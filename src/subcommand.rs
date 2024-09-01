@@ -17,12 +17,14 @@ use {
 ]
 pub(crate) enum Subcommand {
   Create { root: Utf8PathBuf },
+  Verify { root: Utf8PathBuf },
 }
 
 impl Subcommand {
   pub(crate) fn run(self) -> Result {
     match self {
       Self::Create { root } => Self::create(&root),
+      Self::Verify { root } => Self::verify(&root),
     }
   }
 
@@ -58,7 +60,54 @@ impl Subcommand {
 
     let filepack = Filepack { files };
 
-    eprintln!("{}", serde_json::to_string_pretty(&filepack).unwrap());
+    let json = serde_json::to_string(&filepack).unwrap();
+
+    let destination = root.join("filepack.json");
+
+    fs::write(&destination, &json).context(error::Io { path: destination })?;
+
+    Ok(())
+  }
+
+  fn verify(root: &Utf8Path) -> Result {
+    let source = root.join("filepack.json");
+
+    let json = fs::read_to_string(&source).context(error::Io { path: &source })?;
+
+    let filepack =
+      serde_json::from_str::<Filepack>(&json).context(error::Deserialize { path: &source })?;
+
+    for (path, &expected) in &filepack.files {
+      let file = File::open(path).context(error::Io { path })?;
+
+      let mut hasher = Hasher::new();
+
+      hasher.update_reader(file).context(error::Io { path })?;
+
+      let actual = Hash::from(hasher.finalize());
+
+      if actual != expected {
+        return Err(Error::HashMismatch {
+          path: path.into(),
+          actual,
+          expected,
+        });
+      }
+    }
+
+    for entry in WalkDir::new(&root) {
+      let entry = entry?;
+
+      let path = entry.path();
+
+      let path = Utf8Path::from_path(path).context(error::Path { path })?;
+
+      let relative = path.strip_prefix(&root).unwrap();
+
+      if !filepack.files.contains_key(relative) {
+        return Err(Error::ExtraneousFile { path: path.into() });
+      }
+    }
 
     Ok(())
   }

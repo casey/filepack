@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub(crate) struct Hash(blake3::Hash);
 
 impl From<blake3::Hash> for Hash {
@@ -15,5 +15,21 @@ impl Serialize for Hash {
     S: Serializer,
   {
     self.0.to_string().serialize(serializer)
+  }
+}
+
+impl<'de> Deserialize<'de> for Hash {
+  fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+  where
+    D: Deserializer<'de>,
+  {
+    // todo: handle error
+    Ok(Self(String::deserialize(deserializer)?.parse().unwrap()))
+  }
+}
+
+impl Display for Hash {
+  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    self.0.fmt(f)
   }
 }
