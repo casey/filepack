@@ -1,0 +1,9 @@
+[package]
+name = "filepack"
+version = "0.0.0"
+edition = "2021"
+authors = ["Casey Rodarmor <casey@rodarmor.com>"]
+description = "🤖 Just a command runner"
+homepage = "https://github.com/casey/filepack"
+license = "CC0-1.0"
+repository = "https://github.com/casey/filepack"
