@@ -1,7 +1,7 @@
 use {
   self::{error::Error, filepack::Filepack, hash::Hash, subcommand::Subcommand},
   blake3::Hasher,
-  camino::{Utf8Path, Utf8PathBuf},
+  camino::{Utf8Component, Utf8Path, Utf8PathBuf},
   clap::Parser,
   serde::{Deserialize, Deserializer, Serialize, Serializer},
   snafu::{ErrorCompat, OptionExt, ResultExt, Snafu},

@@ -78,7 +78,20 @@ impl Subcommand {
       serde_json::from_str::<Filepack>(&json).context(error::Deserialize { path: &source })?;
 
     for (path, &expected) in &filepack.files {
-      let file = File::open(path).context(error::Io { path })?;
+      for component in path.components() {
+        if !matches!(component, Utf8Component::Normal(_)) {
+          return Err(Error::PathComponent {
+            component: component.to_string(),
+            path: path.into(),
+          });
+        }
+      }
+
+      if path.as_str().ends_with("/") {
+        return Err(Error::TrailingSlash { path: path.into() });
+      }
+
+      let file = File::open(root.join(path)).context(error::Io { path })?;
 
       let mut hasher = Hasher::new();
 

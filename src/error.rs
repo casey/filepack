@@ -23,8 +23,15 @@ pub(crate) enum Error {
   },
   #[snafu(display("path `{}` not valid unicode", path.display()))]
   Path { path: PathBuf },
+  #[snafu(display("path `{path}` contains invalid component {component}"))]
+  PathComponent {
+    path: Utf8PathBuf,
+    component: String,
+  },
   #[snafu(display("symlink at `{path}`"))]
   Symlink { path: Utf8PathBuf },
+  #[snafu(display("path `{path}` has trailing slash"))]
+  TrailingSlash { path: Utf8PathBuf },
   #[snafu(context(false))]
   WalkDir { source: walkdir::Error },
 }
