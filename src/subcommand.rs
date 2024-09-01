@@ -31,7 +31,7 @@ impl Subcommand {
   fn create(root: &Utf8Path) -> Result {
     let mut files = HashMap::new();
 
-    for entry in WalkDir::new(&root) {
+    for entry in WalkDir::new(root) {
       let entry = entry?;
 
       if entry.file_type().is_dir() {
@@ -53,7 +53,7 @@ impl Subcommand {
       hasher.update_reader(file).context(error::Io { path })?;
 
       files.insert(
-        path.strip_prefix(&root).unwrap().into(),
+        path.strip_prefix(root).unwrap().into(),
         hasher.finalize().into(),
       );
     }
@@ -95,14 +95,14 @@ impl Subcommand {
       }
     }
 
-    for entry in WalkDir::new(&root) {
+    for entry in WalkDir::new(root) {
       let entry = entry?;
 
       let path = entry.path();
 
       let path = Utf8Path::from_path(path).context(error::Path { path })?;
 
-      let relative = path.strip_prefix(&root).unwrap();
+      let relative = path.strip_prefix(root).unwrap();
 
       if !filepack.files.contains_key(relative) {
         return Err(Error::ExtraneousFile { path: path.into() });

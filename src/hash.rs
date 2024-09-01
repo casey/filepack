@@ -23,8 +23,13 @@ impl<'de> Deserialize<'de> for Hash {
   where
     D: Deserializer<'de>,
   {
-    // todo: handle error
-    Ok(Self(String::deserialize(deserializer)?.parse().unwrap()))
+    use serde::de::{Error, Unexpected};
+
+    let s = String::deserialize(deserializer)?;
+
+    Ok(Self(s.parse::<blake3::Hash>().map_err(|err| {
+      D::Error::invalid_value(Unexpected::Str(&s), &err.to_string().as_str())
+    })?))
   }
 }
 
