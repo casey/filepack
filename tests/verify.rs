@@ -16,7 +16,7 @@ fn no_files() -> Result {
 }
 
 #[test]
-fn extra_fields_are_disallowed() -> Result {
+fn extra_fields_are_not_allowed() -> Result {
   let dir = TempDir::new()?;
 
   dir
