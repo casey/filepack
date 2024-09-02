@@ -8,8 +8,6 @@ pub(crate) enum Error {
     path: Utf8PathBuf,
     source: serde_json::Error,
   },
-  #[snafu(display("path `{path}` contains double slash"))]
-  DoubleSlash { path: Utf8PathBuf },
   #[snafu(display("extraneous file not in filepack at `{path}`"))]
   ExtraneousFile { path: Utf8PathBuf },
   #[snafu(display("filepack `{path}` already exists"))]
@@ -37,12 +35,14 @@ pub(crate) enum Error {
     path: Utf8PathBuf,
     component: String,
   },
+  #[snafu(display("path `{path}` contains double slash"))]
+  PathDoubleSlash { path: Utf8PathBuf },
+  #[snafu(display("path `{path}` has trailing slash"))]
+  PathTrailingSlash { path: Utf8PathBuf },
   #[snafu(display("path `{}` not valid unicode", path.display()))]
   PathUnicode { path: PathBuf },
   #[snafu(display("symlink at `{path}`"))]
   Symlink { path: Utf8PathBuf },
-  #[snafu(display("path `{path}` has trailing slash"))]
-  TrailingSlash { path: Utf8PathBuf },
   #[snafu(context(false))]
   WalkDir { source: walkdir::Error },
 }

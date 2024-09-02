@@ -19,11 +19,15 @@ pub(crate) fn run(root: &Utf8Path) -> Result {
     }
 
     if path.as_str().ends_with("/") {
-      return Err(Error::TrailingSlash { path: path.into() });
+      return Err(Error::PathTrailingSlash { path: path.into() });
     }
 
     if path.as_str().contains("//") {
-      return Err(Error::DoubleSlash { path: path.into() });
+      return Err(Error::PathDoubleSlash { path: path.into() });
+    }
+
+    if path.as_str().contains('\\') {
+      return Err(Error::PathBackslash { path: path.into() });
     }
 
     let file = File::open(root.join(path)).context(error::Io { path })?;
