@@ -34,8 +34,8 @@ impl<'de> Deserialize<'de> for Hash {
 
     let s = String::deserialize(deserializer)?;
 
-    Ok(Self(s.parse::<blake3::Hash>().map_err(|err| {
-      D::Error::invalid_value(Unexpected::Str(&s), &err.to_string().as_str())
+    Ok(Self(s.parse::<blake3::Hash>().map_err(|_| {
+      D::Error::invalid_value(Unexpected::Str(&s), &"64 hex digits")
     })?))
   }
 }
@@ -59,5 +59,15 @@ mod tests {
       "\"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262\""
     );
     assert_eq!(serde_json::from_str::<Hash>(&json).unwrap(), input);
+  }
+
+  #[test]
+  fn deserialize_error_format() {
+    assert_eq!(
+      serde_json::from_str::<Hash>(&"\"foo\"")
+        .unwrap_err()
+        .to_string(),
+      r#"invalid value: string "foo", expected 64 hex digits"#,
+    );
   }
 }
