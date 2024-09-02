@@ -6,37 +6,30 @@ use super::*;
 
 #[derive(Debug, PartialEq, Snafu)]
 pub(crate) enum Error {
-  #[snafu(display("leading slash"))]
-  LeadingSlash,
-  #[snafu(display("trailing slash"))]
-  TrailingSlash,
-  #[snafu(display("Windows disk prefix `{letter}:`"))]
-  DiskPrefix {
-    letter: char,
-  },
   #[snafu(display("double slash"))]
   DoubleSlash,
   #[snafu(display("illegal character `{character}`"))]
-  Character {
-    character: char,
-  },
+  Character { character: char },
   #[snafu(display("illegal path component `{}`", component))]
-  Component {
-    component: String,
-  },
+  Component { component: String },
   #[snafu(display("length {length} path component"))]
-  ComponentLength {
-    length: usize,
-  },
+  ComponentLength { length: usize },
   #[snafu(display("empty path"))]
   Empty,
+  #[snafu(display("leading slash"))]
+  LeadingSlash,
   #[snafu(display("leading space"))]
   LeadingSpace,
-  Name {
-    name: String,
-  },
+  #[snafu(display("non-portable name `{name}`"))]
+  Name { name: String },
+  #[snafu(display("trailing period"))]
   TrailingPeriod,
+  #[snafu(display("trailing slash"))]
+  TrailingSlash,
+  #[snafu(display("trailing space"))]
   TrailingSpace,
+  #[snafu(display("Windows disk prefix `{letter}:`"))]
+  WindowsDiskPrefix { letter: char },
 }
 
 #[derive(Debug, Eq, Hash, PartialEq, Serialize)]
@@ -160,7 +153,7 @@ impl FromStr for RelativePath {
     let second = chars.next();
     if let Some((first, second)) = first.zip(second) {
       if second == ':' {
-        return Err(Error::DiskPrefix { letter: first });
+        return Err(Error::WindowsDiskPrefix { letter: first });
       }
     }
 
@@ -222,7 +215,7 @@ mod tests {
       assert_eq!(path.parse::<RelativePath>().unwrap_err(), expected);
     }
 
-    case("C:", Error::DiskPrefix { letter: 'C' });
+    case("C:", Error::WindowsDiskPrefix { letter: 'C' });
 
     case("", Error::Empty);
     case(
