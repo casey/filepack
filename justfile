@@ -8,3 +8,9 @@ lint:
   cargo clippy --all-targets -- --deny warnings
   ./bin/forbid
   cargo fmt --all -- --check
+
+outdated:
+  cargo outdated --root-deps-only
+
+unused:
+  cargo +nightly udeps
