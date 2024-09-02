@@ -12,6 +12,7 @@ use {
     fs::{self, File},
     io,
     path::PathBuf,
+    process,
   },
   walkdir::WalkDir,
 };
@@ -43,5 +44,7 @@ fn main() {
         eprintln!("{backtrace}");
       }
     }
+
+    process::exit(1);
   }
 }

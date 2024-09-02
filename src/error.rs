@@ -8,8 +8,12 @@ pub(crate) enum Error {
     path: Utf8PathBuf,
     source: serde_json::Error,
   },
+  #[snafu(display("path `{path}` contains double slash"))]
+  DoubleSlash { path: Utf8PathBuf },
   #[snafu(display("extraneous file not in filepack at `{path}`"))]
   ExtraneousFile { path: Utf8PathBuf },
+  #[snafu(display("filepack `{path}` already exists"))]
+  FilepackExists { path: Utf8PathBuf },
   #[snafu(display("file at `{path}` hash mismatch, expected {expected} but got {actual}"))]
   HashMismatch {
     path: Utf8PathBuf,
