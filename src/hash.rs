@@ -3,6 +3,13 @@ use super::*;
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub(crate) struct Hash(blake3::Hash);
 
+impl Hash {
+  #[cfg(test)]
+  pub(crate) fn bytes(input: &[u8]) -> Self {
+    Self(blake3::hash(input))
+  }
+}
+
 impl From<blake3::Hash> for Hash {
   fn from(hash: blake3::Hash) -> Self {
     Self(hash)
@@ -36,5 +43,22 @@ impl<'de> Deserialize<'de> for Hash {
 impl Display for Hash {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     self.0.fmt(f)
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn serde() {
+    let input = Hash::bytes(&[]);
+    let json = serde_json::to_string(&input).unwrap();
+    assert_eq!(
+      json,
+      "\"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262\""
+    );
+    let output = serde_json::from_str::<Hash>(&json).unwrap();
+    assert_eq!(output, input);
   }
 }

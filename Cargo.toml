@@ -22,6 +22,11 @@ walkdir = "2.5.0"
 assert_cmd = { version = "2.0.16", features = ["color-auto"] }
 assert_fs = { version = "1.1.2", features = ["color-auto"] }
 
+[lints.clippy]
+all = { level = "deny", priority = -1 }
+pedantic = { level = "deny", priority = -1 }
+wildcard_imports = "allow"
+
 [[test]]
 name = "integration"
 path = "tests/lib.rs"

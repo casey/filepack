@@ -18,7 +18,7 @@ pub(crate) fn run(root: &Utf8Path) -> Result {
       }
     }
 
-    if path.as_str().ends_with("/") {
+    if path.as_str().ends_with('/') {
       return Err(Error::PathTrailingSlash { path: path.into() });
     }
 
