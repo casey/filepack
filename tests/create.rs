@@ -70,3 +70,38 @@ fn file_in_subdirectory() -> Result {
 
   Ok(())
 }
+
+// disable test on macos, since it does not allow non-unicode filenames
+#[cfg(not(target_os = "macos"))]
+#[test]
+fn non_unicode_path_error() -> Result {
+  use std::path::PathBuf;
+
+  let dir = TempDir::new()?;
+
+  let path: PathBuf;
+
+  #[cfg(unix)]
+  {
+    use std::{ffi::OsStr, os::unix::ffi::OsStrExt};
+
+    path = OsStr::from_bytes(&[0x80]).into();
+  };
+
+  #[cfg(windows)]
+  {
+    use std::{ffi::OsString, os::windows::ffi::OsStringExt};
+
+    path = OsString::from_wide(&[0xd800]).into();
+  };
+
+  dir.child(path).touch().unwrap();
+
+  Command::cargo_bin("filepack")?
+    .args(["create", "."])
+    .current_dir(&dir)
+    .assert()
+    .failure();
+
+  Ok(())
+}
