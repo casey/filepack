@@ -10,5 +10,7 @@ use {
 
 type Result = std::result::Result<(), Box<dyn Error>>;
 
+const SEPARATOR: char = std::path::MAIN_SEPARATOR;
+
 mod create;
 mod verify;

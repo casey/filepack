@@ -27,7 +27,9 @@ fn extraneous_file() -> Result {
     .args(["verify", "."])
     .current_dir(&dir)
     .assert()
-    .stderr("error: extraneous file not in filepack at `./foo`\n")
+    .stderr(format!(
+      "error: extraneous file not in filepack at `.{SEPARATOR}foo`\n"
+    ))
     .failure();
 
   Ok(())
