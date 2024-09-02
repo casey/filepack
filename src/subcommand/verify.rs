@@ -56,7 +56,7 @@ pub(crate) fn run(root: &Utf8Path) -> Result {
       continue;
     }
 
-    let path = Utf8Path::from_path(path).context(error::Path { path })?;
+    let path = Utf8Path::from_path(path).context(error::PathUnicode { path })?;
 
     let relative = path.strip_prefix(root).unwrap();
 

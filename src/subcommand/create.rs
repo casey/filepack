@@ -12,7 +12,7 @@ pub(crate) fn run(root: &Utf8Path) -> Result {
 
     let path = entry.path();
 
-    let path = Utf8Path::from_path(path).context(error::Path { path })?;
+    let path = Utf8Path::from_path(path).context(error::PathUnicode { path })?;
 
     if entry.file_type().is_symlink() {
       return Err(error::Symlink { path }.build());
@@ -26,7 +26,25 @@ pub(crate) fn run(root: &Utf8Path) -> Result {
 
     let relative = path.strip_prefix(root).unwrap();
 
-    files.insert(relative.into(), hasher.finalize().into());
+    let mut components = Vec::new();
+
+    for component in relative.components() {
+      let Utf8Component::Normal(component) = component else {
+        return Err(Error::Internal {
+          message: format!("unexpected path component `{component}`"),
+        });
+      };
+
+      if component.contains('\\') {
+        return Err(Error::PathBackslash {
+          path: relative.into(),
+        });
+      }
+
+      components.push(component);
+    }
+
+    files.insert(components.join("/").into(), hasher.finalize().into());
   }
 
   let destination = root.join(Filepack::FILENAME);

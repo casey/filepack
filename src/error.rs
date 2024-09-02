@@ -20,18 +20,25 @@ pub(crate) enum Error {
     expected: Hash,
     actual: Hash,
   },
+  #[snafu(display(
+    "internal error, this may indicate a bug in filepack: `{message}` \
+     consider filing an issue: https://github.com/casey/filepack/issues/new"
+  ))]
+  Internal { message: String },
   #[snafu(display("I/O error at `{path}`"))]
   Io {
     path: Utf8PathBuf,
     source: io::Error,
   },
-  #[snafu(display("path `{}` not valid unicode", path.display()))]
-  Path { path: PathBuf },
+  #[snafu(display("path `{path}` contains backslash"))]
+  PathBackslash { path: Utf8PathBuf },
   #[snafu(display("path `{path}` contains invalid component {component}"))]
   PathComponent {
     path: Utf8PathBuf,
     component: String,
   },
+  #[snafu(display("path `{}` not valid unicode", path.display()))]
+  PathUnicode { path: PathBuf },
   #[snafu(display("symlink at `{path}`"))]
   Symlink { path: Utf8PathBuf },
   #[snafu(display("path `{path}` has trailing slash"))]
