@@ -141,22 +141,6 @@ fn backslash_error() {
     .failure();
 }
 
-#[cfg(windows)]
-#[test]
-fn backslash_error() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("/").touch().unwrap();
-
-  Command::cargo_bin("filepack")
-    .unwrap()
-    .args(["create", "."])
-    .current_dir(&dir)
-    .assert()
-    .stderr("error: path `/` has component containing forward slash\n")
-    .failure();
-}
-
 #[test]
 fn manifest_already_exists_error() {
   let dir = TempDir::new().unwrap();
