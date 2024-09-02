@@ -10,14 +10,14 @@ pub(crate) enum Error {
   },
   #[snafu(display("extraneous file not in filepack at `{path}`"))]
   ExtraneousFile { path: Utf8PathBuf },
-  #[snafu(display("filepack `{path}` already exists"))]
-  FilepackExists { path: Utf8PathBuf },
   #[snafu(display("hash mismatch for `{path}`, expected {expected} but got {actual}"))]
   HashMismatch {
     path: Utf8PathBuf,
     expected: Hash,
     actual: Hash,
   },
+  #[snafu(display("manifest `{path}` already exists"))]
+  ManifestAlreadyExists { path: Utf8PathBuf },
   #[snafu(display(
     "internal error, this may indicate a bug in filepack: `{message}` \
      consider filing an issue: https://github.com/casey/filepack/issues/new"

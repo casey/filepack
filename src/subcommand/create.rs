@@ -59,7 +59,7 @@ pub(crate) fn run(root: &Utf8Path) -> Result {
     .try_exists()
     .context(error::Io { path: &destination })?
   {
-    return Err(Error::FilepackExists { path: destination });
+    return Err(Error::ManifestAlreadyExists { path: destination });
   }
 
   let filepack = Filepack { files };

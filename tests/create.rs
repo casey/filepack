@@ -156,3 +156,20 @@ fn backslash_error() {
     .stderr("error: path `/` has component containing forward slash\n")
     .failure();
 }
+
+#[test]
+fn manifest_already_exists_error() {
+  let dir = TempDir::new().unwrap();
+
+  dir.child("filepack.json").touch().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["create", "."])
+    .current_dir(&dir)
+    .assert()
+    .stderr(format!(
+      "error: manifest `.{SEPARATOR}filepack.json` already exists\n"
+    ))
+    .failure();
+}
