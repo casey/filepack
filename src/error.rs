@@ -45,6 +45,11 @@ pub(crate) enum Error {
     backtrace: Option<Backtrace>,
     path: Utf8PathBuf,
   },
+  #[snafu(display("invalid path `{path}`"))]
+  Path {
+    path: Utf8PathBuf,
+    source: relative_path::Error,
+  },
   #[snafu(display("path `{path}` contains invalid component {component}"))]
   PathComponent {
     backtrace: Option<Backtrace>,

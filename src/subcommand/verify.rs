@@ -9,30 +9,6 @@ pub(crate) fn run(root: &Utf8Path) -> Result {
     serde_json::from_str::<Manifest>(&json).context(error::Deserialize { path: &source })?;
 
   for (path, &expected) in &manifest.files {
-    for component in path.components() {
-      if !matches!(component, Utf8Component::Normal(_)) {
-        return Err(
-          error::PathComponent {
-            component: component.to_string(),
-            path,
-          }
-          .build(),
-        );
-      }
-    }
-
-    if path.as_str().ends_with('/') {
-      return Err(error::PathTrailingSlash { path }.build());
-    }
-
-    if path.as_str().contains("//") {
-      return Err(error::PathDoubleSlash { path }.build());
-    }
-
-    if path.as_str().contains('\\') {
-      return Err(error::PathBackslash { path }.build());
-    }
-
     let file = File::open(root.join(path)).context(error::Io { path })?;
 
     let mut hasher = Hasher::new();
@@ -68,13 +44,19 @@ pub(crate) fn run(root: &Utf8Path) -> Result {
 
     let path = Utf8Path::from_path(path).context(error::PathUnicode { path })?;
 
-    let relative = path.strip_prefix(root).unwrap();
+    // todo: handle error
+    let relative = path
+      .strip_prefix(root)
+      .unwrap()
+      .as_str()
+      .parse::<RelativePath>()
+      .unwrap();
 
     if relative == Manifest::FILENAME {
       continue;
     }
 
-    if !manifest.files.contains_key(relative) {
+    if !manifest.files.contains_key(&relative) {
       return Err(error::ExtraneousFile { path }.build());
     }
   }

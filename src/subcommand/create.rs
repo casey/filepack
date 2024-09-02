@@ -26,26 +26,12 @@ pub(crate) fn run(root: &Utf8Path) -> Result {
 
     let relative = path.strip_prefix(root).unwrap();
 
-    let mut components = Vec::new();
+    let relative = relative
+      .as_str()
+      .parse::<RelativePath>()
+      .context(error::Path { path: relative })?;
 
-    for component in relative.components() {
-      let Utf8Component::Normal(component) = component else {
-        return Err(
-          error::Internal {
-            message: format!("unexpected path component `{component}`"),
-          }
-          .build(),
-        );
-      };
-
-      if component.contains('\\') {
-        return Err(error::PathBackslash { path: relative }.build());
-      }
-
-      components.push(component);
-    }
-
-    files.insert(components.join("/").into(), hasher.finalize().into());
+    files.insert(relative, hasher.finalize().into());
   }
 
   let destination = root.join(Manifest::FILENAME);

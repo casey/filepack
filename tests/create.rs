@@ -137,7 +137,13 @@ fn backslash_error() {
     .args(["create", "."])
     .current_dir(&dir)
     .assert()
-    .stderr("error: path `\\` contains backslash\n")
+    .stderr(
+      "error: invalid path `\\`
+
+because:
+- illegal character `\\\\`
+",
+    )
     .failure();
 }
 

@@ -1,5 +1,8 @@
 use {
-  self::{error::Error, hash::Hash, manifest::Manifest, subcommand::Subcommand},
+  self::{
+    error::Error, hash::Hash, manifest::Manifest, relative_path::RelativePath,
+    subcommand::Subcommand,
+  },
   blake3::Hasher,
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},
   clap::Parser,
@@ -13,6 +16,7 @@ use {
     io,
     path::PathBuf,
     process,
+    str::FromStr,
   },
   walkdir::WalkDir,
 };
@@ -20,6 +24,7 @@ use {
 mod error;
 mod hash;
 mod manifest;
+mod relative_path;
 mod subcommand;
 
 type Result<T = (), E = Error> = std::result::Result<T, E>;
