@@ -74,7 +74,7 @@ fn file_in_subdirectory() {
 // disable test on macos, since it does not allow non-unicode filenames
 #[cfg(not(target_os = "macos"))]
 #[test]
-fn non_unicode_path_error() -> Result {
+fn non_unicode_path_error() {
   use std::path::PathBuf;
 
   let dir = TempDir::new().unwrap();
@@ -97,7 +97,8 @@ fn non_unicode_path_error() -> Result {
 
   dir.child(path).touch().unwrap();
 
-  Command::cargo_bin("filepack")?
+  Command::cargo_bin("filepack")
+    .unwrap()
     .args(["create", "."])
     .current_dir(&dir)
     .assert()
