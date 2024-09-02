@@ -14,7 +14,7 @@ pub(crate) enum Error {
   ExtraneousFile { path: Utf8PathBuf },
   #[snafu(display("filepack `{path}` already exists"))]
   FilepackExists { path: Utf8PathBuf },
-  #[snafu(display("file at `{path}` hash mismatch, expected {expected} but got {actual}"))]
+  #[snafu(display("hash mismatch for `{path}`, expected {expected} but got {actual}"))]
   HashMismatch {
     path: Utf8PathBuf,
     expected: Hash,
