@@ -47,7 +47,7 @@ pub(crate) fn run(root: &Utf8Path) -> Result {
     files.insert(components.join("/").into(), hasher.finalize().into());
   }
 
-  let destination = root.join(Filepack::FILENAME);
+  let destination = root.join(Manifest::FILENAME);
 
   if destination
     .try_exists()
@@ -56,9 +56,9 @@ pub(crate) fn run(root: &Utf8Path) -> Result {
     return Err(Error::ManifestAlreadyExists { path: destination });
   }
 
-  let filepack = Filepack { files };
+  let manifest = Manifest { files };
 
-  let json = serde_json::to_string(&filepack).unwrap();
+  let json = serde_json::to_string(&manifest).unwrap();
 
   fs::write(&destination, &json).context(error::Io { path: destination })?;
 

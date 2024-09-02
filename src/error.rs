@@ -3,12 +3,12 @@ use super::*;
 #[derive(Debug, Snafu)]
 #[snafu(context(suffix(false)), visibility(pub(crate)))]
 pub(crate) enum Error {
-  #[snafu(display("failed to deserialize filepack at `{path}`"))]
+  #[snafu(display("failed to deserialize manifest at `{path}`"))]
   Deserialize {
     path: Utf8PathBuf,
     source: serde_json::Error,
   },
-  #[snafu(display("extraneous file not in filepack at `{path}`"))]
+  #[snafu(display("extraneous file not in manifest at `{path}`"))]
   ExtraneousFile { path: Utf8PathBuf },
   #[snafu(display("hash mismatch for `{path}`, expected {expected} but got {actual}"))]
   HashMismatch {

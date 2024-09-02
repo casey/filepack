@@ -1,14 +1,14 @@
 use super::*;
 
 pub(crate) fn run(root: &Utf8Path) -> Result {
-  let source = root.join(Filepack::FILENAME);
+  let source = root.join(Manifest::FILENAME);
 
   let json = fs::read_to_string(&source).context(error::Io { path: &source })?;
 
-  let filepack =
-    serde_json::from_str::<Filepack>(&json).context(error::Deserialize { path: &source })?;
+  let manifest =
+    serde_json::from_str::<Manifest>(&json).context(error::Deserialize { path: &source })?;
 
-  for (path, &expected) in &filepack.files {
+  for (path, &expected) in &manifest.files {
     for component in path.components() {
       if !matches!(component, Utf8Component::Normal(_)) {
         return Err(Error::PathComponent {
@@ -64,11 +64,11 @@ pub(crate) fn run(root: &Utf8Path) -> Result {
 
     let relative = path.strip_prefix(root).unwrap();
 
-    if relative == Filepack::FILENAME {
+    if relative == Manifest::FILENAME {
       continue;
     }
 
-    if !filepack.files.contains_key(relative) {
+    if !manifest.files.contains_key(relative) {
       return Err(Error::ExtraneousFile { path: path.into() });
     }
   }

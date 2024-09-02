@@ -1,5 +1,5 @@
 use {
-  self::{error::Error, filepack::Filepack, hash::Hash, subcommand::Subcommand},
+  self::{error::Error, hash::Hash, manifest::Manifest, subcommand::Subcommand},
   blake3::Hasher,
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},
   clap::Parser,
@@ -18,8 +18,8 @@ use {
 };
 
 mod error;
-mod filepack;
 mod hash;
+mod manifest;
 mod subcommand;
 
 type Result<T = (), E = Error> = std::result::Result<T, E>;

@@ -32,7 +32,7 @@ fn extra_fields_are_not_allowed() {
     .current_dir(&dir)
     .assert()
     .stderr(format!(
-      "error: failed to deserialize filepack at `.{SEPARATOR}filepack.json`
+      "error: failed to deserialize manifest at `.{SEPARATOR}filepack.json`
 
 because:
 - unknown field `foo`, expected `files` at line 1 column 17\n"
@@ -57,7 +57,7 @@ fn extraneous_file() {
     .current_dir(&dir)
     .assert()
     .stderr(format!(
-      "error: extraneous file not in filepack at `.{SEPARATOR}foo`\n"
+      "error: extraneous file not in manifest at `.{SEPARATOR}foo`\n"
     ))
     .failure();
 }
