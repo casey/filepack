@@ -11,23 +11,26 @@ pub(crate) fn run(root: &Utf8Path) -> Result {
   for (path, &expected) in &manifest.files {
     for component in path.components() {
       if !matches!(component, Utf8Component::Normal(_)) {
-        return Err(Error::PathComponent {
-          component: component.to_string(),
-          path: path.into(),
-        });
+        return Err(
+          error::PathComponent {
+            component: component.to_string(),
+            path,
+          }
+          .build(),
+        );
       }
     }
 
     if path.as_str().ends_with('/') {
-      return Err(Error::PathTrailingSlash { path: path.into() });
+      return Err(error::PathTrailingSlash { path }.build());
     }
 
     if path.as_str().contains("//") {
-      return Err(Error::PathDoubleSlash { path: path.into() });
+      return Err(error::PathDoubleSlash { path }.build());
     }
 
     if path.as_str().contains('\\') {
-      return Err(Error::PathBackslash { path: path.into() });
+      return Err(error::PathBackslash { path }.build());
     }
 
     let file = File::open(root.join(path)).context(error::Io { path })?;
@@ -39,11 +42,14 @@ pub(crate) fn run(root: &Utf8Path) -> Result {
     let actual = Hash::from(hasher.finalize());
 
     if actual != expected {
-      return Err(Error::HashMismatch {
-        path: path.into(),
-        actual,
-        expected,
-      });
+      return Err(
+        error::HashMismatch {
+          path,
+          actual,
+          expected,
+        }
+        .build(),
+      );
     }
   }
 
@@ -69,7 +75,7 @@ pub(crate) fn run(root: &Utf8Path) -> Result {
     }
 
     if !manifest.files.contains_key(relative) {
-      return Err(Error::ExtraneousFile { path: path.into() });
+      return Err(error::ExtraneousFile { path }.build());
     }
   }
 

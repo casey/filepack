@@ -30,15 +30,16 @@ pub(crate) fn run(root: &Utf8Path) -> Result {
 
     for component in relative.components() {
       let Utf8Component::Normal(component) = component else {
-        return Err(Error::Internal {
-          message: format!("unexpected path component `{component}`"),
-        });
+        return Err(
+          error::Internal {
+            message: format!("unexpected path component `{component}`"),
+          }
+          .build(),
+        );
       };
 
       if component.contains('\\') {
-        return Err(Error::PathBackslash {
-          path: relative.into(),
-        });
+        return Err(error::PathBackslash { path: relative }.build());
       }
 
       components.push(component);
@@ -53,7 +54,7 @@ pub(crate) fn run(root: &Utf8Path) -> Result {
     .try_exists()
     .context(error::Io { path: &destination })?
   {
-    return Err(Error::ManifestAlreadyExists { path: destination });
+    return Err(error::ManifestAlreadyExists { path: destination }.build());
   }
 
   let manifest = Manifest { files };

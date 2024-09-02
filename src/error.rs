@@ -5,24 +5,35 @@ use super::*;
 pub(crate) enum Error {
   #[snafu(display("failed to deserialize manifest at `{path}`"))]
   Deserialize {
+    backtrace: Option<Backtrace>,
     path: Utf8PathBuf,
     source: serde_json::Error,
   },
   #[snafu(display("extraneous file not in manifest at `{path}`"))]
-  ExtraneousFile { path: Utf8PathBuf },
+  ExtraneousFile {
+    backtrace: Option<Backtrace>,
+    path: Utf8PathBuf,
+  },
   #[snafu(display("hash mismatch for `{path}`, expected {expected} but got {actual}"))]
   HashMismatch {
-    path: Utf8PathBuf,
-    expected: Hash,
     actual: Hash,
+    backtrace: Option<Backtrace>,
+    expected: Hash,
+    path: Utf8PathBuf,
   },
   #[snafu(display("manifest `{path}` already exists"))]
-  ManifestAlreadyExists { path: Utf8PathBuf },
+  ManifestAlreadyExists {
+    backtrace: Option<Backtrace>,
+    path: Utf8PathBuf,
+  },
   #[snafu(display(
     "internal error, this may indicate a bug in filepack: `{message}` \
      consider filing an issue: https://github.com/casey/filepack/issues/new"
   ))]
-  Internal { message: String },
+  Internal {
+    backtrace: Option<Backtrace>,
+    message: String,
+  },
   #[snafu(display("I/O error at `{path}`"))]
   Io {
     backtrace: Option<Backtrace>,
@@ -30,20 +41,39 @@ pub(crate) enum Error {
     source: io::Error,
   },
   #[snafu(display("path `{path}` contains backslash"))]
-  PathBackslash { path: Utf8PathBuf },
+  PathBackslash {
+    backtrace: Option<Backtrace>,
+    path: Utf8PathBuf,
+  },
   #[snafu(display("path `{path}` contains invalid component {component}"))]
   PathComponent {
-    path: Utf8PathBuf,
+    backtrace: Option<Backtrace>,
     component: String,
+    path: Utf8PathBuf,
   },
   #[snafu(display("path `{path}` contains double slash"))]
-  PathDoubleSlash { path: Utf8PathBuf },
+  PathDoubleSlash {
+    backtrace: Option<Backtrace>,
+    path: Utf8PathBuf,
+  },
   #[snafu(display("path `{path}` has trailing slash"))]
-  PathTrailingSlash { path: Utf8PathBuf },
+  PathTrailingSlash {
+    backtrace: Option<Backtrace>,
+    path: Utf8PathBuf,
+  },
   #[snafu(display("path `{}` not valid unicode", path.display()))]
-  PathUnicode { path: PathBuf },
+  PathUnicode {
+    backtrace: Option<Backtrace>,
+    path: PathBuf,
+  },
   #[snafu(display("symlink at `{path}`"))]
-  Symlink { path: Utf8PathBuf },
+  Symlink {
+    backtrace: Option<Backtrace>,
+    path: Utf8PathBuf,
+  },
   #[snafu(context(false))]
-  WalkDir { source: walkdir::Error },
+  WalkDir {
+    backtrace: Option<Backtrace>,
+    source: walkdir::Error,
+  },
 }
