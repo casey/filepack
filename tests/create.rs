@@ -141,7 +141,7 @@ fn backslash_error() {
       "error: invalid path `\\`
 
 because:
-- illegal character `\\\\`
+- illegal character `\\`
 ",
     )
     .failure();

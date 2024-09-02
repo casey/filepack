@@ -10,9 +10,13 @@ pub(crate) enum Error {
   LeadingSlash,
   #[snafu(display("trailing slash"))]
   TrailingSlash,
+  #[snafu(display("Windows disk prefix `{letter}:`"))]
+  DiskPrefix {
+    letter: char,
+  },
   #[snafu(display("double slash"))]
   DoubleSlash,
-  #[snafu(display("illegal character `{}`", character.escape_default()))]
+  #[snafu(display("illegal character `{character}`"))]
   Character {
     character: char,
   },
@@ -151,6 +155,15 @@ impl FromStr for RelativePath {
       return Err(Error::DoubleSlash);
     }
 
+    let mut chars = s.chars();
+    let first = chars.next();
+    let second = chars.next();
+    if let Some((first, second)) = first.zip(second) {
+      if second == ':' {
+        return Err(Error::DiskPrefix { letter: first });
+      }
+    }
+
     let mut path = String::new();
 
     for (i, component) in s.split('/').enumerate() {
@@ -192,11 +205,24 @@ mod tests {
   use super::*;
 
   #[test]
-  fn errors() {
+  fn from_str() {
+    #[track_caller]
+    fn case(path: &str, expected: &str) {
+      assert_eq!(path.parse::<RelativePath>().unwrap(), expected);
+    }
+
+    case("foo", "foo");
+    case("foo/bar", "foo/bar");
+  }
+
+  #[test]
+  fn from_str_errors() {
     #[track_caller]
     fn case(path: &str, expected: Error) {
       assert_eq!(path.parse::<RelativePath>().unwrap_err(), expected);
     }
+
+    case("C:", Error::DiskPrefix { letter: 'C' });
 
     case("", Error::Empty);
     case(
@@ -212,11 +238,22 @@ mod tests {
       },
     );
     case("/", Error::LeadingSlash);
+    case("foo/", Error::TrailingSlash);
+    case("foo//bar", Error::DoubleSlash);
     case("\\", Error::Character { character: '\\' });
   }
 
   #[test]
-  fn check_portability() {
+  fn portability() {
+    "foo"
+      .parse::<RelativePath>()
+      .unwrap()
+      .check_portability()
+      .unwrap();
+  }
+
+  #[test]
+  fn portability_errors() {
     #[track_caller]
     fn case(path: &str, expected: Error) {
       assert_eq!(
