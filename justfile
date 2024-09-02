@@ -14,3 +14,7 @@ outdated:
 
 unused:
   cargo +nightly udeps
+
+coverage:
+  cargo llvm-cov --html
+  open target/llvm-cov/html/index.html
