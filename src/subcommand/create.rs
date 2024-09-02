@@ -41,6 +41,12 @@ pub(crate) fn run(root: &Utf8Path) -> Result {
         });
       }
 
+      if component.contains('/') {
+        return Err(Error::PathForwardSlash {
+          path: relative.into(),
+        });
+      }
+
       components.push(component);
     }
 

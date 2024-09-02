@@ -37,6 +37,8 @@ pub(crate) enum Error {
   },
   #[snafu(display("path `{path}` contains double slash"))]
   PathDoubleSlash { path: Utf8PathBuf },
+  #[snafu(display("path `{path}` has component containing forward slash"))]
+  PathForwardSlash { path: Utf8PathBuf },
   #[snafu(display("path `{path}` has trailing slash"))]
   PathTrailingSlash { path: Utf8PathBuf },
   #[snafu(display("path `{}` not valid unicode", path.display()))]

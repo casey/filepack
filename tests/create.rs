@@ -124,3 +124,35 @@ fn symlink_error() {
     .stderr(format!("error: symlink at `.{SEPARATOR}bar`\n"))
     .failure();
 }
+
+#[cfg(not(windows))]
+#[test]
+fn backslash_error() {
+  let dir = TempDir::new().unwrap();
+
+  dir.child("\\").touch().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["create", "."])
+    .current_dir(&dir)
+    .assert()
+    .stderr("error: path `\\` contains backslash\n")
+    .failure();
+}
+
+#[cfg(windows)]
+#[test]
+fn backslash_error() {
+  let dir = TempDir::new().unwrap();
+
+  dir.child("/").touch().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["create", "."])
+    .current_dir(&dir)
+    .assert()
+    .stderr("error: path `/` has component containing forward slash\n")
+    .failure();
+}
