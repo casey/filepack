@@ -1,10 +1,11 @@
 use super::*;
 
 #[test]
-fn no_files() -> Result {
-  let dir = TempDir::new()?;
+fn no_files() {
+  let dir = TempDir::new().unwrap();
 
-  Command::cargo_bin("filepack")?
+  Command::cargo_bin("filepack")
+    .unwrap()
     .args(["create", "."])
     .current_dir(&dir)
     .assert()
@@ -12,22 +13,22 @@ fn no_files() -> Result {
 
   dir.child("filepack.json").assert(r#"{"files":{}}"#);
 
-  Command::cargo_bin("filepack")?
+  Command::cargo_bin("filepack")
+    .unwrap()
     .args(["verify", "."])
     .current_dir(&dir)
     .assert()
     .success();
-
-  Ok(())
 }
 
 #[test]
-fn single_file() -> Result {
-  let dir = TempDir::new()?;
+fn single_file() {
+  let dir = TempDir::new().unwrap();
 
   dir.child("foo").touch().unwrap();
 
-  Command::cargo_bin("filepack")?
+  Command::cargo_bin("filepack")
+    .unwrap()
     .args(["create", "."])
     .current_dir(&dir)
     .assert()
@@ -37,22 +38,22 @@ fn single_file() -> Result {
     r#"{"files":{"foo":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"}}"#,
   );
 
-  Command::cargo_bin("filepack")?
+  Command::cargo_bin("filepack")
+    .unwrap()
     .args(["verify", "."])
     .current_dir(&dir)
     .assert()
     .success();
-
-  Ok(())
 }
 
 #[test]
-fn file_in_subdirectory() -> Result {
-  let dir = TempDir::new()?;
+fn file_in_subdirectory() {
+  let dir = TempDir::new().unwrap();
 
   dir.child("foo/bar").touch().unwrap();
 
-  Command::cargo_bin("filepack")?
+  Command::cargo_bin("filepack")
+    .unwrap()
     .args(["create", "."])
     .current_dir(&dir)
     .assert()
@@ -62,13 +63,12 @@ fn file_in_subdirectory() -> Result {
     r#"{"files":{"foo/bar":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"}}"#,
   );
 
-  Command::cargo_bin("filepack")?
+  Command::cargo_bin("filepack")
+    .unwrap()
     .args(["verify", "."])
     .current_dir(&dir)
     .assert()
     .success();
-
-  Ok(())
 }
 
 // disable test on macos, since it does not allow non-unicode filenames
@@ -77,7 +77,7 @@ fn file_in_subdirectory() -> Result {
 fn non_unicode_path_error() -> Result {
   use std::path::PathBuf;
 
-  let dir = TempDir::new()?;
+  let dir = TempDir::new().unwrap();
 
   let path: PathBuf;
 
@@ -103,6 +103,23 @@ fn non_unicode_path_error() -> Result {
     .assert()
     .stderr(format!("error: path `.{SEPARATOR}�` not valid unicode\n"))
     .failure();
+}
 
-  Ok(())
+#[test]
+fn symlink_error() {
+  let dir = TempDir::new().unwrap();
+
+  #[cfg(unix)]
+  std::os::unix::fs::symlink("foo", dir.path().join("bar")).unwrap();
+
+  #[cfg(windows)]
+  std::os::windows::fs::symlink_file("foo", dir.path().join("bar")).unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["create", "."])
+    .current_dir(&dir)
+    .assert()
+    .stderr(format!("error: symlink at `.{SEPARATOR}bar`\n"))
+    .failure();
 }

@@ -5,10 +5,7 @@ use {
     fixture::{FileTouch, FileWriteStr, PathChild},
     TempDir,
   },
-  std::error::Error,
 };
-
-type Result = std::result::Result<(), Box<dyn Error>>;
 
 const SEPARATOR: char = std::path::MAIN_SEPARATOR;
 

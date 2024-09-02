@@ -1,29 +1,33 @@
 use super::*;
 
 #[test]
-fn no_files() -> Result {
-  let dir = TempDir::new()?;
+fn no_files() {
+  let dir = TempDir::new().unwrap();
 
-  dir.child("filepack.json").write_str(r#"{"files":{}}"#)?;
+  dir
+    .child("filepack.json")
+    .write_str(r#"{"files":{}}"#)
+    .unwrap();
 
-  Command::cargo_bin("filepack")?
+  Command::cargo_bin("filepack")
+    .unwrap()
     .args(["verify", "."])
     .current_dir(&dir)
     .assert()
     .success();
-
-  Ok(())
 }
 
 #[test]
-fn extra_fields_are_not_allowed() -> Result {
-  let dir = TempDir::new()?;
+fn extra_fields_are_not_allowed() {
+  let dir = TempDir::new().unwrap();
 
   dir
     .child("filepack.json")
-    .write_str(r#"{"files":{},"foo":"bar"}"#)?;
+    .write_str(r#"{"files":{},"foo":"bar"}"#)
+    .unwrap();
 
-  Command::cargo_bin("filepack")?
+  Command::cargo_bin("filepack")
+    .unwrap()
     .args(["verify", "."])
     .current_dir(&dir)
     .assert()
@@ -34,19 +38,21 @@ because:
 - unknown field `foo`, expected `files` at line 1 column 17\n"
     ))
     .failure();
-
-  Ok(())
 }
 
 #[test]
-fn extraneous_file() -> Result {
-  let dir = TempDir::new()?;
+fn extraneous_file() {
+  let dir = TempDir::new().unwrap();
 
-  dir.child("filepack.json").write_str(r#"{"files":{}}"#)?;
+  dir
+    .child("filepack.json")
+    .write_str(r#"{"files":{}}"#)
+    .unwrap();
 
   dir.child("foo").touch().unwrap();
 
-  Command::cargo_bin("filepack")?
+  Command::cargo_bin("filepack")
+    .unwrap()
     .args(["verify", "."])
     .current_dir(&dir)
     .assert()
@@ -54,17 +60,16 @@ fn extraneous_file() -> Result {
       "error: extraneous file not in filepack at `.{SEPARATOR}foo`\n"
     ))
     .failure();
-
-  Ok(())
 }
 
 #[test]
-fn hash_mismatch() -> Result {
-  let dir = TempDir::new()?;
+fn hash_mismatch() {
+  let dir = TempDir::new().unwrap();
 
   dir.child("foo").touch().unwrap();
 
-  Command::cargo_bin("filepack")?
+  Command::cargo_bin("filepack")
+    .unwrap()
     .args(["create", "."])
     .current_dir(&dir)
     .assert()
@@ -72,12 +77,10 @@ fn hash_mismatch() -> Result {
 
   dir.child("foo").write_str("bar").unwrap();
 
-  Command::cargo_bin("filepack")?
+  Command::cargo_bin("filepack").unwrap()
     .args(["verify", "."])
     .current_dir(&dir)
     .assert()
     .stderr("error: hash mismatch for `foo`, expected af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262 but got f2e897eed7d206cd855d441598fa521abc75aa96953e97c030c9612c30c1293d\n")
     .failure();
-
-  Ok(())
 }
