@@ -25,6 +25,7 @@ pub(crate) enum Error {
   Internal { message: String },
   #[snafu(display("I/O error at `{path}`"))]
   Io {
+    backtrace: Option<Backtrace>,
     path: Utf8PathBuf,
     source: io::Error,
   },

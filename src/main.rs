@@ -6,7 +6,7 @@ use {
   serde::{Deserialize, Deserializer, Serialize, Serializer},
   snafu::{ErrorCompat, OptionExt, ResultExt, Snafu},
   std::{
-    backtrace::BacktraceStatus,
+    backtrace::{Backtrace, BacktraceStatus},
     collections::HashMap,
     fmt::{self, Display, Formatter},
     fs::{self, File},

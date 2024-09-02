@@ -5,9 +5,11 @@ use {
     fixture::{FileTouch, FileWriteStr, PathChild},
     TempDir,
   },
+  predicates::prelude::predicate,
 };
 
 const SEPARATOR: char = std::path::MAIN_SEPARATOR;
 
 mod create;
+mod misc;
 mod verify;
