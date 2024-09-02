@@ -16,6 +16,29 @@ fn no_files() -> Result {
 }
 
 #[test]
+fn extra_fields_are_disallowed() -> Result {
+  let dir = TempDir::new()?;
+
+  dir
+    .child("filepack.json")
+    .write_str(r#"{"files":{},"foo":"bar"}"#)?;
+
+  Command::cargo_bin("filepack")?
+    .args(["verify", "."])
+    .current_dir(&dir)
+    .assert()
+    .stderr(format!(
+      "error: failed to deserialize filepack at `.{SEPARATOR}filepack.json`
+
+because:
+- unknown field `foo`, expected `files` at line 1 column 17\n"
+    ))
+    .failure();
+
+  Ok(())
+}
+
+#[test]
 fn extraneous_file() -> Result {
   let dir = TempDir::new()?;
 
