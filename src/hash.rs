@@ -58,7 +58,6 @@ mod tests {
       json,
       "\"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262\""
     );
-    let output = serde_json::from_str::<Hash>(&json).unwrap();
-    assert_eq!(output, input);
+    assert_eq!(serde_json::from_str::<Hash>(&json).unwrap(), input);
   }
 }
