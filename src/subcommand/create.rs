@@ -26,10 +26,7 @@ pub(crate) fn run(root: &Utf8Path) -> Result {
 
     let relative = path.strip_prefix(root).unwrap();
 
-    let relative = relative
-      .as_str()
-      .parse::<RelativePath>()
-      .context(error::Path { path: relative })?;
+    let relative = RelativePath::try_from(relative).context(error::Path { path: relative })?;
 
     relative.check_portability().context(error::PathLint {
       path: relative.clone(),

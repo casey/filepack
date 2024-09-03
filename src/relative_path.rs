@@ -167,6 +167,30 @@ impl PartialEq<&str> for RelativePath {
   }
 }
 
+impl TryFrom<&Utf8Path> for RelativePath {
+  type Error = Error;
+
+  fn try_from(path: &Utf8Path) -> Result<Self, Self::Error> {
+    let mut s = String::new();
+
+    for (i, component) in path.components().enumerate() {
+      let Utf8Component::Normal(component) = component else {
+        return Err(Error::Component {
+          component: component.to_string(),
+        });
+      };
+
+      if i > 0 {
+        s.push('/');
+      }
+
+      s.push_str(component);
+    }
+
+    s.parse()
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
