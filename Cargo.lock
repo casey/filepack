@@ -273,7 +273,7 @@ checksum = "e8c02a5121d4ea3eb16a80748c74f5549a5665e4c21333c6098f283870fbdea6"
 
 [[package]]
 name = "filepack"
-version = "0.0.0"
+version = "0.0.1"
 dependencies = [
  "assert_cmd",
  "assert_fs",
@@ -604,6 +604,13 @@ name = "unicode-ident"
 version = "1.0.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3354b9ac3fae1ff6755cb6db53683adb661634f67557942dea4facebec0fee4b"
+
+[[package]]
+name = "update-contributors"
+version = "0.0.0"
+dependencies = [
+ "regex",
+]
 
 [[package]]
 name = "utf8parse"

@@ -1,6 +1,6 @@
 [package]
 name = "filepack"
-version = "0.0.0"
+version = "0.0.1"
 authors = ["Casey Rodarmor <casey@rodarmor.com>"]
 autotests = false
 description = "🗄️ file verification utility"
@@ -29,6 +29,9 @@ needless_pass_by_value = "allow"
 pedantic = { level = "deny", priority = -1 }
 result-large-err = "allow"
 wildcard_imports = "allow"
+
+[workspace]
+members = [".", "crates/*"]
 
 [[test]]
 name = "integration"
