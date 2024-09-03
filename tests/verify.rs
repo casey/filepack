@@ -168,6 +168,8 @@ fn non_unicode_path_error() {
     path = OsString::from_wide(&[0xd800]).into();
   };
 
+  dir.child(path).touch().unwrap();
+
   dir
     .child("filepack.json")
     .write_str(r#"{"files":{}}"#)
