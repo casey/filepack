@@ -49,6 +49,7 @@ pub(crate) fn run(root: &Utf8Path) -> Result {
   }
 
   if !dirs.is_empty() {
+    dirs.sort();
     return Err(Error::EmptyDirectory {
       paths: dirs
         .into_iter()

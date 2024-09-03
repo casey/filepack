@@ -153,7 +153,7 @@ fn multiple_empty_directory_error() {
     .args(["create", "."])
     .current_dir(&dir)
     .assert()
-    .stderr("error: empty directories `foo` and `bar`\n")
+    .stderr("error: empty directories `bar` and `foo`\n")
     .failure();
 }
 

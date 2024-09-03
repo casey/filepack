@@ -97,7 +97,7 @@ fn multiple_empty_directories() {
     .args(["verify", "."])
     .current_dir(&dir)
     .assert()
-    .stderr("error: empty directories `foo` and `bar`\n")
+    .stderr("error: empty directories `bar` and `foo`\n")
     .failure();
 }
 
