@@ -41,7 +41,7 @@ because:
 }
 
 #[test]
-fn extraneous_file() {
+fn extraneous_file_error() {
   let dir = TempDir::new().unwrap();
 
   dir
@@ -57,6 +57,67 @@ fn extraneous_file() {
     .current_dir(&dir)
     .assert()
     .stderr("error: extraneous file not in manifest at `foo`\n")
+    .failure();
+}
+
+#[test]
+fn empty_directory_error() {
+  let dir = TempDir::new().unwrap();
+
+  dir
+    .child("filepack.json")
+    .write_str(r#"{"files":{}}"#)
+    .unwrap();
+
+  dir.child("foo").create_dir_all().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["verify", "."])
+    .current_dir(&dir)
+    .assert()
+    .stderr("error: empty directory `foo`\n")
+    .failure();
+}
+
+#[test]
+fn multiple_empty_directories() {
+  let dir = TempDir::new().unwrap();
+
+  dir
+    .child("filepack.json")
+    .write_str(r#"{"files":{}}"#)
+    .unwrap();
+
+  dir.child("foo").create_dir_all().unwrap();
+  dir.child("bar").create_dir_all().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["verify", "."])
+    .current_dir(&dir)
+    .assert()
+    .stderr("error: empty directories `foo` and `bar`\n")
+    .failure();
+}
+
+#[test]
+fn only_leaf_empty_directory_is_reported() {
+  let dir = TempDir::new().unwrap();
+
+  dir
+    .child("filepack.json")
+    .write_str(r#"{"files":{}}"#)
+    .unwrap();
+
+  dir.child("foo/bar").create_dir_all().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["verify", "."])
+    .current_dir(&dir)
+    .assert()
+    .stderr("error: empty directory `foo/bar`\n")
     .failure();
 }
 
