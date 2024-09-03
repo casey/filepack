@@ -6,9 +6,6 @@ use {
   },
 };
 
-mod create;
-mod verify;
-
 #[derive(Parser)]
 #[command(
   version,
@@ -18,16 +15,15 @@ mod verify;
     .literal(AnsiColor::Blue.on_default() | Effects::BOLD)
     .placeholder(AnsiColor::Cyan.on_default()))
 ]
-pub(crate) enum Subcommand {
-  Create { root: Utf8PathBuf },
-  Verify { root: Utf8PathBuf },
+pub(crate) struct Arguments {
+  #[command(flatten)]
+  options: Options,
+  #[command(subcommand)]
+  pub(crate) subcommand: Subcommand,
 }
 
-impl Subcommand {
-  pub(crate) fn run(self, options: Options) -> Result {
-    match self {
-      Self::Create { root } => create::run(options, &root),
-      Self::Verify { root } => verify::run(options, &root),
-    }
+impl Arguments {
+  pub(crate) fn run(self) -> Result {
+    self.subcommand.run(self.options)
   }
 }

@@ -1,6 +1,6 @@
 use super::*;
 
-pub(crate) fn run(root: &Utf8Path) -> Result {
+pub(crate) fn run(options: Options, root: &Utf8Path) -> Result {
   let mut files = HashMap::new();
 
   let mut dirs = Vec::new();
@@ -31,11 +31,14 @@ pub(crate) fn run(root: &Utf8Path) -> Result {
       return Err(error::Symlink { path }.build());
     }
 
-    let file = File::open(path).context(error::Io { path })?;
-
     let mut hasher = Hasher::new();
 
-    hasher.update_reader(file).context(error::Io { path })?;
+    if options.mmap {
+      hasher.update_mmap(path).unwrap();
+    } else {
+      let file = File::open(root.join(path)).context(error::Io { path })?;
+      hasher.update_reader(file).context(error::Io { path })?;
+    }
 
     let relative = path.strip_prefix(root).unwrap();
 

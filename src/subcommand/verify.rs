@@ -1,6 +1,6 @@
 use super::*;
 
-pub(crate) fn run(root: &Utf8Path) -> Result {
+pub(crate) fn run(options: Options, root: &Utf8Path) -> Result {
   let source = root.join(Manifest::FILENAME);
 
   let json = fs::read_to_string(&source).context(error::Io {
@@ -12,11 +12,14 @@ pub(crate) fn run(root: &Utf8Path) -> Result {
   })?;
 
   for (path, &expected) in &manifest.files {
-    let file = File::open(root.join(path)).context(error::Io { path })?;
-
     let mut hasher = Hasher::new();
 
-    hasher.update_reader(file).context(error::Io { path })?;
+    if options.mmap {
+      hasher.update_mmap(path).unwrap();
+    } else {
+      let file = File::open(root.join(path)).context(error::Io { path })?;
+      hasher.update_reader(file).context(error::Io { path })?;
+    }
 
     let actual = Hash::from(hasher.finalize());
 
