@@ -7,8 +7,9 @@ pub(crate) fn run(root: &Utf8Path) -> Result {
     path: Manifest::FILENAME,
   })?;
 
-  let manifest =
-    serde_json::from_str::<Manifest>(&json).context(error::Deserialize { path: &source })?;
+  let manifest = serde_json::from_str::<Manifest>(&json).context(error::Deserialize {
+    path: Manifest::FILENAME,
+  })?;
 
   for (path, &expected) in &manifest.files {
     let file = File::open(root.join(path)).context(error::Io { path })?;

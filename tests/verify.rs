@@ -31,12 +31,12 @@ fn extra_fields_are_not_allowed() {
     .args(["verify", "."])
     .current_dir(&dir)
     .assert()
-    .stderr(format!(
-      "error: failed to deserialize manifest at `.{SEPARATOR}filepack.json`
+    .stderr(
+      "error: failed to deserialize manifest at `filepack.json`
 
 because:
-- unknown field `foo`, expected `files` at line 1 column 17\n"
-    ))
+- unknown field `foo`, expected `files` at line 1 column 17\n",
+    )
     .failure();
 }
 
