@@ -31,6 +31,10 @@ pub(crate) fn run(root: &Utf8Path) -> Result {
       .parse::<RelativePath>()
       .context(error::Path { path: relative })?;
 
+    relative.check_portability().context(error::PathLint {
+      path: relative.clone(),
+    })?;
+
     files.insert(relative, hasher.finalize().into());
   }
 

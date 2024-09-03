@@ -2,37 +2,35 @@ use super::*;
 
 // todo:
 // - distinguish between illegal and non portable errors
-// - error on `X:` prefix
 
-#[derive(Debug, PartialEq, Snafu)]
+#[derive(Debug, PartialEq)]
 pub(crate) enum Error {
-  #[snafu(display("double slash"))]
-  DoubleSlash,
-  #[snafu(display("illegal character `{character}`"))]
   Character { character: char },
-  #[snafu(display("illegal path component `{}`", component))]
   Component { component: String },
-  #[snafu(display("length {length} path component"))]
-  ComponentLength { length: usize },
-  #[snafu(display("empty path"))]
+  DoubleSlash,
   Empty,
-  #[snafu(display("leading slash"))]
   LeadingSlash,
-  #[snafu(display("leading space"))]
-  LeadingSpace,
-  #[snafu(display("non-portable name `{name}`"))]
-  Name { name: String },
-  #[snafu(display("trailing period"))]
-  TrailingPeriod,
-  #[snafu(display("trailing slash"))]
   TrailingSlash,
-  #[snafu(display("trailing space"))]
-  TrailingSpace,
-  #[snafu(display("Windows disk prefix `{letter}:`"))]
   WindowsDiskPrefix { letter: char },
 }
 
-#[derive(Debug, Eq, Hash, PartialEq, Serialize)]
+impl Display for Error {
+  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    match self {
+      Error::Character { character } => write!(f, "illegal character `{character}`"),
+      Error::Component { component } => write!(f, "illegal path component `{component}`"),
+      Error::DoubleSlash => write!(f, "double slash"),
+      Error::Empty => write!(f, "empty path"),
+      Error::LeadingSlash => write!(f, "leading slash"),
+      Error::TrailingSlash => write!(f, "trailing slash"),
+      Error::WindowsDiskPrefix { letter } => write!(f, "Windows disk prefix `{letter}:`"),
+    }
+  }
+}
+
+impl std::error::Error for Error {}
+
+#[derive(Clone, Debug, Eq, Hash, PartialEq, Serialize)]
 pub(crate) struct RelativePath(String);
 
 impl RelativePath {
@@ -45,7 +43,7 @@ impl RelativePath {
     "lpt2", "lpt3", "lpt4", "lpt5", "lpt6", "lpt7", "lpt8", "lpt9", "nul", "prn",
   ];
 
-  fn check_portability(&self) -> Result<(), Error> {
+  pub(crate) fn check_portability(&self) -> Result<(), Lint> {
     for component in Utf8Path::new(&self.0).components() {
       let Utf8Component::Normal(component) = component else {
         unreachable!(
@@ -55,11 +53,11 @@ impl RelativePath {
 
       for character in component.chars() {
         if Self::NON_PORTABLE_CHARACTERS.contains(&character) {
-          return Err(Error::Character { character });
+          return Err(Lint::Character { character });
         }
 
         if let 0..32 = character as u32 {
-          return Err(Error::Character { character });
+          return Err(Lint::Character { character });
         }
       }
 
@@ -67,14 +65,14 @@ impl RelativePath {
         let lowercase = component.to_lowercase();
 
         if lowercase == name {
-          return Err(Error::Name {
+          return Err(Lint::Name {
             name: component.into(),
           });
         }
 
         if lowercase.starts_with(name) {
           if lowercase.chars().nth(name.chars().count()) == Some('.') {
-            return Err(Error::Name {
+            return Err(Lint::Name {
               name: component.into(),
             });
           }
@@ -82,19 +80,19 @@ impl RelativePath {
       }
 
       if component.starts_with(' ') {
-        return Err(Error::LeadingSpace);
+        return Err(Lint::LeadingSpace);
       }
 
       if component.ends_with(' ') {
-        return Err(Error::TrailingSpace);
+        return Err(Lint::TrailingSpace);
       }
 
       if component.ends_with('.') {
-        return Err(Error::TrailingPeriod);
+        return Err(Lint::TrailingPeriod);
       }
 
       if component.len() > 255 {
-        return Err(Error::ComponentLength {
+        return Err(Lint::ComponentLength {
           length: component.len(),
         });
       }
@@ -129,6 +127,12 @@ impl<'de> Deserialize<'de> for RelativePath {
       s.parse::<Self>()
         .map_err(|err| D::Error::invalid_value(Unexpected::Str(&s), &err.to_string().as_str()))?,
     )
+  }
+}
+
+impl Display for RelativePath {
+  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    self.0.fmt(f)
   }
 }
 
@@ -248,7 +252,7 @@ mod tests {
   #[test]
   fn portability_errors() {
     #[track_caller]
-    fn case(path: &str, expected: Error) {
+    fn case(path: &str, expected: Lint) {
       assert_eq!(
         path
           .parse::<RelativePath>()
@@ -261,56 +265,56 @@ mod tests {
 
     for i in 0..32 {
       let character = char::from_u32(i).unwrap();
-      case(&character.to_string(), Error::Character { character });
+      case(&character.to_string(), Lint::Character { character });
     }
 
-    case("*", Error::Character { character: '*' });
-    case(":", Error::Character { character: ':' });
-    case("<", Error::Character { character: '<' });
-    case(">", Error::Character { character: '>' });
-    case("?", Error::Character { character: '?' });
-    case("\"", Error::Character { character: '"' });
-    case("|", Error::Character { character: '|' });
+    case("*", Lint::Character { character: '*' });
+    case(":", Lint::Character { character: ':' });
+    case("<", Lint::Character { character: '<' });
+    case(">", Lint::Character { character: '>' });
+    case("?", Lint::Character { character: '?' });
+    case("\"", Lint::Character { character: '"' });
+    case("|", Lint::Character { character: '|' });
 
-    case(&"a".repeat(256), Error::ComponentLength { length: 256 });
+    case(&"a".repeat(256), Lint::ComponentLength { length: 256 });
 
-    case("foo/ bar", Error::LeadingSpace);
+    case("foo/ bar", Lint::LeadingSpace);
 
-    case("CON", Error::Name { name: "CON".into() });
-    case("con", Error::Name { name: "con".into() });
+    case("CON", Lint::Name { name: "CON".into() });
+    case("con", Lint::Name { name: "con".into() });
     case(
       "CON./foo",
-      Error::Name {
+      Lint::Name {
         name: "CON.".into(),
       },
     );
     case(
       "CON.txt",
-      Error::Name {
+      Lint::Name {
         name: "CON.txt".into(),
       },
     );
     case(
       "CON.txt/foo",
-      Error::Name {
+      Lint::Name {
         name: "CON.txt".into(),
       },
     );
     case(
       "foo/CON.",
-      Error::Name {
+      Lint::Name {
         name: "CON.".into(),
       },
     );
     case(
       "foo/CON.txt",
-      Error::Name {
+      Lint::Name {
         name: "CON.txt".into(),
       },
     );
 
-    case("foo./bar", Error::TrailingPeriod);
+    case("foo./bar", Lint::TrailingPeriod);
 
-    case("foo /bar", Error::TrailingSpace);
+    case("foo /bar", Lint::TrailingSpace);
   }
 }

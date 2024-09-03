@@ -26,45 +26,22 @@ pub(crate) enum Error {
     backtrace: Option<Backtrace>,
     path: Utf8PathBuf,
   },
-  #[snafu(display(
-    "internal error, this may indicate a bug in filepack: `{message}` \
-     consider filing an issue: https://github.com/casey/filepack/issues/new"
-  ))]
-  Internal {
-    backtrace: Option<Backtrace>,
-    message: String,
-  },
   #[snafu(display("I/O error at `{path}`"))]
   Io {
     backtrace: Option<Backtrace>,
     path: Utf8PathBuf,
     source: io::Error,
   },
-  #[snafu(display("path `{path}` contains backslash"))]
-  PathBackslash {
+  #[snafu(display("non-portable path `{path}`"))]
+  PathLint {
     backtrace: Option<Backtrace>,
-    path: Utf8PathBuf,
+    path: RelativePath,
+    source: Lint,
   },
   #[snafu(display("invalid path `{path}`"))]
   Path {
     path: Utf8PathBuf,
     source: relative_path::Error,
-  },
-  #[snafu(display("path `{path}` contains invalid component {component}"))]
-  PathComponent {
-    backtrace: Option<Backtrace>,
-    component: String,
-    path: Utf8PathBuf,
-  },
-  #[snafu(display("path `{path}` contains double slash"))]
-  PathDoubleSlash {
-    backtrace: Option<Backtrace>,
-    path: Utf8PathBuf,
-  },
-  #[snafu(display("path `{path}` has trailing slash"))]
-  PathTrailingSlash {
-    backtrace: Option<Backtrace>,
-    path: Utf8PathBuf,
   },
   #[snafu(display("path `{}` not valid unicode", path.display()))]
   PathUnicode {

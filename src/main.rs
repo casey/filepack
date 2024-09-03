@@ -1,6 +1,6 @@
 use {
   self::{
-    error::Error, hash::Hash, manifest::Manifest, relative_path::RelativePath,
+    error::Error, hash::Hash, lint::Lint, manifest::Manifest, relative_path::RelativePath,
     subcommand::Subcommand,
   },
   blake3::Hasher,
@@ -23,6 +23,7 @@ use {
 
 mod error;
 mod hash;
+mod lint;
 mod manifest;
 mod relative_path;
 mod subcommand;
