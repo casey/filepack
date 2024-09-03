@@ -3,16 +3,29 @@ use super::*;
 pub(crate) fn run(root: &Utf8Path) -> Result {
   let mut files = HashMap::new();
 
+  let mut dirs = Vec::new();
+
   for entry in WalkDir::new(root) {
     let entry = entry?;
-
-    if entry.file_type().is_dir() {
-      continue;
-    }
 
     let path = entry.path();
 
     let path = Utf8Path::from_path(path).context(error::PathUnicode { path })?;
+
+    while let Some(dir) = dirs.last() {
+      if path.starts_with(dir) {
+        dirs.pop();
+      } else {
+        break;
+      }
+    }
+
+    if entry.file_type().is_dir() {
+      if path != root {
+        dirs.push(path.to_owned());
+      }
+      continue;
+    }
 
     if entry.file_type().is_symlink() {
       return Err(error::Symlink { path }.build());
@@ -33,6 +46,15 @@ pub(crate) fn run(root: &Utf8Path) -> Result {
     })?;
 
     files.insert(relative, hasher.finalize().into());
+  }
+
+  if !dirs.is_empty() {
+    return Err(Error::EmptyDirectory {
+      paths: dirs
+        .into_iter()
+        .map(|dir| dir.strip_prefix(root).unwrap().to_owned())
+        .collect(),
+    });
   }
 
   let destination = root.join(Manifest::FILENAME);

@@ -2,7 +2,7 @@ use {
   assert_cmd::Command,
   assert_fs::{
     assert::PathAssert,
-    fixture::{FileTouch, FileWriteStr, PathChild},
+    fixture::{FileTouch, FileWriteStr, PathChild, PathCreateDir},
     TempDir,
   },
   predicates::prelude::predicate,

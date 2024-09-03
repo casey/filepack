@@ -125,6 +125,53 @@ fn symlink_error() {
     .failure();
 }
 
+#[test]
+fn empty_directory_error() {
+  let dir = TempDir::new().unwrap();
+
+  dir.child("foo").create_dir_all().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["create", "."])
+    .current_dir(&dir)
+    .assert()
+    .stderr("error: empty directory `foo`\n")
+    .failure();
+}
+
+#[test]
+fn multiple_empty_directory_error() {
+  let dir = TempDir::new().unwrap();
+
+  dir.child("foo").create_dir_all().unwrap();
+
+  dir.child("bar").create_dir_all().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["create", "."])
+    .current_dir(&dir)
+    .assert()
+    .stderr("error: empty directories `foo` and `bar`\n")
+    .failure();
+}
+
+#[test]
+fn only_leaf_empty_directory_is_reported() {
+  let dir = TempDir::new().unwrap();
+
+  dir.child("foo/bar").create_dir_all().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["create", "."])
+    .current_dir(&dir)
+    .assert()
+    .stderr("error: empty directory `foo/bar`\n")
+    .failure();
+}
+
 #[cfg(not(windows))]
 #[test]
 fn backslash_error() {

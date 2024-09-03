@@ -1,7 +1,7 @@
 use {
   self::{
-    error::Error, hash::Hash, lint::Lint, manifest::Manifest, relative_path::RelativePath,
-    subcommand::Subcommand,
+    error::Error, hash::Hash, lint::Lint, list::List, manifest::Manifest,
+    relative_path::RelativePath, subcommand::Subcommand,
   },
   blake3::Hasher,
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},
@@ -24,6 +24,7 @@ use {
 mod error;
 mod hash;
 mod lint;
+mod list;
 mod manifest;
 mod relative_path;
 mod subcommand;

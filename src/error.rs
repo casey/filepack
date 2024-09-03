@@ -9,6 +9,14 @@ pub(crate) enum Error {
     path: Utf8PathBuf,
     source: serde_json::Error,
   },
+  #[snafu(
+    display(
+      "empty director{} {}",
+      if paths.len() == 1 { "y" } else { "ies" },
+      List::and_ticked(paths),
+    )
+  )]
+  EmptyDirectory { paths: Vec<Utf8PathBuf> },
   #[snafu(display("extraneous file not in manifest at `{path}`"))]
   ExtraneousFile {
     backtrace: Option<Backtrace>,
