@@ -12,6 +12,7 @@ mod verify;
 #[derive(Parser)]
 #[command(
   version,
+  about = "🗄️ file verification utility - https://github.com/casey/filepack",
   styles = Styles::styled()
     .header(AnsiColor::Green.on_default() | Effects::BOLD)
     .usage(AnsiColor::Green.on_default() | Effects::BOLD)
@@ -19,7 +20,9 @@ mod verify;
     .placeholder(AnsiColor::Cyan.on_default()))
 ]
 pub(crate) enum Subcommand {
+  #[command(about = "create manifest")]
   Create { root: Utf8PathBuf },
+  #[command(about = "verify directory against manifest")]
   Verify { root: Utf8PathBuf },
 }
 
