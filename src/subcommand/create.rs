@@ -1,78 +1,86 @@
 use super::*;
 
-pub(crate) fn run(options: Options, root: &Utf8Path) -> Result {
-  let mut files = HashMap::new();
+#[derive(Parser)]
+pub(crate) struct Create {
+  #[arg(help = "Create manifest for files in <ROOT> directory")]
+  root: Utf8PathBuf,
+}
 
-  let mut dirs = Vec::new();
+impl Create {
+  pub(crate) fn run(self, options: Options) -> Result {
+    let mut files = HashMap::new();
 
-  for entry in WalkDir::new(root) {
-    let entry = entry?;
+    let mut dirs = Vec::new();
 
-    let path = entry.path();
+    for entry in WalkDir::new(&self.root) {
+      let entry = entry?;
 
-    let path = Utf8Path::from_path(path).context(error::PathUnicode { path })?;
+      let path = entry.path();
 
-    while let Some(dir) = dirs.last() {
-      if path.starts_with(dir) {
-        dirs.pop();
-      } else {
-        break;
+      let path = Utf8Path::from_path(path).context(error::PathUnicode { path })?;
+
+      while let Some(dir) = dirs.last() {
+        if path.starts_with(dir) {
+          dirs.pop();
+        } else {
+          break;
+        }
       }
+
+      if entry.file_type().is_dir() {
+        if path != self.root {
+          dirs.push(path.to_owned());
+        }
+        continue;
+      }
+
+      if entry.file_type().is_symlink() {
+        return Err(error::Symlink { path }.build());
+      }
+
+      let hash = options.hash_file(path)?;
+
+      let relative = path.strip_prefix(&self.root).unwrap();
+
+      let relative = RelativePath::try_from(relative).context(error::Path { path: relative })?;
+
+      relative.check_portability().context(error::PathLint {
+        path: relative.clone(),
+      })?;
+
+      files.insert(relative, hash);
     }
 
-    if entry.file_type().is_dir() {
-      if path != root {
-        dirs.push(path.to_owned());
-      }
-      continue;
+    if !dirs.is_empty() {
+      dirs.sort();
+      return Err(Error::EmptyDirectory {
+        paths: dirs
+          .into_iter()
+          .map(|dir| dir.strip_prefix(&self.root).unwrap().to_owned())
+          .collect(),
+      });
     }
 
-    if entry.file_type().is_symlink() {
-      return Err(error::Symlink { path }.build());
+    let destination = self.root.join(Manifest::FILENAME);
+
+    if destination
+      .try_exists()
+      .context(error::Io { path: &destination })?
+    {
+      return Err(
+        error::ManifestAlreadyExists {
+          path: Manifest::FILENAME,
+        }
+        .build(),
+      );
     }
 
-    let hash = options.hash_file(path)?;
+    let manifest = Manifest { files };
 
-    let relative = path.strip_prefix(root).unwrap();
+    let json = serde_json::to_string(&manifest).unwrap();
 
-    let relative = RelativePath::try_from(relative).context(error::Path { path: relative })?;
+    fs::write(&destination, &json).context(error::Io { path: destination })?;
 
-    relative.check_portability().context(error::PathLint {
-      path: relative.clone(),
-    })?;
-
-    files.insert(relative, hash);
+    Ok(())
   }
-
-  if !dirs.is_empty() {
-    dirs.sort();
-    return Err(Error::EmptyDirectory {
-      paths: dirs
-        .into_iter()
-        .map(|dir| dir.strip_prefix(root).unwrap().to_owned())
-        .collect(),
-    });
-  }
-
-  let destination = root.join(Manifest::FILENAME);
-
-  if destination
-    .try_exists()
-    .context(error::Io { path: &destination })?
-  {
-    return Err(
-      error::ManifestAlreadyExists {
-        path: Manifest::FILENAME,
-      }
-      .build(),
-    );
-  }
-
-  let manifest = Manifest { files };
-
-  let json = serde_json::to_string(&manifest).unwrap();
-
-  fs::write(&destination, &json).context(error::Io { path: destination })?;
-
-  Ok(())
 }
