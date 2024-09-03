@@ -18,6 +18,48 @@ fn no_files() {
 }
 
 #[test]
+fn single_file() {
+  let dir = TempDir::new().unwrap();
+
+  dir.child("foo").touch().unwrap();
+
+  dir
+    .child("filepack.json")
+    .write_str(
+      r#"{"files":{"foo":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"}}"#,
+    )
+    .unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["verify", "."])
+    .current_dir(&dir)
+    .assert()
+    .success();
+}
+
+#[test]
+fn single_file_with_mmap() {
+  let dir = TempDir::new().unwrap();
+
+  dir.child("foo").touch().unwrap();
+
+  dir
+    .child("filepack.json")
+    .write_str(
+      r#"{"files":{"foo":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"}}"#,
+    )
+    .unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["--mmap", "verify", "."])
+    .current_dir(&dir)
+    .assert()
+    .success();
+}
+
+#[test]
 fn extra_fields_are_not_allowed() {
   let dir = TempDir::new().unwrap();
 

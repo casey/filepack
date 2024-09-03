@@ -86,6 +86,12 @@ impl AsRef<Utf8Path> for RelativePath {
   }
 }
 
+impl AsRef<Path> for RelativePath {
+  fn as_ref(&self) -> &Path {
+    self.0.as_ref()
+  }
+}
+
 impl<'de> Deserialize<'de> for RelativePath {
   fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
   where
