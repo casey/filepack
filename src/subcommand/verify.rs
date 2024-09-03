@@ -46,12 +46,8 @@ pub(crate) fn run(root: &Utf8Path) -> Result {
 
     let path = Utf8Path::from_path(path).context(error::PathUnicode { path })?;
 
-    let relative = path
-      .strip_prefix(root)
-      .unwrap()
-      .as_str()
-      .parse::<RelativePath>()
-      .context(error::Path { path })?;
+    let relative =
+      RelativePath::try_from(path.strip_prefix(root).unwrap()).context(error::Path { path })?;
 
     if relative == Manifest::FILENAME {
       continue;
