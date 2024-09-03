@@ -168,7 +168,7 @@ fn only_leaf_empty_directory_is_reported() {
     .args(["create", "."])
     .current_dir(&dir)
     .assert()
-    .stderr("error: empty directory `foo/bar`\n")
+    .stderr(format!("error: empty directory `foo{SEPARATOR}bar`\n"))
     .failure();
 }
 
