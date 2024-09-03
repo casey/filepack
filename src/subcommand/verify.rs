@@ -3,7 +3,9 @@ use super::*;
 pub(crate) fn run(root: &Utf8Path) -> Result {
   let source = root.join(Manifest::FILENAME);
 
-  let json = fs::read_to_string(&source).context(error::Io { path: &source })?;
+  let json = fs::read_to_string(&source).context(error::Io {
+    path: Manifest::FILENAME,
+  })?;
 
   let manifest =
     serde_json::from_str::<Manifest>(&json).context(error::Deserialize { path: &source })?;

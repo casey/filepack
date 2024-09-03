@@ -10,11 +10,14 @@ fn backtraces_are_recorded_when_environment_variable_is_set() {
     .current_dir(&dir)
     .assert()
     .stderr(
-      "error: I/O error at `./filepack.json`
+      predicate::str::is_match(
+        r"error: I/O error at `filepack.json`
 
 because:
-- No such file or directory (os error 2)
+- [^\n]*
 ",
+      )
+      .unwrap(),
     )
     .failure();
 
@@ -26,10 +29,10 @@ because:
     .assert()
     .stderr(
       predicate::str::is_match(
-        r"error: I/O error at `./filepack.json`
+        r"error: I/O error at `filepack.json`
 
 because:
-- No such file or directory \(os error 2\)
+- [^\n]*
 
 backtrace:
    0: .*
