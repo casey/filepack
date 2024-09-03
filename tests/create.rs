@@ -194,6 +194,28 @@ because:
     .failure();
 }
 
+#[cfg(not(windows))]
+#[test]
+fn portability_error() {
+  let dir = TempDir::new().unwrap();
+
+  dir.child("aux").touch().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["create", "."])
+    .current_dir(&dir)
+    .assert()
+    .stderr(
+      "error: non-portable path `aux`
+
+because:
+- non-portable name `aux`
+",
+    )
+    .failure();
+}
+
 #[test]
 fn manifest_already_exists_error() {
   let dir = TempDir::new().unwrap();
