@@ -21,16 +21,16 @@ mod verify;
 ]
 pub(crate) enum Subcommand {
   #[command(about = "create manifest")]
-  Create { root: Utf8PathBuf },
+  Create(create::Create),
   #[command(about = "verify directory against manifest")]
-  Verify { root: Utf8PathBuf },
+  Verify(verify::Verify),
 }
 
 impl Subcommand {
   pub(crate) fn run(self, options: Options) -> Result {
     match self {
-      Self::Create { root } => create::run(options, &root),
-      Self::Verify { root } => verify::run(options, &root),
+      Self::Create(create) => create.run(options),
+      Self::Verify(verify) => verify.run(options),
     }
   }
 }
