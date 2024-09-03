@@ -15,7 +15,7 @@ pub(crate) fn run(options: Options, root: &Utf8Path) -> Result {
     let mut hasher = Hasher::new();
 
     if options.mmap {
-      hasher.update_mmap(path).unwrap();
+      hasher.update_mmap(path).context(error::Io { path })?;
     } else {
       let file = File::open(root.join(path)).context(error::Io { path })?;
       hasher.update_reader(file).context(error::Io { path })?;
