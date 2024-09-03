@@ -26,6 +26,7 @@ predicates = "3.1.2"
 [lints.clippy]
 all = { level = "deny", priority = -1 }
 pedantic = { level = "deny", priority = -1 }
+result-large-err = "allow"
 wildcard_imports = "allow"
 
 [[test]]

@@ -70,12 +70,10 @@ impl RelativePath {
           });
         }
 
-        if lowercase.starts_with(name) {
-          if lowercase.chars().nth(name.chars().count()) == Some('.') {
-            return Err(Lint::Name {
-              name: component.into(),
-            });
-          }
+        if lowercase.starts_with(name) && lowercase.chars().nth(name.chars().count()) == Some('.') {
+          return Err(Lint::Name {
+            name: component.into(),
+          });
         }
       }
 
@@ -123,10 +121,8 @@ impl<'de> Deserialize<'de> for RelativePath {
 
     let s = String::deserialize(deserializer)?;
 
-    Ok(
-      s.parse::<Self>()
-        .map_err(|err| D::Error::invalid_value(Unexpected::Str(&s), &err.to_string().as_str()))?,
-    )
+    s.parse::<Self>()
+      .map_err(|err| D::Error::invalid_value(Unexpected::Str(&s), &err.to_string().as_str()))
   }
 }
 

@@ -20,9 +20,9 @@ pub(crate) fn run(root: &Utf8Path) -> Result {
     if actual != expected {
       return Err(
         error::HashMismatch {
-          path,
           actual,
           expected,
+          path,
         }
         .build(),
       );
