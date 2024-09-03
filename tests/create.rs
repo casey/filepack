@@ -158,8 +158,6 @@ fn manifest_already_exists_error() {
     .args(["create", "."])
     .current_dir(&dir)
     .assert()
-    .stderr(format!(
-      "error: manifest `.{SEPARATOR}filepack.json` already exists\n"
-    ))
+    .stderr("error: manifest `filepack.json` already exists\n")
     .failure();
 }

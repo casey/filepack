@@ -41,7 +41,12 @@ pub(crate) fn run(root: &Utf8Path) -> Result {
     .try_exists()
     .context(error::Io { path: &destination })?
   {
-    return Err(error::ManifestAlreadyExists { path: destination }.build());
+    return Err(
+      error::ManifestAlreadyExists {
+        path: Manifest::FILENAME,
+      }
+      .build(),
+    );
   }
 
   let manifest = Manifest { files };
