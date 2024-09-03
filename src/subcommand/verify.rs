@@ -12,16 +12,7 @@ pub(crate) fn run(options: Options, root: &Utf8Path) -> Result {
   })?;
 
   for (path, &expected) in &manifest.files {
-    let mut hasher = Hasher::new();
-
-    if options.mmap {
-      hasher.update_mmap(path).context(error::Io { path })?;
-    } else {
-      let file = File::open(root.join(path)).context(error::Io { path })?;
-      hasher.update_reader(file).context(error::Io { path })?;
-    }
-
-    let actual = Hash::from(hasher.finalize());
+    let actual = options.hash_file(path.as_ref())?;
 
     if actual != expected {
       return Err(

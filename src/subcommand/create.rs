@@ -31,14 +31,7 @@ pub(crate) fn run(options: Options, root: &Utf8Path) -> Result {
       return Err(error::Symlink { path }.build());
     }
 
-    let mut hasher = Hasher::new();
-
-    if options.mmap {
-      hasher.update_mmap(path).context(error::Io { path })?;
-    } else {
-      let file = File::open(root.join(path)).context(error::Io { path })?;
-      hasher.update_reader(file).context(error::Io { path })?;
-    }
+    let hash = options.hash_file(&path)?;
 
     let relative = path.strip_prefix(root).unwrap();
 
@@ -48,7 +41,7 @@ pub(crate) fn run(options: Options, root: &Utf8Path) -> Result {
       path: relative.clone(),
     })?;
 
-    files.insert(relative, hasher.finalize().into());
+    files.insert(relative, hash);
   }
 
   if !dirs.is_empty() {
