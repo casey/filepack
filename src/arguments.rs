@@ -19,7 +19,7 @@ pub(crate) struct Arguments {
   #[command(flatten)]
   options: Options,
   #[command(subcommand)]
-  pub(crate) subcommand: Subcommand,
+  subcommand: Subcommand,
 }
 
 impl Arguments {
