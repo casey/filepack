@@ -1,9 +1,35 @@
 [package]
 name = "filepack"
 version = "0.0.0"
-edition = "2021"
 authors = ["Casey Rodarmor <casey@rodarmor.com>"]
-description = "🤖 Just a command runner"
+autotests = false
+description = "🗄️ file verification utility"
+edition = "2021"
 homepage = "https://github.com/casey/filepack"
 license = "CC0-1.0"
 repository = "https://github.com/casey/filepack"
+
+[dependencies]
+blake3 = { version = "1.5.4", features = ["serde"] }
+camino = { version = "1.1.9", features = ["serde1"] }
+clap = { version = "4.5.16", features = ["derive"] }
+serde = { version = "1.0.209", features = ["derive"] }
+serde_json = "1.0.127"
+snafu = "0.8.4"
+walkdir = "2.5.0"
+
+[dev-dependencies]
+assert_cmd = { version = "2.0.16", features = ["color-auto"] }
+assert_fs = { version = "1.1.2", features = ["color-auto"] }
+predicates = "3.1.2"
+
+[lints.clippy]
+all = { level = "deny", priority = -1 }
+needless_pass_by_value = "allow"
+pedantic = { level = "deny", priority = -1 }
+result-large-err = "allow"
+wildcard_imports = "allow"
+
+[[test]]
+name = "integration"
+path = "tests/lib.rs"
