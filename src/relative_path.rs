@@ -311,4 +311,18 @@ mod tests {
 
     case("foo /bar", Lint::TrailingSpace);
   }
+
+  #[test]
+  fn try_from_utf8_path() {
+    assert_eq!(
+      RelativePath::try_from(Utf8Path::new("..")).unwrap_err(),
+      Error::Component {
+        component: "..".into()
+      }
+    );
+    assert_eq!(
+      RelativePath::try_from(Utf8Path::new("foo/bar")).unwrap(),
+      "foo/bar",
+    );
+  }
 }
