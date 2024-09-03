@@ -38,3 +38,9 @@ publish:
   cargo publish
   cd ../..
   rm -rf tmp/release
+
+test-release-workflow:
+  -git tag -d test-release
+  -git push origin :test-release
+  git tag test-release
+  git push origin test-release
