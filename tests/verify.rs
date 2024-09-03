@@ -56,9 +56,7 @@ fn extraneous_file() {
     .args(["verify", "."])
     .current_dir(&dir)
     .assert()
-    .stderr(format!(
-      "error: extraneous file not in manifest at `.{SEPARATOR}foo`\n"
-    ))
+    .stderr("error: extraneous file not in manifest at `foo`\n")
     .failure();
 }
 

@@ -12,7 +12,7 @@ pub(crate) enum Error {
   #[snafu(display("extraneous file not in manifest at `{path}`"))]
   ExtraneousFile {
     backtrace: Option<Backtrace>,
-    path: Utf8PathBuf,
+    path: RelativePath,
   },
   #[snafu(display("hash mismatch for `{path}`, expected {expected} but got {actual}"))]
   HashMismatch {

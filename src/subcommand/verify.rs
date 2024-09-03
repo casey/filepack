@@ -44,16 +44,17 @@ pub(crate) fn run(root: &Utf8Path) -> Result {
       continue;
     }
 
+    let path = path.strip_prefix(root).unwrap();
+
     let path = Utf8Path::from_path(path).context(error::PathUnicode { path })?;
 
-    let relative =
-      RelativePath::try_from(path.strip_prefix(root).unwrap()).context(error::Path { path })?;
+    let path = RelativePath::try_from(path).context(error::Path { path })?;
 
-    if relative == Manifest::FILENAME {
+    if path == Manifest::FILENAME {
       continue;
     }
 
-    if !manifest.files.contains_key(&relative) {
+    if !manifest.files.contains_key(&path) {
       return Err(error::ExtraneousFile { path }.build());
     }
   }
