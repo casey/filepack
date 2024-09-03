@@ -31,7 +31,7 @@ pub(crate) fn run(options: Options, root: &Utf8Path) -> Result {
       return Err(error::Symlink { path }.build());
     }
 
-    let hash = options.hash_file(&path)?;
+    let hash = options.hash_file(path)?;
 
     let relative = path.strip_prefix(root).unwrap();
 
