@@ -44,13 +44,12 @@ pub(crate) fn run(root: &Utf8Path) -> Result {
 
     let path = Utf8Path::from_path(path).context(error::PathUnicode { path })?;
 
-    // todo: handle error
     let relative = path
       .strip_prefix(root)
       .unwrap()
       .as_str()
       .parse::<RelativePath>()
-      .unwrap();
+      .context(error::Path { path })?;
 
     if relative == Manifest::FILENAME {
       continue;
