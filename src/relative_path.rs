@@ -1,8 +1,5 @@
 use super::*;
 
-// todo:
-// - distinguish between illegal and non portable errors
-
 #[derive(Debug, PartialEq)]
 pub(crate) enum Error {
   Character { character: char },

@@ -64,7 +64,7 @@ mod tests {
   #[test]
   fn deserialize_error_format() {
     assert_eq!(
-      serde_json::from_str::<Hash>(&"\"foo\"")
+      serde_json::from_str::<Hash>("\"foo\"")
         .unwrap_err()
         .to_string(),
       r#"invalid value: string "foo", expected 64 hex digits"#,
