@@ -9,16 +9,13 @@ fn backtraces_are_recorded_when_environment_variable_is_set() {
     .args(["verify", "."])
     .current_dir(&dir)
     .assert()
-    .stderr(
-      predicate::str::is_match(
-        r"error: I/O error at `filepack.json`
+    .stderr(is_match(
+      r"error: I/O error at `filepack.json`
 
 because:
 - [^\n]*
 ",
-      )
-      .unwrap(),
-    )
+    ))
     .failure();
 
   Command::cargo_bin("filepack")
@@ -27,9 +24,8 @@ because:
     .args(["verify", "."])
     .current_dir(&dir)
     .assert()
-    .stderr(
-      predicate::str::is_match(
-        r"error: I/O error at `filepack.json`
+    .stderr(is_match(
+      r"error: I/O error at `filepack.json`
 
 because:
 - [^\n]*
@@ -37,8 +33,6 @@ because:
 backtrace:
    0: .*
 ",
-      )
-      .unwrap(),
-    )
+    ))
     .failure();
 }

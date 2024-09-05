@@ -16,7 +16,7 @@ use {
     io,
     path::{Path, PathBuf},
     process,
-    str::FromStr,
+    str::{self, FromStr},
   },
   walkdir::WalkDir,
 };
