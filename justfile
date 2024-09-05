@@ -44,3 +44,6 @@ test-release-workflow:
   -git push origin :test-release
   git tag test-release
   git push origin test-release
+
+www:
+  open www/index.html

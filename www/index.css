@@ -1,0 +1,76 @@
+:root {
+  --height-target: calc(100vh / 4);
+  --margin-horizontal: calc((100vw - var(--size) * 5) / 2);
+  --margin-vertical: calc((100vh - var(--size) * 2.5) / 2);
+  --size: min(var(--width-target), var(--height-target));
+  --width-target: calc(100vw / 6);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+a {
+  color: white;
+  text-decoration: none;
+}
+
+a:hover {
+  text-shadow: 0 0 5px #fff;
+}
+
+html {
+  background-color: black;
+  color: white;
+  font-family: sans-serif;
+  font-size: var(--size);
+  line-height: var(--size);
+  overflow: hidden;
+  text-align: center;
+}
+
+#grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  margin-bottom: var(--margin-vertical);
+  margin-left: var(--margin-horizontal);
+  margin-right: var(--margin-horizontal);
+  margin-top: var(--margin-vertical);
+}
+
+#grid > * {
+  width: var(--size);
+  height: var(--size);
+}
+
+#grid > a {
+  align-items: center;
+  display: flex;
+  font-size: calc(var(--size) / 9);
+  height: calc(var(--size) / 2);
+  justify-content: center;
+  line-height: calc(var(--size) / 9);
+}
+
+#grid > div {
+  text-shadow: 0 0 5px #fff;
+}
+
+/* filepack is an isogram */
+#f:after { content: 'F'; }
+#i:after { content: 'I'; }
+#l:after { content: 'L'; }
+#e:after { content: 'E'; }
+#p:after { content: 'P'; }
+#a:after { content: 'A'; }
+#c:after { content: 'C'; }
+#k:after { content: 'K'; }
+#f:hover:after { content: '私'; }
+#i:hover:after { content: '∅'; }
+#l:hover:after { content: '࿈'; }
+#e:hover:after { content: 'Ə'; }
+#p:hover:after { content: 'ℜ'; }
+#a:hover:after { content: '☾'; }
+#c:hover:after { content: 'ꙮ'; }
+#k:hover:after { content: '↓'; }
