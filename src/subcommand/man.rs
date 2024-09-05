@@ -4,13 +4,9 @@ use {super::*, clap::CommandFactory, clap_mangen::Man};
 pub(crate) fn run() -> Result {
   let mut man = Vec::<u8>::new();
 
-  Man::new(Arguments::command())
-    .render(&mut man)
-    .expect("writing to buffer cannot fail");
+  Man::new(Arguments::command()).render(&mut man).unwrap();
 
-  let man = String::from_utf8(man).expect("man page is UTF-8");
-
-  print!("{man}");
+  print!("{}", str::from_utf8(&man).unwrap());
 
   Ok(())
 }
