@@ -3,9 +3,11 @@ name = "filepack"
 version = "0.0.1"
 authors = ["Casey Rodarmor <casey@rodarmor.com>"]
 autotests = false
+categories = ["authentication", "command-line-utilities", "cryptography"]
 description = "🗄️ file verification utility"
 edition = "2021"
 homepage = "https://github.com/casey/filepack"
+keywords = ["checksum", "verification"]
 license = "CC0-1.0"
 repository = "https://github.com/casey/filepack"
 
