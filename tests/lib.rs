@@ -5,11 +5,19 @@ use {
     fixture::{FileTouch, FileWriteBin, FileWriteStr, PathChild, PathCreateDir},
     TempDir,
   },
-  predicates::prelude::predicate,
+  predicates::str::RegexPredicate,
 };
 
 const SEPARATOR: char = std::path::MAIN_SEPARATOR;
 
+fn is_match<S>(pattern: S) -> RegexPredicate
+where
+  S: AsRef<str>,
+{
+  predicates::prelude::predicate::str::is_match(pattern).unwrap()
+}
+
 mod create;
+mod man;
 mod misc;
 mod verify;

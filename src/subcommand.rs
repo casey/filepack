@@ -7,6 +7,7 @@ use {
 };
 
 mod create;
+mod man;
 mod verify;
 
 #[derive(Parser)]
@@ -22,6 +23,8 @@ mod verify;
 pub(crate) enum Subcommand {
   #[command(about = "create manifest")]
   Create(create::Create),
+  #[command(about = "print man page")]
+  Man,
   #[command(about = "verify directory against manifest")]
   Verify(verify::Verify),
 }
@@ -30,6 +33,7 @@ impl Subcommand {
   pub(crate) fn run(self, options: Options) -> Result {
     match self {
       Self::Create(create) => create.run(options),
+      Self::Man => man::run(),
       Self::Verify(verify) => verify.run(options),
     }
   }
