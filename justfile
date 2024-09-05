@@ -45,5 +45,5 @@ test-release-workflow:
   git tag test-release
   git push origin test-release
 
-www:
-  open www/index.html
+docs:
+  open docs/index.html
