@@ -1,0 +1,30 @@
+* {
+ margin: 0;
+ padding: 0;
+}
+
+a {
+ color: white;
+ text-decoration: none;
+}
+
+a:hover {
+ text-shadow: 0 0 100px #fff;
+}
+
+body {
+ align-items: center;
+ display: flex;
+ justify-content: center;
+ min-height: 100%;
+}
+
+html {
+ background-color: black;
+ color: white;
+ font-family: sans-serif;
+ font-size: 60vmin;
+ height: 100%;
+ text-align: center;
+ width: 100%;
+}
