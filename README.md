@@ -128,9 +128,9 @@ Lofty Ambitions
 
 `filepack` has lofty ambitions!
 
-- Define a root hash, likely just the hash of the manifest itself, so that as
-  long as the root hash is received from a trusted source the manifest itself
-  can be verified, and thus the contents of the directory protected from
+- Definition of a "root" hash, likely just the hash of the manifest itself, so
+  that as long as the root hash is received from a trusted source the manifest
+  itself can be verified, and thus the contents of the directory protected from
   malicious tampering.
 
 - Creation and verification of signatures over the root hash, so that
