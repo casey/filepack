@@ -130,8 +130,7 @@ Lofty Ambitions
 
 - Definition of a "root" hash, likely just the hash of the manifest itself, so
   that as long as the root hash is received from a trusted source the manifest
-  itself can be verified, and thus the contents of the directory protected from
-  malicious tampering.
+  itself does not need to be trusted.
 
 - Creation and verification of signatures over the root hash, so that
   developers and packagers can vouch for the correctness of the contents of a
