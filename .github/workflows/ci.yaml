@@ -20,14 +20,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
-    - name: Install Rust Toolchain Components
-      uses: actions-rs/toolchain@v1
-      with:
-        components: clippy, rustfmt
-        override: true
-        toolchain: stable
+    - name: Install Rust Toolchain
+      run: rustup toolchain install stable --profile minimal --component rustfmt clippy
 
     - uses: Swatinem/rust-cache@v2
 
@@ -53,13 +49,10 @@ jobs:
     runs-on: ${{matrix.os}}
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
-    - name: Install Rust Toolchain Components
-      uses: actions-rs/toolchain@v1
-      with:
-        profile: minimal
-        toolchain: stable
+    - name: Install Rust Toolchain
+      run: rustup toolchain install stable --profile minimal
 
     - uses: Swatinem/rust-cache@v2
 
