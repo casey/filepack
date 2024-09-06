@@ -15,8 +15,9 @@ can be created with:
 filepack create path/to/directory
 ```
 
-Which will write the manifest to `path/to/directory/filepack.json`. It can
-later be verified with:
+Which will write the manifest to `path/to/directory/filepack.json`.
+
+Files can later be verified with:
 
 ```
 filepack verify path/to/directory
