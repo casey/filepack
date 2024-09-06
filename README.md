@@ -1,8 +1,23 @@
-filepack
-========
+<div align=right>Table of Contents↗️</div>
 
-`filepack` is a command-line utility for verifying the integrity of collections
-of files.
+<h1 align=center><code>filepack</code></h1>
+
+<div align=center>
+  <a href=https://crates.io/crates/filepack>
+    <img src=https://img.shields.io/crates/v/filepack.svg alt="crates.io version">
+  </a>
+  <a href=https://github.com/casey/filepack/actions>
+    <img src=https://github.com/casey/filepack/actions/workflows/ci.yaml/badge.svg alt="build status">
+  </a>
+  <a href=https://github.com/casey/filepack/releases>
+    <img src=https://img.shields.io/github/downloads/casey/filepack/total.svg alt=downloads>
+  </a>
+</div>
+
+<br>
+
+`filepack` is a command-line file hashing and verification utility written in
+Rust.
 
 It is an alternative to `.sfv` files and tools like `shasum`. Files are hashed
 using [BLAKE3](https://github.com/BLAKE3-team/BLAKE3/), a fast, cryptographic
