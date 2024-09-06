@@ -47,3 +47,6 @@ test-release-workflow:
 
 docs:
   open docs/index.html
+
+list-package:
+  cargo package --list --allow-dirty
