@@ -91,12 +91,12 @@ circumstances, pass a specific tag to install with `--tag`.
 Manifest format
 ---------------
 
-`filepack` manifests are named `filepack.json`. `filepack create` and `filepack
-verify` both expect the manifest to be in the root of the directory containing
-the files.
+`filepack` manifests are named `filepack.json`. `filepack create` and
+`filepack verify` both expect the manifest to be in the root of the directory
+containing the files to be verified.
 
 The manifest contains a [JSON](https://www.json.org/json-en.html) object,
-currently with a single key, `files`, whose value is a object mapping strings
+currently with a single key, `files`, whose value is an object mapping strings
 containing paths to strings containing hex-encoded BLAKE3 hashes.
 
 Manifests are encoded as [UTF-8](https://en.wikipedia.org/wiki/UTF-8), so paths
@@ -104,9 +104,9 @@ must be valid Unicode.
 
 Paths are `/`-separated, even on Windows, and may not contain backslashes.
 
-They are relative, meaning that they cannot begin with a `/` or a Windows drive
-prefix, such as `C:`, and cannot contain the path components `.` or  `..`, and
-may not end with a slash.
+Paths are relative, meaning that they cannot begin with a `/` or a Windows
+drive prefix, such as `C:`, and cannot contain the path components `.` or
+`..`, and may not end with a slash.
 
 Filepack currently has no way of tracking empty directories, which are an error
 when creating or verifying a manifest.
