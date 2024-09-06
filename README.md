@@ -4,24 +4,49 @@ filepack
 `filepack` is a command-line utility for verifying the integrity of collections
 of files.
 
-It is currently unstable: the interface and file format may change at any time.
-Additionally, the code has not been extensively reviewed and should be
-considered experimental.
+It is an alternative to `.sfv` files and tools like `shasum`. Files are hashed
+using [BLAKE3](https://github.com/BLAKE3-team/BLAKE3/), a fast, cryptographic
+hash function.
 
-Files are hashed using [BLAKE3](https://github.com/BLAKE3-team/BLAKE3/), a
-fast, cryptographic hash function, and hash digests and file paths are stored
-in a manifest file named `filepack.json`.
+A manifest named `filepack.json` containing the hashes of files in a directory
+can be created with:
+
+```sh
+filepack create path/to/directory
+```
+
+Which will write the manifest to `path/to/directory/filepack.json`. It can
+later be verified with:
+
+```
+filepack verify path/to/directory
+```
 
 Files can later be verified against the hashes saved in the manifest to protect
 against accidental or malicious corruption, as long as the manifest has not
 been tampered with.
 
+If you run `filepack` a lot, you might want to `alias fp=filepack`.
+
+`filepack` is currently unstable: the interface and file format may change at
+any time. Additionally, the code has not been extensively reviewed and should
+be considered experimental.
+
 Installation
 ------------
 
 `filepack` is written in [Rust](https://www.rust-lang.org/) and can be built
-from source and installed from this repo with `cargo install --path .`, or from
-[crates.io](https://crates.io/crates/filepack) with `cargo install filepack`.
+from source and installed from this repo:
+
+```sh
+cargo install --path .
+```
+
+Or from [crates.io](https://crates.io/crates/filepack) with:
+
+```sh
+cargo install filepack
+```
 
 See [rustup.rs](https://rustup.rs/) for installation instructions for Rust.
 
@@ -61,6 +86,66 @@ where many machines share IP addresses. `install.sh` calls GitHub APIs in order
 to determine the latest version of `filepack` to install, and those API calls
 are rate-limited on a per-IP basis. To make `install.sh` more reliable in such
 circumstances, pass a specific tag to install with `--tag`.
+
+Manifest format
+---------------
+
+`filepack` manifests are named `filepack.json`. `filepack create` and `filepack
+verify` both expect the manifest to be in the root of the directory containing
+the files.
+
+The manifest contains a [JSON](https://www.json.org/json-en.html) object,
+currently with a single key, `files`, whose value is a object mapping strings
+containing paths to strings containing hex-encoded BLAKE3 hashes.
+
+Manifests are encoded as [UTF-8](https://en.wikipedia.org/wiki/UTF-8), so paths
+must be valid Unicode.
+
+Paths are `/`-separated, even on Windows, and may not contain backslashes.
+
+They are relative, meaning that they cannot begin with a `/` or a Windows drive
+prefix, such as `C:`, and cannot contain the path components `.` or  `..`, and
+may not end with a slash.
+
+Filepack currently has no way of tracking empty directories, which are an error
+when creating or verifying a manifest.
+
+An example manifest for a directory containing the files `README.md` and
+`src/main.c`, pretty-printed for legibility:
+
+```json
+{
+  "files": {
+    "README.md": "5a9a6d96244ec398545fc0c98c2cb7ed52511b025c19e9ad1e3c1ef4ac8575ad",
+    "src/main.c": "38abf296dc2a90f66f7870fe0ce584af3859668cf5140c7557a76786189dcf0f"
+  }
+}
+```
+
+Lofty Ambitions
+---------------
+
+`filepack` has lofty ambitions!
+
+- Define a root hash, likely just the hash of the manifest itself, so that as
+  long as the root hash is received from a trusted source the manifest itself
+  can be verified, and thus the contents of the directory protected from
+  malicious tampering.
+
+- Creation and verification of signatures over the root hash, so that
+  developers and packagers can vouch for the correctness of the contents of a
+  manifest, and users can verify that a manifest was signed by a trusted public
+  key.
+
+- Portability lints, so packagers can ensure that the files covered by a
+  manifest can be used in other environments, for example case-insensitive and
+  Windows file systems.
+
+- Semantic, manchine-readable metadata about *what* a package is. For example,
+  a human-readable title, a suggested filename-safe slug, a description, a
+  year, etcetera, to aid package indexing and search.
+
+Suggestions for new features are most welcome!
 
 Alternatives and Prior Art
 --------------------------
