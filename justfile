@@ -48,5 +48,12 @@ test-release-workflow:
 docs:
   open docs/index.html
 
+shellcheck-install-script:
+  shellcheck docs/install.sh
+
+test-install-script:
+  rm -f tmp/filepack
+  ./docs/install.sh --to tmp
+
 list-package:
   cargo package --list --allow-dirty
