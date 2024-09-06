@@ -10,6 +10,7 @@ homepage = "https://github.com/casey/filepack"
 keywords = ["checksum", "verification"]
 license = "CC0-1.0"
 repository = "https://github.com/casey/filepack"
+include = ["CHANGELOG.md", "CONTRIBUTING", "LICENSE", "README.md", "src", "tests"]
 
 [dependencies]
 blake3 = { version = "1.5.4", features = ["mmap", "rayon", "serde"] }
