@@ -22,12 +22,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Install Rust Toolchain Components
-      uses: actions-rs/toolchain@v1
-      with:
-        components: clippy, rustfmt
-        override: true
-        toolchain: stable
+    - run: rustup toolchain install stable --profile minimal --component rustfmt clippy
 
     - uses: Swatinem/rust-cache@v2
 
@@ -55,11 +50,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Install Rust Toolchain Components
-      uses: actions-rs/toolchain@v1
-      with:
-        profile: minimal
-        toolchain: stable
+    - run: rustup toolchain install stable --profile minimal
 
     - uses: Swatinem/rust-cache@v2
 
