@@ -12,7 +12,7 @@ fi
 
 help() {
   cat <<'EOF'
-Install a binary release of a just hosted on GitHub
+Install a binary release of a filepack hosted on GitHub
 
 USAGE:
     install.sh [options]
@@ -27,10 +27,6 @@ OPTIONS:
     --target TARGET
 EOF
 }
-
-crate=just
-url=https://github.com/casey/just
-releases=$url/releases
 
 say() {
   echo "install: $*" >&2
@@ -115,7 +111,7 @@ fi
 
 if [ -z "${tag-}" ]; then
   tag=$(
-    download https://api.github.com/repos/casey/just/releases/latest - |
+    download https://api.github.com/repos/casey/filepack/releases/latest - |
     grep tag_name |
     cut -d'"' -f4
   )
@@ -149,10 +145,10 @@ case $target in
   *) extension=tar.gz; need tar;;
 esac
 
-archive="$releases/download/$tag/$crate-$tag-$target.$extension"
+archive="https://github.com/casey/filepack/releases/download/$tag/filepack-$tag-$target.$extension"
 
-say "Repository:  $url"
-say "Crate:       $crate"
+say "Repository:  https://github.com/casey/filepack"
+say "Crate:       filepack"
 say "Tag:         $tag"
 say "Target:      $target"
 say "Destination: $dest"
@@ -161,18 +157,18 @@ say "Archive:     $archive"
 td=$(mktemp -d || mktemp -d -t tmp)
 
 if [ "$extension" = "zip" ]; then
-  download "$archive" "$td/just.zip"
-  unzip -d "$td" "$td/just.zip"
+  download "$archive" "$td/filepack.zip"
+  unzip -d "$td" "$td/filepack.zip"
 else
   download "$archive" - | tar -C "$td" -xz
 fi
 
-if [ -e "$dest/just" ] && [ "$force" = false ]; then
-  err "\`$dest/just\` already exists"
+if [ -e "$dest/filepack" ] && [ "$force" = false ]; then
+  err "\`$dest/filepack\` already exists"
 else
   mkdir -p "$dest"
-  cp "$td/just" "$dest/just"
-  chmod 755 "$dest/just"
+  cp "$td/filepack" "$dest/filepack"
+  chmod 755 "$dest/filepack"
 fi
 
 rm -rf "$td"

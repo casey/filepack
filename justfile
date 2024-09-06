@@ -47,3 +47,10 @@ test-release-workflow:
 
 docs:
   open docs/index.html
+
+shellcheck-install-script:
+  shellcheck docs/install.sh
+
+install-tmp:
+  rm -f tmp/filepack
+  ./docs/install.sh --to tmp
