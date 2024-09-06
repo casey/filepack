@@ -51,6 +51,9 @@ docs:
 shellcheck-install-script:
   shellcheck docs/install.sh
 
-install-tmp:
+test-install-script:
   rm -f tmp/filepack
   ./docs/install.sh --to tmp
+
+list-package:
+  cargo package --list --allow-dirty
