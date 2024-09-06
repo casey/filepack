@@ -22,7 +22,8 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - run: rustup toolchain install stable --profile minimal --component rustfmt clippy
+    - name: Install Rust Toolchain
+      run: rustup toolchain install stable --profile minimal --component rustfmt clippy
 
     - uses: Swatinem/rust-cache@v2
 
@@ -50,7 +51,8 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - run: rustup toolchain install stable --profile minimal
+    - name: Install Rust Toolchain
+      run: rustup toolchain install stable --profile minimal
 
     - uses: Swatinem/rust-cache@v2
 
