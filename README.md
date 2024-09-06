@@ -40,8 +40,8 @@ CRC-32 is not a cryptographic hash function and cannot be used to detect
 intentional modifications. Similarly, SHA-1 was thought to be a cryptographic
 hash function, but is now known to be insecure.
 
-Like `b3sum`, filepack uses BLAKE3, a fast, general-purpose cryptographic hash
-function.
+`filepack` and `b3sum` both use BLAKE3, a fast, general-purpose cryptographic
+hash function.
 
 New Releases
 ------------
