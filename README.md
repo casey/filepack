@@ -142,8 +142,8 @@ Lofty Ambitions
   systems.
 
 - Semantic, manchine-readable metadata about *what* a package is. For example,
-  a human-readable title, a suggested filename-safe slug, a description, a
-  year, etcetera, to aid package indexing and search.
+  human-readable title, suggested filename-safe slug, description, or year of
+  publication, to aid package indexing and search.
 
 Suggestions for new features are most welcome!
 
