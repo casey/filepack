@@ -137,9 +137,9 @@ Lofty Ambitions
   manifest, and users can verify that a manifest was signed by a trusted public
   key.
 
-- Portability lints, so packagers can ensure that the files covered by a
-  manifest can be used in other environments, for example case-insensitive and
-  Windows file systems.
+- Portability lints, so packagers can ensure that the files in a manifest can
+  be used in other environments, for example case-insensitive and Windows file
+  systems.
 
 - Semantic, manchine-readable metadata about *what* a package is. For example,
   a human-readable title, a suggested filename-safe slug, a description, a
