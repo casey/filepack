@@ -35,7 +35,7 @@ fn single_file_omit_root() {
     .success();
 
   dir.child("filepack.json").assert(
-    r#"{"files":{"foo":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"}}"#,
+    r#"{"files":{"foo":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}}}"#,
   );
 
   Command::cargo_bin("filepack")
@@ -60,7 +60,32 @@ fn single_file() {
     .success();
 
   dir.child("filepack.json").assert(
-    r#"{"files":{"foo":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"}}"#,
+    r#"{"files":{"foo":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}}}"#,
+  );
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["verify", "."])
+    .current_dir(&dir)
+    .assert()
+    .success();
+}
+
+#[test]
+fn single_non_empty_file() {
+  let dir = TempDir::new().unwrap();
+
+  dir.child("foo").write_str("bar").unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["create", "."])
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  dir.child("filepack.json").assert(
+    r#"{"files":{"foo":{"hash":"f2e897eed7d206cd855d441598fa521abc75aa96953e97c030c9612c30c1293d","size":3}}}"#,
   );
 
   Command::cargo_bin("filepack")
@@ -85,7 +110,7 @@ fn single_file_mmap() {
     .success();
 
   dir.child("filepack.json").assert(
-    r#"{"files":{"foo":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"}}"#,
+    r#"{"files":{"foo":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}}}"#,
   );
 
   Command::cargo_bin("filepack")
@@ -110,7 +135,7 @@ fn single_file_parallel() {
     .success();
 
   dir.child("filepack.json").assert(
-    r#"{"files":{"foo":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"}}"#,
+    r#"{"files":{"foo":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}}}"#,
   );
 
   Command::cargo_bin("filepack")
@@ -135,7 +160,7 @@ fn file_in_subdirectory() {
     .success();
 
   dir.child("filepack.json").assert(
-    r#"{"files":{"foo/bar":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"}}"#,
+    r#"{"files":{"foo/bar":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}}}"#,
   );
 
   Command::cargo_bin("filepack")

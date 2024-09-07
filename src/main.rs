@@ -1,7 +1,7 @@
 use {
   self::{
-    arguments::Arguments, error::Error, hash::Hash, lint::Lint, list::List, manifest::Manifest,
-    options::Options, relative_path::RelativePath, subcommand::Subcommand,
+    arguments::Arguments, entry::Entry, error::Error, hash::Hash, lint::Lint, list::List,
+    manifest::Manifest, options::Options, relative_path::RelativePath, subcommand::Subcommand,
   },
   blake3::Hasher,
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},
@@ -10,7 +10,7 @@ use {
   snafu::{ErrorCompat, OptionExt, ResultExt, Snafu},
   std::{
     backtrace::{Backtrace, BacktraceStatus},
-    collections::{HashMap, HashSet},
+    collections::HashMap,
     env,
     fmt::{self, Display, Formatter},
     fs::{self, File},
@@ -23,6 +23,7 @@ use {
 };
 
 mod arguments;
+mod entry;
 mod error;
 mod hash;
 mod lint;

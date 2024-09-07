@@ -29,14 +29,31 @@ impl Verify {
       path: Manifest::FILENAME,
     })?;
 
-    for (path, &expected) in &manifest.files {
-      let actual = options.hash_file(path.as_ref())?;
+    for (path, entry) in &manifest.files {
+      let size = root
+        .join(path)
+        .metadata()
+        .context(error::Io { path })?
+        .len();
 
-      if actual != expected {
+      if size != entry.size {
+        return Err(
+          error::SizeMismatch {
+            actual: size,
+            expected: entry.size,
+            path,
+          }
+          .build(),
+        );
+      }
+
+      let hash = options.hash_file(&root.join(path))?;
+
+      if hash != entry.hash {
         return Err(
           error::HashMismatch {
-            actual,
-            expected,
+            actual: hash,
+            expected: entry.hash,
             path,
           }
           .build(),

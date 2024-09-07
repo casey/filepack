@@ -15,7 +15,7 @@ impl Create {
       Utf8PathBuf::from_path_buf(path).map_err(|path| error::PathUnicode { path }.build())?
     };
 
-    let mut paths = HashSet::new();
+    let mut paths = HashMap::new();
 
     let mut dirs = Vec::new();
 
@@ -53,7 +53,9 @@ impl Create {
         path: relative.clone(),
       })?;
 
-      paths.insert(relative);
+      let metadata = path.metadata().context(error::Io { path })?;
+
+      paths.insert(relative, metadata.len());
     }
 
     if !dirs.is_empty() {
@@ -82,9 +84,9 @@ impl Create {
 
     let mut files = HashMap::new();
 
-    for path in paths {
+    for (path, size) in paths {
       let hash = options.hash_file(&root.join(&path))?;
-      files.insert(path, hash);
+      files.insert(path, Entry { hash, size });
     }
 
     let manifest = Manifest { files };

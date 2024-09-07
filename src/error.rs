@@ -58,6 +58,13 @@ pub(crate) enum Error {
     backtrace: Option<Backtrace>,
     path: PathBuf,
   },
+  #[snafu(display("size mismatch for `{path}`, expected {expected} but got {actual}"))]
+  SizeMismatch {
+    actual: u64,
+    backtrace: Option<Backtrace>,
+    expected: u64,
+    path: Utf8PathBuf,
+  },
   #[snafu(display("I/O error reading standard input"))]
   StandardInputIo {
     backtrace: Option<Backtrace>,
