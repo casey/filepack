@@ -84,9 +84,12 @@ impl Create {
 
     let mut files = HashMap::new();
 
+    let bar = progress_bar::new(paths.values().sum());
+
     for (path, size) in paths {
       let hash = options.hash_file(&root.join(&path))?;
       files.insert(path, Entry { hash, size });
+      bar.inc(size);
     }
 
     let manifest = Manifest { files };
