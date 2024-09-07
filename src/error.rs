@@ -44,7 +44,7 @@ pub(crate) enum Error {
   #[snafu(display("file missing: `{path}`"))]
   MissingFile {
     backtrace: Option<Backtrace>,
-    path: Utf8PathBuf,
+    path: RelativePath,
   },
   #[snafu(display("I/O error at `{path}`"))]
   Io {
