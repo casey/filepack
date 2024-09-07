@@ -57,3 +57,14 @@ test-install-script:
 
 list-package:
   cargo package --list --allow-dirty
+
+test-progress-bar:
+  #!/usr/bin/env bash
+  rm -rf tmp
+  mkdir -p tmp
+  head -c 1073741824 /dev/urandom > tmp/data0
+  for i in {1..9}; do
+    cp tmp/data0 tmp/data$i
+  done
+  cargo run --release create tmp
+  rm -rf tmp
