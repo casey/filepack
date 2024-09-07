@@ -8,7 +8,7 @@ pub(crate) struct Create {
 
 impl Create {
   pub(crate) fn run(self, options: Options) -> Result {
-    let mut files = HashMap::new();
+    let mut paths = HashSet::new();
 
     let mut dirs = Vec::new();
 
@@ -38,8 +38,6 @@ impl Create {
         return Err(error::Symlink { path }.build());
       }
 
-      let hash = options.hash_file(path)?;
-
       let relative = path.strip_prefix(&self.root).unwrap();
 
       let relative = RelativePath::try_from(relative).context(error::Path { path: relative })?;
@@ -48,7 +46,7 @@ impl Create {
         path: relative.clone(),
       })?;
 
-      files.insert(relative, hash);
+      paths.insert(relative);
     }
 
     if !dirs.is_empty() {
@@ -73,6 +71,13 @@ impl Create {
         }
         .build(),
       );
+    }
+
+    let mut files = HashMap::new();
+
+    for path in paths {
+      let hash = options.hash_file(&self.root.join(&path))?;
+      files.insert(path, hash);
     }
 
     let manifest = Manifest { files };
