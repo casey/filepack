@@ -21,20 +21,31 @@ impl Verify {
 
     let source = root.join(Manifest::FILENAME);
 
-    let json = fs::read_to_string(&source).context(error::Io {
-      path: Manifest::FILENAME,
-    })?;
+    let json = match fs::read_to_string(&source) {
+      Err(err) if err.kind() == io::ErrorKind::NotFound => {
+        return Err(
+          error::ManifestNotFound {
+            path: Manifest::FILENAME,
+          }
+          .build(),
+        );
+      }
+      result => result.context(error::Io {
+        path: Manifest::FILENAME,
+      })?,
+    };
 
     let manifest = serde_json::from_str::<Manifest>(&json).context(error::Deserialize {
       path: Manifest::FILENAME,
     })?;
 
     for (path, entry) in &manifest.files {
-      let size = root
-        .join(path)
-        .metadata()
-        .context(error::Io { path })?
-        .len();
+      let size = match root.join(path).metadata() {
+        Err(err) if err.kind() == io::ErrorKind::NotFound => {
+          return Err(error::MissingFile { path }.build());
+        }
+        result => result.context(error::Io { path })?.len(),
+      };
 
       if size != entry.size {
         return Err(

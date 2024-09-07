@@ -352,3 +352,36 @@ fn manifest_paths_are_relative_to_root() {
     .assert()
     .success();
 }
+
+#[test]
+fn manifest_not_found_error_message() {
+  let dir = TempDir::new().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .arg("verify")
+    .current_dir(&dir)
+    .assert()
+    .stderr("error: manifest `filepack.json` not found\n")
+    .failure();
+}
+
+#[test]
+fn file_not_found_error_message() {
+  let dir = TempDir::new().unwrap();
+
+  dir
+    .child("filepack.json")
+    .write_str(
+      r#"{"files":{"foo":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}}}"#
+    )
+    .unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .arg("verify")
+    .current_dir(&dir)
+    .assert()
+    .stderr("error: file missing: `foo`\n")
+    .failure();
+}

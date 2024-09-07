@@ -112,6 +112,12 @@ impl Display for RelativePath {
   }
 }
 
+impl From<&RelativePath> for RelativePath {
+  fn from(path: &RelativePath) -> Self {
+    path.clone()
+  }
+}
+
 impl FromStr for RelativePath {
   type Err = Error;
 

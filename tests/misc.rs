@@ -10,10 +10,7 @@ fn backtraces_are_recorded_when_environment_variable_is_set() {
     .current_dir(&dir)
     .assert()
     .stderr(is_match(
-      r"error: I/O error at `filepack.json`
-
-because:
-- [^\n]*
+      r"error: manifest `filepack.json` not found
 ",
     ))
     .failure();
@@ -25,10 +22,7 @@ because:
     .current_dir(&dir)
     .assert()
     .stderr(is_match(
-      r"error: I/O error at `filepack.json`
-
-because:
-- [^\n]*
+      r"error: manifest `filepack.json` not found
 
 backtrace:
    0: .*

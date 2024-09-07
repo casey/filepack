@@ -36,6 +36,16 @@ pub(crate) enum Error {
     backtrace: Option<Backtrace>,
     path: Utf8PathBuf,
   },
+  #[snafu(display("manifest `{path}` not found"))]
+  ManifestNotFound {
+    backtrace: Option<Backtrace>,
+    path: Utf8PathBuf,
+  },
+  #[snafu(display("file missing: `{path}`"))]
+  MissingFile {
+    backtrace: Option<Backtrace>,
+    path: RelativePath,
+  },
   #[snafu(display("I/O error at `{path}`"))]
   Io {
     backtrace: Option<Backtrace>,

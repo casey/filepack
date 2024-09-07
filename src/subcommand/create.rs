@@ -49,9 +49,9 @@ impl Create {
 
       let relative = RelativePath::try_from(relative).context(error::Path { path: relative })?;
 
-      relative.check_portability().context(error::PathLint {
-        path: relative.clone(),
-      })?;
+      relative
+        .check_portability()
+        .context(error::PathLint { path: &relative })?;
 
       let metadata = path.metadata().context(error::Io { path })?;
 
