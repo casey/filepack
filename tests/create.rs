@@ -72,6 +72,31 @@ fn single_file() {
 }
 
 #[test]
+fn single_non_empty_file() {
+  let dir = TempDir::new().unwrap();
+
+  dir.child("foo").write_str("bar").unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["create", "."])
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  dir.child("filepack.json").assert(
+    r#"{"files":{"foo":{"hash":"f2e897eed7d206cd855d441598fa521abc75aa96953e97c030c9612c30c1293d","size":3}}}"#,
+  );
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["verify", "."])
+    .current_dir(&dir)
+    .assert()
+    .success();
+}
+
+#[test]
 fn single_file_mmap() {
   let dir = TempDir::new().unwrap();
 
