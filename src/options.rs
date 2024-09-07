@@ -17,8 +17,7 @@ impl Options {
     } else if self.mmap {
       hasher.update_mmap(path)?;
     } else {
-      let file = File::open(path)?;
-      hasher.update_reader(file)?;
+      hasher.update_reader(File::open(path)?)?;
     }
 
     Ok(Entry {

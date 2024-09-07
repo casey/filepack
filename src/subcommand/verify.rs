@@ -102,8 +102,9 @@ impl Verify {
         continue;
       }
 
-      if !manifest.files.contains_key(&path) {
-        return Err(error::ExtraneousFile { path }.build());
+      ensure! {
+        manifest.files.contains_key(&path),
+        error::ExtraneousFile { path },
       }
     }
 
