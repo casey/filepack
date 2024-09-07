@@ -382,6 +382,6 @@ fn file_not_found_error_message() {
     .arg("verify")
     .current_dir(&dir)
     .assert()
-    .stderr(is_match("error: file missing: `.*foo`\n"))
+    .stderr(is_match("error: file missing: `foo`\n"))
     .failure();
 }
