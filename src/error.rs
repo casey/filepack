@@ -58,6 +58,11 @@ pub(crate) enum Error {
     backtrace: Option<Backtrace>,
     path: PathBuf,
   },
+  #[snafu(display("I/O error reading standard input"))]
+  StandardInputIo {
+    backtrace: Option<Backtrace>,
+    source: io::Error,
+  },
   #[snafu(display("symlink at `{path}`"))]
   Symlink {
     backtrace: Option<Backtrace>,

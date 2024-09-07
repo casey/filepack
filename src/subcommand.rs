@@ -7,6 +7,7 @@ use {
 };
 
 mod create;
+mod hash;
 mod man;
 mod verify;
 
@@ -23,6 +24,8 @@ mod verify;
 pub(crate) enum Subcommand {
   #[command(about = "create manifest")]
   Create(create::Create),
+  #[command(about = "hash single file")]
+  Hash(hash::Hash),
   #[command(about = "print man page")]
   Man,
   #[command(about = "verify directory against manifest")]
@@ -33,6 +36,7 @@ impl Subcommand {
   pub(crate) fn run(self, options: Options) -> Result {
     match self {
       Self::Create(create) => create.run(options),
+      Self::Hash(hash) => hash.run(options),
       Self::Man => man::run(),
       Self::Verify(verify) => verify.run(options),
     }

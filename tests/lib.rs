@@ -18,6 +18,7 @@ where
 }
 
 mod create;
+mod hash;
 mod man;
 mod misc;
 mod verify;
