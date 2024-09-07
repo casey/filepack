@@ -10,7 +10,7 @@ use {
   snafu::{ErrorCompat, OptionExt, ResultExt, Snafu},
   std::{
     backtrace::{Backtrace, BacktraceStatus},
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     fmt::{self, Display, Formatter},
     fs::{self, File},
     io,
