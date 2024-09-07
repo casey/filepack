@@ -4,13 +4,22 @@ use super::*;
 pub(crate) struct Verify {
   #[arg(help = "Print manifest if verification is successful", long)]
   print: bool,
-  #[arg(help = "Verify files in <ROOT> directory against manifest")]
-  root: Utf8PathBuf,
+  #[arg(
+    help = "Verify files in <ROOT> directory against manifest, defaulting to current directory"
+  )]
+  root: Option<Utf8PathBuf>,
 }
 
 impl Verify {
   pub(crate) fn run(self, options: Options) -> Result {
-    let source = self.root.join(Manifest::FILENAME);
+    let root = if let Some(root) = self.root {
+      root
+    } else {
+      let path = env::current_dir().context(error::CurrentDir)?;
+      Utf8PathBuf::from_path_buf(path).map_err(|path| error::PathUnicode { path }.build())?
+    };
+
+    let source = root.join(Manifest::FILENAME);
 
     let json = fs::read_to_string(&source).context(error::Io {
       path: Manifest::FILENAME,
@@ -37,7 +46,7 @@ impl Verify {
 
     let mut dirs = Vec::new();
 
-    for entry in WalkDir::new(&self.root) {
+    for entry in WalkDir::new(&root) {
       let entry = entry?;
 
       let path = entry.path();
@@ -53,13 +62,13 @@ impl Verify {
       }
 
       if entry.file_type().is_dir() {
-        if path != self.root {
+        if path != root {
           dirs.push(path.to_owned());
         }
         continue;
       }
 
-      let path = path.strip_prefix(&self.root).unwrap();
+      let path = path.strip_prefix(&root).unwrap();
 
       let path = RelativePath::try_from(path).context(error::Path { path })?;
 
@@ -77,7 +86,7 @@ impl Verify {
       return Err(Error::EmptyDirectory {
         paths: dirs
           .into_iter()
-          .map(|dir| dir.strip_prefix(&self.root).unwrap().to_owned())
+          .map(|dir| dir.strip_prefix(&root).unwrap().to_owned())
           .collect(),
       });
     }

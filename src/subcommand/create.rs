@@ -2,17 +2,24 @@ use super::*;
 
 #[derive(Parser)]
 pub(crate) struct Create {
-  #[arg(help = "Create manifest for files in <ROOT> directory")]
-  root: Utf8PathBuf,
+  #[arg(help = "Create manifest for files in <ROOT> directory, defaulting to current directory")]
+  root: Option<Utf8PathBuf>,
 }
 
 impl Create {
   pub(crate) fn run(self, options: Options) -> Result {
+    let root = if let Some(root) = self.root {
+      root
+    } else {
+      let path = env::current_dir().context(error::CurrentDir)?;
+      Utf8PathBuf::from_path_buf(path).map_err(|path| error::PathUnicode { path }.build())?
+    };
+
     let mut paths = HashSet::new();
 
     let mut dirs = Vec::new();
 
-    for entry in WalkDir::new(&self.root) {
+    for entry in WalkDir::new(&root) {
       let entry = entry?;
 
       let path = entry.path();
@@ -28,7 +35,7 @@ impl Create {
       }
 
       if entry.file_type().is_dir() {
-        if path != self.root {
+        if path != root {
           dirs.push(path.to_owned());
         }
         continue;
@@ -38,7 +45,7 @@ impl Create {
         return Err(error::Symlink { path }.build());
       }
 
-      let relative = path.strip_prefix(&self.root).unwrap();
+      let relative = path.strip_prefix(&root).unwrap();
 
       let relative = RelativePath::try_from(relative).context(error::Path { path: relative })?;
 
@@ -54,12 +61,12 @@ impl Create {
       return Err(Error::EmptyDirectory {
         paths: dirs
           .into_iter()
-          .map(|dir| dir.strip_prefix(&self.root).unwrap().to_owned())
+          .map(|dir| dir.strip_prefix(&root).unwrap().to_owned())
           .collect(),
       });
     }
 
-    let destination = self.root.join(Manifest::FILENAME);
+    let destination = root.join(Manifest::FILENAME);
 
     if destination
       .try_exists()
@@ -76,7 +83,7 @@ impl Create {
     let mut files = HashMap::new();
 
     for path in paths {
-      let hash = options.hash_file(&self.root.join(&path))?;
+      let hash = options.hash_file(&root.join(&path))?;
       files.insert(path, hash);
     }
 

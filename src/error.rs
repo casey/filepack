@@ -3,6 +3,8 @@ use super::*;
 #[derive(Debug, Snafu)]
 #[snafu(context(suffix(false)), visibility(pub(crate)))]
 pub(crate) enum Error {
+  #[snafu(display("failed to get current directory"))]
+  CurrentDir { source: io::Error },
   #[snafu(display("failed to deserialize manifest at `{path}`"))]
   Deserialize {
     backtrace: Option<Backtrace>,
