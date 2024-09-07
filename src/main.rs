@@ -11,6 +11,7 @@ use {
   std::{
     backtrace::{Backtrace, BacktraceStatus},
     collections::{HashMap, HashSet},
+    env,
     fmt::{self, Display, Formatter},
     fs::{self, File},
     io,
