@@ -87,7 +87,9 @@ impl Create {
     let bar = progress_bar::new(paths.values().sum());
 
     for (path, _size) in paths {
-      let entry = options.hash_file(&root.join(&path))?;
+      let entry = options
+        .hash_file(&root.join(&path))
+        .context(error::Io { path: &path })?;
       files.insert(path, entry);
       bar.inc(entry.size);
     }

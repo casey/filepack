@@ -9,14 +9,7 @@ pub(crate) struct Options {
 }
 
 impl Options {
-  pub(crate) fn hash_file(&self, path: &Utf8Path) -> Result<Entry> {
-    match self.hash_file_inner(path) {
-      Err(err) if err.kind() == io::ErrorKind::NotFound => Err(error::MissingFile { path }.build()),
-      result => result.context(error::Io { path }),
-    }
-  }
-
-  fn hash_file_inner(&self, path: &Utf8Path) -> io::Result<Entry> {
+  pub(crate) fn hash_file(&self, path: &Utf8Path) -> io::Result<Entry> {
     let mut hasher = Hasher::new();
 
     if self.parallel {

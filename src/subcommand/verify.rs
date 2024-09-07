@@ -42,7 +42,12 @@ impl Verify {
     let bar = progress_bar::new(manifest.files.values().map(|entry| entry.size).sum());
 
     for (path, &expected) in &manifest.files {
-      let actual = options.hash_file(&root.join(path))?;
+      let actual = match options.hash_file(&root.join(path)) {
+        Err(err) if err.kind() == io::ErrorKind::NotFound => {
+          return Err(error::MissingFile { path }.build())
+        }
+        result => result.context(error::Io { path })?,
+      };
 
       ensure!(
         actual.size == expected.size,
