@@ -112,7 +112,9 @@ containing the files to be verified.
 
 The manifest contains a [JSON](https://www.json.org/json-en.html) object,
 currently with a single key, `files`, whose value is an object mapping strings
-containing paths to strings containing hex-encoded BLAKE3 hashes.
+containing paths to manifest entries. Manifest entries are objects with the key
+`hash`, whose value is a hex-encoded BLAKE3 hash of the file, and `size`, whose
+value is the integer length of the file in bytes.
 
 Manifests are encoded as [UTF-8](https://en.wikipedia.org/wiki/UTF-8), so paths
 must be valid Unicode.
@@ -132,8 +134,14 @@ An example manifest for a directory containing the files `README.md` and
 ```json
 {
   "files": {
-    "README.md": "5a9a6d96244ec398545fc0c98c2cb7ed52511b025c19e9ad1e3c1ef4ac8575ad",
-    "src/main.c": "38abf296dc2a90f66f7870fe0ce584af3859668cf5140c7557a76786189dcf0f"
+    "README.md": {
+      "hash": "5a9a6d96244ec398545fc0c98c2cb7ed52511b025c19e9ad1e3c1ef4ac8575ad",
+      "size": "1573",
+    },
+    "src/main.c": {
+      "hash": "38abf296dc2a90f66f7870fe0ce584af3859668cf5140c7557a76786189dcf0f",
+      "size": "4491",
+    }
   }
 }
 ```

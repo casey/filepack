@@ -26,7 +26,7 @@ fn single_file() {
   dir
     .child("filepack.json")
     .write_str(
-      r#"{"files":{"foo":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"}}"#,
+      r#"{"files":{"foo":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}}}"#
     )
     .unwrap();
 
@@ -47,7 +47,7 @@ fn single_file_omit_directory() {
   dir
     .child("filepack.json")
     .write_str(
-      r#"{"files":{"foo":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"}}"#,
+      r#"{"files":{"foo":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}}}"#
     )
     .unwrap();
 
@@ -68,7 +68,7 @@ fn single_file_mmap() {
   dir
     .child("filepack.json")
     .write_str(
-      r#"{"files":{"foo":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"}}"#,
+      r#"{"files":{"foo":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}}}"#
     )
     .unwrap();
 
@@ -89,7 +89,7 @@ fn single_file_parallel() {
   dir
     .child("filepack.json")
     .write_str(
-      r#"{"files":{"foo":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"}}"#,
+      r#"{"files":{"foo":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}}}"#
     )
     .unwrap();
 
@@ -209,7 +209,7 @@ fn only_leaf_empty_directory_is_reported() {
 fn hash_mismatch() {
   let dir = TempDir::new().unwrap();
 
-  dir.child("foo").touch().unwrap();
+  dir.child("foo").write_str("foo").unwrap();
 
   Command::cargo_bin("filepack")
     .unwrap()
@@ -224,7 +224,31 @@ fn hash_mismatch() {
     .args(["verify", "."])
     .current_dir(&dir)
     .assert()
-    .stderr("error: hash mismatch for `foo`, expected af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262 but got f2e897eed7d206cd855d441598fa521abc75aa96953e97c030c9612c30c1293d\n")
+    .stderr("error: hash mismatch for `foo`, expected 04e0bb39f30b1a3feb89f536c93be15055482df748674b00d26e5a75777702e9 but got f2e897eed7d206cd855d441598fa521abc75aa96953e97c030c9612c30c1293d\n")
+    .failure();
+}
+
+#[test]
+fn size_mismatch() {
+  let dir = TempDir::new().unwrap();
+
+  dir.child("foo").touch().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["create", "."])
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  dir.child("foo").write_str("bar").unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["verify", "."])
+    .current_dir(&dir)
+    .assert()
+    .stderr("error: size mismatch for `foo`, expected 0 but got 3\n")
     .failure();
 }
 
@@ -293,8 +317,7 @@ because:
 fn print() {
   let dir = TempDir::new().unwrap();
 
-  let manifest =
-    r#"{"files":{"foo":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"}}"#;
+  let manifest = r#"{"files":{"foo":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}}}"#;
 
   dir.child("foo").touch().unwrap();
 
@@ -306,5 +329,26 @@ fn print() {
     .current_dir(&dir)
     .assert()
     .stdout(manifest)
+    .success();
+}
+
+#[test]
+fn manifest_paths_are_relative_to_root() {
+  let dir = TempDir::new().unwrap();
+
+  dir.child("dir/foo").touch().unwrap();
+
+  dir
+    .child("dir/filepack.json")
+    .write_str(
+      r#"{"files":{"foo":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}}}"#
+    )
+    .unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["verify", "dir"])
+    .current_dir(&dir)
+    .assert()
     .success();
 }

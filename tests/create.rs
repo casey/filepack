@@ -35,7 +35,7 @@ fn single_file_omit_root() {
     .success();
 
   dir.child("filepack.json").assert(
-    r#"{"files":{"foo":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"}}"#,
+    r#"{"files":{"foo":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}}}"#,
   );
 
   Command::cargo_bin("filepack")
@@ -60,7 +60,7 @@ fn single_file() {
     .success();
 
   dir.child("filepack.json").assert(
-    r#"{"files":{"foo":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"}}"#,
+    r#"{"files":{"foo":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}}}"#,
   );
 
   Command::cargo_bin("filepack")
@@ -85,7 +85,7 @@ fn single_file_mmap() {
     .success();
 
   dir.child("filepack.json").assert(
-    r#"{"files":{"foo":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"}}"#,
+    r#"{"files":{"foo":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}}}"#,
   );
 
   Command::cargo_bin("filepack")
@@ -110,7 +110,7 @@ fn single_file_parallel() {
     .success();
 
   dir.child("filepack.json").assert(
-    r#"{"files":{"foo":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"}}"#,
+    r#"{"files":{"foo":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}}}"#,
   );
 
   Command::cargo_bin("filepack")
@@ -135,7 +135,7 @@ fn file_in_subdirectory() {
     .success();
 
   dir.child("filepack.json").assert(
-    r#"{"files":{"foo/bar":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"}}"#,
+    r#"{"files":{"foo/bar":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}}}"#,
   );
 
   Command::cargo_bin("filepack")
