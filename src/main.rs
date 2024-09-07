@@ -6,6 +6,7 @@ use {
   blake3::Hasher,
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},
   clap::Parser,
+  indicatif::{ProgressBar, ProgressStyle},
   serde::{Deserialize, Deserializer, Serialize, Serializer},
   snafu::{ErrorCompat, OptionExt, ResultExt, Snafu},
   std::{
@@ -30,6 +31,7 @@ mod lint;
 mod list;
 mod manifest;
 mod options;
+mod progress_bar;
 mod relative_path;
 mod subcommand;
 

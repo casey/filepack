@@ -39,6 +39,8 @@ impl Verify {
       path: Manifest::FILENAME,
     })?;
 
+    let bar = progress_bar::new(manifest.files.values().map(|entry| entry.size).sum());
+
     for (path, entry) in &manifest.files {
       let size = match root.join(path).metadata() {
         Err(err) if err.kind() == io::ErrorKind::NotFound => {
@@ -70,6 +72,8 @@ impl Verify {
           .build(),
         );
       }
+
+      bar.inc(size);
     }
 
     let mut dirs = Vec::new();

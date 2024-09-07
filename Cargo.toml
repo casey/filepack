@@ -17,6 +17,7 @@ blake3 = { version = "1.5.4", features = ["mmap", "rayon", "serde"] }
 camino = { version = "1.1.9", features = ["serde1"] }
 clap = { version = "4.5.16", features = ["derive"] }
 clap_mangen = "0.2.23"
+indicatif = "0.17.8"
 serde = { version = "1.0.209", features = ["derive"] }
 serde_json = "1.0.127"
 snafu = "0.8.4"
