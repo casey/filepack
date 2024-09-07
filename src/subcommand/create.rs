@@ -41,8 +41,9 @@ impl Create {
         continue;
       }
 
-      if entry.file_type().is_symlink() {
-        return Err(error::Symlink { path }.build());
+      ensure! {
+        !entry.file_type().is_symlink(),
+        error::Symlink { path },
       }
 
       let relative = path.strip_prefix(&root).unwrap();
@@ -70,26 +71,23 @@ impl Create {
 
     let destination = root.join(Manifest::FILENAME);
 
-    if destination
-      .try_exists()
-      .context(error::Io { path: &destination })?
-    {
-      return Err(
-        error::ManifestAlreadyExists {
-          path: Manifest::FILENAME,
-        }
-        .build(),
-      );
+    ensure! {
+      !destination.try_exists().context(error::Io { path: &destination })?,
+      error::ManifestAlreadyExists {
+        path: Manifest::FILENAME,
+      },
     }
 
     let mut files = HashMap::new();
 
     let bar = progress_bar::new(paths.values().sum());
 
-    for (path, size) in paths {
-      let hash = options.hash_file(&root.join(&path))?;
-      files.insert(path, Entry { hash, size });
-      bar.inc(size);
+    for (path, _size) in paths {
+      let entry = options
+        .hash_file(&root.join(&path))
+        .context(error::Io { path: &path })?;
+      files.insert(path, entry);
+      bar.inc(entry.size);
     }
 
     let manifest = Manifest { files };

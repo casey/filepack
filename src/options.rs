@@ -9,18 +9,20 @@ pub(crate) struct Options {
 }
 
 impl Options {
-  pub(crate) fn hash_file(&self, path: &Utf8Path) -> Result<Hash> {
+  pub(crate) fn hash_file(&self, path: &Utf8Path) -> io::Result<Entry> {
     let mut hasher = Hasher::new();
 
     if self.parallel {
-      hasher.update_mmap_rayon(path).context(error::Io { path })?;
+      hasher.update_mmap_rayon(path)?;
     } else if self.mmap {
-      hasher.update_mmap(path).context(error::Io { path })?;
+      hasher.update_mmap(path)?;
     } else {
-      let file = File::open(path).context(error::Io { path })?;
-      hasher.update_reader(file).context(error::Io { path })?;
+      hasher.update_reader(File::open(path)?)?;
     }
 
-    Ok(hasher.finalize().into())
+    Ok(Entry {
+      hash: hasher.finalize().into(),
+      size: hasher.count(),
+    })
   }
 }

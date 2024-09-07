@@ -8,7 +8,7 @@ use {
   clap::Parser,
   indicatif::{ProgressBar, ProgressStyle},
   serde::{Deserialize, Deserializer, Serialize, Serializer},
-  snafu::{ErrorCompat, OptionExt, ResultExt, Snafu},
+  snafu::{ensure, ErrorCompat, OptionExt, ResultExt, Snafu},
   std::{
     backtrace::{Backtrace, BacktraceStatus},
     collections::HashMap,
