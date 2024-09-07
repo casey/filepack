@@ -41,39 +41,28 @@ impl Verify {
 
     let bar = progress_bar::new(manifest.files.values().map(|entry| entry.size).sum());
 
-    for (path, entry) in &manifest.files {
-      let size = match root.join(path).metadata() {
-        Err(err) if err.kind() == io::ErrorKind::NotFound => {
-          return Err(error::MissingFile { path }.build());
-        }
-        result => result.context(error::Io { path })?.len(),
-      };
+    for (path, &expected) in &manifest.files {
+      let actual = options.hash_file(&root.join(path))?;
 
-      if size != entry.size {
-        return Err(
-          error::SizeMismatch {
-            actual: size,
-            expected: entry.size,
-            path,
-          }
-          .build(),
-        );
-      }
+      ensure!(
+        actual.size == expected.size,
+        error::SizeMismatch {
+          actual: actual.size,
+          expected: expected.size,
+          path,
+        },
+      );
 
-      let hash = options.hash_file(&root.join(path))?;
+      ensure!(
+        actual.hash == expected.hash,
+        error::HashMismatch {
+          actual: actual.hash,
+          expected: expected.hash,
+          path,
+        },
+      );
 
-      if hash != entry.hash {
-        return Err(
-          error::HashMismatch {
-            actual: hash,
-            expected: entry.hash,
-            path,
-          }
-          .build(),
-        );
-      }
-
-      bar.inc(size);
+      bar.inc(expected.size);
     }
 
     let mut dirs = Vec::new();
