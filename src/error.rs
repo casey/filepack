@@ -58,10 +58,10 @@ pub(crate) enum Error {
   },
   #[snafu(display("invalid path `{path}`"))]
   Path {
-    path: Utf8PathBuf,
+    path: DisplayPath,
     source: relative_path::Error,
   },
-  #[snafu(display("path `{}` not valid unicode", path.display()))]
+  #[snafu(display("path valid unicode: `{}`", path.display()))]
   PathUnicode {
     backtrace: Option<Backtrace>,
     path: PathBuf,
