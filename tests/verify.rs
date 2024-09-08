@@ -116,10 +116,9 @@ fn extra_fields_are_not_allowed() {
     .current_dir(&dir)
     .assert()
     .stderr(
-      "error: failed to deserialize manifest at `filepack.json`
-
-because:
-- unknown field `foo`, expected `files` at line 1 column 17\n",
+      "\
+error: failed to deserialize manifest at `filepack.json`
+       └─ unknown field `foo`, expected `files` at line 1 column 17\n",
     )
     .failure();
 }
@@ -304,10 +303,9 @@ fn non_unicode_manifest_deserialize_error() {
     .current_dir(&dir)
     .assert()
     .stderr(
-      "error: I/O error at `filepack.json`
-
-because:
-- stream did not contain valid UTF-8
+      "\
+error: I/O error at `filepack.json`
+       └─ stream did not contain valid UTF-8
 ",
     )
     .failure();

@@ -2,11 +2,14 @@ use super::*;
 
 #[derive(Parser)]
 pub(crate) struct Verify {
+  #[arg(
+    help = "Read manifest from <MANIFEST>, defaults to `<ROOT>/filepack.json`",
+    long
+  )]
+  manifest: Option<Utf8PathBuf>,
   #[arg(help = "Print manifest if verification is successful", long)]
   print: bool,
-  #[arg(
-    help = "Verify files in <ROOT> directory against manifest, defaulting to current directory"
-  )]
+  #[arg(help = "Verify files in <ROOT> directory against manifest, defaults to current directory")]
   root: Option<Utf8PathBuf>,
 }
 
@@ -19,20 +22,17 @@ impl Verify {
       Utf8PathBuf::from_path_buf(path).map_err(|path| error::PathUnicode { path }.build())?
     };
 
-    let source = root.join(Manifest::FILENAME);
+    let manifest = if let Some(manifest) = self.manifest {
+      manifest
+    } else {
+      root.join(Manifest::FILENAME)
+    };
 
-    let json = match fs::read_to_string(&source) {
+    let json = match fs::read_to_string(&manifest) {
       Err(err) if err.kind() == io::ErrorKind::NotFound => {
-        return Err(
-          error::ManifestNotFound {
-            path: Manifest::FILENAME,
-          }
-          .build(),
-        );
+        return Err(error::ManifestNotFound { path: manifest }.build());
       }
-      result => result.context(error::Io {
-        path: Manifest::FILENAME,
-      })?,
+      result => result.context(error::Io { path: manifest })?,
     };
 
     let manifest = serde_json::from_str::<Manifest>(&json).context(error::Deserialize {
@@ -113,7 +113,7 @@ impl Verify {
       return Err(Error::EmptyDirectory {
         paths: dirs
           .into_iter()
-          .map(|dir| dir.strip_prefix(&root).unwrap().to_owned())
+          .map(|dir| dir.strip_prefix(&root).unwrap().to_owned().into())
           .collect(),
       });
     }

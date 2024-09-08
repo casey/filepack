@@ -8,7 +8,7 @@ pub(crate) enum Error {
   #[snafu(display("failed to deserialize manifest at `{path}`"))]
   Deserialize {
     backtrace: Option<Backtrace>,
-    path: Utf8PathBuf,
+    path: DisplayPath,
     source: serde_json::Error,
   },
   #[snafu(
@@ -18,28 +18,28 @@ pub(crate) enum Error {
       List::and_ticked(paths),
     )
   )]
-  EmptyDirectory { paths: Vec<Utf8PathBuf> },
+  EmptyDirectory { paths: Vec<DisplayPath> },
   #[snafu(display("extraneous file not in manifest at `{path}`"))]
   ExtraneousFile {
     backtrace: Option<Backtrace>,
-    path: RelativePath,
+    path: DisplayPath,
   },
   #[snafu(display("hash mismatch for `{path}`, expected {expected} but got {actual}"))]
   HashMismatch {
     actual: Hash,
     backtrace: Option<Backtrace>,
     expected: Hash,
-    path: Utf8PathBuf,
+    path: DisplayPath,
   },
   #[snafu(display("manifest `{path}` already exists"))]
   ManifestAlreadyExists {
     backtrace: Option<Backtrace>,
-    path: Utf8PathBuf,
+    path: DisplayPath,
   },
   #[snafu(display("manifest `{path}` not found"))]
   ManifestNotFound {
     backtrace: Option<Backtrace>,
-    path: Utf8PathBuf,
+    path: DisplayPath,
   },
   #[snafu(display("file missing: `{path}`"))]
   MissingFile {
@@ -49,7 +49,7 @@ pub(crate) enum Error {
   #[snafu(display("I/O error at `{path}`"))]
   Io {
     backtrace: Option<Backtrace>,
-    path: Utf8PathBuf,
+    path: DisplayPath,
     source: io::Error,
   },
   #[snafu(display("non-portable path `{path}`"))]
@@ -73,7 +73,7 @@ pub(crate) enum Error {
     actual: u64,
     backtrace: Option<Backtrace>,
     expected: u64,
-    path: Utf8PathBuf,
+    path: DisplayPath,
   },
   #[snafu(display("I/O error reading standard input"))]
   StandardInputIo {
@@ -83,7 +83,7 @@ pub(crate) enum Error {
   #[snafu(display("symlink at `{path}`"))]
   Symlink {
     backtrace: Option<Backtrace>,
-    path: Utf8PathBuf,
+    path: DisplayPath,
   },
   #[snafu(context(false))]
   WalkDir {

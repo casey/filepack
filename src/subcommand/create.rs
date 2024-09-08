@@ -2,7 +2,12 @@ use super::*;
 
 #[derive(Parser)]
 pub(crate) struct Create {
-  #[arg(help = "Create manifest for files in <ROOT> directory, defaulting to current directory")]
+  #[arg(
+    help = "Write manifest to <MANIFEST>, defaults to `<ROOT>/filepack.json`",
+    long
+  )]
+  manifest: Option<Utf8PathBuf>,
+  #[arg(help = "Create manifest for files in <ROOT> directory, defaults to current directory")]
   root: Option<Utf8PathBuf>,
 }
 
@@ -64,17 +69,21 @@ impl Create {
       return Err(Error::EmptyDirectory {
         paths: dirs
           .into_iter()
-          .map(|dir| dir.strip_prefix(&root).unwrap().to_owned())
+          .map(|dir| dir.strip_prefix(&root).unwrap().to_owned().into())
           .collect(),
       });
     }
 
-    let destination = root.join(Manifest::FILENAME);
+    let destination = if let Some(path) = self.manifest {
+      path
+    } else {
+      root.join(Manifest::FILENAME)
+    };
 
     ensure! {
       !destination.try_exists().context(error::Io { path: &destination })?,
       error::ManifestAlreadyExists {
-        path: Manifest::FILENAME,
+        path: destination,
       },
     }
 

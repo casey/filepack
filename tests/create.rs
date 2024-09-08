@@ -221,7 +221,7 @@ fn symlink_error() {
     .args(["create", "."])
     .current_dir(&dir)
     .assert()
-    .stderr(format!("error: symlink at `.{SEPARATOR}bar`\n"))
+    .stderr(format!("error: symlink at `bar`\n"))
     .failure();
 }
 
@@ -285,10 +285,9 @@ fn backslash_error() {
     .current_dir(&dir)
     .assert()
     .stderr(
-      "error: invalid path `\\`
-
-because:
-- illegal character `\\`
+      "\
+error: invalid path `\\`
+       └─ illegal character `\\`
 ",
     )
     .failure();
@@ -307,10 +306,9 @@ fn portability_error() {
     .current_dir(&dir)
     .assert()
     .stderr(
-      "error: non-portable path `aux`
-
-because:
-- non-portable name `aux`
+      "\
+error: non-portable path `aux`
+       └─ non-portable name `aux`
 ",
     )
     .failure();
