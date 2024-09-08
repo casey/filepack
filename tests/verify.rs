@@ -116,10 +116,9 @@ fn extra_fields_are_not_allowed() {
     .current_dir(&dir)
     .assert()
     .stderr(
-      "error: failed to deserialize manifest at `filepack.json`
-
-because:
-- unknown field `foo`, expected `files` at line 1 column 17\n",
+      "\
+error: failed to deserialize manifest at `filepack.json`
+       └─ unknown field `foo`, expected `files` at line 1 column 17\n",
     )
     .failure();
 }
@@ -140,7 +139,7 @@ fn extraneous_file_error() {
     .args(["verify", "."])
     .current_dir(&dir)
     .assert()
-    .stderr("error: extraneous file not in manifest at `foo`\n")
+    .stderr("error: extraneous file not in manifest: `foo`\n")
     .failure();
 }
 
@@ -220,11 +219,19 @@ fn hash_mismatch() {
 
   dir.child("foo").write_str("bar").unwrap();
 
-  Command::cargo_bin("filepack").unwrap()
+  Command::cargo_bin("filepack")
+    .unwrap()
     .args(["verify", "."])
     .current_dir(&dir)
     .assert()
-    .stderr("error: hash mismatch for `foo`, expected 04e0bb39f30b1a3feb89f536c93be15055482df748674b00d26e5a75777702e9 but got f2e897eed7d206cd855d441598fa521abc75aa96953e97c030c9612c30c1293d\n")
+    .stderr(
+      "\
+mismatched file: `foo`
+       manifest: 04e0bb39f30b1a3feb89f536c93be15055482df748674b00d26e5a75777702e9 (3 bytes)
+           file: f2e897eed7d206cd855d441598fa521abc75aa96953e97c030c9612c30c1293d (3 bytes)
+error: 1 mismatched file
+",
+    )
     .failure();
 }
 
@@ -248,7 +255,50 @@ fn size_mismatch() {
     .args(["verify", "."])
     .current_dir(&dir)
     .assert()
-    .stderr("error: size mismatch for `foo`, expected 0 but got 3\n")
+    .stderr(
+      "\
+mismatched file: `foo`
+       manifest: af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262 (0 bytes)
+           file: f2e897eed7d206cd855d441598fa521abc75aa96953e97c030c9612c30c1293d (3 bytes)
+error: 1 mismatched file
+",
+    )
+    .failure();
+}
+
+#[test]
+fn multiple_mismatches() {
+  let dir = TempDir::new().unwrap();
+
+  dir.child("foo").touch().unwrap();
+  dir.child("bar").touch().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["create", "."])
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  dir.child("foo").write_str("baz").unwrap();
+  dir.child("bar").write_str("bob").unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["verify", "."])
+    .current_dir(&dir)
+    .assert()
+    .stderr(
+      "\
+mismatched file: `bar`
+       manifest: af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262 (0 bytes)
+           file: e476f1b379438de7a1acfd567a94a8c53f08b9714042f7f17e5791645afc3176 (3 bytes)
+mismatched file: `foo`
+       manifest: af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262 (0 bytes)
+           file: 9624faa79d245cea9c345474fdb1a863b75921a8dd7aff3d84b22c65d1fc0847 (3 bytes)
+error: 2 mismatched files
+",
+    )
     .failure();
 }
 
@@ -288,7 +338,7 @@ fn non_unicode_path_error() {
     .args(["verify", "."])
     .current_dir(&dir)
     .assert()
-    .stderr(format!("error: path `.{SEPARATOR}�` not valid unicode\n"))
+    .stderr(format!("error: path not valid unicode: `.{SEPARATOR}�`\n"))
     .failure();
 }
 
@@ -304,10 +354,9 @@ fn non_unicode_manifest_deserialize_error() {
     .current_dir(&dir)
     .assert()
     .stderr(
-      "error: I/O error at `filepack.json`
-
-because:
-- stream did not contain valid UTF-8
+      "\
+error: I/O error at `filepack.json`
+       └─ stream did not contain valid UTF-8
 ",
     )
     .failure();
@@ -384,4 +433,22 @@ fn file_not_found_error_message() {
     .assert()
     .stderr(is_match("error: file missing: `foo`\n"))
     .failure();
+}
+
+#[test]
+fn with_manifest_path() {
+  let dir = TempDir::new().unwrap();
+
+  dir.child("foo").touch().unwrap();
+
+  dir.child("hello.json").write_str(
+    r#"{"files":{"foo":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}}}"#,
+  ).unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["verify", "--manifest", "hello.json"])
+    .current_dir(&dir)
+    .assert()
+    .success();
 }

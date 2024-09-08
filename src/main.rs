@@ -1,17 +1,19 @@
 use {
   self::{
-    arguments::Arguments, entry::Entry, error::Error, hash::Hash, lint::Lint, list::List,
-    manifest::Manifest, options::Options, relative_path::RelativePath, subcommand::Subcommand,
+    arguments::Arguments, display_path::DisplayPath, entry::Entry, error::Error, hash::Hash,
+    lint::Lint, list::List, manifest::Manifest, options::Options, relative_path::RelativePath,
+    subcommand::Subcommand,
   },
   blake3::Hasher,
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},
   clap::Parser,
   indicatif::{ProgressBar, ProgressStyle},
+  lexiclean::Lexiclean,
   serde::{Deserialize, Deserializer, Serialize, Serializer},
   snafu::{ensure, ErrorCompat, OptionExt, ResultExt, Snafu},
   std::{
     backtrace::{Backtrace, BacktraceStatus},
-    collections::HashMap,
+    collections::{BTreeMap, HashMap},
     env,
     fmt::{self, Display, Formatter},
     fs::{self, File},
@@ -24,6 +26,7 @@ use {
 };
 
 mod arguments;
+mod display_path;
 mod entry;
 mod error;
 mod hash;
@@ -41,13 +44,10 @@ fn main() {
   if let Err(err) = Arguments::parse().run() {
     eprintln!("error: {err}");
 
-    for (i, err) in err.iter_chain().skip(1).enumerate() {
-      if i == 0 {
-        eprintln!();
-        eprintln!("because:");
-      }
+    let causes = err.iter_chain().skip(1).count();
 
-      eprintln!("- {err}");
+    for (i, err) in err.iter_chain().skip(1).enumerate() {
+      eprintln!("       {}─ {err}", if i < causes - 1 { '├' } else { '└' });
     }
 
     if let Some(backtrace) = err.backtrace() {

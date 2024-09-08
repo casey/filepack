@@ -202,7 +202,7 @@ fn non_unicode_path_error() {
     .args(["create", "."])
     .current_dir(&dir)
     .assert()
-    .stderr(format!("error: path `.{SEPARATOR}�` not valid unicode\n"))
+    .stderr(format!("error: path not valid unicode: `.{SEPARATOR}�`\n"))
     .failure();
 }
 
@@ -221,7 +221,7 @@ fn symlink_error() {
     .args(["create", "."])
     .current_dir(&dir)
     .assert()
-    .stderr(format!("error: symlink at `.{SEPARATOR}bar`\n"))
+    .stderr("error: symlink at `bar`\n")
     .failure();
 }
 
@@ -285,10 +285,9 @@ fn backslash_error() {
     .current_dir(&dir)
     .assert()
     .stderr(
-      "error: invalid path `\\`
-
-because:
-- illegal character `\\`
+      "\
+error: invalid path `\\`
+       └─ illegal character `\\`
 ",
     )
     .failure();
@@ -307,10 +306,9 @@ fn portability_error() {
     .current_dir(&dir)
     .assert()
     .stderr(
-      "error: non-portable path `aux`
-
-because:
-- non-portable name `aux`
+      "\
+error: non-portable path `aux`
+       └─ non-portable name `aux`
 ",
     )
     .failure();
@@ -329,4 +327,29 @@ fn manifest_already_exists_error() {
     .assert()
     .stderr("error: manifest `filepack.json` already exists\n")
     .failure();
+}
+
+#[test]
+fn with_manifest_path() {
+  let dir = TempDir::new().unwrap();
+
+  dir.child("foo").touch().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["create", "--manifest", "hello.json"])
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  dir.child("hello.json").assert(
+    r#"{"files":{"foo":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}}}"#,
+  );
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["verify", "--manifest", "hello.json"])
+    .current_dir(&dir)
+    .assert()
+    .success();
 }
