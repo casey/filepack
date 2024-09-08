@@ -24,7 +24,7 @@ pub(crate) enum Error {
     backtrace: Option<Backtrace>,
     count: usize,
   },
-  #[snafu(display("extraneous file not in manifest at `{path}`"))]
+  #[snafu(display("extraneous file not in manifest: `{path}`"))]
   ExtraneousFile {
     backtrace: Option<Backtrace>,
     path: DisplayPath,

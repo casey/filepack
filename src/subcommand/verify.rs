@@ -22,13 +22,13 @@ impl Verify {
       Utf8PathBuf::from_path_buf(path).map_err(|path| error::PathUnicode { path }.build())?
     };
 
-    let manifest = if let Some(ref manifest) = self.manifest {
+    let source = if let Some(ref manifest) = self.manifest {
       manifest.clone()
     } else {
       root.join(Manifest::FILENAME)
     };
 
-    let json = match fs::read_to_string(&manifest) {
+    let json = match fs::read_to_string(&source) {
       Err(err) if err.kind() == io::ErrorKind::NotFound => {
         return Err(
           error::ManifestNotFound {
@@ -40,7 +40,7 @@ impl Verify {
           .build(),
         );
       }
-      result => result.context(error::Io { path: manifest })?,
+      result => result.context(error::Io { path: &source })?,
     };
 
     let manifest = serde_json::from_str::<Manifest>(&json).context(error::Deserialize {
@@ -109,13 +109,13 @@ mismatched file: `{path}`
         continue;
       }
 
+      if path == source {
+        continue;
+      }
+
       let path = path.strip_prefix(&root).unwrap();
 
       let path = RelativePath::try_from(path).context(error::Path { path })?;
-
-      if path == Manifest::FILENAME {
-        continue;
-      }
 
       ensure! {
         manifest.files.contains_key(&path),

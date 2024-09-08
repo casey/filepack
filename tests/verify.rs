@@ -139,7 +139,7 @@ fn extraneous_file_error() {
     .args(["verify", "."])
     .current_dir(&dir)
     .assert()
-    .stderr("error: extraneous file not in manifest at `foo`\n")
+    .stderr("error: extraneous file not in manifest: `foo`\n")
     .failure();
 }
 

@@ -328,3 +328,28 @@ fn manifest_already_exists_error() {
     .stderr("error: manifest `filepack.json` already exists\n")
     .failure();
 }
+
+#[test]
+fn with_manifest_path() {
+  let dir = TempDir::new().unwrap();
+
+  dir.child("foo").touch().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["create", "--manifest", "hello.json"])
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  dir.child("hello.json").assert(
+    r#"{"files":{"foo":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}}}"#,
+  );
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["verify", "--manifest", "hello.json"])
+    .current_dir(&dir)
+    .assert()
+    .success();
+}
