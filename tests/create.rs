@@ -281,7 +281,7 @@ fn backslash_error() {
 
   Command::cargo_bin("filepack")
     .unwrap()
-    .args(["create", "."])
+    .args(["create", "--deny", "all", "."])
     .current_dir(&dir)
     .assert()
     .stderr(
@@ -295,14 +295,14 @@ error: invalid path `\\`
 
 #[cfg(not(windows))]
 #[test]
-fn portability_error() {
+fn deny_portability_error() {
   let dir = TempDir::new().unwrap();
 
   dir.child("aux").touch().unwrap();
 
   Command::cargo_bin("filepack")
     .unwrap()
-    .args(["create", "."])
+    .args(["create", "--deny", "all", "."])
     .current_dir(&dir)
     .assert()
     .stderr(
@@ -312,6 +312,21 @@ error: non-portable path `aux`
 ",
     )
     .failure();
+}
+
+#[cfg(not(windows))]
+#[test]
+fn allow_portability_error() {
+  let dir = TempDir::new().unwrap();
+
+  dir.child("aux").touch().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["create", "."])
+    .current_dir(&dir)
+    .assert()
+    .success();
 }
 
 #[test]

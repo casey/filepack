@@ -2,6 +2,8 @@ use super::*;
 
 #[derive(Parser)]
 pub(crate) struct Create {
+  #[arg(help = "Deny <LINT_GROUP>", long, value_name = "LINT_GROUP")]
+  deny: Option<LintGroup>,
   #[arg(
     help = "Write manifest to <MANIFEST>, defaults to `<ROOT>/filepack.json`",
     long
@@ -55,9 +57,14 @@ impl Create {
 
       let relative = RelativePath::try_from(relative).context(error::Path { path: relative })?;
 
-      relative
-        .check_portability()
-        .context(error::PathLint { path: &relative })?;
+      match self.deny {
+        None => {}
+        Some(LintGroup::All) => {
+          relative
+            .check_portability()
+            .context(error::PathLint { path: &relative })?;
+        }
+      }
 
       let metadata = path.metadata().context(error::Io { path })?;
 
