@@ -287,7 +287,7 @@ fn backslash_error() {
     .stderr(
       "\
 error: invalid path `\\`
-       └─ illegal character `\\`
+       └─ paths may not contain separator character `\\`
 ",
     )
     .failure();
@@ -308,7 +308,7 @@ fn deny_portability_error() {
     .stderr(
       "\
 error: non-portable path `aux`
-       └─ non-portable name `aux`
+       └─ Windows does not allow files named `aux`
 ",
     )
     .failure();

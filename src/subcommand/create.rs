@@ -24,6 +24,8 @@ impl Create {
 
     let mut paths = HashMap::new();
 
+    let mut case_conflicts = HashMap::<RelativePath, Vec<RelativePath>>::new();
+
     let mut dirs = Vec::new();
 
     for entry in WalkDir::new(&root) {
@@ -63,12 +65,29 @@ impl Create {
           relative
             .check_portability()
             .context(error::PathLint { path: &relative })?;
+
+          case_conflicts
+            .entry(relative.to_lowercase())
+            .or_default()
+            .push(relative.clone());
         }
       }
 
       let metadata = path.metadata().context(error::Io { path })?;
 
       paths.insert(relative, metadata.len());
+    }
+
+    let mut lint_errors = 0;
+
+    for (_lowercase, originals) in case_conflicts {
+      if originals.len() > 1 {
+        lint_errors += 1;
+        eprintln!("multiple paths would conflict on case-sensitive filesystems:");
+        for original in originals {
+          eprintln!("    {original}");
+        }
+      }
     }
 
     if !dirs.is_empty() {

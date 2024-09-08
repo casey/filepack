@@ -8,13 +8,14 @@ mod error;
 pub(crate) struct RelativePath(String);
 
 impl RelativePath {
-  const ILLEGAL_CHARACTERS: [char; 2] = ['/', '\\'];
+  const SEPARATORS: [char; 2] = ['/', '\\'];
 
-  const NON_PORTABLE_CHARACTERS: [char; 7] = ['"', '*', ':', '<', '>', '?', '|'];
+  const WINDOWS_RESERVED_CHARACTERS: [char; 7] = ['"', '*', ':', '<', '>', '?', '|'];
 
-  const NON_PORTABLE_NAMES: [&'static str; 22] = [
-    "aux", "com1", "com2", "com3", "com4", "com5", "com6", "com7", "com8", "com9", "con", "lpt1",
-    "lpt2", "lpt3", "lpt4", "lpt5", "lpt6", "lpt7", "lpt8", "lpt9", "nul", "prn",
+  const WINDOWS_RESERVED_NAMES: [&'static str; 28] = [
+    "AUX", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "COM¹", "COM²",
+    "COM³", "CON", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9", "LPT¹",
+    "LPT²", "LPT³", "NUL", "PRN",
   ];
 
   pub(crate) fn check_portability(&self) -> Result<(), Lint> {
@@ -26,51 +27,53 @@ impl RelativePath {
       };
 
       for character in component.chars() {
-        if Self::NON_PORTABLE_CHARACTERS.contains(&character) {
-          return Err(Lint::Character { character });
+        if Self::WINDOWS_RESERVED_CHARACTERS.contains(&character) {
+          return Err(Lint::WindowsReservedCharacter { character });
         }
 
         if let 0..32 = character as u32 {
-          return Err(Lint::Character { character });
+          return Err(Lint::WindowsReservedCharacter { character });
         }
       }
 
-      for name in Self::NON_PORTABLE_NAMES {
-        let lowercase = component.to_lowercase();
+      for name in Self::WINDOWS_RESERVED_NAMES {
+        let uppercase = component.to_uppercase();
 
-        if lowercase == name {
-          return Err(Lint::Name {
+        if uppercase == name {
+          return Err(Lint::WindowsReservedFilename {
             name: component.into(),
           });
         }
 
-        if lowercase.starts_with(name) && lowercase.chars().nth(name.chars().count()) == Some('.') {
-          return Err(Lint::Name {
+        if uppercase.starts_with(name) && uppercase.chars().nth(name.chars().count()) == Some('.') {
+          return Err(Lint::WindowsReservedFilename {
             name: component.into(),
           });
         }
       }
 
       if component.starts_with(' ') {
-        return Err(Lint::LeadingSpace);
+        return Err(Lint::WindowsLeadingSpace);
       }
 
       if component.ends_with(' ') {
-        return Err(Lint::TrailingSpace);
+        return Err(Lint::WindowsTrailingSpace);
       }
 
       if component.ends_with('.') {
-        return Err(Lint::TrailingPeriod);
+        return Err(Lint::WindowsTrailingPeriod);
       }
 
       if component.len() > 255 {
-        return Err(Lint::ComponentLength {
-          length: component.len(),
-        });
+        return Err(Lint::FilenameLength);
       }
     }
 
     Ok(())
+  }
+
+  pub(crate) fn to_lowercase(&self) -> Self {
+    Self(self.0.to_lowercase())
   }
 }
 
@@ -82,12 +85,6 @@ impl AsRef<str> for RelativePath {
 
 impl AsRef<Utf8Path> for RelativePath {
   fn as_ref(&self) -> &Utf8Path {
-    self.0.as_ref()
-  }
-}
-
-impl AsRef<Path> for RelativePath {
-  fn as_ref(&self) -> &Path {
     self.0.as_ref()
   }
 }
@@ -153,8 +150,8 @@ impl FromStr for RelativePath {
       }
 
       for character in component.chars() {
-        if Self::ILLEGAL_CHARACTERS.contains(&character) {
-          return Err(Error::Character { character });
+        if Self::SEPARATORS.contains(&character) {
+          return Err(Error::Separator { character });
         }
       }
 
@@ -243,7 +240,7 @@ mod tests {
     case("/", Error::LeadingSlash);
     case("foo/", Error::TrailingSlash);
     case("foo//bar", Error::DoubleSlash);
-    case("\\", Error::Character { character: '\\' });
+    case("\\", Error::Separator { character: '\\' });
   }
 
   #[test]
@@ -271,57 +268,60 @@ mod tests {
 
     for i in 0..32 {
       let character = char::from_u32(i).unwrap();
-      case(&character.to_string(), Lint::Character { character });
+      case(
+        &character.to_string(),
+        Lint::WindowsReservedCharacter { character },
+      );
     }
 
-    case("*", Lint::Character { character: '*' });
-    case(":", Lint::Character { character: ':' });
-    case("<", Lint::Character { character: '<' });
-    case(">", Lint::Character { character: '>' });
-    case("?", Lint::Character { character: '?' });
-    case("\"", Lint::Character { character: '"' });
-    case("|", Lint::Character { character: '|' });
+    case("*", Lint::WindowsReservedCharacter { character: '*' });
+    case(":", Lint::WindowsReservedCharacter { character: ':' });
+    case("<", Lint::WindowsReservedCharacter { character: '<' });
+    case(">", Lint::WindowsReservedCharacter { character: '>' });
+    case("?", Lint::WindowsReservedCharacter { character: '?' });
+    case("\"", Lint::WindowsReservedCharacter { character: '"' });
+    case("|", Lint::WindowsReservedCharacter { character: '|' });
 
-    case(&"a".repeat(256), Lint::ComponentLength { length: 256 });
+    case(&"a".repeat(256), Lint::FilenameLength);
 
-    case("foo/ bar", Lint::LeadingSpace);
+    case("foo/ bar", Lint::WindowsLeadingSpace);
 
-    case("CON", Lint::Name { name: "CON".into() });
-    case("con", Lint::Name { name: "con".into() });
+    case("CON", Lint::WindowsReservedFilename { name: "CON".into() });
+    case("con", Lint::WindowsReservedFilename { name: "con".into() });
     case(
       "CON./foo",
-      Lint::Name {
+      Lint::WindowsReservedFilename {
         name: "CON.".into(),
       },
     );
     case(
       "CON.txt",
-      Lint::Name {
+      Lint::WindowsReservedFilename {
         name: "CON.txt".into(),
       },
     );
     case(
       "CON.txt/foo",
-      Lint::Name {
+      Lint::WindowsReservedFilename {
         name: "CON.txt".into(),
       },
     );
     case(
       "foo/CON.",
-      Lint::Name {
+      Lint::WindowsReservedFilename {
         name: "CON.".into(),
       },
     );
     case(
       "foo/CON.txt",
-      Lint::Name {
+      Lint::WindowsReservedFilename {
         name: "CON.txt".into(),
       },
     );
 
-    case("foo./bar", Lint::TrailingPeriod);
+    case("foo./bar", Lint::WindowsTrailingPeriod);
 
-    case("foo /bar", Lint::TrailingSpace);
+    case("foo /bar", Lint::WindowsTrailingSpace);
   }
 
   #[test]

@@ -2,11 +2,11 @@ use super::*;
 
 #[derive(Debug, PartialEq)]
 pub(crate) enum Error {
-  Character { character: char },
   Component { component: String },
   DoubleSlash,
   Empty,
   LeadingSlash,
+  Separator { character: char },
   TrailingSlash,
   WindowsDiskPrefix { letter: char },
 }
@@ -14,13 +14,21 @@ pub(crate) enum Error {
 impl Display for Error {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     match self {
-      Error::Character { character } => write!(f, "illegal character `{character}`"),
-      Error::Component { component } => write!(f, "illegal path component `{component}`"),
-      Error::DoubleSlash => write!(f, "double slash"),
-      Error::Empty => write!(f, "empty path"),
-      Error::LeadingSlash => write!(f, "leading slash"),
-      Error::TrailingSlash => write!(f, "trailing slash"),
-      Error::WindowsDiskPrefix { letter } => write!(f, "Windows disk prefix `{letter}:`"),
+      Error::Component { component } => write!(
+        f,
+        "paths may not contain non-normal path component `{component}`"
+      ),
+      Error::DoubleSlash => write!(f, "paths may not contain double slashes"),
+      Error::Empty => write!(f, "paths may not be empty"),
+      Error::LeadingSlash => write!(f, "paths may not begin with slash character"),
+      Error::Separator { character } => {
+        write!(f, "paths may not contain separator character `{character}`")
+      }
+      Error::TrailingSlash => write!(f, "paths may not end with slash character"),
+      Error::WindowsDiskPrefix { letter } => write!(
+        f,
+        "paths may not begin with Windows disk prefix `{letter}:`"
+      ),
     }
   }
 }
