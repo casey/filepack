@@ -38,9 +38,8 @@ Files can later be verified with:
 filepack verify path/to/directory
 ```
 
-Files can later be verified against the hashes saved in the manifest to protect
-against accidental or malicious corruption, as long as the manifest has not
-been tampered with.
+To protect against accidental or malicious corruption, as long as the manifest
+has not been tampered with.
 
 If you run `filepack` a lot, you might want to `alias fp=filepack`.
 
