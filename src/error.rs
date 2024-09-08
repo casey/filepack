@@ -19,16 +19,14 @@ pub(crate) enum Error {
     )
   )]
   EmptyDirectory { paths: Vec<DisplayPath> },
+  #[snafu(display("{count} mismatched file{}", if *count == 1 { "" } else { "s" }))]
+  EntryMismatch {
+    backtrace: Option<Backtrace>,
+    count: usize,
+  },
   #[snafu(display("extraneous file not in manifest at `{path}`"))]
   ExtraneousFile {
     backtrace: Option<Backtrace>,
-    path: DisplayPath,
-  },
-  #[snafu(display("hash mismatch for `{path}`, expected {expected} but got {actual}"))]
-  HashMismatch {
-    actual: Hash,
-    backtrace: Option<Backtrace>,
-    expected: Hash,
     path: DisplayPath,
   },
   #[snafu(display("manifest `{path}` already exists"))]
@@ -67,13 +65,6 @@ pub(crate) enum Error {
   PathUnicode {
     backtrace: Option<Backtrace>,
     path: PathBuf,
-  },
-  #[snafu(display("size mismatch for `{path}`, expected {expected} but got {actual}"))]
-  SizeMismatch {
-    actual: u64,
-    backtrace: Option<Backtrace>,
-    expected: u64,
-    path: DisplayPath,
   },
   #[snafu(display("I/O error reading standard input"))]
   StandardInputIo {

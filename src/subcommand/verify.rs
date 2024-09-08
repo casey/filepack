@@ -49,6 +49,8 @@ impl Verify {
 
     let bar = progress_bar::new(manifest.files.values().map(|entry| entry.size).sum());
 
+    let mut mismatches = HashMap::new();
+
     for (path, &expected) in &manifest.files {
       let actual = match options.hash_file(&root.join(path)) {
         Err(err) if err.kind() == io::ErrorKind::NotFound => {
@@ -57,25 +59,30 @@ impl Verify {
         result => result.context(error::Io { path })?,
       };
 
-      ensure!(
-        actual.size == expected.size,
-        error::SizeMismatch {
-          actual: actual.size,
-          expected: expected.size,
-          path,
-        },
-      );
-
-      ensure!(
-        actual.hash == expected.hash,
-        error::HashMismatch {
-          actual: actual.hash,
-          expected: expected.hash,
-          path,
-        },
-      );
+      if actual != expected {
+        mismatches.insert(path, (actual, expected));
+      }
 
       bar.inc(expected.size);
+    }
+
+    if !mismatches.is_empty() {
+      for (path, (actual, expected)) in &mismatches {
+        eprintln!(
+          "\
+mismatched file: `{path}`
+       manifest: {} ({} bytes)
+           file: {} ({} bytes)",
+          expected.hash, expected.size, actual.hash, actual.size,
+        );
+      }
+
+      return Err(
+        error::EntryMismatch {
+          count: mismatches.len(),
+        }
+        .build(),
+      );
     }
 
     let mut dirs = Vec::new();
