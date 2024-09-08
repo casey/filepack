@@ -15,11 +15,13 @@ pub(crate) struct Verify {
 
 impl Verify {
   pub(crate) fn run(self, options: Options) -> Result {
+    let current_dir = Utf8PathBuf::from_path_buf(env::current_dir().context(error::CurrentDir)?)
+      .map_err(|path| error::PathUnicode { path }.build())?;
+
     let root = if let Some(root) = self.root {
       root
     } else {
-      let path = env::current_dir().context(error::CurrentDir)?;
-      Utf8PathBuf::from_path_buf(path).map_err(|path| error::PathUnicode { path }.build())?
+      current_dir.clone()
     };
 
     let source = if let Some(ref manifest) = self.manifest {
@@ -109,7 +111,7 @@ mismatched file: `{path}`
         continue;
       }
 
-      if path == source {
+      if current_dir.join(&path) == current_dir.join(&source) {
         continue;
       }
 
