@@ -30,7 +30,12 @@ impl Verify {
 
     let json = match fs::read_to_string(&manifest) {
       Err(err) if err.kind() == io::ErrorKind::NotFound => {
-        return Err(error::ManifestNotFound { path: manifest }.build());
+        return Err(
+          error::ManifestNotFound {
+            path: manifest.strip_prefix(root).unwrap_or(&manifest),
+          }
+          .build(),
+        );
       }
       result => result.context(error::Io { path: manifest })?,
     };
