@@ -22,8 +22,8 @@ impl Verify {
       Utf8PathBuf::from_path_buf(path).map_err(|path| error::PathUnicode { path }.build())?
     };
 
-    let manifest = if let Some(manifest) = self.manifest {
-      manifest
+    let manifest = if let Some(ref manifest) = self.manifest {
+      manifest.clone()
     } else {
       root.join(Manifest::FILENAME)
     };
@@ -32,7 +32,10 @@ impl Verify {
       Err(err) if err.kind() == io::ErrorKind::NotFound => {
         return Err(
           error::ManifestNotFound {
-            path: manifest.strip_prefix(root).unwrap_or(&manifest),
+            path: self
+              .manifest
+              .as_deref()
+              .unwrap_or(Utf8Path::new(Manifest::FILENAME)),
           }
           .build(),
         );
