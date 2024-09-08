@@ -49,7 +49,7 @@ impl Verify {
 
     let bar = progress_bar::new(manifest.files.values().map(|entry| entry.size).sum());
 
-    let mut mismatches = HashMap::new();
+    let mut mismatches = BTreeMap::new();
 
     for (path, &expected) in &manifest.files {
       let actual = match options.hash_file(&root.join(path)) {

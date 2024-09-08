@@ -4,7 +4,7 @@ pub(crate) use self::error::Error;
 
 mod error;
 
-#[derive(Clone, Debug, Eq, Hash, PartialEq, Serialize)]
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize)]
 pub(crate) struct RelativePath(String);
 
 impl RelativePath {

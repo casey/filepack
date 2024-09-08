@@ -13,7 +13,7 @@ use {
   snafu::{ensure, ErrorCompat, OptionExt, ResultExt, Snafu},
   std::{
     backtrace::{Backtrace, BacktraceStatus},
-    collections::HashMap,
+    collections::{BTreeMap, HashMap},
     env,
     fmt::{self, Display, Formatter},
     fs::{self, File},
