@@ -111,7 +111,7 @@ mismatched file: `{path}`
         continue;
       }
 
-      if current_dir.join(&path) == current_dir.join(&source) {
+      if current_dir.join(path) == current_dir.join(&source) {
         continue;
       }
 

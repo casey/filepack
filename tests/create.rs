@@ -221,7 +221,7 @@ fn symlink_error() {
     .args(["create", "."])
     .current_dir(&dir)
     .assert()
-    .stderr(format!("error: symlink at `bar`\n"))
+    .stderr("error: symlink at `bar`\n")
     .failure();
 }
 
