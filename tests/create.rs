@@ -309,8 +309,8 @@ fn deny_case_insensitive_filesystem_path_conflict() {
     .stderr(
       "\
 error: paths would conflict on case-insensitive filesystem:
-       ├─ `foo`
-       └─ `FOO`
+       ├─ `FOO`
+       └─ `foo`
 error: 1 lint error
 ",
     )
