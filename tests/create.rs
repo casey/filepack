@@ -293,6 +293,29 @@ error: invalid path `\\`
     .failure();
 }
 
+#[cfg(all(not(windows), not(target_os = "macos")))]
+#[test]
+fn deny_case_insensitive_filesystem_path_conflict() {
+  let dir = TempDir::new().unwrap();
+
+  dir.child("foo").touch().unwrap();
+  dir.child("FOO").touch().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["create", "--deny", "all", "."])
+    .current_dir(&dir)
+    .assert()
+    .stderr(
+      "\
+error: non-portable path: `aux`
+       └─ Windows does not allow files named `aux`
+error: 1 lint error
+",
+    )
+    .failure();
+}
+
 #[cfg(not(windows))]
 #[test]
 fn deny_portability_error() {
@@ -307,8 +330,9 @@ fn deny_portability_error() {
     .assert()
     .stderr(
       "\
-error: non-portable path `aux`
+error: non-portable path: `aux`
        └─ Windows does not allow files named `aux`
+error: 1 lint error
 ",
     )
     .failure();

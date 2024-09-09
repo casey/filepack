@@ -18,7 +18,7 @@ impl RelativePath {
     "LPT²", "LPT³", "NUL", "PRN",
   ];
 
-  pub(crate) fn check_portability(&self) -> Result<(), Lint> {
+  pub(crate) fn check_portability(&self) -> Option<Lint> {
     for component in Utf8Path::new(&self.0).components() {
       let Utf8Component::Normal(component) = component else {
         unreachable!(
@@ -28,11 +28,11 @@ impl RelativePath {
 
       for character in component.chars() {
         if Self::WINDOWS_RESERVED_CHARACTERS.contains(&character) {
-          return Err(Lint::WindowsReservedCharacter { character });
+          return Some(Lint::WindowsReservedCharacter { character });
         }
 
         if let 0..32 = character as u32 {
-          return Err(Lint::WindowsReservedCharacter { character });
+          return Some(Lint::WindowsReservedCharacter { character });
         }
       }
 
@@ -40,36 +40,36 @@ impl RelativePath {
         let uppercase = component.to_uppercase();
 
         if uppercase == name {
-          return Err(Lint::WindowsReservedFilename {
+          return Some(Lint::WindowsReservedFilename {
             name: component.into(),
           });
         }
 
         if uppercase.starts_with(name) && uppercase.chars().nth(name.chars().count()) == Some('.') {
-          return Err(Lint::WindowsReservedFilename {
+          return Some(Lint::WindowsReservedFilename {
             name: component.into(),
           });
         }
       }
 
       if component.starts_with(' ') {
-        return Err(Lint::WindowsLeadingSpace);
+        return Some(Lint::WindowsLeadingSpace);
       }
 
       if component.ends_with(' ') {
-        return Err(Lint::WindowsTrailingSpace);
+        return Some(Lint::WindowsTrailingSpace);
       }
 
       if component.ends_with('.') {
-        return Err(Lint::WindowsTrailingPeriod);
+        return Some(Lint::WindowsTrailingPeriod);
       }
 
       if component.len() > 255 {
-        return Err(Lint::FilenameLength);
+        return Some(Lint::FilenameLength);
       }
     }
 
-    Ok(())
+    None
   }
 
   pub(crate) fn to_lowercase(&self) -> Self {
@@ -245,11 +245,11 @@ mod tests {
 
   #[test]
   fn portability() {
-    "foo"
+    assert!("foo"
       .parse::<RelativePath>()
       .unwrap()
       .check_portability()
-      .unwrap();
+      .is_none());
   }
 
   #[test]
@@ -261,7 +261,7 @@ mod tests {
           .parse::<RelativePath>()
           .unwrap()
           .check_portability()
-          .unwrap_err(),
+          .unwrap(),
         expected,
       );
     }

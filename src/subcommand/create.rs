@@ -26,6 +26,8 @@ impl Create {
 
     let mut case_conflicts = HashMap::<RelativePath, Vec<RelativePath>>::new();
 
+    let mut lint_errors = 0u64;
+
     let mut dirs = Vec::new();
 
     for entry in WalkDir::new(&root) {
@@ -62,9 +64,11 @@ impl Create {
       match self.deny {
         None => {}
         Some(LintGroup::All) => {
-          relative
-            .check_portability()
-            .context(error::PathLint { path: &relative })?;
+          if let Some(lint) = relative.check_portability() {
+            eprintln!("error: non-portable path: `{relative}`");
+            eprintln!("       └─ {lint}");
+            lint_errors += 1
+          }
 
           case_conflicts
             .entry(relative.to_lowercase())
@@ -78,19 +82,26 @@ impl Create {
       paths.insert(relative, metadata.len());
     }
 
-    let mut lint_errors = 0;
-
     for originals in case_conflicts.values() {
       if originals.len() > 1 {
-        lint_errors += 1;
-        eprintln!("paths would conflict on case-sensitive filesystem:");
-        for original in originals {
-          eprintln!("    {original}");
+        eprintln!("error: paths would conflict on case-sensitive filesystem:");
+        for (i, original) in originals.iter().enumerate() {
+          eprintln!(
+            "       {}─ {original}",
+            if i < originals.len() - 1 {
+              '├'
+            } else {
+              '└'
+            }
+          );
         }
+        lint_errors += 1;
       }
     }
 
-    if lint_errors > 0 {}
+    if lint_errors > 0 {
+      return Err(error::Lint { count: lint_errors }.build());
+    }
 
     if !dirs.is_empty() {
       dirs.sort();
