@@ -80,15 +80,17 @@ impl Create {
 
     let mut lint_errors = 0;
 
-    for (_lowercase, originals) in case_conflicts {
+    for originals in case_conflicts.values() {
       if originals.len() > 1 {
         lint_errors += 1;
-        eprintln!("multiple paths would conflict on case-sensitive filesystems:");
+        eprintln!("paths would conflict on case-sensitive filesystem:");
         for original in originals {
           eprintln!("    {original}");
         }
       }
     }
+
+    if lint_errors > 0 {}
 
     if !dirs.is_empty() {
       dirs.sort();
