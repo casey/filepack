@@ -87,7 +87,7 @@ impl Create {
         eprintln!("error: paths would conflict on case-sensitive filesystem:");
         for (i, original) in originals.iter().enumerate() {
           eprintln!(
-            "       {}─ {original}",
+            "       {}─ `{original}`",
             if i < originals.len() - 1 {
               '├'
             } else {

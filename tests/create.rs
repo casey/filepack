@@ -308,9 +308,9 @@ fn deny_case_insensitive_filesystem_path_conflict() {
     .assert()
     .stderr(
       "\
-error: non-portable path: `aux`
-       └─ Windows does not allow files named `aux`
-error: 1 lint error
+error: paths would conflict on case-sensitive filesystem:
+       ├─ `foo`
+       └─ `FOO`
 ",
     )
     .failure();
