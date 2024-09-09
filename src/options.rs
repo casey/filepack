@@ -13,7 +13,15 @@ impl Options {
     let mut hasher = Hasher::new();
 
     if self.parallel {
-      hasher.update_mmap_rayon(path)?;
+      // rayon is actually slower for files that are under 128KiB
+      // (https://docs.rs/blake3/latest/blake3/struct.Hasher.html#method.update_rayon)
+      // Check the file size and only use rayon if it's larger than 128KiB.
+      let metadata = fs::metadata(path)?;
+      if metadata.len() > 128 * 1024 {
+        hasher.update_mmap_rayon(path)?;
+      } else {
+        hasher.update_reader(File::open(path)?)?;
+      }
     } else if self.mmap {
       hasher.update_mmap(path)?;
     } else {
