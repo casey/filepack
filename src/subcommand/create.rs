@@ -82,9 +82,10 @@ impl Create {
       paths.insert(relative, metadata.len());
     }
 
-    for originals in case_conflicts.values() {
+    for mut originals in case_conflicts.into_values() {
       if originals.len() > 1 {
-        eprintln!("error: paths would conflict on case-sensitive filesystem:");
+        originals.sort();
+        eprintln!("error: paths would conflict on case-insensitive filesystem:");
         for (i, original) in originals.iter().enumerate() {
           eprintln!(
             "       {}─ `{original}`",

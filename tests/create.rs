@@ -308,9 +308,10 @@ fn deny_case_insensitive_filesystem_path_conflict() {
     .assert()
     .stderr(
       "\
-error: paths would conflict on case-sensitive filesystem:
+error: paths would conflict on case-insensitive filesystem:
        ├─ `foo`
        └─ `FOO`
+error: 1 lint error
 ",
     )
     .failure();
