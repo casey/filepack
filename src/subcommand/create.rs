@@ -67,7 +67,7 @@ impl Create {
           if let Some(lint) = relative.check_portability() {
             eprintln!("error: non-portable path: `{relative}`");
             eprintln!("       └─ {lint}");
-            lint_errors += 1
+            lint_errors += 1;
           }
 
           case_conflicts
