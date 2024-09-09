@@ -50,11 +50,10 @@ pub(crate) enum Error {
     path: DisplayPath,
     source: io::Error,
   },
-  #[snafu(display("non-portable path `{path}`"))]
-  PathLint {
+  #[snafu(display("{count} lint error{}", if *count == 1 { "" } else { "s" }))]
+  Lint {
     backtrace: Option<Backtrace>,
-    path: RelativePath,
-    source: Lint,
+    count: u64,
   },
   #[snafu(display("invalid path `{path}`"))]
   Path {

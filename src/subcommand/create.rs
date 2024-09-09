@@ -2,6 +2,8 @@ use super::*;
 
 #[derive(Parser)]
 pub(crate) struct Create {
+  #[arg(help = "Deny <LINT_GROUP>", long, value_name = "LINT_GROUP")]
+  deny: Option<LintGroup>,
   #[arg(
     help = "Write manifest to <MANIFEST>, defaults to `<ROOT>/filepack.json`",
     long
@@ -21,6 +23,10 @@ impl Create {
     };
 
     let mut paths = HashMap::new();
+
+    let mut case_conflicts = HashMap::<RelativePath, Vec<RelativePath>>::new();
+
+    let mut lint_errors = 0u64;
 
     let mut dirs = Vec::new();
 
@@ -55,13 +61,47 @@ impl Create {
 
       let relative = RelativePath::try_from(relative).context(error::Path { path: relative })?;
 
-      relative
-        .check_portability()
-        .context(error::PathLint { path: &relative })?;
+      match self.deny {
+        None => {}
+        Some(LintGroup::All) => {
+          if let Some(lint) = relative.check_portability() {
+            eprintln!("error: non-portable path: `{relative}`");
+            eprintln!("       └─ {lint}");
+            lint_errors += 1;
+          }
+
+          case_conflicts
+            .entry(relative.to_lowercase())
+            .or_default()
+            .push(relative.clone());
+        }
+      }
 
       let metadata = path.metadata().context(error::Io { path })?;
 
       paths.insert(relative, metadata.len());
+    }
+
+    for mut originals in case_conflicts.into_values() {
+      if originals.len() > 1 {
+        originals.sort();
+        eprintln!("error: paths would conflict on case-insensitive filesystem:");
+        for (i, original) in originals.iter().enumerate() {
+          eprintln!(
+            "       {}─ `{original}`",
+            if i < originals.len() - 1 {
+              '├'
+            } else {
+              '└'
+            }
+          );
+        }
+        lint_errors += 1;
+      }
+    }
+
+    if lint_errors > 0 {
+      return Err(error::Lint { count: lint_errors }.build());
     }
 
     if !dirs.is_empty() {

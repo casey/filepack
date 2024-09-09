@@ -1,12 +1,12 @@
 use {
   self::{
     arguments::Arguments, display_path::DisplayPath, entry::Entry, error::Error, hash::Hash,
-    lint::Lint, list::List, manifest::Manifest, options::Options, relative_path::RelativePath,
-    subcommand::Subcommand,
+    lint::Lint, lint_group::LintGroup, list::List, manifest::Manifest, options::Options,
+    relative_path::RelativePath, subcommand::Subcommand,
   },
   blake3::Hasher,
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},
-  clap::Parser,
+  clap::{Parser, ValueEnum},
   indicatif::{ProgressBar, ProgressStyle},
   lexiclean::Lexiclean,
   serde::{Deserialize, Deserializer, Serialize, Serializer},
@@ -31,6 +31,7 @@ mod entry;
 mod error;
 mod hash;
 mod lint;
+mod lint_group;
 mod list;
 mod manifest;
 mod options;

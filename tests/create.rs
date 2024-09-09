@@ -281,13 +281,37 @@ fn backslash_error() {
 
   Command::cargo_bin("filepack")
     .unwrap()
-    .args(["create", "."])
+    .args(["create", "--deny", "all", "."])
     .current_dir(&dir)
     .assert()
     .stderr(
       "\
 error: invalid path `\\`
-       └─ illegal character `\\`
+       └─ paths may not contain separator character `\\`
+",
+    )
+    .failure();
+}
+
+#[cfg(all(not(windows), not(target_os = "macos")))]
+#[test]
+fn deny_case_insensitive_filesystem_path_conflict() {
+  let dir = TempDir::new().unwrap();
+
+  dir.child("foo").touch().unwrap();
+  dir.child("FOO").touch().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["create", "--deny", "all", "."])
+    .current_dir(&dir)
+    .assert()
+    .stderr(
+      "\
+error: paths would conflict on case-insensitive filesystem:
+       ├─ `FOO`
+       └─ `foo`
+error: 1 lint error
 ",
     )
     .failure();
@@ -295,7 +319,29 @@ error: invalid path `\\`
 
 #[cfg(not(windows))]
 #[test]
-fn portability_error() {
+fn deny_portability_error() {
+  let dir = TempDir::new().unwrap();
+
+  dir.child("aux").touch().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["create", "--deny", "all", "."])
+    .current_dir(&dir)
+    .assert()
+    .stderr(
+      "\
+error: non-portable path: `aux`
+       └─ Windows does not allow files named `aux`
+error: 1 lint error
+",
+    )
+    .failure();
+}
+
+#[cfg(not(windows))]
+#[test]
+fn allow_portability_error() {
   let dir = TempDir::new().unwrap();
 
   dir.child("aux").touch().unwrap();
@@ -305,13 +351,7 @@ fn portability_error() {
     .args(["create", "."])
     .current_dir(&dir)
     .assert()
-    .stderr(
-      "\
-error: non-portable path `aux`
-       └─ non-portable name `aux`
-",
-    )
-    .failure();
+    .success();
 }
 
 #[test]
