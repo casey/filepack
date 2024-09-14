@@ -18,7 +18,9 @@ impl RelativePath {
     "LPT²", "LPT³", "NUL", "PRN",
   ];
 
-  pub(crate) fn check_portability(&self) -> Option<Lint> {
+  const JUNK_NAMES: [&'static str; 2] = [".DS_Store", ".localized"];
+
+  pub(crate) fn lint(&self) -> Option<Lint> {
     for component in Utf8Path::new(&self.0).components() {
       let Utf8Component::Normal(component) = component else {
         unreachable!(
@@ -50,6 +52,10 @@ impl RelativePath {
             name: component.into(),
           });
         }
+      }
+
+      if Self::JUNK_NAMES.contains(&component) {
+        return Some(Lint::Junk);
       }
 
       if component.starts_with(' ') {
@@ -244,24 +250,16 @@ mod tests {
   }
 
   #[test]
-  fn portability() {
-    assert!("foo"
-      .parse::<RelativePath>()
-      .unwrap()
-      .check_portability()
-      .is_none());
+  fn lint_pass() {
+    assert!("foo".parse::<RelativePath>().unwrap().lint().is_none());
   }
 
   #[test]
-  fn portability_errors() {
+  fn lint_fail() {
     #[track_caller]
     fn case(path: &str, expected: Lint) {
       assert_eq!(
-        path
-          .parse::<RelativePath>()
-          .unwrap()
-          .check_portability()
-          .unwrap(),
+        path.parse::<RelativePath>().unwrap().lint().unwrap(),
         expected,
       );
     }
@@ -322,6 +320,8 @@ mod tests {
     case("foo./bar", Lint::WindowsTrailingPeriod);
 
     case("foo /bar", Lint::WindowsTrailingSpace);
+
+    case(".DS_Store", Lint::Junk);
   }
 
   #[test]

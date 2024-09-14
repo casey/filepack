@@ -3,6 +3,7 @@ use super::*;
 #[derive(Debug, PartialEq)]
 pub(crate) enum Lint {
   FilenameLength,
+  Junk,
   WindowsLeadingSpace,
   WindowsReservedCharacter { character: char },
   WindowsReservedFilename { name: String },
@@ -15,8 +16,9 @@ impl Display for Lint {
     match self {
       Lint::FilenameLength => write!(
         f,
-        "Many filesystems do not allow filenames longer than 255 bytes"
+        "many filesystems do not allow filenames longer than 255 bytes"
       ),
+      Lint::Junk => write!(f, "possible junk file"),
       Lint::WindowsLeadingSpace => {
         write!(f, "Windows does not allow filenames that begin with spaces")
       }
