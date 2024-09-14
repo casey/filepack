@@ -370,6 +370,58 @@ fn manifest_already_exists_error() {
 }
 
 #[test]
+fn force_overwrites_manifest() {
+  let dir = TempDir::new().unwrap();
+
+  dir.child("filepack.json").touch().unwrap();
+  dir.child("foo").touch().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["create", "--force", "."])
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  dir.child("filepack.json").assert(
+    r#"{"files":{"foo":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}}}"#,
+  );
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["verify", "."])
+    .current_dir(&dir)
+    .assert()
+    .success();
+}
+
+#[test]
+fn force_overwrites_manifest_with_destination() {
+  let dir = TempDir::new().unwrap();
+
+  dir.child("foo.json").touch().unwrap();
+  dir.child("foo").touch().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["create", "--force", ".", "--manifest", "foo.json"])
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  dir.child("foo.json").assert(
+    r#"{"files":{"foo":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}}}"#,
+  );
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["verify", ".", "--manifest", "foo.json"])
+    .current_dir(&dir)
+    .assert()
+    .success();
+}
+
+#[test]
 fn with_manifest_path() {
   let dir = TempDir::new().unwrap();
 
