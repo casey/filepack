@@ -145,6 +145,19 @@ An example manifest for a directory containing the files `README.md` and
 }
 ```
 
+Lints
+-----
+
+`filepack create` supports a optional lints that can be enabled with:
+
+```
+filepack create --deny all
+```
+
+These lints cover issues such as non-portable paths which are illegal on
+Windows filesystems, paths which would conflict on case-insensitive
+filesystems, and inclusion of junk files such as `.DS_Store`.
+
 Lofty Ambitions
 ---------------
 

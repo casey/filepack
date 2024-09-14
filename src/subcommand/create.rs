@@ -64,8 +64,8 @@ impl Create {
       match self.deny {
         None => {}
         Some(LintGroup::All) => {
-          if let Some(lint) = relative.check_portability() {
-            eprintln!("error: non-portable path: `{relative}`");
+          if let Some(lint) = relative.lint() {
+            eprintln!("error: path failed lint: `{relative}`");
             eprintln!("       └─ {lint}");
             lint_errors += 1;
           }

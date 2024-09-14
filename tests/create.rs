@@ -319,7 +319,7 @@ error: 1 lint error
 
 #[cfg(not(windows))]
 #[test]
-fn deny_portability_error() {
+fn deny_lint() {
   let dir = TempDir::new().unwrap();
 
   dir.child("aux").touch().unwrap();
@@ -331,7 +331,7 @@ fn deny_portability_error() {
     .assert()
     .stderr(
       "\
-error: non-portable path: `aux`
+error: path failed lint: `aux`
        └─ Windows does not allow files named `aux`
 error: 1 lint error
 ",
@@ -341,7 +341,7 @@ error: 1 lint error
 
 #[cfg(not(windows))]
 #[test]
-fn allow_portability_error() {
+fn allow_lint() {
   let dir = TempDir::new().unwrap();
 
   dir.child("aux").touch().unwrap();
