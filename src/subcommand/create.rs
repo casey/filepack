@@ -4,6 +4,8 @@ use super::*;
 pub(crate) struct Create {
   #[arg(help = "Deny <LINT_GROUP>", long, value_name = "LINT_GROUP")]
   deny: Option<LintGroup>,
+  #[arg(help = "Overwrite manifest if it already exists", long)]
+  force: bool,
   #[arg(
     help = "Write manifest to <MANIFEST>, defaults to `<ROOT>/filepack.json`",
     long
@@ -15,12 +17,22 @@ pub(crate) struct Create {
 
 impl Create {
   pub(crate) fn run(self, options: Options) -> Result {
+    let current_dir = env::current_dir().context(error::CurrentDir)?;
+
     let root = if let Some(root) = self.root {
       root
     } else {
-      let path = env::current_dir().context(error::CurrentDir)?;
-      Utf8PathBuf::from_path_buf(path).map_err(|path| error::PathUnicode { path }.build())?
+      Utf8PathBuf::from_path_buf(current_dir.clone())
+        .map_err(|path| error::PathUnicode { path }.build())?
     };
+
+    let destination = if let Some(path) = self.manifest {
+      path
+    } else {
+      root.join(Manifest::FILENAME)
+    };
+
+    let cleaned_destination = current_dir.join(&destination).lexiclean();
 
     let mut paths = HashMap::new();
 
@@ -36,6 +48,10 @@ impl Create {
       let path = entry.path();
 
       let path = Utf8Path::from_path(path).context(error::PathUnicode { path })?;
+
+      if current_dir.join(path).lexiclean() == cleaned_destination {
+        continue;
+      }
 
       while let Some(dir) = dirs.last() {
         if path.starts_with(dir) {
@@ -114,14 +130,8 @@ impl Create {
       });
     }
 
-    let destination = if let Some(path) = self.manifest {
-      path
-    } else {
-      root.join(Manifest::FILENAME)
-    };
-
     ensure! {
-      !destination.try_exists().context(error::Io { path: &destination })?,
+      self.force || !destination.try_exists().context(error::Io { path: &destination })?,
       error::ManifestAlreadyExists {
         path: destination,
       },
