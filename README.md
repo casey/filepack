@@ -148,7 +148,7 @@ An example manifest for a directory containing the files `README.md` and
 Lints
 -----
 
-`filepack create` supports a optional lints that can be enabled with:
+`filepack create` supports optional lints that can be enabled with:
 
 ```
 filepack create --deny all
