@@ -148,7 +148,7 @@ backslashes.
 Paths are relative, meaning that they cannot begin with a `/` or a Windows
 drive prefix, such as `C:`.
 
-Paths may not contain the path components `.` or `..`, and may not end with a
+Paths may not contain the path components `.` or `..` and may not end with a
 slash.
 
 Filepack currently has no way of tracking empty directories, the presence of
