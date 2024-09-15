@@ -1,9 +1,5 @@
 use super::*;
 
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-pub(crate) struct MetadataTemplate {}
-
 #[derive(Parser)]
 pub(crate) struct Create {
   #[arg(help = "Deny <LINT_GROUP>", long, value_name = "LINT_GROUP")]
