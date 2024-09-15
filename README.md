@@ -151,8 +151,8 @@ drive prefix, such as `C:`.
 Paths may not contain the path components `.` or `..` and may not end with a
 slash.
 
-Filepack currently has no way of tracking empty directories, the presence of
-which are an error when creating or verifying a manifest.
+Filepack has no way of tracking empty directories, the presence of which are an
+error when creating or verifying a manifest.
 
 Manifests contain an object with one mandatory key, `files`, and one optional
 key, `metadata`.
