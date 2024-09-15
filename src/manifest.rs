@@ -1,7 +1,7 @@
 use super::*;
 
 #[derive(Debug, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
+#[serde(deny_unknown_fields, rename_all = "kebab-case")]
 pub(crate) struct Manifest {
   pub(crate) files: HashMap<RelativePath, Entry>,
   #[serde(skip_serializing_if = "Option::is_none")]
