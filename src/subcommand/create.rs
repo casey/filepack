@@ -1,5 +1,9 @@
 use super::*;
 
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct MetadataTemplate {}
+
 #[derive(Parser)]
 pub(crate) struct Create {
   #[arg(help = "Deny <LINT_GROUP>", long, value_name = "LINT_GROUP")]
@@ -36,7 +40,11 @@ impl Create {
 
     let metadata = if let Some(path) = &self.metadata {
       let yaml = fs::read_to_string(path).context(error::Io { path })?;
-      serde_yaml::from_str(&yaml).context(error::DeserializeMetadata { path })?
+      Some(
+        serde_yaml::from_str::<Template>(&yaml)
+          .context(error::DeserializeMetadata { path })?
+          .into(),
+      )
     } else {
       None
     };

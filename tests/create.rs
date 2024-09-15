@@ -472,3 +472,23 @@ fn with_metadata() {
     .assert()
     .success();
 }
+
+#[test]
+fn metadata_template_may_not_have_unknown_keys() {
+  let dir = TempDir::new().unwrap();
+
+  dir.child("foo/bar").touch().unwrap();
+
+  dir
+    .child("metadata.yaml")
+    .write_str("title: Foo\nbar: baz")
+    .unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["create", "foo", "--metadata", "metadata.yaml"])
+    .current_dir(&dir)
+    .assert()
+    .stderr(is_match(".*unknown field `bar`.*"))
+    .failure();
+}

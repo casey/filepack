@@ -3,7 +3,7 @@ use {
     arguments::Arguments, display_path::DisplayPath, entry::Entry, error::Error, hash::Hash,
     lint::Lint, lint_group::LintGroup, list::List, manifest::Manifest, metadata::Metadata,
     options::Options, owo_colorize_ext::OwoColorizeExt, relative_path::RelativePath, style::Style,
-    subcommand::Subcommand,
+    subcommand::Subcommand, template::Template,
   },
   blake3::Hasher,
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},
@@ -43,6 +43,7 @@ mod progress_bar;
 mod relative_path;
 mod style;
 mod subcommand;
+mod template;
 
 type Result<T = (), E = Error> = std::result::Result<T, E>;
 
