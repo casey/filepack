@@ -11,6 +11,8 @@ pub(crate) struct Create {
     long
   )]
   manifest: Option<Utf8PathBuf>,
+  #[arg(help = "Include metadata from YAML document <METADATA>`", long)]
+  metadata: Option<Utf8PathBuf>,
   #[arg(help = "Create manifest for files in <ROOT> directory, defaults to current directory")]
   root: Option<Utf8PathBuf>,
 }
@@ -30,6 +32,13 @@ impl Create {
       path
     } else {
       root.join(Manifest::FILENAME)
+    };
+
+    let metadata = if let Some(path) = &self.metadata {
+      let yaml = fs::read_to_string(path).context(error::Io { path })?;
+      serde_yaml::from_str(&yaml).context(error::DeserializeMetadata { path })?
+    } else {
+      None
     };
 
     let cleaned_destination = current_dir.join(&destination).lexiclean();
@@ -149,7 +158,7 @@ impl Create {
       bar.inc(entry.size);
     }
 
-    let manifest = Manifest { files };
+    let manifest = Manifest { files, metadata };
 
     let json = serde_json::to_string(&manifest).unwrap();
 
