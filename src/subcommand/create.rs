@@ -11,7 +11,7 @@ pub(crate) struct Create {
     long
   )]
   manifest: Option<Utf8PathBuf>,
-  #[arg(help = "Include metadata from <METADATA>`", long)]
+  #[arg(help = "Include metadata from YAML document <METADATA>`", long)]
   metadata: Option<Utf8PathBuf>,
   #[arg(help = "Create manifest for files in <ROOT> directory, defaults to current directory")]
   root: Option<Utf8PathBuf>,
