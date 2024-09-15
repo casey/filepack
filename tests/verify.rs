@@ -452,3 +452,21 @@ fn with_manifest_path() {
     .assert()
     .success();
 }
+
+#[test]
+fn manifest_metadata_allows_unknown_keys() {
+  let dir = TempDir::new().unwrap();
+
+  dir.child("foo/bar").touch().unwrap();
+
+  dir.child("foo/filepack.json").write_str(
+    r#"{"files":{"bar":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}},"metadata":{"title":"Foo","bar":100}}"#,
+  ).unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["verify", "foo"])
+    .current_dir(&dir)
+    .assert()
+    .success();
+}

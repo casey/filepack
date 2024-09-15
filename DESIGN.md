@@ -135,11 +135,11 @@ Some alternative serialization formats are:
 Metadata
 --------
 
-A planned feature is the addition of optional metadata which semantically
-describes the contents of a package. For example, it's title and author.
+Filepack manifests may optionally include semantic metadata describing the
+package. For example, its title and author.
 
-This metadata could be included in the manifest, or could be in a file placed
-alongside the manifest.
+Metadata is currently included in the manifest itself, but could alternatively
+be placed in a file alongside the manifest.
 
 Including it in the manifest would have the advantage of being a single file.
 
