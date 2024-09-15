@@ -28,6 +28,14 @@ impl Style {
     }
   }
 
+  pub(crate) fn effective_style(self) -> owo_colors::Style {
+    if self.is_terminal {
+      self.inner
+    } else {
+      owo_colors::Style::default()
+    }
+  }
+
   pub(crate) fn message(self) -> Self {
     Self {
       inner: self.inner.bold(),
@@ -39,20 +47,6 @@ impl Style {
     Self {
       is_terminal: io::stderr().is_terminal(),
       inner: owo_colors::Style::default(),
-    }
-  }
-}
-
-pub(crate) trait OwoColorizeExt {
-  fn style(&self, style: Style) -> Styled<&Self>;
-}
-
-impl<T: owo_colors::OwoColorize> OwoColorizeExt for T {
-  fn style(&self, style: Style) -> Styled<&Self> {
-    if style.is_terminal {
-      self.style(style.inner)
-    } else {
-      self.style(owo_colors::Style::default())
     }
   }
 }

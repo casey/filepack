@@ -1,17 +1,8 @@
 use {
   self::{
-    arguments::Arguments,
-    display_path::DisplayPath,
-    entry::Entry,
-    error::Error,
-    hash::Hash,
-    lint::Lint,
-    lint_group::LintGroup,
-    list::List,
-    manifest::Manifest,
-    options::Options,
-    relative_path::RelativePath,
-    style::{OwoColorizeExt, Style},
+    arguments::Arguments, display_path::DisplayPath, entry::Entry, error::Error, hash::Hash,
+    lint::Lint, lint_group::LintGroup, list::List, manifest::Manifest, options::Options,
+    owo_colorize_ext::OwoColorizeExt, relative_path::RelativePath, style::Style,
     subcommand::Subcommand,
   },
   blake3::Hasher,
@@ -46,6 +37,7 @@ mod lint_group;
 mod list;
 mod manifest;
 mod options;
+mod owo_colorize_ext;
 mod progress_bar;
 mod relative_path;
 mod style;
