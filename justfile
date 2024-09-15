@@ -58,6 +58,9 @@ test-install-script:
 list-package:
   cargo package --list --allow-dirty
 
+commit-release:
+  git commit --edit --file release-commit-message.txt
+
 test-progress-bar:
   #!/usr/bin/env bash
   mkdir -p tmp

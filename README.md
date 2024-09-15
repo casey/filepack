@@ -208,20 +208,3 @@ hash function, but is now known to be insecure.
 
 `filepack` and `b3sum` both use BLAKE3, a fast, general-purpose cryptographic
 hash function.
-
-New Releases
-------------
-
-New releases of `filepack` are made frequently so that users quickly get access to
-new features.
-
-Release commit messages use the following template:
-
-```
-Release x.y.z
-
-- Bump version: x.y.z → x.y.z
-- Update changelog
-- Update changelog contributor credits
-- Update dependencies
-```
