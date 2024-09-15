@@ -136,7 +136,7 @@ Metadata
 --------
 
 Filepack manifests may optionally include semantic metadata describing the
-package. For example, it's title and author.
+package. For example, its title and author.
 
 Metadata is currently included in the manifest itself, but could alternatively
 be placed in a file alongside the manifest.
