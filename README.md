@@ -133,9 +133,8 @@ containing metadata with the same schema as that of the manifest.
 Manifest
 --------
 
-`filepack` manifests are conventionally named `filepack.json`. `filepack
-create` and `filepack verify` both expect the manifest to be in the root of the
-directory containing the files to be verified.
+`filepack` manifests are conventionally named `filepack.json` and are placed
+alongside the files they reference.
 
 Manifests are [UTF-8](https://en.wikipedia.org/wiki/UTF-8)-encoded
 [JSON](https://www.json.org/json-en.html).
