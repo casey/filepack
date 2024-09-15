@@ -75,7 +75,7 @@ pub(crate) enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
-  #[snafu(context(false))]
+  #[snafu(transparent)]
   WalkDir {
     backtrace: Option<Backtrace>,
     source: walkdir::Error,
