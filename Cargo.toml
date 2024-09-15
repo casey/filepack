@@ -22,6 +22,7 @@ lexiclean = "0.0.1"
 owo-colors = "4"
 serde = { version = "1.0.209", features = ["derive"] }
 serde_json = "1.0.127"
+serde_yaml = "0.9.34"
 snafu = "0.8.4"
 walkdir = "2.5.0"
 
@@ -29,6 +30,7 @@ walkdir = "2.5.0"
 assert_cmd = { version = "2.0.16", features = ["color-auto"] }
 assert_fs = { version = "1.1.2", features = ["color-auto"] }
 predicates = "3.1.2"
+regex = "1.10.6"
 
 [lints.clippy]
 all = { level = "deny", priority = -1 }

@@ -6,10 +6,16 @@ pub(crate) enum Error {
   #[snafu(display("failed to get current directory"))]
   CurrentDir { source: io::Error },
   #[snafu(display("failed to deserialize manifest at `{path}`"))]
-  Deserialize {
+  DeserializeManifest {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
     source: serde_json::Error,
+  },
+  #[snafu(display("failed to deserialize metadata at `{path}`"))]
+  DeserializeMetadata {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+    source: serde_yaml::Error,
   },
   #[snafu(
     display(

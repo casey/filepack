@@ -102,33 +102,52 @@ to determine the latest version of `filepack` to install, and those API calls
 are rate-limited on a per-IP basis. To make `install.sh` more reliable in such
 circumstances, pass a specific tag to install with `--tag`.
 
-Manifest format
----------------
+Usage
+-----
 
-`filepack` manifests are named `filepack.json`. `filepack create` and
-`filepack verify` both expect the manifest to be in the root of the directory
-containing the files to be verified.
+Filepack supports a number of subcommands, including `filepack create` to
+create a manifest, and `filepack verify` to verify a manifest.
 
-The manifest contains a [JSON](https://www.json.org/json-en.html) object,
-currently with a single key, `files`, whose value is an object mapping strings
-containing paths to manifest entries. Manifest entries are objects with the key
-`hash`, whose value is a hex-encoded BLAKE3 hash of the file, and `size`, whose
-value is the integer length of the file in bytes.
+See `filepack help` for supported subcommands and `filepack help SUBCOMMAND`
+for information about a particular subcommand.
 
-Manifests are encoded as [UTF-8](https://en.wikipedia.org/wiki/UTF-8), so paths
-must be valid Unicode.
+Manifest
+--------
 
-Paths are `/`-separated, even on Windows, and may not contain backslashes.
+`filepack` manifests are conventionally named `filepack.json`. `filepack
+create` and `filepack verify` both expect the manifest to be in the root of the
+directory containing the files to be verified.
+
+Manifests are [UTF-8](https://en.wikipedia.org/wiki/UTF-8)-encoded
+[JSON](https://www.json.org/json-en.html).
+
+As a consequence of the manifest being UTF-8 , all file paths must be
+valid Unicode.
+
+For cross-platform compatibility, paths are `/`-separated and may not contain
+backslashes.
 
 Paths are relative, meaning that they cannot begin with a `/` or a Windows
-drive prefix, such as `C:`, and cannot contain the path components `.` or
-`..`, and may not end with a slash.
+drive prefix, such as `C:`.
 
-Filepack currently has no way of tracking empty directories, which are an error
-when creating or verifying a manifest.
+Paths may not contain the path components `.` or `..`, and may not end with a
+slash.
+
+Filepack currently has no way of tracking empty directories, the presence of
+which are an error when creating or verifying a manifest.
+
+Manifests contain an object with one mandatory key, `files`, and one optional
+key, `metadata`.
+
+### `files`
+
+The value of the mandatory `files` key is an object mapping string paths to
+manifest entries. Manifest entries are objects with the key `hash`, whose value
+is a hex-encoded BLAKE3 hash of the file, and `size`, whose value is the length
+of the file in bytes.
 
 An example manifest for a directory containing the files `README.md` and
-`src/main.c`, pretty-printed for legibility:
+`src/main.c`:
 
 ```json
 {
@@ -141,6 +160,29 @@ An example manifest for a directory containing the files `README.md` and
       "hash": "38abf296dc2a90f66f7870fe0ce584af3859668cf5140c7557a76786189dcf0f",
       "size": 4491
     }
+  }
+}
+```
+
+### `metadata`
+
+The value of the optional `metadata` key is an object containing metadata
+describing the package, with keys and values as follows:
+
+- `title`: A string containing the package's human-readable title.
+
+An example manifest with metadata:
+
+```json
+{
+  "files": {
+    "tobins-spirit-guide.md": {
+      "hash": "5a9a6d96244ec398545fc0c98c2cb7ed52511b025c19e9ad1e3c1ef4ac8575ad",
+      "size": 175934
+    }
+  },
+  "metadata": {
+    "title": "Tobin's Spirit Guide"
   }
 }
 ```

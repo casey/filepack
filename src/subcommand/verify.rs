@@ -45,7 +45,7 @@ impl Verify {
       result => result.context(error::Io { path: &source })?,
     };
 
-    let manifest = serde_json::from_str::<Manifest>(&json).context(error::Deserialize {
+    let manifest = serde_json::from_str::<Manifest>(&json).context(error::DeserializeManifest {
       path: Manifest::FILENAME,
     })?;
 

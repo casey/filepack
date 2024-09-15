@@ -118,7 +118,7 @@ fn extra_fields_are_not_allowed() {
     .stderr(
       "\
 error: failed to deserialize manifest at `filepack.json`
-       └─ unknown field `foo`, expected `files` at line 1 column 17\n",
+       └─ unknown field `foo`, expected `files` or `metadata` at line 1 column 17\n",
     )
     .failure();
 }
