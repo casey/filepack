@@ -1,6 +1,28 @@
 Changelog
 =========
 
+[0.0.3](https://github.com/casey/filepack/releases/tag/0.0.3) - 2024-09-15
+--------------------------------------------------------------------------
+
+### Added
+- Allow overwriting manifest with `--force` ([#41](https://github.com/casey/filepack/pull/41) by [casey](https://github.com/casey))
+- Add lint for junk files ([#38](https://github.com/casey/filepack/pull/38) by [casey](https://github.com/casey))
+- Allow specifying path to manifest ([#35](https://github.com/casey/filepack/pull/35) by [casey](https://github.com/casey))
+
+### Changed
+- Allow portability lints by default ([#37](https://github.com/casey/filepack/pull/37) by [casey](https://github.com/casey))
+
+### Misc
+- Add color to error and mismatch messages ([#42](https://github.com/casey/filepack/pull/42) by [casey](https://github.com/casey))
+- Update readme ([#36](https://github.com/casey/filepack/pull/36) by [casey](https://github.com/casey))
+- Return Entry from Options::hash_file ([#34](https://github.com/casey/filepack/pull/34) by [casey](https://github.com/casey))
+- Add progress bars ([#33](https://github.com/casey/filepack/pull/33) by [casey](https://github.com/casey))
+- Improve missing file error messages ([#32](https://github.com/casey/filepack/pull/32) by [casey](https://github.com/casey))
+- Add DESIGN.md ([#30](https://github.com/casey/filepack/pull/30) by [casey](https://github.com/casey))
+- Include file sizes in manifest ([#29](https://github.com/casey/filepack/pull/29) by [casey](https://github.com/casey))
+- Add `filpack hash` subcommand to hash single file ([#28](https://github.com/casey/filepack/pull/28) by [casey](https://github.com/casey))
+- Install Rust toolchain in release workflow ([#27](https://github.com/casey/filepack/pull/27) by [casey](https://github.com/casey))
+
 [0.0.2](https://github.com/casey/filepack/releases/tag/0.0.1) - 2024-09-06
 --------------------------------------------------------------------------
 
