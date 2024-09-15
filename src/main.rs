@@ -1,14 +1,25 @@
 use {
   self::{
-    arguments::Arguments, display_path::DisplayPath, entry::Entry, error::Error, hash::Hash,
-    lint::Lint, lint_group::LintGroup, list::List, manifest::Manifest, options::Options,
-    relative_path::RelativePath, subcommand::Subcommand,
+    arguments::Arguments,
+    display_path::DisplayPath,
+    entry::Entry,
+    error::Error,
+    hash::Hash,
+    lint::Lint,
+    lint_group::LintGroup,
+    list::List,
+    manifest::Manifest,
+    options::Options,
+    relative_path::RelativePath,
+    style::{OwoColorizeExt, Style},
+    subcommand::Subcommand,
   },
   blake3::Hasher,
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},
   clap::{Parser, ValueEnum},
   indicatif::{ProgressBar, ProgressStyle},
   lexiclean::Lexiclean,
+  owo_colors::Styled,
   serde::{Deserialize, Deserializer, Serialize, Serializer},
   snafu::{ensure, ErrorCompat, OptionExt, ResultExt, Snafu},
   std::{
@@ -17,7 +28,7 @@ use {
     env,
     fmt::{self, Display, Formatter},
     fs::{self, File},
-    io,
+    io::{self, IsTerminal},
     path::{Path, PathBuf},
     process,
     str::{self, FromStr},
@@ -37,13 +48,19 @@ mod manifest;
 mod options;
 mod progress_bar;
 mod relative_path;
+mod style;
 mod subcommand;
 
 type Result<T = (), E = Error> = std::result::Result<T, E>;
 
 fn main() {
   if let Err(err) = Arguments::parse().run() {
-    eprintln!("error: {err}");
+    let style = Style::stderr();
+    eprintln!(
+      "{}: {}",
+      "error".style(style.error()),
+      err.style(style.message()),
+    );
 
     let causes = err.iter_chain().skip(1).count();
 
