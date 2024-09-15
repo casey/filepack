@@ -111,6 +111,25 @@ create a manifest, and `filepack verify` to verify a manifest.
 See `filepack help` for supported subcommands and `filepack help SUBCOMMAND`
 for information about a particular subcommand.
 
+### `filepack create`
+
+Create a manifest.
+
+Optional path portability lints can be enabled with:
+
+```
+filepack create --deny all
+```
+
+Metadata can optionally be included in the manifest with:
+
+```
+filepack create --metadata <PATH>
+```
+
+Where `<PATH>` is a [YAML](https://en.wikipedia.org/wiki/YAML) document
+containing metadata with the same schema as that of the manifest.
+
 Manifest
 --------
 
