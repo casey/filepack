@@ -216,8 +216,8 @@ filepack create --deny all
 ```
 
 These lints cover issues such as non-portable paths which are illegal on
-Windows filesystems, paths which would conflict on case-insensitive
-filesystems, and inclusion of junk files such as `.DS_Store`.
+Windows file systems, paths which would conflict on case-insensitive file
+systems, and inclusion of junk files such as `.DS_Store`.
 
 Lofty Ambitions
 ---------------
@@ -237,7 +237,7 @@ Lofty Ambitions
   be used in other environments, for example case-insensitive and Windows file
   systems.
 
-- Semantic, manchine-readable metadata about *what* a package is. For example,
+- Semantic, machine-readable metadata about *what* a package is. For example,
   human-readable title, suggested filename-safe slug, description, or year of
   publication, to aid package indexing and search.
 
