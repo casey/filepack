@@ -492,3 +492,20 @@ fn metadata_template_may_not_have_unknown_keys() {
     .stderr(is_match(".*unknown field `bar`.*"))
     .failure();
 }
+
+#[test]
+fn metadata_template_should_not_be_included_in_package() {
+  let dir = TempDir::new().unwrap();
+
+  dir.child("foo").touch().unwrap();
+
+  dir.child("metadata.yaml").write_str("title: Foo").unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["create", ".", "--metadata", "metadata.yaml"])
+    .current_dir(&dir)
+    .assert()
+    .stderr("error: metadata template `metadata.yaml` should not be included in package\n")
+    .failure();
+}

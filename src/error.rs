@@ -45,6 +45,11 @@ pub(crate) enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
+  #[snafu(display("metadata template `{path}` should not be included in package"))]
+  MetadataTemplateIncluded {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+  },
   #[snafu(display("file missing: `{path}`"))]
   MissingFile {
     backtrace: Option<Backtrace>,
