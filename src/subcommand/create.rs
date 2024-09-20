@@ -28,7 +28,7 @@ impl Create {
         .map_err(|path| error::PathUnicode { path }.build())?
     };
 
-    let destination = if let Some(path) = self.manifest {
+    let manifest = if let Some(path) = self.manifest {
       path
     } else {
       root.join(Manifest::FILENAME)
@@ -45,7 +45,9 @@ impl Create {
       None
     };
 
-    let cleaned_destination = current_dir.join(&destination).lexiclean();
+    let cleaned_manifest = current_dir.join(&manifest).lexiclean();
+
+    let cleaned_metadata = self.metadata.map(|path| current_dir.join(path).lexiclean());
 
     let mut paths = HashMap::new();
 
@@ -62,8 +64,17 @@ impl Create {
 
       let path = Utf8Path::from_path(path).context(error::PathUnicode { path })?;
 
-      if current_dir.join(path).lexiclean() == cleaned_destination {
+      let cleaned_path = current_dir.join(path).lexiclean();
+
+      if cleaned_path == cleaned_manifest {
         continue;
+      }
+
+      if cleaned_metadata
+        .as_ref()
+        .is_some_and(|path| cleaned_path == *path)
+      {
+        return Err(error::MetadataTemplateIncluded { path }.build());
       }
 
       while let Some(dir) = dirs.last() {
@@ -144,9 +155,9 @@ impl Create {
     }
 
     ensure! {
-      self.force || !destination.try_exists().context(error::Io { path: &destination })?,
+      self.force || !manifest.try_exists().context(error::Io { path: &manifest })?,
       error::ManifestAlreadyExists {
-        path: destination,
+        path: manifest,
       },
     }
 
@@ -162,11 +173,9 @@ impl Create {
       bar.inc(entry.size);
     }
 
-    let manifest = Manifest { files, metadata };
+    let json = serde_json::to_string(&Manifest { files, metadata }).unwrap();
 
-    let json = serde_json::to_string(&manifest).unwrap();
-
-    fs::write(&destination, &json).context(error::Io { path: destination })?;
+    fs::write(&manifest, &json).context(error::Io { path: manifest })?;
 
     Ok(())
   }
