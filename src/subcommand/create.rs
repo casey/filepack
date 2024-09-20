@@ -72,8 +72,7 @@ impl Create {
 
       if cleaned_metadata
         .as_ref()
-        .map(|path| cleaned_path == *path)
-        .unwrap_or_default()
+        .is_some_and(|path| cleaned_path == *path)
       {
         return Err(error::MetadataTemplateIncluded { path }.build());
       }
