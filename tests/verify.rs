@@ -696,3 +696,35 @@ fn valid_signature_for_wrong_pubkey_error() {
     ))
     .failure();
 }
+
+#[test]
+fn signature_verification_success() {
+  let dir = TempDir::new().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .env("FILEPACK_DATA_DIR", dir.path())
+    .arg("keygen")
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  dir.child("foo/bar").touch().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .env("FILEPACK_DATA_DIR", dir.path())
+    .args(["create", "--sign", "foo"])
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  let public_key = fs::read_to_string(dir.child("keys/master.public")).unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["verify", "foo", "--key", public_key.trim()])
+    .current_dir(&dir)
+    .assert()
+    .success();
+}

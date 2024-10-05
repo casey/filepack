@@ -3,9 +3,9 @@ use super::*;
 #[derive(Parser)]
 pub(crate) struct Verify {
   #[arg(
-    help = "Verify that manifest has been signed by <PUBKEY>",
+    help = "Verify that manifest has been signed by <KEY>",
     long,
-    value_name = "PUBKEY"
+    value_name = "KEY"
   )]
   key: Option<PublicKey>,
   #[arg(
