@@ -16,6 +16,7 @@ pub(crate) enum Error {
   },
 }
 
+#[derive(PartialEq)]
 pub(crate) struct Signature(ed25519_dalek::Signature);
 
 impl Signature {
@@ -73,6 +74,15 @@ impl FromStr for Signature {
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn parse() {
+    let signature = PrivateKey::generate().sign(b"hello");
+    assert_eq!(
+      signature.to_string().parse::<Signature>().unwrap(),
+      signature
+    );
+  }
 
   #[test]
   fn display_is_lowercase_hex() {
