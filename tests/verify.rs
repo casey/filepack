@@ -491,7 +491,9 @@ fn missing_signature_file_extension() {
     .arg("verify")
     .current_dir(&dir)
     .assert()
-    .stderr("error: invalid signature filename: `signatures/foo`\n")
+    .stderr(format!(
+      "error: invalid signature filename: `signatures{SEPARATOR}foo`\n"
+    ))
     .failure();
 }
 
@@ -515,7 +517,9 @@ fn invalid_signature_file_extension() {
     .arg("verify")
     .current_dir(&dir)
     .assert()
-    .stderr("error: invalid signature filename: `signatures/foo.baz`\n")
+    .stderr(format!(
+      "error: invalid signature filename: `signatures{SEPARATOR}foo.baz`\n"
+    ))
     .failure();
 }
 
@@ -539,7 +543,9 @@ fn missing_signature_file_stem() {
     .arg("verify")
     .current_dir(&dir)
     .assert()
-    .stderr("error: invalid signature filename: `signatures/.signature`\n")
+    .stderr(format!(
+      "error: invalid signature filename: `signatures{SEPARATOR}.signature`\n"
+    ))
     .failure();
 }
 
@@ -563,9 +569,9 @@ fn invalid_signature_public_key() {
     .arg("verify")
     .current_dir(&dir)
     .assert()
-    .stderr(is_match(
-      "error: invalid signature public key: `signatures/hello.signature`\n.*",
-    ))
+    .stderr(is_match(format!(
+      "error: invalid signature public key: `signatures{SEPARATOR}hello.signature`\n.*"
+    )))
     .failure();
 }
 
@@ -592,9 +598,9 @@ fn weak_signature_public_key() {
     .arg("verify")
     .current_dir(&dir)
     .assert()
-    .stderr(is_match(
-      "error: invalid signature public key: `signatures/0{64}.signature`\n.*weak key.*",
-    ))
+    .stderr(is_match(format!(
+      "error: invalid signature public key: `signatures{SEPARATOR}0{{64}}.signature`\n.*weak key.*"
+    )))
     .failure();
 }
 
@@ -647,9 +653,9 @@ fn malformed_signature_error() {
     .current_dir(&dir)
     .assert()
     .stderr(is_match(
-      "error: malformed signature: \
-      `signatures/7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b.signature`\n.*",
-    ))
+      format!("error: malformed signature: \
+      `signatures{SEPARATOR}7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b.signature`\n.*",
+    )))
     .failure();
 }
 
@@ -691,8 +697,10 @@ fn valid_signature_for_wrong_pubkey_error() {
     .current_dir(&dir)
     .assert()
     .stderr(is_match(
+        format!(
       "error: invalid signature: \
-      `signatures/7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b.signature`\n.*Verification equation was not satisfied.*",
+      `signatures{SEPARATOR}7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b.signature`\n.*Verification equation was not satisfied.*",
+        )
     ))
     .failure();
 }

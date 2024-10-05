@@ -627,7 +627,7 @@ fn existing_signature_will_not_be_overwritten() {
     .current_dir(&dir)
     .assert()
     .stderr(format!(
-      "error: signature `foo/signatures/{public_key}.signature` already exists\n"
+      "error: signature `foo{SEPARATOR}signatures{SEPARATOR}{public_key}.signature` already exists\n"
     ))
     .failure();
 }
