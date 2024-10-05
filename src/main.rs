@@ -31,6 +31,9 @@ use {
   walkdir::WalkDir,
 };
 
+#[cfg(test)]
+use assert_fs::TempDir;
+
 mod arguments;
 mod display_path;
 mod display_secret;
