@@ -154,4 +154,15 @@ mod tests {
       "invalid byte length 2: `0123`"
     );
   }
+
+  #[test]
+  fn weak_public_keys_are_forbidden() {
+    assert!(matches!(
+        "0000000000000000000000000000000000000000000000000000000000000000"
+          .parse::<PublicKey>()
+          .unwrap_err(),
+        Error::Weak { key }
+          if key == "0000000000000000000000000000000000000000000000000000000000000000",
+    ));
+  }
 }
