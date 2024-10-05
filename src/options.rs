@@ -32,7 +32,7 @@ impl Options {
     })
   }
 
-  pub(crate) fn keydir(&self) -> Result<Utf8PathBuf> {
+  pub(crate) fn key_dir(&self) -> Result<Utf8PathBuf> {
     let path = if let Some(path) = &self.data_dir {
       path.into()
     } else {
@@ -43,5 +43,41 @@ impl Options {
     };
 
     Ok(path.join("keys"))
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn key_dir_default() {
+    assert_eq!(
+      Options {
+        data_dir: None,
+        mmap: false,
+        parallel: false,
+      }
+      .key_dir()
+      .unwrap(),
+      dirs::data_local_dir()
+        .unwrap()
+        .join("filepack")
+        .join("keys"),
+    );
+  }
+
+  #[test]
+  fn key_dir_set() {
+    assert_eq!(
+      Options {
+        data_dir: Some("hello".into()),
+        mmap: false,
+        parallel: false,
+      }
+      .key_dir()
+      .unwrap(),
+      Utf8Path::new("hello").join("keys"),
+    );
   }
 }

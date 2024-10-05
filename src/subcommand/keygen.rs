@@ -1,18 +1,18 @@
 use super::*;
 
 pub(crate) fn run(option: Options) -> Result {
-  let keys = option.keydir()?;
+  let key_dir = option.key_dir()?;
 
-  fs::create_dir_all(&keys).context(error::Io { path: &keys })?;
+  fs::create_dir_all(&key_dir).context(error::Io { path: &key_dir })?;
 
-  let private_path = keys.join(MASTER_PRIVATE_KEY);
+  let private_path = key_dir.join(MASTER_PRIVATE_KEY);
 
   ensure! {
     !private_path.try_exists().context(error::Io { path: &private_path})?,
     error::PrivateKeyAlreadyExists { path: private_path },
   }
 
-  let public_path = keys.join(MASTER_PUBLIC_KEY);
+  let public_path = key_dir.join(MASTER_PUBLIC_KEY);
 
   ensure! {
     !public_path.try_exists().context(error::Io { path: &public_path})?,

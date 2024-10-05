@@ -180,7 +180,7 @@ impl Create {
     fs::write(&manifest, &json).context(error::Io { path: manifest })?;
 
     if self.sign {
-      let private_key_path = options.keydir()?.join(MASTER_PRIVATE_KEY);
+      let private_key_path = options.key_dir()?.join(MASTER_PRIVATE_KEY);
 
       let private_key = PrivateKey::load(&private_key_path)?;
 

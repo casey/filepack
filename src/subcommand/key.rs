@@ -1,11 +1,11 @@
 use super::*;
 
 pub(crate) fn run(options: Options) -> Result {
-  let keys = options.keydir()?;
+  let key_dir = options.key_dir()?;
 
-  let public_key = PublicKey::load(&keys.join(MASTER_PUBLIC_KEY))?;
+  let public_key = PublicKey::load(&key_dir.join(MASTER_PUBLIC_KEY))?;
 
-  let private_key = PrivateKey::load(&keys.join(MASTER_PRIVATE_KEY))?;
+  let private_key = PrivateKey::load(&key_dir.join(MASTER_PRIVATE_KEY))?;
 
   ensure! {
     private_key.public_key() == public_key,
