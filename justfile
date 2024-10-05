@@ -26,6 +26,9 @@ update-changelog:
 update-contributors:
   cargo run --release --package update-contributors
 
+doc:
+  cargo doc --all --open
+
 publish:
   #!/usr/bin/env bash
   set -euxo pipefail

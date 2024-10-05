@@ -1,9 +1,11 @@
 use {
   self::{
-    arguments::Arguments, display_path::DisplayPath, entry::Entry, error::Error, hash::Hash,
-    lint::Lint, lint_group::LintGroup, list::List, manifest::Manifest, metadata::Metadata,
-    options::Options, owo_colorize_ext::OwoColorizeExt, relative_path::RelativePath, style::Style,
-    subcommand::Subcommand, template::Template,
+    arguments::Arguments, display_path::DisplayPath, display_secret::DisplaySecret, entry::Entry,
+    error::Error, hash::Hash, lint::Lint, lint_group::LintGroup, list::List, manifest::Manifest,
+    metadata::Metadata, options::Options, owo_colorize_ext::OwoColorizeExt,
+    private_key::PrivateKey, public_key::PublicKey, relative_path::RelativePath,
+    signature::Signature, signature_error::SignatureError, style::Style, subcommand::Subcommand,
+    template::Template,
   },
   blake3::Hasher,
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},
@@ -14,8 +16,10 @@ use {
   serde::{Deserialize, Deserializer, Serialize, Serializer},
   snafu::{ensure, ErrorCompat, OptionExt, ResultExt, Snafu},
   std::{
+    array::TryFromSliceError,
     backtrace::{Backtrace, BacktraceStatus},
-    collections::{BTreeMap, HashMap},
+    cmp::Ordering,
+    collections::{BTreeMap, BTreeSet, HashMap},
     env,
     fmt::{self, Display, Formatter},
     fs::{self, File},
@@ -29,6 +33,7 @@ use {
 
 mod arguments;
 mod display_path;
+mod display_secret;
 mod entry;
 mod error;
 mod hash;
@@ -39,13 +44,21 @@ mod manifest;
 mod metadata;
 mod options;
 mod owo_colorize_ext;
+mod private_key;
 mod progress_bar;
+mod public_key;
 mod relative_path;
+mod signature;
+mod signature_error;
 mod style;
 mod subcommand;
 mod template;
 
 type Result<T = (), E = Error> = std::result::Result<T, E>;
+
+const MASTER_PRIVATE_KEY: &str = "master.private";
+const MASTER_PUBLIC_KEY: &str = "master.public";
+const SIGNATURES: &str = "signatures";
 
 fn main() {
   if let Err(err) = Arguments::parse().run() {

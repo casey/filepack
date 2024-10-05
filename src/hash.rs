@@ -16,6 +16,12 @@ impl From<blake3::Hash> for Hash {
   }
 }
 
+impl From<Hash> for [u8; 32] {
+  fn from(hash: Hash) -> Self {
+    hash.0.into()
+  }
+}
+
 impl Serialize for Hash {
   fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
   where

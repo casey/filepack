@@ -15,6 +15,8 @@ pub(crate) struct Create {
   metadata: Option<Utf8PathBuf>,
   #[arg(help = "Create manifest for files in <ROOT> directory, defaults to current directory")]
   root: Option<Utf8PathBuf>,
+  #[arg(help = "Sign manifest with master key", long)]
+  sign: bool,
 }
 
 impl Create {
@@ -176,6 +178,33 @@ impl Create {
     let json = serde_json::to_string(&Manifest { files, metadata }).unwrap();
 
     fs::write(&manifest, &json).context(error::Io { path: manifest })?;
+
+    if self.sign {
+      let private_key_path = options.keydir()?.join(MASTER_PRIVATE_KEY);
+
+      let private_key = PrivateKey::load(&private_key_path)?;
+
+      let signature = private_key.sign(json.as_bytes());
+
+      let public_key = private_key.public_key();
+
+      let signature_dir = root.join(SIGNATURES);
+
+      let signature_path = signature_dir.join(format!("{public_key}.signature"));
+
+      ensure! {
+        !signature_path.try_exists().context(error::Io { path: &signature_path, })?,
+        error::SignatureAlreadyExists { path: signature_path },
+      }
+
+      fs::create_dir_all(&signature_dir).context(error::Io {
+        path: &signature_dir,
+      })?;
+
+      fs::write(&signature_path, signature.to_string()).context(error::Io {
+        path: signature_path,
+      })?;
+    }
 
     Ok(())
   }
