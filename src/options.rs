@@ -7,7 +7,7 @@ pub(crate) struct Options {
     help = "Store local data, including private keys, in <DATA_DIR>",
     env = "FILEPACK_DATA_DIR"
   )]
-  pub(crate) data_dir: Option<Utf8PathBuf>,
+  data_dir: Option<Utf8PathBuf>,
   #[arg(long, help = "Memory-map files for hashing")]
   pub(crate) mmap: bool,
   #[arg(long, help = "Memory-map and read files in parallel for hashing")]
