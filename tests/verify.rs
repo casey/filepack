@@ -593,7 +593,7 @@ fn weak_signature_public_key() {
     .current_dir(&dir)
     .assert()
     .stderr(is_match(
-      "error: invalid signature public key: `signatures/0{64}.signature`\n.*weak public key.*",
+      "error: invalid signature public key: `signatures/0{64}.signature`\n.*weak key.*",
     ))
     .failure();
 }

@@ -3,20 +3,20 @@ use super::*;
 #[derive(Debug, Snafu)]
 #[snafu(context(suffix(Error)))]
 pub(crate) enum Error {
-  #[snafu(display("invalid public key hex: `{key}`"))]
+  #[snafu(display("invalid hex: `{key}`"))]
   Hex {
     key: String,
     source: hex::FromHexError,
   },
-  #[snafu(display("invalid public key: `{key}`"))]
+  #[snafu(display("invalid key: `{key}`"))]
   Key { key: String, source: SignatureError },
-  #[snafu(display("invalid public key length {length}: `{key}`"))]
+  #[snafu(display("invalid byte length {length}: `{key}`"))]
   Length {
     key: String,
     length: usize,
     source: TryFromSliceError,
   },
-  #[snafu(display("weak public key: `{key}`"))]
+  #[snafu(display("weak key: `{key}`"))]
   Weak { key: String },
 }
 
@@ -111,5 +111,47 @@ mod tests {
     "f6d444f09eb336d3cc94d66cc541fea0b70b36be291eb3ecf5b49113f34c8d3"
       .parse::<PublicKey>()
       .unwrap_err();
+  }
+
+  #[test]
+  fn whitespace_is_trimmed_when_loading_from_disk() {
+    let dir = TempDir::new().unwrap();
+
+    let path = Utf8PathBuf::from_path_buf(dir.join("key")).unwrap();
+
+    let key = "0f6d444f09eb336d3cc94d66cc541fea0b70b36be291eb3ecf5b49113f34c8d3"
+      .parse::<PublicKey>()
+      .unwrap();
+
+    fs::write(&path, format!(" \t{key}\n")).unwrap();
+
+    assert_eq!(PublicKey::load(&path).unwrap(), key);
+  }
+
+  #[test]
+  fn whitespace_is_not_trimmed_when_parsing_from_string() {
+    "0f6d444f09eb336d3cc94d66cc541fea0b70b36be291eb3ecf5b49113f34c8d3"
+      .parse::<PublicKey>()
+      .unwrap();
+
+    " 0f6d444f09eb336d3cc94d66cc541fea0b70b36be291eb3ecf5b49113f34c8d3"
+      .parse::<PublicKey>()
+      .unwrap_err();
+  }
+
+  #[test]
+  fn parse_hex_error() {
+    assert_eq!(
+      "xyz".parse::<PublicKey>().unwrap_err().to_string(),
+      "invalid hex: `xyz`"
+    );
+  }
+
+  #[test]
+  fn parse_length_error() {
+    assert_eq!(
+      "0123".parse::<PublicKey>().unwrap_err().to_string(),
+      "invalid byte length 2: `0123`"
+    );
   }
 }

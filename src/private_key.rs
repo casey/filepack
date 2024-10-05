@@ -5,7 +5,7 @@ use super::*;
 pub(crate) enum Error {
   #[snafu(display("invalid hex"))]
   Hex { source: hex::FromHexError },
-  #[snafu(display("invalid length {length}"))]
+  #[snafu(display("invalid byte length {length}"))]
   Length { length: usize },
   #[snafu(display("weak key"))]
   Weak,
@@ -149,7 +149,7 @@ mod tests {
   fn parse_length_error() {
     assert_eq!(
       "0123".parse::<PrivateKey>().unwrap_err().to_string(),
-      "invalid length 2"
+      "invalid byte length 2"
     );
   }
 }

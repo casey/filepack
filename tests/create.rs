@@ -543,7 +543,7 @@ fn private_key_load_error_message() {
     .current_dir(&dir)
     .assert()
     .stderr(is_match(
-      "error: invalid private key `.*master.private`.*invalid length 0.*",
+      "error: invalid private key `.*master.private`.*invalid byte length 0.*",
     ))
     .failure();
 }
