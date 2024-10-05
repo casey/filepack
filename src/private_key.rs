@@ -136,4 +136,20 @@ mod tests {
       .parse::<PrivateKey>()
       .unwrap_err();
   }
+
+  #[test]
+  fn parse_hex_error() {
+    assert_eq!(
+      "xyz".parse::<PrivateKey>().unwrap_err().to_string(),
+      "invalid hex"
+    );
+  }
+
+  #[test]
+  fn parse_length_error() {
+    assert_eq!(
+      "0123".parse::<PrivateKey>().unwrap_err().to_string(),
+      "invalid length 2"
+    );
+  }
 }
