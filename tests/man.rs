@@ -6,6 +6,6 @@ fn man() {
     .unwrap()
     .arg("man")
     .assert()
-    .stdout(is_match(r#"\.TH filepack 1  "filepack \d+\.\d+\.\d+""#))
+    .stdout(is_match(r#".*\.TH filepack 1  "filepack \d+\.\d+\.\d+".*"#))
     .success();
 }

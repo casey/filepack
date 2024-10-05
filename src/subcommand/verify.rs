@@ -3,6 +3,12 @@ use super::*;
 #[derive(Parser)]
 pub(crate) struct Verify {
   #[arg(
+    help = "Verify that manifest has been signed by <KEY>",
+    long,
+    value_name = "KEY"
+  )]
+  key: Option<PublicKey>,
+  #[arg(
     help = "Read manifest from <MANIFEST>, defaults to `<ROOT>/filepack.json`",
     long
   )]
@@ -106,6 +112,8 @@ mismatched file: `{path}`
 
     let mut dirs = Vec::new();
 
+    let mut signatures = BTreeSet::new();
+
     for entry in WalkDir::new(&root) {
       let entry = entry?;
 
@@ -134,11 +142,49 @@ mismatched file: `{path}`
 
       let path = path.strip_prefix(&root).unwrap();
 
+      if path == SIGNATURES {
+        continue;
+      }
+
+      if path.starts_with(SIGNATURES) {
+        ensure! {
+          path.extension() == Some("signature"),
+          error::SignatureFilename { path },
+        }
+
+        let pubkey = path
+          .file_stem()
+          .context(error::SignatureFilename { path })?
+          .parse::<PublicKey>()
+          .context(error::SignaturePublicKey { path })?;
+
+        let signature = fs::read_to_string(entry.path()).context(error::Io { path })?;
+
+        let signature = signature
+          .parse::<Signature>()
+          .context(error::SignatureMalformed { path })?;
+
+        pubkey
+          .verify(json.as_bytes(), &signature)
+          .context(error::SignatureInvalid { path })?;
+
+        signatures.insert(pubkey);
+
+        continue;
+      }
+
       let path = RelativePath::try_from(path).context(error::Path { path })?;
 
       ensure! {
         manifest.files.contains_key(&path),
         error::ExtraneousFile { path },
+      }
+    }
+
+    if let Some(key) = self.key {
+      ensure! {
+        signatures.contains(&key),
+        error::SignatureMissing { key },
       }
     }
 

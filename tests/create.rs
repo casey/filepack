@@ -509,3 +509,125 @@ fn metadata_template_should_not_be_included_in_package() {
     .stderr("error: metadata template `metadata.yaml` should not be included in package\n")
     .failure();
 }
+
+#[test]
+fn sign_fails_if_master_key_not_available() {
+  let dir = TempDir::new().unwrap();
+
+  dir.child("foo/bar").touch().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["create", "--sign", "foo"])
+    .env("FILEPACK_DATA_DIR", dir.path())
+    .current_dir(&dir)
+    .assert()
+    .stderr(is_match(
+      "error: private key not found: `.*master.private`\n",
+    ))
+    .failure();
+}
+
+#[test]
+fn private_key_load_error_message() {
+  let dir = TempDir::new().unwrap();
+
+  dir.child("foo/bar").touch().unwrap();
+
+  dir.child("keys/master.private").touch().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["create", "--sign", "foo"])
+    .env("FILEPACK_DATA_DIR", dir.path())
+    .current_dir(&dir)
+    .assert()
+    .stderr(is_match(
+      "error: invalid private key `.*master.private`.*invalid byte length 0.*",
+    ))
+    .failure();
+}
+
+#[test]
+fn sign_creates_valid_signature() {
+  let dir = TempDir::new().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .arg("keygen")
+    .env("FILEPACK_DATA_DIR", dir.path())
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  dir.child("foo/bar").touch().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["create", "--sign", "foo"])
+    .env("FILEPACK_DATA_DIR", dir.path())
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  let public_key = fs::read_to_string(dir.child("keys/master.public"))
+    .unwrap()
+    .trim()
+    .to_owned();
+
+  let signature =
+    fs::read_to_string(dir.child(format!("foo/signatures/{public_key}.signature"))).unwrap();
+
+  let signature = signature.parse::<ed25519_dalek::Signature>().unwrap();
+
+  let public_key =
+    ed25519_dalek::VerifyingKey::from_bytes(&hex::decode(public_key).unwrap().try_into().unwrap())
+      .unwrap();
+
+  let manifest = fs::read_to_string(dir.child("foo/filepack.json")).unwrap();
+
+  public_key
+    .verify_strict(manifest.as_bytes(), &signature)
+    .unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["verify", "foo"])
+    .current_dir(&dir)
+    .assert()
+    .success();
+}
+
+#[test]
+fn existing_signature_will_not_be_overwritten() {
+  let dir = TempDir::new().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .arg("keygen")
+    .env("FILEPACK_DATA_DIR", dir.path())
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  let public_key = fs::read_to_string(dir.child("keys/master.public"))
+    .unwrap()
+    .trim()
+    .to_owned();
+
+  dir
+    .child(format!("foo/signatures/{public_key}.signature"))
+    .touch()
+    .unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["create", "--sign", "foo"])
+    .env("FILEPACK_DATA_DIR", dir.path())
+    .current_dir(&dir)
+    .assert()
+    .stderr(format!(
+      "error: signature `foo{SEPARATOR}signatures{SEPARATOR}{public_key}.signature` already exists\n"
+    ))
+    .failure();
+}

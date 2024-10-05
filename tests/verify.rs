@@ -470,3 +470,269 @@ fn manifest_metadata_allows_unknown_keys() {
     .assert()
     .success();
 }
+
+#[test]
+fn missing_signature_file_extension() {
+  let dir = TempDir::new().unwrap();
+
+  dir.child("bar").touch().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .arg("create")
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  dir.child("signatures/foo").touch().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .arg("verify")
+    .current_dir(&dir)
+    .assert()
+    .stderr(format!(
+      "error: invalid signature filename: `signatures{SEPARATOR}foo`\n"
+    ))
+    .failure();
+}
+
+#[test]
+fn invalid_signature_file_extension() {
+  let dir = TempDir::new().unwrap();
+
+  dir.child("bar").touch().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .arg("create")
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  dir.child("signatures/foo.baz").touch().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .arg("verify")
+    .current_dir(&dir)
+    .assert()
+    .stderr(format!(
+      "error: invalid signature filename: `signatures{SEPARATOR}foo.baz`\n"
+    ))
+    .failure();
+}
+
+#[test]
+fn missing_signature_file_stem() {
+  let dir = TempDir::new().unwrap();
+
+  dir.child("bar").touch().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .arg("create")
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  dir.child("signatures/.signature").touch().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .arg("verify")
+    .current_dir(&dir)
+    .assert()
+    .stderr(format!(
+      "error: invalid signature filename: `signatures{SEPARATOR}.signature`\n"
+    ))
+    .failure();
+}
+
+#[test]
+fn invalid_signature_public_key() {
+  let dir = TempDir::new().unwrap();
+
+  dir.child("bar").touch().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .arg("create")
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  dir.child("signatures/hello.signature").touch().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .arg("verify")
+    .current_dir(&dir)
+    .assert()
+    .stderr(is_match(format!(
+      "error: invalid signature public key: `signatures{SEPARATOR_RE}hello.signature`\n.*"
+    )))
+    .failure();
+}
+
+#[test]
+fn weak_signature_public_key() {
+  let dir = TempDir::new().unwrap();
+
+  dir.child("bar").touch().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .arg("create")
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  dir
+    .child("signatures/0000000000000000000000000000000000000000000000000000000000000000.signature")
+    .touch()
+    .unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .arg("verify")
+    .current_dir(&dir)
+    .assert()
+    .stderr(is_match(format!(
+      "error: invalid signature public key: `signatures{SEPARATOR_RE}0{{64}}.signature`\n.*weak key.*"
+    )))
+    .failure();
+}
+
+#[test]
+fn missing_signature_error() {
+  let dir = TempDir::new().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .arg("create")
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args([
+      "verify",
+      "--key",
+      "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b",
+    ])
+    .current_dir(&dir)
+    .assert()
+    .stderr(
+      "error: no signature found for key \
+      7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b\n",
+    )
+    .failure();
+}
+
+#[test]
+fn malformed_signature_error() {
+  let dir = TempDir::new().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .arg("create")
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  dir
+    .child("signatures/7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b.signature")
+    .write_str("7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b")
+    .unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .arg("verify")
+    .current_dir(&dir)
+    .assert()
+    .stderr(is_match(
+      format!("error: malformed signature: \
+      `signatures{SEPARATOR_RE}7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b.signature`\n.*",
+    )))
+    .failure();
+}
+
+#[test]
+fn valid_signature_for_wrong_pubkey_error() {
+  let dir = TempDir::new().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .env("FILEPACK_DATA_DIR", dir.path())
+    .arg("keygen")
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  dir.child("foo/bar").touch().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .env("FILEPACK_DATA_DIR", dir.path())
+    .args(["create", "--sign", "foo"])
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  let public_key = fs::read_to_string(dir.child("keys/master.public")).unwrap();
+
+  fs::rename(
+    dir.child(format!("foo/signatures/{}.signature", public_key.trim())),
+    dir.child(
+      "foo/signatures/7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b.signature",
+    ),
+  )
+  .unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["verify", "foo"])
+    .current_dir(&dir)
+    .assert()
+    .stderr(is_match(
+        format!(
+      "error: invalid signature: \
+      `signatures{SEPARATOR_RE}7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b.signature`\n.*Verification equation was not satisfied.*",
+        )
+    ))
+    .failure();
+}
+
+#[test]
+fn signature_verification_success() {
+  let dir = TempDir::new().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .env("FILEPACK_DATA_DIR", dir.path())
+    .arg("keygen")
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  dir.child("foo/bar").touch().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .env("FILEPACK_DATA_DIR", dir.path())
+    .args(["create", "--sign", "foo"])
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  let public_key = fs::read_to_string(dir.child("keys/master.public")).unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["verify", "foo", "--key", public_key.trim()])
+    .current_dir(&dir)
+    .assert()
+    .success();
+}
