@@ -103,6 +103,12 @@ mod tests {
   use super::*;
 
   #[test]
+  fn parse() {
+    let key = PrivateKey::generate().public_key();
+    assert_eq!(key.to_string().parse::<PublicKey>().unwrap(), key);
+  }
+
+  #[test]
   fn must_have_leading_zeros() {
     "0f6d444f09eb336d3cc94d66cc541fea0b70b36be291eb3ecf5b49113f34c8d3"
       .parse::<PublicKey>()
