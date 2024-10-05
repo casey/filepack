@@ -28,10 +28,10 @@ pub(crate) enum Subcommand {
   Create(create::Create),
   #[command(about = "hash single file")]
   Hash(hash::Hash),
-  #[command(about = "Generate new key pair")]
-  Keygen,
   #[command(about = "Print master key")]
   Key,
+  #[command(about = "Generate new key pair")]
+  Keygen,
   #[command(about = "print man page")]
   Man,
   #[command(about = "verify directory against manifest")]
@@ -43,8 +43,8 @@ impl Subcommand {
     match self {
       Self::Create(create) => create.run(options),
       Self::Hash(hash) => hash.run(options),
-      Self::Keygen => keygen::run(options),
       Self::Key => key::run(options),
+      Self::Keygen => keygen::run(options),
       Self::Man => man::run(),
       Self::Verify(verify) => verify.run(options),
     }
