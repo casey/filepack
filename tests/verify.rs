@@ -570,7 +570,7 @@ fn invalid_signature_public_key() {
     .current_dir(&dir)
     .assert()
     .stderr(is_match(format!(
-      "error: invalid signature public key: `signatures{SEPARATOR}hello.signature`\n.*"
+      "error: invalid signature public key: `signatures{SEPARATOR_RE}hello.signature`\n.*"
     )))
     .failure();
 }
@@ -599,7 +599,7 @@ fn weak_signature_public_key() {
     .current_dir(&dir)
     .assert()
     .stderr(is_match(format!(
-      "error: invalid signature public key: `signatures{SEPARATOR}0{{64}}.signature`\n.*weak key.*"
+      "error: invalid signature public key: `signatures{SEPARATOR_RE}0{{64}}.signature`\n.*weak key.*"
     )))
     .failure();
 }
@@ -654,7 +654,7 @@ fn malformed_signature_error() {
     .assert()
     .stderr(is_match(
       format!("error: malformed signature: \
-      `signatures{SEPARATOR}7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b.signature`\n.*",
+      `signatures{SEPARATOR_RE}7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b.signature`\n.*",
     )))
     .failure();
 }
@@ -699,7 +699,7 @@ fn valid_signature_for_wrong_pubkey_error() {
     .stderr(is_match(
         format!(
       "error: invalid signature: \
-      `signatures{SEPARATOR}7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b.signature`\n.*Verification equation was not satisfied.*",
+      `signatures{SEPARATOR_RE}7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b.signature`\n.*Verification equation was not satisfied.*",
         )
     ))
     .failure();

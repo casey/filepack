@@ -9,7 +9,8 @@ use {
   std::{fs, str},
 };
 
-const SEPARATOR: char = std::path::MAIN_SEPARATOR;
+const SEPARATOR: char = if cfg!(windows) { '\\' } else { '/' };
+const SEPARATOR_RE: &str = if cfg!(windows) { r"\\" } else { "/" };
 
 fn is_match<S>(pattern: S) -> RegexPredicate
 where
