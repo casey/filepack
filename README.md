@@ -261,6 +261,8 @@ Some examples, with links to implementations and the hash functions they use:
 | [`sha3sum`](https://codeberg.org/maandree/sha3sum) | [SHA-3](https://en.wikipedia.org/wiki/SHA-3) |
 | [`b2sum`](https://github.com/BLAKE2/BLAKE2) | [BLAKE2](https://en.wikipedia.org/wiki/BLAKE_(hash_function)#BLAKE2) |
 | [`b3sum`](https://github.com/BLAKE3-team/BLAKE3) | [BLAKE3](https://en.wikipedia.org/wiki/BLAKE_(hash_function)#BLAKE3) |
+| [`hashdeep`](https://github.com/jessek/hashdeep) | various |
+| [`hashdir`](https://github.com/ultimateanu/hashdir/) | various |
 
 CRC-32 is not a cryptographic hash function and cannot be used to detect
 intentional modifications. Similarly, SHA-1 was thought to be a cryptographic
