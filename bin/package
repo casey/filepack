@@ -2,23 +2,21 @@
 
 set -euxo pipefail
 
-VERSION=${REF#"refs/tags/"}
-DIST=`pwd`/dist
-
-echo "Packaging filepack $VERSION for $TARGET..."
+echo "Packaging filepack $TAG for $TARGET..."
 
 test -f Cargo.lock || cargo generate-lockfile
 
 echo "Installing rust toolchain for $TARGET..."
 rustup target add $TARGET
 
+echo "Building filepack..."
 if [[ $TARGET == aarch64-unknown-linux-musl ]]; then
   export CC=aarch64-linux-gnu-gcc
 fi
-
-echo "Building filepack..."
 RUSTFLAGS="--deny warnings --codegen target-feature=+crt-static $TARGET_RUSTFLAGS" \
   cargo build --bin filepack --target $TARGET --release
+export -n CC
+
 EXECUTABLE=target/$TARGET/release/filepack
 
 if [[ $OS == windows-latest ]]; then
@@ -34,21 +32,24 @@ cp -r \
   LICENSE \
   CONTRIBUTING \
   README.md \
-  $DIST
+  dist
 
-cd $DIST
+echo "Creating filepack manifest..."
+cargo run create --deny all dist
+
 echo "Creating release archive..."
+cd dist
 case $OS in
   ubuntu-latest | macos-latest)
-    ARCHIVE=$DIST/filepack-$VERSION-$TARGET.tar.gz
+    ARCHIVE=`pwd`/filepack-$TAG-$TARGET.tar.gz
     tar czf $ARCHIVE *
     echo "archive=$ARCHIVE" >> $GITHUB_OUTPUT
     shasum -a 256 $ARCHIVE > $ARCHIVE.sha256sum
     ;;
   windows-latest)
-    ARCHIVE=$DIST/filepack-$VERSION-$TARGET.zip
+    ARCHIVE=`pwd`/filepack-$TAG-$TARGET.zip
     7z a $ARCHIVE *
-    echo "archive=`pwd -W`/filepack-$VERSION-$TARGET.zip" >> $GITHUB_OUTPUT
+    echo "archive=`pwd -W`/filepack-$TAG-$TARGET.zip" >> $GITHUB_OUTPUT
     sha256sum $ARCHIVE > $ARCHIVE.sha256sum
     ;;
 esac

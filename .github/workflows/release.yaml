@@ -50,7 +50,7 @@ jobs:
           os: ubuntu-latest
           target_rustflags: ''
 
-    runs-on: ${{matrix.os}}
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v4
@@ -78,7 +78,7 @@ jobs:
     - name: Release Type
       id: release-type
       run: |
-        if [[ ${{ github.ref }} =~ ^refs/tags/[0-9]+[.][0-9]+[.][0-9]+$ ]]; then
+        if [[ ${{ github.ref_name }} =~ ^[0-9]+[.][0-9]+[.][0-9]+$ ]]; then
             echo value=release >> $GITHUB_OUTPUT
         else
             echo value=prerelease >> $GITHUB_OUTPUT
@@ -88,7 +88,7 @@ jobs:
       id: package
       env:
         TARGET: ${{ matrix.target }}
-        REF: ${{ github.ref }}
+        TAG: ${{ github.ref_name }}
         OS: ${{ matrix.os }}
         TARGET_RUSTFLAGS: ${{ matrix.target_rustflags }}
       run: ./bin/package
