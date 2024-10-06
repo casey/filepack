@@ -736,3 +736,46 @@ fn signature_verification_success() {
     .assert()
     .success();
 }
+
+#[test]
+fn verify_hash() {
+  let dir = TempDir::new().unwrap();
+
+  dir.child("foo").touch().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .arg("create")
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args([
+      "verify",
+      "--hash",
+      "74ddbe0dcf48c634aca1d90f37defd60b230fc52857ffa4b6c956583e8a4daaf",
+    ])
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args([
+      "verify",
+      "--hash",
+      "0000000000000000000000000000000000000000000000000000000000000000",
+    ])
+    .current_dir(&dir)
+    .assert()
+    .stderr(is_match(
+      "\
+manifest hash mismatch: `.*filepack\\.json`
+              expected: 0000000000000000000000000000000000000000000000000000000000000000
+                actual: 74ddbe0dcf48c634aca1d90f37defd60b230fc52857ffa4b6c956583e8a4daaf
+error: manifest hash mismatch\n",
+    ))
+    .failure();
+}

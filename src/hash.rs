@@ -4,7 +4,6 @@ use super::*;
 pub(crate) struct Hash(blake3::Hash);
 
 impl Hash {
-  #[cfg(test)]
   pub(crate) fn bytes(input: &[u8]) -> Self {
     Self(blake3::hash(input))
   }
@@ -19,6 +18,14 @@ impl From<blake3::Hash> for Hash {
 impl From<Hash> for [u8; 32] {
   fn from(hash: Hash) -> Self {
     hash.0.into()
+  }
+}
+
+impl FromStr for Hash {
+  type Err = blake3::HexError;
+
+  fn from_str(s: &str) -> Result<Self, Self::Err> {
+    Ok(Self(s.parse()?))
   }
 }
 
