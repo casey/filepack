@@ -270,3 +270,9 @@ hash function, but is now known to be insecure.
 
 `filepack` and `b3sum` both use BLAKE3, a fast, general-purpose cryptographic
 hash function.
+
+Utilities for creating and verifying signatures over files include
+[`gpg`](https://gnupg.org/), an implementation of
+[OpenPGP](https://www.openpgp.org/), and
+[`ssh-keygen`](https://man.openbsd.org/ssh-keygen.1), part of
+[OpenSSH](https://www.openssh.com/).
