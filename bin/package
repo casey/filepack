@@ -35,12 +35,11 @@ cp -r \
   README.md \
   $DIST
 
-cd $DIST
-
 echo "Creating filepack manifest..."
-cargo run create --deny all
+cargo run create --deny all dist
 
 echo "Creating release archive..."
+cd $DIST
 case $OS in
   ubuntu-latest | macos-latest)
     ARCHIVE=$DIST/filepack-$TAG-$TARGET.tar.gz
