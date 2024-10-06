@@ -254,7 +254,7 @@ differ in which hash function they use.
 
 Some examples, with links to implementations and the hash functions they use:
 
-| Binary | Hash Function |
+| binary | hash function |
 |---|---|
 | [`b2sum`](https://github.com/BLAKE2/BLAKE2) | [BLAKE2](https://en.wikipedia.org/wiki/BLAKE_(hash_function)#BLAKE2) |
 | [`b3sum`](https://github.com/BLAKE3-team/BLAKE3) | [BLAKE3](https://en.wikipedia.org/wiki/BLAKE_(hash_function)#BLAKE3) |
@@ -271,8 +271,15 @@ hash function, but is now known to be insecure.
 `filepack` and `b3sum` both use BLAKE3, a fast, general-purpose cryptographic
 hash function.
 
-Utilities for creating and verifying signatures over files include
-[`gpg`](https://gnupg.org/), an implementation of
-[OpenPGP](https://www.openpgp.org/), and
-[`ssh-keygen`](https://man.openbsd.org/ssh-keygen.1), part of
-[OpenSSH](https://www.openssh.com/).
+`filepack` can also create and verify signatures. Other signing and
+verification utilities incude:
+
+| binary | about |
+|---|---|
+| [`gpg`](https://gnupg.org/) | general-purpose, [OpenPGP](https://www.openpgp.org/) implementation |
+| [`ssh-keygen`](https://man.openbsd.org/ssh-keygen.1) | general-purpose, shipped with [OpenSSH](https://www.openssh.com/) |
+| [`minisign`](https://github.com/jedisct1/minisign) | general-purpose |
+| [`signifiy`]( https://github.com/aperezdc/signify) general-purpose |
+| [`SignTool`](https://learn.microsoft.com/en-us/windows/win32/seccrypto/signtool) | Windows code signing |
+| [`codesign`](https://developer.apple.com/library/archive/documentation/Security/Conceptual/CodeSigningGuide/Procedures/Procedures.html) | macOS code signing |
+| [`jarsigner`](https://docs.oracle.com/javase/8/docs/technotes/tools/windows/jarsigner.html) | JDK code signing |
