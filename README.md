@@ -279,7 +279,7 @@ verification utilities incude:
 | [`gpg`](https://gnupg.org/) | general-purpose, [OpenPGP](https://www.openpgp.org/) implementation |
 | [`ssh-keygen`](https://man.openbsd.org/ssh-keygen.1) | general-purpose, shipped with [OpenSSH](https://www.openssh.com/) |
 | [`minisign`](https://github.com/jedisct1/minisign) | general-purpose |
-| [`signifiy`]( https://github.com/aperezdc/signify) general-purpose |
+| [`signifiy`]( https://github.com/aperezdc/signify) | general-purpose |
 | [`SignTool`](https://learn.microsoft.com/en-us/windows/win32/seccrypto/signtool) | Windows code signing |
 | [`codesign`](https://developer.apple.com/library/archive/documentation/Security/Conceptual/CodeSigningGuide/Procedures/Procedures.html) | macOS code signing |
 | [`jarsigner`](https://docs.oracle.com/javase/8/docs/technotes/tools/windows/jarsigner.html) | JDK code signing |
