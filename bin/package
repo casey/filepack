@@ -2,10 +2,9 @@
 
 set -euxo pipefail
 
-VERSION=${REF#"refs/tags/"}
 DIST=`pwd`/dist
 
-echo "Packaging filepack $VERSION for $TARGET..."
+echo "Packaging filepack $TAG for $TARGET..."
 
 test -f Cargo.lock || cargo generate-lockfile
 
@@ -40,15 +39,15 @@ cd $DIST
 echo "Creating release archive..."
 case $OS in
   ubuntu-latest | macos-latest)
-    ARCHIVE=$DIST/filepack-$VERSION-$TARGET.tar.gz
+    ARCHIVE=$DIST/filepack-$TAG-$TARGET.tar.gz
     tar czf $ARCHIVE *
     echo "archive=$ARCHIVE" >> $GITHUB_OUTPUT
     shasum -a 256 $ARCHIVE > $ARCHIVE.sha256sum
     ;;
   windows-latest)
-    ARCHIVE=$DIST/filepack-$VERSION-$TARGET.zip
+    ARCHIVE=$DIST/filepack-$TAG-$TARGET.zip
     7z a $ARCHIVE *
-    echo "archive=`pwd -W`/filepack-$VERSION-$TARGET.zip" >> $GITHUB_OUTPUT
+    echo "archive=`pwd -W`/filepack-$TAG-$TARGET.zip" >> $GITHUB_OUTPUT
     sha256sum $ARCHIVE > $ARCHIVE.sha256sum
     ;;
 esac

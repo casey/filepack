@@ -19,6 +19,7 @@ jobs:
     # - release
     steps:
     - run: echo ${{  github.ref_name }}
+    - run: gh api /repos/casey/filepack/releases/
   release:
     strategy:
       matrix:
@@ -84,7 +85,7 @@ jobs:
     - name: Release Type
       id: release-type
       run: |
-        if [[ ${{ github.ref }} =~ ^refs/tags/[0-9]+[.][0-9]+[.][0-9]+$ ]]; then
+        if [[ ${{ github.ref_name }} =~ ^[0-9]+[.][0-9]+[.][0-9]+$ ]]; then
             echo value=release >> $GITHUB_OUTPUT
         else
             echo value=prerelease >> $GITHUB_OUTPUT
@@ -94,7 +95,7 @@ jobs:
       id: package
       env:
         TARGET: ${{ matrix.target }}
-        REF: ${{ github.ref }}
+        TAG: ${{ github.ref_name }}
         OS: ${{ matrix.os }}
         TARGET_RUSTFLAGS: ${{ matrix.target_rustflags }}
       run: ./bin/package
