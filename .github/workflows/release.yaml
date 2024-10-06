@@ -13,14 +13,12 @@ defaults:
     shell: bash
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    - run: |
-        echo ${{  github.ref_name }}
   manifest:
     runs-on: ubuntu-latest
-    needs:
-    - release
+    # needs:
+    # - release
+    steps:
+    - run: echo ${{  github.ref_name }}
   release:
     strategy:
       matrix:
