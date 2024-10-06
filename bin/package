@@ -36,7 +36,7 @@ cp -r \
   $DIST
 
 echo "Creating filepack manifest..."
-cargo run create --deny all dist
+env -u CC cargo run create --deny all dist
 
 echo "Creating release archive..."
 cd $DIST
