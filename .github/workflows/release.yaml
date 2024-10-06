@@ -15,7 +15,8 @@ defaults:
 jobs:
   test:
     runs-on: ubuntu-latest
-    - run: echo ${{  github.ref_name }}
+    - run: |
+        echo ${{  github.ref_name }}
   manifest:
     runs-on: ubuntu-latest
     needs:
