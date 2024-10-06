@@ -18,9 +18,9 @@ jobs:
     needs:
     - release
     steps:
-    # use v2 to work around https://github.com/actions/download-artifact/issues/290
-    - uses: actions/download-artifact@v2
+    - uses: actions/download-artifact@v4
     - run: |
+        sleep 60
         echo $GITHUB_WORKSPACE
         ls $GITHUB_WORKSPACE
   release:
