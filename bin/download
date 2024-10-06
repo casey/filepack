@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+rm -rf tmp
+mkdir tmp
+cd tmp
+
+OWNER=casey
+REPO=filepack
+TAG=0.0.3
+
+curl --location \
+  --header "Accept: application/vnd.github+json" \
+  --header "X-GitHub-Api-Version: 2022-11-28" \
+  https://api.github.com/repos/$OWNER/$REPO/releases/tags/$TAG \
+  > release.json
+
+cat release.json | jq -c '.assets[] | {"name": (.name), "url": (.browser_download_url)}' > assets.json
+
+cat release.json | jq -c "{\"name\": \"$REPO-$TAG.tar.gz\", \"url\": (.tarball_url)}" >> assets.json
+
+cat release.json | jq -c "{\"name\": \"$REPO-$TAG.zip\", \"url\": (.zipball_url)}" >> assets.json
+
+while read asset; do
+  name=`echo "$asset" | jq -r .name`
+  url=`echo "$asset" | jq -r .url`
+  echo "Downloading $name..."
+  curl --location --output "$name" "$url"
+done < assets.json
