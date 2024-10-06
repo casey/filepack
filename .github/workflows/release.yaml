@@ -18,9 +18,9 @@ jobs:
     needs:
     - release
     steps:
+    - run: sleep 60
     - uses: actions/download-artifact@v4
     - run: |
-        sleep 60
         echo $GITHUB_WORKSPACE
         ls $GITHUB_WORKSPACE
   release:
