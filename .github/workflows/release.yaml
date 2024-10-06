@@ -15,11 +15,12 @@ defaults:
 jobs:
   manifest:
     runs-on: ubuntu-latest
-    # needs:
-    # - release
+    needs:
+    - release
     steps:
-    - run: echo ${{  github.ref_name }}
-    - run: gh api /repos/casey/filepack/releases/
+    - env:
+        GH_TOKEN: ${{ github.token }}
+      run: gh api /repos/casey/filepack/releases/tags/${{ github.ref_name }}
   release:
     strategy:
       matrix:
@@ -57,7 +58,7 @@ jobs:
           os: ubuntu-latest
           target_rustflags: ''
 
-    runs-on: ${{matrix.os}}
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v4
