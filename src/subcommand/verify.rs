@@ -2,11 +2,9 @@ use super::*;
 
 #[derive(Parser)]
 pub(crate) struct Verify {
-  #[arg(
-    help = "Verify that manifest has been signed by <KEY>",
-    long,
-    value_name = "KEY"
-  )]
+  #[arg(help = "Verify that BLAKE3 hash of manifest manifest is <HASH>", long)]
+  hash: Option<Hash>,
+  #[arg(help = "Verify that manifest has been signed by <KEY>", long)]
   key: Option<PublicKey>,
   #[arg(
     help = "Read manifest from <MANIFEST>, defaults to `<ROOT>/filepack.json`",
@@ -50,6 +48,22 @@ impl Verify {
       }
       result => result.context(error::Io { path: &source })?,
     };
+
+    if let Some(expected) = self.hash {
+      let actual = Hash::bytes(json.as_bytes());
+      if actual != expected {
+        let style = Style::stderr();
+        eprintln!(
+          "\
+manifest hash mismatch: `{source}`
+              expected: {}
+                actual: {}",
+          expected.style(style.good()),
+          actual.style(style.bad()),
+        );
+        return Err(error::ManifestHashMismatch.build());
+      }
+    }
 
     let manifest = serde_json::from_str::<Manifest>(&json).context(error::DeserializeManifest {
       path: Manifest::FILENAME,
