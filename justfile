@@ -74,3 +74,15 @@ test-progress-bar:
   done
   cargo run --release create tmp
   rm tmp/data*
+
+artifacts:
+  gh api \
+    -H 'Accept: application/vnd.github+json' \
+    -H 'X-GitHub-Api-Version: 2022-11-28' \
+    /repos/casey/filepack/actions/artifacts
+
+releases:
+  gh api \
+    -H "Accept: application/vnd.github+json" \
+    -H "X-GitHub-Api-Version: 2022-11-28" \
+    /repos/casey/filepack/releases/tags/
