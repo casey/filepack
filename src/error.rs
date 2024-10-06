@@ -32,10 +32,27 @@ pub(crate) enum Error {
     backtrace: Option<Backtrace>,
     count: usize,
   },
+  #[snafu(display("environment variable `{key}` is not valid unicode"))]
+  EnvVarUnicode {
+    backtrace: Option<Backtrace>,
+    key: String,
+  },
   #[snafu(display("extraneous file not in manifest: `{path}`"))]
   ExtraneousFile {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
+  },
+  #[snafu(display("HTTP request failed for {url}"))]
+  HttpRequest {
+    backtrace: Option<Backtrace>,
+    source: reqwest::Error,
+    url: String,
+  },
+  #[snafu(display("HTTP request failed with status {status} for  {url}"))]
+  HttpStatus {
+    backtrace: Option<Backtrace>,
+    status: reqwest::StatusCode,
+    url: String,
   },
   #[snafu(display("manifest `{path}` already exists"))]
   ManifestAlreadyExists {
@@ -117,6 +134,12 @@ pub(crate) enum Error {
   PublicKeyNotFound {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
+  },
+  #[snafu(display("failed to deserialize GitHub release {release}"))]
+  GithubReleaseDeserialize {
+    release: GithubRelease,
+    backtrace: Option<Backtrace>,
+    source: serde_json::Error,
   },
   #[snafu(display("signature `{path}` already exists"))]
   SignatureAlreadyExists {

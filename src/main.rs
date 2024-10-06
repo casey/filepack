@@ -1,11 +1,11 @@
 use {
   self::{
     arguments::Arguments, display_path::DisplayPath, display_secret::DisplaySecret, entry::Entry,
-    error::Error, hash::Hash, lint::Lint, lint_group::LintGroup, list::List, manifest::Manifest,
-    metadata::Metadata, options::Options, owo_colorize_ext::OwoColorizeExt,
-    private_key::PrivateKey, public_key::PublicKey, relative_path::RelativePath,
-    signature::Signature, signature_error::SignatureError, style::Style, subcommand::Subcommand,
-    template::Template,
+    error::Error, github_release::GithubRelease, hash::Hash, lint::Lint, lint_group::LintGroup,
+    list::List, manifest::Manifest, metadata::Metadata, options::Options,
+    owo_colorize_ext::OwoColorizeExt, private_key::PrivateKey, public_key::PublicKey,
+    relative_path::RelativePath, signature::Signature, signature_error::SignatureError,
+    style::Style, subcommand::Subcommand, template::Template,
   },
   blake3::Hasher,
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},
@@ -39,6 +39,7 @@ mod display_path;
 mod display_secret;
 mod entry;
 mod error;
+mod github_release;
 mod hash;
 mod lint;
 mod lint_group;

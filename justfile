@@ -74,3 +74,27 @@ test-progress-bar:
   done
   cargo run --release create tmp
   rm tmp/data*
+
+create-release-manifest:
+  #!/usr/bin/env bash
+  rm -rf tmp
+  mkdir -p tmp
+  cargo run create --github-release casey/filepack/0.0.3 tmp
+
+download-release:
+  #!/usr/bin/env bash
+  rm -rf tmp
+  mkdir -p tmp
+  cd tmp
+  curl -L \
+    -H "Accept: application/vnd.github+json" \
+    -H "X-GitHub-Api-Version: 2022-11-28" \
+    https://api.github.com/repos/casey/filepack/releases/tags/0.0.3
+    # | jq -c '.assets[]' | while read asset;
+  # do
+    # URL=`echo "$asset" | jq -r .browser_download_url`
+    # echo "Downloading $URL..."
+    # curl --verbose --remote-name --location "$URL"
+  # done
+  # curl --verbose --remote-name --location "https://github.com/casey/filepack/archive/refs/tags/0.0.3.zip"
+  # curl --verbose --remote-name --location "https://github.com/casey/filepack/archive/refs/tags/0.0.3.tar.gz"
