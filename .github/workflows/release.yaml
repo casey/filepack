@@ -18,8 +18,8 @@ jobs:
     needs:
     - release
     steps:
-    # use v3 to work around https://github.com/actions/download-artifact/issues/290
-    - uses: actions/download-artifact@v3
+    # use v2 to work around https://github.com/actions/download-artifact/issues/290
+    - uses: actions/download-artifact@v2
     - run: |
         echo $GITHUB_WORKSPACE
         ls $GITHUB_WORKSPACE
