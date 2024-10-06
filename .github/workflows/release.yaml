@@ -13,6 +13,14 @@ defaults:
     shell: bash
 
 jobs:
+  manifest:
+    needs:
+    - release
+    steps:
+    - uses: actions/download-artifact@v4
+    - run: |
+        echo $GITHUB_WORKSPACE
+        ls $GITHUB_WORKSPACE
   release:
     strategy:
       matrix:
