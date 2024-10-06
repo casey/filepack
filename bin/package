@@ -36,6 +36,10 @@ cp -r \
   $DIST
 
 cd $DIST
+
+echo "Creating filepack manifest..."
+cargo run create --deny all
+
 echo "Creating release archive..."
 case $OS in
   ubuntu-latest | macos-latest)
