@@ -20,8 +20,6 @@ fn var(key: &str) -> Result<Option<String>> {
 #[derive(Deserialize)]
 struct Release {
   assets: Vec<Asset>,
-  zipball_url: String,
-  tarball_url: String,
 }
 
 #[derive(Deserialize)]
@@ -77,13 +75,13 @@ impl Download {
     let mut assets = BTreeMap::new();
 
     assets.insert(
-      asset_filename(&format!("{repo}-{tag}.zip"))?,
-      release.zipball_url,
+      asset_filename(&format!("{repo}-{tag}.tar.gz"))?,
+      format!("https://github.com/{owner}/{repo}/archive/refs/tags/{tag}.tar.gz"),
     );
 
     assets.insert(
-      asset_filename(&format!("{repo}-{tag}.tar.gz"))?,
-      release.tarball_url,
+      asset_filename(&format!("{repo}-{tag}.zip"))?,
+      format!("https://github.com/{owner}/{repo}/archive/refs/tags/{tag}.zip"),
     );
 
     for asset in release.assets {
