@@ -41,6 +41,7 @@ pub(crate) struct Download {
 impl Download {
   pub(crate) fn run(self) -> Result {
     let root = if let Some(root) = self.root {
+      fs::create_dir_all(&root).context(error::Io { path: &root })?;
       root
     } else {
       current_dir()?

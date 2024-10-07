@@ -79,3 +79,40 @@ fn download_to_directory() {
     .assert()
     .success();
 }
+
+#[test]
+#[ignore]
+fn download_to_new_directory() {
+  let dir = TempDir::new().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args([
+      "download",
+      "--github-release",
+      "casey/filepack/0.0.3",
+      "foo",
+    ])
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["create", "foo"])
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args([
+      "verify",
+      "--hash",
+      "d8e3d0f33e58e0f0f0e43082fcdeb2a38f7e560b3bdc0e8862608e8d959e852e",
+      "foo",
+    ])
+    .current_dir(&dir)
+    .assert()
+    .success();
+}
