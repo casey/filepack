@@ -1,6 +1,12 @@
 Changelog
 =========
 
+[0.0.5](https://github.com/casey/filepack/releases/tag/0.0.4) - 2024-10-07
+--------------------------------------------------------------------------
+
+### Fixed
+- Download tarball and zipball using web URLs ([#59](https://github.com/casey/filepack/pull/59) by [casey](https://github.com/casey))
+
 [0.0.4](https://github.com/casey/filepack/releases/tag/0.0.4) - 2024-10-07
 --------------------------------------------------------------------------
 
