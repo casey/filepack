@@ -1,6 +1,6 @@
 use super::*;
 
-const ERROR: &str = "must be of the form '<OWNER>/<REPO>/<TAG>'";
+const ERROR: &str = "must be of the form 'OWNER/REPO/TAG'";
 
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct GithubRelease {
