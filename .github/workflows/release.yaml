@@ -18,6 +18,9 @@ jobs:
     needs:
     - release
     steps:
+    - uses: actions/checkout@v4
+    - name: Install Rust Toolchain
+      run: rustup toolchain install stable --profile minimal
     - run: cargo build --release
     - env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
