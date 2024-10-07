@@ -46,6 +46,10 @@ result-large-err = "allow"
 too-many-lines = "allow"
 wildcard-imports = "allow"
 
+[profile.release]
+codegen-units = 1
+lto = true
+
 [workspace]
 members = [".", "crates/*"]
 
