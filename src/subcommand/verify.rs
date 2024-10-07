@@ -19,8 +19,7 @@ pub(crate) struct Verify {
 
 impl Verify {
   pub(crate) fn run(self, options: Options) -> Result {
-    let current_dir = Utf8PathBuf::from_path_buf(current_dir()?)
-      .map_err(|path| error::PathUnicode { path }.build())?;
+    let current_dir = current_dir()?;
 
     let root = if let Some(root) = self.root {
       root

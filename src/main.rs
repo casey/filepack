@@ -5,7 +5,7 @@ use {
     list::List, manifest::Manifest, metadata::Metadata, options::Options,
     owo_colorize_ext::OwoColorizeExt, private_key::PrivateKey, public_key::PublicKey,
     relative_path::RelativePath, signature::Signature, signature_error::SignatureError,
-    style::Style, subcommand::Subcommand, template::Template,
+    style::Style, subcommand::Subcommand, template::Template, utf8_path_ext::Utf8PathExt,
   },
   blake3::Hasher,
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},
@@ -57,6 +57,7 @@ mod signature_error;
 mod style;
 mod subcommand;
 mod template;
+mod utf8_path_ext;
 
 type Result<T = (), E = Error> = std::result::Result<T, E>;
 
@@ -64,8 +65,9 @@ const MASTER_PRIVATE_KEY: &str = "master.private";
 const MASTER_PUBLIC_KEY: &str = "master.public";
 const SIGNATURES: &str = "signatures";
 
-fn current_dir() -> Result<PathBuf> {
-  env::current_dir().context(error::CurrentDir)
+fn current_dir() -> Result<Utf8PathBuf> {
+  Utf8PathBuf::from_path_buf(env::current_dir().context(error::CurrentDir)?)
+    .map_err(|path| error::PathUnicode { path }.build())
 }
 
 fn main() {

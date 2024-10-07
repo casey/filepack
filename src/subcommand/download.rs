@@ -45,8 +45,7 @@ impl Download {
     let root = if let Some(root) = self.root {
       root
     } else {
-      Utf8PathBuf::from_path_buf(current_dir.clone())
-        .map_err(|path| error::PathUnicode { path }.build())?
+      current_dir
     };
 
     let GithubRelease { owner, repo, tag } = &self.github_release;
