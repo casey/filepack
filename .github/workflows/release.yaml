@@ -72,32 +72,32 @@ jobs:
     - name: Install Rust Toolchain
       run: rustup toolchain install stable --profile minimal
 
+    - name: Update apt
+      if: ${{ matrix.os == 'ubuntu-latest' }}
+      run: |
+        sudo apt-get update
+
     - name: Install AArch64 Toolchain
       if: ${{ matrix.target == 'aarch64-unknown-linux-musl' }}
       run: |
-        sudo apt-get update
         sudo apt-get install gcc-aarch64-linux-gnu libc6-dev-i386
 
     - name: Install ARM Toolchain
       if: ${{ matrix.target == 'arm-unknown-linux-musleabihf' || matrix.target == 'armv7-unknown-linux-musleabihf' }}
       run: |
-        sudo apt-get update
         sudo apt-get install gcc-arm-linux-gnueabihf
         sudo apt-get install binutils-arm-linux-gnueabihf
         sudo ln -s /usr/bin/arm-linux-gnueabihf-gcc /usr/bin/arm-linux-musleabihf-gcc
-        # sudo apt-get install musl-tools
-        # sudo apt-get install musl-dev
 
     - name: Install AArch64 Toolchain (Windows)
       if: ${{ matrix.target == 'aarch64-pc-windows-msvc' }}
       run: |
         rustup target add aarch64-pc-windows-msvc
 
-    # - name: Install musl-tools
-    #   if: ${{ matrix.target == 'x86_64-unknown-linux-musl' }}
-    #   run: |
-    #     sudo apt-get update
-    #     sudo apt-get install musl-tools
+    - name: Install musl-tools
+      if: ${{ matrix.target == 'x86_64-unknown-linux-musl' }}
+      run: |
+        sudo apt-get install musl-tools
 
     - name: Release Type
       id: release-type
