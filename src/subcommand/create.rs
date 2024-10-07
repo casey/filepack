@@ -158,7 +158,7 @@ impl Create {
       },
     }
 
-    let mut files = HashMap::new();
+    let mut files = BTreeMap::new();
 
     let bar = progress_bar::new(paths.values().sum());
 
