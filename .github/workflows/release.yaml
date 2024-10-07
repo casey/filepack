@@ -46,9 +46,9 @@ jobs:
         - target: aarch64-pc-windows-msvc
           os: windows-latest
           target_rustflags: ''
-        # - target: aarch64-unknown-linux-musl
-        #   os: ubuntu-latest
-        #   target_rustflags: '--codegen linker=aarch64-linux-gnu-gcc'
+        - target: aarch64-unknown-linux-musl
+          os: ubuntu-latest
+          target_rustflags: '--codegen linker=aarch64-linux-gnu-gcc'
         # - target: arm-unknown-linux-musleabihf
         #   os: ubuntu-latest
         #   target_rustflags: '--codegen linker=arm-linux-gnueabihf-gcc'
