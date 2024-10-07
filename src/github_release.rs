@@ -19,13 +19,15 @@ impl FromStr for GithubRelease {
   type Err = &'static str;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
-    let [owner, repo, tag]: [String; 3] = s
-      .split('/')
-      .filter_map(|component| (!component.is_empty()).then_some(component.to_string()))
-      .collect::<Vec<String>>()
-      .try_into()
-      .map_err(|_| ERROR)?;
-    Ok(Self { owner, repo, tag })
+    static RE: LazyLock<Regex> = LazyLock::new(|| Regex::new("^([^/]+)/([^/]+)/([^/]+)$").unwrap());
+
+    let captures = RE.captures(s).ok_or(ERROR)?;
+
+    Ok(Self {
+      owner: captures[1].into(),
+      repo: captures[2].into(),
+      tag: captures[3].into(),
+    })
   }
 }
 
@@ -57,5 +59,6 @@ mod tests {
     "/b/".parse::<GithubRelease>().unwrap_err();
     "//c".parse::<GithubRelease>().unwrap_err();
     "a/b/c/d".parse::<GithubRelease>().unwrap_err();
+    "/a/b/c/".parse::<GithubRelease>().unwrap_err();
   }
 }

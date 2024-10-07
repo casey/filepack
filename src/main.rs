@@ -13,6 +13,7 @@ use {
   indicatif::{ProgressBar, ProgressStyle},
   lexiclean::Lexiclean,
   owo_colors::Styled,
+  regex::Regex,
   serde::{Deserialize, Deserializer, Serialize, Serializer},
   snafu::{ensure, ErrorCompat, OptionExt, ResultExt, Snafu},
   std::{
@@ -27,6 +28,7 @@ use {
     path::{Path, PathBuf},
     process,
     str::{self, FromStr},
+    sync::LazyLock,
   },
   walkdir::WalkDir,
 };
