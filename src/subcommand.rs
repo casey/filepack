@@ -44,8 +44,8 @@ pub(crate) enum Subcommand {
 impl Subcommand {
   pub(crate) fn run(self, options: Options) -> Result {
     match self {
-      Self::Download(download) => download.run(),
       Self::Create(create) => create.run(options),
+      Self::Download(download) => download.run(),
       Self::Hash(hash) => hash.run(options),
       Self::Key => key::run(options),
       Self::Keygen => keygen::run(options),
