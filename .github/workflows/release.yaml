@@ -86,7 +86,7 @@ jobs:
         sudo apt-get install binutils-arm-linux-gnueabihf
         sudo ln -s /usr/bin/arm-linux-gnueabihf-gcc /usr/bin/arm-linux-musleabihf-gcc
         sudo apt-get install musl-tools
-        sudo apt-get install musl-dev
+        # sudo apt-get install musl-dev
 
     - name: Install AArch64 Toolchain (Windows)
       if: ${{ matrix.target == 'aarch64-pc-windows-msvc' }}
