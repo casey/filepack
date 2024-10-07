@@ -41,7 +41,8 @@ jobs:
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: >-
-        ./target/release/filepack download
+        ./target/release/filepack
+        download
         --github-release casey/filepack/${{ github.ref_name }}
         release
 
