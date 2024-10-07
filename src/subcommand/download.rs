@@ -50,8 +50,6 @@ impl Download {
 
     let url = format!("https://api.github.com/repos/{owner}/{repo}/releases/tags/{tag}");
 
-    eprintln!("Downloading {url}");
-
     let client = Client::new();
 
     let mut builder = client
@@ -96,7 +94,7 @@ impl Download {
     }
 
     for (name, url) in &assets {
-      eprintln!("Downloading {name}");
+      eprintln!("Downloading {name}...");
 
       let mut response = client
         .get(url)
