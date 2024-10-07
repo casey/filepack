@@ -21,7 +21,7 @@ pub(crate) struct Create {
 
 impl Create {
   pub(crate) fn run(self, options: Options) -> Result {
-    let current_dir = env::current_dir().context(error::CurrentDir)?;
+    let current_dir = current_dir()?;
 
     let root = if let Some(root) = self.root {
       root

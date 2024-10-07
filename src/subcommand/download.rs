@@ -40,7 +40,7 @@ pub(crate) struct Download {
 
 impl Download {
   pub(crate) fn run(self) -> Result {
-    let current_dir = env::current_dir().context(error::CurrentDir)?;
+    let current_dir = current_dir()?;
 
     let root = if let Some(root) = self.root {
       root

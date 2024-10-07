@@ -64,6 +64,10 @@ const MASTER_PRIVATE_KEY: &str = "master.private";
 const MASTER_PUBLIC_KEY: &str = "master.public";
 const SIGNATURES: &str = "signatures";
 
+fn current_dir() -> Result<PathBuf> {
+  env::current_dir().context(error::CurrentDir)
+}
+
 fn main() {
   if let Err(err) = Arguments::parse().run() {
     let style = Style::stderr();
