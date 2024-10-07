@@ -42,7 +42,6 @@ publish: tmp
   git tag -a $VERSION -m "Release $VERSION"
   git push origin $VERSION
   cargo publish
-  cd ../..
 
 test-release-workflow:
   -git tag -d test-release
