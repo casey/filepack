@@ -19,20 +19,13 @@ impl FromStr for GithubRelease {
   type Err = &'static str;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
-    let components = s
+    let [owner, repo, tag]: [String; 3] = s
       .split('/')
-      .filter(|component| !component.is_empty())
-      .collect::<Vec<&str>>();
-
-    let [owner, repo, tag] = components[..] else {
-      return Err(ERROR);
-    };
-
-    Ok(Self {
-      owner: owner.into(),
-      repo: repo.into(),
-      tag: tag.into(),
-    })
+      .filter_map(|component| (!component.is_empty()).then_some(component.to_string()))
+      .collect::<Vec<String>>()
+      .try_into()
+      .map_err(|_| ERROR)?;
+    Ok(Self { owner, repo, tag })
   }
 }
 
