@@ -24,14 +24,14 @@ impl FromStr for GithubRelease {
       .filter(|component| !component.is_empty())
       .collect::<Vec<&str>>();
 
-    if components.len() != 3 {
+    let [owner, repo, tag] = components[..] else {
       return Err(ERROR);
-    }
+    };
 
     Ok(Self {
-      owner: components[0].into(),
-      repo: components[1].into(),
-      tag: components[2].into(),
+      owner: owner.into(),
+      repo: repo.into(),
+      tag: tag.into(),
     })
   }
 }
