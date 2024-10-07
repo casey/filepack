@@ -7,7 +7,7 @@ use {
 };
 
 mod create;
-pub(crate) mod download;
+mod download;
 mod hash;
 mod key;
 mod keygen;
