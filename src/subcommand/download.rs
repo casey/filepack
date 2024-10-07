@@ -40,9 +40,11 @@ pub(crate) struct Download {
 
 impl Download {
   pub(crate) fn run(self) -> Result {
-    let current_dir = current_dir()?;
-
-    let root = self.root.unwrap_or(current_dir);
+    let root = if let Some(root) = self.root {
+      root
+    } else {
+      current_dir()?
+    };
 
     let GithubRelease { owner, repo, tag } = &self.github_release;
 
