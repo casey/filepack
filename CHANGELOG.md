@@ -1,6 +1,27 @@
 Changelog
 =========
 
+[0.0.4](https://github.com/casey/filepack/releases/tag/0.0.4) - 2024-10-07
+--------------------------------------------------------------------------
+
+### Added
+- Verify manifest hash with `--hash` ([#51](https://github.com/casey/filepack/pull/51) by [casey](https://github.com/casey))
+- Add key generation, printing, signing, and verification ([#48](https://github.com/casey/filepack/pull/48) by [casey](https://github.com/casey))
+- Allow including metadata in manifest ([#44](https://github.com/casey/filepack/pull/44) by [casey](https://github.com/casey))
+
+### Changed
+- Don't allow metadata template to be included in package ([#47](https://github.com/casey/filepack/pull/47) by [casey](https://github.com/casey))
+
+### Misc
+- Publish manifest with releases ([#56](https://github.com/casey/filepack/pull/56) by [casey](https://github.com/casey))
+- Optimize release build ([#57](https://github.com/casey/filepack/pull/57) by [casey](https://github.com/casey))
+- Include manifests in release archives ([#55](https://github.com/casey/filepack/pull/55) by [casey](https://github.com/casey))
+- Add signing utility table to prior art readme section ([#54](https://github.com/casey/filepack/pull/54) by [casey](https://github.com/casey))
+- Add `gpg` and `ssh-keygen` to prior art readme section ([#53](https://github.com/casey/filepack/pull/53) by [casey](https://github.com/casey))
+- Add `hashdeep` and `hashdir` to alternatives section in readme ([#52](https://github.com/casey/filepack/pull/52) by [casey](https://github.com/casey))
+- Use kebab-case field names ([#46](https://github.com/casey/filepack/pull/46) by [casey](https://github.com/casey))
+- Allow unknown keys in manifest but not in metadata template ([#45](https://github.com/casey/filepack/pull/45) by [casey](https://github.com/casey))
+
 [0.0.3](https://github.com/casey/filepack/releases/tag/0.0.3) - 2024-09-15
 --------------------------------------------------------------------------
 
