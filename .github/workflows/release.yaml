@@ -102,7 +102,7 @@ jobs:
     - name: Install Rust Toolchain
       run:  rustup toolchain install stable --profile minimal
 
-    - name: Update apt
+    - name: Update APT
       if:   ${{ matrix.os == 'ubuntu-latest' }}
       run:  sudo apt-get update
 
