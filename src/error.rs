@@ -75,8 +75,8 @@ pub(crate) enum Error {
   #[snafu(display("public key `{public_key}` doesn't match private key `{private_key}`"))]
   KeyMismatch {
     backtrace: Option<Backtrace>,
-    public_key: String,
-    private_key: String,
+    public_key: DisplayPath,
+    private_key: DisplayPath,
   },
   #[snafu(display("{count} lint error{}", if *count == 1 { "" } else { "s" }))]
   Lint {
