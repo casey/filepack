@@ -1,0 +1,118 @@
+use super::*;
+
+#[test]
+fn invalid_github_release_error() {
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["download", "--github-release", "a/b/c/d"])
+    .assert()
+    .stderr(is_match("error: invalid value 'a/b/c/d' for '--github-release <GITHUB_RELEASE>': must be of the form 'OWNER/REPO/TAG'.*"))
+    .failure();
+}
+
+#[test]
+#[ignore]
+fn download() {
+  let dir = TempDir::new().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["download", "--github-release", "casey/filepack/0.0.3"])
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .arg("create")
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args([
+      "verify",
+      "--hash",
+      "d8e3d0f33e58e0f0f0e43082fcdeb2a38f7e560b3bdc0e8862608e8d959e852e",
+    ])
+    .current_dir(&dir)
+    .assert()
+    .success();
+}
+
+#[test]
+#[ignore]
+fn download_to_directory() {
+  let dir = TempDir::new().unwrap();
+
+  dir.child("foo").create_dir_all().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args([
+      "download",
+      "--github-release",
+      "casey/filepack/0.0.3",
+      "foo",
+    ])
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["create", "foo"])
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args([
+      "verify",
+      "--hash",
+      "d8e3d0f33e58e0f0f0e43082fcdeb2a38f7e560b3bdc0e8862608e8d959e852e",
+      "foo",
+    ])
+    .current_dir(&dir)
+    .assert()
+    .success();
+}
+
+#[test]
+#[ignore]
+fn download_to_new_directory() {
+  let dir = TempDir::new().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args([
+      "download",
+      "--github-release",
+      "casey/filepack/0.0.3",
+      "foo",
+    ])
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["create", "foo"])
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args([
+      "verify",
+      "--hash",
+      "d8e3d0f33e58e0f0f0e43082fcdeb2a38f7e560b3bdc0e8862608e8d959e852e",
+      "foo",
+    ])
+    .current_dir(&dir)
+    .assert()
+    .success();
+}

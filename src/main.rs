@@ -1,11 +1,11 @@
 use {
   self::{
     arguments::Arguments, display_path::DisplayPath, display_secret::DisplaySecret, entry::Entry,
-    error::Error, hash::Hash, lint::Lint, lint_group::LintGroup, list::List, manifest::Manifest,
-    metadata::Metadata, options::Options, owo_colorize_ext::OwoColorizeExt,
-    private_key::PrivateKey, public_key::PublicKey, relative_path::RelativePath,
-    signature::Signature, signature_error::SignatureError, style::Style, subcommand::Subcommand,
-    template::Template,
+    error::Error, github_release::GithubRelease, hash::Hash, lint::Lint, lint_group::LintGroup,
+    list::List, manifest::Manifest, metadata::Metadata, options::Options,
+    owo_colorize_ext::OwoColorizeExt, private_key::PrivateKey, public_key::PublicKey,
+    relative_path::RelativePath, signature::Signature, signature_error::SignatureError,
+    style::Style, subcommand::Subcommand, template::Template, utf8_path_ext::Utf8PathExt,
   },
   blake3::Hasher,
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},
@@ -13,6 +13,7 @@ use {
   indicatif::{ProgressBar, ProgressStyle},
   lexiclean::Lexiclean,
   owo_colors::Styled,
+  regex::Regex,
   serde::{Deserialize, Deserializer, Serialize, Serializer},
   snafu::{ensure, ErrorCompat, OptionExt, ResultExt, Snafu},
   std::{
@@ -27,6 +28,7 @@ use {
     path::{Path, PathBuf},
     process,
     str::{self, FromStr},
+    sync::LazyLock,
   },
   walkdir::WalkDir,
 };
@@ -39,6 +41,7 @@ mod display_path;
 mod display_secret;
 mod entry;
 mod error;
+mod github_release;
 mod hash;
 mod lint;
 mod lint_group;
@@ -56,12 +59,18 @@ mod signature_error;
 mod style;
 mod subcommand;
 mod template;
+mod utf8_path_ext;
 
 type Result<T = (), E = Error> = std::result::Result<T, E>;
 
 const MASTER_PRIVATE_KEY: &str = "master.private";
 const MASTER_PUBLIC_KEY: &str = "master.public";
 const SIGNATURES: &str = "signatures";
+
+fn current_dir() -> Result<Utf8PathBuf> {
+  Utf8PathBuf::from_path_buf(env::current_dir().context(error::CurrentDir)?)
+    .map_err(|path| error::PathUnicode { path }.build())
+}
 
 fn main() {
   if let Err(err) = Arguments::parse().run() {

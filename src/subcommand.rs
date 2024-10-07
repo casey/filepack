@@ -7,6 +7,7 @@ use {
 };
 
 mod create;
+mod download;
 mod hash;
 mod key;
 mod keygen;
@@ -24,17 +25,19 @@ mod verify;
     .placeholder(AnsiColor::Cyan.on_default()))
 ]
 pub(crate) enum Subcommand {
-  #[command(about = "create manifest")]
+  #[command(about = "Create manifest")]
   Create(create::Create),
-  #[command(about = "hash single file")]
+  #[command(about = "Download GitHub release artifacts")]
+  Download(download::Download),
+  #[command(about = "Hash file")]
   Hash(hash::Hash),
   #[command(about = "Print master key")]
   Key,
-  #[command(about = "Generate new master key")]
+  #[command(about = "Generate master key")]
   Keygen,
-  #[command(about = "print man page")]
+  #[command(about = "Print man page")]
   Man,
-  #[command(about = "verify directory against manifest")]
+  #[command(about = "Verify manifest")]
   Verify(verify::Verify),
 }
 
@@ -42,6 +45,7 @@ impl Subcommand {
   pub(crate) fn run(self, options: Options) -> Result {
     match self {
       Self::Create(create) => create.run(options),
+      Self::Download(download) => download.run(),
       Self::Hash(hash) => hash.run(options),
       Self::Key => key::run(options),
       Self::Keygen => keygen::run(options),

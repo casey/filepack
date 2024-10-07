@@ -13,7 +13,52 @@ defaults:
     shell: bash
 
 jobs:
-  release:
+  manifest:
+    runs-on: ubuntu-latest
+
+    needs:
+    - package
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Prerelease Check
+      id: prerelease
+      run: |
+        if [[ ${{ github.ref_name }} =~ ^[0-9]+[.][0-9]+[.][0-9]+$ ]]; then
+            echo value=false >> $GITHUB_OUTPUT
+        else
+            echo value=true >> $GITHUB_OUTPUT
+        fi
+
+    - name: Install Rust Toolchain
+      run: rustup toolchain install stable --profile minimal
+
+    - name: Build
+      run: cargo build --release
+
+    - name: Download GitHub Release
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: >-
+        ./target/release/filepack
+        download
+        --github-release casey/filepack/${{ github.ref_name }}
+        release
+
+    - name: Create Manifest
+      run: ./target/release/filepack create --deny all release
+
+    - name: Publish Manifest
+      uses: softprops/action-gh-release@v2.0.8
+      with:
+        draft: false
+        files: release/filepack.json
+        prerelease: ${{ steps.prerelease.outputs.value }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  package:
     strategy:
       matrix:
         target:
@@ -56,32 +101,41 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Install Rust Toolchain
-      run: rustup toolchain install stable --profile minimal
+      run:  rustup toolchain install stable --profile minimal
+
+    - name: Update APT
+      if:   ${{ matrix.os == 'ubuntu-latest' }}
+      run:  sudo apt-get update
 
     - name: Install AArch64 Toolchain
-      if: ${{ matrix.target == 'aarch64-unknown-linux-musl' }}
-      run: |
-        sudo apt-get update
-        sudo apt-get install gcc-aarch64-linux-gnu libc6-dev-i386
+      if:   ${{ matrix.target == 'aarch64-unknown-linux-musl' }}
+      run:  sudo apt-get install gcc-aarch64-linux-gnu libc6-dev-i386
 
     - name: Install ARM Toolchain
-      if: ${{ matrix.target == 'arm-unknown-linux-musleabihf' || matrix.target == 'armv7-unknown-linux-musleabihf' }}
+      if:   >-
+        ${{
+          matrix.target == 'arm-unknown-linux-musleabihf'
+          || matrix.target == 'armv7-unknown-linux-musleabihf'
+         }}
       run: |
-        sudo apt-get update
         sudo apt-get install gcc-arm-linux-gnueabihf
+        sudo ln -s /usr/bin/arm-linux-gnueabihf-gcc /usr/bin/arm-linux-musleabihf-gcc
 
     - name: Install AArch64 Toolchain (Windows)
-      if: ${{ matrix.target == 'aarch64-pc-windows-msvc' }}
-      run: |
-        rustup target add aarch64-pc-windows-msvc
+      if:   ${{ matrix.target == 'aarch64-pc-windows-msvc' }}
+      run:  rustup target add aarch64-pc-windows-msvc
 
-    - name: Release Type
-      id: release-type
+    - name: Install musl-tools
+      if:   ${{ matrix.target == 'x86_64-unknown-linux-musl' }}
+      run:  sudo apt-get install musl-tools
+
+    - name: Prerelease Check
+      id:   prerelease
       run: |
         if [[ ${{ github.ref_name }} =~ ^[0-9]+[.][0-9]+[.][0-9]+$ ]]; then
-            echo value=release >> $GITHUB_OUTPUT
+            echo value=false >> $GITHUB_OUTPUT
         else
-            echo value=prerelease >> $GITHUB_OUTPUT
+            echo value=true >> $GITHUB_OUTPUT
         fi
 
     - name: Package
@@ -96,26 +150,20 @@ jobs:
 
     - name: Publish Archive
       uses: softprops/action-gh-release@v2.0.8
-      if: ${{ startsWith(github.ref, 'refs/tags/') }}
+      if:   ${{ startsWith(github.ref, 'refs/tags/') }}
       with:
         draft: false
-        files: |
-          ${{ steps.package.outputs.archive }}
-          ${{ steps.package.outputs.archive }}.sha256sum
-        prerelease: ${{ steps.release-type.outputs.value == 'prerelease' }}
+        files: ${{ steps.package.outputs.archive }}
+        prerelease: ${{ steps.prerelease.outputs.value }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Publish Changelog
       uses: softprops/action-gh-release@v2.0.8
-      if: >-
-        ${{
-          startsWith(github.ref, 'refs/tags/')
-          && matrix.target == 'x86_64-unknown-linux-musl'
-        }}
+      if:   ${{ matrix.target == 'x86_64-unknown-linux-musl' }}
       with:
         draft: false
         files: CHANGELOG.md
-        prerelease: ${{ steps.ref-type.outputs.value != 'release' }}
+        prerelease: ${{ steps.prerelease.outputs.value }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

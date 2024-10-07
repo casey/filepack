@@ -21,14 +21,9 @@ pub(crate) struct Create {
 
 impl Create {
   pub(crate) fn run(self, options: Options) -> Result {
-    let current_dir = env::current_dir().context(error::CurrentDir)?;
+    let current_dir = current_dir()?;
 
-    let root = if let Some(root) = self.root {
-      root
-    } else {
-      Utf8PathBuf::from_path_buf(current_dir.clone())
-        .map_err(|path| error::PathUnicode { path }.build())?
-    };
+    let root = self.root.unwrap_or_else(|| current_dir.clone());
 
     let manifest = if let Some(path) = self.manifest {
       path
@@ -163,7 +158,7 @@ impl Create {
       },
     }
 
-    let mut files = HashMap::new();
+    let mut files = BTreeMap::new();
 
     let bar = progress_bar::new(paths.values().sum());
 

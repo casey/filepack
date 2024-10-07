@@ -182,6 +182,12 @@ impl PartialEq<&str> for RelativePath {
   }
 }
 
+impl AsRef<Path> for RelativePath {
+  fn as_ref(&self) -> &Path {
+    self.0.as_ref()
+  }
+}
+
 impl TryFrom<&Utf8Path> for RelativePath {
   type Error = Error;
 
