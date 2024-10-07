@@ -31,9 +31,12 @@ fn download() {
 
   Command::cargo_bin("filepack")
     .unwrap()
-    .args(["hash", dir.path().join("filepack.json").to_str().unwrap()])
+    .args([
+      "verify",
+      "--hash",
+      "d8e3d0f33e58e0f0f0e43082fcdeb2a38f7e560b3bdc0e8862608e8d959e852e",
+    ])
     .current_dir(&dir)
     .assert()
-    .stdout("d8e3d0f33e58e0f0f0e43082fcdeb2a38f7e560b3bdc0e8862608e8d959e852e\n")
     .success();
 }
