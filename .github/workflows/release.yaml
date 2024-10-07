@@ -29,13 +29,13 @@ jobs:
       matrix:
         target:
         - aarch64-apple-darwin
-        - aarch64-pc-windows-msvc
-        - aarch64-unknown-linux-musl
-        - arm-unknown-linux-musleabihf
-        - armv7-unknown-linux-musleabihf
-        - x86_64-apple-darwin
-        - x86_64-pc-windows-msvc
-        - x86_64-unknown-linux-musl
+        # - aarch64-pc-windows-msvc
+        # - aarch64-unknown-linux-musl
+        # - arm-unknown-linux-musleabihf
+        # - armv7-unknown-linux-musleabihf
+        # - x86_64-apple-darwin
+        # - x86_64-pc-windows-msvc
+        # - x86_64-unknown-linux-musl
         include:
         - target: aarch64-apple-darwin
           os: macos-latest
@@ -85,12 +85,6 @@ jobs:
       if: ${{ matrix.target == 'aarch64-pc-windows-msvc' }}
       run: |
         rustup target add aarch64-pc-windows-msvc
-
-    - name: Install musl Tools
-      if: ${{ matrix.target == 'x86_64-unknown-linux-musl' }}
-      run: |
-        sudo apt-get update
-        sudo apt-get install musl-tools
 
     - name: Release Type
       id: release-type
