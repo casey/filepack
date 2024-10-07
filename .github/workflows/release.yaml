@@ -36,8 +36,8 @@ jobs:
         # - aarch64-unknown-linux-musl
         # - arm-unknown-linux-musleabihf
         # - armv7-unknown-linux-musleabihf
-        # - x86_64-apple-darwin
-        # - x86_64-pc-windows-msvc
+        - x86_64-apple-darwin
+        - x86_64-pc-windows-msvc
         # - x86_64-unknown-linux-musl
         include:
         - target: aarch64-apple-darwin
@@ -55,11 +55,11 @@ jobs:
         # - target: armv7-unknown-linux-musleabihf
         #   os: ubuntu-latest
         #   target_rustflags: '--codegen linker=arm-linux-gnueabihf-gcc'
-        # - target: x86_64-apple-darwin
-        #   os: macos-latest
-        #   target_rustflags: ''
-        # - target: x86_64-pc-windows-msvc
-        #   os: windows-latest
+        - target: x86_64-apple-darwin
+          os: macos-latest
+          target_rustflags: ''
+        - target: x86_64-pc-windows-msvc
+          os: windows-latest
         # - target: x86_64-unknown-linux-musl
         #   os: ubuntu-latest
         #   target_rustflags: ''
