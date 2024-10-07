@@ -72,14 +72,14 @@ jobs:
     - name: Install AArch64 Toolchain
       if: ${{ matrix.target == 'aarch64-unknown-linux-musl' }}
       run: |
-        apt-get update
-        apt-get install gcc-aarch64-linux-gnu libc6-dev-i386
+        sudo apt-get update
+        sudo apt-get install gcc-aarch64-linux-gnu libc6-dev-i386
 
     - name: Install ARM Toolchain
       if: ${{ matrix.target == 'arm-unknown-linux-musleabihf' || matrix.target == 'armv7-unknown-linux-musleabihf' }}
       run: |
-        apt-get update
-        apt-get install gcc-arm-linux-gnueabihf
+        sudo apt-get update
+        sudo apt-get install gcc-arm-linux-gnueabihf
 
     - name: Install AArch64 Toolchain (Windows)
       if: ${{ matrix.target == 'aarch64-pc-windows-msvc' }}
@@ -89,8 +89,8 @@ jobs:
     - name: Install musl Tools
       if: ${{ matrix.target == 'x86_64-unknown-linux-musl' }}
       run: |
-        apt-get update
-        apt-get install musl-tools
+        sudo apt-get update
+        sudo apt-get install musl-tools
 
     - name: Release Type
       id: release-type
