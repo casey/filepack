@@ -3,7 +3,7 @@ use super::*;
 #[derive(Debug, Snafu)]
 #[snafu(context(suffix(false)), visibility(pub(crate)))]
 pub(crate) enum Error {
-  #[snafu(display("artifact name cannot be safely used as a filename: `{name}`"))]
+  #[snafu(display("release artifact name cannot be safely used as a filename: `{name}`"))]
   ArtifactName {
     backtrace: Option<Backtrace>,
     name: String,
@@ -25,7 +25,7 @@ pub(crate) enum Error {
     path: DisplayPath,
     source: serde_yaml::Error,
   },
-  #[snafu(display("failed to deserialize GitHub release {release}"))]
+  #[snafu(display("failed to deserialize GitHub release {release} from JSON"))]
   DeserializeRelease {
     release: GithubRelease,
     backtrace: Option<Backtrace>,
@@ -57,7 +57,7 @@ pub(crate) enum Error {
     count: usize,
   },
   #[snafu(display("environment variable `{key}` is not valid unicode"))]
-  EnvVarUnicode {
+  EnvironmentVariableUnicode {
     backtrace: Option<Backtrace>,
     key: String,
   },

@@ -13,7 +13,7 @@ fn var(key: &str) -> Result<Option<String>> {
   match env::var(key) {
     Ok(val) => Ok(Some(val)),
     Err(env::VarError::NotPresent) => Ok(None),
-    Err(env::VarError::NotUnicode(_)) => Err(error::EnvVarUnicode { key }.build()),
+    Err(env::VarError::NotUnicode(_)) => Err(error::EnvironmentVariableUnicode { key }.build()),
   }
 }
 
