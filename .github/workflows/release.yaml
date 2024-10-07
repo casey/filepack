@@ -89,6 +89,12 @@ jobs:
       run: |
         rustup target add aarch64-pc-windows-msvc
 
+    - name: Install musl-tools
+      if: ${{ matrix.target == 'x86_64-unknown-linux-musl' }}
+      run: |
+        sudo apt-get update
+        sudo apt-get install musl-tools
+
     - name: Release Type
       id: release-type
       run: |
