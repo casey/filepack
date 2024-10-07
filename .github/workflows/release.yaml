@@ -29,7 +29,7 @@ jobs:
       matrix:
         target:
         - aarch64-apple-darwin
-        # - aarch64-pc-windows-msvc
+        - aarch64-pc-windows-msvc
         # - aarch64-unknown-linux-musl
         # - arm-unknown-linux-musleabihf
         # - armv7-unknown-linux-musleabihf
@@ -40,9 +40,9 @@ jobs:
         - target: aarch64-apple-darwin
           os: macos-latest
           target_rustflags: ''
-        # - target: aarch64-pc-windows-msvc
-        #   os: windows-latest
-        #   target_rustflags: ''
+        - target: aarch64-pc-windows-msvc
+          os: windows-latest
+          target_rustflags: ''
         # - target: aarch64-unknown-linux-musl
         #   os: ubuntu-latest
         #   target_rustflags: '--codegen linker=aarch64-linux-gnu-gcc'
