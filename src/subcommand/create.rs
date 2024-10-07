@@ -23,11 +23,7 @@ impl Create {
   pub(crate) fn run(self, options: Options) -> Result {
     let current_dir = current_dir()?;
 
-    let root = if let Some(root) = self.root {
-      root
-    } else {
-      current_dir.clone()
-    };
+    let root = self.root.unwrap_or_else(|| current_dir.clone());
 
     let manifest = if let Some(path) = self.manifest {
       path
