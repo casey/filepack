@@ -27,17 +27,17 @@ mod verify;
 pub(crate) enum Subcommand {
   #[command(about = "Create manifest")]
   Create(create::Create),
-  #[command(about = "Download a GitHub release")]
+  #[command(about = "Download GitHub release artifacts")]
   Download(download::Download),
-  #[command(about = "Hash single file")]
+  #[command(about = "Hash file")]
   Hash(hash::Hash),
   #[command(about = "Print master key")]
   Key,
-  #[command(about = "Generate new master key")]
+  #[command(about = "Generate master key")]
   Keygen,
   #[command(about = "Print man page")]
   Man,
-  #[command(about = "Verify directory against manifest")]
+  #[command(about = "Verify manifest")]
   Verify(verify::Verify),
 }
 
