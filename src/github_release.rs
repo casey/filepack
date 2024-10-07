@@ -1,5 +1,7 @@
 use super::*;
 
+const ERROR: &str = "must be of the form '<OWNER>/<REPO>/<TAG>'";
+
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct GithubRelease {
   pub(crate) owner: String,
@@ -14,18 +16,28 @@ impl Display for GithubRelease {
 }
 
 impl FromStr for GithubRelease {
-  type Err = Error;
+  type Err = &'static str;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
-    let v = s.split('/').collect::<Vec<&str>>();
-    assert_eq!(v.len(), 3);
-    assert!(!v[0].is_empty());
-    assert!(!v[1].is_empty());
-    assert!(!v[2].is_empty());
+    let components = s
+      .split('/')
+      .map(|component| {
+        if component.is_empty() {
+          Err(ERROR)
+        } else {
+          Ok(component)
+        }
+      })
+      .collect::<Result<Vec<&str>, &str>>()?;
+
+    if components.len() != 3 {
+      return Err(ERROR);
+    }
+
     Ok(Self {
-      owner: v[0].into(),
-      repo: v[1].into(),
-      tag: v[2].into(),
+      owner: components[0].into(),
+      repo: components[1].into(),
+      tag: components[2].into(),
     })
   }
 }
@@ -46,5 +58,15 @@ mod tests {
       release.to_string().parse::<GithubRelease>().unwrap(),
       release,
     );
+  }
+
+  #[test]
+  fn err() {
+    "".parse::<GithubRelease>().unwrap_err();
+    "///".parse::<GithubRelease>().unwrap_err();
+    "a//".parse::<GithubRelease>().unwrap_err();
+    "/b/".parse::<GithubRelease>().unwrap_err();
+    "/b/c".parse::<GithubRelease>().unwrap_err();
+    "a/b/c/d".parse::<GithubRelease>().unwrap_err();
   }
 }
