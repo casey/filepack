@@ -13,8 +13,6 @@ pub(crate) struct Create {
   manifest: Option<Utf8PathBuf>,
   #[arg(help = "Include metadata from YAML document <METADATA>`", long)]
   metadata: Option<Utf8PathBuf>,
-  #[arg(long, help = "Download artifacts for <GITHUB_RELEASE>")]
-  github_release: Option<GithubRelease>,
   #[arg(help = "Create manifest for files in <ROOT> directory, defaults to current directory")]
   root: Option<Utf8PathBuf>,
   #[arg(help = "Sign manifest with master key", long)]
@@ -31,10 +29,6 @@ impl Create {
       Utf8PathBuf::from_path_buf(current_dir.clone())
         .map_err(|path| error::PathUnicode { path }.build())?
     };
-
-    if let Some(github_release) = &self.github_release {
-      github_release.download(&root)?;
-    }
 
     let manifest = if let Some(path) = self.manifest {
       path
