@@ -50,9 +50,7 @@ jobs:
       uses: softprops/action-gh-release@v2.0.8
       with:
         draft: false
-        files: >-
-          release/filepack.json
-          CHANGELOG.md
+        files: release/filepack.json
         prerelease: ${{ steps.prerelease.outputs.value }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
