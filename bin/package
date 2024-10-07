@@ -44,12 +44,10 @@ case $OS in
     ARCHIVE=`pwd`/filepack-$TAG-$TARGET.tar.gz
     tar czf $ARCHIVE *
     echo "archive=$ARCHIVE" >> $GITHUB_OUTPUT
-    shasum -a 256 $ARCHIVE > $ARCHIVE.sha256sum
     ;;
   windows-latest)
     ARCHIVE=`pwd`/filepack-$TAG-$TARGET.zip
     7z a $ARCHIVE *
     echo "archive=`pwd -W`/filepack-$TAG-$TARGET.zip" >> $GITHUB_OUTPUT
-    sha256sum $ARCHIVE > $ARCHIVE.sha256sum
     ;;
 esac
