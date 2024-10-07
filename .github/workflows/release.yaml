@@ -86,7 +86,6 @@ jobs:
       if: ${{ matrix.target == 'arm-unknown-linux-musleabihf' || matrix.target == 'armv7-unknown-linux-musleabihf' }}
       run: |
         sudo apt-get install gcc-arm-linux-gnueabihf
-        # sudo apt-get install binutils-arm-linux-gnueabihf
         sudo ln -s /usr/bin/arm-linux-gnueabihf-gcc /usr/bin/arm-linux-musleabihf-gcc
 
     - name: Install AArch64 Toolchain (Windows)
