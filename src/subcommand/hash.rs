@@ -2,13 +2,13 @@ use super::*;
 
 #[derive(Parser)]
 pub(crate) struct Hash {
-  #[arg(help = "Hash file at <PATH>, defaulting to standard input")]
-  path: Option<Utf8PathBuf>,
+  #[arg(help = "Hash <FILE>, defaulting to standard input")]
+  file: Option<Utf8PathBuf>,
 }
 
 impl Hash {
   pub(crate) fn run(self, options: Options) -> Result {
-    let hash = if let Some(path) = self.path {
+    let hash = if let Some(path) = self.file {
       options.hash_file(&path).context(error::Io { path })?.hash
     } else {
       let mut hasher = Hasher::new();

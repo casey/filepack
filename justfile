@@ -84,3 +84,18 @@ check-error-variant-order: tmp
   cat src/error.rs | rg '^  ([A-Z].*) \{' -or '$1' > tmp/original.txt
   sort tmp/original.txt > tmp/sorted.txt
   diff tmp/{original,sorted}.txt
+
+sign-release: tmp
+  #!/usr/bin/env bash
+  set -euxo pipefail
+  VERSION=`sed -En 's/version[[:space:]]*=[[:space:]]*"([^"]+)"/\1/p' Cargo.toml | head -1`
+  gh release download \
+    --repo casey/filepack \
+    --pattern filepack.json \
+    --dir tmp \
+    $VERSION
+  cargo run sign tmp/filepack.json
+  gh release upload \
+    --repo casey/filepack \
+    $VERSION \
+    tmp/*.signature

@@ -177,11 +177,7 @@ impl Create {
     if self.sign {
       let private_key_path = options.key_dir()?.join(MASTER_PRIVATE_KEY);
 
-      let private_key = PrivateKey::load(&private_key_path)?;
-
-      let signature = private_key.sign(json.as_bytes());
-
-      let public_key = private_key.public_key();
+      let (public_key, signature) = PrivateKey::load_and_sign(&private_key_path, json.as_bytes())?;
 
       let signature_dir = root.join(SIGNATURES);
 
