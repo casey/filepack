@@ -4,6 +4,8 @@ use super::*;
 pub(crate) struct Verify {
   #[arg(help = "Verify that BLAKE3 hash of manifest manifest is <HASH>", long)]
   hash: Option<Hash>,
+  #[arg(help = "Ignore missing files", long)]
+  ignore_missing: bool,
   #[arg(help = "Verify that manifest has been signed by <KEY>", long)]
   key: Option<PublicKey>,
   #[arg(
@@ -71,7 +73,11 @@ manifest hash mismatch: `{source}`
     for (path, &expected) in &manifest.files {
       let actual = match options.hash_file(&root.join(path)) {
         Err(err) if err.kind() == io::ErrorKind::NotFound => {
-          return Err(error::MissingFile { path }.build())
+          ensure! {
+            self.ignore_missing,
+            error::MissingFile { path },
+          }
+          continue;
         }
         result => result.context(error::Io { path })?,
       };
