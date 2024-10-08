@@ -779,3 +779,30 @@ error: manifest hash mismatch\n",
     ))
     .failure();
 }
+
+#[test]
+fn ignore_missing_allows_missing_files() {
+  let dir = TempDir::new().unwrap();
+
+  dir
+    .child("filepack.json")
+    .write_str(
+      r#"{"files":{"foo":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}}}"#
+    )
+    .unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .arg("verify")
+    .current_dir(&dir)
+    .assert()
+    .stderr(is_match("error: file missing: `foo`\n"))
+    .failure();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["verify", "--ignore-missing"])
+    .current_dir(&dir)
+    .assert()
+    .success();
+}
