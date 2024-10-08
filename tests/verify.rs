@@ -781,7 +781,7 @@ error: manifest hash mismatch\n",
 }
 
 #[test]
-fn ignore_missing_allows_missing_files() {
+fn ignore_missing() {
   let dir = TempDir::new().unwrap();
 
   dir
