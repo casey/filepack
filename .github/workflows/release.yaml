@@ -163,8 +163,9 @@ jobs:
       uses: softprops/action-gh-release@v2.0.8
       with:
         draft: false
-        files: release/SHA256SUMS
-        files: release/filepack.json
+        files: |
+          release/SHA256SUMS
+          release/filepack.json
         prerelease: ${{ needs.prerelease.outputs.value }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
