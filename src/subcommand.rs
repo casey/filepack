@@ -7,7 +7,6 @@ use {
 };
 
 mod create;
-mod download;
 mod hash;
 mod key;
 mod keygen;
@@ -27,8 +26,6 @@ mod verify;
 pub(crate) enum Subcommand {
   #[command(about = "Create manifest")]
   Create(create::Create),
-  #[command(about = "Download GitHub release artifacts")]
-  Download(download::Download),
   #[command(about = "Hash file")]
   Hash(hash::Hash),
   #[command(about = "Print master key")]
@@ -45,7 +42,6 @@ impl Subcommand {
   pub(crate) fn run(self, options: Options) -> Result {
     match self {
       Self::Create(create) => create.run(options),
-      Self::Download(download) => download.run(),
       Self::Hash(hash) => hash.run(options),
       Self::Key => key::run(options),
       Self::Keygen => keygen::run(options),

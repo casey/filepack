@@ -20,7 +20,6 @@ where
 }
 
 mod create;
-mod download;
 mod hash;
 mod key;
 mod keygen;

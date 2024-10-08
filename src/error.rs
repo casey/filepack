@@ -3,12 +3,6 @@ use super::*;
 #[derive(Debug, Snafu)]
 #[snafu(context(suffix(false)), visibility(pub(crate)))]
 pub(crate) enum Error {
-  #[snafu(display("release artifact name cannot be safely used as a filename: `{name}`"))]
-  ArtifactName {
-    backtrace: Option<Backtrace>,
-    name: String,
-    source: relative_path::Error,
-  },
   #[snafu(display("failed to get current directory"))]
   CurrentDir { source: io::Error },
   #[snafu(display("failed to get local data directory"))]
@@ -25,24 +19,6 @@ pub(crate) enum Error {
     path: DisplayPath,
     source: serde_yaml::Error,
   },
-  #[snafu(display("failed to deserialize GitHub release {release} from JSON"))]
-  DeserializeRelease {
-    release: GithubRelease,
-    backtrace: Option<Backtrace>,
-    source: serde_json::Error,
-  },
-  #[snafu(display("failed to download `{url}` to `{path}`"))]
-  Download {
-    backtrace: Option<Backtrace>,
-    path: Utf8PathBuf,
-    source: io::Error,
-    url: String,
-  },
-  #[snafu(display("duplicate release asset filename {filename}"))]
-  DuplicateReleaseAssetFilename {
-    backtrace: Option<Backtrace>,
-    filename: RelativePath,
-  },
   #[snafu(
     display(
       "empty director{} {}",
@@ -55,11 +31,6 @@ pub(crate) enum Error {
   EntryMismatch {
     backtrace: Option<Backtrace>,
     count: usize,
-  },
-  #[snafu(display("environment variable `{key}` is not valid unicode"))]
-  EnvironmentVariableUnicode {
-    backtrace: Option<Backtrace>,
-    key: String,
   },
   #[snafu(display("extraneous file not in manifest: `{path}`"))]
   ExtraneousFile {
@@ -146,11 +117,6 @@ pub(crate) enum Error {
   PublicKeyNotFound {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
-  },
-  #[snafu(transparent)]
-  Request {
-    backtrace: Option<Backtrace>,
-    source: reqwest::Error,
   },
   #[snafu(display("signature `{path}` already exists"))]
   SignatureAlreadyExists {
