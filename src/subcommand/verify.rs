@@ -4,7 +4,7 @@ use super::*;
 pub(crate) struct Verify {
   #[arg(help = "Verify that BLAKE3 hash of manifest manifest is <HASH>", long)]
   hash: Option<Hash>,
-  #[arg(help = "Don't fail or report status for missing files", long)]
+  #[arg(help = "Ignore missing files", long)]
   ignore_missing: bool,
   #[arg(help = "Verify that manifest has been signed by <KEY>", long)]
   key: Option<PublicKey>,
