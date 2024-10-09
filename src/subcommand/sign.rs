@@ -4,6 +4,8 @@ use super::*;
 pub(crate) struct Sign {
   #[arg(help = "Sign and update <MANIFEST>")]
   manifest: Utf8PathBuf,
+  #[arg(help = "Don't error if we have already signed manifest", long)]
+  force: bool,
 }
 
 impl Sign {
@@ -21,6 +23,15 @@ impl Sign {
 
     for (public_key, signature) in &manifest.signatures {
       public_key.verify(root_hash.as_bytes(), signature)?;
+    }
+
+    if !self.force {
+      let public_key_path = options.key_dir()?.join(MASTER_PUBLIC_KEY);
+      let public_key = PublicKey::load(&public_key_path)?;
+      ensure! {
+        !manifest.signatures.contains_key(&public_key),
+        error::SignatureAlreadyExists { public_key },
+      }
     }
 
     let private_key_path = options.key_dir()?.join(MASTER_PRIVATE_KEY);

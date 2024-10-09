@@ -129,6 +129,11 @@ pub(crate) enum Error {
   },
   #[snafu(display("root hash mismatch"))]
   RootHashMismatch { backtrace: Option<Backtrace> },
+  #[snafu(display("manifest has already been signed by public key `{public_key}`"))]
+  SignatureAlreadyExists {
+    backtrace: Option<Backtrace>,
+    public_key: PublicKey,
+  },
   #[snafu(display("invalid signature for public key `{public_key}`"))]
   SignatureInvalid {
     backtrace: Option<Backtrace>,

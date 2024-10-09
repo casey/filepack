@@ -166,3 +166,72 @@ fn existing_signatures_are_preserved() {
     .assert()
     .success();
 }
+
+#[test]
+fn re_signing_requires_force() {
+  let dir = TempDir::new().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .env("FILEPACK_DATA_DIR", dir.path())
+    .arg("keygen")
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  dir.child("foo/bar").touch().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .env("FILEPACK_DATA_DIR", dir.path())
+    .args(["create", "foo"])
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  let public_key = fs::read_to_string(dir.child("keys/master.public"))
+    .unwrap()
+    .trim()
+    .to_owned();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .env("FILEPACK_DATA_DIR", dir.path())
+    .args(["sign", "foo/filepack.json"])
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["verify", "foo", "--key", &public_key])
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .env("FILEPACK_DATA_DIR", dir.path())
+    .args(["sign", "foo/filepack.json"])
+    .current_dir(&dir)
+    .assert()
+    .stderr(format!(
+      "error: manifest has already been signed by public key `{public_key}`\n"
+    ))
+    .failure();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .env("FILEPACK_DATA_DIR", dir.path())
+    .args(["sign", "--force", "foo/filepack.json"])
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["verify", "foo", "--key", &public_key])
+    .current_dir(&dir)
+    .assert()
+    .success();
+}
