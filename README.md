@@ -185,7 +185,7 @@ Metadata
 --------
 
 `filepack create` can optionally write metadata describing the contents of the
-package to a file named `metadata.json`, contain a JSON object with the
+package to a file named `metadata.json`, containing a JSON object with the
 following keys:
 
 - `title`: A string containing the package's human-readable title.
