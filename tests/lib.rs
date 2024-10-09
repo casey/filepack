@@ -6,17 +6,40 @@ use {
     TempDir,
   },
   predicates::str::RegexPredicate,
-  std::{fs, str},
+  serde::{Deserialize, Serialize},
+  std::{collections::BTreeMap, fs, path::Path, str},
 };
 
 const SEPARATOR: char = if cfg!(windows) { '\\' } else { '/' };
-const SEPARATOR_RE: &str = if cfg!(windows) { r"\\" } else { "/" };
 
 fn is_match<S>(pattern: S) -> RegexPredicate
 where
   S: AsRef<str>,
 {
   predicates::prelude::predicate::str::is_match(format!("^(?s){}$", pattern.as_ref())).unwrap()
+}
+
+#[derive(Deserialize, Serialize)]
+struct Manifest {
+  files: BTreeMap<String, Entry>,
+  #[serde(skip_serializing_if = "BTreeMap::is_empty", default)]
+  signatures: BTreeMap<String, String>,
+}
+
+#[derive(Deserialize, Serialize)]
+pub(crate) struct Entry {
+  pub(crate) hash: String,
+  pub(crate) size: u64,
+}
+
+impl Manifest {
+  fn load(path: &Path) -> Self {
+    serde_json::from_str(&fs::read_to_string(path).unwrap()).unwrap()
+  }
+
+  fn store(&self, path: &Path) {
+    fs::write(path, serde_json::to_string(self).unwrap()).unwrap()
+  }
 }
 
 mod create;
