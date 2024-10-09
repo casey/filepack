@@ -95,4 +95,19 @@ sign-release: tmp
     --dir tmp \
     $VERSION
   cargo run sign tmp/filepack.json
-  cat tmp/filepack.json
+  gh release upload \
+    --clobber \
+    --repo casey/filepack \
+    $VERSION \
+    tmp/filepack.json
+
+verify-release: tmp
+  #!/usr/bin/env bash
+  set -euxo pipefail
+  VERSION=`sed -En 's/version[[:space:]]*=[[:space:]]*"([^"]+)"/\1/p' Cargo.toml | head -1`
+  gh release download \
+    --repo casey/filepack \
+    --pattern '*' \
+    --dir tmp \
+    $VERSION
+  cargo run verify --ignore-missing tmp --key `cargo run key`
