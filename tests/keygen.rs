@@ -21,18 +21,12 @@ fn keygen_generates_master_key_by_default() {
   private.assert(is_match("[0-9a-f]{64}\n"));
 
   let public = ed25519_dalek::VerifyingKey::from_bytes(
-    &hex::decode(fs::read_to_string(public).unwrap().trim())
-      .unwrap()
-      .try_into()
-      .unwrap(),
+    &hex::decode(load_key(&public)).unwrap().try_into().unwrap(),
   )
   .unwrap();
 
   let private = ed25519_dalek::SigningKey::from_bytes(
-    &hex::decode(fs::read_to_string(private).unwrap().trim())
-      .unwrap()
-      .try_into()
-      .unwrap(),
+    &hex::decode(load_key(&private)).unwrap().try_into().unwrap(),
   );
 
   assert!(!public.is_weak());

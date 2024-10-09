@@ -569,10 +569,7 @@ fn valid_signature_for_wrong_pubkey_error() {
 
   let mut manifest = Manifest::load(&dir.child("foo/filepack.json"));
 
-  let public_key = fs::read_to_string(dir.child("keys/master.public"))
-    .unwrap()
-    .trim()
-    .to_owned();
+  let public_key = load_key(&dir.child("keys/master.public"));
 
   let foo = manifest.signatures.remove(&public_key).unwrap();
 
@@ -616,11 +613,11 @@ fn signature_verification_success() {
     .assert()
     .success();
 
-  let public_key = fs::read_to_string(dir.child("keys/master.public")).unwrap();
+  let public_key = load_key(&dir.child("keys/master.public"));
 
   Command::cargo_bin("filepack")
     .unwrap()
-    .args(["verify", "foo", "--key", public_key.trim()])
+    .args(["verify", "foo", "--key", &public_key])
     .current_dir(&dir)
     .assert()
     .success();

@@ -574,10 +574,7 @@ fn sign_creates_valid_signature() {
 
   let manifest = Manifest::load(&dir.child("foo/filepack.json"));
 
-  let public_key = fs::read_to_string(dir.child("keys/master.public"))
-    .unwrap()
-    .trim()
-    .to_owned();
+  let public_key = load_key(&dir.child("keys/master.public"));
 
   assert_eq!(manifest.signatures.len(), 1);
 

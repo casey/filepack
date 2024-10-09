@@ -41,7 +41,7 @@ impl Create {
         error::MetadataAlreadyExists { path: &path },
       }
       let metadata = Metadata::from(template);
-      let json = serde_json::to_string(&metadata).unwrap();
+      let json = metadata.to_json();
       fs::write(&path, json).context(error::Io { path: &path })?;
     }
 
@@ -181,18 +181,13 @@ impl Create {
     if self.sign {
       let private_key_path = options.key_dir()?.join(MASTER_PRIVATE_KEY);
 
-      let private_key = PrivateKey::load(&private_key_path)?;
-
-      let signature = private_key.sign(manifest.root_hash().as_bytes());
-
-      let public_key = private_key.public_key();
+      let (public_key, signature) =
+        PrivateKey::load_and_sign(&private_key_path, manifest.root_hash().as_bytes())?;
 
       manifest.signatures.insert(public_key, signature);
     }
 
-    let json = serde_json::to_string(&manifest).unwrap();
-
-    fs::write(&manifest_path, &json).context(error::Io {
+    fs::write(&manifest_path, manifest.to_json()).context(error::Io {
       path: manifest_path,
     })?;
 

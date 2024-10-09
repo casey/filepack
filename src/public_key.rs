@@ -42,11 +42,14 @@ impl PublicKey {
     Ok(public_key)
   }
 
-  pub(crate) fn verify(&self, message: &[u8], signature: &Signature) -> Result<(), SignatureError> {
+  pub(crate) fn verify(&self, message: &[u8], signature: &Signature) -> Result<()> {
     self
       .0
       .verify_strict(message, signature.as_ref())
       .map_err(SignatureError)
+      .context(error::SignatureInvalid {
+        public_key: self.clone(),
+      })
   }
 }
 
