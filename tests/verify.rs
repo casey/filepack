@@ -118,7 +118,7 @@ fn extra_fields_are_not_allowed() {
     .stderr(
       "\
 error: failed to deserialize manifest at `filepack.json`
-       └─ unknown field `foo`, expected `files` or `metadata` at line 1 column 17\n",
+       └─ unknown field `foo`, expected `files` at line 1 column 17\n",
     )
     .failure();
 }
@@ -448,24 +448,6 @@ fn with_manifest_path() {
   Command::cargo_bin("filepack")
     .unwrap()
     .args(["verify", "--manifest", "hello.json"])
-    .current_dir(&dir)
-    .assert()
-    .success();
-}
-
-#[test]
-fn manifest_metadata_allows_unknown_keys() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("foo/bar").touch().unwrap();
-
-  dir.child("foo/filepack.json").write_str(
-    r#"{"files":{"bar":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}},"metadata":{"title":"Foo","bar":100}}"#,
-  ).unwrap();
-
-  Command::cargo_bin("filepack")
-    .unwrap()
-    .args(["verify", "foo"])
     .current_dir(&dir)
     .assert()
     .success();
@@ -805,4 +787,51 @@ fn ignore_missing() {
     .current_dir(&dir)
     .assert()
     .success();
+}
+
+#[test]
+fn metadata_allows_unknown_keys() {
+  let dir = TempDir::new().unwrap();
+
+  dir
+    .child("filepack.json")
+    .write_str(r#"{"files":{"metadata.json":{"hash":"1845a2ea1b86a250cb1c24115032cc0fdc064001f59af4a5e9a17be5cd7efbbc","size":25}}}"#)
+    .unwrap();
+
+  dir
+    .child("metadata.json")
+    .write_str(r#"{"title":"Foo","bar":100}"#)
+    .unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["verify"])
+    .current_dir(&dir)
+    .assert()
+    .success();
+}
+
+#[test]
+fn metadata_may_not_be_invalid() {
+  let dir = TempDir::new().unwrap();
+
+  dir
+    .child("filepack.json")
+    .write_str(r#"{"files":{"metadata.json":{"hash":"f113b1430243e68a2976426b0e13f21e5795cc107a914816fbf6c2f511092f4b","size":13}}}"#)
+    .unwrap();
+
+  dir
+    .child("metadata.json")
+    .write_str(r#"{"title":100}"#)
+    .unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["verify"])
+    .current_dir(&dir)
+    .assert()
+    .stderr(is_match(
+      "error: failed to deserialize metadata at `.*metadata.json`\n.*",
+    ))
+    .failure();
 }

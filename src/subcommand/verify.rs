@@ -196,6 +196,18 @@ mismatched file: `{path}`
       }
     }
 
+    {
+      let path = root.join("metadata.json");
+
+      if let Some(json) = fs::read_to_string(&path)
+        .into_option()
+        .context(error::Io { path: &path })?
+      {
+        serde_json::from_str::<Metadata>(&json)
+          .context(error::DeserializeMetadata { path: &path })?;
+      }
+    }
+
     if let Some(key) = self.key {
       ensure! {
         signatures.contains(&key),

@@ -154,8 +154,7 @@ slash.
 Filepack has no way of tracking empty directories, the presence of which are an
 error when creating or verifying a manifest.
 
-Manifests contain an object with one mandatory key, `files`, and one optional
-key, `metadata`.
+Manifests contain an object with one mandatory key, `files`.
 
 ### `files`
 
@@ -182,6 +181,11 @@ An example manifest for a directory containing the files `README.md` and
 }
 ```
 
+Metadata
+--------
+
+todo: cleanup
+
 ### `metadata`
 
 The value of the optional `metadata` key is an object containing metadata
@@ -191,17 +195,9 @@ describing the package, with keys and values as follows:
 
 An example manifest with metadata:
 
-```json
+```js
 {
-  "files": {
-    "tobins-spirit-guide.md": {
-      "hash": "5a9a6d96244ec398545fc0c98c2cb7ed52511b025c19e9ad1e3c1ef4ac8575ad",
-      "size": 175934
-    }
-  },
-  "metadata": {
-    "title": "Tobin's Spirit Guide"
-  }
+  "title": "Tobin's Spirit Guide"
 }
 ```
 

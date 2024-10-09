@@ -31,16 +31,22 @@ impl Create {
       root.join(Manifest::FILENAME)
     };
 
-    let metadata = if let Some(path) = &self.metadata {
+    if let Some(path) = &self.metadata {
       let yaml = fs::read_to_string(path).context(error::Io { path })?;
-      Some(
-        serde_yaml::from_str::<Template>(&yaml)
-          .context(error::DeserializeMetadata { path })?
-          .into(),
-      )
-    } else {
-      None
-    };
+      let template = serde_yaml::from_str::<Template>(&yaml)
+        .context(error::DeserializeMetadataTemplate { path })?;
+      let path = root.join("metadata.json");
+
+      ensure! {
+        self.force || !path.try_exists().context(error::Io { path: &path })?,
+        error::MetadataAlreadyExists { path: &path },
+      }
+
+      let metadata = Metadata::from(template);
+      let json = serde_json::to_string(&metadata).unwrap();
+
+      fs::write(&path, json).context(error::Io { path: &path })?;
+    }
 
     let cleaned_manifest = current_dir.join(&manifest).lexiclean();
 
@@ -170,7 +176,7 @@ impl Create {
       bar.inc(entry.size);
     }
 
-    let json = serde_json::to_string(&Manifest { files, metadata }).unwrap();
+    let json = serde_json::to_string(&Manifest { files }).unwrap();
 
     fs::write(&manifest, &json).context(error::Io { path: manifest })?;
 

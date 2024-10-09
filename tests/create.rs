@@ -462,8 +462,10 @@ fn with_metadata() {
     .success();
 
   dir.child("foo/filepack.json").assert(
-    r#"{"files":{"bar":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}},"metadata":{"title":"Foo"}}"#,
+    r#"{"files":{"bar":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0},"metadata.json":{"hash":"bf15e6d4fc37be38eb02255ad98c52ac3b54acd1ff7b8de56c343f022eb770de","size":15}}}"#,
   );
+
+  dir.child("foo/metadata.json").assert(r#"{"title":"Foo"}"#);
 
   Command::cargo_bin("filepack")
     .unwrap()
