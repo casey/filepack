@@ -11,7 +11,7 @@ fn no_files() {
     .assert()
     .success();
 
-  dir.child("filepack.json").assert(r#"{"files":{}}"#);
+  dir.child("filepack.json").assert("{}");
 
   Command::cargo_bin("filepack")
     .unwrap()

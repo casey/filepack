@@ -21,8 +21,9 @@ where
 
 #[derive(Deserialize, Serialize)]
 struct Manifest {
+  #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
   files: BTreeMap<String, Entry>,
-  #[serde(skip_serializing_if = "BTreeMap::is_empty", default)]
+  #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
   signatures: BTreeMap<String, String>,
 }
 

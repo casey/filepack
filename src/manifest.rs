@@ -3,8 +3,9 @@ use super::*;
 #[derive(Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
 pub(crate) struct Manifest {
+  #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
   pub(crate) files: BTreeMap<RelativePath, Entry>,
-  #[serde(skip_serializing_if = "BTreeMap::is_empty", default)]
+  #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
   pub(crate) signatures: BTreeMap<PublicKey, Signature>,
 }
 
@@ -47,7 +48,7 @@ mod tests {
       signatures: BTreeMap::new(),
     };
     let json = serde_json::to_string(&manifest).unwrap();
-    assert_eq!(json, r#"{"files":{}}"#);
+    assert_eq!(json, "{}");
     assert_eq!(serde_json::from_str::<Manifest>(&json).unwrap(), manifest);
   }
 }
