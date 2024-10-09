@@ -18,3 +18,22 @@ impl<T> IoResultExt<T> for io::Result<T> {
     }
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn into_option() {
+    Err::<(), io::Error>(io::Error::new(io::ErrorKind::InvalidInput, "foo"))
+      .into_option()
+      .unwrap_err();
+
+    assert_eq!(
+      Err::<(), io::Error>(io::Error::new(io::ErrorKind::NotFound, "foo"))
+        .into_option()
+        .unwrap(),
+      None,
+    );
+  }
+}
