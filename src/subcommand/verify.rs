@@ -178,7 +178,7 @@ mismatched file: `{path}`
 
     for (public_key, signature) in &manifest.signatures {
       public_key
-        .verify(root_hash.as_bytes(), &signature)
+        .verify(root_hash.as_bytes(), signature)
         .context(error::SignatureInvalid {
           public_key: public_key.clone(),
         })?;

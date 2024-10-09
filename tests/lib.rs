@@ -38,7 +38,7 @@ impl Manifest {
   }
 
   fn store(&self, path: &Path) {
-    fs::write(path, serde_json::to_string(self).unwrap()).unwrap()
+    fs::write(path, serde_json::to_string(self).unwrap()).unwrap();
   }
 }
 

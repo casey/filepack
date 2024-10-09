@@ -477,9 +477,9 @@ fn weak_signature_public_key() {
     .arg("verify")
     .current_dir(&dir)
     .assert()
-    .stderr(is_match(format!(
-      "error: failed to deserialize manifest at `filepack.json`\n.*weak public key.*"
-    )))
+    .stderr(is_match(
+      "error: failed to deserialize manifest at `filepack.json`\n.*weak public key.*",
+    ))
     .failure();
 }
 
@@ -539,9 +539,9 @@ fn malformed_signature_error() {
     .arg("verify")
     .current_dir(&dir)
     .assert()
-    .stderr(is_match(format!(
-      "error: failed to deserialize manifest at `filepack.json`\n.*invalid signature byte length.*"
-    )))
+    .stderr(is_match(
+      "error: failed to deserialize manifest at `filepack.json`\n.*invalid signature byte length.*",
+    ))
     .failure();
 }
 
@@ -589,9 +589,7 @@ fn valid_signature_for_wrong_pubkey_error() {
     .current_dir(&dir)
     .assert()
     .stderr(is_match(
-        format!(
       "error: invalid signature for public key `7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b`\n.*Verification equation was not satisfied.*",
-        )
     ))
     .failure();
 }
