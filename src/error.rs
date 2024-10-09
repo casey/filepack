@@ -70,8 +70,6 @@ pub(crate) enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
-  #[snafu(display("manifest hash mismatch"))]
-  ManifestHashMismatch { backtrace: Option<Backtrace> },
   #[snafu(display("manifest `{path}` not found"))]
   ManifestNotFound {
     backtrace: Option<Backtrace>,
@@ -129,6 +127,8 @@ pub(crate) enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
+  #[snafu(display("root hash mismatch"))]
+  RootHashMismatch { backtrace: Option<Backtrace> },
   #[snafu(display("signature `{path}` already exists"))]
   SignatureAlreadyExists {
     backtrace: Option<Backtrace>,
