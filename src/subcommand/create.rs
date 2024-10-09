@@ -173,13 +173,10 @@ impl Create {
       bar.inc(entry.size);
     }
 
-    let manifest = Manifest { files };
-
-    let json = serde_json::to_string(&manifest).unwrap();
-
-    fs::write(&manifest_path, &json).context(error::Io {
-      path: manifest_path,
-    })?;
+    let mut manifest = Manifest {
+      files,
+      signatures: BTreeMap::new(),
+    };
 
     if self.sign {
       let private_key_path = options.key_dir()?.join(MASTER_PRIVATE_KEY);
@@ -190,23 +187,14 @@ impl Create {
 
       let public_key = private_key.public_key();
 
-      let signature_dir = root.join(SIGNATURES);
-
-      let signature_path = signature_dir.join(format!("{public_key}.signature"));
-
-      ensure! {
-        !signature_path.try_exists().context(error::Io { path: &signature_path, })?,
-        error::SignatureAlreadyExists { path: signature_path },
-      }
-
-      fs::create_dir_all(&signature_dir).context(error::Io {
-        path: &signature_dir,
-      })?;
-
-      fs::write(&signature_path, signature.to_string()).context(error::Io {
-        path: signature_path,
-      })?;
+      manifest.signatures.insert(public_key, signature);
     }
+
+    let json = serde_json::to_string(&manifest).unwrap();
+
+    fs::write(&manifest_path, &json).context(error::Io {
+      path: manifest_path,
+    })?;
 
     Ok(())
   }

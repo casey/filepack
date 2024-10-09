@@ -118,7 +118,7 @@ fn extra_fields_are_not_allowed() {
     .stderr(
       "\
 error: failed to deserialize manifest at `filepack.json`
-       └─ unknown field `foo`, expected `files` at line 1 column 17\n",
+       └─ unknown field `foo`, expected `files` or `signatures` at line 1 column 17\n",
     )
     .failure();
 }
@@ -454,110 +454,6 @@ fn with_manifest_path() {
 }
 
 #[test]
-fn missing_signature_file_extension() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("bar").touch().unwrap();
-
-  Command::cargo_bin("filepack")
-    .unwrap()
-    .arg("create")
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  dir.child("signatures/foo").touch().unwrap();
-
-  Command::cargo_bin("filepack")
-    .unwrap()
-    .arg("verify")
-    .current_dir(&dir)
-    .assert()
-    .stderr(format!(
-      "error: invalid signature filename: `signatures{SEPARATOR}foo`\n"
-    ))
-    .failure();
-}
-
-#[test]
-fn invalid_signature_file_extension() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("bar").touch().unwrap();
-
-  Command::cargo_bin("filepack")
-    .unwrap()
-    .arg("create")
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  dir.child("signatures/foo.baz").touch().unwrap();
-
-  Command::cargo_bin("filepack")
-    .unwrap()
-    .arg("verify")
-    .current_dir(&dir)
-    .assert()
-    .stderr(format!(
-      "error: invalid signature filename: `signatures{SEPARATOR}foo.baz`\n"
-    ))
-    .failure();
-}
-
-#[test]
-fn missing_signature_file_stem() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("bar").touch().unwrap();
-
-  Command::cargo_bin("filepack")
-    .unwrap()
-    .arg("create")
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  dir.child("signatures/.signature").touch().unwrap();
-
-  Command::cargo_bin("filepack")
-    .unwrap()
-    .arg("verify")
-    .current_dir(&dir)
-    .assert()
-    .stderr(format!(
-      "error: invalid signature filename: `signatures{SEPARATOR}.signature`\n"
-    ))
-    .failure();
-}
-
-#[test]
-fn invalid_signature_public_key() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("bar").touch().unwrap();
-
-  Command::cargo_bin("filepack")
-    .unwrap()
-    .arg("create")
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  dir.child("signatures/hello.signature").touch().unwrap();
-
-  Command::cargo_bin("filepack")
-    .unwrap()
-    .arg("verify")
-    .current_dir(&dir)
-    .assert()
-    .stderr(is_match(format!(
-      "error: invalid signature public key: `signatures{SEPARATOR_RE}hello.signature`\n.*"
-    )))
-    .failure();
-}
-
-#[test]
 fn weak_signature_public_key() {
   let dir = TempDir::new().unwrap();
 
@@ -570,19 +466,20 @@ fn weak_signature_public_key() {
     .assert()
     .success();
 
-  dir
-    .child("signatures/0000000000000000000000000000000000000000000000000000000000000000.signature")
-    .touch()
-    .unwrap();
+  let mut manifest = Manifest::load(&dir.child("filepack.json"));
+
+  manifest.signatures.insert("0".repeat(64), "0".repeat(128));
+
+  manifest.store(&dir.child("filepack.json"));
 
   Command::cargo_bin("filepack")
     .unwrap()
     .arg("verify")
     .current_dir(&dir)
     .assert()
-    .stderr(is_match(format!(
-      "error: invalid signature public key: `signatures{SEPARATOR_RE}0{{64}}.signature`\n.*weak key.*"
-    )))
+    .stderr(is_match(
+      "error: failed to deserialize manifest at `filepack.json`\n.*weak public key.*",
+    ))
     .failure();
 }
 
@@ -624,10 +521,18 @@ fn malformed_signature_error() {
     .assert()
     .success();
 
-  dir
-    .child("signatures/7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b.signature")
-    .write_str("7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b")
-    .unwrap();
+  let path = dir.child("filepack.json");
+
+  let mut manifest = Manifest::load(&path);
+
+  manifest.signatures.clear();
+
+  manifest.signatures.insert(
+    "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b".into(),
+    "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b".into(),
+  );
+
+  manifest.store(&path);
 
   Command::cargo_bin("filepack")
     .unwrap()
@@ -635,9 +540,8 @@ fn malformed_signature_error() {
     .current_dir(&dir)
     .assert()
     .stderr(is_match(
-      format!("error: malformed signature: \
-      `signatures{SEPARATOR_RE}7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b.signature`\n.*",
-    )))
+      "error: failed to deserialize manifest at `filepack.json`\n.*invalid signature byte length.*",
+    ))
     .failure();
 }
 
@@ -663,15 +567,21 @@ fn valid_signature_for_wrong_pubkey_error() {
     .assert()
     .success();
 
-  let public_key = fs::read_to_string(dir.child("keys/master.public")).unwrap();
+  let mut manifest = Manifest::load(&dir.child("foo/filepack.json"));
 
-  fs::rename(
-    dir.child(format!("foo/signatures/{}.signature", public_key.trim())),
-    dir.child(
-      "foo/signatures/7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b.signature",
-    ),
-  )
-  .unwrap();
+  let public_key = fs::read_to_string(dir.child("keys/master.public"))
+    .unwrap()
+    .trim()
+    .to_owned();
+
+  let foo = manifest.signatures.remove(&public_key).unwrap();
+
+  manifest.signatures.insert(
+    "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b".into(),
+    foo,
+  );
+
+  manifest.store(&dir.child("foo/filepack.json"));
 
   Command::cargo_bin("filepack")
     .unwrap()
@@ -679,10 +589,7 @@ fn valid_signature_for_wrong_pubkey_error() {
     .current_dir(&dir)
     .assert()
     .stderr(is_match(
-        format!(
-      "error: invalid signature: \
-      `signatures{SEPARATOR_RE}7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b.signature`\n.*Verification equation was not satisfied.*",
-        )
+      "error: invalid signature for public key `7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b`\n.*Verification equation was not satisfied.*",
     ))
     .failure();
 }

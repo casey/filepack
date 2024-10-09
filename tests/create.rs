@@ -11,7 +11,7 @@ fn no_files() {
     .assert()
     .success();
 
-  dir.child("filepack.json").assert(r#"{"files":{}}"#);
+  dir.child("filepack.json").assert("{}");
 
   Command::cargo_bin("filepack")
     .unwrap()
@@ -545,7 +545,7 @@ fn private_key_load_error_message() {
     .current_dir(&dir)
     .assert()
     .stderr(is_match(
-      "error: invalid private key `.*master.private`.*invalid byte length 0.*",
+      "error: invalid private key `.*master.private`.*invalid private key byte length 0.*",
     ))
     .failure();
 }
@@ -572,15 +572,18 @@ fn sign_creates_valid_signature() {
     .assert()
     .success();
 
+  let manifest = Manifest::load(&dir.child("foo/filepack.json"));
+
   let public_key = fs::read_to_string(dir.child("keys/master.public"))
     .unwrap()
     .trim()
     .to_owned();
 
-  let signature =
-    fs::read_to_string(dir.child(format!("foo/signatures/{public_key}.signature"))).unwrap();
+  assert_eq!(manifest.signatures.len(), 1);
 
-  let signature = signature.parse::<ed25519_dalek::Signature>().unwrap();
+  let signature = manifest.signatures[&public_key]
+    .parse::<ed25519_dalek::Signature>()
+    .unwrap();
 
   let public_key =
     ed25519_dalek::VerifyingKey::from_bytes(&hex::decode(public_key).unwrap().try_into().unwrap())
@@ -605,40 +608,6 @@ fn sign_creates_valid_signature() {
     .current_dir(&dir)
     .assert()
     .success();
-}
-
-#[test]
-fn existing_signature_will_not_be_overwritten() {
-  let dir = TempDir::new().unwrap();
-
-  Command::cargo_bin("filepack")
-    .unwrap()
-    .arg("keygen")
-    .env("FILEPACK_DATA_DIR", dir.path())
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  let public_key = fs::read_to_string(dir.child("keys/master.public"))
-    .unwrap()
-    .trim()
-    .to_owned();
-
-  dir
-    .child(format!("foo/signatures/{public_key}.signature"))
-    .touch()
-    .unwrap();
-
-  Command::cargo_bin("filepack")
-    .unwrap()
-    .args(["create", "--sign", "foo"])
-    .env("FILEPACK_DATA_DIR", dir.path())
-    .current_dir(&dir)
-    .assert()
-    .stderr(format!(
-      "error: signature `foo{SEPARATOR}signatures{SEPARATOR}{public_key}.signature` already exists\n"
-    ))
-    .failure();
 }
 
 #[test]

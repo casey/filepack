@@ -14,12 +14,13 @@ use {
   lexiclean::Lexiclean,
   owo_colors::Styled,
   serde::{Deserialize, Deserializer, Serialize, Serializer},
+  serde_with::{DeserializeFromStr, SerializeDisplay},
   snafu::{ensure, ErrorCompat, OptionExt, ResultExt, Snafu},
   std::{
     array::TryFromSliceError,
     backtrace::{Backtrace, BacktraceStatus},
     cmp::Ordering,
-    collections::{BTreeMap, BTreeSet, HashMap},
+    collections::{BTreeMap, HashMap},
     env,
     fmt::{self, Display, Formatter},
     fs::{self, File},
@@ -63,7 +64,6 @@ type Result<T = (), E = Error> = std::result::Result<T, E>;
 
 const MASTER_PRIVATE_KEY: &str = "master.private";
 const MASTER_PUBLIC_KEY: &str = "master.public";
-const SIGNATURES: &str = "signatures";
 
 fn current_dir() -> Result<Utf8PathBuf> {
   Utf8PathBuf::from_path_buf(env::current_dir().context(error::CurrentDir)?)

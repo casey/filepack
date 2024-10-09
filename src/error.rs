@@ -129,38 +129,16 @@ pub(crate) enum Error {
   },
   #[snafu(display("root hash mismatch"))]
   RootHashMismatch { backtrace: Option<Backtrace> },
-  #[snafu(display("signature `{path}` already exists"))]
-  SignatureAlreadyExists {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-  },
-  #[snafu(display("invalid signature filename: `{path}`"))]
-  SignatureFilename {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-  },
-  #[snafu(display("invalid signature: `{path}`"))]
+  #[snafu(display("invalid signature for public key `{public_key}`"))]
   SignatureInvalid {
     backtrace: Option<Backtrace>,
-    path: DisplayPath,
+    public_key: PublicKey,
     source: SignatureError,
-  },
-  #[snafu(display("malformed signature: `{path}`"))]
-  SignatureMalformed {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-    source: signature::Error,
   },
   #[snafu(display("no signature found for key {key}"))]
   SignatureMissing {
     backtrace: Option<Backtrace>,
     key: PublicKey,
-  },
-  #[snafu(display("invalid signature public key: `{path}`"))]
-  SignaturePublicKey {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-    source: public_key::Error,
   },
   #[snafu(display("I/O error reading standard input"))]
   StandardInputIo {

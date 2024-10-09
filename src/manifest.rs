@@ -1,9 +1,12 @@
 use super::*;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
 pub(crate) struct Manifest {
+  #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
   pub(crate) files: BTreeMap<RelativePath, Entry>,
+  #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+  pub(crate) signatures: BTreeMap<PublicKey, Signature>,
 }
 
 impl Manifest {
@@ -36,5 +39,16 @@ mod tests {
     for capture in re.captures_iter(&readme) {
       serde_json::from_str::<Manifest>(&capture[1]).unwrap();
     }
+  }
+
+  #[test]
+  fn empty_manifest_serialization() {
+    let manifest = Manifest {
+      files: BTreeMap::new(),
+      signatures: BTreeMap::new(),
+    };
+    let json = serde_json::to_string(&manifest).unwrap();
+    assert_eq!(json, "{}");
+    assert_eq!(serde_json::from_str::<Manifest>(&json).unwrap(), manifest);
   }
 }
