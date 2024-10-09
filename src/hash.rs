@@ -4,7 +4,7 @@ use super::*;
 pub(crate) struct Hash(blake3::Hash);
 
 impl Hash {
-  const LEN: usize = 32;
+  const LEN: usize = blake3::OUT_LEN;
 
   pub(crate) fn as_bytes(&self) -> &[u8; Self::LEN] {
     self.0.as_bytes()
