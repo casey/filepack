@@ -118,7 +118,7 @@ fn extra_fields_are_not_allowed() {
     .stderr(
       "\
 error: failed to deserialize manifest at `filepack.json`
-       └─ unknown field `foo`, expected `files` at line 1 column 17\n",
+       └─ unknown field `foo`, expected `files` or `signatures` at line 1 column 17\n",
     )
     .failure();
 }
@@ -451,110 +451,6 @@ fn with_manifest_path() {
     .current_dir(&dir)
     .assert()
     .success();
-}
-
-#[test]
-fn missing_signature_file_extension() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("bar").touch().unwrap();
-
-  Command::cargo_bin("filepack")
-    .unwrap()
-    .arg("create")
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  dir.child("signatures/foo").touch().unwrap();
-
-  Command::cargo_bin("filepack")
-    .unwrap()
-    .arg("verify")
-    .current_dir(&dir)
-    .assert()
-    .stderr(format!(
-      "error: invalid signature filename: `signatures{SEPARATOR}foo`\n"
-    ))
-    .failure();
-}
-
-#[test]
-fn invalid_signature_file_extension() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("bar").touch().unwrap();
-
-  Command::cargo_bin("filepack")
-    .unwrap()
-    .arg("create")
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  dir.child("signatures/foo.baz").touch().unwrap();
-
-  Command::cargo_bin("filepack")
-    .unwrap()
-    .arg("verify")
-    .current_dir(&dir)
-    .assert()
-    .stderr(format!(
-      "error: invalid signature filename: `signatures{SEPARATOR}foo.baz`\n"
-    ))
-    .failure();
-}
-
-#[test]
-fn missing_signature_file_stem() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("bar").touch().unwrap();
-
-  Command::cargo_bin("filepack")
-    .unwrap()
-    .arg("create")
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  dir.child("signatures/.signature").touch().unwrap();
-
-  Command::cargo_bin("filepack")
-    .unwrap()
-    .arg("verify")
-    .current_dir(&dir)
-    .assert()
-    .stderr(format!(
-      "error: invalid signature filename: `signatures{SEPARATOR}.signature`\n"
-    ))
-    .failure();
-}
-
-#[test]
-fn invalid_signature_public_key() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("bar").touch().unwrap();
-
-  Command::cargo_bin("filepack")
-    .unwrap()
-    .arg("create")
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  dir.child("signatures/hello.signature").touch().unwrap();
-
-  Command::cargo_bin("filepack")
-    .unwrap()
-    .arg("verify")
-    .current_dir(&dir)
-    .assert()
-    .stderr(is_match(format!(
-      "error: invalid signature public key: `signatures{SEPARATOR_RE}hello.signature`\n.*"
-    )))
-    .failure();
 }
 
 #[test]
