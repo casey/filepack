@@ -1,11 +1,11 @@
 use {
   self::{
     arguments::Arguments, display_path::DisplayPath, display_secret::DisplaySecret, entry::Entry,
-    error::Error, hash::Hash, lint::Lint, lint_group::LintGroup, list::List, manifest::Manifest,
-    metadata::Metadata, options::Options, owo_colorize_ext::OwoColorizeExt,
-    private_key::PrivateKey, public_key::PublicKey, relative_path::RelativePath,
-    signature::Signature, signature_error::SignatureError, style::Style, subcommand::Subcommand,
-    template::Template, utf8_path_ext::Utf8PathExt,
+    error::Error, hash::Hash, io_result_ext::IoResultExt, lint::Lint, lint_group::LintGroup,
+    list::List, manifest::Manifest, metadata::Metadata, options::Options,
+    owo_colorize_ext::OwoColorizeExt, private_key::PrivateKey, public_key::PublicKey,
+    relative_path::RelativePath, signature::Signature, signature_error::SignatureError,
+    style::Style, subcommand::Subcommand, template::Template, utf8_path_ext::Utf8PathExt,
   },
   blake3::Hasher,
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},
@@ -40,6 +40,7 @@ mod display_secret;
 mod entry;
 mod error;
 mod hash;
+mod io_result_ext;
 mod lint;
 mod lint_group;
 mod list;

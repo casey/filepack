@@ -17,6 +17,12 @@ pub(crate) enum Error {
   DeserializeMetadata {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
+    source: serde_json::Error,
+  },
+  #[snafu(display("failed to deserialize metadata template at `{path}`"))]
+  DeserializeMetadataTemplate {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
     source: serde_yaml::Error,
   },
   #[snafu(
@@ -56,6 +62,11 @@ pub(crate) enum Error {
   },
   #[snafu(display("manifest `{path}` already exists"))]
   ManifestAlreadyExists {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+  },
+  #[snafu(display("metadata `{path}` already exists"))]
+  MetadataAlreadyExists {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },

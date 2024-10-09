@@ -462,8 +462,10 @@ fn with_metadata() {
     .success();
 
   dir.child("foo/filepack.json").assert(
-    r#"{"files":{"bar":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}},"metadata":{"title":"Foo"}}"#,
+    r#"{"files":{"bar":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0},"metadata.json":{"hash":"bf15e6d4fc37be38eb02255ad98c52ac3b54acd1ff7b8de56c343f022eb770de","size":15}}}"#,
   );
+
+  dir.child("foo/metadata.json").assert(r#"{"title":"Foo"}"#);
 
   Command::cargo_bin("filepack")
     .unwrap()
@@ -630,4 +632,34 @@ fn existing_signature_will_not_be_overwritten() {
       "error: signature `foo{SEPARATOR}signatures{SEPARATOR}{public_key}.signature` already exists\n"
     ))
     .failure();
+}
+
+#[test]
+fn metadata_already_exists() {
+  let dir = TempDir::new().unwrap();
+
+  dir.child("foo/bar").touch().unwrap();
+
+  dir.child("foo/metadata.json").touch().unwrap();
+
+  dir.child("metadata.yaml").write_str("title: Foo").unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["create", "foo", "--metadata", "metadata.yaml"])
+    .current_dir(&dir)
+    .assert()
+    .stderr(format!(
+      "error: metadata `foo{SEPARATOR}metadata.json` already exists\n"
+    ))
+    .failure();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["create", "foo", "--metadata", "metadata.yaml", "--force"])
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  dir.child("foo/metadata.json").assert(r#"{"title":"Foo"}"#);
 }
