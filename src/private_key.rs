@@ -57,7 +57,7 @@ impl PrivateKey {
 
     let signature = private_key.sign(message);
 
-    Ok((private_key.into(), signature))
+    Ok((private_key.public_key(), signature))
   }
 
   pub(crate) fn public_key(&self) -> PublicKey {
