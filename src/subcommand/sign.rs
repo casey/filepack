@@ -2,10 +2,10 @@ use super::*;
 
 #[derive(Parser)]
 pub(crate) struct Sign {
-  #[arg(help = "Sign <MANIFEST>")]
-  manifest: Utf8PathBuf,
   #[arg(help = "Allow overwriting signature", long)]
   force: bool,
+  #[arg(help = "Sign <MANIFEST>")]
+  manifest: Utf8PathBuf,
 }
 
 impl Sign {
