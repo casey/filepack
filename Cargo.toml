@@ -1,6 +1,6 @@
 [package]
 name = "filepack"
-version = "0.0.5"
+version = "0.0.6"
 authors = ["Casey Rodarmor <casey@rodarmor.com>"]
 autotests = false
 categories = ["authentication", "command-line-utilities", "cryptography"]
