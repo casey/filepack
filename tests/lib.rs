@@ -49,4 +49,5 @@ mod key;
 mod keygen;
 mod man;
 mod misc;
+mod sign;
 mod verify;

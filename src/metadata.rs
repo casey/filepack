@@ -8,6 +8,10 @@ pub(crate) struct Metadata {
 
 impl Metadata {
   pub(crate) const FILENAME: &'static str = "metadata.json";
+
+  pub(crate) fn to_json(&self) -> String {
+    serde_json::to_string(self).unwrap()
+  }
 }
 
 impl From<Template> for Metadata {

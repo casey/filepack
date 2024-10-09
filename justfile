@@ -95,7 +95,4 @@ sign-release: tmp
     --dir tmp \
     $VERSION
   cargo run sign tmp/filepack.json
-  gh release upload \
-    --repo casey/filepack \
-    $VERSION \
-    tmp/*.signature
+  cat tmp/filepack.json

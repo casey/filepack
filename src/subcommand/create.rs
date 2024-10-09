@@ -41,7 +41,7 @@ impl Create {
         error::MetadataAlreadyExists { path: &path },
       }
       let metadata = Metadata::from(template);
-      let json = serde_json::to_string(&metadata).unwrap();
+      let json = metadata.to_json();
       fs::write(&path, json).context(error::Io { path: &path })?;
     }
 
@@ -187,9 +187,7 @@ impl Create {
       manifest.signatures.insert(public_key, signature);
     }
 
-    let json = serde_json::to_string(&manifest).unwrap();
-
-    fs::write(&manifest_path, &json).context(error::Io {
+    fs::write(&manifest_path, &manifest.to_json()).context(error::Io {
       path: manifest_path,
     })?;
 
