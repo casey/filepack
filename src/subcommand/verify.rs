@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(Parser)]
 pub(crate) struct Verify {
-  #[arg(help = "Verify that BLAKE3 hash of manifest manifest is <HASH>", long)]
+  #[arg(help = "Verify manifest root hash is <HASH>", long)]
   hash: Option<Hash>,
   #[arg(help = "Ignore missing files", long)]
   ignore_missing: bool,
