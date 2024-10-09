@@ -1,8 +1,5 @@
 use super::*;
 
-// todo:
-// - get root hash
-
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
 pub(crate) struct Manifest {
