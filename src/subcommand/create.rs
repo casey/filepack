@@ -36,15 +36,12 @@ impl Create {
       let template = serde_yaml::from_str::<Template>(&yaml)
         .context(error::DeserializeMetadataTemplate { path })?;
       let path = root.join("metadata.json");
-
       ensure! {
         self.force || !path.try_exists().context(error::Io { path: &path })?,
         error::MetadataAlreadyExists { path: &path },
       }
-
       let metadata = Metadata::from(template);
       let json = serde_json::to_string(&metadata).unwrap();
-
       fs::write(&path, json).context(error::Io { path: &path })?;
     }
 
