@@ -1,7 +1,20 @@
 Changelog
 =========
 
-[0.0.5](https://github.com/casey/filepack/releases/tag/0.0.4) - 2024-10-07
+[0.0.6](https://github.com/casey/filepack/releases/tag/0.0.6) - 2024-10-09
+--------------------------------------------------------------------------
+
+### Added
+- Add sign command ([#66](https://github.com/casey/filepack/pull/66) by [casey](https://github.com/casey))
+- Allow missing files when verifying with `--ignore-missing` ([#61](https://github.com/casey/filepack/pull/61) by [casey](https://github.com/casey))
+
+### Changed
+- Store signatures in manifest ([#65](https://github.com/casey/filepack/pull/65) by [casey](https://github.com/casey))
+- Sign and verify root hash instead of manifest hash ([#64](https://github.com/casey/filepack/pull/64) by [casey](https://github.com/casey))
+- Save metadata to `metadata.json` ([#63](https://github.com/casey/filepack/pull/63) by [casey](https://github.com/casey))
+- Remove download command ([#62](https://github.com/casey/filepack/pull/62) by [casey](https://github.com/casey))
+
+[0.0.5](https://github.com/casey/filepack/releases/tag/0.0.5) - 2024-10-07
 --------------------------------------------------------------------------
 
 ### Fixed
