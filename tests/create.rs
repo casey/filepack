@@ -649,7 +649,9 @@ fn metadata_already_exists() {
     .args(["create", "foo", "--metadata", "metadata.yaml"])
     .current_dir(&dir)
     .assert()
-    .stderr("error: metadata `foo/metadata.json` already exists\n")
+    .stderr(format!(
+      "error: metadata `foo{SEPARATOR}metadata.json` already exists\n"
+    ))
     .failure();
 
   Command::cargo_bin("filepack")
