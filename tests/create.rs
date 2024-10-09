@@ -586,10 +586,17 @@ fn sign_creates_valid_signature() {
     ed25519_dalek::VerifyingKey::from_bytes(&hex::decode(public_key).unwrap().try_into().unwrap())
       .unwrap();
 
-  let manifest = fs::read_to_string(dir.child("foo/filepack.json")).unwrap();
+  let mut hasher = blake3::Hasher::new();
+
+  hasher.update(&3u64.to_le_bytes());
+  hasher.update("bar".as_bytes());
+  hasher.update(&0u64.to_le_bytes());
+  hasher.update(blake3::hash(&[]).as_bytes());
+
+  let root_hash = hasher.finalize();
 
   public_key
-    .verify_strict(manifest.as_bytes(), &signature)
+    .verify_strict(root_hash.as_bytes(), &signature)
     .unwrap();
 
   Command::cargo_bin("filepack")

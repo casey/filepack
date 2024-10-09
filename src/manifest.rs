@@ -8,6 +8,19 @@ pub(crate) struct Manifest {
 
 impl Manifest {
   pub(crate) const FILENAME: &'static str = "filepack.json";
+
+  pub(crate) fn root_hash(&self) -> Hash {
+    let mut hasher = blake3::Hasher::new();
+
+    for (path, entry) in &self.files {
+      hasher.update(&u64::try_from(path.len()).unwrap().to_le_bytes());
+      hasher.update(path.as_str().as_bytes());
+      hasher.update(&entry.size.to_le_bytes());
+      hasher.update(entry.hash.as_bytes());
+    }
+
+    hasher.finalize().into()
+  }
 }
 
 #[cfg(test)]

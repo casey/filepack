@@ -46,25 +46,26 @@ impl Verify {
       result => result.context(error::Io { path: &source })?,
     };
 
-    if let Some(expected) = self.hash {
-      let actual = Hash::bytes(json.as_bytes());
-      if actual != expected {
-        let style = Style::stderr();
-        eprintln!(
-          "\
-manifest hash mismatch: `{source}`
-              expected: {}
-                actual: {}",
-          expected.style(style.good()),
-          actual.style(style.bad()),
-        );
-        return Err(error::ManifestHashMismatch.build());
-      }
-    }
-
     let manifest = serde_json::from_str::<Manifest>(&json).context(error::DeserializeManifest {
       path: Manifest::FILENAME,
     })?;
+
+    let root_hash = manifest.root_hash();
+
+    if let Some(expected) = self.hash {
+      if root_hash != expected {
+        let style = Style::stderr();
+        eprintln!(
+          "\
+root hash mismatch: `{source}`
+          expected: {}
+            actual: {}",
+          expected.style(style.good()),
+          root_hash.style(style.bad()),
+        );
+        return Err(error::RootHashMismatch.build());
+      }
+    }
 
     let bar = progress_bar::new(manifest.files.values().map(|entry| entry.size).sum());
 
@@ -180,7 +181,7 @@ mismatched file: `{path}`
           .context(error::SignatureMalformed { path })?;
 
         pubkey
-          .verify(json.as_bytes(), &signature)
+          .verify(root_hash.as_bytes(), &signature)
           .context(error::SignatureInvalid { path })?;
 
         signatures.insert(pubkey);

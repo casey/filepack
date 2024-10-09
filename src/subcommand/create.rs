@@ -25,7 +25,7 @@ impl Create {
 
     let root = self.root.unwrap_or_else(|| current_dir.clone());
 
-    let manifest = if let Some(path) = self.manifest {
+    let manifest_path = if let Some(path) = self.manifest {
       path
     } else {
       root.join(Manifest::FILENAME)
@@ -45,7 +45,7 @@ impl Create {
       fs::write(&path, json).context(error::Io { path: &path })?;
     }
 
-    let cleaned_manifest = current_dir.join(&manifest).lexiclean();
+    let cleaned_manifest = current_dir.join(&manifest_path).lexiclean();
 
     let cleaned_metadata = self.metadata.map(|path| current_dir.join(path).lexiclean());
 
@@ -155,9 +155,9 @@ impl Create {
     }
 
     ensure! {
-      self.force || !manifest.try_exists().context(error::Io { path: &manifest })?,
+      self.force || !manifest_path.try_exists().context(error::Io { path: &manifest_path })?,
       error::ManifestAlreadyExists {
-        path: manifest,
+        path: manifest_path,
       },
     }
 
@@ -173,16 +173,20 @@ impl Create {
       bar.inc(entry.size);
     }
 
-    let json = serde_json::to_string(&Manifest { files }).unwrap();
+    let manifest = Manifest { files };
 
-    fs::write(&manifest, &json).context(error::Io { path: manifest })?;
+    let json = serde_json::to_string(&manifest).unwrap();
+
+    fs::write(&manifest_path, &json).context(error::Io {
+      path: manifest_path,
+    })?;
 
     if self.sign {
       let private_key_path = options.key_dir()?.join(MASTER_PRIVATE_KEY);
 
       let private_key = PrivateKey::load(&private_key_path)?;
 
-      let signature = private_key.sign(json.as_bytes());
+      let signature = private_key.sign(manifest.root_hash().as_bytes());
 
       let public_key = private_key.public_key();
 
