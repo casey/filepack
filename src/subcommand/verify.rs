@@ -197,7 +197,7 @@ mismatched file: `{path}`
     }
 
     {
-      let path = root.join("metadata.json");
+      let path = root.join(Metadata::FILENAME);
 
       if let Some(json) = fs::read_to_string(&path)
         .into_option()

@@ -35,7 +35,7 @@ impl Create {
       let yaml = fs::read_to_string(path).context(error::Io { path })?;
       let template = serde_yaml::from_str::<Template>(&yaml)
         .context(error::DeserializeMetadataTemplate { path })?;
-      let path = root.join("metadata.json");
+      let path = root.join(Metadata::FILENAME);
       ensure! {
         self.force || !path.try_exists().context(error::Io { path: &path })?,
         error::MetadataAlreadyExists { path: &path },
