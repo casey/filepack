@@ -184,16 +184,13 @@ An example manifest for a directory containing the files `README.md` and
 Metadata
 --------
 
-todo: cleanup
-
-### `metadata`
-
-The value of the optional `metadata` key is an object containing metadata
-describing the package, with keys and values as follows:
+`filepack create` can optionally write metadata describing the contents of the
+package to a file named `metadata.json`, contain a JSON object with the
+following keys:
 
 - `title`: A string containing the package's human-readable title.
 
-An example manifest with metadata:
+An example `metadata.json`:
 
 ```js
 {
