@@ -3,24 +3,24 @@ use super::*;
 #[derive(Debug, Snafu)]
 #[snafu(context(suffix(Error)))]
 pub(crate) enum Error {
-  #[snafu(display("invalid hex: `{key}`"))]
+  #[snafu(display("invalid public key hex: `{key}`"))]
   Hex {
     key: String,
     source: hex::FromHexError,
   },
-  #[snafu(display("invalid key: `{key}`"))]
+  #[snafu(display("invalid public key: `{key}`"))]
   Key { key: String, source: SignatureError },
-  #[snafu(display("invalid byte length {length}: `{key}`"))]
+  #[snafu(display("invalid public key byte length {length}: `{key}`"))]
   Length {
     key: String,
     length: usize,
     source: TryFromSliceError,
   },
-  #[snafu(display("weak key: `{key}`"))]
+  #[snafu(display("weak public key: `{key}`"))]
   Weak { key: String },
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, DeserializeFromStr, Eq, PartialEq, SerializeDisplay)]
 pub(crate) struct PublicKey(ed25519_dalek::VerifyingKey);
 
 impl PublicKey {
@@ -149,7 +149,7 @@ mod tests {
   fn parse_hex_error() {
     assert_eq!(
       "xyz".parse::<PublicKey>().unwrap_err().to_string(),
-      "invalid hex: `xyz`"
+      "invalid public key hex: `xyz`"
     );
   }
 
@@ -157,7 +157,7 @@ mod tests {
   fn parse_length_error() {
     assert_eq!(
       "0123".parse::<PublicKey>().unwrap_err().to_string(),
-      "invalid byte length 2: `0123`"
+      "invalid public key byte length 2: `0123`"
     );
   }
 

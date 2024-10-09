@@ -3,11 +3,11 @@ use super::*;
 #[derive(Debug, Snafu)]
 #[snafu(context(suffix(Error)))]
 pub(crate) enum Error {
-  #[snafu(display("invalid hex"))]
+  #[snafu(display("invalid private key hex"))]
   Hex { source: hex::FromHexError },
-  #[snafu(display("invalid byte length {length}"))]
+  #[snafu(display("invalid private key byte length {length}"))]
   Length { length: usize },
-  #[snafu(display("weak key"))]
+  #[snafu(display("weak private key"))]
   Weak,
 }
 
@@ -149,7 +149,7 @@ mod tests {
   fn parse_hex_error() {
     assert_eq!(
       "xyz".parse::<PrivateKey>().unwrap_err().to_string(),
-      "invalid hex"
+      "invalid private key hex"
     );
   }
 
@@ -157,7 +157,7 @@ mod tests {
   fn parse_length_error() {
     assert_eq!(
       "0123".parse::<PrivateKey>().unwrap_err().to_string(),
-      "invalid byte length 2"
+      "invalid private key byte length 2"
     );
   }
 }

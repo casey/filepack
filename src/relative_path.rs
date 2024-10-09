@@ -20,6 +20,14 @@ impl RelativePath {
 
   const JUNK_NAMES: [&'static str; 2] = [".DS_Store", ".localized"];
 
+  pub(crate) fn as_str(&self) -> &str {
+    self.0.as_str()
+  }
+
+  pub(crate) fn len(&self) -> usize {
+    self.0.len()
+  }
+
   pub(crate) fn lint(&self) -> Option<Lint> {
     for component in Utf8Path::new(&self.0).components() {
       let Utf8Component::Normal(component) = component else {

@@ -3,20 +3,20 @@ use super::*;
 #[derive(Debug, Snafu)]
 #[snafu(context(suffix(Error)))]
 pub(crate) enum Error {
-  #[snafu(display("invalid public key hex: `{key}`"))]
+  #[snafu(display("invalid signature hex: `{signature}`"))]
   Hex {
-    key: String,
+    signature: String,
     source: hex::FromHexError,
   },
-  #[snafu(display("invalid public key length {length}: `{key}`"))]
+  #[snafu(display("invalid signature byte length {length}: `{signature}`"))]
   Length {
-    key: String,
+    signature: String,
     length: usize,
     source: TryFromSliceError,
   },
 }
 
-#[derive(PartialEq)]
+#[derive(DeserializeFromStr, PartialEq, SerializeDisplay)]
 pub(crate) struct Signature(ed25519_dalek::Signature);
 
 impl Signature {
@@ -59,11 +59,11 @@ impl fmt::Debug for Signature {
 impl FromStr for Signature {
   type Err = Error;
 
-  fn from_str(key: &str) -> Result<Self, Self::Err> {
-    let bytes = hex::decode(key).context(HexError { key })?;
+  fn from_str(signature: &str) -> Result<Self, Self::Err> {
+    let bytes = hex::decode(signature).context(HexError { signature })?;
 
     let array: [u8; Self::LEN] = bytes.as_slice().try_into().context(LengthError {
-      key,
+      signature,
       length: bytes.len(),
     })?;
 

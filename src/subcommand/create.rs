@@ -25,24 +25,27 @@ impl Create {
 
     let root = self.root.unwrap_or_else(|| current_dir.clone());
 
-    let manifest = if let Some(path) = self.manifest {
+    let manifest_path = if let Some(path) = self.manifest {
       path
     } else {
       root.join(Manifest::FILENAME)
     };
 
-    let metadata = if let Some(path) = &self.metadata {
+    if let Some(path) = &self.metadata {
       let yaml = fs::read_to_string(path).context(error::Io { path })?;
-      Some(
-        serde_yaml::from_str::<Template>(&yaml)
-          .context(error::DeserializeMetadata { path })?
-          .into(),
-      )
-    } else {
-      None
-    };
+      let template = serde_yaml::from_str::<Template>(&yaml)
+        .context(error::DeserializeMetadataTemplate { path })?;
+      let path = root.join(Metadata::FILENAME);
+      ensure! {
+        self.force || !path.try_exists().context(error::Io { path: &path })?,
+        error::MetadataAlreadyExists { path: &path },
+      }
+      let metadata = Metadata::from(template);
+      let json = serde_json::to_string(&metadata).unwrap();
+      fs::write(&path, json).context(error::Io { path: &path })?;
+    }
 
-    let cleaned_manifest = current_dir.join(&manifest).lexiclean();
+    let cleaned_manifest = current_dir.join(&manifest_path).lexiclean();
 
     let cleaned_metadata = self.metadata.map(|path| current_dir.join(path).lexiclean());
 
@@ -152,9 +155,9 @@ impl Create {
     }
 
     ensure! {
-      self.force || !manifest.try_exists().context(error::Io { path: &manifest })?,
+      self.force || !manifest_path.try_exists().context(error::Io { path: &manifest_path })?,
       error::ManifestAlreadyExists {
-        path: manifest,
+        path: manifest_path,
       },
     }
 
@@ -170,32 +173,25 @@ impl Create {
       bar.inc(entry.size);
     }
 
-    let json = serde_json::to_string(&Manifest { files, metadata }).unwrap();
-
-    fs::write(&manifest, &json).context(error::Io { path: manifest })?;
+    let mut manifest = Manifest {
+      files,
+      signatures: BTreeMap::new(),
+    };
 
     if self.sign {
       let private_key_path = options.key_dir()?.join(MASTER_PRIVATE_KEY);
 
-      let (public_key, signature) = PrivateKey::load_and_sign(&private_key_path, json.as_bytes())?;
+      let (public_key, signature) =
+        PrivateKey::load_and_sign(&private_key_path, manifest.root_hash().as_bytes())?;
 
-      let signature_dir = root.join(SIGNATURES);
-
-      let signature_path = signature_dir.join(format!("{public_key}.signature"));
-
-      ensure! {
-        !signature_path.try_exists().context(error::Io { path: &signature_path, })?,
-        error::SignatureAlreadyExists { path: signature_path },
-      }
-
-      fs::create_dir_all(&signature_dir).context(error::Io {
-        path: &signature_dir,
-      })?;
-
-      fs::write(&signature_path, signature.to_string()).context(error::Io {
-        path: signature_path,
-      })?;
+      manifest.signatures.insert(public_key, signature);
     }
+
+    let json = serde_json::to_string(&manifest).unwrap();
+
+    fs::write(&manifest_path, &json).context(error::Io {
+      path: manifest_path,
+    })?;
 
     Ok(())
   }

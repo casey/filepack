@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(Parser)]
 pub(crate) struct Verify {
-  #[arg(help = "Verify that BLAKE3 hash of manifest is <HASH>", long)]
+  #[arg(help = "Verify manifest root hash is <HASH>", long)]
   hash: Option<Hash>,
   #[arg(help = "Ignore missing files", long)]
   ignore_missing: bool,
@@ -46,25 +46,26 @@ impl Verify {
       result => result.context(error::Io { path: &source })?,
     };
 
-    if let Some(expected) = self.hash {
-      let actual = Hash::bytes(json.as_bytes());
-      if actual != expected {
-        let style = Style::stderr();
-        eprintln!(
-          "\
-manifest hash mismatch: `{source}`
-              expected: {}
-                actual: {}",
-          expected.style(style.good()),
-          actual.style(style.bad()),
-        );
-        return Err(error::ManifestHashMismatch.build());
-      }
-    }
-
     let manifest = serde_json::from_str::<Manifest>(&json).context(error::DeserializeManifest {
       path: Manifest::FILENAME,
     })?;
+
+    let root_hash = manifest.root_hash();
+
+    if let Some(expected) = self.hash {
+      if root_hash != expected {
+        let style = Style::stderr();
+        eprintln!(
+          "\
+root hash mismatch: `{source}`
+          expected: {}
+            actual: {}",
+          expected.style(style.good()),
+          root_hash.style(style.bad()),
+        );
+        return Err(error::RootHashMismatch.build());
+      }
+    }
 
     let bar = progress_bar::new(manifest.files.values().map(|entry| entry.size).sum());
 
@@ -127,8 +128,6 @@ mismatched file: `{path}`
 
     let mut dirs = Vec::new();
 
-    let mut signatures = BTreeSet::new();
-
     for entry in WalkDir::new(&root) {
       let entry = entry?;
 
@@ -157,37 +156,6 @@ mismatched file: `{path}`
 
       let path = path.strip_prefix(&root).unwrap();
 
-      if path == SIGNATURES {
-        continue;
-      }
-
-      if path.starts_with(SIGNATURES) {
-        ensure! {
-          path.extension() == Some("signature"),
-          error::SignatureFilename { path },
-        }
-
-        let pubkey = path
-          .file_stem()
-          .context(error::SignatureFilename { path })?
-          .parse::<PublicKey>()
-          .context(error::SignaturePublicKey { path })?;
-
-        let signature = fs::read_to_string(entry.path()).context(error::Io { path })?;
-
-        let signature = signature
-          .parse::<Signature>()
-          .context(error::SignatureMalformed { path })?;
-
-        pubkey
-          .verify(json.as_bytes(), &signature)
-          .context(error::SignatureInvalid { path })?;
-
-        signatures.insert(pubkey);
-
-        continue;
-      }
-
       let path = RelativePath::try_from(path).context(error::Path { path })?;
 
       ensure! {
@@ -196,9 +164,29 @@ mismatched file: `{path}`
       }
     }
 
+    {
+      let path = root.join(Metadata::FILENAME);
+
+      if let Some(json) = fs::read_to_string(&path)
+        .into_option()
+        .context(error::Io { path: &path })?
+      {
+        serde_json::from_str::<Metadata>(&json)
+          .context(error::DeserializeMetadata { path: &path })?;
+      }
+    }
+
+    for (public_key, signature) in &manifest.signatures {
+      public_key
+        .verify(root_hash.as_bytes(), signature)
+        .context(error::SignatureInvalid {
+          public_key: public_key.clone(),
+        })?;
+    }
+
     if let Some(key) = self.key {
       ensure! {
-        signatures.contains(&key),
+        manifest.signatures.contains_key(&key),
         error::SignatureMissing { key },
       }
     }
