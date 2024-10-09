@@ -38,7 +38,7 @@ publish: tmp
   set -euxo pipefail
   git clone git@github.com:casey/filepack.git tmp
   cd tmp
-  VERSION=`sed -En 's/version[[:space:]]*=[[:space:]]*"([^"]+)"/\1/p' Cargo.toml | head -1`
+  VERSION=`bin/version`
   git tag -a $VERSION -m "Release $VERSION"
   git push origin $VERSION
   cargo publish
@@ -74,12 +74,6 @@ test-progress-bar: tmp
   cargo run --release create tmp
   rm tmp/data*
 
-download-release: tmp
-  #!/usr/bin/env bash
-  VERSION=`sed -En 's/version[[:space:]]*=[[:space:]]*"([^"]+)"/\1/p' Cargo.toml | head -1`
-  cd tmp
-  cargo run download --github-release casey/filepack/$VERSION
-
 check-error-variant-order: tmp
   cat src/error.rs | rg '^  ([A-Z].*) \{' -or '$1' > tmp/original.txt
   sort tmp/original.txt > tmp/sorted.txt
@@ -88,7 +82,7 @@ check-error-variant-order: tmp
 sign-release: tmp
   #!/usr/bin/env bash
   set -euxo pipefail
-  VERSION=`sed -En 's/version[[:space:]]*=[[:space:]]*"([^"]+)"/\1/p' Cargo.toml | head -1`
+  VERSION=`bin/version`
   gh release download \
     --repo casey/filepack \
     --pattern filepack.json \
@@ -104,7 +98,7 @@ sign-release: tmp
 verify-release: tmp
   #!/usr/bin/env bash
   set -euxo pipefail
-  VERSION=`sed -En 's/version[[:space:]]*=[[:space:]]*"([^"]+)"/\1/p' Cargo.toml | head -1`
+  VERSION=`bin/version`
   gh release download \
     --repo casey/filepack \
     --pattern '*' \
