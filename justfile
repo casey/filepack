@@ -104,4 +104,4 @@ verify-release: tmp
     --pattern '*' \
     --dir tmp \
     $VERSION
-  cargo run verify --ignore-missing tmp --key `cargo run key`
+  cargo run verify tmp --key `cargo run key`
