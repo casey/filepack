@@ -19,6 +19,10 @@ where
   predicates::prelude::predicate::str::is_match(format!("^(?s){}$", pattern.as_ref())).unwrap()
 }
 
+fn load_key(path: &Path) -> String {
+  fs::read_to_string(path).unwrap().trim().into()
+}
+
 #[derive(Deserialize, Serialize)]
 struct Manifest {
   #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]

@@ -22,10 +22,7 @@ fn updates_manifest_with_signature() {
     .assert()
     .success();
 
-  let public_key = fs::read_to_string(dir.child("keys/master.public"))
-    .unwrap()
-    .trim()
-    .to_owned();
+  let public_key = load_key(&dir.child("keys/master.public"));
 
   Command::cargo_bin("filepack")
     .unwrap()
@@ -47,7 +44,7 @@ fn updates_manifest_with_signature() {
 
   Command::cargo_bin("filepack")
     .unwrap()
-    .args(["verify", "foo", "--key", public_key.trim()])
+    .args(["verify", "foo", "--key", &public_key])
     .current_dir(&dir)
     .assert()
     .success();
@@ -142,10 +139,7 @@ fn existing_signatures_are_preserved() {
     .assert()
     .success();
 
-  let a = fs::read_to_string(a.join("keys/master.public"))
-    .unwrap()
-    .trim()
-    .to_owned();
+  let a = load_key(&a.join("keys/master.public"));
 
   Command::cargo_bin("filepack")
     .unwrap()
@@ -154,10 +148,7 @@ fn existing_signatures_are_preserved() {
     .assert()
     .success();
 
-  let b = fs::read_to_string(b.join("keys/master.public"))
-    .unwrap()
-    .trim()
-    .to_owned();
+  let b = load_key(&b.join("keys/master.public"));
 
   Command::cargo_bin("filepack")
     .unwrap()
@@ -189,10 +180,7 @@ fn re_signing_requires_force() {
     .assert()
     .success();
 
-  let public_key = fs::read_to_string(dir.child("keys/master.public"))
-    .unwrap()
-    .trim()
-    .to_owned();
+  let public_key = load_key(&dir.child("keys/master.public"));
 
   Command::cargo_bin("filepack")
     .unwrap()
