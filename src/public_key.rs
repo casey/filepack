@@ -20,7 +20,7 @@ pub(crate) enum Error {
   Weak { key: String },
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, DeserializeFromStr, Eq, PartialEq, SerializeDisplay)]
 pub(crate) struct PublicKey(ed25519_dalek::VerifyingKey);
 
 impl PublicKey {

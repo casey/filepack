@@ -26,6 +26,7 @@ owo-colors = "4"
 rand = "0.8.5"
 serde = { version = "1.0.209", features = ["derive"] }
 serde_json = "1.0.127"
+serde_with = "3.11.0"
 serde_yaml = "0.9.34"
 snafu = "0.8.4"
 walkdir = "2.5.0"

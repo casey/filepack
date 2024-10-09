@@ -129,11 +129,6 @@ pub(crate) enum Error {
   },
   #[snafu(display("root hash mismatch"))]
   RootHashMismatch { backtrace: Option<Backtrace> },
-  #[snafu(display("signature `{path}` already exists"))]
-  SignatureAlreadyExists {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-  },
   #[snafu(display("invalid signature filename: `{path}`"))]
   SignatureFilename {
     backtrace: Option<Backtrace>,

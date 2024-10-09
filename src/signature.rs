@@ -16,7 +16,7 @@ pub(crate) enum Error {
   },
 }
 
-#[derive(PartialEq)]
+#[derive(DeserializeFromStr, PartialEq, SerializeDisplay)]
 pub(crate) struct Signature(ed25519_dalek::Signature);
 
 impl Signature {
