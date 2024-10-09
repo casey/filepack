@@ -608,40 +608,6 @@ fn sign_creates_valid_signature() {
 }
 
 #[test]
-fn existing_signature_will_not_be_overwritten() {
-  let dir = TempDir::new().unwrap();
-
-  Command::cargo_bin("filepack")
-    .unwrap()
-    .arg("keygen")
-    .env("FILEPACK_DATA_DIR", dir.path())
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  let public_key = fs::read_to_string(dir.child("keys/master.public"))
-    .unwrap()
-    .trim()
-    .to_owned();
-
-  dir
-    .child(format!("foo/signatures/{public_key}.signature"))
-    .touch()
-    .unwrap();
-
-  Command::cargo_bin("filepack")
-    .unwrap()
-    .args(["create", "--sign", "foo"])
-    .env("FILEPACK_DATA_DIR", dir.path())
-    .current_dir(&dir)
-    .assert()
-    .stderr(format!(
-      "error: signature `foo{SEPARATOR}signatures{SEPARATOR}{public_key}.signature` already exists\n"
-    ))
-    .failure();
-}
-
-#[test]
 fn metadata_already_exists() {
   let dir = TempDir::new().unwrap();
 

@@ -134,10 +134,10 @@ pub(crate) enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
-  #[snafu(display("invalid signature: `{path}`"))]
+  #[snafu(display("invalid signature for public key `{public_key}`"))]
   SignatureInvalid {
     backtrace: Option<Backtrace>,
-    path: DisplayPath,
+    public_key: PublicKey,
     source: SignatureError,
   },
   #[snafu(display("malformed signature: `{path}`"))]
