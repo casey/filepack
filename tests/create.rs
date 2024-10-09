@@ -633,3 +633,31 @@ fn existing_signature_will_not_be_overwritten() {
     ))
     .failure();
 }
+
+#[test]
+fn metadata_already_exists() {
+  let dir = TempDir::new().unwrap();
+
+  dir.child("foo/bar").touch().unwrap();
+
+  dir.child("foo/metadata.json").touch().unwrap();
+
+  dir.child("metadata.yaml").write_str("title: Foo").unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["create", "foo", "--metadata", "metadata.yaml"])
+    .current_dir(&dir)
+    .assert()
+    .stderr("error: metadata `foo/metadata.json` already exists\n")
+    .failure();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["create", "foo", "--metadata", "metadata.yaml", "--force"])
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  dir.child("foo/metadata.json").assert(r#"{"title":"Foo"}"#);
+}
