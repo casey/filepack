@@ -2,9 +2,9 @@ use super::*;
 
 #[derive(Parser)]
 pub(crate) struct Sign {
-  #[arg(help = "Sign and update <MANIFEST>")]
+  #[arg(help = "Sign <MANIFEST>")]
   manifest: Utf8PathBuf,
-  #[arg(help = "Don't error if we have already signed manifest", long)]
+  #[arg(help = "Allow overwriting signature", long)]
   force: bool,
 }
 

@@ -35,7 +35,7 @@ pub(crate) enum Subcommand {
   Keygen,
   #[command(about = "Print man page")]
   Man,
-  #[command(about = "Sign file")]
+  #[command(about = "Add signature to manifest")]
   Sign(sign::Sign),
   #[command(about = "Verify manifest")]
   Verify(verify::Verify),
