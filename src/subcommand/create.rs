@@ -187,7 +187,7 @@ impl Create {
       manifest.signatures.insert(public_key, signature);
     }
 
-    fs::write(&manifest_path, &manifest.to_json()).context(error::Io {
+    fs::write(&manifest_path, manifest.to_json()).context(error::Io {
       path: manifest_path,
     })?;
 
