@@ -252,7 +252,7 @@ fn defaults_to_current_directory() {
     .unwrap()
     .env("FILEPACK_DATA_DIR", dir.path())
     .arg("sign")
-    .current_dir(&dir.join("foo"))
+    .current_dir(dir.join("foo"))
     .assert()
     .success();
 
