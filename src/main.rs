@@ -40,6 +40,7 @@ mod display_path;
 mod display_secret;
 mod entry;
 mod error;
+mod fss;
 mod hash;
 mod io_result_ext;
 mod lint;

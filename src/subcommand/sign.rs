@@ -4,20 +4,22 @@ use super::*;
 pub(crate) struct Sign {
   #[arg(help = "Allow overwriting signature", long)]
   force: bool,
-  #[arg(help = "Sign <MANIFEST>")]
-  manifest: Utf8PathBuf,
+  #[arg(help = "Sign manifest at <PATH> or <PATH>/filepack.json if <PATH> is a directory")]
+  path: Utf8PathBuf,
 }
 
 impl Sign {
   pub(crate) fn run(self, options: Options) -> Result {
-    let json = fs::read_to_string(&self.manifest).context(error::Io {
-      path: &self.manifest,
-    })?;
+    let path = if fss::metadata(&self.path)?.is_dir() {
+      self.path.join(Manifest::FILENAME)
+    } else {
+      self.path
+    };
 
-    let mut manifest =
-      serde_json::from_str::<Manifest>(&json).context(error::DeserializeManifest {
-        path: &self.manifest,
-      })?;
+    let json = fss::read_to_string(&path)?;
+
+    let mut manifest = serde_json::from_str::<Manifest>(&json)
+      .context(error::DeserializeManifest { path: &path })?;
 
     let root_hash = manifest.root_hash();
 
@@ -41,9 +43,7 @@ impl Sign {
 
     manifest.signatures.insert(public_key, signature);
 
-    fs::write(&self.manifest, manifest.to_json()).context(error::Io {
-      path: &self.manifest,
-    })?;
+    fss::write(&path, manifest.to_json().as_bytes())?;
 
     Ok(())
   }
