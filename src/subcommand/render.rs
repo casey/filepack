@@ -21,23 +21,14 @@ impl Render {
       current_dir()?.join(Manifest::FILENAME)
     };
 
-    let json = filesystem::read_to_string(&path)?;
-
-    let manifest = serde_json::from_str::<Manifest>(&json)
-      .context(error::DeserializeManifest { path: &path })?;
+    let manifest = Manifest::load(&path)?;
 
     let root = path.parent().unwrap();
 
     let metadata_path = root.join(Metadata::FILENAME);
 
     let metadata = if filesystem::exists(&metadata_path)? {
-      let json = filesystem::read_to_string(&metadata_path)?;
-
-      Some(
-        serde_json::from_str::<Metadata>(&json).context(error::DeserializeMetadata {
-          path: &metadata_path,
-        })?,
-      )
+      Some(Metadata::load(&metadata_path)?)
     } else {
       None
     };
