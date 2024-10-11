@@ -5,4 +5,5 @@ use super::*;
 pub(crate) struct Page {
   pub(crate) manifest: Manifest,
   pub(crate) metadata: Option<Metadata>,
+  pub(crate) present: HashSet<RelativePath>,
 }

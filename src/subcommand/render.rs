@@ -26,7 +26,9 @@ impl Render {
     let manifest = serde_json::from_str::<Manifest>(&json)
       .context(error::DeserializeManifest { path: &path })?;
 
-    let metadata_path = path.parent().unwrap().join(Metadata::FILENAME);
+    let root = path.parent().unwrap();
+
+    let metadata_path = root.join(Metadata::FILENAME);
 
     let metadata = if filesystem::exists(&metadata_path)? {
       let json = filesystem::read_to_string(&metadata_path)?;
@@ -40,7 +42,19 @@ impl Render {
       None
     };
 
-    let page = Page { manifest, metadata };
+    let mut present = HashSet::new();
+
+    for path in manifest.files.keys() {
+      if filesystem::exists(&root.join(path))? {
+        present.insert(path.clone());
+      }
+    }
+
+    let page = Page {
+      manifest,
+      metadata,
+      present,
+    };
 
     print!("{page}");
 

@@ -35,7 +35,14 @@
       <dd>
         <table>
 %% for (path, entry) in &self.manifest.files {
-          <tr><td class=monospace>{{ path }}</td><td>{{ Bytes(entry.size.into()) }}</td></tr>
+          <tr>
+%% if self.present.contains(path) {
+            <td class=monospace><a href="{{ path }}">{{ path }}</a></td>
+%% } else {
+            <td class=monospace>{{ path }}</td>
+%% }
+            <td>{{ Bytes(entry.size.into()) }}</td>
+            </tr>
 %% }
         </table>
       </dd>

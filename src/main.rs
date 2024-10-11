@@ -22,7 +22,7 @@ use {
     array::TryFromSliceError,
     backtrace::{Backtrace, BacktraceStatus},
     cmp::Ordering,
-    collections::{BTreeMap, HashMap},
+    collections::{BTreeMap, HashMap, HashSet},
     env,
     fmt::{self, Display, Formatter},
     fs::{self, File},
