@@ -1,9 +1,109 @@
 use super::*;
 
-// todo:
-// - loads from file
-// - loads from directory
-// - loads from current dir
-// - loads metadata if it exists (doesn't error if not)
-// - adds links for file in root
-// - prints html
+#[test]
+fn from_current_directory() {
+  let dir = TempDir::new().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .arg("create")
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .arg("render")
+    .current_dir(&dir)
+    .assert()
+    .stdout(is_match("<!doctype html>.*"))
+    .success();
+}
+
+#[test]
+fn from_directory() {
+  let dir = TempDir::new().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .arg("create")
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["render", "."])
+    .current_dir(&dir)
+    .assert()
+    .stdout(is_match("<!doctype html>.*"))
+    .success();
+}
+
+#[test]
+fn from_file() {
+  let dir = TempDir::new().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .arg("create")
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["render", "filepack.json"])
+    .current_dir(&dir)
+    .assert()
+    .stdout(is_match("<!doctype html>.*"))
+    .success();
+}
+
+#[test]
+fn with_metadata() {
+  let dir = TempDir::new().unwrap();
+
+  dir.child("metadata.yaml").write_str("title: foo").unwrap();
+
+  dir.child("foo/bar").touch().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["create", "--metadata", "metadata.yaml", "foo"])
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["render", "foo"])
+    .current_dir(&dir)
+    .assert()
+    .stdout(is_match("<!doctype html>.*<title>foo</title>.*"))
+    .success();
+}
+
+#[test]
+fn links_to_present_files() {
+  let dir = TempDir::new().unwrap();
+
+  dir.child("foo/bar").touch().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["create", "foo"])
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["render", "foo"])
+    .current_dir(&dir)
+    .assert()
+    .stdout(is_match(
+      r#"<!doctype html>.*<td class=monospace><a href="bar">bar</a></td>.*"#,
+    ))
+    .success();
+}
