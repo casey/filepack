@@ -586,14 +586,7 @@ fn sign_creates_valid_signature() {
     ed25519_dalek::VerifyingKey::from_bytes(&hex::decode(public_key).unwrap().try_into().unwrap())
       .unwrap();
 
-  let mut hasher = blake3::Hasher::new();
-
-  hasher.update(&3u64.to_le_bytes());
-  hasher.update("bar".as_bytes());
-  hasher.update(&0u64.to_le_bytes());
-  hasher.update(blake3::hash(&[]).as_bytes());
-
-  let root_hash = hasher.finalize();
+  let root_hash = blake3::hash(r#"{"files":{"bar":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}}}"#.as_bytes());
 
   public_key
     .verify_strict(root_hash.as_bytes(), &signature)

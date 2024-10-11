@@ -13,14 +13,14 @@ impl Manifest {
   pub(crate) const FILENAME: &'static str = "filepack.json";
 
   pub(crate) fn root_hash(&self) -> Hash {
+    let canonical = Self {
+      files: self.files.clone(),
+      signatures: BTreeMap::new(),
+    };
+
     let mut hasher = blake3::Hasher::new();
 
-    for (path, entry) in &self.files {
-      hasher.update(&u64::try_from(path.len()).unwrap().to_le_bytes());
-      hasher.update(path.as_str().as_bytes());
-      hasher.update(&entry.size.to_le_bytes());
-      hasher.update(entry.hash.as_bytes());
-    }
+    serde_json::to_writer(&mut hasher, &canonical).unwrap();
 
     hasher.finalize().into()
   }

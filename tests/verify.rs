@@ -641,7 +641,7 @@ fn verify_hash() {
     .args([
       "verify",
       "--hash",
-      "409a47939fea6278f60d878fd85d57fe753fa7d87c0dba8e4e4a2b61c81077fb",
+      "74ddbe0dcf48c634aca1d90f37defd60b230fc52857ffa4b6c956583e8a4daaf",
     ])
     .current_dir(&dir)
     .assert()
@@ -660,7 +660,7 @@ fn verify_hash() {
       "\
 root hash mismatch: `.*filepack\\.json`
           expected: 0000000000000000000000000000000000000000000000000000000000000000
-            actual: 409a47939fea6278f60d878fd85d57fe753fa7d87c0dba8e4e4a2b61c81077fb
+            actual: 74ddbe0dcf48c634aca1d90f37defd60b230fc52857ffa4b6c956583e8a4daaf
 error: root hash mismatch\n",
     ))
     .failure();
