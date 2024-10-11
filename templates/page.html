@@ -19,18 +19,14 @@
     <dl>
       <dt>file count</dt>
       <dd>{{ self.manifest.files.len() }}</dd>
-
       <dt>total size</dt>
       <dd>{{ Bytes(self.manifest.total_size()) }}</dd>
-
       <dt>root hash</dt>
       <dd class=monospace>{{ self.manifest.root_hash() }}</dd>
-
       <dt>signatures</dt>
 %% for key in self.manifest.signatures.keys() {
       <dd class=monospace>{{ key }}</dd>
 %% }
-
       <dt>files</dt>
       <dd>
         <table>
@@ -42,11 +38,10 @@
             <td class=monospace>{{ path }}</td>
 %% }
             <td>{{ Bytes(entry.size.into()) }}</td>
-            </tr>
+          </tr>
 %% }
         </table>
       </dd>
-
     </dl>
   </body>
 </html>
