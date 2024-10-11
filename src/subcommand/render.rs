@@ -4,7 +4,7 @@ use super::*;
 pub(crate) struct Render {
   #[arg(
     help = "Render <ROOT>. May be a path to a manifest or a directory containing a manifest named \
-    `filepack.json`. If omitted, the manifest `filepack.json` in the current directory is signed."
+    `filepack.json`. If omitted, the manifest `filepack.json` in the current directory is rendered."
   )]
   root: Option<Utf8PathBuf>,
 }
