@@ -128,8 +128,6 @@ fn does_not_link_to_missing_files() {
     .args(["render", "foo"])
     .current_dir(&dir)
     .assert()
-    .stdout(is_match(
-      r#"<!doctype html>.*<td class=monospace>bar</td>.*"#,
-    ))
+    .stdout(is_match(r"<!doctype html>.*<td class=monospace>bar</td>.*"))
     .success();
 }
