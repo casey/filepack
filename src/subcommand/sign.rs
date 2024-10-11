@@ -4,20 +4,29 @@ use super::*;
 pub(crate) struct Sign {
   #[arg(help = "Allow overwriting signature", long)]
   force: bool,
-  #[arg(help = "Sign <MANIFEST>")]
-  manifest: Utf8PathBuf,
+  #[arg(
+    help = "Sign <ROOT>. May be a path to a manifest or a directory containing a manifest named \
+    `filepack.json`. If omitted, the manifest `filepack.json` in the current directory is signed."
+  )]
+  root: Option<Utf8PathBuf>,
 }
 
 impl Sign {
   pub(crate) fn run(self, options: Options) -> Result {
-    let json = fs::read_to_string(&self.manifest).context(error::Io {
-      path: &self.manifest,
-    })?;
+    let path = if let Some(path) = self.root {
+      if filesystem::metadata(&path)?.is_dir() {
+        path.join(Manifest::FILENAME)
+      } else {
+        path
+      }
+    } else {
+      current_dir()?.join(Manifest::FILENAME)
+    };
 
-    let mut manifest =
-      serde_json::from_str::<Manifest>(&json).context(error::DeserializeManifest {
-        path: &self.manifest,
-      })?;
+    let json = filesystem::read_to_string(&path)?;
+
+    let mut manifest = serde_json::from_str::<Manifest>(&json)
+      .context(error::DeserializeManifest { path: &path })?;
 
     let root_hash = manifest.root_hash();
 
@@ -41,9 +50,7 @@ impl Sign {
 
     manifest.signatures.insert(public_key, signature);
 
-    fs::write(&self.manifest, manifest.to_json()).context(error::Io {
-      path: &self.manifest,
-    })?;
+    filesystem::write(&path, manifest.to_json().as_bytes())?;
 
     Ok(())
   }

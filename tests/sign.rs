@@ -223,3 +223,83 @@ fn re_signing_requires_force() {
     .assert()
     .success();
 }
+
+#[test]
+fn defaults_to_current_directory() {
+  let dir = TempDir::new().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .env("FILEPACK_DATA_DIR", dir.path())
+    .arg("keygen")
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  dir.child("foo/bar").touch().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .env("FILEPACK_DATA_DIR", dir.path())
+    .args(["create", "foo"])
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  let public_key = load_key(&dir.child("keys/master.public"));
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .env("FILEPACK_DATA_DIR", dir.path())
+    .arg("sign")
+    .current_dir(dir.join("foo"))
+    .assert()
+    .success();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["verify", "foo", "--key", &public_key])
+    .current_dir(&dir)
+    .assert()
+    .success();
+}
+
+#[test]
+fn appends_filename_if_argument_is_directory() {
+  let dir = TempDir::new().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .env("FILEPACK_DATA_DIR", dir.path())
+    .arg("keygen")
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  dir.child("foo/bar").touch().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .env("FILEPACK_DATA_DIR", dir.path())
+    .args(["create", "foo"])
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  let public_key = load_key(&dir.child("keys/master.public"));
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .env("FILEPACK_DATA_DIR", dir.path())
+    .args(["sign", "foo"])
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["verify", "foo", "--key", &public_key])
+    .current_dir(&dir)
+    .assert()
+    .success();
+}
