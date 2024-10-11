@@ -4,7 +4,7 @@ pub(crate) struct Bytes(pub(crate) u64);
 
 impl Display for Bytes {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    const DISPLAY_SUFFIXES: &[&str] = &["KiB", "MiB", "GiB", "TiB", "PiB", "EiB"];
+    const SUFFIXES: &[&str] = &["KiB", "MiB", "GiB", "TiB", "PiB", "EiB"];
 
     #[allow(clippy::cast_precision_loss)]
     let mut value = self.0 as f64;
@@ -23,7 +23,7 @@ impl Display for Bytes {
         "bytes"
       }
     } else {
-      DISPLAY_SUFFIXES[i - 1]
+      SUFFIXES[i - 1]
     };
 
     let formatted = format!("{value:.2}");
