@@ -4,7 +4,11 @@ use super::*;
 pub(crate) struct Sign {
   #[arg(help = "Allow overwriting signature", long)]
   force: bool,
-  #[arg(help = "Sign manifest in <ROOT>")]
+  #[arg(
+    help = "Sign <ROOT>. May be a path to a manifest or a directory containing a manifest named \
+    `filepack.json`. If omitted, the manifest named `filepack.json` in the current directory is \
+    signed."
+  )]
   root: Option<Utf8PathBuf>,
 }
 
