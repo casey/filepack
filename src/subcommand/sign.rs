@@ -15,7 +15,7 @@ pub(crate) struct Sign {
 impl Sign {
   pub(crate) fn run(self, options: Options) -> Result {
     let path = if let Some(path) = self.root {
-      if fss::metadata(&path)?.is_dir() {
+      if filesystem::metadata(&path)?.is_dir() {
         path.join(Manifest::FILENAME)
       } else {
         path
@@ -24,7 +24,7 @@ impl Sign {
       current_dir()?.join(Manifest::FILENAME)
     };
 
-    let json = fss::read_to_string(&path)?;
+    let json = filesystem::read_to_string(&path)?;
 
     let mut manifest = serde_json::from_str::<Manifest>(&json)
       .context(error::DeserializeManifest { path: &path })?;
@@ -51,7 +51,7 @@ impl Sign {
 
     manifest.signatures.insert(public_key, signature);
 
-    fss::write(&path, manifest.to_json().as_bytes())?;
+    filesystem::write(&path, manifest.to_json().as_bytes())?;
 
     Ok(())
   }
