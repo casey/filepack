@@ -28,6 +28,14 @@ impl Manifest {
   pub(crate) fn to_json(&self) -> String {
     serde_json::to_string(self).unwrap()
   }
+
+  pub(crate) fn total_size(&self) -> u128 {
+    self
+      .files
+      .values()
+      .map(|entry| u128::from(entry.size))
+      .sum()
+  }
 }
 
 #[cfg(test)]

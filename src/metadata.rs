@@ -3,7 +3,7 @@ use super::*;
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub(crate) struct Metadata {
-  title: String,
+  pub(crate) title: String,
 }
 
 impl Metadata {

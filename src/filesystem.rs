@@ -11,3 +11,7 @@ pub(crate) fn metadata(path: &Utf8Path) -> Result<std::fs::Metadata> {
 pub(crate) fn write(path: &Utf8Path, contents: &[u8]) -> Result {
   std::fs::write(path, contents).context(error::Io { path })
 }
+
+pub(crate) fn exists(path: &Utf8Path) -> Result<bool> {
+  path.try_exists().context(error::Io { path })
+}
