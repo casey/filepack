@@ -26,7 +26,7 @@ impl Manifest {
   }
 
   pub(crate) fn load(path: &Utf8Path) -> Result<Self> {
-    serde_json::from_str(&filesystem::read_to_string(&path)?)
+    serde_json::from_str(&filesystem::read_to_string(path)?)
       .context(error::DeserializeManifest { path })
   }
 

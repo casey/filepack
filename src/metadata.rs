@@ -10,7 +10,7 @@ impl Metadata {
   pub(crate) const FILENAME: &'static str = "metadata.json";
 
   pub(crate) fn load(path: &Utf8Path) -> Result<Self> {
-    serde_json::from_str(&filesystem::read_to_string(&path)?)
+    serde_json::from_str(&filesystem::read_to_string(path)?)
       .context(error::DeserializeMetadata { path })
   }
 

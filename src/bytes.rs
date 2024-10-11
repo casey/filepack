@@ -6,6 +6,7 @@ impl Display for Bytes {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     const DISPLAY_SUFFIXES: &[&str] = &["KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"];
 
+    #[allow(clippy::cast_precision_loss)]
     let mut value = self.0 as f64;
 
     let mut i = 0;

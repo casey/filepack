@@ -41,6 +41,7 @@ regex = "1.10.6"
 
 [lints.clippy]
 all = { level = "deny", priority = -1 }
+float-cmp = "allow"
 large_enum_variant = "allow"
 needless-pass-by-value = "allow"
 pedantic = { level = "deny", priority = -1 }
