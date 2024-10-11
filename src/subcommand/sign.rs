@@ -23,10 +23,7 @@ impl Sign {
       current_dir()?.join(Manifest::FILENAME)
     };
 
-    let json = filesystem::read_to_string(&path)?;
-
-    let mut manifest = serde_json::from_str::<Manifest>(&json)
-      .context(error::DeserializeManifest { path: &path })?;
+    let mut manifest = Manifest::load(&path)?;
 
     let root_hash = manifest.root_hash();
 

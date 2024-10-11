@@ -11,6 +11,7 @@ mod hash;
 mod key;
 mod keygen;
 mod man;
+mod render;
 mod sign;
 mod verify;
 
@@ -35,7 +36,9 @@ pub(crate) enum Subcommand {
   Keygen,
   #[command(about = "Print man page")]
   Man,
-  #[command(about = "Add signature to manifest")]
+  #[command(about = "Render manifest")]
+  Render(render::Render),
+  #[command(about = "Sign manifest")]
   Sign(sign::Sign),
   #[command(about = "Verify manifest")]
   Verify(verify::Verify),
@@ -49,6 +52,7 @@ impl Subcommand {
       Self::Key => key::run(options),
       Self::Keygen => keygen::run(options),
       Self::Man => man::run(),
+      Self::Render(render) => render.run(),
       Self::Sign(sign) => sign.run(options),
       Self::Verify(verify) => verify.run(options),
     }

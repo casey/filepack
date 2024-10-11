@@ -1,15 +1,17 @@
 use {
   self::{
-    arguments::Arguments, display_path::DisplayPath, display_secret::DisplaySecret, entry::Entry,
-    error::Error, hash::Hash, io_result_ext::IoResultExt, lint::Lint, lint_group::LintGroup,
-    list::List, manifest::Manifest, metadata::Metadata, options::Options,
-    owo_colorize_ext::OwoColorizeExt, private_key::PrivateKey, public_key::PublicKey,
+    arguments::Arguments, bytes::Bytes, display_path::DisplayPath, display_secret::DisplaySecret,
+    entry::Entry, error::Error, hash::Hash, io_result_ext::IoResultExt, lint::Lint,
+    lint_group::LintGroup, list::List, manifest::Manifest, metadata::Metadata, options::Options,
+    owo_colorize_ext::OwoColorizeExt, page::Page, private_key::PrivateKey, public_key::PublicKey,
     relative_path::RelativePath, signature::Signature, signature_error::SignatureError,
     style::Style, subcommand::Subcommand, template::Template, utf8_path_ext::Utf8PathExt,
   },
   blake3::Hasher,
+  boilerplate::Boilerplate,
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},
   clap::{Parser, ValueEnum},
+  html_escaper::Escape,
   indicatif::{ProgressBar, ProgressStyle},
   lexiclean::Lexiclean,
   owo_colors::Styled,
@@ -20,7 +22,7 @@ use {
     array::TryFromSliceError,
     backtrace::{Backtrace, BacktraceStatus},
     cmp::Ordering,
-    collections::{BTreeMap, HashMap},
+    collections::{BTreeMap, HashMap, HashSet},
     env,
     fmt::{self, Display, Formatter},
     fs::{self, File},
@@ -36,6 +38,7 @@ use {
 use assert_fs::TempDir;
 
 mod arguments;
+mod bytes;
 mod display_path;
 mod display_secret;
 mod entry;
@@ -50,6 +53,7 @@ mod manifest;
 mod metadata;
 mod options;
 mod owo_colorize_ext;
+mod page;
 mod private_key;
 mod progress_bar;
 mod public_key;
