@@ -30,25 +30,26 @@ mod tests {
 
   #[test]
   fn display() {
+    let page = Page {
+      manifest: Manifest {
+        files: [(
+          "foo".parse().unwrap(),
+          Entry {
+            hash: hash(),
+            size: 1024,
+          },
+        )]
+        .into(),
+        signatures: [(public_key(), signature())].into(),
+      },
+      metadata: Some(Metadata {
+        title: "foo".into(),
+      }),
+      present: ["foo".parse().unwrap()].into(),
+    };
+
     pretty_assertions::assert_eq!(
-      Page {
-        manifest: Manifest {
-          files: [(
-            "foo".parse().unwrap(),
-            Entry {
-              hash: hash(),
-              size: 1024
-            },
-          ),]
-          .into(),
-          signatures: [(public_key(), signature())].into()
-        },
-        metadata: Some(Metadata {
-          title: "foo".into(),
-        }),
-        present: ["foo".parse().unwrap()].into(),
-      }
-      .to_string(),
+      page.to_string(),
       r#"<!doctype html>
 <html lang=en>
   <head>
