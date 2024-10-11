@@ -34,12 +34,8 @@ impl Manifest {
     serde_json::to_string(self).unwrap()
   }
 
-  pub(crate) fn total_size(&self) -> u128 {
-    self
-      .files
-      .values()
-      .map(|entry| u128::from(entry.size))
-      .sum()
+  pub(crate) fn total_size(&self) -> u64 {
+    self.files.values().map(|entry| entry.size).sum()
   }
 }
 
