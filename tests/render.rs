@@ -107,3 +107,29 @@ fn links_to_present_files() {
     ))
     .success();
 }
+
+#[test]
+fn does_not_link_to_missing_files() {
+  let dir = TempDir::new().unwrap();
+
+  dir.child("foo/bar").touch().unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["create", "foo"])
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  fs::remove_file(dir.child("foo/bar")).unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["render", "foo"])
+    .current_dir(&dir)
+    .assert()
+    .stdout(is_match(
+      r#"<!doctype html>.*<td class=monospace>bar</td>.*"#,
+    ))
+    .success();
+}
