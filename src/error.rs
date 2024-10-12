@@ -127,8 +127,8 @@ pub(crate) enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
-  #[snafu(display("root hash mismatch"))]
-  RootHashMismatch { backtrace: Option<Backtrace> },
+  #[snafu(display("fingerprint mismatch"))]
+  FingerprintMismatch { backtrace: Option<Backtrace> },
   #[snafu(display("manifest has already been signed by public key `{public_key}`"))]
   SignatureAlreadyExists {
     backtrace: Option<Backtrace>,

@@ -2,8 +2,8 @@ use super::*;
 
 #[derive(Parser)]
 pub(crate) struct Verify {
-  #[arg(help = "Verify manifest root hash is <HASH>", long)]
-  hash: Option<Hash>,
+  #[arg(help = "Verify manifest fingerprint is <FINGERPRINT>", long)]
+  fingerprint: Option<Hash>,
   #[arg(help = "Ignore missing files", long)]
   ignore_missing: bool,
   #[arg(help = "Verify that manifest has been signed by <KEY>", long)]
@@ -45,20 +45,20 @@ impl Verify {
       path: Manifest::FILENAME,
     })?;
 
-    let root_hash = manifest.root_hash();
+    let fingerprint = manifest.fingerprint();
 
-    if let Some(expected) = self.hash {
-      if root_hash != expected {
+    if let Some(expected) = self.fingerprint {
+      if fingerprint != expected {
         let style = Style::stderr();
         eprintln!(
           "\
-root hash mismatch: `{source}`
-          expected: {}
-            actual: {}",
+fingerprint mismatch: `{source}`
+            expected: {}
+              actual: {}",
           expected.style(style.good()),
-          root_hash.style(style.bad()),
+          fingerprint.style(style.bad()),
         );
-        return Err(error::RootHashMismatch.build());
+        return Err(error::FingerprintMismatch.build());
       }
     }
 
@@ -169,7 +169,7 @@ mismatched file: `{path}`
     }
 
     for (public_key, signature) in &manifest.signatures {
-      public_key.verify(root_hash.as_bytes(), signature)?;
+      public_key.verify(fingerprint.as_bytes(), signature)?;
     }
 
     if let Some(key) = self.key {

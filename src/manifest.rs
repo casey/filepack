@@ -12,7 +12,7 @@ pub(crate) struct Manifest {
 impl Manifest {
   pub(crate) const FILENAME: &'static str = "filepack.json";
 
-  pub(crate) fn root_hash(&self) -> Hash {
+  pub(crate) fn fingerprint(&self) -> Hash {
     let canonical = Self {
       files: self.files.clone(),
       signatures: BTreeMap::new(),

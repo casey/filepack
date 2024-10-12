@@ -25,10 +25,10 @@ impl Sign {
 
     let mut manifest = Manifest::load(&path)?;
 
-    let root_hash = manifest.root_hash();
+    let fingerprint = manifest.fingerprint();
 
     for (public_key, signature) in &manifest.signatures {
-      public_key.verify(root_hash.as_bytes(), signature)?;
+      public_key.verify(fingerprint.as_bytes(), signature)?;
     }
 
     if !self.force {
@@ -43,7 +43,7 @@ impl Sign {
     let private_key_path = options.key_dir()?.join(MASTER_PRIVATE_KEY);
 
     let (public_key, signature) =
-      PrivateKey::load_and_sign(&private_key_path, root_hash.as_bytes())?;
+      PrivateKey::load_and_sign(&private_key_path, fingerprint.as_bytes())?;
 
     manifest.signatures.insert(public_key, signature);
 
