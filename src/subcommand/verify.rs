@@ -31,20 +31,15 @@ impl Verify {
       root.join(Manifest::FILENAME)
     };
 
-    let json = match fs::read_to_string(&source) {
-      Err(err) if err.kind() == io::ErrorKind::NotFound => {
-        return Err(
-          error::ManifestNotFound {
-            path: self
-              .manifest
-              .as_deref()
-              .unwrap_or(Utf8Path::new(Manifest::FILENAME)),
-          }
-          .build(),
-        );
+    let json = filesystem::read_to_string_opt(&source)?.ok_or_else(|| {
+      error::ManifestNotFound {
+        path: self
+          .manifest
+          .as_deref()
+          .unwrap_or(Utf8Path::new(Manifest::FILENAME)),
       }
-      result => result.context(error::Io { path: &source })?,
-    };
+      .build()
+    })?;
 
     let manifest = serde_json::from_str::<Manifest>(&json).context(error::DeserializeManifest {
       path: Manifest::FILENAME,
@@ -167,10 +162,7 @@ mismatched file: `{path}`
     {
       let path = root.join(Metadata::FILENAME);
 
-      if let Some(json) = fs::read_to_string(&path)
-        .into_option()
-        .context(error::Io { path: &path })?
-      {
+      if let Some(json) = filesystem::read_to_string_opt(&path)? {
         serde_json::from_str::<Metadata>(&json)
           .context(error::DeserializeMetadata { path: &path })?;
       }

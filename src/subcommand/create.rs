@@ -32,17 +32,15 @@ impl Create {
     };
 
     if let Some(path) = &self.metadata {
-      let yaml = fs::read_to_string(path).context(error::Io { path })?;
+      let yaml = filesystem::read_to_string(path)?;
       let template = serde_yaml::from_str::<Template>(&yaml)
         .context(error::DeserializeMetadataTemplate { path })?;
       let path = root.join(Metadata::FILENAME);
       ensure! {
-        self.force || !path.try_exists().context(error::Io { path: &path })?,
+        self.force || !filesystem::exists(&path)?,
         error::MetadataAlreadyExists { path: &path },
       }
-      let metadata = Metadata::from(template);
-      let json = metadata.to_json();
-      fs::write(&path, json).context(error::Io { path: &path })?;
+      Metadata::from(template).store(&path)?;
     }
 
     let cleaned_manifest = current_dir.join(&manifest_path).lexiclean();
@@ -117,7 +115,7 @@ impl Create {
         }
       }
 
-      let metadata = path.metadata().context(error::Io { path })?;
+      let metadata = filesystem::metadata(path)?;
 
       paths.insert(relative, metadata.len());
     }
@@ -187,9 +185,7 @@ impl Create {
       manifest.signatures.insert(public_key, signature);
     }
 
-    fs::write(&manifest_path, manifest.to_json()).context(error::Io {
-      path: manifest_path,
-    })?;
+    manifest.store(&manifest_path)?;
 
     Ok(())
   }

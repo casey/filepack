@@ -27,12 +27,8 @@ impl PublicKey {
   const LEN: usize = ed25519_dalek::PUBLIC_KEY_LENGTH;
 
   pub(crate) fn load(path: &Utf8Path) -> Result<Self> {
-    let public_key = match fs::read_to_string(path) {
-      Err(err) if err.kind() == io::ErrorKind::NotFound => {
-        return Err(error::PublicKeyNotFound { path }.build())
-      }
-      result => result.context(error::Io { path })?,
-    };
+    let public_key = filesystem::read_to_string_opt(path)?
+      .ok_or_else(|| error::PublicKeyNotFound { path }.build())?;
 
     let public_key = public_key
       .trim()
@@ -132,7 +128,7 @@ mod tests {
       .parse::<PublicKey>()
       .unwrap();
 
-    fs::write(&path, format!(" \t{key}\n")).unwrap();
+    filesystem::write(&path, format!(" \t{key}\n")).unwrap();
 
     assert_eq!(PublicKey::load(&path).unwrap(), key);
   }

@@ -30,8 +30,8 @@ impl Manifest {
       .context(error::DeserializeManifest { path })
   }
 
-  pub(crate) fn to_json(&self) -> String {
-    serde_json::to_string(self).unwrap()
+  pub(crate) fn store(&self, path: &Utf8Path) -> Result<()> {
+    filesystem::write(path, format!("{}\n", serde_json::to_string(self).unwrap()))
   }
 
   pub(crate) fn total_size(&self) -> u64 {
@@ -45,7 +45,7 @@ mod tests {
 
   #[test]
   fn manifests_in_readme_are_valid() {
-    let readme = fs::read_to_string("README.md").unwrap();
+    let readme = filesystem::read_to_string("README.md").unwrap();
 
     let re = Regex::new(r"(?s)```json(.*?)```").unwrap();
 
