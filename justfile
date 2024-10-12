@@ -117,3 +117,5 @@ render: tmp
     $VERSION
   rm tmp/filepack.json
   cargo run create tmp --sign --metadata metadata.yaml
+  cargo run render tmp > tmp/index.html
+  open tmp/index.html
