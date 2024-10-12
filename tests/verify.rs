@@ -624,7 +624,7 @@ fn signature_verification_success() {
 }
 
 #[test]
-fn verify_hash() {
+fn verify_fingerprint() {
   let dir = TempDir::new().unwrap();
 
   dir.child("foo").touch().unwrap();
@@ -640,7 +640,7 @@ fn verify_hash() {
     .unwrap()
     .args([
       "verify",
-      "--hash",
+      "--fingerprint",
       "74ddbe0dcf48c634aca1d90f37defd60b230fc52857ffa4b6c956583e8a4daaf",
     ])
     .current_dir(&dir)
@@ -651,17 +651,17 @@ fn verify_hash() {
     .unwrap()
     .args([
       "verify",
-      "--hash",
+      "--fingerprint",
       "0000000000000000000000000000000000000000000000000000000000000000",
     ])
     .current_dir(&dir)
     .assert()
     .stderr(is_match(
       "\
-root hash mismatch: `.*filepack\\.json`
-          expected: 0000000000000000000000000000000000000000000000000000000000000000
-            actual: 74ddbe0dcf48c634aca1d90f37defd60b230fc52857ffa4b6c956583e8a4daaf
-error: root hash mismatch\n",
+fingerprint mismatch: `.*filepack\\.json`
+            expected: 0000000000000000000000000000000000000000000000000000000000000000
+              actual: 74ddbe0dcf48c634aca1d90f37defd60b230fc52857ffa4b6c956583e8a4daaf
+error: fingerprint mismatch\n",
     ))
     .failure();
 }

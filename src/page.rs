@@ -69,7 +69,7 @@ mod tests {
       <dd>1</dd>
       <dt>total size</dt>
       <dd>1 KiB</dd>
-      <dt>root hash</dt>
+      <dt>fingerprint</dt>
       <dd class=monospace>2e2f6ca534371afe8783a9bcace2237a7611e2e5aa87eb272782b563f70d14ac</dd>
       <dt>signatures</dt>
       <dd class=monospace>3b6a27bcceb6a42d62a3a8d02a6f0d73653215771de243a63ac048a18b59da29</dd>

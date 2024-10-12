@@ -216,11 +216,11 @@ Lofty Ambitions
 
 `filepack` has lofty ambitions!
 
-- Definition of a "root" hash, likely just the hash of the manifest itself, so
-  that as long as the root hash is received from a trusted source the manifest
-  itself does not need to be trusted.
+- Definition of a "fingerprint" hash, likely just the hash of the manifest
+  itself, so that as long as the fingerprint is received from a trusted source
+  the manifest itself does not need to be trusted.
 
-- Creation and verification of signatures over the root hash, so that
+- Creation and verification of signatures over the fingerprint, so that
   developers and packagers can vouch for the correctness of the contents of a
   manifest, and users can verify that a manifest was signed by a trusted public
   key.
