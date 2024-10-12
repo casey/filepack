@@ -37,12 +37,8 @@ impl PrivateKey {
   }
 
   pub(crate) fn load(path: &Utf8Path) -> Result<Self> {
-    let private_key = match fs::read_to_string(path) {
-      Err(err) if err.kind() == io::ErrorKind::NotFound => {
-        return Err(error::PrivateKeyNotFound { path }.build())
-      }
-      result => result.context(error::Io { path })?,
-    };
+    let private_key = filesystem::read_to_string_opt(path)?
+      .ok_or_else(|| error::PrivateKeyNotFound { path }.build())?;
 
     let private_key = private_key
       .trim()
@@ -129,7 +125,7 @@ mod tests {
       .parse::<PrivateKey>()
       .unwrap();
 
-    fs::write(&path, format!(" \t{}\n", key.display_secret())).unwrap();
+    filesystem::write(&path, format!(" \t{}\n", key.display_secret())).unwrap();
 
     assert_eq!(PrivateKey::load(&path).unwrap(), key);
   }

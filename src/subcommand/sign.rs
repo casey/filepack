@@ -47,7 +47,7 @@ impl Sign {
 
     manifest.signatures.insert(public_key, signature);
 
-    filesystem::write(&path, manifest.to_json().as_bytes())?;
+    manifest.store(&path)?;
 
     Ok(())
   }
