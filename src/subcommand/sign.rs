@@ -13,17 +13,7 @@ pub(crate) struct Sign {
 
 impl Sign {
   pub(crate) fn run(self, options: Options) -> Result {
-    let path = if let Some(path) = self.root {
-      if filesystem::metadata(&path)?.is_dir() {
-        path.join(Manifest::FILENAME)
-      } else {
-        path
-      }
-    } else {
-      current_dir()?.join(Manifest::FILENAME)
-    };
-
-    let mut manifest = Manifest::load(&path)?;
+    let (path, mut manifest) = Manifest::load_from_root(self.root.as_deref())?;
 
     let fingerprint = manifest.fingerprint();
 

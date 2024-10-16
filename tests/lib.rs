@@ -48,6 +48,7 @@ impl Manifest {
 }
 
 mod create;
+mod fingerprint;
 mod hash;
 mod key;
 mod keygen;
