@@ -1,7 +1,7 @@
 use super::*;
 
 #[test]
-fn single_file_omit_root() {
+fn fingerprint() {
   let dir = TempDir::new().unwrap();
 
   dir.child("foo").touch().unwrap();
