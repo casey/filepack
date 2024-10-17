@@ -17,11 +17,11 @@ fn fingerprint() {
 
   dir.child("filepack.json").assert(json.to_owned() + "\n");
 
+  let fingerprint = "74ddbe0dcf48c634aca1d90f37defd60b230fc52857ffa4b6c956583e8a4daaf";
+
   assert_eq!(
     blake3::hash(json.as_bytes()),
-    "74ddbe0dcf48c634aca1d90f37defd60b230fc52857ffa4b6c956583e8a4daaf"
-      .parse::<blake3::Hash>()
-      .unwrap(),
+    fingerprint.parse::<blake3::Hash>().unwrap(),
   );
 
   Command::cargo_bin("filepack")
@@ -29,14 +29,14 @@ fn fingerprint() {
     .arg("fingerprint")
     .current_dir(&dir)
     .assert()
-    .stdout("74ddbe0dcf48c634aca1d90f37defd60b230fc52857ffa4b6c956583e8a4daaf\n")
+    .stdout(format!("{fingerprint}\n"))
     .success();
 
   Command::cargo_bin("filepack")
     .unwrap()
     .args(["fingerprint", dir.path().to_str().unwrap()])
     .assert()
-    .stdout("74ddbe0dcf48c634aca1d90f37defd60b230fc52857ffa4b6c956583e8a4daaf\n")
+    .stdout(format!("{fingerprint}\n"))
     .success();
 
   Command::cargo_bin("filepack")
@@ -46,6 +46,6 @@ fn fingerprint() {
       dir.path().join("filepack.json").to_str().unwrap(),
     ])
     .assert()
-    .stdout("74ddbe0dcf48c634aca1d90f37defd60b230fc52857ffa4b6c956583e8a4daaf\n")
+    .stdout(format!("{fingerprint}\n"))
     .success();
 }
