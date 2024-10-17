@@ -25,9 +25,24 @@ impl Manifest {
     hasher.finalize().into()
   }
 
-  pub(crate) fn load(path: &Utf8Path) -> Result<Self> {
-    serde_json::from_str(&filesystem::read_to_string(path)?)
-      .context(error::DeserializeManifest { path })
+  pub(crate) fn load_from_root(path: Option<&Utf8Path>) -> Result<(Utf8PathBuf, Self)> {
+    let path = if let Some(path) = path {
+      if filesystem::metadata(path)?.is_dir() {
+        path.join(Manifest::FILENAME)
+      } else {
+        path.into()
+      }
+    } else {
+      current_dir()?.join(Manifest::FILENAME)
+    };
+
+    let json = filesystem::read_to_string_opt(&path)?
+      .ok_or_else(|| error::ManifestNotFound { path: &path }.build())?;
+
+    let manifest =
+      serde_json::from_str(&json).context(error::DeserializeManifest { path: &path })?;
+
+    Ok((path, manifest))
   }
 
   pub(crate) fn store(&self, path: &Utf8Path) -> Result<()> {

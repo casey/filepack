@@ -7,6 +7,7 @@ use {
 };
 
 mod create;
+mod fingerprint;
 mod hash;
 mod key;
 mod keygen;
@@ -28,7 +29,9 @@ mod verify;
 pub(crate) enum Subcommand {
   #[command(about = "Create manifest")]
   Create(create::Create),
-  #[command(about = "Hash file")]
+  #[command(about = "Print manifest fingerprint")]
+  Fingerprint(fingerprint::Fingerprint),
+  #[command(about = "Print file hash")]
   Hash(hash::Hash),
   #[command(about = "Print master key")]
   Key,
@@ -48,6 +51,7 @@ impl Subcommand {
   pub(crate) fn run(self, options: Options) -> Result {
     match self {
       Self::Create(create) => create.run(options),
+      Self::Fingerprint(fingerprint) => fingerprint.run(),
       Self::Hash(hash) => hash.run(options),
       Self::Key => key::run(options),
       Self::Keygen => keygen::run(options),

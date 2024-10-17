@@ -11,17 +11,7 @@ pub(crate) struct Render {
 
 impl Render {
   pub(crate) fn run(self) -> Result {
-    let path = if let Some(path) = self.root {
-      if filesystem::metadata(&path)?.is_dir() {
-        path.join(Manifest::FILENAME)
-      } else {
-        path
-      }
-    } else {
-      current_dir()?.join(Manifest::FILENAME)
-    };
-
-    let manifest = Manifest::load(&path)?;
+    let (path, manifest) = Manifest::load_from_root(self.root.as_deref())?;
 
     let root = path.parent().unwrap();
 
