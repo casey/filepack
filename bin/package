@@ -4,6 +4,9 @@ set -euxo pipefail
 
 echo "Packaging filepack $TAG for $TARGET..."
 
+echo "Generating man page..."
+cargo run man > filepack.1
+
 test -f Cargo.lock || cargo generate-lockfile
 
 echo "Installing rust toolchain for $TARGET..."
@@ -27,11 +30,12 @@ echo "Copying release files..."
 mkdir dist
 cp -r \
   $EXECUTABLE \
+  CONTRIBUTING \
   Cargo.lock \
   Cargo.toml \
   LICENSE \
-  CONTRIBUTING \
   README.md \
+  filepack.1 \
   dist
 
 echo "Creating filepack manifest..."
