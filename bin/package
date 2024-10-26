@@ -5,7 +5,7 @@ set -euxo pipefail
 echo "Packaging filepack $TAG for $TARGET..."
 
 echo "Generating man page..."
-cargo run man > man/filepack.1
+cargo run man > filepack.1
 
 test -f Cargo.lock || cargo generate-lockfile
 
@@ -35,7 +35,7 @@ cp -r \
   Cargo.toml \
   LICENSE \
   README.md \
-  man/filepack.1 \
+  filepack.1 \
   dist
 
 echo "Creating filepack manifest..."
