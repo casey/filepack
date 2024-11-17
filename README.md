@@ -34,7 +34,7 @@ Which will write the manifest to `path/to/directory/filepack.json`.
 
 Files can later be verified with:
 
-```
+```sh
 filepack verify path/to/directory
 ```
 
@@ -117,18 +117,42 @@ Create a manifest.
 
 Optional path portability lints can be enabled with:
 
-```
+```sh
 filepack create --deny all
 ```
 
 Metadata can optionally be included in the manifest with:
 
-```
+```sh
 filepack create --metadata <PATH>
 ```
 
 Where `<PATH>` is a [YAML](https://en.wikipedia.org/wiki/YAML) document
 containing metadata with the same schema as that of the manifest.
+
+### `filepack verify`
+
+Verify the contents of a directory against a manifest.
+
+To verify the contents of `DIR` against `DIR/filepack.json`:
+
+```sh
+filepack verify DIR
+```
+
+If the current directory contains `filepack.json`, `DIR` can be omitted:
+
+```sh
+filepack verify
+```
+
+`filepack verify` takes an optional `--print` flag, which prints the manifest
+to standard output if verification succeeds. This can be used in a pipeline to
+ensure that you the manifest has been verified before proceeding:
+
+```sh
+filepack verify --print | jq
+```
 
 Manifest
 --------
