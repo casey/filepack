@@ -25,7 +25,7 @@ impl Manifest {
     hasher.finalize().into()
   }
 
-  pub(crate) fn load_from_root(path: Option<&Utf8Path>) -> Result<(Utf8PathBuf, Self)> {
+  pub(crate) fn load(path: Option<&Utf8Path>) -> Result<(Utf8PathBuf, Self)> {
     let path = if let Some(path) = path {
       if filesystem::metadata(path)?.is_dir() {
         path.join(Manifest::FILENAME)
