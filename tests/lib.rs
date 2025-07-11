@@ -47,6 +47,7 @@ impl Manifest {
   }
 }
 
+mod archive;
 mod create;
 mod fingerprint;
 mod hash;

@@ -13,7 +13,7 @@ pub(crate) struct Sign {
 
 impl Sign {
   pub(crate) fn run(self, options: Options) -> Result {
-    let (path, mut manifest) = Manifest::load(self.root.as_deref())?;
+    let (path, _json, mut manifest) = Manifest::load(self.root.as_deref())?;
 
     let fingerprint = manifest.fingerprint();
 
