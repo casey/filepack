@@ -7,7 +7,6 @@ const MAGIC_BYTES: &[u8] = b"FILEPACK";
 //   - call it a file signature instead? more self-explanatory
 //   - include non text characters
 //   - add more entropy
-// - sort by hash
 // - assert that content has correct size and hash
 
 pub(crate) fn run() -> Result {
@@ -46,7 +45,7 @@ pub(crate) fn run() -> Result {
   for (hash, file) in &files {
     write(hash.as_bytes())?;
     write(&offset.to_le_bytes())?;
-    let size = u64::try_from(file.len()).unwrap();
+    let size = file.len().into_u64();
     write(&size.to_le_bytes())?;
     offset += size;
   }
