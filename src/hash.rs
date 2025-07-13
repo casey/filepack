@@ -10,7 +10,6 @@ impl Hash {
     self.0.as_bytes()
   }
 
-  #[cfg(test)]
   pub(crate) fn bytes(input: &[u8]) -> Self {
     Self(blake3::hash(input))
   }

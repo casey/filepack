@@ -32,19 +32,12 @@ fn creates_archive_for_multiple_files() {
   let mut expected = Vec::new();
   expected.extend_from_slice(b"FILEPACK");
 
-  let output = Command::cargo_bin("filepack")
-    .unwrap()
-    .args(["fingerprint", "."])
-    .current_dir(&dir)
-    .output()
-    .unwrap();
-
   let mut offset: u64 = 0;
   let manifest_content = std::fs::read_to_string(dir.child("filepack.json")).unwrap();
-  let manifest_hash = String::from_utf8(output.stdout).unwrap().trim().to_string();
+  let manifest_hash = blake3::hash(manifest_content.as_bytes());
   let manifest_content_length = &u64::try_from(manifest_content.len()).unwrap();
 
-  expected.extend_from_slice(&hex::decode(manifest_hash).unwrap());
+  expected.extend_from_slice(manifest_hash.as_bytes());
   expected.extend_from_slice(&offset.to_le_bytes());
   expected.extend_from_slice(&manifest_content_length.to_le_bytes());
   offset += manifest_content_length;

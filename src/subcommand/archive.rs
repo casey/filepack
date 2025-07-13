@@ -2,12 +2,19 @@ use super::*;
 
 const MAGIC_BYTES: &[u8] = b"FILEPACK";
 
+// todo:
+// - come up with better magic bytes
+//   - call it a file signature instead? more self-explanatory
+//   - include non text characters
+//   - add more entropy
+// - sort by hash
+
 pub(crate) fn run() -> Result {
   let (_manifest_path, manifest_json, manifest) = Manifest::load(None)?;
 
   let mut files = Vec::new();
 
-  for path in manifest.files.keys() {
+  for (path, entry) in &manifest.files {
     let content = fs::read(path).context(error::Io { path })?;
     files.push(content);
   }
@@ -28,7 +35,7 @@ pub(crate) fn run() -> Result {
 
   let mut offset: u64 = 0;
 
-  let manifest_hash = manifest.fingerprint();
+  let manifest_hash = Hash::bytes(manifest_json.as_bytes());
 
   write(manifest_hash.as_bytes())?;
   write(&offset.to_le_bytes())?;
