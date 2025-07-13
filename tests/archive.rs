@@ -2,25 +2,25 @@ use super::*;
 
 #[test]
 fn creates_archive_for_multiple_files() {
-  let dir = TempDir::new().unwrap();
+  let tempdir = TempDir::new().unwrap();
 
-  let files = [("bar", "hello world"), ("quux", "more content")];
+  let files = [("foo", "hello"), ("bar", "goodbye")];
 
-  for (filename, content) in &files {
-    dir.child(filename).write_str(content).unwrap();
+  for (path, content) in files {
+    tempdir.child(path).write_str(content).unwrap();
   }
 
   Command::cargo_bin("filepack")
     .unwrap()
-    .args(["create", "."])
-    .current_dir(&dir)
+    .arg("create")
+    .current_dir(&tempdir)
     .assert()
     .success();
 
   Command::cargo_bin("filepack")
     .unwrap()
-    .args(["archive"])
-    .current_dir(&dir)
+    .arg("archive")
+    .current_dir(&tempdir)
     .assert()
     .success();
 
@@ -28,8 +28,8 @@ fn creates_archive_for_multiple_files() {
 
   expected.extend_from_slice(b"FILEPACK");
 
-  let mut offset: u64 = 0;
-  let manifest = std::fs::read_to_string(dir.child("filepack.json")).unwrap();
+  let mut offset = 0u64;
+  let manifest = std::fs::read_to_string(tempdir.child("filepack.json")).unwrap();
 
   let mut files = iter::once(manifest.as_str())
     .chain(files.iter().map(|&(_path, content)| content))
@@ -50,6 +50,6 @@ fn creates_archive_for_multiple_files() {
     expected.extend_from_slice(content);
   }
 
-  let actual = std::fs::read(dir.child("archive.filepack")).unwrap();
+  let actual = std::fs::read(tempdir.child("archive.filepack")).unwrap();
   assert_eq!(actual, expected);
 }
