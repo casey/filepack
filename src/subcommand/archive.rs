@@ -14,8 +14,6 @@ pub(crate) struct Archive {
   output: Utf8PathBuf,
 }
 
-// filepack archive
-
 // todo:
 // - come up with better magic bytes
 //   - call it a file signature instead? more self-explanatory
