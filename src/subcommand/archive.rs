@@ -12,14 +12,11 @@ const MAGIC_BYTES: &[u8] = b"FILEPACK";
 // - assert that content has correct size and hash
 
 pub(crate) fn run() -> Result {
-  let (_manifest_path, manifest_json, manifest) = Manifest::load(None)?;
+  let (_path, json, manifest) = Manifest::load(None)?;
 
   let mut files = Vec::new();
 
-  files.push((
-    Hash::bytes(manifest_json.as_bytes()),
-    manifest_json.clone().into(),
-  ));
+  files.push((Hash::bytes(json.as_bytes()), json.into()));
 
   for (path, entry) in &manifest.files {
     let content = fs::read(path).context(error::Io { path })?;
