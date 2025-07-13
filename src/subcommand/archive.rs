@@ -10,6 +10,8 @@ const MAGIC_BYTES: &[u8] = b"FILEPACK";
 //   - add a version number?
 //   - use emoji because fun?
 // - assert that content has correct size and hash
+// - allow configuring manifest location
+// - allow configuring archive location
 
 pub(crate) fn run() -> Result {
   let (_path, json, manifest) = Manifest::load(None)?;
