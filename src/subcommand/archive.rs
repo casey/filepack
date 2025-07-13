@@ -4,14 +4,14 @@ const MAGIC_BYTES: &[u8] = b"FILEPACK";
 
 #[derive(Parser)]
 pub(crate) struct Archive {
-  #[arg(help = "Write archive to <OUTPUT>.", long)]
-  output: Utf8PathBuf,
   #[arg(
     help = "Load manifest from <MANIFEST>. May be path to manifest, to directory containing manifest \
     named `filepack.json`, or omitted, in which case manifest named `filepack.json` in the current \
     directory is loaded."
   )]
   manifest: Option<Utf8PathBuf>,
+  #[arg(help = "Write archive to <OUTPUT>.", long)]
+  output: Utf8PathBuf,
 }
 
 // filepack archive
@@ -40,11 +40,13 @@ impl Archive {
     files.push((Hash::bytes(json.as_bytes()), json.into()));
 
     for (path, entry) in &manifest.files {
-      let path = base.join(&path);
+      let path = base.join(path);
       let content = fs::read(&path).context(error::Io { path })?;
       let hash = Hash::bytes(&content);
 
       if hash != entry.hash {}
+
+      if content.len().into_u64() != entry.size {}
 
       files.push((entry.hash, content));
     }

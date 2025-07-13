@@ -43,6 +43,8 @@ pub(crate) enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
+  #[snafu(display("fingerprint mismatch"))]
+  FingerprintMismatch { backtrace: Option<Backtrace> },
   #[snafu(display("I/O error at `{path}`"))]
   Io {
     backtrace: Option<Backtrace>,
@@ -65,13 +67,13 @@ pub(crate) enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
-  #[snafu(display("metadata `{path}` already exists"))]
-  MetadataAlreadyExists {
+  #[snafu(display("manifest `{path}` not found"))]
+  ManifestNotFound {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
-  #[snafu(display("manifest `{path}` not found"))]
-  ManifestNotFound {
+  #[snafu(display("metadata `{path}` already exists"))]
+  MetadataAlreadyExists {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
@@ -127,8 +129,6 @@ pub(crate) enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
-  #[snafu(display("fingerprint mismatch"))]
-  FingerprintMismatch { backtrace: Option<Backtrace> },
   #[snafu(display("manifest has already been signed by public key `{public_key}`"))]
   SignatureAlreadyExists {
     backtrace: Option<Backtrace>,
