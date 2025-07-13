@@ -29,7 +29,7 @@ mod verify;
 ]
 pub(crate) enum Subcommand {
   #[command(about = "Create an archive")]
-  Archive,
+  Archive(archive::Archive),
   #[command(about = "Create manifest")]
   Create(create::Create),
   #[command(about = "Print manifest fingerprint")]
@@ -53,7 +53,7 @@ pub(crate) enum Subcommand {
 impl Subcommand {
   pub(crate) fn run(self, options: Options) -> Result {
     match self {
-      Self::Archive => archive::run(),
+      Self::Archive(archive) => archive.run(),
       Self::Create(create) => create.run(options),
       Self::Fingerprint(fingerprint) => fingerprint.run(),
       Self::Hash(hash) => hash.run(options),

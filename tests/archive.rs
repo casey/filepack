@@ -19,7 +19,7 @@ fn creates_archive_for_multiple_files() {
 
   Command::cargo_bin("filepack")
     .unwrap()
-    .arg("archive")
+    .args(["archive", "--output", "archive.filepack"])
     .current_dir(&tempdir)
     .assert()
     .success();
