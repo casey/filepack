@@ -3,13 +3,13 @@ use super::*;
 const MAGIC_BYTES: &[u8] = b"FILEPACK";
 
 pub(crate) fn run() -> Result {
-  let (manifest_path, manifest_json, manifest) = Manifest::load(None)?;
+  let (_manifest_path, manifest_json, manifest) = Manifest::load(None)?;
 
   let mut files = Vec::new();
 
   for path in manifest.files.keys() {
     let content = fs::read(path).context(error::Io { path })?;
-    files.push((path, content));
+    files.push(content);
   }
 
   let archive_path = "archive.filepack";
@@ -18,56 +18,38 @@ pub(crate) fn run() -> Result {
 
   let mut writer = BufWriter::new(archive);
 
-  writer
-    .write_all(MAGIC_BYTES)
-    .context(error::Io { path: archive_path })?;
+  let mut write = |data: &[u8]| {
+    writer
+      .write_all(data)
+      .context(error::Io { path: archive_path })
+  };
+
+  write(MAGIC_BYTES)?;
 
   let mut offset: u64 = 0;
 
   let manifest_hash = manifest.fingerprint();
 
-  writer
-    .write_all(manifest_hash.as_bytes())
-    .context(error::Io { path: archive_path })?;
-
-  writer
-    .write_all(&offset.to_le_bytes())
-    .context(error::Io { path: archive_path })?;
+  write(manifest_hash.as_bytes())?;
+  write(&offset.to_le_bytes())?;
 
   let manifest_size = u64::try_from(manifest_json.len()).unwrap();
 
-  writer
-    .write_all(&manifest_size.to_le_bytes())
-    .context(error::Io { path: archive_path })?;
+  write(&manifest_size.to_le_bytes())?;
 
   offset += manifest_size;
 
   for entry in manifest.files.values() {
-    writer
-      .write_all(entry.hash.as_bytes())
-      .context(error::Io { path: archive_path })?;
-
-    writer
-      .write_all(&offset.to_le_bytes())
-      .context(error::Io { path: archive_path })?;
-
-    writer
-      .write_all(&entry.size.to_le_bytes())
-      .context(error::Io { path: archive_path })?;
-
+    write(entry.hash.as_bytes())?;
+    write(&offset.to_le_bytes())?;
+    write(&entry.size.to_le_bytes())?;
     offset += entry.size;
   }
 
-  writer
-    .write_all(&manifest_json.as_bytes())
-    .context(error::Io {
-      path: &manifest_path,
-    })?;
+  write(&manifest_json.as_bytes())?;
 
-  for (file, content) in files {
-    writer
-      .write_all(&content)
-      .context(error::Io { path: &file })?;
+  for file in files {
+    write(&file)?;
   }
 
   Ok(())
