@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) struct Hash(blake3::Hash);
 
 impl Hash {
@@ -32,6 +32,18 @@ impl FromStr for Hash {
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     Ok(Self(s.parse()?))
+  }
+}
+
+impl Ord for Hash {
+  fn cmp(&self, other: &Self) -> Ordering {
+    self.as_bytes().cmp(other.as_bytes())
+  }
+}
+
+impl PartialOrd for Hash {
+  fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+    Some(self.cmp(other))
   }
 }
 

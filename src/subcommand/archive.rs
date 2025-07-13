@@ -8,16 +8,24 @@ const MAGIC_BYTES: &[u8] = b"FILEPACK";
 //   - include non text characters
 //   - add more entropy
 // - sort by hash
+// - assert that content has correct size and hash
 
 pub(crate) fn run() -> Result {
   let (_manifest_path, manifest_json, manifest) = Manifest::load(None)?;
 
   let mut files = Vec::new();
 
+  files.push((
+    Hash::bytes(manifest_json.as_bytes()),
+    manifest_json.clone().into(),
+  ));
+
   for (path, entry) in &manifest.files {
     let content = fs::read(path).context(error::Io { path })?;
-    files.push(content);
+    files.push((entry.hash, content));
   }
+
+  files.sort_by_key(|(hash, _content)| *hash);
 
   let archive_path = "archive.filepack";
 
@@ -35,27 +43,15 @@ pub(crate) fn run() -> Result {
 
   let mut offset: u64 = 0;
 
-  let manifest_hash = Hash::bytes(manifest_json.as_bytes());
-
-  write(manifest_hash.as_bytes())?;
-  write(&offset.to_le_bytes())?;
-
-  let manifest_size = u64::try_from(manifest_json.len()).unwrap();
-
-  write(&manifest_size.to_le_bytes())?;
-
-  offset += manifest_size;
-
-  for entry in manifest.files.values() {
-    write(entry.hash.as_bytes())?;
+  for (hash, file) in &files {
+    write(hash.as_bytes())?;
     write(&offset.to_le_bytes())?;
-    write(&entry.size.to_le_bytes())?;
-    offset += entry.size;
+    let size = u64::try_from(file.len()).unwrap();
+    write(&size.to_le_bytes())?;
+    offset += size;
   }
 
-  write(&manifest_json.as_bytes())?;
-
-  for file in files {
+  for (_hash, file) in files {
     write(&file)?;
   }
 

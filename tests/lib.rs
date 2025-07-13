@@ -5,9 +5,10 @@ use {
     fixture::{FileTouch, FileWriteBin, FileWriteStr, PathChild, PathCreateDir},
     TempDir,
   },
+  blake3::Hash,
   predicates::str::RegexPredicate,
   serde::{Deserialize, Serialize},
-  std::{collections::BTreeMap, fs, path::Path, str},
+  std::{collections::BTreeMap, fs, iter, path::Path, str},
 };
 
 const SEPARATOR: char = if cfg!(windows) { '\\' } else { '/' };
