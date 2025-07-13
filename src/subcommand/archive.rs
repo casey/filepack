@@ -27,17 +27,25 @@ pub(crate) struct Archive {
 //
 // - test configuring manifest location
 // - test configuring archive location
+// - test that paths are interpreted relative to the manifest
 
 impl Archive {
   pub(crate) fn run(self) -> Result {
-    let (_path, json, manifest) = Manifest::load(self.manifest.as_deref())?;
+    let (path, json, manifest) = Manifest::load(self.manifest.as_deref())?;
+
+    let base = path.parent().unwrap();
 
     let mut files = Vec::new();
 
     files.push((Hash::bytes(json.as_bytes()), json.into()));
 
     for (path, entry) in &manifest.files {
-      let content = fs::read(path).context(error::Io { path })?;
+      let path = base.join(&path);
+      let content = fs::read(&path).context(error::Io { path })?;
+      let hash = Hash::bytes(&content);
+
+      if hash != entry.hash {}
+
       files.push((entry.hash, content));
     }
 
