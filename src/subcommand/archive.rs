@@ -23,11 +23,13 @@ pub(crate) struct Archive {
 //   - add more entropy
 //   - add a version number?
 //   - use emoji because fun?
-// - assert that content has correct size and hash
 //
-// - test configuring manifest location
-// - test configuring archive location
-// - test that paths are interpreted relative to the manifest
+// - test
+//   - configuring manifest location
+//   - configuring archive location
+//   - that paths are interpreted relative to the manifest
+//   - hash mismatch
+//   - size mismatch
 
 impl Archive {
   pub(crate) fn run(self) -> Result {
@@ -41,12 +43,31 @@ impl Archive {
 
     for (path, entry) in &manifest.files {
       let path = base.join(path);
-      let content = fs::read(&path).context(error::Io { path })?;
+      let content = fs::read(&path).context(error::Io { path: &path })?;
       let hash = Hash::bytes(&content);
 
-      if hash != entry.hash {}
+      if hash != entry.hash {
+        return Err(
+          error::HashMismatch {
+            path,
+            actual: hash,
+            expected: entry.hash,
+          }
+          .build(),
+        );
+      }
 
-      if content.len().into_u64() != entry.size {}
+      let size = content.len().into_u64();
+      if size != entry.size {
+        return Err(
+          error::SizeMismatch {
+            path,
+            actual: size,
+            expected: entry.size,
+          }
+          .build(),
+        );
+      }
 
       files.push((entry.hash, content));
     }
