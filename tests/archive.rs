@@ -80,7 +80,7 @@ fn hash_mismatch_error() {
     .assert()
     .failure()
     .stderr(is_match(
-      "error: file `.*/foo.txt` hash .* does not match manifest hash .*\n",
+      "error: file `.*(/|\\/)foo.txt` hash .* does not match manifest hash .*\n",
     ));
 }
 
@@ -110,6 +110,6 @@ fn size_mismatch_error() {
     .assert()
     .failure()
     .stderr(is_match(
-      "error: file `.*/foo.txt` size 3 does not match manifest size 5\n",
+      "error: file `.*(/|\\/)foo.txt` size 3 does not match manifest size 5\n",
     ));
 }
