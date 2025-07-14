@@ -4,7 +4,7 @@ use super::*;
 fn creates_archive_for_multiple_files() {
   let tempdir = TempDir::new().unwrap();
 
-  let files = [("foo.txt", "hello"), ("bar.txt", "goodbye")];
+  let files = [("sub/foo.txt", "hello"), ("sub/bar.txt", "goodbye")];
 
   for (path, content) in files {
     tempdir.child(path).write_str(content).unwrap();
@@ -12,14 +12,14 @@ fn creates_archive_for_multiple_files() {
 
   Command::cargo_bin("filepack")
     .unwrap()
-    .arg("create")
+    .args(["create", "sub"])
     .current_dir(&tempdir)
     .assert()
     .success();
 
   Command::cargo_bin("filepack")
     .unwrap()
-    .args(["archive", "--output", "archive.filepack"])
+    .args(["archive", "sub", "--output", "output.filepack"])
     .current_dir(&tempdir)
     .assert()
     .success();
@@ -29,7 +29,7 @@ fn creates_archive_for_multiple_files() {
   expected.extend_from_slice(b"FILEPACK");
 
   let mut offset = 0u64;
-  let manifest = std::fs::read_to_string(tempdir.child("filepack.json")).unwrap();
+  let manifest = std::fs::read_to_string(tempdir.child("sub/filepack.json")).unwrap();
 
   let mut files = iter::once(manifest.as_str())
     .chain(files.iter().map(|&(_path, content)| content))
@@ -50,12 +50,42 @@ fn creates_archive_for_multiple_files() {
     expected.extend_from_slice(content);
   }
 
-  let actual = std::fs::read(tempdir.child("archive.filepack")).unwrap();
+  let actual = std::fs::read(tempdir.child("output.filepack")).unwrap();
   assert_eq!(actual, expected);
 }
 
 #[test]
 fn hash_mismatch_error() {
+  let tempdir = TempDir::new().unwrap();
+
+  let files = [("foo.txt", "hello"), ("bar.txt", "goodbye")];
+
+  for (path, content) in files {
+    tempdir.child(path).write_str(content).unwrap();
+  }
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .arg("create")
+    .current_dir(&tempdir)
+    .assert()
+    .success();
+
+  tempdir.child("foo.txt").write_str("bazzz").unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["archive", "--output", "archive.filepack"])
+    .current_dir(&tempdir)
+    .assert()
+    .failure()
+    .stderr(is_match(
+      "error: file `.*/foo.txt` hash .* does not match manifest hash .*\n",
+    ));
+}
+
+#[test]
+fn size_mismatch_error() {
   let tempdir = TempDir::new().unwrap();
 
   let files = [("foo.txt", "hello"), ("bar.txt", "goodbye")];
@@ -80,6 +110,6 @@ fn hash_mismatch_error() {
     .assert()
     .failure()
     .stderr(is_match(
-      "error: file `.*/foo.txt` hash .* does not match manifest hash .*\n",
+      "error: file `.*/foo.txt` size 3 does not match manifest size 5\n",
     ));
 }
