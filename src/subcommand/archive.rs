@@ -14,14 +14,6 @@ pub(crate) struct Archive {
   output: Utf8PathBuf,
 }
 
-// todo:
-// - come up with better magic bytes
-//   - call it a file signature instead? more self-explanatory
-//   - include non text characters
-//   - add more entropy
-//   - add a version number?
-//   - use emoji because fun?
-
 impl Archive {
   pub(crate) fn run(self) -> Result {
     let (path, json, manifest) = Manifest::load(self.manifest.as_deref())?;
