@@ -4,7 +4,7 @@ use super::*;
 fn creates_archive_for_multiple_files() {
   let tempdir = TempDir::new().unwrap();
 
-  let files = [("foo", "hello"), ("bar", "goodbye")];
+  let files = [("foo.txt", "hello"), ("bar.txt", "goodbye")];
 
   for (path, content) in files {
     tempdir.child(path).write_str(content).unwrap();
@@ -52,4 +52,34 @@ fn creates_archive_for_multiple_files() {
 
   let actual = std::fs::read(tempdir.child("archive.filepack")).unwrap();
   assert_eq!(actual, expected);
+}
+
+#[test]
+fn hash_mismatch_error() {
+  let tempdir = TempDir::new().unwrap();
+
+  let files = [("foo.txt", "hello"), ("bar.txt", "goodbye")];
+
+  for (path, content) in files {
+    tempdir.child(path).write_str(content).unwrap();
+  }
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .arg("create")
+    .current_dir(&tempdir)
+    .assert()
+    .success();
+
+  tempdir.child("foo.txt").write_str("baz").unwrap();
+
+  Command::cargo_bin("filepack")
+    .unwrap()
+    .args(["archive", "--output", "archive.filepack"])
+    .current_dir(&tempdir)
+    .assert()
+    .failure()
+    .stderr(is_match(
+      "error: file `.*/foo.txt` hash .* does not match manifest hash .*\n",
+    ));
 }

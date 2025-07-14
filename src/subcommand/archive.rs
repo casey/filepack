@@ -33,14 +33,14 @@ impl Archive {
   pub(crate) fn run(self) -> Result {
     let (path, json, manifest) = Manifest::load(self.manifest.as_deref())?;
 
-    let base = path.parent().unwrap();
+    let root = path.parent().unwrap();
 
     let mut files = Vec::new();
 
     files.push((Hash::bytes(json.as_bytes()), json.into()));
 
     for (path, entry) in &manifest.files {
-      let path = base.join(path);
+      let path = root.join(path);
       let content = fs::read(&path).context(error::Io { path: &path })?;
       let hash = Hash::bytes(&content);
 
@@ -72,9 +72,9 @@ impl Archive {
 
     files.sort_by_key(|(hash, _content)| *hash);
 
-    let archive = File::create(&self.output).context(error::Io { path: &self.output })?;
+    let output = File::create(&self.output).context(error::Io { path: &self.output })?;
 
-    let mut writer = BufWriter::new(archive);
+    let mut writer = BufWriter::new(output);
 
     let mut write = |data: &[u8]| {
       writer
