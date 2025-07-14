@@ -25,7 +25,7 @@ pub(crate) struct Archive {
 // - test
 //   - configuring manifest location
 //   - configuring archive location
-//   - that paths are interpreted relative to the manifest
+//   - paths are interpreted relative to the manifest
 //   - hash mismatch
 //   - size mismatch
 
