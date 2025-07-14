@@ -2,8 +2,8 @@ use super::*;
 
 #[derive(Clone, Copy)]
 pub(crate) struct Style {
-  is_terminal: bool,
   inner: owo_colors::Style,
+  is_terminal: bool,
 }
 
 impl Style {

@@ -11,7 +11,7 @@ pub(crate) struct Render {
 
 impl Render {
   pub(crate) fn run(self) -> Result {
-    let (path, manifest) = Manifest::load_from_root(self.root.as_deref())?;
+    let (path, _json, manifest) = Manifest::load(self.root.as_deref())?;
 
     let root = path.parent().unwrap();
 

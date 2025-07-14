@@ -1,11 +1,11 @@
 use {
   self::{
     arguments::Arguments, bytes::Bytes, display_path::DisplayPath, display_secret::DisplaySecret,
-    entry::Entry, error::Error, hash::Hash, lint::Lint, lint_group::LintGroup, list::List,
-    manifest::Manifest, metadata::Metadata, options::Options, owo_colorize_ext::OwoColorizeExt,
-    page::Page, private_key::PrivateKey, public_key::PublicKey, relative_path::RelativePath,
-    signature::Signature, signature_error::SignatureError, style::Style, subcommand::Subcommand,
-    template::Template, utf8_path_ext::Utf8PathExt,
+    entry::Entry, error::Error, hash::Hash, into_u64::IntoU64, lint::Lint, lint_group::LintGroup,
+    list::List, manifest::Manifest, metadata::Metadata, options::Options,
+    owo_colorize_ext::OwoColorizeExt, page::Page, private_key::PrivateKey, public_key::PublicKey,
+    relative_path::RelativePath, signature::Signature, signature_error::SignatureError,
+    style::Style, subcommand::Subcommand, template::Template, utf8_path_ext::Utf8PathExt,
   },
   blake3::Hasher,
   boilerplate::Boilerplate,
@@ -25,8 +25,8 @@ use {
     collections::{BTreeMap, HashMap, HashSet},
     env,
     fmt::{self, Display, Formatter},
-    fs::File,
-    io::{self, IsTerminal},
+    fs::{self, File},
+    io::{self, BufWriter, IsTerminal, Write},
     path::{Path, PathBuf},
     process,
     str::{self, FromStr},
@@ -45,6 +45,7 @@ mod entry;
 mod error;
 mod filesystem;
 mod hash;
+mod into_u64;
 mod lint;
 mod lint_group;
 mod list;

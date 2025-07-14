@@ -6,6 +6,7 @@ use {
   },
 };
 
+mod archive;
 mod create;
 mod fingerprint;
 mod hash;
@@ -27,6 +28,8 @@ mod verify;
     .placeholder(AnsiColor::Cyan.on_default()))
 ]
 pub(crate) enum Subcommand {
+  #[command(about = "Create archive")]
+  Archive(archive::Archive),
   #[command(about = "Create manifest")]
   Create(create::Create),
   #[command(about = "Print manifest fingerprint")]
@@ -50,6 +53,7 @@ pub(crate) enum Subcommand {
 impl Subcommand {
   pub(crate) fn run(self, options: Options) -> Result {
     match self {
+      Self::Archive(archive) => archive.run(),
       Self::Create(create) => create.run(options),
       Self::Fingerprint(fingerprint) => fingerprint.run(),
       Self::Hash(hash) => hash.run(options),
