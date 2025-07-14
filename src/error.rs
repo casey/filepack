@@ -43,6 +43,12 @@ pub(crate) enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
+  #[snafu(display("I/O error at `{path}`"))]
+  FilesystemIo {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+    source: io::Error,
+  },
   #[snafu(display("fingerprint mismatch"))]
   FingerprintMismatch { backtrace: Option<Backtrace> },
   #[snafu(display("file `{path}` hash {actual} does not match manifest hash {expected}"))]
@@ -51,12 +57,6 @@ pub(crate) enum Error {
     backtrace: Option<Backtrace>,
     expected: Hash,
     path: DisplayPath,
-  },
-  #[snafu(display("I/O error at `{path}`"))]
-  Io {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-    source: io::Error,
   },
   #[snafu(display("public key `{public_key}` doesn't match private key `{private_key}`"))]
   KeyMismatch {
@@ -135,6 +135,22 @@ pub(crate) enum Error {
   PublicKeyNotFound {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
+  },
+  #[snafu(display("failed to bind server to `{port}`"))]
+  ServerBind {
+    port: u16,
+    backtrace: Option<Backtrace>,
+    source: io::Error,
+  },
+  #[snafu(display("failed to initialize server runtime"))]
+  ServerRuntime {
+    backtrace: Option<Backtrace>,
+    source: io::Error,
+  },
+  #[snafu(display("failed to serve server"))]
+  ServerServe {
+    backtrace: Option<Backtrace>,
+    source: io::Error,
   },
   #[snafu(display("manifest has already been signed by public key `{public_key}`"))]
   SignatureAlreadyExists {

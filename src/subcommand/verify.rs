@@ -75,7 +75,7 @@ fingerprint mismatch: `{source}`
           }
           continue;
         }
-        result => result.context(error::Io { path })?,
+        result => result.context(error::FilesystemIo { path })?,
       };
 
       if actual != expected {
