@@ -28,7 +28,7 @@ mod verify;
     .placeholder(AnsiColor::Cyan.on_default()))
 ]
 pub(crate) enum Subcommand {
-  #[command(about = "Create an archive")]
+  #[command(about = "Create archive")]
   Archive(archive::Archive),
   #[command(about = "Create manifest")]
   Create(create::Create),
