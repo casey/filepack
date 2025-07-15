@@ -31,6 +31,34 @@ struct State {
 }
 
 impl Server {
+  fn load(&self) -> Result<Router> {
+    let mut archives = Vec::new();
+
+    for entry in WalkDir::new(&self.archives) {
+      let entry = entry?;
+
+      if entry.file_type().is_dir() {
+        continue;
+      }
+
+      let path = decode_path(entry.path())?;
+
+      if path.extension() != Some(Archive::EXTENSION) {
+        continue;
+      }
+
+      archives.push(Archive::load(path).context(error::ArchiveLoad { path })?);
+    }
+
+    archives.sort_by_key(|archive| archive.manifest);
+
+    Ok(
+      Router::new()
+        .route("/", get(Self::index))
+        .layer(Extension(Arc::new(State { archives }))),
+    )
+  }
+
   async fn index(state: Extension<Arc<State>>) -> IndexHtml {
     IndexHtml {
       archives: state.archives.clone(),
@@ -41,27 +69,7 @@ impl Server {
     Runtime::new()
       .context(error::ServerRuntime)?
       .block_on(async {
-        let mut archives = Vec::new();
-
-        for entry in WalkDir::new(&self.archives) {
-          let entry = entry?;
-
-          if entry.file_type().is_dir() {
-            continue;
-          }
-
-          let path = decode_path(entry.path())?;
-
-          if path.extension() != Some(Archive::EXTENSION) {
-            continue;
-          }
-
-          archives.push(Archive::load(path).context(error::ArchiveLoad { path })?);
-        }
-
-        let app = Router::new()
-          .route("/", get(Self::index))
-          .layer(Extension(Arc::new(State { archives })));
+        let app = Self::load(&self)?;
 
         let listener = tokio::net::TcpListener::bind((self.address.as_str(), self.port))
           .await
@@ -76,5 +84,55 @@ impl Server {
 
         Ok(())
       })
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use {super::*, axum_test::TestServer, std::iter};
+
+  fn test_archive(n: u8) -> Vec<u8> {
+    b"FILEPACK"
+      .iter()
+      .copied()
+      .chain(iter::repeat(n).take(32))
+      .collect()
+  }
+
+  #[tokio::test]
+  async fn index_lists_archives() {
+    let dir = TempDir::new().unwrap();
+
+    dir
+      .child("foo.filepack")
+      .write_binary(&test_archive(0x00))
+      .unwrap();
+
+    dir
+      .child("bar.filepack")
+      .write_binary(&test_archive(0xFF))
+      .unwrap();
+
+    let server = match Server::try_parse_from(["filepack", dir.path().to_str().unwrap()]) {
+      Ok(server) => server,
+      Err(error) => {
+        panic!("{}", error.to_string());
+      }
+    };
+
+    let server = TestServer::new(server.load().unwrap()).unwrap();
+
+    let response = server.get("/").await;
+
+    response.assert_status_ok();
+
+    response.assert_text_contains(
+      "\
+    <ul>
+      <li class=monospace>0000000000000000000000000000000000000000000000000000000000000000</li>
+      <li class=monospace>ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff</li>
+    </ul>
+",
+    );
   }
 }
