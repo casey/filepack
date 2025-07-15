@@ -2,9 +2,19 @@ use super::*;
 
 #[derive(Parser)]
 pub(crate) struct Server {
-  #[arg(help = "Archive directory containing filepack archives.")]
+  #[arg(
+    default_value = "0.0.0.0",
+    help = "Listen on <ADDRESS> for incoming requests.",
+    long
+  )]
+  address: String,
+  #[arg(help = "Serve archives from directory <ARCHIVES>.")]
   archives: Utf8PathBuf,
-  #[arg(help = "Port to run the server on.", default_value_t = 80)]
+  #[arg(
+    default_value_t = 80,
+    help = "Listen on <PORT> for incoming requests.",
+    long
+  )]
   port: u16,
 }
 
@@ -64,9 +74,12 @@ impl Server {
 
         let app = Router::new().route("/", get(|| async { IndexHtml { archives } }));
 
-        let listener = tokio::net::TcpListener::bind(("0.0.0.0", self.port))
+        let listener = tokio::net::TcpListener::bind((self.address.as_str(), self.port))
           .await
-          .context(error::ServerBind { port: self.port })?;
+          .context(error::ServerBind {
+            address: self.address,
+            port: self.port,
+          })?;
 
         axum::serve(listener, app)
           .await

@@ -138,10 +138,11 @@ pub(crate) enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
-  #[snafu(display("failed to bind server to `{port}`"))]
+  #[snafu(display("failed to bind server to `{address}:{port}`"))]
   ServerBind {
-    port: u16,
+    address: String,
     backtrace: Option<Backtrace>,
+    port: u16,
     source: io::Error,
   },
   #[snafu(display("failed to initialize server runtime"))]
