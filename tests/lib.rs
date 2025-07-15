@@ -57,5 +57,6 @@ mod keygen;
 mod man;
 mod misc;
 mod render;
+mod server;
 mod sign;
 mod verify;
