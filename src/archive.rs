@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub(crate) struct Archive {
   pub(crate) manifest: Hash,
 }
@@ -43,5 +43,79 @@ impl Archive {
     Ok(Self {
       manifest: buffer.into(),
     })
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn file_signature_truncated_error() {
+    let tempdir = TempDir::new().unwrap();
+
+    tempdir.child("foo.archive").write_binary(b"foo").unwrap();
+
+    let path = decode_path(tempdir.path()).unwrap();
+
+    assert_matches! {
+      Archive::load(&path.join("foo.archive")),
+      Err(ArchiveError::FileSignature { .. }),
+    }
+  }
+
+  #[test]
+  fn file_signature_mismatch_error() {
+    let tempdir = TempDir::new().unwrap();
+
+    tempdir
+      .child("foo.archive")
+      .write_binary(b"aaaaaaaa")
+      .unwrap();
+
+    let path = decode_path(tempdir.path()).unwrap();
+
+    assert_matches! {
+      Archive::load(&path.join("foo.archive")),
+      Err(ArchiveError::FileSignature { .. }),
+    }
+  }
+
+  #[test]
+  fn truncated_error() {
+    let tempdir = TempDir::new().unwrap();
+
+    tempdir
+      .child("foo.archive")
+      .write_binary(b"FILEPACK")
+      .unwrap();
+
+    let path = decode_path(tempdir.path()).unwrap();
+
+    assert_matches! {
+      Archive::load(&path.join("foo.archive")),
+      Err(ArchiveError::Truncated { .. }),
+    }
+  }
+
+  #[test]
+  fn success() {
+    let tempdir = TempDir::new().unwrap();
+
+    let manifest = Hash::bytes(&[]);
+
+    let archive = Archive::FILE_SIGNATURE
+      .iter()
+      .chain(manifest.as_bytes())
+      .copied()
+      .collect::<Vec<u8>>();
+
+    tempdir.child("foo.archive").write_binary(&archive).unwrap();
+
+    let path = decode_path(tempdir.path()).unwrap();
+
+    let archive = Archive::load(&path.join("foo.archive")).unwrap();
+
+    assert_eq!(archive, Archive { manifest });
   }
 }
