@@ -1,9 +1,5 @@
 use super::*;
 
-use std::io::Read;
-
-use io::BufReader;
-
 #[derive(Parser)]
 pub(crate) struct Server {
   #[arg(help = "Archive directory containing filepack archives.")]
@@ -27,7 +23,7 @@ impl Server {
         let mut archives = Vec::new();
 
         for entry in WalkDir::new(&self.archives) {
-          let entry = entry.unwrap();
+          let entry = entry?;
 
           if entry.file_type().is_dir() {
             continue;
@@ -39,14 +35,32 @@ impl Server {
           let mut reader = BufReader::new(File::open(path).context(error::FilesystemIo { path })?);
 
           let mut bytes = [0u8; MAGIC_BYTES.len()];
-          reader.read_exact(&mut bytes).unwrap();
+
+          match reader.read_exact(&mut bytes) {
+            Ok(()) => {}
+            Err(error) if error.kind() == io::ErrorKind::UnexpectedEof => {
+              continue;
+            }
+            Err(error) => {
+              return Err(error::FilesystemIo { path }.into_error(error));
+            }
+          }
 
           if bytes != MAGIC_BYTES {
             continue;
           }
 
           let mut manifest_hash = [0u8; Hash::LEN];
-          reader.read_exact(&mut manifest_hash).unwrap();
+
+          match reader.read_exact(&mut manifest_hash) {
+            Ok(()) => {}
+            Err(error) if error.kind() == io::ErrorKind::UnexpectedEof => {
+              return Err(error::ArchiveEof { path }.into_error(error));
+            }
+            Err(error) => {
+              return Err(error::FilesystemIo { path }.into_error(error));
+            }
+          }
 
           archives.push(Hash::from(manifest_hash));
         }

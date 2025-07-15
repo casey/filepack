@@ -18,7 +18,7 @@ use {
   owo_colors::Styled,
   serde::{Deserialize, Deserializer, Serialize, Serializer},
   serde_with::{DeserializeFromStr, SerializeDisplay},
-  snafu::{ensure, ErrorCompat, OptionExt, ResultExt, Snafu},
+  snafu::{ensure, ErrorCompat, IntoError, OptionExt, ResultExt, Snafu},
   std::{
     array::TryFromSliceError,
     backtrace::{Backtrace, BacktraceStatus},
@@ -27,7 +27,7 @@ use {
     env,
     fmt::{self, Display, Formatter},
     fs::{self, File},
-    io::{self, BufWriter, IsTerminal, Write},
+    io::{self, BufReader, BufWriter, IsTerminal, Read, Write},
     path::{Path, PathBuf},
     process,
     str::{self, FromStr},

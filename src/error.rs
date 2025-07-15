@@ -3,6 +3,8 @@ use super::*;
 #[derive(Debug, Snafu)]
 #[snafu(context(suffix(false)), visibility(pub(crate)))]
 pub(crate) enum Error {
+  #[snafu(display("unexpected end of archive"))]
+  ArchiveEof { path: PathBuf, source: io::Error },
   #[snafu(display("failed to get current directory"))]
   CurrentDir { source: io::Error },
   #[snafu(display("failed to get local data directory"))]
