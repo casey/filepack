@@ -54,7 +54,7 @@ impl Server {
           match reader.read_exact(&mut manifest_hash) {
             Ok(()) => {}
             Err(error) if error.kind() == io::ErrorKind::UnexpectedEof => {
-              return Err(error::ArchiveEof { path }.into_error(error));
+              return Err(error::ArchiveTruncated { path }.into_error(error));
             }
             Err(error) => {
               return Err(error::FilesystemIo { path }.into_error(error));
