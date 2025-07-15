@@ -11,8 +11,10 @@
     </style>
   </head>
   <body>
-  %% for archive in &self.archives {
-    <div>{{ archive }}</div>
-  %% }
+    <ul>
+%% for archive in &self.archives {
+      <li>{{ archive }}</li>
+%% }
+    </ul>
   </body>
 </html>
