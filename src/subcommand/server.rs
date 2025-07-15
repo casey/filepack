@@ -8,8 +8,6 @@ pub(crate) struct Server {
   port: u16,
 }
 
-use boilerplate::Boilerplate;
-
 #[derive(Boilerplate)]
 struct IndexHtml {
   archives: Vec<Hash>,
