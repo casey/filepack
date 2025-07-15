@@ -3,15 +3,13 @@ use super::*;
 #[derive(Debug, Snafu)]
 #[snafu(context(suffix(false)), visibility(pub(crate)))]
 pub(crate) enum ArchiveError {
-  Signature {
-    backtrace: Option<Backtrace>,
-    signature: Option<[u8; Archive::FILE_SIGNATURE.len()]>,
-  },
-  Truncated {
-    backtrace: Option<Backtrace>,
-  },
+  #[snafu(display("invalid file signature"))]
+  FileSignature { backtrace: Option<Backtrace> },
+  #[snafu(display("I/O error"))]
   FilesystemIo {
     backtrace: Option<Backtrace>,
     source: io::Error,
   },
+  #[snafu(display("archive truncated"))]
+  Truncated { backtrace: Option<Backtrace> },
 }

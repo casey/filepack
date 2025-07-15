@@ -5,7 +5,6 @@ use super::*;
 pub(crate) enum Error {
   #[snafu(display("failed to load archive at `{path}`"))]
   ArchiveLoad {
-    backtrace: Option<Backtrace>,
     path: DisplayPath,
     source: ArchiveError,
   },

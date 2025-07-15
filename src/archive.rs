@@ -17,7 +17,7 @@ impl Archive {
     match reader.read_exact(&mut signature) {
       Ok(()) => {}
       Err(error) if error.kind() == io::ErrorKind::UnexpectedEof => {
-        return Err(archive_error::Signature { signature: None }.build());
+        return Err(archive_error::FileSignature.build());
       }
       Err(error) => {
         return Err(archive_error::FilesystemIo.into_error(error));
@@ -25,7 +25,7 @@ impl Archive {
     }
 
     if signature != Self::FILE_SIGNATURE {
-      return Err(archive_error::Signature { signature }.build());
+      return Err(archive_error::FileSignature.build());
     }
 
     let mut buffer = [0u8; Hash::LEN];
