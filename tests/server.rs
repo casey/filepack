@@ -22,11 +22,13 @@ fn listens_on_correct_port() {
 
   let port = free_port();
 
-  let mut child = std::process::Command::new(executable_path("filepack"))
+  let child = std::process::Command::new(executable_path("filepack"))
     .args(["server", "--port", &port.to_string()])
     .arg(dir.path())
     .spawn()
     .unwrap();
+
+  let child = KillOnDrop(child);
 
   let start = Instant::now();
 
@@ -37,12 +39,13 @@ fn listens_on_correct_port() {
       }
     }
 
-    if start.elapsed() > Duration::from_secs(60) {
-      panic!("server failed to start");
-    }
+    assert!(
+      start.elapsed() < Duration::from_secs(60),
+      "server failed to start"
+    );
 
     thread::sleep(Duration::from_millis(50));
   }
 
-  child.kill().unwrap();
+  drop(child);
 }

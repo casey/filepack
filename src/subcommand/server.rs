@@ -31,6 +31,12 @@ struct State {
 }
 
 impl Server {
+  async fn index(state: Extension<Arc<State>>) -> IndexHtml {
+    IndexHtml {
+      archives: state.archives.clone(),
+    }
+  }
+
   fn load(&self) -> Result<Router> {
     let mut archives = Vec::new();
 
@@ -57,12 +63,6 @@ impl Server {
         .route("/", get(Self::index))
         .layer(Extension(Arc::new(State { archives }))),
     )
-  }
-
-  async fn index(state: Extension<Arc<State>>) -> IndexHtml {
-    IndexHtml {
-      archives: state.archives.clone(),
-    }
   }
 
   pub(crate) fn run(self) -> Result {
@@ -95,7 +95,7 @@ mod tests {
     b"FILEPACK"
       .iter()
       .copied()
-      .chain(iter::repeat(n).take(32))
+      .chain(iter::repeat_n(n, 32))
       .collect()
   }
 

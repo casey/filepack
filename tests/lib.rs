@@ -64,6 +64,15 @@ impl Manifest {
   }
 }
 
+struct KillOnDrop(std::process::Child);
+
+impl Drop for KillOnDrop {
+  fn drop(&mut self) {
+    let _ = self.0.kill();
+    let _ = self.0.wait();
+  }
+}
+
 mod archive;
 mod create;
 mod fingerprint;
