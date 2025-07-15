@@ -69,6 +69,7 @@ mod utf8_path_ext;
 
 type Result<T = (), E = Error> = std::result::Result<T, E>;
 
+const MAGIC_BYTES: &[u8] = b"FILEPACK";
 const MASTER_PRIVATE_KEY: &str = "master.private";
 const MASTER_PUBLIC_KEY: &str = "master.public";
 

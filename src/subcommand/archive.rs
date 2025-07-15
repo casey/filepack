@@ -1,7 +1,5 @@
 use super::*;
 
-const MAGIC_BYTES: &[u8] = b"FILEPACK";
-
 #[derive(Parser)]
 pub(crate) struct Archive {
   #[arg(
