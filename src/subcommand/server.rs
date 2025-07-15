@@ -1,4 +1,7 @@
-use super::*;
+use {
+  super::*,
+  axum::{routing::get, Extension, Router},
+};
 
 #[derive(Parser)]
 pub(crate) struct Server {
@@ -23,7 +26,17 @@ struct IndexHtml {
   archives: Vec<Hash>,
 }
 
+struct State {
+  archives: Vec<Hash>,
+}
+
 impl Server {
+  async fn index(state: Extension<Arc<State>>) -> IndexHtml {
+    IndexHtml {
+      archives: state.archives.clone(),
+    }
+  }
+
   pub(crate) fn run(self) -> Result {
     Runtime::new()
       .context(error::ServerRuntime)?
@@ -72,7 +85,9 @@ impl Server {
           archives.push(Hash::from(manifest_hash));
         }
 
-        let app = Router::new().route("/", get(|| async { IndexHtml { archives } }));
+        let app = Router::new()
+          .route("/", get(Self::index))
+          .layer(Extension(Arc::new(State { archives })));
 
         let listener = tokio::net::TcpListener::bind((self.address.as_str(), self.port))
           .await

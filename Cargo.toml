@@ -51,6 +51,7 @@ needless-pass-by-value = "allow"
 pedantic = { level = "deny", priority = -1 }
 result-large-err = "allow"
 too-many-lines = "allow"
+unused-async = "allow"
 wildcard-imports = "allow"
 
 [profile.release]
