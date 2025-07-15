@@ -6,6 +6,7 @@ pub(crate) struct Archive {
 }
 
 impl Archive {
+  pub(crate) const EXTENSION: &str = "filepack";
   pub(crate) const FILE_SIGNATURE: &[u8] = b"FILEPACK";
 
   pub(crate) fn load(path: &Utf8Path) -> Result<Self, ArchiveError> {

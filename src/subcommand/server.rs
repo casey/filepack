@@ -52,13 +52,11 @@ impl Server {
 
           let path = decode_path(entry.path())?;
 
-          let archive = match Archive::load(path) {
-            Ok(archive) => archive,
-            Err(ArchiveError::Signature { .. }) => continue,
-            Err(error) => return Err(error::ArchiveLoad { path }.into_error(error)),
-          };
+          if path.extension() != Some(Archive::EXTENSION) {
+            continue;
+          }
 
-          archives.push(archive);
+          archives.push(Archive::load(path).context(error::ArchiveLoad { path })?);
         }
 
         let app = Router::new()
