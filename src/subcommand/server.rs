@@ -23,11 +23,11 @@ pub(crate) struct Server {
 
 #[derive(Boilerplate)]
 struct IndexHtml {
-  archives: Vec<Hash>,
+  archives: Vec<Archive>,
 }
 
 struct State {
-  archives: Vec<Hash>,
+  archives: Vec<Archive>,
 }
 
 impl Server {
@@ -52,37 +52,13 @@ impl Server {
 
           let path = decode_path(entry.path())?;
 
-          let mut reader = BufReader::new(File::open(path).context(error::FilesystemIo { path })?);
+          let archive = match Archive::load(path) {
+            Ok(archive) => archive,
+            Err(ArchiveError::Signature { .. }) => continue,
+            Err(error) => return Err(error::ArchiveLoad { path }.into_error(error)),
+          };
 
-          let mut bytes = [0u8; MAGIC_BYTES.len()];
-
-          match reader.read_exact(&mut bytes) {
-            Ok(()) => {}
-            Err(error) if error.kind() == io::ErrorKind::UnexpectedEof => {
-              continue;
-            }
-            Err(error) => {
-              return Err(error::FilesystemIo { path }.into_error(error));
-            }
-          }
-
-          if bytes != MAGIC_BYTES {
-            continue;
-          }
-
-          let mut manifest_hash = [0u8; Hash::LEN];
-
-          match reader.read_exact(&mut manifest_hash) {
-            Ok(()) => {}
-            Err(error) if error.kind() == io::ErrorKind::UnexpectedEof => {
-              return Err(error::ArchiveTruncated { path }.into_error(error));
-            }
-            Err(error) => {
-              return Err(error::FilesystemIo { path }.into_error(error));
-            }
-          }
-
-          archives.push(Hash::from(manifest_hash));
+          archives.push(archive);
         }
 
         let app = Router::new()

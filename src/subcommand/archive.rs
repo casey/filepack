@@ -66,7 +66,7 @@ impl Archive {
         .context(error::FilesystemIo { path: &self.output })
     };
 
-    write(MAGIC_BYTES)?;
+    write(crate::Archive::FILE_SIGNATURE)?;
 
     let mut offset: u64 = 0;
 

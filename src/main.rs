@@ -1,11 +1,12 @@
 use {
   self::{
-    arguments::Arguments, bytes::Bytes, display_path::DisplayPath, display_secret::DisplaySecret,
-    entry::Entry, error::Error, hash::Hash, into_u64::IntoU64, lint::Lint, lint_group::LintGroup,
-    list::List, manifest::Manifest, metadata::Metadata, options::Options,
-    owo_colorize_ext::OwoColorizeExt, page::Page, private_key::PrivateKey, public_key::PublicKey,
-    relative_path::RelativePath, signature::Signature, signature_error::SignatureError,
-    style::Style, subcommand::Subcommand, template::Template, utf8_path_ext::Utf8PathExt,
+    archive::Archive, archive_error::ArchiveError, arguments::Arguments, bytes::Bytes,
+    display_path::DisplayPath, display_secret::DisplaySecret, entry::Entry, error::Error,
+    hash::Hash, into_u64::IntoU64, lint::Lint, lint_group::LintGroup, list::List,
+    manifest::Manifest, metadata::Metadata, options::Options, owo_colorize_ext::OwoColorizeExt,
+    page::Page, private_key::PrivateKey, public_key::PublicKey, relative_path::RelativePath,
+    signature::Signature, signature_error::SignatureError, style::Style, subcommand::Subcommand,
+    template::Template, utf8_path_ext::Utf8PathExt,
   },
   blake3::Hasher,
   boilerplate::Boilerplate,
@@ -39,6 +40,8 @@ use {
 #[cfg(test)]
 use assert_fs::TempDir;
 
+mod archive;
+mod archive_error;
 mod arguments;
 mod bytes;
 mod display_path;
@@ -69,7 +72,6 @@ mod utf8_path_ext;
 
 type Result<T = (), E = Error> = std::result::Result<T, E>;
 
-const MAGIC_BYTES: &[u8] = b"FILEPACK";
 const MASTER_PRIVATE_KEY: &str = "master.private";
 const MASTER_PUBLIC_KEY: &str = "master.public";
 
