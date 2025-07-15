@@ -45,7 +45,7 @@ pub(crate) enum Subcommand {
   Man,
   #[command(about = "Render manifest")]
   Render(render::Render),
-  #[command(about = "Run the server")]
+  #[command(about = "Run server")]
   Server(server::Server),
   #[command(about = "Sign manifest")]
   Sign(sign::Sign),
