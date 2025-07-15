@@ -4,7 +4,7 @@ use super::*;
 pub(crate) struct Hash(blake3::Hash);
 
 impl Hash {
-  const LEN: usize = blake3::OUT_LEN;
+  pub(crate) const LEN: usize = blake3::OUT_LEN;
 
   pub(crate) fn as_bytes(&self) -> &[u8; Self::LEN] {
     self.0.as_bytes()
@@ -24,6 +24,12 @@ impl From<blake3::Hash> for Hash {
 impl From<Hash> for [u8; Hash::LEN] {
   fn from(hash: Hash) -> Self {
     hash.0.into()
+  }
+}
+
+impl From<[u8; Hash::LEN]> for Hash {
+  fn from(bytes: [u8; Hash::LEN]) -> Self {
+    Self(bytes.into())
   }
 }
 

@@ -9,7 +9,10 @@ pub(crate) struct Hash {
 impl Hash {
   pub(crate) fn run(self, options: Options) -> Result {
     let hash = if let Some(path) = self.file {
-      options.hash_file(&path).context(error::Io { path })?.hash
+      options
+        .hash_file(&path)
+        .context(error::FilesystemIo { path })?
+        .hash
     } else {
       let mut hasher = Hasher::new();
 

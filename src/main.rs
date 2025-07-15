@@ -1,11 +1,12 @@
 use {
   self::{
-    arguments::Arguments, bytes::Bytes, display_path::DisplayPath, display_secret::DisplaySecret,
-    entry::Entry, error::Error, hash::Hash, into_u64::IntoU64, lint::Lint, lint_group::LintGroup,
-    list::List, manifest::Manifest, metadata::Metadata, options::Options,
-    owo_colorize_ext::OwoColorizeExt, page::Page, private_key::PrivateKey, public_key::PublicKey,
-    relative_path::RelativePath, signature::Signature, signature_error::SignatureError,
-    style::Style, subcommand::Subcommand, template::Template, utf8_path_ext::Utf8PathExt,
+    archive::Archive, archive_error::ArchiveError, arguments::Arguments, bytes::Bytes,
+    display_path::DisplayPath, display_secret::DisplaySecret, entry::Entry, error::Error,
+    hash::Hash, into_u64::IntoU64, lint::Lint, lint_group::LintGroup, list::List,
+    manifest::Manifest, metadata::Metadata, options::Options, owo_colorize_ext::OwoColorizeExt,
+    page::Page, private_key::PrivateKey, public_key::PublicKey, relative_path::RelativePath,
+    signature::Signature, signature_error::SignatureError, style::Style, subcommand::Subcommand,
+    template::Template, utf8_path_ext::Utf8PathExt,
   },
   blake3::Hasher,
   boilerplate::Boilerplate,
@@ -17,7 +18,7 @@ use {
   owo_colors::Styled,
   serde::{Deserialize, Deserializer, Serialize, Serializer},
   serde_with::{DeserializeFromStr, SerializeDisplay},
-  snafu::{ensure, ErrorCompat, OptionExt, ResultExt, Snafu},
+  snafu::{ensure, ErrorCompat, IntoError, OptionExt, ResultExt, Snafu},
   std::{
     array::TryFromSliceError,
     backtrace::{Backtrace, BacktraceStatus},
@@ -26,17 +27,38 @@ use {
     env,
     fmt::{self, Display, Formatter},
     fs::{self, File},
-    io::{self, BufWriter, IsTerminal, Write},
+    io::{self, BufReader, BufWriter, IsTerminal, Read, Write},
     path::{Path, PathBuf},
     process,
     str::{self, FromStr},
+    sync::Arc,
   },
+  tokio::runtime::Runtime,
   walkdir::WalkDir,
 };
 
 #[cfg(test)]
-use assert_fs::TempDir;
+use assert_fs::{
+  fixture::{FileWriteBin, PathChild},
+  TempDir,
+};
 
+#[cfg(test)]
+macro_rules! assert_matches {
+  ($expression:expr, $( $pattern:pat_param )|+ $( if $guard:expr )? $(,)?) => {
+    match $expression {
+      $( $pattern )|+ $( if $guard )? => {}
+      left => panic!(
+        "assertion failed: (left ~= right)\n  left: `{:?}`\n right: `{}`",
+        left,
+        stringify!($($pattern)|+ $(if $guard)?)
+      ),
+    }
+  }
+}
+
+mod archive;
+mod archive_error;
 mod arguments;
 mod bytes;
 mod display_path;
@@ -73,6 +95,10 @@ const MASTER_PUBLIC_KEY: &str = "master.public";
 fn current_dir() -> Result<Utf8PathBuf> {
   Utf8PathBuf::from_path_buf(env::current_dir().context(error::CurrentDir)?)
     .map_err(|path| error::PathUnicode { path }.build())
+}
+
+fn decode_path(path: &Path) -> Result<&Utf8Path> {
+  Utf8Path::from_path(path).context(error::PathUnicode { path })
 }
 
 fn main() {

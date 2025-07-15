@@ -1,7 +1,5 @@
 use super::*;
 
-const MAGIC_BYTES: &[u8] = b"FILEPACK";
-
 #[derive(Parser)]
 pub(crate) struct Archive {
   #[arg(
@@ -26,7 +24,7 @@ impl Archive {
 
     for (path, entry) in &manifest.files {
       let path = root.join(path);
-      let content = fs::read(&path).context(error::Io { path: &path })?;
+      let content = fs::read(&path).context(error::FilesystemIo { path: &path })?;
 
       let size = content.len().into_u64();
       if size != entry.size {
@@ -58,17 +56,17 @@ impl Archive {
 
     files.sort_by_key(|(hash, _content)| *hash);
 
-    let output = File::create(&self.output).context(error::Io { path: &self.output })?;
+    let output = File::create(&self.output).context(error::FilesystemIo { path: &self.output })?;
 
     let mut writer = BufWriter::new(output);
 
     let mut write = |data: &[u8]| {
       writer
         .write_all(data)
-        .context(error::Io { path: &self.output })
+        .context(error::FilesystemIo { path: &self.output })
     };
 
-    write(MAGIC_BYTES)?;
+    write(crate::Archive::FILE_SIGNATURE)?;
 
     let mut offset: u64 = 0;
 

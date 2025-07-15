@@ -14,6 +14,7 @@ mod key;
 mod keygen;
 mod man;
 mod render;
+mod server;
 mod sign;
 mod verify;
 
@@ -44,6 +45,8 @@ pub(crate) enum Subcommand {
   Man,
   #[command(about = "Render manifest")]
   Render(render::Render),
+  #[command(about = "Run server")]
+  Server(server::Server),
   #[command(about = "Sign manifest")]
   Sign(sign::Sign),
   #[command(about = "Verify manifest")]
@@ -61,6 +64,7 @@ impl Subcommand {
       Self::Keygen => keygen::run(options),
       Self::Man => man::run(),
       Self::Render(render) => render.run(),
+      Self::Server(server) => server.run(),
       Self::Sign(sign) => sign.run(options),
       Self::Verify(verify) => verify.run(options),
     }

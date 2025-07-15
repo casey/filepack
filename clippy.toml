@@ -1,1 +1,1 @@
-source-item-ordering = ['enum', 'struct', 'trait']
+source-item-ordering = ['enum', 'impl', 'struct', 'trait']
