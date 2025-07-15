@@ -29,8 +29,7 @@ impl Server {
             continue;
           }
 
-          let path =
-            Utf8Path::from_path(entry.path()).context(error::PathUnicode { path: entry.path() })?;
+          let path = decode_path(entry.path())?;
 
           let mut reader = BufReader::new(File::open(path).context(error::FilesystemIo { path })?);
 

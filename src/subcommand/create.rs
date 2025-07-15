@@ -60,7 +60,7 @@ impl Create {
 
       let path = entry.path();
 
-      let path = Utf8Path::from_path(path).context(error::PathUnicode { path })?;
+      let path = decode_path(path)?;
 
       let cleaned_path = current_dir.join(path).lexiclean();
 

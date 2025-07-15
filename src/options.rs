@@ -37,9 +37,7 @@ impl Options {
       path.into()
     } else {
       let path = dirs::data_local_dir().context(error::DataLocalDir)?;
-      Utf8Path::from_path(&path)
-        .context(error::PathUnicode { path: &path })?
-        .join("filepack")
+      decode_path(&path)?.join("filepack")
     };
 
     Ok(path.join("keys"))

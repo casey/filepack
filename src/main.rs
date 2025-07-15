@@ -78,6 +78,10 @@ fn current_dir() -> Result<Utf8PathBuf> {
     .map_err(|path| error::PathUnicode { path }.build())
 }
 
+fn decode_path(path: &Path) -> Result<&Utf8Path> {
+  Utf8Path::from_path(path).context(error::PathUnicode { path })
+}
+
 fn main() {
   if let Err(err) = Arguments::parse().run() {
     let style = Style::stderr();

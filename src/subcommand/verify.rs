@@ -128,7 +128,7 @@ mismatched file: `{path}`
 
       let path = entry.path();
 
-      let path = Utf8Path::from_path(path).context(error::PathUnicode { path })?;
+      let path = decode_path(path)?;
 
       while let Some(dir) = dirs.last() {
         if path.starts_with(dir) {
