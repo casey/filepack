@@ -8,6 +8,8 @@ mod error;
 pub(crate) struct RelativePath(String);
 
 impl RelativePath {
+  const JUNK_NAMES: [&'static str; 2] = [".DS_Store", ".localized"];
+
   const SEPARATORS: [char; 2] = ['/', '\\'];
 
   const WINDOWS_RESERVED_CHARACTERS: [char; 7] = ['"', '*', ':', '<', '>', '?', '|'];
@@ -17,8 +19,6 @@ impl RelativePath {
     "COM³", "CON", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9", "LPT¹",
     "LPT²", "LPT³", "NUL", "PRN",
   ];
-
-  const JUNK_NAMES: [&'static str; 2] = [".DS_Store", ".localized"];
 
   pub(crate) fn lint(&self) -> Option<Lint> {
     for component in Utf8Path::new(&self.0).components() {
