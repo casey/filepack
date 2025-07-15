@@ -78,9 +78,7 @@ impl Server {
             port: self.port,
           })?;
 
-        axum::serve(listener, app)
-          .await
-          .context(error::ServerServe)?;
+        axum::serve(listener, app).await.context(error::ServerRun)?;
 
         Ok(())
       })

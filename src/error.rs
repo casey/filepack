@@ -148,13 +148,13 @@ pub(crate) enum Error {
     port: u16,
     source: io::Error,
   },
-  #[snafu(display("failed to initialize server runtime"))]
-  ServerRuntime {
+  #[snafu(display("failed to run server"))]
+  ServerRun {
     backtrace: Option<Backtrace>,
     source: io::Error,
   },
-  #[snafu(display("failed to serve server"))]
-  ServerServe {
+  #[snafu(display("failed to initialize server runtime"))]
+  ServerRuntime {
     backtrace: Option<Backtrace>,
     source: io::Error,
   },
