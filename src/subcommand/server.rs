@@ -1,6 +1,7 @@
 use {
   super::*,
   axum::{extract::Path, routing::get, Extension, Router},
+  server_error::ServerError,
 };
 
 #[derive(Parser)]
@@ -42,15 +43,18 @@ impl Server {
     }
   }
 
-  async fn package(state: Extension<Arc<State>>, Path(hash): Path<Hash>) -> PackageHtml {
-    PackageHtml {
+  async fn package(
+    state: Extension<Arc<State>>,
+    Path(hash): Path<Hash>,
+  ) -> Result<PackageHtml, ServerError> {
+    Ok(PackageHtml {
       archive: state
         .archives
         .iter()
         .find(|archive| archive.manifest == hash)
         .cloned()
-        .expect("Archive not found"),
-    }
+        .ok_or_else(|| ServerError::NotFound(format!("package `{hash}` not found")))?,
+    })
   }
 
   fn load(&self) -> Result<Router> {
@@ -104,7 +108,7 @@ impl Server {
 
 #[cfg(test)]
 mod tests {
-  use {super::*, axum_test::TestServer, std::iter};
+  use {super::*, axum_test::TestServer, reqwest::StatusCode, std::iter};
 
   fn test_archive(n: u8) -> Vec<u8> {
     b"FILEPACK"
@@ -112,6 +116,11 @@ mod tests {
       .copied()
       .chain(iter::repeat_n(n, 32))
       .collect()
+  }
+
+  fn server(dir_path: &str) -> TestServer {
+    let server = Server::try_parse_from(["filepack", dir_path]).unwrap();
+    TestServer::new(server.load().unwrap()).unwrap()
   }
 
   #[tokio::test]
@@ -128,26 +137,116 @@ mod tests {
       .write_binary(&test_archive(0xFF))
       .unwrap();
 
-    let server = match Server::try_parse_from(["filepack", dir.path().to_str().unwrap()]) {
-      Ok(server) => server,
-      Err(error) => {
-        panic!("{}", error.to_string());
-      }
-    };
-
-    let server = TestServer::new(server.load().unwrap()).unwrap();
+    let server = server(dir.path().to_str().unwrap());
 
     let response = server.get("/").await;
 
     response.assert_status_ok();
 
-    response.assert_text_contains(
-      "\
-    <ul>
-      <li class=monospace>0000000000000000000000000000000000000000000000000000000000000000</li>
-      <li class=monospace>ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff</li>
-    </ul>
-",
+    response.assert_text(
+      IndexHtml {
+        archives: vec![
+          Archive {
+            manifest: [0x00; 32].into(),
+          },
+          Archive {
+            manifest: [0xFF; 32].into(),
+          },
+        ],
+      }
+      .to_string(),
+    );
+  }
+
+  #[tokio::test]
+  async fn package_endpoint_returns_archive_details() {
+    let dir = TempDir::new().unwrap();
+
+    dir
+      .child("test.filepack")
+      .write_binary(&test_archive(0xAB))
+      .unwrap();
+
+    let server = server(dir.path().to_str().unwrap());
+
+    let response = server
+      .get("/package/abababababababababababababababababababababababababababababababab")
+      .await;
+
+    response.assert_status_ok();
+
+    response.assert_text(
+      PackageHtml {
+        archive: Archive {
+          manifest: [0xAB; 32].into(),
+        },
+      }
+      .to_string(),
+    );
+  }
+
+  #[tokio::test]
+  async fn package_endpoint_panics_for_nonexistent_archive() {
+    let dir = TempDir::new().unwrap();
+
+    dir
+      .child("test.filepack")
+      .write_binary(&test_archive(0x00))
+      .unwrap();
+
+    let server = server(dir.path().to_str().unwrap());
+
+    let response = server
+      .get("/package/deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef")
+      .await;
+
+    response.assert_status(StatusCode::NOT_FOUND);
+  }
+
+  #[tokio::test]
+  async fn package_endpoint_handles_multiple_archives() {
+    let dir = TempDir::new().unwrap();
+
+    dir
+      .child("first.filepack")
+      .write_binary(&test_archive(0x11))
+      .unwrap();
+
+    dir
+      .child("second.filepack")
+      .write_binary(&test_archive(0x22))
+      .unwrap();
+
+    let server = server(dir.path().to_str().unwrap());
+
+    let response = server
+      .get("/package/1111111111111111111111111111111111111111111111111111111111111111")
+      .await;
+
+    response.assert_status_ok();
+
+    response.assert_text(
+      PackageHtml {
+        archive: Archive {
+          manifest: [0x11; 32].into(),
+        },
+      }
+      .to_string(),
+    );
+
+    let response = server
+      .get("/package/2222222222222222222222222222222222222222222222222222222222222222")
+      .await;
+
+    response.assert_status_ok();
+
+    response.assert_text(
+      PackageHtml {
+        archive: Archive {
+          manifest: [0x22; 32].into(),
+        },
+      }
+      .to_string(),
     );
   }
 }
