@@ -20,7 +20,9 @@ impl Archive {
 
     let mut files = Vec::new();
 
-    files.push((Hash::bytes(json.as_bytes()), json.into()));
+    let manifest_hash = Hash::bytes(json.as_bytes());
+
+    files.push((manifest_hash, json.into()));
 
     for (path, entry) in &manifest.files {
       let path = root.join(path);
@@ -67,6 +69,9 @@ impl Archive {
     };
 
     write(crate::Archive::FILE_SIGNATURE)?;
+
+    write(manifest_hash.as_bytes())?;
+    write(&files.len().into_u64().to_le_bytes())?;
 
     let mut offset: u64 = 0;
 
