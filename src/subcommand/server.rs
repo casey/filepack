@@ -1,6 +1,6 @@
 use {
   super::*,
-  axum::{routing::get, Extension, Router},
+  axum::{extract::Path, routing::get, Extension, Router},
 };
 
 #[derive(Parser)]
@@ -26,6 +26,11 @@ struct IndexHtml {
   archives: Vec<Archive>,
 }
 
+#[derive(Boilerplate)]
+struct PackageHtml {
+  archive: Archive,
+}
+
 struct State {
   archives: Vec<Archive>,
 }
@@ -34,6 +39,17 @@ impl Server {
   async fn index(state: Extension<Arc<State>>) -> IndexHtml {
     IndexHtml {
       archives: state.archives.clone(),
+    }
+  }
+
+  async fn package(state: Extension<Arc<State>>, Path(hash): Path<Hash>) -> PackageHtml {
+    PackageHtml {
+      archive: state
+        .archives
+        .iter()
+        .find(|archive| archive.manifest == hash)
+        .cloned()
+        .expect("Archive not found"),
     }
   }
 
@@ -61,6 +77,7 @@ impl Server {
     Ok(
       Router::new()
         .route("/", get(Self::index))
+        .route("/package/{hash}", get(Self::package))
         .layer(Extension(Arc::new(State { archives }))),
     )
   }
