@@ -4,7 +4,7 @@ use {
     display_path::DisplayPath, display_secret::DisplaySecret, entry::Entry, error::Error,
     hash::Hash, into_u64::IntoU64, lint::Lint, lint_group::LintGroup, list::List,
     manifest::Manifest, metadata::Metadata, options::Options, owo_colorize_ext::OwoColorizeExt,
-    page::Page, private_key::PrivateKey, public_key::PublicKey, relative_path::RelativePath,
+    private_key::PrivateKey, public_key::PublicKey, relative_path::RelativePath,
     signature::Signature, signature_error::SignatureError, style::Style, subcommand::Subcommand,
     template::Template, utf8_path_ext::Utf8PathExt,
   },
@@ -12,7 +12,7 @@ use {
   boilerplate::Boilerplate,
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},
   clap::{Parser, ValueEnum},
-  html_escaper::Escape,
+  html_escaper::{Escape, Trusted},
   indicatif::{ProgressBar, ProgressStyle},
   lexiclean::Lexiclean,
   owo_colors::Styled,
@@ -96,7 +96,6 @@ mod manifest;
 mod metadata;
 mod options;
 mod owo_colorize_ext;
-mod page;
 mod private_key;
 mod progress_bar;
 mod public_key;

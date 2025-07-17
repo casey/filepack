@@ -1,5 +1,5 @@
 use {
-  self::templates::{IndexHtml, PackageHtml},
+  self::templates::{IndexHtml, NewPageHtml, PackageHtml, PageHtml},
   super::*,
   axum::{extract::Path, routing::get, Extension, Router},
   server_error::ServerError,
@@ -30,24 +30,24 @@ struct State {
 }
 
 impl Server {
-  async fn index(state: Extension<Arc<State>>) -> IndexHtml {
-    IndexHtml {
+  async fn index(state: Extension<Arc<State>>) -> NewPageHtml<IndexHtml> {
+    NewPageHtml(IndexHtml {
       archives: state.archives.clone(),
-    }
+    })
   }
 
   async fn package(
     state: Extension<Arc<State>>,
     Path(hash): Path<Hash>,
-  ) -> Result<PackageHtml, ServerError> {
-    Ok(PackageHtml {
+  ) -> Result<NewPageHtml<PackageHtml>, ServerError> {
+    Ok(NewPageHtml(PackageHtml {
       archive: state
         .archives
         .iter()
         .find(|archive| archive.hash == hash)
         .cloned()
         .ok_or_else(|| ServerError::NotFound(format!("package `{hash}` not found")))?,
-    })
+    }))
   }
 
   fn load(&self) -> Result<Router> {
@@ -153,9 +153,9 @@ mod tests {
     let response = server.get("/").await;
     response.assert_status_ok();
     response.assert_text(
-      IndexHtml {
+      NewPageHtml(IndexHtml {
         archives: vec![foo, bar],
-      }
+      })
       .to_string(),
     );
   }
@@ -186,7 +186,7 @@ mod tests {
 
     response.assert_status_ok();
 
-    response.assert_text(PackageHtml { archive }.to_string());
+    response.assert_text(NewPageHtml(PackageHtml { archive }).to_string());
   }
 
   #[tokio::test]
@@ -242,10 +242,10 @@ mod tests {
 
     let response = server.get(&format!("/package/{}", foo.hash)).await;
     response.assert_status_ok();
-    response.assert_text(PackageHtml { archive: foo }.to_string());
+    response.assert_text(NewPageHtml(PackageHtml { archive: foo }).to_string());
 
     let response = server.get(&format!("/package/{}", bar.hash)).await;
     response.assert_status_ok();
-    response.assert_text(PackageHtml { archive: bar }.to_string());
+    response.assert_text(NewPageHtml(PackageHtml { archive: bar }).to_string());
   }
 }
