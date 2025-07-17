@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
 pub(crate) struct Manifest {
   #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]

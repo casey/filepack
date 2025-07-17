@@ -51,7 +51,7 @@ impl Server {
       archive: state
         .archives
         .iter()
-        .find(|archive| archive.manifest == hash)
+        .find(|archive| archive.manifest_hash == hash)
         .cloned()
         .ok_or_else(|| ServerError::NotFound(format!("package `{hash}` not found")))?,
     })
@@ -76,7 +76,7 @@ impl Server {
       archives.push(Archive::load(path).context(error::ArchiveLoad { path })?);
     }
 
-    archives.sort_by_key(|archive| archive.manifest);
+    archives.sort_by_key(|archive| archive.manifest_hash);
 
     Ok(
       Router::new()
@@ -147,10 +147,10 @@ mod tests {
       IndexHtml {
         archives: vec![
           Archive {
-            manifest: [0x00; 32].into(),
+            manifest_hash: [0x00; 32].into(),
           },
           Archive {
-            manifest: [0xFF; 32].into(),
+            manifest_hash: [0xFF; 32].into(),
           },
         ],
       }
@@ -178,7 +178,7 @@ mod tests {
     response.assert_text(
       PackageHtml {
         archive: Archive {
-          manifest: [0xAB; 32].into(),
+          manifest_hash: [0xAB; 32].into(),
         },
       }
       .to_string(),
@@ -228,7 +228,7 @@ mod tests {
     response.assert_text(
       PackageHtml {
         archive: Archive {
-          manifest: [0x11; 32].into(),
+          manifest_hash: [0x11; 32].into(),
         },
       }
       .to_string(),
@@ -243,7 +243,7 @@ mod tests {
     response.assert_text(
       PackageHtml {
         archive: Archive {
-          manifest: [0x22; 32].into(),
+          manifest_hash: [0x22; 32].into(),
         },
       }
       .to_string(),
