@@ -5,8 +5,8 @@ use std::io::SeekFrom;
 
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct Archive {
+  pub(crate) hash: Hash,
   pub(crate) manifest: Manifest,
-  pub(crate) manifest_hash: Hash,
 }
 
 struct Listing {
@@ -105,7 +105,7 @@ impl Archive {
 
     Ok(Self {
       manifest: serde_json::from_slice::<Manifest>(&content).unwrap(),
-      manifest_hash: manifest_hash.into(),
+      hash: manifest_hash.into(),
     })
   }
 }
@@ -166,7 +166,7 @@ mod tests {
   fn success() {
     let tempdir = TempDir::new().unwrap();
 
-    let manifest_hash = Hash::bytes(&[]);
+    let hash = Hash::bytes(&[]);
 
     let manifest = Manifest::default();
 
@@ -174,9 +174,9 @@ mod tests {
 
     let archive = Archive::FILE_SIGNATURE
       .iter()
-      .chain(manifest_hash.as_bytes())
+      .chain(hash.as_bytes())
       .chain(&1u64.to_le_bytes())
-      .chain(manifest_hash.as_bytes())
+      .chain(hash.as_bytes())
       .chain(&0u64.to_le_bytes())
       .chain(&manifest_content.len().to_le_bytes())
       .chain(manifest_content.as_bytes())
@@ -189,12 +189,6 @@ mod tests {
 
     let archive = Archive::load(&path.join("foo.archive")).unwrap();
 
-    assert_eq!(
-      archive,
-      Archive {
-        manifest_hash,
-        manifest
-      }
-    );
+    assert_eq!(archive, Archive { hash, manifest });
   }
 }

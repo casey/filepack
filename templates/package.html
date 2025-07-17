@@ -11,6 +11,11 @@
     </style>
   </head>
   <body>
-    <h1>{{ self.archive.manifest_hash }}</h1>
+    <h1>{{ self.archive.hash }}</h1>
+    <ul>
+%% for (path, entry) in &self.archive.manifest.files {
+      <li>{{ path }}</li>
+%% }
+    </ul>
   </body>
 </html>

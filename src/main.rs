@@ -38,9 +38,12 @@ use {
 };
 
 #[cfg(test)]
-use assert_fs::{
-  fixture::{FileWriteBin, PathChild},
-  TempDir,
+use {
+  assert_fs::{
+    fixture::{FileWriteBin, FileWriteStr, PathChild, PathCreateDir},
+    TempDir,
+  },
+  std::ffi::OsString,
 };
 
 #[cfg(test)]
@@ -55,6 +58,24 @@ macro_rules! assert_matches {
       ),
     }
   }
+}
+
+#[cfg(test)]
+macro_rules! command {
+  ( $($argument:expr),* $(,)?) => {
+    {
+      let mut arguments = Vec::<OsString>::new();
+
+      arguments.push("filepack".into());
+      arguments.push("--quiet".into());
+
+      $(
+        arguments.push($argument.into());
+      )*
+
+      Arguments::try_parse_from(arguments).unwrap().run().unwrap();
+    }
+  };
 }
 
 mod archive;
