@@ -1,9 +1,12 @@
 use {
-  self::templates::{IndexHtml, NewPageHtml, PackageHtml, PageHtml},
+  self::templates::{IndexHtml, PackageHtml, PageHtml},
   super::*,
   axum::{extract::Path, routing::get, Extension, Router},
   server_error::ServerError,
 };
+
+// todo:
+// - test package.html rendering
 
 mod templates;
 
@@ -30,24 +33,10 @@ struct State {
 }
 
 impl Server {
-  async fn index(state: Extension<Arc<State>>) -> NewPageHtml<IndexHtml> {
-    NewPageHtml(IndexHtml {
+  async fn index(state: Extension<Arc<State>>) -> PageHtml<IndexHtml> {
+    PageHtml(IndexHtml {
       archives: state.archives.clone(),
     })
-  }
-
-  async fn package(
-    state: Extension<Arc<State>>,
-    Path(hash): Path<Hash>,
-  ) -> Result<NewPageHtml<PackageHtml>, ServerError> {
-    Ok(NewPageHtml(PackageHtml {
-      archive: state
-        .archives
-        .iter()
-        .find(|archive| archive.hash == hash)
-        .cloned()
-        .ok_or_else(|| ServerError::NotFound(format!("package `{hash}` not found")))?,
-    }))
   }
 
   fn load(&self) -> Result<Router> {
@@ -77,6 +66,20 @@ impl Server {
         .route("/package/{hash}", get(Self::package))
         .layer(Extension(Arc::new(State { archives }))),
     )
+  }
+
+  async fn package(
+    state: Extension<Arc<State>>,
+    Path(hash): Path<Hash>,
+  ) -> Result<PageHtml<PackageHtml>, ServerError> {
+    Ok(PageHtml(PackageHtml {
+      archive: state
+        .archives
+        .iter()
+        .find(|archive| archive.hash == hash)
+        .cloned()
+        .ok_or_else(|| ServerError::NotFound(format!("package `{hash}` not found")))?,
+    }))
   }
 
   pub(crate) fn run(self) -> Result {
@@ -153,7 +156,7 @@ mod tests {
     let response = server.get("/").await;
     response.assert_status_ok();
     response.assert_text(
-      NewPageHtml(IndexHtml {
+      PageHtml(IndexHtml {
         archives: vec![foo, bar],
       })
       .to_string(),
@@ -186,7 +189,7 @@ mod tests {
 
     response.assert_status_ok();
 
-    response.assert_text(NewPageHtml(PackageHtml { archive }).to_string());
+    response.assert_text(PageHtml(PackageHtml { archive }).to_string());
   }
 
   #[tokio::test]
@@ -242,10 +245,10 @@ mod tests {
 
     let response = server.get(&format!("/package/{}", foo.hash)).await;
     response.assert_status_ok();
-    response.assert_text(NewPageHtml(PackageHtml { archive: foo }).to_string());
+    response.assert_text(PageHtml(PackageHtml { archive: foo }).to_string());
 
     let response = server.get(&format!("/package/{}", bar.hash)).await;
     response.assert_status_ok();
-    response.assert_text(NewPageHtml(PackageHtml { archive: bar }).to_string());
+    response.assert_text(PageHtml(PackageHtml { archive: bar }).to_string());
   }
 }

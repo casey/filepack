@@ -9,6 +9,7 @@ pub(crate) struct Archive {
   pub(crate) manifest: Manifest,
 }
 
+#[derive(Clone, Copy)]
 struct Listing {
   hash: Hash,
   offset: u64,
@@ -24,22 +25,6 @@ impl Seek for ArchiveReader {
 }
 
 impl ArchiveReader {
-  fn read_signature(&mut self) -> Result<[u8; Archive::FILE_SIGNATURE.len()], ArchiveError> {
-    let mut signature = [0u8; Archive::FILE_SIGNATURE.len()];
-
-    match self.0.read_exact(&mut signature) {
-      Ok(()) => {}
-      Err(error) if error.kind() == io::ErrorKind::UnexpectedEof => {
-        return Err(archive_error::FileSignature.build());
-      }
-      Err(error) => {
-        return Err(archive_error::FilesystemIo.into_error(error));
-      }
-    }
-
-    Ok(signature)
-  }
-
   fn read(&mut self, buffer: &mut [u8]) -> Result<(), ArchiveError> {
     match self.0.read_exact(buffer) {
       Ok(()) => Ok(()),
@@ -54,6 +39,22 @@ impl ArchiveReader {
     let mut hash = [0u8; Hash::LEN];
     self.read(&mut hash)?;
     Ok(hash.into())
+  }
+
+  fn read_signature(&mut self) -> Result<[u8; Archive::FILE_SIGNATURE.len()], ArchiveError> {
+    let mut signature = [0u8; Archive::FILE_SIGNATURE.len()];
+
+    match self.0.read_exact(&mut signature) {
+      Ok(()) => {}
+      Err(error) if error.kind() == io::ErrorKind::UnexpectedEof => {
+        return Err(archive_error::FileSignature.build());
+      }
+      Err(error) => {
+        return Err(archive_error::FilesystemIo.into_error(error));
+      }
+    }
+
+    Ok(signature)
   }
 
   fn read_u64(&mut self) -> Result<u64, ArchiveError> {
@@ -93,20 +94,29 @@ impl Archive {
 
     let manifest = listings
       .iter()
-      .find(|listing| listing.hash == manifest_hash.into())
+      .find(|listing| listing.hash == manifest_hash)
       .context(archive_error::ManifestMissing)?;
 
-    reader
-      .seek(SeekFrom::Current(manifest.offset as i64))
-      .unwrap();
+    let offset = Self::offset(&listings, *manifest).context(archive_error::OffsetOverflow)?;
 
-    let mut content = vec![0; manifest.size as usize];
-    reader.read(&mut content)?;
+    reader.seek(SeekFrom::Start(offset)).unwrap();
+
+    let manifest = serde_json::from_reader(reader.0.take(manifest.size)).unwrap();
 
     Ok(Self {
-      manifest: serde_json::from_slice::<Manifest>(&content).unwrap(),
-      hash: manifest_hash.into(),
+      manifest,
+      hash: manifest_hash,
     })
+  }
+
+  fn offset(listings: &[Listing], listing: Listing) -> Option<u64> {
+    Self::FILE_SIGNATURE
+      .len()
+      .into_u64()
+      .checked_add(32)?
+      .checked_add(8)?
+      .checked_add(listings.len().into_u64() * (32 + 8 + 8))?
+      .checked_add(listing.offset)
   }
 }
 

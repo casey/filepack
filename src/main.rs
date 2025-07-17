@@ -23,7 +23,7 @@ use {
     array::TryFromSliceError,
     backtrace::{Backtrace, BacktraceStatus},
     cmp::Ordering,
-    collections::{BTreeMap, HashMap, HashSet},
+    collections::{BTreeMap, HashMap},
     env,
     fmt::{self, Display, Formatter},
     fs::{self, File},
@@ -64,9 +64,12 @@ macro_rules! assert_matches {
 macro_rules! command {
   ( $($argument:expr),* $(,)?) => {
     {
+      #![allow(clippy::vec_init_then_push)]
+
       let mut arguments = Vec::<OsString>::new();
 
       arguments.push("filepack".into());
+
       arguments.push("--quiet".into());
 
       $(

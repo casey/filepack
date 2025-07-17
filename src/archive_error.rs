@@ -12,6 +12,8 @@ pub(crate) enum ArchiveError {
   },
   #[snafu(display("missing manifest"))]
   ManifestMissing { backtrace: Option<Backtrace> },
+  #[snafu(display("offset overflow"))]
+  OffsetOverflow { backtrace: Option<Backtrace> },
   #[snafu(display("archive truncated"))]
   Truncated { backtrace: Option<Backtrace> },
 }
