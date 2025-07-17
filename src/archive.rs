@@ -166,12 +166,20 @@ mod tests {
   fn success() {
     let tempdir = TempDir::new().unwrap();
 
-    let manifest = Hash::bytes(&[]);
+    let manifest_hash = Hash::bytes(&[]);
+
+    let manifest = Manifest::default();
+
+    let manifest_content = serde_json::to_string(&manifest).unwrap();
 
     let archive = Archive::FILE_SIGNATURE
       .iter()
-      .chain(manifest.as_bytes())
+      .chain(manifest_hash.as_bytes())
       .chain(&1u64.to_le_bytes())
+      .chain(manifest_hash.as_bytes())
+      .chain(&0u64.to_le_bytes())
+      .chain(&manifest_content.len().to_le_bytes())
+      .chain(manifest_content.as_bytes())
       .copied()
       .collect::<Vec<u8>>();
 
@@ -181,6 +189,12 @@ mod tests {
 
     let archive = Archive::load(&path.join("foo.archive")).unwrap();
 
-    assert_eq!(archive, Archive { manifest_hash });
+    assert_eq!(
+      archive,
+      Archive {
+        manifest_hash,
+        manifest
+      }
+    );
   }
 }
