@@ -101,10 +101,11 @@ impl Archive {
 
     reader.seek(SeekFrom::Start(offset)).unwrap();
 
-    let manifest = serde_json::from_reader(reader.0.take(manifest.size)).unwrap();
+    let mut content = vec![0; usize::try_from(manifest.size).unwrap()];
+    reader.read(&mut content)?;
 
     Ok(Self {
-      manifest,
+      manifest: serde_json::from_slice::<Manifest>(&content).unwrap(),
       hash: manifest_hash,
     })
   }
