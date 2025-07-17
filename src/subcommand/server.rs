@@ -119,8 +119,7 @@ mod tests {
   }
 
   fn server(dir_path: &str) -> TestServer {
-    let server = Server::try_parse_from(["filepack", dir_path]).unwrap();
-    TestServer::new(server.load().unwrap()).unwrap()
+    TestServer::new(Server::try_parse_from(["filepack", dir_path]).unwrap().load().unwrap()).unwrap()
   }
 
   #[tokio::test]
