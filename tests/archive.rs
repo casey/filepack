@@ -31,12 +31,16 @@ fn creates_archive_for_multiple_files() {
   let mut offset = 0u64;
   let manifest = std::fs::read_to_string(tempdir.child("sub/filepack.json")).unwrap();
 
+  expected.extend_from_slice(blake3::hash(manifest.as_bytes()).as_bytes());
+
   let mut files = iter::once(manifest.as_str())
     .chain(files.iter().map(|&(_path, content)| content))
     .map(|content| (blake3::hash(content.as_bytes()), content.into()))
     .collect::<Vec<(Hash, Vec<u8>)>>();
 
   files.sort_by_key(|(hash, _content)| *hash.as_bytes());
+
+  expected.extend_from_slice(&u64::try_from(files.len()).unwrap().to_le_bytes());
 
   for (hash, content) in &files {
     let size = u64::try_from(content.len()).unwrap();

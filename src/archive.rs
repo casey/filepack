@@ -1,20 +1,51 @@
 use super::*;
 
+use std::io::Seek;
+use std::io::SeekFrom;
+
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct Archive {
-  pub(crate) manifest: Hash,
+  pub(crate) hash: Hash,
+  pub(crate) manifest: Manifest,
+  pub(crate) metadata: Option<Metadata>,
 }
 
-impl Archive {
-  pub(crate) const EXTENSION: &str = "filepack";
-  pub(crate) const FILE_SIGNATURE: &[u8] = b"FILEPACK";
+#[derive(Clone, Copy)]
+struct Listing {
+  hash: Hash,
+  offset: u64,
+  size: u64,
+}
 
-  pub(crate) fn load(path: &Utf8Path) -> Result<Self, ArchiveError> {
-    let mut reader = BufReader::new(File::open(path).context(archive_error::FilesystemIo)?);
+struct ArchiveReader(BufReader<File>);
 
-    let mut signature = [0u8; Self::FILE_SIGNATURE.len()];
+impl Seek for ArchiveReader {
+  fn seek(&mut self, pos: SeekFrom) -> io::Result<u64> {
+    self.0.seek(pos)
+  }
+}
 
-    match reader.read_exact(&mut signature) {
+impl ArchiveReader {
+  fn read(&mut self, buffer: &mut [u8]) -> Result<(), ArchiveError> {
+    match self.0.read_exact(buffer) {
+      Ok(()) => Ok(()),
+      Err(error) if error.kind() == io::ErrorKind::UnexpectedEof => {
+        Err(archive_error::Truncated.build())
+      }
+      Err(error) => Err(archive_error::FilesystemIo.into_error(error)),
+    }
+  }
+
+  fn read_hash(&mut self) -> Result<Hash, ArchiveError> {
+    let mut hash = [0u8; Hash::LEN];
+    self.read(&mut hash)?;
+    Ok(hash.into())
+  }
+
+  fn read_signature(&mut self) -> Result<[u8; Archive::FILE_SIGNATURE.len()], ArchiveError> {
+    let mut signature = [0u8; Archive::FILE_SIGNATURE.len()];
+
+    match self.0.read_exact(&mut signature) {
       Ok(()) => {}
       Err(error) if error.kind() == io::ErrorKind::UnexpectedEof => {
         return Err(archive_error::FileSignature.build());
@@ -24,25 +55,91 @@ impl Archive {
       }
     }
 
+    Ok(signature)
+  }
+
+  fn read_u64(&mut self) -> Result<u64, ArchiveError> {
+    let mut n = [0u8; 8];
+    self.read(&mut n)?;
+    Ok(u64::from_le_bytes(n))
+  }
+}
+
+impl Archive {
+  pub(crate) const EXTENSION: &str = "filepack";
+  pub(crate) const FILE_SIGNATURE: &[u8] = b"FILEPACK";
+
+  pub(crate) fn load(path: &Utf8Path) -> Result<Self, ArchiveError> {
+    let mut reader = ArchiveReader(BufReader::new(
+      File::open(path).context(archive_error::FilesystemIo)?,
+    ));
+
+    let signature = reader.read_signature()?;
+
     if signature != Self::FILE_SIGNATURE {
       return Err(archive_error::FileSignature.build());
     }
 
-    let mut buffer = [0u8; Hash::LEN];
+    let manifest_hash = reader.read_hash()?;
 
-    match reader.read_exact(&mut buffer) {
-      Ok(()) => {}
-      Err(error) if error.kind() == io::ErrorKind::UnexpectedEof => {
-        return Err(archive_error::Truncated.build());
-      }
-      Err(error) => {
-        return Err(archive_error::FilesystemIo.into_error(error));
-      }
+    let count = reader.read_u64()?;
+
+    let mut listings = Vec::new();
+
+    for _ in 0..count {
+      let hash = reader.read_hash()?;
+      let offset = reader.read_u64()?;
+      let size = reader.read_u64()?;
+      listings.push(Listing { hash, offset, size });
     }
 
+    let manifest = listings
+      .iter()
+      .find(|listing| listing.hash == manifest_hash)
+      .context(archive_error::ManifestMissing)?;
+
+    let offset = Self::offset(&listings, *manifest).context(archive_error::OffsetOverflow)?;
+
+    reader.seek(SeekFrom::Start(offset)).unwrap();
+
+    let mut content = vec![0; usize::try_from(manifest.size).unwrap()];
+    reader.read(&mut content)?;
+
+    let manifest = serde_json::from_slice::<Manifest>(&content).unwrap();
+
+    let metadata = if let Some(entry) = manifest.files.get(&Metadata::FILENAME.parse().unwrap()) {
+      let entry = listings
+        .iter()
+        .find(|listing| listing.hash == entry.hash)
+        .unwrap();
+
+      let offset = Self::offset(&listings, *entry).context(archive_error::OffsetOverflow)?;
+
+      reader.seek(SeekFrom::Start(offset)).unwrap();
+
+      let mut content = vec![0; usize::try_from(entry.size).unwrap()];
+      reader.read(&mut content)?;
+
+      Some(serde_json::from_slice::<Metadata>(&content).unwrap())
+    } else {
+      None
+    };
+
     Ok(Self {
-      manifest: buffer.into(),
+      manifest,
+      metadata,
+      hash: manifest_hash,
     })
+  }
+
+  fn offset(listings: &[Listing], listing: Listing) -> Option<u64> {
+    Self::FILE_SIGNATURE
+      .len()
+      .into_u64()
+      .checked_add(32)?
+      .checked_add(8)?
+      .checked_add(listings.len().into_u64() * (32 + 8 + 8))?
+      .checked_add(listing.offset)
   }
 }
 
@@ -102,11 +199,20 @@ mod tests {
   fn success() {
     let tempdir = TempDir::new().unwrap();
 
-    let manifest = Hash::bytes(&[]);
+    let hash = Hash::bytes(&[]);
+
+    let manifest = Manifest::default();
+
+    let manifest_content = serde_json::to_string(&manifest).unwrap();
 
     let archive = Archive::FILE_SIGNATURE
       .iter()
-      .chain(manifest.as_bytes())
+      .chain(hash.as_bytes())
+      .chain(&1u64.to_le_bytes())
+      .chain(hash.as_bytes())
+      .chain(&0u64.to_le_bytes())
+      .chain(&manifest_content.len().to_le_bytes())
+      .chain(manifest_content.as_bytes())
       .copied()
       .collect::<Vec<u8>>();
 
@@ -116,6 +222,13 @@ mod tests {
 
     let archive = Archive::load(&path.join("foo.archive")).unwrap();
 
-    assert_eq!(archive, Archive { manifest });
+    assert_eq!(
+      archive,
+      Archive {
+        hash,
+        manifest,
+        metadata: None,
+      }
+    );
   }
 }

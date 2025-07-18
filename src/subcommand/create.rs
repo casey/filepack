@@ -161,7 +161,7 @@ impl Create {
 
     let mut files = BTreeMap::new();
 
-    let bar = progress_bar::new(paths.values().sum());
+    let bar = progress_bar::new(&options, paths.values().sum());
 
     for (path, _size) in paths {
       let entry = options

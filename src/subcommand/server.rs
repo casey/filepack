@@ -1,7 +1,14 @@
 use {
+  self::templates::{IndexHtml, PackageHtml, PageContent, PageHtml},
   super::*,
-  axum::{routing::get, Extension, Router},
+  axum::{extract::Path, routing::get, Extension, Router},
+  server_error::ServerError,
 };
+
+// todo:
+// - test package.html rendering
+
+mod templates;
 
 #[derive(Parser)]
 pub(crate) struct Server {
@@ -21,20 +28,16 @@ pub(crate) struct Server {
   port: u16,
 }
 
-#[derive(Boilerplate)]
-struct IndexHtml {
-  archives: Vec<Archive>,
-}
-
 struct State {
   archives: Vec<Archive>,
 }
 
 impl Server {
-  async fn index(state: Extension<Arc<State>>) -> IndexHtml {
+  async fn index(state: Extension<Arc<State>>) -> PageHtml<IndexHtml> {
     IndexHtml {
       archives: state.archives.clone(),
     }
+    .page()
   }
 
   fn load(&self) -> Result<Router> {
@@ -56,12 +59,30 @@ impl Server {
       archives.push(Archive::load(path).context(error::ArchiveLoad { path })?);
     }
 
-    archives.sort_by_key(|archive| archive.manifest);
+    archives.sort_by_key(|archive| archive.hash);
 
     Ok(
       Router::new()
         .route("/", get(Self::index))
+        .route("/package/{hash}", get(Self::package))
         .layer(Extension(Arc::new(State { archives }))),
+    )
+  }
+
+  async fn package(
+    state: Extension<Arc<State>>,
+    Path(hash): Path<Hash>,
+  ) -> Result<PageHtml<PackageHtml>, ServerError> {
+    Ok(
+      PackageHtml {
+        archive: state
+          .archives
+          .iter()
+          .find(|archive| archive.hash == hash)
+          .cloned()
+          .ok_or_else(|| ServerError::NotFound(format!("package `{hash}` not found")))?,
+      }
+      .page(),
     )
   }
 
@@ -87,50 +108,152 @@ impl Server {
 
 #[cfg(test)]
 mod tests {
-  use {super::*, axum_test::TestServer, std::iter};
+  use {super::*, axum_test::TestServer, reqwest::StatusCode};
 
-  fn test_archive(n: u8) -> Vec<u8> {
-    b"FILEPACK"
-      .iter()
-      .copied()
-      .chain(iter::repeat_n(n, 32))
-      .collect()
+  fn server(path: impl Into<OsString>) -> TestServer {
+    TestServer::new(
+      Server::try_parse_from(["filepack".into(), path.into()])
+        .unwrap()
+        .load()
+        .unwrap(),
+    )
+    .unwrap()
   }
 
   #[tokio::test]
   async fn index_lists_archives() {
     let dir = TempDir::new().unwrap();
 
-    dir
-      .child("foo.filepack")
-      .write_binary(&test_archive(0x00))
-      .unwrap();
+    dir.child("foo").create_dir_all().unwrap();
+    dir.child("foo/hello.txt").write_str("hello").unwrap();
 
-    dir
-      .child("bar.filepack")
-      .write_binary(&test_archive(0xFF))
-      .unwrap();
+    let path = Utf8Path::from_path(dir.path()).unwrap();
 
-    let server = match Server::try_parse_from(["filepack", dir.path().to_str().unwrap()]) {
-      Ok(server) => server,
-      Err(error) => {
-        panic!("{}", error.to_string());
-      }
-    };
+    command!("create", path.join("foo"));
 
-    let server = TestServer::new(server.load().unwrap()).unwrap();
+    command!(
+      "archive",
+      path.join("foo"),
+      "--output",
+      path.join("foo.filepack"),
+    );
 
+    dir.child("bar").create_dir_all().unwrap();
+    dir.child("foo/hello.txt").write_str("hello").unwrap();
+
+    command!("create", path.join("bar"));
+
+    command!(
+      "archive",
+      path.join("bar"),
+      "--output",
+      path.join("bar.filepack"),
+    );
+
+    let foo = Archive::load(&path.join("foo.filepack")).unwrap();
+
+    let bar = Archive::load(&path.join("bar.filepack")).unwrap();
+
+    assert_ne!(foo.hash, bar.hash);
+
+    let server = server(dir.path());
     let response = server.get("/").await;
+    response.assert_status_ok();
+    response.assert_text(
+      IndexHtml {
+        archives: vec![foo, bar],
+      }
+      .page()
+      .to_string(),
+    );
+  }
+
+  #[tokio::test]
+  async fn package_endpoint_returns_archive_details() {
+    let dir = TempDir::new().unwrap();
+
+    dir.child("foo").create_dir_all().unwrap();
+    dir.child("foo/hello.txt").write_str("hello").unwrap();
+
+    let path = Utf8Path::from_path(dir.path()).unwrap();
+
+    command!("create", path.join("foo"));
+
+    command!(
+      "archive",
+      path.join("foo"),
+      "--output",
+      path.join("foo.filepack"),
+    );
+
+    let archive = Archive::load(&path.join("foo.filepack")).unwrap();
+
+    let server = server(dir.path());
+
+    let response = server.get(&format!("/package/{}", archive.hash)).await;
 
     response.assert_status_ok();
 
-    response.assert_text_contains(
-      "\
-    <ul>
-      <li class=monospace>0000000000000000000000000000000000000000000000000000000000000000</li>
-      <li class=monospace>ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff</li>
-    </ul>
-",
+    response.assert_text(PackageHtml { archive }.page().to_string());
+  }
+
+  #[tokio::test]
+  async fn package_endpoint_panics_for_nonexistent_archive() {
+    let dir = TempDir::new().unwrap();
+
+    let server = server(dir.path());
+
+    let response = server
+      .get("/package/0000000000000000000000000000000000000000000000000000000000000000")
+      .await;
+
+    response.assert_status(StatusCode::NOT_FOUND);
+  }
+
+  #[tokio::test]
+  async fn package_endpoint_handles_multiple_archives() {
+    let dir = TempDir::new().unwrap();
+
+    dir.child("foo").create_dir_all().unwrap();
+    dir.child("foo/hello.txt").write_str("hello").unwrap();
+
+    let path = Utf8Path::from_path(dir.path()).unwrap();
+
+    command!("create", path.join("foo"));
+
+    command!(
+      "archive",
+      path.join("foo"),
+      "--output",
+      path.join("foo.filepack"),
     );
+
+    dir.child("bar").create_dir_all().unwrap();
+    dir.child("foo/hello.txt").write_str("hello").unwrap();
+
+    command!("create", path.join("bar"));
+
+    command!(
+      "archive",
+      path.join("bar"),
+      "--output",
+      path.join("bar.filepack"),
+    );
+
+    let foo = Archive::load(&path.join("foo.filepack")).unwrap();
+
+    let bar = Archive::load(&path.join("bar.filepack")).unwrap();
+
+    assert_ne!(foo.hash, bar.hash);
+
+    let server = server(dir.path());
+
+    let response = server.get(&format!("/package/{}", foo.hash)).await;
+    response.assert_status_ok();
+    response.assert_text(PackageHtml { archive: foo }.page().to_string());
+
+    let response = server.get(&format!("/package/{}", bar.hash)).await;
+    response.assert_status_ok();
+    response.assert_text(PackageHtml { archive: bar }.page().to_string());
   }
 }
