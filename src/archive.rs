@@ -7,6 +7,7 @@ use std::io::SeekFrom;
 pub(crate) struct Archive {
   pub(crate) hash: Hash,
   pub(crate) manifest: Manifest,
+  pub(crate) metadata: Option<Metadata>,
 }
 
 #[derive(Clone, Copy)]
@@ -104,8 +105,29 @@ impl Archive {
     let mut content = vec![0; usize::try_from(manifest.size).unwrap()];
     reader.read(&mut content)?;
 
+    let manifest = serde_json::from_slice::<Manifest>(&content).unwrap();
+
+    let metadata = if let Some(entry) = manifest.files.get(&Metadata::FILENAME.parse().unwrap()) {
+      let entry = listings
+        .iter()
+        .find(|listing| listing.hash == entry.hash)
+        .unwrap();
+
+      let offset = Self::offset(&listings, *entry).context(archive_error::OffsetOverflow)?;
+
+      reader.seek(SeekFrom::Start(offset)).unwrap();
+
+      let mut content = vec![0; usize::try_from(entry.size).unwrap()];
+      reader.read(&mut content)?;
+
+      Some(serde_json::from_slice::<Metadata>(&content).unwrap())
+    } else {
+      None
+    };
+
     Ok(Self {
-      manifest: serde_json::from_slice::<Manifest>(&content).unwrap(),
+      manifest,
+      metadata,
       hash: manifest_hash,
     })
   }
@@ -200,6 +222,13 @@ mod tests {
 
     let archive = Archive::load(&path.join("foo.archive")).unwrap();
 
-    assert_eq!(archive, Archive { hash, manifest });
+    assert_eq!(
+      archive,
+      Archive {
+        hash,
+        manifest,
+        metadata: None,
+      }
+    );
   }
 }
