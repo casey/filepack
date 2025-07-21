@@ -38,7 +38,7 @@ impl Server {
   }
 
   fn load(&self) -> Result<Router> {
-    let mut archives = Vec::new();
+    let mut packages = Vec::new();
 
     for entry in WalkDir::new(&self.packages) {
       let entry = entry?;
@@ -53,16 +53,16 @@ impl Server {
         continue;
       }
 
-      archives.push(Package::load(path)?);
+      packages.push(Package::load(path)?);
     }
 
-    archives.sort_by_key(|archive| archive.hash);
+    packages.sort_by_key(|archive| archive.hash);
 
     Ok(
       Router::new()
         .route("/", get(Self::index))
         .route("/package/{hash}", get(Self::package))
-        .layer(Extension(Arc::new(State { packages: archives }))),
+        .layer(Extension(Arc::new(State { packages }))),
     )
   }
 
