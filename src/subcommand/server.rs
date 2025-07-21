@@ -26,13 +26,13 @@ pub(crate) struct Server {
 }
 
 struct State {
-  archives: Vec<Package>,
+  packages: Vec<Package>,
 }
 
 impl Server {
   async fn index(state: Extension<Arc<State>>) -> PageHtml<IndexHtml> {
     IndexHtml {
-      packages: state.archives.clone(),
+      packages: state.packages.clone(),
     }
     .page()
   }
@@ -62,7 +62,7 @@ impl Server {
       Router::new()
         .route("/", get(Self::index))
         .route("/package/{hash}", get(Self::package))
-        .layer(Extension(Arc::new(State { archives }))),
+        .layer(Extension(Arc::new(State { packages: archives }))),
     )
   }
 
@@ -73,7 +73,7 @@ impl Server {
     Ok(
       PackageHtml {
         package: state
-          .archives
+          .packages
           .iter()
           .find(|archive| archive.hash == hash)
           .cloned()
