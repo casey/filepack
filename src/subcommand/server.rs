@@ -181,6 +181,8 @@ mod tests {
 
     let package = Package::load(&path.join("foo/filepack.json")).unwrap();
 
+    assert!(package.metadata.is_some());
+
     let response = server
       .get(&format!("/package/{}", package.fingerprint))
       .await;
