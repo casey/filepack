@@ -35,3 +35,49 @@ pub trait PageContent: Display + 'static {
 
   fn title(&self) -> String;
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn index_empty() {
+    assert_eq!(
+      IndexHtml {
+        packages: Default::default()
+      }
+      .to_string(),
+      "<ul>\n</ul>\n",
+    );
+  }
+
+  #[test]
+  fn index_with_packages() {
+    let fingerprint = Hash::from([0; 32]);
+
+    assert_eq!(
+      IndexHtml {
+        packages: [(
+          fingerprint,
+          Package {
+            fingerprint,
+            manifest: Manifest {
+              files: Default::default(),
+              signatures: Default::default(),
+            },
+            metadata: None,
+          }
+        )]
+        .into(),
+      }
+      .to_string(),
+      format!(
+        "\
+<ul>
+  <li class=monospace><a href=/package/{fingerprint}>{fingerprint}</a></li>
+</ul>
+"
+      ),
+    );
+  }
+}
