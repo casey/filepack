@@ -26,12 +26,12 @@ impl PageContent for PackageHtml {
 pub(crate) struct PageHtml<T: PageContent>(pub(crate) T);
 
 pub trait PageContent: Display + 'static {
-  fn title(&self) -> String;
-
   fn page(self) -> PageHtml<Self>
   where
     Self: Sized,
   {
     PageHtml(self)
   }
+
+  fn title(&self) -> String;
 }
