@@ -159,11 +159,13 @@ mod tests {
 
     dir.child("foo").create_dir_all().unwrap();
     dir.child("foo/foo.txt").write_str("foo").unwrap();
+    dir.child("foo/metadata.json").write_str(r#"{ "title": "foo" }"#).unwrap();
 
     command!("create", path.join("foo"));
 
     dir.child("bar").create_dir_all().unwrap();
     dir.child("bar/bar.txt").write_str("bar").unwrap();
+    dir.child("bar/metadata.json").write_str(r#"{ "title": "bar" }"#).unwrap();
 
     command!("create", path.join("bar"));
 
