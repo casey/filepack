@@ -1,7 +1,7 @@
 use super::*;
 
 #[test]
-fn invalid_manifest_trigger_an_error() {
+fn invalid_manifest_triggers_an_error() {
   let dir = TempDir::new().unwrap();
 
   dir.child("filepack.json").write_str("invalid").unwrap();
