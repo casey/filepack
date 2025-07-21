@@ -101,7 +101,11 @@ mod tests {
         ),
       ]
       .into(),
-      signatures: Default::default(),
+      signatures: [(
+        "1".repeat(64).parse().unwrap(),
+        "1".repeat(128).parse().unwrap(),
+      )]
+      .into(),
     };
 
     let fingerprint = manifest.fingerprint();
@@ -128,6 +132,7 @@ mod tests {
   <dt>fingerprint</dt>
   <dd class=monospace>{fingerprint}</dd>
   <dt>signatures</dt>
+  <dd class=monospace>1111111111111111111111111111111111111111111111111111111111111111</dd>
   <dt>files</dt>
   <dd>
     <table>
