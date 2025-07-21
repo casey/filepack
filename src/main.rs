@@ -1,10 +1,9 @@
 use {
   self::{
-    archive::Archive, archive_error::ArchiveError, arguments::Arguments, bytes::Bytes,
-    display_path::DisplayPath, display_secret::DisplaySecret, entry::Entry, error::Error,
-    hash::Hash, into_u64::IntoU64, lint::Lint, lint_group::LintGroup, list::List,
+    arguments::Arguments, bytes::Bytes, display_path::DisplayPath, display_secret::DisplaySecret,
+    entry::Entry, error::Error, hash::Hash, lint::Lint, lint_group::LintGroup, list::List,
     manifest::Manifest, metadata::Metadata, options::Options, owo_colorize_ext::OwoColorizeExt,
-    private_key::PrivateKey, public_key::PublicKey, relative_path::RelativePath,
+    package::Package, private_key::PrivateKey, public_key::PublicKey, relative_path::RelativePath,
     signature::Signature, signature_error::SignatureError, style::Style, subcommand::Subcommand,
     template::Template, utf8_path_ext::Utf8PathExt,
   },
@@ -18,7 +17,7 @@ use {
   owo_colors::Styled,
   serde::{Deserialize, Deserializer, Serialize, Serializer},
   serde_with::{DeserializeFromStr, SerializeDisplay},
-  snafu::{ensure, ErrorCompat, IntoError, OptionExt, ResultExt, Snafu},
+  snafu::{ensure, ErrorCompat, OptionExt, ResultExt, Snafu},
   std::{
     array::TryFromSliceError,
     backtrace::{Backtrace, BacktraceStatus},
@@ -26,8 +25,8 @@ use {
     collections::{BTreeMap, HashMap},
     env,
     fmt::{self, Display, Formatter},
-    fs::{self, File},
-    io::{self, BufReader, BufWriter, IsTerminal, Read, Write},
+    fs::File,
+    io::{self, IsTerminal},
     path::{Path, PathBuf},
     process,
     str::{self, FromStr},
@@ -40,25 +39,11 @@ use {
 #[cfg(test)]
 use {
   assert_fs::{
-    fixture::{FileWriteBin, FileWriteStr, PathChild, PathCreateDir},
+    fixture::{FileWriteStr, PathChild, PathCreateDir},
     TempDir,
   },
   std::ffi::OsString,
 };
-
-#[cfg(test)]
-macro_rules! assert_matches {
-  ($expression:expr, $( $pattern:pat_param )|+ $( if $guard:expr )? $(,)?) => {
-    match $expression {
-      $( $pattern )|+ $( if $guard )? => {}
-      left => panic!(
-        "assertion failed: (left ~= right)\n  left: `{:?}`\n right: `{}`",
-        left,
-        stringify!($($pattern)|+ $(if $guard)?)
-      ),
-    }
-  }
-}
 
 #[cfg(test)]
 macro_rules! command {
@@ -76,13 +61,18 @@ macro_rules! command {
         arguments.push($argument.into());
       )*
 
-      Arguments::try_parse_from(arguments).unwrap().run().unwrap();
+      let arguments = match Arguments::try_parse_from(arguments) {
+        Ok(arguments) => arguments,
+        Err(error) => {
+          panic!("{error}");
+        }
+      };
+
+      arguments.run().unwrap();
     }
   };
 }
 
-mod archive;
-mod archive_error;
 mod arguments;
 mod bytes;
 mod display_path;
@@ -99,6 +89,7 @@ mod manifest;
 mod metadata;
 mod options;
 mod owo_colorize_ext;
+mod package;
 mod private_key;
 mod progress_bar;
 mod public_key;

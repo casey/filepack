@@ -5,13 +5,12 @@ use {
     fixture::{FileTouch, FileWriteBin, FileWriteStr, PathChild, PathCreateDir},
     TempDir,
   },
-  blake3::Hash,
   executable_path::executable_path,
   predicates::str::RegexPredicate,
   serde::{Deserialize, Serialize},
   std::{
     collections::BTreeMap,
-    fs, iter,
+    fs,
     net::TcpListener,
     path::Path,
     str, thread,
@@ -73,7 +72,6 @@ impl Drop for KillOnDrop {
   }
 }
 
-mod archive;
 mod create;
 mod fingerprint;
 mod hash;

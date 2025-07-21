@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(Boilerplate)]
 pub(crate) struct IndexHtml {
-  pub(crate) archives: Vec<Archive>,
+  pub(crate) packages: Vec<Package>,
 }
 
 impl PageContent for IndexHtml {
@@ -13,12 +13,12 @@ impl PageContent for IndexHtml {
 
 #[derive(Boilerplate)]
 pub(crate) struct PackageHtml {
-  pub(crate) archive: Archive,
+  pub(crate) package: Package,
 }
 
 impl PageContent for PackageHtml {
   fn title(&self) -> String {
-    format!("filepack package {}", self.archive.hash)
+    format!("filepack package {}", self.package.hash)
   }
 }
 

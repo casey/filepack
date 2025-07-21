@@ -1,10 +1,10 @@
 use super::*;
 
 #[test]
-fn invalid_archives_trigger_an_error() {
+fn invalid_manifest_trigger_an_error() {
   let dir = TempDir::new().unwrap();
 
-  dir.child("invalid.filepack").write_str("invalid").unwrap();
+  dir.child("filepack.json").write_str("invalid").unwrap();
 
   Command::cargo_bin("filepack")
     .unwrap()
@@ -12,7 +12,7 @@ fn invalid_archives_trigger_an_error() {
     .assert()
     .failure()
     .stderr(is_match(
-      "error: failed to load archive at `.*invalid.filepack`.*",
+      "error: failed to deserialize manifest at `.*filepack.json`.*",
     ));
 }
 

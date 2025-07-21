@@ -3,11 +3,6 @@ use super::*;
 #[derive(Debug, Snafu)]
 #[snafu(context(suffix(false)), visibility(pub(crate)))]
 pub(crate) enum Error {
-  #[snafu(display("failed to load archive at `{path}`"))]
-  ArchiveLoad {
-    path: DisplayPath,
-    source: ArchiveError,
-  },
   #[snafu(display("failed to get current directory"))]
   CurrentDir { source: io::Error },
   #[snafu(display("failed to get local data directory"))]
@@ -56,13 +51,6 @@ pub(crate) enum Error {
   },
   #[snafu(display("fingerprint mismatch"))]
   FingerprintMismatch { backtrace: Option<Backtrace> },
-  #[snafu(display("file `{path}` hash {actual} does not match manifest hash {expected}"))]
-  HashMismatch {
-    actual: Hash,
-    backtrace: Option<Backtrace>,
-    expected: Hash,
-    path: DisplayPath,
-  },
   #[snafu(display("public key `{public_key}` doesn't match private key `{private_key}`"))]
   KeyMismatch {
     backtrace: Option<Backtrace>,
@@ -173,13 +161,6 @@ pub(crate) enum Error {
   SignatureMissing {
     backtrace: Option<Backtrace>,
     key: PublicKey,
-  },
-  #[snafu(display("file `{path}` size {actual} does not match manifest size {expected}"))]
-  SizeMismatch {
-    actual: u64,
-    backtrace: Option<Backtrace>,
-    expected: u64,
-    path: DisplayPath,
   },
   #[snafu(display("I/O error reading standard input"))]
   StandardInputIo {
