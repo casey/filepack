@@ -81,7 +81,6 @@ mod entry;
 mod error;
 mod filesystem;
 mod hash;
-mod into_u64;
 mod lint;
 mod lint_group;
 mod list;
