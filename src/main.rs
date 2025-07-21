@@ -93,7 +93,6 @@ mod private_key;
 mod progress_bar;
 mod public_key;
 mod relative_path;
-mod server_error;
 mod signature;
 mod signature_error;
 mod style;

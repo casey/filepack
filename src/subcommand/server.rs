@@ -1,10 +1,13 @@
 use {
-  self::templates::{IndexHtml, PackageHtml, PageContent, PageHtml},
+  self::{
+    server_error::ServerError,
+    templates::{IndexHtml, PackageHtml, PageContent, PageHtml},
+  },
   super::*,
   axum::{extract::Path, routing::get, Extension, Router},
-  server_error::ServerError,
 };
 
+mod server_error;
 mod templates;
 
 #[derive(Parser)]
@@ -159,13 +162,19 @@ mod tests {
 
     dir.child("foo").create_dir_all().unwrap();
     dir.child("foo/foo.txt").write_str("foo").unwrap();
-    dir.child("foo/metadata.json").write_str(r#"{ "title": "foo" }"#).unwrap();
+    dir
+      .child("foo/metadata.json")
+      .write_str(r#"{ "title": "foo" }"#)
+      .unwrap();
 
     command!("create", path.join("foo"));
 
     dir.child("bar").create_dir_all().unwrap();
     dir.child("bar/bar.txt").write_str("bar").unwrap();
-    dir.child("bar/metadata.json").write_str(r#"{ "title": "bar" }"#).unwrap();
+    dir
+      .child("bar/metadata.json")
+      .write_str(r#"{ "title": "bar" }"#)
+      .unwrap();
 
     command!("create", path.join("bar"));
 
@@ -173,7 +182,9 @@ mod tests {
 
     let package = Package::load(&path.join("foo/filepack.json")).unwrap();
 
-    let response = server.get(&format!("/package/{}", package.fingerprint)).await;
+    let response = server
+      .get(&format!("/package/{}", package.fingerprint))
+      .await;
 
     response.assert_status_ok();
 
@@ -181,7 +192,9 @@ mod tests {
 
     let package = Package::load(&path.join("bar/filepack.json")).unwrap();
 
-    let response = server.get(&format!("/package/{}", package.fingerprint)).await;
+    let response = server
+      .get(&format!("/package/{}", package.fingerprint))
+      .await;
 
     response.assert_status_ok();
 
