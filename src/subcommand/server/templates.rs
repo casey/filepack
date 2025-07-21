@@ -44,7 +44,7 @@ mod tests {
   fn index_empty() {
     assert_eq!(
       IndexHtml {
-        packages: Default::default()
+        packages: BTreeMap::default()
       }
       .to_string(),
       "<ul>\n</ul>\n",
@@ -62,8 +62,8 @@ mod tests {
           Package {
             fingerprint,
             manifest: Manifest {
-              files: Default::default(),
-              signatures: Default::default(),
+              files: BTreeMap::default(),
+              signatures: BTreeMap::default(),
             },
             metadata: None,
           }
