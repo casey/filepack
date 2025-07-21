@@ -1,5 +1,5 @@
 <ul>
-%% for archive in &self.packages {
-  <li class=monospace>{{ archive.fingerprint }}</li>
+%% for fingerprint in self.packages.keys() {
+  <li class=monospace>{{ fingerprint }}</li>
 %% }
 </ul>

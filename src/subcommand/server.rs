@@ -29,7 +29,7 @@ pub(crate) struct Server {
 }
 
 struct State {
-  packages: Vec<Package>,
+  packages: BTreeMap<Hash, Package>,
 }
 
 impl Server {
@@ -41,7 +41,7 @@ impl Server {
   }
 
   fn load(&self) -> Result<Router> {
-    let mut packages = Vec::new();
+    let mut packages = BTreeMap::new();
 
     for entry in WalkDir::new(&self.packages) {
       let entry = entry?;
@@ -56,10 +56,10 @@ impl Server {
         continue;
       }
 
-      packages.push(Package::load(path)?);
-    }
+      let package = Package::load(path)?;
 
-    packages.sort_by_key(|archive| archive.fingerprint);
+      packages.insert(package.fingerprint, package);
+    }
 
     Ok(
       Router::new()
@@ -77,8 +77,7 @@ impl Server {
       PackageHtml {
         package: state
           .packages
-          .iter()
-          .find(|archive| archive.fingerprint == hash)
+          .get(&hash)
           .cloned()
           .ok_or_else(|| ServerError::NotFound(format!("package `{hash}` not found")))?,
       }

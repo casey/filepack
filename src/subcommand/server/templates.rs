@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(Boilerplate)]
 pub(crate) struct IndexHtml {
-  pub(crate) packages: Vec<Package>,
+  pub(crate) packages: BTreeMap<Hash, Package>,
 }
 
 impl PageContent for IndexHtml {
