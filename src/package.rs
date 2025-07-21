@@ -12,8 +12,8 @@ impl Package {
     let (_path, manifest) = Manifest::load(Some(path))?;
 
     let metadata_path = match path.parent() {
-      Some(parent) => parent.join("metadata.json"),
-      None => "metadata.json".into(),
+      Some(parent) => parent.join(Metadata::FILENAME),
+      None => Metadata::FILENAME.into(),
     };
 
     let metadata = filesystem::read_to_string_opt(&metadata_path)?;

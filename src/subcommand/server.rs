@@ -52,7 +52,7 @@ impl Server {
 
       let path = decode_path(entry.path())?;
 
-      if path.file_name() != Some("filepack.json") {
+      if path.file_name() != Some(Manifest::FILENAME) {
         continue;
       }
 
