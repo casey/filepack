@@ -146,7 +146,7 @@ mod tests {
 
     response.assert_text(
       IndexHtml {
-        packages: vec![foo, bar],
+        packages: [(foo.fingerprint, foo), (bar.fingerprint, bar)].into(),
       }
       .page()
       .to_string(),
