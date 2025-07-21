@@ -5,9 +5,6 @@ use {
   server_error::ServerError,
 };
 
-// todo:
-// - test package.html rendering
-
 mod templates;
 
 #[derive(Parser)]
@@ -121,7 +118,7 @@ mod tests {
   }
 
   #[tokio::test]
-  async fn index_lists_archives() {
+  async fn index_lists_packages() {
     let dir = TempDir::new().unwrap();
 
     dir.child("foo").create_dir_all().unwrap();
@@ -155,19 +152,32 @@ mod tests {
   }
 
   #[tokio::test]
-  async fn package_endpoint_returns_archive_details() {
+  async fn package_endpoint_returns_package_details() {
     let dir = TempDir::new().unwrap();
-
-    dir.child("foo").create_dir_all().unwrap();
-    dir.child("foo/hello.txt").write_str("hello").unwrap();
 
     let path = Utf8Path::from_path(dir.path()).unwrap();
 
+    dir.child("foo").create_dir_all().unwrap();
+    dir.child("foo/foo.txt").write_str("foo").unwrap();
+
     command!("create", path.join("foo"));
+
+    dir.child("bar").create_dir_all().unwrap();
+    dir.child("bar/bar.txt").write_str("bar").unwrap();
+
+    command!("create", path.join("bar"));
+
+    let server = server(dir.path());
 
     let package = Package::load(&path.join("foo/filepack.json")).unwrap();
 
-    let server = server(dir.path());
+    let response = server.get(&format!("/package/{}", package.hash)).await;
+
+    response.assert_status_ok();
+
+    response.assert_text(PackageHtml { package }.page().to_string());
+
+    let package = Package::load(&path.join("bar/filepack.json")).unwrap();
 
     let response = server.get(&format!("/package/{}", package.hash)).await;
 
@@ -177,7 +187,7 @@ mod tests {
   }
 
   #[tokio::test]
-  async fn package_endpoint_panics_for_nonexistent_archive() {
+  async fn package_endpoint_panics_for_nonexistent_package() {
     let dir = TempDir::new().unwrap();
 
     let server = server(dir.path());
@@ -187,38 +197,5 @@ mod tests {
       .await;
 
     response.assert_status(StatusCode::NOT_FOUND);
-  }
-
-  #[tokio::test]
-  async fn package_endpoint_handles_multiple_archives() {
-    let dir = TempDir::new().unwrap();
-
-    dir.child("foo").create_dir_all().unwrap();
-    dir.child("foo/hello.txt").write_str("hello").unwrap();
-
-    let path = Utf8Path::from_path(dir.path()).unwrap();
-
-    command!("create", path.join("foo"));
-
-    dir.child("bar").create_dir_all().unwrap();
-    dir.child("foo/hello.txt").write_str("hello").unwrap();
-
-    command!("create", path.join("bar"));
-
-    // let foo = Package::load(&path.join("foo.filepack")).unwrap();
-
-    // let bar = Package::load(&path.join("bar.filepack")).unwrap();
-
-    // assert_ne!(foo.hash, bar.hash);
-
-    // let server = server(dir.path());
-
-    // let response = server.get(&format!("/package/{}", foo.hash)).await;
-    // response.assert_status_ok();
-    // response.assert_text(PackageHtml { archive: foo }.page().to_string());
-
-    // let response = server.get(&format!("/package/{}", bar.hash)).await;
-    // response.assert_status_ok();
-    // response.assert_text(PackageHtml { archive: bar }.page().to_string());
   }
 }
