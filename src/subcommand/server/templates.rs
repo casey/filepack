@@ -80,4 +80,46 @@ mod tests {
       ),
     );
   }
+
+  #[test]
+  fn package() {
+    let manifest = Manifest {
+      files: Default::default(),
+      signatures: Default::default(),
+    };
+
+    let fingerprint = manifest.fingerprint();
+
+    pretty_assertions::assert_eq!(
+      PackageHtml {
+        package: Package {
+          fingerprint,
+          manifest,
+          metadata: Some(Metadata {
+            title: "foo".into()
+          }),
+        }
+      }
+      .to_string(),
+      format!(
+        "\
+<h1>foo</h1>
+<dl>
+  <dt>file count</dt>
+  <dd>0</dd>
+  <dt>total size</dt>
+  <dd>0 bytes</dd>
+  <dt>fingerprint</dt>
+  <dd class=monospace>{fingerprint}</dd>
+  <dt>signatures</dt>
+  <dt>files</dt>
+  <dd>
+    <table>
+    </table>
+  </dd>
+</dl>
+"
+      ),
+    );
+  }
 }
