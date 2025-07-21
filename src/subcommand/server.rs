@@ -201,7 +201,7 @@ mod tests {
   }
 
   #[tokio::test]
-  async fn package_endpoint_panics_for_nonexistent_package() {
+  async fn package_endpoint_returns_not_found_for_nonexistent_package() {
     let dir = TempDir::new().unwrap();
 
     let server = server(dir.path());
