@@ -170,17 +170,12 @@ mod tests {
 
     dir.child("bar").create_dir_all().unwrap();
     dir.child("bar/bar.txt").write_str("bar").unwrap();
-    dir
-      .child("bar/metadata.json")
-      .write_str(r#"{ "title": "bar" }"#)
-      .unwrap();
 
     command!("create", path.join("bar"));
 
     let server = server(dir.path());
 
     let package = Package::load(&path.join("foo/filepack.json")).unwrap();
-
     assert!(package.metadata.is_some());
 
     let response = server
@@ -192,6 +187,7 @@ mod tests {
     response.assert_text(PackageHtml { package }.page().to_string());
 
     let package = Package::load(&path.join("bar/filepack.json")).unwrap();
+    assert!(package.metadata.is_none());
 
     let response = server
       .get(&format!("/package/{}", package.fingerprint))
