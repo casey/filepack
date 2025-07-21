@@ -12,6 +12,8 @@ pub(crate) struct Options {
   pub(crate) mmap: bool,
   #[arg(long, help = "Memory-map and read files in parallel for hashing")]
   pub(crate) parallel: bool,
+  #[arg(long, help = "Suppress output")]
+  pub(crate) quiet: bool,
 }
 
 impl Options {
@@ -55,6 +57,7 @@ mod tests {
         data_dir: None,
         mmap: false,
         parallel: false,
+        quiet: false,
       }
       .key_dir()
       .unwrap(),
@@ -72,6 +75,7 @@ mod tests {
         data_dir: Some("hello".into()),
         mmap: false,
         parallel: false,
+        quiet: false,
       }
       .key_dir()
       .unwrap(),

@@ -62,7 +62,10 @@ fingerprint mismatch: `{source}`
       }
     }
 
-    let bar = progress_bar::new(manifest.files.values().map(|entry| entry.size).sum());
+    let bar = progress_bar::new(
+      &options,
+      manifest.files.values().map(|entry| entry.size).sum(),
+    );
 
     let mut mismatches = BTreeMap::new();
 

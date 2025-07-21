@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub(crate) struct Metadata {
   pub(crate) title: String,
@@ -8,11 +8,6 @@ pub(crate) struct Metadata {
 
 impl Metadata {
   pub(crate) const FILENAME: &'static str = "metadata.json";
-
-  pub(crate) fn load(path: &Utf8Path) -> Result<Self> {
-    serde_json::from_str(&filesystem::read_to_string(path)?)
-      .context(error::DeserializeMetadata { path })
-  }
 
   pub(crate) fn store(&self, path: &Utf8Path) -> Result<()> {
     filesystem::write(path, format!("{}\n", serde_json::to_string(self).unwrap()))

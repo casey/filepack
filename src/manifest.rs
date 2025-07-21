@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
 pub(crate) struct Manifest {
   #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
@@ -25,7 +25,7 @@ impl Manifest {
     hasher.finalize().into()
   }
 
-  pub(crate) fn load(path: Option<&Utf8Path>) -> Result<(Utf8PathBuf, String, Self)> {
+  pub(crate) fn load(path: Option<&Utf8Path>) -> Result<(Utf8PathBuf, Self)> {
     let path = if let Some(path) = path {
       if filesystem::metadata(path)?.is_dir() {
         path.join(Manifest::FILENAME)
@@ -42,7 +42,7 @@ impl Manifest {
     let manifest =
       serde_json::from_str(&json).context(error::DeserializeManifest { path: &path })?;
 
-    Ok((path, json, manifest))
+    Ok((path, manifest))
   }
 
   pub(crate) fn store(&self, path: &Utf8Path) -> Result<()> {

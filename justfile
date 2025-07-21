@@ -105,17 +105,3 @@ verify-release: tmp
     --dir tmp \
     $VERSION
   cargo run verify tmp --key 3c977ea3a31cd37f0b540f02f33eab158f2ed7449f42b05613c921181aa95b79
-
-render: tmp
-  #!/usr/bin/env bash
-  set -euxo pipefail
-  VERSION=`bin/version`
-  gh release download \
-    --repo casey/filepack \
-    --pattern '*' \
-    --dir tmp \
-    $VERSION
-  rm tmp/filepack.json
-  cargo run create tmp --sign --metadata metadata.yaml
-  cargo run render tmp > tmp/index.html
-  open tmp/index.html

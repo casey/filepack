@@ -1,0 +1,26 @@
+%% if let Some(metadata) = &self.package.metadata {
+<h1>{{ metadata.title }}</h1>
+%% }
+<dl>
+  <dt>file count</dt>
+  <dd>{{ self.package.manifest.files.len() }}</dd>
+  <dt>total size</dt>
+  <dd>{{ Bytes(self.package.manifest.total_size()) }}</dd>
+  <dt>fingerprint</dt>
+  <dd class=monospace>{{ self.package.manifest.fingerprint() }}</dd>
+  <dt>signatures</dt>
+%% for key in self.package.manifest.signatures.keys() {
+  <dd class=monospace>{{ key }}</dd>
+%% }
+  <dt>files</dt>
+  <dd>
+    <table>
+%% for (path, entry) in &self.package.manifest.files {
+      <tr>
+        <td class=monospace>{{ path }}</td>
+        <td>{{ Bytes(entry.size.into()) }}</td>
+      </tr>
+%% }
+    </table>
+  </dd>
+</dl>

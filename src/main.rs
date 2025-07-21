@@ -1,10 +1,9 @@
 use {
   self::{
-    archive::Archive, archive_error::ArchiveError, arguments::Arguments, bytes::Bytes,
-    display_path::DisplayPath, display_secret::DisplaySecret, entry::Entry, error::Error,
-    hash::Hash, into_u64::IntoU64, lint::Lint, lint_group::LintGroup, list::List,
+    arguments::Arguments, bytes::Bytes, display_path::DisplayPath, display_secret::DisplaySecret,
+    entry::Entry, error::Error, hash::Hash, lint::Lint, lint_group::LintGroup, list::List,
     manifest::Manifest, metadata::Metadata, options::Options, owo_colorize_ext::OwoColorizeExt,
-    page::Page, private_key::PrivateKey, public_key::PublicKey, relative_path::RelativePath,
+    package::Package, private_key::PrivateKey, public_key::PublicKey, relative_path::RelativePath,
     signature::Signature, signature_error::SignatureError, style::Style, subcommand::Subcommand,
     template::Template, utf8_path_ext::Utf8PathExt,
   },
@@ -12,22 +11,22 @@ use {
   boilerplate::Boilerplate,
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},
   clap::{Parser, ValueEnum},
-  html_escaper::Escape,
+  html_escaper::{Escape, Trusted},
   indicatif::{ProgressBar, ProgressStyle},
   lexiclean::Lexiclean,
   owo_colors::Styled,
   serde::{Deserialize, Deserializer, Serialize, Serializer},
   serde_with::{DeserializeFromStr, SerializeDisplay},
-  snafu::{ensure, ErrorCompat, IntoError, OptionExt, ResultExt, Snafu},
+  snafu::{ensure, ErrorCompat, OptionExt, ResultExt, Snafu},
   std::{
     array::TryFromSliceError,
     backtrace::{Backtrace, BacktraceStatus},
     cmp::Ordering,
-    collections::{BTreeMap, HashMap, HashSet},
+    collections::{BTreeMap, HashMap},
     env,
     fmt::{self, Display, Formatter},
-    fs::{self, File},
-    io::{self, BufReader, BufWriter, IsTerminal, Read, Write},
+    fs::File,
+    io::{self, IsTerminal},
     path::{Path, PathBuf},
     process,
     str::{self, FromStr},
@@ -38,27 +37,42 @@ use {
 };
 
 #[cfg(test)]
-use assert_fs::{
-  fixture::{FileWriteBin, PathChild},
-  TempDir,
+use {
+  assert_fs::{
+    fixture::{FileWriteStr, PathChild, PathCreateDir},
+    TempDir,
+  },
+  std::ffi::OsString,
 };
 
 #[cfg(test)]
-macro_rules! assert_matches {
-  ($expression:expr, $( $pattern:pat_param )|+ $( if $guard:expr )? $(,)?) => {
-    match $expression {
-      $( $pattern )|+ $( if $guard )? => {}
-      left => panic!(
-        "assertion failed: (left ~= right)\n  left: `{:?}`\n right: `{}`",
-        left,
-        stringify!($($pattern)|+ $(if $guard)?)
-      ),
+macro_rules! command {
+  ( $($argument:expr),* $(,)?) => {
+    {
+      #![allow(clippy::vec_init_then_push)]
+
+      let mut arguments = Vec::<OsString>::new();
+
+      arguments.push("filepack".into());
+
+      arguments.push("--quiet".into());
+
+      $(
+        arguments.push($argument.into());
+      )*
+
+      let arguments = match Arguments::try_parse_from(arguments) {
+        Ok(arguments) => arguments,
+        Err(error) => {
+          panic!("{error}");
+        }
+      };
+
+      arguments.run().unwrap();
     }
-  }
+  };
 }
 
-mod archive;
-mod archive_error;
 mod arguments;
 mod bytes;
 mod display_path;
@@ -67,7 +81,6 @@ mod entry;
 mod error;
 mod filesystem;
 mod hash;
-mod into_u64;
 mod lint;
 mod lint_group;
 mod list;
@@ -75,7 +88,7 @@ mod manifest;
 mod metadata;
 mod options;
 mod owo_colorize_ext;
-mod page;
+mod package;
 mod private_key;
 mod progress_bar;
 mod public_key;

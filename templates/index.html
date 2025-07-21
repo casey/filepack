@@ -1,20 +1,5 @@
-<!doctype html>
-<html lang=en>
-  <head>
-    <meta charset=utf-8>
-    <meta name=viewport content='width=device-width,initial-scale=1.0'>
-    <title>filepack server</title>
-    <style>
-      .monospace {
-        font-family: monospace;
-      }
-    </style>
-  </head>
-  <body>
-    <ul>
-%% for archive in &self.archives {
-      <li class=monospace>{{ archive.manifest }}</li>
+<ul>
+%% for fingerprint in self.packages.keys() {
+  <li class=monospace><a href=/package/{{ fingerprint }}>{{ fingerprint }}</a></li>
 %% }
-    </ul>
-  </body>
-</html>
+</ul>

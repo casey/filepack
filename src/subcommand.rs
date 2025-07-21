@@ -6,14 +6,12 @@ use {
   },
 };
 
-mod archive;
 mod create;
 mod fingerprint;
 mod hash;
 mod key;
 mod keygen;
 mod man;
-mod render;
 mod server;
 mod sign;
 mod verify;
@@ -29,8 +27,6 @@ mod verify;
     .placeholder(AnsiColor::Cyan.on_default()))
 ]
 pub(crate) enum Subcommand {
-  #[command(about = "Create archive")]
-  Archive(archive::Archive),
   #[command(about = "Create manifest")]
   Create(create::Create),
   #[command(about = "Print manifest fingerprint")]
@@ -43,8 +39,6 @@ pub(crate) enum Subcommand {
   Keygen,
   #[command(about = "Print man page")]
   Man,
-  #[command(about = "Render manifest")]
-  Render(render::Render),
   #[command(about = "Run server")]
   Server(server::Server),
   #[command(about = "Sign manifest")]
@@ -56,14 +50,12 @@ pub(crate) enum Subcommand {
 impl Subcommand {
   pub(crate) fn run(self, options: Options) -> Result {
     match self {
-      Self::Archive(archive) => archive.run(),
       Self::Create(create) => create.run(options),
       Self::Fingerprint(fingerprint) => fingerprint.run(),
       Self::Hash(hash) => hash.run(options),
       Self::Key => key::run(options),
       Self::Keygen => keygen::run(options),
       Self::Man => man::run(),
-      Self::Render(render) => render.run(),
       Self::Server(server) => server.run(),
       Self::Sign(sign) => sign.run(options),
       Self::Verify(verify) => verify.run(options),
