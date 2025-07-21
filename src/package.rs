@@ -11,7 +11,10 @@ impl Package {
   pub(crate) fn load(path: &Utf8Path) -> Result<Self> {
     let (_path, manifest) = Manifest::load(Some(path))?;
 
-    let metadata_path = path.parent().unwrap().join("metadata.json");
+    let metadata_path = match path.parent() {
+      Some(parent) => parent.join("metadata.json"),
+      None => "metadata.json".into(),
+    };
 
     let metadata = filesystem::read_to_string_opt(&metadata_path)?;
 
