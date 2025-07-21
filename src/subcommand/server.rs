@@ -18,7 +18,7 @@ pub(crate) struct Server {
     long
   )]
   address: String,
-  #[arg(help = "Serve packages from directory <PACKAGES>.")]
+  #[arg(help = "Serve packages from <PACKAGES> directory.")]
   packages: Utf8PathBuf,
   #[arg(
     default_value_t = 80,
