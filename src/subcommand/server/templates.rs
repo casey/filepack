@@ -84,7 +84,23 @@ mod tests {
   #[test]
   fn package() {
     let manifest = Manifest {
-      files: Default::default(),
+      files: [
+        (
+          "hello.txt".parse().unwrap(),
+          Entry {
+            hash: Hash::bytes(&[]),
+            size: 10,
+          },
+        ),
+        (
+          "goodbye.txt".parse().unwrap(),
+          Entry {
+            hash: Hash::bytes(&[]),
+            size: 20,
+          },
+        ),
+      ]
+      .into(),
       signatures: Default::default(),
     };
 
@@ -106,15 +122,23 @@ mod tests {
 <h1>foo</h1>
 <dl>
   <dt>file count</dt>
-  <dd>0</dd>
+  <dd>2</dd>
   <dt>total size</dt>
-  <dd>0 bytes</dd>
+  <dd>30 bytes</dd>
   <dt>fingerprint</dt>
   <dd class=monospace>{fingerprint}</dd>
   <dt>signatures</dt>
   <dt>files</dt>
   <dd>
     <table>
+      <tr>
+        <td class=monospace>goodbye.txt</td>
+        <td>20 bytes</td>
+      </tr>
+      <tr>
+        <td class=monospace>hello.txt</td>
+        <td>10 bytes</td>
+      </tr>
     </table>
   </dd>
 </dl>
