@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct Package {
-  pub(crate) hash: Hash,
+  pub(crate) fingerprint: Hash,
   pub(crate) manifest: Manifest,
   pub(crate) metadata: Option<Metadata>,
 }
@@ -25,7 +25,7 @@ impl Package {
     };
 
     Ok(Self {
-      hash: manifest.fingerprint(),
+      fingerprint: manifest.fingerprint(),
       manifest,
       metadata,
     })

@@ -56,7 +56,7 @@ impl Server {
       packages.push(Package::load(path)?);
     }
 
-    packages.sort_by_key(|archive| archive.hash);
+    packages.sort_by_key(|archive| archive.fingerprint);
 
     Ok(
       Router::new()
@@ -75,7 +75,7 @@ impl Server {
         package: state
           .packages
           .iter()
-          .find(|archive| archive.hash == hash)
+          .find(|archive| archive.fingerprint == hash)
           .cloned()
           .ok_or_else(|| ServerError::NotFound(format!("package `{hash}` not found")))?,
       }
@@ -173,7 +173,7 @@ mod tests {
 
     let package = Package::load(&path.join("foo/filepack.json")).unwrap();
 
-    let response = server.get(&format!("/package/{}", package.hash)).await;
+    let response = server.get(&format!("/package/{}", package.fingerprint)).await;
 
     response.assert_status_ok();
 
@@ -181,7 +181,7 @@ mod tests {
 
     let package = Package::load(&path.join("bar/filepack.json")).unwrap();
 
-    let response = server.get(&format!("/package/{}", package.hash)).await;
+    let response = server.get(&format!("/package/{}", package.fingerprint)).await;
 
     response.assert_status_ok();
 

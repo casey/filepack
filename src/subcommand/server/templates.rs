@@ -18,7 +18,7 @@ pub(crate) struct PackageHtml {
 
 impl PageContent for PackageHtml {
   fn title(&self) -> String {
-    format!("filepack package {}", self.package.hash)
+    format!("filepack package {}", self.package.fingerprint)
   }
 }
 
