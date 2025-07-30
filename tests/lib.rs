@@ -5,17 +5,9 @@ use {
     fixture::{FileTouch, FileWriteBin, FileWriteStr, PathChild, PathCreateDir},
     TempDir,
   },
-  executable_path::executable_path,
   predicates::str::RegexPredicate,
   serde::{Deserialize, Serialize},
-  std::{
-    collections::BTreeMap,
-    fs,
-    net::TcpListener,
-    path::Path,
-    str, thread,
-    time::{Duration, Instant},
-  },
+  std::{collections::BTreeMap, fs, path::Path, str},
 };
 
 const SEPARATOR: char = if cfg!(windows) { '\\' } else { '/' };
@@ -29,14 +21,6 @@ where
 
 fn load_key(path: &Path) -> String {
   fs::read_to_string(path).unwrap().trim().into()
-}
-
-fn free_port() -> u16 {
-  TcpListener::bind("127.0.0.1:0")
-    .unwrap()
-    .local_addr()
-    .unwrap()
-    .port()
 }
 
 #[derive(Deserialize, Serialize)]
@@ -63,15 +47,6 @@ impl Manifest {
   }
 }
 
-struct KillOnDrop(std::process::Child);
-
-impl Drop for KillOnDrop {
-  fn drop(&mut self) {
-    let _ = self.0.kill();
-    let _ = self.0.wait();
-  }
-}
-
 mod create;
 mod fingerprint;
 mod hash;
@@ -79,6 +54,5 @@ mod key;
 mod keygen;
 mod man;
 mod misc;
-mod server;
 mod sign;
 mod verify;
