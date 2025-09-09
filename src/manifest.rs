@@ -48,10 +48,6 @@ impl Manifest {
   pub(crate) fn store(&self, path: &Utf8Path) -> Result<()> {
     filesystem::write(path, format!("{}\n", serde_json::to_string(self).unwrap()))
   }
-
-  pub(crate) fn total_size(&self) -> u64 {
-    self.files.values().map(|entry| entry.size).sum()
-  }
 }
 
 #[cfg(test)]
