@@ -275,9 +275,12 @@ fn only_leaf_empty_directory_is_reported() {
     .failure();
 }
 
-#[cfg(not(windows))]
 #[test]
 fn backslash_error() {
+  if cfg!(windows) {
+    return;
+  }
+
   let dir = TempDir::new().unwrap();
 
   dir.child("\\").touch().unwrap();
@@ -296,9 +299,12 @@ error: invalid path `\\`
     .failure();
 }
 
-#[cfg(all(not(windows), not(target_os = "macos")))]
 #[test]
 fn deny_case_insensitive_filesystem_path_conflict() {
+  if cfg!(windows) || cfg!(target_os = "macos") {
+    return;
+  }
+
   let dir = TempDir::new().unwrap();
 
   dir.child("foo").touch().unwrap();
@@ -320,9 +326,12 @@ error: 1 lint error
     .failure();
 }
 
-#[cfg(not(windows))]
 #[test]
 fn deny_lint() {
+  if cfg!(windows) {
+    return;
+  }
+
   let dir = TempDir::new().unwrap();
 
   dir.child("aux").touch().unwrap();
