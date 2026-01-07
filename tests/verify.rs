@@ -524,7 +524,6 @@ fn malformed_signature_error() {
 
   let path = dir.child("filepack.json");
 
-  // Write manifest with malformed signature (wrong length) directly as JSON to bypass type validation
   let manifest_json = r#"{"files":{},"signatures":{"7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b":"7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b"}}"#;
   fs::write(&path, manifest_json).unwrap();
 
