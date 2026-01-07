@@ -53,7 +53,7 @@ impl Create {
 
     let mut lint_errors = 0u64;
 
-    let mut dirs = Vec::new();
+    let mut files = Directory::new();
 
     for entry in WalkDir::new(&root) {
       let entry = entry?;
@@ -61,6 +61,10 @@ impl Create {
       let path = entry.path();
 
       let path = decode_path(path)?;
+
+      if path == root {
+        continue;
+      }
 
       let cleaned_path = current_dir.join(path).lexiclean();
 
@@ -73,21 +77,6 @@ impl Create {
         .is_some_and(|path| cleaned_path == *path)
       {
         return Err(error::MetadataTemplateIncluded { path }.build());
-      }
-
-      while let Some(dir) = dirs.last() {
-        if path.starts_with(dir) {
-          dirs.pop();
-        } else {
-          break;
-        }
-      }
-
-      if entry.file_type().is_dir() {
-        if path != root {
-          dirs.push(path.to_owned());
-        }
-        continue;
       }
 
       ensure! {
@@ -113,6 +102,11 @@ impl Create {
             .or_default()
             .push(relative.clone());
         }
+      }
+
+      if entry.file_type().is_dir() {
+        files.create_directory(&relative)?;
+        continue;
       }
 
       let metadata = filesystem::metadata(path)?;
@@ -142,16 +136,6 @@ impl Create {
       return Err(error::Lint { count: lint_errors }.build());
     }
 
-    if !dirs.is_empty() {
-      dirs.sort();
-      return Err(Error::EmptyDirectory {
-        paths: dirs
-          .into_iter()
-          .map(|dir| dir.strip_prefix(&root).unwrap().to_owned().into())
-          .collect(),
-      });
-    }
-
     ensure! {
       self.force || !manifest_path.try_exists().context(error::FilesystemIo { path: &manifest_path })?,
       error::ManifestAlreadyExists {
@@ -159,16 +143,14 @@ impl Create {
       },
     }
 
-    let mut files = BTreeMap::new();
-
     let bar = progress_bar::new(&options, paths.values().sum());
 
     for (path, _size) in paths {
-      let entry = options
+      let file = options
         .hash_file(&root.join(&path))
         .context(error::FilesystemIo { path: &path })?;
-      files.insert(path, entry);
-      bar.inc(entry.size);
+      files.create_file(&path, file)?;
+      bar.inc(file.size);
     }
 
     let mut manifest = Manifest {

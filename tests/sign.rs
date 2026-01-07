@@ -4,8 +4,7 @@ use super::*;
 fn updates_manifest_with_signature() {
   let dir = TempDir::new().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .env("FILEPACK_DATA_DIR", dir.path())
     .arg("keygen")
     .current_dir(&dir)
@@ -14,8 +13,7 @@ fn updates_manifest_with_signature() {
 
   dir.child("foo/bar").touch().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .env("FILEPACK_DATA_DIR", dir.path())
     .args(["create", "foo"])
     .current_dir(&dir)
@@ -24,8 +22,7 @@ fn updates_manifest_with_signature() {
 
   let public_key = load_key(&dir.child("keys/master.public"));
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["verify", "foo", "--key", &public_key])
     .current_dir(&dir)
     .assert()
@@ -34,16 +31,14 @@ fn updates_manifest_with_signature() {
     )))
     .failure();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .env("FILEPACK_DATA_DIR", dir.path())
     .args(["sign", "foo/filepack.json"])
     .current_dir(&dir)
     .assert()
     .success();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["verify", "foo", "--key", &public_key])
     .current_dir(&dir)
     .assert()
@@ -54,8 +49,7 @@ fn updates_manifest_with_signature() {
 fn existing_signatures_must_be_valid() {
   let dir = TempDir::new().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .env("FILEPACK_DATA_DIR", dir.path())
     .arg("keygen")
     .current_dir(&dir)
@@ -64,8 +58,7 @@ fn existing_signatures_must_be_valid() {
 
   dir.child("foo/bar").touch().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .env("FILEPACK_DATA_DIR", dir.path())
     .args(["create", "foo"])
     .current_dir(&dir)
@@ -86,8 +79,7 @@ fn existing_signatures_must_be_valid() {
     .save(dir.child("foo/filepack.json").utf8_path())
     .unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .env("FILEPACK_DATA_DIR", dir.path())
     .args(["sign", "foo/filepack.json"])
     .current_dir(&dir)
@@ -103,16 +95,14 @@ fn existing_signatures_are_preserved() {
   let a = dir.path().join("a");
   let b = dir.path().join("b");
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .env("FILEPACK_DATA_DIR", dir.path().join("a"))
     .arg("keygen")
     .current_dir(&dir)
     .assert()
     .success();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .env("FILEPACK_DATA_DIR", dir.path().join("b"))
     .arg("keygen")
     .current_dir(&dir)
@@ -121,23 +111,20 @@ fn existing_signatures_are_preserved() {
 
   dir.child("foo/bar").touch().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["create", "foo"])
     .current_dir(&dir)
     .assert()
     .success();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .env("FILEPACK_DATA_DIR", &a)
     .args(["sign", "foo/filepack.json"])
     .current_dir(&dir)
     .assert()
     .success();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .env("FILEPACK_DATA_DIR", &b)
     .args(["sign", "foo/filepack.json"])
     .current_dir(&dir)
@@ -146,8 +133,7 @@ fn existing_signatures_are_preserved() {
 
   let a = load_key(&a.join("keys/master.public"));
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["verify", "foo", "--key", &a])
     .current_dir(&dir)
     .assert()
@@ -155,8 +141,7 @@ fn existing_signatures_are_preserved() {
 
   let b = load_key(&b.join("keys/master.public"));
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["verify", "foo", "--key", &b])
     .current_dir(&dir)
     .assert()
@@ -167,8 +152,7 @@ fn existing_signatures_are_preserved() {
 fn re_signing_requires_force() {
   let dir = TempDir::new().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .env("FILEPACK_DATA_DIR", dir.path())
     .arg("keygen")
     .current_dir(&dir)
@@ -177,8 +161,7 @@ fn re_signing_requires_force() {
 
   dir.child("foo/bar").touch().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .env("FILEPACK_DATA_DIR", dir.path())
     .args(["create", "foo"])
     .current_dir(&dir)
@@ -187,23 +170,20 @@ fn re_signing_requires_force() {
 
   let public_key = load_key(&dir.child("keys/master.public"));
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .env("FILEPACK_DATA_DIR", dir.path())
     .args(["sign", "foo/filepack.json"])
     .current_dir(&dir)
     .assert()
     .success();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["verify", "foo", "--key", &public_key])
     .current_dir(&dir)
     .assert()
     .success();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .env("FILEPACK_DATA_DIR", dir.path())
     .args(["sign", "foo/filepack.json"])
     .current_dir(&dir)
@@ -213,16 +193,14 @@ fn re_signing_requires_force() {
     ))
     .failure();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .env("FILEPACK_DATA_DIR", dir.path())
     .args(["sign", "--force", "foo/filepack.json"])
     .current_dir(&dir)
     .assert()
     .success();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["verify", "foo", "--key", &public_key])
     .current_dir(&dir)
     .assert()
@@ -233,8 +211,7 @@ fn re_signing_requires_force() {
 fn defaults_to_current_directory() {
   let dir = TempDir::new().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .env("FILEPACK_DATA_DIR", dir.path())
     .arg("keygen")
     .current_dir(&dir)
@@ -243,8 +220,7 @@ fn defaults_to_current_directory() {
 
   dir.child("foo/bar").touch().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .env("FILEPACK_DATA_DIR", dir.path())
     .args(["create", "foo"])
     .current_dir(&dir)
@@ -253,16 +229,14 @@ fn defaults_to_current_directory() {
 
   let public_key = load_key(&dir.child("keys/master.public"));
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .env("FILEPACK_DATA_DIR", dir.path())
     .arg("sign")
     .current_dir(dir.join("foo"))
     .assert()
     .success();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["verify", "foo", "--key", &public_key])
     .current_dir(&dir)
     .assert()
@@ -273,8 +247,7 @@ fn defaults_to_current_directory() {
 fn appends_filename_if_argument_is_directory() {
   let dir = TempDir::new().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .env("FILEPACK_DATA_DIR", dir.path())
     .arg("keygen")
     .current_dir(&dir)
@@ -283,8 +256,7 @@ fn appends_filename_if_argument_is_directory() {
 
   dir.child("foo/bar").touch().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .env("FILEPACK_DATA_DIR", dir.path())
     .args(["create", "foo"])
     .current_dir(&dir)
@@ -293,16 +265,14 @@ fn appends_filename_if_argument_is_directory() {
 
   let public_key = load_key(&dir.child("keys/master.public"));
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .env("FILEPACK_DATA_DIR", dir.path())
     .args(["sign", "foo"])
     .current_dir(&dir)
     .assert()
     .success();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["verify", "foo", "--key", &public_key])
     .current_dir(&dir)
     .assert()

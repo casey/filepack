@@ -4,8 +4,7 @@ use super::*;
 fn no_files() {
   let dir = TempDir::new().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["create", "."])
     .current_dir(&dir)
     .assert()
@@ -13,8 +12,7 @@ fn no_files() {
 
   dir.child("filepack.json").assert("{}\n");
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["verify", "."])
     .current_dir(&dir)
     .assert()
@@ -27,19 +25,22 @@ fn single_file_omit_root() {
 
   dir.child("foo").touch().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .arg("create")
     .current_dir(&dir)
     .assert()
     .success();
 
-  dir.child("filepack.json").assert(
-    r#"{"files":{"foo":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}}}"#.to_owned() + "\n",
-  );
+  dir.child("filepack.json").assert(json! {
+    files: {
+      foo: {
+        hash: EMPTY_HASH,
+        size: 0
+      }
+    }
+  });
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["verify", "."])
     .current_dir(&dir)
     .assert()
@@ -52,19 +53,22 @@ fn single_file() {
 
   dir.child("foo").touch().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["create", "."])
     .current_dir(&dir)
     .assert()
     .success();
 
-  dir.child("filepack.json").assert(
-    r#"{"files":{"foo":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}}}"#.to_owned() + "\n",
-  );
+  dir.child("filepack.json").assert(json! {
+    files: {
+      foo: {
+        hash: EMPTY_HASH,
+        size: 0
+      }
+    }
+  });
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["verify", "."])
     .current_dir(&dir)
     .assert()
@@ -77,19 +81,22 @@ fn single_non_empty_file() {
 
   dir.child("foo").write_str("bar").unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["create", "."])
     .current_dir(&dir)
     .assert()
     .success();
 
-  dir.child("filepack.json").assert(
-    r#"{"files":{"foo":{"hash":"f2e897eed7d206cd855d441598fa521abc75aa96953e97c030c9612c30c1293d","size":3}}}"#.to_owned() + "\n",
-  );
+  dir.child("filepack.json").assert(json! {
+    files: {
+      foo: {
+        hash: "f2e897eed7d206cd855d441598fa521abc75aa96953e97c030c9612c30c1293d",
+        size: 3
+      }
+    }
+  });
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["verify", "."])
     .current_dir(&dir)
     .assert()
@@ -102,19 +109,22 @@ fn single_file_mmap() {
 
   dir.child("foo").touch().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["--mmap", "create", "."])
     .current_dir(&dir)
     .assert()
     .success();
 
-  dir.child("filepack.json").assert(
-    r#"{"files":{"foo":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}}}"#.to_owned() + "\n",
-  );
+  dir.child("filepack.json").assert(json! {
+    files: {
+      foo: {
+        hash: EMPTY_HASH,
+        size: 0
+      }
+    }
+  });
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["--mmap", "verify", "."])
     .current_dir(&dir)
     .assert()
@@ -127,19 +137,22 @@ fn single_file_parallel() {
 
   dir.child("foo").touch().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["--parallel", "create", "."])
     .current_dir(&dir)
     .assert()
     .success();
 
-  dir.child("filepack.json").assert(
-    r#"{"files":{"foo":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}}}"#.to_owned() + "\n",
-  );
+  dir.child("filepack.json").assert(json! {
+    files: {
+      foo: {
+        hash: EMPTY_HASH,
+        size: 0
+      }
+    }
+  });
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["--parallel", "verify", "."])
     .current_dir(&dir)
     .assert()
@@ -152,19 +165,24 @@ fn file_in_subdirectory() {
 
   dir.child("foo/bar").touch().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["create", "."])
     .current_dir(&dir)
     .assert()
     .success();
 
-  dir.child("filepack.json").assert(
-    r#"{"files":{"foo/bar":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}}}"#.to_owned() + "\n",
-  );
+  dir.child("filepack.json").assert(json! {
+    files: {
+      foo: {
+        bar: {
+          hash: EMPTY_HASH,
+          size: 0
+        }
+      }
+    }
+  });
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["verify", "."])
     .current_dir(&dir)
     .assert()
@@ -200,8 +218,7 @@ fn non_unicode_path_error() {
 
   dir.child(invalid).touch().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["create", "."])
     .current_dir(&dir)
     .assert()
@@ -219,8 +236,7 @@ fn symlink_error() {
   #[cfg(windows)]
   std::os::windows::fs::symlink_file("foo", dir.path().join("bar")).unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["create", "."])
     .current_dir(&dir)
     .assert()
@@ -229,50 +245,87 @@ fn symlink_error() {
 }
 
 #[test]
-fn empty_directory_error() {
+fn empty_directories_are_included() {
   let dir = TempDir::new().unwrap();
 
   dir.child("foo").create_dir_all().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["create", "."])
     .current_dir(&dir)
     .assert()
-    .stderr("error: empty directory `foo`\n")
-    .failure();
+    .success();
+
+  dir.child("filepack.json").assert(json! {
+    files: {
+      foo: {
+      },
+    },
+  });
+
+  cargo_bin_cmd!("filepack")
+    .args(["verify", "."])
+    .current_dir(&dir)
+    .assert()
+    .success();
 }
 
 #[test]
-fn multiple_empty_directory_error() {
+fn multiple_empty_directory_are_included() {
   let dir = TempDir::new().unwrap();
 
   dir.child("foo").create_dir_all().unwrap();
 
   dir.child("bar").create_dir_all().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["create", "."])
     .current_dir(&dir)
     .assert()
-    .stderr("error: empty directories `bar` and `foo`\n")
-    .failure();
+    .success();
+
+  dir.child("filepack.json").assert(json! {
+    files: {
+      bar: {
+      },
+      foo: {
+      },
+    },
+  });
+
+  cargo_bin_cmd!("filepack")
+    .args(["verify", "."])
+    .current_dir(&dir)
+    .assert()
+    .success();
 }
 
 #[test]
-fn only_leaf_empty_directory_is_reported() {
+fn nested_empty_directories_are_included() {
   let dir = TempDir::new().unwrap();
 
   dir.child("foo/bar").create_dir_all().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["create", "."])
     .current_dir(&dir)
     .assert()
-    .stderr(path("error: empty directory `foo/bar`\n"))
-    .failure();
+    .success();
+
+  dir.child("filepack.json").assert(json! {
+    files: {
+      foo: {
+        bar: {
+        },
+      },
+    },
+  });
+
+  cargo_bin_cmd!("filepack")
+    .args(["verify", "."])
+    .current_dir(&dir)
+    .assert()
+    .success();
 }
 
 #[test]
@@ -285,8 +338,7 @@ fn backslash_error() {
 
   dir.child("\\").touch().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["create", "--deny", "all", "."])
     .current_dir(&dir)
     .assert()
@@ -310,8 +362,7 @@ fn deny_case_insensitive_filesystem_path_conflict() {
   dir.child("foo").touch().unwrap();
   dir.child("FOO").touch().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["create", "--deny", "all", "."])
     .current_dir(&dir)
     .assert()
@@ -336,8 +387,7 @@ fn deny_lint() {
 
   dir.child("aux").touch().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["create", "--deny", "all", "."])
     .current_dir(&dir)
     .assert()
@@ -361,8 +411,7 @@ fn allow_lint() {
 
   dir.child("aux").touch().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["create", "."])
     .current_dir(&dir)
     .assert()
@@ -375,8 +424,7 @@ fn manifest_already_exists_error() {
 
   dir.child("filepack.json").touch().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["create", "."])
     .current_dir(&dir)
     .assert()
@@ -391,19 +439,22 @@ fn force_overwrites_manifest() {
   dir.child("filepack.json").touch().unwrap();
   dir.child("foo").touch().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["create", "--force", "."])
     .current_dir(&dir)
     .assert()
     .success();
 
-  dir.child("filepack.json").assert(
-    r#"{"files":{"foo":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}}}"#.to_string() + "\n",
-  );
+  dir.child("filepack.json").assert(json! {
+    files: {
+      foo: {
+        hash: EMPTY_HASH,
+        size: 0
+      }
+    }
+  });
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["verify", "."])
     .current_dir(&dir)
     .assert()
@@ -417,19 +468,22 @@ fn force_overwrites_manifest_with_destination() {
   dir.child("foo.json").touch().unwrap();
   dir.child("foo").touch().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["create", "--force", ".", "--manifest", "foo.json"])
     .current_dir(&dir)
     .assert()
     .success();
 
-  dir.child("foo.json").assert(
-    r#"{"files":{"foo":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}}}"#.to_owned() + "\n",
-  );
+  dir.child("foo.json").assert(json! {
+    files: {
+      foo: {
+        hash: EMPTY_HASH,
+        size: 0
+      }
+    }
+  });
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["verify", ".", "--manifest", "foo.json"])
     .current_dir(&dir)
     .assert()
@@ -442,19 +496,22 @@ fn with_manifest_path() {
 
   dir.child("foo").touch().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["create", "--manifest", "hello.json"])
     .current_dir(&dir)
     .assert()
     .success();
 
-  dir.child("hello.json").assert(
-    r#"{"files":{"foo":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}}}"#.to_owned() + "\n",
-  );
+  dir.child("hello.json").assert(json! {
+    files: {
+      foo: {
+        hash: EMPTY_HASH,
+        size: 0
+      }
+    }
+  });
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["verify", "--manifest", "hello.json"])
     .current_dir(&dir)
     .assert()
@@ -469,23 +526,30 @@ fn with_metadata() {
 
   dir.child("metadata.yaml").write_str("title: Foo").unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["create", "foo", "--metadata", "metadata.yaml"])
     .current_dir(&dir)
     .assert()
     .success();
 
-  dir.child("foo/filepack.json").assert(
-    r#"{"files":{"bar":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0},"metadata.json":{"hash":"395190e326d9f4b03fff68cacda59e9c31b9b2a702d46a12f89bfb1ec568c0f1","size":16}}}"#.to_owned() + "\n",
-  );
+  dir.child("foo/filepack.json").assert(json! {
+    files: {
+      bar: {
+        hash: EMPTY_HASH,
+        size: 0
+      },
+      "metadata.json": {
+        hash: "395190e326d9f4b03fff68cacda59e9c31b9b2a702d46a12f89bfb1ec568c0f1",
+        size: 16
+      }
+    }
+  });
 
   dir
     .child("foo/metadata.json")
-    .assert(r#"{"title":"Foo"}"#.to_owned() + "\n");
+    .assert(json! { title: "Foo" });
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["verify", "foo"])
     .current_dir(&dir)
     .assert()
@@ -503,8 +567,7 @@ fn metadata_template_may_not_have_unknown_keys() {
     .write_str("title: Foo\nbar: baz")
     .unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["create", "foo", "--metadata", "metadata.yaml"])
     .current_dir(&dir)
     .assert()
@@ -520,8 +583,7 @@ fn metadata_template_should_not_be_included_in_package() {
 
   dir.child("metadata.yaml").write_str("title: Foo").unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["create", ".", "--metadata", "metadata.yaml"])
     .current_dir(&dir)
     .assert()
@@ -535,8 +597,7 @@ fn sign_fails_if_master_key_not_available() {
 
   dir.child("foo/bar").touch().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["create", "--sign", "foo"])
     .env("FILEPACK_DATA_DIR", dir.path())
     .current_dir(&dir)
@@ -555,8 +616,7 @@ fn private_key_load_error_message() {
 
   dir.child("keys/master.private").touch().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["create", "--sign", "foo"])
     .env("FILEPACK_DATA_DIR", dir.path())
     .current_dir(&dir)
@@ -571,8 +631,7 @@ fn private_key_load_error_message() {
 fn sign_creates_valid_signature() {
   let dir = TempDir::new().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .arg("keygen")
     .env("FILEPACK_DATA_DIR", dir.path())
     .current_dir(&dir)
@@ -581,8 +640,7 @@ fn sign_creates_valid_signature() {
 
   dir.child("foo/bar").touch().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["create", "--sign", "foo"])
     .env("FILEPACK_DATA_DIR", dir.path())
     .current_dir(&dir)
@@ -599,14 +657,11 @@ fn sign_creates_valid_signature() {
 
   let signature = manifest.signatures[&public_key].clone();
 
-  let fingerprint = blake3::hash(r#"{"files":{"bar":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}}}"#.as_bytes());
-
   public_key
-    .verify(fingerprint.as_bytes(), &signature)
+    .verify(manifest.fingerprint().as_bytes(), &signature)
     .unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["verify", "foo"])
     .current_dir(&dir)
     .assert()
@@ -623,16 +678,14 @@ fn metadata_already_exists() {
 
   dir.child("metadata.yaml").write_str("title: Foo").unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["create", "foo", "--metadata", "metadata.yaml"])
     .current_dir(&dir)
     .assert()
     .stderr(path("error: metadata `foo/metadata.json` already exists\n"))
     .failure();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["create", "foo", "--metadata", "metadata.yaml", "--force"])
     .current_dir(&dir)
     .assert()
@@ -640,5 +693,5 @@ fn metadata_already_exists() {
 
   dir
     .child("foo/metadata.json")
-    .assert(r#"{"title":"Foo"}"#.to_owned() + "\n");
+    .assert(json! { title: "Foo" });
 }

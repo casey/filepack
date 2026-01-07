@@ -1,9 +1,11 @@
 use {
   self::{
-    arguments::Arguments, display_path::DisplayPath, display_secret::DisplaySecret, lint::Lint,
-    lint_group::LintGroup, list::List, metadata::Metadata, options::Options,
-    owo_colorize_ext::OwoColorizeExt, private_key::PrivateKey, signature_error::SignatureError,
-    style::Style, subcommand::Subcommand, template::Template, utf8_path_ext::Utf8PathExt,
+    arguments::Arguments, component::Component, context::Context, directory::Directory,
+    display_path::DisplayPath, display_secret::DisplaySecret, entry::Entry,
+    field_hasher::FieldHasher, lint::Lint, lint_group::LintGroup, metadata::Metadata,
+    options::Options, owo_colorize_ext::OwoColorizeExt, path_error::PathError,
+    private_key::PrivateKey, signature_error::SignatureError, style::Style, subcommand::Subcommand,
+    template::Template, utf8_path_ext::Utf8PathExt,
   },
   blake3::Hasher,
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},
@@ -17,21 +19,25 @@ use {
   std::{
     array::TryFromSliceError,
     backtrace::{Backtrace, BacktraceStatus},
+    borrow::Borrow,
     cmp::Ordering,
     collections::{BTreeMap, HashMap},
     env,
     fmt::{self, Display, Formatter},
-    fs::File,
+    fs,
     io::{self, IsTerminal},
+    num::NonZeroU64,
     path::{Path, PathBuf},
     process,
     str::{self, FromStr},
   },
+  strum::IntoStaticStr,
+  usized::IntoU64,
   walkdir::WalkDir,
 };
 
 pub use self::{
-  entry::Entry, error::Error, hash::Hash, manifest::Manifest, public_key::PublicKey,
+  error::Error, file::File, hash::Hash, manifest::Manifest, public_key::PublicKey,
   relative_path::RelativePath, signature::Signature,
 };
 
@@ -39,19 +45,24 @@ pub use self::{
 use assert_fs::TempDir;
 
 mod arguments;
+mod component;
+mod context;
+mod directory;
 mod display_path;
 mod display_secret;
 mod entry;
 mod error;
+mod field_hasher;
+mod file;
 mod filesystem;
 mod hash;
 mod lint;
 mod lint_group;
-mod list;
 mod manifest;
 mod metadata;
 mod options;
 mod owo_colorize_ext;
+mod path_error;
 mod private_key;
 mod progress_bar;
 mod public_key;
@@ -67,6 +78,7 @@ type Result<T = (), E = Error> = std::result::Result<T, E>;
 
 const MASTER_PRIVATE_KEY: &str = "master.private";
 const MASTER_PUBLIC_KEY: &str = "master.public";
+const SEPARATORS: [char; 2] = ['/', '\\'];
 
 fn current_dir() -> Result<Utf8PathBuf> {
   Utf8PathBuf::from_path_buf(env::current_dir().context(error::CurrentDir)?)

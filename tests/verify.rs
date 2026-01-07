@@ -6,11 +6,10 @@ fn no_files() {
 
   dir
     .child("filepack.json")
-    .write_str(r#"{"files":{}}"#)
+    .write_str(&json! { files: {} })
     .unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["verify", "."])
     .current_dir(&dir)
     .assert()
@@ -25,13 +24,17 @@ fn single_file() {
 
   dir
     .child("filepack.json")
-    .write_str(
-      r#"{"files":{"foo":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}}}"#
-    )
+    .write_str(&json! {
+      files: {
+        foo: {
+          hash: EMPTY_HASH,
+          size: 0
+        }
+      }
+    })
     .unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["verify", "."])
     .current_dir(&dir)
     .assert()
@@ -46,13 +49,17 @@ fn single_file_omit_directory() {
 
   dir
     .child("filepack.json")
-    .write_str(
-      r#"{"files":{"foo":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}}}"#
-    )
+    .write_str(&json! {
+      files: {
+        foo: {
+          hash: EMPTY_HASH,
+          size: 0
+        }
+      }
+    })
     .unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .arg("verify")
     .current_dir(&dir)
     .assert()
@@ -67,13 +74,17 @@ fn single_file_mmap() {
 
   dir
     .child("filepack.json")
-    .write_str(
-      r#"{"files":{"foo":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}}}"#
-    )
+    .write_str(&json! {
+      files: {
+        foo: {
+          hash: EMPTY_HASH,
+          size: 0
+        }
+      }
+    })
     .unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["--mmap", "verify", "."])
     .current_dir(&dir)
     .assert()
@@ -88,13 +99,17 @@ fn single_file_parallel() {
 
   dir
     .child("filepack.json")
-    .write_str(
-      r#"{"files":{"foo":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}}}"#
-    )
+    .write_str(&json! {
+      files: {
+        foo: {
+          hash: EMPTY_HASH,
+          size: 0
+        }
+      }
+    })
     .unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["--parallel", "verify", "."])
     .current_dir(&dir)
     .assert()
@@ -107,11 +122,13 @@ fn extra_fields_are_not_allowed() {
 
   dir
     .child("filepack.json")
-    .write_str(r#"{"files":{},"foo":"bar"}"#)
+    .write_str(&json! {
+      files: {},
+      foo: "bar"
+    })
     .unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["verify", "."])
     .current_dir(&dir)
     .assert()
@@ -129,78 +146,16 @@ fn extraneous_file_error() {
 
   dir
     .child("filepack.json")
-    .write_str(r#"{"files":{}}"#)
+    .write_str(&json! { files: {} })
     .unwrap();
 
   dir.child("foo").touch().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["verify", "."])
     .current_dir(&dir)
     .assert()
     .stderr("error: extraneous file not in manifest: `foo`\n")
-    .failure();
-}
-
-#[test]
-fn empty_directory_error() {
-  let dir = TempDir::new().unwrap();
-
-  dir
-    .child("filepack.json")
-    .write_str(r#"{"files":{}}"#)
-    .unwrap();
-
-  dir.child("foo").create_dir_all().unwrap();
-
-  Command::cargo_bin("filepack")
-    .unwrap()
-    .args(["verify", "."])
-    .current_dir(&dir)
-    .assert()
-    .stderr("error: empty directory `foo`\n")
-    .failure();
-}
-
-#[test]
-fn multiple_empty_directories() {
-  let dir = TempDir::new().unwrap();
-
-  dir
-    .child("filepack.json")
-    .write_str(r#"{"files":{}}"#)
-    .unwrap();
-
-  dir.child("foo").create_dir_all().unwrap();
-  dir.child("bar").create_dir_all().unwrap();
-
-  Command::cargo_bin("filepack")
-    .unwrap()
-    .args(["verify", "."])
-    .current_dir(&dir)
-    .assert()
-    .stderr("error: empty directories `bar` and `foo`\n")
-    .failure();
-}
-
-#[test]
-fn only_leaf_empty_directory_is_reported() {
-  let dir = TempDir::new().unwrap();
-
-  dir
-    .child("filepack.json")
-    .write_str(r#"{"files":{}}"#)
-    .unwrap();
-
-  dir.child("foo/bar").create_dir_all().unwrap();
-
-  Command::cargo_bin("filepack")
-    .unwrap()
-    .args(["verify", "."])
-    .current_dir(&dir)
-    .assert()
-    .stderr(path("error: empty directory `foo/bar`\n"))
     .failure();
 }
 
@@ -210,8 +165,7 @@ fn hash_mismatch() {
 
   dir.child("foo").write_str("foo").unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["create", "."])
     .current_dir(&dir)
     .assert()
@@ -219,8 +173,7 @@ fn hash_mismatch() {
 
   dir.child("foo").write_str("bar").unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["verify", "."])
     .current_dir(&dir)
     .assert()
@@ -241,8 +194,7 @@ fn size_mismatch() {
 
   dir.child("foo").touch().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["create", "."])
     .current_dir(&dir)
     .assert()
@@ -250,8 +202,7 @@ fn size_mismatch() {
 
   dir.child("foo").write_str("bar").unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["verify", "."])
     .current_dir(&dir)
     .assert()
@@ -273,8 +224,7 @@ fn multiple_mismatches() {
   dir.child("foo").touch().unwrap();
   dir.child("bar").touch().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["create", "."])
     .current_dir(&dir)
     .assert()
@@ -283,8 +233,7 @@ fn multiple_mismatches() {
   dir.child("foo").write_str("baz").unwrap();
   dir.child("bar").write_str("bob").unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["verify", "."])
     .current_dir(&dir)
     .assert()
@@ -333,11 +282,10 @@ fn non_unicode_path_error() {
 
   dir
     .child("filepack.json")
-    .write_str(r#"{"files":{}}"#)
+    .write_str(&json! { files: {} })
     .unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["verify", "."])
     .current_dir(&dir)
     .assert()
@@ -351,8 +299,7 @@ fn non_unicode_manifest_deserialize_error() {
 
   dir.child("filepack.json").write_binary(&[0x80]).unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["verify", "."])
     .current_dir(&dir)
     .assert()
@@ -369,14 +316,20 @@ error: I/O error at `filepack.json`
 fn print() {
   let dir = TempDir::new().unwrap();
 
-  let manifest = r#"{"files":{"foo":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}}}"#;
+  let manifest = json! {
+    files: {
+      foo: {
+        hash: EMPTY_HASH,
+        size: 0
+      }
+    }
+  };
 
   dir.child("foo").touch().unwrap();
 
-  dir.child("filepack.json").write_str(manifest).unwrap();
+  dir.child("filepack.json").write_str(&manifest).unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["verify", "--print", "."])
     .current_dir(&dir)
     .assert()
@@ -392,13 +345,17 @@ fn manifest_paths_are_relative_to_root() {
 
   dir
     .child("dir/filepack.json")
-    .write_str(
-      r#"{"files":{"foo":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}}}"#
-    )
+    .write_str(&json! {
+      files: {
+        foo: {
+          hash: EMPTY_HASH,
+          size: 0
+        }
+      }
+    })
     .unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["verify", "dir"])
     .current_dir(&dir)
     .assert()
@@ -409,8 +366,7 @@ fn manifest_paths_are_relative_to_root() {
 fn manifest_not_found_error_message() {
   let dir = TempDir::new().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .arg("verify")
     .current_dir(&dir)
     .assert()
@@ -424,13 +380,17 @@ fn file_not_found_error_message() {
 
   dir
     .child("filepack.json")
-    .write_str(
-      r#"{"files":{"foo":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}}}"#
-    )
+    .write_str(&json! {
+      files: {
+        foo: {
+          hash: EMPTY_HASH,
+          size: 0
+        }
+      }
+    })
     .unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .arg("verify")
     .current_dir(&dir)
     .assert()
@@ -444,12 +404,19 @@ fn with_manifest_path() {
 
   dir.child("foo").touch().unwrap();
 
-  dir.child("hello.json").write_str(
-    r#"{"files":{"foo":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}}}"#,
-  ).unwrap();
+  dir
+    .child("hello.json")
+    .write_str(&json! {
+      files: {
+        foo: {
+          hash: EMPTY_HASH,
+          size: 0
+        }
+      }
+    })
+    .unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["verify", "--manifest", "hello.json"])
     .current_dir(&dir)
     .assert()
@@ -462,19 +429,27 @@ fn weak_signature_public_key() {
 
   dir.child("bar").touch().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .arg("create")
     .current_dir(&dir)
     .assert()
     .success();
 
-  let json = r#"{"files":{"bar":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}},"signatures":{"0000000000000000000000000000000000000000000000000000000000000000":"0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"}}"#;
+  let json = json! {
+    files: {
+      bar: {
+        hash: EMPTY_HASH,
+        size: 0
+      }
+    },
+    signatures: {
+      "0000000000000000000000000000000000000000000000000000000000000000":"0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+    }
+  };
 
   fs::write(dir.child("filepack.json"), json).unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .arg("verify")
     .current_dir(&dir)
     .assert()
@@ -488,15 +463,13 @@ fn weak_signature_public_key() {
 fn missing_signature_error() {
   let dir = TempDir::new().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .arg("create")
     .current_dir(&dir)
     .assert()
     .success();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args([
       "verify",
       "--key",
@@ -515,8 +488,7 @@ fn missing_signature_error() {
 fn malformed_signature_error() {
   let dir = TempDir::new().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .arg("create")
     .current_dir(&dir)
     .assert()
@@ -524,11 +496,16 @@ fn malformed_signature_error() {
 
   let path = dir.child("filepack.json");
 
-  let manifest_json = r#"{"files":{},"signatures":{"7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b":"7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b"}}"#;
+  let manifest_json = json! {
+    files: {},
+    signatures: {
+      "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b":
+        "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b"
+    }
+  };
   fs::write(&path, manifest_json).unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .arg("verify")
     .current_dir(&dir)
     .assert()
@@ -542,8 +519,7 @@ fn malformed_signature_error() {
 fn valid_signature_for_wrong_pubkey_error() {
   let dir = TempDir::new().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .env("FILEPACK_DATA_DIR", dir.path())
     .arg("keygen")
     .current_dir(&dir)
@@ -552,8 +528,7 @@ fn valid_signature_for_wrong_pubkey_error() {
 
   dir.child("foo/bar").touch().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .env("FILEPACK_DATA_DIR", dir.path())
     .args(["create", "--sign", "foo"])
     .current_dir(&dir)
@@ -580,8 +555,7 @@ fn valid_signature_for_wrong_pubkey_error() {
     .save(dir.child("foo/filepack.json").utf8_path())
     .unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["verify", "foo"])
     .current_dir(&dir)
     .assert()
@@ -595,8 +569,7 @@ fn valid_signature_for_wrong_pubkey_error() {
 fn signature_verification_success() {
   let dir = TempDir::new().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .env("FILEPACK_DATA_DIR", dir.path())
     .arg("keygen")
     .current_dir(&dir)
@@ -605,8 +578,7 @@ fn signature_verification_success() {
 
   dir.child("foo/bar").touch().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .env("FILEPACK_DATA_DIR", dir.path())
     .args(["create", "--sign", "foo"])
     .current_dir(&dir)
@@ -615,8 +587,7 @@ fn signature_verification_success() {
 
   let public_key = load_key(&dir.child("keys/master.public"));
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["verify", "foo", "--key", &public_key])
     .current_dir(&dir)
     .assert()
@@ -629,26 +600,23 @@ fn verify_fingerprint() {
 
   dir.child("foo").touch().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .arg("create")
     .current_dir(&dir)
     .assert()
     .success();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args([
       "verify",
       "--fingerprint",
-      "74ddbe0dcf48c634aca1d90f37defd60b230fc52857ffa4b6c956583e8a4daaf",
+      "be0bee3021daa02a28397d7c91faa5b43008062dca0f4a95cc74f456d251d66d",
     ])
     .current_dir(&dir)
     .assert()
     .success();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args([
       "verify",
       "--fingerprint",
@@ -660,7 +628,7 @@ fn verify_fingerprint() {
       "\
 fingerprint mismatch: `.*filepack\\.json`
             expected: 0000000000000000000000000000000000000000000000000000000000000000
-              actual: 74ddbe0dcf48c634aca1d90f37defd60b230fc52857ffa4b6c956583e8a4daaf
+              actual: be0bee3021daa02a28397d7c91faa5b43008062dca0f4a95cc74f456d251d66d
 error: fingerprint mismatch\n",
     ))
     .failure();
@@ -672,21 +640,24 @@ fn ignore_missing() {
 
   dir
     .child("filepack.json")
-    .write_str(
-      r#"{"files":{"foo":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}}}"#
-    )
+    .write_str(&json! {
+      files: {
+        foo: {
+          hash: EMPTY_HASH,
+          size: 0
+        }
+      }
+    })
     .unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .arg("verify")
     .current_dir(&dir)
     .assert()
     .stderr(is_match("error: file missing: `foo`\n"))
     .failure();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["verify", "--ignore-missing"])
     .current_dir(&dir)
     .assert()
@@ -699,16 +670,28 @@ fn metadata_allows_unknown_keys() {
 
   dir
     .child("filepack.json")
-    .write_str(r#"{"files":{"metadata.json":{"hash":"1845a2ea1b86a250cb1c24115032cc0fdc064001f59af4a5e9a17be5cd7efbbc","size":25}}}"#)
+    .write_str(&json! {
+      files: {
+        "metadata.json": {
+          hash: "1845a2ea1b86a250cb1c24115032cc0fdc064001f59af4a5e9a17be5cd7efbbc",
+          size: 25
+        }
+      }
+    })
     .unwrap();
 
   dir
     .child("metadata.json")
-    .write_str(r#"{"title":"Foo","bar":100}"#)
+    .write_str(
+      json! {
+        title: "Foo",
+        bar: 100
+      }
+      .trim_end_matches('\n'),
+    )
     .unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["verify"])
     .current_dir(&dir)
     .assert()
@@ -721,16 +704,22 @@ fn metadata_may_not_be_invalid() {
 
   dir
     .child("filepack.json")
-    .write_str(r#"{"files":{"metadata.json":{"hash":"f113b1430243e68a2976426b0e13f21e5795cc107a914816fbf6c2f511092f4b","size":13}}}"#)
+    .write_str(&json! {
+      files: {
+        "metadata.json": {
+          hash: "f113b1430243e68a2976426b0e13f21e5795cc107a914816fbf6c2f511092f4b",
+          size: 13
+        }
+      }
+    })
     .unwrap();
 
   dir
     .child("metadata.json")
-    .write_str(r#"{"title":100}"#)
+    .write_str(json! { title: 100 }.trim_end_matches('\n'))
     .unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["verify"])
     .current_dir(&dir)
     .assert()

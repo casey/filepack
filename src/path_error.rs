@@ -1,7 +1,7 @@
 use super::*;
 
 #[derive(Debug, PartialEq)]
-pub enum Error {
+pub enum PathError {
   Component { component: String },
   DoubleSlash,
   Empty,
@@ -11,21 +11,21 @@ pub enum Error {
   WindowsDiskPrefix { letter: char },
 }
 
-impl Display for Error {
+impl Display for PathError {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     match self {
-      Error::Component { component } => write!(
+      Self::Component { component } => write!(
         f,
         "paths may not contain non-normal path component `{component}`"
       ),
-      Error::DoubleSlash => write!(f, "paths may not contain double slashes"),
-      Error::Empty => write!(f, "paths may not be empty"),
-      Error::LeadingSlash => write!(f, "paths may not begin with slash character"),
-      Error::Separator { character } => {
+      Self::DoubleSlash => write!(f, "paths may not contain double slashes"),
+      Self::Empty => write!(f, "paths may not be empty"),
+      Self::LeadingSlash => write!(f, "paths may not begin with slash character"),
+      Self::Separator { character } => {
         write!(f, "paths may not contain separator character `{character}`")
       }
-      Error::TrailingSlash => write!(f, "paths may not end with slash character"),
-      Error::WindowsDiskPrefix { letter } => write!(
+      Self::TrailingSlash => write!(f, "paths may not end with slash character"),
+      Self::WindowsDiskPrefix { letter } => write!(
         f,
         "paths may not begin with Windows disk prefix `{letter}:`"
       ),
@@ -33,4 +33,4 @@ impl Display for Error {
   }
 }
 
-impl std::error::Error for Error {}
+impl std::error::Error for PathError {}

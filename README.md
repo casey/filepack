@@ -197,9 +197,11 @@ An example manifest for a directory containing the files `README.md` and
       "hash": "5a9a6d96244ec398545fc0c98c2cb7ed52511b025c19e9ad1e3c1ef4ac8575ad",
       "size": 1573
     },
-    "src/main.c": {
-      "hash": "38abf296dc2a90f66f7870fe0ce584af3859668cf5140c7557a76786189dcf0f",
-      "size": 4491
+    "src": {
+      "main.c": {
+        "hash": "38abf296dc2a90f66f7870fe0ce584af3859668cf5140c7557a76786189dcf0f",
+        "size": 4491
+      }
     }
   }
 }

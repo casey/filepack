@@ -3,8 +3,8 @@ use super::*;
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
 pub struct Manifest {
-  #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
-  pub files: BTreeMap<RelativePath, Entry>,
+  #[serde(default, skip_serializing_if = "Directory::is_empty")]
+  pub files: Directory,
   #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
   pub signatures: BTreeMap<PublicKey, Signature>,
 }
@@ -12,17 +12,29 @@ pub struct Manifest {
 impl Manifest {
   pub(crate) const FILENAME: &'static str = "filepack.json";
 
-  pub(crate) fn fingerprint(&self) -> Hash {
-    let canonical = Self {
-      files: self.files.clone(),
-      signatures: BTreeMap::new(),
-    };
+  pub(crate) fn files(&self) -> BTreeMap<RelativePath, File> {
+    let mut files = BTreeMap::new();
+    let mut stack = vec![(&self.files, Vec::new())];
+    while let Some((directory, components)) = stack.pop() {
+      for (component, entry) in &directory.entries {
+        let mut components = components.clone();
+        components.push(component.as_str());
+        match entry {
+          Entry::File(file) => {
+            let path = components.join("/").parse::<RelativePath>().unwrap();
+            let old = files.insert(path, *file);
+            assert!(old.is_none());
+          }
+          Entry::Directory(directory) => stack.push((directory, components)),
+        }
+      }
+    }
+    files
+  }
 
-    let mut hasher = blake3::Hasher::new();
-
-    serde_json::to_writer(&mut hasher, &canonical).unwrap();
-
-    hasher.finalize().into()
+  #[must_use]
+  pub fn fingerprint(&self) -> Hash {
+    self.files.fingerprint()
   }
 
   pub fn load(path: Option<&Utf8Path>) -> Result<(Utf8PathBuf, Self)> {
@@ -48,6 +60,20 @@ impl Manifest {
   pub fn save(&self, path: &Utf8Path) -> Result<()> {
     filesystem::write(path, format!("{}\n", serde_json::to_string(self).unwrap()))
   }
+
+  pub(crate) fn total_size(&self) -> Option<u64> {
+    let mut size = 0u64;
+    let mut stack = vec![&self.files];
+    while let Some(current) = stack.pop() {
+      for entry in current.entries.values() {
+        match entry {
+          Entry::File(file) => size = size.checked_add(file.size)?,
+          Entry::Directory(directory) => stack.push(directory),
+        }
+      }
+    }
+    Some(size)
+  }
 }
 
 #[cfg(test)]
@@ -68,7 +94,7 @@ mod tests {
   #[test]
   fn empty_manifest_serialization() {
     let manifest = Manifest {
-      files: BTreeMap::new(),
+      files: Directory::new(),
       signatures: BTreeMap::new(),
     };
     let json = serde_json::to_string(&manifest).unwrap();

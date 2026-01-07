@@ -4,8 +4,7 @@ use super::*;
 fn keygen_generates_master_key_by_default() {
   let dir = TempDir::new().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .env("FILEPACK_DATA_DIR", dir.path())
     .arg("keygen")
     .current_dir(&dir)
@@ -44,8 +43,7 @@ fn error_if_master_public_key_already_exists() {
 
   fs::write(keys.child("master.public"), "foo").unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .env("FILEPACK_DATA_DIR", dir.path())
     .arg("keygen")
     .current_dir(&dir)
@@ -66,8 +64,7 @@ fn error_if_master_private_key_already_exists() {
 
   fs::write(keys.child("master.private"), "foo").unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .env("FILEPACK_DATA_DIR", dir.path())
     .arg("keygen")
     .current_dir(&dir)

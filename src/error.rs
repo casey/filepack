@@ -25,14 +25,6 @@ pub enum Error {
     path: DisplayPath,
     source: serde_yaml::Error,
   },
-  #[snafu(
-    display(
-      "empty director{} {}",
-      if paths.len() == 1 { "y" } else { "ies" },
-      List::and_ticked(paths),
-    )
-  )]
-  EmptyDirectory { paths: Vec<DisplayPath> },
   #[snafu(display("{count} mismatched file{}", if *count == 1 { "" } else { "s" }))]
   EntryMismatch {
     backtrace: Option<Backtrace>,
@@ -51,6 +43,11 @@ pub enum Error {
   },
   #[snafu(display("fingerprint mismatch"))]
   FingerprintMismatch { backtrace: Option<Backtrace> },
+  #[snafu(display("internal error, this may indicate a bug in filepack: {message}"))]
+  Internal {
+    backtrace: Option<Backtrace>,
+    message: String,
+  },
   #[snafu(display("public key `{public_key}` doesn't match private key `{private_key}`"))]
   KeyMismatch {
     backtrace: Option<Backtrace>,
@@ -90,7 +87,7 @@ pub enum Error {
   #[snafu(display("invalid path `{path}`"))]
   Path {
     path: DisplayPath,
-    source: relative_path::Error,
+    source: PathError,
   },
   #[snafu(display("path not valid unicode: `{}`", path.display()))]
   PathUnicode {

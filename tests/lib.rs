@@ -1,5 +1,5 @@
 use {
-  assert_cmd::Command,
+  assert_cmd::cargo::cargo_bin_cmd,
   assert_fs::{
     TempDir,
     assert::PathAssert,
@@ -35,6 +35,10 @@ where
 fn load_key(path: &Path) -> String {
   fs::read_to_string(path).unwrap().trim().into()
 }
+
+const EMPTY_HASH: &str = "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262";
+
+mod json;
 
 mod create;
 mod fingerprint;
