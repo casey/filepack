@@ -72,14 +72,16 @@ fn existing_signatures_must_be_valid() {
     .assert()
     .success();
 
-  let mut manifest = Manifest::load(&dir.child("foo/filepack.json"));
+  let mut manifest = load_manifest(&dir.child("foo/filepack.json"));
 
   manifest.signatures.insert(
-    "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b".into(),
-    "0".repeat(128),
+    "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b"
+      .parse::<PublicKey>()
+      .unwrap(),
+    "0".repeat(128).parse::<Signature>().unwrap(),
   );
 
-  manifest.save(&dir.child("foo/filepack.json"));
+  save_manifest(&manifest, &dir.child("foo/filepack.json"));
 
   Command::cargo_bin("filepack")
     .unwrap()

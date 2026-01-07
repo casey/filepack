@@ -5,10 +5,10 @@ use {
     fixture::{FileTouch, FileWriteBin, FileWriteStr, PathChild, PathCreateDir},
     TempDir,
   },
-  filepack::Entry,
+  camino::Utf8Path,
+  filepack::{Manifest, PublicKey, Signature},
   predicates::str::RegexPredicate,
-  serde::{Deserialize, Serialize},
-  std::{collections::BTreeMap, fs, path::Path, str},
+  std::{fs, path::Path, str},
 };
 
 fn path(message: &str) -> String {
@@ -26,22 +26,14 @@ fn load_key(path: &Path) -> String {
   fs::read_to_string(path).unwrap().trim().into()
 }
 
-#[derive(Deserialize, Serialize)]
-struct Manifest {
-  #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
-  files: BTreeMap<String, Entry>,
-  #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
-  signatures: BTreeMap<String, String>,
+fn load_manifest(path: &Path) -> Manifest {
+  let utf8_path = Utf8Path::from_path(path).unwrap();
+  Manifest::load(Some(utf8_path)).unwrap().1
 }
 
-impl Manifest {
-  fn load(path: &Path) -> Self {
-    serde_json::from_str(&fs::read_to_string(path).unwrap()).unwrap()
-  }
-
-  fn save(&self, path: &Path) {
-    fs::write(path, serde_json::to_string(self).unwrap()).unwrap();
-  }
+fn save_manifest(manifest: &Manifest, path: &Path) {
+  let utf8_path = Utf8Path::from_path(path).unwrap();
+  manifest.save(utf8_path).unwrap();
 }
 
 mod create;

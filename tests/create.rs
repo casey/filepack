@@ -589,23 +589,26 @@ fn sign_creates_valid_signature() {
     .assert()
     .success();
 
-  let manifest = Manifest::load(&dir.child("foo/filepack.json"));
+  let manifest = load_manifest(&dir.child("foo/filepack.json"));
 
-  let public_key = load_key(&dir.child("keys/master.public"));
+  let public_key_str = load_key(&dir.child("keys/master.public"));
+  let public_key: PublicKey = public_key_str.parse().unwrap();
 
   assert_eq!(manifest.signatures.len(), 1);
 
-  let signature = manifest.signatures[&public_key]
-    .parse::<ed25519_dalek::Signature>()
-    .unwrap();
+  let signature: ed25519_dalek::Signature = manifest.signatures[&public_key].clone().into();
 
-  let public_key =
-    ed25519_dalek::VerifyingKey::from_bytes(&hex::decode(public_key).unwrap().try_into().unwrap())
-      .unwrap();
+  let verifying_key = ed25519_dalek::VerifyingKey::from_bytes(
+    &hex::decode(&public_key_str)
+      .unwrap()
+      .try_into()
+      .unwrap(),
+  )
+  .unwrap();
 
   let fingerprint = blake3::hash(r#"{"files":{"bar":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}}}"#.as_bytes());
 
-  public_key
+  verifying_key
     .verify_strict(fingerprint.as_bytes(), &signature)
     .unwrap();
 

@@ -25,7 +25,7 @@ impl Manifest {
     hasher.finalize().into()
   }
 
-  pub(crate) fn load(path: Option<&Utf8Path>) -> Result<(Utf8PathBuf, Self)> {
+  pub fn load(path: Option<&Utf8Path>) -> Result<(Utf8PathBuf, Self)> {
     let path = if let Some(path) = path {
       if filesystem::metadata(path)?.is_dir() {
         path.join(Manifest::FILENAME)
@@ -45,7 +45,7 @@ impl Manifest {
     Ok((path, manifest))
   }
 
-  pub(crate) fn save(&self, path: &Utf8Path) -> Result<()> {
+  pub fn save(&self, path: &Utf8Path) -> Result<()> {
     filesystem::write(path, format!("{}\n", serde_json::to_string(self).unwrap()))
   }
 }

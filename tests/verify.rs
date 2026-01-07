@@ -469,11 +469,9 @@ fn weak_signature_public_key() {
     .assert()
     .success();
 
-  let mut manifest = Manifest::load(&dir.child("filepack.json"));
-
-  manifest.signatures.insert("0".repeat(64), "0".repeat(128));
-
-  manifest.save(&dir.child("filepack.json"));
+  // Write manifest with weak public key directly as JSON to bypass type validation
+  let manifest_json = r#"{"files":{"bar":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}},"signatures":{"0000000000000000000000000000000000000000000000000000000000000000":"0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"}}"#;
+  fs::write(dir.child("filepack.json"), manifest_json).unwrap();
 
   Command::cargo_bin("filepack")
     .unwrap()
@@ -526,16 +524,9 @@ fn malformed_signature_error() {
 
   let path = dir.child("filepack.json");
 
-  let mut manifest = Manifest::load(&path);
-
-  manifest.signatures.clear();
-
-  manifest.signatures.insert(
-    "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b".into(),
-    "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b".into(),
-  );
-
-  manifest.save(&path);
+  // Write manifest with malformed signature (wrong length) directly as JSON to bypass type validation
+  let manifest_json = r#"{"files":{},"signatures":{"7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b":"7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b"}}"#;
+  fs::write(&path, manifest_json).unwrap();
 
   Command::cargo_bin("filepack")
     .unwrap()
@@ -570,18 +561,21 @@ fn valid_signature_for_wrong_pubkey_error() {
     .assert()
     .success();
 
-  let mut manifest = Manifest::load(&dir.child("foo/filepack.json"));
+  let mut manifest = load_manifest(&dir.child("foo/filepack.json"));
 
-  let public_key = load_key(&dir.child("keys/master.public"));
+  let public_key_str = load_key(&dir.child("keys/master.public"));
+  let public_key: PublicKey = public_key_str.parse().unwrap();
 
   let foo = manifest.signatures.remove(&public_key).unwrap();
 
   manifest.signatures.insert(
-    "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b".into(),
+    "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b"
+      .parse::<PublicKey>()
+      .unwrap(),
     foo,
   );
 
-  manifest.save(&dir.child("foo/filepack.json"));
+  save_manifest(&manifest, &dir.child("foo/filepack.json"));
 
   Command::cargo_bin("filepack")
     .unwrap()

@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(Debug, Snafu)]
 #[snafu(context(suffix(Error)))]
-pub(crate) enum Error {
+pub enum Error {
   #[snafu(display("invalid private key hex"))]
   Hex { source: hex::FromHexError },
   #[snafu(display("invalid private key byte length {length}"))]
