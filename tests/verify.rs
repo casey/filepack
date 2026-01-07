@@ -338,7 +338,7 @@ fn non_unicode_path_error() {
     .args(["verify", "."])
     .current_dir(&dir)
     .assert()
-    .stderr(format!("error: path not valid unicode: `.{SEPARATOR}�`\n"))
+    .stderr(path("error: path not valid unicode: `./�`\n"))
     .failure();
 }
 
