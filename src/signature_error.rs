@@ -1,6 +1,6 @@
 use super::*;
 
-pub(crate) struct SignatureError(pub(crate) ed25519_dalek::SignatureError);
+pub struct SignatureError(pub(crate) ed25519_dalek::SignatureError);
 
 impl Display for SignatureError {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {

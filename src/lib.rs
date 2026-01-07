@@ -1,11 +1,9 @@
 use {
   self::{
-    arguments::Arguments, display_path::DisplayPath, display_secret::DisplaySecret, error::Error,
-    lint::Lint, lint_group::LintGroup, list::List, manifest::Manifest, metadata::Metadata,
-    options::Options, owo_colorize_ext::OwoColorizeExt, private_key::PrivateKey,
-    public_key::PublicKey, relative_path::RelativePath, signature::Signature,
-    signature_error::SignatureError, style::Style, subcommand::Subcommand, template::Template,
-    utf8_path_ext::Utf8PathExt,
+    arguments::Arguments, display_path::DisplayPath, display_secret::DisplaySecret, lint::Lint,
+    lint_group::LintGroup, list::List, metadata::Metadata, options::Options,
+    owo_colorize_ext::OwoColorizeExt, private_key::PrivateKey, signature_error::SignatureError,
+    style::Style, subcommand::Subcommand, template::Template, utf8_path_ext::Utf8PathExt,
   },
   blake3::Hasher,
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},
@@ -15,7 +13,7 @@ use {
   owo_colors::Styled,
   serde::{Deserialize, Deserializer, Serialize, Serializer},
   serde_with::{DeserializeFromStr, SerializeDisplay},
-  snafu::{ensure, ErrorCompat, OptionExt, ResultExt, Snafu},
+  snafu::{ErrorCompat, OptionExt, ResultExt, Snafu, ensure},
   std::{
     array::TryFromSliceError,
     backtrace::{Backtrace, BacktraceStatus},
@@ -32,7 +30,10 @@ use {
   walkdir::WalkDir,
 };
 
-pub use self::{entry::Entry, hash::Hash};
+pub use self::{
+  entry::Entry, error::Error, hash::Hash, manifest::Manifest, public_key::PublicKey,
+  relative_path::RelativePath, signature::Signature,
+};
 
 #[cfg(test)]
 use assert_fs::TempDir;
@@ -91,12 +92,12 @@ pub fn run() {
       eprintln!("       {}─ {err}", if i < causes - 1 { '├' } else { '└' });
     }
 
-    if let Some(backtrace) = err.backtrace() {
-      if backtrace.status() == BacktraceStatus::Captured {
-        eprintln!();
-        eprintln!("backtrace:");
-        eprintln!("{backtrace}");
-      }
+    if let Some(backtrace) = err.backtrace()
+      && backtrace.status() == BacktraceStatus::Captured
+    {
+      eprintln!();
+      eprintln!("backtrace:");
+      eprintln!("{backtrace}");
     }
 
     process::exit(1);

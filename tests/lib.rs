@@ -1,15 +1,25 @@
 use {
   assert_cmd::Command,
   assert_fs::{
-    assert::PathAssert,
-    fixture::{FileTouch, FileWriteBin, FileWriteStr, PathChild, PathCreateDir},
     TempDir,
+    assert::PathAssert,
+    fixture::{ChildPath, FileTouch, FileWriteBin, FileWriteStr, PathChild, PathCreateDir},
   },
-  filepack::Entry,
+  camino::Utf8Path,
+  filepack::{Manifest, PublicKey, Signature},
   predicates::str::RegexPredicate,
-  serde::{Deserialize, Serialize},
-  std::{collections::BTreeMap, fs, path::Path, str},
+  std::{fs, path::Path, str},
 };
+
+trait ChildPathExt {
+  fn utf8_path(&self) -> &Utf8Path;
+}
+
+impl ChildPathExt for ChildPath {
+  fn utf8_path(&self) -> &Utf8Path {
+    self.path().try_into().unwrap()
+  }
+}
 
 fn path(message: &str) -> String {
   message.replace('/', std::path::MAIN_SEPARATOR_STR)
@@ -24,24 +34,6 @@ where
 
 fn load_key(path: &Path) -> String {
   fs::read_to_string(path).unwrap().trim().into()
-}
-
-#[derive(Deserialize, Serialize)]
-struct Manifest {
-  #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
-  files: BTreeMap<String, Entry>,
-  #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
-  signatures: BTreeMap<String, String>,
-}
-
-impl Manifest {
-  fn load(path: &Path) -> Self {
-    serde_json::from_str(&fs::read_to_string(path).unwrap()).unwrap()
-  }
-
-  fn save(&self, path: &Path) {
-    fs::write(path, serde_json::to_string(self).unwrap()).unwrap();
-  }
 }
 
 mod create;

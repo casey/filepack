@@ -2,11 +2,11 @@ use super::*;
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
-pub(crate) struct Manifest {
+pub struct Manifest {
   #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
-  pub(crate) files: BTreeMap<RelativePath, Entry>,
+  pub files: BTreeMap<RelativePath, Entry>,
   #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
-  pub(crate) signatures: BTreeMap<PublicKey, Signature>,
+  pub signatures: BTreeMap<PublicKey, Signature>,
 }
 
 impl Manifest {
@@ -25,7 +25,7 @@ impl Manifest {
     hasher.finalize().into()
   }
 
-  pub(crate) fn load(path: Option<&Utf8Path>) -> Result<(Utf8PathBuf, Self)> {
+  pub fn load(path: Option<&Utf8Path>) -> Result<(Utf8PathBuf, Self)> {
     let path = if let Some(path) = path {
       if filesystem::metadata(path)?.is_dir() {
         path.join(Manifest::FILENAME)
@@ -45,7 +45,7 @@ impl Manifest {
     Ok((path, manifest))
   }
 
-  pub(crate) fn save(&self, path: &Utf8Path) -> Result<()> {
+  pub fn save(&self, path: &Utf8Path) -> Result<()> {
     filesystem::write(path, format!("{}\n", serde_json::to_string(self).unwrap()))
   }
 }

@@ -5,7 +5,7 @@ authors = ["Casey Rodarmor <casey@rodarmor.com>"]
 autotests = false
 categories = ["authentication", "command-line-utilities", "cryptography"]
 description = "file verification utility"
-edition = "2021"
+edition = "2024"
 homepage = "https://github.com/casey/filepack"
 keywords = ["checksum", "verification"]
 license = "CC0-1.0"
@@ -42,6 +42,8 @@ all = { level = "deny", priority = -1 }
 arbitrary-source-item-ordering = "deny"
 float-cmp = "allow"
 large_enum_variant = "allow"
+missing-errors-doc = "allow"
+missing-panics-doc = "allow"
 needless-pass-by-value = "allow"
 pedantic = { level = "deny", priority = -1 }
 result-large-err = "allow"
