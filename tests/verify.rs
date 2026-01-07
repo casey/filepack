@@ -564,8 +564,9 @@ fn valid_signature_for_wrong_pubkey_error() {
   let (_path, mut manifest) =
     Manifest::load(Some(dir.child("foo/filepack.json").utf8_path())).unwrap();
 
-  let public_key_str = load_key(&dir.child("keys/master.public"));
-  let public_key: PublicKey = public_key_str.parse().unwrap();
+  let public_key = load_key(&dir.child("keys/master.public"))
+    .parse::<PublicKey>()
+    .unwrap();
 
   let foo = manifest.signatures.remove(&public_key).unwrap();
 
