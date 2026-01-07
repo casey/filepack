@@ -1,7 +1,7 @@
 use super::*;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(crate) struct Hash(blake3::Hash);
+pub struct Hash(blake3::Hash);
 
 impl Hash {
   pub(crate) const LEN: usize = blake3::OUT_LEN;

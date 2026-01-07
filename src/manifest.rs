@@ -45,7 +45,7 @@ impl Manifest {
     Ok((path, manifest))
   }
 
-  pub(crate) fn store(&self, path: &Utf8Path) -> Result<()> {
+  pub(crate) fn save(&self, path: &Utf8Path) -> Result<()> {
     filesystem::write(path, format!("{}\n", serde_json::to_string(self).unwrap()))
   }
 }

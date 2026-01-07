@@ -5,6 +5,7 @@ use {
     fixture::{FileTouch, FileWriteBin, FileWriteStr, PathChild, PathCreateDir},
     TempDir,
   },
+  filepack::Entry,
   predicates::str::RegexPredicate,
   serde::{Deserialize, Serialize},
   std::{collections::BTreeMap, fs, path::Path, str},
@@ -33,18 +34,12 @@ struct Manifest {
   signatures: BTreeMap<String, String>,
 }
 
-#[derive(Deserialize, Serialize)]
-pub(crate) struct Entry {
-  pub(crate) hash: String,
-  pub(crate) size: u64,
-}
-
 impl Manifest {
   fn load(path: &Path) -> Self {
     serde_json::from_str(&fs::read_to_string(path).unwrap()).unwrap()
   }
 
-  fn store(&self, path: &Path) {
+  fn save(&self, path: &Path) {
     fs::write(path, serde_json::to_string(self).unwrap()).unwrap();
   }
 }

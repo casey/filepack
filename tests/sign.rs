@@ -79,7 +79,7 @@ fn existing_signatures_must_be_valid() {
     "0".repeat(128),
   );
 
-  manifest.store(&dir.child("foo/filepack.json"));
+  manifest.save(&dir.child("foo/filepack.json"));
 
   Command::cargo_bin("filepack")
     .unwrap()
