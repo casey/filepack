@@ -175,7 +175,7 @@ fn file_in_subdirectory() {
 fn non_unicode_path_error() {
   use std::path::PathBuf;
 
-  // disable test on macos, since it does not allow non-unicode filenames
+  // don't test on macos, non-unicode filenames are disallowed
   if cfg!(target_os = "macos") {
     return;
   }
