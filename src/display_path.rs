@@ -1,7 +1,7 @@
 use super::*;
 
 #[derive(Debug)]
-pub(crate) struct DisplayPath(PathBuf);
+pub struct DisplayPath(PathBuf);
 
 impl Display for DisplayPath {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
