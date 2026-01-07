@@ -92,12 +92,12 @@ pub fn run() {
       eprintln!("       {}─ {err}", if i < causes - 1 { '├' } else { '└' });
     }
 
-    if let Some(backtrace) = err.backtrace() {
-      if backtrace.status() == BacktraceStatus::Captured {
-        eprintln!();
-        eprintln!("backtrace:");
-        eprintln!("{backtrace}");
-      }
+    if let Some(backtrace) = err.backtrace()
+      && backtrace.status() == BacktraceStatus::Captured
+    {
+      eprintln!();
+      eprintln!("backtrace:");
+      eprintln!("{backtrace}");
     }
 
     process::exit(1);

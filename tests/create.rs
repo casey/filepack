@@ -589,7 +589,7 @@ fn sign_creates_valid_signature() {
     .assert()
     .success();
 
-  let manifest = load_manifest(&dir.child("foo/filepack.json"));
+  let (_path, manifest) = Manifest::load(Some(dir.child("foo/filepack.json").utf8_path())).unwrap();
 
   let public_key_str = load_key(&dir.child("keys/master.public"));
   let public_key: PublicKey = public_key_str.parse().unwrap();

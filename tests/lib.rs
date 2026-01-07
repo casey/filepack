@@ -3,13 +3,23 @@ use {
   assert_fs::{
     TempDir,
     assert::PathAssert,
-    fixture::{FileTouch, FileWriteBin, FileWriteStr, PathChild, PathCreateDir},
+    fixture::{ChildPath, FileTouch, FileWriteBin, FileWriteStr, PathChild, PathCreateDir},
   },
   camino::Utf8Path,
   filepack::{Manifest, PublicKey, Signature},
   predicates::str::RegexPredicate,
   std::{fs, path::Path, str},
 };
+
+trait ChildPathExt {
+  fn utf8_path(&self) -> &Utf8Path;
+}
+
+impl ChildPathExt for ChildPath {
+  fn utf8_path(&self) -> &Utf8Path {
+    self.path().try_into().unwrap()
+  }
+}
 
 fn path(message: &str) -> String {
   message.replace('/', std::path::MAIN_SEPARATOR_STR)
@@ -24,11 +34,6 @@ where
 
 fn load_key(path: &Path) -> String {
   fs::read_to_string(path).unwrap().trim().into()
-}
-
-fn load_manifest(path: &Path) -> Manifest {
-  let utf8_path = Utf8Path::from_path(path).unwrap();
-  Manifest::load(Some(utf8_path)).unwrap().1
 }
 
 mod create;

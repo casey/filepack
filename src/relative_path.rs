@@ -140,10 +140,10 @@ impl FromStr for RelativePath {
     let mut chars = s.chars();
     let first = chars.next();
     let second = chars.next();
-    if let Some((first, second)) = first.zip(second) {
-      if second == ':' {
-        return Err(Error::WindowsDiskPrefix { letter: first });
-      }
+    if let Some((first, second)) = first.zip(second)
+      && second == ':'
+    {
+      return Err(Error::WindowsDiskPrefix { letter: first });
     }
 
     let mut path = String::new();

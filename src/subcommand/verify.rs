@@ -47,19 +47,19 @@ impl Verify {
 
     let fingerprint = manifest.fingerprint();
 
-    if let Some(expected) = self.fingerprint {
-      if fingerprint != expected {
-        let style = Style::stderr();
-        eprintln!(
-          "\
+    if let Some(expected) = self.fingerprint
+      && fingerprint != expected
+    {
+      let style = Style::stderr();
+      eprintln!(
+        "\
 fingerprint mismatch: `{source}`
             expected: {}
               actual: {}",
-          expected.style(style.good()),
-          fingerprint.style(style.bad()),
-        );
-        return Err(error::FingerprintMismatch.build());
-      }
+        expected.style(style.good()),
+        fingerprint.style(style.bad()),
+      );
+      return Err(error::FingerprintMismatch.build());
     }
 
     let bar = progress_bar::new(
