@@ -5,6 +5,7 @@ use {
     fixture::{FileTouch, FileWriteBin, FileWriteStr, PathChild, PathCreateDir},
     TempDir,
   },
+  filepack::Entry,
   predicates::str::RegexPredicate,
   serde::{Deserialize, Serialize},
   std::{collections::BTreeMap, fs, path::Path, str},
@@ -31,12 +32,6 @@ struct Manifest {
   files: BTreeMap<String, Entry>,
   #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
   signatures: BTreeMap<String, String>,
-}
-
-#[derive(Deserialize, Serialize)]
-pub(crate) struct Entry {
-  pub(crate) hash: String,
-  pub(crate) size: u64,
 }
 
 impl Manifest {
