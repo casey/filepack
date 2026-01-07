@@ -10,7 +10,9 @@ use {
   std::{collections::BTreeMap, fs, path::Path, str},
 };
 
-const SEPARATOR: char = if cfg!(windows) { '\\' } else { '/' };
+fn path(message: &str) -> String {
+  message.replace('/', std::path::MAIN_SEPARATOR_STR)
+}
 
 fn is_match<S>(pattern: S) -> RegexPredicate
 where

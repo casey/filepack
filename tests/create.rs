@@ -171,38 +171,41 @@ fn file_in_subdirectory() {
     .success();
 }
 
-// disable test on macos, since it does not allow non-unicode filenames
-#[cfg(not(target_os = "macos"))]
 #[test]
 fn non_unicode_path_error() {
   use std::path::PathBuf;
 
+  // macos does not allow non-unicode filenames
+  if cfg!(target_os = "macos") {
+    return;
+  }
+
   let dir = TempDir::new().unwrap();
 
-  let path: PathBuf;
+  let invalid: PathBuf;
 
   #[cfg(unix)]
   {
     use std::{ffi::OsStr, os::unix::ffi::OsStrExt};
 
-    path = OsStr::from_bytes(&[0x80]).into();
+    invalid = OsStr::from_bytes(&[0x80]).into();
   };
 
   #[cfg(windows)]
   {
     use std::{ffi::OsString, os::windows::ffi::OsStringExt};
 
-    path = OsString::from_wide(&[0xd800]).into();
+    invalid = OsString::from_wide(&[0xd800]).into();
   };
 
-  dir.child(path).touch().unwrap();
+  dir.child(invalid).touch().unwrap();
 
   Command::cargo_bin("filepack")
     .unwrap()
     .args(["create", "."])
     .current_dir(&dir)
     .assert()
-    .stderr(format!("error: path not valid unicode: `.{SEPARATOR}�`\n"))
+    .stderr(path("error: path not valid unicode: `./�`\n"))
     .failure();
 }
 
@@ -268,13 +271,16 @@ fn only_leaf_empty_directory_is_reported() {
     .args(["create", "."])
     .current_dir(&dir)
     .assert()
-    .stderr(format!("error: empty directory `foo{SEPARATOR}bar`\n"))
+    .stderr(path("error: empty directory `foo/bar`\n"))
     .failure();
 }
 
-#[cfg(not(windows))]
 #[test]
 fn backslash_error() {
+  if cfg!(windows) {
+    return;
+  }
+
   let dir = TempDir::new().unwrap();
 
   dir.child("\\").touch().unwrap();
@@ -293,9 +299,12 @@ error: invalid path `\\`
     .failure();
 }
 
-#[cfg(all(not(windows), not(target_os = "macos")))]
 #[test]
 fn deny_case_insensitive_filesystem_path_conflict() {
+  if cfg!(windows) || cfg!(target_os = "macos") {
+    return;
+  }
+
   let dir = TempDir::new().unwrap();
 
   dir.child("foo").touch().unwrap();
@@ -317,9 +326,12 @@ error: 1 lint error
     .failure();
 }
 
-#[cfg(not(windows))]
 #[test]
 fn deny_lint() {
+  if cfg!(windows) {
+    return;
+  }
+
   let dir = TempDir::new().unwrap();
 
   dir.child("aux").touch().unwrap();
@@ -339,9 +351,12 @@ error: 1 lint error
     .failure();
 }
 
-#[cfg(not(windows))]
 #[test]
 fn allow_lint() {
+  if cfg!(windows) {
+    return;
+  }
+
   let dir = TempDir::new().unwrap();
 
   dir.child("aux").touch().unwrap();
@@ -617,9 +632,7 @@ fn metadata_already_exists() {
     .args(["create", "foo", "--metadata", "metadata.yaml"])
     .current_dir(&dir)
     .assert()
-    .stderr(format!(
-      "error: metadata `foo{SEPARATOR}metadata.json` already exists\n"
-    ))
+    .stderr(path("error: metadata `foo/metadata.json` already exists\n"))
     .failure();
 
   Command::cargo_bin("filepack")
