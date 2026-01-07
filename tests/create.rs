@@ -173,12 +173,12 @@ fn file_in_subdirectory() {
 
 #[test]
 fn non_unicode_path_error() {
+  use std::path::PathBuf;
+
   // disable test on macos, since it does not allow non-unicode filenames
   if cfg!(target_os = "macos") {
     return;
   }
-
-  use std::path::PathBuf;
 
   let dir = TempDir::new().unwrap();
 
