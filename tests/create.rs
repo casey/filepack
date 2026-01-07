@@ -268,7 +268,7 @@ fn only_leaf_empty_directory_is_reported() {
     .args(["create", "."])
     .current_dir(&dir)
     .assert()
-    .stderr(format!("error: empty directory `foo{SEPARATOR}bar`\n"))
+    .stderr(path("error: empty directory `foo/bar`\n"))
     .failure();
 }
 
@@ -617,9 +617,7 @@ fn metadata_already_exists() {
     .args(["create", "foo", "--metadata", "metadata.yaml"])
     .current_dir(&dir)
     .assert()
-    .stderr(format!(
-      "error: metadata `foo{SEPARATOR}metadata.json` already exists\n"
-    ))
+    .stderr(path("error: metadata `foo/metadata.json` already exists\n"))
     .failure();
 
   Command::cargo_bin("filepack")

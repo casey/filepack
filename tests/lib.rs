@@ -7,10 +7,17 @@ use {
   },
   predicates::str::RegexPredicate,
   serde::{Deserialize, Serialize},
-  std::{collections::BTreeMap, fs, path::Path, str},
+  std::{
+    collections::BTreeMap,
+    fs,
+    path::{Path, MAIN_SEPARATOR},
+    str,
+  },
 };
 
-const SEPARATOR: char = if cfg!(windows) { '\\' } else { '/' };
+fn path(message: &str) -> String {
+  message.replace("/", &MAIN_SEPARATOR.to_string())
+}
 
 fn is_match<S>(pattern: S) -> RegexPredicate
 where
