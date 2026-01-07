@@ -81,7 +81,9 @@ fn existing_signatures_must_be_valid() {
     "0".repeat(128).parse::<Signature>().unwrap(),
   );
 
-  save_manifest(&manifest, &dir.child("foo/filepack.json"));
+  manifest
+    .save(dir.child("foo/filepack.json").path().try_into().unwrap())
+    .unwrap();
 
   Command::cargo_bin("filepack")
     .unwrap()

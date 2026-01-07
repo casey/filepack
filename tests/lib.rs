@@ -31,11 +31,6 @@ fn load_manifest(path: &Path) -> Manifest {
   Manifest::load(Some(utf8_path)).unwrap().1
 }
 
-fn save_manifest(manifest: &Manifest, path: &Path) {
-  let utf8_path = Utf8Path::from_path(path).unwrap();
-  manifest.save(utf8_path).unwrap();
-}
-
 mod create;
 mod fingerprint;
 mod hash;

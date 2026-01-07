@@ -575,7 +575,9 @@ fn valid_signature_for_wrong_pubkey_error() {
     foo,
   );
 
-  save_manifest(&manifest, &dir.child("foo/filepack.json"));
+  manifest
+    .save(dir.child("foo/filepack.json").path().try_into().unwrap())
+    .unwrap();
 
   Command::cargo_bin("filepack")
     .unwrap()
