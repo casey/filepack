@@ -37,7 +37,7 @@ impl Sign {
 
     manifest.signatures.insert(public_key, signature);
 
-    manifest.store(&path)?;
+    manifest.save(&path)?;
 
     Ok(())
   }

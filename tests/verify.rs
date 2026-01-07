@@ -473,7 +473,7 @@ fn weak_signature_public_key() {
 
   manifest.signatures.insert("0".repeat(64), "0".repeat(128));
 
-  manifest.store(&dir.child("filepack.json"));
+  manifest.save(&dir.child("filepack.json"));
 
   Command::cargo_bin("filepack")
     .unwrap()
@@ -535,7 +535,7 @@ fn malformed_signature_error() {
     "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b".into(),
   );
 
-  manifest.store(&path);
+  manifest.save(&path);
 
   Command::cargo_bin("filepack")
     .unwrap()
@@ -581,7 +581,7 @@ fn valid_signature_for_wrong_pubkey_error() {
     foo,
   );
 
-  manifest.store(&dir.child("foo/filepack.json"));
+  manifest.save(&dir.child("foo/filepack.json"));
 
   Command::cargo_bin("filepack")
     .unwrap()

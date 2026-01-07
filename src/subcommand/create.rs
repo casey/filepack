@@ -40,7 +40,7 @@ impl Create {
         self.force || !filesystem::exists(&path)?,
         error::MetadataAlreadyExists { path: &path },
       }
-      Metadata::from(template).store(&path)?;
+      Metadata::from(template).save(&path)?;
     }
 
     let cleaned_manifest = current_dir.join(&manifest_path).lexiclean();
@@ -185,7 +185,7 @@ impl Create {
       manifest.signatures.insert(public_key, signature);
     }
 
-    manifest.store(&manifest_path)?;
+    manifest.save(&manifest_path)?;
 
     Ok(())
   }

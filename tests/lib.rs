@@ -39,7 +39,7 @@ impl Manifest {
     serde_json::from_str(&fs::read_to_string(path).unwrap()).unwrap()
   }
 
-  fn store(&self, path: &Path) {
+  fn save(&self, path: &Path) {
     fs::write(path, serde_json::to_string(self).unwrap()).unwrap();
   }
 }
