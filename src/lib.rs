@@ -1,11 +1,10 @@
 use {
   self::{
     arguments::Arguments, display_path::DisplayPath, display_secret::DisplaySecret, error::Error,
-    lint::Lint, lint_group::LintGroup, list::List, manifest::Manifest, metadata::Metadata,
-    options::Options, owo_colorize_ext::OwoColorizeExt, private_key::PrivateKey,
-    public_key::PublicKey, relative_path::RelativePath, signature::Signature,
-    signature_error::SignatureError, style::Style, subcommand::Subcommand, template::Template,
-    utf8_path_ext::Utf8PathExt,
+    lint::Lint, lint_group::LintGroup, list::List, metadata::Metadata, options::Options,
+    owo_colorize_ext::OwoColorizeExt, private_key::PrivateKey, public_key::PublicKey,
+    relative_path::RelativePath, signature::Signature, signature_error::SignatureError,
+    style::Style, subcommand::Subcommand, template::Template, utf8_path_ext::Utf8PathExt,
   },
   blake3::Hasher,
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},
@@ -32,7 +31,7 @@ use {
   walkdir::WalkDir,
 };
 
-pub use self::{entry::Entry, hash::Hash};
+pub use self::{entry::Entry, hash::Hash, manifest::Manifest};
 
 #[cfg(test)]
 use assert_fs::TempDir;

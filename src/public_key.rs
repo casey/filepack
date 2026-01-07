@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(Debug, Snafu)]
 #[snafu(context(suffix(Error)))]
-pub(crate) enum Error {
+pub enum Error {
   #[snafu(display("invalid public key hex: `{key}`"))]
   Hex {
     key: String,
@@ -21,7 +21,7 @@ pub(crate) enum Error {
 }
 
 #[derive(Clone, Debug, DeserializeFromStr, Eq, PartialEq, SerializeDisplay)]
-pub(crate) struct PublicKey(ed25519_dalek::VerifyingKey);
+pub struct PublicKey(ed25519_dalek::VerifyingKey);
 
 impl PublicKey {
   const LEN: usize = ed25519_dalek::PUBLIC_KEY_LENGTH;

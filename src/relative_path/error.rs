@@ -1,7 +1,7 @@
 use super::*;
 
 #[derive(Debug, PartialEq)]
-pub(crate) enum Error {
+pub enum Error {
   Component { component: String },
   DoubleSlash,
   Empty,

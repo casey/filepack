@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(Debug, Snafu)]
 #[snafu(context(suffix(Error)))]
-pub(crate) enum Error {
+pub enum Error {
   #[snafu(display("invalid signature hex: `{signature}`"))]
   Hex {
     signature: String,
@@ -17,7 +17,7 @@ pub(crate) enum Error {
 }
 
 #[derive(Clone, DeserializeFromStr, PartialEq, SerializeDisplay)]
-pub(crate) struct Signature(ed25519_dalek::Signature);
+pub struct Signature(ed25519_dalek::Signature);
 
 impl Signature {
   const LEN: usize = ed25519_dalek::Signature::BYTE_SIZE;

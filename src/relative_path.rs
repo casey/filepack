@@ -5,7 +5,7 @@ pub(crate) use self::error::Error;
 mod error;
 
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize)]
-pub(crate) struct RelativePath(String);
+pub struct RelativePath(String);
 
 impl RelativePath {
   const JUNK_NAMES: [&'static str; 2] = [".DS_Store", ".localized"];

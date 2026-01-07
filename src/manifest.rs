@@ -2,11 +2,11 @@ use super::*;
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
-pub(crate) struct Manifest {
+pub struct Manifest {
   #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
-  pub(crate) files: BTreeMap<RelativePath, Entry>,
+  pub files: BTreeMap<RelativePath, Entry>,
   #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
-  pub(crate) signatures: BTreeMap<PublicKey, Signature>,
+  pub signatures: BTreeMap<PublicKey, Signature>,
 }
 
 impl Manifest {
