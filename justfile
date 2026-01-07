@@ -1,5 +1,7 @@
-watch +args='test':
+watch +args='ltest':
   cargo watch --clear --exec '{{ args }}'
+
+clippy: (watch 'lclippy --all-targets -- --deny warnings')
 
 ci: lint
   cargo test --workspace

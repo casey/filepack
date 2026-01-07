@@ -7,16 +7,11 @@ use {
   },
   predicates::str::RegexPredicate,
   serde::{Deserialize, Serialize},
-  std::{
-    collections::BTreeMap,
-    fs,
-    path::{Path, MAIN_SEPARATOR},
-    str,
-  },
+  std::{collections::BTreeMap, fs, path::Path, str},
 };
 
 fn path(message: &str) -> String {
-  message.replace("/", &MAIN_SEPARATOR.to_string())
+  message.replace('/', std::path::MAIN_SEPARATOR_STR)
 }
 
 fn is_match<S>(pattern: S) -> RegexPredicate
