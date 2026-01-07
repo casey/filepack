@@ -171,31 +171,34 @@ fn file_in_subdirectory() {
     .success();
 }
 
-// disable test on macos, since it does not allow non-unicode filenames
-#[cfg(not(target_os = "macos"))]
 #[test]
 fn non_unicode_path_error() {
+  // disable test on macos, since it does not allow non-unicode filenames
+  if cfg!(target_os = "macos") {
+    return;
+  }
+
   use std::path::PathBuf;
 
   let dir = TempDir::new().unwrap();
 
-  let path: PathBuf;
+  let p: PathBuf;
 
   #[cfg(unix)]
   {
     use std::{ffi::OsStr, os::unix::ffi::OsStrExt};
 
-    path = OsStr::from_bytes(&[0x80]).into();
+    p = OsStr::from_bytes(&[0x80]).into();
   };
 
   #[cfg(windows)]
   {
     use std::{ffi::OsString, os::windows::ffi::OsStringExt};
 
-    path = OsString::from_wide(&[0xd800]).into();
+    p = OsString::from_wide(&[0xd800]).into();
   };
 
-  dir.child(path).touch().unwrap();
+  dir.child(p).touch().unwrap();
 
   Command::cargo_bin("filepack")
     .unwrap()
