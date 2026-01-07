@@ -302,31 +302,34 @@ error: 2 mismatched files
     .failure();
 }
 
-// disable test on macos, since it does not allow non-unicode filenames
-#[cfg(not(target_os = "macos"))]
 #[test]
 fn non_unicode_path_error() {
   use std::path::PathBuf;
 
+  // disable test on macos, since it does not allow non-unicode filenames
+  if cfg!(target_os = "macos") {
+    return;
+  }
+
   let dir = TempDir::new().unwrap();
 
-  let path: PathBuf;
+  let invalid: PathBuf;
 
   #[cfg(unix)]
   {
     use std::{ffi::OsStr, os::unix::ffi::OsStrExt};
 
-    path = OsStr::from_bytes(&[0x80]).into();
+    invalid = OsStr::from_bytes(&[0x80]).into();
   };
 
   #[cfg(windows)]
   {
     use std::{ffi::OsString, os::windows::ffi::OsStringExt};
 
-    path = OsString::from_wide(&[0xd800]).into();
+    invalid = OsString::from_wide(&[0xd800]).into();
   };
 
-  dir.child(path).touch().unwrap();
+  dir.child(invalid).touch().unwrap();
 
   dir
     .child("filepack.json")

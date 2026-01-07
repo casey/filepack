@@ -182,23 +182,23 @@ fn non_unicode_path_error() {
 
   let dir = TempDir::new().unwrap();
 
-  let p: PathBuf;
+  let invalid: PathBuf;
 
   #[cfg(unix)]
   {
     use std::{ffi::OsStr, os::unix::ffi::OsStrExt};
 
-    p = OsStr::from_bytes(&[0x80]).into();
+    invalid = OsStr::from_bytes(&[0x80]).into();
   };
 
   #[cfg(windows)]
   {
     use std::{ffi::OsString, os::windows::ffi::OsStringExt};
 
-    p = OsString::from_wide(&[0xd800]).into();
+    invalid = OsString::from_wide(&[0xd800]).into();
   };
 
-  dir.child(p).touch().unwrap();
+  dir.child(invalid).touch().unwrap();
 
   Command::cargo_bin("filepack")
     .unwrap()
@@ -351,9 +351,12 @@ error: 1 lint error
     .failure();
 }
 
-#[cfg(not(windows))]
 #[test]
 fn allow_lint() {
+  if cfg!(windows) {
+    return;
+  }
+
   let dir = TempDir::new().unwrap();
 
   dir.child("aux").touch().unwrap();
