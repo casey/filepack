@@ -38,7 +38,7 @@ impl PublicKey {
     Ok(public_key)
   }
 
-  pub(crate) fn verify(&self, message: &[u8], signature: &Signature) -> Result<()> {
+  pub fn verify(&self, message: &[u8], signature: &Signature) -> Result<()> {
     self
       .0
       .verify_strict(message, signature.as_ref())
