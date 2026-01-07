@@ -306,7 +306,7 @@ error: 2 mismatched files
 fn non_unicode_path_error() {
   use std::path::PathBuf;
 
-  // disable test on macos, since it does not allow non-unicode filenames
+  // macos does not allow non-unicode filenames
   if cfg!(target_os = "macos") {
     return;
   }
