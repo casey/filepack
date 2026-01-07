@@ -1,8 +1,8 @@
 use {
   super::*,
   clap::builder::{
-    styling::{AnsiColor, Effects},
     Styles,
+    styling::{AnsiColor, Effects},
   },
 };
 

@@ -599,10 +599,7 @@ fn sign_creates_valid_signature() {
   let signature: ed25519_dalek::Signature = manifest.signatures[&public_key].clone().into();
 
   let verifying_key = ed25519_dalek::VerifyingKey::from_bytes(
-    &hex::decode(&public_key_str)
-      .unwrap()
-      .try_into()
-      .unwrap(),
+    &hex::decode(&public_key_str).unwrap().try_into().unwrap(),
   )
   .unwrap();
 

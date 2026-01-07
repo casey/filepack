@@ -1,7 +1,7 @@
 use {
   self::{
-    arguments::Arguments, display_path::DisplayPath, display_secret::DisplaySecret,
-    lint::Lint, lint_group::LintGroup, list::List, metadata::Metadata, options::Options,
+    arguments::Arguments, display_path::DisplayPath, display_secret::DisplaySecret, lint::Lint,
+    lint_group::LintGroup, list::List, metadata::Metadata, options::Options,
     owo_colorize_ext::OwoColorizeExt, private_key::PrivateKey, signature_error::SignatureError,
     style::Style, subcommand::Subcommand, template::Template, utf8_path_ext::Utf8PathExt,
   },
@@ -13,7 +13,7 @@ use {
   owo_colors::Styled,
   serde::{Deserialize, Deserializer, Serialize, Serializer},
   serde_with::{DeserializeFromStr, SerializeDisplay},
-  snafu::{ensure, ErrorCompat, OptionExt, ResultExt, Snafu},
+  snafu::{ErrorCompat, OptionExt, ResultExt, Snafu, ensure},
   std::{
     array::TryFromSliceError,
     backtrace::{Backtrace, BacktraceStatus},

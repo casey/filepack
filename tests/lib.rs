@@ -1,9 +1,9 @@
 use {
   assert_cmd::Command,
   assert_fs::{
+    TempDir,
     assert::PathAssert,
     fixture::{FileTouch, FileWriteBin, FileWriteStr, PathChild, PathCreateDir},
-    TempDir,
   },
   camino::Utf8Path,
   filepack::{Manifest, PublicKey, Signature},
