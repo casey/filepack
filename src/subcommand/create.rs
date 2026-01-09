@@ -53,7 +53,7 @@ impl Create {
 
     let mut lint_errors = 0u64;
 
-    let mut files = Directory::new();
+    let mut empty = Vec::new();
 
     for entry in WalkDir::new(&root) {
       let entry = entry?;
@@ -88,6 +88,14 @@ impl Create {
 
       let relative = RelativePath::try_from(relative).context(error::Path { path: relative })?;
 
+      while let Some(dir) = empty.last() {
+        if path.starts_with(dir) {
+          empty.pop();
+        } else {
+          break;
+        }
+      }
+
       match self.deny {
         None => {}
         Some(LintGroup::All) => {
@@ -105,7 +113,7 @@ impl Create {
       }
 
       if entry.file_type().is_dir() {
-        files.create_directory(&relative)?;
+        empty.push(relative);
         continue;
       }
 
@@ -144,6 +152,12 @@ impl Create {
     }
 
     let bar = progress_bar::new(&options, paths.values().sum());
+
+    let mut files = Directory::new();
+
+    for path in empty {
+      files.create_directory(&path)?;
+    }
 
     for (path, _size) in paths {
       let file = options
