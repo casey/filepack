@@ -3,11 +3,11 @@ use super::*;
 pub(crate) struct FieldHasher {
   array: Option<NonZeroU64>,
   hasher: Hasher,
-  next: u8,
+  next: u64,
 }
 
 impl FieldHasher {
-  pub(crate) fn array(&mut self, tag: u8, len: u64) {
+  pub(crate) fn array(&mut self, tag: u64, len: u64) {
     self.tag(tag);
     self.array = NonZeroU64::new(len);
     self.hasher.update(&len.to_le_bytes());
@@ -18,7 +18,7 @@ impl FieldHasher {
     self.hasher.update(hash.as_bytes());
   }
 
-  pub(crate) fn field(&mut self, tag: u8, contents: &[u8]) {
+  pub(crate) fn field(&mut self, tag: u64, contents: &[u8]) {
     self.tag(tag);
     self.hasher.update(&contents.len().into_u64().to_le_bytes());
     self.hasher.update(contents);
@@ -37,10 +37,10 @@ impl FieldHasher {
     }
   }
 
-  pub(crate) fn tag(&mut self, tag: u8) {
+  pub(crate) fn tag(&mut self, tag: u64) {
     assert_eq!(self.next, tag);
     assert_eq!(self.array, None);
     self.next = self.next.checked_add(1).unwrap();
-    self.hasher.update(&[tag]);
+    self.hasher.update(&tag.to_le_bytes());
   }
 }
