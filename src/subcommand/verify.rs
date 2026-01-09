@@ -163,9 +163,18 @@ mismatched file: `{path}`
       }
     }
 
+    let dirs = dirs.into_iter().collect::<BTreeSet<RelativePath>>();
+
     let empty = manifest.empty_directories();
 
-    for path in dirs {
+    for path in &empty {
+      ensure! {
+        dirs.contains(&path),
+        error::MissingDirectory { path },
+      }
+    }
+
+    for path in &dirs {
       ensure! {
         empty.contains(&path),
         error::ExtraneousDirectory { path },
