@@ -789,7 +789,9 @@ fn nested_extraneous_empty_directory_error() {
     .args(["verify", "."])
     .current_dir(&dir)
     .assert()
-    .stderr("error: extraneous directory not in manifest: `foo/bar/baz`\n")
+    .stderr(path(
+      "error: extraneous directory not in manifest: `foo/bar/baz`\n",
+    ))
     .failure();
 }
 
