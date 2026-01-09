@@ -30,12 +30,12 @@ impl Manifest {
     empty
   }
 
-  pub(crate) fn files(&self) -> BTreeMap<RelativePath, &File> {
+  pub(crate) fn files(&self) -> BTreeMap<RelativePath, File> {
     let mut files = BTreeMap::new();
 
     for (path, entry) in self.entries() {
       if let Entry::File(file) = entry {
-        let old = files.insert(path, file);
+        let old = files.insert(path, *file);
         assert!(old.is_none());
       }
     }
