@@ -30,6 +30,11 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     count: usize,
   },
+  #[snafu(display("extraneous directory not in manifest: `{path}`"))]
+  ExtraneousDirectory {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+  },
   #[snafu(display("extraneous file not in manifest: `{path}`"))]
   ExtraneousFile {
     backtrace: Option<Backtrace>,
@@ -78,6 +83,11 @@ pub enum Error {
   MetadataTemplateIncluded {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
+  },
+  #[snafu(display("directory missing: `{path}`"))]
+  MissingDirectory {
+    backtrace: Option<Backtrace>,
+    path: RelativePath,
   },
   #[snafu(display("file missing: `{path}`"))]
   MissingFile {

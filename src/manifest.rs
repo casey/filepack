@@ -32,6 +32,25 @@ impl Manifest {
     files
   }
 
+  pub(crate) fn empty_directories(&self) -> BTreeSet<RelativePath> {
+    let mut directories = BTreeSet::new();
+    let mut stack = vec![(&self.files, Vec::new())];
+    while let Some((directory, components)) = stack.pop() {
+      for (component, entry) in &directory.entries {
+        let mut components = components.clone();
+        components.push(component.as_str());
+        if let Entry::Directory(directory) = entry {
+          if directory.entries.is_empty() {
+            let path = components.join("/").parse::<RelativePath>().unwrap();
+            directories.insert(path);
+          }
+          stack.push((directory, components));
+        }
+      }
+    }
+    directories
+  }
+
   #[must_use]
   pub fn fingerprint(&self) -> Hash {
     self.files.fingerprint()

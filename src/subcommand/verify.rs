@@ -132,18 +132,7 @@ mismatched file: `{path}`
 
       let path = decode_path(path)?;
 
-      while let Some(dir) = dirs.last() {
-        if path.starts_with(dir) {
-          dirs.pop();
-        } else {
-          break;
-        }
-      }
-
-      if entry.file_type().is_dir() {
-        if path != root {
-          dirs.push(path.to_owned());
-        }
+      if path == root {
         continue;
       }
 
@@ -155,9 +144,31 @@ mismatched file: `{path}`
 
       let path = RelativePath::try_from(path).context(error::Path { path })?;
 
+      while let Some(dir) = dirs.last() {
+        if path.starts_with(dir) {
+          dirs.pop();
+        } else {
+          break;
+        }
+      }
+
+      if entry.file_type().is_dir() {
+        dirs.push(path);
+        continue;
+      }
+
       ensure! {
         files.contains_key(&path),
         error::ExtraneousFile { path },
+      }
+    }
+
+    let empty = manifest.empty_directories();
+
+    for path in dirs {
+      ensure! {
+        empty.contains(&path),
+        error::ExtraneousDirectory { path },
       }
     }
 

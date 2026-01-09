@@ -21,7 +21,7 @@ use {
     backtrace::{Backtrace, BacktraceStatus},
     borrow::Borrow,
     cmp::Ordering,
-    collections::{BTreeMap, HashMap},
+    collections::{BTreeMap, BTreeSet, HashMap},
     env,
     fmt::{self, Display, Formatter},
     fs,

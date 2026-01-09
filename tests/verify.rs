@@ -728,3 +728,89 @@ fn metadata_may_not_be_invalid() {
     ))
     .failure();
 }
+
+#[test]
+fn extraneous_empty_directory_error() {
+  let dir = TempDir::new().unwrap();
+
+  cargo_bin_cmd!("filepack")
+    .args(["create", "."])
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  dir.child("foo").create_dir_all().unwrap();
+
+  cargo_bin_cmd!("filepack")
+    .args(["verify", "."])
+    .current_dir(&dir)
+    .assert()
+    .stderr("error: extraneous directory not in manifest: `foo`\n")
+    .failure();
+}
+
+#[test]
+fn missing_empty_directory_error() {
+  let dir = TempDir::new().unwrap();
+
+  dir.child("foo").create_dir_all().unwrap();
+
+  cargo_bin_cmd!("filepack")
+    .args(["create", "."])
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  std::fs::remove_dir(dir.path().join("foo")).unwrap();
+
+  cargo_bin_cmd!("filepack")
+    .args(["verify", "."])
+    .current_dir(&dir)
+    .assert()
+    .stderr("error: directory missing: `foo`\n")
+    .failure();
+}
+
+#[test]
+fn nested_extraneous_empty_directory_error() {
+  let dir = TempDir::new().unwrap();
+
+  dir.child("foo/bar").create_dir_all().unwrap();
+
+  cargo_bin_cmd!("filepack")
+    .args(["create", "."])
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  dir.child("foo/bar/baz").create_dir_all().unwrap();
+
+  cargo_bin_cmd!("filepack")
+    .args(["verify", "."])
+    .current_dir(&dir)
+    .assert()
+    .stderr("error: extraneous directory not in manifest: `foo/bar/baz`\n")
+    .failure();
+}
+
+#[test]
+fn nested_missing_empty_directory_error() {
+  let dir = TempDir::new().unwrap();
+
+  dir.child("foo/bar/baz").create_dir_all().unwrap();
+
+  cargo_bin_cmd!("filepack")
+    .args(["create", "."])
+    .current_dir(&dir)
+    .assert()
+    .success();
+
+  std::fs::remove_dir(dir.path().join("foo/bar/baz")).unwrap();
+
+  cargo_bin_cmd!("filepack")
+    .args(["verify", "."])
+    .current_dir(&dir)
+    .assert()
+    .stderr("error: directory missing: `foo/bar/baz`\n")
+    .failure();
+}
