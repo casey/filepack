@@ -17,7 +17,7 @@ impl Display for PathError {
     match self {
       Self::Component { component } => write!(
         f,
-        "paths may not contain non-normal path component `{component}`",
+        "paths may not contain non-normal component `{component}`",
       ),
       Self::ComponentEmpty => write!(f, "paths may not contain empty components"),
       Self::DoubleSlash => write!(f, "paths may not contain double slashes"),
