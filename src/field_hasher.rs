@@ -14,7 +14,7 @@ impl FieldHasher {
   }
 
   pub(crate) fn element(&mut self, hash: Hash) {
-    self.array = NonZeroU64::new(self.array.unwrap().get() - 1);
+    self.array = NonZeroU64::new(self.array.expect("element outside of array").get() - 1);
     self.hasher.update(hash.as_bytes());
   }
 
@@ -25,7 +25,7 @@ impl FieldHasher {
   }
 
   pub(crate) fn finalize(self) -> Hash {
-    assert_eq!(self.array, None);
+    assert_eq!(self.array, None, "unfinished array");
     self.hasher.finalize().into()
   }
 
@@ -42,8 +42,8 @@ impl FieldHasher {
   }
 
   fn tag(&mut self, tag: u64) {
-    assert_eq!(self.next, tag);
-    assert_eq!(self.array, None);
+    assert_eq!(self.next, tag, "unexpected tag {tag}");
+    assert_eq!(self.array, None, "field in array");
     self.next = self.next.checked_add(1).unwrap();
     self.integer(tag);
   }
@@ -54,28 +54,28 @@ mod tests {
   use super::*;
 
   #[test]
-  #[should_panic]
+  #[should_panic(expected = "unexpected tag 1")]
   fn tag_order_field() {
     let mut hasher = FieldHasher::new(Context::File);
     hasher.field(1, &[]);
   }
 
   #[test]
-  #[should_panic]
+  #[should_panic(expected = "unexpected tag 1")]
   fn tag_order_array() {
     let mut hasher = FieldHasher::new(Context::File);
     hasher.array(1, 1);
   }
 
   #[test]
-  #[should_panic]
-  fn element_out_of_array() {
+  #[should_panic(expected = "element outside of array")]
+  fn element_outside_of_array() {
     let mut hasher = FieldHasher::new(Context::File);
     hasher.element(Hash::from([0; 32]));
   }
 
   #[test]
-  #[should_panic]
+  #[should_panic(expected = "unfinished array")]
   fn unfinished_array() {
     let mut hasher = FieldHasher::new(Context::File);
     hasher.array(0, 1);
@@ -83,7 +83,7 @@ mod tests {
   }
 
   #[test]
-  #[should_panic]
+  #[should_panic(expected = "field in array")]
   fn field_in_array() {
     let mut hasher = FieldHasher::new(Context::File);
     hasher.array(0, 1);

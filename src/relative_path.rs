@@ -83,10 +83,6 @@ impl RelativePath {
     Utf8Path::new(self).starts_with(Utf8Path::new(prefix))
   }
 
-  pub(crate) fn as_str(&self) -> &str {
-    &self.0
-  }
-
   pub(crate) fn to_lowercase(&self) -> Self {
     Self(self.0.to_lowercase())
   }
@@ -94,13 +90,13 @@ impl RelativePath {
 
 impl AsRef<str> for RelativePath {
   fn as_ref(&self) -> &str {
-    self.as_str()
+    self.0.as_ref()
   }
 }
 
 impl AsRef<Utf8Path> for RelativePath {
   fn as_ref(&self) -> &Utf8Path {
-    self.as_str().as_ref()
+    self.0.as_ref()
   }
 }
 

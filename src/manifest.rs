@@ -12,22 +12,22 @@ pub struct Manifest {
 impl Manifest {
   pub(crate) const FILENAME: &'static str = "filepack.json";
 
-  fn entries(&self) -> Entries {
-    self.into()
-  }
-
   pub(crate) fn empty_directories(&self) -> BTreeSet<RelativePath> {
     let mut empty = BTreeSet::new();
 
     for (path, entry) in self.entries() {
-      if let Entry::Directory(directory) = entry {
-        if directory.entries.is_empty() {
-          empty.insert(path);
-        }
+      if let Entry::Directory(directory) = entry
+        && directory.entries.is_empty()
+      {
+        empty.insert(path);
       }
     }
 
     empty
+  }
+
+  fn entries(&self) -> Entries {
+    self.into()
   }
 
   pub(crate) fn files(&self) -> BTreeMap<RelativePath, File> {
