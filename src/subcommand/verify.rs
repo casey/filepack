@@ -123,7 +123,7 @@ mismatched file: `{path}`
 
     let files = manifest.files();
 
-    let mut dirs = Vec::new();
+    let mut empty = Vec::new();
 
     for entry in WalkDir::new(&root) {
       let entry = entry?;
@@ -144,16 +144,16 @@ mismatched file: `{path}`
 
       let path = RelativePath::try_from(path).context(error::Path { path })?;
 
-      while let Some(dir) = dirs.last() {
+      while let Some(dir) = empty.last() {
         if path.starts_with(dir) {
-          dirs.pop();
+          empty.pop();
         } else {
           break;
         }
       }
 
       if entry.file_type().is_dir() {
-        dirs.push(path);
+        empty.push(path);
         continue;
       }
 
@@ -163,20 +163,18 @@ mismatched file: `{path}`
       }
     }
 
-    let dirs = dirs.into_iter().collect::<BTreeSet<RelativePath>>();
+    let manifest_empty = manifest.empty_directories();
 
-    let empty = manifest.empty_directories();
-
-    for path in &empty {
+    for path in &manifest_empty {
       ensure! {
-        dirs.contains(&path),
+        empty.iter().any(|dir| dir.starts_with(path)),
         error::MissingDirectory { path },
       }
     }
 
-    for path in &dirs {
+    for path in &empty {
       ensure! {
-        empty.contains(&path),
+        manifest_empty.contains(path),
         error::ExtraneousDirectory { path },
       }
     }

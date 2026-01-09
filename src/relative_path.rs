@@ -79,12 +79,12 @@ impl RelativePath {
     None
   }
 
-  pub(crate) fn str(&self) -> &str {
-    &self.0
-  }
-
   pub(crate) fn starts_with(&self, prefix: &RelativePath) -> bool {
     Utf8Path::new(self).starts_with(Utf8Path::new(prefix))
+  }
+
+  pub(crate) fn str(&self) -> &str {
+    &self.0
   }
 
   pub(crate) fn to_lowercase(&self) -> Self {
