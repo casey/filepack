@@ -10,7 +10,7 @@ impl FieldHasher {
   pub(crate) fn array(&mut self, tag: u64, len: u64) {
     self.tag(tag);
     self.array = NonZeroU64::new(len);
-    self.hasher.update(&len.to_le_bytes());
+    self.integer(len);
   }
 
   pub(crate) fn element(&mut self, hash: Hash) {
@@ -20,7 +20,7 @@ impl FieldHasher {
 
   pub(crate) fn field(&mut self, tag: u64, contents: &[u8]) {
     self.tag(tag);
-    self.hasher.update(&contents.len().into_u64().to_le_bytes());
+    self.integer(contents.len().into_u64());
     self.hasher.update(contents);
   }
 
@@ -37,10 +37,14 @@ impl FieldHasher {
     }
   }
 
-  pub(crate) fn tag(&mut self, tag: u64) {
+  fn tag(&mut self, tag: u64) {
     assert_eq!(self.next, tag);
     assert_eq!(self.array, None);
     self.next = self.next.checked_add(1).unwrap();
-    self.hasher.update(&tag.to_le_bytes());
+    self.integer(tag);
+  }
+
+  fn integer(&mut self, n: u64) {
+    self.hasher.update(&n.to_le_bytes());
   }
 }
