@@ -78,7 +78,7 @@ fingerprint mismatch: `{source}`
         result => result.context(error::FilesystemIo { path: &path })?,
       };
 
-      if actual != expected {
+      if actual != *expected {
         mismatches.insert(path, (actual, expected));
       }
 

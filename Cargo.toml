@@ -54,6 +54,9 @@ too-many-lines = "allow"
 unused-async = "allow"
 wildcard-imports = "allow"
 
+[lints.rust]
+mismatched-lifetime-syntaxes = "allow"
+
 [profile.release]
 codegen-units = 1
 lto = true

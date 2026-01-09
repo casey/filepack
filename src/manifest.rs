@@ -9,68 +9,37 @@ pub struct Manifest {
   pub signatures: BTreeMap<PublicKey, Signature>,
 }
 
-struct Entries<'a> {
-  stack: Vec<(Vec<&'a Component>, &'a Entry)>,
-}
-
-impl<'a> Iterator for Entries<'a> {
-  type Item = (RelativePath, &'a Entry);
-
-  fn next(&mut self) -> Option<Self::Item> {
-    let (components, entry) = self.stack.pop()?;
-
-    if let Entry::Directory(directory) = entry {
-      for (component, child_entry) in directory.entries.iter().rev() {
-        let mut child_components = components.clone();
-        child_components.push(component);
-        self.stack.push((child_components, child_entry));
-      }
-    }
-
-    let path = RelativePath::try_from(components.as_slice()).unwrap();
-    Some((path, entry))
-  }
-}
-
 impl Manifest {
   pub(crate) const FILENAME: &'static str = "filepack.json";
 
-  pub(crate) fn empty_directories(&self) -> BTreeSet<RelativePath> {
-    let mut directories = BTreeSet::new();
-    let mut stack = vec![(&self.files, Vec::new())];
-    while let Some((directory, components)) = stack.pop() {
-      for (component, entry) in &directory.entries {
-        let mut components = components.clone();
-        components.push(component);
-        if let Entry::Directory(directory) = entry {
-          if directory.entries.is_empty() {
-            let path = RelativePath::try_from(components.as_slice()).unwrap();
-            directories.insert(path);
-          }
-          stack.push((directory, components));
-        }
-      }
-    }
-    directories
+  fn entries(&self) -> Entries {
+    self.into()
   }
 
-  pub(crate) fn files(&self) -> BTreeMap<RelativePath, File> {
-    let mut files = BTreeMap::new();
-    let mut stack = vec![(&self.files, Vec::new())];
-    while let Some((directory, components)) = stack.pop() {
-      for (component, entry) in &directory.entries {
-        let mut components = components.clone();
-        components.push(component);
-        match entry {
-          Entry::File(file) => {
-            let path = RelativePath::try_from(components.as_slice()).unwrap();
-            let old = files.insert(path, *file);
-            assert!(old.is_none());
-          }
-          Entry::Directory(directory) => stack.push((directory, components)),
+  pub(crate) fn empty_directories(&self) -> BTreeSet<RelativePath> {
+    let mut empty = BTreeSet::new();
+
+    for (path, entry) in self.entries() {
+      if let Entry::Directory(directory) = entry {
+        if directory.entries.is_empty() {
+          empty.insert(path);
         }
       }
     }
+
+    empty
+  }
+
+  pub(crate) fn files(&self) -> BTreeMap<RelativePath, &File> {
+    let mut files = BTreeMap::new();
+
+    for (path, entry) in self.entries() {
+      if let Entry::File(file) = entry {
+        let old = files.insert(path, file);
+        assert!(old.is_none());
+      }
+    }
+
     files
   }
 

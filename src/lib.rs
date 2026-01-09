@@ -1,7 +1,7 @@
 use {
   self::{
     arguments::Arguments, component::Component, context::Context, directory::Directory,
-    display_path::DisplayPath, display_secret::DisplaySecret, entry::Entry,
+    display_path::DisplayPath, display_secret::DisplaySecret, entries::Entries, entry::Entry,
     field_hasher::FieldHasher, lint::Lint, lint_group::LintGroup, metadata::Metadata,
     options::Options, owo_colorize_ext::OwoColorizeExt, path_error::PathError,
     private_key::PrivateKey, signature_error::SignatureError, style::Style, subcommand::Subcommand,
@@ -50,6 +50,7 @@ mod context;
 mod directory;
 mod display_path;
 mod display_secret;
+mod entries;
 mod entry;
 mod error;
 mod field_hasher;
