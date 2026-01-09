@@ -48,3 +48,45 @@ impl FieldHasher {
     self.integer(tag);
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  #[should_panic]
+  fn tag_order_field() {
+    let mut hasher = FieldHasher::new(Context::File);
+    hasher.field(1, &[]);
+  }
+
+  #[test]
+  #[should_panic]
+  fn tag_order_array() {
+    let mut hasher = FieldHasher::new(Context::File);
+    hasher.array(1, 1);
+  }
+
+  #[test]
+  #[should_panic]
+  fn element_out_of_array() {
+    let mut hasher = FieldHasher::new(Context::File);
+    hasher.element(Hash::from([0; 32]));
+  }
+
+  #[test]
+  #[should_panic]
+  fn unfinished_array() {
+    let mut hasher = FieldHasher::new(Context::File);
+    hasher.array(0, 1);
+    hasher.finalize();
+  }
+
+  #[test]
+  #[should_panic]
+  fn field_in_array() {
+    let mut hasher = FieldHasher::new(Context::File);
+    hasher.array(0, 1);
+    hasher.field(1, &[]);
+  }
+}
