@@ -19,7 +19,7 @@ impl Display for PathError {
         f,
         "paths may not contain non-normal path component `{component}`",
       ),
-      Self::ComponentEmpty => write!(f, "paths may not contain empty components",),
+      Self::ComponentEmpty => write!(f, "paths may not contain empty components"),
       Self::DoubleSlash => write!(f, "paths may not contain double slashes"),
       Self::Empty => write!(f, "paths may not be empty"),
       Self::LeadingSlash => write!(f, "paths may not begin with slash character"),
