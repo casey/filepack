@@ -62,15 +62,12 @@ fingerprint mismatch: `{source}`
       return Err(error::FingerprintMismatch.build());
     }
 
-    let bar = progress_bar::new(
-      &options,
-      manifest.files.values().map(|entry| entry.size).sum(),
-    );
+    let bar = progress_bar::new(&options, manifest.total_size().unwrap_or(u64::MAX));
 
     let mut mismatches = BTreeMap::new();
 
-    for (path, &expected) in &manifest.files {
-      let actual = match options.hash_file(&root.join(path)) {
+    for (path, expected) in manifest.files() {
+      let actual = match options.hash_file(&root.join(&path)) {
         Err(err) if err.kind() == io::ErrorKind::NotFound => {
           ensure! {
             self.ignore_missing,
@@ -78,7 +75,7 @@ fingerprint mismatch: `{source}`
           }
           continue;
         }
-        result => result.context(error::FilesystemIo { path })?,
+        result => result.context(error::FilesystemIo { path: &path })?,
       };
 
       if actual != expected {
@@ -124,7 +121,9 @@ mismatched file: `{path}`
       );
     }
 
-    let mut dirs = Vec::new();
+    let files = manifest.files();
+
+    let mut empty = Vec::new();
 
     for entry in WalkDir::new(&root) {
       let entry = entry?;
@@ -133,18 +132,7 @@ mismatched file: `{path}`
 
       let path = decode_path(path)?;
 
-      while let Some(dir) = dirs.last() {
-        if path.starts_with(dir) {
-          dirs.pop();
-        } else {
-          break;
-        }
-      }
-
-      if entry.file_type().is_dir() {
-        if path != root {
-          dirs.push(path.to_owned());
-        }
+      if path == root {
         continue;
       }
 
@@ -156,9 +144,38 @@ mismatched file: `{path}`
 
       let path = RelativePath::try_from(path).context(error::Path { path })?;
 
+      while let Some(dir) = empty.last() {
+        if path.starts_with(dir) {
+          empty.pop();
+        } else {
+          break;
+        }
+      }
+
+      if entry.file_type().is_dir() {
+        empty.push(path);
+        continue;
+      }
+
       ensure! {
-        manifest.files.contains_key(&path),
+        files.contains_key(&path),
         error::ExtraneousFile { path },
+      }
+    }
+
+    let manifest_empty = manifest.empty_directories();
+
+    for path in &manifest_empty {
+      ensure! {
+        empty.iter().any(|dir| dir.starts_with(path)),
+        error::MissingDirectory { path },
+      }
+    }
+
+    for path in &empty {
+      ensure! {
+        manifest_empty.contains(path),
+        error::ExtraneousDirectory { path },
       }
     }
 
@@ -180,16 +197,6 @@ mismatched file: `{path}`
         manifest.signatures.contains_key(&key),
         error::SignatureMissing { key },
       }
-    }
-
-    if !dirs.is_empty() {
-      dirs.sort();
-      return Err(Error::EmptyDirectory {
-        paths: dirs
-          .into_iter()
-          .map(|dir| dir.strip_prefix(&root).unwrap().to_owned().into())
-          .collect(),
-      });
     }
 
     if self.print {

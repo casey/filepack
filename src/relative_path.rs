@@ -1,16 +1,10 @@
 use super::*;
 
-pub(crate) use self::error::Error;
-
-mod error;
-
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize)]
 pub struct RelativePath(String);
 
 impl RelativePath {
   const JUNK_NAMES: [&'static str; 2] = [".DS_Store", ".localized"];
-
-  const SEPARATORS: [char; 2] = ['/', '\\'];
 
   const WINDOWS_RESERVED_CHARACTERS: [char; 7] = ['"', '*', ':', '<', '>', '?', '|'];
 
@@ -19,6 +13,13 @@ impl RelativePath {
     "COM³", "CON", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9", "LPT¹",
     "LPT²", "LPT³", "NUL", "PRN",
   ];
+
+  pub(crate) fn components(&self) -> impl Iterator<Item = Component> {
+    self
+      .0
+      .split('/')
+      .map(|component| component.parse().unwrap())
+  }
 
   pub(crate) fn lint(&self) -> Option<Lint> {
     for component in Utf8Path::new(&self.0).components() {
@@ -78,6 +79,10 @@ impl RelativePath {
     None
   }
 
+  pub(crate) fn starts_with(&self, prefix: &RelativePath) -> bool {
+    Utf8Path::new(self).starts_with(Utf8Path::new(prefix))
+  }
+
   pub(crate) fn to_lowercase(&self) -> Self {
     Self(self.0.to_lowercase())
   }
@@ -85,7 +90,7 @@ impl RelativePath {
 
 impl AsRef<str> for RelativePath {
   fn as_ref(&self) -> &str {
-    &self.0
+    self.0.as_ref()
   }
 }
 
@@ -122,19 +127,19 @@ impl From<&RelativePath> for RelativePath {
 }
 
 impl FromStr for RelativePath {
-  type Err = Error;
+  type Err = PathError;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     if s.starts_with('/') {
-      return Err(Error::LeadingSlash);
+      return Err(PathError::LeadingSlash);
     }
 
     if s.ends_with('/') {
-      return Err(Error::TrailingSlash);
+      return Err(PathError::TrailingSlash);
     }
 
     if s.contains("//") {
-      return Err(Error::DoubleSlash);
+      return Err(PathError::DoubleSlash);
     }
 
     let mut chars = s.chars();
@@ -143,21 +148,21 @@ impl FromStr for RelativePath {
     if let Some((first, second)) = first.zip(second)
       && second == ':'
     {
-      return Err(Error::WindowsDiskPrefix { letter: first });
+      return Err(PathError::WindowsDiskPrefix { letter: first });
     }
 
     let mut path = String::new();
 
     for (i, component) in s.split('/').enumerate() {
       if component == ".." || component == "." {
-        return Err(Error::Component {
+        return Err(PathError::Component {
           component: component.into(),
         });
       }
 
       for character in component.chars() {
-        if Self::SEPARATORS.contains(&character) {
-          return Err(Error::Separator { character });
+        if SEPARATORS.contains(&character) {
+          return Err(PathError::Separator { character });
         }
       }
 
@@ -169,7 +174,7 @@ impl FromStr for RelativePath {
     }
 
     if path.is_empty() {
-      return Err(Error::Empty);
+      return Err(PathError::Empty);
     }
 
     Ok(Self(path))
@@ -189,14 +194,14 @@ impl AsRef<Path> for RelativePath {
 }
 
 impl TryFrom<&Utf8Path> for RelativePath {
-  type Error = Error;
+  type Error = PathError;
 
   fn try_from(path: &Utf8Path) -> Result<Self, Self::Error> {
     let mut s = String::new();
 
     for (i, component) in path.components().enumerate() {
       let Utf8Component::Normal(component) = component else {
-        return Err(Error::Component {
+        return Err(PathError::Component {
           component: component.to_string(),
         });
       };
@@ -212,9 +217,56 @@ impl TryFrom<&Utf8Path> for RelativePath {
   }
 }
 
+impl TryFrom<&[&Component]> for RelativePath {
+  type Error = PathError;
+
+  fn try_from(components: &[&Component]) -> Result<Self, Self::Error> {
+    let mut path = String::new();
+
+    for (i, component) in components.iter().enumerate() {
+      if i > 0 {
+        path.push('/');
+      }
+      path.push_str(component.as_str());
+    }
+
+    path.parse()
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn from_components() {
+    assert_eq!(
+      RelativePath::try_from([&"foo".parse().unwrap()].as_slice()).unwrap(),
+      "foo",
+    );
+
+    assert_eq!(
+      RelativePath::try_from([&"foo".parse().unwrap(), &"bar".parse().unwrap()].as_slice())
+        .unwrap(),
+      "foo/bar",
+    );
+  }
+
+  #[test]
+  fn from_components_empty() {
+    assert_eq!(
+      RelativePath::try_from([].as_slice()).unwrap_err(),
+      PathError::Empty,
+    );
+  }
+
+  #[test]
+  fn from_components_drive_prefix() {
+    assert_eq!(
+      RelativePath::try_from([&"C:".parse().unwrap()].as_slice()).unwrap_err(),
+      PathError::WindowsDiskPrefix { letter: 'C' },
+    );
+  }
 
   #[test]
   fn from_str() {
@@ -230,29 +282,29 @@ mod tests {
   #[test]
   fn from_str_errors() {
     #[track_caller]
-    fn case(path: &str, expected: Error) {
+    fn case(path: &str, expected: PathError) {
       assert_eq!(path.parse::<RelativePath>().unwrap_err(), expected);
     }
 
-    case("C:", Error::WindowsDiskPrefix { letter: 'C' });
+    case("C:", PathError::WindowsDiskPrefix { letter: 'C' });
 
-    case("", Error::Empty);
+    case("", PathError::Empty);
     case(
       ".",
-      Error::Component {
+      PathError::Component {
         component: ".".into(),
       },
     );
     case(
       "..",
-      Error::Component {
+      PathError::Component {
         component: "..".into(),
       },
     );
-    case("/", Error::LeadingSlash);
-    case("foo/", Error::TrailingSlash);
-    case("foo//bar", Error::DoubleSlash);
-    case("\\", Error::Separator { character: '\\' });
+    case("/", PathError::LeadingSlash);
+    case("foo/", PathError::TrailingSlash);
+    case("foo//bar", PathError::DoubleSlash);
+    case("\\", PathError::Separator { character: '\\' });
   }
 
   #[test]
@@ -334,7 +386,7 @@ mod tests {
   fn try_from_utf8_path() {
     assert_eq!(
       RelativePath::try_from(Utf8Path::new("..")).unwrap_err(),
-      Error::Component {
+      PathError::Component {
         component: "..".into()
       }
     );

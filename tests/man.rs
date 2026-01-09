@@ -2,8 +2,7 @@ use super::*;
 
 #[test]
 fn man() {
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .arg("man")
     .assert()
     .stdout(is_match(r#".*\.TH filepack 1  "filepack \d+\.\d+\.\d+".*"#))

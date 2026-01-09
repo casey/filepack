@@ -4,8 +4,7 @@ use super::*;
 fn backtraces_are_recorded_when_environment_variable_is_set() {
   let dir = TempDir::new().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["verify", "."])
     .current_dir(&dir)
     .assert()
@@ -15,8 +14,7 @@ fn backtraces_are_recorded_when_environment_variable_is_set() {
     ))
     .failure();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .env("RUST_BACKTRACE", "1")
     .args(["verify", "."])
     .current_dir(&dir)

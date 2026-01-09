@@ -2,8 +2,7 @@ use super::*;
 
 #[test]
 fn stdin() {
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .arg("hash")
     .write_stdin("foo")
     .assert()
@@ -17,8 +16,7 @@ fn file() {
 
   dir.child("foo").write_str("foo").unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .args(["hash", "foo"])
     .current_dir(&dir)
     .assert()

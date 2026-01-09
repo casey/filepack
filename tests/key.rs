@@ -4,16 +4,14 @@ use super::*;
 fn prints_pubkey() {
   let dir = TempDir::new().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .arg("keygen")
     .env("FILEPACK_DATA_DIR", dir.path())
     .current_dir(&dir)
     .assert()
     .success();
 
-  let output = Command::cargo_bin("filepack")
-    .unwrap()
+  let output = cargo_bin_cmd!("filepack")
     .arg("key")
     .env("FILEPACK_DATA_DIR", dir.path())
     .current_dir(&dir)
@@ -32,8 +30,7 @@ fn prints_pubkey() {
 fn missing_public_key_error() {
   let dir = TempDir::new().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .arg("keygen")
     .env("FILEPACK_DATA_DIR", dir.path())
     .current_dir(&dir)
@@ -42,8 +39,7 @@ fn missing_public_key_error() {
 
   fs::remove_file(dir.child("keys/master.public")).unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .arg("key")
     .env("FILEPACK_DATA_DIR", dir.path())
     .current_dir(&dir)
@@ -56,8 +52,7 @@ fn missing_public_key_error() {
 fn missing_private_key_error() {
   let dir = TempDir::new().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .arg("keygen")
     .env("FILEPACK_DATA_DIR", dir.path())
     .current_dir(&dir)
@@ -66,8 +61,7 @@ fn missing_private_key_error() {
 
   fs::remove_file(dir.child("keys/master.private")).unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .arg("key")
     .env("FILEPACK_DATA_DIR", dir.path())
     .current_dir(&dir)
@@ -82,16 +76,14 @@ fn missing_private_key_error() {
 fn mismatched_key_error() {
   let dir = TempDir::new().unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .arg("keygen")
     .env("FILEPACK_DATA_DIR", dir.path().join("foo"))
     .current_dir(&dir)
     .assert()
     .success();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .arg("keygen")
     .env("FILEPACK_DATA_DIR", dir.path())
     .current_dir(&dir)
@@ -104,8 +96,7 @@ fn mismatched_key_error() {
   )
   .unwrap();
 
-  Command::cargo_bin("filepack")
-    .unwrap()
+  cargo_bin_cmd!("filepack")
     .arg("key")
     .env("FILEPACK_DATA_DIR", dir.path())
     .current_dir(&dir)

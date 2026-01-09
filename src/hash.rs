@@ -6,7 +6,8 @@ pub struct Hash(blake3::Hash);
 impl Hash {
   pub(crate) const LEN: usize = blake3::OUT_LEN;
 
-  pub(crate) fn as_bytes(&self) -> &[u8; Self::LEN] {
+  #[must_use]
+  pub fn as_bytes(&self) -> &[u8; Self::LEN] {
     self.0.as_bytes()
   }
 
