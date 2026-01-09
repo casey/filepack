@@ -180,9 +180,9 @@ Manifests contain an object with one mandatory key, `files`.
 ### `files`
 
 The value of the mandatory `files` key is an object mapping path components to
-directory entries. Directory entries may themselves be directories, or they may
-be files with the key `hash`, whose value is a hex-encoded BLAKE3 hash of the
-file, and `size`, whose value is the length of the file in bytes.
+directory entries. Directory entries may be subdirectories or files. Files are
+objects with keys `hash`, the hex-encoded BLAKE3 hash of the file, and `size`,
+the length of the file in bytes.
 
 An example manifest for a directory containing the files `README.md` and
 `src/main.c`:
