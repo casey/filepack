@@ -29,6 +29,10 @@ impl FieldHasher {
     self.hasher.finalize().into()
   }
 
+  fn integer(&mut self, n: u64) {
+    self.hasher.update(&n.to_le_bytes());
+  }
+
   pub(crate) fn new(context: Context) -> Self {
     Self {
       array: None,
@@ -42,9 +46,5 @@ impl FieldHasher {
     assert_eq!(self.array, None);
     self.next = self.next.checked_add(1).unwrap();
     self.integer(tag);
-  }
-
-  fn integer(&mut self, n: u64) {
-    self.hasher.update(&n.to_le_bytes());
   }
 }

@@ -88,14 +88,6 @@ impl Create {
 
       let relative = RelativePath::try_from(relative).context(error::Path { path: relative })?;
 
-      while let Some(dir) = empty.last() {
-        if path.starts_with(dir) {
-          empty.pop();
-        } else {
-          break;
-        }
-      }
-
       match self.deny {
         None => {}
         Some(LintGroup::All) => {
@@ -109,6 +101,14 @@ impl Create {
             .entry(relative.to_lowercase())
             .or_default()
             .push(relative.clone());
+        }
+      }
+
+      while let Some(dir) = empty.last() {
+        if path.starts_with(dir) {
+          empty.pop();
+        } else {
+          break;
         }
       }
 
