@@ -21,10 +21,15 @@ impl<'a> Iterator for Entries<'a> {
     let (components, entry) = self.stack.pop()?;
 
     if let Entry::Directory(directory) = entry {
-      for (component, child_entry) in directory.entries.iter().rev() {
-        let mut child_components = components.clone();
-        child_components.push(component);
-        self.stack.push((child_components, child_entry));
+      for (component, child) in &directory.entries {
+        self.stack.push((
+          components
+            .iter()
+            .copied()
+            .chain(iter::once(component))
+            .collect(),
+          child,
+        ));
       }
     }
 

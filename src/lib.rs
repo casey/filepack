@@ -26,6 +26,7 @@ use {
     fmt::{self, Display, Formatter},
     fs,
     io::{self, IsTerminal},
+    iter,
     num::NonZeroU64,
     path::{Path, PathBuf},
     process,
