@@ -10,14 +10,25 @@ pub struct Manifest {
 }
 
 struct Entries<'a> {
-  stack: Vec<(&'a Directory, Vec<Component>)>,
+  stack: Vec<(Vec<&'a Component>, &'a Entry)>,
 }
 
 impl<'a> Iterator for Entries<'a> {
   type Item = (RelativePath, &'a Entry);
 
   fn next(&mut self) -> Option<Self::Item> {
-    todo!()
+    let (components, entry) = self.stack.pop()?;
+
+    if let Entry::Directory(directory) = entry {
+      for (component, child_entry) in directory.entries.iter().rev() {
+        let mut child_components = components.clone();
+        child_components.push(component);
+        self.stack.push((child_components, child_entry));
+      }
+    }
+
+    let path = RelativePath::try_from(components.as_slice()).unwrap();
+    Some((path, entry))
   }
 }
 
