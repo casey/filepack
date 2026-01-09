@@ -221,9 +221,56 @@ impl TryFrom<&Utf8Path> for RelativePath {
   }
 }
 
+impl TryFrom<&[&Component]> for RelativePath {
+  type Error = PathError;
+
+  fn try_from(components: &[&Component]) -> Result<Self, Self::Error> {
+    let mut path = String::new();
+
+    for (i, component) in components.iter().enumerate() {
+      if i > 0 {
+        path.push('/');
+      }
+      path.push_str(component.as_str());
+    }
+
+    path.parse()
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn from_components() {
+    assert_eq!(
+      RelativePath::try_from([&"foo".parse().unwrap()].as_slice()).unwrap(),
+      "foo",
+    );
+
+    assert_eq!(
+      RelativePath::try_from([&"foo".parse().unwrap(), &"bar".parse().unwrap()].as_slice())
+        .unwrap(),
+      "foo/bar",
+    );
+  }
+
+  #[test]
+  fn from_components_empty() {
+    assert_eq!(
+      RelativePath::try_from([].as_slice()).unwrap_err(),
+      PathError::Empty,
+    );
+  }
+
+  #[test]
+  fn from_components_drive_prefix() {
+    assert_eq!(
+      RelativePath::try_from([&"C:".parse().unwrap()].as_slice()).unwrap_err(),
+      PathError::WindowsDiskPrefix { letter: 'C' },
+    );
+  }
 
   #[test]
   fn from_str() {

@@ -18,10 +18,10 @@ impl Manifest {
     while let Some((directory, components)) = stack.pop() {
       for (component, entry) in &directory.entries {
         let mut components = components.clone();
-        components.push(component.as_str());
+        components.push(component);
         if let Entry::Directory(directory) = entry {
           if directory.entries.is_empty() {
-            let path = components.join("/").parse::<RelativePath>().unwrap();
+            let path = RelativePath::try_from(components.as_slice()).unwrap();
             directories.insert(path);
           }
           stack.push((directory, components));
@@ -37,10 +37,10 @@ impl Manifest {
     while let Some((directory, components)) = stack.pop() {
       for (component, entry) in &directory.entries {
         let mut components = components.clone();
-        components.push(component.as_str());
+        components.push(component);
         match entry {
           Entry::File(file) => {
-            let path = components.join("/").parse::<RelativePath>().unwrap();
+            let path = RelativePath::try_from(components.as_slice()).unwrap();
             let old = files.insert(path, *file);
             assert!(old.is_none());
           }
