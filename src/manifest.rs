@@ -9,6 +9,18 @@ pub struct Manifest {
   pub signatures: BTreeMap<PublicKey, Signature>,
 }
 
+struct Entries<'a> {
+  stack: Vec<(&'a Directory, Vec<Component>)>,
+}
+
+impl<'a> Iterator for Entries<'a> {
+  type Item = (RelativePath, &'a Entry);
+
+  fn next(&mut self) -> Option<Self::Item> {
+    todo!()
+  }
+}
+
 impl Manifest {
   pub(crate) const FILENAME: &'static str = "filepack.json";
 
