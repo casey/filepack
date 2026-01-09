@@ -3,6 +3,7 @@ use super::*;
 #[derive(Debug, PartialEq)]
 pub enum PathError {
   Component { component: String },
+  ComponentEmpty,
   DoubleSlash,
   Empty,
   LeadingSlash,
@@ -16,8 +17,9 @@ impl Display for PathError {
     match self {
       Self::Component { component } => write!(
         f,
-        "paths may not contain non-normal path component `{component}`"
+        "paths may not contain non-normal path component `{component}`",
       ),
+      Self::ComponentEmpty => write!(f, "paths may not contain empty components",),
       Self::DoubleSlash => write!(f, "paths may not contain double slashes"),
       Self::Empty => write!(f, "paths may not be empty"),
       Self::LeadingSlash => write!(f, "paths may not begin with slash character"),
@@ -27,7 +29,7 @@ impl Display for PathError {
       Self::TrailingSlash => write!(f, "paths may not end with slash character"),
       Self::WindowsDiskPrefix { letter } => write!(
         f,
-        "paths may not begin with Windows disk prefix `{letter}:`"
+        "paths may not begin with Windows disk prefix `{letter}:`",
       ),
     }
   }

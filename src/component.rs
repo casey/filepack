@@ -37,9 +37,55 @@ impl FromStr for Component {
     }
 
     if s.is_empty() {
-      return Err(PathError::Empty);
+      return Err(PathError::ComponentEmpty);
     }
 
     Ok(Self(s.into()))
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn parent() {
+    assert_eq!(
+      "..".parse::<Component>().unwrap_err(),
+      PathError::Component {
+        component: "..".into(),
+      },
+    );
+  }
+
+  #[test]
+  fn current() {
+    assert_eq!(
+      ".".parse::<Component>().unwrap_err(),
+      PathError::Component {
+        component: ".".into(),
+      },
+    );
+  }
+
+  #[test]
+  fn empty() {
+    assert_eq!(
+      "".parse::<Component>().unwrap_err(),
+      PathError::ComponentEmpty,
+    );
+  }
+
+  #[test]
+  fn separator() {
+    assert_eq!(
+      "/".parse::<Component>().unwrap_err(),
+      PathError::Separator { character: '/' },
+    );
+
+    assert_eq!(
+      "\\".parse::<Component>().unwrap_err(),
+      PathError::Separator { character: '\\' },
+    );
   }
 }
