@@ -22,12 +22,6 @@ impl From<blake3::Hash> for Hash {
   }
 }
 
-impl From<Hash> for [u8; Hash::LEN] {
-  fn from(hash: Hash) -> Self {
-    hash.0.into()
-  }
-}
-
 impl From<[u8; Hash::LEN]> for Hash {
   fn from(bytes: [u8; Hash::LEN]) -> Self {
     Self(bytes.into())
@@ -39,18 +33,6 @@ impl FromStr for Hash {
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     Ok(Self(s.parse()?))
-  }
-}
-
-impl Ord for Hash {
-  fn cmp(&self, other: &Self) -> Ordering {
-    self.as_bytes().cmp(other.as_bytes())
-  }
-}
-
-impl PartialOrd for Hash {
-  fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-    Some(self.cmp(other))
   }
 }
 

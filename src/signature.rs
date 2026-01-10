@@ -35,12 +35,6 @@ impl From<ed25519_dalek::Signature> for Signature {
   }
 }
 
-impl From<Signature> for ed25519_dalek::Signature {
-  fn from(signature: Signature) -> Self {
-    signature.0
-  }
-}
-
 impl Display for Signature {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     for byte in self.0.to_bytes() {

@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize)]
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct RelativePath(String);
 
 impl RelativePath {
@@ -97,20 +97,6 @@ impl AsRef<str> for RelativePath {
 impl AsRef<Utf8Path> for RelativePath {
   fn as_ref(&self) -> &Utf8Path {
     self.0.as_ref()
-  }
-}
-
-impl<'de> Deserialize<'de> for RelativePath {
-  fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-  where
-    D: Deserializer<'de>,
-  {
-    use serde::de::{Error, Unexpected};
-
-    let s = String::deserialize(deserializer)?;
-
-    s.parse::<Self>()
-      .map_err(|err| D::Error::invalid_value(Unexpected::Str(&s), &err.to_string().as_str()))
   }
 }
 
@@ -375,6 +361,7 @@ mod tests {
     case("foo /bar", Lint::WindowsTrailingSpace);
 
     case(".DS_Store", Lint::Junk);
+    case(".localized", Lint::Junk);
   }
 
   #[test]
