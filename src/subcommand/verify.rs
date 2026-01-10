@@ -123,7 +123,7 @@ mismatched file: `{path}`
 
     let files = manifest.files();
 
-    let mut empty = Vec::new();
+    let mut empty = Vec::<RelativePath>::new();
 
     for entry in WalkDir::new(&root) {
       let entry = entry?;
@@ -144,13 +144,7 @@ mismatched file: `{path}`
 
       let path = RelativePath::try_from(path).context(error::Path { path })?;
 
-      while let Some(dir) = empty.last() {
-        if path.starts_with(dir) {
-          empty.pop();
-        } else {
-          break;
-        }
-      }
+      empty.pop_if(|empty| path.starts_with(&empty));
 
       if entry.file_type().is_dir() {
         empty.push(path);
