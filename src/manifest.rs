@@ -74,13 +74,9 @@ impl Manifest {
 
   pub(crate) fn total_size(&self) -> Option<u64> {
     let mut size = 0u64;
-    let mut stack = vec![&self.files];
-    while let Some(current) = stack.pop() {
-      for entry in current.entries.values() {
-        match entry {
-          Entry::File(file) => size = size.checked_add(file.size)?,
-          Entry::Directory(directory) => stack.push(directory),
-        }
+    for (_path, entry) in self.entries() {
+      if let Entry::File(file) = entry {
+        size = size.checked_add(file.size)?;
       }
     }
     Some(size)
