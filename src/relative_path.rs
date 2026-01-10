@@ -253,18 +253,18 @@ mod tests {
   }
 
   #[test]
-  fn from_components_empty() {
-    assert_eq!(
-      RelativePath::try_from([].as_slice()).unwrap_err(),
-      PathError::Empty,
-    );
-  }
-
-  #[test]
   fn from_components_drive_prefix() {
     assert_eq!(
       RelativePath::try_from([&"C:".parse().unwrap()].as_slice()).unwrap_err(),
       PathError::WindowsDiskPrefix { letter: 'C' },
+    );
+  }
+
+  #[test]
+  fn from_components_empty() {
+    assert_eq!(
+      RelativePath::try_from([].as_slice()).unwrap_err(),
+      PathError::Empty,
     );
   }
 
@@ -305,11 +305,6 @@ mod tests {
     case("foo/", PathError::TrailingSlash);
     case("foo//bar", PathError::DoubleSlash);
     case("\\", PathError::Separator { character: '\\' });
-  }
-
-  #[test]
-  fn lint_pass() {
-    assert!("foo".parse::<RelativePath>().unwrap().lint().is_none());
   }
 
   #[test]
@@ -380,6 +375,11 @@ mod tests {
     case("foo /bar", Lint::WindowsTrailingSpace);
 
     case(".DS_Store", Lint::Junk);
+  }
+
+  #[test]
+  fn lint_pass() {
+    assert!("foo".parse::<RelativePath>().unwrap().lint().is_none());
   }
 
   #[test]

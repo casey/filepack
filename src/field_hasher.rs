@@ -53,9 +53,17 @@ mod tests {
   use super::*;
 
   #[test]
-  #[should_panic(expected = "unexpected tag 1")]
-  fn tag_order_field() {
+  #[should_panic(expected = "element outside of array")]
+  fn element_outside_of_array() {
     let mut hasher = FieldHasher::new(Context::File);
+    hasher.element(Hash::from([0; 32]));
+  }
+
+  #[test]
+  #[should_panic(expected = "field in array")]
+  fn field_in_array() {
+    let mut hasher = FieldHasher::new(Context::File);
+    hasher.array(0, 1);
     hasher.field(1, Hash::bytes(&[]));
   }
 
@@ -67,10 +75,10 @@ mod tests {
   }
 
   #[test]
-  #[should_panic(expected = "element outside of array")]
-  fn element_outside_of_array() {
+  #[should_panic(expected = "unexpected tag 1")]
+  fn tag_order_field() {
     let mut hasher = FieldHasher::new(Context::File);
-    hasher.element(Hash::from([0; 32]));
+    hasher.field(1, Hash::bytes(&[]));
   }
 
   #[test]
@@ -79,13 +87,5 @@ mod tests {
     let mut hasher = FieldHasher::new(Context::File);
     hasher.array(0, 1);
     hasher.finalize();
-  }
-
-  #[test]
-  #[should_panic(expected = "field in array")]
-  fn field_in_array() {
-    let mut hasher = FieldHasher::new(Context::File);
-    hasher.array(0, 1);
-    hasher.field(1, Hash::bytes(&[]));
   }
 }

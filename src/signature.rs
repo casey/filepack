@@ -76,15 +76,6 @@ mod tests {
   use super::*;
 
   #[test]
-  fn parse() {
-    let signature = PrivateKey::generate().sign(b"hello");
-    assert_eq!(
-      signature.to_string().parse::<Signature>().unwrap(),
-      signature
-    );
-  }
-
-  #[test]
   fn display_is_lowercase_hex() {
     let s = "0f6d444f09eb336d3cc94d66cc541fea0b70b36be291eb3ecf5b49113f34c8d3\
      0f6d444f09eb336d3cc94d66cc541fea0b70b36be291eb3ecf5b49113f34c8d3";
@@ -103,5 +94,14 @@ mod tests {
      0f6d444f09eb336d3cc94d66cc541fea0b70b36be291eb3ecf5b49113f34c8d3"
       .parse::<Signature>()
       .unwrap_err();
+  }
+
+  #[test]
+  fn parse() {
+    let signature = PrivateKey::generate().sign(b"hello");
+    assert_eq!(
+      signature.to_string().parse::<Signature>().unwrap(),
+      signature
+    );
   }
 }

@@ -92,6 +92,17 @@ mod tests {
   use super::*;
 
   #[test]
+  fn must_have_leading_zeros() {
+    "0e56ae8b43aa93fd4c179ceaff96f729522622d26b4b5357bc959e476e59e107"
+      .parse::<PrivateKey>()
+      .unwrap();
+
+    "e56ae8b43aa93fd4c179ceaff96f729522622d26b4b5357bc959e476e59e107"
+      .parse::<PrivateKey>()
+      .unwrap_err();
+  }
+
+  #[test]
   fn parse() {
     let key = PrivateKey::generate();
     assert_eq!(
@@ -105,12 +116,28 @@ mod tests {
   }
 
   #[test]
-  fn must_have_leading_zeros() {
+  fn parse_hex_error() {
+    assert_eq!(
+      "xyz".parse::<PrivateKey>().unwrap_err().to_string(),
+      "invalid private key hex"
+    );
+  }
+
+  #[test]
+  fn parse_length_error() {
+    assert_eq!(
+      "0123".parse::<PrivateKey>().unwrap_err().to_string(),
+      "invalid private key byte length 2"
+    );
+  }
+
+  #[test]
+  fn whitespace_is_not_trimmed_when_parsing_from_string() {
     "0e56ae8b43aa93fd4c179ceaff96f729522622d26b4b5357bc959e476e59e107"
       .parse::<PrivateKey>()
       .unwrap();
 
-    "e56ae8b43aa93fd4c179ceaff96f729522622d26b4b5357bc959e476e59e107"
+    " 0e56ae8b43aa93fd4c179ceaff96f729522622d26b4b5357bc959e476e59e107"
       .parse::<PrivateKey>()
       .unwrap_err();
   }
@@ -128,32 +155,5 @@ mod tests {
     filesystem::write(&path, format!(" \t{}\n", key.display_secret())).unwrap();
 
     assert_eq!(PrivateKey::load(&path).unwrap(), key);
-  }
-
-  #[test]
-  fn whitespace_is_not_trimmed_when_parsing_from_string() {
-    "0e56ae8b43aa93fd4c179ceaff96f729522622d26b4b5357bc959e476e59e107"
-      .parse::<PrivateKey>()
-      .unwrap();
-
-    " 0e56ae8b43aa93fd4c179ceaff96f729522622d26b4b5357bc959e476e59e107"
-      .parse::<PrivateKey>()
-      .unwrap_err();
-  }
-
-  #[test]
-  fn parse_hex_error() {
-    assert_eq!(
-      "xyz".parse::<PrivateKey>().unwrap_err().to_string(),
-      "invalid private key hex"
-    );
-  }
-
-  #[test]
-  fn parse_length_error() {
-    assert_eq!(
-      "0123".parse::<PrivateKey>().unwrap_err().to_string(),
-      "invalid private key byte length 2"
-    );
   }
 }
