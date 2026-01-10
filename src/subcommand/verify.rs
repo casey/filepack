@@ -144,13 +144,7 @@ mismatched file: `{path}`
 
       let path = RelativePath::try_from(path).context(error::Path { path })?;
 
-      while let Some(dir) = empty.last() {
-        if path.starts_with(dir) {
-          empty.pop();
-        } else {
-          break;
-        }
-      }
+      empty.pop_if(|dir| path.starts_with(dir));
 
       if entry.file_type().is_dir() {
         empty.push(path);

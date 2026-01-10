@@ -84,42 +84,36 @@ impl Create {
         error::Symlink { path },
       }
 
-      let relative = path.strip_prefix(&root).unwrap();
+      let metadata = filesystem::metadata(path)?;
 
-      let relative = RelativePath::try_from(relative).context(error::Path { path: relative })?;
+      let path = path.strip_prefix(&root).unwrap();
+
+      let path = RelativePath::try_from(path).context(error::Path { path })?;
 
       match self.deny {
         None => {}
         Some(LintGroup::All) => {
-          if let Some(lint) = relative.lint() {
-            eprintln!("error: path failed lint: `{relative}`");
+          if let Some(lint) = path.lint() {
+            eprintln!("error: path failed lint: `{path}`");
             eprintln!("       └─ {lint}");
             lint_errors += 1;
           }
 
           case_conflicts
-            .entry(relative.to_lowercase())
+            .entry(path.to_lowercase())
             .or_default()
-            .push(relative.clone());
+            .push(path.clone());
         }
       }
 
-      while let Some(dir) = empty.last() {
-        if path.starts_with(dir) {
-          empty.pop();
-        } else {
-          break;
-        }
-      }
+      empty.pop_if(|dir| path.starts_with(dir));
 
       if entry.file_type().is_dir() {
-        empty.push(relative);
+        empty.push(path);
         continue;
       }
 
-      let metadata = filesystem::metadata(path)?;
-
-      paths.insert(relative, metadata.len());
+      paths.insert(path, metadata.len());
     }
 
     for mut originals in case_conflicts.into_values() {
