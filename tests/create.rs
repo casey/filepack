@@ -440,9 +440,11 @@ fn sign_creates_valid_signature() {
     .parse::<PublicKey>()
     .unwrap();
 
-  assert_eq!(manifest.signatures.len(), 1);
-
-  let signature = manifest.signatures[&public_key].clone();
+  let signature =
+    fs::read_to_string(&public_key.signature_path(dir.child("foo/signatures").utf8_path()))
+      .unwrap()
+      .parse::<Signature>()
+      .unwrap();
 
   public_key
     .verify(manifest.fingerprint().as_bytes(), &signature)

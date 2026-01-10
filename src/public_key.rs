@@ -38,6 +38,10 @@ impl PublicKey {
     Ok(public_key)
   }
 
+  pub fn signature_path(&self, signatures: &Utf8Path) -> Utf8PathBuf {
+    signatures.join(format!("{self}.{SIGNATURE_EXTENSION}"))
+  }
+
   pub fn verify(&self, message: &[u8], signature: &Signature) -> Result<()> {
     self
       .0

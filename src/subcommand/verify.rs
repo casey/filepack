@@ -125,6 +125,8 @@ mismatched file: `{path}`
 
     let mut empty = Vec::new();
 
+    let mut signatures = Vec::new();
+
     for entry in WalkDir::new(&root) {
       let entry = entry?;
 
@@ -153,7 +155,14 @@ mismatched file: `{path}`
       }
 
       if entry.file_type().is_dir() {
-        empty.push(path);
+        if path != SIGNATURES_DIRECTORY {
+          empty.push(path);
+        }
+        continue;
+      }
+
+      if path.starts_with(SIGNATURES_DIRECTORY) && path.component_count() == 2 {
+        signatures.push(path);
         continue;
       }
 
@@ -188,13 +197,32 @@ mismatched file: `{path}`
       }
     }
 
-    for (public_key, signature) in &manifest.signatures {
-      public_key.verify(fingerprint.as_bytes(), signature)?;
+    let mut public_keys = BTreeSet::new();
+
+    for signature in signatures {
+      if signature.extension() != Some(SIGNATURE_EXTENSION) {
+        return Err(error::SignatureExtension { path: &signature }.build());
+      }
+
+      let public_key = signature
+        .file_stem()
+        .parse::<PublicKey>()
+        .context(error::PublicKeyLoad { path: &signature })?;
+
+      let path = root.join(&signature);
+
+      let s = filesystem::read_to_string(path)?
+        .parse::<Signature>()
+        .context(error::SignatureLoad { path: &signature })?;
+
+      public_key.verify(fingerprint.as_bytes(), &s)?;
+
+      public_keys.insert(public_key);
     }
 
     if let Some(key) = self.key {
       ensure! {
-        manifest.signatures.contains_key(&key),
+        public_keys.contains(&key),
         error::SignatureMissing { key },
       }
     }

@@ -147,6 +147,17 @@ pub enum Error {
     public_key: PublicKey,
     source: SignatureError,
   },
+  #[snafu(display("unexpected signature extension `{path}`"))]
+  SignatureExtension {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+  },
+  #[snafu(display("invalid signature `{path}`"))]
+  SignatureLoad {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+    source: signature::Error,
+  },
   #[snafu(display("no signature found for key {key}"))]
   SignatureMissing {
     backtrace: Option<Backtrace>,

@@ -21,6 +21,30 @@ impl RelativePath {
       .map(|component| component.parse().unwrap())
   }
 
+  pub(crate) fn component_count(&self) -> usize {
+    self.0.split('/').count()
+  }
+
+  pub(crate) fn file_name(&self) -> &str {
+    self.0.split('/').last().unwrap()
+  }
+
+  pub(crate) fn file_stem(&self) -> &str {
+    let name = self.file_name();
+    match name.rfind('.') {
+      None | Some(0) => name,
+      Some(i) => &name[..i],
+    }
+  }
+
+  pub(crate) fn extension(&self) -> Option<&str> {
+    let name = self.file_name();
+    match name.rfind('.') {
+      None | Some(0) => None,
+      Some(i) => Some(&name[i + 1..]),
+    }
+  }
+
   pub(crate) fn lint(&self) -> Option<Lint> {
     for component in Utf8Path::new(&self.0).components() {
       let Utf8Component::Normal(component) = component else {
@@ -79,8 +103,8 @@ impl RelativePath {
     None
   }
 
-  pub(crate) fn starts_with(&self, prefix: &RelativePath) -> bool {
-    Utf8Path::new(self).starts_with(Utf8Path::new(prefix))
+  pub(crate) fn starts_with(&self, prefix: impl AsRef<str>) -> bool {
+    Utf8Path::new(self).starts_with(Utf8Path::new(&prefix))
   }
 
   pub(crate) fn to_lowercase(&self) -> Self {

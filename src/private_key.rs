@@ -48,10 +48,10 @@ impl PrivateKey {
     Ok(private_key)
   }
 
-  pub(crate) fn load_and_sign(path: &Utf8Path, message: &[u8]) -> Result<(PublicKey, Signature)> {
+  pub(crate) fn load_and_sign(path: &Utf8Path, message: Hash) -> Result<(PublicKey, Signature)> {
     let private_key = Self::load(path)?;
 
-    let signature = private_key.sign(message);
+    let signature = private_key.sign(message.as_bytes());
 
     Ok((private_key.public_key(), signature))
   }

@@ -686,25 +686,21 @@ fn valid_signature_for_wrong_pubkey_error() {
     .assert()
     .success();
 
-  let (_path, mut manifest) =
-    Manifest::load(Some(dir.child("foo/filepack.json").utf8_path())).unwrap();
-
   let public_key = load_key(&dir.child("keys/master.public"))
     .parse::<PublicKey>()
     .unwrap();
 
-  let foo = manifest.signatures.remove(&public_key).unwrap();
-
-  manifest.signatures.insert(
-    "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b"
-      .parse::<PublicKey>()
-      .unwrap(),
-    foo,
-  );
-
-  manifest
-    .save(dir.child("foo/filepack.json").utf8_path())
+  let wrong_public_key = "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b"
+    .parse::<PublicKey>()
     .unwrap();
+
+  let signatures = dir.child("foo/signatures").utf8_path().to_owned();
+
+  fs::rename(
+    public_key.signature_path(&signatures),
+    wrong_public_key.signature_path(&signatures),
+  )
+  .unwrap();
 
   cargo_bin_cmd!("filepack")
     .args(["verify", "foo"])
