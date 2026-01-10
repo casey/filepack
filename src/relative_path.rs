@@ -375,6 +375,7 @@ mod tests {
     case("foo /bar", Lint::WindowsTrailingSpace);
 
     case(".DS_Store", Lint::Junk);
+    case(".localized", Lint::Junk);
   }
 
   #[test]

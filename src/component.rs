@@ -14,12 +14,6 @@ impl Component {
   }
 }
 
-impl Borrow<str> for Component {
-  fn borrow(&self) -> &str {
-    self.0.as_str()
-  }
-}
-
 impl FromStr for Component {
   type Err = PathError;
 

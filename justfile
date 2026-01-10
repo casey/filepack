@@ -18,7 +18,7 @@ unused:
   cargo +nightly udeps --workspace
 
 coverage:
-  cargo llvm-cov --html
+  cargo +nightly llvm-cov --branch --html
   open target/llvm-cov/html/index.html
 
 update-changelog:

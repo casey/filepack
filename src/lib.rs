@@ -19,7 +19,6 @@ use {
   std::{
     array::TryFromSliceError,
     backtrace::{Backtrace, BacktraceStatus},
-    borrow::Borrow,
     cmp::Ordering,
     collections::{BTreeMap, BTreeSet, HashMap},
     env,
