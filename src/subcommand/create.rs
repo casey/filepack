@@ -106,7 +106,7 @@ impl Create {
         }
       }
 
-      empty.pop_if(|empty| path.starts_with(&empty));
+      empty.pop_if(|dir| path.starts_with(&dir));
 
       if entry.file_type().is_dir() {
         empty.push(path);
