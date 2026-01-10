@@ -10,8 +10,8 @@ pub struct File {
 impl File {
   pub(crate) fn fingerprint(&self) -> Hash {
     let mut hasher = FieldHasher::new(Context::File);
-    hasher.field(0, &self.size.to_le_bytes());
-    hasher.field(1, self.hash.as_bytes());
+    hasher.field(0, Hash::bytes(&self.size.to_le_bytes()));
+    hasher.field(1, self.hash);
     hasher.finalize()
   }
 }

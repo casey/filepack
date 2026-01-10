@@ -23,7 +23,7 @@ fn fingerprint() {
 
   dir.child("filepack.json").assert(json.clone());
 
-  let fingerprint = "f521b82c0bcadb3c61cdf8c7a4831505b2b251175a8f16c3dc44c66d577fd6a1";
+  let fingerprint = "9fc83a909b30c2e9cc31d1325f782244e2151607c2a8d696cfb31ab42173dce9";
 
   cargo_bin_cmd!("filepack")
     .arg("fingerprint")

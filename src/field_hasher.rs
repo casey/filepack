@@ -9,8 +9,8 @@ pub(crate) struct FieldHasher {
 impl FieldHasher {
   pub(crate) fn array(&mut self, tag: u64, len: u64) {
     self.tag(tag);
-    self.array = NonZeroU64::new(len);
     self.integer(len);
+    self.array = NonZeroU64::new(len);
   }
 
   pub(crate) fn element(&mut self, hash: Hash) {
@@ -18,10 +18,9 @@ impl FieldHasher {
     self.hasher.update(hash.as_bytes());
   }
 
-  pub(crate) fn field(&mut self, tag: u64, contents: &[u8]) {
+  pub(crate) fn field(&mut self, tag: u64, hash: Hash) {
     self.tag(tag);
-    self.integer(contents.len().into_u64());
-    self.hasher.update(contents);
+    self.hasher.update(hash.as_bytes());
   }
 
   pub(crate) fn finalize(self) -> Hash {
@@ -57,7 +56,7 @@ mod tests {
   #[should_panic(expected = "unexpected tag 1")]
   fn tag_order_field() {
     let mut hasher = FieldHasher::new(Context::File);
-    hasher.field(1, &[]);
+    hasher.field(1, Hash::bytes(&[]));
   }
 
   #[test]
@@ -87,6 +86,6 @@ mod tests {
   fn field_in_array() {
     let mut hasher = FieldHasher::new(Context::File);
     hasher.array(0, 1);
-    hasher.field(1, &[]);
+    hasher.field(1, Hash::bytes(&[]));
   }
 }
