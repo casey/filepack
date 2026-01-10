@@ -167,18 +167,21 @@ impl Create {
       bar.inc(file.size);
     }
 
-    let mut manifest = Manifest {
-      files,
-      signatures: BTreeMap::new(),
-    };
+    let manifest = Manifest { files };
 
     if self.sign {
       let private_key_path = options.key_dir()?.join(MASTER_PRIVATE_KEY);
 
       let (public_key, signature) =
-        PrivateKey::load_and_sign(&private_key_path, manifest.fingerprint().as_bytes())?;
+        PrivateKey::load_and_sign(&private_key_path, manifest.fingerprint())?;
 
-      manifest.signatures.insert(public_key, signature);
+      let signatures = manifest_path.parent().unwrap().join(SIGNATURES_DIRECTORY);
+
+      filesystem::create_dir_all(&signatures)?;
+
+      let signature_path = public_key.signature_path(&signatures);
+
+      filesystem::write(&signature_path, signature.to_string())?;
     }
 
     manifest.save(&manifest_path)?;

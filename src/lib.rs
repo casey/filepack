@@ -78,6 +78,8 @@ mod utf8_path_ext;
 const MASTER_PRIVATE_KEY: &str = "master.private";
 const MASTER_PUBLIC_KEY: &str = "master.public";
 const SEPARATORS: [char; 2] = ['/', '\\'];
+const SIGNATURES_DIRECTORY: &str = "signatures";
+const SIGNATURE_EXTENSION: &str = "signature";
 
 type Result<T = (), E = Error> = std::result::Result<T, E>;
 

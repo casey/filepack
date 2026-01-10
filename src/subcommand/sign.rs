@@ -1,5 +1,9 @@
 use super::*;
 
+// todo:
+// - figure out if I'm using the right paths in errors
+// - make sure signatures are saved with trailing newline
+
 #[derive(Parser)]
 pub(crate) struct Sign {
   #[arg(help = "Allow overwriting signature", long)]
@@ -13,31 +17,31 @@ pub(crate) struct Sign {
 
 impl Sign {
   pub(crate) fn run(self, options: Options) -> Result {
-    let (path, mut manifest) = Manifest::load(self.root.as_deref())?;
+    let (path, manifest) = Manifest::load(self.root.as_deref())?;
 
-    let fingerprint = manifest.fingerprint();
-
-    for (public_key, signature) in &manifest.signatures {
-      public_key.verify(fingerprint.as_bytes(), signature)?;
-    }
+    let signatures = path.parent().unwrap().join(SIGNATURES_DIRECTORY);
 
     if !self.force {
       let public_key_path = options.key_dir()?.join(MASTER_PUBLIC_KEY);
       let public_key = PublicKey::load(&public_key_path)?;
       ensure! {
-        !manifest.signatures.contains_key(&public_key),
+        !filesystem::exists(&public_key.signature_path(&signatures))?,
         error::SignatureAlreadyExists { public_key },
       }
     }
 
     let private_key_path = options.key_dir()?.join(MASTER_PRIVATE_KEY);
 
-    let (public_key, signature) =
-      PrivateKey::load_and_sign(&private_key_path, fingerprint.as_bytes())?;
+    let fingerprint = manifest.fingerprint();
 
-    manifest.signatures.insert(public_key, signature);
+    let (public_key, signature) = PrivateKey::load_and_sign(&private_key_path, fingerprint)?;
 
-    manifest.save(&path)?;
+    filesystem::create_dir_all(&signatures)?;
+
+    filesystem::write(
+      &public_key.signature_path(&signatures),
+      signature.to_string(),
+    )?;
 
     Ok(())
   }
