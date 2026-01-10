@@ -102,12 +102,6 @@ mod tests {
   use super::*;
 
   #[test]
-  fn parse() {
-    let key = PrivateKey::generate().public_key();
-    assert_eq!(key.to_string().parse::<PublicKey>().unwrap(), key);
-  }
-
-  #[test]
   fn must_have_leading_zeros() {
     "0f6d444f09eb336d3cc94d66cc541fea0b70b36be291eb3ecf5b49113f34c8d3"
       .parse::<PublicKey>()
@@ -119,29 +113,9 @@ mod tests {
   }
 
   #[test]
-  fn whitespace_is_trimmed_when_loading_from_disk() {
-    let dir = TempDir::new().unwrap();
-
-    let path = Utf8PathBuf::from_path_buf(dir.join("key")).unwrap();
-
-    let key = "0f6d444f09eb336d3cc94d66cc541fea0b70b36be291eb3ecf5b49113f34c8d3"
-      .parse::<PublicKey>()
-      .unwrap();
-
-    filesystem::write(&path, format!(" \t{key}\n")).unwrap();
-
-    assert_eq!(PublicKey::load(&path).unwrap(), key);
-  }
-
-  #[test]
-  fn whitespace_is_not_trimmed_when_parsing_from_string() {
-    "0f6d444f09eb336d3cc94d66cc541fea0b70b36be291eb3ecf5b49113f34c8d3"
-      .parse::<PublicKey>()
-      .unwrap();
-
-    " 0f6d444f09eb336d3cc94d66cc541fea0b70b36be291eb3ecf5b49113f34c8d3"
-      .parse::<PublicKey>()
-      .unwrap_err();
+  fn parse() {
+    let key = PrivateKey::generate().public_key();
+    assert_eq!(key.to_string().parse::<PublicKey>().unwrap(), key);
   }
 
   #[test]
@@ -169,5 +143,31 @@ mod tests {
         Error::Weak { key }
           if key == "0000000000000000000000000000000000000000000000000000000000000000",
     ));
+  }
+
+  #[test]
+  fn whitespace_is_not_trimmed_when_parsing_from_string() {
+    "0f6d444f09eb336d3cc94d66cc541fea0b70b36be291eb3ecf5b49113f34c8d3"
+      .parse::<PublicKey>()
+      .unwrap();
+
+    " 0f6d444f09eb336d3cc94d66cc541fea0b70b36be291eb3ecf5b49113f34c8d3"
+      .parse::<PublicKey>()
+      .unwrap_err();
+  }
+
+  #[test]
+  fn whitespace_is_trimmed_when_loading_from_disk() {
+    let dir = TempDir::new().unwrap();
+
+    let path = Utf8PathBuf::from_path_buf(dir.join("key")).unwrap();
+
+    let key = "0f6d444f09eb336d3cc94d66cc541fea0b70b36be291eb3ecf5b49113f34c8d3"
+      .parse::<PublicKey>()
+      .unwrap();
+
+    filesystem::write(&path, format!(" \t{key}\n")).unwrap();
+
+    assert_eq!(PublicKey::load(&path).unwrap(), key);
   }
 }

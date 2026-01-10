@@ -49,16 +49,6 @@ mod tests {
   use super::*;
 
   #[test]
-  fn parent() {
-    assert_eq!(
-      "..".parse::<Component>().unwrap_err(),
-      PathError::Component {
-        component: "..".into(),
-      },
-    );
-  }
-
-  #[test]
   fn current() {
     assert_eq!(
       ".".parse::<Component>().unwrap_err(),
@@ -73,6 +63,16 @@ mod tests {
     assert_eq!(
       "".parse::<Component>().unwrap_err(),
       PathError::ComponentEmpty,
+    );
+  }
+
+  #[test]
+  fn parent() {
+    assert_eq!(
+      "..".parse::<Component>().unwrap_err(),
+      PathError::Component {
+        component: "..".into(),
+      },
     );
   }
 

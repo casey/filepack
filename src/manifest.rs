@@ -92,17 +92,6 @@ mod tests {
   use {super::*, regex::Regex};
 
   #[test]
-  fn manifests_in_readme_are_valid() {
-    let readme = filesystem::read_to_string("README.md").unwrap();
-
-    let re = Regex::new(r"(?s)```json(.*?)```").unwrap();
-
-    for capture in re.captures_iter(&readme) {
-      serde_json::from_str::<Manifest>(&capture[1]).unwrap();
-    }
-  }
-
-  #[test]
   fn empty_manifest_serialization() {
     let manifest = Manifest {
       files: Directory::new(),
@@ -111,5 +100,16 @@ mod tests {
     let json = serde_json::to_string(&manifest).unwrap();
     assert_eq!(json, "{}");
     assert_eq!(serde_json::from_str::<Manifest>(&json).unwrap(), manifest);
+  }
+
+  #[test]
+  fn manifests_in_readme_are_valid() {
+    let readme = filesystem::read_to_string("README.md").unwrap();
+
+    let re = Regex::new(r"(?s)```json(.*?)```").unwrap();
+
+    for capture in re.captures_iter(&readme) {
+      serde_json::from_str::<Manifest>(&capture[1]).unwrap();
+    }
   }
 }

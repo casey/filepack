@@ -76,11 +76,11 @@ mod subcommand;
 mod template;
 mod utf8_path_ext;
 
-type Result<T = (), E = Error> = std::result::Result<T, E>;
-
 const MASTER_PRIVATE_KEY: &str = "master.private";
 const MASTER_PUBLIC_KEY: &str = "master.public";
 const SEPARATORS: [char; 2] = ['/', '\\'];
+
+type Result<T = (), E = Error> = std::result::Result<T, E>;
 
 fn current_dir() -> Result<Utf8PathBuf> {
   Utf8PathBuf::from_path_buf(env::current_dir().context(error::CurrentDir)?)
