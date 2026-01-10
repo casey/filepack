@@ -123,7 +123,7 @@ mismatched file: `{path}`
 
     let files = manifest.files();
 
-    let mut empty = Vec::<RelativePath>::new();
+    let mut empty = Vec::new();
 
     for entry in WalkDir::new(&root) {
       let entry = entry?;
