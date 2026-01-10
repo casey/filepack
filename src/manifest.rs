@@ -5,8 +5,6 @@ use super::*;
 pub struct Manifest {
   #[serde(default, skip_serializing_if = "Directory::is_empty")]
   pub files: Directory,
-  #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
-  pub signatures: BTreeMap<PublicKey, Signature>,
 }
 
 impl Manifest {
@@ -91,7 +89,6 @@ mod tests {
   fn empty_manifest_serialization() {
     let manifest = Manifest {
       files: Directory::new(),
-      signatures: BTreeMap::new(),
     };
     let json = serde_json::to_string(&manifest).unwrap();
     assert_eq!(json, "{}");

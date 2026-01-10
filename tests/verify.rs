@@ -19,7 +19,7 @@ fn extra_fields_are_not_allowed() {
     .stderr(
       "\
 error: failed to deserialize manifest at `filepack.json`
-       └─ unknown field `foo`, expected `files` or `signatures` at line 1 column 17\n",
+       └─ unknown field `foo`, expected `files` at line 1 column 17\n",
     )
     .failure();
 }
@@ -156,24 +156,20 @@ fn malformed_signature_error() {
     .assert()
     .success();
 
-  let path = dir.child("filepack.json");
+  let public_key = "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b";
 
-  let manifest_json = json! {
-    files: {},
-    signatures: {
-      "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b":
-        "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b"
-    }
-  };
-  fs::write(&path, manifest_json).unwrap();
+  dir
+    .child("signatures/7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b.signature")
+    .write_str("00")
+    .unwrap();
 
   cargo_bin_cmd!("filepack")
     .arg("verify")
     .current_dir(&dir)
     .assert()
-    .stderr(is_match(
-      "error: failed to deserialize manifest at `filepack.json`\n.*invalid signature byte length.*",
-    ))
+    .stderr(is_match(format!(
+      "error: invalid signature `signatures/{public_key}.signature`\n.*invalid signature byte length.*",
+    )))
     .failure();
 }
 
@@ -764,26 +760,15 @@ fn weak_signature_public_key() {
     .assert()
     .success();
 
-  let json = json! {
-    files: {
-      bar: {
-        hash: EMPTY_HASH,
-        size: 0
-      }
-    },
-    signatures: {
-      "0000000000000000000000000000000000000000000000000000000000000000":"0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
-    }
-  };
-
-  fs::write(dir.child("filepack.json"), json).unwrap();
+  dir.child("signatures/0000000000000000000000000000000000000000000000000000000000000000.signature")
+    .write_str("0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000").unwrap();
 
   cargo_bin_cmd!("filepack")
     .arg("verify")
     .current_dir(&dir)
     .assert()
     .stderr(is_match(
-      "error: failed to deserialize manifest at `filepack.json`\n.*weak public key.*",
+      "error: invalid public key `signatures/0{64}.signature`\n.*weak public key.*",
     ))
     .failure();
 }

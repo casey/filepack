@@ -167,10 +167,7 @@ impl Create {
       bar.inc(file.size);
     }
 
-    let manifest = Manifest {
-      files,
-      signatures: BTreeMap::new(),
-    };
+    let manifest = Manifest { files };
 
     if self.sign {
       let private_key_path = options.key_dir()?.join(MASTER_PRIVATE_KEY);
