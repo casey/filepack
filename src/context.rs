@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Clone, Copy, IntoStaticStr)]
+#[derive(Clone, Copy, EnumIter, IntoStaticStr)]
 #[strum(serialize_all = "kebab-case")]
 pub(crate) enum Context {
   Directory,

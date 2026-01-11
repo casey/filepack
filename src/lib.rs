@@ -31,7 +31,7 @@ use {
     process,
     str::{self, FromStr},
   },
-  strum::IntoStaticStr,
+  strum::{EnumIter, IntoStaticStr},
   usized::IntoU64,
   walkdir::WalkDir,
 };
@@ -42,7 +42,7 @@ pub use self::{
 };
 
 #[cfg(test)]
-use assert_fs::TempDir;
+use {assert_fs::TempDir, std::collections::HashSet, strum::IntoEnumIterator};
 
 mod arguments;
 mod component;

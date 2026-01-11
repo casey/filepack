@@ -88,4 +88,33 @@ mod tests {
     hasher.array(0, 1);
     hasher.finalize();
   }
+
+  #[test]
+  fn contexts_produce_distinct_hashes() {
+    let mut hashes = HashSet::new();
+    for context in Context::iter() {
+      assert!(hashes.insert(ContextHasher::new(context).finalize()));
+    }
+  }
+
+  #[test]
+  fn field_values_contribute_to_hash() {
+    let mut hashes = HashSet::new();
+    for value in 0..2 {
+      let mut hasher = ContextHasher::new(Context::Directory);
+      hasher.field(0, Hash::bytes(&[value]));
+      assert!(hashes.insert(hasher.finalize()));
+    }
+  }
+
+  #[test]
+  fn array_values_contribute_to_hash() {
+    let mut hashes = HashSet::new();
+    for value in 0..2 {
+      let mut hasher = ContextHasher::new(Context::Directory);
+      hasher.array(0, 1);
+      hasher.element(Hash::bytes(&[value]));
+      assert!(hashes.insert(hasher.finalize()));
+    }
+  }
 }

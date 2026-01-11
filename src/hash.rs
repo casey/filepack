@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct Hash(blake3::Hash);
 
 impl Hash {
