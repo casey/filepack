@@ -62,7 +62,10 @@ fingerprint mismatch: `{source}`
       return Err(error::FingerprintMismatch.build());
     }
 
-    let bar = progress_bar::new(&options, manifest.total_size().unwrap_or(u64::MAX));
+    let bar = progress_bar::new(
+      &options,
+      u64::try_from(manifest.total_size()).unwrap_or(u64::MAX),
+    );
 
     let mut mismatches = BTreeMap::new();
 
