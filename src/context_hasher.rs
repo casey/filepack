@@ -1,12 +1,12 @@
 use super::*;
 
-pub(crate) struct FingerprintHasher {
+pub(crate) struct ContextHasher {
   array: Option<NonZeroU64>,
   hasher: Hasher,
   next: u64,
 }
 
-impl FingerprintHasher {
+impl ContextHasher {
   pub(crate) fn array(&mut self, tag: u64, len: u64) {
     self.tag(tag);
     self.integer(len);
@@ -55,14 +55,14 @@ mod tests {
   #[test]
   #[should_panic(expected = "element outside of array")]
   fn element_outside_of_array() {
-    let mut hasher = FingerprintHasher::new(Context::File);
+    let mut hasher = ContextHasher::new(Context::File);
     hasher.element(Hash::from([0; 32]));
   }
 
   #[test]
   #[should_panic(expected = "field in array")]
   fn field_in_array() {
-    let mut hasher = FingerprintHasher::new(Context::File);
+    let mut hasher = ContextHasher::new(Context::File);
     hasher.array(0, 1);
     hasher.field(1, Hash::bytes(&[]));
   }
@@ -70,21 +70,21 @@ mod tests {
   #[test]
   #[should_panic(expected = "unexpected tag 1")]
   fn tag_order_array() {
-    let mut hasher = FingerprintHasher::new(Context::File);
+    let mut hasher = ContextHasher::new(Context::File);
     hasher.array(1, 1);
   }
 
   #[test]
   #[should_panic(expected = "unexpected tag 1")]
   fn tag_order_field() {
-    let mut hasher = FingerprintHasher::new(Context::File);
+    let mut hasher = ContextHasher::new(Context::File);
     hasher.field(1, Hash::bytes(&[]));
   }
 
   #[test]
   #[should_panic(expected = "unfinished array")]
   fn unfinished_array() {
-    let mut hasher = FingerprintHasher::new(Context::File);
+    let mut hasher = ContextHasher::new(Context::File);
     hasher.array(0, 1);
     hasher.finalize();
   }

@@ -9,7 +9,7 @@ pub struct File {
 
 impl File {
   pub(crate) fn fingerprint(&self) -> Hash {
-    let mut hasher = FingerprintHasher::new(Context::File);
+    let mut hasher = ContextHasher::new(Context::File);
     hasher.field(0, Hash::bytes(&self.size.to_le_bytes()));
     hasher.field(1, self.hash);
     hasher.finalize()

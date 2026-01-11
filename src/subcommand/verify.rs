@@ -186,7 +186,7 @@ mismatched file: `{path}`
     }
 
     for (public_key, signature) in &manifest.signatures {
-      public_key.verify(fingerprint.as_bytes(), signature)?;
+      public_key.verify(fingerprint, signature)?;
     }
 
     if let Some(key) = self.key {

@@ -6,6 +6,7 @@ pub(crate) enum Context {
   Directory,
   Entry,
   File,
+  Message,
 }
 
 impl Context {
