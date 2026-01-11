@@ -686,8 +686,7 @@ fn valid_signature_for_wrong_pubkey_error() {
     .assert()
     .success();
 
-  let (_path, mut manifest) =
-    Manifest::load(Some(dir.child("foo/filepack.json").utf8_path())).unwrap();
+  let mut manifest = Manifest::load(Some(dir.child("foo/filepack.json").utf8_path())).unwrap();
 
   let public_key = load_key(&dir.child("keys/master.public"))
     .parse::<PublicKey>()

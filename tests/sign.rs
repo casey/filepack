@@ -152,8 +152,7 @@ fn existing_signatures_must_be_valid() {
     .assert()
     .success();
 
-  let (_path, mut manifest) =
-    Manifest::load(Some(dir.child("foo/filepack.json").utf8_path())).unwrap();
+  let mut manifest = Manifest::load(Some(dir.child("foo/filepack.json").utf8_path())).unwrap();
 
   manifest.signatures.insert(
     "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b"

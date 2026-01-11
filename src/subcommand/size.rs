@@ -8,7 +8,7 @@ pub(crate) struct Size {
 
 impl Size {
   pub(crate) fn run(self) -> Result {
-    let (_path, manifest) = Manifest::load(self.path.as_deref())?;
+    let manifest = Manifest::load(self.path.as_deref())?;
     println!("{}", manifest.total_size());
     Ok(())
   }

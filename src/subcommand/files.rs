@@ -17,7 +17,7 @@ pub(crate) struct Files {
 
 impl Files {
   pub(crate) fn run(self) -> Result {
-    let (_path, manifest) = Manifest::load(self.path.as_deref())?;
+    let manifest = Manifest::load(self.path.as_deref())?;
 
     let files = manifest.files();
 
