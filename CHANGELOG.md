@@ -1,6 +1,45 @@
 Changelog
 =========
 
+### Added
+- Add `size` subcommand to print out manifest total file size ([#101](https://github.com/casey/filepack/pull/101) by [casey](https://github.com/casey))
+- Add json and tsv formats options to `filepack files` ([#100](https://github.com/casey/filepack/pull/100) by [casey](https://github.com/casey))
+- Add files subcommand to list files in manifest ([#99](https://github.com/casey/filepack/pull/99) by [casey](https://github.com/casey))
+- Use hierarchical manifest format ([#90](https://github.com/casey/filepack/pull/90) by [casey](https://github.com/casey))
+- Add `filepack fingerprint` command to print manifest fingerprint ([#75](https://github.com/casey/filepack/pull/75) by [casey](https://github.com/casey))
+
+### Changed
+- Allow `filepack sign` argument to be a directory or be omitted ([#69](https://github.com/casey/filepack/pull/69) by [casey](https://github.com/casey))
+
+### Misc
+- Hash fields as single-element arrays ([#107](https://github.com/casey/filepack/pull/107) by [casey](https://github.com/casey))
+- Add basic context hasher tests ([#106](https://github.com/casey/filepack/pull/106) by [casey](https://github.com/casey))
+- Sort file fingerprint fields ([#105](https://github.com/casey/filepack/pull/105) by [casey](https://github.com/casey))
+- Domain separate signatures ([#104](https://github.com/casey/filepack/pull/104) by [casey](https://github.com/casey))
+- Test that unknown fields are rejected ([#103](https://github.com/casey/filepack/pull/103) by [casey](https://github.com/casey))
+- Add load with path function to get loaded manifest path ([#102](https://github.com/casey/filepack/pull/102) by [casey](https://github.com/casey))
+- Rename field hasher to fingerprint hasher ([#98](https://github.com/casey/filepack/pull/98) by [casey](https://github.com/casey))
+- Simplify empty directory tracking ([#97](https://github.com/casey/filepack/pull/97) by [casey](https://github.com/casey))
+- Use entries iterator to calculate total manifest size ([#94](https://github.com/casey/filepack/pull/94) by [casey](https://github.com/casey))
+- Remove unused trait implementations ([#93](https://github.com/casey/filepack/pull/93) by [casey](https://github.com/casey))
+- Enable item order lints ([#92](https://github.com/casey/filepack/pull/92) by [casey](https://github.com/casey))
+- Hash variable-length fields ([#91](https://github.com/casey/filepack/pull/91) by [casey](https://github.com/casey))
+- Share manifest struct with integration tests ([#88](https://github.com/casey/filepack/pull/88) by [casey](https://github.com/casey))
+- Share entry struct with integration tests ([#87](https://github.com/casey/filepack/pull/87) by [casey](https://github.com/casey))
+- Improve tests ([#86](https://github.com/casey/filepack/pull/86) by [casey](https://github.com/casey))
+- Remove server ([#84](https://github.com/casey/filepack/pull/84) by [casey](https://github.com/casey))
+- Serve package details ([#83](https://github.com/casey/filepack/pull/83) by [terror](https://github.com/terror))
+- Add `filepack server` subcommand ([#82](https://github.com/casey/filepack/pull/82) by [terror](https://github.com/terror))
+- Add `filepack archive` command ([#80](https://github.com/casey/filepack/pull/80) by [terror](https://github.com/terror))
+- Document `filepack verify` in readme ([#79](https://github.com/casey/filepack/pull/79) by [casey](https://github.com/casey))
+- Include man page in release archives ([#77](https://github.com/casey/filepack/pull/77) by [casey](https://github.com/casey))
+- Rename "root hash" to "fingerprint" ([#74](https://github.com/casey/filepack/pull/74) by [casey](https://github.com/casey))
+- Avoid using `std::fs` directly ([#73](https://github.com/casey/filepack/pull/73) by [casey](https://github.com/casey))
+- Open rendered page in render recipe ([#72](https://github.com/casey/filepack/pull/72) by [casey](https://github.com/casey))
+- Add render subcommand ([#71](https://github.com/casey/filepack/pull/71) by [casey](https://github.com/casey))
+- Use JSON to calculate root hash ([#70](https://github.com/casey/filepack/pull/70) by [casey](https://github.com/casey))
+- Don't publish SHA256SUMS ([#68](https://github.com/casey/filepack/pull/68) by [casey](https://github.com/casey))
+
 [0.0.6](https://github.com/casey/filepack/releases/tag/0.0.6) - 2024-10-09
 --------------------------------------------------------------------------
 
