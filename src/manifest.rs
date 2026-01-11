@@ -112,4 +112,14 @@ mod tests {
       serde_json::from_str::<Manifest>(&capture[1]).unwrap();
     }
   }
+
+  #[test]
+  fn unknown_fields_are_rejected() {
+    assert!(
+      serde_json::from_str::<Manifest>(&r#"{"hello": []}"#)
+        .unwrap_err()
+        .to_string()
+        .starts_with("unknown field `hello`")
+    );
+  }
 }

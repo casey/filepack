@@ -15,3 +15,18 @@ impl File {
     hasher.finalize()
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn unknown_fields_are_rejected() {
+    assert!(
+      serde_json::from_str::<File>(&r#"{"hash": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262", "size": 0, "foo": null}"#)
+        .unwrap_err()
+        .to_string()
+        .starts_with("unknown field `foo`")
+    );
+  }
+}
