@@ -1,8 +1,8 @@
 use {
   self::{
-    arguments::Arguments, component::Component, context::Context, directory::Directory,
-    display_path::DisplayPath, display_secret::DisplaySecret, entries::Entries, entry::Entry,
-    fingerprint_hasher::ContextHasher, lint::Lint, lint_group::LintGroup, message::Message,
+    arguments::Arguments, component::Component, context::Context, context_hasher::ContextHasher,
+    directory::Directory, display_path::DisplayPath, display_secret::DisplaySecret,
+    entries::Entries, entry::Entry, lint::Lint, lint_group::LintGroup, message::Message,
     metadata::Metadata, options::Options, owo_colorize_ext::OwoColorizeExt, path_error::PathError,
     private_key::PrivateKey, signature_error::SignatureError, style::Style, subcommand::Subcommand,
     template::Template, utf8_path_ext::Utf8PathExt,
@@ -47,6 +47,7 @@ use assert_fs::TempDir;
 mod arguments;
 mod component;
 mod context;
+mod context_hasher;
 mod directory;
 mod display_path;
 mod display_secret;
@@ -55,7 +56,6 @@ mod entry;
 mod error;
 mod file;
 mod filesystem;
-mod fingerprint_hasher;
 mod hash;
 mod lint;
 mod lint_group;
