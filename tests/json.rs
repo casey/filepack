@@ -13,6 +13,17 @@ macro_rules! json {
 }
 
 #[macro_export]
+macro_rules! json_pretty {
+  ($($parts:tt)*) => {
+    {
+      let json = json!($($parts)*);
+      let value = serde_json::from_str::<serde_json::Value>(&json).unwrap();
+      serde_json::to_string_pretty(&value).unwrap() + "\n"
+    }
+  }
+}
+
+#[macro_export]
 macro_rules! parts {
     ($s:ident, { $($parts:tt)* }) => {{
         $s.push('{');
