@@ -34,7 +34,7 @@ mod verify;
 pub(crate) enum Subcommand {
   #[command(about = "Create manifest")]
   Create(create::Create),
-  #[command(about = "Print manifest files")]
+  #[command(about = "List manifest files")]
   Files(files::Files),
   #[command(about = "Print manifest fingerprint")]
   Fingerprint(fingerprint::Fingerprint),
