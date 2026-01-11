@@ -48,7 +48,7 @@ impl PrivateKey {
     Ok(private_key)
   }
 
-  pub(crate) fn load_and_sign(path: &Utf8Path, message: &[u8]) -> Result<(PublicKey, Signature)> {
+  pub(crate) fn load_and_sign(path: &Utf8Path, message: Hash) -> Result<(PublicKey, Signature)> {
     let private_key = Self::load(path)?;
 
     let signature = private_key.sign(message);
@@ -60,9 +60,10 @@ impl PrivateKey {
     self.clone().into()
   }
 
-  pub(crate) fn sign(&self, message: &[u8]) -> Signature {
+  pub(crate) fn sign(&self, fingerprint: Hash) -> Signature {
     use ed25519_dalek::Signer;
-    self.0.sign(message).into()
+    let message = Message { fingerprint }.digest();
+    self.0.sign(message.as_bytes()).into()
   }
 }
 

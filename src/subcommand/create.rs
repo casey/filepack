@@ -170,7 +170,7 @@ impl Create {
       let private_key_path = options.key_dir()?.join(MASTER_PRIVATE_KEY);
 
       let (public_key, signature) =
-        PrivateKey::load_and_sign(&private_key_path, manifest.fingerprint().as_bytes())?;
+        PrivateKey::load_and_sign(&private_key_path, manifest.fingerprint())?;
 
       manifest.signatures.insert(public_key, signature);
     }

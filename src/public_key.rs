@@ -38,10 +38,11 @@ impl PublicKey {
     Ok(public_key)
   }
 
-  pub fn verify(&self, message: &[u8], signature: &Signature) -> Result<()> {
+  pub fn verify(&self, fingerprint: Hash, signature: &Signature) -> Result<()> {
+    let message = Message { fingerprint }.digest();
     self
       .0
-      .verify_strict(message, signature.as_ref())
+      .verify_strict(message.as_bytes(), signature.as_ref())
       .map_err(SignatureError)
       .context(error::SignatureInvalid {
         public_key: self.clone(),

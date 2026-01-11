@@ -15,7 +15,7 @@ impl Sign {
     let fingerprint = manifest.fingerprint();
 
     for (public_key, signature) in &manifest.signatures {
-      public_key.verify(fingerprint.as_bytes(), signature)?;
+      public_key.verify(fingerprint, signature)?;
     }
 
     if !self.force {
@@ -29,8 +29,7 @@ impl Sign {
 
     let private_key_path = options.key_dir()?.join(MASTER_PRIVATE_KEY);
 
-    let (public_key, signature) =
-      PrivateKey::load_and_sign(&private_key_path, fingerprint.as_bytes())?;
+    let (public_key, signature) = PrivateKey::load_and_sign(&private_key_path, fingerprint)?;
 
     manifest.signatures.insert(public_key, signature);
 

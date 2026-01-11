@@ -54,7 +54,7 @@ impl Directory {
   }
 
   pub(crate) fn fingerprint(&self) -> Hash {
-    let mut hasher = FingerprintHasher::new(Context::Directory);
+    let mut hasher = ContextHasher::new(Context::Directory);
 
     hasher.array(0, self.entries.len().into_u64());
 

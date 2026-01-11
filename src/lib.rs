@@ -2,8 +2,8 @@ use {
   self::{
     arguments::Arguments, component::Component, context::Context, directory::Directory,
     display_path::DisplayPath, display_secret::DisplaySecret, entries::Entries, entry::Entry,
-    fingerprint_hasher::FingerprintHasher, lint::Lint, lint_group::LintGroup, metadata::Metadata,
-    options::Options, owo_colorize_ext::OwoColorizeExt, path_error::PathError,
+    fingerprint_hasher::ContextHasher, lint::Lint, lint_group::LintGroup, message::Message,
+    metadata::Metadata, options::Options, owo_colorize_ext::OwoColorizeExt, path_error::PathError,
     private_key::PrivateKey, signature_error::SignatureError, style::Style, subcommand::Subcommand,
     template::Template, utf8_path_ext::Utf8PathExt,
   },
@@ -60,6 +60,7 @@ mod hash;
 mod lint;
 mod lint_group;
 mod manifest;
+mod message;
 mod metadata;
 mod options;
 mod owo_colorize_ext;

@@ -445,7 +445,7 @@ fn sign_creates_valid_signature() {
   let signature = manifest.signatures[&public_key].clone();
 
   public_key
-    .verify(manifest.fingerprint().as_bytes(), &signature)
+    .verify(manifest.fingerprint(), &signature)
     .unwrap();
 
   cargo_bin_cmd!("filepack")
