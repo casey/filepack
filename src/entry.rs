@@ -9,7 +9,7 @@ pub(crate) enum Entry {
 
 impl Entry {
   pub(crate) fn fingerprint(&self, component: &Component) -> Hash {
-    let mut hasher = FieldHasher::new(Context::Entry);
+    let mut hasher = FingerprintHasher::new(Context::Entry);
 
     hasher.field(0, Hash::bytes(component.as_bytes()));
 
