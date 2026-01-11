@@ -6,11 +6,6 @@ use {
   },
 };
 
-const MANIFEST_PATH_HELP: &str = "\
-  Load manifest from <PATH>. May be path to manifest, to directory containing manifest named \
-  `filepack.json`, or omitted, in which case manifest named `filepack.json` in the current \
-  directory is loaded.";
-
 mod create;
 mod files;
 mod fingerprint;
@@ -20,6 +15,11 @@ mod keygen;
 mod man;
 mod sign;
 mod verify;
+
+const MANIFEST_PATH_HELP: &str = "\
+  Load manifest from <PATH>. May be path to manifest, to directory containing manifest named \
+  `filepack.json`, or omitted, in which case manifest named `filepack.json` in the current \
+  directory is loaded.";
 
 #[derive(Parser)]
 #[command(
