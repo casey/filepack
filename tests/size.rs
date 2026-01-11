@@ -4,9 +4,9 @@ use super::*;
 fn size() {
   let dir = TempDir::new().unwrap();
 
-  dir.child("foo/bar/baz").touch().unwrap();
+  dir.child("foo/bar/baz").write_str("hello").unwrap();
 
-  dir.child("foo/bar/bob").write_str("hello").unwrap();
+  dir.child("foo/bar/bob").write_str("goodbye").unwrap();
 
   cargo_bin_cmd!("filepack")
     .args(["create", "."])
@@ -18,6 +18,6 @@ fn size() {
     .arg("size")
     .current_dir(&dir)
     .assert()
-    .stdout("5\n")
+    .stdout("12\n")
     .success();
 }
