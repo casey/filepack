@@ -48,7 +48,11 @@ impl Manifest {
     self.files.fingerprint()
   }
 
-  pub fn load(path: Option<&Utf8Path>) -> Result<(Utf8PathBuf, Self)> {
+  pub fn load(path: Option<&Utf8Path>) -> Result<Self> {
+    Ok(Self::load_with_path(path)?.1)
+  }
+
+  pub(crate) fn load_with_path(path: Option<&Utf8Path>) -> Result<(Utf8PathBuf, Self)> {
     let path = if let Some(path) = path {
       if filesystem::metadata(path)?.is_dir() {
         path.join(Manifest::FILENAME)
