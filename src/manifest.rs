@@ -72,14 +72,14 @@ impl Manifest {
     filesystem::write(path, format!("{}\n", serde_json::to_string(self).unwrap()))
   }
 
-  pub(crate) fn total_size(&self) -> Option<u64> {
-    let mut size = 0u64;
+  pub(crate) fn total_size(&self) -> u128 {
+    let mut size = 0u128;
     for (_path, entry) in self.entries() {
       if let Entry::File(file) = entry {
-        size = size.checked_add(file.size)?;
+        size = size.checked_add(file.size.into()).unwrap();
       }
     }
-    Some(size)
+    size
   }
 }
 

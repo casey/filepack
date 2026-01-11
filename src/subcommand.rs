@@ -14,6 +14,7 @@ mod key;
 mod keygen;
 mod man;
 mod sign;
+mod size;
 mod verify;
 
 const MANIFEST_PATH_HELP: &str = "\
@@ -48,6 +49,8 @@ pub(crate) enum Subcommand {
   Man,
   #[command(about = "Sign manifest")]
   Sign(sign::Sign),
+  #[command(about = "Print manifest total file size")]
+  Size(size::Size),
   #[command(about = "Verify manifest")]
   Verify(verify::Verify),
 }
@@ -63,6 +66,7 @@ impl Subcommand {
       Self::Keygen => keygen::run(options),
       Self::Man => man::run(),
       Self::Sign(sign) => sign.run(options),
+      Self::Size(size) => size.run(),
       Self::Verify(verify) => verify.run(options),
     }
   }
