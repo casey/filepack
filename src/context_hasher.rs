@@ -19,8 +19,8 @@ impl ContextHasher {
   }
 
   pub(crate) fn field(&mut self, tag: u64, hash: Hash) {
-    self.tag(tag);
-    self.hasher.update(hash.as_bytes());
+    self.array(tag, 1);
+    self.element(hash);
   }
 
   pub(crate) fn finalize(self) -> Hash {
