@@ -9,10 +9,10 @@ enum Format {
 
 #[derive(Parser)]
 pub(crate) struct Files {
-  #[arg(help = MANIFEST_PATH_HELP)]
-  path: Option<Utf8PathBuf>,
   #[arg(long = "format", default_value = "json-pretty")]
   format: Format,
+  #[arg(help = MANIFEST_PATH_HELP)]
+  path: Option<Utf8PathBuf>,
 }
 
 impl Files {
