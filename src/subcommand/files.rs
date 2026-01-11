@@ -22,8 +22,8 @@ impl Files {
     let files = manifest.files();
 
     match self.format {
-      Format::Json => println!("{}", serde_json::to_string(&files).unwrap(),),
-      Format::JsonPretty => println!("{}", serde_json::to_string_pretty(&files).unwrap(),),
+      Format::Json => println!("{}", serde_json::to_string(&files).unwrap()),
+      Format::JsonPretty => println!("{}", serde_json::to_string_pretty(&files).unwrap()),
       Format::Tsv => {
         for (path, file) in files {
           println!("{path}\t{}\t{}", file.hash, file.size);
