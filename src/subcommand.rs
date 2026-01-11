@@ -42,7 +42,7 @@ pub(crate) enum Subcommand {
   Hash(hash::Hash),
   #[command(about = "Print master public key")]
   Key,
-  #[command(about = "Generate master key")]
+  #[command(about = "Generate master key pair")]
   Keygen,
   #[command(about = "Print man page")]
   Man,
