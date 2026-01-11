@@ -6,7 +6,13 @@ use {
   },
 };
 
+const MANIFEST_PATH_HELP: &str = "\
+  Load manifest from <PATH>. May be path to manifest, to directory containing manifest named \
+  `filepack.json`, or omitted, in which case manifest named `filepack.json` in the current \
+  directory is loaded.";
+
 mod create;
+mod files;
 mod fingerprint;
 mod hash;
 mod key;
@@ -28,11 +34,13 @@ mod verify;
 pub(crate) enum Subcommand {
   #[command(about = "Create manifest")]
   Create(create::Create),
+  #[command(about = "Print manifest files")]
+  Files(files::Files),
   #[command(about = "Print manifest fingerprint")]
   Fingerprint(fingerprint::Fingerprint),
   #[command(about = "Print file hash")]
   Hash(hash::Hash),
-  #[command(about = "Print master key")]
+  #[command(about = "Print master public key")]
   Key,
   #[command(about = "Generate master key")]
   Keygen,
@@ -48,6 +56,7 @@ impl Subcommand {
   pub(crate) fn run(self, options: Options) -> Result {
     match self {
       Self::Create(create) => create.run(options),
+      Self::Files(files) => files.run(),
       Self::Fingerprint(fingerprint) => fingerprint.run(),
       Self::Hash(hash) => hash.run(options),
       Self::Key => key::run(options),

@@ -12,6 +12,7 @@ use {
 };
 
 mod create;
+mod files;
 mod fingerprint;
 mod hash;
 mod json;
