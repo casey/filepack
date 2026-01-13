@@ -253,8 +253,8 @@ filepack keygen
 Which creates `master.public` and `master.private` files in the filepack `keys`
 directory.
 
-The `keys` drectory is located in the filepack data directory whose location is
-platform-dependent:
+The `keys` directory is located in the filepack data directory whose location
+is platform-dependent:
 
 | Platform | Value                                    | Example                                  |
 | -------- | ---------------------------------------- | ---------------------------------------- |
@@ -298,7 +298,7 @@ Fingerprints
 ------------
 
 Filepack signatures are made over the manifest fingerprint hash, which is the
-root of a merkle tree of the files and directories contained in the manifest.
+root of a Merkle tree of the files and directories contained in the manifest.
 
 Fingerprints are BLAKE3 hashes, constructed such that it is impossible to
 produce objects which are different, either in type or content, but which have
@@ -334,7 +334,7 @@ hash function, but is now known to be insecure.
 hash function.
 
 `filepack` can also create and verify signatures. Other signing and
-verification utilities incude:
+verification utilities include:
 
 | binary | about |
 |---|---|
