@@ -143,6 +143,7 @@ fn ignore_missing() {
     .args(["verify", "--ignore-missing"])
     .current_dir(&dir)
     .assert()
+    .stderr("successfully verified 0 files totaling 0 bytes with 0 signatures\n")
     .success();
 }
 
@@ -211,6 +212,7 @@ fn manifest_paths_are_relative_to_root() {
     .args(["verify", "dir"])
     .current_dir(&dir)
     .assert()
+    .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
     .success();
 }
 
@@ -245,6 +247,7 @@ fn metadata_allows_unknown_keys() {
     .args(["verify"])
     .current_dir(&dir)
     .assert()
+    .stderr("successfully verified 1 file totaling 25 bytes with 0 signatures\n")
     .success();
 }
 
@@ -419,6 +422,7 @@ fn no_files() {
     .args(["verify", "."])
     .current_dir(&dir)
     .assert()
+    .stderr("successfully verified 0 files totaling 0 bytes with 0 signatures\n")
     .success();
 }
 
@@ -505,6 +509,7 @@ fn print() {
     .current_dir(&dir)
     .assert()
     .stdout(manifest)
+    .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
     .success();
 }
 
@@ -534,6 +539,7 @@ fn signature_verification_success() {
     .args(["verify", "foo", "--key", &public_key])
     .current_dir(&dir)
     .assert()
+    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
     .success();
 }
 
@@ -559,6 +565,7 @@ fn single_file() {
     .args(["verify", "."])
     .current_dir(&dir)
     .assert()
+    .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
     .success();
 }
 
@@ -584,6 +591,7 @@ fn single_file_mmap() {
     .args(["--mmap", "verify", "."])
     .current_dir(&dir)
     .assert()
+    .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
     .success();
 }
 
@@ -609,6 +617,7 @@ fn single_file_omit_directory() {
     .arg("verify")
     .current_dir(&dir)
     .assert()
+    .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
     .success();
 }
 
@@ -634,6 +643,7 @@ fn single_file_parallel() {
     .args(["--parallel", "verify", "."])
     .current_dir(&dir)
     .assert()
+    .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
     .success();
 }
 
@@ -735,6 +745,7 @@ fn verify_fingerprint() {
     ])
     .current_dir(&dir)
     .assert()
+    .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
     .success();
 
   cargo_bin_cmd!("filepack")
