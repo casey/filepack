@@ -40,7 +40,8 @@ Fingerprints
 ------------
 
 Although only manifest fingerprints are exposed externally, several types of
-fingerprints are used internally.
+fingerprints are used internally, namely directory, entry, file, and message
+fingerprints.
 
 Fingerprints are constructed to be unique, both between and within types,
 meaning that it is impossible two different values with different types or
@@ -66,3 +67,4 @@ In particular, see:
 - [Directory](src/directory.rs)
 - [Entry](src/entry.rs)
 - [Files](src/file.rs)
+- [Message](src/message.rs)
