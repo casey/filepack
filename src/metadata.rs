@@ -19,3 +19,13 @@ impl From<Template> for Metadata {
     Self { title }
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn extra_fields_in_metadata_are_ignored() {
+    serde_json::from_str::<Metadata>(r#"{"title":"foo","bar":1}"#).unwrap();
+  }
+}
