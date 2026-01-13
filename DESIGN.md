@@ -48,8 +48,8 @@ meaning that it is impossible two different values with different types or
 contents, but which have the same fingerprint.
 
 Fingerprints are BLAKE3 hashes. To guarantee that fingerprints are unique
-between types, the hasher is first initialized with a prefix string unique to
-each type.
+between types, the hasher is first initialized with a length-prefixed string
+unique to each type.
 
 After the prefix, the value is hashed as a sequence of TLV fields.
 
