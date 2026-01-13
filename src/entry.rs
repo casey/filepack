@@ -2,14 +2,14 @@ use super::*;
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields, rename_all = "kebab-case", untagged)]
-pub(crate) enum Entry {
+pub enum Entry {
   Directory(Directory),
   File(File),
 }
 
 impl Entry {
   pub(crate) fn fingerprint(&self, component: &Component) -> Hash {
-    let mut hasher = ContextHasher::new(HashContext::Entry);
+    let mut hasher = FingerprintHasher::new(FingerprintPrefix::Entry);
 
     hasher.field(0, component.as_bytes());
 

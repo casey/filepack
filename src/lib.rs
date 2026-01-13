@@ -18,12 +18,12 @@
 
 use {
   self::{
-    arguments::Arguments, component::Component, context_hasher::ContextHasher,
-    directory::Directory, display_path::DisplayPath, display_secret::DisplaySecret,
-    entries::Entries, entry::Entry, hash_context::HashContext, lint::Lint, lint_group::LintGroup,
-    message::Message, metadata::Metadata, options::Options, owo_colorize_ext::OwoColorizeExt,
-    path_error::PathError, private_key::PrivateKey, signature_error::SignatureError, style::Style,
-    subcommand::Subcommand, template::Template, utf8_path_ext::Utf8PathExt,
+    arguments::Arguments, component::Component, display_path::DisplayPath,
+    display_secret::DisplaySecret, entries::Entries, fingerprint_hasher::FingerprintHasher,
+    hash_context::FingerprintPrefix, lint::Lint, lint_group::LintGroup, message::Message,
+    metadata::Metadata, options::Options, owo_colorize_ext::OwoColorizeExt, path_error::PathError,
+    private_key::PrivateKey, signature_error::SignatureError, style::Style, subcommand::Subcommand,
+    template::Template, utf8_path_ext::Utf8PathExt,
   },
   blake3::Hasher,
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},
@@ -54,8 +54,8 @@ use {
 };
 
 pub use self::{
-  error::Error, file::File, hash::Hash, manifest::Manifest, public_key::PublicKey,
-  relative_path::RelativePath, signature::Signature,
+  directory::Directory, entry::Entry, error::Error, file::File, hash::Hash, manifest::Manifest,
+  public_key::PublicKey, relative_path::RelativePath, signature::Signature,
 };
 
 #[cfg(test)]
@@ -63,7 +63,6 @@ use {assert_fs::TempDir, std::collections::HashSet, strum::IntoEnumIterator};
 
 mod arguments;
 mod component;
-mod context_hasher;
 mod directory;
 mod display_path;
 mod display_secret;
@@ -72,6 +71,7 @@ mod entry;
 mod error;
 mod file;
 mod filesystem;
+mod fingerprint_hasher;
 mod hash;
 mod hash_context;
 mod lint;
