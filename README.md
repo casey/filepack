@@ -278,9 +278,9 @@ Signatures are created with:
 filepack sign
 ```
 
-Which signs the manifest in the current directory and adds the signature to the
-manifest's `signatures` map. Signatures are made over a fingerprint hash,
-recursively calculated from the contents of the manifest.
+Which signs the manifest in the current directory with your master key and adds
+the signature to the manifest's `signatures` map. Signatures are made over a
+fingerprint hash, recursively calculated from the contents of the manifest.
 
 ### Signature Verification
 
