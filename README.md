@@ -234,29 +234,75 @@ These lints cover issues such as non-portable paths which are illegal on
 Windows file systems, paths which would conflict on case-insensitive file
 systems, and inclusion of junk files such as `.DS_Store`.
 
-Lofty Ambitions
----------------
+Keys and Signatures
+-------------------
 
-`filepack` has lofty ambitions!
+`filepack` supports the generation of
+[Curve25519](https://en.wikipedia.org/wiki/Curve25519) public/private keypairs,
+and the creation and verification of
+[EdDSA](https://en.wikipedia.org/wiki/EdDSA) signatures over manifests.
 
-- Definition of a "fingerprint" hash, likely just the hash of the manifest
-  itself, so that as long as the fingerprint is received from a trusted source
-  the manifest itself does not need to be trusted.
+### Keypair Generation
 
-- Creation and verification of signatures over the fingerprint, so that
-  developers and packagers can vouch for the correctness of the contents of a
-  manifest, and users can verify that a manifest was signed by a trusted public
-  key.
+Keypairs are generated with:
 
-- Portability lints, so packagers can ensure that the files in a manifest can
-  be used in other environments, for example case-insensitive and Windows file
-  systems.
+```
+filepack keygen
+```
 
-- Semantic, machine-readable metadata about *what* a package is. For example,
-  human-readable title, suggested filename-safe slug, description, or year of
-  publication, to aid package indexing and search.
+Which creates `master.public` and `master.private` files in the filepack `keys`
+directory.
 
-Suggestions for new features are most welcome!
+The `keys` directory is located in the filepack data directory whose location
+is platform-dependent:
+
+| Platform | Value                                    | Example                                  |
+| -------- | ---------------------------------------- | ---------------------------------------- |
+| Linux    | `$XDG_DATA_HOME` or `$HOME`/.local/share | /home/alice/.local/share                 |
+| macOS    | `$HOME`/Library/Application Support      | /Users/Alice/Library/Application Support |
+| Windows  | `{FOLDERID_LocalAppData}`                | C:\Users\Alice\AppData\Local             |
+
+### Public Key Printing
+
+Generated public keys can be printed with:
+
+```
+filepack key
+```
+
+### Signing
+
+Signatures are created with:
+
+```
+filepack sign
+```
+
+Which signs the manifest in the current directory with your master key and adds
+the signature to the manifest's `signatures` map. Signatures are made over a
+fingerprint hash, recursively calculated from the contents of the manifest.
+
+### Signature Verification
+
+Signatures embedded in a manifest are verified whenever a manifest is verified.
+The presence of a signature by a particular public key can be asserted with:
+
+```
+filepack verify --key PUBLIC_KEY
+```
+
+Which will fail if a valid signature for `PUBLIC_KEY` over the manifest
+contents is not present.
+
+Fingerprints
+------------
+
+Filepack signatures are made over the manifest fingerprint hash, which is the
+root of a Merkle tree of the files and directories contained in the manifest.
+
+Fingerprints are BLAKE3 hashes, constructed such that it is impossible to
+produce objects which are different, either in type or content, but which have
+the same fingerprint.
 
 Alternatives and Prior Art
 --------------------------
@@ -288,7 +334,7 @@ hash function, but is now known to be insecure.
 hash function.
 
 `filepack` can also create and verify signatures. Other signing and
-verification utilities incude:
+verification utilities include:
 
 | binary | about |
 |---|---|
