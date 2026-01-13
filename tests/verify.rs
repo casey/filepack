@@ -731,7 +731,7 @@ fn verify_fingerprint() {
     .args([
       "verify",
       "--fingerprint",
-      "7636fe8bf9b25782e9c193e887c1b004e0a951a168cc37298da782f1a8516aaa",
+      "aef130d1d67b911c301079bf05ab37d4160f96c15cc4d1832ea77a9a24a2a73e",
     ])
     .current_dir(&dir)
     .assert()
@@ -749,7 +749,7 @@ fn verify_fingerprint() {
       "\
 fingerprint mismatch: `.*filepack\\.json`
             expected: 0000000000000000000000000000000000000000000000000000000000000000
-              actual: 7636fe8bf9b25782e9c193e887c1b004e0a951a168cc37298da782f1a8516aaa
+              actual: aef130d1d67b911c301079bf05ab37d4160f96c15cc4d1832ea77a9a24a2a73e
 error: fingerprint mismatch\n",
     ))
     .failure();

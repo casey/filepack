@@ -1,11 +1,11 @@
 use {
   self::{
-    arguments::Arguments, component::Component, context::Context, context_hasher::ContextHasher,
+    arguments::Arguments, component::Component, context_hasher::ContextHasher,
     directory::Directory, display_path::DisplayPath, display_secret::DisplaySecret,
-    entries::Entries, entry::Entry, lint::Lint, lint_group::LintGroup, message::Message,
-    metadata::Metadata, options::Options, owo_colorize_ext::OwoColorizeExt, path_error::PathError,
-    private_key::PrivateKey, signature_error::SignatureError, style::Style, subcommand::Subcommand,
-    template::Template, utf8_path_ext::Utf8PathExt,
+    entries::Entries, entry::Entry, hash_context::HashContext, lint::Lint, lint_group::LintGroup,
+    message::Message, metadata::Metadata, options::Options, owo_colorize_ext::OwoColorizeExt,
+    path_error::PathError, private_key::PrivateKey, signature_error::SignatureError, style::Style,
+    subcommand::Subcommand, template::Template, utf8_path_ext::Utf8PathExt,
   },
   blake3::Hasher,
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},
@@ -26,7 +26,6 @@ use {
     fs,
     io::{self, IsTerminal},
     iter,
-    num::NonZeroU64,
     path::{Path, PathBuf},
     process,
     str::{self, FromStr},
@@ -46,7 +45,6 @@ use {assert_fs::TempDir, std::collections::HashSet, strum::IntoEnumIterator};
 
 mod arguments;
 mod component;
-mod context;
 mod context_hasher;
 mod directory;
 mod display_path;
@@ -57,6 +55,7 @@ mod error;
 mod file;
 mod filesystem;
 mod hash;
+mod hash_context;
 mod lint;
 mod lint_group;
 mod manifest;
