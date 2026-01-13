@@ -1,12 +1,5 @@
 use super::*;
 
-#[derive(Default)]
-struct Verified {
-  bytes: u128,
-  files: u64,
-  signatures: u64,
-}
-
 #[derive(Parser)]
 pub(crate) struct Verify {
   #[arg(help = "Verify manifest fingerprint is <FINGERPRINT>", long)]
@@ -28,6 +21,13 @@ pub(crate) struct Verify {
 
 impl Verify {
   pub(crate) fn run(self, options: Options) -> Result {
+    #[derive(Default)]
+    struct Verified {
+      bytes: u128,
+      files: u64,
+      signatures: u64,
+    }
+
     let current_dir = current_dir()?;
 
     let root = self.root.unwrap_or_else(|| current_dir.clone());
