@@ -6,8 +6,8 @@ pub(crate) struct Message {
 
 impl Message {
   pub(crate) fn digest(self) -> Hash {
-    let mut hasher = ContextHasher::new(Context::Message);
-    hasher.field(0, self.fingerprint);
+    let mut hasher = ContextHasher::new(HashContext::Message);
+    hasher.field(0, self.fingerprint.as_bytes());
     hasher.finalize()
   }
 }
