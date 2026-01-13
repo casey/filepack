@@ -54,7 +54,7 @@ impl Directory {
   }
 
   pub(crate) fn fingerprint(&self) -> Hash {
-    let mut hasher = ContextHasher::new(HashContext::Directory);
+    let mut hasher = FingerprintHasher::new(FingerprintPrefix::Directory);
 
     for (component, entry) in &self.entries {
       hasher.field(0, entry.fingerprint(component).as_bytes());
