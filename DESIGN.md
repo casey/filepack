@@ -54,7 +54,7 @@ unique to each type.
 After the prefix, the value is hashed as a sequence of TLV fields.
 
 Fields are hashed in order, but may be skipped, in the case of optional fields,
-or be repeated, in the case of fields containing multiple values.
+or repeated, in the case of fields containing multiple values.
 
 Currently, no fingerprint test vectors exist, and the best documentation is
 the code itself.
