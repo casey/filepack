@@ -81,7 +81,7 @@ fingerprint mismatch: `{source}`
     let files = manifest.files();
 
     for (path, expected) in &files {
-      let actual = match options.hash_file(&root.join(&path)) {
+      let actual = match options.hash_file(&root.join(path)) {
         Err(err) if err.kind() == io::ErrorKind::NotFound => {
           ensure! {
             self.ignore_missing,
