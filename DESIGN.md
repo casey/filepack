@@ -60,9 +60,9 @@ the code itself.
 
 In particular, see:
 
-- [src/fingerprint_hasher.rs]
-- [src/fingerprint_prefix.rs]
-- [src/manifest.rs]
-- [src/directory.rs]
-- [src/entry.rs]
-- [src/file.rs]
+- [FingerprintHasher](src/fingerprint_hasher.rs)
+- [FingerprintPrefix](src/fingerprint_prefix.rs)
+- [Manifest](src/manifest.rs)
+- [Directory](src/directory.rs)
+- [Entry](src/entry.rs)
+- [Files](src/file.rs)
