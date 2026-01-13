@@ -29,12 +29,12 @@ Signatures
 
 Filepack allows for the creation of signatures over the contents of a manifest,
 which thus commit to the contents of the directory covered by the manifest.
-Signatures are made not over the hash of the literal JSON bytes of the
-manifest, but over a fingerprint hash, a Merkle tree hash created from the
-contents of the manifest. This keeps signatures independent of the manifest
-format, avoids issues with canonicalization of the manifest JSON, avoids hash
-loops due to the inclusion of signatures in the manifest itself, and allows
-proving the inclusion of files covered by a signature using a Merkle receipt.
+Signatures are made not over serialized manifest, but over a fingerprint hash,
+a Merkle tree hash created from the contents of the manifest. This keeps
+signatures independent of the manifest format, avoids issues with
+canonicalization of the manifest JSON, avoids hash loops due to the inclusion
+of signatures in the manifest itself, and allows proving the inclusion of files
+covered by a signature using a Merkle receipt.
 
 Fingerprints
 ------------
