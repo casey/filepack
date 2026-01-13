@@ -304,7 +304,7 @@ Fingerprints are BLAKE3 hashes, constructed such that it is impossible to
 produce objects which are different, either in type or content, but which have
 the same fingerprint.
 
-For details on how fingerprints are calculated, see [DESIGN.md].
+For details on how fingerprints are calculated, see [DESIGN.md](DESIGN.md).
 
 Alternatives and Prior Art
 --------------------------

@@ -20,7 +20,7 @@ use {
   self::{
     arguments::Arguments, component::Component, display_path::DisplayPath,
     display_secret::DisplaySecret, entries::Entries, fingerprint_hasher::FingerprintHasher,
-    hash_context::FingerprintPrefix, lint::Lint, lint_group::LintGroup, message::Message,
+    fingerprint_prefix::FingerprintPrefix, lint::Lint, lint_group::LintGroup, message::Message,
     metadata::Metadata, options::Options, owo_colorize_ext::OwoColorizeExt, path_error::PathError,
     private_key::PrivateKey, signature_error::SignatureError, style::Style, subcommand::Subcommand,
     template::Template, utf8_path_ext::Utf8PathExt,
@@ -72,8 +72,8 @@ mod error;
 mod file;
 mod filesystem;
 mod fingerprint_hasher;
+mod fingerprint_prefix;
 mod hash;
-mod hash_context;
 mod lint;
 mod lint_group;
 mod manifest;
