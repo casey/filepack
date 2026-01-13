@@ -13,3 +13,15 @@ impl<N: Display + One + PartialEq, T: Display> Display for Count<N, T> {
     Ok(())
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn count() {
+    assert_eq!(Count(0, "foo").to_string(), "0 foos");
+    assert_eq!(Count(1, "foo").to_string(), "1 foo");
+    assert_eq!(Count(2, "foo").to_string(), "2 foos");
+  }
+}
