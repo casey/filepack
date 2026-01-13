@@ -1,3 +1,21 @@
+//! `filepack` is a tool for hashing directories.
+//!
+//! `filepack create` creates a manifest which commits to the content of the
+//! current directory and its children.
+//!
+//! `filepack verify` verifies a manifest against the content of the current
+//! directory of its children.
+//!
+//! This can be used to detect accidental corruption or modification. If
+//! `filepack verify` succeeds, the contents of the directory have not changed.
+//!
+//! A manifest can also be used to guard against intentional corruption, as
+//! long as the manifest itself is kept secure.
+//!
+//! The `filepack` library crate is not intended for general consumption, and
+//! exists mainly to facilitate code-sharing between the `filepack` binary and
+//! integration tests. As such, it provides no semantic versioning guarantees.
+
 use {
   self::{
     arguments::Arguments, component::Component, context_hasher::ContextHasher,
