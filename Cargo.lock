@@ -560,6 +560,7 @@ dependencies = [
  "hex",
  "indicatif",
  "lexiclean",
+ "num-traits",
  "owo-colors",
  "predicates",
  "pretty_assertions",

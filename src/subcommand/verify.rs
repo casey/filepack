@@ -1,5 +1,12 @@
 use super::*;
 
+#[derive(Default)]
+struct Verified {
+  bytes: u128,
+  files: u64,
+  signatures: u64,
+}
+
 #[derive(Parser)]
 pub(crate) struct Verify {
   #[arg(help = "Verify manifest fingerprint is <FINGERPRINT>", long)]
@@ -69,7 +76,11 @@ fingerprint mismatch: `{source}`
 
     let mut mismatches = BTreeMap::new();
 
-    for (path, expected) in manifest.files() {
+    let mut verified = Verified::default();
+
+    let files = manifest.files();
+
+    for (path, expected) in &files {
       let actual = match options.hash_file(&root.join(&path)) {
         Err(err) if err.kind() == io::ErrorKind::NotFound => {
           ensure! {
@@ -81,7 +92,10 @@ fingerprint mismatch: `{source}`
         result => result.context(error::FilesystemIo { path: &path })?,
       };
 
-      if actual != expected {
+      if actual == *expected {
+        verified.files += 1;
+        verified.bytes += u128::from(expected.size);
+      } else {
         mismatches.insert(path, (actual, expected));
       }
 
@@ -123,8 +137,6 @@ mismatched file: `{path}`
         .build(),
       );
     }
-
-    let files = manifest.files();
 
     let mut empty = Vec::new();
 
@@ -187,6 +199,7 @@ mismatched file: `{path}`
 
     for (public_key, signature) in &manifest.signatures {
       public_key.verify(fingerprint, signature)?;
+      verified.signatures += 1;
     }
 
     if let Some(key) = self.key {
@@ -199,6 +212,13 @@ mismatched file: `{path}`
     if self.print {
       print!("{json}");
     }
+
+    eprintln!(
+      "successfully verified {} totaling {} with {}",
+      Count(verified.files, "file"),
+      Count(verified.bytes, "byte"),
+      Count(verified.signatures, "signature"),
+    );
 
     Ok(())
   }

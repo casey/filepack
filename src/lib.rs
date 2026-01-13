@@ -18,7 +18,7 @@
 
 use {
   self::{
-    arguments::Arguments, component::Component, display_path::DisplayPath,
+    arguments::Arguments, component::Component, count::Count, display_path::DisplayPath,
     display_secret::DisplaySecret, entries::Entries, fingerprint_hasher::FingerprintHasher,
     fingerprint_prefix::FingerprintPrefix, lint::Lint, lint_group::LintGroup, message::Message,
     metadata::Metadata, options::Options, owo_colorize_ext::OwoColorizeExt, path_error::PathError,
@@ -30,6 +30,7 @@ use {
   clap::{Parser, ValueEnum},
   indicatif::{ProgressBar, ProgressStyle},
   lexiclean::Lexiclean,
+  num_traits::One,
   owo_colors::Styled,
   serde::{Deserialize, Deserializer, Serialize, Serializer},
   serde_with::{DeserializeFromStr, SerializeDisplay},
@@ -63,6 +64,7 @@ use {assert_fs::TempDir, std::collections::HashSet, strum::IntoEnumIterator};
 
 mod arguments;
 mod component;
+mod count;
 mod directory;
 mod display_path;
 mod display_secret;

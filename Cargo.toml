@@ -22,6 +22,7 @@ ed25519-dalek = { version = "2.1.1", features = ["rand_core"] }
 hex = "0.4.3"
 indicatif = "0.18.0"
 lexiclean = "0.0.1"
+num-traits = "0.2.19"
 owo-colors = "4"
 rand = "0.8.5"
 serde = { version = "1.0.209", features = ["derive"] }
