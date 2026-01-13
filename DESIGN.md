@@ -1,5 +1,35 @@
-Design
-======
+Filepack Design
+===============
+
+Open Questions
+--------------
+
+- *Should filepack re-use an existing signature system, like SSH or PGP?* I
+  looked into both, but the formats and algorithms are incredibly complex, and
+  allow a huge number of unnecessary degrees of freedom.
+
+- *Should signatures be included in the manifest or in a subdirectory?*
+  Currently, signatures are stored in the manifest in an object under the
+  `signatures` key. This has pros and cons. The major pro is one only needs to
+  download a single file in order to verify the contents of a directory and
+  signatures. The major con is that adding a signature requires modifying the
+  manifest, and care must be taken to avoid conflicts if multiple people add
+  signatures concurrently.
+
+- *Should filepack use a derived key when signing messages?* I would like to,
+  since deriving a key with an explicit context seems like good practice, but
+  `ed25519_dalek` doesn't support it.
+
+- *Should I worry about quantum computers?* I'm leaning towards no, since
+  filepack can likely be reactive instead of proactive on this front.
+
+- *Should the manifest use a binary serialization format?* The main advantage
+  would be being able to easily include large amounts of binary data in the
+  manifest. For example, parity information, or intermediate file hash tiers.
+
+- *Should Bech32m be used for fingerprints, public keys, and private keys?*
+  This would make them distinct and easy to identify, and give private keys
+  like `private1…` which suggests that they shouldn't be exposed.
 
 Manifest Format
 ---------------
@@ -27,14 +57,14 @@ of file hashing and verification.
 Signatures
 ----------
 
-Filepack allows for the creation of signatures over the contents of a manifest,
-which thus commit to the contents of the directory covered by the manifest.
-Signatures are made not over serialized manifest, but over a fingerprint hash,
-a Merkle tree hash created from the contents of the manifest. This keeps
-signatures independent of the manifest format, avoids issues with
-canonicalization of the manifest JSON, avoids hash loops due to the inclusion
-of signatures in the manifest itself, and allows proving the inclusion of files
-covered by a signature using a Merkle receipt.
+Filepack allows for the creation of Ed25519 signatures over the contents of a
+manifest, which thus commit to the contents of the directory covered by the
+manifest. Signatures are made not over serialized manifest, but over a message
+containing a fingerprint hash, a Merkle tree hash created from the contents of
+the manifest. This keeps signatures independent of the manifest format, avoids
+issues with canonicalization of the manifest JSON, avoids hash loops due to the
+inclusion of signatures in the manifest itself, and allows proving the
+inclusion of files covered by a signature using a Merkle receipt.
 
 Fingerprints
 ------------
