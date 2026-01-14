@@ -1,6 +1,40 @@
 use super::*;
 
 #[test]
+fn default() {
+  let test = Test::new()
+    .args(["keygen"])
+    .success()
+    .args(["key"])
+    .stdout_regex("[0-9a-f]{64}\n")
+    .success();
+
+  let public_key = test.read("keys/master.public");
+
+  test
+    .args(["key"])
+    .stdout(format!("{public_key}\n"))
+    .success();
+}
+
+#[test]
+fn master() {
+  let test = Test::new()
+    .args(["keygen"])
+    .success()
+    .args(["key", "--key", "master"])
+    .stdout_regex("[0-9a-f]{64}\n")
+    .success();
+
+  let public_key = test.read("keys/master.public");
+
+  test
+    .args(["key", "--key", "master"])
+    .stdout(format!("{public_key}\n"))
+    .success();
+}
+
+#[test]
 fn mismatched_key() {
   Test::new()
     .data_dir("foo")
@@ -11,6 +45,16 @@ fn mismatched_key() {
     .rename("foo/keys/master.private", "keys/master.private")
     .args(["key"])
     .stderr("error: public key `master.public` doesn't match private key `master.private`\n")
+    .failure();
+}
+
+#[test]
+fn missing() {
+  Test::new()
+    .args(["keygen"])
+    .success()
+    .args(["key", "--key", "nonexistent"])
+    .stderr_regex("error: public key not found: `.*nonexistent.public`\n")
     .failure();
 }
 
@@ -37,23 +81,6 @@ fn missing_public_key() {
 }
 
 #[test]
-fn default() {
-  let test = Test::new()
-    .args(["keygen"])
-    .success()
-    .args(["key"])
-    .stdout_regex("[0-9a-f]{64}\n")
-    .success();
-
-  let public_key = test.read("keys/master.public");
-
-  test
-    .args(["key"])
-    .stdout(format!("{public_key}\n"))
-    .success();
-}
-
-#[test]
 fn named() {
   let test = Test::new()
     .args(["keygen", "--name", "deploy"])
@@ -68,31 +95,4 @@ fn named() {
     .args(["key", "--key", "deploy"])
     .stdout(format!("{public_key}\n"))
     .success();
-}
-
-#[test]
-fn master() {
-  let test = Test::new()
-    .args(["keygen"])
-    .success()
-    .args(["key", "--key", "master"])
-    .stdout_regex("[0-9a-f]{64}\n")
-    .success();
-
-  let public_key = test.read("keys/master.public");
-
-  test
-    .args(["key", "--key", "master"])
-    .stdout(format!("{public_key}\n"))
-    .success();
-}
-
-#[test]
-fn missing() {
-  Test::new()
-    .args(["keygen"])
-    .success()
-    .args(["key", "--key", "nonexistent"])
-    .stderr_regex("error: public key not found: `.*nonexistent.public`\n")
-    .failure();
 }
