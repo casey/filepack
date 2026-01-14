@@ -15,21 +15,18 @@ impl Display for Mode {
   }
 }
 
+#[cfg(unix)]
 impl From<Permissions> for Mode {
   fn from(permissions: Permissions) -> Self {
-    #[cfg(unix)]
-    let mode = {
-      use std::os::unix::fs::PermissionsExt;
-      permissions.mode()
-    };
+    use std::os::unix::fs::PermissionsExt;
+    Self(permissions.mode())
+  }
+}
 
-    #[cfg(not(unix))]
-    let mode = {
-      let _ = permissions;
-      0
-    };
-
-    Self(mode)
+#[cfg(not(unix))]
+impl From<Permissions> for Mode {
+  fn from(_permissions: Permissions) -> Self {
+    Self(0)
   }
 }
 

@@ -41,20 +41,16 @@ impl Test {
     self
   }
 
+  #[cfg(unix)]
   pub(crate) fn chmod(self, path: &str, mode: u32) -> Self {
-    #[cfg(unix)]
-    {
-      use std::os::unix::fs::PermissionsExt;
-      let path = self.join(path);
-      fs::set_permissions(&path, fs::Permissions::from_mode(mode)).unwrap();
-    }
+    use std::os::unix::fs::PermissionsExt;
+    let path = self.join(path);
+    fs::set_permissions(&path, fs::Permissions::from_mode(mode)).unwrap();
+    self
+  }
 
-    #[cfg(not(unix))]
-    {
-      let _ = path;
-      let _ = mode;
-    }
-
+  #[cfg(not(unix))]
+  pub(crate) fn chmod(self, _path: &str, _mode: u32) -> Self {
     self
   }
 
