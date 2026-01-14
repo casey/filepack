@@ -2,6 +2,8 @@ use super::*;
 
 #[derive(Parser)]
 pub(crate) struct Hash {
+  #[arg(help = "Assert file hash is <HASH>", long, value_name = "HASH")]
+  assert: Option<crate::Hash>,
   #[arg(help = "Hash <FILE>, defaulting to standard input")]
   file: Option<Utf8PathBuf>,
 }
@@ -22,6 +24,16 @@ impl Hash {
 
       hasher.finalize().into()
     };
+
+    if let Some(expected) = self.assert {
+      ensure! {
+        hash == expected,
+        error::Assert {
+          actual: hash,
+          expected,
+        }
+      }
+    }
 
     println!("{hash}");
 
