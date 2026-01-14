@@ -327,6 +327,43 @@ fn sign_fails_if_master_key_not_available() {
 }
 
 #[test]
+fn sign_with_named_key() {
+  let test = Test::new()
+    .args(["keygen", "--name", "deploy"])
+    .success()
+    .touch("foo/bar")
+    .args(["create", "--sign", "--key", "deploy", "foo"])
+    .success();
+
+  let manifest_path = test.path().join("foo/filepack.json");
+  let manifest = Manifest::load(Some(&manifest_path)).unwrap();
+
+  let public_key = test.read_public_key("keys/deploy.public");
+
+  assert_eq!(manifest.signatures.len(), 1);
+
+  let signature = manifest.signatures[&public_key].clone();
+
+  public_key
+    .verify(manifest.fingerprint(), &signature)
+    .unwrap();
+
+  test
+    .args(["verify", "foo"])
+    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
+    .success();
+}
+
+#[test]
+fn sign_with_unknown_key() {
+  Test::new()
+    .touch("foo/bar")
+    .args(["create", "--sign", "--key", "deploy", "foo"])
+    .stderr_regex("error: private key not found: `.*deploy.private`\n")
+    .failure();
+}
+
+#[test]
 fn single_file() {
   Test::new()
     .touch("foo")
