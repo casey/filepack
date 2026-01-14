@@ -356,30 +356,17 @@ fn print() {
 
 #[test]
 fn signature_verification_success() {
-  let dir = TempDir::new().unwrap();
-
-  cargo_bin_cmd!("filepack")
-    .env("FILEPACK_DATA_DIR", dir.path())
-    .arg("keygen")
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  dir.child("foo/bar").touch().unwrap();
-
-  cargo_bin_cmd!("filepack")
-    .env("FILEPACK_DATA_DIR", dir.path())
+  let test = Test::new()
+    .args(["keygen"])
+    .success()
+    .touch("foo/bar")
     .args(["create", "--sign", "foo"])
-    .current_dir(&dir)
-    .assert()
     .success();
 
-  let public_key = load_key(&dir.child("keys/master.public"));
+  let public_key = test.read("keys/master.public");
 
-  cargo_bin_cmd!("filepack")
+  test
     .args(["verify", "foo", "--key", &public_key])
-    .current_dir(&dir)
-    .assert()
     .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
     .success();
 }
