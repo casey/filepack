@@ -37,7 +37,9 @@ pub enum Error {
   #[snafu(display("key provided multiple times: `{key}`"))]
   DuplicateKey {
     backtrace: Option<Backtrace>,
+    first: KeyIdentifier,
     key: PublicKey,
+    second: KeyIdentifier,
   },
   #[snafu(display("{count} mismatched file{}", if *count == 1 { "" } else { "s" }))]
   EntryMismatch {
@@ -173,10 +175,10 @@ pub enum Error {
     public_key: PublicKey,
     source: SignatureError,
   },
-  #[snafu(display("no signature found for key {key}"))]
+  #[snafu(display("no signature found for key {identifier}"))]
   SignatureMissing {
     backtrace: Option<Backtrace>,
-    key: PublicKey,
+    identifier: KeyIdentifier,
   },
   #[snafu(display("I/O error reading standard input"))]
   StandardInputIo {
