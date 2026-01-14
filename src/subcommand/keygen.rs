@@ -3,11 +3,7 @@ use super::*;
 pub(crate) fn run(option: Options) -> Result {
   let dir = option.key_dir()?;
 
-  let exists = filesystem::exists(&dir)?;
-
-  filesystem::create_dir_all(&dir)?;
-
-  if exists {
+  if filesystem::exists(&dir)? {
     let mode = filesystem::mode(&dir)?;
 
     ensure! {
@@ -15,6 +11,8 @@ pub(crate) fn run(option: Options) -> Result {
       error::KeyDirPermissions { path: &dir, mode },
     }
   } else {
+    filesystem::create_dir_all(&dir)?;
+
     filesystem::set_mode(&dir, 0o700)?;
   }
 
