@@ -21,11 +21,11 @@ impl KeyName {
 }
 
 impl FromStr for KeyName {
-  type Err = public_key::Error;
+  type Err = PublicKeyError;
 
   fn from_str(name: &str) -> Result<Self, Self::Err> {
     if !NAME_RE.is_match(name) {
-      return Err(public_key::Error::Name { name: name.into() });
+      return Err(public_key_error::NameError { name }.build());
     }
 
     Ok(Self(name.into()))

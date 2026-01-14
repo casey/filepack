@@ -23,8 +23,8 @@ use {
     fingerprint_prefix::FingerprintPrefix, key_identifier::KeyIdentifier, key_name::KeyName,
     lint::Lint, lint_group::LintGroup, message::Message, metadata::Metadata, mode::Mode,
     options::Options, owo_colorize_ext::OwoColorizeExt, path_error::PathError,
-    private_key::PrivateKey, signature_error::SignatureError, style::Style, subcommand::Subcommand,
-    template::Template, utf8_path_ext::Utf8PathExt,
+    private_key::PrivateKey, public_key_error::PublicKeyError, signature_error::SignatureError,
+    style::Style, subcommand::Subcommand, template::Template, utf8_path_ext::Utf8PathExt,
   },
   blake3::Hasher,
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},
@@ -101,6 +101,7 @@ mod path_error;
 mod private_key;
 mod progress_bar;
 mod public_key;
+mod public_key_error;
 mod relative_path;
 mod signature;
 mod signature_error;

@@ -18,7 +18,7 @@ impl KeyIdentifier {
 }
 
 impl FromStr for KeyIdentifier {
-  type Err = public_key::Error;
+  type Err = PublicKeyError;
 
   fn from_str(name: &str) -> Result<Self, Self::Err> {
     if LITERAL_RE.is_match(name) {

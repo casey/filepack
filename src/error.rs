@@ -166,7 +166,7 @@ pub enum Error {
   PublicKeyLoad {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
-    source: public_key::Error,
+    source: PublicKeyError,
   },
   #[snafu(display("public key not found: `{path}`"))]
   PublicKeyNotFound {
