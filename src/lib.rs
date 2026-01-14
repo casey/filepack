@@ -18,13 +18,31 @@
 
 use {
   self::{
-    arguments::Arguments, component::Component, count::Count, display_path::DisplayPath,
-    display_secret::DisplaySecret, entries::Entries, fingerprint_hasher::FingerprintHasher,
-    fingerprint_prefix::FingerprintPrefix, key_identifier::KeyIdentifier, key_name::KeyName,
-    lint::Lint, lint_group::LintGroup, message::Message, metadata::Metadata, mode::Mode,
-    options::Options, owo_colorize_ext::OwoColorizeExt, path_error::PathError,
-    public_key_error::PublicKeyError, signature_error::SignatureError, style::Style,
-    subcommand::Subcommand, template::Template, utf8_path_ext::Utf8PathExt,
+    arguments::Arguments,
+    component::Component,
+    count::Count,
+    display_path::DisplayPath,
+    display_secret::DisplaySecret,
+    entries::Entries,
+    fingerprint_hasher::FingerprintHasher,
+    fingerprint_prefix::FingerprintPrefix,
+    functions::{current_dir, decode_path, is_lowercase_hex},
+    key_identifier::KeyIdentifier,
+    key_name::KeyName,
+    lint::Lint,
+    lint_group::LintGroup,
+    message::Message,
+    metadata::Metadata,
+    mode::Mode,
+    options::Options,
+    owo_colorize_ext::OwoColorizeExt,
+    path_error::PathError,
+    public_key_error::PublicKeyError,
+    signature_error::SignatureError,
+    style::Style,
+    subcommand::Subcommand,
+    template::Template,
+    utf8_path_ext::Utf8PathExt,
   },
   blake3::Hasher,
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},
@@ -87,6 +105,7 @@ mod file;
 mod filesystem;
 mod fingerprint_hasher;
 mod fingerprint_prefix;
+mod functions;
 mod hash;
 mod key_identifier;
 mod key_name;
@@ -115,15 +134,6 @@ const DEFAULT_KEY: &str = "master";
 const SEPARATORS: [char; 2] = ['/', '\\'];
 
 type Result<T = (), E = Error> = std::result::Result<T, E>;
-
-fn current_dir() -> Result<Utf8PathBuf> {
-  Utf8PathBuf::from_path_buf(env::current_dir().context(error::CurrentDir)?)
-    .map_err(|path| error::PathUnicode { path }.build())
-}
-
-fn decode_path(path: &Path) -> Result<&Utf8Path> {
-  Utf8Path::from_path(path).context(error::PathUnicode { path })
-}
 
 pub fn run() {
   if let Err(err) = Arguments::parse().run() {
