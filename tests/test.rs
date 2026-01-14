@@ -8,15 +8,15 @@ enum Expected {
 }
 
 impl Expected {
-  fn check(&self, actual: &str) {
+  fn check(&self, actual: &str, name: &str) {
     match self {
-      Expected::String(expected) => assert_eq!(actual, expected),
+      Expected::String(expected) => assert_eq!(actual, expected, "{name} did not match"),
       Expected::Regex(regex) => assert!(
         regex.is_match(actual),
-        "did not match regex\n   actual: {actual}\n    regex: {}",
+        "{name} did not match regex\n   actual: {actual}\n    regex: {}",
         regex.as_str()
       ),
-      Expected::Empty => assert!(actual.is_empty()),
+      Expected::Empty => assert!(actual.is_empty(), "{name} is not empty"),
     }
   }
 
@@ -185,13 +185,13 @@ impl Test {
 
     assert_eq!(output.status.code(), Some(code));
 
-    self.stderr.check(stderr);
+    self.stderr.check(stderr, "stderr");
 
-    self.stdout.check(stdout);
+    self.stdout.check(stdout, "stdout");
 
     for (path, expected) in &self.files {
       let actual = fs::read_to_string(self.join(&path)).unwrap();
-      expected.check(&actual);
+      expected.check(&actual, &format!("file `{path}`"));
     }
 
     Self::with_tempdir(self.tempdir)
