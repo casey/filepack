@@ -5,6 +5,12 @@ enum Expected {
   String(String),
 }
 
+impl Expected {
+  fn regex(pattern: &str) -> Self {
+    Self::Regex(Regex::new(&format!("^(?s){pattern}$")).unwrap())
+  }
+}
+
 pub(crate) struct Test {
   args: Vec<String>,
   current_dir: Option<String>,
@@ -174,23 +180,17 @@ impl Test {
   }
 
   pub(crate) fn stderr_regex(mut self, pattern: &str) -> Self {
-    self.stderr = Some(Expected::Regex(
-      Regex::new(&format!("^(?s){pattern}$")).unwrap(),
-    ));
+    self.stderr = Some(Expected::regex(pattern));
     self
   }
 
-  pub(crate) fn stdout(mut self, stdout: impl AsRef<[u8]>) -> Self {
-    self.stdout = Some(Expected::String(
-      String::from_utf8(stdout.as_ref().to_vec()).unwrap(),
-    ));
+  pub(crate) fn stdout(mut self, stdout: impl AsRef<str>) -> Self {
+    self.stdout = Some(Expected::String(stdout.as_ref().into()));
     self
   }
 
   pub(crate) fn stdout_regex(mut self, pattern: &str) -> Self {
-    self.stdout = Some(Expected::Regex(
-      Regex::new(&format!("^(?s){pattern}$")).unwrap(),
-    ));
+    self.stdout = Some(Expected::regex(pattern));
     self
   }
 
