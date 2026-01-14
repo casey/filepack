@@ -6,6 +6,8 @@ pub(crate) struct Create {
   deny: Option<LintGroup>,
   #[arg(help = "Overwrite manifest if it already exists", long)]
   force: bool,
+  #[arg(default_value = DEFAULT_KEY, help = "Sign with <KEY>", long, requires = "sign")]
+  key: KeyName,
   #[arg(
     help = "Write manifest to <MANIFEST>, defaults to `<ROOT>/filepack.json`",
     long
@@ -17,8 +19,6 @@ pub(crate) struct Create {
   root: Option<Utf8PathBuf>,
   #[arg(help = "Sign manifest", long)]
   sign: bool,
-  #[arg(default_value = DEFAULT_KEY, help = "Sign with <KEY>", long, requires = "sign")]
-  key: KeyName,
 }
 
 impl Create {
