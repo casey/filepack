@@ -29,11 +29,15 @@ pub(crate) fn read_to_string_opt(path: &Utf8Path) -> Result<Option<String>> {
   }
 }
 
-#[cfg(unix)]
 pub(crate) fn set_mode(path: &Utf8Path, mode: u32) -> Result {
-  use std::os::unix::fs::PermissionsExt;
-  std::fs::set_permissions(path, std::fs::Permissions::from_mode(mode))
-    .context(error::FilesystemIo { path })
+  #[cfg(unix)]
+  {
+    use std::os::unix::fs::PermissionsExt;
+    std::fs::set_permissions(path, std::fs::Permissions::from_mode(mode))
+      .context(error::FilesystemIo { path })?;
+  }
+
+  Ok(())
 }
 
 pub(crate) fn write(path: &Utf8Path, contents: impl AsRef<[u8]>) -> Result {
