@@ -211,6 +211,7 @@ impl Test {
   }
 
   pub(crate) fn stdin(mut self, stdin: &str) -> Self {
+    assert!(self.stdin.is_none());
     self.stdin = Some(stdin.into());
     self
   }
