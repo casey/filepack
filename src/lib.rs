@@ -60,7 +60,15 @@ pub use self::{
 };
 
 #[cfg(test)]
-use {assert_fs::TempDir, std::collections::HashSet, strum::IntoEnumIterator};
+use {std::collections::HashSet, strum::IntoEnumIterator};
+
+#[cfg(test)]
+fn tempdir() -> tempfile::TempDir {
+  tempfile::Builder::new()
+    .prefix("filepack-test-tempdir")
+    .tempdir()
+    .unwrap()
+}
 
 mod arguments;
 mod component;

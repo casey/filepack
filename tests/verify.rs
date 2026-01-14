@@ -2,20 +2,15 @@ use super::*;
 
 #[test]
 fn extra_fields_are_not_allowed() {
-  let dir = TempDir::new().unwrap();
-
-  dir
-    .child("filepack.json")
-    .write_str(&json! {
-      files: {},
-      foo: "bar"
-    })
-    .unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
     .args(["verify", "."])
-    .current_dir(&dir)
-    .assert()
+    .write(
+      "filepack.json",
+      json! {
+        files: {},
+        foo: "bar"
+      },
+    )
     .stderr(
       "\
 error: failed to deserialize manifest at `filepack.json`
@@ -26,85 +21,52 @@ error: failed to deserialize manifest at `filepack.json`
 
 #[test]
 fn extraneous_empty_directory_error() {
-  let dir = TempDir::new().unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
     .args(["create", "."])
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  dir.child("foo").create_dir_all().unwrap();
-
-  cargo_bin_cmd!("filepack")
+    .success()
+    .create_dir("foo")
     .args(["verify", "."])
-    .current_dir(&dir)
-    .assert()
     .stderr("error: extraneous directory not in manifest: `foo`\n")
     .failure();
 }
 
 #[test]
 fn extraneous_file_error() {
-  let dir = TempDir::new().unwrap();
-
-  dir
-    .child("filepack.json")
-    .write_str(&json! { files: {} })
-    .unwrap();
-
-  dir.child("foo").touch().unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .write("filepack.json", json! { files: {} })
+    .touch("foo")
     .args(["verify", "."])
-    .current_dir(&dir)
-    .assert()
     .stderr("error: extraneous file not in manifest: `foo`\n")
     .failure();
 }
 
 #[test]
 fn file_not_found_error_message() {
-  let dir = TempDir::new().unwrap();
-
-  dir
-    .child("filepack.json")
-    .write_str(&json! {
-      files: {
-        foo: {
-          hash: EMPTY_HASH,
-          size: 0
+  Test::new()
+    .write(
+      "filepack.json",
+      json! {
+        files: {
+          foo: {
+            hash: EMPTY_HASH,
+            size: 0
+          }
         }
-      }
-    })
-    .unwrap();
-
-  cargo_bin_cmd!("filepack")
-    .arg("verify")
-    .current_dir(&dir)
-    .assert()
-    .stderr(is_match("error: file missing: `foo`\n"))
+      },
+    )
+    .args(["verify"])
+    .stderr_regex("error: file missing: `foo`\n")
     .failure();
 }
 
 #[test]
 fn hash_mismatch() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("foo").write_str("foo").unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .write("foo", "foo")
     .args(["create", "."])
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  dir.child("foo").write_str("bar").unwrap();
-
-  cargo_bin_cmd!("filepack")
+    .success()
+    .write("foo", "bar")
     .args(["verify", "."])
-    .current_dir(&dir)
-    .assert()
     .stderr(
       "\
 mismatched file: `foo`
@@ -118,210 +80,145 @@ error: 1 mismatched file
 
 #[test]
 fn ignore_missing() {
-  let dir = TempDir::new().unwrap();
-
-  dir
-    .child("filepack.json")
-    .write_str(&json! {
-      files: {
-        foo: {
-          hash: EMPTY_HASH,
-          size: 0
+  Test::new()
+    .write(
+      "filepack.json",
+      json! {
+        files: {
+          foo: {
+            hash: EMPTY_HASH,
+            size: 0
+          }
         }
-      }
-    })
-    .unwrap();
-
-  cargo_bin_cmd!("filepack")
-    .arg("verify")
-    .current_dir(&dir)
-    .assert()
-    .stderr(is_match("error: file missing: `foo`\n"))
-    .failure();
-
-  cargo_bin_cmd!("filepack")
+      },
+    )
+    .args(["verify"])
+    .stderr_regex("error: file missing: `foo`\n")
+    .failure()
     .args(["verify", "--ignore-missing"])
-    .current_dir(&dir)
-    .assert()
     .stderr("successfully verified 0 files totaling 0 bytes with 0 signatures\n")
     .success();
 }
 
 #[test]
 fn malformed_signature_error() {
-  let dir = TempDir::new().unwrap();
-
-  cargo_bin_cmd!("filepack")
-    .arg("create")
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  let path = dir.child("filepack.json");
-
-  let manifest_json = json! {
-    files: {},
-    signatures: {
-      "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b":
-        "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b"
-    }
-  };
-  fs::write(&path, manifest_json).unwrap();
-
-  cargo_bin_cmd!("filepack")
-    .arg("verify")
-    .current_dir(&dir)
-    .assert()
-    .stderr(is_match(
+  Test::new()
+    .args(["create"])
+    .success()
+    .write(
+      "filepack.json",
+      json! {
+        files: {},
+        signatures: {
+          "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b":
+            "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b"
+        }
+      },
+    )
+    .args(["verify"])
+    .stderr_regex(
       "error: failed to deserialize manifest at `filepack.json`\n.*invalid signature byte length.*",
-    ))
+    )
     .failure();
 }
 
 #[test]
 fn manifest_not_found_error_message() {
-  let dir = TempDir::new().unwrap();
-
-  cargo_bin_cmd!("filepack")
-    .arg("verify")
-    .current_dir(&dir)
-    .assert()
+  Test::new()
+    .args(["verify"])
     .stderr("error: manifest `filepack.json` not found\n")
     .failure();
 }
 
 #[test]
 fn manifest_paths_are_relative_to_root() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("dir/foo").touch().unwrap();
-
-  dir
-    .child("dir/filepack.json")
-    .write_str(&json! {
-      files: {
-        foo: {
-          hash: EMPTY_HASH,
-          size: 0
+  Test::new()
+    .touch("dir/foo")
+    .write(
+      "dir/filepack.json",
+      json! {
+        files: {
+          foo: {
+            hash: EMPTY_HASH,
+            size: 0
+          }
         }
-      }
-    })
-    .unwrap();
-
-  cargo_bin_cmd!("filepack")
+      },
+    )
     .args(["verify", "dir"])
-    .current_dir(&dir)
-    .assert()
     .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
     .success();
 }
 
 #[test]
 fn metadata_allows_unknown_keys() {
-  let dir = TempDir::new().unwrap();
+  let metadata = json! {
+    title: "Foo",
+    bar: 100
+  };
 
-  dir
-    .child("filepack.json")
-    .write_str(&json! {
-      files: {
-        "metadata.json": {
-          hash: "1845a2ea1b86a250cb1c24115032cc0fdc064001f59af4a5e9a17be5cd7efbbc",
-          size: 25
-        }
-      }
-    })
-    .unwrap();
+  let hash = blake3::hash(metadata.as_bytes()).to_string();
 
-  dir
-    .child("metadata.json")
-    .write_str(
+  Test::new()
+    .write(
+      "filepack.json",
       json! {
-        title: "Foo",
-        bar: 100
-      }
-      .trim_end_matches('\n'),
+        files: {
+          "metadata.json": {
+            hash: hash,
+            size: 26
+          }
+        }
+      },
     )
-    .unwrap();
-
-  cargo_bin_cmd!("filepack")
+    .write("metadata.json", metadata)
     .args(["verify"])
-    .current_dir(&dir)
-    .assert()
-    .stderr("successfully verified 1 file totaling 25 bytes with 0 signatures\n")
+    .stderr("successfully verified 1 file totaling 26 bytes with 0 signatures\n")
     .success();
 }
 
 #[test]
 fn metadata_may_not_be_invalid() {
-  let dir = TempDir::new().unwrap();
-
-  dir
-    .child("filepack.json")
-    .write_str(&json! {
-      files: {
-        "metadata.json": {
-          hash: "f113b1430243e68a2976426b0e13f21e5795cc107a914816fbf6c2f511092f4b",
-          size: 13
+  Test::new()
+    .write(
+      "filepack.json",
+      json! {
+        files: {
+          "metadata.json": {
+            hash: "bc9ebf24ee55783c96f0794cc208c03933e318986ed9b3f347020606e21f7b4b",
+            size: 14
+          }
         }
-      }
-    })
-    .unwrap();
-
-  dir
-    .child("metadata.json")
-    .write_str(json! { title: 100 }.trim_end_matches('\n'))
-    .unwrap();
-
-  cargo_bin_cmd!("filepack")
+      },
+    )
+    .write("metadata.json", json! { title: 100 })
     .args(["verify"])
-    .current_dir(&dir)
-    .assert()
-    .stderr(is_match(
-      "error: failed to deserialize metadata at `.*metadata.json`\n.*",
-    ))
+    .stderr_regex("error: failed to deserialize metadata at `.*metadata.json`\n.*")
     .failure();
 }
 
 #[test]
 fn missing_empty_directory_error() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("foo").create_dir_all().unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .create_dir("foo")
     .args(["create", "."])
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  std::fs::remove_dir(dir.path().join("foo")).unwrap();
-
-  cargo_bin_cmd!("filepack")
+    .success()
+    .remove_dir("foo")
     .args(["verify", "."])
-    .current_dir(&dir)
-    .assert()
     .stderr("error: directory missing: `foo`\n")
     .failure();
 }
 
 #[test]
 fn missing_signature_error() {
-  let dir = TempDir::new().unwrap();
-
-  cargo_bin_cmd!("filepack")
-    .arg("create")
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .args(["create"])
+    .success()
     .args([
       "verify",
       "--key",
       "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b",
     ])
-    .current_dir(&dir)
-    .assert()
     .stderr(
       "error: no signature found for key \
       7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b\n",
@@ -331,24 +228,14 @@ fn missing_signature_error() {
 
 #[test]
 fn multiple_mismatches() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("foo").touch().unwrap();
-  dir.child("bar").touch().unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .touch("foo")
+    .touch("bar")
     .args(["create", "."])
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  dir.child("foo").write_str("baz").unwrap();
-  dir.child("bar").write_str("bob").unwrap();
-
-  cargo_bin_cmd!("filepack")
+    .success()
+    .write("foo", "baz")
+    .write("bar", "bob")
     .args(["verify", "."])
-    .current_dir(&dir)
-    .assert()
     .stderr(
       "\
 mismatched file: `bar`
@@ -365,77 +252,42 @@ error: 2 mismatched files
 
 #[test]
 fn nested_extraneous_empty_directory_error() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("foo/bar").create_dir_all().unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .create_dir("foo/bar")
     .args(["create", "."])
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  dir.child("foo/bar/baz").create_dir_all().unwrap();
-
-  cargo_bin_cmd!("filepack")
+    .success()
+    .create_dir("foo/bar/baz")
     .args(["verify", "."])
-    .current_dir(&dir)
-    .assert()
-    .stderr(path(
-      "error: extraneous directory not in manifest: `foo/bar/baz`\n",
-    ))
+    .stderr_path("error: extraneous directory not in manifest: `foo/bar/baz`\n")
     .failure();
 }
 
 #[test]
 fn nested_missing_empty_directory_error() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("foo/bar/baz").create_dir_all().unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .create_dir("foo/bar/baz")
     .args(["create", "."])
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  std::fs::remove_dir(dir.path().join("foo/bar/baz")).unwrap();
-
-  cargo_bin_cmd!("filepack")
+    .success()
+    .remove_dir("foo/bar/baz")
     .args(["verify", "."])
-    .current_dir(&dir)
-    .assert()
     .stderr("error: directory missing: `foo/bar/baz`\n")
     .failure();
 }
 
 #[test]
 fn no_files() {
-  let dir = TempDir::new().unwrap();
-
-  dir
-    .child("filepack.json")
-    .write_str(&json! { files: {} })
-    .unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .write("filepack.json", json! { files: {} })
     .args(["verify", "."])
-    .current_dir(&dir)
-    .assert()
     .stderr("successfully verified 0 files totaling 0 bytes with 0 signatures\n")
     .success();
 }
 
 #[test]
 fn non_unicode_manifest_deserialize_error() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("filepack.json").write_binary(&[0x80]).unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .write("filepack.json", [0x80])
     .args(["verify", "."])
-    .current_dir(&dir)
-    .assert()
     .stderr(
       "\
 error: I/O error at `filepack.json`
@@ -447,50 +299,20 @@ error: I/O error at `filepack.json`
 
 #[test]
 fn non_unicode_path_error() {
-  use std::path::PathBuf;
-
-  // macos does not allow non-unicode filenames
   if cfg!(target_os = "macos") {
     return;
   }
 
-  let dir = TempDir::new().unwrap();
-
-  let invalid: PathBuf;
-
-  #[cfg(unix)]
-  {
-    use std::{ffi::OsStr, os::unix::ffi::OsStrExt};
-
-    invalid = OsStr::from_bytes(&[0x80]).into();
-  };
-
-  #[cfg(windows)]
-  {
-    use std::{ffi::OsString, os::windows::ffi::OsStringExt};
-
-    invalid = OsString::from_wide(&[0xd800]).into();
-  };
-
-  dir.child(invalid).touch().unwrap();
-
-  dir
-    .child("filepack.json")
-    .write_str(&json! { files: {} })
-    .unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .touch_non_unicode()
+    .write("filepack.json", json! { files: {} })
     .args(["verify", "."])
-    .current_dir(&dir)
-    .assert()
-    .stderr(path("error: path not valid unicode: `./�`\n"))
+    .stderr_path("error: path not valid unicode: `./�`\n")
     .failure();
 }
 
 #[test]
 fn print() {
-  let dir = TempDir::new().unwrap();
-
   let manifest = json! {
     files: {
       foo: {
@@ -500,171 +322,120 @@ fn print() {
     }
   };
 
-  dir.child("foo").touch().unwrap();
-
-  dir.child("filepack.json").write_str(&manifest).unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .touch("foo")
+    .write("filepack.json", &manifest)
     .args(["verify", "--print", "."])
-    .current_dir(&dir)
-    .assert()
-    .stdout(manifest)
+    .stdout(&manifest)
     .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
     .success();
 }
 
 #[test]
 fn signature_verification_success() {
-  let dir = TempDir::new().unwrap();
-
-  cargo_bin_cmd!("filepack")
-    .env("FILEPACK_DATA_DIR", dir.path())
-    .arg("keygen")
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  dir.child("foo/bar").touch().unwrap();
-
-  cargo_bin_cmd!("filepack")
-    .env("FILEPACK_DATA_DIR", dir.path())
+  let test = Test::new()
+    .args(["keygen"])
+    .success()
+    .touch("foo/bar")
     .args(["create", "--sign", "foo"])
-    .current_dir(&dir)
-    .assert()
     .success();
 
-  let public_key = load_key(&dir.child("keys/master.public"));
+  let public_key = test.read("keys/master.public");
 
-  cargo_bin_cmd!("filepack")
+  test
     .args(["verify", "foo", "--key", &public_key])
-    .current_dir(&dir)
-    .assert()
     .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
     .success();
 }
 
 #[test]
 fn single_file() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("foo").touch().unwrap();
-
-  dir
-    .child("filepack.json")
-    .write_str(&json! {
-      files: {
-        foo: {
-          hash: EMPTY_HASH,
-          size: 0
+  Test::new()
+    .touch("foo")
+    .write(
+      "filepack.json",
+      json! {
+        files: {
+          foo: {
+            hash: EMPTY_HASH,
+            size: 0
+          }
         }
-      }
-    })
-    .unwrap();
-
-  cargo_bin_cmd!("filepack")
+      },
+    )
     .args(["verify", "."])
-    .current_dir(&dir)
-    .assert()
     .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
     .success();
 }
 
 #[test]
 fn single_file_mmap() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("foo").touch().unwrap();
-
-  dir
-    .child("filepack.json")
-    .write_str(&json! {
-      files: {
-        foo: {
-          hash: EMPTY_HASH,
-          size: 0
+  Test::new()
+    .touch("foo")
+    .write(
+      "filepack.json",
+      json! {
+        files: {
+          foo: {
+            hash: EMPTY_HASH,
+            size: 0
+          }
         }
-      }
-    })
-    .unwrap();
-
-  cargo_bin_cmd!("filepack")
+      },
+    )
     .args(["--mmap", "verify", "."])
-    .current_dir(&dir)
-    .assert()
     .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
     .success();
 }
 
 #[test]
 fn single_file_omit_directory() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("foo").touch().unwrap();
-
-  dir
-    .child("filepack.json")
-    .write_str(&json! {
-      files: {
-        foo: {
-          hash: EMPTY_HASH,
-          size: 0
+  Test::new()
+    .touch("foo")
+    .write(
+      "filepack.json",
+      json! {
+        files: {
+          foo: {
+            hash: EMPTY_HASH,
+            size: 0
+          }
         }
-      }
-    })
-    .unwrap();
-
-  cargo_bin_cmd!("filepack")
-    .arg("verify")
-    .current_dir(&dir)
-    .assert()
+      },
+    )
+    .args(["verify"])
     .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
     .success();
 }
 
 #[test]
 fn single_file_parallel() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("foo").touch().unwrap();
-
-  dir
-    .child("filepack.json")
-    .write_str(&json! {
-      files: {
-        foo: {
-          hash: EMPTY_HASH,
-          size: 0
+  Test::new()
+    .touch("foo")
+    .write(
+      "filepack.json",
+      json! {
+        files: {
+          foo: {
+            hash: EMPTY_HASH,
+            size: 0
+          }
         }
-      }
-    })
-    .unwrap();
-
-  cargo_bin_cmd!("filepack")
+      },
+    )
     .args(["--parallel", "verify", "."])
-    .current_dir(&dir)
-    .assert()
     .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
     .success();
 }
 
 #[test]
 fn size_mismatch() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("foo").touch().unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .touch("foo")
     .args(["create", "."])
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  dir.child("foo").write_str("bar").unwrap();
-
-  cargo_bin_cmd!("filepack")
+    .success()
+    .write("foo", "bar")
     .args(["verify", "."])
-    .current_dir(&dir)
-    .assert()
     .stderr(
       "\
 mismatched file: `foo`
@@ -678,151 +449,109 @@ error: 1 mismatched file
 
 #[test]
 fn valid_signature_for_wrong_pubkey_error() {
-  let dir = TempDir::new().unwrap();
-
-  cargo_bin_cmd!("filepack")
-    .env("FILEPACK_DATA_DIR", dir.path())
-    .arg("keygen")
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  dir.child("foo/bar").touch().unwrap();
-
-  cargo_bin_cmd!("filepack")
-    .env("FILEPACK_DATA_DIR", dir.path())
+  let test = Test::new()
+    .args(["keygen"])
+    .success()
+    .touch("foo/bar")
     .args(["create", "--sign", "foo"])
-    .current_dir(&dir)
-    .assert()
     .success();
 
-  let mut manifest = Manifest::load(Some(dir.child("foo/filepack.json").utf8_path())).unwrap();
+  let manifest_path = test.path().join("foo/filepack.json");
 
-  let public_key = load_key(&dir.child("keys/master.public"))
-    .parse::<PublicKey>()
-    .unwrap();
+  let mut manifest = Manifest::load(Some(&manifest_path)).unwrap();
 
-  let foo = manifest.signatures.remove(&public_key).unwrap();
+  let public_key = test.read_key("keys/master.public");
+
+  let signature = manifest.signatures.remove(&public_key).unwrap();
 
   manifest.signatures.insert(
     "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b"
       .parse::<PublicKey>()
       .unwrap(),
-    foo,
+    signature,
   );
 
-  manifest
-    .save(dir.child("foo/filepack.json").utf8_path())
-    .unwrap();
+  manifest.save(&manifest_path).unwrap();
 
-  cargo_bin_cmd!("filepack")
+  test
     .args(["verify", "foo"])
-    .current_dir(&dir)
-    .assert()
-    .stderr(is_match(
+    .stderr_regex(
       "error: invalid signature for public key `7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b`\n.*Verification equation was not satisfied.*",
-    ))
+    )
     .failure();
 }
 
 #[test]
 fn verify_fingerprint() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("foo").touch().unwrap();
-
-  cargo_bin_cmd!("filepack")
-    .arg("create")
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .touch("foo")
+    .args(["create"])
+    .success()
     .args([
       "verify",
       "--fingerprint",
       "864e5111ebe431702448d7d7c3f9b962d5659f761fb4287049d52d6376a4c20e",
     ])
-    .current_dir(&dir)
-    .assert()
     .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
-    .success();
-
-  cargo_bin_cmd!("filepack")
+    .success()
     .args([
       "verify",
       "--fingerprint",
       "0000000000000000000000000000000000000000000000000000000000000000",
     ])
-    .current_dir(&dir)
-    .assert()
-    .stderr(is_match(
+    .stderr_regex(
       "\
 fingerprint mismatch: `.*filepack\\.json`
             expected: 0000000000000000000000000000000000000000000000000000000000000000
               actual: 864e5111ebe431702448d7d7c3f9b962d5659f761fb4287049d52d6376a4c20e
 error: fingerprint mismatch\n",
-    ))
+    )
     .failure();
 }
 
 #[test]
 fn weak_signature_public_key() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("bar").touch().unwrap();
-
-  cargo_bin_cmd!("filepack")
-    .arg("create")
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  let json = json! {
-    files: {
-      bar: {
-        hash: EMPTY_HASH,
-        size: 0
-      }
-    },
-    signatures: {
-      "0000000000000000000000000000000000000000000000000000000000000000":"0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
-    }
-  };
-
-  fs::write(dir.child("filepack.json"), json).unwrap();
-
-  cargo_bin_cmd!("filepack")
-    .arg("verify")
-    .current_dir(&dir)
-    .assert()
-    .stderr(is_match(
+  Test::new()
+    .touch("bar")
+    .args(["create"])
+    .success()
+    .write(
+      "filepack.json",
+      json! {
+        files: {
+          bar: {
+            hash: EMPTY_HASH,
+            size: 0
+          }
+        },
+        signatures: {
+          "0000000000000000000000000000000000000000000000000000000000000000":"0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      },
+    )
+    .args(["verify"])
+    .stderr_regex(
       "error: failed to deserialize manifest at `filepack.json`\n.*weak public key.*",
-    ))
+    )
     .failure();
 }
 
 #[test]
 fn with_manifest_path() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("foo").touch().unwrap();
-
-  dir
-    .child("hello.json")
-    .write_str(&json! {
-      files: {
-        foo: {
-          hash: EMPTY_HASH,
-          size: 0
+  Test::new()
+    .touch("foo")
+    .write(
+      "hello.json",
+      json! {
+        files: {
+          foo: {
+            hash: EMPTY_HASH,
+            size: 0
+          }
         }
-      }
-    })
-    .unwrap();
-
-  cargo_bin_cmd!("filepack")
+      },
+    )
     .args(["verify", "--manifest", "hello.json"])
-    .current_dir(&dir)
-    .assert()
+    .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
     .success();
 }

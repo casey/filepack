@@ -52,7 +52,7 @@ macro_rules! parts {
 
     ($s:ident, $value:expr) => {{
         $s.push('"');
-        $s.push_str($value);
+        $s.push_str(($value).as_ref());
         $s.push('"');
     }};
 

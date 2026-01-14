@@ -35,11 +35,10 @@ usized = "0.0.2"
 walkdir = "2.5.0"
 
 [dev-dependencies]
-assert_cmd = { version = "2.0.16", features = ["color-auto"] }
-assert_fs = { version = "1.1.2", features = ["color-auto"] }
-predicates = "3.1.2"
+executable-path = "1.0.0"
 pretty_assertions = "1.4.1"
 regex = "1.10.6"
+tempfile = "3.24.0"
 
 [lints.clippy]
 all = { level = "deny", priority = -1 }
