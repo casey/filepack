@@ -116,6 +116,25 @@ fn key_dir_insecure_permissions() {
 }
 
 #[test]
+fn named() {
+  let test = Test::new()
+    .args(["keygen", "--name", "deploy"])
+    .success()
+    .touch("foo/bar")
+    .args(["create", "foo"])
+    .success();
+
+  let public_key = test.read("keys/deploy.public");
+
+  test
+    .args(["sign", "--key", "deploy", "foo/filepack.json"])
+    .success()
+    .args(["verify", "foo", "--key", &public_key])
+    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
+    .success();
+}
+
+#[test]
 fn private_key_insecure_permissions() {
   if !cfg!(unix) {
     return;
