@@ -35,6 +35,14 @@ tmp:
   rm -rf tmp
   mkdir tmp
 
+example: tmp
+  cp README.md tmp
+  mkdir tmp/src
+  cp src/main.rs tmp/src
+  cargo run create tmp
+  cargo run sign tmp
+  cat tmp/filepack.json | jq > tmp/example.json
+
 publish: tmp
   #!/usr/bin/env bash
   set -euxo pipefail
