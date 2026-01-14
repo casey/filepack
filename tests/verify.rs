@@ -233,7 +233,7 @@ fn missing_signature_error() {
 }
 
 #[test]
-fn multiple_keys_all_present() {
+fn multiple_keys() {
   let test = Test::new()
     .data_dir("alice")
     .args(["keygen"])
@@ -245,10 +245,10 @@ fn multiple_keys_all_present() {
     .args(["create", "foo"])
     .success()
     .data_dir("alice")
-    .args(["sign", "foo/filepack.json"])
+    .args(["sign", "foo"])
     .success()
     .data_dir("bob")
-    .args(["sign", "foo/filepack.json"])
+    .args(["sign", "foo"])
     .success();
 
   let alice_key = test.read("alice/keys/master.public");
