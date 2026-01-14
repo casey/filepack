@@ -4,6 +4,8 @@ use super::*;
 pub(crate) struct Sign {
   #[arg(help = "Allow overwriting signature", long)]
   force: bool,
+  #[arg(default_value = DEFAULT_KEY, help = "Sign with <KEY>", long)]
+  key: KeyName,
   #[arg(help = MANIFEST_PATH_HELP)]
   path: Option<Utf8PathBuf>,
 }
@@ -18,10 +20,8 @@ impl Sign {
       public_key.verify(fingerprint, signature)?;
     }
 
-    let key = KeyName::master();
-
     if !self.force {
-      let public_key_path = options.key_dir()?.join(key.public_key_filename());
+      let public_key_path = options.key_dir()?.join(self.key.public_key_filename());
       let public_key = PublicKey::load(&public_key_path)?;
       ensure! {
         !manifest.signatures.contains_key(&public_key),
@@ -29,7 +29,7 @@ impl Sign {
       }
     }
 
-    let private_key_path = options.key_dir()?.join(key.private_key_filename());
+    let private_key_path = options.key_dir()?.join(self.key.private_key_filename());
 
     let (public_key, signature) = PrivateKey::load_and_sign(&private_key_path, fingerprint)?;
 

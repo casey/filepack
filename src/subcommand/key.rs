@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(Parser)]
 pub(crate) struct Key {
-  #[arg(default_value = "master", help = "Print public key <KEY>", long)]
+  #[arg(default_value = DEFAULT_KEY, help = "Print public key <KEY>", long)]
   key: KeyName,
 }
 
