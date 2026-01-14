@@ -37,6 +37,7 @@ pub(crate) fn set_mode(path: &Utf8Path, mode: u32) -> Result {
       .context(error::FilesystemIo { path })?;
   }
 
+  #[cfg(not(unix))]
   let _ = path;
 
   Ok(())

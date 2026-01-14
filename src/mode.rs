@@ -24,7 +24,10 @@ impl From<Permissions> for Mode {
     };
 
     #[cfg(not(unix))]
-    let mode = 0;
+    let mode = {
+      let _ = permissions;
+      0
+    };
 
     Self(mode)
   }
