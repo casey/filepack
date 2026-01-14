@@ -1,13 +1,31 @@
 use {super::*, pretty_assertions::assert_eq, regex::Regex};
 
+#[derive(Debug)]
 enum Expected {
+  Empty,
   Regex(Regex),
   String(String),
 }
 
 impl Expected {
+  fn check(&self, actual: &str) {
+    match self {
+      Expected::String(expected) => assert_eq!(actual, expected),
+      Expected::Regex(regex) => assert!(
+        regex.is_match(actual),
+        "did not match regex\n   actual: {actual}\n    regex: {}",
+        regex.as_str()
+      ),
+      Expected::Empty => assert!(actual.is_empty()),
+    }
+  }
+
   fn regex(pattern: &str) -> Self {
     Self::Regex(Regex::new(&format!("^(?s){pattern}$")).unwrap())
+  }
+
+  fn string(string: impl Into<String>) -> Self {
+    Self::String(string.into())
   }
 }
 
@@ -16,9 +34,10 @@ pub(crate) struct Test {
   current_dir: Option<String>,
   data_dir: Option<String>,
   env: BTreeMap<String, String>,
-  stderr: Option<Expected>,
+  files: BTreeMap<String, Expected>,
+  stderr: Expected,
   stdin: Option<String>,
-  stdout: Option<Expected>,
+  stdout: Expected,
   tempdir: tempfile::TempDir,
 }
 
@@ -31,19 +50,22 @@ impl Test {
     self
   }
 
-  pub(crate) fn assert_file(self, path: &str, expected: impl AsRef<str>) -> Self {
-    let actual = fs::read_to_string(self.join(path)).unwrap();
-    assert_eq!(actual.trim(), expected.as_ref().trim());
+  pub(crate) fn assert_file(mut self, path: &str, expected: impl Into<String>) -> Self {
+    assert!(
+      self
+        .files
+        .insert(path.into(), Expected::string(expected))
+        .is_none()
+    );
     self
   }
 
-  pub(crate) fn assert_file_regex(self, path: &str, pattern: &str) -> Self {
-    let actual = fs::read_to_string(self.join(path)).unwrap();
-    let regex = Regex::new(&format!("^(?s){pattern}$")).unwrap();
+  pub(crate) fn assert_file_regex(mut self, path: &str, pattern: &str) -> Self {
     assert!(
-      regex.is_match(&actual),
-      "file content did not match regex\n   actual: {actual}\n    regex: {}",
-      regex.as_str()
+      self
+        .files
+        .insert(path.into(), Expected::regex(pattern))
+        .is_none()
     );
     self
   }
@@ -142,7 +164,7 @@ impl Test {
       .spawn()
       .unwrap();
 
-    if let Some(stdin) = self.stdin {
+    if let Some(stdin) = &self.stdin {
       child
         .stdin
         .as_ref()
@@ -163,36 +185,27 @@ impl Test {
 
     assert_eq!(output.status.code(), Some(code));
 
-    match &self.stderr {
-      Some(Expected::String(expected)) => assert_eq!(stderr, expected),
-      Some(Expected::Regex(regex)) => assert!(
-        regex.is_match(stderr),
-        "stderr did not match regex\n   stderr: {stderr}\n    regex: {}",
-        regex.as_str()
-      ),
-      None => assert!(output.stderr.is_empty()),
-    }
+    self.stderr.check(stderr);
 
-    match &self.stdout {
-      Some(Expected::String(expected)) => assert_eq!(stdout, expected),
-      Some(Expected::Regex(regex)) => assert!(
-        regex.is_match(stdout),
-        "stdout did not match regex\n   stdout: {stdout}\n    regex: {}",
-        regex.as_str()
-      ),
-      None => assert!(output.stdout.is_empty()),
+    self.stdout.check(stdout);
+
+    for (path, expected) in &self.files {
+      let actual = fs::read_to_string(self.join(&path)).unwrap();
+      expected.check(&actual);
     }
 
     Self::with_tempdir(self.tempdir)
   }
 
   pub(crate) fn stderr(mut self, stderr: &str) -> Self {
-    self.stderr = Some(Expected::String(stderr.into()));
+    assert_matches!(self.stderr, Expected::Empty);
+    self.stderr = Expected::String(stderr.into());
     self
   }
 
   pub(crate) fn stderr_regex(mut self, pattern: &str) -> Self {
-    self.stderr = Some(Expected::regex(pattern));
+    assert_matches!(self.stderr, Expected::Empty);
+    self.stderr = Expected::regex(pattern);
     self
   }
 
@@ -202,12 +215,14 @@ impl Test {
   }
 
   pub(crate) fn stdout(mut self, stdout: impl AsRef<str>) -> Self {
-    self.stdout = Some(Expected::String(stdout.as_ref().into()));
+    assert_matches!(self.stdout, Expected::Empty);
+    self.stdout = Expected::String(stdout.as_ref().into());
     self
   }
 
   pub(crate) fn stdout_regex(mut self, pattern: &str) -> Self {
-    self.stdout = Some(Expected::regex(pattern));
+    assert_matches!(self.stdout, Expected::Empty);
+    self.stdout = Expected::regex(pattern);
     self
   }
 
@@ -238,9 +253,10 @@ impl Test {
       current_dir: None,
       data_dir: None,
       env: BTreeMap::new(),
-      stderr: None,
+      files: BTreeMap::new(),
+      stderr: Expected::Empty,
       stdin: None,
-      stdout: None,
+      stdout: Expected::Empty,
       tempdir,
     }
   }

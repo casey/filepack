@@ -6,10 +6,7 @@ fn allow_lint() {
     return;
   }
 
-  Test::new()
-    .touch("aux")
-    .args(["create", "."])
-    .success();
+  Test::new().touch("aux").args(["create", "."]).success();
 }
 
 #[test]
@@ -75,7 +72,6 @@ fn empty_directories_are_included() {
   Test::new()
     .create_dir("foo")
     .args(["create", "."])
-    .success()
     .assert_file(
       "filepack.json",
       json! {
@@ -85,6 +81,7 @@ fn empty_directories_are_included() {
         },
       },
     )
+    .success()
     .args(["verify", "."])
     .stderr("successfully verified 0 files totaling 0 bytes with 0 signatures\n")
     .success();
@@ -95,7 +92,6 @@ fn file_in_subdirectory() {
   Test::new()
     .touch("foo/bar")
     .args(["create", "."])
-    .success()
     .assert_file(
       "filepack.json",
       json! {
@@ -109,6 +105,7 @@ fn file_in_subdirectory() {
         }
       },
     )
+    .success()
     .args(["verify", "."])
     .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
     .success();
@@ -120,7 +117,6 @@ fn force_overwrites_manifest() {
     .touch("filepack.json")
     .touch("foo")
     .args(["create", "--force", "."])
-    .success()
     .assert_file(
       "filepack.json",
       json! {
@@ -132,6 +128,7 @@ fn force_overwrites_manifest() {
         }
       },
     )
+    .success()
     .args(["verify", "."])
     .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
     .success();
@@ -143,7 +140,6 @@ fn force_overwrites_manifest_with_destination() {
     .touch("foo.json")
     .touch("foo")
     .args(["create", "--force", ".", "--manifest", "foo.json"])
-    .success()
     .assert_file(
       "foo.json",
       json! {
@@ -155,6 +151,7 @@ fn force_overwrites_manifest_with_destination() {
         }
       },
     )
+    .success()
     .args(["verify", ".", "--manifest", "foo.json"])
     .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
     .success();
@@ -176,11 +173,13 @@ fn metadata_already_exists() {
     .touch("foo/metadata.json")
     .write("metadata.yaml", "title: Foo")
     .args(["create", "foo", "--metadata", "metadata.yaml"])
-    .stderr(&path("error: metadata `foo/metadata.json` already exists\n"))
+    .stderr(&path(
+      "error: metadata `foo/metadata.json` already exists\n",
+    ))
     .failure()
     .args(["create", "foo", "--metadata", "metadata.yaml", "--force"])
-    .success()
-    .assert_file("foo/metadata.json", json! { title: "Foo" });
+    .assert_file("foo/metadata.json", json! { title: "Foo" })
+    .success();
 }
 
 #[test]
@@ -209,7 +208,6 @@ fn multiple_empty_directory_are_included() {
     .create_dir("foo")
     .create_dir("bar")
     .args(["create", "."])
-    .success()
     .assert_file(
       "filepack.json",
       json! {
@@ -221,6 +219,7 @@ fn multiple_empty_directory_are_included() {
         },
       },
     )
+    .success()
     .args(["verify", "."])
     .stderr("successfully verified 0 files totaling 0 bytes with 0 signatures\n")
     .success();
@@ -231,7 +230,6 @@ fn nested_empty_directories_are_included() {
   Test::new()
     .create_dir("foo/bar")
     .args(["create", "."])
-    .success()
     .assert_file(
       "filepack.json",
       json! {
@@ -243,6 +241,7 @@ fn nested_empty_directories_are_included() {
         },
       },
     )
+    .success()
     .args(["verify", "."])
     .stderr("successfully verified 0 files totaling 0 bytes with 0 signatures\n")
     .success();
@@ -252,8 +251,8 @@ fn nested_empty_directories_are_included() {
 fn no_files() {
   Test::new()
     .args(["create", "."])
+    .assert_file("filepack.json", "{}\n")
     .success()
-    .assert_file("filepack.json", "{}")
     .args(["verify", "."])
     .stderr("successfully verified 0 files totaling 0 bytes with 0 signatures\n")
     .success();
@@ -344,7 +343,6 @@ fn single_file() {
   Test::new()
     .touch("foo")
     .args(["create", "."])
-    .success()
     .assert_file(
       "filepack.json",
       json! {
@@ -356,6 +354,7 @@ fn single_file() {
         }
       },
     )
+    .success()
     .args(["verify", "."])
     .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
     .success();
@@ -366,7 +365,6 @@ fn single_file_mmap() {
   Test::new()
     .touch("foo")
     .args(["--mmap", "create", "."])
-    .success()
     .assert_file(
       "filepack.json",
       json! {
@@ -378,6 +376,7 @@ fn single_file_mmap() {
         }
       },
     )
+    .success()
     .args(["--mmap", "verify", "."])
     .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
     .success();
@@ -388,7 +387,6 @@ fn single_file_omit_root() {
   Test::new()
     .touch("foo")
     .args(["create"])
-    .success()
     .assert_file(
       "filepack.json",
       json! {
@@ -400,6 +398,7 @@ fn single_file_omit_root() {
         }
       },
     )
+    .success()
     .args(["verify", "."])
     .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
     .success();
@@ -410,7 +409,6 @@ fn single_file_parallel() {
   Test::new()
     .touch("foo")
     .args(["--parallel", "create", "."])
-    .success()
     .assert_file(
       "filepack.json",
       json! {
@@ -422,6 +420,7 @@ fn single_file_parallel() {
         }
       },
     )
+    .success()
     .args(["--parallel", "verify", "."])
     .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
     .success();
@@ -432,7 +431,6 @@ fn single_non_empty_file() {
   Test::new()
     .write("foo", "bar")
     .args(["create", "."])
-    .success()
     .assert_file(
       "filepack.json",
       json! {
@@ -444,6 +442,7 @@ fn single_non_empty_file() {
         }
       },
     )
+    .success()
     .args(["verify", "."])
     .stderr("successfully verified 1 file totaling 3 bytes with 0 signatures\n")
     .success();
@@ -463,7 +462,6 @@ fn with_manifest_path() {
   Test::new()
     .touch("foo")
     .args(["create", "--manifest", "hello.json"])
-    .success()
     .assert_file(
       "hello.json",
       json! {
@@ -475,6 +473,7 @@ fn with_manifest_path() {
         }
       },
     )
+    .success()
     .args(["verify", "--manifest", "hello.json"])
     .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
     .success();
@@ -486,7 +485,6 @@ fn with_metadata() {
     .touch("foo/bar")
     .write("metadata.yaml", "title: Foo")
     .args(["create", "foo", "--metadata", "metadata.yaml"])
-    .success()
     .assert_file(
       "foo/filepack.json",
       json! {
@@ -503,6 +501,7 @@ fn with_metadata() {
       },
     )
     .assert_file("foo/metadata.json", json! { title: "Foo" })
+    .success()
     .args(["verify", "foo"])
     .stderr("successfully verified 2 files totaling 16 bytes with 0 signatures\n")
     .success();

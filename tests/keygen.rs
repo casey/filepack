@@ -22,9 +22,9 @@ fn error_if_master_public_key_already_exists() {
 fn keygen_generates_master_key_by_default() {
   let test = Test::new()
     .args(["keygen"])
-    .success()
     .assert_file_regex("keys/master.public", "[0-9a-f]{64}\n")
-    .assert_file_regex("keys/master.private", "[0-9a-f]{64}\n");
+    .assert_file_regex("keys/master.private", "[0-9a-f]{64}\n")
+    .success();
 
   let public_key = ed25519_dalek::VerifyingKey::from_bytes(
     &hex::decode(test.read("keys/master.public"))

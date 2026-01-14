@@ -5,7 +5,6 @@ fn fingerprint() {
   let test = Test::new()
     .touch("foo")
     .args(["create"])
-    .success()
     .assert_file(
       "filepack.json",
       json! {
@@ -16,7 +15,8 @@ fn fingerprint() {
           }
         }
       },
-    );
+    )
+    .success();
 
   let fingerprint = "864e5111ebe431702448d7d7c3f9b962d5659f761fb4287049d52d6376a4c20e";
 
