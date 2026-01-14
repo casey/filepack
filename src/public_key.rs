@@ -159,9 +159,9 @@ mod tests {
 
   #[test]
   fn whitespace_is_trimmed_when_loading_from_disk() {
-    let dir = TempDir::new().unwrap();
+    let dir = tempdir();
 
-    let path = Utf8PathBuf::from_path_buf(dir.join("key")).unwrap();
+    let path = Utf8PathBuf::from_path_buf(dir.path().join("key")).unwrap();
 
     let key = "0f6d444f09eb336d3cc94d66cc541fea0b70b36be291eb3ecf5b49113f34c8d3"
       .parse::<PublicKey>()

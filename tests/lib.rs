@@ -1,8 +1,14 @@
 use {
   self::test::Test,
-  assert_cmd::cargo::cargo_bin_cmd,
+  executable_path::executable_path,
   filepack::{Manifest, PublicKey, Signature},
-  std::{fs, path::Path, str},
+  std::{
+    fs,
+    io::Write,
+    path::Path,
+    process::{Command, Stdio},
+    str,
+  },
 };
 
 mod create;

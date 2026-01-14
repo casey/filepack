@@ -92,7 +92,7 @@ impl Test {
   }
 
   fn run(self, code: i32) -> Self {
-    let mut command = cargo_bin_cmd!("filepack");
+    let mut command = Command::new(executable_path("filepack"));
 
     let current_dir = if let Some(ref subdir) = self.current_dir {
       self.tempdir.path().join(subdir)
@@ -116,11 +116,23 @@ impl Test {
 
     command.args(&self.args);
 
-    if let Some(ref stdin_content) = self.stdin {
-      command.write_stdin(stdin_content.as_str());
+    let child = command
+      .stdin(Stdio::piped())
+      .stdout(Stdio::piped())
+      .stderr(Stdio::piped())
+      .spawn()
+      .unwrap();
+
+    if let Some(stdin) = self.stdin {
+      child
+        .stdin
+        .as_ref()
+        .unwrap()
+        .write_all(stdin.as_bytes())
+        .unwrap();
     }
 
-    let output = command.output().unwrap();
+    let output = child.wait_with_output().unwrap();
 
     assert_eq!(output.status.code(), Some(code));
 
