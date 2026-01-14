@@ -258,28 +258,12 @@ fn no_files() {
 
 #[test]
 fn non_unicode_path_error() {
-  use std::path::PathBuf;
-
   if cfg!(target_os = "macos") {
     return;
   }
 
-  let invalid: PathBuf;
-
-  #[cfg(unix)]
-  {
-    use std::{ffi::OsStr, os::unix::ffi::OsStrExt};
-    invalid = OsStr::from_bytes(&[0x80]).into();
-  };
-
-  #[cfg(windows)]
-  {
-    use std::{ffi::OsString, os::windows::ffi::OsStringExt};
-    invalid = OsString::from_wide(&[0xd800]).into();
-  };
-
   Test::new()
-    .touch(invalid)
+    .touch_non_unicode()
     .args(["create", "."])
     .stderr_path("error: path not valid unicode: `./�`\n")
     .failure();

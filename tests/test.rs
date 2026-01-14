@@ -288,6 +288,26 @@ impl Test {
   }
 
   #[must_use]
+  pub(crate) fn touch_non_unicode(self) -> Self {
+    #[cfg(unix)]
+    fn create_non_unicode_path() -> std::path::PathBuf {
+      use std::{ffi::OsStr, os::unix::ffi::OsStrExt};
+      OsStr::from_bytes(&[0x80]).into()
+    }
+
+    #[cfg(windows)]
+    fn create_non_unicode_path() -> std::path::PathBuf {
+      use std::{ffi::OsString, os::windows::ffi::OsStringExt};
+      OsString::from_wide(&[0xd800]).into()
+    }
+
+    let path = self.tempdir.path().join(create_non_unicode_path());
+    fs::create_dir_all(path.parent().unwrap()).unwrap();
+    fs::write(path, []).unwrap();
+    self
+  }
+
+  #[must_use]
   fn with_tempdir(tempdir: tempfile::TempDir) -> Self {
     Self {
       args: Vec::new(),
