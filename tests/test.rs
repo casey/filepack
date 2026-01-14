@@ -1,14 +1,19 @@
-use {super::*, pretty_assertions::assert_eq};
+use {super::*, pretty_assertions::assert_eq, regex::Regex};
+
+enum Expected {
+  Regex(Regex),
+  String(String),
+}
 
 pub(crate) struct Test {
   args: Vec<&'static str>,
-  stderr: Option<String>,
+  stderr: Option<Expected>,
   tempdir: tempfile::TempDir,
 }
 
 impl Test {
   pub(crate) fn new() -> Self {
-    Self::foo(
+    Self::with_tempdir(
       tempfile::Builder::new()
         .prefix("filepack-test-tempdir")
         .tempdir()
@@ -16,7 +21,7 @@ impl Test {
     )
   }
 
-  fn foo(tempdir: tempfile::TempDir) -> Self {
+  fn with_tempdir(tempdir: tempfile::TempDir) -> Self {
     Self {
       args: Vec::new(),
       stderr: None,
@@ -32,12 +37,13 @@ impl Test {
     self
   }
 
-  pub(crate) fn failure(self) -> Self {
-    self.run(1)
+  pub(crate) fn create_dir(self, path: &str) -> Self {
+    fs::create_dir_all(self.tempdir.path().join(path)).unwrap();
+    self
   }
 
-  pub(crate) fn success(self) -> Self {
-    self.run(0)
+  pub(crate) fn failure(self) -> Self {
+    self.run(1)
   }
 
   fn run(self, code: i32) -> Self {
@@ -49,39 +55,50 @@ impl Test {
 
     assert_eq!(output.status.code(), Some(code));
 
-    if let Some(expected) = self.stderr {
-      let actual = str::from_utf8(&output.stderr).unwrap();
-      assert_eq!(actual, expected);
-    } else {
-      assert!(output.stderr.is_empty());
+    let stderr = str::from_utf8(&output.stderr).unwrap();
+
+    match &self.stderr {
+      Some(Expected::String(expected)) => assert_eq!(stderr, expected),
+      Some(Expected::Regex(regex)) => assert!(
+        regex.is_match(stderr),
+        "stderr did not match regex\n   stderr: {stderr}\n    regex: {}",
+        regex.as_str()
+      ),
+      None => assert!(output.stderr.is_empty()),
     }
 
     assert!(output.stdout.is_empty());
 
-    Self::foo(self.tempdir)
+    Self::with_tempdir(self.tempdir)
   }
 
   pub(crate) fn stderr(mut self, stderr: &str) -> Self {
-    self.stderr = Some(stderr.into());
+    self.stderr = Some(Expected::String(stderr.into()));
     self
   }
 
-  pub(crate) fn write(self, path: &str, content: String) -> Self {
-    let path = self.tempdir.path().join(path);
-    fs::create_dir_all(path.parent().unwrap()).unwrap();
-    fs::write(path, content).unwrap();
+  pub(crate) fn stderr_regex(mut self, pattern: &str) -> Self {
+    self.stderr = Some(Expected::Regex(
+      Regex::new(&format!("^(?s){pattern}$")).unwrap(),
+    ));
     self
   }
 
-  pub(crate) fn create_dir(self, path: &str) -> Self {
-    fs::create_dir_all(self.tempdir.path().join(path)).unwrap();
-    self
+  pub(crate) fn success(self) -> Self {
+    self.run(0)
   }
 
   pub(crate) fn touch(self, path: &str) -> Self {
     let path = self.tempdir.path().join(path);
     fs::create_dir_all(path.parent().unwrap()).unwrap();
     fs::write(path, []).unwrap();
+    self
+  }
+
+  pub(crate) fn write(self, path: &str, content: impl AsRef<str>) -> Self {
+    let path = self.tempdir.path().join(path);
+    fs::create_dir_all(path.parent().unwrap()).unwrap();
+    fs::write(path, content.as_ref()).unwrap();
     self
   }
 }

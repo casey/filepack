@@ -42,46 +42,31 @@ fn extraneous_file_error() {
 
 #[test]
 fn file_not_found_error_message() {
-  let dir = TempDir::new().unwrap();
-
-  dir
-    .child("filepack.json")
-    .write_str(&json! {
-      files: {
-        foo: {
-          hash: EMPTY_HASH,
-          size: 0
+  Test::new()
+    .write(
+      "filepack.json",
+      json! {
+        files: {
+          foo: {
+            hash: EMPTY_HASH,
+            size: 0
+          }
         }
-      }
-    })
-    .unwrap();
-
-  cargo_bin_cmd!("filepack")
-    .arg("verify")
-    .current_dir(&dir)
-    .assert()
-    .stderr(is_match("error: file missing: `foo`\n"))
+      },
+    )
+    .args(["verify"])
+    .stderr_regex("error: file missing: `foo`\n")
     .failure();
 }
 
 #[test]
 fn hash_mismatch() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("foo").write_str("foo").unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .write("foo", "foo")
     .args(["create", "."])
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  dir.child("foo").write_str("bar").unwrap();
-
-  cargo_bin_cmd!("filepack")
+    .success()
+    .write("foo", "bar")
     .args(["verify", "."])
-    .current_dir(&dir)
-    .assert()
     .stderr(
       "\
 mismatched file: `foo`
