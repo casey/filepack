@@ -393,7 +393,7 @@ fn named_key_not_found() {
     .args(["create"])
     .success()
     .args(["verify", "--key", "nonexistent"])
-    .stderr_regex("error: public key not found: `.*keys/nonexistent.public`\n")
+    .stderr_regex_path("error: public key not found: `.*keys/nonexistent.public`\n")
     .failure();
 }
 

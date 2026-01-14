@@ -215,6 +215,12 @@ impl Test {
     self
   }
 
+  pub(crate) fn stderr_regex_path(mut self, pattern: &str) -> Self {
+    assert_matches!(self.stderr, Expected::Empty);
+    self.stderr = Expected::regex(&pattern.replace('/', std::path::MAIN_SEPARATOR_STR));
+    self
+  }
+
   pub(crate) fn stdin(mut self, stdin: &str) -> Self {
     assert!(self.stdin.is_none());
     self.stdin = Some(stdin.into());
