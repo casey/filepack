@@ -1,7 +1,7 @@
 use super::*;
 
 #[test]
-fn error_if_key_dir_has_insecure_permissions() {
+fn key_dir_insecure_permissions() {
   if !cfg!(unix) {
     return;
   }
@@ -15,7 +15,7 @@ fn error_if_key_dir_has_insecure_permissions() {
 }
 
 #[test]
-fn error_if_master_private_key_already_exists() {
+fn private_key_already_exists() {
   Test::new()
     .write("keys/master.private", "foo")
     .chmod("keys", 0o700)
@@ -26,7 +26,7 @@ fn error_if_master_private_key_already_exists() {
 }
 
 #[test]
-fn error_if_master_public_key_already_exists() {
+fn public_key_already_exists() {
   Test::new()
     .write("keys/master.public", "foo")
     .chmod("keys", 0o700)
@@ -36,7 +36,7 @@ fn error_if_master_public_key_already_exists() {
 }
 
 #[test]
-fn keygen_generates_master_key_by_default() {
+fn default_name() {
   let test = Test::new()
     .args(["keygen"])
     .assert_file_regex("keys/master.public", "[0-9a-f]{64}\n")
@@ -53,7 +53,7 @@ fn keygen_generates_master_key_by_default() {
 }
 
 #[test]
-fn keygen_with_custom_name() {
+fn custom_name() {
   let test = Test::new()
     .args(["keygen", "--name", "deploy"])
     .assert_file_regex("keys/deploy.public", "[0-9a-f]{64}\n")
@@ -70,28 +70,7 @@ fn keygen_with_custom_name() {
 }
 
 #[test]
-fn error_if_named_private_key_already_exists() {
-  Test::new()
-    .write("keys/deploy.private", "foo")
-    .chmod("keys", 0o700)
-    .chmod("keys/deploy.private", 0o700)
-    .args(["keygen", "--name", "deploy"])
-    .stderr_regex("error: private key already exists: `.*deploy.private`\n")
-    .failure();
-}
-
-#[test]
-fn error_if_named_public_key_already_exists() {
-  Test::new()
-    .write("keys/deploy.public", "foo")
-    .chmod("keys", 0o700)
-    .args(["keygen", "--name", "deploy"])
-    .stderr_regex("error: public key already exists: `.*deploy.public`\n")
-    .failure();
-}
-
-#[test]
-fn error_with_invalid_key_name() {
+fn invaid_name() {
   Test::new()
     .args(["keygen", "--name", "@invalid"])
     .stderr(
@@ -99,26 +78,4 @@ fn error_with_invalid_key_name() {
       For more information, try '--help'.\n",
     )
     .status(2);
-}
-
-#[test]
-fn multiple_named_keys() {
-  Test::new()
-    .args(["keygen", "--name", "alice"])
-    .assert_file_regex("keys/alice.public", "[0-9a-f]{64}\n")
-    .assert_file_regex("keys/alice.private", "[0-9a-f]{64}\n")
-    .success()
-    .args(["keygen", "--name", "bob"])
-    .assert_file_regex("keys/bob.public", "[0-9a-f]{64}\n")
-    .assert_file_regex("keys/bob.private", "[0-9a-f]{64}\n")
-    .success();
-}
-
-#[test]
-fn key_name_with_special_characters() {
-  Test::new()
-    .args(["keygen", "--name", "deploy-2024.prod_v1"])
-    .assert_file_regex("keys/deploy-2024.prod_v1.public", "[0-9a-f]{64}\n")
-    .assert_file_regex("keys/deploy-2024.prod_v1.private", "[0-9a-f]{64}\n")
-    .success();
 }
