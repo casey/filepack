@@ -251,11 +251,11 @@ fn multiple_keys() {
     .args(["sign", "foo"])
     .success();
 
-  let alice_key = test.read("alice/keys/master.public");
-  let bob_key = test.read("bob/keys/master.public");
+  let alice = test.read("alice/keys/master.public");
+  let bob = test.read("bob/keys/master.public");
 
   test
-    .args(["verify", "foo", "--key", &alice_key, "--key", &bob_key])
+    .args(["verify", "foo", "--key", &alice, "--key", &bob])
     .stderr("successfully verified 1 file totaling 0 bytes with 2 signatures\n")
     .success();
 }
