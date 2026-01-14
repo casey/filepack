@@ -8,6 +8,7 @@ enum Expected {
 pub(crate) struct Test {
   args: Vec<&'static str>,
   stderr: Option<Expected>,
+  stdout: Option<Expected>,
   tempdir: tempfile::TempDir,
 }
 
@@ -25,6 +26,7 @@ impl Test {
     Self {
       args: Vec::new(),
       stderr: None,
+      stdout: None,
       tempdir,
     }
   }
@@ -72,7 +74,17 @@ impl Test {
       None => assert!(output.stderr.is_empty()),
     }
 
-    assert!(output.stdout.is_empty());
+    let stdout = str::from_utf8(&output.stdout).unwrap();
+
+    match &self.stdout {
+      Some(Expected::String(expected)) => assert_eq!(stdout, expected),
+      Some(Expected::Regex(regex)) => assert!(
+        regex.is_match(stdout),
+        "stdout did not match regex\n   stdout: {stdout}\n    regex: {}",
+        regex.as_str()
+      ),
+      None => assert!(output.stdout.is_empty()),
+    }
 
     Self::with_tempdir(self.tempdir)
   }
@@ -89,11 +101,18 @@ impl Test {
     self
   }
 
+  pub(crate) fn stdout(mut self, stdout: impl AsRef<[u8]>) -> Self {
+    self.stdout = Some(Expected::String(
+      String::from_utf8(stdout.as_ref().to_vec()).unwrap(),
+    ));
+    self
+  }
+
   pub(crate) fn success(self) -> Self {
     self.run(0)
   }
 
-  pub(crate) fn touch(self, path: &str) -> Self {
+  pub(crate) fn touch(self, path: impl AsRef<Path>) -> Self {
     let path = self.tempdir.path().join(path);
     fs::create_dir_all(path.parent().unwrap()).unwrap();
     fs::write(path, []).unwrap();

@@ -292,14 +292,9 @@ fn no_files() {
 
 #[test]
 fn non_unicode_manifest_deserialize_error() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("filepack.json").write_binary(&[0x80]).unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .write("filepack.json", [0x80])
     .args(["verify", "."])
-    .current_dir(&dir)
-    .assert()
     .stderr(
       "\
 error: I/O error at `filepack.json`
@@ -313,48 +308,34 @@ error: I/O error at `filepack.json`
 fn non_unicode_path_error() {
   use std::path::PathBuf;
 
-  // macos does not allow non-unicode filenames
   if cfg!(target_os = "macos") {
     return;
   }
-
-  let dir = TempDir::new().unwrap();
 
   let invalid: PathBuf;
 
   #[cfg(unix)]
   {
     use std::{ffi::OsStr, os::unix::ffi::OsStrExt};
-
     invalid = OsStr::from_bytes(&[0x80]).into();
   };
 
   #[cfg(windows)]
   {
     use std::{ffi::OsString, os::windows::ffi::OsStringExt};
-
     invalid = OsString::from_wide(&[0xd800]).into();
   };
 
-  dir.child(invalid).touch().unwrap();
-
-  dir
-    .child("filepack.json")
-    .write_str(&json! { files: {} })
-    .unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .touch(invalid)
+    .write("filepack.json", json! { files: {} })
     .args(["verify", "."])
-    .current_dir(&dir)
-    .assert()
-    .stderr(path("error: path not valid unicode: `./�`\n"))
+    .stderr(&path("error: path not valid unicode: `./�`\n"))
     .failure();
 }
 
 #[test]
 fn print() {
-  let dir = TempDir::new().unwrap();
-
   let manifest = json! {
     files: {
       foo: {
@@ -364,15 +345,11 @@ fn print() {
     }
   };
 
-  dir.child("foo").touch().unwrap();
-
-  dir.child("filepack.json").write_str(&manifest).unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .touch("foo")
+    .write("filepack.json", &manifest)
     .args(["verify", "--print", "."])
-    .current_dir(&dir)
-    .assert()
-    .stdout(manifest)
+    .stdout(&manifest)
     .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
     .success();
 }
