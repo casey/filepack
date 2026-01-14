@@ -625,7 +625,7 @@ fn valid_signature_for_wrong_pubkey_error() {
 
   let mut manifest = Manifest::load(Some(&manifest_path)).unwrap();
 
-  let public_key = test.read_key("keys/master.public");
+  let public_key = test.read_public_key("keys/master.public");
 
   let signature = manifest.signatures.remove(&public_key).unwrap();
 

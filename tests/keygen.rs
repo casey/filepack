@@ -43,24 +43,13 @@ fn keygen_generates_master_key_by_default() {
     .assert_file_regex("keys/master.private", "[0-9a-f]{64}\n")
     .success();
 
-  let public_key = ed25519_dalek::VerifyingKey::from_bytes(
-    &hex::decode(test.read("keys/master.public"))
-      .unwrap()
-      .try_into()
-      .unwrap(),
-  )
-  .unwrap();
+  let public_key = test.read_public_key("keys/master.public");
 
-  let private_key = ed25519_dalek::SigningKey::from_bytes(
-    &hex::decode(test.read("keys/master.private"))
-      .unwrap()
-      .try_into()
-      .unwrap(),
-  );
+  let private_key = test.read_private_key("keys/master.private");
 
-  assert!(!public_key.is_weak());
+  assert!(!public_key.inner().is_weak());
 
-  assert_eq!(private_key.verifying_key(), public_key);
+  assert_eq!(private_key.public_key(), public_key);
 }
 
 #[test]
@@ -71,24 +60,13 @@ fn keygen_with_custom_name() {
     .assert_file_regex("keys/deploy.private", "[0-9a-f]{64}\n")
     .success();
 
-  let public_key = ed25519_dalek::VerifyingKey::from_bytes(
-    &hex::decode(test.read("keys/deploy.public"))
-      .unwrap()
-      .try_into()
-      .unwrap(),
-  )
-  .unwrap();
+  let public_key = test.read_public_key("keys/deploy.public");
 
-  let private_key = ed25519_dalek::SigningKey::from_bytes(
-    &hex::decode(test.read("keys/deploy.private"))
-      .unwrap()
-      .try_into()
-      .unwrap(),
-  );
+  let private_key = test.read_private_key("keys/deploy.private");
 
-  assert!(!public_key.is_weak());
+  assert!(!public_key.inner().is_weak());
 
-  assert_eq!(private_key.verifying_key(), public_key);
+  assert_eq!(private_key.public_key(), public_key);
 }
 
 #[test]

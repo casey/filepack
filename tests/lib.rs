@@ -2,7 +2,7 @@ use {
   self::{expected::Expected, test::Test},
   camino::{Utf8Path, Utf8PathBuf},
   executable_path::executable_path,
-  filepack::{Manifest, PublicKey, Signature},
+  filepack::{Manifest, PrivateKey, PublicKey, Signature},
   regex::Regex,
   std::{
     collections::BTreeMap,

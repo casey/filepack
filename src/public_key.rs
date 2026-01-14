@@ -6,6 +6,10 @@ pub struct PublicKey(ed25519_dalek::VerifyingKey);
 impl PublicKey {
   const LEN: usize = ed25519_dalek::PUBLIC_KEY_LENGTH;
 
+  pub fn inner(&self) -> ed25519_dalek::VerifyingKey {
+    self.0
+  }
+
   pub(crate) fn load(path: &Utf8Path) -> Result<Self> {
     let public_key = filesystem::read_to_string_opt(path)?
       .ok_or_else(|| error::PublicKeyNotFound { path }.build())?;

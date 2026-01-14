@@ -23,8 +23,8 @@ use {
     fingerprint_prefix::FingerprintPrefix, key_identifier::KeyIdentifier, key_name::KeyName,
     lint::Lint, lint_group::LintGroup, message::Message, metadata::Metadata, mode::Mode,
     options::Options, owo_colorize_ext::OwoColorizeExt, path_error::PathError,
-    private_key::PrivateKey, public_key_error::PublicKeyError, signature_error::SignatureError,
-    style::Style, subcommand::Subcommand, template::Template, utf8_path_ext::Utf8PathExt,
+    public_key_error::PublicKeyError, signature_error::SignatureError, style::Style,
+    subcommand::Subcommand, template::Template, utf8_path_ext::Utf8PathExt,
   },
   blake3::Hasher,
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},
@@ -59,7 +59,8 @@ use {
 
 pub use self::{
   directory::Directory, entry::Entry, error::Error, file::File, hash::Hash, manifest::Manifest,
-  public_key::PublicKey, relative_path::RelativePath, signature::Signature,
+  private_key::PrivateKey, public_key::PublicKey, relative_path::RelativePath,
+  signature::Signature,
 };
 
 #[cfg(test)]

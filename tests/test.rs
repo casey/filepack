@@ -102,7 +102,15 @@ impl Test {
     fs::read_to_string(self.join(path)).unwrap().trim().into()
   }
 
-  pub(crate) fn read_key(&self, path: &str) -> PublicKey {
+  pub(crate) fn read_private_key(&self, path: &str) -> PrivateKey {
+    fs::read_to_string(self.join(path))
+      .unwrap()
+      .trim()
+      .parse()
+      .unwrap()
+  }
+
+  pub(crate) fn read_public_key(&self, path: &str) -> PublicKey {
     fs::read_to_string(self.join(path))
       .unwrap()
       .trim()

@@ -301,7 +301,7 @@ fn sign_creates_valid_signature() {
   let manifest_path = test.path().join("foo/filepack.json");
   let manifest = Manifest::load(Some(&manifest_path)).unwrap();
 
-  let public_key = test.read_key("keys/master.public");
+  let public_key = test.read_public_key("keys/master.public");
 
   assert_eq!(manifest.signatures.len(), 1);
 
