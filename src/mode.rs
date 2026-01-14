@@ -38,5 +38,6 @@ mod tests {
   fn display() {
     assert_eq!(Mode(0).to_string(), "0000");
     assert_eq!(Mode(0o777).to_string(), "0777");
+    assert_eq!(Mode(0o7777).to_string(), "0777");
   }
 }
