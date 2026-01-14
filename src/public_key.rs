@@ -1,7 +1,7 @@
 use super::*;
 
 #[derive(Debug, Snafu)]
-#[snafu(context(suffix(Error)))]
+#[snafu(context(suffix(Error)), visibility(pub(crate)))]
 pub enum Error {
   #[snafu(display("invalid public key hex: `{key}`"))]
   Hex {

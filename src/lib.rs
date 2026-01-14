@@ -20,11 +20,11 @@ use {
   self::{
     arguments::Arguments, component::Component, count::Count, display_path::DisplayPath,
     display_secret::DisplaySecret, entries::Entries, fingerprint_hasher::FingerprintHasher,
-    fingerprint_prefix::FingerprintPrefix, key_identifier::KeyIdentifier, lint::Lint,
-    lint_group::LintGroup, message::Message, metadata::Metadata, mode::Mode, options::Options,
-    owo_colorize_ext::OwoColorizeExt, path_error::PathError, private_key::PrivateKey,
-    signature_error::SignatureError, style::Style, subcommand::Subcommand, template::Template,
-    utf8_path_ext::Utf8PathExt,
+    fingerprint_prefix::FingerprintPrefix, key_identifier::KeyIdentifier, key_name::KeyName,
+    lint::Lint, lint_group::LintGroup, message::Message, metadata::Metadata, mode::Mode,
+    options::Options, owo_colorize_ext::OwoColorizeExt, path_error::PathError,
+    private_key::PrivateKey, signature_error::SignatureError, style::Style, subcommand::Subcommand,
+    template::Template, utf8_path_ext::Utf8PathExt,
   },
   blake3::Hasher,
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},
@@ -88,6 +88,7 @@ mod fingerprint_hasher;
 mod fingerprint_prefix;
 mod hash;
 mod key_identifier;
+mod key_name;
 mod lint;
 mod lint_group;
 mod manifest;
@@ -108,8 +109,6 @@ mod subcommand;
 mod template;
 mod utf8_path_ext;
 
-const MASTER_PRIVATE_KEY: &str = "master.private";
-const MASTER_PUBLIC_KEY: &str = "master.public";
 const SEPARATORS: [char; 2] = ['/', '\\'];
 
 type Result<T = (), E = Error> = std::result::Result<T, E>;

@@ -44,7 +44,7 @@ pub(crate) enum Subcommand {
   #[command(about = "Print master public key")]
   Key,
   #[command(about = "Generate master key pair")]
-  Keygen,
+  Keygen(keygen::Keygen),
   #[command(about = "Print man page")]
   Man,
   #[command(about = "Sign manifest")]
@@ -63,7 +63,7 @@ impl Subcommand {
       Self::Fingerprint(fingerprint) => fingerprint.run(),
       Self::Hash(hash) => hash.run(options),
       Self::Key => key::run(options),
-      Self::Keygen => keygen::run(options),
+      Self::Keygen(keygen) => keygen.run(options),
       Self::Man => man::run(),
       Self::Sign(sign) => sign.run(options),
       Self::Size(size) => size.run(),

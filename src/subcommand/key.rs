@@ -3,16 +3,17 @@ use super::*;
 pub(crate) fn run(options: Options) -> Result {
   let key_dir = options.key_dir()?;
 
-  let public_key = PublicKey::load(&key_dir.join(MASTER_PUBLIC_KEY))?;
+  let key = KeyName::master();
+
+  let public_key = PublicKey::load(&key_dir.join(key.public_key_filename()))?;
 
   {
-    let private_key = PrivateKey::load(&key_dir.join(MASTER_PRIVATE_KEY))?;
+    let private_key = PrivateKey::load(&key_dir.join(key.private_key_filename()))?;
 
     ensure! {
       private_key.public_key() == public_key,
       error::KeyMismatch {
-        public_key: MASTER_PUBLIC_KEY,
-        private_key: MASTER_PRIVATE_KEY,
+        key,
       },
     }
   }
