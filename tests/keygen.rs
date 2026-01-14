@@ -1,8 +1,11 @@
 use super::*;
 
-#[cfg(unix)]
 #[test]
 fn error_if_key_dir_has_insecure_permissions() {
+  if !cfg!(unix) {
+    return;
+  }
+
   Test::new()
     .create_dir("keys")
     .chmod("keys", 0o750)

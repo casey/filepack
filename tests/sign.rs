@@ -1,8 +1,11 @@
 use super::*;
 
-#[cfg(unix)]
 #[test]
 fn error_if_key_dir_has_insecure_permissions() {
+  if !cfg!(unix) {
+    return;
+  }
+
   Test::new()
     .args(["keygen"])
     .success()
@@ -15,9 +18,12 @@ fn error_if_key_dir_has_insecure_permissions() {
     .failure();
 }
 
-#[cfg(unix)]
 #[test]
 fn error_if_private_key_has_insecure_permissions() {
+  if !cfg!(unix) {
+    return;
+  }
+
   Test::new()
     .args(["keygen"])
     .success()
