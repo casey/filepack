@@ -13,7 +13,7 @@ pub(crate) fn run(option: Options) -> Result {
   } else {
     filesystem::create_dir_all(&dir)?;
 
-    filesystem::set_mode(&dir, 0o700)?;
+    filesystem::chmod(&dir, 0o700)?;
   }
 
   let private_path = dir.join(MASTER_PRIVATE_KEY);
@@ -34,7 +34,7 @@ pub(crate) fn run(option: Options) -> Result {
 
   filesystem::write(&private_path, format!("{}\n", private_key.display_secret()))?;
 
-  filesystem::set_mode(&private_path, 0o600)?;
+  filesystem::chmod(&private_path, 0o600)?;
 
   let public_key = private_key.public_key();
 
