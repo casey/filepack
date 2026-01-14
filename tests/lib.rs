@@ -6,7 +6,7 @@ use {
     assert::PathAssert,
     fixture::{ChildPath, FileTouch, FileWriteBin, FileWriteStr, PathChild, PathCreateDir},
   },
-  camino::{Utf8Path, Utf8PathBuf},
+  camino::Utf8Path,
   filepack::{Manifest, PublicKey, Signature},
   predicates::str::RegexPredicate,
   std::{fs, path::Path, str},

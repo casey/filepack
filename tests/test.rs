@@ -32,11 +32,11 @@ impl Test {
     self
   }
 
-  pub(crate) fn failure(mut self) -> Self {
+  pub(crate) fn failure(self) -> Self {
     self.run(1)
   }
 
-  pub(crate) fn success(mut self) -> Self {
+  pub(crate) fn success(self) -> Self {
     self.run(0)
   }
 
@@ -75,6 +75,13 @@ impl Test {
 
   pub(crate) fn create_dir(self, path: &str) -> Self {
     fs::create_dir_all(self.tempdir.path().join(path)).unwrap();
+    self
+  }
+
+  pub(crate) fn touch(self, path: &str) -> Self {
+    let path = self.tempdir.path().join(path);
+    fs::create_dir_all(path.parent().unwrap()).unwrap();
+    fs::write(path, []).unwrap();
     self
   }
 }

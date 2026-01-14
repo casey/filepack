@@ -32,19 +32,10 @@ fn extraneous_empty_directory_error() {
 
 #[test]
 fn extraneous_file_error() {
-  let dir = TempDir::new().unwrap();
-
-  dir
-    .child("filepack.json")
-    .write_str(&json! { files: {} })
-    .unwrap();
-
-  dir.child("foo").touch().unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .write("filepack.json", json! { files: {} })
+    .touch("foo")
     .args(["verify", "."])
-    .current_dir(&dir)
-    .assert()
     .stderr("error: extraneous file not in manifest: `foo`\n")
     .failure();
 }
