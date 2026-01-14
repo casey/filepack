@@ -111,6 +111,7 @@ mod subcommand;
 mod template;
 mod utf8_path_ext;
 
+const DEFAULT_KEY: &str = "master";
 const SEPARATORS: [char; 2] = ['/', '\\'];
 
 type Result<T = (), E = Error> = std::result::Result<T, E>;
