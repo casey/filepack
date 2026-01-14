@@ -1,33 +1,4 @@
-use {super::*, pretty_assertions::assert_eq, regex::Regex};
-
-#[derive(Debug)]
-enum Expected {
-  Empty,
-  Regex(Regex),
-  String(String),
-}
-
-impl Expected {
-  fn check(&self, actual: &str, name: &str) {
-    match self {
-      Expected::String(expected) => assert_eq!(actual, expected, "{name} did not match"),
-      Expected::Regex(regex) => assert!(
-        regex.is_match(actual),
-        "{name} did not match regex\n   actual: {actual}\n    regex: {}",
-        regex.as_str()
-      ),
-      Expected::Empty => assert!(actual.is_empty(), "{name} is not empty"),
-    }
-  }
-
-  fn regex(pattern: &str) -> Self {
-    Self::Regex(Regex::new(&format!("^(?s){pattern}$")).unwrap())
-  }
-
-  fn string(string: impl Into<String>) -> Self {
-    Self::String(string.into())
-  }
-}
+use {super::*, pretty_assertions::assert_eq};
 
 pub(crate) struct Test {
   args: Vec<String>,

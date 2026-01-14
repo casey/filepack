@@ -1,8 +1,9 @@
 use {
-  self::test::Test,
+  self::{expected::Expected, test::Test},
   camino::{Utf8Path, Utf8PathBuf},
   executable_path::executable_path,
   filepack::{Manifest, PublicKey, Signature},
+  regex::Regex,
   std::{
     collections::BTreeMap,
     fs,
@@ -27,6 +28,7 @@ macro_rules! assert_matches {
 }
 
 mod create;
+mod expected;
 mod files;
 mod fingerprint;
 mod hash;
