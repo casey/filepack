@@ -9,7 +9,7 @@ fn default() {
     .stdout_regex("[0-9a-f]{64}\n")
     .success();
 
-  let public_key = test.read("keys/master.public");
+  let public_key = test.read_public_key("keys/master.public");
 
   test
     .args(["key"])
@@ -26,7 +26,7 @@ fn master() {
     .stdout_regex("[0-9a-f]{64}\n")
     .success();
 
-  let public_key = test.read("keys/master.public");
+  let public_key = test.read_public_key("keys/master.public");
 
   test
     .args(["key", "--key", "master"])
@@ -89,7 +89,7 @@ fn named() {
     .stdout_regex("[0-9a-f]{64}\n")
     .success();
 
-  let public_key = test.read("keys/deploy.public");
+  let public_key = test.read_public_key("keys/deploy.public");
 
   test
     .args(["key", "--key", "deploy"])
