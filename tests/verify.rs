@@ -472,151 +472,111 @@ error: 1 mismatched file
 
 #[test]
 fn valid_signature_for_wrong_pubkey_error() {
-  let dir = TempDir::new().unwrap();
-
-  cargo_bin_cmd!("filepack")
-    .env("FILEPACK_DATA_DIR", dir.path())
-    .arg("keygen")
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  dir.child("foo/bar").touch().unwrap();
-
-  cargo_bin_cmd!("filepack")
-    .env("FILEPACK_DATA_DIR", dir.path())
+  let test = Test::new()
+    .args(["keygen"])
+    .success()
+    .touch("foo/bar")
     .args(["create", "--sign", "foo"])
-    .current_dir(&dir)
-    .assert()
     .success();
 
-  let mut manifest = Manifest::load(Some(dir.child("foo/filepack.json").utf8_path())).unwrap();
+  let manifest_path = test.path().join("foo/filepack.json");
 
-  let public_key = load_key(&dir.child("keys/master.public"))
+  let mut manifest = Manifest::load(Some(&manifest_path)).unwrap();
+
+  let public_key = load_key(test.path().join("keys/master.public").as_std_path())
     .parse::<PublicKey>()
     .unwrap();
 
-  let foo = manifest.signatures.remove(&public_key).unwrap();
+  let signature = manifest.signatures.remove(&public_key).unwrap();
 
   manifest.signatures.insert(
     "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b"
       .parse::<PublicKey>()
       .unwrap(),
-    foo,
+    signature,
   );
 
-  manifest
-    .save(dir.child("foo/filepack.json").utf8_path())
-    .unwrap();
+  manifest.save(&manifest_path).unwrap();
 
-  cargo_bin_cmd!("filepack")
+  test
     .args(["verify", "foo"])
-    .current_dir(&dir)
-    .assert()
-    .stderr(is_match(
+    .stderr_regex(
       "error: invalid signature for public key `7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b`\n.*Verification equation was not satisfied.*",
-    ))
+    )
     .failure();
 }
 
 #[test]
 fn verify_fingerprint() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("foo").touch().unwrap();
-
-  cargo_bin_cmd!("filepack")
-    .arg("create")
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .touch("foo")
+    .args(["create"])
+    .success()
     .args([
       "verify",
       "--fingerprint",
       "864e5111ebe431702448d7d7c3f9b962d5659f761fb4287049d52d6376a4c20e",
     ])
-    .current_dir(&dir)
-    .assert()
     .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
-    .success();
-
-  cargo_bin_cmd!("filepack")
+    .success()
     .args([
       "verify",
       "--fingerprint",
       "0000000000000000000000000000000000000000000000000000000000000000",
     ])
-    .current_dir(&dir)
-    .assert()
-    .stderr(is_match(
+    .stderr_regex(
       "\
 fingerprint mismatch: `.*filepack\\.json`
             expected: 0000000000000000000000000000000000000000000000000000000000000000
               actual: 864e5111ebe431702448d7d7c3f9b962d5659f761fb4287049d52d6376a4c20e
 error: fingerprint mismatch\n",
-    ))
+    )
     .failure();
 }
 
 #[test]
 fn weak_signature_public_key() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("bar").touch().unwrap();
-
-  cargo_bin_cmd!("filepack")
-    .arg("create")
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  let json = json! {
-    files: {
-      bar: {
-        hash: EMPTY_HASH,
-        size: 0
-      }
-    },
-    signatures: {
-      "0000000000000000000000000000000000000000000000000000000000000000":"0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
-    }
-  };
-
-  fs::write(dir.child("filepack.json"), json).unwrap();
-
-  cargo_bin_cmd!("filepack")
-    .arg("verify")
-    .current_dir(&dir)
-    .assert()
-    .stderr(is_match(
+  Test::new()
+    .touch("bar")
+    .args(["create"])
+    .success()
+    .write(
+      "filepack.json",
+      json! {
+        files: {
+          bar: {
+            hash: EMPTY_HASH,
+            size: 0
+          }
+        },
+        signatures: {
+          "0000000000000000000000000000000000000000000000000000000000000000":"0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      },
+    )
+    .args(["verify"])
+    .stderr_regex(
       "error: failed to deserialize manifest at `filepack.json`\n.*weak public key.*",
-    ))
+    )
     .failure();
 }
 
 #[test]
 fn with_manifest_path() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("foo").touch().unwrap();
-
-  dir
-    .child("hello.json")
-    .write_str(&json! {
-      files: {
-        foo: {
-          hash: EMPTY_HASH,
-          size: 0
+  Test::new()
+    .touch("foo")
+    .write(
+      "hello.json",
+      json! {
+        files: {
+          foo: {
+            hash: EMPTY_HASH,
+            size: 0
+          }
         }
-      }
-    })
-    .unwrap();
-
-  cargo_bin_cmd!("filepack")
+      },
+    )
     .args(["verify", "--manifest", "hello.json"])
-    .current_dir(&dir)
-    .assert()
+    .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
     .success();
 }

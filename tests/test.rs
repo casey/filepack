@@ -38,6 +38,12 @@ impl Test {
     self
   }
 
+  pub(crate) fn assert_file(self, path: &str, expected: impl AsRef<str>) -> Self {
+    let actual = fs::read_to_string(self.tempdir.path().join(path)).unwrap();
+    assert_eq!(actual.trim(), expected.as_ref().trim());
+    self
+  }
+
   pub(crate) fn create_dir(self, path: &str) -> Self {
     fs::create_dir_all(self.tempdir.path().join(path)).unwrap();
     self
@@ -45,6 +51,10 @@ impl Test {
 
   pub(crate) fn failure(self) -> Self {
     self.run(1)
+  }
+
+  pub(crate) fn path(&self) -> camino::Utf8PathBuf {
+    camino::Utf8PathBuf::from_path_buf(self.tempdir.path().into()).unwrap()
   }
 
   pub(crate) fn read(&self, path: &str) -> String {

@@ -6,14 +6,9 @@ fn allow_lint() {
     return;
   }
 
-  let dir = TempDir::new().unwrap();
-
-  dir.child("aux").touch().unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .touch("aux")
     .args(["create", "."])
-    .current_dir(&dir)
-    .assert()
     .success();
 }
 
@@ -23,14 +18,9 @@ fn backslash_error() {
     return;
   }
 
-  let dir = TempDir::new().unwrap();
-
-  dir.child("\\").touch().unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .touch("\\")
     .args(["create", "--deny", "all", "."])
-    .current_dir(&dir)
-    .assert()
     .stderr(
       "\
 error: invalid path `\\`
@@ -46,15 +36,10 @@ fn deny_case_insensitive_filesystem_path_conflict() {
     return;
   }
 
-  let dir = TempDir::new().unwrap();
-
-  dir.child("foo").touch().unwrap();
-  dir.child("FOO").touch().unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .touch("foo")
+    .touch("FOO")
     .args(["create", "--deny", "all", "."])
-    .current_dir(&dir)
-    .assert()
     .stderr(
       "\
 error: paths would conflict on case-insensitive filesystem:
@@ -72,14 +57,9 @@ fn deny_lint() {
     return;
   }
 
-  let dir = TempDir::new().unwrap();
-
-  dir.child("aux").touch().unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .touch("aux")
     .args(["create", "--deny", "all", "."])
-    .current_dir(&dir)
-    .assert()
     .stderr(
       "\
 error: path failed lint: `aux`
@@ -92,158 +72,115 @@ error: 1 lint error
 
 #[test]
 fn empty_directories_are_included() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("foo").create_dir_all().unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .create_dir("foo")
     .args(["create", "."])
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  dir.child("filepack.json").assert(json! {
-    files: {
-      foo: {
+    .success()
+    .assert_file(
+      "filepack.json",
+      json! {
+        files: {
+          foo: {
+          },
+        },
       },
-    },
-  });
-
-  cargo_bin_cmd!("filepack")
+    )
     .args(["verify", "."])
-    .current_dir(&dir)
-    .assert()
+    .stderr("successfully verified 0 files totaling 0 bytes with 0 signatures\n")
     .success();
 }
 
 #[test]
 fn file_in_subdirectory() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("foo/bar").touch().unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .touch("foo/bar")
     .args(["create", "."])
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  dir.child("filepack.json").assert(json! {
-    files: {
-      foo: {
-        bar: {
-          hash: EMPTY_HASH,
-          size: 0
+    .success()
+    .assert_file(
+      "filepack.json",
+      json! {
+        files: {
+          foo: {
+            bar: {
+              hash: EMPTY_HASH,
+              size: 0
+            }
+          }
         }
-      }
-    }
-  });
-
-  cargo_bin_cmd!("filepack")
+      },
+    )
     .args(["verify", "."])
-    .current_dir(&dir)
-    .assert()
+    .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
     .success();
 }
 
 #[test]
 fn force_overwrites_manifest() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("filepack.json").touch().unwrap();
-  dir.child("foo").touch().unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .touch("filepack.json")
+    .touch("foo")
     .args(["create", "--force", "."])
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  dir.child("filepack.json").assert(json! {
-    files: {
-      foo: {
-        hash: EMPTY_HASH,
-        size: 0
-      }
-    }
-  });
-
-  cargo_bin_cmd!("filepack")
+    .success()
+    .assert_file(
+      "filepack.json",
+      json! {
+        files: {
+          foo: {
+            hash: EMPTY_HASH,
+            size: 0
+          }
+        }
+      },
+    )
     .args(["verify", "."])
-    .current_dir(&dir)
-    .assert()
+    .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
     .success();
 }
 
 #[test]
 fn force_overwrites_manifest_with_destination() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("foo.json").touch().unwrap();
-  dir.child("foo").touch().unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .touch("foo.json")
+    .touch("foo")
     .args(["create", "--force", ".", "--manifest", "foo.json"])
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  dir.child("foo.json").assert(json! {
-    files: {
-      foo: {
-        hash: EMPTY_HASH,
-        size: 0
-      }
-    }
-  });
-
-  cargo_bin_cmd!("filepack")
+    .success()
+    .assert_file(
+      "foo.json",
+      json! {
+        files: {
+          foo: {
+            hash: EMPTY_HASH,
+            size: 0
+          }
+        }
+      },
+    )
     .args(["verify", ".", "--manifest", "foo.json"])
-    .current_dir(&dir)
-    .assert()
+    .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
     .success();
 }
 
 #[test]
 fn manifest_already_exists_error() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("filepack.json").touch().unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .touch("filepack.json")
     .args(["create", "."])
-    .current_dir(&dir)
-    .assert()
     .stderr("error: manifest `filepack.json` already exists\n")
     .failure();
 }
 
 #[test]
 fn metadata_already_exists() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("foo/bar").touch().unwrap();
-
-  dir.child("foo/metadata.json").touch().unwrap();
-
-  dir.child("metadata.yaml").write_str("title: Foo").unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .touch("foo/bar")
+    .touch("foo/metadata.json")
+    .write("metadata.yaml", "title: Foo")
     .args(["create", "foo", "--metadata", "metadata.yaml"])
-    .current_dir(&dir)
-    .assert()
-    .stderr(path("error: metadata `foo/metadata.json` already exists\n"))
-    .failure();
-
-  cargo_bin_cmd!("filepack")
+    .stderr(&path("error: metadata `foo/metadata.json` already exists\n"))
+    .failure()
     .args(["create", "foo", "--metadata", "metadata.yaml", "--force"])
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  dir
-    .child("foo/metadata.json")
-    .assert(json! { title: "Foo" });
+    .success()
+    .assert_file("foo/metadata.json", json! { title: "Foo" });
 }
 
 #[test]
