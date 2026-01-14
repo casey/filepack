@@ -70,7 +70,7 @@ fn custom_name() {
 }
 
 #[test]
-fn invaid_name() {
+fn invalid_name() {
   Test::new()
     .args(["keygen", "--name", "@invalid"])
     .stderr(
