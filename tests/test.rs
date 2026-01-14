@@ -203,7 +203,7 @@ impl Test {
     self
   }
 
-  pub(crate) fn stderr_path(mut self, stderr: &str) -> Self {
+  pub(crate) fn stderr_path(self, stderr: &str) -> Self {
     self.stderr(&stderr.replace('/', std::path::MAIN_SEPARATOR_STR))
   }
 
@@ -213,7 +213,7 @@ impl Test {
     self
   }
 
-  pub(crate) fn stderr_regex_path(mut self, pattern: &str) -> Self {
+  pub(crate) fn stderr_regex_path(self, pattern: &str) -> Self {
     self.stderr_regex(&pattern.replace('/', std::path::MAIN_SEPARATOR_STR))
   }
 
