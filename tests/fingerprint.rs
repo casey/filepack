@@ -13,7 +13,8 @@ fn fingerprint() {
             hash: EMPTY_HASH,
             size: 0
           }
-        }
+        },
+        signatures: {},
       },
     )
     .success();
