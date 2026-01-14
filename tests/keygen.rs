@@ -62,3 +62,85 @@ fn keygen_generates_master_key_by_default() {
 
   assert_eq!(private_key.verifying_key(), public_key);
 }
+
+#[test]
+fn keygen_with_custom_name() {
+  let test = Test::new()
+    .args(["keygen", "--name", "deploy"])
+    .assert_file_regex("keys/deploy.public", "[0-9a-f]{64}\n")
+    .assert_file_regex("keys/deploy.private", "[0-9a-f]{64}\n")
+    .success();
+
+  let public_key = ed25519_dalek::VerifyingKey::from_bytes(
+    &hex::decode(test.read("keys/deploy.public"))
+      .unwrap()
+      .try_into()
+      .unwrap(),
+  )
+  .unwrap();
+
+  let private_key = ed25519_dalek::SigningKey::from_bytes(
+    &hex::decode(test.read("keys/deploy.private"))
+      .unwrap()
+      .try_into()
+      .unwrap(),
+  );
+
+  assert!(!public_key.is_weak());
+
+  assert_eq!(private_key.verifying_key(), public_key);
+}
+
+#[test]
+fn error_if_named_private_key_already_exists() {
+  Test::new()
+    .write("keys/deploy.private", "foo")
+    .chmod("keys", 0o700)
+    .chmod("keys/deploy.private", 0o700)
+    .args(["keygen", "--name", "deploy"])
+    .stderr_regex("error: private key already exists: `.*deploy.private`\n")
+    .failure();
+}
+
+#[test]
+fn error_if_named_public_key_already_exists() {
+  Test::new()
+    .write("keys/deploy.public", "foo")
+    .chmod("keys", 0o700)
+    .args(["keygen", "--name", "deploy"])
+    .stderr_regex("error: public key already exists: `.*deploy.public`\n")
+    .failure();
+}
+
+#[test]
+fn error_with_invalid_key_name() {
+  Test::new()
+    .args(["keygen", "--name", "@invalid"])
+    .stderr(
+      "error: invalid value '@invalid' for '--name <NAME>': invalid public key name `@invalid`\n\n\
+      For more information, try '--help'.\n",
+    )
+    .status(2);
+}
+
+#[test]
+fn multiple_named_keys() {
+  Test::new()
+    .args(["keygen", "--name", "alice"])
+    .assert_file_regex("keys/alice.public", "[0-9a-f]{64}\n")
+    .assert_file_regex("keys/alice.private", "[0-9a-f]{64}\n")
+    .success()
+    .args(["keygen", "--name", "bob"])
+    .assert_file_regex("keys/bob.public", "[0-9a-f]{64}\n")
+    .assert_file_regex("keys/bob.private", "[0-9a-f]{64}\n")
+    .success();
+}
+
+#[test]
+fn key_name_with_special_characters() {
+  Test::new()
+    .args(["keygen", "--name", "deploy-2024.prod_v1"])
+    .assert_file_regex("keys/deploy-2024.prod_v1.public", "[0-9a-f]{64}\n")
+    .assert_file_regex("keys/deploy-2024.prod_v1.private", "[0-9a-f]{64}\n")
+    .success();
+}
