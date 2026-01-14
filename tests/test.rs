@@ -71,6 +71,15 @@ impl Test {
     self.run(1)
   }
 
+  pub(crate) fn new() -> Self {
+    Self::with_tempdir(
+      tempfile::Builder::new()
+        .prefix("filepack-test-tempdir")
+        .tempdir()
+        .unwrap(),
+    )
+  }
+
   pub(crate) fn path(&self) -> camino::Utf8PathBuf {
     camino::Utf8PathBuf::from_path_buf(self.tempdir.path().into()).unwrap()
   }
@@ -82,11 +91,6 @@ impl Test {
       .into()
   }
 
-  pub(crate) fn rename(self, from: &str, to: &str) -> Self {
-    fs::rename(self.tempdir.path().join(from), self.tempdir.path().join(to)).unwrap();
-    self
-  }
-
   pub(crate) fn remove_dir(self, path: &str) -> Self {
     fs::remove_dir(self.tempdir.path().join(path)).unwrap();
     self
@@ -94,6 +98,11 @@ impl Test {
 
   pub(crate) fn remove_file(self, path: &str) -> Self {
     fs::remove_file(self.tempdir.path().join(path)).unwrap();
+    self
+  }
+
+  pub(crate) fn rename(self, from: &str, to: &str) -> Self {
+    fs::rename(self.tempdir.path().join(from), self.tempdir.path().join(to)).unwrap();
     self
   }
 
@@ -174,13 +183,13 @@ impl Test {
     self
   }
 
-  pub(crate) fn stdin(mut self, stdin: &str) -> Self {
-    self.stdin = Some(stdin.into());
+  pub(crate) fn stderr_regex(mut self, pattern: &str) -> Self {
+    self.stderr = Some(Expected::regex(pattern));
     self
   }
 
-  pub(crate) fn stderr_regex(mut self, pattern: &str) -> Self {
-    self.stderr = Some(Expected::regex(pattern));
+  pub(crate) fn stdin(mut self, stdin: &str) -> Self {
+    self.stdin = Some(stdin.into());
     self
   }
 
@@ -214,22 +223,6 @@ impl Test {
     self
   }
 
-  pub(crate) fn write(self, path: &str, content: impl AsRef<[u8]>) -> Self {
-    let path = self.tempdir.path().join(path);
-    fs::create_dir_all(path.parent().unwrap()).unwrap();
-    fs::write(path, content.as_ref()).unwrap();
-    self
-  }
-
-  pub(crate) fn new() -> Self {
-    Self::with_tempdir(
-      tempfile::Builder::new()
-        .prefix("filepack-test-tempdir")
-        .tempdir()
-        .unwrap(),
-    )
-  }
-
   fn with_tempdir(tempdir: tempfile::TempDir) -> Self {
     Self {
       args: Vec::new(),
@@ -241,5 +234,12 @@ impl Test {
       stdout: None,
       tempdir,
     }
+  }
+
+  pub(crate) fn write(self, path: &str, content: impl AsRef<[u8]>) -> Self {
+    let path = self.tempdir.path().join(path);
+    fs::create_dir_all(path.parent().unwrap()).unwrap();
+    fs::write(path, content.as_ref()).unwrap();
+    self
   }
 }
