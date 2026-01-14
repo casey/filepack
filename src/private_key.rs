@@ -147,17 +147,6 @@ mod tests {
   }
 
   #[test]
-  fn whitespace_is_not_trimmed_when_parsing_from_string() {
-    "0e56ae8b43aa93fd4c179ceaff96f729522622d26b4b5357bc959e476e59e107"
-      .parse::<PrivateKey>()
-      .unwrap();
-
-    " 0e56ae8b43aa93fd4c179ceaff96f729522622d26b4b5357bc959e476e59e107"
-      .parse::<PrivateKey>()
-      .unwrap_err();
-  }
-
-  #[test]
   fn uppercase_is_forbidden() {
     let key = "0e56ae8b43aa93fd4c179ceaff96f729522622d26b4b5357bc959e476e59e107";
     key.parse::<PrivateKey>().unwrap();
@@ -169,6 +158,17 @@ mod tests {
         .to_string(),
       "private keys must be lowercase hex",
     );
+  }
+
+  #[test]
+  fn whitespace_is_not_trimmed_when_parsing_from_string() {
+    "0e56ae8b43aa93fd4c179ceaff96f729522622d26b4b5357bc959e476e59e107"
+      .parse::<PrivateKey>()
+      .unwrap();
+
+    " 0e56ae8b43aa93fd4c179ceaff96f729522622d26b4b5357bc959e476e59e107"
+      .parse::<PrivateKey>()
+      .unwrap_err();
   }
 
   #[test]

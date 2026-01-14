@@ -11,7 +11,7 @@ pub(crate) fn decode_path(path: &Path) -> Result<&Utf8Path> {
 
 pub(crate) fn is_lowercase_hex(s: &str) -> bool {
   s.chars()
-    .all(|c| c.is_digit(16) && (c.is_numeric() || c.is_lowercase()))
+    .all(|c| c.is_ascii_hexdigit() && (c.is_numeric() || c.is_lowercase()))
 }
 
 #[cfg(test)]
