@@ -49,6 +49,6 @@ fn prints_pubkey() {
 
   test
     .args(["key"])
-    .stdout(&format!("{public_key}\n"))
+    .stdout(format!("{public_key}\n"))
     .success();
 }

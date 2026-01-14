@@ -17,28 +17,6 @@ pub(crate) struct Test {
 }
 
 impl Test {
-  pub(crate) fn new() -> Self {
-    Self::with_tempdir(
-      tempfile::Builder::new()
-        .prefix("filepack-test-tempdir")
-        .tempdir()
-        .unwrap(),
-    )
-  }
-
-  fn with_tempdir(tempdir: tempfile::TempDir) -> Self {
-    Self {
-      args: Vec::new(),
-      current_dir: None,
-      data_dir: None,
-      env: Vec::new(),
-      stderr: None,
-      stdin: None,
-      stdout: None,
-      tempdir,
-    }
-  }
-
   pub(crate) fn args(mut self, args: impl IntoIterator<Item = impl AsRef<str>>) -> Self {
     for arg in args {
       self.args.push(arg.as_ref().into());
@@ -229,5 +207,27 @@ impl Test {
     fs::create_dir_all(path.parent().unwrap()).unwrap();
     fs::write(path, content.as_ref()).unwrap();
     self
+  }
+
+  pub(crate) fn new() -> Self {
+    Self::with_tempdir(
+      tempfile::Builder::new()
+        .prefix("filepack-test-tempdir")
+        .tempdir()
+        .unwrap(),
+    )
+  }
+
+  fn with_tempdir(tempdir: tempfile::TempDir) -> Self {
+    Self {
+      args: Vec::new(),
+      current_dir: None,
+      data_dir: None,
+      env: Vec::new(),
+      stderr: None,
+      stdin: None,
+      stdout: None,
+      tempdir,
+    }
   }
 }

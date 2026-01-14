@@ -24,12 +24,12 @@ fn fingerprint() {
 
   test
     .args(["fingerprint"])
-    .stdout(&format!("{fingerprint}\n"))
+    .stdout(format!("{fingerprint}\n"))
     .success()
     .args(["fingerprint", path.as_str()])
-    .stdout(&format!("{fingerprint}\n"))
+    .stdout(format!("{fingerprint}\n"))
     .success()
     .args(["fingerprint", path.join("filepack.json").as_str()])
-    .stdout(&format!("{fingerprint}\n"))
+    .stdout(format!("{fingerprint}\n"))
     .success();
 }
