@@ -3,6 +3,8 @@ use super::*;
 #[derive(Debug, Snafu)]
 #[snafu(context(suffix(Error)), visibility(pub(crate)))]
 pub enum PublicKeyError {
+  #[snafu(display("public keys must be lowercase hex: `{key}`"))]
+  Case { key: String },
   #[snafu(display("invalid public key hex: `{key}`"))]
   Hex {
     key: String,

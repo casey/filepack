@@ -47,6 +47,10 @@ impl FromStr for PublicKey {
   fn from_str(key: &str) -> Result<Self, Self::Err> {
     let bytes = hex::decode(key).context(public_key_error::HexError { key })?;
 
+    if !is_lowercase_hex(key) {
+      return Err(public_key_error::CaseError { key }.build());
+    }
+
     let array: [u8; Self::LEN] =
       bytes
         .as_slice()
@@ -121,6 +125,21 @@ mod tests {
     assert_eq!(
       "0123".parse::<PublicKey>().unwrap_err().to_string(),
       "invalid public key byte length 2: `0123`"
+    );
+  }
+
+  #[test]
+  fn uppercase_is_forbidden() {
+    let key = "0f6d444f09eb336d3cc94d66cc541fea0b70b36be291eb3ecf5b49113f34c8d3";
+    key.parse::<PublicKey>().unwrap();
+    assert_eq!(
+      key
+        .to_uppercase()
+        .parse::<PublicKey>()
+        .unwrap_err()
+        .to_string(),
+      "public keys must be lowercase hex: \
+      `0F6D444F09EB336D3CC94D66CC541FEA0B70B36BE291EB3ECF5B49113F34C8D3`"
     );
   }
 

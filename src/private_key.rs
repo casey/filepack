@@ -3,6 +3,8 @@ use super::*;
 #[derive(Debug, Snafu)]
 #[snafu(context(suffix(Error)))]
 pub enum Error {
+  #[snafu(display("private keys must be lowercase hex"))]
+  Case,
   #[snafu(display("invalid private key hex"))]
   Hex { source: hex::FromHexError },
   #[snafu(display("invalid private key byte length {length}"))]
@@ -74,6 +76,10 @@ impl FromStr for PrivateKey {
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     let bytes = hex::decode(s).context(HexError)?;
 
+    if !is_lowercase_hex(s) {
+      return Err(CaseError.build());
+    }
+
     let secret: [u8; Self::LEN] = bytes.as_slice().try_into().ok().context(LengthError {
       length: bytes.len(),
     })?;
@@ -138,6 +144,20 @@ mod tests {
     let key = "0e56ae8b43aa93fd4c179ceaff96f729522622d26b4b5357bc959e476e59e107";
     key.parse::<PrivateKey>().unwrap();
     key.parse::<PublicKey>().unwrap_err();
+  }
+
+  #[test]
+  fn uppercase_is_forbidden() {
+    let key = "0e56ae8b43aa93fd4c179ceaff96f729522622d26b4b5357bc959e476e59e107";
+    key.parse::<PrivateKey>().unwrap();
+    assert_eq!(
+      key
+        .to_uppercase()
+        .parse::<PrivateKey>()
+        .unwrap_err()
+        .to_string(),
+      "private keys must be lowercase hex",
+    );
   }
 
   #[test]
