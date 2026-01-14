@@ -25,12 +25,12 @@ impl Hash {
       hasher.finalize().into()
     };
 
-    if let Some(assert) = self.assert {
+    if let Some(expected) = self.assert {
       ensure! {
-        hash == assert,
+        hash == expected,
         error::Assert {
           actual: hash,
-          expected: assert,
+          expected: expected,
         }
       }
     }
