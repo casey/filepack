@@ -6,8 +6,12 @@ pub(crate) struct Verify {
   fingerprint: Option<Hash>,
   #[arg(help = "Ignore missing files", long)]
   ignore_missing: bool,
-  #[arg(help = "Verify that manifest has been signed by <KEY>", long)]
-  key: Option<PublicKey>,
+  #[arg(
+    help = "Verify that manifest has been signed by <KEY>",
+    long = "key",
+    value_name = "KEY"
+  )]
+  keys: Vec<PublicKey>,
   #[arg(
     help = "Read manifest from <MANIFEST>, defaults to `<ROOT>/filepack.json`",
     long
@@ -202,7 +206,16 @@ mismatched file: `{path}`
       verified.signatures += 1;
     }
 
-    if let Some(key) = self.key {
+    let mut keys = BTreeSet::new();
+
+    for key in &self.keys {
+      ensure! {
+        keys.insert(key.clone()),
+        error::DuplicateKey { key: key.clone() },
+      }
+    }
+
+    for key in self.keys {
       ensure! {
         manifest.signatures.contains_key(&key),
         error::SignatureMissing { key },

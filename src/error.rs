@@ -34,6 +34,11 @@ pub enum Error {
     path: DisplayPath,
     source: serde_yaml::Error,
   },
+  #[snafu(display("key provided multiple times: `{key}`"))]
+  DuplicateKey {
+    backtrace: Option<Backtrace>,
+    key: PublicKey,
+  },
   #[snafu(display("{count} mismatched file{}", if *count == 1 { "" } else { "s" }))]
   EntryMismatch {
     backtrace: Option<Backtrace>,

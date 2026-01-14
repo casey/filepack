@@ -1,6 +1,25 @@
 use super::*;
 
 #[test]
+fn duplicate_key() {
+  Test::new()
+    .args(["create"])
+    .success()
+    .args([
+      "verify",
+      "--key",
+      "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b",
+      "--key",
+      "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b",
+    ])
+    .stderr(
+      "error: key provided multiple times: \
+      `7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b`\n",
+    )
+    .failure();
+}
+
+#[test]
 fn extra_fields_are_not_allowed() {
   Test::new()
     .args(["verify", "."])
@@ -222,6 +241,65 @@ fn missing_signature_error() {
     .success()
     .args([
       "verify",
+      "--key",
+      "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b",
+    ])
+    .stderr(
+      "error: no signature found for key \
+      7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b\n",
+    )
+    .failure();
+}
+
+#[test]
+fn multiple_keys() {
+  let test = Test::new()
+    .data_dir("alice")
+    .args(["keygen"])
+    .success()
+    .data_dir("bob")
+    .args(["keygen"])
+    .success()
+    .touch("foo/bar")
+    .args(["create", "foo"])
+    .success()
+    .data_dir("alice")
+    .args(["sign", "foo"])
+    .success()
+    .data_dir("bob")
+    .args(["sign", "foo"])
+    .success();
+
+  let alice = test.read("alice/keys/master.public");
+  let bob = test.read("bob/keys/master.public");
+
+  test
+    .args(["verify", "foo", "--key", &alice, "--key", &bob])
+    .stderr("successfully verified 1 file totaling 0 bytes with 2 signatures\n")
+    .success();
+}
+
+#[test]
+fn multiple_keys_one_missing() {
+  let test = Test::new()
+    .data_dir("alice")
+    .args(["keygen"])
+    .success()
+    .touch("foo/bar")
+    .args(["create", "foo"])
+    .success()
+    .data_dir("alice")
+    .args(["sign", "foo/filepack.json"])
+    .success();
+
+  let alice = test.read("alice/keys/master.public");
+
+  test
+    .args([
+      "verify",
+      "foo",
+      "--key",
+      &alice,
       "--key",
       "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b",
     ])
