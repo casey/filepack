@@ -1,5 +1,16 @@
 use super::*;
 
+#[cfg(unix)]
+pub(crate) fn chmod(path: &Utf8Path, mode: u32) -> Result {
+  use std::os::unix::fs::PermissionsExt;
+  std::fs::set_permissions(path, Permissions::from_mode(mode)).context(error::FilesystemIo { path })
+}
+
+#[cfg(not(unix))]
+pub(crate) fn chmod(_path: &Utf8Path, _mode: u32) -> Result {
+  Ok(())
+}
+
 pub(crate) fn create_dir_all(path: &Utf8Path) -> Result<()> {
   std::fs::create_dir_all(path).context(error::FilesystemIo { path })
 }
@@ -27,23 +38,6 @@ pub(crate) fn read_to_string_opt(path: &Utf8Path) -> Result<Option<String>> {
     Err(err) if err.kind() == io::ErrorKind::NotFound => Ok(None),
     result => result.map(Some).context(error::FilesystemIo { path }),
   }
-}
-
-pub(crate) fn set_mode(path: &Utf8Path, mode: u32) -> Result {
-  #[cfg(unix)]
-  {
-    use std::os::unix::fs::PermissionsExt;
-    std::fs::set_permissions(path, Permissions::from_mode(mode))
-      .context(error::FilesystemIo { path })?;
-  }
-
-  #[cfg(not(unix))]
-  {
-    let _ = path;
-    let _ = mode;
-  }
-
-  Ok(())
 }
 
 pub(crate) fn write(path: &Utf8Path, contents: impl AsRef<[u8]>) -> Result {
