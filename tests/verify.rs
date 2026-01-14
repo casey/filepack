@@ -1,6 +1,25 @@
 use super::*;
 
 #[test]
+fn duplicate_key() {
+  Test::new()
+    .args(["create"])
+    .success()
+    .args([
+      "verify",
+      "--key",
+      "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b",
+      "--key",
+      "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b",
+    ])
+    .stderr(
+      "error: key provided multiple times: \
+      `7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b`\n",
+    )
+    .failure();
+}
+
+#[test]
 fn extra_fields_are_not_allowed() {
   Test::new()
     .args(["verify", "."])
@@ -258,25 +277,6 @@ fn multiple_keys() {
     .args(["verify", "foo", "--key", &alice, "--key", &bob])
     .stderr("successfully verified 1 file totaling 0 bytes with 2 signatures\n")
     .success();
-}
-
-#[test]
-fn duplicate_key() {
-  Test::new()
-    .args(["create"])
-    .success()
-    .args([
-      "verify",
-      "--key",
-      "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b",
-      "--key",
-      "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b",
-    ])
-    .stderr(
-      "error: key provided multiple times: \
-      `7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b`\n",
-    )
-    .failure();
 }
 
 #[test]
