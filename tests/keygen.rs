@@ -1,9 +1,25 @@
 use super::*;
 
 #[test]
+fn error_if_key_dir_has_insecure_permissions() {
+  if !cfg!(unix) {
+    return;
+  }
+
+  Test::new()
+    .create_dir("keys")
+    .chmod("keys", 0o750)
+    .args(["keygen"])
+    .stderr_regex("error: keys directory `.*keys` has insecure permissions 0750\n")
+    .failure();
+}
+
+#[test]
 fn error_if_master_private_key_already_exists() {
   Test::new()
     .write("keys/master.private", "foo")
+    .chmod("keys", 0o700)
+    .chmod("keys/master.private", 0o700)
     .args(["keygen"])
     .stderr_regex("error: private key already exists: `.*master.private`\n")
     .failure();
@@ -13,6 +29,7 @@ fn error_if_master_private_key_already_exists() {
 fn error_if_master_public_key_already_exists() {
   Test::new()
     .write("keys/master.public", "foo")
+    .chmod("keys", 0o700)
     .args(["keygen"])
     .stderr_regex("error: public key already exists: `.*master.public`\n")
     .failure();

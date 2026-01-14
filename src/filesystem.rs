@@ -12,6 +12,10 @@ pub(crate) fn metadata(path: &Utf8Path) -> Result<std::fs::Metadata> {
   std::fs::metadata(path).context(error::FilesystemIo { path })
 }
 
+pub(crate) fn mode(path: &Utf8Path) -> Result<Mode> {
+  Ok(metadata(path)?.permissions().into())
+}
+
 pub(crate) fn read_to_string(path: impl AsRef<Utf8Path>) -> Result<String> {
   std::fs::read_to_string(path.as_ref()).context(error::FilesystemIo {
     path: path.as_ref(),
@@ -23,6 +27,23 @@ pub(crate) fn read_to_string_opt(path: &Utf8Path) -> Result<Option<String>> {
     Err(err) if err.kind() == io::ErrorKind::NotFound => Ok(None),
     result => result.map(Some).context(error::FilesystemIo { path }),
   }
+}
+
+pub(crate) fn set_mode(path: &Utf8Path, mode: u32) -> Result {
+  #[cfg(unix)]
+  {
+    use std::os::unix::fs::PermissionsExt;
+    std::fs::set_permissions(path, Permissions::from_mode(mode))
+      .context(error::FilesystemIo { path })?;
+  }
+
+  #[cfg(not(unix))]
+  {
+    let _ = path;
+    let _ = mode;
+  }
+
+  Ok(())
 }
 
 pub(crate) fn write(path: &Utf8Path, contents: impl AsRef<[u8]>) -> Result {

@@ -98,6 +98,42 @@ fn existing_signatures_must_be_valid() {
 }
 
 #[test]
+fn key_dir_insecure_permissions() {
+  if !cfg!(unix) {
+    return;
+  }
+
+  Test::new()
+    .args(["keygen"])
+    .success()
+    .chmod("keys", 0o750)
+    .touch("foo/bar")
+    .args(["create", "foo"])
+    .success()
+    .args(["sign", "foo/filepack.json"])
+    .stderr_regex("error: keys directory `.*keys` has insecure permissions 0750\n")
+    .failure();
+}
+
+#[test]
+fn private_key_insecure_permissions() {
+  if !cfg!(unix) {
+    return;
+  }
+
+  Test::new()
+    .args(["keygen"])
+    .success()
+    .chmod("keys/master.private", 0o644)
+    .touch("foo/bar")
+    .args(["create", "foo"])
+    .success()
+    .args(["sign", "foo/filepack.json"])
+    .stderr_regex("error: private key `.*master.private` has insecure permissions 0644\n")
+    .failure();
+}
+
+#[test]
 fn re_signing_requires_force() {
   let test = Test::new()
     .args(["keygen"])

@@ -1,0 +1,50 @@
+use super::*;
+
+#[derive(Clone, Copy, Debug)]
+pub struct Mode(u32);
+
+impl Mode {
+  pub(crate) fn is_secure(self) -> bool {
+    self.0.trailing_zeros() >= 6
+  }
+}
+
+impl Display for Mode {
+  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    write!(f, "0{:03o}", self.0 & 0o777)
+  }
+}
+
+#[cfg(unix)]
+impl From<Permissions> for Mode {
+  fn from(permissions: Permissions) -> Self {
+    use std::os::unix::fs::PermissionsExt;
+    Self(permissions.mode())
+  }
+}
+
+#[cfg(not(unix))]
+impl From<Permissions> for Mode {
+  fn from(_permissions: Permissions) -> Self {
+    Self(0)
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn display() {
+    assert_eq!(Mode(0).to_string(), "0000");
+    assert_eq!(Mode(0o777).to_string(), "0777");
+    assert_eq!(Mode(0o7777).to_string(), "0777");
+  }
+
+  #[test]
+  fn is_secure() {
+    assert!(Mode(0o000).is_secure());
+    assert!(Mode(0o700).is_secure());
+    assert!(!Mode(0o701).is_secure());
+  }
+}

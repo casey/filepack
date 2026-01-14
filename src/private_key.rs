@@ -147,6 +147,8 @@ mod tests {
   fn whitespace_is_trimmed_when_loading_from_disk() {
     let dir = tempdir();
 
+    filesystem::set_mode(Utf8Path::from_path(dir.path()).unwrap(), 0o700).unwrap();
+
     let path = Utf8PathBuf::from_path_buf(dir.path().join("key")).unwrap();
 
     let key = "0e56ae8b43aa93fd4c179ceaff96f729522622d26b4b5357bc959e476e59e107"
@@ -154,6 +156,8 @@ mod tests {
       .unwrap();
 
     filesystem::write(&path, format!(" \t{}\n", key.display_secret())).unwrap();
+
+    filesystem::set_mode(&path, 0o600).unwrap();
 
     assert_eq!(PrivateKey::load(&path).unwrap(), key);
   }
