@@ -204,44 +204,26 @@ fn metadata_may_not_be_invalid() {
 
 #[test]
 fn missing_empty_directory_error() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("foo").create_dir_all().unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .create_dir("foo")
     .args(["create", "."])
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  std::fs::remove_dir(dir.path().join("foo")).unwrap();
-
-  cargo_bin_cmd!("filepack")
+    .success()
+    .remove_dir("foo")
     .args(["verify", "."])
-    .current_dir(&dir)
-    .assert()
     .stderr("error: directory missing: `foo`\n")
     .failure();
 }
 
 #[test]
 fn missing_signature_error() {
-  let dir = TempDir::new().unwrap();
-
-  cargo_bin_cmd!("filepack")
-    .arg("create")
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .args(["create"])
+    .success()
     .args([
       "verify",
       "--key",
       "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b",
     ])
-    .current_dir(&dir)
-    .assert()
     .stderr(
       "error: no signature found for key \
       7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b\n",
@@ -251,24 +233,14 @@ fn missing_signature_error() {
 
 #[test]
 fn multiple_mismatches() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("foo").touch().unwrap();
-  dir.child("bar").touch().unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .touch("foo")
+    .touch("bar")
     .args(["create", "."])
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  dir.child("foo").write_str("baz").unwrap();
-  dir.child("bar").write_str("bob").unwrap();
-
-  cargo_bin_cmd!("filepack")
+    .success()
+    .write("foo", "baz")
+    .write("bar", "bob")
     .args(["verify", "."])
-    .current_dir(&dir)
-    .assert()
     .stderr(
       "\
 mismatched file: `bar`
@@ -285,23 +257,13 @@ error: 2 mismatched files
 
 #[test]
 fn nested_extraneous_empty_directory_error() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("foo/bar").create_dir_all().unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .create_dir("foo/bar")
     .args(["create", "."])
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  dir.child("foo/bar/baz").create_dir_all().unwrap();
-
-  cargo_bin_cmd!("filepack")
+    .success()
+    .create_dir("foo/bar/baz")
     .args(["verify", "."])
-    .current_dir(&dir)
-    .assert()
-    .stderr(path(
+    .stderr(&path(
       "error: extraneous directory not in manifest: `foo/bar/baz`\n",
     ))
     .failure();
@@ -309,39 +271,21 @@ fn nested_extraneous_empty_directory_error() {
 
 #[test]
 fn nested_missing_empty_directory_error() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("foo/bar/baz").create_dir_all().unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .create_dir("foo/bar/baz")
     .args(["create", "."])
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  std::fs::remove_dir(dir.path().join("foo/bar/baz")).unwrap();
-
-  cargo_bin_cmd!("filepack")
+    .success()
+    .remove_dir("foo/bar/baz")
     .args(["verify", "."])
-    .current_dir(&dir)
-    .assert()
     .stderr("error: directory missing: `foo/bar/baz`\n")
     .failure();
 }
 
 #[test]
 fn no_files() {
-  let dir = TempDir::new().unwrap();
-
-  dir
-    .child("filepack.json")
-    .write_str(&json! { files: {} })
-    .unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .write("filepack.json", json! { files: {} })
     .args(["verify", "."])
-    .current_dir(&dir)
-    .assert()
     .stderr("successfully verified 0 files totaling 0 bytes with 0 signatures\n")
     .success();
 }

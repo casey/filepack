@@ -42,6 +42,11 @@ impl Test {
     self
   }
 
+  pub(crate) fn remove_dir(self, path: &str) -> Self {
+    fs::remove_dir(self.tempdir.path().join(path)).unwrap();
+    self
+  }
+
   pub(crate) fn failure(self) -> Self {
     self.run(1)
   }
@@ -95,7 +100,7 @@ impl Test {
     self
   }
 
-  pub(crate) fn write(self, path: &str, content: impl AsRef<str>) -> Self {
+  pub(crate) fn write(self, path: &str, content: impl AsRef<[u8]>) -> Self {
     let path = self.tempdir.path().join(path);
     fs::create_dir_all(path.parent().unwrap()).unwrap();
     fs::write(path, content.as_ref()).unwrap();
