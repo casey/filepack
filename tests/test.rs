@@ -78,7 +78,7 @@ impl Test {
 
   #[track_caller]
   pub(crate) fn failure(self) -> Self {
-    self.run(1)
+    self.status(1)
   }
 
   fn join(&self, path: &str) -> Utf8PathBuf {
@@ -126,7 +126,7 @@ impl Test {
   }
 
   #[track_caller]
-  fn run(self, code: i32) -> Self {
+  pub(crate) fn status(self, code: i32) -> Self {
     let mut command = Command::new(executable_path("filepack"));
 
     let current_dir = if let Some(ref subdir) = self.current_dir {
@@ -203,16 +203,25 @@ impl Test {
     self
   }
 
-  pub(crate) fn stderr_path(mut self, stderr: &str) -> Self {
-    assert_matches!(self.stderr, Expected::Empty);
-    self.stderr = Expected::String(stderr.replace('/', std::path::MAIN_SEPARATOR_STR));
-    self
+  pub(crate) fn stderr_path(self, stderr: &str) -> Self {
+    self.stderr(&stderr.replace('/', MAIN_SEPARATOR_STR))
   }
 
   pub(crate) fn stderr_regex(mut self, pattern: &str) -> Self {
     assert_matches!(self.stderr, Expected::Empty);
     self.stderr = Expected::regex(pattern);
     self
+  }
+
+  pub(crate) fn stderr_regex_path(self, pattern: &str) -> Self {
+    self.stderr_regex(&pattern.replace(
+      '/',
+      if MAIN_SEPARATOR_STR == "\\" {
+        "\\\\"
+      } else {
+        MAIN_SEPARATOR_STR
+      },
+    ))
   }
 
   pub(crate) fn stdin(mut self, stdin: &str) -> Self {
@@ -235,7 +244,7 @@ impl Test {
 
   #[track_caller]
   pub(crate) fn success(self) -> Self {
-    self.run(0)
+    self.status(0)
   }
 
   pub(crate) fn symlink(self, target: &str, link: &str) -> Self {

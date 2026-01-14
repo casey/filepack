@@ -11,7 +11,7 @@ pub(crate) struct Verify {
     long = "key",
     value_name = "KEY"
   )]
-  keys: Vec<PublicKey>,
+  keys: Vec<KeyIdentifier>,
   #[arg(
     help = "Read manifest from <MANIFEST>, defaults to `<ROOT>/filepack.json`",
     long
@@ -30,6 +30,18 @@ impl Verify {
       bytes: u128,
       files: u64,
       signatures: u64,
+    }
+
+    let key_dir = options.key_dir()?;
+
+    let mut keys = BTreeMap::new();
+
+    for second in self.keys {
+      let key = second.load(&key_dir)?;
+
+      if let Some(first) = keys.insert(key.clone(), second.clone()) {
+        return Err(error::DuplicateKey { first, second }.build());
+      }
     }
 
     let current_dir = current_dir()?;
@@ -204,19 +216,10 @@ mismatched file: `{path}`
       verified.signatures += 1;
     }
 
-    let mut keys = BTreeSet::new();
-
-    for key in &self.keys {
-      ensure! {
-        keys.insert(key.clone()),
-        error::DuplicateKey { key: key.clone() },
-      }
-    }
-
-    for key in self.keys {
+    for (key, identifier) in keys {
       ensure! {
         manifest.signatures.contains_key(&key),
-        error::SignatureMissing { key },
+        error::SignatureMissing { identifier },
       }
     }
 

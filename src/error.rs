@@ -34,10 +34,18 @@ pub enum Error {
     path: DisplayPath,
     source: serde_yaml::Error,
   },
-  #[snafu(display("key provided multiple times: `{key}`"))]
+  #[snafu(display(
+    "duplicate key: {}",
+    if first == second {
+      format!("`{first}`")
+    } else {
+      format!("`{first}` and `{second}`")
+    },
+  ))]
   DuplicateKey {
     backtrace: Option<Backtrace>,
-    key: PublicKey,
+    first: KeyIdentifier,
+    second: KeyIdentifier,
   },
   #[snafu(display("{count} mismatched file{}", if *count == 1 { "" } else { "s" }))]
   EntryMismatch {
@@ -173,10 +181,10 @@ pub enum Error {
     public_key: PublicKey,
     source: SignatureError,
   },
-  #[snafu(display("no signature found for key {key}"))]
+  #[snafu(display("no signature found for key `{identifier}`"))]
   SignatureMissing {
     backtrace: Option<Backtrace>,
-    key: PublicKey,
+    identifier: KeyIdentifier,
   },
   #[snafu(display("I/O error reading standard input"))]
   StandardInputIo {

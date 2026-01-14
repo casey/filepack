@@ -20,10 +20,11 @@ use {
   self::{
     arguments::Arguments, component::Component, count::Count, display_path::DisplayPath,
     display_secret::DisplaySecret, entries::Entries, fingerprint_hasher::FingerprintHasher,
-    fingerprint_prefix::FingerprintPrefix, lint::Lint, lint_group::LintGroup, message::Message,
-    metadata::Metadata, mode::Mode, options::Options, owo_colorize_ext::OwoColorizeExt,
-    path_error::PathError, private_key::PrivateKey, signature_error::SignatureError, style::Style,
-    subcommand::Subcommand, template::Template, utf8_path_ext::Utf8PathExt,
+    fingerprint_prefix::FingerprintPrefix, key_identifier::KeyIdentifier, lint::Lint,
+    lint_group::LintGroup, message::Message, metadata::Metadata, mode::Mode, options::Options,
+    owo_colorize_ext::OwoColorizeExt, path_error::PathError, private_key::PrivateKey,
+    signature_error::SignatureError, style::Style, subcommand::Subcommand, template::Template,
+    utf8_path_ext::Utf8PathExt,
   },
   blake3::Hasher,
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},
@@ -32,6 +33,7 @@ use {
   lexiclean::Lexiclean,
   num_traits::One,
   owo_colors::Styled,
+  regex::Regex,
   serde::{Deserialize, Deserializer, Serialize, Serializer},
   serde_with::{DeserializeFromStr, SerializeDisplay},
   snafu::{ErrorCompat, OptionExt, ResultExt, Snafu, ensure},
@@ -48,6 +50,7 @@ use {
     path::{Path, PathBuf},
     process,
     str::{self, FromStr},
+    sync::LazyLock,
   },
   strum::{EnumIter, IntoStaticStr},
   usized::IntoU64,
@@ -84,6 +87,7 @@ mod filesystem;
 mod fingerprint_hasher;
 mod fingerprint_prefix;
 mod hash;
+mod key_identifier;
 mod lint;
 mod lint_group;
 mod manifest;

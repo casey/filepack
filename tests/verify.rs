@@ -1,7 +1,7 @@
 use super::*;
 
 #[test]
-fn duplicate_key() {
+fn duplicate_key_literal() {
   Test::new()
     .args(["create"])
     .success()
@@ -13,9 +13,37 @@ fn duplicate_key() {
       "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b",
     ])
     .stderr(
-      "error: key provided multiple times: \
+      "error: duplicate key: \
       `7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b`\n",
     )
+    .failure();
+}
+
+#[test]
+fn duplicate_key_named() {
+  Test::new()
+    .args(["keygen"])
+    .success()
+    .args(["create"])
+    .success()
+    .args(["verify", "--key", "master", "--key", "master"])
+    .stderr_regex("error: duplicate key: `master`\n")
+    .failure();
+}
+
+#[test]
+fn duplicate_key_named_and_literal() {
+  let test = Test::new()
+    .args(["keygen"])
+    .success()
+    .args(["create"])
+    .success();
+
+  let key = test.read("keys/master.public");
+
+  test
+    .args(["verify", "--key", "master", "--key", &key])
+    .stderr_regex("error: duplicate key: `master` and `[a-f0-9]{64}`\n")
     .failure();
 }
 
@@ -235,7 +263,7 @@ fn missing_empty_directory_error() {
 }
 
 #[test]
-fn missing_signature_error() {
+fn missing_signature_for_literal_key() {
   Test::new()
     .args(["create"])
     .success()
@@ -246,8 +274,20 @@ fn missing_signature_error() {
     ])
     .stderr(
       "error: no signature found for key \
-      7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b\n",
+      `7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b`\n",
     )
+    .failure();
+}
+
+#[test]
+fn missing_signature_for_named_key() {
+  Test::new()
+    .args(["keygen"])
+    .success()
+    .args(["create"])
+    .success()
+    .args(["verify", "--key", "master"])
+    .stderr("error: no signature found for key `master`\n")
     .failure();
 }
 
@@ -305,7 +345,7 @@ fn multiple_keys_one_missing() {
     ])
     .stderr(
       "error: no signature found for key \
-      7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b\n",
+      `7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b`\n",
     )
     .failure();
 }
@@ -331,6 +371,42 @@ mismatched file: `foo`
 error: 2 mismatched files
 ",
     )
+    .failure();
+}
+
+#[test]
+fn named_key() {
+  Test::new()
+    .args(["keygen"])
+    .success()
+    .touch("foo/bar")
+    .args(["create", "--sign", "foo"])
+    .success()
+    .args(["verify", "foo", "--key", "master"])
+    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
+    .success();
+}
+
+#[test]
+fn named_key_invalid() {
+  Test::new()
+    .args(["create"])
+    .success()
+    .args(["verify", "--key", "@invalid"])
+    .stderr(
+      "error: invalid value '@invalid' for '--key <KEY>': invalid public key name `@invalid`\n\n\
+      For more information, try '--help'.\n",
+    )
+    .status(2);
+}
+
+#[test]
+fn named_key_not_found() {
+  Test::new()
+    .args(["create"])
+    .success()
+    .args(["verify", "--key", "nonexistent"])
+    .stderr_regex_path("error: public key not found: `.*keys/nonexistent.public`\n")
     .failure();
 }
 
