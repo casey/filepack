@@ -117,6 +117,14 @@ impl Test {
     fs::read_to_string(self.join(path)).unwrap().trim().into()
   }
 
+  pub(crate) fn read_key(&self, path: &str) -> PublicKey {
+    fs::read_to_string(self.join(path))
+      .unwrap()
+      .trim()
+      .parse()
+      .unwrap()
+  }
+
   pub(crate) fn remove_dir(self, path: &str) -> Self {
     fs::remove_dir(self.join(path)).unwrap();
     self
@@ -201,6 +209,12 @@ impl Test {
   pub(crate) fn stderr(mut self, stderr: &str) -> Self {
     assert_matches!(self.stderr, Expected::Empty);
     self.stderr = Expected::String(stderr.into());
+    self
+  }
+
+  pub(crate) fn stderr_path(mut self, stderr: &str) -> Self {
+    assert_matches!(self.stderr, Expected::Empty);
+    self.stderr = Expected::String(stderr.replace('/', std::path::MAIN_SEPARATOR_STR));
     self
   }
 

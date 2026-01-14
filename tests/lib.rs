@@ -41,11 +41,3 @@ mod test;
 mod verify;
 
 const EMPTY_HASH: &str = "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262";
-
-fn load_key(path: &Path) -> String {
-  fs::read_to_string(path).unwrap().trim().into()
-}
-
-fn path(message: &str) -> String {
-  message.replace('/', std::path::MAIN_SEPARATOR_STR)
-}

@@ -173,9 +173,7 @@ fn metadata_already_exists() {
     .touch("foo/metadata.json")
     .write("metadata.yaml", "title: Foo")
     .args(["create", "foo", "--metadata", "metadata.yaml"])
-    .stderr(&path(
-      "error: metadata `foo/metadata.json` already exists\n",
-    ))
+    .stderr_path("error: metadata `foo/metadata.json` already exists\n")
     .failure()
     .args(["create", "foo", "--metadata", "metadata.yaml", "--force"])
     .assert_file("foo/metadata.json", json! { title: "Foo" })
@@ -283,7 +281,7 @@ fn non_unicode_path_error() {
   Test::new()
     .touch(invalid)
     .args(["create", "."])
-    .stderr(&path("error: path not valid unicode: `./�`\n"))
+    .stderr_path("error: path not valid unicode: `./�`\n")
     .failure();
 }
 
@@ -311,9 +309,7 @@ fn sign_creates_valid_signature() {
   let manifest_path = test.path().join("foo/filepack.json");
   let manifest = Manifest::load(Some(&manifest_path)).unwrap();
 
-  let public_key = load_key(test.path().join("keys/master.public").as_std_path())
-    .parse::<PublicKey>()
-    .unwrap();
+  let public_key = test.read_key("keys/master.public");
 
   assert_eq!(manifest.signatures.len(), 1);
 

@@ -258,9 +258,7 @@ fn nested_extraneous_empty_directory_error() {
     .success()
     .create_dir("foo/bar/baz")
     .args(["verify", "."])
-    .stderr(&path(
-      "error: extraneous directory not in manifest: `foo/bar/baz`\n",
-    ))
+    .stderr_path("error: extraneous directory not in manifest: `foo/bar/baz`\n")
     .failure();
 }
 
@@ -325,7 +323,7 @@ fn non_unicode_path_error() {
     .touch(invalid)
     .write("filepack.json", json! { files: {} })
     .args(["verify", "."])
-    .stderr(&path("error: path not valid unicode: `./�`\n"))
+    .stderr_path("error: path not valid unicode: `./�`\n")
     .failure();
 }
 
@@ -478,9 +476,7 @@ fn valid_signature_for_wrong_pubkey_error() {
 
   let mut manifest = Manifest::load(Some(&manifest_path)).unwrap();
 
-  let public_key = load_key(test.path().join("keys/master.public").as_std_path())
-    .parse::<PublicKey>()
-    .unwrap();
+  let public_key = test.read_key("keys/master.public");
 
   let signature = manifest.signatures.remove(&public_key).unwrap();
 
