@@ -37,9 +37,9 @@ pub enum Error {
   #[snafu(display(
     "duplicate key: {}",
     if first == second {
-      first.to_string()
+      format!("`{first}`")
     } else {
-      format!("{first} and {second}")
+      format!("`{first}` and `{second}`")
     },
   ))]
   DuplicateKey {
@@ -181,7 +181,7 @@ pub enum Error {
     public_key: PublicKey,
     source: SignatureError,
   },
-  #[snafu(display("no signature found for key {identifier}"))]
+  #[snafu(display("no signature found for key `{identifier}`"))]
   SignatureMissing {
     backtrace: Option<Backtrace>,
     identifier: KeyIdentifier,
