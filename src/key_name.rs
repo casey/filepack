@@ -7,10 +7,6 @@ static NAME_RE: LazyLock<Regex> =
 pub struct KeyName(String);
 
 impl KeyName {
-  pub(crate) fn master() -> Self {
-    Self("master".into())
-  }
-
   pub(crate) fn private_key_filename(&self) -> String {
     format!("{}.private", self.0)
   }
