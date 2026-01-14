@@ -80,167 +80,125 @@ error: 1 mismatched file
 
 #[test]
 fn ignore_missing() {
-  let dir = TempDir::new().unwrap();
-
-  dir
-    .child("filepack.json")
-    .write_str(&json! {
-      files: {
-        foo: {
-          hash: EMPTY_HASH,
-          size: 0
+  Test::new()
+    .write(
+      "filepack.json",
+      json! {
+        files: {
+          foo: {
+            hash: EMPTY_HASH,
+            size: 0
+          }
         }
-      }
-    })
-    .unwrap();
-
-  cargo_bin_cmd!("filepack")
-    .arg("verify")
-    .current_dir(&dir)
-    .assert()
-    .stderr(is_match("error: file missing: `foo`\n"))
-    .failure();
-
-  cargo_bin_cmd!("filepack")
+      },
+    )
+    .args(["verify"])
+    .stderr_regex("error: file missing: `foo`\n")
+    .failure()
     .args(["verify", "--ignore-missing"])
-    .current_dir(&dir)
-    .assert()
     .stderr("successfully verified 0 files totaling 0 bytes with 0 signatures\n")
     .success();
 }
 
 #[test]
 fn malformed_signature_error() {
-  let dir = TempDir::new().unwrap();
-
-  cargo_bin_cmd!("filepack")
-    .arg("create")
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  let path = dir.child("filepack.json");
-
-  let manifest_json = json! {
-    files: {},
-    signatures: {
-      "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b":
-        "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b"
-    }
-  };
-  fs::write(&path, manifest_json).unwrap();
-
-  cargo_bin_cmd!("filepack")
-    .arg("verify")
-    .current_dir(&dir)
-    .assert()
-    .stderr(is_match(
+  Test::new()
+    .args(["create"])
+    .success()
+    .write(
+      "filepack.json",
+      json! {
+        files: {},
+        signatures: {
+          "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b":
+            "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b"
+        }
+      },
+    )
+    .args(["verify"])
+    .stderr_regex(
       "error: failed to deserialize manifest at `filepack.json`\n.*invalid signature byte length.*",
-    ))
+    )
     .failure();
 }
 
 #[test]
 fn manifest_not_found_error_message() {
-  let dir = TempDir::new().unwrap();
-
-  cargo_bin_cmd!("filepack")
-    .arg("verify")
-    .current_dir(&dir)
-    .assert()
+  Test::new()
+    .args(["verify"])
     .stderr("error: manifest `filepack.json` not found\n")
     .failure();
 }
 
 #[test]
 fn manifest_paths_are_relative_to_root() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("dir/foo").touch().unwrap();
-
-  dir
-    .child("dir/filepack.json")
-    .write_str(&json! {
-      files: {
-        foo: {
-          hash: EMPTY_HASH,
-          size: 0
+  Test::new()
+    .touch("dir/foo")
+    .write(
+      "dir/filepack.json",
+      json! {
+        files: {
+          foo: {
+            hash: EMPTY_HASH,
+            size: 0
+          }
         }
-      }
-    })
-    .unwrap();
-
-  cargo_bin_cmd!("filepack")
+      },
+    )
     .args(["verify", "dir"])
-    .current_dir(&dir)
-    .assert()
     .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
     .success();
 }
 
 #[test]
 fn metadata_allows_unknown_keys() {
-  let dir = TempDir::new().unwrap();
-
-  dir
-    .child("filepack.json")
-    .write_str(&json! {
-      files: {
-        "metadata.json": {
-          hash: "1845a2ea1b86a250cb1c24115032cc0fdc064001f59af4a5e9a17be5cd7efbbc",
-          size: 25
+  Test::new()
+    .write(
+      "filepack.json",
+      json! {
+        files: {
+          "metadata.json": {
+            hash: "1845a2ea1b86a250cb1c24115032cc0fdc064001f59af4a5e9a17be5cd7efbbc",
+            size: 25
+          }
         }
-      }
-    })
-    .unwrap();
-
-  dir
-    .child("metadata.json")
-    .write_str(
+      },
+    )
+    .write(
+      "metadata.json",
       json! {
         title: "Foo",
         bar: 100
       }
       .trim_end_matches('\n'),
     )
-    .unwrap();
-
-  cargo_bin_cmd!("filepack")
     .args(["verify"])
-    .current_dir(&dir)
-    .assert()
     .stderr("successfully verified 1 file totaling 25 bytes with 0 signatures\n")
     .success();
 }
 
 #[test]
 fn metadata_may_not_be_invalid() {
-  let dir = TempDir::new().unwrap();
-
-  dir
-    .child("filepack.json")
-    .write_str(&json! {
-      files: {
-        "metadata.json": {
-          hash: "f113b1430243e68a2976426b0e13f21e5795cc107a914816fbf6c2f511092f4b",
-          size: 13
+  Test::new()
+    .write(
+      "filepack.json",
+      json! {
+        files: {
+          "metadata.json": {
+            hash: "f113b1430243e68a2976426b0e13f21e5795cc107a914816fbf6c2f511092f4b",
+            size: 13
+          }
         }
-      }
-    })
-    .unwrap();
-
-  dir
-    .child("metadata.json")
-    .write_str(json! { title: 100 }.trim_end_matches('\n'))
-    .unwrap();
-
-  cargo_bin_cmd!("filepack")
+      },
+    )
+    .write(
+      "metadata.json",
+      json! { title: 100 }.trim_end_matches('\n'),
+    )
     .args(["verify"])
-    .current_dir(&dir)
-    .assert()
-    .stderr(is_match(
+    .stderr_regex(
       "error: failed to deserialize metadata at `.*metadata.json`\n.*",
-    ))
+    )
     .failure();
 }
 
