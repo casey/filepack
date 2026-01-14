@@ -70,8 +70,8 @@ pub enum Error {
   #[snafu(display("keys directory `{path}` has insecure permissions {mode}"))]
   KeyDirPermissions {
     backtrace: Option<Backtrace>,
-    path: DisplayPath,
     mode: Mode,
+    path: DisplayPath,
   },
   #[snafu(display("public key `{public_key}` doesn't match private key `{private_key}`"))]
   KeyMismatch {
@@ -143,8 +143,8 @@ pub enum Error {
   #[snafu(display("private key `{path}` has insecure permissions {mode}"))]
   PrivateKeyPermissions {
     backtrace: Option<Backtrace>,
-    path: DisplayPath,
     mode: Mode,
+    path: DisplayPath,
   },
   #[snafu(display("public key already exists: `{}`", path.display()))]
   PublicKeyAlreadyExists {
