@@ -3,6 +3,8 @@ watch +args='ltest':
 
 clippy: (watch 'lclippy --tests --all --all-targets -- --deny warnings')
 
+check: (watch 'lcheck --tests --all --all-targets')
+
 ci: lint
   cargo test --workspace
 

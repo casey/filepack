@@ -4,7 +4,7 @@ use super::*;
 pub(crate) struct Sign {
   #[arg(help = "Allow overwriting signature", long)]
   force: bool,
-  #[arg(default_value = DEFAULT_KEY, help = "Sign with <KEY>", long)]
+  #[arg(default_value_t = KeyName::DEFAULT, help = "Sign with <KEY>", long)]
   key: KeyName,
   #[arg(help = MANIFEST_PATH_HELP)]
   path: Option<Utf8PathBuf>,

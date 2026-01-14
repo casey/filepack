@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(Parser)]
 pub(crate) struct Keygen {
-  #[arg(default_value = DEFAULT_KEY, help = "Generate key named <NAME>", long)]
+  #[arg(default_value_t = KeyName::DEFAULT, help = "Generate key named <NAME>", long)]
   name: KeyName,
 }
 

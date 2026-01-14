@@ -34,40 +34,46 @@ impl Keys {
       }
 
       if !entry.file_type().is_file() {
-        panic!();
+        todo!();
       }
 
       let Some(extension) = path.extension() else {
-        panic!();
+        todo!();
       };
 
-      if extension == PRIVATE_KEY_EXTENSION {
-        let mode = filesystem::mode(path)?;
-
-        ensure! {
-          mode.is_secure(),
-          error::PrivateKeyPermissions { mode, path },
-        }
-
-        // todo:
-        // - check that public key exists
-        // - check that public key corresponds to private key
-
-        continue;
-      }
-
-      if extension != PUBLIC_KEY_EXTENSION {
-        panic!();
-      }
-
-      // todo:
-      // - check that private key exists
+      let key_type = extension.parse::<KeyType>().unwrap();
 
       let name = path.file_stem().unwrap().parse::<KeyName>().unwrap();
 
-      let public_key = PublicKey::load(path)?;
+      match key_type {
+        KeyType::Private => {
+          let mode = filesystem::mode(path)?;
 
-      names.insert(name, public_key);
+          ensure! {
+            mode.is_secure(),
+            error::PrivateKeyPermissions { mode, path },
+          }
+
+          let public_key = path.with_file_name(name.public_key_filename());
+
+          if !filesystem::exists(&public_key)? {
+            todo!();
+          }
+
+          PublicKey::load(&public_key)?;
+        }
+        KeyType::Public => {
+          let public_key = PublicKey::load(path)?;
+
+          let private_key = path.with_file_name(name.private_key_filename());
+
+          if !filesystem::exists(&private_key)? {
+            todo!()
+          }
+
+          names.insert(name, public_key);
+        }
+      }
     }
 
     Ok(Self { names })
