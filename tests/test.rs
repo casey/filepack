@@ -9,6 +9,7 @@ pub(crate) struct Test {
   args: Vec<String>,
   current_dir: Option<String>,
   data_dir: Option<String>,
+  env: Vec<(String, String)>,
   stderr: Option<Expected>,
   stdin: Option<String>,
   stdout: Option<Expected>,
@@ -30,6 +31,7 @@ impl Test {
       args: Vec::new(),
       current_dir: None,
       data_dir: None,
+      env: Vec::new(),
       stderr: None,
       stdin: None,
       stdout: None,
@@ -50,6 +52,17 @@ impl Test {
     self
   }
 
+  pub(crate) fn assert_file_regex(self, path: &str, pattern: &str) -> Self {
+    let actual = fs::read_to_string(self.tempdir.path().join(path)).unwrap();
+    let regex = Regex::new(&format!("^(?s){pattern}$")).unwrap();
+    assert!(
+      regex.is_match(&actual),
+      "file content did not match regex\n   actual: {actual}\n    regex: {}",
+      regex.as_str()
+    );
+    self
+  }
+
   pub(crate) fn create_dir(self, path: &str) -> Self {
     fs::create_dir_all(self.tempdir.path().join(path)).unwrap();
     self
@@ -62,6 +75,11 @@ impl Test {
 
   pub(crate) fn data_dir(mut self, path: &str) -> Self {
     self.data_dir = Some(path.into());
+    self
+  }
+
+  pub(crate) fn env(mut self, key: &str, value: &str) -> Self {
+    self.env.push((key.into(), value.into()));
     self
   }
 
@@ -80,8 +98,18 @@ impl Test {
       .into()
   }
 
+  pub(crate) fn rename(self, from: &str, to: &str) -> Self {
+    fs::rename(self.tempdir.path().join(from), self.tempdir.path().join(to)).unwrap();
+    self
+  }
+
   pub(crate) fn remove_dir(self, path: &str) -> Self {
     fs::remove_dir(self.tempdir.path().join(path)).unwrap();
+    self
+  }
+
+  pub(crate) fn remove_file(self, path: &str) -> Self {
+    fs::remove_file(self.tempdir.path().join(path)).unwrap();
     self
   }
 
@@ -103,6 +131,11 @@ impl Test {
     };
 
     command.env("FILEPACK_DATA_DIR", data_dir);
+
+    for (key, value) in &self.env {
+      command.env(key, value);
+    }
+
     command.args(&self.args);
 
     if let Some(ref stdin_content) = self.stdin {
@@ -160,6 +193,13 @@ impl Test {
   pub(crate) fn stdout(mut self, stdout: impl AsRef<[u8]>) -> Self {
     self.stdout = Some(Expected::String(
       String::from_utf8(stdout.as_ref().to_vec()).unwrap(),
+    ));
+    self
+  }
+
+  pub(crate) fn stdout_regex(mut self, pattern: &str) -> Self {
+    self.stdout = Some(Expected::Regex(
+      Regex::new(&format!("^(?s){pattern}$")).unwrap(),
     ));
     self
   }
