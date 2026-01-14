@@ -48,6 +48,13 @@ impl Test {
       let path = self.join(path);
       fs::set_permissions(&path, fs::Permissions::from_mode(mode)).unwrap();
     }
+
+    #[cfg(not(unix))]
+    {
+      let _ = path;
+      let _ = mode;
+    }
+
     self
   }
 
