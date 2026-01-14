@@ -38,7 +38,10 @@ pub(crate) fn set_mode(path: &Utf8Path, mode: u32) -> Result {
   }
 
   #[cfg(not(unix))]
-  let _ = path;
+  {
+    let _ = path;
+    let _ = mode;
+  }
 
   Ok(())
 }
