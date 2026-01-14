@@ -21,9 +21,9 @@ use {
     arguments::Arguments, component::Component, count::Count, display_path::DisplayPath,
     display_secret::DisplaySecret, entries::Entries, fingerprint_hasher::FingerprintHasher,
     fingerprint_prefix::FingerprintPrefix, lint::Lint, lint_group::LintGroup, message::Message,
-    metadata::Metadata, options::Options, owo_colorize_ext::OwoColorizeExt, path_error::PathError,
-    private_key::PrivateKey, signature_error::SignatureError, style::Style, subcommand::Subcommand,
-    template::Template, utf8_path_ext::Utf8PathExt,
+    metadata::Metadata, mode::Mode, options::Options, owo_colorize_ext::OwoColorizeExt,
+    path_error::PathError, private_key::PrivateKey, signature_error::SignatureError, style::Style,
+    subcommand::Subcommand, template::Template, utf8_path_ext::Utf8PathExt,
   },
   blake3::Hasher,
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},
@@ -42,7 +42,7 @@ use {
     collections::{BTreeMap, BTreeSet, HashMap},
     env,
     fmt::{self, Display, Formatter},
-    fs,
+    fs::{self, Permissions},
     io::{self, IsTerminal},
     iter,
     path::{Path, PathBuf},
@@ -89,6 +89,7 @@ mod lint_group;
 mod manifest;
 mod message;
 mod metadata;
+mod mode;
 mod options;
 mod owo_colorize_ext;
 mod path_error;

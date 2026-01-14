@@ -12,10 +12,8 @@ pub(crate) fn metadata(path: &Utf8Path) -> Result<std::fs::Metadata> {
   std::fs::metadata(path).context(error::FilesystemIo { path })
 }
 
-#[cfg(unix)]
-pub(crate) fn mode(path: &Utf8Path) -> Result<u32> {
-  use std::os::unix::fs::PermissionsExt;
-  Ok(metadata(path)?.permissions().mode())
+pub(crate) fn mode(path: &Utf8Path) -> Result<Mode> {
+  Ok(metadata(path)?.permissions().into())
 }
 
 pub(crate) fn read_to_string(path: impl AsRef<Utf8Path>) -> Result<String> {

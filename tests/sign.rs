@@ -111,7 +111,7 @@ fn key_dir_insecure_permissions() {
     .args(["create", "foo"])
     .success()
     .args(["sign", "foo/filepack.json"])
-    .stderr_regex("error: keys directory `.*keys` has insecure permissions 0o40750\n")
+    .stderr_regex("error: keys directory `.*keys` has insecure permissions 0750\n")
     .failure();
 }
 
@@ -129,7 +129,7 @@ fn private_key_insecure_permissions() {
     .args(["create", "foo"])
     .success()
     .args(["sign", "foo/filepack.json"])
-    .stderr_regex("error: private key `.*master.private` has insecure permissions 0o100644\n")
+    .stderr_regex("error: private key `.*master.private` has insecure permissions 0644\n")
     .failure();
 }
 

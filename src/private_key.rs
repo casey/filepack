@@ -47,14 +47,14 @@ impl PrivateKey {
       let mode = filesystem::mode(key_dir)?;
 
       ensure! {
-        mode.trailing_zeros() >= 6,
+        mode.is_secure(),
         error::KeyDirPermissions { path: key_dir, mode },
       }
 
       let mode = filesystem::mode(path)?;
 
       ensure! {
-        mode.trailing_zeros() >= 6,
+        mode.is_secure(),
         error::PrivateKeyPermissions { path, mode },
       }
     }
