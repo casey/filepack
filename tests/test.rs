@@ -78,7 +78,7 @@ impl Test {
 
   #[track_caller]
   pub(crate) fn failure(self) -> Self {
-    self.code(1)
+    self.status(1)
   }
 
   fn join(&self, path: &str) -> Utf8PathBuf {
@@ -126,7 +126,7 @@ impl Test {
   }
 
   #[track_caller]
-  pub(crate) fn code(self, code: i32) -> Self {
+  pub(crate) fn status(self, code: i32) -> Self {
     let mut command = Command::new(executable_path("filepack"));
 
     let current_dir = if let Some(ref subdir) = self.current_dir {
@@ -237,7 +237,7 @@ impl Test {
 
   #[track_caller]
   pub(crate) fn success(self) -> Self {
-    self.code(0)
+    self.status(0)
   }
 
   pub(crate) fn symlink(self, target: &str, link: &str) -> Self {
