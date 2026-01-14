@@ -147,7 +147,7 @@ mod tests {
   fn whitespace_is_trimmed_when_loading_from_disk() {
     let dir = tempdir();
 
-    filesystem::set_mode(&Utf8Path::from_path(dir.path()).unwrap(), 0o700).unwrap();
+    filesystem::set_mode(Utf8Path::from_path(dir.path()).unwrap(), 0o700).unwrap();
 
     let path = Utf8PathBuf::from_path_buf(dir.path().join("key")).unwrap();
 
