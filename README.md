@@ -194,26 +194,31 @@ of `files`.
 
 ### example
 
-An example manifest for a directory containing the files `README.md` and
-`src/main.c`:
+An manifest over a directory containing the files `README.md` and `src/main.c`,
+signed by the public key
+`3c977ea3a31cd37f0b540f02f33eab158f2ed7449f42b05613c921181aa95b79`:
 
 ```json
 {
   "files": {
     "README.md": {
-      "hash": "5a9a6d96244ec398545fc0c98c2cb7ed52511b025c19e9ad1e3c1ef4ac8575ad",
-      "size": 1573
+      "hash": "7773f729322c522446f9ebb84fc0858cda075b7df0389405a5dc82f812195281",
+      "size": 11319
     },
     "src": {
-      "main.c": {
-        "hash": "38abf296dc2a90f66f7870fe0ce584af3859668cf5140c7557a76786189dcf0f",
-        "size": 4491
+      "main.rs": {
+        "hash": "1fa48b95ed335369d45b91af8138bdccd1413364bcdbfa6e9034e8a2cfd6e17f",
+        "size": 33
       }
     }
   },
-  "signatures": {}
+  "signatures": {
+    "3c977ea3a31cd37f0b540f02f33eab158f2ed7449f42b05613c921181aa95b79": "…"
+  }
 }
 ```
+
+Signatures are 128 character hexidecimal strings.
 
 Metadata
 --------
