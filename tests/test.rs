@@ -13,7 +13,6 @@ pub(crate) struct Test {
 }
 
 impl Test {
-  #[must_use]
   pub(crate) fn args(mut self, args: impl IntoIterator<Item = impl AsRef<str>>) -> Self {
     assert!(self.args.is_empty());
     for arg in args {
@@ -22,7 +21,6 @@ impl Test {
     self
   }
 
-  #[must_use]
   pub(crate) fn assert_file(mut self, path: &str, expected: impl Into<String>) -> Self {
     assert!(
       self
@@ -33,7 +31,6 @@ impl Test {
     self
   }
 
-  #[must_use]
   pub(crate) fn assert_file_regex(mut self, path: &str, pattern: &str) -> Self {
     assert!(
       self
@@ -44,27 +41,23 @@ impl Test {
     self
   }
 
-  #[must_use]
   pub(crate) fn create_dir(self, path: &str) -> Self {
     fs::create_dir_all(self.join(path)).unwrap();
     self
   }
 
-  #[must_use]
   pub(crate) fn current_dir(mut self, path: &str) -> Self {
     assert!(self.current_dir.is_none());
     self.current_dir = Some(path.into());
     self
   }
 
-  #[must_use]
   pub(crate) fn data_dir(mut self, path: &str) -> Self {
     assert!(self.data_dir.is_none());
     self.data_dir = Some(path.into());
     self
   }
 
-  #[must_use]
   pub(crate) fn env(mut self, key: &str, value: &str) -> Self {
     assert!(self.env.insert(key.into(), value.into()).is_none());
     self
@@ -74,12 +67,10 @@ impl Test {
     self.run(1)
   }
 
-  #[must_use]
   fn join(&self, path: &str) -> Utf8PathBuf {
     Utf8Path::from_path(self.tempdir.path()).unwrap().join(path)
   }
 
-  #[must_use]
   pub(crate) fn new() -> Self {
     Self::with_tempdir(
       tempfile::Builder::new()
@@ -89,17 +80,14 @@ impl Test {
     )
   }
 
-  #[must_use]
   pub(crate) fn path(&self) -> Utf8PathBuf {
     Utf8PathBuf::from_path_buf(self.tempdir.path().into()).unwrap()
   }
 
-  #[must_use]
   pub(crate) fn read(&self, path: &str) -> String {
     fs::read_to_string(self.join(path)).unwrap().trim().into()
   }
 
-  #[must_use]
   pub(crate) fn read_key(&self, path: &str) -> PublicKey {
     fs::read_to_string(self.join(path))
       .unwrap()
@@ -108,25 +96,21 @@ impl Test {
       .unwrap()
   }
 
-  #[must_use]
   pub(crate) fn remove_dir(self, path: &str) -> Self {
     fs::remove_dir(self.join(path)).unwrap();
     self
   }
 
-  #[must_use]
   pub(crate) fn remove_file(self, path: &str) -> Self {
     fs::remove_file(self.join(path)).unwrap();
     self
   }
 
-  #[must_use]
   pub(crate) fn rename(self, from: &str, to: &str) -> Self {
     fs::rename(self.join(from), self.join(to)).unwrap();
     self
   }
 
-  #[must_use]
   fn run(self, code: i32) -> Self {
     let mut command = Command::new(executable_path("filepack"));
 
@@ -193,42 +177,36 @@ impl Test {
     Self::with_tempdir(self.tempdir)
   }
 
-  #[must_use]
   pub(crate) fn stderr(mut self, stderr: &str) -> Self {
     assert_matches!(self.stderr, Expected::Empty);
     self.stderr = Expected::String(stderr.into());
     self
   }
 
-  #[must_use]
   pub(crate) fn stderr_path(mut self, stderr: &str) -> Self {
     assert_matches!(self.stderr, Expected::Empty);
     self.stderr = Expected::String(stderr.replace('/', std::path::MAIN_SEPARATOR_STR));
     self
   }
 
-  #[must_use]
   pub(crate) fn stderr_regex(mut self, pattern: &str) -> Self {
     assert_matches!(self.stderr, Expected::Empty);
     self.stderr = Expected::regex(pattern);
     self
   }
 
-  #[must_use]
   pub(crate) fn stdin(mut self, stdin: &str) -> Self {
     assert!(self.stdin.is_none());
     self.stdin = Some(stdin.into());
     self
   }
 
-  #[must_use]
   pub(crate) fn stdout(mut self, stdout: impl AsRef<str>) -> Self {
     assert_matches!(self.stdout, Expected::Empty);
     self.stdout = Expected::String(stdout.as_ref().into());
     self
   }
 
-  #[must_use]
   pub(crate) fn stdout_regex(mut self, pattern: &str) -> Self {
     assert_matches!(self.stdout, Expected::Empty);
     self.stdout = Expected::regex(pattern);
@@ -239,7 +217,6 @@ impl Test {
     self.run(0)
   }
 
-  #[must_use]
   pub(crate) fn symlink(self, target: &str, link: &str) -> Self {
     let target = self.join(target);
     let link = self.join(link);
@@ -250,7 +227,6 @@ impl Test {
     self
   }
 
-  #[must_use]
   pub(crate) fn touch(self, path: impl AsRef<Path>) -> Self {
     let path = self.tempdir.path().join(path);
     fs::create_dir_all(path.parent().unwrap()).unwrap();
@@ -258,7 +234,6 @@ impl Test {
     self
   }
 
-  #[must_use]
   pub(crate) fn touch_non_unicode(self) -> Self {
     #[cfg(unix)]
     fn create_non_unicode_path() -> std::path::PathBuf {
@@ -278,7 +253,6 @@ impl Test {
     self
   }
 
-  #[must_use]
   fn with_tempdir(tempdir: tempfile::TempDir) -> Self {
     Self {
       args: Vec::new(),
@@ -293,7 +267,6 @@ impl Test {
     }
   }
 
-  #[must_use]
   pub(crate) fn write(self, path: &str, content: impl AsRef<[u8]>) -> Self {
     let path = self.join(path);
     fs::create_dir_all(path.parent().unwrap()).unwrap();
