@@ -261,7 +261,7 @@ fn multiple_keys() {
 }
 
 #[test]
-fn multiple_keys_duplicate_error() {
+fn duplicate_key() {
   Test::new()
     .args(["create"])
     .success()
@@ -292,14 +292,14 @@ fn multiple_keys_one_missing() {
     .args(["sign", "foo/filepack.json"])
     .success();
 
-  let alice_key = test.read("alice/keys/master.public");
+  let alice = test.read("alice/keys/master.public");
 
   test
     .args([
       "verify",
       "foo",
       "--key",
-      &alice_key,
+      &alice,
       "--key",
       "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b",
     ])
