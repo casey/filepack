@@ -33,9 +33,7 @@ impl Verify {
     }
 
     let key_dir = options.key_dir()?;
-
     let mut keys = BTreeMap::new();
-
     for second in self.keys {
       let key = second.load(&key_dir)?;
 

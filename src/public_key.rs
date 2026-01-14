@@ -1,32 +1,15 @@
 use super::*;
 
-#[derive(Debug, Snafu)]
-#[snafu(context(suffix(Error)))]
-pub enum Error {
-  #[snafu(display("invalid public key hex: `{key}`"))]
-  Hex {
-    key: String,
-    source: hex::FromHexError,
-  },
-  #[snafu(display("invalid public key: `{key}`"))]
-  Key { key: String, source: SignatureError },
-  #[snafu(display("invalid public key byte length {length}: `{key}`"))]
-  Length {
-    key: String,
-    length: usize,
-    source: TryFromSliceError,
-  },
-  #[snafu(display("invalid public key name `{name}`"))]
-  Name { name: String },
-  #[snafu(display("weak public key: `{key}`"))]
-  Weak { key: String },
-}
-
 #[derive(Clone, Debug, DeserializeFromStr, Eq, PartialEq, SerializeDisplay)]
 pub struct PublicKey(ed25519_dalek::VerifyingKey);
 
 impl PublicKey {
   const LEN: usize = ed25519_dalek::PUBLIC_KEY_LENGTH;
+
+  #[must_use]
+  pub fn inner(&self) -> ed25519_dalek::VerifyingKey {
+    self.0
+  }
 
   pub(crate) fn load(path: &Utf8Path) -> Result<Self> {
     let public_key = filesystem::read_to_string_opt(path)?
@@ -59,23 +42,27 @@ impl From<PrivateKey> for PublicKey {
 }
 
 impl FromStr for PublicKey {
-  type Err = Error;
+  type Err = PublicKeyError;
 
   fn from_str(key: &str) -> Result<Self, Self::Err> {
-    let bytes = hex::decode(key).context(HexError { key })?;
+    let bytes = hex::decode(key).context(public_key_error::HexError { key })?;
 
-    let array: [u8; Self::LEN] = bytes.as_slice().try_into().context(LengthError {
-      key,
-      length: bytes.len(),
-    })?;
+    let array: [u8; Self::LEN] =
+      bytes
+        .as_slice()
+        .try_into()
+        .context(public_key_error::LengthError {
+          key,
+          length: bytes.len(),
+        })?;
 
     let inner = ed25519_dalek::VerifyingKey::from_bytes(&array)
       .map_err(SignatureError)
-      .context(KeyError { key })?;
+      .context(public_key_error::InvalidError { key })?;
 
     ensure! {
       !inner.is_weak(),
-      WeakError { key },
+      public_key_error::WeakError { key },
     }
 
     Ok(Self(inner))
@@ -143,7 +130,7 @@ mod tests {
         "0000000000000000000000000000000000000000000000000000000000000000"
           .parse::<PublicKey>()
           .unwrap_err(),
-        Error::Weak { key }
+        PublicKeyError::Weak { key }
           if key == "0000000000000000000000000000000000000000000000000000000000000000",
     ));
   }

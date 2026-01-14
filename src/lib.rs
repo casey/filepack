@@ -20,11 +20,11 @@ use {
   self::{
     arguments::Arguments, component::Component, count::Count, display_path::DisplayPath,
     display_secret::DisplaySecret, entries::Entries, fingerprint_hasher::FingerprintHasher,
-    fingerprint_prefix::FingerprintPrefix, key_identifier::KeyIdentifier, lint::Lint,
-    lint_group::LintGroup, message::Message, metadata::Metadata, mode::Mode, options::Options,
-    owo_colorize_ext::OwoColorizeExt, path_error::PathError, private_key::PrivateKey,
-    signature_error::SignatureError, style::Style, subcommand::Subcommand, template::Template,
-    utf8_path_ext::Utf8PathExt,
+    fingerprint_prefix::FingerprintPrefix, key_identifier::KeyIdentifier, key_name::KeyName,
+    lint::Lint, lint_group::LintGroup, message::Message, metadata::Metadata, mode::Mode,
+    options::Options, owo_colorize_ext::OwoColorizeExt, path_error::PathError,
+    public_key_error::PublicKeyError, signature_error::SignatureError, style::Style,
+    subcommand::Subcommand, template::Template, utf8_path_ext::Utf8PathExt,
   },
   blake3::Hasher,
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},
@@ -59,7 +59,8 @@ use {
 
 pub use self::{
   directory::Directory, entry::Entry, error::Error, file::File, hash::Hash, manifest::Manifest,
-  public_key::PublicKey, relative_path::RelativePath, signature::Signature,
+  private_key::PrivateKey, public_key::PublicKey, relative_path::RelativePath,
+  signature::Signature,
 };
 
 #[cfg(test)]
@@ -88,6 +89,7 @@ mod fingerprint_hasher;
 mod fingerprint_prefix;
 mod hash;
 mod key_identifier;
+mod key_name;
 mod lint;
 mod lint_group;
 mod manifest;
@@ -100,6 +102,7 @@ mod path_error;
 mod private_key;
 mod progress_bar;
 mod public_key;
+mod public_key_error;
 mod relative_path;
 mod signature;
 mod signature_error;
@@ -108,8 +111,6 @@ mod subcommand;
 mod template;
 mod utf8_path_ext;
 
-const MASTER_PRIVATE_KEY: &str = "master.private";
-const MASTER_PUBLIC_KEY: &str = "master.public";
 const SEPARATORS: [char; 2] = ['/', '\\'];
 
 type Result<T = (), E = Error> = std::result::Result<T, E>;

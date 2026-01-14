@@ -12,7 +12,7 @@ pub enum Error {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub(crate) struct PrivateKey(ed25519_dalek::SigningKey);
+pub struct PrivateKey(ed25519_dalek::SigningKey);
 
 impl PrivateKey {
   const LEN: usize = ed25519_dalek::SECRET_KEY_LENGTH;
@@ -56,7 +56,8 @@ impl PrivateKey {
     Ok((private_key.public_key(), signature))
   }
 
-  pub(crate) fn public_key(&self) -> PublicKey {
+  #[must_use]
+  pub fn public_key(&self) -> PublicKey {
     self.clone().into()
   }
 

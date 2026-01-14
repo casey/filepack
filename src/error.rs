@@ -81,11 +81,14 @@ pub enum Error {
     mode: Mode,
     path: DisplayPath,
   },
-  #[snafu(display("public key `{public_key}` doesn't match private key `{private_key}`"))]
+  #[snafu(display(
+    "public key `{}` doesn't match private key `{}`",
+    key.public_key_filename(),
+    key.private_key_filename(),
+  ))]
   KeyMismatch {
     backtrace: Option<Backtrace>,
-    public_key: DisplayPath,
-    private_key: DisplayPath,
+    key: KeyName,
   },
   #[snafu(display("{count} lint error{}", if *count == 1 { "" } else { "s" }))]
   Lint {
@@ -163,7 +166,7 @@ pub enum Error {
   PublicKeyLoad {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
-    source: public_key::Error,
+    source: PublicKeyError,
   },
   #[snafu(display("public key not found: `{path}`"))]
   PublicKeyNotFound {

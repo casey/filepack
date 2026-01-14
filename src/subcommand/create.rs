@@ -165,7 +165,9 @@ impl Create {
     };
 
     if self.sign {
-      let private_key_path = options.key_dir()?.join(MASTER_PRIVATE_KEY);
+      let private_key_path = options
+        .key_dir()?
+        .join(KeyName::master().private_key_filename());
 
       let (public_key, signature) =
         PrivateKey::load_and_sign(&private_key_path, manifest.fingerprint())?;
