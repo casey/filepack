@@ -1,33 +1,31 @@
 use super::*;
 
 pub(crate) fn run(option: Options) -> Result {
-  let key_dir = option.key_dir()?;
+  let dir = option.key_dir()?;
 
-  #[cfg(unix)]
-  let key_dir_exists = filesystem::exists(&key_dir)?;
+  let exists = filesystem::exists(&dir)?;
 
-  filesystem::create_dir_all(&key_dir)?;
+  filesystem::create_dir_all(&dir)?;
 
-  #[cfg(unix)]
-  if key_dir_exists {
-    let mode = filesystem::mode(&key_dir)?;
+  if exists {
+    let mode = filesystem::mode(&dir)?;
 
     ensure! {
       mode.is_secure(),
-      error::KeyDirPermissions { path: &key_dir, mode },
+      error::KeyDirPermissions { path: &dir, mode },
     }
   } else {
-    filesystem::set_mode(&key_dir, 0o700)?;
+    filesystem::set_mode(&dir, 0o700)?;
   }
 
-  let private_path = key_dir.join(MASTER_PRIVATE_KEY);
+  let private_path = dir.join(MASTER_PRIVATE_KEY);
 
   ensure! {
     !filesystem::exists(&private_path)?,
     error::PrivateKeyAlreadyExists { path: private_path },
   }
 
-  let public_path = key_dir.join(MASTER_PUBLIC_KEY);
+  let public_path = dir.join(MASTER_PUBLIC_KEY);
 
   ensure! {
     !filesystem::exists(&public_path)?,
@@ -38,7 +36,6 @@ pub(crate) fn run(option: Options) -> Result {
 
   filesystem::write(&private_path, format!("{}\n", private_key.display_secret()))?;
 
-  #[cfg(unix)]
   filesystem::set_mode(&private_path, 0o600)?;
 
   let public_key = private_key.public_key();
