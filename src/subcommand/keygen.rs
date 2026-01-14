@@ -13,7 +13,7 @@ pub(crate) fn run(option: Options) -> Result {
     let mode = filesystem::mode(&key_dir)?;
 
     ensure! {
-      mode & 0o077 == 0,
+      mode.trailing_zeros() >= 6,
       error::KeyDirPermissions { path: &key_dir, mode },
     }
   } else {

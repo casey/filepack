@@ -1,42 +1,6 @@
 use super::*;
 
 #[test]
-fn error_if_key_dir_has_insecure_permissions() {
-  if !cfg!(unix) {
-    return;
-  }
-
-  Test::new()
-    .args(["keygen"])
-    .success()
-    .chmod("keys", 0o750)
-    .touch("foo/bar")
-    .args(["create", "foo"])
-    .success()
-    .args(["sign", "foo/filepack.json"])
-    .stderr_regex("error: keys directory `.*keys` has insecure permissions 0o40750\n")
-    .failure();
-}
-
-#[test]
-fn error_if_private_key_has_insecure_permissions() {
-  if !cfg!(unix) {
-    return;
-  }
-
-  Test::new()
-    .args(["keygen"])
-    .success()
-    .chmod("keys/master.private", 0o644)
-    .touch("foo/bar")
-    .args(["create", "foo"])
-    .success()
-    .args(["sign", "foo/filepack.json"])
-    .stderr_regex("error: private key `.*master.private` has insecure permissions 0o100644\n")
-    .failure();
-}
-
-#[test]
 fn appends_filename_if_argument_is_directory() {
   let test = Test::new()
     .args(["keygen"])
@@ -130,6 +94,42 @@ fn existing_signatures_must_be_valid() {
   test
     .args(["sign", "foo/filepack.json"])
     .stderr_regex("error: invalid signature for public key `7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b`\n.*Verification equation was not satisfied\n")
+    .failure();
+}
+
+#[test]
+fn key_dir_insecure_permissions() {
+  if !cfg!(unix) {
+    return;
+  }
+
+  Test::new()
+    .args(["keygen"])
+    .success()
+    .chmod("keys", 0o750)
+    .touch("foo/bar")
+    .args(["create", "foo"])
+    .success()
+    .args(["sign", "foo/filepack.json"])
+    .stderr_regex("error: keys directory `.*keys` has insecure permissions 0o40750\n")
+    .failure();
+}
+
+#[test]
+fn private_key_insecure_permissions() {
+  if !cfg!(unix) {
+    return;
+  }
+
+  Test::new()
+    .args(["keygen"])
+    .success()
+    .chmod("keys/master.private", 0o644)
+    .touch("foo/bar")
+    .args(["create", "foo"])
+    .success()
+    .args(["sign", "foo/filepack.json"])
+    .stderr_regex("error: private key `.*master.private` has insecure permissions 0o100644\n")
     .failure();
 }
 
