@@ -186,7 +186,7 @@ the length of the file in bytes.
 
 ### `signatures`
 
-The value of the mandatory `files` key is an object mapping public keys to
+The value of the mandatory `signatures` key is an object mapping public keys to
 signatures. Public keys and signatures are both lowercase hexadecimal strings.
 
 Signatures are made over the root of a Merkle tree which commits to the content
