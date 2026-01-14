@@ -218,7 +218,7 @@ signed by the public key
 }
 ```
 
-Signatures are 128 character hexidecimal strings.
+The signature is a 128 character hexidecimal string and is elided for brevity.
 
 Metadata
 --------
