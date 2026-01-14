@@ -7,7 +7,6 @@ enum Expected {
 
 pub(crate) struct Test {
   args: Vec<String>,
-  env: Vec<(String, String)>,
   stderr: Option<Expected>,
   stdout: Option<Expected>,
   tempdir: tempfile::TempDir,
@@ -26,16 +25,10 @@ impl Test {
   fn with_tempdir(tempdir: tempfile::TempDir) -> Self {
     Self {
       args: Vec::new(),
-      env: Vec::new(),
       stderr: None,
       stdout: None,
       tempdir,
     }
-  }
-
-  pub(crate) fn arg(mut self, arg: impl AsRef<str>) -> Self {
-    self.args.push(arg.as_ref().into());
-    self
   }
 
   pub(crate) fn args(mut self, args: impl IntoIterator<Item = impl AsRef<str>>) -> Self {
@@ -47,11 +40,6 @@ impl Test {
 
   pub(crate) fn create_dir(self, path: &str) -> Self {
     fs::create_dir_all(self.tempdir.path().join(path)).unwrap();
-    self
-  }
-
-  pub(crate) fn env(mut self, key: &str, value: impl AsRef<Path>) -> Self {
-    self.env.push((key.into(), value.as_ref().display().to_string()));
     self
   }
 
@@ -76,10 +64,6 @@ impl Test {
 
     command.current_dir(self.tempdir.path());
     command.env("FILEPACK_DATA_DIR", self.tempdir.path());
-
-    for (key, value) in &self.env {
-      command.env(key, value);
-    }
 
     let output = command.args(&self.args).output().unwrap();
 
@@ -133,10 +117,6 @@ impl Test {
 
   pub(crate) fn success(self) -> Self {
     self.run(0)
-  }
-
-  pub(crate) fn tempdir_path(&self) -> &Path {
-    self.tempdir.path()
   }
 
   pub(crate) fn touch(self, path: impl AsRef<Path>) -> Self {

@@ -373,126 +373,92 @@ fn signature_verification_success() {
 
 #[test]
 fn single_file() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("foo").touch().unwrap();
-
-  dir
-    .child("filepack.json")
-    .write_str(&json! {
-      files: {
-        foo: {
-          hash: EMPTY_HASH,
-          size: 0
+  Test::new()
+    .touch("foo")
+    .write(
+      "filepack.json",
+      json! {
+        files: {
+          foo: {
+            hash: EMPTY_HASH,
+            size: 0
+          }
         }
-      }
-    })
-    .unwrap();
-
-  cargo_bin_cmd!("filepack")
+      },
+    )
     .args(["verify", "."])
-    .current_dir(&dir)
-    .assert()
     .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
     .success();
 }
 
 #[test]
 fn single_file_mmap() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("foo").touch().unwrap();
-
-  dir
-    .child("filepack.json")
-    .write_str(&json! {
-      files: {
-        foo: {
-          hash: EMPTY_HASH,
-          size: 0
+  Test::new()
+    .touch("foo")
+    .write(
+      "filepack.json",
+      json! {
+        files: {
+          foo: {
+            hash: EMPTY_HASH,
+            size: 0
+          }
         }
-      }
-    })
-    .unwrap();
-
-  cargo_bin_cmd!("filepack")
+      },
+    )
     .args(["--mmap", "verify", "."])
-    .current_dir(&dir)
-    .assert()
     .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
     .success();
 }
 
 #[test]
 fn single_file_omit_directory() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("foo").touch().unwrap();
-
-  dir
-    .child("filepack.json")
-    .write_str(&json! {
-      files: {
-        foo: {
-          hash: EMPTY_HASH,
-          size: 0
+  Test::new()
+    .touch("foo")
+    .write(
+      "filepack.json",
+      json! {
+        files: {
+          foo: {
+            hash: EMPTY_HASH,
+            size: 0
+          }
         }
-      }
-    })
-    .unwrap();
-
-  cargo_bin_cmd!("filepack")
-    .arg("verify")
-    .current_dir(&dir)
-    .assert()
+      },
+    )
+    .args(["verify"])
     .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
     .success();
 }
 
 #[test]
 fn single_file_parallel() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("foo").touch().unwrap();
-
-  dir
-    .child("filepack.json")
-    .write_str(&json! {
-      files: {
-        foo: {
-          hash: EMPTY_HASH,
-          size: 0
+  Test::new()
+    .touch("foo")
+    .write(
+      "filepack.json",
+      json! {
+        files: {
+          foo: {
+            hash: EMPTY_HASH,
+            size: 0
+          }
         }
-      }
-    })
-    .unwrap();
-
-  cargo_bin_cmd!("filepack")
+      },
+    )
     .args(["--parallel", "verify", "."])
-    .current_dir(&dir)
-    .assert()
     .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
     .success();
 }
 
 #[test]
 fn size_mismatch() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("foo").touch().unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .touch("foo")
     .args(["create", "."])
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  dir.child("foo").write_str("bar").unwrap();
-
-  cargo_bin_cmd!("filepack")
+    .success()
+    .write("foo", "bar")
     .args(["verify", "."])
-    .current_dir(&dir)
-    .assert()
     .stderr(
       "\
 mismatched file: `foo`
