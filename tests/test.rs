@@ -175,9 +175,10 @@ impl Test {
       panic!("command failed with {}", output.status);
     }
 
-    if code != 0 && output.status.success() {
-      panic!("command unexpectedly succeeded");
-    }
+    assert!(
+      !(code != 0 && output.status.success()),
+      "command unexpectedly succeeded",
+    );
 
     assert_eq!(output.status.code(), Some(code));
 

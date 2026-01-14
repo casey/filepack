@@ -42,7 +42,7 @@ impl Options {
 
       ensure! {
         mode.is_secure(),
-        error::KeyDirPermissions { path, mode },
+        error::KeyDirPermissions { mode, path },
       }
 
       for entry in WalkDir::new(&path) {
@@ -55,11 +55,11 @@ impl Options {
             continue;
           }
 
-          let mode = filesystem::mode(&path)?;
+          let mode = filesystem::mode(path)?;
 
           ensure! {
             mode.is_secure(),
-            error::PrivateKeyPermissions { path, mode },
+            error::PrivateKeyPermissions { mode, path },
           }
         }
       }

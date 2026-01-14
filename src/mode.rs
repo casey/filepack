@@ -40,4 +40,11 @@ mod tests {
     assert_eq!(Mode(0o777).to_string(), "0777");
     assert_eq!(Mode(0o7777).to_string(), "0777");
   }
+
+  #[test]
+  fn is_secure() {
+    assert!(Mode(0o000).is_secure());
+    assert!(Mode(0o700).is_secure());
+    assert!(!Mode(0o701).is_secure());
+  }
 }
