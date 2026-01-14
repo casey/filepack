@@ -2,10 +2,10 @@ use super::*;
 
 #[derive(Parser)]
 pub(crate) struct Hash {
-  #[arg(help = "Hash <FILE>, defaulting to standard input")]
-  file: Option<Utf8PathBuf>,
   #[arg(help = "Assert file hash is <HASH>", long, value_name = "HASH")]
   assert: Option<crate::Hash>,
+  #[arg(help = "Hash <FILE>, defaulting to standard input")]
+  file: Option<Utf8PathBuf>,
 }
 
 impl Hash {
