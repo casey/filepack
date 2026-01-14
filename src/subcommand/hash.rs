@@ -30,7 +30,7 @@ impl Hash {
         hash == expected,
         error::Assert {
           actual: hash,
-          expected: expected,
+          expected,
         }
       }
     }
