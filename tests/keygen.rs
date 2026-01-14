@@ -16,12 +16,10 @@ fn error_if_key_dir_has_insecure_permissions() {
 
 #[test]
 fn error_if_master_private_key_already_exists() {
-  let test = Test::new().write("keys/master.private", "foo");
-
-  #[cfg(unix)]
-  let test = test.chmod("keys", 0o700);
-
-  test
+  Test::new()
+    .write("keys/master.private", "foo")
+    .chmod("keys", 0o700)
+    .chmod("keys/master.private", 0o700)
     .args(["keygen"])
     .stderr_regex("error: private key already exists: `.*master.private`\n")
     .failure();
@@ -29,12 +27,9 @@ fn error_if_master_private_key_already_exists() {
 
 #[test]
 fn error_if_master_public_key_already_exists() {
-  let test = Test::new().write("keys/master.public", "foo");
-
-  #[cfg(unix)]
-  let test = test.chmod("keys", 0o700);
-
-  test
+  Test::new()
+    .write("keys/master.public", "foo")
+    .chmod("keys", 0o700)
     .args(["keygen"])
     .stderr_regex("error: public key already exists: `.*master.public`\n")
     .failure();

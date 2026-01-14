@@ -40,25 +40,6 @@ impl PrivateKey {
     let private_key = filesystem::read_to_string_opt(path)?
       .ok_or_else(|| error::PrivateKeyNotFound { path }.build())?;
 
-    #[cfg(unix)]
-    {
-      let key_dir = path.parent().unwrap();
-
-      let mode = filesystem::mode(key_dir)?;
-
-      ensure! {
-        mode.is_secure(),
-        error::KeyDirPermissions { path: key_dir, mode },
-      }
-
-      let mode = filesystem::mode(path)?;
-
-      ensure! {
-        mode.is_secure(),
-        error::PrivateKeyPermissions { path, mode },
-      }
-    }
-
     let private_key = private_key
       .trim()
       .parse::<Self>()

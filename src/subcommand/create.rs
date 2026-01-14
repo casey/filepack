@@ -58,9 +58,7 @@ impl Create {
     for entry in WalkDir::new(&root) {
       let entry = entry?;
 
-      let path = entry.path();
-
-      let path = decode_path(path)?;
+      let path = decode_path(entry.path())?;
 
       if path == root {
         continue;

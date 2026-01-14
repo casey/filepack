@@ -41,14 +41,15 @@ impl Test {
     self
   }
 
-  #[cfg(unix)]
   pub(crate) fn chmod(self, path: &str, mode: u32) -> Self {
-    use std::os::unix::fs::PermissionsExt;
-    let path = self.join(path);
-    fs::set_permissions(&path, fs::Permissions::from_mode(mode)).unwrap();
+    #[cfg(unix)]
+    {
+      use std::os::unix::fs::PermissionsExt;
+      let path = self.join(path);
+      fs::set_permissions(&path, fs::Permissions::from_mode(mode)).unwrap();
+    }
     self
   }
-
 
   pub(crate) fn create_dir(self, path: &str) -> Self {
     fs::create_dir_all(self.join(path)).unwrap();
@@ -72,6 +73,7 @@ impl Test {
     self
   }
 
+  #[track_caller]
   pub(crate) fn failure(self) -> Self {
     self.run(1)
   }
@@ -120,6 +122,7 @@ impl Test {
     self
   }
 
+  #[track_caller]
   fn run(self, code: i32) -> Self {
     let mut command = Command::new(executable_path("filepack"));
 
@@ -172,6 +175,10 @@ impl Test {
       panic!("command failed with {}", output.status);
     }
 
+    if code != 0 && output.status.success() {
+      panic!("command unexpectedly succeeded");
+    }
+
     assert_eq!(output.status.code(), Some(code));
 
     self.stderr.check(stderr, "stderr");
@@ -222,6 +229,7 @@ impl Test {
     self
   }
 
+  #[track_caller]
   pub(crate) fn success(self) -> Self {
     self.run(0)
   }

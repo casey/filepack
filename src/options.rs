@@ -35,6 +35,40 @@ impl Options {
   }
 
   pub(crate) fn key_dir(&self) -> Result<Utf8PathBuf> {
+    let path = self.key_dir_path()?;
+
+    if filesystem::exists(&path)? {
+      let mode = filesystem::mode(&path)?;
+
+      ensure! {
+        mode.is_secure(),
+        error::KeyDirPermissions { path, mode },
+      }
+
+      for entry in WalkDir::new(&path) {
+        let entry = entry?;
+
+        if entry.file_type().is_file() {
+          let path = decode_path(entry.path())?;
+
+          if path.extension() != Some("private") {
+            continue;
+          }
+
+          let mode = filesystem::mode(&path)?;
+
+          ensure! {
+            mode.is_secure(),
+            error::PrivateKeyPermissions { path, mode },
+          }
+        }
+      }
+    }
+
+    Ok(path)
+  }
+
+  fn key_dir_path(&self) -> Result<Utf8PathBuf> {
     let path = if let Some(path) = &self.data_dir {
       path.into()
     } else {
@@ -59,7 +93,7 @@ mod tests {
         parallel: false,
         quiet: false,
       }
-      .key_dir()
+      .key_dir_path()
       .unwrap(),
       dirs::data_local_dir()
         .unwrap()

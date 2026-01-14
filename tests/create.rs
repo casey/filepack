@@ -277,12 +277,11 @@ fn non_unicode_path_error() {
 
 #[test]
 fn private_key_load_error_message() {
-  let test = Test::new().touch("foo/bar").touch("keys/master.private");
-
-  #[cfg(unix)]
-  let test = test.chmod("keys", 0o700).chmod("keys/master.private", 0o600);
-
-  test
+  Test::new()
+    .touch("foo/bar")
+    .touch("keys/master.private")
+    .chmod("keys", 0o700)
+    .chmod("keys/master.private", 0o600)
     .args(["create", "--sign", "foo"])
     .stderr_regex(
       "error: invalid private key `.*master.private`.*invalid private key byte length 0.*",
