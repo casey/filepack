@@ -15,7 +15,7 @@ pub(crate) struct Test {
   args: Vec<String>,
   current_dir: Option<String>,
   data_dir: Option<String>,
-  env: Vec<(String, String)>,
+  env: BTreeMap<String, String>,
   stderr: Option<Expected>,
   stdin: Option<String>,
   stdout: Option<Expected>,
@@ -24,6 +24,7 @@ pub(crate) struct Test {
 
 impl Test {
   pub(crate) fn args(mut self, args: impl IntoIterator<Item = impl AsRef<str>>) -> Self {
+    assert!(self.args.is_empty());
     for arg in args {
       self.args.push(arg.as_ref().into());
     }
@@ -31,13 +32,13 @@ impl Test {
   }
 
   pub(crate) fn assert_file(self, path: &str, expected: impl AsRef<str>) -> Self {
-    let actual = fs::read_to_string(self.tempdir.path().join(path)).unwrap();
+    let actual = fs::read_to_string(self.join(path)).unwrap();
     assert_eq!(actual.trim(), expected.as_ref().trim());
     self
   }
 
   pub(crate) fn assert_file_regex(self, path: &str, pattern: &str) -> Self {
-    let actual = fs::read_to_string(self.tempdir.path().join(path)).unwrap();
+    let actual = fs::read_to_string(self.join(path)).unwrap();
     let regex = Regex::new(&format!("^(?s){pattern}$")).unwrap();
     assert!(
       regex.is_match(&actual),
@@ -48,27 +49,33 @@ impl Test {
   }
 
   pub(crate) fn create_dir(self, path: &str) -> Self {
-    fs::create_dir_all(self.tempdir.path().join(path)).unwrap();
+    fs::create_dir_all(self.join(path)).unwrap();
     self
   }
 
   pub(crate) fn current_dir(mut self, path: &str) -> Self {
+    assert!(self.current_dir.is_none());
     self.current_dir = Some(path.into());
     self
   }
 
   pub(crate) fn data_dir(mut self, path: &str) -> Self {
+    assert!(self.data_dir.is_none());
     self.data_dir = Some(path.into());
     self
   }
 
   pub(crate) fn env(mut self, key: &str, value: &str) -> Self {
-    self.env.push((key.into(), value.into()));
+    assert!(self.env.insert(key.into(), value.into()).is_none());
     self
   }
 
   pub(crate) fn failure(self) -> Self {
     self.run(1)
+  }
+
+  fn join(&self, path: &str) -> Utf8PathBuf {
+    Utf8Path::from_path(self.tempdir.path()).unwrap().join(path)
   }
 
   pub(crate) fn new() -> Self {
@@ -80,29 +87,26 @@ impl Test {
     )
   }
 
-  pub(crate) fn path(&self) -> camino::Utf8PathBuf {
-    camino::Utf8PathBuf::from_path_buf(self.tempdir.path().into()).unwrap()
+  pub(crate) fn path(&self) -> Utf8PathBuf {
+    Utf8PathBuf::from_path_buf(self.tempdir.path().into()).unwrap()
   }
 
   pub(crate) fn read(&self, path: &str) -> String {
-    fs::read_to_string(self.tempdir.path().join(path))
-      .unwrap()
-      .trim()
-      .into()
+    fs::read_to_string(self.join(path)).unwrap().trim().into()
   }
 
   pub(crate) fn remove_dir(self, path: &str) -> Self {
-    fs::remove_dir(self.tempdir.path().join(path)).unwrap();
+    fs::remove_dir(self.join(path)).unwrap();
     self
   }
 
   pub(crate) fn remove_file(self, path: &str) -> Self {
-    fs::remove_file(self.tempdir.path().join(path)).unwrap();
+    fs::remove_file(self.join(path)).unwrap();
     self
   }
 
   pub(crate) fn rename(self, from: &str, to: &str) -> Self {
-    fs::rename(self.tempdir.path().join(from), self.tempdir.path().join(to)).unwrap();
+    fs::rename(self.join(from), self.join(to)).unwrap();
     self
   }
 
@@ -110,17 +114,17 @@ impl Test {
     let mut command = Command::new(executable_path("filepack"));
 
     let current_dir = if let Some(ref subdir) = self.current_dir {
-      self.tempdir.path().join(subdir)
+      self.join(subdir)
     } else {
-      self.tempdir.path().into()
+      self.path()
     };
 
     command.current_dir(current_dir);
 
     let data_dir = if let Some(ref subdir) = self.data_dir {
-      self.tempdir.path().join(subdir)
+      self.join(subdir)
     } else {
-      self.tempdir.path().into()
+      self.path()
     };
 
     command.env("FILEPACK_DATA_DIR", data_dir);
@@ -212,11 +216,12 @@ impl Test {
   }
 
   pub(crate) fn symlink(self, target: &str, link: &str) -> Self {
-    let link_path = self.tempdir.path().join(link);
+    let target = self.join(target);
+    let link = self.join(link);
     #[cfg(unix)]
-    std::os::unix::fs::symlink(target, link_path).unwrap();
+    std::os::unix::fs::symlink(target, link).unwrap();
     #[cfg(windows)]
-    std::os::windows::fs::symlink_file(target, link_path).unwrap();
+    std::os::windows::fs::symlink_file(target, link).unwrap();
     self
   }
 
@@ -232,7 +237,7 @@ impl Test {
       args: Vec::new(),
       current_dir: None,
       data_dir: None,
-      env: Vec::new(),
+      env: BTreeMap::new(),
       stderr: None,
       stdin: None,
       stdout: None,
@@ -241,7 +246,7 @@ impl Test {
   }
 
   pub(crate) fn write(self, path: &str, content: impl AsRef<[u8]>) -> Self {
-    let path = self.tempdir.path().join(path);
+    let path = self.join(path);
     fs::create_dir_all(path.parent().unwrap()).unwrap();
     fs::write(path, content.as_ref()).unwrap();
     self

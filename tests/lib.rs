@@ -1,8 +1,10 @@
 use {
   self::test::Test,
+  camino::{Utf8Path, Utf8PathBuf},
   executable_path::executable_path,
   filepack::{Manifest, PublicKey, Signature},
   std::{
+    collections::BTreeMap,
     fs,
     io::Write,
     path::Path,
