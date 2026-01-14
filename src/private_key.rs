@@ -147,11 +147,7 @@ mod tests {
   fn whitespace_is_trimmed_when_loading_from_disk() {
     let dir = tempdir();
 
-    #[cfg(unix)]
-    {
-      use std::os::unix::fs::PermissionsExt;
-      std::fs::set_permissions(dir.path(), std::fs::Permissions::from_mode(0o700)).unwrap();
-    }
+    filesystem::set_mode(&Utf8Path::from_path(dir.path()).unwrap(), 0o700).unwrap();
 
     let path = Utf8PathBuf::from_path_buf(dir.path().join("key")).unwrap();
 
@@ -161,11 +157,7 @@ mod tests {
 
     filesystem::write(&path, format!(" \t{}\n", key.display_secret())).unwrap();
 
-    #[cfg(unix)]
-    {
-      use std::os::unix::fs::PermissionsExt;
-      std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o600)).unwrap();
-    }
+    filesystem::set_mode(&path, 0o600).unwrap();
 
     assert_eq!(PrivateKey::load(&path).unwrap(), key);
   }
