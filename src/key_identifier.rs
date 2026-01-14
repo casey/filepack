@@ -12,7 +12,7 @@ impl KeyIdentifier {
   pub(crate) fn load(&self, key_dir: &Utf8Path) -> Result<PublicKey> {
     match self {
       Self::Literal(key) => Ok(key.clone()),
-      Self::Name(name) => PublicKey::load(&key_dir.join(format!("{name}.public"))),
+      Self::Name(name) => PublicKey::load(&key_dir.join(format!("{name}.{PUBLIC_KEY_EXTENSION}"))),
     }
   }
 }

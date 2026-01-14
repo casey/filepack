@@ -29,6 +29,7 @@ use {
     functions::{current_dir, decode_path, is_lowercase_hex},
     key_identifier::KeyIdentifier,
     key_name::KeyName,
+    keys::Keys,
     lint::Lint,
     lint_group::LintGroup,
     message::Message,
@@ -109,6 +110,7 @@ mod functions;
 mod hash;
 mod key_identifier;
 mod key_name;
+mod keys;
 mod lint;
 mod lint_group;
 mod manifest;
@@ -131,6 +133,8 @@ mod template;
 mod utf8_path_ext;
 
 const DEFAULT_KEY: &str = "master";
+const PRIVATE_KEY_EXTENSION: &str = "private";
+const PUBLIC_KEY_EXTENSION: &str = "public";
 const SEPARATORS: [char; 2] = ['/', '\\'];
 
 type Result<T = (), E = Error> = std::result::Result<T, E>;

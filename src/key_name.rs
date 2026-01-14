@@ -7,11 +7,11 @@ pub struct KeyName(String);
 
 impl KeyName {
   pub(crate) fn private_key_filename(&self) -> String {
-    format!("{}.private", self.0)
+    format!("{}.{PRIVATE_KEY_EXTENSION}", self.0)
   }
 
   pub(crate) fn public_key_filename(&self) -> String {
-    format!("{}.public", self.0)
+    format!("{}.{PUBLIC_KEY_EXTENSION}", self.0)
   }
 }
 
