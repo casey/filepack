@@ -8,7 +8,7 @@ use {
     collections::BTreeMap,
     fs,
     io::Write,
-    path::Path,
+    path::{MAIN_SEPARATOR_STR, Path},
     process::{Command, Stdio},
     str,
   },
