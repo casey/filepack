@@ -1,7 +1,41 @@
 use super::*;
 
 #[test]
-fn mismatched_key_error() {
+fn default() {
+  let test = Test::new()
+    .args(["keygen"])
+    .success()
+    .args(["key"])
+    .stdout_regex("[0-9a-f]{64}\n")
+    .success();
+
+  let public_key = test.read_public_key("keys/master.public");
+
+  test
+    .args(["key"])
+    .stdout(format!("{public_key}\n"))
+    .success();
+}
+
+#[test]
+fn master() {
+  let test = Test::new()
+    .args(["keygen"])
+    .success()
+    .args(["key", "--key", "master"])
+    .stdout_regex("[0-9a-f]{64}\n")
+    .success();
+
+  let public_key = test.read_public_key("keys/master.public");
+
+  test
+    .args(["key", "--key", "master"])
+    .stdout(format!("{public_key}\n"))
+    .success();
+}
+
+#[test]
+fn mismatched_key() {
   Test::new()
     .data_dir("foo")
     .args(["keygen"])
@@ -15,7 +49,17 @@ fn mismatched_key_error() {
 }
 
 #[test]
-fn missing_private_key_error() {
+fn missing() {
+  Test::new()
+    .args(["keygen"])
+    .success()
+    .args(["key", "--key", "nonexistent"])
+    .stderr_regex("error: public key not found: `.*nonexistent.public`\n")
+    .failure();
+}
+
+#[test]
+fn missing_private_key() {
   Test::new()
     .args(["keygen"])
     .success()
@@ -26,7 +70,7 @@ fn missing_private_key_error() {
 }
 
 #[test]
-fn missing_public_key_error() {
+fn missing_public_key() {
   Test::new()
     .args(["keygen"])
     .success()
@@ -37,18 +81,18 @@ fn missing_public_key_error() {
 }
 
 #[test]
-fn prints_pubkey() {
+fn named() {
   let test = Test::new()
-    .args(["keygen"])
+    .args(["keygen", "--name", "deploy"])
     .success()
-    .args(["key"])
+    .args(["key", "--key", "deploy"])
     .stdout_regex("[0-9a-f]{64}\n")
     .success();
 
-  let public_key = test.read("keys/master.public");
+  let public_key = test.read_public_key("keys/deploy.public");
 
   test
-    .args(["key"])
+    .args(["key", "--key", "deploy"])
     .stdout(format!("{public_key}\n"))
     .success();
 }

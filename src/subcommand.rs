@@ -41,9 +41,9 @@ pub(crate) enum Subcommand {
   Fingerprint(fingerprint::Fingerprint),
   #[command(about = "Print file hash")]
   Hash(hash::Hash),
-  #[command(about = "Print master public key")]
-  Key,
-  #[command(about = "Generate master key pair")]
+  #[command(about = "Print public key")]
+  Key(key::Key),
+  #[command(about = "Generate key pair")]
   Keygen(keygen::Keygen),
   #[command(about = "Print man page")]
   Man,
@@ -62,7 +62,7 @@ impl Subcommand {
       Self::Files(files) => files.run(),
       Self::Fingerprint(fingerprint) => fingerprint.run(),
       Self::Hash(hash) => hash.run(options),
-      Self::Key => key::run(options),
+      Self::Key(key) => key.run(options),
       Self::Keygen(keygen) => keygen.run(options),
       Self::Man => man::run(),
       Self::Sign(sign) => sign.run(options),
