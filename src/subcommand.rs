@@ -10,6 +10,7 @@ mod create;
 mod files;
 mod fingerprint;
 mod hash;
+mod info;
 mod key;
 mod keygen;
 mod man;
@@ -41,6 +42,8 @@ pub(crate) enum Subcommand {
   Fingerprint(fingerprint::Fingerprint),
   #[command(about = "Print file hash")]
   Hash(hash::Hash),
+  #[command(about = "Print info")]
+  Info,
   #[command(about = "Print public key")]
   Key(key::Key),
   #[command(about = "Generate key pair")]
@@ -62,6 +65,7 @@ impl Subcommand {
       Self::Files(files) => files.run(),
       Self::Fingerprint(fingerprint) => fingerprint.run(),
       Self::Hash(hash) => hash.run(options),
+      Self::Info => info::run(options),
       Self::Key(key) => key.run(options),
       Self::Keygen(keygen) => keygen.run(options),
       Self::Man => man::run(),

@@ -60,11 +60,11 @@ impl Create {
     for entry in WalkDir::new(&root) {
       let entry = entry?;
 
-      let path = decode_path(entry.path())?;
-
-      if path == root {
+      if entry.depth() == 0 {
         continue;
       }
+
+      let path = decode_path(entry.path())?;
 
       let cleaned_path = current_dir.join(path).lexiclean();
 
