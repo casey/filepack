@@ -2,20 +2,15 @@ use super::*;
 
 #[test]
 fn extra_fields_are_not_allowed() {
-  let dir = TempDir::new().unwrap();
-
-  dir
-    .child("filepack.json")
-    .write_str(&json! {
-      files: {},
-      foo: "bar"
-    })
-    .unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
     .args(["verify", "."])
-    .current_dir(&dir)
-    .assert()
+    .write(
+      "filepack.json",
+      json! {
+        files: {},
+        foo: "bar"
+      },
+    )
     .stderr(
       "\
 error: failed to deserialize manifest at `filepack.json`
@@ -26,20 +21,11 @@ error: failed to deserialize manifest at `filepack.json`
 
 #[test]
 fn extraneous_empty_directory_error() {
-  let dir = TempDir::new().unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
     .args(["create", "."])
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  dir.child("foo").create_dir_all().unwrap();
-
-  cargo_bin_cmd!("filepack")
+    .success()
+    .create_dir("foo")
     .args(["verify", "."])
-    .current_dir(&dir)
-    .assert()
     .stderr("error: extraneous directory not in manifest: `foo`\n")
     .failure();
 }

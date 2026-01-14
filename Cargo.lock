@@ -572,6 +572,7 @@ dependencies = [
  "serde_yaml",
  "snafu",
  "strum",
+ "tempfile",
  "usized",
  "walkdir",
 ]

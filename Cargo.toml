@@ -31,6 +31,7 @@ serde_with = "3.11.0"
 serde_yaml = "0.9.34"
 snafu = "0.8.4"
 strum = { version = "0.27.2", features = ["derive"] }
+tempfile = "3.24.0"
 usized = "0.0.2"
 walkdir = "2.5.0"
 

@@ -1,11 +1,12 @@
 use {
+  self::test::Test,
   assert_cmd::cargo::cargo_bin_cmd,
   assert_fs::{
     TempDir,
     assert::PathAssert,
     fixture::{ChildPath, FileTouch, FileWriteBin, FileWriteStr, PathChild, PathCreateDir},
   },
-  camino::Utf8Path,
+  camino::{Utf8Path, Utf8PathBuf},
   filepack::{Manifest, PublicKey, Signature},
   predicates::str::RegexPredicate,
   std::{fs, path::Path, str},
@@ -22,6 +23,7 @@ mod man;
 mod misc;
 mod sign;
 mod size;
+mod test;
 mod verify;
 
 const EMPTY_HASH: &str = "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262";
