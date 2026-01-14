@@ -39,7 +39,7 @@ pub enum Error {
     if first == second {
       first.to_string()
     } else {
-      format!("{} and {}", first, second)
+      format!("{first} and {second}")
     },
   ))]
   DuplicateKey {

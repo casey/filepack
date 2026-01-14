@@ -33,7 +33,11 @@ fn duplicate_key_named() {
 
 #[test]
 fn duplicate_key_named_and_literal() {
-  let test = Test::new().args(["keygen"]).success().args(["create"]).success();
+  let test = Test::new()
+    .args(["keygen"])
+    .success()
+    .args(["create"])
+    .success();
 
   let key = test.read("keys/master.public");
 
@@ -347,29 +351,6 @@ fn multiple_keys_one_missing() {
 }
 
 #[test]
-fn named_key() {
-  Test::new()
-    .args(["keygen"])
-    .success()
-    .touch("foo/bar")
-    .args(["create", "--sign", "foo"])
-    .success()
-    .args(["verify", "foo", "--key", "master"])
-    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
-    .success();
-}
-
-#[test]
-fn named_key_not_found() {
-  Test::new()
-    .args(["create"])
-    .success()
-    .args(["verify", "--key", "nonexistent"])
-    .stderr_regex("error: public key not found: `.*keys/nonexistent.public`\n")
-    .failure();
-}
-
-#[test]
 fn multiple_mismatches() {
   Test::new()
     .touch("foo")
@@ -390,6 +371,29 @@ mismatched file: `foo`
 error: 2 mismatched files
 ",
     )
+    .failure();
+}
+
+#[test]
+fn named_key() {
+  Test::new()
+    .args(["keygen"])
+    .success()
+    .touch("foo/bar")
+    .args(["create", "--sign", "foo"])
+    .success()
+    .args(["verify", "foo", "--key", "master"])
+    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
+    .success();
+}
+
+#[test]
+fn named_key_not_found() {
+  Test::new()
+    .args(["create"])
+    .success()
+    .args(["verify", "--key", "nonexistent"])
+    .stderr_regex("error: public key not found: `.*keys/nonexistent.public`\n")
     .failure();
 }
 
