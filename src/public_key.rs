@@ -6,6 +6,7 @@ pub struct PublicKey(ed25519_dalek::VerifyingKey);
 impl PublicKey {
   const LEN: usize = ed25519_dalek::PUBLIC_KEY_LENGTH;
 
+  #[must_use]
   pub fn inner(&self) -> ed25519_dalek::VerifyingKey {
     self.0
   }

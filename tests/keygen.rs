@@ -1,6 +1,51 @@
 use super::*;
 
 #[test]
+fn custom_name() {
+  let test = Test::new()
+    .args(["keygen", "--name", "deploy"])
+    .assert_file_regex("keys/deploy.public", "[0-9a-f]{64}\n")
+    .assert_file_regex("keys/deploy.private", "[0-9a-f]{64}\n")
+    .success();
+
+  let public_key = test.read_public_key("keys/deploy.public");
+
+  let private_key = test.read_private_key("keys/deploy.private");
+
+  assert!(!public_key.inner().is_weak());
+
+  assert_eq!(private_key.public_key(), public_key);
+}
+
+#[test]
+fn default_name() {
+  let test = Test::new()
+    .args(["keygen"])
+    .assert_file_regex("keys/master.public", "[0-9a-f]{64}\n")
+    .assert_file_regex("keys/master.private", "[0-9a-f]{64}\n")
+    .success();
+
+  let public_key = test.read_public_key("keys/master.public");
+
+  let private_key = test.read_private_key("keys/master.private");
+
+  assert!(!public_key.inner().is_weak());
+
+  assert_eq!(private_key.public_key(), public_key);
+}
+
+#[test]
+fn invalid_name() {
+  Test::new()
+    .args(["keygen", "--name", "@invalid"])
+    .stderr(
+      "error: invalid value '@invalid' for '--name <NAME>': invalid public key name `@invalid`\n\n\
+      For more information, try '--help'.\n",
+    )
+    .status(2);
+}
+
+#[test]
 fn key_dir_insecure_permissions() {
   if !cfg!(unix) {
     return;
@@ -33,49 +78,4 @@ fn public_key_already_exists() {
     .args(["keygen"])
     .stderr_regex("error: public key already exists: `.*master.public`\n")
     .failure();
-}
-
-#[test]
-fn default_name() {
-  let test = Test::new()
-    .args(["keygen"])
-    .assert_file_regex("keys/master.public", "[0-9a-f]{64}\n")
-    .assert_file_regex("keys/master.private", "[0-9a-f]{64}\n")
-    .success();
-
-  let public_key = test.read_public_key("keys/master.public");
-
-  let private_key = test.read_private_key("keys/master.private");
-
-  assert!(!public_key.inner().is_weak());
-
-  assert_eq!(private_key.public_key(), public_key);
-}
-
-#[test]
-fn custom_name() {
-  let test = Test::new()
-    .args(["keygen", "--name", "deploy"])
-    .assert_file_regex("keys/deploy.public", "[0-9a-f]{64}\n")
-    .assert_file_regex("keys/deploy.private", "[0-9a-f]{64}\n")
-    .success();
-
-  let public_key = test.read_public_key("keys/deploy.public");
-
-  let private_key = test.read_private_key("keys/deploy.private");
-
-  assert!(!public_key.inner().is_weak());
-
-  assert_eq!(private_key.public_key(), public_key);
-}
-
-#[test]
-fn invalid_name() {
-  Test::new()
-    .args(["keygen", "--name", "@invalid"])
-    .stderr(
-      "error: invalid value '@invalid' for '--name <NAME>': invalid public key name `@invalid`\n\n\
-      For more information, try '--help'.\n",
-    )
-    .status(2);
 }

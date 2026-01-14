@@ -56,6 +56,7 @@ impl PrivateKey {
     Ok((private_key.public_key(), signature))
   }
 
+  #[must_use]
   pub fn public_key(&self) -> PublicKey {
     self.clone().into()
   }
