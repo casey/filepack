@@ -175,7 +175,7 @@ fn updates_manifest_with_signature() {
 
   test
     .args(["verify", "foo", "--key", &public_key])
-    .stderr(&format!("error: no signature found for key {public_key}\n"))
+    .stderr(&format!("error: no signature found for key `{public_key}`\n"))
     .failure()
     .args(["sign", "foo/filepack.json"])
     .success()

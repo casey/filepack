@@ -14,7 +14,7 @@ fn duplicate_key_literal() {
     ])
     .stderr(
       "error: duplicate key: \
-      7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b\n",
+      `7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b`\n",
     )
     .failure();
 }
@@ -27,7 +27,7 @@ fn duplicate_key_named() {
     .args(["create"])
     .success()
     .args(["verify", "--key", "master", "--key", "master"])
-    .stderr_regex("error: duplicate key: master\n")
+    .stderr_regex("error: duplicate key: `master`\n")
     .failure();
 }
 
@@ -43,7 +43,7 @@ fn duplicate_key_named_and_literal() {
 
   test
     .args(["verify", "--key", "master", "--key", &key])
-    .stderr_regex("error: duplicate key: master and [a-f0-9]{64}\n")
+    .stderr_regex("error: duplicate key: `master` and `[a-f0-9]{64}`\n")
     .failure();
 }
 
@@ -274,7 +274,7 @@ fn missing_signature_for_literal_key() {
     ])
     .stderr(
       "error: no signature found for key \
-      7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b\n",
+      `7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b`\n",
     )
     .failure();
 }
@@ -287,7 +287,7 @@ fn missing_signature_for_named_key() {
     .args(["create"])
     .success()
     .args(["verify", "--key", "master"])
-    .stderr("error: no signature found for key master\n")
+    .stderr("error: no signature found for key `master`\n")
     .failure();
 }
 
@@ -345,7 +345,7 @@ fn multiple_keys_one_missing() {
     ])
     .stderr(
       "error: no signature found for key \
-      7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b\n",
+      `7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b`\n",
     )
     .failure();
 }
@@ -385,6 +385,19 @@ fn named_key() {
     .args(["verify", "foo", "--key", "master"])
     .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
     .success();
+}
+
+#[test]
+fn named_key_invalid() {
+  Test::new()
+    .args(["create"])
+    .success()
+    .args(["verify", "--key", "@invalid"])
+    .stderr(
+      "error: invalid value '@invalid' for '--key <KEY>': invalid public key name `@invalid`\n\n\
+      For more information, try '--help'.\n",
+    )
+    .code(2);
 }
 
 #[test]
