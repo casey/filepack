@@ -152,28 +152,28 @@ fn manifest_paths_are_relative_to_root() {
 
 #[test]
 fn metadata_allows_unknown_keys() {
+  let metadata = json! {
+    title: "Foo",
+    bar: 100
+  };
+
+  let hash = blake3::hash(metadata.as_bytes()).to_string();
+
   Test::new()
     .write(
       "filepack.json",
       json! {
         files: {
           "metadata.json": {
-            hash: "1845a2ea1b86a250cb1c24115032cc0fdc064001f59af4a5e9a17be5cd7efbbc",
-            size: 25
+            hash: hash,
+            size: 26
           }
         }
       },
     )
-    .write(
-      "metadata.json",
-      json! {
-        title: "Foo",
-        bar: 100
-      }
-      .trim_end_matches('\n'),
-    )
+    .write("metadata.json", metadata)
     .args(["verify"])
-    .stderr("successfully verified 1 file totaling 25 bytes with 0 signatures\n")
+    .stderr("successfully verified 1 file totaling 26 bytes with 0 signatures\n")
     .success();
 }
 
@@ -191,14 +191,9 @@ fn metadata_may_not_be_invalid() {
         }
       },
     )
-    .write(
-      "metadata.json",
-      json! { title: 100 }.trim_end_matches('\n'),
-    )
+    .write("metadata.json", json! { title: 100 }.trim_end_matches('\n'))
     .args(["verify"])
-    .stderr_regex(
-      "error: failed to deserialize metadata at `.*metadata.json`\n.*",
-    )
+    .stderr_regex("error: failed to deserialize metadata at `.*metadata.json`\n.*")
     .failure();
 }
 
