@@ -40,6 +40,25 @@ impl PrivateKey {
     let private_key = filesystem::read_to_string_opt(path)?
       .ok_or_else(|| error::PrivateKeyNotFound { path }.build())?;
 
+    #[cfg(unix)]
+    {
+      let key_dir = path.parent().unwrap();
+
+      let mode = filesystem::mode(key_dir)?;
+
+      ensure! {
+        mode & 0o077 == 0,
+        error::KeyDirPermissions { path: key_dir, mode },
+      }
+
+      let mode = filesystem::mode(path)?;
+
+      ensure! {
+        mode & 0o077 == 0,
+        error::PrivateKeyPermissions { path, mode },
+      }
+    }
+
     let private_key = private_key
       .trim()
       .parse::<Self>()
@@ -147,6 +166,12 @@ mod tests {
   fn whitespace_is_trimmed_when_loading_from_disk() {
     let dir = tempdir();
 
+    #[cfg(unix)]
+    {
+      use std::os::unix::fs::PermissionsExt;
+      std::fs::set_permissions(dir.path(), std::fs::Permissions::from_mode(0o700)).unwrap();
+    }
+
     let path = Utf8PathBuf::from_path_buf(dir.path().join("key")).unwrap();
 
     let key = "0e56ae8b43aa93fd4c179ceaff96f729522622d26b4b5357bc959e476e59e107"
@@ -154,6 +179,12 @@ mod tests {
       .unwrap();
 
     filesystem::write(&path, format!(" \t{}\n", key.display_secret())).unwrap();
+
+    #[cfg(unix)]
+    {
+      use std::os::unix::fs::PermissionsExt;
+      std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o600)).unwrap();
+    }
 
     assert_eq!(PrivateKey::load(&path).unwrap(), key);
   }

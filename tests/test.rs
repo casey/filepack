@@ -41,6 +41,15 @@ impl Test {
     self
   }
 
+  #[cfg(unix)]
+  pub(crate) fn chmod(self, path: &str, mode: u32) -> Self {
+    use std::os::unix::fs::PermissionsExt;
+    let path = self.join(path);
+    fs::set_permissions(&path, fs::Permissions::from_mode(mode)).unwrap();
+    self
+  }
+
+
   pub(crate) fn create_dir(self, path: &str) -> Self {
     fs::create_dir_all(self.join(path)).unwrap();
     self
