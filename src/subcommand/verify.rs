@@ -40,7 +40,7 @@ impl Verify {
       let key = second.load(&key_dir)?;
 
       if let Some(first) = keys.insert(key.clone(), second.clone()) {
-        return Err(error::DuplicateKey { first, key, second }.build());
+        return Err(error::DuplicateKey { first, second }.build());
       }
     }
 

@@ -5,7 +5,7 @@ static NAME_RE: LazyLock<Regex> =
 
 static LITERAL_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new("^[A-Za-z0-9]{64}$").unwrap());
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum KeyIdentifier {
   Literal(PublicKey),
   Named(String),
