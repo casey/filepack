@@ -63,10 +63,6 @@ impl Directory {
     hasher.finalize()
   }
 
-  pub(crate) fn is_empty(&self) -> bool {
-    self.entries.is_empty()
-  }
-
   pub(crate) fn new() -> Self {
     Self::default()
   }

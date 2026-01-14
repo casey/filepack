@@ -79,6 +79,7 @@ fn empty_directories_are_included() {
           foo: {
           },
         },
+        signatures: {},
       },
     )
     .success()
@@ -102,7 +103,8 @@ fn file_in_subdirectory() {
               size: 0
             }
           }
-        }
+        },
+        signatures: {},
       },
     )
     .success()
@@ -125,7 +127,8 @@ fn force_overwrites_manifest() {
             hash: EMPTY_HASH,
             size: 0
           }
-        }
+        },
+        signatures: {},
       },
     )
     .success()
@@ -148,7 +151,8 @@ fn force_overwrites_manifest_with_destination() {
             hash: EMPTY_HASH,
             size: 0
           }
-        }
+        },
+        signatures: {},
       },
     )
     .success()
@@ -215,6 +219,7 @@ fn multiple_empty_directory_are_included() {
           foo: {
           },
         },
+        signatures: {},
       },
     )
     .success()
@@ -237,6 +242,7 @@ fn nested_empty_directories_are_included() {
             },
           },
         },
+        signatures: {},
       },
     )
     .success()
@@ -249,7 +255,7 @@ fn nested_empty_directories_are_included() {
 fn no_files() {
   Test::new()
     .args(["create", "."])
-    .assert_file("filepack.json", "{}\n")
+    .assert_file("filepack.json", json! { files: {}, signatures: {} })
     .success()
     .args(["verify", "."])
     .stderr("successfully verified 0 files totaling 0 bytes with 0 signatures\n")
@@ -331,7 +337,8 @@ fn single_file() {
             hash: EMPTY_HASH,
             size: 0
           }
-        }
+        },
+        signatures: {},
       },
     )
     .success()
@@ -353,7 +360,8 @@ fn single_file_mmap() {
             hash: EMPTY_HASH,
             size: 0
           }
-        }
+        },
+        signatures: {},
       },
     )
     .success()
@@ -375,7 +383,8 @@ fn single_file_omit_root() {
             hash: EMPTY_HASH,
             size: 0
           }
-        }
+        },
+        signatures: {},
       },
     )
     .success()
@@ -397,7 +406,8 @@ fn single_file_parallel() {
             hash: EMPTY_HASH,
             size: 0
           }
-        }
+        },
+        signatures: {},
       },
     )
     .success()
@@ -419,7 +429,8 @@ fn single_non_empty_file() {
             hash: "f2e897eed7d206cd855d441598fa521abc75aa96953e97c030c9612c30c1293d",
             size: 3
           }
-        }
+        },
+        signatures: {},
       },
     )
     .success()
@@ -450,7 +461,8 @@ fn with_manifest_path() {
             hash: EMPTY_HASH,
             size: 0
           }
-        }
+        },
+        signatures: {},
       },
     )
     .success()
@@ -477,7 +489,8 @@ fn with_metadata() {
             hash: "395190e326d9f4b03fff68cacda59e9c31b9b2a702d46a12f89bfb1ec568c0f1",
             size: 16
           }
-        }
+        },
+        signatures: {},
       },
     )
     .assert_file("foo/metadata.json", json! { title: "Foo" })

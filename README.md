@@ -175,7 +175,7 @@ drive prefix, such as `C:`.
 Paths may not contain the path components `.` or `..` and may not end with a
 slash.
 
-Manifests contain an object with one mandatory key, `files`.
+Manifests contain an object with two mandatory keys, `files` and `signatures`.
 
 ### `files`
 
@@ -183,6 +183,16 @@ The value of the mandatory `files` key is an object mapping path components to
 directory entries. Directory entries may be subdirectories or files. Files are
 objects with keys `hash`, the hex-encoded BLAKE3 hash of the file, and `size`,
 the length of the file in bytes.
+
+### `signatures`
+
+The value of the mandatory `files` key is an object mapping public keys to
+signatures. Public keys and signatures are both lowercase hexadecimal strings.
+
+Signatures are made over the root of a Merkle tree which commits to the content
+of `files`.
+
+### example
 
 An example manifest for a directory containing the files `README.md` and
 `src/main.c`:
@@ -200,7 +210,8 @@ An example manifest for a directory containing the files `README.md` and
         "size": 4491
       }
     }
-  }
+  },
+  "signatures": {}
 }
 ```
 

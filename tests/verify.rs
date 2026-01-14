@@ -8,13 +8,14 @@ fn extra_fields_are_not_allowed() {
       "filepack.json",
       json! {
         files: {},
+        signatures: {},
         foo: "bar"
       },
     )
     .stderr(
       "\
 error: failed to deserialize manifest at `filepack.json`
-       └─ unknown field `foo`, expected `files` or `signatures` at line 1 column 17\n",
+       └─ unknown field `foo`, expected `files` or `signatures` at line 1 column 33\n",
     )
     .failure();
 }
@@ -33,7 +34,7 @@ fn extraneous_empty_directory_error() {
 #[test]
 fn extraneous_file_error() {
   Test::new()
-    .write("filepack.json", json! { files: {} })
+    .write("filepack.json", json! { files: {}, signatures: {} })
     .touch("foo")
     .args(["verify", "."])
     .stderr("error: extraneous file not in manifest: `foo`\n")
@@ -51,7 +52,8 @@ fn file_not_found_error_message() {
             hash: EMPTY_HASH,
             size: 0
           }
-        }
+        },
+        signatures: {},
       },
     )
     .args(["verify"])
@@ -89,7 +91,8 @@ fn ignore_missing() {
             hash: EMPTY_HASH,
             size: 0
           }
-        }
+        },
+        signatures: {},
       },
     )
     .args(["verify"])
@@ -142,7 +145,8 @@ fn manifest_paths_are_relative_to_root() {
             hash: EMPTY_HASH,
             size: 0
           }
-        }
+        },
+        signatures: {},
       },
     )
     .args(["verify", "dir"])
@@ -168,7 +172,8 @@ fn metadata_allows_unknown_keys() {
             hash: hash,
             size: 26
           }
-        }
+        },
+        signatures: {},
       },
     )
     .write("metadata.json", metadata)
@@ -188,7 +193,8 @@ fn metadata_may_not_be_invalid() {
             hash: "bc9ebf24ee55783c96f0794cc208c03933e318986ed9b3f347020606e21f7b4b",
             size: 14
           }
-        }
+        },
+        signatures: {},
       },
     )
     .write("metadata.json", json! { title: 100 })
@@ -277,7 +283,7 @@ fn nested_missing_empty_directory_error() {
 #[test]
 fn no_files() {
   Test::new()
-    .write("filepack.json", json! { files: {} })
+    .write("filepack.json", json! { files: {}, signatures: {} })
     .args(["verify", "."])
     .stderr("successfully verified 0 files totaling 0 bytes with 0 signatures\n")
     .success();
@@ -305,7 +311,7 @@ fn non_unicode_path_error() {
 
   Test::new()
     .touch_non_unicode()
-    .write("filepack.json", json! { files: {} })
+    .write("filepack.json", json! { files: {}, signatures: {} })
     .args(["verify", "."])
     .stderr_path("error: path not valid unicode: `./�`\n")
     .failure();
@@ -319,7 +325,8 @@ fn print() {
         hash: EMPTY_HASH,
         size: 0
       }
-    }
+    },
+    signatures: {},
   };
 
   Test::new()
@@ -360,7 +367,8 @@ fn single_file() {
             hash: EMPTY_HASH,
             size: 0
           }
-        }
+        },
+        signatures: {},
       },
     )
     .args(["verify", "."])
@@ -380,7 +388,8 @@ fn single_file_mmap() {
             hash: EMPTY_HASH,
             size: 0
           }
-        }
+        },
+        signatures: {},
       },
     )
     .args(["--mmap", "verify", "."])
@@ -400,7 +409,8 @@ fn single_file_omit_directory() {
             hash: EMPTY_HASH,
             size: 0
           }
-        }
+        },
+        signatures: {},
       },
     )
     .args(["verify"])
@@ -420,7 +430,8 @@ fn single_file_parallel() {
             hash: EMPTY_HASH,
             size: 0
           }
-        }
+        },
+        signatures: {},
       },
     )
     .args(["--parallel", "verify", "."])
@@ -548,7 +559,8 @@ fn with_manifest_path() {
             hash: EMPTY_HASH,
             size: 0
           }
-        }
+        },
+        signatures: {},
       },
     )
     .args(["verify", "--manifest", "hello.json"])
