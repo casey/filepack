@@ -1,7 +1,7 @@
 use super::*;
 
 #[test]
-fn mismatched_key_error() {
+fn mismatched_key() {
   Test::new()
     .data_dir("foo")
     .args(["keygen"])
@@ -15,7 +15,7 @@ fn mismatched_key_error() {
 }
 
 #[test]
-fn missing_private_key_error() {
+fn missing_private_key() {
   Test::new()
     .args(["keygen"])
     .success()
@@ -26,7 +26,7 @@ fn missing_private_key_error() {
 }
 
 #[test]
-fn missing_public_key_error() {
+fn missing_public_key() {
   Test::new()
     .args(["keygen"])
     .success()
@@ -37,7 +37,7 @@ fn missing_public_key_error() {
 }
 
 #[test]
-fn prints_pubkey() {
+fn default() {
   let test = Test::new()
     .args(["keygen"])
     .success()
@@ -54,7 +54,7 @@ fn prints_pubkey() {
 }
 
 #[test]
-fn prints_named_key() {
+fn named() {
   let test = Test::new()
     .args(["keygen", "--name", "deploy"])
     .success()
@@ -71,7 +71,7 @@ fn prints_named_key() {
 }
 
 #[test]
-fn explicit_master_key() {
+fn master() {
   let test = Test::new()
     .args(["keygen"])
     .success()
@@ -88,7 +88,7 @@ fn explicit_master_key() {
 }
 
 #[test]
-fn nonexistent_key_error() {
+fn missing() {
   Test::new()
     .args(["keygen"])
     .success()
