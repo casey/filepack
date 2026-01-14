@@ -204,9 +204,7 @@ impl Test {
   }
 
   pub(crate) fn stderr_path(mut self, stderr: &str) -> Self {
-    assert_matches!(self.stderr, Expected::Empty);
-    self.stderr = Expected::String(stderr.replace('/', std::path::MAIN_SEPARATOR_STR));
-    self
+    self.stderr(&stderr.replace('/', std::path::MAIN_SEPARATOR_STR))
   }
 
   pub(crate) fn stderr_regex(mut self, pattern: &str) -> Self {
@@ -216,9 +214,7 @@ impl Test {
   }
 
   pub(crate) fn stderr_regex_path(mut self, pattern: &str) -> Self {
-    assert_matches!(self.stderr, Expected::Empty);
-    self.stderr = Expected::regex(&pattern.replace('/', std::path::MAIN_SEPARATOR_STR));
-    self
+    self.stderr_regex(&pattern.replace('/', std::path::MAIN_SEPARATOR_STR))
   }
 
   pub(crate) fn stdin(mut self, stdin: &str) -> Self {
