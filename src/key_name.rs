@@ -19,7 +19,7 @@ impl FromStr for KeyName {
   type Err = PublicKeyError;
 
   fn from_str(name: &str) -> Result<Self, Self::Err> {
-    if !NAME_RE.is_match(name) {
+    if !NAME_RE.is_match(name) || name.len() > 128 {
       return Err(public_key_error::NameError { name }.build());
     }
 
@@ -54,6 +54,7 @@ mod tests {
     valid("foo");
     valid("foo-bar");
     valid("foo-bar-baz");
+    valid(&"a".repeat(128));
 
     invalid("");
     invalid("-");
@@ -70,5 +71,6 @@ mod tests {
     invalid("foo.");
     invalid("foo.bar");
     invalid("foo_bar");
+    invalid(&"a".repeat(129));
   }
 }
