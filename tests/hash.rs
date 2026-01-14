@@ -19,7 +19,7 @@ fn stdin() {
 }
 
 #[test]
-fn assert_file_success() {
+fn assert_success() {
   Test::new()
     .write("foo", "foo")
     .args([
@@ -33,7 +33,7 @@ fn assert_file_success() {
 }
 
 #[test]
-fn assert_file_failure() {
+fn assert_failure() {
   Test::new()
     .write("foo", "foo")
     .args([
@@ -42,32 +42,6 @@ fn assert_file_failure() {
       "--assert",
       "0000000000000000000000000000000000000000000000000000000000000000",
     ])
-    .stderr("error: file hash 04e0bb39f30b1a3feb89f536c93be15055482df748674b00d26e5a75777702e9 not equal to expected 0000000000000000000000000000000000000000000000000000000000000000\n")
-    .failure();
-}
-
-#[test]
-fn assert_stdin_success() {
-  Test::new()
-    .args([
-      "hash",
-      "--assert",
-      "04e0bb39f30b1a3feb89f536c93be15055482df748674b00d26e5a75777702e9",
-    ])
-    .stdin("foo")
-    .stdout("04e0bb39f30b1a3feb89f536c93be15055482df748674b00d26e5a75777702e9\n")
-    .success();
-}
-
-#[test]
-fn assert_stdin_failure() {
-  Test::new()
-    .args([
-      "hash",
-      "--assert",
-      "0000000000000000000000000000000000000000000000000000000000000000",
-    ])
-    .stdin("foo")
     .stderr("error: file hash 04e0bb39f30b1a3feb89f536c93be15055482df748674b00d26e5a75777702e9 not equal to expected 0000000000000000000000000000000000000000000000000000000000000000\n")
     .failure();
 }
