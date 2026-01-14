@@ -17,7 +17,7 @@ pub struct PrivateKey(ed25519_dalek::SigningKey);
 impl PrivateKey {
   const LEN: usize = ed25519_dalek::SECRET_KEY_LENGTH;
 
-  pub(crate) fn as_bytes(&self) -> [u8; Self::LEN] {
+  pub(crate) fn as_secret_bytes(&self) -> [u8; Self::LEN] {
     self.0.to_bytes()
   }
 
@@ -32,7 +32,7 @@ impl PrivateKey {
     Self(inner)
   }
 
-  pub(crate) fn inner(&self) -> &ed25519_dalek::SigningKey {
+  pub(crate) fn inner_secret(&self) -> &ed25519_dalek::SigningKey {
     &self.0
   }
 
@@ -161,5 +161,12 @@ mod tests {
     filesystem::chmod(&path, 0o600).unwrap();
 
     assert_eq!(PrivateKey::load(&path).unwrap(), key);
+  }
+
+  #[test]
+  fn serialized_private_key_is_not_valid_public_key() {
+    let key = "0e56ae8b43aa93fd4c179ceaff96f729522622d26b4b5357bc959e476e59e107";
+    key.parse::<PrivateKey>().unwrap();
+    key.parse::<PublicKey>().unwrap_err();
   }
 }
