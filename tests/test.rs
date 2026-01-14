@@ -10,6 +10,7 @@ pub(crate) struct Test {
   current_dir: Option<String>,
   data_dir: Option<String>,
   stderr: Option<Expected>,
+  stdin: Option<String>,
   stdout: Option<Expected>,
   tempdir: tempfile::TempDir,
 }
@@ -30,6 +31,7 @@ impl Test {
       current_dir: None,
       data_dir: None,
       stderr: None,
+      stdin: None,
       stdout: None,
       tempdir,
     }
@@ -101,8 +103,13 @@ impl Test {
     };
 
     command.env("FILEPACK_DATA_DIR", data_dir);
+    command.args(&self.args);
 
-    let output = command.args(&self.args).output().unwrap();
+    if let Some(ref stdin_content) = self.stdin {
+      command.write_stdin(stdin_content.as_str());
+    }
+
+    let output = command.output().unwrap();
 
     assert_eq!(output.status.code(), Some(code));
 
@@ -135,6 +142,11 @@ impl Test {
 
   pub(crate) fn stderr(mut self, stderr: &str) -> Self {
     self.stderr = Some(Expected::String(stderr.into()));
+    self
+  }
+
+  pub(crate) fn stdin(mut self, stdin: &str) -> Self {
+    self.stdin = Some(stdin.into());
     self
   }
 
