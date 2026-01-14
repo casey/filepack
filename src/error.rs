@@ -3,8 +3,17 @@ use super::*;
 #[derive(Debug, Snafu)]
 #[snafu(context(suffix(false)), visibility(pub(crate)))]
 pub enum Error {
+  #[snafu(display("file hash {actual} not equal to expected {expected}"))]
+  Assert {
+    backtrace: Option<Backtrace>,
+    actual: Hash,
+    expected: Hash,
+  },
   #[snafu(display("failed to get current directory"))]
-  CurrentDir { source: io::Error },
+  CurrentDir {
+    backtrace: Option<Backtrace>,
+    source: io::Error,
+  },
   #[snafu(display("failed to get local data directory"))]
   DataLocalDir { backtrace: Option<Backtrace> },
   #[snafu(display("failed to deserialize manifest at `{path}`"))]
