@@ -188,7 +188,7 @@ impl Test {
     let stderr = str::from_utf8(&output.stderr).unwrap();
 
     if code == 0 && !output.status.success() {
-      eprintln!("{}", stderr);
+      eprintln!("{stderr}");
       panic!("command failed with {}", output.status);
     }
 
@@ -199,7 +199,7 @@ impl Test {
     self.stdout.check(stdout, "stdout");
 
     for (path, expected) in &self.files {
-      let actual = fs::read_to_string(self.join(&path)).unwrap();
+      let actual = fs::read_to_string(self.join(path)).unwrap();
       expected.check(&actual, &format!("file `{path}`"));
     }
 
