@@ -185,113 +185,77 @@ fn metadata_already_exists() {
 
 #[test]
 fn metadata_template_may_not_have_unknown_keys() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("foo/bar").touch().unwrap();
-
-  dir
-    .child("metadata.yaml")
-    .write_str("title: Foo\nbar: baz")
-    .unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .touch("foo/bar")
+    .write("metadata.yaml", "title: Foo\nbar: baz")
     .args(["create", "foo", "--metadata", "metadata.yaml"])
-    .current_dir(&dir)
-    .assert()
-    .stderr(is_match(".*unknown field `bar`.*"))
+    .stderr_regex(".*unknown field `bar`.*")
     .failure();
 }
 
 #[test]
 fn metadata_template_should_not_be_included_in_package() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("foo").touch().unwrap();
-
-  dir.child("metadata.yaml").write_str("title: Foo").unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .touch("foo")
+    .write("metadata.yaml", "title: Foo")
     .args(["create", ".", "--metadata", "metadata.yaml"])
-    .current_dir(&dir)
-    .assert()
     .stderr("error: metadata template `metadata.yaml` should not be included in package\n")
     .failure();
 }
 
 #[test]
 fn multiple_empty_directory_are_included() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("foo").create_dir_all().unwrap();
-
-  dir.child("bar").create_dir_all().unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .create_dir("foo")
+    .create_dir("bar")
     .args(["create", "."])
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  dir.child("filepack.json").assert(json! {
-    files: {
-      bar: {
+    .success()
+    .assert_file(
+      "filepack.json",
+      json! {
+        files: {
+          bar: {
+          },
+          foo: {
+          },
+        },
       },
-      foo: {
-      },
-    },
-  });
-
-  cargo_bin_cmd!("filepack")
+    )
     .args(["verify", "."])
-    .current_dir(&dir)
-    .assert()
+    .stderr("successfully verified 0 files totaling 0 bytes with 0 signatures\n")
     .success();
 }
 
 #[test]
 fn nested_empty_directories_are_included() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("foo/bar").create_dir_all().unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .create_dir("foo/bar")
     .args(["create", "."])
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  dir.child("filepack.json").assert(json! {
-    files: {
-      foo: {
-        bar: {
+    .success()
+    .assert_file(
+      "filepack.json",
+      json! {
+        files: {
+          foo: {
+            bar: {
+            },
+          },
         },
       },
-    },
-  });
-
-  cargo_bin_cmd!("filepack")
+    )
     .args(["verify", "."])
-    .current_dir(&dir)
-    .assert()
+    .stderr("successfully verified 0 files totaling 0 bytes with 0 signatures\n")
     .success();
 }
 
 #[test]
 fn no_files() {
-  let dir = TempDir::new().unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
     .args(["create", "."])
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  dir.child("filepack.json").assert("{}\n");
-
-  cargo_bin_cmd!("filepack")
+    .success()
+    .assert_file("filepack.json", "{}")
     .args(["verify", "."])
-    .current_dir(&dir)
-    .assert()
+    .stderr("successfully verified 0 files totaling 0 bytes with 0 signatures\n")
     .success();
 }
 
@@ -299,81 +263,56 @@ fn no_files() {
 fn non_unicode_path_error() {
   use std::path::PathBuf;
 
-  // macos does not allow non-unicode filenames
   if cfg!(target_os = "macos") {
     return;
   }
-
-  let dir = TempDir::new().unwrap();
 
   let invalid: PathBuf;
 
   #[cfg(unix)]
   {
     use std::{ffi::OsStr, os::unix::ffi::OsStrExt};
-
     invalid = OsStr::from_bytes(&[0x80]).into();
   };
 
   #[cfg(windows)]
   {
     use std::{ffi::OsString, os::windows::ffi::OsStringExt};
-
     invalid = OsString::from_wide(&[0xd800]).into();
   };
 
-  dir.child(invalid).touch().unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .touch(invalid)
     .args(["create", "."])
-    .current_dir(&dir)
-    .assert()
-    .stderr(path("error: path not valid unicode: `./�`\n"))
+    .stderr(&path("error: path not valid unicode: `./�`\n"))
     .failure();
 }
 
 #[test]
 fn private_key_load_error_message() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("foo/bar").touch().unwrap();
-
-  dir.child("keys/master.private").touch().unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .touch("foo/bar")
+    .touch("keys/master.private")
     .args(["create", "--sign", "foo"])
-    .env("FILEPACK_DATA_DIR", dir.path())
-    .current_dir(&dir)
-    .assert()
-    .stderr(is_match(
+    .stderr_regex(
       "error: invalid private key `.*master.private`.*invalid private key byte length 0.*",
-    ))
+    )
     .failure();
 }
 
 #[test]
 fn sign_creates_valid_signature() {
-  let dir = TempDir::new().unwrap();
-
-  cargo_bin_cmd!("filepack")
-    .arg("keygen")
-    .env("FILEPACK_DATA_DIR", dir.path())
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  dir.child("foo/bar").touch().unwrap();
-
-  cargo_bin_cmd!("filepack")
+  let test = Test::new()
+    .args(["keygen"])
+    .success()
+    .touch("foo/bar")
     .args(["create", "--sign", "foo"])
-    .env("FILEPACK_DATA_DIR", dir.path())
-    .current_dir(&dir)
-    .assert()
     .success();
 
-  let manifest = Manifest::load(Some(dir.child("foo/filepack.json").utf8_path())).unwrap();
+  let manifest_path = test.path().join("foo/filepack.json");
+  let manifest = Manifest::load(Some(&manifest_path)).unwrap();
 
-  let public_key = load_key(&dir.child("keys/master.public"))
+  let public_key = load_key(test.path().join("keys/master.public").as_std_path())
     .parse::<PublicKey>()
     .unwrap();
 
@@ -385,250 +324,186 @@ fn sign_creates_valid_signature() {
     .verify(manifest.fingerprint(), &signature)
     .unwrap();
 
-  cargo_bin_cmd!("filepack")
+  test
     .args(["verify", "foo"])
-    .current_dir(&dir)
-    .assert()
+    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
     .success();
 }
 
 #[test]
 fn sign_fails_if_master_key_not_available() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("foo/bar").touch().unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .touch("foo/bar")
     .args(["create", "--sign", "foo"])
-    .env("FILEPACK_DATA_DIR", dir.path())
-    .current_dir(&dir)
-    .assert()
-    .stderr(is_match(
-      "error: private key not found: `.*master.private`\n",
-    ))
+    .stderr_regex("error: private key not found: `.*master.private`\n")
     .failure();
 }
 
 #[test]
 fn single_file() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("foo").touch().unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .touch("foo")
     .args(["create", "."])
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  dir.child("filepack.json").assert(json! {
-    files: {
-      foo: {
-        hash: EMPTY_HASH,
-        size: 0
-      }
-    }
-  });
-
-  cargo_bin_cmd!("filepack")
+    .success()
+    .assert_file(
+      "filepack.json",
+      json! {
+        files: {
+          foo: {
+            hash: EMPTY_HASH,
+            size: 0
+          }
+        }
+      },
+    )
     .args(["verify", "."])
-    .current_dir(&dir)
-    .assert()
+    .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
     .success();
 }
 
 #[test]
 fn single_file_mmap() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("foo").touch().unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .touch("foo")
     .args(["--mmap", "create", "."])
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  dir.child("filepack.json").assert(json! {
-    files: {
-      foo: {
-        hash: EMPTY_HASH,
-        size: 0
-      }
-    }
-  });
-
-  cargo_bin_cmd!("filepack")
+    .success()
+    .assert_file(
+      "filepack.json",
+      json! {
+        files: {
+          foo: {
+            hash: EMPTY_HASH,
+            size: 0
+          }
+        }
+      },
+    )
     .args(["--mmap", "verify", "."])
-    .current_dir(&dir)
-    .assert()
+    .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
     .success();
 }
 
 #[test]
 fn single_file_omit_root() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("foo").touch().unwrap();
-
-  cargo_bin_cmd!("filepack")
-    .arg("create")
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  dir.child("filepack.json").assert(json! {
-    files: {
-      foo: {
-        hash: EMPTY_HASH,
-        size: 0
-      }
-    }
-  });
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .touch("foo")
+    .args(["create"])
+    .success()
+    .assert_file(
+      "filepack.json",
+      json! {
+        files: {
+          foo: {
+            hash: EMPTY_HASH,
+            size: 0
+          }
+        }
+      },
+    )
     .args(["verify", "."])
-    .current_dir(&dir)
-    .assert()
+    .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
     .success();
 }
 
 #[test]
 fn single_file_parallel() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("foo").touch().unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .touch("foo")
     .args(["--parallel", "create", "."])
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  dir.child("filepack.json").assert(json! {
-    files: {
-      foo: {
-        hash: EMPTY_HASH,
-        size: 0
-      }
-    }
-  });
-
-  cargo_bin_cmd!("filepack")
+    .success()
+    .assert_file(
+      "filepack.json",
+      json! {
+        files: {
+          foo: {
+            hash: EMPTY_HASH,
+            size: 0
+          }
+        }
+      },
+    )
     .args(["--parallel", "verify", "."])
-    .current_dir(&dir)
-    .assert()
+    .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
     .success();
 }
 
 #[test]
 fn single_non_empty_file() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("foo").write_str("bar").unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .write("foo", "bar")
     .args(["create", "."])
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  dir.child("filepack.json").assert(json! {
-    files: {
-      foo: {
-        hash: "f2e897eed7d206cd855d441598fa521abc75aa96953e97c030c9612c30c1293d",
-        size: 3
-      }
-    }
-  });
-
-  cargo_bin_cmd!("filepack")
+    .success()
+    .assert_file(
+      "filepack.json",
+      json! {
+        files: {
+          foo: {
+            hash: "f2e897eed7d206cd855d441598fa521abc75aa96953e97c030c9612c30c1293d",
+            size: 3
+          }
+        }
+      },
+    )
     .args(["verify", "."])
-    .current_dir(&dir)
-    .assert()
+    .stderr("successfully verified 1 file totaling 3 bytes with 0 signatures\n")
     .success();
 }
 
 #[test]
 fn symlink_error() {
-  let dir = TempDir::new().unwrap();
-
-  #[cfg(unix)]
-  std::os::unix::fs::symlink("foo", dir.path().join("bar")).unwrap();
-
-  #[cfg(windows)]
-  std::os::windows::fs::symlink_file("foo", dir.path().join("bar")).unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .symlink("foo", "bar")
     .args(["create", "."])
-    .current_dir(&dir)
-    .assert()
     .stderr("error: symlink at `bar`\n")
     .failure();
 }
 
 #[test]
 fn with_manifest_path() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("foo").touch().unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .touch("foo")
     .args(["create", "--manifest", "hello.json"])
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  dir.child("hello.json").assert(json! {
-    files: {
-      foo: {
-        hash: EMPTY_HASH,
-        size: 0
-      }
-    }
-  });
-
-  cargo_bin_cmd!("filepack")
+    .success()
+    .assert_file(
+      "hello.json",
+      json! {
+        files: {
+          foo: {
+            hash: EMPTY_HASH,
+            size: 0
+          }
+        }
+      },
+    )
     .args(["verify", "--manifest", "hello.json"])
-    .current_dir(&dir)
-    .assert()
+    .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
     .success();
 }
 
 #[test]
 fn with_metadata() {
-  let dir = TempDir::new().unwrap();
-
-  dir.child("foo/bar").touch().unwrap();
-
-  dir.child("metadata.yaml").write_str("title: Foo").unwrap();
-
-  cargo_bin_cmd!("filepack")
+  Test::new()
+    .touch("foo/bar")
+    .write("metadata.yaml", "title: Foo")
     .args(["create", "foo", "--metadata", "metadata.yaml"])
-    .current_dir(&dir)
-    .assert()
-    .success();
-
-  dir.child("foo/filepack.json").assert(json! {
-    files: {
-      bar: {
-        hash: EMPTY_HASH,
-        size: 0
+    .success()
+    .assert_file(
+      "foo/filepack.json",
+      json! {
+        files: {
+          bar: {
+            hash: EMPTY_HASH,
+            size: 0
+          },
+          "metadata.json": {
+            hash: "395190e326d9f4b03fff68cacda59e9c31b9b2a702d46a12f89bfb1ec568c0f1",
+            size: 16
+          }
+        }
       },
-      "metadata.json": {
-        hash: "395190e326d9f4b03fff68cacda59e9c31b9b2a702d46a12f89bfb1ec568c0f1",
-        size: 16
-      }
-    }
-  });
-
-  dir
-    .child("foo/metadata.json")
-    .assert(json! { title: "Foo" });
-
-  cargo_bin_cmd!("filepack")
+    )
+    .assert_file("foo/metadata.json", json! { title: "Foo" })
     .args(["verify", "foo"])
-    .current_dir(&dir)
-    .assert()
+    .stderr("successfully verified 2 files totaling 16 bytes with 0 signatures\n")
     .success();
 }

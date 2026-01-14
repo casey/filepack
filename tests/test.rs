@@ -7,6 +7,8 @@ enum Expected {
 
 pub(crate) struct Test {
   args: Vec<String>,
+  current_dir: Option<String>,
+  data_dir: Option<String>,
   stderr: Option<Expected>,
   stdout: Option<Expected>,
   tempdir: tempfile::TempDir,
@@ -25,6 +27,8 @@ impl Test {
   fn with_tempdir(tempdir: tempfile::TempDir) -> Self {
     Self {
       args: Vec::new(),
+      current_dir: None,
+      data_dir: None,
       stderr: None,
       stdout: None,
       tempdir,
@@ -46,6 +50,16 @@ impl Test {
 
   pub(crate) fn create_dir(self, path: &str) -> Self {
     fs::create_dir_all(self.tempdir.path().join(path)).unwrap();
+    self
+  }
+
+  pub(crate) fn current_dir(mut self, path: &str) -> Self {
+    self.current_dir = Some(path.into());
+    self
+  }
+
+  pub(crate) fn data_dir(mut self, path: &str) -> Self {
+    self.data_dir = Some(path.into());
     self
   }
 
@@ -72,8 +86,21 @@ impl Test {
   fn run(self, code: i32) -> Self {
     let mut command = cargo_bin_cmd!("filepack");
 
-    command.current_dir(self.tempdir.path());
-    command.env("FILEPACK_DATA_DIR", self.tempdir.path());
+    let current_dir = if let Some(ref subdir) = self.current_dir {
+      self.tempdir.path().join(subdir)
+    } else {
+      self.tempdir.path().into()
+    };
+
+    command.current_dir(current_dir);
+
+    let data_dir = if let Some(ref subdir) = self.data_dir {
+      self.tempdir.path().join(subdir)
+    } else {
+      self.tempdir.path().into()
+    };
+
+    command.env("FILEPACK_DATA_DIR", data_dir);
 
     let output = command.args(&self.args).output().unwrap();
 
@@ -127,6 +154,15 @@ impl Test {
 
   pub(crate) fn success(self) -> Self {
     self.run(0)
+  }
+
+  pub(crate) fn symlink(self, target: &str, link: &str) -> Self {
+    let link_path = self.tempdir.path().join(link);
+    #[cfg(unix)]
+    std::os::unix::fs::symlink(target, link_path).unwrap();
+    #[cfg(windows)]
+    std::os::windows::fs::symlink_file(target, link_path).unwrap();
+    self
   }
 
   pub(crate) fn touch(self, path: impl AsRef<Path>) -> Self {
