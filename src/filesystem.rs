@@ -33,7 +33,7 @@ pub(crate) fn set_mode(path: &Utf8Path, mode: u32) -> Result {
   #[cfg(unix)]
   {
     use std::os::unix::fs::PermissionsExt;
-    std::fs::set_permissions(path, std::fs::Permissions::from_mode(mode))
+    std::fs::set_permissions(path, Permissions::from_mode(mode))
       .context(error::FilesystemIo { path })?;
   }
 
