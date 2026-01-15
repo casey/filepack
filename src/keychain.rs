@@ -42,12 +42,9 @@ impl Keychain {
     Ok(())
   }
 
-  pub(crate) fn identifier_public_key<'a>(
-    &'a self,
-    identifier: &'a KeyIdentifier,
-  ) -> Result<&'a PublicKey> {
+  pub(crate) fn identifier_public_key(&self, identifier: &KeyIdentifier) -> Result<PublicKey> {
     match identifier {
-      KeyIdentifier::Literal(key) => Ok(key),
+      KeyIdentifier::Literal(key) => Ok(*key),
       KeyIdentifier::Name(name) => self.public_key(name),
     }
   }
@@ -134,19 +131,23 @@ impl Keychain {
     Ok(Self { keys, path })
   }
 
-  pub(crate) fn public_key(&self, name: &KeyName) -> Result<&PublicKey> {
-    self.keys.get(name).context(error::PublicKeyNotFound {
-      path: self.path.join(name.public_key_filename()),
-    })
+  pub(crate) fn public_key(&self, name: &KeyName) -> Result<PublicKey> {
+    self
+      .keys
+      .get(name)
+      .copied()
+      .context(error::PublicKeyNotFound {
+        path: self.path.join(name.public_key_filename()),
+      })
   }
 
-  pub(crate) fn sign(&self, name: &KeyName, message: Message) -> Result<(&PublicKey, Signature)> {
+  pub(crate) fn sign(&self, name: &KeyName, message: &Message) -> Result<(PublicKey, Signature)> {
     let public_key = self.public_key(name)?;
 
     let private_key = PrivateKey::load(&self.path.join(name.private_key_filename()))?;
 
     ensure! {
-      private_key.public_key() == *public_key,
+      private_key.public_key() == public_key,
       error::KeyMismatch {
         key: name.clone(),
       }

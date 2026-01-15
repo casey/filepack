@@ -168,11 +168,9 @@ impl Create {
 
       let keychain = Keychain::load(&options)?;
 
-      let (public_key, signature) = keychain.sign(&self.key, message)?;
+      let (public_key, signature) = keychain.sign(&self.key, &message)?;
 
-      vec![Note {
-        signatures: [(public_key.clone(), signature)].into(),
-      }]
+      vec![Note::from_message(message, public_key, signature)]
     } else {
       Vec::new()
     };

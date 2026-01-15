@@ -20,8 +20,18 @@ impl Note {
     Message { fingerprint }.digest()
   }
 
-  pub(crate) fn has_signature(&self, public_key: &PublicKey) -> bool {
-    self.signatures.contains_key(public_key)
+  pub(crate) fn from_message(
+    _message: Message,
+    public_key: PublicKey,
+    signature: Signature,
+  ) -> Self {
+    Self {
+      signatures: [(public_key, signature)].into(),
+    }
+  }
+
+  pub(crate) fn has_signature(&self, public_key: PublicKey) -> bool {
+    self.signatures.contains_key(&public_key)
   }
 
   pub(crate) fn verify(&self, fingerprint: Hash) -> Result<u64> {

@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Clone, Debug, DeserializeFromStr, Eq, PartialEq, SerializeDisplay)]
+#[derive(Clone, Copy, Debug, DeserializeFromStr, Eq, PartialEq, SerializeDisplay)]
 pub struct PublicKey(ed25519_dalek::VerifyingKey);
 
 impl PublicKey {
@@ -29,9 +29,7 @@ impl PublicKey {
       .0
       .verify_strict(message.as_bytes(), signature.as_ref())
       .map_err(SignatureError)
-      .context(error::SignatureInvalid {
-        public_key: self.clone(),
-      })
+      .context(error::SignatureInvalid { public_key: *self })
   }
 }
 

@@ -18,7 +18,7 @@ pub enum Error {
   },
 }
 
-#[derive(Clone, DeserializeFromStr, PartialEq, SerializeDisplay)]
+#[derive(Clone, Copy, DeserializeFromStr, PartialEq, SerializeDisplay)]
 pub struct Signature(ed25519_dalek::Signature);
 
 impl Signature {

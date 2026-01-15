@@ -24,15 +24,15 @@ impl Sign {
 
     let message = Message { fingerprint };
 
-    let (public_key, signature) = keychain.sign(&self.key, message)?;
+    let (public_key, signature) = keychain.sign(&self.key, &message)?;
 
     ensure! {
       self.force || !manifest.notes.iter().any(|note| note.has_signature(public_key)),
-      error::SignatureAlreadyExists { public_key: public_key.clone() },
+      error::SignatureAlreadyExists { public_key },
     }
 
     let note = Note {
-      signatures: [(public_key.clone(), signature)].into(),
+      signatures: [(public_key, signature)].into(),
     };
 
     manifest.notes.push(note);
