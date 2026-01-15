@@ -37,24 +37,18 @@ impl Keys {
       }
 
       let Some(extension) = path.extension() else {
-        return Err(error::KeyDirExtension { path }.build());
+        return Err(error::KeyDirUnexpected { path }.build());
       };
 
-      let Ok(key_type) = extension.parse::<KeyType>() else {
-        return Err(
-          error::KeyDirType {
-            extension: extension.to_string(),
-            path,
-          }
-          .build(),
-        );
-      };
+      let key_type = extension
+        .parse::<KeyType>()
+        .context(error::KeyDirType { extension, path })?;
 
       let stem = path.file_stem().unwrap();
 
-      let name = stem.parse::<KeyName>().context(error::KeyNameInvalid {
-        stem: stem.to_string(),
-      })?;
+      let name = stem
+        .parse::<KeyName>()
+        .context(error::KeyNameInvalid { stem })?;
 
       match key_type {
         KeyType::Private => {
@@ -65,23 +59,23 @@ impl Keys {
             error::PrivateKeyPermissions { mode, path },
           }
 
-          let public_key_path = path.with_file_name(name.public_key_filename());
+          let path = path.with_file_name(name.public_key_filename());
 
           ensure! {
-            filesystem::exists(&public_key_path)?,
-            error::PublicKeyNotFound { path: public_key_path },
+            filesystem::exists(&path)?,
+            error::PublicKeyNotFound { path },
           }
 
-          PublicKey::load(&public_key_path)?;
+          PublicKey::load(&path)?;
         }
         KeyType::Public => {
           let public_key = PublicKey::load(path)?;
 
-          let private_key_path = path.with_file_name(name.private_key_filename());
+          let path = path.with_file_name(name.private_key_filename());
 
           ensure! {
-            filesystem::exists(&private_key_path)?,
-            error::PrivateKeyNotFound { path: private_key_path },
+            filesystem::exists(&path)?,
+            error::PrivateKeyNotFound { path },
           }
 
           public_keys.insert(name, public_key);

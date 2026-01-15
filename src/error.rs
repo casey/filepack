@@ -91,9 +91,10 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     extension: String,
     path: DisplayPath,
+    source: strum::ParseError,
   },
-  #[snafu(display("unexpected file with no extension in keys directory: `{path}`"))]
-  KeyDirExtension {
+  #[snafu(display("unexpected file in keys directory: `{path}`"))]
+  KeyDirUnexpected {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
