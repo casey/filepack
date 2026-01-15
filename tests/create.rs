@@ -212,7 +212,7 @@ fn mismatched_key() {
     .success()
     .args(["keygen"])
     .success()
-    .rename("foo/keys/master.private", "keys/master.private")
+    .rename("foo/keychain/master.private", "keychain/master.private")
     .create_dir("bar")
     .args(["create", "bar", "--sign"])
     .stderr("error: public key `master.public` doesn't match private key `master.private`\n")
@@ -294,10 +294,10 @@ fn non_unicode_path_error() {
 fn private_key_load_error_message() {
   Test::new()
     .touch("foo/bar")
-    .touch("keys/master.private")
-    .write("keys/master.public", PUBLIC_KEY)
-    .chmod("keys", 0o700)
-    .chmod("keys/master.private", 0o600)
+    .touch("keychain/master.private")
+    .write("keychain/master.public", PUBLIC_KEY)
+    .chmod("keychain", 0o700)
+    .chmod("keychain/master.private", 0o600)
     .args(["create", "--sign", "foo"])
     .stderr_regex(
       "error: invalid private key `.*master.private`.*invalid private key byte length 0.*",
@@ -317,7 +317,7 @@ fn sign_creates_valid_signature() {
   let manifest_path = test.path().join("foo/filepack.json");
   let manifest = Manifest::load(Some(&manifest_path)).unwrap();
 
-  let public_key = test.read_public_key("keys/master.public");
+  let public_key = test.read_public_key("keychain/master.public");
 
   assert_eq!(manifest.signatures.len(), 1);
 
@@ -338,7 +338,7 @@ fn sign_fails_if_master_key_not_available() {
   Test::new()
     .args(["keygen"])
     .success()
-    .remove_file("keys/master.private")
+    .remove_file("keychain/master.private")
     .touch("foo/bar")
     .args(["create", "--sign", "foo"])
     .stderr_regex("error: private key not found: `.*master.private`\n")
@@ -357,7 +357,7 @@ fn sign_with_named_key() {
   let manifest_path = test.path().join("foo/filepack.json");
   let manifest = Manifest::load(Some(&manifest_path)).unwrap();
 
-  let public_key = test.read_public_key("keys/deploy.public");
+  let public_key = test.read_public_key("keychain/deploy.public");
 
   assert_eq!(manifest.signatures.len(), 1);
 
