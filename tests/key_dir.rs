@@ -6,7 +6,7 @@ fn directory_error() {
     .create_dir("keys/subdir")
     .chmod("keys", 0o700)
     .args(["info"])
-    .stderr_regex("error: unexpected directory in keys directory: `.*subdir`\n")
+    .stderr_regex("error: unexpected directory in key directory: `.*subdir`\n")
     .failure();
 }
 
@@ -16,7 +16,7 @@ fn unexpected_file_error() {
     .write("keys/foo", "")
     .chmod("keys", 0o700)
     .args(["info"])
-    .stderr_regex("error: unexpected file in keys directory: `.*foo`\n")
+    .stderr_regex("error: unexpected file in key directory: `.*foo`\n")
     .failure();
 }
 
@@ -26,7 +26,7 @@ fn type_error() {
     .write("keys/master.unknown", "")
     .chmod("keys", 0o700)
     .args(["info"])
-    .stderr_regex("error: unexpected file type `unknown` in keys directory: `.*master.unknown`\n.*")
+    .stderr_regex("error: unexpected file in key directory: `.*master.unknown`\n")
     .failure();
 }
 
@@ -38,7 +38,7 @@ fn key_name_invalid_error() {
     .chmod("keys", 0o700)
     .chmod("keys/INVALID.private", 0o600)
     .args(["info"])
-    .stderr_regex("error: invalid key name: `INVALID`\n.*")
+    .stderr_regex("error: invalid key name: `.*INVALID.private`\n.*")
     .failure();
 }
 

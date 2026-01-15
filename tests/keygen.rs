@@ -55,7 +55,7 @@ fn key_dir_insecure_permissions() {
     .create_dir("keys")
     .chmod("keys", 0o750)
     .args(["keygen"])
-    .stderr_regex("error: keys directory `.*keys` has insecure permissions 0750\n")
+    .stderr_regex("error: key directory `.*keys` has insecure permissions 0750\n")
     .failure();
 }
 

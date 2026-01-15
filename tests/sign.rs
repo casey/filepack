@@ -112,7 +112,7 @@ fn key_dir_insecure_permissions() {
     .args(["create", "foo"])
     .success()
     .args(["sign", "foo/filepack.json"])
-    .stderr_regex("error: keys directory `.*keys` has insecure permissions 0750\n")
+    .stderr_regex("error: key directory `.*keys` has insecure permissions 0750\n")
     .failure();
 }
 
