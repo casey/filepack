@@ -75,33 +75,26 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     message: String,
   },
-  #[snafu(display("unexpected directory in keys directory: `{path}`"))]
-  KeyDirDirectory {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-  },
-  #[snafu(display("keys directory `{path}` has insecure permissions {mode}"))]
+  #[snafu(display("key directory `{path}` has insecure permissions {mode}"))]
   KeyDirPermissions {
     backtrace: Option<Backtrace>,
     mode: Mode,
     path: DisplayPath,
   },
-  #[snafu(display("unexpected file type `{extension}` in keys directory: `{path}`"))]
-  KeyDirType {
-    backtrace: Option<Backtrace>,
-    extension: String,
-    path: DisplayPath,
-    source: strum::ParseError,
-  },
-  #[snafu(display("unexpected file in keys directory: `{path}`"))]
-  KeyDirUnexpected {
+  #[snafu(display("unexpected directory in key directory: `{path}`"))]
+  KeyDirUnexpectedDirectory {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
-  #[snafu(display("invalid key name: `{stem}`"))]
+  #[snafu(display("unexpected file in key directory: `{path}`"))]
+  KeyDirUnexpectedFile {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+  },
+  #[snafu(display("invalid key name: `{path}`"))]
   KeyNameInvalid {
     backtrace: Option<Backtrace>,
-    stem: String,
+    path: DisplayPath,
     source: PublicKeyError,
   },
   #[snafu(display(

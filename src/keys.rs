@@ -33,22 +33,23 @@ impl Keys {
       }
 
       if !entry.file_type().is_file() {
-        return Err(error::KeyDirDirectory { path }.build());
+        return Err(error::KeyDirUnexpectedDirectory { path }.build());
       }
 
       let Some(extension) = path.extension() else {
-        return Err(error::KeyDirUnexpected { path }.build());
+        return Err(error::KeyDirUnexpectedFile { path }.build());
       };
 
       let key_type = extension
         .parse::<KeyType>()
-        .context(error::KeyDirType { extension, path })?;
+        .ok()
+        .context(error::KeyDirUnexpectedFile { path })?;
 
       let stem = path.file_stem().unwrap();
 
       let name = stem
         .parse::<KeyName>()
-        .context(error::KeyNameInvalid { stem })?;
+        .context(error::KeyNameInvalid { path })?;
 
       match key_type {
         KeyType::Private => {
