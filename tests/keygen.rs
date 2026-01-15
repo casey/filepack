@@ -4,13 +4,13 @@ use super::*;
 fn custom_name() {
   let test = Test::new()
     .args(["keygen", "--name", "deploy"])
-    .assert_file_regex("keys/deploy.public", "[0-9a-f]{64}\n")
-    .assert_file_regex("keys/deploy.private", "[0-9a-f]{64}\n")
+    .assert_file_regex("keychain/deploy.public", "[0-9a-f]{64}\n")
+    .assert_file_regex("keychain/deploy.private", "[0-9a-f]{64}\n")
     .success();
 
-  let public_key = test.read_public_key("keys/deploy.public");
+  let public_key = test.read_public_key("keychain/deploy.public");
 
-  let private_key = test.read_private_key("keys/deploy.private");
+  let private_key = test.read_private_key("keychain/deploy.private");
 
   assert!(!public_key.inner().is_weak());
 
@@ -21,13 +21,13 @@ fn custom_name() {
 fn default_name() {
   let test = Test::new()
     .args(["keygen"])
-    .assert_file_regex("keys/master.public", "[0-9a-f]{64}\n")
-    .assert_file_regex("keys/master.private", "[0-9a-f]{64}\n")
+    .assert_file_regex("keychain/master.public", "[0-9a-f]{64}\n")
+    .assert_file_regex("keychain/master.private", "[0-9a-f]{64}\n")
     .success();
 
-  let public_key = test.read_public_key("keys/master.public");
+  let public_key = test.read_public_key("keychain/master.public");
 
-  let private_key = test.read_private_key("keys/master.private");
+  let private_key = test.read_private_key("keychain/master.private");
 
   assert!(!public_key.inner().is_weak());
 
@@ -48,10 +48,10 @@ fn invalid_name() {
 #[test]
 fn key_already_exists() {
   Test::new()
-    .write("keys/master.private", PRIVATE_KEY)
-    .write("keys/master.public", PUBLIC_KEY)
-    .chmod("keys", 0o700)
-    .chmod("keys/master.private", 0o700)
+    .write("keychain/master.private", PRIVATE_KEY)
+    .write("keychain/master.public", PUBLIC_KEY)
+    .chmod("keychain", 0o700)
+    .chmod("keychain/master.private", 0o700)
     .args(["keygen"])
     .stderr_regex("error: private key already exists: `.*master.private`\n")
     .failure();

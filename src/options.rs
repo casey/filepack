@@ -44,7 +44,7 @@ impl Options {
   }
 
   pub(crate) fn key_dir(&self) -> Result<Utf8PathBuf> {
-    Ok(self.data_dir()?.join("keys"))
+    Ok(self.data_dir()?.join("keychain"))
   }
 }
 
@@ -66,7 +66,7 @@ mod tests {
       dirs::data_local_dir()
         .unwrap()
         .join("filepack")
-        .join("keys"),
+        .join("keychain"),
     );
   }
 
@@ -81,7 +81,7 @@ mod tests {
       }
       .key_dir()
       .unwrap(),
-      Utf8Path::new("hello").join("keys"),
+      Utf8Path::new("hello").join("keychain"),
     );
   }
 }

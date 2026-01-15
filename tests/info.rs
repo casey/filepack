@@ -6,7 +6,7 @@ fn no_key_dir() {
     .args(["info"])
     .stdout_regex(&json_regex! {
       "data-dir": ".*",
-      "key-dir": ".*keys",
+      "key-dir": ".*keychain",
       keys: {
       },
     })
@@ -16,12 +16,12 @@ fn no_key_dir() {
 #[test]
 fn no_keys() {
   Test::new()
-    .create_dir("keys")
-    .chmod("keys", 0o700)
+    .create_dir("keychain")
+    .chmod("keychain", 0o700)
     .args(["info"])
     .stdout_regex(&json_regex! {
       "data-dir": ".*",
-      "key-dir": ".*keys",
+      "key-dir": ".*keychain",
       keys: {
       },
     })
@@ -36,14 +36,14 @@ fn with_keys() {
     .args(["keygen", "--name", "foo"])
     .success();
 
-  let master = test.read("keys/master.public");
-  let foo = test.read("keys/foo.public");
+  let master = test.read("keychain/master.public");
+  let foo = test.read("keychain/foo.public");
 
   test
     .args(["info"])
     .stdout_regex(&json_regex! {
       "data-dir": ".*",
-      "key-dir": ".*keys",
+      "key-dir": ".*keychain",
       keys: {
         master: master,
         foo: foo,

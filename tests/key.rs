@@ -9,7 +9,7 @@ fn default() {
     .stdout_regex("[0-9a-f]{64}\n")
     .success();
 
-  let public_key = test.read_public_key("keys/master.public");
+  let public_key = test.read_public_key("keychain/master.public");
 
   test
     .args(["key"])
@@ -26,7 +26,7 @@ fn master() {
     .stdout_regex("[0-9a-f]{64}\n")
     .success();
 
-  let public_key = test.read_public_key("keys/master.public");
+  let public_key = test.read_public_key("keychain/master.public");
 
   test
     .args(["key", "--key", "master"])
@@ -49,7 +49,7 @@ fn missing_private_key() {
   Test::new()
     .args(["keygen"])
     .success()
-    .remove_file("keys/master.private")
+    .remove_file("keychain/master.private")
     .args(["key"])
     .stderr_regex("error: private key not found: `.*master.private`\n")
     .failure();
@@ -60,7 +60,7 @@ fn missing_public_key() {
   Test::new()
     .args(["keygen"])
     .success()
-    .remove_file("keys/master.public")
+    .remove_file("keychain/master.public")
     .args(["key"])
     .stderr_regex("error: public key not found: `.*master.public`\n")
     .failure();
@@ -75,7 +75,7 @@ fn named() {
     .stdout_regex("[0-9a-f]{64}\n")
     .success();
 
-  let public_key = test.read_public_key("keys/deploy.public");
+  let public_key = test.read_public_key("keychain/deploy.public");
 
   test
     .args(["key", "--key", "deploy"])

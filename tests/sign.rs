@@ -9,7 +9,7 @@ fn appends_filename_if_argument_is_directory() {
     .args(["create", "foo"])
     .success();
 
-  let public_key = test.read("keys/master.public");
+  let public_key = test.read("keychain/master.public");
 
   test
     .args(["sign", "foo"])
@@ -28,7 +28,7 @@ fn defaults_to_current_directory() {
     .args(["create", "foo"])
     .success();
 
-  let public_key = test.read("keys/master.public");
+  let public_key = test.read("keychain/master.public");
 
   test
     .current_dir("foo")
@@ -58,8 +58,8 @@ fn existing_signatures_are_preserved() {
     .args(["sign", "foo/filepack.json"])
     .success();
 
-  let a = test.read("a/keys/master.public");
-  let b = test.read("b/keys/master.public");
+  let a = test.read("a/keychain/master.public");
+  let b = test.read("b/keychain/master.public");
 
   test
     .args(["verify", "foo", "--key", &a])
@@ -106,7 +106,7 @@ fn mismatched_key() {
     .success()
     .args(["keygen"])
     .success()
-    .rename("foo/keys/master.private", "keys/master.private")
+    .rename("foo/keychain/master.private", "keychain/master.private")
     .create_dir("bar")
     .args(["create", "bar"])
     .success()
@@ -124,7 +124,7 @@ fn named() {
     .args(["create", "foo"])
     .success();
 
-  let public_key = test.read("keys/deploy.public");
+  let public_key = test.read("keychain/deploy.public");
 
   test
     .args(["sign", "--key", "deploy", "foo/filepack.json"])
@@ -143,7 +143,7 @@ fn re_signing_requires_force() {
     .args(["create", "foo"])
     .success();
 
-  let public_key = test.read("keys/master.public");
+  let public_key = test.read("keychain/master.public");
 
   test
     .args(["sign", "foo/filepack.json"])
@@ -172,7 +172,7 @@ fn updates_manifest_with_signature() {
     .args(["create", "foo"])
     .success();
 
-  let public_key = test.read("keys/master.public");
+  let public_key = test.read("keychain/master.public");
 
   test
     .args(["verify", "foo", "--key", &public_key])

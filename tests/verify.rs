@@ -30,7 +30,7 @@ fn duplicate_key_named_and_literal() {
     .args(["create"])
     .success();
 
-  let key = test.read("keys/master.public");
+  let key = test.read("keychain/master.public");
 
   test
     .args(["verify", "--key", "master", "--key", &key])
@@ -295,8 +295,8 @@ fn multiple_keys() {
     .args(["sign", "foo"])
     .success();
 
-  let alice = test.read("alice/keys/master.public");
-  let bob = test.read("bob/keys/master.public");
+  let alice = test.read("alice/keychain/master.public");
+  let bob = test.read("bob/keychain/master.public");
 
   test
     .args(["verify", "foo", "--key", &alice, "--key", &bob])
@@ -317,7 +317,7 @@ fn multiple_keys_one_missing() {
     .args(["sign", "foo/filepack.json"])
     .success();
 
-  let alice = test.read("alice/keys/master.public");
+  let alice = test.read("alice/keychain/master.public");
 
   test
     .args(["verify", "foo", "--key", &alice, "--key", PUBLIC_KEY])
@@ -383,7 +383,7 @@ fn named_key_not_found() {
     .args(["create"])
     .success()
     .args(["verify", "--key", "nonexistent"])
-    .stderr_regex_path("error: public key not found: `.*keys/nonexistent.public`\n")
+    .stderr_regex_path("error: public key not found: `.*keychain/nonexistent.public`\n")
     .failure();
 }
 
@@ -478,7 +478,7 @@ fn signature_verification_success() {
     .args(["create", "--sign", "foo"])
     .success();
 
-  let public_key = test.read("keys/master.public");
+  let public_key = test.read("keychain/master.public");
 
   test
     .args(["verify", "foo", "--key", &public_key])
@@ -602,7 +602,7 @@ fn valid_signature_for_wrong_pubkey_error() {
 
   let mut manifest = Manifest::load(Some(&manifest_path)).unwrap();
 
-  let public_key = test.read_public_key("keys/master.public");
+  let public_key = test.read_public_key("keychain/master.public");
 
   let signature = manifest.signatures.remove(&public_key).unwrap();
 
