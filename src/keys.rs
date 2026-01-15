@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(Default)]
 pub(crate) struct Keys {
-  pub(crate) names: BTreeMap<KeyName, PublicKey>,
+  pub(crate) public_keys: BTreeMap<KeyName, PublicKey>,
 }
 
 impl Keys {
@@ -18,8 +18,7 @@ impl Keys {
       error::KeyDirPermissions { mode, path },
     }
 
-    let mut names = BTreeMap::new();
-
+    let mut public_keys = BTreeMap::new();
     for entry in WalkDir::new(&path).max_depth(1) {
       let entry = entry?;
 
@@ -77,11 +76,11 @@ impl Keys {
             todo!()
           }
 
-          names.insert(name, public_key);
+          public_keys.insert(name, public_key);
         }
       }
     }
 
-    Ok(Self { names })
+    Ok(Self { public_keys })
   }
 }
