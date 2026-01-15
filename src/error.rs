@@ -90,18 +90,18 @@ pub enum Error {
     path: DisplayPath,
     source: PublicKeyError,
   },
-  #[snafu(display("key directory `{path}` has insecure permissions {mode}"))]
+  #[snafu(display("keychain directory `{path}` has insecure permissions {mode}"))]
   KeychainPermissions {
     backtrace: Option<Backtrace>,
     mode: Mode,
     path: DisplayPath,
   },
-  #[snafu(display("unexpected directory in key directory: `{path}`"))]
+  #[snafu(display("unexpected directory in keychain directory: `{path}`"))]
   KeychainUnexpectedDirectory {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
-  #[snafu(display("unexpected file in key directory: `{path}`"))]
+  #[snafu(display("unexpected file in keychain directory: `{path}`"))]
   KeychainUnexpectedFile {
     backtrace: Option<Backtrace>,
     path: DisplayPath,

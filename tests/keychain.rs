@@ -10,7 +10,7 @@ fn dir_permissions() {
     .create_dir("keychain")
     .chmod("keychain", 0o750)
     .args(["keygen"])
-    .stderr_regex("error: key directory `.*keychain` has insecure permissions 0750\n")
+    .stderr_regex("error: keychain directory `.*keychain` has insecure permissions 0750\n")
     .failure();
 }
 
@@ -92,7 +92,7 @@ fn unexpected_directory() {
     .create_dir("keychain/subdir")
     .chmod("keychain", 0o700)
     .args(["info"])
-    .stderr_regex("error: unexpected directory in key directory: `.*subdir`\n")
+    .stderr_regex("error: unexpected directory in keychain directory: `.*subdir`\n")
     .failure();
 }
 
@@ -102,7 +102,7 @@ fn unexpected_file_no_extension() {
     .touch("keychain/foo")
     .chmod("keychain", 0o700)
     .args(["info"])
-    .stderr_regex("error: unexpected file in key directory: `.*foo`\n")
+    .stderr_regex("error: unexpected file in keychain directory: `.*foo`\n")
     .failure();
 }
 
@@ -112,6 +112,6 @@ fn unexpected_file_with_extension() {
     .touch("keychain/master.unknown")
     .chmod("keychain", 0o700)
     .args(["info"])
-    .stderr_regex("error: unexpected file in key directory: `.*master.unknown`\n")
+    .stderr_regex("error: unexpected file in keychain directory: `.*master.unknown`\n")
     .failure();
 }
