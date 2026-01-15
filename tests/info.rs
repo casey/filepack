@@ -6,7 +6,12 @@ fn no_keys() {
     .create_dir("keys")
     .chmod("keys", 0o700)
     .args(["info"])
-    .stdout_regex(r#"\{\n  "data-dir": ".*",\n  "key-dir": ".*keys",\n  "keys": \{\}\n\}\n"#)
+    .stdout_regex(&json_regex! {
+      "data-dir": ".*",
+      "key-dir": ".*keys",
+      keys: {
+      },
+    })
     .success();
 }
 
@@ -15,16 +20,21 @@ fn with_keys() {
   let test = Test::new()
     .args(["keygen"])
     .success()
-    .args(["keygen", "--name", "deploy"])
+    .args(["keygen", "--name", "foo"])
     .success();
 
-  let master_key = test.read("keys/master.public");
-  let deploy_key = test.read("keys/deploy.public");
+  let master = test.read("keys/master.public");
+  let foo = test.read("keys/foo.public");
 
   test
     .args(["info"])
-    .stdout_regex(&format!(
-      r#"\{{\n  "data-dir": ".*",\n  "key-dir": ".*keys",\n  "keys": \{{\n    "deploy": "{deploy_key}",\n    "master": "{master_key}"\n  }}\n}}\n"#
-    ))
+    .stdout_regex(&json_regex! {
+      "data-dir": ".*",
+      "key-dir": ".*keys",
+      keys: {
+        master: master,
+        foo: foo,
+      },
+    })
     .success();
 }

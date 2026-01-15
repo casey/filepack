@@ -24,6 +24,16 @@ macro_rules! json_pretty {
 }
 
 #[macro_export]
+macro_rules! json_regex {
+  ($($parts:tt)*) => {
+    {
+      let s = json_pretty!($($parts)*);
+      s.replace('{', "\\{")
+    }
+  };
+}
+
+#[macro_export]
 macro_rules! parts {
     ($s:ident, { $($parts:tt)* }) => {{
         $s.push('{');
