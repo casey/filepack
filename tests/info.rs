@@ -1,7 +1,7 @@
 use super::*;
 
 #[test]
-fn no_key_dir() {
+fn no_keychain() {
   Test::new()
     .args(["info"])
     .stdout_regex(&json_regex! {
