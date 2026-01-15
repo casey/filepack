@@ -336,6 +336,9 @@ fn sign_creates_valid_signature() {
 #[test]
 fn sign_fails_if_master_key_not_available() {
   Test::new()
+    .args(["keygen"])
+    .success()
+    .remove_file("keys/master.private")
     .touch("foo/bar")
     .args(["create", "--sign", "foo"])
     .stderr_regex("error: private key not found: `.*master.private`\n")
@@ -375,7 +378,7 @@ fn sign_with_unknown_key() {
   Test::new()
     .touch("foo/bar")
     .args(["create", "--sign", "--key", "deploy", "foo"])
-    .stderr_regex("error: private key not found: `.*deploy.private`\n")
+    .stderr_regex("error: public key not found: `.*deploy.public`\n")
     .failure();
 }
 
