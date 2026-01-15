@@ -83,9 +83,7 @@ fn existing_signatures_must_be_valid() {
   let mut manifest = Manifest::load(Some(&manifest_path)).unwrap();
 
   manifest.signatures.insert(
-    "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b"
-      .parse::<PublicKey>()
-      .unwrap(),
+    PUBLIC_KEY.parse::<PublicKey>().unwrap(),
     "0".repeat(128).parse::<Signature>().unwrap(),
   );
 
@@ -93,7 +91,10 @@ fn existing_signatures_must_be_valid() {
 
   test
     .args(["sign", "foo/filepack.json"])
-    .stderr_regex("error: invalid signature for public key `7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b`\n.*Verification equation was not satisfied\n")
+    .stderr_regex(&format!(
+      "error: invalid signature for public key `{PUBLIC_KEY}`\n\
+        .*Verification equation was not satisfied\n"
+    ))
     .failure();
 }
 

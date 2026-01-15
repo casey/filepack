@@ -5,17 +5,8 @@ fn duplicate_key_literal() {
   Test::new()
     .args(["create"])
     .success()
-    .args([
-      "verify",
-      "--key",
-      "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b",
-      "--key",
-      "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b",
-    ])
-    .stderr(
-      "error: duplicate key: \
-      `7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b`\n",
-    )
+    .args(["verify", "--key", PUBLIC_KEY, "--key", PUBLIC_KEY])
+    .stderr(&format!("error: duplicate key: `{PUBLIC_KEY}`\n"))
     .failure();
 }
 
@@ -160,8 +151,7 @@ fn malformed_signature_error() {
       json! {
         files: {},
         signatures: {
-          "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b":
-            "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b"
+          "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b": "00",
         }
       },
     )
@@ -267,15 +257,10 @@ fn missing_signature_for_literal_key() {
   Test::new()
     .args(["create"])
     .success()
-    .args([
-      "verify",
-      "--key",
-      "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b",
-    ])
-    .stderr(
-      "error: no signature found for key \
-      `7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b`\n",
-    )
+    .args(["verify", "--key", PUBLIC_KEY])
+    .stderr(&format!(
+      "error: no signature found for key `{PUBLIC_KEY}`\n",
+    ))
     .failure();
 }
 
@@ -335,18 +320,10 @@ fn multiple_keys_one_missing() {
   let alice = test.read("alice/keys/master.public");
 
   test
-    .args([
-      "verify",
-      "foo",
-      "--key",
-      &alice,
-      "--key",
-      "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b",
-    ])
-    .stderr(
-      "error: no signature found for key \
-      `7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b`\n",
-    )
+    .args(["verify", "foo", "--key", &alice, "--key", PUBLIC_KEY])
+    .stderr(&format!(
+      "error: no signature found for key `{PUBLIC_KEY}`\n",
+    ))
     .failure();
 }
 
@@ -629,20 +606,18 @@ fn valid_signature_for_wrong_pubkey_error() {
 
   let signature = manifest.signatures.remove(&public_key).unwrap();
 
-  manifest.signatures.insert(
-    "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b"
-      .parse::<PublicKey>()
-      .unwrap(),
-    signature,
-  );
+  manifest
+    .signatures
+    .insert(PUBLIC_KEY.parse::<PublicKey>().unwrap(), signature);
 
   manifest.save(&manifest_path).unwrap();
 
   test
     .args(["verify", "foo"])
-    .stderr_regex(
-      "error: invalid signature for public key `7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b`\n.*Verification equation was not satisfied.*",
-    )
+    .stderr_regex(&format!(
+      "error: invalid signature for public key `{PUBLIC_KEY}`\n\
+      .*Verification equation was not satisfied.*",
+    ))
     .failure();
 }
 
