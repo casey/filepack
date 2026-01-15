@@ -26,7 +26,7 @@ use {
     entries::Entries,
     fingerprint_hasher::FingerprintHasher,
     fingerprint_prefix::FingerprintPrefix,
-    functions::{current_dir, decode_path, is_lowercase_hex},
+    functions::{current_dir, decode_path, default, is_lowercase_hex},
     key_identifier::KeyIdentifier,
     key_name::KeyName,
     key_type::KeyType,

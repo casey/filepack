@@ -1,6 +1,5 @@
 use super::*;
 
-#[derive(Default)]
 pub(crate) struct Keychain {
   pub(crate) keys: BTreeMap<KeyName, PublicKey>,
   pub(crate) path: Utf8PathBuf,
@@ -11,7 +10,10 @@ impl Keychain {
     let path = options.key_dir()?;
 
     if !filesystem::exists(&path)? {
-      return Ok(Self::default());
+      return Ok(Self {
+        keys: default(),
+        path,
+      });
     }
 
     let mode = filesystem::mode(&path)?;
