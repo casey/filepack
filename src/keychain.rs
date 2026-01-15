@@ -83,10 +83,7 @@ impl Keychain {
       }
     }
 
-    Ok(Self {
-      keys,
-      path: path.into(),
-    })
+    Ok(Self { keys, path })
   }
 
   pub(crate) fn public_key(&self, name: &KeyName) -> Result<&PublicKey> {
