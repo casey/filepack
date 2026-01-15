@@ -33,22 +33,28 @@ impl Keys {
       }
 
       if !entry.file_type().is_file() {
-        todo!("unexpected directory");
+        return Err(error::KeyDirDirectory { path }.build());
       }
 
       let Some(extension) = path.extension() else {
-        todo!("unexpected file");
+        return Err(error::KeyDirExtension { path }.build());
       };
 
-      let key_type = extension
-        .parse::<KeyType>()
-        .expect("todo: unexpected file type");
+      let Ok(key_type) = extension.parse::<KeyType>() else {
+        return Err(
+          error::KeyDirType {
+            extension: extension.to_string(),
+            path,
+          }
+          .build(),
+        );
+      };
 
-      let name = path
-        .file_stem()
-        .unwrap()
-        .parse::<KeyName>()
-        .expect("todo: bad key name");
+      let stem = path.file_stem().unwrap();
+
+      let name = stem.parse::<KeyName>().context(error::KeyNameInvalid {
+        stem: stem.to_string(),
+      })?;
 
       match key_type {
         KeyType::Private => {
@@ -59,21 +65,23 @@ impl Keys {
             error::PrivateKeyPermissions { mode, path },
           }
 
-          let public_key = path.with_file_name(name.public_key_filename());
+          let public_key_path = path.with_file_name(name.public_key_filename());
 
-          if !filesystem::exists(&public_key)? {
-            todo!();
+          ensure! {
+            filesystem::exists(&public_key_path)?,
+            error::PublicKeyNotFound { path: public_key_path },
           }
 
-          PublicKey::load(&public_key)?;
+          PublicKey::load(&public_key_path)?;
         }
         KeyType::Public => {
           let public_key = PublicKey::load(path)?;
 
-          let private_key = path.with_file_name(name.private_key_filename());
+          let private_key_path = path.with_file_name(name.private_key_filename());
 
-          if !filesystem::exists(&private_key)? {
-            todo!()
+          ensure! {
+            filesystem::exists(&private_key_path)?,
+            error::PrivateKeyNotFound { path: private_key_path },
           }
 
           public_keys.insert(name, public_key);

@@ -75,11 +75,33 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     message: String,
   },
+  #[snafu(display("unexpected directory in keys directory: `{path}`"))]
+  KeyDirDirectory {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+  },
   #[snafu(display("keys directory `{path}` has insecure permissions {mode}"))]
   KeyDirPermissions {
     backtrace: Option<Backtrace>,
     mode: Mode,
     path: DisplayPath,
+  },
+  #[snafu(display("unexpected file type `{extension}` in keys directory: `{path}`"))]
+  KeyDirType {
+    backtrace: Option<Backtrace>,
+    extension: String,
+    path: DisplayPath,
+  },
+  #[snafu(display("unexpected file with no extension in keys directory: `{path}`"))]
+  KeyDirExtension {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+  },
+  #[snafu(display("invalid key name: `{stem}`"))]
+  KeyNameInvalid {
+    backtrace: Option<Backtrace>,
+    stem: String,
+    source: PublicKeyError,
   },
   #[snafu(display(
     "public key `{}` doesn't match private key `{}`",
