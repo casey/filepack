@@ -1,0 +1,105 @@
+use super::*;
+
+#[test]
+fn no_keys() {
+  Test::new()
+    .create_dir("keys")
+    .chmod("keys", 0o700)
+    .args(["info"])
+    .stdout_regex(r#"\{\n  "data-dir": ".*",\n  "key-dir": ".*keys",\n  "keys": \{\}\n\}\n"#)
+    .success();
+}
+
+#[test]
+fn with_keys() {
+  let test = Test::new()
+    .args(["keygen"])
+    .success()
+    .args(["keygen", "--name", "deploy"])
+    .success();
+
+  let master_key = test.read("keys/master.public");
+  let deploy_key = test.read("keys/deploy.public");
+
+  test
+    .args(["info"])
+    .stdout_regex(&format!(
+      r#"\{{\n  "data-dir": ".*",\n  "key-dir": ".*keys",\n  "keys": \{{\n    "deploy": "{deploy_key}",\n    "master": "{master_key}"\n  }}\n}}\n"#
+    ))
+    .success();
+}
+
+#[test]
+fn key_dir_directory_error() {
+  Test::new()
+    .create_dir("keys/subdir")
+    .chmod("keys", 0o700)
+    .args(["info"])
+    .stderr_regex("error: unexpected directory in keys directory: `.*subdir`\n")
+    .failure();
+}
+
+#[test]
+fn key_dir_unexpected_file_error() {
+  Test::new()
+    .write("keys/foo", "")
+    .chmod("keys", 0o700)
+    .args(["info"])
+    .stderr_regex("error: unexpected file in keys directory: `.*foo`\n")
+    .failure();
+}
+
+#[test]
+fn key_dir_type_error() {
+  Test::new()
+    .write("keys/master.unknown", "")
+    .chmod("keys", 0o700)
+    .args(["info"])
+    .stderr_regex("error: unexpected file type `unknown` in keys directory: `.*master.unknown`\n.*")
+    .failure();
+}
+
+#[test]
+fn key_name_invalid_error() {
+  Test::new()
+    .write("keys/INVALID.public", PUBLIC_KEY)
+    .write("keys/INVALID.private", PRIVATE_KEY)
+    .chmod("keys", 0o700)
+    .chmod("keys/INVALID.private", 0o600)
+    .args(["info"])
+    .stderr_regex("error: invalid key name: `INVALID`\n.*")
+    .failure();
+}
+
+#[test]
+fn hidden_files_are_ignored() {
+  Test::new()
+    .args(["keygen"])
+    .success()
+    .write("keys/.hidden", "")
+    .write("keys/.DS_Store", "")
+    .args(["info"])
+    .stdout_regex(r#".*"keys": \{\n    "master":.*"#)
+    .success();
+}
+
+#[test]
+fn missing_private_key_error() {
+  Test::new()
+    .write("keys/orphan.public", PUBLIC_KEY)
+    .chmod("keys", 0o700)
+    .args(["info"])
+    .stderr_regex("error: private key not found: `.*orphan.private`\n")
+    .failure();
+}
+
+#[test]
+fn missing_public_key_error() {
+  Test::new()
+    .write("keys/orphan.private", PRIVATE_KEY)
+    .chmod("keys", 0o700)
+    .chmod("keys/orphan.private", 0o600)
+    .args(["info"])
+    .stderr_regex("error: public key not found: `.*orphan.public`\n")
+    .failure();
+}

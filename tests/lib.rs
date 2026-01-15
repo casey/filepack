@@ -32,6 +32,7 @@ mod expected;
 mod files;
 mod fingerprint;
 mod hash;
+mod info;
 mod json;
 mod key;
 mod keygen;
