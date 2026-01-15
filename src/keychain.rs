@@ -12,7 +12,7 @@ impl Keychain {
     }
 
     ensure! {
-      !self.keys.contains_key(&name),
+      !self.keys.contains_key(name),
       error::PublicKeyAlreadyExists { path: self.path.join(name.public_key_filename()) },
     }
 

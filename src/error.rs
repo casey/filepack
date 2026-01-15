@@ -75,6 +75,21 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     message: String,
   },
+  #[snafu(display(
+    "public key `{}` doesn't match private key `{}`",
+    key.public_key_filename(),
+    key.private_key_filename(),
+  ))]
+  KeyMismatch {
+    backtrace: Option<Backtrace>,
+    key: crate::KeyName,
+  },
+  #[snafu(display("invalid key name: `{path}`"))]
+  KeyName {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+    source: PublicKeyError,
+  },
   #[snafu(display("key directory `{path}` has insecure permissions {mode}"))]
   KeychainPermissions {
     backtrace: Option<Backtrace>,
@@ -90,21 +105,6 @@ pub enum Error {
   KeychainUnexpectedFile {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
-  },
-  #[snafu(display(
-    "public key `{}` doesn't match private key `{}`",
-    key.public_key_filename(),
-    key.private_key_filename(),
-  ))]
-  KeyMismatch {
-    backtrace: Option<Backtrace>,
-    key: crate::KeyName,
-  },
-  #[snafu(display("invalid key name: `{path}`"))]
-  KeyName {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-    source: PublicKeyError,
   },
   #[snafu(display("{count} lint error{}", if *count == 1 { "" } else { "s" }))]
   Lint {
