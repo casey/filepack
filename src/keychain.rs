@@ -2,8 +2,8 @@ use super::*;
 
 #[derive(Default)]
 pub(crate) struct Keychain {
-  pub(crate) path: Utf8PathBuf,
   pub(crate) keys: BTreeMap<KeyName, PublicKey>,
+  pub(crate) path: Utf8PathBuf,
 }
 
 impl Keychain {
