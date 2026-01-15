@@ -128,11 +128,6 @@ impl Test {
     self
   }
 
-  pub(crate) fn rename(self, from: &str, to: &str) -> Self {
-    fs::rename(self.join(from), self.join(to)).unwrap();
-    self
-  }
-
   #[track_caller]
   pub(crate) fn status(self, code: i32) -> Self {
     let mut command = Command::new(executable_path("filepack"));

@@ -11,7 +11,7 @@ impl Keys {
       return Ok(Self::default());
     }
 
-    let mode = filesystem::mode(&path)?;
+    let mode = filesystem::mode(path)?;
 
     ensure! {
       mode.is_secure(),
@@ -19,7 +19,7 @@ impl Keys {
     }
 
     let mut public_keys = BTreeMap::new();
-    for entry in WalkDir::new(&path).max_depth(1) {
+    for entry in WalkDir::new(path).max_depth(1) {
       let entry = entry?;
 
       if entry.depth() == 0 {

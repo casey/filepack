@@ -6,16 +6,16 @@ pub struct KeyName(Cow<'static, str>);
 impl KeyName {
   pub(crate) const DEFAULT: Self = KeyName(Cow::Borrowed("master"));
 
+  fn filename(&self, key_type: KeyType) -> String {
+    format!("{}.{}", self.0, key_type.extension())
+  }
+
   pub(crate) fn private_key_filename(&self) -> String {
     self.filename(KeyType::Private)
   }
 
   pub(crate) fn public_key_filename(&self) -> String {
     self.filename(KeyType::Public)
-  }
-
-  fn filename(&self, key_type: KeyType) -> String {
-    format!("{}.{}", self.0, key_type.extension())
   }
 }
 

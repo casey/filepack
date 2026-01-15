@@ -75,6 +75,27 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     message: String,
   },
+  #[snafu(display(
+    "private key `{}` doesn't match public key `{}`",
+    key.private_key_filename(),
+    key.public_key_filename(),
+  ))]
+  KeyDirKeyMismatch {
+    backtrace: Option<Backtrace>,
+    key: KeyName,
+  },
+  #[snafu(display("invalid key name: `{path}`"))]
+  KeyDirKeyName {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+    source: PublicKeyError,
+  },
+  #[snafu(display("key directory `{path}` has insecure permissions {mode}"))]
+  KeyDirPermissions {
+    backtrace: Option<Backtrace>,
+    mode: Mode,
+    path: DisplayPath,
+  },
   #[snafu(display("private key not found: `{path}`"))]
   KeyDirPrivateKeyNotFound {
     backtrace: Option<Backtrace>,
@@ -83,12 +104,6 @@ pub enum Error {
   #[snafu(display("public key not found: `{path}`"))]
   KeyDirPublicKeyNotFound {
     backtrace: Option<Backtrace>,
-    path: DisplayPath,
-  },
-  #[snafu(display("key directory `{path}` has insecure permissions {mode}"))]
-  KeyDirPermissions {
-    backtrace: Option<Backtrace>,
-    mode: Mode,
     path: DisplayPath,
   },
   #[snafu(display("unexpected directory in key directory: `{path}`"))]
@@ -100,21 +115,6 @@ pub enum Error {
   KeyDirUnexpectedFile {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
-  },
-  #[snafu(display("invalid key name: `{path}`"))]
-  KeyDirKeyName {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-    source: PublicKeyError,
-  },
-  #[snafu(display(
-    "public key `{}` doesn't match private key `{}`",
-    key.public_key_filename(),
-    key.private_key_filename(),
-  ))]
-  KeyDirKeyMismatch {
-    backtrace: Option<Backtrace>,
-    key: KeyName,
   },
   #[snafu(display("{count} lint error{}", if *count == 1 { "" } else { "s" }))]
   Lint {
