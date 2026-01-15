@@ -44,14 +44,6 @@ impl Options {
   }
 
   pub(crate) fn key_dir(&self) -> Result<Utf8PathBuf> {
-    let path = self.key_dir_path()?;
-
-    Keys::load(&path)?;
-
-    Ok(path)
-  }
-
-  fn key_dir_path(&self) -> Result<Utf8PathBuf> {
     Ok(self.data_dir()?.join("keys"))
   }
 }
@@ -69,7 +61,7 @@ mod tests {
         parallel: false,
         quiet: false,
       }
-      .key_dir_path()
+      .key_dir()
       .unwrap(),
       dirs::data_local_dir()
         .unwrap()

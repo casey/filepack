@@ -50,24 +50,6 @@ impl PrivateKey {
     Ok(private_key)
   }
 
-  pub(crate) fn load_and_sign(
-    name: &KeyName,
-    public_key: &PublicKey,
-    path: &Utf8Path,
-    message: Hash,
-  ) -> Result<Signature> {
-    let private_key = Self::load(path)?;
-
-    ensure! {
-      private_key.public_key() == *public_key,
-      error::KeyMismatch {
-        key: name.clone(),
-      }
-    }
-
-    Ok(private_key.sign(message))
-  }
-
   #[must_use]
   pub fn public_key(&self) -> PublicKey {
     self.clone().into()

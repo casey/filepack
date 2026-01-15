@@ -9,6 +9,10 @@ pub(crate) fn decode_path(path: &Path) -> Result<&Utf8Path> {
   Utf8Path::from_path(path).context(error::PathUnicode { path })
 }
 
+pub(crate) fn default<T: Default>() -> T {
+  Default::default()
+}
+
 pub(crate) fn is_lowercase_hex(s: &str) -> bool {
   s.chars()
     .all(|c| c.is_ascii_hexdigit() && (c.is_numeric() || c.is_lowercase()))

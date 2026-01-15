@@ -35,7 +35,7 @@ mod hash;
 mod info;
 mod json;
 mod key;
-mod key_dir;
+mod keychain;
 mod keygen;
 mod man;
 mod misc;

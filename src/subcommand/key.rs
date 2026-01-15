@@ -8,13 +8,8 @@ pub(crate) struct Key {
 
 impl Key {
   pub(crate) fn run(self, options: Options) -> Result {
-    let key_dir = options.key_dir()?;
-
-    println!(
-      "{}",
-      PublicKey::load(&key_dir.join(self.key.public_key_filename()))?,
-    );
-
+    let keychain = Keychain::load(&options)?;
+    println!("{}", keychain.public_key(&self.key)?);
     Ok(())
   }
 }

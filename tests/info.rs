@@ -1,6 +1,19 @@
 use super::*;
 
 #[test]
+fn no_key_dir() {
+  Test::new()
+    .args(["info"])
+    .stdout_regex(&json_regex! {
+      "data-dir": ".*",
+      "key-dir": ".*keys",
+      keys: {
+      },
+    })
+    .success();
+}
+
+#[test]
 fn no_keys() {
   Test::new()
     .create_dir("keys")
