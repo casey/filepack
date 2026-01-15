@@ -53,6 +53,17 @@ pub enum Error {
     first: usize,
     second: usize,
   },
+  #[snafu(display(
+    "note {} and {} both have signatures from pubkey {key}",
+    Index(*first),
+    Index(*second),
+  ))]
+  DuplicateSignature {
+    backtrace: Option<Backtrace>,
+    first: usize,
+    key: PublicKey,
+    second: usize,
+  },
   #[snafu(display("{count} mismatched file{}", if *count == 1 { "" } else { "s" }))]
   EntryMismatch {
     backtrace: Option<Backtrace>,
