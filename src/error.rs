@@ -82,10 +82,10 @@ pub enum Error {
   ))]
   KeyMismatch {
     backtrace: Option<Backtrace>,
-    key: KeyName,
+    key: crate::KeyName,
   },
   #[snafu(display("invalid key name: `{path}`"))]
-  KeyDirKeyName {
+  KeyName {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
     source: PublicKeyError,
@@ -97,12 +97,12 @@ pub enum Error {
     path: DisplayPath,
   },
   #[snafu(display("private key not found: `{path}`"))]
-  KeyDirPrivateKeyNotFound {
+  PrivateKeyNotFound {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
   #[snafu(display("public key not found: `{path}`"))]
-  KeyDirPublicKeyNotFound {
+  PublicKeyNotFound {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },

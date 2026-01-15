@@ -40,7 +40,7 @@ impl PrivateKey {
 
   pub(crate) fn load(path: &Utf8Path) -> Result<Self> {
     let private_key = filesystem::read_to_string_opt(path)?
-      .ok_or_else(|| error::KeyDirPrivateKeyNotFound { path }.build())?;
+      .ok_or_else(|| error::PrivateKeyNotFound { path }.build())?;
 
     let private_key = private_key
       .trim()

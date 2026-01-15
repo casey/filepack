@@ -47,9 +47,7 @@ impl Keys {
 
       let stem = path.file_stem().unwrap();
 
-      let name = stem
-        .parse::<KeyName>()
-        .context(error::KeyDirKeyName { path })?;
+      let name = stem.parse::<KeyName>().context(error::KeyName { path })?;
 
       match key_type {
         KeyType::Private => {
@@ -64,7 +62,7 @@ impl Keys {
 
           ensure! {
             filesystem::exists(&path)?,
-            error::KeyDirPublicKeyNotFound { path },
+            error::PublicKeyNotFound { path },
           }
         }
         KeyType::Public => {
@@ -74,7 +72,7 @@ impl Keys {
 
           ensure! {
             filesystem::exists(&path)?,
-            error::KeyDirPrivateKeyNotFound { path },
+            error::PrivateKeyNotFound { path },
           }
 
           public_keys.insert(name, key);
