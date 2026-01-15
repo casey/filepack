@@ -9,13 +9,12 @@ struct Output {
 }
 
 pub(crate) fn run(options: Options) -> Result {
-  let key_dir = options.key_dir()?;
-  let keys = Keys::load(&key_dir)?;
+  let keychain = Keychain::load(&options)?;
 
   let info = Output {
     data_dir: options.data_dir()?,
-    key_dir,
-    keys: keys.public_keys,
+    key_dir: keychain.path,
+    keys: keychain.keys,
   };
 
   println!("{}", serde_json::to_string_pretty(&info).unwrap());

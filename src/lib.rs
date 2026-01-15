@@ -30,7 +30,7 @@ use {
     key_identifier::KeyIdentifier,
     key_name::KeyName,
     key_type::KeyType,
-    keys::Keys,
+    keychain::Keychain,
     lint::Lint,
     lint_group::LintGroup,
     message::Message,
@@ -113,7 +113,7 @@ mod hash;
 mod key_identifier;
 mod key_name;
 mod key_type;
-mod keys;
+mod keychain;
 mod lint;
 mod lint_group;
 mod manifest;

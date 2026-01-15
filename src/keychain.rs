@@ -1,25 +1,28 @@
 use super::*;
 
 #[derive(Default)]
-pub(crate) struct Keys {
-  pub(crate) public_keys: BTreeMap<KeyName, PublicKey>,
+pub(crate) struct Keychain {
+  pub(crate) path: Utf8PathBuf,
+  pub(crate) keys: BTreeMap<KeyName, PublicKey>,
 }
 
-impl Keys {
-  pub(crate) fn load(path: &Utf8Path) -> Result<Self> {
-    if !filesystem::exists(path)? {
+impl Keychain {
+  pub(crate) fn load(options: &Options) -> Result<Self> {
+    let path = options.key_dir()?;
+
+    if !filesystem::exists(&path)? {
       return Ok(Self::default());
     }
 
-    let mode = filesystem::mode(path)?;
+    let mode = filesystem::mode(&path)?;
 
     ensure! {
       mode.is_secure(),
       error::KeyDirPermissions { mode, path },
     }
 
-    let mut public_keys = BTreeMap::new();
-    for entry in WalkDir::new(path).max_depth(1) {
+    let mut keys = BTreeMap::new();
+    for entry in WalkDir::new(&path).max_depth(1) {
       let entry = entry?;
 
       if entry.depth() == 0 {
@@ -75,11 +78,35 @@ impl Keys {
             error::PrivateKeyNotFound { path },
           }
 
-          public_keys.insert(name, key);
+          keys.insert(name, key);
         }
       }
     }
 
-    Ok(Self { public_keys })
+    Ok(Self {
+      keys,
+      path: path.into(),
+    })
+  }
+
+  pub(crate) fn public_key(&self, name: &KeyName) -> Result<&PublicKey> {
+    self.keys.get(name).context(error::PublicKeyNotFound {
+      path: self.path.join(name.public_key_filename()),
+    })
+  }
+
+  pub(crate) fn sign(&self, name: &KeyName, fingerprint: Hash) -> Result<(&PublicKey, Signature)> {
+    let public_key = self.public_key(name)?;
+
+    let private_key = PrivateKey::load(&self.path.join(name.private_key_filename()))?;
+
+    ensure! {
+      private_key.public_key() == *public_key,
+      error::KeyMismatch {
+        key: name.clone(),
+      }
+    }
+
+    Ok((public_key, private_key.sign(fingerprint)))
   }
 }
