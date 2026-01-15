@@ -161,21 +161,15 @@ impl Create {
       bar.inc(file.size);
     }
 
-    let notes = if self.sign {
-      let message = Message {
-        fingerprint: files.fingerprint(),
-      };
-
-      let keychain = Keychain::load(&options)?;
-
-      let (public_key, signature) = keychain.sign(&self.key, message.digest())?;
-
-      vec![Note::from_message(message, public_key, signature)]
-    } else {
-      Vec::new()
+    let mut manifest = Manifest {
+      files,
+      notes: Vec::new(),
     };
 
-    let manifest = Manifest { files, notes };
+    if self.sign {
+      let keychain = Keychain::load(&options)?;
+      manifest.sign(&keychain, &self.key, false)?;
+    }
 
     manifest.save(&manifest_path)?;
 
