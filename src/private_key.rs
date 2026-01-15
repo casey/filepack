@@ -60,6 +60,11 @@ impl PrivateKey {
     let message = Message { fingerprint }.digest();
     self.0.sign(message.as_bytes()).into()
   }
+
+  pub(crate) fn sign_message(&self, message: Message) -> Signature {
+    use ed25519_dalek::Signer;
+    self.0.sign(message.digest().as_bytes()).into()
+  }
 }
 
 impl FromStr for PrivateKey {

@@ -16,20 +16,28 @@ impl Sign {
 
     let fingerprint = manifest.fingerprint();
 
-    for (public_key, signature) in &manifest.signatures {
-      public_key.verify(fingerprint, signature)?;
+    for note in &manifest.notes {
+      for (public_key, signature) in &note.signatures {
+        public_key.verify(fingerprint, signature)?;
+      }
     }
 
     let keychain = Keychain::load(&options)?;
 
-    let (public_key, signature) = keychain.sign(&self.key, fingerprint)?;
+    let message = Message { fingerprint };
+
+    let (public_key, signature) = keychain.sign_message(&self.key, message)?;
 
     ensure! {
-      self.force || !manifest.signatures.contains_key(public_key),
+      self.force || manifest.notes.iter().all(|note| !note.has_signature(public_key)),
       error::SignatureAlreadyExists { public_key: public_key.clone() },
     }
 
-    manifest.signatures.insert(public_key.clone(), signature);
+    let note = Note {
+      signatures: [(public_key.clone(), signature)].into(),
+    };
+
+    manifest.notes.push(note);
 
     manifest.save(&path)?;
 

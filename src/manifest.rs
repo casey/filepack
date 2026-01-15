@@ -4,7 +4,7 @@ use super::*;
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
 pub struct Manifest {
   pub files: Directory,
-  pub signatures: BTreeMap<PublicKey, Signature>,
+  pub notes: Vec<Note>,
 }
 
 impl Manifest {
@@ -93,7 +93,7 @@ mod tests {
   fn empty_manifest_serialization() {
     let manifest = Manifest {
       files: Directory::new(),
-      signatures: BTreeMap::new(),
+      notes: Vec::new(),
     };
     let json = serde_json::to_string(&manifest).unwrap();
     assert_eq!(json, r#"{"files":{},"signatures":{}}"#);

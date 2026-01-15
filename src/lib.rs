@@ -36,6 +36,7 @@ use {
     message::Message,
     metadata::Metadata,
     mode::Mode,
+    note::Note,
     options::Options,
     owo_colorize_ext::OwoColorizeExt,
     path_error::PathError,
@@ -120,6 +121,7 @@ mod manifest;
 mod message;
 mod metadata;
 mod mode;
+mod note;
 mod options;
 mod owo_colorize_ext;
 mod path_error;

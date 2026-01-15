@@ -29,6 +29,7 @@ impl Verify {
     struct Verified {
       bytes: u128,
       files: u64,
+      notes: u64,
       signatures: u64,
     }
 
@@ -215,14 +216,14 @@ mismatched file: `{path}`
       }
     }
 
-    for (public_key, signature) in &manifest.signatures {
-      public_key.verify(fingerprint, signature)?;
-      verified.signatures += 1;
+    for note in &manifest.notes {
+      verified.signatures += note.verify(fingerprint)?;
+      verified.notes += 1;
     }
 
     for (key, identifier) in keys {
       ensure! {
-        manifest.signatures.contains_key(key),
+        manifest.notes.iter().any(|note| note.has_signature(key)),
         error::SignatureMissing { identifier: identifier.clone() },
       }
     }
@@ -232,10 +233,11 @@ mismatched file: `{path}`
     }
 
     eprintln!(
-      "successfully verified {} totaling {} with {}",
+      "successfully verified {} totaling {} with {} across {}",
       Count(verified.files, "file"),
       Count(verified.bytes, "byte"),
       Count(verified.signatures, "signature"),
+      Count(verified.notes, "note"),
     );
 
     Ok(())

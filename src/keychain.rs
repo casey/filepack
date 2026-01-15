@@ -154,4 +154,23 @@ impl Keychain {
 
     Ok((public_key, private_key.sign(fingerprint)))
   }
+
+  pub(crate) fn sign_message(
+    &self,
+    name: &KeyName,
+    message: Message,
+  ) -> Result<(&PublicKey, Signature)> {
+    let public_key = self.public_key(name)?;
+
+    let private_key = PrivateKey::load(&self.path.join(name.private_key_filename()))?;
+
+    ensure! {
+      private_key.public_key() == *public_key,
+      error::KeyMismatch {
+        key: name.clone(),
+      }
+    }
+
+    Ok((public_key, private_key.sign_message(message)))
+  }
 }

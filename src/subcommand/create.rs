@@ -161,18 +161,19 @@ impl Create {
       bar.inc(file.size);
     }
 
-    let mut manifest = Manifest {
-      files,
-      signatures: BTreeMap::new(),
-    };
-
-    if self.sign {
+    let notes = if self.sign {
       let keychain = Keychain::load(&options)?;
 
-      let (public_key, signature) = keychain.sign(&self.key, manifest.fingerprint())?;
+      let (public_key, signature) = keychain.sign(&self.key, files.fingerprint())?;
 
-      manifest.signatures.insert(public_key.clone(), signature);
-    }
+      vec![Note {
+        signatures: [(public_key.clone(), signature)].into(),
+      }]
+    } else {
+      Vec::new()
+    };
+
+    let manifest = Manifest { files, notes };
 
     manifest.save(&manifest_path)?;
 
