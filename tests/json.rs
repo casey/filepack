@@ -27,8 +27,7 @@ macro_rules! json_pretty {
 macro_rules! json_regex {
   ($($parts:tt)*) => {
     {
-      let s = json_pretty!($($parts)*);
-      s.replace('{', "\\{")
+      json_pretty!($($parts)*).replace('{', "\\{")
     }
   };
 }
