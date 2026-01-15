@@ -47,7 +47,7 @@ pub enum Error {
     first: KeyIdentifier,
     second: KeyIdentifier,
   },
-  #[snafu(display("note {first} and {second} have the same digests"))]
+  #[snafu(display("note {first} and {second} have the same digest"))]
   DuplicateNote {
     backtrace: Option<Backtrace>,
     first: Index,
