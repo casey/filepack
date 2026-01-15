@@ -43,7 +43,7 @@ impl Keychain {
   }
 
   pub(crate) fn load(options: &Options) -> Result<Self> {
-    let path = options.key_dir()?;
+    let path = options.data_dir()?.join("keychain");
 
     if !filesystem::exists(&path)? {
       return Ok(Self {
@@ -122,6 +122,16 @@ impl Keychain {
     }
 
     Ok(Self { keys, path })
+  }
+
+  pub(crate) fn identifier_public_key<'a>(
+    &'a self,
+    identifier: &'a KeyIdentifier,
+  ) -> Result<&'a PublicKey> {
+    match identifier {
+      KeyIdentifier::Literal(key) => Ok(key),
+      KeyIdentifier::Name(name) => self.public_key(name),
+    }
   }
 
   pub(crate) fn public_key(&self, name: &KeyName) -> Result<&PublicKey> {

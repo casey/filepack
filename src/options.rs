@@ -42,10 +42,6 @@ impl Options {
       size: hasher.count(),
     })
   }
-
-  pub(crate) fn key_dir(&self) -> Result<Utf8PathBuf> {
-    Ok(self.data_dir()?.join("keychain"))
-  }
 }
 
 #[cfg(test)]
@@ -53,7 +49,7 @@ mod tests {
   use super::*;
 
   #[test]
-  fn key_dir_default() {
+  fn data_dir_default() {
     assert_eq!(
       Options {
         data_dir: None,
@@ -61,17 +57,14 @@ mod tests {
         parallel: false,
         quiet: false,
       }
-      .key_dir()
+      .data_dir()
       .unwrap(),
-      dirs::data_local_dir()
-        .unwrap()
-        .join("filepack")
-        .join("keychain"),
+      dirs::data_local_dir().unwrap().join("filepack")
     );
   }
 
   #[test]
-  fn key_dir_set() {
+  fn data_dir_set() {
     assert_eq!(
       Options {
         data_dir: Some("hello".into()),
@@ -79,9 +72,9 @@ mod tests {
         parallel: false,
         quiet: false,
       }
-      .key_dir()
+      .data_dir()
       .unwrap(),
-      Utf8Path::new("hello").join("keychain"),
+      Utf8Path::new("hello"),
     );
   }
 }

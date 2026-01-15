@@ -6,15 +6,6 @@ pub enum KeyIdentifier {
   Name(KeyName),
 }
 
-impl KeyIdentifier {
-  pub(crate) fn load(&self, key_dir: &Utf8Path) -> Result<PublicKey> {
-    match self {
-      Self::Literal(key) => Ok(key.clone()),
-      Self::Name(name) => PublicKey::load(&key_dir.join(name.public_key_filename())),
-    }
-  }
-}
-
 impl FromStr for KeyIdentifier {
   type Err = PublicKeyError;
 
