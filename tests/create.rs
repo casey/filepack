@@ -205,6 +205,21 @@ fn metadata_template_should_not_be_included_in_package() {
 }
 
 #[test]
+fn mismatched_key() {
+  Test::new()
+    .data_dir("foo")
+    .args(["keygen"])
+    .success()
+    .args(["keygen"])
+    .success()
+    .rename("foo/keys/master.private", "keys/master.private")
+    .create_dir("bar")
+    .args(["create", "bar", "--sign"])
+    .stderr("error: public key `master.public` doesn't match private key `master.private`\n")
+    .failure();
+}
+
+#[test]
 fn multiple_empty_directory_are_included() {
   Test::new()
     .create_dir("foo")
@@ -280,6 +295,7 @@ fn private_key_load_error_message() {
   Test::new()
     .touch("foo/bar")
     .touch("keys/master.private")
+    .write("keys/master.public", PUBLIC_KEY)
     .chmod("keys", 0o700)
     .chmod("keys/master.private", 0o600)
     .args(["create", "--sign", "foo"])
@@ -320,6 +336,9 @@ fn sign_creates_valid_signature() {
 #[test]
 fn sign_fails_if_master_key_not_available() {
   Test::new()
+    .args(["keygen"])
+    .success()
+    .remove_file("keys/master.private")
     .touch("foo/bar")
     .args(["create", "--sign", "foo"])
     .stderr_regex("error: private key not found: `.*master.private`\n")
@@ -359,7 +378,7 @@ fn sign_with_unknown_key() {
   Test::new()
     .touch("foo/bar")
     .args(["create", "--sign", "--key", "deploy", "foo"])
-    .stderr_regex("error: private key not found: `.*deploy.private`\n")
+    .stderr_regex("error: public key not found: `.*deploy.public`\n")
     .failure();
 }
 

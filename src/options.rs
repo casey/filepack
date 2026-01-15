@@ -17,6 +17,15 @@ pub(crate) struct Options {
 }
 
 impl Options {
+  pub(crate) fn data_dir(&self) -> Result<Utf8PathBuf> {
+    if let Some(path) = &self.data_dir {
+      Ok(path.into())
+    } else {
+      let path = dirs::data_local_dir().context(error::DataLocalDir)?;
+      Ok(decode_path(&path)?.join("filepack"))
+    }
+  }
+
   pub(crate) fn hash_file(&self, path: &Utf8Path) -> io::Result<File> {
     let mut hasher = Hasher::new();
 
@@ -37,46 +46,13 @@ impl Options {
   pub(crate) fn key_dir(&self) -> Result<Utf8PathBuf> {
     let path = self.key_dir_path()?;
 
-    if filesystem::exists(&path)? {
-      let mode = filesystem::mode(&path)?;
-
-      ensure! {
-        mode.is_secure(),
-        error::KeyDirPermissions { mode, path },
-      }
-
-      for entry in WalkDir::new(&path) {
-        let entry = entry?;
-
-        if entry.file_type().is_file() {
-          let path = decode_path(entry.path())?;
-
-          if path.extension() != Some("private") {
-            continue;
-          }
-
-          let mode = filesystem::mode(path)?;
-
-          ensure! {
-            mode.is_secure(),
-            error::PrivateKeyPermissions { mode, path },
-          }
-        }
-      }
-    }
+    Keys::load(&path)?;
 
     Ok(path)
   }
 
   fn key_dir_path(&self) -> Result<Utf8PathBuf> {
-    let path = if let Some(path) = &self.data_dir {
-      path.into()
-    } else {
-      let path = dirs::data_local_dir().context(error::DataLocalDir)?;
-      decode_path(&path)?.join("filepack")
-    };
-
-    Ok(path.join("keys"))
+    Ok(self.data_dir()?.join("keys"))
   }
 }
 

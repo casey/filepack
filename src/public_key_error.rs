@@ -1,7 +1,7 @@
 use super::*;
 
 #[derive(Debug, Snafu)]
-#[snafu(context(suffix(Error)), visibility(pub(crate)))]
+#[snafu(context(suffix(false)), visibility(pub(crate)))]
 pub enum PublicKeyError {
   #[snafu(display("public keys must be lowercase hex: `{key}`"))]
   Case { key: String },

@@ -29,6 +29,8 @@ use {
     functions::{current_dir, decode_path, is_lowercase_hex},
     key_identifier::KeyIdentifier,
     key_name::KeyName,
+    key_type::KeyType,
+    keys::Keys,
     lint::Lint,
     lint_group::LintGroup,
     message::Message,
@@ -58,6 +60,7 @@ use {
   std::{
     array::TryFromSliceError,
     backtrace::{Backtrace, BacktraceStatus},
+    borrow::Cow,
     cmp::Ordering,
     collections::{BTreeMap, BTreeSet, HashMap},
     env,
@@ -70,7 +73,7 @@ use {
     str::{self, FromStr},
     sync::LazyLock,
   },
-  strum::{EnumIter, IntoStaticStr},
+  strum::{EnumIter, EnumString, IntoStaticStr},
   usized::IntoU64,
   walkdir::WalkDir,
 };
@@ -109,6 +112,8 @@ mod functions;
 mod hash;
 mod key_identifier;
 mod key_name;
+mod key_type;
+mod keys;
 mod lint;
 mod lint_group;
 mod manifest;
@@ -122,6 +127,7 @@ mod private_key;
 mod progress_bar;
 mod public_key;
 mod public_key_error;
+mod re;
 mod relative_path;
 mod signature;
 mod signature_error;
@@ -130,7 +136,6 @@ mod subcommand;
 mod template;
 mod utf8_path_ext;
 
-const DEFAULT_KEY: &str = "master";
 const SEPARATORS: [char; 2] = ['/', '\\'];
 
 type Result<T = (), E = Error> = std::result::Result<T, E>;

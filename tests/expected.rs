@@ -8,6 +8,7 @@ pub(crate) enum Expected {
 }
 
 impl Expected {
+  #[track_caller]
   pub(crate) fn check(&self, actual: &str, name: &str) {
     match self {
       Expected::String(expected) => assert_eq!(actual, expected, "{name} did not match"),

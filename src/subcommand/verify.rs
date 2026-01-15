@@ -157,11 +157,11 @@ mismatched file: `{path}`
     for entry in WalkDir::new(&root) {
       let entry = entry?;
 
-      let path = decode_path(entry.path())?;
-
-      if path == root {
+      if entry.depth() == 0 {
         continue;
       }
+
+      let path = decode_path(entry.path())?;
 
       if current_dir.join(path) == current_dir.join(&source) {
         continue;

@@ -35,20 +35,6 @@ fn master() {
 }
 
 #[test]
-fn mismatched_key() {
-  Test::new()
-    .data_dir("foo")
-    .args(["keygen"])
-    .success()
-    .args(["keygen"])
-    .success()
-    .rename("foo/keys/master.private", "keys/master.private")
-    .args(["key"])
-    .stderr("error: public key `master.public` doesn't match private key `master.private`\n")
-    .failure();
-}
-
-#[test]
 fn missing() {
   Test::new()
     .args(["keygen"])

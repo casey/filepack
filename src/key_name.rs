@@ -1,17 +1,21 @@
 use super::*;
 
-static NAME_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new("^[a-z0-9]+(-[a-z0-9]+)*$").unwrap());
-
-#[derive(Clone, Debug, PartialEq)]
-pub struct KeyName(String);
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Serialize)]
+pub struct KeyName(Cow<'static, str>);
 
 impl KeyName {
+  pub(crate) const DEFAULT: Self = KeyName(Cow::Borrowed("master"));
+
+  fn filename(&self, key_type: KeyType) -> String {
+    format!("{}.{}", self.0, key_type.extension())
+  }
+
   pub(crate) fn private_key_filename(&self) -> String {
-    format!("{}.private", self.0)
+    self.filename(KeyType::Private)
   }
 
   pub(crate) fn public_key_filename(&self) -> String {
-    format!("{}.public", self.0)
+    self.filename(KeyType::Public)
   }
 }
 
@@ -19,11 +23,11 @@ impl FromStr for KeyName {
   type Err = PublicKeyError;
 
   fn from_str(name: &str) -> Result<Self, Self::Err> {
-    if !NAME_RE.is_match(name) || name.len() > 128 {
-      return Err(public_key_error::NameError { name }.build());
+    if re::PUBLIC_KEY.is_match(name) || !re::KEY_NAME.is_match(name) || name.len() > 128 {
+      return Err(public_key_error::Name { name }.build());
     }
 
-    Ok(Self(name.into()))
+    Ok(Self(Cow::Owned(name.into())))
   }
 }
 
@@ -72,5 +76,6 @@ mod tests {
     invalid("foo.bar");
     invalid("foo_bar");
     invalid(&"a".repeat(129));
+    invalid(&"a".repeat(64));
   }
 }

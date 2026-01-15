@@ -75,10 +75,20 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     message: String,
   },
-  #[snafu(display("keys directory `{path}` has insecure permissions {mode}"))]
+  #[snafu(display("key directory `{path}` has insecure permissions {mode}"))]
   KeyDirPermissions {
     backtrace: Option<Backtrace>,
     mode: Mode,
+    path: DisplayPath,
+  },
+  #[snafu(display("unexpected directory in key directory: `{path}`"))]
+  KeyDirUnexpectedDirectory {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+  },
+  #[snafu(display("unexpected file in key directory: `{path}`"))]
+  KeyDirUnexpectedFile {
+    backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
   #[snafu(display(
@@ -88,7 +98,13 @@ pub enum Error {
   ))]
   KeyMismatch {
     backtrace: Option<Backtrace>,
-    key: KeyName,
+    key: crate::KeyName,
+  },
+  #[snafu(display("invalid key name: `{path}`"))]
+  KeyName {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+    source: PublicKeyError,
   },
   #[snafu(display("{count} lint error{}", if *count == 1 { "" } else { "s" }))]
   Lint {
@@ -162,7 +178,7 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: PathBuf,
   },
-  #[snafu(display("invalid public key `{path}`"))]
+  #[snafu(display("invalid public key: `{path}`"))]
   PublicKeyLoad {
     backtrace: Option<Backtrace>,
     path: DisplayPath,

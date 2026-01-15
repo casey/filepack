@@ -6,7 +6,7 @@ pub(crate) struct Create {
   deny: Option<LintGroup>,
   #[arg(help = "Overwrite manifest if it already exists", long)]
   force: bool,
-  #[arg(default_value = DEFAULT_KEY, help = "Sign with <KEY>", long, requires = "sign")]
+  #[arg(default_value_t = KeyName::DEFAULT, help = "Sign with <KEY>", long, requires = "sign")]
   key: KeyName,
   #[arg(
     help = "Write manifest to <MANIFEST>, defaults to `<ROOT>/filepack.json`",
@@ -60,11 +60,11 @@ impl Create {
     for entry in WalkDir::new(&root) {
       let entry = entry?;
 
-      let path = decode_path(entry.path())?;
-
-      if path == root {
+      if entry.depth() == 0 {
         continue;
       }
+
+      let path = decode_path(entry.path())?;
 
       let cleaned_path = current_dir.join(path).lexiclean();
 
@@ -167,10 +167,16 @@ impl Create {
     };
 
     if self.sign {
-      let private_key_path = options.key_dir()?.join(self.key.private_key_filename());
+      let key_dir = options.key_dir()?;
 
-      let (public_key, signature) =
-        PrivateKey::load_and_sign(&private_key_path, manifest.fingerprint())?;
+      let public_key = PublicKey::load(&key_dir.join(self.key.public_key_filename()))?;
+
+      let signature = PrivateKey::load_and_sign(
+        &self.key,
+        &public_key,
+        &key_dir.join(self.key.private_key_filename()),
+        manifest.fingerprint(),
+      )?;
 
       manifest.signatures.insert(public_key, signature);
     }
