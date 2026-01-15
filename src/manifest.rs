@@ -83,6 +83,18 @@ impl Manifest {
     }
     size
   }
+
+  pub(crate) fn verify_notes(&self) -> Result<Hash> {
+    let fingerprint = self.fingerprint();
+    let mut digests = BTreeMap::new();
+    for (second, note) in self.notes.iter().enumerate() {
+      if let Some(first) = digests.insert(note.digest(fingerprint), second) {
+        return Err(error::DuplicateNote { first, second }.build());
+      }
+      note.verify(fingerprint)?;
+    }
+    Ok(fingerprint)
+  }
 }
 
 #[cfg(test)]

@@ -14,11 +14,7 @@ impl Sign {
   pub(crate) fn run(self, options: Options) -> Result {
     let (path, mut manifest) = Manifest::load_with_path(self.path.as_deref())?;
 
-    let fingerprint = manifest.fingerprint();
-
-    for note in &manifest.notes {
-      note.verify(fingerprint)?;
-    }
+    let fingerprint = manifest.verify_notes()?;
 
     let keychain = Keychain::load(&options)?;
 

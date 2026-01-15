@@ -73,7 +73,16 @@ impl Verify {
       path: Manifest::FILENAME,
     })?;
 
-    let fingerprint = manifest.fingerprint();
+    let mut verified = Verified::default();
+
+    let fingerprint = manifest.verify_notes()?;
+
+    verified.signatures += manifest
+      .notes
+      .iter()
+      .map(|note| note.signatures.len().into_u64())
+      .sum::<u64>();
+    verified.notes += manifest.notes.len().into_u64();
 
     if let Some(expected) = self.fingerprint
       && fingerprint != expected
@@ -96,8 +105,6 @@ fingerprint mismatch: `{source}`
     );
 
     let mut mismatches = BTreeMap::new();
-
-    let mut verified = Verified::default();
 
     let files = manifest.files();
 
@@ -214,15 +221,6 @@ mismatched file: `{path}`
         serde_json::from_str::<Metadata>(&json)
           .context(error::DeserializeMetadata { path: &path })?;
       }
-    }
-
-    let mut digests = BTreeMap::new();
-    for (second, note) in manifest.notes.iter().enumerate() {
-      if let Some(first) = digests.insert(note.digest(fingerprint), second) {
-        return Err(error::DuplicateNote { first, second }.build());
-      }
-      verified.signatures += note.verify(fingerprint)?;
-      verified.notes += 1;
     }
 
     for (key, identifier) in keys {
