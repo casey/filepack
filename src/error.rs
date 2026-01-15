@@ -76,18 +76,18 @@ pub enum Error {
     message: String,
   },
   #[snafu(display("key directory `{path}` has insecure permissions {mode}"))]
-  KeyDirPermissions {
+  KeychainPermissions {
     backtrace: Option<Backtrace>,
     mode: Mode,
     path: DisplayPath,
   },
   #[snafu(display("unexpected directory in key directory: `{path}`"))]
-  KeyDirUnexpectedDirectory {
+  KeychainUnexpectedDirectory {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
   #[snafu(display("unexpected file in key directory: `{path}`"))]
-  KeyDirUnexpectedFile {
+  KeychainUnexpectedFile {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },

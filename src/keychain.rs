@@ -6,6 +6,42 @@ pub(crate) struct Keychain {
 }
 
 impl Keychain {
+  pub(crate) fn generate_key(&mut self, name: &KeyName) -> Result {
+    if !filesystem::exists(&self.path)? {
+      filesystem::create_dir_all_with_mode(&self.path, 0o700)?;
+    }
+
+    ensure! {
+      !self.keys.contains_key(&name),
+      error::PublicKeyAlreadyExists { path: self.path.join(name.public_key_filename()) },
+    }
+
+    let private_path = self.path.join(name.private_key_filename());
+
+    ensure! {
+      !filesystem::exists(&private_path)?,
+      error::PrivateKeyAlreadyExists { path: private_path },
+    }
+
+    let private_key = PrivateKey::generate();
+
+    filesystem::write_with_mode(
+      &private_path,
+      format!("{}\n", private_key.display_secret()),
+      0o600,
+    )?;
+
+    let public_key = private_key.public_key();
+
+    let public_path = self.path.join(name.public_key_filename());
+
+    filesystem::write(&public_path, format!("{public_key}\n"))?;
+
+    self.keys.insert(name.clone(), public_key);
+
+    Ok(())
+  }
+
   pub(crate) fn load(options: &Options) -> Result<Self> {
     let path = options.key_dir()?;
 
@@ -20,7 +56,7 @@ impl Keychain {
 
     ensure! {
       mode.is_secure(),
-      error::KeyDirPermissions { mode, path },
+      error::KeychainPermissions { mode, path },
     }
 
     let mut keys = BTreeMap::new();
@@ -38,17 +74,17 @@ impl Keychain {
       }
 
       if !entry.file_type().is_file() {
-        return Err(error::KeyDirUnexpectedDirectory { path }.build());
+        return Err(error::KeychainUnexpectedDirectory { path }.build());
       }
 
       let Some(extension) = path.extension() else {
-        return Err(error::KeyDirUnexpectedFile { path }.build());
+        return Err(error::KeychainUnexpectedFile { path }.build());
       };
 
       let key_type = extension
         .parse::<KeyType>()
         .ok()
-        .context(error::KeyDirUnexpectedFile { path })?;
+        .context(error::KeychainUnexpectedFile { path })?;
 
       let stem = path.file_stem().unwrap();
 

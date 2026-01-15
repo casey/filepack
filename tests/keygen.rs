@@ -53,6 +53,6 @@ fn key_already_exists() {
     .chmod("keychain", 0o700)
     .chmod("keychain/master.private", 0o700)
     .args(["keygen"])
-    .stderr_regex("error: private key already exists: `.*master.private`\n")
+    .stderr_regex("error: public key already exists: `.*master.public`\n")
     .failure();
 }
