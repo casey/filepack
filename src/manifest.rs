@@ -46,30 +46,6 @@ impl Manifest {
     self.files.fingerprint()
   }
 
-  pub(crate) fn sign(&mut self, keychain: &Keychain, key: &KeyName, force: bool) -> Result {
-    let fingerprint = self.verify_notes()?;
-
-    let message = Message { fingerprint };
-
-    let digest = message.digest();
-
-    let (key, signature) = keychain.sign(key, digest)?;
-
-    for note in &mut self.notes {
-      if note.digest(message.fingerprint) == digest {
-        ensure! {
-          note.signatures.insert(key, signature).is_none() || force,
-          error::SignatureAlreadyExists { key },
-        }
-        return Ok(());
-      }
-    }
-
-    self.notes.push(Note::from_message(message, key, signature));
-
-    Ok(())
-  }
-
   pub fn load(path: Option<&Utf8Path>) -> Result<Self> {
     Ok(Self::load_with_path(path)?.1)
   }
@@ -96,6 +72,30 @@ impl Manifest {
 
   pub fn save(&self, path: &Utf8Path) -> Result<()> {
     filesystem::write(path, format!("{}\n", serde_json::to_string(self).unwrap()))
+  }
+
+  pub(crate) fn sign(&mut self, keychain: &Keychain, key: &KeyName, force: bool) -> Result {
+    let fingerprint = self.verify_notes()?;
+
+    let message = Message { fingerprint };
+
+    let digest = message.digest();
+
+    let (key, signature) = keychain.sign(key, digest)?;
+
+    for note in &mut self.notes {
+      if note.digest(message.fingerprint) == digest {
+        ensure! {
+          note.signatures.insert(key, signature).is_none() || force,
+          error::SignatureAlreadyExists { key },
+        }
+        return Ok(());
+      }
+    }
+
+    self.notes.push(Note::from_message(message, key, signature));
+
+    Ok(())
   }
 
   pub(crate) fn total_size(&self) -> u128 {
