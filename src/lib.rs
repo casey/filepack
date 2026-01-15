@@ -21,6 +21,7 @@ use {
     arguments::Arguments,
     component::Component,
     count::Count,
+    digest::Digest,
     display_path::DisplayPath,
     display_secret::DisplaySecret,
     entries::Entries,
@@ -100,6 +101,7 @@ fn tempdir() -> tempfile::TempDir {
 mod arguments;
 mod component;
 mod count;
+mod digest;
 mod directory;
 mod display_path;
 mod display_secret;

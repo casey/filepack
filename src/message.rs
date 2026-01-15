@@ -5,9 +5,9 @@ pub(crate) struct Message {
 }
 
 impl Message {
-  pub(crate) fn digest(&self) -> Hash {
+  pub(crate) fn digest(&self) -> Digest {
     let mut hasher = FingerprintHasher::new(FingerprintPrefix::Message);
     hasher.field(0, self.fingerprint.as_bytes());
-    hasher.finalize()
+    Digest(hasher.finalize())
   }
 }

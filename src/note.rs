@@ -16,7 +16,7 @@ pub struct Note {
 
 impl Note {
   #[allow(clippy::unused_self)]
-  pub(crate) fn digest(&self, fingerprint: Hash) -> Hash {
+  pub(crate) fn digest(&self, fingerprint: Hash) -> Digest {
     Message { fingerprint }.digest()
   }
 
@@ -35,8 +35,9 @@ impl Note {
   }
 
   pub(crate) fn verify(&self, fingerprint: Hash) -> Result<u64> {
+    let digest = self.digest(fingerprint);
     for (public_key, signature) in &self.signatures {
-      public_key.verify(fingerprint, signature)?;
+      public_key.verify(digest, signature)?;
     }
     Ok(self.signatures.len().into_u64())
   }
