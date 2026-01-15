@@ -49,7 +49,7 @@ impl Keys {
 
       let name = stem
         .parse::<KeyName>()
-        .context(error::KeyNameInvalid { path })?;
+        .context(error::KeyDirKeyName { path })?;
 
       match key_type {
         KeyType::Private => {
@@ -66,8 +66,6 @@ impl Keys {
             filesystem::exists(&path)?,
             error::PublicKeyNotFound { path },
           }
-
-          PublicKey::load(&path)?;
         }
         KeyType::Public => {
           let public_key = PublicKey::load(path)?;

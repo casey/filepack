@@ -92,7 +92,7 @@ pub enum Error {
     path: DisplayPath,
   },
   #[snafu(display("invalid key name: `{path}`"))]
-  KeyNameInvalid {
+  KeyDirKeyName {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
     source: PublicKeyError,
@@ -102,7 +102,7 @@ pub enum Error {
     key.public_key_filename(),
     key.private_key_filename(),
   ))]
-  KeyMismatch {
+  KeyDirKeyMismatch {
     backtrace: Option<Backtrace>,
     key: KeyName,
   },
@@ -178,7 +178,7 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: PathBuf,
   },
-  #[snafu(display("invalid public key `{path}`"))]
+  #[snafu(display("invalid public key: `{path}`"))]
   PublicKeyLoad {
     backtrace: Option<Backtrace>,
     path: DisplayPath,

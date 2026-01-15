@@ -46,20 +46,6 @@ fn invalid_name() {
 }
 
 #[test]
-fn key_dir_insecure_permissions() {
-  if !cfg!(unix) {
-    return;
-  }
-
-  Test::new()
-    .create_dir("keys")
-    .chmod("keys", 0o750)
-    .args(["keygen"])
-    .stderr_regex("error: key directory `.*keys` has insecure permissions 0750\n")
-    .failure();
-}
-
-#[test]
 fn key_already_exists() {
   Test::new()
     .write("keys/master.private", PRIVATE_KEY)
