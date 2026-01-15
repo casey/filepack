@@ -43,3 +43,5 @@ mod test;
 mod verify;
 
 const EMPTY_HASH: &str = "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262";
+const PRIVATE_KEY: &str = "8eb33440cce2a651c6d8867c331392f642ebfd9b96e485cd2124643461fb41a2";
+const PUBLIC_KEY: &str = "26892a0ef203b97c2702052336f2b8711efaf1442430ff0d9fb4d03df794a0ac";

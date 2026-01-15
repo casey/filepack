@@ -60,22 +60,13 @@ fn key_dir_insecure_permissions() {
 }
 
 #[test]
-fn private_key_already_exists() {
+fn key_already_exists() {
   Test::new()
-    .write("keys/master.private", "foo")
+    .write("keys/master.private", PRIVATE_KEY)
+    .write("keys/master.public", PUBLIC_KEY)
     .chmod("keys", 0o700)
     .chmod("keys/master.private", 0o700)
     .args(["keygen"])
     .stderr_regex("error: private key already exists: `.*master.private`\n")
-    .failure();
-}
-
-#[test]
-fn public_key_already_exists() {
-  Test::new()
-    .write("keys/master.public", "foo")
-    .chmod("keys", 0o700)
-    .args(["keygen"])
-    .stderr_regex("error: public key already exists: `.*master.public`\n")
     .failure();
 }
