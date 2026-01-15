@@ -17,19 +17,17 @@ impl Sign {
     let fingerprint = manifest.fingerprint();
 
     for note in &manifest.notes {
-      for (public_key, signature) in &note.signatures {
-        public_key.verify(fingerprint, signature)?;
-      }
+      note.verify(fingerprint)?;
     }
 
     let keychain = Keychain::load(&options)?;
 
     let message = Message { fingerprint };
 
-    let (public_key, signature) = keychain.sign_message(&self.key, message)?;
+    let (public_key, signature) = keychain.sign(&self.key, message)?;
 
     ensure! {
-      self.force || manifest.notes.iter().all(|note| !note.has_signature(public_key)),
+      self.force || !manifest.notes.iter().any(|note| note.has_signature(public_key)),
       error::SignatureAlreadyExists { public_key: public_key.clone() },
     }
 

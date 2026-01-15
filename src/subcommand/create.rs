@@ -162,9 +162,13 @@ impl Create {
     }
 
     let notes = if self.sign {
+      let message = Message {
+        fingerprint: files.fingerprint(),
+      };
+
       let keychain = Keychain::load(&options)?;
 
-      let (public_key, signature) = keychain.sign(&self.key, files.fingerprint())?;
+      let (public_key, signature) = keychain.sign(&self.key, message)?;
 
       vec![Note {
         signatures: [(public_key.clone(), signature)].into(),

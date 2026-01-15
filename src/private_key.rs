@@ -55,13 +55,7 @@ impl PrivateKey {
     self.clone().into()
   }
 
-  pub(crate) fn sign(&self, fingerprint: Hash) -> Signature {
-    use ed25519_dalek::Signer;
-    let message = Message { fingerprint }.digest();
-    self.0.sign(message.as_bytes()).into()
-  }
-
-  pub(crate) fn sign_message(&self, message: Message) -> Signature {
+  pub(crate) fn sign(&self, message: Message) -> Signature {
     use ed25519_dalek::Signer;
     self.0.sign(message.digest().as_bytes()).into()
   }
