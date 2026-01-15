@@ -77,6 +77,17 @@ impl Keys {
             error::PrivateKeyNotFound { path },
           }
 
+          {
+            let private_key = PrivateKey::load(&path)?;
+
+            ensure! {
+              private_key.public_key() == public_key,
+              error::KeyDirKeyMismatch {
+                key: name,
+              },
+            }
+          }
+
           public_keys.insert(name, public_key);
         }
       }
