@@ -99,6 +99,23 @@ fn existing_signatures_must_be_valid() {
 }
 
 #[test]
+fn mismatched_key() {
+  Test::new()
+    .data_dir("foo")
+    .args(["keygen"])
+    .success()
+    .args(["keygen"])
+    .success()
+    .rename("foo/keys/master.private", "keys/master.private")
+    .create_dir("bar")
+    .args(["create", "bar"])
+    .success()
+    .args(["sign", "bar"])
+    .stderr("error: public key `master.public` doesn't match private key `master.private`\n")
+    .failure();
+}
+
+#[test]
 fn named() {
   let test = Test::new()
     .args(["keygen", "--name", "deploy"])

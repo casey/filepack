@@ -80,7 +80,7 @@ pub enum Error {
     key.private_key_filename(),
     key.public_key_filename(),
   ))]
-  KeyDirKeyMismatch {
+  KeyMismatch {
     backtrace: Option<Backtrace>,
     key: KeyName,
   },

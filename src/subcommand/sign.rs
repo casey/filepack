@@ -20,18 +20,19 @@ impl Sign {
       public_key.verify(fingerprint, signature)?;
     }
 
-    if !self.force {
-      let public_key_path = options.key_dir()?.join(self.key.public_key_filename());
-      let public_key = PublicKey::load(&public_key_path)?;
-      ensure! {
-        !manifest.signatures.contains_key(&public_key),
-        error::SignatureAlreadyExists { public_key },
-      }
+    let public_key_path = options.key_dir()?.join(self.key.public_key_filename());
+
+    let public_key = PublicKey::load(&public_key_path)?;
+
+    ensure! {
+      self.force || !manifest.signatures.contains_key(&public_key),
+      error::SignatureAlreadyExists { public_key },
     }
 
     let private_key_path = options.key_dir()?.join(self.key.private_key_filename());
 
-    let (public_key, signature) = PrivateKey::load_and_sign(&private_key_path, fingerprint)?;
+    let signature =
+      PrivateKey::load_and_sign(&self.key, &public_key, &private_key_path, fingerprint)?;
 
     manifest.signatures.insert(public_key, signature);
 
