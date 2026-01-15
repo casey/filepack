@@ -24,7 +24,7 @@ impl FromStr for KeyName {
 
   fn from_str(name: &str) -> Result<Self, Self::Err> {
     if re::PUBLIC_KEY.is_match(name) || !re::KEY_NAME.is_match(name) || name.len() > 128 {
-      return Err(public_key_error::NameError { name }.build());
+      return Err(public_key_error::Name { name }.build());
     }
 
     Ok(Self(Cow::Owned(name.into())))

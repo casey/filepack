@@ -45,28 +45,27 @@ impl FromStr for PublicKey {
   type Err = PublicKeyError;
 
   fn from_str(key: &str) -> Result<Self, Self::Err> {
-    let bytes = hex::decode(key).context(public_key_error::HexError { key })?;
+    let bytes = hex::decode(key).context(public_key_error::Hex { key })?;
 
     if !is_lowercase_hex(key) {
-      return Err(public_key_error::CaseError { key }.build());
+      return Err(public_key_error::Case { key }.build());
     }
 
-    let array: [u8; Self::LEN] =
-      bytes
-        .as_slice()
-        .try_into()
-        .context(public_key_error::LengthError {
-          key,
-          length: bytes.len(),
-        })?;
+    let array: [u8; Self::LEN] = bytes
+      .as_slice()
+      .try_into()
+      .context(public_key_error::Length {
+        key,
+        length: bytes.len(),
+      })?;
 
     let inner = ed25519_dalek::VerifyingKey::from_bytes(&array)
       .map_err(SignatureError)
-      .context(public_key_error::InvalidError { key })?;
+      .context(public_key_error::Invalid { key })?;
 
     ensure! {
       !inner.is_weak(),
-      public_key_error::WeakError { key },
+      public_key_error::Weak { key },
     }
 
     Ok(Self(inner))
