@@ -88,16 +88,25 @@ impl Manifest {
     let fingerprint = self.fingerprint();
     let mut digests = BTreeMap::new();
     let mut signatures = BTreeMap::new();
-    for (second, note) in self.notes.iter().enumerate() {
-      if let Some(first) = digests.insert(note.digest(fingerprint), second) {
-        return Err(error::DuplicateNote { first, second }.build());
+    for (i, note) in self.notes.iter().enumerate() {
+      if let Some(first) = digests.insert(note.digest(fingerprint), i) {
+        return Err(error::DuplicateNote { first, second: i }.build());
       }
       for &key in note.signatures.keys() {
-        if let Some(first) = signatures.insert(key, second) {
-          return Err(error::DuplicateSignature { first, key, second }.build());
+        if let Some(first) = signatures.insert(key, i) {
+          return Err(
+            error::DuplicateSignature {
+              first,
+              key,
+              second: i,
+            }
+            .build(),
+          );
         }
       }
-      note.verify(fingerprint)?;
+      if note.verify(fingerprint)? == 0 {
+        return Err(error::UnsignedNote { index: i }.build());
+      }
     }
     Ok(fingerprint)
   }

@@ -47,22 +47,18 @@ pub enum Error {
     first: KeyIdentifier,
     second: KeyIdentifier,
   },
-  #[snafu(display("note {} and {} have the same digests", Index(*first), Index(*second)))]
+  #[snafu(display("note {first} and {second} have the same digests"))]
   DuplicateNote {
     backtrace: Option<Backtrace>,
-    first: usize,
-    second: usize,
+    first: Index,
+    second: Index,
   },
-  #[snafu(display(
-    "note {} and {} both have signatures from pubkey {key}",
-    Index(*first),
-    Index(*second),
-  ))]
+  #[snafu(display("note {first} and {second} both have signatures from pubkey {key}"))]
   DuplicateSignature {
     backtrace: Option<Backtrace>,
-    first: usize,
+    first: Index,
     key: PublicKey,
-    second: usize,
+    second: Index,
   },
   #[snafu(display("{count} mismatched file{}", if *count == 1 { "" } else { "s" }))]
   EntryMismatch {
@@ -231,6 +227,11 @@ pub enum Error {
   Symlink {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
+  },
+  #[snafu(display("note {index} is unsigned"))]
+  UnsignedNote {
+    backtrace: Option<Backtrace>,
+    index: Index,
   },
   #[snafu(transparent)]
   WalkDir {

@@ -1,6 +1,13 @@
 use super::*;
 
-pub(crate) struct Index(pub(crate) usize);
+#[derive(Debug)]
+pub struct Index(pub(crate) usize);
+
+impl From<usize> for Index {
+  fn from(value: usize) -> Self {
+    Self(value)
+  }
+}
 
 impl Display for Index {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
