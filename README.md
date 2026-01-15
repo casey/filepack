@@ -175,7 +175,7 @@ drive prefix, such as `C:`.
 Paths may not contain the path components `.` or `..` and may not end with a
 slash.
 
-Manifests contain an object with two mandatory keys, `files` and `signatures`.
+Manifests contain an object with two mandatory keys, `files` and `notes`.
 
 ### `files`
 
@@ -184,10 +184,12 @@ directory entries. Directory entries may be subdirectories or files. Files are
 objects with keys `hash`, the hex-encoded BLAKE3 hash of the file, and `size`,
 the length of the file in bytes.
 
-### `signatures`
+### `notes`
 
-The value of the mandatory `signatures` key is an object mapping public keys to
-signatures. Public keys and signatures are both lowercase hexadecimal strings.
+The value of the mandatory `notes` key is an array of signed notes. Notes are
+objects containing a single mandatory key `signatures`, a mapping public keys
+to signatures. Public keys and signatures are both lowercase hexadecimal
+strings.
 
 Signatures are made over the root of a Merkle tree which commits to the content
 of `files`.
@@ -212,9 +214,13 @@ signed by the public key
       }
     }
   },
-  "signatures": {
-    "3c977ea3a31cd37f0b540f02f33eab158f2ed7449f42b05613c921181aa95b79": "…"
-  }
+  "notes": [
+    {
+      "signatures": {
+        "3c977ea3a31cd37f0b540f02f33eab158f2ed7449f42b05613c921181aa95b79": "…"
+      }
+    }
+  ]
 }
 ```
 

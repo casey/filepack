@@ -157,7 +157,7 @@ mod tests {
       notes: Vec::new(),
     };
     let json = serde_json::to_string(&manifest).unwrap();
-    assert_eq!(json, r#"{"files":{},"signatures":{}}"#);
+    assert_eq!(json, r#"{"files":{},"notes":[]}"#);
     assert_eq!(serde_json::from_str::<Manifest>(&json).unwrap(), manifest);
   }
 
