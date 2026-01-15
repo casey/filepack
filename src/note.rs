@@ -1,18 +1,5 @@
 use super::*;
 
-// todo:
-// - ensure duplicate map items are forbidden
-// - ensure duplicate set items are forbidden
-// - duplicate notes are forbidden
-// - multiple signatures from the same pubkey are forbidden
-// - serialize duration as integer nanoseconds?
-// - does duration forbid additional fields?
-// - sort notes by digest
-// - add time to note
-//   --time none
-//   --time now
-//   --time N.M
-
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
 pub struct Note {
