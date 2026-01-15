@@ -92,9 +92,9 @@ pub enum Error {
     path: DisplayPath,
   },
   #[snafu(display(
-    "private key `{}` doesn't match public key `{}`",
-    key.private_key_filename(),
+    "public key `{}` doesn't match private key `{}`",
     key.public_key_filename(),
+    key.private_key_filename(),
   ))]
   KeyMismatch {
     backtrace: Option<Backtrace>,
