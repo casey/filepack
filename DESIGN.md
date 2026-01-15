@@ -29,7 +29,7 @@ Open Questions
 
 - *Should Bech32m be used for fingerprints, public keys, and private keys?*
   This would make them distinct and easy to identify, and give private keys
-  like `private1…` which suggests that they shouldn't be exposed.
+  names like `private1…` which suggests that they shouldn't be exposed.
 
 Manifest Format
 ---------------
