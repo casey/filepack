@@ -47,6 +47,12 @@ pub enum Error {
     first: KeyIdentifier,
     second: KeyIdentifier,
   },
+  #[snafu(display("note {} and {} have the same digests", Index(*first), Index(*second)))]
+  DuplicateNote {
+    backtrace: Option<Backtrace>,
+    first: usize,
+    second: usize,
+  },
   #[snafu(display("{count} mismatched file{}", if *count == 1 { "" } else { "s" }))]
   EntryMismatch {
     backtrace: Option<Backtrace>,

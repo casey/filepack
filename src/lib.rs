@@ -27,6 +27,7 @@ use {
     fingerprint_hasher::FingerprintHasher,
     fingerprint_prefix::FingerprintPrefix,
     functions::{current_dir, decode_path, default, is_lowercase_hex},
+    index::Index,
     key_identifier::KeyIdentifier,
     key_name::KeyName,
     key_type::KeyType,
@@ -111,6 +112,7 @@ mod fingerprint_hasher;
 mod fingerprint_prefix;
 mod functions;
 mod hash;
+mod index;
 mod key_identifier;
 mod key_name;
 mod key_type;

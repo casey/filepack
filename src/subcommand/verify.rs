@@ -216,7 +216,11 @@ mismatched file: `{path}`
       }
     }
 
-    for note in &manifest.notes {
+    let mut digests = BTreeMap::new();
+    for (second, note) in manifest.notes.iter().enumerate() {
+      if let Some(first) = digests.insert(note.digest(fingerprint), second) {
+        return Err(error::DuplicateNote { first, second }.build());
+      }
       verified.signatures += note.verify(fingerprint)?;
       verified.notes += 1;
     }

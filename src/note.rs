@@ -15,6 +15,11 @@ pub struct Note {
 }
 
 impl Note {
+  #[allow(clippy::unused_self)]
+  pub(crate) fn digest(&self, fingerprint: Hash) -> Hash {
+    Message { fingerprint }.digest()
+  }
+
   pub(crate) fn has_signature(&self, public_key: &PublicKey) -> bool {
     self.signatures.contains_key(public_key)
   }
