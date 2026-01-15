@@ -13,7 +13,7 @@ impl PublicKey {
 
   pub(crate) fn load(path: &Utf8Path) -> Result<Self> {
     let public_key = filesystem::read_to_string_opt(path)?
-      .ok_or_else(|| error::PublicKeyNotFound { path }.build())?;
+      .ok_or_else(|| error::KeyDirPublicKeyNotFound { path }.build())?;
 
     let public_key = public_key
       .trim()

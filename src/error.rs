@@ -75,6 +75,16 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     message: String,
   },
+  #[snafu(display("private key not found: `{path}`"))]
+  KeyDirPrivateKeyNotFound {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+  },
+  #[snafu(display("public key not found: `{path}`"))]
+  KeyDirPublicKeyNotFound {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+  },
   #[snafu(display("key directory `{path}` has insecure permissions {mode}"))]
   KeyDirPermissions {
     backtrace: Option<Backtrace>,
@@ -162,11 +172,6 @@ pub enum Error {
     path: DisplayPath,
     source: private_key::Error,
   },
-  #[snafu(display("private key not found: `{path}`"))]
-  PrivateKeyNotFound {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-  },
   #[snafu(display("private key `{path}` has insecure permissions {mode}"))]
   PrivateKeyPermissions {
     backtrace: Option<Backtrace>,
@@ -183,11 +188,6 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
     source: PublicKeyError,
-  },
-  #[snafu(display("public key not found: `{path}`"))]
-  PublicKeyNotFound {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
   },
   #[snafu(display("manifest has already been signed by public key `{public_key}`"))]
   SignatureAlreadyExists {

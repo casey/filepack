@@ -64,31 +64,20 @@ impl Keys {
 
           ensure! {
             filesystem::exists(&path)?,
-            error::PublicKeyNotFound { path },
+            error::KeyDirPublicKeyNotFound { path },
           }
         }
         KeyType::Public => {
-          let public_key = PublicKey::load(path)?;
+          let key = PublicKey::load(path)?;
 
           let path = path.with_file_name(name.private_key_filename());
 
           ensure! {
             filesystem::exists(&path)?,
-            error::PrivateKeyNotFound { path },
+            error::KeyDirPrivateKeyNotFound { path },
           }
 
-          {
-            let private_key = PrivateKey::load(&path)?;
-
-            ensure! {
-              private_key.public_key() == public_key,
-              error::KeyDirKeyMismatch {
-                key: name,
-              },
-            }
-          }
-
-          public_keys.insert(name, public_key);
+          public_keys.insert(name, key);
         }
       }
     }
