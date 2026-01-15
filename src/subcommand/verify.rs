@@ -36,7 +36,7 @@ impl Verify {
 
     let mut keys = BTreeMap::new();
     for second in &self.keys {
-      let key = keychain.identifier_public_key(&second)?;
+      let key = keychain.identifier_public_key(second)?;
       if let Some(first) = keys.insert(key, second) {
         return Err(
           error::DuplicateKey {
@@ -222,7 +222,7 @@ mismatched file: `{path}`
 
     for (key, identifier) in keys {
       ensure! {
-        manifest.signatures.contains_key(&key),
+        manifest.signatures.contains_key(key),
         error::SignatureMissing { identifier: identifier.clone() },
       }
     }
