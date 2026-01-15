@@ -53,7 +53,7 @@ pub enum Error {
     first: Index,
     second: Index,
   },
-  #[snafu(display("note {first} and {second} both have signatures from pubkey {key}"))]
+  #[snafu(display("note {first} and {second} both have signatures from key {key}"))]
   DuplicateSignature {
     backtrace: Option<Backtrace>,
     first: Index,
