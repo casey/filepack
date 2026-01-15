@@ -1,12 +1,12 @@
 use super::*;
 
 #[test]
-fn no_key_dir() {
+fn no_keychain() {
   Test::new()
     .args(["info"])
     .stdout_regex(&json_regex! {
-      "data-dir": ".*",
-      "key-dir": ".*keychain",
+      data: ".*",
+      keychain: ".*keychain",
       keys: {
       },
     })
@@ -20,8 +20,8 @@ fn no_keys() {
     .chmod("keychain", 0o700)
     .args(["info"])
     .stdout_regex(&json_regex! {
-      "data-dir": ".*",
-      "key-dir": ".*keychain",
+      data: ".*",
+      keychain: ".*keychain",
       keys: {
       },
     })
@@ -42,8 +42,8 @@ fn with_keys() {
   test
     .args(["info"])
     .stdout_regex(&json_regex! {
-      "data-dir": ".*",
-      "key-dir": ".*keychain",
+      data: ".*",
+      keychain: ".*keychain",
       keys: {
         master: master,
         foo: foo,

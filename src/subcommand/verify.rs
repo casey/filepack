@@ -32,13 +32,19 @@ impl Verify {
       signatures: u64,
     }
 
-    let key_dir = options.key_dir()?;
-    let mut keys = BTreeMap::new();
-    for second in self.keys {
-      let key = second.load(&key_dir)?;
+    let keychain = Keychain::load(&options)?;
 
-      if let Some(first) = keys.insert(key.clone(), second.clone()) {
-        return Err(error::DuplicateKey { first, second }.build());
+    let mut keys = BTreeMap::new();
+    for second in &self.keys {
+      let key = keychain.identifier_public_key(second)?;
+      if let Some(first) = keys.insert(key, second) {
+        return Err(
+          error::DuplicateKey {
+            first: first.clone(),
+            second: second.clone(),
+          }
+          .build(),
+        );
       }
     }
 
@@ -216,8 +222,8 @@ mismatched file: `{path}`
 
     for (key, identifier) in keys {
       ensure! {
-        manifest.signatures.contains_key(&key),
-        error::SignatureMissing { identifier },
+        manifest.signatures.contains_key(key),
+        error::SignatureMissing { identifier: identifier.clone() },
       }
     }
 

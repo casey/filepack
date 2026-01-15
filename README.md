@@ -266,11 +266,11 @@ Keypairs are generated with:
 filepack keygen
 ```
 
-Which creates `master.public` and `master.private` files in the filepack `keys`
-directory.
+Which creates `master.public` and `master.private` files in the filepack
+`keychain` directory.
 
-The `keys` directory is located in the filepack data directory whose location
-is platform-dependent:
+The `keychain` directory is located in the filepack data directory whose
+location is platform-dependent:
 
 | Platform | Value                                    | Example                                  |
 | -------- | ---------------------------------------- | ---------------------------------------- |

@@ -75,22 +75,6 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     message: String,
   },
-  #[snafu(display("key directory `{path}` has insecure permissions {mode}"))]
-  KeyDirPermissions {
-    backtrace: Option<Backtrace>,
-    mode: Mode,
-    path: DisplayPath,
-  },
-  #[snafu(display("unexpected directory in key directory: `{path}`"))]
-  KeyDirUnexpectedDirectory {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-  },
-  #[snafu(display("unexpected file in key directory: `{path}`"))]
-  KeyDirUnexpectedFile {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-  },
   #[snafu(display(
     "public key `{}` doesn't match private key `{}`",
     key.public_key_filename(),
@@ -105,6 +89,22 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
     source: PublicKeyError,
+  },
+  #[snafu(display("keychain directory `{path}` has insecure permissions {mode}"))]
+  KeychainPermissions {
+    backtrace: Option<Backtrace>,
+    mode: Mode,
+    path: DisplayPath,
+  },
+  #[snafu(display("unexpected directory in keychain directory: `{path}`"))]
+  KeychainUnexpectedDirectory {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+  },
+  #[snafu(display("unexpected file in keychain directory: `{path}`"))]
+  KeychainUnexpectedFile {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
   },
   #[snafu(display("{count} lint error{}", if *count == 1 { "" } else { "s" }))]
   Lint {
