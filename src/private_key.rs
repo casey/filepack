@@ -55,9 +55,9 @@ impl PrivateKey {
     self.clone().into()
   }
 
-  pub(crate) fn sign(&self, message: &Message) -> Signature {
+  pub(crate) fn sign(&self, digest: Digest) -> Signature {
     use ed25519_dalek::Signer;
-    self.0.sign(message.digest().as_bytes()).into()
+    self.0.sign(digest.as_bytes()).into()
   }
 }
 

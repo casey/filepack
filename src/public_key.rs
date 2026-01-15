@@ -28,7 +28,7 @@ impl PublicKey {
       .0
       .verify_strict(digest.as_bytes(), signature.as_ref())
       .map_err(SignatureError)
-      .context(error::SignatureInvalid { public_key: *self })
+      .context(error::SignatureInvalid { key: *self })
   }
 }
 

@@ -202,15 +202,15 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
-  #[snafu(display("manifest has already been signed by public key `{public_key}`"))]
+  #[snafu(display("manifest has already been signed by key `{key}`"))]
   SignatureAlreadyExists {
     backtrace: Option<Backtrace>,
-    public_key: PublicKey,
+    key: PublicKey,
   },
-  #[snafu(display("invalid signature for public key `{public_key}`"))]
+  #[snafu(display("invalid signature for key `{key}`"))]
   SignatureInvalid {
     backtrace: Option<Backtrace>,
-    public_key: PublicKey,
+    key: PublicKey,
     source: SignatureError,
   },
   #[snafu(display("no signature found for key `{identifier}`"))]

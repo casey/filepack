@@ -7,6 +7,7 @@ use super::*;
 // - multiple signatures from the same pubkey are forbidden
 // - serialize duration as integer nanoseconds?
 // - does duration forbid additional fields?
+// - sort notes by digest
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
