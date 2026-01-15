@@ -34,16 +34,22 @@ impl Keys {
       }
 
       if !entry.file_type().is_file() {
-        todo!();
+        todo!("unexpected directory");
       }
 
       let Some(extension) = path.extension() else {
-        todo!();
+        todo!("unexpected file");
       };
 
-      let key_type = extension.parse::<KeyType>().unwrap();
+      let key_type = extension
+        .parse::<KeyType>()
+        .expect("todo: unexpected file type");
 
-      let name = path.file_stem().unwrap().parse::<KeyName>().unwrap();
+      let name = path
+        .file_stem()
+        .unwrap()
+        .parse::<KeyName>()
+        .expect("todo: bad key name");
 
       match key_type {
         KeyType::Private => {
