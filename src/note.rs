@@ -10,7 +10,6 @@ pub struct Note {
 }
 
 impl Note {
-  #[allow(clippy::unused_self)]
   pub(crate) fn digest(&self, fingerprint: Hash) -> Digest {
     Message {
       fingerprint,
