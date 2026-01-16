@@ -157,7 +157,7 @@ mod tests {
 
     assert_eq!(
       PublicKey::load(&path).unwrap().to_string(),
-      test::PUBLIC_KEY
+      test::PUBLIC_KEY,
     );
   }
 }
