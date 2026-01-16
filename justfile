@@ -44,8 +44,8 @@ example: tmp
   mkdir tmp/src
   cp src/main.rs tmp/src
   cargo run create tmp
-  cargo run sign tmp
-  cat tmp/filepack.json | jq > tmp/example.json
+  cargo run sign --time tmp
+  cat tmp/filepack.json | jq | pbcopy
 
 publish: tmp
   #!/usr/bin/env bash

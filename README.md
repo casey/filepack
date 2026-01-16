@@ -191,8 +191,12 @@ objects containing a single mandatory key `signatures`, an object mapping
 public keys to signatures. Public keys and signatures are both lowercase
 hexadecimal strings.
 
+Notes may optionally contain a `time` field whose value is a timestamp given as
+the number of nanoseconds after the UNIX epoch.
+
 Public keys are Curve25519 points and signatures are Ed25519 signatures made
-over the root of a Merkle tree which commits to the content of `files`.
+over the root of a Merkle tree which commits to the content of `files`, as well
+as the value of the `time` field, if present.
 
 ### example
 
@@ -204,8 +208,8 @@ signed by the public key
 {
   "files": {
     "README.md": {
-      "hash": "7773f729322c522446f9ebb84fc0858cda075b7df0389405a5dc82f812195281",
-      "size": 11319
+      "hash": "fc253b84551ce6b00e820a826ac18054dc7f63a318ce62f3175315f5c467a62a",
+      "size": 11883
     },
     "src": {
       "main.rs": {
@@ -218,7 +222,8 @@ signed by the public key
     {
       "signatures": {
         "3c977ea3a31cd37f0b540f02f33eab158f2ed7449f42b05613c921181aa95b79": "…"
-      }
+      },
+      "time": 1768531681809767000
     }
   ]
 }
