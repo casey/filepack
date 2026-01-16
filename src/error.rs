@@ -228,6 +228,11 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
+  #[snafu(display("Failed to get curent time"))]
+  Time {
+    backtrace: Option<Backtrace>,
+    source: SystemTimeError,
+  },
   #[snafu(display("note {index} is unsigned"))]
   UnsignedNote {
     backtrace: Option<Backtrace>,

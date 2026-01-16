@@ -19,6 +19,8 @@ pub(crate) struct Create {
   root: Option<Utf8PathBuf>,
   #[arg(help = "Sign manifest", long)]
   sign: bool,
+  #[arg(help = TIME_HELP, long)]
+  time: bool,
 }
 
 impl Create {
@@ -168,7 +170,14 @@ impl Create {
 
     if self.sign {
       let keychain = Keychain::load(&options)?;
-      manifest.sign(&keychain, &self.key, false)?;
+      manifest.sign(
+        SignOptions {
+          time: self.time,
+          overwrite: false,
+        },
+        &keychain,
+        &self.key,
+      )?;
     }
 
     manifest.save(&manifest_path)?;

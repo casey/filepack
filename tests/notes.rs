@@ -28,9 +28,11 @@ fn duplicate_note() {
   manifest.notes = vec![
     Note {
       signatures: [(first_key, first_sig)].into(),
+      time: None,
     },
     Note {
       signatures: [(second_key, second_sig)].into(),
+      time: None,
     },
   ];
 
@@ -91,6 +93,7 @@ fn invalid_signature() {
       "0".repeat(128).parse::<Signature>().unwrap(),
     )]
     .into(),
+    time: None,
   });
 
   manifest.save(&manifest_path).unwrap();
@@ -105,6 +108,58 @@ fn invalid_signature() {
     .arg("sign")
     .stderr_regex(&format!(
       "error: invalid signature for key `{PUBLIC_KEY}`\n\
+      .*Verification equation was not satisfied.*"
+    ))
+    .failure();
+}
+
+#[test]
+fn time_modification_invalidates_signature() {
+  let test = Test::new()
+    .arg("keygen")
+    .success()
+    .args(["create", "--sign", "--time"])
+    .success();
+
+  let public_key = test.read("keychain/master.public");
+
+  let manifest_path = test.path().join("filepack.json");
+  let mut manifest = Manifest::load(Some(&manifest_path)).unwrap();
+
+  let time = manifest.notes[0].time.unwrap();
+  manifest.notes[0].time = Some(time + 1);
+  manifest.save(&manifest_path).unwrap();
+
+  test
+    .arg("verify")
+    .stderr_regex(&format!(
+      "error: invalid signature for key `{public_key}`\n\
+      .*Verification equation was not satisfied.*"
+    ))
+    .failure();
+}
+
+#[test]
+fn time_removal_invalidates_signature() {
+  let test = Test::new()
+    .arg("keygen")
+    .success()
+    .args(["create", "--sign", "--time"])
+    .success();
+
+  let public_key = test.read("keychain/master.public");
+
+  let manifest_path = test.path().join("filepack.json");
+  let mut manifest = Manifest::load(Some(&manifest_path)).unwrap();
+
+  assert!(manifest.notes[0].time.is_some());
+  manifest.notes[0].time = None;
+  manifest.save(&manifest_path).unwrap();
+
+  test
+    .arg("verify")
+    .stderr_regex(&format!(
+      "error: invalid signature for key `{public_key}`\n\
       .*Verification equation was not satisfied.*"
     ))
     .failure();

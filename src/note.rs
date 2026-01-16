@@ -6,21 +6,26 @@ use super::*;
 pub struct Note {
   #[serde_as(as = "MapPreventDuplicates<_, _>")]
   pub signatures: BTreeMap<PublicKey, Signature>,
+  pub time: Option<u128>,
 }
 
 impl Note {
-  #[allow(clippy::unused_self)]
   pub(crate) fn digest(&self, fingerprint: Hash) -> Digest {
-    Message { fingerprint }.digest()
+    Message {
+      fingerprint,
+      time: self.time,
+    }
+    .digest()
   }
 
   pub(crate) fn from_message(
-    _message: Message,
+    message: Message,
     public_key: PublicKey,
     signature: Signature,
   ) -> Self {
     Self {
       signatures: [(public_key, signature)].into(),
+      time: message.time,
     }
   }
 

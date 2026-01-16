@@ -74,10 +74,18 @@ impl Manifest {
     filesystem::write(path, format!("{}\n", serde_json::to_string(self).unwrap()))
   }
 
-  pub(crate) fn sign(&mut self, keychain: &Keychain, key: &KeyName, force: bool) -> Result {
+  pub(crate) fn sign(
+    &mut self,
+    options: SignOptions,
+    keychain: &Keychain,
+    key: &KeyName,
+  ) -> Result {
     let fingerprint = self.verify_notes()?;
 
-    let message = Message { fingerprint };
+    let message = Message {
+      fingerprint,
+      time: options.time.then(now).transpose()?,
+    };
 
     let digest = message.digest();
 
@@ -86,7 +94,7 @@ impl Manifest {
     for note in &mut self.notes {
       if note.digest(fingerprint) == digest {
         ensure! {
-          note.signatures.insert(key, signature).is_none() || force,
+          note.signatures.insert(key, signature).is_none() || options.overwrite,
           error::SignatureAlreadyExists { key },
         }
         return Ok(());

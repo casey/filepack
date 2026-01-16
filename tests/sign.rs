@@ -146,7 +146,7 @@ fn updates_manifest_with_signature() {
 
   let public_key = test.read("keychain/master.public");
 
-  test
+  let test = test
     .args(["verify", "foo", "--key", &public_key])
     .stderr(&format!(
       "error: no signature found for key `{public_key}`\n"
@@ -157,4 +157,38 @@ fn updates_manifest_with_signature() {
     .args(["verify", "foo", "--key", &public_key])
     .stderr("successfully verified 1 file totaling 0 bytes with 1 signature across 1 note\n")
     .success();
+
+  let manifest_path = test.path().join("foo/filepack.json");
+  let manifest = Manifest::load(Some(&manifest_path)).unwrap();
+  assert!(manifest.notes[0].time.is_none());
+}
+
+#[test]
+fn with_time() {
+  let test = Test::new()
+    .arg("keygen")
+    .success()
+    .touch("foo/bar")
+    .args(["create", "foo"])
+    .success();
+
+  let public_key = test.read("keychain/master.public");
+
+  let test = test
+    .args(["sign", "--time", "foo/filepack.json"])
+    .success()
+    .args(["verify", "foo", "--key", &public_key])
+    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature across 1 note\n")
+    .success();
+
+  let manifest_path = test.path().join("foo/filepack.json");
+  let manifest = Manifest::load(Some(&manifest_path)).unwrap();
+
+  let time = manifest.notes[0].time.unwrap();
+  let now = SystemTime::now()
+    .duration_since(UNIX_EPOCH)
+    .unwrap()
+    .as_nanos();
+  let one_minute_ago = now - 60 * 1_000_000_000;
+  assert!(time >= one_minute_ago && time <= now);
 }
