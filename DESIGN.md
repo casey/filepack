@@ -31,6 +31,12 @@ Open Questions
   This would make them distinct and easy to identify, and give private keys
   names like `private1…` which suggests that they shouldn't be exposed.
 
+- *Should fingerprint hashes be calculated over CBOR, instead of TLV fields?*
+  Currently, fingerprints are created by encoding data as a sequence of TLV
+  fields. This is extremely simple. However, we could also encode data as CBOR,
+  which is much more complicated, but has the advantage of being standardized,
+  and enforces domain separation between types.
+
 Manifest Format
 ---------------
 
