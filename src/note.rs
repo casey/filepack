@@ -43,11 +43,15 @@ mod tests {
 
   #[test]
   fn duplicate_signatures_are_rejected() {
+    let sig = "0".repeat(128);
+    let json = format!(
+      r#"{{"signatures":{{"{}":"{sig}","{}":"{sig}"}}}}"#,
+      test::PUBLIC_KEY,
+      test::PUBLIC_KEY,
+    );
     assert_eq!(
-      serde_json::from_str::<Note>(r#"{"signatures":{"a":"a","a":"a"}}"#)
-        .unwrap_err()
-        .to_string(),
-      "invalid entry: found duplicate key at line 1 column 15",
+      serde_json::from_str::<Note>(&json).unwrap_err().to_string(),
+      "invalid entry: found duplicate key at line 1 column 411",
     );
   }
 }

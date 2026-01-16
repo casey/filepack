@@ -92,13 +92,14 @@ mod tests {
 
   #[test]
   fn must_have_leading_zeros() {
-    "0e56ae8b43aa93fd4c179ceaff96f729522622d26b4b5357bc959e476e59e107"
-      .parse::<PrivateKey>()
-      .unwrap();
-
-    "e56ae8b43aa93fd4c179ceaff96f729522622d26b4b5357bc959e476e59e107"
-      .parse::<PrivateKey>()
-      .unwrap_err();
+    assert_eq!(
+      "0"
+        .repeat(63)
+        .parse::<PrivateKey>()
+        .unwrap_err()
+        .to_string(),
+      "invalid private key hex",
+    );
   }
 
   #[test]
@@ -132,17 +133,13 @@ mod tests {
 
   #[test]
   fn serialized_private_key_is_not_valid_public_key() {
-    let key = "0e56ae8b43aa93fd4c179ceaff96f729522622d26b4b5357bc959e476e59e107";
-    key.parse::<PrivateKey>().unwrap();
-    key.parse::<PublicKey>().unwrap_err();
+    test::PRIVATE_KEY.parse::<PublicKey>().unwrap_err();
   }
 
   #[test]
   fn uppercase_is_forbidden() {
-    let key = "0e56ae8b43aa93fd4c179ceaff96f729522622d26b4b5357bc959e476e59e107";
-    key.parse::<PrivateKey>().unwrap();
     assert_eq!(
-      key
+      test::PRIVATE_KEY
         .to_uppercase()
         .parse::<PrivateKey>()
         .unwrap_err()
@@ -153,11 +150,7 @@ mod tests {
 
   #[test]
   fn whitespace_is_not_trimmed_when_parsing_from_string() {
-    "0e56ae8b43aa93fd4c179ceaff96f729522622d26b4b5357bc959e476e59e107"
-      .parse::<PrivateKey>()
-      .unwrap();
-
-    " 0e56ae8b43aa93fd4c179ceaff96f729522622d26b4b5357bc959e476e59e107"
+    format!(" {}", test::PRIVATE_KEY)
       .parse::<PrivateKey>()
       .unwrap_err();
   }
@@ -170,14 +163,13 @@ mod tests {
 
     let path = Utf8PathBuf::from_path_buf(dir.path().join("key")).unwrap();
 
-    let key = "0e56ae8b43aa93fd4c179ceaff96f729522622d26b4b5357bc959e476e59e107"
-      .parse::<PrivateKey>()
-      .unwrap();
-
-    filesystem::write(&path, format!(" \t{}\n", key.display_secret())).unwrap();
+    filesystem::write(&path, format!(" \t{}\n", test::PRIVATE_KEY)).unwrap();
 
     filesystem::chmod(&path, 0o600).unwrap();
 
-    assert_eq!(PrivateKey::load(&path).unwrap(), key);
+    assert_eq!(
+      PrivateKey::load(&path).unwrap(),
+      test::PRIVATE_KEY.parse().unwrap(),
+    );
   }
 }
