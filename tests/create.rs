@@ -208,9 +208,9 @@ fn metadata_template_should_not_be_included_in_package() {
 fn mismatched_key() {
   Test::new()
     .data_dir("foo")
-    .args(["keygen"])
+    .arg("keygen")
     .success()
-    .args(["keygen"])
+    .arg("keygen")
     .success()
     .rename("foo/keychain/master.private", "keychain/master.private")
     .create_dir("bar")
@@ -308,7 +308,7 @@ fn private_key_load_error_message() {
 #[test]
 fn sign_creates_valid_signature() {
   let test = Test::new()
-    .args(["keygen"])
+    .arg("keygen")
     .success()
     .touch("foo/bar")
     .args(["create", "--sign", "foo"])
@@ -332,7 +332,7 @@ fn sign_creates_valid_signature() {
 #[test]
 fn sign_fails_if_master_key_not_available() {
   Test::new()
-    .args(["keygen"])
+    .arg("keygen")
     .success()
     .remove_file("keychain/master.private")
     .touch("foo/bar")
@@ -424,7 +424,7 @@ fn single_file_mmap() {
 fn single_file_omit_root() {
   Test::new()
     .touch("foo")
-    .args(["create"])
+    .arg("create")
     .assert_file(
       "filepack.json",
       json! {

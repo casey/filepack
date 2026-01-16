@@ -3,7 +3,7 @@ use super::*;
 #[test]
 fn no_keychain() {
   Test::new()
-    .args(["info"])
+    .arg("info")
     .stdout_regex(&json_regex! {
       data: ".*",
       keychain: ".*keychain",
@@ -18,7 +18,7 @@ fn no_keys() {
   Test::new()
     .create_dir("keychain")
     .chmod("keychain", 0o700)
-    .args(["info"])
+    .arg("info")
     .stdout_regex(&json_regex! {
       data: ".*",
       keychain: ".*keychain",
@@ -31,7 +31,7 @@ fn no_keys() {
 #[test]
 fn with_keys() {
   let test = Test::new()
-    .args(["keygen"])
+    .arg("keygen")
     .success()
     .args(["keygen", "--name", "foo"])
     .success();
@@ -40,7 +40,7 @@ fn with_keys() {
   let foo = test.read("keychain/foo.public");
 
   test
-    .args(["info"])
+    .arg("info")
     .stdout_regex(&json_regex! {
       data: ".*",
       keychain: ".*keychain",

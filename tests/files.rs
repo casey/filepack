@@ -7,7 +7,7 @@ fn files_default() {
     .touch("foo/bar/bob")
     .args(["create", "."])
     .success()
-    .args(["files"])
+    .arg("files")
     .stdout(json_pretty! {
       "foo/bar/baz": {
         hash: EMPTY_HASH,

@@ -9,7 +9,7 @@ fn dir_permissions() {
   Test::new()
     .create_dir("keychain")
     .chmod("keychain", 0o750)
-    .args(["keygen"])
+    .arg("keygen")
     .stderr_regex("error: keychain directory `.*keychain` has insecure permissions 0750\n")
     .failure();
 }
@@ -17,10 +17,10 @@ fn dir_permissions() {
 #[test]
 fn hidden_files_are_ignored() {
   Test::new()
-    .args(["keygen"])
+    .arg("keygen")
     .success()
     .touch("keychain/.hidden")
-    .args(["info"])
+    .arg("info")
     .stdout_regex(r#".*"keys": \{\n    "master":.*"#)
     .success();
 }
@@ -32,7 +32,7 @@ fn invalid_key_name() {
     .write("keychain/INVALID.private", PRIVATE_KEY)
     .chmod("keychain", 0o700)
     .chmod("keychain/INVALID.private", 0o600)
-    .args(["info"])
+    .arg("info")
     .stderr_regex("error: invalid key name: `.*INVALID.private`\n.*")
     .failure();
 }
@@ -42,7 +42,7 @@ fn invalid_public_key() {
   Test::new()
     .write("keychain/foo.public", "foo")
     .chmod("keychain", 0o700)
-    .args(["info"])
+    .arg("info")
     .stderr_regex("error: invalid public key: `.*foo.public`\n.*")
     .failure();
 }
@@ -52,7 +52,7 @@ fn missing_private_key_error() {
   Test::new()
     .write("keychain/orphan.public", PUBLIC_KEY)
     .chmod("keychain", 0o700)
-    .args(["info"])
+    .arg("info")
     .stderr_regex("error: private key not found: `.*orphan.private`\n")
     .failure();
 }
@@ -63,7 +63,7 @@ fn missing_public_key_error() {
     .write("keychain/foo.private", PRIVATE_KEY)
     .chmod("keychain", 0o700)
     .chmod("keychain/foo.private", 0o600)
-    .args(["info"])
+    .arg("info")
     .stderr_regex("error: public key not found: `.*foo.public`\n")
     .failure();
 }
@@ -75,7 +75,7 @@ fn private_key_permissions() {
   }
 
   Test::new()
-    .args(["keygen"])
+    .arg("keygen")
     .success()
     .chmod("keychain/master.private", 0o644)
     .touch("foo/bar")
@@ -91,7 +91,7 @@ fn unexpected_directory() {
   Test::new()
     .create_dir("keychain/subdir")
     .chmod("keychain", 0o700)
-    .args(["info"])
+    .arg("info")
     .stderr_regex("error: unexpected directory in keychain directory: `.*subdir`\n")
     .failure();
 }
@@ -101,7 +101,7 @@ fn unexpected_file_no_extension() {
   Test::new()
     .touch("keychain/foo")
     .chmod("keychain", 0o700)
-    .args(["info"])
+    .arg("info")
     .stderr_regex("error: unexpected file in keychain directory: `.*foo`\n")
     .failure();
 }
@@ -111,7 +111,7 @@ fn unexpected_file_with_extension() {
   Test::new()
     .touch("keychain/master.unknown")
     .chmod("keychain", 0o700)
-    .args(["info"])
+    .arg("info")
     .stderr_regex("error: unexpected file in keychain directory: `.*master.unknown`\n")
     .failure();
 }

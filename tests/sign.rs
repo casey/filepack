@@ -3,7 +3,7 @@ use super::*;
 #[test]
 fn appends_filename_if_argument_is_directory() {
   let test = Test::new()
-    .args(["keygen"])
+    .arg("keygen")
     .success()
     .touch("foo/bar")
     .args(["create", "foo"])
@@ -22,7 +22,7 @@ fn appends_filename_if_argument_is_directory() {
 #[test]
 fn defaults_to_current_directory() {
   let test = Test::new()
-    .args(["keygen"])
+    .arg("keygen")
     .success()
     .touch("foo/bar")
     .args(["create", "foo"])
@@ -32,7 +32,7 @@ fn defaults_to_current_directory() {
 
   test
     .current_dir("foo")
-    .args(["sign"])
+    .arg("sign")
     .success()
     .args(["verify", "foo", "--key", &public_key])
     .stderr("successfully verified 1 file totaling 0 bytes with 1 signature across 1 note\n")
@@ -43,10 +43,10 @@ fn defaults_to_current_directory() {
 fn existing_signatures_are_preserved() {
   let test = Test::new()
     .data_dir("a")
-    .args(["keygen"])
+    .arg("keygen")
     .success()
     .data_dir("b")
-    .args(["keygen"])
+    .arg("keygen")
     .success()
     .touch("foo/bar")
     .args(["create", "foo"])
@@ -74,9 +74,9 @@ fn existing_signatures_are_preserved() {
 fn mismatched_key() {
   Test::new()
     .data_dir("foo")
-    .args(["keygen"])
+    .arg("keygen")
     .success()
-    .args(["keygen"])
+    .arg("keygen")
     .success()
     .rename("foo/keychain/master.private", "keychain/master.private")
     .create_dir("bar")
@@ -109,7 +109,7 @@ fn named() {
 #[test]
 fn re_signing_requires_force() {
   let test = Test::new()
-    .args(["keygen"])
+    .arg("keygen")
     .success()
     .touch("foo/bar")
     .args(["create", "foo"])
@@ -138,7 +138,7 @@ fn re_signing_requires_force() {
 #[test]
 fn updates_manifest_with_signature() {
   let test = Test::new()
-    .args(["keygen"])
+    .arg("keygen")
     .success()
     .touch("foo/bar")
     .args(["create", "foo"])

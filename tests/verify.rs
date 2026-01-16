@@ -3,7 +3,7 @@ use super::*;
 #[test]
 fn duplicate_key_literal() {
   Test::new()
-    .args(["create"])
+    .arg("create")
     .success()
     .args(["verify", "--key", PUBLIC_KEY, "--key", PUBLIC_KEY])
     .stderr(&format!("error: duplicate key: `{PUBLIC_KEY}`\n"))
@@ -13,9 +13,9 @@ fn duplicate_key_literal() {
 #[test]
 fn duplicate_key_named() {
   Test::new()
-    .args(["keygen"])
+    .arg("keygen")
     .success()
-    .args(["create"])
+    .arg("create")
     .success()
     .args(["verify", "--key", "master", "--key", "master"])
     .stderr_regex("error: duplicate key: `master`\n")
@@ -24,11 +24,7 @@ fn duplicate_key_named() {
 
 #[test]
 fn duplicate_key_named_and_literal() {
-  let test = Test::new()
-    .args(["keygen"])
-    .success()
-    .args(["create"])
-    .success();
+  let test = Test::new().arg("keygen").success().arg("create").success();
 
   let key = test.read("keychain/master.public");
 
@@ -94,7 +90,7 @@ fn file_not_found_error_message() {
         notes: [],
       },
     )
-    .args(["verify"])
+    .arg("verify")
     .stderr_regex("error: file missing: `foo`\n")
     .failure();
 }
@@ -133,7 +129,7 @@ fn ignore_missing() {
         notes: [],
       },
     )
-    .args(["verify"])
+    .arg("verify")
     .stderr_regex("error: file missing: `foo`\n")
     .failure()
     .args(["verify", "--ignore-missing"])
@@ -144,7 +140,7 @@ fn ignore_missing() {
 #[test]
 fn malformed_signature_error() {
   Test::new()
-    .args(["create"])
+    .arg("create")
     .success()
     .write(
       "filepack.json",
@@ -159,7 +155,7 @@ fn malformed_signature_error() {
         ]
       },
     )
-    .args(["verify"])
+    .arg("verify")
     .stderr_regex(
       "error: failed to deserialize manifest at `filepack.json`\n.*invalid signature byte length.*",
     )
@@ -169,7 +165,7 @@ fn malformed_signature_error() {
 #[test]
 fn manifest_not_found_error_message() {
   Test::new()
-    .args(["verify"])
+    .arg("verify")
     .stderr("error: manifest `filepack.json` not found\n")
     .failure();
 }
@@ -218,7 +214,7 @@ fn metadata_allows_unknown_keys() {
       },
     )
     .write("metadata.json", metadata)
-    .args(["verify"])
+    .arg("verify")
     .stderr("successfully verified 1 file totaling 26 bytes with 0 signatures across 0 notes\n")
     .success();
 }
@@ -239,7 +235,7 @@ fn metadata_may_not_be_invalid() {
       },
     )
     .write("metadata.json", json! { title: 100 })
-    .args(["verify"])
+    .arg("verify")
     .stderr_regex("error: failed to deserialize metadata at `.*metadata.json`\n.*")
     .failure();
 }
@@ -259,7 +255,7 @@ fn missing_empty_directory_error() {
 #[test]
 fn missing_signature_for_literal_key() {
   Test::new()
-    .args(["create"])
+    .arg("create")
     .success()
     .args(["verify", "--key", PUBLIC_KEY])
     .stderr(&format!(
@@ -271,9 +267,9 @@ fn missing_signature_for_literal_key() {
 #[test]
 fn missing_signature_for_named_key() {
   Test::new()
-    .args(["keygen"])
+    .arg("keygen")
     .success()
-    .args(["create"])
+    .arg("create")
     .success()
     .args(["verify", "--key", "master"])
     .stderr("error: no signature found for key `master`\n")
@@ -284,10 +280,10 @@ fn missing_signature_for_named_key() {
 fn multiple_keys() {
   let test = Test::new()
     .data_dir("alice")
-    .args(["keygen"])
+    .arg("keygen")
     .success()
     .data_dir("bob")
-    .args(["keygen"])
+    .arg("keygen")
     .success()
     .touch("foo/bar")
     .args(["create", "foo"])
@@ -312,7 +308,7 @@ fn multiple_keys() {
 fn multiple_keys_one_missing() {
   let test = Test::new()
     .data_dir("alice")
-    .args(["keygen"])
+    .arg("keygen")
     .success()
     .touch("foo/bar")
     .args(["create", "foo"])
@@ -358,7 +354,7 @@ error: 2 mismatched files
 #[test]
 fn named_key() {
   Test::new()
-    .args(["keygen"])
+    .arg("keygen")
     .success()
     .touch("foo/bar")
     .args(["create", "--sign", "foo"])
@@ -371,7 +367,7 @@ fn named_key() {
 #[test]
 fn named_key_invalid() {
   Test::new()
-    .args(["create"])
+    .arg("create")
     .success()
     .args(["verify", "--key", "@invalid"])
     .stderr(
@@ -384,7 +380,7 @@ fn named_key_invalid() {
 #[test]
 fn named_key_not_found() {
   Test::new()
-    .args(["create"])
+    .arg("create")
     .success()
     .args(["verify", "--key", "nonexistent"])
     .stderr_regex_path("error: public key not found: `.*keychain/nonexistent.public`\n")
@@ -476,7 +472,7 @@ fn print() {
 #[test]
 fn signature_verification_success() {
   let test = Test::new()
-    .args(["keygen"])
+    .arg("keygen")
     .success()
     .touch("foo/bar")
     .args(["create", "--sign", "foo"])
@@ -548,7 +544,7 @@ fn single_file_omit_directory() {
         notes: [],
       },
     )
-    .args(["verify"])
+    .arg("verify")
     .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures across 0 notes\n")
     .success();
 }
@@ -597,7 +593,7 @@ error: 1 mismatched file
 fn verify_fingerprint() {
   Test::new()
     .touch("foo")
-    .args(["create"])
+    .arg("create")
     .success()
     .args([
       "verify",
@@ -625,7 +621,7 @@ error: fingerprint mismatch\n",
 fn weak_signature_public_key() {
   Test::new()
     .touch("bar")
-    .args(["create"])
+    .arg("create")
     .success()
     .write(
       "filepack.json",
@@ -645,7 +641,7 @@ fn weak_signature_public_key() {
         ]
       },
     )
-    .args(["verify"])
+    .arg("verify")
     .stderr_regex(
       "error: failed to deserialize manifest at `filepack.json`\n.*weak public key.*",
     )
