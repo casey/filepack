@@ -28,9 +28,11 @@ fn duplicate_note() {
   manifest.notes = vec![
     Note {
       signatures: [(first_key, first_sig)].into(),
+      time: None,
     },
     Note {
       signatures: [(second_key, second_sig)].into(),
+      time: None,
     },
   ];
 
@@ -91,6 +93,7 @@ fn invalid_signature() {
       "0".repeat(128).parse::<Signature>().unwrap(),
     )]
     .into(),
+    time: None,
   });
 
   manifest.save(&manifest_path).unwrap();

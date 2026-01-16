@@ -27,7 +27,7 @@ use {
     entries::Entries,
     fingerprint_hasher::FingerprintHasher,
     fingerprint_prefix::FingerprintPrefix,
-    functions::{current_dir, decode_path, default, is_lowercase_hex},
+    functions::{current_dir, decode_path, default, is_lowercase_hex, now},
     index::Index,
     key_identifier::KeyIdentifier,
     key_name::KeyName,
@@ -42,6 +42,7 @@ use {
     owo_colorize_ext::OwoColorizeExt,
     path_error::PathError,
     public_key_error::PublicKeyError,
+    sign_options::SignOptions,
     signature_error::SignatureError,
     style::Style,
     subcommand::Subcommand,
@@ -74,6 +75,7 @@ use {
     process,
     str::{self, FromStr},
     sync::LazyLock,
+    time::{SystemTime, SystemTimeError, UNIX_EPOCH},
   },
   strum::{EnumIter, EnumString, IntoStaticStr},
   usized::IntoU64,
@@ -134,6 +136,7 @@ mod public_key;
 mod public_key_error;
 mod re;
 mod relative_path;
+mod sign_options;
 mod signature;
 mod signature_error;
 mod style;

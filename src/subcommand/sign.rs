@@ -8,6 +8,8 @@ pub(crate) struct Sign {
   key: KeyName,
   #[arg(help = MANIFEST_PATH_HELP)]
   path: Option<Utf8PathBuf>,
+  #[arg(help = "Include current time in note", long)]
+  time: bool,
 }
 
 impl Sign {
@@ -16,7 +18,14 @@ impl Sign {
 
     let keychain = Keychain::load(&options)?;
 
-    manifest.sign(&keychain, &self.key, self.force)?;
+    manifest.sign(
+      SignOptions {
+        overwrite: self.force,
+        time: self.time,
+      },
+      &keychain,
+      &self.key,
+    )?;
 
     manifest.save(&path)?;
 
