@@ -33,7 +33,7 @@ impl Display for Lint {
         write!(f, "Windows does not allow filenames that end with a period")
       }
       Lint::WindowsTrailingSpace => {
-        write!(f, "Windows does not allow filenmaes that end with a space")
+        write!(f, "Windows does not allow filenames that end with a space")
       }
     }
   }
