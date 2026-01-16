@@ -26,12 +26,6 @@ pub enum Error {
   DeserializeMetadata {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
-    source: serde_json::Error,
-  },
-  #[snafu(display("failed to deserialize metadata template at `{path}`"))]
-  DeserializeMetadataTemplate {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
     source: serde_yaml::Error,
   },
   #[snafu(display(

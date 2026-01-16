@@ -9,9 +9,12 @@ pub(crate) struct Metadata {
 impl Metadata {
   pub(crate) const FILENAME: &'static str = "metadata.yaml";
 
-  pub(crate) fn load(path: &Utf8Path) -> Result {
-    let yaml = filesystem::read_to_string(&path)?;
-    serde_yaml::from_str(&yaml).context(error::DeserializeMetadataTemplate { path })
+  pub(crate) fn deserialize(path: &Utf8Path, yaml: &str) -> Result<Self> {
+    serde_yaml::from_str(&yaml).context(error::DeserializeMetadata { path })
+  }
+
+  pub(crate) fn load(path: &Utf8Path) -> Result<Self> {
+    Self::deserialize(path, &filesystem::read_to_string(&path)?)
   }
 }
 

@@ -221,22 +221,26 @@ fn metadata_allows_unknown_keys() {
 
 #[test]
 fn metadata_may_not_be_invalid() {
+  let metadata = "title: hello\nbar: 100";
+
+  let hash = blake3::hash(metadata.as_bytes()).to_string();
+
   Test::new()
     .write(
       "filepack.json",
       json! {
         files: {
-          "metadata.json": {
-            hash: "bc9ebf24ee55783c96f0794cc208c03933e318986ed9b3f347020606e21f7b4b",
-            size: 14
+          "metadata.yaml": {
+            hash: hash,
+            size: 21,
           }
         },
         notes: [],
       },
     )
-    .write("metadata.json", json! { title: 100 })
+    .write("metadata.yaml", metadata)
     .arg("verify")
-    .stderr_regex("error: failed to deserialize metadata at `.*metadata.json`\n.*")
+    .stderr_regex("error: failed to deserialize metadata at `.*metadata.yaml`\n.*")
     .failure();
 }
 
