@@ -43,11 +43,12 @@ mod tests {
 
   #[test]
   fn duplicate_signatures_are_rejected() {
-    let sig = "0".repeat(128);
     let json = format!(
-      r#"{{"signatures":{{"{}":"{sig}","{}":"{sig}"}}}}"#,
+      r#"{{"signatures":{{"{}":"{}","{}":"{}"}}}}"#,
       test::PUBLIC_KEY,
+      test::SIGNATURE,
       test::PUBLIC_KEY,
+      test::SIGNATURE,
     );
     assert_eq!(
       serde_json::from_str::<Note>(&json).unwrap_err().to_string(),
