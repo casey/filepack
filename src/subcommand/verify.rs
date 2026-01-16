@@ -233,13 +233,21 @@ mismatched file: `{path}`
       print!("{json}");
     }
 
-    eprintln!(
-      "successfully verified {} totaling {} with {} across {}",
-      Count(verified.files, "file"),
-      Count(verified.bytes, "byte"),
-      Count(verified.signatures, "signature"),
-      Count(verified.notes, "note"),
-    );
+    eprint!("successfully verified {}", Count(verified.files, "file"));
+
+    if verified.files > 0 {
+      eprint!(" totaling {}", Count(verified.bytes, "byte"));
+    }
+
+    if verified.signatures > 0 {
+      eprint!(
+        " with {} across {}",
+        Count(verified.signatures, "signature"),
+        Count(verified.notes, "note"),
+      );
+    }
+
+    eprintln!();
 
     Ok(())
   }
