@@ -37,6 +37,11 @@ Open Questions
   which is much more complicated, but has the advantage of being standardized,
   and enforces domain separation between types.
 
+- *Should the signature algorithm use BLAKE3 instead of the the EdDSA default
+  of SHA-512?* This would allow us to avoid double-hashing, and remove a
+  dependency on a second hash algorithm, but would make our signatures
+  non-standard.
+
 Manifest Format
 ---------------
 
