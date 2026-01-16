@@ -191,7 +191,8 @@ objects containing a single mandatory key `signatures`, an object mapping
 public keys to signatures. Public keys and signatures are both lowercase
 hexadecimal strings.
 
-Notes may optionally contain a `time` field
+Notes may optionally contain a `time` field whose value is a timestamp given as
+the number of nanoseconds after the UNIX epoch.
 
 Public keys are Curve25519 points and signatures are Ed25519 signatures made
 over the root of a Merkle tree which commits to the content of `files`, as well
