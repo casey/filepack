@@ -42,7 +42,7 @@ impl Manifest {
   }
 
   #[must_use]
-  pub fn fingerprint(&self) -> Hash {
+  pub fn fingerprint(&self) -> Fingerprint {
     self.files.fingerprint()
   }
 
@@ -116,7 +116,7 @@ impl Manifest {
     size
   }
 
-  pub(crate) fn verify_notes(&self) -> Result<Hash> {
+  pub(crate) fn verify_notes(&self) -> Result<Fingerprint> {
     let fingerprint = self.fingerprint();
 
     let mut digests = BTreeMap::new();

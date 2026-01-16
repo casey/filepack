@@ -10,7 +10,7 @@ pub struct Note {
 }
 
 impl Note {
-  pub(crate) fn digest(&self, fingerprint: Hash) -> Digest {
+  pub(crate) fn digest(&self, fingerprint: Fingerprint) -> Digest {
     Message {
       fingerprint,
       time: self.time,
@@ -33,7 +33,7 @@ impl Note {
     self.signatures.contains_key(&public_key)
   }
 
-  pub(crate) fn verify(&self, fingerprint: Hash) -> Result<u64> {
+  pub(crate) fn verify(&self, fingerprint: Fingerprint) -> Result<u64> {
     let digest = self.digest(fingerprint);
     for (public_key, signature) in &self.signatures {
       public_key.verify(digest, signature)?;

@@ -97,7 +97,7 @@ mod tests {
 
   #[test]
   fn parse() {
-    let signature = PrivateKey::generate().sign(Digest(Hash::bytes(b"hello")));
+    let signature = PrivateKey::generate().sign(Digest(test::HASH.parse().unwrap()));
     assert_eq!(
       signature.to_string().parse::<Signature>().unwrap(),
       signature

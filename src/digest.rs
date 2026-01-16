@@ -1,7 +1,7 @@
 use super::*;
 
 #[derive(Clone, Copy, Eq, Ord, PartialEq, PartialOrd)]
-pub struct Digest(pub(crate) Hash);
+pub struct Digest(pub(crate) Fingerprint);
 
 impl Digest {
   #[must_use]

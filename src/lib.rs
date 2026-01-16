@@ -83,9 +83,9 @@ use {
 };
 
 pub use self::{
-  directory::Directory, entry::Entry, error::Error, file::File, hash::Hash, manifest::Manifest,
-  note::Note, private_key::PrivateKey, public_key::PublicKey, relative_path::RelativePath,
-  signature::Signature,
+  directory::Directory, entry::Entry, error::Error, file::File, fingerprint::Fingerprint,
+  hash::Hash, manifest::Manifest, note::Note, private_key::PrivateKey, public_key::PublicKey,
+  relative_path::RelativePath, signature::Signature,
 };
 
 #[cfg(test)]
@@ -111,6 +111,7 @@ mod entry;
 mod error;
 mod file;
 mod filesystem;
+mod fingerprint;
 mod fingerprint_hasher;
 mod fingerprint_prefix;
 mod functions;
