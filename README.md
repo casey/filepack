@@ -187,12 +187,12 @@ the length of the file in bytes.
 ### `notes`
 
 The value of the mandatory `notes` key is an array of signed notes. Notes are
-objects containing a single mandatory key `signatures`, a mapping public keys
-to signatures. Public keys and signatures are both lowercase hexadecimal
-strings.
+objects containing a single mandatory key `signatures`, an object mapping
+public keys to signatures. Public keys and signatures are both lowercase
+hexadecimal strings.
 
-Signatures are made over the root of a Merkle tree which commits to the content
-of `files`.
+Public keys are Curve25519 points and signatures are Ed25519 signatures made
+over the root of a Merkle tree which commits to the content of `files`.
 
 ### example
 
