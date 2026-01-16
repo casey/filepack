@@ -322,6 +322,41 @@ fn sign_creates_valid_signature() {
   assert_eq!(manifest.notes.len(), 1);
   assert_eq!(manifest.notes[0].signatures.len(), 1);
   assert!(manifest.notes[0].signatures.contains_key(&public_key));
+  assert!(manifest.notes[0].time.is_none());
+
+  test
+    .args(["verify", "foo"])
+    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature across 1 note\n")
+    .success();
+}
+
+#[test]
+fn sign_with_time() {
+  use std::time::{SystemTime, UNIX_EPOCH};
+
+  let test = Test::new()
+    .arg("keygen")
+    .success()
+    .touch("foo/bar")
+    .args(["create", "--sign", "--time", "foo"])
+    .success();
+
+  let manifest_path = test.path().join("foo/filepack.json");
+  let manifest = Manifest::load(Some(&manifest_path)).unwrap();
+
+  let public_key = test.read_public_key("keychain/master.public");
+
+  assert_eq!(manifest.notes.len(), 1);
+  assert_eq!(manifest.notes[0].signatures.len(), 1);
+  assert!(manifest.notes[0].signatures.contains_key(&public_key));
+
+  let time = manifest.notes[0].time.unwrap();
+  let now = SystemTime::now()
+    .duration_since(UNIX_EPOCH)
+    .unwrap()
+    .as_nanos();
+  let one_minute_ago = now - 60 * 1_000_000_000;
+  assert!(time >= one_minute_ago && time <= now);
 
   test
     .args(["verify", "foo"])
