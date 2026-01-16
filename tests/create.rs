@@ -171,36 +171,11 @@ fn manifest_already_exists_error() {
 }
 
 #[test]
-fn metadata_already_exists() {
+fn metadata_may_not_have_unknown_keys() {
   Test::new()
-    .touch("foo/bar")
-    .touch("foo/metadata.json")
-    .write("metadata.yaml", "title: Foo")
-    .args(["create", "foo", "--metadata", "metadata.yaml"])
-    .stderr_path("error: metadata `foo/metadata.json` already exists\n")
-    .failure()
-    .args(["create", "foo", "--metadata", "metadata.yaml", "--force"])
-    .assert_file("foo/metadata.json", json! { title: "Foo" })
-    .success();
-}
-
-#[test]
-fn metadata_template_may_not_have_unknown_keys() {
-  Test::new()
-    .touch("foo/bar")
     .write("metadata.yaml", "title: Foo\nbar: baz")
-    .args(["create", "foo", "--metadata", "metadata.yaml"])
+    .arg("create")
     .stderr_regex(".*unknown field `bar`.*")
-    .failure();
-}
-
-#[test]
-fn metadata_template_should_not_be_included_in_package() {
-  Test::new()
-    .touch("foo")
-    .write("metadata.yaml", "title: Foo")
-    .args(["create", ".", "--metadata", "metadata.yaml"])
-    .stderr("error: metadata template `metadata.yaml` should not be included in package\n")
     .failure();
 }
 
@@ -555,28 +530,12 @@ fn with_manifest_path() {
 #[test]
 fn with_metadata() {
   Test::new()
-    .touch("foo/bar")
+    .touch("bar")
     .write("metadata.yaml", "title: Foo")
-    .args(["create", "foo", "--metadata", "metadata.yaml"])
-    .assert_file(
-      "foo/filepack.json",
-      json! {
-        files: {
-          bar: {
-            hash: EMPTY_HASH,
-            size: 0
-          },
-          "metadata.json": {
-            hash: "395190e326d9f4b03fff68cacda59e9c31b9b2a702d46a12f89bfb1ec568c0f1",
-            size: 16
-          }
-        },
-        notes: [],
-      },
-    )
-    .assert_file("foo/metadata.json", json! { title: "Foo" })
+    .arg("create")
+    .assert_file_regex("filepack.json", r#".*"metadata.yaml".*"#)
     .success()
-    .args(["verify", "foo"])
-    .stderr("successfully verified 2 files totaling 16 bytes with 0 signatures across 0 notes\n")
+    .arg("verify")
+    .stderr("successfully verified 2 files totaling 10 bytes with 0 signatures across 0 notes\n")
     .success();
 }

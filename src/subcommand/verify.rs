@@ -217,9 +217,8 @@ mismatched file: `{path}`
     {
       let path = root.join(Metadata::FILENAME);
 
-      if let Some(json) = filesystem::read_to_string_opt(&path)? {
-        serde_json::from_str::<Metadata>(&json)
-          .context(error::DeserializeMetadata { path: &path })?;
+      if let Some(yaml) = filesystem::read_to_string_opt(&path)? {
+        Metadata::deserialize(&path, &yaml)?;
       }
     }
 
