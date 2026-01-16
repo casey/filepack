@@ -168,13 +168,7 @@ mod tests {
     let re = Regex::new(r"(?s)```json(.*?)```").unwrap();
 
     for capture in re.captures_iter(&readme) {
-      let manifest = capture[1].replace(
-        "…",
-        concat!(
-          "3f814a19e6db6431959f0393d362920846224af1d44ceee851e0caded9412d93",
-          "9a221a15f6ba9a5d118a570a6b1cc48c95c7fb73581eeec1e33afdb4d0163907"
-        ),
-      );
+      let manifest = capture[1].replace("…", test::SIGNATURE);
       serde_json::from_str::<Manifest>(&manifest).unwrap();
     }
   }

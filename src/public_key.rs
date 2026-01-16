@@ -93,13 +93,11 @@ mod tests {
 
   #[test]
   fn must_have_leading_zeros() {
-    "0f6d444f09eb336d3cc94d66cc541fea0b70b36be291eb3ecf5b49113f34c8d3"
-      .parse::<PublicKey>()
-      .unwrap();
-
-    "f6d444f09eb336d3cc94d66cc541fea0b70b36be291eb3ecf5b49113f34c8d3"
-      .parse::<PublicKey>()
-      .unwrap_err();
+    let s = "0".repeat(63);
+    assert_eq!(
+      s.parse::<PublicKey>().unwrap_err().to_string(),
+      format!("invalid public key hex: `{s}`"),
+    );
   }
 
   #[test]
@@ -126,37 +124,25 @@ mod tests {
 
   #[test]
   fn uppercase_is_forbidden() {
-    let key = "0f6d444f09eb336d3cc94d66cc541fea0b70b36be291eb3ecf5b49113f34c8d3";
-    key.parse::<PublicKey>().unwrap();
+    let uppercase = test::PUBLIC_KEY.to_uppercase();
     assert_eq!(
-      key
-        .to_uppercase()
-        .parse::<PublicKey>()
-        .unwrap_err()
-        .to_string(),
-      "public keys must be lowercase hex: \
-      `0F6D444F09EB336D3CC94D66CC541FEA0B70B36BE291EB3ECF5B49113F34C8D3`"
+      uppercase.parse::<PublicKey>().unwrap_err().to_string(),
+      format!("public keys must be lowercase hex: `{uppercase}`"),
     );
   }
 
   #[test]
   fn weak_public_keys_are_forbidden() {
+    let key = "0".repeat(64);
     assert!(matches!(
-        "0000000000000000000000000000000000000000000000000000000000000000"
-          .parse::<PublicKey>()
-          .unwrap_err(),
-        PublicKeyError::Weak { key }
-          if key == "0000000000000000000000000000000000000000000000000000000000000000",
+      key.parse::<PublicKey>().unwrap_err(),
+      PublicKeyError::Weak { key } if key == key,
     ));
   }
 
   #[test]
   fn whitespace_is_not_trimmed_when_parsing_from_string() {
-    "0f6d444f09eb336d3cc94d66cc541fea0b70b36be291eb3ecf5b49113f34c8d3"
-      .parse::<PublicKey>()
-      .unwrap();
-
-    " 0f6d444f09eb336d3cc94d66cc541fea0b70b36be291eb3ecf5b49113f34c8d3"
+    format!(" {}", test::PUBLIC_KEY)
       .parse::<PublicKey>()
       .unwrap_err();
   }
@@ -167,12 +153,11 @@ mod tests {
 
     let path = Utf8PathBuf::from_path_buf(dir.path().join("key")).unwrap();
 
-    let key = "0f6d444f09eb336d3cc94d66cc541fea0b70b36be291eb3ecf5b49113f34c8d3"
-      .parse::<PublicKey>()
-      .unwrap();
+    filesystem::write(&path, format!(" \t{}\n", test::PUBLIC_KEY)).unwrap();
 
-    filesystem::write(&path, format!(" \t{key}\n")).unwrap();
-
-    assert_eq!(PublicKey::load(&path).unwrap(), key);
+    assert_eq!(
+      PublicKey::load(&path).unwrap().to_string(),
+      test::PUBLIC_KEY,
+    );
   }
 }

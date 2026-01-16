@@ -1,8 +1,10 @@
 use super::*;
 
+#[serde_as]
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
 pub struct Note {
+  #[serde_as(as = "MapPreventDuplicates<_, _>")]
   pub signatures: BTreeMap<PublicKey, Signature>,
 }
 
@@ -32,5 +34,25 @@ impl Note {
       public_key.verify(digest, signature)?;
     }
     Ok(self.signatures.len().into_u64())
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn duplicate_signatures_are_rejected() {
+    let json = format!(
+      r#"{{"signatures":{{"{}":"{}","{}":"{}"}}}}"#,
+      test::PUBLIC_KEY,
+      test::SIGNATURE,
+      test::PUBLIC_KEY,
+      test::SIGNATURE,
+    );
+    assert_eq!(
+      serde_json::from_str::<Note>(&json).unwrap_err().to_string(),
+      "invalid entry: found duplicate key at line 1 column 411",
+    );
   }
 }
