@@ -38,7 +38,6 @@ use {
     message::Message,
     metadata::Metadata,
     mode::Mode,
-    note::Note,
     options::Options,
     owo_colorize_ext::OwoColorizeExt,
     path_error::PathError,
@@ -83,7 +82,7 @@ use {
 
 pub use self::{
   directory::Directory, entry::Entry, error::Error, file::File, hash::Hash, manifest::Manifest,
-  private_key::PrivateKey, public_key::PublicKey, relative_path::RelativePath,
+  note::Note, private_key::PrivateKey, public_key::PublicKey, relative_path::RelativePath,
   signature::Signature,
 };
 
