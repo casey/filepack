@@ -84,7 +84,7 @@ impl Manifest {
 
     let message = Message {
       fingerprint,
-      time: options.time.then(|| now()).transpose()?,
+      time: options.time.then(now).transpose()?,
     };
 
     let digest = message.digest();
