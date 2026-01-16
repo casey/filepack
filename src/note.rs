@@ -6,6 +6,7 @@ use super::*;
 pub struct Note {
   #[serde_as(as = "MapPreventDuplicates<_, _>")]
   pub signatures: BTreeMap<PublicKey, Signature>,
+  #[serde(default, skip_serializing_if = "is_default")]
   pub time: Option<u128>,
 }
 
@@ -68,6 +69,18 @@ mod tests {
     assert_eq!(
       serde_json::from_str::<Note>(&json).unwrap_err().to_string(),
       "invalid entry: found duplicate key at line 1 column 411",
+    );
+  }
+
+  #[test]
+  fn optional_fields_are_not_serialized() {
+    assert_eq!(
+      serde_json::to_string(&Note {
+        signatures: BTreeMap::new(),
+        time: None,
+      })
+      .unwrap(),
+      r#"{"signatures":{}}"#,
     );
   }
 }

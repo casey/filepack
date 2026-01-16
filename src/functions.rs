@@ -13,6 +13,10 @@ pub(crate) fn default<T: Default>() -> T {
   Default::default()
 }
 
+pub(crate) fn is_default<T: Default + PartialEq>(value: &T) -> bool {
+  *value == default()
+}
+
 pub(crate) fn is_lowercase_hex(s: &str) -> bool {
   s.chars()
     .all(|c| c.is_ascii_hexdigit() && (c.is_numeric() || c.is_lowercase()))
