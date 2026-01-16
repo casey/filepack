@@ -23,6 +23,8 @@ const MANIFEST_PATH_HELP: &str = "\
   `filepack.json`, or omitted, in which case manifest named `filepack.json` in the current \
   directory is loaded.";
 
+const TIME_HELP: &str = "Include current time in note";
+
 #[derive(Parser)]
 #[command(
   version,

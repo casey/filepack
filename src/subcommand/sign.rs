@@ -8,7 +8,7 @@ pub(crate) struct Sign {
   key: KeyName,
   #[arg(help = MANIFEST_PATH_HELP)]
   path: Option<Utf8PathBuf>,
-  #[arg(help = "Include current time in note", long)]
+  #[arg(help = TIME_HELP, long)]
   time: bool,
 }
 

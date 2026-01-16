@@ -19,7 +19,7 @@ pub(crate) struct Create {
   root: Option<Utf8PathBuf>,
   #[arg(help = "Sign manifest", long)]
   sign: bool,
-  #[arg(help = "Include current time in note", long)]
+  #[arg(help = TIME_HELP, long)]
   time: bool,
 }
 
