@@ -8,7 +8,7 @@ pub struct File {
 }
 
 impl File {
-  pub(crate) fn fingerprint(&self) -> Hash {
+  pub(crate) fn fingerprint(&self) -> Fingerprint {
     let mut hasher = FingerprintHasher::new(FingerprintPrefix::File);
     hasher.field(0, self.hash.as_bytes());
     hasher.field(1, &self.size.to_le_bytes());

@@ -25,6 +25,7 @@ use {
     display_path::DisplayPath,
     display_secret::DisplaySecret,
     entries::Entries,
+    fingerprint::Fingerprint,
     fingerprint_hasher::FingerprintHasher,
     fingerprint_prefix::FingerprintPrefix,
     functions::{current_dir, decode_path, default, is_lowercase_hex, now},
@@ -111,6 +112,7 @@ mod entry;
 mod error;
 mod file;
 mod filesystem;
+mod fingerprint;
 mod fingerprint_hasher;
 mod fingerprint_prefix;
 mod functions;

@@ -14,8 +14,8 @@ impl FingerprintHasher {
     self.hasher.update(field);
   }
 
-  pub(crate) fn finalize(self) -> Hash {
-    self.hasher.finalize().into()
+  pub(crate) fn finalize(self) -> Fingerprint {
+    Fingerprint(self.hasher.finalize().into())
   }
 
   pub(crate) fn new(context: FingerprintPrefix) -> Self {

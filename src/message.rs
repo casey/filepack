@@ -1,7 +1,7 @@
 use super::*;
 
 pub(crate) struct Message {
-  pub(crate) fingerprint: Hash,
+  pub(crate) fingerprint: Fingerprint,
   pub(crate) time: Option<u128>,
 }
 
