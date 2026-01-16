@@ -47,6 +47,16 @@ mod tests {
   use super::*;
 
   #[test]
+  fn duplicate_fields_are_rejected() {
+    assert_eq!(
+      serde_json::from_str::<Note>(r#"{"signatures":{},"signatures":{}}"#)
+        .unwrap_err()
+        .to_string(),
+      "duplicate field `signatures` at line 1 column 29",
+    );
+  }
+
+  #[test]
   fn duplicate_signatures_are_rejected() {
     let json = format!(
       r#"{{"signatures":{{"{}":"{}","{}":"{}"}}}}"#,
