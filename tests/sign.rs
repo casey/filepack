@@ -165,8 +165,6 @@ fn updates_manifest_with_signature() {
 
 #[test]
 fn with_time() {
-  use std::time::{SystemTime, UNIX_EPOCH};
-
   let test = Test::new()
     .arg("keygen")
     .success()
