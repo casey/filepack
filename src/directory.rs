@@ -1,8 +1,10 @@
 use super::*;
 
+#[serde_as]
 #[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields, rename_all = "kebab-case", transparent)]
 pub struct Directory {
+  #[serde_as(as = "MapPreventDuplicates<_, _>")]
   pub(crate) entries: BTreeMap<Component, Entry>,
 }
 
@@ -65,5 +67,20 @@ impl Directory {
 
   pub(crate) fn new() -> Self {
     Self::default()
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn duplicate_entries_are_rejected() {
+    assert!(
+      serde_json::from_str::<Directory>(r#"{"a":{},"a":{}}"#)
+        .unwrap_err()
+        .to_string()
+        .contains("duplicate key"),
+    );
   }
 }

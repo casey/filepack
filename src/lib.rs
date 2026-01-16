@@ -57,7 +57,7 @@ use {
   owo_colors::Styled,
   regex::Regex,
   serde::{Deserialize, Deserializer, Serialize, Serializer},
-  serde_with::{DeserializeFromStr, SerializeDisplay},
+  serde_with::{DeserializeFromStr, MapPreventDuplicates, SerializeDisplay, serde_as},
   snafu::{ErrorCompat, OptionExt, ResultExt, Snafu, ensure},
   std::{
     array::TryFromSliceError,
