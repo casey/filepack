@@ -25,7 +25,6 @@ use {
     display_path::DisplayPath,
     display_secret::DisplaySecret,
     entries::Entries,
-    fingerprint::Fingerprint,
     fingerprint_hasher::FingerprintHasher,
     fingerprint_prefix::FingerprintPrefix,
     functions::{current_dir, decode_path, default, is_lowercase_hex, now},
@@ -84,9 +83,9 @@ use {
 };
 
 pub use self::{
-  directory::Directory, entry::Entry, error::Error, file::File, hash::Hash, manifest::Manifest,
-  note::Note, private_key::PrivateKey, public_key::PublicKey, relative_path::RelativePath,
-  signature::Signature,
+  directory::Directory, entry::Entry, error::Error, file::File, fingerprint::Fingerprint,
+  hash::Hash, manifest::Manifest, note::Note, private_key::PrivateKey, public_key::PublicKey,
+  relative_path::RelativePath, signature::Signature,
 };
 
 #[cfg(test)]
