@@ -30,7 +30,7 @@ pub(crate) fn create_dir_all_with_mode(path: &Utf8Path, mode: u32) -> Result {
 }
 
 #[cfg(not(unix))]
-pub(crate) fn create_dir_all_with_mode(path: &Utf8Path, _mode: u32) -> Resul {
+pub(crate) fn create_dir_all_with_mode(path: &Utf8Path, _mode: u32) -> Result {
   create_dir_all(path)
 }
 
