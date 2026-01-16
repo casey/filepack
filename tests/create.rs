@@ -79,12 +79,12 @@ fn empty_directories_are_included() {
           foo: {
           },
         },
-        signatures: {},
+        notes: [],
       },
     )
     .success()
     .args(["verify", "."])
-    .stderr("successfully verified 0 files totaling 0 bytes with 0 signatures\n")
+    .stderr("successfully verified 0 files totaling 0 bytes with 0 signatures across 0 notes\n")
     .success();
 }
 
@@ -104,12 +104,12 @@ fn file_in_subdirectory() {
             }
           }
         },
-        signatures: {},
+        notes: [],
       },
     )
     .success()
     .args(["verify", "."])
-    .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
+    .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures across 0 notes\n")
     .success();
 }
 
@@ -128,12 +128,12 @@ fn force_overwrites_manifest() {
             size: 0
           }
         },
-        signatures: {},
+        notes: [],
       },
     )
     .success()
     .args(["verify", "."])
-    .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
+    .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures across 0 notes\n")
     .success();
 }
 
@@ -152,12 +152,12 @@ fn force_overwrites_manifest_with_destination() {
             size: 0
           }
         },
-        signatures: {},
+        notes: [],
       },
     )
     .success()
     .args(["verify", ".", "--manifest", "foo.json"])
-    .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
+    .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures across 0 notes\n")
     .success();
 }
 
@@ -234,12 +234,12 @@ fn multiple_empty_directory_are_included() {
           foo: {
           },
         },
-        signatures: {},
+        notes: [],
       },
     )
     .success()
     .args(["verify", "."])
-    .stderr("successfully verified 0 files totaling 0 bytes with 0 signatures\n")
+    .stderr("successfully verified 0 files totaling 0 bytes with 0 signatures across 0 notes\n")
     .success();
 }
 
@@ -257,12 +257,12 @@ fn nested_empty_directories_are_included() {
             },
           },
         },
-        signatures: {},
+        notes: [],
       },
     )
     .success()
     .args(["verify", "."])
-    .stderr("successfully verified 0 files totaling 0 bytes with 0 signatures\n")
+    .stderr("successfully verified 0 files totaling 0 bytes with 0 signatures across 0 notes\n")
     .success();
 }
 
@@ -270,10 +270,10 @@ fn nested_empty_directories_are_included() {
 fn no_files() {
   Test::new()
     .args(["create", "."])
-    .assert_file("filepack.json", json! { files: {}, signatures: {} })
+    .assert_file("filepack.json", json! { files: {}, notes: [] })
     .success()
     .args(["verify", "."])
-    .stderr("successfully verified 0 files totaling 0 bytes with 0 signatures\n")
+    .stderr("successfully verified 0 files totaling 0 bytes with 0 signatures across 0 notes\n")
     .success();
 }
 
@@ -319,17 +319,13 @@ fn sign_creates_valid_signature() {
 
   let public_key = test.read_public_key("keychain/master.public");
 
-  assert_eq!(manifest.signatures.len(), 1);
-
-  let signature = manifest.signatures[&public_key].clone();
-
-  public_key
-    .verify(manifest.fingerprint(), &signature)
-    .unwrap();
+  assert_eq!(manifest.notes.len(), 1);
+  assert_eq!(manifest.notes[0].signatures.len(), 1);
+  assert!(manifest.notes[0].signatures.contains_key(&public_key));
 
   test
     .args(["verify", "foo"])
-    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
+    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature across 1 note\n")
     .success();
 }
 
@@ -359,17 +355,13 @@ fn sign_with_named_key() {
 
   let public_key = test.read_public_key("keychain/deploy.public");
 
-  assert_eq!(manifest.signatures.len(), 1);
-
-  let signature = manifest.signatures[&public_key].clone();
-
-  public_key
-    .verify(manifest.fingerprint(), &signature)
-    .unwrap();
+  assert_eq!(manifest.notes.len(), 1);
+  assert_eq!(manifest.notes[0].signatures.len(), 1);
+  assert!(manifest.notes[0].signatures.contains_key(&public_key));
 
   test
     .args(["verify", "foo"])
-    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
+    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature across 1 note\n")
     .success();
 }
 
@@ -396,12 +388,12 @@ fn single_file() {
             size: 0
           }
         },
-        signatures: {},
+        notes: [],
       },
     )
     .success()
     .args(["verify", "."])
-    .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
+    .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures across 0 notes\n")
     .success();
 }
 
@@ -419,12 +411,12 @@ fn single_file_mmap() {
             size: 0
           }
         },
-        signatures: {},
+        notes: [],
       },
     )
     .success()
     .args(["--mmap", "verify", "."])
-    .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
+    .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures across 0 notes\n")
     .success();
 }
 
@@ -442,12 +434,12 @@ fn single_file_omit_root() {
             size: 0
           }
         },
-        signatures: {},
+        notes: [],
       },
     )
     .success()
     .args(["verify", "."])
-    .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
+    .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures across 0 notes\n")
     .success();
 }
 
@@ -465,12 +457,12 @@ fn single_file_parallel() {
             size: 0
           }
         },
-        signatures: {},
+        notes: [],
       },
     )
     .success()
     .args(["--parallel", "verify", "."])
-    .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
+    .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures across 0 notes\n")
     .success();
 }
 
@@ -488,12 +480,12 @@ fn single_non_empty_file() {
             size: 3
           }
         },
-        signatures: {},
+        notes: [],
       },
     )
     .success()
     .args(["verify", "."])
-    .stderr("successfully verified 1 file totaling 3 bytes with 0 signatures\n")
+    .stderr("successfully verified 1 file totaling 3 bytes with 0 signatures across 0 notes\n")
     .success();
 }
 
@@ -520,12 +512,12 @@ fn with_manifest_path() {
             size: 0
           }
         },
-        signatures: {},
+        notes: [],
       },
     )
     .success()
     .args(["verify", "--manifest", "hello.json"])
-    .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
+    .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures across 0 notes\n")
     .success();
 }
 
@@ -548,12 +540,12 @@ fn with_metadata() {
             size: 16
           }
         },
-        signatures: {},
+        notes: [],
       },
     )
     .assert_file("foo/metadata.json", json! { title: "Foo" })
     .success()
     .args(["verify", "foo"])
-    .stderr("successfully verified 2 files totaling 16 bytes with 0 signatures\n")
+    .stderr("successfully verified 2 files totaling 16 bytes with 0 signatures across 0 notes\n")
     .success();
 }

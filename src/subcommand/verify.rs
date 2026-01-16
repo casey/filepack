@@ -29,6 +29,7 @@ impl Verify {
     struct Verified {
       bytes: u128,
       files: u64,
+      notes: u64,
       signatures: u64,
     }
 
@@ -72,7 +73,16 @@ impl Verify {
       path: Manifest::FILENAME,
     })?;
 
-    let fingerprint = manifest.fingerprint();
+    let mut verified = Verified::default();
+
+    let fingerprint = manifest.verify_notes()?;
+
+    verified.signatures += manifest
+      .notes
+      .iter()
+      .map(|note| note.signatures.len().into_u64())
+      .sum::<u64>();
+    verified.notes += manifest.notes.len().into_u64();
 
     if let Some(expected) = self.fingerprint
       && fingerprint != expected
@@ -95,8 +105,6 @@ fingerprint mismatch: `{source}`
     );
 
     let mut mismatches = BTreeMap::new();
-
-    let mut verified = Verified::default();
 
     let files = manifest.files();
 
@@ -215,14 +223,9 @@ mismatched file: `{path}`
       }
     }
 
-    for (public_key, signature) in &manifest.signatures {
-      public_key.verify(fingerprint, signature)?;
-      verified.signatures += 1;
-    }
-
     for (key, identifier) in keys {
       ensure! {
-        manifest.signatures.contains_key(key),
+        manifest.notes.iter().any(|note| note.has_signature(key)),
         error::SignatureMissing { identifier: identifier.clone() },
       }
     }
@@ -232,10 +235,11 @@ mismatched file: `{path}`
     }
 
     eprintln!(
-      "successfully verified {} totaling {} with {}",
+      "successfully verified {} totaling {} with {} across {}",
       Count(verified.files, "file"),
       Count(verified.bytes, "byte"),
       Count(verified.signatures, "signature"),
+      Count(verified.notes, "note"),
     );
 
     Ok(())

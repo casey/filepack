@@ -21,12 +21,14 @@ use {
     arguments::Arguments,
     component::Component,
     count::Count,
+    digest::Digest,
     display_path::DisplayPath,
     display_secret::DisplaySecret,
     entries::Entries,
     fingerprint_hasher::FingerprintHasher,
     fingerprint_prefix::FingerprintPrefix,
     functions::{current_dir, decode_path, default, is_lowercase_hex},
+    index::Index,
     key_identifier::KeyIdentifier,
     key_name::KeyName,
     key_type::KeyType,
@@ -80,7 +82,7 @@ use {
 
 pub use self::{
   directory::Directory, entry::Entry, error::Error, file::File, hash::Hash, manifest::Manifest,
-  private_key::PrivateKey, public_key::PublicKey, relative_path::RelativePath,
+  note::Note, private_key::PrivateKey, public_key::PublicKey, relative_path::RelativePath,
   signature::Signature,
 };
 
@@ -98,6 +100,7 @@ fn tempdir() -> tempfile::TempDir {
 mod arguments;
 mod component;
 mod count;
+mod digest;
 mod directory;
 mod display_path;
 mod display_secret;
@@ -110,6 +113,7 @@ mod fingerprint_hasher;
 mod fingerprint_prefix;
 mod functions;
 mod hash;
+mod index;
 mod key_identifier;
 mod key_name;
 mod key_type;
@@ -120,6 +124,7 @@ mod manifest;
 mod message;
 mod metadata;
 mod mode;
+mod note;
 mod options;
 mod owo_colorize_ext;
 mod path_error;

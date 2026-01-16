@@ -2,7 +2,7 @@ use {
   self::{expected::Expected, test::Test},
   camino::{Utf8Path, Utf8PathBuf},
   executable_path::executable_path,
-  filepack::{Manifest, PrivateKey, PublicKey, Signature},
+  filepack::{Manifest, Note, PrivateKey, PublicKey, Signature},
   regex::Regex,
   std::{
     collections::BTreeMap,
@@ -39,6 +39,7 @@ mod keychain;
 mod keygen;
 mod man;
 mod misc;
+mod notes;
 mod sign;
 mod size;
 mod test;

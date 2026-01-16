@@ -40,6 +40,12 @@ macro_rules! parts {
         $s.push('}');
     }};
 
+    ($s:ident, [ $($elements:tt)* ]) => {{
+        $s.push('[');
+        parts!($s, $($elements)*);
+        $s.push(']');
+    }};
+
     ($s:ident, $key:tt : $value:tt $(, $($rest:tt)*)? ) => {{
         quote!($s, $key);
         $s.push(':');
@@ -137,16 +143,39 @@ fn json() {
 
   case(
     json! {
+      files: {},
+      notes: []
+    },
+    r#"{"files":{},"notes":[]}"#,
+  );
+
+  case(
+    json! {
+      notes: [
+        {
+          signatures: {}
+        }
+      ]
+    },
+    r#"{"notes":[{"signatures":{}}]}"#,
+  );
+
+  case(
+    json! {
       files: {
         bar: {
           hash: EMPTY_HASH,
           size: 0
         }
       },
-      signatures: {
-        "0": "0"
-      }
+      notes: [
+        {
+          signatures: {
+            "0": "0"
+          }
+        }
+      ]
     },
-    r#"{"files":{"bar":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}},"signatures":{"0":"0"}}"#,
+    r#"{"files":{"bar":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}},"notes":[{"signatures":{"0":"0"}}]}"#,
   );
 }

@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Clone, Debug, DeserializeFromStr, Eq, PartialEq, SerializeDisplay)]
+#[derive(Clone, Copy, Debug, DeserializeFromStr, Eq, PartialEq, SerializeDisplay)]
 pub struct PublicKey(ed25519_dalek::VerifyingKey);
 
 impl PublicKey {
@@ -23,15 +23,12 @@ impl PublicKey {
     Ok(public_key)
   }
 
-  pub fn verify(&self, fingerprint: Hash, signature: &Signature) -> Result<()> {
-    let message = Message { fingerprint }.digest();
+  pub fn verify(&self, digest: Digest, signature: &Signature) -> Result<()> {
     self
       .0
-      .verify_strict(message.as_bytes(), signature.as_ref())
+      .verify_strict(digest.as_bytes(), signature.as_ref())
       .map_err(SignatureError)
-      .context(error::SignatureInvalid {
-        public_key: self.clone(),
-      })
+      .context(error::SignatureInvalid { key: *self })
   }
 }
 

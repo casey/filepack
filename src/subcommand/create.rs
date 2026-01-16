@@ -163,15 +163,12 @@ impl Create {
 
     let mut manifest = Manifest {
       files,
-      signatures: BTreeMap::new(),
+      notes: Vec::new(),
     };
 
     if self.sign {
       let keychain = Keychain::load(&options)?;
-
-      let (public_key, signature) = keychain.sign(&self.key, manifest.fingerprint())?;
-
-      manifest.signatures.insert(public_key.clone(), signature);
+      manifest.sign(&keychain, &self.key, false)?;
     }
 
     manifest.save(&manifest_path)?;

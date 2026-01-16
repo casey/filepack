@@ -46,14 +46,14 @@ fn extra_fields_are_not_allowed() {
       "filepack.json",
       json! {
         files: {},
-        signatures: {},
+        notes: [],
         foo: "bar"
       },
     )
     .stderr(
       "\
 error: failed to deserialize manifest at `filepack.json`
-       └─ unknown field `foo`, expected `files` or `signatures` at line 1 column 33\n",
+       └─ unknown field `foo`, expected `files` or `notes` at line 1 column 28\n",
     )
     .failure();
 }
@@ -72,7 +72,7 @@ fn extraneous_empty_directory_error() {
 #[test]
 fn extraneous_file_error() {
   Test::new()
-    .write("filepack.json", json! { files: {}, signatures: {} })
+    .write("filepack.json", json! { files: {}, notes: [] })
     .touch("foo")
     .args(["verify", "."])
     .stderr("error: extraneous file not in manifest: `foo`\n")
@@ -91,7 +91,7 @@ fn file_not_found_error_message() {
             size: 0
           }
         },
-        signatures: {},
+        notes: [],
       },
     )
     .args(["verify"])
@@ -130,14 +130,14 @@ fn ignore_missing() {
             size: 0
           }
         },
-        signatures: {},
+        notes: [],
       },
     )
     .args(["verify"])
     .stderr_regex("error: file missing: `foo`\n")
     .failure()
     .args(["verify", "--ignore-missing"])
-    .stderr("successfully verified 0 files totaling 0 bytes with 0 signatures\n")
+    .stderr("successfully verified 0 files totaling 0 bytes with 0 signatures across 0 notes\n")
     .success();
 }
 
@@ -150,9 +150,13 @@ fn malformed_signature_error() {
       "filepack.json",
       json! {
         files: {},
-        signatures: {
-          "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b": "00",
-        }
+        notes: [
+          {
+            signatures: {
+              "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b": "00"
+            }
+          }
+        ]
       },
     )
     .args(["verify"])
@@ -183,11 +187,11 @@ fn manifest_paths_are_relative_to_root() {
             size: 0
           }
         },
-        signatures: {},
+        notes: [],
       },
     )
     .args(["verify", "dir"])
-    .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
+    .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures across 0 notes\n")
     .success();
 }
 
@@ -210,12 +214,12 @@ fn metadata_allows_unknown_keys() {
             size: 26
           }
         },
-        signatures: {},
+        notes: [],
       },
     )
     .write("metadata.json", metadata)
     .args(["verify"])
-    .stderr("successfully verified 1 file totaling 26 bytes with 0 signatures\n")
+    .stderr("successfully verified 1 file totaling 26 bytes with 0 signatures across 0 notes\n")
     .success();
 }
 
@@ -231,7 +235,7 @@ fn metadata_may_not_be_invalid() {
             size: 14
           }
         },
-        signatures: {},
+        notes: [],
       },
     )
     .write("metadata.json", json! { title: 100 })
@@ -300,7 +304,7 @@ fn multiple_keys() {
 
   test
     .args(["verify", "foo", "--key", &alice, "--key", &bob])
-    .stderr("successfully verified 1 file totaling 0 bytes with 2 signatures\n")
+    .stderr("successfully verified 1 file totaling 0 bytes with 2 signatures across 1 note\n")
     .success();
 }
 
@@ -360,7 +364,7 @@ fn named_key() {
     .args(["create", "--sign", "foo"])
     .success()
     .args(["verify", "foo", "--key", "master"])
-    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
+    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature across 1 note\n")
     .success();
 }
 
@@ -414,9 +418,9 @@ fn nested_missing_empty_directory_error() {
 #[test]
 fn no_files() {
   Test::new()
-    .write("filepack.json", json! { files: {}, signatures: {} })
+    .write("filepack.json", json! { files: {}, notes: [] })
     .args(["verify", "."])
-    .stderr("successfully verified 0 files totaling 0 bytes with 0 signatures\n")
+    .stderr("successfully verified 0 files totaling 0 bytes with 0 signatures across 0 notes\n")
     .success();
 }
 
@@ -442,7 +446,7 @@ fn non_unicode_path_error() {
 
   Test::new()
     .touch_non_unicode()
-    .write("filepack.json", json! { files: {}, signatures: {} })
+    .write("filepack.json", json! { files: {}, notes: [] })
     .args(["verify", "."])
     .stderr_path("error: path not valid unicode: `./�`\n")
     .failure();
@@ -457,7 +461,7 @@ fn print() {
         size: 0
       }
     },
-    signatures: {},
+    notes: [],
   };
 
   Test::new()
@@ -465,7 +469,7 @@ fn print() {
     .write("filepack.json", &manifest)
     .args(["verify", "--print", "."])
     .stdout(&manifest)
-    .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
+    .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures across 0 notes\n")
     .success();
 }
 
@@ -482,7 +486,7 @@ fn signature_verification_success() {
 
   test
     .args(["verify", "foo", "--key", &public_key])
-    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
+    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature across 1 note\n")
     .success();
 }
 
@@ -499,11 +503,11 @@ fn single_file() {
             size: 0
           }
         },
-        signatures: {},
+        notes: [],
       },
     )
     .args(["verify", "."])
-    .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
+    .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures across 0 notes\n")
     .success();
 }
 
@@ -520,11 +524,11 @@ fn single_file_mmap() {
             size: 0
           }
         },
-        signatures: {},
+        notes: [],
       },
     )
     .args(["--mmap", "verify", "."])
-    .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
+    .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures across 0 notes\n")
     .success();
 }
 
@@ -541,11 +545,11 @@ fn single_file_omit_directory() {
             size: 0
           }
         },
-        signatures: {},
+        notes: [],
       },
     )
     .args(["verify"])
-    .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
+    .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures across 0 notes\n")
     .success();
 }
 
@@ -562,11 +566,11 @@ fn single_file_parallel() {
             size: 0
           }
         },
-        signatures: {},
+        notes: [],
       },
     )
     .args(["--parallel", "verify", "."])
-    .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
+    .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures across 0 notes\n")
     .success();
 }
 
@@ -590,38 +594,6 @@ error: 1 mismatched file
 }
 
 #[test]
-fn valid_signature_for_wrong_pubkey_error() {
-  let test = Test::new()
-    .args(["keygen"])
-    .success()
-    .touch("foo/bar")
-    .args(["create", "--sign", "foo"])
-    .success();
-
-  let manifest_path = test.path().join("foo/filepack.json");
-
-  let mut manifest = Manifest::load(Some(&manifest_path)).unwrap();
-
-  let public_key = test.read_public_key("keychain/master.public");
-
-  let signature = manifest.signatures.remove(&public_key).unwrap();
-
-  manifest
-    .signatures
-    .insert(PUBLIC_KEY.parse::<PublicKey>().unwrap(), signature);
-
-  manifest.save(&manifest_path).unwrap();
-
-  test
-    .args(["verify", "foo"])
-    .stderr_regex(&format!(
-      "error: invalid signature for public key `{PUBLIC_KEY}`\n\
-      .*Verification equation was not satisfied.*",
-    ))
-    .failure();
-}
-
-#[test]
 fn verify_fingerprint() {
   Test::new()
     .touch("foo")
@@ -632,7 +604,7 @@ fn verify_fingerprint() {
       "--fingerprint",
       "864e5111ebe431702448d7d7c3f9b962d5659f761fb4287049d52d6376a4c20e",
     ])
-    .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
+    .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures across 0 notes\n")
     .success()
     .args([
       "verify",
@@ -664,9 +636,13 @@ fn weak_signature_public_key() {
             size: 0
           }
         },
-        signatures: {
-          "0000000000000000000000000000000000000000000000000000000000000000":"0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
-        }
+        notes: [
+          {
+            signatures: {
+              "0000000000000000000000000000000000000000000000000000000000000000": "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+            }
+          }
+        ]
       },
     )
     .args(["verify"])
@@ -689,10 +665,10 @@ fn with_manifest_path() {
             size: 0
           }
         },
-        signatures: {},
+        notes: [],
       },
     )
     .args(["verify", "--manifest", "hello.json"])
-    .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures\n")
+    .stderr("successfully verified 1 file totaling 0 bytes with 0 signatures across 0 notes\n")
     .success();
 }

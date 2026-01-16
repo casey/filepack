@@ -15,7 +15,7 @@ fn appends_filename_if_argument_is_directory() {
     .args(["sign", "foo"])
     .success()
     .args(["verify", "foo", "--key", &public_key])
-    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
+    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature across 1 note\n")
     .success();
 }
 
@@ -35,7 +35,7 @@ fn defaults_to_current_directory() {
     .args(["sign"])
     .success()
     .args(["verify", "foo", "--key", &public_key])
-    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
+    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature across 1 note\n")
     .success();
 }
 
@@ -63,39 +63,11 @@ fn existing_signatures_are_preserved() {
 
   test
     .args(["verify", "foo", "--key", &a])
-    .stderr("successfully verified 1 file totaling 0 bytes with 2 signatures\n")
+    .stderr("successfully verified 1 file totaling 0 bytes with 2 signatures across 1 note\n")
     .success()
     .args(["verify", "foo", "--key", &b])
-    .stderr("successfully verified 1 file totaling 0 bytes with 2 signatures\n")
+    .stderr("successfully verified 1 file totaling 0 bytes with 2 signatures across 1 note\n")
     .success();
-}
-
-#[test]
-fn existing_signatures_must_be_valid() {
-  let test = Test::new()
-    .args(["keygen"])
-    .success()
-    .touch("foo/bar")
-    .args(["create", "foo"])
-    .success();
-
-  let manifest_path = test.path().join("foo/filepack.json");
-  let mut manifest = Manifest::load(Some(&manifest_path)).unwrap();
-
-  manifest.signatures.insert(
-    PUBLIC_KEY.parse::<PublicKey>().unwrap(),
-    "0".repeat(128).parse::<Signature>().unwrap(),
-  );
-
-  manifest.save(&manifest_path).unwrap();
-
-  test
-    .args(["sign", "foo/filepack.json"])
-    .stderr_regex(&format!(
-      "error: invalid signature for public key `{PUBLIC_KEY}`\n\
-        .*Verification equation was not satisfied\n"
-    ))
-    .failure();
 }
 
 #[test]
@@ -130,7 +102,7 @@ fn named() {
     .args(["sign", "--key", "deploy", "foo/filepack.json"])
     .success()
     .args(["verify", "foo", "--key", &public_key])
-    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
+    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature across 1 note\n")
     .success();
 }
 
@@ -149,17 +121,17 @@ fn re_signing_requires_force() {
     .args(["sign", "foo/filepack.json"])
     .success()
     .args(["verify", "foo", "--key", &public_key])
-    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
+    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature across 1 note\n")
     .success()
     .args(["sign", "foo/filepack.json"])
     .stderr(&format!(
-      "error: manifest has already been signed by public key `{public_key}`\n"
+      "error: manifest has already been signed by key `{public_key}`\n"
     ))
     .failure()
     .args(["sign", "--force", "foo/filepack.json"])
     .success()
     .args(["verify", "foo", "--key", &public_key])
-    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
+    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature across 1 note\n")
     .success();
 }
 
@@ -183,6 +155,6 @@ fn updates_manifest_with_signature() {
     .args(["sign", "foo/filepack.json"])
     .success()
     .args(["verify", "foo", "--key", &public_key])
-    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
+    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature across 1 note\n")
     .success();
 }

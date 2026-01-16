@@ -4,7 +4,7 @@ use super::*;
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
 pub struct Manifest {
   pub files: Directory,
-  pub signatures: BTreeMap<PublicKey, Signature>,
+  pub notes: Vec<Note>,
 }
 
 impl Manifest {
@@ -74,6 +74,30 @@ impl Manifest {
     filesystem::write(path, format!("{}\n", serde_json::to_string(self).unwrap()))
   }
 
+  pub(crate) fn sign(&mut self, keychain: &Keychain, key: &KeyName, force: bool) -> Result {
+    let fingerprint = self.verify_notes()?;
+
+    let message = Message { fingerprint };
+
+    let digest = message.digest();
+
+    let (key, signature) = keychain.sign(key, digest)?;
+
+    for note in &mut self.notes {
+      if note.digest(fingerprint) == digest {
+        ensure! {
+          note.signatures.insert(key, signature).is_none() || force,
+          error::SignatureAlreadyExists { key },
+        }
+        return Ok(());
+      }
+    }
+
+    self.notes.push(Note::from_message(message, key, signature));
+
+    Ok(())
+  }
+
   pub(crate) fn total_size(&self) -> u128 {
     let mut size = 0u128;
     for (_path, entry) in self.entries() {
@@ -82,6 +106,43 @@ impl Manifest {
       }
     }
     size
+  }
+
+  pub(crate) fn verify_notes(&self) -> Result<Hash> {
+    let fingerprint = self.fingerprint();
+
+    let mut digests = BTreeMap::new();
+    let mut signatures = BTreeMap::new();
+    for (index, note) in self.notes.iter().enumerate() {
+      for &key in note.signatures.keys() {
+        if let Some(first) = signatures.insert(key, index) {
+          return Err(
+            error::DuplicateSignature {
+              first,
+              key,
+              second: index,
+            }
+            .build(),
+          );
+        }
+      }
+
+      if let Some(first) = digests.insert(note.digest(fingerprint), index) {
+        return Err(
+          error::DuplicateNote {
+            first,
+            second: index,
+          }
+          .build(),
+        );
+      }
+
+      if note.verify(fingerprint)? == 0 {
+        return Err(error::UnsignedNote { index }.build());
+      }
+    }
+
+    Ok(fingerprint)
   }
 }
 
@@ -93,10 +154,10 @@ mod tests {
   fn empty_manifest_serialization() {
     let manifest = Manifest {
       files: Directory::new(),
-      signatures: BTreeMap::new(),
+      notes: Vec::new(),
     };
     let json = serde_json::to_string(&manifest).unwrap();
-    assert_eq!(json, r#"{"files":{},"signatures":{}}"#);
+    assert_eq!(json, r#"{"files":{},"notes":[]}"#);
     assert_eq!(serde_json::from_str::<Manifest>(&json).unwrap(), manifest);
   }
 

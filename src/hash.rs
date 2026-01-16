@@ -37,6 +37,18 @@ impl FromStr for Hash {
   }
 }
 
+impl Ord for Hash {
+  fn cmp(&self, other: &Self) -> Ordering {
+    self.as_bytes().cmp(other.as_bytes())
+  }
+}
+
+impl PartialOrd for Hash {
+  fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+    Some(self.cmp(other))
+  }
+}
+
 impl Serialize for Hash {
   fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
   where
