@@ -76,11 +76,11 @@ mod tests {
 
   #[test]
   fn duplicate_entries_are_rejected() {
-    assert!(
+    assert_eq!(
       serde_json::from_str::<Directory>(r#"{"a":{},"a":{}}"#)
         .unwrap_err()
-        .to_string()
-        .contains("duplicate key"),
+        .to_string(),
+      "invalid entry: found duplicate key at line 1 column 15",
     );
   }
 }
