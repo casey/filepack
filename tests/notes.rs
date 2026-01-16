@@ -115,6 +115,30 @@ fn invalid_signature() {
 }
 
 #[test]
+fn unsigned_note() {
+  Test::new()
+    .write(
+      "filepack.json",
+      json! {
+        files: {},
+        notes: [
+          {
+            signatures: {}
+          }
+        ]
+      },
+    )
+    .args(["verify"])
+    .stderr("error: note 1 is unsigned\n")
+    .failure()
+    .args(["keygen"])
+    .success()
+    .args(["sign"])
+    .stderr("error: note 1 is unsigned\n")
+    .failure();
+}
+
+#[test]
 fn valid_signature_for_wrong_pubkey() {
   let test = Test::new()
     .args(["keygen"])
@@ -146,29 +170,5 @@ fn valid_signature_for_wrong_pubkey() {
       "error: invalid signature for key `{PUBLIC_KEY}`\n\
       .*Verification equation was not satisfied.*"
     ))
-    .failure();
-}
-
-#[test]
-fn unsigned_note() {
-  Test::new()
-    .write(
-      "filepack.json",
-      json! {
-        files: {},
-        notes: [
-          {
-            signatures: {}
-          }
-        ]
-      },
-    )
-    .args(["verify"])
-    .stderr("error: note 1 is unsigned\n")
-    .failure()
-    .args(["keygen"])
-    .success()
-    .args(["sign"])
-    .stderr("error: note 1 is unsigned\n")
     .failure();
 }
