@@ -40,7 +40,7 @@ fn file() {
 #[test]
 fn stdin() {
   Test::new()
-    .args(["hash"])
+    .arg("hash")
     .stdin("foo")
     .stdout("04e0bb39f30b1a3feb89f536c93be15055482df748674b00d26e5a75777702e9\n")
     .success();

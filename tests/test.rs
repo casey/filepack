@@ -13,6 +13,10 @@ pub(crate) struct Test {
 }
 
 impl Test {
+  pub(crate) fn arg(mut self, arg: &str) -> Self {
+    self.args([arg])
+  }
+
   pub(crate) fn args(mut self, args: impl IntoIterator<Item = impl AsRef<str>>) -> Self {
     assert!(self.args.is_empty());
     for arg in args {

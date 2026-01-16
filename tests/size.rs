@@ -7,7 +7,7 @@ fn size() {
     .write("foo/bar/bob", "goodbye")
     .args(["create", "."])
     .success()
-    .args(["size"])
+    .arg("size")
     .stdout("12\n")
     .success();
 }

@@ -3,16 +3,16 @@ use super::*;
 #[test]
 fn default() {
   let test = Test::new()
-    .args(["keygen"])
+    .arg("keygen")
     .success()
-    .args(["key"])
+    .arg("key")
     .stdout_regex("[0-9a-f]{64}\n")
     .success();
 
   let public_key = test.read_public_key("keychain/master.public");
 
   test
-    .args(["key"])
+    .arg("key")
     .stdout(format!("{public_key}\n"))
     .success();
 }
@@ -20,7 +20,7 @@ fn default() {
 #[test]
 fn master() {
   let test = Test::new()
-    .args(["keygen"])
+    .arg("keygen")
     .success()
     .args(["key", "--key", "master"])
     .stdout_regex("[0-9a-f]{64}\n")
@@ -37,7 +37,7 @@ fn master() {
 #[test]
 fn missing() {
   Test::new()
-    .args(["keygen"])
+    .arg("keygen")
     .success()
     .args(["key", "--key", "nonexistent"])
     .stderr_regex("error: public key not found: `.*nonexistent.public`\n")
@@ -47,10 +47,10 @@ fn missing() {
 #[test]
 fn missing_private_key() {
   Test::new()
-    .args(["keygen"])
+    .arg("keygen")
     .success()
     .remove_file("keychain/master.private")
-    .args(["key"])
+    .arg("key")
     .stderr_regex("error: private key not found: `.*master.private`\n")
     .failure();
 }
@@ -58,10 +58,10 @@ fn missing_private_key() {
 #[test]
 fn missing_public_key() {
   Test::new()
-    .args(["keygen"])
+    .arg("keygen")
     .success()
     .remove_file("keychain/master.public")
-    .args(["key"])
+    .arg("key")
     .stderr_regex("error: public key not found: `.*master.public`\n")
     .failure();
 }

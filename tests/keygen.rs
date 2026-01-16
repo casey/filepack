@@ -20,7 +20,7 @@ fn custom_name() {
 #[test]
 fn default_name() {
   let test = Test::new()
-    .args(["keygen"])
+    .arg("keygen")
     .assert_file_regex("keychain/master.public", "[0-9a-f]{64}\n")
     .assert_file_regex("keychain/master.private", "[0-9a-f]{64}\n")
     .success();
@@ -52,7 +52,7 @@ fn key_already_exists() {
     .write("keychain/master.public", PUBLIC_KEY)
     .chmod("keychain", 0o700)
     .chmod("keychain/master.private", 0o700)
-    .args(["keygen"])
+    .arg("keygen")
     .stderr_regex("error: public key already exists: `.*master.public`\n")
     .failure();
 }

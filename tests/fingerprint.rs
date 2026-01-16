@@ -4,7 +4,7 @@ use super::*;
 fn fingerprint() {
   let test = Test::new()
     .touch("foo")
-    .args(["create"])
+    .arg("create")
     .assert_file(
       "filepack.json",
       json! {
@@ -24,7 +24,7 @@ fn fingerprint() {
   let path = test.path();
 
   test
-    .args(["fingerprint"])
+    .arg("fingerprint")
     .stdout(format!("{fingerprint}\n"))
     .success()
     .args(["fingerprint", path.as_str()])

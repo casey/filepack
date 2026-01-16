@@ -4,18 +4,18 @@ use super::*;
 fn duplicate_note() {
   let test = Test::new()
     .data_dir("alice")
-    .args(["keygen"])
+    .arg("keygen")
     .success()
     .data_dir("bob")
-    .args(["keygen"])
+    .arg("keygen")
     .success()
-    .args(["create"])
+    .arg("create")
     .success()
     .data_dir("alice")
-    .args(["sign"])
+    .arg("sign")
     .success()
     .data_dir("bob")
-    .args(["sign"])
+    .arg("sign")
     .success();
 
   let manifest_path = test.path().join("filepack.json");
@@ -37,10 +37,10 @@ fn duplicate_note() {
   manifest.save(&manifest_path).unwrap();
 
   test
-    .args(["verify"])
+    .arg("verify")
     .stderr("error: note 1 and 2 have the same digest\n")
     .failure()
-    .args(["sign"])
+    .arg("sign")
     .stderr("error: note 1 and 2 have the same digest\n")
     .failure();
 }
@@ -48,11 +48,11 @@ fn duplicate_note() {
 #[test]
 fn duplicate_signature() {
   let test = Test::new()
-    .args(["keygen"])
+    .arg("keygen")
     .success()
-    .args(["create"])
+    .arg("create")
     .success()
-    .args(["sign"])
+    .arg("sign")
     .success();
 
   let manifest_path = test.path().join("filepack.json");
@@ -66,12 +66,12 @@ fn duplicate_signature() {
   manifest.save(&manifest_path).unwrap();
 
   test
-    .args(["verify"])
+    .arg("verify")
     .stderr(&format!(
       "error: note 1 and 2 both have signatures from key {public_key}\n"
     ))
     .failure()
-    .args(["sign"])
+    .arg("sign")
     .stderr(&format!(
       "error: note 1 and 2 both have signatures from key {public_key}\n"
     ))
@@ -81,9 +81,9 @@ fn duplicate_signature() {
 #[test]
 fn invalid_signature() {
   let test = Test::new()
-    .args(["keygen"])
+    .arg("keygen")
     .success()
-    .args(["create"])
+    .arg("create")
     .success();
 
   let manifest_path = test.path().join("filepack.json");
@@ -100,13 +100,13 @@ fn invalid_signature() {
   manifest.save(&manifest_path).unwrap();
 
   test
-    .args(["verify"])
+    .arg("verify")
     .stderr_regex(&format!(
       "error: invalid signature for key `{PUBLIC_KEY}`\n\
       .*Verification equation was not satisfied.*"
     ))
     .failure()
-    .args(["sign"])
+    .arg("sign")
     .stderr_regex(&format!(
       "error: invalid signature for key `{PUBLIC_KEY}`\n\
       .*Verification equation was not satisfied.*"
@@ -128,12 +128,12 @@ fn unsigned_note() {
         ]
       },
     )
-    .args(["verify"])
+    .arg("verify")
     .stderr("error: note 1 is unsigned\n")
     .failure()
-    .args(["keygen"])
+    .arg("keygen")
     .success()
-    .args(["sign"])
+    .arg("sign")
     .stderr("error: note 1 is unsigned\n")
     .failure();
 }
@@ -141,7 +141,7 @@ fn unsigned_note() {
 #[test]
 fn valid_signature_for_wrong_pubkey() {
   let test = Test::new()
-    .args(["keygen"])
+    .arg("keygen")
     .success()
     .args(["create", "--sign"])
     .success();
@@ -159,13 +159,13 @@ fn valid_signature_for_wrong_pubkey() {
   manifest.save(&manifest_path).unwrap();
 
   test
-    .args(["verify"])
+    .arg("verify")
     .stderr_regex(&format!(
       "error: invalid signature for key `{PUBLIC_KEY}`\n\
       .*Verification equation was not satisfied.*"
     ))
     .failure()
-    .args(["sign"])
+    .arg("sign")
     .stderr_regex(&format!(
       "error: invalid signature for key `{PUBLIC_KEY}`\n\
       .*Verification equation was not satisfied.*"
