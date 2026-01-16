@@ -42,7 +42,7 @@ macro_rules! parts {
 
     ($s:ident, [ $($elements:tt)* ]) => {{
         $s.push('[');
-        array_elements!($s, $($elements)*);
+        parts!($s, $($elements)*);
         $s.push(']');
     }};
 
@@ -72,52 +72,6 @@ macro_rules! parts {
     }};
 
     ($s:ident,) => {};
-}
-
-#[macro_export]
-macro_rules! array_elements {
-    ($s:ident, { $($parts:tt)* } $(, $($rest:tt)*)?) => {{
-        $s.push('{');
-        parts!($s, $($parts)*);
-        $s.push('}');
-        $(
-            $s.push(',');
-            let len = $s.len();
-            array_elements!($s, $($rest)*);
-            if $s.len() == len {
-                $s.pop();
-            }
-        )?
-    }};
-
-    ($s:ident, $value:literal $(, $($rest:tt)*)?) => {{
-        $s.push_str(stringify!($value));
-        $(
-            $s.push(',');
-            let len = $s.len();
-            array_elements!($s, $($rest)*);
-            if $s.len() == len {
-                $s.pop();
-            }
-        )?
-    }};
-
-    ($s:ident, $value:expr $(, $($rest:tt)*)?) => {{
-        $s.push('"');
-        $s.push_str(($value).as_ref());
-        $s.push('"');
-        $(
-            $s.push(',');
-            let len = $s.len();
-            array_elements!($s, $($rest)*);
-            if $s.len() == len {
-                $s.pop();
-            }
-        )?
-    }};
-
-    ($s:ident,) => {};
-    ($s:ident) => {};
 }
 
 #[macro_export]
@@ -224,5 +178,4 @@ fn json() {
     },
     r#"{"files":{"bar":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}},"notes":[{"signatures":{"0":"0"}}]}"#,
   );
-
 }
