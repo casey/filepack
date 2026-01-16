@@ -71,37 +71,6 @@ fn existing_signatures_are_preserved() {
 }
 
 #[test]
-fn existing_signatures_must_be_valid() {
-  let test = Test::new()
-    .args(["keygen"])
-    .success()
-    .touch("foo/bar")
-    .args(["create", "foo"])
-    .success();
-
-  let manifest_path = test.path().join("foo/filepack.json");
-  let mut manifest = Manifest::load(Some(&manifest_path)).unwrap();
-
-  manifest.notes.push(Note {
-    signatures: [(
-      PUBLIC_KEY.parse::<PublicKey>().unwrap(),
-      "0".repeat(128).parse::<Signature>().unwrap(),
-    )]
-    .into(),
-  });
-
-  manifest.save(&manifest_path).unwrap();
-
-  test
-    .args(["sign", "foo/filepack.json"])
-    .stderr_regex(&format!(
-      "error: invalid signature for key `{PUBLIC_KEY}`\n\
-        .*Verification equation was not satisfied\n"
-    ))
-    .failure();
-}
-
-#[test]
 fn mismatched_key() {
   Test::new()
     .data_dir("foo")

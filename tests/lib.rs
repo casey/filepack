@@ -39,6 +39,7 @@ mod keychain;
 mod keygen;
 mod man;
 mod misc;
+mod notes;
 mod sign;
 mod size;
 mod test;

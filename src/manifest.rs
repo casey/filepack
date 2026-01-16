@@ -114,16 +114,6 @@ impl Manifest {
     let mut digests = BTreeMap::new();
     let mut signatures = BTreeMap::new();
     for (index, note) in self.notes.iter().enumerate() {
-      if let Some(first) = digests.insert(note.digest(fingerprint), index) {
-        return Err(
-          error::DuplicateNote {
-            first,
-            second: index,
-          }
-          .build(),
-        );
-      }
-
       for &key in note.signatures.keys() {
         if let Some(first) = signatures.insert(key, index) {
           return Err(
@@ -135,6 +125,16 @@ impl Manifest {
             .build(),
           );
         }
+      }
+
+      if let Some(first) = digests.insert(note.digest(fingerprint), index) {
+        return Err(
+          error::DuplicateNote {
+            first,
+            second: index,
+          }
+          .build(),
+        );
       }
 
       if note.verify(fingerprint)? == 0 {

@@ -594,38 +594,6 @@ error: 1 mismatched file
 }
 
 #[test]
-fn valid_signature_for_wrong_pubkey_error() {
-  let test = Test::new()
-    .args(["keygen"])
-    .success()
-    .touch("foo/bar")
-    .args(["create", "--sign", "foo"])
-    .success();
-
-  let manifest_path = test.path().join("foo/filepack.json");
-
-  let mut manifest = Manifest::load(Some(&manifest_path)).unwrap();
-
-  let public_key = test.read_public_key("keychain/master.public");
-
-  let signature = manifest.notes[0].signatures.remove(&public_key).unwrap();
-
-  manifest.notes[0]
-    .signatures
-    .insert(PUBLIC_KEY.parse::<PublicKey>().unwrap(), signature);
-
-  manifest.save(&manifest_path).unwrap();
-
-  test
-    .args(["verify", "foo"])
-    .stderr_regex(&format!(
-      "error: invalid signature for key `{PUBLIC_KEY}`\n\
-      .*Verification equation was not satisfied.*",
-    ))
-    .failure();
-}
-
-#[test]
 fn verify_fingerprint() {
   Test::new()
     .touch("foo")
