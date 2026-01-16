@@ -13,8 +13,6 @@ pub(crate) struct Create {
     long
   )]
   manifest: Option<Utf8PathBuf>,
-  #[arg(help = "Include metadata from YAML document <METADATA>`", long)]
-  metadata: Option<Utf8PathBuf>,
   #[arg(help = "Create manifest for files in <ROOT> directory, defaults to current directory")]
   root: Option<Utf8PathBuf>,
   #[arg(help = "Sign manifest", long)]
@@ -35,21 +33,13 @@ impl Create {
       root.join(Manifest::FILENAME)
     };
 
-    if let Some(path) = &self.metadata {
-      let yaml = filesystem::read_to_string(path)?;
-      let template = serde_yaml::from_str::<Template>(&yaml)
-        .context(error::DeserializeMetadataTemplate { path })?;
-      let path = root.join(Metadata::FILENAME);
-      ensure! {
-        self.force || !filesystem::exists(&path)?,
-        error::MetadataAlreadyExists { path: &path },
-      }
-      Metadata::from(template).save(&path)?;
+    let metadata = root.join(Metadata::FILENAME);
+
+    if filesystem::exists(&metadata)? {
+      Metadata::load(&metadata)?;
     }
 
     let cleaned_manifest = current_dir.join(&manifest_path).lexiclean();
-
-    let cleaned_metadata = self.metadata.map(|path| current_dir.join(path).lexiclean());
 
     let mut paths = HashMap::new();
 
@@ -72,13 +62,6 @@ impl Create {
 
       if cleaned_path == cleaned_manifest {
         continue;
-      }
-
-      if cleaned_metadata
-        .as_ref()
-        .is_some_and(|path| cleaned_path == *path)
-      {
-        return Err(error::MetadataTemplateIncluded { path }.build());
       }
 
       ensure! {

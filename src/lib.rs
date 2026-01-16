@@ -46,7 +46,6 @@ use {
     signature_error::SignatureError,
     style::Style,
     subcommand::Subcommand,
-    template::Template,
     utf8_path_ext::Utf8PathExt,
   },
   blake3::Hasher,
@@ -142,7 +141,6 @@ mod signature;
 mod signature_error;
 mod style;
 mod subcommand;
-mod template;
 mod utf8_path_ext;
 
 #[cfg(test)]

@@ -11,12 +11,12 @@ pub(crate) fn chmod(_path: &Utf8Path, _mode: u32) -> Result {
   Ok(())
 }
 
-pub(crate) fn create_dir_all(path: &Utf8Path) -> Result<()> {
+pub(crate) fn create_dir_all(path: &Utf8Path) -> Result {
   std::fs::create_dir_all(path).context(error::FilesystemIo { path })
 }
 
 #[cfg(unix)]
-pub(crate) fn create_dir_all_with_mode(path: &Utf8Path, mode: u32) -> Result<()> {
+pub(crate) fn create_dir_all_with_mode(path: &Utf8Path, mode: u32) -> Result {
   use std::{fs::DirBuilder, os::unix::fs::DirBuilderExt};
 
   if let Some(parent) = path.parent() {
@@ -30,7 +30,7 @@ pub(crate) fn create_dir_all_with_mode(path: &Utf8Path, mode: u32) -> Result<()>
 }
 
 #[cfg(not(unix))]
-pub(crate) fn create_dir_all_with_mode(path: &Utf8Path, _mode: u32) -> Result<()> {
+pub(crate) fn create_dir_all_with_mode(path: &Utf8Path, _mode: u32) -> Resul {
   create_dir_all(path)
 }
 
