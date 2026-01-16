@@ -133,11 +133,6 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
-  #[snafu(display("metadata template `{path}` should not be included in package"))]
-  MetadataTemplateIncluded {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-  },
   #[snafu(display("directory missing: `{path}`"))]
   MissingDirectory {
     backtrace: Option<Backtrace>,
