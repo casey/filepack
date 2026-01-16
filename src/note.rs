@@ -60,4 +60,14 @@ mod tests {
       "invalid entry: found duplicate key at line 1 column 411",
     );
   }
+
+  #[test]
+  fn duplicate_fields_are_rejected() {
+    assert_eq!(
+      serde_json::from_str::<Note>(r#"{"signatures":{},"signatures":{}}"#)
+        .unwrap_err()
+        .to_string(),
+      "duplicate field `signatures` at line 1 column 29",
+    );
+  }
 }
