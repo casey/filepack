@@ -24,11 +24,7 @@ fn duplicate_key_named() {
 
 #[test]
 fn duplicate_key_named_and_literal() {
-  let test = Test::new()
-    .arg("keygen")
-    .success()
-    .arg("create")
-    .success();
+  let test = Test::new().arg("keygen").success().arg("create").success();
 
   let key = test.read("keychain/master.public");
 

@@ -13,7 +13,7 @@ pub(crate) struct Test {
 }
 
 impl Test {
-  pub(crate) fn arg(mut self, arg: &str) -> Self {
+  pub(crate) fn arg(self, arg: &str) -> Self {
     self.args([arg])
   }
 

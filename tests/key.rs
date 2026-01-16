@@ -11,10 +11,7 @@ fn default() {
 
   let public_key = test.read_public_key("keychain/master.public");
 
-  test
-    .arg("key")
-    .stdout(format!("{public_key}\n"))
-    .success();
+  test.arg("key").stdout(format!("{public_key}\n")).success();
 }
 
 #[test]
