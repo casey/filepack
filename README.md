@@ -231,7 +231,7 @@ following keys:
 
 - `title`: A string containing the package's human-readable title.
 
-Metadata follows a fixed schema and is *not* user-extensible. Future version of
+Metadata follows a fixed schema and is not user-extensible. Future version of
 `filepack` may define new metadata fields, causing verification errors if those
 fields are present and invalid according to the new schema.
 
