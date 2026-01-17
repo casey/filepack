@@ -38,15 +38,15 @@ impl Metadata {
     let mut files = Vec::new();
 
     if let Some(artwork) = &self.artwork {
-      files.push(artwork.as_path())
+      files.push(artwork.as_path());
     }
 
     if let Some(nfo) = &self.nfo {
-      files.push(nfo.as_path())
+      files.push(nfo.as_path());
     }
 
     if let Some(readme) = &self.readme {
-      files.push(readme.as_path())
+      files.push(readme.as_path());
     }
 
     files

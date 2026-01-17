@@ -2,14 +2,14 @@ use super::*;
 
 #[derive(Debug, PartialEq, Snafu)]
 pub enum ComponentError {
-  #[snafu(display("component may not be `{component}`"))]
-  Normal { component: &'static str },
   #[snafu(display("component may not be empty"))]
   Empty,
   #[snafu(display("component must end in `.{extension}`"))]
   Extension { extension: &'static str },
   #[snafu(display("component exceeds 255 byte limit"))]
   Length,
+  #[snafu(display("component may not be `{component}`"))]
+  Normal { component: &'static str },
   #[snafu(display("component may not contain NUL character"))]
   Nul,
   #[snafu(display("component may not contain path separator `{character}`"))]

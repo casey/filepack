@@ -123,9 +123,9 @@ impl Create {
     }
 
     if let Some(metadata) = metadata {
-      for file in metadata.files() {
-        if !paths.contains_key(&file) {
-          todo!()
+      for filename in metadata.files() {
+        if !paths.contains_key(&filename) {
+          return Err(error::MissingMetadataFile { filename }.build());
         }
       }
     }

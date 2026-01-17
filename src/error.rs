@@ -149,6 +149,11 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: RelativePath,
   },
+  #[snafu(display("file referenced in metadata missing: `{filename}`"))]
+  MissingMetadataFile {
+    backtrace: Option<Backtrace>,
+    filename: RelativePath,
+  },
   #[snafu(display("invalid path `{path}`"))]
   Path {
     path: DisplayPath,

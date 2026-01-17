@@ -86,9 +86,7 @@ mod tests {
   fn current() {
     assert_eq!(
       ".".parse::<Component>().unwrap_err(),
-      ComponentError::Normal {
-        component: ".".into(),
-      },
+      ComponentError::Normal { component: "." },
     );
   }
 
@@ -127,9 +125,7 @@ mod tests {
   fn parent() {
     assert_eq!(
       "..".parse::<Component>().unwrap_err(),
-      ComponentError::Normal {
-        component: "..".into(),
-      },
+      ComponentError::Normal { component: ".." },
     );
   }
 
