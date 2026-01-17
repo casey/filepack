@@ -64,4 +64,20 @@ mod tests {
     case("1970-01-01T00:00:00+00:00", "1970-01-01 00:00:00 +00:00");
     case("1970-01-01T00:00:00Z", "1970-01-01 00:00:00 +00:00");
   }
+
+  #[test]
+  fn dates_in_readme_are_valid() {
+    let readme = filesystem::read_to_string("README.md").unwrap();
+
+    let re = Regex::new(r"(?s)```tsv(.*?)```").unwrap();
+
+    for capture in re.captures_iter(&readme) {
+      for line in capture[1].lines() {
+        if line.is_empty() {
+          continue;
+        }
+        assert!(line.parse::<DateTime>().is_ok(), "invalid date {line}");
+      }
+    }
+  }
 }

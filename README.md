@@ -283,11 +283,18 @@ components may not be valid paths on Windows.
 
 #### Dates
 
-Dates are formatted according to
-[RFC 3339](https://datatracker.ietf.org/doc/html/rfc3339), and may be a date
-i.e., `1970-01-01`, or a date and time in the UTC time zone, i.e.,
-`1970-01-01T00:00:00Z`, or with a time zone offset, i.e.,
-`1970-01-01T00:00:00+00:00`.
+Dates may be given in several formats, and may be given as a year only, when
+the date and time is uknown, a date only, when the time is unknown, or a
+complete date and time, with a mandatory time zone.
+
+```tsv
+1970
+1970-01-01
+1970-01-01T00:00:00Z
+1970-01-01 00:00:00Z
+1970-01-01T00:00:00+00:00
+1970-01-01 00:00:00 +00:00
+```
 
 ### Example
 
