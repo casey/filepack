@@ -110,3 +110,60 @@ fn unknown_keys() {
     .stderr_regex(".*unknown fields in metadata at `.*metadata.yaml`: `bar`\n")
     .failure();
 }
+
+#[test]
+fn package_date() {
+  Test::new()
+    .touch("content")
+    .write("metadata.yaml", "title: Foo\npackage-date: 2024-06-15")
+    .arg("create")
+    .success()
+    .arg("verify")
+    .stderr("successfully verified 2 files totaling 35 bytes\n")
+    .success();
+}
+
+#[test]
+fn release_date() {
+  Test::new()
+    .touch("content")
+    .write("metadata.yaml", "title: Foo\nrelease-date: 2024-06-15T12:30:00Z")
+    .arg("create")
+    .success()
+    .arg("verify")
+    .stderr("successfully verified 2 files totaling 45 bytes\n")
+    .success();
+}
+
+#[test]
+fn both_dates() {
+  Test::new()
+    .touch("content")
+    .write(
+      "metadata.yaml",
+      "title: Foo\npackage-date: 2024-06-15T12:30:00+05:00\nrelease-date: 2024-01-01",
+    )
+    .arg("create")
+    .success()
+    .arg("verify")
+    .stderr("successfully verified 2 files totaling 75 bytes\n")
+    .success();
+}
+
+#[test]
+fn invalid_package_date() {
+  Test::new()
+    .write("metadata.yaml", "title: Foo\npackage-date: not-a-date")
+    .arg("create")
+    .stderr_regex(".*invalid characters.*")
+    .failure();
+}
+
+#[test]
+fn invalid_release_date() {
+  Test::new()
+    .write("metadata.yaml", "title: Foo\nrelease-date: 2024/06/15")
+    .arg("create")
+    .stderr_regex(".*invalid characters.*")
+    .failure();
+}
