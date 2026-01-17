@@ -1,4 +1,5 @@
 title: filepack
+description: A file verification utility.
 packager: Casey Rodarmor
 language: en
 readme: README.md

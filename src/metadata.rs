@@ -4,9 +4,11 @@ use super::*;
 #[serde(rename_all = "kebab-case")]
 pub(crate) struct Metadata {
   pub(crate) artwork: Option<filename::Png>,
+  pub(crate) description: Option<String>,
   pub(crate) language: Option<Language>,
   pub(crate) nfo: Option<filename::Nfo>,
   pub(crate) package_date: Option<DateTime>,
+  pub(crate) package_description: Option<String>,
   pub(crate) packager: Option<Component>,
   pub(crate) readme: Option<filename::Md>,
   pub(crate) release_date: Option<DateTime>,
@@ -83,7 +85,30 @@ mod tests {
     let re = Regex::new(r"(?s)```yaml(.*?)```").unwrap();
 
     for capture in re.captures_iter(&readme) {
-      Metadata::deserialize_strict("README.md".as_ref(), &capture[1]).unwrap();
+      let metadata = Metadata::deserialize_strict("README.md".as_ref(), &capture[1]).unwrap();
+
+      let Metadata {
+        artwork,
+        description,
+        language,
+        nfo,
+        package_date,
+        package_description,
+        packager,
+        readme,
+        release_date,
+        title: _,
+      } = metadata;
+
+      assert!(artwork.is_some());
+      assert!(description.is_some());
+      assert!(language.is_some());
+      assert!(nfo.is_some());
+      assert!(package_date.is_some());
+      assert!(package_description.is_some());
+      assert!(packager.is_some());
+      assert!(readme.is_some());
+      assert!(release_date.is_some());
     }
   }
 

@@ -104,6 +104,20 @@ fn tempdir() -> tempfile::TempDir {
     .unwrap()
 }
 
+#[macro_export]
+macro_rules! assert_matches {
+  ($expression:expr, $( $pattern:pat_param )|+ $( if $guard:expr )? $(,)?) => {
+    match $expression {
+      $( $pattern )|+ $( if $guard )? => {}
+      left => panic!(
+        "assertion failed: (left ~= right)\n  left: `{:?}`\n right: `{}`",
+        left,
+        stringify!($($pattern)|+ $(if $guard)?)
+      ),
+    }
+  }
+}
+
 mod arguments;
 mod component;
 mod component_error;
