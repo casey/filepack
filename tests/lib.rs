@@ -42,6 +42,7 @@ mod languages;
 mod lint;
 mod lints;
 mod man;
+mod metadata;
 mod misc;
 mod notes;
 mod sign;
