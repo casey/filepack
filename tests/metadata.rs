@@ -1,6 +1,25 @@
 use super::*;
 
 #[test]
+fn dates() {
+  Test::new()
+    .touch("content")
+    .write(
+      "metadata.yaml",
+      "
+title: Foo
+package-date: 2024-06-15T12:30:00+05:00
+release-date: 2024-01-01
+",
+    )
+    .arg("create")
+    .success()
+    .arg("verify")
+    .stderr("successfully verified 2 files totaling 77 bytes\n")
+    .success();
+}
+
+#[test]
 fn files() {
   Test::new()
     .touch("content")
@@ -91,6 +110,24 @@ fn invalid_language() {
 }
 
 #[test]
+fn invalid_package_date() {
+  Test::new()
+    .write("metadata.yaml", "title: Foo\npackage-date: not-a-date")
+    .arg("create")
+    .stderr_regex(".*invalid characters.*")
+    .failure();
+}
+
+#[test]
+fn invalid_release_date() {
+  Test::new()
+    .write("metadata.yaml", "title: Foo\nrelease-date: 2024/06/15")
+    .arg("create")
+    .stderr_regex(".*invalid characters.*")
+    .failure();
+}
+
+#[test]
 fn language() {
   Test::new()
     .touch("content")
@@ -108,42 +145,5 @@ fn unknown_keys() {
     .write("metadata.yaml", "title: Foo\nbar: baz")
     .arg("create")
     .stderr_regex(".*unknown fields in metadata at `.*metadata.yaml`: `bar`\n")
-    .failure();
-}
-
-#[test]
-fn dates() {
-  Test::new()
-    .touch("content")
-    .write(
-      "metadata.yaml",
-      "
-title: Foo
-package-date: 2024-06-15T12:30:00+05:00
-release-date: 2024-01-01
-",
-    )
-    .arg("create")
-    .success()
-    .arg("verify")
-    .stderr("successfully verified 2 files totaling 77 bytes\n")
-    .success();
-}
-
-#[test]
-fn invalid_package_date() {
-  Test::new()
-    .write("metadata.yaml", "title: Foo\npackage-date: not-a-date")
-    .arg("create")
-    .stderr_regex(".*invalid characters.*")
-    .failure();
-}
-
-#[test]
-fn invalid_release_date() {
-  Test::new()
-    .write("metadata.yaml", "title: Foo\nrelease-date: 2024/06/15")
-    .arg("create")
-    .stderr_regex(".*invalid characters.*")
     .failure();
 }
