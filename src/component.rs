@@ -56,7 +56,7 @@ impl Component {
   }
 
   pub(crate) fn extension(&self) -> Option<&str> {
-    match self.0.find('.') {
+    match self.0.rfind('.') {
       None | Some(0) => None,
       Some(n) => Some(&self.0[n + 1..]),
     }
@@ -140,5 +140,20 @@ mod tests {
       "\\".parse::<Component>().unwrap_err(),
       ComponentError::Separator { character: '\\' },
     );
+  }
+
+  #[test]
+  fn extension() {
+    #[track_caller]
+    fn case(input: &str, expected: Option<&str>) {
+      let component = input.parse::<Component>().unwrap();
+      assert_eq!(component.extension(), expected);
+    }
+
+    case(".hidden", None);
+    case(".hidden.txt", Some("txt"));
+    case("file", None);
+    case("file.tar.gz", Some("gz"));
+    case("file.txt", Some("txt"));
   }
 }

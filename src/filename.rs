@@ -53,3 +53,37 @@ impl<T: Extension> FromStr for Filename<T> {
     })
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn valid() {
+    #[track_caller]
+    fn case<T: FromStr<Err = ComponentError>>(input: &str) {
+      input.parse::<T>().unwrap();
+    }
+
+    case::<Md>("README.md");
+    case::<Nfo>("info.nfo");
+    case::<Png>("cover.png");
+  }
+
+  #[test]
+  fn invalid() {
+    #[track_caller]
+    fn case<T: FromStr<Err = ComponentError> + std::fmt::Debug>(
+      input: &str,
+      expected: ComponentError,
+    ) {
+      assert_eq!(input.parse::<T>().unwrap_err(), expected);
+    }
+
+    case::<Md>("README.txt", ComponentError::Extension { extension: "md" });
+    case::<Nfo>("info.txt", ComponentError::Extension { extension: "nfo" });
+    case::<Png>("", ComponentError::Empty);
+    case::<Png>("cover.jpg", ComponentError::Extension { extension: "png" });
+    case::<Png>("foo/bar.png", ComponentError::Separator { character: '/' });
+  }
+}

@@ -491,3 +491,79 @@ fn with_metadata() {
     .stderr("successfully verified 2 files totaling 10 bytes\n")
     .success();
 }
+
+#[test]
+fn metadata_with_files() {
+  Test::new()
+    .touch("content")
+    .touch("cover.png")
+    .touch("info.nfo")
+    .touch("README.md")
+    .write(
+      "metadata.yaml",
+      "title: Foo\nartwork: cover.png\nnfo: info.nfo\nreadme: README.md",
+    )
+    .arg("create")
+    .success()
+    .arg("verify")
+    .stderr("successfully verified 5 files totaling 61 bytes\n")
+    .success();
+}
+
+#[test]
+fn metadata_files_missing() {
+  #[track_caller]
+  fn case(metadata: &str, stderr: &str) {
+    Test::new()
+      .write("metadata.yaml", metadata)
+      .arg("create")
+      .stderr_regex(stderr)
+      .failure();
+  }
+
+  case(
+    "title: Foo\nartwork: cover.png",
+    "error: file referenced in metadata missing: `cover.png`\n",
+  );
+
+  case(
+    "title: Foo\nnfo: info.nfo",
+    "error: file referenced in metadata missing: `info.nfo`\n",
+  );
+
+  case(
+    "title: Foo\nreadme: README.md",
+    "error: file referenced in metadata missing: `README.md`\n",
+  );
+}
+
+#[test]
+fn metadata_files_wrong_extension() {
+  #[track_caller]
+  fn case(metadata: &str, file: &str, stderr: &str) {
+    Test::new()
+      .touch(file)
+      .write("metadata.yaml", metadata)
+      .arg("create")
+      .stderr_regex(stderr)
+      .failure();
+  }
+
+  case(
+    "title: Foo\nartwork: cover.jpg",
+    "cover.jpg",
+    ".*component must end in `.png`.*",
+  );
+
+  case(
+    "title: Foo\nnfo: info.txt",
+    "info.txt",
+    ".*component must end in `.nfo`.*",
+  );
+
+  case(
+    "title: Foo\nreadme: README.txt",
+    "README.txt",
+    ".*component must end in `.md`.*",
+  );
+}
