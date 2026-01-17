@@ -242,50 +242,57 @@ Please feel free to open an issue with ideas for new metadata fields.
 
 ### Schema
 
-Mandatory keys:
+Fields are given as `NAME: TYPE`.
 
-- `title`: A component containing the package's human-readable title.
+Mandatory fields:
 
-Optional keys:
+- `title: component`: The package's human-readable title.
 
-- `artwork`: A component containing the filename of an PNG file containing
-  artwork for the package, for example, cover art for an album or key art for a
-  movie. Must end in `.png`;
+Optional fields:
 
-- `description`: A markdown string describing the package content.
+- `artwork: component.png`: The filename of an PNG file containing artwork for
+  the package, for example, cover art for an album or key art for a movie.
 
-- `language`: The primary language of the package content as an ISO 639-1
-  two-character language code. See `filepack languages` for valid language
-  codes.
+- `description: string`: A markdown string describing the package content.
 
-- `nfo`: A component containing the filename of the package nfo file. Must end
-  in `.nfo`.
+- `language: language`: The primary language of the package content.
 
-- `package-date`: The date and optionally time the package was created.
+- `package: object`: Metadata for the package itself, as opposed to its content.
 
-- `package-description`: A markdown string describing the package.
+- `readme: component.md`: A component containing the filename of the package
+  markdown readme.
 
-- `packager`: A component containing the name of the person or group who
-  created the package. Note that this may not be the author of the content of
-  the package.
+- `date: date`: The date the package content was created.
 
-- `readme`: A component containing the filename of the package markdown readme.
-  Must end in `.md`.
+The package
 
-- `release-date`: The date and optionally time the package content was created.
+- `package.nfo: component.nfo`: The filename of the package nfo file.
 
-#### Components
+- `package.date: date`: The date and optionally time the package was created.
 
-Components are strings with the same restrictions as path components in the
-manifest `files` object, allowing them to be used as unix filesystem paths.
-Note that Windows imposes additional restrictions which are not enforced, so
-components may not be valid paths on Windows.
+- `package.description: string`: A markdown string describing the package.
 
-#### Dates
+- `package.packager: component`: A component containing the name of the person
+  or group who created the package. Note that this may not be the author of the
+  content of the package.
 
-Dates may be given in several formats, as a year only, when the date and time
-is unknown, a date only, when the time is unknown, or a date and time with a
-mandatory time zone.
+Types:
+
+- `component`: A string with the same restrictions as path components in the
+  manifest `files` object, allowing them to be used as unix filesystem paths.
+  Note that Windows imposes additional restrictions which are not enforced, so
+  components may not be valid paths on Windows.
+
+- `component.EXTENSION`: A component that must end with `.EXTENSION`.
+
+- `date`: A string containing a date in one of several formats: as a year only,
+  when the date and time is unknown, a date only, when the time is unknown, or a
+  date and time with a mandatory time zone.
+
+- `language`: A string containing an ISO 639-1 two-character language code. See
+  `filepack languages` for valid language codes.
+
+Example dates:
 
 ```tsv
 1970

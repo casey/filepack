@@ -4,14 +4,11 @@ use super::*;
 #[serde(rename_all = "kebab-case")]
 pub(crate) struct Metadata {
   pub(crate) artwork: Option<filename::Png>,
+  pub(crate) date: Option<DateTime>,
   pub(crate) description: Option<String>,
   pub(crate) language: Option<Language>,
-  pub(crate) nfo: Option<filename::Nfo>,
-  pub(crate) package_date: Option<DateTime>,
-  pub(crate) package_description: Option<String>,
-  pub(crate) packager: Option<Component>,
+  pub(crate) package: Option<Package>,
   pub(crate) readme: Option<filename::Md>,
-  pub(crate) release_date: Option<DateTime>,
   pub(crate) title: Component,
 }
 
@@ -46,7 +43,9 @@ impl Metadata {
       files.push(artwork.as_path());
     }
 
-    if let Some(nfo) = &self.nfo {
+    if let Some(package) = &self.package
+      && let Some(nfo) = &package.nfo
+    {
       files.push(nfo.as_path());
     }
 
