@@ -103,14 +103,14 @@ mod tests {
       assert!(readme.is_some());
 
       let Package {
-        date: package_date,
-        description: package_description,
+        date,
+        description,
         nfo,
         packager,
       } = package.unwrap();
 
-      assert!(package_date.is_some());
-      assert!(package_description.is_some());
+      assert!(date.is_some());
+      assert!(description.is_some());
       assert!(nfo.is_some());
       assert!(packager.is_some());
     }
