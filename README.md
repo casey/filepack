@@ -239,6 +239,9 @@ And the following optional keys:
 - `nfo`: A component containing the filename of the package nfo file. Must end
   in `.nfo`.
 
+- `package-date`: The date and optionally time the package was created.
+  Distinct from `release-date`.
+
 - `packager`: A component containing the name of the person or group who
   created the package. Note that this may not be the author of the content of
   the package.
@@ -246,10 +249,19 @@ And the following optional keys:
 - `readme`: A component containing the filename of the package markdown readme.
   Must end in `.md`.
 
+- `release-date`: The date and optionally time the package content was created.
+  Distinct from `package-date`.
+
 Components are strings with the same restrictions as path components in the
 manifest `files` object, allowing them to be used as unix filesystem paths.
 Note that Windows imposes additional restrictions which are not enforced, so
 components may not be valid paths on Windows.
+
+Dates are formatted according to
+[RFC 3339](https://datatracker.ietf.org/doc/html/rfc3339), and may be a date
+i.e., `1970-01-01`, or a date and time in the UTC time zone, i.e.,
+`1970-01-01T00:00:00Z`, or with a time zone offset, i.e.,
+`1970-01-01T00:00:00+00:00`.
 
 Metadata follows a fixed schema and is not user-extensible. Future version of
 `filepack` may define new metadata fields, causing verification errors if those
