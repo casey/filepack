@@ -200,7 +200,7 @@ impl FromStr for Language {
     CODES
       .get_key_value(code)
       .map(|(key, _value)| Self(key))
-      .ok_or_else(|| format!("unknown langauge code `{code}`"))
+      .ok_or_else(|| format!("unknown language code `{code}`"))
   }
 }
 
@@ -212,7 +212,7 @@ mod tests {
   fn invalid() {
     assert_eq!(
       "ac".parse::<Language>().unwrap_err(),
-      "unknown langauge code `ac`"
+      "unknown language code `ac`"
     );
   }
 

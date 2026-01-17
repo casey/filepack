@@ -185,7 +185,7 @@ fn metadata_invalid_language() {
   Test::new()
     .write("metadata.yaml", "title: Foo\nlanguage: xx")
     .arg("create")
-    .stderr_regex(".*unknown langauge code `xx`.*")
+    .stderr_regex(".*unknown language code `xx`.*")
     .failure();
 }
 
