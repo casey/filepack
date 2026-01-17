@@ -1,12 +1,5 @@
 use super::*;
 
-#[derive(Clone, ValueEnum)]
-enum Format {
-  Json,
-  JsonPretty,
-  Tsv,
-}
-
 #[derive(Parser)]
 pub(crate) struct Files {
   #[arg(long = "format", default_value = "json-pretty")]
