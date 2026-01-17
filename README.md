@@ -306,7 +306,7 @@ language: en
 nfo: tobins-spirit-guide.nfo
 readme: README.md
 release-date: 1929
-package-date: 1984-07-08T19:32:00-04:00
+package-date: 1984-07-08 19:32:00 -04:00
 package-description: >
   First edition on loan from NYPL Main Branch research stacks. Captured via
   Microtek MS-300A flatbed scanner.
