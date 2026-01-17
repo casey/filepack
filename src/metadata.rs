@@ -47,6 +47,11 @@ mod tests {
   }
 
   #[test]
+  fn filepack_metadata_is_valid() {
+    Metadata::load_strict(Metadata::FILENAME.as_ref()).unwrap();
+  }
+
+  #[test]
   fn metadata_in_readme_is_valid() {
     let readme = filesystem::read_to_string("README.md").unwrap();
 
