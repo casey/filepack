@@ -383,7 +383,7 @@ mod tests {
       "foo"
         .parse::<RelativePath>()
         .unwrap()
-        .lint(&LintGroup::All.lints())
+        .lint(&LintGroup::Recommended.lints())
         .is_none()
     );
   }

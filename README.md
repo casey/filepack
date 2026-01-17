@@ -115,10 +115,10 @@ for information about a particular subcommand.
 
 Create a manifest.
 
-Optional path portability lints can be enabled with:
+Recommended lints can be enabled with:
 
 ```sh
-filepack create --deny all
+filepack create --deny recommended
 ```
 
 Metadata can optionally be included in the manifest with:
@@ -251,15 +251,15 @@ An example `metadata.json`:
 Lints
 -----
 
-`filepack create` supports optional lints that can be enabled with:
+`filepack create` supports optional lints that can be enabled by lint group name:
 
 ```
-filepack create --deny all
+filepack create --deny recommended
 ```
 
-These lints cover issues such as non-portable paths which are illegal on
-Windows file systems, paths which would conflict on case-insensitive file
-systems, and inclusion of junk files such as `.DS_Store`.
+The recommended lints cover issues such as non-portable paths which are illegal
+on Windows, paths which would conflict on case-insensitive file systems, and
+inclusion of junk files such as `.DS_Store`.
 
 Keys and Signatures
 -------------------

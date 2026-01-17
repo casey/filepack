@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(Clone, Copy, ValueEnum)]
 pub(crate) enum LintGroup {
-  All,
+  Recommended,
 }
 
 impl LintGroup {

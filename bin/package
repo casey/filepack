@@ -39,7 +39,7 @@ cp -r \
   dist
 
 echo "Creating filepack manifest..."
-cargo run create --deny all dist
+cargo run create --deny recommended dist
 
 echo "Creating release archive..."
 cd dist
