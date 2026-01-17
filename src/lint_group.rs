@@ -15,7 +15,6 @@ impl LintGroup {
     match self {
       Self::Compatibility => [
         CaseConflict,
-        FilenameLength,
         WindowsLeadingSpace,
         WindowsReservedCharacter,
         WindowsReservedFilename,

@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize)]
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, SerializeDisplay)]
 pub struct RelativePath(String);
 
 impl RelativePath {
@@ -74,10 +74,6 @@ impl RelativePath {
 
       if lints.contains(&Lint::WindowsTrailingPeriod) && component.ends_with('.') {
         return Some(LintError::WindowsTrailingPeriod);
-      }
-
-      if lints.contains(&Lint::FilenameLength) && component.len() > 255 {
-        return Some(LintError::FilenameLength);
       }
     }
 
@@ -294,7 +290,7 @@ mod tests {
       assert_eq!(path.lint(&[].into()), None);
     }
 
-    for i in 0..32 {
+    for i in 1..32 {
       let character = char::from_u32(i).unwrap();
       case(
         &character.to_string(),
@@ -309,8 +305,6 @@ mod tests {
     case("?", LintError::WindowsReservedCharacter { character: '?' });
     case("\"", LintError::WindowsReservedCharacter { character: '"' });
     case("|", LintError::WindowsReservedCharacter { character: '|' });
-
-    case(&"a".repeat(256), LintError::FilenameLength);
 
     case("foo/ bar", LintError::WindowsLeadingSpace);
 

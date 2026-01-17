@@ -12,6 +12,10 @@ pub enum PathError {
   Empty,
   #[snafu(display("paths may not begin with slash character"))]
   LeadingSlash,
+  #[snafu(display("component exceeds 255 byte limit"))]
+  Length,
+  #[snafu(display("paths may not contain NUL character"))]
+  Nul,
   #[snafu(display("paths may not contain separator character `{character}`"))]
   Separator { character: char },
   #[snafu(display("paths may not end with slash character"))]
