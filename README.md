@@ -163,11 +163,12 @@ directory entries. Directory entries may be subdirectories or files. Files are
 objects with keys `hash`, the hex-encoded BLAKE3 hash of the file, and `size`,
 the length of the file in bytes.
 
-As a consequence of the manifest being UTF-8 , all path components must be
+As a consequence of the manifest being UTF-8, all path components must be
 valid Unicode.
 
-Path components may not be `.` or `..`, contain `/` or `\`, or begin with a
-Windows drive prefix, such as `C:`.
+Path components may not be `.` or `..`, contain the path separators `/` or `\`,
+contain NUL, be longer than 255 bytes, or begin with a Windows drive prefix,
+such as `C:`.
 
 ### `notes`
 
