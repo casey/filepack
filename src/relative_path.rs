@@ -145,17 +145,7 @@ impl FromStr for RelativePath {
     let mut path = String::new();
 
     for (i, component) in s.split('/').enumerate() {
-      if component == ".." || component == "." {
-        return Err(PathError::Component {
-          component: component.into(),
-        });
-      }
-
-      for character in component.chars() {
-        if SEPARATORS.contains(&character) {
-          return Err(PathError::Separator { character });
-        }
-      }
+      Component::check(component)?;
 
       if i > 0 {
         path.push('/');
