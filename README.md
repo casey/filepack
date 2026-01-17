@@ -224,11 +224,14 @@ Filepack packages may optionally contain metadata describing the contents of
 the packages in a file named `metadata.yaml` containing a YAML object with the
 following keys:
 
-- `title`: A string containing the package's human-readable title.
+- `title`: A component containing the package's human-readable title.
 
-- `packager`: A string containing the name of the person or group who created
-  the package. Note that this may not be the author of the content of the
-  package.
+- `packager`: A component containing the name of the person or group who
+  created the package. Note that this may not be the author of the content of
+  the package.
+
+Components are strings with the same restrictions as path components in the
+manifest `files` object, allowing them to be used in filesystem paths.
 
 Metadata follows a fixed schema and is not user-extensible. Future version of
 `filepack` may define new metadata fields, causing verification errors if those

@@ -40,7 +40,6 @@ use {
     mode::Mode,
     options::Options,
     owo_colorize_ext::OwoColorizeExt,
-    packager::Packager,
     path_error::PathError,
     public_key_error::PublicKeyError,
     sign_options::SignOptions,
@@ -131,7 +130,6 @@ mod mode;
 mod note;
 mod options;
 mod owo_colorize_ext;
-mod packager;
 mod path_error;
 mod private_key;
 mod progress_bar;
