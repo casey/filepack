@@ -308,16 +308,17 @@ Example dates:
 ```yaml
 title: Tobin's Spirit Guide
 artwork: cover.png
+date: 1929
 description: A compilation of supernatural occurrences, entities, and facts.
 language: en
-nfo: tobins.nfo
 readme: README.md
-release-date: 1929
-package-date: 1984-07-08 19:32:00 -04:00
-package-description: >
-  First edition on loan from NYPL Main Branch research stacks. Captured via
-  Microtek MS-300A flatbed scanner.
-packager: Egon Spengler
+package:
+  date: 1984-07-08 19:32:00 -04:00
+  description: >
+    First edition on loan from NYPL Main Branch research stacks. Captured via
+    Microtek MS-300A flatbed scanner.
+  nfo: tobins.nfo
+  packager: Egon Spengler
 ```
 
 Lints

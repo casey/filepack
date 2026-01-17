@@ -88,26 +88,31 @@ mod tests {
 
       let Metadata {
         artwork,
+        date,
         description,
         language,
-        nfo,
-        package_date,
-        package_description,
-        packager,
+        package,
         readme,
-        release_date,
         title: _,
       } = metadata;
 
       assert!(artwork.is_some());
+      assert!(date.is_some());
       assert!(description.is_some());
       assert!(language.is_some());
-      assert!(nfo.is_some());
+      assert!(readme.is_some());
+
+      let Package {
+        date: package_date,
+        description: package_description,
+        nfo,
+        packager,
+      } = package.unwrap();
+
       assert!(package_date.is_some());
       assert!(package_description.is_some());
+      assert!(nfo.is_some());
       assert!(packager.is_some());
-      assert!(readme.is_some());
-      assert!(release_date.is_some());
     }
   }
 
