@@ -6,8 +6,10 @@ pub(crate) struct Metadata {
   pub(crate) artwork: Option<filename::Png>,
   pub(crate) language: Option<Language>,
   pub(crate) nfo: Option<filename::Nfo>,
+  pub(crate) package_date: Option<DateTime>,
   pub(crate) packager: Option<Component>,
   pub(crate) readme: Option<filename::Md>,
+  pub(crate) release_date: Option<DateTime>,
   pub(crate) title: Component,
 }
 
