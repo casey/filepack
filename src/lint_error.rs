@@ -1,7 +1,12 @@
 use super::*;
 
 #[derive(Debug, EnumDiscriminants, PartialEq, Snafu)]
-#[strum_discriminants(name(Lint), derive(Ord, PartialOrd))]
+#[strum_discriminants(
+  name(Lint),
+  derive(EnumIter, IntoStaticStr, Ord, PartialOrd, Serialize),
+  serde(rename_all = "kebab-case"),
+  strum(serialize_all = "kebab-case")
+)]
 pub(crate) enum LintError {
   #[snafu(display("filenames would confict on case-insensitive file system"))]
   CaseConflict,
@@ -19,4 +24,16 @@ pub(crate) enum LintError {
   WindowsTrailingPeriod,
   #[snafu(display("Windows does not allow filenames that end with a space"))]
   WindowsTrailingSpace,
+}
+
+impl Lint {
+  fn name(self) -> &'static str {
+    self.into()
+  }
+}
+
+impl Display for Lint {
+  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    write!(f, "{}", self.name())
+  }
 }

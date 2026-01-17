@@ -77,7 +77,7 @@ use {
     sync::LazyLock,
     time::{SystemTime, SystemTimeError, UNIX_EPOCH},
   },
-  strum::{EnumDiscriminants, EnumIter, EnumString, IntoStaticStr},
+  strum::{EnumDiscriminants, EnumIter, EnumString, IntoEnumIterator, IntoStaticStr},
   usized::IntoU64,
   walkdir::WalkDir,
 };
@@ -89,10 +89,7 @@ pub use self::{
 };
 
 #[cfg(test)]
-use {
-  std::collections::HashSet,
-  strum::{IntoDiscriminant, IntoEnumIterator},
-};
+use {std::collections::HashSet, strum::IntoDiscriminant};
 
 #[cfg(test)]
 fn tempdir() -> tempfile::TempDir {

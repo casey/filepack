@@ -13,6 +13,7 @@ mod hash;
 mod info;
 mod key;
 mod keygen;
+mod lints;
 mod man;
 mod sign;
 mod size;
@@ -50,6 +51,8 @@ pub(crate) enum Subcommand {
   Key(key::Key),
   #[command(about = "Generate key pair")]
   Keygen(keygen::Keygen),
+  #[command(about = "List lint groups")]
+  Lints,
   #[command(about = "Print man page")]
   Man,
   #[command(about = "Sign manifest")]
@@ -70,6 +73,7 @@ impl Subcommand {
       Self::Info => info::run(options),
       Self::Key(key) => key.run(options),
       Self::Keygen(keygen) => keygen.run(options),
+      Self::Lints => lints::run(),
       Self::Man => man::run(),
       Self::Sign(sign) => sign.run(options),
       Self::Size(size) => size.run(),
