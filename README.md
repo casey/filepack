@@ -242,6 +242,12 @@ An example `metadata.yaml`:
 title: Tobin's Spirit Guide
 ```
 
+Filepack metadata is intended to a broadly useful machine and human readable
+description of the contents of a package, covering personal, distribution, and
+archival use-cases.
+
+Please feel free to open an issue with ideas for new metadata fields.
+
 Lints
 -----
 
