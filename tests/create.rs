@@ -183,9 +183,9 @@ fn metadata_files_wrong_extension() {
 #[test]
 fn metadata_invalid_language() {
   Test::new()
-    .write("metadata.yaml", "title: Foo\nlanguage: xx")
+    .write("metadata.yaml", "title: Foo\nlanguage: ac")
     .arg("create")
-    .stderr_regex(".*unknown language code `xx`.*")
+    .stderr_regex(".*unknown language code `ac`.*")
     .failure();
 }
 
