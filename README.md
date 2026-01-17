@@ -220,8 +220,8 @@ The signature is a 128 character hexidecimal string and is elided for brevity.
 Metadata
 --------
 
-Filepack packages may optionally contain a file named `metadata.yaml`
-describing the package and its content.
+Filepack packages may contain a file named `metadata.yaml` describing the
+package and its content.
 
 `filepack create` loads `metadata.yaml` if present and checks for validity and
 unknown fields.
