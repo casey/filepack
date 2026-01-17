@@ -232,6 +232,8 @@ And the following optional keys:
   artwork for the package, for example, cover art for an album or key art for a
   movie. Must end in `.png`;
 
+- `description`: A markdown string describing the package content.
+
 - `language`: The primary language of the package content as an ISO 639-1
   two-character language code. Print valid language codes by running
   `filepack languages`.
