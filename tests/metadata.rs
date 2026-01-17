@@ -103,6 +103,15 @@ fn files_wrong_extension() {
 }
 
 #[test]
+fn invalid_date() {
+  Test::new()
+    .write("metadata.yaml", "title: Foo\ndate: 2024/06/15")
+    .arg("create")
+    .stderr_regex(".*invalid characters.*")
+    .failure();
+}
+
+#[test]
 fn invalid_language() {
   Test::new()
     .write("metadata.yaml", "title: Foo\nlanguage: ac")
@@ -115,15 +124,6 @@ fn invalid_language() {
 fn invalid_package_date() {
   Test::new()
     .write("metadata.yaml", "title: Foo\npackage:\n  date: not-a-date")
-    .arg("create")
-    .stderr_regex(".*invalid characters.*")
-    .failure();
-}
-
-#[test]
-fn invalid_date() {
-  Test::new()
-    .write("metadata.yaml", "title: Foo\ndate: 2024/06/15")
     .arg("create")
     .stderr_regex(".*invalid characters.*")
     .failure();
