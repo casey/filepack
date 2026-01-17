@@ -41,7 +41,7 @@ impl Create {
 
     let cleaned_manifest = current_dir.join(&manifest_path).lexiclean();
 
-    let mut paths = BTreeMap::new();
+    let mut paths = HashMap::new();
 
     let mut case_conflicts = HashMap::<RelativePath, Vec<RelativePath>>::new();
 
