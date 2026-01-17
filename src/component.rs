@@ -12,16 +12,10 @@ impl Component {
   pub(crate) fn as_str(&self) -> &str {
     &self.0
   }
-}
 
-impl FromStr for Component {
-  type Err = PathError;
-
-  fn from_str(s: &str) -> Result<Self, Self::Err> {
-    for character in s.chars() {
-      if SEPARATORS.contains(&character) {
-        return Err(PathError::Separator { character });
-      }
+  pub(crate) fn check(s: &str) -> Result<(), PathError> {
+    if s.is_empty() {
+      return Err(PathError::ComponentEmpty);
     }
 
     if s == ".." || s == "." {
@@ -30,10 +24,30 @@ impl FromStr for Component {
       });
     }
 
-    if s.is_empty() {
-      return Err(PathError::ComponentEmpty);
+    for character in s.chars() {
+      if SEPARATORS.contains(&character) {
+        return Err(PathError::Separator { character });
+      }
     }
 
+    let mut chars = s.chars();
+    let first = chars.next();
+    let second = chars.next();
+    if let Some((first, second)) = first.zip(second)
+      && second == ':'
+    {
+      return Err(PathError::WindowsDiskPrefix { letter: first });
+    }
+
+    Ok(())
+  }
+}
+
+impl FromStr for Component {
+  type Err = PathError;
+
+  fn from_str(s: &str) -> Result<Self, Self::Err> {
+    Self::check(s)?;
     Ok(Self(s.into()))
   }
 }
@@ -49,6 +63,14 @@ mod tests {
       PathError::Component {
         component: ".".into(),
       },
+    );
+  }
+
+  #[test]
+  fn drive_prefix() {
+    assert_eq!(
+      "C:".parse::<Component>().unwrap_err(),
+      PathError::WindowsDiskPrefix { letter: 'C' },
     );
   }
 

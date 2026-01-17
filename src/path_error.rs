@@ -1,38 +1,21 @@
 use super::*;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Snafu)]
 pub enum PathError {
+  #[snafu(display("paths may not contain non-normal component `{component}`"))]
   Component { component: String },
+  #[snafu(display("paths may not contain empty components"))]
   ComponentEmpty,
+  #[snafu(display("paths may not contain double slashes"))]
   DoubleSlash,
+  #[snafu(display("paths may not be empty"))]
   Empty,
+  #[snafu(display("paths may not begin with slash character"))]
   LeadingSlash,
+  #[snafu(display("paths may not contain separator character `{character}`"))]
   Separator { character: char },
+  #[snafu(display("paths may not end with slash character"))]
   TrailingSlash,
+  #[snafu(display("paths may not begin with Windows disk prefix `{letter}:`"))]
   WindowsDiskPrefix { letter: char },
 }
-
-impl Display for PathError {
-  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    match self {
-      Self::Component { component } => write!(
-        f,
-        "paths may not contain non-normal component `{component}`",
-      ),
-      Self::ComponentEmpty => write!(f, "paths may not contain empty components"),
-      Self::DoubleSlash => write!(f, "paths may not contain double slashes"),
-      Self::Empty => write!(f, "paths may not be empty"),
-      Self::LeadingSlash => write!(f, "paths may not begin with slash character"),
-      Self::Separator { character } => {
-        write!(f, "paths may not contain separator character `{character}`")
-      }
-      Self::TrailingSlash => write!(f, "paths may not end with slash character"),
-      Self::WindowsDiskPrefix { letter } => write!(
-        f,
-        "paths may not begin with Windows disk prefix `{letter}:`",
-      ),
-    }
-  }
-}
-
-impl std::error::Error for PathError {}

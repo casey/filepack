@@ -154,18 +154,6 @@ alongside the files they reference.
 Manifests are [UTF-8](https://en.wikipedia.org/wiki/UTF-8)-encoded
 [JSON](https://www.json.org/json-en.html).
 
-As a consequence of the manifest being UTF-8 , all file paths must be
-valid Unicode.
-
-For cross-platform compatibility, paths are `/`-separated and may not contain
-backslashes.
-
-Paths are relative, meaning that they cannot begin with a `/` or a Windows
-drive prefix, such as `C:`.
-
-Paths may not contain the path components `.` or `..` and may not end with a
-slash.
-
 Manifests contain an object with two mandatory keys, `files` and `notes`.
 
 ### `files`
@@ -174,6 +162,12 @@ The value of the mandatory `files` key is an object mapping path components to
 directory entries. Directory entries may be subdirectories or files. Files are
 objects with keys `hash`, the hex-encoded BLAKE3 hash of the file, and `size`,
 the length of the file in bytes.
+
+As a consequence of the manifest being UTF-8 , all path components must be
+valid Unicode.
+
+Path components may not be `.` or `..`, contain `/` or `\`, or begin with a
+Windows drive prefix, such as `C:`.
 
 ### `notes`
 
@@ -258,7 +252,7 @@ filepack create --deny distribution
 ```
 
 The `distribution` lint group checks for issues which can cause problems if the
-package is indended for distribution, such as non-portable paths that are
+package is intended for distribution, such as non-portable paths that are
 illegal on Windows, paths which would conflict on case-insensitive file
 systems, and inclusion of junk files such as `.DS_Store`.
 

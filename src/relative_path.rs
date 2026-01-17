@@ -121,6 +121,10 @@ impl FromStr for RelativePath {
   type Err = PathError;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
+    if s.is_empty() {
+      return Err(PathError::Empty);
+    }
+
     if s.starts_with('/') {
       return Err(PathError::LeadingSlash);
     }
@@ -145,27 +149,13 @@ impl FromStr for RelativePath {
     let mut path = String::new();
 
     for (i, component) in s.split('/').enumerate() {
-      if component == ".." || component == "." {
-        return Err(PathError::Component {
-          component: component.into(),
-        });
-      }
-
-      for character in component.chars() {
-        if SEPARATORS.contains(&character) {
-          return Err(PathError::Separator { character });
-        }
-      }
+      Component::check(component)?;
 
       if i > 0 {
         path.push('/');
       }
 
       path.push_str(component);
-    }
-
-    if path.is_empty() {
-      return Err(PathError::Empty);
     }
 
     Ok(Self(path))
@@ -244,14 +234,6 @@ mod tests {
   }
 
   #[test]
-  fn from_components_drive_prefix() {
-    assert_eq!(
-      RelativePath::try_from([&"C:".parse().unwrap()].as_slice()).unwrap_err(),
-      PathError::WindowsDiskPrefix { letter: 'C' },
-    );
-  }
-
-  #[test]
   fn from_components_empty() {
     assert_eq!(
       RelativePath::try_from([].as_slice()).unwrap_err(),
@@ -278,6 +260,8 @@ mod tests {
     }
 
     case("C:", PathError::WindowsDiskPrefix { letter: 'C' });
+
+    case("foo/C:bar", PathError::WindowsDiskPrefix { letter: 'C' });
 
     case("", PathError::Empty);
     case(
