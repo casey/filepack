@@ -253,7 +253,7 @@ Optional fields:
 - `artwork: component.png`: The filename of an PNG file containing artwork for
   the package, for example, cover art for an album or key art for a movie.
 
-- `description: string`: A markdown string describing the package content.
+- `description: markdown`: A description of the package content.
 
 - `language: language`: The primary language of the package content.
 
@@ -270,7 +270,7 @@ The package
 
 - `package.date: date`: The date and optionally time the package was created.
 
-- `package.description: string`: A markdown string describing the package.
+- `package.description: markdown`: A descriptiion of the package.
 
 - `package.packager: component`: A component containing the name of the person
   or group who created the package. Note that this may not be the author of the
@@ -291,6 +291,8 @@ Types:
 
 - `language`: A string containing an ISO 639-1 two-character language code. See
   `filepack languages` for valid language codes.
+
+- `markdown`: A string containing CommonMark markdown.
 
 Example dates:
 
