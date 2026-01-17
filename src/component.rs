@@ -104,6 +104,21 @@ mod tests {
   }
 
   #[test]
+  fn extension() {
+    #[track_caller]
+    fn case(input: &str, expected: Option<&str>) {
+      let component = input.parse::<Component>().unwrap();
+      assert_eq!(component.extension(), expected);
+    }
+
+    case(".hidden", None);
+    case(".hidden.txt", Some("txt"));
+    case("file", None);
+    case("file.tar.gz", Some("gz"));
+    case("file.txt", Some("txt"));
+  }
+
+  #[test]
   fn length() {
     "a".repeat(255).parse::<Component>().unwrap();
 
@@ -140,20 +155,5 @@ mod tests {
       "\\".parse::<Component>().unwrap_err(),
       ComponentError::Separator { character: '\\' },
     );
-  }
-
-  #[test]
-  fn extension() {
-    #[track_caller]
-    fn case(input: &str, expected: Option<&str>) {
-      let component = input.parse::<Component>().unwrap();
-      assert_eq!(component.extension(), expected);
-    }
-
-    case(".hidden", None);
-    case(".hidden.txt", Some("txt"));
-    case("file", None);
-    case("file.tar.gz", Some("gz"));
-    case("file.txt", Some("txt"));
   }
 }

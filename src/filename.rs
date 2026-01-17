@@ -59,18 +59,6 @@ mod tests {
   use super::*;
 
   #[test]
-  fn valid() {
-    #[track_caller]
-    fn case<T: FromStr<Err = ComponentError>>(input: &str) {
-      input.parse::<T>().unwrap();
-    }
-
-    case::<Md>("README.md");
-    case::<Nfo>("info.nfo");
-    case::<Png>("cover.png");
-  }
-
-  #[test]
   fn invalid() {
     #[track_caller]
     fn case<T: FromStr<Err = ComponentError> + std::fmt::Debug>(
@@ -85,5 +73,17 @@ mod tests {
     case::<Png>("", ComponentError::Empty);
     case::<Png>("cover.jpg", ComponentError::Extension { extension: "png" });
     case::<Png>("foo/bar.png", ComponentError::Separator { character: '/' });
+  }
+
+  #[test]
+  fn valid() {
+    #[track_caller]
+    fn case<T: FromStr<Err = ComponentError>>(input: &str) {
+      input.parse::<T>().unwrap();
+    }
+
+    case::<Md>("README.md");
+    case::<Nfo>("info.nfo");
+    case::<Png>("cover.png");
   }
 }
