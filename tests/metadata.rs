@@ -1,6 +1,29 @@
 use super::*;
 
 #[test]
+fn files() {
+  Test::new()
+    .touch("content")
+    .touch("cover.png")
+    .touch("info.nfo")
+    .touch("README.md")
+    .write(
+      "metadata.yaml",
+      "\
+title: Foo
+artwork: cover.png
+nfo: info.nfo
+readme: README.md
+",
+    )
+    .arg("create")
+    .success()
+    .arg("verify")
+    .stderr("successfully verified 5 files totaling 62 bytes\n")
+    .success();
+}
+
+#[test]
 fn files_missing() {
   #[track_caller]
   fn case(metadata: &str, stderr: &str) {
@@ -68,38 +91,6 @@ fn invalid_language() {
 }
 
 #[test]
-fn unknown_keys() {
-  Test::new()
-    .write("metadata.yaml", "title: Foo\nbar: baz")
-    .arg("create")
-    .stderr_regex(".*unknown fields in metadata at `.*metadata.yaml`: `bar`\n")
-    .failure();
-}
-
-#[test]
-fn files() {
-  Test::new()
-    .touch("content")
-    .touch("cover.png")
-    .touch("info.nfo")
-    .touch("README.md")
-    .write(
-      "metadata.yaml",
-      "\
-title: Foo
-artwork: cover.png
-nfo: info.nfo
-readme: README.md
-",
-    )
-    .arg("create")
-    .success()
-    .arg("verify")
-    .stderr("successfully verified 5 files totaling 62 bytes\n")
-    .success();
-}
-
-#[test]
 fn language() {
   Test::new()
     .touch("content")
@@ -109,4 +100,13 @@ fn language() {
     .arg("verify")
     .stderr("successfully verified 2 files totaling 23 bytes\n")
     .success();
+}
+
+#[test]
+fn unknown_keys() {
+  Test::new()
+    .write("metadata.yaml", "title: Foo\nbar: baz")
+    .arg("create")
+    .stderr_regex(".*unknown fields in metadata at `.*metadata.yaml`: `bar`\n")
+    .failure();
 }
