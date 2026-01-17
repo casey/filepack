@@ -49,7 +49,7 @@ impl Create {
 
     let mut empty = Vec::new();
 
-    let lints = self.deny.map(|group| group.lints()).unwrap_or_default();
+    let lints = self.deny.map(LintGroup::lints).unwrap_or_default();
 
     for entry in WalkDir::new(&root) {
       let entry = entry?;
