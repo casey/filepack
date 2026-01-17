@@ -103,7 +103,7 @@ impl Create {
     for mut originals in case_conflicts.into_values() {
       if originals.len() > 1 {
         originals.sort();
-        eprintln!("error: paths would conflict on case-insensitive filesystem:");
+        eprintln!("error: {}", LintError::CaseConflict);
         for (i, original) in originals.iter().enumerate() {
           eprintln!(
             "       {}─ `{original}`",
