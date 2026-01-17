@@ -202,7 +202,7 @@ fn metadata_with_files() {
 title: Foo
 artwork: cover.png
 nfo: info.nfo
-readme: README.md,
+readme: README.md
 ",
     )
     .arg("create")
