@@ -252,18 +252,18 @@ Optional keys:
   artwork for the package, for example, cover art for an album or key art for a
   movie. Must end in `.png`;
 
-- `comment`: A markdown string describing the package.
-
 - `description`: A markdown string describing the package content.
 
 - `language`: The primary language of the package content as an ISO 639-1
-  two-character language code. Print valid language codes by running
-  `filepack languages`.
+  two-character language code. See `filepack languages` for valid language
+  codes.
 
 - `nfo`: A component containing the filename of the package nfo file. Must end
   in `.nfo`.
 
 - `package-date`: The date and optionally time the package was created.
+
+- `package-description`: A markdown string describing the package.
 
 - `packager`: A component containing the name of the person or group who
   created the package. Note that this may not be the author of the content of
@@ -293,6 +293,16 @@ i.e., `1970-01-01`, or a date and time in the UTC time zone, i.e.,
 
 ```yaml
 title: Tobin's Spirit Guide
+artwork: cover.png
+description: A compilation of supernatural occurrences, entities, and facts.
+language: en
+nfo: tobins-spirit-guide.nfo
+readme: README.md
+release-date: 1929
+package-date: 1984-07-08T19:32:00-04:00
+package-description: >
+  First edition on loan from NYPL Main Branch research stacks. Captured via
+  Microtek MS-300A flatbed scanner.
 packager: Egon Spengler
 ```
 

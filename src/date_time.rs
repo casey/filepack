@@ -7,16 +7,29 @@ use {
 pub(crate) enum DateTime {
   Date(NaiveDate),
   DateTime(chrono::DateTime<FixedOffset>),
+  Year(u16),
 }
 
 impl FromStr for DateTime {
   type Err = chrono::ParseError;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
-    if re::DATE.is_match(s) {
+    if re::YEAR.is_match(s) {
+      Ok(Self::Year(s.parse().unwrap()))
+    } else if re::DATE.is_match(s) {
       Ok(Self::Date(s.parse()?))
     } else {
       Ok(Self::DateTime(s.parse()?))
+    }
+  }
+}
+
+impl Display for DateTime {
+  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    match self {
+      Self::Date(date) => write!(f, "{date}"),
+      Self::DateTime(date_time) => write!(f, "{date_time}"),
+      Self::Year(year) => write!(f, "{year}"),
     }
   }
 }
@@ -26,17 +39,29 @@ mod tests {
   use super::*;
 
   #[test]
-  fn date_time_formats() {
+  fn invalid() {
     #[track_caller]
     fn case(s: &str) {
-      assert_eq!(
-        serde_json::from_str::<DateTime>(&format!("\"{s}\"")).unwrap(),
-        s.parse::<DateTime>().unwrap(),
-      );
+      assert!(s.parse::<DateTime>().is_err());
     }
 
-    case("1970-01-01");
-    case("1970-01-01T00:00:00Z");
-    case("1970-01-01T00:00:00+00:00");
+    case("1970-01-01 00:00:00");
+    case("1970-01-01T00:00:00");
+  }
+
+  #[test]
+  fn valid() {
+    #[track_caller]
+    fn case(s: &str, expected: &str) {
+      assert_eq!(s.parse::<DateTime>().unwrap().to_string(), expected);
+    }
+
+    case("1970", "1970");
+    case("1970-01-01 00:00:00 +00:00", "1970-01-01 00:00:00 +00:00");
+    case("1970-01-01 00:00:00 +00:00", "1970-01-01 00:00:00 +00:00");
+    case("1970-01-01 00:00:00Z", "1970-01-01 00:00:00 +00:00");
+    case("1970-01-01", "1970-01-01");
+    case("1970-01-01T00:00:00+00:00", "1970-01-01 00:00:00 +00:00");
+    case("1970-01-01T00:00:00Z", "1970-01-01 00:00:00 +00:00");
   }
 }

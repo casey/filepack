@@ -2,7 +2,7 @@ use {
   self::{expected::Expected, test::Test},
   camino::{Utf8Path, Utf8PathBuf},
   executable_path::executable_path,
-  filepack::{Manifest, Note, PrivateKey, PublicKey, Signature},
+  filepack::{Manifest, Note, PrivateKey, PublicKey, Signature, assert_matches},
   regex::Regex,
   std::{
     collections::BTreeMap,
@@ -14,19 +14,6 @@ use {
     time::{SystemTime, UNIX_EPOCH},
   },
 };
-
-macro_rules! assert_matches {
-  ($expression:expr, $( $pattern:pat_param )|+ $( if $guard:expr )? $(,)?) => {
-    match $expression {
-      $( $pattern )|+ $( if $guard )? => {}
-      left => panic!(
-        "assertion failed: (left ~= right)\n  left: `{:?}`\n right: `{}`",
-        left,
-        stringify!($($pattern)|+ $(if $guard)?)
-      ),
-    }
-  }
-}
 
 mod create;
 mod expected;
