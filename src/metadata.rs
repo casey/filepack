@@ -4,7 +4,7 @@ use super::*;
 #[serde(rename_all = "kebab-case")]
 pub(crate) struct Metadata {
   pub(crate) title: String,
-  pub(crate) packager: Option<Packager>,
+  pub(crate) packager: Option<Component>,
 }
 
 impl Metadata {
