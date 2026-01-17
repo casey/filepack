@@ -93,9 +93,10 @@ mod tests {
         language,
         package,
         readme,
-        title: _,
+        title,
       } = metadata;
 
+      assert!(!title.as_str().is_empty());
       assert!(artwork.is_some());
       assert!(date.is_some());
       assert!(description.is_some());
