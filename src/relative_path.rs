@@ -133,19 +133,10 @@ impl FromStr for RelativePath {
       return Err(PathError::DoubleSlash);
     }
 
-    let mut chars = s.chars();
-    let first = chars.next();
-    let second = chars.next();
-    if let Some((first, second)) = first.zip(second)
-      && second == ':'
-    {
-      return Err(PathError::WindowsDiskPrefix { letter: first });
-    }
-
     let mut path = String::new();
 
     for (i, component) in s.split('/').enumerate() {
-      Component::check(component)?;
+      Component::check(component).context(path_error::Component { component })?;
 
       if i > 0 {
         path.push('/');
@@ -178,7 +169,7 @@ impl TryFrom<&Utf8Path> for RelativePath {
 
     for (i, component) in path.components().enumerate() {
       let Utf8Component::Normal(component) = component else {
-        return Err(PathError::Component {
+        return Err(PathError::Normal {
           component: component.to_string(),
         });
       };
@@ -254,28 +245,17 @@ mod tests {
     fn case(path: &str, expected: PathError) {
       assert_eq!(path.parse::<RelativePath>().unwrap_err(), expected);
     }
-
-    case("C:", PathError::WindowsDiskPrefix { letter: 'C' });
-
-    case("foo/C:bar", PathError::WindowsDiskPrefix { letter: 'C' });
-
     case("", PathError::Empty);
-    case(
-      ".",
-      PathError::Component {
-        component: ".".into(),
-      },
-    );
-    case(
-      "..",
-      PathError::Component {
-        component: "..".into(),
-      },
-    );
     case("/", PathError::LeadingSlash);
     case("foo/", PathError::TrailingSlash);
     case("foo//bar", PathError::DoubleSlash);
-    case("\\", PathError::Separator { character: '\\' });
+    case(
+      "\0",
+      PathError::Component {
+        component: "\0".to_string(),
+        source: ComponentError::Nul,
+      },
+    );
   }
 
   #[test]
@@ -369,10 +349,11 @@ mod tests {
   #[test]
   fn try_from_utf8_path() {
     assert_eq!(
-      RelativePath::try_from(Utf8Path::new("..")).unwrap_err(),
+      RelativePath::try_from(Utf8Path::new("\0")).unwrap_err(),
       PathError::Component {
-        component: "..".into()
-      }
+        component: "\0".into(),
+        source: ComponentError::Nul,
+      },
     );
     assert_eq!(
       RelativePath::try_from(Utf8Path::new("foo/bar")).unwrap(),

@@ -8,32 +8,38 @@ impl Component {
     self.0.as_bytes()
   }
 
+  pub(crate) fn as_path(&self) -> RelativePath {
+    self.as_str().parse().unwrap()
+  }
+
   pub(crate) fn as_str(&self) -> &str {
     &self.0
   }
 
-  pub(crate) fn check(s: &str) -> Result<(), PathError> {
+  pub(crate) fn check(s: &str) -> Result<(), ComponentError> {
     if s.is_empty() {
-      return Err(PathError::ComponentEmpty);
+      return Err(ComponentError::Empty);
     }
 
     if s.len() > 255 {
-      return Err(PathError::Length);
+      return Err(ComponentError::Length);
     }
 
-    if s == ".." || s == "." {
-      return Err(PathError::Component {
-        component: s.into(),
-      });
+    if s == "." {
+      return Err(ComponentError::Normal { component: "." });
+    }
+
+    if s == ".." {
+      return Err(ComponentError::Normal { component: ".." });
     }
 
     for character in s.chars() {
       if ['/', '\\'].contains(&character) {
-        return Err(PathError::Separator { character });
+        return Err(ComponentError::Separator { character });
       }
 
       if character == '\0' {
-        return Err(PathError::Nul);
+        return Err(ComponentError::Nul);
       }
     }
 
@@ -43,10 +49,17 @@ impl Component {
     if let Some((first, second)) = first.zip(second)
       && second == ':'
     {
-      return Err(PathError::WindowsDiskPrefix { letter: first });
+      return Err(ComponentError::WindowsDriveLetter { letter: first });
     }
 
     Ok(())
+  }
+
+  pub(crate) fn extension(&self) -> Option<&str> {
+    match self.0.rfind('.') {
+      None | Some(0) => None,
+      Some(n) => Some(&self.0[n + 1..]),
+    }
   }
 }
 
@@ -57,7 +70,7 @@ impl Display for Component {
 }
 
 impl FromStr for Component {
-  type Err = PathError;
+  type Err = ComponentError;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     Self::check(s)?;
@@ -73,9 +86,7 @@ mod tests {
   fn current() {
     assert_eq!(
       ".".parse::<Component>().unwrap_err(),
-      PathError::Component {
-        component: ".".into(),
-      },
+      ComponentError::Normal { component: "." },
     );
   }
 
@@ -83,16 +94,28 @@ mod tests {
   fn drive_prefix() {
     assert_eq!(
       "C:".parse::<Component>().unwrap_err(),
-      PathError::WindowsDiskPrefix { letter: 'C' },
+      ComponentError::WindowsDriveLetter { letter: 'C' },
     );
   }
 
   #[test]
   fn empty() {
-    assert_eq!(
-      "".parse::<Component>().unwrap_err(),
-      PathError::ComponentEmpty,
-    );
+    assert_eq!("".parse::<Component>().unwrap_err(), ComponentError::Empty,);
+  }
+
+  #[test]
+  fn extension() {
+    #[track_caller]
+    fn case(input: &str, expected: Option<&str>) {
+      let component = input.parse::<Component>().unwrap();
+      assert_eq!(component.extension(), expected);
+    }
+
+    case(".hidden", None);
+    case(".hidden.txt", Some("txt"));
+    case("file", None);
+    case("file.tar.gz", Some("gz"));
+    case("file.txt", Some("txt"));
   }
 
   #[test]
@@ -101,22 +124,23 @@ mod tests {
 
     assert_eq!(
       "a".repeat(256).parse::<Component>().unwrap_err(),
-      PathError::Length,
+      ComponentError::Length,
     );
   }
 
   #[test]
   fn nul() {
-    assert_eq!("foo\0bar".parse::<Component>().unwrap_err(), PathError::Nul);
+    assert_eq!(
+      "foo\0bar".parse::<Component>().unwrap_err(),
+      ComponentError::Nul
+    );
   }
 
   #[test]
   fn parent() {
     assert_eq!(
       "..".parse::<Component>().unwrap_err(),
-      PathError::Component {
-        component: "..".into(),
-      },
+      ComponentError::Normal { component: ".." },
     );
   }
 
@@ -124,12 +148,12 @@ mod tests {
   fn separator() {
     assert_eq!(
       "/".parse::<Component>().unwrap_err(),
-      PathError::Separator { character: '/' },
+      ComponentError::Separator { character: '/' },
     );
 
     assert_eq!(
       "\\".parse::<Component>().unwrap_err(),
-      PathError::Separator { character: '\\' },
+      ComponentError::Separator { character: '\\' },
     );
   }
 }

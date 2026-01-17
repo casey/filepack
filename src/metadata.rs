@@ -3,7 +3,10 @@ use super::*;
 #[derive(Clone, Debug, Deserialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub(crate) struct Metadata {
+  pub(crate) artwork: Option<filename::Png>,
+  pub(crate) nfo: Option<filename::Nfo>,
   pub(crate) packager: Option<Component>,
+  pub(crate) readme: Option<filename::Md>,
   pub(crate) title: Component,
 }
 
@@ -29,6 +32,24 @@ impl Metadata {
     }
 
     Ok(metadata)
+  }
+
+  pub(crate) fn files(&self) -> Vec<RelativePath> {
+    let mut files = Vec::new();
+
+    if let Some(artwork) = &self.artwork {
+      files.push(artwork.as_path());
+    }
+
+    if let Some(nfo) = &self.nfo {
+      files.push(nfo.as_path());
+    }
+
+    if let Some(readme) = &self.readme {
+      files.push(readme.as_path());
+    }
+
+    files
   }
 
   pub(crate) fn load_strict(path: &Utf8Path) -> Result<Self> {

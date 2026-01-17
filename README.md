@@ -222,13 +222,25 @@ Metadata
 
 Filepack packages may optionally contain metadata describing the contents of
 the packages in a file named `metadata.yaml` containing a YAML object with the
-following keys:
+following mandatory key:
 
 - `title`: A component containing the package's human-readable title.
+
+And the following optional keys:
+
+- `artwork`: A component containing the filename of an PNG file containing
+  artwork for the package, for example, cover art for an album or key art for a
+  movie. Must end in `.png`;
+
+- `nfo`: A component containing the filename of the package nfo file. Must end
+  in `.nfo`.
 
 - `packager`: A component containing the name of the person or group who
   created the package. Note that this may not be the author of the content of
   the package.
+
+- `readme`: A component containing the filename of the package markdown readme.
+  Must end in `.md`.
 
 Components are strings with the same restrictions as path components in the
 manifest `files` object, allowing them to be used as unix filesystem paths.

@@ -20,6 +20,7 @@ use {
   self::{
     arguments::Arguments,
     component::Component,
+    component_error::ComponentError,
     count::Count,
     digest::Digest,
     display_path::DisplayPath,
@@ -71,6 +72,7 @@ use {
     fs::{self, Permissions},
     io::{self, IsTerminal},
     iter,
+    marker::PhantomData,
     path::{Path, PathBuf},
     process,
     str::{self, FromStr},
@@ -101,6 +103,7 @@ fn tempdir() -> tempfile::TempDir {
 
 mod arguments;
 mod component;
+mod component_error;
 mod count;
 mod digest;
 mod directory;
@@ -110,6 +113,7 @@ mod entries;
 mod entry;
 mod error;
 mod file;
+mod filename;
 mod filesystem;
 mod fingerprint;
 mod fingerprint_hasher;
