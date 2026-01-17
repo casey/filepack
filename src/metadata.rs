@@ -14,7 +14,7 @@ impl Metadata {
   }
 
   pub(crate) fn deserialize_strict(path: &Utf8Path, yaml: &str) -> Result<Self> {
-    let deserializer = serde_yaml::Deserializer::from_str(&yaml);
+    let deserializer = serde_yaml::Deserializer::from_str(yaml);
 
     let mut unknown = BTreeSet::new();
 
