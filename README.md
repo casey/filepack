@@ -232,6 +232,9 @@ And the following optional keys:
   artwork for the package, for example, cover art for an album or key art for a
   movie. Must end in `.png`;
 
+- `language`: The primary language of the package content as an ISO 639-1
+  two-character language code.
+
 - `nfo`: A component containing the filename of the package nfo file. Must end
   in `.nfo`.
 

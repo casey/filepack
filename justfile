@@ -119,3 +119,10 @@ verify-release: tmp
     --dir tmp \
     $VERSION
   cargo run verify tmp --key 3c977ea3a31cd37f0b540f02f33eab158f2ed7449f42b05613c921181aa95b79
+
+languages:
+  jq -r \
+    '.["639-3"][] \
+    | select(.["alpha_2"] != null) \
+    | "(\"\( .["alpha_2"] )\", \"\( .name | gsub(" \\([^)]*\\)"; "") )\"),"' \
+    /opt/homebrew/share/iso-codes/json/iso_639-3.json

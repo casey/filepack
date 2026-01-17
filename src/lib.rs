@@ -34,6 +34,7 @@ use {
     key_name::KeyName,
     key_type::KeyType,
     keychain::Keychain,
+    language::Language,
     lint_error::{Lint, LintError},
     lint_group::LintGroup,
     message::Message,
@@ -125,6 +126,7 @@ mod key_identifier;
 mod key_name;
 mod key_type;
 mod keychain;
+mod language;
 mod lint_error;
 mod lint_group;
 mod manifest;
