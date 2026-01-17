@@ -261,6 +261,8 @@ mod tests {
 
     case("C:", PathError::WindowsDiskPrefix { letter: 'C' });
 
+    case("foo/C:bar", PathError::WindowsDiskPrefix { letter: 'C' });
+
     case("", PathError::Empty);
     case(
       ".",

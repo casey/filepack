@@ -166,9 +166,8 @@ the length of the file in bytes.
 As a consequence of the manifest being UTF-8 , all path components must be
 valid Unicode.
 
-For cross-platform compatibility, path commonents may not contain `/` or `\`,
-cannot begin with a Windows drive prefix, such as `C:`, and may not be `.` or
-`..`.
+Path components may not be `.` or `..`, contain `/` or `\`, or begin with a
+Windows drive prefix, such as `C:`.
 
 ### `notes`
 
@@ -253,7 +252,7 @@ filepack create --deny distribution
 ```
 
 The `distribution` lint group checks for issues which can cause problems if the
-package is indended for distribution, such as non-portable paths that are
+package is indented for distribution, such as non-portable paths that are
 illegal on Windows, paths which would conflict on case-insensitive file
 systems, and inclusion of junk files such as `.DS_Store`.
 
