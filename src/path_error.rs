@@ -6,10 +6,14 @@ pub enum PathError {
   Component { component: String },
   #[snafu(display("paths may not contain empty components"))]
   ComponentEmpty,
+  #[snafu(display("component exceeds 255 byte limit"))]
+  Length,
   #[snafu(display("paths may not contain double slashes"))]
   DoubleSlash,
   #[snafu(display("paths may not be empty"))]
   Empty,
+  #[snafu(display("paths may not contain NUL character"))]
+  Nul,
   #[snafu(display("paths may not begin with slash character"))]
   LeadingSlash,
   #[snafu(display("paths may not contain separator character `{character}`"))]

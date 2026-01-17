@@ -1,7 +1,6 @@
 use super::*;
 
-#[derive(Clone, Debug, Deserialize, Eq, Ord, PartialEq, PartialOrd, Serialize)]
-#[serde(deny_unknown_fields, rename_all = "kebab-case", transparent)]
+#[derive(Clone, Debug, DeserializeFromStr, Eq, Ord, PartialEq, PartialOrd, SerializeDisplay)]
 pub(crate) struct Component(String);
 
 impl Component {
@@ -18,6 +17,10 @@ impl Component {
       return Err(PathError::ComponentEmpty);
     }
 
+    if s.len() > 255 {
+      return Err(PathError::Length);
+    }
+
     if s == ".." || s == "." {
       return Err(PathError::Component {
         component: s.into(),
@@ -25,8 +28,12 @@ impl Component {
     }
 
     for character in s.chars() {
-      if SEPARATORS.contains(&character) {
+      if ['/', '\\'].contains(&character) {
         return Err(PathError::Separator { character });
+      }
+
+      if character == '\0' {
+        return Err(PathError::Nul);
       }
     }
 
@@ -40,6 +47,12 @@ impl Component {
     }
 
     Ok(())
+  }
+}
+
+impl Display for Component {
+  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    write!(f, "{}", self.0)
   }
 }
 
