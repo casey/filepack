@@ -231,7 +231,9 @@ following keys:
   the package.
 
 Components are strings with the same restrictions as path components in the
-manifest `files` object, allowing them to be used in filesystem paths.
+manifest `files` object, allowing them to be used as unix filesystem paths.
+Note that Windows imposes additional restrictions which are not enforced, so
+components may not be valid paths on Windows.
 
 Metadata follows a fixed schema and is not user-extensible. Future version of
 `filepack` may define new metadata fields, causing verification errors if those
