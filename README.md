@@ -234,13 +234,13 @@ Filepack metadata is intended to a broadly useful machine and human readable
 description of the contents of a package, covering personal, distribution, and
 archival use-cases.
 
+Metadata follows a fixed schema and is not user-extensible. Future version of
+`filepack` may define new metadata fields, causing verification errors if those
+fields are present and invalid according to the new schema.
+
 Please feel free to open an issue with ideas for new metadata fields.
 
 ### Schema
-
-Metadata follows a fixed schema. Future version of `filepack` may define new
-metadata fields, causing verification errors if those fields are present and
-invalid according to the new schema.
 
 Mandatory keys:
 
