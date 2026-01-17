@@ -220,17 +220,39 @@ The signature is a 128 character hexidecimal string and is elided for brevity.
 Metadata
 --------
 
-Filepack packages may optionally contain metadata describing the contents of
-the packages in a file named `metadata.yaml` containing a YAML object with the
-following mandatory key:
+Filepack packages may optionally contain a file named `metadata.yaml`
+describing the package and its content.
+
+`filepack create` loads `metadata.yaml` if present and checks for validity and
+unknown fields.
+
+`filepack verify` also loads `metadata.yaml` if present and checks for
+validity. Unknown fields, however, are not an error, so that future versions of
+`filepack` may define new metadata fields in a backwards-compatible fashion.
+
+Filepack metadata is intended to a broadly useful machine and human readable
+description of the contents of a package, covering personal, distribution, and
+archival use-cases.
+
+Please feel free to open an issue with ideas for new metadata fields.
+
+### Schema
+
+Metadata follows a fixed schema. Future version of `filepack` may define new
+metadata fields, causing verification errors if those fields are present and
+invalid according to the new schema.
+
+Mandatory keys:
 
 - `title`: A component containing the package's human-readable title.
 
-And the following optional keys:
+Optional keys:
 
 - `artwork`: A component containing the filename of an PNG file containing
   artwork for the package, for example, cover art for an album or key art for a
   movie. Must end in `.png`;
+
+- `comment`: A markdown string describing the package.
 
 - `description`: A markdown string describing the package content.
 
@@ -242,7 +264,6 @@ And the following optional keys:
   in `.nfo`.
 
 - `package-date`: The date and optionally time the package was created.
-  Distinct from `release-date`.
 
 - `packager`: A component containing the name of the person or group who
   created the package. Note that this may not be the author of the content of
@@ -252,12 +273,15 @@ And the following optional keys:
   Must end in `.md`.
 
 - `release-date`: The date and optionally time the package content was created.
-  Distinct from `package-date`.
+
+#### Components
 
 Components are strings with the same restrictions as path components in the
 manifest `files` object, allowing them to be used as unix filesystem paths.
 Note that Windows imposes additional restrictions which are not enforced, so
 components may not be valid paths on Windows.
+
+#### Dates
 
 Dates are formatted according to
 [RFC 3339](https://datatracker.ietf.org/doc/html/rfc3339), and may be a date
@@ -265,29 +289,12 @@ i.e., `1970-01-01`, or a date and time in the UTC time zone, i.e.,
 `1970-01-01T00:00:00Z`, or with a time zone offset, i.e.,
 `1970-01-01T00:00:00+00:00`.
 
-Metadata follows a fixed schema and is not user-extensible. Future version of
-`filepack` may define new metadata fields, causing verification errors if those
-fields are present and invalid according to the new schema.
-
-`filepack create` loads `metadata.yaml` if present and checks for validity and
-unknown fields.
-
-`filepack verify` also loads `metadata.yaml` if present and checks for
-validity. Unknown fields, however, are not an error, so that future versions of
-`filepack` may define new metadata fields in a backwards-compatible fashion.
-
-An example `metadata.yaml`:
+### Example
 
 ```yaml
 title: Tobin's Spirit Guide
 packager: Egon Spengler
 ```
-
-Filepack metadata is intended to a broadly useful machine and human readable
-description of the contents of a package, covering personal, distribution, and
-archival use-cases.
-
-Please feel free to open an issue with ideas for new metadata fields.
 
 Lints
 -----

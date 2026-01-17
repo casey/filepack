@@ -4,6 +4,7 @@ use super::*;
 #[serde(rename_all = "kebab-case")]
 pub(crate) struct Metadata {
   pub(crate) artwork: Option<filename::Png>,
+  pub(crate) comment: Option<String>,
   pub(crate) description: Option<String>,
   pub(crate) language: Option<Language>,
   pub(crate) nfo: Option<filename::Nfo>,
