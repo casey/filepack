@@ -26,7 +26,7 @@ hash function.
 A manifest named `filepack.json` containing the hashes of files in a directory
 can be created with:
 
-```sh
+```shell
 filepack create path/to/directory
 ```
 
@@ -34,7 +34,7 @@ Which will write the manifest to `path/to/directory/filepack.json`.
 
 Files can later be verified with:
 
-```sh
+```shell
 filepack verify path/to/directory
 ```
 
@@ -117,18 +117,9 @@ Create a manifest.
 
 Recommended lints can be enabled with:
 
-```sh
+```shell
 filepack create --deny distribution
 ```
-
-Metadata can optionally be included in the manifest with:
-
-```sh
-filepack create --metadata <PATH>
-```
-
-Where `<PATH>` is a [YAML](https://en.wikipedia.org/wiki/YAML) document
-containing metadata with the same schema as that of the manifest.
 
 ### `filepack verify`
 
@@ -136,13 +127,13 @@ Verify the contents of a directory against a manifest.
 
 To verify the contents of `DIR` against `DIR/filepack.json`:
 
-```sh
+```shell
 filepack verify DIR
 ```
 
 If the current directory contains `filepack.json`, `DIR` can be omitted:
 
-```sh
+```shell
 filepack verify
 ```
 
@@ -150,7 +141,7 @@ filepack verify
 to standard output if verification succeeds. This can be used in a pipeline to
 ensure that you the manifest has been verified before proceeding:
 
-```sh
+```shell
 filepack verify --print | jq
 ```
 
@@ -234,18 +225,27 @@ The signature is a 128 character hexidecimal string and is elided for brevity.
 Metadata
 --------
 
-`filepack create` can optionally write metadata describing the contents of the
-package to a file named `metadata.json`, containing a JSON object with the
-following keys:
+Filepack packages may optional contain machine-readable metadata describing the
+contents of the packages in a file named `metadata.yaml` containing a YAML
+object with the following keys:
 
 - `title`: A string containing the package's human-readable title.
 
-An example `metadata.json`:
+Metadata is *not* user-extensible, and follow a fixed schema. Future version of
+`filepack` may define new metadata fields, causing verification errors if those
+fields are present and invalid according to the new schema.
 
-```js
-{
-  "title": "Tobin's Spirit Guide"
-}
+`filepack create` loads `metadata.yaml` if present and checks for validity and
+unknown fields.
+
+`filepack verify` also loads `metadata.yaml` if present and checks for
+validity. Unknown fields, however, are not an error, so future versions of
+`filepack` may define new metadata fields in a backwards-compatible fashion.
+
+An example `metadata.yaml`:
+
+```yaml
+title: Tobin's Spirit Guide
 ```
 
 Lints
@@ -253,7 +253,7 @@ Lints
 
 `filepack create` supports optional lints that can be enabled by group:
 
-```
+```shell
 filepack create --deny distribution
 ```
 
@@ -264,7 +264,7 @@ inclusion of junk files such as `.DS_Store`.
 
 Lint group names and the lints they cover can be printed with:
 
-```
+```shell
 filepack lints
 ```
 
@@ -280,7 +280,7 @@ and the creation and verification of
 
 Keypairs are generated with:
 
-```
+```shell
 filepack keygen
 ```
 
@@ -300,7 +300,7 @@ location is platform-dependent:
 
 Generated public keys can be printed with:
 
-```
+```shell
 filepack key
 ```
 
@@ -308,7 +308,7 @@ filepack key
 
 Signatures are created with:
 
-```
+```shell
 filepack sign
 ```
 
@@ -321,7 +321,7 @@ fingerprint hash, recursively calculated from the contents of the manifest.
 Signatures embedded in a manifest are verified whenever a manifest is verified.
 The presence of a signature by a particular public key can be asserted with:
 
-```
+```sh
 filepack verify --key PUBLIC_KEY
 ```
 

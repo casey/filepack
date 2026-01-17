@@ -47,6 +47,17 @@ mod tests {
   }
 
   #[test]
+  fn metadata_in_readme_is_valid() {
+    let readme = filesystem::read_to_string("README.md").unwrap();
+
+    let re = Regex::new(r"(?s)```yaml(.*?)```").unwrap();
+
+    for capture in re.captures_iter(&readme) {
+      Metadata::deserialize_strict("README.md".as_ref(), &capture[1]).unwrap();
+    }
+  }
+
+  #[test]
   fn strict_deserialize_rejects_unknown_fields() {
     assert_eq!(
       Metadata::deserialize_strict(Metadata::FILENAME.as_ref(), UNKNOWN_FIELD)
