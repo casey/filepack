@@ -193,35 +193,7 @@ fn manifest_paths_are_relative_to_root() {
 
 #[test]
 fn metadata_allows_unknown_keys() {
-  let metadata = json! {
-    title: "Foo",
-    bar: 100
-  };
-
-  let hash = blake3::hash(metadata.as_bytes()).to_string();
-
-  Test::new()
-    .write(
-      "filepack.json",
-      json! {
-        files: {
-          "metadata.json": {
-            hash: hash,
-            size: 26
-          }
-        },
-        notes: [],
-      },
-    )
-    .write("metadata.json", metadata)
-    .arg("verify")
-    .stderr("successfully verified 1 file totaling 26 bytes\n")
-    .success();
-}
-
-#[test]
-fn metadata_may_not_be_invalid() {
-  let metadata = "title: hello\nbar: 100";
+  let metadata = "title: foo\nbar: 100";
 
   let hash = blake3::hash(metadata.as_bytes()).to_string();
 
@@ -232,7 +204,32 @@ fn metadata_may_not_be_invalid() {
         files: {
           "metadata.yaml": {
             hash: hash,
-            size: 21,
+            size: 19,
+          }
+        },
+        notes: [],
+      },
+    )
+    .write("metadata.yaml", metadata)
+    .arg("verify")
+    .stderr("successfully verified 1 file totaling 19 bytes\n")
+    .success();
+}
+
+#[test]
+fn metadata_may_not_be_invalid() {
+  let metadata = "foo: bar\n";
+
+  let hash = blake3::hash(metadata.as_bytes()).to_string();
+
+  Test::new()
+    .write(
+      "filepack.json",
+      json! {
+        files: {
+          "metadata.yaml": {
+            hash: hash,
+            size: 9,
           }
         },
         notes: [],

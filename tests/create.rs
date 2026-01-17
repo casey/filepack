@@ -175,7 +175,7 @@ fn metadata_may_not_have_unknown_keys() {
   Test::new()
     .write("metadata.yaml", "title: Foo\nbar: baz")
     .arg("create")
-    .stderr_regex(".*unknown field `bar`.*")
+    .stderr_regex(".*unknown fields in metadata at `.*metadata.yaml`: `bar`\n")
     .failure();
 }
 
