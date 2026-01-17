@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(Parser)]
 pub(crate) struct Files {
-  #[arg(long = "format", default_value = "json-pretty")]
+  #[arg(long = "format", default_value_t)]
   format: Format,
   #[arg(help = MANIFEST_PATH_HELP)]
   path: Option<Utf8PathBuf>,

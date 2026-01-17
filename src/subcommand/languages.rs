@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(Parser)]
 pub(crate) struct Languages {
-  #[arg(long = "format", default_value = "json-pretty")]
+  #[arg(long = "format", default_value_t)]
   format: Format,
 }
 
