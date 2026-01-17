@@ -8,7 +8,7 @@ fn backslash_error() {
 
   Test::new()
     .touch("\\")
-    .args(["create", "--deny", "distribution", "."])
+    .arg("create")
     .stderr(
       "\
 error: invalid path `\\`
