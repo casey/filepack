@@ -208,7 +208,7 @@ readme: README.md
     .arg("create")
     .success()
     .arg("verify")
-    .stderr("successfully verified 5 files totaling 61 bytes\n")
+    .stderr("successfully verified 5 files totaling 62 bytes\n")
     .success();
 }
 
