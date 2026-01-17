@@ -20,6 +20,7 @@ use {
   self::{
     arguments::Arguments,
     component::Component,
+    component_error::ComponentError,
     count::Count,
     digest::Digest,
     display_path::DisplayPath,
@@ -102,6 +103,7 @@ fn tempdir() -> tempfile::TempDir {
 
 mod arguments;
 mod component;
+mod component_error;
 mod count;
 mod digest;
 mod directory;

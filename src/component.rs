@@ -16,28 +16,30 @@ impl Component {
     &self.0
   }
 
-  pub(crate) fn check(s: &str) -> Result<(), PathError> {
+  pub(crate) fn check(s: &str) -> Result<(), ComponentError> {
     if s.is_empty() {
-      return Err(PathError::ComponentEmpty);
+      return Err(ComponentError::Empty);
     }
 
     if s.len() > 255 {
-      return Err(PathError::Length);
+      return Err(ComponentError::Length);
     }
 
-    if s == ".." || s == "." {
-      return Err(PathError::Component {
-        component: s.into(),
-      });
+    if s == "." {
+      return Err(ComponentError::Normal { component: "." });
+    }
+
+    if s == ".." {
+      return Err(ComponentError::Normal { component: ".." });
     }
 
     for character in s.chars() {
       if ['/', '\\'].contains(&character) {
-        return Err(PathError::Separator { character });
+        return Err(ComponentError::Separator { character });
       }
 
       if character == '\0' {
-        return Err(PathError::Nul);
+        return Err(ComponentError::Nul);
       }
     }
 
@@ -47,7 +49,7 @@ impl Component {
     if let Some((first, second)) = first.zip(second)
       && second == ':'
     {
-      return Err(PathError::WindowsDiskPrefix { letter: first });
+      return Err(ComponentError::WindowsDriveLetter { letter: first });
     }
 
     Ok(())
@@ -68,7 +70,7 @@ impl Display for Component {
 }
 
 impl FromStr for Component {
-  type Err = PathError;
+  type Err = ComponentError;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     Self::check(s)?;
@@ -84,7 +86,7 @@ mod tests {
   fn current() {
     assert_eq!(
       ".".parse::<Component>().unwrap_err(),
-      PathError::Component {
+      ComponentError::Normal {
         component: ".".into(),
       },
     );
@@ -94,16 +96,13 @@ mod tests {
   fn drive_prefix() {
     assert_eq!(
       "C:".parse::<Component>().unwrap_err(),
-      PathError::WindowsDiskPrefix { letter: 'C' },
+      ComponentError::WindowsDriveLetter { letter: 'C' },
     );
   }
 
   #[test]
   fn empty() {
-    assert_eq!(
-      "".parse::<Component>().unwrap_err(),
-      PathError::ComponentEmpty,
-    );
+    assert_eq!("".parse::<Component>().unwrap_err(), ComponentError::Empty,);
   }
 
   #[test]
@@ -112,20 +111,23 @@ mod tests {
 
     assert_eq!(
       "a".repeat(256).parse::<Component>().unwrap_err(),
-      PathError::Length,
+      ComponentError::Length,
     );
   }
 
   #[test]
   fn nul() {
-    assert_eq!("foo\0bar".parse::<Component>().unwrap_err(), PathError::Nul);
+    assert_eq!(
+      "foo\0bar".parse::<Component>().unwrap_err(),
+      ComponentError::Nul
+    );
   }
 
   #[test]
   fn parent() {
     assert_eq!(
       "..".parse::<Component>().unwrap_err(),
-      PathError::Component {
+      ComponentError::Normal {
         component: "..".into(),
       },
     );
@@ -135,12 +137,12 @@ mod tests {
   fn separator() {
     assert_eq!(
       "/".parse::<Component>().unwrap_err(),
-      PathError::Separator { character: '/' },
+      ComponentError::Separator { character: '/' },
     );
 
     assert_eq!(
       "\\".parse::<Component>().unwrap_err(),
-      PathError::Separator { character: '\\' },
+      ComponentError::Separator { character: '\\' },
     );
   }
 }

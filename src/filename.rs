@@ -36,7 +36,7 @@ impl<T: Extension> Filename<T> {
 }
 
 impl<T: Extension> FromStr for Filename<T> {
-  type Err = PathError;
+  type Err = ComponentError;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     let component = s.parse::<Component>()?;
