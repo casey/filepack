@@ -209,15 +209,15 @@ mod tests {
   use super::*;
 
   #[test]
-  fn valid() {
-    assert_eq!("en".parse::<Language>().unwrap(), Language("en"));
-  }
-
-  #[test]
   fn invalid() {
     assert_eq!(
       "ac".parse::<Language>().unwrap_err(),
       "unknown langauge code `ac`"
     );
+  }
+
+  #[test]
+  fn valid() {
+    assert_eq!("en".parse::<Language>().unwrap(), Language("en"));
   }
 }
