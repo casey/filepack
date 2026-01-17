@@ -4,6 +4,6 @@ use super::*;
 fn lints() {
   Test::new()
     .arg("lints")
-    .stdout_regex("\\{.*\"compatibility\".*}\n")
+    .stdout_regex("\\{\n.*\"compatibility\".*}\n")
     .success();
 }
