@@ -234,14 +234,6 @@ mod tests {
   }
 
   #[test]
-  fn from_components_drive_prefix() {
-    assert_eq!(
-      RelativePath::try_from([&"C:".parse().unwrap()].as_slice()).unwrap_err(),
-      PathError::WindowsDiskPrefix { letter: 'C' },
-    );
-  }
-
-  #[test]
   fn from_components_empty() {
     assert_eq!(
       RelativePath::try_from([].as_slice()).unwrap_err(),

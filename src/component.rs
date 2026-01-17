@@ -67,6 +67,14 @@ mod tests {
   }
 
   #[test]
+  fn drive_prefix() {
+    assert_eq!(
+      "C:".parse::<Component>().unwrap_err(),
+      PathError::WindowsDiskPrefix { letter: 'C' },
+    );
+  }
+
+  #[test]
   fn empty() {
     assert_eq!(
       "".parse::<Component>().unwrap_err(),
