@@ -21,7 +21,7 @@ impl RelativePath {
       .map(|component| component.parse().unwrap())
   }
 
-  pub(crate) fn lint(&self) -> Option<Lint> {
+  pub(crate) fn lint(&self, lints: &BTreeSet<Lint>) -> Option<LintError> {
     for component in Utf8Path::new(&self.0).components() {
       let Utf8Component::Normal(component) = component else {
         unreachable!(
@@ -29,50 +29,55 @@ impl RelativePath {
         );
       };
 
-      for character in component.chars() {
-        if Self::WINDOWS_RESERVED_CHARACTERS.contains(&character) {
-          return Some(Lint::WindowsReservedCharacter { character });
-        }
+      if lints.contains(&Lint::WindowsReservedCharacter) {
+        for character in component.chars() {
+          if Self::WINDOWS_RESERVED_CHARACTERS.contains(&character) {
+            return Some(LintError::WindowsReservedCharacter { character });
+          }
 
-        if let 0..32 = character as u32 {
-          return Some(Lint::WindowsReservedCharacter { character });
-        }
-      }
-
-      for name in Self::WINDOWS_RESERVED_NAMES {
-        let uppercase = component.to_uppercase();
-
-        if uppercase == name {
-          return Some(Lint::WindowsReservedFilename {
-            name: component.into(),
-          });
-        }
-
-        if uppercase.starts_with(name) && uppercase.chars().nth(name.chars().count()) == Some('.') {
-          return Some(Lint::WindowsReservedFilename {
-            name: component.into(),
-          });
+          if let 0..32 = character as u32 {
+            return Some(LintError::WindowsReservedCharacter { character });
+          }
         }
       }
 
-      if Self::JUNK_NAMES.contains(&component) {
-        return Some(Lint::Junk);
+      if lints.contains(&Lint::WindowsReservedFilename) {
+        for name in Self::WINDOWS_RESERVED_NAMES {
+          let uppercase = component.to_uppercase();
+
+          if uppercase == name {
+            return Some(LintError::WindowsReservedFilename {
+              name: component.into(),
+            });
+          }
+
+          if uppercase.starts_with(name) && uppercase.chars().nth(name.chars().count()) == Some('.')
+          {
+            return Some(LintError::WindowsReservedFilename {
+              name: component.into(),
+            });
+          }
+        }
       }
 
-      if component.starts_with(' ') {
-        return Some(Lint::WindowsLeadingSpace);
+      if lints.contains(&Lint::Junk) && Self::JUNK_NAMES.contains(&component) {
+        return Some(LintError::Junk);
       }
 
-      if component.ends_with(' ') {
-        return Some(Lint::WindowsTrailingSpace);
+      if lints.contains(&Lint::WindowsLeadingSpace) && component.starts_with(' ') {
+        return Some(LintError::WindowsLeadingSpace);
       }
 
-      if component.ends_with('.') {
-        return Some(Lint::WindowsTrailingPeriod);
+      if lints.contains(&Lint::WindowsTrailingSpace) && component.ends_with(' ') {
+        return Some(LintError::WindowsTrailingSpace);
       }
 
-      if component.len() > 255 {
-        return Some(Lint::FilenameLength);
+      if lints.contains(&Lint::WindowsTrailingPeriod) && component.ends_with('.') {
+        return Some(LintError::WindowsTrailingPeriod);
+      }
+
+      if lints.contains(&Lint::FilenameLength) && component.len() > 255 {
+        return Some(LintError::FilenameLength);
       }
     }
 
@@ -296,77 +301,91 @@ mod tests {
   #[test]
   fn lint_fail() {
     #[track_caller]
-    fn case(path: &str, expected: Lint) {
-      assert_eq!(
-        path.parse::<RelativePath>().unwrap().lint().unwrap(),
-        expected,
-      );
+    fn case(path: &str, expected: LintError) {
+      let lint = expected.discriminant();
+      let path = path.parse::<RelativePath>().unwrap();
+
+      assert_eq!(path.lint(&[lint].into()).unwrap(), expected,);
+
+      assert_eq!(path.lint(&[].into()), None);
     }
 
     for i in 0..32 {
       let character = char::from_u32(i).unwrap();
       case(
         &character.to_string(),
-        Lint::WindowsReservedCharacter { character },
+        LintError::WindowsReservedCharacter { character },
       );
     }
 
-    case("*", Lint::WindowsReservedCharacter { character: '*' });
-    case(":", Lint::WindowsReservedCharacter { character: ':' });
-    case("<", Lint::WindowsReservedCharacter { character: '<' });
-    case(">", Lint::WindowsReservedCharacter { character: '>' });
-    case("?", Lint::WindowsReservedCharacter { character: '?' });
-    case("\"", Lint::WindowsReservedCharacter { character: '"' });
-    case("|", Lint::WindowsReservedCharacter { character: '|' });
+    case("*", LintError::WindowsReservedCharacter { character: '*' });
+    case(":", LintError::WindowsReservedCharacter { character: ':' });
+    case("<", LintError::WindowsReservedCharacter { character: '<' });
+    case(">", LintError::WindowsReservedCharacter { character: '>' });
+    case("?", LintError::WindowsReservedCharacter { character: '?' });
+    case("\"", LintError::WindowsReservedCharacter { character: '"' });
+    case("|", LintError::WindowsReservedCharacter { character: '|' });
 
-    case(&"a".repeat(256), Lint::FilenameLength);
+    case(&"a".repeat(256), LintError::FilenameLength);
 
-    case("foo/ bar", Lint::WindowsLeadingSpace);
+    case("foo/ bar", LintError::WindowsLeadingSpace);
 
-    case("CON", Lint::WindowsReservedFilename { name: "CON".into() });
-    case("con", Lint::WindowsReservedFilename { name: "con".into() });
+    case(
+      "CON",
+      LintError::WindowsReservedFilename { name: "CON".into() },
+    );
+    case(
+      "con",
+      LintError::WindowsReservedFilename { name: "con".into() },
+    );
     case(
       "CON./foo",
-      Lint::WindowsReservedFilename {
+      LintError::WindowsReservedFilename {
         name: "CON.".into(),
       },
     );
     case(
       "CON.txt",
-      Lint::WindowsReservedFilename {
+      LintError::WindowsReservedFilename {
         name: "CON.txt".into(),
       },
     );
     case(
       "CON.txt/foo",
-      Lint::WindowsReservedFilename {
+      LintError::WindowsReservedFilename {
         name: "CON.txt".into(),
       },
     );
     case(
       "foo/CON.",
-      Lint::WindowsReservedFilename {
+      LintError::WindowsReservedFilename {
         name: "CON.".into(),
       },
     );
     case(
       "foo/CON.txt",
-      Lint::WindowsReservedFilename {
+      LintError::WindowsReservedFilename {
         name: "CON.txt".into(),
       },
     );
 
-    case("foo./bar", Lint::WindowsTrailingPeriod);
+    case("foo./bar", LintError::WindowsTrailingPeriod);
 
-    case("foo /bar", Lint::WindowsTrailingSpace);
+    case("foo /bar", LintError::WindowsTrailingSpace);
 
-    case(".DS_Store", Lint::Junk);
-    case(".localized", Lint::Junk);
+    case(".DS_Store", LintError::Junk);
+    case(".localized", LintError::Junk);
   }
 
   #[test]
   fn lint_pass() {
-    assert!("foo".parse::<RelativePath>().unwrap().lint().is_none());
+    assert!(
+      "foo"
+        .parse::<RelativePath>()
+        .unwrap()
+        .lint(&LintGroup::Distribution.lints())
+        .is_none()
+    );
   }
 
   #[test]

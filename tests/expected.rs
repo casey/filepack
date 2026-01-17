@@ -1,4 +1,4 @@
-use super::*;
+use {super::*, pretty_assertions::assert_eq};
 
 #[derive(Debug)]
 pub(crate) enum Expected {
@@ -17,7 +17,7 @@ impl Expected {
         "{name} did not match regex\n   actual: {actual}\n    regex: {}",
         regex.as_str()
       ),
-      Expected::Empty => assert!(actual.is_empty(), "{name} is not empty"),
+      Expected::Empty => assert!(actual.is_empty(), "{name} is not empty: {actual}"),
     }
   }
 

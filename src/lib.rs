@@ -33,7 +33,7 @@ use {
     key_name::KeyName,
     key_type::KeyType,
     keychain::Keychain,
-    lint::Lint,
+    lint_error::{Lint, LintError},
     lint_group::LintGroup,
     message::Message,
     metadata::Metadata,
@@ -77,7 +77,7 @@ use {
     sync::LazyLock,
     time::{SystemTime, SystemTimeError, UNIX_EPOCH},
   },
-  strum::{EnumIter, EnumString, IntoStaticStr},
+  strum::{EnumDiscriminants, EnumIter, EnumString, IntoEnumIterator, IntoStaticStr},
   usized::IntoU64,
   walkdir::WalkDir,
 };
@@ -89,7 +89,7 @@ pub use self::{
 };
 
 #[cfg(test)]
-use {std::collections::HashSet, strum::IntoEnumIterator};
+use {std::collections::HashSet, strum::IntoDiscriminant};
 
 #[cfg(test)]
 fn tempdir() -> tempfile::TempDir {
@@ -121,7 +121,7 @@ mod key_identifier;
 mod key_name;
 mod key_type;
 mod keychain;
-mod lint;
+mod lint_error;
 mod lint_group;
 mod manifest;
 mod message;

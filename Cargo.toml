@@ -44,6 +44,7 @@ tempfile = "3.24.0"
 [lints.clippy]
 all = { level = "deny", priority = -1 }
 arbitrary-source-item-ordering = "deny"
+enum-glob-use = "allow"
 float-cmp = "allow"
 large_enum_variant = "allow"
 missing-errors-doc = "allow"

@@ -38,6 +38,8 @@ mod json;
 mod key;
 mod keychain;
 mod keygen;
+mod lint;
+mod lints;
 mod man;
 mod misc;
 mod notes;

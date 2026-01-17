@@ -27,3 +27,23 @@ impl Arguments {
     self.subcommand.run(self.options)
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn commands_in_readme_are_valid() {
+    let readme = filesystem::read_to_string("README.md").unwrap();
+
+    let re = Regex::new(r"(?s)```shell(.*?)```").unwrap();
+
+    for capture in re.captures_iter(&readme) {
+      let command = capture[1].split('|').next().unwrap();
+      assert!(
+        Arguments::try_parse_from(command.split_whitespace()).is_ok(),
+        "bad filepack command in readme: {command}",
+      );
+    }
+  }
+}

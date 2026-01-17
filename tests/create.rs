@@ -1,15 +1,6 @@
 use super::*;
 
 #[test]
-fn allow_lint() {
-  if cfg!(windows) {
-    return;
-  }
-
-  Test::new().touch("aux").args(["create", "."]).success();
-}
-
-#[test]
 fn backslash_error() {
   if cfg!(windows) {
     return;
@@ -17,51 +8,11 @@ fn backslash_error() {
 
   Test::new()
     .touch("\\")
-    .args(["create", "--deny", "all", "."])
+    .arg("create")
     .stderr(
       "\
 error: invalid path `\\`
        └─ paths may not contain separator character `\\`
-",
-    )
-    .failure();
-}
-
-#[test]
-fn deny_case_insensitive_filesystem_path_conflict() {
-  if cfg!(windows) || cfg!(target_os = "macos") {
-    return;
-  }
-
-  Test::new()
-    .touch("foo")
-    .touch("FOO")
-    .args(["create", "--deny", "all", "."])
-    .stderr(
-      "\
-error: paths would conflict on case-insensitive filesystem:
-       ├─ `FOO`
-       └─ `foo`
-error: 1 lint error
-",
-    )
-    .failure();
-}
-
-#[test]
-fn deny_lint() {
-  if cfg!(windows) {
-    return;
-  }
-
-  Test::new()
-    .touch("aux")
-    .args(["create", "--deny", "all", "."])
-    .stderr(
-      "\
-error: path failed lint: `aux`
-       └─ Windows does not allow files named `aux`
-error: 1 lint error
 ",
     )
     .failure();
