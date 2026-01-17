@@ -36,7 +36,7 @@ impl Create {
     let metadata = root.join(Metadata::FILENAME);
 
     if filesystem::exists(&metadata)? {
-      Metadata::load(&metadata)?;
+      Metadata::load_strict(&metadata)?;
     }
 
     let cleaned_manifest = current_dir.join(&manifest_path).lexiclean();
