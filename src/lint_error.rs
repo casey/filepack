@@ -1,7 +1,10 @@
 use super::*;
 
-#[derive(Debug, PartialEq, Snafu)]
-pub(crate) enum Lint {
+#[derive(Debug, EnumDiscriminants, PartialEq, Snafu)]
+#[strum_discriminants(name(Lint), derive(Ord, PartialOrd))]
+pub(crate) enum LintError {
+  #[snafu(display("filenames would confict on case-insensitive file system"))]
+  CaseConflict,
   #[snafu(display("many filesystems do not allow filenames longer than 255 bytes"))]
   FilenameLength,
   #[snafu(display("possible junk file"))]

@@ -49,6 +49,8 @@ impl Create {
 
     let mut empty = Vec::new();
 
+    let lints = self.deny.map(|group| group.lints()).unwrap_or_default();
+
     for entry in WalkDir::new(&root) {
       let entry = entry?;
 
@@ -75,20 +77,17 @@ impl Create {
 
       let path = RelativePath::try_from(path).context(error::Path { path })?;
 
-      match self.deny {
-        None => {}
-        Some(LintGroup::All) => {
-          if let Some(lint) = path.lint() {
-            eprintln!("error: path failed lint: `{path}`");
-            eprintln!("       └─ {lint}");
-            lint_errors += 1;
-          }
+      if let Some(lint) = path.lint(&lints) {
+        eprintln!("error: path failed lint: `{path}`");
+        eprintln!("       └─ {lint}");
+        lint_errors += 1;
+      }
 
-          case_conflicts
-            .entry(path.to_lowercase())
-            .or_default()
-            .push(path.clone());
-        }
+      if lints.contains(&Lint::CaseConflict) {
+        case_conflicts
+          .entry(path.to_lowercase())
+          .or_default()
+          .push(path.clone());
       }
 
       empty.pop_if(|dir| path.starts_with(dir));
