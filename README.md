@@ -118,7 +118,7 @@ Create a manifest.
 Recommended lints can be enabled with:
 
 ```sh
-filepack create --deny recommended
+filepack create --deny distribution
 ```
 
 Metadata can optionally be included in the manifest with:
@@ -254,11 +254,12 @@ Lints
 `filepack create` supports optional lints that can be enabled by lint group name:
 
 ```
-filepack create --deny recommended
+filepack create --deny distribution
 ```
 
-The recommended lints cover issues such as non-portable paths which are illegal
-on Windows, paths which would conflict on case-insensitive file systems, and
+The distribution lints cover issues which should be used if the package is
+indended for distribution, such as non-portable paths that are illegal on
+Windows, paths which would conflict on case-insensitive file systems, and
 inclusion of junk files such as `.DS_Store`.
 
 Keys and Signatures

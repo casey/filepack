@@ -3,8 +3,8 @@ use super::*;
 #[derive(Clone, Copy, ValueEnum)]
 pub(crate) enum LintGroup {
   Compatibility,
+  Distribution,
   Junk,
-  Recommended,
 }
 
 impl LintGroup {
@@ -22,8 +22,8 @@ impl LintGroup {
         WindowsTrailingSpace,
       ]
       .into(),
+      Self::Distribution => &Self::Junk.lints() | &Self::Compatibility.lints(),
       Self::Junk => [Junk].into(),
-      Self::Recommended => &Self::Junk.lints() | &Self::Compatibility.lints(),
     }
   }
 }

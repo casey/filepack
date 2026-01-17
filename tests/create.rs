@@ -17,7 +17,7 @@ fn backslash_error() {
 
   Test::new()
     .touch("\\")
-    .args(["create", "--deny", "recommended", "."])
+    .args(["create", "--deny", "distribution", "."])
     .stderr(
       "\
 error: invalid path `\\`
@@ -36,7 +36,7 @@ fn deny_case_insensitive_filesystem_path_conflict() {
   Test::new()
     .touch("foo")
     .touch("FOO")
-    .args(["create", "--deny", "recommended", "."])
+    .args(["create", "--deny", "distribution", "."])
     .stderr(
       "\
 error: paths would conflict on case-insensitive filesystem:
@@ -56,7 +56,7 @@ fn deny_lint() {
 
   Test::new()
     .touch("aux")
-    .args(["create", "--deny", "recommended", "."])
+    .args(["create", "--deny", "distribution", "."])
     .stderr(
       "\
 error: path failed lint: `aux`
