@@ -112,41 +112,21 @@ fn unknown_keys() {
 }
 
 #[test]
-fn package_date() {
-  Test::new()
-    .touch("content")
-    .write("metadata.yaml", "title: Foo\npackage-date: 2024-06-15")
-    .arg("create")
-    .success()
-    .arg("verify")
-    .stderr("successfully verified 2 files totaling 35 bytes\n")
-    .success();
-}
-
-#[test]
-fn release_date() {
-  Test::new()
-    .touch("content")
-    .write("metadata.yaml", "title: Foo\nrelease-date: 2024-06-15T12:30:00Z")
-    .arg("create")
-    .success()
-    .arg("verify")
-    .stderr("successfully verified 2 files totaling 45 bytes\n")
-    .success();
-}
-
-#[test]
-fn both_dates() {
+fn dates() {
   Test::new()
     .touch("content")
     .write(
       "metadata.yaml",
-      "title: Foo\npackage-date: 2024-06-15T12:30:00+05:00\nrelease-date: 2024-01-01",
+      "
+title: Foo
+package-date: 2024-06-15T12:30:00+05:00
+release-date: 2024-01-01
+",
     )
     .arg("create")
     .success()
     .arg("verify")
-    .stderr("successfully verified 2 files totaling 75 bytes\n")
+    .stderr("successfully verified 2 files totaling 77 bytes\n")
     .success();
 }
 
