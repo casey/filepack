@@ -251,7 +251,7 @@ An example `metadata.json`:
 Lints
 -----
 
-`filepack create` supports optional lints that can be enabled by lint group name:
+`filepack create` supports optional lints that can be enabled by group:
 
 ```
 filepack create --deny distribution
@@ -261,6 +261,12 @@ The distribution lints cover issues which should be used if the package is
 indended for distribution, such as non-portable paths that are illegal on
 Windows, paths which would conflict on case-insensitive file systems, and
 inclusion of junk files such as `.DS_Store`.
+
+Lint group names and the lints they cover can be printed with:
+
+```
+filepack lints
+```
 
 Keys and Signatures
 -------------------
