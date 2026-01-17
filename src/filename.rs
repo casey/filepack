@@ -42,7 +42,9 @@ impl<T: Extension> FromStr for Filename<T> {
     let component = s.parse::<Component>()?;
 
     if component.extension() != Some(T::EXTENSION) {
-      todo!()
+      return Err(ComponentError::Extension {
+        extension: T::EXTENSION,
+      });
     }
 
     Ok(Self {

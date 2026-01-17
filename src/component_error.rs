@@ -6,6 +6,8 @@ pub enum ComponentError {
   Normal { component: &'static str },
   #[snafu(display("component may not be empty"))]
   Empty,
+  #[snafu(display("component must end in `.{extension}`"))]
+  Extension { extension: &'static str },
   #[snafu(display("component exceeds 255 byte limit"))]
   Length,
   #[snafu(display("component may not contain NUL character"))]
