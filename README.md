@@ -225,13 +225,13 @@ The signature is a 128 character hexidecimal string and is elided for brevity.
 Metadata
 --------
 
-Filepack packages may optional contain machine-readable metadata describing the
-contents of the packages in a file named `metadata.yaml` containing a YAML
-object with the following keys:
+Filepack packages may optionally contain metadata describing the contents of
+the packages in a file named `metadata.yaml` containing a YAML object with the
+following keys:
 
 - `title`: A string containing the package's human-readable title.
 
-Metadata is *not* user-extensible, and follow a fixed schema. Future version of
+Metadata follows a fixed schema and is *not* user-extensible. Future version of
 `filepack` may define new metadata fields, causing verification errors if those
 fields are present and invalid according to the new schema.
 
@@ -239,7 +239,7 @@ fields are present and invalid according to the new schema.
 unknown fields.
 
 `filepack verify` also loads `metadata.yaml` if present and checks for
-validity. Unknown fields, however, are not an error, so future versions of
+validity. Unknown fields, however, are not an error, so that future versions of
 `filepack` may define new metadata fields in a backwards-compatible fashion.
 
 An example `metadata.yaml`:
