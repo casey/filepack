@@ -303,7 +303,7 @@ title: Tobin's Spirit Guide
 artwork: cover.png
 description: A compilation of supernatural occurrences, entities, and facts.
 language: en
-nfo: tobins-spirit-guide.nfo
+nfo: tobins.nfo
 readme: README.md
 release-date: 1929
 package-date: 1984-07-08 19:32:00 -04:00
