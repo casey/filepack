@@ -9,4 +9,4 @@ pub(crate) static KEY_NAME: LazyLock<Regex> =
 pub(crate) static PUBLIC_KEY: LazyLock<Regex> =
   LazyLock::new(|| "^[A-Za-z0-9]{64}$".parse().unwrap());
 
-pub(crate) static YEAR: LazyLock<Regex> = LazyLock::new(|| r"^\d{1,4}$".parse().unwrap());
+pub(crate) static YEAR: LazyLock<Regex> = LazyLock::new(|| r"^[1-9][0-9]{0,3}$".parse().unwrap());
