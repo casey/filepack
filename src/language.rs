@@ -1,19 +1,5 @@
 use super::*;
 
-#[derive(Clone, Debug, DeserializeFromStr, PartialEq)]
-pub(crate) struct Language(&'static str);
-
-impl FromStr for Language {
-  type Err = String;
-
-  fn from_str(code: &str) -> Result<Self, Self::Err> {
-    CODES
-      .get_key_value(code)
-      .map(|(key, _value)| Self(key))
-      .ok_or_else(|| format!("unknown langauge code `{code}`"))
-  }
-}
-
 pub(crate) static CODES: LazyLock<BTreeMap<&'static str, &'static str>> = LazyLock::new(|| {
   [
     ("aa", "Afar"),
@@ -203,3 +189,17 @@ pub(crate) static CODES: LazyLock<BTreeMap<&'static str, &'static str>> = LazyLo
   ]
   .into()
 });
+
+#[derive(Clone, Debug, DeserializeFromStr, PartialEq)]
+pub(crate) struct Language(&'static str);
+
+impl FromStr for Language {
+  type Err = String;
+
+  fn from_str(code: &str) -> Result<Self, Self::Err> {
+    CODES
+      .get_key_value(code)
+      .map(|(key, _value)| Self(key))
+      .ok_or_else(|| format!("unknown langauge code `{code}`"))
+  }
+}
