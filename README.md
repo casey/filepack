@@ -284,7 +284,7 @@ components may not be valid paths on Windows.
 #### Dates
 
 Dates may be given in several formats, as a year only, when the date and time
-is unknown, a date only, when the time is unknown, or a date and time  with a
+is unknown, a date only, when the time is unknown, or a date and time with a
 mandatory time zone.
 
 ```tsv
