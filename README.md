@@ -252,7 +252,7 @@ filepack create --deny distribution
 ```
 
 The `distribution` lint group checks for issues which can cause problems if the
-package is indented for distribution, such as non-portable paths that are
+package is intended for distribution, such as non-portable paths that are
 illegal on Windows, paths which would conflict on case-insensitive file
 systems, and inclusion of junk files such as `.DS_Store`.
 
