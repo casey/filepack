@@ -8,7 +8,7 @@ use super::*;
   strum(serialize_all = "kebab-case")
 )]
 pub(crate) enum LintError {
-  #[snafu(display("paths would conflict on case-insensitive file system"))]
+  #[snafu(display("paths would conflict on case-insensitive filesystem"))]
   CaseConflict,
   #[snafu(display("many filesystems do not allow filenames longer than 255 bytes"))]
   FilenameLength,
