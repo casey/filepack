@@ -3,8 +3,8 @@ use super::*;
 #[derive(Clone, Debug, Deserialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub(crate) struct Metadata {
-  pub(crate) title: Component,
   pub(crate) packager: Option<Component>,
+  pub(crate) title: Component,
 }
 
 impl Metadata {
