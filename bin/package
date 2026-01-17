@@ -36,6 +36,7 @@ cp -r \
   LICENSE \
   README.md \
   filepack.1 \
+  metadata.yaml \
   dist
 
 echo "Creating filepack manifest..."
