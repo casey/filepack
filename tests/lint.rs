@@ -21,7 +21,7 @@ fn deny_case_insensitive_filesystem_path_conflict() {
     .args(["create", "--deny", "distribution", "."])
     .stderr(
       "\
-error: paths would conflict on case-insensitive filesystem:
+error: paths would conflict on case-insensitive filesystem
        ├─ `FOO`
        └─ `foo`
 error: 1 lint error
