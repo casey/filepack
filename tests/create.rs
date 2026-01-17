@@ -501,7 +501,12 @@ fn metadata_with_files() {
     .touch("README.md")
     .write(
       "metadata.yaml",
-      "title: Foo\nartwork: cover.png\nnfo: info.nfo\nreadme: README.md",
+      "\
+title: Foo
+artwork: cover.png
+nfo: info.nfo
+readme: README.md,
+",
     )
     .arg("create")
     .success()
