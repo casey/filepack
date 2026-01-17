@@ -121,6 +121,10 @@ impl FromStr for RelativePath {
   type Err = PathError;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
+    if s.is_empty() {
+      return Err(PathError::Empty);
+    }
+
     if s.starts_with('/') {
       return Err(PathError::LeadingSlash);
     }
@@ -152,10 +156,6 @@ impl FromStr for RelativePath {
       }
 
       path.push_str(component);
-    }
-
-    if path.is_empty() {
-      return Err(PathError::Empty);
     }
 
     Ok(Self(path))
