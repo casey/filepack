@@ -117,4 +117,19 @@ mod tests {
       PathError::Separator { character: '\\' },
     );
   }
+
+  #[test]
+  fn nul() {
+    assert_eq!("foo\0bar".parse::<Component>().unwrap_err(), PathError::Nul);
+  }
+
+  #[test]
+  fn length() {
+    "a".repeat(255).parse::<Component>().unwrap();
+
+    assert_eq!(
+      "a".repeat(256).parse::<Component>().unwrap_err(),
+      PathError::Length,
+    );
+  }
 }
