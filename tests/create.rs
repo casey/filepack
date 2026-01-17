@@ -572,3 +572,24 @@ fn with_metadata() {
     .stderr("successfully verified 2 files totaling 10 bytes\n")
     .success();
 }
+
+#[test]
+fn metadata_with_language() {
+  Test::new()
+    .touch("content")
+    .write("metadata.yaml", "title: Foo\nlanguage: en")
+    .arg("create")
+    .success()
+    .arg("verify")
+    .stderr("successfully verified 2 files totaling 23 bytes\n")
+    .success();
+}
+
+#[test]
+fn metadata_invalid_language() {
+  Test::new()
+    .write("metadata.yaml", "title: Foo\nlanguage: xx")
+    .arg("create")
+    .stderr_regex(".*unknown langauge code `xx`.*")
+    .failure();
+}

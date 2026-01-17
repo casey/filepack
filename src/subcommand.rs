@@ -52,7 +52,7 @@ pub(crate) enum Subcommand {
   Key(key::Key),
   #[command(about = "Generate key pair")]
   Keygen(keygen::Keygen),
-  #[command(about = "Print language codes")]
+  #[command(about = "List language codes")]
   Languages,
   #[command(about = "List lint groups")]
   Lints,

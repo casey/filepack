@@ -233,7 +233,8 @@ And the following optional keys:
   movie. Must end in `.png`;
 
 - `language`: The primary language of the package content as an ISO 639-1
-  two-character language code.
+  two-character language code. Print valid language codes by running
+  `filepack languages`.
 
 - `nfo`: A component containing the filename of the package nfo file. Must end
   in `.nfo`.
