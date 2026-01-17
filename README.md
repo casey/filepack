@@ -242,50 +242,59 @@ Please feel free to open an issue with ideas for new metadata fields.
 
 ### Schema
 
-Mandatory keys:
+Fields are given as `NAME: TYPE`.
 
-- `title`: A component containing the package's human-readable title.
+Mandatory fields:
 
-Optional keys:
+- `title: component`: The package's human-readable title.
 
-- `artwork`: A component containing the filename of an PNG file containing
-  artwork for the package, for example, cover art for an album or key art for a
-  movie. Must end in `.png`;
+Optional fields:
 
-- `description`: A markdown string describing the package content.
+- `artwork: component.png`: The filename of an PNG file containing artwork for
+  the package, for example, cover art for an album or key art for a movie.
 
-- `language`: The primary language of the package content as an ISO 639-1
-  two-character language code. See `filepack languages` for valid language
-  codes.
+- `description: markdown`: A description of the package content.
 
-- `nfo`: A component containing the filename of the package nfo file. Must end
-  in `.nfo`.
+- `language: language`: The primary language of the package content.
 
-- `package-date`: The date and optionally time the package was created.
+- `package: object`: Metadata for the package itself, as opposed to its content.
 
-- `package-description`: A markdown string describing the package.
+- `readme: component.md`: A component containing the filename of the package
+  markdown readme.
 
-- `packager`: A component containing the name of the person or group who
-  created the package. Note that this may not be the author of the content of
-  the package.
+- `date: date`: The date the package content was created.
 
-- `readme`: A component containing the filename of the package markdown readme.
-  Must end in `.md`.
+The package
 
-- `release-date`: The date and optionally time the package content was created.
+- `package.nfo: component.nfo`: The filename of the package nfo file.
 
-#### Components
+- `package.date: date`: The date and optionally time the package was created.
 
-Components are strings with the same restrictions as path components in the
-manifest `files` object, allowing them to be used as unix filesystem paths.
-Note that Windows imposes additional restrictions which are not enforced, so
-components may not be valid paths on Windows.
+- `package.description: markdown`: A descriptiion of the package.
 
-#### Dates
+- `package.packager: component`: A component containing the name of the person
+  or group who created the package. Note that this may not be the author of the
+  content of the package.
 
-Dates may be given in several formats, as a year only, when the date and time
-is unknown, a date only, when the time is unknown, or a date and time with a
-mandatory time zone.
+Types:
+
+- `component`: A string with the same restrictions as path components in the
+  manifest `files` object, allowing them to be used as unix filesystem paths.
+  Note that Windows imposes additional restrictions which are not enforced, so
+  components may not be valid paths on Windows.
+
+- `component.EXTENSION`: A component that must end with `.EXTENSION`.
+
+- `date`: A string containing a date in one of several formats: as a year only,
+  when the date and time is unknown, a date only, when the time is unknown, or a
+  date and time with a mandatory time zone.
+
+- `language`: A string containing an ISO 639-1 two-character language code. See
+  `filepack languages` for valid language codes.
+
+- `markdown`: A string containing CommonMark markdown.
+
+Example dates:
 
 ```tsv
 1970
@@ -301,16 +310,17 @@ mandatory time zone.
 ```yaml
 title: Tobin's Spirit Guide
 artwork: cover.png
+date: 1929
 description: A compilation of supernatural occurrences, entities, and facts.
 language: en
-nfo: tobins.nfo
 readme: README.md
-release-date: 1929
-package-date: 1984-07-08 19:32:00 -04:00
-package-description: >
-  First edition on loan from NYPL Main Branch research stacks. Captured via
-  Microtek MS-300A flatbed scanner.
-packager: Egon Spengler
+package:
+  date: 1984-07-08 19:32:00 -04:00
+  description: >
+    First edition on loan from NYPL Main Branch research stacks. Captured via
+    Microtek MS-300A flatbed scanner.
+  nfo: tobins.nfo
+  packager: Egon Spengler
 ```
 
 Lints

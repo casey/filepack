@@ -8,14 +8,15 @@ fn dates() {
       "metadata.yaml",
       "
 title: Foo
-package-date: 2024-06-15T12:30:00+05:00
-release-date: 2024-01-01
+date: 2024-01-01
+package:
+  date: 2024-06-15T12:30:00+05:00
 ",
     )
     .arg("create")
     .success()
     .arg("verify")
-    .stderr("successfully verified 2 files totaling 77 bytes\n")
+    .stderr("successfully verified 2 files totaling 72 bytes\n")
     .success();
 }
 
@@ -31,14 +32,15 @@ fn files() {
       "\
 title: Foo
 artwork: cover.png
-nfo: info.nfo
 readme: README.md
+package:
+  nfo: info.nfo
 ",
     )
     .arg("create")
     .success()
     .arg("verify")
-    .stderr("successfully verified 5 files totaling 62 bytes\n")
+    .stderr("successfully verified 5 files totaling 73 bytes\n")
     .success();
 }
 
@@ -59,7 +61,7 @@ fn files_missing() {
   );
 
   case(
-    "title: Foo\nnfo: info.nfo",
+    "title: Foo\npackage:\n  nfo: info.nfo",
     "error: file referenced in metadata missing: `info.nfo`\n",
   );
 
@@ -88,7 +90,7 @@ fn files_wrong_extension() {
   );
 
   case(
-    "title: Foo\nnfo: info.txt",
+    "title: Foo\npackage:\n  nfo: info.txt",
     "info.txt",
     ".*component must end in `.nfo`.*",
   );
@@ -98,6 +100,15 @@ fn files_wrong_extension() {
     "README.txt",
     ".*component must end in `.md`.*",
   );
+}
+
+#[test]
+fn invalid_date() {
+  Test::new()
+    .write("metadata.yaml", "title: Foo\ndate: 2024/06/15")
+    .arg("create")
+    .stderr_regex(".*invalid characters.*")
+    .failure();
 }
 
 #[test]
@@ -112,16 +123,7 @@ fn invalid_language() {
 #[test]
 fn invalid_package_date() {
   Test::new()
-    .write("metadata.yaml", "title: Foo\npackage-date: not-a-date")
-    .arg("create")
-    .stderr_regex(".*invalid characters.*")
-    .failure();
-}
-
-#[test]
-fn invalid_release_date() {
-  Test::new()
-    .write("metadata.yaml", "title: Foo\nrelease-date: 2024/06/15")
+    .write("metadata.yaml", "title: Foo\npackage:\n  date: not-a-date")
     .arg("create")
     .stderr_regex(".*invalid characters.*")
     .failure();
