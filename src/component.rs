@@ -8,6 +8,10 @@ impl Component {
     self.0.as_bytes()
   }
 
+  pub(crate) fn as_path(&self) -> RelativePath {
+    self.as_str().parse().unwrap()
+  }
+
   pub(crate) fn as_str(&self) -> &str {
     &self.0
   }
@@ -47,6 +51,13 @@ impl Component {
     }
 
     Ok(())
+  }
+
+  pub(crate) fn extension(&self) -> Option<&str> {
+    match self.0.find('.') {
+      None | Some(0) => None,
+      Some(n) => Some(&self.0[n + 1..]),
+    }
   }
 }
 

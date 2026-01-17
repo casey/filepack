@@ -35,13 +35,13 @@ impl Create {
 
     let metadata = root.join(Metadata::FILENAME);
 
-    if filesystem::exists(&metadata)? {
-      Metadata::load_strict(&metadata)?;
-    }
+    let metadata = filesystem::exists(&metadata)?
+      .then(|| Metadata::load_strict(&metadata))
+      .transpose()?;
 
     let cleaned_manifest = current_dir.join(&manifest_path).lexiclean();
 
-    let mut paths = HashMap::new();
+    let mut paths = BTreeMap::new();
 
     let mut case_conflicts = HashMap::<RelativePath, Vec<RelativePath>>::new();
 
@@ -120,6 +120,14 @@ impl Create {
 
     if lint_errors > 0 {
       return Err(error::Lint { count: lint_errors }.build());
+    }
+
+    if let Some(metadata) = metadata {
+      for file in metadata.files() {
+        if !paths.contains_key(&file) {
+          todo!()
+        }
+      }
     }
 
     ensure! {

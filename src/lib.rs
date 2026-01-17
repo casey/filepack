@@ -71,6 +71,7 @@ use {
     fs::{self, Permissions},
     io::{self, IsTerminal},
     iter,
+    marker::PhantomData,
     path::{Path, PathBuf},
     process,
     str::{self, FromStr},
@@ -110,6 +111,7 @@ mod entries;
 mod entry;
 mod error;
 mod file;
+mod filename;
 mod filesystem;
 mod fingerprint;
 mod fingerprint_hasher;
