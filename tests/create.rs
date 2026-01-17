@@ -181,6 +181,15 @@ fn metadata_files_wrong_extension() {
 }
 
 #[test]
+fn metadata_invalid_language() {
+  Test::new()
+    .write("metadata.yaml", "title: Foo\nlanguage: ac")
+    .arg("create")
+    .stderr_regex(".*unknown language code `ac`.*")
+    .failure();
+}
+
+#[test]
 fn metadata_may_not_have_unknown_keys() {
   Test::new()
     .write("metadata.yaml", "title: Foo\nbar: baz")
@@ -209,6 +218,18 @@ readme: README.md
     .success()
     .arg("verify")
     .stderr("successfully verified 5 files totaling 62 bytes\n")
+    .success();
+}
+
+#[test]
+fn metadata_with_language() {
+  Test::new()
+    .touch("content")
+    .write("metadata.yaml", "title: Foo\nlanguage: en")
+    .arg("create")
+    .success()
+    .arg("verify")
+    .stderr("successfully verified 2 files totaling 23 bytes\n")
     .success();
 }
 
