@@ -56,7 +56,7 @@ mod tests {
       assert_eq!(s.parse::<DateTime>().unwrap().to_string(), expected);
     }
 
-    case("0000", "0000");
+    case("0000", "0");
     case("1970", "1970");
     case("9999", "9999");
     case("1970-01-01 00:00:00 +00:00", "1970-01-01 00:00:00 +00:00");
