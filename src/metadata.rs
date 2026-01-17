@@ -1,9 +1,10 @@
 use super::*;
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub(crate) struct Metadata {
   pub(crate) title: String,
+  pub(crate) packager: Option<Packager>,
 }
 
 impl Metadata {

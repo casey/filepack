@@ -226,6 +226,10 @@ following keys:
 
 - `title`: A string containing the package's human-readable title.
 
+- `packager`: A string containing the name of the person or group who created
+  the package. Note that this may not be the author of the content of the
+  package.
+
 Metadata follows a fixed schema and is not user-extensible. Future version of
 `filepack` may define new metadata fields, causing verification errors if those
 fields are present and invalid according to the new schema.
@@ -241,6 +245,7 @@ An example `metadata.yaml`:
 
 ```yaml
 title: Tobin's Spirit Guide
+packager: Egon Spengler
 ```
 
 Filepack metadata is intended to a broadly useful machine and human readable
