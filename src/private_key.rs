@@ -83,18 +83,6 @@ mod tests {
   use super::*;
 
   #[test]
-  fn must_have_leading_zeros() {
-    assert_eq!(
-      "0"
-        .repeat(63)
-        .parse::<PrivateKey>()
-        .unwrap_err()
-        .to_string(),
-      "invalid private key hex",
-    );
-  }
-
-  #[test]
   fn parse() {
     let key = PrivateKey::generate();
     assert_eq!(
@@ -108,36 +96,8 @@ mod tests {
   }
 
   #[test]
-  fn parse_hex_error() {
-    assert_eq!(
-      "xyz".parse::<PrivateKey>().unwrap_err().to_string(),
-      "invalid private key hex"
-    );
-  }
-
-  #[test]
-  fn parse_length_error() {
-    assert_eq!(
-      "0123".parse::<PrivateKey>().unwrap_err().to_string(),
-      "invalid private key byte length 2"
-    );
-  }
-
-  #[test]
   fn serialized_private_key_is_not_valid_public_key() {
     test::PRIVATE_KEY.parse::<PublicKey>().unwrap_err();
-  }
-
-  #[test]
-  fn uppercase_is_forbidden() {
-    assert_eq!(
-      test::PRIVATE_KEY
-        .to_uppercase()
-        .parse::<PrivateKey>()
-        .unwrap_err()
-        .to_string(),
-      "private keys must be lowercase hex",
-    );
   }
 
   #[test]
@@ -163,5 +123,17 @@ mod tests {
       PrivateKey::load(&path).unwrap(),
       test::PRIVATE_KEY.parse().unwrap(),
     );
+  }
+
+  #[test]
+  fn private_key_bytes_not_in_error_message() {
+    let key = PrivateKey::generate();
+    let encoded = key.display_secret().to_string();
+
+    let corrupted = format!("{}x", &encoded[..encoded.len() - 1]);
+
+    let err = corrupted.parse::<PrivateKey>().unwrap_err().to_string();
+
+    assert!(!err.contains(&encoded));
   }
 }

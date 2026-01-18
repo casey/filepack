@@ -30,7 +30,7 @@ fn duplicate_key_named_and_literal() {
 
   test
     .args(["verify", "--key", "master", "--key", &key])
-    .stderr_regex("error: duplicate key: `master` and `[a-f0-9]{64}`\n")
+    .stderr_regex("error: duplicate key: `master` and `public1[a-z0-9]+`\n")
     .failure();
 }
 
@@ -149,7 +149,7 @@ fn malformed_signature_error() {
         notes: [
           {
             signatures: {
-              "7f1420cdc898f9370fd196b9e8e5606a7992fab5144fc1873d91b8c65ef5db6b": "00"
+              "public167dndhhmae7p6fsfnj0z37zf78cde6mwqgtms0y87h8ldlvvflyqdq9may": "signature1invalid"
             }
           }
         ]
@@ -157,7 +157,7 @@ fn malformed_signature_error() {
     )
     .arg("verify")
     .stderr_regex(
-      "error: failed to deserialize manifest at `filepack.json`\n.*invalid signature byte length.*",
+      "error: failed to deserialize manifest at `filepack.json`\n.*failed to decode bech32m.*",
     )
     .failure();
 }
@@ -646,7 +646,7 @@ fn weak_signature_public_key() {
         notes: [
           {
             signatures: {
-              "0000000000000000000000000000000000000000000000000000000000000000": "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+              "public1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq9xa2lj": "signature1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq83s9ss"
             }
           }
         ]

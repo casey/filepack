@@ -174,8 +174,8 @@ such as `C:`.
 
 The value of the mandatory `notes` key is an array of signed notes. Notes are
 objects containing a single mandatory key `signatures`, an object mapping
-public keys to signatures. Public keys and signatures are both lowercase
-hexadecimal strings.
+public keys to signatures. Public keys and signatures are bech32m-encoded
+strings with `public` and `signature` prefixes, respectively.
 
 Notes may optionally contain a `time` field whose value is a timestamp given as
 the number of nanoseconds after the UNIX epoch.
@@ -188,7 +188,7 @@ as the value of the `time` field, if present.
 
 An manifest over a directory containing the files `README.md` and `src/main.c`,
 signed by the public key
-`3c977ea3a31cd37f0b540f02f33eab158f2ed7449f42b05613c921181aa95b79`:
+`public167dndhhmae7p6fsfnj0z37zf78cde6mwqgtms0y87h8ldlvvflyqdq9may`:
 
 ```json
 {
@@ -207,7 +207,7 @@ signed by the public key
   "notes": [
     {
       "signatures": {
-        "3c977ea3a31cd37f0b540f02f33eab158f2ed7449f42b05613c921181aa95b79": "…"
+        "public167dndhhmae7p6fsfnj0z37zf78cde6mwqgtms0y87h8ldlvvflyqdq9may": "…"
       },
       "time": 1768531681809767000
     }
@@ -215,7 +215,7 @@ signed by the public key
 }
 ```
 
-The signature is a 128 character hexidecimal string and is elided for brevity.
+The signature is a bech32m-encoded string and is elided for brevity.
 
 Metadata
 --------

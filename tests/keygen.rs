@@ -4,8 +4,8 @@ use super::*;
 fn custom_name() {
   let test = Test::new()
     .args(["keygen", "--name", "deploy"])
-    .assert_file_regex("keychain/deploy.public", "[0-9a-f]{64}\n")
-    .assert_file_regex("keychain/deploy.private", "[0-9a-f]{64}\n")
+    .assert_file_regex("keychain/deploy.public", "public1[a-z0-9]+\n")
+    .assert_file_regex("keychain/deploy.private", "private1[a-z0-9]+\n")
     .success();
 
   let public_key = test.read_public_key("keychain/deploy.public");
@@ -21,8 +21,8 @@ fn custom_name() {
 fn default_name() {
   let test = Test::new()
     .arg("keygen")
-    .assert_file_regex("keychain/master.public", "[0-9a-f]{64}\n")
-    .assert_file_regex("keychain/master.private", "[0-9a-f]{64}\n")
+    .assert_file_regex("keychain/master.public", "public1[a-z0-9]+\n")
+    .assert_file_regex("keychain/master.private", "private1[a-z0-9]+\n")
     .success();
 
   let public_key = test.read_public_key("keychain/master.public");

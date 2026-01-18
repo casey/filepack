@@ -84,51 +84,19 @@ mod tests {
   use super::*;
 
   #[test]
-  fn must_have_leading_zeros() {
-    let s = "0".repeat(63);
-    assert_eq!(
-      s.parse::<PublicKey>().unwrap_err().to_string(),
-      format!("invalid public key hex: `{s}`"),
-    );
-  }
-
-  #[test]
   fn parse() {
     let key = PrivateKey::generate().public_key();
     assert_eq!(key.to_string().parse::<PublicKey>().unwrap(), key);
   }
 
   #[test]
-  fn parse_hex_error() {
-    assert_eq!(
-      "xyz".parse::<PublicKey>().unwrap_err().to_string(),
-      "invalid public key hex: `xyz`"
-    );
-  }
-
-  #[test]
-  fn parse_length_error() {
-    assert_eq!(
-      "0123".parse::<PublicKey>().unwrap_err().to_string(),
-      "invalid public key byte length 2: `0123`"
-    );
-  }
-
-  #[test]
-  fn uppercase_is_forbidden() {
-    let uppercase = test::PUBLIC_KEY.to_uppercase();
-    assert_eq!(
-      uppercase.parse::<PublicKey>().unwrap_err().to_string(),
-      format!("public keys must be lowercase hex: `{uppercase}`"),
-    );
-  }
-
-  #[test]
   fn weak_public_keys_are_forbidden() {
-    let key = "0".repeat(64);
+    let weak_bytes = [0u8; PublicKey::LEN];
+    let encoded =
+      bech32::encode::<bech32::Bech32m>(PublicKey::HRP, &weak_bytes).unwrap();
     assert!(matches!(
-      key.parse::<PublicKey>().unwrap_err(),
-      PublicKeyError::Weak { key } if key == key,
+      encoded.parse::<PublicKey>().unwrap_err(),
+      PublicKeyError::Weak { .. },
     ));
   }
 
