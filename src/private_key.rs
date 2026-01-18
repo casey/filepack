@@ -3,21 +3,17 @@ use super::*;
 #[derive(Debug, Snafu)]
 #[snafu(context(suffix(Error)))]
 pub enum Error {
-  #[snafu(display("private keys must be lowercase hex"))]
-  Case,
-  #[snafu(display("invalid private key hex"))]
-  Hex { source: hex::FromHexError },
-  #[snafu(display("invalid private key byte length {length}"))]
-  Length { length: usize },
   #[snafu(display("weak private key"))]
   Weak,
+  #[snafu(transparent)]
+  Bech32m { source: Bech32mError },
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct PrivateKey(ed25519_dalek::SigningKey);
 
 impl PrivateKey {
-  const LEN: usize = ed25519_dalek::SECRET_KEY_LENGTH;
+  pub(crate) const LEN: usize = ed25519_dalek::SECRET_KEY_LENGTH;
 
   pub(crate) fn as_secret_bytes(&self) -> [u8; Self::LEN] {
     self.0.to_bytes()
@@ -61,21 +57,17 @@ impl PrivateKey {
   }
 }
 
+impl Bech32m<{ PrivateKey::LEN }> for PrivateKey {
+  const HRP: Hrp = Hrp::parse_unchecked("private");
+}
+
 impl FromStr for PrivateKey {
   type Err = Error;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
-    let bytes = hex::decode(s).context(HexError)?;
+    let bytes = Self::decode_bech32m(s)?;
 
-    if !is_lowercase_hex(s) {
-      return Err(CaseError.build());
-    }
-
-    let secret: [u8; Self::LEN] = bytes.as_slice().try_into().ok().context(LengthError {
-      length: bytes.len(),
-    })?;
-
-    let inner = ed25519_dalek::SigningKey::from_bytes(&secret);
+    let inner = ed25519_dalek::SigningKey::from_bytes(&bytes);
 
     ensure! {
       !inner.verifying_key().is_weak(),

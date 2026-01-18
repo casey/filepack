@@ -21,7 +21,6 @@ clap = { version = "4.5.16", features = ["derive"] }
 clap_mangen = "0.2.23"
 dirs = "6.0.0"
 ed25519-dalek = { version = "2.1.1", features = ["rand_core"] }
-hex = "0.4.3"
 indicatif = "0.18.0"
 lexiclean = "0.0.1"
 num-traits = "0.2.19"

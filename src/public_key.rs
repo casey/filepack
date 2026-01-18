@@ -32,6 +32,10 @@ impl PublicKey {
   }
 }
 
+impl Bech32m<{ PublicKey::LEN }> for PublicKey {
+  const HRP: Hrp = Hrp::parse_unchecked("public");
+}
+
 impl From<PrivateKey> for PublicKey {
   fn from(private_key: PrivateKey) -> Self {
     Self(private_key.inner_secret().verifying_key())
@@ -42,17 +46,9 @@ impl FromStr for PublicKey {
   type Err = PublicKeyError;
 
   fn from_str(key: &str) -> Result<Self, Self::Err> {
-    let bytes = Bech32m::PublicKey.decode(key);
+    let bytes = Self::decode_bech32m(key)?;
 
-    let array: [u8; Self::LEN] = bytes
-      .as_slice()
-      .try_into()
-      .context(public_key_error::Length {
-        key,
-        length: bytes.len(),
-      })?;
-
-    let inner = ed25519_dalek::VerifyingKey::from_bytes(&array)
+    let inner = ed25519_dalek::VerifyingKey::from_bytes(&bytes)
       .map_err(SignatureError)
       .context(public_key_error::Invalid { key })?;
 
@@ -67,7 +63,7 @@ impl FromStr for PublicKey {
 
 impl Display for PublicKey {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    Bech32m::PublicKey.encode(f, *self.0.as_bytes())
+    Self::encode_bech32m(f, *self.0.as_bytes())
   }
 }
 

@@ -1,34 +1,20 @@
 use super::*;
 
-#[derive(Debug, Snafu)]
-#[snafu(context(suffix(Error)))]
-pub enum Error {
-  #[snafu(display("signatures must be lowercase hex: `{signature}`"))]
-  Case { signature: String },
-  #[snafu(display("invalid signature hex: `{signature}`"))]
-  Hex {
-    signature: String,
-    source: hex::FromHexError,
-  },
-  #[snafu(display("invalid signature byte length {length}: `{signature}`"))]
-  Length {
-    signature: String,
-    length: usize,
-    source: TryFromSliceError,
-  },
-}
-
 #[derive(Clone, Copy, DeserializeFromStr, PartialEq, SerializeDisplay)]
 pub struct Signature(ed25519_dalek::Signature);
 
 impl Signature {
-  const LEN: usize = ed25519_dalek::Signature::BYTE_SIZE;
+  pub(crate) const LEN: usize = ed25519_dalek::Signature::BYTE_SIZE;
 }
 
 impl AsRef<ed25519_dalek::Signature> for Signature {
   fn as_ref(&self) -> &ed25519_dalek::Signature {
     &self.0
   }
+}
+
+impl Bech32m<{ Signature::LEN }> for Signature {
+  const HRP: Hrp = Hrp::parse_unchecked("signature");
 }
 
 impl From<ed25519_dalek::Signature> for Signature {
@@ -39,10 +25,7 @@ impl From<ed25519_dalek::Signature> for Signature {
 
 impl Display for Signature {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    for byte in self.0.to_bytes() {
-      write!(f, "{byte:02x}")?;
-    }
-    Ok(())
+    Self::encode_bech32m(f, self.0.to_bytes())
   }
 }
 
@@ -53,21 +36,11 @@ impl fmt::Debug for Signature {
 }
 
 impl FromStr for Signature {
-  type Err = Error;
+  type Err = Bech32mError;
 
   fn from_str(signature: &str) -> Result<Self, Self::Err> {
-    let bytes = hex::decode(signature).context(HexError { signature })?;
-
-    if !is_lowercase_hex(signature) {
-      return Err(CaseError { signature }.build());
-    }
-
-    let array: [u8; Self::LEN] = bytes.as_slice().try_into().context(LengthError {
-      signature,
-      length: bytes.len(),
-    })?;
-
-    Ok(Self(ed25519_dalek::Signature::from_bytes(&array)))
+    let bytes = Self::decode_bech32m(signature)?;
+    Ok(Self(ed25519_dalek::Signature::from_bytes(&bytes)))
   }
 }
 
