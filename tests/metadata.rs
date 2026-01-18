@@ -112,6 +112,15 @@ fn invalid_date() {
 }
 
 #[test]
+fn invalid_homepage() {
+  Test::new()
+    .write("metadata.yaml", "title: Foo\nhomepage: not-a-valid-url")
+    .arg("create")
+    .stderr_regex(".*relative URL without a base.*")
+    .failure();
+}
+
+#[test]
 fn invalid_language() {
   Test::new()
     .write("metadata.yaml", "title: Foo\nlanguage: ac")
@@ -146,6 +155,18 @@ fn invalid_package_date() {
 }
 
 #[test]
+fn invalid_package_homepage() {
+  Test::new()
+    .write(
+      "metadata.yaml",
+      "title: Foo\npackage:\n  homepage: :::invalid",
+    )
+    .arg("create")
+    .stderr_regex(".*relative URL without a base.*")
+    .failure();
+}
+
+#[test]
 fn language() {
   Test::new()
     .touch("content")
@@ -163,26 +184,5 @@ fn unknown_keys() {
     .write("metadata.yaml", "title: Foo\nbar: baz")
     .arg("create")
     .stderr_regex(".*unknown fields in metadata at `.*metadata.yaml`: `bar`\n")
-    .failure();
-}
-
-#[test]
-fn invalid_homepage() {
-  Test::new()
-    .write("metadata.yaml", "title: Foo\nhomepage: not-a-valid-url")
-    .arg("create")
-    .stderr_regex(".*relative URL without a base.*")
-    .failure();
-}
-
-#[test]
-fn invalid_package_homepage() {
-  Test::new()
-    .write(
-      "metadata.yaml",
-      "title: Foo\npackage:\n  homepage: :::invalid",
-    )
-    .arg("create")
-    .stderr_regex(".*relative URL without a base.*")
     .failure();
 }
