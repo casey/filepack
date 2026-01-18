@@ -268,13 +268,13 @@ Optional fields:
 Optional `package` fields, which describe the package itself, as opposed its
 content:
 
-- `package.nfo: component.nfo`: The filename of the package nfo file.
+- `package.creator: component`: The person or group who created the package.
 
 - `package.date: date`: The date the package was created.
 
-- `package.description: markdown`: A descriptiion of the package.
+- `package.description: markdown`: A description of the package.
 
-- `package.creator: component`: The person or group who created the package.
+- `package.nfo: component.nfo`: The filename of the package nfo file.
 
 Types:
 
