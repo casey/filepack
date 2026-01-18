@@ -72,7 +72,7 @@ pub(crate) enum Subcommand {
 impl Subcommand {
   pub(crate) fn run(self, options: Options) -> Result {
     match self {
-      Self::Contains(contains) => contains.run(),
+      Self::Contains(contains) => contains.run(options),
       Self::Create(create) => create.run(options),
       Self::Files(files) => files.run(),
       Self::Fingerprint(fingerprint) => fingerprint.run(),

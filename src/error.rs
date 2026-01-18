@@ -228,6 +228,15 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     identifier: KeyIdentifier,
   },
+  #[snafu(display(
+    "file with hash `{hash}` has size {manifest} in manifest but size {disk} on disk"
+  ))]
+  SizeMismatch {
+    backtrace: Option<Backtrace>,
+    disk: u64,
+    hash: Hash,
+    manifest: u64,
+  },
   #[snafu(display("I/O error reading standard input"))]
   StandardInputIo {
     backtrace: Option<Backtrace>,
