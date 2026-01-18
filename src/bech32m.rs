@@ -6,9 +6,11 @@ pub(crate) trait Bech32m<const LEN: usize> {
   fn decode_bech32m(s: &str) -> Result<[u8; LEN], Bech32mError> {
     let p = CheckedHrpstring::new::<bech32::Bech32m>(&s).context(bech32m_error::Decode)?;
 
+    let actual = p.hrp();
+
     ensure! {
-      p.hrp() == Self::HRP,
-      bech32m_error::Hrp { expected: Self::HRP, actual: p.hrp() },
+      actual == Self::HRP,
+      bech32m_error::Hrp { expected: Self::HRP, actual },
     }
 
     let mut bytes = p.byte_iter();
