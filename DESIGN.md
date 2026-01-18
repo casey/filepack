@@ -71,10 +71,10 @@ Signatures
 Filepack allows for the creation of Ed25519 signatures over the contents of a
 manifest, which thus commit to the contents of the directory covered by the
 manifest. Signatures are made not over serialized manifest, but over a message
-containing a fingerprint hash, a Merkle tree hash created from the contents of
-the manifest. This keeps signatures independent of the manifest format, avoids
-issues with canonicalization of the manifest JSON, avoids hash loops due to the
-inclusion of signatures in the manifest itself, and allows proving the
+containing a "fingerprint" hash, a Merkle tree hash created from the contents
+of the manifest. This keeps signatures independent of the manifest format,
+avoids issues with canonicalization of the manifest JSON, avoids hash loops due
+to the inclusion of signatures in the manifest itself, and allows proving the
 inclusion of files covered by a signature using a Merkle receipt.
 
 Fingerprints
@@ -86,7 +86,7 @@ fingerprints.
 
 Fingerprints are constructed to be unique, both between and within types,
 meaning that it is impossible two different values with different types or
-contents, but which have the same fingerprint.
+contents but which have the same fingerprint.
 
 Fingerprints are BLAKE3 hashes. To guarantee that fingerprints are unique
 between types, the hasher is first initialized with a length-prefixed string
@@ -97,8 +97,8 @@ After the prefix, the value is hashed as a sequence of TLV fields.
 Fields are hashed in order, but may be skipped, in the case of optional fields,
 or repeated, in the case of fields containing multiple values.
 
-Currently, no fingerprint test vectors exist, and the best documentation is
-the code itself.
+Currently, no fingerprint test vectors exist, and the best documentation is the
+code itself.
 
 In particular, see:
 
