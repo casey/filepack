@@ -316,7 +316,7 @@ Example dates:
 ```yaml
 title: Tobin's Spirit Guide
 creator: John Horace Tobin
-homepage: tobin-society.org/spirit-guide
+homepage: http://tobin-society.org/spirit-guide
 artwork: cover.png
 date: 1929
 description: A compilation of supernatural occurrences, entities, and facts.
@@ -325,13 +325,16 @@ readme: README.md
 package:
   creator: Egon Spengler
   creator-tag: ES
-  homepage: ghost-busters.net/~egon
+  homepage: http://ghost-busters.net/~egon
   date: 1984-07-08 19:32:00 -04:00
   description: >
     First edition on loan from NYPL Main Branch research stacks. Captured via
     Microtek MS-300A flatbed scanner.
   nfo: tobins.nfo
 ```
+
+(The `homepage` URLs are of course anachronistic, as the World Wide Web was
+created in 1989, some years after Egon first packaged Tobin's Spirit Guide.)
 
 Lints
 -----

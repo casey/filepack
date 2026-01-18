@@ -53,7 +53,6 @@ use {
     subcommand::Subcommand,
     tag::Tag,
     ticked::Ticked,
-    url::Url,
     utf8_path_ext::Utf8PathExt,
   },
   blake3::Hasher,
@@ -86,6 +85,7 @@ use {
     time::{SystemTime, SystemTimeError, UNIX_EPOCH},
   },
   strum::{EnumDiscriminants, EnumIter, EnumString, IntoEnumIterator, IntoStaticStr},
+  url::Url,
   usized::IntoU64,
   walkdir::WalkDir,
 };
@@ -172,7 +172,6 @@ mod style;
 mod subcommand;
 mod tag;
 mod ticked;
-mod url;
 mod utf8_path_ext;
 
 #[cfg(test)]
