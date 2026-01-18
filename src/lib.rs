@@ -31,6 +31,7 @@ use {
     fingerprint_prefix::FingerprintPrefix,
     format::Format,
     functions::{current_dir, decode_path, default, is_default, is_lowercase_hex, now},
+    hash_error::HashError,
     index::Index,
     key_identifier::KeyIdentifier,
     key_name::KeyName,
@@ -142,6 +143,7 @@ mod fingerprint_prefix;
 mod format;
 mod functions;
 mod hash;
+mod hash_error;
 mod index;
 mod key_identifier;
 mod key_name;

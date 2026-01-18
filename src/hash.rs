@@ -30,10 +30,18 @@ impl From<[u8; Hash::LEN]> for Hash {
 }
 
 impl FromStr for Hash {
-  type Err = blake3::HexError;
+  type Err = HashError;
 
-  fn from_str(s: &str) -> Result<Self, Self::Err> {
-    Ok(Self(s.parse()?))
+  fn from_str(hash: &str) -> Result<Self, Self::Err> {
+    if !is_lowercase_hex(hash) {
+      return Err(
+        hash_error::Case {
+          hash: hash.to_owned(),
+        }
+        .build(),
+      );
+    }
+    Ok(Self(hash.parse()?))
   }
 }
 
@@ -82,6 +90,11 @@ impl Display for Hash {
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn uppercase_is_forbidden() {
+    test::HASH.to_uppercase().parse::<Hash>().unwrap_err();
+  }
 
   #[test]
   fn deserialize_error_format() {
