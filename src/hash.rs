@@ -32,11 +32,14 @@ impl From<[u8; Hash::LEN]> for Hash {
 impl FromStr for Hash {
   type Err = HashError;
 
-  fn from_str(hash: &str) -> Result<Self, Self::Err> {
-    if !is_lowercase_hex(hash) {
-      return Err(hash_error::Case { hash }.build());
+  fn from_str(s: &str) -> Result<Self, Self::Err> {
+    let hash = s.parse()?;
+
+    if !is_lowercase_hex(s) {
+      return Err(hash_error::Case { hash: s }.build());
     }
-    Ok(Self(hash.parse()?))
+
+    Ok(Self(hash))
   }
 }
 
