@@ -163,7 +163,7 @@ fn malformed_signature_error() {
 }
 
 #[test]
-fn manifest_in_root_with_external_manifest() {
+fn manifest_in_package_with_external_manifest() {
   Test::new()
     .arg("create")
     .success()
