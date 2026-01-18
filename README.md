@@ -255,7 +255,7 @@ Optional fields:
 
 - `creator: component`: The person or group who created the content.
 
-- `date: date`: The date the content was created.
+- `date: date`: The date the content was created or released.
 
 - `description: markdown`: A description of the content.
 
