@@ -134,6 +134,11 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
+  #[snafu(display("cannot use `--manifest` when `{path}` exists"))]
+  ManifestInRoot {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+  },
   #[snafu(display("metadata `{path}` already exists"))]
   MetadataAlreadyExists {
     backtrace: Option<Backtrace>,

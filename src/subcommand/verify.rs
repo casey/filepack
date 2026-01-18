@@ -54,6 +54,13 @@ impl Verify {
     let root = self.root.unwrap_or_else(|| current_dir.clone());
 
     let source = if let Some(ref manifest) = self.manifest {
+      ensure! {
+        !filesystem::exists(&root.join(Manifest::FILENAME))?,
+        error::ManifestInRoot {
+          path: Manifest::FILENAME,
+        },
+      }
+
       manifest.clone()
     } else {
       root.join(Manifest::FILENAME)

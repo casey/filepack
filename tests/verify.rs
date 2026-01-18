@@ -669,3 +669,26 @@ fn with_manifest_path() {
     .stderr("successfully verified 1 file totaling 0 bytes\n")
     .success();
 }
+
+#[test]
+fn manifest_in_root_with_external_manifest() {
+  Test::new()
+    .touch("foo")
+    .args(["create", "."])
+    .success()
+    .write(
+      "alternative.json",
+      json! {
+        files: {
+          foo: {
+            hash: EMPTY_HASH,
+            size: 0
+          }
+        },
+        notes: [],
+      },
+    )
+    .args(["verify", "--manifest", "alternative.json"])
+    .stderr("error: cannot use `--manifest` when `filepack.json` exists\n")
+    .failure();
+}
