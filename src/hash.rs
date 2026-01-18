@@ -34,12 +34,7 @@ impl FromStr for Hash {
 
   fn from_str(hash: &str) -> Result<Self, Self::Err> {
     if !is_lowercase_hex(hash) {
-      return Err(
-        hash_error::Case {
-          hash: hash.to_owned(),
-        }
-        .build(),
-      );
+      return Err(hash_error::Case { hash }.build());
     }
     Ok(Self(hash.parse()?))
   }
