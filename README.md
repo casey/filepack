@@ -507,7 +507,7 @@ Save the fingerprint in a secure location.
 
 Then, verify the package against the saved fingerprint:
 
-```shell
+```sh
 filepack verify <PACKAGE> --fingerprint <FINGERPRINT>
 ```
 
