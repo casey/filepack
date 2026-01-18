@@ -103,6 +103,22 @@ fn files_wrong_extension() {
 }
 
 #[test]
+fn invalid_package_creator_tag() {
+  Test::new()
+    .write(
+      "metadata.yaml",
+      "
+title: Foo
+package:
+  creator-tag: foo
+",
+    )
+    .arg("create")
+    .stderr_regex(".*tags must match regex `.*`.*")
+    .failure();
+}
+
+#[test]
 fn invalid_date() {
   Test::new()
     .write("metadata.yaml", "title: Foo\ndate: 2024/06/15")
