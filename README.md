@@ -295,8 +295,8 @@ Types:
 - `component.EXTENSION`: A component that must end with `.EXTENSION`.
 
 - `date`: A string containing a date in one of several formats: as a year only,
-  when the date and time is unknown, a date only, when the time is unknown, or a
-  date and time with a mandatory time zone.
+  when the date and time is unknown, a date only, when the time is unknown, or
+  a date and time with a mandatory time zone.
 
 - `language`: A string containing an ISO 639-1 two-character language code. See
   `filepack languages` for valid language codes.
