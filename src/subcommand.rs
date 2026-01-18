@@ -6,6 +6,7 @@ use {
   },
 };
 
+mod contains;
 mod create;
 mod files;
 mod fingerprint;
@@ -38,6 +39,8 @@ const TIME_HELP: &str = "Include current time in note";
     .placeholder(AnsiColor::Cyan.on_default()))
 ]
 pub(crate) enum Subcommand {
+  #[command(about = "Check if manifest contains file")]
+  Contains(contains::Contains),
   #[command(about = "Create manifest")]
   Create(create::Create),
   #[command(about = "List manifest files")]
@@ -69,6 +72,7 @@ pub(crate) enum Subcommand {
 impl Subcommand {
   pub(crate) fn run(self, options: Options) -> Result {
     match self {
+      Self::Contains(contains) => contains.run(),
       Self::Create(create) => create.run(options),
       Self::Files(files) => files.run(),
       Self::Fingerprint(fingerprint) => fingerprint.run(),
