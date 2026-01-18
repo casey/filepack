@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Clone, Copy, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct Fingerprint(pub(crate) Hash);
 
 impl Fingerprint {
