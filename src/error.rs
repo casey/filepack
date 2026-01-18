@@ -129,13 +129,13 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
-  #[snafu(display("manifest `{path}` not found"))]
-  ManifestNotFound {
+  #[snafu(display("cannot use `--manifest` when `{path}` exists"))]
+  ManifestInPackage {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
-  #[snafu(display("cannot use `--manifest` when `{path}` exists"))]
-  ManifestInRoot {
+  #[snafu(display("manifest `{path}` not found"))]
+  ManifestNotFound {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },

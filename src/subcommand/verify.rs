@@ -56,7 +56,7 @@ impl Verify {
     let source = if let Some(manifest) = &self.manifest {
       ensure! {
         !filesystem::exists(&root.join(Manifest::FILENAME))?,
-        error::ManifestInRoot {
+        error::ManifestInPackage {
           path: Manifest::FILENAME,
         },
       }
