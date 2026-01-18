@@ -298,7 +298,7 @@ Types:
 - `markdown`: A string containing CommonMark markdown.
 
 - `tag`: A string containing a tag, commonly an abbreviation of a release group
-  name. Must match the regular expression `[A-Z0-9]+(\.[A-Z0-9]+)*`.
+  name. Must match the regular expression `[0-9A-Z]+(\.[0-9A-Z]+)*`.
 
 Example dates:
 
