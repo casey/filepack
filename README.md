@@ -269,8 +269,7 @@ Optional fields:
 
 - `readme: component.md`: The filename of the content readme.
 
-Optional fields of `package`, which describe the package itself, as opposed its
-content:
+Optional `package` field describing the package itself, as opposed its content:
 
 - `creator: component`: The person or group who created the package.
 
@@ -324,20 +323,20 @@ Example dates:
 ```yaml
 title: Tobin's Spirit Guide
 creator: John Horace Tobin
-homepage: https://tobin-society.org/spirit-guide
 artwork: cover.png
 date: 1929
 description: A compilation of supernatural occurrences, entities, and facts.
+homepage: https://tobin-society.org/spirit-guide
 language: en
 readme: README.md
 package:
   creator: Egon Spengler
   creator-tag: ES
-  homepage: https://ghost-busters.net/~egon
   date: 1984-07-08 19:32:00 -04:00
   description: >
     First edition on loan from NYPL Main Branch research stacks. Captured via
     Microtek MS-300A flatbed scanner.
+  homepage: https://ghost-busters.net/~egon
   nfo: tobins.nfo
 ```
 
