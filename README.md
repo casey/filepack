@@ -446,9 +446,9 @@ Create a filepack manifest with:
 filepack create <PACKAGE>
 ```
 
-This will create `<PACKAGE>/filepack.manifest`.
+This will create `<PACKAGE>/filepack.json`
 
-To later verify the pacakge against the manifest:
+To later verify the package against the manifest:
 
 ```shell
 filepack verify <PACKAGE>
@@ -464,11 +464,11 @@ of the modified files.
 ### Detecting Malicious Corruption
 
 Because an attacker could modify the files and replace the manifest hashes with
-the hashes of the modified files, you must ensuring that the manifest has not
+the hashes of the modified files, you must ensure that the manifest has not
 been tampered with.
 
-This can be accomplished in a number of ways, ether by saving the manifest in a
-secure location, saving the package fingerprint, or signing the package.
+This can be accomplished in a number of ways, either by saving the manifest in
+a secure location, saving the package fingerprint, or signing the package.
 
 #### Manifest
 
@@ -479,7 +479,7 @@ the manifest somewhere other than the package:
 filepack create <PACKAGE> --manifest <MANIFEST>
 ```
 
-Then, verify the package against the saved package:
+Then, verify the package against the saved manifest:
 
 ```shell
 filepack verify <PACKAGE> --manifest <MANIFEST>
