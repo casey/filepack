@@ -467,7 +467,7 @@ Because an attacker could modify the files and replace the manifest hashes with
 the hashes of the modified files, you must ensure that the manifest has not
 been tampered with.
 
-This can be accomplished in a number of ways, either by saving the manifest in
+This can be accomplished in a number of ways, either by saving the manifest to
 a secure location, saving the package fingerprint, or signing the package.
 
 #### Manifest
