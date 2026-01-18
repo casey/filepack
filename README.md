@@ -538,7 +538,7 @@ to generate and secure your private key.
 ### Determining Authenticity
 
 To check the authenticity of a package created by someone else, get their
-public key hex, and verify the pakcage against it:
+public key, and verify the package against it:
 
 ```shell
 filepack verify <PACKAGE> --key <KEY>
