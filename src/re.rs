@@ -1,12 +1,14 @@
 use super::*;
 
-pub(crate) static DATE: LazyLock<Regex> =
-  LazyLock::new(|| r"^\d\d\d\d-\d\d-\d\d$".parse().unwrap());
+macro_rules! re {
+  { $name:ident, $pattern:literal } => {
+    pub(crate) static $name: LazyLock<Regex> =
+      LazyLock::new(|| concat!("^", $pattern, "$").parse().unwrap());
+  }
+}
 
-pub(crate) static KEY_NAME: LazyLock<Regex> =
-  LazyLock::new(|| "^[a-z0-9]+(-[a-z0-9]+)*$".parse().unwrap());
-
-pub(crate) static PUBLIC_KEY: LazyLock<Regex> =
-  LazyLock::new(|| "^[A-Za-z0-9]{64}$".parse().unwrap());
-
-pub(crate) static YEAR: LazyLock<Regex> = LazyLock::new(|| r"^[1-9][0-9]{0,3}$".parse().unwrap());
+re! { DATE,       r"\d\d\d\d-\d\d-\d\d"     }
+re! { KEY_NAME,   r"[0-9a-z]+(-[0-9a-z]+)*" }
+re! { PUBLIC_KEY, r"[0-9A-Za-z]{64}"        }
+re! { TAG,        r"[0-9A-Z]+(\.[0-9A-Z]+)*" }
+re! { YEAR,       r"[1-9][0-9]{0,3}"        }

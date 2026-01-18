@@ -107,13 +107,15 @@ mod tests {
       assert!(readme.is_some());
 
       let Package {
+        creator,
+        creator_tag,
         date,
         description,
         nfo,
-        creator,
       } = package.unwrap();
 
       assert!(creator.is_some());
+      assert!(creator_tag.is_some());
       assert!(date.is_some());
       assert!(description.is_some());
       assert!(nfo.is_some());

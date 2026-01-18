@@ -270,6 +270,9 @@ content:
 
 - `package.creator: component`: The person or group who created the package.
 
+- `package.creator-tag: tag`: The tag of the person or group who created the
+  package.
+
 - `package.date: date`: The date the package was created.
 
 - `package.description: markdown`: A description of the package.
@@ -293,6 +296,9 @@ Types:
   `filepack languages` for valid language codes.
 
 - `markdown`: A string containing CommonMark markdown.
+
+- `tag`: A string containing a tag, commonly an abbreviation of a release group
+  name. Must match the regular expression `[A-Z0-9]+(\.[A-Z0-9]+)*`.
 
 Example dates:
 
@@ -322,6 +328,7 @@ package:
     Microtek MS-300A flatbed scanner.
   nfo: tobins.nfo
   creator: Egon Spengler
+  creator-tag: ES
 ```
 
 Lints
