@@ -33,19 +33,6 @@ mod tests {
   use super::*;
 
   #[test]
-  fn valid() {
-    #[track_caller]
-    fn case(s: &str) {
-      s.parse::<Tag>().unwrap();
-    }
-
-    case("A");
-    case("A0");
-    case("A0.A0");
-    case("A0.A0.A0");
-  }
-
-  #[test]
   fn invalid() {
     #[track_caller]
     fn case(s: &str) {
@@ -58,5 +45,18 @@ mod tests {
     case("");
     case("A.");
     case("A.B.");
+  }
+
+  #[test]
+  fn valid() {
+    #[track_caller]
+    fn case(s: &str) {
+      s.parse::<Tag>().unwrap();
+    }
+
+    case("A");
+    case("A0");
+    case("A0.A0");
+    case("A0.A0.A0");
   }
 }
