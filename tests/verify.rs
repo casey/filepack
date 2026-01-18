@@ -163,6 +163,16 @@ fn malformed_signature_error() {
 }
 
 #[test]
+fn manifest_in_package_with_external_manifest() {
+  Test::new()
+    .arg("create")
+    .success()
+    .args(["verify", "--manifest", "foo.json"])
+    .stderr("error: cannot use `--manifest` when `filepack.json` exists\n")
+    .failure();
+}
+
+#[test]
 fn manifest_not_found_error_message() {
   Test::new()
     .arg("verify")
