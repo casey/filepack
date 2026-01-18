@@ -121,6 +121,22 @@ fn invalid_language() {
 }
 
 #[test]
+fn invalid_package_creator_tag() {
+  Test::new()
+    .write(
+      "metadata.yaml",
+      "
+title: Foo
+package:
+  creator-tag: foo
+",
+    )
+    .arg("create")
+    .stderr_regex(".*tags must match regex `.*`.*")
+    .failure();
+}
+
+#[test]
 fn invalid_package_date() {
   Test::new()
     .write("metadata.yaml", "title: Foo\npackage:\n  date: not-a-date")
