@@ -7,6 +7,7 @@ pub(crate) struct Metadata {
   pub(crate) creator: Option<Component>,
   pub(crate) date: Option<DateTime>,
   pub(crate) description: Option<String>,
+  pub(crate) homepage: Option<Url>,
   pub(crate) language: Option<Language>,
   pub(crate) package: Option<Package>,
   pub(crate) readme: Option<filename::Md>,
@@ -92,6 +93,7 @@ mod tests {
         creator,
         date,
         description,
+        homepage,
         language,
         package,
         readme,
@@ -103,6 +105,7 @@ mod tests {
       assert!(creator.is_some());
       assert!(date.is_some());
       assert!(description.is_some());
+      assert!(homepage.is_some());
       assert!(language.is_some());
       assert!(readme.is_some());
 
@@ -111,6 +114,7 @@ mod tests {
         creator_tag,
         date,
         description,
+        homepage,
         nfo,
       } = package.unwrap();
 
@@ -118,6 +122,7 @@ mod tests {
       assert!(creator_tag.is_some());
       assert!(date.is_some());
       assert!(description.is_some());
+      assert!(homepage.is_some());
       assert!(nfo.is_some());
     }
   }

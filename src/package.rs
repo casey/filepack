@@ -7,5 +7,6 @@ pub(crate) struct Package {
   pub(crate) creator_tag: Option<Tag>,
   pub(crate) date: Option<DateTime>,
   pub(crate) description: Option<String>,
+  pub(crate) homepage: Option<Url>,
   pub(crate) nfo: Option<filename::Nfo>,
 }

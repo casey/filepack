@@ -316,19 +316,21 @@ Example dates:
 ```yaml
 title: Tobin's Spirit Guide
 creator: John Horace Tobin
+homepage: tobin-society.org/spirit-guide
 artwork: cover.png
 date: 1929
 description: A compilation of supernatural occurrences, entities, and facts.
 language: en
 readme: README.md
 package:
+  creator: Egon Spengler
+  creator-tag: ES
+  homepage: ghost-busters.net/~egon
   date: 1984-07-08 19:32:00 -04:00
   description: >
     First edition on loan from NYPL Main Branch research stacks. Captured via
     Microtek MS-300A flatbed scanner.
   nfo: tobins.nfo
-  creator: Egon Spengler
-  creator-tag: ES
 ```
 
 Lints
