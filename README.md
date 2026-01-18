@@ -259,25 +259,30 @@ Optional fields:
 
 - `description: markdown`: A description of the content.
 
+- `homepage: url`: Primary URL for the content. Should be the official homepage
+  of the content, if any, and not, for example, a Wikipedia or media database
+  link.
+
 - `language: language`: The primary language of the content.
 
 - `package: object`: The package metadata.
 
 - `readme: component.md`: The filename of the content readme.
 
-Optional `package` fields, which describe the package itself, as opposed its
-content:
+Optional `package` field describing the package itself, as opposed its content:
 
-- `package.creator: component`: The person or group who created the package.
+- `creator: component`: The person or group who created the package.
 
-- `package.creator-tag: tag`: The tag of the person or group who created the
+- `creator-tag: tag`: The tag of the person or group who created the
   package.
 
-- `package.date: date`: The date the package was created.
+- `date: date`: The date the package was created.
 
-- `package.description: markdown`: A description of the package.
+- `description: markdown`: A description of the package.
 
-- `package.nfo: component.nfo`: The filename of the package nfo file.
+- `homepage: url`: Primary URL for the package.
+
+- `nfo: component.nfo`: The filename of the package nfo file.
 
 Types:
 
@@ -289,8 +294,8 @@ Types:
 - `component.EXTENSION`: A component that must end with `.EXTENSION`.
 
 - `date`: A string containing a date in one of several formats: as a year only,
-  when the date and time is unknown, a date only, when the time is unknown, or a
-  date and time with a mandatory time zone.
+  when the date and time is unknown, a date only, when the time is unknown, or
+  a date and time with a mandatory time zone.
 
 - `language`: A string containing an ISO 639-1 two-character language code. See
   `filepack languages` for valid language codes.
@@ -299,6 +304,8 @@ Types:
 
 - `tag`: A string containing a tag, commonly an abbreviation of a release group
   name. Must match the regular expression `[0-9A-Z]+(\.[0-9A-Z]+)*`.
+
+- `url`: A string containing a URL.
 
 Example dates:
 
@@ -319,17 +326,22 @@ creator: John Horace Tobin
 artwork: cover.png
 date: 1929
 description: A compilation of supernatural occurrences, entities, and facts.
+homepage: https://tobin-society.org/spirit-guide
 language: en
 readme: README.md
 package:
+  creator: Egon Spengler
+  creator-tag: ES
   date: 1984-07-08 19:32:00 -04:00
   description: >
     First edition on loan from NYPL Main Branch research stacks. Captured via
     Microtek MS-300A flatbed scanner.
+  homepage: https://ghost-busters.net/~egon
   nfo: tobins.nfo
-  creator: Egon Spengler
-  creator-tag: ES
 ```
+
+The `homepage` URLs are of course anachronistic, as the World Wide Web was
+created in 1989, some years after Egon first packaged Tobin's Spirit Guide.
 
 Lints
 -----

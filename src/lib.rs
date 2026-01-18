@@ -85,6 +85,7 @@ use {
     time::{SystemTime, SystemTimeError, UNIX_EPOCH},
   },
   strum::{EnumDiscriminants, EnumIter, EnumString, IntoEnumIterator, IntoStaticStr},
+  url::Url,
   usized::IntoU64,
   walkdir::WalkDir,
 };
