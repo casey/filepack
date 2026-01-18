@@ -8,8 +8,7 @@ pub(crate) const PRIVATE_KEY: &str =
 pub(crate) const PUBLIC_KEY: &str =
   "public167dndhhmae7p6fsfnj0z37zf78cde6mwqgtms0y87h8ldlvvflyqdq9may";
 
-pub(crate) const SIGNATURE: &str =
-  "signature1gc6dglnp0v32znv204688sd05nekguae2p6ajhmpnqwqsqxxay76s88w7r32qqyf52u8y8hlu9crgjyeg2jamru7kswmqq3j0npfjzglmt8d2";
+pub(crate) const SIGNATURE: &str = "signature1gc6dglnp0v32znv204688sd05nekguae2p6ajhmpnqwqsqxxay76s88w7r32qqyf52u8y8hlu9crgjyeg2jamru7kswmqq3j0npfjzglmt8d2";
 
 #[test]
 fn hash_is_valid() {
