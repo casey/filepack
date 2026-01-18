@@ -163,6 +163,16 @@ fn malformed_signature_error() {
 }
 
 #[test]
+fn manifest_in_root_with_external_manifest() {
+  Test::new()
+    .arg("create")
+    .success()
+    .args(["verify", "--manifest", "foo.json"])
+    .stderr("error: cannot use `--manifest` when `filepack.json` exists\n")
+    .failure();
+}
+
+#[test]
 fn manifest_not_found_error_message() {
   Test::new()
     .arg("verify")
@@ -668,14 +678,4 @@ fn with_manifest_path() {
     .args(["verify", "--manifest", "hello.json"])
     .stderr("successfully verified 1 file totaling 0 bytes\n")
     .success();
-}
-
-#[test]
-fn manifest_in_root_with_external_manifest() {
-  Test::new()
-    .arg("create")
-    .success()
-    .args(["verify", "--manifest", "foo.json"])
-    .stderr("error: cannot use `--manifest` when `filepack.json` exists\n")
-    .failure();
 }
