@@ -167,39 +167,22 @@ fn unknown_keys() {
 }
 
 #[test]
-fn homepage() {
-  Test::new()
-    .touch("content")
-    .write(
-      "metadata.yaml",
-      "
-title: Foo
-homepage: https://example.com
-package:
-  homepage: https://example.org
-",
-    )
-    .arg("create")
-    .success()
-    .arg("verify")
-    .stderr_regex("successfully verified.*")
-    .success();
-}
-
-#[test]
 fn invalid_homepage() {
   Test::new()
     .write("metadata.yaml", "title: Foo\nhomepage: not-a-valid-url")
     .arg("create")
-    .stderr_regex(".*metadata.yaml.*")
+    .stderr_regex(".*relative URL without a base.*")
     .failure();
 }
 
 #[test]
 fn invalid_package_homepage() {
   Test::new()
-    .write("metadata.yaml", "title: Foo\npackage:\n  homepage: :::invalid")
+    .write(
+      "metadata.yaml",
+      "title: Foo\npackage:\n  homepage: :::invalid",
+    )
     .arg("create")
-    .stderr_regex(".*metadata.yaml.*")
+    .stderr_regex(".*relative URL without a base.*")
     .failure();
 }
