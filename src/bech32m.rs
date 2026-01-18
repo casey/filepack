@@ -4,7 +4,7 @@ pub(crate) trait Bech32m<const LEN: usize> {
   const HRP: Hrp;
 
   fn decode_bech32m(s: &str) -> Result<[u8; LEN], Bech32mError> {
-    let hrp_string = CheckedHrpstring::new::<bech32::Bech32m>(&s).context(bech32m_error::Decode)?;
+    let hrp_string = CheckedHrpstring::new::<bech32::Bech32m>(s).context(bech32m_error::Decode)?;
 
     let actual = hrp_string.hrp();
 
@@ -55,24 +55,6 @@ mod tests {
   use super::*;
 
   #[test]
-  fn weak_encodings() {
-    let weak_pub = [0u8; PublicKey::LEN];
-    let weak_sig = [0u8; Signature::LEN];
-
-    let pub_encoded = bech32::encode::<bech32::Bech32m>(PublicKey::HRP, &weak_pub).unwrap();
-    let sig_encoded = bech32::encode::<bech32::Bech32m>(Signature::HRP, &weak_sig).unwrap();
-
-    assert_eq!(
-      pub_encoded,
-      "public1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq9xa2lj"
-    );
-    assert_eq!(
-      sig_encoded,
-      "signature1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq83s9ss"
-    );
-  }
-
-  #[test]
   fn implementation() {
     fn case<const LEN: usize, T: Bech32m<LEN>>(hrp: &str) {
       use bech32::Checksum;
@@ -92,5 +74,23 @@ mod tests {
     case::<{ PrivateKey::LEN }, PrivateKey>("private");
     case::<{ PublicKey::LEN }, PublicKey>("public");
     case::<{ Signature::LEN }, Signature>("signature");
+  }
+
+  #[test]
+  fn weak_encodings() {
+    let weak_pub = [0u8; PublicKey::LEN];
+    let weak_sig = [0u8; Signature::LEN];
+
+    let pub_encoded = bech32::encode::<bech32::Bech32m>(PublicKey::HRP, &weak_pub).unwrap();
+    let sig_encoded = bech32::encode::<bech32::Bech32m>(Signature::HRP, &weak_sig).unwrap();
+
+    assert_eq!(
+      pub_encoded,
+      "public1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq9xa2lj"
+    );
+    assert_eq!(
+      sig_encoded,
+      "signature1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq83s9ss"
+    );
   }
 }
