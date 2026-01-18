@@ -51,6 +51,7 @@ use {
     signature_error::SignatureError,
     style::Style,
     subcommand::Subcommand,
+    tag::Tag,
     ticked::Ticked,
     utf8_path_ext::Utf8PathExt,
   },
@@ -168,6 +169,7 @@ mod signature;
 mod signature_error;
 mod style;
 mod subcommand;
+mod tag;
 mod ticked;
 mod utf8_path_ext;
 
