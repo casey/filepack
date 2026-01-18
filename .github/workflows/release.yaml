@@ -152,7 +152,7 @@ jobs:
       run: rustup toolchain install stable --profile minimal
 
     - name: Create Manifest
-      run: cargo run create --deny all release
+      run: cargo run create --deny distribution release
 
     - name: Publish Manifest
       uses: softprops/action-gh-release@v2.0.8
