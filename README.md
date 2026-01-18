@@ -306,7 +306,7 @@ Types:
 - `tag`: A string containing a tag, commonly an abbreviation of a release group
   name. Must match the regular expression `[0-9A-Z]+(\.[0-9A-Z]+)*`.
 
-- `tag`: A string containing a URL.
+- `url`: A string containing a URL.
 
 Example dates:
 
