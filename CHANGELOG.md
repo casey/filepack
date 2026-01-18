@@ -1,6 +1,76 @@
 Changelog
 =========
 
+[0.0.8](https://github.com/casey/filepack/releases/tag/0.0.8) - 2026-01-17
+--------------------------------------------------------------------------
+
+### Changed
+- Move package metadata into sub-object ([#164](https://github.com/casey/filepack/pull/164) by [casey](https://github.com/casey))
+- Forbid overlong components and components containing NUL ([#157](https://github.com/casey/filepack/pull/157) by [casey](https://github.com/casey))
+- Allow unknown metadata fields when verifying ([#150](https://github.com/casey/filepack/pull/150) by [casey](https://github.com/casey))
+- Use YAML metadata ([#148](https://github.com/casey/filepack/pull/148) by [casey](https://github.com/casey))
+- Include current time in note with `filepack create/sign --time` ([#140](https://github.com/casey/filepack/pull/140) by [casey](https://github.com/casey))
+- Rename keys directory to keychain ([#134](https://github.com/casey/filepack/pull/134) by [casey](https://github.com/casey))
+- Create `keys` dir and private keys with correct permissions ([#123](https://github.com/casey/filepack/pull/123) by [casey](https://github.com/casey))
+- Make manifest keys mandatory ([#118](https://github.com/casey/filepack/pull/118) by [casey](https://github.com/casey))
+
+### Added
+- Add homepage URLs to metadata ([#167](https://github.com/casey/filepack/pull/167) by [casey](https://github.com/casey))
+- Add package creator tag ([#166](https://github.com/casey/filepack/pull/166) by [casey](https://github.com/casey))
+- Add creator metadata ([#165](https://github.com/casey/filepack/pull/165) by [casey](https://github.com/casey))
+- Add description fields to metadata ([#163](https://github.com/casey/filepack/pull/163) by [casey](https://github.com/casey))
+- Add metadata date fields ([#162](https://github.com/casey/filepack/pull/162) by [casey](https://github.com/casey))
+- Add language metadata field ([#160](https://github.com/casey/filepack/pull/160) by [casey](https://github.com/casey))
+- Add file fields to metadata ([#159](https://github.com/casey/filepack/pull/159) by [casey](https://github.com/casey))
+- Add packager metadata field ([#158](https://github.com/casey/filepack/pull/158) by [casey](https://github.com/casey))
+- Add more lint groups ([#152](https://github.com/casey/filepack/pull/152) by [casey](https://github.com/casey))
+- Notes ([#137](https://github.com/casey/filepack/pull/137) by [casey](https://github.com/casey))
+- Add `filepack info` subcommand ([#132](https://github.com/casey/filepack/pull/132) by [casey](https://github.com/casey))
+- Allow signing with non-default key when creating manifest ([#129](https://github.com/casey/filepack/pull/129) by [casey](https://github.com/casey))
+- Allow signing with non-default key ([#128](https://github.com/casey/filepack/pull/128) by [casey](https://github.com/casey))
+- Allow printing named public key ([#126](https://github.com/casey/filepack/pull/126) by [casey](https://github.com/casey))
+- Allow supplying key name to `filepack keygen` ([#125](https://github.com/casey/filepack/pull/125) by [casey](https://github.com/casey))
+- Allow using named keys with `filepack verify --key` ([#124](https://github.com/casey/filepack/pull/124) by [casey](https://github.com/casey))
+- Check `keys` dir and private key permissions ([#121](https://github.com/casey/filepack/pull/121) by [casey](https://github.com/casey))
+- Allow asserting multiple keys when verifying ([#120](https://github.com/casey/filepack/pull/120) by [casey](https://github.com/casey))
+- Add `--assert` to `filepack hash` ([#117](https://github.com/casey/filepack/pull/117) by [casey](https://github.com/casey))
+
+### Misc
+- Move metadata tests into dedicated module ([#161](https://github.com/casey/filepack/pull/161) by [casey](https://github.com/casey))
+- Test filepack metadata ([#156](https://github.com/casey/filepack/pull/156) by [casey](https://github.com/casey))
+- Include metadata in filepack releases ([#155](https://github.com/casey/filepack/pull/155) by [casey](https://github.com/casey))
+- Document metadata purpose ([#154](https://github.com/casey/filepack/pull/154) by [casey](https://github.com/casey))
+- Improve path handling ([#153](https://github.com/casey/filepack/pull/153) by [casey](https://github.com/casey))
+- Use snafu for lint display implementation ([#151](https://github.com/casey/filepack/pull/151) by [casey](https://github.com/casey))
+- Make verify less verbose ([#149](https://github.com/casey/filepack/pull/149) by [casey](https://github.com/casey))
+- Fix lint message typo ([#147](https://github.com/casey/filepack/pull/147) by [casey](https://github.com/casey))
+- Skip serializing optional note fields ([#146](https://github.com/casey/filepack/pull/146) by [casey](https://github.com/casey))
+- Use distinct fingerprint type ([#144](https://github.com/casey/filepack/pull/144) by [casey](https://github.com/casey))
+- Consider using BLAKE3 in signatures ([#143](https://github.com/casey/filepack/pull/143) by [casey](https://github.com/casey))
+- Open question: CBOR fingerprints ([#142](https://github.com/casey/filepack/pull/142) by [casey](https://github.com/casey))
+- Test that duplicate note fields are rejected ([#141](https://github.com/casey/filepack/pull/141) by [casey](https://github.com/casey))
+- Forbid duplicate directory entries and note signatures ([#139](https://github.com/casey/filepack/pull/139) by [casey](https://github.com/casey))
+- Add single argument test method ([#138](https://github.com/casey/filepack/pull/138) by [casey](https://github.com/casey))
+- Fix DESIGN.md typo ([#136](https://github.com/casey/filepack/pull/136) by [casey](https://github.com/casey))
+- Delegate key generation to keychain ([#135](https://github.com/casey/filepack/pull/135) by [casey](https://github.com/casey))
+- Rename Keys to Keychain ([#133](https://github.com/casey/filepack/pull/133) by [casey](https://github.com/casey))
+- Restrict key names ([#131](https://github.com/casey/filepack/pull/131) by [casey](https://github.com/casey))
+- Require lowercase keys and signatures ([#130](https://github.com/casey/filepack/pull/130) by [casey](https://github.com/casey))
+- Be more paranoid with private keys ([#127](https://github.com/casey/filepack/pull/127) by [casey](https://github.com/casey))
+- Rename `filesystem::set_mode` to `chmod` ([#122](https://github.com/casey/filepack/pull/122) by [casey](https://github.com/casey))
+- Sign readme manifest ([#119](https://github.com/casey/filepack/pull/119) by [casey](https://github.com/casey))
+- Use custom test assertions ([#116](https://github.com/casey/filepack/pull/116) by [casey](https://github.com/casey))
+- Print number of files, bytes, and signatures verified ([#115](https://github.com/casey/filepack/pull/115) by [casey](https://github.com/casey))
+- Add open questions to DESIGN.md ([#114](https://github.com/casey/filepack/pull/114) by [casey](https://github.com/casey))
+- Test that extra fields in metadata are ignored ([#113](https://github.com/casey/filepack/pull/113) by [casey](https://github.com/casey))
+- Add DESIGN.md ([#112](https://github.com/casey/filepack/pull/112) by [casey](https://github.com/casey))
+- Expand readme ([#111](https://github.com/casey/filepack/pull/111) by [casey](https://github.com/casey))
+- Add top-level doc-comment to library ([#110](https://github.com/casey/filepack/pull/110) by [casey](https://github.com/casey))
+- Simplify context hasher ([#109](https://github.com/casey/filepack/pull/109) by [casey](https://github.com/casey))
+
+[0.0.7](https://github.com/casey/filepack/releases/tag/0.0.7) - 2026-01-11
+--------------------------------------------------------------------------
+
 ### Added
 - Add `size` subcommand to print out manifest total file size ([#101](https://github.com/casey/filepack/pull/101) by [casey](https://github.com/casey))
 - Add json and tsv formats options to `filepack files` ([#100](https://github.com/casey/filepack/pull/100) by [casey](https://github.com/casey))
