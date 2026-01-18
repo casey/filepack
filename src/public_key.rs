@@ -91,10 +91,8 @@ mod tests {
 
   #[test]
   fn weak_public_keys_are_forbidden() {
-    let weak_bytes = [0u8; PublicKey::LEN];
-    let encoded = bech32::encode::<bech32::Bech32m>(PublicKey::HRP, &weak_bytes).unwrap();
     assert!(matches!(
-      encoded.parse::<PublicKey>().unwrap_err(),
+      test::WEAK_PUBLIC_KEY.parse::<PublicKey>().unwrap_err(),
       PublicKeyError::Weak { .. },
     ));
   }

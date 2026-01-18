@@ -75,22 +75,4 @@ mod tests {
     case::<{ PublicKey::LEN }, PublicKey>("public");
     case::<{ Signature::LEN }, Signature>("signature");
   }
-
-  #[test]
-  fn weak_encodings() {
-    let weak_pub = [0u8; PublicKey::LEN];
-    let weak_sig = [0u8; Signature::LEN];
-
-    let pub_encoded = bech32::encode::<bech32::Bech32m>(PublicKey::HRP, &weak_pub).unwrap();
-    let sig_encoded = bech32::encode::<bech32::Bech32m>(Signature::HRP, &weak_sig).unwrap();
-
-    assert_eq!(
-      pub_encoded,
-      "public1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq9xa2lj"
-    );
-    assert_eq!(
-      sig_encoded,
-      "signature1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq83s9ss"
-    );
-  }
 }
