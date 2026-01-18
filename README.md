@@ -246,35 +246,35 @@ Fields are given as `NAME: TYPE`.
 
 Mandatory fields:
 
-- `title: component`: The package's human-readable title.
+- `title: component`: The content's human-readable title.
 
 Optional fields:
 
 - `artwork: component.png`: The filename of an PNG file containing artwork for
-  the package, for example, cover art for an album or key art for a movie.
+  the content, for example, cover art for an album or key art for a movie.
 
-- `description: markdown`: A description of the package content.
+- `creator: component`: The person or group who created the content.
 
-- `language: language`: The primary language of the package content.
+- `date: date`: The date the content was created.
 
-- `package: object`: Metadata for the package itself, as opposed to its content.
+- `description: markdown`: A description of the content.
 
-- `readme: component.md`: A component containing the filename of the package
-  markdown readme.
+- `language: language`: The primary language of the content.
 
-- `date: date`: The date the package content was created.
+- `package: object`: The package metadata.
 
-The package
+- `readme: component.md`: The filename of the content readme.
+
+Optional `package` fields, which describe the package itself, as opposed its
+content:
 
 - `package.nfo: component.nfo`: The filename of the package nfo file.
 
-- `package.date: date`: The date and optionally time the package was created.
+- `package.date: date`: The date the package was created.
 
 - `package.description: markdown`: A descriptiion of the package.
 
-- `package.packager: component`: A component containing the name of the person
-  or group who created the package. Note that this may not be the author of the
-  content of the package.
+- `package.creator: component`: The person or group who created the package.
 
 Types:
 
@@ -309,6 +309,7 @@ Example dates:
 
 ```yaml
 title: Tobin's Spirit Guide
+creator: John Horace Tobin
 artwork: cover.png
 date: 1929
 description: A compilation of supernatural occurrences, entities, and facts.
@@ -320,7 +321,7 @@ package:
     First edition on loan from NYPL Main Branch research stacks. Captured via
     Microtek MS-300A flatbed scanner.
   nfo: tobins.nfo
-  packager: Egon Spengler
+  creator: Egon Spengler
 ```
 
 Lints

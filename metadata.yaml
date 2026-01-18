@@ -1,6 +1,7 @@
 title: filepack
+creator: Casey Rodarmor
 description: A file verification utility.
 language: en
 readme: README.md
 package:
-  packager: Casey Rodarmor
+  creator: Casey Rodarmor

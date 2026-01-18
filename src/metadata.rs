@@ -4,6 +4,7 @@ use super::*;
 #[serde(rename_all = "kebab-case")]
 pub(crate) struct Metadata {
   pub(crate) artwork: Option<filename::Png>,
+  pub(crate) creator: Option<Component>,
   pub(crate) date: Option<DateTime>,
   pub(crate) description: Option<String>,
   pub(crate) language: Option<Language>,
@@ -88,6 +89,7 @@ mod tests {
 
       let Metadata {
         artwork,
+        creator,
         date,
         description,
         language,
@@ -98,6 +100,7 @@ mod tests {
 
       assert!(!title.as_str().is_empty());
       assert!(artwork.is_some());
+      assert!(creator.is_some());
       assert!(date.is_some());
       assert!(description.is_some());
       assert!(language.is_some());
@@ -107,13 +110,13 @@ mod tests {
         date,
         description,
         nfo,
-        packager,
+        creator,
       } = package.unwrap();
 
+      assert!(creator.is_some());
       assert!(date.is_some());
       assert!(description.is_some());
       assert!(nfo.is_some());
-      assert!(packager.is_some());
     }
   }
 
