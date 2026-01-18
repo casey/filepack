@@ -75,6 +75,11 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
+  #[snafu(display("manifest does not contain file with hash `{hash}`"))]
+  FileNotFound {
+    backtrace: Option<Backtrace>,
+    hash: Hash,
+  },
   #[snafu(display("I/O error at `{path}`"))]
   FilesystemIo {
     backtrace: Option<Backtrace>,

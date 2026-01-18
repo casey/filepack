@@ -15,6 +15,7 @@ use {
   },
 };
 
+mod contains;
 mod create;
 mod expected;
 mod files;
