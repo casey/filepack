@@ -673,22 +673,9 @@ fn with_manifest_path() {
 #[test]
 fn manifest_in_root_with_external_manifest() {
   Test::new()
-    .touch("foo")
-    .args(["create", "."])
+    .arg("create")
     .success()
-    .write(
-      "alternative.json",
-      json! {
-        files: {
-          foo: {
-            hash: EMPTY_HASH,
-            size: 0
-          }
-        },
-        notes: [],
-      },
-    )
-    .args(["verify", "--manifest", "alternative.json"])
+    .args(["verify", "--manifest", "foo.json"])
     .stderr("error: cannot use `--manifest` when `filepack.json` exists\n")
     .failure();
 }
