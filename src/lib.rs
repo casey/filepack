@@ -19,6 +19,7 @@
 use {
   self::{
     arguments::Arguments,
+    bech32m::Bech32m,
     component::Component,
     component_error::ComponentError,
     count::Count,
@@ -123,6 +124,7 @@ macro_rules! assert_matches {
 }
 
 mod arguments;
+mod bech32m;
 mod component;
 mod component_error;
 mod count;

@@ -4,7 +4,7 @@ use super::*;
 pub struct PublicKey(ed25519_dalek::VerifyingKey);
 
 impl PublicKey {
-  const LEN: usize = ed25519_dalek::PUBLIC_KEY_LENGTH;
+  pub(crate) const LEN: usize = ed25519_dalek::PUBLIC_KEY_LENGTH;
 
   #[must_use]
   pub fn inner(&self) -> ed25519_dalek::VerifyingKey {
@@ -42,11 +42,7 @@ impl FromStr for PublicKey {
   type Err = PublicKeyError;
 
   fn from_str(key: &str) -> Result<Self, Self::Err> {
-    let bytes = hex::decode(key).context(public_key_error::Hex { key })?;
-
-    if !is_lowercase_hex(key) {
-      return Err(public_key_error::Case { key }.build());
-    }
+    let bytes = Bech32m::PublicKey.decode(key);
 
     let array: [u8; Self::LEN] = bytes
       .as_slice()
@@ -71,7 +67,7 @@ impl FromStr for PublicKey {
 
 impl Display for PublicKey {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    write!(f, "{}", hex::encode(self.0.to_bytes()))
+    Bech32m::PublicKey.encode(f, *self.0.as_bytes())
   }
 }
 
