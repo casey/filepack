@@ -4,16 +4,16 @@ pub(crate) trait Bech32m<const LEN: usize> {
   const HRP: Hrp;
 
   fn decode_bech32m(s: &str) -> Result<[u8; LEN], Bech32mError> {
-    let p = CheckedHrpstring::new::<bech32::Bech32m>(&s).context(bech32m_error::Decode)?;
+    let hrp_string = CheckedHrpstring::new::<bech32::Bech32m>(&s).context(bech32m_error::Decode)?;
 
-    let actual = p.hrp();
+    let actual = hrp_string.hrp();
 
     ensure! {
       actual == Self::HRP,
       bech32m_error::Hrp { expected: Self::HRP, actual },
     }
 
-    let mut bytes = p.byte_iter();
+    let mut bytes = hrp_string.byte_iter();
 
     let mut array = [0; LEN];
 
