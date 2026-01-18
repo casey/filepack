@@ -435,6 +435,115 @@ the same fingerprint.
 
 For details on how fingerprints are calculated, see [DESIGN.md](DESIGN.md).
 
+Workflows
+---------
+
+### Detecting Accidental Corruption
+
+Create a filepack manifest with:
+
+```shell
+filepack create <PACKAGE>
+```
+
+This will create `<PACKAGE>/filepack.manifest`.
+
+To later verify the pacakge against the manifest:
+
+```shell
+filepack verify <PACKAGE>
+```
+
+Because the manifest contains cryptographic hashes, accidental corruption to
+the files or manifest will always be detected by `filepack verify`.
+
+This is *not* the case with intentional, malicious corruption, since an
+attacker could modify the files and replace the manifest hashes with the hashes
+of the modified files.
+
+### Detecting Malicious Corruption
+
+Because an attacker could modify the files and replace the manifest hashes with
+the hashes of the modified files, you must ensuring that the manifest has not
+been tampered with.
+
+This can be accomplished in a number of ways, ether by saving the manifest in a
+secure location, saving the package fingerprint, or signing the package.
+
+#### Manifest
+
+To save the manifest in a secure location, use the `--manifest` option to save
+the manifest somewhere other than the package:
+
+```shell
+filepack create <PACKAGE> --manifest <MANIFEST>
+```
+
+Then, verify the package against the saved package:
+
+```shell
+filepack verify <PACKAGE> --manifest <MANIFEST>
+```
+
+Because the manifest was protected, any modification to the package will be
+detected. This has the advantage that not only will any modifications be
+detected, but which files were modified can also be detected.
+
+#### Fingerprint
+
+Create the manifest in the package root with:
+
+```shell
+filepack create <PACKAGE>
+```
+
+Print the package fingerprint:
+
+```shell
+filepack fingerprint <PACKAGE>
+```
+
+Save the fingerprint in a secure location.
+
+Then, verify the package against the saved fingerprint:
+
+```shell
+filepack verify <PACKAGE> --fingerprint <FINGERPRINT>
+```
+
+Because the fingerprint was protected, any modification to the package will be
+detected. This has the advantage that you only have to save a small text
+string, but the disadvantage that while any modifications will be detected, you
+will not be able to determine which files have changed.
+
+#### Signature
+
+Create the manifest in the package root and sign it with your `master` key:
+
+```shell
+filepack create <PACKAGE> --sign
+```
+
+Then, verify the package and its signature:
+
+```shell
+filepack verify <PACKAGE> --key master
+```
+
+Any modification to the package or manifest will invalidate the signature,
+which will be detected. This has the advantage of not needing to save the
+manifest or fingerprint of packages you want to verify. However, you will need
+to generate and secure your private key.
+
+### Determining Authenticity
+
+To check the authenticity of a package created by someone else, get their
+public key hex, and verify the pakcage against it:
+
+```shell
+filepack verify <PACKAGE> --key <KEY>
+```
+
 Alternatives and Prior Art
 --------------------------
 
