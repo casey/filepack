@@ -32,6 +32,9 @@ mod tests {
 
   #[test]
   fn uppercase_is_forbidden() {
-    test::HASH.to_uppercase().parse::<Hash>().unwrap_err();
+    test::HASH
+      .to_uppercase()
+      .parse::<Fingerprint>()
+      .unwrap_err();
   }
 }
