@@ -30,10 +30,16 @@ impl From<[u8; Hash::LEN]> for Hash {
 }
 
 impl FromStr for Hash {
-  type Err = blake3::HexError;
+  type Err = HashError;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
-    Ok(Self(s.parse()?))
+    let hash = s.parse()?;
+
+    if !is_lowercase_hex(s) {
+      return Err(hash_error::Case { hash: s }.build());
+    }
+
+    Ok(Self(hash))
   }
 }
 
@@ -102,5 +108,10 @@ mod tests {
       "\"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262\""
     );
     assert_eq!(serde_json::from_str::<Hash>(&json).unwrap(), input);
+  }
+
+  #[test]
+  fn uppercase_is_forbidden() {
+    test::HASH.to_uppercase().parse::<Hash>().unwrap_err();
   }
 }

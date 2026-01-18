@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Clone, Copy, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct Fingerprint(pub(crate) Hash);
 
 impl Fingerprint {
@@ -19,9 +19,22 @@ impl Display for Fingerprint {
 }
 
 impl FromStr for Fingerprint {
-  type Err = blake3::HexError;
+  type Err = HashError;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     Ok(Self(s.parse()?))
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn uppercase_is_forbidden() {
+    test::HASH
+      .to_uppercase()
+      .parse::<Fingerprint>()
+      .unwrap_err();
   }
 }
