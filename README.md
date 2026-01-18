@@ -540,7 +540,7 @@ to generate and secure your private key.
 To check the authenticity of a package created by someone else, get their
 public key, and verify the package against it:
 
-```shell
+```sh
 filepack verify <PACKAGE> --key <KEY>
 ```
 
