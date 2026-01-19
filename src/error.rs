@@ -9,9 +9,10 @@ pub enum Error {
     actual: Hash,
     expected: Hash,
   },
-  #[snafu(display("failed to decode bech32m"))]
+  #[snafu(display("failed to decode bech32m `{bech32m}`"))]
   Bech32mDecode {
     backtrace: Option<Backtrace>,
+    bech32m: String,
     source: CheckedHrpstringError,
   },
   #[snafu(display("failed to encode bech32m"))]
@@ -103,9 +104,10 @@ pub enum Error {
   },
   #[snafu(display("fingerprint mismatch"))]
   FingerprintMismatch { backtrace: Option<Backtrace> },
-  #[snafu(display("failed to parse hexadecimal"))]
+  #[snafu(display("failed to parse hexadecimal `{hex}`"))]
   Hex {
     backtrace: Option<Backtrace>,
+    hex: String,
     source: hex::FromHexError,
   },
   #[snafu(display("internal error, this may indicate a bug in filepack: {message}"))]

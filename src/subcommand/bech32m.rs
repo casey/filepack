@@ -26,13 +26,16 @@ impl Bech32m {
   pub(crate) fn run(self) -> Result {
     if let Some(bech32m) = self.decode {
       let checked =
-        CheckedHrpstring::new::<bech32::Bech32m>(&bech32m).context(error::Bech32mDecode)?;
+        CheckedHrpstring::new::<bech32::Bech32m>(&bech32m).context(error::Bech32mDecode {
+          bech32m: bech32m.clone(),
+        })?;
       let bytes = checked.byte_iter().collect::<Vec<u8>>();
       let hex = hex::encode(bytes);
       println!("{hex}");
     } else {
       let hrp = Hrp::parse(&self.hrp.unwrap()).context(error::Bech32mHrp)?;
-      let hex = hex::decode(self.encode.unwrap()).context(error::Hex)?;
+      let hex = self.encode.unwrap();
+      let hex = hex::decode(&hex).context(error::Hex { hex })?;
       let bech32m = bech32::encode::<bech32::Bech32m>(hrp, &hex).context(error::Bech32mEncode)?;
       println!("{bech32m}");
     }
