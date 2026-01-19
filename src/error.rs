@@ -9,6 +9,22 @@ pub enum Error {
     actual: Hash,
     expected: Hash,
   },
+  #[snafu(display("failed to decode bech32m `{bech32m}`"))]
+  Bech32mDecode {
+    backtrace: Option<Backtrace>,
+    bech32m: String,
+    source: CheckedHrpstringError,
+  },
+  #[snafu(display("failed to encode bech32m"))]
+  Bech32mEncode {
+    backtrace: Option<Backtrace>,
+    source: bech32::EncodeError,
+  },
+  #[snafu(display("failed to parse bech32m human-readable part"))]
+  Bech32mHrp {
+    backtrace: Option<Backtrace>,
+    source: bech32::primitives::hrp::Error,
+  },
   #[snafu(display("failed to get current directory"))]
   CurrentDir {
     backtrace: Option<Backtrace>,
@@ -88,6 +104,12 @@ pub enum Error {
   },
   #[snafu(display("fingerprint mismatch"))]
   FingerprintMismatch { backtrace: Option<Backtrace> },
+  #[snafu(display("failed to parse hexadecimal `{hex}`"))]
+  Hex {
+    backtrace: Option<Backtrace>,
+    hex: String,
+    source: hex::FromHexError,
+  },
   #[snafu(display("internal error, this may indicate a bug in filepack: {message}"))]
   Internal {
     backtrace: Option<Backtrace>,

@@ -1,4 +1,4 @@
-use {super::*, bech32::primitives::decode::CheckedHrpstring};
+use super::*;
 
 pub(crate) trait Bech32m<const LEN: usize> {
   const HRP: Hrp;
@@ -95,7 +95,7 @@ mod tests {
 
     case(
       test::PRIVATE_KEY,
-      "expected bech32m human-readable prefix `public1...` but found `private1...`",
+      "expected bech32m human-readable part `public1...` but found `private1...`",
     );
 
     case("public134jkgz", "expected 32 bytes but found 0");

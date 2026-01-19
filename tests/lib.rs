@@ -15,6 +15,7 @@ use {
   },
 };
 
+mod bech32m;
 mod contains;
 mod create;
 mod expected;

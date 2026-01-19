@@ -1,4 +1,4 @@
-use {super::*, bech32::primitives::decode::CheckedHrpstringError};
+use super::*;
 
 #[derive(Debug, Snafu)]
 #[snafu(context(suffix(false)), visibility(pub(crate)))]
@@ -9,7 +9,7 @@ pub enum Bech32mError {
     source: CheckedHrpstringError,
   },
   #[snafu(display(
-    "expected bech32m human-readable prefix `{expected}1...` but found `{actual}1...`",
+    "expected bech32m human-readable part `{expected}1...` but found `{actual}1...`",
   ))]
   Hrp {
     expected: crate::Hrp,
