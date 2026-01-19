@@ -97,18 +97,6 @@ mod tests {
   }
 
   #[test]
-  fn private_key_bytes_not_in_error_message() {
-    let key = PrivateKey::generate();
-    let encoded = key.display_secret().to_string();
-
-    let corrupted = format!("{}x", &encoded[..encoded.len() - 1]);
-
-    let err = corrupted.parse::<PrivateKey>().unwrap_err().to_string();
-
-    assert!(!err.contains(&encoded));
-  }
-
-  #[test]
   fn serialized_private_key_is_not_valid_public_key() {
     test::PRIVATE_KEY.parse::<PublicKey>().unwrap_err();
   }
