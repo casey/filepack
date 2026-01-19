@@ -72,6 +72,7 @@ pub(crate) trait Bech32m<const LEN: usize> {
     for c in chars {
       f.write_char(c)?;
     }
+
     Ok(())
   }
 }

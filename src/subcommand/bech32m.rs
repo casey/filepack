@@ -20,16 +20,16 @@ pub(crate) struct Bech32m {
   encode: Option<String>,
   #[arg(help = "Prefix bech32m with human-readable part <HRP>", long)]
   hrp: Option<String>,
-  #[arg(
-    help = "Version character (bech32 field element: q-z, 0-9, excluding 1, b, i, o)",
-    long
-  )]
+  #[arg(help = "Version character", long)]
   version: Option<char>,
 }
 
 impl Bech32m {
   pub(crate) fn run(self) -> Result {
     use bech32::Fe32;
+
+    // todo:
+    // - check version character, since not all bech32m symbols are versions
 
     let version = self
       .version
@@ -61,13 +61,12 @@ impl Bech32m {
       let hex = hex::encode(bytes);
       println!("{hex}");
     } else {
-      use {bech32::ByteIterExt, bech32::Fe32IterExt, std::fmt::Write};
+      use {bech32::ByteIterExt, bech32::Fe32IterExt};
 
       let hrp = Hrp::parse(&self.hrp.unwrap()).context(error::Bech32mHrp)?;
       let hex = self.encode.unwrap();
       let hex = hex::decode(&hex).context(error::Hex { hex })?;
 
-      let mut result = String::new();
       let iter = hex
         .iter()
         .copied()
@@ -75,15 +74,16 @@ impl Bech32m {
         .with_checksum::<bech32::Bech32m>(&hrp);
 
       let chars = if let Some(v) = version {
-        iter.with_witness_version(v).chars().collect::<Vec<_>>()
+        iter.with_witness_version(v).chars()
       } else {
-        iter.chars().collect::<Vec<_>>()
+        iter.chars()
       };
 
       for c in chars {
-        result.write_char(c).unwrap();
+        print!("{c}");
       }
-      println!("{result}");
+
+      println!();
     }
 
     Ok(())
