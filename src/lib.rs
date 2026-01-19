@@ -31,6 +31,7 @@ use {
     entries::Entries,
     fingerprint_hasher::FingerprintHasher,
     fingerprint_prefix::FingerprintPrefix,
+    fingerprint_serializer::FingerprintSerializer,
     format::Format,
     functions::{current_dir, decode_path, default, is_default, is_lowercase_hex, now},
     hash_error::HashError,
@@ -147,6 +148,7 @@ mod filesystem;
 mod fingerprint;
 mod fingerprint_hasher;
 mod fingerprint_prefix;
+mod fingerprint_serializer;
 mod format;
 mod functions;
 mod hash;
