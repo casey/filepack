@@ -7,7 +7,7 @@ fn fingerprint() {
     .arg("create")
     .assert_file(
       "filepack.json",
-      json! {
+      json_pretty! {
         files: {
           foo: {
             hash: EMPTY_HASH,

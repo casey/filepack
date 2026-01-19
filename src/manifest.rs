@@ -71,7 +71,10 @@ impl Manifest {
   }
 
   pub fn save(&self, path: &Utf8Path) -> Result {
-    filesystem::write(path, format!("{}\n", serde_json::to_string(self).unwrap()))
+    filesystem::write(
+      path,
+      format!("{}\n", serde_json::to_string_pretty(self).unwrap()),
+    )
   }
 
   pub(crate) fn sign(
