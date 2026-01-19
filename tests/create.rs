@@ -26,7 +26,7 @@ fn empty_directories_are_included() {
     .args(["create", "."])
     .assert_file(
       "filepack.json",
-      json! {
+      json_pretty! {
         files: {
           foo: {
           },
@@ -47,7 +47,7 @@ fn file_in_subdirectory() {
     .args(["create", "."])
     .assert_file(
       "filepack.json",
-      json! {
+      json_pretty! {
         files: {
           foo: {
             bar: {
@@ -73,7 +73,7 @@ fn force_overwrites_manifest() {
     .args(["create", "--force", "."])
     .assert_file(
       "filepack.json",
-      json! {
+      json_pretty! {
         files: {
           foo: {
             hash: EMPTY_HASH,
@@ -97,7 +97,7 @@ fn force_overwrites_manifest_with_destination() {
     .args(["create", "--force", ".", "--manifest", "foo.json"])
     .assert_file(
       "foo.json",
-      json! {
+      json_pretty! {
         files: {
           foo: {
             hash: EMPTY_HASH,
@@ -145,7 +145,7 @@ fn multiple_empty_directory_are_included() {
     .args(["create", "."])
     .assert_file(
       "filepack.json",
-      json! {
+      json_pretty! {
         files: {
           bar: {
           },
@@ -168,7 +168,7 @@ fn nested_empty_directories_are_included() {
     .args(["create", "."])
     .assert_file(
       "filepack.json",
-      json! {
+      json_pretty! {
         files: {
           foo: {
             bar: {
@@ -188,7 +188,7 @@ fn nested_empty_directories_are_included() {
 fn no_files() {
   Test::new()
     .args(["create", "."])
-    .assert_file("filepack.json", json! { files: {}, notes: [] })
+    .assert_file("filepack.json", json_pretty! { files: {}, notes: [] })
     .success()
     .args(["verify", "."])
     .stderr("successfully verified 0 files\n")
@@ -328,7 +328,7 @@ fn single_file() {
     .args(["create", "."])
     .assert_file(
       "filepack.json",
-      json! {
+      json_pretty! {
         files: {
           foo: {
             hash: EMPTY_HASH,
@@ -351,7 +351,7 @@ fn single_file_mmap() {
     .args(["--mmap", "create", "."])
     .assert_file(
       "filepack.json",
-      json! {
+      json_pretty! {
         files: {
           foo: {
             hash: EMPTY_HASH,
@@ -374,7 +374,7 @@ fn single_file_omit_root() {
     .arg("create")
     .assert_file(
       "filepack.json",
-      json! {
+      json_pretty! {
         files: {
           foo: {
             hash: EMPTY_HASH,
@@ -397,7 +397,7 @@ fn single_file_parallel() {
     .args(["--parallel", "create", "."])
     .assert_file(
       "filepack.json",
-      json! {
+      json_pretty! {
         files: {
           foo: {
             hash: EMPTY_HASH,
@@ -420,7 +420,7 @@ fn single_non_empty_file() {
     .args(["create", "."])
     .assert_file(
       "filepack.json",
-      json! {
+      json_pretty! {
         files: {
           foo: {
             hash: "f2e897eed7d206cd855d441598fa521abc75aa96953e97c030c9612c30c1293d",
@@ -452,7 +452,7 @@ fn with_manifest_path() {
     .args(["create", "--manifest", "hello.json"])
     .assert_file(
       "hello.json",
-      json! {
+      json_pretty! {
         files: {
           foo: {
             hash: EMPTY_HASH,
