@@ -28,7 +28,7 @@ impl Bech32m {
   pub(crate) fn run(self) -> Result {
     let version = self
       .version
-      .map(|c| Fe32::from_char(c).map_err(|_| error::Bech32mVersion { version: c }.build()))
+      .map(|version| Fe32::from_char(version).context(error::Bech32mVersion { version }))
       .transpose()?;
 
     if let Some(bech32m) = self.decode {

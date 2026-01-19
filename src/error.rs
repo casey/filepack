@@ -28,6 +28,7 @@ pub enum Error {
   #[snafu(display("invalid bech32m version character `{version}`"))]
   Bech32mVersion {
     backtrace: Option<Backtrace>,
+    source: bech32::primitives::gf32::FromCharError,
     version: char,
   },
   #[snafu(display("bech32m version `{actual}` does not match expected `{expected}`"))]
