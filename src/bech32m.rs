@@ -19,10 +19,9 @@ pub(crate) trait Bech32m<const LEN: usize> {
 
     let mut fe32s = hrp_string.fe32_iter::<std::vec::IntoIter<u8>>();
 
-    let version = fe32s.next().context(bech32m_error::Length {
-      actual: 0usize,
-      expected: LEN,
-    })?;
+    let version = fe32s
+      .next()
+      .context(bech32m_error::VersionMissing { ty: Self::TYPE })?;
 
     ensure! {
       version == VERSION,

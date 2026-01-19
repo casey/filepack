@@ -24,4 +24,6 @@ pub enum Bech32mError {
     ty: &'static str,
     version: bech32::Fe32,
   },
+  #[snafu(display("bech32m {ty} missing version character"))]
+  VersionMissing { ty: &'static str },
 }
