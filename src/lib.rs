@@ -25,7 +25,6 @@ use {
     component_error::ComponentError,
     count::Count,
     date_time::DateTime,
-    digest::Digest,
     display_path::DisplayPath,
     display_secret::DisplaySecret,
     entries::Entries,
@@ -135,7 +134,6 @@ mod component;
 mod component_error;
 mod count;
 mod date_time;
-mod digest;
 mod directory;
 mod display_path;
 mod display_secret;

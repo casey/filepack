@@ -51,7 +51,7 @@ mod tests {
 
   #[test]
   fn parse() {
-    let signature = PrivateKey::generate().sign(todo!());
+    let signature = PrivateKey::generate().sign(b"foo");
     assert_eq!(
       signature.to_string().parse::<Signature>().unwrap(),
       signature
