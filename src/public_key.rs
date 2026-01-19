@@ -92,10 +92,10 @@ mod tests {
 
   #[test]
   fn weak_public_keys_are_forbidden() {
-    assert!(matches!(
+    assert_matches!(
       test::WEAK_PUBLIC_KEY.parse::<PublicKey>().unwrap_err(),
       PublicKeyError::Weak { .. },
-    ));
+    );
   }
 
   #[test]
