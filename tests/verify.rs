@@ -30,7 +30,7 @@ fn duplicate_key_named_and_literal() {
 
   test
     .args(["verify", "--key", "master", "--key", &key])
-    .stderr_regex("error: duplicate key: `master` and `public1[a-z0-9]+`\n")
+    .stderr_regex("error: duplicate key: `master` and `public1.{58}`\n")
     .failure();
 }
 
