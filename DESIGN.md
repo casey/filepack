@@ -12,12 +12,15 @@ Open Questions
   since deriving a key with an explicit context seems like good practice, but
   `ed25519_dalek` doesn't support it.
 
-- *Should Bech32m be used for fingerprints, public keys, and private keys?*
-  This would make them distinct and easy to identify, and give private keys
-  names like `private1…` which suggests that they shouldn't be exposed.
-
 Closed Questions
 ----------------
+
+- *Should Bech32m be used for fingerprints, public keys, private keys, and
+  signatures?* This would make them distinct and easy to identify, and give
+  private keys names like `private1…` which suggests that they shouldn't be
+  exposed. **Conclusion: Use bech32m everything. Having easy-to-distinguish
+  keys, fingerprints, and signatures is a huge benefit. BLAKE3 file hashes are
+  standard hexadecimal.**
 
 - *Should signatures be included in the manifest or in a subdirectory?*
   Currently, signatures are stored in the manifest in an object under the

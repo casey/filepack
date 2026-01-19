@@ -174,9 +174,7 @@ such as `C:`.
 
 The value of the mandatory `notes` key is an array of signed notes. Notes are
 objects containing a single mandatory key `signatures`, an object mapping
-public keys to signatures. Public keys and signatures are
-[bech32m]([bech32m](https://github.com/bitcoin/bips/blob/master/bip-0350.mediawiki))-encoded
-strings with `public1…` and `signature1…` prefixes, respectively.
+public keys to signatures.
 
 Notes may optionally contain a `time` field whose value is a timestamp given as
 the number of nanoseconds after the UNIX epoch.
@@ -217,6 +215,16 @@ signed by the public key
 ```
 
 The signature is elided for brevity.
+
+Keys, Signatures, Fingerprints, and Hashes
+------------------------------------------
+
+Public keys, private keys, signatures, and package fingerprints are all
+[bech32m](https://github.com/bitcoin/bips/blob/master/bip-0350.mediawiki)-encoded
+strings beginning with `public1…`, `private1…`, `signature1…`, and `package1…`
+respectively.
+
+BLAKE3 file hashes are 64-character lowercase hexadecimal.
 
 Metadata
 --------
@@ -382,10 +390,6 @@ filepack keygen
 
 Which creates `master.public` and `master.private` files in the filepack
 `keychain` directory.
-
-Public keys, private keys, and signatures are
-[bech32m](https://github.com/bitcoin/bips/blob/master/bip-0350.mediawiki)-encoded
-strings beginning with `public1…`, `private1…`, and `signature1…` respectively.
 
 The `keychain` directory is located in the filepack data directory whose
 location is platform-dependent:
