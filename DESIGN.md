@@ -12,6 +12,14 @@ Open Questions
   since deriving a key with an explicit context seems like good practice, but
   `ed25519_dalek` doesn't support it.
 
+- *Should bech32m-encoded strings add a version character?* Similar to segwit
+  addresses, we could add a version character to fingerprints, public keys,
+  private keys, and signatures. This would allow us to print a better error
+  message if for some reason these formats change in the future. It seems
+  unlikely public keys, private keys, and fingerprints would change, but it
+  does seem conceivable that it might be desirable to add additional data to
+  signatures, for example, a per-signature timestamp.
+
 Closed Questions
 ----------------
 
