@@ -1,4 +1,4 @@
-use {super::*, bech32::primitives::decode::CheckedHrpstring};
+use super::*;
 
 pub(crate) trait Bech32m<const LEN: usize> {
   const HRP: Hrp;

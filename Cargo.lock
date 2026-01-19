@@ -528,6 +528,7 @@ dependencies = [
  "dirs",
  "ed25519-dalek",
  "executable-path",
+ "hex",
  "indicatif",
  "lexiclean",
  "num-traits",

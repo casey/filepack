@@ -1,4 +1,4 @@
-use {super::*, bech32::primitives::decode::CheckedHrpstringError};
+use super::*;
 
 #[derive(Debug, Snafu)]
 #[snafu(context(suffix(false)), visibility(pub(crate)))]

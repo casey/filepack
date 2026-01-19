@@ -58,7 +58,10 @@ use {
     ticked::Ticked,
     utf8_path_ext::Utf8PathExt,
   },
-  bech32::Hrp,
+  bech32::{
+    Hrp,
+    primitives::decode::{CheckedHrpstring, CheckedHrpstringError},
+  },
   blake3::Hasher,
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},
   clap::{Parser, ValueEnum},
