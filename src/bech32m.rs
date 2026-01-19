@@ -1,13 +1,22 @@
-use super::*;
+use {
+  super::*,
+  bech32::{Fe32, Fe32IterExt},
+};
+
+// todo:
+// - as an alternative to a version, we
+//   could use a tlv encoding, with a single field.
+//   tlv is crazy though
+// - or a different hrp
+
+const BECH32M_VERSION: Fe32 = Fe32::Q;
 
 pub(crate) trait Bech32m<const LEN: usize> {
   const HRP: Hrp;
   const TYPE: &'static str;
 
   fn decode_bech32m(s: &str) -> Result<[u8; LEN], Bech32mError> {
-    use bech32::Fe32;
-
-    let mut hrp_string = CheckedHrpstring::new::<bech32::Bech32m>(s)
+    let hrp_string = CheckedHrpstring::new::<bech32::Bech32m>(s)
       .context(bech32m_error::Decode { ty: Self::TYPE })?;
 
     let actual = hrp_string.hrp();
@@ -17,19 +26,19 @@ pub(crate) trait Bech32m<const LEN: usize> {
       bech32m_error::Hrp { expected: Self::HRP, actual },
     }
 
-    let version = hrp_string
-      .remove_witness_version()
-      .context(bech32m_error::Length {
-        actual: 0usize,
-        expected: LEN,
-      })?;
+    let mut fe32s = hrp_string.fe32_iter::<std::vec::IntoIter<u8>>();
+
+    let version = fe32s.next().context(bech32m_error::Length {
+      actual: 0usize,
+      expected: LEN,
+    })?;
 
     ensure! {
-      version == Fe32::Q,
+      version == BECH32M_VERSION,
       bech32m_error::UnsupportedVersion { ty: Self::TYPE, version },
     }
 
-    let mut bytes = hrp_string.byte_iter();
+    let mut bytes = fe32s.fes_to_bytes();
 
     let mut array = [0; LEN];
 

@@ -1,4 +1,4 @@
-use super::*;
+use {super::*, bech32::Fe32IterExt};
 
 #[derive(Parser)]
 #[group(required = true)]
@@ -28,36 +28,31 @@ impl Bech32m {
   pub(crate) fn run(self) -> Result {
     use bech32::Fe32;
 
-    // todo:
-    // - check version character, since not all bech32m symbols are versions
-
     let version = self
       .version
       .map(|c| Fe32::from_char(c).map_err(|_| error::Bech32mVersion { version: c }.build()))
       .transpose()?;
 
     if let Some(bech32m) = self.decode {
-      let mut checked =
+      let hrp_string =
         CheckedHrpstring::new::<bech32::Bech32m>(&bech32m).context(error::Bech32mDecode {
           bech32m: bech32m.clone(),
         })?;
 
-      if version.is_some()
-        && let Some(v) = checked.remove_witness_version()
-      {
+      let mut fe32s = hrp_string.fe32_iter::<std::vec::IntoIter<u8>>();
+
+      if version.is_some() {
+        let actual = fe32s.next().unwrap();
+
         if let Some(expected) = version {
           ensure!(
-            v == expected,
-            error::Bech32mVersionMismatch {
-              actual: v,
-              expected,
-            },
+            actual == expected,
+            error::Bech32mVersionMismatch { actual, expected },
           );
         }
-        eprintln!("version: {v}");
       }
 
-      let bytes = checked.byte_iter().collect::<Vec<u8>>();
+      let bytes = fe32s.fes_to_bytes().collect::<Vec<u8>>();
       let hex = hex::encode(bytes);
       println!("{hex}");
     } else {
@@ -73,13 +68,13 @@ impl Bech32m {
         .bytes_to_fes()
         .with_checksum::<bech32::Bech32m>(&hrp);
 
-      let chars = if let Some(v) = version {
-        iter.with_witness_version(v).chars()
+      let iter = if let Some(v) = version {
+        iter.with_witness_version(v)
       } else {
-        iter.chars()
+        iter
       };
 
-      for c in chars {
+      for c in iter.chars() {
         print!("{c}");
       }
 
