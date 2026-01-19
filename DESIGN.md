@@ -12,14 +12,6 @@ Open Questions
   since deriving a key with an explicit context seems like good practice, but
   `ed25519_dalek` doesn't support it.
 
-- *Should bech32m-encoded strings add a version character?* Similar to segwit
-  addresses, we could add a version character to fingerprints, public keys,
-  private keys, and signatures. This would allow us to print a better error
-  message if for some reason these formats change in the future. It seems
-  unlikely public keys, private keys, and fingerprints would change, but it
-  does seem conceivable that it might be desirable to add additional data to
-  signatures, for example, a per-signature timestamp.
-
 Closed Questions
 ----------------
 
@@ -29,6 +21,16 @@ Closed Questions
   exposed. **Conclusion: Use bech32m everything. Having easy-to-distinguish
   keys, fingerprints, and signatures is a huge benefit. BLAKE3 file hashes are
   standard hexadecimal.**
+
+- *Should bech32m-encoded strings add a version character?* Similar to segwit
+  addresses, we could add a version character to fingerprints, public keys,
+  private keys, and signatures. This would allow us to print a better error
+  message if for some reason these formats change in the future. It seems
+  unlikely public keys, private keys, and fingerprints would change, but it
+  does seem conceivable that it might be desirable to add additional data to
+  signatures, for example, a per-signature timestamp. **Conclusion: Add the
+  version character `q`, and complain if a bech32m string starts with a
+  different character.**
 
 - *Should signatures be included in the manifest or in a subdirectory?*
   Currently, signatures are stored in the manifest in an object under the

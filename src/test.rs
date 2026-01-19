@@ -1,20 +1,20 @@
 use super::*;
 
 pub(crate) const FINGERPRINT: &str =
-  "package14uf5nw04lxs6dgzqfh4rdhxffxdukfwf4hq39d7vn2fu4eqlxf3q33muym";
+  "package1q4uf5nw04lxs6dgzqfh4rdhxffxdukfwf4hq39d7vn2fu4eqlxf3q4w3y6x";
 
 pub(crate) const HASH: &str = "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262";
 
 pub(crate) const PRIVATE_KEY: &str =
-  "private124p4zsr2nh04f4pkgtxfzv5yle473x4jue7s6lkwg9tdkk73q59qz34d70";
+  "private1q24p4zsr2nh04f4pkgtxfzv5yle473x4jue7s6lkwg9tdkk73q59q4vvsck";
 
 pub(crate) const PUBLIC_KEY: &str =
-  "public167dndhhmae7p6fsfnj0z37zf78cde6mwqgtms0y87h8ldlvvflyqdq9may";
+  "public1q67dndhhmae7p6fsfnj0z37zf78cde6mwqgtms0y87h8ldlvvflyqjkxlrx";
 
-pub(crate) const SIGNATURE: &str = "signature1gc6dglnp0v32znv204688sd05nekguae2p6ajhmpnqwqsqxxay76s88w7r32qqyf52u8y8hlu9crgjyeg2jamru7kswmqq3j0npfjzglmt8d2";
+pub(crate) const SIGNATURE: &str = "signature1qgc6dglnp0v32znv204688sd05nekguae2p6ajhmpnqwqsqxxay76s88w7r32qqyf52u8y8hlu9crgjyeg2jamru7kswmqq3j0npfjzgxjtqd8";
 
 pub(crate) const WEAK_PUBLIC_KEY: &str =
-  "public1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq9xa2lj";
+  "public1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq6s7wps";
 
 #[test]
 fn hash_is_valid() {

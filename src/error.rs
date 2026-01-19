@@ -25,6 +25,17 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     source: bech32::primitives::hrp::Error,
   },
+  #[snafu(display("invalid bech32m version character `{version}`"))]
+  Bech32mVersion {
+    backtrace: Option<Backtrace>,
+    version: char,
+  },
+  #[snafu(display("bech32m version `{actual}` does not match expected `{expected}`"))]
+  Bech32mVersionMismatch {
+    backtrace: Option<Backtrace>,
+    actual: bech32::Fe32,
+    expected: bech32::Fe32,
+  },
   #[snafu(display("failed to get current directory"))]
   CurrentDir {
     backtrace: Option<Backtrace>,

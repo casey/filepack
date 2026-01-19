@@ -5,7 +5,9 @@ pub(crate) trait Bech32m<const LEN: usize> {
   const TYPE: &'static str;
 
   fn decode_bech32m(s: &str) -> Result<[u8; LEN], Bech32mError> {
-    let hrp_string = CheckedHrpstring::new::<bech32::Bech32m>(s)
+    use bech32::Fe32;
+
+    let mut hrp_string = CheckedHrpstring::new::<bech32::Bech32m>(s)
       .context(bech32m_error::Decode { ty: Self::TYPE })?;
 
     let actual = hrp_string.hrp();
@@ -13,6 +15,18 @@ pub(crate) trait Bech32m<const LEN: usize> {
     ensure! {
       actual == Self::HRP,
       bech32m_error::Hrp { expected: Self::HRP, actual },
+    }
+
+    let version = hrp_string
+      .remove_witness_version()
+      .context(bech32m_error::Length {
+        actual: 0usize,
+        expected: LEN,
+      })?;
+
+    ensure! {
+      version == Fe32::Q,
+      bech32m_error::UnsupportedVersion { ty: Self::TYPE, version },
     }
 
     let mut bytes = hrp_string.byte_iter();
@@ -42,13 +56,23 @@ pub(crate) trait Bech32m<const LEN: usize> {
   }
 
   fn encode_bech32m(f: &mut Formatter, bytes: [u8; LEN]) -> fmt::Result {
-    bech32::encode_to_fmt::<bech32::Bech32m, Formatter>(f, Self::HRP, &bytes).map_err(|err| {
-      if let bech32::EncodeError::Fmt(err) = err {
-        err
-      } else {
-        unreachable!()
-      }
-    })
+    use {
+      bech32::{ByteIterExt, Fe32, Fe32IterExt},
+      fmt::Write,
+    };
+
+    let chars = bytes
+      .iter()
+      .copied()
+      .bytes_to_fes()
+      .with_checksum::<bech32::Bech32m>(&Self::HRP)
+      .with_witness_version(Fe32::Q)
+      .chars();
+
+    for c in chars {
+      f.write_char(c)?;
+    }
+    Ok(())
   }
 }
 
@@ -64,7 +88,8 @@ mod tests {
       let max = (bech32::Bech32m::CODE_LENGTH
         - T::HRP.as_str().len()
         - 1
-        - bech32::Bech32m::CHECKSUM_LENGTH)
+        - bech32::Bech32m::CHECKSUM_LENGTH
+        - 1)
         * 5
         / 8;
 
@@ -98,12 +123,45 @@ mod tests {
       "expected bech32m human-readable part `public1...` but found `private1...`",
     );
 
-    case("public134jkgz", "expected 32 bytes but found 0");
+    {
+      use {
+        bech32::{ByteIterExt, Fe32, Fe32IterExt},
+        fmt::Write,
+      };
+      let empty_bytes: [u8; 0] = [];
+      let mut s = String::new();
+      for c in empty_bytes
+        .iter()
+        .copied()
+        .bytes_to_fes()
+        .with_checksum::<bech32::Bech32m>(&PublicKey::HRP)
+        .with_witness_version(Fe32::Q)
+        .chars()
+      {
+        s.write_char(c).unwrap();
+      }
+      case(&s, "expected 32 bytes but found 0");
+    }
 
-    case(
-      "public1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq6s7wps",
-      "expected 32 bytes but found 33",
-    );
+    {
+      use {
+        bech32::{ByteIterExt, Fe32, Fe32IterExt},
+        fmt::Write,
+      };
+      let bytes_33 = [0u8; 33];
+      let mut s = String::new();
+      for c in bytes_33
+        .iter()
+        .copied()
+        .bytes_to_fes()
+        .with_checksum::<bech32::Bech32m>(&PublicKey::HRP)
+        .with_witness_version(Fe32::Q)
+        .chars()
+      {
+        s.write_char(c).unwrap();
+      }
+      case(&s, "expected 32 bytes but found 33");
+    }
 
     let public_key = test::PUBLIC_KEY.parse::<PublicKey>().unwrap();
 
@@ -111,5 +169,31 @@ mod tests {
       bech32::encode::<bech32::Bech32>(PublicKey::HRP, public_key.inner().as_bytes()).unwrap();
 
     case(&bech32, "failed to decode bech32m public key");
+  }
+
+  #[test]
+  fn unsupported_version() {
+    use {
+      bech32::{ByteIterExt, Fe32, Fe32IterExt},
+      fmt::Write,
+    };
+
+    let bytes = [0u8; 32];
+    let mut s = String::new();
+    for c in bytes
+      .iter()
+      .copied()
+      .bytes_to_fes()
+      .with_checksum::<bech32::Bech32m>(&PublicKey::HRP)
+      .with_witness_version(Fe32::P)
+      .chars()
+    {
+      s.write_char(c).unwrap();
+    }
+
+    assert_eq!(
+      PublicKey::decode_bech32m(&s).unwrap_err().to_string(),
+      "bech32m public key version `p` is not supported by this version of the program",
+    );
   }
 }
