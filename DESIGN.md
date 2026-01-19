@@ -28,9 +28,10 @@ Closed Questions
   message if for some reason these formats change in the future. It seems
   unlikely public keys, private keys, and fingerprints would change, but it
   does seem conceivable that it might be desirable to add additional data to
-  signatures, for example, a per-signature timestamp. **Conclusion: Add the
-  version character `a`, and complain if a bech32m string starts with a
-  different character.**
+  signatures, for example, a per-signature timestamp, or a different message
+  framing or encoding, to support verifying signatures generated with PGP or
+  SSH. **Conclusion: Add the version character `a`, and complain if a bech32m
+  string starts with a different character.**
 
 - *Should signatures be included in the manifest or in a subdirectory?*
   Currently, signatures are stored in the manifest in an object under the
