@@ -95,7 +95,7 @@ impl Manifest {
     let (key, signature) = keychain.sign(key, digest)?;
 
     for note in &mut self.notes {
-      if note.digest(fingerprint) == digest {
+      if note.message(fingerprint) == message {
         ensure! {
           note.signatures.insert(key, signature).is_none() || options.overwrite,
           error::SignatureAlreadyExists { key },

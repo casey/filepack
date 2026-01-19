@@ -8,7 +8,7 @@ impl FingerprintHasher {
   }
 
   pub(crate) fn finalize(self) -> Fingerprint {
-    Fingerprint(self.0.inner().finalize().into())
+    Fingerprint(self.0.into_inner().finalize().into())
   }
 
   pub(crate) fn new(context: FingerprintPrefix) -> Self {

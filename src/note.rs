@@ -12,11 +12,7 @@ pub struct Note {
 
 impl Note {
   pub(crate) fn digest(&self, fingerprint: Fingerprint) -> Digest {
-    Message {
-      fingerprint,
-      time: self.time,
-    }
-    .digest()
+    self.message(fingerprint).digest()
   }
 
   pub(crate) fn from_message(
@@ -32,6 +28,13 @@ impl Note {
 
   pub(crate) fn has_signature(&self, public_key: PublicKey) -> bool {
     self.signatures.contains_key(&public_key)
+  }
+
+  pub(crate) fn message(&self, fingerprint: Fingerprint) -> Message {
+    Message {
+      fingerprint,
+      time: self.time,
+    }
   }
 
   pub(crate) fn verify(&self, fingerprint: Fingerprint) -> Result<u64> {

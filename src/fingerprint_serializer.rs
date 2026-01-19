@@ -17,7 +17,7 @@ impl<T: io::Write> FingerprintSerializer<T> {
     Ok(())
   }
 
-  pub(crate) fn inner(self) -> T {
+  pub(crate) fn into_inner(self) -> T {
     self.inner
   }
 
