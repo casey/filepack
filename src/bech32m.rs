@@ -57,6 +57,31 @@ mod tests {
   use super::*;
 
   #[test]
+  fn invalid() {
+    #[track_caller]
+    fn case(s: &str, expected: &str) {
+      assert_eq!(
+        PublicKey::decode_bech32m(s).unwrap_err().to_string(),
+        expected,
+      );
+    }
+
+    case("foo", "failed to decode bech32m public key");
+
+    case(
+      test::PRIVATE_KEY,
+      "expected bech32m human-readable prefix `public1...` but found `private1...`",
+    );
+
+    case("public134jkgz", "expected 32 bytes but found 0");
+
+    case(
+      "public1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq6s7wps",
+      "expected 32 bytes but found 33",
+    );
+  }
+
+  #[test]
   fn implementations() {
     fn case<const LEN: usize, T: Bech32m<LEN>>(hrp: &str, ty: &str) {
       use bech32::Checksum;
