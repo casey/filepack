@@ -17,4 +17,11 @@ pub enum Bech32mError {
   },
   #[snafu(display("expected {expected} bytes but found {actual}"))]
   Length { expected: usize, actual: usize },
+  #[snafu(display("bech32m {ty} version `{version}` is not supported"))]
+  UnsupportedVersion {
+    ty: &'static str,
+    version: bech32::Fe32,
+  },
+  #[snafu(display("bech32m {ty} missing version character"))]
+  VersionMissing { ty: &'static str },
 }

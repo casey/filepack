@@ -30,7 +30,7 @@ fn duplicate_key_named_and_literal() {
 
   test
     .args(["verify", "--key", "master", "--key", &key])
-    .stderr_regex("error: duplicate key: `master` and `public1.{58}`\n")
+    .stderr_regex("error: duplicate key: `master` and `public1a.{58}`\n")
     .failure();
 }
 
@@ -149,7 +149,7 @@ fn malformed_signature_error() {
         notes: [
           {
             signatures: {
-              "public167dndhhmae7p6fsfnj0z37zf78cde6mwqgtms0y87h8ldlvvflyqdq9may": "signature1invalid"
+              "public1a67dndhhmae7p6fsfnj0z37zf78cde6mwqgtms0y87h8ldlvvflyqcxnd63": "signature1invalid"
             }
           }
         ]
@@ -609,20 +609,20 @@ fn verify_fingerprint() {
     .args([
       "verify",
       "--fingerprint",
-      "package1se89zy0tuschqfzg6ltu87devt2kt8mkr76zsuzf65kkxa4ycg8qpej6n9",
+      "package1ase89zy0tuschqfzg6ltu87devt2kt8mkr76zsuzf65kkxa4ycg8q0kds50",
     ])
     .stderr("successfully verified 1 file totaling 0 bytes\n")
     .success()
     .args([
       "verify",
       "--fingerprint",
-      "package14uf5nw04lxs6dgzqfh4rdhxffxdukfwf4hq39d7vn2fu4eqlxf3q33muym",
+      "package1a4uf5nw04lxs6dgzqfh4rdhxffxdukfwf4hq39d7vn2fu4eqlxf3ql7ykr3",
     ])
     .stderr_regex(
       "\
 fingerprint mismatch: `.*filepack\\.json`
-            expected: package14uf5nw04lxs6dgzqfh4rdhxffxdukfwf4hq39d7vn2fu4eqlxf3q33muym
-              actual: package1se89zy0tuschqfzg6ltu87devt2kt8mkr76zsuzf65kkxa4ycg8qpej6n9
+            expected: package1a4uf5nw04lxs6dgzqfh4rdhxffxdukfwf4hq39d7vn2fu4eqlxf3ql7ykr3
+              actual: package1ase89zy0tuschqfzg6ltu87devt2kt8mkr76zsuzf65kkxa4ycg8q0kds50
 error: fingerprint mismatch\n",
     )
     .failure();
@@ -646,7 +646,7 @@ fn weak_signature_public_key() {
         notes: [
           {
             signatures: {
-              "public1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq9xa2lj": "signature1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq83s9ss"
+              "public1aqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqsqtuc8": "signature1aqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqtv4u5e"
             }
           }
         ]
