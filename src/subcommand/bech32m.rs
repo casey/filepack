@@ -20,7 +20,7 @@ pub(crate) struct Bech32m {
   encode: Option<String>,
   #[arg(help = "Prefix bech32m with human-readable part <HRP>", long)]
   hrp: Option<String>,
-  #[arg(help = "Version character", long)]
+  #[arg(help = "Strip or add <VERSION> character", long)]
   version: Option<char>,
 }
 
