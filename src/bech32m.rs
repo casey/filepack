@@ -3,12 +3,6 @@ use {
   bech32::{Fe32, Fe32IterExt},
 };
 
-// todo:
-// - as an alternative to a version, we
-//   could use a tlv encoding, with a single field.
-//   tlv is crazy though
-// - or a different hrp
-
 const BECH32M_VERSION: Fe32 = Fe32::Q;
 
 pub(crate) trait Bech32m<const LEN: usize> {
