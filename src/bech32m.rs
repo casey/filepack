@@ -75,6 +75,7 @@ mod tests {
       assert_eq!(T::TYPE, ty);
     }
 
+    case::<{ Fingerprint::LEN }, Fingerprint>("package", "package fingerprint");
     case::<{ PrivateKey::LEN }, PrivateKey>("private", "private key");
     case::<{ PublicKey::LEN }, PublicKey>("public", "public key");
     case::<{ Signature::LEN }, Signature>("signature", "signature");
