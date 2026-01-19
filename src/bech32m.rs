@@ -159,8 +159,6 @@ mod tests {
 
   #[test]
   fn unsupported_version() {
-    use {bech32::ByteIterExt, fmt::Write};
-
     let bytes = [0u8; 32];
     let mut s = String::new();
     for c in bytes
