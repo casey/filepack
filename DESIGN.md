@@ -37,11 +37,11 @@ Closed Questions
   and so widely supported. If we need to include large amounts of binary data,
   we can keep them in separate files.**
 
-- *Should the signature algorithm use BLAKE3 instead of the the EdDSA default
-  of SHA-512?* This would allow us to avoid double-hashing and remove a
-  dependency on SHA-512, but would make our signatures nonstandard, which is
-  crazy. **Conclusion: using non-standard ed25519 signatures for such limited
-  benefit is indeed crazy.**
+- *Should the signature algorithm use BLAKE3 instead of the EdDSA default of
+  SHA-512?* This would allow us to avoid double-hashing and remove a dependency
+  on SHA-512, but would make our signatures nonstandard, which is crazy.
+  **Conclusion: using non-standard ed25519 signatures for such limited benefit
+  is indeed crazy.**
 
 - *Should fingerprint hashes be calculated over CBOR, instead of TLV fields?*
   Currently, fingerprints are created by encoding data as a sequence of TLV
