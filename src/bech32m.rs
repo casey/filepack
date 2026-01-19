@@ -157,6 +157,25 @@ mod tests {
   }
 
   #[test]
+  fn no_version() {
+    let mut s = String::new();
+    for c in []
+      .iter()
+      .copied()
+      .bytes_to_fes()
+      .with_checksum::<bech32::Bech32m>(&PublicKey::HRP)
+      .chars()
+    {
+      s.write_char(c).unwrap();
+    }
+
+    assert_eq!(
+      PublicKey::decode_bech32m(&s).unwrap_err().to_string(),
+      "bech32m public key missing version character",
+    );
+  }
+
+  #[test]
   fn unsupported_version() {
     let bytes = [0u8; 32];
     let mut s = String::new();
@@ -174,25 +193,6 @@ mod tests {
     assert_eq!(
       PublicKey::decode_bech32m(&s).unwrap_err().to_string(),
       "bech32m public key version `p` is not supported",
-    );
-  }
-
-  #[test]
-  fn no_version() {
-    let mut s = String::new();
-    for c in []
-      .iter()
-      .copied()
-      .bytes_to_fes()
-      .with_checksum::<bech32::Bech32m>(&PublicKey::HRP)
-      .chars()
-    {
-      s.write_char(c).unwrap();
-    }
-
-    assert_eq!(
-      PublicKey::decode_bech32m(&s).unwrap_err().to_string(),
-      "bech32m public key missing version character",
     );
   }
 }
