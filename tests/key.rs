@@ -6,7 +6,7 @@ fn default() {
     .arg("keygen")
     .success()
     .arg("key")
-    .stdout_regex("public1[a-z0-9]+\n")
+    .stdout_regex("public1.{58}\n")
     .success();
 
   let public_key = test.read_public_key("keychain/master.public");
@@ -20,7 +20,7 @@ fn master() {
     .arg("keygen")
     .success()
     .args(["key", "--key", "master"])
-    .stdout_regex("public1[a-z0-9]+\n")
+    .stdout_regex("public1.{58}\n")
     .success();
 
   let public_key = test.read_public_key("keychain/master.public");
