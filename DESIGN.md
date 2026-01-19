@@ -20,7 +20,7 @@ Closed Questions
   private keys names like `private1…` which suggests that they shouldn't be
   exposed. **Conclusion: Use bech32m everything. Having easy-to-distinguish
   keys, fingerprints, and signatures is a huge benefit. BLAKE3 file hashes are
-  standard hexidecimal.**
+  standard hexadecimal.**
 
 - *Should signatures be included in the manifest or in a subdirectory?*
   Currently, signatures are stored in the manifest in an object under the
