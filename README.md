@@ -224,7 +224,7 @@ Public keys, private keys, signatures, and package fingerprints are all
 strings beginning with `public1…`, `private1…`, `signature1…`, and `package1…`
 respectively.
 
-BLAKE3 file hashes are 64-character lowercase hexidecimal.
+BLAKE3 file hashes are 64-character lowercase hexadecimal.
 
 Metadata
 --------
