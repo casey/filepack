@@ -103,5 +103,12 @@ mod tests {
       "public1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq6s7wps",
       "expected 32 bytes but found 33",
     );
+
+    let public_key = test::PUBLIC_KEY.parse::<PublicKey>().unwrap();
+
+    let bech32 =
+      bech32::encode::<bech32::Bech32>(PublicKey::HRP, public_key.inner().as_bytes()).unwrap();
+
+    case(&bech32, "failed to decode bech32m public key");
   }
 }
