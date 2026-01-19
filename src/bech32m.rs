@@ -57,6 +57,30 @@ mod tests {
   use super::*;
 
   #[test]
+  fn implementations() {
+    fn case<const LEN: usize, T: Bech32m<LEN>>(hrp: &str, ty: &str) {
+      use bech32::Checksum;
+
+      let max = (bech32::Bech32m::CODE_LENGTH
+        - T::HRP.as_str().len()
+        - 1
+        - bech32::Bech32m::CHECKSUM_LENGTH)
+        * 5
+        / 8;
+
+      assert!(LEN <= max);
+
+      assert_eq!(T::HRP.as_str(), hrp);
+
+      assert_eq!(T::TYPE, ty);
+    }
+
+    case::<{ PrivateKey::LEN }, PrivateKey>("private", "private key");
+    case::<{ PublicKey::LEN }, PublicKey>("public", "public key");
+    case::<{ Signature::LEN }, Signature>("signature", "signature");
+  }
+
+  #[test]
   fn invalid() {
     #[track_caller]
     fn case(s: &str, expected: &str) {
@@ -79,29 +103,5 @@ mod tests {
       "public1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq6s7wps",
       "expected 32 bytes but found 33",
     );
-  }
-
-  #[test]
-  fn implementations() {
-    fn case<const LEN: usize, T: Bech32m<LEN>>(hrp: &str, ty: &str) {
-      use bech32::Checksum;
-
-      let max = (bech32::Bech32m::CODE_LENGTH
-        - T::HRP.as_str().len()
-        - 1
-        - bech32::Bech32m::CHECKSUM_LENGTH)
-        * 5
-        / 8;
-
-      assert!(LEN <= max);
-
-      assert_eq!(T::HRP.as_str(), hrp);
-
-      assert_eq!(T::TYPE, ty);
-    }
-
-    case::<{ PrivateKey::LEN }, PrivateKey>("private", "private key");
-    case::<{ PublicKey::LEN }, PublicKey>("public", "public key");
-    case::<{ Signature::LEN }, Signature>("signature", "signature");
   }
 }
