@@ -2,6 +2,9 @@ use super::*;
 
 pub(crate) const HASH: &str = "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262";
 
+pub(crate) const FINGERPRINT: &str =
+  "package14uf5nw04lxs6dgzqfh4rdhxffxdukfwf4hq39d7vn2fu4eqlxf3q33muym";
+
 pub(crate) const PRIVATE_KEY: &str =
   "private124p4zsr2nh04f4pkgtxfzv5yle473x4jue7s6lkwg9tdkk73q59qz34d70";
 
@@ -49,6 +52,6 @@ fn signature_is_valid() {
 #[test]
 fn signature_matches() {
   let private_key = PRIVATE_KEY.parse::<PrivateKey>().unwrap();
-  let signature = private_key.sign(Digest(HASH.parse().unwrap()));
+  let signature = private_key.sign(Digest(FINGERPRINT.parse().unwrap()));
   assert_eq!(signature.to_string(), SIGNATURE);
 }

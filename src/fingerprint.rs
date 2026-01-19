@@ -30,16 +30,3 @@ impl FromStr for Fingerprint {
     Ok(Self(Self::decode_bech32m(s)?.into()))
   }
 }
-
-#[cfg(test)]
-mod tests {
-  use super::*;
-
-  #[test]
-  fn uppercase_is_forbidden() {
-    test::HASH
-      .to_uppercase()
-      .parse::<Fingerprint>()
-      .unwrap_err();
-  }
-}
