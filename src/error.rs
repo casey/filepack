@@ -37,6 +37,8 @@ pub enum Error {
     actual: bech32::Fe32,
     expected: bech32::Fe32,
   },
+  #[snafu(display("bech32m version character missing"))]
+  Bech32mVersionMissing { backtrace: Option<Backtrace> },
   #[snafu(display("failed to get current directory"))]
   CurrentDir {
     backtrace: Option<Backtrace>,

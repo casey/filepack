@@ -39,15 +39,13 @@ impl Bech32m {
 
       let mut fe32s = hrp_string.fe32_iter::<std::vec::IntoIter<u8>>();
 
-      if version.is_some() {
-        let actual = fe32s.next().unwrap();
+      if let Some(expected) = version {
+        let actual = fe32s.next().context(error::Bech32mVersionMissing)?;
 
-        if let Some(expected) = version {
-          ensure!(
-            actual == expected,
-            error::Bech32mVersionMismatch { actual, expected },
-          );
-        }
+        ensure!(
+          actual == expected,
+          error::Bech32mVersionMismatch { actual, expected },
+        );
       }
 
       let bytes = fe32s.fes_to_bytes().collect::<Vec<u8>>();
