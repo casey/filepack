@@ -9,6 +9,14 @@ pub struct Signature {
 impl Signature {
   pub(crate) const LEN: usize = ed25519_dalek::Signature::BYTE_SIZE;
 
+  #[cfg(test)]
+  pub(crate) fn from_bytes(bytes: [u8; Self::LEN]) -> Self {
+    Self::new(
+      SignatureScheme::Filepack,
+      ed25519_dalek::Signature::from_bytes(&bytes),
+    )
+  }
+
   pub(crate) fn new(scheme: SignatureScheme, inner: ed25519_dalek::Signature) -> Self {
     Self { inner, scheme }
   }
