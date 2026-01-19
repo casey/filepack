@@ -1,14 +1,5 @@
 use super::*;
 
-#[derive(Debug, Snafu)]
-#[snafu(context(suffix(Error)))]
-pub enum Error {
-  #[snafu(transparent)]
-  Bech32m { source: Bech32mError },
-  #[snafu(display("weak private key"))]
-  Weak,
-}
-
 #[derive(Clone, Debug, PartialEq)]
 pub struct PrivateKey(ed25519_dalek::SigningKey);
 
@@ -63,18 +54,12 @@ impl Bech32m<{ PrivateKey::LEN }> for PrivateKey {
 }
 
 impl FromStr for PrivateKey {
-  type Err = Error;
+  type Err = Bech32mError;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     let bytes = Self::decode_bech32m(s)?;
-
     let inner = ed25519_dalek::SigningKey::from_bytes(&bytes);
-
-    ensure! {
-      !inner.verifying_key().is_weak(),
-      WeakError,
-    }
-
+    assert!(!inner.verifying_key().is_weak());
     Ok(Self(inner))
   }
 }
