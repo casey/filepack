@@ -40,7 +40,7 @@ const TIME_HELP: &str = "Include current time in note";
     .placeholder(AnsiColor::Cyan.on_default()))
 ]
 pub(crate) enum Subcommand {
-  #[command(about = "Encode and decode bech32m strings")]
+  #[command(about = "Encode and decode bech32m")]
   Bech32m(bech32m::Bech32m),
   #[command(about = "Check if manifest contains file")]
   Contains(contains::Contains),
