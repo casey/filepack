@@ -9,7 +9,7 @@ pub enum Bech32mError {
     source: CheckedHrpstringError,
   },
   #[snafu(display(
-    "expected bech32m human-readable prefix `{expected}1...` but found `{actual}1...`",
+    "expected bech32m human-readable part `{expected}1...` but found `{actual}1...`",
   ))]
   Hrp {
     expected: crate::Hrp,
