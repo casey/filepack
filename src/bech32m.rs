@@ -3,7 +3,7 @@ use {
   bech32::{Fe32, Fe32IterExt},
 };
 
-const BECH32M_VERSION: Fe32 = Fe32::Q;
+const BECH32M_VERSION: Fe32 = Fe32::A;
 
 pub(crate) trait Bech32m<const LEN: usize> {
   const HRP: Hrp;
