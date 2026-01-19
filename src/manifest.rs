@@ -90,9 +90,9 @@ impl Manifest {
       time: options.time.then(now).transpose()?,
     };
 
-    let digest = message.digest();
+    let serialized = message.serialize();
 
-    let (key, signature) = keychain.sign(key, digest)?;
+    let (key, signature) = keychain.sign(key, &serialized)?;
 
     for note in &mut self.notes {
       if note.message(fingerprint) == message {
@@ -138,7 +138,7 @@ impl Manifest {
         }
       }
 
-      if let Some(first) = digests.insert(note.digest(fingerprint), index) {
+      if let Some(first) = digests.insert(note.message(fingerprint), index) {
         return Err(
           error::DuplicateNote {
             first,

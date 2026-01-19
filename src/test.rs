@@ -55,6 +55,6 @@ fn signature_is_valid() {
 #[test]
 fn signature_matches() {
   let private_key = PRIVATE_KEY.parse::<PrivateKey>().unwrap();
-  let signature = private_key.sign(Digest(FINGERPRINT.parse().unwrap()));
+  let signature = private_key.sign(todo!());
   assert_eq!(signature.to_string(), SIGNATURE);
 }

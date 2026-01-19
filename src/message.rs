@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(PartialEq)]
+#[derive(Eq, Ord, PartialEq, PartialOrd)]
 pub(crate) struct Message {
   pub(crate) fingerprint: Fingerprint,
   pub(crate) time: Option<u128>,

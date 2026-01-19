@@ -11,10 +11,6 @@ pub struct Note {
 }
 
 impl Note {
-  pub(crate) fn digest(&self, fingerprint: Fingerprint) -> Digest {
-    self.message(fingerprint).digest()
-  }
-
   pub(crate) fn from_message(
     message: Message,
     public_key: PublicKey,
@@ -38,9 +34,9 @@ impl Note {
   }
 
   pub(crate) fn verify(&self, fingerprint: Fingerprint) -> Result<u64> {
-    let digest = self.digest(fingerprint);
+    let serialized = self.message(fingerprint).serialize();
     for (public_key, signature) in &self.signatures {
-      public_key.verify(digest, signature)?;
+      public_key.verify(&serialized, signature)?;
     }
     Ok(self.signatures.len().into_u64())
   }
