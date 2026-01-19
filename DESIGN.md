@@ -8,39 +8,54 @@ Open Questions
   looked into both, but the formats and algorithms are incredibly complex, and
   allow a huge number of unnecessary degrees of freedom.
 
+- *Should filepack use a derived key when signing messages?* I would like to,
+  since deriving a key with an explicit context seems like good practice, but
+  `ed25519_dalek` doesn't support it.
+
+- *Should Bech32m be used for fingerprints, public keys, and private keys?*
+  This would make them distinct and easy to identify, and give private keys
+  names like `private1…` which suggests that they shouldn't be exposed.
+
+Closed Questions
+----------------
+
 - *Should signatures be included in the manifest or in a subdirectory?*
   Currently, signatures are stored in the manifest in an object under the
   `signatures` key. This has pros and cons. The major pro is one only needs to
   download a single file in order to verify the contents of a directory and
   signatures. The major con is that adding a signature requires modifying the
   manifest, and care must be taken to avoid conflicts if multiple people add
-  signatures concurrently.
-
-- *Should filepack use a derived key when signing messages?* I would like to,
-  since deriving a key with an explicit context seems like good practice, but
-  `ed25519_dalek` doesn't support it.
-
-- *Should I worry about quantum computers?* I'm leaning towards no, since
-  filepack can likely be reactive instead of proactive on this front.
+  signatures concurrently. **Conclusion: keeping signatures with the manifest
+  has safety and usability benefits, and merging multiple sources of signatures
+  into a manifest can be made easier with tooling. Also, the manifest is now
+  pretty-printed, to make merge conflicts easier to deal with.**
 
 - *Should the manifest use a binary serialization format?* The main advantage
   would be being able to easily include large amounts of binary data in the
   manifest. For example, parity information, or intermediate file hash tiers.
+  **Conclusion: Keep JSON, since it is so much easier for humans to deal with
+  and so widely supported. If we need to include large amounts of binary data,
+  we can keep them in separate files.**
 
-- *Should Bech32m be used for fingerprints, public keys, and private keys?*
-  This would make them distinct and easy to identify, and give private keys
-  names like `private1…` which suggests that they shouldn't be exposed.
+- *Should the signature algorithm use BLAKE3 instead of the the EdDSA default
+  of SHA-512?* This would allow us to avoid double-hashing and remove a
+  dependency on SHA-512, but would make our signatures nonstandard, which is
+  crazy. **Conclusion: using non-standard ed25519 signatures for such limited
+  benefit is indeed crazy.**
 
 - *Should fingerprint hashes be calculated over CBOR, instead of TLV fields?*
   Currently, fingerprints are created by encoding data as a sequence of TLV
   fields. This is extremely simple. However, we could also encode data as CBOR,
   which is much more complicated, but has the advantage of being standardized,
-  and enforces domain separation between types.
+  and enforces domain separation between types. **Conclusion: Stick with the
+  TLV-encoding. The complexity of CBOR canonicalization offsets any benefit of
+  standardization.**
 
-- *Should the signature algorithm use BLAKE3 instead of the the EdDSA default
-  of SHA-512?* This would allow us to avoid double-hashing, and remove a
-  dependency on a second hash algorithm, but would make our signatures
-  non-standard.
+- *Should I worry about quantum computers?* I'm leaning towards no, since
+  filepack can likely be reactive instead of proactive on this front.
+  **Conclusion: If there was an obvious choice of post-quantum signature
+  scheme, that would be one thing, but right now it's such a moving target that
+  it's almost certainly better to wait.**
 
 Manifest Format
 ---------------
