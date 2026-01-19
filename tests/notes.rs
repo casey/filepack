@@ -90,7 +90,7 @@ fn invalid_signature() {
   manifest.notes.push(Note {
     signatures: [(
       PUBLIC_KEY.parse::<PublicKey>().unwrap(),
-      "signature1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq83s9ss".parse::<Signature>().unwrap(),
+      SIGNATURE.parse::<Signature>().unwrap(),
     )]
     .into(),
     time: None,
