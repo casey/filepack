@@ -29,7 +29,7 @@ mod tests {
     fn case(s: &str, expected: &str) {
       assert_eq!(
         PublicKey::decode_bech32m(s).unwrap_err().to_string(),
-        expected
+        expected,
       );
     }
 

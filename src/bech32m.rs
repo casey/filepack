@@ -35,7 +35,7 @@ pub(crate) trait Bech32m<const LEN: usize> {
       bech32m_error::Length {
         actual,
         expected: LEN,
-      }
+      },
     }
 
     Ok(array)
