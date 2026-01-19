@@ -57,7 +57,7 @@ mod tests {
   use super::*;
 
   #[test]
-  fn implementation() {
+  fn implementations() {
     fn case<const LEN: usize, T: Bech32m<LEN>>(hrp: &str, ty: &str) {
       use bech32::Checksum;
 
