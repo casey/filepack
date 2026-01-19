@@ -20,17 +20,30 @@ fn hash_is_valid() {
 
 #[test]
 fn private_key_is_valid() {
-  PRIVATE_KEY.parse::<PrivateKey>().unwrap();
+  assert_eq!(
+    test::PRIVATE_KEY
+      .parse::<PrivateKey>()
+      .unwrap()
+      .display_secret()
+      .to_string(),
+    test::PRIVATE_KEY,
+  );
 }
 
 #[test]
 fn public_key_is_valid() {
-  PUBLIC_KEY.parse::<PublicKey>().unwrap();
+  assert_eq!(
+    test::PUBLIC_KEY.parse::<PublicKey>().unwrap().to_string(),
+    test::PUBLIC_KEY,
+  );
 }
 
 #[test]
 fn signature_is_valid() {
-  SIGNATURE.parse::<Signature>().unwrap();
+  assert_eq!(
+    test::SIGNATURE.parse::<Signature>().unwrap().to_string(),
+    test::SIGNATURE,
+  );
 }
 
 #[test]
