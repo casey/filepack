@@ -174,8 +174,9 @@ such as `C:`.
 
 The value of the mandatory `notes` key is an array of signed notes. Notes are
 objects containing a single mandatory key `signatures`, an object mapping
-public keys to signatures. Public keys and signatures are both lowercase
-hexadecimal strings.
+public keys to signatures. Public keys and signatures are
+[bech32m]([bech32m](https://github.com/bitcoin/bips/blob/master/bip-0350.mediawiki))-encoded
+strings with `public1…` and `signature1…` prefixes, respectively.
 
 Notes may optionally contain a `time` field whose value is a timestamp given as
 the number of nanoseconds after the UNIX epoch.
@@ -184,11 +185,11 @@ Public keys are Curve25519 points and signatures are Ed25519 signatures made
 over the root of a Merkle tree which commits to the content of `files`, as well
 as the value of the `time` field, if present.
 
-### example
+### Example
 
 An manifest over a directory containing the files `README.md` and `src/main.c`,
 signed by the public key
-`3c977ea3a31cd37f0b540f02f33eab158f2ed7449f42b05613c921181aa95b79`:
+`public167dndhhmae7p6fsfnj0z37zf78cde6mwqgtms0y87h8ldlvvflyqdq9may`:
 
 ```json
 {
@@ -207,7 +208,7 @@ signed by the public key
   "notes": [
     {
       "signatures": {
-        "3c977ea3a31cd37f0b540f02f33eab158f2ed7449f42b05613c921181aa95b79": "…"
+        "public167dndhhmae7p6fsfnj0z37zf78cde6mwqgtms0y87h8ldlvvflyqdq9may": "…"
       },
       "time": 1768531681809767000
     }
@@ -215,7 +216,7 @@ signed by the public key
 }
 ```
 
-The signature is a 128 character hexidecimal string and is elided for brevity.
+The signature is elided for brevity.
 
 Metadata
 --------
@@ -381,6 +382,10 @@ filepack keygen
 
 Which creates `master.public` and `master.private` files in the filepack
 `keychain` directory.
+
+Public keys, private keys, and signatures are
+[bech32m](https://github.com/bitcoin/bips/blob/master/bip-0350.mediawiki)-encoded
+strings beginning with `public1…`, `private1…`, and `signature1…` respectively.
 
 The `keychain` directory is located in the filepack data directory whose
 location is platform-dependent:

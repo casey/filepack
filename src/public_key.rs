@@ -4,7 +4,7 @@ use super::*;
 pub struct PublicKey(ed25519_dalek::VerifyingKey);
 
 impl PublicKey {
-  const LEN: usize = ed25519_dalek::PUBLIC_KEY_LENGTH;
+  pub(crate) const LEN: usize = ed25519_dalek::PUBLIC_KEY_LENGTH;
 
   #[must_use]
   pub fn inner(&self) -> ed25519_dalek::VerifyingKey {
@@ -32,6 +32,11 @@ impl PublicKey {
   }
 }
 
+impl Bech32m<{ PublicKey::LEN }> for PublicKey {
+  const HRP: Hrp = Hrp::parse_unchecked("public");
+  const TYPE: &'static str = "public key";
+}
+
 impl From<PrivateKey> for PublicKey {
   fn from(private_key: PrivateKey) -> Self {
     Self(private_key.inner_secret().verifying_key())
@@ -42,21 +47,9 @@ impl FromStr for PublicKey {
   type Err = PublicKeyError;
 
   fn from_str(key: &str) -> Result<Self, Self::Err> {
-    let bytes = hex::decode(key).context(public_key_error::Hex { key })?;
+    let bytes = Self::decode_bech32m(key)?;
 
-    if !is_lowercase_hex(key) {
-      return Err(public_key_error::Case { key }.build());
-    }
-
-    let array: [u8; Self::LEN] = bytes
-      .as_slice()
-      .try_into()
-      .context(public_key_error::Length {
-        key,
-        length: bytes.len(),
-      })?;
-
-    let inner = ed25519_dalek::VerifyingKey::from_bytes(&array)
+    let inner = ed25519_dalek::VerifyingKey::from_bytes(&bytes)
       .map_err(SignatureError)
       .context(public_key_error::Invalid { key })?;
 
@@ -71,7 +64,7 @@ impl FromStr for PublicKey {
 
 impl Display for PublicKey {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    write!(f, "{}", hex::encode(self.0.to_bytes()))
+    Self::encode_bech32m(f, *self.0.as_bytes())
   }
 }
 
@@ -92,52 +85,17 @@ mod tests {
   use super::*;
 
   #[test]
-  fn must_have_leading_zeros() {
-    let s = "0".repeat(63);
-    assert_eq!(
-      s.parse::<PublicKey>().unwrap_err().to_string(),
-      format!("invalid public key hex: `{s}`"),
-    );
-  }
-
-  #[test]
   fn parse() {
     let key = PrivateKey::generate().public_key();
     assert_eq!(key.to_string().parse::<PublicKey>().unwrap(), key);
   }
 
   #[test]
-  fn parse_hex_error() {
-    assert_eq!(
-      "xyz".parse::<PublicKey>().unwrap_err().to_string(),
-      "invalid public key hex: `xyz`"
-    );
-  }
-
-  #[test]
-  fn parse_length_error() {
-    assert_eq!(
-      "0123".parse::<PublicKey>().unwrap_err().to_string(),
-      "invalid public key byte length 2: `0123`"
-    );
-  }
-
-  #[test]
-  fn uppercase_is_forbidden() {
-    let uppercase = test::PUBLIC_KEY.to_uppercase();
-    assert_eq!(
-      uppercase.parse::<PublicKey>().unwrap_err().to_string(),
-      format!("public keys must be lowercase hex: `{uppercase}`"),
-    );
-  }
-
-  #[test]
   fn weak_public_keys_are_forbidden() {
-    let key = "0".repeat(64);
-    assert!(matches!(
-      key.parse::<PublicKey>().unwrap_err(),
-      PublicKeyError::Weak { key } if key == key,
-    ));
+    assert_matches!(
+      test::WEAK_PUBLIC_KEY.parse::<PublicKey>().unwrap_err(),
+      PublicKeyError::Weak { .. },
+    );
   }
 
   #[test]

@@ -1,23 +1,10 @@
 use super::*;
 
-#[derive(Debug, Snafu)]
-#[snafu(context(suffix(Error)))]
-pub enum Error {
-  #[snafu(display("private keys must be lowercase hex"))]
-  Case,
-  #[snafu(display("invalid private key hex"))]
-  Hex { source: hex::FromHexError },
-  #[snafu(display("invalid private key byte length {length}"))]
-  Length { length: usize },
-  #[snafu(display("weak private key"))]
-  Weak,
-}
-
 #[derive(Clone, Debug, PartialEq)]
 pub struct PrivateKey(ed25519_dalek::SigningKey);
 
 impl PrivateKey {
-  const LEN: usize = ed25519_dalek::SECRET_KEY_LENGTH;
+  pub(crate) const LEN: usize = ed25519_dalek::SECRET_KEY_LENGTH;
 
   pub(crate) fn as_secret_bytes(&self) -> [u8; Self::LEN] {
     self.0.to_bytes()
@@ -61,27 +48,18 @@ impl PrivateKey {
   }
 }
 
+impl Bech32m<{ PrivateKey::LEN }> for PrivateKey {
+  const HRP: Hrp = Hrp::parse_unchecked("private");
+  const TYPE: &'static str = "private key";
+}
+
 impl FromStr for PrivateKey {
-  type Err = Error;
+  type Err = Bech32mError;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
-    let bytes = hex::decode(s).context(HexError)?;
-
-    if !is_lowercase_hex(s) {
-      return Err(CaseError.build());
-    }
-
-    let secret: [u8; Self::LEN] = bytes.as_slice().try_into().ok().context(LengthError {
-      length: bytes.len(),
-    })?;
-
-    let inner = ed25519_dalek::SigningKey::from_bytes(&secret);
-
-    ensure! {
-      !inner.verifying_key().is_weak(),
-      WeakError,
-    }
-
+    let bytes = Self::decode_bech32m(s)?;
+    let inner = ed25519_dalek::SigningKey::from_bytes(&bytes);
+    assert!(!inner.verifying_key().is_weak());
     Ok(Self(inner))
   }
 }
@@ -89,18 +67,6 @@ impl FromStr for PrivateKey {
 #[cfg(test)]
 mod tests {
   use super::*;
-
-  #[test]
-  fn must_have_leading_zeros() {
-    assert_eq!(
-      "0"
-        .repeat(63)
-        .parse::<PrivateKey>()
-        .unwrap_err()
-        .to_string(),
-      "invalid private key hex",
-    );
-  }
 
   #[test]
   fn parse() {
@@ -116,36 +82,8 @@ mod tests {
   }
 
   #[test]
-  fn parse_hex_error() {
-    assert_eq!(
-      "xyz".parse::<PrivateKey>().unwrap_err().to_string(),
-      "invalid private key hex"
-    );
-  }
-
-  #[test]
-  fn parse_length_error() {
-    assert_eq!(
-      "0123".parse::<PrivateKey>().unwrap_err().to_string(),
-      "invalid private key byte length 2"
-    );
-  }
-
-  #[test]
   fn serialized_private_key_is_not_valid_public_key() {
     test::PRIVATE_KEY.parse::<PublicKey>().unwrap_err();
-  }
-
-  #[test]
-  fn uppercase_is_forbidden() {
-    assert_eq!(
-      test::PRIVATE_KEY
-        .to_uppercase()
-        .parse::<PrivateKey>()
-        .unwrap_err()
-        .to_string(),
-      "private keys must be lowercase hex",
-    );
   }
 
   #[test]

@@ -3,15 +3,15 @@ use super::*;
 pub(crate) const HASH: &str = "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262";
 
 pub(crate) const PRIVATE_KEY: &str =
-  "8eb33440cce2a651c6d8867c331392f642ebfd9b96e485cd2124643461fb41a2";
+  "private124p4zsr2nh04f4pkgtxfzv5yle473x4jue7s6lkwg9tdkk73q59qz34d70";
 
 pub(crate) const PUBLIC_KEY: &str =
-  "26892a0ef203b97c2702052336f2b8711efaf1442430ff0d9fb4d03df794a0ac";
+  "public167dndhhmae7p6fsfnj0z37zf78cde6mwqgtms0y87h8ldlvvflyqdq9may";
 
-pub(crate) const SIGNATURE: &str = concat!(
-  "3f814a19e6db6431959f0393d362920846224af1d44ceee851e0caded9412d93",
-  "9a221a15f6ba9a5d118a570a6b1cc48c95c7fb73581eeec1e33afdb4d0163907",
-);
+pub(crate) const SIGNATURE: &str = "signature1gc6dglnp0v32znv204688sd05nekguae2p6ajhmpnqwqsqxxay76s88w7r32qqyf52u8y8hlu9crgjyeg2jamru7kswmqq3j0npfjzglmt8d2";
+
+pub(crate) const WEAK_PUBLIC_KEY: &str =
+  "public1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq9xa2lj";
 
 #[test]
 fn hash_is_valid() {
@@ -20,15 +20,35 @@ fn hash_is_valid() {
 
 #[test]
 fn private_key_is_valid() {
-  PRIVATE_KEY.parse::<PrivateKey>().unwrap();
+  assert_eq!(
+    test::PRIVATE_KEY
+      .parse::<PrivateKey>()
+      .unwrap()
+      .display_secret()
+      .to_string(),
+    test::PRIVATE_KEY,
+  );
 }
 
 #[test]
 fn public_key_is_valid() {
-  PUBLIC_KEY.parse::<PublicKey>().unwrap();
+  assert_eq!(
+    test::PUBLIC_KEY.parse::<PublicKey>().unwrap().to_string(),
+    test::PUBLIC_KEY,
+  );
 }
 
 #[test]
 fn signature_is_valid() {
-  SIGNATURE.parse::<Signature>().unwrap();
+  assert_eq!(
+    test::SIGNATURE.parse::<Signature>().unwrap().to_string(),
+    test::SIGNATURE,
+  );
+}
+
+#[test]
+fn signature_matches() {
+  let private_key = PRIVATE_KEY.parse::<PrivateKey>().unwrap();
+  let signature = private_key.sign(Digest(HASH.parse().unwrap()));
+  assert_eq!(signature.to_string(), SIGNATURE);
 }

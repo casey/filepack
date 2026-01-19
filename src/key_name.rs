@@ -76,6 +76,6 @@ mod tests {
     invalid("foo.bar");
     invalid("foo_bar");
     invalid(&"a".repeat(129));
-    invalid(&"a".repeat(64));
+    invalid("public1abcd");
   }
 }

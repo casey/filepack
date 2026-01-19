@@ -19,6 +19,8 @@
 use {
   self::{
     arguments::Arguments,
+    bech32m::Bech32m,
+    bech32m_error::Bech32mError,
     component::Component,
     component_error::ComponentError,
     count::Count,
@@ -56,6 +58,7 @@ use {
     ticked::Ticked,
     utf8_path_ext::Utf8PathExt,
   },
+  bech32::Hrp,
   blake3::Hasher,
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},
   clap::{Parser, ValueEnum},
@@ -68,7 +71,6 @@ use {
   serde_with::{DeserializeFromStr, MapPreventDuplicates, SerializeDisplay, serde_as},
   snafu::{ErrorCompat, OptionExt, ResultExt, Snafu, ensure},
   std::{
-    array::TryFromSliceError,
     backtrace::{Backtrace, BacktraceStatus},
     borrow::Cow,
     cmp::Ordering,
@@ -123,6 +125,8 @@ macro_rules! assert_matches {
 }
 
 mod arguments;
+mod bech32m;
+mod bech32m_error;
 mod component;
 mod component_error;
 mod count;
