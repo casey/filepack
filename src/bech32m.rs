@@ -2,9 +2,11 @@ use {super::*, bech32::primitives::decode::CheckedHrpstring};
 
 pub(crate) trait Bech32m<const LEN: usize> {
   const HRP: Hrp;
+  const TYPE: &'static str;
 
   fn decode_bech32m(s: &str) -> Result<[u8; LEN], Bech32mError> {
-    let hrp_string = CheckedHrpstring::new::<bech32::Bech32m>(s).context(bech32m_error::Decode)?;
+    let hrp_string = CheckedHrpstring::new::<bech32::Bech32m>(s)
+      .context(bech32m_error::Decode { ty: Self::TYPE })?;
 
     let actual = hrp_string.hrp();
 
@@ -56,7 +58,7 @@ mod tests {
 
   #[test]
   fn implementation() {
-    fn case<const LEN: usize, T: Bech32m<LEN>>(hrp: &str) {
+    fn case<const LEN: usize, T: Bech32m<LEN>>(hrp: &str, ty: &str) {
       use bech32::Checksum;
 
       let max = (bech32::Bech32m::CODE_LENGTH
@@ -69,10 +71,12 @@ mod tests {
       assert!(LEN <= max);
 
       assert_eq!(T::HRP.as_str(), hrp);
+
+      assert_eq!(T::TYPE, ty);
     }
 
-    case::<{ PrivateKey::LEN }, PrivateKey>("private");
-    case::<{ PublicKey::LEN }, PublicKey>("public");
-    case::<{ Signature::LEN }, Signature>("signature");
+    case::<{ PrivateKey::LEN }, PrivateKey>("private", "private key");
+    case::<{ PublicKey::LEN }, PublicKey>("public", "public key");
+    case::<{ Signature::LEN }, Signature>("signature", "signature");
   }
 }

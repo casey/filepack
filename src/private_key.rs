@@ -59,6 +59,7 @@ impl PrivateKey {
 
 impl Bech32m<{ PrivateKey::LEN }> for PrivateKey {
   const HRP: Hrp = Hrp::parse_unchecked("private");
+  const TYPE: &'static str = "private key";
 }
 
 impl FromStr for PrivateKey {

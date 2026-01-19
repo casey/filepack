@@ -15,6 +15,7 @@ impl AsRef<ed25519_dalek::Signature> for Signature {
 
 impl Bech32m<{ Signature::LEN }> for Signature {
   const HRP: Hrp = Hrp::parse_unchecked("signature");
+  const TYPE: &'static str = "signature";
 }
 
 impl From<ed25519_dalek::Signature> for Signature {
