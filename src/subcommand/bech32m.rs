@@ -1,4 +1,4 @@
-use {super::*, bech32::Fe32IterExt};
+use super::*;
 
 #[derive(Parser)]
 #[group(required = true)]
@@ -26,8 +26,6 @@ pub(crate) struct Bech32m {
 
 impl Bech32m {
   pub(crate) fn run(self) -> Result {
-    use bech32::Fe32;
-
     let version = self
       .version
       .map(|c| Fe32::from_char(c).map_err(|_| error::Bech32mVersion { version: c }.build()))
@@ -56,8 +54,6 @@ impl Bech32m {
       let hex = hex::encode(bytes);
       println!("{hex}");
     } else {
-      use {bech32::ByteIterExt, bech32::Fe32IterExt};
-
       let hrp = Hrp::parse(&self.hrp.unwrap()).context(error::Bech32mHrp)?;
       let hex = self.encode.unwrap();
       let hex = hex::decode(&hex).context(error::Hex { hex })?;

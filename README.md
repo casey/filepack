@@ -187,7 +187,7 @@ as the value of the `time` field, if present.
 
 An manifest over a directory containing the files `README.md` and `src/main.c`,
 signed by the public key
-`public1q67dndhhmae7p6fsfnj0z37zf78cde6mwqgtms0y87h8ldlvvflyqjkxlrx`:
+`public1a67dndhhmae7p6fsfnj0z37zf78cde6mwqgtms0y87h8ldlvvflyqcxnd63`:
 
 ```json
 {
@@ -206,7 +206,7 @@ signed by the public key
   "notes": [
     {
       "signatures": {
-        "public1q67dndhhmae7p6fsfnj0z37zf78cde6mwqgtms0y87h8ldlvvflyqjkxlrx": "…"
+        "public1a67dndhhmae7p6fsfnj0z37zf78cde6mwqgtms0y87h8ldlvvflyqcxnd63": "…"
       },
       "time": 1768531681809767000
     }

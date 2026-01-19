@@ -1,9 +1,6 @@
-use {
-  super::*,
-  bech32::{Fe32, Fe32IterExt},
-};
+use super::*;
 
-const BECH32M_VERSION: Fe32 = Fe32::A;
+const VERSION: Fe32 = Fe32::A;
 
 pub(crate) trait Bech32m<const LEN: usize> {
   const HRP: Hrp;
@@ -28,7 +25,7 @@ pub(crate) trait Bech32m<const LEN: usize> {
     })?;
 
     ensure! {
-      version == BECH32M_VERSION,
+      version == VERSION,
       bech32m_error::UnsupportedVersion { ty: Self::TYPE, version },
     }
 
@@ -59,17 +56,12 @@ pub(crate) trait Bech32m<const LEN: usize> {
   }
 
   fn encode_bech32m(f: &mut Formatter, bytes: [u8; LEN]) -> fmt::Result {
-    use {
-      bech32::{ByteIterExt, Fe32, Fe32IterExt},
-      fmt::Write,
-    };
-
     let chars = bytes
       .iter()
       .copied()
       .bytes_to_fes()
       .with_checksum::<bech32::Bech32m>(&Self::HRP)
-      .with_witness_version(Fe32::Q)
+      .with_witness_version(VERSION)
       .chars();
 
     for c in chars {
@@ -83,6 +75,32 @@ pub(crate) trait Bech32m<const LEN: usize> {
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  struct EmptyPublicKey;
+
+  impl Bech32m<0> for EmptyPublicKey {
+    const HRP: Hrp = Hrp::parse_unchecked("public");
+    const TYPE: &'static str = "public key";
+  }
+
+  impl Display for EmptyPublicKey {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+      Self::encode_bech32m(f, [])
+    }
+  }
+
+  struct LongPublicKey;
+
+  impl Bech32m<33> for LongPublicKey {
+    const HRP: Hrp = Hrp::parse_unchecked("public");
+    const TYPE: &'static str = "public key";
+  }
+
+  impl Display for LongPublicKey {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+      Self::encode_bech32m(f, [0; 33])
+    }
+  }
 
   #[test]
   fn implementations() {
@@ -127,45 +145,9 @@ mod tests {
       "expected bech32m human-readable part `public1...` but found `private1...`",
     );
 
-    {
-      use {
-        bech32::{ByteIterExt, Fe32, Fe32IterExt},
-        fmt::Write,
-      };
-      let empty_bytes: [u8; 0] = [];
-      let mut s = String::new();
-      for c in empty_bytes
-        .iter()
-        .copied()
-        .bytes_to_fes()
-        .with_checksum::<bech32::Bech32m>(&PublicKey::HRP)
-        .with_witness_version(Fe32::Q)
-        .chars()
-      {
-        s.write_char(c).unwrap();
-      }
-      case(&s, "expected 32 bytes but found 0");
-    }
+    case(&EmptyPublicKey.to_string(), "expected 32 bytes but found 0");
 
-    {
-      use {
-        bech32::{ByteIterExt, Fe32, Fe32IterExt},
-        fmt::Write,
-      };
-      let bytes_33 = [0u8; 33];
-      let mut s = String::new();
-      for c in bytes_33
-        .iter()
-        .copied()
-        .bytes_to_fes()
-        .with_checksum::<bech32::Bech32m>(&PublicKey::HRP)
-        .with_witness_version(Fe32::Q)
-        .chars()
-      {
-        s.write_char(c).unwrap();
-      }
-      case(&s, "expected 32 bytes but found 33");
-    }
+    case(&LongPublicKey.to_string(), "expected 32 bytes but found 33");
 
     let public_key = test::PUBLIC_KEY.parse::<PublicKey>().unwrap();
 
@@ -177,10 +159,7 @@ mod tests {
 
   #[test]
   fn unsupported_version() {
-    use {
-      bech32::{ByteIterExt, Fe32, Fe32IterExt},
-      fmt::Write,
-    };
+    use {bech32::ByteIterExt, fmt::Write};
 
     let bytes = [0u8; 32];
     let mut s = String::new();

@@ -59,7 +59,7 @@ use {
     utf8_path_ext::Utf8PathExt,
   },
   bech32::{
-    Hrp,
+    ByteIterExt, Fe32, Fe32IterExt, Hrp,
     primitives::decode::{CheckedHrpstring, CheckedHrpstringError},
   },
   blake3::Hasher,
@@ -79,7 +79,7 @@ use {
     cmp::Ordering,
     collections::{BTreeMap, BTreeSet, HashMap},
     env,
-    fmt::{self, Display, Formatter},
+    fmt::{self, Display, Formatter, Write},
     fs::{self, Permissions},
     io::{self, IsTerminal},
     iter,

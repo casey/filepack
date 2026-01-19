@@ -29,7 +29,7 @@ Closed Questions
   unlikely public keys, private keys, and fingerprints would change, but it
   does seem conceivable that it might be desirable to add additional data to
   signatures, for example, a per-signature timestamp. **Conclusion: Add the
-  version character `q`, and complain if a bech32m string starts with a
+  version character `a`, and complain if a bech32m string starts with a
   different character.**
 
 - *Should signatures be included in the manifest or in a subdirectory?*
