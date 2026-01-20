@@ -89,9 +89,7 @@ pub(crate) trait Bech32m<const LEN: usize> {
       return Err(PaddingError::TooMuch);
     }
 
-    let padding_bits = last.to_u8() & ((1u8 << padding_len) - 1);
-
-    if padding_bits != 0 {
+    if u64::from(last.to_u8().trailing_zeros()) < padding_len.into_u64() {
       Err(PaddingError::NonZero)
     } else {
       Ok(())
