@@ -109,7 +109,7 @@ inclusion of files covered by a signature using a Merkle receipt.
 Fingerprints
 ------------
 
-Although only manifest fingerprints are exposed externally, several types of
+Although only package fingerprints are exposed externally, several types of
 fingerprints are used internally, namely directory, entry, file, and message
 fingerprints.
 

@@ -435,8 +435,8 @@ contents is not present.
 Fingerprints
 ------------
 
-Filepack signatures are made over the manifest fingerprint hash, which is the
-root of a Merkle tree of the files and directories contained in the manifest.
+Filepack signatures are made over the package fingerprint, which is the root of
+a Merkle tree of the files and directories contained in the manifest.
 
 Fingerprints are BLAKE3 hashes, constructed such that it is impossible to
 produce objects which are different, either in type or content, but which have
