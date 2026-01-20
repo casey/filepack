@@ -15,8 +15,17 @@ pub enum Bech32mError {
     expected: crate::Hrp,
     actual: crate::Hrp,
   },
-  #[snafu(display("expected {expected} bytes but found {actual}"))]
-  Length { expected: usize, actual: usize },
+  #[snafu(display("expected {} for bech32m {ty} but found {actual}", Count(*expected, "byte")))]
+  Length {
+    expected: usize,
+    actual: usize,
+    ty: &'static str,
+  },
+  #[snafu(display("bech32m {ty} has invalid padding"))]
+  Padding {
+    ty: &'static str,
+    source: PaddingError,
+  },
   #[snafu(display("bech32m {ty} version `{version}` is not supported"))]
   UnsupportedVersion {
     ty: &'static str,
