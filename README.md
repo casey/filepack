@@ -161,7 +161,7 @@ The location of the platform data directory is platform dependent, with the
 | macOS    | `$HOME`/Library/Application Support |
 | Windows  | `{FOLDERID_LocalAppData}`           |
 
-Filepack stores keys in the `keychain` subdirectory of in the filepack data
+Filepack stores keys in the `keychain` subdirectory of the filepack data
 directory. So if the platform data directory is `~/.local/share`, the
 `keychain` directory is `~/.local/share/filepack/keychain`.
 
