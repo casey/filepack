@@ -12,8 +12,8 @@ pub(crate) const PUBLIC_KEY: &str =
   "public1a67dndhhmae7p6fsfnj0z37zf78cde6mwqgtms0y87h8ldlvvflyqcxnd63";
 
 pub(crate) const SIGNATURE: &str = concat!(
-  "signature1agc6dglnp0v32znv204688sd05nekguae2p6ajhmpnqwqsqxxa",
-  "y76s88w7r32qqyf52u8y8hlu9crgjyeg2jamru7kswmqq3j0npfjzgnxw7fr",
+  "signature1appampjlm7qs0g4amn9fnq87crhn70k5lv5wf48ajy6k774tqw",
+  "6yc9s5n0kpq5420jrz644sgu7geahpffl8l7nuv9azsqv8jpgtrcqsfz5zpg",
 );
 
 pub(crate) const WEAK_PUBLIC_KEY: &str =
@@ -55,6 +55,10 @@ fn signature_is_valid() {
 #[test]
 fn signature_matches() {
   let private_key = PRIVATE_KEY.parse::<PrivateKey>().unwrap();
-  let signature = private_key.sign(Digest(FINGERPRINT.parse().unwrap()));
+  let message = Message {
+    fingerprint: FINGERPRINT.parse().unwrap(),
+    time: None,
+  };
+  let signature = private_key.sign(&message.serialize());
   assert_eq!(signature.to_string(), SIGNATURE);
 }

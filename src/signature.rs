@@ -51,7 +51,11 @@ mod tests {
 
   #[test]
   fn parse() {
-    let signature = PrivateKey::generate().sign(Digest(test::FINGERPRINT.parse().unwrap()));
+    let message = Message {
+      fingerprint: test::FINGERPRINT.parse().unwrap(),
+      time: None,
+    };
+    let signature = PrivateKey::generate().sign(&message.serialize());
     assert_eq!(
       signature.to_string().parse::<Signature>().unwrap(),
       signature
