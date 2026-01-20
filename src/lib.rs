@@ -42,7 +42,7 @@ use {
     language::Language,
     lint_error::{Lint, LintError},
     lint_group::LintGroup,
-    message::Message,
+    message::{Message, SerializedMessage},
     metadata::Metadata,
     mode::Mode,
     options::Options,

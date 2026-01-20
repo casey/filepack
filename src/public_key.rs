@@ -23,10 +23,10 @@ impl PublicKey {
     Ok(public_key)
   }
 
-  pub fn verify(&self, message: &[u8], signature: &Signature) -> Result {
+  pub fn verify(&self, message: &SerializedMessage, signature: &Signature) -> Result {
     self
       .0
-      .verify_strict(message, signature.as_ref())
+      .verify_strict(message.as_ref(), signature.as_ref())
       .map_err(SignatureError)
       .context(error::SignatureInvalid { key: *self })
   }

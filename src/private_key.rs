@@ -42,9 +42,9 @@ impl PrivateKey {
     self.clone().into()
   }
 
-  pub(crate) fn sign(&self, message: &[u8]) -> Signature {
+  pub(crate) fn sign(&self, message: &SerializedMessage) -> Signature {
     use ed25519_dalek::Signer;
-    self.0.sign(message).into()
+    self.0.sign(message.as_ref()).into()
   }
 }
 

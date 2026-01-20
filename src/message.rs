@@ -1,5 +1,13 @@
 use super::*;
 
+pub struct SerializedMessage(Vec<u8>);
+
+impl AsRef<[u8]> for SerializedMessage {
+  fn as_ref(&self) -> &[u8] {
+    &self.0
+  }
+}
+
 #[derive(Eq, Ord, PartialEq, PartialOrd)]
 pub(crate) struct Message {
   pub(crate) fingerprint: Fingerprint,
@@ -7,7 +15,7 @@ pub(crate) struct Message {
 }
 
 impl Message {
-  pub(crate) fn serialize(&self) -> Vec<u8> {
+  pub(crate) fn serialize(&self) -> SerializedMessage {
     let mut serializer =
       FingerprintSerializer::new(FingerprintPrefix::Message, Vec::new()).unwrap();
 
@@ -17,6 +25,6 @@ impl Message {
       serializer.field(1, &time.to_le_bytes()).unwrap();
     }
 
-    serializer.into_inner()
+    SerializedMessage(serializer.into_inner())
   }
 }
