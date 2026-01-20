@@ -8,7 +8,7 @@ pub enum Entry {
 }
 
 impl Entry {
-  pub(crate) fn fingerprint(&self, component: &Component) -> Fingerprint {
+  pub(crate) fn fingerprint(&self, component: &Component) -> Hash {
     let mut hasher = FingerprintHasher::new(FingerprintPrefix::Entry);
 
     hasher.field(0, component.as_bytes());

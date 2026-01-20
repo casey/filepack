@@ -43,7 +43,7 @@ impl Manifest {
 
   #[must_use]
   pub fn fingerprint(&self) -> Fingerprint {
-    self.files.fingerprint()
+    Fingerprint(self.files.fingerprint())
   }
 
   pub fn load(path: Option<&Utf8Path>) -> Result<Self> {
