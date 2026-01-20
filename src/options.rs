@@ -21,7 +21,9 @@ impl Options {
     if let Some(path) = &self.data_dir {
       Ok(path.into())
     } else {
-      let dir = if let Some(dir) = env::var_os("XDG_DATA_HOME") {
+      let dir = if let Some(dir) = env::var_os("XDG_DATA_HOME")
+        && !dir.is_empty()
+      {
         dir.into()
       } else {
         dirs::data_local_dir().context(error::DataLocalDir)?
