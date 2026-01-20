@@ -21,8 +21,13 @@ impl Options {
     if let Some(path) = &self.data_dir {
       Ok(path.into())
     } else {
-      let path = dirs::data_local_dir().context(error::DataLocalDir)?;
-      Ok(decode_path(&path)?.join("filepack"))
+      let dir = if let Some(dir) = env::var_os("XDG_DATA_HOME") {
+        dir.into()
+      } else {
+        dirs::data_local_dir().context(error::DataLocalDir)?
+      };
+
+      Ok(decode_path(&dir)?.join("filepack"))
     }
   }
 
