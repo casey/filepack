@@ -5,7 +5,7 @@ use {
   filepack::{Manifest, Note, PrivateKey, PublicKey, Signature, assert_matches},
   regex::Regex,
   std::{
-    collections::{BTreeMap, BTreeSet},
+    collections::BTreeMap,
     fs,
     io::Write,
     path::{MAIN_SEPARATOR_STR, Path},
