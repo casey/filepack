@@ -55,7 +55,7 @@ impl Directory {
     Ok(())
   }
 
-  pub(crate) fn fingerprint(&self) -> Fingerprint {
+  pub(crate) fn fingerprint(&self) -> Hash {
     let mut hasher = FingerprintHasher::new(FingerprintPrefix::Directory);
 
     for (component, entry) in &self.entries {
