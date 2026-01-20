@@ -15,7 +15,7 @@ pub enum Bech32mError {
     expected: crate::Hrp,
     actual: crate::Hrp,
   },
-  #[snafu(display("expected {} for bech32m {ty} but found {actual}", Count(*expected, "byte")))]
+  #[snafu(display("expected bech32m {ty} to have {} but found {actual}", Count(*expected, "byte")))]
   Length {
     expected: usize,
     actual: usize,

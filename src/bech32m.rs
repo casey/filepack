@@ -172,12 +172,12 @@ mod tests {
 
     case(
       &EmptyPublicKey.to_string(),
-      "expected 32 bytes for bech32m public key but found 0",
+      "expected bech32m public key to have 32 bytes but found 0",
     );
 
     case(
       &LongPublicKey.to_string(),
-      "expected 32 bytes for bech32m public key but found 33",
+      "expected bech32m public key to have 32 bytes but found 33",
     );
 
     let public_key = test::PUBLIC_KEY.parse::<PublicKey>().unwrap();
