@@ -144,7 +144,7 @@ impl Test {
 
   #[track_caller]
   pub(crate) fn status(self, code: i32) -> Self {
-    let mut command = Command::new(executable_path("filepack"));
+    let mut command = Command::new(env!("CARGO_BIN_EXE_filepack"));
 
     let current_dir = if let Some(ref subdir) = self.current_dir {
       self.join(subdir)
