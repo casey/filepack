@@ -42,7 +42,7 @@ use {
     language::Language,
     lint_error::{Lint, LintError},
     lint_group::LintGroup,
-    message::{Message, SerializedMessage},
+    message::Message,
     metadata::Metadata,
     mode::Mode,
     options::Options,
@@ -50,6 +50,7 @@ use {
     package::Package,
     path_error::PathError,
     public_key_error::PublicKeyError,
+    serialized_message::SerializedMessage,
     sign_options::SignOptions,
     signature_error::SignatureError,
     style::Style,
@@ -174,6 +175,7 @@ mod public_key;
 mod public_key_error;
 mod re;
 mod relative_path;
+mod serialized_message;
 mod sign_options;
 mod signature;
 mod signature_error;

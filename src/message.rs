@@ -1,13 +1,5 @@
 use super::*;
 
-pub struct SerializedMessage(Vec<u8>);
-
-impl AsRef<[u8]> for SerializedMessage {
-  fn as_ref(&self) -> &[u8] {
-    &self.0
-  }
-}
-
 #[derive(Eq, Ord, PartialEq, PartialOrd)]
 pub(crate) struct Message {
   pub(crate) fingerprint: Fingerprint,
