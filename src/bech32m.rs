@@ -195,4 +195,28 @@ mod tests {
       "bech32m public key version `p` is not supported",
     );
   }
+
+  #[test]
+  fn non_zero_padding_rejected() {
+    let bytes = [0u8; 32];
+    let mut fe32s = bytes.iter().copied().bytes_to_fes().collect::<Vec<_>>();
+
+    let last = fe32s.last_mut().unwrap();
+    *last = Fe32::try_from(last.to_u8() | 0x01).unwrap();
+
+    let mut s = String::new();
+    for c in fe32s
+      .into_iter()
+      .with_checksum::<bech32::Bech32m>(&PublicKey::HRP)
+      .with_witness_version(VERSION)
+      .chars()
+    {
+      s.write_char(c).unwrap();
+    }
+
+    assert_eq!(
+      PublicKey::decode_bech32m(&s).unwrap_err().to_string(),
+      "bech32m public key has invalid padding",
+    );
+  }
 }
