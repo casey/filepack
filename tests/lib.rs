@@ -1,7 +1,6 @@
 use {
   self::{expected::Expected, test::Test},
   camino::{Utf8Path, Utf8PathBuf},
-  executable_path::executable_path,
   filepack::{Manifest, Note, PrivateKey, PublicKey, Signature, assert_matches},
   regex::Regex,
   std::{
