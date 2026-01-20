@@ -61,7 +61,7 @@ use {
   },
   bech32::{
     ByteIterExt, Fe32, Fe32IterExt, Hrp,
-    primitives::decode::{CheckedHrpstring, CheckedHrpstringError},
+    primitives::decode::{CheckedHrpstring, CheckedHrpstringError, PaddingError},
   },
   blake3::Hasher,
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},

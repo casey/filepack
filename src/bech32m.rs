@@ -28,6 +28,8 @@ pub(crate) trait Bech32m<const LEN: usize> {
       bech32m_error::UnsupportedVersion { ty: Self::TYPE, version },
     }
 
+    Self::validate_padding(&hrp_string).context(bech32m_error::Padding { ty: Self::TYPE })?;
+
     let mut bytes = fe32s.fes_to_bytes();
 
     let mut array = [0; LEN];
@@ -37,6 +39,7 @@ pub(crate) trait Bech32m<const LEN: usize> {
       *byte = bytes.next().context(bech32m_error::Length {
         actual,
         expected: LEN,
+        ty: Self::TYPE,
       })?;
       actual += 1;
     }
@@ -48,6 +51,7 @@ pub(crate) trait Bech32m<const LEN: usize> {
       bech32m_error::Length {
         actual,
         expected: LEN,
+        ty: Self::TYPE,
       },
     }
 
@@ -68,6 +72,28 @@ pub(crate) trait Bech32m<const LEN: usize> {
     }
 
     Ok(())
+  }
+
+  fn validate_padding(hrp_string: &CheckedHrpstring) -> Result<(), PaddingError> {
+    let mut fe32s = hrp_string.fe32_iter::<std::vec::IntoIter<u8>>();
+
+    fe32s.next().unwrap();
+
+    let Some((i, last)) = fe32s.enumerate().last() else {
+      return Ok(());
+    };
+
+    let padding_len = (i + 1) * 5 % 8;
+
+    if padding_len > 4 {
+      return Err(PaddingError::TooMuch);
+    }
+
+    if u64::from(last.to_u8().trailing_zeros()) < padding_len.into_u64() {
+      Err(PaddingError::NonZero)
+    } else {
+      Ok(())
+    }
   }
 }
 
@@ -144,9 +170,15 @@ mod tests {
       "expected bech32m human-readable part `public1...` but found `private1...`",
     );
 
-    case(&EmptyPublicKey.to_string(), "expected 32 bytes but found 0");
+    case(
+      &EmptyPublicKey.to_string(),
+      "expected bech32m public key to have 32 bytes but found 0",
+    );
 
-    case(&LongPublicKey.to_string(), "expected 32 bytes but found 33");
+    case(
+      &LongPublicKey.to_string(),
+      "expected bech32m public key to have 32 bytes but found 33",
+    );
 
     let public_key = test::PUBLIC_KEY.parse::<PublicKey>().unwrap();
 
@@ -172,6 +204,21 @@ mod tests {
     assert_eq!(
       PublicKey::decode_bech32m(&s).unwrap_err().to_string(),
       "bech32m public key missing version character",
+    );
+  }
+
+  #[test]
+  fn non_zero_padding_rejected() {
+    let bech32m = iter::repeat_n(Fe32::Q, 51)
+      .chain(iter::once(Fe32::P))
+      .with_checksum::<bech32::Bech32m>(&PublicKey::HRP)
+      .with_witness_version(VERSION)
+      .chars()
+      .collect::<String>();
+
+    assert_eq!(
+      PublicKey::decode_bech32m(&bech32m).unwrap_err().to_string(),
+      "bech32m public key has invalid padding",
     );
   }
 
