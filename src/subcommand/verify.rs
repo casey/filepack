@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(Parser)]
 pub(crate) struct Verify {
-  #[arg(help = "Verify manifest fingerprint is <FINGERPRINT>", long)]
+  #[arg(help = "Verify package fingerprint is <FINGERPRINT>", long)]
   fingerprint: Option<Fingerprint>,
   #[arg(help = "Ignore missing files", long)]
   ignore_missing: bool,

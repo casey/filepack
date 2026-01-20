@@ -48,7 +48,7 @@ pub(crate) enum Subcommand {
   Create(create::Create),
   #[command(about = "List manifest files")]
   Files(files::Files),
-  #[command(about = "Print manifest fingerprint")]
+  #[command(about = "Print package fingerprint")]
   Fingerprint(fingerprint::Fingerprint),
   #[command(about = "Print file hash")]
   Hash(hash::Hash),
