@@ -269,7 +269,7 @@ impl Test {
     self.stdout_regex(&pattern.replace(
       '/',
       if MAIN_SEPARATOR_STR == "\\" {
-        "\\\\"
+        "\\\\\\\\"
       } else {
         MAIN_SEPARATOR_STR
       },
