@@ -120,6 +120,9 @@ verify-release: tmp
     $VERSION
   cargo run verify tmp --key 3c977ea3a31cd37f0b540f02f33eab158f2ed7449f42b05613c921181aa95b79
 
+profile:
+  cargo flamegraph --test integration --profile dev
+
 languages:
   brew install iso-codes
   jq -r \
