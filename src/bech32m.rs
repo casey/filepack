@@ -208,6 +208,21 @@ mod tests {
   }
 
   #[test]
+  fn non_zero_padding_rejected() {
+    let bech32m = iter::repeat_n(Fe32::Q, 51)
+      .chain(iter::once(Fe32::P))
+      .with_checksum::<bech32::Bech32m>(&PublicKey::HRP)
+      .with_witness_version(VERSION)
+      .chars()
+      .collect::<String>();
+
+    assert_eq!(
+      PublicKey::decode_bech32m(&bech32m).unwrap_err().to_string(),
+      "bech32m public key has invalid padding",
+    );
+  }
+
+  #[test]
   fn unsupported_version() {
     let bytes = [0u8; 32];
     let mut s = String::new();
@@ -225,29 +240,6 @@ mod tests {
     assert_eq!(
       PublicKey::decode_bech32m(&s).unwrap_err().to_string(),
       "bech32m public key version `p` is not supported",
-    );
-  }
-
-  #[test]
-  fn non_zero_padding_rejected() {
-    let mut fe32s = [0; 32]
-      .iter()
-      .copied()
-      .bytes_to_fes()
-      .collect::<Vec<Fe32>>();
-
-    *fe32s.last_mut().unwrap() = Fe32::try_from(0 | 0x01).unwrap();
-
-    let bech32m = fe32s
-      .into_iter()
-      .with_checksum::<bech32::Bech32m>(&PublicKey::HRP)
-      .with_witness_version(VERSION)
-      .chars()
-      .collect::<String>();
-
-    assert_eq!(
-      PublicKey::decode_bech32m(&bech32m).unwrap_err().to_string(),
-      "bech32m public key has invalid padding",
     );
   }
 }
