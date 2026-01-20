@@ -3,9 +3,12 @@ use super::*;
 #[test]
 fn flag() {
   Test::new()
-    .args(["--data-dir", "foo", "keygen"])
-    .assert_file_regex("foo/keychain/master.public", "public1a.{58}\n")
-    .assert_file_regex("foo/keychain/master.private", "private1a.{58}\n")
+    .args(["--data-dir", "foo", "info"])
+    .stdout_regex_path(&json_regex! {
+      data: "foo",
+      keychain: "foo/keychain",
+      keys: {},
+    })
     .success();
 }
 
@@ -14,9 +17,12 @@ fn xdg_data_home() {
   Test::new()
     .env_remove("FILEPACK_DATA_DIR")
     .env("XDG_DATA_HOME", "foo")
-    .arg("keygen")
-    .assert_file_regex("foo/filepack/keychain/master.public", "public1a.{58}\n")
-    .assert_file_regex("foo/filepack/keychain/master.private", "private1a.{58}\n")
+    .arg("info")
+    .stdout_regex_path(&json_regex! {
+      data: "foo/filepack",
+      keychain: "foo/filepack/keychain",
+      keys: {},
+    })
     .success();
 }
 
@@ -24,8 +30,11 @@ fn xdg_data_home() {
 fn xdg_data_home_empty() {
   Test::new()
     .env("XDG_DATA_HOME", "")
-    .arg("keygen")
-    .assert_file_regex("keychain/master.public", "public1a.{58}\n")
-    .assert_file_regex("keychain/master.private", "private1a.{58}\n")
+    .arg("info")
+    .stdout_regex_path(&json_regex! {
+      data: ".*filepack-test-tempdir.*",
+      keychain: ".*filepack-test-tempdir.*/keychain",
+      keys: {},
+    })
     .success();
 }

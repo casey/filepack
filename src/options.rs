@@ -50,38 +50,3 @@ impl Options {
     })
   }
 }
-
-#[cfg(test)]
-mod tests {
-  use super::*;
-
-  #[test]
-  fn data_dir_default() {
-    assert_eq!(
-      Options {
-        data_dir: None,
-        mmap: false,
-        parallel: false,
-        quiet: false,
-      }
-      .data_dir()
-      .unwrap(),
-      dirs::data_local_dir().unwrap().join("filepack")
-    );
-  }
-
-  #[test]
-  fn data_dir_set() {
-    assert_eq!(
-      Options {
-        data_dir: Some("hello".into()),
-        mmap: false,
-        parallel: false,
-        quiet: false,
-      }
-      .data_dir()
-      .unwrap(),
-      Utf8Path::new("hello"),
-    );
-  }
-}

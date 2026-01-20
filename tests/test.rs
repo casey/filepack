@@ -265,6 +265,17 @@ impl Test {
     self
   }
 
+  pub(crate) fn stdout_regex_path(self, pattern: &str) -> Self {
+    self.stdout_regex(&pattern.replace(
+      '/',
+      if MAIN_SEPARATOR_STR == "\\" {
+        "\\\\\\\\"
+      } else {
+        MAIN_SEPARATOR_STR
+      },
+    ))
+  }
+
   #[track_caller]
   pub(crate) fn success(self) -> Self {
     self.status(0)
