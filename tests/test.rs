@@ -4,7 +4,7 @@ pub(crate) struct Test {
   args: Vec<String>,
   current_dir: Option<String>,
   data_dir: Option<String>,
-  env: BTreeMap<String, String>,
+  env: BTreeMap<String, Option<String>>,
   files: BTreeMap<String, Expected>,
   stderr: Expected,
   stdin: Option<String>,
@@ -76,7 +76,12 @@ impl Test {
   }
 
   pub(crate) fn env(mut self, key: &str, value: &str) -> Self {
-    assert!(self.env.insert(key.into(), value.into()).is_none());
+    assert!(self.env.insert(key.into(), Some(value.into())).is_none());
+    self
+  }
+
+  pub(crate) fn env_remove(mut self, key: &str) -> Self {
+    assert!(self.env.insert(key.into(), None).is_none());
     self
   }
 
@@ -155,10 +160,16 @@ impl Test {
       self.path()
     };
 
-    command.env("FILEPACK_DATA_DIR", data_dir);
+    if !self.env.contains_key("FILEPACK_DATA_DIR") {
+      command.env("FILEPACK_DATA_DIR", data_dir);
+    }
 
     for (key, value) in &self.env {
-      command.env(key, value);
+      if let Some(value) = value {
+        command.env(key, value);
+      } else {
+        command.env_remove(key);
+      }
     }
 
     command.args(&self.args);

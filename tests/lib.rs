@@ -18,6 +18,7 @@ use {
 mod bech32m;
 mod contains;
 mod create;
+mod data_dir;
 mod expected;
 mod files;
 mod fingerprint;

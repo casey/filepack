@@ -145,6 +145,29 @@ ensure that you the manifest has been verified before proceeding:
 filepack verify --print | jq
 ```
 
+Data Directory
+--------------
+
+Filepack stores local configuration in the `filepack` subdirectory of the
+platform data directory.
+
+The location of the platform data directory is platform dependent, with the
+`$XDG_DATA_DIR` being respected on all platforms.
+
+| Platform | Value                               |
+| -------- | ----------------------------------- |
+| All      | `$XDG_DATA_DIR`                     |
+| Linux    | `$HOME`/.local/share                |
+| macOS    | `$HOME`/Library/Application Support |
+| Windows  | `{FOLDERID_LocalAppData}`           |
+
+Filepack stores keys in the `keychain` subdirectory of the filepack data
+directory. So if the platform data directory is `~/.local/share`, the
+`keychain` directory is `~/.local/share/filepack/keychain`.
+
+The location of the filepack data directory used by a command can be overridden
+with the `--data-dir` option.
+
 Manifest
 --------
 
@@ -388,17 +411,8 @@ Keypairs are generated with:
 filepack keygen
 ```
 
-Which creates `master.public` and `master.private` files in the filepack
-`keychain` directory.
-
-The `keychain` directory is located in the filepack data directory whose
-location is platform-dependent:
-
-| Platform | Value                                    | Example                                  |
-| -------- | ---------------------------------------- | ---------------------------------------- |
-| Linux    | `$XDG_DATA_HOME` or `$HOME`/.local/share | /home/alice/.local/share                 |
-| macOS    | `$HOME`/Library/Application Support      | /Users/Alice/Library/Application Support |
-| Windows  | `{FOLDERID_LocalAppData}`                | C:\Users\Alice\AppData\Local             |
+Which creates `master.public` and `master.private` files in the `keychain`
+subdirectory of the filepack data directory.
 
 ### Public Key Printing
 
