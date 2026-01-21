@@ -27,7 +27,7 @@ impl PublicKey {
     self
       .0
       .verify_strict(message.as_ref(), signature.as_ref())
-      .map_err(SignatureError)
+      .map_err(DalekSignatureError)
       .context(error::SignatureInvalid { key: *self })
   }
 }
@@ -50,7 +50,7 @@ impl FromStr for PublicKey {
     let bytes = Self::decode_bech32m(key)?;
 
     let inner = ed25519_dalek::VerifyingKey::from_bytes(&bytes)
-      .map_err(SignatureError)
+      .map_err(DalekSignatureError)
       .context(public_key_error::Invalid { key })?;
 
     ensure! {

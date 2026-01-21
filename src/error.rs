@@ -257,7 +257,7 @@ pub enum Error {
   SignatureInvalid {
     backtrace: Option<Backtrace>,
     key: PublicKey,
-    source: SignatureError,
+    source: DalekSignatureError,
   },
   #[snafu(display("no signature found for key `{identifier}`"))]
   SignatureMissing {

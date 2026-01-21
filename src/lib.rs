@@ -24,6 +24,7 @@ use {
     component::Component,
     component_error::ComponentError,
     count::Count,
+    dalek_signature_error::DalekSignatureError,
     date_time::DateTime,
     display_path::DisplayPath,
     display_secret::DisplaySecret,
@@ -52,7 +53,6 @@ use {
     public_key_error::PublicKeyError,
     serialized_message::SerializedMessage,
     sign_options::SignOptions,
-    signature_error::SignatureError,
     style::Style,
     subcommand::Subcommand,
     tag::Tag,
@@ -134,6 +134,7 @@ mod bech32m_error;
 mod component;
 mod component_error;
 mod count;
+mod dalek_signature_error;
 mod date_time;
 mod directory;
 mod display_path;
@@ -178,7 +179,6 @@ mod relative_path;
 mod serialized_message;
 mod sign_options;
 mod signature;
-mod signature_error;
 mod style;
 mod subcommand;
 mod tag;
