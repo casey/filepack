@@ -216,6 +216,11 @@ fn pgp_v4_signatures_can_be_verified() {
     .sign_message(&mut keypair, message.bytes())
     .unwrap();
 
+  signature_packet
+    .clone()
+    .verify_message(signing_key.key(), message.bytes())
+    .unwrap();
+
   let mpi::Signature::EdDSA { r, s } = signature_packet.mpis() else {
     panic!("expected EdDSA signature");
   };
@@ -233,10 +238,7 @@ fn pgp_v4_signatures_can_be_verified() {
 
   let (public_key_bytes, _) = q.decode_point(&Curve::Ed25519).unwrap();
 
-  signature_packet
-    .clone()
-    .verify_message(signing_key.key(), message.bytes())
-    .unwrap();
+  let public_key = PublicKey::from_bytes(public_key_bytes.try_into().unwrap());
 
   {
     let hashed_area = signature_packet.hashed_area().to_vec().unwrap();
@@ -269,8 +271,6 @@ fn pgp_v4_signatures_can_be_verified() {
     let sig = ed25519_dalek::Signature::from_bytes(&sig_bytes);
     verifying_key.verify_strict(&digest, &sig).unwrap();
   }
-
-  let public_key = PublicKey::from_bytes(public_key_bytes.try_into().unwrap());
 
   {
     let packet::key::SecretKeyMaterial::Unencrypted(secret_key_material) =
