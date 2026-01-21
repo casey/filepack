@@ -21,7 +21,6 @@ use {
     arguments::Arguments,
     bech32m::Bech32m,
     bech32m_error::Bech32mError,
-    bech32m_payload::Bech32mPayload,
     component::Component,
     component_error::ComponentError,
     count::Count,
@@ -134,7 +133,6 @@ macro_rules! assert_matches {
 mod arguments;
 mod bech32m;
 mod bech32m_error;
-mod bech32m_payload;
 mod component;
 mod component_error;
 mod count;
