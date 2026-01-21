@@ -164,7 +164,7 @@ pub(crate) trait Bech32m<const PREFIX: usize, const DATA: usize> {
     fe32s.next().unwrap();
 
     // remove prefix
-    for i in 0..PREFIX {
+    for _ in 0..PREFIX {
       fe32s.next().unwrap();
     }
 
