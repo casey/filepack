@@ -1,4 +1,7 @@
-use super::*;
+use {
+  super::*,
+  sha2::{Digest, Sha512},
+};
 
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) enum SignatureScheme {
@@ -37,8 +40,6 @@ impl SignatureScheme {
     match self {
       Self::Filepack => message.bytes().into(),
       Self::Pgp { hashed_area } => {
-        use sha2::{Digest, Sha512};
-
         let hashed_area_len = hashed_area.len();
 
         let mut header = [0u8; 6];
@@ -63,8 +64,6 @@ impl SignatureScheme {
         hasher.finalize().to_vec().into()
       }
       Self::Ssh => {
-        use sha2::{Digest, Sha512};
-
         let mut buffer = b"SSHSIG".to_vec();
 
         let mut field = |value: &[u8]| {
