@@ -1,7 +1,7 @@
 use {super::*, std::process::Command};
 
 #[test]
-fn signatures_are_ssh_compatible() {
+fn ssh_signatures_can_be_verified() {
   let manifest = Manifest {
     files: Directory::new(),
     notes: Vec::new(),
@@ -81,5 +81,5 @@ fn signatures_are_ssh_compatible() {
     )
   };
 
-  public_key.verify(&message, &signature).unwrap();
+  signature.verify(&message, &public_key).unwrap();
 }
