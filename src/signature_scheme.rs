@@ -14,20 +14,32 @@ impl SignatureScheme {
   pub(crate) fn new(scheme: Fe32, suffix: Vec<u8>) -> Result<Self, SignatureError> {
     match scheme {
       Fe32::F => {
-        assert!(suffix.is_empty(), "todo: proper error");
+        ensure!(
+          suffix.is_empty(),
+          signature_error::SuffixNotAllowed { scheme: "filepack" },
+        );
         Ok(SignatureScheme::Filepack)
       }
       Fe32::P => {
-        assert!(u16::try_from(suffix.len()).is_ok(), "todo: proper error");
+        ensure!(
+          u16::try_from(suffix.len()).is_ok(),
+          signature_error::SuffixTooLarge {
+            length: suffix.len(),
+            scheme: "pgp",
+          },
+        );
         Ok(SignatureScheme::Pgp {
           hashed_area: suffix,
         })
       }
       Fe32::S => {
-        assert!(suffix.is_empty(), "todo: proper error");
+        ensure!(
+          suffix.is_empty(),
+          signature_error::SuffixNotAllowed { scheme: "ssh" },
+        );
         Ok(SignatureScheme::Ssh)
       }
-      _ => return Err(signature_error::UnsupportedScheme { scheme }.build()),
+      _ => Err(signature_error::UnsupportedScheme { scheme }.build()),
     }
   }
 
@@ -76,7 +88,7 @@ impl SignatureScheme {
         field(b"filepack"); // namespace
         field(b""); // reserved
         field(b"sha512"); // hash algorithm
-        field(&Sha512::digest(&message.bytes()));
+        field(&Sha512::digest(message.bytes()));
 
         buffer.into()
       }

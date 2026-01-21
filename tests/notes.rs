@@ -27,11 +27,11 @@ fn duplicate_note() {
 
   manifest.notes = vec![
     Note {
-      signatures: [(first_key.clone(), first_sig.clone())].into(),
+      signatures: [(*first_key, first_sig.clone())].into(),
       time: None,
     },
     Note {
-      signatures: [(second_key.clone(), second_sig.clone())].into(),
+      signatures: [(*second_key, second_sig.clone())].into(),
       time: None,
     },
   ];

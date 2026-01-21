@@ -43,8 +43,8 @@ impl Suffix for Vec<u8> {
 
 #[derive(Debug)]
 pub(crate) struct Payload<const PREFIX: usize, const DATA: usize, T> {
-  pub(crate) prefix: [Fe32; PREFIX],
   pub(crate) data: [u8; DATA],
+  pub(crate) prefix: [Fe32; PREFIX],
   pub(crate) suffix: T,
 }
 
@@ -104,16 +104,12 @@ pub(crate) trait Bech32m<const PREFIX: usize, const DATA: usize> {
 
     let mut bytes = fe32s.fes_to_bytes();
 
-    {
-      let mut actual = 0usize;
-      for byte in &mut data {
-        *byte = bytes.next().context(bech32m_error::DataLength {
-          actual,
-          expected: DATA,
-          ty: Self::TYPE,
-        })?;
-        actual += 1;
-      }
+    for (actual, byte) in data.iter_mut().enumerate() {
+      *byte = bytes.next().context(bech32m_error::DataLength {
+        actual,
+        expected: DATA,
+        ty: Self::TYPE,
+      })?;
     }
 
     let suffix = Self::Suffix::from_bytes(Self::TYPE, bytes)?;
@@ -121,8 +117,8 @@ pub(crate) trait Bech32m<const PREFIX: usize, const DATA: usize> {
     Self::validate_padding(&hrp_string).context(bech32m_error::Padding { ty: Self::TYPE })?;
 
     Ok(Payload {
-      prefix,
       data,
+      prefix,
       suffix,
     })
   }
@@ -132,9 +128,9 @@ pub(crate) trait Bech32m<const PREFIX: usize, const DATA: usize> {
     payload: Payload<PREFIX, DATA, Self::Suffix>,
   ) -> fmt::Result {
     let Payload {
+      data,
       prefix,
       suffix,
-      data,
     } = payload;
 
     let chars = prefix
