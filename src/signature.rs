@@ -31,6 +31,7 @@ impl Signature {
 impl Bech32m<1, { Signature::LEN }> for Signature {
   const HRP: Hrp = Hrp::parse_unchecked("signature");
   const TYPE: &'static str = "signature";
+  type Suffix = ();
 }
 
 impl Display for Signature {
@@ -49,7 +50,7 @@ impl FromStr for Signature {
   type Err = SignatureError;
 
   fn from_str(signature: &str) -> Result<Self, Self::Err> {
-    let ([scheme], data) = Self::decode_bech32m(signature)?;
+    let ([scheme], data, ()) = Self::decode_bech32m(signature)?;
 
     Ok(Self {
       inner: ed25519_dalek::Signature::from_bytes(&data),

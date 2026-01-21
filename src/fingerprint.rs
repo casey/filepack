@@ -15,6 +15,7 @@ impl Fingerprint {
 impl Bech32m<0, { Fingerprint::LEN }> for Fingerprint {
   const HRP: Hrp = Hrp::parse_unchecked("package");
   const TYPE: &'static str = "package fingerprint";
+  type Suffix = ();
 }
 
 impl Display for Fingerprint {
@@ -27,7 +28,7 @@ impl FromStr for Fingerprint {
   type Err = Bech32mError;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
-    let ([], data) = Self::decode_bech32m(s)?;
+    let ([], data, ()) = Self::decode_bech32m(s)?;
     Ok(Self(data.into()))
   }
 }

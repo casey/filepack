@@ -36,6 +36,7 @@ impl PublicKey {
 impl Bech32m<0, { PublicKey::LEN }> for PublicKey {
   const HRP: Hrp = Hrp::parse_unchecked("public");
   const TYPE: &'static str = "public key";
+  type Suffix = ();
 }
 
 impl From<PrivateKey> for PublicKey {
@@ -48,7 +49,7 @@ impl FromStr for PublicKey {
   type Err = PublicKeyError;
 
   fn from_str(key: &str) -> Result<Self, Self::Err> {
-    let ([], data) = Self::decode_bech32m(key)?;
+    let ([], data, ()) = Self::decode_bech32m(key)?;
 
     let inner = ed25519_dalek::VerifyingKey::from_bytes(&data)
       .map_err(DalekSignatureError)
