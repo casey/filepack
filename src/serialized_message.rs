@@ -8,9 +8,9 @@ impl SerializedMessage {
 
     let mut buf = b"SSHSIG".to_vec();
 
-    let mut field = |bytes: &[u8]| {
-      buf.extend_from_slice(&(bytes.len() as u32).to_be_bytes());
-      buf.extend_from_slice(bytes);
+    let mut field = |value: &[u8]| {
+      buf.extend_from_slice(&u32::try_from(value.len()).unwrap().to_be_bytes());
+      buf.extend_from_slice(value);
     };
 
     field(b"filepack");
