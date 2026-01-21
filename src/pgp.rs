@@ -11,7 +11,7 @@ use {
     types::{Curve, HashAlgorithm, SignatureType},
   },
   sha2::{Digest, Sha512},
-  std::{os::unix::fs::PermissionsExt, process::Command},
+  std::process::Command,
 };
 
 #[test]
@@ -38,7 +38,12 @@ fn gpg_v4_signatures_can_be_verified() {
 
   let gnupg_home = path.join("gnupg");
   fs::create_dir(&gnupg_home).unwrap();
-  fs::set_permissions(&gnupg_home, Permissions::from_mode(0o700)).unwrap();
+
+  #[cfg(unix)]
+  {
+    use std::os::unix::fs::PermissionsExt;
+    fs::set_permissions(&gnupg_home, Permissions::from_mode(0o700)).unwrap();
+  }
 
   let output = Command::new("gpg")
     .args(["--homedir", gnupg_home.as_str()])
