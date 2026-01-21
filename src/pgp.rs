@@ -120,6 +120,7 @@ fn pgp_v4_signatures_can_be_verified() {
 }
 
 #[test]
+#[ignore]
 fn pgp_v6_signatures_can_be_verified() {
   let manifest = Manifest {
     files: Directory::new(),

@@ -37,7 +37,30 @@ impl SignatureScheme {
     match self {
       Self::Filepack => message.bytes().into(),
       Self::Pgp { hashed_area } => {
-        todo!()
+        use sha2::{Digest, Sha512};
+
+        let hashed_area_len = hashed_area.len();
+
+        let mut header = [0u8; 6];
+        header[0] = 4;
+        header[1] = 0;
+        header[2] = 22;
+        header[3] = 10;
+        header[4..6].copy_from_slice(&(hashed_area_len as u16).to_be_bytes());
+
+        let mut trailer = [0u8; 6];
+        trailer[0] = 4;
+        trailer[1] = 0xff;
+        let len = (header.len() + hashed_area_len) as u32;
+        trailer[2..6].copy_from_slice(&len.to_be_bytes());
+
+        let mut hasher = Sha512::new();
+        hasher.update(message.bytes());
+        hasher.update(&header);
+        hasher.update(hashed_area);
+        hasher.update(&trailer);
+
+        hasher.finalize().to_vec().into()
       }
       Self::Ssh => {
         use sha2::{Digest, Sha512};
