@@ -20,31 +20,23 @@ fn gpg_v4_signatures_can_be_verified() {
     return;
   }
 
-  let manifest = Manifest {
-    files: Directory::new(),
-    notes: Vec::new(),
-  };
-
-  let message = Message {
-    fingerprint: manifest.fingerprint(),
-    time: None,
-  };
-
-  let message = message.serialize();
-
+  // create tempdir
   let tempdir = tempdir();
-
   let path = decode_path(tempdir.path()).unwrap();
 
+  // create gpg homedir
   let home = path.join("gnupg");
-  fs::create_dir(&home).unwrap();
-
-  #[cfg(unix)]
   {
-    use std::os::unix::fs::PermissionsExt;
-    fs::set_permissions(&home, Permissions::from_mode(0o700)).unwrap();
+    fs::create_dir(&home).unwrap();
+
+    #[cfg(unix)]
+    {
+      use std::os::unix::fs::PermissionsExt;
+      fs::set_permissions(&home, Permissions::from_mode(0o700)).unwrap();
+    }
   }
 
+  // generate keypair
   {
     let output = Command::new("gpg")
       .args(["--homedir", home.as_str()])
@@ -60,9 +52,20 @@ fn gpg_v4_signatures_can_be_verified() {
     );
   }
 
+  // create and sign message
   let signature_path = path.join("message.sig");
+  let message = {
+    let manifest = Manifest {
+      files: Directory::new(),
+      notes: Vec::new(),
+    };
 
-  {
+    let message = Message {
+      fingerprint: manifest.fingerprint(),
+      time: None,
+    }
+    .serialize();
+
     let message_path = path.join("message");
     filesystem::write(&message_path, message.bytes()).unwrap();
 
@@ -80,99 +83,114 @@ fn gpg_v4_signatures_can_be_verified() {
       "gpg signing failed: {}",
       String::from_utf8_lossy(&output.stderr)
     );
+
+    message
+  };
+
+  // extract public key
+  let public_key = {
+    let policy = StandardPolicy::new();
+
+    let output = Command::new("gpg")
+      .args(["--homedir", home.as_str()])
+      .args(["--export", "foo@bar"])
+      .output()
+      .unwrap();
+    assert!(
+      output.status.success(),
+      "gpg export failed: {}",
+      String::from_utf8_lossy(&output.stderr)
+    );
+
+    let cert = Cert::from_bytes(&output.stdout).unwrap();
+
+    let signing_key = cert
+      .keys()
+      .with_policy(&policy, None)
+      .supported()
+      .for_signing()
+      .next()
+      .unwrap();
+
+    let mpi::PublicKey::EdDSA { q, .. } = signing_key.key().mpis() else {
+      panic!("expected EdDSA public key");
+    };
+
+    let (public_key_bytes, _) = q.decode_point(&Curve::Ed25519).unwrap();
+    PublicKey::from_bytes(public_key_bytes.try_into().unwrap())
+  };
+
+  // extract and verify private key
+  {
+    let policy = StandardPolicy::new();
+
+    let output = Command::new("gpg")
+      .args(["--homedir", home.as_str()])
+      .arg("--batch")
+      .args(["--passphrase", ""])
+      .args(["--export-secret-keys", "foo@bar"])
+      .output()
+      .unwrap();
+    assert!(
+      output.status.success(),
+      "gpg export-secret-keys failed: {}",
+      String::from_utf8_lossy(&output.stderr)
+    );
+
+    let secret_cert = Cert::from_bytes(&output.stdout).unwrap();
+
+    let secret_key = secret_cert
+      .keys()
+      .unencrypted_secret()
+      .with_policy(&policy, None)
+      .supported()
+      .for_signing()
+      .next()
+      .unwrap();
+
+    let packet::key::SecretKeyMaterial::Unencrypted(secret_key_material) =
+      secret_key.key().optional_secret().unwrap()
+    else {
+      panic!("expected unencrypted secret key");
+    };
+
+    let mpi::SecretKeyMaterial::EdDSA { scalar } = secret_key_material.map(Clone::clone) else {
+      panic!("expected EdDSA secret key");
+    };
+
+    let private_key = PrivateKey::from_bytes(scalar.value().try_into().unwrap());
+
+    assert_eq!(private_key.public_key(), public_key);
   }
 
-  let signature_bytes = fs::read(signature_path.as_std_path()).unwrap();
-  let packet = Packet::from_bytes(&signature_bytes).unwrap();
-  let Packet::Signature(signature_packet) = packet else {
-    panic!("expected signature packet");
+  // extract signature
+  let signature = {
+    let signature_bytes = fs::read(signature_path.as_std_path()).unwrap();
+    let packet = Packet::from_bytes(&signature_bytes).unwrap();
+    let Packet::Signature(signature_packet) = packet else {
+      panic!("expected signature packet");
+    };
+
+    let mpi::Signature::EdDSA { r, s } = signature_packet.mpis() else {
+      panic!("expected EdDSA signature");
+    };
+
+    let r_bytes = r.value_padded(32).unwrap();
+    let s_bytes = s.value_padded(32).unwrap();
+
+    let mut sig_bytes = [0u8; 64];
+    sig_bytes[..32].copy_from_slice(&r_bytes);
+    sig_bytes[32..].copy_from_slice(&s_bytes);
+
+    Signature::new(
+      SignatureScheme::Pgp {
+        hashed_area: signature_packet.hashed_area().to_vec().unwrap(),
+      },
+      ed25519_dalek::Signature::from_bytes(&sig_bytes),
+    )
   };
 
-  let mpi::Signature::EdDSA { r, s } = signature_packet.mpis() else {
-    panic!("expected EdDSA signature");
-  };
-
-  let r_bytes = r.value_padded(32).unwrap();
-  let s_bytes = s.value_padded(32).unwrap();
-
-  let mut sig_bytes = [0u8; 64];
-  sig_bytes[..32].copy_from_slice(&r_bytes);
-  sig_bytes[32..].copy_from_slice(&s_bytes);
-
-  let output = Command::new("gpg")
-    .args(["--homedir", home.as_str()])
-    .args(["--export", "foo@bar"])
-    .output()
-    .unwrap();
-  assert!(
-    output.status.success(),
-    "gpg export failed: {}",
-    String::from_utf8_lossy(&output.stderr)
-  );
-
-  let cert = Cert::from_bytes(&output.stdout).unwrap();
-  let policy = StandardPolicy::new();
-
-  let signing_key = cert
-    .keys()
-    .with_policy(&policy, None)
-    .supported()
-    .for_signing()
-    .next()
-    .unwrap();
-
-  let mpi::PublicKey::EdDSA { q, .. } = signing_key.key().mpis() else {
-    panic!("expected EdDSA public key");
-  };
-
-  let (public_key_bytes, _) = q.decode_point(&Curve::Ed25519).unwrap();
-  let public_key = PublicKey::from_bytes(public_key_bytes.try_into().unwrap());
-
-  let output = Command::new("gpg")
-    .args(["--homedir", home.as_str()])
-    .arg("--batch")
-    .args(["--passphrase", ""])
-    .args(["--export-secret-keys", "foo@bar"])
-    .output()
-    .unwrap();
-  assert!(
-    output.status.success(),
-    "gpg export-secret-keys failed: {}",
-    String::from_utf8_lossy(&output.stderr)
-  );
-
-  let secret_cert = Cert::from_bytes(&output.stdout).unwrap();
-
-  let secret_key = secret_cert
-    .keys()
-    .unencrypted_secret()
-    .with_policy(&policy, None)
-    .supported()
-    .for_signing()
-    .next()
-    .unwrap();
-
-  let packet::key::SecretKeyMaterial::Unencrypted(secret_key_material) =
-    secret_key.key().optional_secret().unwrap()
-  else {
-    panic!("expected unencrypted secret key");
-  };
-
-  let mpi::SecretKeyMaterial::EdDSA { scalar } = secret_key_material.map(Clone::clone) else {
-    panic!("expected EdDSA secret key");
-  };
-
-  let private_key = PrivateKey::from_bytes(scalar.value().try_into().unwrap());
-
-  assert_eq!(private_key.public_key(), public_key);
-
-  let signature = Signature::new(
-    SignatureScheme::Pgp {
-      hashed_area: signature_packet.hashed_area().to_vec().unwrap(),
-    },
-    ed25519_dalek::Signature::from_bytes(&sig_bytes),
-  );
-
+  // verify signature
   signature.verify(&message, public_key).unwrap();
 }
 

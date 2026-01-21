@@ -6,24 +6,12 @@ fn ssh_signatures_can_be_verified() {
     return;
   }
 
-  let manifest = Manifest {
-    files: Directory::new(),
-    notes: Vec::new(),
-  };
-
-  let message = Message {
-    fingerprint: manifest.fingerprint(),
-    time: None,
-  };
-
-  let message = message.serialize();
-
+  // create tempdir
   let tempdir = tempdir();
-
   let path = decode_path(tempdir.path()).unwrap();
 
+  // generate keypair
   let key_path = path.join("id_ed25519");
-
   {
     let output = Command::new("ssh-keygen")
       .args(["-t", "ed25519"])
@@ -35,10 +23,22 @@ fn ssh_signatures_can_be_verified() {
     assert!(output.status.success());
   }
 
+  // create and sign message
   let message_path = path.join("message");
-  filesystem::write(&message_path, message.bytes()).unwrap();
+  let message = {
+    let manifest = Manifest {
+      files: Directory::new(),
+      notes: Vec::new(),
+    };
 
-  {
+    let message = Message {
+      fingerprint: manifest.fingerprint(),
+      time: None,
+    }
+    .serialize();
+
+    filesystem::write(&message_path, message.bytes()).unwrap();
+
     let output = Command::new("ssh-keygen")
       .args(["-Y", "sign"])
       .args(["-f", key_path.as_str()])
@@ -46,8 +46,11 @@ fn ssh_signatures_can_be_verified() {
       .output()
       .unwrap();
     assert!(output.status.success());
-  }
 
+    message
+  };
+
+  // extract public key
   let public_key = {
     let public_key = filesystem::read_to_string(key_path.with_extension("pub"))
       .unwrap()
@@ -62,6 +65,7 @@ fn ssh_signatures_can_be_verified() {
     PublicKey::from_bytes(public_key.0)
   };
 
+  // extract and verify private key
   {
     let pem = filesystem::read_to_string(&key_path).unwrap();
     let private_key = ssh_key::PrivateKey::from_openssh(&pem).unwrap();
@@ -77,6 +81,7 @@ fn ssh_signatures_can_be_verified() {
     assert_eq!(private_key.public_key(), public_key,);
   };
 
+  // extract signature
   let signature = {
     let signature = filesystem::read_to_string(path.join("message.sig"))
       .unwrap()
@@ -88,5 +93,6 @@ fn ssh_signatures_can_be_verified() {
     )
   };
 
+  // verify signature
   signature.verify(&message, public_key).unwrap();
 }
