@@ -16,6 +16,7 @@ impl Signature {
   pub fn verify(&self, message: &SerializedMessage, public_key: PublicKey) -> Result {
     let signed_data = match self.scheme {
       SignatureScheme::Filepack => Cow::Borrowed(message.filepack_signed_data()),
+      SignatureScheme::Pgp => Cow::Owned(message.pgp_signed_data()),
       SignatureScheme::Ssh => Cow::Owned(message.ssh_signed_data()),
     };
 

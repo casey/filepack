@@ -190,6 +190,8 @@ mod ticked;
 mod utf8_path_ext;
 
 #[cfg(test)]
+mod pgp;
+#[cfg(test)]
 mod ssh;
 #[cfg(test)]
 mod test;

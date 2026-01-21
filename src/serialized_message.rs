@@ -7,6 +7,10 @@ impl SerializedMessage {
     &self.0
   }
 
+  pub(crate) fn pgp_signed_data(&self) -> Vec<u8> {
+    todo!()
+  }
+
   pub(crate) fn ssh_signed_data(&self) -> Vec<u8> {
     let mut buffer = b"SSHSIG".to_vec();
 

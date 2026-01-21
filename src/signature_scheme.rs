@@ -3,6 +3,7 @@ use super::*;
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub(crate) enum SignatureScheme {
   Filepack,
+  Pgp,
   Ssh,
 }
 
@@ -10,6 +11,7 @@ impl From<SignatureScheme> for Fe32 {
   fn from(scheme: SignatureScheme) -> Self {
     match scheme {
       SignatureScheme::Filepack => Fe32::F,
+      SignatureScheme::Pgp => Fe32::P,
       SignatureScheme::Ssh => Fe32::S,
     }
   }
@@ -21,6 +23,7 @@ impl TryFrom<Fe32> for SignatureScheme {
   fn try_from(scheme: Fe32) -> Result<Self, Self::Error> {
     match scheme {
       Fe32::F => Ok(Self::Filepack),
+      Fe32::P => Ok(Self::Pgp),
       Fe32::S => Ok(Self::Ssh),
       _ => Err(signature_error::UnsupportedScheme { scheme }.build()),
     }
