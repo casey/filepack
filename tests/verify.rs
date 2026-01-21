@@ -463,16 +463,16 @@ fn non_unicode_path_error() {
 fn pgp_signature() {
   #[allow(unused)]
   const PGP_PRIVATE_KEY: &str =
-    "private1at6hy62ykv46jmlqks3jpnx3lmgv2avtrrtnt2uljwhzdrfx54n6sx4cj9e";
+    "private1afwzmk66ppk6mr0jgh6w2nlsup4u4n9ve0l89yww6p9g6lanrcm0qw7hwq5";
 
-  const PGP_PUBLIC_KEY: &str = "public1ackrgctyukf4rjvve9kda5s5huadpq58htnz2wu0dyjd7jzcfg9ts3us24e";
+  const PGP_PUBLIC_KEY: &str = "public1axadguya9tqnfavpjq08st0sfzgvmxwjsqcfudgg55sh4ztjnsugsxmnnj0";
 
   const PGP_SIGNATURE: &str = concat!(
-    "signature1ap49xy7g634zevd4sj87ke957jve5rp3ww0sxw4rjzca9c2ckzua",
-    "0xxc78n4vzrwhntg2nx3pezqqst5gsefjj0vlznhe5n9t6ca6aayrg9sf5hz",
-    "cympyg0v4dq6mzduvmjgu2qqqqqqqqpuqpqwdskcazqdehhgct5d9hkuueww",
-    "djhzat0d9sj6ur8wqhx7un87nsw6ra87hdutl7snlc6f9wua2vqyac8uz8ny",
-    "9nh2yluhnpwcfp3vggy45w4wxfz7338q36y26qlv4dq6mzduvmjz24scs",
+    "signature1ap4f9anzsjk4gq0hh0a7uk5v7vvjpfz20hwp2y548twpn2ecxn5a",
+    "hdjd2gusuztpwxs63ajcqzl26k7s95tcatvpsz8r2pgtj0yxjav2rc9sf5hz",
+    "c22pygwudfszugaanvcgu2qqqqqqqqpuqpqwdskcazqdehhgct5d9hkuueww",
+    "djhzat0d9sj6ur8wqhx7un8rl2l6gcc3ccvenxhfpyacp57t5xfyp3dktmz0",
+    "68w8uspdfdwy89pvggyppyz88rs9es8fq65rx77udfszugaanvcclxt00",
   );
 
   Test::new()
@@ -637,13 +637,13 @@ error: 1 mismatched file
 fn ssh_signature() {
   #[allow(unused)]
   const SSH_PRIVATE_KEY: &str =
-    "private1a4u5t9g3hlfk56d5kaw8drqgc478ljeqzae7lqc4y742pa6u6ur7srw5lct";
+    "private1am4us9r7p9m4d66jhgdynesetgs06vgk7zdzys4nuztqzm7wx7lfqghthpt";
 
-  const SSH_PUBLIC_KEY: &str = "public1aq909nh5a30jkz54an4r53gxcvc94lxgvlcqspvryh8r6u9pwaceqf8ya25";
+  const SSH_PUBLIC_KEY: &str = "public1avp5pgjsqf6uzcrd34x4hgdndfaf5w5h786wh3tjs9vyup3n74h2shpdku2";
 
   const SSH_SIGNATURE: &str = concat!(
-    "signature1as0aemdcqhpwh99nqzawnrpcyadl2eq7axfxfhanedkuhy8rmz3k",
-    "7lr5kxh3emnjdwfys76qny48lla6v68ma3mm4w7tmmew74qzeuu5pqqgrh5r",
+    "signature1as0qpsm76yvvg4wjn4l7vqemk5vpc5khpp5ceqrp693x2ndrvrnv",
+    "sga58suzl239sjh4t5uhprwpyfmypy4cmp0upe055cvzxg226e7gzq3e7nwt",
   );
 
   Test::new()

@@ -98,6 +98,18 @@ fn ssh_signatures_can_be_verified() {
   // verify signature
   signature.verify(&message, public_key).unwrap();
 
+  let private_key = {
+    let pem = filesystem::read_to_string(&key_path).unwrap();
+    let ssh_private_key = ssh_key::PrivateKey::from_openssh(&pem).unwrap();
+
+    let ssh_key::private::KeypairData::Ed25519(keypair) = ssh_private_key.key_data() else {
+      panic!("expected ed25519");
+    };
+
+    PrivateKey::from_bytes(keypair.private.to_bytes())
+  };
+
+  eprintln!("SSH_PRIVATE_KEY: {}", private_key.display_secret());
   eprintln!("SSH_PUBLIC_KEY: {public_key}");
   eprintln!("SSH_SIGNATURE: {signature}");
 }
