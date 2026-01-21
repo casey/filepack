@@ -45,6 +45,11 @@ pretty_assertions = "1.4.1"
 ssh-key = "0.6.0"
 tempfile = "3.24.0"
 
+[dev-dependencies.sequoia-openpgp]
+version = "2.1.0"
+default-features = false
+features = ["allow-experimental-crypto", "allow-variable-time-crypto", "crypto-rust"]
+
 [lints.clippy]
 all = { level = "deny", priority = -1 }
 arbitrary-source-item-ordering = "deny"

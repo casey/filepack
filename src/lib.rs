@@ -21,6 +21,8 @@ use {
     arguments::Arguments,
     bech32m::Bech32m,
     bech32m_error::Bech32mError,
+    bech32m_payload::Bech32mPayload,
+    bech32m_suffix::Bech32mSuffix,
     component::Component,
     component_error::ComponentError,
     count::Count,
@@ -63,7 +65,10 @@ use {
   },
   bech32::{
     ByteIterExt, Fe32, Fe32IterExt, Hrp,
-    primitives::decode::{CheckedHrpstring, CheckedHrpstringError, PaddingError},
+    primitives::{
+      decode::{AsciiToFe32Iter, CheckedHrpstring, CheckedHrpstringError, PaddingError},
+      iter::FesToBytes,
+    },
   },
   blake3::Hasher,
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},
@@ -133,6 +138,8 @@ macro_rules! assert_matches {
 mod arguments;
 mod bech32m;
 mod bech32m_error;
+mod bech32m_payload;
+mod bech32m_suffix;
 mod component;
 mod component_error;
 mod count;
@@ -189,6 +196,8 @@ mod tag;
 mod ticked;
 mod utf8_path_ext;
 
+#[cfg(test)]
+mod pgp;
 #[cfg(test)]
 mod ssh;
 #[cfg(test)]

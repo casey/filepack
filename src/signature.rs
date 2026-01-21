@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Clone, Copy, DeserializeFromStr, PartialEq, SerializeDisplay)]
+#[derive(Clone, DeserializeFromStr, PartialEq, SerializeDisplay)]
 pub struct Signature {
   inner: ed25519_dalek::Signature,
   scheme: SignatureScheme,
@@ -14,10 +14,7 @@ impl Signature {
   }
 
   pub fn verify(&self, message: &SerializedMessage, public_key: PublicKey) -> Result {
-    let signed_data = match self.scheme {
-      SignatureScheme::Filepack => Cow::Borrowed(message.filepack_signed_data()),
-      SignatureScheme::Ssh => Cow::Owned(message.ssh_signed_data()),
-    };
+    let signed_data = self.scheme.signed_data(message);
 
     public_key
       .inner()
@@ -30,11 +27,20 @@ impl Signature {
 impl Bech32m<1, { Signature::LEN }> for Signature {
   const HRP: Hrp = Hrp::parse_unchecked("signature");
   const TYPE: &'static str = "signature";
+  type Suffix = Vec<u8>;
 }
 
 impl Display for Signature {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    Self::encode_bech32m(f, [self.scheme.into()], self.inner.to_bytes())
+    let (prefix, suffix) = self.scheme.prefix_and_suffix();
+
+    let payload = Bech32mPayload {
+      prefix,
+      data: self.inner.to_bytes(),
+      suffix: suffix.into(),
+    };
+
+    Self::encode_bech32m(f, payload)
   }
 }
 
@@ -48,11 +54,15 @@ impl FromStr for Signature {
   type Err = SignatureError;
 
   fn from_str(signature: &str) -> Result<Self, Self::Err> {
-    let ([scheme], data) = Self::decode_bech32m(signature)?;
+    let Bech32mPayload {
+      prefix: [scheme],
+      data,
+      suffix,
+    } = Self::decode_bech32m(signature)?;
 
     Ok(Self {
       inner: ed25519_dalek::Signature::from_bytes(&data),
-      scheme: scheme.try_into()?,
+      scheme: SignatureScheme::new(scheme, suffix)?,
     })
   }
 }

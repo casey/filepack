@@ -1,54 +1,97 @@
-use super::*;
+use {
+  super::*,
+  sha2::{Digest, Sha512},
+};
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub(crate) enum SignatureScheme {
   Filepack,
+  Pgp { hashed_area: Vec<u8> },
   Ssh,
 }
 
-impl From<SignatureScheme> for Fe32 {
-  fn from(scheme: SignatureScheme) -> Self {
+impl SignatureScheme {
+  pub(crate) fn new(scheme: Fe32, suffix: Vec<u8>) -> Result<Self, SignatureError> {
     match scheme {
-      SignatureScheme::Filepack => Fe32::F,
-      SignatureScheme::Ssh => Fe32::S,
-    }
-  }
-}
-
-impl TryFrom<Fe32> for SignatureScheme {
-  type Error = SignatureError;
-
-  fn try_from(scheme: Fe32) -> Result<Self, Self::Error> {
-    match scheme {
-      Fe32::F => Ok(Self::Filepack),
-      Fe32::S => Ok(Self::Ssh),
+      Fe32::F => {
+        ensure!(
+          suffix.is_empty(),
+          signature_error::UnexpectedSuffix { scheme: "filepack" },
+        );
+        Ok(SignatureScheme::Filepack)
+      }
+      Fe32::P => {
+        u16::try_from(suffix.len())
+          .ok()
+          .context(signature_error::SuffixLength {
+            length: suffix.len(),
+            maximum: usize::from(u16::MAX),
+            scheme: "pgp",
+          })?;
+        Ok(SignatureScheme::Pgp {
+          hashed_area: suffix,
+        })
+      }
+      Fe32::S => {
+        ensure!(
+          suffix.is_empty(),
+          signature_error::UnexpectedSuffix { scheme: "ssh" },
+        );
+        Ok(SignatureScheme::Ssh)
+      }
       _ => Err(signature_error::UnsupportedScheme { scheme }.build()),
     }
   }
-}
 
-#[cfg(test)]
-mod tests {
-  use super::*;
-
-  #[test]
-  fn fe32_to_filepack() {
-    assert_eq!(
-      SignatureScheme::try_from(Fe32::F).unwrap(),
-      SignatureScheme::Filepack,
-    );
+  pub(crate) fn prefix_and_suffix(&self) -> ([Fe32; 1], &[u8]) {
+    match self {
+      SignatureScheme::Filepack => ([Fe32::F], &[]),
+      SignatureScheme::Pgp { hashed_area } => ([Fe32::P], hashed_area),
+      SignatureScheme::Ssh => ([Fe32::S], &[]),
+    }
   }
 
-  #[test]
-  fn filepack_to_fe32() {
-    assert_eq!(Fe32::from(SignatureScheme::Filepack), Fe32::F);
-  }
+  pub(crate) fn signed_data<'a>(&self, message: &'a SerializedMessage) -> Cow<'a, [u8]> {
+    match self {
+      Self::Filepack => message.bytes().into(),
+      Self::Pgp { hashed_area } => {
+        let mut hasher = Sha512::new();
 
-  #[test]
-  fn unsupported_scheme() {
-    assert_eq!(
-      SignatureScheme::try_from(Fe32::Q).unwrap_err().to_string(),
-      "bech32m signature scheme `q` is not supported",
-    );
+        // message
+        hasher.update(message.bytes());
+
+        // header
+        hasher.update([4]); // version: 4
+        hasher.update([0]); // signature type: binary signature
+        hasher.update([22]); // public key algorithm: EdDSA
+        hasher.update([10]); // hash algorithm: SHA-512
+        hasher.update(u16::try_from(hashed_area.len()).unwrap().to_be_bytes());
+
+        // hashed area
+        hasher.update(hashed_area);
+
+        // trailer
+        hasher.update([4]); // version: 4
+        hasher.update([0xff]); // marker byte
+        hasher.update(u32::try_from(6 + hashed_area.len()).unwrap().to_be_bytes());
+
+        hasher.finalize().to_vec().into()
+      }
+      Self::Ssh => {
+        let mut buffer = b"SSHSIG".to_vec();
+
+        let mut field = |value: &[u8]| {
+          buffer.extend_from_slice(&u32::try_from(value.len()).unwrap().to_be_bytes());
+          buffer.extend_from_slice(value);
+        };
+
+        field(b"filepack"); // namespace
+        field(b""); // reserved
+        field(b"sha512"); // hash algorithm
+        field(&Sha512::digest(message.bytes()));
+
+        buffer.into()
+      }
+    }
   }
 }

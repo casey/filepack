@@ -6,7 +6,9 @@ pub(crate) trait Bech32m<const PREFIX: usize, const DATA: usize> {
   const HRP: Hrp;
   const TYPE: &'static str;
 
-  fn decode_bech32m(s: &str) -> Result<([Fe32; PREFIX], [u8; DATA]), Bech32mError> {
+  type Suffix: Bech32mSuffix;
+
+  fn decode_bech32m(s: &str) -> Result<Bech32mPayload<PREFIX, DATA, Self::Suffix>, Bech32mError> {
     let hrp_string = CheckedHrpstring::new::<bech32::Bech32m>(s)
       .context(bech32m_error::Decode { ty: Self::TYPE })?;
 
@@ -28,8 +30,6 @@ pub(crate) trait Bech32m<const PREFIX: usize, const DATA: usize> {
       bech32m_error::UnsupportedVersion { ty: Self::TYPE, version },
     }
 
-    Self::validate_padding(&hrp_string).context(bech32m_error::Padding { ty: Self::TYPE })?;
-
     let mut prefix = [Fe32::Q; PREFIX];
 
     for (actual, fe32) in prefix.iter_mut().enumerate() {
@@ -42,38 +42,46 @@ pub(crate) trait Bech32m<const PREFIX: usize, const DATA: usize> {
 
     let mut data = [0; DATA];
 
-    {
-      let mut bytes = fe32s.fes_to_bytes();
+    let mut bytes = fe32s.fes_to_bytes();
 
-      let mut actual = 0;
-      for byte in &mut data {
-        *byte = bytes.next().context(bech32m_error::DataLength {
-          actual,
-          expected: DATA,
-          ty: Self::TYPE,
-        })?;
-        actual += 1;
-      }
-
-      actual += bytes.count();
-
-      ensure! {
-        actual == DATA,
-        bech32m_error::DataLength {
-          actual,
-          expected: DATA,
-          ty: Self::TYPE,
-        },
-      }
+    for (actual, byte) in data.iter_mut().enumerate() {
+      *byte = bytes.next().context(bech32m_error::DataLength {
+        actual,
+        expected: DATA,
+        ty: Self::TYPE,
+      })?;
     }
 
-    Ok((prefix, data))
+    let suffix = Self::Suffix::from_bytes(Self::TYPE, bytes)?;
+
+    Self::validate_padding(&hrp_string).context(bech32m_error::Padding { ty: Self::TYPE })?;
+
+    Ok(Bech32mPayload {
+      data,
+      prefix,
+      suffix,
+    })
   }
 
-  fn encode_bech32m(f: &mut Formatter, prefix: [Fe32; PREFIX], data: [u8; DATA]) -> fmt::Result {
+  fn encode_bech32m(
+    f: &mut Formatter,
+    payload: Bech32mPayload<PREFIX, DATA, Self::Suffix>,
+  ) -> fmt::Result {
+    let Bech32mPayload {
+      data,
+      prefix,
+      suffix,
+    } = payload;
+
     let chars = prefix
       .into_iter()
-      .chain(data.iter().copied().bytes_to_fes())
+      .chain(
+        data
+          .iter()
+          .copied()
+          .chain(suffix.into_bytes())
+          .bytes_to_fes(),
+      )
       .with_checksum::<bech32::Bech32m>(&Self::HRP)
       .with_witness_version(VERSION)
       .chars();
@@ -89,6 +97,10 @@ pub(crate) trait Bech32m<const PREFIX: usize, const DATA: usize> {
     let mut fe32s = hrp_string.fe32_iter::<std::vec::IntoIter<u8>>();
 
     fe32s.next().unwrap();
+
+    for _ in 0..PREFIX {
+      fe32s.next().unwrap();
+    }
 
     let Some((i, last)) = fe32s.enumerate().last() else {
       return Ok(());
@@ -117,11 +129,12 @@ mod tests {
   impl Bech32m<0, 0> for EmptyPublicKey {
     const HRP: Hrp = Hrp::parse_unchecked("public");
     const TYPE: &'static str = "public key";
+    type Suffix = ();
   }
 
   impl Display for EmptyPublicKey {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-      Self::encode_bech32m(f, [], [])
+      Self::encode_bech32m(f, Bech32mPayload::from_data([]))
     }
   }
 
@@ -130,11 +143,12 @@ mod tests {
   impl Bech32m<0, 33> for LongPublicKey {
     const HRP: Hrp = Hrp::parse_unchecked("public");
     const TYPE: &'static str = "public key";
+    type Suffix = ();
   }
 
   impl Display for LongPublicKey {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-      Self::encode_bech32m(f, [], [0; 33])
+      Self::encode_bech32m(f, Bech32mPayload::from_data([0; 33]))
     }
   }
 
@@ -189,7 +203,7 @@ mod tests {
 
     case(
       &LongPublicKey.to_string(),
-      "expected bech32m public key to have 32 data bytes but found 33",
+      "expected bech32m public key to have 0 suffix bytes but found 1",
     );
 
     let public_key = test::PUBLIC_KEY.parse::<PublicKey>().unwrap();
@@ -241,6 +255,7 @@ mod tests {
     impl Bech32m<2, 0> for PrefixedType {
       const HRP: Hrp = Hrp::parse_unchecked("test");
       const TYPE: &'static str = "test";
+      type Suffix = ();
     }
 
     let bech32m = []

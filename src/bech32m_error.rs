@@ -38,6 +38,15 @@ pub enum Bech32mError {
     actual: usize,
     ty: &'static str,
   },
+  #[snafu(display(
+    "expected bech32m {ty} to have {} but found {actual}",
+    Count(*expected, "suffix byte"),
+  ))]
+  SuffixLength {
+    expected: usize,
+    actual: usize,
+    ty: &'static str,
+  },
   #[snafu(display("bech32m {ty} version `{version}` is not supported"))]
   UnsupportedVersion {
     ty: &'static str,

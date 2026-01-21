@@ -61,6 +61,23 @@ macro_rules! parts {
         )?
     }};
 
+    ($s:ident, *$key:tt : $value:tt $(, $($rest:tt)*)? ) => {{
+        $s.push('"');
+        $s.push_str(($key).as_ref());
+        $s.push('"');
+        $s.push(':');
+        parts!($s, $value);
+
+        $(
+            $s.push(',');
+            let len = $s.len();
+            parts!($s, $($rest)*);
+            if $s.len() == len {
+              $s.pop();
+            }
+        )?
+    }};
+
     ($s:ident, $value:literal) => {{
         $s.push_str(stringify!($value));
     }};

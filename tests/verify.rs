@@ -460,6 +460,39 @@ fn non_unicode_path_error() {
 }
 
 #[test]
+fn pgp_signature() {
+  #[allow(unused)]
+  const PGP_PRIVATE_KEY: &str =
+    "private1at6hy62ykv46jmlqks3jpnx3lmgv2avtrrtnt2uljwhzdrfx54n6sx4cj9e";
+
+  const PGP_PUBLIC_KEY: &str = "public1afzgrryd0m6n96syhjl4fadx3hjse8pjr23uztxpwv4685lkjm37qmgwsd3";
+
+  const PGP_SIGNATURE: &str = concat!(
+    "signature1apnckuwdwggchcm3wp5tyqef2ea03kucmc8j7p3ewcqh8falwrd0",
+    "axhp3n59c644jxnyk66tcwhs33ut0v7puw58024g4xd756m7y7szs9sf5hzw",
+    "qrpyg93acd9h5ckdxygu2qqqqqqqqpuqpqwdskcazqdehhgct5d9hkuuewwd",
+    "jhzat0d9sj6ur8wqhx7un8fp3vcyaew0zvdd79t5tmsy3hy4mun4gql69d8n",
+    "4t05sykyn9fm53vggy47uff5p0uvufjpvme2d43acd9h5ckdxy2u26nt",
+  );
+
+  Test::new()
+    .write(
+      "filepack.json",
+      json! {
+        files: {},
+        notes: [{
+          signatures: {
+            *PGP_PUBLIC_KEY: PGP_SIGNATURE
+          },
+        }],
+      },
+    )
+    .args(["verify", "--key", PGP_PUBLIC_KEY])
+    .stderr("successfully verified 0 files with 1 signature across 1 note\n")
+    .success();
+}
+
+#[test]
 fn print() {
   let manifest = json! {
     files: {
@@ -620,7 +653,7 @@ fn ssh_signature() {
         files: {},
         notes: [{
           signatures: {
-            "public1a5yf9ackwkywzmygc3q4mglp7qd32ruyj5fr0w3szp70jt4cl34cqwtjjhh": SSH_SIGNATURE
+            *SSH_PUBLIC_KEY: SSH_SIGNATURE
           },
         }],
       },
