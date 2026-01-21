@@ -40,26 +40,25 @@ impl SignatureScheme {
     match self {
       Self::Filepack => message.bytes().into(),
       Self::Pgp { hashed_area } => {
-        let hashed_area_len = hashed_area.len();
-
-        let mut header = [0u8; 6];
-        header[0] = 4;
-        header[1] = 0;
-        header[2] = 22;
-        header[3] = 10;
-        header[4..6].copy_from_slice(&(hashed_area_len as u16).to_be_bytes());
-
-        let mut trailer = [0u8; 6];
-        trailer[0] = 4;
-        trailer[1] = 0xff;
-        let len = (header.len() + hashed_area_len) as u32;
-        trailer[2..6].copy_from_slice(&len.to_be_bytes());
-
         let mut hasher = Sha512::new();
+
+        // message
         hasher.update(message.bytes());
-        hasher.update(&header);
+
+        // header
+        hasher.update([4]);
+        hasher.update([0]);
+        hasher.update([22]);
+        hasher.update([10]);
+        hasher.update((hashed_area.len() as u16).to_be_bytes());
+
+        // hashed area
         hasher.update(hashed_area);
-        hasher.update(&trailer);
+
+        // trailer
+        hasher.update([4]);
+        hasher.update([0xff]);
+        hasher.update((6 + hashed_area.len() as u32).to_be_bytes());
 
         hasher.finalize().to_vec().into()
       }
