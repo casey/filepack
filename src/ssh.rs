@@ -75,7 +75,10 @@ fn signatures_are_ssh_compatible() {
       .unwrap()
       .parse::<ssh_key::SshSig>()
       .unwrap();
-    Signature::from_bytes(signature.signature_bytes().try_into().unwrap())
+    Signature::new(
+      SignatureScheme::Filepack,
+      ed25519_dalek::Signature::from_bytes(&signature.signature_bytes().try_into().unwrap()),
+    )
   };
 
   public_key.verify(&message, &signature).unwrap();

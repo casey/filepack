@@ -9,14 +9,6 @@ pub struct Signature {
 impl Signature {
   pub(crate) const LEN: usize = ed25519_dalek::Signature::BYTE_SIZE;
 
-  #[cfg(test)]
-  pub(crate) fn from_bytes(bytes: [u8; Self::LEN]) -> Self {
-    Self::new(
-      SignatureScheme::Filepack,
-      ed25519_dalek::Signature::from_bytes(&bytes),
-    )
-  }
-
   pub(crate) fn new(scheme: SignatureScheme, inner: ed25519_dalek::Signature) -> Self {
     Self { inner, scheme }
   }
@@ -28,6 +20,7 @@ impl Signature {
         .verify_strict(message.as_ref(), &self.inner)
         .map_err(DalekSignatureError)
         .context(error::SignatureInvalid { key: *public_key }),
+      SignatureScheme::Ssh => todo!(),
     }
   }
 }
