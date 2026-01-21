@@ -1,16 +1,16 @@
 use {
   super::*,
   sequoia_openpgp::{
-    self as openpgp,
-    cert::prelude::*,
+    cert::CertBuilder,
     crypto::mpi,
     packet::{
+      self, Key,
       key::{Key6, SecretParts, UnspecifiedRole},
       signature::SignatureBuilder,
     },
     policy::StandardPolicy,
     serialize::MarshalInto,
-    types::{HashAlgorithm, SignatureType},
+    types::{Curve, HashAlgorithm, SignatureType},
   },
   sha2::{Digest, Sha512},
 };
@@ -70,7 +70,7 @@ fn pgp_v4_signatures_can_be_verified() {
     panic!("expected EdDSA public key");
   };
 
-  let (public_key_bytes, _) = q.decode_point(&openpgp::types::Curve::Ed25519).unwrap();
+  let (public_key_bytes, _) = q.decode_point(&Curve::Ed25519).unwrap();
 
   signature_packet
     .clone()
@@ -137,7 +137,7 @@ fn pgp_v6_signatures_can_be_verified() {
 
   let key6: Key6<SecretParts, UnspecifiedRole> =
     Key6::import_secret_ed25519(secret_key.as_bytes(), None).unwrap();
-  let key: openpgp::packet::Key<_, _> = key6.into();
+  let key: Key<_, _> = key6.into();
 
   let mut keypair = key.clone().into_keypair().unwrap();
 
@@ -148,7 +148,7 @@ fn pgp_v6_signatures_can_be_verified() {
 
   assert_eq!(signature_packet.version(), 6);
 
-  let openpgp::packet::Signature::V6(sig6) = signature_packet.clone() else {
+  let packet::Signature::V6(sig6) = signature_packet.clone() else {
     panic!("expected v6 signature");
   };
 
