@@ -2,73 +2,13 @@ use super::*;
 
 const VERSION: Fe32 = Fe32::A;
 
-type Bytes<'a> = FesToBytes<AsciiToFe32Iter<'a>>;
-
-pub(crate) trait Suffix: Sized {
-  fn from_bytes(ty: &'static str, bytes: Bytes) -> Result<Self, Bech32mError>;
-
-  fn into_bytes(self) -> Vec<u8>;
-}
-
-impl Suffix for () {
-  fn from_bytes(ty: &'static str, bytes: Bytes) -> Result<Self, Bech32mError> {
-    let actual = bytes.count();
-
-    ensure! {
-      actual == 0,
-      bech32m_error::SuffixLength {
-        actual,
-        expected: 0usize,
-        ty,
-      },
-    }
-
-    Ok(())
-  }
-
-  fn into_bytes(self) -> Vec<u8> {
-    Vec::new()
-  }
-}
-
-impl Suffix for Vec<u8> {
-  fn from_bytes(_ty: &'static str, bytes: Bytes) -> Result<Self, Bech32mError> {
-    Ok(bytes.collect())
-  }
-
-  fn into_bytes(self) -> Vec<u8> {
-    self
-  }
-}
-
-#[derive(Debug)]
-pub(crate) struct Payload<const PREFIX: usize, const DATA: usize, T> {
-  pub(crate) data: [u8; DATA],
-  pub(crate) prefix: [Fe32; PREFIX],
-  pub(crate) suffix: T,
-}
-
-impl<const DATA: usize> Payload<0, DATA, ()> {
-  pub(crate) fn from_data(data: [u8; DATA]) -> Self {
-    Self {
-      data,
-      prefix: [],
-      suffix: (),
-    }
-  }
-
-  pub(crate) fn into_data(self) -> [u8; DATA] {
-    self.data
-  }
-}
-
 pub(crate) trait Bech32m<const PREFIX: usize, const DATA: usize> {
   const HRP: Hrp;
   const TYPE: &'static str;
 
-  type Suffix: Suffix;
+  type Suffix: Bech32mSuffix;
 
-  fn decode_bech32m(s: &str) -> Result<Payload<PREFIX, DATA, Self::Suffix>, Bech32mError> {
+  fn decode_bech32m(s: &str) -> Result<Bech32mPayload<PREFIX, DATA, Self::Suffix>, Bech32mError> {
     let hrp_string = CheckedHrpstring::new::<bech32::Bech32m>(s)
       .context(bech32m_error::Decode { ty: Self::TYPE })?;
 
@@ -116,7 +56,7 @@ pub(crate) trait Bech32m<const PREFIX: usize, const DATA: usize> {
 
     Self::validate_padding(&hrp_string).context(bech32m_error::Padding { ty: Self::TYPE })?;
 
-    Ok(Payload {
+    Ok(Bech32mPayload {
       data,
       prefix,
       suffix,
@@ -125,9 +65,9 @@ pub(crate) trait Bech32m<const PREFIX: usize, const DATA: usize> {
 
   fn encode_bech32m(
     f: &mut Formatter,
-    payload: Payload<PREFIX, DATA, Self::Suffix>,
+    payload: Bech32mPayload<PREFIX, DATA, Self::Suffix>,
   ) -> fmt::Result {
-    let Payload {
+    let Bech32mPayload {
       data,
       prefix,
       suffix,
@@ -194,7 +134,7 @@ mod tests {
 
   impl Display for EmptyPublicKey {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-      Self::encode_bech32m(f, Payload::from_data([]))
+      Self::encode_bech32m(f, Bech32mPayload::from_data([]))
     }
   }
 
@@ -208,7 +148,7 @@ mod tests {
 
   impl Display for LongPublicKey {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-      Self::encode_bech32m(f, Payload::from_data([0; 33]))
+      Self::encode_bech32m(f, Bech32mPayload::from_data([0; 33]))
     }
   }
 

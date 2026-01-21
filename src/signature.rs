@@ -34,7 +34,7 @@ impl Display for Signature {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     let (prefix, suffix) = self.scheme.prefix_and_suffix();
 
-    let payload = bech32m::Payload {
+    let payload = Bech32mPayload {
       prefix,
       data: self.inner.to_bytes(),
       suffix: suffix.into(),
@@ -54,7 +54,7 @@ impl FromStr for Signature {
   type Err = SignatureError;
 
   fn from_str(signature: &str) -> Result<Self, Self::Err> {
-    let bech32m::Payload {
+    let Bech32mPayload {
       prefix: [scheme],
       data,
       suffix,
