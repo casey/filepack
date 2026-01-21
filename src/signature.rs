@@ -87,7 +87,7 @@ mod tests {
   }
 
   #[test]
-  fn prefix_missing() {
+  fn prefix_length() {
     let bech32m = []
       .iter()
       .copied()
@@ -99,7 +99,7 @@ mod tests {
 
     assert_eq!(
       bech32m.parse::<Signature>().unwrap_err().to_string(),
-      "bech32m signature missing 1 prefix character",
+      "expected bech32m signature to have 1 prefix character but found 0",
     );
   }
 }

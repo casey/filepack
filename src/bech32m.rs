@@ -32,33 +32,36 @@ pub(crate) trait Bech32m<const PREFIX: usize, const DATA: usize> {
 
     let mut prefix = [Fe32::Q; PREFIX];
 
+    let mut prefix_actual: usize = 0;
     for fe32 in &mut prefix {
-      *fe32 = fe32s.next().context(bech32m_error::PrefixMissing {
+      *fe32 = fe32s.next().context(bech32m_error::PrefixLength {
         ty: Self::TYPE,
-        prefix: PREFIX,
+        expected: PREFIX,
+        actual: prefix_actual,
       })?;
+      prefix_actual += 1;
     }
 
     let mut bytes = fe32s.fes_to_bytes();
 
     let mut data = [0; DATA];
 
-    let mut actual = 0;
+    let mut data_actual = 0;
     for byte in &mut data {
-      *byte = bytes.next().context(bech32m_error::Length {
-        actual,
+      *byte = bytes.next().context(bech32m_error::DataLength {
+        actual: data_actual,
         expected: DATA,
         ty: Self::TYPE,
       })?;
-      actual += 1;
+      data_actual += 1;
     }
 
-    actual += bytes.count();
+    data_actual += bytes.count();
 
     ensure! {
-      actual == DATA,
-      bech32m_error::Length {
-        actual,
+      data_actual == DATA,
+      bech32m_error::DataLength {
+        actual: data_actual,
         expected: DATA,
         ty: Self::TYPE,
       },
@@ -181,12 +184,12 @@ mod tests {
 
     case(
       &EmptyPublicKey.to_string(),
-      "expected bech32m public key to have 32 bytes but found 0",
+      "expected bech32m public key to have 32 data bytes but found 0",
     );
 
     case(
       &LongPublicKey.to_string(),
-      "expected bech32m public key to have 32 bytes but found 33",
+      "expected bech32m public key to have 32 data bytes but found 33",
     );
 
     let public_key = test::PUBLIC_KEY.parse::<PublicKey>().unwrap();
@@ -253,7 +256,7 @@ mod tests {
   }
 
   #[test]
-  fn prefix_missing() {
+  fn prefix_length() {
     struct PrefixedType;
 
     impl Bech32m<2, 0> for PrefixedType {
@@ -274,7 +277,7 @@ mod tests {
       PrefixedType::decode_bech32m(&bech32m)
         .unwrap_err()
         .to_string(),
-      "bech32m test missing 2 prefix characters",
+      "expected bech32m test to have 2 prefix characters but found 0",
     );
   }
 }

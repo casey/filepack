@@ -15,8 +15,8 @@ pub enum Bech32mError {
     expected: crate::Hrp,
     actual: crate::Hrp,
   },
-  #[snafu(display("expected bech32m {ty} to have {} but found {actual}", Count(*expected, "byte")))]
-  Length {
+  #[snafu(display("expected bech32m {ty} to have {} but found {actual}", Count(*expected, "data byte")))]
+  DataLength {
     expected: usize,
     actual: usize,
     ty: &'static str,
@@ -26,8 +26,12 @@ pub enum Bech32mError {
     ty: &'static str,
     source: PaddingError,
   },
-  #[snafu(display("bech32m {ty} missing {}", Count(*prefix, "prefix character")))]
-  PrefixMissing { ty: &'static str, prefix: usize },
+  #[snafu(display("expected bech32m {ty} to have {} but found {actual}", Count(*expected, "prefix character")))]
+  PrefixLength {
+    expected: usize,
+    actual: usize,
+    ty: &'static str,
+  },
   #[snafu(display("bech32m {ty} version `{version}` is not supported"))]
   UnsupportedVersion {
     ty: &'static str,
