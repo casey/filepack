@@ -16,15 +16,16 @@ impl SignatureScheme {
       Fe32::F => {
         ensure!(
           suffix.is_empty(),
-          signature_error::SuffixNotAllowed { scheme: "filepack" },
+          signature_error::UnexpectedSuffix { scheme: "filepack" },
         );
         Ok(SignatureScheme::Filepack)
       }
       Fe32::P => {
         ensure!(
           u16::try_from(suffix.len()).is_ok(),
-          signature_error::SuffixTooLarge {
+          signature_error::SuffixLength {
             length: suffix.len(),
+            maximum: usize::from(u16::MAX),
             scheme: "pgp",
           },
         );
@@ -35,7 +36,7 @@ impl SignatureScheme {
       Fe32::S => {
         ensure!(
           suffix.is_empty(),
-          signature_error::SuffixNotAllowed { scheme: "ssh" },
+          signature_error::UnexpectedSuffix { scheme: "ssh" },
         );
         Ok(SignatureScheme::Ssh)
       }
