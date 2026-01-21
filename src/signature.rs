@@ -1,23 +1,5 @@
 use super::*;
 
-fn ssh_signed_data(message: &[u8]) -> Vec<u8> {
-  use sha2::{Digest, Sha512};
-
-  let hash = Sha512::digest(message);
-
-  let mut buf = Vec::new();
-  buf.extend_from_slice(b"SSHSIG");
-  buf.extend_from_slice(&8u32.to_be_bytes());
-  buf.extend_from_slice(b"filepack");
-  buf.extend_from_slice(&0u32.to_be_bytes());
-  buf.extend_from_slice(&6u32.to_be_bytes());
-  buf.extend_from_slice(b"sha512");
-  buf.extend_from_slice(&(hash.len() as u32).to_be_bytes());
-  buf.extend_from_slice(&hash);
-
-  buf
-}
-
 #[derive(Clone, Copy, DeserializeFromStr, PartialEq, SerializeDisplay)]
 pub struct Signature {
   inner: ed25519_dalek::Signature,
@@ -39,7 +21,7 @@ impl Signature {
         .map_err(DalekSignatureError)
         .context(error::SignatureInvalid { key: *public_key }),
       SignatureScheme::Ssh => {
-        let signed_data = ssh_signed_data(message.as_ref());
+        let signed_data = message.ssh_signed_data();
         public_key
           .inner()
           .verify_strict(&signed_data, &self.inner)
