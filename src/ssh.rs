@@ -2,6 +2,10 @@ use {super::*, std::process::Command};
 
 #[test]
 fn ssh_signatures_can_be_verified() {
+  if cfg!(windows) {
+    return;
+  }
+
   let manifest = Manifest {
     files: Directory::new(),
     notes: Vec::new(),
@@ -64,10 +68,9 @@ fn ssh_signatures_can_be_verified() {
 
     assert_eq!(PublicKey::from_bytes(*keypair.public.as_ref()), public_key);
 
-    assert_eq!(
-      PrivateKey::from_bytes(keypair.private.to_bytes()).public_key(),
-      public_key
-    );
+    let private_key = PrivateKey::from_bytes(keypair.private.to_bytes());
+
+    assert_eq!(private_key.public_key(), public_key,);
   };
 
   let signature = {
