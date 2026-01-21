@@ -90,10 +90,6 @@ pub(crate) trait Bech32m<const PREFIX: usize, const DATA: usize> {
       bech32m_error::UnsupportedVersion { ty: Self::TYPE, version },
     }
 
-    // todo:
-    // - this is wrong, need to validate padding after taking prefix out
-    Self::validate_padding(&hrp_string).context(bech32m_error::Padding { ty: Self::TYPE })?;
-
     let mut prefix = [Fe32::Q; PREFIX];
 
     for (actual, fe32) in prefix.iter_mut().enumerate() {
@@ -121,6 +117,8 @@ pub(crate) trait Bech32m<const PREFIX: usize, const DATA: usize> {
     }
 
     let suffix = Self::Suffix::from_bytes(Self::TYPE, bytes)?;
+
+    Self::validate_padding(&hrp_string).context(bech32m_error::Padding { ty: Self::TYPE })?;
 
     Ok(Payload {
       prefix,
@@ -162,7 +160,13 @@ pub(crate) trait Bech32m<const PREFIX: usize, const DATA: usize> {
   fn validate_padding(hrp_string: &CheckedHrpstring) -> Result<(), PaddingError> {
     let mut fe32s = hrp_string.fe32_iter::<std::vec::IntoIter<u8>>();
 
+    // remove version
     fe32s.next().unwrap();
+
+    // remove prefix
+    for i in 0..PREFIX {
+      fe32s.next().unwrap();
+    }
 
     let Some((i, last)) = fe32s.enumerate().last() else {
       return Ok(());
