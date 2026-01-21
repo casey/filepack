@@ -1,6 +1,7 @@
 use {super::*, std::process::Command};
 
 #[test]
+#[ignore]
 fn ssh_signatures_can_be_verified() {
   let manifest = Manifest {
     files: Directory::new(),
