@@ -238,7 +238,6 @@ fn pgp_v4_signatures_can_be_verified() {
     .verify_message(signing_key.key(), message.bytes())
     .unwrap();
 
-  #[allow(clippy::cast_possible_truncation)]
   {
     let hashed_area = signature_packet.hashed_area().to_vec().unwrap();
     let hashed_area_len = hashed_area.len();
@@ -248,11 +247,13 @@ fn pgp_v4_signatures_can_be_verified() {
     header[1] = u8::from(signature_packet.typ());
     header[2] = u8::from(signature_packet.pk_algo());
     header[3] = u8::from(signature_packet.hash_algo());
+    #[allow(clippy::cast_possible_truncation)]
     header[4..6].copy_from_slice(&(hashed_area_len as u16).to_be_bytes());
 
     let mut trailer = [0u8; 6];
     trailer[0] = 4;
     trailer[1] = 0xff;
+    #[allow(clippy::cast_possible_truncation)]
     let len = (header.len() + hashed_area_len) as u32;
     trailer[2..6].copy_from_slice(&len.to_be_bytes());
 
@@ -269,20 +270,23 @@ fn pgp_v4_signatures_can_be_verified() {
     verifying_key.verify_strict(&digest, &sig).unwrap();
   }
 
-  let packet::key::SecretKeyMaterial::Unencrypted(secret_key_material) =
-    signing_key.key().optional_secret().unwrap()
-  else {
-    panic!("expected unencrypted secret key");
-  };
-
-  let mpi::SecretKeyMaterial::EdDSA { scalar } = secret_key_material.map(Clone::clone) else {
-    panic!("expected EdDSA secret key");
-  };
-
-  let private_key = PrivateKey::from_bytes(scalar.value().try_into().unwrap());
   let public_key = PublicKey::from_bytes(public_key_bytes.try_into().unwrap());
 
-  assert_eq!(private_key.public_key(), public_key);
+  {
+    let packet::key::SecretKeyMaterial::Unencrypted(secret_key_material) =
+      signing_key.key().optional_secret().unwrap()
+    else {
+      panic!("expected unencrypted secret key");
+    };
+
+    let mpi::SecretKeyMaterial::EdDSA { scalar } = secret_key_material.map(Clone::clone) else {
+      panic!("expected EdDSA secret key");
+    };
+
+    let private_key = PrivateKey::from_bytes(scalar.value().try_into().unwrap());
+
+    assert_eq!(private_key.public_key(), public_key);
+  }
 
   let signature = Signature::new(
     SignatureScheme::Pgp {
