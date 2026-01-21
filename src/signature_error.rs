@@ -11,8 +11,8 @@ pub enum SignatureError {
     maximum: usize,
     scheme: &'static str,
   },
-  #[snafu(display("bech32m signature scheme `{scheme}` is not supported"))]
-  UnsupportedScheme { scheme: Fe32 },
   #[snafu(display("found unexpected suffix for signature scheme `{scheme}`"))]
   UnexpectedSuffix { scheme: &'static str },
+  #[snafu(display("bech32m signature scheme `{scheme}` is not supported"))]
+  UnsupportedScheme { scheme: Fe32 },
 }
