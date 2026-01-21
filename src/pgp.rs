@@ -52,7 +52,7 @@ fn pgp_v4_signatures_can_be_verified() {
 
   let signature_packet = SignatureBuilder::new(SignatureType::Binary)
     .set_hash_algo(HashAlgorithm::SHA512)
-    .sign_message(&mut keypair, message.filepack_signed_data())
+    .sign_message(&mut keypair, message.bytes())
     .unwrap();
 
   let mpi::Signature::EdDSA { r, s } = signature_packet.mpis() else {
@@ -74,7 +74,7 @@ fn pgp_v4_signatures_can_be_verified() {
 
   signature_packet
     .clone()
-    .verify_message(signing_key.key(), message.filepack_signed_data())
+    .verify_message(signing_key.key(), message.bytes())
     .unwrap();
 
   {
@@ -95,7 +95,7 @@ fn pgp_v4_signatures_can_be_verified() {
     trailer[2..6].copy_from_slice(&len.to_be_bytes());
 
     let mut hasher = Sha512::new();
-    hasher.update(message.filepack_signed_data());
+    hasher.update(message.bytes());
     hasher.update(&header);
     hasher.update(&hashed_area);
     hasher.update(&trailer);
@@ -143,7 +143,7 @@ fn pgp_v6_signatures_can_be_verified() {
 
   let signature_packet = SignatureBuilder::new(SignatureType::Binary)
     .set_hash_algo(HashAlgorithm::SHA512)
-    .sign_message(&mut keypair, message.filepack_signed_data())
+    .sign_message(&mut keypair, message.bytes())
     .unwrap();
 
   assert_eq!(signature_packet.version(), 6);
@@ -164,7 +164,7 @@ fn pgp_v6_signatures_can_be_verified() {
 
   signature_packet
     .clone()
-    .verify_message(&key, message.filepack_signed_data())
+    .verify_message(&key, message.bytes())
     .unwrap();
 
   {
@@ -186,7 +186,7 @@ fn pgp_v6_signatures_can_be_verified() {
 
     let mut hasher = Sha512::new();
     hasher.update(salt);
-    hasher.update(message.filepack_signed_data());
+    hasher.update(message.bytes());
     hasher.update(&header);
     hasher.update(&hashed_area);
     hasher.update(&trailer);

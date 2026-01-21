@@ -25,11 +25,37 @@ impl SignatureScheme {
     }
   }
 
-  pub(crate) fn prefix(&self) -> Fe32 {
+  pub(crate) fn to_prefix_and_suffix(&self) -> ([Fe32; 1], &[u8]) {
     match self {
-      SignatureScheme::Filepack => Fe32::F,
-      SignatureScheme::Pgp { .. } => Fe32::P,
-      SignatureScheme::Ssh => Fe32::S,
+      SignatureScheme::Filepack => ([Fe32::F], &[]),
+      SignatureScheme::Pgp { hashed_area } => ([Fe32::P], hashed_area),
+      SignatureScheme::Ssh => ([Fe32::S], &[]),
+    }
+  }
+
+  pub(crate) fn signed_data<'a>(&self, message: &'a SerializedMessage) -> Cow<'a, [u8]> {
+    match self {
+      Self::Filepack => message.bytes().into(),
+      Self::Pgp { hashed_area } => {
+        todo!()
+      }
+      Self::Ssh => {
+        use sha2::{Digest, Sha512};
+
+        let mut buffer = b"SSHSIG".to_vec();
+
+        let mut field = |value: &[u8]| {
+          buffer.extend_from_slice(&u32::try_from(value.len()).unwrap().to_be_bytes());
+          buffer.extend_from_slice(value);
+        };
+
+        field(b"filepack");
+        field(b"");
+        field(b"sha512");
+        field(&Sha512::digest(&message.bytes()));
+
+        buffer.into()
+      }
     }
   }
 }

@@ -14,11 +14,7 @@ impl Signature {
   }
 
   pub fn verify(&self, message: &SerializedMessage, public_key: PublicKey) -> Result {
-    let signed_data = match &self.scheme {
-      SignatureScheme::Filepack => Cow::Borrowed(message.filepack_signed_data()),
-      SignatureScheme::Pgp { hashed_area } => Cow::Owned(message.pgp_signed_data(hashed_area)),
-      SignatureScheme::Ssh => Cow::Owned(message.ssh_signed_data()),
-    };
+    let signed_data = self.scheme.signed_data(message);
 
     public_key
       .inner()
@@ -36,10 +32,12 @@ impl Bech32m<1, { Signature::LEN }> for Signature {
 
 impl Display for Signature {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    let (prefix, suffix) = self.scheme.to_prefix_and_suffix();
+
     let payload = bech32m::Payload {
-      prefix: [self.scheme.prefix()],
+      prefix,
       data: self.inner.to_bytes(),
-      suffix: Vec::new(),
+      suffix: suffix.into(),
     };
 
     Self::encode_bech32m(f, payload)

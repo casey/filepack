@@ -34,7 +34,7 @@ fn ssh_signatures_can_be_verified() {
   assert!(output.status.success());
 
   let message_path = path.join("message");
-  filesystem::write(&message_path, message.filepack_signed_data()).unwrap();
+  filesystem::write(&message_path, message.bytes()).unwrap();
 
   let status = Command::new("ssh-keygen")
     .args(["-Y", "sign"])
