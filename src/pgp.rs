@@ -214,7 +214,7 @@ fn pgp_v6_signatures_can_be_verified() {
 }
 
 #[test]
-fn gpg_signatures_can_be_verified() {
+fn gpg_v4_signatures_can_be_verified() {
   if cfg!(windows) {
     return;
   }
