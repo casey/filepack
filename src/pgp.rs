@@ -45,6 +45,7 @@ fn gpg_v4_signatures_can_be_verified() {
       .args(["--quick-gen-key", "foo@bar", "ed25519", "sign"])
       .output()
       .unwrap();
+
     assert!(
       output.status.success(),
       "gpg key generation failed: {}",
@@ -78,6 +79,7 @@ fn gpg_v4_signatures_can_be_verified() {
       .arg(message_path.as_str())
       .output()
       .unwrap();
+
     assert!(
       output.status.success(),
       "gpg signing failed: {}",
@@ -96,6 +98,7 @@ fn gpg_v4_signatures_can_be_verified() {
       .args(["--export", "foo@bar"])
       .output()
       .unwrap();
+
     assert!(
       output.status.success(),
       "gpg export failed: {}",
@@ -131,6 +134,7 @@ fn gpg_v4_signatures_can_be_verified() {
       .args(["--export-secret-keys", "foo@bar"])
       .output()
       .unwrap();
+
     assert!(
       output.status.success(),
       "gpg export-secret-keys failed: {}",

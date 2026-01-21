@@ -20,6 +20,7 @@ fn ssh_signatures_can_be_verified() {
       .arg("-q")
       .output()
       .unwrap();
+
     assert!(output.status.success());
   }
 
@@ -45,6 +46,7 @@ fn ssh_signatures_can_be_verified() {
       .args(["-n", "filepack", message_path.as_str()])
       .output()
       .unwrap();
+
     assert!(output.status.success());
 
     message
