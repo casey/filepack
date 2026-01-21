@@ -36,46 +36,51 @@ fn gpg_v4_signatures_can_be_verified() {
 
   let path = decode_path(tempdir.path()).unwrap();
 
-  let gnupg_home = path.join("gnupg");
-  fs::create_dir(&gnupg_home).unwrap();
+  let home = path.join("gnupg");
+  fs::create_dir(&home).unwrap();
 
   #[cfg(unix)]
   {
     use std::os::unix::fs::PermissionsExt;
-    fs::set_permissions(&gnupg_home, Permissions::from_mode(0o700)).unwrap();
+    fs::set_permissions(&home, Permissions::from_mode(0o700)).unwrap();
   }
 
-  let output = Command::new("gpg")
-    .args(["--homedir", gnupg_home.as_str()])
-    .arg("--batch")
-    .args(["--passphrase", ""])
-    .args(["--quick-gen-key", "foo@bar", "ed25519", "sign"])
-    .output()
-    .unwrap();
-  assert!(
-    output.status.success(),
-    "gpg key generation failed: {}",
-    String::from_utf8_lossy(&output.stderr)
-  );
-
-  let message_path = path.join("message");
-  filesystem::write(&message_path, message.bytes()).unwrap();
+  {
+    let output = Command::new("gpg")
+      .args(["--homedir", home.as_str()])
+      .arg("--batch")
+      .args(["--passphrase", ""])
+      .args(["--quick-gen-key", "foo@bar", "ed25519", "sign"])
+      .output()
+      .unwrap();
+    assert!(
+      output.status.success(),
+      "gpg key generation failed: {}",
+      String::from_utf8_lossy(&output.stderr)
+    );
+  }
 
   let signature_path = path.join("message.sig");
-  let output = Command::new("gpg")
-    .args(["--homedir", gnupg_home.as_str()])
-    .arg("--batch")
-    .args(["--passphrase", ""])
-    .arg("--detach-sign")
-    .args(["-o", signature_path.as_str()])
-    .arg(message_path.as_str())
-    .output()
-    .unwrap();
-  assert!(
-    output.status.success(),
-    "gpg signing failed: {}",
-    String::from_utf8_lossy(&output.stderr)
-  );
+
+  {
+    let message_path = path.join("message");
+    filesystem::write(&message_path, message.bytes()).unwrap();
+
+    let output = Command::new("gpg")
+      .args(["--homedir", home.as_str()])
+      .arg("--batch")
+      .args(["--passphrase", ""])
+      .arg("--detach-sign")
+      .args(["-o", signature_path.as_str()])
+      .arg(message_path.as_str())
+      .output()
+      .unwrap();
+    assert!(
+      output.status.success(),
+      "gpg signing failed: {}",
+      String::from_utf8_lossy(&output.stderr)
+    );
+  }
 
   let signature_bytes = fs::read(signature_path.as_std_path()).unwrap();
   let packet = Packet::from_bytes(&signature_bytes).unwrap();
@@ -95,7 +100,7 @@ fn gpg_v4_signatures_can_be_verified() {
   sig_bytes[32..].copy_from_slice(&s_bytes);
 
   let output = Command::new("gpg")
-    .args(["--homedir", gnupg_home.as_str()])
+    .args(["--homedir", home.as_str()])
     .args(["--export", "foo@bar"])
     .output()
     .unwrap();
@@ -124,7 +129,7 @@ fn gpg_v4_signatures_can_be_verified() {
   let public_key = PublicKey::from_bytes(public_key_bytes.try_into().unwrap());
 
   let output = Command::new("gpg")
-    .args(["--homedir", gnupg_home.as_str()])
+    .args(["--homedir", home.as_str()])
     .arg("--batch")
     .args(["--passphrase", ""])
     .args(["--export-secret-keys", "foo@bar"])

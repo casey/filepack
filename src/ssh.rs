@@ -24,25 +24,29 @@ fn ssh_signatures_can_be_verified() {
 
   let key_path = path.join("id_ed25519");
 
-  let output = Command::new("ssh-keygen")
-    .args(["-t", "ed25519"])
-    .args(["-f", key_path.as_str()])
-    .args(["-N", ""])
-    .arg("-q")
-    .output()
-    .unwrap();
-  assert!(output.status.success());
+  {
+    let output = Command::new("ssh-keygen")
+      .args(["-t", "ed25519"])
+      .args(["-f", key_path.as_str()])
+      .args(["-N", ""])
+      .arg("-q")
+      .output()
+      .unwrap();
+    assert!(output.status.success());
+  }
 
   let message_path = path.join("message");
   filesystem::write(&message_path, message.bytes()).unwrap();
 
-  let output = Command::new("ssh-keygen")
-    .args(["-Y", "sign"])
-    .args(["-f", key_path.as_str()])
-    .args(["-n", "filepack", message_path.as_str()])
-    .output()
-    .unwrap();
-  assert!(output.status.success());
+  {
+    let output = Command::new("ssh-keygen")
+      .args(["-Y", "sign"])
+      .args(["-f", key_path.as_str()])
+      .args(["-n", "filepack", message_path.as_str()])
+      .output()
+      .unwrap();
+    assert!(output.status.success());
+  }
 
   let public_key = {
     let public_key = filesystem::read_to_string(key_path.with_extension("pub"))
