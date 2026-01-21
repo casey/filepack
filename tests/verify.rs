@@ -461,10 +461,6 @@ fn non_unicode_path_error() {
 
 #[test]
 fn pgp_signature() {
-  #[allow(unused)]
-  const PGP_PRIVATE_KEY: &str =
-    "private1afwzmk66ppk6mr0jgh6w2nlsup4u4n9ve0l89yww6p9g6lanrcm0qw7hwq5";
-
   const PGP_PUBLIC_KEY: &str = "public1axadguya9tqnfavpjq08st0sfzgvmxwjsqcfudgg55sh4ztjnsugsxmnnj0";
 
   const PGP_SIGNATURE: &str = concat!(
@@ -635,10 +631,6 @@ error: 1 mismatched file
 
 #[test]
 fn ssh_signature() {
-  #[allow(unused)]
-  const SSH_PRIVATE_KEY: &str =
-    "private1am4us9r7p9m4d66jhgdynesetgs06vgk7zdzys4nuztqzm7wx7lfqghthpt";
-
   const SSH_PUBLIC_KEY: &str = "public1avp5pgjsqf6uzcrd34x4hgdndfaf5w5h786wh3tjs9vyup3n74h2shpdku2";
 
   const SSH_SIGNATURE: &str = concat!(
