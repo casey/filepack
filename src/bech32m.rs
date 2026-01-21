@@ -160,10 +160,8 @@ pub(crate) trait Bech32m<const PREFIX: usize, const DATA: usize> {
   fn validate_padding(hrp_string: &CheckedHrpstring) -> Result<(), PaddingError> {
     let mut fe32s = hrp_string.fe32_iter::<std::vec::IntoIter<u8>>();
 
-    // remove version
     fe32s.next().unwrap();
 
-    // remove prefix
     for _ in 0..PREFIX {
       fe32s.next().unwrap();
     }
