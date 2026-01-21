@@ -2,6 +2,7 @@ use super::*;
 
 const VERSION: Fe32 = Fe32::A;
 
+#[derive(Debug)]
 pub(crate) struct Payload<const PREFIX: usize, const DATA: usize> {
   data: [u8; DATA],
   prefix: [Fe32; PREFIX],
@@ -125,33 +126,33 @@ mod tests {
 
   struct EmptyPublicKey;
 
-  impl Bech32m<0> for EmptyPublicKey {
+  impl Bech32m<0, 0> for EmptyPublicKey {
     const HRP: Hrp = Hrp::parse_unchecked("public");
     const TYPE: &'static str = "public key";
   }
 
   impl Display for EmptyPublicKey {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-      Self::encode_bech32m(f, [])
+      Self::encode_bech32m(f, [], [])
     }
   }
 
   struct LongPublicKey;
 
-  impl Bech32m<33> for LongPublicKey {
+  impl Bech32m<0, 33> for LongPublicKey {
     const HRP: Hrp = Hrp::parse_unchecked("public");
     const TYPE: &'static str = "public key";
   }
 
   impl Display for LongPublicKey {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-      Self::encode_bech32m(f, [0; 33])
+      Self::encode_bech32m(f, [], [0; 33])
     }
   }
 
   #[test]
   fn implementations() {
-    fn case<const LEN: usize, T: Bech32m<LEN>>(hrp: &str, ty: &str) {
+    fn case<const PREFIX: usize, const DATA: usize, T: Bech32m<PREFIX, DATA>>(hrp: &str, ty: &str) {
       use bech32::Checksum;
 
       let max = (bech32::Bech32m::CODE_LENGTH
@@ -162,17 +163,17 @@ mod tests {
         * 5
         / 8;
 
-      assert!(LEN <= max);
+      assert!(DATA <= max);
 
       assert_eq!(T::HRP.as_str(), hrp);
 
       assert_eq!(T::TYPE, ty);
     }
 
-    case::<{ Fingerprint::LEN }, Fingerprint>("package", "package fingerprint");
-    case::<{ PrivateKey::LEN }, PrivateKey>("private", "private key");
-    case::<{ PublicKey::LEN }, PublicKey>("public", "public key");
-    case::<{ Signature::LEN }, Signature>("signature", "signature");
+    case::<0, { Fingerprint::LEN }, Fingerprint>("package", "package fingerprint");
+    case::<0, { PrivateKey::LEN }, PrivateKey>("private", "private key");
+    case::<0, { PublicKey::LEN }, PublicKey>("public", "public key");
+    case::<1, { Signature::LEN }, Signature>("signature", "signature");
   }
 
   #[test]
