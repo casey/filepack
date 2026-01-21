@@ -125,12 +125,12 @@ impl Manifest {
     let mut digests = BTreeMap::new();
     let mut signatures = BTreeMap::new();
     for (index, note) in self.notes.iter().enumerate() {
-      for &key in note.signatures.keys() {
-        if let Some(first) = signatures.insert(key, index) {
+      for &public_key in note.signatures.keys() {
+        if let Some(first) = signatures.insert(public_key, index) {
           return Err(
             error::DuplicateSignature {
               first,
-              key,
+              public_key,
               second: index,
             }
             .build(),

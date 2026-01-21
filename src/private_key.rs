@@ -14,6 +14,11 @@ impl PrivateKey {
     DisplaySecret(self.clone())
   }
 
+  #[cfg(test)]
+  pub(crate) fn from_bytes(bytes: [u8; Self::LEN]) -> Self {
+    Self(ed25519_dalek::SigningKey::from_bytes(&bytes))
+  }
+
   pub(crate) fn generate() -> Self {
     let inner = ed25519_dalek::SigningKey::generate(&mut rand::thread_rng());
     let verifying_key = inner.verifying_key();
@@ -44,7 +49,10 @@ impl PrivateKey {
 
   pub(crate) fn sign(&self, message: &SerializedMessage) -> Signature {
     use ed25519_dalek::Signer;
-    Signature::new(SignatureScheme::Filepack, self.0.sign(message.as_ref()))
+    Signature::new(
+      SignatureScheme::Filepack,
+      self.0.sign(message.filepack_signed_data()),
+    )
   }
 }
 
