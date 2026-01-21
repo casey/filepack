@@ -482,7 +482,7 @@ fn pgp_signature() {
         files: {},
         notes: [{
           signatures: {
-            "public1afzgrryd0m6n96syhjl4fadx3hjse8pjr23uztxpwv4685lkjm37qmgwsd3": PGP_SIGNATURE
+            *PGP_PUBLIC_KEY: PGP_SIGNATURE
           },
         }],
       },
@@ -653,7 +653,7 @@ fn ssh_signature() {
         files: {},
         notes: [{
           signatures: {
-            "public1a5yf9ackwkywzmygc3q4mglp7qd32ruyj5fr0w3szp70jt4cl34cqwtjjhh": SSH_SIGNATURE
+            *SSH_PUBLIC_KEY: SSH_SIGNATURE
           },
         }],
       },
