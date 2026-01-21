@@ -144,7 +144,8 @@ mod tests {
         - T::HRP.as_str().len()
         - 1
         - bech32::Bech32m::CHECKSUM_LENGTH
-        - 1)
+        - 1
+        - PREFIX)
         * 5
         / 8;
 
