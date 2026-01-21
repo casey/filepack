@@ -250,4 +250,30 @@ mod tests {
       "bech32m public key version `p` is not supported",
     );
   }
+
+  #[test]
+  fn prefix_missing() {
+    struct PrefixedType;
+
+    impl Bech32m<2, 0> for PrefixedType {
+      const HRP: Hrp = Hrp::parse_unchecked("test");
+      const TYPE: &'static str = "test";
+    }
+
+    let bech32m = []
+      .iter()
+      .copied()
+      .bytes_to_fes()
+      .with_checksum::<bech32::Bech32m>(&PrefixedType::HRP)
+      .with_witness_version(VERSION)
+      .chars()
+      .collect::<String>();
+
+    assert_eq!(
+      PrefixedType::decode_bech32m(&bech32m)
+        .unwrap_err()
+        .to_string(),
+      "bech32m test missing 2 prefix characters",
+    );
+  }
 }

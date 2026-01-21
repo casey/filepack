@@ -70,4 +70,36 @@ mod tests {
       signature
     );
   }
+
+  #[test]
+  fn unsupported_scheme() {
+    let bech32m = iter::once(Fe32::Q)
+      .chain([0u8; Signature::LEN].iter().copied().bytes_to_fes())
+      .with_checksum::<bech32::Bech32m>(&Signature::HRP)
+      .with_witness_version(Fe32::A)
+      .chars()
+      .collect::<String>();
+
+    assert_eq!(
+      bech32m.parse::<Signature>().unwrap_err().to_string(),
+      "bech32m signature scheme `q` is not supported",
+    );
+  }
+
+  #[test]
+  fn prefix_missing() {
+    let bech32m = []
+      .iter()
+      .copied()
+      .bytes_to_fes()
+      .with_checksum::<bech32::Bech32m>(&Signature::HRP)
+      .with_witness_version(Fe32::A)
+      .chars()
+      .collect::<String>();
+
+    assert_eq!(
+      bech32m.parse::<Signature>().unwrap_err().to_string(),
+      "bech32m signature missing 1 prefix character",
+    );
+  }
 }
