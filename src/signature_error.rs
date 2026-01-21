@@ -5,8 +5,6 @@ use super::*;
 pub enum SignatureError {
   #[snafu(transparent)]
   Bech32m { source: Bech32mError },
-  #[snafu(display("found unexpected suffix for signature scheme `{scheme}`"))]
-  UnexpectedSuffix { scheme: &'static str },
   #[snafu(display("signature scheme `{scheme}` suffix length {length} exceeds maximum {maximum}",))]
   SuffixLength {
     length: usize,
@@ -15,4 +13,6 @@ pub enum SignatureError {
   },
   #[snafu(display("bech32m signature scheme `{scheme}` is not supported"))]
   UnsupportedScheme { scheme: Fe32 },
+  #[snafu(display("found unexpected suffix for signature scheme `{scheme}`"))]
+  UnexpectedSuffix { scheme: &'static str },
 }
