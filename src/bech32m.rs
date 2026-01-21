@@ -2,29 +2,11 @@ use super::*;
 
 const VERSION: Fe32 = Fe32::A;
 
-#[derive(Debug)]
-pub(crate) struct Payload<const PREFIX: usize, const DATA: usize> {
-  data: [u8; DATA],
-  prefix: [Fe32; PREFIX],
-}
-
-impl<const DATA: usize> Payload<0, DATA> {
-  pub(crate) fn into_data(self) -> [u8; DATA] {
-    self.data
-  }
-}
-
-impl<const PREFIX: usize, const DATA: usize> Payload<PREFIX, DATA> {
-  pub(crate) fn into_prefix_and_data(self) -> ([Fe32; PREFIX], [u8; DATA]) {
-    (self.prefix, self.data)
-  }
-}
-
 pub(crate) trait Bech32m<const PREFIX: usize, const DATA: usize> {
   const HRP: Hrp;
   const TYPE: &'static str;
 
-  fn decode_bech32m(s: &str) -> Result<Payload<PREFIX, DATA>, Bech32mError> {
+  fn decode_bech32m(s: &str) -> Result<([Fe32; PREFIX], [u8; DATA]), Bech32mError> {
     let hrp_string = CheckedHrpstring::new::<bech32::Bech32m>(s)
       .context(bech32m_error::Decode { ty: Self::TYPE })?;
 
@@ -82,7 +64,7 @@ pub(crate) trait Bech32m<const PREFIX: usize, const DATA: usize> {
       },
     }
 
-    Ok(Payload { data, prefix })
+    Ok((prefix, data))
   }
 
   fn encode_bech32m(f: &mut Formatter, prefix: [Fe32; PREFIX], data: [u8; DATA]) -> fmt::Result {

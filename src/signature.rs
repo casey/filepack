@@ -45,7 +45,7 @@ impl FromStr for Signature {
   type Err = SignatureError;
 
   fn from_str(signature: &str) -> Result<Self, Self::Err> {
-    let ([scheme], data) = Self::decode_bech32m(signature)?.into_prefix_and_data();
+    let ([scheme], data) = Self::decode_bech32m(signature)?;
 
     Ok(Self {
       inner: ed25519_dalek::Signature::from_bytes(&data),

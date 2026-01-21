@@ -57,8 +57,8 @@ impl FromStr for PrivateKey {
   type Err = Bech32mError;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
-    let bytes = Self::decode_bech32m(s)?.into_data();
-    let inner = ed25519_dalek::SigningKey::from_bytes(&bytes);
+    let ([], data) = Self::decode_bech32m(s)?;
+    let inner = ed25519_dalek::SigningKey::from_bytes(&data);
     assert!(!inner.verifying_key().is_weak());
     Ok(Self(inner))
   }

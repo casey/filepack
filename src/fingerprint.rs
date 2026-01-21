@@ -27,6 +27,7 @@ impl FromStr for Fingerprint {
   type Err = Bech32mError;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
-    Ok(Self(Self::decode_bech32m(s)?.into_data().into()))
+    let ([], data) = Self::decode_bech32m(s)?;
+    Ok(Self(data.into()))
   }
 }

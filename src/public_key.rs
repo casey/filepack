@@ -43,9 +43,9 @@ impl FromStr for PublicKey {
   type Err = PublicKeyError;
 
   fn from_str(key: &str) -> Result<Self, Self::Err> {
-    let bytes = Self::decode_bech32m(key)?.into_data();
+    let ([], data) = Self::decode_bech32m(key)?;
 
-    let inner = ed25519_dalek::VerifyingKey::from_bytes(&bytes)
+    let inner = ed25519_dalek::VerifyingKey::from_bytes(&data)
       .map_err(DalekSignatureError)
       .context(public_key_error::Invalid { key })?;
 
