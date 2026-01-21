@@ -25,7 +25,7 @@ impl SignatureScheme {
     }
   }
 
-  pub(crate) fn to_prefix_and_suffix(&self) -> ([Fe32; 1], &[u8]) {
+  pub(crate) fn prefix_and_suffix(&self) -> ([Fe32; 1], &[u8]) {
     match self {
       SignatureScheme::Filepack => ([Fe32::F], &[]),
       SignatureScheme::Pgp { hashed_area } => ([Fe32::P], hashed_area),
