@@ -31,12 +31,12 @@ impl Signature {
 impl Bech32m<1, { Signature::LEN }> for Signature {
   const HRP: Hrp = Hrp::parse_unchecked("signature");
   const TYPE: &'static str = "signature";
-  type Suffix = ();
+  type Suffix = Vec<u8>;
 }
 
 impl Display for Signature {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    Self::encode_bech32m(f, [self.scheme.into()], self.inner.to_bytes())
+    Self::encode_bech32m(f, [self.scheme.into()], self.inner.to_bytes(), Vec::new())
   }
 }
 
@@ -50,7 +50,11 @@ impl FromStr for Signature {
   type Err = SignatureError;
 
   fn from_str(signature: &str) -> Result<Self, Self::Err> {
-    let ([scheme], data, ()) = Self::decode_bech32m(signature)?;
+    let bech32m::Payload {
+      prefix: [scheme],
+      data,
+      suffix,
+    } = Self::decode_bech32m(signature)?;
 
     Ok(Self {
       inner: ed25519_dalek::Signature::from_bytes(&data),

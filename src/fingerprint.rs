@@ -20,7 +20,7 @@ impl Bech32m<0, { Fingerprint::LEN }> for Fingerprint {
 
 impl Display for Fingerprint {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    Self::encode_bech32m(f, [], *self.as_bytes())
+    Self::encode_bech32m(f, [], *self.as_bytes(), ())
   }
 }
 
@@ -28,7 +28,6 @@ impl FromStr for Fingerprint {
   type Err = Bech32mError;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
-    let ([], data, ()) = Self::decode_bech32m(s)?;
-    Ok(Self(data.into()))
+    Ok(Self(Self::decode_bech32m(s)?.into_data().into()))
   }
 }

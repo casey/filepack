@@ -31,13 +31,38 @@ impl Suffix for Vec<u8> {
   }
 }
 
+#[derive(Debug)]
+pub(crate) struct Payload<const PREFIX: usize, const DATA: usize, T> {
+  pub(crate) prefix: [Fe32; PREFIX],
+  pub(crate) data: [u8; DATA],
+  pub(crate) suffix: T,
+}
+
+impl<const DATA: usize> Payload<0, DATA, ()> {
+  pub(crate) fn into_data(self) -> [u8; DATA] {
+    self.data
+  }
+}
+
 pub(crate) trait Bech32m<const PREFIX: usize, const DATA: usize> {
   const HRP: Hrp;
   const TYPE: &'static str;
 
   type Suffix: Suffix;
 
-  fn decode_bech32m(s: &str) -> Result<([Fe32; PREFIX], [u8; DATA], Self::Suffix), Bech32mError> {
+  fn decode_bech32m(s: &str) -> Result<Payload<PREFIX, DATA, Self::Suffix>, Bech32mError> {
+    let (prefix, data, suffix) = Self::decode_bech32m_old(s)?;
+
+    Ok(Payload {
+      prefix,
+      data,
+      suffix,
+    })
+  }
+
+  fn decode_bech32m_old(
+    s: &str,
+  ) -> Result<([Fe32; PREFIX], [u8; DATA], Self::Suffix), Bech32mError> {
     let hrp_string = CheckedHrpstring::new::<bech32::Bech32m>(s)
       .context(bech32m_error::Decode { ty: Self::TYPE })?;
 
@@ -92,7 +117,12 @@ pub(crate) trait Bech32m<const PREFIX: usize, const DATA: usize> {
     Ok((prefix, data, suffix))
   }
 
-  fn encode_bech32m(f: &mut Formatter, prefix: [Fe32; PREFIX], data: [u8; DATA]) -> fmt::Result {
+  fn encode_bech32m(
+    f: &mut Formatter,
+    prefix: [Fe32; PREFIX],
+    data: [u8; DATA],
+    suffix: Self::Suffix,
+  ) -> fmt::Result {
     let chars = prefix
       .into_iter()
       .chain(data.iter().copied().bytes_to_fes())
@@ -144,7 +174,7 @@ mod tests {
 
   impl Display for EmptyPublicKey {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-      Self::encode_bech32m(f, [], [])
+      Self::encode_bech32m(f, [], [], ())
     }
   }
 
@@ -158,7 +188,7 @@ mod tests {
 
   impl Display for LongPublicKey {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-      Self::encode_bech32m(f, [], [0; 33])
+      Self::encode_bech32m(f, [], [0; 33], ())
     }
   }
 
