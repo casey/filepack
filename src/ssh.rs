@@ -76,7 +76,7 @@ fn ssh_signatures_can_be_verified() {
       .parse::<ssh_key::SshSig>()
       .unwrap();
     Signature::new(
-      SignatureScheme::Filepack,
+      SignatureScheme::Ssh,
       ed25519_dalek::Signature::from_bytes(&signature.signature_bytes().try_into().unwrap()),
     )
   };
