@@ -52,7 +52,7 @@ impl SignatureScheme {
         hasher.update([4]); // version: v4
         hasher.update([0]); // signature type: binary signature
         hasher.update([22]); // public key algorithm: EdDSA
-        hasher.update([10]); // hash algorithm: SHA-5120
+        hasher.update([10]); // hash algorithm: SHA-512
         hasher.update(u16::try_from(hashed_area.len()).unwrap().to_be_bytes());
 
         // hashed area
