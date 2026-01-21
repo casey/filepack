@@ -2,11 +2,11 @@ use super::*;
 
 const VERSION: Fe32 = Fe32::A;
 
-pub(crate) trait Bech32m<const LEN: usize> {
+pub(crate) trait Bech32m<const PREFIX: usize, const DATA: usize> {
   const HRP: Hrp;
   const TYPE: &'static str;
 
-  fn decode_bech32m(s: &str) -> Result<[u8; LEN], Bech32mError> {
+  fn decode_bech32m(s: &str) -> Result<Bech32mPayload<PREFIX, DATA>, Bech32mError> {
     let hrp_string = CheckedHrpstring::new::<bech32::Bech32m>(s)
       .context(bech32m_error::Decode { ty: Self::TYPE })?;
 
@@ -30,15 +30,21 @@ pub(crate) trait Bech32m<const LEN: usize> {
 
     Self::validate_padding(&hrp_string).context(bech32m_error::Padding { ty: Self::TYPE })?;
 
+    let mut prefix = [Fe32::Q; PREFIX];
+
+    for fe32 in &mut prefix {
+      *fe32 = fe32s.next().expect("todo: return proper error");
+    }
+
     let mut bytes = fe32s.fes_to_bytes();
 
-    let mut array = [0; LEN];
+    let mut data = [0; DATA];
 
     let mut actual = 0;
-    for byte in &mut array {
+    for byte in &mut data {
       *byte = bytes.next().context(bech32m_error::Length {
         actual,
-        expected: LEN,
+        expected: DATA,
         ty: Self::TYPE,
       })?;
       actual += 1;
@@ -47,22 +53,21 @@ pub(crate) trait Bech32m<const LEN: usize> {
     actual += bytes.count();
 
     ensure! {
-      actual == LEN,
+      actual == DATA,
       bech32m_error::Length {
         actual,
-        expected: LEN,
+        expected: DATA,
         ty: Self::TYPE,
       },
     }
 
-    Ok(array)
+    Ok(Bech32mPayload { prefix, data })
   }
 
-  fn encode_bech32m(f: &mut Formatter, bytes: [u8; LEN]) -> fmt::Result {
-    let chars = bytes
-      .iter()
-      .copied()
-      .bytes_to_fes()
+  fn encode_bech32m(f: &mut Formatter, prefix: [Fe32; PREFIX], data: [u8; DATA]) -> fmt::Result {
+    let chars = prefix
+      .into_iter()
+      .chain(data.iter().copied().bytes_to_fes())
       .with_checksum::<bech32::Bech32m>(&Self::HRP)
       .with_witness_version(VERSION)
       .chars();

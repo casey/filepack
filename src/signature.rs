@@ -1,47 +1,52 @@
 use super::*;
 
 #[derive(Clone, Copy, DeserializeFromStr, PartialEq, SerializeDisplay)]
-pub struct Signature(ed25519_dalek::Signature);
+pub struct Signature {
+  inner: ed25519_dalek::Signature,
+  scheme: SignatureScheme,
+}
 
 impl Signature {
   pub(crate) const LEN: usize = ed25519_dalek::Signature::BYTE_SIZE;
+
+  pub(crate) fn new(scheme: SignatureScheme, inner: ed25519_dalek::Signature) -> Self {
+    Self { scheme, inner }
+  }
 }
 
 impl AsRef<ed25519_dalek::Signature> for Signature {
   fn as_ref(&self) -> &ed25519_dalek::Signature {
-    &self.0
+    &self.inner
   }
 }
 
-impl Bech32m<{ Signature::LEN }> for Signature {
+impl Bech32m<1, { Signature::LEN }> for Signature {
   const HRP: Hrp = Hrp::parse_unchecked("signature");
   const TYPE: &'static str = "signature";
 }
 
-impl From<ed25519_dalek::Signature> for Signature {
-  fn from(inner: ed25519_dalek::Signature) -> Self {
-    Self(inner)
-  }
-}
-
 impl Display for Signature {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    Self::encode_bech32m(f, self.0.to_bytes())
+    Self::encode_bech32m(f, [self.scheme.into()], self.inner.to_bytes())
   }
 }
 
 impl fmt::Debug for Signature {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    <dyn std::fmt::Debug>::fmt(&self.0, f)
+    <dyn std::fmt::Debug>::fmt(&self.inner, f)
   }
 }
 
 impl FromStr for Signature {
-  type Err = Bech32mError;
+  type Err = SignatureError;
 
   fn from_str(signature: &str) -> Result<Self, Self::Err> {
-    let bytes = Self::decode_bech32m(signature)?;
-    Ok(Self(ed25519_dalek::Signature::from_bytes(&bytes)))
+    let ([scheme], data) = Self::decode_bech32m(signature)?.into_prefix_and_data();
+
+    Ok(Self {
+      inner: ed25519_dalek::Signature::from_bytes(&data),
+      scheme: scheme.try_into()?,
+    })
   }
 }
 

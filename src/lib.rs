@@ -21,6 +21,7 @@ use {
     arguments::Arguments,
     bech32m::Bech32m,
     bech32m_error::Bech32mError,
+    bech32m_payload::Bech32mPayload,
     component::Component,
     component_error::ComponentError,
     count::Count,
@@ -53,6 +54,8 @@ use {
     public_key_error::PublicKeyError,
     serialized_message::SerializedMessage,
     sign_options::SignOptions,
+    signature_error::SignatureError,
+    signature_scheme::SignatureScheme,
     style::Style,
     subcommand::Subcommand,
     tag::Tag,
@@ -131,6 +134,7 @@ macro_rules! assert_matches {
 mod arguments;
 mod bech32m;
 mod bech32m_error;
+mod bech32m_payload;
 mod component;
 mod component_error;
 mod count;
@@ -179,6 +183,8 @@ mod relative_path;
 mod serialized_message;
 mod sign_options;
 mod signature;
+mod signature_error;
+mod signature_scheme;
 mod style;
 mod subcommand;
 mod tag;
