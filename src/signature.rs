@@ -24,7 +24,7 @@ impl Signature {
   }
 }
 
-impl Bech32m<1, { Signature::LEN }> for Signature {
+impl Bech32m<2, { Signature::LEN }> for Signature {
   const HRP: Hrp = Hrp::parse_unchecked("signature");
   const TYPE: &'static str = "signature";
   type Suffix = Vec<u8>;
@@ -55,14 +55,14 @@ impl FromStr for Signature {
 
   fn from_str(signature: &str) -> Result<Self, Self::Err> {
     let Bech32mPayload {
-      prefix: [scheme],
+      prefix: [scheme, version],
       data,
       suffix,
     } = Self::decode_bech32m(signature)?;
 
     Ok(Self {
       inner: ed25519_dalek::Signature::from_bytes(&data),
-      scheme: SignatureScheme::new(scheme, suffix)?,
+      scheme: SignatureScheme::new(scheme, version, suffix)?,
     })
   }
 }
@@ -97,13 +97,14 @@ mod tests {
 
     assert_eq!(
       bech32m.parse::<Signature>().unwrap_err().to_string(),
-      "expected bech32m signature to have 1 prefix character but found 0",
+      "expected bech32m signature to have 2 prefix characters but found 0",
     );
   }
 
   #[test]
   fn unsupported_scheme() {
     let bech32m = iter::once(Fe32::Q)
+      .chain(iter::once(Fe32::_0))
       .chain([0u8; Signature::LEN].iter().copied().bytes_to_fes())
       .with_checksum::<bech32::Bech32m>(&Signature::HRP)
       .with_witness_version(Fe32::A)
@@ -112,7 +113,7 @@ mod tests {
 
     assert_eq!(
       bech32m.parse::<Signature>().unwrap_err().to_string(),
-      "bech32m signature scheme `q` is not supported",
+      "signature scheme `q` is not supported",
     );
   }
 }

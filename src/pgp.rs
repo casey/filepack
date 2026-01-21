@@ -313,7 +313,7 @@ fn pgp_v4_signatures_can_be_verified() {
   }
 
   // extract and verify public key
-  {
+  let private_key = {
     let packet::key::SecretKeyMaterial::Unencrypted(secret_key_material) =
       signing_key.key().optional_secret().unwrap()
     else {
@@ -327,7 +327,9 @@ fn pgp_v4_signatures_can_be_verified() {
     let private_key = PrivateKey::from_bytes(scalar.value().try_into().unwrap());
 
     assert_eq!(private_key.public_key(), public_key);
-  }
+
+    private_key
+  };
 
   // create filepack signature
   let signature = Signature::new(
@@ -339,4 +341,8 @@ fn pgp_v4_signatures_can_be_verified() {
 
   // verify signature
   signature.verify(&message, public_key).unwrap();
+
+  eprintln!("PGP_PRIVATE_KEY: {}", private_key.display_secret());
+  eprintln!("PGP_PUBLIC_KEY: {public_key}");
+  eprintln!("PGP_SIGNATURE: {signature}");
 }

@@ -13,6 +13,14 @@ pub enum SignatureError {
   },
   #[snafu(display("found unexpected suffix for signature scheme `{scheme}`"))]
   UnexpectedSuffix { scheme: &'static str },
-  #[snafu(display("bech32m signature scheme `{scheme}` is not supported"))]
+  #[snafu(display("signature scheme `{scheme}` is not supported"))]
   UnsupportedScheme { scheme: Fe32 },
+  #[snafu(display(
+    "signature scheme `{scheme}` version `{actual}` is not supported, expected `{expected}`",
+  ))]
+  UnsupportedVersion {
+    actual: Fe32,
+    expected: Fe32,
+    scheme: &'static str,
+  },
 }
