@@ -4,11 +4,7 @@ use {
     Cert, Packet,
     cert::CertBuilder,
     crypto::mpi,
-    packet::{
-      self, Key,
-      key::{Key6, SecretParts, UnspecifiedRole},
-      signature::SignatureBuilder,
-    },
+    packet::{self, signature::SignatureBuilder},
     parse::Parse,
     policy::StandardPolicy,
     serialize::MarshalInto,
@@ -117,97 +113,6 @@ fn pgp_v4_signatures_can_be_verified() {
       hashed_area: signature_packet.hashed_area().to_vec().unwrap(),
     },
     ed25519_dalek::Signature::from_bytes(&sig_bytes),
-  );
-
-  signature.verify(&message, public_key).unwrap();
-}
-
-#[test]
-#[ignore]
-fn pgp_v6_signatures_can_be_verified() {
-  let manifest = Manifest {
-    files: Directory::new(),
-    notes: Vec::new(),
-  };
-
-  let message = Message {
-    fingerprint: manifest.fingerprint(),
-    time: None,
-  };
-
-  let message = message.serialize();
-
-  let secret_key = ed25519_dalek::SigningKey::generate(&mut rand::thread_rng());
-
-  let key6: Key6<SecretParts, UnspecifiedRole> =
-    Key6::import_secret_ed25519(secret_key.as_bytes(), None).unwrap();
-  let key: Key<_, _> = key6.into();
-
-  let mut keypair = key.clone().into_keypair().unwrap();
-
-  let signature_packet = SignatureBuilder::new(SignatureType::Binary)
-    .set_hash_algo(HashAlgorithm::SHA512)
-    .sign_message(&mut keypair, message.bytes())
-    .unwrap();
-
-  assert_eq!(signature_packet.version(), 6);
-
-  let packet::Signature::V6(sig6) = signature_packet.clone() else {
-    panic!("expected v6 signature");
-  };
-
-  let salt = sig6.salt();
-
-  let mpi::Signature::Ed25519 { s } = signature_packet.mpis() else {
-    panic!("expected Ed25519 signature");
-  };
-
-  let mpi::PublicKey::Ed25519 { a } = key.mpis() else {
-    panic!("expected Ed25519 public key");
-  };
-
-  signature_packet
-    .clone()
-    .verify_message(&key, message.bytes())
-    .unwrap();
-
-  {
-    let hashed_area = signature_packet.hashed_area().to_vec().unwrap();
-    let hashed_area_len = hashed_area.len();
-
-    let mut header = [0u8; 8];
-    header[0] = 6;
-    header[1] = u8::from(signature_packet.typ());
-    header[2] = u8::from(signature_packet.pk_algo());
-    header[3] = u8::from(signature_packet.hash_algo());
-    header[4..8].copy_from_slice(&(hashed_area_len as u32).to_be_bytes());
-
-    let mut trailer = [0u8; 6];
-    trailer[0] = 6;
-    trailer[1] = 0xff;
-    let len = (header.len() + hashed_area_len) as u32;
-    trailer[2..6].copy_from_slice(&len.to_be_bytes());
-
-    let mut hasher = Sha512::new();
-    hasher.update(salt);
-    hasher.update(message.bytes());
-    hasher.update(&header);
-    hasher.update(&hashed_area);
-    hasher.update(&trailer);
-    let digest = hasher.finalize();
-
-    let verifying_key = ed25519_dalek::VerifyingKey::from_bytes(a).unwrap();
-    let sig = ed25519_dalek::Signature::from_bytes(s.as_ref());
-    verifying_key.verify_strict(&digest, &sig).unwrap();
-  }
-
-  let public_key = PublicKey::from_bytes(*a);
-
-  let signature = Signature::new(
-    SignatureScheme::Pgp {
-      hashed_area: signature_packet.hashed_area().to_vec().unwrap(),
-    },
-    ed25519_dalek::Signature::from_bytes(s.as_ref()),
   );
 
   signature.verify(&message, public_key).unwrap();
