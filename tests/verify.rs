@@ -634,8 +634,8 @@ fn ssh_signature() {
   const SSH_PUBLIC_KEY: &str = "public1avp5pgjsqf6uzcrd34x4hgdndfaf5w5h786wh3tjs9vyup3n74h2shpdku2";
 
   const SSH_SIGNATURE: &str = concat!(
-    "signature1as0qpsm76yvvg4wjn4l7vqemk5vpc5khpp5ceqrp693x2ndrvrnv",
-    "sga58suzl239sjh4t5uhprwpyfmypy4cmp0upe055cvzxg226e7gzq3e7nwt",
+    "signature1as0qpsm76yvvg4wjn4l7vqemk5vpc5khpp5ceqrp693x2ndrvrn",
+    "vsga58suzl239sjh4t5uhprwpyfmypy4cmp0upe055cvzxg226e7gzq3e7nwt",
   );
 
   Test::new()
