@@ -16,9 +16,9 @@ impl SignatureScheme {
       Fe32::F => {
         ensure!(
           version == Fe32::_0,
-          signature_error::UnsupportedSchemeVersion {
+          signature_error::UnsupportedVersion {
             scheme: "filepack",
-            version,
+            actual: version,
             expected: Fe32::_0,
           },
         );
@@ -31,9 +31,9 @@ impl SignatureScheme {
       Fe32::P => {
         ensure!(
           version == Fe32::_4,
-          signature_error::UnsupportedSchemeVersion {
+          signature_error::UnsupportedVersion {
             scheme: "pgp",
-            version,
+            actual: version,
             expected: Fe32::_4,
           },
         );
@@ -51,9 +51,9 @@ impl SignatureScheme {
       Fe32::S => {
         ensure!(
           version == Fe32::_0,
-          signature_error::UnsupportedSchemeVersion {
+          signature_error::UnsupportedVersion {
             scheme: "ssh",
-            version,
+            actual: version,
             expected: Fe32::_0,
           },
         );

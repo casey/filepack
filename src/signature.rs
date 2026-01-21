@@ -113,7 +113,7 @@ mod tests {
 
     assert_eq!(
       bech32m.parse::<Signature>().unwrap_err().to_string(),
-      "bech32m signature scheme `q` is not supported",
+      "signature scheme `q` is not supported",
     );
   }
 }
