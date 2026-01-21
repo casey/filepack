@@ -67,7 +67,7 @@ mod tests {
     );
     assert_eq!(
       serde_json::from_str::<Note>(&json).unwrap_err().to_string(),
-      "invalid entry: found duplicate key at line 1 column 401",
+      "invalid entry: found duplicate key at line 1 column 403",
     );
   }
 

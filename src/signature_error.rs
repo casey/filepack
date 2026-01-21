@@ -15,4 +15,10 @@ pub enum SignatureError {
   UnexpectedSuffix { scheme: &'static str },
   #[snafu(display("bech32m signature scheme `{scheme}` is not supported"))]
   UnsupportedScheme { scheme: Fe32 },
+  #[snafu(display("signature scheme `{scheme}` version `{version}` is not supported, expected `{expected}`"))]
+  UnsupportedSchemeVersion {
+    scheme: &'static str,
+    version: Fe32,
+    expected: Fe32,
+  },
 }

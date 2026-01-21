@@ -11,9 +11,17 @@ pub(crate) enum SignatureScheme {
 }
 
 impl SignatureScheme {
-  pub(crate) fn new(scheme: Fe32, suffix: Vec<u8>) -> Result<Self, SignatureError> {
+  pub(crate) fn new(scheme: Fe32, version: Fe32, suffix: Vec<u8>) -> Result<Self, SignatureError> {
     match scheme {
       Fe32::F => {
+        ensure!(
+          version == Fe32::_0,
+          signature_error::UnsupportedSchemeVersion {
+            scheme: "filepack",
+            version,
+            expected: Fe32::_0,
+          },
+        );
         ensure!(
           suffix.is_empty(),
           signature_error::UnexpectedSuffix { scheme: "filepack" },
@@ -21,6 +29,14 @@ impl SignatureScheme {
         Ok(SignatureScheme::Filepack)
       }
       Fe32::P => {
+        ensure!(
+          version == Fe32::_4,
+          signature_error::UnsupportedSchemeVersion {
+            scheme: "pgp",
+            version,
+            expected: Fe32::_4,
+          },
+        );
         u16::try_from(suffix.len())
           .ok()
           .context(signature_error::SuffixLength {
@@ -34,6 +50,14 @@ impl SignatureScheme {
       }
       Fe32::S => {
         ensure!(
+          version == Fe32::_0,
+          signature_error::UnsupportedSchemeVersion {
+            scheme: "ssh",
+            version,
+            expected: Fe32::_0,
+          },
+        );
+        ensure!(
           suffix.is_empty(),
           signature_error::UnexpectedSuffix { scheme: "ssh" },
         );
@@ -43,11 +67,11 @@ impl SignatureScheme {
     }
   }
 
-  pub(crate) fn prefix_and_suffix(&self) -> ([Fe32; 1], &[u8]) {
+  pub(crate) fn prefix_and_suffix(&self) -> ([Fe32; 2], &[u8]) {
     match self {
-      SignatureScheme::Filepack => ([Fe32::F], &[]),
-      SignatureScheme::Pgp { hashed_area } => ([Fe32::P], hashed_area),
-      SignatureScheme::Ssh => ([Fe32::S], &[]),
+      SignatureScheme::Filepack => ([Fe32::F, Fe32::_0], &[]),
+      SignatureScheme::Pgp { hashed_area } => ([Fe32::P, Fe32::_4], hashed_area),
+      SignatureScheme::Ssh => ([Fe32::S, Fe32::_0], &[]),
     }
   }
 

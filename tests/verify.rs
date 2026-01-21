@@ -465,14 +465,14 @@ fn pgp_signature() {
   const PGP_PRIVATE_KEY: &str =
     "private1at6hy62ykv46jmlqks3jpnx3lmgv2avtrrtnt2uljwhzdrfx54n6sx4cj9e";
 
-  const PGP_PUBLIC_KEY: &str = "public1afzgrryd0m6n96syhjl4fadx3hjse8pjr23uztxpwv4685lkjm37qmgwsd3";
+  const PGP_PUBLIC_KEY: &str = "public1ackrgctyukf4rjvve9kda5s5huadpq58htnz2wu0dyjd7jzcfg9ts3us24e";
 
   const PGP_SIGNATURE: &str = concat!(
-    "signature1apnckuwdwggchcm3wp5tyqef2ea03kucmc8j7p3ewcqh8falwrd0",
-    "axhp3n59c644jxnyk66tcwhs33ut0v7puw58024g4xd756m7y7szs9sf5hzw",
-    "qrpyg93acd9h5ckdxygu2qqqqqqqqpuqpqwdskcazqdehhgct5d9hkuuewwd",
-    "jhzat0d9sj6ur8wqhx7un8fp3vcyaew0zvdd79t5tmsy3hy4mun4gql69d8n",
-    "4t05sykyn9fm53vggy47uff5p0uvufjpvme2d43acd9h5ckdxy2u26nt",
+    "signature1ap49xy7g634zevd4sj87ke957jve5rp3ww0sxw4rjzca9c2ckzua",
+    "0xxc78n4vzrwhntg2nx3pezqqst5gsefjj0vlznhe5n9t6ca6aayrg9sf5hz",
+    "cympyg0v4dq6mzduvmjgu2qqqqqqqqpuqpqwdskcazqdehhgct5d9hkuueww",
+    "djhzat0d9sj6ur8wqhx7un87nsw6ra87hdutl7snlc6f9wua2vqyac8uz8ny",
+    "9nh2yluhnpwcfp3vggy45w4wxfz7338q36y26qlv4dq6mzduvmjz24scs",
   );
 
   Test::new()
@@ -639,11 +639,11 @@ fn ssh_signature() {
   const SSH_PRIVATE_KEY: &str =
     "private1a4u5t9g3hlfk56d5kaw8drqgc478ljeqzae7lqc4y742pa6u6ur7srw5lct";
 
-  const SSH_PUBLIC_KEY: &str = "public1a5yf9ackwkywzmygc3q4mglp7qd32ruyj5fr0w3szp70jt4cl34cqwtjjhh";
+  const SSH_PUBLIC_KEY: &str = "public1aq909nh5a30jkz54an4r53gxcvc94lxgvlcqspvryh8r6u9pwaceqf8ya25";
 
   const SSH_SIGNATURE: &str = concat!(
-    "signature1as2wzp8g6f9d6gt53dpt37zlz4qw2hwhn4q7yg99uz6lrua63mh",
-    "h7mnmka5cap6z37rglrst2thst909zlmerltgna7yhgf240dsqd6pgrvzhv0",
+    "signature1as0aemdcqhpwh99nqzawnrpcyadl2eq7axfxfhanedkuhy8rmz3k",
+    "7lr5kxh3emnjdwfys76qny48lla6v68ma3mm4w7tmmew74qzeuu5pqqgrh5r",
   );
 
   Test::new()

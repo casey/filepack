@@ -97,4 +97,7 @@ fn ssh_signatures_can_be_verified() {
 
   // verify signature
   signature.verify(&message, public_key).unwrap();
+
+  eprintln!("SSH_PUBLIC_KEY: {public_key}");
+  eprintln!("SSH_SIGNATURE: {signature}");
 }

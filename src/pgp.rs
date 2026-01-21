@@ -339,4 +339,7 @@ fn pgp_v4_signatures_can_be_verified() {
 
   // verify signature
   signature.verify(&message, public_key).unwrap();
+
+  eprintln!("PGP_PUBLIC_KEY: {public_key}");
+  eprintln!("PGP_SIGNATURE: {signature}");
 }
