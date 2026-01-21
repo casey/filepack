@@ -81,5 +81,5 @@ fn ssh_signatures_can_be_verified() {
     )
   };
 
-  signature.verify(&message, &public_key).unwrap();
+  signature.verify(&message, public_key).unwrap();
 }

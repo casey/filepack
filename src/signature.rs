@@ -13,7 +13,7 @@ impl Signature {
     Self { inner, scheme }
   }
 
-  pub fn verify(&self, message: &SerializedMessage, public_key: &PublicKey) -> Result {
+  pub fn verify(&self, message: &SerializedMessage, public_key: PublicKey) -> Result {
     let signed_data = match self.scheme {
       SignatureScheme::Filepack => Cow::Borrowed(message.filepack_signed_data()),
       SignatureScheme::Ssh => Cow::Owned(message.ssh_signed_data()),
@@ -23,7 +23,7 @@ impl Signature {
       .inner()
       .verify_strict(&signed_data, &self.inner)
       .map_err(DalekSignatureError)
-      .context(error::SignatureInvalid { key: *public_key })
+      .context(error::SignatureInvalid { public_key })
   }
 }
 

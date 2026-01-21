@@ -253,10 +253,10 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     key: PublicKey,
   },
-  #[snafu(display("invalid signature for key `{key}`"))]
+  #[snafu(display("invalid signature for key `{public_key}`"))]
   SignatureInvalid {
     backtrace: Option<Backtrace>,
-    key: PublicKey,
+    public_key: PublicKey,
     source: DalekSignatureError,
   },
   #[snafu(display("no signature found for key `{identifier}`"))]
