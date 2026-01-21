@@ -1,21 +1,10 @@
 use super::*;
 
-pub struct SignatureError(pub(crate) ed25519_dalek::SignatureError);
-
-impl Display for SignatureError {
-  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    self.0.fmt(f)
-  }
-}
-
-impl fmt::Debug for SignatureError {
-  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    <dyn std::fmt::Debug>::fmt(&self.0, f)
-  }
-}
-
-impl std::error::Error for SignatureError {
-  fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-    self.0.source()?.source()
-  }
+#[derive(Debug, Snafu)]
+#[snafu(context(suffix(false)), visibility(pub(crate)))]
+pub enum SignatureError {
+  #[snafu(transparent)]
+  Bech32m { source: Bech32mError },
+  #[snafu(display("bech32m signature scheme `{scheme}` is not supported"))]
+  UnsupportedScheme { scheme: Fe32 },
 }

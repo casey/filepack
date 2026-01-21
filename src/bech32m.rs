@@ -2,11 +2,11 @@ use super::*;
 
 const VERSION: Fe32 = Fe32::A;
 
-pub(crate) trait Bech32m<const LEN: usize> {
+pub(crate) trait Bech32m<const PREFIX: usize, const DATA: usize> {
   const HRP: Hrp;
   const TYPE: &'static str;
 
-  fn decode_bech32m(s: &str) -> Result<[u8; LEN], Bech32mError> {
+  fn decode_bech32m(s: &str) -> Result<([Fe32; PREFIX], [u8; DATA]), Bech32mError> {
     let hrp_string = CheckedHrpstring::new::<bech32::Bech32m>(s)
       .context(bech32m_error::Decode { ty: Self::TYPE })?;
 
@@ -30,39 +30,50 @@ pub(crate) trait Bech32m<const LEN: usize> {
 
     Self::validate_padding(&hrp_string).context(bech32m_error::Padding { ty: Self::TYPE })?;
 
-    let mut bytes = fe32s.fes_to_bytes();
+    let mut prefix = [Fe32::Q; PREFIX];
 
-    let mut array = [0; LEN];
-
-    let mut actual = 0;
-    for byte in &mut array {
-      *byte = bytes.next().context(bech32m_error::Length {
-        actual,
-        expected: LEN,
+    for (actual, fe32) in prefix.iter_mut().enumerate() {
+      *fe32 = fe32s.next().context(bech32m_error::PrefixLength {
         ty: Self::TYPE,
+        expected: PREFIX,
+        actual,
       })?;
-      actual += 1;
     }
 
-    actual += bytes.count();
+    let mut data = [0; DATA];
 
-    ensure! {
-      actual == LEN,
-      bech32m_error::Length {
-        actual,
-        expected: LEN,
-        ty: Self::TYPE,
-      },
+    {
+      let mut bytes = fe32s.fes_to_bytes();
+
+      let mut actual = 0;
+      for byte in &mut data {
+        *byte = bytes.next().context(bech32m_error::DataLength {
+          actual,
+          expected: DATA,
+          ty: Self::TYPE,
+        })?;
+        actual += 1;
+      }
+
+      actual += bytes.count();
+
+      ensure! {
+        actual == DATA,
+        bech32m_error::DataLength {
+          actual,
+          expected: DATA,
+          ty: Self::TYPE,
+        },
+      }
     }
 
-    Ok(array)
+    Ok((prefix, data))
   }
 
-  fn encode_bech32m(f: &mut Formatter, bytes: [u8; LEN]) -> fmt::Result {
-    let chars = bytes
-      .iter()
-      .copied()
-      .bytes_to_fes()
+  fn encode_bech32m(f: &mut Formatter, prefix: [Fe32; PREFIX], data: [u8; DATA]) -> fmt::Result {
+    let chars = prefix
+      .into_iter()
+      .chain(data.iter().copied().bytes_to_fes())
       .with_checksum::<bech32::Bech32m>(&Self::HRP)
       .with_witness_version(VERSION)
       .chars();
@@ -103,54 +114,55 @@ mod tests {
 
   struct EmptyPublicKey;
 
-  impl Bech32m<0> for EmptyPublicKey {
+  impl Bech32m<0, 0> for EmptyPublicKey {
     const HRP: Hrp = Hrp::parse_unchecked("public");
     const TYPE: &'static str = "public key";
   }
 
   impl Display for EmptyPublicKey {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-      Self::encode_bech32m(f, [])
+      Self::encode_bech32m(f, [], [])
     }
   }
 
   struct LongPublicKey;
 
-  impl Bech32m<33> for LongPublicKey {
+  impl Bech32m<0, 33> for LongPublicKey {
     const HRP: Hrp = Hrp::parse_unchecked("public");
     const TYPE: &'static str = "public key";
   }
 
   impl Display for LongPublicKey {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-      Self::encode_bech32m(f, [0; 33])
+      Self::encode_bech32m(f, [], [0; 33])
     }
   }
 
   #[test]
   fn implementations() {
-    fn case<const LEN: usize, T: Bech32m<LEN>>(hrp: &str, ty: &str) {
+    fn case<const PREFIX: usize, const DATA: usize, T: Bech32m<PREFIX, DATA>>(hrp: &str, ty: &str) {
       use bech32::Checksum;
 
       let max = (bech32::Bech32m::CODE_LENGTH
         - T::HRP.as_str().len()
         - 1
         - bech32::Bech32m::CHECKSUM_LENGTH
-        - 1)
+        - 1
+        - PREFIX)
         * 5
         / 8;
 
-      assert!(LEN <= max);
+      assert!(DATA <= max);
 
       assert_eq!(T::HRP.as_str(), hrp);
 
       assert_eq!(T::TYPE, ty);
     }
 
-    case::<{ Fingerprint::LEN }, Fingerprint>("package", "package fingerprint");
-    case::<{ PrivateKey::LEN }, PrivateKey>("private", "private key");
-    case::<{ PublicKey::LEN }, PublicKey>("public", "public key");
-    case::<{ Signature::LEN }, Signature>("signature", "signature");
+    case::<0, { Fingerprint::LEN }, Fingerprint>("package", "package fingerprint");
+    case::<0, { PrivateKey::LEN }, PrivateKey>("private", "private key");
+    case::<0, { PublicKey::LEN }, PublicKey>("public", "public key");
+    case::<1, { Signature::LEN }, Signature>("signature", "signature");
   }
 
   #[test]
@@ -172,12 +184,12 @@ mod tests {
 
     case(
       &EmptyPublicKey.to_string(),
-      "expected bech32m public key to have 32 bytes but found 0",
+      "expected bech32m public key to have 32 data bytes but found 0",
     );
 
     case(
       &LongPublicKey.to_string(),
-      "expected bech32m public key to have 32 bytes but found 33",
+      "expected bech32m public key to have 32 data bytes but found 33",
     );
 
     let public_key = test::PUBLIC_KEY.parse::<PublicKey>().unwrap();
@@ -219,6 +231,32 @@ mod tests {
     assert_eq!(
       PublicKey::decode_bech32m(&bech32m).unwrap_err().to_string(),
       "bech32m public key has invalid padding",
+    );
+  }
+
+  #[test]
+  fn prefix_length() {
+    struct PrefixedType;
+
+    impl Bech32m<2, 0> for PrefixedType {
+      const HRP: Hrp = Hrp::parse_unchecked("test");
+      const TYPE: &'static str = "test";
+    }
+
+    let bech32m = []
+      .iter()
+      .copied()
+      .bytes_to_fes()
+      .with_checksum::<bech32::Bech32m>(&PrefixedType::HRP)
+      .with_witness_version(VERSION)
+      .chars()
+      .collect::<String>();
+
+    assert_eq!(
+      PrefixedType::decode_bech32m(&bech32m)
+        .unwrap_err()
+        .to_string(),
+      "expected bech32m test to have 2 prefix characters but found 0",
     );
   }
 

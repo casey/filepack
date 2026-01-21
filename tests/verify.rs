@@ -646,16 +646,14 @@ fn weak_signature_public_key() {
         notes: [
           {
             signatures: {
-              "public1aqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqsqtuc8": "signature1aqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqtv4u5e"
+              "public1aqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqsqtuc8": "",
             }
           }
         ]
       },
     )
     .arg("verify")
-    .stderr_regex(
-      "error: failed to deserialize manifest at `filepack.json`\n.*weak public key.*",
-    )
+    .stderr_regex("error: failed to deserialize manifest at `filepack.json`\n.*weak public key.*")
     .failure();
 }
 

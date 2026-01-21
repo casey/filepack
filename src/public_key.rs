@@ -24,15 +24,11 @@ impl PublicKey {
   }
 
   pub fn verify(&self, message: &SerializedMessage, signature: &Signature) -> Result {
-    self
-      .0
-      .verify_strict(message.as_ref(), signature.as_ref())
-      .map_err(SignatureError)
-      .context(error::SignatureInvalid { key: *self })
+    signature.verify(message, self)
   }
 }
 
-impl Bech32m<{ PublicKey::LEN }> for PublicKey {
+impl Bech32m<0, { PublicKey::LEN }> for PublicKey {
   const HRP: Hrp = Hrp::parse_unchecked("public");
   const TYPE: &'static str = "public key";
 }
@@ -47,10 +43,10 @@ impl FromStr for PublicKey {
   type Err = PublicKeyError;
 
   fn from_str(key: &str) -> Result<Self, Self::Err> {
-    let bytes = Self::decode_bech32m(key)?;
+    let ([], data) = Self::decode_bech32m(key)?;
 
-    let inner = ed25519_dalek::VerifyingKey::from_bytes(&bytes)
-      .map_err(SignatureError)
+    let inner = ed25519_dalek::VerifyingKey::from_bytes(&data)
+      .map_err(DalekSignatureError)
       .context(public_key_error::Invalid { key })?;
 
     ensure! {
@@ -64,7 +60,7 @@ impl FromStr for PublicKey {
 
 impl Display for PublicKey {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    Self::encode_bech32m(f, *self.0.as_bytes())
+    Self::encode_bech32m(f, [], *self.0.as_bytes())
   }
 }
 

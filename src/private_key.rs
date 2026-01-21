@@ -44,11 +44,11 @@ impl PrivateKey {
 
   pub(crate) fn sign(&self, message: &SerializedMessage) -> Signature {
     use ed25519_dalek::Signer;
-    self.0.sign(message.as_ref()).into()
+    Signature::new(SignatureScheme::Filepack, self.0.sign(message.as_ref()))
   }
 }
 
-impl Bech32m<{ PrivateKey::LEN }> for PrivateKey {
+impl Bech32m<0, { PrivateKey::LEN }> for PrivateKey {
   const HRP: Hrp = Hrp::parse_unchecked("private");
   const TYPE: &'static str = "private key";
 }
@@ -57,8 +57,8 @@ impl FromStr for PrivateKey {
   type Err = Bech32mError;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
-    let bytes = Self::decode_bech32m(s)?;
-    let inner = ed25519_dalek::SigningKey::from_bytes(&bytes);
+    let ([], data) = Self::decode_bech32m(s)?;
+    let inner = ed25519_dalek::SigningKey::from_bytes(&data);
     assert!(!inner.verifying_key().is_weak());
     Ok(Self(inner))
   }

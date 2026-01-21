@@ -12,14 +12,14 @@ impl Fingerprint {
   }
 }
 
-impl Bech32m<{ Fingerprint::LEN }> for Fingerprint {
+impl Bech32m<0, { Fingerprint::LEN }> for Fingerprint {
   const HRP: Hrp = Hrp::parse_unchecked("package");
   const TYPE: &'static str = "package fingerprint";
 }
 
 impl Display for Fingerprint {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    Self::encode_bech32m(f, *self.as_bytes())
+    Self::encode_bech32m(f, [], *self.as_bytes())
   }
 }
 
@@ -27,6 +27,7 @@ impl FromStr for Fingerprint {
   type Err = Bech32mError;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
-    Ok(Self(Self::decode_bech32m(s)?.into()))
+    let ([], data) = Self::decode_bech32m(s)?;
+    Ok(Self(data.into()))
   }
 }
