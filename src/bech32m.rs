@@ -32,39 +32,43 @@ pub(crate) trait Bech32m<const PREFIX: usize, const DATA: usize> {
 
     let mut prefix = [Fe32::Q; PREFIX];
 
-    let mut prefix_actual: usize = 0;
-    for fe32 in &mut prefix {
-      *fe32 = fe32s.next().context(bech32m_error::PrefixLength {
-        ty: Self::TYPE,
-        expected: PREFIX,
-        actual: prefix_actual,
-      })?;
-      prefix_actual += 1;
+    {
+      let mut actual: usize = 0;
+      for fe32 in &mut prefix {
+        *fe32 = fe32s.next().context(bech32m_error::PrefixLength {
+          ty: Self::TYPE,
+          expected: PREFIX,
+          actual,
+        })?;
+        actual += 1;
+      }
     }
-
-    let mut bytes = fe32s.fes_to_bytes();
 
     let mut data = [0; DATA];
 
-    let mut data_actual = 0;
-    for byte in &mut data {
-      *byte = bytes.next().context(bech32m_error::DataLength {
-        actual: data_actual,
-        expected: DATA,
-        ty: Self::TYPE,
-      })?;
-      data_actual += 1;
-    }
+    {
+      let mut bytes = fe32s.fes_to_bytes();
 
-    data_actual += bytes.count();
+      let mut actual = 0;
+      for byte in &mut data {
+        *byte = bytes.next().context(bech32m_error::DataLength {
+          actual,
+          expected: DATA,
+          ty: Self::TYPE,
+        })?;
+        actual += 1;
+      }
 
-    ensure! {
-      data_actual == DATA,
-      bech32m_error::DataLength {
-        actual: data_actual,
-        expected: DATA,
-        ty: Self::TYPE,
-      },
+      actual += bytes.count();
+
+      ensure! {
+        actual == DATA,
+        bech32m_error::DataLength {
+          actual,
+          expected: DATA,
+          ty: Self::TYPE,
+        },
+      }
     }
 
     Ok((prefix, data))
