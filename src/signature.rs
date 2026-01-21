@@ -36,7 +36,13 @@ impl Bech32m<1, { Signature::LEN }> for Signature {
 
 impl Display for Signature {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    Self::encode_bech32m(f, [self.scheme.into()], self.inner.to_bytes(), Vec::new())
+    let payload = bech32m::Payload {
+      prefix: [self.scheme.into()],
+      data: self.inner.to_bytes(),
+      suffix: Vec::new(),
+    };
+
+    Self::encode_bech32m(f, payload)
   }
 }
 

@@ -6,6 +6,8 @@ type Bytes<'a> = FesToBytes<AsciiToFe32Iter<'a>>;
 
 pub(crate) trait Suffix: Sized {
   fn from_bytes(ty: &'static str, bytes: Bytes) -> Result<Self, Bech32mError>;
+
+  fn into_bytes(self) -> Vec<u8>;
 }
 
 impl Suffix for () {
@@ -23,11 +25,19 @@ impl Suffix for () {
 
     Ok(())
   }
+
+  fn into_bytes(self) -> Vec<u8> {
+    Vec::new()
+  }
 }
 
 impl Suffix for Vec<u8> {
   fn from_bytes(_ty: &'static str, bytes: Bytes) -> Result<Self, Bech32mError> {
     Ok(bytes.collect())
+  }
+
+  fn into_bytes(self) -> Vec<u8> {
+    self
   }
 }
 
@@ -39,6 +49,14 @@ pub(crate) struct Payload<const PREFIX: usize, const DATA: usize, T> {
 }
 
 impl<const DATA: usize> Payload<0, DATA, ()> {
+  pub(crate) fn from_data(data: [u8; DATA]) -> Self {
+    Self {
+      data,
+      prefix: [],
+      suffix: (),
+    }
+  }
+
   pub(crate) fn into_data(self) -> [u8; DATA] {
     self.data
   }
@@ -51,18 +69,6 @@ pub(crate) trait Bech32m<const PREFIX: usize, const DATA: usize> {
   type Suffix: Suffix;
 
   fn decode_bech32m(s: &str) -> Result<Payload<PREFIX, DATA, Self::Suffix>, Bech32mError> {
-    let (prefix, data, suffix) = Self::decode_bech32m_old(s)?;
-
-    Ok(Payload {
-      prefix,
-      data,
-      suffix,
-    })
-  }
-
-  fn decode_bech32m_old(
-    s: &str,
-  ) -> Result<([Fe32; PREFIX], [u8; DATA], Self::Suffix), Bech32mError> {
     let hrp_string = CheckedHrpstring::new::<bech32::Bech32m>(s)
       .context(bech32m_error::Decode { ty: Self::TYPE })?;
 
@@ -114,18 +120,32 @@ pub(crate) trait Bech32m<const PREFIX: usize, const DATA: usize> {
 
     let suffix = Self::Suffix::from_bytes(Self::TYPE, bytes)?;
 
-    Ok((prefix, data, suffix))
+    Ok(Payload {
+      prefix,
+      data,
+      suffix,
+    })
   }
 
   fn encode_bech32m(
     f: &mut Formatter,
-    prefix: [Fe32; PREFIX],
-    data: [u8; DATA],
-    suffix: Self::Suffix,
+    payload: Payload<PREFIX, DATA, Self::Suffix>,
   ) -> fmt::Result {
+    let Payload {
+      prefix,
+      suffix,
+      data,
+    } = payload;
+
     let chars = prefix
       .into_iter()
-      .chain(data.iter().copied().bytes_to_fes())
+      .chain(
+        data
+          .iter()
+          .copied()
+          .chain(suffix.into_bytes())
+          .bytes_to_fes(),
+      )
       .with_checksum::<bech32::Bech32m>(&Self::HRP)
       .with_witness_version(VERSION)
       .chars();
@@ -174,7 +194,7 @@ mod tests {
 
   impl Display for EmptyPublicKey {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-      Self::encode_bech32m(f, [], [], ())
+      Self::encode_bech32m(f, Payload::from_data([]))
     }
   }
 
@@ -188,7 +208,7 @@ mod tests {
 
   impl Display for LongPublicKey {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-      Self::encode_bech32m(f, [], [0; 33], ())
+      Self::encode_bech32m(f, Payload::from_data([0; 33]))
     }
   }
 

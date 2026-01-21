@@ -66,7 +66,7 @@ impl FromStr for PublicKey {
 
 impl Display for PublicKey {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    Self::encode_bech32m(f, [], *self.0.as_bytes(), ())
+    Self::encode_bech32m(f, bech32m::Payload::from_data(*self.0.as_bytes()))
   }
 }
 
