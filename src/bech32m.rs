@@ -90,6 +90,8 @@ pub(crate) trait Bech32m<const PREFIX: usize, const DATA: usize> {
       bech32m_error::UnsupportedVersion { ty: Self::TYPE, version },
     }
 
+    // todo:
+    // - this is wrong, need to validate padding after taking prefix out
     Self::validate_padding(&hrp_string).context(bech32m_error::Padding { ty: Self::TYPE })?;
 
     let mut prefix = [Fe32::Q; PREFIX];
