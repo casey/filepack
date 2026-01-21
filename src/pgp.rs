@@ -346,6 +346,7 @@ fn gpg_signatures_can_be_verified() {
   else {
     panic!("expected unencrypted secret key");
   };
+
   let mpi::SecretKeyMaterial::EdDSA { scalar } = secret_key_material.map(|m| m.clone()) else {
     panic!("expected EdDSA secret key");
   };
