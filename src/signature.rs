@@ -12,11 +12,15 @@ impl Signature {
   pub(crate) fn new(scheme: SignatureScheme, inner: ed25519_dalek::Signature) -> Self {
     Self { scheme, inner }
   }
-}
 
-impl AsRef<ed25519_dalek::Signature> for Signature {
-  fn as_ref(&self) -> &ed25519_dalek::Signature {
-    &self.inner
+  pub fn verify(&self, message: &SerializedMessage, public_key: &PublicKey) -> Result {
+    match self.scheme {
+      SignatureScheme::Filepack => public_key
+        .inner()
+        .verify_strict(message.as_ref(), &self.inner)
+        .map_err(DalekSignatureError)
+        .context(error::SignatureInvalid { key: *public_key }),
+    }
   }
 }
 

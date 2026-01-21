@@ -24,11 +24,7 @@ impl PublicKey {
   }
 
   pub fn verify(&self, message: &SerializedMessage, signature: &Signature) -> Result {
-    self
-      .0
-      .verify_strict(message.as_ref(), signature.as_ref())
-      .map_err(DalekSignatureError)
-      .context(error::SignatureInvalid { key: *self })
+    signature.verify(message, self)
   }
 }
 
