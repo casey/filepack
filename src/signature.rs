@@ -10,7 +10,7 @@ impl Signature {
   pub(crate) const LEN: usize = ed25519_dalek::Signature::BYTE_SIZE;
 
   pub(crate) fn new(scheme: SignatureScheme, inner: ed25519_dalek::Signature) -> Self {
-    Self { scheme, inner }
+    Self { inner, scheme }
   }
 
   pub fn verify(&self, message: &SerializedMessage, public_key: &PublicKey) -> Result {

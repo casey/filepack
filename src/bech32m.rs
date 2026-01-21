@@ -51,7 +51,10 @@ pub(crate) trait Bech32m<const PREFIX: usize, const DATA: usize> {
     let mut prefix = [Fe32::Q; PREFIX];
 
     for fe32 in &mut prefix {
-      *fe32 = fe32s.next().expect("todo: return proper error");
+      *fe32 = fe32s.next().context(bech32m_error::PrefixMissing {
+        ty: Self::TYPE,
+        prefix: PREFIX,
+      })?;
     }
 
     let mut bytes = fe32s.fes_to_bytes();

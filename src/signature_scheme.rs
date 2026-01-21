@@ -5,10 +5,10 @@ pub(crate) enum SignatureScheme {
   Filepack,
 }
 
-impl Into<Fe32> for SignatureScheme {
-  fn into(self) -> Fe32 {
-    match self {
-      Self::Filepack => Fe32::F,
+impl From<SignatureScheme> for Fe32 {
+  fn from(val: SignatureScheme) -> Self {
+    match val {
+      SignatureScheme::Filepack => Fe32::F,
     }
   }
 }
