@@ -21,14 +21,13 @@ impl SignatureScheme {
         Ok(SignatureScheme::Filepack)
       }
       Fe32::P => {
-        ensure!(
-          u16::try_from(suffix.len()).is_ok(),
-          signature_error::SuffixLength {
+        u16::try_from(suffix.len())
+          .ok()
+          .context(signature_error::SuffixLength {
             length: suffix.len(),
             maximum: usize::from(u16::MAX),
             scheme: "pgp",
-          },
-        );
+          })?;
         Ok(SignatureScheme::Pgp {
           hashed_area: suffix,
         })
