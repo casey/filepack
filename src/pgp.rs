@@ -200,26 +200,32 @@ fn gpg_v4_signatures_can_be_verified() {
 
 #[test]
 fn pgp_v4_signatures_can_be_verified() {
-  let manifest = Manifest {
-    files: Directory::new(),
-    notes: Vec::new(),
+  // create message
+  let message = {
+    let manifest = Manifest {
+      files: Directory::new(),
+      notes: Vec::new(),
+    };
+
+    let message = Message {
+      fingerprint: manifest.fingerprint(),
+      time: None,
+    };
+
+    message.serialize()
   };
 
-  let message = Message {
-    fingerprint: manifest.fingerprint(),
-    time: None,
-  };
-
-  let message = message.serialize();
-
-  let policy = StandardPolicy::new();
-
+  // create cert
   let (cert, _revocation) = CertBuilder::new()
     .add_userid("foo@bar")
     .add_signing_subkey()
     .generate()
     .unwrap();
 
+  // create policy
+  let policy = StandardPolicy::new();
+
+  // get signing key
   let signing_key = cert
     .keys()
     .unencrypted_secret()
@@ -231,37 +237,51 @@ fn pgp_v4_signatures_can_be_verified() {
     .next()
     .unwrap();
 
-  let mut keypair = signing_key.key().clone().into_keypair().unwrap();
+  // create signature packet
+  let signature_packet = {
+    let mut keypair = signing_key.key().clone().into_keypair().unwrap();
 
-  let signature_packet = SignatureBuilder::new(SignatureType::Binary)
-    .set_hash_algo(HashAlgorithm::SHA512)
-    .sign_message(&mut keypair, message.bytes())
-    .unwrap();
+    let signature_packet = SignatureBuilder::new(SignatureType::Binary)
+      .set_hash_algo(HashAlgorithm::SHA512)
+      .sign_message(&mut keypair, message.bytes())
+      .unwrap();
 
-  signature_packet
-    .clone()
-    .verify_message(signing_key.key(), message.bytes())
-    .unwrap();
+    signature_packet
+      .clone()
+      .verify_message(signing_key.key(), message.bytes())
+      .unwrap();
 
-  let mpi::Signature::EdDSA { r, s } = signature_packet.mpis() else {
-    panic!("expected EdDSA signature");
+    signature_packet
   };
 
-  let r_bytes = r.value_padded(32).unwrap();
-  let s_bytes = s.value_padded(32).unwrap();
+  // generate signature
+  let signature = {
+    let mpi::Signature::EdDSA { r, s } = signature_packet.mpis() else {
+      panic!("expected EdDSA signature");
+    };
 
-  let mut sig_bytes = [0u8; 64];
-  sig_bytes[..32].copy_from_slice(&r_bytes);
-  sig_bytes[32..].copy_from_slice(&s_bytes);
+    let r_bytes = r.value_padded(32).unwrap();
+    let s_bytes = s.value_padded(32).unwrap();
 
-  let mpi::PublicKey::EdDSA { q, .. } = signing_key.key().mpis() else {
-    panic!("expected EdDSA public key");
+    let mut sig_bytes = [0u8; 64];
+    sig_bytes[..32].copy_from_slice(&r_bytes);
+    sig_bytes[32..].copy_from_slice(&s_bytes);
+
+    ed25519_dalek::Signature::from_bytes(&sig_bytes)
   };
 
-  let (public_key_bytes, _) = q.decode_point(&Curve::Ed25519).unwrap();
+  // extract public key
+  let public_key = {
+    let mpi::PublicKey::EdDSA { q, .. } = signing_key.key().mpis() else {
+      panic!("expected EdDSA public key");
+    };
 
-  let public_key = PublicKey::from_bytes(public_key_bytes.try_into().unwrap());
+    let (public_key_bytes, _) = q.decode_point(&Curve::Ed25519).unwrap();
 
+    PublicKey::from_bytes(public_key_bytes.try_into().unwrap())
+  };
+
+  // check signature
   {
     let hashed_area = signature_packet.hashed_area().to_vec().unwrap();
     let hashed_area_len = hashed_area.len();
@@ -288,12 +308,11 @@ fn pgp_v4_signatures_can_be_verified() {
     hasher.update(trailer);
     let digest = hasher.finalize();
 
-    let verifying_key =
-      ed25519_dalek::VerifyingKey::from_bytes(public_key_bytes.try_into().unwrap()).unwrap();
-    let sig = ed25519_dalek::Signature::from_bytes(&sig_bytes);
-    verifying_key.verify_strict(&digest, &sig).unwrap();
+    let verifying_key = public_key.inner();
+    verifying_key.verify_strict(&digest, &signature).unwrap();
   }
 
+  // extract and verify public key
   {
     let packet::key::SecretKeyMaterial::Unencrypted(secret_key_material) =
       signing_key.key().optional_secret().unwrap()
@@ -310,12 +329,14 @@ fn pgp_v4_signatures_can_be_verified() {
     assert_eq!(private_key.public_key(), public_key);
   }
 
+  // create filepack signature
   let signature = Signature::new(
     SignatureScheme::Pgp {
       hashed_area: signature_packet.hashed_area().to_vec().unwrap(),
     },
-    ed25519_dalek::Signature::from_bytes(&sig_bytes),
+    signature,
   );
 
+  // verify signature
   signature.verify(&message, public_key).unwrap();
 }
