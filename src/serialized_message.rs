@@ -3,6 +3,10 @@ use sha2::{Digest, Sha512};
 pub struct SerializedMessage(pub(crate) Vec<u8>);
 
 impl SerializedMessage {
+  pub(crate) fn filepack_signed_data(&self) -> &[u8] {
+    &self.0
+  }
+
   pub(crate) fn ssh_signed_data(&self) -> Vec<u8> {
     let mut buffer = b"SSHSIG".to_vec();
 
@@ -17,11 +21,5 @@ impl SerializedMessage {
     field(&Sha512::digest(&self.0));
 
     buffer
-  }
-}
-
-impl AsRef<[u8]> for SerializedMessage {
-  fn as_ref(&self) -> &[u8] {
-    &self.0
   }
 }
