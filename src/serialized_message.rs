@@ -1,9 +1,9 @@
+use sha2::{Digest, Sha512};
+
 pub struct SerializedMessage(pub(crate) Vec<u8>);
 
 impl SerializedMessage {
   pub(crate) fn ssh_signed_data(&self) -> Vec<u8> {
-    use sha2::{Digest, Sha512};
-
     let hash = Sha512::digest(&self.0);
 
     let mut buf = b"SSHSIG".to_vec();
