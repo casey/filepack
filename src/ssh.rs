@@ -1,8 +1,11 @@
 use {super::*, std::process::Command};
 
 #[test]
-#[cfg(unix)]
 fn ssh_signatures_can_be_verified() {
+  if cfg!(windows) {
+    return;
+  }
+
   let manifest = Manifest {
     files: Directory::new(),
     notes: Vec::new(),
