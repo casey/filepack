@@ -601,6 +601,36 @@ error: 1 mismatched file
 }
 
 #[test]
+fn ssh_signature() {
+  #[allow(unused)]
+  const SSH_PRIVATE_KEY: &str =
+    "private1a4u5t9g3hlfk56d5kaw8drqgc478ljeqzae7lqc4y742pa6u6ur7srw5lct";
+
+  const SSH_PUBLIC_KEY: &str = "public1a5yf9ackwkywzmygc3q4mglp7qd32ruyj5fr0w3szp70jt4cl34cqwtjjhh";
+
+  const SSH_SIGNATURE: &str = concat!(
+    "signature1as2wzp8g6f9d6gt53dpt37zlz4qw2hwhn4q7yg99uz6lrua63mh",
+    "h7mnmka5cap6z37rglrst2thst909zlmerltgna7yhgf240dsqd6pgrvzhv0",
+  );
+
+  Test::new()
+    .write(
+      "filepack.json",
+      json! {
+        files: {},
+        notes: [{
+          signatures: {
+            "public1a5yf9ackwkywzmygc3q4mglp7qd32ruyj5fr0w3szp70jt4cl34cqwtjjhh": SSH_SIGNATURE
+          },
+        }],
+      },
+    )
+    .args(["verify", "--key", SSH_PUBLIC_KEY])
+    .stderr("successfully verified 0 files with 1 signature across 1 note\n")
+    .success();
+}
+
+#[test]
 fn verify_fingerprint() {
   Test::new()
     .touch("foo")
@@ -675,34 +705,5 @@ fn with_manifest_path() {
     )
     .args(["verify", "--manifest", "hello.json"])
     .stderr("successfully verified 1 file totaling 0 bytes\n")
-    .success();
-}
-
-#[test]
-fn ssh_signature() {
-  const SSH_PRIVATE_KEY: &str =
-    "private1a4u5t9g3hlfk56d5kaw8drqgc478ljeqzae7lqc4y742pa6u6ur7srw5lct";
-
-  const SSH_PUBLIC_KEY: &str = "public1a5yf9ackwkywzmygc3q4mglp7qd32ruyj5fr0w3szp70jt4cl34cqwtjjhh";
-
-  const SSH_SIGNATURE: &str = concat!(
-    "signature1as2wzp8g6f9d6gt53dpt37zlz4qw2hwhn4q7yg99uz6lrua63mh",
-    "h7mnmka5cap6z37rglrst2thst909zlmerltgna7yhgf240dsqd6pgrvzhv0",
-  );
-
-  Test::new()
-    .write(
-      "filepack.json",
-      json! {
-        files: {},
-        notes: [{
-          signatures: {
-            "public1a5yf9ackwkywzmygc3q4mglp7qd32ruyj5fr0w3szp70jt4cl34cqwtjjhh": SSH_SIGNATURE
-          },
-        }],
-      },
-    )
-    .args(["verify", "--key", SSH_PUBLIC_KEY])
-    .stderr("successfully verified 0 files with 1 signature across 1 note\n")
     .success();
 }
