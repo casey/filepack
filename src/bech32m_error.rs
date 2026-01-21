@@ -15,7 +15,10 @@ pub enum Bech32mError {
     expected: crate::Hrp,
     actual: crate::Hrp,
   },
-  #[snafu(display("expected bech32m {ty} to have {} but found {actual}", Count(*expected, "data byte")))]
+  #[snafu(display(
+    "expected bech32m {ty} to have {} but found {actual}",
+    Count(*expected, "data byte"),
+  ))]
   DataLength {
     expected: usize,
     actual: usize,
@@ -26,7 +29,10 @@ pub enum Bech32mError {
     ty: &'static str,
     source: PaddingError,
   },
-  #[snafu(display("expected bech32m {ty} to have {} but found {actual}", Count(*expected, "prefix character")))]
+  #[snafu(display(
+    "expected bech32m {ty} to have {} but found {actual}",
+    Count(*expected, "prefix character"),
+  ))]
   PrefixLength {
     expected: usize,
     actual: usize,
