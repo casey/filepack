@@ -7,7 +7,7 @@ impl SerializedMessage {
     &self.0
   }
 
-  pub(crate) fn pgp_signed_data(&self) -> Vec<u8> {
+  pub(crate) fn pgp_signed_data(&self, hashed_area: &[u8]) -> Vec<u8> {
     todo!()
   }
 

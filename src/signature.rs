@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Clone, Copy, DeserializeFromStr, PartialEq, SerializeDisplay)]
+#[derive(Clone, DeserializeFromStr, PartialEq, SerializeDisplay)]
 pub struct Signature {
   inner: ed25519_dalek::Signature,
   scheme: SignatureScheme,
@@ -14,9 +14,9 @@ impl Signature {
   }
 
   pub fn verify(&self, message: &SerializedMessage, public_key: PublicKey) -> Result {
-    let signed_data = match self.scheme {
+    let signed_data = match &self.scheme {
       SignatureScheme::Filepack => Cow::Borrowed(message.filepack_signed_data()),
-      SignatureScheme::Pgp => Cow::Owned(message.pgp_signed_data()),
+      SignatureScheme::Pgp { hashed_area } => Cow::Owned(message.pgp_signed_data(hashed_area)),
       SignatureScheme::Ssh => Cow::Owned(message.ssh_signed_data()),
     };
 
@@ -37,7 +37,7 @@ impl Bech32m<1, { Signature::LEN }> for Signature {
 impl Display for Signature {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     let payload = bech32m::Payload {
-      prefix: [self.scheme.into()],
+      prefix: [self.scheme.prefix()],
       data: self.inner.to_bytes(),
       suffix: Vec::new(),
     };
@@ -64,7 +64,7 @@ impl FromStr for Signature {
 
     Ok(Self {
       inner: ed25519_dalek::Signature::from_bytes(&data),
-      scheme: scheme.try_into()?,
+      scheme: SignatureScheme::new(scheme, suffix)?,
     })
   }
 }

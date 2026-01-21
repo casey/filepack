@@ -110,7 +110,9 @@ fn pgp_v4_signatures_can_be_verified() {
   let public_key = PublicKey::from_bytes(public_key_bytes.try_into().unwrap());
 
   let signature = Signature::new(
-    SignatureScheme::Pgp,
+    SignatureScheme::Pgp {
+      hashed_area: signature_packet.hashed_area().to_vec().unwrap(),
+    },
     ed25519_dalek::Signature::from_bytes(&sig_bytes),
   );
 
@@ -198,7 +200,9 @@ fn pgp_v6_signatures_can_be_verified() {
   let public_key = PublicKey::from_bytes(*a);
 
   let signature = Signature::new(
-    SignatureScheme::Pgp,
+    SignatureScheme::Pgp {
+      hashed_area: signature_packet.hashed_area().to_vec().unwrap(),
+    },
     ed25519_dalek::Signature::from_bytes(s.as_ref()),
   );
 

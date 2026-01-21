@@ -22,16 +22,16 @@ fn duplicate_note() {
   let mut manifest = Manifest::load(Some(&manifest_path)).unwrap();
 
   let mut iter = manifest.notes[0].signatures.iter();
-  let (&first_key, &first_sig) = iter.next().unwrap();
-  let (&second_key, &second_sig) = iter.next().unwrap();
+  let (first_key, first_sig) = iter.next().unwrap();
+  let (second_key, second_sig) = iter.next().unwrap();
 
   manifest.notes = vec![
     Note {
-      signatures: [(first_key, first_sig)].into(),
+      signatures: [(first_key.clone(), first_sig.clone())].into(),
       time: None,
     },
     Note {
-      signatures: [(second_key, second_sig)].into(),
+      signatures: [(second_key.clone(), second_sig.clone())].into(),
       time: None,
     },
   ];
