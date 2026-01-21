@@ -61,7 +61,7 @@ impl SignatureScheme {
         hasher.update(message.bytes());
 
         // header
-        hasher.update([4]); // version: v4
+        hasher.update([4]); // version: 4
         hasher.update([0]); // signature type: binary signature
         hasher.update([22]); // public key algorithm: EdDSA
         hasher.update([10]); // hash algorithm: SHA-512
@@ -71,7 +71,7 @@ impl SignatureScheme {
         hasher.update(hashed_area);
 
         // trailer
-        hasher.update([4]); // version: v4
+        hasher.update([4]); // version: 4
         hasher.update([0xff]); // marker byte
         hasher.update(u32::try_from(6 + hashed_area.len()).unwrap().to_be_bytes());
 
