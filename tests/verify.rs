@@ -464,11 +464,11 @@ fn pgp_signature() {
   const PGP_PUBLIC_KEY: &str = "public1axadguya9tqnfavpjq08st0sfzgvmxwjsqcfudgg55sh4ztjnsugsxmnnj0";
 
   const PGP_SIGNATURE: &str = concat!(
-    "signature1ap4f9anzsjk4gq0hh0a7uk5v7vvjpfz20hwp2y548twpn2ecxn5a",
-    "hdjd2gusuztpwxs63ajcqzl26k7s95tcatvpsz8r2pgtj0yxjav2rc9sf5hz",
-    "c22pygwudfszugaanvcgu2qqqqqqqqpuqpqwdskcazqdehhgct5d9hkuueww",
-    "djhzat0d9sj6ur8wqhx7un8rl2l6gcc3ccvenxhfpyacp57t5xfyp3dktmz0",
-    "68w8uspdfdwy89pvggyppyz88rs9es8fq65rx77udfszugaanvcclxt00",
+    "signature1ap4f9anzsjk4gq0hh0a7uk5v7vvjpfz20hwp2y548twpn2ecxn5",
+    "ahdjd2gusuztpwxs63ajcqzl26k7s95tcatvpsz8r2pgtj0yxjav2rc9sf5hz",
+    "c22pygwudfszugaanvcgu2qqqqqqqqpuqpqwdskcazqdehhgct5d9hkuuewwd",
+    "jhzat0d9sj6ur8wqhx7un8rl2l6gcc3ccvenxhfpyacp57t5xfyp3dktmz068",
+    "w8uspdfdwy89pvggyppyz88rs9es8fq65rx77udfszugaanvcclxt00",
   );
 
   Test::new()
