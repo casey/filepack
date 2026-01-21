@@ -646,7 +646,7 @@ fn weak_signature_public_key() {
         notes: [
           {
             signatures: {
-              "public1aqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqsqtuc8": ""
+              "public1aqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqsqtuc8": "",
             }
           }
         ]
