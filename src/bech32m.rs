@@ -32,16 +32,12 @@ pub(crate) trait Bech32m<const PREFIX: usize, const DATA: usize> {
 
     let mut prefix = [Fe32::Q; PREFIX];
 
-    {
-      let mut actual: usize = 0;
-      for fe32 in &mut prefix {
-        *fe32 = fe32s.next().context(bech32m_error::PrefixLength {
-          ty: Self::TYPE,
-          expected: PREFIX,
-          actual,
-        })?;
-        actual += 1;
-      }
+    for (actual, fe32) in prefix.iter_mut().enumerate() {
+      *fe32 = fe32s.next().context(bech32m_error::PrefixLength {
+        ty: Self::TYPE,
+        expected: PREFIX,
+        actual,
+      })?;
     }
 
     let mut data = [0; DATA];
@@ -239,27 +235,6 @@ mod tests {
   }
 
   #[test]
-  fn unsupported_version() {
-    let bytes = [0u8; 32];
-    let mut s = String::new();
-    for c in bytes
-      .iter()
-      .copied()
-      .bytes_to_fes()
-      .with_checksum::<bech32::Bech32m>(&PublicKey::HRP)
-      .with_witness_version(Fe32::P)
-      .chars()
-    {
-      s.write_char(c).unwrap();
-    }
-
-    assert_eq!(
-      PublicKey::decode_bech32m(&s).unwrap_err().to_string(),
-      "bech32m public key version `p` is not supported",
-    );
-  }
-
-  #[test]
   fn prefix_length() {
     struct PrefixedType;
 
@@ -282,6 +257,27 @@ mod tests {
         .unwrap_err()
         .to_string(),
       "expected bech32m test to have 2 prefix characters but found 0",
+    );
+  }
+
+  #[test]
+  fn unsupported_version() {
+    let bytes = [0u8; 32];
+    let mut s = String::new();
+    for c in bytes
+      .iter()
+      .copied()
+      .bytes_to_fes()
+      .with_checksum::<bech32::Bech32m>(&PublicKey::HRP)
+      .with_witness_version(Fe32::P)
+      .chars()
+    {
+      s.write_char(c).unwrap();
+    }
+
+    assert_eq!(
+      PublicKey::decode_bech32m(&s).unwrap_err().to_string(),
+      "bech32m public key version `p` is not supported",
     );
   }
 }

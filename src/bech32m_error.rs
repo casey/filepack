@@ -3,6 +3,15 @@ use super::*;
 #[derive(Debug, Snafu)]
 #[snafu(context(suffix(false)), visibility(pub(crate)))]
 pub enum Bech32mError {
+  #[snafu(display(
+    "expected bech32m {ty} to have {} but found {actual}",
+    Count(*expected, "data byte"),
+  ))]
+  DataLength {
+    expected: usize,
+    actual: usize,
+    ty: &'static str,
+  },
   #[snafu(display("failed to decode bech32m {ty}"))]
   Decode {
     ty: &'static str,
@@ -14,15 +23,6 @@ pub enum Bech32mError {
   Hrp {
     expected: crate::Hrp,
     actual: crate::Hrp,
-  },
-  #[snafu(display(
-    "expected bech32m {ty} to have {} but found {actual}",
-    Count(*expected, "data byte"),
-  ))]
-  DataLength {
-    expected: usize,
-    actual: usize,
-    ty: &'static str,
   },
   #[snafu(display("bech32m {ty} has invalid padding"))]
   Padding {

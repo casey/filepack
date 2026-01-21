@@ -72,21 +72,6 @@ mod tests {
   }
 
   #[test]
-  fn unsupported_scheme() {
-    let bech32m = iter::once(Fe32::Q)
-      .chain([0u8; Signature::LEN].iter().copied().bytes_to_fes())
-      .with_checksum::<bech32::Bech32m>(&Signature::HRP)
-      .with_witness_version(Fe32::A)
-      .chars()
-      .collect::<String>();
-
-    assert_eq!(
-      bech32m.parse::<Signature>().unwrap_err().to_string(),
-      "bech32m signature scheme `q` is not supported",
-    );
-  }
-
-  #[test]
   fn prefix_length() {
     let bech32m = []
       .iter()
@@ -100,6 +85,21 @@ mod tests {
     assert_eq!(
       bech32m.parse::<Signature>().unwrap_err().to_string(),
       "expected bech32m signature to have 1 prefix character but found 0",
+    );
+  }
+
+  #[test]
+  fn unsupported_scheme() {
+    let bech32m = iter::once(Fe32::Q)
+      .chain([0u8; Signature::LEN].iter().copied().bytes_to_fes())
+      .with_checksum::<bech32::Bech32m>(&Signature::HRP)
+      .with_witness_version(Fe32::A)
+      .chars()
+      .collect::<String>();
+
+    assert_eq!(
+      bech32m.parse::<Signature>().unwrap_err().to_string(),
+      "bech32m signature scheme `q` is not supported",
     );
   }
 }
