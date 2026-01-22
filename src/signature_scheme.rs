@@ -4,7 +4,7 @@ use {
 };
 
 #[derive(Clone, Debug, EnumDiscriminants, PartialEq)]
-#[strum_discriminants(name(SignatureSchemeType), vis(pub))]
+#[strum_discriminants(name(SignatureSchemeType), derive(EnumIter), vis(pub))]
 pub(crate) enum SignatureScheme {
   Filepack,
   Pgp { hashed_area: Vec<u8> },
@@ -157,16 +157,9 @@ mod tests {
 
   #[test]
   fn round_trip() {
-    #[track_caller]
-    fn case(scheme: SignatureSchemeType) {
-      let prefix = scheme.prefix();
-      assert_eq!(
-        SignatureSchemeType::new(prefix[0], prefix[1]).unwrap(),
-        scheme
-      );
+    for scheme in SignatureSchemeType::iter() {
+      let [scheme, version] = scheme.prefix();
+      assert_eq!(SignatureSchemeType::new(scheme, version).unwrap(), scheme);
     }
-    case(SignatureSchemeType::Filepack);
-    case(SignatureSchemeType::Pgp);
-    case(SignatureSchemeType::Ssh);
   }
 }
