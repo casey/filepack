@@ -107,6 +107,8 @@ mod tests {
       );
     }
 
+    case("foo", "failed to decode bech32m signature");
+
     case(
       "signature1aq0%dcnjdk",
       "signature scheme `q` is not supported",
@@ -124,7 +126,7 @@ mod tests {
   }
 
   #[test]
-  fn bech32m_round_trip() {
+  fn round_trip() {
     #[track_caller]
     fn case(bech32m: &str, expected: SignatureSchemeType) {
       let bech32m = bech32m.replace('%', &"q".repeat(103));
