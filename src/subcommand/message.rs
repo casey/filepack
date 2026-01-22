@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(Parser)]
 pub(crate) struct Message {
-  #[arg(help = "Write message to <PATH>", value_name = "PATH")]
+  #[arg(help = "Write message to <PATH>", long, value_name = "PATH")]
   output: Utf8PathBuf,
   #[arg(help = MANIFEST_PATH_HELP)]
   path: Option<Utf8PathBuf>,

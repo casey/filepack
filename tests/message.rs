@@ -5,7 +5,7 @@ fn creates_file() {
   let test = Test::new()
     .arg("create")
     .success()
-    .args(["message", "foo"])
+    .args(["message", "--output", "foo"])
     .success();
 
   let manifest = Manifest::load(Some(&test.path().join("filepack.json"))).unwrap();
@@ -23,7 +23,7 @@ fn with_time() {
   let test = Test::new()
     .arg("create")
     .success()
-    .args(["message", "--time", "foo"])
+    .args(["message", "--time", "--output", "foo"])
     .success();
 
   let manifest = Manifest::load(Some(&test.path().join("filepack.json"))).unwrap();
@@ -56,7 +56,7 @@ fn explicit_manifest_path() {
     .touch("foo/bar")
     .args(["create", "foo"])
     .success()
-    .args(["message", "output.bin", "foo"])
+    .args(["message", "--output", "output.bin", "foo"])
     .success();
 }
 
@@ -67,14 +67,14 @@ fn defaults_to_current_directory() {
     .arg("create")
     .success()
     .current_dir(".")
-    .args(["message", "output.bin"])
+    .args(["message", "--output", "output.bin"])
     .success();
 }
 
 #[test]
 fn manifest_not_found() {
   Test::new()
-    .args(["message", "output.bin"])
+    .args(["message", "--output", "output.bin"])
     .stderr_regex("error: manifest `.*filepack.json` not found\n")
     .failure();
 }
