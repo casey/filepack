@@ -1,14 +1,14 @@
-watch +args='ltest':
+watch +args='ltest --include-ignored':
   cargo watch --clear --exec '{{ args }}'
 
 clippy: (watch 'lclippy --tests --all --all-targets -- --deny warnings')
 
 check: (watch 'lcheck --tests --all --all-targets')
 
-test: (watch 'ltest --all --all-targets')
+test: (watch 'ltest --all --all-targets -- --include-ignored')
 
 ci: lint
-  cargo test --workspace
+  cargo test --workspace -- --include-ignored
 
 lint:
   cargo clippy --workspace --all-targets -- --deny warnings
