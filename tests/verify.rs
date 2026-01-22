@@ -461,14 +461,13 @@ fn non_unicode_path_error() {
 
 #[test]
 fn pgp_signature() {
-  const PGP_PUBLIC_KEY: &str = "public1axadguya9tqnfavpjq08st0sfzgvmxwjsqcfudgg55sh4ztjnsugsxmnnj0";
+  const PGP_PUBLIC_KEY: &str =
+    "public1acwq3xkd0mzpcp28tp6uwt5aspdcswvyy56fn3lulyqge070whresetrxl5";
 
   const PGP_SIGNATURE: &str = concat!(
-    "signature1ap4f9anzsjk4gq0hh0a7uk5v7vvjpfz20hwp2y548twpn2ecxn5",
-    "ahdjd2gusuztpwxs63ajcqzl26k7s95tcatvpsz8r2pgtj0yxjav2rc9sf5hz",
-    "c22pygwudfszugaanvcgu2qqqqqqqqpuqpqwdskcazqdehhgct5d9hkuuewwd",
-    "jhzat0d9sj6ur8wqhx7un8rl2l6gcc3ccvenxhfpyacp57t5xfyp3dktmz068",
-    "w8uspdfdwy89pvggyppyz88rs9es8fq65rx77udfszugaanvcclxt00",
+    "signature1ap4pecu8prhgfs5ee7lm6nhc3lw7xhf4nv8lj0thh6u5fh5e06quh",
+    "cze8km3sq2f5p6pfprmpkv4cmxgh5qy5etg49fff95psy0vundmjpqkyyz8h5",
+    "z7hg574d2wxftgqy8zmf0aydlqnxys2qnfwxc72p9dp0l",
   );
 
   Test::new()
@@ -631,11 +630,12 @@ error: 1 mismatched file
 
 #[test]
 fn ssh_signature() {
-  const SSH_PUBLIC_KEY: &str = "public1avp5pgjsqf6uzcrd34x4hgdndfaf5w5h786wh3tjs9vyup3n74h2shpdku2";
+  const SSH_PUBLIC_KEY: &str =
+    "public1ahqxwdactcarld802yzplrfm0vx5kngnwth2prqhxty9kxhzst6vqg57sw8";
 
   const SSH_SIGNATURE: &str = concat!(
-    "signature1as0qpsm76yvvg4wjn4l7vqemk5vpc5khpp5ceqrp693x2ndrvrn",
-    "vsga58suzl239sjh4t5uhprwpyfmypy4cmp0upe055cvzxg226e7gzq3e7nwt",
+    "signature1as0pyhmvp2z3agzqzpqdemkq6g5tejdaqrgd3pu4sa66le9jylk",
+    "em3aln6lsn8ma088kmsc6d8c6j9ytsyh88xvzkmm4uh0x7xcgz72gyrc5psl89",
   );
 
   Test::new()
