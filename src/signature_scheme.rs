@@ -3,76 +3,101 @@ use {
   sha2::{Digest, Sha512},
 };
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, EnumDiscriminants, PartialEq)]
+#[strum_discriminants(name(SignatureSchemeType), vis(pub))]
 pub(crate) enum SignatureScheme {
   Filepack,
   Pgp { hashed_area: Vec<u8> },
   Ssh,
 }
 
+impl SignatureSchemeType {
+  fn new(scheme: Fe32, version: Fe32) -> Result<Self, SignatureError> {
+    let scheme = match scheme {
+      Fe32::F => Self::Filepack,
+      Fe32::P => Self::Pgp,
+      Fe32::S => Self::Ssh,
+      _ => return Err(signature_error::UnsupportedScheme { scheme }.build()),
+    };
+
+    ensure! {
+      version == scheme.version(),
+      signature_error::UnsupportedVersion {
+        scheme,
+        actual: version,
+      },
+    }
+
+    Ok(scheme)
+  }
+
+  fn prefix(self) -> [Fe32; 2] {
+    let scheme = match self {
+      Self::Filepack => Fe32::F,
+      Self::Pgp => Fe32::P,
+      Self::Ssh => Fe32::S,
+    };
+
+    [scheme, self.version()]
+  }
+
+  pub(crate) fn version(self) -> Fe32 {
+    match self {
+      Self::Filepack => Fe32::_0,
+      Self::Pgp => Fe32::_4,
+      Self::Ssh => Fe32::_0,
+    }
+  }
+}
+
+impl Display for SignatureSchemeType {
+  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    match self {
+      Self::Filepack => write!(f, "filepack"),
+      Self::Pgp => write!(f, "PGP"),
+      Self::Ssh => write!(f, "SSH"),
+    }
+  }
+}
+
 impl SignatureScheme {
   pub(crate) fn new(scheme: Fe32, version: Fe32, suffix: Vec<u8>) -> Result<Self, SignatureError> {
+    let scheme = SignatureSchemeType::new(scheme, version)?;
+
     match scheme {
-      Fe32::F => {
-        ensure!(
-          version == Fe32::_0,
-          signature_error::UnsupportedVersion {
-            scheme: "filepack",
-            actual: version,
-            expected: Fe32::_0,
-          },
-        );
-        ensure!(
-          suffix.is_empty(),
-          signature_error::UnexpectedSuffix { scheme: "filepack" },
-        );
-        Ok(SignatureScheme::Filepack)
-      }
-      Fe32::P => {
-        ensure!(
-          version == Fe32::_4,
-          signature_error::UnsupportedVersion {
-            scheme: "pgp",
-            actual: version,
-            expected: Fe32::_4,
-          },
-        );
+      SignatureSchemeType::Filepack | SignatureSchemeType::Ssh => ensure!(
+        suffix.is_empty(),
+        signature_error::UnexpectedSuffix { scheme },
+      ),
+      SignatureSchemeType::Pgp => {
         u16::try_from(suffix.len())
           .ok()
           .context(signature_error::SuffixLength {
             length: suffix.len(),
             maximum: usize::from(u16::MAX),
-            scheme: "pgp",
+            scheme,
           })?;
-        Ok(SignatureScheme::Pgp {
-          hashed_area: suffix,
-        })
       }
-      Fe32::S => {
-        ensure!(
-          version == Fe32::_0,
-          signature_error::UnsupportedVersion {
-            scheme: "ssh",
-            actual: version,
-            expected: Fe32::_0,
-          },
-        );
-        ensure!(
-          suffix.is_empty(),
-          signature_error::UnexpectedSuffix { scheme: "ssh" },
-        );
-        Ok(SignatureScheme::Ssh)
-      }
-      _ => Err(signature_error::UnsupportedScheme { scheme }.build()),
+    }
+
+    match scheme {
+      SignatureSchemeType::Filepack => Ok(SignatureScheme::Filepack),
+      SignatureSchemeType::Pgp => Ok(SignatureScheme::Pgp {
+        hashed_area: suffix,
+      }),
+      SignatureSchemeType::Ssh => Ok(SignatureScheme::Ssh),
     }
   }
 
   pub(crate) fn prefix_and_suffix(&self) -> ([Fe32; 2], &[u8]) {
-    match self {
-      SignatureScheme::Filepack => ([Fe32::F, Fe32::_0], &[]),
-      SignatureScheme::Pgp { hashed_area } => ([Fe32::P, Fe32::_4], hashed_area),
-      SignatureScheme::Ssh => ([Fe32::S, Fe32::_0], &[]),
-    }
+    let prefix = self.discriminant().prefix();
+
+    let suffix = match self {
+      SignatureScheme::Filepack | SignatureScheme::Ssh => &[],
+      SignatureScheme::Pgp { hashed_area } => hashed_area.as_slice(),
+    };
+
+    (prefix, suffix)
   }
 
   pub(crate) fn signed_data<'a>(&self, message: &'a SerializedMessage) -> Cow<'a, [u8]> {
