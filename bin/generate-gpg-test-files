@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+TEMPDIR=$(mktemp -d)
+trap "rm -rf $TEMPDIR" EXIT
+
+GNUPGHOME="$TEMPDIR/gnupg"
+mkdir -p "$GNUPGHOME"
+chmod 700 "$GNUPGHOME"
+
+cargo build --release
+
+MANIFESTDIR="$TEMPDIR/manifest"
+mkdir -p "$MANIFESTDIR"
+./target/release/filepack create "$MANIFESTDIR"
+
+./target/release/filepack message --output "$TEMPDIR/message" "$MANIFESTDIR"
+
+gpg --homedir "$GNUPGHOME" --batch --passphrase "" \
+    --quick-gen-key "foo@bar" ed25519 sign
+
+gpg --homedir "$GNUPGHOME" --batch --passphrase "" \
+    --detach-sign -o "$TEMPDIR/message.sig" "$TEMPDIR/message"
+
+gpg --homedir "$GNUPGHOME" --export "foo@bar" > "$TEMPDIR/public-key.gpg"
+gpg --homedir "$GNUPGHOME" --batch --passphrase "" \
+    --export-secret-keys "foo@bar" > "$TEMPDIR/secret-key.gpg"
+
+mkdir -p static/gpg-test
+cp "$TEMPDIR/message" static/gpg-test/
+cp "$TEMPDIR/message.sig" static/gpg-test/
+cp "$TEMPDIR/public-key.gpg" static/gpg-test/
+cp "$TEMPDIR/secret-key.gpg" static/gpg-test/
+
+echo "Generated files in static/gpg-test/"
