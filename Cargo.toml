@@ -50,6 +50,9 @@ version = "2.1.0"
 default-features = false
 features = ["allow-experimental-crypto", "allow-variable-time-crypto", "crypto-rust"]
 
+[lib]
+doctest = false
+
 [lints.clippy]
 all = { level = "deny", priority = -1 }
 arbitrary-source-item-ordering = "deny"
