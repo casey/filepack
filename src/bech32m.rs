@@ -154,7 +154,11 @@ mod tests {
 
   #[test]
   fn implementations() {
-    fn case<const PREFIX: usize, const DATA: usize, T: Bech32m<PREFIX, DATA>>(hrp: &str, ty: &str) {
+    fn case<const PREFIX: usize, const DATA: usize, T>(hrp: &str, ty: &str, s: &str)
+    where
+      T: Bech32m<PREFIX, DATA> + FromStr,
+      <T as FromStr>::Err: fmt::Debug,
+    {
       use bech32::Checksum;
 
       let max = (bech32::Bech32m::CODE_LENGTH
@@ -171,12 +175,18 @@ mod tests {
       assert_eq!(T::HRP.as_str(), hrp);
 
       assert_eq!(T::TYPE, ty);
+
+      s.parse::<T>().unwrap();
     }
 
-    case::<0, { Fingerprint::LEN }, Fingerprint>("package", "package fingerprint");
-    case::<0, { PrivateKey::LEN }, PrivateKey>("private", "private key");
-    case::<0, { PublicKey::LEN }, PublicKey>("public", "public key");
-    case::<2, { Signature::LEN }, Signature>("signature", "signature");
+    case::<0, { Fingerprint::LEN }, Fingerprint>(
+      "package",
+      "package fingerprint",
+      test::FINGERPRINT,
+    );
+    case::<0, { PrivateKey::LEN }, PrivateKey>("private", "private key", test::PRIVATE_KEY);
+    case::<0, { PublicKey::LEN }, PublicKey>("public", "public key", test::PUBLIC_KEY);
+    case::<2, { Signature::LEN }, Signature>("signature", "signature", test::SIGNATURE);
   }
 
   #[test]
@@ -272,6 +282,30 @@ mod tests {
         .unwrap_err()
         .to_string(),
       "expected bech32m test to have 2 prefix characters but found 0",
+    );
+  }
+
+  #[test]
+  fn round_trip() {
+    fn case<T>(s: &str)
+    where
+      T: FromStr + ToString,
+      <T as FromStr>::Err: fmt::Debug,
+    {
+      assert_eq!(s.parse::<T>().unwrap().to_string(), s);
+    }
+
+    case::<Fingerprint>(test::FINGERPRINT);
+    case::<PublicKey>(test::PUBLIC_KEY);
+    case::<Signature>(test::SIGNATURE);
+
+    assert_eq!(
+      test::PRIVATE_KEY
+        .parse::<PrivateKey>()
+        .unwrap()
+        .display_secret()
+        .to_string(),
+      test::PRIVATE_KEY,
     );
   }
 
