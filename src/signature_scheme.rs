@@ -178,6 +178,13 @@ mod tests {
   use super::*;
 
   #[test]
+  fn hash_algorithm_numeric_value() {
+    assert_eq!(u8::from(SignatureScheme::Filepack.hash_algorithm()), 0);
+    assert_eq!(u8::from(SignatureScheme::Pgp.hash_algorithm()), 1);
+    assert_eq!(u8::from(SignatureScheme::Ssh.hash_algorithm()), 1);
+  }
+
+  #[test]
   fn round_trip() {
     for scheme in SignatureSchemeType::iter() {
       assert_eq!(SignatureSchemeType::new(scheme.prefix()).unwrap(), scheme);
