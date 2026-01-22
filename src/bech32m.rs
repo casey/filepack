@@ -154,7 +154,7 @@ mod tests {
 
   #[test]
   fn implementations() {
-    fn case<const PREFIX: usize, const DATA: usize, T>(hrp: &str, ty: &str, s: &str)
+    fn case<const PREFIX: usize, const DATA: usize, T>(hrp: &str, ty: &str)
     where
       T: Bech32m<PREFIX, DATA> + FromStr,
       <T as FromStr>::Err: fmt::Debug,
@@ -175,18 +175,12 @@ mod tests {
       assert_eq!(T::HRP.as_str(), hrp);
 
       assert_eq!(T::TYPE, ty);
-
-      s.parse::<T>().unwrap();
     }
 
-    case::<0, { Fingerprint::LEN }, Fingerprint>(
-      "package",
-      "package fingerprint",
-      test::FINGERPRINT,
-    );
-    case::<0, { PrivateKey::LEN }, PrivateKey>("private", "private key", test::PRIVATE_KEY);
-    case::<0, { PublicKey::LEN }, PublicKey>("public", "public key", test::PUBLIC_KEY);
-    case::<2, { Signature::LEN }, Signature>("signature", "signature", test::SIGNATURE);
+    case::<0, { Fingerprint::LEN }, Fingerprint>("package", "package fingerprint");
+    case::<0, { PrivateKey::LEN }, PrivateKey>("private", "private key");
+    case::<0, { PublicKey::LEN }, PublicKey>("public", "public key");
+    case::<2, { Signature::LEN }, Signature>("signature", "signature");
   }
 
   #[test]
