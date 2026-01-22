@@ -6,7 +6,59 @@ Open Questions
 
 - *Should filepack use a derived key when signing messages?* I would like to,
   since deriving a key with an explicit context seems like good practice, but
-  `ed25519_dalek` doesn't support it.
+  ed25519-dalek doesn't support it.
+
+- *Should filepack signatures include an additional byte specifying the hashing
+  algorithm?* Currently, three filepack signature types are supported,
+  filepack, PGP, and SSH. All use Ed25519 as the signature scheme. The filepack
+  signature scheme signs an unhashed message, so no other hashing algorithms
+  are in use. SSH on the other hand signs a message including a hash of the
+  message, and PGP signs a hash of an outer message that includes the inner
+  message. Currently, we only allow SHA-512 as the hash algorithm in SSH and
+  PGP signatures. This is both because it is the default algorithm that
+  `ssh-keygen` and `gpg` use when creating Ed25519 signatures, and because
+  Ed25519 uses SHA-512 internally, so using any other hashing algorithm
+  introduces a new dependency. So, and here we finally get to the question,
+  should we add a byte to the `signature1a…` bech32 representation of
+  signatures which represents the hashing algorithm? This would allow us to
+  extend the existing signature encoding scheme to support multiple hashing
+  algorithms, although we would only do that if absolutely necessary, since
+  SHA-512 is a perfectly good default, and the only reason to add additional
+  algorithms would be something like supporting existing signing devices which
+  do not support SHA-512.
+
+- *Should filepack attempt to support PGP v5 (LibraPGP) or PGP v6 signatures?*
+  In the case of v5, no additional data is needed, we would only be generating
+  different message bytes. In the case of v6, we need an additional 32-byte
+  salt. Because the bech32m PGP signature string is already `signature1ap4…`,
+  it would be easy to add v5 and v6 variants.
+
+- *Should filepack attempt to support other signature schemes, like signify and
+  minisign?* Any existing signature scheme which uses Ed25519 and SHA-512 and
+  signs a superset of the message signed by the core filepack scheme could be
+  supported and treated interchangeably. I think it's really only a question of
+  demand.
+
+- *Should filepack bech32m signature strings include the public key?* This
+  would allow them to be self-describing and potentially easier to handle. If
+  we did this, the map of public keys to signatures in the notes struct would
+  be changed to an array of signatures.
+
+- *Is filepack's use of bech32m appropriate?* We currently use bech32m to
+  encode fingerprints, public keys, private keys, and signatures. Fingerprints,
+  public keys, and private keys are all 32 bytes, so they fit bech32m's design.
+  Signatures, however, are at least 64 bytes, and in the case of PGP signatures
+  can contain up to 2**16 bytes of data. I think that this only means that
+  bech32m's error detection guarantees break down, and it remains about as
+  likely to detect errors as a checksum. This is fine, since a broken signature
+  will be detectable by failing to verify, but I want to make sure my
+  understanding is correct.
+
+- *Will signatures made with existing PGP and SSH keys pass strict
+  verification?* We use ed25519-dalek's strict verification of signatures. This
+  prevents certain kind of signature malleability issues, however it was not
+  part of the original RFC, and I wonder if there are any users with existing
+  PGP and SSH keys which fail strict verification.
 
 Closed Questions
 ----------------
@@ -64,7 +116,7 @@ Closed Questions
 - *Should the signature algorithm use BLAKE3 instead of the EdDSA default of
   SHA-512?* This would allow us to avoid double-hashing and remove a dependency
   on SHA-512, but would make our signatures nonstandard, which is crazy.
-  **Conclusion: using non-standard ed25519 signatures for such limited benefit
+  **Conclusion: using non-standard Ed25519 signatures for such limited benefit
   is indeed crazy.**
 
 - *Should fingerprint hashes be calculated over CBOR, instead of TLV fields?*
