@@ -79,19 +79,16 @@ mod tests {
 
     case("foo", "failed to decode bech32m signature");
 
-    case(
-      "signature1aq0%dcnjdk",
-      "signature scheme `q` is not supported",
-    );
+    case("signature1aq0%dcnjdk", "signature scheme `q` not supported");
 
     case(
       "signature1afp%fcu5ju",
-      "signature scheme `filepack` version `p` is not supported, expected `0`",
+      "signature scheme `filepack` version `p` not supported, expected version `0`",
     );
 
     case(
       "signature1af0%qqqqqqqqk7md3j",
-      "found unexpected suffix for signature scheme `filepack`",
+      "found unexpected 5 byte suffix with signature scheme `filepack`",
     );
   }
 

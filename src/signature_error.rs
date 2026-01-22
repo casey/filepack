@@ -11,12 +11,15 @@ pub enum SignatureError {
     maximum: usize,
     scheme: SignatureSchemeType,
   },
-  #[snafu(display("found unexpected suffix for signature scheme `{scheme}`"))]
-  UnexpectedSuffix { scheme: SignatureSchemeType },
-  #[snafu(display("signature scheme `{scheme}` is not supported"))]
+  #[snafu(display("found unexpected {suffix} byte suffix with signature scheme `{scheme}`"))]
+  UnexpectedSuffix {
+    suffix: usize,
+    scheme: SignatureSchemeType,
+  },
+  #[snafu(display("signature scheme `{scheme}` not supported"))]
   UnsupportedScheme { scheme: Fe32 },
   #[snafu(display(
-    "signature scheme `{scheme}` version `{actual}` is not supported, expected `{}`",
+    "signature scheme `{scheme}` version `{actual}` not supported, expected version `{}`",
     scheme.version(),
   ))]
   UnsupportedVersion {

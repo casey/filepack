@@ -66,7 +66,10 @@ impl SignatureScheme {
     match scheme {
       SignatureSchemeType::Filepack | SignatureSchemeType::Ssh => ensure!(
         suffix.is_empty(),
-        signature_error::UnexpectedSuffix { scheme },
+        signature_error::UnexpectedSuffix {
+          scheme,
+          suffix: suffix.len(),
+        },
       ),
       SignatureSchemeType::Pgp => {
         u16::try_from(suffix.len())
