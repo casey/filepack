@@ -79,7 +79,7 @@ pub(crate) trait Bech32m<const PREFIX: usize, const BODY: usize> {
         body
           .iter()
           .copied()
-          .chain(suffix.into_bytes().iter().copied())
+          .chain(suffix.as_bytes().iter().copied())
           .bytes_to_fes(),
       )
       .with_checksum::<bech32::Bech32m>(&Self::HRP)

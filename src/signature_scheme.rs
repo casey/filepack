@@ -101,7 +101,7 @@ impl SignatureScheme {
 
     let suffix = match self {
       SignatureScheme::Filepack | SignatureScheme::Ssh => &EMPTY,
-      SignatureScheme::Pgp { hashed_area } => &hashed_area,
+      SignatureScheme::Pgp { hashed_area } => hashed_area,
     };
 
     Bech32mPayload {
