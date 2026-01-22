@@ -4,16 +4,26 @@ Filepack Design
 Open Questions
 --------------
 
-- *Should filepack re-use an existing signature system, like SSH or PGP?* I
-  looked into both, but the formats and algorithms are incredibly complex, and
-  allow a huge number of unnecessary degrees of freedom.
-
 - *Should filepack use a derived key when signing messages?* I would like to,
   since deriving a key with an explicit context seems like good practice, but
   `ed25519_dalek` doesn't support it.
 
 Closed Questions
 ----------------
+
+- *Should filepack re-use an existing signature system, like SSH or PGP?* I
+  looked into both, but the formats and algorithms are incredibly complex, and
+  allow a huge number of unnecessary degrees of freedom. **Conclusion: I added
+  support for multiple signature schemes, filepack, GPG v4, and SSH. Filepack
+  is the simple scheme which filepack uses when signing messages using keys it
+  manages. The GPG and SSH schemes are compatible with GPG and SSH, but
+  restricted to Ed25519 as the signature scheme, and SHA-512 as the hash
+  algorithm. This allows signatures to be created using GPG or SSH, using
+  existing keys, key management, and signers, and imported into filepack. All
+  signature schemes sign the same message, wrapped in the case of GPG and SSH,
+  and the resulting message and public key are always Ed25519 keys, and aside
+  from the difference in message bytes, all signature schemes are verified in
+  the same way.**
 
 - *Should Bech32m be used for fingerprints, public keys, private keys, and
   signatures?* This would make them distinct and easy to identify, and give
