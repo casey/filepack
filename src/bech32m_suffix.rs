@@ -3,12 +3,16 @@ use super::*;
 type Bytes<'a> = FesToBytes<AsciiToFe32Iter<'a>>;
 
 pub(crate) trait Bech32mSuffix: Sized {
+  type Borrow<'a>;
+
   fn from_bytes(ty: &'static str, bytes: Bytes) -> Result<Self, Bech32mError>;
 
   fn into_bytes(self) -> Vec<u8>;
 }
 
 impl Bech32mSuffix for () {
+  type Borrow<'a> = &'a [u8];
+
   fn from_bytes(ty: &'static str, bytes: Bytes) -> Result<Self, Bech32mError> {
     let actual = bytes.count();
 
@@ -30,6 +34,8 @@ impl Bech32mSuffix for () {
 }
 
 impl Bech32mSuffix for Vec<u8> {
+  type Borrow<'a> = &'a [u8];
+
   fn from_bytes(_ty: &'static str, bytes: Bytes) -> Result<Self, Bech32mError> {
     Ok(bytes.collect())
   }

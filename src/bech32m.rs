@@ -65,7 +65,7 @@ pub(crate) trait Bech32m<const PREFIX: usize, const BODY: usize> {
 
   fn encode_bech32m(
     f: &mut Formatter,
-    payload: Bech32mPayload<PREFIX, BODY, Self::Suffix>,
+    payload: Bech32mPayload<PREFIX, BODY, &[u8]>,
   ) -> fmt::Result {
     let Bech32mPayload {
       body,
@@ -79,7 +79,7 @@ pub(crate) trait Bech32m<const PREFIX: usize, const BODY: usize> {
         body
           .iter()
           .copied()
-          .chain(suffix.into_bytes())
+          .chain(suffix.into_iter().copied())
           .bytes_to_fes(),
       )
       .with_checksum::<bech32::Bech32m>(&Self::HRP)

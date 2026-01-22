@@ -94,7 +94,7 @@ impl SignatureScheme {
   pub(crate) fn payload(
     &self,
     signature: ed25519_dalek::Signature,
-  ) -> Bech32mPayload<2, 64, Vec<u8>> {
+  ) -> Bech32mPayload<2, 64, &[u8]> {
     let prefix = self.discriminant().prefix();
 
     let suffix = match self {
@@ -105,7 +105,7 @@ impl SignatureScheme {
     Bech32mPayload {
       body: signature.to_bytes(),
       prefix,
-      suffix: suffix.into(),
+      suffix,
     }
   }
 
