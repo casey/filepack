@@ -64,6 +64,35 @@ mod tests {
   use super::*;
 
   #[test]
+  fn error_display() {
+    #[track_caller]
+    fn case(bech32m: &str, expected: &str) {
+      assert_eq!(
+        bech32m
+          .replace('%', &"q".repeat(103))
+          .parse::<Signature>()
+          .unwrap_err()
+          .to_string(),
+        expected
+      );
+    }
+
+    case("foo", "failed to decode bech32m signature");
+
+    case("signature1aq0%dcnjdk", "signature scheme `q` not supported");
+
+    case(
+      "signature1afp%fcu5ju",
+      "signature version `p` not supported with filepack signatures, expected version `0`",
+    );
+
+    case(
+      "signature1af0%qqqqqqqqk7md3j",
+      "found unexpected 5 byte suffix on filepack signature",
+    );
+  }
+
+  #[test]
   fn parse() {
     let message = Message {
       fingerprint: test::FINGERPRINT.parse().unwrap(),
@@ -94,18 +123,16 @@ mod tests {
   }
 
   #[test]
-  fn unsupported_scheme() {
-    let bech32m = iter::once(Fe32::Q)
-      .chain(iter::once(Fe32::_0))
-      .chain([0u8; Signature::LEN].iter().copied().bytes_to_fes())
-      .with_checksum::<bech32::Bech32m>(&Signature::HRP)
-      .with_witness_version(Fe32::A)
-      .chars()
-      .collect::<String>();
-
-    assert_eq!(
-      bech32m.parse::<Signature>().unwrap_err().to_string(),
-      "signature scheme `q` is not supported",
-    );
+  fn round_trip() {
+    #[track_caller]
+    fn case(bech32m: &str, expected: SignatureSchemeType) {
+      let bech32m = bech32m.replace('%', &"q".repeat(103));
+      let signature = bech32m.parse::<Signature>().unwrap();
+      assert_eq!(signature.scheme.discriminant(), expected);
+      assert_eq!(signature.to_string(), bech32m);
+    }
+    case("signature1af0%ldnl7s", SignatureSchemeType::Filepack);
+    case("signature1ap4%qqypqxpqk2fwrl", SignatureSchemeType::Pgp);
+    case("signature1as0%yxnqs4", SignatureSchemeType::Ssh);
   }
 }

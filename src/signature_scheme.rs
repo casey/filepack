@@ -4,7 +4,7 @@ use {
 };
 
 #[derive(Clone, Debug, EnumDiscriminants, PartialEq)]
-#[strum_discriminants(name(SignatureSchemeType), vis(pub))]
+#[strum_discriminants(name(SignatureSchemeType), derive(EnumIter), vis(pub))]
 pub(crate) enum SignatureScheme {
   Filepack,
   Pgp { hashed_area: Vec<u8> },
@@ -66,7 +66,10 @@ impl SignatureScheme {
     match scheme {
       SignatureSchemeType::Filepack | SignatureSchemeType::Ssh => ensure!(
         suffix.is_empty(),
-        signature_error::UnexpectedSuffix { scheme },
+        signature_error::UnexpectedSuffix {
+          scheme,
+          suffix: suffix.len(),
+        },
       ),
       SignatureSchemeType::Pgp => {
         u16::try_from(suffix.len())
@@ -147,6 +150,22 @@ impl SignatureScheme {
 
         buffer.into()
       }
+    }
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn round_trip() {
+    for scheme in SignatureSchemeType::iter() {
+      let prefix = scheme.prefix();
+      assert_eq!(
+        SignatureSchemeType::new(prefix[0], prefix[1]).unwrap(),
+        scheme,
+      );
     }
   }
 }
