@@ -34,8 +34,7 @@ impl PublicKey {
 }
 
 impl Bech32m<0, { PublicKey::LEN }> for PublicKey {
-  const HRP: Hrp = Hrp::parse_unchecked("public");
-  const TYPE: &'static str = "public key";
+  const TYPE: Bech32mType = Bech32mType::PublicKey;
   type Suffix = ();
 }
 

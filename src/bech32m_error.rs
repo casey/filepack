@@ -10,23 +10,21 @@ pub enum Bech32mError {
   BodyLength {
     expected: usize,
     actual: usize,
-    ty: &'static str,
+    ty: Bech32mType,
   },
   #[snafu(display("failed to decode bech32m {ty}"))]
   Decode {
-    ty: &'static str,
+    ty: Bech32mType,
     source: CheckedHrpstringError,
   },
   #[snafu(display(
-    "expected bech32m human-readable part `{expected}1...` but found `{actual}1...`",
+    "expected bech32m human-readable part `{}1...` but found `{actual}1...`",
+    ty.hrp(),
   ))]
-  Hrp {
-    expected: crate::Hrp,
-    actual: crate::Hrp,
-  },
+  Hrp { ty: Bech32mType, actual: crate::Hrp },
   #[snafu(display("bech32m {ty} has invalid padding"))]
   Padding {
-    ty: &'static str,
+    ty: Bech32mType,
     source: PaddingError,
   },
   #[snafu(display(
@@ -36,7 +34,7 @@ pub enum Bech32mError {
   PrefixLength {
     expected: usize,
     actual: usize,
-    ty: &'static str,
+    ty: Bech32mType,
   },
   #[snafu(display(
     "expected bech32m {ty} to have {} but found {actual}",
@@ -45,13 +43,13 @@ pub enum Bech32mError {
   SuffixLength {
     expected: usize,
     actual: usize,
-    ty: &'static str,
+    ty: Bech32mType,
   },
   #[snafu(display("bech32m {ty} version `{version}` is not supported"))]
   UnsupportedVersion {
-    ty: &'static str,
+    ty: Bech32mType,
     version: bech32::Fe32,
   },
   #[snafu(display("bech32m {ty} missing version character"))]
-  VersionMissing { ty: &'static str },
+  VersionMissing { ty: Bech32mType },
 }

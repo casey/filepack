@@ -23,6 +23,7 @@ use {
     bech32m_error::Bech32mError,
     bech32m_payload::Bech32mPayload,
     bech32m_suffix::Bech32mSuffix,
+    bech32m_type::Bech32mType,
     component::Component,
     component_error::ComponentError,
     count::Count,
@@ -142,6 +143,7 @@ mod bech32m;
 mod bech32m_error;
 mod bech32m_payload;
 mod bech32m_suffix;
+mod bech32m_type;
 mod component;
 mod component_error;
 mod count;

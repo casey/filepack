@@ -5,7 +5,7 @@ type Bytes<'a> = FesToBytes<AsciiToFe32Iter<'a>>;
 pub(crate) trait Bech32mSuffix: Sized {
   fn as_bytes(&self) -> &[u8];
 
-  fn from_bytes(ty: &'static str, bytes: Bytes) -> Result<Self, Bech32mError>;
+  fn from_bytes(ty: Bech32mType, bytes: Bytes) -> Result<Self, Bech32mError>;
 }
 
 impl Bech32mSuffix for () {
@@ -13,7 +13,7 @@ impl Bech32mSuffix for () {
     &[]
   }
 
-  fn from_bytes(ty: &'static str, bytes: Bytes) -> Result<Self, Bech32mError> {
+  fn from_bytes(ty: Bech32mType, bytes: Bytes) -> Result<Self, Bech32mError> {
     let actual = bytes.count();
 
     ensure! {
@@ -34,7 +34,7 @@ impl Bech32mSuffix for Vec<u8> {
     self
   }
 
-  fn from_bytes(_ty: &'static str, bytes: Bytes) -> Result<Self, Bech32mError> {
+  fn from_bytes(_ty: Bech32mType, bytes: Bytes) -> Result<Self, Bech32mError> {
     Ok(bytes.collect())
   }
 }

@@ -25,8 +25,7 @@ impl Signature {
 }
 
 impl Bech32m<2, { Signature::LEN }> for Signature {
-  const HRP: Hrp = Hrp::parse_unchecked("signature");
-  const TYPE: &'static str = "signature";
+  const TYPE: Bech32mType = Bech32mType::Signature;
   type Suffix = Vec<u8>;
 }
 
@@ -111,7 +110,7 @@ mod tests {
       .iter()
       .copied()
       .bytes_to_fes()
-      .with_checksum::<bech32::Bech32m>(&Signature::HRP)
+      .with_checksum::<bech32::Bech32m>(Signature::TYPE.hrp())
       .with_witness_version(Fe32::A)
       .chars()
       .collect::<String>();
