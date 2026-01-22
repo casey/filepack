@@ -48,12 +48,12 @@ impl FromStr for Signature {
   fn from_str(signature: &str) -> Result<Self, Self::Err> {
     let Bech32mPayload {
       prefix: [scheme, version],
-      data,
+      body,
       suffix,
     } = Self::decode_bech32m(signature)?;
 
     Ok(Self {
-      inner: ed25519_dalek::Signature::from_bytes(&data),
+      inner: ed25519_dalek::Signature::from_bytes(&body),
       scheme: SignatureScheme::new(scheme, version, suffix)?,
     })
   }

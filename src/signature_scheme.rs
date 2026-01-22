@@ -103,8 +103,8 @@ impl SignatureScheme {
     };
 
     Bech32mPayload {
+      body: signature.to_bytes(),
       prefix,
-      data: signature.to_bytes(),
       suffix: suffix.into(),
     }
   }

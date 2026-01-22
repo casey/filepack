@@ -2,13 +2,13 @@ use super::*;
 
 const VERSION: Fe32 = Fe32::A;
 
-pub(crate) trait Bech32m<const PREFIX: usize, const DATA: usize> {
+pub(crate) trait Bech32m<const PREFIX: usize, const BODY: usize> {
   const HRP: Hrp;
   const TYPE: &'static str;
 
   type Suffix: Bech32mSuffix;
 
-  fn decode_bech32m(s: &str) -> Result<Bech32mPayload<PREFIX, DATA, Self::Suffix>, Bech32mError> {
+  fn decode_bech32m(s: &str) -> Result<Bech32mPayload<PREFIX, BODY, Self::Suffix>, Bech32mError> {
     let hrp_string = CheckedHrpstring::new::<bech32::Bech32m>(s)
       .context(bech32m_error::Decode { ty: Self::TYPE })?;
 
@@ -40,14 +40,14 @@ pub(crate) trait Bech32m<const PREFIX: usize, const DATA: usize> {
       })?;
     }
 
-    let mut data = [0; DATA];
+    let mut body = [0; BODY];
 
     let mut bytes = fe32s.fes_to_bytes();
 
-    for (actual, byte) in data.iter_mut().enumerate() {
-      *byte = bytes.next().context(bech32m_error::DataLength {
+    for (actual, byte) in body.iter_mut().enumerate() {
+      *byte = bytes.next().context(bech32m_error::BodyLength {
         actual,
-        expected: DATA,
+        expected: BODY,
         ty: Self::TYPE,
       })?;
     }
@@ -57,7 +57,7 @@ pub(crate) trait Bech32m<const PREFIX: usize, const DATA: usize> {
     Self::validate_padding(&hrp_string).context(bech32m_error::Padding { ty: Self::TYPE })?;
 
     Ok(Bech32mPayload {
-      data,
+      body,
       prefix,
       suffix,
     })
@@ -65,10 +65,10 @@ pub(crate) trait Bech32m<const PREFIX: usize, const DATA: usize> {
 
   fn encode_bech32m(
     f: &mut Formatter,
-    payload: Bech32mPayload<PREFIX, DATA, Self::Suffix>,
+    payload: Bech32mPayload<PREFIX, BODY, Self::Suffix>,
   ) -> fmt::Result {
     let Bech32mPayload {
-      data,
+      body,
       prefix,
       suffix,
     } = payload;
@@ -76,7 +76,7 @@ pub(crate) trait Bech32m<const PREFIX: usize, const DATA: usize> {
     let chars = prefix
       .into_iter()
       .chain(
-        data
+        body
           .iter()
           .copied()
           .chain(suffix.into_bytes())
@@ -134,7 +134,7 @@ mod tests {
 
   impl Display for EmptyPublicKey {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-      Self::encode_bech32m(f, Bech32mPayload::from_data([]))
+      Self::encode_bech32m(f, Bech32mPayload::from_body([]))
     }
   }
 
@@ -148,13 +148,13 @@ mod tests {
 
   impl Display for LongPublicKey {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-      Self::encode_bech32m(f, Bech32mPayload::from_data([0; 33]))
+      Self::encode_bech32m(f, Bech32mPayload::from_body([0; 33]))
     }
   }
 
   #[test]
   fn implementations() {
-    fn case<const PREFIX: usize, const DATA: usize, T: Bech32m<PREFIX, DATA>>(hrp: &str, ty: &str) {
+    fn case<const PREFIX: usize, const BODY: usize, T: Bech32m<PREFIX, BODY>>(hrp: &str, ty: &str) {
       use bech32::Checksum;
 
       let max = (bech32::Bech32m::CODE_LENGTH
@@ -166,7 +166,7 @@ mod tests {
         * 5
         / 8;
 
-      assert!(DATA <= max);
+      assert!(BODY <= max);
 
       assert_eq!(T::HRP.as_str(), hrp);
 
@@ -198,7 +198,7 @@ mod tests {
 
     case(
       &EmptyPublicKey.to_string(),
-      "expected bech32m public key to have 32 data bytes but found 0",
+      "expected bech32m public key to have 32 body bytes but found 0",
     );
 
     case(
