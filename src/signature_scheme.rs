@@ -150,3 +150,60 @@ impl SignatureScheme {
     }
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn error_display() {
+    assert_eq!(
+      SignatureSchemeType::new(Fe32::Q, Fe32::_0).unwrap_err().to_string(),
+      "signature scheme `q` is not supported",
+    );
+
+    assert_eq!(
+      SignatureSchemeType::new(Fe32::F, Fe32::P).unwrap_err().to_string(),
+      "signature scheme `filepack` version `p` is not supported, expected `0`",
+    );
+
+    assert_eq!(
+      SignatureScheme::new(Fe32::F, Fe32::_0, vec![0]).unwrap_err().to_string(),
+      "found unexpected suffix for signature scheme `filepack`",
+    );
+
+    assert_eq!(
+      SignatureScheme::new(Fe32::P, Fe32::_4, vec![0; 65536]).unwrap_err().to_string(),
+      "signature scheme `PGP` suffix length 65536 exceeds maximum 65535",
+    );
+  }
+
+  #[test]
+  fn signature_scheme_type_round_trip() {
+    #[track_caller]
+    fn case(scheme: SignatureSchemeType) {
+      let prefix = scheme.prefix();
+      assert_eq!(SignatureSchemeType::new(prefix[0], prefix[1]).unwrap(), scheme);
+    }
+
+    case(SignatureSchemeType::Filepack);
+    case(SignatureSchemeType::Pgp);
+    case(SignatureSchemeType::Ssh);
+  }
+
+  #[test]
+  fn signature_bech32m_round_trip() {
+    #[track_caller]
+    fn case(scheme: SignatureScheme) {
+      let signature = Signature::new(
+        scheme,
+        ed25519_dalek::Signature::from_bytes(&[0u8; 64]),
+      );
+      assert_eq!(signature.to_string().parse::<Signature>().unwrap(), signature);
+    }
+
+    case(SignatureScheme::Filepack);
+    case(SignatureScheme::Pgp { hashed_area: vec![0, 1, 2] });
+    case(SignatureScheme::Ssh);
+  }
+}

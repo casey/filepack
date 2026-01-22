@@ -94,18 +94,46 @@ mod tests {
   }
 
   #[test]
-  fn unsupported_scheme() {
-    let bech32m = iter::once(Fe32::Q)
-      .chain(iter::once(Fe32::_0))
-      .chain([0u8; Signature::LEN].iter().copied().bytes_to_fes())
-      .with_checksum::<bech32::Bech32m>(&Signature::HRP)
-      .with_witness_version(Fe32::A)
-      .chars()
-      .collect::<String>();
+  fn error_display() {
+    #[track_caller]
+    fn case(bech32m: &str, expected: &str) {
+      assert_eq!(
+        bech32m
+          .replace('%', &"q".repeat(103))
+          .parse::<Signature>()
+          .unwrap_err()
+          .to_string(),
+        expected
+      );
+    }
 
-    assert_eq!(
-      bech32m.parse::<Signature>().unwrap_err().to_string(),
+    case(
+      "signature1aq0%dcnjdk",
       "signature scheme `q` is not supported",
     );
+
+    case(
+      "signature1afp%fcu5ju",
+      "signature scheme `filepack` version `p` is not supported, expected `0`",
+    );
+
+    case(
+      "signature1af0%qqqqqqqqk7md3j",
+      "found unexpected suffix for signature scheme `filepack`",
+    );
+  }
+
+  #[test]
+  fn bech32m_round_trip() {
+    #[track_caller]
+    fn case(bech32m: &str, expected: SignatureSchemeType) {
+      let bech32m = bech32m.replace('%', &"q".repeat(103));
+      let signature = bech32m.parse::<Signature>().unwrap();
+      assert_eq!(signature.scheme.discriminant(), expected);
+      assert_eq!(signature.to_string(), bech32m);
+    }
+    case("signature1af0%ldnl7s", SignatureSchemeType::Filepack);
+    case("signature1ap4%qqypqxpqk2fwrl", SignatureSchemeType::Pgp);
+    case("signature1as0%yxnqs4", SignatureSchemeType::Ssh);
   }
 }
