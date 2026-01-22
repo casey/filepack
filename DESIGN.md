@@ -27,6 +27,12 @@ Open Questions
   algorithms, would be something like supporting existing signing devices which
   do not support SHA-512.
 
+- *Should filepack attempt to support PGP v5 (LibraPGP) or PGP v6 signatures?*
+  In the case of v5, no additional data is needed, we would only be generating
+  different message bytes. In the case of v6, we need an additional 32-byte
+  salt. Because the bech32m PGP signature string is already `signature1ap4…`,
+  it would be easy to add v5 and v6 variants.
+
 Closed Questions
 ----------------
 
