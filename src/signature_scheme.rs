@@ -179,9 +179,9 @@ mod tests {
 
   #[test]
   fn hash_algorithm_numeric_value() {
-    assert_eq!(u8::from(SignatureScheme::Filepack.hash_algorithm()), 0);
-    assert_eq!(u8::from(SignatureScheme::Pgp.hash_algorithm()), 1);
-    assert_eq!(u8::from(SignatureScheme::Ssh.hash_algorithm()), 1);
+    assert_eq!(u8::from(SignatureSchemeType::Filepack.hash_algorithm()), 0);
+    assert_eq!(u8::from(SignatureSchemeType::Pgp.hash_algorithm()), 1);
+    assert_eq!(u8::from(SignatureSchemeType::Ssh.hash_algorithm()), 1);
   }
 
   #[test]
