@@ -1,61 +1,16 @@
-use {super::*, std::process::Command};
+use super::*;
 
 #[test]
 fn ssh_signatures_can_be_verified() {
-  if cfg!(windows) {
-    return;
-  }
+  let message_bytes = include_bytes!("../static/ssh-test/message");
+  let signature_str = include_str!("../static/ssh-test/message.sig");
+  let public_key_str = include_str!("../static/ssh-test/id_ed25519.pub");
+  let private_key_str = include_str!("../static/ssh-test/id_ed25519");
 
-  // create tempdir
-  let tempdir = tempdir();
-  let path = decode_path(tempdir.path()).unwrap();
+  let message = SerializedMessage(message_bytes.to_vec());
 
-  // generate keypair
-  let key_path = path.join("id_ed25519");
-  {
-    let output = Command::new("ssh-keygen")
-      .args(["-t", "ed25519"])
-      .args(["-f", key_path.as_str()])
-      .args(["-N", ""])
-      .arg("-q")
-      .output()
-      .unwrap();
-
-    assert!(output.status.success());
-  }
-
-  // create and sign message
-  let message_path = path.join("message");
-  let message = {
-    let manifest = Manifest {
-      files: Directory::new(),
-      notes: Vec::new(),
-    };
-
-    let message = Message {
-      fingerprint: manifest.fingerprint(),
-      time: None,
-    }
-    .serialize();
-
-    filesystem::write(&message_path, message.as_bytes()).unwrap();
-
-    let output = Command::new("ssh-keygen")
-      .args(["-Y", "sign"])
-      .args(["-f", key_path.as_str()])
-      .args(["-n", "filepack", message_path.as_str()])
-      .output()
-      .unwrap();
-
-    assert!(output.status.success());
-
-    message
-  };
-
-  // extract public key
   let public_key = {
-    let public_key = filesystem::read_to_string(key_path.with_extension("pub"))
-      .unwrap()
+    let public_key = public_key_str
       .trim()
       .parse::<ssh_key::PublicKey>()
       .unwrap();
@@ -67,10 +22,8 @@ fn ssh_signatures_can_be_verified() {
     PublicKey::from_bytes(public_key.0)
   };
 
-  // extract and verify private key
   let private_key = {
-    let pem = filesystem::read_to_string(&key_path).unwrap();
-    let private_key = ssh_key::PrivateKey::from_openssh(&pem).unwrap();
+    let private_key = ssh_key::PrivateKey::from_openssh(private_key_str).unwrap();
 
     let ssh_key::private::KeypairData::Ed25519(keypair) = private_key.key_data() else {
       panic!("expected ed25519");
@@ -85,10 +38,8 @@ fn ssh_signatures_can_be_verified() {
     private_key
   };
 
-  // extract signature
   let signature = {
-    let signature = filesystem::read_to_string(path.join("message.sig"))
-      .unwrap()
+    let signature = signature_str
       .parse::<ssh_key::SshSig>()
       .unwrap();
     Signature::new(
@@ -97,7 +48,6 @@ fn ssh_signatures_can_be_verified() {
     )
   };
 
-  // verify signature
   signature.verify(&message, public_key).unwrap();
 
   eprintln!("SSH_PRIVATE_KEY: {}", private_key.display_secret());
