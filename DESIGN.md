@@ -6,7 +6,7 @@ Open Questions
 
 - *Should filepack use a derived key when signing messages?* I would like to,
   since deriving a key with an explicit context seems like good practice, but
-  `ed25519_dalek` doesn't support it.
+  ed25519-dalek doesn't support it.
 
 - *Should filepack signatures include an additional byte specifying the hashing
   algorithm?* Currently, three filepack signature types are supported,
@@ -38,6 +38,27 @@ Open Questions
   signs a superset of the message signed by the core filepack scheme could be
   supported and treated interchangeably. I think it's really only a question of
   demand.
+
+- *Should filepack bech32m signature strings include the public key?* This
+  would allow them to be self-describing and potentially easier to handle. If
+  we did this, the map of public keys to signatures in the notes struct would
+  be changed to an array of signatures.
+
+- *Is filepack's use of bech32m appropriate?* We currently use bech32m to
+  encode fingerprints, public keys, private keys, and signatures. Fingerprints,
+  public keys, and private keys are all 32 bytes, so they fit bech32m's design.
+  Signatures, however, are at least 64 bytes, and in the case of PGP signatures
+  can contain up to 2**16 bytes of data. I think that this only means that
+  bech32m's error detection guarantees break down, and it remains about as
+  likely to detect errors as a checksum. This is fine, since a broken signature
+  will be detectable by failing to verify, but I want to make sure my
+  understanding is correct.
+
+- *Will signatures made with existing PGP and SSH keys pass strict
+  verification?* We use ed25519-dalek's strict verification of signatures. This
+  prevents certain kind of signature malleability issues, however it was not
+  part of the original RFC, and I wonder if there are any users with existing
+  PGP and SSH keys which fail strict verification.
 
 Closed Questions
 ----------------
