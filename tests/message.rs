@@ -52,23 +52,39 @@ fn with_time() {
 
 #[test]
 fn explicit_manifest_path() {
-  Test::new()
-    .touch("foo/bar")
-    .args(["create", "foo"])
+  let test = Test::new()
+    .create_dir("bar")
+    .args(["create", "bar"])
     .success()
-    .args(["message", "--output", "output.bin", "foo"])
+    .args(["message", "--output", "foo", "bar"])
     .success();
+
+  let manifest = Manifest::load(Some(&test.path().join("bar/filepack.json"))).unwrap();
+
+  let message = Message {
+    fingerprint: manifest.fingerprint(),
+    time: None,
+  };
+
+  assert_eq!(test.read_bytes("foo"), message.serialize().as_bytes());
 }
 
 #[test]
 fn defaults_to_current_directory() {
-  Test::new()
-    .touch("foo")
+  let test = Test::new()
     .arg("create")
     .success()
-    .current_dir(".")
-    .args(["message", "--output", "output.bin"])
+    .args(["message", "--output", "bar"])
     .success();
+
+  let manifest = Manifest::load(Some(&test.path().join("filepack.json"))).unwrap();
+
+  let message = Message {
+    fingerprint: manifest.fingerprint(),
+    time: None,
+  };
+
+  assert_eq!(test.read_bytes("bar"), message.serialize().as_bytes());
 }
 
 #[test]
