@@ -154,11 +154,7 @@ mod tests {
 
   #[test]
   fn implementations() {
-    fn case<const PREFIX: usize, const DATA: usize, T>(hrp: &str, ty: &str)
-    where
-      T: Bech32m<PREFIX, DATA> + FromStr,
-      <T as FromStr>::Err: fmt::Debug,
-    {
+    fn case<const PREFIX: usize, const DATA: usize, T: Bech32m<PREFIX, DATA>>(hrp: &str, ty: &str) {
       use bech32::Checksum;
 
       let max = (bech32::Bech32m::CODE_LENGTH
