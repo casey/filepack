@@ -16,6 +16,15 @@ pub enum SignatureError {
     suffix: usize,
     scheme: SignatureSchemeType,
   },
+  #[snafu(display(
+    "signature hash algorithm `{actual}` not supported with {scheme} signatures, \
+    expected hash algorithm `{}`",
+    scheme.hash_algorithm(),
+  ))]
+  UnsupportedHashAlgorithm {
+    actual: Fe32,
+    scheme: SignatureSchemeType,
+  },
   #[snafu(display("signature scheme `{scheme}` not supported"))]
   UnsupportedScheme { scheme: Fe32 },
   #[snafu(display(

@@ -24,7 +24,7 @@ impl Signature {
   }
 }
 
-impl Bech32m<2, { Signature::LEN }> for Signature {
+impl Bech32m<3, { Signature::LEN }> for Signature {
   const TYPE: Bech32mType = Bech32mType::Signature;
   type Suffix = Vec<u8>;
 }
@@ -46,14 +46,14 @@ impl FromStr for Signature {
 
   fn from_str(signature: &str) -> Result<Self, Self::Err> {
     let Bech32mPayload {
-      prefix: [scheme, version],
+      prefix,
       body,
       suffix,
     } = Self::decode_bech32m(signature)?;
 
     Ok(Self {
       inner: ed25519_dalek::Signature::from_bytes(&body),
-      scheme: SignatureScheme::new(scheme, version, suffix)?,
+      scheme: SignatureScheme::new(prefix, suffix)?,
     })
   }
 }

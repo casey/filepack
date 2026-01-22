@@ -173,7 +173,7 @@ mod tests {
     case::<0, { Fingerprint::LEN }, Fingerprint>("package", "package fingerprint");
     case::<0, { PrivateKey::LEN }, PrivateKey>("private", "private key");
     case::<0, { PublicKey::LEN }, PublicKey>("public", "public key");
-    case::<2, { Signature::LEN }, Signature>("signature", "signature");
+    case::<3, { Signature::LEN }, Signature>("signature", "signature");
   }
 
   #[test]
