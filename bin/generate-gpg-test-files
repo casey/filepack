@@ -2,35 +2,57 @@
 
 set -euo pipefail
 
-TEMPDIR=$(mktemp -d)
-trap "rm -rf $TEMPDIR" EXIT
+tmp=tmp/gpg-test
 
-GNUPGHOME="$TEMPDIR/gnupg"
-mkdir -p "$GNUPGHOME"
-chmod 700 "$GNUPGHOME"
+rm -rf $tmp
+mkdir -p $tmp
 
-cargo build --release
+gpg=$tmp/gnupg
 
-MANIFESTDIR="$TEMPDIR/manifest"
-mkdir -p "$MANIFESTDIR"
-./target/release/filepack create "$MANIFESTDIR"
+mkdir -p $gpg
+chmod 700 $gpg
 
-./target/release/filepack message --output "$TEMPDIR/message" "$MANIFESTDIR"
+package=$tmp/package
 
-gpg --homedir "$GNUPGHOME" --batch --passphrase "" \
-    --quick-gen-key "foo@bar" ed25519 sign
+mkdir -p $package
 
-gpg --homedir "$GNUPGHOME" --batch --passphrase "" \
-    --detach-sign -o "$TEMPDIR/message.sig" "$TEMPDIR/message"
+cargo run --release create $package
 
-gpg --homedir "$GNUPGHOME" --export "foo@bar" > "$TEMPDIR/public-key.gpg"
-gpg --homedir "$GNUPGHOME" --batch --passphrase "" \
-    --export-secret-keys "foo@bar" > "$TEMPDIR/secret-key.gpg"
+cargo run --release message --output $tmp/message $package
 
-mkdir -p static/gpg-test
-cp "$TEMPDIR/message" static/gpg-test/
-cp "$TEMPDIR/message.sig" static/gpg-test/
-cp "$TEMPDIR/public-key.gpg" static/gpg-test/
-cp "$TEMPDIR/secret-key.gpg" static/gpg-test/
+gpg \
+  --homedir $gpg \
+  --batch \
+  --passphrase "" \
+  --quick-gen-key "foo@bar" ed25519 sign
 
-echo "Generated files in static/gpg-test/"
+gpg \
+  --homedir $gpg \
+  --batch \
+  --passphrase "" \
+  --detach-sign \
+  -o $tmp/message.sig \
+  $tmp/message
+
+gpg \
+  --homedir $gpg \
+  --export foo@bar \
+  > $tmp/public-key.gpg
+
+gpg \
+  --homedir $gpg \
+  --batch \
+  --passphrase "" \
+  --export-secret-keys foo@bar \
+  > $tmp/secret-key.gpg
+
+static=static/gpg-test
+rm -rf $static
+mkdir -p $static
+
+cp \
+  $tmp/message \
+  $tmp/message.sig \
+  $tmp/public-key.gpg \
+  $tmp/secret-key.gpg \
+  $static
