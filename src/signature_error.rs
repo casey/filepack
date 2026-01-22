@@ -19,7 +19,7 @@ pub enum SignatureError {
   #[snafu(display("signature scheme `{scheme}` not supported"))]
   UnsupportedScheme { scheme: Fe32 },
   #[snafu(display(
-    "signature scheme `{scheme}` version `{actual}` not supported, expected version `{}`",
+    "signature version `{actual}` not supported with {scheme} signatures, expected version `{}`",
     scheme.version(),
   ))]
   UnsupportedVersion {

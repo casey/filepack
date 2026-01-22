@@ -83,7 +83,7 @@ mod tests {
 
     case(
       "signature1afp%fcu5ju",
-      "signature scheme `filepack` version `p` not supported, expected version `0`",
+      "signature version `p` not supported with filepack signatures, expected version `0`",
     );
 
     case(
