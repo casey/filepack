@@ -43,9 +43,8 @@ impl SignatureSchemeType {
 
   pub(crate) fn version(self) -> Fe32 {
     match self {
-      Self::Filepack => Fe32::_0,
+      Self::Filepack | Self::Ssh => Fe32::_0,
       Self::Pgp => Fe32::_4,
-      Self::Ssh => Fe32::_0,
     }
   }
 }
