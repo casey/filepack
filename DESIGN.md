@@ -8,6 +8,25 @@ Open Questions
   since deriving a key with an explicit context seems like good practice, but
   `ed25519_dalek` doesn't support it.
 
+- *Should filepack signatures include an additional byte specifying the hashing
+  algorithm?* Currently, three filepack signature types are supported,
+  filepack, PGP, and SSH. All use Ed25519 as the signature scheme. The filepack
+  signature scheme signs an unhashed message, so no other hashing algorithms
+  are in use. SSH and PGP, on the other hand, sign either a message including a
+  hash of the message, or hash of an outer message that includes the inner
+  message. Currently, we only allow SHA-512 as the hash algorithm in SSH and
+  PGP signatures. This is both because it is the default algorithm that
+  `ssh-keygen` and `gpg` use when creating Ed25519 signatures, and because
+  Ed25519 uses SHA-512 internally, so using any other hashing algorithm
+  introduces a new dependency. So, and here we finally get to the question,
+  should we add a byte to the `signature1a…` bech32 representation of
+  signatures which represents the hashing algorithm? This would allow us to
+  extend the existing siganture encoding scheme to support multiple hashing
+  algorithms, although we would only do that if absolutely necessary, since
+  SHA-512 is a perfectly good default, and the only reason to add additional
+  algorithms, would be something like supporting existing signing devices which
+  do not support SHA-512.
+
 Closed Questions
 ----------------
 
