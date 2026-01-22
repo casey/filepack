@@ -12,7 +12,7 @@ Open Questions
   algorithm?* Currently, three filepack signature types are supported,
   filepack, PGP, and SSH. All use Ed25519 as the signature scheme. The filepack
   signature scheme signs an unhashed message, so no other hashing algorithms
-  are in use. SSH on the other hand, signs a message including a hash of the
+  are in use. SSH on the other hand signs a message including a hash of the
   message, and PGP signs a hash of an outer message that includes the inner
   message. Currently, we only allow SHA-512 as the hash algorithm in SSH and
   PGP signatures. This is both because it is the default algorithm that
