@@ -49,7 +49,7 @@ impl FromStr for PublicKey {
   type Err = PublicKeyError;
 
   fn from_str(key: &str) -> Result<Self, Self::Err> {
-    let data = Self::decode_bech32m(key)?.into_data();
+    let data = Self::decode_bech32m(key)?.into_body();
 
     let inner = ed25519_dalek::VerifyingKey::from_bytes(&data)
       .map_err(DalekSignatureError)
@@ -66,7 +66,7 @@ impl FromStr for PublicKey {
 
 impl Display for PublicKey {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    Self::encode_bech32m(f, Bech32mPayload::from_data(*self.0.as_bytes()))
+    Self::encode_bech32m(f, Bech32mPayload::from_body(*self.0.as_bytes()))
   }
 }
 
