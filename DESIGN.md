@@ -21,7 +21,7 @@ Open Questions
   introduces a new dependency. So, and here we finally get to the question,
   should we add a byte to the `signature1a…` bech32 representation of
   signatures which represents the hashing algorithm? This would allow us to
-  extend the existing siganture encoding scheme to support multiple hashing
+  extend the existing signature encoding scheme to support multiple hashing
   algorithms, although we would only do that if absolutely necessary, since
   SHA-512 is a perfectly good default, and the only reason to add additional
   algorithms would be something like supporting existing signing devices which
@@ -36,7 +36,7 @@ Open Questions
 - *Should filepack attempt to support other signature schemes, like signify and
   minisign?* Any existing signature scheme which uses Ed25519 and SHA-512 and
   signs a superset of the message signed by the core filepack scheme could be
-  supported and treated interchangably. I think it's really only a question of
+  supported and treated interchangeably. I think it's really only a question of
   demand.
 
 Closed Questions
@@ -95,7 +95,7 @@ Closed Questions
 - *Should the signature algorithm use BLAKE3 instead of the EdDSA default of
   SHA-512?* This would allow us to avoid double-hashing and remove a dependency
   on SHA-512, but would make our signatures nonstandard, which is crazy.
-  **Conclusion: using non-standard ed25519 signatures for such limited benefit
+  **Conclusion: using non-standard Ed25519 signatures for such limited benefit
   is indeed crazy.**
 
 - *Should fingerprint hashes be calculated over CBOR, instead of TLV fields?*
