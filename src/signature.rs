@@ -88,7 +88,7 @@ mod tests {
 
     case(
       "signature1af0%qqqqqqqqk7md3j",
-      "found unexpected 5 byte suffix with signature scheme `filepack`",
+      "found unexpected 5 byte suffix on filepack signature",
     );
   }
 

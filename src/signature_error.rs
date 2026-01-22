@@ -5,13 +5,13 @@ use super::*;
 pub enum SignatureError {
   #[snafu(transparent)]
   Bech32m { source: Bech32mError },
-  #[snafu(display("signature scheme `{scheme}` suffix length {length} exceeds maximum {maximum}",))]
+  #[snafu(display("{scheme} signature suffix length {length} exceeds maximum {maximum}",))]
   SuffixLength {
     length: usize,
     maximum: usize,
     scheme: SignatureSchemeType,
   },
-  #[snafu(display("found unexpected {suffix} byte suffix with signature scheme `{scheme}`"))]
+  #[snafu(display("found unexpected {suffix} byte suffix on {scheme} signature"))]
   UnexpectedSuffix {
     suffix: usize,
     scheme: SignatureSchemeType,
