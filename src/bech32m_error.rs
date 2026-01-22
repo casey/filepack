@@ -5,9 +5,9 @@ use super::*;
 pub enum Bech32mError {
   #[snafu(display(
     "expected bech32m {ty} to have {} but found {actual}",
-    Count(*expected, "data byte"),
+    Count(*expected, "body byte"),
   ))]
-  DataLength {
+  BodyLength {
     expected: usize,
     actual: usize,
     ty: &'static str,

@@ -45,7 +45,7 @@ pub(crate) trait Bech32m<const PREFIX: usize, const BODY: usize> {
     let mut bytes = fe32s.fes_to_bytes();
 
     for (actual, byte) in body.iter_mut().enumerate() {
-      *byte = bytes.next().context(bech32m_error::DataLength {
+      *byte = bytes.next().context(bech32m_error::BodyLength {
         actual,
         expected: BODY,
         ty: Self::TYPE,
@@ -198,7 +198,7 @@ mod tests {
 
     case(
       &EmptyPublicKey.to_string(),
-      "expected bech32m public key to have 32 data bytes but found 0",
+      "expected bech32m public key to have 32 body bytes but found 0",
     );
 
     case(
