@@ -33,6 +33,12 @@ Open Questions
   salt. Because the bech32m PGP signature string is already `signature1ap4…`,
   it would be easy to add v5 and v6 variants.
 
+- *Should filepack attempt to support other signature schemes, like signify and
+  minisign?* Any existing signature scheme which uses Ed25519 and SHA-512 and
+  signs a superset of the message signed by the core filepack scheme could be
+  supported and treated interchangably. I think it's really only a question of
+  demand.
+
 Closed Questions
 ----------------
 
