@@ -70,6 +70,15 @@ impl Manifest {
     Ok((path, manifest))
   }
 
+  pub(crate) fn message(&self, include_time: bool) -> Result<Message> {
+    let fingerprint = self.verify_notes()?;
+
+    Ok(Message {
+      fingerprint,
+      time: include_time.then(now).transpose()?,
+    })
+  }
+
   pub fn save(&self, path: &Utf8Path) -> Result {
     filesystem::write(
       path,
@@ -83,19 +92,14 @@ impl Manifest {
     keychain: &Keychain,
     key: &KeyName,
   ) -> Result {
-    let fingerprint = self.verify_notes()?;
-
-    let message = Message {
-      fingerprint,
-      time: options.time.then(now).transpose()?,
-    };
+    let message = self.message(options.time)?;
 
     let serialized = message.serialize();
 
     let (key, signature) = keychain.sign(key, &serialized)?;
 
     for note in &mut self.notes {
-      if note.message(fingerprint) == message {
+      if note.message(message.fingerprint) == message {
         ensure! {
           note.signatures.insert(key, signature).is_none() || options.overwrite,
           error::SignatureAlreadyExists { key },

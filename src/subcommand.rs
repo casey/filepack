@@ -18,6 +18,7 @@ mod keygen;
 mod languages;
 mod lints;
 mod man;
+mod message;
 mod sign;
 mod size;
 mod verify;
@@ -62,6 +63,8 @@ pub(crate) enum Subcommand {
   Languages(languages::Languages),
   #[command(about = "List lint groups")]
   Lints,
+  #[command(about = "Export message for external signers")]
+  Message(message::Message),
   #[command(about = "Print man page")]
   Man,
   #[command(about = "Sign manifest")]
@@ -86,6 +89,7 @@ impl Subcommand {
       Self::Languages(languages) => languages.run(),
       Self::Keygen(keygen) => keygen.run(options),
       Self::Lints => lints::run(),
+      Self::Message(message) => message.run(),
       Self::Man => man::run(),
       Self::Sign(sign) => sign.run(options),
       Self::Size(size) => size.run(),
