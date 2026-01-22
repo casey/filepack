@@ -113,12 +113,12 @@ impl SignatureScheme {
 
   pub(crate) fn signed_data<'a>(&self, message: &'a SerializedMessage) -> Cow<'a, [u8]> {
     match self {
-      Self::Filepack => message.bytes().into(),
+      Self::Filepack => message.as_bytes().into(),
       Self::Pgp { hashed_area } => {
         let mut hasher = Sha512::new();
 
         // message
-        hasher.update(message.bytes());
+        hasher.update(message.as_bytes());
 
         // header
         hasher.update([4]); // version: 4
@@ -148,7 +148,7 @@ impl SignatureScheme {
         field(b"filepack"); // namespace
         field(b""); // reserved
         field(b"sha512"); // hash algorithm
-        field(&Sha512::digest(message.bytes()));
+        field(&Sha512::digest(message.as_bytes()));
 
         buffer.into()
       }

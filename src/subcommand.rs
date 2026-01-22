@@ -18,6 +18,7 @@ mod keygen;
 mod languages;
 mod lints;
 mod man;
+mod message;
 mod sign;
 mod size;
 mod verify;
@@ -64,6 +65,8 @@ pub(crate) enum Subcommand {
   Lints,
   #[command(about = "Print man page")]
   Man,
+  #[command(about = "Export unsigned message")]
+  Message(message::Message),
   #[command(about = "Sign manifest")]
   Sign(sign::Sign),
   #[command(about = "Print manifest total file size")]
@@ -83,10 +86,11 @@ impl Subcommand {
       Self::Hash(hash) => hash.run(options),
       Self::Info => info::run(options),
       Self::Key(key) => key.run(options),
-      Self::Languages(languages) => languages.run(),
       Self::Keygen(keygen) => keygen.run(options),
+      Self::Languages(languages) => languages.run(),
       Self::Lints => lints::run(),
       Self::Man => man::run(),
+      Self::Message(message) => message.run(),
       Self::Sign(sign) => sign.run(options),
       Self::Size(size) => size.run(),
       Self::Verify(verify) => verify.run(options),

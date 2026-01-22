@@ -68,7 +68,7 @@ fn gpg_v4_signatures_can_be_verified() {
     .serialize();
 
     let message_path = path.join("message");
-    filesystem::write(&message_path, message.bytes()).unwrap();
+    filesystem::write(&message_path, message.as_bytes()).unwrap();
 
     let output = Command::new("gpg")
       .args(["--homedir", home.as_str()])
@@ -243,12 +243,12 @@ fn pgp_v4_signatures_can_be_verified() {
 
     let signature_packet = SignatureBuilder::new(SignatureType::Binary)
       .set_hash_algo(HashAlgorithm::SHA512)
-      .sign_message(&mut keypair, message.bytes())
+      .sign_message(&mut keypair, message.as_bytes())
       .unwrap();
 
     signature_packet
       .clone()
-      .verify_message(signing_key.key(), message.bytes())
+      .verify_message(signing_key.key(), message.as_bytes())
       .unwrap();
 
     signature_packet
@@ -302,7 +302,7 @@ fn pgp_v4_signatures_can_be_verified() {
     trailer[2..6].copy_from_slice(&len.to_be_bytes());
 
     let mut hasher = Sha512::new();
-    hasher.update(message.bytes());
+    hasher.update(message.as_bytes());
     hasher.update(header);
     hasher.update(&hashed_area);
     hasher.update(trailer);
