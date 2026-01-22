@@ -276,6 +276,30 @@ mod tests {
   }
 
   #[test]
+  fn round_trip() {
+    fn case<T>(s: &str)
+    where
+      T: FromStr + ToString,
+      <T as FromStr>::Err: fmt::Debug,
+    {
+      assert_eq!(s.parse::<T>().unwrap().to_string(), s);
+    }
+
+    case::<Fingerprint>(test::FINGERPRINT);
+    case::<PublicKey>(test::PUBLIC_KEY);
+    case::<Signature>(test::SIGNATURE);
+
+    assert_eq!(
+      test::PRIVATE_KEY
+        .parse::<PrivateKey>()
+        .unwrap()
+        .display_secret()
+        .to_string(),
+      test::PRIVATE_KEY,
+    );
+  }
+
+  #[test]
   fn unsupported_version() {
     let bytes = [0u8; 32];
     let mut s = String::new();

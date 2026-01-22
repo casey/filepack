@@ -9,18 +9,18 @@ pub enum SignatureError {
   SuffixLength {
     length: usize,
     maximum: usize,
-    scheme: &'static str,
+    scheme: SignatureSchemeType,
   },
   #[snafu(display("found unexpected suffix for signature scheme `{scheme}`"))]
-  UnexpectedSuffix { scheme: &'static str },
+  UnexpectedSuffix { scheme: SignatureSchemeType },
   #[snafu(display("signature scheme `{scheme}` is not supported"))]
   UnsupportedScheme { scheme: Fe32 },
   #[snafu(display(
-    "signature scheme `{scheme}` version `{actual}` is not supported, expected `{expected}`",
+    "signature scheme `{scheme}` version `{actual}` is not supported, expected `{}`",
+    scheme.version(),
   ))]
   UnsupportedVersion {
     actual: Fe32,
-    expected: Fe32,
-    scheme: &'static str,
+    scheme: SignatureSchemeType,
   },
 }
