@@ -13,8 +13,7 @@ impl Fingerprint {
 }
 
 impl Bech32m<0, { Fingerprint::LEN }> for Fingerprint {
-  const HRP: Hrp = Hrp::parse_unchecked("package");
-  const TYPE: &'static str = "package fingerprint";
+  const TYPE: Bech32mType = Bech32mType::Fingerprint;
   type Suffix = ();
 }
 

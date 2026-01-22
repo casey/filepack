@@ -3,8 +3,7 @@ use super::*;
 const VERSION: Fe32 = Fe32::A;
 
 pub(crate) trait Bech32m<const PREFIX: usize, const BODY: usize> {
-  const HRP: Hrp;
-  const TYPE: &'static str;
+  const TYPE: Bech32mType;
 
   type Suffix: Bech32mSuffix;
 
@@ -15,8 +14,8 @@ pub(crate) trait Bech32m<const PREFIX: usize, const BODY: usize> {
     let actual = hrp_string.hrp();
 
     ensure! {
-      actual == Self::HRP,
-      bech32m_error::Hrp { expected: Self::HRP, actual },
+      actual == *Self::TYPE.hrp(),
+      bech32m_error::Hrp { ty: Self::TYPE, actual },
     }
 
     let mut fe32s = hrp_string.fe32_iter::<std::vec::IntoIter<u8>>();
@@ -82,7 +81,7 @@ pub(crate) trait Bech32m<const PREFIX: usize, const BODY: usize> {
           .chain(suffix.as_bytes().iter().copied())
           .bytes_to_fes(),
       )
-      .with_checksum::<bech32::Bech32m>(&Self::HRP)
+      .with_checksum::<bech32::Bech32m>(Self::TYPE.hrp())
       .with_witness_version(VERSION)
       .chars();
 
@@ -127,8 +126,7 @@ mod tests {
   struct EmptyPublicKey;
 
   impl Bech32m<0, 0> for EmptyPublicKey {
-    const HRP: Hrp = Hrp::parse_unchecked("public");
-    const TYPE: &'static str = "public key";
+    const TYPE: Bech32mType = Bech32mType::PublicKey;
     type Suffix = ();
   }
 
@@ -141,8 +139,7 @@ mod tests {
   struct LongPublicKey;
 
   impl Bech32m<0, 33> for LongPublicKey {
-    const HRP: Hrp = Hrp::parse_unchecked("public");
-    const TYPE: &'static str = "public key";
+    const TYPE: Bech32mType = Bech32mType::PublicKey;
     type Suffix = ();
   }
 
@@ -158,7 +155,7 @@ mod tests {
       use bech32::Checksum;
 
       let max = (bech32::Bech32m::CODE_LENGTH
-        - T::HRP.as_str().len()
+        - T::TYPE.hrp().as_str().len()
         - 1
         - bech32::Bech32m::CHECKSUM_LENGTH
         - 1
@@ -168,9 +165,9 @@ mod tests {
 
       assert!(BODY <= max);
 
-      assert_eq!(T::HRP.as_str(), hrp);
+      assert_eq!(T::TYPE.hrp().as_str(), hrp);
 
-      assert_eq!(T::TYPE, ty);
+      assert_eq!(T::TYPE.to_string(), ty);
     }
 
     case::<0, { Fingerprint::LEN }, Fingerprint>("package", "package fingerprint");
@@ -209,7 +206,8 @@ mod tests {
     let public_key = test::PUBLIC_KEY.parse::<PublicKey>().unwrap();
 
     let bech32 =
-      bech32::encode::<bech32::Bech32>(PublicKey::HRP, public_key.inner().as_bytes()).unwrap();
+      bech32::encode::<bech32::Bech32>(*PublicKey::TYPE.hrp(), public_key.inner().as_bytes())
+        .unwrap();
 
     case(&bech32, "failed to decode bech32m public key");
   }
@@ -221,7 +219,7 @@ mod tests {
       .iter()
       .copied()
       .bytes_to_fes()
-      .with_checksum::<bech32::Bech32m>(&PublicKey::HRP)
+      .with_checksum::<bech32::Bech32m>(PublicKey::TYPE.hrp())
       .chars()
     {
       s.write_char(c).unwrap();
@@ -237,7 +235,7 @@ mod tests {
   fn non_zero_padding_rejected() {
     let bech32m = iter::repeat_n(Fe32::Q, 51)
       .chain(iter::once(Fe32::P))
-      .with_checksum::<bech32::Bech32m>(&PublicKey::HRP)
+      .with_checksum::<bech32::Bech32m>(PublicKey::TYPE.hrp())
       .with_witness_version(VERSION)
       .chars()
       .collect::<String>();
@@ -253,8 +251,7 @@ mod tests {
     struct PrefixedType;
 
     impl Bech32m<2, 0> for PrefixedType {
-      const HRP: Hrp = Hrp::parse_unchecked("test");
-      const TYPE: &'static str = "test";
+      const TYPE: Bech32mType = Bech32mType::PublicKey;
       type Suffix = ();
     }
 
@@ -262,7 +259,7 @@ mod tests {
       .iter()
       .copied()
       .bytes_to_fes()
-      .with_checksum::<bech32::Bech32m>(&PrefixedType::HRP)
+      .with_checksum::<bech32::Bech32m>(Bech32mType::PublicKey.hrp())
       .with_witness_version(VERSION)
       .chars()
       .collect::<String>();
@@ -271,7 +268,7 @@ mod tests {
       PrefixedType::decode_bech32m(&bech32m)
         .unwrap_err()
         .to_string(),
-      "expected bech32m test to have 2 prefix characters but found 0",
+      "expected bech32m public key to have 2 prefix characters but found 0",
     );
   }
 
@@ -307,7 +304,7 @@ mod tests {
       .iter()
       .copied()
       .bytes_to_fes()
-      .with_checksum::<bech32::Bech32m>(&PublicKey::HRP)
+      .with_checksum::<bech32::Bech32m>(PublicKey::TYPE.hrp())
       .with_witness_version(Fe32::P)
       .chars()
     {
