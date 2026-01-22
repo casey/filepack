@@ -24,7 +24,7 @@ Open Questions
   extend the existing siganture encoding scheme to support multiple hashing
   algorithms, although we would only do that if absolutely necessary, since
   SHA-512 is a perfectly good default, and the only reason to add additional
-  algorithms, would be something like supporting existing signing devices which
+  algorithms would be something like supporting existing signing devices which
   do not support SHA-512.
 
 - *Should filepack attempt to support PGP v5 (LibraPGP) or PGP v6 signatures?*
