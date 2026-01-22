@@ -94,12 +94,14 @@ impl SignatureScheme {
   pub(crate) fn payload(
     &self,
     signature: ed25519_dalek::Signature,
-  ) -> Bech32mPayload<2, 64, &[u8]> {
+  ) -> Bech32mPayload<2, 64, &Vec<u8>> {
+    static EMPTY: Vec<u8> = Vec::new();
+
     let prefix = self.discriminant().prefix();
 
     let suffix = match self {
-      SignatureScheme::Filepack | SignatureScheme::Ssh => &[],
-      SignatureScheme::Pgp { hashed_area } => hashed_area.as_slice(),
+      SignatureScheme::Filepack | SignatureScheme::Ssh => &EMPTY,
+      SignatureScheme::Pgp { hashed_area } => &hashed_area,
     };
 
     Bech32mPayload {

@@ -7,7 +7,7 @@ pub(crate) trait Bech32mSuffix: Sized {
 
   fn from_bytes(ty: &'static str, bytes: Bytes) -> Result<Self, Bech32mError>;
 
-  fn into_bytes(self) -> Vec<u8>;
+  fn into_bytes(&self) -> &[u8];
 }
 
 impl Bech32mSuffix for () {
@@ -28,8 +28,8 @@ impl Bech32mSuffix for () {
     Ok(())
   }
 
-  fn into_bytes(self) -> Vec<u8> {
-    Vec::new()
+  fn into_bytes(&self) -> &[u8] {
+    &[]
   }
 }
 
@@ -40,7 +40,7 @@ impl Bech32mSuffix for Vec<u8> {
     Ok(bytes.collect())
   }
 
-  fn into_bytes(self) -> Vec<u8> {
-    self
+  fn into_bytes(&self) -> &[u8] {
+    &self
   }
 }
