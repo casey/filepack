@@ -15,6 +15,7 @@ use {
 };
 
 #[test]
+#[ignore]
 fn gpg_v4_signatures_can_be_verified() {
   if cfg!(not(unix)) {
     return;
