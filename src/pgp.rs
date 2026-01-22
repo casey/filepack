@@ -11,101 +11,21 @@ use {
     types::{Curve, HashAlgorithm, SignatureType},
   },
   sha2::{Digest, Sha512},
-  std::process::Command,
 };
 
 #[test]
 fn gpg_v4_signatures_can_be_verified() {
-  if cfg!(not(unix)) {
-    return;
-  }
+  let policy = StandardPolicy::new();
 
-  // create tempdir
-  let tempdir = tempdir();
-  let path = decode_path(tempdir.path()).unwrap();
+  let message_bytes = include_bytes!("../static/gpg-test/message");
+  let signature_bytes = include_bytes!("../static/gpg-test/message.sig");
+  let public_key_bytes = include_bytes!("../static/gpg-test/public-key.gpg");
+  let secret_key_bytes = include_bytes!("../static/gpg-test/secret-key.gpg");
 
-  // create gpg homedir
-  let home = path.join("gnupg");
-  {
-    fs::create_dir(&home).unwrap();
+  let message = SerializedMessage(message_bytes.to_vec());
 
-    #[cfg(unix)]
-    {
-      use std::os::unix::fs::PermissionsExt;
-      fs::set_permissions(&home, Permissions::from_mode(0o700)).unwrap();
-    }
-  }
-
-  // generate keypair
-  {
-    let output = Command::new("gpg")
-      .args(["--homedir", home.as_str()])
-      .arg("--batch")
-      .args(["--passphrase", ""])
-      .args(["--quick-gen-key", "foo@bar", "ed25519", "sign"])
-      .output()
-      .unwrap();
-
-    assert!(
-      output.status.success(),
-      "gpg key generation failed: {}",
-      String::from_utf8_lossy(&output.stderr)
-    );
-  }
-
-  // create and sign message
-  let signature_path = path.join("message.sig");
-  let message = {
-    let manifest = Manifest {
-      files: Directory::new(),
-      notes: Vec::new(),
-    };
-
-    let message = Message {
-      fingerprint: manifest.fingerprint(),
-      time: None,
-    }
-    .serialize();
-
-    let message_path = path.join("message");
-    filesystem::write(&message_path, message.as_bytes()).unwrap();
-
-    let output = Command::new("gpg")
-      .args(["--homedir", home.as_str()])
-      .arg("--batch")
-      .args(["--passphrase", ""])
-      .arg("--detach-sign")
-      .args(["-o", signature_path.as_str()])
-      .arg(message_path.as_str())
-      .output()
-      .unwrap();
-
-    assert!(
-      output.status.success(),
-      "gpg signing failed: {}",
-      String::from_utf8_lossy(&output.stderr)
-    );
-
-    message
-  };
-
-  // extract public key
   let public_key = {
-    let policy = StandardPolicy::new();
-
-    let output = Command::new("gpg")
-      .args(["--homedir", home.as_str()])
-      .args(["--export", "foo@bar"])
-      .output()
-      .unwrap();
-
-    assert!(
-      output.status.success(),
-      "gpg export failed: {}",
-      String::from_utf8_lossy(&output.stderr)
-    );
-
-    let cert = Cert::from_bytes(&output.stdout).unwrap();
+    let cert = Cert::from_bytes(public_key_bytes).unwrap();
 
     let signing_key = cert
       .keys()
@@ -123,25 +43,8 @@ fn gpg_v4_signatures_can_be_verified() {
     PublicKey::from_bytes(public_key_bytes.try_into().unwrap())
   };
 
-  // extract and verify private key
   {
-    let policy = StandardPolicy::new();
-
-    let output = Command::new("gpg")
-      .args(["--homedir", home.as_str()])
-      .arg("--batch")
-      .args(["--passphrase", ""])
-      .args(["--export-secret-keys", "foo@bar"])
-      .output()
-      .unwrap();
-
-    assert!(
-      output.status.success(),
-      "gpg export-secret-keys failed: {}",
-      String::from_utf8_lossy(&output.stderr)
-    );
-
-    let secret_cert = Cert::from_bytes(&output.stdout).unwrap();
+    let secret_cert = Cert::from_bytes(secret_key_bytes).unwrap();
 
     let secret_key = secret_cert
       .keys()
@@ -167,10 +70,8 @@ fn gpg_v4_signatures_can_be_verified() {
     assert_eq!(private_key.public_key(), public_key);
   }
 
-  // extract signature
   let signature = {
-    let signature_bytes = fs::read(signature_path.as_std_path()).unwrap();
-    let packet = Packet::from_bytes(&signature_bytes).unwrap();
+    let packet = Packet::from_bytes(signature_bytes).unwrap();
     let Packet::Signature(signature_packet) = packet else {
       panic!("expected signature packet");
     };
@@ -194,7 +95,6 @@ fn gpg_v4_signatures_can_be_verified() {
     )
   };
 
-  // verify signature
   signature.verify(&message, public_key).unwrap();
 }
 

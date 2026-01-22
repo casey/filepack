@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+tmp=tmp/gpg-test
+
+rm -rf $tmp
+mkdir -p $tmp
+
+gpg=$tmp/gnupg
+
+mkdir -p $gpg
+chmod 700 $gpg
+
+package=$tmp/package
+
+mkdir -p $package
+
+cargo run --release create $package
+
+cargo run --release message --output $tmp/message $package
+
+gpg \
+  --homedir $gpg \
+  --batch \
+  --passphrase "" \
+  --quick-gen-key "foo@bar" ed25519 sign
+
+gpg \
+  --homedir $gpg \
+  --batch \
+  --passphrase "" \
+  --detach-sign \
+  -o $tmp/message.sig \
+  $tmp/message
+
+gpg \
+  --homedir $gpg \
+  --export foo@bar \
+  > $tmp/public-key.gpg
+
+gpg \
+  --homedir $gpg \
+  --batch \
+  --passphrase "" \
+  --export-secret-keys foo@bar \
+  > $tmp/secret-key.gpg
+
+static=static/gpg-test
+rm -rf $static
+mkdir -p $static
+
+cp \
+  $tmp/message \
+  $tmp/message.sig \
+  $tmp/public-key.gpg \
+  $tmp/secret-key.gpg \
+  $static
