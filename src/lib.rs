@@ -46,7 +46,6 @@ use {
     language::Language,
     lint_error::{Lint, LintError},
     lint_group::LintGroup,
-    message::Message,
     metadata::Metadata,
     mode::Mode,
     options::Options,
@@ -54,7 +53,6 @@ use {
     package::Package,
     path_error::PathError,
     public_key_error::PublicKeyError,
-    serialized_message::SerializedMessage,
     sign_options::SignOptions,
     signature_error::SignatureError,
     signature_scheme::{SignatureScheme, SignatureSchemeType},
@@ -109,8 +107,9 @@ use {
 
 pub use self::{
   directory::Directory, entry::Entry, error::Error, file::File, fingerprint::Fingerprint,
-  hash::Hash, manifest::Manifest, note::Note, private_key::PrivateKey, public_key::PublicKey,
-  relative_path::RelativePath, signature::Signature,
+  hash::Hash, manifest::Manifest, message::Message, note::Note, private_key::PrivateKey,
+  public_key::PublicKey, relative_path::RelativePath, serialized_message::SerializedMessage,
+  signature::Signature,
 };
 
 #[cfg(test)]

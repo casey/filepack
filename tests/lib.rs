@@ -1,7 +1,7 @@
 use {
   self::{expected::Expected, test::Test},
   camino::{Utf8Path, Utf8PathBuf},
-  filepack::{Manifest, Note, PrivateKey, PublicKey, Signature, assert_matches},
+  filepack::{Manifest, Message, Note, PrivateKey, PublicKey, Signature, assert_matches},
   regex::Regex,
   std::{
     collections::BTreeMap,
@@ -31,6 +31,7 @@ mod languages;
 mod lint;
 mod lints;
 mod man;
+mod message;
 mod metadata;
 mod misc;
 mod notes;

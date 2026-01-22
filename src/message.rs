@@ -1,13 +1,13 @@
 use super::*;
 
 #[derive(Eq, Ord, PartialEq, PartialOrd)]
-pub(crate) struct Message {
-  pub(crate) fingerprint: Fingerprint,
-  pub(crate) time: Option<u128>,
+pub struct Message {
+  pub fingerprint: Fingerprint,
+  pub time: Option<u128>,
 }
 
 impl Message {
-  pub(crate) fn serialize(&self) -> SerializedMessage {
+  pub fn serialize(&self) -> SerializedMessage {
     let mut serializer =
       FingerprintSerializer::new(FingerprintPrefix::Message, Vec::new()).unwrap();
 
