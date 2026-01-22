@@ -10,10 +10,7 @@ fn ssh_signatures_can_be_verified() {
   let message = SerializedMessage(message_bytes.to_vec());
 
   let public_key = {
-    let public_key = public_key_str
-      .trim()
-      .parse::<ssh_key::PublicKey>()
-      .unwrap();
+    let public_key = public_key_str.trim().parse::<ssh_key::PublicKey>().unwrap();
 
     let ssh_key::public::KeyData::Ed25519(public_key) = public_key.key_data() else {
       panic!("expected ed25519");
@@ -39,9 +36,7 @@ fn ssh_signatures_can_be_verified() {
   };
 
   let signature = {
-    let signature = signature_str
-      .parse::<ssh_key::SshSig>()
-      .unwrap();
+    let signature = signature_str.parse::<ssh_key::SshSig>().unwrap();
     Signature::new(
       SignatureScheme::Ssh,
       ed25519_dalek::Signature::from_bytes(&signature.signature_bytes().try_into().unwrap()),
