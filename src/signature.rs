@@ -64,36 +64,6 @@ mod tests {
   use super::*;
 
   #[test]
-  fn parse() {
-    let message = Message {
-      fingerprint: test::FINGERPRINT.parse().unwrap(),
-      time: None,
-    };
-    let signature = PrivateKey::generate().sign(&message.serialize());
-    assert_eq!(
-      signature.to_string().parse::<Signature>().unwrap(),
-      signature
-    );
-  }
-
-  #[test]
-  fn prefix_length() {
-    let bech32m = []
-      .iter()
-      .copied()
-      .bytes_to_fes()
-      .with_checksum::<bech32::Bech32m>(&Signature::HRP)
-      .with_witness_version(Fe32::A)
-      .chars()
-      .collect::<String>();
-
-    assert_eq!(
-      bech32m.parse::<Signature>().unwrap_err().to_string(),
-      "expected bech32m signature to have 2 prefix characters but found 0",
-    );
-  }
-
-  #[test]
   fn error_display() {
     #[track_caller]
     fn case(bech32m: &str, expected: &str) {
@@ -122,6 +92,36 @@ mod tests {
     case(
       "signature1af0%qqqqqqqqk7md3j",
       "found unexpected suffix for signature scheme `filepack`",
+    );
+  }
+
+  #[test]
+  fn parse() {
+    let message = Message {
+      fingerprint: test::FINGERPRINT.parse().unwrap(),
+      time: None,
+    };
+    let signature = PrivateKey::generate().sign(&message.serialize());
+    assert_eq!(
+      signature.to_string().parse::<Signature>().unwrap(),
+      signature
+    );
+  }
+
+  #[test]
+  fn prefix_length() {
+    let bech32m = []
+      .iter()
+      .copied()
+      .bytes_to_fes()
+      .with_checksum::<bech32::Bech32m>(&Signature::HRP)
+      .with_witness_version(Fe32::A)
+      .chars()
+      .collect::<String>();
+
+    assert_eq!(
+      bech32m.parse::<Signature>().unwrap_err().to_string(),
+      "expected bech32m signature to have 2 prefix characters but found 0",
     );
   }
 

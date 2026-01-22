@@ -158,8 +158,11 @@ mod tests {
   #[test]
   fn round_trip() {
     for scheme in SignatureSchemeType::iter() {
-      let [scheme, version] = scheme.prefix();
-      assert_eq!(SignatureSchemeType::new(scheme, version).unwrap(), scheme);
+      let prefix = scheme.prefix();
+      assert_eq!(
+        SignatureSchemeType::new(prefix[0], prefix[1]).unwrap(),
+        scheme,
+      );
     }
   }
 }
