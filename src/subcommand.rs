@@ -65,7 +65,7 @@ pub(crate) enum Subcommand {
   Lints,
   #[command(about = "Print man page")]
   Man,
-  #[command(about = "Export message for external signers")]
+  #[command(about = "Export unsigned message")]
   Message(message::Message),
   #[command(about = "Sign manifest")]
   Sign(sign::Sign),
