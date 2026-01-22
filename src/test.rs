@@ -5,13 +5,16 @@ use super::*;
 pub(crate) fn bech32m_placeholder(s: &str) -> String {
   use bech32::{Bech32m, primitives::decode::UncheckedHrpstring};
 
-  let unchecked = UncheckedHrpstring::new(s).unwrap().remove_checksum::<Bech32m>();
+  let unchecked = UncheckedHrpstring::new(s)
+    .unwrap()
+    .remove_checksum::<Bech32m>();
 
   let hrp = unchecked.hrp();
 
-  let data = unchecked.data_part_ascii_no_checksum().iter().map(|c| {
-    bech32::Fe32::from_char(char::from(*c)).unwrap()
-  });
+  let data = unchecked
+    .data_part_ascii_no_checksum()
+    .iter()
+    .map(|c| bech32::Fe32::from_char(char::from(*c)).unwrap());
 
   let encoded = data
     .with_checksum::<Bech32m>(&hrp)
