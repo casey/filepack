@@ -20,15 +20,20 @@ pub(crate) struct Bech32m {
   encode: Option<String>,
   #[arg(help = "Prefix bech32m with human-readable part <HRP>", long)]
   hrp: Option<String>,
-  #[arg(help = "Strip or add <VERSION> character", long)]
-  version: Option<char>,
+  #[arg(help = "Strip or add <PREFIX> characters", long)]
+  prefix: Option<String>,
 }
 
 impl Bech32m {
   pub(crate) fn run(self) -> Result {
-    let version = self
-      .version
-      .map(|version| Fe32::from_char(version).context(error::Bech32mVersion { version }))
+    let prefix = self
+      .prefix
+      .map(|prefix| {
+        prefix
+          .chars()
+          .map(|character| Fe32::from_char(character).context(error::Bech32mPrefix { character }))
+          .collect::<Result<Vec<Fe32>>>()
+      })
       .transpose()?;
 
     if let Some(bech32m) = self.decode {
@@ -37,18 +42,20 @@ impl Bech32m {
           bech32m: bech32m.clone(),
         })?;
 
-      let mut fe32s = hrp_string.fe32_iter::<std::vec::IntoIter<u8>>();
+      let mut fe32s = hrp_string
+        .fe32_iter::<std::vec::IntoIter<u8>>()
+        .collect::<Vec<Fe32>>();
 
-      if let Some(expected) = version {
-        let actual = fe32s.next().context(error::Bech32mVersionMissing)?;
+      if let Some(prefix) = prefix {
+        ensure! {
+          fe32s.starts_with(&prefix),
+          error::Bech32mPrefixMissing,
+        }
 
-        ensure!(
-          actual == expected,
-          error::Bech32mVersionMismatch { actual, expected },
-        );
+        fe32s.drain(..prefix.len());
       }
 
-      let bytes = fe32s.fes_to_bytes().collect::<Vec<u8>>();
+      let bytes = fe32s.into_iter().fes_to_bytes().collect::<Vec<u8>>();
       let hex = hex::encode(bytes);
       println!("{hex}");
     } else {
@@ -56,19 +63,20 @@ impl Bech32m {
       let hex = self.encode.unwrap();
       let hex = hex::decode(&hex).context(error::Hex { hex })?;
 
-      let iter = hex
-        .iter()
-        .copied()
-        .bytes_to_fes()
-        .with_checksum::<bech32::Bech32m>(&hrp);
-
-      let iter = if let Some(v) = version {
-        iter.with_witness_version(v)
+      let fe32s = if let Some(prefix) = prefix {
+        prefix
+          .into_iter()
+          .chain(hex.iter().copied().bytes_to_fes())
+          .collect::<Vec<Fe32>>()
       } else {
-        iter
+        hex.iter().copied().bytes_to_fes().collect::<Vec<Fe32>>()
       };
 
-      for c in iter.chars() {
+      for c in fe32s
+        .into_iter()
+        .with_checksum::<bech32::Bech32m>(&hrp)
+        .chars()
+      {
         print!("{c}");
       }
 
