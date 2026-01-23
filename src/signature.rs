@@ -129,7 +129,7 @@ mod tests {
     assert_matches!(
       err,
       ChecksumError::CodeLength(CodeLengthError {
-        encoded_length: 104980,
+        encoded_length: 104_980,
         code_length: 1023,
         ..
       })
