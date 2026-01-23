@@ -22,7 +22,6 @@ use {
     bech32m_decoder::Bech32mDecoder,
     bech32m_encoder::Bech32mEncoder,
     bech32m_error::Bech32mError,
-    bech32m_payload::Bech32mPayload,
     bech32m_type::Bech32mType,
     component::Component,
     component_error::ComponentError,
@@ -138,7 +137,6 @@ mod arguments;
 mod bech32m_decoder;
 mod bech32m_encoder;
 mod bech32m_error;
-mod bech32m_payload;
 mod bech32m_type;
 mod component;
 mod component_error;
