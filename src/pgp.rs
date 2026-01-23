@@ -96,6 +96,9 @@ fn gpg_v4_signatures_can_be_verified() {
   };
 
   signature.verify(&message, public_key).unwrap();
+
+  eprintln!("GPG_PUBLIC_KEY: {public_key}");
+  eprintln!("GPG_SIGNATURE: {signature}");
 }
 
 #[test]

@@ -12,13 +12,30 @@ pub(crate) enum SignatureScheme {
 }
 
 impl SignatureSchemeType {
-  fn new(scheme: Fe32, version: Fe32) -> Result<Self, SignatureError> {
+  pub(crate) fn hash_algorithm(self) -> Fe32 {
+    match self {
+      Self::Filepack => Fe32::Q,
+      Self::Ssh | Self::Pgp => Fe32::P,
+    }
+  }
+
+  fn new(prefix: [Fe32; 3]) -> Result<Self, SignatureError> {
+    let [scheme, version, hash] = prefix;
+
     let scheme = match scheme {
       Fe32::F => Self::Filepack,
       Fe32::P => Self::Pgp,
       Fe32::S => Self::Ssh,
       _ => return Err(signature_error::UnsupportedScheme { scheme }.build()),
     };
+
+    ensure! {
+      hash == scheme.hash_algorithm(),
+      signature_error::UnsupportedHashAlgorithm {
+        scheme,
+        actual: hash,
+      },
+    }
 
     ensure! {
       version == scheme.version(),
@@ -31,14 +48,14 @@ impl SignatureSchemeType {
     Ok(scheme)
   }
 
-  fn prefix(self) -> [Fe32; 2] {
+  fn prefix(self) -> [Fe32; 3] {
     let scheme = match self {
       Self::Filepack => Fe32::F,
       Self::Pgp => Fe32::P,
       Self::Ssh => Fe32::S,
     };
 
-    [scheme, self.version()]
+    [scheme, self.version(), self.hash_algorithm()]
   }
 
   pub(crate) fn version(self) -> Fe32 {
@@ -60,8 +77,8 @@ impl Display for SignatureSchemeType {
 }
 
 impl SignatureScheme {
-  pub(crate) fn new(scheme: Fe32, version: Fe32, suffix: Vec<u8>) -> Result<Self, SignatureError> {
-    let scheme = SignatureSchemeType::new(scheme, version)?;
+  pub(crate) fn new(prefix: [Fe32; 3], suffix: Vec<u8>) -> Result<Self, SignatureError> {
+    let scheme = SignatureSchemeType::new(prefix)?;
 
     match scheme {
       SignatureSchemeType::Filepack | SignatureSchemeType::Ssh => ensure!(
@@ -94,7 +111,7 @@ impl SignatureScheme {
   pub(crate) fn payload(
     &self,
     signature: ed25519_dalek::Signature,
-  ) -> Bech32mPayload<2, 64, &Vec<u8>> {
+  ) -> Bech32mPayload<3, 64, &Vec<u8>> {
     static EMPTY: Vec<u8> = Vec::new();
 
     let prefix = self.discriminant().prefix();
@@ -161,13 +178,16 @@ mod tests {
   use super::*;
 
   #[test]
+  fn hash_algorithm_numeric_value() {
+    assert_eq!(u8::from(SignatureSchemeType::Filepack.hash_algorithm()), 0);
+    assert_eq!(u8::from(SignatureSchemeType::Pgp.hash_algorithm()), 1);
+    assert_eq!(u8::from(SignatureSchemeType::Ssh.hash_algorithm()), 1);
+  }
+
+  #[test]
   fn round_trip() {
     for scheme in SignatureSchemeType::iter() {
-      let prefix = scheme.prefix();
-      assert_eq!(
-        SignatureSchemeType::new(prefix[0], prefix[1]).unwrap(),
-        scheme,
-      );
+      assert_eq!(SignatureSchemeType::new(scheme.prefix()).unwrap(), scheme);
     }
   }
 }

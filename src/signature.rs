@@ -24,7 +24,7 @@ impl Signature {
   }
 }
 
-impl Bech32m<2, { Signature::LEN }> for Signature {
+impl Bech32m<3, { Signature::LEN }> for Signature {
   const TYPE: Bech32mType = Bech32mType::Signature;
   type Suffix = Vec<u8>;
 }
@@ -46,14 +46,14 @@ impl FromStr for Signature {
 
   fn from_str(signature: &str) -> Result<Self, Self::Err> {
     let Bech32mPayload {
-      prefix: [scheme, version],
+      prefix,
       body,
       suffix,
     } = Self::decode_bech32m(signature)?;
 
     Ok(Self {
       inner: ed25519_dalek::Signature::from_bytes(&body),
-      scheme: SignatureScheme::new(scheme, version, suffix)?,
+      scheme: SignatureScheme::new(prefix, suffix)?,
     })
   }
 }
@@ -78,15 +78,23 @@ mod tests {
 
     case("foo", "failed to decode bech32m signature");
 
-    case("signature1aq0%dcnjdk", "signature scheme `q` not supported");
+    case(
+      "signature1aq0q%62zsmd",
+      "signature scheme `q` not supported",
+    );
 
     case(
-      "signature1afp%fcu5ju",
+      "signature1afpq%40xf7h",
       "signature version `p` not supported with filepack signatures, expected version `0`",
     );
 
     case(
-      "signature1af0%qqqqqqqqk7md3j",
+      "signature1af0p%eeas80",
+      "signature hash algorithm `p` not supported with filepack signatures, expected hash algorithm `q`",
+    );
+
+    case(
+      "signature1af0q%qqqqqqqqeyyw6u",
       "found unexpected 5 byte suffix on filepack signature",
     );
   }
@@ -117,7 +125,7 @@ mod tests {
 
     assert_eq!(
       bech32m.parse::<Signature>().unwrap_err().to_string(),
-      "expected bech32m signature to have 2 prefix characters but found 0",
+      "expected bech32m signature to have 3 prefix characters but found 0",
     );
   }
 
@@ -130,8 +138,8 @@ mod tests {
       assert_eq!(signature.scheme.discriminant(), expected);
       assert_eq!(signature.to_string(), bech32m);
     }
-    case("signature1af0%ldnl7s", SignatureSchemeType::Filepack);
-    case("signature1ap4%qqypqxpqk2fwrl", SignatureSchemeType::Pgp);
-    case("signature1as0%yxnqs4", SignatureSchemeType::Ssh);
+    case("signature1af0q%fwxcmn", SignatureSchemeType::Filepack);
+    case("signature1ap4p%qqypqxpq4vxtfa", SignatureSchemeType::Pgp);
+    case("signature1as0p%hlmu87", SignatureSchemeType::Ssh);
   }
 }
