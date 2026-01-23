@@ -9,44 +9,44 @@ pub enum Error {
     actual: Hash,
     expected: Hash,
   },
-  #[snafu(display("failed to decode bech32m `{bech32m}`"))]
-  Bech32mDecode {
+  #[snafu(display("failed to decode bech32 `{bech32}`"))]
+  Bech32Decode {
     backtrace: Option<Backtrace>,
-    bech32m: String,
+    bech32: String,
     source: CheckedHrpstringError,
   },
-  #[snafu(display("failed to encode bech32m"))]
-  Bech32mEncode {
+  #[snafu(display("failed to encode bech32"))]
+  Bech32Encode {
     backtrace: Option<Backtrace>,
     source: bech32::EncodeError,
   },
-  #[snafu(display("failed to parse bech32m human-readable part"))]
-  Bech32mHrp {
+  #[snafu(display("failed to parse bech32 human-readable part"))]
+  Bech32Hrp {
     backtrace: Option<Backtrace>,
     source: bech32::primitives::hrp::Error,
   },
-  #[snafu(display("invalid bech32m prefix character `{character}`"))]
-  Bech32mPrefix {
+  #[snafu(display("invalid bech32 prefix character `{character}`"))]
+  Bech32Prefix {
     backtrace: Option<Backtrace>,
     character: char,
     source: bech32::primitives::gf32::FromCharError,
   },
-  #[snafu(display("bech32m prefix missing"))]
-  Bech32mPrefixMissing { backtrace: Option<Backtrace> },
-  #[snafu(display("invalid bech32m version character `{version}`"))]
-  Bech32mVersion {
+  #[snafu(display("bech32 prefix missing"))]
+  Bech32PrefixMissing { backtrace: Option<Backtrace> },
+  #[snafu(display("invalid bech32 version character `{version}`"))]
+  Bech32Version {
     backtrace: Option<Backtrace>,
     source: bech32::primitives::gf32::FromCharError,
     version: char,
   },
-  #[snafu(display("bech32m version `{actual}` does not match expected `{expected}`"))]
-  Bech32mVersionMismatch {
+  #[snafu(display("bech32 version `{actual}` does not match expected `{expected}`"))]
+  Bech32VersionMismatch {
     backtrace: Option<Backtrace>,
     actual: bech32::Fe32,
     expected: bech32::Fe32,
   },
-  #[snafu(display("bech32m version character missing"))]
-  Bech32mVersionMissing { backtrace: Option<Backtrace> },
+  #[snafu(display("bech32 version character missing"))]
+  Bech32VersionMissing { backtrace: Option<Backtrace> },
   #[snafu(display("failed to get current directory"))]
   CurrentDir {
     backtrace: Option<Backtrace>,

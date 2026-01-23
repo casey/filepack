@@ -157,7 +157,7 @@ fn malformed_signature_error() {
     )
     .arg("verify")
     .stderr_regex(
-      "error: failed to deserialize manifest at `filepack.json`\n.*failed to decode bech32m.*",
+      "error: failed to deserialize manifest at `filepack.json`\n.*failed to decode bech32.*",
     )
     .failure();
 }

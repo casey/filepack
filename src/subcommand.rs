@@ -6,7 +6,7 @@ use {
   },
 };
 
-mod bech32m;
+mod bech32;
 mod contains;
 mod create;
 mod files;
@@ -41,8 +41,8 @@ const TIME_HELP: &str = "Include current time in note";
     .placeholder(AnsiColor::Cyan.on_default()))
 ]
 pub(crate) enum Subcommand {
-  #[command(about = "Encode and decode bech32m")]
-  Bech32m(bech32m::Bech32m),
+  #[command(about = "Encode and decode bech32")]
+  Bech32(bech32::Bech32),
   #[command(about = "Check if manifest contains file")]
   Contains(contains::Contains),
   #[command(about = "Create manifest")]
@@ -78,7 +78,7 @@ pub(crate) enum Subcommand {
 impl Subcommand {
   pub(crate) fn run(self, options: Options) -> Result {
     match self {
-      Self::Bech32m(bech32m) => bech32m.run(),
+      Self::Bech32(bech32) => bech32.run(),
       Self::Contains(contains) => contains.run(options),
       Self::Create(create) => create.run(options),
       Self::Files(files) => files.run(),

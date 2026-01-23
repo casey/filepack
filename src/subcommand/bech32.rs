@@ -2,44 +2,44 @@ use super::*;
 
 #[derive(Parser)]
 #[group(required = true)]
-pub(crate) struct Bech32m {
+pub(crate) struct Bech32 {
   #[arg(
     group = "source",
-    help = "Convert <BECH32M> to hexadecimal",
+    help = "Convert <BECH32> to hexadecimal",
     long,
-    value_name = "BECH32M"
+    value_name = "BECH32"
   )]
   decode: Option<String>,
   #[arg(
     group = "source",
-    help = "Encode <HEXADECIMAL> to bech32m",
+    help = "Encode <HEXADECIMAL> to bech32",
     long,
     requires = "hrp",
     value_name = "HEXADECIMAL"
   )]
   encode: Option<String>,
-  #[arg(help = "Prefix bech32m with human-readable part <HRP>", long)]
+  #[arg(help = "Prefix bech32 with human-readable part <HRP>", long)]
   hrp: Option<String>,
   #[arg(help = "Strip or add <PREFIX> characters", long)]
   prefix: Option<String>,
 }
 
-impl Bech32m {
+impl Bech32 {
   pub(crate) fn run(self) -> Result {
     let prefix = self
       .prefix
       .map(|prefix| {
         prefix
           .chars()
-          .map(|character| Fe32::from_char(character).context(error::Bech32mPrefix { character }))
+          .map(|character| Fe32::from_char(character).context(error::Bech32Prefix { character }))
           .collect::<Result<Vec<Fe32>>>()
       })
       .transpose()?;
 
-    if let Some(bech32m) = self.decode {
+    if let Some(bech32) = self.decode {
       let hrp_string =
-        CheckedHrpstring::new::<bech32::Bech32m>(&bech32m).context(error::Bech32mDecode {
-          bech32m: bech32m.clone(),
+        CheckedHrpstring::new::<::bech32::Bech32m>(&bech32).context(error::Bech32Decode {
+          bech32: bech32.clone(),
         })?;
 
       let mut fes = hrp_string
@@ -49,7 +49,7 @@ impl Bech32m {
       if let Some(prefix) = prefix {
         ensure! {
           fes.starts_with(&prefix),
-          error::Bech32mPrefixMissing,
+          error::Bech32PrefixMissing,
         }
 
         fes.drain(..prefix.len());
@@ -59,7 +59,7 @@ impl Bech32m {
       let hex = hex::encode(bytes);
       println!("{hex}");
     } else {
-      let hrp = Hrp::parse(&self.hrp.unwrap()).context(error::Bech32mHrp)?;
+      let hrp = Hrp::parse(&self.hrp.unwrap()).context(error::Bech32Hrp)?;
       let hex = self.encode.unwrap();
       let hex = hex::decode(&hex).context(error::Hex { hex })?;
 
@@ -74,7 +74,7 @@ impl Bech32m {
 
       for c in fes
         .into_iter()
-        .with_checksum::<bech32::Bech32m>(&hrp)
+        .with_checksum::<::bech32::Bech32m>(&hrp)
         .chars()
       {
         print!("{c}");
