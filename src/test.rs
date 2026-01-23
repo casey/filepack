@@ -1,4 +1,4 @@
-use {super::*, bech32::primitives::decode::UncheckedHrpstring};
+use super::*;
 
 pub(crate) const FINGERPRINT: &str =
   "package1a4uf5nw04lxs6dgzqfh4rdhxffxdukfwf4hq39d7vn2fu4eqlxf3ql7ykr3";
