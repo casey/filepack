@@ -60,14 +60,14 @@ Closed Questions
   algorithms, although we would only do that if absolutely necessary, since
   SHA-512 is a perfectly good default, and the only reason to add additional
   algorithms would be something like supporting existing signing devices which
-  do not support SHA-512. **This seems a very common degree of freedom in
-  signature schemes, so I added it. Filepack, PGP, and SSH signatures now start
-  with `af0q`, `ap4p`, and, `as0p`. The last character is the hashing
-  algorithm, filepack does not hash the message, so it's `q`, which is the 0th
-  bech32m element, PGP and SSH are restricted to SHA-512, which is `p`, or the
-  1st element. No support exists for alternative combinations of signature
-  scheme and hash function, this is only in case we have to add support in the
-  future.**
+  do not support SHA-512. **Conclusion: This seems a very common degree of
+  freedom in signature schemes, so I added it. Filepack, PGP, and SSH
+  signatures now start with `af0q`, `ap4p`, and, `as0p`. The last character is
+  the hashing algorithm, filepack does not hash the message, so it's `q`, which
+  is the 0th bech32m element, PGP and SSH are restricted to SHA-512, which is
+  `p`, or the 1st element. No support exists for alternative combinations of
+  signature scheme and hash function, this is only in case we have to add
+  support in the future.**
 
 ----------------
 
