@@ -1,5 +1,24 @@
 use {super::*, bech32::primitives::decode::UncheckedHrpstring};
 
+pub(crate) const FINGERPRINT: &str =
+  "package1a4uf5nw04lxs6dgzqfh4rdhxffxdukfwf4hq39d7vn2fu4eqlxf3ql7ykr3";
+
+pub(crate) const HASH: &str = "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262";
+
+pub(crate) const PRIVATE_KEY: &str =
+  "private1a24p4zsr2nh04f4pkgtxfzv5yle473x4jue7s6lkwg9tdkk73q59qluezpp";
+
+pub(crate) const PUBLIC_KEY: &str =
+  "public1a67dndhhmae7p6fsfnj0z37zf78cde6mwqgtms0y87h8ldlvvflyqcxnd63";
+
+pub(crate) const SIGNATURE: &str = concat!(
+  "signature1af0qppampjlm7qs0g4amn9fnq87crhn70k5lv5wf48ajy6k774tq",
+  "w6yc9s5n0kpq5420jrz644sgu7geahpffl8l7nuv9azsqv8jpgtrcqstq8xwz",
+);
+
+pub(crate) const WEAK_PUBLIC_KEY: &str =
+  "public1aqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqsqtuc8";
+
 #[allow(dead_code)]
 #[track_caller]
 pub(crate) fn checksum(s: &str) -> &str {
@@ -21,25 +40,6 @@ pub(crate) fn checksum(s: &str) -> &str {
 
   panic!("{encoded}");
 }
-
-pub(crate) const FINGERPRINT: &str =
-  "package1a4uf5nw04lxs6dgzqfh4rdhxffxdukfwf4hq39d7vn2fu4eqlxf3ql7ykr3";
-
-pub(crate) const HASH: &str = "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262";
-
-pub(crate) const PRIVATE_KEY: &str =
-  "private1a24p4zsr2nh04f4pkgtxfzv5yle473x4jue7s6lkwg9tdkk73q59qluezpp";
-
-pub(crate) const PUBLIC_KEY: &str =
-  "public1a67dndhhmae7p6fsfnj0z37zf78cde6mwqgtms0y87h8ldlvvflyqcxnd63";
-
-pub(crate) const SIGNATURE: &str = concat!(
-  "signature1af0qppampjlm7qs0g4amn9fnq87crhn70k5lv5wf48ajy6k774tq",
-  "w6yc9s5n0kpq5420jrz644sgu7geahpffl8l7nuv9azsqv8jpgtrcqstq8xwz",
-);
-
-pub(crate) const WEAK_PUBLIC_KEY: &str =
-  "public1aqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqsqtuc8";
 
 #[test]
 fn hash_is_valid() {
