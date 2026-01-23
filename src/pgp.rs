@@ -102,7 +102,7 @@ fn gpg_v4_signatures_can_be_verified() {
 }
 
 #[test]
-fn pgp_v4_signatures_can_be_verified() {
+fn pgp_v4_signatures_can_be_generated_and_verified() {
   // create message
   let message = {
     let manifest = Manifest {
