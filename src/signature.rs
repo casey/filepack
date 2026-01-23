@@ -25,9 +25,9 @@ impl Signature {
 impl Display for Signature {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     let mut encoder = Bech32mEncoder::new(Bech32mType::Signature);
-    let (prefix, inner, suffix) = self.scheme.payload(self.inner);
+    let (prefix, suffix) = self.scheme.payload();
     encoder.fes(&prefix);
-    encoder.bytes(&inner);
+    encoder.bytes(&self.inner.to_bytes());
     encoder.bytes(suffix);
     write!(f, "{encoder}")
   }

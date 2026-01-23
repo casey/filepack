@@ -108,10 +108,7 @@ impl SignatureScheme {
     }
   }
 
-  pub(crate) fn payload(
-    &self,
-    signature: ed25519_dalek::Signature,
-  ) -> ([Fe32; 3], [u8; 64], &[u8]) {
+  pub(crate) fn payload(&self) -> ([Fe32; 3], &[u8]) {
     let prefix = self.discriminant().prefix();
 
     let suffix = match self {
@@ -119,7 +116,7 @@ impl SignatureScheme {
       SignatureScheme::Pgp { hashed_area } => hashed_area.as_slice(),
     };
 
-    (prefix, signature.to_bytes(), suffix)
+    (prefix, suffix)
   }
 
   pub(crate) fn signed_data<'a>(&self, message: &'a SerializedMessage) -> Cow<'a, [u8]> {
