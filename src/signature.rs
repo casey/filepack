@@ -44,15 +44,10 @@ impl FromStr for Signature {
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     let mut decoder = Bech32mDecoder::new(Bech32mType::Signature, s)?;
-
     let prefix = decoder.fe_array()?;
-
     let inner = decoder.byte_array()?;
-
     let suffix = decoder.into_bytes()?;
-
     let scheme = SignatureScheme::new(prefix, suffix)?;
-
     Ok(Self {
       inner: ed25519_dalek::Signature::from_bytes(&inner),
       scheme,
