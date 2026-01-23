@@ -24,7 +24,7 @@ impl Signature {
 
 impl Display for Signature {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    let mut encoder = Bech32mEncoder::new(Bech32mType::Signature);
+    let mut encoder = Bech32Encoder::new(Bech32Type::Signature);
     let (prefix, suffix) = self.scheme.payload();
     encoder.fes(&prefix);
     encoder.bytes(&self.inner.to_bytes());
@@ -43,7 +43,7 @@ impl FromStr for Signature {
   type Err = SignatureError;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
-    let mut decoder = Bech32mDecoder::new(Bech32mType::Signature, s)?;
+    let mut decoder = Bech32Decoder::new(Bech32Type::Signature, s)?;
     let prefix = decoder.fe_array()?;
     let inner = decoder.byte_array()?;
     let suffix = decoder.into_bytes()?;

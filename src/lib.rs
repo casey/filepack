@@ -19,10 +19,10 @@
 use {
   self::{
     arguments::Arguments,
-    bech32m_decoder::Bech32mDecoder,
-    bech32m_encoder::Bech32mEncoder,
-    bech32m_error::Bech32mError,
-    bech32m_type::Bech32mType,
+    bech32_decoder::Bech32Decoder,
+    bech32_encoder::Bech32Encoder,
+    bech32_error::Bech32Error,
+    bech32_type::Bech32Type,
     component::Component,
     component_error::ComponentError,
     count::Count,
@@ -134,10 +134,10 @@ macro_rules! assert_matches {
 }
 
 mod arguments;
-mod bech32m_decoder;
-mod bech32m_encoder;
-mod bech32m_error;
-mod bech32m_type;
+mod bech32_decoder;
+mod bech32_encoder;
+mod bech32_error;
+mod bech32_type;
 mod component;
 mod component_error;
 mod count;
@@ -201,7 +201,7 @@ mod ssh;
 #[cfg(test)]
 mod test;
 
-const BECH32M_VERSION: Fe32 = Fe32::A;
+const BECH32_VERSION: Fe32 = Fe32::A;
 
 type Result<T = (), E = Error> = std::result::Result<T, E>;
 

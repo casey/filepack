@@ -227,7 +227,7 @@ pub enum Error {
   PrivateKeyLoad {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
-    source: Bech32mError,
+    source: Bech32Error,
   },
   #[snafu(display("private key not found: `{path}`"))]
   PrivateKeyNotFound {
