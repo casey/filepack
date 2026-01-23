@@ -1,7 +1,7 @@
 use super::*;
 
 #[test]
-fn ssh_signatures_can_be_verified() {
+fn ssh_keygen_signatures_can_be_verified() {
   let message_bytes = include_bytes!("../static/ssh-test/message");
   let signature_str = include_str!("../static/ssh-test/message.sig");
   let public_key_str = include_str!("../static/ssh-test/id_ed25519.pub");
