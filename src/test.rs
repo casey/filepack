@@ -1,27 +1,25 @@
-use super::*;
+use {super::*, bech32::primitives::decode::UncheckedHrpstring};
 
 #[allow(dead_code)]
 #[track_caller]
-pub(crate) fn bech32m_placeholder(s: &str) -> String {
-  use bech32::{Bech32m, primitives::decode::UncheckedHrpstring};
-
+pub(crate) fn checksum(s: &str) -> &str {
   let unchecked = UncheckedHrpstring::new(s)
     .unwrap()
-    .remove_checksum::<Bech32m>();
+    .remove_checksum::<bech32::Bech32m>();
 
   let hrp = unchecked.hrp();
 
   let data = unchecked
     .data_part_ascii_no_checksum()
     .iter()
-    .map(|c| bech32::Fe32::from_char(char::from(*c)).unwrap());
+    .map(|c| Fe32::from_char(char::from(*c)).unwrap());
 
   let encoded = data
-    .with_checksum::<Bech32m>(&hrp)
+    .with_checksum::<bech32::Bech32m>(&hrp)
     .chars()
     .collect::<String>();
 
-  panic!("bech32m_placeholder: {encoded}");
+  panic!("{encoded}");
 }
 
 pub(crate) const FINGERPRINT: &str =
