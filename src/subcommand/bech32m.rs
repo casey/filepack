@@ -31,9 +31,7 @@ impl Bech32m {
       .map(|prefix| {
         prefix
           .chars()
-          .map(|character| {
-            Fe32::from_char(character).context(error::Bech32mVersion { version: character })
-          })
+          .map(|character| Fe32::from_char(character).context(error::Bech32mPrefix { character }))
           .collect::<Result<Vec<Fe32>>>()
       })
       .transpose()?;
