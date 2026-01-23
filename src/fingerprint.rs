@@ -12,11 +12,6 @@ impl Fingerprint {
   }
 }
 
-impl Bech32m<0, { Fingerprint::LEN }> for Fingerprint {
-  const TYPE: Bech32mType = Bech32mType::Fingerprint;
-  type Suffix = ();
-}
-
 impl Display for Fingerprint {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     let mut encoder = Bech32mEncoder::new(Bech32mType::Fingerprint);

@@ -4,6 +4,7 @@ use super::*;
 pub struct PublicKey(ed25519_dalek::VerifyingKey);
 
 impl PublicKey {
+  #[cfg(test)]
   pub(crate) const LEN: usize = ed25519_dalek::PUBLIC_KEY_LENGTH;
 
   #[cfg(test)]
@@ -31,11 +32,6 @@ impl PublicKey {
   pub fn verify(self, message: &SerializedMessage, signature: &Signature) -> Result {
     signature.verify(message, self)
   }
-}
-
-impl Bech32m<0, { PublicKey::LEN }> for PublicKey {
-  const TYPE: Bech32mType = Bech32mType::PublicKey;
-  type Suffix = ();
 }
 
 impl From<PrivateKey> for PublicKey {

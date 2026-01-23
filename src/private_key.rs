@@ -53,11 +53,6 @@ impl PrivateKey {
   }
 }
 
-impl Bech32m<0, { PrivateKey::LEN }> for PrivateKey {
-  const TYPE: Bech32mType = Bech32mType::PrivateKey;
-  type Suffix = ();
-}
-
 impl FromStr for PrivateKey {
   type Err = Bech32mError;
 

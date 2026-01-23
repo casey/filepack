@@ -25,6 +25,20 @@ fn hash_is_valid() {
 }
 
 #[test]
+fn length() {
+  #[track_caller]
+  fn case(s: &str) {
+    use bech32::Checksum;
+    assert!(s.len() <= bech32::Bech32m::CODE_LENGTH);
+  }
+
+  case(FINGERPRINT);
+  case(PUBLIC_KEY);
+  case(PRIVATE_KEY);
+  case(SIGNATURE);
+}
+
+#[test]
 fn private_key_is_valid() {
   assert_eq!(
     test::PRIVATE_KEY

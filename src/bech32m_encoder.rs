@@ -6,19 +6,19 @@ pub(crate) struct Bech32mEncoder {
 }
 
 impl Bech32mEncoder {
-  pub(crate) fn new(ty: Bech32mType) -> Self {
-    Self {
-      fes: vec![BECH32M_VERSION],
-      ty,
-    }
-  }
-
   pub(crate) fn bytes(&mut self, bytes: &[u8]) {
     self.fes.extend(bytes.iter().copied().bytes_to_fes());
   }
 
   pub(crate) fn fes(&mut self, fes: &[Fe32]) {
     self.fes.extend_from_slice(fes);
+  }
+
+  pub(crate) fn new(ty: Bech32mType) -> Self {
+    Self {
+      fes: vec![BECH32M_VERSION],
+      ty,
+    }
   }
 }
 
