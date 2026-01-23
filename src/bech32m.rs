@@ -240,10 +240,14 @@ mod tests {
       .chars()
       .collect::<String>();
 
-    assert_eq!(
-      PublicKey::decode_bech32m(&bech32m).unwrap_err().to_string(),
-      "bech32m public key has invalid padding",
-    );
+    let Bech32mError::Padding { ty, source } = PublicKey::decode_bech32m(&bech32m).unwrap_err()
+    else {
+      panic!("expected padding error");
+    };
+
+    assert_eq!(ty, Bech32mType::PublicKey);
+
+    assert_eq!(source, PaddingError::NonZero);
   }
 
   #[test]
