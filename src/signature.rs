@@ -60,7 +60,10 @@ impl FromStr for Signature {
 
 #[cfg(test)]
 mod tests {
-  use super::*;
+  use {
+    super::*,
+    bech32::primitives::decode::{ChecksumError, CodeLengthError},
+  };
 
   #[test]
   fn error_display() {
@@ -96,6 +99,40 @@ mod tests {
     case(
       "signature1af0q%qqqqqqqqeyyw6u",
       "found unexpected 5 byte suffix on filepack signature",
+    );
+  }
+
+  #[test]
+  fn overlong_pgp_suffix() {
+    let bech32m = [Fe32::P, Fe32::_4, Fe32::P]
+      .into_iter()
+      .chain([0u8; 64].into_iter().chain(vec![0u8; 65536]).bytes_to_fes())
+      .with_checksum::<bech32::Bech32m>(Signature::TYPE.hrp())
+      .with_witness_version(Fe32::A)
+      .chars()
+      .collect::<String>();
+
+    let SignatureError::Bech32m { source } = bech32m.parse::<Signature>().unwrap_err() else {
+      panic!("expected bech32m error");
+    };
+
+    let Bech32mError::Decode { ty, source } = source else {
+      panic!("expected decode error");
+    };
+
+    assert_eq!(ty, Bech32mType::Signature);
+
+    let CheckedHrpstringError::Checksum(err) = source else {
+      panic!("expected checksum error");
+    };
+
+    assert_matches!(
+      err,
+      ChecksumError::CodeLength(CodeLengthError {
+        encoded_length: 104980,
+        code_length: 1023,
+        ..
+      })
     );
   }
 
