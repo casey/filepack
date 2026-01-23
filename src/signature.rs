@@ -7,8 +7,6 @@ pub struct Signature {
 }
 
 impl Signature {
-  pub(crate) const LEN: usize = ed25519_dalek::Signature::BYTE_SIZE;
-
   pub(crate) fn new(scheme: SignatureScheme, inner: ed25519_dalek::Signature) -> Self {
     Self { inner, scheme }
   }
@@ -24,14 +22,14 @@ impl Signature {
   }
 }
 
-impl Bech32m<3, { Signature::LEN }> for Signature {
-  const TYPE: Bech32mType = Bech32mType::Signature;
-  type Suffix = Vec<u8>;
-}
-
 impl Display for Signature {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    Self::encode_bech32m(f, self.scheme.payload(self.inner))
+    let mut encoder = Bech32mEncoder::new(Bech32mType::Signature);
+    let payload = self.scheme.payload(self.inner);
+    encoder.fes(&payload.prefix);
+    encoder.bytes(&payload.body);
+    encoder.bytes(payload.suffix);
+    write!(f, "{encoder}")
   }
 }
 
@@ -44,26 +42,22 @@ impl fmt::Debug for Signature {
 impl FromStr for Signature {
   type Err = SignatureError;
 
-  fn from_str(signature: &str) -> Result<Self, Self::Err> {
-    let Bech32mPayload {
-      prefix,
-      body,
-      suffix,
-    } = Self::decode_bech32m(signature)?;
-
+  fn from_str(s: &str) -> Result<Self, Self::Err> {
+    let mut decoder = Bech32mDecoder::new(Bech32mType::Signature, s)?;
+    let prefix = decoder.fe_array()?;
+    let inner = decoder.byte_array()?;
+    let suffix = decoder.into_bytes()?;
+    let scheme = SignatureScheme::new(prefix, suffix)?;
     Ok(Self {
-      inner: ed25519_dalek::Signature::from_bytes(&body),
-      scheme: SignatureScheme::new(prefix, suffix)?,
+      inner: ed25519_dalek::Signature::from_bytes(&inner),
+      scheme,
     })
   }
 }
 
 #[cfg(test)]
 mod tests {
-  use {
-    super::*,
-    bech32::primitives::decode::{ChecksumError, CodeLengthError},
-  };
+  use super::*;
 
   #[test]
   fn error_display() {
@@ -103,40 +97,6 @@ mod tests {
   }
 
   #[test]
-  fn overlong_pgp_suffix() {
-    let bech32m = [Fe32::P, Fe32::_4, Fe32::P]
-      .into_iter()
-      .chain([0u8; 64].into_iter().chain(vec![0u8; 65536]).bytes_to_fes())
-      .with_checksum::<bech32::Bech32m>(Signature::TYPE.hrp())
-      .with_witness_version(Fe32::A)
-      .chars()
-      .collect::<String>();
-
-    let SignatureError::Bech32m { source } = bech32m.parse::<Signature>().unwrap_err() else {
-      panic!("expected bech32m error");
-    };
-
-    let Bech32mError::Decode { ty, source } = source else {
-      panic!("expected decode error");
-    };
-
-    assert_eq!(ty, Bech32mType::Signature);
-
-    let CheckedHrpstringError::Checksum(err) = source else {
-      panic!("expected checksum error");
-    };
-
-    assert_matches!(
-      err,
-      ChecksumError::CodeLength(CodeLengthError {
-        encoded_length: 104_980,
-        code_length: 1023,
-        ..
-      })
-    );
-  }
-
-  #[test]
   fn parse() {
     let message = Message {
       fingerprint: test::FINGERPRINT.parse().unwrap(),
@@ -146,23 +106,6 @@ mod tests {
     assert_eq!(
       signature.to_string().parse::<Signature>().unwrap(),
       signature
-    );
-  }
-
-  #[test]
-  fn prefix_length() {
-    let bech32m = []
-      .iter()
-      .copied()
-      .bytes_to_fes()
-      .with_checksum::<bech32::Bech32m>(Signature::TYPE.hrp())
-      .with_witness_version(Fe32::A)
-      .chars()
-      .collect::<String>();
-
-    assert_eq!(
-      bech32m.parse::<Signature>().unwrap_err().to_string(),
-      "expected bech32m signature to have 3 prefix characters but found 0",
     );
   }
 

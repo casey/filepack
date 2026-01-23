@@ -53,16 +53,15 @@ impl PrivateKey {
   }
 }
 
-impl Bech32m<0, { PrivateKey::LEN }> for PrivateKey {
-  const TYPE: Bech32mType = Bech32mType::PrivateKey;
-  type Suffix = ();
-}
-
 impl FromStr for PrivateKey {
   type Err = Bech32mError;
 
-  fn from_str(s: &str) -> Result<Self, Self::Err> {
-    let inner = ed25519_dalek::SigningKey::from_bytes(&Self::decode_bech32m(s)?.into_body());
+  fn from_str(key: &str) -> Result<Self, Self::Err> {
+    let mut decoder = Bech32mDecoder::new(Bech32mType::PrivateKey, key)?;
+    let inner = decoder.byte_array()?;
+    decoder.done()?;
+
+    let inner = ed25519_dalek::SigningKey::from_bytes(&inner);
     assert!(!inner.verifying_key().is_weak());
     Ok(Self(inner))
   }

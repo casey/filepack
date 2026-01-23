@@ -4,6 +4,7 @@ use super::*;
 pub struct PublicKey(ed25519_dalek::VerifyingKey);
 
 impl PublicKey {
+  #[cfg(test)]
   pub(crate) const LEN: usize = ed25519_dalek::PUBLIC_KEY_LENGTH;
 
   #[cfg(test)]
@@ -33,11 +34,6 @@ impl PublicKey {
   }
 }
 
-impl Bech32m<0, { PublicKey::LEN }> for PublicKey {
-  const TYPE: Bech32mType = Bech32mType::PublicKey;
-  type Suffix = ();
-}
-
 impl From<PrivateKey> for PublicKey {
   fn from(private_key: PrivateKey) -> Self {
     Self(private_key.inner_secret().verifying_key())
@@ -48,9 +44,11 @@ impl FromStr for PublicKey {
   type Err = PublicKeyError;
 
   fn from_str(key: &str) -> Result<Self, Self::Err> {
-    let data = Self::decode_bech32m(key)?.into_body();
+    let mut decoder = Bech32mDecoder::new(Bech32mType::PublicKey, key)?;
+    let inner = decoder.byte_array()?;
+    decoder.done()?;
 
-    let inner = ed25519_dalek::VerifyingKey::from_bytes(&data)
+    let inner = ed25519_dalek::VerifyingKey::from_bytes(&inner)
       .map_err(DalekSignatureError)
       .context(public_key_error::Invalid { key })?;
 
@@ -65,7 +63,9 @@ impl FromStr for PublicKey {
 
 impl Display for PublicKey {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    Self::encode_bech32m(f, Bech32mPayload::from_body(*self.0.as_bytes()))
+    let mut encoder = Bech32mEncoder::new(Bech32mType::PublicKey);
+    encoder.bytes(self.0.as_bytes());
+    write!(f, "{encoder}")
   }
 }
 

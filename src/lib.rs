@@ -19,10 +19,10 @@
 use {
   self::{
     arguments::Arguments,
-    bech32m::Bech32m,
+    bech32m_decoder::Bech32mDecoder,
+    bech32m_encoder::Bech32mEncoder,
     bech32m_error::Bech32mError,
     bech32m_payload::Bech32mPayload,
-    bech32m_suffix::Bech32mSuffix,
     bech32m_type::Bech32mType,
     component::Component,
     component_error::ComponentError,
@@ -64,10 +64,7 @@ use {
   },
   bech32::{
     ByteIterExt, Fe32, Fe32IterExt, Hrp,
-    primitives::{
-      decode::{AsciiToFe32Iter, CheckedHrpstring, CheckedHrpstringError, PaddingError},
-      iter::FesToBytes,
-    },
+    primitives::decode::{CheckedHrpstring, CheckedHrpstringError, PaddingError},
   },
   blake3::Hasher,
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},
@@ -138,10 +135,10 @@ macro_rules! assert_matches {
 }
 
 mod arguments;
-mod bech32m;
+mod bech32m_decoder;
+mod bech32m_encoder;
 mod bech32m_error;
 mod bech32m_payload;
-mod bech32m_suffix;
 mod bech32m_type;
 mod component;
 mod component_error;
@@ -205,6 +202,8 @@ mod pgp;
 mod ssh;
 #[cfg(test)]
 mod test;
+
+const BECH32M_VERSION: Fe32 = Fe32::A;
 
 type Result<T = (), E = Error> = std::result::Result<T, E>;
 
