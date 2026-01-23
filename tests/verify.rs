@@ -461,12 +461,13 @@ fn non_unicode_path_error() {
 
 #[test]
 fn pgp_signature() {
-  const PGP_PUBLIC_KEY: &str = "public1acwq3xkd0mzpcp28tp6uwt5aspdcswvyy56fn3lulyqge070whresetrxl5";
+  const PGP_PUBLIC_KEY: &str = "public1arjvkf7w3c75qc9n8dxzrx2argptgs8kufnz9u0v49aa5h90jtz6s4mdx57";
 
   const PGP_SIGNATURE: &str = concat!(
-    "signature1ap4pecu8prhgfs5ee7lm6nhc3lw7xhf4nv8lj0thh6u5fh5e06quh",
-    "cze8km3sq2f5p6pfprmpkv4cmxgh5qy5etg49fff95psy0vundmjpqkyyz8h5",
-    "z7hg574d2wxftgqy8zmf0aydlqnxys2qnfwxc72p9dp0l",
+    "signature1ap4pytzfklvtvhetxh2466y9zcqjr28tqu0ez6e9kcaa9jsf280mzgz3racdp22rywsj49",
+    "a98tucqe9mstenuweelmu543zgkcu3e9aqsrcqkpxju7m8yy3penqgzl0je46g4r3gqqqqqqqq8sqype",
+    "kzmr5gphx7arpw35k7mnn9eek2ut4da5kzttsvaczummjv727jpzfwp27dts8n202fdxecv0e8z0plew",
+    "gk7cfhtpk59ldusus593pq3ld907us3aagwlnknpedenqgzl0je46g5a8e83p",
   );
 
   Test::new()

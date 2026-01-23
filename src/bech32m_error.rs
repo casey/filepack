@@ -22,6 +22,8 @@ pub enum Bech32mError {
     ty.hrp(),
   ))]
   Hrp { ty: Bech32mType, actual: crate::Hrp },
+  #[snafu(display("bech32m {ty} overlong by {}", Count(*excess, "characters")))]
+  Overlong { excess: usize, ty: Bech32mType },
   #[snafu(display("bech32m {ty} has invalid padding"))]
   Padding {
     ty: Bech32mType,
@@ -45,6 +47,8 @@ pub enum Bech32mError {
     actual: usize,
     ty: Bech32mType,
   },
+  #[snafu(display("bech32m {ty} truncated"))]
+  Truncated { ty: Bech32mType },
   #[snafu(display("bech32m {ty} version `{version}` is not supported"))]
   UnsupportedVersion {
     ty: Bech32mType,

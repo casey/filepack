@@ -4,6 +4,8 @@ pub(crate) struct DisplaySecret(pub(crate) PrivateKey);
 
 impl Display for DisplaySecret {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    PrivateKey::encode_bech32m(f, Bech32mPayload::from_body(self.0.as_secret_bytes()))
+    let mut encoder = Bech32mEncoder::new(Bech32mType::PrivateKey);
+    encoder.bytes(&self.0.as_secret_bytes());
+    write!(f, "{encoder}")
   }
 }

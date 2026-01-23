@@ -7,6 +7,7 @@ pub(crate) trait Bech32m<const PREFIX: usize, const BODY: usize> {
 
   type Suffix: Bech32mSuffix;
 
+  #[cfg(test)]
   fn decode_bech32m(s: &str) -> Result<Bech32mPayload<PREFIX, BODY, Self::Suffix>, Bech32mError> {
     let hrp_string = CheckedHrpstring::new::<bech32::Bech32m>(s)
       .context(bech32m_error::Decode { ty: Self::TYPE })?;
@@ -62,6 +63,7 @@ pub(crate) trait Bech32m<const PREFIX: usize, const BODY: usize> {
     })
   }
 
+  #[cfg(test)]
   fn encode_bech32m(
     f: &mut Formatter,
     payload: Bech32mPayload<PREFIX, BODY, &Self::Suffix>,
@@ -72,22 +74,15 @@ pub(crate) trait Bech32m<const PREFIX: usize, const BODY: usize> {
       suffix,
     } = payload;
 
-    let chars = prefix
-      .into_iter()
-      .chain(
-        body
-          .iter()
-          .copied()
-          .chain(suffix.as_bytes().iter().copied())
-          .bytes_to_fes(),
-      )
-      .with_checksum::<bech32::Bech32m>(Self::TYPE.hrp())
-      .with_witness_version(VERSION)
-      .chars();
+    let mut encoder = Bech32mEncoder::new(Self::TYPE);
 
-    for c in chars {
-      f.write_char(c)?;
-    }
+    encoder.fes(&prefix);
+
+    encoder.bytes(&body);
+
+    encoder.bytes(suffix.as_bytes());
+
+    write!(f, "{encoder}")?;
 
     Ok(())
   }

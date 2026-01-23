@@ -31,7 +31,17 @@ impl Bech32m<3, { Signature::LEN }> for Signature {
 
 impl Display for Signature {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    Self::encode_bech32m(f, self.scheme.payload(self.inner))
+    let mut encoder = Bech32mEncoder::new(Bech32mType::Signature);
+
+    let payload = self.scheme.payload(self.inner);
+
+    encoder.fes(&payload.prefix);
+
+    encoder.bytes(&payload.body);
+
+    encoder.bytes(&payload.suffix);
+
+    write!(f, "{encoder}")
   }
 }
 
@@ -44,16 +54,20 @@ impl fmt::Debug for Signature {
 impl FromStr for Signature {
   type Err = SignatureError;
 
-  fn from_str(signature: &str) -> Result<Self, Self::Err> {
-    let Bech32mPayload {
-      prefix,
-      body,
-      suffix,
-    } = Self::decode_bech32m(signature)?;
+  fn from_str(s: &str) -> Result<Self, Self::Err> {
+    let mut decoder = Bech32mDecoder::new(Bech32mType::Signature, s)?;
+
+    let prefix = decoder.fe_array()?;
+
+    let inner = decoder.byte_array()?;
+
+    let suffix = decoder.into_bytes()?;
+
+    let scheme = SignatureScheme::new(prefix, suffix)?;
 
     Ok(Self {
-      inner: ed25519_dalek::Signature::from_bytes(&body),
-      scheme: SignatureScheme::new(prefix, suffix)?,
+      inner: ed25519_dalek::Signature::from_bytes(&inner),
+      scheme,
     })
   }
 }
@@ -162,7 +176,7 @@ mod tests {
 
     assert_eq!(
       bech32m.parse::<Signature>().unwrap_err().to_string(),
-      "expected bech32m signature to have 3 prefix characters but found 0",
+      "bech32m signature truncated",
     );
   }
 
