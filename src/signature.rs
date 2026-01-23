@@ -89,6 +89,11 @@ mod tests {
     );
 
     case(
+      "signature1af0p%eeas80",
+      "signature hash algorithm `p` not supported with filepack signatures, expected hash algorithm `q`",
+    );
+
+    case(
       "signature1af0q%qqqqqqqqeyyw6u",
       "found unexpected 5 byte suffix on filepack signature",
     );
