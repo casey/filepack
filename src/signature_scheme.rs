@@ -108,24 +108,15 @@ impl SignatureScheme {
     }
   }
 
-  pub(crate) fn payload(
-    &self,
-    signature: ed25519_dalek::Signature,
-  ) -> Bech32mPayload<3, 64, &Vec<u8>> {
-    static EMPTY: Vec<u8> = Vec::new();
-
+  pub(crate) fn payload(&self) -> ([Fe32; 3], &[u8]) {
     let prefix = self.discriminant().prefix();
 
     let suffix = match self {
-      SignatureScheme::Filepack | SignatureScheme::Ssh => &EMPTY,
-      SignatureScheme::Pgp { hashed_area } => hashed_area,
+      SignatureScheme::Filepack | SignatureScheme::Ssh => &[],
+      SignatureScheme::Pgp { hashed_area } => hashed_area.as_slice(),
     };
 
-    Bech32mPayload {
-      body: signature.to_bytes(),
-      prefix,
-      suffix,
-    }
+    (prefix, suffix)
   }
 
   pub(crate) fn signed_data<'a>(&self, message: &'a SerializedMessage) -> Cow<'a, [u8]> {
