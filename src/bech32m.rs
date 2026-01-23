@@ -251,32 +251,6 @@ mod tests {
   }
 
   #[test]
-  fn too_much_padding_rejected() {
-    struct ShortPublicKey;
-
-    impl Bech32m<0, 31> for ShortPublicKey {
-      const TYPE: Bech32mType = Bech32mType::PublicKey;
-      type Suffix = ();
-    }
-
-    let bech32m = iter::repeat_n(Fe32::Q, 51)
-      .with_checksum::<bech32::Bech32m>(ShortPublicKey::TYPE.hrp())
-      .with_witness_version(VERSION)
-      .chars()
-      .collect::<String>();
-
-    let Bech32mError::Padding { ty, source } =
-      ShortPublicKey::decode_bech32m(&bech32m).unwrap_err()
-    else {
-      panic!("expected padding error");
-    };
-
-    assert_eq!(ty, Bech32mType::PublicKey);
-
-    assert_eq!(source, PaddingError::TooMuch);
-  }
-
-  #[test]
   fn prefix_length() {
     struct PrefixedType;
 
@@ -324,6 +298,32 @@ mod tests {
         .to_string(),
       test::PRIVATE_KEY,
     );
+  }
+
+  #[test]
+  fn too_much_padding_rejected() {
+    struct ShortPublicKey;
+
+    impl Bech32m<0, 31> for ShortPublicKey {
+      const TYPE: Bech32mType = Bech32mType::PublicKey;
+      type Suffix = ();
+    }
+
+    let bech32m = iter::repeat_n(Fe32::Q, 51)
+      .with_checksum::<bech32::Bech32m>(ShortPublicKey::TYPE.hrp())
+      .with_witness_version(VERSION)
+      .chars()
+      .collect::<String>();
+
+    let Bech32mError::Padding { ty, source } =
+      ShortPublicKey::decode_bech32m(&bech32m).unwrap_err()
+    else {
+      panic!("expected padding error");
+    };
+
+    assert_eq!(ty, Bech32mType::PublicKey);
+
+    assert_eq!(source, PaddingError::TooMuch);
   }
 
   #[test]
