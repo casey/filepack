@@ -62,9 +62,9 @@ mod tests {
   #[test]
   fn error_display() {
     #[track_caller]
-    fn case(bech32m: &str, expected: &str) {
+    fn case(bech32: &str, expected: &str) {
       assert_eq!(
-        bech32m
+        bech32
           .replace('%', &"q".repeat(103))
           .parse::<Signature>()
           .unwrap_err()
@@ -73,7 +73,7 @@ mod tests {
       );
     }
 
-    case("foo", "failed to decode bech32m signature");
+    case("foo", "failed to decode bech32 signature");
 
     case(
       "signature1aq0q%62zsmd",
@@ -112,11 +112,11 @@ mod tests {
   #[test]
   fn round_trip() {
     #[track_caller]
-    fn case(bech32m: &str, expected: SignatureSchemeType) {
-      let bech32m = bech32m.replace('%', &"q".repeat(103));
-      let signature = bech32m.parse::<Signature>().unwrap();
+    fn case(bech32: &str, expected: SignatureSchemeType) {
+      let bech32 = bech32.replace('%', &"q".repeat(103));
+      let signature = bech32.parse::<Signature>().unwrap();
       assert_eq!(signature.scheme.discriminant(), expected);
-      assert_eq!(signature.to_string(), bech32m);
+      assert_eq!(signature.to_string(), bech32);
     }
     case("signature1af0q%fwxcmn", SignatureSchemeType::Filepack);
     case("signature1ap4p%qqypqxpq4vxtfa", SignatureSchemeType::Pgp);

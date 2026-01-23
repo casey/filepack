@@ -9,7 +9,7 @@ fn decode() {
 }
 
 #[test]
-fn decode_invalid_bech32m() {
+fn decode_invalid_bech32() {
   Test::new()
     .args(["bech32", "--decode", "invalid"])
     .stderr_regex("error: failed to decode bech32 `invalid`\n.*")

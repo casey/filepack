@@ -14,7 +14,7 @@ use {
   },
 };
 
-mod bech32m;
+mod bech32;
 mod contains;
 mod create;
 mod data_dir;
