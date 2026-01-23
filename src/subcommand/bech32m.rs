@@ -42,20 +42,20 @@ impl Bech32m {
           bech32m: bech32m.clone(),
         })?;
 
-      let mut fe32s = hrp_string
+      let mut fes = hrp_string
         .fe32_iter::<std::vec::IntoIter<u8>>()
         .collect::<Vec<Fe32>>();
 
       if let Some(prefix) = prefix {
         ensure! {
-          fe32s.starts_with(&prefix),
+          fes.starts_with(&prefix),
           error::Bech32mPrefixMissing,
         }
 
-        fe32s.drain(..prefix.len());
+        fes.drain(..prefix.len());
       }
 
-      let bytes = fe32s.into_iter().fes_to_bytes().collect::<Vec<u8>>();
+      let bytes = fes.into_iter().fes_to_bytes().collect::<Vec<u8>>();
       let hex = hex::encode(bytes);
       println!("{hex}");
     } else {
@@ -63,7 +63,7 @@ impl Bech32m {
       let hex = self.encode.unwrap();
       let hex = hex::decode(&hex).context(error::Hex { hex })?;
 
-      let fe32s = if let Some(prefix) = prefix {
+      let fes = if let Some(prefix) = prefix {
         prefix
           .into_iter()
           .chain(hex.iter().copied().bytes_to_fes())
@@ -72,7 +72,7 @@ impl Bech32m {
         hex.iter().copied().bytes_to_fes().collect::<Vec<Fe32>>()
       };
 
-      for c in fe32s
+      for c in fes
         .into_iter()
         .with_checksum::<bech32::Bech32m>(&hrp)
         .chars()

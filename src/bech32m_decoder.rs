@@ -1,7 +1,5 @@
 use super::*;
 
-const FE32_BITS: usize = 5;
-
 pub(crate) struct Bech32mDecoder<'a> {
   data: &'a [u8],
   i: usize,
@@ -20,7 +18,7 @@ impl<'a> Bech32mDecoder<'a> {
   }
 
   fn bytes(&mut self, len: usize) -> Result<impl Iterator<Item = u8>, Bech32mError> {
-    let fe_len = (len * 8).div_ceil(FE32_BITS);
+    let fe_len = (len * 8).div_ceil(5);
 
     let fes = self.fes(fe_len)?;
 
