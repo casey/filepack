@@ -25,6 +25,14 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     source: bech32::primitives::hrp::Error,
   },
+  #[snafu(display("invalid bech32m prefix character `{character}`"))]
+  Bech32mPrefix {
+    backtrace: Option<Backtrace>,
+    character: char,
+    source: bech32::primitives::gf32::FromCharError,
+  },
+  #[snafu(display("bech32m prefix missing"))]
+  Bech32mPrefixMissing { backtrace: Option<Backtrace> },
   #[snafu(display("invalid bech32m version character `{version}`"))]
   Bech32mVersion {
     backtrace: Option<Backtrace>,
