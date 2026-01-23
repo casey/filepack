@@ -54,10 +54,10 @@ impl PrivateKey {
 }
 
 impl FromStr for PrivateKey {
-  type Err = Bech32mError;
+  type Err = Bech32Error;
 
   fn from_str(key: &str) -> Result<Self, Self::Err> {
-    let mut decoder = Bech32mDecoder::new(Bech32mType::PrivateKey, key)?;
+    let mut decoder = Bech32Decoder::new(Bech32Type::PrivateKey, key)?;
     let inner = decoder.byte_array()?;
     decoder.done()?;
 

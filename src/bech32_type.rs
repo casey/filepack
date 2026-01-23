@@ -1,14 +1,14 @@
 use super::*;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum Bech32mType {
+pub enum Bech32Type {
   Fingerprint,
   PrivateKey,
   PublicKey,
   Signature,
 }
 
-impl Bech32mType {
+impl Bech32Type {
   pub(crate) fn hrp(self) -> &'static Hrp {
     static FINGERPRINT: Hrp = Hrp::parse_unchecked("package");
     static PRIVATE_KEY: Hrp = Hrp::parse_unchecked("private");
@@ -24,7 +24,7 @@ impl Bech32mType {
   }
 }
 
-impl Display for Bech32mType {
+impl Display for Bech32Type {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     match self {
       Self::Fingerprint => write!(f, "package fingerprint"),

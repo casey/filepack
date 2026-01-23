@@ -4,7 +4,7 @@ use super::*;
 #[snafu(context(suffix(false)), visibility(pub(crate)))]
 pub enum SignatureError {
   #[snafu(transparent)]
-  Bech32m { source: Bech32mError },
+  Bech32 { source: Bech32Error },
   #[snafu(display("{scheme} signature suffix length {length} exceeds maximum {maximum}",))]
   SuffixLength {
     length: usize,

@@ -4,7 +4,7 @@ use super::*;
 #[snafu(context(suffix(false)), visibility(pub(crate)))]
 pub enum PublicKeyError {
   #[snafu(transparent)]
-  Bech32m { source: Bech32mError },
+  Bech32 { source: Bech32Error },
   #[snafu(display("invalid public key: `{key}`"))]
   Invalid {
     key: String,

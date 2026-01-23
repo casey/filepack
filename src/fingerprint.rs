@@ -14,17 +14,17 @@ impl Fingerprint {
 
 impl Display for Fingerprint {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    let mut encoder = Bech32mEncoder::new(Bech32mType::Fingerprint);
+    let mut encoder = Bech32Encoder::new(Bech32Type::Fingerprint);
     encoder.bytes(self.as_bytes());
     write!(f, "{encoder}")
   }
 }
 
 impl FromStr for Fingerprint {
-  type Err = Bech32mError;
+  type Err = Bech32Error;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
-    let mut decoder = Bech32mDecoder::new(Bech32mType::Fingerprint, s)?;
+    let mut decoder = Bech32Decoder::new(Bech32Type::Fingerprint, s)?;
     let inner = decoder.byte_array()?;
     decoder.done()?;
     Ok(Self(inner.into()))

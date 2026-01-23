@@ -44,7 +44,7 @@ impl FromStr for PublicKey {
   type Err = PublicKeyError;
 
   fn from_str(key: &str) -> Result<Self, Self::Err> {
-    let mut decoder = Bech32mDecoder::new(Bech32mType::PublicKey, key)?;
+    let mut decoder = Bech32Decoder::new(Bech32Type::PublicKey, key)?;
     let inner = decoder.byte_array()?;
     decoder.done()?;
 
@@ -63,7 +63,7 @@ impl FromStr for PublicKey {
 
 impl Display for PublicKey {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    let mut encoder = Bech32mEncoder::new(Bech32mType::PublicKey);
+    let mut encoder = Bech32Encoder::new(Bech32Type::PublicKey);
     encoder.bytes(self.0.as_bytes());
     write!(f, "{encoder}")
   }
