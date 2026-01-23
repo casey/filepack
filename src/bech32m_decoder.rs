@@ -111,7 +111,7 @@ impl<'a> Bech32mDecoder<'a> {
 
     let mut fes = hrp_string.fe32_iter::<std::vec::IntoIter<u8>>();
 
-    let version = fes.next().context(bech32m_error::VersionMissing { ty })?;
+    let version = fes.next().context(bech32m_error::Truncated { ty })?;
 
     ensure! {
       version == BECH32M_VERSION,
