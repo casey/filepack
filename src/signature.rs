@@ -25,15 +25,10 @@ impl Signature {
 impl Display for Signature {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     let mut encoder = Bech32mEncoder::new(Bech32mType::Signature);
-
     let payload = self.scheme.payload(self.inner);
-
     encoder.fes(&payload.prefix);
-
     encoder.bytes(&payload.body);
-
     encoder.bytes(payload.suffix);
-
     write!(f, "{encoder}")
   }
 }
