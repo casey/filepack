@@ -19,28 +19,6 @@ pub(crate) const SIGNATURE: &str = concat!(
 pub(crate) const WEAK_PUBLIC_KEY: &str =
   "public1aqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqsqtuc8";
 
-#[allow(dead_code)]
-#[track_caller]
-pub(crate) fn checksum(s: &str) -> &str {
-  let unchecked = UncheckedHrpstring::new(s)
-    .unwrap()
-    .remove_checksum::<bech32::Bech32m>();
-
-  let hrp = unchecked.hrp();
-
-  let data = unchecked
-    .data_part_ascii_no_checksum()
-    .iter()
-    .map(|c| Fe32::from_char(char::from(*c)).unwrap());
-
-  let encoded = data
-    .with_checksum::<bech32::Bech32m>(&hrp)
-    .chars()
-    .collect::<String>();
-
-  panic!("{encoded}");
-}
-
 #[test]
 fn hash_is_valid() {
   HASH.parse::<Hash>().unwrap();
