@@ -27,7 +27,6 @@ impl PublicKey {
     Ok(Self(key))
   }
 
-  #[must_use]
   pub fn inner(&self) -> ed25519_dalek::VerifyingKey {
     self.0
   }

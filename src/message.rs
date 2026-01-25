@@ -7,7 +7,6 @@ pub struct Message {
 }
 
 impl Message {
-  #[must_use]
   pub fn serialize(&self) -> SerializedMessage {
     let mut serializer =
       FingerprintSerializer::new(FingerprintPrefix::Message, Vec::new()).unwrap();

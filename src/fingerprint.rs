@@ -6,7 +6,6 @@ pub struct Fingerprint(pub(crate) Hash);
 impl Fingerprint {
   pub(crate) const LEN: usize = Hash::LEN;
 
-  #[must_use]
   pub(crate) fn as_bytes(&self) -> &[u8; Self::LEN] {
     self.0.as_bytes()
   }

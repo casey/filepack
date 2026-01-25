@@ -43,7 +43,6 @@ impl PrivateKey {
     Ok(private_key)
   }
 
-  #[must_use]
   pub fn public_key(&self) -> PublicKey {
     self.clone().into()
   }
