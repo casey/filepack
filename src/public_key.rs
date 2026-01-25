@@ -6,6 +6,12 @@ pub struct PublicKey(ed25519_dalek::VerifyingKey);
 impl PublicKey {
   pub(crate) const LEN: usize = ed25519_dalek::PUBLIC_KEY_LENGTH;
 
+  fn encode_bytes(bytes: [u8; Self::LEN]) -> Bech32Encoder {
+    let mut encoder = Bech32Encoder::new(Bech32Type::PublicKey);
+    encoder.bytes(&bytes);
+    encoder
+  }
+
   pub fn from_bytes(bytes: [u8; Self::LEN]) -> Result<Self, PublicKeyError> {
     let format = || Self::encode_bytes(bytes).to_string();
 
@@ -40,12 +46,6 @@ impl PublicKey {
 
   pub fn verify(self, message: &SerializedMessage, signature: &Signature) -> Result {
     signature.verify(message, self)
-  }
-
-  fn encode_bytes(bytes: [u8; Self::LEN]) -> Bech32Encoder {
-    let mut encoder = Bech32Encoder::new(Bech32Type::PublicKey);
-    encoder.bytes(&bytes);
-    encoder
   }
 }
 

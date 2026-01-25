@@ -19,7 +19,7 @@ fn ssh_keygen_signatures_can_be_verified() {
     PublicKey::from_bytes(public_key.0).unwrap()
   };
 
-  let private_key = {
+  {
     let private_key = ssh_key::PrivateKey::from_openssh(private_key_str).unwrap();
 
     let ssh_key::private::KeypairData::Ed25519(keypair) = private_key.key_data() else {
@@ -34,9 +34,7 @@ fn ssh_keygen_signatures_can_be_verified() {
     let private_key = PrivateKey::from_bytes(keypair.private.to_bytes());
 
     assert_eq!(private_key.public_key(), public_key);
-
-    private_key
-  };
+  }
 
   let signature = {
     let signature = signature_str.parse::<ssh_key::SshSig>().unwrap();
