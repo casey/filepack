@@ -41,7 +41,6 @@ impl Manifest {
     files
   }
 
-  #[must_use]
   pub fn fingerprint(&self) -> Fingerprint {
     Fingerprint(self.files.fingerprint())
   }

@@ -61,6 +61,7 @@ float-cmp = "allow"
 large_enum_variant = "allow"
 missing-errors-doc = "allow"
 missing-panics-doc = "allow"
+must-use-candidate = "allow"
 needless-pass-by-value = "allow"
 pedantic = { level = "deny", priority = -1 }
 result-large-err = "allow"

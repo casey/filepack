@@ -4,15 +4,29 @@ use super::*;
 pub struct PublicKey(ed25519_dalek::VerifyingKey);
 
 impl PublicKey {
-  #[cfg(test)]
   pub(crate) const LEN: usize = ed25519_dalek::PUBLIC_KEY_LENGTH;
 
-  #[cfg(test)]
-  pub(crate) fn from_bytes(bytes: [u8; Self::LEN]) -> Self {
-    Self(ed25519_dalek::VerifyingKey::from_bytes(&bytes).unwrap())
+  fn encode_bytes(bytes: [u8; Self::LEN]) -> Bech32Encoder {
+    let mut encoder = Bech32Encoder::new(Bech32Type::PublicKey);
+    encoder.bytes(&bytes);
+    encoder
   }
 
-  #[must_use]
+  pub fn from_bytes(bytes: [u8; Self::LEN]) -> Result<Self, PublicKeyError> {
+    let format = || Self::encode_bytes(bytes).to_string();
+
+    let key = ed25519_dalek::VerifyingKey::from_bytes(&bytes)
+      .map_err(DalekSignatureError)
+      .context(public_key_error::Invalid { key: format() })?;
+
+    ensure! {
+      !key.is_weak(),
+      public_key_error::Weak { key: format() },
+    }
+
+    Ok(Self(key))
+  }
+
   pub fn inner(&self) -> ed25519_dalek::VerifyingKey {
     self.0
   }
@@ -48,24 +62,13 @@ impl FromStr for PublicKey {
     let inner = decoder.byte_array()?;
     decoder.done()?;
 
-    let inner = ed25519_dalek::VerifyingKey::from_bytes(&inner)
-      .map_err(DalekSignatureError)
-      .context(public_key_error::Invalid { key })?;
-
-    ensure! {
-      !inner.is_weak(),
-      public_key_error::Weak { key },
-    }
-
-    Ok(Self(inner))
+    Self::from_bytes(inner)
   }
 }
 
 impl Display for PublicKey {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    let mut encoder = Bech32Encoder::new(Bech32Type::PublicKey);
-    encoder.bytes(self.0.as_bytes());
-    write!(f, "{encoder}")
+    write!(f, "{}", Self::encode_bytes(*self.0.as_bytes()))
   }
 }
 

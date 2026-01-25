@@ -10,13 +10,14 @@ impl PrivateKey {
     self.0.to_bytes()
   }
 
-  pub(crate) fn display_secret(&self) -> DisplaySecret {
+  pub fn display_secret(&self) -> DisplaySecret {
     DisplaySecret(self.clone())
   }
 
-  #[cfg(test)]
-  pub(crate) fn from_bytes(bytes: [u8; Self::LEN]) -> Self {
-    Self(ed25519_dalek::SigningKey::from_bytes(&bytes))
+  pub fn from_bytes(bytes: [u8; Self::LEN]) -> Self {
+    let inner = ed25519_dalek::SigningKey::from_bytes(&bytes);
+    assert!(!inner.verifying_key().is_weak());
+    Self(inner)
   }
 
   pub(crate) fn generate() -> Self {
@@ -42,7 +43,6 @@ impl PrivateKey {
     Ok(private_key)
   }
 
-  #[must_use]
   pub fn public_key(&self) -> PublicKey {
     self.clone().into()
   }

@@ -460,34 +460,6 @@ fn non_unicode_path_error() {
 }
 
 #[test]
-fn pgp_signature() {
-  const PGP_PUBLIC_KEY: &str = "public1arjvkf7w3c75qc9n8dxzrx2argptgs8kufnz9u0v49aa5h90jtz6s4mdx57";
-
-  const PGP_SIGNATURE: &str = concat!(
-    "signature1ap4pytzfklvtvhetxh2466y9zcqjr28tqu0ez6e9kcaa9jsf280mzgz3racdp22rywsj49",
-    "a98tucqe9mstenuweelmu543zgkcu3e9aqsrcqkpxju7m8yy3penqgzl0je46g4r3gqqqqqqqq8sqype",
-    "kzmr5gphx7arpw35k7mnn9eek2ut4da5kzttsvaczummjv727jpzfwp27dts8n202fdxecv0e8z0plew",
-    "gk7cfhtpk59ldusus593pq3ld907us3aagwlnknpedenqgzl0je46g5a8e83p",
-  );
-
-  Test::new()
-    .write(
-      "filepack.json",
-      json! {
-        files: {},
-        notes: [{
-          signatures: {
-            *PGP_PUBLIC_KEY: PGP_SIGNATURE
-          },
-        }],
-      },
-    )
-    .args(["verify", "--key", PGP_PUBLIC_KEY])
-    .stderr("successfully verified 0 files with 1 signature across 1 note\n")
-    .success();
-}
-
-#[test]
 fn print() {
   let manifest = json! {
     files: {
@@ -626,32 +598,6 @@ error: 1 mismatched file
 ",
     )
     .failure();
-}
-
-#[test]
-fn ssh_signature() {
-  const SSH_PUBLIC_KEY: &str = "public1ahqxwdactcarld802yzplrfm0vx5kngnwth2prqhxty9kxhzst6vqg57sw8";
-
-  const SSH_SIGNATURE: &str = concat!(
-    "signature1as0pyhmvp2z3agzqzpqdemkq6g5tejdaqrgd3pu4sa66le9jylk",
-    "em3aln6lsn8ma088kmsc6d8c6j9ytsyh88xvzkmm4uh0x7xcgz72gyrc5psl89",
-  );
-
-  Test::new()
-    .write(
-      "filepack.json",
-      json! {
-        files: {},
-        notes: [{
-          signatures: {
-            *SSH_PUBLIC_KEY: SSH_SIGNATURE
-          },
-        }],
-      },
-    )
-    .args(["verify", "--key", SSH_PUBLIC_KEY])
-    .stderr("successfully verified 0 files with 1 signature across 1 note\n")
-    .success();
 }
 
 #[test]

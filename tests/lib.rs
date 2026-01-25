@@ -1,7 +1,10 @@
 use {
   self::{expected::Expected, test::Test},
   camino::{Utf8Path, Utf8PathBuf},
-  filepack::{Manifest, Message, Note, PrivateKey, PublicKey, Signature, assert_matches},
+  filepack::{
+    Directory, Manifest, Message, Note, PrivateKey, PublicKey, SerializedMessage, Signature,
+    SignatureScheme, assert_matches,
+  },
   regex::Regex,
   std::{
     collections::BTreeMap,
@@ -35,8 +38,10 @@ mod message;
 mod metadata;
 mod misc;
 mod notes;
+mod pgp;
 mod sign;
 mod size;
+mod ssh;
 mod test;
 mod verify;
 
