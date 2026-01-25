@@ -38,6 +38,7 @@ mod message;
 mod metadata;
 mod misc;
 mod notes;
+mod pgp;
 mod sign;
 mod size;
 mod ssh;

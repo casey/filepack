@@ -196,8 +196,6 @@ mod ticked;
 mod utf8_path_ext;
 
 #[cfg(test)]
-mod pgp;
-#[cfg(test)]
 mod test;
 
 const BECH32_VERSION: Fe32 = Fe32::A;
