@@ -13,8 +13,9 @@
 //! long as the manifest itself is kept secure.
 //!
 //! The `filepack` library crate is not intended for general consumption, and
-//! exists mainly to facilitate code-sharing between the `filepack` binary and
-//! integration tests. As such, it provides no semantic versioning guarantees.
+//! exists only to facilitate code-sharing between the `filepack` binary and
+//! integration tests. As such, it should not be used by outside consumers, and
+//! provides no semantic versioning guarantees.
 
 use {
   self::{
@@ -54,7 +55,7 @@ use {
     public_key_error::PublicKeyError,
     sign_options::SignOptions,
     signature_error::SignatureError,
-    signature_scheme::{SignatureScheme, SignatureSchemeType},
+    signature_scheme::SignatureSchemeType,
     style::Style,
     subcommand::Subcommand,
     tag::Tag,
@@ -105,7 +106,7 @@ pub use self::{
   directory::Directory, entry::Entry, error::Error, file::File, fingerprint::Fingerprint,
   hash::Hash, manifest::Manifest, message::Message, note::Note, private_key::PrivateKey,
   public_key::PublicKey, relative_path::RelativePath, serialized_message::SerializedMessage,
-  signature::Signature,
+  signature::Signature, signature_scheme::SignatureScheme,
 };
 
 #[cfg(test)]

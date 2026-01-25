@@ -1,4 +1,4 @@
-pub struct SerializedMessage(pub(crate) Vec<u8>);
+pub struct SerializedMessage(pub Vec<u8>);
 
 impl SerializedMessage {
   #[must_use]

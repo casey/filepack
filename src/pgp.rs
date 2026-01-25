@@ -40,7 +40,7 @@ fn gpg_v4_signatures_can_be_verified() {
     };
 
     let (public_key_bytes, _) = q.decode_point(&Curve::Ed25519).unwrap();
-    PublicKey::from_bytes(public_key_bytes.try_into().unwrap())
+    PublicKey::from_bytes(public_key_bytes.try_into().unwrap()).unwrap()
   };
 
   {
@@ -181,7 +181,7 @@ fn pgp_v4_signatures_can_be_generated_and_verified() {
 
     let (public_key_bytes, _) = q.decode_point(&Curve::Ed25519).unwrap();
 
-    PublicKey::from_bytes(public_key_bytes.try_into().unwrap())
+    PublicKey::from_bytes(public_key_bytes.try_into().unwrap()).unwrap()
   };
 
   // check signature

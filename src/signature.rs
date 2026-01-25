@@ -7,7 +7,7 @@ pub struct Signature {
 }
 
 impl Signature {
-  pub(crate) fn new(scheme: SignatureScheme, inner: ed25519_dalek::Signature) -> Self {
+  pub fn new(scheme: SignatureScheme, inner: ed25519_dalek::Signature) -> Self {
     Self { inner, scheme }
   }
 

@@ -4,12 +4,13 @@ use super::*;
 pub struct PublicKey(ed25519_dalek::VerifyingKey);
 
 impl PublicKey {
-  #[cfg(test)]
   pub(crate) const LEN: usize = ed25519_dalek::PUBLIC_KEY_LENGTH;
 
-  #[cfg(test)]
-  pub(crate) fn from_bytes(bytes: [u8; Self::LEN]) -> Self {
-    Self(ed25519_dalek::VerifyingKey::from_bytes(&bytes).unwrap())
+  pub fn from_bytes(bytes: [u8; Self::LEN]) -> Result<Self, PublicKeyError> {
+    // todo: assert not weak
+    Ok(Self(
+      ed25519_dalek::VerifyingKey::from_bytes(&bytes).unwrap(),
+    ))
   }
 
   #[must_use]

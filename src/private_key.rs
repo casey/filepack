@@ -10,12 +10,12 @@ impl PrivateKey {
     self.0.to_bytes()
   }
 
-  pub(crate) fn display_secret(&self) -> DisplaySecret {
+  pub fn display_secret(&self) -> DisplaySecret {
     DisplaySecret(self.clone())
   }
 
-  #[cfg(test)]
-  pub(crate) fn from_bytes(bytes: [u8; Self::LEN]) -> Self {
+  pub fn from_bytes(bytes: [u8; Self::LEN]) -> Self {
+    // todo: assert not weak
     Self(ed25519_dalek::SigningKey::from_bytes(&bytes))
   }
 

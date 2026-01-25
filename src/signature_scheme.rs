@@ -5,7 +5,7 @@ use {
 
 #[derive(Clone, Debug, EnumDiscriminants, PartialEq)]
 #[strum_discriminants(name(SignatureSchemeType), derive(EnumIter), vis(pub))]
-pub(crate) enum SignatureScheme {
+pub enum SignatureScheme {
   Filepack,
   Pgp { hashed_area: Vec<u8> },
   Ssh,
