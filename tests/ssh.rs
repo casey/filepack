@@ -48,9 +48,24 @@ fn ssh_keygen_signatures_can_be_verified() {
 
   signature.verify(&message, public_key).unwrap();
 
-  eprintln!("SSH_PRIVATE_KEY: {}", private_key.display_secret());
-  eprintln!("SSH_PUBLIC_KEY: {public_key}");
-  eprintln!("SSH_SIGNATURE: {signature}");
+  let public_key = public_key.to_string();
+  let signature = signature.to_string();
+
+  Test::new()
+    .write(
+      "filepack.json",
+      json! {
+        files: {},
+        notes: [{
+          signatures: {
+            *public_key: signature,
+          },
+        }],
+      },
+    )
+    .args(["verify", "--key", &public_key])
+    .stderr("successfully verified 0 files with 1 signature across 1 note\n")
+    .success();
 }
 
 #[test]
@@ -96,4 +111,24 @@ fn ssh_signatures_can_be_generated_and_verified() {
   };
 
   signature.verify(&message, public_key).unwrap();
+
+  let public_key = public_key.to_string();
+
+  let signature = signature.to_string();
+
+  Test::new()
+    .write(
+      "filepack.json",
+      json! {
+        files: {},
+        notes: [{
+          signatures: {
+            *public_key: signature,
+          },
+        }],
+      },
+    )
+    .args(["verify", "--key", &public_key])
+    .stderr("successfully verified 0 files with 1 signature across 1 note\n")
+    .success();
 }

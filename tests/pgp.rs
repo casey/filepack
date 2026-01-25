@@ -97,8 +97,24 @@ fn gpg_v4_signatures_can_be_verified() {
 
   signature.verify(&message, public_key).unwrap();
 
-  eprintln!("GPG_PUBLIC_KEY: {public_key}");
-  eprintln!("GPG_SIGNATURE: {signature}");
+  let public_key = public_key.to_string();
+  let signature = signature.to_string();
+
+  Test::new()
+    .write(
+      "filepack.json",
+      json! {
+        files: {},
+        notes: [{
+          signatures: {
+            *public_key: signature,
+          },
+        }],
+      },
+    )
+    .args(["verify", "--key", &public_key])
+    .stderr("successfully verified 0 files with 1 signature across 1 note\n")
+    .success();
 }
 
 #[test]
@@ -245,7 +261,22 @@ fn pgp_v4_signatures_can_be_generated_and_verified() {
   // verify signature
   signature.verify(&message, public_key).unwrap();
 
-  eprintln!("PGP_PRIVATE_KEY: {}", private_key.display_secret());
-  eprintln!("PGP_PUBLIC_KEY: {public_key}");
-  eprintln!("PGP_SIGNATURE: {signature}");
+  let public_key = public_key.to_string();
+  let signature = signature.to_string();
+
+  Test::new()
+    .write(
+      "filepack.json",
+      json! {
+        files: {},
+        notes: [{
+          signatures: {
+            *public_key: signature,
+          },
+        }],
+      },
+    )
+    .args(["verify", "--key", &public_key])
+    .stderr("successfully verified 0 files with 1 signature across 1 note\n")
+    .success();
 }
