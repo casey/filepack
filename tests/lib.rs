@@ -2,8 +2,8 @@ use {
   self::{expected::Expected, test::Test},
   camino::{Utf8Path, Utf8PathBuf},
   filepack::{
-    Manifest, Message, Note, PrivateKey, PublicKey, SerializedMessage, Signature, SignatureScheme,
-    assert_matches,
+    Directory, Manifest, Message, Note, PrivateKey, PublicKey, SerializedMessage, Signature,
+    SignatureScheme, assert_matches,
   },
   regex::Regex,
   std::{

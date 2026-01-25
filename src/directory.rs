@@ -65,7 +65,7 @@ impl Directory {
     hasher.finalize()
   }
 
-  pub(crate) fn new() -> Self {
+  pub fn new() -> Self {
     Self::default()
   }
 }
