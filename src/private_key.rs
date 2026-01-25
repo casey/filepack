@@ -15,8 +15,9 @@ impl PrivateKey {
   }
 
   pub fn from_bytes(bytes: [u8; Self::LEN]) -> Self {
-    // todo: assert not weak
-    Self(ed25519_dalek::SigningKey::from_bytes(&bytes))
+    let inner = ed25519_dalek::SigningKey::from_bytes(&bytes);
+    assert!(!inner.verifying_key().is_weak());
+    Self(inner)
   }
 
   pub(crate) fn generate() -> Self {
