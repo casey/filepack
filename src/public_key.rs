@@ -61,7 +61,6 @@ impl FromStr for PublicKey {
     let mut decoder = Bech32Decoder::new(Bech32Type::PublicKey, key)?;
     let inner = decoder.byte_array()?;
     decoder.done()?;
-
     Self::from_bytes(inner)
   }
 }
