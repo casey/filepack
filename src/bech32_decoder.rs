@@ -14,6 +14,13 @@ impl<'a> Bech32Decoder<'a> {
       *slot = byte;
     }
 
+    let excess = self.data.len() - self.i;
+
+    ensure! {
+      excess == 0,
+      bech32_error::Overlong { excess, ty: self.ty },
+    }
+
     Ok(array)
   }
 
@@ -41,17 +48,6 @@ impl<'a> Bech32Decoder<'a> {
     }
 
     Ok(fes.fes_to_bytes())
-  }
-
-  pub(crate) fn done(self) -> Result<(), Bech32Error> {
-    let excess = self.data.len() - self.i;
-
-    ensure! {
-      excess == 0,
-      bech32_error::Overlong { excess, ty: self.ty },
-    }
-
-    Ok(())
   }
 
   fn fes(
