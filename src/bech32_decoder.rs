@@ -114,6 +114,18 @@ mod tests {
   }
 
   #[test]
+  fn private_key_round_trip() {
+    assert_eq!(
+      test::PRIVATE_KEY
+        .parse::<PrivateKey>()
+        .unwrap()
+        .display_secret()
+        .to_string(),
+      test::PRIVATE_KEY,
+    );
+  }
+
+  #[test]
   fn round_trip() {
     #[track_caller]
     fn case<T: FromStr + ToString>(s: &str)
@@ -126,17 +138,5 @@ mod tests {
     case::<Fingerprint>(test::FINGERPRINT);
     case::<PublicKey>(test::PUBLIC_KEY);
     case::<Signature>(test::SIGNATURE);
-  }
-
-  #[test]
-  fn private_key_round_trip() {
-    assert_eq!(
-      test::PRIVATE_KEY
-        .parse::<PrivateKey>()
-        .unwrap()
-        .display_secret()
-        .to_string(),
-      test::PRIVATE_KEY,
-    );
   }
 }
