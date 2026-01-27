@@ -7,7 +7,7 @@ pub(crate) struct Bech32Decoder<'a> {
 }
 
 impl<'a> Bech32Decoder<'a> {
-  pub(crate) fn byte_array<const LEN: usize>(&mut self) -> Result<[u8; LEN], Bech32Error> {
+  pub(crate) fn byte_array<const LEN: usize>(mut self) -> Result<[u8; LEN], Bech32Error> {
     let mut array = [0; LEN];
 
     for (slot, byte) in array.iter_mut().zip(self.bytes(LEN)?) {
