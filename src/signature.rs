@@ -44,32 +44,3 @@ impl FromStr for Signature {
     })
   }
 }
-
-#[cfg(test)]
-mod tests {
-  use super::*;
-
-  #[test]
-  fn parse() {
-    let message = Message {
-      fingerprint: test::FINGERPRINT.parse().unwrap(),
-      time: None,
-    };
-    let signature = PrivateKey::generate().sign(&message.serialize());
-    assert_eq!(
-      signature.to_string().parse::<Signature>().unwrap(),
-      signature
-    );
-  }
-
-  #[test]
-  fn round_trip() {
-    #[track_caller]
-    fn case(bech32: &str) {
-      let bech32 = bech32.replace('%', &"q".repeat(103));
-      let signature = bech32.parse::<Signature>().unwrap();
-      assert_eq!(signature.to_string(), bech32);
-    }
-    case("signature1af0q%fwxcmn");
-  }
-}

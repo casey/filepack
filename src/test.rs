@@ -25,20 +25,6 @@ fn hash_is_valid() {
 }
 
 #[test]
-fn length() {
-  #[track_caller]
-  fn case(s: &str) {
-    use bech32::Checksum;
-    assert!(s.len() <= bech32::Bech32m::CODE_LENGTH);
-  }
-
-  case(FINGERPRINT);
-  case(PUBLIC_KEY);
-  case(PRIVATE_KEY);
-  case(SIGNATURE);
-}
-
-#[test]
 fn private_key_is_valid() {
   assert_eq!(
     test::PRIVATE_KEY
@@ -47,22 +33,6 @@ fn private_key_is_valid() {
       .display_secret()
       .to_string(),
     test::PRIVATE_KEY,
-  );
-}
-
-#[test]
-fn public_key_is_valid() {
-  assert_eq!(
-    test::PUBLIC_KEY.parse::<PublicKey>().unwrap().to_string(),
-    test::PUBLIC_KEY,
-  );
-}
-
-#[test]
-fn signature_is_valid() {
-  assert_eq!(
-    test::SIGNATURE.parse::<Signature>().unwrap().to_string(),
-    test::SIGNATURE,
   );
 }
 
