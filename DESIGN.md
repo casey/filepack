@@ -8,18 +8,6 @@ Open Questions
   since deriving a key with an explicit context seems like good practice, but
   ed25519-dalek doesn't support it.
 
-- *Should filepack attempt to support PGP v5 (LibraPGP) or PGP v6 signatures?*
-  In the case of v5, no additional data is needed, we would only be generating
-  different message bytes. In the case of v6, we need an additional 32-byte
-  salt. Because the bech32m PGP signature string is already `signature1ap4…`,
-  it would be easy to add v5 and v6 variants.
-
-- *Should filepack attempt to support other signature schemes, like signify and
-  minisign?* Any existing signature scheme which uses Ed25519 and SHA-512 and
-  signs a superset of the message signed by the core filepack scheme could be
-  supported and treated interchangeably. I think it's really only a question of
-  demand.
-
 - *Should filepack bech32m signature strings include the public key?* This
   would allow them to be self-describing and potentially easier to handle. If
   we did this, the map of public keys to signatures in the notes struct would
@@ -35,55 +23,15 @@ Open Questions
   will be detectable by failing to verify, but I want to make sure my
   understanding is correct.
 
-- *Will signatures made with existing PGP and SSH keys pass strict
-  verification?* We use ed25519-dalek's strict verification of signatures. This
-  prevents certain kind of signature malleability issues, however it was not
-  part of the original RFC, and I wonder if there are any users with existing
-  PGP and SSH keys which fail strict verification.
-
 Closed Questions
-
-- *Should filepack signatures include an additional byte specifying the hashing
-  algorithm?* Currently, three filepack signature types are supported,
-  filepack, PGP, and SSH. All use Ed25519 as the signature scheme. The filepack
-  signature scheme signs an unhashed message, so no other hashing algorithms
-  are in use. SSH on the other hand signs a message including a hash of the
-  message, and PGP signs a hash of an outer message that includes the inner
-  message. Currently, we only allow SHA-512 as the hash algorithm in SSH and
-  PGP signatures. This is both because it is the default algorithm that
-  `ssh-keygen` and `gpg` use when creating Ed25519 signatures, and because
-  Ed25519 uses SHA-512 internally, so using any other hashing algorithm
-  introduces a new dependency. So, and here we finally get to the question,
-  should we add a byte to the `signature1a…` bech32 representation of
-  signatures which represents the hashing algorithm? This would allow us to
-  extend the existing signature encoding scheme to support multiple hashing
-  algorithms, although we would only do that if absolutely necessary, since
-  SHA-512 is a perfectly good default, and the only reason to add additional
-  algorithms would be something like supporting existing signing devices which
-  do not support SHA-512. **Conclusion: This seems a very common degree of
-  freedom in signature schemes, so I added it. Filepack, PGP, and SSH
-  signatures now start with `af0q`, `ap4p`, and, `as0p`. The last character is
-  the hashing algorithm, filepack does not hash the message, so it's `q`, which
-  is the 0th bech32m element, PGP and SSH are restricted to SHA-512, which is
-  `p`, or the 1st element. No support exists for alternative combinations of
-  signature scheme and hash function, this is only in case we have to add
-  support in the future.**
-
 ----------------
 
-- *Should filepack re-use an existing signature system, like SSH or PGP?* I
-  looked into both, but the formats and algorithms are incredibly complex, and
-  allow a huge number of unnecessary degrees of freedom. **Conclusion: I added
-  support for multiple signature schemes, filepack, GPG v4, and SSH. Filepack
-  is the simple scheme which filepack uses when signing messages using keys it
-  manages. The GPG and SSH schemes are compatible with GPG and SSH, but
-  restricted to Ed25519 as the signature scheme, and SHA-512 as the hash
-  algorithm. This allows signatures to be created using GPG or SSH, using
-  existing keys, key management, and signers, and imported into filepack. All
-  signature schemes sign the same message, wrapped in the case of GPG and SSH,
-  and the resulting message and public key are always Ed25519 keys, and aside
-  from the difference in message bytes, all signature schemes are verified in
-  the same way.**
+- *Should filepack support SSH or PGP Ed25519 signatures?* Supporting SSH and
+  PGP signatures would let developers reuse existing Ed25519 keys, and make use
+  of existing key managment systems and hardware signers **Conclusion: I added
+  support for SSH and PGP signatures, but ultimately decided to remove it. This
+  is something that adds complexity, so I want to do it based on actual demand,
+  concrete benefits, and actual use-cases. **
 
 - *Should Bech32m be used for fingerprints, public keys, private keys, and
   signatures?* This would make them distinct and easy to identify, and give

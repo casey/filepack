@@ -58,10 +58,8 @@ impl FromStr for PublicKey {
   type Err = PublicKeyError;
 
   fn from_str(key: &str) -> Result<Self, Self::Err> {
-    let mut decoder = Bech32Decoder::new(Bech32Type::PublicKey, key)?;
+    let decoder = Bech32Decoder::new(Bech32Type::PublicKey, key)?;
     let inner = decoder.byte_array()?;
-    decoder.done()?;
-
     Self::from_bytes(inner)
   }
 }

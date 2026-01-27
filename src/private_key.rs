@@ -49,7 +49,7 @@ impl PrivateKey {
 
   pub(crate) fn sign(&self, message: &SerializedMessage) -> Signature {
     use ed25519_dalek::Signer;
-    Signature::new(SignatureScheme::Filepack, self.0.sign(message.as_bytes()))
+    Signature::new(self.0.sign(message.as_bytes()))
   }
 }
 
@@ -57,10 +57,8 @@ impl FromStr for PrivateKey {
   type Err = Bech32Error;
 
   fn from_str(key: &str) -> Result<Self, Self::Err> {
-    let mut decoder = Bech32Decoder::new(Bech32Type::PrivateKey, key)?;
+    let decoder = Bech32Decoder::new(Bech32Type::PrivateKey, key)?;
     let inner = decoder.byte_array()?;
-    decoder.done()?;
-
     let inner = ed25519_dalek::SigningKey::from_bytes(&inner);
     assert!(!inner.verifying_key().is_weak());
     Ok(Self(inner))

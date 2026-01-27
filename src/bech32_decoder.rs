@@ -7,11 +7,18 @@ pub(crate) struct Bech32Decoder<'a> {
 }
 
 impl<'a> Bech32Decoder<'a> {
-  pub(crate) fn byte_array<const LEN: usize>(&mut self) -> Result<[u8; LEN], Bech32Error> {
+  pub(crate) fn byte_array<const LEN: usize>(mut self) -> Result<[u8; LEN], Bech32Error> {
     let mut array = [0; LEN];
 
     for (slot, byte) in array.iter_mut().zip(self.bytes(LEN)?) {
       *slot = byte;
+    }
+
+    let excess = self.data.len() - self.i;
+
+    ensure! {
+      excess == 0,
+      bech32_error::Overlong { excess, ty: self.ty },
     }
 
     Ok(array)
@@ -43,39 +50,6 @@ impl<'a> Bech32Decoder<'a> {
     Ok(fes.fes_to_bytes())
   }
 
-  pub(crate) fn done(self) -> Result<(), Bech32Error> {
-    let excess = self.data.len() - self.i;
-
-    ensure! {
-      excess == 0,
-      bech32_error::Overlong { excess, ty: self.ty },
-    }
-
-    Ok(())
-  }
-
-  pub(crate) fn fe(&mut self) -> Result<Fe32, Bech32Error> {
-    let next = self
-      .data
-      .get(self.i)
-      .map(|c| Fe32::from_char_unchecked(*c))
-      .context(bech32_error::Truncated { ty: self.ty })?;
-
-    self.i += 1;
-
-    Ok(next)
-  }
-
-  pub(crate) fn fe_array<const LEN: usize>(&mut self) -> Result<[Fe32; LEN], Bech32Error> {
-    let mut array = [Fe32::Q; LEN];
-
-    for slot in &mut array {
-      *slot = self.fe()?;
-    }
-
-    Ok(array)
-  }
-
   fn fes(
     &mut self,
     len: usize,
@@ -91,11 +65,6 @@ impl<'a> Bech32Decoder<'a> {
     self.i = end;
 
     Ok(fes.iter().map(|c| Fe32::from_char_unchecked(*c)))
-  }
-
-  pub(crate) fn into_bytes(mut self) -> Result<Vec<u8>, Bech32Error> {
-    let fes = self.data.len() - self.i;
-    Ok(self.bytes(fes * 5 / 8)?.collect())
   }
 
   pub(crate) fn new(ty: Bech32Type, s: &'a str) -> Result<Self, Bech32Error> {
@@ -123,5 +92,51 @@ impl<'a> Bech32Decoder<'a> {
       i: 1,
       ty,
     })
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn length() {
+    #[track_caller]
+    fn case(s: &str) {
+      use bech32::Checksum;
+      assert!(s.len() <= bech32::Bech32m::CODE_LENGTH);
+    }
+
+    case(test::FINGERPRINT);
+    case(test::PUBLIC_KEY);
+    case(test::PRIVATE_KEY);
+    case(test::SIGNATURE);
+  }
+
+  #[test]
+  fn private_key_round_trip() {
+    assert_eq!(
+      test::PRIVATE_KEY
+        .parse::<PrivateKey>()
+        .unwrap()
+        .display_secret()
+        .to_string(),
+      test::PRIVATE_KEY,
+    );
+  }
+
+  #[test]
+  fn round_trip() {
+    #[track_caller]
+    fn case<T: FromStr + ToString>(s: &str)
+    where
+      T::Err: fmt::Debug,
+    {
+      assert_eq!(s.parse::<T>().unwrap().to_string(), s);
+    }
+
+    case::<Fingerprint>(test::FINGERPRINT);
+    case::<PublicKey>(test::PUBLIC_KEY);
+    case::<Signature>(test::SIGNATURE);
   }
 }

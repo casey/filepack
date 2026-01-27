@@ -1,10 +1,7 @@
 use {
   self::{expected::Expected, test::Test},
   camino::{Utf8Path, Utf8PathBuf},
-  filepack::{
-    Directory, Manifest, Message, Note, PrivateKey, PublicKey, SerializedMessage, Signature,
-    SignatureScheme, assert_matches,
-  },
+  filepack::{Manifest, Message, Note, PrivateKey, PublicKey, Signature, assert_matches},
   regex::Regex,
   std::{
     collections::BTreeMap,
@@ -38,10 +35,8 @@ mod message;
 mod metadata;
 mod misc;
 mod notes;
-mod pgp;
 mod sign;
 mod size;
-mod ssh;
 mod test;
 mod verify;
 
@@ -51,7 +46,7 @@ const PRIVATE_KEY: &str = "private1a24p4zsr2nh04f4pkgtxfzv5yle473x4jue7s6lkwg9td
 
 const PUBLIC_KEY: &str = "public1a67dndhhmae7p6fsfnj0z37zf78cde6mwqgtms0y87h8ldlvvflyqcxnd63";
 
-const SIGNATURE: &str = concat!(
-  "signature1af0qppampjlm7qs0g4amn9fnq87crhn70k5lv5wf48ajy6k774tq",
-  "w6yc9s5n0kpq5420jrz644sgu7geahpffl8l7nuv9azsqv8jpgtrcqstq8xwz",
+pub(crate) const SIGNATURE: &str = concat!(
+  "signature1appampjlm7qs0g4amn9fnq87crhn70k5lv5wf48ajy6k774tqw6yc9s5n0kpq5420jrz64",
+  "4sgu7geahpffl8l7nuv9azsqv8jpgtrcqsfz5zpg",
 );

@@ -65,10 +65,11 @@ mod tests {
       test::PUBLIC_KEY,
       test::SIGNATURE,
     );
-    assert_eq!(
+
+    assert_matches_regex! {
       serde_json::from_str::<Note>(&json).unwrap_err().to_string(),
-      "invalid entry: found duplicate key at line 1 column 405",
-    );
+      r"invalid entry: found duplicate key at line 1 column \d+",
+    }
   }
 
   #[test]
