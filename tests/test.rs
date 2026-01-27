@@ -111,10 +111,6 @@ impl Test {
     fs::read_to_string(self.join(path)).unwrap().trim().into()
   }
 
-  pub(crate) fn read_bytes(&self, path: &str) -> Vec<u8> {
-    fs::read(self.join(path)).unwrap()
-  }
-
   pub(crate) fn read_private_key(&self, path: &str) -> PrivateKey {
     fs::read_to_string(self.join(path))
       .unwrap()

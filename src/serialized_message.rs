@@ -1,7 +1,7 @@
-pub struct SerializedMessage(pub Vec<u8>);
+pub(crate) struct SerializedMessage(pub Vec<u8>);
 
 impl SerializedMessage {
-  pub fn as_bytes(&self) -> &[u8] {
+  pub(crate) fn as_bytes(&self) -> &[u8] {
     &self.0
   }
 }

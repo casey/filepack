@@ -6,11 +6,11 @@ pub struct Signature {
 }
 
 impl Signature {
-  pub fn new(inner: ed25519_dalek::Signature) -> Self {
+  pub(crate) fn new(inner: ed25519_dalek::Signature) -> Self {
     Self { inner }
   }
 
-  pub fn verify(&self, message: &SerializedMessage, public_key: PublicKey) -> Result {
+  pub(crate) fn verify(&self, message: &SerializedMessage, public_key: PublicKey) -> Result {
     public_key
       .inner()
       .verify_strict(message.as_bytes(), &self.inner)
