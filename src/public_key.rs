@@ -43,7 +43,7 @@ impl PublicKey {
     Ok(public_key)
   }
 
-  pub fn verify(self, message: &SerializedMessage, signature: &Signature) -> Result {
+  pub(crate) fn verify(self, message: &SerializedMessage, signature: &Signature) -> Result {
     signature.verify(message, self)
   }
 }

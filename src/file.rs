@@ -2,9 +2,9 @@ use super::*;
 
 #[derive(Clone, Copy, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
-pub struct File {
-  pub hash: Hash,
-  pub size: u64,
+pub(crate) struct File {
+  pub(crate) hash: Hash,
+  pub(crate) size: u64,
 }
 
 impl File {
