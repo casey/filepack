@@ -10,10 +10,6 @@ impl Bech32Encoder {
     self.fes.extend(bytes.iter().copied().bytes_to_fes());
   }
 
-  pub(crate) fn fes(&mut self, fes: &[Fe32]) {
-    self.fes.extend_from_slice(fes);
-  }
-
   pub(crate) fn new(ty: Bech32Type) -> Self {
     Self {
       fes: vec![BECH32_VERSION],

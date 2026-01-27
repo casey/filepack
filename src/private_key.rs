@@ -49,7 +49,7 @@ impl PrivateKey {
 
   pub(crate) fn sign(&self, message: &SerializedMessage) -> Signature {
     use ed25519_dalek::Signer;
-    Signature::new(SignatureScheme::Filepack, self.0.sign(message.as_bytes()))
+    Signature::new(self.0.sign(message.as_bytes()))
   }
 }
 

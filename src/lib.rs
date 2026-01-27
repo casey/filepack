@@ -54,8 +54,6 @@ use {
     path_error::PathError,
     public_key_error::PublicKeyError,
     sign_options::SignOptions,
-    signature_error::SignatureError,
-    signature_scheme::SignatureSchemeType,
     style::Style,
     subcommand::Subcommand,
     tag::Tag,
@@ -94,9 +92,7 @@ use {
     sync::LazyLock,
     time::{SystemTime, SystemTimeError, UNIX_EPOCH},
   },
-  strum::{
-    EnumDiscriminants, EnumIter, EnumString, IntoDiscriminant, IntoEnumIterator, IntoStaticStr,
-  },
+  strum::{EnumDiscriminants, EnumIter, EnumString, IntoEnumIterator, IntoStaticStr},
   url::Url,
   usized::IntoU64,
   walkdir::WalkDir,
@@ -106,11 +102,11 @@ pub use self::{
   directory::Directory, entry::Entry, error::Error, file::File, fingerprint::Fingerprint,
   hash::Hash, manifest::Manifest, message::Message, note::Note, private_key::PrivateKey,
   public_key::PublicKey, relative_path::RelativePath, serialized_message::SerializedMessage,
-  signature::Signature, signature_scheme::SignatureScheme,
+  signature::Signature,
 };
 
 #[cfg(test)]
-use std::collections::HashSet;
+use {std::collections::HashSet, strum::IntoDiscriminant};
 
 #[cfg(test)]
 fn tempdir() -> tempfile::TempDir {
@@ -187,8 +183,6 @@ mod relative_path;
 mod serialized_message;
 mod sign_options;
 mod signature;
-mod signature_error;
-mod signature_scheme;
 mod style;
 mod subcommand;
 mod tag;

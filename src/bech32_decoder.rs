@@ -54,28 +54,6 @@ impl<'a> Bech32Decoder<'a> {
     Ok(())
   }
 
-  pub(crate) fn fe(&mut self) -> Result<Fe32, Bech32Error> {
-    let next = self
-      .data
-      .get(self.i)
-      .map(|c| Fe32::from_char_unchecked(*c))
-      .context(bech32_error::Truncated { ty: self.ty })?;
-
-    self.i += 1;
-
-    Ok(next)
-  }
-
-  pub(crate) fn fe_array<const LEN: usize>(&mut self) -> Result<[Fe32; LEN], Bech32Error> {
-    let mut array = [Fe32::Q; LEN];
-
-    for slot in &mut array {
-      *slot = self.fe()?;
-    }
-
-    Ok(array)
-  }
-
   fn fes(
     &mut self,
     len: usize,
@@ -91,11 +69,6 @@ impl<'a> Bech32Decoder<'a> {
     self.i = end;
 
     Ok(fes.iter().map(|c| Fe32::from_char_unchecked(*c)))
-  }
-
-  pub(crate) fn into_bytes(mut self) -> Result<Vec<u8>, Bech32Error> {
-    let fes = self.data.len() - self.i;
-    Ok(self.bytes(fes * 5 / 8)?.collect())
   }
 
   pub(crate) fn new(ty: Bech32Type, s: &'a str) -> Result<Self, Bech32Error> {
