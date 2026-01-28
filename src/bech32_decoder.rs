@@ -1,5 +1,6 @@
 use super::*;
 
+#[derive(Debug)]
 pub(crate) struct Bech32Decoder<'a> {
   data: &'a [u8],
   i: usize,
@@ -32,18 +33,8 @@ impl<'a> Bech32Decoder<'a> {
     if let Some((i, last)) = fes.clone().enumerate().last() {
       let padding_len = (i + 1) * 5 % 8;
 
-      if padding_len > 4 {
-        return Err(Bech32Error::Padding {
-          source: PaddingError::TooMuch,
-          ty: self.ty,
-        });
-      }
-
       if u64::from(last.to_u8().trailing_zeros()) < padding_len.into_u64() {
-        return Err(Bech32Error::Padding {
-          source: PaddingError::NonZero,
-          ty: self.ty,
-        });
+        return Err(Bech32Error::Padding { ty: self.ty });
       }
     }
 
@@ -110,7 +101,7 @@ mod tests {
     case(test::FINGERPRINT);
     case(test::PUBLIC_KEY);
     case(test::PRIVATE_KEY);
-    case(test::SIGNATURE);
+    case(test::SIGNATURE)
   }
 
   #[test]
@@ -138,5 +129,42 @@ mod tests {
     case::<Fingerprint>(test::FINGERPRINT);
     case::<PublicKey>(test::PUBLIC_KEY);
     case::<Signature>(test::SIGNATURE);
+  }
+
+  fn checksum(s: &str) -> String {
+    let checked_hrpstring = CheckedHrpstring::new::<bech32::NoChecksum>(s).unwrap();
+
+    checked_hrpstring
+      .fe32_iter::<std::vec::IntoIter<u8>>()
+      .with_checksum::<bech32::Bech32m>(&checked_hrpstring.hrp())
+      .chars()
+      .collect()
+  }
+
+  #[test]
+  fn errors() {
+    #[track_caller]
+    fn case(s: &str, err: &str) {
+      assert_eq!(
+        Bech32Decoder::new(Bech32Type::PublicKey, &checksum(s))
+          .and_then(|decoder| decoder.byte_array::<1>())
+          .unwrap_err()
+          .to_string(),
+        err,
+      );
+    }
+
+    case(
+      "foo1",
+      "expected bech32 human-readable part `public1...` but found `foo1...`",
+    );
+
+    case("public1c", "bech32 public key version `c` not supported");
+
+    case("public1a", "bech32 public key truncated");
+
+    case("public1aqqq", "bech32 public key overlong by 1 character");
+
+    case("public1aql", "bech32 public key has nonzero padding");
   }
 }
