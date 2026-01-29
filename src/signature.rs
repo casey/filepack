@@ -19,16 +19,16 @@ impl PartialOrd for Signature {
 }
 
 impl Signature {
+  fn comparison_key(&self) -> (PublicKey, [u8; 64]) {
+    (self.public_key, self.inner.to_bytes())
+  }
+
   pub(crate) fn new(inner: ed25519_dalek::Signature, public_key: PublicKey) -> Self {
     Self { inner, public_key }
   }
 
   pub(crate) fn public_key(&self) -> PublicKey {
     self.public_key
-  }
-
-  fn comparison_key(&self) -> ([u8; 64], PublicKey) {
-    (self.inner.to_bytes(), self.public_key)
   }
 
   pub(crate) fn verify(&self, message: &SerializedMessage) -> Result {
