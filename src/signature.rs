@@ -35,7 +35,10 @@ impl Signature {
   pub(crate) fn verify(&self, fingerprint: Fingerprint) -> Result {
     ensure! {
       fingerprint == self.message.fingerprint,
-      error::SignatureFingerprintMismatch,
+      error::SignatureFingerprintMismatch {
+        signature: self.message.fingerprint,
+        package: fingerprint,
+      },
     }
 
     self
@@ -105,6 +108,22 @@ mod tests {
       &test::FINGERPRINT["package1a".len()..test::FINGERPRINT.len() - 6]
     );
     assert!(test::SIGNATURE.starts_with(&prefix));
+  }
+
+  #[test]
+  fn modifying_fingerprint_invalidates_signature() {
+    let private_key = test::PRIVATE_KEY.parse::<PrivateKey>().unwrap();
+    let fingerprint = test::FINGERPRINT.parse::<Fingerprint>().unwrap();
+    let message = Message {
+      fingerprint,
+      time: Some(1000),
+    };
+    let mut signature = private_key.sign(&message, &message.serialize());
+    signature.message.fingerprint = Fingerprint::from_bytes(default());
+    assert_matches!(
+      signature.verify(fingerprint).unwrap_err(),
+      Error::SignatureFingerprintMismatch { .. },
+    );
   }
 
   #[test]

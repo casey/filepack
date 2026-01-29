@@ -243,8 +243,14 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
-  #[snafu(display("signature fingerprint does not match package fingerprint"))]
-  SignatureFingerprintMismatch { backtrace: Option<Backtrace> },
+  #[snafu(display(
+    "signature fingerprint `{signature}` does not match package fingerprint `{package}`"
+  ))]
+  SignatureFingerprintMismatch {
+    backtrace: Option<Backtrace>,
+    package: Fingerprint,
+    signature: Fingerprint,
+  },
   #[snafu(display("invalid signature for key `{public_key}`"))]
   SignatureInvalid {
     backtrace: Option<Backtrace>,
