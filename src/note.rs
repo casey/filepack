@@ -11,18 +11,14 @@ pub struct Note {
 }
 
 impl Note {
-  pub(crate) fn from_message(
-    message: Message,
-    public_key: PublicKey,
-    signature: Signature,
-  ) -> Self {
+  pub(crate) fn from_message(message: Message, signature: Signature) -> Self {
     Self {
       signatures: [signature].into(),
       time: message.time,
     }
   }
 
-  pub(crate) fn has_signature(&self, public_key: PublicKey) -> bool {
+  pub fn has_signature(&self, public_key: PublicKey) -> bool {
     self
       .signatures
       .iter()
@@ -52,7 +48,7 @@ mod tests {
   #[test]
   fn duplicate_fields_are_rejected() {
     assert_eq!(
-      serde_json::from_str::<Note>(r#"{"signatures":{},"signatures":{}}"#)
+      serde_json::from_str::<Note>(r#"{"signatures":[],"signatures":[]}"#)
         .unwrap_err()
         .to_string(),
       "duplicate field `signatures` at line 1 column 29",
@@ -62,16 +58,14 @@ mod tests {
   #[test]
   fn duplicate_signatures_are_rejected() {
     let json = format!(
-      r#"{{"signatures":{{"{}":"{}","{}":"{}"}}}}"#,
-      test::PUBLIC_KEY,
+      r#"{{"signatures":["{}","{}"]}}"#,
       test::SIGNATURE,
-      test::PUBLIC_KEY,
       test::SIGNATURE,
     );
 
     assert_matches_regex! {
       serde_json::from_str::<Note>(&json).unwrap_err().to_string(),
-      r"invalid entry: found duplicate key at line 1 column \d+",
+      r"invalid entry: found duplicate value at line 1 column \d+",
     }
   }
 
@@ -83,7 +77,7 @@ mod tests {
         time: None,
       })
       .unwrap(),
-      r#"{"signatures":{}}"#,
+      r#"{"signatures":[]}"#,
     );
   }
 }

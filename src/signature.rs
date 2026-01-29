@@ -59,7 +59,7 @@ impl fmt::Debug for Signature {
 }
 
 impl FromStr for Signature {
-  type Err = Bech32Error;
+  type Err = SignatureError;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     let mut decoder = Bech32Decoder::new(Bech32Type::Signature, s)?;
@@ -68,7 +68,7 @@ impl FromStr for Signature {
     decoder.done()?;
     Ok(Self {
       inner: ed25519_dalek::Signature::from_bytes(&inner),
-      public_key: PublicKey::from_bytes(public_key).unwrap(),
+      public_key: PublicKey::from_bytes(public_key)?,
     })
   }
 }

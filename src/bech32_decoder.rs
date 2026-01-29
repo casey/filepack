@@ -34,6 +34,16 @@ impl<'a> Bech32Decoder<'a> {
     Ok(fes.fes_to_bytes())
   }
 
+  pub(crate) fn decode_byte_array<const LEN: usize>(
+    ty: Bech32Type,
+    s: &'a str,
+  ) -> Result<[u8; LEN], Bech32Error> {
+    let mut decoder = Self::new(ty, s)?;
+    let array = decoder.byte_array()?;
+    decoder.done()?;
+    Ok(array)
+  }
+
   pub(crate) fn done(self) -> Result<(), Bech32Error> {
     let excess = self.data.len() - self.i;
 
@@ -60,16 +70,6 @@ impl<'a> Bech32Decoder<'a> {
     self.i = end;
 
     Ok(fes.iter().map(|c| Fe32::from_char_unchecked(*c)))
-  }
-
-  pub(crate) fn decode_byte_array<const LEN: usize>(
-    ty: Bech32Type,
-    s: &'a str,
-  ) -> Result<[u8; LEN], Bech32Error> {
-    let mut decoder = Self::new(ty, s)?;
-    let array = decoder.byte_array()?;
-    decoder.done()?;
-    Ok(array)
   }
 
   pub(crate) fn new(ty: Bech32Type, s: &'a str) -> Result<Self, Bech32Error> {

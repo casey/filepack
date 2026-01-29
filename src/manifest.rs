@@ -107,7 +107,7 @@ impl Manifest {
       }
     }
 
-    self.notes.push(Note::from_message(message, key, signature));
+    self.notes.push(Note::from_message(message, signature));
 
     Ok(())
   }

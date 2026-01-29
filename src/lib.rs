@@ -58,6 +58,7 @@ use {
     public_key_error::PublicKeyError,
     serialized_message::SerializedMessage,
     sign_options::SignOptions,
+    signature_error::SignatureError,
     style::Style,
     subcommand::Subcommand,
     tag::Tag,
@@ -201,6 +202,7 @@ mod relative_path;
 mod serialized_message;
 mod sign_options;
 mod signature;
+mod signature_error;
 mod style;
 mod subcommand;
 mod tag;

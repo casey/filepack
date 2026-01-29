@@ -22,16 +22,16 @@ fn duplicate_note() {
   let mut manifest = Manifest::load(Some(&manifest_path)).unwrap();
 
   let mut iter = manifest.notes[0].signatures.iter();
-  let (first_key, first_sig) = iter.next().unwrap();
-  let (second_key, second_sig) = iter.next().unwrap();
+  let first_sig = iter.next().unwrap().clone();
+  let second_sig = iter.next().unwrap().clone();
 
   manifest.notes = vec![
     Note {
-      signatures: [(*first_key, first_sig.clone())].into(),
+      signatures: [first_sig].into(),
       time: None,
     },
     Note {
-      signatures: [(*second_key, second_sig.clone())].into(),
+      signatures: [second_sig].into(),
       time: None,
     },
   ];
@@ -88,11 +88,7 @@ fn invalid_signature() {
   let mut manifest = Manifest::load(Some(&manifest_path)).unwrap();
 
   manifest.notes.push(Note {
-    signatures: [(
-      PUBLIC_KEY.parse::<PublicKey>().unwrap(),
-      SIGNATURE.parse::<Signature>().unwrap(),
-    )]
-    .into(),
+    signatures: [SIGNATURE.parse::<Signature>().unwrap()].into(),
     time: None,
   });
 
@@ -174,7 +170,7 @@ fn unsigned_note() {
         files: {},
         notes: [
           {
-            signatures: {}
+            signatures: []
           }
         ]
       },
@@ -200,12 +196,10 @@ fn valid_signature_for_wrong_pubkey() {
   let manifest_path = test.path().join("filepack.json");
   let mut manifest = Manifest::load(Some(&manifest_path)).unwrap();
 
-  let public_key = test.read_public_key("keychain/master.public");
-  let signature = manifest.notes[0].signatures.remove(&public_key).unwrap();
-
+  manifest.notes[0].signatures.clear();
   manifest.notes[0]
     .signatures
-    .insert(PUBLIC_KEY.parse::<PublicKey>().unwrap(), signature);
+    .insert(SIGNATURE.parse::<Signature>().unwrap());
 
   manifest.save(&manifest_path).unwrap();
 
