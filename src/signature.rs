@@ -8,11 +8,7 @@ pub struct Signature {
 
 impl Ord for Signature {
   fn cmp(&self, other: &Self) -> Ordering {
-    self
-      .inner
-      .to_bytes()
-      .cmp(&other.inner.to_bytes())
-      .then_with(|| self.public_key.cmp(&other.public_key))
+    self.comparison_key().cmp(&other.comparison_key())
   }
 }
 
@@ -29,6 +25,10 @@ impl Signature {
 
   pub(crate) fn public_key(&self) -> PublicKey {
     self.public_key
+  }
+
+  fn comparison_key(&self) -> ([u8; 64], PublicKey) {
+    (self.inner.to_bytes(), self.public_key)
   }
 
   pub(crate) fn verify(&self, message: &SerializedMessage) -> Result {
