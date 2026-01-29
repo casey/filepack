@@ -630,6 +630,19 @@ error: fingerprint mismatch\n",
 
 #[test]
 fn weak_signature_public_key() {
+  fn checksum(s: &str) -> String {
+    use ::bech32::Fe32IterExt;
+
+    let checked_hrpstring =
+      ::bech32::primitives::decode::CheckedHrpstring::new::<::bech32::NoChecksum>(s).unwrap();
+
+    checked_hrpstring
+      .fe32_iter::<std::vec::IntoIter<u8>>()
+      .with_checksum::<::bech32::Bech32m>(&checked_hrpstring.hrp())
+      .chars()
+      .collect()
+  }
+
   Test::new()
     .touch("bar")
     .arg("create")
@@ -646,14 +659,16 @@ fn weak_signature_public_key() {
         notes: [
           {
             signatures: [
-              "signature1aqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq8uu8v5"
+              checksum(&format!("signature1a{}", "q".repeat(207)))
             ]
           }
         ]
       },
     )
     .arg("verify")
-    .stderr_regex("error: failed to deserialize manifest at `filepack.json`\n.*signature public key invalid.*")
+    .stderr_regex(
+      "error: failed to deserialize manifest at `filepack.json`\n.*signature public key invalid.*",
+    )
     .failure();
 }
 
