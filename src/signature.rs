@@ -109,11 +109,27 @@ mod tests {
 
   #[test]
   fn modifying_time_invalidates_signature() {
-    todo!();
+    let private_key = test::PRIVATE_KEY.parse::<PrivateKey>().unwrap();
+    let fingerprint = test::FINGERPRINT.parse::<Fingerprint>().unwrap();
+    let message = Message {
+      fingerprint,
+      time: Some(1000),
+    };
+    let mut signature = private_key.sign(&message, &message.serialize());
+    signature.message.time = Some(2000);
+    assert!(signature.verify(fingerprint).is_err());
   }
 
   #[test]
   fn removing_time_invalidates_signature() {
-    todo!();
+    let private_key = test::PRIVATE_KEY.parse::<PrivateKey>().unwrap();
+    let fingerprint = test::FINGERPRINT.parse::<Fingerprint>().unwrap();
+    let message = Message {
+      fingerprint,
+      time: Some(1000),
+    };
+    let mut signature = private_key.sign(&message, &message.serialize());
+    signature.message.time = None;
+    assert!(signature.verify(fingerprint).is_err());
   }
 }

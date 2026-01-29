@@ -1,7 +1,7 @@
 use {
   self::{expected::Expected, test::Test},
   camino::{Utf8Path, Utf8PathBuf},
-  filepack::{Manifest, PrivateKey, PublicKey, Signature, assert_matches},
+  filepack::{Manifest, PrivateKey, PublicKey, assert_matches},
   regex::Regex,
   std::{
     collections::BTreeMap,
