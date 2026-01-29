@@ -42,10 +42,6 @@ impl PublicKey {
 
     Ok(public_key)
   }
-
-  pub(crate) fn verify(self, message: &SerializedMessage, signature: &Signature) -> Result {
-    signature.verify(message, self)
-  }
 }
 
 impl From<PrivateKey> for PublicKey {
@@ -58,8 +54,7 @@ impl FromStr for PublicKey {
   type Err = PublicKeyError;
 
   fn from_str(key: &str) -> Result<Self, Self::Err> {
-    let decoder = Bech32Decoder::new(Bech32Type::PublicKey, key)?;
-    let inner = decoder.byte_array()?;
+    let inner = Bech32Decoder::decode_byte_array(Bech32Type::PublicKey, key)?;
     Self::from_bytes(inner)
   }
 }

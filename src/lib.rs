@@ -77,7 +77,9 @@ use {
   owo_colors::Styled,
   regex::Regex,
   serde::{Deserialize, Deserializer, Serialize, Serializer},
-  serde_with::{DeserializeFromStr, MapPreventDuplicates, SerializeDisplay, serde_as},
+  serde_with::{
+    DeserializeFromStr, MapPreventDuplicates, SerializeDisplay, SetPreventDuplicates, serde_as,
+  },
   snafu::{ErrorCompat, OptionExt, ResultExt, Snafu, ensure},
   std::{
     backtrace::{Backtrace, BacktraceStatus},

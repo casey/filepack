@@ -100,7 +100,7 @@ impl Manifest {
     for note in &mut self.notes {
       if note.message(message.fingerprint) == message {
         ensure! {
-          note.signatures.insert(key, signature).is_none() || options.overwrite,
+          note.signatures.insert(signature) || options.overwrite,
           error::SignatureAlreadyExists { key },
         }
         return Ok(());
@@ -128,7 +128,8 @@ impl Manifest {
     let mut digests = BTreeMap::new();
     let mut signatures = BTreeMap::new();
     for (index, note) in self.notes.iter().enumerate() {
-      for &public_key in note.signatures.keys() {
+      for signature in &note.signatures {
+        let public_key = signature.public_key();
         if let Some(first) = signatures.insert(public_key, index) {
           return Err(
             error::DuplicateSignature {
