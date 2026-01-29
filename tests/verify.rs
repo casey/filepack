@@ -42,14 +42,14 @@ fn extra_fields_are_not_allowed() {
       "filepack.json",
       json! {
         files: {},
-        notes: [],
+        signatures: [],
         foo: "bar"
       },
     )
     .stderr(
       "\
 error: failed to deserialize manifest at `filepack.json`
-       └─ unknown field `foo`, expected `files` or `notes` at line 1 column 28\n",
+       └─ unknown field `foo`, expected `files` or `signatures` at line 1 column 33\n",
     )
     .failure();
 }
@@ -68,7 +68,7 @@ fn extraneous_empty_directory_error() {
 #[test]
 fn extraneous_file_error() {
   Test::new()
-    .write("filepack.json", json! { files: {}, notes: [] })
+    .write("filepack.json", json! { files: {}, signatures: [] })
     .touch("foo")
     .args(["verify", "."])
     .stderr("error: extraneous file not in manifest: `foo`\n")
@@ -87,7 +87,7 @@ fn file_not_found_error_message() {
             size: 0
           }
         },
-        notes: [],
+        signatures: [],
       },
     )
     .arg("verify")
@@ -126,7 +126,7 @@ fn ignore_missing() {
             size: 0
           }
         },
-        notes: [],
+        signatures: [],
       },
     )
     .arg("verify")
@@ -146,12 +146,8 @@ fn malformed_signature_error() {
       "filepack.json",
       json! {
         files: {},
-        notes: [
-          {
-            signatures: [
-              "signature1invalid"
-            ]
-          }
+        signatures: [
+          "signature1invalid"
         ]
       },
     )
@@ -193,7 +189,7 @@ fn manifest_paths_are_relative_to_root() {
             size: 0
           }
         },
-        notes: [],
+        signatures: [],
       },
     )
     .args(["verify", "dir"])
@@ -217,7 +213,7 @@ fn metadata_allows_unknown_keys() {
             size: 19,
           }
         },
-        notes: [],
+        signatures: [],
       },
     )
     .write("metadata.yaml", metadata)
@@ -242,7 +238,7 @@ fn metadata_may_not_be_invalid() {
             size: 9,
           }
         },
-        notes: [],
+        signatures: [],
       },
     )
     .write("metadata.yaml", metadata)
@@ -311,7 +307,7 @@ fn multiple_keys() {
 
   test
     .args(["verify", "foo", "--key", &alice, "--key", &bob])
-    .stderr("successfully verified 1 file totaling 0 bytes with 2 signatures across 1 note\n")
+    .stderr("successfully verified 1 file totaling 0 bytes with 2 signatures\n")
     .success();
 }
 
@@ -371,7 +367,7 @@ fn named_key() {
     .args(["create", "--sign", "foo"])
     .success()
     .args(["verify", "foo", "--key", "master"])
-    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature across 1 note\n")
+    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
     .success();
 }
 
@@ -425,7 +421,7 @@ fn nested_missing_empty_directory_error() {
 #[test]
 fn no_files() {
   Test::new()
-    .write("filepack.json", json! { files: {}, notes: [] })
+    .write("filepack.json", json! { files: {}, signatures: [] })
     .args(["verify", "."])
     .stderr("successfully verified 0 files\n")
     .success();
@@ -453,7 +449,7 @@ fn non_unicode_path_error() {
 
   Test::new()
     .touch_non_unicode()
-    .write("filepack.json", json! { files: {}, notes: [] })
+    .write("filepack.json", json! { files: {}, signatures: [] })
     .args(["verify", "."])
     .stderr_path("error: path not valid unicode: `./�`\n")
     .failure();
@@ -468,7 +464,7 @@ fn print() {
         size: 0
       }
     },
-    notes: [],
+    signatures: [],
   };
 
   Test::new()
@@ -493,7 +489,7 @@ fn signature_verification_success() {
 
   test
     .args(["verify", "foo", "--key", &public_key])
-    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature across 1 note\n")
+    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
     .success();
 }
 
@@ -510,7 +506,7 @@ fn single_file() {
             size: 0
           }
         },
-        notes: [],
+        signatures: [],
       },
     )
     .args(["verify", "."])
@@ -531,7 +527,7 @@ fn single_file_mmap() {
             size: 0
           }
         },
-        notes: [],
+        signatures: [],
       },
     )
     .args(["--mmap", "verify", "."])
@@ -552,7 +548,7 @@ fn single_file_omit_directory() {
             size: 0
           }
         },
-        notes: [],
+        signatures: [],
       },
     )
     .arg("verify")
@@ -573,7 +569,7 @@ fn single_file_parallel() {
             size: 0
           }
         },
-        notes: [],
+        signatures: [],
       },
     )
     .args(["--parallel", "verify", "."])
@@ -656,12 +652,8 @@ fn weak_signature_public_key() {
             size: 0
           }
         },
-        notes: [
-          {
-            signatures: [
-              checksum(&format!("signature1a{}", "q".repeat(207)))
-            ]
-          }
+        signatures: [
+          checksum(&format!("signature1a{}", "q".repeat(233)))
         ]
       },
     )
@@ -685,7 +677,7 @@ fn with_manifest_path() {
             size: 0
           }
         },
-        notes: [],
+        signatures: [],
       },
     )
     .args(["verify", "--manifest", "hello.json"])
@@ -695,26 +687,55 @@ fn with_manifest_path() {
 
 #[test]
 fn invalid_signature() {
-  let test = Test::new().arg("keygen").success().arg("create").success();
+  fn corrupt_signature(s: &str) -> String {
+    use ::bech32::Fe32IterExt;
 
-  let manifest_path = test.path().join("filepack.json");
+    let checked_hrpstring =
+      ::bech32::primitives::decode::CheckedHrpstring::new::<::bech32::Bech32m>(s).unwrap();
+
+    let hrp = checked_hrpstring.hrp();
+    let mut fes = checked_hrpstring
+      .fe32_iter::<std::vec::IntoIter<u8>>()
+      .collect::<Vec<_>>();
+
+    let middle = fes.len() / 2;
+    fes[middle] = if fes[middle] == ::bech32::Fe32::Q {
+      ::bech32::Fe32::P
+    } else {
+      ::bech32::Fe32::Q
+    };
+
+    fes
+      .into_iter()
+      .with_checksum::<::bech32::Bech32m>(&hrp)
+      .chars()
+      .collect()
+  }
+
+  let test = Test::new()
+    .arg("keygen")
+    .success()
+    .touch("pkg/foo")
+    .args(["create", "--sign", "pkg"])
+    .success();
+
+  let manifest_path = test.path().join("pkg/filepack.json");
   let mut manifest = Manifest::load(Some(&manifest_path)).unwrap();
 
-  manifest.signatures.insert(SIGNATURE.parse().unwrap());
+  let signature = manifest.signatures.pop_first().unwrap().to_string();
+  let corrupted = corrupt_signature(&signature);
 
+  manifest.signatures.insert(corrupted.parse().unwrap());
   manifest.save(&manifest_path).unwrap();
 
+  let public_key = test.read("keychain/master.public");
+
   test
-    .arg("verify")
+    .args(["verify", "pkg"])
     .stderr_regex(&format!(
-      "error: invalid signature for key `{PUBLIC_KEY}`\n\
-      .*Verification equation was not satisfied.*"
-    ))
-    .failure()
-    .arg("sign")
-    .stderr_regex(&format!(
-      "error: invalid signature for key `{PUBLIC_KEY}`\n\
-      .*Verification equation was not satisfied.*"
+      "error: invalid signature for key `{}`\n\
+      .*Verification equation was not satisfied.*",
+      public_key.trim()
     ))
     .failure();
 }
@@ -724,28 +745,19 @@ fn valid_signature_for_wrong_pubkey() {
   let test = Test::new()
     .arg("keygen")
     .success()
-    .args(["create", "--sign"])
+    .touch("pkg/foo")
+    .args(["create", "--sign", "pkg"])
     .success();
 
-  let manifest_path = test.path().join("filepack.json");
-  let mut manifest = Manifest::load(Some(&manifest_path)).unwrap();
-
-  manifest.signatures.clear();
-  manifest.signatures.insert(SIGNATURE.parse().unwrap());
-
-  manifest.save(&manifest_path).unwrap();
+  let public_key = test.read("keychain/master.public");
 
   test
-    .arg("verify")
-    .stderr_regex(&format!(
-      "error: invalid signature for key `{PUBLIC_KEY}`\n\
-      .*Verification equation was not satisfied.*"
+    .args(["verify", "pkg", "--key", PUBLIC_KEY])
+    .stderr(&format!(
+      "error: no signature found for key `{PUBLIC_KEY}`\n"
     ))
     .failure()
-    .arg("sign")
-    .stderr_regex(&format!(
-      "error: invalid signature for key `{PUBLIC_KEY}`\n\
-      .*Verification equation was not satisfied.*"
-    ))
-    .failure();
+    .args(["verify", "pkg", "--key", public_key.trim()])
+    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
+    .success();
 }

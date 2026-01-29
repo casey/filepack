@@ -31,7 +31,7 @@ fn empty_directories_are_included() {
           foo: {
           },
         },
-        notes: [],
+        signatures: [],
       },
     )
     .success()
@@ -56,7 +56,7 @@ fn file_in_subdirectory() {
             }
           }
         },
-        notes: [],
+        signatures: [],
       },
     )
     .success()
@@ -80,7 +80,7 @@ fn force_overwrites_manifest() {
             size: 0
           }
         },
-        notes: [],
+        signatures: [],
       },
     )
     .success()
@@ -104,7 +104,7 @@ fn force_overwrites_manifest_with_destination() {
             size: 0
           }
         },
-        notes: [],
+        signatures: [],
       },
     )
     .success()
@@ -152,7 +152,7 @@ fn multiple_empty_directory_are_included() {
           foo: {
           },
         },
-        notes: [],
+        signatures: [],
       },
     )
     .success()
@@ -175,7 +175,7 @@ fn nested_empty_directories_are_included() {
             },
           },
         },
-        notes: [],
+        signatures: [],
       },
     )
     .success()
@@ -188,7 +188,7 @@ fn nested_empty_directories_are_included() {
 fn no_files() {
   Test::new()
     .args(["create", "."])
-    .assert_file("filepack.json", json_pretty! { files: {}, notes: [] })
+    .assert_file("filepack.json", json_pretty! { files: {}, signatures: [] })
     .success()
     .args(["verify", "."])
     .stderr("successfully verified 0 files\n")
@@ -230,7 +230,7 @@ fn sign_creates_valid_signature() {
     .args(["create", "--sign", "foo"])
     .success()
     .args(["verify", "foo"])
-    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature across 1 note\n")
+    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
     .success();
 
   let manifest_path = test.path().join("foo/filepack.json");
@@ -280,7 +280,7 @@ fn sign_with_named_key() {
 
   test
     .args(["verify", "foo"])
-    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature across 1 note\n")
+    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
     .success();
 }
 
@@ -295,7 +295,7 @@ fn sign_with_time() {
     .args(["create", "--sign", "--time", "foo"])
     .success()
     .args(["verify", "foo"])
-    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature across 1 note\n")
+    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
     .success();
 
   let manifest_path = test.path().join("foo/filepack.json");
@@ -340,7 +340,7 @@ fn single_file() {
             size: 0
           }
         },
-        notes: [],
+        signatures: [],
       },
     )
     .success()
@@ -363,7 +363,7 @@ fn single_file_mmap() {
             size: 0
           }
         },
-        notes: [],
+        signatures: [],
       },
     )
     .success()
@@ -386,7 +386,7 @@ fn single_file_omit_root() {
             size: 0
           }
         },
-        notes: [],
+        signatures: [],
       },
     )
     .success()
@@ -409,7 +409,7 @@ fn single_file_parallel() {
             size: 0
           }
         },
-        notes: [],
+        signatures: [],
       },
     )
     .success()
@@ -432,7 +432,7 @@ fn single_non_empty_file() {
             size: 3
           }
         },
-        notes: [],
+        signatures: [],
       },
     )
     .success()
@@ -464,7 +464,7 @@ fn with_manifest_path() {
             size: 0
           }
         },
-        notes: [],
+        signatures: [],
       },
     )
     .success()
