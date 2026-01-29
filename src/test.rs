@@ -47,10 +47,3 @@ fn signature_matches() {
   let signature = private_key.sign(&message.serialize());
   assert_eq!(signature.to_string(), SIGNATURE);
 }
-
-#[test]
-fn signature_begins_with_pubkey() {
-  assert!(
-    SIGNATURE.starts_with(&PUBLIC_KEY[..PUBLIC_KEY.len() - 6].replace("public1", "signature1")),
-  )
-}

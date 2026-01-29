@@ -72,3 +72,15 @@ impl FromStr for Signature {
     })
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn signature_begins_with_pubkey() {
+    assert!(test::SIGNATURE.starts_with(
+      &test::PUBLIC_KEY[..test::PUBLIC_KEY.len() - 6].replace("public1", "signature1")
+    ),);
+  }
+}
