@@ -46,8 +46,8 @@ impl Signature {
 impl Display for Signature {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     let mut encoder = Bech32Encoder::new(Bech32Type::Signature);
-    encoder.bytes(&self.inner.to_bytes());
     encoder.bytes(&self.public_key.inner().to_bytes());
+    encoder.bytes(&self.inner.to_bytes());
     write!(f, "{encoder}")
   }
 }
@@ -63,8 +63,8 @@ impl FromStr for Signature {
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     let mut decoder = Bech32Decoder::new(Bech32Type::Signature, s)?;
-    let inner = decoder.byte_array()?;
     let public_key = decoder.byte_array()?;
+    let inner = decoder.byte_array()?;
     decoder.done()?;
     Ok(Self {
       inner: ed25519_dalek::Signature::from_bytes(&inner),

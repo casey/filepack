@@ -12,9 +12,9 @@ pub(crate) const PUBLIC_KEY: &str =
   "public1a67dndhhmae7p6fsfnj0z37zf78cde6mwqgtms0y87h8ldlvvflyqcxnd63";
 
 pub(crate) const SIGNATURE: &str = concat!(
-  "signature1appampjlm7qs0g4amn9fnq87crhn70k5lv5wf48ajy6k774tqw6yc9s5n0kpq5420jrz64",
-  "4sgu7geahpffl8l7nuv9azsqv8jpgtrcqs67dndhhmae7p6fsfnj0z37zf78cde6mwqgtms0y87h8ldl",
-  "vvflyq6z3ycm",
+  "signature1a67dndhhmae7p6fsfnj0z37zf78cde6mwqgtms0y87h8ldlvvflyqppampjlm7qs0g4amn",
+  "9fnq87crhn70k5lv5wf48ajy6k774tqw6yc9s5n0kpq5420jrz644sgu7geahpffl8l7nuv9azsqv8jp",
+  "gtrcqstge7ax",
 );
 
 pub(crate) const WEAK_PUBLIC_KEY: &str =
@@ -46,4 +46,11 @@ fn signature_matches() {
   };
   let signature = private_key.sign(&message.serialize());
   assert_eq!(signature.to_string(), SIGNATURE);
+}
+
+#[test]
+fn signature_begins_with_pubkey() {
+  assert!(
+    SIGNATURE.starts_with(&PUBLIC_KEY[..PUBLIC_KEY.len() - 6].replace("public1", "signature1")),
+  )
 }
