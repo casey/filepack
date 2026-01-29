@@ -47,9 +47,13 @@ impl PrivateKey {
     self.clone().into()
   }
 
-  pub(crate) fn sign(&self, message: &SerializedMessage) -> Signature {
+  pub(crate) fn sign(&self, message: &Message, serialized: &SerializedMessage) -> Signature {
     use ed25519_dalek::Signer;
-    Signature::new(self.0.sign(message.as_bytes()), self.public_key())
+    Signature::new(
+      message.fingerprint,
+      self.0.sign(serialized.as_bytes()),
+      self.public_key(),
+    )
   }
 }
 

@@ -9,6 +9,10 @@ impl Fingerprint {
   pub(crate) fn as_bytes(&self) -> &[u8; Self::LEN] {
     self.0.as_bytes()
   }
+
+  pub(crate) fn from_bytes(bytes: [u8; Self::LEN]) -> Self {
+    Self(bytes.into())
+  }
 }
 
 impl Display for Fingerprint {

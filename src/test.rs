@@ -12,9 +12,9 @@ pub(crate) const PUBLIC_KEY: &str =
   "public1a67dndhhmae7p6fsfnj0z37zf78cde6mwqgtms0y87h8ldlvvflyqcxnd63";
 
 pub(crate) const SIGNATURE: &str = concat!(
-  "signature1a67dndhhmae7p6fsfnj0z37zf78cde6mwqgtms0y87h8ldlvvflyqppampjlm7qs0g4amn",
-  "9fnq87crhn70k5lv5wf48ajy6k774tqw6yc9s5n0kpq5420jrz644sgu7geahpffl8l7nuv9azsqv8jp",
-  "gtrcqstge7ax",
+  "signature1a67dndhhmae7p6fsfnj0z37zf78cde6mwqgtms0y87h8ldlvvflyq4uf5nw04lxs6dgzqf",
+  "h4rdhxffxdukfwf4hq39d7vn2fu4eqlxf3qppampjlm7qs0g4amn9fnq87crhn70k5lv5wf48ajy6k77",
+  "4tqw6yc9s5n0kpq5420jrz644sgu7geahpffl8l7nuv9azsqv8jpgtrcqsz79ak7",
 );
 
 pub(crate) const WEAK_PUBLIC_KEY: &str =
@@ -44,6 +44,6 @@ fn signature_matches() {
     fingerprint: FINGERPRINT.parse().unwrap(),
     time: None,
   };
-  let signature = private_key.sign(&message.serialize());
+  let signature = private_key.sign(&message, &message.serialize());
   assert_eq!(signature.to_string(), SIGNATURE);
 }

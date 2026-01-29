@@ -95,7 +95,7 @@ impl Manifest {
 
     let serialized = message.serialize();
 
-    let (key, signature) = keychain.sign(key, &serialized)?;
+    let (key, signature) = keychain.sign(key, &message, &serialized)?;
 
     for note in &mut self.notes {
       if note.message(message.fingerprint) == message {

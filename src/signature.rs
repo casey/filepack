@@ -2,6 +2,7 @@ use super::*;
 
 #[derive(Clone, DeserializeFromStr, Eq, PartialEq, SerializeDisplay)]
 pub struct Signature {
+  fingerprint: Fingerprint,
   inner: ed25519_dalek::Signature,
   public_key: PublicKey,
 }
@@ -19,12 +20,20 @@ impl PartialOrd for Signature {
 }
 
 impl Signature {
-  fn comparison_key(&self) -> (PublicKey, [u8; 64]) {
-    (self.public_key, self.inner.to_bytes())
+  fn comparison_key(&self) -> (PublicKey, Fingerprint, [u8; 64]) {
+    (self.public_key, self.fingerprint, self.inner.to_bytes())
   }
 
-  pub(crate) fn new(inner: ed25519_dalek::Signature, public_key: PublicKey) -> Self {
-    Self { inner, public_key }
+  pub(crate) fn new(
+    fingerprint: Fingerprint,
+    inner: ed25519_dalek::Signature,
+    public_key: PublicKey,
+  ) -> Self {
+    Self {
+      fingerprint,
+      inner,
+      public_key,
+    }
   }
 
   pub(crate) fn public_key(&self) -> PublicKey {
@@ -47,6 +56,7 @@ impl Display for Signature {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     let mut encoder = Bech32Encoder::new(Bech32Type::Signature);
     encoder.bytes(&self.public_key.inner().to_bytes());
+    encoder.bytes(self.fingerprint.as_bytes());
     encoder.bytes(&self.inner.to_bytes());
     write!(f, "{encoder}")
   }
@@ -64,9 +74,11 @@ impl FromStr for Signature {
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     let mut decoder = Bech32Decoder::new(Bech32Type::Signature, s)?;
     let public_key = decoder.byte_array()?;
+    let fingerprint = decoder.byte_array()?;
     let inner = decoder.byte_array()?;
     decoder.done()?;
     Ok(Self {
+      fingerprint: Fingerprint::from_bytes(fingerprint),
       inner: ed25519_dalek::Signature::from_bytes(&inner),
       public_key: PublicKey::from_bytes(public_key).context(signature_error::PublicKey)?,
     })
