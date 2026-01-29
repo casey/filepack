@@ -101,7 +101,7 @@ mod tests {
   use super::*;
 
   #[test]
-  fn signature_begins_with_pubkey() {
+  fn signature_begins_with_pubkey_and_fingerprint() {
     let prefix = format!(
       "signature1a{}{}",
       &test::PUBLIC_KEY["public1a".len()..test::PUBLIC_KEY.len() - 6],
