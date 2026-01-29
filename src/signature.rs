@@ -12,6 +12,10 @@ impl Signature {
     (self.public_key, &self.message, self.signature.to_bytes())
   }
 
+  pub fn message(&self) -> &Message {
+    &self.message
+  }
+
   pub(crate) fn new(
     message: Message,
     public_key: PublicKey,
@@ -24,7 +28,7 @@ impl Signature {
     }
   }
 
-  pub(crate) fn public_key(&self) -> PublicKey {
+  pub fn public_key(&self) -> PublicKey {
     self.public_key
   }
 

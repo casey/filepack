@@ -238,10 +238,12 @@ fn sign_creates_valid_signature() {
 
   let public_key = test.read_public_key("keychain/master.public");
 
-  assert_eq!(manifest.notes.len(), 1);
-  assert_eq!(manifest.notes[0].signatures.len(), 1);
-  assert!(manifest.notes[0].has_signature(public_key));
-  assert!(manifest.notes[0].time.is_none());
+  assert_eq!(manifest.signatures.len(), 1);
+
+  let signature = manifest.signatures.into_iter().next().unwrap();
+
+  assert_eq!(signature.public_key(), public_key);
+  assert!(signature.message().time.is_none());
 }
 
 #[test]

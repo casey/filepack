@@ -60,6 +60,7 @@ needless-pass-by-value = "allow"
 pedantic = { level = "deny", priority = -1 }
 result-large-err = "allow"
 similar-names = "allow"
+struct-field-names = "allow"
 too-many-lines = "allow"
 unused-async = "allow"
 wildcard-imports = "allow"
