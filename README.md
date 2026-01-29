@@ -237,7 +237,7 @@ signed by the public key
 ```
 
 The signature is elided for brevity. Signatures are bech32m-encoded strings
-that include both the Ed25519 signature and the public key.
+containing both a public key and an Ed25519 signature.
 
 Keys, Signatures, Fingerprints, and Hashes
 ------------------------------------------
