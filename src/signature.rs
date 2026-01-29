@@ -106,4 +106,14 @@ mod tests {
     );
     assert!(test::SIGNATURE.starts_with(&prefix));
   }
+
+  #[test]
+  fn modifying_time_invalidates_signature() {
+    todo!();
+  }
+
+  #[test]
+  fn removing_time_invalidates_signature() {
+    todo!();
+  }
 }

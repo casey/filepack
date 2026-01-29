@@ -272,9 +272,11 @@ fn sign_with_named_key() {
 
   let public_key = test.read_public_key("keychain/deploy.public");
 
-  assert_eq!(manifest.notes.len(), 1);
-  assert_eq!(manifest.notes[0].signatures.len(), 1);
-  assert!(manifest.notes[0].has_signature(public_key));
+  assert_eq!(manifest.signatures.len(), 1);
+  assert_eq!(
+    manifest.signatures.into_iter().next().unwrap().public_key(),
+    public_key,
+  );
 
   test
     .args(["verify", "foo"])
@@ -301,11 +303,12 @@ fn sign_with_time() {
 
   let public_key = test.read_public_key("keychain/master.public");
 
-  assert_eq!(manifest.notes.len(), 1);
-  assert_eq!(manifest.notes[0].signatures.len(), 1);
-  assert!(manifest.notes[0].has_signature(public_key));
+  assert_eq!(manifest.signatures.len(), 1);
 
-  let time = manifest.notes[0].time.unwrap();
+  let signature = manifest.signatures.into_iter().next().unwrap();
+  assert_eq!(signature.public_key(), public_key,);
+
+  let time = signature.message().time.unwrap();
   let now = SystemTime::now()
     .duration_since(UNIX_EPOCH)
     .unwrap()

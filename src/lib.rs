@@ -48,7 +48,6 @@ use {
     language::Language,
     lint_error::{Lint, LintError},
     lint_group::LintGroup,
-    message::Message,
     metadata::Metadata,
     mode::Mode,
     options::Options,
@@ -107,7 +106,7 @@ use {
 
 pub use self::{
   directory::Directory, error::Error, fingerprint::Fingerprint, hash::Hash, manifest::Manifest,
-  private_key::PrivateKey, public_key::PublicKey, relative_path::RelativePath,
+  message::Message, private_key::PrivateKey, public_key::PublicKey, relative_path::RelativePath,
   signature::Signature,
 };
 

@@ -1,7 +1,7 @@
 use super::*;
 
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
-pub(crate) struct Message {
+pub struct Message {
   pub fingerprint: Fingerprint,
   pub time: Option<u128>,
 }

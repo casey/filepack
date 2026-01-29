@@ -99,10 +99,7 @@ impl Manifest {
 
     let (key, signature) = keychain.sign(key, &message, &serialized)?;
 
-    ensure! {
-      self.signatures.insert(signature) || options.overwrite,
-      error::SignatureAlreadyExists { key },
-    }
+    self.signatures.insert(signature);
 
     Ok(())
   }
