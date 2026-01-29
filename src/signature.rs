@@ -68,7 +68,7 @@ impl FromStr for Signature {
     decoder.done()?;
     Ok(Self {
       inner: ed25519_dalek::Signature::from_bytes(&inner),
-      public_key: PublicKey::from_bytes(public_key)?,
+      public_key: PublicKey::from_bytes(public_key).context(signature_error::PublicKey)?,
     })
   }
 }
