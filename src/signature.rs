@@ -117,7 +117,10 @@ mod tests {
     };
     let mut signature = private_key.sign(&message, &message.serialize());
     signature.message.time = Some(2000);
-    assert!(signature.verify(fingerprint).is_err());
+    assert_matches!(
+      signature.verify(fingerprint).unwrap_err(),
+      Error::SignatureInvalid { .. },
+    );
   }
 
   #[test]
@@ -130,6 +133,9 @@ mod tests {
     };
     let mut signature = private_key.sign(&message, &message.serialize());
     signature.message.time = None;
-    assert!(signature.verify(fingerprint).is_err());
+    assert_matches!(
+      signature.verify(fingerprint).unwrap_err(),
+      Error::SignatureInvalid { .. },
+    );
   }
 }
