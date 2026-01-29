@@ -653,7 +653,7 @@ fn weak_signature_public_key() {
       },
     )
     .arg("verify")
-    .stderr_regex("error: failed to deserialize manifest at `filepack.json`\n.*weak public key.*")
+    .stderr_regex("error: failed to deserialize manifest at `filepack.json`\n.*signature public key invalid.*")
     .failure();
 }
 
