@@ -196,8 +196,7 @@ such as `C:`.
 ### `notes`
 
 The value of the mandatory `notes` key is an array of signed notes. Notes are
-objects containing a single mandatory key `signatures`, an object mapping
-public keys to signatures.
+objects containing a single mandatory key `signatures`, an array of signatures.
 
 Notes may optionally contain a `time` field whose value is a timestamp given as
 the number of nanoseconds after the UNIX epoch.
@@ -228,16 +227,17 @@ signed by the public key
   },
   "notes": [
     {
-      "signatures": {
-        "public1a67dndhhmae7p6fsfnj0z37zf78cde6mwqgtms0y87h8ldlvvflyqcxnd63": "…"
-      },
+      "signatures": [
+        "…"
+      ],
       "time": 1768531681809767000
     }
   ]
 }
 ```
 
-The signature is elided for brevity.
+The signature is elided for brevity. Signatures are bech32m-encoded strings
+containing both a public key and an Ed25519 signature.
 
 Keys, Signatures, Fingerprints, and Hashes
 ------------------------------------------
@@ -431,7 +431,7 @@ filepack sign
 ```
 
 Which signs the manifest in the current directory with your master key and adds
-the signature to the manifest's `signatures` map. Signatures are made over a
+the signature to the manifest's `signatures` array. Signatures are made over a
 fingerprint hash, recursively calculated from the contents of the manifest.
 
 ### Signature Verification

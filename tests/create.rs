@@ -240,7 +240,7 @@ fn sign_creates_valid_signature() {
 
   assert_eq!(manifest.notes.len(), 1);
   assert_eq!(manifest.notes[0].signatures.len(), 1);
-  assert!(manifest.notes[0].signatures.contains_key(&public_key));
+  assert!(manifest.notes[0].has_signature(public_key));
   assert!(manifest.notes[0].time.is_none());
 }
 
@@ -272,7 +272,7 @@ fn sign_with_named_key() {
 
   assert_eq!(manifest.notes.len(), 1);
   assert_eq!(manifest.notes[0].signatures.len(), 1);
-  assert!(manifest.notes[0].signatures.contains_key(&public_key));
+  assert!(manifest.notes[0].has_signature(public_key));
 
   test
     .args(["verify", "foo"])
@@ -301,7 +301,7 @@ fn sign_with_time() {
 
   assert_eq!(manifest.notes.len(), 1);
   assert_eq!(manifest.notes[0].signatures.len(), 1);
-  assert!(manifest.notes[0].signatures.contains_key(&public_key));
+  assert!(manifest.notes[0].has_signature(public_key));
 
   let time = manifest.notes[0].time.unwrap();
   let now = SystemTime::now()

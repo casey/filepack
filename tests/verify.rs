@@ -148,9 +148,9 @@ fn malformed_signature_error() {
         files: {},
         notes: [
           {
-            signatures: {
-              "public1a67dndhhmae7p6fsfnj0z37zf78cde6mwqgtms0y87h8ldlvvflyqcxnd63": "signature1invalid"
-            }
+            signatures: [
+              "signature1invalid"
+            ]
           }
         ]
       },
@@ -645,15 +645,15 @@ fn weak_signature_public_key() {
         },
         notes: [
           {
-            signatures: {
-              "public1aqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqsqtuc8": "",
-            }
+            signatures: [
+              "signature1aqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq8uu8v5"
+            ]
           }
         ]
       },
     )
     .arg("verify")
-    .stderr_regex("error: failed to deserialize manifest at `filepack.json`\n.*weak public key.*")
+    .stderr_regex("error: failed to deserialize manifest at `filepack.json`\n.*signature public key invalid.*")
     .failure();
 }
 

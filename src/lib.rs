@@ -58,6 +58,7 @@ use {
     public_key_error::PublicKeyError,
     serialized_message::SerializedMessage,
     sign_options::SignOptions,
+    signature_error::SignatureError,
     style::Style,
     subcommand::Subcommand,
     tag::Tag,
@@ -77,7 +78,9 @@ use {
   owo_colors::Styled,
   regex::Regex,
   serde::{Deserialize, Deserializer, Serialize, Serializer},
-  serde_with::{DeserializeFromStr, MapPreventDuplicates, SerializeDisplay, serde_as},
+  serde_with::{
+    DeserializeFromStr, MapPreventDuplicates, SerializeDisplay, SetPreventDuplicates, serde_as,
+  },
   snafu::{ErrorCompat, OptionExt, ResultExt, Snafu, ensure},
   std::{
     backtrace::{Backtrace, BacktraceStatus},
@@ -199,6 +202,7 @@ mod relative_path;
 mod serialized_message;
 mod sign_options;
 mod signature;
+mod signature_error;
 mod style;
 mod subcommand;
 mod tag;

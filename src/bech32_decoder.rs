@@ -8,18 +8,11 @@ pub(crate) struct Bech32Decoder<'a> {
 }
 
 impl<'a> Bech32Decoder<'a> {
-  pub(crate) fn byte_array<const LEN: usize>(mut self) -> Result<[u8; LEN], Bech32Error> {
+  pub(crate) fn byte_array<const LEN: usize>(&mut self) -> Result<[u8; LEN], Bech32Error> {
     let mut array = [0; LEN];
 
     for (slot, byte) in array.iter_mut().zip(self.bytes(LEN)?) {
       *slot = byte;
-    }
-
-    let excess = self.data.len() - self.i;
-
-    ensure! {
-      excess == 0,
-      bech32_error::Overlong { excess, ty: self.ty },
     }
 
     Ok(array)
@@ -39,6 +32,27 @@ impl<'a> Bech32Decoder<'a> {
     }
 
     Ok(fes.fes_to_bytes())
+  }
+
+  pub(crate) fn decode_byte_array<const LEN: usize>(
+    ty: Bech32Type,
+    s: &'a str,
+  ) -> Result<[u8; LEN], Bech32Error> {
+    let mut decoder = Self::new(ty, s)?;
+    let array = decoder.byte_array()?;
+    decoder.done()?;
+    Ok(array)
+  }
+
+  pub(crate) fn done(self) -> Result<(), Bech32Error> {
+    let excess = self.data.len() - self.i;
+
+    ensure! {
+      excess == 0,
+      bech32_error::Overlong { excess, ty: self.ty },
+    }
+
+    Ok(())
   }
 
   fn fes(
@@ -105,8 +119,7 @@ mod tests {
     #[track_caller]
     fn case(s: &str, err: &str) {
       assert_eq!(
-        Bech32Decoder::new(Bech32Type::PublicKey, &checksum(s))
-          .and_then(Bech32Decoder::byte_array::<1>)
+        Bech32Decoder::decode_byte_array::<1>(Bech32Type::PublicKey, &checksum(s))
           .unwrap_err()
           .to_string(),
         err,

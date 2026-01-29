@@ -23,8 +23,7 @@ impl FromStr for Fingerprint {
   type Err = Bech32Error;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
-    let decoder = Bech32Decoder::new(Bech32Type::Fingerprint, s)?;
-    let inner = decoder.byte_array()?;
+    let inner = Bech32Decoder::decode_byte_array(Bech32Type::Fingerprint, s)?;
     Ok(Self(inner.into()))
   }
 }
