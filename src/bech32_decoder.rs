@@ -106,7 +106,6 @@ mod tests {
 
   fn checksum(s: &str) -> String {
     let checked_hrpstring = CheckedHrpstring::new::<bech32::NoChecksum>(s).unwrap();
-
     checked_hrpstring
       .fe32_iter::<std::vec::IntoIter<u8>>()
       .with_checksum::<bech32::Bech32m>(&checked_hrpstring.hrp())

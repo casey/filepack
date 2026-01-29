@@ -35,7 +35,7 @@ impl Note {
   pub(crate) fn verify(&self, fingerprint: Fingerprint) -> Result<u64> {
     let serialized = self.message(fingerprint).serialize();
     for signature in &self.signatures {
-      signature.verify(&serialized)?;
+      signature.verify(fingerprint, &serialized)?;
     }
     Ok(self.signatures.len().into_u64())
   }

@@ -51,8 +51,8 @@ impl PrivateKey {
     use ed25519_dalek::Signer;
     Signature::new(
       message.fingerprint,
-      self.0.sign(serialized.as_bytes()),
       self.public_key(),
+      self.0.sign(serialized.as_bytes()),
     )
   }
 }
