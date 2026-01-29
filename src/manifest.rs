@@ -100,9 +100,10 @@ impl Manifest {
     for note in &mut self.notes {
       if note.message(message.fingerprint) == message {
         ensure! {
-          note.signatures.insert(signature) || options.overwrite,
+          !note.has_signature(key) || options.overwrite,
           error::SignatureAlreadyExists { key },
         }
+        note.signatures.insert(signature);
         return Ok(());
       }
     }
