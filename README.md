@@ -208,7 +208,7 @@ as the value of the `time` field, if present.
 ### Example
 
 An manifest over a directory containing the files `README.md` and `src/main.c`,
-signed by public key
+signed by the public key
 `public1a67dndhhmae7p6fsfnj0z37zf78cde6mwqgtms0y87h8ldlvvflyqcxnd63`:
 
 ```json
