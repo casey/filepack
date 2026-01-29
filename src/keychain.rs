@@ -146,7 +146,7 @@ impl Keychain {
     name: &KeyName,
     message: &Message,
     serialized: &SerializedMessage,
-  ) -> Result<(PublicKey, Signature)> {
+  ) -> Result<Signature> {
     let public_key = self.public_key(name)?;
 
     let private_key = PrivateKey::load(&self.path.join(name.private_key_filename()))?;
@@ -158,6 +158,6 @@ impl Keychain {
       }
     }
 
-    Ok((public_key, private_key.sign(message, serialized)))
+    Ok(private_key.sign(message, serialized))
   }
 }

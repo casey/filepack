@@ -160,7 +160,15 @@ fn updates_manifest_with_signature() {
 
   let manifest_path = test.path().join("foo/filepack.json");
   let manifest = Manifest::load(Some(&manifest_path)).unwrap();
-  assert!(manifest.notes[0].time.is_none());
+  assert!(
+    manifest
+      .signatures
+      .first()
+      .unwrap()
+      .message()
+      .time
+      .is_none()
+  );
 }
 
 #[test]
@@ -184,7 +192,7 @@ fn with_time() {
   let manifest_path = test.path().join("foo/filepack.json");
   let manifest = Manifest::load(Some(&manifest_path)).unwrap();
 
-  let time = manifest.notes[0].time.unwrap();
+  let time = manifest.signatures.first().unwrap().message().time.unwrap();
   let now = SystemTime::now()
     .duration_since(UNIX_EPOCH)
     .unwrap()

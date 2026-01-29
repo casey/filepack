@@ -40,7 +40,6 @@ use {
     format::Format,
     functions::{current_dir, decode_path, default, is_lowercase_hex, now},
     hash_error::HashError,
-    index::Index,
     key_identifier::KeyIdentifier,
     key_name::KeyName,
     key_type::KeyType,
@@ -162,7 +161,6 @@ mod format;
 mod functions;
 mod hash;
 mod hash_error;
-mod index;
 mod key_identifier;
 mod key_name;
 mod key_type;
