@@ -155,7 +155,7 @@ impl Create {
 
     let mut manifest = Manifest {
       files,
-      notes: Vec::new(),
+      signatures: BTreeSet::new(),
     };
 
     if self.sign {

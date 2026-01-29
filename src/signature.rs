@@ -2,25 +2,25 @@ use super::*;
 
 #[derive(Clone, Debug, DeserializeFromStr, Eq, PartialEq, SerializeDisplay)]
 pub struct Signature {
-  fingerprint: Fingerprint,
+  message: Message,
   public_key: PublicKey,
   signature: ed25519_dalek::Signature,
 }
 
 impl Signature {
-  fn comparison_key(&self) -> (PublicKey, Fingerprint, [u8; 64]) {
-    (self.public_key, self.fingerprint, self.signature.to_bytes())
+  fn comparison_key(&self) -> (PublicKey, &Message, [u8; 64]) {
+    (self.public_key, &self.message, self.signature.to_bytes())
   }
 
   pub(crate) fn new(
-    fingerprint: Fingerprint,
+    message: Message,
     public_key: PublicKey,
     signature: ed25519_dalek::Signature,
   ) -> Self {
     Self {
-      fingerprint,
-      signature,
+      message,
       public_key,
+      signature,
     }
   }
 
@@ -28,16 +28,16 @@ impl Signature {
     self.public_key
   }
 
-  pub(crate) fn verify(&self, fingerprint: Fingerprint, message: &SerializedMessage) -> Result {
+  pub(crate) fn verify(&self, fingerprint: Fingerprint) -> Result {
     ensure! {
-      fingerprint == self.fingerprint,
+      fingerprint == self.message.fingerprint,
       error::SignatureFingerprintMismatch,
     }
 
     self
       .public_key
       .inner()
-      .verify_strict(message.as_bytes(), &self.signature)
+      .verify_strict(self.message.serialize().as_bytes(), &self.signature)
       .map_err(DalekSignatureError)
       .context(error::SignatureInvalid {
         public_key: self.public_key,
@@ -49,7 +49,8 @@ impl Display for Signature {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     let mut encoder = Bech32Encoder::new(Bech32Type::Signature);
     encoder.bytes(&self.public_key.inner().to_bytes());
-    encoder.bytes(self.fingerprint.as_bytes());
+    encoder.bytes(self.message.fingerprint.as_bytes());
+    encoder.bytes(&self.message.time.unwrap_or_default().to_le_bytes());
     encoder.bytes(&self.signature.to_bytes());
     write!(f, "{encoder}")
   }
@@ -62,10 +63,14 @@ impl FromStr for Signature {
     let mut decoder = Bech32Decoder::new(Bech32Type::Signature, s)?;
     let public_key = decoder.byte_array()?;
     let fingerprint = decoder.byte_array()?;
+    let time = u128::from_le_bytes(decoder.byte_array()?);
     let signature = decoder.byte_array()?;
     decoder.done()?;
     Ok(Self {
-      fingerprint: Fingerprint::from_bytes(fingerprint),
+      message: Message {
+        fingerprint: Fingerprint::from_bytes(fingerprint),
+        time: if time == 0 { None } else { Some(time) },
+      },
       signature: ed25519_dalek::Signature::from_bytes(&signature),
       public_key: PublicKey::from_bytes(public_key).context(signature_error::PublicKey)?,
     })

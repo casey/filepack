@@ -29,7 +29,6 @@ impl Verify {
     struct Verified {
       bytes: u128,
       files: u64,
-      notes: u64,
       signatures: u64,
     }
 
@@ -82,14 +81,9 @@ impl Verify {
 
     let mut verified = Verified::default();
 
-    let fingerprint = manifest.verify_notes()?;
+    let fingerprint = manifest.verify_signatures()?;
 
-    verified.signatures += manifest
-      .notes
-      .iter()
-      .map(|note| note.signatures.len().into_u64())
-      .sum::<u64>();
-    verified.notes += manifest.notes.len().into_u64();
+    verified.signatures += manifest.signatures.len().into_u64();
 
     if let Some(expected) = self.fingerprint
       && fingerprint != expected
@@ -231,7 +225,7 @@ mismatched file: `{path}`
 
     for (key, identifier) in keys {
       ensure! {
-        manifest.notes.iter().any(|note| note.has_signature(key)),
+        manifest.signatures.iter().any(|signature| signature.public_key() == key),
         error::SignatureMissing { identifier: identifier.clone() },
       }
     }
@@ -247,11 +241,7 @@ mismatched file: `{path}`
     }
 
     if verified.signatures > 0 {
-      eprint!(
-        " with {} across {}",
-        Count(verified.signatures, "signature"),
-        Count(verified.notes, "note"),
-      );
+      eprint!(" with {}", Count(verified.signatures, "signature"),);
     }
 
     eprintln!();

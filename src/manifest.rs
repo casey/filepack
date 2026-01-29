@@ -1,10 +1,12 @@
 use super::*;
 
+#[serde_as]
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
 pub struct Manifest {
   pub files: Directory,
-  pub notes: Vec<Note>,
+  #[serde_as(as = "SetPreventDuplicates<_>")]
+  pub signatures: BTreeSet<Signature>,
 }
 
 impl Manifest {
@@ -70,7 +72,7 @@ impl Manifest {
   }
 
   pub(crate) fn message(&self, include_time: bool) -> Result<Message> {
-    let fingerprint = self.verify_notes()?;
+    let fingerprint = self.verify_signatures()?;
 
     Ok(Message {
       fingerprint,
@@ -97,18 +99,10 @@ impl Manifest {
 
     let (key, signature) = keychain.sign(key, &message, &serialized)?;
 
-    for note in &mut self.notes {
-      if note.message(message.fingerprint) == message {
-        ensure! {
-          !note.has_signature(key) || options.overwrite,
-          error::SignatureAlreadyExists { key },
-        }
-        note.signatures.insert(signature);
-        return Ok(());
-      }
+    ensure! {
+      self.signatures.insert(signature) || options.overwrite,
+      error::SignatureAlreadyExists { key },
     }
-
-    self.notes.push(Note::from_message(message, signature));
 
     Ok(())
   }
@@ -123,39 +117,11 @@ impl Manifest {
     size
   }
 
-  pub(crate) fn verify_notes(&self) -> Result<Fingerprint> {
+  pub(crate) fn verify_signatures(&self) -> Result<Fingerprint> {
     let fingerprint = self.fingerprint();
 
-    let mut digests = BTreeMap::new();
-    let mut signatures = BTreeMap::new();
-    for (index, note) in self.notes.iter().enumerate() {
-      for signature in &note.signatures {
-        let public_key = signature.public_key();
-        if let Some(first) = signatures.insert(public_key, index) {
-          return Err(
-            error::DuplicateSignature {
-              first,
-              public_key,
-              second: index,
-            }
-            .build(),
-          );
-        }
-      }
-
-      if let Some(first) = digests.insert(note.message(fingerprint), index) {
-        return Err(
-          error::DuplicateNote {
-            first,
-            second: index,
-          }
-          .build(),
-        );
-      }
-
-      if note.verify(fingerprint)? == 0 {
-        return Err(error::UnsignedNote { index }.build());
-      }
+    for signature in &self.signatures {
+      signature.verify(fingerprint)?;
     }
 
     Ok(fingerprint)
@@ -170,10 +136,10 @@ mod tests {
   fn empty_manifest_serialization() {
     let manifest = Manifest {
       files: Directory::new(),
-      notes: Vec::new(),
+      signatures: BTreeSet::new(),
     };
     let json = serde_json::to_string(&manifest).unwrap();
-    assert_eq!(json, r#"{"files":{},"notes":[]}"#);
+    assert_eq!(json, r#"{"files":{},"signatures":[]}"#);
     assert_eq!(serde_json::from_str::<Manifest>(&json).unwrap(), manifest);
   }
 
