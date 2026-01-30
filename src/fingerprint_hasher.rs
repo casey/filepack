@@ -1,18 +1,29 @@
 use super::*;
 
-pub(crate) struct FingerprintHasher(FingerprintSerializer<Hasher>);
+pub(crate) struct FingerprintHasher {
+  hasher: Hasher,
+  tag: u64,
+}
 
 impl FingerprintHasher {
   pub(crate) fn field(&mut self, tag: u64, field: &[u8]) {
-    self.0.field(tag, field).unwrap();
+    assert!(tag >= self.tag, "unexpected tag {tag}");
+    self.tag = tag;
+    self.hasher.update(&tag.to_le_bytes());
+    self.hasher.update(&field.len().into_u64().to_le_bytes());
+    self.hasher.update(field);
   }
 
   pub(crate) fn finalize(self) -> Hash {
-    self.0.into_inner().finalize().into()
+    self.hasher.finalize().into()
   }
 
   pub(crate) fn new(context: FingerprintPrefix) -> Self {
-    Self(FingerprintSerializer::new(context, Hasher::new()).unwrap())
+    let mut hasher = Hasher::new();
+    let prefix = context.prefix();
+    hasher.update(&prefix.len().into_u64().to_le_bytes());
+    hasher.update(prefix.as_bytes());
+    Self { hasher, tag: 0 }
   }
 }
 
