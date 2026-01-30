@@ -130,6 +130,20 @@ mod tests {
   use {super::*, regex::Regex};
 
   #[test]
+  fn duplicate_signatures_are_rejected() {
+    assert_eq!(
+      serde_json::from_str::<Manifest>(&format!(
+        r#"{{"files":{{}},"signatures":["{}","{}"]}}"#,
+        test::SIGNATURE,
+        test::SIGNATURE,
+      ))
+      .unwrap_err()
+      .to_string(),
+      "invalid entry: found duplicate value at line 1 column 532",
+    );
+  }
+
+  #[test]
   fn empty_manifest_serialization() {
     let manifest = Manifest {
       files: Directory::new(),
@@ -159,20 +173,6 @@ mod tests {
         .unwrap_err()
         .to_string()
         .starts_with("unknown field `hello`")
-    );
-  }
-
-  #[test]
-  fn duplicate_signatures_are_rejected() {
-    assert_eq!(
-      serde_json::from_str::<Manifest>(&format!(
-        r#"{{"files":{{}},"signatures":["{}","{}"]}}"#,
-        test::SIGNATURE,
-        test::SIGNATURE,
-      ))
-      .unwrap_err()
-      .to_string(),
-      "invalid entry: found duplicate value at line 1 column 532",
     );
   }
 }

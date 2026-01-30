@@ -477,6 +477,42 @@ fn print() {
 }
 
 #[test]
+fn signature_fingerprint_mismatch() {
+  let test = Test::new()
+    .arg("keygen")
+    .success()
+    .create_dir("foo")
+    .args(["create", "--sign", "foo"])
+    .success();
+
+  let manifest = test.read("foo/filepack.json");
+
+  let manifest = serde_json::from_str::<Manifest>(&manifest).unwrap();
+
+  let signature = manifest.signatures.iter().next().unwrap().to_string();
+
+  test
+    .write(
+      "foo/filepack.json",
+      json! {
+        files: {
+          bar: {
+            hash: EMPTY_HASH,
+            size: 0
+          }
+        },
+        signatures: [signature]
+      },
+    )
+    .touch("foo/bar")
+    .args(["verify", "foo"])
+    .stderr_regex(
+      "error: signature fingerprint `package1a.*` does not match package fingerprint `package1a.*`\n",
+    )
+    .failure();
+}
+
+#[test]
 fn signature_verification_success() {
   let test = Test::new()
     .arg("keygen")
@@ -679,42 +715,6 @@ fn weak_signature_public_key() {
     .arg("verify")
     .stderr_regex(
       "error: failed to deserialize manifest at `filepack.json`\n.*signature public key invalid.*",
-    )
-    .failure();
-}
-
-#[test]
-fn signature_fingerprint_mismatch() {
-  let test = Test::new()
-    .arg("keygen")
-    .success()
-    .create_dir("foo")
-    .args(["create", "--sign", "foo"])
-    .success();
-
-  let manifest = test.read("foo/filepack.json");
-
-  let manifest = serde_json::from_str::<Manifest>(&manifest).unwrap();
-
-  let signature = manifest.signatures.iter().next().unwrap().to_string();
-
-  test
-    .write(
-      "foo/filepack.json",
-      json! {
-        files: {
-          bar: {
-            hash: EMPTY_HASH,
-            size: 0
-          }
-        },
-        signatures: [signature]
-      },
-    )
-    .touch("foo/bar")
-    .args(["verify", "foo"])
-    .stderr_regex(
-      "error: signature fingerprint `package1a.*` does not match package fingerprint `package1a.*`\n",
     )
     .failure();
 }
