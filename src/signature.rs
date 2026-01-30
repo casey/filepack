@@ -101,16 +101,6 @@ mod tests {
   use super::*;
 
   #[test]
-  fn signature_begins_with_pubkey_and_fingerprint() {
-    let prefix = format!(
-      "signature1a{}{}",
-      &test::PUBLIC_KEY["public1a".len()..test::PUBLIC_KEY.len() - 6],
-      &test::FINGERPRINT["package1a".len()..test::FINGERPRINT.len() - 6]
-    );
-    assert!(test::SIGNATURE.starts_with(&prefix));
-  }
-
-  #[test]
   fn modifying_fingerprint_invalidates_signature() {
     let private_key = test::PRIVATE_KEY.parse::<PrivateKey>().unwrap();
     let fingerprint = test::FINGERPRINT.parse::<Fingerprint>().unwrap();
@@ -156,5 +146,15 @@ mod tests {
       signature.verify(fingerprint).unwrap_err(),
       Error::SignatureInvalid { .. },
     );
+  }
+
+  #[test]
+  fn signature_begins_with_pubkey_and_fingerprint() {
+    let prefix = format!(
+      "signature1a{}{}",
+      &test::PUBLIC_KEY["public1a".len()..test::PUBLIC_KEY.len() - 6],
+      &test::FINGERPRINT["package1a".len()..test::FINGERPRINT.len() - 6]
+    );
+    assert!(test::SIGNATURE.starts_with(&prefix));
   }
 }

@@ -108,7 +108,7 @@ fn named() {
 
 #[test]
 fn re_signing_is_idempotent() {
-  let test = Test::new()
+  Test::new()
     .arg("keygen")
     .success()
     .create_dir("foo")

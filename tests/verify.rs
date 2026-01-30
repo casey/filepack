@@ -597,6 +597,28 @@ error: 1 mismatched file
 }
 
 #[test]
+fn valid_signature_for_wrong_pubkey() {
+  let test = Test::new()
+    .arg("keygen")
+    .success()
+    .touch("pkg/foo")
+    .args(["create", "--sign", "pkg"])
+    .success();
+
+  let public_key = test.read("keychain/master.public");
+
+  test
+    .args(["verify", "pkg", "--key", PUBLIC_KEY])
+    .stderr(&format!(
+      "error: no signature found for key `{PUBLIC_KEY}`\n"
+    ))
+    .failure()
+    .args(["verify", "pkg", "--key", public_key.trim()])
+    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
+    .success();
+}
+
+#[test]
 fn verify_fingerprint() {
   Test::new()
     .touch("foo")
@@ -631,7 +653,7 @@ fn weak_signature_public_key() {
     let checked_hrpstring = CheckedHrpstring::new::<NoChecksum>(s).unwrap();
     checked_hrpstring
       .fe32_iter::<std::vec::IntoIter<u8>>()
-      .with_checksum::<::bech32::Bech32m>(&checked_hrpstring.hrp())
+      .with_checksum::<Bech32m>(&checked_hrpstring.hrp())
       .chars()
       .collect()
   }
@@ -679,27 +701,5 @@ fn with_manifest_path() {
     )
     .args(["verify", "--manifest", "hello.json"])
     .stderr("successfully verified 1 file totaling 0 bytes\n")
-    .success();
-}
-
-#[test]
-fn valid_signature_for_wrong_pubkey() {
-  let test = Test::new()
-    .arg("keygen")
-    .success()
-    .touch("pkg/foo")
-    .args(["create", "--sign", "pkg"])
-    .success();
-
-  let public_key = test.read("keychain/master.public");
-
-  test
-    .args(["verify", "pkg", "--key", PUBLIC_KEY])
-    .stderr(&format!(
-      "error: no signature found for key `{PUBLIC_KEY}`\n"
-    ))
-    .failure()
-    .args(["verify", "pkg", "--key", public_key.trim()])
-    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
     .success();
 }
