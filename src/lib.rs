@@ -36,7 +36,6 @@ use {
     file::File,
     fingerprint_hasher::FingerprintHasher,
     fingerprint_prefix::FingerprintPrefix,
-    fingerprint_serializer::FingerprintSerializer,
     format::Format,
     functions::{current_dir, decode_path, default, is_lowercase_hex, now},
     hash_error::HashError,
@@ -54,7 +53,6 @@ use {
     package::Package,
     path_error::PathError,
     public_key_error::PublicKeyError,
-    serialized_message::SerializedMessage,
     sign_options::SignOptions,
     signature_error::SignatureError,
     style::Style,
@@ -156,7 +154,6 @@ mod filesystem;
 mod fingerprint;
 mod fingerprint_hasher;
 mod fingerprint_prefix;
-mod fingerprint_serializer;
 mod format;
 mod functions;
 mod hash;
@@ -182,7 +179,6 @@ mod public_key;
 mod public_key_error;
 mod re;
 mod relative_path;
-mod serialized_message;
 mod sign_options;
 mod signature;
 mod signature_error;

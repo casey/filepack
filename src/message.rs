@@ -7,16 +7,15 @@ pub struct Message {
 }
 
 impl Message {
-  pub(crate) fn serialize(&self) -> SerializedMessage {
-    let mut serializer =
-      FingerprintSerializer::new(FingerprintPrefix::Message, Vec::new()).unwrap();
+  pub(crate) fn fingerprint(&self) -> Hash {
+    let mut serializer = FingerprintHasher::new(FingerprintPrefix::Message);
 
-    serializer.field(0, self.fingerprint.as_bytes()).unwrap();
+    serializer.field(0, self.fingerprint.as_bytes());
 
     if let Some(time) = self.time {
-      serializer.field(1, &time.to_le_bytes()).unwrap();
+      serializer.field(1, &time.to_le_bytes());
     }
 
-    SerializedMessage(serializer.into_inner())
+    serializer.finalize()
   }
 }
