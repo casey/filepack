@@ -650,7 +650,7 @@ fn valid_signature_for_wrong_pubkey() {
     ))
     .failure()
     .args(["verify", "foo", "--key", public_key.trim()])
-    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
+    .stderr("successfully verified 0 files with 1 signature\n")
     .success();
 }
 
