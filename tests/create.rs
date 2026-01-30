@@ -240,7 +240,7 @@ fn sign_creates_valid_signature() {
 
   assert_eq!(manifest.signatures.len(), 1);
 
-  let signature = manifest.signatures.into_iter().next().unwrap();
+  let signature = manifest.signatures.first().unwrap();
 
   assert_eq!(signature.public_key(), public_key);
   assert!(signature.message().time.is_none());
@@ -274,7 +274,7 @@ fn sign_with_named_key() {
 
   assert_eq!(manifest.signatures.len(), 1);
   assert_eq!(
-    manifest.signatures.into_iter().next().unwrap().public_key(),
+    manifest.signatures.first().unwrap().public_key(),
     public_key,
   );
 
@@ -305,7 +305,7 @@ fn sign_with_time() {
 
   assert_eq!(manifest.signatures.len(), 1);
 
-  let signature = manifest.signatures.into_iter().next().unwrap();
+  let signature = manifest.signatures.first().unwrap();
   assert_eq!(signature.public_key(), public_key,);
 
   let time = signature.message().time.unwrap();

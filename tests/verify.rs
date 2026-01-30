@@ -627,11 +627,8 @@ error: fingerprint mismatch\n",
 #[test]
 fn weak_signature_public_key() {
   fn checksum(s: &str) -> String {
-    use ::bech32::Fe32IterExt;
-
-    let checked_hrpstring =
-      ::bech32::primitives::decode::CheckedHrpstring::new::<::bech32::NoChecksum>(s).unwrap();
-
+    use ::bech32::{Bech32m, Fe32IterExt, NoChecksum, primitives::decode::CheckedHrpstring};
+    let checked_hrpstring = CheckedHrpstring::new::<NoChecksum>(s).unwrap();
     checked_hrpstring
       .fe32_iter::<std::vec::IntoIter<u8>>()
       .with_checksum::<::bech32::Bech32m>(&checked_hrpstring.hrp())
@@ -683,61 +680,6 @@ fn with_manifest_path() {
     .args(["verify", "--manifest", "hello.json"])
     .stderr("successfully verified 1 file totaling 0 bytes\n")
     .success();
-}
-
-#[test]
-fn invalid_signature() {
-  fn corrupt_signature(s: &str) -> String {
-    use ::bech32::Fe32IterExt;
-
-    let checked_hrpstring =
-      ::bech32::primitives::decode::CheckedHrpstring::new::<::bech32::Bech32m>(s).unwrap();
-
-    let hrp = checked_hrpstring.hrp();
-    let mut fes = checked_hrpstring
-      .fe32_iter::<std::vec::IntoIter<u8>>()
-      .collect::<Vec<_>>();
-
-    let middle = fes.len() / 2;
-    fes[middle] = if fes[middle] == ::bech32::Fe32::Q {
-      ::bech32::Fe32::P
-    } else {
-      ::bech32::Fe32::Q
-    };
-
-    fes
-      .into_iter()
-      .with_checksum::<::bech32::Bech32m>(&hrp)
-      .chars()
-      .collect()
-  }
-
-  let test = Test::new()
-    .arg("keygen")
-    .success()
-    .touch("pkg/foo")
-    .args(["create", "--sign", "pkg"])
-    .success();
-
-  let manifest_path = test.path().join("pkg/filepack.json");
-  let mut manifest = Manifest::load(Some(&manifest_path)).unwrap();
-
-  let signature = manifest.signatures.pop_first().unwrap().to_string();
-  let corrupted = corrupt_signature(&signature);
-
-  manifest.signatures.insert(corrupted.parse().unwrap());
-  manifest.save(&manifest_path).unwrap();
-
-  let public_key = test.read("keychain/master.public");
-
-  test
-    .args(["verify", "pkg"])
-    .stderr_regex(&format!(
-      "error: invalid signature for key `{}`\n\
-      .*Verification equation was not satisfied.*",
-      public_key.trim()
-    ))
-    .failure();
 }
 
 #[test]

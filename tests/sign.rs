@@ -111,22 +111,18 @@ fn re_signing_is_idempotent() {
   let test = Test::new()
     .arg("keygen")
     .success()
-    .touch("foo/bar")
+    .create_dir("foo")
     .args(["create", "foo"])
-    .success();
-
-  let public_key = test.read("keychain/master.public");
-
-  test
-    .args(["sign", "foo/filepack.json"])
-    .success()
-    .args(["verify", "foo", "--key", &public_key])
-    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
     .success()
     .args(["sign", "foo/filepack.json"])
     .success()
-    .args(["verify", "foo", "--key", &public_key])
-    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
+    .args(["verify", "foo", "--key", "master"])
+    .stderr("successfully verified 0 files with 1 signature\n")
+    .success()
+    .args(["sign", "foo/filepack.json"])
+    .success()
+    .args(["verify", "foo", "--key", "master"])
+    .stderr("successfully verified 0 files with 1 signature\n")
     .success();
 }
 
@@ -147,7 +143,7 @@ fn updates_manifest_with_signature() {
       "error: no signature found for key `{public_key}`\n"
     ))
     .failure()
-    .args(["sign", "foo/filepack.json"])
+    .args(["sign", "foo"])
     .success()
     .args(["verify", "foo", "--key", &public_key])
     .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
