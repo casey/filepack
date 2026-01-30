@@ -145,7 +145,7 @@ impl Keychain {
     &self,
     name: &KeyName,
     message: &Message,
-    serialized: &SerializedMessage,
+    digest: &Digest,
   ) -> Result<Signature> {
     let public_key = self.public_key(name)?;
 
@@ -158,6 +158,6 @@ impl Keychain {
       }
     }
 
-    Ok(private_key.sign(message, serialized))
+    Ok(private_key.sign(message, digest))
   }
 }

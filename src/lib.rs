@@ -29,6 +29,7 @@ use {
     count::Count,
     dalek_signature_error::DalekSignatureError,
     date_time::DateTime,
+    digest::Digest,
     display_path::DisplayPath,
     display_secret::DisplaySecret,
     entries::Entries,
@@ -54,7 +55,6 @@ use {
     package::Package,
     path_error::PathError,
     public_key_error::PublicKeyError,
-    serialized_message::SerializedMessage,
     sign_options::SignOptions,
     signature_error::SignatureError,
     style::Style,
@@ -144,6 +144,7 @@ mod component_error;
 mod count;
 mod dalek_signature_error;
 mod date_time;
+mod digest;
 mod directory;
 mod display_path;
 mod display_secret;
@@ -182,7 +183,6 @@ mod public_key;
 mod public_key_error;
 mod re;
 mod relative_path;
-mod serialized_message;
 mod sign_options;
 mod signature;
 mod signature_error;

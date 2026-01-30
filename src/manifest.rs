@@ -95,9 +95,9 @@ impl Manifest {
   ) -> Result {
     let message = self.message(options.time)?;
 
-    let serialized = message.serialize();
+    let digest = message.digest();
 
-    let signature = keychain.sign(key, &message, &serialized)?;
+    let signature = keychain.sign(key, &message, &digest)?;
 
     self.signatures.insert(signature);
 

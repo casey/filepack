@@ -44,7 +44,7 @@ impl Signature {
     self
       .public_key
       .inner()
-      .verify_strict(self.message.serialize().as_bytes(), &self.signature)
+      .verify_strict(self.message.digest().as_bytes(), &self.signature)
       .map_err(DalekSignatureError)
       .context(error::SignatureInvalid {
         public_key: self.public_key,
@@ -108,7 +108,7 @@ mod tests {
       fingerprint,
       time: Some(1000),
     };
-    let mut signature = private_key.sign(&message, &message.serialize());
+    let mut signature = private_key.sign(&message, &message.digest());
     signature.message.fingerprint = Fingerprint::from_bytes(default());
     assert_matches!(
       signature.verify(fingerprint).unwrap_err(),
@@ -124,7 +124,7 @@ mod tests {
       fingerprint,
       time: Some(1000),
     };
-    let mut signature = private_key.sign(&message, &message.serialize());
+    let mut signature = private_key.sign(&message, &message.digest());
     signature.message.time = Some(2000);
     assert_matches!(
       signature.verify(fingerprint).unwrap_err(),
@@ -140,7 +140,7 @@ mod tests {
       fingerprint,
       time: Some(1000),
     };
-    let mut signature = private_key.sign(&message, &message.serialize());
+    let mut signature = private_key.sign(&message, &message.digest());
     signature.message.time = None;
     assert_matches!(
       signature.verify(fingerprint).unwrap_err(),
