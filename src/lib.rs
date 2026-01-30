@@ -46,7 +46,6 @@ use {
     language::Language,
     lint_error::{Lint, LintError},
     lint_group::LintGroup,
-    message_fingerprint::MessageFingerprint,
     metadata::Metadata,
     mode::Mode,
     options::Options,
@@ -168,7 +167,6 @@ mod lint_error;
 mod lint_group;
 mod manifest;
 mod message;
-mod message_fingerprint;
 mod metadata;
 mod mode;
 mod options;

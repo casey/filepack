@@ -141,12 +141,7 @@ impl Keychain {
       })
   }
 
-  pub(crate) fn sign(
-    &self,
-    name: &KeyName,
-    message: &Message,
-    fingerprint: &MessageFingerprint,
-  ) -> Result<Signature> {
+  pub(crate) fn sign(&self, name: &KeyName, message: &Message) -> Result<Signature> {
     let public_key = self.public_key(name)?;
 
     let private_key = PrivateKey::load(&self.path.join(name.private_key_filename()))?;
@@ -158,6 +153,6 @@ impl Keychain {
       }
     }
 
-    Ok(private_key.sign(message, fingerprint))
+    Ok(private_key.sign(message))
   }
 }

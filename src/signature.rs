@@ -108,7 +108,7 @@ mod tests {
       fingerprint,
       time: Some(1000),
     };
-    let mut signature = private_key.sign(&message, &message.fingerprint());
+    let mut signature = private_key.sign(&message);
     signature.message.fingerprint = Fingerprint::from_bytes(default());
     assert_matches!(
       signature.verify(fingerprint).unwrap_err(),
@@ -124,7 +124,7 @@ mod tests {
       fingerprint,
       time: Some(1000),
     };
-    let mut signature = private_key.sign(&message, &message.fingerprint());
+    let mut signature = private_key.sign(&message);
     signature.message.time = Some(2000);
     assert_matches!(
       signature.verify(fingerprint).unwrap_err(),
@@ -140,7 +140,7 @@ mod tests {
       fingerprint,
       time: Some(1000),
     };
-    let mut signature = private_key.sign(&message, &message.fingerprint());
+    let mut signature = private_key.sign(&message);
     signature.message.time = None;
     assert_matches!(
       signature.verify(fingerprint).unwrap_err(),

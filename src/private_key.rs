@@ -47,12 +47,12 @@ impl PrivateKey {
     self.clone().into()
   }
 
-  pub(crate) fn sign(&self, message: &Message, fingerprint: &MessageFingerprint) -> Signature {
+  pub(crate) fn sign(&self, message: &Message) -> Signature {
     use ed25519_dalek::Signer;
     Signature::new(
       message.clone(),
       self.public_key(),
-      self.0.sign(fingerprint.as_bytes()),
+      self.0.sign(message.fingerprint().as_bytes()),
     )
   }
 }
