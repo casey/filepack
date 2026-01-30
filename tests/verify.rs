@@ -601,19 +601,19 @@ fn valid_signature_for_wrong_pubkey() {
   let test = Test::new()
     .arg("keygen")
     .success()
-    .touch("pkg/foo")
-    .args(["create", "--sign", "pkg"])
+    .create_dir("foo")
+    .args(["create", "--sign", "foo"])
     .success();
 
   let public_key = test.read("keychain/master.public");
 
   test
-    .args(["verify", "pkg", "--key", PUBLIC_KEY])
+    .args(["verify", "foo", "--key", PUBLIC_KEY])
     .stderr(&format!(
       "error: no signature found for key `{PUBLIC_KEY}`\n"
     ))
     .failure()
-    .args(["verify", "pkg", "--key", public_key.trim()])
+    .args(["verify", "foo", "--key", public_key.trim()])
     .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
     .success();
 }
@@ -688,7 +688,7 @@ fn signature_fingerprint_mismatch() {
   let test = Test::new()
     .arg("keygen")
     .success()
-    .create("foo")
+    .create_dir("foo")
     .args(["create", "--sign", "foo"])
     .success();
 
