@@ -2,8 +2,6 @@ use super::*;
 
 #[derive(Parser)]
 pub(crate) struct Sign {
-  #[arg(help = "Allow overwriting signature", long)]
-  force: bool,
   #[arg(default_value_t = KeyName::DEFAULT, help = "Sign with <KEY>", long)]
   key: KeyName,
   #[arg(help = MANIFEST_PATH_HELP)]
@@ -18,14 +16,7 @@ impl Sign {
 
     let keychain = Keychain::load(&options)?;
 
-    manifest.sign(
-      SignOptions {
-        overwrite: self.force,
-        time: self.time,
-      },
-      &keychain,
-      &self.key,
-    )?;
+    manifest.sign(SignOptions { time: self.time }, &keychain, &self.key)?;
 
     manifest.save(&path)?;
 

@@ -85,19 +85,6 @@ pub enum Error {
     first: KeyIdentifier,
     second: KeyIdentifier,
   },
-  #[snafu(display("note {first} and {second} have the same digest"))]
-  DuplicateNote {
-    backtrace: Option<Backtrace>,
-    first: Index,
-    second: Index,
-  },
-  #[snafu(display("note {first} and {second} both have signatures from key {public_key}"))]
-  DuplicateSignature {
-    backtrace: Option<Backtrace>,
-    first: Index,
-    public_key: PublicKey,
-    second: Index,
-  },
   #[snafu(display("{count} mismatched file{}", if *count == 1 { "" } else { "s" }))]
   EntryMismatch {
     backtrace: Option<Backtrace>,
@@ -256,10 +243,13 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
-  #[snafu(display("manifest has already been signed by key `{key}`"))]
-  SignatureAlreadyExists {
+  #[snafu(display(
+    "signature fingerprint `{signature}` does not match package fingerprint `{package}`"
+  ))]
+  SignatureFingerprintMismatch {
     backtrace: Option<Backtrace>,
-    key: PublicKey,
+    package: Fingerprint,
+    signature: Fingerprint,
   },
   #[snafu(display("invalid signature for key `{public_key}`"))]
   SignatureInvalid {
@@ -295,11 +285,6 @@ pub enum Error {
   Time {
     backtrace: Option<Backtrace>,
     source: SystemTimeError,
-  },
-  #[snafu(display("note {index} is unsigned"))]
-  UnsignedNote {
-    backtrace: Option<Backtrace>,
-    index: Index,
   },
   #[snafu(transparent)]
   WalkDir {

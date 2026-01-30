@@ -155,19 +155,12 @@ impl Create {
 
     let mut manifest = Manifest {
       files,
-      notes: Vec::new(),
+      signatures: BTreeSet::new(),
     };
 
     if self.sign {
       let keychain = Keychain::load(&options)?;
-      manifest.sign(
-        SignOptions {
-          time: self.time,
-          overwrite: false,
-        },
-        &keychain,
-        &self.key,
-      )?;
+      manifest.sign(SignOptions { time: self.time }, &keychain, &self.key)?;
     }
 
     manifest.save(&manifest_path)?;

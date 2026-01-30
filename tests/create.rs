@@ -31,7 +31,7 @@ fn empty_directories_are_included() {
           foo: {
           },
         },
-        notes: [],
+        signatures: [],
       },
     )
     .success()
@@ -56,7 +56,7 @@ fn file_in_subdirectory() {
             }
           }
         },
-        notes: [],
+        signatures: [],
       },
     )
     .success()
@@ -80,7 +80,7 @@ fn force_overwrites_manifest() {
             size: 0
           }
         },
-        notes: [],
+        signatures: [],
       },
     )
     .success()
@@ -104,7 +104,7 @@ fn force_overwrites_manifest_with_destination() {
             size: 0
           }
         },
-        notes: [],
+        signatures: [],
       },
     )
     .success()
@@ -152,7 +152,7 @@ fn multiple_empty_directory_are_included() {
           foo: {
           },
         },
-        notes: [],
+        signatures: [],
       },
     )
     .success()
@@ -175,7 +175,7 @@ fn nested_empty_directories_are_included() {
             },
           },
         },
-        notes: [],
+        signatures: [],
       },
     )
     .success()
@@ -188,7 +188,7 @@ fn nested_empty_directories_are_included() {
 fn no_files() {
   Test::new()
     .args(["create", "."])
-    .assert_file("filepack.json", json_pretty! { files: {}, notes: [] })
+    .assert_file("filepack.json", json_pretty! { files: {}, signatures: [] })
     .success()
     .args(["verify", "."])
     .stderr("successfully verified 0 files\n")
@@ -230,7 +230,7 @@ fn sign_creates_valid_signature() {
     .args(["create", "--sign", "foo"])
     .success()
     .args(["verify", "foo"])
-    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature across 1 note\n")
+    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
     .success();
 
   let manifest_path = test.path().join("foo/filepack.json");
@@ -238,10 +238,12 @@ fn sign_creates_valid_signature() {
 
   let public_key = test.read_public_key("keychain/master.public");
 
-  assert_eq!(manifest.notes.len(), 1);
-  assert_eq!(manifest.notes[0].signatures.len(), 1);
-  assert!(manifest.notes[0].has_signature(public_key));
-  assert!(manifest.notes[0].time.is_none());
+  assert_eq!(manifest.signatures.len(), 1);
+
+  let signature = manifest.signatures.first().unwrap();
+
+  assert_eq!(signature.public_key(), public_key);
+  assert!(signature.message().time.is_none());
 }
 
 #[test]
@@ -270,13 +272,15 @@ fn sign_with_named_key() {
 
   let public_key = test.read_public_key("keychain/deploy.public");
 
-  assert_eq!(manifest.notes.len(), 1);
-  assert_eq!(manifest.notes[0].signatures.len(), 1);
-  assert!(manifest.notes[0].has_signature(public_key));
+  assert_eq!(manifest.signatures.len(), 1);
+  assert_eq!(
+    manifest.signatures.first().unwrap().public_key(),
+    public_key,
+  );
 
   test
     .args(["verify", "foo"])
-    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature across 1 note\n")
+    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
     .success();
 }
 
@@ -291,7 +295,7 @@ fn sign_with_time() {
     .args(["create", "--sign", "--time", "foo"])
     .success()
     .args(["verify", "foo"])
-    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature across 1 note\n")
+    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
     .success();
 
   let manifest_path = test.path().join("foo/filepack.json");
@@ -299,11 +303,12 @@ fn sign_with_time() {
 
   let public_key = test.read_public_key("keychain/master.public");
 
-  assert_eq!(manifest.notes.len(), 1);
-  assert_eq!(manifest.notes[0].signatures.len(), 1);
-  assert!(manifest.notes[0].has_signature(public_key));
+  assert_eq!(manifest.signatures.len(), 1);
 
-  let time = manifest.notes[0].time.unwrap();
+  let signature = manifest.signatures.first().unwrap();
+  assert_eq!(signature.public_key(), public_key,);
+
+  let time = signature.message().time.unwrap();
   let now = SystemTime::now()
     .duration_since(UNIX_EPOCH)
     .unwrap()
@@ -335,7 +340,7 @@ fn single_file() {
             size: 0
           }
         },
-        notes: [],
+        signatures: [],
       },
     )
     .success()
@@ -358,7 +363,7 @@ fn single_file_mmap() {
             size: 0
           }
         },
-        notes: [],
+        signatures: [],
       },
     )
     .success()
@@ -381,7 +386,7 @@ fn single_file_omit_root() {
             size: 0
           }
         },
-        notes: [],
+        signatures: [],
       },
     )
     .success()
@@ -404,7 +409,7 @@ fn single_file_parallel() {
             size: 0
           }
         },
-        notes: [],
+        signatures: [],
       },
     )
     .success()
@@ -427,7 +432,7 @@ fn single_non_empty_file() {
             size: 3
           }
         },
-        notes: [],
+        signatures: [],
       },
     )
     .success()
@@ -459,7 +464,7 @@ fn with_manifest_path() {
             size: 0
           }
         },
-        notes: [],
+        signatures: [],
       },
     )
     .success()

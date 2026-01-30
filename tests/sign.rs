@@ -15,7 +15,7 @@ fn appends_filename_if_argument_is_directory() {
     .args(["sign", "foo"])
     .success()
     .args(["verify", "foo", "--key", &public_key])
-    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature across 1 note\n")
+    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
     .success();
 }
 
@@ -35,7 +35,7 @@ fn defaults_to_current_directory() {
     .arg("sign")
     .success()
     .args(["verify", "foo", "--key", &public_key])
-    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature across 1 note\n")
+    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
     .success();
 }
 
@@ -63,10 +63,10 @@ fn existing_signatures_are_preserved() {
 
   test
     .args(["verify", "foo", "--key", &a])
-    .stderr("successfully verified 1 file totaling 0 bytes with 2 signatures across 1 note\n")
+    .stderr("successfully verified 1 file totaling 0 bytes with 2 signatures\n")
     .success()
     .args(["verify", "foo", "--key", &b])
-    .stderr("successfully verified 1 file totaling 0 bytes with 2 signatures across 1 note\n")
+    .stderr("successfully verified 1 file totaling 0 bytes with 2 signatures\n")
     .success();
 }
 
@@ -102,36 +102,27 @@ fn named() {
     .args(["sign", "--key", "deploy", "foo/filepack.json"])
     .success()
     .args(["verify", "foo", "--key", &public_key])
-    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature across 1 note\n")
+    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
     .success();
 }
 
 #[test]
-fn re_signing_requires_force() {
-  let test = Test::new()
+fn re_signing_is_idempotent() {
+  Test::new()
     .arg("keygen")
     .success()
-    .touch("foo/bar")
+    .create_dir("foo")
     .args(["create", "foo"])
-    .success();
-
-  let public_key = test.read("keychain/master.public");
-
-  test
-    .args(["sign", "foo/filepack.json"])
-    .success()
-    .args(["verify", "foo", "--key", &public_key])
-    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature across 1 note\n")
     .success()
     .args(["sign", "foo/filepack.json"])
-    .stderr(&format!(
-      "error: manifest has already been signed by key `{public_key}`\n"
-    ))
-    .failure()
-    .args(["sign", "--force", "foo/filepack.json"])
     .success()
-    .args(["verify", "foo", "--key", &public_key])
-    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature across 1 note\n")
+    .args(["verify", "foo", "--key", "master"])
+    .stderr("successfully verified 0 files with 1 signature\n")
+    .success()
+    .args(["sign", "foo/filepack.json"])
+    .success()
+    .args(["verify", "foo", "--key", "master"])
+    .stderr("successfully verified 0 files with 1 signature\n")
     .success();
 }
 
@@ -152,15 +143,23 @@ fn updates_manifest_with_signature() {
       "error: no signature found for key `{public_key}`\n"
     ))
     .failure()
-    .args(["sign", "foo/filepack.json"])
+    .args(["sign", "foo"])
     .success()
     .args(["verify", "foo", "--key", &public_key])
-    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature across 1 note\n")
+    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
     .success();
 
   let manifest_path = test.path().join("foo/filepack.json");
   let manifest = Manifest::load(Some(&manifest_path)).unwrap();
-  assert!(manifest.notes[0].time.is_none());
+  assert!(
+    manifest
+      .signatures
+      .first()
+      .unwrap()
+      .message()
+      .time
+      .is_none()
+  );
 }
 
 #[test]
@@ -178,13 +177,13 @@ fn with_time() {
     .args(["sign", "--time", "foo/filepack.json"])
     .success()
     .args(["verify", "foo", "--key", &public_key])
-    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature across 1 note\n")
+    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
     .success();
 
   let manifest_path = test.path().join("foo/filepack.json");
   let manifest = Manifest::load(Some(&manifest_path)).unwrap();
 
-  let time = manifest.notes[0].time.unwrap();
+  let time = manifest.signatures.first().unwrap().message().time.unwrap();
   let now = SystemTime::now()
     .duration_since(UNIX_EPOCH)
     .unwrap()

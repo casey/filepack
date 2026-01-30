@@ -38,9 +38,8 @@ use {
     fingerprint_prefix::FingerprintPrefix,
     fingerprint_serializer::FingerprintSerializer,
     format::Format,
-    functions::{current_dir, decode_path, default, is_default, is_lowercase_hex, now},
+    functions::{current_dir, decode_path, default, is_lowercase_hex, now},
     hash_error::HashError,
-    index::Index,
     key_identifier::KeyIdentifier,
     key_name::KeyName,
     key_type::KeyType,
@@ -48,7 +47,6 @@ use {
     language::Language,
     lint_error::{Lint, LintError},
     lint_group::LintGroup,
-    message::Message,
     metadata::Metadata,
     mode::Mode,
     options::Options,
@@ -107,7 +105,7 @@ use {
 
 pub use self::{
   directory::Directory, error::Error, fingerprint::Fingerprint, hash::Hash, manifest::Manifest,
-  note::Note, private_key::PrivateKey, public_key::PublicKey, relative_path::RelativePath,
+  message::Message, private_key::PrivateKey, public_key::PublicKey, relative_path::RelativePath,
   signature::Signature,
 };
 
@@ -134,19 +132,6 @@ macro_rules! assert_matches {
       ),
     }
   }
-}
-
-#[cfg(test)]
-macro_rules! assert_matches_regex {
-  ($haystack:expr, $re:expr $(,)?) => {{
-    let haystack = $haystack;
-    let re = Regex::new(&$re).unwrap();
-    assert!(
-      re.is_match(&haystack),
-      "assertion failed: `{haystack:?}` does not match `{}`",
-      re.as_str(),
-    );
-  }};
 }
 
 mod arguments;
@@ -176,7 +161,6 @@ mod format;
 mod functions;
 mod hash;
 mod hash_error;
-mod index;
 mod key_identifier;
 mod key_name;
 mod key_type;
@@ -188,7 +172,6 @@ mod manifest;
 mod message;
 mod metadata;
 mod mode;
-mod note;
 mod options;
 mod owo_colorize_ext;
 mod package;

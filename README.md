@@ -193,17 +193,16 @@ Path components may not be `.` or `..`, contain the path separators `/` or `\`,
 contain NUL, be longer than 255 bytes, or begin with a Windows drive prefix,
 such as `C:`.
 
-### `notes`
+### `signatures`
 
-The value of the mandatory `notes` key is an array of signed notes. Notes are
-objects containing a single mandatory key `signatures`, an array of signatures.
-
-Notes may optionally contain a `time` field whose value is a timestamp given as
-the number of nanoseconds after the UNIX epoch.
+The value of the mandatory `signatures` key is an array of signatures.
+Signatures are bech32 strings that include an Ed25519 key, the package
+fingerprint the signature is made over, an optional timestamp, and the
+signature itself.
 
 Public keys are Curve25519 points and signatures are Ed25519 signatures made
-over the root of a Merkle tree which commits to the content of `files`, as well
-as the value of the `time` field, if present.
+over the root of a Merkle tree which commits to the content of `files` via the
+package fingerprint.
 
 ### Example
 
@@ -225,14 +224,7 @@ signed by the public key
       }
     }
   },
-  "notes": [
-    {
-      "signatures": [
-        "…"
-      ],
-      "time": 1768531681809767000
-    }
-  ]
+  "signatures": ["…"]
 }
 ```
 

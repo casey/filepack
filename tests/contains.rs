@@ -57,7 +57,7 @@ fn size_mismatch() {
             size: 1,
           }
         },
-        notes: [],
+        signatures: [],
       },
     )
     .args(["contains", "--file", "foo"])

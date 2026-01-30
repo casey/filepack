@@ -14,7 +14,7 @@ fn fingerprint() {
             size: 0
           }
         },
-        notes: [],
+        signatures: [],
       },
     )
     .success();

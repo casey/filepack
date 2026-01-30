@@ -1,9 +1,9 @@
 use super::*;
 
-#[derive(Eq, Ord, PartialEq, PartialOrd)]
-pub(crate) struct Message {
-  pub(crate) fingerprint: Fingerprint,
-  pub(crate) time: Option<u128>,
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
+pub struct Message {
+  pub fingerprint: Fingerprint,
+  pub time: Option<u128>,
 }
 
 impl Message {

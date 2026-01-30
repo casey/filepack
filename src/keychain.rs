@@ -144,8 +144,9 @@ impl Keychain {
   pub(crate) fn sign(
     &self,
     name: &KeyName,
-    message: &SerializedMessage,
-  ) -> Result<(PublicKey, Signature)> {
+    message: &Message,
+    serialized: &SerializedMessage,
+  ) -> Result<Signature> {
     let public_key = self.public_key(name)?;
 
     let private_key = PrivateKey::load(&self.path.join(name.private_key_filename()))?;
@@ -157,6 +158,6 @@ impl Keychain {
       }
     }
 
-    Ok((public_key, private_key.sign(message)))
+    Ok(private_key.sign(message, serialized))
   }
 }

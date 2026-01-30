@@ -1,7 +1,7 @@
 use {
   self::{expected::Expected, test::Test},
   camino::{Utf8Path, Utf8PathBuf},
-  filepack::{Manifest, Note, PrivateKey, PublicKey, Signature, assert_matches},
+  filepack::{Manifest, PrivateKey, PublicKey, assert_matches},
   regex::Regex,
   std::{
     collections::BTreeMap,
@@ -33,7 +33,6 @@ mod lints;
 mod man;
 mod metadata;
 mod misc;
-mod notes;
 mod sign;
 mod size;
 mod test;
@@ -44,9 +43,3 @@ const EMPTY_HASH: &str = "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93
 const PRIVATE_KEY: &str = "private1a24p4zsr2nh04f4pkgtxfzv5yle473x4jue7s6lkwg9tdkk73q59qluezpp";
 
 const PUBLIC_KEY: &str = "public1a67dndhhmae7p6fsfnj0z37zf78cde6mwqgtms0y87h8ldlvvflyqcxnd63";
-
-pub(crate) const SIGNATURE: &str = concat!(
-  "signature1a67dndhhmae7p6fsfnj0z37zf78cde6mwqgtms0y87h8ldlvvflyqppampjlm7qs0g4amn",
-  "9fnq87crhn70k5lv5wf48ajy6k774tqw6yc9s5n0kpq5420jrz644sgu7geahpffl8l7nuv9azsqv8jp",
-  "gtrcqstge7ax",
-);
