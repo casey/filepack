@@ -161,4 +161,18 @@ mod tests {
         .starts_with("unknown field `hello`")
     );
   }
+
+  #[test]
+  fn duplicate_signatures_are_rejected() {
+    assert_eq!(
+      serde_json::from_str::<Manifest>(&format!(
+        r#"{{"files":{{}},"signatures":["{}","{}"]}}"#,
+        test::SIGNATURE,
+        test::SIGNATURE,
+      ))
+      .unwrap_err()
+      .to_string(),
+      "invalid entry: found duplicate value at line 1 column 532",
+    );
+  }
 }

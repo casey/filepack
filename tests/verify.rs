@@ -684,6 +684,42 @@ fn weak_signature_public_key() {
 }
 
 #[test]
+fn signature_fingerprint_mismatch() {
+  let test = Test::new()
+    .arg("keygen")
+    .success()
+    .create("foo")
+    .args(["create", "--sign", "foo"])
+    .success();
+
+  let manifest = test.read("foo/filepack.json");
+
+  let manifest = serde_json::from_str::<Manifest>(&manifest).unwrap();
+
+  let signature = manifest.signatures.iter().next().unwrap().to_string();
+
+  test
+    .write(
+      "foo/filepack.json",
+      json! {
+        files: {
+          bar: {
+            hash: EMPTY_HASH,
+            size: 0
+          }
+        },
+        signatures: [signature]
+      },
+    )
+    .touch("foo/bar")
+    .args(["verify", "foo"])
+    .stderr_regex(
+      "error: signature fingerprint `package1a.*` does not match package fingerprint `package1a.*`\n",
+    )
+    .failure();
+}
+
+#[test]
 fn with_manifest_path() {
   Test::new()
     .touch("foo")
