@@ -7,7 +7,7 @@ pub struct Message {
 }
 
 impl Message {
-  pub(crate) fn digest(&self) -> Digest {
+  pub(crate) fn fingerprint(&self) -> MessageFingerprint {
     let mut serializer = FingerprintHasher::new(FingerprintPrefix::Message);
 
     serializer.field(0, self.fingerprint.as_bytes());
@@ -16,6 +16,6 @@ impl Message {
       serializer.field(1, &time.to_le_bytes());
     }
 
-    Digest(serializer.finalize())
+    MessageFingerprint(serializer.finalize())
   }
 }

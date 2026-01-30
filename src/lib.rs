@@ -29,7 +29,6 @@ use {
     count::Count,
     dalek_signature_error::DalekSignatureError,
     date_time::DateTime,
-    digest::Digest,
     display_path::DisplayPath,
     display_secret::DisplaySecret,
     entries::Entries,
@@ -47,6 +46,7 @@ use {
     language::Language,
     lint_error::{Lint, LintError},
     lint_group::LintGroup,
+    message_fingerprint::MessageFingerprint,
     metadata::Metadata,
     mode::Mode,
     options::Options,
@@ -143,7 +143,6 @@ mod component_error;
 mod count;
 mod dalek_signature_error;
 mod date_time;
-mod digest;
 mod directory;
 mod display_path;
 mod display_secret;
@@ -169,6 +168,7 @@ mod lint_error;
 mod lint_group;
 mod manifest;
 mod message;
+mod message_fingerprint;
 mod metadata;
 mod mode;
 mod options;

@@ -95,9 +95,9 @@ impl Manifest {
   ) -> Result {
     let message = self.message(options.time)?;
 
-    let digest = message.digest();
+    let fingerprint = message.fingerprint();
 
-    let signature = keychain.sign(key, &message, &digest)?;
+    let signature = keychain.sign(key, &message, &fingerprint)?;
 
     self.signatures.insert(signature);
 
