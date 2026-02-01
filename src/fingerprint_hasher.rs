@@ -2,13 +2,13 @@ use super::*;
 
 pub(crate) struct FingerprintHasher {
   hasher: Hasher,
-  tag: u64,
+  next: u64,
 }
 
 impl FingerprintHasher {
   pub(crate) fn field(&mut self, tag: u64, field: &[u8]) {
-    assert!(tag >= self.tag, "unexpected tag {tag}");
-    self.tag = tag;
+    assert!(tag == self.next, "unexpected tag {tag}");
+    self.next += 1;
     self.varint(tag);
     self.varint(field.len().into_u64());
     self.hasher.update(field);
@@ -21,7 +21,7 @@ impl FingerprintHasher {
   pub(crate) fn new(context: FingerprintPrefix) -> Self {
     let mut hasher = Self {
       hasher: Hasher::new(),
-      tag: 0,
+      next: 0,
     };
     let prefix = context.prefix();
     hasher.varint(prefix.len().into_u64());
@@ -65,10 +65,10 @@ mod tests {
   }
 
   #[test]
-  #[should_panic(expected = "unexpected tag 0")]
+  #[should_panic(expected = "unexpected tag 2")]
   fn tag_order() {
     let mut hasher = FingerprintHasher::new(FingerprintPrefix::File);
-    hasher.field(1, &[]);
     hasher.field(0, &[]);
+    hasher.field(2, &[]);
   }
 }
