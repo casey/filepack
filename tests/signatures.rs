@@ -11,27 +11,6 @@ fn no_signatures() {
 }
 
 #[test]
-fn signature_without_time() {
-  let test = Test::new()
-    .arg("keygen")
-    .success()
-    .touch("foo/bar")
-    .args(["create", "foo"])
-    .success()
-    .args(["sign", "foo"])
-    .success();
-
-  let public_key = test.read("keychain/master.public");
-
-  test
-    .args(["signatures", "--format", "json", "foo"])
-    .stdout(format!(
-      "[{{\"public-key\":\"{public_key}\",\"timestamp\":null}}]\n"
-    ))
-    .success();
-}
-
-#[test]
 fn signature_with_time() {
   let test = Test::new()
     .arg("keygen")
@@ -48,6 +27,27 @@ fn signature_with_time() {
     .args(["signatures", "--format", "json", "foo"])
     .stdout_regex(&format!(
       r#"\[\{{"public-key":"{public_key}","timestamp":\d+\}}\]\n"#,
+    ))
+    .success();
+}
+
+#[test]
+fn signature_without_time() {
+  let test = Test::new()
+    .arg("keygen")
+    .success()
+    .touch("foo/bar")
+    .args(["create", "foo"])
+    .success()
+    .args(["sign", "foo"])
+    .success();
+
+  let public_key = test.read("keychain/master.public");
+
+  test
+    .args(["signatures", "--format", "json", "foo"])
+    .stdout(format!(
+      "[{{\"public-key\":\"{public_key}\",\"timestamp\":null}}]\n"
     ))
     .success();
 }
