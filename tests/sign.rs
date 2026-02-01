@@ -157,13 +157,13 @@ fn updates_manifest_with_signature() {
       .first()
       .unwrap()
       .message()
-      .time
+      .timestamp
       .is_none()
   );
 }
 
 #[test]
-fn with_time() {
+fn with_timestamp() {
   let test = Test::new()
     .arg("keygen")
     .success()
@@ -174,7 +174,7 @@ fn with_time() {
   let public_key = test.read("keychain/master.public");
 
   let test = test
-    .args(["sign", "--time", "foo/filepack.json"])
+    .args(["sign", "--timestamp", "foo/filepack.json"])
     .success()
     .args(["verify", "foo", "--key", &public_key])
     .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
@@ -183,7 +183,13 @@ fn with_time() {
   let manifest_path = test.path().join("foo/filepack.json");
   let manifest = Manifest::load(Some(&manifest_path)).unwrap();
 
-  let time = manifest.signatures.first().unwrap().message().time.unwrap();
+  let time = manifest
+    .signatures
+    .first()
+    .unwrap()
+    .message()
+    .timestamp
+    .unwrap();
   let now = SystemTime::now()
     .duration_since(UNIX_EPOCH)
     .unwrap()

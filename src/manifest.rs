@@ -82,7 +82,7 @@ impl Manifest {
   pub(crate) fn message(&self, include_time: bool) -> Result<Message> {
     Ok(Message {
       fingerprint: self.fingerprint(),
-      time: include_time.then(now).transpose()?,
+      timestamp: include_time.then(now).transpose()?,
     })
   }
 
@@ -99,7 +99,7 @@ impl Manifest {
     keychain: &Keychain,
     key: &KeyName,
   ) -> Result {
-    let message = self.message(options.time)?;
+    let message = self.message(options.timestamp)?;
 
     let signature = keychain.sign(key, &message)?;
 

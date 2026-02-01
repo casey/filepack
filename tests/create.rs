@@ -243,7 +243,7 @@ fn sign_creates_valid_signature() {
   let signature = manifest.signatures.first().unwrap();
 
   assert_eq!(signature.public_key(), public_key);
-  assert!(signature.message().time.is_none());
+  assert!(signature.message().timestamp.is_none());
 }
 
 #[test]
@@ -285,14 +285,14 @@ fn sign_with_named_key() {
 }
 
 #[test]
-fn sign_with_time() {
+fn sign_with_timestamp() {
   use std::time::{SystemTime, UNIX_EPOCH};
 
   let test = Test::new()
     .arg("keygen")
     .success()
     .touch("foo/bar")
-    .args(["create", "--sign", "--time", "foo"])
+    .args(["create", "--sign", "--timestamp", "foo"])
     .success()
     .args(["verify", "foo"])
     .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
@@ -308,13 +308,13 @@ fn sign_with_time() {
   let signature = manifest.signatures.first().unwrap();
   assert_eq!(signature.public_key(), public_key,);
 
-  let time = signature.message().time.unwrap();
+  let timestamp = signature.message().timestamp.unwrap();
   let now = SystemTime::now()
     .duration_since(UNIX_EPOCH)
     .unwrap()
     .as_secs();
   let one_minute_ago = now - 60;
-  assert!(time >= one_minute_ago && time <= now);
+  assert!(timestamp >= one_minute_ago && timestamp <= now);
 }
 
 #[test]
