@@ -30,7 +30,7 @@ fn signature_with_time() {
     .touch("foo/bar")
     .args(["create", "foo"])
     .success()
-    .args(["sign", "--time", "foo"])
+    .args(["sign", "--timestamp", "foo"])
     .success();
 
   let public_key = test.read("keychain/master.public");
@@ -91,7 +91,7 @@ fn tsv_format_with_time() {
     .touch("foo/bar")
     .args(["create", "foo"])
     .success()
-    .args(["sign", "--time", "foo"])
+    .args(["sign", "--timestamp", "foo"])
     .success();
 
   let public_key = test.read("keychain/master.public");

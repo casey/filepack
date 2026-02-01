@@ -24,7 +24,7 @@ impl Signatures {
       .iter()
       .map(|signature| Output {
         public_key: signature.public_key(),
-        timestamp: signature.message().time,
+        timestamp: signature.message().timestamp,
       })
       .collect::<Vec<Output>>();
 

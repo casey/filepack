@@ -1,3 +1,3 @@
 pub(crate) struct SignOptions {
-  pub(crate) time: bool,
+  pub(crate) timestamp: bool,
 }

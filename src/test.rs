@@ -51,7 +51,7 @@ fn signature_matches() {
   let private_key = PRIVATE_KEY.parse::<PrivateKey>().unwrap();
   let message = Message {
     fingerprint: FINGERPRINT.parse().unwrap(),
-    time: None,
+    timestamp: None,
   };
   let signature = private_key.sign(&message);
   assert_eq!(signature.to_string(), SIGNATURE);
