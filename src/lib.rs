@@ -132,6 +132,19 @@ macro_rules! assert_matches {
   }
 }
 
+#[cfg(test)]
+macro_rules! assert_matches_regex {
+  ($haystack:expr, $re:expr $(,)?) => {{
+    let haystack = $haystack;
+    let re = Regex::new(&$re).unwrap();
+    assert!(
+      re.is_match(&haystack),
+      "assertion failed: `{haystack:?}` does not match `{}`",
+      re.as_str(),
+    );
+  }};
+}
+
 mod arguments;
 mod bech32_decoder;
 mod bech32_encoder;

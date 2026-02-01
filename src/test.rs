@@ -13,9 +13,8 @@ pub(crate) const PUBLIC_KEY: &str =
 
 pub(crate) const SIGNATURE: &str = concat!(
   "signature1a67dndhhmae7p6fsfnj0z37zf78cde6mwqgtms0y87h8ldlvvflyq4uf5nw04lxs6dgzqf",
-  "h4rdhxffxdukfwf4hq39d7vn2fu4eqlxf3qqqqqqqqqqqqqqqqqqqqqqqqqqq5j9kf2jslrnmfptk2rs",
-  "j85tnp4ttqwagu46kkw64uf3dgffz3juhjnh9us86m2xzugrgxhn87kcn6azkernfruce7qh4mhzfefy",
-  "cuqq4uxt9f",
+  "h4rdhxffxdukfwf4hq39d7vn2fu4eqlxf3q5j9kf2jslrnmfptk2rsj85tnp4ttqwagu46kkw64uf3dg",
+  "ffz3juhjnh9us86m2xzugrgxhn87kcn6azkernfruce7qh4mhzfefycuqq7t9j5l"
 );
 
 pub(crate) const WEAK_PUBLIC_KEY: &str =

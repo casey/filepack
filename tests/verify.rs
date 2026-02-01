@@ -708,7 +708,7 @@ fn weak_signature_public_key() {
           }
         },
         signatures: [
-          checksum(&format!("signature1a{}", "q".repeat(233)))
+          checksum(&format!("signature1a{}", "q".repeat(207)))
         ]
       },
     )
