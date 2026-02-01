@@ -47,6 +47,15 @@ impl Manifest {
     Fingerprint(self.files.fingerprint())
   }
 
+  pub(crate) fn from_json(json: &str, path: &Utf8Path) -> Result<Self> {
+    let manifest =
+      serde_json::from_str::<Self>(&json).context(error::DeserializeManifest { path: &path })?;
+
+    manifest.verify_signatures()?;
+
+    Ok(manifest)
+  }
+
   pub fn load(path: Option<&Utf8Path>) -> Result<Self> {
     Ok(Self::load_with_path(path)?.1)
   }
@@ -65,17 +74,14 @@ impl Manifest {
     let json = filesystem::read_to_string_opt(&path)?
       .ok_or_else(|| error::ManifestNotFound { path: &path }.build())?;
 
-    let manifest =
-      serde_json::from_str(&json).context(error::DeserializeManifest { path: &path })?;
+    let manifest = Self::from_json(&json, &path)?;
 
     Ok((path, manifest))
   }
 
   pub(crate) fn message(&self, include_time: bool) -> Result<Message> {
-    let fingerprint = self.verify_signatures()?;
-
     Ok(Message {
-      fingerprint,
+      fingerprint: self.fingerprint(),
       time: include_time.then(now).transpose()?,
     })
   }
@@ -112,7 +118,7 @@ impl Manifest {
     size
   }
 
-  pub(crate) fn verify_signatures(&self) -> Result<Fingerprint> {
+  fn verify_signatures(&self) -> Result<Fingerprint> {
     let fingerprint = self.fingerprint();
 
     for signature in &self.signatures {
