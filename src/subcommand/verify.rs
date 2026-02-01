@@ -75,15 +75,13 @@ impl Verify {
       .build()
     })?;
 
-    let manifest = serde_json::from_str::<Manifest>(&json).context(error::DeserializeManifest {
-      path: Manifest::FILENAME,
-    })?;
+    let manifest = Manifest::from_json(&json, Manifest::FILENAME.as_ref())?;
 
     let mut verified = Verified::default();
 
-    let fingerprint = manifest.verify_signatures()?;
-
     verified.signatures += manifest.signatures.len().into_u64();
+
+    let fingerprint = manifest.fingerprint();
 
     if let Some(expected) = self.fingerprint
       && fingerprint != expected
