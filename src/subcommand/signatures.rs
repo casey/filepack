@@ -19,6 +19,8 @@ impl Signatures {
   pub(crate) fn run(self) -> Result {
     let manifest = Manifest::load(self.path.as_deref())?;
 
+    manifest.verify_signatures()?;
+
     let signatures = manifest
       .signatures
       .iter()
