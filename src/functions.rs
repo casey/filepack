@@ -18,12 +18,12 @@ pub(crate) fn is_lowercase_hex(s: &str) -> bool {
     .all(|c| c.is_ascii_hexdigit() && (c.is_numeric() || c.is_lowercase()))
 }
 
-pub(crate) fn now() -> Result<u128> {
+pub(crate) fn now() -> Result<u64> {
   Ok(
     SystemTime::now()
       .duration_since(UNIX_EPOCH)
       .context(error::Time)?
-      .as_nanos(),
+      .as_secs(),
   )
 }
 
