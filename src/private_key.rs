@@ -71,7 +71,7 @@ impl FromStr for PrivateKey {
 
     ensure!(
       inner.verifying_key().to_bytes() == public_key,
-      private_key_error::Mismatch,
+      private_key_error::PublicKeyMismatch,
     );
 
     Ok(Self(inner))
@@ -117,7 +117,7 @@ mod tests {
     ));
     assert_eq!(
       mismatched.parse::<PrivateKey>().unwrap_err().to_string(),
-      "private key public key mismatch",
+      "private key derived public key does not match embedded public key",
     );
   }
 

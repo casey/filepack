@@ -6,5 +6,5 @@ pub enum PrivateKeyError {
   #[snafu(transparent)]
   Bech32 { source: Bech32Error },
   #[snafu(display("private key derived public key does not match embedded public key"))]
-  Mismatch,
+  PublicKeyMismatch,
 }
