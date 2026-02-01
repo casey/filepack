@@ -62,8 +62,8 @@ impl FromStr for PrivateKey {
 
   fn from_str(key: &str) -> Result<Self, Self::Err> {
     let mut decoder = Bech32Decoder::new(Bech32Type::PrivateKey, key)?;
-    let public_key = decoder.byte_array::<{ PublicKey::LEN }>()?;
-    let private_key = decoder.byte_array::<{ Self::LEN }>()?;
+    let public_key = decoder.byte_array()?;
+    let private_key = decoder.byte_array()?;
     decoder.done()?;
 
     let inner = ed25519_dalek::SigningKey::from_bytes(&private_key);
