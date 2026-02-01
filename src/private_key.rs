@@ -58,12 +58,22 @@ impl PrivateKey {
 }
 
 impl FromStr for PrivateKey {
-  type Err = Bech32Error;
+  type Err = PrivateKeyError;
 
   fn from_str(key: &str) -> Result<Self, Self::Err> {
-    let inner = Bech32Decoder::decode_byte_array(Bech32Type::PrivateKey, key)?;
-    let inner = ed25519_dalek::SigningKey::from_bytes(&inner);
+    let mut decoder = Bech32Decoder::new(Bech32Type::PrivateKey, key)?;
+    let public_key = decoder.byte_array::<{ PublicKey::LEN }>()?;
+    let private_key = decoder.byte_array::<{ Self::LEN }>()?;
+    decoder.done()?;
+
+    let inner = ed25519_dalek::SigningKey::from_bytes(&private_key);
     assert!(!inner.verifying_key().is_weak());
+
+    ensure!(
+      inner.verifying_key().to_bytes() == public_key,
+      private_key_error::Mismatch,
+    );
+
     Ok(Self(inner))
   }
 }
@@ -82,6 +92,32 @@ mod tests {
         .parse::<PrivateKey>()
         .unwrap(),
       key
+    );
+  }
+
+  #[test]
+  fn private_key_begins_with_public_key() {
+    let prefix = format!(
+      "private1a{}",
+      &test::PUBLIC_KEY["public1a".len()..test::PUBLIC_KEY.len() - 6],
+    );
+    assert!(test::PRIVATE_KEY.starts_with(&prefix));
+  }
+
+  #[test]
+  fn public_key_mismatch_error() {
+    let other = PrivateKey::generate();
+    let other_public_key_data =
+      &other.public_key().to_string()["public1a".len()..test::PUBLIC_KEY.len() - 6];
+    let public_key_data_len = test::PUBLIC_KEY.len() - "public1a".len() - 6;
+    let private_key_data =
+      &test::PRIVATE_KEY["private1a".len() + public_key_data_len..test::PRIVATE_KEY.len() - 6];
+    let mismatched = test::checksum(&format!(
+      "private1a{other_public_key_data}{private_key_data}"
+    ));
+    assert_eq!(
+      mismatched.parse::<PrivateKey>().unwrap_err().to_string(),
+      "private key public key mismatch",
     );
   }
 

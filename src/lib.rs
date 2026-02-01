@@ -52,6 +52,7 @@ use {
     owo_colorize_ext::OwoColorizeExt,
     package::Package,
     path_error::PathError,
+    private_key_error::PrivateKeyError,
     public_key_error::PublicKeyError,
     sign_options::SignOptions,
     signature_error::SignatureError,
@@ -187,6 +188,7 @@ mod owo_colorize_ext;
 mod package;
 mod path_error;
 mod private_key;
+mod private_key_error;
 mod progress_bar;
 mod public_key;
 mod public_key_error;

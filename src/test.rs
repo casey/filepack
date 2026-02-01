@@ -5,8 +5,10 @@ pub(crate) const FINGERPRINT: &str =
 
 pub(crate) const HASH: &str = "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262";
 
-pub(crate) const PRIVATE_KEY: &str =
-  "private1a24p4zsr2nh04f4pkgtxfzv5yle473x4jue7s6lkwg9tdkk73q59qluezpp";
+pub(crate) const PRIVATE_KEY: &str = concat!(
+  "private1a67dndhhmae7p6fsfnj0z37zf78cde6mwqgtms0y87h8ldlvvflyq24p4zsr2nh04f4pkgtxf",
+  "zv5yle473x4jue7s6lkwg9tdkk73q59qxqurh4",
+);
 
 pub(crate) const PUBLIC_KEY: &str =
   "public1a67dndhhmae7p6fsfnj0z37zf78cde6mwqgtms0y87h8ldlvvflyqcxnd63";
