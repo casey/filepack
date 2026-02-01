@@ -19,6 +19,7 @@ mod languages;
 mod lints;
 mod man;
 mod sign;
+mod signatures;
 mod size;
 mod verify;
 
@@ -66,6 +67,8 @@ pub(crate) enum Subcommand {
   Man,
   #[command(about = "Sign manifest")]
   Sign(sign::Sign),
+  #[command(about = "List manifest signatures")]
+  Signatures(signatures::Signatures),
   #[command(about = "Print manifest total file size")]
   Size(size::Size),
   #[command(about = "Verify manifest")]
@@ -88,6 +91,7 @@ impl Subcommand {
       Self::Lints => lints::run(),
       Self::Man => man::run(),
       Self::Sign(sign) => sign.run(options),
+      Self::Signatures(signatures) => signatures.run(),
       Self::Size(size) => size.run(),
       Self::Verify(verify) => verify.run(options),
     }
