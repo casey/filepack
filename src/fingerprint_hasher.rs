@@ -71,4 +71,38 @@ mod tests {
     hasher.field(0, &[]);
     hasher.field(2, &[]);
   }
+
+  #[test]
+  fn varint_encoding() {
+    #[track_caller]
+    fn case(len: usize, varint: &[u8]) {
+      let field = iter::repeat_n(0, len).collect::<Vec<u8>>();
+
+      let actual = {
+        let mut hasher = FingerprintHasher::new(FingerprintPrefix::File);
+        hasher.field(0, &field);
+        hasher.finalize()
+      };
+
+      let expected = {
+        let mut hasher = Hasher::new();
+        hasher.update(&[13]);
+        hasher.update("filepack:file".as_bytes());
+        hasher.update(&[0]);
+        hasher.update(varint);
+        hasher.update(&field);
+        hasher.finalize().into()
+      };
+
+      assert_eq!(actual, expected, "unexpected hash for length {len} field");
+    }
+
+    case(0, &[0]);
+    case(1, &[1]);
+    case(127, &[0x7F]);
+    case(128, &[0x80, 0x01]);
+    case(129, &[0x81, 0x01]);
+    case(16383, &[0xFF, 0x7F]);
+    case(16384, &[0x80, 0x80, 0x01]);
+  }
 }
