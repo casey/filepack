@@ -20,6 +20,15 @@ pub(crate) const SIGNATURE: &str = concat!(
 pub(crate) const WEAK_PUBLIC_KEY: &str =
   "public1aqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqsqtuc8";
 
+pub(crate) fn checksum(s: &str) -> String {
+  let checked_hrpstring = CheckedHrpstring::new::<bech32::NoChecksum>(s).unwrap();
+  checked_hrpstring
+    .fe32_iter::<std::vec::IntoIter<u8>>()
+    .with_checksum::<bech32::Bech32m>(&checked_hrpstring.hrp())
+    .chars()
+    .collect()
+}
+
 #[test]
 fn hash_is_valid() {
   HASH.parse::<Hash>().unwrap();

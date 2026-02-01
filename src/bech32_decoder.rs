@@ -110,21 +110,12 @@ impl<'a> Bech32Decoder<'a> {
 mod tests {
   use super::*;
 
-  fn checksum(s: &str) -> String {
-    let checked_hrpstring = CheckedHrpstring::new::<bech32::NoChecksum>(s).unwrap();
-    checked_hrpstring
-      .fe32_iter::<std::vec::IntoIter<u8>>()
-      .with_checksum::<bech32::Bech32m>(&checked_hrpstring.hrp())
-      .chars()
-      .collect()
-  }
-
   #[test]
   fn errors() {
     #[track_caller]
     fn case(s: &str, err: &str) {
       assert_eq!(
-        Bech32Decoder::decode_byte_array::<1>(Bech32Type::PublicKey, &checksum(s))
+        Bech32Decoder::decode_byte_array::<1>(Bech32Type::PublicKey, &test::checksum(s))
           .unwrap_err()
           .to_string(),
         err,

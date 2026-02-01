@@ -168,4 +168,17 @@ mod tests {
     );
     assert!(test::SIGNATURE.starts_with(&prefix));
   }
+
+  #[test]
+  fn unexpected_field_error() {
+    let mut s = test::SIGNATURE[..test::SIGNATURE.len() - 6].to_string();
+    s.push('z');
+    assert_eq!(
+      test::checksum(&s)
+        .parse::<Signature>()
+        .unwrap_err()
+        .to_string(),
+      "unexpected signature field `z`",
+    );
+  }
 }
