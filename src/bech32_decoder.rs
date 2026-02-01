@@ -55,6 +55,12 @@ impl<'a> Bech32Decoder<'a> {
     Ok(())
   }
 
+  pub(crate) fn fe(&mut self) -> Option<Fe32> {
+    let fe = Fe32::from_char_unchecked(*self.data.get(self.i)?);
+    self.i += 1;
+    Some(fe)
+  }
+
   fn fes(
     &mut self,
     len: usize,
