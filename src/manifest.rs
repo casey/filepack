@@ -49,7 +49,7 @@ impl Manifest {
 
   pub(crate) fn from_json(json: &str, path: &Utf8Path) -> Result<Self> {
     let manifest =
-      serde_json::from_str::<Self>(&json).context(error::DeserializeManifest { path: &path })?;
+      serde_json::from_str::<Self>(json).context(error::DeserializeManifest { path: &path })?;
 
     manifest.verify_signatures()?;
 
