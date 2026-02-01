@@ -1,6 +1,18 @@
 use super::*;
 
 #[test]
+fn defaults_to_current_directory() {
+  Test::new()
+    .create_dir("foo")
+    .args(["create", "foo"])
+    .success()
+    .current_dir("foo")
+    .arg("signatures")
+    .stdout("[]\n")
+    .success();
+}
+
+#[test]
 fn no_signatures() {
   Test::new()
     .arg("create")
@@ -87,17 +99,5 @@ fn tsv_format_with_time() {
   test
     .args(["signatures", "--format", "tsv", "foo"])
     .stdout_regex(&format!("{public_key}\t\\d+\n"))
-    .success();
-}
-
-#[test]
-fn defaults_to_current_directory() {
-  Test::new()
-    .create_dir("foo")
-    .args(["create", "foo"])
-    .success()
-    .current_dir("foo")
-    .arg("signatures")
-    .stdout("[]\n")
     .success();
 }
