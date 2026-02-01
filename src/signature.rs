@@ -79,7 +79,7 @@ impl FromStr for Signature {
 
     let time = match decoder.fe() {
       None => None,
-      Some(TIME) => Some(u128::from_le_bytes(decoder.byte_array()?)),
+      Some(TIME) => Some(u64::from_le_bytes(decoder.byte_array()?)),
       Some(tag) => return Err(signature_error::Field { tag }.build()),
     };
 

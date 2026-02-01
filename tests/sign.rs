@@ -187,7 +187,7 @@ fn with_time() {
   let now = SystemTime::now()
     .duration_since(UNIX_EPOCH)
     .unwrap()
-    .as_nanos();
-  let one_minute_ago = now - 60 * 1_000_000_000;
+    .as_secs();
+  let one_minute_ago = now - 60;
   assert!(time >= one_minute_ago && time <= now);
 }

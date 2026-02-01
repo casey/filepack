@@ -3,7 +3,7 @@ use super::*;
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub struct Message {
   pub fingerprint: Fingerprint,
-  pub time: Option<u128>,
+  pub time: Option<u64>,
 }
 
 impl Message {
