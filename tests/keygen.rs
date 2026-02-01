@@ -5,7 +5,7 @@ fn custom_name() {
   let test = Test::new()
     .args(["keygen", "--name", "deploy"])
     .assert_file_regex("keychain/deploy.public", "public1a.{58}\n")
-    .assert_file_regex("keychain/deploy.private", "private1a.{58}\n")
+    .assert_file_regex("keychain/deploy.private", "private1a.{110}\n")
     .success();
 
   let public_key = test.read_public_key("keychain/deploy.public");
@@ -22,7 +22,7 @@ fn default_name() {
   let test = Test::new()
     .arg("keygen")
     .assert_file_regex("keychain/master.public", "public1a.{58}\n")
-    .assert_file_regex("keychain/master.private", "private1a.{58}\n")
+    .assert_file_regex("keychain/master.private", "private1a.{110}\n")
     .success();
 
   let public_key = test.read_public_key("keychain/master.public");
