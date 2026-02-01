@@ -9,8 +9,8 @@ impl FingerprintHasher {
   pub(crate) fn field(&mut self, tag: u64, field: &[u8]) {
     assert!(tag >= self.tag, "unexpected tag {tag}");
     self.tag = tag;
-    self.hasher.update(&tag.to_le_bytes());
-    self.hasher.update(&field.len().into_u64().to_le_bytes());
+    self.varint(tag);
+    self.varint(field.len().into_u64());
     self.hasher.update(field);
   }
 
@@ -19,11 +19,26 @@ impl FingerprintHasher {
   }
 
   pub(crate) fn new(context: FingerprintPrefix) -> Self {
-    let mut hasher = Hasher::new();
+    let mut hasher = Self {
+      hasher: Hasher::new(),
+      tag: 0,
+    };
     let prefix = context.prefix();
-    hasher.update(&prefix.len().into_u64().to_le_bytes());
-    hasher.update(prefix.as_bytes());
-    Self { hasher, tag: 0 }
+    hasher.varint(prefix.len().into_u64());
+    hasher.hasher.update(prefix.as_bytes());
+    hasher
+  }
+
+  fn varint(&mut self, mut n: u64) {
+    loop {
+      let byte = (n & 0b0111_1111).try_into().unwrap();
+      n >>= 7;
+      if n == 0 {
+        self.hasher.update(&[byte]);
+        break;
+      }
+      self.hasher.update(&[byte | 0b1000_0000]);
+    }
   }
 }
 
