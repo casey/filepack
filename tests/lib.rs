@@ -34,6 +34,7 @@ mod man;
 mod metadata;
 mod misc;
 mod sign;
+mod signatures;
 mod size;
 mod test;
 mod verify;
