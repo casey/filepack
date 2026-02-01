@@ -79,10 +79,10 @@ impl Manifest {
     Ok((path, manifest))
   }
 
-  pub(crate) fn message(&self, include_time: bool) -> Result<Message> {
+  pub(crate) fn message(&self, timestamp: bool) -> Result<Message> {
     Ok(Message {
       fingerprint: self.fingerprint(),
-      timestamp: include_time.then(now).transpose()?,
+      timestamp: timestamp.then(now).transpose()?,
     })
   }
 
