@@ -58,9 +58,13 @@ impl Directory {
   pub(crate) fn fingerprint(&self) -> Hash {
     let mut hasher = FingerprintHasher::new(FingerprintPrefix::Directory);
 
-    for (component, entry) in &self.entries {
-      hasher.field(0, entry.fingerprint(component).as_bytes());
-    }
+    let entries = self
+      .entries
+      .iter()
+      .flat_map(|(component, entry)| *entry.fingerprint(component).as_bytes())
+      .collect::<Vec<u8>>();
+
+    hasher.field(0, &entries);
 
     hasher.finalize()
   }
