@@ -118,14 +118,14 @@ impl Manifest {
     size
   }
 
-  fn verify_signatures(&self) -> Result<Fingerprint> {
+  fn verify_signatures(&self) -> Result {
     let fingerprint = self.fingerprint();
 
     for signature in &self.signatures {
       signature.verify(fingerprint)?;
     }
 
-    Ok(fingerprint)
+    Ok(())
   }
 }
 
