@@ -5,6 +5,8 @@ use super::*;
 pub enum SignatureError {
   #[snafu(transparent)]
   Bech32 { source: Bech32Error },
+  #[snafu(display("unexpected signature field `{tag}`"))]
+  Field { tag: Fe32 },
   #[snafu(display("signature public key invalid"))]
   PublicKey { source: PublicKeyError },
 }

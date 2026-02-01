@@ -1,5 +1,7 @@
 use super::*;
 
+const TIME: Fe32 = Fe32::T;
+
 #[derive(Clone, Debug, DeserializeFromStr, Eq, PartialEq, SerializeDisplay)]
 pub struct Signature {
   message: Message,
@@ -57,8 +59,11 @@ impl Display for Signature {
     let mut encoder = Bech32Encoder::new(Bech32Type::Signature);
     encoder.bytes(&self.public_key.inner().to_bytes());
     encoder.bytes(self.message.fingerprint.as_bytes());
-    encoder.bytes(&self.message.time.unwrap_or_default().to_le_bytes());
     encoder.bytes(&self.signature.to_bytes());
+    if let Some(time) = self.message.time {
+      encoder.fe(TIME);
+      encoder.bytes(&time.to_le_bytes());
+    }
     write!(f, "{encoder}")
   }
 }
@@ -70,13 +75,19 @@ impl FromStr for Signature {
     let mut decoder = Bech32Decoder::new(Bech32Type::Signature, s)?;
     let public_key = decoder.byte_array()?;
     let fingerprint = decoder.byte_array()?;
-    let time = u128::from_le_bytes(decoder.byte_array()?);
     let signature = decoder.byte_array()?;
+
+    let time = match decoder.fe() {
+      None => None,
+      Some(TIME) => Some(u128::from_le_bytes(decoder.byte_array()?)),
+      Some(tag) => return Err(signature_error::Field { tag }.build()),
+    };
+
     decoder.done()?;
     Ok(Self {
       message: Message {
         fingerprint: Fingerprint::from_bytes(fingerprint),
-        time: if time == 0 { None } else { Some(time) },
+        time,
       },
       signature: ed25519_dalek::Signature::from_bytes(&signature),
       public_key: PublicKey::from_bytes(public_key).context(signature_error::PublicKey)?,
@@ -156,5 +167,18 @@ mod tests {
       &test::FINGERPRINT["package1a".len()..test::FINGERPRINT.len() - 6]
     );
     assert!(test::SIGNATURE.starts_with(&prefix));
+  }
+
+  #[test]
+  fn unexpected_field_error() {
+    let mut s = test::SIGNATURE[..test::SIGNATURE.len() - 6].to_string();
+    s.push('z');
+    assert_eq!(
+      test::checksum(&s)
+        .parse::<Signature>()
+        .unwrap_err()
+        .to_string(),
+      "unexpected signature field `z`",
+    );
   }
 }
