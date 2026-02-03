@@ -6,7 +6,7 @@ const TEMPLATE: &str = "{spinner:.green} ⟪{elapsed_precise}⟫ ⟦{wide_bar:.c
                         {binary_bytes}/{binary_total_bytes} \
                         ⟨{binary_bytes_per_sec}, {eta}⟩";
 
-pub const TICK_CHARS: &str = concat!(
+const TICK_CHARS: &str = concat!(
   "⠀⠁⠈⠉⠂⠃⠊⠋⠐⠑⠘⠙⠒⠓⠚⠛",
   "⠄⠅⠌⠍⠆⠇⠎⠏⠔⠕⠜⠝⠖⠗⠞⠟",
   "⠠⠡⠨⠩⠢⠣⠪⠫⠰⠱⠸⠹⠲⠳⠺⠻",
