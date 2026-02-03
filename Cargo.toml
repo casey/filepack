@@ -67,6 +67,7 @@ wildcard-imports = "allow"
 
 [lints.rust]
 mismatched-lifetime-syntaxes = "allow"
+unreachable_pub = "deny"
 
 [profile.release]
 codegen-units = 1
