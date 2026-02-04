@@ -1,6 +1,81 @@
 Changelog
 =========
 
+[0.0.9](https://github.com/casey/filepack/releases/tag/0.0.9) - 2026-02-04
+--------------------------------------------------------------------------
+
+### Added
+- Add signatures subcommand ([#229](https://github.com/casey/filepack/pull/229) by [casey](https://github.com/casey))
+- Add `filepack beck32m` for converting between bech32m and hex ([#181](https://github.com/casey/filepack/pull/181) by [casey](https://github.com/casey))
+- Add `filepack contains` subcommand ([#175](https://github.com/casey/filepack/pull/175) by [casey](https://github.com/casey))
+
+### Changed
+- Always respect `$XDG_DATA_DIR` ([#186](https://github.com/casey/filepack/pull/186) by [casey](https://github.com/casey))
+- Encode public keys, private keys, and signature as bech32m ([#177](https://github.com/casey/filepack/pull/177) by [casey](https://github.com/casey))
+
+### Misc
+- Deny unreachable-pub lint ([#234](https://github.com/casey/filepack/pull/234) by [casey](https://github.com/casey))
+- Use compact fingerprint serialization ([#233](https://github.com/casey/filepack/pull/233) by [casey](https://github.com/casey))
+- Make private keys begin with public key ([#232](https://github.com/casey/filepack/pull/232) by [casey](https://github.com/casey))
+- Rename signature time to timestamp ([#231](https://github.com/casey/filepack/pull/231) by [casey](https://github.com/casey))
+- Always verify manifest signatures on load ([#230](https://github.com/casey/filepack/pull/230) by [casey](https://github.com/casey))
+- Use seconds for signature timestamp ([#228](https://github.com/casey/filepack/pull/228) by [casey](https://github.com/casey))
+- Make signature time field optional ([#227](https://github.com/casey/filepack/pull/227) by [casey](https://github.com/casey))
+- Sign message fingerprint ([#226](https://github.com/casey/filepack/pull/226) by [casey](https://github.com/casey))
+- Include message in signature ([#225](https://github.com/casey/filepack/pull/225) by [casey](https://github.com/casey))
+- Include public key in signature ([#224](https://github.com/casey/filepack/pull/224) by [casey](https://github.com/casey))
+- Test bech32 decoder errors ([#223](https://github.com/casey/filepack/pull/223) by [casey](https://github.com/casey))
+- Remove static GPG and SSH test files ([#222](https://github.com/casey/filepack/pull/222) by [casey](https://github.com/casey))
+- Remove message subcommand ([#221](https://github.com/casey/filepack/pull/221) by [casey](https://github.com/casey))
+- Remove PGP and SSH signature support ([#220](https://github.com/casey/filepack/pull/220) by [casey](https://github.com/casey))
+- Generate and verify SSH and GPG signatures in integration tests ([#219](https://github.com/casey/filepack/pull/219) by [casey](https://github.com/casey))
+- Bech32 prefix instead of Bech32m ([#218](https://github.com/casey/filepack/pull/218) by [casey](https://github.com/casey))
+- Remove bech32m payload struct ([#217](https://github.com/casey/filepack/pull/217) by [casey](https://github.com/casey))
+- Use more flexible bech32m decoder ([#216](https://github.com/casey/filepack/pull/216) by [casey](https://github.com/casey))
+- Test padding errors with prefix ([#215](https://github.com/casey/filepack/pull/215) by [casey](https://github.com/casey))
+- Test bech32m padding errors ([#214](https://github.com/casey/filepack/pull/214) by [casey](https://github.com/casey))
+- Test signatures generated with ssh-key ([#213](https://github.com/casey/filepack/pull/213) by [casey](https://github.com/casey))
+- Test overlong PGP signature suffix error ([#212](https://github.com/casey/filepack/pull/212) by [casey](https://github.com/casey))
+- Add and remove multi-character bech32m prefix strings ([#211](https://github.com/casey/filepack/pull/211) by [casey](https://github.com/casey))
+- Add signature hash algorithm character ([#210](https://github.com/casey/filepack/pull/210) by [casey](https://github.com/casey))
+- Disable doctests ([#209](https://github.com/casey/filepack/pull/209) by [casey](https://github.com/casey))
+- Convert SSH signature tests to use pre-generated key and signature ([#208](https://github.com/casey/filepack/pull/208) by [casey](https://github.com/casey))
+- Update DESIGN.md ([#207](https://github.com/casey/filepack/pull/207) by [casey](https://github.com/casey))
+- Resolve signature scheme reuse open question ([#206](https://github.com/casey/filepack/pull/206) by [casey](https://github.com/casey))
+- Use pre-generated files for GPG signature test ([#205](https://github.com/casey/filepack/pull/205) by [casey](https://github.com/casey))
+- Add message subcommand ([#204](https://github.com/casey/filepack/pull/204) by [casey](https://github.com/casey))
+- Add bech32m type enum ([#203](https://github.com/casey/filepack/pull/203) by [casey](https://github.com/casey))
+- Avoid allocating when formatting bech32m strings ([#202](https://github.com/casey/filepack/pull/202) by [casey](https://github.com/casey))
+- Rename bech32m data to body ([#201](https://github.com/casey/filepack/pull/201) by [casey](https://github.com/casey))
+- Add signature round trip and error display tests ([#200](https://github.com/casey/filepack/pull/200) by [casey](https://github.com/casey))
+- Move signature payload generation into signature scheme ([#199](https://github.com/casey/filepack/pull/199) by [casey](https://github.com/casey))
+- Add signature scheme type ([#198](https://github.com/casey/filepack/pull/198) by [casey](https://github.com/casey))
+- Add signature scheme versioning ([#197](https://github.com/casey/filepack/pull/197) by [casey](https://github.com/casey))
+- Add PGP signature scheme ([#196](https://github.com/casey/filepack/pull/196) by [casey](https://github.com/casey))
+- Add SSH signature verification integration test ([#195](https://github.com/casey/filepack/pull/195) by [casey](https://github.com/casey))
+- Add SSH signature scheme ([#194](https://github.com/casey/filepack/pull/194) by [casey](https://github.com/casey))
+- Add signature schemes ([#193](https://github.com/casey/filepack/pull/193) by [casey](https://github.com/casey))
+- Add profile recipe ([#192](https://github.com/casey/filepack/pull/192) by [casey](https://github.com/casey))
+- Remove dependency on executable-path ([#191](https://github.com/casey/filepack/pull/191) by [casey](https://github.com/casey))
+- Remove release commit message template ([#190](https://github.com/casey/filepack/pull/190) by [casey](https://github.com/casey))
+- Forbid non-zero padding in bech32m strings ([#189](https://github.com/casey/filepack/pull/189) by [casey](https://github.com/casey))
+- Use `filepack info` in data dir tests ([#188](https://github.com/casey/filepack/pull/188) by [casey](https://github.com/casey))
+- Only use fingerprint type for package fingerprints ([#187](https://github.com/casey/filepack/pull/187) by [casey](https://github.com/casey))
+- Use "package fingerprint" instead "manifest fingerprint" ([#185](https://github.com/casey/filepack/pull/185) by [casey](https://github.com/casey))
+- Don't hash message before signing ([#184](https://github.com/casey/filepack/pull/184) by [casey](https://github.com/casey))
+- Use version character `a` for bech32m strings ([#183](https://github.com/casey/filepack/pull/183) by [casey](https://github.com/casey))
+- Open question: bech32m version characters ([#182](https://github.com/casey/filepack/pull/182) by [casey](https://github.com/casey))
+- Use bech32m for package fingerprints ([#180](https://github.com/casey/filepack/pull/180) by [casey](https://github.com/casey))
+- Resolve some open questions in DESIGN.md ([#179](https://github.com/casey/filepack/pull/179) by [casey](https://github.com/casey))
+- Pretty print manifest ([#178](https://github.com/casey/filepack/pull/178) by [casey](https://github.com/casey))
+- Add `--file` to `filepack contains` ([#176](https://github.com/casey/filepack/pull/176) by [casey](https://github.com/casey))
+- Update DESIGN.md ([#174](https://github.com/casey/filepack/pull/174) by [casey](https://github.com/casey))
+- Require lowercase hashes ([#173](https://github.com/casey/filepack/pull/173) by [casey](https://github.com/casey))
+- Note that fingerprint is globally unique identifier ([#172](https://github.com/casey/filepack/pull/172) by [casey](https://github.com/casey))
+- Forbid using `--manifest` with manifest in package ([#171](https://github.com/casey/filepack/pull/171) by [casey](https://github.com/casey))
+- Fix release workflow manifest creation ([#170](https://github.com/casey/filepack/pull/170) by [casey](https://github.com/casey))
+- Add workflows to readme ([#169](https://github.com/casey/filepack/pull/169) by [casey](https://github.com/casey))
+
 [0.0.8](https://github.com/casey/filepack/releases/tag/0.0.8) - 2026-01-17
 --------------------------------------------------------------------------
 
