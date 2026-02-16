@@ -67,7 +67,7 @@ impl Keychain {
     }
 
     let mut keys = BTreeMap::new();
-    for entry in WalkDir::new(&path).max_depth(1) {
+    for entry in WalkDir::new(&path).max_depth(1).sort_by_file_name() {
       let entry = entry?;
 
       if entry.depth() == 0 {
