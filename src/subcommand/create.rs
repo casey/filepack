@@ -51,7 +51,7 @@ impl Create {
 
     let lints = self.deny.map(LintGroup::lints).unwrap_or_default();
 
-    for entry in WalkDir::new(&root) {
+    for entry in WalkDir::new(&root).sort_by_file_name() {
       let entry = entry?;
 
       if entry.depth() == 0 {
