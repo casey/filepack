@@ -493,7 +493,7 @@ To create a package with metadata describing the package, create a file named
 title: The Necronomicon
 creator: Abdul Alhazred
 description: >
-  The Old Ones, their history, and the rites by which they may besummoned.
+  The Old Ones, their history, and the rites by which they may be summoned.
 language: la
 ```
 
