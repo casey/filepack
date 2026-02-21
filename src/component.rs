@@ -78,9 +78,9 @@ impl FromStr for Component {
   }
 }
 
-impl PartialEq<str> for Component {
-  fn eq(&self, s: &str) -> bool {
-    self.as_str().eq(s)
+impl PartialEq<&str> for Component {
+  fn eq(&self, s: &&str) -> bool {
+    self.as_str().eq(*s)
   }
 }
 
