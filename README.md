@@ -673,8 +673,8 @@ experience and features of the system are a direct consequence.
 
 As polished services driven by metadata have become more popular, the user
 experience that systems based on folders of files can offer has become ever
-more unacceptable and alien to users, regardless of cost or underlying
-availability of content.
+more unacceptable and alien, regardless of cost or underlying availability of
+content.
 
 Filepack seeks to rectify this by standardizing machine-readable metadata that
 can be included with folder-of-files content.
