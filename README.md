@@ -456,21 +456,149 @@ For details on how fingerprints are calculated, see [DESIGN.md](DESIGN.md).
 Guide
 -----
 
-todo:
-- create package
-- add metadata
-- verify with manifest
-- get package fingerprint
-- verify by fingerprint
-- generate private key
-- sign
-- publish public key
-- verify with public key
-- multiple signatures
-- linting
-  - feel free to request new lints
-- publish manifest
-  - no content, just hashes, can be published anywhere where technical or legal limitations prohibit content
+The `[DIRECTORY]` argument in examples can be omitted, in which case it
+defaults to the current directory.
+
+### Creating a Package
+
+To create a filepack manifest:
+
+```shell
+filepack create [DIRECTORY]
+```
+
+This creates `filepack.json` containing hashes and file sizes of all files in
+the `DIRECTORY` and subdirectories.
+
+To enable linting, use the `--deny` flag with a lint or lint group:
+
+```shell
+filepack create --deny <LINT> [DIRECTORY]
+```
+
+To view all lints:
+
+```shell
+filepack lints
+```
+
+Please feel free to open issues requesting new lints.
+
+### Creating a Package with Metadata
+
+To create a package with metadata describing the package, create a file named
+`metadata.yaml` in the package directory, for example:
+
+```yaml
+title: The Necronomicon
+creator: Abdul Alhazred
+description: >
+  The Old Ones, their history, and the rites by which they may besummoned.
+language: la
+```
+
+Then, to create the package:
+
+```shell
+filepack create [DIRECTORY]
+```
+
+Which will validate metadata if present.
+
+See [metadata](#metadata) for the full schema.
+
+### Signing a Package
+
+To sign a package when creating it, first create a new public and private key
+pair:
+
+```shell
+filepack keygen
+```
+
+This creates a new public key, `master.public`, with corresponding private key,
+`master.private`, in the filepack keychain directory.
+
+The `filepack info` command will print the path to the filepack data directory,
+keychain directory, and any public keys in the keychain directory.
+
+Your public key can be printed with:
+
+```shell
+filepack key
+```
+
+To sign a new package:
+
+```shell
+filepack create --sign [DIRECTORY]
+```
+
+To add a signature to an existing package:
+
+```shell
+filepack sign
+```
+
+### Getting the Package Fingerprint
+
+To print the fingerprint of a package:
+
+```shell
+filepack fingerprint [DIRECTORY]
+```
+
+### Publishing a Manifest
+
+Manifests contain only hashes and not file content, and so can be published
+anywhere, including places where technical or legal limitations would preclude
+publication of the content itself.
+
+### Verifying a Package
+
+Package content can be verified with:
+
+```shell
+filepack verify [DIRECTORY]
+```
+
+Any extra files, missing files, or modified files will produce an error.
+
+This verifies files against hashes stored in the manifest.
+
+Running `filepack verify` on its own can detect accidental corruption, but not
+intentional modification, since an attacker could modify package content, and
+then modify the manifest to make it match the modified content and thus pass
+verification.
+
+However, if the manifest was obtained from a trusted source, verification will
+catch any modifications, intentional or otherwise, even if the package content
+was obtained from an untrusted source.
+
+To detect intentional modification, you can either verify a package against a
+known-good fingerprint:
+
+```shell
+filepack verify --fingerprint <FINGERPRINT> [DIRECTORY]
+```
+
+This verifies both the contents of the package and that the manifest has the
+expected fingerprint. The former protects against accidental corruption, and
+the latter against intentional modification.
+
+Packages can also be verified by checking for a signature by a known public
+key. This also protects against intentional modification, as long as the
+private key corresponding to the public key is protected, and only known to
+you, or someone you trust.
+
+To verify that a package has a signature from a particular public key:
+
+```shell
+filepack verify --key <PUBLIC_KEY> [DIRECTORY]
+```
+
+The `--key` option can be repeated to require signatures from multiple public
+keys.
 
 ### Detecting Accidental Corruption
 
