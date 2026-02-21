@@ -456,6 +456,22 @@ For details on how fingerprints are calculated, see [DESIGN.md](DESIGN.md).
 Guide
 -----
 
+todo:
+- create package
+- add metadata
+- verify with manifest
+- get package fingerprint
+- verify by fingerprint
+- generate private key
+- sign
+- publish public key
+- verify with public key
+- multiple signatures
+- linting
+  - feel free to request new lints
+- publish manifest
+  - no content, just hashes, can be published anywhere where technical or legal limitations prohibit content
+
 ### Detecting Accidental Corruption
 
 Create a filepack manifest with:
