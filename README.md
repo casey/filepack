@@ -705,4 +705,4 @@ Ideas for future features include:
 - Chain packages where each package points to the previous package by the same
   packager
 
-- Semantic signatures: package revocation, invalidation, or replacement
+- Semantic signatures for package revocation, invalidation, or replacement
