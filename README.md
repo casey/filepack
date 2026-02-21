@@ -472,7 +472,7 @@ the `DIRECTORY` and subdirectories.
 
 To enable linting, use the `--deny` flag with a lint or lint group:
 
-```shell
+```sh
 filepack create --deny <LINT> [DIRECTORY]
 ```
 
@@ -578,7 +578,7 @@ was obtained from an untrusted source.
 To detect intentional modification, you can either verify a package against a
 known-good fingerprint:
 
-```shell
+```sh
 filepack verify --fingerprint <FINGERPRINT> [DIRECTORY]
 ```
 
@@ -593,7 +593,7 @@ you, or someone you trust.
 
 To verify that a package has a signature from a particular public key:
 
-```shell
+```sh
 filepack verify --key <PUBLIC_KEY> [DIRECTORY]
 ```
 

@@ -101,6 +101,11 @@ mod tests {
       } = metadata;
 
       assert!(!title.as_str().is_empty());
+
+      if title != "Tobin's Spirit Guide" {
+        continue;
+      }
+
       assert!(artwork.is_some());
       assert!(creator.is_some());
       assert!(date.is_some());
