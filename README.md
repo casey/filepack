@@ -686,3 +686,23 @@ formats, and who created the package. This metadata can serve as a base for the
 creation of rich local and distributed applications and services, with user
 experiences that compete with and exceed those of closed centralized
 alternatives.
+
+Future Directions
+-----------------
+
+Ideas for future features include:
+
+- Deterministic multi-part RAR packing and unpacking
+
+- `.nfo` file generation from templates and metadata
+
+- Additional lints for complex naming conventions
+
+- Content-type specific metadata
+
+- Packages of packages
+
+- Chain packages where each package points to the previous package by the same
+  packager
+
+- Semantic signatures: package revocation, invalidation, or replacement
