@@ -692,7 +692,7 @@ Future Directions
 
 Ideas for future features include:
 
-- Deterministic multi-part RAR packing and unpacking
+- Deterministic multi-part RAR archive packing and unpacking
 
 - `.nfo` file generation from templates and metadata
 
