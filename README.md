@@ -680,8 +680,9 @@ Filepack seeks to rectify this by standardizing machine-readable metadata that
 can be included with folder-of-files content.
 
 Filepack metadata is stored a single file, `metadata.yaml`, in the root of a
-filepack package. It contains information related to what the package contains,
-which files in the package contain the package content and their file formats,
-and who created the package. This metadata can serve as a base for the creation
-of rich local and distributed applications and services, with user experiences
-that compete with and exceed those of closed centralized alternatives.
+filepack package, and contains information related to what the package
+contains, which files in the package contain the package content and their file
+formats, and who created the package. This metadata can serve as a base for the
+creation of rich local and distributed applications and services, with user
+experiences that compete with and exceed those of closed centralized
+alternatives.
