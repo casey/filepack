@@ -78,6 +78,12 @@ impl FromStr for Component {
   }
 }
 
+impl PartialEq<&str> for Component {
+  fn eq(&self, s: &&str) -> bool {
+    self.as_str().eq(*s)
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
