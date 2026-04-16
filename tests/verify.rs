@@ -663,7 +663,7 @@ fn verify_fingerprint() {
     .args([
       "verify",
       "--fingerprint",
-      "package1a6mpecnnzja3uzmdxruf87074wy778qra3yn25xuudzgjx49v3tsq9qx6vs",
+      "package1azljtch6chgyjc8rk7hd74wvnsqhl88zgl2g326jqpxnjlfsaaseqffcrlp",
     ])
     .stderr("successfully verified 1 file totaling 0 bytes\n")
     .success()
@@ -676,7 +676,7 @@ fn verify_fingerprint() {
       "\
 fingerprint mismatch: `.*filepack\\.json`
             expected: package1a4uf5nw04lxs6dgzqfh4rdhxffxdukfwf4hq39d7vn2fu4eqlxf3ql7ykr3
-              actual: package1a6mpecnnzja3uzmdxruf87074wy778qra3yn25xuudzgjx49v3tsq9qx6vs
+              actual: package1azljtch6chgyjc8rk7hd74wvnsqhl88zgl2g326jqpxnjlfsaaseqffcrlp
 error: fingerprint mismatch\n",
     )
     .failure();

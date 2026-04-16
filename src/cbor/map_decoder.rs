@@ -1,0 +1,90 @@
+use super::*;
+
+pub(crate) struct MapDecoder<'a, K> {
+  decoder: &'a mut Decoder,
+  last: Option<K>,
+  remaining: usize,
+}
+
+impl<'a, K> MapDecoder<'a, K> {
+  pub(crate) fn new(decoder: &'a mut Decoder) -> Result<Self, DecodeError> {
+    let head = decoder.head()?;
+    ensure!(
+      head.major_type == MajorType::Map,
+      decode_error::TypeMismatch {
+        expected: MajorType::Map,
+        actual: head.major_type,
+      }
+    );
+
+    Ok(Self {
+      decoder,
+      last: None,
+      remaining: head.value.try_into().unwrap(),
+    })
+  }
+}
+
+impl<K: Clone + Decode + Debug + PartialOrd> MapDecoder<'_, K> {
+  pub(crate) fn key<V: Decode>(&mut self, key: K) -> Result<Option<V>, DecodeError> {
+    let Some((k, value)) = self.next()? else {
+      return Ok(None);
+    };
+
+    ensure!(k == key, decode_error::UnexpectedKey);
+
+    Ok(Some(value))
+  }
+
+  pub(crate) fn next<V: Decode>(&mut self) -> Result<Option<(K, V)>, DecodeError> {
+    if self.remaining == 0 {
+      return Ok(None);
+    }
+
+    self.remaining -= 1;
+
+    let key = K::decode(self.decoder)?;
+
+    if let Some(last) = &self.last {
+      ensure!(key > *last, decode_error::KeyOrder);
+    }
+
+    self.last = Some(key.clone());
+
+    let value = V::decode(self.decoder)?;
+    Ok(Some((key, value)))
+  }
+
+  pub(crate) fn finish(&mut self) -> Result<(), DecodeError> {
+    ensure!(self.remaining == 0, decode_error::UnconsumedEntries);
+    Ok(())
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn out_of_order() {
+    let mut decoder = Decoder::new(vec![0xA2, 0x02, 0x00, 0x01, 0x00]);
+    let mut map = decoder.map::<u64>().unwrap();
+    map.next::<u64>().unwrap();
+    assert_eq!(map.next::<u64>(), Err(DecodeError::KeyOrder));
+  }
+
+  #[test]
+  fn unconsumed_entries() {
+    let mut decoder = Decoder::new(vec![0xA2, 0x00, 0x00, 0x01, 0x01]);
+    let mut map = decoder.map::<u64>().unwrap();
+    map.next::<u64>().unwrap();
+    assert_eq!(map.finish(), Err(DecodeError::UnconsumedEntries));
+  }
+
+  #[test]
+  fn key_mismatch() {
+    let mut decoder = Decoder::new(vec![0xA1, 0x01, 0x00]);
+    let mut map = decoder.map::<u64>().unwrap();
+    assert_eq!(map.key::<u64>(0), Err(DecodeError::UnexpectedKey));
+  }
+}

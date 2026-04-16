@@ -10,9 +10,17 @@ impl Hash {
     self.0.as_bytes()
   }
 
-  #[cfg(test)]
   pub(crate) fn bytes(input: &[u8]) -> Self {
     Self(blake3::hash(input))
+  }
+}
+
+#[cfg(test)]
+impl Decode for Hash {
+  fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
+    let bytes = decoder.bytes()?;
+    let array = <[u8; Self::LEN]>::try_from(bytes).unwrap();
+    Ok(Self::from(array))
   }
 }
 
@@ -80,7 +88,13 @@ impl<'de> Deserialize<'de> for Hash {
 
 impl Display for Hash {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    self.0.fmt(f)
+    Display::fmt(&self.0, f)
+  }
+}
+
+impl Encode for Hash {
+  fn encode(&self, encoder: &mut Encoder) {
+    self.as_bytes().encode(encoder);
   }
 }
 
@@ -96,6 +110,11 @@ mod tests {
         .to_string(),
       r#"invalid value: string "foo", expected 64 hex digits"#,
     );
+  }
+
+  #[test]
+  fn hash() {
+    assert_encoding(Hash::bytes(b"foo"));
   }
 
   #[test]

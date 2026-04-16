@@ -4,10 +4,6 @@ use super::*;
 pub(crate) struct Component(String);
 
 impl Component {
-  pub(crate) fn as_bytes(&self) -> &[u8] {
-    self.0.as_bytes()
-  }
-
   pub(crate) fn as_path(&self) -> RelativePath {
     self.as_str().parse().unwrap()
   }
@@ -63,6 +59,19 @@ impl Component {
   }
 }
 
+impl Encode for Component {
+  fn encode(&self, encoder: &mut Encoder) {
+    self.as_str().encode(encoder);
+  }
+}
+
+#[cfg(test)]
+impl Decode for Component {
+  fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
+    Ok(decoder.text()?.parse()?)
+  }
+}
+
 impl Display for Component {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     write!(f, "{}", self.0)
@@ -107,6 +116,19 @@ mod tests {
   #[test]
   fn empty() {
     assert_eq!("".parse::<Component>().unwrap_err(), ComponentError::Empty,);
+  }
+
+  #[test]
+  fn encoding() {
+    assert_encoding("foo".parse::<Component>().unwrap());
+    let empty = "".encode_to_vec();
+    let mut decoder = Decoder::new(empty);
+    assert_eq!(
+      Component::decode(&mut decoder),
+      Err(DecodeError::Component {
+        source: ComponentError::Empty
+      }),
+    );
   }
 
   #[test]
