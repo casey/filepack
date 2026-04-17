@@ -3,24 +3,15 @@ use super::*;
 pub(crate) struct MapDecoder<'a, K> {
   decoder: &'a mut Decoder,
   last: Option<K>,
-  remaining: usize,
+  remaining: u64,
 }
 
 impl<'a, K> MapDecoder<'a, K> {
-  pub(crate) fn new(decoder: &'a mut Decoder) -> Result<Self, DecodeError> {
-    let head = decoder.head()?;
-    ensure!(
-      head.major_type == MajorType::Map,
-      decode_error::UnexpectedType {
-        expected: MajorType::Map,
-        actual: head.major_type,
-      }
-    );
-
+  pub(crate) fn new(decoder: &'a mut Decoder, len: u64) -> Result<Self, DecodeError> {
     Ok(Self {
       decoder,
       last: None,
-      remaining: head.value.try_into().unwrap(),
+      remaining: len,
     })
   }
 }

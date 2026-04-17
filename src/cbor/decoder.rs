@@ -65,7 +65,8 @@ impl Decoder {
   }
 
   pub(crate) fn map<K>(&mut self) -> Result<MapDecoder<K>, DecodeError> {
-    MapDecoder::new(self)
+    let len = self.expect(MajorType::Map)?;
+    MapDecoder::new(self, len)
   }
 
   pub(crate) fn new(buffer: Vec<u8>) -> Self {
