@@ -10,6 +10,16 @@ pub(crate) enum MajorType {
 }
 
 impl MajorType {
+  #[cfg(test)]
+  pub(crate) fn from_initial_byte(initial_byte: u8) -> Self {
+    Self::from_value(initial_byte >> 5 & 0b111)
+  }
+
+  #[cfg(test)]
+  pub(crate) fn from_value(value: u8) -> Self {
+    Self::from_repr(value).unwrap()
+  }
+
   pub(crate) fn head(self, value: u64) -> Head {
     Head {
       major_type: self,
@@ -19,15 +29,5 @@ impl MajorType {
 
   pub(crate) fn value(self) -> u8 {
     self as u8
-  }
-
-  #[cfg(test)]
-  pub(crate) fn from_initial_byte(initial_byte: u8) -> Self {
-    Self::from_value(initial_byte >> 5 & 0b111)
-  }
-
-  #[cfg(test)]
-  pub(crate) fn from_value(value: u8) -> Self {
-    Self::from_repr(value).unwrap()
   }
 }

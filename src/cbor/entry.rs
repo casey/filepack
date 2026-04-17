@@ -1,5 +1,6 @@
 use super::*;
 
+#[allow(clippy::arbitrary_source_item_ordering)]
 #[derive(Debug, PartialEq)]
 pub(crate) struct Entry {
   pub(crate) ty: EntryType,

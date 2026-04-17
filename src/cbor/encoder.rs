@@ -5,12 +5,13 @@ pub(crate) struct Encoder {
 }
 
 impl Encoder {
-  pub(crate) fn new() -> Self {
-    Self { buffer: Vec::new() }
+  pub(crate) fn bytes(&mut self, bytes: &[u8]) {
+    self.head(MajorType::Bytes.head(bytes.len().into_u64()));
+    self.buffer.extend(bytes);
   }
 
-  pub(crate) fn map<K: Encode + PartialOrd>(&mut self, length: usize) -> MapEncoder<K> {
-    MapEncoder::new(self, length.into_u64())
+  pub(crate) fn finish(self) -> Vec<u8> {
+    self.buffer
   }
 
   pub(crate) fn head(&mut self, head: Head) {
@@ -35,21 +36,20 @@ impl Encoder {
     self.buffer[i] |= head.major_type.value() << 5;
   }
 
-  pub(crate) fn text(&mut self, text: &str) {
-    self.head(MajorType::Text.head(text.len().into_u64()));
-    self.buffer.extend(text.as_bytes());
-  }
-
   pub(crate) fn integer(&mut self, integer: u64) {
     self.head(MajorType::Integer.head(integer));
   }
 
-  pub(crate) fn bytes(&mut self, bytes: &[u8]) {
-    self.head(MajorType::Bytes.head(bytes.len().into_u64()));
-    self.buffer.extend(bytes);
+  pub(crate) fn map<K: Encode + PartialOrd>(&mut self, length: usize) -> MapEncoder<K> {
+    MapEncoder::new(self, length.into_u64())
   }
 
-  pub(crate) fn finish(self) -> Vec<u8> {
-    self.buffer
+  pub(crate) fn new() -> Self {
+    Self { buffer: Vec::new() }
+  }
+
+  pub(crate) fn text(&mut self, text: &str) {
+    self.head(MajorType::Text.head(text.len().into_u64()));
+    self.buffer.extend(text.as_bytes());
   }
 }

@@ -67,34 +67,6 @@ mod tests {
   use super::*;
 
   #[test]
-  fn u64_encoding() {
-    #[track_caller]
-    fn case(value: u64, expected: &[u8]) {
-      assert_eq!(value.encode_to_vec(), expected);
-    }
-
-    case(0, &[0x00]);
-    case(24, &[0x18, 0x18]);
-    case(256, &[0x19, 0x01, 0x00]);
-  }
-
-  #[test]
-  fn u8_encoding() {
-    assert_eq!(100u8.encode_to_vec(), 100u64.encode_to_vec());
-  }
-
-  #[test]
-  fn str_encoding() {
-    #[track_caller]
-    fn case(value: &str, expected: &[u8]) {
-      assert_eq!(value.encode_to_vec(), expected);
-    }
-
-    case("", &[0x60]);
-    case("foo", &[0x63, 0x66, 0x6F, 0x6F]);
-  }
-
-  #[test]
   fn bytes_encoding() {
     #[track_caller]
     fn case(value: &[u8], expected: &[u8]) {
@@ -114,5 +86,33 @@ mod tests {
         0xA2, 0x63, 0x62, 0x61, 0x72, 0x01, 0x63, 0x66, 0x6F, 0x6F, 0x02,
       ],
     );
+  }
+
+  #[test]
+  fn str_encoding() {
+    #[track_caller]
+    fn case(value: &str, expected: &[u8]) {
+      assert_eq!(value.encode_to_vec(), expected);
+    }
+
+    case("", &[0x60]);
+    case("foo", &[0x63, 0x66, 0x6F, 0x6F]);
+  }
+
+  #[test]
+  fn u64_encoding() {
+    #[track_caller]
+    fn case(value: u64, expected: &[u8]) {
+      assert_eq!(value.encode_to_vec(), expected);
+    }
+
+    case(0, &[0x00]);
+    case(24, &[0x18, 0x18]);
+    case(256, &[0x19, 0x01, 0x00]);
+  }
+
+  #[test]
+  fn u8_encoding() {
+    assert_eq!(100u8.encode_to_vec(), 100u64.encode_to_vec());
   }
 }

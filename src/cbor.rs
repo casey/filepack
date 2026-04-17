@@ -1,5 +1,3 @@
-#![allow(clippy::arbitrary_source_item_ordering)]
-
 use super::*;
 
 pub(crate) use self::{

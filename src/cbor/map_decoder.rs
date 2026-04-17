@@ -26,6 +26,11 @@ impl<'a, K> MapDecoder<'a, K> {
 }
 
 impl<K: Clone + Decode + Debug + PartialOrd> MapDecoder<'_, K> {
+  pub(crate) fn finish(&mut self) -> Result<(), DecodeError> {
+    ensure!(self.remaining == 0, decode_error::UnconsumedEntries);
+    Ok(())
+  }
+
   pub(crate) fn key<V: Decode>(&mut self, key: K) -> Result<Option<V>, DecodeError> {
     let Some((k, value)) = self.next()? else {
       return Ok(None);
@@ -54,16 +59,18 @@ impl<K: Clone + Decode + Debug + PartialOrd> MapDecoder<'_, K> {
     let value = V::decode(self.decoder)?;
     Ok(Some((key, value)))
   }
-
-  pub(crate) fn finish(&mut self) -> Result<(), DecodeError> {
-    ensure!(self.remaining == 0, decode_error::UnconsumedEntries);
-    Ok(())
-  }
 }
 
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn key_mismatch() {
+    let mut decoder = Decoder::new(vec![0xA1, 0x01, 0x00]);
+    let mut map = decoder.map::<u64>().unwrap();
+    assert_eq!(map.key::<u64>(0), Err(DecodeError::UnexpectedKey));
+  }
 
   #[test]
   fn out_of_order() {
@@ -79,12 +86,5 @@ mod tests {
     let mut map = decoder.map::<u64>().unwrap();
     map.next::<u64>().unwrap();
     assert_eq!(map.finish(), Err(DecodeError::UnconsumedEntries));
-  }
-
-  #[test]
-  fn key_mismatch() {
-    let mut decoder = Decoder::new(vec![0xA1, 0x01, 0x00]);
-    let mut map = decoder.map::<u64>().unwrap();
-    assert_eq!(map.key::<u64>(0), Err(DecodeError::UnexpectedKey));
   }
 }

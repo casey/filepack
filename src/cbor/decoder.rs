@@ -1,48 +1,13 @@
 use super::*;
 
 pub(crate) struct Decoder {
-  i: usize,
   buffer: Vec<u8>,
+  i: usize,
 }
 
 impl Decoder {
-  pub(crate) fn new(buffer: Vec<u8>) -> Self {
-    Self { i: 0, buffer }
-  }
-
   fn array<const N: usize>(&mut self) -> [u8; N] {
     self.slice(N).try_into().unwrap()
-  }
-
-  fn slice(&mut self, n: usize) -> &[u8] {
-    let start = self.i;
-    let end = start + n;
-    self.i = end;
-    &self.buffer[start..end]
-  }
-
-  pub(crate) fn integer(&mut self) -> Result<u64, DecodeError> {
-    let head = self.head()?;
-    ensure!(
-      head.major_type == MajorType::Integer,
-      decode_error::TypeMismatch {
-        expected: MajorType::Integer,
-        actual: head.major_type,
-      }
-    );
-    Ok(head.value)
-  }
-
-  pub(crate) fn text(&mut self) -> Result<&str, DecodeError> {
-    let head = self.head()?;
-    ensure!(
-      head.major_type == MajorType::Text,
-      decode_error::TypeMismatch {
-        expected: MajorType::Text,
-        actual: head.major_type,
-      }
-    );
-    Ok(str::from_utf8(self.slice(head.value.try_into().unwrap())).unwrap())
   }
 
   pub(crate) fn bytes(&mut self) -> Result<&[u8], DecodeError> {
@@ -55,6 +20,11 @@ impl Decoder {
       }
     );
     Ok(self.slice(head.value.try_into().unwrap()))
+  }
+
+  pub(crate) fn finish(self) -> Result<(), DecodeError> {
+    ensure!(self.i == self.buffer.len(), decode_error::TrailingBytes);
+    Ok(())
   }
 
   pub(crate) fn head(&mut self) -> Result<Head, DecodeError> {
@@ -86,13 +56,43 @@ impl Decoder {
     Ok(Head { major_type, value })
   }
 
+  pub(crate) fn integer(&mut self) -> Result<u64, DecodeError> {
+    let head = self.head()?;
+    ensure!(
+      head.major_type == MajorType::Integer,
+      decode_error::TypeMismatch {
+        expected: MajorType::Integer,
+        actual: head.major_type,
+      }
+    );
+    Ok(head.value)
+  }
+
   pub(crate) fn map<K>(&mut self) -> Result<MapDecoder<K>, DecodeError> {
     MapDecoder::new(self)
   }
 
-  pub(crate) fn finish(self) -> Result<(), DecodeError> {
-    ensure!(self.i == self.buffer.len(), decode_error::TrailingBytes);
-    Ok(())
+  pub(crate) fn new(buffer: Vec<u8>) -> Self {
+    Self { i: 0, buffer }
+  }
+
+  fn slice(&mut self, n: usize) -> &[u8] {
+    let start = self.i;
+    let end = start + n;
+    self.i = end;
+    &self.buffer[start..end]
+  }
+
+  pub(crate) fn text(&mut self) -> Result<&str, DecodeError> {
+    let head = self.head()?;
+    ensure!(
+      head.major_type == MajorType::Text,
+      decode_error::TypeMismatch {
+        expected: MajorType::Text,
+        actual: head.major_type,
+      }
+    );
+    Ok(str::from_utf8(self.slice(head.value.try_into().unwrap())).unwrap())
   }
 }
 
@@ -117,11 +117,10 @@ mod tests {
   }
 
   #[test]
-  fn unsupported_additional_info() {
-    assert_eq!(
-      Decoder::new(vec![0x1C]).head(),
-      Err(DecodeError::UnsupportedAdditionalInfo { value: 28 }),
-    );
+  fn trailing_bytes() {
+    let mut decoder = Decoder::new(vec![0x00, 0x01]);
+    decoder.head().unwrap();
+    assert_eq!(decoder.finish(), Err(DecodeError::TrailingBytes));
   }
 
   #[test]
@@ -152,9 +151,10 @@ mod tests {
   }
 
   #[test]
-  fn trailing_bytes() {
-    let mut decoder = Decoder::new(vec![0x00, 0x01]);
-    decoder.head().unwrap();
-    assert_eq!(decoder.finish(), Err(DecodeError::TrailingBytes));
+  fn unsupported_additional_info() {
+    assert_eq!(
+      Decoder::new(vec![0x1C]).head(),
+      Err(DecodeError::UnsupportedAdditionalInfo { value: 28 }),
+    );
   }
 }

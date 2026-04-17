@@ -7,15 +7,6 @@ pub(crate) struct MapEncoder<'a, K> {
 }
 
 impl<'a, K: Encode + PartialOrd> MapEncoder<'a, K> {
-  pub(crate) fn new(encoder: &'a mut Encoder, length: u64) -> Self {
-    encoder.head(MajorType::Map.head(length));
-    Self {
-      encoder,
-      last: None,
-      remaining: length,
-    }
-  }
-
   pub(crate) fn item(&mut self, key: K, value: impl Encode) {
     assert!(self.remaining > 0, "too many items");
 
@@ -29,6 +20,15 @@ impl<'a, K: Encode + PartialOrd> MapEncoder<'a, K> {
     self.last = Some(key);
     self.remaining -= 1;
   }
+
+  pub(crate) fn new(encoder: &'a mut Encoder, length: u64) -> Self {
+    encoder.head(MajorType::Map.head(length));
+    Self {
+      encoder,
+      last: None,
+      remaining: length,
+    }
+  }
 }
 
 impl<K> Drop for MapEncoder<'_, K> {
@@ -41,42 +41,53 @@ impl<K> Drop for MapEncoder<'_, K> {
 
 #[cfg(test)]
 mod tests {
-  use super::*;
-  use std::panic::catch_unwind;
+  use {
+    super::*,
+    std::panic::{UnwindSafe, catch_unwind},
+  };
 
-  fn panic_message(result: Result<(), Box<dyn std::any::Any + Send>>) -> &'static str {
-    *result.unwrap_err().downcast::<&str>().unwrap()
+  fn case(f: impl Fn() + UnwindSafe, expected: &str) {
+    assert_eq!(
+      *catch_unwind(f).unwrap_err().downcast::<&str>().unwrap(),
+      expected
+    );
   }
 
   #[test]
   fn out_of_order() {
-    let result = catch_unwind(|| {
-      let mut encoder = Encoder::new();
-      let mut map = encoder.map::<u8>(2);
-      map.item(2, 1u8);
-      map.item(1, 2u8);
-    });
-    assert_eq!(panic_message(result), "out of order key");
-  }
-
-  #[test]
-  fn too_many_items() {
-    let result = catch_unwind(|| {
-      let mut encoder = Encoder::new();
-      let mut map = encoder.map::<u8>(1);
-      map.item(0, 0u8);
-      map.item(1, 1u8);
-    });
-    assert_eq!(panic_message(result), "too many items");
+    case(
+      || {
+        let mut encoder = Encoder::new();
+        let mut map = encoder.map::<u8>(2);
+        map.item(2, 1u8);
+        map.item(1, 2u8);
+      },
+      "out of order key",
+    );
   }
 
   #[test]
   fn too_few_items() {
-    let result = catch_unwind(|| {
-      let mut encoder = Encoder::new();
-      let mut map = MapEncoder::<u8>::new(&mut encoder, 2);
-      map.item(0, 0u8);
-    });
-    assert_eq!(panic_message(result), "too few items");
+    case(
+      || {
+        let mut encoder = Encoder::new();
+        let mut map = MapEncoder::<u8>::new(&mut encoder, 2);
+        map.item(0, 0u8);
+      },
+      "too few items",
+    );
+  }
+
+  #[test]
+  fn too_many_items() {
+    case(
+      || {
+        let mut encoder = Encoder::new();
+        let mut map = encoder.map::<u8>(1);
+        map.item(0, 0u8);
+        map.item(1, 1u8);
+      },
+      "too many items",
+    );
   }
 }
