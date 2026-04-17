@@ -17,6 +17,8 @@ pub(crate) enum DecodeError {
   SizeRange { source: TryFromIntError },
   #[snafu(display("trailing bytes"))]
   TrailingBytes,
+  #[snafu(display("truncated"))]
+  Truncated,
   #[snafu(display("unconsumed map entries"))]
   UnconsumedEntries,
   #[snafu(display("unexpected key"))]

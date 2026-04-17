@@ -6,20 +6,17 @@ pub(crate) struct Decoder {
 }
 
 impl Decoder {
-  fn array<const N: usize>(&mut self) -> [u8; N] {
-    self.slice(N).try_into().unwrap()
+  fn array<const N: usize>(&mut self) -> Result<[u8; N], DecodeError> {
+    Ok(self.slice(N)?.try_into().unwrap())
   }
 
   pub(crate) fn bytes(&mut self) -> Result<&[u8], DecodeError> {
-    let head = self.head()?;
-    ensure!(
-      head.major_type == MajorType::Bytes,
-      decode_error::UnexpectedType {
-        expected: MajorType::Bytes,
-        actual: head.major_type,
-      }
-    );
-    Ok(self.slice(head.value.try_into().context(decode_error::SizeRange)?))
+    let len = self
+      .expect(MajorType::Bytes)?
+      .try_into()
+      .context(decode_error::SizeRange)?;
+
+    self.slice(len)
   }
 
   pub(crate) fn finish(self) -> Result<(), DecodeError> {
@@ -28,7 +25,7 @@ impl Decoder {
   }
 
   pub(crate) fn head(&mut self) -> Result<Head, DecodeError> {
-    let initial_byte = self.array::<1>()[0];
+    let initial_byte = self.array::<1>()?[0];
 
     let major_type = MajorType::from_initial_byte(initial_byte);
 
@@ -36,10 +33,10 @@ impl Decoder {
 
     let value = match additional_information {
       0..24 => additional_information.into(),
-      24 => u8::from_be_bytes(self.array()).into(),
-      25 => u16::from_be_bytes(self.array()).into(),
-      26 => u32::from_be_bytes(self.array()).into(),
-      27 => u64::from_be_bytes(self.array()),
+      24 => u8::from_be_bytes(self.array()?).into(),
+      25 => u16::from_be_bytes(self.array()?).into(),
+      26 => u32::from_be_bytes(self.array()?).into(),
+      27 => u64::from_be_bytes(self.array()?),
       value @ 28..31 => {
         return Err(decode_error::ReservedAdditionalInformation { value }.build());
       }
@@ -64,15 +61,7 @@ impl Decoder {
   }
 
   pub(crate) fn integer(&mut self) -> Result<u64, DecodeError> {
-    let head = self.head()?;
-    ensure!(
-      head.major_type == MajorType::Integer,
-      decode_error::UnexpectedType {
-        expected: MajorType::Integer,
-        actual: head.major_type,
-      }
-    );
-    Ok(head.value)
+    self.expect(MajorType::Integer)
   }
 
   pub(crate) fn map<K>(&mut self) -> Result<MapDecoder<K>, DecodeError> {
@@ -83,27 +72,41 @@ impl Decoder {
     Self { i: 0, buffer }
   }
 
-  fn slice(&mut self, n: usize) -> &[u8] {
+  fn slice(&mut self, n: usize) -> Result<&[u8], DecodeError> {
     let start = self.i;
     let end = start + n;
+
+    ensure! {
+      end <= self.buffer.len(),
+      decode_error::Truncated,
+    }
+
     self.i = end;
-    &self.buffer[start..end]
+
+    Ok(&self.buffer[start..end])
   }
 
-  pub(crate) fn text(&mut self) -> Result<&str, DecodeError> {
-    let head = self.head()?;
+  fn expect(&mut self, expected: MajorType) -> Result<u64, DecodeError> {
+    let Head { major_type, value } = self.head()?;
 
     ensure!(
-      head.major_type == MajorType::Text,
+      major_type == expected,
       decode_error::UnexpectedType {
-        expected: MajorType::Text,
-        actual: head.major_type,
+        actual: major_type,
+        expected,
       }
     );
 
-    let len = head.value.try_into().context(decode_error::SizeRange)?;
+    Ok(value)
+  }
 
-    str::from_utf8(self.slice(len)).context(decode_error::Unicode)
+  pub(crate) fn text(&mut self) -> Result<&str, DecodeError> {
+    let len = self
+      .expect(MajorType::Text)?
+      .try_into()
+      .context(decode_error::SizeRange)?;
+
+    str::from_utf8(self.slice(len)?).context(decode_error::Unicode)
   }
 }
 
