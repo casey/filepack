@@ -31,7 +31,10 @@ impl Decode for String {
 
 impl Decode for u8 {
   fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
-    Ok(decoder.integer()?.try_into().unwrap())
+    decoder
+      .integer()?
+      .try_into()
+      .context(decode_error::IntegerOutOfRange)
   }
 }
 

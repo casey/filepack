@@ -1,4 +1,4 @@
-use super::*;
+use {super::*, std::num::TryFromIntError};
 
 #[derive(Debug, PartialEq, Snafu)]
 #[snafu(context(suffix(false)), visibility(pub(crate)))]
@@ -9,6 +9,8 @@ pub(crate) enum DecodeError {
   KeyOrder,
   #[snafu(display("overlong integer"))]
   OverlongInteger,
+  #[snafu(display("integer out of range"))]
+  IntegerOutOfRange { source: TryFromIntError },
   #[snafu(display("trailing bytes"))]
   TrailingBytes,
   #[snafu(display("expected {expected}, got {actual}"))]
