@@ -19,15 +19,34 @@ where
   }
 }
 
-impl Encode for str {
+impl<K, V> Encode for BTreeMap<K, V>
+where
+  K: Encode + PartialOrd,
+  V: Encode,
+{
   fn encode(&self, encoder: &mut Encoder) {
-    encoder.text(self);
+    let mut map = encoder.map::<&K>(self.len());
+    for (key, value) in self {
+      map.item(key, value);
+    }
   }
 }
 
 impl Encode for String {
   fn encode(&self, encoder: &mut Encoder) {
     self.as_str().encode(encoder);
+  }
+}
+
+impl Encode for Vec<u8> {
+  fn encode(&self, encoder: &mut Encoder) {
+    self.as_slice().encode(encoder);
+  }
+}
+
+impl Encode for str {
+  fn encode(&self, encoder: &mut Encoder) {
+    encoder.text(self);
   }
 }
 
@@ -52,25 +71,6 @@ impl Encode for usize {
 impl Encode for [u8] {
   fn encode(&self, encoder: &mut Encoder) {
     encoder.bytes(self);
-  }
-}
-
-impl Encode for Vec<u8> {
-  fn encode(&self, encoder: &mut Encoder) {
-    self.as_slice().encode(encoder);
-  }
-}
-
-impl<K, V> Encode for BTreeMap<K, V>
-where
-  K: Encode + PartialOrd,
-  V: Encode,
-{
-  fn encode(&self, encoder: &mut Encoder) {
-    let mut map = encoder.map::<&K>(self.len());
-    for (key, value) in self {
-      map.item(key, value);
-    }
   }
 }
 
