@@ -19,7 +19,7 @@ impl Decoder {
         actual: head.major_type,
       }
     );
-    Ok(self.slice(head.value.try_into().unwrap()))
+    Ok(self.slice(head.value.try_into().context(decode_error::SizeRange)?))
   }
 
   pub(crate) fn finish(self) -> Result<(), DecodeError> {

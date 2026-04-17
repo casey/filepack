@@ -28,7 +28,7 @@ pub(crate) enum DecodeError {
     expected: MajorType,
     actual: MajorType,
   },
-  #[snafu(display("string not unicode"))]
+  #[snafu(display("string not valid UTF-8"))]
   Unicode { source: Utf8Error },
   #[snafu(display("unsupported additional information value: {value}"))]
   UnsupportedAdditionalInformation { value: u8 },

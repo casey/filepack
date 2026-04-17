@@ -1,5 +1,8 @@
 use super::*;
 
+// todo:
+// - test all error variants
+
 pub(crate) use self::{
   directory::Directory, encode::Encode, encoder::Encoder, entry::Entry, entry_type::EntryType,
   head::Head, major_type::MajorType, map_encoder::MapEncoder, version::Version,
