@@ -5,12 +5,12 @@ use {super::*, std::num::TryFromIntError};
 pub(crate) enum DecodeError {
   #[snafu(transparent)]
   Component { source: ComponentError },
+  #[snafu(display("integer out of range"))]
+  IntegerOutOfRange { source: TryFromIntError },
   #[snafu(display("key order violation"))]
   KeyOrder,
   #[snafu(display("overlong integer"))]
   OverlongInteger,
-  #[snafu(display("integer out of range"))]
-  IntegerOutOfRange { source: TryFromIntError },
   #[snafu(display("trailing bytes"))]
   TrailingBytes,
   #[snafu(display("expected {expected}, got {actual}"))]
