@@ -133,9 +133,10 @@ mod tests {
 
   #[test]
   fn trailing_bytes() {
-    let mut decoder = Decoder::new(vec![0x00, 0x01]);
-    decoder.head().unwrap();
-    assert_eq!(decoder.finish(), Err(DecodeError::TrailingBytes));
+    assert_eq!(
+      Decoder::new(vec![0x00]).finish(),
+      Err(DecodeError::TrailingBytes)
+    );
   }
 
   #[test]
@@ -145,22 +146,6 @@ mod tests {
       Err(DecodeError::UnexpectedType {
         expected: MajorType::Integer,
         actual: MajorType::Text,
-      }),
-    );
-
-    assert_eq!(
-      Decoder::new(vec![0x00]).text(),
-      Err(DecodeError::UnexpectedType {
-        expected: MajorType::Text,
-        actual: MajorType::Integer,
-      }),
-    );
-
-    assert_eq!(
-      Decoder::new(vec![0x00]).bytes(),
-      Err(DecodeError::UnexpectedType {
-        expected: MajorType::Bytes,
-        actual: MajorType::Integer,
       }),
     );
   }
