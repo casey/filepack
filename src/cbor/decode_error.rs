@@ -1,4 +1,4 @@
-use {super::*, std::num::TryFromIntError};
+use super::*;
 
 #[derive(Debug, PartialEq, Snafu)]
 #[snafu(context(suffix(false)), visibility(pub(crate)))]
@@ -11,6 +11,8 @@ pub(crate) enum DecodeError {
   KeyOrder,
   #[snafu(display("overlong integer"))]
   OverlongInteger,
+  #[snafu(display("reserved additional information value: {value}"))]
+  ReservedAdditionalInformation { value: u8 },
   #[snafu(display("trailing bytes"))]
   TrailingBytes,
   #[snafu(display("unconsumed map entries"))]
@@ -24,8 +26,6 @@ pub(crate) enum DecodeError {
     expected: MajorType,
     actual: MajorType,
   },
-  #[snafu(display("reserved additional information value: {value}"))]
-  ReservedAdditionalInformation { value: u8 },
   #[snafu(display("unsupported additional information value: {value}"))]
   UnsupportedAdditionalInformation { value: u8 },
 }
