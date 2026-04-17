@@ -110,7 +110,7 @@ pub use self::{
 #[cfg(test)]
 use {
   self::cbor::{Decode, DecodeError, Decoder, decode_error},
-  std::num::TryFromIntError,
+  std::{num::TryFromIntError, str::Utf8Error},
   strum::IntoDiscriminant,
 };
 

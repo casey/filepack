@@ -89,6 +89,7 @@ impl Decoder {
 
   pub(crate) fn text(&mut self) -> Result<&str, DecodeError> {
     let head = self.head()?;
+
     ensure!(
       head.major_type == MajorType::Text,
       decode_error::UnexpectedType {
@@ -96,7 +97,10 @@ impl Decoder {
         actual: head.major_type,
       }
     );
-    Ok(str::from_utf8(self.slice(head.value.try_into().unwrap())).unwrap())
+
+    let len = head.value.try_into().context(decode_error::SizeRange)?;
+
+    str::from_utf8(self.slice(len)).context(decode_error::Unicode)
   }
 }
 

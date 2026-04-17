@@ -13,6 +13,8 @@ pub(crate) enum DecodeError {
   OverlongInteger,
   #[snafu(display("reserved additional information value: {value}"))]
   ReservedAdditionalInformation { value: u8 },
+  #[snafu(display("size out of range"))]
+  SizeRange { source: TryFromIntError },
   #[snafu(display("trailing bytes"))]
   TrailingBytes,
   #[snafu(display("unconsumed map entries"))]
@@ -26,6 +28,8 @@ pub(crate) enum DecodeError {
     expected: MajorType,
     actual: MajorType,
   },
+  #[snafu(display("string not unicode"))]
+  Unicode { source: Utf8Error },
   #[snafu(display("unsupported additional information value: {value}"))]
   UnsupportedAdditionalInformation { value: u8 },
 }
