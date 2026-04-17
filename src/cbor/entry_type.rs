@@ -27,7 +27,7 @@ mod tests {
 
   #[test]
   fn encoding() {
-    assert_encoding(EntryType::File);
-    assert_encoding(EntryType::Directory);
+    assert_encoding(EntryType::File, &[0x00]);
+    assert_encoding(EntryType::Directory, &[0x01]);
   }
 }

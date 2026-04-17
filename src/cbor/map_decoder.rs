@@ -7,12 +7,12 @@ pub(crate) struct MapDecoder<'a, K> {
 }
 
 impl<'a, K> MapDecoder<'a, K> {
-  pub(crate) fn new(decoder: &'a mut Decoder, len: u64) -> Result<Self, DecodeError> {
-    Ok(Self {
+  pub(crate) fn new(decoder: &'a mut Decoder, len: u64) -> Self {
+    Self {
       decoder,
       last: None,
       remaining: len,
-    })
+    }
   }
 }
 

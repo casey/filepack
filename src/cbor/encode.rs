@@ -25,6 +25,12 @@ impl Encode for str {
   }
 }
 
+impl Encode for String {
+  fn encode(&self, encoder: &mut Encoder) {
+    self.as_str().encode(encoder);
+  }
+}
+
 impl Encode for u8 {
   fn encode(&self, encoder: &mut Encoder) {
     encoder.integer((*self).into());
@@ -49,6 +55,12 @@ impl Encode for [u8] {
   }
 }
 
+impl Encode for Vec<u8> {
+  fn encode(&self, encoder: &mut Encoder) {
+    self.as_slice().encode(encoder);
+  }
+}
+
 impl<K, V> Encode for BTreeMap<K, V>
 where
   K: Encode + PartialOrd,
@@ -67,52 +79,41 @@ mod tests {
   use super::*;
 
   #[test]
-  fn bytes_encoding() {
-    #[track_caller]
-    fn case(value: &[u8], expected: &[u8]) {
-      assert_eq!(value.encode_to_vec(), expected);
-    }
-
-    case(b"", &[0x40]);
-    case(b"bar", &[0x43, 0x62, 0x61, 0x72]);
+  fn bytes() {
+    assert_encoding(Vec::<u8>::new(), &[0x40]);
+    assert_encoding(b"bar".to_vec(), &[0x43, 0x62, 0x61, 0x72]);
   }
 
   #[test]
-  fn map_encoding() {
-    let map = BTreeMap::from([("bar", 1u64), ("foo", 2u64)]);
-    assert_eq!(
-      map.encode_to_vec(),
-      [
+  fn map() {
+    assert_encoding(
+      BTreeMap::from([("bar".to_string(), 1u64), ("foo".to_string(), 2u64)]),
+      &[
         0xA2, 0x63, 0x62, 0x61, 0x72, 0x01, 0x63, 0x66, 0x6F, 0x6F, 0x02,
       ],
     );
   }
 
   #[test]
-  fn str_encoding() {
-    #[track_caller]
-    fn case(value: &str, expected: &[u8]) {
-      assert_eq!(value.encode_to_vec(), expected);
-    }
-
-    case("", &[0x60]);
-    case("foo", &[0x63, 0x66, 0x6F, 0x6F]);
+  fn string() {
+    assert_encoding(String::new(), &[0x60]);
+    assert_encoding(String::from("foo"), &[0x63, 0x66, 0x6F, 0x6F]);
   }
 
   #[test]
-  fn u64_encoding() {
-    #[track_caller]
-    fn case(value: u64, expected: &[u8]) {
-      assert_eq!(value.encode_to_vec(), expected);
-    }
-
-    case(0, &[0x00]);
-    case(24, &[0x18, 0x18]);
-    case(256, &[0x19, 0x01, 0x00]);
+  fn u64() {
+    assert_encoding(0u64, &[0x00]);
+    assert_encoding(24u64, &[0x18, 0x18]);
+    assert_encoding(256u64, &[0x19, 0x01, 0x00]);
   }
 
   #[test]
-  fn u8_encoding() {
-    assert_eq!(100u8.encode_to_vec(), 100u64.encode_to_vec());
+  fn u8() {
+    assert_encoding(100u8, &[0x18, 0x64]);
+  }
+
+  #[test]
+  fn usize() {
+    assert_encoding(42usize, &[0x18, 0x2A]);
   }
 }

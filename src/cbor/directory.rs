@@ -57,16 +57,24 @@ mod tests {
 
   #[test]
   fn encoding() {
-    assert_encoding(Directory {
-      version: Version::Zero,
-      entries: BTreeMap::from([(
-        "foo".parse::<Component>().unwrap(),
-        Entry {
-          ty: EntryType::File,
-          size: 0,
-          hash: Hash::bytes(b"bar"),
-        },
-      )]),
-    });
+    assert_encoding(
+      Directory {
+        version: Version::Zero,
+        entries: BTreeMap::from([(
+          "foo".parse::<Component>().unwrap(),
+          Entry {
+            ty: EntryType::File,
+            size: 0,
+            hash: Hash::bytes(b"bar"),
+          },
+        )]),
+      },
+      &[
+        0xA2, 0x00, 0x00, 0x01, 0xA1, 0x63, 0x66, 0x6F, 0x6F, 0xA3, 0x00, 0x00, 0x01, 0x58, 0x20,
+        0xF2, 0xE8, 0x97, 0xEE, 0xD7, 0xD2, 0x06, 0xCD, 0x85, 0x5D, 0x44, 0x15, 0x98, 0xFA, 0x52,
+        0x1A, 0xBC, 0x75, 0xAA, 0x96, 0x95, 0x3E, 0x97, 0xC0, 0x30, 0xC9, 0x61, 0x2C, 0x30, 0xC1,
+        0x29, 0x3D, 0x02, 0x00,
+      ],
+    );
   }
 }

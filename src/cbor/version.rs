@@ -26,6 +26,6 @@ mod tests {
 
   #[test]
   fn encoding() {
-    assert_encoding(Version::Zero);
+    assert_encoding(Version::Zero, &[0x00]);
   }
 }

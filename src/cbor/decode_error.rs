@@ -23,13 +23,13 @@ pub(crate) enum DecodeError {
   UnconsumedEntries,
   #[snafu(display("unexpected key"))]
   UnexpectedKey,
-  #[snafu(display("unexpected value"))]
-  UnexpectedValue,
   #[snafu(display("expected {expected} but found {actual}"))]
   UnexpectedType {
     expected: MajorType,
     actual: MajorType,
   },
+  #[snafu(display("unexpected value"))]
+  UnexpectedValue,
   #[snafu(display("string not valid UTF-8"))]
   Unicode { source: Utf8Error },
   #[snafu(display("unsupported additional information value: {value}"))]

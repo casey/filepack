@@ -19,6 +19,20 @@ impl Decoder {
     self.slice(len)
   }
 
+  fn expect(&mut self, expected: MajorType) -> Result<u64, DecodeError> {
+    let Head { major_type, value } = self.head()?;
+
+    ensure!(
+      major_type == expected,
+      decode_error::UnexpectedType {
+        actual: major_type,
+        expected,
+      }
+    );
+
+    Ok(value)
+  }
+
   pub(crate) fn finish(self) -> Result<(), DecodeError> {
     ensure!(self.i == self.buffer.len(), decode_error::TrailingBytes);
     Ok(())
@@ -50,8 +64,8 @@ impl Decoder {
       0..24 => 0,
       24 => 24,
       25 => 0x100,
-      26 => 0x10000,
-      27 => 0x100000000,
+      26 => 0x1_0000,
+      27 => 0x1_0000_0000,
       _ => unreachable!(),
     };
 
@@ -66,7 +80,7 @@ impl Decoder {
 
   pub(crate) fn map<K>(&mut self) -> Result<MapDecoder<K>, DecodeError> {
     let len = self.expect(MajorType::Map)?;
-    MapDecoder::new(self, len)
+    Ok(MapDecoder::new(self, len))
   }
 
   pub(crate) fn new(buffer: Vec<u8>) -> Self {
@@ -87,20 +101,6 @@ impl Decoder {
     Ok(&self.buffer[start..end])
   }
 
-  fn expect(&mut self, expected: MajorType) -> Result<u64, DecodeError> {
-    let Head { major_type, value } = self.head()?;
-
-    ensure!(
-      major_type == expected,
-      decode_error::UnexpectedType {
-        actual: major_type,
-        expected,
-      }
-    );
-
-    Ok(value)
-  }
-
   pub(crate) fn text(&mut self) -> Result<&str, DecodeError> {
     let len = self
       .expect(MajorType::Text)?
@@ -114,6 +114,14 @@ impl Decoder {
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn integer_range() {
+    assert!(matches!(
+      u8::decode(&mut Decoder::new(256u64.encode_to_vec())),
+      Err(DecodeError::IntegerRange { .. }),
+    ));
+  }
 
   #[test]
   fn overlong_integer() {
@@ -132,11 +140,24 @@ mod tests {
   }
 
   #[test]
+  fn reserved_additional_information() {
+    assert_eq!(
+      Decoder::new(vec![0x1C]).head(),
+      Err(DecodeError::ReservedAdditionalInformation { value: 28 }),
+    );
+  }
+
+  #[test]
   fn trailing_bytes() {
     assert_eq!(
       Decoder::new(vec![0x00]).finish(),
       Err(DecodeError::TrailingBytes)
     );
+  }
+
+  #[test]
+  fn truncated() {
+    assert_eq!(Decoder::new(vec![]).head(), Err(DecodeError::Truncated),);
   }
 
   #[test]
@@ -151,15 +172,18 @@ mod tests {
   }
 
   #[test]
-  fn reserved_additional_inforomation() {
+  #[expect(invalid_from_utf8)]
+  fn unicode() {
     assert_eq!(
-      Decoder::new(vec![0x1C]).head(),
-      Err(DecodeError::ReservedAdditionalInformation { value: 28 }),
+      Decoder::new(vec![0x62, 0xFF, 0xFE]).text().map(drop),
+      Err(DecodeError::Unicode {
+        source: str::from_utf8(&[0xFF, 0xFE]).unwrap_err()
+      }),
     );
   }
 
   #[test]
-  fn unsupported_additional_inforomation() {
+  fn unsupported_additional_information() {
     assert_eq!(
       Decoder::new(vec![0x1F]).head(),
       Err(DecodeError::UnsupportedAdditionalInformation { value: 31 }),

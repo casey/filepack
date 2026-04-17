@@ -120,7 +120,10 @@ mod tests {
 
   #[test]
   fn encoding() {
-    assert_encoding("foo".parse::<Component>().unwrap());
+    assert_encoding(
+      "foo".parse::<Component>().unwrap(),
+      &[0x63, 0x66, 0x6F, 0x6F],
+    );
     let empty = "".encode_to_vec();
     let mut decoder = Decoder::new(empty);
     assert_eq!(
