@@ -30,7 +30,7 @@ pub(crate) enum DecodeError {
   },
   #[snafu(display("unexpected value"))]
   UnexpectedValue,
-  #[snafu(display("string not valid UTF-8"))]
+  #[snafu(display("string not valid unicode"))]
   Unicode { source: Utf8Error },
   #[snafu(display("unsupported additional information value: {value}"))]
   UnsupportedAdditionalInformation { value: u8 },
