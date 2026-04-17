@@ -4,13 +4,13 @@ pub struct DalekSignatureError(pub(crate) ed25519_dalek::SignatureError);
 
 impl Display for DalekSignatureError {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    self.0.fmt(f)
+    Display::fmt(&self.0, f)
   }
 }
 
 impl fmt::Debug for DalekSignatureError {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    <dyn std::fmt::Debug>::fmt(&self.0, f)
+    Debug::fmt(&self.0, f)
   }
 }
 

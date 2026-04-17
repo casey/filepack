@@ -23,6 +23,19 @@ impl Display for Fingerprint {
   }
 }
 
+#[cfg(test)]
+impl Decode for Fingerprint {
+  fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
+    Ok(Self(Hash::decode(decoder)?))
+  }
+}
+
+impl Encode for Fingerprint {
+  fn encode(&self, encoder: &mut Encoder) {
+    self.0.encode(encoder);
+  }
+}
+
 impl FromStr for Fingerprint {
   type Err = Bech32Error;
 

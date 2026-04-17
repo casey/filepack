@@ -5,7 +5,7 @@ pub struct DisplayPath(PathBuf);
 
 impl Display for DisplayPath {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    self.0.display().fmt(f)
+    Display::fmt(&self.0.display(), f)
   }
 }
 

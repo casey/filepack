@@ -10,9 +10,17 @@ impl Hash {
     self.0.as_bytes()
   }
 
-  #[cfg(test)]
   pub(crate) fn bytes(input: &[u8]) -> Self {
     Self(blake3::hash(input))
+  }
+}
+
+#[cfg(test)]
+impl Decode for Hash {
+  fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
+    let bytes = decoder.bytes()?;
+    let array = <[u8; Self::LEN]>::try_from(bytes).unwrap();
+    Ok(Self::from(array))
   }
 }
 
@@ -80,7 +88,13 @@ impl<'de> Deserialize<'de> for Hash {
 
 impl Display for Hash {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    self.0.fmt(f)
+    Display::fmt(&self.0, f)
+  }
+}
+
+impl Encode for Hash {
+  fn encode(&self, encoder: &mut Encoder) {
+    self.as_bytes().encode(encoder);
   }
 }
 
@@ -95,6 +109,18 @@ mod tests {
         .unwrap_err()
         .to_string(),
       r#"invalid value: string "foo", expected 64 hex digits"#,
+    );
+  }
+
+  #[test]
+  fn hash() {
+    assert_encoding(
+      Hash::bytes(b"foo"),
+      &[
+        0x58, 0x20, 0x04, 0xE0, 0xBB, 0x39, 0xF3, 0x0B, 0x1A, 0x3F, 0xEB, 0x89, 0xF5, 0x36, 0xC9,
+        0x3B, 0xE1, 0x50, 0x55, 0x48, 0x2D, 0xF7, 0x48, 0x67, 0x4B, 0x00, 0xD2, 0x6E, 0x5A, 0x75,
+        0x77, 0x77, 0x02, 0xE9,
+      ],
     );
   }
 

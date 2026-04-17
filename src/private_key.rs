@@ -52,7 +52,7 @@ impl PrivateKey {
     Signature::new(
       message.clone(),
       self.public_key(),
-      self.0.sign(message.fingerprint().as_bytes()),
+      self.0.sign(message.digest().as_bytes()),
     )
   }
 }

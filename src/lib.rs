@@ -24,6 +24,7 @@ use {
     bech32_encoder::Bech32Encoder,
     bech32_error::Bech32Error,
     bech32_type::Bech32Type,
+    cbor::{Encode, Encoder},
     component::Component,
     component_error::ComponentError,
     count::Count,
@@ -34,8 +35,6 @@ use {
     entries::Entries,
     entry::Entry,
     file::File,
-    fingerprint_hasher::FingerprintHasher,
-    fingerprint_prefix::FingerprintPrefix,
     format::Format,
     functions::{current_dir, decode_path, default, is_lowercase_hex, now},
     hash_error::HashError,
@@ -85,7 +84,7 @@ use {
     cmp::Ordering,
     collections::{BTreeMap, BTreeSet, HashMap},
     env,
-    fmt::{self, Display, Formatter, Write},
+    fmt::{self, Debug, Display, Formatter, Write},
     fs::{self, Permissions},
     io::{self, IsTerminal},
     iter,
@@ -96,7 +95,7 @@ use {
     sync::LazyLock,
     time::{SystemTime, SystemTimeError, UNIX_EPOCH},
   },
-  strum::{EnumDiscriminants, EnumIter, EnumString, IntoEnumIterator, IntoStaticStr},
+  strum::{EnumDiscriminants, EnumIter, EnumString, FromRepr, IntoEnumIterator, IntoStaticStr},
   url::Url,
   usized::IntoU64,
   walkdir::WalkDir,
@@ -109,7 +108,11 @@ pub use self::{
 };
 
 #[cfg(test)]
-use {std::collections::HashSet, strum::IntoDiscriminant};
+use {
+  self::cbor::{Decode, DecodeError, Decoder, decode_error},
+  std::{num::TryFromIntError, str::Utf8Error},
+  strum::IntoDiscriminant,
+};
 
 #[cfg(test)]
 fn tempdir() -> tempfile::TempDir {
@@ -117,6 +120,17 @@ fn tempdir() -> tempfile::TempDir {
     .prefix("filepack-test-tempdir")
     .tempdir()
     .unwrap()
+}
+
+#[cfg(test)]
+#[track_caller]
+fn assert_encoding<T: Debug + Decode + Encode + PartialEq>(value: T, cbor: &[u8]) {
+  let buffer = value.encode_to_vec();
+  assert_eq!(buffer, cbor);
+  let mut decoder = Decoder::new(buffer);
+  let decoded = T::decode(&mut decoder).unwrap();
+  decoder.finish().unwrap();
+  assert_eq!(decoded, value);
 }
 
 #[macro_export]
@@ -151,6 +165,7 @@ mod bech32_decoder;
 mod bech32_encoder;
 mod bech32_error;
 mod bech32_type;
+mod cbor;
 mod component;
 mod component_error;
 mod count;
@@ -166,8 +181,6 @@ mod file;
 mod filename;
 mod filesystem;
 mod fingerprint;
-mod fingerprint_hasher;
-mod fingerprint_prefix;
 mod format;
 mod functions;
 mod hash;

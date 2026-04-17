@@ -7,15 +7,6 @@ pub(crate) struct File {
   pub(crate) size: u64,
 }
 
-impl File {
-  pub(crate) fn fingerprint(&self) -> Hash {
-    let mut hasher = FingerprintHasher::new(FingerprintPrefix::File);
-    hasher.field(0, self.hash.as_bytes());
-    hasher.field(1, &self.size.to_le_bytes());
-    hasher.finalize()
-  }
-}
-
 #[cfg(test)]
 mod tests {
   use super::*;

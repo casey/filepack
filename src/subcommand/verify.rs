@@ -239,7 +239,7 @@ mismatched file: `{path}`
     }
 
     if verified.signatures > 0 {
-      eprint!(" with {}", Count(verified.signatures, "signature"),);
+      eprint!(" with {}", Count(verified.signatures, "signature"));
     }
 
     eprintln!();

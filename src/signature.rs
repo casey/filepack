@@ -46,7 +46,7 @@ impl Signature {
     self
       .public_key
       .inner()
-      .verify_strict(self.message.fingerprint().as_bytes(), &self.signature)
+      .verify_strict(self.message.digest().as_bytes(), &self.signature)
       .map_err(DalekSignatureError)
       .context(error::SignatureInvalid {
         public_key: self.public_key,

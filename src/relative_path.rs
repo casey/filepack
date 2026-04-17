@@ -103,7 +103,7 @@ impl AsRef<Utf8Path> for RelativePath {
 
 impl Display for RelativePath {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    self.0.fmt(f)
+    Display::fmt(&self.0, f)
   }
 }
 
