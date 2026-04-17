@@ -70,7 +70,7 @@ impl Decoder {
   }
 
   pub(crate) fn new(buffer: Vec<u8>) -> Self {
-    Self { i: 0, buffer }
+    Self { buffer, i: 0 }
   }
 
   fn slice(&mut self, n: usize) -> Result<&[u8], DecodeError> {
