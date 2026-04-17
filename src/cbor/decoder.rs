@@ -34,18 +34,12 @@ impl Decoder {
 
     let additional_information = initial_byte & 0b11111;
 
-    let (value, min) = match additional_information {
-      0..24 => (additional_information.into(), 0),
-      24 => (u8::from_be_bytes(self.array()).into(), u64::from(24u8)),
-      25 => (
-        u16::from_be_bytes(self.array()).into(),
-        u64::from(u8::MAX) + 1,
-      ),
-      26 => (
-        u32::from_be_bytes(self.array()).into(),
-        u64::from(u16::MAX) + 1,
-      ),
-      27 => (u64::from_be_bytes(self.array()), u64::from(u32::MAX) + 1),
+    let value = match additional_information {
+      0..24 => additional_information.into(),
+      24 => u8::from_be_bytes(self.array()).into(),
+      25 => u16::from_be_bytes(self.array()).into(),
+      26 => u32::from_be_bytes(self.array()).into(),
+      27 => u64::from_be_bytes(self.array()),
       value @ 28..31 => {
         return Err(decode_error::ReservedAdditionalInformation { value }.build());
       }
@@ -53,6 +47,15 @@ impl Decoder {
         return Err(decode_error::UnsupportedAdditionalInformation { value }.build());
       }
       32..=u8::MAX => unreachable!(),
+    };
+
+    let min = match additional_information {
+      0..24 => 0,
+      24 => 24,
+      25 => 0x100,
+      26 => 0x10000,
+      27 => 0x100000000,
+      _ => unreachable!(),
     };
 
     ensure!(value >= min, decode_error::OverlongInteger);
