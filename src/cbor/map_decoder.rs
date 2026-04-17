@@ -11,7 +11,7 @@ impl<'a, K> MapDecoder<'a, K> {
     let head = decoder.head()?;
     ensure!(
       head.major_type == MajorType::Map,
-      decode_error::TypeMismatch {
+      decode_error::UnexpectedType {
         expected: MajorType::Map,
         actual: head.major_type,
       }

@@ -14,7 +14,7 @@ impl Decoder {
     let head = self.head()?;
     ensure!(
       head.major_type == MajorType::Bytes,
-      decode_error::TypeMismatch {
+      decode_error::UnexpectedType {
         expected: MajorType::Bytes,
         actual: head.major_type,
       }
@@ -46,9 +46,13 @@ impl Decoder {
         u64::from(u16::MAX) + 1,
       ),
       27 => (u64::from_be_bytes(self.array()), u64::from(u32::MAX) + 1),
-      value => {
-        return decode_error::UnsupportedAdditionalInfo { value }.fail();
+      value @ 28..31 => {
+        return Err(decode_error::ReservedAdditionalInformation { value }.build());
       }
+      value @ 31 => {
+        return Err(decode_error::UnsupportedAdditionalInformation { value }.build());
+      }
+      32..=u8::MAX => unreachable!(),
     };
 
     ensure!(value >= min, decode_error::OverlongInteger);
@@ -60,7 +64,7 @@ impl Decoder {
     let head = self.head()?;
     ensure!(
       head.major_type == MajorType::Integer,
-      decode_error::TypeMismatch {
+      decode_error::UnexpectedType {
         expected: MajorType::Integer,
         actual: head.major_type,
       }
@@ -87,7 +91,7 @@ impl Decoder {
     let head = self.head()?;
     ensure!(
       head.major_type == MajorType::Text,
-      decode_error::TypeMismatch {
+      decode_error::UnexpectedType {
         expected: MajorType::Text,
         actual: head.major_type,
       }
@@ -127,7 +131,7 @@ mod tests {
   fn type_mismatch() {
     assert_eq!(
       Decoder::new(vec![0x60]).integer(),
-      Err(DecodeError::TypeMismatch {
+      Err(DecodeError::UnexpectedType {
         expected: MajorType::Integer,
         actual: MajorType::Text,
       }),
@@ -135,7 +139,7 @@ mod tests {
 
     assert_eq!(
       Decoder::new(vec![0x00]).text(),
-      Err(DecodeError::TypeMismatch {
+      Err(DecodeError::UnexpectedType {
         expected: MajorType::Text,
         actual: MajorType::Integer,
       }),
@@ -143,7 +147,7 @@ mod tests {
 
     assert_eq!(
       Decoder::new(vec![0x00]).bytes(),
-      Err(DecodeError::TypeMismatch {
+      Err(DecodeError::UnexpectedType {
         expected: MajorType::Bytes,
         actual: MajorType::Integer,
       }),
@@ -151,10 +155,18 @@ mod tests {
   }
 
   #[test]
-  fn unsupported_additional_info() {
+  fn reserved_additional_inforomation() {
     assert_eq!(
       Decoder::new(vec![0x1C]).head(),
-      Err(DecodeError::UnsupportedAdditionalInfo { value: 28 }),
+      Err(DecodeError::ReservedAdditionalInformation { value: 28 }),
+    );
+  }
+
+  #[test]
+  fn unsupported_additional_inforomation() {
+    assert_eq!(
+      Decoder::new(vec![0x1F]).head(),
+      Err(DecodeError::UnsupportedAdditionalInformation { value: 31 }),
     );
   }
 }

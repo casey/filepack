@@ -34,7 +34,7 @@ impl Decode for u8 {
     decoder
       .integer()?
       .try_into()
-      .context(decode_error::IntegerOutOfRange)
+      .context(decode_error::IntegerRange)
   }
 }
 

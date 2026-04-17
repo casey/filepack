@@ -109,7 +109,7 @@ pub use self::{
 
 #[cfg(test)]
 use {
-  self::cbor::{Decode, DecodeError, Decoder},
+  self::cbor::{Decode, DecodeError, Decoder, decode_error},
   strum::IntoDiscriminant,
 };
 
