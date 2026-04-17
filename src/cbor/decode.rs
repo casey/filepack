@@ -29,6 +29,12 @@ impl Decode for String {
   }
 }
 
+impl Decode for Vec<u8> {
+  fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
+    Ok(decoder.bytes()?.to_vec())
+  }
+}
+
 impl Decode for u8 {
   fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
     decoder
@@ -50,11 +56,5 @@ impl Decode for usize {
       .integer()?
       .try_into()
       .context(decode_error::IntegerRange)
-  }
-}
-
-impl Decode for Vec<u8> {
-  fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
-    Ok(decoder.bytes()?.to_vec())
   }
 }
