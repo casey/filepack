@@ -2,6 +2,15 @@ use super::*;
 
 // todo:
 // - test all error variants
+// - encoding test for directory which tests exact byte string
+// - any test coverage gaps?
+// - anything which is pub(crate) but can be made more private?
+// - add a `cbor: &[u8]` argument to the assert_encoding test case generator,
+//   and assert that the generated cbor matches a specific byte slice
+// - replace the `case` functions in src/cbor/encode.rs with `assert_encoding`
+//
+// later:
+// - test against an existing cbor library
 
 pub(crate) use self::{
   directory::Directory, encode::Encode, encoder::Encoder, entry::Entry, entry_type::EntryType,

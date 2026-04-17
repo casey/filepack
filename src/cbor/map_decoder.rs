@@ -48,6 +48,7 @@ impl<K: Clone + Decode + Debug + PartialOrd> MapDecoder<'_, K> {
     self.last = Some(key.clone());
 
     let value = V::decode(self.decoder)?;
+
     Ok(Some((key, value)))
   }
 }
