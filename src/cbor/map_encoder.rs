@@ -33,7 +33,7 @@ impl<'a, K: Encode + PartialOrd> MapEncoder<'a, K> {
 
 impl<K> Drop for MapEncoder<'_, K> {
   fn drop(&mut self) {
-    if !std::thread::panicking() && self.remaining != 0 {
+    if !std::thread::panicking() {
       assert!(self.remaining == 0, "too few items");
     }
   }
