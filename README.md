@@ -879,8 +879,8 @@ of file hashing and verification.
 
 Filepack allows for the creation of Ed25519 signatures over the contents of a
 manifest, which thus commit to the contents of the directory covered by the
-manifest. Signatures are made over a message containing a "fingerprint" hash
-made over a canonical CBOR serialization of the manifest. This keeps signatures
+manifest. Signatures are made over a message containing a "fingerprint" hash of
+a canonical CBOR serialization of the manifest. This keeps signatures
 independent of the manifest format, avoids issues with canonicalization of the
 manifest JSON, avoids hash loops due to the inclusion of signatures in the
 manifest itself, and allows proving the inclusion of files covered by a
