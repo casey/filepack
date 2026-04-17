@@ -11,7 +11,7 @@ pub(crate) enum DecodeError {
   OverlongInteger,
   #[snafu(display("trailing bytes"))]
   TrailingBytes,
-  #[snafu(display("expected {expected:?}, got {actual:?}"))]
+  #[snafu(display("expected {expected}, got {actual}"))]
   TypeMismatch {
     expected: MajorType,
     actual: MajorType,

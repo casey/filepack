@@ -1,6 +1,7 @@
 use super::*;
 
-#[derive(Clone, Copy, Debug, FromRepr, PartialEq)]
+#[derive(Clone, Copy, Debug, FromRepr, IntoStaticStr, PartialEq)]
+#[strum(serialize_all = "kebab-case")]
 #[repr(u8)]
 pub(crate) enum MajorType {
   Integer = 0,
@@ -27,7 +28,17 @@ impl MajorType {
     }
   }
 
+  fn name(self) -> &'static str {
+    self.into()
+  }
+
   pub(crate) fn value(self) -> u8 {
     self as u8
+  }
+}
+
+impl Display for MajorType {
+  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    write!(f, "{}", self.name())
   }
 }
