@@ -16,7 +16,7 @@ package:
     .arg("create")
     .success()
     .arg("verify")
-    .stderr("successfully verified 2 files totaling 72 bytes\n")
+    .stderr("successfully verified 3 files totaling 121 bytes\n")
     .success();
 }
 
@@ -40,7 +40,7 @@ package:
     .arg("create")
     .success()
     .arg("verify")
-    .stderr("successfully verified 5 files totaling 73 bytes\n")
+    .stderr("successfully verified 6 files totaling 113 bytes\n")
     .success();
 }
 
@@ -174,7 +174,7 @@ fn language() {
     .arg("create")
     .success()
     .arg("verify")
-    .stderr("successfully verified 2 files totaling 23 bytes\n")
+    .stderr("successfully verified 3 files totaling 33 bytes\n")
     .success();
 }
 

@@ -160,6 +160,11 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     count: u64,
   },
+  #[snafu(display("metadata CBOR `{path}` already exists"))]
+  MetadataCborAlreadyExists {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+  },
   #[snafu(display("manifest `{path}` already exists"))]
   ManifestAlreadyExists {
     backtrace: Option<Backtrace>,

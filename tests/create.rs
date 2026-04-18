@@ -482,6 +482,6 @@ fn with_metadata() {
     .assert_file_regex("filepack.json", r#".*"metadata.yaml".*"#)
     .success()
     .arg("verify")
-    .stderr("successfully verified 2 files totaling 10 bytes\n")
+    .stderr("successfully verified 3 files totaling 16 bytes\n")
     .success();
 }
