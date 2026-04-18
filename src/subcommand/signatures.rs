@@ -9,7 +9,6 @@ pub(crate) struct Signatures {
 }
 
 #[derive(Serialize)]
-#[serde(rename_all = "kebab-case")]
 struct Output {
   public_key: PublicKey,
   timestamp: Option<u64>,

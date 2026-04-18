@@ -38,7 +38,7 @@ fn signature_with_time() {
   test
     .args(["signatures", "--format", "json", "foo"])
     .stdout_regex(&format!(
-      r#"\[\{{"public-key":"{public_key}","timestamp":\d+\}}\]\n"#,
+      r#"\[\{{"public_key":"{public_key}","timestamp":\d+\}}\]\n"#,
     ))
     .success();
 }
@@ -59,7 +59,7 @@ fn signature_without_time() {
   test
     .args(["signatures", "--format", "json", "foo"])
     .stdout(format!(
-      "[{{\"public-key\":\"{public_key}\",\"timestamp\":null}}]\n"
+      "[{{\"public_key\":\"{public_key}\",\"timestamp\":null}}]\n"
     ))
     .success();
 }

@@ -2,7 +2,7 @@ use super::*;
 
 #[serde_as]
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
-#[serde(deny_unknown_fields, rename_all = "kebab-case")]
+#[serde(deny_unknown_fields)]
 pub struct Manifest {
   pub files: Directory,
   #[serde_as(as = "SetPreventDuplicates<_>")]
