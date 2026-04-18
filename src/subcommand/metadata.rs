@@ -22,17 +22,7 @@ impl Metadata {
 
     let bytes = filesystem::read(&path)?;
 
-    let mut decoder = Decoder::new(bytes);
-
-    let metadata = crate::metadata::Metadata::decode(&mut decoder).map_err(|err| {
-      error::DecodeMetadataCbor {
-        message: err.to_string(),
-        path: &path,
-      }
-      .build()
-    })?;
-
-    decoder.finish().map_err(|err| {
+    let metadata = crate::Metadata::decode_from_vec(bytes).map_err(|err| {
       error::DecodeMetadataCbor {
         message: err.to_string(),
         path: &path,

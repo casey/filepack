@@ -2,6 +2,13 @@ use super::*;
 
 pub(crate) trait Decode: Sized {
   fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError>;
+
+  fn decode_from_vec(buffer: Vec<u8>) -> Result<Self, DecodeError> {
+    let mut decoder = Decoder::new(buffer);
+    let value = Self::decode(&mut decoder)?;
+    decoder.finish()?;
+    Ok(value)
+  }
 }
 
 impl<K, V> Decode for BTreeMap<K, V>

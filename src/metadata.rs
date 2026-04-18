@@ -1,11 +1,9 @@
 use super::*;
 
 // todo:
-// - this seems fine
-// - metadata command is good since JSON is easier to manipulate
-// - cbor manifest is probably good
-// - cbor is efficient, canonical, and simple
-// - do the annoying thing first, if users hate it i can relent
+// - tests
+// - document relationship between metadata.cbor and metadata.yaml
+// - fix up any docs
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub(crate) struct Metadata {
