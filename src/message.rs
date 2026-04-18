@@ -41,15 +41,12 @@ impl Decode for Message {
 
 impl Encode for Message {
   fn encode(&self, encoder: &mut Encoder) {
-    let length = if self.timestamp.is_none() { 3 } else { 4 };
+    let length = 3 + count_some!(self.timestamp);
     let mut map = encoder.map::<u8>(length);
     map.item(0, "filepack");
     map.item(1, "message");
     map.item(2, self.fingerprint);
-
-    if let Some(timestamp) = self.timestamp {
-      map.item(3, timestamp);
-    }
+    map.item_optional(3, self.timestamp);
   }
 }
 

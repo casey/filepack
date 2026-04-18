@@ -204,6 +204,12 @@ impl FromStr for Language {
   }
 }
 
+impl Encode for Language {
+  fn encode(&self, encoder: &mut Encoder) {
+    self.0.encode(encoder);
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;

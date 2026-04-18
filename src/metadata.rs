@@ -13,6 +13,33 @@ pub(crate) struct Metadata {
   pub(crate) title: Component,
 }
 
+impl Encode for Metadata {
+  fn encode(&self, encoder: &mut Encoder) {
+    let length = 1 + count_some!(
+      self.artwork,
+      self.creator,
+      self.date,
+      self.description,
+      self.homepage,
+      self.language,
+      self.package,
+      self.readme,
+    );
+
+    let mut map = encoder.map::<u8>(length);
+
+    map.item_optional(0, self.artwork.as_ref());
+    map.item_optional(1, self.creator.as_ref());
+    map.item_optional(2, self.date.as_ref());
+    map.item_optional(3, self.description.as_ref());
+    map.item_optional(4, self.homepage.as_ref());
+    map.item_optional(5, self.language.as_ref());
+    map.item_optional(6, self.package.as_ref());
+    map.item_optional(7, self.readme.as_ref());
+    map.item(8, &self.title);
+  }
+}
+
 impl Metadata {
   pub(crate) const FILENAME: &'static str = "metadata.yaml";
 

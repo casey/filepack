@@ -35,6 +35,12 @@ impl<T: Extension> Filename<T> {
   }
 }
 
+impl<T: Extension> Encode for Filename<T> {
+  fn encode(&self, encoder: &mut Encoder) {
+    self.component.encode(encoder);
+  }
+}
+
 impl<T: Extension> FromStr for Filename<T> {
   type Err = ComponentError;
 

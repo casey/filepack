@@ -18,6 +18,12 @@ impl FromStr for Tag {
   }
 }
 
+impl Encode for Tag {
+  fn encode(&self, encoder: &mut Encoder) {
+    self.0.encode(encoder);
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;

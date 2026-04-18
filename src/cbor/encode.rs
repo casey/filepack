@@ -25,10 +25,16 @@ where
   V: Encode,
 {
   fn encode(&self, encoder: &mut Encoder) {
-    let mut map = encoder.map::<&K>(self.len());
+    let mut map = encoder.map::<&K>(self.len().into_u64());
     for (key, value) in self {
       map.item(key, value);
     }
+  }
+}
+
+impl Encode for Url {
+  fn encode(&self, encoder: &mut Encoder) {
+    self.as_str().encode(encoder);
   }
 }
 

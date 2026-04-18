@@ -24,6 +24,12 @@ impl FromStr for DateTime {
   }
 }
 
+impl Encode for DateTime {
+  fn encode(&self, encoder: &mut Encoder) {
+    self.to_string().encode(encoder);
+  }
+}
+
 impl Display for DateTime {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     match self {

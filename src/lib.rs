@@ -133,6 +133,12 @@ fn assert_encoding<T: Debug + Decode + Encode + PartialEq>(value: T, cbor: &[u8]
   assert_eq!(decoded, value);
 }
 
+macro_rules! count_some {
+  ($($option:expr),* $(,)?) => {
+    0u64 $(+ u64::from($option.is_some()))*
+  };
+}
+
 #[macro_export]
 macro_rules! assert_matches {
   ($expression:expr, $( $pattern:pat_param )|+ $( if $guard:expr )? $(,)?) => {
