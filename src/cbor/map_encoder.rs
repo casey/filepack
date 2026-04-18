@@ -21,7 +21,7 @@ impl<'a, K: Encode + PartialOrd> MapEncoder<'a, K> {
     self.remaining -= 1;
   }
 
-  pub(crate) fn item_optional(&mut self, key: K, value: Option<impl Encode>) {
+  pub(crate) fn optional_item(&mut self, key: K, value: Option<impl Encode>) {
     if let Some(value) = value {
       self.item(key, value);
     }

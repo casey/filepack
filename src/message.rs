@@ -46,7 +46,7 @@ impl Encode for Message {
     map.item(0, "filepack");
     map.item(1, "message");
     map.item(2, self.fingerprint);
-    map.item_optional(3, self.timestamp);
+    map.optional_item(3, self.timestamp);
   }
 }
 
