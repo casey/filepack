@@ -22,13 +22,8 @@ impl Metadata {
 
     let bytes = filesystem::read(&path)?;
 
-    let metadata = crate::Metadata::decode_from_vec(bytes).map_err(|err| {
-      error::DecodeMetadataCbor {
-        message: err.to_string(),
-        path: &path,
-      }
-      .build()
-    })?;
+    let metadata =
+      crate::Metadata::decode_from_vec(bytes).context(error::DecodeMetadataCbor { path })?;
 
     match self.format {
       Format::Json => println!("{}", serde_json::to_string(&metadata).unwrap()),

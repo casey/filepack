@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(Debug, PartialEq, Snafu)]
 #[snafu(context(suffix(false)), visibility(pub(crate)))]
-pub(crate) enum DecodeError {
+pub enum DecodeError {
   #[snafu(display("failed to parse component"))]
   Component { source: ComponentError },
   #[snafu(display("integer out of range"))]

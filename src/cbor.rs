@@ -1,10 +1,12 @@
 use super::*;
 
 pub(crate) use self::{
-  decode::Decode, decode_error::DecodeError, decoder::Decoder, directory::Directory,
-  encode::Encode, encoder::Encoder, entry::Entry, entry_type::EntryType, head::Head,
-  major_type::MajorType, map_decoder::MapDecoder, map_encoder::MapEncoder, version::Version,
+  decode::Decode, decoder::Decoder, directory::Directory, encode::Encode, encoder::Encoder,
+  entry::Entry, entry_type::EntryType, head::Head, map_decoder::MapDecoder,
+  map_encoder::MapEncoder, version::Version,
 };
+
+pub use self::{decode_error::DecodeError, major_type::MajorType};
 
 mod decode;
 pub(crate) mod decode_error;

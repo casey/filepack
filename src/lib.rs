@@ -103,12 +103,20 @@ use {
 };
 
 pub use self::{
-  directory::Directory, error::Error, fingerprint::Fingerprint, hash::Hash, manifest::Manifest,
-  message::Message, private_key::PrivateKey, public_key::PublicKey, relative_path::RelativePath,
+  cbor::{DecodeError, MajorType},
+  directory::Directory,
+  error::Error,
+  fingerprint::Fingerprint,
+  hash::Hash,
+  manifest::Manifest,
+  message::Message,
+  private_key::PrivateKey,
+  public_key::PublicKey,
+  relative_path::RelativePath,
   signature::Signature,
 };
 
-use self::cbor::{Decode, DecodeError, Decoder, decode_error};
+use self::cbor::{Decode, Decoder, decode_error};
 
 #[cfg(test)]
 use strum::IntoDiscriminant;

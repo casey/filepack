@@ -54,11 +54,11 @@ pub enum Error {
   },
   #[snafu(display("failed to get local data directory"))]
   DataLocalDir { backtrace: Option<Backtrace> },
-  #[snafu(display("failed to decode metadata CBOR at `{path}`: {message}"))]
+  #[snafu(display("failed to decode metadata CBOR at `{path}`"))]
   DecodeMetadataCbor {
     backtrace: Option<Backtrace>,
-    message: String,
     path: DisplayPath,
+    source: DecodeError,
   },
   #[snafu(display("failed to deserialize manifest at `{path}`"))]
   DeserializeManifest {

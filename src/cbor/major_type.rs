@@ -3,7 +3,7 @@ use super::*;
 #[derive(Clone, Copy, Debug, FromRepr, IntoStaticStr, PartialEq)]
 #[strum(serialize_all = "kebab-case")]
 #[repr(u8)]
-pub(crate) enum MajorType {
+pub enum MajorType {
   Integer = 0,
   Bytes = 2,
   Text = 3,
