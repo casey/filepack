@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Clone, Debug, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub(crate) struct Metadata {
   pub(crate) artwork: Option<filename::Png>,
   pub(crate) creator: Option<Component>,
@@ -13,18 +13,51 @@ pub(crate) struct Metadata {
   pub(crate) title: Component,
 }
 
+impl Decode for Metadata {
+  fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
+    let mut map = decoder.map::<u8>()?;
+
+    let artwork = map.optional_key(0)?;
+    let creator = map.optional_key(1)?;
+    let date = map.optional_key(2)?;
+    let description = map.optional_key(3)?;
+    let homepage = map.optional_key(4)?;
+    let language = map.optional_key(5)?;
+    let package = map.optional_key(6)?;
+    let readme = map.optional_key(7)?;
+    let title = map
+      .key(8)?
+      .ok_or_else(|| decode_error::MissingField { key: 8u64 }.build())?;
+
+    map.finish()?;
+
+    Ok(Self {
+      artwork,
+      creator,
+      date,
+      description,
+      homepage,
+      language,
+      package,
+      readme,
+      title,
+    })
+  }
+}
+
 impl Encode for Metadata {
   fn encode(&self, encoder: &mut Encoder) {
-    let length = 1 + count_some!(
-      self.artwork,
-      self.creator,
-      self.date,
-      self.description,
-      self.homepage,
-      self.language,
-      self.package,
-      self.readme,
-    );
+    let length = 1
+      + count_some!(
+        self.artwork,
+        self.creator,
+        self.date,
+        self.description,
+        self.homepage,
+        self.language,
+        self.package,
+        self.readme,
+      );
 
     let mut map = encoder.map::<u8>(length);
 

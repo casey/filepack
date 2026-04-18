@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Clone, Debug, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub(crate) struct Package {
   pub(crate) creator: Option<Component>,
   pub(crate) creator_tag: Option<Tag>,
@@ -8,6 +8,30 @@ pub(crate) struct Package {
   pub(crate) description: Option<String>,
   pub(crate) homepage: Option<Url>,
   pub(crate) nfo: Option<filename::Nfo>,
+}
+
+impl Decode for Package {
+  fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
+    let mut map = decoder.map::<u8>()?;
+
+    let creator = map.optional_key(0)?;
+    let creator_tag = map.optional_key(1)?;
+    let date = map.optional_key(2)?;
+    let description = map.optional_key(3)?;
+    let homepage = map.optional_key(4)?;
+    let nfo = map.optional_key(5)?;
+
+    map.finish()?;
+
+    Ok(Self {
+      creator,
+      creator_tag,
+      date,
+      description,
+      homepage,
+      nfo,
+    })
+  }
 }
 
 impl Encode for Package {

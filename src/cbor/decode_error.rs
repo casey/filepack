@@ -9,8 +9,12 @@ pub(crate) enum DecodeError {
   IntegerRange { source: TryFromIntError },
   #[snafu(display("map keys out of order"))]
   KeyOrder,
+  #[snafu(display("missing required field: {key}"))]
+  MissingField { key: u64 },
   #[snafu(display("overlong integer"))]
   OverlongInteger,
+  #[snafu(display("failed to parse text: {message}"))]
+  Parse { message: String },
   #[snafu(display("reserved additional information value: {value}"))]
   ReservedAdditionalInformation { value: u8 },
   #[snafu(display("size out of range"))]

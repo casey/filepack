@@ -3,7 +3,7 @@ use {
   chrono::{FixedOffset, NaiveDate},
 };
 
-#[derive(Clone, Debug, DeserializeFromStr, PartialEq)]
+#[derive(Clone, Debug, DeserializeFromStr, PartialEq, SerializeDisplay)]
 pub(crate) enum DateTime {
   Date(NaiveDate),
   DateTime(chrono::DateTime<FixedOffset>),
@@ -21,6 +21,17 @@ impl FromStr for DateTime {
     } else {
       Ok(Self::DateTime(s.parse()?))
     }
+  }
+}
+
+impl Decode for DateTime {
+  fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
+    decoder.text()?.parse().map_err(|err: chrono::ParseError| {
+      decode_error::Parse {
+        message: err.to_string(),
+      }
+      .build()
+    })
   }
 }
 

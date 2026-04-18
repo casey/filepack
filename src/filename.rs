@@ -35,6 +35,23 @@ impl<T: Extension> Filename<T> {
   }
 }
 
+impl<T: Extension> Serialize for Filename<T> {
+  fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+    self.component.serialize(serializer)
+  }
+}
+
+impl<T: Extension> Decode for Filename<T> {
+  fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
+    decoder.text()?.parse().map_err(|err: ComponentError| {
+      decode_error::Parse {
+        message: err.to_string(),
+      }
+      .build()
+    })
+  }
+}
+
 impl<T: Extension> Encode for Filename<T> {
   fn encode(&self, encoder: &mut Encoder) {
     self.component.encode(encoder);

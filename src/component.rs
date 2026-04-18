@@ -65,7 +65,6 @@ impl Encode for Component {
   }
 }
 
-#[cfg(test)]
 impl Decode for Component {
   fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
     decoder.text()?.parse().context(decode_error::Component)

@@ -54,6 +54,12 @@ pub enum Error {
   },
   #[snafu(display("failed to get local data directory"))]
   DataLocalDir { backtrace: Option<Backtrace> },
+  #[snafu(display("failed to decode metadata CBOR at `{path}`: {message}"))]
+  DecodeMetadataCbor {
+    backtrace: Option<Backtrace>,
+    message: String,
+    path: DisplayPath,
+  },
   #[snafu(display("failed to deserialize manifest at `{path}`"))]
   DeserializeManifest {
     backtrace: Option<Backtrace>,
@@ -160,11 +166,6 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     count: u64,
   },
-  #[snafu(display("metadata CBOR `{path}` already exists"))]
-  MetadataCborAlreadyExists {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-  },
   #[snafu(display("manifest `{path}` already exists"))]
   ManifestAlreadyExists {
     backtrace: Option<Backtrace>,
@@ -185,6 +186,13 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
+  #[snafu(display("metadata CBOR `{path}` already exists"))]
+  MetadataCborAlreadyExists {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+  },
+  #[snafu(display("metadata cannot be displayed as TSV"))]
+  MetadataTsv { backtrace: Option<Backtrace> },
   #[snafu(display("directory missing: `{path}`"))]
   MissingDirectory {
     backtrace: Option<Backtrace>,

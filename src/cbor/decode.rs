@@ -23,6 +23,17 @@ where
   }
 }
 
+impl Decode for Url {
+  fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
+    Url::parse(decoder.text()?).map_err(|err| {
+      decode_error::Parse {
+        message: err.to_string(),
+      }
+      .build()
+    })
+  }
+}
+
 impl Decode for String {
   fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
     Ok(decoder.text()?.to_owned())

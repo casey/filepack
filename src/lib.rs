@@ -89,9 +89,10 @@ use {
     io::{self, IsTerminal},
     iter,
     marker::PhantomData,
+    num::TryFromIntError,
     path::{Path, PathBuf},
     process,
-    str::{self, FromStr},
+    str::{self, FromStr, Utf8Error},
     sync::LazyLock,
     time::{SystemTime, SystemTimeError, UNIX_EPOCH},
   },
@@ -107,12 +108,10 @@ pub use self::{
   signature::Signature,
 };
 
+use self::cbor::{Decode, DecodeError, Decoder, decode_error};
+
 #[cfg(test)]
-use {
-  self::cbor::{Decode, DecodeError, Decoder, decode_error},
-  std::{num::TryFromIntError, str::Utf8Error},
-  strum::IntoDiscriminant,
-};
+use strum::IntoDiscriminant;
 
 #[cfg(test)]
 fn tempdir() -> tempfile::TempDir {
@@ -131,12 +130,6 @@ fn assert_encoding<T: Debug + Decode + Encode + PartialEq>(value: T, cbor: &[u8]
   let decoded = T::decode(&mut decoder).unwrap();
   decoder.finish().unwrap();
   assert_eq!(decoded, value);
-}
-
-macro_rules! count_some {
-  ($($option:expr),* $(,)?) => {
-    0u64 $(+ u64::from($option.is_some()))*
-  };
 }
 
 #[macro_export]
@@ -164,6 +157,12 @@ macro_rules! assert_matches_regex {
       re.as_str(),
     );
   }};
+}
+
+macro_rules! count_some {
+  ($($option:expr),* $(,)?) => {
+    0u64 $(+ u64::from($option.is_some()))*
+  };
 }
 
 mod arguments;

@@ -87,6 +87,14 @@ impl Decoder {
     Self { buffer, i: 0 }
   }
 
+  pub(crate) fn position(&self) -> usize {
+    self.i
+  }
+
+  pub(crate) fn set_position(&mut self, position: usize) {
+    self.i = position;
+  }
+
   fn slice(&mut self, n: usize) -> Result<&[u8], DecodeError> {
     let start = self.i;
     let end = start + n;

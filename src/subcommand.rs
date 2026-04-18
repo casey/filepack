@@ -18,6 +18,7 @@ mod keygen;
 mod languages;
 mod lints;
 mod man;
+mod metadata;
 mod sign;
 mod signatures;
 mod size;
@@ -65,6 +66,8 @@ pub(crate) enum Subcommand {
   Lints,
   #[command(about = "Print man page")]
   Man,
+  #[command(about = "Print metadata")]
+  Metadata(metadata::Metadata),
   #[command(about = "Sign manifest")]
   Sign(sign::Sign),
   #[command(about = "List manifest signatures")]
@@ -90,6 +93,7 @@ impl Subcommand {
       Self::Languages(languages) => languages.run(),
       Self::Lints => lints::run(),
       Self::Man => man::run(),
+      Self::Metadata(metadata) => metadata.run(),
       Self::Sign(sign) => sign.run(options),
       Self::Signatures(signatures) => signatures.run(),
       Self::Size(size) => size.run(),

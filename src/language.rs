@@ -204,6 +204,21 @@ impl FromStr for Language {
   }
 }
 
+impl Serialize for Language {
+  fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+    serializer.serialize_str(self.0)
+  }
+}
+
+impl Decode for Language {
+  fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
+    decoder
+      .text()?
+      .parse()
+      .map_err(|err: String| decode_error::Parse { message: err }.build())
+  }
+}
+
 impl Encode for Language {
   fn encode(&self, encoder: &mut Encoder) {
     self.0.encode(encoder);

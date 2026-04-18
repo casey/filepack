@@ -51,6 +51,32 @@ impl<K: Clone + Decode + Debug + PartialOrd> MapDecoder<'_, K> {
 
     Ok(Some((key, value)))
   }
+
+  pub(crate) fn optional_key<V: Decode>(&mut self, key: K) -> Result<Option<V>, DecodeError>
+  where
+    K: Eq,
+  {
+    if self.remaining == 0 {
+      return Ok(None);
+    }
+
+    let position = self.decoder.position();
+    let next_key = K::decode(self.decoder)?;
+
+    if next_key != key {
+      self.decoder.set_position(position);
+      return Ok(None);
+    }
+
+    if let Some(last) = &self.last {
+      ensure!(next_key > *last, decode_error::KeyOrder);
+    }
+
+    self.remaining -= 1;
+    self.last = Some(next_key);
+
+    Ok(Some(V::decode(self.decoder)?))
+  }
 }
 
 #[cfg(test)]
