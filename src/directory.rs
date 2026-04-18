@@ -2,7 +2,7 @@ use super::*;
 
 #[serde_as]
 #[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
-#[serde(deny_unknown_fields, rename_all = "kebab-case", transparent)]
+#[serde(deny_unknown_fields, transparent)]
 pub struct Directory {
   #[serde_as(as = "MapPreventDuplicates<_, _>")]
   pub(crate) entries: BTreeMap<Component, Entry>,

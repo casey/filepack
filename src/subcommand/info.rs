@@ -1,7 +1,6 @@
 use super::*;
 
 #[derive(Serialize)]
-#[serde(rename_all = "kebab-case")]
 struct Output {
   data: Utf8PathBuf,
   keychain: Utf8PathBuf,

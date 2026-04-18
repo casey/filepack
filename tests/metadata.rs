@@ -137,7 +137,7 @@ fn invalid_package_creator_tag() {
       "
 title: Foo
 package:
-  creator-tag: foo
+  creator_tag: foo
 ",
     )
     .arg("create")

@@ -1,7 +1,6 @@
 use super::*;
 
 #[derive(Clone, Debug, Deserialize, PartialEq)]
-#[serde(rename_all = "kebab-case")]
 pub(crate) struct Metadata {
   pub(crate) artwork: Option<filename::Png>,
   pub(crate) creator: Option<Component>,

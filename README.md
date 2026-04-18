@@ -297,7 +297,7 @@ Optional `package` field describing the package itself, as opposed its content:
 
 - `creator: component`: The person or group who created the package.
 
-- `creator-tag: tag`: The tag of the person or group who created the
+- `creator_tag: tag`: The tag of the person or group who created the
   package.
 
 - `date: date`: The date the package was created.
@@ -355,7 +355,7 @@ language: en
 readme: README.md
 package:
   creator: Egon Spengler
-  creator-tag: ES
+  creator_tag: ES
   date: 1984-07-08 19:32:00 -04:00
   description: >
     First edition on loan from NYPL Main Branch research stacks. Captured via
