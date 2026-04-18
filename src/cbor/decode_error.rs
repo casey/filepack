@@ -10,7 +10,7 @@ pub(crate) enum DecodeError {
   #[snafu(display("map keys out of order"))]
   KeyOrder,
   #[snafu(display("missing required field: {key}"))]
-  MissingField { key: u64 },
+  MissingField { key: String },
   #[snafu(display("overlong integer"))]
   OverlongInteger,
   #[snafu(display("failed to parse text: {message}"))]

@@ -1,5 +1,12 @@
 use super::*;
 
+// todo:
+// - this seems fine
+// - metadata command is good since JSON is easier to manipulate
+// - cbor manifest is probably good
+// - cbor is efficient, canonical, and simple
+// - do the annoying thing first, if users hate it i can relent
+
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub(crate) struct Metadata {
   pub(crate) artwork: Option<filename::Png>,
@@ -25,9 +32,7 @@ impl Decode for Metadata {
     let language = map.optional_key(5)?;
     let package = map.optional_key(6)?;
     let readme = map.optional_key(7)?;
-    let title = map
-      .key(8)?
-      .ok_or_else(|| decode_error::MissingField { key: 8u64 }.build())?;
+    let title = map.required_key(8)?;
 
     map.finish()?;
 
