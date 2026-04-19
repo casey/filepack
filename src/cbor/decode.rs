@@ -32,7 +32,7 @@ where
 
 impl Decode for Url {
   fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
-    Url::parse(decoder.text()?).context(decode_error::Url)
+    decoder.text()?.parse::<Url>().context(decode_error::Url)
   }
 }
 
@@ -69,5 +69,18 @@ impl Decode for usize {
       .integer()?
       .try_into()
       .context(decode_error::IntegerRange)
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn url() {
+    assert_encoding(
+      "http://example.com/".parse::<Url>().unwrap(),
+      &"http://example.com/".encode_to_vec(),
+    );
   }
 }

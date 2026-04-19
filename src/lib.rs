@@ -59,6 +59,7 @@ use {
     subcommand::Subcommand,
     tag::Tag,
     ticked::Ticked,
+    url::Url,
     utf8_path_ext::Utf8PathExt,
   },
   bech32::{
@@ -97,7 +98,6 @@ use {
     time::{SystemTime, SystemTimeError, UNIX_EPOCH},
   },
   strum::{EnumDiscriminants, EnumIter, EnumString, FromRepr, IntoEnumIterator, IntoStaticStr},
-  url::Url,
   usized::IntoU64,
   walkdir::WalkDir,
 };
@@ -231,6 +231,7 @@ mod subcommand;
 mod tag;
 mod tag_error;
 mod ticked;
+mod url;
 mod utf8_path_ext;
 
 #[cfg(test)]

@@ -36,7 +36,7 @@ serde_yaml = "0.9.34"
 sha2 = "0.10"
 snafu = "0.8.4"
 strum = { version = "0.27.2", features = ["derive"] }
-url = { version = "2.5.8", features = ["serde"] }
+url = "2.5.8"
 usized = "0.0.2"
 walkdir = "2.5.0"
 

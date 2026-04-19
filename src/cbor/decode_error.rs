@@ -43,5 +43,5 @@ pub enum DecodeError {
   #[snafu(display("unsupported additional information value: {value}"))]
   UnsupportedAdditionalInformation { value: u8 },
   #[snafu(display("failed to parse URL"))]
-  Url { source: url::ParseError },
+  Url { source: ::url::ParseError },
 }
