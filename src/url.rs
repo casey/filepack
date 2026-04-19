@@ -41,6 +41,14 @@ mod tests {
   use super::*;
 
   #[test]
+  fn encoding() {
+    assert_encoding(
+      "http://example.com".parse::<Url>().unwrap(),
+      &"http://example.com".encode_to_vec(),
+    );
+  }
+
+  #[test]
   fn url_is_not_normalized() {
     assert_eq!(
       "http://example.com".parse::<Url>().unwrap().as_str(),
@@ -51,14 +59,6 @@ mod tests {
     assert_eq!(
       "http://example.com".parse::<::url::Url>().unwrap().as_str(),
       "http://example.com/",
-    );
-  }
-
-  #[test]
-  fn url() {
-    assert_encoding(
-      "http://example.com".parse::<Url>().unwrap(),
-      &"http://example.com".encode_to_vec(),
     );
   }
 }

@@ -95,12 +95,12 @@ impl Decoder {
     }
   }
 
-  pub(crate) fn push_position(&mut self) {
-    self.stack.push(self.position);
-  }
-
   pub(crate) fn pop_position(&mut self) {
     self.position = self.stack.pop().unwrap();
+  }
+
+  pub(crate) fn push_position(&mut self) {
+    self.stack.push(self.position);
   }
 
   fn slice(&mut self, n: usize) -> Result<&[u8], DecodeError> {
