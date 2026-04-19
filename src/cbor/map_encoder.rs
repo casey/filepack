@@ -96,4 +96,22 @@ mod tests {
       "too many items",
     );
   }
+
+  #[test]
+  fn optional_item_some() {
+    let mut encoder = Encoder::new();
+    let mut map = encoder.map::<u8>(1);
+    map.optional_item(0, Some(42u8));
+    drop(map);
+    assert_eq!(encoder.finish(), vec![0xa1, 0x00, 0x18, 0x2a]);
+  }
+
+  #[test]
+  fn optional_item_none() {
+    let mut encoder = Encoder::new();
+    let mut map = encoder.map::<u8>(0);
+    map.optional_item(0, None::<u8>);
+    drop(map);
+    assert_eq!(encoder.finish(), vec![0xa0]);
+  }
 }

@@ -204,4 +204,13 @@ mod tests {
       Err(DecodeError::UnsupportedAdditionalInformation { value: 31 }),
     );
   }
+
+  #[test]
+  fn position_stack() {
+    let mut decoder = Decoder::new(vec![0x01, 0x02]);
+    decoder.push_position();
+    assert_eq!(decoder.integer().unwrap(), 1);
+    decoder.pop_position();
+    assert_eq!(decoder.integer().unwrap(), 1);
+  }
 }

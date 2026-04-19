@@ -49,6 +49,14 @@ mod tests {
   }
 
   #[test]
+  fn decode_error() {
+    assert_matches!(
+      Url::decode(&mut Decoder::new("foo".encode_to_vec())),
+      Err(DecodeError::Url { .. }),
+    );
+  }
+
+  #[test]
   fn url_is_not_normalized() {
     assert_eq!(
       "http://example.com".parse::<Url>().unwrap().as_str(),

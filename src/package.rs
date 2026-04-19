@@ -55,3 +55,20 @@ impl Encode for Package {
     map.optional_item(5, self.nfo.as_ref());
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn encoding() {
+    assert_encoding(Package {
+      creator: Some("foo".parse().unwrap()),
+      creator_tag: Some("A0".parse().unwrap()),
+      date: Some("2024-01-01".parse().unwrap()),
+      description: Some("bar".into()),
+      homepage: Some("http://example.com".parse().unwrap()),
+      nfo: Some("info.nfo".parse().unwrap()),
+    });
+  }
+}

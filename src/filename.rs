@@ -104,4 +104,22 @@ mod tests {
     case::<Nfo>("info.nfo");
     case::<Png>("cover.png");
   }
+
+  #[test]
+  fn encoding() {
+    assert_cbor(
+      "cover.png".parse::<Png>().unwrap(),
+      &"cover.png".encode_to_vec(),
+    );
+  }
+
+  #[test]
+  fn decode_error() {
+    assert_eq!(
+      Png::decode(&mut Decoder::new("cover.jpg".encode_to_vec())),
+      Err(DecodeError::Component {
+        source: ComponentError::Extension { extension: "png" },
+      }),
+    );
+  }
 }

@@ -186,3 +186,91 @@ fn unknown_keys() {
     .stderr_regex(".*unknown fields in metadata at `.*metadata.yaml`: `bar`\n")
     .failure();
 }
+
+#[test]
+fn metadata_cbor_already_exists() {
+  Test::new()
+    .write("metadata.yaml", "title: Foo")
+    .touch("metadata.cbor")
+    .arg("create")
+    .stderr_regex("error: metadata CBOR `.*metadata.cbor` already exists\n")
+    .failure();
+}
+
+#[test]
+fn metadata_cbor_force() {
+  Test::new()
+    .write("metadata.yaml", "title: Foo")
+    .touch("metadata.cbor")
+    .args(["create", "--force"])
+    .success()
+    .arg("verify")
+    .stderr_regex(".*successfully verified.*")
+    .success();
+}
+
+#[test]
+fn metadata_subcommand_default() {
+  Test::new()
+    .write("metadata.yaml", "title: Foo")
+    .arg("create")
+    .success()
+    .arg("metadata")
+    .stdout_regex("(?s)\\{.*\"title\".*\"Foo\".*\\}\n")
+    .success();
+}
+
+#[test]
+fn metadata_subcommand_format_json() {
+  Test::new()
+    .write("metadata.yaml", "title: Foo")
+    .arg("create")
+    .success()
+    .args(["metadata", "--format", "json"])
+    .stdout_regex("\\{.*\"title\":\"Foo\".*\\}\n")
+    .success();
+}
+
+#[test]
+fn metadata_subcommand_format_tsv_error() {
+  Test::new()
+    .write("metadata.yaml", "title: Foo")
+    .arg("create")
+    .success()
+    .args(["metadata", "--format", "tsv"])
+    .stderr("error: metadata cannot be displayed as TSV\n")
+    .failure();
+}
+
+#[test]
+fn metadata_subcommand_path_is_directory() {
+  Test::new()
+    .write("pkg/metadata.yaml", "title: Foo")
+    .args(["create", "pkg"])
+    .success()
+    .args(["metadata", "pkg"])
+    .stdout_regex("(?s)\\{.*\"title\".*\"Foo\".*\\}\n")
+    .success();
+}
+
+#[test]
+fn metadata_subcommand_path_is_file() {
+  Test::new()
+    .write("pkg/metadata.yaml", "title: Foo")
+    .args(["create", "pkg"])
+    .success()
+    .args(["metadata", "pkg/metadata.cbor"])
+    .stdout_regex("(?s)\\{.*\"title\".*\"Foo\".*\\}\n")
+    .success();
+}
+
+#[test]
+fn metadata_subcommand_path_omitted() {
+  Test::new()
+    .write("metadata.yaml", "title: Foo")
+    .arg("create")
+    .success()
+    .arg("metadata")
+    .stdout_regex("(?s)\\{.*\"title\".*\"Foo\".*\\}\n")
+    .success();
+}
