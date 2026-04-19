@@ -252,7 +252,7 @@ new package. `filepack create` then loads `metadata.yaml` if present, checks
 for validity and unknown fields, and writes the CBOR serialization to
 `metadata.cbor` in the package root.
 
-`metadata.yaml` is retained as a human-readable reference, and to amending
+`metadata.yaml` is retained as a human-readable reference, and for amending
 metadata, but `metadata.cbor` is the authoritative source of metadata. For
 consumption by scripts and tools, `filepack metadata` prints the contents of
 `metadata.cbor` as JSON.
