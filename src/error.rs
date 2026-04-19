@@ -54,7 +54,7 @@ pub enum Error {
   },
   #[snafu(display("failed to get local data directory"))]
   DataLocalDir { backtrace: Option<Backtrace> },
-  #[snafu(display("failed to decode metadata CBOR at `{path}`"))]
+  #[snafu(display("failed to decode metadata at `{path}`"))]
   DecodeMetadataCbor {
     backtrace: Option<Backtrace>,
     path: DisplayPath,

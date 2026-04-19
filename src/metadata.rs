@@ -13,6 +13,56 @@ pub(crate) struct Metadata {
   pub(crate) title: Component,
 }
 
+impl Metadata {
+  pub(crate) const YAML_FILENAME: &'static str = "metadata.yaml";
+  pub(crate) const CBOR_FILENAME: &'static str = "metadata.cbor";
+
+  pub(crate) fn deserialize(path: &Utf8Path, yaml: &str) -> Result<Self> {
+    serde_yaml::from_str(yaml).context(error::DeserializeMetadata { path })
+  }
+
+  pub(crate) fn deserialize_strict(path: &Utf8Path, yaml: &str) -> Result<Self> {
+    let deserializer = serde_yaml::Deserializer::from_str(yaml);
+
+    let mut unknown = BTreeSet::new();
+
+    let metadata = serde_ignored::deserialize(deserializer, |path| {
+      unknown.insert(path.to_string());
+    })
+    .context(error::DeserializeMetadata { path })?;
+
+    if !unknown.is_empty() {
+      return Err(error::DeserializeMetadataStrict { path, unknown }.build());
+    }
+
+    Ok(metadata)
+  }
+
+  pub(crate) fn files(&self) -> Vec<RelativePath> {
+    let mut files = Vec::new();
+
+    if let Some(artwork) = &self.artwork {
+      files.push(artwork.as_path());
+    }
+
+    if let Some(package) = &self.package
+      && let Some(nfo) = &package.nfo
+    {
+      files.push(nfo.as_path());
+    }
+
+    if let Some(readme) = &self.readme {
+      files.push(readme.as_path());
+    }
+
+    files
+  }
+
+  pub(crate) fn load_strict(path: &Utf8Path) -> Result<Self> {
+    Self::deserialize_strict(path, &filesystem::read_to_string(path)?)
+  }
+}
+
 impl Decode for Metadata {
   fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
     let mut map = decoder.map::<u8>()?;
@@ -71,55 +121,6 @@ impl Encode for Metadata {
   }
 }
 
-impl Metadata {
-  pub(crate) const FILENAME: &'static str = "metadata.yaml";
-
-  pub(crate) fn deserialize(path: &Utf8Path, yaml: &str) -> Result<Self> {
-    serde_yaml::from_str(yaml).context(error::DeserializeMetadata { path })
-  }
-
-  pub(crate) fn deserialize_strict(path: &Utf8Path, yaml: &str) -> Result<Self> {
-    let deserializer = serde_yaml::Deserializer::from_str(yaml);
-
-    let mut unknown = BTreeSet::new();
-
-    let metadata = serde_ignored::deserialize(deserializer, |path| {
-      unknown.insert(path.to_string());
-    })
-    .context(error::DeserializeMetadata { path })?;
-
-    if !unknown.is_empty() {
-      return Err(error::DeserializeMetadataStrict { path, unknown }.build());
-    }
-
-    Ok(metadata)
-  }
-
-  pub(crate) fn files(&self) -> Vec<RelativePath> {
-    let mut files = Vec::new();
-
-    if let Some(artwork) = &self.artwork {
-      files.push(artwork.as_path());
-    }
-
-    if let Some(package) = &self.package
-      && let Some(nfo) = &package.nfo
-    {
-      files.push(nfo.as_path());
-    }
-
-    if let Some(readme) = &self.readme {
-      files.push(readme.as_path());
-    }
-
-    files
-  }
-
-  pub(crate) fn load_strict(path: &Utf8Path) -> Result<Self> {
-    Self::deserialize_strict(path, &filesystem::read_to_string(path)?)
-  }
-}
-
 #[cfg(test)]
 mod tests {
   use super::*;
@@ -128,12 +129,12 @@ mod tests {
 
   #[test]
   fn deserializer_allows_unknown_fields() {
-    Metadata::deserialize(Metadata::FILENAME.as_ref(), UNKNOWN_FIELD).unwrap();
+    Metadata::deserialize(Metadata::YAML_FILENAME.as_ref(), UNKNOWN_FIELD).unwrap();
   }
 
   #[test]
   fn filepack_metadata_is_valid() {
-    Metadata::load_strict(Metadata::FILENAME.as_ref()).unwrap();
+    Metadata::load_strict(Metadata::YAML_FILENAME.as_ref()).unwrap();
   }
 
   #[test]
@@ -192,7 +193,7 @@ mod tests {
   #[test]
   fn strict_deserialize_rejects_unknown_fields() {
     assert_eq!(
-      Metadata::deserialize_strict(Metadata::FILENAME.as_ref(), UNKNOWN_FIELD)
+      Metadata::deserialize_strict(Metadata::YAML_FILENAME.as_ref(), UNKNOWN_FIELD)
         .unwrap_err()
         .to_string(),
       "unknown fields in metadata at `metadata.yaml`: `bar`",

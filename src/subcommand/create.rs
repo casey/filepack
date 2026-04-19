@@ -33,13 +33,13 @@ impl Create {
       root.join(Manifest::FILENAME)
     };
 
-    let metadata = root.join(Metadata::FILENAME);
+    let metadata = root.join(Metadata::YAML_FILENAME);
 
     let metadata = filesystem::exists(&metadata)?
       .then(|| Metadata::load_strict(&metadata))
       .transpose()?;
 
-    let metadata_cbor_path = root.join("metadata.cbor");
+    let metadata_cbor_path = root.join(Metadata::CBOR_FILENAME);
 
     if let Some(metadata) = &metadata {
       ensure! {

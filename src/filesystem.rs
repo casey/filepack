@@ -50,6 +50,13 @@ pub(crate) fn read(path: &Utf8Path) -> Result<Vec<u8>> {
   std::fs::read(path).context(error::FilesystemIo { path })
 }
 
+pub(crate) fn read_opt(path: &Utf8Path) -> Result<Option<Vec<u8>>> {
+  match std::fs::read(path) {
+    Err(err) if err.kind() == io::ErrorKind::NotFound => Ok(None),
+    result => result.map(Some).context(error::FilesystemIo { path }),
+  }
+}
+
 pub(crate) fn read_to_string(path: impl AsRef<Utf8Path>) -> Result<String> {
   std::fs::read_to_string(path.as_ref()).context(error::FilesystemIo {
     path: path.as_ref(),
