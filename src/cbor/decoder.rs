@@ -158,8 +158,8 @@ mod tests {
   #[test]
   fn trailing_bytes() {
     assert_eq!(
-      Decoder::new(vec![0x00]).finish(),
-      Err(DecodeError::TrailingBytes)
+      u8::decode_from_vec(vec![0x00, 0x00]),
+      Err(DecodeError::TrailingBytes),
     );
   }
 
