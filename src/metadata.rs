@@ -14,8 +14,8 @@ pub(crate) struct Metadata {
 }
 
 impl Metadata {
-  pub(crate) const YAML_FILENAME: &'static str = "metadata.yaml";
   pub(crate) const CBOR_FILENAME: &'static str = "metadata.cbor";
+  pub(crate) const YAML_FILENAME: &'static str = "metadata.yaml";
 
   pub(crate) fn deserialize(path: &Utf8Path, yaml: &str) -> Result<Self> {
     serde_yaml::from_str(yaml).context(error::DeserializeMetadata { path })
