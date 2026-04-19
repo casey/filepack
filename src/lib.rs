@@ -77,6 +77,7 @@ use {
   serde::{Deserialize, Deserializer, Serialize, Serializer},
   serde_with::{
     DeserializeFromStr, MapPreventDuplicates, SerializeDisplay, SetPreventDuplicates, serde_as,
+    skip_serializing_none,
   },
   snafu::{ErrorCompat, OptionExt, ResultExt, Snafu, ensure},
   std::{

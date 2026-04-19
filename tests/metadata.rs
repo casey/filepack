@@ -209,6 +209,14 @@ fn metadata_cbor_force() {
     .success();
 }
 
+const METADATA_JSON: &str = "{\"title\":\"Foo\"}\n";
+
+const METADATA_JSON_PRETTY: &str = "\
+{
+  \"title\": \"Foo\"
+}
+";
+
 #[test]
 fn metadata_subcommand_default() {
   Test::new()
@@ -216,7 +224,7 @@ fn metadata_subcommand_default() {
     .arg("create")
     .success()
     .arg("metadata")
-    .stdout_regex("(?s)\\{.*\"title\".*\"Foo\".*\\}\n")
+    .stdout(METADATA_JSON_PRETTY)
     .success();
 }
 
@@ -227,7 +235,7 @@ fn metadata_subcommand_format_json() {
     .arg("create")
     .success()
     .args(["metadata", "--format", "json"])
-    .stdout_regex("\\{.*\"title\":\"Foo\".*\\}\n")
+    .stdout(METADATA_JSON)
     .success();
 }
 
@@ -249,7 +257,7 @@ fn metadata_subcommand_path_is_directory() {
     .args(["create", "pkg"])
     .success()
     .args(["metadata", "pkg"])
-    .stdout_regex("(?s)\\{.*\"title\".*\"Foo\".*\\}\n")
+    .stdout(METADATA_JSON_PRETTY)
     .success();
 }
 
@@ -260,7 +268,7 @@ fn metadata_subcommand_path_is_file() {
     .args(["create", "pkg"])
     .success()
     .args(["metadata", "pkg/metadata.cbor"])
-    .stdout_regex("(?s)\\{.*\"title\".*\"Foo\".*\\}\n")
+    .stdout(METADATA_JSON_PRETTY)
     .success();
 }
 
@@ -271,6 +279,6 @@ fn metadata_subcommand_path_omitted() {
     .arg("create")
     .success()
     .arg("metadata")
-    .stdout_regex("(?s)\\{.*\"title\".*\"Foo\".*\\}\n")
+    .stdout(METADATA_JSON_PRETTY)
     .success();
 }

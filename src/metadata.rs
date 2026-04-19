@@ -1,5 +1,6 @@
 use super::*;
 
+#[skip_serializing_none]
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub(crate) struct Metadata {
   pub(crate) artwork: Option<filename::Png>,
