@@ -2,7 +2,8 @@ use super::*;
 
 pub(crate) struct Decoder {
   buffer: Vec<u8>,
-  i: usize,
+  position: usize,
+  stack: Vec<usize>,
 }
 
 impl Decoder {
@@ -34,7 +35,10 @@ impl Decoder {
   }
 
   pub(crate) fn finish(self) -> Result<(), DecodeError> {
-    ensure!(self.i == self.buffer.len(), decode_error::TrailingBytes);
+    ensure!(
+      self.position == self.buffer.len(),
+      decode_error::TrailingBytes
+    );
     Ok(())
   }
 
@@ -84,19 +88,23 @@ impl Decoder {
   }
 
   pub(crate) fn new(buffer: Vec<u8>) -> Self {
-    Self { buffer, i: 0 }
+    Self {
+      buffer,
+      position: 0,
+      stack: Vec::new(),
+    }
   }
 
-  pub(crate) fn position(&self) -> usize {
-    self.i
+  pub(crate) fn push_position(&mut self) {
+    self.stack.push(self.position);
   }
 
-  pub(crate) fn set_position(&mut self, position: usize) {
-    self.i = position;
+  pub(crate) fn pop_position(&mut self) {
+    self.position = self.stack.pop().unwrap();
   }
 
   fn slice(&mut self, n: usize) -> Result<&[u8], DecodeError> {
-    let start = self.i;
+    let start = self.position;
     let end = start + n;
 
     ensure! {
@@ -104,7 +112,7 @@ impl Decoder {
       decode_error::Truncated,
     }
 
-    self.i = end;
+    self.position = end;
 
     Ok(&self.buffer[start..end])
   }

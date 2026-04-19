@@ -60,20 +60,20 @@ impl<K: Clone + Decode + Debug + PartialOrd> MapDecoder<'_, K> {
       return Ok(None);
     }
 
-    let position = self.decoder.position();
-    let next_key = K::decode(self.decoder)?;
+    self.decoder.push_position();
+    let next = K::decode(self.decoder)?;
 
-    if next_key != key {
-      self.decoder.set_position(position);
+    if next != key {
+      self.decoder.pop_position();
       return Ok(None);
     }
 
     if let Some(last) = &self.last {
-      ensure!(next_key > *last, decode_error::KeyOrder);
+      ensure!(next > *last, decode_error::KeyOrder);
     }
 
     self.remaining -= 1;
-    self.last = Some(next_key);
+    self.last = Some(next);
 
     Ok(Some(V::decode(self.decoder)?))
   }
