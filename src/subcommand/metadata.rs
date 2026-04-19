@@ -12,12 +12,12 @@ impl Metadata {
   pub(crate) fn run(self) -> Result {
     let path = if let Some(path) = self.path {
       if path.is_dir() {
-        path.join("metadata.cbor")
+        path.join(crate::Metadata::CBOR_FILENAME)
       } else {
         path
       }
     } else {
-      Utf8PathBuf::from("metadata.cbor")
+      crate::Metadata::CBOR_FILENAME.into()
     };
 
     let bytes = filesystem::read(&path)?;
