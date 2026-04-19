@@ -150,15 +150,15 @@ mod tests {
     }
 
     case(&[0x18, 0x17]);
-    case(&[0x19, 0x00, 0xFF]);
-    case(&[0x1A, 0x00, 0x00, 0xFF, 0xFF]);
-    case(&[0x1B, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF]);
+    case(&[0x19, 0x00, 0xff]);
+    case(&[0x1a, 0x00, 0x00, 0xff, 0xff]);
+    case(&[0x1b, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff]);
   }
 
   #[test]
   fn reserved_additional_information() {
     assert_eq!(
-      Decoder::new(vec![0x1C]).head(),
+      Decoder::new(vec![0x1c]).head(),
       Err(DecodeError::ReservedAdditionalInformation { value: 28 }),
     );
   }
@@ -191,9 +191,9 @@ mod tests {
   #[expect(invalid_from_utf8)]
   fn unicode() {
     assert_eq!(
-      Decoder::new(vec![0x62, 0xFF, 0xFE]).text().map(drop),
+      Decoder::new(vec![0x62, 0xff, 0xfe]).text().map(drop),
       Err(DecodeError::Unicode {
-        source: str::from_utf8(&[0xFF, 0xFE]).unwrap_err()
+        source: str::from_utf8(&[0xff, 0xfe]).unwrap_err()
       }),
     );
   }
@@ -201,7 +201,7 @@ mod tests {
   #[test]
   fn unsupported_additional_information() {
     assert_eq!(
-      Decoder::new(vec![0x1F]).head(),
+      Decoder::new(vec![0x1f]).head(),
       Err(DecodeError::UnsupportedAdditionalInformation { value: 31 }),
     );
   }

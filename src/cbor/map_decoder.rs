@@ -96,14 +96,14 @@ mod tests {
 
   #[test]
   fn key_mismatch() {
-    let mut decoder = Decoder::new(vec![0xA1, 0x01, 0x00]);
+    let mut decoder = Decoder::new(vec![0xa1, 0x01, 0x00]);
     let mut map = decoder.map::<u64>().unwrap();
     assert_eq!(map.key::<u64>(0), Err(DecodeError::UnexpectedKey));
   }
 
   #[test]
   fn out_of_order() {
-    let mut decoder = Decoder::new(vec![0xA2, 0x02, 0x00, 0x01, 0x00]);
+    let mut decoder = Decoder::new(vec![0xa2, 0x02, 0x00, 0x01, 0x00]);
     let mut map = decoder.map::<u64>().unwrap();
     map.next::<u64>().unwrap();
     assert_eq!(map.next::<u64>(), Err(DecodeError::KeyOrder));
@@ -111,7 +111,7 @@ mod tests {
 
   #[test]
   fn unconsumed_entries() {
-    let mut decoder = Decoder::new(vec![0xA2, 0x00, 0x00, 0x01, 0x01]);
+    let mut decoder = Decoder::new(vec![0xa2, 0x00, 0x00, 0x01, 0x01]);
     let mut map = decoder.map::<u64>().unwrap();
     map.next::<u64>().unwrap();
     assert_eq!(map.finish(), Err(DecodeError::UnconsumedEntries));

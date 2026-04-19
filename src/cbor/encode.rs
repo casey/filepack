@@ -89,7 +89,7 @@ mod tests {
     assert_encoding(
       BTreeMap::from([("bar".to_string(), 1u64), ("foo".to_string(), 2u64)]),
       &[
-        0xA2, 0x63, 0x62, 0x61, 0x72, 0x01, 0x63, 0x66, 0x6F, 0x6F, 0x02,
+        0xa2, 0x63, 0x62, 0x61, 0x72, 0x01, 0x63, 0x66, 0x6f, 0x6f, 0x02,
       ],
     );
   }
@@ -97,7 +97,7 @@ mod tests {
   #[test]
   fn string() {
     assert_encoding(String::new(), &[0x60]);
-    assert_encoding(String::from("foo"), &[0x63, 0x66, 0x6F, 0x6F]);
+    assert_encoding(String::from("foo"), &[0x63, 0x66, 0x6f, 0x6f]);
   }
 
   #[test]
@@ -114,6 +114,6 @@ mod tests {
 
   #[test]
   fn usize() {
-    assert_encoding(42usize, &[0x18, 0x2A]);
+    assert_encoding(42usize, &[0x18, 0x2a]);
   }
 }
