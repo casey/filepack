@@ -43,12 +43,7 @@ impl<T: Extension> Serialize for Filename<T> {
 
 impl<T: Extension> Decode for Filename<T> {
   fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
-    decoder.text()?.parse().map_err(|err: ComponentError| {
-      decode_error::Parse {
-        message: err.to_string(),
-      }
-      .build()
-    })
+    decoder.text()?.parse().context(decode_error::Component)
   }
 }
 

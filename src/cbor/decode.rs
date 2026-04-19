@@ -32,12 +32,7 @@ where
 
 impl Decode for Url {
   fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
-    Url::parse(decoder.text()?).map_err(|err| {
-      decode_error::Parse {
-        message: err.to_string(),
-      }
-      .build()
-    })
+    Url::parse(decoder.text()?).context(decode_error::Url)
   }
 }
 

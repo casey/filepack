@@ -4,16 +4,13 @@ use super::*;
 pub(crate) struct Tag(String);
 
 impl FromStr for Tag {
-  type Err = String;
+  type Err = TagError;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     if re::TAG.is_match(s) {
       Ok(Self(s.into()))
     } else {
-      Err(format!(
-        "tags must match regex `{}`",
-        &re::TAG.as_str()[1..re::TAG.as_str().len() - 1],
-      ))
+      Err(TagError::Parse)
     }
   }
 }
@@ -26,10 +23,7 @@ impl Serialize for Tag {
 
 impl Decode for Tag {
   fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
-    decoder
-      .text()?
-      .parse()
-      .map_err(|err: String| decode_error::Parse { message: err }.build())
+    decoder.text()?.parse().context(decode_error::Tag)
   }
 }
 

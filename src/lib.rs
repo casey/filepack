@@ -108,12 +108,14 @@ pub use self::{
   error::Error,
   fingerprint::Fingerprint,
   hash::Hash,
+  language_error::LanguageError,
   manifest::Manifest,
   message::Message,
   private_key::PrivateKey,
   public_key::PublicKey,
   relative_path::RelativePath,
   signature::Signature,
+  tag_error::TagError,
 };
 
 use self::cbor::{Decode, Decoder, decode_error};
@@ -203,6 +205,7 @@ mod key_name;
 mod key_type;
 mod keychain;
 mod language;
+mod language_error;
 mod lint_error;
 mod lint_group;
 mod manifest;
@@ -226,6 +229,7 @@ mod signature_error;
 mod style;
 mod subcommand;
 mod tag;
+mod tag_error;
 mod ticked;
 mod utf8_path_ext;
 

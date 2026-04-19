@@ -194,13 +194,13 @@ pub(crate) static CODES: LazyLock<BTreeMap<&'static str, &'static str>> = LazyLo
 pub(crate) struct Language(&'static str);
 
 impl FromStr for Language {
-  type Err = String;
+  type Err = LanguageError;
 
   fn from_str(code: &str) -> Result<Self, Self::Err> {
     CODES
       .get_key_value(code)
       .map(|(key, _value)| Self(key))
-      .ok_or_else(|| format!("unknown language code `{code}`"))
+      .context(language_error::Code { code })
   }
 }
 
@@ -212,10 +212,7 @@ impl Serialize for Language {
 
 impl Decode for Language {
   fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
-    decoder
-      .text()?
-      .parse()
-      .map_err(|err: String| decode_error::Parse { message: err }.build())
+    decoder.text()?.parse().context(decode_error::Language)
   }
 }
 

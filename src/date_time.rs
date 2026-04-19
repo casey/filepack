@@ -26,12 +26,7 @@ impl FromStr for DateTime {
 
 impl Decode for DateTime {
   fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
-    decoder.text()?.parse().map_err(|err: chrono::ParseError| {
-      decode_error::Parse {
-        message: err.to_string(),
-      }
-      .build()
-    })
+    decoder.text()?.parse().context(decode_error::DateTime)
   }
 }
 
