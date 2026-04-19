@@ -1,10 +1,5 @@
 use super::*;
 
-// todo:
-// - tests
-// - document relationship between metadata.cbor and metadata.yaml
-// - fix up any docs
-
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub(crate) struct Metadata {
   pub(crate) artwork: Option<filename::Png>,
