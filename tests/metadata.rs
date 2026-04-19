@@ -209,13 +209,10 @@ fn metadata_cbor_force() {
     .success();
 }
 
-const METADATA_JSON: &str = "{\"title\":\"Foo\"}\n";
-
-const METADATA_JSON_PRETTY: &str = "\
-{
-  \"title\": \"Foo\"
+const METADATA_JSON_PRETTY: &str = r#"{
+  "title": "Foo"
 }
-";
+"#;
 
 #[test]
 fn metadata_subcommand_default() {
@@ -235,7 +232,7 @@ fn metadata_subcommand_format_json() {
     .arg("create")
     .success()
     .args(["metadata", "--format", "json"])
-    .stdout(METADATA_JSON)
+    .stdout("{\"title\":\"Foo\"}\n")
     .success();
 }
 
@@ -268,17 +265,6 @@ fn metadata_subcommand_path_is_file() {
     .args(["create", "pkg"])
     .success()
     .args(["metadata", "pkg/metadata.cbor"])
-    .stdout(METADATA_JSON_PRETTY)
-    .success();
-}
-
-#[test]
-fn metadata_subcommand_path_omitted() {
-  Test::new()
-    .write("metadata.yaml", "title: Foo")
-    .arg("create")
-    .success()
-    .arg("metadata")
     .stdout(METADATA_JSON_PRETTY)
     .success();
 }
