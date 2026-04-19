@@ -20,7 +20,7 @@ impl FromStr for Url {
 
 impl Display for Url {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    write!(f, "{self}")
+    write!(f, "{}", self.0)
   }
 }
 
