@@ -30,12 +30,6 @@ where
   }
 }
 
-impl Decode for Url {
-  fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
-    decoder.text()?.parse::<Url>().context(decode_error::Url)
-  }
-}
-
 impl Decode for String {
   fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
     Ok(decoder.text()?.to_owned())
@@ -69,18 +63,5 @@ impl Decode for usize {
       .integer()?
       .try_into()
       .context(decode_error::IntegerRange)
-  }
-}
-
-#[cfg(test)]
-mod tests {
-  use super::*;
-
-  #[test]
-  fn url() {
-    assert_encoding(
-      "http://example.com/".parse::<Url>().unwrap(),
-      &"http://example.com/".encode_to_vec(),
-    );
   }
 }

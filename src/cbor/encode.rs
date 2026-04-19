@@ -32,12 +32,6 @@ where
   }
 }
 
-impl Encode for Url {
-  fn encode(&self, encoder: &mut Encoder) {
-    self.as_str().encode(encoder);
-  }
-}
-
 impl Encode for String {
   fn encode(&self, encoder: &mut Encoder) {
     self.as_str().encode(encoder);

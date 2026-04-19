@@ -23,3 +23,42 @@ impl Display for Url {
     write!(f, "{self}")
   }
 }
+
+impl Decode for Url {
+  fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
+    decoder.text()?.parse::<Url>().context(decode_error::Url)
+  }
+}
+
+impl Encode for Url {
+  fn encode(&self, encoder: &mut Encoder) {
+    self.as_str().encode(encoder);
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn url_is_not_normalized() {
+    assert_eq!(
+      "http://example.com".parse::<Url>().unwrap().as_str(),
+      "http://example.com",
+    );
+
+    // an example of ::url::Url normalization
+    assert_eq!(
+      "http://example.com".parse::<::url::Url>().unwrap().as_str(),
+      "http://example.com/",
+    );
+  }
+
+  #[test]
+  fn url() {
+    assert_encoding(
+      "http://example.com".parse::<Url>().unwrap(),
+      &"http://example.com".encode_to_vec(),
+    );
+  }
+}
