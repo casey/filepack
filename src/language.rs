@@ -194,13 +194,31 @@ pub(crate) static CODES: LazyLock<BTreeMap<&'static str, &'static str>> = LazyLo
 pub(crate) struct Language(&'static str);
 
 impl FromStr for Language {
-  type Err = String;
+  type Err = LanguageError;
 
   fn from_str(code: &str) -> Result<Self, Self::Err> {
     CODES
       .get_key_value(code)
       .map(|(key, _value)| Self(key))
-      .ok_or_else(|| format!("unknown language code `{code}`"))
+      .context(language_error::Code { code })
+  }
+}
+
+impl Serialize for Language {
+  fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+    serializer.serialize_str(self.0)
+  }
+}
+
+impl Decode for Language {
+  fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
+    decoder.text()?.parse().context(decode_error::Language)
+  }
+}
+
+impl Encode for Language {
+  fn encode(&self, encoder: &mut Encoder) {
+    self.0.encode(encoder);
   }
 }
 
@@ -209,10 +227,25 @@ mod tests {
   use super::*;
 
   #[test]
+  fn decode_error() {
+    assert_eq!(
+      Language::decode(&mut Decoder::new("xx".encode_to_vec())),
+      Err(DecodeError::Language {
+        source: LanguageError::Code { code: "xx".into() },
+      }),
+    );
+  }
+
+  #[test]
+  fn encoding() {
+    assert_cbor("en".parse::<Language>().unwrap(), &"en".encode_to_vec());
+  }
+
+  #[test]
   fn invalid() {
     assert_eq!(
       "ac".parse::<Language>().unwrap_err(),
-      "unknown language code `ac`"
+      LanguageError::Code { code: "ac".into() },
     );
   }
 

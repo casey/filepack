@@ -1,6 +1,7 @@
 use super::*;
 
-#[derive(Clone, Debug, Deserialize, PartialEq)]
+#[skip_serializing_none]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub(crate) struct Metadata {
   pub(crate) artwork: Option<filename::Png>,
   pub(crate) creator: Option<Component>,
@@ -14,7 +15,8 @@ pub(crate) struct Metadata {
 }
 
 impl Metadata {
-  pub(crate) const FILENAME: &'static str = "metadata.yaml";
+  pub(crate) const CBOR_FILENAME: &'static str = "metadata.cbor";
+  pub(crate) const YAML_FILENAME: &'static str = "metadata.yaml";
 
   pub(crate) fn deserialize(path: &Utf8Path, yaml: &str) -> Result<Self> {
     serde_yaml::from_str(yaml).context(error::DeserializeMetadata { path })
@@ -62,6 +64,64 @@ impl Metadata {
   }
 }
 
+impl Decode for Metadata {
+  fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
+    let mut map = decoder.map::<u8>()?;
+
+    let artwork = map.optional_key(0)?;
+    let creator = map.optional_key(1)?;
+    let date = map.optional_key(2)?;
+    let description = map.optional_key(3)?;
+    let homepage = map.optional_key(4)?;
+    let language = map.optional_key(5)?;
+    let package = map.optional_key(6)?;
+    let readme = map.optional_key(7)?;
+    let title = map.required_key(8)?;
+
+    map.finish()?;
+
+    Ok(Self {
+      artwork,
+      creator,
+      date,
+      description,
+      homepage,
+      language,
+      package,
+      readme,
+      title,
+    })
+  }
+}
+
+impl Encode for Metadata {
+  fn encode(&self, encoder: &mut Encoder) {
+    let length = 1
+      + count_some!(
+        self.artwork,
+        self.creator,
+        self.date,
+        self.description,
+        self.homepage,
+        self.language,
+        self.package,
+        self.readme,
+      );
+
+    let mut map = encoder.map::<u8>(length);
+
+    map.optional_item(0, self.artwork.as_ref());
+    map.optional_item(1, self.creator.as_ref());
+    map.optional_item(2, self.date.as_ref());
+    map.optional_item(3, self.description.as_ref());
+    map.optional_item(4, self.homepage.as_ref());
+    map.optional_item(5, self.language.as_ref());
+    map.optional_item(6, self.package.as_ref());
+    map.optional_item(7, self.readme.as_ref());
+    map.item(8, &self.title);
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
@@ -69,13 +129,40 @@ mod tests {
   const UNKNOWN_FIELD: &str = "title: foo\nbar: 1";
 
   #[test]
+  fn deserialize_allows_missing_optional_fields() {
+    Metadata::deserialize(Metadata::YAML_FILENAME.as_ref(), "title: Foo").unwrap();
+  }
+
+  #[test]
   fn deserializer_allows_unknown_fields() {
-    Metadata::deserialize(Metadata::FILENAME.as_ref(), UNKNOWN_FIELD).unwrap();
+    Metadata::deserialize(Metadata::YAML_FILENAME.as_ref(), UNKNOWN_FIELD).unwrap();
+  }
+
+  #[test]
+  fn encoding() {
+    assert_encoding(Metadata {
+      artwork: Some("cover.png".parse().unwrap()),
+      creator: Some("foo".parse().unwrap()),
+      date: Some("2024".parse().unwrap()),
+      description: Some("bar".into()),
+      homepage: Some("http://example.com".parse().unwrap()),
+      language: Some("en".parse().unwrap()),
+      package: Some(Package {
+        creator: Some("baz".parse().unwrap()),
+        creator_tag: Some("A0".parse().unwrap()),
+        date: Some("2024-01-01".parse().unwrap()),
+        description: Some("qux".into()),
+        homepage: Some("http://example.com/foo".parse().unwrap()),
+        nfo: Some("info.nfo".parse().unwrap()),
+      }),
+      readme: Some("README.md".parse().unwrap()),
+      title: "foo".parse().unwrap(),
+    });
   }
 
   #[test]
   fn filepack_metadata_is_valid() {
-    Metadata::load_strict(Metadata::FILENAME.as_ref()).unwrap();
+    Metadata::load_strict(Metadata::YAML_FILENAME.as_ref()).unwrap();
   }
 
   #[test]
@@ -134,7 +221,7 @@ mod tests {
   #[test]
   fn strict_deserialize_rejects_unknown_fields() {
     assert_eq!(
-      Metadata::deserialize_strict(Metadata::FILENAME.as_ref(), UNKNOWN_FIELD)
+      Metadata::deserialize_strict(Metadata::YAML_FILENAME.as_ref(), UNKNOWN_FIELD)
         .unwrap_err()
         .to_string(),
       "unknown fields in metadata at `metadata.yaml`: `bar`",

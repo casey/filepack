@@ -16,7 +16,7 @@ package:
     .arg("create")
     .success()
     .arg("verify")
-    .stderr("successfully verified 2 files totaling 72 bytes\n")
+    .stderr("successfully verified 3 files totaling 121 bytes\n")
     .success();
 }
 
@@ -40,7 +40,7 @@ package:
     .arg("create")
     .success()
     .arg("verify")
-    .stderr("successfully verified 5 files totaling 73 bytes\n")
+    .stderr("successfully verified 6 files totaling 113 bytes\n")
     .success();
 }
 
@@ -174,7 +174,99 @@ fn language() {
     .arg("create")
     .success()
     .arg("verify")
-    .stderr("successfully verified 2 files totaling 23 bytes\n")
+    .stderr("successfully verified 3 files totaling 33 bytes\n")
+    .success();
+}
+
+#[test]
+fn metadata_cbor_already_exists() {
+  Test::new()
+    .write("metadata.yaml", "title: Foo")
+    .touch("metadata.cbor")
+    .arg("create")
+    .stderr_regex("error: metadata CBOR `.*metadata.cbor` already exists\n")
+    .failure();
+}
+
+#[test]
+fn metadata_cbor_force() {
+  Test::new()
+    .write("metadata.yaml", "title: Foo")
+    .touch("metadata.cbor")
+    .args(["create", "--force"])
+    .success()
+    .arg("verify")
+    .stderr_regex(".*successfully verified.*")
+    .success();
+}
+
+#[test]
+fn metadata_subcommand_default() {
+  Test::new()
+    .write("metadata.yaml", "title: Foo")
+    .arg("create")
+    .success()
+    .arg("metadata")
+    .stdout(
+      r#"{
+  "title": "Foo"
+}
+"#,
+    )
+    .success();
+}
+
+#[test]
+fn metadata_subcommand_format_json() {
+  Test::new()
+    .write("metadata.yaml", "title: Foo")
+    .arg("create")
+    .success()
+    .args(["metadata", "--format", "json"])
+    .stdout("{\"title\":\"Foo\"}\n")
+    .success();
+}
+
+#[test]
+fn metadata_subcommand_format_tsv_error() {
+  Test::new()
+    .write("metadata.yaml", "title: Foo")
+    .arg("create")
+    .success()
+    .args(["metadata", "--format", "tsv"])
+    .stderr("error: metadata cannot be displayed as TSV\n")
+    .failure();
+}
+
+#[test]
+fn metadata_subcommand_path_is_directory() {
+  Test::new()
+    .write("pkg/metadata.yaml", "title: Foo")
+    .args(["create", "pkg"])
+    .success()
+    .args(["metadata", "pkg"])
+    .stdout(
+      r#"{
+  "title": "Foo"
+}
+"#,
+    )
+    .success();
+}
+
+#[test]
+fn metadata_subcommand_path_is_file() {
+  Test::new()
+    .write("pkg/metadata.yaml", "title: Foo")
+    .args(["create", "pkg"])
+    .success()
+    .args(["metadata", "pkg/metadata.cbor"])
+    .stdout(
+      r#"{
+  "title": "Foo"
+}
+"#,
+    )
     .success();
 }
 

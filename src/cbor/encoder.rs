@@ -40,8 +40,8 @@ impl Encoder {
     self.head(MajorType::Integer.head(integer));
   }
 
-  pub(crate) fn map<K: Encode + PartialOrd>(&mut self, length: usize) -> MapEncoder<K> {
-    MapEncoder::new(self, length.into_u64())
+  pub(crate) fn map<K: Encode + PartialOrd>(&mut self, length: u64) -> MapEncoder<K> {
+    MapEncoder::new(self, length)
   }
 
   pub(crate) fn new() -> Self {

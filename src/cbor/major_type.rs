@@ -3,7 +3,7 @@ use super::*;
 #[derive(Clone, Copy, Debug, FromRepr, IntoStaticStr, PartialEq)]
 #[strum(serialize_all = "kebab-case")]
 #[repr(u8)]
-pub(crate) enum MajorType {
+pub enum MajorType {
   Integer = 0,
   Bytes = 2,
   Text = 3,
@@ -11,12 +11,10 @@ pub(crate) enum MajorType {
 }
 
 impl MajorType {
-  #[cfg(test)]
   pub(crate) fn from_initial_byte(initial_byte: u8) -> Self {
     Self::from_value(initial_byte >> 5 & 0b111)
   }
 
-  #[cfg(test)]
   pub(crate) fn from_value(value: u8) -> Self {
     Self::from_repr(value).unwrap()
   }

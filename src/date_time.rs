@@ -3,7 +3,7 @@ use {
   chrono::{FixedOffset, NaiveDate},
 };
 
-#[derive(Clone, Debug, DeserializeFromStr, PartialEq)]
+#[derive(Clone, Debug, DeserializeFromStr, PartialEq, SerializeDisplay)]
 pub(crate) enum DateTime {
   Date(NaiveDate),
   DateTime(chrono::DateTime<FixedOffset>),
@@ -21,6 +21,18 @@ impl FromStr for DateTime {
     } else {
       Ok(Self::DateTime(s.parse()?))
     }
+  }
+}
+
+impl Decode for DateTime {
+  fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
+    decoder.text()?.parse().context(decode_error::DateTime)
+  }
+}
+
+impl Encode for DateTime {
+  fn encode(&self, encoder: &mut Encoder) {
+    self.to_string().encode(encoder);
   }
 }
 
@@ -52,6 +64,27 @@ mod tests {
         assert!(line.parse::<DateTime>().is_ok(), "invalid date {line}");
       }
     }
+  }
+
+  #[test]
+  fn decode_error() {
+    assert_matches!(
+      DateTime::decode(&mut Decoder::new("foo".encode_to_vec())),
+      Err(DecodeError::DateTime { .. }),
+    );
+  }
+
+  #[test]
+  fn encoding() {
+    assert_cbor("1970".parse::<DateTime>().unwrap(), &"1970".encode_to_vec());
+    assert_cbor(
+      "1970-01-01".parse::<DateTime>().unwrap(),
+      &"1970-01-01".encode_to_vec(),
+    );
+    assert_cbor(
+      "1970-01-01T00:00:00Z".parse::<DateTime>().unwrap(),
+      &"1970-01-01 00:00:00 +00:00".encode_to_vec(),
+    );
   }
 
   #[test]

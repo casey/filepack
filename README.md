@@ -244,15 +244,18 @@ BLAKE3 file hashes are 64-character lowercase hexadecimal.
 Metadata
 --------
 
-Filepack packages may contain a file named `metadata.yaml` describing the
-package and its content.
+Filepack packages may contain a file named `metadata.cbor` describing the
+package and its contents.
 
-`filepack create` loads `metadata.yaml` if present and checks for validity and
-unknown fields.
+Metadata is authored by creating a file named `metadata.yaml` in the root of a
+new package. `filepack create` then loads `metadata.yaml` if present, checks
+for validity and unknown fields, and writes the CBOR serialization to
+`metadata.cbor` in the package root.
 
-`filepack verify` also loads `metadata.yaml` if present and checks for
-validity. Unknown fields, however, are not an error, so that future versions of
-`filepack` may define new metadata fields in a backwards-compatible fashion.
+`metadata.yaml` is retained as a human-readable reference, and for amending
+metadata, but `metadata.cbor` is the authoritative source of metadata. For
+consumption by scripts and tools, `filepack metadata` prints the contents of
+`metadata.cbor` as JSON.
 
 Filepack metadata is intended to a broadly useful machine and human readable
 description of the contents of a package, covering personal, distribution, and
@@ -503,7 +506,7 @@ Then, to create the package:
 filepack create [DIRECTORY]
 ```
 
-Which will validate metadata if present.
+Which will validate metadata if present and write it to `metadata.cbor`.
 
 See [metadata](#metadata) for the full schema.
 
@@ -823,7 +826,7 @@ content.
 Filepack seeks to rectify this by standardizing machine-readable metadata that
 can be included with folder-of-files content.
 
-Filepack metadata is stored a single file, `metadata.yaml`, in the root of a
+Filepack metadata is stored a single file, `metadata.cbor`, in the root of a
 filepack package, and contains information related to what the package
 contains, which files in the package contain the package content and their file
 formats, and who created the package. This metadata can serve as a base for the

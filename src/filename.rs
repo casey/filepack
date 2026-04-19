@@ -35,6 +35,24 @@ impl<T: Extension> Filename<T> {
   }
 }
 
+impl<T: Extension> Serialize for Filename<T> {
+  fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+    self.component.serialize(serializer)
+  }
+}
+
+impl<T: Extension> Decode for Filename<T> {
+  fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
+    decoder.text()?.parse().context(decode_error::Component)
+  }
+}
+
+impl<T: Extension> Encode for Filename<T> {
+  fn encode(&self, encoder: &mut Encoder) {
+    self.component.encode(encoder);
+  }
+}
+
 impl<T: Extension> FromStr for Filename<T> {
   type Err = ComponentError;
 
@@ -57,6 +75,24 @@ impl<T: Extension> FromStr for Filename<T> {
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn decode_error() {
+    assert_eq!(
+      Png::decode(&mut Decoder::new("cover.jpg".encode_to_vec())),
+      Err(DecodeError::Component {
+        source: ComponentError::Extension { extension: "png" },
+      }),
+    );
+  }
+
+  #[test]
+  fn encoding() {
+    assert_cbor(
+      "cover.png".parse::<Png>().unwrap(),
+      &"cover.png".encode_to_vec(),
+    );
+  }
 
   #[test]
   fn invalid() {

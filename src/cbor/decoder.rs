@@ -2,7 +2,8 @@ use super::*;
 
 pub(crate) struct Decoder {
   buffer: Vec<u8>,
-  i: usize,
+  position: usize,
+  stack: Vec<usize>,
 }
 
 impl Decoder {
@@ -34,7 +35,10 @@ impl Decoder {
   }
 
   pub(crate) fn finish(self) -> Result<(), DecodeError> {
-    ensure!(self.i == self.buffer.len(), decode_error::TrailingBytes);
+    ensure!(
+      self.position == self.buffer.len(),
+      decode_error::TrailingBytes
+    );
     Ok(())
   }
 
@@ -84,11 +88,23 @@ impl Decoder {
   }
 
   pub(crate) fn new(buffer: Vec<u8>) -> Self {
-    Self { buffer, i: 0 }
+    Self {
+      buffer,
+      position: 0,
+      stack: Vec::new(),
+    }
+  }
+
+  pub(crate) fn pop_position(&mut self) {
+    self.position = self.stack.pop().unwrap();
+  }
+
+  pub(crate) fn push_position(&mut self) {
+    self.stack.push(self.position);
   }
 
   fn slice(&mut self, n: usize) -> Result<&[u8], DecodeError> {
-    let start = self.i;
+    let start = self.position;
     let end = start + n;
 
     ensure! {
@@ -96,7 +112,7 @@ impl Decoder {
       decode_error::Truncated,
     }
 
-    self.i = end;
+    self.position = end;
 
     Ok(&self.buffer[start..end])
   }
@@ -114,6 +130,13 @@ impl Decoder {
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn finish_errors_on_trailing_bytes() {
+    let mut decoder = Decoder::new(vec![0x00, 0x00]);
+    u8::decode(&mut decoder).unwrap();
+    assert_eq!(decoder.finish().unwrap_err(), DecodeError::TrailingBytes,);
+  }
 
   #[test]
   fn integer_range() {
@@ -134,24 +157,25 @@ mod tests {
     }
 
     case(&[0x18, 0x17]);
-    case(&[0x19, 0x00, 0xFF]);
-    case(&[0x1A, 0x00, 0x00, 0xFF, 0xFF]);
-    case(&[0x1B, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF]);
+    case(&[0x19, 0x00, 0xff]);
+    case(&[0x1a, 0x00, 0x00, 0xff, 0xff]);
+    case(&[0x1b, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff]);
+  }
+
+  #[test]
+  fn position_stack() {
+    let mut decoder = Decoder::new(vec![0x01, 0x02]);
+    decoder.push_position();
+    assert_eq!(decoder.integer().unwrap(), 1);
+    decoder.pop_position();
+    assert_eq!(decoder.integer().unwrap(), 1);
   }
 
   #[test]
   fn reserved_additional_information() {
     assert_eq!(
-      Decoder::new(vec![0x1C]).head(),
+      Decoder::new(vec![0x1c]).head(),
       Err(DecodeError::ReservedAdditionalInformation { value: 28 }),
-    );
-  }
-
-  #[test]
-  fn trailing_bytes() {
-    assert_eq!(
-      Decoder::new(vec![0x00]).finish(),
-      Err(DecodeError::TrailingBytes)
     );
   }
 
@@ -175,9 +199,9 @@ mod tests {
   #[expect(invalid_from_utf8)]
   fn unicode() {
     assert_eq!(
-      Decoder::new(vec![0x62, 0xFF, 0xFE]).text().map(drop),
+      Decoder::new(vec![0x62, 0xff, 0xfe]).text().map(drop),
       Err(DecodeError::Unicode {
-        source: str::from_utf8(&[0xFF, 0xFE]).unwrap_err()
+        source: str::from_utf8(&[0xff, 0xfe]).unwrap_err()
       }),
     );
   }
@@ -185,7 +209,7 @@ mod tests {
   #[test]
   fn unsupported_additional_information() {
     assert_eq!(
-      Decoder::new(vec![0x1F]).head(),
+      Decoder::new(vec![0x1f]).head(),
       Err(DecodeError::UnsupportedAdditionalInformation { value: 31 }),
     );
   }

@@ -59,6 +59,7 @@ use {
     subcommand::Subcommand,
     tag::Tag,
     ticked::Ticked,
+    url::Url,
     utf8_path_ext::Utf8PathExt,
   },
   bech32::{
@@ -76,6 +77,7 @@ use {
   serde::{Deserialize, Deserializer, Serialize, Serializer},
   serde_with::{
     DeserializeFromStr, MapPreventDuplicates, SerializeDisplay, SetPreventDuplicates, serde_as,
+    skip_serializing_none,
   },
   snafu::{ErrorCompat, OptionExt, ResultExt, Snafu, ensure},
   std::{
@@ -89,30 +91,38 @@ use {
     io::{self, IsTerminal},
     iter,
     marker::PhantomData,
+    num::TryFromIntError,
     path::{Path, PathBuf},
     process,
-    str::{self, FromStr},
+    str::{self, FromStr, Utf8Error},
     sync::LazyLock,
     time::{SystemTime, SystemTimeError, UNIX_EPOCH},
   },
   strum::{EnumDiscriminants, EnumIter, EnumString, FromRepr, IntoEnumIterator, IntoStaticStr},
-  url::Url,
   usized::IntoU64,
   walkdir::WalkDir,
 };
 
 pub use self::{
-  directory::Directory, error::Error, fingerprint::Fingerprint, hash::Hash, manifest::Manifest,
-  message::Message, private_key::PrivateKey, public_key::PublicKey, relative_path::RelativePath,
+  cbor::{DecodeError, MajorType},
+  directory::Directory,
+  error::Error,
+  fingerprint::Fingerprint,
+  hash::Hash,
+  language_error::LanguageError,
+  manifest::Manifest,
+  message::Message,
+  private_key::PrivateKey,
+  public_key::PublicKey,
+  relative_path::RelativePath,
   signature::Signature,
+  tag_error::TagError,
 };
 
+use self::cbor::{Decode, Decoder, decode_error};
+
 #[cfg(test)]
-use {
-  self::cbor::{Decode, DecodeError, Decoder, decode_error},
-  std::{num::TryFromIntError, str::Utf8Error},
-  strum::IntoDiscriminant,
-};
+use strum::IntoDiscriminant;
 
 #[cfg(test)]
 fn tempdir() -> tempfile::TempDir {
@@ -124,9 +134,19 @@ fn tempdir() -> tempfile::TempDir {
 
 #[cfg(test)]
 #[track_caller]
-fn assert_encoding<T: Debug + Decode + Encode + PartialEq>(value: T, cbor: &[u8]) {
+fn assert_cbor<T: Debug + Decode + Encode + PartialEq>(value: T, cbor: &[u8]) {
   let buffer = value.encode_to_vec();
   assert_eq!(buffer, cbor);
+  let mut decoder = Decoder::new(buffer);
+  let decoded = T::decode(&mut decoder).unwrap();
+  decoder.finish().unwrap();
+  assert_eq!(decoded, value);
+}
+
+#[cfg(test)]
+#[track_caller]
+fn assert_encoding<T: Debug + Decode + Encode + PartialEq>(value: T) {
+  let buffer = value.encode_to_vec();
   let mut decoder = Decoder::new(buffer);
   let decoded = T::decode(&mut decoder).unwrap();
   decoder.finish().unwrap();
@@ -160,6 +180,12 @@ macro_rules! assert_matches_regex {
   }};
 }
 
+macro_rules! count_some {
+  ($($option:expr),* $(,)?) => {
+    0u64 $(+ u64::from($option.is_some()))*
+  };
+}
+
 mod arguments;
 mod bech32_decoder;
 mod bech32_encoder;
@@ -190,6 +216,7 @@ mod key_name;
 mod key_type;
 mod keychain;
 mod language;
+mod language_error;
 mod lint_error;
 mod lint_group;
 mod manifest;
@@ -213,7 +240,9 @@ mod signature_error;
 mod style;
 mod subcommand;
 mod tag;
+mod tag_error;
 mod ticked;
+mod url;
 mod utf8_path_ext;
 
 #[cfg(test)]

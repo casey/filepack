@@ -33,11 +33,24 @@ impl Create {
       root.join(Manifest::FILENAME)
     };
 
-    let metadata = root.join(Metadata::FILENAME);
+    let metadata = root.join(Metadata::YAML_FILENAME);
 
     let metadata = filesystem::exists(&metadata)?
       .then(|| Metadata::load_strict(&metadata))
       .transpose()?;
+
+    let metadata_cbor_path = root.join(Metadata::CBOR_FILENAME);
+
+    if let Some(metadata) = &metadata {
+      ensure! {
+        self.force || !metadata_cbor_path.try_exists().context(error::FilesystemIo { path: &metadata_cbor_path })?,
+        error::MetadataCborAlreadyExists {
+          path: metadata_cbor_path,
+        },
+      }
+
+      filesystem::write(&metadata_cbor_path, metadata.encode_to_vec())?;
+    }
 
     let cleaned_manifest = current_dir.join(&manifest_path).lexiclean();
 
@@ -122,7 +135,7 @@ impl Create {
       return Err(error::Lint { count: lint_errors }.build());
     }
 
-    if let Some(metadata) = metadata {
+    if let Some(metadata) = &metadata {
       for filename in metadata.files() {
         if !paths.contains_key(&filename) {
           return Err(error::MissingMetadataFile { filename }.build());

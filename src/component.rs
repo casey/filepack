@@ -65,7 +65,6 @@ impl Encode for Component {
   }
 }
 
-#[cfg(test)]
 impl Decode for Component {
   fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
     decoder.text()?.parse().context(decode_error::Component)
@@ -120,9 +119,9 @@ mod tests {
 
   #[test]
   fn encoding() {
-    assert_encoding(
+    assert_cbor(
       "foo".parse::<Component>().unwrap(),
-      &[0x63, 0x66, 0x6F, 0x6F],
+      &[0x63, 0x66, 0x6f, 0x6f],
     );
     let empty = "".encode_to_vec();
     let mut decoder = Decoder::new(empty);

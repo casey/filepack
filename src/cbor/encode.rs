@@ -25,7 +25,7 @@ where
   V: Encode,
 {
   fn encode(&self, encoder: &mut Encoder) {
-    let mut map = encoder.map::<&K>(self.len());
+    let mut map = encoder.map::<&K>(self.len().into_u64());
     for (key, value) in self {
       map.item(key, value);
     }
@@ -80,40 +80,40 @@ mod tests {
 
   #[test]
   fn bytes() {
-    assert_encoding(Vec::<u8>::new(), &[0x40]);
-    assert_encoding(b"bar".to_vec(), &[0x43, 0x62, 0x61, 0x72]);
+    assert_cbor(Vec::<u8>::new(), &[0x40]);
+    assert_cbor(b"bar".to_vec(), &[0x43, 0x62, 0x61, 0x72]);
   }
 
   #[test]
   fn map() {
-    assert_encoding(
+    assert_cbor(
       BTreeMap::from([("bar".to_string(), 1u64), ("foo".to_string(), 2u64)]),
       &[
-        0xA2, 0x63, 0x62, 0x61, 0x72, 0x01, 0x63, 0x66, 0x6F, 0x6F, 0x02,
+        0xa2, 0x63, 0x62, 0x61, 0x72, 0x01, 0x63, 0x66, 0x6f, 0x6f, 0x02,
       ],
     );
   }
 
   #[test]
   fn string() {
-    assert_encoding(String::new(), &[0x60]);
-    assert_encoding(String::from("foo"), &[0x63, 0x66, 0x6F, 0x6F]);
+    assert_cbor(String::new(), &[0x60]);
+    assert_cbor(String::from("foo"), &[0x63, 0x66, 0x6f, 0x6f]);
   }
 
   #[test]
   fn u64() {
-    assert_encoding(0u64, &[0x00]);
-    assert_encoding(24u64, &[0x18, 0x18]);
-    assert_encoding(256u64, &[0x19, 0x01, 0x00]);
+    assert_cbor(0u64, &[0x00]);
+    assert_cbor(24u64, &[0x18, 0x18]);
+    assert_cbor(256u64, &[0x19, 0x01, 0x00]);
   }
 
   #[test]
   fn u8() {
-    assert_encoding(100u8, &[0x18, 0x64]);
+    assert_cbor(100u8, &[0x18, 0x64]);
   }
 
   #[test]
   fn usize() {
-    assert_encoding(42usize, &[0x18, 0x2A]);
+    assert_cbor(42usize, &[0x18, 0x2a]);
   }
 }
