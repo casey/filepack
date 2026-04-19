@@ -42,7 +42,7 @@ mod tests {
 
   #[test]
   fn encoding() {
-    assert_encoding(
+    assert_cbor(
       "http://example.com".parse::<Url>().unwrap(),
       &"http://example.com".encode_to_vec(),
     );

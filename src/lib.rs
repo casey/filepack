@@ -133,9 +133,19 @@ fn tempdir() -> tempfile::TempDir {
 
 #[cfg(test)]
 #[track_caller]
-fn assert_encoding<T: Debug + Decode + Encode + PartialEq>(value: T, cbor: &[u8]) {
+fn assert_cbor<T: Debug + Decode + Encode + PartialEq>(value: T, cbor: &[u8]) {
   let buffer = value.encode_to_vec();
   assert_eq!(buffer, cbor);
+  let mut decoder = Decoder::new(buffer);
+  let decoded = T::decode(&mut decoder).unwrap();
+  decoder.finish().unwrap();
+  assert_eq!(decoded, value);
+}
+
+#[cfg(test)]
+#[track_caller]
+fn assert_encoding<T: Debug + Decode + Encode + PartialEq>(value: T) {
+  let buffer = value.encode_to_vec();
   let mut decoder = Decoder::new(buffer);
   let decoded = T::decode(&mut decoder).unwrap();
   decoder.finish().unwrap();

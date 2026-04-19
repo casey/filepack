@@ -119,7 +119,7 @@ mod tests {
 
   #[test]
   fn encoding() {
-    assert_encoding(
+    assert_cbor(
       "foo".parse::<Component>().unwrap(),
       &[0x63, 0x66, 0x6f, 0x6f],
     );
