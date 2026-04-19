@@ -4,10 +4,13 @@ use super::*;
 pub(crate) struct Metadata {
   #[arg(long = "format", default_value_t)]
   format: Format,
-  #[arg(help = "Path to metadata.cbor or directory containing it")]
+  #[arg(
+    help = "Load CBOR metadata from <PATH>. May be path to metadata, to directory containing named \
+    `metadata.cbor`, or omitted, in which case metadata named `metadata.cbor` in the current \
+    directory is loaded."
+  )]
   path: Option<Utf8PathBuf>,
 }
-
 impl Metadata {
   pub(crate) fn run(self) -> Result {
     let path = if let Some(path) = self.path {
