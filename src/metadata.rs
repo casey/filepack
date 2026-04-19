@@ -129,6 +129,11 @@ mod tests {
   const UNKNOWN_FIELD: &str = "title: foo\nbar: 1";
 
   #[test]
+  fn deserialize_allows_missing_optional_fields() {
+    Metadata::deserialize(Metadata::YAML_FILENAME.as_ref(), "title: Foo").unwrap();
+  }
+
+  #[test]
   fn deserializer_allows_unknown_fields() {
     Metadata::deserialize(Metadata::YAML_FILENAME.as_ref(), UNKNOWN_FIELD).unwrap();
   }
