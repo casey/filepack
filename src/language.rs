@@ -230,7 +230,7 @@ mod tests {
   fn invalid() {
     assert_eq!(
       "ac".parse::<Language>().unwrap_err(),
-      "unknown language code `ac`"
+      LanguageError::Code { code: "ac".into() },
     );
   }
 

@@ -41,10 +41,7 @@ mod tests {
   fn invalid() {
     #[track_caller]
     fn case(s: &str) {
-      assert_eq!(
-        s.parse::<Tag>().unwrap_err(),
-        r"tags must match regex `[0-9A-Z]+(\.[0-9A-Z]+)*`",
-      );
+      assert_eq!(s.parse::<Tag>().unwrap_err(), TagError::Parse);
     }
 
     case("");
