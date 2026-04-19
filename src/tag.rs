@@ -38,6 +38,21 @@ mod tests {
   use super::*;
 
   #[test]
+  fn decode_error() {
+    assert_eq!(
+      Tag::decode(&mut Decoder::new("".encode_to_vec())),
+      Err(DecodeError::Tag {
+        source: TagError::Parse,
+      }),
+    );
+  }
+
+  #[test]
+  fn encoding() {
+    assert_cbor("A0".parse::<Tag>().unwrap(), &"A0".encode_to_vec());
+  }
+
+  #[test]
   fn invalid() {
     #[track_caller]
     fn case(s: &str) {
@@ -60,20 +75,5 @@ mod tests {
     case("A0");
     case("A0.A0");
     case("A0.A0.A0");
-  }
-
-  #[test]
-  fn encoding() {
-    assert_cbor("A0".parse::<Tag>().unwrap(), &"A0".encode_to_vec());
-  }
-
-  #[test]
-  fn decode_error() {
-    assert_eq!(
-      Tag::decode(&mut Decoder::new("".encode_to_vec())),
-      Err(DecodeError::Tag {
-        source: TagError::Parse,
-      }),
-    );
   }
 }

@@ -77,6 +77,24 @@ mod tests {
   use super::*;
 
   #[test]
+  fn decode_error() {
+    assert_eq!(
+      Png::decode(&mut Decoder::new("cover.jpg".encode_to_vec())),
+      Err(DecodeError::Component {
+        source: ComponentError::Extension { extension: "png" },
+      }),
+    );
+  }
+
+  #[test]
+  fn encoding() {
+    assert_cbor(
+      "cover.png".parse::<Png>().unwrap(),
+      &"cover.png".encode_to_vec(),
+    );
+  }
+
+  #[test]
   fn invalid() {
     #[track_caller]
     fn case<T: FromStr<Err = ComponentError> + std::fmt::Debug>(
@@ -103,23 +121,5 @@ mod tests {
     case::<Md>("README.md");
     case::<Nfo>("info.nfo");
     case::<Png>("cover.png");
-  }
-
-  #[test]
-  fn encoding() {
-    assert_cbor(
-      "cover.png".parse::<Png>().unwrap(),
-      &"cover.png".encode_to_vec(),
-    );
-  }
-
-  #[test]
-  fn decode_error() {
-    assert_eq!(
-      Png::decode(&mut Decoder::new("cover.jpg".encode_to_vec())),
-      Err(DecodeError::Component {
-        source: ComponentError::Extension { extension: "png" },
-      }),
-    );
   }
 }

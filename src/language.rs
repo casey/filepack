@@ -227,6 +227,21 @@ mod tests {
   use super::*;
 
   #[test]
+  fn decode_error() {
+    assert_eq!(
+      Language::decode(&mut Decoder::new("xx".encode_to_vec())),
+      Err(DecodeError::Language {
+        source: LanguageError::Code { code: "xx".into() },
+      }),
+    );
+  }
+
+  #[test]
+  fn encoding() {
+    assert_cbor("en".parse::<Language>().unwrap(), &"en".encode_to_vec());
+  }
+
+  #[test]
   fn invalid() {
     assert_eq!(
       "ac".parse::<Language>().unwrap_err(),
@@ -237,20 +252,5 @@ mod tests {
   #[test]
   fn valid() {
     assert_eq!("en".parse::<Language>().unwrap(), Language("en"));
-  }
-
-  #[test]
-  fn encoding() {
-    assert_cbor("en".parse::<Language>().unwrap(), &"en".encode_to_vec());
-  }
-
-  #[test]
-  fn decode_error() {
-    assert_eq!(
-      Language::decode(&mut Decoder::new("xx".encode_to_vec())),
-      Err(DecodeError::Language {
-        source: LanguageError::Code { code: "xx".into() },
-      }),
-    );
   }
 }

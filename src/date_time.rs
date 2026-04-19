@@ -67,6 +67,27 @@ mod tests {
   }
 
   #[test]
+  fn decode_error() {
+    assert_matches!(
+      DateTime::decode(&mut Decoder::new("foo".encode_to_vec())),
+      Err(DecodeError::DateTime { .. }),
+    );
+  }
+
+  #[test]
+  fn encoding() {
+    assert_cbor("1970".parse::<DateTime>().unwrap(), &"1970".encode_to_vec());
+    assert_cbor(
+      "1970-01-01".parse::<DateTime>().unwrap(),
+      &"1970-01-01".encode_to_vec(),
+    );
+    assert_cbor(
+      "1970-01-01T00:00:00Z".parse::<DateTime>().unwrap(),
+      &"1970-01-01 00:00:00 +00:00".encode_to_vec(),
+    );
+  }
+
+  #[test]
   fn invalid() {
     #[track_caller]
     fn case(s: &str) {
@@ -98,29 +119,5 @@ mod tests {
     case("1970-01-01T00:00:00+00:00", "1970-01-01 00:00:00 +00:00");
     case("1970-01-01T00:00:00Z", "1970-01-01 00:00:00 +00:00");
     case("9999", "9999");
-  }
-
-  #[test]
-  fn encoding() {
-    assert_cbor(
-      "1970".parse::<DateTime>().unwrap(),
-      &"1970".encode_to_vec(),
-    );
-    assert_cbor(
-      "1970-01-01".parse::<DateTime>().unwrap(),
-      &"1970-01-01".encode_to_vec(),
-    );
-    assert_cbor(
-      "1970-01-01T00:00:00Z".parse::<DateTime>().unwrap(),
-      &"1970-01-01 00:00:00 +00:00".encode_to_vec(),
-    );
-  }
-
-  #[test]
-  fn decode_error() {
-    assert_matches!(
-      DateTime::decode(&mut Decoder::new("foo".encode_to_vec())),
-      Err(DecodeError::DateTime { .. }),
-    );
   }
 }

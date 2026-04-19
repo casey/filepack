@@ -41,18 +41,18 @@ mod tests {
   use super::*;
 
   #[test]
-  fn encoding() {
-    assert_cbor(
-      "http://example.com".parse::<Url>().unwrap(),
-      &"http://example.com".encode_to_vec(),
-    );
-  }
-
-  #[test]
   fn decode_error() {
     assert_matches!(
       Url::decode(&mut Decoder::new("foo".encode_to_vec())),
       Err(DecodeError::Url { .. }),
+    );
+  }
+
+  #[test]
+  fn encoding() {
+    assert_cbor(
+      "http://example.com".parse::<Url>().unwrap(),
+      &"http://example.com".encode_to_vec(),
     );
   }
 

@@ -139,6 +139,28 @@ mod tests {
   }
 
   #[test]
+  fn encoding() {
+    assert_encoding(Metadata {
+      artwork: Some("cover.png".parse().unwrap()),
+      creator: Some("foo".parse().unwrap()),
+      date: Some("2024".parse().unwrap()),
+      description: Some("bar".into()),
+      homepage: Some("http://example.com".parse().unwrap()),
+      language: Some("en".parse().unwrap()),
+      package: Some(Package {
+        creator: Some("baz".parse().unwrap()),
+        creator_tag: Some("A0".parse().unwrap()),
+        date: Some("2024-01-01".parse().unwrap()),
+        description: Some("qux".into()),
+        homepage: Some("http://example.com/foo".parse().unwrap()),
+        nfo: Some("info.nfo".parse().unwrap()),
+      }),
+      readme: Some("README.md".parse().unwrap()),
+      title: "foo".parse().unwrap(),
+    });
+  }
+
+  #[test]
   fn filepack_metadata_is_valid() {
     Metadata::load_strict(Metadata::YAML_FILENAME.as_ref()).unwrap();
   }
@@ -204,27 +226,5 @@ mod tests {
         .to_string(),
       "unknown fields in metadata at `metadata.yaml`: `bar`",
     );
-  }
-
-  #[test]
-  fn encoding() {
-    assert_encoding(Metadata {
-      artwork: Some("cover.png".parse().unwrap()),
-      creator: Some("foo".parse().unwrap()),
-      date: Some("2024".parse().unwrap()),
-      description: Some("bar".into()),
-      homepage: Some("http://example.com".parse().unwrap()),
-      language: Some("en".parse().unwrap()),
-      package: Some(Package {
-        creator: Some("baz".parse().unwrap()),
-        creator_tag: Some("A0".parse().unwrap()),
-        date: Some("2024-01-01".parse().unwrap()),
-        description: Some("qux".into()),
-        homepage: Some("http://example.com/foo".parse().unwrap()),
-        nfo: Some("info.nfo".parse().unwrap()),
-      }),
-      readme: Some("README.md".parse().unwrap()),
-      title: "foo".parse().unwrap(),
-    });
   }
 }

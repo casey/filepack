@@ -179,15 +179,6 @@ fn language() {
 }
 
 #[test]
-fn unknown_keys() {
-  Test::new()
-    .write("metadata.yaml", "title: Foo\nbar: baz")
-    .arg("create")
-    .stderr_regex(".*unknown fields in metadata at `.*metadata.yaml`: `bar`\n")
-    .failure();
-}
-
-#[test]
 fn metadata_cbor_already_exists() {
   Test::new()
     .write("metadata.yaml", "title: Foo")
@@ -209,11 +200,6 @@ fn metadata_cbor_force() {
     .success();
 }
 
-const METADATA_JSON_PRETTY: &str = r#"{
-  "title": "Foo"
-}
-"#;
-
 #[test]
 fn metadata_subcommand_default() {
   Test::new()
@@ -221,7 +207,12 @@ fn metadata_subcommand_default() {
     .arg("create")
     .success()
     .arg("metadata")
-    .stdout(METADATA_JSON_PRETTY)
+    .stdout(
+      r#"{
+  "title": "Foo"
+}
+"#,
+    )
     .success();
 }
 
@@ -254,7 +245,12 @@ fn metadata_subcommand_path_is_directory() {
     .args(["create", "pkg"])
     .success()
     .args(["metadata", "pkg"])
-    .stdout(METADATA_JSON_PRETTY)
+    .stdout(
+      r#"{
+  "title": "Foo"
+}
+"#,
+    )
     .success();
 }
 
@@ -265,6 +261,20 @@ fn metadata_subcommand_path_is_file() {
     .args(["create", "pkg"])
     .success()
     .args(["metadata", "pkg/metadata.cbor"])
-    .stdout(METADATA_JSON_PRETTY)
+    .stdout(
+      r#"{
+  "title": "Foo"
+}
+"#,
+    )
     .success();
+}
+
+#[test]
+fn unknown_keys() {
+  Test::new()
+    .write("metadata.yaml", "title: Foo\nbar: baz")
+    .arg("create")
+    .stderr_regex(".*unknown fields in metadata at `.*metadata.yaml`: `bar`\n")
+    .failure();
 }

@@ -102,6 +102,33 @@ mod tests {
   }
 
   #[test]
+  fn missing_field() {
+    let mut decoder = Decoder::new(vec![0xa0]);
+    let mut map = decoder.map::<u64>().unwrap();
+    assert_eq!(
+      map.required_key::<u64>(0),
+      Err(DecodeError::MissingField { key: "0".into() }),
+    );
+  }
+
+  #[test]
+  fn optional_key_missing() {
+    let mut decoder = Decoder::new(vec![0xa1, 0x01, 0x18, 0x2a]);
+    let mut map = decoder.map::<u64>().unwrap();
+    assert_eq!(map.optional_key::<u64>(0), Ok(None));
+    map.next::<u64>().unwrap();
+    map.finish().unwrap();
+  }
+
+  #[test]
+  fn optional_key_present() {
+    let mut decoder = Decoder::new(vec![0xa1, 0x00, 0x18, 0x2a]);
+    let mut map = decoder.map::<u64>().unwrap();
+    assert_eq!(map.optional_key::<u64>(0), Ok(Some(42)));
+    map.finish().unwrap();
+  }
+
+  #[test]
   fn out_of_order() {
     let mut decoder = Decoder::new(vec![0xa2, 0x02, 0x00, 0x01, 0x00]);
     let mut map = decoder.map::<u64>().unwrap();
@@ -115,32 +142,5 @@ mod tests {
     let mut map = decoder.map::<u64>().unwrap();
     map.next::<u64>().unwrap();
     assert_eq!(map.finish(), Err(DecodeError::UnconsumedEntries));
-  }
-
-  #[test]
-  fn missing_field() {
-    let mut decoder = Decoder::new(vec![0xa0]);
-    let mut map = decoder.map::<u64>().unwrap();
-    assert_eq!(
-      map.required_key::<u64>(0),
-      Err(DecodeError::MissingField { key: "0".into() }),
-    );
-  }
-
-  #[test]
-  fn optional_key_present() {
-    let mut decoder = Decoder::new(vec![0xa1, 0x00, 0x18, 0x2a]);
-    let mut map = decoder.map::<u64>().unwrap();
-    assert_eq!(map.optional_key::<u64>(0), Ok(Some(42)));
-    map.finish().unwrap();
-  }
-
-  #[test]
-  fn optional_key_missing() {
-    let mut decoder = Decoder::new(vec![0xa1, 0x01, 0x18, 0x2a]);
-    let mut map = decoder.map::<u64>().unwrap();
-    assert_eq!(map.optional_key::<u64>(0), Ok(None));
-    map.next::<u64>().unwrap();
-    map.finish().unwrap();
   }
 }
