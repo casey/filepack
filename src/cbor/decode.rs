@@ -65,3 +65,16 @@ impl Decode for usize {
       .context(decode_error::IntegerRange)
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn decode_from_vec_errors_on_trailing_bytes() {
+    assert_eq!(
+      u8::decode_from_vec(vec![0x00, 0x00]),
+      Err(DecodeError::TrailingBytes),
+    );
+  }
+}

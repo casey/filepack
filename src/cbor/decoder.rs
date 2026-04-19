@@ -132,6 +132,13 @@ mod tests {
   use super::*;
 
   #[test]
+  fn finish_errors_on_trailing_bytes() {
+    let mut decoder = Decoder::new(vec![0x00, 0x00]);
+    u8::decode(&mut decoder).unwrap();
+    assert_eq!(decoder.finish().unwrap_err(), DecodeError::TrailingBytes,);
+  }
+
+  #[test]
   fn integer_range() {
     assert!(matches!(
       u8::decode(&mut Decoder::new(256u64.encode_to_vec())),
@@ -160,14 +167,6 @@ mod tests {
     assert_eq!(
       Decoder::new(vec![0x1c]).head(),
       Err(DecodeError::ReservedAdditionalInformation { value: 28 }),
-    );
-  }
-
-  #[test]
-  fn trailing_bytes() {
-    assert_eq!(
-      u8::decode_from_vec(vec![0x00, 0x00]),
-      Err(DecodeError::TrailingBytes),
     );
   }
 
