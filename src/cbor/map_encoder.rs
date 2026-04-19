@@ -21,18 +21,18 @@ impl<'a, K: Encode + PartialOrd> MapEncoder<'a, K> {
     self.remaining -= 1;
   }
 
-  pub(crate) fn optional_item(&mut self, key: K, value: Option<impl Encode>) {
-    if let Some(value) = value {
-      self.item(key, value);
-    }
-  }
-
   pub(crate) fn new(encoder: &'a mut Encoder, length: u64) -> Self {
     encoder.head(MajorType::Map.head(length));
     Self {
       encoder,
       last: None,
       remaining: length,
+    }
+  }
+
+  pub(crate) fn optional_item(&mut self, key: K, value: Option<impl Encode>) {
+    if let Some(value) = value {
+      self.item(key, value);
     }
   }
 }

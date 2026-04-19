@@ -32,17 +32,6 @@ impl<K: Clone + Decode + Debug + PartialOrd> MapDecoder<'_, K> {
     Ok(Some(value))
   }
 
-  pub(crate) fn required_key<V: Decode>(&mut self, key: K) -> Result<V, DecodeError>
-  where
-    K: Clone + Display,
-  {
-    self
-      .key(key.clone())?
-      .with_context(|| decode_error::MissingField {
-        key: key.to_string(),
-      })
-  }
-
   pub(crate) fn next<V: Decode>(&mut self) -> Result<Option<(K, V)>, DecodeError> {
     if self.remaining == 0 {
       return Ok(None);
@@ -87,6 +76,17 @@ impl<K: Clone + Decode + Debug + PartialOrd> MapDecoder<'_, K> {
     self.last = Some(next_key);
 
     Ok(Some(V::decode(self.decoder)?))
+  }
+
+  pub(crate) fn required_key<V: Decode>(&mut self, key: K) -> Result<V, DecodeError>
+  where
+    K: Clone + Display,
+  {
+    self
+      .key(key.clone())?
+      .with_context(|| decode_error::MissingField {
+        key: key.to_string(),
+      })
   }
 }
 
