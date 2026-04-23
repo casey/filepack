@@ -1,7 +1,7 @@
 use super::*;
 
 pub(crate) struct Entries<'a> {
-  stack: Vec<(Vec<&'a Component>, &'a Entry)>,
+  stack: Vec<(Vec<&'a Component>, &'a DirectoryTreeEntry)>,
 }
 
 impl<'a> From<&'a Manifest> for Entries<'a> {
@@ -15,12 +15,12 @@ impl<'a> From<&'a Manifest> for Entries<'a> {
 }
 
 impl<'a> Iterator for Entries<'a> {
-  type Item = (RelativePath, &'a Entry);
+  type Item = (RelativePath, &'a DirectoryTreeEntry);
 
   fn next(&mut self) -> Option<Self::Item> {
     let (components, entry) = self.stack.pop()?;
 
-    if let Entry::Directory(directory) = entry {
+    if let DirectoryTreeEntry::Directory(directory) = entry {
       for (component, child) in &directory.entries {
         self.stack.push((
           components

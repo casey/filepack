@@ -4,12 +4,12 @@ use super::*;
 fn backtraces_are_recorded_when_environment_variable_is_set() {
   Test::new()
     .args(["verify", "."])
-    .stderr("error: manifest `filepack.json` not found\n")
+    .stderr("error: manifest `manifest.filepack` not found\n")
     .failure()
     .env("RUST_BACKTRACE", "1")
     .args(["verify", "."])
     .stderr_regex(
-      r"error: manifest `filepack.json` not found
+      r"error: manifest `manifest.filepack` not found
 
 backtrace:
    0: .*

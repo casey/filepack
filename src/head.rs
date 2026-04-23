@@ -19,20 +19,24 @@ mod tests {
       assert_eq!(encoder.finish(), expected);
     }
 
-    case(MajorType::Integer, 0, &[0x00]);
-    case(MajorType::Integer, 23, &[0x17]);
-    case(MajorType::Integer, 24, &[0x18, 0x18]);
-    case(MajorType::Integer, 255, &[0x18, 0xff]);
-    case(MajorType::Integer, 256, &[0x19, 0x01, 0x00]);
-    case(MajorType::Integer, 65535, &[0x19, 0xff, 0xff]);
-    case(MajorType::Integer, 65536, &[0x1a, 0x00, 0x01, 0x00, 0x00]);
+    case(MajorType::UnsignedInteger, 0, &[0x00]);
+    case(MajorType::UnsignedInteger, 23, &[0x17]);
+    case(MajorType::UnsignedInteger, 24, &[0x18, 0x18]);
+    case(MajorType::UnsignedInteger, 255, &[0x18, 0xff]);
+    case(MajorType::UnsignedInteger, 256, &[0x19, 0x01, 0x00]);
+    case(MajorType::UnsignedInteger, 65535, &[0x19, 0xff, 0xff]);
     case(
-      MajorType::Integer,
+      MajorType::UnsignedInteger,
+      65536,
+      &[0x1a, 0x00, 0x01, 0x00, 0x00],
+    );
+    case(
+      MajorType::UnsignedInteger,
       4_294_967_295,
       &[0x1a, 0xff, 0xff, 0xff, 0xff],
     );
     case(
-      MajorType::Integer,
+      MajorType::UnsignedInteger,
       4_294_967_296,
       &[0x1b, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00],
     );

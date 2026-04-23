@@ -59,6 +59,12 @@ impl Component {
   }
 }
 
+impl Borrow<str> for Component {
+  fn borrow(&self) -> &str {
+    &self.0
+  }
+}
+
 impl Encode for Component {
   fn encode(&self, encoder: &mut Encoder) {
     self.as_str().encode(encoder);
@@ -125,7 +131,7 @@ mod tests {
     );
     let empty = "".encode_to_vec();
     let mut decoder = Decoder::new(empty);
-    assert_eq!(
+    assert_matches!(
       Component::decode(&mut decoder),
       Err(DecodeError::Component {
         source: ComponentError::Empty

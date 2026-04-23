@@ -14,6 +14,7 @@ use {
   },
 };
 
+mod archive;
 mod bech32;
 mod contains;
 mod create;
@@ -31,6 +32,7 @@ mod languages;
 mod lint;
 mod lints;
 mod man;
+mod manifest;
 mod metadata;
 mod misc;
 mod sign;

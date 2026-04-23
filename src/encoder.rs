@@ -37,7 +37,7 @@ impl Encoder {
   }
 
   pub(crate) fn integer(&mut self, integer: u64) {
-    self.head(MajorType::Integer.head(integer));
+    self.head(MajorType::UnsignedInteger.head(integer));
   }
 
   pub(crate) fn map<K: Encode + PartialOrd>(&mut self, length: u64) -> MapEncoder<K> {

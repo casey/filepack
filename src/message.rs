@@ -18,13 +18,10 @@ impl Decode for Message {
     let mut map = decoder.map::<u8>()?;
 
     let application = map.key::<String>(0)?.unwrap();
-    ensure!(
-      application == "filepack",
-      cbor::decode_error::UnexpectedValue
-    );
+    ensure!(application == "filepack", decode_error::UnexpectedValue);
 
     let ty = map.key::<String>(1)?.unwrap();
-    ensure!(ty == "message", cbor::decode_error::UnexpectedValue);
+    ensure!(ty == "message", decode_error::UnexpectedValue);
 
     let fingerprint = map.key::<Fingerprint>(2)?.unwrap();
 
@@ -80,9 +77,9 @@ mod tests {
     drop(map);
     let bytes = encoder.finish();
 
-    assert_eq!(
+    assert_matches!(
       Message::decode(&mut Decoder::new(bytes)),
-      Err(DecodeError::UnexpectedValue),
+      Err(DecodeError::UnexpectedValue)
     );
   }
 
@@ -96,9 +93,9 @@ mod tests {
     drop(map);
     let bytes = encoder.finish();
 
-    assert_eq!(
+    assert_matches!(
       Message::decode(&mut Decoder::new(bytes)),
-      Err(DecodeError::UnexpectedValue),
+      Err(DecodeError::UnexpectedValue)
     );
   }
 }

@@ -6,6 +6,7 @@ use {
   },
 };
 
+mod archive;
 mod bech32;
 mod contains;
 mod create;
@@ -18,6 +19,7 @@ mod keygen;
 mod languages;
 mod lints;
 mod man;
+mod manifest;
 mod metadata;
 mod sign;
 mod signatures;
@@ -26,7 +28,7 @@ mod verify;
 
 const MANIFEST_PATH_HELP: &str = "\
   Load manifest from <PATH>. May be path to manifest, to directory containing manifest named \
-  `filepack.json`, or omitted, in which case manifest named `filepack.json` in the current \
+  `manifest.filepack`, or omitted, in which case manifest named `manifest.filepack` in the current \
   directory is loaded.";
 
 const TIMESTAMP_HELP: &str = "Include current time in signature";
@@ -42,6 +44,8 @@ const TIMESTAMP_HELP: &str = "Include current time in signature";
     .placeholder(AnsiColor::Cyan.on_default()))
 ]
 pub(crate) enum Subcommand {
+  #[command(about = "Create archive from JSON manifest on stdin")]
+  Archive(archive::Archive),
   #[command(about = "Encode and decode bech32")]
   Bech32(bech32::Bech32),
   #[command(about = "Check if manifest contains file")]
@@ -66,6 +70,8 @@ pub(crate) enum Subcommand {
   Lints,
   #[command(about = "Print man page")]
   Man,
+  #[command(about = "Print manifest")]
+  Manifest(manifest::Manifest),
   #[command(about = "Print metadata")]
   Metadata(metadata::Metadata),
   #[command(about = "Sign manifest")]
@@ -81,6 +87,7 @@ pub(crate) enum Subcommand {
 impl Subcommand {
   pub(crate) fn run(self, options: Options) -> Result {
     match self {
+      Self::Archive(archive) => archive.run(),
       Self::Bech32(bech32) => bech32.run(),
       Self::Contains(contains) => contains.run(options),
       Self::Create(create) => create.run(options),
@@ -93,6 +100,7 @@ impl Subcommand {
       Self::Languages(languages) => languages.run(),
       Self::Lints => lints::run(),
       Self::Man => man::run(),
+      Self::Manifest(manifest) => manifest.run(),
       Self::Metadata(metadata) => metadata.run(),
       Self::Sign(sign) => sign.run(options),
       Self::Signatures(signatures) => signatures.run(),

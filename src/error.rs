@@ -54,6 +54,12 @@ pub enum Error {
   },
   #[snafu(display("failed to get local data directory"))]
   DataLocalDir { backtrace: Option<Backtrace> },
+  #[snafu(display("failed to decode manifest at `{path}`"))]
+  DecodeManifest {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+    source: DecodeError,
+  },
   #[snafu(display("failed to decode metadata at `{path}`"))]
   DecodeMetadataCbor {
     backtrace: Option<Backtrace>,
@@ -76,7 +82,7 @@ pub enum Error {
   DeserializeMetadataStrict {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
-    unknown: Ticked,
+    unknown: Ticked<String>,
   },
   #[snafu(display(
     "duplicate key: {}",
@@ -181,6 +187,8 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
+  #[snafu(display("manifest cannot be formatted as TSV"))]
+  ManifestTsv { backtrace: Option<Backtrace> },
   #[snafu(display("metadata `{path}` already exists"))]
   MetadataAlreadyExists {
     backtrace: Option<Backtrace>,
@@ -191,7 +199,7 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
-  #[snafu(display("metadata cannot be displayed as TSV"))]
+  #[snafu(display("metadata cannot be formatted as TSV"))]
   MetadataTsv { backtrace: Option<Backtrace> },
   #[snafu(display("directory missing: `{path}`"))]
   MissingDirectory {
@@ -298,6 +306,12 @@ pub enum Error {
   Time {
     backtrace: Option<Backtrace>,
     source: SystemTimeError,
+  },
+  #[snafu(display("Failed to unarchive manifest"))]
+  UnarchiveManifest {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+    source: ArchiveError,
   },
   #[snafu(transparent)]
   WalkDir {

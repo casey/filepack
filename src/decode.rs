@@ -72,9 +72,9 @@ mod tests {
 
   #[test]
   fn decode_from_vec_errors_on_trailing_bytes() {
-    assert_eq!(
+    assert_matches!(
       u8::decode_from_vec(vec![0x00, 0x00]),
-      Err(DecodeError::TrailingBytes),
+      Err(DecodeError::TrailingBytes)
     );
   }
 }

@@ -12,7 +12,7 @@ pub(crate) struct Sign {
 
 impl Sign {
   pub(crate) fn run(self, options: Options) -> Result {
-    let (path, mut manifest) = Manifest::load_with_path(self.path.as_deref())?;
+    let (path, mut manifest) = Manifest::load_with_opt_path(self.path.as_deref())?;
 
     let keychain = Keychain::load(&options)?;
 

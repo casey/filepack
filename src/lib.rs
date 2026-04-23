@@ -19,25 +19,36 @@
 
 use {
   self::{
+    archive::Archive,
+    archive_builder::ArchiveBuilder,
+    archive_error::ArchiveError,
     arguments::Arguments,
     bech32_decoder::Bech32Decoder,
     bech32_encoder::Bech32Encoder,
     bech32_error::Bech32Error,
     bech32_type::Bech32Type,
-    cbor::{Encode, Encoder},
     component::Component,
     component_error::ComponentError,
     count::Count,
     dalek_signature_error::DalekSignatureError,
     date_time::DateTime,
+    decode::Decode,
+    decode_error::DecodeError,
+    decoder::Decoder,
+    directory::Directory,
+    directory_tree_entry::DirectoryTreeEntry,
     display_path::DisplayPath,
     display_secret::DisplaySecret,
+    encode::Encode,
+    encoder::Encoder,
     entries::Entries,
     entry::Entry,
+    entry_type::EntryType,
     file::File,
     format::Format,
     functions::{current_dir, decode_path, default, is_lowercase_hex, now},
     hash_error::HashError,
+    head::Head,
     key_identifier::KeyIdentifier,
     key_name::KeyName,
     key_type::KeyType,
@@ -45,6 +56,8 @@ use {
     language::Language,
     lint_error::{Lint, LintError},
     lint_group::LintGroup,
+    map_decoder::MapDecoder,
+    map_encoder::MapEncoder,
     metadata::Metadata,
     mode::Mode,
     options::Options,
@@ -61,6 +74,7 @@ use {
     ticked::Ticked,
     url::Url,
     utf8_path_ext::Utf8PathExt,
+    version::Version,
   },
   bech32::{
     ByteIterExt, Fe32, Fe32IterExt, Hrp,
@@ -82,6 +96,7 @@ use {
   snafu::{ErrorCompat, OptionExt, ResultExt, Snafu, ensure},
   std::{
     backtrace::{Backtrace, BacktraceStatus},
+    borrow::Borrow,
     borrow::Cow,
     cmp::Ordering,
     collections::{BTreeMap, BTreeSet, HashMap},
@@ -104,22 +119,11 @@ use {
 };
 
 pub use self::{
-  cbor::{DecodeError, MajorType},
-  directory::Directory,
-  error::Error,
-  fingerprint::Fingerprint,
-  hash::Hash,
-  language_error::LanguageError,
-  manifest::Manifest,
-  message::Message,
-  private_key::PrivateKey,
-  public_key::PublicKey,
-  relative_path::RelativePath,
-  signature::Signature,
-  tag_error::TagError,
+  directory_tree::DirectoryTree, error::Error, fingerprint::Fingerprint, hash::Hash,
+  language_error::LanguageError, major_type::MajorType, manifest::Manifest, message::Message,
+  private_key::PrivateKey, public_key::PublicKey, relative_path::RelativePath,
+  signature::Signature, tag_error::TagError,
 };
-
-use self::cbor::{Decode, Decoder, decode_error};
 
 #[cfg(test)]
 use strum::IntoDiscriminant;
@@ -186,22 +190,32 @@ macro_rules! count_some {
   };
 }
 
+mod archive;
+mod archive_builder;
+mod archive_error;
 mod arguments;
 mod bech32_decoder;
 mod bech32_encoder;
 mod bech32_error;
 mod bech32_type;
-mod cbor;
 mod component;
 mod component_error;
 mod count;
 mod dalek_signature_error;
 mod date_time;
+mod decode;
+mod decode_error;
+mod decoder;
 mod directory;
+mod directory_tree;
+mod directory_tree_entry;
 mod display_path;
 mod display_secret;
+mod encode;
+mod encoder;
 mod entries;
 mod entry;
+mod entry_type;
 mod error;
 mod file;
 mod filename;
@@ -211,6 +225,7 @@ mod format;
 mod functions;
 mod hash;
 mod hash_error;
+mod head;
 mod key_identifier;
 mod key_name;
 mod key_type;
@@ -219,7 +234,10 @@ mod language;
 mod language_error;
 mod lint_error;
 mod lint_group;
+mod major_type;
 mod manifest;
+mod map_decoder;
+mod map_encoder;
 mod message;
 mod metadata;
 mod mode;
@@ -244,6 +262,7 @@ mod tag_error;
 mod ticked;
 mod url;
 mod utf8_path_ext;
+mod version;
 
 #[cfg(test)]
 mod test;

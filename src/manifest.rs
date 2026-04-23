@@ -4,19 +4,19 @@ use super::*;
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Manifest {
-  pub files: Directory,
+  pub files: DirectoryTree,
   #[serde_as(as = "SetPreventDuplicates<_>")]
   pub signatures: BTreeSet<Signature>,
 }
 
 impl Manifest {
-  pub(crate) const FILENAME: &'static str = "filepack.json";
+  pub(crate) const FILENAME: &'static str = "manifest.filepack";
 
   pub(crate) fn empty_directories(&self) -> BTreeSet<RelativePath> {
     let mut empty = BTreeSet::new();
 
     for (path, entry) in self.entries() {
-      if let Entry::Directory(directory) = entry
+      if let DirectoryTreeEntry::Directory(directory) = entry
         && directory.entries.is_empty()
       {
         empty.insert(path);
@@ -34,7 +34,7 @@ impl Manifest {
     let mut files = BTreeMap::new();
 
     for (path, entry) in self.entries() {
-      if let Entry::File(file) = entry {
+      if let DirectoryTreeEntry::File(file) = entry {
         let old = files.insert(path, *file);
         assert!(old.is_none());
       }
@@ -44,7 +44,7 @@ impl Manifest {
   }
 
   pub fn fingerprint(&self) -> Fingerprint {
-    Fingerprint(self.files.fingerprint())
+    Archive::archive(self).fingerprint()
   }
 
   pub(crate) fn from_json(json: &str, path: &Utf8Path) -> Result<Self> {
@@ -57,10 +57,10 @@ impl Manifest {
   }
 
   pub fn load(path: Option<&Utf8Path>) -> Result<Self> {
-    Ok(Self::load_with_path(path)?.1)
+    Ok(Self::load_with_opt_path(path)?.1)
   }
 
-  pub(crate) fn load_with_path(path: Option<&Utf8Path>) -> Result<(Utf8PathBuf, Self)> {
+  pub(crate) fn load_with_opt_path(path: Option<&Utf8Path>) -> Result<(Utf8PathBuf, Self)> {
     let path = if let Some(path) = path {
       if filesystem::metadata(path)?.is_dir() {
         path.join(Manifest::FILENAME)
@@ -71,12 +71,25 @@ impl Manifest {
       current_dir()?.join(Manifest::FILENAME)
     };
 
-    let json = filesystem::read_to_string_opt(&path)?
-      .ok_or_else(|| error::ManifestNotFound { path: &path }.build())?;
-
-    let manifest = Self::from_json(&json, &path)?;
+    let manifest = Self::load_with_path(&path, &path)?;
 
     Ok((path, manifest))
+  }
+
+  pub(crate) fn load_with_path(path: &Utf8Path, display_path: &Utf8Path) -> Result<Self> {
+    let cbor = filesystem::read_opt(path)?
+      .ok_or_else(|| error::ManifestNotFound { path: display_path }.build())?;
+
+    let archive =
+      Archive::decode_from_vec(cbor).context(error::DecodeManifest { path: display_path })?;
+
+    let manifest = archive
+      .unarchive()
+      .context(error::UnarchiveManifest { path: display_path })?;
+
+    manifest.verify_signatures()?;
+
+    Ok(manifest)
   }
 
   pub(crate) fn message(&self, timestamp: bool) -> Result<Message> {
@@ -87,10 +100,8 @@ impl Manifest {
   }
 
   pub fn save(&self, path: &Utf8Path) -> Result {
-    filesystem::write(
-      path,
-      format!("{}\n", serde_json::to_string_pretty(self).unwrap()),
-    )
+    let cbor = Archive::archive(self).encode_to_vec();
+    filesystem::write(path, cbor)
   }
 
   pub(crate) fn sign(
@@ -111,7 +122,7 @@ impl Manifest {
   pub(crate) fn total_size(&self) -> u128 {
     let mut size = 0u128;
     for (_path, entry) in self.entries() {
-      if let Entry::File(file) = entry {
+      if let DirectoryTreeEntry::File(file) = entry {
         size = size.checked_add(file.size.into()).unwrap();
       }
     }
@@ -150,7 +161,7 @@ mod tests {
   #[test]
   fn empty_manifest_serialization() {
     let manifest = Manifest {
-      files: Directory::new(),
+      files: DirectoryTree::new(),
       signatures: BTreeSet::new(),
     };
     let json = serde_json::to_string(&manifest).unwrap();

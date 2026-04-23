@@ -6,6 +6,7 @@ pub(crate) struct Test {
   data_dir: Option<String>,
   env: BTreeMap<String, Option<String>>,
   files: BTreeMap<String, Expected>,
+  manifests: BTreeMap<String, Expected>,
   stderr: Expected,
   stdin: Option<String>,
   stdout: Expected,
@@ -25,6 +26,7 @@ impl Test {
     self
   }
 
+  #[expect(unused)]
   pub(crate) fn assert_file(mut self, path: &str, expected: impl Into<String>) -> Self {
     assert!(
       self
@@ -40,6 +42,16 @@ impl Test {
       self
         .files
         .insert(path.into(), Expected::regex(pattern))
+        .is_none()
+    );
+    self
+  }
+
+  pub(crate) fn assert_manifest(mut self, path: &str, expected: impl Into<String>) -> Self {
+    assert!(
+      self
+        .manifests
+        .insert(path.into(), Expected::string(expected))
         .is_none()
     );
     self
@@ -217,6 +229,12 @@ impl Test {
       expected.check(&actual, &format!("file `{path}`"));
     }
 
+    for (path, expected) in &self.manifests {
+      let manifest = Manifest::load(Some(&self.join(path))).unwrap();
+      let actual = format!("{}\n", serde_json::to_string_pretty(&manifest).unwrap());
+      expected.check(&actual, &format!("manifest `{path}`"));
+    }
+
     Self::with_tempdir(self.tempdir)
   }
 
@@ -324,6 +342,7 @@ impl Test {
       data_dir: None,
       env: BTreeMap::new(),
       files: BTreeMap::new(),
+      manifests: BTreeMap::new(),
       stderr: Expected::Empty,
       stdin: None,
       stdout: Expected::Empty,
@@ -335,6 +354,28 @@ impl Test {
     let path = self.join(path);
     fs::create_dir_all(path.parent().unwrap()).unwrap();
     fs::write(path, content.as_ref()).unwrap();
+    self
+  }
+
+  pub(crate) fn write_archive(self, path: &str, json: impl AsRef<str>) -> Self {
+    let mut child = Command::new(env!("CARGO_BIN_EXE_filepack"))
+      .args(["archive", path])
+      .stdin(Stdio::piped())
+      .current_dir(self.tempdir.path())
+      .spawn()
+      .unwrap();
+
+    child
+      .stdin
+      .as_mut()
+      .unwrap()
+      .write_all(json.as_ref().as_bytes())
+      .unwrap();
+
+    let status = child.wait().unwrap();
+
+    assert!(status.success());
+
     self
   }
 }

@@ -1,9 +1,9 @@
 use super::*;
 
 #[derive(Debug)]
-pub struct Ticked(BTreeSet<String>);
+pub struct Ticked<T>(BTreeSet<T>);
 
-impl Display for Ticked {
+impl<T: Display> Display for Ticked<T> {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     for (i, value) in self.0.iter().enumerate() {
       if i > 0 {
@@ -15,8 +15,8 @@ impl Display for Ticked {
   }
 }
 
-impl From<BTreeSet<String>> for Ticked {
-  fn from(value: BTreeSet<String>) -> Self {
+impl<T> From<BTreeSet<T>> for Ticked<T> {
+  fn from(value: BTreeSet<T>) -> Self {
     Self(value)
   }
 }
@@ -27,9 +27,9 @@ mod tests {
 
   #[test]
   fn display() {
-    assert_eq!(Ticked(["foo".into()].into()).to_string(), "`foo`");
+    assert_eq!(Ticked::<&str>(["foo"].into()).to_string(), "`foo`");
     assert_eq!(
-      Ticked(["bar".into(), "foo".into()].into()).to_string(),
+      Ticked::<&str>(["bar", "foo"].into()).to_string(),
       "`bar`, `foo`"
     );
   }

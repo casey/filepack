@@ -48,9 +48,9 @@ fn hash_missing() {
 fn size_mismatch() {
   Test::new()
     .touch("foo")
-    .write(
-      "filepack.json",
-      &json! {
+    .write_archive(
+      "manifest.filepack",
+      json! {
         files: {
           foo: {
             hash: EMPTY_HASH,

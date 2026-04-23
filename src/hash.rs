@@ -15,7 +15,6 @@ impl Hash {
   }
 }
 
-#[cfg(test)]
 impl Decode for Hash {
   fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
     let bytes = decoder.bytes()?;

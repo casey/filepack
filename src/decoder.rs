@@ -79,7 +79,7 @@ impl Decoder {
   }
 
   pub(crate) fn integer(&mut self) -> Result<u64, DecodeError> {
-    self.expect(MajorType::Integer)
+    self.expect(MajorType::UnsignedInteger)
   }
 
   pub(crate) fn map<K>(&mut self) -> Result<MapDecoder<K>, DecodeError> {
@@ -135,7 +135,7 @@ mod tests {
   fn finish_errors_on_trailing_bytes() {
     let mut decoder = Decoder::new(vec![0x00, 0x00]);
     u8::decode(&mut decoder).unwrap();
-    assert_eq!(decoder.finish().unwrap_err(), DecodeError::TrailingBytes,);
+    assert_matches!(decoder.finish(), Err(DecodeError::TrailingBytes));
   }
 
   #[test]
@@ -150,9 +150,9 @@ mod tests {
   fn overlong_integer() {
     #[track_caller]
     fn case(bytes: &[u8]) {
-      assert_eq!(
+      assert_matches!(
         Decoder::new(bytes.to_vec()).head(),
-        Err(DecodeError::OverlongInteger),
+        Err(DecodeError::OverlongInteger)
       );
     }
 
@@ -173,44 +173,41 @@ mod tests {
 
   #[test]
   fn reserved_additional_information() {
-    assert_eq!(
+    assert_matches!(
       Decoder::new(vec![0x1c]).head(),
-      Err(DecodeError::ReservedAdditionalInformation { value: 28 }),
+      Err(DecodeError::ReservedAdditionalInformation { value }) if value == 28,
     );
   }
 
   #[test]
   fn truncated() {
-    assert_eq!(Decoder::new(vec![]).head(), Err(DecodeError::Truncated),);
+    assert_matches!(Decoder::new(vec![]).head(), Err(DecodeError::Truncated));
   }
 
   #[test]
   fn type_mismatch() {
-    assert_eq!(
+    assert_matches!(
       Decoder::new(vec![0x60]).integer(),
       Err(DecodeError::UnexpectedType {
-        expected: MajorType::Integer,
-        actual: MajorType::Text,
+        expected: MajorType::UnsignedInteger,
+        actual: MajorType::Text
       }),
     );
   }
 
   #[test]
-  #[expect(invalid_from_utf8)]
   fn unicode() {
-    assert_eq!(
+    assert_matches!(
       Decoder::new(vec![0x62, 0xff, 0xfe]).text().map(drop),
-      Err(DecodeError::Unicode {
-        source: str::from_utf8(&[0xff, 0xfe]).unwrap_err()
-      }),
+      Err(DecodeError::Unicode { .. }),
     );
   }
 
   #[test]
   fn unsupported_additional_information() {
-    assert_eq!(
+    assert_matches!(
       Decoder::new(vec![0x1f]).head(),
-      Err(DecodeError::UnsupportedAdditionalInformation { value: 31 }),
+      Err(DecodeError::UnsupportedAdditionalInformation { value }) if value == 31,
     );
   }
 }

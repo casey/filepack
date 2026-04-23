@@ -9,7 +9,7 @@ pub(crate) struct Create {
   #[arg(default_value_t = KeyName::DEFAULT, help = "Sign with <KEY>", long, requires = "sign")]
   key: KeyName,
   #[arg(
-    help = "Write manifest to <MANIFEST>, defaults to `<ROOT>/filepack.json`",
+    help = "Write manifest to <MANIFEST>, defaults to `<ROOT>/manifest.filepack`",
     long
   )]
   manifest: Option<Utf8PathBuf>,
@@ -152,7 +152,7 @@ impl Create {
 
     let bar = progress_bar::new(&options, paths.values().sum());
 
-    let mut files = Directory::new();
+    let mut files = DirectoryTree::new();
 
     for path in empty {
       files.create_directory(&path)?;
