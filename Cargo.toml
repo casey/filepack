@@ -57,6 +57,7 @@ missing-errors-doc = "allow"
 missing-panics-doc = "allow"
 must-use-candidate = "allow"
 needless-pass-by-value = "allow"
+new-without-default = "allow"
 pedantic = { level = "deny", priority = -1 }
 result-large-err = "allow"
 self-named-constructors = "allow"

@@ -174,6 +174,41 @@ impl Decode for Archive {
 mod tests {
   use super::*;
 
+  #[test]
+  fn decode_error() {
+    let junk = b"foo".to_vec();
+    let hash = Hash::bytes(&junk);
+    let mut files = BTreeMap::new();
+    files.insert(hash, junk);
+    let archive = Archive {
+      version: Version::Zero,
+      root: hash,
+      files,
+    };
+    assert_matches!(
+      archive.unpack(),
+      Err(ArchiveError::Decode {
+        source: DecodeError::UnexpectedType {
+          expected: MajorType::Map,
+          actual: MajorType::Text,
+        }
+      })
+    );
+  }
+
+  #[test]
+  fn file_hash_mismatch() {
+    let mut archive = Archive::pack(&manifest());
+    let &expected = archive.files.keys().next().unwrap();
+    archive.files.insert(expected, b"foo".to_vec());
+    let actual = Hash::bytes(b"foo");
+    assert_matches!(
+      archive.unpack(),
+      Err(ArchiveError::FileHashMismatch { actual: a, expected: e })
+        if a == actual && e == expected,
+    );
+  }
+
   fn manifest() -> Manifest {
     let mut files = DirectoryTree::new();
 
@@ -188,10 +223,56 @@ mod tests {
   }
 
   #[test]
-  fn round_trip_pack_unpack() {
-    let manifest = manifest();
+  fn missing_root() {
+    let mut archive = Archive::pack(&manifest());
+    let missing = Hash::bytes(&[]);
+    archive.root = missing;
+    assert_matches!(
+      archive.unpack(),
+      Err(ArchiveError::FileMissing { hash }) if hash == missing,
+    );
+  }
+
+  #[test]
+  fn package_missing() {
+    let directory = Directory::default().encode_to_vec();
+    let root = Hash::bytes(&directory);
+    let mut files = BTreeMap::new();
+    files.insert(root, directory);
+    let archive = Archive {
+      version: Version::Zero,
+      root,
+      files,
+    };
+    assert_matches!(archive.unpack(), Err(ArchiveError::PackageMissing));
+  }
+
+  #[test]
+  fn round_trip_empty() {
+    let manifest = Manifest {
+      files: DirectoryTree::new(),
+      signatures: BTreeSet::new(),
+    };
     let archive = Archive::pack(&manifest);
-    assert_eq!(archive.unpack().unwrap(), manifest);
+    let bytes = archive.encode_to_vec();
+    let decoded = Archive::decode_from_vec(bytes).unwrap();
+    assert_eq!(decoded.unpack().unwrap(), manifest);
+  }
+
+  #[test]
+  fn round_trip_empty_directory() {
+    let mut files = DirectoryTree::new();
+    files.create_directory(&"foo/bar".parse().unwrap()).unwrap();
+
+    let manifest = Manifest {
+      files,
+      signatures: BTreeSet::new(),
+    };
+
+    let archive = Archive::pack(&manifest);
+    let bytes = archive.encode_to_vec();
+    let decoded = Archive::decode_from_vec(bytes).unwrap();
+    assert_eq!(decoded.unpack().unwrap(), manifest);
   }
 
   #[test]
@@ -204,11 +285,20 @@ mod tests {
   }
 
   #[test]
-  fn round_trip_empty() {
+  fn round_trip_multiple_files() {
+    let mut files = DirectoryTree::new();
+
+    for (name, content) in [("foo", b"aaa"), ("bar", b"bbb"), ("baz", b"ccc")] {
+      files
+        .create_file(&name.parse().unwrap(), File::new(content))
+        .unwrap();
+    }
+
     let manifest = Manifest {
-      files: DirectoryTree::new(),
+      files,
       signatures: BTreeSet::new(),
     };
+
     let archive = Archive::pack(&manifest);
     let bytes = archive.encode_to_vec();
     let decoded = Archive::decode_from_vec(bytes).unwrap();
@@ -239,40 +329,10 @@ mod tests {
   }
 
   #[test]
-  fn round_trip_empty_directory() {
-    let mut files = DirectoryTree::new();
-    files.create_directory(&"foo/bar".parse().unwrap()).unwrap();
-
-    let manifest = Manifest {
-      files,
-      signatures: BTreeSet::new(),
-    };
-
+  fn round_trip_pack_unpack() {
+    let manifest = manifest();
     let archive = Archive::pack(&manifest);
-    let bytes = archive.encode_to_vec();
-    let decoded = Archive::decode_from_vec(bytes).unwrap();
-    assert_eq!(decoded.unpack().unwrap(), manifest);
-  }
-
-  #[test]
-  fn round_trip_multiple_files() {
-    let mut files = DirectoryTree::new();
-
-    for (name, content) in [("foo", b"aaa"), ("bar", b"bbb"), ("baz", b"ccc")] {
-      files
-        .create_file(&name.parse().unwrap(), File::new(content))
-        .unwrap();
-    }
-
-    let manifest = Manifest {
-      files,
-      signatures: BTreeSet::new(),
-    };
-
-    let archive = Archive::pack(&manifest);
-    let bytes = archive.encode_to_vec();
-    let decoded = Archive::decode_from_vec(bytes).unwrap();
-    assert_eq!(decoded.unpack().unwrap(), manifest);
+    assert_eq!(archive.unpack().unwrap(), manifest);
   }
 
   #[test]
@@ -298,84 +358,6 @@ mod tests {
     let bytes = archive.encode_to_vec();
     let decoded = Archive::decode_from_vec(bytes).unwrap();
     assert_eq!(decoded.unpack().unwrap(), manifest);
-  }
-
-  #[test]
-  fn missing_root() {
-    let mut archive = Archive::pack(&manifest());
-    let missing = Hash::bytes(&[]);
-    archive.root = missing;
-    assert_matches!(
-      archive.unpack(),
-      Err(ArchiveError::FileMissing { hash }) if hash == missing,
-    );
-  }
-
-  #[test]
-  fn file_hash_mismatch() {
-    let mut archive = Archive::pack(&manifest());
-    let &expected = archive.files.keys().next().unwrap();
-    archive.files.insert(expected, b"foo".to_vec());
-    let actual = Hash::bytes(b"foo");
-    assert_matches!(
-      archive.unpack(),
-      Err(ArchiveError::FileHashMismatch { actual: a, expected: e })
-        if a == actual && e == expected,
-    );
-  }
-
-  #[test]
-  fn package_missing() {
-    let directory = Directory::default().encode_to_vec();
-    let root = Hash::bytes(&directory);
-    let mut files = BTreeMap::new();
-    files.insert(root, directory);
-    let archive = Archive {
-      version: Version::Zero,
-      root,
-      files,
-    };
-    assert_matches!(archive.unpack(), Err(ArchiveError::PackageMissing));
-  }
-
-  #[test]
-  fn signatures_missing() {
-    let mut builder = ArchiveBuilder::new();
-
-    let package = builder.entry(EntryType::Directory, Directory::default().encode_to_vec());
-
-    let root = Directory {
-      version: Version::Zero,
-      entries: BTreeMap::from([("package".parse().unwrap(), package)]),
-    };
-
-    let root = builder.entry(EntryType::Directory, root.encode_to_vec());
-
-    let archive = builder.build(root.hash);
-
-    assert_matches!(archive.unpack(), Err(ArchiveError::SignaturesMissing));
-  }
-
-  #[test]
-  fn decode_error() {
-    let junk = b"foo".to_vec();
-    let hash = Hash::bytes(&junk);
-    let mut files = BTreeMap::new();
-    files.insert(hash, junk);
-    let archive = Archive {
-      version: Version::Zero,
-      root: hash,
-      files,
-    };
-    assert_matches!(
-      archive.unpack(),
-      Err(ArchiveError::Decode {
-        source: DecodeError::UnexpectedType {
-          expected: MajorType::Map,
-          actual: MajorType::Text,
-        }
-      })
-    );
   }
 
   #[test]
@@ -416,6 +398,24 @@ mod tests {
         source: SignatureError::Bech32 { .. }
       })
     );
+  }
+
+  #[test]
+  fn signatures_missing() {
+    let mut builder = ArchiveBuilder::new();
+
+    let package = builder.entry(EntryType::Directory, Directory::default().encode_to_vec());
+
+    let root = Directory {
+      version: Version::Zero,
+      entries: BTreeMap::from([("package".parse().unwrap(), package)]),
+    };
+
+    let root = builder.entry(EntryType::Directory, root.encode_to_vec());
+
+    let archive = builder.build(root.hash);
+
+    assert_matches!(archive.unpack(), Err(ArchiveError::SignaturesMissing));
   }
 
   #[test]
