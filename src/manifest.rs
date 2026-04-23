@@ -44,7 +44,7 @@ impl Manifest {
   }
 
   pub fn fingerprint(&self) -> Fingerprint {
-    Archive::archive(self).fingerprint()
+    Archive::pack(self).fingerprint()
   }
 
   pub(crate) fn from_json(json: &str, path: &Utf8Path) -> Result<Self> {
@@ -84,7 +84,7 @@ impl Manifest {
       Archive::decode_from_vec(cbor).context(error::DecodeManifest { path: display_path })?;
 
     let manifest = archive
-      .unarchive()
+      .unpack()
       .context(error::UnarchiveManifest { path: display_path })?;
 
     manifest.verify_signatures()?;
@@ -100,7 +100,7 @@ impl Manifest {
   }
 
   pub fn save(&self, path: &Utf8Path) -> Result {
-    let cbor = Archive::archive(self).encode_to_vec();
+    let cbor = Archive::pack(self).encode_to_vec();
     filesystem::write(path, cbor)
   }
 

@@ -11,7 +11,28 @@ impl Archive {
   const PACKAGE: &str = "package";
   const SIGNATURES: &str = "signatures";
 
-  pub(crate) fn archive(manifest: &Manifest) -> Self {
+  fn decode_directory(
+    &self,
+    loose: &mut BTreeSet<Hash>,
+    hash: Hash,
+  ) -> Result<Directory, ArchiveError> {
+    let file = self
+      .files
+      .get(&hash)
+      .context(archive_error::FileMissing { hash })?;
+
+    loose.remove(&hash);
+
+    Directory::decode_from_vec(file.clone()).context(archive_error::Decode)
+  }
+
+  pub(crate) fn fingerprint(&self) -> Fingerprint {
+    let root = &self.files[&self.root];
+    let root = Directory::decode_from_vec(root.clone()).unwrap();
+    Fingerprint(root.entries[&Self::PACKAGE.parse::<Component>().unwrap()].hash)
+  }
+
+  pub(crate) fn pack(manifest: &Manifest) -> Self {
     let mut builder = ArchiveBuilder::new();
 
     let package = builder.directory(&manifest.files);
@@ -48,28 +69,7 @@ impl Archive {
     builder.build(entry.hash)
   }
 
-  fn decode_directory(
-    &self,
-    loose: &mut BTreeSet<Hash>,
-    hash: Hash,
-  ) -> Result<Directory, ArchiveError> {
-    let file = self
-      .files
-      .get(&hash)
-      .context(archive_error::FileMissing { hash })?;
-
-    loose.remove(&hash);
-
-    Directory::decode_from_vec(file.clone()).context(archive_error::Decode)
-  }
-
-  pub(crate) fn fingerprint(&self) -> Fingerprint {
-    let root = &self.files[&self.root];
-    let root = Directory::decode_from_vec(root.clone()).unwrap();
-    Fingerprint(root.entries[&Self::PACKAGE.parse::<Component>().unwrap()].hash)
-  }
-
-  pub(crate) fn unarchive(&self) -> Result<Manifest, ArchiveError> {
+  pub(crate) fn unpack(&self) -> Result<Manifest, ArchiveError> {
     let mut loose = self.files.keys().copied().collect();
 
     ensure! {
@@ -92,7 +92,7 @@ impl Archive {
       .get(Self::PACKAGE)
       .context(archive_error::PackageMissing)?;
 
-    let files = self.unarchive_directory(&mut loose, package)?;
+    let files = self.unpack_directory(&mut loose, package)?;
 
     let signatures_entry = root
       .entries
@@ -121,7 +121,7 @@ impl Archive {
     Ok(Manifest { files, signatures })
   }
 
-  fn unarchive_directory(
+  fn unpack_directory(
     &self,
     loose: &mut BTreeSet<Hash>,
     entry: &Entry,
@@ -136,9 +136,7 @@ impl Archive {
           hash: entry.hash,
           size: entry.size,
         }),
-        EntryType::Directory => {
-          DirectoryTreeEntry::Directory(self.unarchive_directory(loose, entry)?)
-        }
+        EntryType::Directory => DirectoryTreeEntry::Directory(self.unpack_directory(loose, entry)?),
       };
       entries.insert(name.clone(), crate_entry);
     }
