@@ -40,3 +40,15 @@ impl Display for MajorType {
     write!(f, "{}", self.name())
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn all_possible_bytes_produce_valid_major_type() {
+    for byte in 0..=u8::MAX {
+      MajorType::from_initial_byte(byte);
+    }
+  }
+}
