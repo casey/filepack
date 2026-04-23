@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Debug, PartialEq, Snafu)]
+#[derive(Debug, Snafu)]
 #[snafu(context(suffix(false)), visibility(pub(crate)))]
 pub enum Bech32Error {
   #[snafu(display("failed to decode bech32 {ty}"))]
