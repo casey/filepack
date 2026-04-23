@@ -4,17 +4,21 @@ use super::*;
 fn creates_archive_from_json() {
   Test::new()
     .touch("foo")
-    .stdin(&json! {
-      files: {
-        foo: {
-          hash: EMPTY_HASH,
-          size: 0
-        }
+    .write(
+      "manifest.json",
+      json! {
+        files: {
+          foo: {
+            hash: EMPTY_HASH,
+            size: 0
+          }
+        },
+        signatures: [],
       },
-      signatures: [],
-    })
-    .args(["archive", "manifest.filepack"])
+    )
+    .args(["archive", "manifest.json", "manifest.filepack"])
     .success()
+    .remove_file("manifest.json")
     .args(["verify", "."])
     .stderr("successfully verified 1 file totaling 0 bytes\n")
     .success();
@@ -24,16 +28,19 @@ fn creates_archive_from_json() {
 fn round_trip() {
   Test::new()
     .touch("foo")
-    .stdin(&json! {
-      files: {
-        foo: {
-          hash: EMPTY_HASH,
-          size: 0
-        }
+    .write(
+      "manifest.json",
+      json! {
+        files: {
+          foo: {
+            hash: EMPTY_HASH,
+            size: 0
+          }
+        },
+        signatures: [],
       },
-      signatures: [],
-    })
-    .args(["archive", "manifest.filepack"])
+    )
+    .args(["archive", "manifest.json", "manifest.filepack"])
     .success()
     .arg("manifest")
     .stdout(json_pretty! {

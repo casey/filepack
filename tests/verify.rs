@@ -40,15 +40,18 @@ fn duplicate_key_named_and_literal() {
 #[test]
 fn extra_fields_are_not_allowed() {
   Test::new()
-    .stdin(&json! {
-      files: {},
-      signatures: [],
-      foo: "bar"
-    })
-    .args(["archive", "manifest.filepack"])
+    .write(
+      "manifest.json",
+      json! {
+        files: {},
+        signatures: [],
+        foo: "bar"
+      },
+    )
+    .args(["archive", "manifest.json", "manifest.filepack"])
     .stderr(
       "\
-error: failed to deserialize manifest at `manifest.filepack`
+error: failed to deserialize manifest at `manifest.json`
        └─ unknown field `foo`, expected `files` or `signatures` at line 1 column 33\n",
     )
     .failure();
@@ -140,15 +143,18 @@ fn ignore_missing() {
 #[test]
 fn malformed_signature_error() {
   Test::new()
-    .stdin(&json! {
-      files: {},
-      signatures: [
-        "signature1invalid"
-      ]
-    })
-    .args(["archive", "manifest.filepack"])
+    .write(
+      "manifest.json",
+      json! {
+        files: {},
+        signatures: [
+          "signature1invalid"
+        ]
+      },
+    )
+    .args(["archive", "manifest.json", "manifest.filepack"])
     .stderr_regex(
-      "error: failed to deserialize manifest at `manifest.filepack`\n.*failed to decode bech32.*",
+      "error: failed to deserialize manifest at `manifest.json`\n.*failed to decode bech32.*",
     )
     .failure();
 }
@@ -722,20 +728,23 @@ fn weak_signature_public_key() {
   }
 
   Test::new()
-    .stdin(&json! {
-      files: {
-        bar: {
-          hash: EMPTY_HASH,
-          size: 0
-        }
+    .write(
+      "manifest.json",
+      json! {
+        files: {
+          bar: {
+            hash: EMPTY_HASH,
+            size: 0
+          }
+        },
+        signatures: [
+          checksum(&format!("signature1a{}", "q".repeat(207)))
+        ]
       },
-      signatures: [
-        checksum(&format!("signature1a{}", "q".repeat(207)))
-      ]
-    })
-    .args(["archive", "manifest.filepack"])
+    )
+    .args(["archive", "manifest.json", "manifest.filepack"])
     .stderr_regex(
-      "error: failed to deserialize manifest at `manifest.filepack`\n.*signature public key invalid.*",
+      "error: failed to deserialize manifest at `manifest.json`\n.*signature public key invalid.*",
     )
     .failure();
 }

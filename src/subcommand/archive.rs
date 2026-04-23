@@ -1,21 +1,20 @@
-use {super::*, io::Read};
+use super::*;
 
 #[derive(Parser)]
 pub(crate) struct Archive {
-  #[arg(help = "Write archive to <PATH>")]
-  path: Utf8PathBuf,
+  #[arg(help = "Read manifest JSON from <INPUT>")]
+  input: Utf8PathBuf,
+  #[arg(help = "Write archive to <OUTPUT>")]
+  output: Utf8PathBuf,
 }
 
 impl Archive {
   pub(crate) fn run(self) -> Result {
-    let mut json = String::new();
-    io::stdin()
-      .read_to_string(&mut json)
-      .context(error::StandardInputIo)?;
+    let json = filesystem::read_to_string(&self.input)?;
 
-    let manifest = Manifest::from_json(&json, &self.path)?;
+    let manifest = Manifest::from_json(&json, &self.input)?;
 
-    manifest.save(&self.path)?;
+    manifest.save(&self.output)?;
 
     Ok(())
   }

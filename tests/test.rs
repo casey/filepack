@@ -358,23 +358,21 @@ impl Test {
   }
 
   pub(crate) fn write_archive(self, path: &str, json: impl AsRef<str>) -> Self {
-    let mut child = Command::new(env!("CARGO_BIN_EXE_filepack"))
-      .args(["archive", path])
-      .stdin(Stdio::piped())
+    let manifest_json = self.join("write-archive-manifest.json");
+
+    fs::write(&manifest_json, json.as_ref()).unwrap();
+
+    let status = Command::new(env!("CARGO_BIN_EXE_filepack"))
+      .args(["archive", manifest_json.as_str(), path])
       .current_dir(self.tempdir.path())
       .spawn()
-      .unwrap();
-
-    child
-      .stdin
-      .as_mut()
       .unwrap()
-      .write_all(json.as_ref().as_bytes())
+      .wait()
       .unwrap();
-
-    let status = child.wait().unwrap();
 
     assert!(status.success());
+
+    fs::remove_file(&manifest_json).unwrap();
 
     self
   }
