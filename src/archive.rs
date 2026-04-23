@@ -99,10 +99,10 @@ impl Archive {
       .get(Self::SIGNATURES)
       .context(archive_error::SignaturesMissing)?;
 
-    let signatures_dir = self.decode_directory(&mut loose, signatures_entry.hash)?;
+    let signatures_directory = self.decode_directory(&mut loose, signatures_entry.hash)?;
 
     let mut signatures = BTreeSet::new();
-    for entry in signatures_dir.entries.values() {
+    for entry in signatures_directory.entries.values() {
       loose.remove(&entry.hash);
       let bytes = &self.files[&entry.hash];
       let s = str::from_utf8(bytes)
