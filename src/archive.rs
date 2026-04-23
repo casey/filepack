@@ -178,10 +178,7 @@ mod tests {
     let mut files = DirectoryTree::new();
 
     files
-      .create_file(
-        &"foo".parse().unwrap(),
-        File::new(b"bar"),
-      )
+      .create_file(&"foo".parse().unwrap(), File::new(b"bar"))
       .unwrap();
 
     Manifest {
@@ -223,17 +220,11 @@ mod tests {
     let mut files = DirectoryTree::new();
 
     files
-      .create_file(
-        &"a/b/c".parse().unwrap(),
-        File::new(b"foo"),
-      )
+      .create_file(&"a/b/c".parse().unwrap(), File::new(b"foo"))
       .unwrap();
 
     files
-      .create_file(
-        &"a/d".parse().unwrap(),
-        File::new(b"bar"),
-      )
+      .create_file(&"a/d".parse().unwrap(), File::new(b"bar"))
       .unwrap();
 
     let manifest = Manifest {

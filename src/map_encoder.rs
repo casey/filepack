@@ -1,13 +1,13 @@
 use super::*;
 
-pub(crate) struct MapEncoder<'a, K> {
+pub struct MapEncoder<'a, K> {
   encoder: &'a mut Encoder,
   last: Option<K>,
   remaining: u64,
 }
 
 impl<'a, K: Encode + PartialOrd> MapEncoder<'a, K> {
-  pub(crate) fn item(&mut self, key: K, value: impl Encode) {
+  pub fn item(&mut self, key: K, value: impl Encode) {
     assert!(self.remaining > 0, "too many items");
 
     if let Some(last) = &self.last {
@@ -30,7 +30,7 @@ impl<'a, K: Encode + PartialOrd> MapEncoder<'a, K> {
     }
   }
 
-  pub(crate) fn optional_item(&mut self, key: K, value: Option<impl Encode>) {
+  pub fn optional_item(&mut self, key: K, value: Option<impl Encode>) {
     if let Some(value) = value {
       self.item(key, value);
     }

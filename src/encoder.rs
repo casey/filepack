@@ -1,16 +1,16 @@
 use super::*;
 
-pub(crate) struct Encoder {
+pub struct Encoder {
   buffer: Vec<u8>,
 }
 
 impl Encoder {
-  pub(crate) fn bytes(&mut self, bytes: &[u8]) {
+  pub fn bytes(&mut self, bytes: &[u8]) {
     self.head(MajorType::Bytes.head(bytes.len().into_u64()));
     self.buffer.extend(bytes);
   }
 
-  pub(crate) fn finish(self) -> Vec<u8> {
+  pub fn finish(self) -> Vec<u8> {
     self.buffer
   }
 
@@ -36,19 +36,19 @@ impl Encoder {
     self.buffer[i] |= head.major_type.value() << 5;
   }
 
-  pub(crate) fn integer(&mut self, integer: u64) {
+  pub fn integer(&mut self, integer: u64) {
     self.head(MajorType::UnsignedInteger.head(integer));
   }
 
-  pub(crate) fn map<K: Encode + PartialOrd>(&mut self, length: u64) -> MapEncoder<K> {
+  pub fn map<K: Encode + PartialOrd>(&mut self, length: u64) -> MapEncoder<K> {
     MapEncoder::new(self, length)
   }
 
-  pub(crate) fn new() -> Self {
+  pub fn new() -> Self {
     Self { buffer: Vec::new() }
   }
 
-  pub(crate) fn text(&mut self, text: &str) {
+  pub fn text(&mut self, text: &str) {
     self.head(MajorType::Text.head(text.len().into_u64()));
     self.buffer.extend(text.as_bytes());
   }

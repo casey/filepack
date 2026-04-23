@@ -1,6 +1,6 @@
 use super::*;
 
-pub(crate) trait Encode {
+pub trait Encode {
   fn encode(&self, encoder: &mut Encoder);
 
   fn encode_to_vec(&self) -> Vec<u8> {

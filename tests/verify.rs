@@ -1,4 +1,7 @@
-use super::*;
+use {
+  super::*,
+  filepack::{Encoder, Hash},
+};
 
 #[test]
 fn duplicate_key_literal() {
@@ -425,6 +428,34 @@ fn non_unicode_manifest_deserialize_error() {
     .write("manifest.filepack", [0x80])
     .args(["verify", "."])
     .stderr_regex("error: failed to decode manifest at `manifest.filepack`\n.*")
+    .failure();
+}
+
+#[test]
+fn unarchive_error() {
+  let mut dir_encoder = Encoder::new();
+  let mut dir_map = dir_encoder.map::<u8>(2);
+  dir_map.item(0, 0u8);
+  dir_map.item(1, &BTreeMap::<String, u8>::new());
+  drop(dir_map);
+  let dir_bytes = dir_encoder.finish();
+
+  let root = Hash::bytes(&dir_bytes);
+
+  let mut files = BTreeMap::new();
+  files.insert(root, dir_bytes);
+
+  let mut encoder = Encoder::new();
+  let mut archive = encoder.map::<u8>(3);
+  archive.item(0, 0u8);
+  archive.item(1, root);
+  archive.item(2, &files);
+  drop(archive);
+
+  Test::new()
+    .write("manifest.filepack", encoder.finish())
+    .args(["verify", "."])
+    .stderr_regex("error: failed to unarchive manifest\n.*archive missing package directory\n")
     .failure();
 }
 

@@ -39,8 +39,6 @@ use {
     directory_tree_entry::DirectoryTreeEntry,
     display_path::DisplayPath,
     display_secret::DisplaySecret,
-    encode::Encode,
-    encoder::Encoder,
     entries::Entries,
     entry::Entry,
     entry_type::EntryType,
@@ -57,7 +55,6 @@ use {
     lint_error::{Lint, LintError},
     lint_group::LintGroup,
     map_decoder::MapDecoder,
-    map_encoder::MapEncoder,
     metadata::Metadata,
     mode::Mode,
     options::Options,
@@ -119,10 +116,10 @@ use {
 };
 
 pub use self::{
-  directory_tree::DirectoryTree, error::Error, fingerprint::Fingerprint, hash::Hash,
-  language_error::LanguageError, major_type::MajorType, manifest::Manifest, message::Message,
-  private_key::PrivateKey, public_key::PublicKey, relative_path::RelativePath,
-  signature::Signature, tag_error::TagError,
+  directory_tree::DirectoryTree, encode::Encode, encoder::Encoder, error::Error,
+  fingerprint::Fingerprint, hash::Hash, language_error::LanguageError, major_type::MajorType,
+  manifest::Manifest, map_encoder::MapEncoder, message::Message, private_key::PrivateKey,
+  public_key::PublicKey, relative_path::RelativePath, signature::Signature, tag_error::TagError,
 };
 
 #[cfg(test)]
