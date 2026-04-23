@@ -302,12 +302,12 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
-  #[snafu(display("Failed to get curent time"))]
+  #[snafu(display("failed to get curent time"))]
   Time {
     backtrace: Option<Backtrace>,
     source: SystemTimeError,
   },
-  #[snafu(display("Failed to unarchive manifest"))]
+  #[snafu(display("failed to unarchive manifest"))]
   UnarchiveManifest {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
