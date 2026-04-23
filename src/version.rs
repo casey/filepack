@@ -1,8 +1,9 @@
 use super::*;
 
-#[derive(Clone, Copy, Debug, FromRepr, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, PartialEq)]
 #[repr(u8)]
 pub(crate) enum Version {
+  #[default]
   Zero = 0,
 }
 

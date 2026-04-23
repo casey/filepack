@@ -169,3 +169,174 @@ impl Decode for Archive {
     })
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  fn manifest() -> Manifest {
+    let mut files = DirectoryTree::new();
+
+    files
+      .create_file(
+        &"foo".parse().unwrap(),
+        File {
+          hash: Hash::bytes(b"bar"),
+          size: 3,
+        },
+      )
+      .unwrap();
+
+    Manifest {
+      files,
+      signatures: BTreeSet::new(),
+    }
+  }
+
+  #[test]
+  fn round_trip_pack_unpack() {
+    let manifest = manifest();
+    let archive = Archive::pack(&manifest);
+    assert_eq!(archive.unpack().unwrap(), manifest);
+  }
+
+  #[test]
+  fn round_trip_encode_decode() {
+    let manifest = manifest();
+    let archive = Archive::pack(&manifest);
+    let bytes = archive.encode_to_vec();
+    let decoded = Archive::decode_from_vec(bytes).unwrap();
+    assert_eq!(decoded.unpack().unwrap(), manifest);
+  }
+
+  #[test]
+  fn missing_root() {
+    let mut archive = Archive::pack(&manifest());
+    let missing = Hash::bytes(&[]);
+    archive.root = missing;
+    assert_matches!(
+      archive.unpack(),
+      Err(ArchiveError::FileMissing { hash }) if hash == missing,
+    );
+  }
+
+  #[test]
+  fn file_hash_mismatch() {
+    let mut archive = Archive::pack(&manifest());
+    let &expected = archive.files.keys().next().unwrap();
+    archive.files.insert(expected, b"foo".to_vec());
+    let actual = Hash::bytes(b"foo");
+    assert_matches!(
+      archive.unpack(),
+      Err(ArchiveError::FileHashMismatch { actual: a, expected: e })
+        if a == actual && e == expected,
+    );
+  }
+
+  #[test]
+  fn package_missing() {
+    let directory = Directory::default().encode_to_vec();
+    let root = Hash::bytes(&directory);
+    let mut files = BTreeMap::new();
+    files.insert(root, directory);
+    let archive = Archive {
+      version: Version::Zero,
+      root,
+      files,
+    };
+    assert_matches!(archive.unpack(), Err(ArchiveError::PackageMissing));
+  }
+
+  #[test]
+  fn signatures_missing() {
+    let mut builder = ArchiveBuilder::new();
+
+    let package = builder.entry(EntryType::Directory, Directory::default().encode_to_vec());
+
+    let root = Directory {
+      version: Version::Zero,
+      entries: BTreeMap::from([("package".parse().unwrap(), package)]),
+    };
+
+    let root = builder.entry(EntryType::Directory, root.encode_to_vec());
+
+    let archive = builder.build(root.hash);
+
+    assert_matches!(archive.unpack(), Err(ArchiveError::SignaturesMissing));
+  }
+
+  #[test]
+  fn decode_error() {
+    let junk = b"foo".to_vec();
+    let hash = Hash::bytes(&junk);
+    let mut files = BTreeMap::new();
+    files.insert(hash, junk);
+    let archive = Archive {
+      version: Version::Zero,
+      root: hash,
+      files,
+    };
+    assert_matches!(
+      archive.unpack(),
+      Err(ArchiveError::Decode {
+        source: DecodeError::UnexpectedType {
+          expected: MajorType::Map,
+          actual: MajorType::Text,
+        }
+      })
+    );
+  }
+
+  #[test]
+  fn signature_parse_error() {
+    let mut builder = ArchiveBuilder::new();
+
+    let package = Directory {
+      version: Version::Zero,
+      entries: BTreeMap::new(),
+    };
+
+    let package = builder.entry(EntryType::Directory, package.encode_to_vec());
+
+    let signature = builder.entry(EntryType::File, b"not-a-signature".to_vec());
+
+    let signatures = Directory {
+      version: Version::Zero,
+      entries: BTreeMap::from([("0".parse().unwrap(), signature)]),
+    };
+
+    let signatures = builder.entry(EntryType::Directory, signatures.encode_to_vec());
+
+    let root = Directory {
+      version: Version::Zero,
+      entries: BTreeMap::from([
+        ("package".parse().unwrap(), package),
+        ("signatures".parse().unwrap(), signatures),
+      ]),
+    };
+
+    let root = builder.entry(EntryType::Directory, root.encode_to_vec());
+
+    let archive = builder.build(root.hash);
+
+    assert_matches!(
+      archive.unpack(),
+      Err(ArchiveError::SignatureParse {
+        source: SignatureError::Bech32 { .. }
+      })
+    );
+  }
+
+  #[test]
+  fn unreferenced_files() {
+    let mut archive = Archive::pack(&manifest());
+    let file = b"foo".to_vec();
+    let hash = Hash::bytes(&file);
+    archive.files.insert(hash, file);
+    assert_matches!(
+      archive.unpack(),
+      Err(ArchiveError::UnreferencedFiles { hashes: Ticked(hashes) })
+        if hashes == BTreeSet::from([hash]),
+    );
+  }
+}

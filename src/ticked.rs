@@ -1,7 +1,7 @@
 use super::*;
 
 #[derive(Debug)]
-pub struct Ticked<T>(BTreeSet<T>);
+pub struct Ticked<T>(pub BTreeSet<T>);
 
 impl<T: Display> Display for Ticked<T> {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {

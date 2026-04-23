@@ -1,7 +1,7 @@
 use super::*;
 
 #[allow(clippy::arbitrary_source_item_ordering)]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Default, PartialEq)]
 pub(crate) struct Directory {
   pub(crate) version: Version,
   pub(crate) entries: BTreeMap<Component, Entry>,
