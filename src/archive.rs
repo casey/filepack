@@ -130,11 +130,11 @@ impl Archive {
     loose: &mut BTreeSet<Hash>,
     entry: &Entry,
   ) -> Result<DirectoryTree, ArchiveError> {
-    let dir = self.decode_directory(loose, entry.hash)?;
+    let directory = self.decode_directory(loose, entry.hash)?;
 
     let mut entries = BTreeMap::new();
 
-    for (name, entry) in &dir.entries {
+    for (name, entry) in &directory.entries {
       let crate_entry = match entry.ty {
         EntryType::File => DirectoryTreeEntry::File(File {
           hash: entry.hash,

@@ -1,4 +1,4 @@
-watch +args='ltest':
+watch +args='lcheck':
   cargo watch --clear --exec '{{ args }}'
 
 clippy: (watch 'lclippy --tests --all --all-targets -- --deny warnings')
