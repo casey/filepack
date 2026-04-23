@@ -232,7 +232,7 @@ mismatched file: `{path}`
     }
 
     if self.print {
-      println!("{}", serde_json::to_string(&manifest).unwrap());
+      println!("{}", serde_json::to_string_pretty(&manifest).unwrap());
     }
 
     eprint!("successfully verified {}", Count(verified.files, "file"));

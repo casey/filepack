@@ -459,7 +459,7 @@ fn print() {
       },
     )
     .args(["verify", "--print", "."])
-    .stdout(json! {
+    .stdout(json_pretty! {
       files: {
         foo: {
           hash: EMPTY_HASH,
