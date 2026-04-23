@@ -210,6 +210,121 @@ mod tests {
   }
 
   #[test]
+  fn round_trip_empty() {
+    let manifest = Manifest {
+      files: DirectoryTree::new(),
+      signatures: BTreeSet::new(),
+    };
+    let archive = Archive::pack(&manifest);
+    let bytes = archive.encode_to_vec();
+    let decoded = Archive::decode_from_vec(bytes).unwrap();
+    assert_eq!(decoded.unpack().unwrap(), manifest);
+  }
+
+  #[test]
+  fn round_trip_nested_directories() {
+    let mut files = DirectoryTree::new();
+
+    files
+      .create_file(
+        &"a/b/c".parse().unwrap(),
+        File {
+          hash: Hash::bytes(b"foo"),
+          size: 3,
+        },
+      )
+      .unwrap();
+
+    files
+      .create_file(
+        &"a/d".parse().unwrap(),
+        File {
+          hash: Hash::bytes(b"bar"),
+          size: 3,
+        },
+      )
+      .unwrap();
+
+    let manifest = Manifest {
+      files,
+      signatures: BTreeSet::new(),
+    };
+
+    let archive = Archive::pack(&manifest);
+    let bytes = archive.encode_to_vec();
+    let decoded = Archive::decode_from_vec(bytes).unwrap();
+    assert_eq!(decoded.unpack().unwrap(), manifest);
+  }
+
+  #[test]
+  fn round_trip_empty_directory() {
+    let mut files = DirectoryTree::new();
+    files.create_directory(&"foo/bar".parse().unwrap()).unwrap();
+
+    let manifest = Manifest {
+      files,
+      signatures: BTreeSet::new(),
+    };
+
+    let archive = Archive::pack(&manifest);
+    let bytes = archive.encode_to_vec();
+    let decoded = Archive::decode_from_vec(bytes).unwrap();
+    assert_eq!(decoded.unpack().unwrap(), manifest);
+  }
+
+  #[test]
+  fn round_trip_multiple_files() {
+    let mut files = DirectoryTree::new();
+
+    for (name, content) in [("foo", b"aaa"), ("bar", b"bbb"), ("baz", b"ccc")] {
+      files
+        .create_file(
+          &name.parse().unwrap(),
+          File {
+            hash: Hash::bytes(content),
+            size: 3,
+          },
+        )
+        .unwrap();
+    }
+
+    let manifest = Manifest {
+      files,
+      signatures: BTreeSet::new(),
+    };
+
+    let archive = Archive::pack(&manifest);
+    let bytes = archive.encode_to_vec();
+    let decoded = Archive::decode_from_vec(bytes).unwrap();
+    assert_eq!(decoded.unpack().unwrap(), manifest);
+  }
+
+  #[test]
+  fn round_trip_with_signature() {
+    let manifest = Manifest {
+      files: DirectoryTree::new(),
+      signatures: BTreeSet::new(),
+    };
+
+    let private_key = test::PRIVATE_KEY.parse::<PrivateKey>().unwrap();
+    let message = Message {
+      fingerprint: manifest.fingerprint(),
+      timestamp: None,
+    };
+    let signature = private_key.sign(&message);
+
+    let manifest = Manifest {
+      files: manifest.files,
+      signatures: BTreeSet::from([signature]),
+    };
+
+    let archive = Archive::pack(&manifest);
+    let bytes = archive.encode_to_vec();
+    let decoded = Archive::decode_from_vec(bytes).unwrap();
+    assert_eq!(decoded.unpack().unwrap(), manifest);
+  }
+
+  #[test]
   fn missing_root() {
     let mut archive = Archive::pack(&manifest());
     let missing = Hash::bytes(&[]);
