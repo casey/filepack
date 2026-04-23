@@ -230,9 +230,7 @@ mod tests {
   fn decode_error() {
     assert_matches!(
       Language::decode(&mut Decoder::new("xx".encode_to_vec())),
-      Err(DecodeError::Language {
-        source: LanguageError::Code { code },
-      }) if code == "xx",
+      Err(DecodeError::Language { source: LanguageError::Code { code }, }) if code == "xx",
     );
   }
 
