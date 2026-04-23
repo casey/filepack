@@ -94,25 +94,29 @@ impl Archive {
 
     let files = self.unpack_directory(&mut loose, package)?;
 
-    let signatures_entry = root
-      .entries
-      .get(Self::SIGNATURES)
-      .context(archive_error::SignaturesMissing)?;
+    let signatures = {
+      let entry = root
+        .entries
+        .get(Self::SIGNATURES)
+        .context(archive_error::SignaturesMissing)?;
 
-    let signatures_directory = self.decode_directory(&mut loose, signatures_entry.hash)?;
+      let directory = self.decode_directory(&mut loose, entry.hash)?;
 
-    let mut signatures = BTreeSet::new();
-    for entry in signatures_directory.entries.values() {
-      loose.remove(&entry.hash);
-      let bytes = &self.files[&entry.hash];
-      let s = str::from_utf8(bytes)
-        .context(decode_error::Unicode)
-        .context(archive_error::Decode)?;
-      signatures.insert(
-        s.parse::<Signature>()
-          .context(archive_error::SignatureParse)?,
-      );
-    }
+      let mut signatures = BTreeSet::new();
+      for entry in directory.entries.values() {
+        loose.remove(&entry.hash);
+        let bytes = &self.files[&entry.hash];
+        let s = str::from_utf8(bytes)
+          .context(decode_error::Unicode)
+          .context(archive_error::Decode)?;
+        signatures.insert(
+          s.parse::<Signature>()
+            .context(archive_error::SignatureParse)?,
+        );
+      }
+
+      signatures
+    };
 
     if !loose.is_empty() {
       return Err(archive_error::UnreferencedFiles { hashes: loose }.build());
