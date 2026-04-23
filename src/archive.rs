@@ -23,7 +23,7 @@ impl Archive {
 
     loose.remove(&hash);
 
-    Directory::decode_from_vec(file.clone()).context(archive_error::Decode)
+    Directory::decode_from_vec(file.clone()).context(archive_error::DirectoryDecode)
   }
 
   pub(crate) fn fingerprint(&self) -> Fingerprint {
@@ -108,7 +108,7 @@ impl Archive {
         let bytes = &self.files[&entry.hash];
         let s = str::from_utf8(bytes)
           .context(decode_error::Unicode)
-          .context(archive_error::Decode)?;
+          .context(archive_error::SignatureDecode)?;
         signatures.insert(
           s.parse::<Signature>()
             .context(archive_error::SignatureParse)?,
