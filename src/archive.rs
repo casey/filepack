@@ -133,7 +133,6 @@ impl Archive {
     let directory = self.decode_directory(loose, entry.hash)?;
 
     let mut entries = BTreeMap::new();
-
     for (name, entry) in &directory.entries {
       let crate_entry = match entry.ty {
         EntryType::File => DirectoryTreeEntry::File(File {
@@ -164,7 +163,7 @@ impl Decode for Archive {
 
     let version = decoder.required_key(0)?;
     let root = decoder.required_key(1)?;
-    let files = decoder.required_key::<BTreeMap<Hash, Vec<u8>>>(2)?;
+    let files = decoder.required_key(2)?;
 
     Ok(Self {
       version,
