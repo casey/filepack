@@ -11,8 +11,8 @@ impl Decode for Directory {
   fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
     let mut decoder = decoder.map::<u8>()?;
 
-    let version = decoder.key(0)?.unwrap();
-    let entries = decoder.key(1)?.unwrap();
+    let version = decoder.required_key(0)?;
+    let entries = decoder.required_key(1)?;
 
     decoder.finish()?;
 

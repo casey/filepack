@@ -190,7 +190,7 @@ mod tests {
     };
     assert_matches!(
       archive.unpack(),
-      Err(ArchiveError::Decode {
+      Err(ArchiveError::DirectoryDecode {
         source: DecodeError::UnexpectedType {
           expected: MajorType::Map,
           actual: MajorType::Text,

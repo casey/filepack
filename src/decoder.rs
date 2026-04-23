@@ -152,7 +152,7 @@ mod tests {
     fn case(bytes: &[u8]) {
       assert_matches!(
         Decoder::new(bytes.to_vec()).head(),
-        Err(DecodeError::OverlongInteger)
+        Err(DecodeError::OverlongInteger),
       );
     }
 

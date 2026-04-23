@@ -12,9 +12,9 @@ impl Decode for Entry {
   fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
     let mut decoder = decoder.map::<u8>()?;
 
-    let ty = decoder.key(0)?.unwrap();
-    let hash = decoder.key(1)?.unwrap();
-    let size = decoder.key(2)?.unwrap();
+    let ty = decoder.required_key(0)?;
+    let hash = decoder.required_key(1)?;
+    let size = decoder.required_key(2)?;
 
     decoder.finish()?;
 

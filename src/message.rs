@@ -17,13 +17,13 @@ impl Decode for Message {
   fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
     let mut map = decoder.map::<u8>()?;
 
-    let application = map.key::<String>(0)?.unwrap();
+    let application = map.required_key::<String>(0)?;
     ensure!(application == "filepack", decode_error::UnexpectedValue);
 
-    let ty = map.key::<String>(1)?.unwrap();
+    let ty = map.required_key::<String>(1)?;
     ensure!(ty == "message", decode_error::UnexpectedValue);
 
-    let fingerprint = map.key::<Fingerprint>(2)?.unwrap();
+    let fingerprint = map.required_key::<Fingerprint>(2)?;
 
     let timestamp = map.key::<u64>(3)?;
 
