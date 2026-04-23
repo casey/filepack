@@ -7,6 +7,16 @@ pub(crate) struct File {
   pub(crate) size: u64,
 }
 
+impl File {
+  #[cfg(test)]
+  pub(crate) fn new(bytes: &[u8]) -> Self {
+    Self {
+      hash: Hash::bytes(bytes),
+      size: bytes.len().into_u64(),
+    }
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;

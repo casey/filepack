@@ -180,10 +180,7 @@ mod tests {
     files
       .create_file(
         &"foo".parse().unwrap(),
-        File {
-          hash: Hash::bytes(b"bar"),
-          size: 3,
-        },
+        File::new(b"bar"),
       )
       .unwrap();
 
@@ -228,20 +225,14 @@ mod tests {
     files
       .create_file(
         &"a/b/c".parse().unwrap(),
-        File {
-          hash: Hash::bytes(b"foo"),
-          size: 3,
-        },
+        File::new(b"foo"),
       )
       .unwrap();
 
     files
       .create_file(
         &"a/d".parse().unwrap(),
-        File {
-          hash: Hash::bytes(b"bar"),
-          size: 3,
-        },
+        File::new(b"bar"),
       )
       .unwrap();
 
@@ -278,13 +269,7 @@ mod tests {
 
     for (name, content) in [("foo", b"aaa"), ("bar", b"bbb"), ("baz", b"ccc")] {
       files
-        .create_file(
-          &name.parse().unwrap(),
-          File {
-            hash: Hash::bytes(content),
-            size: 3,
-          },
-        )
+        .create_file(&name.parse().unwrap(), File::new(content))
         .unwrap();
     }
 
