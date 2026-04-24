@@ -140,11 +140,14 @@ impl Archive {
       return Err(archive_error::LooseFiles { hashes: loose }.build());
     }
 
-    let mut unexpected = embedded.keys().cloned().collect::<BTreeSet<RelativePath>>();
-    unexpected.remove(Metadata::CBOR_FILENAME);
+    {
+      let mut unexpected = embedded.keys().cloned().collect::<BTreeSet<RelativePath>>();
+      unexpected.remove(Metadata::CBOR_FILENAME);
 
-    if !unexpected.is_empty() {
-      return Err(archive_error::UnexpectedEmbeddedFiles { paths: unexpected }.build());
+      ensure! {
+        unexpected.is_empty(),
+        archive_error::UnexpectedEmbeddedFiles { paths: unexpected },
+      }
     }
 
     let embedded = embedded
