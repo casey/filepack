@@ -1,9 +1,5 @@
 use super::*;
 
-// todo:
-// - review derive implementation
-// - assert the actual cbor encoding
-
 #[test]
 fn all_optional_all_none() {
   #[derive(Debug, Encode, Decode, PartialEq)]
