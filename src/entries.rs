@@ -8,7 +8,7 @@ impl<'a> From<&'a Manifest> for Entries<'a> {
   fn from(manifest: &'a Manifest) -> Self {
     let mut stack = Vec::new();
     for (component, entry) in &manifest.files.entries {
-      stack.push((vec![&**component], entry));
+      stack.push((vec![component.borrow()], entry));
     }
     Self { stack }
   }
