@@ -587,6 +587,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+ "usized",
 ]
 
 [[package]]

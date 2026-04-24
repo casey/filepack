@@ -48,7 +48,17 @@ tempfile = "3.24.0"
 [lib]
 doctest = false
 
-[lints.clippy]
+[lints]
+workspace = true
+
+[profile.release]
+codegen-units = 1
+lto = true
+
+[workspace]
+members = [".", "crates/*"]
+
+[workspace.lints.clippy]
 all = { level = "deny", priority = -1 }
 arbitrary-source-item-ordering = "deny"
 enum-glob-use = "allow"
@@ -68,16 +78,9 @@ too-many-lines = "allow"
 unused-async = "allow"
 wildcard-imports = "allow"
 
-[lints.rust]
+[workspace.lints.rust]
 mismatched-lifetime-syntaxes = "allow"
 unreachable_pub = "deny"
-
-[profile.release]
-codegen-units = 1
-lto = true
-
-[workspace]
-members = [".", "crates/*"]
 
 [[test]]
 name = "integration"

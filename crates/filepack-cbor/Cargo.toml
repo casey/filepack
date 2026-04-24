@@ -7,11 +7,11 @@ edition = "2024"
 proc-macro = true
 
 [dependencies]
-darling = "0.20"
-proc-macro2 = "1"
-quote = "1"
-syn = "2"
+darling = "0.20.0"
+proc-macro2 = "1.0.0"
+quote = "1.0.0"
+syn = "2.0.0"
+usized = "0.0.2"
 
-[lints.rust]
-mismatched-lifetime-syntaxes = "allow"
-unreachable_pub = "deny"
+[lints]
+workspace = true
