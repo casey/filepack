@@ -10,9 +10,10 @@ pub(crate) struct Input {
 impl Input {
   pub(crate) fn derive_decode_inner(&self) -> Result<proc_macro2::TokenStream> {
     let name = &self.ident;
+
     let fields = self.parse_fields()?;
 
-    let decode_fields = fields.iter().map(|f| {
+    let decode = fields.iter().map(|f| {
       let ident = f.ident;
       let n = f.n;
       if f.optional {
@@ -22,16 +23,16 @@ impl Input {
       }
     });
 
-    let field_names = fields.iter().map(|f| f.ident);
+    let fields = fields.iter().map(|f| f.ident);
 
     Ok(quote! {
       impl Decode for #name {
         fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
           let mut map = decoder.map::<u64>()?;
-          #(#decode_fields)*
+          #(#decode)*
           map.finish()?;
           Ok(Self {
-            #(#field_names,)*
+            #(#fields,)*
           })
         }
       }
@@ -42,9 +43,9 @@ impl Input {
     let name = &self.ident;
     let fields = self.parse_fields()?;
 
-    let required_count = fields.iter().filter(|f| !f.optional).count().into_u64();
+    let required = fields.iter().filter(|f| !f.optional).count().into_u64();
 
-    let count_optionals = fields.iter().filter(|f| f.optional).map(|f| {
+    let optional = fields.iter().filter(|f| f.optional).map(|f| {
       let ident = f.ident;
       quote! { + u64::from(self.#ident.is_some()) }
     });
@@ -62,7 +63,7 @@ impl Input {
     Ok(quote! {
       impl Encode for #name {
         fn encode(&self, encoder: &mut Encoder) {
-          let length = #required_count #(#count_optionals)*;
+          let length = #required #(#optional)*;
           let mut map = encoder.map::<u64>(length);
           #(#items)*
         }
