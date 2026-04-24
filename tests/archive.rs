@@ -59,6 +59,46 @@ fn round_trip() {
 }
 
 #[test]
+fn embedded_preserved() {
+  let content = b"foo";
+  let hash = Hash::bytes(content).to_string();
+  let hex_content = hex::encode(content);
+
+  Test::new()
+    .write(
+      "manifest.json",
+      json! {
+        embedded: {
+          *hash: hex_content
+        },
+        files: {
+          "metadata.cbor": {
+            hash: hash,
+            size: 3
+          }
+        },
+        signatures: [],
+      },
+    )
+    .args(["archive", "manifest.json", "manifest.filepack"])
+    .success()
+    .arg("manifest")
+    .stdout(json_pretty! {
+      embedded: {
+        *hash: hex_content
+      },
+      files: {
+        "metadata.cbor": {
+          hash: hash,
+          size: 3
+        }
+      },
+      signatures: [],
+    })
+    .success();
+}
+
+#[test]
 fn signature_fingerprint_mismatch() {
   let test = Test::new()
     .arg("keygen")

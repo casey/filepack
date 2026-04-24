@@ -491,6 +491,19 @@ fn print() {
 }
 
 #[test]
+fn print_includes_embedded_files() {
+  Test::new()
+    .write("metadata.yaml", "title: foo")
+    .touch("bar")
+    .arg("create")
+    .success()
+    .args(["verify", "--print"])
+    .stdout_regex(r#".*"embedded": \{[^}].*"#)
+    .stderr_regex("successfully verified .* files.*\n")
+    .success();
+}
+
+#[test]
 fn signature_fingerprint_mismatch() {
   let test = Test::new()
     .arg("keygen")
