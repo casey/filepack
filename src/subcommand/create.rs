@@ -39,9 +39,11 @@ impl Create {
       .then(|| Metadata::load_strict(&metadata))
       .transpose()?;
 
+    let metadata_cbor = metadata.as_ref().map(Metadata::encode_to_vec);
+
     let metadata_cbor_path = root.join(Metadata::CBOR_FILENAME);
 
-    if let Some(metadata) = &metadata {
+    if let Some(cbor) = &metadata_cbor {
       ensure! {
         self.force || !metadata_cbor_path.try_exists().context(error::FilesystemIo { path: &metadata_cbor_path })?,
         error::MetadataCborAlreadyExists {
@@ -49,7 +51,7 @@ impl Create {
         },
       }
 
-      filesystem::write(&metadata_cbor_path, metadata.encode_to_vec())?;
+      filesystem::write(&metadata_cbor_path, cbor)?;
     }
 
     let cleaned_manifest = current_dir.join(&manifest_path).lexiclean();
@@ -166,7 +168,14 @@ impl Create {
       bar.inc(file.size);
     }
 
+    let embedded = if let Some(cbor) = metadata_cbor {
+      BTreeMap::from([(Hash::bytes(&cbor), cbor)])
+    } else {
+      BTreeMap::new()
+    };
+
     let mut manifest = Manifest {
+      embedded,
       files,
       signatures: BTreeSet::new(),
     };

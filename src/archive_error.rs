@@ -17,6 +17,8 @@ pub enum ArchiveError {
   SignatureParse { source: SignatureError },
   #[snafu(display("archive missing signatures directory"))]
   SignaturesMissing,
+  #[snafu(display("archive contains unexpected embedded files: {paths}"))]
+  UnexpectedEmbeddedFiles { paths: Ticked<RelativePath> },
   #[snafu(display("archive contains unreferenced files: {hashes}"))]
   UnreferencedFiles { hashes: Ticked<Hash> },
 }

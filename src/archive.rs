@@ -41,6 +41,10 @@ impl Archive {
 
     let package = builder.directory(&manifest.files);
 
+    for (hash, content) in &manifest.embedded {
+      builder.files.insert(*hash, content.clone());
+    }
+
     let mut root = BTreeMap::new();
 
     root.insert(Self::PACKAGE.parse::<ComponentBuf>().unwrap(), package);
@@ -96,7 +100,9 @@ impl Archive {
       .get(Self::PACKAGE)
       .context(archive_error::PackageMissing)?;
 
-    let files = self.unpack_directory(&mut loose, package)?;
+    let mut embedded = BTreeMap::new();
+
+    let files = self.unpack_directory(&mut loose, &mut embedded, package, &[])?;
 
     let signatures = {
       let entry = root
@@ -126,24 +132,64 @@ impl Archive {
       return Err(archive_error::UnreferencedFiles { hashes: loose }.build());
     }
 
-    Ok(Manifest { files, signatures })
+    let metadata_cbor_hash =
+      embedded.remove(&Metadata::CBOR_FILENAME.parse::<RelativePath>().unwrap());
+
+    if !embedded.is_empty() {
+      return Err(
+        archive_error::UnexpectedEmbeddedFiles {
+          paths: embedded.into_keys().collect::<BTreeSet<RelativePath>>(),
+        }
+        .build(),
+      );
+    }
+
+    let embedded = metadata_cbor_hash
+      .map(|hash| (hash, self.files[&hash].clone()))
+      .into_iter()
+      .collect();
+
+    Ok(Manifest {
+      embedded,
+      files,
+      signatures,
+    })
   }
 
   fn unpack_directory(
     &self,
     loose: &mut BTreeSet<Hash>,
+    embedded: &mut BTreeMap<RelativePath, Hash>,
     entry: &Entry,
+    prefix: &[&Component],
   ) -> Result<DirectoryTree, ArchiveError> {
     let directory = self.decode_directory(loose, entry.hash)?;
 
     let mut entries = BTreeMap::new();
     for (name, entry) in &directory.entries {
       let crate_entry = match entry.ty {
-        EntryType::File => DirectoryTreeEntry::File(File {
-          hash: entry.hash,
-          size: entry.size,
-        }),
-        EntryType::Directory => DirectoryTreeEntry::Directory(self.unpack_directory(loose, entry)?),
+        EntryType::File => {
+          if loose.remove(&entry.hash) {
+            let mut components: Vec<&Component> = prefix.to_vec();
+            components.push(name);
+            let path = RelativePath::try_from(components.as_slice()).unwrap();
+            embedded.insert(path, entry.hash);
+          }
+          DirectoryTreeEntry::File(File {
+            hash: entry.hash,
+            size: entry.size,
+          })
+        }
+        EntryType::Directory => {
+          let mut child_prefix: Vec<&Component> = prefix.to_vec();
+          child_prefix.push(name);
+          DirectoryTreeEntry::Directory(self.unpack_directory(
+            loose,
+            embedded,
+            entry,
+            &child_prefix,
+          )?)
+        }
       };
       entries.insert(name.clone(), crate_entry);
     }
@@ -199,6 +245,7 @@ mod tests {
       .unwrap();
 
     Manifest {
+      embedded: BTreeMap::new(),
       files,
       signatures: BTreeSet::new(),
     }
@@ -232,6 +279,7 @@ mod tests {
   #[test]
   fn round_trip_empty() {
     let manifest = Manifest {
+      embedded: BTreeMap::new(),
       files: DirectoryTree::new(),
       signatures: BTreeSet::new(),
     };
@@ -247,6 +295,7 @@ mod tests {
     files.create_directory(&"foo/bar".parse().unwrap()).unwrap();
 
     let manifest = Manifest {
+      embedded: BTreeMap::new(),
       files,
       signatures: BTreeSet::new(),
     };
@@ -277,6 +326,7 @@ mod tests {
     }
 
     let manifest = Manifest {
+      embedded: BTreeMap::new(),
       files,
       signatures: BTreeSet::new(),
     };
@@ -300,6 +350,7 @@ mod tests {
       .unwrap();
 
     let manifest = Manifest {
+      embedded: BTreeMap::new(),
       files,
       signatures: BTreeSet::new(),
     };
@@ -320,6 +371,7 @@ mod tests {
   #[test]
   fn round_trip_with_signature() {
     let manifest = Manifest {
+      embedded: BTreeMap::new(),
       files: DirectoryTree::new(),
       signatures: BTreeSet::new(),
     };
@@ -332,6 +384,7 @@ mod tests {
     let signature = private_key.sign(&message);
 
     let manifest = Manifest {
+      embedded: BTreeMap::new(),
       files: manifest.files,
       signatures: BTreeSet::from([signature]),
     };
@@ -438,6 +491,48 @@ mod tests {
     let archive = builder.build(root.hash);
 
     assert_matches!(archive.unpack(), Err(ArchiveError::SignaturesMissing));
+  }
+
+  #[test]
+  fn embedded_metadata_cbor() {
+    let content = b"foo";
+    let mut files = DirectoryTree::new();
+    files
+      .create_file(
+        &Metadata::CBOR_FILENAME.parse().unwrap(),
+        File::new(content),
+      )
+      .unwrap();
+
+    let manifest = Manifest {
+      embedded: BTreeMap::from([(Hash::bytes(content), content.to_vec())]),
+      files,
+      signatures: BTreeSet::new(),
+    };
+
+    let archive = Archive::pack(&manifest);
+    assert_eq!(archive.unpack().unwrap(), manifest);
+  }
+
+  #[test]
+  fn unexpected_embedded_file() {
+    let content = b"foo";
+    let mut files = DirectoryTree::new();
+    files
+      .create_file(&"bar".parse().unwrap(), File::new(content))
+      .unwrap();
+
+    let manifest = Manifest {
+      embedded: BTreeMap::from([(Hash::bytes(content), content.to_vec())]),
+      files,
+      signatures: BTreeSet::new(),
+    };
+
+    let archive = Archive::pack(&manifest);
+    assert_matches!(
+      archive.unpack(),
+      Err(ArchiveError::UnexpectedEmbeddedFiles { .. }),
+    );
   }
 
   #[test]
