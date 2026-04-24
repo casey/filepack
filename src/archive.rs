@@ -23,7 +23,7 @@ impl Archive {
 
     loose.remove(&hash);
 
-    Directory::decode_from_slice(&file).context(archive_error::DirectoryDecode)
+    Directory::decode_from_slice(file).context(archive_error::DirectoryDecode)
   }
 
   pub(crate) fn fingerprint(&self) -> Fingerprint {

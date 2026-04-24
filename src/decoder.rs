@@ -151,7 +151,7 @@ mod tests {
     #[track_caller]
     fn case(bytes: &[u8]) {
       assert_matches!(
-        Decoder::new(&bytes).head(),
+        Decoder::new(bytes).head(),
         Err(DecodeError::OverlongInteger),
       );
     }

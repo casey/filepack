@@ -16,7 +16,7 @@ impl<'a, 'b, K> MapDecoder<'a, 'b, K> {
   }
 }
 
-impl<'a, 'b, K: Clone + Decode + Debug + PartialOrd> MapDecoder<'a, 'b, K> {
+impl<K: Clone + Decode + Debug + PartialOrd> MapDecoder<'_, '_, K> {
   pub(crate) fn finish(&mut self) -> Result<(), DecodeError> {
     ensure!(self.remaining == 0, decode_error::UnconsumedEntries);
     Ok(())
