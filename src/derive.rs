@@ -85,6 +85,67 @@ fn all_required() {
 }
 
 #[test]
+fn enum_integer_range() {
+  #[derive(Clone, Copy, Debug, Decode, Encode, FromRepr, PartialEq)]
+  #[repr(u8)]
+  enum Foo {
+    Bar = 0,
+  }
+
+  assert_matches!(
+    Foo::decode_from_slice(&256u64.encode_to_vec()),
+    Err(DecodeError::IntegerRange { .. }),
+  );
+}
+
+#[test]
+fn enum_invalid_discriminant() {
+  #[derive(Clone, Copy, Debug, Decode, Encode, FromRepr, PartialEq)]
+  #[repr(u8)]
+  enum Foo {
+    Bar = 0,
+  }
+
+  assert_matches!(
+    Foo::decode_from_slice(&[0x01]),
+    Err(DecodeError::InvalidDiscriminant {
+      discriminant: 1,
+      name: "Foo",
+    }),
+  );
+}
+
+#[test]
+fn enum_round_trip() {
+  #[derive(Clone, Copy, Debug, Decode, Encode, FromRepr, PartialEq)]
+  #[repr(u8)]
+  enum Foo {
+    Bar = 0,
+    Baz = 1,
+  }
+
+  assert_cbor(Foo::Bar, &[0x00]);
+  assert_cbor(Foo::Baz, &[0x01]);
+}
+
+#[test]
+fn enum_unexpected_type() {
+  #[derive(Clone, Copy, Debug, Decode, Encode, FromRepr, PartialEq)]
+  #[repr(u8)]
+  enum Foo {
+    Bar = 0,
+  }
+
+  assert_matches!(
+    Foo::decode_from_slice(&"foo".encode_to_vec()),
+    Err(DecodeError::UnexpectedType {
+      expected: MajorType::UnsignedInteger,
+      actual: MajorType::Text,
+    }),
+  );
+}
+
+#[test]
 fn mixed_required_and_optional() {
   #[derive(Debug, Encode, Decode, PartialEq)]
   struct Foo {

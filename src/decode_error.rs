@@ -9,6 +9,11 @@ pub enum DecodeError {
   DateTime { source: chrono::ParseError },
   #[snafu(display("integer out of range"))]
   IntegerRange { source: TryFromIntError },
+  #[snafu(display("invalid discriminant {discriminant} for enum {name}"))]
+  InvalidDiscriminant {
+    discriminant: u64,
+    name: &'static str,
+  },
   #[snafu(display("map keys out of order"))]
   KeyOrder,
   #[snafu(display("failed to parse language code"))]

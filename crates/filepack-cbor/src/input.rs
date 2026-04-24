@@ -1,8 +1,11 @@
+#![allow(clippy::needless_continue)]
+
 use super::*;
 
 #[derive(FromDeriveInput)]
-#[darling(supports(struct_named))]
+#[darling(supports(struct_named, enum_unit), forward_attrs(repr))]
 pub(crate) struct Input {
+  attrs: Vec<Attribute>,
   data: Data<(), Field>,
   ident: Ident,
 }
@@ -10,6 +13,21 @@ pub(crate) struct Input {
 impl Input {
   pub(crate) fn derive_decode_inner(&self) -> Result<proc_macro2::TokenStream> {
     let name = &self.ident;
+
+    if matches!(self.data, Data::Enum(_)) {
+      let repr = self.parse_repr()?;
+      return Ok(quote! {
+        impl Decode for #name {
+          fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
+            let discriminant = #repr::decode(decoder)?;
+            Self::from_repr(discriminant).context(decode_error::InvalidDiscriminant {
+              discriminant: u64::from(discriminant),
+              name: stringify!(#name),
+            })
+          }
+        }
+      });
+    }
 
     let fields = self.parse_fields()?;
 
@@ -41,6 +59,18 @@ impl Input {
 
   pub(crate) fn derive_encode_inner(&self) -> Result<proc_macro2::TokenStream> {
     let name = &self.ident;
+
+    if matches!(self.data, Data::Enum(_)) {
+      let repr = self.parse_repr()?;
+      return Ok(quote! {
+        impl Encode for #name {
+          fn encode(&self, encoder: &mut Encoder) {
+            (*self as #repr).encode(encoder);
+          }
+        }
+      });
+    }
+
     let fields = self.parse_fields()?;
 
     let required = fields.iter().filter(|f| !f.optional).count().into_u64();
@@ -84,14 +114,14 @@ impl Input {
     let mut n = HashSet::new();
     for (i, field) in fields.iter().enumerate() {
       if !n.insert(field.n) {
-        return Err(syn::Error::new_spanned(
+        return Err(Error::new_spanned(
           field.ident,
           format!("duplicate key {}", field.n),
         ));
       }
 
       if field.n != i.into_u64() {
-        return Err(syn::Error::new_spanned(
+        return Err(Error::new_spanned(
           field.ident,
           format!(
             "keys must be contiguous starting from 0: expected {i}, found {}",
@@ -102,5 +132,20 @@ impl Input {
     }
 
     Ok(fields)
+  }
+
+  fn parse_repr(&self) -> Result<Type> {
+    let mut repr = None;
+
+    for attribute in &self.attrs {
+      if attribute.path().is_ident("repr") {
+        if repr.is_some() {
+          return Err(Error::new_spanned(attribute, "duplicate #[repr] attribute"));
+        }
+        repr = Some(attribute.parse_args::<Type>()?);
+      }
+    }
+
+    repr.ok_or_else(|| Error::new_spanned(&self.ident, "missing #[repr(...)] attribute"))
   }
 }

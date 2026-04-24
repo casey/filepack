@@ -1,23 +1,10 @@
 use super::*;
 
-#[derive(Clone, Copy, Debug, FromRepr, PartialEq)]
+#[derive(Clone, Copy, Debug, Decode, Encode, FromRepr, PartialEq)]
 #[repr(u8)]
 pub(crate) enum EntryType {
   File = 0,
   Directory = 1,
-}
-
-impl Encode for EntryType {
-  fn encode(&self, encoder: &mut Encoder) {
-    (*self as u8).encode(encoder);
-  }
-}
-
-impl Decode for EntryType {
-  fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
-    let discriminant = decoder.integer()?;
-    Ok(Self::from_repr(discriminant.try_into().unwrap()).unwrap())
-  }
 }
 
 #[cfg(test)]
