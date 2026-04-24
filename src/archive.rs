@@ -557,7 +557,7 @@ mod tests {
   }
 
   #[test]
-  fn unexpected_embedded_files_share_hash() {
+  fn unexpected_embedded_files_with_same_hash() {
     let archive = archive_with_embedded_files(&["bar", "foo"], b"baz");
     assert_matches!(
       archive.unpack(),
