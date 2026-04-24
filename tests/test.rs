@@ -26,17 +26,6 @@ impl Test {
     self
   }
 
-  #[expect(unused)]
-  pub(crate) fn assert_file(mut self, path: &str, expected: impl Into<String>) -> Self {
-    assert!(
-      self
-        .files
-        .insert(path.into(), Expected::string(expected))
-        .is_none()
-    );
-    self
-  }
-
   pub(crate) fn assert_file_regex(mut self, path: &str, pattern: &str) -> Self {
     assert!(
       self
