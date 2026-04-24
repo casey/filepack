@@ -225,7 +225,7 @@ mod tests {
   }
 
   #[test]
-  fn embedded_metadata_cbor() {
+  fn archive_packs_metadata_cbor() {
     let content = b"foo";
     let mut files = DirectoryTree::new();
     files
