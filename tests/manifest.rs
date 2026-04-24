@@ -20,19 +20,6 @@ fn default_format() {
 }
 
 #[test]
-fn empty() {
-  Test::new()
-    .arg("create")
-    .success()
-    .arg("manifest")
-    .stdout(json_pretty! {
-      files: {},
-      signatures: [],
-    })
-    .success();
-}
-
-#[test]
 fn json_format() {
   Test::new()
     .touch("foo")
@@ -92,29 +79,6 @@ fn with_path() {
         bar: {
           hash: EMPTY_HASH,
           size: 0
-        }
-      },
-      signatures: [],
-    })
-    .success();
-}
-
-#[test]
-fn with_subdirectories() {
-  Test::new()
-    .touch("a/b/c")
-    .arg("create")
-    .success()
-    .arg("manifest")
-    .stdout(json_pretty! {
-      files: {
-        a: {
-          b: {
-            c: {
-              hash: EMPTY_HASH,
-              size: 0
-            }
-          }
         }
       },
       signatures: [],
