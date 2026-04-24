@@ -1,6 +1,6 @@
 use {
   self::input::Input,
-  darling::{FromDeriveInput, FromField, ast},
+  darling::{FromDeriveInput, FromField, ast::Data},
   field::Field,
   parsed_field::ParsedField,
   proc_macro::TokenStream,

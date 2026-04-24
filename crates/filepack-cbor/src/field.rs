@@ -1,3 +1,5 @@
+#![allow(clippy::needless_continue)]
+
 use super::*;
 
 #[derive(FromField)]

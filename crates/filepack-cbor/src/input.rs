@@ -3,7 +3,7 @@ use super::*;
 #[derive(FromDeriveInput)]
 #[darling(supports(struct_named))]
 pub(crate) struct Input {
-  data: ast::Data<(), Field>,
+  data: Data<(), Field>,
   ident: Ident,
 }
 
@@ -27,7 +27,7 @@ impl Input {
     Ok(quote! {
       impl crate::Decode for #name {
         fn decode(decoder: &mut crate::Decoder) -> Result<Self, crate::DecodeError> {
-          let mut map = decoder.map::<u8>()?;
+          let mut map = decoder.map::<u64>()?;
           #(#decode_fields)*
           map.finish()?;
           Ok(Self {
@@ -63,7 +63,7 @@ impl Input {
       impl crate::Encode for #name {
         fn encode(&self, encoder: &mut crate::Encoder) {
           let length = #required_count #(#count_optionals)*;
-          let mut map = encoder.map::<u8>(length);
+          let mut map = encoder.map::<u64>(length);
           #(#items)*
         }
       }
