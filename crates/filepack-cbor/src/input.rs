@@ -25,8 +25,8 @@ impl Input {
     let field_names = fields.iter().map(|f| f.ident);
 
     Ok(quote! {
-      impl crate::Decode for #name {
-        fn decode(decoder: &mut crate::Decoder) -> Result<Self, crate::DecodeError> {
+      impl Decode for #name {
+        fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
           let mut map = decoder.map::<u64>()?;
           #(#decode_fields)*
           map.finish()?;
@@ -60,8 +60,8 @@ impl Input {
     });
 
     Ok(quote! {
-      impl crate::Encode for #name {
-        fn encode(&self, encoder: &mut crate::Encoder) {
+      impl Encode for #name {
+        fn encode(&self, encoder: &mut Encoder) {
           let length = #required_count #(#count_optionals)*;
           let mut map = encoder.map::<u64>(length);
           #(#items)*
