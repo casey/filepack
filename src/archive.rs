@@ -132,10 +132,10 @@ impl Archive {
       return Err(archive_error::UnreferencedFiles { hashes: loose }.build());
     }
 
-    let metadata_cbor_hash =
-      embedded.remove(&Metadata::CBOR_FILENAME.parse::<RelativePath>().unwrap());
-
-    if !embedded.is_empty() {
+    if !embedded.is_empty()
+      || (embedded.len() == 1 && embedded.contains_key(Metadata::CBOR_FILENAME))
+    {
+      embedded.remove(Metadata::CBOR_FILENAME);
       return Err(
         archive_error::UnexpectedEmbeddedFiles {
           paths: embedded.into_keys().collect::<BTreeSet<RelativePath>>(),
@@ -144,8 +144,9 @@ impl Archive {
       );
     }
 
-    let embedded = metadata_cbor_hash
-      .map(|hash| (hash, self.files[&hash].clone()))
+    let embedded = embedded
+      .into_iter()
+      .map(|(_path, hash)| (hash, self.files[&hash].clone()))
       .into_iter()
       .collect();
 

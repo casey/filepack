@@ -41,7 +41,7 @@ impl Create {
 
     let metadata_cbor = metadata.as_ref().map(Metadata::encode_to_vec);
 
-    if let Some(manifest_cbor) = &metadata_cbor {
+    if let Some(metadata_cbor) = &metadata_cbor {
       let path = root.join(Metadata::CBOR_FILENAME);
 
       ensure! {
@@ -51,7 +51,7 @@ impl Create {
         },
       }
 
-      filesystem::write(&path, manifest_cbor)?;
+      filesystem::write(&path, metadata_cbor)?;
     }
 
     let cleaned_manifest = current_dir.join(&manifest_path).lexiclean();
