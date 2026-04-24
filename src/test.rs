@@ -22,6 +22,25 @@ pub(crate) const SIGNATURE: &str = concat!(
 pub(crate) const WEAK_PUBLIC_KEY: &str =
   "public1aqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqsqtuc8";
 
+#[track_caller]
+pub(crate) fn assert_cbor<T: Debug + Decode + Encode + PartialEq>(value: T, cbor: &[u8]) {
+  let buffer = value.encode_to_vec();
+  assert_eq!(buffer, cbor);
+  let mut decoder = Decoder::new(&buffer);
+  let decoded = T::decode(&mut decoder).unwrap();
+  decoder.finish().unwrap();
+  assert_eq!(decoded, value);
+}
+
+#[track_caller]
+pub(crate) fn assert_encoding<T: Debug + Decode + Encode + PartialEq>(value: T) {
+  let buffer = value.encode_to_vec();
+  let mut decoder = Decoder::new(&buffer);
+  let decoded = T::decode(&mut decoder).unwrap();
+  decoder.finish().unwrap();
+  assert_eq!(decoded, value);
+}
+
 pub(crate) fn checksum(s: &str) -> String {
   let checked_hrpstring = CheckedHrpstring::new::<bech32::NoChecksum>(s).unwrap();
   checked_hrpstring
@@ -57,4 +76,11 @@ fn signature_matches() {
   };
   let signature = private_key.sign(&message);
   assert_eq!(signature.to_string(), SIGNATURE);
+}
+
+pub(crate) fn tempdir() -> tempfile::TempDir {
+  tempfile::Builder::new()
+    .prefix("filepack-test-tempdir")
+    .tempdir()
+    .unwrap()
 }
