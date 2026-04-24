@@ -102,7 +102,7 @@ impl Archive {
 
     let mut embedded = BTreeMap::new();
 
-    let files = self.unpack_directory(&mut loose, &mut embedded, package, &[])?;
+    let files = self.unpack_directory(&mut loose, &mut embedded, package, None)?;
 
     let signatures = {
       let entry = root
@@ -162,7 +162,7 @@ impl Archive {
     loose: &mut BTreeSet<Hash>,
     embedded: &mut BTreeMap<RelativePath, Hash>,
     entry: &Entry,
-    prefix: &[&Component],
+    prefix: Option<&RelativePath>,
   ) -> Result<DirectoryTree, ArchiveError> {
     let directory = self.decode_directory(loose, entry.hash)?;
 
@@ -171,31 +171,32 @@ impl Archive {
       let crate_entry = match entry.ty {
         EntryType::File => {
           if loose.remove(&entry.hash) {
-            let mut components = prefix.to_vec();
-            components.push(name);
-            let path = RelativePath::try_from(components.as_slice()).unwrap();
-            embedded.insert(path, entry.hash);
+            embedded.insert(Self::join(prefix, name), entry.hash);
           }
           DirectoryTreeEntry::File(File {
             hash: entry.hash,
             size: entry.size,
           })
         }
-        EntryType::Directory => {
-          let mut child_prefix = prefix.to_vec();
-          child_prefix.push(name);
-          DirectoryTreeEntry::Directory(self.unpack_directory(
-            loose,
-            embedded,
-            entry,
-            &child_prefix,
-          )?)
-        }
+        EntryType::Directory => DirectoryTreeEntry::Directory(self.unpack_directory(
+          loose,
+          embedded,
+          entry,
+          Some(&Self::join(prefix, name)),
+        )?),
       };
       entries.insert(name.clone(), crate_entry);
     }
 
     Ok(DirectoryTree { entries })
+  }
+
+  fn join(prefix: Option<&RelativePath>, name: &Component) -> RelativePath {
+    if let Some(prefix) = prefix {
+      prefix.join(name)
+    } else {
+      name.into()
+    }
   }
 }
 
