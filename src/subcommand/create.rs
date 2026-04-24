@@ -45,7 +45,7 @@ impl Create {
       let path = root.join(Metadata::CBOR_FILENAME);
 
       ensure! {
-        self.force || !path.try_exists().context(error::FilesystemIo { path: &path })?,
+        self.force || !filesystem::exists(&path)?,
         error::MetadataCborAlreadyExists {
           path,
         },
