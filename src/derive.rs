@@ -86,7 +86,7 @@ fn all_required() {
 
 #[test]
 fn enum_integer_range() {
-  #[derive(Clone, Copy, Debug, Decode, Encode, FromRepr, PartialEq)]
+  #[derive(Debug, Decode, FromRepr)]
   #[repr(u8)]
   enum Foo {
     Bar = 0,
@@ -100,7 +100,7 @@ fn enum_integer_range() {
 
 #[test]
 fn enum_invalid_discriminant() {
-  #[derive(Clone, Copy, Debug, Decode, Encode, FromRepr, PartialEq)]
+  #[derive(Debug, Decode, FromRepr)]
   #[repr(u8)]
   enum Foo {
     Bar = 0,
@@ -130,7 +130,7 @@ fn enum_round_trip() {
 
 #[test]
 fn enum_unexpected_type() {
-  #[derive(Clone, Copy, Debug, Decode, Encode, FromRepr, PartialEq)]
+  #[derive(Debug, Decode, FromRepr)]
   #[repr(u8)]
   enum Foo {
     Bar = 0,
