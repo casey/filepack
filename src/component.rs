@@ -114,7 +114,7 @@ mod tests {
 
   #[test]
   fn empty() {
-    assert_eq!(Component::new("").unwrap_err(), ComponentError::Empty,);
+    assert_eq!(Component::new("").unwrap_err(), ComponentError::Empty);
   }
 
   #[test]

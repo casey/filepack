@@ -51,8 +51,7 @@ impl FromStr for ComponentBuf {
   type Err = ComponentError;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
-    Component::new(s)?;
-    Ok(Self(s.into()))
+    Ok(Self::from_component(Component::new(s)?))
   }
 }
 
