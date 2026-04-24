@@ -48,7 +48,7 @@ fn hash_missing() {
 fn size_mismatch() {
   Test::new()
     .touch("foo")
-    .write_archive(
+    .write_manifest(
       "manifest.filepack",
       json! {
         files: {

@@ -12,6 +12,7 @@ use {
     str,
     time::{SystemTime, UNIX_EPOCH},
   },
+  tempfile::{NamedTempFile, TempDir},
 };
 
 mod archive;

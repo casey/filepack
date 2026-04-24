@@ -10,7 +10,7 @@ pub(crate) struct Test {
   stderr: Expected,
   stdin: Option<String>,
   stdout: Expected,
-  tempdir: tempfile::TempDir,
+  tempdir: TempDir,
 }
 
 impl Test {
@@ -335,7 +335,7 @@ impl Test {
     self
   }
 
-  fn with_tempdir(tempdir: tempfile::TempDir) -> Self {
+  fn with_tempdir(tempdir: TempDir) -> Self {
     Self {
       args: Vec::new(),
       current_dir: None,
@@ -357,13 +357,13 @@ impl Test {
     self
   }
 
-  pub(crate) fn write_archive(self, path: &str, json: impl AsRef<str>) -> Self {
-    let manifest_json = self.join("write-archive-manifest.json");
+  pub(crate) fn write_manifest(self, path: &str, json: impl AsRef<str>) -> Self {
+    let mut tempfile = NamedTempFile::new().unwrap();
 
-    fs::write(&manifest_json, json.as_ref()).unwrap();
+    tempfile.write_all(json.as_ref().as_bytes()).unwrap();
 
     let status = Command::new(env!("CARGO_BIN_EXE_filepack"))
-      .args(["archive", manifest_json.as_str(), path])
+      .args(["archive", tempfile.path().to_str().unwrap(), path])
       .current_dir(self.tempdir.path())
       .spawn()
       .unwrap()
@@ -371,8 +371,6 @@ impl Test {
       .unwrap();
 
     assert!(status.success());
-
-    fs::remove_file(&manifest_json).unwrap();
 
     self
   }

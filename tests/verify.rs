@@ -71,7 +71,7 @@ fn extraneous_empty_directory_error() {
 #[test]
 fn extraneous_file_error() {
   Test::new()
-    .write_archive("manifest.filepack", json! { files: {}, signatures: [] })
+    .write_manifest("manifest.filepack", json! { files: {}, signatures: [] })
     .touch("foo")
     .args(["verify", "."])
     .stderr("error: extraneous file not in manifest: `foo`\n")
@@ -81,7 +81,7 @@ fn extraneous_file_error() {
 #[test]
 fn file_not_found_error_message() {
   Test::new()
-    .write_archive(
+    .write_manifest(
       "manifest.filepack",
       json! {
         files: {
@@ -120,7 +120,7 @@ error: 1 mismatched file
 #[test]
 fn ignore_missing() {
   Test::new()
-    .write_archive(
+    .write_manifest(
       "manifest.filepack",
       json! {
         files: {
@@ -181,7 +181,7 @@ fn manifest_not_found_error_message() {
 fn manifest_paths_are_relative_to_root() {
   Test::new()
     .touch("dir/foo")
-    .write_archive(
+    .write_manifest(
       "dir/manifest.filepack",
       json! {
         files: {
@@ -205,7 +205,7 @@ fn metadata_allows_unknown_keys() {
   let hash = blake3::hash(metadata.as_bytes()).to_string();
 
   Test::new()
-    .write_archive(
+    .write_manifest(
       "manifest.filepack",
       json! {
         files: {
@@ -230,7 +230,7 @@ fn metadata_may_not_be_invalid() {
   let hash = blake3::hash(metadata.as_bytes()).to_string();
 
   Test::new()
-    .write_archive(
+    .write_manifest(
       "manifest.filepack",
       json! {
         files: {
@@ -422,7 +422,7 @@ fn nested_missing_empty_directory_error() {
 #[test]
 fn no_files() {
   Test::new()
-    .write_archive("manifest.filepack", json! { files: {}, signatures: [] })
+    .write_manifest("manifest.filepack", json! { files: {}, signatures: [] })
     .args(["verify", "."])
     .stderr("successfully verified 0 files\n")
     .success();
@@ -445,7 +445,7 @@ fn non_unicode_path_error() {
 
   Test::new()
     .touch_non_unicode()
-    .write_archive("manifest.filepack", json! { files: {}, signatures: [] })
+    .write_manifest("manifest.filepack", json! { files: {}, signatures: [] })
     .args(["verify", "."])
     .stderr_path("error: path not valid unicode: `./�`\n")
     .failure();
@@ -455,7 +455,7 @@ fn non_unicode_path_error() {
 fn print() {
   Test::new()
     .touch("foo")
-    .write_archive(
+    .write_manifest(
       "manifest.filepack",
       json! {
         files: {
@@ -538,7 +538,7 @@ fn signature_verification_success() {
 fn single_file() {
   Test::new()
     .touch("foo")
-    .write_archive(
+    .write_manifest(
       "manifest.filepack",
       json! {
         files: {
@@ -559,7 +559,7 @@ fn single_file() {
 fn single_file_mmap() {
   Test::new()
     .touch("foo")
-    .write_archive(
+    .write_manifest(
       "manifest.filepack",
       json! {
         files: {
@@ -580,7 +580,7 @@ fn single_file_mmap() {
 fn single_file_omit_directory() {
   Test::new()
     .touch("foo")
-    .write_archive(
+    .write_manifest(
       "manifest.filepack",
       json! {
         files: {
@@ -601,7 +601,7 @@ fn single_file_omit_directory() {
 fn single_file_parallel() {
   Test::new()
     .touch("foo")
-    .write_archive(
+    .write_manifest(
       "manifest.filepack",
       json! {
         files: {
@@ -753,7 +753,7 @@ fn weak_signature_public_key() {
 fn with_manifest_path() {
   Test::new()
     .touch("foo")
-    .write_archive(
+    .write_manifest(
       "hello.json",
       json! {
         files: {
