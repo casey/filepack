@@ -4,7 +4,7 @@ use super::*;
 #[derive(Debug, Default, PartialEq)]
 pub(crate) struct Directory {
   pub(crate) version: Version,
-  pub(crate) entries: BTreeMap<Component, Entry>,
+  pub(crate) entries: BTreeMap<ComponentBuf, Entry>,
 }
 
 impl Decode for Directory {
@@ -37,7 +37,7 @@ mod tests {
     assert_encoding(Directory {
       version: Version::Zero,
       entries: BTreeMap::from([(
-        "foo".parse::<Component>().unwrap(),
+        "foo".parse::<ComponentBuf>().unwrap(),
         Entry {
           ty: EntryType::File,
           size: 0,

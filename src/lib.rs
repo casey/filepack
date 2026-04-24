@@ -28,6 +28,7 @@ use {
     bech32_error::Bech32Error,
     bech32_type::Bech32Type,
     component::Component,
+    component_buf::ComponentBuf,
     component_error::ComponentError,
     count::Count,
     dalek_signature_error::DalekSignatureError,
@@ -104,8 +105,9 @@ use {
     iter,
     marker::PhantomData,
     num::TryFromIntError,
+    ops::Deref,
     path::{Path, PathBuf},
-    process,
+    process, ptr,
     str::{self, FromStr, Utf8Error},
     sync::LazyLock,
     time::{SystemTime, SystemTimeError, UNIX_EPOCH},
@@ -196,6 +198,7 @@ mod bech32_encoder;
 mod bech32_error;
 mod bech32_type;
 mod component;
+mod component_buf;
 mod component_error;
 mod count;
 mod dalek_signature_error;

@@ -3,7 +3,7 @@ use super::*;
 #[skip_serializing_none]
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub(crate) struct Package {
-  pub(crate) creator: Option<Component>,
+  pub(crate) creator: Option<ComponentBuf>,
   pub(crate) creator_tag: Option<Tag>,
   pub(crate) date: Option<DateTime>,
   pub(crate) description: Option<String>,

@@ -29,7 +29,7 @@ impl Archive {
   pub(crate) fn fingerprint(&self) -> Fingerprint {
     let root = &self.files[&self.root];
     let root = Directory::decode_from_slice(root).unwrap();
-    Fingerprint(root.entries[&Self::PACKAGE.parse::<Component>().unwrap()].hash)
+    Fingerprint(root.entries[Self::PACKAGE].hash)
   }
 
   pub(crate) fn pack(manifest: &Manifest) -> Self {
@@ -39,13 +39,13 @@ impl Archive {
 
     let mut root = BTreeMap::new();
 
-    root.insert(Self::PACKAGE.parse::<Component>().unwrap(), package);
+    root.insert(Self::PACKAGE.parse::<ComponentBuf>().unwrap(), package);
 
     let mut entries = BTreeMap::new();
     for (i, signature) in manifest.signatures.iter().enumerate() {
       let signature = signature.to_string().into_bytes();
       entries.insert(
-        i.to_string().parse::<Component>().unwrap(),
+        i.to_string().parse::<ComponentBuf>().unwrap(),
         builder.entry(EntryType::File, signature),
       );
     }

@@ -14,11 +14,11 @@ impl RelativePath {
     "LPT²", "LPT³", "NUL", "PRN",
   ];
 
-  pub(crate) fn components(&self) -> impl Iterator<Item = Component> {
+  pub(crate) fn components(&self) -> impl Iterator<Item = &Component> {
     self
       .0
       .split('/')
-      .map(|component| component.parse().unwrap())
+      .map(|component| Component::new(component).unwrap())
   }
 
   pub(crate) fn lint(&self, lints: &BTreeSet<Lint>) -> Option<LintError> {
@@ -136,7 +136,7 @@ impl FromStr for RelativePath {
     let mut path = String::new();
 
     for (i, component) in s.split('/').enumerate() {
-      Component::check(component).context(path_error::Component { component })?;
+      Component::new(component).context(path_error::Component { component })?;
 
       if i > 0 {
         path.push('/');
@@ -209,13 +209,19 @@ mod tests {
   #[test]
   fn from_components() {
     assert_eq!(
-      RelativePath::try_from([&"foo".parse().unwrap()].as_slice()).unwrap(),
+      RelativePath::try_from([Component::new("foo").unwrap()].as_slice()).unwrap(),
       "foo",
     );
 
     assert_eq!(
-      RelativePath::try_from([&"foo".parse().unwrap(), &"bar".parse().unwrap()].as_slice())
-        .unwrap(),
+      RelativePath::try_from(
+        [
+          Component::new("foo").unwrap(),
+          Component::new("bar").unwrap()
+        ]
+        .as_slice()
+      )
+      .unwrap(),
       "foo/bar",
     );
   }
