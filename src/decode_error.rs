@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Debug, PartialEq, Snafu)]
+#[derive(Debug, Snafu)]
 #[snafu(context(suffix(false)), visibility(pub(crate)))]
 pub enum DecodeError {
   #[snafu(display("failed to parse component"))]
@@ -36,8 +36,11 @@ pub enum DecodeError {
     expected: MajorType,
     actual: MajorType,
   },
-  #[snafu(display("unexpected value"))]
-  UnexpectedValue,
+  #[snafu(display("unexpected value, expected {expected} but found {actual}"))]
+  UnexpectedValue {
+    actual: String,
+    expected: &'static str,
+  },
   #[snafu(display("string not valid unicode"))]
   Unicode { source: Utf8Error },
   #[snafu(display("unsupported additional information value: {value}"))]

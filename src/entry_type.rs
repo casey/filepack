@@ -2,18 +2,18 @@ use super::*;
 
 #[derive(Clone, Copy, Debug, FromRepr, PartialEq)]
 #[repr(u8)]
-pub(crate) enum Version {
-  Zero = 0,
+pub(crate) enum EntryType {
+  File = 0,
+  Directory = 1,
 }
 
-impl Encode for Version {
+impl Encode for EntryType {
   fn encode(&self, encoder: &mut Encoder) {
     (*self as u8).encode(encoder);
   }
 }
 
-#[cfg(test)]
-impl Decode for Version {
+impl Decode for EntryType {
   fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
     let discriminant = decoder.integer()?;
     Ok(Self::from_repr(discriminant.try_into().unwrap()).unwrap())
@@ -26,6 +26,7 @@ mod tests {
 
   #[test]
   fn encoding() {
-    assert_cbor(Version::Zero, &[0x00]);
+    assert_cbor(EntryType::File, &[0x00]);
+    assert_cbor(EntryType::Directory, &[0x01]);
   }
 }

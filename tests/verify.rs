@@ -1,4 +1,7 @@
-use super::*;
+use {
+  super::*,
+  filepack::{Encoder, Hash},
+};
 
 #[test]
 fn duplicate_key_literal() {
@@ -37,18 +40,18 @@ fn duplicate_key_named_and_literal() {
 #[test]
 fn extra_fields_are_not_allowed() {
   Test::new()
-    .args(["verify", "."])
     .write(
-      "filepack.json",
+      "manifest.json",
       json! {
         files: {},
         signatures: [],
         foo: "bar"
       },
     )
+    .args(["archive", "manifest.json", "manifest.filepack"])
     .stderr(
       "\
-error: failed to deserialize manifest at `filepack.json`
+error: failed to deserialize manifest at `manifest.json`
        └─ unknown field `foo`, expected `files` or `signatures` at line 1 column 33\n",
     )
     .failure();
@@ -68,7 +71,7 @@ fn extraneous_empty_directory_error() {
 #[test]
 fn extraneous_file_error() {
   Test::new()
-    .write("filepack.json", json! { files: {}, signatures: [] })
+    .write_manifest("manifest.filepack", json! { files: {}, signatures: [] })
     .touch("foo")
     .args(["verify", "."])
     .stderr("error: extraneous file not in manifest: `foo`\n")
@@ -78,8 +81,8 @@ fn extraneous_file_error() {
 #[test]
 fn file_not_found_error_message() {
   Test::new()
-    .write(
-      "filepack.json",
+    .write_manifest(
+      "manifest.filepack",
       json! {
         files: {
           foo: {
@@ -117,8 +120,8 @@ error: 1 mismatched file
 #[test]
 fn ignore_missing() {
   Test::new()
-    .write(
-      "filepack.json",
+    .write_manifest(
+      "manifest.filepack",
       json! {
         files: {
           foo: {
@@ -140,10 +143,8 @@ fn ignore_missing() {
 #[test]
 fn malformed_signature_error() {
   Test::new()
-    .arg("create")
-    .success()
     .write(
-      "filepack.json",
+      "manifest.json",
       json! {
         files: {},
         signatures: [
@@ -151,9 +152,9 @@ fn malformed_signature_error() {
         ]
       },
     )
-    .arg("verify")
+    .args(["archive", "manifest.json", "manifest.filepack"])
     .stderr_regex(
-      "error: failed to deserialize manifest at `filepack.json`\n.*failed to decode bech32.*",
+      "error: failed to deserialize manifest at `manifest.json`\n.*failed to decode bech32.*",
     )
     .failure();
 }
@@ -164,7 +165,7 @@ fn manifest_in_package_with_external_manifest() {
     .arg("create")
     .success()
     .args(["verify", "--manifest", "foo.json"])
-    .stderr("error: cannot use `--manifest` when `filepack.json` exists\n")
+    .stderr("error: cannot use `--manifest` when `manifest.filepack` exists\n")
     .failure();
 }
 
@@ -172,7 +173,7 @@ fn manifest_in_package_with_external_manifest() {
 fn manifest_not_found_error_message() {
   Test::new()
     .arg("verify")
-    .stderr("error: manifest `filepack.json` not found\n")
+    .stderr("error: manifest `manifest.filepack` not found\n")
     .failure();
 }
 
@@ -180,8 +181,8 @@ fn manifest_not_found_error_message() {
 fn manifest_paths_are_relative_to_root() {
   Test::new()
     .touch("dir/foo")
-    .write(
-      "dir/filepack.json",
+    .write_manifest(
+      "dir/manifest.filepack",
       json! {
         files: {
           foo: {
@@ -204,8 +205,8 @@ fn metadata_allows_unknown_keys() {
   let hash = blake3::hash(metadata.as_bytes()).to_string();
 
   Test::new()
-    .write(
-      "filepack.json",
+    .write_manifest(
+      "manifest.filepack",
       json! {
         files: {
           "metadata.yaml": {
@@ -229,8 +230,8 @@ fn metadata_may_not_be_invalid() {
   let hash = blake3::hash(metadata.as_bytes()).to_string();
 
   Test::new()
-    .write(
-      "filepack.json",
+    .write_manifest(
+      "manifest.filepack",
       json! {
         files: {
           "metadata.yaml": {
@@ -321,7 +322,7 @@ fn multiple_keys_one_missing() {
     .args(["create", "foo"])
     .success()
     .data_dir("alice")
-    .args(["sign", "foo/filepack.json"])
+    .args(["sign", "foo/manifest.filepack"])
     .success();
 
   let alice = test.read("alice/keychain/master.public");
@@ -421,24 +422,10 @@ fn nested_missing_empty_directory_error() {
 #[test]
 fn no_files() {
   Test::new()
-    .write("filepack.json", json! { files: {}, signatures: [] })
+    .write_manifest("manifest.filepack", json! { files: {}, signatures: [] })
     .args(["verify", "."])
     .stderr("successfully verified 0 files\n")
     .success();
-}
-
-#[test]
-fn non_unicode_manifest_deserialize_error() {
-  Test::new()
-    .write("filepack.json", [0x80])
-    .args(["verify", "."])
-    .stderr(
-      "\
-error: I/O error at `filepack.json`
-       └─ stream did not contain valid UTF-8
-",
-    )
-    .failure();
 }
 
 #[test]
@@ -449,7 +436,7 @@ fn non_unicode_path_error() {
 
   Test::new()
     .touch_non_unicode()
-    .write("filepack.json", json! { files: {}, signatures: [] })
+    .write_manifest("manifest.filepack", json! { files: {}, signatures: [] })
     .args(["verify", "."])
     .stderr_path("error: path not valid unicode: `./�`\n")
     .failure();
@@ -457,21 +444,30 @@ fn non_unicode_path_error() {
 
 #[test]
 fn print() {
-  let manifest = json! {
-    files: {
-      foo: {
-        hash: EMPTY_HASH,
-        size: 0
-      }
-    },
-    signatures: [],
-  };
-
   Test::new()
     .touch("foo")
-    .write("filepack.json", &manifest)
+    .write_manifest(
+      "manifest.filepack",
+      json! {
+        files: {
+          foo: {
+            hash: EMPTY_HASH,
+            size: 0
+          }
+        },
+        signatures: [],
+      },
+    )
     .args(["verify", "--print", "."])
-    .stdout(&manifest)
+    .stdout(json_pretty! {
+      files: {
+        foo: {
+          hash: EMPTY_HASH,
+          size: 0
+        }
+      },
+      signatures: [],
+    })
     .stderr("successfully verified 1 file totaling 0 bytes\n")
     .success();
 }
@@ -485,25 +481,25 @@ fn signature_fingerprint_mismatch() {
     .args(["create", "--sign", "foo"])
     .success();
 
-  let manifest = test.read("foo/filepack.json");
-
-  let manifest = serde_json::from_str::<Manifest>(&manifest).unwrap();
+  let manifest_path = test.path().join("foo/manifest.filepack");
+  let manifest = Manifest::load(Some(&manifest_path)).unwrap();
 
   let signature = manifest.signatures.iter().next().unwrap().to_string();
 
+  let json = json! {
+    files: {
+      bar: {
+        hash: EMPTY_HASH,
+        size: 0
+      }
+    },
+    signatures: [signature]
+  };
+
+  let bad_manifest = serde_json::from_str::<Manifest>(&json).unwrap();
+  bad_manifest.save(&manifest_path).unwrap();
+
   test
-    .write(
-      "foo/filepack.json",
-      json! {
-        files: {
-          bar: {
-            hash: EMPTY_HASH,
-            size: 0
-          }
-        },
-        signatures: [signature]
-      },
-    )
     .touch("foo/bar")
     .args(["verify", "foo"])
     .stderr_regex(
@@ -533,8 +529,8 @@ fn signature_verification_success() {
 fn single_file() {
   Test::new()
     .touch("foo")
-    .write(
-      "filepack.json",
+    .write_manifest(
+      "manifest.filepack",
       json! {
         files: {
           foo: {
@@ -554,8 +550,8 @@ fn single_file() {
 fn single_file_mmap() {
   Test::new()
     .touch("foo")
-    .write(
-      "filepack.json",
+    .write_manifest(
+      "manifest.filepack",
       json! {
         files: {
           foo: {
@@ -575,8 +571,8 @@ fn single_file_mmap() {
 fn single_file_omit_directory() {
   Test::new()
     .touch("foo")
-    .write(
-      "filepack.json",
+    .write_manifest(
+      "manifest.filepack",
       json! {
         files: {
           foo: {
@@ -596,8 +592,8 @@ fn single_file_omit_directory() {
 fn single_file_parallel() {
   Test::new()
     .touch("foo")
-    .write(
-      "filepack.json",
+    .write_manifest(
+      "manifest.filepack",
       json! {
         files: {
           foo: {
@@ -627,6 +623,39 @@ mismatched file: `foo`
        manifest: af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262 (0 bytes)
            file: f2e897eed7d206cd855d441598fa521abc75aa96953e97c030c9612c30c1293d (3 bytes)
 error: 1 mismatched file
+",
+    )
+    .failure();
+}
+
+#[test]
+fn unarchive_error() {
+  let mut dir_encoder = Encoder::new();
+  let mut dir_map = dir_encoder.map::<u8>(2);
+  dir_map.item(0, 0u8);
+  dir_map.item(1, BTreeMap::<String, u8>::new());
+  drop(dir_map);
+  let dir_bytes = dir_encoder.finish();
+
+  let root = Hash::bytes(&dir_bytes);
+
+  let mut files = BTreeMap::new();
+  files.insert(root, dir_bytes);
+
+  let mut encoder = Encoder::new();
+  let mut archive = encoder.map::<u8>(3);
+  archive.item(0, 0u8);
+  archive.item(1, root);
+  archive.item(2, &files);
+  drop(archive);
+
+  Test::new()
+    .write("manifest.filepack", encoder.finish())
+    .args(["verify", "."])
+    .stderr(
+      "\
+error: failed to unarchive manifest
+       └─ archive missing package directory
 ",
     )
     .failure();
@@ -674,7 +703,7 @@ fn verify_fingerprint() {
     ])
     .stderr_regex(
       "\
-fingerprint mismatch: `.*filepack\\.json`
+fingerprint mismatch: `.*manifest\\.filepack`
             expected: package1a4uf5nw04lxs6dgzqfh4rdhxffxdukfwf4hq39d7vn2fu4eqlxf3ql7ykr3
               actual: package1azljtch6chgyjc8rk7hd74wvnsqhl88zgl2g326jqpxnjlfsaaseqffcrlp
 error: fingerprint mismatch\n",
@@ -695,11 +724,8 @@ fn weak_signature_public_key() {
   }
 
   Test::new()
-    .touch("bar")
-    .arg("create")
-    .success()
     .write(
-      "filepack.json",
+      "manifest.json",
       json! {
         files: {
           bar: {
@@ -712,9 +738,9 @@ fn weak_signature_public_key() {
         ]
       },
     )
-    .arg("verify")
+    .args(["archive", "manifest.json", "manifest.filepack"])
     .stderr_regex(
-      "error: failed to deserialize manifest at `filepack.json`\n.*signature public key invalid.*",
+      "error: failed to deserialize manifest at `manifest.json`\n.*signature public key invalid.*",
     )
     .failure();
 }
@@ -723,7 +749,7 @@ fn weak_signature_public_key() {
 fn with_manifest_path() {
   Test::new()
     .touch("foo")
-    .write(
+    .write_manifest(
       "hello.json",
       json! {
         files: {

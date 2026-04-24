@@ -23,14 +23,14 @@ It is an alternative to `.sfv` files and tools like `shasum`. Files are hashed
 using [BLAKE3](https://github.com/BLAKE3-team/BLAKE3/), a fast, cryptographic
 hash function.
 
-A manifest named `filepack.json` containing the hashes of files in a directory
-can be created with:
+A manifest named `manifest.filepack` containing the hashes of files in a
+directory can be created with:
 
 ```shell
 filepack create path/to/directory
 ```
 
-Which will write the manifest to `path/to/directory/filepack.json`.
+Which will write the manifest to `path/to/directory/manifest.filepack`.
 
 Files can later be verified with:
 
@@ -125,13 +125,13 @@ filepack create --deny distribution
 
 Verify the contents of a directory against a manifest.
 
-To verify the contents of `DIR` against `DIR/filepack.json`:
+To verify the contents of `DIR` against `DIR/manifest.filepack`:
 
 ```shell
 filepack verify DIR
 ```
 
-If the current directory contains `filepack.json`, `DIR` can be omitted:
+If the current directory contains `manifest.filepack`, `DIR` can be omitted:
 
 ```shell
 filepack verify
@@ -171,13 +171,14 @@ with the `--data-dir` option.
 Manifest
 --------
 
-`filepack` manifests are conventionally named `filepack.json` and are placed
-alongside the files they reference.
+`filepack` manifests are conventionally named `manifest.filepack` and are
+placed alongside the files they reference.
 
-Manifests are [UTF-8](https://en.wikipedia.org/wiki/UTF-8)-encoded
-[JSON](https://www.json.org/json-en.html).
+Manifests are [CBOR](https://www.rfc-editor.org/rfc/rfc8949.html) and may be
+converted to JSON for inspection or manipulation with `filepack manifest`.
 
-Manifests contain an object with two mandatory keys, `files` and `notes`.
+Manifests, when converted to JSON, are an object with two mandatory keys,
+`files` and `signatures`.
 
 ### `files`
 
@@ -186,28 +187,25 @@ directory entries. Directory entries may be subdirectories or files. Files are
 objects with keys `hash`, the hex-encoded BLAKE3 hash of the file, and `size`,
 the length of the file in bytes.
 
-As a consequence of the manifest being UTF-8, all path components must be
-valid Unicode.
-
-Path components may not be `.` or `..`, contain the path separators `/` or `\`,
-contain NUL, be longer than 255 bytes, or begin with a Windows drive prefix,
-such as `C:`.
+Path components are UTF-8 and may not be `.` or `..`, contain the path
+separators `/` or `\`, contain NUL, be longer than 255 bytes, or begin with a
+Windows drive prefix, such as `C:`.
 
 ### `signatures`
 
 The value of the mandatory `signatures` key is an array of signatures.
-Signatures are bech32 strings that include an Ed25519 key, the package
+Signatures are Bech32m strings that include an Ed25519 key, the package
 fingerprint the signature is made over, an optional timestamp, and the
 signature itself.
 
 Public keys are Curve25519 points and signatures are Ed25519 signatures made
-over the root of a Merkle tree which commits to the content of `files` via the
-package fingerprint.
+over the hash of a serialized CBOR message containing the package fingerprint
+which commits to the content of `files`.
 
 ### Example
 
-An manifest over a directory containing the files `README.md` and `src/main.c`,
-signed by the public key
+An manifest converted to JSON over a directory containing the files `README.md`
+and `src/main.c`, signed by the public key
 `public1a67dndhhmae7p6fsfnj0z37zf78cde6mwqgtms0y87h8ldlvvflyqcxnd63`:
 
 ```json
@@ -228,14 +226,14 @@ signed by the public key
 }
 ```
 
-The signature is elided for brevity. Signatures are bech32m-encoded strings
+The signature is elided for brevity. Signatures are Bech32m-encoded strings
 containing both a public key and an Ed25519 signature.
 
 Keys, Signatures, Fingerprints, and Hashes
 ------------------------------------------
 
 Public keys, private keys, signatures, and package fingerprints are all
-[bech32m](https://github.com/bitcoin/bips/blob/master/bip-0350.mediawiki)-encoded
+[Bech32m](https://github.com/bitcoin/bips/blob/master/bip-0350.mediawiki)-encoded
 strings beginning with `public1…`, `private1…`, `signature1…`, and `package1…`
 respectively.
 
@@ -252,7 +250,7 @@ new package. `filepack create` then loads `metadata.yaml` if present, checks
 for validity and unknown fields, and writes the CBOR serialization to
 `metadata.cbor` in the package root.
 
-`metadata.yaml` is retained as a human-readable reference, and for amending
+`metadata.yaml` is retained as a human-readable reference and for amending
 metadata, but `metadata.cbor` is the authoritative source of metadata. For
 consumption by scripts and tools, `filepack metadata` prints the contents of
 `metadata.cbor` as JSON.
@@ -268,6 +266,9 @@ fields are present and invalid according to the new schema.
 Please feel free to open an issue with ideas for new metadata fields.
 
 ### Schema
+
+This schema is for the YAML authoring format and the JSON output of
+`filepack metadata`. The CBOR schema is currently undocumented.
 
 Fields are given as `NAME: TYPE`.
 
@@ -444,12 +445,12 @@ contents is not present.
 Fingerprints
 ------------
 
-Filepack signatures are made over the package fingerprint, which is the root of
-a Merkle tree of the files and directories contained in the manifest.
+Filepack signatures are made over the package fingerprint, which is the hash of
+a CBOR object which commits to the files and directories contained in the
+manifest.
 
 Fingerprints are BLAKE3 hashes, constructed such that it is impossible to
-produce objects which are different, either in type or content, but which have
-the same fingerprint.
+produce packages which are different but which have the same fingerprint.
 
 Fingerprints may be used as a globally unique identifier. If two packages have
 the same fingerprint, they have the same content.
@@ -470,8 +471,8 @@ To create a filepack manifest:
 filepack create [DIRECTORY]
 ```
 
-This creates `filepack.json` containing hashes and file sizes of all files in
-the `DIRECTORY` and subdirectories.
+This creates `manifest.filepack` containing hashes and file sizes of all files
+in the `DIRECTORY` and subdirectories.
 
 To enable linting, use the `--deny` flag with a lint or lint group:
 
@@ -611,7 +612,7 @@ Create a filepack manifest with:
 filepack create <PACKAGE>
 ```
 
-This will create `<PACKAGE>/filepack.json`
+This will create `<PACKAGE>/manifest.filepack`
 
 To later verify the package against the manifest:
 
@@ -760,17 +761,17 @@ over simple file verification with `.sfv` files.
 - Filepack can detect both accidental corruption and intentional modification,
   whereas `.sfv` files can only detect accidental corruption.
 
-- Because `filepack.json` manifests contain file sizes, Filepack can tell the
-  user not just whether a file has been modified, but also whether it is empty,
-  truncated, or too long.
+- Because `manifest.filepack` manifests contain file sizes, Filepack can tell
+  the user not just whether a file has been modified, but also whether it is
+  empty, truncated, or too long.
 
 - Filepack packages have a fingerprint, a short text string beginning with
   `package1…` which is guaranteed to be globally unique, allowing packages to
   be identified and referenced by fingerprint alone.
 
-- Fingerprints can be used to verify that a `filepack.json` manifest itself has
-  not been tampered with, proving authenticity of a package regardless of its
-  source.
+- Fingerprints can be used to verify that a `manifest.filepack` manifest itself
+  has not been tampered with, proving authenticity of a package regardless of
+  its source.
 
 - Packages can be signed, allowing users to verify authenticity of any package
   from a packager by public key, a short string beginning with `public1…`.

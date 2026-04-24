@@ -234,7 +234,7 @@ fn metadata_subcommand_format_tsv_error() {
     .arg("create")
     .success()
     .args(["metadata", "--format", "tsv"])
-    .stderr("error: metadata cannot be displayed as TSV\n")
+    .stderr("error: metadata cannot be formatted as TSV\n")
     .failure();
 }
 

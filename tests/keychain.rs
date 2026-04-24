@@ -81,7 +81,7 @@ fn private_key_permissions() {
     .touch("foo/bar")
     .args(["create", "foo"])
     .success()
-    .args(["sign", "foo/filepack.json"])
+    .args(["sign", "foo/manifest.filepack"])
     .stderr_regex("error: private key `.*master.private` has insecure permissions 0644\n")
     .failure();
 }

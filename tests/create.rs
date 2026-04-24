@@ -24,8 +24,8 @@ fn empty_directories_are_included() {
   Test::new()
     .create_dir("foo")
     .args(["create", "."])
-    .assert_file(
-      "filepack.json",
+    .assert_manifest(
+      "manifest.filepack",
       json_pretty! {
         files: {
           foo: {
@@ -45,8 +45,8 @@ fn file_in_subdirectory() {
   Test::new()
     .touch("foo/bar")
     .args(["create", "."])
-    .assert_file(
-      "filepack.json",
+    .assert_manifest(
+      "manifest.filepack",
       json_pretty! {
         files: {
           foo: {
@@ -68,11 +68,11 @@ fn file_in_subdirectory() {
 #[test]
 fn force_overwrites_manifest() {
   Test::new()
-    .touch("filepack.json")
+    .touch("manifest.filepack")
     .touch("foo")
     .args(["create", "--force", "."])
-    .assert_file(
-      "filepack.json",
+    .assert_manifest(
+      "manifest.filepack",
       json_pretty! {
         files: {
           foo: {
@@ -95,7 +95,7 @@ fn force_overwrites_manifest_with_destination() {
     .touch("foo.json")
     .touch("foo")
     .args(["create", "--force", ".", "--manifest", "foo.json"])
-    .assert_file(
+    .assert_manifest(
       "foo.json",
       json_pretty! {
         files: {
@@ -116,9 +116,9 @@ fn force_overwrites_manifest_with_destination() {
 #[test]
 fn manifest_already_exists_error() {
   Test::new()
-    .touch("filepack.json")
+    .touch("manifest.filepack")
     .args(["create", "."])
-    .stderr("error: manifest `filepack.json` already exists\n")
+    .stderr("error: manifest `manifest.filepack` already exists\n")
     .failure();
 }
 
@@ -143,8 +143,8 @@ fn multiple_empty_directory_are_included() {
     .create_dir("foo")
     .create_dir("bar")
     .args(["create", "."])
-    .assert_file(
-      "filepack.json",
+    .assert_manifest(
+      "manifest.filepack",
       json_pretty! {
         files: {
           bar: {
@@ -166,8 +166,8 @@ fn nested_empty_directories_are_included() {
   Test::new()
     .create_dir("foo/bar")
     .args(["create", "."])
-    .assert_file(
-      "filepack.json",
+    .assert_manifest(
+      "manifest.filepack",
       json_pretty! {
         files: {
           foo: {
@@ -188,7 +188,10 @@ fn nested_empty_directories_are_included() {
 fn no_files() {
   Test::new()
     .args(["create", "."])
-    .assert_file("filepack.json", json_pretty! { files: {}, signatures: [] })
+    .assert_manifest(
+      "manifest.filepack",
+      json_pretty! { files: {}, signatures: [] },
+    )
     .success()
     .args(["verify", "."])
     .stderr("successfully verified 0 files\n")
@@ -233,7 +236,7 @@ fn sign_creates_valid_signature() {
     .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
     .success();
 
-  let manifest_path = test.path().join("foo/filepack.json");
+  let manifest_path = test.path().join("foo/manifest.filepack");
   let manifest = Manifest::load(Some(&manifest_path)).unwrap();
 
   let public_key = test.read_public_key("keychain/master.public");
@@ -267,7 +270,7 @@ fn sign_with_named_key() {
     .args(["create", "--sign", "--key", "deploy", "foo"])
     .success();
 
-  let manifest_path = test.path().join("foo/filepack.json");
+  let manifest_path = test.path().join("foo/manifest.filepack");
   let manifest = Manifest::load(Some(&manifest_path)).unwrap();
 
   let public_key = test.read_public_key("keychain/deploy.public");
@@ -298,7 +301,7 @@ fn sign_with_timestamp() {
     .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
     .success();
 
-  let manifest_path = test.path().join("foo/filepack.json");
+  let manifest_path = test.path().join("foo/manifest.filepack");
   let manifest = Manifest::load(Some(&manifest_path)).unwrap();
 
   let public_key = test.read_public_key("keychain/master.public");
@@ -331,8 +334,8 @@ fn single_file() {
   Test::new()
     .touch("foo")
     .args(["create", "."])
-    .assert_file(
-      "filepack.json",
+    .assert_manifest(
+      "manifest.filepack",
       json_pretty! {
         files: {
           foo: {
@@ -354,8 +357,8 @@ fn single_file_mmap() {
   Test::new()
     .touch("foo")
     .args(["--mmap", "create", "."])
-    .assert_file(
-      "filepack.json",
+    .assert_manifest(
+      "manifest.filepack",
       json_pretty! {
         files: {
           foo: {
@@ -377,8 +380,8 @@ fn single_file_omit_root() {
   Test::new()
     .touch("foo")
     .arg("create")
-    .assert_file(
-      "filepack.json",
+    .assert_manifest(
+      "manifest.filepack",
       json_pretty! {
         files: {
           foo: {
@@ -400,8 +403,8 @@ fn single_file_parallel() {
   Test::new()
     .touch("foo")
     .args(["--parallel", "create", "."])
-    .assert_file(
-      "filepack.json",
+    .assert_manifest(
+      "manifest.filepack",
       json_pretty! {
         files: {
           foo: {
@@ -423,8 +426,8 @@ fn single_non_empty_file() {
   Test::new()
     .write("foo", "bar")
     .args(["create", "."])
-    .assert_file(
-      "filepack.json",
+    .assert_manifest(
+      "manifest.filepack",
       json_pretty! {
         files: {
           foo: {
@@ -455,7 +458,7 @@ fn with_manifest_path() {
   Test::new()
     .touch("foo")
     .args(["create", "--manifest", "hello.json"])
-    .assert_file(
+    .assert_manifest(
       "hello.json",
       json_pretty! {
         files: {
@@ -479,7 +482,9 @@ fn with_metadata() {
     .touch("bar")
     .write("metadata.yaml", "title: Foo")
     .arg("create")
-    .assert_file_regex("filepack.json", r#".*"metadata.yaml".*"#)
+    .success()
+    .arg("manifest")
+    .stdout_regex(r#".*"metadata\.cbor".*"metadata\.yaml".*"#)
     .success()
     .arg("verify")
     .stderr("successfully verified 3 files totaling 16 bytes\n")

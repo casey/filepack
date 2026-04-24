@@ -13,7 +13,7 @@ pub(crate) struct Verify {
   )]
   keys: Vec<KeyIdentifier>,
   #[arg(
-    help = "Read manifest from <MANIFEST>, defaults to `<ROOT>/filepack.json`",
+    help = "Read manifest from <MANIFEST>, defaults to `<ROOT>/manifest.filepack`",
     long
   )]
   manifest: Option<Utf8PathBuf>,
@@ -65,17 +65,12 @@ impl Verify {
       root.join(Manifest::FILENAME)
     };
 
-    let json = filesystem::read_to_string_opt(&source)?.ok_or_else(|| {
-      error::ManifestNotFound {
-        path: self
-          .manifest
-          .as_deref()
-          .unwrap_or(Utf8Path::new(Manifest::FILENAME)),
-      }
-      .build()
-    })?;
+    let display_path = self
+      .manifest
+      .as_deref()
+      .unwrap_or(Utf8Path::new(Manifest::FILENAME));
 
-    let manifest = Manifest::from_json(&json, Manifest::FILENAME.as_ref())?;
+    let manifest = Manifest::load_with_path(&source, display_path)?;
 
     let mut verified = Verified::default();
 
@@ -237,7 +232,7 @@ mismatched file: `{path}`
     }
 
     if self.print {
-      print!("{json}");
+      println!("{}", serde_json::to_string_pretty(&manifest).unwrap());
     }
 
     eprint!("successfully verified {}", Count(verified.files, "file"));

@@ -5,8 +5,8 @@ fn fingerprint() {
   let test = Test::new()
     .touch("foo")
     .arg("create")
-    .assert_file(
-      "filepack.json",
+    .assert_manifest(
+      "manifest.filepack",
       json_pretty! {
         files: {
           foo: {
@@ -30,7 +30,7 @@ fn fingerprint() {
     .args(["fingerprint", path.as_str()])
     .stdout(format!("{fingerprint}\n"))
     .success()
-    .args(["fingerprint", path.join("filepack.json").as_str()])
+    .args(["fingerprint", path.join("manifest.filepack").as_str()])
     .stdout(format!("{fingerprint}\n"))
     .success();
 }

@@ -52,10 +52,10 @@ fn existing_signatures_are_preserved() {
     .args(["create", "foo"])
     .success()
     .data_dir("a")
-    .args(["sign", "foo/filepack.json"])
+    .args(["sign", "foo/manifest.filepack"])
     .success()
     .data_dir("b")
-    .args(["sign", "foo/filepack.json"])
+    .args(["sign", "foo/manifest.filepack"])
     .success();
 
   let a = test.read("a/keychain/master.public");
@@ -99,7 +99,7 @@ fn named() {
   let public_key = test.read("keychain/deploy.public");
 
   test
-    .args(["sign", "--key", "deploy", "foo/filepack.json"])
+    .args(["sign", "--key", "deploy", "foo/manifest.filepack"])
     .success()
     .args(["verify", "foo", "--key", &public_key])
     .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
@@ -114,12 +114,12 @@ fn re_signing_is_idempotent() {
     .create_dir("foo")
     .args(["create", "foo"])
     .success()
-    .args(["sign", "foo/filepack.json"])
+    .args(["sign", "foo/manifest.filepack"])
     .success()
     .args(["verify", "foo", "--key", "master"])
     .stderr("successfully verified 0 files with 1 signature\n")
     .success()
-    .args(["sign", "foo/filepack.json"])
+    .args(["sign", "foo/manifest.filepack"])
     .success()
     .args(["verify", "foo", "--key", "master"])
     .stderr("successfully verified 0 files with 1 signature\n")
@@ -149,7 +149,7 @@ fn updates_manifest_with_signature() {
     .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
     .success();
 
-  let manifest_path = test.path().join("foo/filepack.json");
+  let manifest_path = test.path().join("foo/manifest.filepack");
   let manifest = Manifest::load(Some(&manifest_path)).unwrap();
   assert!(
     manifest
@@ -174,13 +174,13 @@ fn with_timestamp() {
   let public_key = test.read("keychain/master.public");
 
   let test = test
-    .args(["sign", "--timestamp", "foo/filepack.json"])
+    .args(["sign", "--timestamp", "foo/manifest.filepack"])
     .success()
     .args(["verify", "foo", "--key", &public_key])
     .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
     .success();
 
-  let manifest_path = test.path().join("foo/filepack.json");
+  let manifest_path = test.path().join("foo/manifest.filepack");
   let manifest = Manifest::load(Some(&manifest_path)).unwrap();
 
   let time = manifest

@@ -10,12 +10,11 @@ impl Hash {
     self.0.as_bytes()
   }
 
-  pub(crate) fn bytes(input: &[u8]) -> Self {
+  pub fn bytes(input: &[u8]) -> Self {
     Self(blake3::hash(input))
   }
 }
 
-#[cfg(test)]
 impl Decode for Hash {
   fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
     let bytes = decoder.bytes()?;

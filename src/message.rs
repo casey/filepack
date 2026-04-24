@@ -17,16 +17,25 @@ impl Decode for Message {
   fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
     let mut map = decoder.map::<u8>()?;
 
-    let application = map.key::<String>(0)?.unwrap();
-    ensure!(
-      application == "filepack",
-      cbor::decode_error::UnexpectedValue
-    );
+    {
+      let actual = map.required_key::<String>(0)?;
+      let expected = "filepack";
+      ensure! {
+        actual == expected,
+        decode_error::UnexpectedValue { actual, expected },
+      }
+    }
 
-    let ty = map.key::<String>(1)?.unwrap();
-    ensure!(ty == "message", cbor::decode_error::UnexpectedValue);
+    {
+      let actual = map.required_key::<String>(1)?;
+      let expected = "message";
+      ensure! {
+        actual == expected,
+        decode_error::UnexpectedValue { actual, expected },
+      }
+    }
 
-    let fingerprint = map.key::<Fingerprint>(2)?.unwrap();
+    let fingerprint = map.required_key::<Fingerprint>(2)?;
 
     let timestamp = map.key::<u64>(3)?;
 
@@ -80,9 +89,9 @@ mod tests {
     drop(map);
     let bytes = encoder.finish();
 
-    assert_eq!(
+    assert_matches!(
       Message::decode(&mut Decoder::new(bytes)),
-      Err(DecodeError::UnexpectedValue),
+      Err(DecodeError::UnexpectedValue { actual, expected: "filepack" }) if actual == "foo",
     );
   }
 
@@ -96,9 +105,9 @@ mod tests {
     drop(map);
     let bytes = encoder.finish();
 
-    assert_eq!(
+    assert_matches!(
       Message::decode(&mut Decoder::new(bytes)),
-      Err(DecodeError::UnexpectedValue),
+      Err(DecodeError::UnexpectedValue { actual, expected: "message" }) if actual == "foo",
     );
   }
 }

@@ -9,7 +9,7 @@ pub(crate) struct Languages {
 impl Languages {
   #[expect(clippy::unnecessary_wraps)]
   pub(crate) fn run(self) -> Result {
-    let codes = &*crate::language::CODES;
+    let codes = &*language::CODES;
 
     match self.format {
       Format::Json => println!("{}", serde_json::to_string(codes).unwrap()),

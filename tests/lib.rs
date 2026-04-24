@@ -12,8 +12,10 @@ use {
     str,
     time::{SystemTime, UNIX_EPOCH},
   },
+  tempfile::{NamedTempFile, TempDir},
 };
 
+mod archive;
 mod bech32;
 mod contains;
 mod create;
@@ -31,6 +33,7 @@ mod languages;
 mod lint;
 mod lints;
 mod man;
+mod manifest;
 mod metadata;
 mod misc;
 mod sign;

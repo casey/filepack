@@ -1,4 +1,4 @@
-watch +args='ltest':
+watch +args='lcheck':
   cargo watch --clear --exec '{{ args }}'
 
 clippy: (watch 'lclippy --tests --all --all-targets -- --deny warnings')
@@ -45,7 +45,7 @@ example: tmp
   cp src/main.rs tmp/src
   cargo run create tmp
   cargo run sign --time tmp
-  cat tmp/filepack.json | jq | pbcopy
+  cat tmp/manifest.filepack | jq | pbcopy
 
 publish: tmp
   #!/usr/bin/env bash
@@ -99,15 +99,15 @@ sign-release: tmp
   VERSION=`bin/version`
   gh release download \
     --repo casey/filepack \
-    --pattern filepack.json \
+    --pattern manifest.filepack \
     --dir tmp \
     $VERSION
-  cargo run sign tmp/filepack.json
+  cargo run sign tmp/manifest.filepack
   gh release upload \
     --clobber \
     --repo casey/filepack \
     $VERSION \
-    tmp/filepack.json
+    tmp/manifest.filepack
 
 verify-release: tmp
   #!/usr/bin/env bash

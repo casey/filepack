@@ -78,7 +78,7 @@ mod tests {
 
   #[test]
   fn decode_error() {
-    assert_eq!(
+    assert_matches!(
       Png::decode(&mut Decoder::new("cover.jpg".encode_to_vec())),
       Err(DecodeError::Component {
         source: ComponentError::Extension { extension: "png" },
