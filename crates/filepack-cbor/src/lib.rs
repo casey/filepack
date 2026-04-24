@@ -5,6 +5,7 @@ use {
   parsed_field::ParsedField,
   proc_macro::TokenStream,
   quote::quote,
+  std::collections::HashSet,
   syn::{Attribute, DeriveInput, Error, Ident, LitInt, Result, Type, TypePath},
   usized::IntoU64,
 };

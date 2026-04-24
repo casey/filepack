@@ -71,25 +71,24 @@ impl Input {
   }
 
   fn parse_fields(&self) -> Result<Vec<ParsedField>> {
-    let fields = self.data.as_ref().take_struct().unwrap();
-
-    let mut parsed = fields
+    let fields = self
+      .data
+      .as_ref()
+      .take_struct()
+      .unwrap()
       .into_iter()
       .map(Field::parse)
       .collect::<Result<Vec<ParsedField>>>()?;
 
-    parsed.sort_by_key(|f| f.n);
-
-    for window in parsed.windows(2) {
-      if window[0].n == window[1].n {
+    let mut n = HashSet::new();
+    for (i, field) in fields.iter().enumerate() {
+      if !n.insert(field.n) {
         return Err(syn::Error::new_spanned(
-          window[1].ident,
-          format!("duplicate key {}", window[1].n),
+          field.ident,
+          format!("duplicate key {}", field.n),
         ));
       }
-    }
 
-    for (i, field) in parsed.iter().enumerate() {
       if field.n != i.into_u64() {
         return Err(syn::Error::new_spanned(
           field.ident,
@@ -101,6 +100,6 @@ impl Input {
       }
     }
 
-    Ok(parsed)
+    Ok(fields)
   }
 }
