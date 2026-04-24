@@ -1,12 +1,12 @@
 use super::*;
 
-pub(crate) struct Decoder {
-  buffer: Vec<u8>,
+pub(crate) struct Decoder<'a> {
+  buffer: &'a [u8],
   position: usize,
   stack: Vec<usize>,
 }
 
-impl Decoder {
+impl<'a> Decoder<'a> {
   fn array<const N: usize>(&mut self) -> Result<[u8; N], DecodeError> {
     Ok(self.slice(N)?.try_into().unwrap())
   }
@@ -82,12 +82,12 @@ impl Decoder {
     self.expect(MajorType::UnsignedInteger)
   }
 
-  pub(crate) fn map<K>(&mut self) -> Result<MapDecoder<K>, DecodeError> {
+  pub(crate) fn map<'b, K>(&'b mut self) -> Result<MapDecoder<'b, 'a, K>, DecodeError> {
     let len = self.expect(MajorType::Map)?;
     Ok(MapDecoder::new(self, len))
   }
 
-  pub(crate) fn new(buffer: Vec<u8>) -> Self {
+  pub(crate) fn new(buffer: &'a [u8]) -> Self {
     Self {
       buffer,
       position: 0,
@@ -133,7 +133,7 @@ mod tests {
 
   #[test]
   fn finish_errors_on_trailing_bytes() {
-    let mut decoder = Decoder::new(vec![0x00, 0x00]);
+    let mut decoder = Decoder::new(&[0x00, 0x00]);
     u8::decode(&mut decoder).unwrap();
     assert_matches!(decoder.finish(), Err(DecodeError::TrailingBytes));
   }
@@ -141,7 +141,7 @@ mod tests {
   #[test]
   fn integer_range() {
     assert!(matches!(
-      u8::decode(&mut Decoder::new(256u64.encode_to_vec())),
+      u8::decode(&mut Decoder::new(&256u64.encode_to_vec())),
       Err(DecodeError::IntegerRange { .. }),
     ));
   }
@@ -151,7 +151,7 @@ mod tests {
     #[track_caller]
     fn case(bytes: &[u8]) {
       assert_matches!(
-        Decoder::new(bytes.to_vec()).head(),
+        Decoder::new(&bytes.to_vec()).head(),
         Err(DecodeError::OverlongInteger),
       );
     }
@@ -164,7 +164,7 @@ mod tests {
 
   #[test]
   fn position_stack() {
-    let mut decoder = Decoder::new(vec![0x01, 0x02]);
+    let mut decoder = Decoder::new(&[0x01, 0x02]);
     decoder.push_position();
     assert_eq!(decoder.integer().unwrap(), 1);
     decoder.pop_position();
@@ -174,20 +174,20 @@ mod tests {
   #[test]
   fn reserved_additional_information() {
     assert_matches!(
-      Decoder::new(vec![0x1c]).head(),
+      Decoder::new(&[0x1c]).head(),
       Err(DecodeError::ReservedAdditionalInformation { value }) if value == 28,
     );
   }
 
   #[test]
   fn truncated() {
-    assert_matches!(Decoder::new(vec![]).head(), Err(DecodeError::Truncated));
+    assert_matches!(Decoder::new(&[]).head(), Err(DecodeError::Truncated));
   }
 
   #[test]
   fn type_mismatch() {
     assert_matches!(
-      Decoder::new(vec![0x60]).integer(),
+      Decoder::new(&[0x60]).integer(),
       Err(DecodeError::UnexpectedType {
         expected: MajorType::UnsignedInteger,
         actual: MajorType::Text
@@ -198,7 +198,7 @@ mod tests {
   #[test]
   fn unicode() {
     assert_matches!(
-      Decoder::new(vec![0x62, 0xff, 0xfe]).text().map(drop),
+      Decoder::new(&[0x62, 0xff, 0xfe]).text().map(drop),
       Err(DecodeError::Unicode { .. }),
     );
   }
@@ -206,7 +206,7 @@ mod tests {
   #[test]
   fn unsupported_additional_information() {
     assert_matches!(
-      Decoder::new(vec![0x1f]).head(),
+      Decoder::new(&[0x1f]).head(),
       Err(DecodeError::UnsupportedAdditionalInformation { value }) if value == 31,
     );
   }

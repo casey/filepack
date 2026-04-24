@@ -69,7 +69,7 @@ mod tests {
   #[test]
   fn decode_error() {
     assert_matches!(
-      DateTime::decode(&mut Decoder::new("foo".encode_to_vec())),
+      DateTime::decode(&mut Decoder::new(&"foo".encode_to_vec())),
       Err(DecodeError::DateTime { .. }),
     );
   }

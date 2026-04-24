@@ -90,7 +90,7 @@ mod tests {
     let bytes = encoder.finish();
 
     assert_matches!(
-      Message::decode(&mut Decoder::new(bytes)),
+      Message::decode(&mut Decoder::new(&bytes)),
       Err(DecodeError::UnexpectedValue { actual, expected: "filepack" }) if actual == "foo",
     );
   }
@@ -106,7 +106,7 @@ mod tests {
     let bytes = encoder.finish();
 
     assert_matches!(
-      Message::decode(&mut Decoder::new(bytes)),
+      Message::decode(&mut Decoder::new(&bytes)),
       Err(DecodeError::UnexpectedValue { actual, expected: "message" }) if actual == "foo",
     );
   }

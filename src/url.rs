@@ -43,7 +43,7 @@ mod tests {
   #[test]
   fn decode_error() {
     assert_matches!(
-      Url::decode(&mut Decoder::new("foo".encode_to_vec())),
+      Url::decode(&mut Decoder::new(&"foo".encode_to_vec())),
       Err(DecodeError::Url { .. }),
     );
   }
