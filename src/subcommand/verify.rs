@@ -220,7 +220,7 @@ mismatched file: `{path}`
       let path = root.join(Metadata::CBOR_FILENAME);
 
       if let Some(cbor) = filesystem::read_opt(&path)? {
-        Metadata::decode_from_vec(cbor).context(error::DecodeMetadataCbor { path })?;
+        Metadata::decode_from_slice(&cbor).context(error::DecodeMetadataCbor { path })?;
       }
     }
 

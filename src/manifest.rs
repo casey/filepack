@@ -81,7 +81,7 @@ impl Manifest {
       .ok_or_else(|| error::ManifestNotFound { path: display_path }.build())?;
 
     let archive =
-      Archive::decode_from_vec(cbor).context(error::DecodeManifest { path: display_path })?;
+      Archive::decode_from_slice(&cbor).context(error::DecodeManifest { path: display_path })?;
 
     let manifest = archive
       .unpack()
