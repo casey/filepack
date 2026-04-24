@@ -200,13 +200,7 @@ impl TryFrom<&Utf8Path> for RelativePath {
 
 impl From<&Component> for RelativePath {
   fn from(component: &Component) -> Self {
-    component.as_str().parse().unwrap()
-  }
-}
-
-impl From<&ComponentBuf> for RelativePath {
-  fn from(component: &ComponentBuf) -> Self {
-    component.as_str().parse().unwrap()
+    Self(component.into())
   }
 }
 
