@@ -142,8 +142,11 @@ impl Archive {
     }
 
     {
-      let mut unexpected = embedded.keys().cloned().collect::<BTreeSet<RelativePath>>();
-      unexpected.remove(Metadata::CBOR_FILENAME);
+      let unexpected = embedded
+        .keys()
+        .filter(|path| **path == Metadata::CBOR_FILENAME)
+        .cloned()
+        .collect::<BTreeSet<RelativePath>>();
 
       ensure! {
         unexpected.is_empty(),
