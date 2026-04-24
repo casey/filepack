@@ -540,21 +540,12 @@ mod tests {
   }
 
   #[test]
-  fn unexpected_embedded_file() {
-    let archive = archive_with_embedded_files(&["bar"], b"foo");
-    assert_matches!(
-      archive.unpack(),
-      Err(ArchiveError::UnexpectedEmbeddedFiles { paths }) if paths.to_string() == "`bar`",
-    );
-  }
-
-  #[test]
-  fn unexpected_embedded_files_with_same_hash() {
-    let archive = archive_with_embedded_files(&["bar", "foo"], b"baz");
+  fn unexpected_embedded_files() {
+    let archive = archive_with_embedded_files(&["bar/bob", "foo"], b"baz");
     assert_matches!(
       archive.unpack(),
       Err(ArchiveError::UnexpectedEmbeddedFiles { paths })
-        if paths.to_string() == "`bar`, `foo`",
+        if paths.to_string() == "`bar/bob`, `foo`",
     );
   }
 
