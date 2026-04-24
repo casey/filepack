@@ -13,6 +13,10 @@ impl Component {
     &self.0
   }
 
+  fn cast(s: &str) -> &Component {
+    unsafe { &*(ptr::from_ref::<str>(s) as *const Component) }
+  }
+
   pub(crate) fn extension(&self) -> Option<&str> {
     match self.0.rfind('.') {
       None | Some(0) => None,
@@ -20,7 +24,7 @@ impl Component {
     }
   }
 
-  pub(crate) fn from_component_buf<'a>(c: &'a ComponentBuf) -> &'a Self {
+  pub(crate) fn from_component_buf(c: &ComponentBuf) -> &Self {
     Self::cast(c.borrow())
   }
 
@@ -61,10 +65,6 @@ impl Component {
     }
 
     Ok(Self::cast(s))
-  }
-
-  fn cast(s: &str) -> &Component {
-    unsafe { &*(ptr::from_ref::<str>(s) as *const Component) }
   }
 }
 
