@@ -531,7 +531,7 @@ mod tests {
     let archive = Archive::pack(&manifest);
     assert_matches!(
       archive.unpack(),
-      Err(ArchiveError::UnexpectedEmbeddedFiles { .. }),
+      Err(ArchiveError::UnexpectedEmbeddedFiles { paths }) if paths.to_string() == "`bar`",
     );
   }
 
