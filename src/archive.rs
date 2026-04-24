@@ -219,35 +219,6 @@ mod tests {
     assert_eq!(archive.unpack().unwrap(), manifest);
   }
 
-  fn archive_with_embedded_files(paths: &[&str], content: &[u8]) -> Archive {
-    let mut files = DirectoryTree::new();
-    for path in paths {
-      files
-        .create_file(&path.parse().unwrap(), File::new(content))
-        .unwrap();
-    }
-
-    let mut builder = ArchiveBuilder::new();
-
-    let package = builder.directory(&files);
-
-    builder.files.insert(Hash::bytes(content), content.to_vec());
-
-    let signatures = builder.entry(EntryType::Directory, Directory::default().encode_to_vec());
-
-    let root = Directory {
-      version: Version::Zero,
-      entries: BTreeMap::from([
-        ("package".parse().unwrap(), package),
-        ("signatures".parse().unwrap(), signatures),
-      ]),
-    };
-
-    let root = builder.entry(EntryType::Directory, root.encode_to_vec());
-
-    builder.build(root.hash)
-  }
-
   #[test]
   fn decode_error() {
     let junk = b"foo".to_vec();
@@ -541,11 +512,39 @@ mod tests {
 
   #[test]
   fn unexpected_embedded_files() {
-    let archive = archive_with_embedded_files(&["bar/bob", "foo"], b"baz");
+    let content = b"foo";
+
+    let mut files = DirectoryTree::new();
+    for path in &["bar/bob", "baz"] {
+      files
+        .create_file(&path.parse().unwrap(), File::new(content))
+        .unwrap();
+    }
+
+    let mut builder = ArchiveBuilder::new();
+
+    let package = builder.directory(&files);
+
+    builder.files.insert(Hash::bytes(content), content.to_vec());
+
+    let signatures = builder.entry(EntryType::Directory, Directory::default().encode_to_vec());
+
+    let root = Directory {
+      version: Version::Zero,
+      entries: BTreeMap::from([
+        ("package".parse().unwrap(), package),
+        ("signatures".parse().unwrap(), signatures),
+      ]),
+    };
+
+    let root = builder.entry(EntryType::Directory, root.encode_to_vec());
+
+    let archive = builder.build(root.hash);
+
     assert_matches!(
       archive.unpack(),
       Err(ArchiveError::UnexpectedEmbeddedFiles { paths })
-        if paths.to_string() == "`bar/bob`, `foo`",
+        if paths.to_string() == "`bar/bob`, `baz`",
     );
   }
 
