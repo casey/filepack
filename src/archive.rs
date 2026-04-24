@@ -23,12 +23,12 @@ impl Archive {
 
     loose.remove(&hash);
 
-    Directory::decode_from_vec(file.clone()).context(archive_error::DirectoryDecode)
+    Directory::decode_from_slice(file).context(archive_error::DirectoryDecode)
   }
 
   pub(crate) fn fingerprint(&self) -> Fingerprint {
     let root = &self.files[&self.root];
-    let root = Directory::decode_from_vec(root.clone()).unwrap();
+    let root = Directory::decode_from_slice(root).unwrap();
     Fingerprint(root.entries[&Self::PACKAGE.parse::<Component>().unwrap()].hash)
   }
 
@@ -258,7 +258,7 @@ mod tests {
     };
     let archive = Archive::pack(&manifest);
     let bytes = archive.encode_to_vec();
-    let decoded = Archive::decode_from_vec(bytes).unwrap();
+    let decoded = Archive::decode_from_slice(&bytes).unwrap();
     assert_eq!(decoded.unpack().unwrap(), manifest);
   }
 
@@ -274,7 +274,7 @@ mod tests {
 
     let archive = Archive::pack(&manifest);
     let bytes = archive.encode_to_vec();
-    let decoded = Archive::decode_from_vec(bytes).unwrap();
+    let decoded = Archive::decode_from_slice(&bytes).unwrap();
     assert_eq!(decoded.unpack().unwrap(), manifest);
   }
 
@@ -283,7 +283,7 @@ mod tests {
     let manifest = manifest();
     let archive = Archive::pack(&manifest);
     let bytes = archive.encode_to_vec();
-    let decoded = Archive::decode_from_vec(bytes).unwrap();
+    let decoded = Archive::decode_from_slice(&bytes).unwrap();
     assert_eq!(decoded.unpack().unwrap(), manifest);
   }
 
@@ -304,7 +304,7 @@ mod tests {
 
     let archive = Archive::pack(&manifest);
     let bytes = archive.encode_to_vec();
-    let decoded = Archive::decode_from_vec(bytes).unwrap();
+    let decoded = Archive::decode_from_slice(&bytes).unwrap();
     assert_eq!(decoded.unpack().unwrap(), manifest);
   }
 
@@ -327,7 +327,7 @@ mod tests {
 
     let archive = Archive::pack(&manifest);
     let bytes = archive.encode_to_vec();
-    let decoded = Archive::decode_from_vec(bytes).unwrap();
+    let decoded = Archive::decode_from_slice(&bytes).unwrap();
     assert_eq!(decoded.unpack().unwrap(), manifest);
   }
 
@@ -359,7 +359,7 @@ mod tests {
 
     let archive = Archive::pack(&manifest);
     let bytes = archive.encode_to_vec();
-    let decoded = Archive::decode_from_vec(bytes).unwrap();
+    let decoded = Archive::decode_from_slice(&bytes).unwrap();
     assert_eq!(decoded.unpack().unwrap(), manifest);
   }
 

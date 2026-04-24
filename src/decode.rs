@@ -3,7 +3,7 @@ use super::*;
 pub(crate) trait Decode: Sized {
   fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError>;
 
-  fn decode_from_vec(buffer: Vec<u8>) -> Result<Self, DecodeError> {
+  fn decode_from_slice(buffer: &[u8]) -> Result<Self, DecodeError> {
     let mut decoder = Decoder::new(buffer);
     let value = Self::decode(&mut decoder)?;
     decoder.finish()?;
@@ -73,7 +73,7 @@ mod tests {
   #[test]
   fn decode_from_vec_errors_on_trailing_bytes() {
     assert_matches!(
-      u8::decode_from_vec(vec![0x00, 0x00]),
+      u8::decode_from_slice(&[0x00, 0x00]),
       Err(DecodeError::TrailingBytes),
     );
   }

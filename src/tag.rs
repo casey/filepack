@@ -40,7 +40,7 @@ mod tests {
   #[test]
   fn decode_error() {
     assert_matches!(
-      Tag::decode(&mut Decoder::new("".encode_to_vec())),
+      Tag::decode(&mut Decoder::new(&"".encode_to_vec())),
       Err(DecodeError::Tag {
         source: TagError::Parse,
       }),

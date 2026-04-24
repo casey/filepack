@@ -130,7 +130,7 @@ mod tests {
       &[0x63, 0x66, 0x6f, 0x6f],
     );
     let empty = "".encode_to_vec();
-    let mut decoder = Decoder::new(empty);
+    let mut decoder = Decoder::new(&empty);
     assert_matches!(
       Component::decode(&mut decoder),
       Err(DecodeError::Component {
