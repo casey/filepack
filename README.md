@@ -518,7 +518,8 @@ Then, to create the package:
 filepack create [DIRECTORY]
 ```
 
-Which will validate metadata if present and write it to `metadata.cbor`.
+Which will validate metadata if present and write it to `metadata.cbor`, as
+well as include it in `manifest.filepack`.
 
 See [metadata](#metadata) for the full schema.
 
@@ -838,13 +839,13 @@ content.
 Filepack seeks to rectify this by standardizing machine-readable metadata that
 can be included with folder-of-files content.
 
-Filepack metadata is stored a single file, `metadata.cbor`, in the root of a
-filepack package, and contains information related to what the package
-contains, which files in the package contain the package content and their file
-formats, and who created the package. This metadata can serve as a base for the
-creation of rich local and distributed applications and services, with user
-experiences that compete with and exceed those of closed centralized
-alternatives.
+Filepack metadata is stored a file, `metadata.cbor`, in the root of a filepack
+package as well as in the `manifest.filepack` archive, and contains information
+related to what the package contains, which files in the package contain the
+package content and their file formats, and who created the package. This
+metadata can serve as a base for the creation of rich local and distributed
+applications and services, with user experiences that compete with and exceed
+those of closed centralized alternatives.
 
 Future Directions
 -----------------
@@ -880,6 +881,9 @@ of the file.
 The length of the file is not strictly necessary for verification, but is
 included so that truncated, empty, and overlong files can be identified, which
 may help in understanding verification failures.
+
+File contents may be embedded in the `manifest.filepack` archive under the
+`embedded` key.
 
 ### File Hashes
 
