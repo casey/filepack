@@ -313,6 +313,12 @@ pub enum Error {
     path: DisplayPath,
     source: ArchiveError,
   },
+  #[snafu(display("manifest `{path}` contains unexpected embedded files: {unexpected}"))]
+  UnexpectedEmbeddedFiles {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+    unexpected: Ticked<RelativePath>,
+  },
   #[snafu(transparent)]
   WalkDir {
     backtrace: Option<Backtrace>,

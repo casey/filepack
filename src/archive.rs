@@ -200,6 +200,56 @@ mod tests {
   use super::*;
 
   #[test]
+  fn archive_packs_metadata_cbor() {
+    let content = b"foo";
+    let mut files = DirectoryTree::new();
+    files
+      .create_file(
+        &Metadata::CBOR_FILENAME.parse().unwrap(),
+        File::new(content),
+      )
+      .unwrap();
+
+    let manifest = Manifest {
+      embedded: BTreeMap::from([(Hash::bytes(content), content.to_vec())]),
+      files,
+      signatures: BTreeSet::new(),
+    };
+
+    let archive = Archive::pack(&manifest);
+    assert_eq!(archive.unpack().unwrap(), manifest);
+  }
+
+  fn archive_with_embedded_files(paths: &[&str], content: &[u8]) -> Archive {
+    let mut files = DirectoryTree::new();
+    for path in paths {
+      files
+        .create_file(&path.parse().unwrap(), File::new(content))
+        .unwrap();
+    }
+
+    let mut builder = ArchiveBuilder::new();
+
+    let package = builder.directory(&files);
+
+    builder.files.insert(Hash::bytes(content), content.to_vec());
+
+    let signatures = builder.entry(EntryType::Directory, Directory::default().encode_to_vec());
+
+    let root = Directory {
+      version: Version::Zero,
+      entries: BTreeMap::from([
+        ("package".parse().unwrap(), package),
+        ("signatures".parse().unwrap(), signatures),
+      ]),
+    };
+
+    let root = builder.entry(EntryType::Directory, root.encode_to_vec());
+
+    builder.build(root.hash)
+  }
+
+  #[test]
   fn decode_error() {
     let junk = b"foo".to_vec();
     let hash = Hash::bytes(&junk);
@@ -219,27 +269,6 @@ mod tests {
         }
       })
     );
-  }
-
-  #[test]
-  fn archive_packs_metadata_cbor() {
-    let content = b"foo";
-    let mut files = DirectoryTree::new();
-    files
-      .create_file(
-        &Metadata::CBOR_FILENAME.parse().unwrap(),
-        File::new(content),
-      )
-      .unwrap();
-
-    let manifest = Manifest {
-      embedded: BTreeMap::from([(Hash::bytes(content), content.to_vec())]),
-      files,
-      signatures: BTreeSet::new(),
-    };
-
-    let archive = Archive::pack(&manifest);
-    assert_eq!(archive.unpack().unwrap(), manifest);
   }
 
   #[test]
@@ -513,22 +542,20 @@ mod tests {
 
   #[test]
   fn unexpected_embedded_file() {
-    let content = b"foo";
-    let mut files = DirectoryTree::new();
-    files
-      .create_file(&"bar".parse().unwrap(), File::new(content))
-      .unwrap();
-
-    let manifest = Manifest {
-      embedded: BTreeMap::from([(Hash::bytes(content), content.to_vec())]),
-      files,
-      signatures: BTreeSet::new(),
-    };
-
-    let archive = Archive::pack(&manifest);
+    let archive = archive_with_embedded_files(&["bar"], b"foo");
     assert_matches!(
       archive.unpack(),
       Err(ArchiveError::UnexpectedEmbeddedFiles { paths }) if paths.to_string() == "`bar`",
+    );
+  }
+
+  #[test]
+  fn unexpected_embedded_files_share_hash() {
+    let archive = archive_with_embedded_files(&["bar", "foo"], b"baz");
+    assert_matches!(
+      archive.unpack(),
+      Err(ArchiveError::UnexpectedEmbeddedFiles { paths })
+        if paths.to_string() == "`bar`, `foo`",
     );
   }
 

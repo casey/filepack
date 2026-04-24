@@ -53,6 +53,18 @@ impl Manifest {
     let manifest =
       serde_json::from_str::<Self>(json).context(error::DeserializeManifest { path: &path })?;
 
+    let mut unexpected = BTreeSet::new();
+    for (file_path, file) in manifest.files() {
+      if manifest.embedded.contains_key(&file.hash) && file_path != Metadata::CBOR_FILENAME {
+        unexpected.insert(file_path);
+      }
+    }
+
+    ensure! {
+      unexpected.is_empty(),
+      error::UnexpectedEmbeddedFiles { path, unexpected },
+    }
+
     manifest.verify_signatures()?;
 
     Ok(manifest)

@@ -127,6 +127,23 @@ fn manifest_already_exists_error() {
 }
 
 #[test]
+fn metadata_cbor_is_embedded_in_manifest_archive() {
+  let test = Test::new()
+    .write("metadata.yaml", "title: Foo")
+    .arg("create")
+    .success();
+
+  let cbor = fs::read(test.path().join("metadata.cbor")).unwrap();
+
+  let manifest = Manifest::load(Some(&test.path().join("manifest.filepack"))).unwrap();
+
+  assert_eq!(
+    manifest.embedded,
+    BTreeMap::from([(Hash::bytes(&cbor), cbor)]),
+  );
+}
+
+#[test]
 fn mismatched_key() {
   Test::new()
     .data_dir("foo")
