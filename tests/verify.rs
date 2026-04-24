@@ -43,6 +43,7 @@ fn extra_fields_are_not_allowed() {
     .write(
       "manifest.json",
       json! {
+        embedded: {},
         files: {},
         signatures: [],
         foo: "bar"
@@ -52,7 +53,7 @@ fn extra_fields_are_not_allowed() {
     .stderr(
       "\
 error: failed to deserialize manifest at `manifest.json`
-       └─ unknown field `foo`, expected `files` or `signatures` at line 1 column 33\n",
+       └─ unknown field `foo`, expected one of `embedded`, `files`, `signatures` at line 1 column 47\n",
     )
     .failure();
 }
@@ -71,7 +72,10 @@ fn extraneous_empty_directory_error() {
 #[test]
 fn extraneous_file_error() {
   Test::new()
-    .write_manifest("manifest.filepack", json! { files: {}, signatures: [] })
+    .write_manifest(
+      "manifest.filepack",
+      json! { embedded: {}, files: {}, signatures: [] },
+    )
     .touch("foo")
     .args(["verify", "."])
     .stderr("error: extraneous file not in manifest: `foo`\n")
@@ -84,6 +88,7 @@ fn file_not_found_error_message() {
     .write_manifest(
       "manifest.filepack",
       json! {
+        embedded: {},
         files: {
           foo: {
             hash: EMPTY_HASH,
@@ -123,6 +128,7 @@ fn ignore_missing() {
     .write_manifest(
       "manifest.filepack",
       json! {
+        embedded: {},
         files: {
           foo: {
             hash: EMPTY_HASH,
@@ -146,6 +152,7 @@ fn malformed_signature_error() {
     .write(
       "manifest.json",
       json! {
+        embedded: {},
         files: {},
         signatures: [
           "signature1invalid"
@@ -184,6 +191,7 @@ fn manifest_paths_are_relative_to_root() {
     .write_manifest(
       "dir/manifest.filepack",
       json! {
+        embedded: {},
         files: {
           foo: {
             hash: EMPTY_HASH,
@@ -208,6 +216,7 @@ fn metadata_allows_unknown_keys() {
     .write_manifest(
       "manifest.filepack",
       json! {
+        embedded: {},
         files: {
           "metadata.yaml": {
             hash: hash,
@@ -233,6 +242,7 @@ fn metadata_may_not_be_invalid() {
     .write_manifest(
       "manifest.filepack",
       json! {
+        embedded: {},
         files: {
           "metadata.yaml": {
             hash: hash,
@@ -422,7 +432,10 @@ fn nested_missing_empty_directory_error() {
 #[test]
 fn no_files() {
   Test::new()
-    .write_manifest("manifest.filepack", json! { files: {}, signatures: [] })
+    .write_manifest(
+      "manifest.filepack",
+      json! { embedded: {}, files: {}, signatures: [] },
+    )
     .args(["verify", "."])
     .stderr("successfully verified 0 files\n")
     .success();
@@ -436,7 +449,10 @@ fn non_unicode_path_error() {
 
   Test::new()
     .touch_non_unicode()
-    .write_manifest("manifest.filepack", json! { files: {}, signatures: [] })
+    .write_manifest(
+      "manifest.filepack",
+      json! { embedded: {}, files: {}, signatures: [] },
+    )
     .args(["verify", "."])
     .stderr_path("error: path not valid unicode: `./�`\n")
     .failure();
@@ -449,6 +465,7 @@ fn print() {
     .write_manifest(
       "manifest.filepack",
       json! {
+        embedded: {},
         files: {
           foo: {
             hash: EMPTY_HASH,
@@ -460,6 +477,7 @@ fn print() {
     )
     .args(["verify", "--print", "."])
     .stdout(json_pretty! {
+      embedded: {},
       files: {
         foo: {
           hash: EMPTY_HASH,
@@ -487,6 +505,7 @@ fn signature_fingerprint_mismatch() {
   let signature = manifest.signatures.iter().next().unwrap().to_string();
 
   let json = json! {
+    embedded: {},
     files: {
       bar: {
         hash: EMPTY_HASH,
@@ -532,6 +551,7 @@ fn single_file() {
     .write_manifest(
       "manifest.filepack",
       json! {
+        embedded: {},
         files: {
           foo: {
             hash: EMPTY_HASH,
@@ -553,6 +573,7 @@ fn single_file_mmap() {
     .write_manifest(
       "manifest.filepack",
       json! {
+        embedded: {},
         files: {
           foo: {
             hash: EMPTY_HASH,
@@ -574,6 +595,7 @@ fn single_file_omit_directory() {
     .write_manifest(
       "manifest.filepack",
       json! {
+        embedded: {},
         files: {
           foo: {
             hash: EMPTY_HASH,
@@ -595,6 +617,7 @@ fn single_file_parallel() {
     .write_manifest(
       "manifest.filepack",
       json! {
+        embedded: {},
         files: {
           foo: {
             hash: EMPTY_HASH,
@@ -727,6 +750,7 @@ fn weak_signature_public_key() {
     .write(
       "manifest.json",
       json! {
+        embedded: {},
         files: {
           bar: {
             hash: EMPTY_HASH,
@@ -752,6 +776,7 @@ fn with_manifest_path() {
     .write_manifest(
       "hello.json",
       json! {
+        embedded: {},
         files: {
           foo: {
             hash: EMPTY_HASH,

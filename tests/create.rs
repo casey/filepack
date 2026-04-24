@@ -27,6 +27,7 @@ fn empty_directories_are_included() {
     .assert_manifest(
       "manifest.filepack",
       json_pretty! {
+        embedded: {},
         files: {
           foo: {
           },
@@ -48,6 +49,7 @@ fn file_in_subdirectory() {
     .assert_manifest(
       "manifest.filepack",
       json_pretty! {
+        embedded: {},
         files: {
           foo: {
             bar: {
@@ -74,6 +76,7 @@ fn force_overwrites_manifest() {
     .assert_manifest(
       "manifest.filepack",
       json_pretty! {
+        embedded: {},
         files: {
           foo: {
             hash: EMPTY_HASH,
@@ -98,6 +101,7 @@ fn force_overwrites_manifest_with_destination() {
     .assert_manifest(
       "foo.json",
       json_pretty! {
+        embedded: {},
         files: {
           foo: {
             hash: EMPTY_HASH,
@@ -146,6 +150,7 @@ fn multiple_empty_directory_are_included() {
     .assert_manifest(
       "manifest.filepack",
       json_pretty! {
+        embedded: {},
         files: {
           bar: {
           },
@@ -169,6 +174,7 @@ fn nested_empty_directories_are_included() {
     .assert_manifest(
       "manifest.filepack",
       json_pretty! {
+        embedded: {},
         files: {
           foo: {
             bar: {
@@ -190,7 +196,7 @@ fn no_files() {
     .args(["create", "."])
     .assert_manifest(
       "manifest.filepack",
-      json_pretty! { files: {}, signatures: [] },
+      json_pretty! { embedded: {}, files: {}, signatures: [] },
     )
     .success()
     .args(["verify", "."])
@@ -337,6 +343,7 @@ fn single_file() {
     .assert_manifest(
       "manifest.filepack",
       json_pretty! {
+        embedded: {},
         files: {
           foo: {
             hash: EMPTY_HASH,
@@ -360,6 +367,7 @@ fn single_file_mmap() {
     .assert_manifest(
       "manifest.filepack",
       json_pretty! {
+        embedded: {},
         files: {
           foo: {
             hash: EMPTY_HASH,
@@ -383,6 +391,7 @@ fn single_file_omit_root() {
     .assert_manifest(
       "manifest.filepack",
       json_pretty! {
+        embedded: {},
         files: {
           foo: {
             hash: EMPTY_HASH,
@@ -406,6 +415,7 @@ fn single_file_parallel() {
     .assert_manifest(
       "manifest.filepack",
       json_pretty! {
+        embedded: {},
         files: {
           foo: {
             hash: EMPTY_HASH,
@@ -429,6 +439,7 @@ fn single_non_empty_file() {
     .assert_manifest(
       "manifest.filepack",
       json_pretty! {
+        embedded: {},
         files: {
           foo: {
             hash: "f2e897eed7d206cd855d441598fa521abc75aa96953e97c030c9612c30c1293d",
@@ -461,6 +472,7 @@ fn with_manifest_path() {
     .assert_manifest(
       "hello.json",
       json_pretty! {
+        embedded: {},
         files: {
           foo: {
             hash: EMPTY_HASH,

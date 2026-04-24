@@ -7,6 +7,7 @@ fn creates_archive_from_json() {
     .write(
       "manifest.json",
       json! {
+        embedded: {},
         files: {
           foo: {
             hash: EMPTY_HASH,
@@ -31,6 +32,7 @@ fn round_trip() {
     .write(
       "manifest.json",
       json! {
+        embedded: {},
         files: {
           foo: {
             hash: EMPTY_HASH,
@@ -44,6 +46,7 @@ fn round_trip() {
     .success()
     .arg("manifest")
     .stdout(json_pretty! {
+      embedded: {},
       files: {
         foo: {
           hash: EMPTY_HASH,
@@ -73,6 +76,7 @@ fn signature_fingerprint_mismatch() {
     .write(
       "manifest.json",
       json! {
+        embedded: {},
         files: {
           bar: {
             hash: EMPTY_HASH,
