@@ -36,14 +36,6 @@ impl Archive {
     Fingerprint(root.entries[Self::PACKAGE].hash)
   }
 
-  fn join(prefix: Option<&RelativePath>, name: &Component) -> RelativePath {
-    if let Some(prefix) = prefix {
-      prefix.join(name)
-    } else {
-      name.into()
-    }
-  }
-
   pub(crate) fn pack(manifest: &Manifest) -> Self {
     let mut builder = ArchiveBuilder::new();
 
@@ -181,7 +173,7 @@ impl Archive {
         EntryType::File => {
           if self.files.contains_key(&entry.hash) {
             loose.remove(&entry.hash);
-            embedded.insert(Self::join(prefix, name), entry.hash);
+            embedded.insert(RelativePath::join_opt(prefix, name), entry.hash);
           }
           DirectoryTreeEntry::File(File {
             hash: entry.hash,
@@ -192,7 +184,7 @@ impl Archive {
           loose,
           embedded,
           entry,
-          Some(&Self::join(prefix, name)),
+          Some(&RelativePath::join_opt(prefix, name)),
         )?),
       };
       entries.insert(name.clone(), crate_entry);
