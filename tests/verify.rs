@@ -652,7 +652,12 @@ fn unarchive_error() {
   Test::new()
     .write("manifest.filepack", encoder.finish())
     .args(["verify", "."])
-    .stderr_regex("error: failed to unarchive manifest\n.*archive missing package directory\n")
+    .stderr(
+      "\
+error: failed to unarchive manifest
+       └─ archive missing package directory
+",
+    )
     .failure();
 }
 
