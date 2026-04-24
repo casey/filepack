@@ -182,9 +182,10 @@ Manifests, when converted to JSON, are an object with three mandatory keys,
 
 ### `embedded`
 
-The value of the mandatory `embedded` key is an object mapping hashes to file
-contents. The `files` object only includes file names, hashes, and sizes, but
-files may be embedded in the manifest archive in the `embedded` map.
+The value of the mandatory `embedded` key is an object mapping BLAKE3 hashes to
+hex-encoded file contents. The `files` object only includes file names, hashes,
+and sizes, but files may be embedded in the manifest archive in the `embedded`
+map.
 
 This is currently only used to embed `metadata.cbor`.
 
@@ -252,7 +253,8 @@ Metadata
 --------
 
 Filepack packages may contain a file named `metadata.cbor` describing the
-package and its contents.
+package and its contents. If present, the contents of `metadata.cbor` is also
+embedded in the `manifest.filepack` archive.
 
 Metadata is authored by creating a file named `metadata.yaml` in the root of a
 new package. `filepack create` then loads `metadata.yaml` if present, checks
