@@ -364,6 +364,46 @@ mod tests {
   }
 
   #[test]
+  fn signature_decode_error() {
+    let mut builder = ArchiveBuilder::new();
+
+    let package = Directory {
+      version: Version::Zero,
+      entries: BTreeMap::new(),
+    };
+
+    let package = builder.entry(EntryType::Directory, package.encode_to_vec());
+
+    let signature = builder.entry(EntryType::File, b"\xff".to_vec());
+
+    let signatures = Directory {
+      version: Version::Zero,
+      entries: BTreeMap::from([("0".parse().unwrap(), signature)]),
+    };
+
+    let signatures = builder.entry(EntryType::Directory, signatures.encode_to_vec());
+
+    let root = Directory {
+      version: Version::Zero,
+      entries: BTreeMap::from([
+        ("package".parse().unwrap(), package),
+        ("signatures".parse().unwrap(), signatures),
+      ]),
+    };
+
+    let root = builder.entry(EntryType::Directory, root.encode_to_vec());
+
+    let archive = builder.build(root.hash);
+
+    assert_matches!(
+      archive.unpack(),
+      Err(ArchiveError::SignatureDecode {
+        source: DecodeError::Unicode { .. }
+      })
+    );
+  }
+
+  #[test]
   fn signature_parse_error() {
     let mut builder = ArchiveBuilder::new();
 

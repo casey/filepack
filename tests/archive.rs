@@ -54,3 +54,37 @@ fn round_trip() {
     })
     .success();
 }
+
+#[test]
+fn signature_fingerprint_mismatch() {
+  let test = Test::new()
+    .arg("keygen")
+    .success()
+    .create_dir("foo")
+    .args(["create", "--sign", "foo"])
+    .success();
+
+  let manifest_path = test.path().join("foo/manifest.filepack");
+  let manifest = Manifest::load(Some(&manifest_path)).unwrap();
+
+  let signature = manifest.signatures.iter().next().unwrap().to_string();
+
+  test
+    .write(
+      "manifest.json",
+      json! {
+        files: {
+          bar: {
+            hash: EMPTY_HASH,
+            size: 0
+          }
+        },
+        signatures: [signature]
+      },
+    )
+    .args(["archive", "manifest.json", "out.filepack"])
+    .stderr_regex(
+      "error: signature fingerprint `package1a.*` does not match package fingerprint `package1a.*`\n",
+    )
+    .failure();
+}
