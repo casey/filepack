@@ -17,11 +17,23 @@ impl Decode for Message {
   fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
     let mut map = decoder.map::<u8>()?;
 
-    let application = map.required_key::<String>(0)?;
-    ensure!(application == "filepack", decode_error::UnexpectedValue);
+    {
+      let actual = map.required_key::<String>(0)?;
+      let expected = "filepack";
+      ensure! {
+        actual == expected,
+        decode_error::UnexpectedValue { actual, expected },
+      }
+    }
 
-    let ty = map.required_key::<String>(1)?;
-    ensure!(ty == "message", decode_error::UnexpectedValue);
+    {
+      let actual = map.required_key::<String>(1)?;
+      let expected = "message";
+      ensure! {
+        actual == expected,
+        decode_error::UnexpectedValue { actual, expected },
+      }
+    }
 
     let fingerprint = map.required_key::<Fingerprint>(2)?;
 
@@ -79,7 +91,7 @@ mod tests {
 
     assert_matches!(
       Message::decode(&mut Decoder::new(bytes)),
-      Err(DecodeError::UnexpectedValue)
+      Err(DecodeError::UnexpectedValue { actual, expected: "filepack" }) if actual == "foo",
     );
   }
 
@@ -95,7 +107,7 @@ mod tests {
 
     assert_matches!(
       Message::decode(&mut Decoder::new(bytes)),
-      Err(DecodeError::UnexpectedValue)
+      Err(DecodeError::UnexpectedValue { actual, expected: "message" }) if actual == "foo",
     );
   }
 }
