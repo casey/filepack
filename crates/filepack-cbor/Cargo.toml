@@ -11,3 +11,7 @@ darling = "0.20"
 proc-macro2 = "1"
 quote = "1"
 syn = "2"
+
+[lints.rust]
+mismatched-lifetime-syntaxes = "allow"
+unreachable_pub = "deny"

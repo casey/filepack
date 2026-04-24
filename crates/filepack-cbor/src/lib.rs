@@ -26,31 +26,39 @@ struct ParsedField<'a> {
   optional: bool,
 }
 
-fn parse_n(field: &Field) -> syn::Result<u8> {
-  let ident = field.ident.as_ref().unwrap();
+impl Field {
+  fn n(&self) -> syn::Result<u8> {
+    let ident = self.ident.as_ref().unwrap();
 
-  let mut n = None;
+    let mut n = None;
 
-  for attr in &field.attrs {
-    if attr.path().is_ident("n") {
-      if n.is_some() {
-        return Err(syn::Error::new_spanned(attr, "duplicate #[n] attribute"));
+    for attr in &self.attrs {
+      if attr.path().is_ident("n") {
+        if n.is_some() {
+          return Err(syn::Error::new_spanned(attr, "duplicate #[n] attribute"));
+        }
+        let lit = attr.parse_args::<LitInt>()?;
+        n = Some(lit.base10_parse::<u8>()?);
       }
-      let lit = attr.parse_args::<LitInt>()?;
-      n = Some(lit.base10_parse::<u8>()?);
+    }
+
+    n.ok_or_else(|| syn::Error::new_spanned(ident, "missing #[n(N)] attribute"))
+  }
+
+  fn is_option(&self) -> bool {
+    if let syn::Type::Path(syn::TypePath { qself: None, path }) = &self.ty {
+      path.leading_colon.is_none() && path.segments.len() == 1 && path.segments[0].ident == "Option"
+    } else {
+      false
     }
   }
 
-  n.ok_or_else(|| syn::Error::new_spanned(ident, "missing #[n(N)] attribute"))
-}
-
-fn is_option(ty: &syn::Type) -> bool {
-  if let syn::Type::Path(type_path) = ty
-    && let Some(last) = type_path.path.segments.last()
-  {
-    return last.ident == "Option";
+  fn parse(&self) -> syn::Result<ParsedField> {
+    let ident = self.ident.as_ref().unwrap();
+    let n = self.n()?;
+    let optional = self.is_option();
+    Ok(ParsedField { ident, n, optional })
   }
-  false
 }
 
 #[proc_macro_derive(Encode, attributes(n))]
@@ -117,14 +125,10 @@ impl Input {
   fn parse_fields(&self) -> syn::Result<Vec<ParsedField<'_>>> {
     let fields = self.data.as_ref().take_struct().unwrap();
 
-    let mut parsed = Vec::new();
-
-    for field in fields {
-      let ident = field.ident.as_ref().unwrap();
-      let n = parse_n(field)?;
-      let optional = is_option(&field.ty);
-      parsed.push(ParsedField { ident, n, optional });
-    }
+    let mut parsed = fields
+      .into_iter()
+      .map(|field| field.parse())
+      .collect::<syn::Result<Vec<ParsedField>>>()?;
 
     parsed.sort_by_key(|f| f.n);
 
