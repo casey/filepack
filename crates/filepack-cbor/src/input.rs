@@ -42,7 +42,7 @@ impl Input {
     let name = &self.ident;
     let fields = self.parse_fields()?;
 
-    let required_count = fields.iter().filter(|f| !f.optional).count() as u64;
+    let required_count = fields.iter().filter(|f| !f.optional).count().into_u64();
 
     let count_optionals = fields.iter().filter(|f| f.optional).map(|f| {
       let ident = f.ident;

@@ -24,13 +24,12 @@ impl Field {
 
     let mut n = None;
 
-    for attr in &self.attrs {
-      if attr.path().is_ident("n") {
+    for attribute in &self.attrs {
+      if attribute.path().is_ident("n") {
         if n.is_some() {
-          return Err(Error::new_spanned(attr, "duplicate #[n] attribute"));
+          return Err(Error::new_spanned(attribute, "duplicate #[n] attribute"));
         }
-        let lit = attr.parse_args::<LitInt>()?;
-        n = Some(lit.base10_parse::<u64>()?);
+        n = Some(attribute.parse_args::<LitInt>()?.base10_parse::<u64>()?);
       }
     }
 
@@ -38,9 +37,10 @@ impl Field {
   }
 
   pub(crate) fn parse(&self) -> Result<ParsedField> {
-    let ident = self.ident.as_ref().unwrap();
-    let n = self.n()?;
-    let optional = self.is_option();
-    Ok(ParsedField { ident, n, optional })
+    Ok(ParsedField {
+      ident: self.ident.as_ref().unwrap(),
+      n: self.n()?,
+      optional: self.is_option(),
+    })
   }
 }
