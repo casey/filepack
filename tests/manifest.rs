@@ -21,7 +21,7 @@ fn default_format() {
 }
 
 #[test]
-fn includes_embeded_files() {
+fn includes_embedded_files() {
   Test::new()
     .write("metadata.yaml", "title: foo")
     .touch("bar")
