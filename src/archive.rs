@@ -129,7 +129,7 @@ impl Archive {
     };
 
     if !loose.is_empty() {
-      return Err(archive_error::UnreferencedFiles { hashes: loose }.build());
+      return Err(archive_error::LooseFiles { hashes: loose }.build());
     }
 
     if !embedded.is_empty()

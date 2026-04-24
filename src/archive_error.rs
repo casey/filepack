@@ -9,6 +9,8 @@ pub enum ArchiveError {
   FileHashMismatch { actual: Hash, expected: Hash },
   #[snafu(display("archive missing entry for hash {hash}"))]
   FileMissing { hash: Hash },
+  #[snafu(display("archive contains loose files: {hashes}"))]
+  LooseFiles { hashes: Ticked<Hash> },
   #[snafu(display("archive missing package directory"))]
   PackageMissing,
   #[snafu(display("failed to decode signature"))]
@@ -19,6 +21,4 @@ pub enum ArchiveError {
   SignaturesMissing,
   #[snafu(display("archive contains unexpected embedded files: {paths}"))]
   UnexpectedEmbeddedFiles { paths: Ticked<RelativePath> },
-  #[snafu(display("archive contains unreferenced files: {hashes}"))]
-  UnreferencedFiles { hashes: Ticked<Hash> },
 }
