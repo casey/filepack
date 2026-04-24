@@ -1,18 +1,6 @@
 use super::*;
 
 #[test]
-fn includes_embeded_files() {
-  Test::new()
-    .write("metadata.yaml", "title: foo")
-    .touch("bar")
-    .arg("create")
-    .success()
-    .arg("manifest")
-    .stdout_regex(r#".*"embedded": \{[^}].*"#)
-    .success();
-}
-
-#[test]
 fn default_format() {
   Test::new()
     .touch("foo")
@@ -29,6 +17,18 @@ fn default_format() {
       },
       signatures: [],
     })
+    .success();
+}
+
+#[test]
+fn includes_embeded_files() {
+  Test::new()
+    .write("metadata.yaml", "title: foo")
+    .touch("bar")
+    .arg("create")
+    .success()
+    .arg("manifest")
+    .stdout_regex(r#".*"embedded": \{[^}].*"#)
     .success();
 }
 

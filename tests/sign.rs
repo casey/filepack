@@ -20,22 +20,6 @@ fn appends_filename_if_argument_is_directory() {
 }
 
 #[test]
-fn preserves_embedded_files() {
-  let test = Test::new()
-    .arg("keygen")
-    .success()
-    .write("pkg/metadata.yaml", "title: foo")
-    .touch("pkg/bar")
-    .args(["create", "pkg"])
-    .success()
-    .args(["sign", "pkg"])
-    .success();
-
-  let manifest = Manifest::load(Some(&test.path().join("pkg/manifest.filepack"))).unwrap();
-  assert!(!manifest.embedded.is_empty());
-}
-
-#[test]
 fn defaults_to_current_directory() {
   let test = Test::new()
     .arg("keygen")
@@ -120,6 +104,22 @@ fn named() {
     .args(["verify", "foo", "--key", &public_key])
     .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
     .success();
+}
+
+#[test]
+fn preserves_embedded_files() {
+  let test = Test::new()
+    .arg("keygen")
+    .success()
+    .write("pkg/metadata.yaml", "title: foo")
+    .touch("pkg/bar")
+    .args(["create", "pkg"])
+    .success()
+    .args(["sign", "pkg"])
+    .success();
+
+  let manifest = Manifest::load(Some(&test.path().join("pkg/manifest.filepack"))).unwrap();
+  assert!(!manifest.embedded.is_empty());
 }
 
 #[test]
