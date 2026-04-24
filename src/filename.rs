@@ -25,7 +25,7 @@ pub(crate) trait Extension {
 
 #[derive(Clone, Debug, DeserializeFromStr, PartialEq)]
 pub(crate) struct Filename<T: Extension> {
-  component: Component,
+  component: ComponentBuf,
   phantom: PhantomData<T>,
 }
 
@@ -57,7 +57,7 @@ impl<T: Extension> FromStr for Filename<T> {
   type Err = ComponentError;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
-    let component = s.parse::<Component>()?;
+    let component = s.parse::<ComponentBuf>()?;
 
     if component.extension() != Some(T::EXTENSION) {
       return Err(ComponentError::Extension {

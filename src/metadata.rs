@@ -4,14 +4,14 @@ use super::*;
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub(crate) struct Metadata {
   pub(crate) artwork: Option<filename::Png>,
-  pub(crate) creator: Option<Component>,
+  pub(crate) creator: Option<ComponentBuf>,
   pub(crate) date: Option<DateTime>,
   pub(crate) description: Option<String>,
   pub(crate) homepage: Option<Url>,
   pub(crate) language: Option<Language>,
   pub(crate) package: Option<Package>,
   pub(crate) readme: Option<filename::Md>,
-  pub(crate) title: Component,
+  pub(crate) title: ComponentBuf,
 }
 
 impl Metadata {

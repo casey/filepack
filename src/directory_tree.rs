@@ -5,7 +5,7 @@ use super::*;
 #[serde(deny_unknown_fields, transparent)]
 pub struct DirectoryTree {
   #[serde_as(as = "MapPreventDuplicates<_, _>")]
-  pub(crate) entries: BTreeMap<Component, DirectoryTreeEntry>,
+  pub(crate) entries: BTreeMap<ComponentBuf, DirectoryTreeEntry>,
 }
 
 impl DirectoryTree {
@@ -17,10 +17,10 @@ impl DirectoryTree {
     Ok(())
   }
 
-  fn create_directory_entry(&mut self, component: Component) -> Result<&mut DirectoryTree> {
+  fn create_directory_entry(&mut self, component: &Component) -> Result<&mut DirectoryTree> {
     let entry = self
       .entries
-      .entry(component)
+      .entry(component.to_owned())
       .or_insert(DirectoryTreeEntry::Directory(DirectoryTree::new()));
 
     match entry {
@@ -41,7 +41,7 @@ impl DirectoryTree {
     while let Some(component) = components.next() {
       if components.peek().is_none() {
         ensure! {
-          current.entries.insert(component, DirectoryTreeEntry::File(file)).is_none(),
+          current.entries.insert(component.to_owned(), DirectoryTreeEntry::File(file)).is_none(),
           error::Internal {
             message: "entry `{component}` already contains file",
           }

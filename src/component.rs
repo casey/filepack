@@ -1,7 +1,8 @@
 use super::*;
 
-#[derive(Clone, Debug, DeserializeFromStr, Eq, Ord, PartialEq, PartialOrd, SerializeDisplay)]
-pub(crate) struct Component(String);
+#[repr(transparent)]
+#[derive(Debug, Eq, Ord, PartialEq, PartialOrd)]
+pub(crate) struct Component(str);
 
 impl Component {
   pub(crate) fn as_path(&self) -> RelativePath {
@@ -12,7 +13,14 @@ impl Component {
     &self.0
   }
 
-  pub(crate) fn check(s: &str) -> Result<(), ComponentError> {
+  pub(crate) fn extension(&self) -> Option<&str> {
+    match self.0.rfind('.') {
+      None | Some(0) => None,
+      Some(n) => Some(&self.0[n + 1..]),
+    }
+  }
+
+  pub(crate) fn new(s: &str) -> Result<&Component, ComponentError> {
     if s.is_empty() {
       return Err(ComponentError::Empty);
     }
@@ -48,14 +56,7 @@ impl Component {
       return Err(ComponentError::WindowsDriveLetter { letter: first });
     }
 
-    Ok(())
-  }
-
-  pub(crate) fn extension(&self) -> Option<&str> {
-    match self.0.rfind('.') {
-      None | Some(0) => None,
-      Some(n) => Some(&self.0[n + 1..]),
-    }
+    Ok(unsafe { &*(std::ptr::from_ref::<str>(s) as *const Component) })
   }
 }
 
@@ -65,36 +66,29 @@ impl Borrow<str> for Component {
   }
 }
 
+impl Display for Component {
+  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    write!(f, "{}", &self.0)
+  }
+}
+
 impl Encode for Component {
   fn encode(&self, encoder: &mut Encoder) {
     self.as_str().encode(encoder);
   }
 }
 
-impl Decode for Component {
-  fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
-    decoder.text()?.parse().context(decode_error::Component)
-  }
-}
-
-impl Display for Component {
-  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    write!(f, "{}", self.0)
-  }
-}
-
-impl FromStr for Component {
-  type Err = ComponentError;
-
-  fn from_str(s: &str) -> Result<Self, Self::Err> {
-    Self::check(s)?;
-    Ok(Self(s.into()))
-  }
-}
-
 impl PartialEq<&str> for Component {
   fn eq(&self, s: &&str) -> bool {
     self.as_str().eq(*s)
+  }
+}
+
+impl ToOwned for Component {
+  type Owned = ComponentBuf;
+
+  fn to_owned(&self) -> ComponentBuf {
+    ComponentBuf::from_component(self)
   }
 }
 
@@ -105,7 +99,7 @@ mod tests {
   #[test]
   fn current() {
     assert_eq!(
-      ".".parse::<Component>().unwrap_err(),
+      Component::new(".").unwrap_err(),
       ComponentError::Normal { component: "." },
     );
   }
@@ -113,37 +107,21 @@ mod tests {
   #[test]
   fn drive_prefix() {
     assert_eq!(
-      "C:".parse::<Component>().unwrap_err(),
+      Component::new("C:").unwrap_err(),
       ComponentError::WindowsDriveLetter { letter: 'C' },
     );
   }
 
   #[test]
   fn empty() {
-    assert_eq!("".parse::<Component>().unwrap_err(), ComponentError::Empty,);
-  }
-
-  #[test]
-  fn encoding() {
-    assert_cbor(
-      "foo".parse::<Component>().unwrap(),
-      &[0x63, 0x66, 0x6f, 0x6f],
-    );
-    let empty = "".encode_to_vec();
-    let mut decoder = Decoder::new(&empty);
-    assert_matches!(
-      Component::decode(&mut decoder),
-      Err(DecodeError::Component {
-        source: ComponentError::Empty
-      }),
-    );
+    assert_eq!(Component::new("").unwrap_err(), ComponentError::Empty,);
   }
 
   #[test]
   fn extension() {
     #[track_caller]
     fn case(input: &str, expected: Option<&str>) {
-      let component = input.parse::<Component>().unwrap();
+      let component = Component::new(input).unwrap();
       assert_eq!(component.extension(), expected);
     }
 
@@ -156,26 +134,24 @@ mod tests {
 
   #[test]
   fn length() {
-    "a".repeat(255).parse::<Component>().unwrap();
+    let long = "a".repeat(255);
+    Component::new(&long).unwrap();
 
     assert_eq!(
-      "a".repeat(256).parse::<Component>().unwrap_err(),
+      Component::new(&"a".repeat(256)).unwrap_err(),
       ComponentError::Length,
     );
   }
 
   #[test]
   fn nul() {
-    assert_eq!(
-      "foo\0bar".parse::<Component>().unwrap_err(),
-      ComponentError::Nul
-    );
+    assert_eq!(Component::new("foo\0bar").unwrap_err(), ComponentError::Nul);
   }
 
   #[test]
   fn parent() {
     assert_eq!(
-      "..".parse::<Component>().unwrap_err(),
+      Component::new("..").unwrap_err(),
       ComponentError::Normal { component: ".." },
     );
   }
@@ -183,12 +159,12 @@ mod tests {
   #[test]
   fn separator() {
     assert_eq!(
-      "/".parse::<Component>().unwrap_err(),
+      Component::new("/").unwrap_err(),
       ComponentError::Separator { character: '/' },
     );
 
     assert_eq!(
-      "\\".parse::<Component>().unwrap_err(),
+      Component::new("\\").unwrap_err(),
       ComponentError::Separator { character: '\\' },
     );
   }
