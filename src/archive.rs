@@ -170,7 +170,7 @@ impl Archive {
       let crate_entry = match entry.ty {
         EntryType::File => {
           if loose.remove(&entry.hash) {
-            let mut components: Vec<&Component> = prefix.to_vec();
+            let mut components = prefix.to_vec();
             components.push(name);
             let path = RelativePath::try_from(components.as_slice()).unwrap();
             embedded.insert(path, entry.hash);
@@ -181,7 +181,7 @@ impl Archive {
           })
         }
         EntryType::Directory => {
-          let mut child_prefix: Vec<&Component> = prefix.to_vec();
+          let mut child_prefix = prefix.to_vec();
           child_prefix.push(name);
           DirectoryTreeEntry::Directory(self.unpack_directory(
             loose,
