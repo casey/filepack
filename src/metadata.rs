@@ -1,16 +1,25 @@
 use super::*;
 
 #[skip_serializing_none]
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, Encode, Decode, PartialEq, Serialize)]
 pub(crate) struct Metadata {
+  #[n(0)]
   pub(crate) artwork: Option<filename::Png>,
+  #[n(1)]
   pub(crate) creator: Option<ComponentBuf>,
+  #[n(2)]
   pub(crate) date: Option<DateTime>,
+  #[n(3)]
   pub(crate) description: Option<String>,
+  #[n(4)]
   pub(crate) homepage: Option<Url>,
+  #[n(5)]
   pub(crate) language: Option<Language>,
+  #[n(6)]
   pub(crate) package: Option<Package>,
+  #[n(7)]
   pub(crate) readme: Option<filename::Md>,
+  #[n(8)]
   pub(crate) title: ComponentBuf,
 }
 
@@ -61,64 +70,6 @@ impl Metadata {
 
   pub(crate) fn load_strict(path: &Utf8Path) -> Result<Self> {
     Self::deserialize_strict(path, &filesystem::read_to_string(path)?)
-  }
-}
-
-impl Decode for Metadata {
-  fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
-    let mut map = decoder.map::<u8>()?;
-
-    let artwork = map.optional_key(0)?;
-    let creator = map.optional_key(1)?;
-    let date = map.optional_key(2)?;
-    let description = map.optional_key(3)?;
-    let homepage = map.optional_key(4)?;
-    let language = map.optional_key(5)?;
-    let package = map.optional_key(6)?;
-    let readme = map.optional_key(7)?;
-    let title = map.required_key(8)?;
-
-    map.finish()?;
-
-    Ok(Self {
-      artwork,
-      creator,
-      date,
-      description,
-      homepage,
-      language,
-      package,
-      readme,
-      title,
-    })
-  }
-}
-
-impl Encode for Metadata {
-  fn encode(&self, encoder: &mut Encoder) {
-    let length = 1
-      + count_some!(
-        self.artwork,
-        self.creator,
-        self.date,
-        self.description,
-        self.homepage,
-        self.language,
-        self.package,
-        self.readme,
-      );
-
-    let mut map = encoder.map::<u8>(length);
-
-    map.optional_item(0, self.artwork.as_ref());
-    map.optional_item(1, self.creator.as_ref());
-    map.optional_item(2, self.date.as_ref());
-    map.optional_item(3, self.description.as_ref());
-    map.optional_item(4, self.homepage.as_ref());
-    map.optional_item(5, self.language.as_ref());
-    map.optional_item(6, self.package.as_ref());
-    map.optional_item(7, self.readme.as_ref());
-    map.item(8, &self.title);
   }
 }
 

@@ -1,0 +1,13 @@
+[package]
+name = "filepack-cbor"
+version = "0.0.0"
+edition = "2024"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+darling = "0.20"
+proc-macro2 = "1"
+quote = "1"
+syn = "2"

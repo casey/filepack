@@ -1,9 +1,13 @@
 use super::*;
 
 #[allow(clippy::arbitrary_source_item_ordering)]
+#[derive(Encode, Decode)]
 pub(crate) struct Archive {
+  #[n(0)]
   pub(crate) version: Version,
+  #[n(1)]
   pub(crate) root: Hash,
+  #[n(2)]
   pub(crate) files: BTreeMap<Hash, Vec<u8>>,
 }
 
@@ -145,31 +149,6 @@ impl Archive {
     }
 
     Ok(DirectoryTree { entries })
-  }
-}
-
-impl Encode for Archive {
-  fn encode(&self, encoder: &mut Encoder) {
-    let mut encoder = encoder.map::<u8>(3);
-    encoder.item(0, self.version);
-    encoder.item(1, self.root);
-    encoder.item(2, &self.files);
-  }
-}
-
-impl Decode for Archive {
-  fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
-    let mut decoder = decoder.map::<u8>()?;
-
-    let version = decoder.required_key(0)?;
-    let root = decoder.required_key(1)?;
-    let files = decoder.required_key(2)?;
-
-    Ok(Self {
-      version,
-      root,
-      files,
-    })
   }
 }
 

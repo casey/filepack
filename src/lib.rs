@@ -81,6 +81,7 @@ use {
   blake3::Hasher,
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},
   clap::{Parser, ValueEnum},
+  filepack_cbor::{Decode, Encode},
   indicatif::{ProgressBar, ProgressStyle},
   lexiclean::Lexiclean,
   num_traits::One,
@@ -264,6 +265,8 @@ mod url;
 mod utf8_path_ext;
 mod version;
 
+#[cfg(test)]
+mod derive;
 #[cfg(test)]
 mod test;
 
