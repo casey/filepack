@@ -41,17 +41,17 @@ impl Create {
 
     let metadata_cbor = metadata.as_ref().map(Metadata::encode_to_vec);
 
-    let metadata_cbor_path = root.join(Metadata::CBOR_FILENAME);
+    if let Some(manifest_cbor) = &metadata_cbor {
+      let path = root.join(Metadata::CBOR_FILENAME);
 
-    if let Some(cbor) = &metadata_cbor {
       ensure! {
-        self.force || !metadata_cbor_path.try_exists().context(error::FilesystemIo { path: &metadata_cbor_path })?,
+        self.force || !path.try_exists().context(error::FilesystemIo { path: &path })?,
         error::MetadataCborAlreadyExists {
-          path: metadata_cbor_path,
+          path,
         },
       }
 
-      filesystem::write(&metadata_cbor_path, cbor)?;
+      filesystem::write(&path, manifest_cbor)?;
     }
 
     let cleaned_manifest = current_dir.join(&manifest_path).lexiclean();

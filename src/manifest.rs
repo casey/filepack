@@ -4,7 +4,6 @@ use super::*;
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Manifest {
-  #[serde(skip)]
   pub(crate) embedded: BTreeMap<Hash, Vec<u8>>,
   pub files: DirectoryTree,
   #[serde_as(as = "SetPreventDuplicates<_>")]
