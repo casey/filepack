@@ -85,20 +85,6 @@ fn all_required() {
 }
 
 #[test]
-fn enum_integer_range() {
-  #[derive(Debug, Decode, FromRepr)]
-  #[repr(u8)]
-  enum Foo {
-    Bar = 0,
-  }
-
-  assert_matches!(
-    Foo::decode_from_slice(&256u64.encode_to_vec()),
-    Err(DecodeError::IntegerRange { .. }),
-  );
-}
-
-#[test]
 fn enum_invalid_discriminant() {
   #[derive(Debug, Decode, FromRepr)]
   #[repr(u8)]
@@ -106,13 +92,19 @@ fn enum_invalid_discriminant() {
     Bar = 0,
   }
 
-  assert_matches!(
-    Foo::decode_from_slice(&[0x01]),
-    Err(DecodeError::InvalidDiscriminant {
-      discriminant: 1,
-      name: "Foo",
-    }),
-  );
+  #[track_caller]
+  fn case(bytes: &[u8], expected: u64) {
+    assert_matches!(
+      Foo::decode_from_slice(bytes),
+      Err(DecodeError::InvalidDiscriminant {
+        discriminant,
+        name: "Foo",
+      }) if discriminant == expected,
+    );
+  }
+
+  case(&[0x01], 1);
+  case(&256u64.encode_to_vec(), 256);
 }
 
 #[test]

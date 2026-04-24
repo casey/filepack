@@ -19,11 +19,14 @@ impl Input {
       return Ok(quote! {
         impl Decode for #name {
           fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
-            let discriminant = #repr::decode(decoder)?;
-            Self::from_repr(discriminant).context(decode_error::InvalidDiscriminant {
-              discriminant: u64::from(discriminant),
-              name: stringify!(#name),
-            })
+            let discriminant = decoder.integer()?;
+            #repr::try_from(discriminant)
+              .ok()
+              .and_then(Self::from_repr)
+              .context(decode_error::InvalidDiscriminant {
+                discriminant,
+                name: stringify!(#name),
+              })
           }
         }
       });
