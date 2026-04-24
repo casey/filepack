@@ -433,7 +433,10 @@ fn non_unicode_manifest_deserialize_error() {
   Test::new()
     .write("manifest.filepack", [0x80])
     .args(["verify", "."])
-    .stderr_regex("error: failed to decode manifest at `manifest.filepack`\n.*")
+    .stderr(
+      "error: failed to decode manifest at `manifest.filepack`
+       └─ expected map but found array\n",
+    )
     .failure();
 }
 
