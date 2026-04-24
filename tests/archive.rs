@@ -19,7 +19,7 @@ fn creates_archive_from_json() {
     .args(["archive", "manifest.json", "manifest.filepack"])
     .success()
     .remove_file("manifest.json")
-    .args(["verify", "."])
+    .arg("verify")
     .stderr("successfully verified 1 file totaling 0 bytes\n")
     .success();
 }
