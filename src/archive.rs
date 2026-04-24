@@ -144,7 +144,7 @@ impl Archive {
     {
       let unexpected = embedded
         .keys()
-        .filter(|path| **path == Metadata::CBOR_FILENAME)
+        .filter(|path| **path != Metadata::CBOR_FILENAME)
         .cloned()
         .collect::<BTreeSet<RelativePath>>();
 
