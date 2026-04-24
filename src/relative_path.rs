@@ -116,12 +116,6 @@ impl AsRef<Utf8Path> for RelativePath {
   }
 }
 
-impl Borrow<str> for RelativePath {
-  fn borrow(&self) -> &str {
-    &self.0
-  }
-}
-
 impl Display for RelativePath {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     Display::fmt(&self.0, f)
