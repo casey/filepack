@@ -183,7 +183,7 @@ Manifests, when converted to JSON, are an object with three mandatory keys,
 ### `embedded`
 
 The value of the mandatory `embedded` key is an object mapping hashes to file
-contents. The `files` object only inludes file names, hashes, and sizes, but
+contents. The `files` object only includes file names, hashes, and sizes, but
 files may be embedded in the manifest archive in the `embedded` map.
 
 This is currently only used to embed `metadata.cbor`.
