@@ -20,6 +20,10 @@ impl Component {
     }
   }
 
+  pub(crate) fn from_component_buf<'a>(c: &'a ComponentBuf) -> &'a Self {
+    Self::cast(c.borrow())
+  }
+
   pub(crate) fn new(s: &str) -> Result<&Component, ComponentError> {
     if s.is_empty() {
       return Err(ComponentError::Empty);
@@ -56,7 +60,11 @@ impl Component {
       return Err(ComponentError::WindowsDriveLetter { letter: first });
     }
 
-    Ok(unsafe { &*(std::ptr::from_ref::<str>(s) as *const Component) })
+    Ok(Self::cast(s))
+  }
+
+  fn cast(s: &str) -> &Component {
+    unsafe { &*(ptr::from_ref::<str>(s) as *const Component) }
   }
 }
 

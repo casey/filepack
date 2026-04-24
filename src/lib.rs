@@ -107,7 +107,7 @@ use {
     num::TryFromIntError,
     ops::Deref,
     path::{Path, PathBuf},
-    process,
+    process, ptr,
     str::{self, FromStr, Utf8Error},
     sync::LazyLock,
     time::{SystemTime, SystemTimeError, UNIX_EPOCH},

@@ -31,7 +31,7 @@ impl Deref for ComponentBuf {
   type Target = Component;
 
   fn deref(&self) -> &Component {
-    unsafe { &*(std::ptr::from_ref::<str>(self.0.as_str()) as *const Component) }
+    Component::from_component_buf(self)
   }
 }
 
