@@ -177,9 +177,8 @@ impl Archive {
     for (name, entry) in &directory.entries {
       let crate_entry = match entry.ty {
         EntryType::File => {
-          if loose.remove(&entry.hash) {
-            embedded.insert(Self::join(prefix, name), entry.hash);
-          }
+          loose.remove(&entry.hash);
+          embedded.insert(Self::join(prefix, name), entry.hash);
           DirectoryTreeEntry::File(File {
             hash: entry.hash,
             size: entry.size,
