@@ -36,6 +36,14 @@ impl Archive {
     Fingerprint(root.entries[Self::PACKAGE].hash)
   }
 
+  fn join(prefix: Option<&RelativePath>, name: &Component) -> RelativePath {
+    if let Some(prefix) = prefix {
+      prefix.join(name)
+    } else {
+      name.into()
+    }
+  }
+
   pub(crate) fn pack(manifest: &Manifest) -> Self {
     let mut builder = ArchiveBuilder::new();
 
@@ -145,9 +153,8 @@ impl Archive {
     }
 
     let embedded = embedded
-      .into_iter()
-      .map(|(_path, hash)| (hash, self.files[&hash].clone()))
-      .into_iter()
+      .into_values()
+      .map(|hash| (hash, self.files[&hash].clone()))
       .collect();
 
     Ok(Manifest {
@@ -190,14 +197,6 @@ impl Archive {
 
     Ok(DirectoryTree { entries })
   }
-
-  fn join(prefix: Option<&RelativePath>, name: &Component) -> RelativePath {
-    if let Some(prefix) = prefix {
-      prefix.join(name)
-    } else {
-      name.into()
-    }
-  }
 }
 
 #[cfg(test)]
@@ -224,6 +223,27 @@ mod tests {
         }
       })
     );
+  }
+
+  #[test]
+  fn embedded_metadata_cbor() {
+    let content = b"foo";
+    let mut files = DirectoryTree::new();
+    files
+      .create_file(
+        &Metadata::CBOR_FILENAME.parse().unwrap(),
+        File::new(content),
+      )
+      .unwrap();
+
+    let manifest = Manifest {
+      embedded: BTreeMap::from([(Hash::bytes(content), content.to_vec())]),
+      files,
+      signatures: BTreeSet::new(),
+    };
+
+    let archive = Archive::pack(&manifest);
+    assert_eq!(archive.unpack().unwrap(), manifest);
   }
 
   #[test]
@@ -496,27 +516,6 @@ mod tests {
   }
 
   #[test]
-  fn embedded_metadata_cbor() {
-    let content = b"foo";
-    let mut files = DirectoryTree::new();
-    files
-      .create_file(
-        &Metadata::CBOR_FILENAME.parse().unwrap(),
-        File::new(content),
-      )
-      .unwrap();
-
-    let manifest = Manifest {
-      embedded: BTreeMap::from([(Hash::bytes(content), content.to_vec())]),
-      files,
-      signatures: BTreeSet::new(),
-    };
-
-    let archive = Archive::pack(&manifest);
-    assert_eq!(archive.unpack().unwrap(), manifest);
-  }
-
-  #[test]
   fn unexpected_embedded_file() {
     let content = b"foo";
     let mut files = DirectoryTree::new();
@@ -545,7 +544,7 @@ mod tests {
     archive.files.insert(hash, file);
     assert_matches!(
       archive.unpack(),
-      Err(ArchiveError::UnreferencedFiles { hashes: Ticked(hashes) })
+      Err(ArchiveError::LooseFiles { hashes: Ticked(hashes) })
         if hashes == BTreeSet::from([hash]),
     );
   }
