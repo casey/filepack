@@ -136,8 +136,9 @@ impl Archive {
       signatures
     };
 
-    if !loose.is_empty() {
-      return Err(archive_error::LooseFiles { hashes: loose }.build());
+    ensure! {
+      loose.is_empty(),
+      archive_error::LooseFiles { hashes: loose },
     }
 
     {
