@@ -167,7 +167,7 @@ mod tests {
       signatures: BTreeSet::new(),
     };
     let json = serde_json::to_string(&manifest).unwrap();
-    assert_eq!(json, r#"{"files":{},"signatures":[]}"#);
+    assert_eq!(json, r#"{"embedded":{},"files":{},"signatures":[]}"#);
     assert_eq!(serde_json::from_str::<Manifest>(&json).unwrap(), manifest);
   }
 

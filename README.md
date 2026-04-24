@@ -177,8 +177,16 @@ placed alongside the files they reference.
 Manifests are [CBOR](https://www.rfc-editor.org/rfc/rfc8949.html) and may be
 converted to JSON for inspection or manipulation with `filepack manifest`.
 
-Manifests, when converted to JSON, are an object with two mandatory keys,
-`files` and `signatures`.
+Manifests, when converted to JSON, are an object with three mandatory keys,
+`embedded`, `files`, and `signatures`.
+
+### `embedded`
+
+The value of the mandatory `embedded` key is an object mapping hashes to file
+contents. The `files` object only inludes file names, hashes, and sizes, but
+files may be embedded in the manifest archive in the `embedded` map.
+
+This is currently only used to embed `metadata.cbor`.
 
 ### `files`
 
@@ -210,6 +218,7 @@ and `src/main.c`, signed by the public key
 
 ```json
 {
+  "embedded": {},
   "files": {
     "README.md": {
       "hash": "fc253b84551ce6b00e820a826ac18054dc7f63a318ce62f3175315f5c467a62a",
