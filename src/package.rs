@@ -1,60 +1,20 @@
 use super::*;
 
 #[skip_serializing_none]
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, Encode, Decode, PartialEq, Serialize)]
 pub(crate) struct Package {
+  #[n(0)]
   pub(crate) creator: Option<ComponentBuf>,
+  #[n(1)]
   pub(crate) creator_tag: Option<Tag>,
+  #[n(2)]
   pub(crate) date: Option<DateTime>,
+  #[n(3)]
   pub(crate) description: Option<String>,
+  #[n(4)]
   pub(crate) homepage: Option<Url>,
+  #[n(5)]
   pub(crate) nfo: Option<filename::Nfo>,
-}
-
-impl Decode for Package {
-  fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
-    let mut map = decoder.map::<u8>()?;
-
-    let creator = map.optional_key(0)?;
-    let creator_tag = map.optional_key(1)?;
-    let date = map.optional_key(2)?;
-    let description = map.optional_key(3)?;
-    let homepage = map.optional_key(4)?;
-    let nfo = map.optional_key(5)?;
-
-    map.finish()?;
-
-    Ok(Self {
-      creator,
-      creator_tag,
-      date,
-      description,
-      homepage,
-      nfo,
-    })
-  }
-}
-
-impl Encode for Package {
-  fn encode(&self, encoder: &mut Encoder) {
-    let length = count_some!(
-      self.creator,
-      self.creator_tag,
-      self.date,
-      self.description,
-      self.homepage,
-      self.nfo,
-    );
-
-    let mut map = encoder.map::<u8>(length);
-
-    map.optional_item(0, self.creator.as_ref());
-    map.optional_item(1, self.creator_tag.as_ref());
-    map.optional_item(2, self.date.as_ref());
-    map.optional_item(3, self.description.as_ref());
-    map.optional_item(4, self.homepage.as_ref());
-    map.optional_item(5, self.nfo.as_ref());
-  }
 }
 
 #[cfg(test)]

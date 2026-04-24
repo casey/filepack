@@ -21,6 +21,7 @@ clap = { version = "4.5.16", features = ["derive"] }
 clap_mangen = "0.2.23"
 dirs = "6.0.0"
 ed25519-dalek = { version = "2.1.1", features = ["rand_core"] }
+filepack-cbor = { version = "0.0.0", path = "crates/filepack-cbor" }
 hex = "0.4.3"
 indicatif = "0.18.0"
 lexiclean = "0.0.1"
@@ -47,7 +48,17 @@ tempfile = "3.24.0"
 [lib]
 doctest = false
 
-[lints.clippy]
+[lints]
+workspace = true
+
+[profile.release]
+codegen-units = 1
+lto = true
+
+[workspace]
+members = [".", "crates/*"]
+
+[workspace.lints.clippy]
 all = { level = "deny", priority = -1 }
 arbitrary-source-item-ordering = "deny"
 enum-glob-use = "allow"
@@ -67,16 +78,9 @@ too-many-lines = "allow"
 unused-async = "allow"
 wildcard-imports = "allow"
 
-[lints.rust]
+[workspace.lints.rust]
 mismatched-lifetime-syntaxes = "allow"
 unreachable_pub = "deny"
-
-[profile.release]
-codegen-units = 1
-lto = true
-
-[workspace]
-members = [".", "crates/*"]
 
 [[test]]
 name = "integration"
