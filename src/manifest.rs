@@ -4,8 +4,10 @@ use super::*;
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Manifest {
+  #[serde_as(as = "BTreeMap<serde_with::Same, serde_with::hex::Hex>")]
+  pub embedded: BTreeMap<Hash, Vec<u8>>,
   pub files: DirectoryTree,
-  #[serde_as(as = "SetPreventDuplicates<_>")]
+  #[serde_as(as = "SetPreventDuplicates<serde_with::Same>")]
   pub signatures: BTreeSet<Signature>,
 }
 
@@ -50,6 +52,18 @@ impl Manifest {
   pub(crate) fn from_json(json: &str, path: &Utf8Path) -> Result<Self> {
     let manifest =
       serde_json::from_str::<Self>(json).context(error::DeserializeManifest { path: &path })?;
+
+    let mut unexpected = BTreeSet::new();
+    for (file_path, file) in manifest.files() {
+      if manifest.embedded.contains_key(&file.hash) && file_path != Metadata::CBOR_FILENAME {
+        unexpected.insert(file_path);
+      }
+    }
+
+    ensure! {
+      unexpected.is_empty(),
+      error::UnexpectedEmbeddedFiles { path, unexpected },
+    }
 
     manifest.verify_signatures()?;
 
@@ -159,13 +173,35 @@ mod tests {
   }
 
   #[test]
+  fn embedded_serializes_as_hex() {
+    let manifest = Manifest {
+      embedded: BTreeMap::from([(Hash::bytes(b"foo"), b"foo".to_vec())]),
+      files: DirectoryTree::new(),
+      signatures: BTreeSet::new(),
+    };
+
+    let json = serde_json::to_string(&manifest).unwrap();
+
+    assert_eq!(
+      json,
+      format!(
+        r#"{{"embedded":{{"{hash}":"666f6f"}},"files":{{}},"signatures":[]}}"#,
+        hash = Hash::bytes(b"foo"),
+      ),
+    );
+
+    assert_eq!(serde_json::from_str::<Manifest>(&json).unwrap(), manifest);
+  }
+
+  #[test]
   fn empty_manifest_serialization() {
     let manifest = Manifest {
+      embedded: BTreeMap::new(),
       files: DirectoryTree::new(),
       signatures: BTreeSet::new(),
     };
     let json = serde_json::to_string(&manifest).unwrap();
-    assert_eq!(json, r#"{"files":{},"signatures":[]}"#);
+    assert_eq!(json, r#"{"embedded":{},"files":{},"signatures":[]}"#);
     assert_eq!(serde_json::from_str::<Manifest>(&json).unwrap(), manifest);
   }
 

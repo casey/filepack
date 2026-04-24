@@ -86,6 +86,12 @@ impl Encode for Component {
   }
 }
 
+impl From<&Component> for String {
+  fn from(component: &Component) -> Self {
+    component.as_str().into()
+  }
+}
+
 impl PartialEq<&str> for Component {
   fn eq(&self, s: &&str) -> bool {
     self.as_str().eq(*s)

@@ -51,6 +51,7 @@ fn size_mismatch() {
     .write_manifest(
       "manifest.filepack",
       json! {
+        embedded: {},
         files: {
           foo: {
             hash: EMPTY_HASH,

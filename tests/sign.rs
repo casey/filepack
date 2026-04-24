@@ -107,6 +107,22 @@ fn named() {
 }
 
 #[test]
+fn preserves_embedded_files() {
+  let test = Test::new()
+    .arg("keygen")
+    .success()
+    .write("pkg/metadata.yaml", "title: foo")
+    .touch("pkg/bar")
+    .args(["create", "pkg"])
+    .success()
+    .args(["sign", "pkg"])
+    .success();
+
+  let manifest = Manifest::load(Some(&test.path().join("pkg/manifest.filepack"))).unwrap();
+  assert!(!manifest.embedded.is_empty());
+}
+
+#[test]
 fn re_signing_is_idempotent() {
   Test::new()
     .arg("keygen")

@@ -41,6 +41,10 @@ impl Archive {
 
     let package = builder.directory(&manifest.files);
 
+    for (hash, content) in &manifest.embedded {
+      builder.files.insert(*hash, content.clone());
+    }
+
     let mut root = BTreeMap::new();
 
     root.insert(Self::PACKAGE.parse::<ComponentBuf>().unwrap(), package);
@@ -96,7 +100,9 @@ impl Archive {
       .get(Self::PACKAGE)
       .context(archive_error::PackageMissing)?;
 
-    let files = self.unpack_directory(&mut loose, package)?;
+    let mut embedded = BTreeMap::new();
+
+    let files = self.unpack_directory(&mut loose, &mut embedded, package, None)?;
 
     let signatures = {
       let entry = root
@@ -122,28 +128,64 @@ impl Archive {
       signatures
     };
 
-    if !loose.is_empty() {
-      return Err(archive_error::UnreferencedFiles { hashes: loose }.build());
+    ensure! {
+      loose.is_empty(),
+      archive_error::LooseFiles { hashes: loose },
     }
 
-    Ok(Manifest { files, signatures })
+    {
+      let unexpected = embedded
+        .keys()
+        .filter(|path| **path != Metadata::CBOR_FILENAME)
+        .cloned()
+        .collect::<BTreeSet<RelativePath>>();
+
+      ensure! {
+        unexpected.is_empty(),
+        archive_error::UnexpectedEmbeddedFiles { paths: unexpected },
+      }
+    }
+
+    let embedded = embedded
+      .into_values()
+      .map(|hash| (hash, self.files[&hash].clone()))
+      .collect();
+
+    Ok(Manifest {
+      embedded,
+      files,
+      signatures,
+    })
   }
 
   fn unpack_directory(
     &self,
     loose: &mut BTreeSet<Hash>,
+    embedded: &mut BTreeMap<RelativePath, Hash>,
     entry: &Entry,
+    prefix: Option<&RelativePath>,
   ) -> Result<DirectoryTree, ArchiveError> {
     let directory = self.decode_directory(loose, entry.hash)?;
 
     let mut entries = BTreeMap::new();
     for (name, entry) in &directory.entries {
       let crate_entry = match entry.ty {
-        EntryType::File => DirectoryTreeEntry::File(File {
-          hash: entry.hash,
-          size: entry.size,
-        }),
-        EntryType::Directory => DirectoryTreeEntry::Directory(self.unpack_directory(loose, entry)?),
+        EntryType::File => {
+          if self.files.contains_key(&entry.hash) {
+            loose.remove(&entry.hash);
+            embedded.insert(RelativePath::join_opt(prefix, name), entry.hash);
+          }
+          DirectoryTreeEntry::File(File {
+            hash: entry.hash,
+            size: entry.size,
+          })
+        }
+        EntryType::Directory => DirectoryTreeEntry::Directory(self.unpack_directory(
+          loose,
+          embedded,
+          entry,
+          Some(&RelativePath::join_opt(prefix, name)),
+        )?),
       };
       entries.insert(name.clone(), crate_entry);
     }
@@ -155,6 +197,27 @@ impl Archive {
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn archive_packs_metadata_cbor() {
+    let content = b"foo";
+    let mut files = DirectoryTree::new();
+    files
+      .create_file(
+        &Metadata::CBOR_FILENAME.parse().unwrap(),
+        File::new(content),
+      )
+      .unwrap();
+
+    let manifest = Manifest {
+      embedded: BTreeMap::from([(Hash::bytes(content), content.to_vec())]),
+      files,
+      signatures: BTreeSet::new(),
+    };
+
+    let archive = Archive::pack(&manifest);
+    assert_eq!(archive.unpack().unwrap(), manifest);
+  }
 
   #[test]
   fn decode_error() {
@@ -199,6 +262,7 @@ mod tests {
       .unwrap();
 
     Manifest {
+      embedded: BTreeMap::new(),
       files,
       signatures: BTreeSet::new(),
     }
@@ -232,6 +296,7 @@ mod tests {
   #[test]
   fn round_trip_empty() {
     let manifest = Manifest {
+      embedded: BTreeMap::new(),
       files: DirectoryTree::new(),
       signatures: BTreeSet::new(),
     };
@@ -247,6 +312,7 @@ mod tests {
     files.create_directory(&"foo/bar".parse().unwrap()).unwrap();
 
     let manifest = Manifest {
+      embedded: BTreeMap::new(),
       files,
       signatures: BTreeSet::new(),
     };
@@ -277,6 +343,7 @@ mod tests {
     }
 
     let manifest = Manifest {
+      embedded: BTreeMap::new(),
       files,
       signatures: BTreeSet::new(),
     };
@@ -300,6 +367,7 @@ mod tests {
       .unwrap();
 
     let manifest = Manifest {
+      embedded: BTreeMap::new(),
       files,
       signatures: BTreeSet::new(),
     };
@@ -320,6 +388,7 @@ mod tests {
   #[test]
   fn round_trip_with_signature() {
     let manifest = Manifest {
+      embedded: BTreeMap::new(),
       files: DirectoryTree::new(),
       signatures: BTreeSet::new(),
     };
@@ -332,6 +401,7 @@ mod tests {
     let signature = private_key.sign(&message);
 
     let manifest = Manifest {
+      embedded: BTreeMap::new(),
       files: manifest.files,
       signatures: BTreeSet::from([signature]),
     };
@@ -441,6 +511,44 @@ mod tests {
   }
 
   #[test]
+  fn unexpected_embedded_files() {
+    let content = b"foo";
+
+    let mut files = DirectoryTree::new();
+    for path in &["bar/bob", "baz"] {
+      files
+        .create_file(&path.parse().unwrap(), File::new(content))
+        .unwrap();
+    }
+
+    let mut builder = ArchiveBuilder::new();
+
+    let package = builder.directory(&files);
+
+    builder.files.insert(Hash::bytes(content), content.to_vec());
+
+    let signatures = builder.entry(EntryType::Directory, Directory::default().encode_to_vec());
+
+    let root = Directory {
+      version: Version::Zero,
+      entries: BTreeMap::from([
+        ("package".parse().unwrap(), package),
+        ("signatures".parse().unwrap(), signatures),
+      ]),
+    };
+
+    let root = builder.entry(EntryType::Directory, root.encode_to_vec());
+
+    let archive = builder.build(root.hash);
+
+    assert_matches!(
+      archive.unpack(),
+      Err(ArchiveError::UnexpectedEmbeddedFiles { paths })
+        if paths.to_string() == "`bar/bob`, `baz`",
+    );
+  }
+
+  #[test]
   fn unreferenced_files() {
     let mut archive = Archive::pack(&manifest());
     let file = b"foo".to_vec();
@@ -448,7 +556,7 @@ mod tests {
     archive.files.insert(hash, file);
     assert_matches!(
       archive.unpack(),
-      Err(ArchiveError::UnreferencedFiles { hashes: Ticked(hashes) })
+      Err(ArchiveError::LooseFiles { hashes: Ticked(hashes) })
         if hashes == BTreeSet::from([hash]),
     );
   }

@@ -177,8 +177,17 @@ placed alongside the files they reference.
 Manifests are [CBOR](https://www.rfc-editor.org/rfc/rfc8949.html) and may be
 converted to JSON for inspection or manipulation with `filepack manifest`.
 
-Manifests, when converted to JSON, are an object with two mandatory keys,
-`files` and `signatures`.
+Manifests, when converted to JSON, are an object with three mandatory keys,
+`embedded`, `files`, and `signatures`.
+
+### `embedded`
+
+The value of the mandatory `embedded` key is an object mapping BLAKE3 hashes to
+hex-encoded file contents. The `files` object only includes file names, hashes,
+and sizes, but files may be embedded in the manifest archive in the `embedded`
+map.
+
+This is currently only used to embed `metadata.cbor`.
 
 ### `files`
 
@@ -210,6 +219,7 @@ and `src/main.c`, signed by the public key
 
 ```json
 {
+  "embedded": {},
   "files": {
     "README.md": {
       "hash": "fc253b84551ce6b00e820a826ac18054dc7f63a318ce62f3175315f5c467a62a",
@@ -243,7 +253,8 @@ Metadata
 --------
 
 Filepack packages may contain a file named `metadata.cbor` describing the
-package and its contents.
+package and its contents. If present, the contents of `metadata.cbor` is also
+embedded in the `manifest.filepack` archive.
 
 Metadata is authored by creating a file named `metadata.yaml` in the root of a
 new package. `filepack create` then loads `metadata.yaml` if present, checks
@@ -507,7 +518,8 @@ Then, to create the package:
 filepack create [DIRECTORY]
 ```
 
-Which will validate metadata if present and write it to `metadata.cbor`.
+Which will validate metadata if present and write it to `metadata.cbor`, as
+well as include it in `manifest.filepack`.
 
 See [metadata](#metadata) for the full schema.
 
@@ -827,13 +839,13 @@ content.
 Filepack seeks to rectify this by standardizing machine-readable metadata that
 can be included with folder-of-files content.
 
-Filepack metadata is stored a single file, `metadata.cbor`, in the root of a
-filepack package, and contains information related to what the package
-contains, which files in the package contain the package content and their file
-formats, and who created the package. This metadata can serve as a base for the
-creation of rich local and distributed applications and services, with user
-experiences that compete with and exceed those of closed centralized
-alternatives.
+Filepack metadata is stored a file, `metadata.cbor`, in the root of a filepack
+package as well as in the `manifest.filepack` archive, and contains information
+related to what the package contains, which files in the package contain the
+package content and their file formats, and who created the package. This
+metadata can serve as a base for the creation of rich local and distributed
+applications and services, with user experiences that compete with and exceed
+those of closed centralized alternatives.
 
 Future Directions
 -----------------
@@ -869,6 +881,9 @@ of the file.
 The length of the file is not strictly necessary for verification, but is
 included so that truncated, empty, and overlong files can be identified, which
 may help in understanding verification failures.
+
+File contents may be embedded in the `manifest.filepack` archive under the
+`embedded` key.
 
 ### File Hashes
 

@@ -8,6 +8,7 @@ fn default_format() {
     .success()
     .arg("manifest")
     .stdout(json_pretty! {
+      embedded: {},
       files: {
         foo: {
           hash: EMPTY_HASH,
@@ -20,6 +21,18 @@ fn default_format() {
 }
 
 #[test]
+fn includes_embedded_files() {
+  Test::new()
+    .write("metadata.yaml", "title: foo")
+    .touch("bar")
+    .arg("create")
+    .success()
+    .arg("manifest")
+    .stdout_regex(r#".*"embedded": \{[^}].*"#)
+    .success();
+}
+
+#[test]
 fn json_format() {
   Test::new()
     .touch("foo")
@@ -27,6 +40,7 @@ fn json_format() {
     .success()
     .args(["manifest", "--format", "json"])
     .stdout(json! {
+      embedded: {},
       files: {
         foo: {
           hash: EMPTY_HASH,
@@ -46,6 +60,7 @@ fn json_pretty_format() {
     .success()
     .args(["manifest", "--format", "json-pretty"])
     .stdout(json_pretty! {
+      embedded: {},
       files: {
         foo: {
           hash: EMPTY_HASH,
@@ -75,6 +90,7 @@ fn with_path() {
     .success()
     .args(["manifest", "pkg"])
     .stdout(json_pretty! {
+      embedded: {},
       files: {
         bar: {
           hash: EMPTY_HASH,

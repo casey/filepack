@@ -21,6 +21,21 @@ impl RelativePath {
       .map(|component| Component::new(component).unwrap())
   }
 
+  pub(crate) fn join(&self, component: &Component) -> Self {
+    let mut path = self.0.clone();
+    path.push('/');
+    path.push_str(component.as_str());
+    Self(path)
+  }
+
+  pub(crate) fn join_opt(prefix: Option<&Self>, component: &Component) -> Self {
+    if let Some(prefix) = prefix {
+      prefix.join(component)
+    } else {
+      component.into()
+    }
+  }
+
   pub(crate) fn lint(&self, lints: &BTreeSet<Lint>) -> Option<LintError> {
     for component in Utf8Path::new(&self.0).components() {
       let Utf8Component::Normal(component) = component else {
@@ -182,6 +197,12 @@ impl TryFrom<&Utf8Path> for RelativePath {
     }
 
     s.parse()
+  }
+}
+
+impl From<&Component> for RelativePath {
+  fn from(component: &Component) -> Self {
+    Self(component.into())
   }
 }
 

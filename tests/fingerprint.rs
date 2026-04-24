@@ -8,6 +8,7 @@ fn fingerprint() {
     .assert_manifest(
       "manifest.filepack",
       json_pretty! {
+        embedded: {},
         files: {
           foo: {
             hash: EMPTY_HASH,
