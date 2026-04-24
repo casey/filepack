@@ -10,10 +10,13 @@ fn all_optional_all_none() {
     baz: Option<String>,
   }
 
-  assert_encoding(Foo {
-    bar: None,
-    baz: None,
-  });
+  assert_cbor(
+    Foo {
+      bar: None,
+      baz: None,
+    },
+    &[0xa0],
+  );
 }
 
 #[test]
@@ -26,10 +29,13 @@ fn all_optional_all_some() {
     baz: Option<String>,
   }
 
-  assert_encoding(Foo {
-    bar: Some(1),
-    baz: Some("foo".into()),
-  });
+  assert_cbor(
+    Foo {
+      bar: Some(1),
+      baz: Some("foo".into()),
+    },
+    &[0xa2, 0x00, 0x01, 0x01, 0x63, 0x66, 0x6f, 0x6f],
+  );
 }
 
 #[test]
@@ -42,15 +48,21 @@ fn all_optional_mixed() {
     baz: Option<String>,
   }
 
-  assert_encoding(Foo {
-    bar: Some(1),
-    baz: None,
-  });
+  assert_cbor(
+    Foo {
+      bar: Some(1),
+      baz: None,
+    },
+    &[0xa1, 0x00, 0x01],
+  );
 
-  assert_encoding(Foo {
-    bar: None,
-    baz: Some("foo".into()),
-  });
+  assert_cbor(
+    Foo {
+      bar: None,
+      baz: Some("foo".into()),
+    },
+    &[0xa1, 0x01, 0x63, 0x66, 0x6f, 0x6f],
+  );
 }
 
 #[test]
@@ -63,10 +75,13 @@ fn all_required() {
     baz: String,
   }
 
-  assert_encoding(Foo {
-    bar: 42,
-    baz: "foo".into(),
-  });
+  assert_cbor(
+    Foo {
+      bar: 42,
+      baz: "foo".into(),
+    },
+    &[0xa2, 0x00, 0x18, 0x2a, 0x01, 0x63, 0x66, 0x6f, 0x6f],
+  );
 }
 
 #[test]
@@ -79,15 +94,21 @@ fn mixed_required_and_optional() {
     baz: String,
   }
 
-  assert_encoding(Foo {
-    bar: Some(1),
-    baz: "foo".into(),
-  });
+  assert_cbor(
+    Foo {
+      bar: Some(1),
+      baz: "foo".into(),
+    },
+    &[0xa2, 0x00, 0x01, 0x01, 0x63, 0x66, 0x6f, 0x6f],
+  );
 
-  assert_encoding(Foo {
-    bar: None,
-    baz: "foo".into(),
-  });
+  assert_cbor(
+    Foo {
+      bar: None,
+      baz: "foo".into(),
+    },
+    &[0xa1, 0x01, 0x63, 0x66, 0x6f, 0x6f],
+  );
 }
 
 #[test]
@@ -98,5 +119,5 @@ fn single_field() {
     bar: u64,
   }
 
-  assert_encoding(Foo { bar: 99 });
+  assert_cbor(Foo { bar: 99 }, &[0xa1, 0x00, 0x18, 0x63]);
 }
