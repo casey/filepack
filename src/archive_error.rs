@@ -15,8 +15,6 @@ pub enum ArchiveError {
   PackageMissing,
   #[snafu(display("failed to decode signature"))]
   SignatureDecode { source: DecodeError },
-  #[snafu(display("failed to parse signature"))]
-  SignatureParse { source: SignatureError },
   #[snafu(display("archive missing signatures directory"))]
   SignaturesMissing,
   #[snafu(display("archive contains unexpected embedded files: {paths}"))]
