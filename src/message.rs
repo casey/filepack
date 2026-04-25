@@ -19,3 +19,40 @@ impl Message {
     Hash::bytes(&envelope.encode_to_vec())
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[track_caller]
+  fn case(message: Message) {
+    let mut encoder = Encoder::new();
+
+    {
+      let mut encoder = encoder.map::<u64>(3);
+      encoder.item(0, "filepack");
+      encoder.item(1, "message");
+      encoder.item(2, &message);
+    }
+
+    let bytes = encoder.finish();
+
+    assert_eq!(message.digest(), Hash::bytes(&bytes));
+  }
+
+  #[test]
+  fn digest_with_timestamp() {
+    case(Message {
+      fingerprint: Fingerprint::from_bytes([0; Fingerprint::LEN]),
+      timestamp: Some(1000),
+    });
+  }
+
+  #[test]
+  fn digest_without_timestamp() {
+    case(Message {
+      fingerprint: Fingerprint::from_bytes([0; Fingerprint::LEN]),
+      timestamp: None,
+    });
+  }
+}
