@@ -1,14 +1,45 @@
+#![allow(clippy::needless_continue)]
+
 use super::*;
 
 #[derive(FromDeriveInput)]
-#[darling(supports(struct_named))]
+#[darling(supports(struct_named, enum_unit), forward_attrs(repr))]
 pub(crate) struct Input {
+  attrs: Vec<Attribute>,
   data: Data<(), Field>,
   ident: Ident,
 }
 
 impl Input {
-  pub(crate) fn derive_decode_inner(&self) -> Result<proc_macro2::TokenStream> {
+  pub(crate) fn derive_decode(&self) -> Result<proc_macro2::TokenStream> {
+    match self.data {
+      Data::Enum(_) => self.derive_decode_enum(),
+      Data::Struct(_) => self.derive_decode_struct(),
+    }
+  }
+
+  pub(crate) fn derive_decode_enum(&self) -> Result<proc_macro2::TokenStream> {
+    let name = &self.ident;
+
+    let repr = self.parse_repr()?;
+
+    Ok(quote! {
+      impl Decode for #name {
+        fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
+          let discriminant = decoder.integer()?;
+          #repr::try_from(discriminant)
+            .ok()
+            .and_then(Self::from_repr)
+            .context(decode_error::InvalidDiscriminant {
+              discriminant,
+              name: stringify!(#name),
+            })
+        }
+      }
+    })
+  }
+
+  pub(crate) fn derive_decode_struct(&self) -> Result<proc_macro2::TokenStream> {
     let name = &self.ident;
 
     let fields = self.parse_fields()?;
@@ -39,8 +70,30 @@ impl Input {
     })
   }
 
-  pub(crate) fn derive_encode_inner(&self) -> Result<proc_macro2::TokenStream> {
+  pub(crate) fn derive_encode(&self) -> Result<proc_macro2::TokenStream> {
+    match self.data {
+      Data::Enum(_) => self.derive_encode_enum(),
+      Data::Struct(_) => self.derive_encode_struct(),
+    }
+  }
+
+  pub(crate) fn derive_encode_enum(&self) -> Result<proc_macro2::TokenStream> {
     let name = &self.ident;
+
+    let repr = self.parse_repr()?;
+
+    Ok(quote! {
+      impl Encode for #name {
+        fn encode(&self, encoder: &mut Encoder) {
+          (*self as #repr).encode(encoder);
+        }
+      }
+    })
+  }
+
+  pub(crate) fn derive_encode_struct(&self) -> Result<proc_macro2::TokenStream> {
+    let name = &self.ident;
+
     let fields = self.parse_fields()?;
 
     let required = fields.iter().filter(|f| !f.optional).count().into_u64();
@@ -84,14 +137,14 @@ impl Input {
     let mut n = HashSet::new();
     for (i, field) in fields.iter().enumerate() {
       if !n.insert(field.n) {
-        return Err(syn::Error::new_spanned(
+        return Err(Error::new_spanned(
           field.ident,
           format!("duplicate key {}", field.n),
         ));
       }
 
       if field.n != i.into_u64() {
-        return Err(syn::Error::new_spanned(
+        return Err(Error::new_spanned(
           field.ident,
           format!(
             "keys must be contiguous starting from 0: expected {i}, found {}",
@@ -102,5 +155,20 @@ impl Input {
     }
 
     Ok(fields)
+  }
+
+  fn parse_repr(&self) -> Result<Type> {
+    let mut repr = None;
+
+    for attribute in &self.attrs {
+      if attribute.path().is_ident("repr") {
+        if repr.is_some() {
+          return Err(Error::new_spanned(attribute, "duplicate #[repr] attribute"));
+        }
+        repr = Some(attribute.parse_args::<Type>()?);
+      }
+    }
+
+    repr.ok_or_else(|| Error::new_spanned(&self.ident, "missing #[repr(...)] attribute"))
   }
 }

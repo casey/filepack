@@ -85,6 +85,59 @@ fn all_required() {
 }
 
 #[test]
+fn enum_invalid_discriminant() {
+  #[derive(Debug, Decode, FromRepr)]
+  #[repr(u8)]
+  enum Foo {
+    Bar = 0,
+  }
+
+  #[track_caller]
+  fn case(bytes: &[u8], expected: u64) {
+    assert_matches!(
+      Foo::decode_from_slice(bytes),
+      Err(DecodeError::InvalidDiscriminant {
+        discriminant,
+        name: "Foo",
+      }) if discriminant == expected,
+    );
+  }
+
+  case(&[0x01], 1);
+  case(&256u64.encode_to_vec(), 256);
+}
+
+#[test]
+fn enum_round_trip() {
+  #[derive(Clone, Copy, Debug, Decode, Encode, FromRepr, PartialEq)]
+  #[repr(u8)]
+  enum Foo {
+    Bar = 0,
+    Baz = 1,
+  }
+
+  assert_cbor(Foo::Bar, &[0x00]);
+  assert_cbor(Foo::Baz, &[0x01]);
+}
+
+#[test]
+fn enum_unexpected_type() {
+  #[derive(Debug, Decode, FromRepr)]
+  #[repr(u8)]
+  enum Foo {
+    Bar = 0,
+  }
+
+  assert_matches!(
+    Foo::decode_from_slice(&"foo".encode_to_vec()),
+    Err(DecodeError::UnexpectedType {
+      expected: MajorType::UnsignedInteger,
+      actual: MajorType::Text,
+    }),
+  );
+}
+
+#[test]
 fn mixed_required_and_optional() {
   #[derive(Debug, Encode, Decode, PartialEq)]
   struct Foo {
