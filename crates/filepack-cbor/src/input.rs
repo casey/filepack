@@ -128,17 +128,6 @@ impl Input {
   pub(crate) fn derive_encode_struct(&self) -> Result<proc_macro2::TokenStream> {
     let name = &self.ident;
 
-    if self.is_transparent() {
-      let member = self.transparent_member()?;
-      return Ok(quote! {
-        impl Encode for #name {
-          fn encode(&self, encoder: &mut Encoder) {
-            self.#member.encode(encoder);
-          }
-        }
-      });
-    }
-
     let fields = self.parse_fields()?;
 
     let required = fields.iter().filter(|f| !f.optional).count().into_u64();
