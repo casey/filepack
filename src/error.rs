@@ -194,11 +194,6 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
-  #[snafu(display("metadata CBOR `{path}` already exists"))]
-  MetadataCborAlreadyExists {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-  },
   #[snafu(display("metadata cannot be formatted as TSV"))]
   MetadataTsv { backtrace: Option<Backtrace> },
   #[snafu(display("directory missing: `{path}`"))]

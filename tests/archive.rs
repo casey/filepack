@@ -39,7 +39,7 @@ fn embedded_preserved() {
           *hash: hex_content
         },
         package: {
-          "metadata.cbor": {
+          "metadata.filepack": {
             hash: hash,
             size: 3
           }
@@ -55,7 +55,7 @@ fn embedded_preserved() {
         *hash: hex_content
       },
       package: {
-        "metadata.cbor": {
+        "metadata.filepack": {
           hash: hash,
           size: 3
         }
