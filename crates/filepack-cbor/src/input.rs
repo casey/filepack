@@ -53,10 +53,10 @@ impl Input {
 
     let fields = self.parse_fields()?;
 
-    let decode = fields.iter().map(|f| {
-      let ident = f.ident;
-      let n = f.n;
-      match (&f.decode_with, f.optional) {
+    let decode = fields.iter().map(|field| {
+      let ident = field.ident;
+      let n = field.n;
+      match (&field.decode_with, field.optional) {
         (Some(path), true) => quote! { let #ident = map.optional_key_with(#n, #path)?; },
         (Some(path), false) => quote! { let #ident = map.required_key_with(#n, #path)?; },
         (None, true) => quote! { let #ident = map.optional_key(#n)?; },
@@ -64,7 +64,7 @@ impl Input {
       }
     });
 
-    let fields = fields.iter().map(|f| f.ident);
+    let fields = fields.iter().map(|field| field.ident);
 
     Ok(quote! {
       impl Decode for #name {

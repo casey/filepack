@@ -11,37 +11,6 @@ pub(crate) struct Field {
 }
 
 impl Field {
-  fn cbor(&self) -> Result<(Option<Path>, Option<Path>)> {
-    let mut decode_with = None;
-    let mut encode_with = None;
-
-    for attribute in &self.attrs {
-      if !attribute.path().is_ident("cbor") {
-        continue;
-      }
-
-      attribute.parse_nested_meta(|meta| {
-        if meta.path.is_ident("decode_with") {
-          if decode_with.is_some() {
-            return Err(meta.error("duplicate `decode_with` attribute"));
-          }
-          decode_with = Some(meta.value()?.parse::<Path>()?);
-          Ok(())
-        } else if meta.path.is_ident("encode_with") {
-          if encode_with.is_some() {
-            return Err(meta.error("duplicate `encode_with` attribute"));
-          }
-          encode_with = Some(meta.value()?.parse::<Path>()?);
-          Ok(())
-        } else {
-          Err(meta.error("unknown cbor attribute"))
-        }
-      })?;
-    }
-
-    Ok((decode_with, encode_with))
-  }
-
   pub(crate) fn ident(&self) -> Option<&Ident> {
     self.ident.as_ref()
   }
@@ -72,7 +41,8 @@ impl Field {
   }
 
   pub(crate) fn parse(&self) -> Result<ParsedField> {
-    let (decode_with, encode_with) = self.cbor()?;
+    let (decode_with, encode_with) = self.parse_attributes()?;
+
     Ok(ParsedField {
       decode_with,
       encode_with,
@@ -80,5 +50,36 @@ impl Field {
       n: self.n()?,
       optional: self.is_option(),
     })
+  }
+
+  fn parse_attributes(&self) -> Result<(Option<Path>, Option<Path>)> {
+    let mut decode_with = None;
+    let mut encode_with = None;
+
+    for attribute in &self.attrs {
+      if !attribute.path().is_ident("cbor") {
+        continue;
+      }
+
+      attribute.parse_nested_meta(|meta| {
+        if meta.path.is_ident("decode_with") {
+          if decode_with.is_some() {
+            return Err(meta.error("duplicate `decode_with` attribute"));
+          }
+          decode_with = Some(meta.value()?.parse::<Path>()?);
+          Ok(())
+        } else if meta.path.is_ident("encode_with") {
+          if encode_with.is_some() {
+            return Err(meta.error("duplicate `encode_with` attribute"));
+          }
+          encode_with = Some(meta.value()?.parse::<Path>()?);
+          Ok(())
+        } else {
+          Err(meta.error("unknown cbor attribute"))
+        }
+      })?;
+    }
+
+    Ok((decode_with, encode_with))
   }
 }
