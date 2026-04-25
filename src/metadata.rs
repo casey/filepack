@@ -20,7 +20,7 @@ pub(crate) struct Metadata {
   #[n(7)]
   pub(crate) readme: Option<filename::Md>,
   #[n(8)]
-  pub(crate) title: ComponentBuf,
+  pub(crate) title: Option<ComponentBuf>,
 }
 
 impl Metadata {
@@ -105,9 +105,10 @@ mod tests {
         description: Some("qux".into()),
         homepage: Some("http://example.com/foo".parse().unwrap()),
         nfo: Some("info.nfo".parse().unwrap()),
+        title: Some("foo-bar".parse().unwrap()),
       }),
       readme: Some("README.md".parse().unwrap()),
-      title: "foo".parse().unwrap(),
+      title: Some("foo".parse().unwrap()),
     });
   }
 
@@ -137,9 +138,10 @@ mod tests {
         title,
       } = metadata;
 
-      assert!(!title.as_str().is_empty());
-
-      if title != "Tobin's Spirit Guide" {
+      if title
+        .as_ref()
+        .is_none_or(|title| *title != "Tobin's Spirit Guide")
+      {
         continue;
       }
 
@@ -150,6 +152,7 @@ mod tests {
       assert!(homepage.is_some());
       assert!(language.is_some());
       assert!(readme.is_some());
+      assert!(title.is_some());
 
       let Package {
         creator,
@@ -158,6 +161,7 @@ mod tests {
         description,
         homepage,
         nfo,
+        title,
       } = package.unwrap();
 
       assert!(creator.is_some());
@@ -166,6 +170,7 @@ mod tests {
       assert!(description.is_some());
       assert!(homepage.is_some());
       assert!(nfo.is_some());
+      assert!(title.is_some());
     }
   }
 

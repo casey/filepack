@@ -1,7 +1,4 @@
-use {
-  super::*,
-  filepack::{Encoder, Hash},
-};
+use super::*;
 
 #[test]
 fn duplicate_key_literal() {
@@ -233,8 +230,8 @@ fn metadata_allows_unknown_keys() {
 }
 
 #[test]
-fn metadata_may_not_be_invalid() {
-  let metadata = "foo: bar\n";
+fn metadata_yaml_may_not_be_invalid() {
+  let metadata = "title: /\n";
 
   let hash = blake3::hash(metadata.as_bytes()).to_string();
 
