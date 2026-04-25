@@ -182,9 +182,9 @@ fn language() {
 fn metadata_cbor_already_exists() {
   Test::new()
     .write("metadata.yaml", "title: Foo")
-    .touch("metadata.cbor")
+    .touch("metadata.filepack")
     .arg("create")
-    .stderr_regex("error: metadata CBOR `.*metadata.cbor` already exists\n")
+    .stderr_regex("error: metadata `.*metadata.filepack` already exists\n")
     .failure();
 }
 
@@ -192,7 +192,7 @@ fn metadata_cbor_already_exists() {
 fn metadata_cbor_force() {
   Test::new()
     .write("metadata.yaml", "title: Foo")
-    .touch("metadata.cbor")
+    .touch("metadata.filepack")
     .args(["create", "--force"])
     .success()
     .arg("verify")
@@ -260,7 +260,7 @@ fn metadata_subcommand_path_is_file() {
     .write("pkg/metadata.yaml", "title: Foo")
     .args(["create", "pkg"])
     .success()
-    .args(["metadata", "pkg/metadata.cbor"])
+    .args(["metadata", "pkg/metadata.filepack"])
     .stdout(
       r#"{
   "title": "Foo"

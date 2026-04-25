@@ -194,7 +194,7 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
-  #[snafu(display("metadata CBOR `{path}` already exists"))]
+  #[snafu(display("metadata `{path}` already exists"))]
   MetadataCborAlreadyExists {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
