@@ -429,7 +429,7 @@ mod tests {
     let mut encoder = Encoder::new();
     let mut map = encoder.map::<u64>(3);
     map.item(0, &message);
-    map.item(1, &public_key);
+    map.item(1, public_key);
     map.item(2, &[0u8; 32][..]);
     drop(map);
     let signature_bytes = encoder.finish();

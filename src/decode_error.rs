@@ -33,9 +33,9 @@ pub enum DecodeError {
   #[snafu(display("reserved additional information value: {value}"))]
   ReservedAdditionalInformation { value: u8 },
   #[snafu(display("size out of range"))]
-  SizeRange { source: TryFromIntError },
-  #[snafu(display("size out of range"))]
   Signature { source: TryFromIntError },
+  #[snafu(display("size out of range"))]
+  SizeRange { source: TryFromIntError },
   #[snafu(display("failed to parse tag"))]
   Tag { source: TagError },
   #[snafu(display("trailing bytes"))]
