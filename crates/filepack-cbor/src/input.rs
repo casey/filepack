@@ -4,8 +4,8 @@ use super::*;
 
 #[derive(FromDeriveInput)]
 #[darling(
-  forward_attrs(repr, transparent)
   supports(struct_named, struct_newtype, enum_unit),
+  forward_attrs(repr, transparent)
 )]
 pub(crate) struct Input {
   attrs: Vec<Attribute>,
@@ -17,7 +17,13 @@ impl Input {
   pub(crate) fn derive_decode(&self) -> Result<proc_macro2::TokenStream> {
     match self.data {
       Data::Enum(_) => self.derive_decode_enum(),
-      Data::Struct(_) => self.derive_decode_struct(),
+      Data::Struct(_) => {
+        if self.is_transparent() {
+          self.derive_decode_transparent()
+        } else {
+          self.derive_decode_struct()
+        }
+      }
     }
   }
 
@@ -44,21 +50,6 @@ impl Input {
 
   pub(crate) fn derive_decode_struct(&self) -> Result<proc_macro2::TokenStream> {
     let name = &self.ident;
-
-    if self.is_transparent() {
-      let member = self.transparent_member()?;
-      let constructor = match &member {
-        Member::Named(ident) => quote! { Self { #ident: Decode::decode(decoder)? } },
-        Member::Unnamed(_) => quote! { Self(Decode::decode(decoder)?) },
-      };
-      return Ok(quote! {
-        impl Decode for #name {
-          fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
-            Ok(#constructor)
-          }
-        }
-      });
-    }
 
     let fields = self.parse_fields()?;
 
@@ -88,10 +79,35 @@ impl Input {
     })
   }
 
+  pub(crate) fn derive_decode_transparent(&self) -> Result<proc_macro2::TokenStream> {
+    let name = &self.ident;
+
+    let member = self.transparent_member()?;
+
+    let constructor = match &member {
+      Member::Named(ident) => quote! { Self { #ident: Decode::decode(decoder)? } },
+      Member::Unnamed(_) => quote! { Self(Decode::decode(decoder)?) },
+    };
+
+    Ok(quote! {
+      impl Decode for #name {
+        fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
+          Ok(#constructor)
+        }
+      }
+    })
+  }
+
   pub(crate) fn derive_encode(&self) -> Result<proc_macro2::TokenStream> {
     match self.data {
       Data::Enum(_) => self.derive_encode_enum(),
-      Data::Struct(_) => self.derive_encode_struct(),
+      Data::Struct(_) => {
+        if self.is_transparent() {
+          self.derive_encode_transparent()
+        } else {
+          self.derive_encode_struct()
+        }
+      }
     }
   }
 
@@ -148,6 +164,20 @@ impl Input {
           let length = #required #(#optional)*;
           let mut map = encoder.map::<u64>(length);
           #(#items)*
+        }
+      }
+    })
+  }
+
+  pub(crate) fn derive_encode_transparent(&self) -> Result<proc_macro2::TokenStream> {
+    let name = &self.ident;
+
+    let member = self.transparent_member()?;
+
+    Ok(quote! {
+      impl Encode for #name {
+        fn encode(&self, encoder: &mut Encoder) {
+          self.#member.encode(encoder);
         }
       }
     })
