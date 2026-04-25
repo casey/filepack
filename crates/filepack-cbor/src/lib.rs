@@ -45,3 +45,41 @@ pub fn derive_encode(input: TokenStream) -> TokenStream {
     Err(err) => err.to_compile_error().into(),
   }
 }
+
+#[proc_macro_derive(DecodeFromStr)]
+pub fn derive_decode_from_str(input: TokenStream) -> TokenStream {
+  let input = syn::parse_macro_input!(input as DeriveInput);
+
+  let name = &input.ident;
+
+  quote! {
+    impl Decode for #name {
+      fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
+        decoder
+          .text()?
+          .parse::<Self>()
+          .map_err(|source| DecodeError::FromStr {
+            name: stringify!(#name),
+            source: Box::new(source),
+          })
+      }
+    }
+  }
+  .into()
+}
+
+#[proc_macro_derive(EncodeDisplay)]
+pub fn derive_encode_display(input: TokenStream) -> TokenStream {
+  let input = syn::parse_macro_input!(input as DeriveInput);
+
+  let name = &input.ident;
+
+  quote! {
+    impl Encode for #name {
+      fn encode(&self, encoder: &mut Encoder) {
+        self.to_string().encode(encoder);
+      }
+    }
+  }
+  .into()
+}

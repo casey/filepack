@@ -13,6 +13,11 @@ pub enum DecodeError {
   Component { source: ComponentError },
   #[snafu(display("failed to parse datetime"))]
   DateTime { source: chrono::ParseError },
+  #[snafu(display("failed to parse {name}"))]
+  FromStr {
+    name: &'static str,
+    source: Box<dyn std::error::Error + Send + Sync>,
+  },
   #[snafu(display("integer out of range"))]
   IntegerRange { source: TryFromIntError },
   #[snafu(display("invalid discriminant {discriminant} for enum {name}"))]

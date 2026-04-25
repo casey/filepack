@@ -19,6 +19,7 @@
 
 use {
   self::{
+    application::Application,
     archive::Archive,
     archive_builder::ArchiveBuilder,
     archive_error::ArchiveError,
@@ -30,6 +31,7 @@ use {
     component::Component,
     component_buf::ComponentBuf,
     component_error::ComponentError,
+    context::Context,
     count::Count,
     dalek_signature_error::DalekSignatureError,
     date_time::DateTime,
@@ -82,7 +84,7 @@ use {
   blake3::Hasher,
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},
   clap::{Parser, ValueEnum},
-  filepack_cbor::{Decode, Encode},
+  filepack_cbor::{Decode, DecodeFromStr, Encode, EncodeDisplay},
   indicatif::{ProgressBar, ProgressStyle},
   lexiclean::Lexiclean,
   num_traits::One,
@@ -160,6 +162,7 @@ macro_rules! assert_matches_regex {
   }};
 }
 
+mod application;
 mod archive;
 mod archive_builder;
 mod archive_error;
@@ -171,6 +174,7 @@ mod bech32_type;
 mod component;
 mod component_buf;
 mod component_error;
+mod context;
 mod count;
 mod dalek_signature_error;
 mod date_time;

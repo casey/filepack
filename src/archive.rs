@@ -4,10 +4,14 @@ use super::*;
 #[derive(Encode, Decode)]
 pub(crate) struct Archive {
   #[n(0)]
-  pub(crate) version: Version,
+  pub(crate) application: Application,
   #[n(1)]
-  pub(crate) root: Hash,
+  pub(crate) context: Context,
   #[n(2)]
+  pub(crate) version: Version,
+  #[n(3)]
+  pub(crate) root: Hash,
+  #[n(4)]
   pub(crate) files: BTreeMap<Hash, Vec<u8>>,
 }
 

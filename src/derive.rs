@@ -172,6 +172,57 @@ fn encode_with_required() {
 }
 
 #[test]
+fn decode_from_str() {
+  #[derive(Debug, DecodeFromStr, PartialEq)]
+  struct Foo(String);
+
+  #[derive(Debug, Snafu)]
+  #[snafu(display("bar error"))]
+  struct FooError;
+
+  impl FromStr for Foo {
+    type Err = FooError;
+
+    fn from_str(s: &str) -> Result<Self, FooError> {
+      if s == "foo" {
+        Ok(Foo(s.to_string()))
+      } else {
+        Err(FooError)
+      }
+    }
+  }
+
+  assert_eq!(
+    Foo::decode_from_slice(&[0x63, 0x66, 0x6f, 0x6f]).unwrap(),
+    Foo("foo".to_string()),
+  );
+
+  let err = Foo::decode_from_slice(&[0x63, 0x62, 0x61, 0x72]).unwrap_err();
+
+  assert_matches!(
+    err,
+    DecodeError::FromStr {
+      name: "Foo",
+      ref source,
+    } if source.to_string() == "bar error",
+  );
+}
+
+#[test]
+fn encode_display() {
+  #[derive(EncodeDisplay)]
+  struct Foo;
+
+  impl Display for Foo {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+      write!(f, "foo")
+    }
+  }
+
+  assert_eq!(Foo.encode_to_vec(), [0x63, 0x66, 0x6f, 0x6f]);
+}
+
+#[test]
 fn enum_invalid_discriminant() {
   #[derive(Debug, Decode, FromRepr)]
   #[repr(u8)]

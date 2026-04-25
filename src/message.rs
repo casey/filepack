@@ -11,8 +11,8 @@ pub struct Message {
 impl Message {
   pub(crate) fn digest(&self) -> Hash {
     let envelope = Envelope {
-      application: "filepack",
-      ty: "message",
+      application: Application::Filepack,
+      context: Context::Message,
       message: self.clone(),
     };
 
