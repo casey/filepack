@@ -7,6 +7,15 @@ pub(crate) struct Decoder<'a> {
 }
 
 impl<'a> Decoder<'a> {
+  pub(crate) fn byte_array<const N: usize>(&mut self) -> Result<[u8; N], DecodeError> {
+    let bytes = self.bytes()?;
+
+    bytes.try_into().context(decode_error::ArrayLength {
+      actual: bytes.len(),
+      expected: N,
+    })
+  }
+
   fn array<const N: usize>(&mut self) -> Result<[u8; N], DecodeError> {
     Ok(self.slice(N)?.try_into().unwrap())
   }

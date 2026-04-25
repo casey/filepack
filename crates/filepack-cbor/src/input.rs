@@ -56,10 +56,11 @@ impl Input {
     let decode = fields.iter().map(|f| {
       let ident = f.ident;
       let n = f.n;
-      if f.optional {
-        quote! { let #ident = map.optional_key(#n)?; }
-      } else {
-        quote! { let #ident = map.required_key(#n)?; }
+      match (&f.decode_with, f.optional) {
+        (Some(path), true) => quote! { let #ident = map.optional_key_with(#n, #path)?; },
+        (Some(path), false) => quote! { let #ident = map.required_key_with(#n, #path)?; },
+        (None, true) => quote! { let #ident = map.optional_key(#n)?; },
+        (None, false) => quote! { let #ident = map.required_key(#n)?; },
       }
     });
 
@@ -140,10 +141,11 @@ impl Input {
     let items = fields.iter().map(|f| {
       let ident = f.ident;
       let n = f.n;
-      if f.optional {
-        quote! { map.optional_item(#n, self.#ident.as_ref()); }
-      } else {
-        quote! { map.item(#n, &self.#ident); }
+      match (&f.encode_with, f.optional) {
+        (Some(path), true) => quote! { map.optional_item_with(#n, self.#ident.as_ref(), #path); },
+        (Some(path), false) => quote! { map.item_with(#n, &self.#ident, #path); },
+        (None, true) => quote! { map.optional_item(#n, self.#ident.as_ref()); },
+        (None, false) => quote! { map.item(#n, &self.#ident); },
       }
     });
 

@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Clone, Debug, Encode, Eq, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Debug, Decode, Encode, Eq, Ord, PartialEq, PartialOrd)]
 pub struct Message {
   #[n(0)]
   pub fingerprint: Fingerprint,

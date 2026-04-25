@@ -95,6 +95,7 @@ use {
   },
   snafu::{ErrorCompat, OptionExt, ResultExt, Snafu, ensure},
   std::{
+    array,
     backtrace::{Backtrace, BacktraceStatus},
     borrow::Borrow,
     borrow::Cow,

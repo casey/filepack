@@ -8,6 +8,10 @@ pub struct MapEncoder<'a, K> {
 
 impl<'a, K: Encode + PartialOrd> MapEncoder<'a, K> {
   pub fn item(&mut self, key: K, value: impl Encode) {
+    self.item_with(key, &value, Encode::encode);
+  }
+
+  pub fn item_with<V>(&mut self, key: K, value: &V, encode: impl FnOnce(&V, &mut Encoder)) {
     assert!(self.remaining > 0, "too many items");
 
     if let Some(last) = &self.last {
@@ -15,7 +19,7 @@ impl<'a, K: Encode + PartialOrd> MapEncoder<'a, K> {
     }
 
     key.encode(self.encoder);
-    value.encode(self.encoder);
+    encode(value, self.encoder);
 
     self.last = Some(key);
     self.remaining -= 1;
@@ -33,6 +37,17 @@ impl<'a, K: Encode + PartialOrd> MapEncoder<'a, K> {
   pub fn optional_item(&mut self, key: K, value: Option<impl Encode>) {
     if let Some(value) = value {
       self.item(key, value);
+    }
+  }
+
+  pub fn optional_item_with<V>(
+    &mut self,
+    key: K,
+    value: Option<&V>,
+    encode: impl FnOnce(&V, &mut Encoder),
+  ) {
+    if let Some(value) = value {
+      self.item_with(key, value, encode);
     }
   }
 }

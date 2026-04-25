@@ -23,7 +23,15 @@ impl<K: Clone + Decode + Debug + PartialOrd> MapDecoder<'_, '_, K> {
   }
 
   pub(crate) fn key<V: Decode>(&mut self, key: K) -> Result<Option<V>, DecodeError> {
-    let Some((k, value)) = self.next()? else {
+    self.key_with(key, V::decode)
+  }
+
+  pub(crate) fn key_with<V>(
+    &mut self,
+    key: K,
+    decode: impl FnOnce(&mut Decoder) -> Result<V, DecodeError>,
+  ) -> Result<Option<V>, DecodeError> {
+    let Some((k, value)) = self.next_with(decode)? else {
       return Ok(None);
     };
 
@@ -33,6 +41,13 @@ impl<K: Clone + Decode + Debug + PartialOrd> MapDecoder<'_, '_, K> {
   }
 
   pub(crate) fn next<V: Decode>(&mut self) -> Result<Option<(K, V)>, DecodeError> {
+    self.next_with(V::decode)
+  }
+
+  pub(crate) fn next_with<V>(
+    &mut self,
+    decode: impl FnOnce(&mut Decoder) -> Result<V, DecodeError>,
+  ) -> Result<Option<(K, V)>, DecodeError> {
     if self.remaining == 0 {
       return Ok(None);
     }
@@ -47,12 +62,23 @@ impl<K: Clone + Decode + Debug + PartialOrd> MapDecoder<'_, '_, K> {
 
     self.last = Some(key.clone());
 
-    let value = V::decode(self.decoder)?;
+    let value = decode(self.decoder)?;
 
     Ok(Some((key, value)))
   }
 
   pub(crate) fn optional_key<V: Decode>(&mut self, key: K) -> Result<Option<V>, DecodeError>
+  where
+    K: Eq,
+  {
+    self.optional_key_with(key, V::decode)
+  }
+
+  pub(crate) fn optional_key_with<V>(
+    &mut self,
+    key: K,
+    decode: impl FnOnce(&mut Decoder) -> Result<V, DecodeError>,
+  ) -> Result<Option<V>, DecodeError>
   where
     K: Eq,
   {
@@ -75,7 +101,7 @@ impl<K: Clone + Decode + Debug + PartialOrd> MapDecoder<'_, '_, K> {
     self.remaining -= 1;
     self.last = Some(next);
 
-    Ok(Some(V::decode(self.decoder)?))
+    Ok(Some(decode(self.decoder)?))
   }
 
   pub(crate) fn required_key<V: Decode>(&mut self, key: K) -> Result<V, DecodeError>
@@ -84,6 +110,21 @@ impl<K: Clone + Decode + Debug + PartialOrd> MapDecoder<'_, '_, K> {
   {
     self
       .key(key.clone())?
+      .with_context(|| decode_error::MissingField {
+        key: key.to_string(),
+      })
+  }
+
+  pub(crate) fn required_key_with<V>(
+    &mut self,
+    key: K,
+    decode: impl FnOnce(&mut Decoder) -> Result<V, DecodeError>,
+  ) -> Result<V, DecodeError>
+  where
+    K: Clone + Display,
+  {
+    self
+      .key_with(key.clone(), decode)?
       .with_context(|| decode_error::MissingField {
         key: key.to_string(),
       })

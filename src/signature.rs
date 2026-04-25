@@ -2,16 +2,28 @@ use super::*;
 
 const TIMESTAMP: Fe32 = Fe32::T;
 
-#[derive(Clone, Debug, DeserializeFromStr, Eq, PartialEq, SerializeDisplay)]
+#[derive(Clone, Debug, Decode, Encode, DeserializeFromStr, Eq, PartialEq, SerializeDisplay)]
 pub struct Signature {
+  #[n(0)]
   message: Message,
+  #[n(1)]
   public_key: PublicKey,
+  #[n(2)]
+  #[cbor(decode_with = Signature::decode_signature, encode_with = Signature::encode_signature)]
   signature: ed25519_dalek::Signature,
 }
 
 impl Signature {
   fn comparison_key(&self) -> (PublicKey, &Message, [u8; 64]) {
     (self.public_key, &self.message, self.signature.to_bytes())
+  }
+
+  fn decode_signature(decoder: &mut Decoder) -> Result<ed25519_dalek::Signature, DecodeError> {
+    Ok(ed25519_dalek::Signature::from_bytes(&decoder.byte_array()?))
+  }
+
+  fn encode_signature(signature: &ed25519_dalek::Signature, encoder: &mut Encoder) {
+    encoder.bytes(&signature.to_bytes());
   }
 
   pub fn message(&self) -> &Message {

@@ -85,6 +85,93 @@ fn all_required() {
 }
 
 #[test]
+fn decode_with_optional() {
+  fn decode_offset(decoder: &mut Decoder) -> Result<u64, DecodeError> {
+    Ok(decoder.integer()? + 1)
+  }
+
+  #[derive(Debug, Decode, PartialEq)]
+  struct Foo {
+    #[cbor(decode_with = decode_offset)]
+    #[n(0)]
+    bar: Option<u64>,
+  }
+
+  assert_eq!(
+    Foo::decode_from_slice(&[0xa1, 0x00, 0x18, 0x63]).unwrap(),
+    Foo { bar: Some(100) },
+  );
+
+  assert_eq!(Foo::decode_from_slice(&[0xa0]).unwrap(), Foo { bar: None });
+}
+
+#[test]
+fn decode_with_required() {
+  fn decode_offset(decoder: &mut Decoder) -> Result<u64, DecodeError> {
+    Ok(decoder.integer()? + 1)
+  }
+
+  #[derive(Debug, Decode, PartialEq)]
+  struct Foo {
+    #[cbor(decode_with = decode_offset)]
+    #[n(0)]
+    bar: u64,
+  }
+
+  assert_eq!(
+    Foo::decode_from_slice(&[0xa1, 0x00, 0x18, 0x63]).unwrap(),
+    Foo { bar: 100 },
+  );
+}
+
+#[test]
+fn encode_with_optional() {
+  struct Foreign(u64);
+
+  fn encode_foreign(value: &Foreign, encoder: &mut Encoder) {
+    (value.0 + 1).encode(encoder);
+  }
+
+  #[derive(Encode)]
+  struct Foo {
+    #[cbor(encode_with = encode_foreign)]
+    #[n(0)]
+    bar: Option<Foreign>,
+  }
+
+  assert_eq!(
+    Foo {
+      bar: Some(Foreign(99)),
+    }
+    .encode_to_vec(),
+    [0xa1, 0x00, 0x18, 0x64],
+  );
+
+  assert_eq!(Foo { bar: None }.encode_to_vec(), [0xa0]);
+}
+
+#[test]
+fn encode_with_required() {
+  struct Foreign(u64);
+
+  fn encode_foreign(value: &Foreign, encoder: &mut Encoder) {
+    (value.0 + 1).encode(encoder);
+  }
+
+  #[derive(Encode)]
+  struct Foo {
+    #[cbor(encode_with = encode_foreign)]
+    #[n(0)]
+    bar: Foreign,
+  }
+
+  assert_eq!(
+    Foo { bar: Foreign(99) }.encode_to_vec(),
+    [0xa1, 0x00, 0x18, 0x64],
+  );
+}
+
+#[test]
 fn enum_invalid_discriminant() {
   #[derive(Debug, Decode, FromRepr)]
   #[repr(u8)]
