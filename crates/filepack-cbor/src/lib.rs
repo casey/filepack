@@ -16,7 +16,7 @@ mod field;
 mod input;
 mod parsed_field;
 
-#[proc_macro_derive(Decode, attributes(cbor, n, transparent))]
+#[proc_macro_derive(Decode, attributes(cbor, n))]
 pub fn derive_decode(input: TokenStream) -> TokenStream {
   let input = syn::parse_macro_input!(input as DeriveInput);
 
@@ -31,7 +31,7 @@ pub fn derive_decode(input: TokenStream) -> TokenStream {
   }
 }
 
-#[proc_macro_derive(Encode, attributes(cbor, n, transparent))]
+#[proc_macro_derive(Encode, attributes(cbor, n))]
 pub fn derive_encode(input: TokenStream) -> TokenStream {
   let input = syn::parse_macro_input!(input as DeriveInput);
 

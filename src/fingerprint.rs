@@ -1,7 +1,7 @@
 use super::*;
 
 #[derive(Clone, Copy, Debug, Decode, Encode, Eq, Ord, PartialEq, PartialOrd)]
-#[transparent]
+#[cbor(transparent)]
 pub struct Fingerprint(pub(crate) Hash);
 
 impl Fingerprint {

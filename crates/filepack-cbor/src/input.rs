@@ -5,7 +5,7 @@ use super::*;
 #[derive(FromDeriveInput)]
 #[darling(
   supports(struct_named, struct_newtype, enum_unit),
-  forward_attrs(repr, transparent)
+  forward_attrs(cbor, repr)
 )]
 pub(crate) struct Input {
   attrs: Vec<Attribute>,
@@ -18,7 +18,7 @@ impl Input {
     match self.data {
       Data::Enum(_) => self.derive_decode_enum(),
       Data::Struct(_) => {
-        if self.is_transparent() {
+        if self.is_transparent()? {
           self.derive_decode_transparent()
         } else {
           self.derive_decode_struct()
@@ -103,7 +103,7 @@ impl Input {
     match self.data {
       Data::Enum(_) => self.derive_encode_enum(),
       Data::Struct(_) => {
-        if self.is_transparent() {
+        if self.is_transparent()? {
           self.derive_encode_transparent()
         } else {
           self.derive_encode_struct()
@@ -174,11 +174,28 @@ impl Input {
     })
   }
 
-  fn is_transparent(&self) -> bool {
-    self
-      .attrs
-      .iter()
-      .any(|attribute| attribute.path().is_ident("transparent"))
+  fn is_transparent(&self) -> Result<bool> {
+    let mut transparent = false;
+
+    for attribute in &self.attrs {
+      if !attribute.path().is_ident("cbor") {
+        continue;
+      }
+
+      attribute.parse_nested_meta(|meta| {
+        if meta.path.is_ident("transparent") {
+          if transparent {
+            return Err(meta.error("duplicate `transparent` attribute"));
+          }
+          transparent = true;
+          Ok(())
+        } else {
+          Err(meta.error("unknown cbor attribute"))
+        }
+      })?;
+    }
+
+    Ok(transparent)
   }
 
   fn parse_fields(&self) -> Result<Vec<ParsedField>> {
@@ -187,7 +204,7 @@ impl Input {
     if data.is_tuple() {
       return Err(Error::new_spanned(
         &self.ident,
-        "tuple struct must use `#[transparent]` attribute to derive `Decode` or `Encode`",
+        "tuple struct must use `#[cbor(transparent)]` attribute to derive `Decode` or `Encode`",
       ));
     }
 

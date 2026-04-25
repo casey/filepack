@@ -265,7 +265,7 @@ fn single_field() {
 #[test]
 fn transparent_named() {
   #[derive(Debug, Encode, Decode, PartialEq)]
-  #[transparent]
+  #[cbor(transparent)]
   struct Foo {
     bar: String,
   }
@@ -277,7 +277,7 @@ fn transparent_named() {
 #[test]
 fn transparent_newtype() {
   #[derive(Debug, Encode, Decode, PartialEq)]
-  #[transparent]
+  #[cbor(transparent)]
   struct Foo(u64);
 
   assert_cbor(Foo(99), &[0x18, 0x63]);
