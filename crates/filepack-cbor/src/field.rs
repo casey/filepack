@@ -6,7 +6,7 @@ use super::*;
 #[darling(forward_attrs(n))]
 pub(crate) struct Field {
   attrs: Vec<Attribute>,
-  ident: Option<Ident>,
+  pub(crate) ident: Option<Ident>,
   ty: Type,
 }
 

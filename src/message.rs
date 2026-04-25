@@ -1,61 +1,22 @@
 use super::*;
 
-#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Debug, Encode, Eq, Ord, PartialEq, PartialOrd)]
 pub struct Message {
+  #[n(0)]
   pub fingerprint: Fingerprint,
+  #[n(1)]
   pub timestamp: Option<u64>,
 }
 
 impl Message {
   pub(crate) fn digest(&self) -> Hash {
-    Hash::bytes(&self.encode_to_vec())
-  }
-}
+    let envelope = Envelope {
+      application: "filepack",
+      ty: "message",
+      message: self.clone(),
+    };
 
-#[cfg(test)]
-impl Decode for Message {
-  fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
-    let mut map = decoder.map::<u8>()?;
-
-    {
-      let actual = map.required_key::<String>(0)?;
-      let expected = "filepack";
-      ensure! {
-        actual == expected,
-        decode_error::UnexpectedValue { actual, expected },
-      }
-    }
-
-    {
-      let actual = map.required_key::<String>(1)?;
-      let expected = "message";
-      ensure! {
-        actual == expected,
-        decode_error::UnexpectedValue { actual, expected },
-      }
-    }
-
-    let fingerprint = map.required_key::<Fingerprint>(2)?;
-
-    let timestamp = map.key::<u64>(3)?;
-
-    map.finish()?;
-
-    Ok(Self {
-      fingerprint,
-      timestamp,
-    })
-  }
-}
-
-impl Encode for Message {
-  fn encode(&self, encoder: &mut Encoder) {
-    let length = 3 + count_some!(self.timestamp);
-    let mut map = encoder.map::<u8>(length);
-    map.item(0, "filepack");
-    map.item(1, "message");
-    map.item(2, self.fingerprint);
-    map.optional_item(3, self.timestamp);
+    Hash::bytes(&envelope.encode_to_vec())
   }
 }
 

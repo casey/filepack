@@ -1,6 +1,7 @@
 use super::*;
 
-#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Copy, Debug, Decode, Encode, Eq, Ord, PartialEq, PartialOrd)]
+#[transparent]
 pub struct Fingerprint(pub(crate) Hash);
 
 impl Fingerprint {
@@ -20,19 +21,6 @@ impl Display for Fingerprint {
     let mut encoder = Bech32Encoder::new(Bech32Type::Fingerprint);
     encoder.bytes(self.as_bytes());
     write!(f, "{encoder}")
-  }
-}
-
-#[cfg(test)]
-impl Decode for Fingerprint {
-  fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
-    Ok(Self(Hash::decode(decoder)?))
-  }
-}
-
-impl Encode for Fingerprint {
-  fn encode(&self, encoder: &mut Encoder) {
-    self.0.encode(encoder);
   }
 }
 

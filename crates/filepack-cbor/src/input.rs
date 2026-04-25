@@ -3,7 +3,10 @@
 use super::*;
 
 #[derive(FromDeriveInput)]
-#[darling(supports(struct_named, enum_unit), forward_attrs(repr))]
+#[darling(
+  supports(struct_named, struct_newtype, enum_unit),
+  forward_attrs(repr, transparent)
+)]
 pub(crate) struct Input {
   attrs: Vec<Attribute>,
   data: Data<(), Field>,
@@ -41,6 +44,21 @@ impl Input {
 
   pub(crate) fn derive_decode_struct(&self) -> Result<proc_macro2::TokenStream> {
     let name = &self.ident;
+
+    if self.is_transparent() {
+      let member = self.transparent_member()?;
+      let constructor = match &member {
+        Member::Named(ident) => quote! { Self { #ident: Decode::decode(decoder)? } },
+        Member::Unnamed(_) => quote! { Self(Decode::decode(decoder)?) },
+      };
+      return Ok(quote! {
+        impl Decode for #name {
+          fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
+            Ok(#constructor)
+          }
+        }
+      });
+    }
 
     let fields = self.parse_fields()?;
 
@@ -94,6 +112,17 @@ impl Input {
   pub(crate) fn derive_encode_struct(&self) -> Result<proc_macro2::TokenStream> {
     let name = &self.ident;
 
+    if self.is_transparent() {
+      let member = self.transparent_member()?;
+      return Ok(quote! {
+        impl Encode for #name {
+          fn encode(&self, encoder: &mut Encoder) {
+            self.#member.encode(encoder);
+          }
+        }
+      });
+    }
+
     let fields = self.parse_fields()?;
 
     let required = fields.iter().filter(|f| !f.optional).count().into_u64();
@@ -124,12 +153,24 @@ impl Input {
     })
   }
 
+  fn is_transparent(&self) -> bool {
+    self
+      .attrs
+      .iter()
+      .any(|attribute| attribute.path().is_ident("transparent"))
+  }
+
   fn parse_fields(&self) -> Result<Vec<ParsedField>> {
-    let fields = self
-      .data
-      .as_ref()
-      .take_struct()
-      .unwrap()
+    let data = self.data.as_ref().take_struct().unwrap();
+
+    if data.is_tuple() {
+      return Err(Error::new_spanned(
+        &self.ident,
+        "tuple struct must use `#[transparent]` attribute to derive `Decode` or `Encode`",
+      ));
+    }
+
+    let fields = data
       .into_iter()
       .map(Field::parse)
       .collect::<Result<Vec<ParsedField>>>()?;
@@ -170,5 +211,23 @@ impl Input {
     }
 
     repr.ok_or_else(|| Error::new_spanned(&self.ident, "missing #[repr(...)] attribute"))
+  }
+
+  fn transparent_member(&self) -> Result<Member> {
+    let fields = self.data.as_ref().take_struct().unwrap();
+
+    if fields.fields.len() != 1 {
+      return Err(Error::new_spanned(
+        &self.ident,
+        "#[transparent] requires a struct with a single field",
+      ));
+    }
+
+    let field = fields.fields[0];
+
+    Ok(match &field.ident {
+      Some(ident) => Member::Named(ident.clone()),
+      None => Member::Unnamed(Index::from(0)),
+    })
   }
 }

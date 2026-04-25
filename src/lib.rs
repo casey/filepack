@@ -43,6 +43,7 @@ use {
     entries::Entries,
     entry::Entry,
     entry_type::EntryType,
+    envelope::Envelope,
     file::File,
     format::Format,
     functions::{current_dir, decode_path, default, is_lowercase_hex, now},
@@ -158,12 +159,6 @@ macro_rules! assert_matches_regex {
   }};
 }
 
-macro_rules! count_some {
-  ($($option:expr),* $(,)?) => {
-    0u64 $(+ u64::from($option.is_some()))*
-  };
-}
-
 mod archive;
 mod archive_builder;
 mod archive_error;
@@ -191,6 +186,7 @@ mod encoder;
 mod entries;
 mod entry;
 mod entry_type;
+mod envelope;
 mod error;
 mod file;
 mod filename;
