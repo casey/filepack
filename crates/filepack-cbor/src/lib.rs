@@ -23,7 +23,7 @@ pub fn derive_decode(input: TokenStream) -> TokenStream {
     Err(err) => return err.write_errors().into(),
   };
 
-  match input.derive_decode_inner() {
+  match input.derive_decode() {
     Ok(tokens) => tokens.into(),
     Err(err) => err.to_compile_error().into(),
   }
@@ -38,7 +38,7 @@ pub fn derive_encode(input: TokenStream) -> TokenStream {
     Err(err) => return err.write_errors().into(),
   };
 
-  match input.derive_encode_inner() {
+  match input.derive_encode() {
     Ok(tokens) => tokens.into(),
     Err(err) => err.to_compile_error().into(),
   }

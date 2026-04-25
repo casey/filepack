@@ -11,26 +11,36 @@ pub(crate) struct Input {
 }
 
 impl Input {
-  pub(crate) fn derive_decode_inner(&self) -> Result<proc_macro2::TokenStream> {
+  pub(crate) fn derive_decode(&self) -> Result<proc_macro2::TokenStream> {
+    match self.data {
+      Data::Enum(_) => self.derive_decode_enum(),
+      Data::Struct(_) => self.derive_decode_struct(),
+    }
+  }
+
+  pub(crate) fn derive_decode_enum(&self) -> Result<proc_macro2::TokenStream> {
     let name = &self.ident;
 
-    if matches!(self.data, Data::Enum(_)) {
-      let repr = self.parse_repr()?;
-      return Ok(quote! {
-        impl Decode for #name {
-          fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
-            let discriminant = decoder.integer()?;
-            #repr::try_from(discriminant)
-              .ok()
-              .and_then(Self::from_repr)
-              .context(decode_error::InvalidDiscriminant {
-                discriminant,
-                name: stringify!(#name),
-              })
-          }
+    let repr = self.parse_repr()?;
+
+    Ok(quote! {
+      impl Decode for #name {
+        fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
+          let discriminant = decoder.integer()?;
+          #repr::try_from(discriminant)
+            .ok()
+            .and_then(Self::from_repr)
+            .context(decode_error::InvalidDiscriminant {
+              discriminant,
+              name: stringify!(#name),
+            })
         }
-      });
-    }
+      }
+    })
+  }
+
+  pub(crate) fn derive_decode_struct(&self) -> Result<proc_macro2::TokenStream> {
+    let name = &self.ident;
 
     let fields = self.parse_fields()?;
 
@@ -60,19 +70,29 @@ impl Input {
     })
   }
 
-  pub(crate) fn derive_encode_inner(&self) -> Result<proc_macro2::TokenStream> {
+  pub(crate) fn derive_encode(&self) -> Result<proc_macro2::TokenStream> {
+    match self.data {
+      Data::Enum(_) => self.derive_encode_enum(),
+      Data::Struct(_) => self.derive_encode_struct(),
+    }
+  }
+
+  pub(crate) fn derive_encode_enum(&self) -> Result<proc_macro2::TokenStream> {
     let name = &self.ident;
 
-    if matches!(self.data, Data::Enum(_)) {
-      let repr = self.parse_repr()?;
-      return Ok(quote! {
-        impl Encode for #name {
-          fn encode(&self, encoder: &mut Encoder) {
-            (*self as #repr).encode(encoder);
-          }
+    let repr = self.parse_repr()?;
+
+    Ok(quote! {
+      impl Encode for #name {
+        fn encode(&self, encoder: &mut Encoder) {
+          (*self as #repr).encode(encoder);
         }
-      });
-    }
+      }
+    })
+  }
+
+  pub(crate) fn derive_encode_struct(&self) -> Result<proc_macro2::TokenStream> {
+    let name = &self.ident;
 
     let fields = self.parse_fields()?;
 
