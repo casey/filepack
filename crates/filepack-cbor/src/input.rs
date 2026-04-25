@@ -131,17 +131,21 @@ impl Input {
 
     let fields = self.parse_fields()?;
 
-    let required = fields.iter().filter(|f| !f.optional).count().into_u64();
+    let required = fields
+      .iter()
+      .filter(|field| !field.optional)
+      .count()
+      .into_u64();
 
-    let optional = fields.iter().filter(|f| f.optional).map(|f| {
-      let ident = f.ident;
+    let optional = fields.iter().filter(|field| field.optional).map(|field| {
+      let ident = field.ident;
       quote! { + u64::from(self.#ident.is_some()) }
     });
 
-    let items = fields.iter().map(|f| {
-      let ident = f.ident;
-      let n = f.n;
-      match (&f.encode_with, f.optional) {
+    let items = fields.iter().map(|field| {
+      let ident = field.ident;
+      let n = field.n;
+      match (&field.encode_with, field.optional) {
         (Some(path), true) => quote! { map.optional_item_with(#n, self.#ident.as_ref(), #path); },
         (Some(path), false) => quote! { map.item_with(#n, &self.#ident, #path); },
         (None, true) => quote! { map.optional_item(#n, self.#ident.as_ref()); },
