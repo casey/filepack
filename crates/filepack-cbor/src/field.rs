@@ -6,11 +6,15 @@ use super::*;
 #[darling(forward_attrs(n))]
 pub(crate) struct Field {
   attrs: Vec<Attribute>,
-  pub(crate) ident: Option<Ident>,
+  ident: Option<Ident>,
   ty: Type,
 }
 
 impl Field {
+  pub(crate) fn ident(&self) -> Option<&Ident> {
+    self.ident.as_ref()
+  }
+
   fn is_option(&self) -> bool {
     if let Type::Path(TypePath { qself: None, path }) = &self.ty {
       path.leading_colon.is_none() && path.segments.len() == 1 && path.segments[0].ident == "Option"

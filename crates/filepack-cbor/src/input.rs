@@ -223,9 +223,7 @@ impl Input {
       ));
     }
 
-    let field = fields.fields[0];
-
-    Ok(match &field.ident {
+    Ok(match fields.fields[0].ident() {
       Some(ident) => Member::Named(ident.clone()),
       None => Member::Unnamed(Index::from(0)),
     })
