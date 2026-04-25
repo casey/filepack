@@ -15,6 +15,8 @@ pub(crate) struct Package {
   pub(crate) homepage: Option<Url>,
   #[n(5)]
   pub(crate) nfo: Option<filename::Nfo>,
+  #[n(6)]
+  pub(crate) title: Option<ComponentBuf>,
 }
 
 #[cfg(test)]
@@ -30,6 +32,7 @@ mod tests {
       description: Some("bar".into()),
       homepage: Some("http://example.com".parse().unwrap()),
       nfo: Some("info.nfo".parse().unwrap()),
+      title: Some("foo-A0".parse().unwrap()),
     });
   }
 }

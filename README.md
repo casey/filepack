@@ -253,8 +253,8 @@ Metadata
 --------
 
 Filepack packages may contain a file named `metadata.cbor` describing the
-package and its contents. If present, the contents of `metadata.cbor` is also
-embedded in the `manifest.filepack` archive.
+package and its contents. If present, `metadata.cbor` is also embedded in the
+`manifest.filepack` archive.
 
 Metadata is authored by creating a file named `metadata.yaml` in the root of a
 new package. `filepack create` then loads `metadata.yaml` if present, checks
@@ -278,16 +278,12 @@ Please feel free to open an issue with ideas for new metadata fields.
 
 ### Schema
 
-This schema is for the YAML authoring format and the JSON output of
-`filepack metadata`. The CBOR schema is currently undocumented.
+This schema is for the YAML authoring format and the JSON output of `filepack
+metadata`. The CBOR schema is currently undocumented.
 
-Fields are given as `NAME: TYPE`.
+Fields are given as `NAME: TYPE`. All fields are optional.
 
-Mandatory fields:
-
-- `title: component`: The content's human-readable title.
-
-Optional fields:
+Top-level fieldds
 
 - `artwork: component.png`: The filename of an PNG file containing artwork for
   the content, for example, cover art for an album or key art for a movie.
@@ -308,12 +304,13 @@ Optional fields:
 
 - `readme: component.md`: The filename of the content readme.
 
-Optional `package` field describing the package itself, as opposed its content:
+- `title: component`: The content's human-readable title.
+
+Fields of `package` describing the package itself, as opposed its content:
 
 - `creator: component`: The person or group who created the package.
 
-- `creator_tag: tag`: The tag of the person or group who created the
-  package.
+- `creator_tag: tag`: The tag of the person or group who created the package.
 
 - `date: date`: The date the package was created.
 
@@ -322,6 +319,10 @@ Optional `package` field describing the package itself, as opposed its content:
 - `homepage: url`: Primary URL for the package.
 
 - `nfo: component.nfo`: The filename of the package nfo file.
+
+- `title: component`: The package's title. May contain details related to the
+  source, packager, or encoding. May to be used as a directory name when saving
+  the package if the main title field would be ambiguous.
 
 Types:
 
@@ -369,6 +370,7 @@ homepage: https://tobin-society.org/spirit-guide
 language: en
 readme: README.md
 package:
+  title: Tobin's Spirit Guide - First Edition
   creator: Egon Spengler
   creator_tag: ES
   date: 1984-07-08 19:32:00 -04:00
