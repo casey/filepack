@@ -117,7 +117,9 @@ use {
     sync::LazyLock,
     time::{SystemTime, SystemTimeError, UNIX_EPOCH},
   },
-  strum::{EnumDiscriminants, EnumIter, EnumString, FromRepr, IntoEnumIterator, IntoStaticStr},
+  strum::{
+    Display, EnumDiscriminants, EnumIter, EnumString, FromRepr, IntoEnumIterator, IntoStaticStr,
+  },
   usized::IntoU64,
   walkdir::WalkDir,
 };
