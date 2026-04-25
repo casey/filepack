@@ -6,7 +6,7 @@ use super::*;
 pub struct Manifest {
   #[serde_as(as = "BTreeMap<serde_with::Same, serde_with::hex::Hex>")]
   pub embedded: BTreeMap<Hash, Vec<u8>>,
-  pub files: DirectoryTree,
+  pub package: DirectoryTree,
   #[serde_as(as = "SetPreventDuplicates<serde_with::Same>")]
   pub signatures: BTreeSet<Signature>,
 }
@@ -162,7 +162,7 @@ mod tests {
   fn duplicate_signatures_are_rejected() {
     assert_matches_regex!(
       serde_json::from_str::<Manifest>(&format!(
-        r#"{{"files":{{}},"signatures":["{}","{}"]}}"#,
+        r#"{{"package":{{}},"signatures":["{}","{}"]}}"#,
         test::SIGNATURE,
         test::SIGNATURE,
       ))
@@ -176,7 +176,7 @@ mod tests {
   fn embedded_serializes_as_hex() {
     let manifest = Manifest {
       embedded: BTreeMap::from([(Hash::bytes(b"foo"), b"foo".to_vec())]),
-      files: DirectoryTree::new(),
+      package: DirectoryTree::new(),
       signatures: BTreeSet::new(),
     };
 
@@ -185,7 +185,7 @@ mod tests {
     assert_eq!(
       json,
       format!(
-        r#"{{"embedded":{{"{hash}":"666f6f"}},"files":{{}},"signatures":[]}}"#,
+        r#"{{"embedded":{{"{hash}":"666f6f"}},"package":{{}},"signatures":[]}}"#,
         hash = Hash::bytes(b"foo"),
       ),
     );
@@ -197,11 +197,11 @@ mod tests {
   fn empty_manifest_serialization() {
     let manifest = Manifest {
       embedded: BTreeMap::new(),
-      files: DirectoryTree::new(),
+      package: DirectoryTree::new(),
       signatures: BTreeSet::new(),
     };
     let json = serde_json::to_string(&manifest).unwrap();
-    assert_eq!(json, r#"{"embedded":{},"files":{},"signatures":[]}"#);
+    assert_eq!(json, r#"{"embedded":{},"package":{},"signatures":[]}"#);
     assert_eq!(serde_json::from_str::<Manifest>(&json).unwrap(), manifest);
   }
 

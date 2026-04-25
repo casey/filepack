@@ -178,23 +178,23 @@ Manifests are [CBOR](https://www.rfc-editor.org/rfc/rfc8949.html) and may be
 converted to JSON for inspection or manipulation with `filepack manifest`.
 
 Manifests, when converted to JSON, are an object with three mandatory keys,
-`embedded`, `files`, and `signatures`.
+`embedded`, `package`, and `signatures`.
 
 ### `embedded`
 
 The value of the mandatory `embedded` key is an object mapping BLAKE3 hashes to
-hex-encoded file contents. The `files` object only includes file names, hashes,
-and sizes, but files may be embedded in the manifest archive in the `embedded`
-map.
+hex-encoded file contents. The `package` object only includes file names,
+hashes, and sizes, but files may be embedded in the manifest archive in the
+`embedded` map.
 
 This is currently only used to embed `metadata.cbor`.
 
-### `files`
+### `package`
 
-The value of the mandatory `files` key is an object mapping path components to
-directory entries. Directory entries may be subdirectories or files. Files are
-objects with keys `hash`, the hex-encoded BLAKE3 hash of the file, and `size`,
-the length of the file in bytes.
+The value of the mandatory `package` key is an object mapping path components
+to directory entries. Directory entries may be subdirectories or files. Files
+are objects with keys `hash`, the hex-encoded BLAKE3 hash of the file, and
+`size`, the length of the file in bytes.
 
 Path components are UTF-8 and may not be `.` or `..`, contain the path
 separators `/` or `\`, contain NUL, be longer than 255 bytes, or begin with a
@@ -209,7 +209,7 @@ signature itself.
 
 Public keys are Curve25519 points and signatures are Ed25519 signatures made
 over the hash of a serialized CBOR message containing the package fingerprint
-which commits to the content of `files`.
+which commits to the content of `package`.
 
 ### Example
 
@@ -220,7 +220,7 @@ and `src/main.c`, signed by the public key
 ```json
 {
   "embedded": {},
-  "files": {
+  "package": {
     "README.md": {
       "hash": "fc253b84551ce6b00e820a826ac18054dc7f63a318ce62f3175315f5c467a62a",
       "size": 11883
@@ -326,7 +326,7 @@ Optional `package` field describing the package itself, as opposed its content:
 Types:
 
 - `component`: A string with the same restrictions as path components in the
-  manifest `files` object, allowing them to be used as unix filesystem paths.
+  manifest `package` object, allowing them to be used as unix filesystem paths.
   Note that Windows imposes additional restrictions which are not enforced, so
   components may not be valid paths on Windows.
 
@@ -873,7 +873,7 @@ Design
 ### Manifest Format
 
 A filepack manifest contains all information needed to verify the contents of a
-directory. The `files` key of the manifest is a directory object mapping
+directory. The `package` key of the manifest is a directory object mapping
 filenames to directory entries, which may themselves be directories, or files,
 in which case they contain the hash of the file contents, as well as the length
 of the file.

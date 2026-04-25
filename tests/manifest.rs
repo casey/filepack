@@ -9,7 +9,7 @@ fn default_format() {
     .arg("manifest")
     .stdout(json_pretty! {
       embedded: {},
-      files: {
+      package: {
         foo: {
           hash: EMPTY_HASH,
           size: 0
@@ -41,7 +41,7 @@ fn json_format() {
     .args(["manifest", "--format", "json"])
     .stdout(json! {
       embedded: {},
-      files: {
+      package: {
         foo: {
           hash: EMPTY_HASH,
           size: 0
@@ -61,7 +61,7 @@ fn json_pretty_format() {
     .args(["manifest", "--format", "json-pretty"])
     .stdout(json_pretty! {
       embedded: {},
-      files: {
+      package: {
         foo: {
           hash: EMPTY_HASH,
           size: 0
@@ -91,7 +91,7 @@ fn with_path() {
     .args(["manifest", "pkg"])
     .stdout(json_pretty! {
       embedded: {},
-      files: {
+      package: {
         bar: {
           hash: EMPTY_HASH,
           size: 0

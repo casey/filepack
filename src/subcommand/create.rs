@@ -154,17 +154,17 @@ impl Create {
 
     let bar = progress_bar::new(&options, paths.values().sum());
 
-    let mut files = DirectoryTree::new();
+    let mut package = DirectoryTree::new();
 
     for path in empty {
-      files.create_directory(&path)?;
+      package.create_directory(&path)?;
     }
 
     for (path, _size) in paths {
       let file = options
         .hash_file(&root.join(&path))
         .context(error::FilesystemIo { path: &path })?;
-      files.create_file(&path, file)?;
+      package.create_file(&path, file)?;
       bar.inc(file.size);
     }
 
@@ -176,7 +176,7 @@ impl Create {
 
     let mut manifest = Manifest {
       embedded,
-      files,
+      package,
       signatures: BTreeSet::new(),
     };
 

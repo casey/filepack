@@ -8,7 +8,7 @@ fn creates_archive_from_json() {
       "manifest.json",
       json! {
         embedded: {},
-        files: {
+        package: {
           foo: {
             hash: EMPTY_HASH,
             size: 0
@@ -38,7 +38,7 @@ fn embedded_preserved() {
         embedded: {
           *hash: hex_content
         },
-        files: {
+        package: {
           "metadata.cbor": {
             hash: hash,
             size: 3
@@ -54,7 +54,7 @@ fn embedded_preserved() {
       embedded: {
         *hash: hex_content
       },
-      files: {
+      package: {
         "metadata.cbor": {
           hash: hash,
           size: 3
@@ -78,7 +78,7 @@ fn rejects_unexpected_embedded_files() {
         embedded: {
           *hash: hex_content
         },
-        files: {
+        package: {
           bar: {
             hash: hash,
             size: 3
@@ -102,7 +102,7 @@ fn round_trip() {
       "manifest.json",
       json! {
         embedded: {},
-        files: {
+        package: {
           foo: {
             hash: EMPTY_HASH,
             size: 0
@@ -116,7 +116,7 @@ fn round_trip() {
     .arg("manifest")
     .stdout(json_pretty! {
       embedded: {},
-      files: {
+      package: {
         foo: {
           hash: EMPTY_HASH,
           size: 0
@@ -146,7 +146,7 @@ fn signature_fingerprint_mismatch() {
       "manifest.json",
       json! {
         embedded: {},
-        files: {
+        package: {
           bar: {
             hash: EMPTY_HASH,
             size: 0

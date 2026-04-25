@@ -39,7 +39,7 @@ impl Archive {
   pub(crate) fn pack(manifest: &Manifest) -> Self {
     let mut builder = ArchiveBuilder::new();
 
-    let package = builder.directory(&manifest.files);
+    let package = builder.directory(&manifest.package);
 
     for (hash, content) in &manifest.embedded {
       builder.files.insert(*hash, content.clone());
@@ -102,7 +102,7 @@ impl Archive {
 
     let mut embedded = BTreeMap::new();
 
-    let files = self.unpack_directory(&mut loose, &mut embedded, package, None)?;
+    let package = self.unpack_directory(&mut loose, &mut embedded, package, None)?;
 
     let signatures = {
       let entry = root
@@ -153,7 +153,7 @@ impl Archive {
 
     Ok(Manifest {
       embedded,
-      files,
+      package,
       signatures,
     })
   }
@@ -201,8 +201,8 @@ mod tests {
   #[test]
   fn archive_packs_metadata_cbor() {
     let content = b"foo";
-    let mut files = DirectoryTree::new();
-    files
+    let mut package = DirectoryTree::new();
+    package
       .create_file(
         &Metadata::CBOR_FILENAME.parse().unwrap(),
         File::new(content),
@@ -211,7 +211,7 @@ mod tests {
 
     let manifest = Manifest {
       embedded: BTreeMap::from([(Hash::bytes(content), content.to_vec())]),
-      files,
+      package,
       signatures: BTreeSet::new(),
     };
 
@@ -255,15 +255,15 @@ mod tests {
   }
 
   fn manifest() -> Manifest {
-    let mut files = DirectoryTree::new();
+    let mut package = DirectoryTree::new();
 
-    files
+    package
       .create_file(&"foo".parse().unwrap(), File::new(b"bar"))
       .unwrap();
 
     Manifest {
       embedded: BTreeMap::new(),
-      files,
+      package,
       signatures: BTreeSet::new(),
     }
   }
@@ -297,7 +297,7 @@ mod tests {
   fn round_trip_empty() {
     let manifest = Manifest {
       embedded: BTreeMap::new(),
-      files: DirectoryTree::new(),
+      package: DirectoryTree::new(),
       signatures: BTreeSet::new(),
     };
     let archive = Archive::pack(&manifest);
@@ -308,12 +308,14 @@ mod tests {
 
   #[test]
   fn round_trip_empty_directory() {
-    let mut files = DirectoryTree::new();
-    files.create_directory(&"foo/bar".parse().unwrap()).unwrap();
+    let mut package = DirectoryTree::new();
+    package
+      .create_directory(&"foo/bar".parse().unwrap())
+      .unwrap();
 
     let manifest = Manifest {
       embedded: BTreeMap::new(),
-      files,
+      package,
       signatures: BTreeSet::new(),
     };
 
@@ -334,17 +336,17 @@ mod tests {
 
   #[test]
   fn round_trip_multiple_files() {
-    let mut files = DirectoryTree::new();
+    let mut package = DirectoryTree::new();
 
     for (name, content) in [("foo", b"aaa"), ("bar", b"bbb"), ("baz", b"ccc")] {
-      files
+      package
         .create_file(&name.parse().unwrap(), File::new(content))
         .unwrap();
     }
 
     let manifest = Manifest {
       embedded: BTreeMap::new(),
-      files,
+      package,
       signatures: BTreeSet::new(),
     };
 
@@ -356,19 +358,19 @@ mod tests {
 
   #[test]
   fn round_trip_nested_directories() {
-    let mut files = DirectoryTree::new();
+    let mut package = DirectoryTree::new();
 
-    files
+    package
       .create_file(&"a/b/c".parse().unwrap(), File::new(b"foo"))
       .unwrap();
 
-    files
+    package
       .create_file(&"a/d".parse().unwrap(), File::new(b"bar"))
       .unwrap();
 
     let manifest = Manifest {
       embedded: BTreeMap::new(),
-      files,
+      package,
       signatures: BTreeSet::new(),
     };
 
@@ -389,7 +391,7 @@ mod tests {
   fn round_trip_with_signature() {
     let manifest = Manifest {
       embedded: BTreeMap::new(),
-      files: DirectoryTree::new(),
+      package: DirectoryTree::new(),
       signatures: BTreeSet::new(),
     };
 
@@ -402,7 +404,7 @@ mod tests {
 
     let manifest = Manifest {
       embedded: BTreeMap::new(),
-      files: manifest.files,
+      package: manifest.package,
       signatures: BTreeSet::from([signature]),
     };
 
@@ -514,16 +516,16 @@ mod tests {
   fn unexpected_embedded_files() {
     let content = b"foo";
 
-    let mut files = DirectoryTree::new();
+    let mut package = DirectoryTree::new();
     for path in &["bar/bob", "baz"] {
-      files
+      package
         .create_file(&path.parse().unwrap(), File::new(content))
         .unwrap();
     }
 
     let mut builder = ArchiveBuilder::new();
 
-    let package = builder.directory(&files);
+    let package = builder.directory(&package);
 
     builder.files.insert(Hash::bytes(content), content.to_vec());
 

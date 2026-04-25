@@ -9,7 +9,7 @@ fn fingerprint() {
       "manifest.filepack",
       json_pretty! {
         embedded: {},
-        files: {
+        package: {
           foo: {
             hash: EMPTY_HASH,
             size: 0
