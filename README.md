@@ -253,8 +253,8 @@ Metadata
 --------
 
 Filepack packages may contain a file named `metadata.filepack` describing the
-package and its contents. If present, `metadata.filepack` is also embedded in the
-`manifest.filepack` archive.
+package and its contents. If present, `metadata.filepack` is also embedded in
+the `manifest.filepack` archive.
 
 Metadata is authored by creating a file named `metadata.yaml` in the root of a
 new package. `filepack create` then loads `metadata.yaml` if present, checks
@@ -841,13 +841,13 @@ content.
 Filepack seeks to rectify this by standardizing machine-readable metadata that
 can be included with folder-of-files content.
 
-Filepack metadata is stored a file, `metadata.filepack`, in the root of a filepack
-package as well as in the `manifest.filepack` archive, and contains information
-related to what the package contains, which files in the package contain the
-package content and their file formats, and who created the package. This
-metadata can serve as a base for the creation of rich local and distributed
-applications and services, with user experiences that compete with and exceed
-those of closed centralized alternatives.
+Filepack metadata is stored a file, `metadata.filepack`, in the root of a
+filepack package as well as in the `manifest.filepack` archive, and contains
+information related to what the package contains, which files in the package
+contain the package content and their file formats, and who created the
+package. This metadata can serve as a base for the creation of rich local and
+distributed applications and services, with user experiences that compete with
+and exceed those of closed centralized alternatives.
 
 Future Directions
 -----------------
