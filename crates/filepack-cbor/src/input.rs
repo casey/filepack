@@ -4,8 +4,8 @@ use super::*;
 
 #[derive(FromDeriveInput)]
 #[darling(
-  supports(struct_named, struct_newtype, enum_unit),
   forward_attrs(repr, transparent)
+  supports(struct_named, struct_newtype, enum_unit),
 )]
 pub(crate) struct Input {
   attrs: Vec<Attribute>,
