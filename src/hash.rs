@@ -17,9 +17,7 @@ impl Hash {
 
 impl Decode for Hash {
   fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
-    let bytes = decoder.bytes()?;
-    let array = <[u8; Self::LEN]>::try_from(bytes).unwrap();
-    Ok(Self::from(array))
+    Ok(Self::from(decoder.byte_array()?))
   }
 }
 

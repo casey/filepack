@@ -8,6 +8,10 @@ pub struct MapEncoder<'a, K> {
 
 impl<'a, K: Encode + PartialOrd> MapEncoder<'a, K> {
   pub fn item(&mut self, key: K, value: impl Encode) {
+    self.item_with(key, &value, Encode::encode);
+  }
+
+  pub fn item_with<V>(&mut self, key: K, value: &V, encode: impl FnOnce(&V, &mut Encoder)) {
     assert!(self.remaining > 0, "too many items");
 
     if let Some(last) = &self.last {
@@ -15,7 +19,7 @@ impl<'a, K: Encode + PartialOrd> MapEncoder<'a, K> {
     }
 
     key.encode(self.encoder);
-    value.encode(self.encoder);
+    encode(value, self.encoder);
 
     self.last = Some(key);
     self.remaining -= 1;
@@ -35,6 +39,17 @@ impl<'a, K: Encode + PartialOrd> MapEncoder<'a, K> {
       self.item(key, value);
     }
   }
+
+  pub fn optional_item_with<V>(
+    &mut self,
+    key: K,
+    value: Option<&V>,
+    encode: impl FnOnce(&V, &mut Encoder),
+  ) {
+    if let Some(value) = value {
+      self.item_with(key, value, encode);
+    }
+  }
 }
 
 impl<K> Drop for MapEncoder<'_, K> {
@@ -52,11 +67,26 @@ mod tests {
     std::panic::{UnwindSafe, catch_unwind},
   };
 
+  struct Foreign(u64);
+
   fn case(f: impl Fn() + UnwindSafe, expected: &str) {
     assert_eq!(
       *catch_unwind(f).unwrap_err().downcast::<&str>().unwrap(),
       expected
     );
+  }
+
+  fn encode_foreign(value: &Foreign, encoder: &mut Encoder) {
+    (value.0 + 1).encode(encoder);
+  }
+
+  #[test]
+  fn item_with() {
+    let mut encoder = Encoder::new();
+    let mut map = encoder.map::<u8>(1);
+    map.item_with(0, &Foreign(42), encode_foreign);
+    drop(map);
+    assert_eq!(encoder.finish(), vec![0xa1, 0x00, 0x18, 0x2b]);
   }
 
   #[test]
@@ -75,6 +105,24 @@ mod tests {
     map.optional_item(0, Some(42u8));
     drop(map);
     assert_eq!(encoder.finish(), vec![0xa1, 0x00, 0x18, 0x2a]);
+  }
+
+  #[test]
+  fn optional_item_with_none() {
+    let mut encoder = Encoder::new();
+    let mut map = encoder.map::<u8>(0);
+    map.optional_item_with(0, None::<&Foreign>, encode_foreign);
+    drop(map);
+    assert_eq!(encoder.finish(), vec![0xa0]);
+  }
+
+  #[test]
+  fn optional_item_with_some() {
+    let mut encoder = Encoder::new();
+    let mut map = encoder.map::<u8>(1);
+    map.optional_item_with(0, Some(&Foreign(42)), encode_foreign);
+    drop(map);
+    assert_eq!(encoder.finish(), vec![0xa1, 0x00, 0x18, 0x2b]);
   }
 
   #[test]

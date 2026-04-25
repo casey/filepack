@@ -11,6 +11,15 @@ impl<'a> Decoder<'a> {
     Ok(self.slice(N)?.try_into().unwrap())
   }
 
+  pub(crate) fn byte_array<const N: usize>(&mut self) -> Result<[u8; N], DecodeError> {
+    let bytes = self.bytes()?;
+
+    bytes.try_into().context(decode_error::ArrayLength {
+      actual: bytes.len(),
+      expected: N,
+    })
+  }
+
   pub(crate) fn bytes(&mut self) -> Result<&[u8], DecodeError> {
     let len = self
       .expect(MajorType::Bytes)?
@@ -130,6 +139,25 @@ impl<'a> Decoder<'a> {
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn byte_array() {
+    let mut decoder = Decoder::new(&[0x42, 0x01, 0x02]);
+    assert_eq!(decoder.byte_array::<2>().unwrap(), [0x01, 0x02]);
+    decoder.finish().unwrap();
+  }
+
+  #[test]
+  fn byte_array_length_mismatch() {
+    assert_matches!(
+      Decoder::new(&[0x42, 0x01, 0x02]).byte_array::<3>(),
+      Err(DecodeError::ArrayLength {
+        actual: 2,
+        expected: 3,
+        ..
+      }),
+    );
+  }
 
   #[test]
   fn finish_errors_on_trailing_bytes() {

@@ -59,9 +59,21 @@ impl FromStr for PublicKey {
   }
 }
 
+impl Decode for PublicKey {
+  fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
+    Self::from_bytes(decoder.byte_array()?).context(decode_error::PublicKey)
+  }
+}
+
 impl Display for PublicKey {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     write!(f, "{}", Self::encode_bytes(*self.0.as_bytes()))
+  }
+}
+
+impl Encode for PublicKey {
+  fn encode(&self, encoder: &mut Encoder) {
+    encoder.bytes(self.0.as_bytes());
   }
 }
 

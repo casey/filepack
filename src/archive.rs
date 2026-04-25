@@ -51,10 +51,9 @@ impl Archive {
 
     let mut entries = BTreeMap::new();
     for (i, signature) in manifest.signatures.iter().enumerate() {
-      let signature = signature.to_string().into_bytes();
       entries.insert(
         i.to_string().parse::<ComponentBuf>().unwrap(),
-        builder.entry(EntryType::File, signature),
+        builder.entry(EntryType::File, signature.encode_to_vec()),
       );
     }
 
@@ -115,14 +114,9 @@ impl Archive {
       let mut signatures = BTreeSet::new();
       for entry in directory.entries.values() {
         loose.remove(&entry.hash);
-        let bytes = &self.files[&entry.hash];
-        let s = str::from_utf8(bytes)
-          .context(decode_error::Unicode)
+        let signature = Signature::decode_from_slice(&self.files[&entry.hash])
           .context(archive_error::SignatureDecode)?;
-        signatures.insert(
-          s.parse::<Signature>()
-            .context(archive_error::SignatureParse)?,
-        );
+        signatures.insert(signature);
       }
 
       signatures
@@ -425,7 +419,22 @@ mod tests {
 
     let package = builder.entry(EntryType::Directory, package.encode_to_vec());
 
-    let signature = builder.entry(EntryType::File, b"\xff".to_vec());
+    let public_key = test::PUBLIC_KEY.parse::<PublicKey>().unwrap();
+
+    let message = Message {
+      fingerprint: Fingerprint::from_bytes([0; Fingerprint::LEN]),
+      timestamp: None,
+    };
+
+    let mut encoder = Encoder::new();
+    let mut map = encoder.map::<u64>(3);
+    map.item(0, &message);
+    map.item(1, public_key);
+    map.item(2, &[0u8; 32][..]);
+    drop(map);
+    let signature_bytes = encoder.finish();
+
+    let signature = builder.entry(EntryType::File, signature_bytes);
 
     let signatures = Directory {
       version: Version::Zero,
@@ -449,47 +458,11 @@ mod tests {
     assert_matches!(
       archive.unpack(),
       Err(ArchiveError::SignatureDecode {
-        source: DecodeError::Unicode { .. }
-      })
-    );
-  }
-
-  #[test]
-  fn signature_parse_error() {
-    let mut builder = ArchiveBuilder::new();
-
-    let package = Directory {
-      version: Version::Zero,
-      entries: BTreeMap::new(),
-    };
-
-    let package = builder.entry(EntryType::Directory, package.encode_to_vec());
-
-    let signature = builder.entry(EntryType::File, b"not-a-signature".to_vec());
-
-    let signatures = Directory {
-      version: Version::Zero,
-      entries: BTreeMap::from([("0".parse().unwrap(), signature)]),
-    };
-
-    let signatures = builder.entry(EntryType::Directory, signatures.encode_to_vec());
-
-    let root = Directory {
-      version: Version::Zero,
-      entries: BTreeMap::from([
-        ("package".parse().unwrap(), package),
-        ("signatures".parse().unwrap(), signatures),
-      ]),
-    };
-
-    let root = builder.entry(EntryType::Directory, root.encode_to_vec());
-
-    let archive = builder.build(root.hash);
-
-    assert_matches!(
-      archive.unpack(),
-      Err(ArchiveError::SignatureParse {
-        source: SignatureError::Bech32 { .. }
+        source: DecodeError::ArrayLength {
+          actual: 32,
+          expected: 64,
+          ..
+        },
       })
     );
   }

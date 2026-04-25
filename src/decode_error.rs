@@ -3,6 +3,12 @@ use super::*;
 #[derive(Debug, Snafu)]
 #[snafu(context(suffix(false)), visibility(pub(crate)))]
 pub enum DecodeError {
+  #[snafu(display("expected {expected} bytes but found {actual}"))]
+  ArrayLength {
+    actual: usize,
+    expected: usize,
+    source: array::TryFromSliceError,
+  },
   #[snafu(display("failed to parse component"))]
   Component { source: ComponentError },
   #[snafu(display("failed to parse datetime"))]
@@ -22,6 +28,8 @@ pub enum DecodeError {
   MissingField { key: String },
   #[snafu(display("overlong integer"))]
   OverlongInteger,
+  #[snafu(display("invalid public key"))]
+  PublicKey { source: PublicKeyError },
   #[snafu(display("reserved additional information value: {value}"))]
   ReservedAdditionalInformation { value: u8 },
   #[snafu(display("size out of range"))]
