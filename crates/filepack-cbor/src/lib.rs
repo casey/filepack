@@ -6,7 +6,7 @@ use {
   proc_macro::TokenStream,
   quote::quote,
   std::collections::HashSet,
-  syn::{Attribute, DeriveInput, Error, Ident, LitInt, Result, Type, TypePath},
+  syn::{Attribute, DeriveInput, Error, Ident, Index, LitInt, Member, Result, Type, TypePath},
   usized::IntoU64,
 };
 
@@ -14,7 +14,7 @@ mod field;
 mod input;
 mod parsed_field;
 
-#[proc_macro_derive(Decode, attributes(n))]
+#[proc_macro_derive(Decode, attributes(n, transparent))]
 pub fn derive_decode(input: TokenStream) -> TokenStream {
   let input = syn::parse_macro_input!(input as DeriveInput);
 
@@ -29,7 +29,7 @@ pub fn derive_decode(input: TokenStream) -> TokenStream {
   }
 }
 
-#[proc_macro_derive(Encode, attributes(n))]
+#[proc_macro_derive(Encode, attributes(n, transparent))]
 pub fn derive_encode(input: TokenStream) -> TokenStream {
   let input = syn::parse_macro_input!(input as DeriveInput);
 
