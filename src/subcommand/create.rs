@@ -46,7 +46,7 @@ impl Create {
 
       ensure! {
         self.force || !filesystem::exists(&path)?,
-        error::MetadataCborAlreadyExists {
+        error::MetadataAlreadyExists {
           path,
         },
       }
