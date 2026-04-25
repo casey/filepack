@@ -14,20 +14,20 @@ pub(crate) struct Input {
 }
 
 impl Input {
-  pub(crate) fn derive_decode(&self) -> Result<proc_macro2::TokenStream> {
+  pub(crate) fn decode(&self) -> Result<proc_macro2::TokenStream> {
     match self.data {
-      Data::Enum(_) => self.derive_decode_enum(),
+      Data::Enum(_) => self.decode_enum(),
       Data::Struct(_) => {
         if self.is_transparent()? {
-          self.derive_decode_transparent()
+          self.decode_transparent()
         } else {
-          self.derive_decode_struct()
+          self.decode_struct()
         }
       }
     }
   }
 
-  pub(crate) fn derive_decode_enum(&self) -> Result<proc_macro2::TokenStream> {
+  pub(crate) fn decode_enum(&self) -> Result<proc_macro2::TokenStream> {
     let name = &self.ident;
 
     let repr = self.parse_repr()?;
@@ -48,7 +48,7 @@ impl Input {
     })
   }
 
-  pub(crate) fn derive_decode_struct(&self) -> Result<proc_macro2::TokenStream> {
+  pub(crate) fn decode_struct(&self) -> Result<proc_macro2::TokenStream> {
     let name = &self.ident;
 
     let fields = self.parse_fields()?;
@@ -80,7 +80,7 @@ impl Input {
     })
   }
 
-  pub(crate) fn derive_decode_transparent(&self) -> Result<proc_macro2::TokenStream> {
+  pub(crate) fn decode_transparent(&self) -> Result<proc_macro2::TokenStream> {
     let name = &self.ident;
 
     let member = self.transparent_member()?;
@@ -99,20 +99,20 @@ impl Input {
     })
   }
 
-  pub(crate) fn derive_encode(&self) -> Result<proc_macro2::TokenStream> {
+  pub(crate) fn encode(&self) -> Result<proc_macro2::TokenStream> {
     match self.data {
-      Data::Enum(_) => self.derive_encode_enum(),
+      Data::Enum(_) => self.encode_enum(),
       Data::Struct(_) => {
         if self.is_transparent()? {
-          self.derive_encode_transparent()
+          self.encode_transparent()
         } else {
-          self.derive_encode_struct()
+          self.encode_struct()
         }
       }
     }
   }
 
-  pub(crate) fn derive_encode_enum(&self) -> Result<proc_macro2::TokenStream> {
+  pub(crate) fn encode_enum(&self) -> Result<proc_macro2::TokenStream> {
     let name = &self.ident;
 
     let repr = self.parse_repr()?;
@@ -126,7 +126,7 @@ impl Input {
     })
   }
 
-  pub(crate) fn derive_encode_struct(&self) -> Result<proc_macro2::TokenStream> {
+  pub(crate) fn encode_struct(&self) -> Result<proc_macro2::TokenStream> {
     let name = &self.ident;
 
     let fields = self.parse_fields()?;
@@ -164,7 +164,7 @@ impl Input {
     })
   }
 
-  pub(crate) fn derive_encode_transparent(&self) -> Result<proc_macro2::TokenStream> {
+  pub(crate) fn encode_transparent(&self) -> Result<proc_macro2::TokenStream> {
     let name = &self.ident;
 
     let member = self.transparent_member()?;

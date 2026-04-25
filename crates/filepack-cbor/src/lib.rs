@@ -17,7 +17,7 @@ mod input;
 mod parsed_field;
 
 #[proc_macro_derive(Decode, attributes(cbor, n))]
-pub fn derive_decode(input: TokenStream) -> TokenStream {
+pub fn decode(input: TokenStream) -> TokenStream {
   let input = syn::parse_macro_input!(input as DeriveInput);
 
   let input = match Input::from_derive_input(&input) {
@@ -25,29 +25,14 @@ pub fn derive_decode(input: TokenStream) -> TokenStream {
     Err(err) => return err.write_errors().into(),
   };
 
-  match input.derive_decode() {
-    Ok(tokens) => tokens.into(),
-    Err(err) => err.to_compile_error().into(),
-  }
-}
-
-#[proc_macro_derive(Encode, attributes(cbor, n))]
-pub fn derive_encode(input: TokenStream) -> TokenStream {
-  let input = syn::parse_macro_input!(input as DeriveInput);
-
-  let input = match Input::from_derive_input(&input) {
-    Ok(input) => input,
-    Err(err) => return err.write_errors().into(),
-  };
-
-  match input.derive_encode() {
+  match input.decode() {
     Ok(tokens) => tokens.into(),
     Err(err) => err.to_compile_error().into(),
   }
 }
 
 #[proc_macro_derive(DecodeFromStr)]
-pub fn derive_decode_from_str(input: TokenStream) -> TokenStream {
+pub fn decode_from_str(input: TokenStream) -> TokenStream {
   let input = syn::parse_macro_input!(input as DeriveInput);
 
   let name = &input.ident;
@@ -68,8 +53,23 @@ pub fn derive_decode_from_str(input: TokenStream) -> TokenStream {
   .into()
 }
 
+#[proc_macro_derive(Encode, attributes(cbor, n))]
+pub fn encode(input: TokenStream) -> TokenStream {
+  let input = syn::parse_macro_input!(input as DeriveInput);
+
+  let input = match Input::from_derive_input(&input) {
+    Ok(input) => input,
+    Err(err) => return err.write_errors().into(),
+  };
+
+  match input.encode() {
+    Ok(tokens) => tokens.into(),
+    Err(err) => err.to_compile_error().into(),
+  }
+}
+
 #[proc_macro_derive(EncodeDisplay)]
-pub fn derive_encode_display(input: TokenStream) -> TokenStream {
+pub fn encode_display(input: TokenStream) -> TokenStream {
   let input = syn::parse_macro_input!(input as DeriveInput);
 
   let name = &input.ident;
