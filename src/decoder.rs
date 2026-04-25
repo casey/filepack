@@ -141,6 +141,25 @@ mod tests {
   use super::*;
 
   #[test]
+  fn byte_array() {
+    let mut decoder = Decoder::new(&[0x42, 0x01, 0x02]);
+    assert_eq!(decoder.byte_array::<2>().unwrap(), [0x01, 0x02]);
+    decoder.finish().unwrap();
+  }
+
+  #[test]
+  fn byte_array_length_mismatch() {
+    assert_matches!(
+      Decoder::new(&[0x42, 0x01, 0x02]).byte_array::<3>(),
+      Err(DecodeError::ArrayLength {
+        actual: 2,
+        expected: 3,
+        ..
+      }),
+    );
+  }
+
+  #[test]
   fn finish_errors_on_trailing_bytes() {
     let mut decoder = Decoder::new(&[0x00, 0x00]);
     u8::decode(&mut decoder).unwrap();
