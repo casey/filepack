@@ -69,15 +69,15 @@ mod tests {
 
   struct Foreign(u64);
 
-  fn encode_foreign(value: &Foreign, encoder: &mut Encoder) {
-    (value.0 + 1).encode(encoder);
-  }
-
   fn case(f: impl Fn() + UnwindSafe, expected: &str) {
     assert_eq!(
       *catch_unwind(f).unwrap_err().downcast::<&str>().unwrap(),
       expected
     );
+  }
+
+  fn encode_foreign(value: &Foreign, encoder: &mut Encoder) {
+    (value.0 + 1).encode(encoder);
   }
 
   #[test]
