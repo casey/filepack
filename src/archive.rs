@@ -419,7 +419,22 @@ mod tests {
 
     let package = builder.entry(EntryType::Directory, package.encode_to_vec());
 
-    let signature = builder.entry(EntryType::File, b"\xff".to_vec());
+    let public_key = test::PUBLIC_KEY.parse::<PublicKey>().unwrap();
+
+    let message = Message {
+      fingerprint: Fingerprint::from_bytes([0; Fingerprint::LEN]),
+      timestamp: None,
+    };
+
+    let mut encoder = Encoder::new();
+    let mut map = encoder.map::<u64>(3);
+    map.item(0, &message);
+    map.item(1, &public_key);
+    map.item(2, &[0u8; 32][..]);
+    drop(map);
+    let signature_bytes = encoder.finish();
+
+    let signature = builder.entry(EntryType::File, signature_bytes);
 
     let signatures = Directory {
       version: Version::Zero,
@@ -443,7 +458,11 @@ mod tests {
     assert_matches!(
       archive.unpack(),
       Err(ArchiveError::SignatureDecode {
-        source: DecodeError::Unicode { .. }
+        source: DecodeError::ArrayLength {
+          actual: 32,
+          expected: 64,
+          ..
+        },
       })
     );
   }
