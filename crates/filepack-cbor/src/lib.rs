@@ -17,7 +17,7 @@ mod input;
 mod parsed_field;
 
 #[proc_macro_derive(Decode, attributes(cbor, n))]
-pub fn derive_decode(input: TokenStream) -> TokenStream {
+pub fn decode(input: TokenStream) -> TokenStream {
   let input = syn::parse_macro_input!(input as DeriveInput);
 
   let input = match Input::from_derive_input(&input) {
@@ -25,14 +25,36 @@ pub fn derive_decode(input: TokenStream) -> TokenStream {
     Err(err) => return err.write_errors().into(),
   };
 
-  match input.derive_decode() {
+  match input.decode() {
     Ok(tokens) => tokens.into(),
     Err(err) => err.to_compile_error().into(),
   }
 }
 
+#[proc_macro_derive(DecodeFromStr)]
+pub fn decode_from_str(input: TokenStream) -> TokenStream {
+  let input = syn::parse_macro_input!(input as DeriveInput);
+
+  let name = &input.ident;
+
+  quote! {
+    impl Decode for #name {
+      fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
+        decoder
+          .text()?
+          .parse::<Self>()
+          .map_err(|source| DecodeError::FromStr {
+            name: stringify!(#name),
+            source: Box::new(source),
+          })
+      }
+    }
+  }
+  .into()
+}
+
 #[proc_macro_derive(Encode, attributes(cbor, n))]
-pub fn derive_encode(input: TokenStream) -> TokenStream {
+pub fn encode(input: TokenStream) -> TokenStream {
   let input = syn::parse_macro_input!(input as DeriveInput);
 
   let input = match Input::from_derive_input(&input) {
@@ -40,8 +62,24 @@ pub fn derive_encode(input: TokenStream) -> TokenStream {
     Err(err) => return err.write_errors().into(),
   };
 
-  match input.derive_encode() {
+  match input.encode() {
     Ok(tokens) => tokens.into(),
     Err(err) => err.to_compile_error().into(),
   }
+}
+
+#[proc_macro_derive(EncodeDisplay)]
+pub fn encode_display(input: TokenStream) -> TokenStream {
+  let input = syn::parse_macro_input!(input as DeriveInput);
+
+  let name = &input.ident;
+
+  quote! {
+    impl Encode for #name {
+      fn encode(&self, encoder: &mut Encoder) {
+        self.to_string().encode(encoder);
+      }
+    }
+  }
+  .into()
 }
