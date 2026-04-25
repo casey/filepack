@@ -44,7 +44,7 @@ fn extra_fields_are_not_allowed() {
       "manifest.json",
       json! {
         embedded: {},
-        files: {},
+        package: {},
         signatures: [],
         foo: "bar"
       },
@@ -53,7 +53,7 @@ fn extra_fields_are_not_allowed() {
     .stderr(
       "\
 error: failed to deserialize manifest at `manifest.json`
-       └─ unknown field `foo`, expected one of `embedded`, `files`, `signatures` at line 1 column 47\n",
+       └─ unknown field `foo`, expected one of `embedded`, `package`, `signatures` at line 1 column 49\n",
     )
     .failure();
 }
@@ -74,7 +74,7 @@ fn extraneous_file_error() {
   Test::new()
     .write_manifest(
       "manifest.filepack",
-      json! { embedded: {}, files: {}, signatures: [] },
+      json! { embedded: {}, package: {}, signatures: [] },
     )
     .touch("foo")
     .args(["verify", "."])
@@ -89,7 +89,7 @@ fn file_not_found_error_message() {
       "manifest.filepack",
       json! {
         embedded: {},
-        files: {
+        package: {
           foo: {
             hash: EMPTY_HASH,
             size: 0
@@ -129,7 +129,7 @@ fn ignore_missing() {
       "manifest.filepack",
       json! {
         embedded: {},
-        files: {
+        package: {
           foo: {
             hash: EMPTY_HASH,
             size: 0
@@ -153,7 +153,7 @@ fn malformed_signature_error() {
       "manifest.json",
       json! {
         embedded: {},
-        files: {},
+        package: {},
         signatures: [
           "signature1invalid"
         ]
@@ -192,7 +192,7 @@ fn manifest_paths_are_relative_to_root() {
       "dir/manifest.filepack",
       json! {
         embedded: {},
-        files: {
+        package: {
           foo: {
             hash: EMPTY_HASH,
             size: 0
@@ -217,7 +217,7 @@ fn metadata_allows_unknown_keys() {
       "manifest.filepack",
       json! {
         embedded: {},
-        files: {
+        package: {
           "metadata.yaml": {
             hash: hash,
             size: 19,
@@ -243,7 +243,7 @@ fn metadata_may_not_be_invalid() {
       "manifest.filepack",
       json! {
         embedded: {},
-        files: {
+        package: {
           "metadata.yaml": {
             hash: hash,
             size: 9,
@@ -434,7 +434,7 @@ fn no_files() {
   Test::new()
     .write_manifest(
       "manifest.filepack",
-      json! { embedded: {}, files: {}, signatures: [] },
+      json! { embedded: {}, package: {}, signatures: [] },
     )
     .args(["verify", "."])
     .stderr("successfully verified 0 files\n")
@@ -451,7 +451,7 @@ fn non_unicode_path_error() {
     .touch_non_unicode()
     .write_manifest(
       "manifest.filepack",
-      json! { embedded: {}, files: {}, signatures: [] },
+      json! { embedded: {}, package: {}, signatures: [] },
     )
     .args(["verify", "."])
     .stderr_path("error: path not valid unicode: `./�`\n")
@@ -466,7 +466,7 @@ fn print() {
       "manifest.filepack",
       json! {
         embedded: {},
-        files: {
+        package: {
           foo: {
             hash: EMPTY_HASH,
             size: 0
@@ -478,7 +478,7 @@ fn print() {
     .args(["verify", "--print", "."])
     .stdout(json_pretty! {
       embedded: {},
-      files: {
+      package: {
         foo: {
           hash: EMPTY_HASH,
           size: 0
@@ -519,7 +519,7 @@ fn signature_fingerprint_mismatch() {
 
   let json = json! {
     embedded: {},
-    files: {
+    package: {
       bar: {
         hash: EMPTY_HASH,
         size: 0
@@ -565,7 +565,7 @@ fn single_file() {
       "manifest.filepack",
       json! {
         embedded: {},
-        files: {
+        package: {
           foo: {
             hash: EMPTY_HASH,
             size: 0
@@ -587,7 +587,7 @@ fn single_file_mmap() {
       "manifest.filepack",
       json! {
         embedded: {},
-        files: {
+        package: {
           foo: {
             hash: EMPTY_HASH,
             size: 0
@@ -609,7 +609,7 @@ fn single_file_omit_directory() {
       "manifest.filepack",
       json! {
         embedded: {},
-        files: {
+        package: {
           foo: {
             hash: EMPTY_HASH,
             size: 0
@@ -631,7 +631,7 @@ fn single_file_parallel() {
       "manifest.filepack",
       json! {
         embedded: {},
-        files: {
+        package: {
           foo: {
             hash: EMPTY_HASH,
             size: 0
@@ -764,7 +764,7 @@ fn weak_signature_public_key() {
       "manifest.json",
       json! {
         embedded: {},
-        files: {
+        package: {
           bar: {
             hash: EMPTY_HASH,
             size: 0
@@ -790,7 +790,7 @@ fn with_manifest_path() {
       "hello.json",
       json! {
         embedded: {},
-        files: {
+        package: {
           foo: {
             hash: EMPTY_HASH,
             size: 0

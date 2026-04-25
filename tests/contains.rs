@@ -52,7 +52,7 @@ fn size_mismatch() {
       "manifest.filepack",
       json! {
         embedded: {},
-        files: {
+        package: {
           foo: {
             hash: EMPTY_HASH,
             size: 1,

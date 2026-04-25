@@ -7,7 +7,7 @@ pub(crate) struct Entries<'a> {
 impl<'a> From<&'a Manifest> for Entries<'a> {
   fn from(manifest: &'a Manifest) -> Self {
     let mut stack = Vec::new();
-    for (component, entry) in &manifest.files.entries {
+    for (component, entry) in &manifest.package.entries {
       stack.push((vec![component.borrow()], entry));
     }
     Self { stack }
