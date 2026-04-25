@@ -7,8 +7,6 @@ pub(crate) struct ArchiveBuilder {
 impl ArchiveBuilder {
   pub(crate) fn build(self, root: Hash) -> Archive {
     Archive {
-      application: Application::Filepack,
-      context: Context::Manifest,
       files: self.files,
       root,
       version: Version::Zero,
