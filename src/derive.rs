@@ -176,16 +176,6 @@ fn single_field() {
 }
 
 #[test]
-fn transparent_newtype() {
-  #[derive(Debug, Encode, Decode, PartialEq)]
-  #[transparent]
-  struct Foo(u64);
-
-  assert_cbor(Foo(99), &[0x18, 0x63]);
-  assert_cbor(Foo(99), &99u64.encode_to_vec());
-}
-
-#[test]
 fn transparent_named() {
   #[derive(Debug, Encode, Decode, PartialEq)]
   #[transparent]
@@ -195,4 +185,14 @@ fn transparent_named() {
 
   assert_cbor(Foo { bar: "foo".into() }, &[0x63, 0x66, 0x6f, 0x6f]);
   assert_cbor(Foo { bar: "foo".into() }, &"foo".encode_to_vec());
+}
+
+#[test]
+fn transparent_newtype() {
+  #[derive(Debug, Encode, Decode, PartialEq)]
+  #[transparent]
+  struct Foo(u64);
+
+  assert_cbor(Foo(99), &[0x18, 0x63]);
+  assert_cbor(Foo(99), &99u64.encode_to_vec());
 }
