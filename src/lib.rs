@@ -109,6 +109,7 @@ use {
     io::{self, IsTerminal},
     iter,
     marker::PhantomData,
+    net::{Ipv6Addr, SocketAddrV6},
     num::TryFromIntError,
     ops::Deref,
     path::{Path, PathBuf},

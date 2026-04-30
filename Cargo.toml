@@ -20,7 +20,7 @@ chrono = { version = "0.4.43", features = ["serde"] }
 clap = { version = "4.5.16", features = ["derive"] }
 clap_mangen = "0.2.23"
 dirs = "6.0.0"
-ed25519-dalek = { version = "2.1.1", features = ["rand_core"] }
+ed25519-dalek = { version = "2.1.1", features = ["pkcs8", "rand_core"] }
 filepack-cbor = { version = "0.0.0", path = "crates/filepack-cbor" }
 hex = "0.4.3"
 indicatif = "0.18.0"
@@ -28,7 +28,9 @@ lexiclean = "0.0.1"
 num-traits = "0.2.19"
 owo-colors = "4"
 rand = "0.8.5"
+rcgen = { version = "0.14.7", default-features = false }
 regex = "1.10.6"
+rustls-pki-types = "1.14.1"
 serde = { version = "1.0.209", features = ["derive"] }
 serde_ignored = "0.1.14"
 serde_json = "1.0.127"
@@ -37,9 +39,11 @@ serde_yaml = "0.9.34"
 sha2 = "0.10"
 snafu = "0.8.4"
 strum = { version = "0.27.2", features = ["derive"] }
+tokio = { version = "1.52.1", default-features = false, features = ["rt-multi-thread"] }
 url = "2.5.8"
 usized = "0.0.2"
 walkdir = "2.5.0"
+web-transport-quinn = { version = "0.11.9", default-features = false, features = ["ring"] }
 
 [dev-dependencies]
 pretty_assertions = "1.4.1"
