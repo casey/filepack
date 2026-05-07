@@ -151,12 +151,12 @@ Data Directory
 Filepack stores local configuration in the `filepack` subdirectory of the
 platform data directory.
 
-The location of the platform data directory is platform dependent, with the
-`$XDG_DATA_DIR` being respected on all platforms.
+The location of the platform data directory is platform dependent, with
+`$XDG_DATA_HOME` being respected on all platforms.
 
 | Platform | Value                               |
 | -------- | ----------------------------------- |
-| All      | `$XDG_DATA_DIR`                     |
+| All      | `$XDG_DATA_HOME`                    |
 | Linux    | `$HOME`/.local/share                |
 | macOS    | `$HOME`/Library/Application Support |
 | Windows  | `{FOLDERID_LocalAppData}`           |
