@@ -390,11 +390,11 @@ mod tests {
     };
 
     let private_key = test::PRIVATE_KEY.parse::<PrivateKey>().unwrap();
-    let message = Statement {
+    let statement = Statement {
       fingerprint: manifest.fingerprint(),
       timestamp: None,
     };
-    let signature = private_key.sign(&message);
+    let signature = private_key.sign(&statement);
 
     let manifest = Manifest {
       embedded: BTreeMap::new(),
