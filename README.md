@@ -208,7 +208,7 @@ fingerprint the signature is made over, an optional timestamp, and the
 signature itself.
 
 Public keys are Curve25519 points and signatures are Ed25519 signatures made
-over the hash of a serialized CBOR message containing the package fingerprint
+over the hash of a serialized CBOR statement containing the package fingerprint
 which commits to the content of `package`.
 
 ### Example
@@ -900,8 +900,8 @@ of file hashing and verification.
 
 Filepack allows for the creation of Ed25519 signatures over the contents of a
 manifest, which thus commit to the contents of the directory covered by the
-manifest. Signatures are made over a message containing a "fingerprint" hash of
-a canonical CBOR serialization of the manifest. This keeps signatures
+manifest. Signatures are made over a statemtn containing a "fingerprint" hash
+of a canonical CBOR serialization of the manifest. This keeps signatures
 independent of the manifest format, avoids issues with canonicalization of the
 manifest JSON, avoids hash loops due to the inclusion of signatures in the
 manifest itself, and allows proving the inclusion of files covered by a
@@ -923,6 +923,6 @@ In particular, see:
 - [Directory](src/directory.rs)
 - [Entry](src/entry.rs)
 - [Files](src/file.rs)
-- [Message](src/message.rs)
+- [Statement](src/statement.rs)
 
 And the [cbor](src/cbor.rs) module for the encoding.

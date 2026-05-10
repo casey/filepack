@@ -127,11 +127,11 @@ mod tests {
   fn modifying_fingerprint_invalidates_signature() {
     let private_key = test::PRIVATE_KEY.parse::<PrivateKey>().unwrap();
     let fingerprint = test::FINGERPRINT.parse::<Fingerprint>().unwrap();
-    let message = Statement {
+    let statement = Statement {
       fingerprint,
       timestamp: Some(1000),
     };
-    let mut signature = private_key.sign(&message);
+    let mut signature = private_key.sign(&statement);
     signature.statement.fingerprint = Fingerprint::from_bytes(default());
     assert_matches!(
       signature.verify(fingerprint).unwrap_err(),
@@ -143,11 +143,11 @@ mod tests {
   fn modifying_time_invalidates_signature() {
     let private_key = test::PRIVATE_KEY.parse::<PrivateKey>().unwrap();
     let fingerprint = test::FINGERPRINT.parse::<Fingerprint>().unwrap();
-    let message = Statement {
+    let statement = Statement {
       fingerprint,
       timestamp: Some(1000),
     };
-    let mut signature = private_key.sign(&message);
+    let mut signature = private_key.sign(&statement);
     signature.statement.timestamp = Some(2000);
     assert_matches!(
       signature.verify(fingerprint).unwrap_err(),
@@ -159,11 +159,11 @@ mod tests {
   fn removing_time_invalidates_signature() {
     let private_key = test::PRIVATE_KEY.parse::<PrivateKey>().unwrap();
     let fingerprint = test::FINGERPRINT.parse::<Fingerprint>().unwrap();
-    let message = Statement {
+    let statement = Statement {
       fingerprint,
       timestamp: Some(1000),
     };
-    let mut signature = private_key.sign(&message);
+    let mut signature = private_key.sign(&statement);
     signature.statement.timestamp = None;
     assert_matches!(
       signature.verify(fingerprint).unwrap_err(),
