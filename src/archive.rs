@@ -421,14 +421,14 @@ mod tests {
 
     let public_key = test::PUBLIC_KEY.parse::<PublicKey>().unwrap();
 
-    let message = Statement {
+    let statement = Statement {
       fingerprint: Fingerprint::from_bytes([0; Fingerprint::LEN]),
       timestamp: None,
     };
 
     let mut encoder = Encoder::new();
     let mut map = encoder.map::<u64>(3);
-    map.item(0, &message);
+    map.item(0, &statement);
     map.item(1, public_key);
     map.item(2, &[0u8; 32][..]);
     drop(map);
