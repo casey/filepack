@@ -172,7 +172,7 @@ fn updates_manifest_with_signature() {
       .signatures
       .first()
       .unwrap()
-      .message()
+      .statement()
       .timestamp
       .is_none()
   );
@@ -203,7 +203,7 @@ fn with_timestamp() {
     .signatures
     .first()
     .unwrap()
-    .message()
+    .statement()
     .timestamp
     .unwrap();
   let now = SystemTime::now()

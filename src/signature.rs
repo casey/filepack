@@ -5,7 +5,7 @@ const TIMESTAMP: Fe32 = Fe32::T;
 #[derive(Clone, Debug, Decode, Encode, DeserializeFromStr, Eq, PartialEq, SerializeDisplay)]
 pub struct Signature {
   #[n(0)]
-  message: Statement,
+  statement: Statement,
   #[n(1)]
   public_key: PublicKey,
   #[n(2)]
@@ -15,7 +15,7 @@ pub struct Signature {
 
 impl Signature {
   fn comparison_key(&self) -> (PublicKey, &Statement, [u8; 64]) {
-    (self.public_key, &self.message, self.signature.to_bytes())
+    (self.public_key, &self.statement, self.signature.to_bytes())
   }
 
   fn decode_signature(decoder: &mut Decoder) -> Result<ed25519_dalek::Signature, DecodeError> {
@@ -26,17 +26,17 @@ impl Signature {
     encoder.bytes(&signature.to_bytes());
   }
 
-  pub fn message(&self) -> &Statement {
-    &self.message
+  pub fn statement(&self) -> &Statement {
+    &self.statement
   }
 
   pub(crate) fn new(
-    message: Statement,
+    statement: Statement,
     public_key: PublicKey,
     signature: ed25519_dalek::Signature,
   ) -> Self {
     Self {
-      message,
+      statement,
       public_key,
       signature,
     }
@@ -48,9 +48,9 @@ impl Signature {
 
   pub(crate) fn verify(&self, fingerprint: Fingerprint) -> Result {
     ensure! {
-      fingerprint == self.message.fingerprint,
+      fingerprint == self.statement.fingerprint,
       error::SignatureFingerprintMismatch {
-        signature: self.message.fingerprint,
+        signature: self.statement.fingerprint,
         package: fingerprint,
       },
     }
@@ -58,7 +58,7 @@ impl Signature {
     self
       .public_key
       .inner()
-      .verify_strict(self.message.digest().as_bytes(), &self.signature)
+      .verify_strict(self.statement.digest().as_bytes(), &self.signature)
       .map_err(DalekSignatureError)
       .context(error::SignatureInvalid {
         public_key: self.public_key,
@@ -70,9 +70,9 @@ impl Display for Signature {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     let mut encoder = Bech32Encoder::new(Bech32Type::Signature);
     encoder.bytes(&self.public_key.inner().to_bytes());
-    encoder.bytes(self.message.fingerprint.as_bytes());
+    encoder.bytes(self.statement.fingerprint.as_bytes());
     encoder.bytes(&self.signature.to_bytes());
-    if let Some(timestamp) = self.message.timestamp {
+    if let Some(timestamp) = self.statement.timestamp {
       encoder.fe(TIMESTAMP);
       encoder.bytes(&timestamp.to_le_bytes());
     }
@@ -97,7 +97,7 @@ impl FromStr for Signature {
 
     decoder.done()?;
     Ok(Self {
-      message: Statement {
+      statement: Statement {
         fingerprint: Fingerprint::from_bytes(fingerprint),
         timestamp,
       },
@@ -132,7 +132,7 @@ mod tests {
       timestamp: Some(1000),
     };
     let mut signature = private_key.sign(&message);
-    signature.message.fingerprint = Fingerprint::from_bytes(default());
+    signature.statement.fingerprint = Fingerprint::from_bytes(default());
     assert_matches!(
       signature.verify(fingerprint).unwrap_err(),
       Error::SignatureFingerprintMismatch { .. },
@@ -148,7 +148,7 @@ mod tests {
       timestamp: Some(1000),
     };
     let mut signature = private_key.sign(&message);
-    signature.message.timestamp = Some(2000);
+    signature.statement.timestamp = Some(2000);
     assert_matches!(
       signature.verify(fingerprint).unwrap_err(),
       Error::SignatureInvalid { .. },
@@ -164,7 +164,7 @@ mod tests {
       timestamp: Some(1000),
     };
     let mut signature = private_key.sign(&message);
-    signature.message.timestamp = None;
+    signature.statement.timestamp = None;
     assert_matches!(
       signature.verify(fingerprint).unwrap_err(),
       Error::SignatureInvalid { .. },

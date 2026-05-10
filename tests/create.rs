@@ -269,7 +269,7 @@ fn sign_creates_valid_signature() {
   let signature = manifest.signatures.first().unwrap();
 
   assert_eq!(signature.public_key(), public_key);
-  assert!(signature.message().timestamp.is_none());
+  assert!(signature.statement().timestamp.is_none());
 }
 
 #[test]
@@ -334,7 +334,7 @@ fn sign_with_timestamp() {
   let signature = manifest.signatures.first().unwrap();
   assert_eq!(signature.public_key(), public_key,);
 
-  let timestamp = signature.message().timestamp.unwrap();
+  let timestamp = signature.statement().timestamp.unwrap();
   let now = SystemTime::now()
     .duration_since(UNIX_EPOCH)
     .unwrap()
