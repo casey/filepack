@@ -24,6 +24,8 @@ use {
     archive_builder::ArchiveBuilder,
     archive_error::ArchiveError,
     arguments::Arguments,
+    array_decoder::ArrayDecoder,
+    array_encoder::ArrayEncoder,
     bech32_decoder::Bech32Decoder,
     bech32_encoder::Bech32Encoder,
     bech32_error::Bech32Error,
@@ -104,11 +106,12 @@ use {
     cmp::Ordering,
     collections::{BTreeMap, BTreeSet, HashMap},
     env,
-    fmt::{self, Debug, Display, Formatter, Write},
+    fmt::{self, Debug, Display, Formatter},
     fs::{self, Permissions},
-    io::{self, IsTerminal},
+    io::{self, IsTerminal, Read, Write},
     iter,
     marker::PhantomData,
+    net::{TcpListener, TcpStream},
     num::TryFromIntError,
     ops::Deref,
     path::{Path, PathBuf},
@@ -120,7 +123,7 @@ use {
   strum::{
     Display, EnumDiscriminants, EnumIter, EnumString, FromRepr, IntoEnumIterator, IntoStaticStr,
   },
-  usized::IntoU64,
+  usized::{IntoU64, IntoUsize},
   walkdir::WalkDir,
 };
 
@@ -169,6 +172,8 @@ mod archive;
 mod archive_builder;
 mod archive_error;
 mod arguments;
+mod array_decoder;
+mod array_encoder;
 mod bech32_decoder;
 mod bech32_encoder;
 mod bech32_error;

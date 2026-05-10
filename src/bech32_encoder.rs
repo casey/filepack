@@ -31,7 +31,7 @@ impl Display for Bech32Encoder {
       .with_checksum::<bech32::Bech32m>(self.ty.hrp())
       .chars()
     {
-      f.write_char(c)?;
+      fmt::Write::write_char(f, c)?;
     }
 
     Ok(())

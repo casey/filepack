@@ -7,8 +7,9 @@ pub(crate) struct Decoder<'a> {
 }
 
 impl<'a> Decoder<'a> {
-  fn array<const N: usize>(&mut self) -> Result<[u8; N], DecodeError> {
-    Ok(self.slice(N)?.try_into().unwrap())
+  pub(crate) fn array<'b>(&'b mut self) -> Result<ArrayDecoder<'b, 'a>, DecodeError> {
+    let len = self.expect(MajorType::Array)?;
+    Ok(ArrayDecoder::new(self, len))
   }
 
   pub(crate) fn byte_array<const N: usize>(&mut self) -> Result<[u8; N], DecodeError> {
@@ -26,7 +27,7 @@ impl<'a> Decoder<'a> {
       .try_into()
       .context(decode_error::SizeRange)?;
 
-    self.slice(len)
+    self.raw_slice(len)
   }
 
   fn expect(&mut self, expected: MajorType) -> Result<u64, DecodeError> {
@@ -52,7 +53,7 @@ impl<'a> Decoder<'a> {
   }
 
   pub(crate) fn head(&mut self) -> Result<Head, DecodeError> {
-    let initial_byte = self.array::<1>()?[0];
+    let initial_byte = self.raw_array::<1>()?[0];
 
     let major_type = MajorType::from_initial_byte(initial_byte);
 
@@ -60,10 +61,10 @@ impl<'a> Decoder<'a> {
 
     let value = match additional_information {
       0..24 => additional_information.into(),
-      24 => u8::from_be_bytes(self.array()?).into(),
-      25 => u16::from_be_bytes(self.array()?).into(),
-      26 => u32::from_be_bytes(self.array()?).into(),
-      27 => u64::from_be_bytes(self.array()?),
+      24 => u8::from_be_bytes(self.raw_array()?).into(),
+      25 => u16::from_be_bytes(self.raw_array()?).into(),
+      26 => u32::from_be_bytes(self.raw_array()?).into(),
+      27 => u64::from_be_bytes(self.raw_array()?),
       value @ 28..31 => {
         return Err(decode_error::ReservedAdditionalInformation { value }.build());
       }
@@ -122,7 +123,11 @@ impl<'a> Decoder<'a> {
     }
   }
 
-  fn slice(&mut self, n: usize) -> Result<&[u8], DecodeError> {
+  fn raw_array<const N: usize>(&mut self) -> Result<[u8; N], DecodeError> {
+    Ok(self.raw_slice(N)?.try_into().unwrap())
+  }
+
+  fn raw_slice(&mut self, n: usize) -> Result<&[u8], DecodeError> {
     let start = self.position;
     let end = start + n;
 
@@ -142,7 +147,7 @@ impl<'a> Decoder<'a> {
       .try_into()
       .context(decode_error::SizeRange)?;
 
-    str::from_utf8(self.slice(len)?).context(decode_error::Unicode)
+    str::from_utf8(self.raw_slice(len)?).context(decode_error::Unicode)
   }
 }
 

@@ -21,9 +21,11 @@ mod lints;
 mod man;
 mod manifest;
 mod metadata;
+mod node;
 mod sign;
 mod signatures;
 mod size;
+mod upload;
 mod verify;
 
 const MANIFEST_PATH_HELP: &str = "\
@@ -74,12 +76,16 @@ pub(crate) enum Subcommand {
   Manifest(manifest::Manifest),
   #[command(about = "Print metadata")]
   Metadata(metadata::Metadata),
+  #[command(about = "Start node")]
+  Node(node::Node),
   #[command(about = "Sign manifest")]
   Sign(sign::Sign),
   #[command(about = "List manifest signatures")]
   Signatures(signatures::Signatures),
   #[command(about = "Print manifest total file size")]
   Size(size::Size),
+  #[command(about = "Upload to node")]
+  Upload(upload::Upload),
   #[command(about = "Verify manifest")]
   Verify(verify::Verify),
 }
@@ -102,9 +108,11 @@ impl Subcommand {
       Self::Man => man::run(),
       Self::Manifest(manifest) => manifest.run(),
       Self::Metadata(metadata) => metadata.run(),
+      Self::Node(node) => node.run(),
       Self::Sign(sign) => sign.run(options),
       Self::Signatures(signatures) => signatures.run(),
       Self::Size(size) => size.run(),
+      Self::Upload(upload) => upload.run(),
       Self::Verify(verify) => verify.run(options),
     }
   }
