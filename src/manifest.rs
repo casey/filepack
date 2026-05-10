@@ -106,7 +106,7 @@ impl Manifest {
     Ok(manifest)
   }
 
-  pub(crate) fn message(&self, timestamp: bool) -> Result<Statement> {
+  pub(crate) fn statement(&self, timestamp: bool) -> Result<Statement> {
     Ok(Statement {
       fingerprint: self.fingerprint(),
       timestamp: timestamp.then(now).transpose()?,
@@ -124,9 +124,9 @@ impl Manifest {
     keychain: &Keychain,
     key: &KeyName,
   ) -> Result {
-    let message = self.message(options.timestamp)?;
+    let statement = self.statement(options.timestamp)?;
 
-    let signature = keychain.sign(key, &message)?;
+    let signature = keychain.sign(key, &statement)?;
 
     self.signatures.insert(signature);
 
