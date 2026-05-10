@@ -13,7 +13,7 @@ impl Statement {
     let envelope = Envelope {
       application: Application::Filepack,
       context: Context::Message,
-      message: self.clone(),
+      statement: self.clone(),
     };
 
     Hash::bytes(&envelope.encode_to_vec())
