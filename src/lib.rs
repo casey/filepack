@@ -127,8 +127,8 @@ use {
 pub use self::{
   directory_tree::DirectoryTree, encode::Encode, encoder::Encoder, error::Error,
   fingerprint::Fingerprint, hash::Hash, language_error::LanguageError, major_type::MajorType,
-  manifest::Manifest, map_encoder::MapEncoder, message::Message, private_key::PrivateKey,
-  public_key::PublicKey, relative_path::RelativePath, signature::Signature, tag_error::TagError,
+  manifest::Manifest, map_encoder::MapEncoder, private_key::PrivateKey, public_key::PublicKey,
+  relative_path::RelativePath, signature::Signature, statement::Statement, tag_error::TagError,
 };
 
 #[cfg(test)]
@@ -216,7 +216,6 @@ mod major_type;
 mod manifest;
 mod map_decoder;
 mod map_encoder;
-mod message;
 mod metadata;
 mod mode;
 mod options;
@@ -233,6 +232,7 @@ mod relative_path;
 mod sign_options;
 mod signature;
 mod signature_error;
+mod statement;
 mod style;
 mod subcommand;
 mod tag;

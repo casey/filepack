@@ -8,5 +8,5 @@ pub(crate) struct Envelope {
   #[n(1)]
   pub(crate) context: Context,
   #[n(2)]
-  pub(crate) message: Message,
+  pub(crate) message: Statement,
 }

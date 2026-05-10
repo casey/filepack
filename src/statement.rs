@@ -1,14 +1,14 @@
 use super::*;
 
 #[derive(Clone, Debug, Decode, Encode, Eq, Ord, PartialEq, PartialOrd)]
-pub struct Message {
+pub struct Statement {
   #[n(0)]
   pub fingerprint: Fingerprint,
   #[n(1)]
   pub timestamp: Option<u64>,
 }
 
-impl Message {
+impl Statement {
   pub(crate) fn digest(&self) -> Hash {
     let envelope = Envelope {
       application: Application::Filepack,
@@ -25,7 +25,7 @@ mod tests {
   use super::*;
 
   #[track_caller]
-  fn case(message: Message) {
+  fn case(message: Statement) {
     let mut encoder = Encoder::new();
 
     {
@@ -42,7 +42,7 @@ mod tests {
 
   #[test]
   fn digest_with_timestamp() {
-    case(Message {
+    case(Statement {
       fingerprint: Fingerprint::from_bytes([0; Fingerprint::LEN]),
       timestamp: Some(1000),
     });
@@ -50,7 +50,7 @@ mod tests {
 
   #[test]
   fn digest_without_timestamp() {
-    case(Message {
+    case(Statement {
       fingerprint: Fingerprint::from_bytes([0; Fingerprint::LEN]),
       timestamp: None,
     });

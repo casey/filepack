@@ -106,8 +106,8 @@ impl Manifest {
     Ok(manifest)
   }
 
-  pub(crate) fn message(&self, timestamp: bool) -> Result<Message> {
-    Ok(Message {
+  pub(crate) fn message(&self, timestamp: bool) -> Result<Statement> {
+    Ok(Statement {
       fingerprint: self.fingerprint(),
       timestamp: timestamp.then(now).transpose()?,
     })

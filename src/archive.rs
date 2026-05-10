@@ -390,7 +390,7 @@ mod tests {
     };
 
     let private_key = test::PRIVATE_KEY.parse::<PrivateKey>().unwrap();
-    let message = Message {
+    let message = Statement {
       fingerprint: manifest.fingerprint(),
       timestamp: None,
     };
@@ -421,7 +421,7 @@ mod tests {
 
     let public_key = test::PUBLIC_KEY.parse::<PublicKey>().unwrap();
 
-    let message = Message {
+    let message = Statement {
       fingerprint: Fingerprint::from_bytes([0; Fingerprint::LEN]),
       timestamp: None,
     };

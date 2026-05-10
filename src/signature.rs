@@ -5,7 +5,7 @@ const TIMESTAMP: Fe32 = Fe32::T;
 #[derive(Clone, Debug, Decode, Encode, DeserializeFromStr, Eq, PartialEq, SerializeDisplay)]
 pub struct Signature {
   #[n(0)]
-  message: Message,
+  message: Statement,
   #[n(1)]
   public_key: PublicKey,
   #[n(2)]
@@ -14,7 +14,7 @@ pub struct Signature {
 }
 
 impl Signature {
-  fn comparison_key(&self) -> (PublicKey, &Message, [u8; 64]) {
+  fn comparison_key(&self) -> (PublicKey, &Statement, [u8; 64]) {
     (self.public_key, &self.message, self.signature.to_bytes())
   }
 
@@ -26,12 +26,12 @@ impl Signature {
     encoder.bytes(&signature.to_bytes());
   }
 
-  pub fn message(&self) -> &Message {
+  pub fn message(&self) -> &Statement {
     &self.message
   }
 
   pub(crate) fn new(
-    message: Message,
+    message: Statement,
     public_key: PublicKey,
     signature: ed25519_dalek::Signature,
   ) -> Self {
@@ -97,7 +97,7 @@ impl FromStr for Signature {
 
     decoder.done()?;
     Ok(Self {
-      message: Message {
+      message: Statement {
         fingerprint: Fingerprint::from_bytes(fingerprint),
         timestamp,
       },
@@ -127,7 +127,7 @@ mod tests {
   fn modifying_fingerprint_invalidates_signature() {
     let private_key = test::PRIVATE_KEY.parse::<PrivateKey>().unwrap();
     let fingerprint = test::FINGERPRINT.parse::<Fingerprint>().unwrap();
-    let message = Message {
+    let message = Statement {
       fingerprint,
       timestamp: Some(1000),
     };
@@ -143,7 +143,7 @@ mod tests {
   fn modifying_time_invalidates_signature() {
     let private_key = test::PRIVATE_KEY.parse::<PrivateKey>().unwrap();
     let fingerprint = test::FINGERPRINT.parse::<Fingerprint>().unwrap();
-    let message = Message {
+    let message = Statement {
       fingerprint,
       timestamp: Some(1000),
     };
@@ -159,7 +159,7 @@ mod tests {
   fn removing_time_invalidates_signature() {
     let private_key = test::PRIVATE_KEY.parse::<PrivateKey>().unwrap();
     let fingerprint = test::FINGERPRINT.parse::<Fingerprint>().unwrap();
-    let message = Message {
+    let message = Statement {
       fingerprint,
       timestamp: Some(1000),
     };
