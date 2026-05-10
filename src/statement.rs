@@ -25,19 +25,19 @@ mod tests {
   use super::*;
 
   #[track_caller]
-  fn case(message: Statement) {
+  fn case(statement: Statement) {
     let mut encoder = Encoder::new();
 
     {
       let mut encoder = encoder.map::<u64>(3);
       encoder.item(0, "filepack");
-      encoder.item(1, "message");
-      encoder.item(2, &message);
+      encoder.item(1, "statement");
+      encoder.item(2, &statement);
     }
 
     let bytes = encoder.finish();
 
-    assert_eq!(message.digest(), Hash::bytes(&bytes));
+    assert_eq!(statement.digest(), Hash::bytes(&bytes));
   }
 
   #[test]
