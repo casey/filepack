@@ -12,7 +12,7 @@ impl Statement {
   pub(crate) fn digest(&self) -> Hash {
     let envelope = Envelope {
       application: Application::Filepack,
-      context: Context::Message,
+      context: Context::Statement,
       statement: self.clone(),
     };
 

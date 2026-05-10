@@ -70,11 +70,11 @@ fn private_key_is_valid() {
 #[test]
 fn signature_matches() {
   let private_key = PRIVATE_KEY.parse::<PrivateKey>().unwrap();
-  let message = Statement {
+  let statement = Statement {
     fingerprint: FINGERPRINT.parse().unwrap(),
     timestamp: None,
   };
-  let signature = private_key.sign(&message);
+  let signature = private_key.sign(&statement);
   assert_eq!(signature.to_string(), SIGNATURE);
 }
 
