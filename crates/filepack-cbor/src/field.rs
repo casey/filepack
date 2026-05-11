@@ -23,6 +23,10 @@ impl Field {
     }
   }
 
+  pub(crate) fn n_attribute(&self) -> Option<&Attribute> {
+    self.attrs.iter().find(|attr| attr.path().is_ident("n"))
+  }
+
   pub(crate) fn parse(&self) -> Result<ParsedField> {
     let (decode_with, encode_with) = self.parse_attributes()?;
 

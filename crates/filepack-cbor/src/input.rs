@@ -12,10 +12,21 @@ pub(crate) struct Input {
 
 impl Input {
   pub(crate) fn decode(&self) -> Result<proc_macro2::TokenStream> {
+    let transparent = self.is_transparent()?;
+
     match self.data {
-      Data::Enum(_) => self.decode_enum(),
+      Data::Enum(_) => {
+        if transparent {
+          Err(Error::new_spanned(
+            &self.ident,
+            "#[cbor(transparent)] cannot be used with enums",
+          ))
+        } else {
+          self.decode_enum()
+        }
+      }
       Data::Struct(_) => {
-        if self.is_transparent()? {
+        if transparent {
           self.decode_transparent()
         } else {
           self.decode_struct()
@@ -101,10 +112,21 @@ impl Input {
   }
 
   pub(crate) fn encode(&self) -> Result<proc_macro2::TokenStream> {
+    let transparent = self.is_transparent()?;
+
     match self.data {
-      Data::Enum(_) => self.encode_enum(),
+      Data::Enum(_) => {
+        if transparent {
+          Err(Error::new_spanned(
+            &self.ident,
+            "#[cbor(transparent)] cannot be used with enums",
+          ))
+        } else {
+          self.encode_enum()
+        }
+      }
       Data::Struct(_) => {
-        if self.is_transparent()? {
+        if transparent {
           self.encode_transparent()
         } else {
           self.encode_struct()
@@ -289,6 +311,15 @@ impl Input {
         &self.ident,
         "#[transparent] requires a struct with a single field",
       ));
+    }
+
+    for field in &fields.fields {
+      if let Some(attr) = field.n_attribute() {
+        return Err(Error::new_spanned(
+          attr,
+          "#[n] attribute cannot be used with #[cbor(transparent)]",
+        ));
+      }
     }
 
     Ok(match fields.fields[0].ident() {
