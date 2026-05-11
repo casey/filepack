@@ -25,6 +25,18 @@ impl Child {
   pub(crate) fn take(&mut self) -> (std::process::Child, Test) {
     (self.child.take().unwrap(), self.test.take().unwrap())
   }
+
+  pub(crate) fn terminate(self) -> Self {
+    let pid = self.child.as_ref().unwrap().id();
+
+    let result = unsafe { libc::kill(pid.try_into().unwrap(), libc::SIGTERM) };
+
+    if result == -1 {
+      panic!("{}", std::io::Error::last_os_error());
+    }
+
+    self
+  }
 }
 
 impl Drop for Child {

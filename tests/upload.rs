@@ -8,6 +8,7 @@ fn node_creates_file() {
 
   let node = node.spawn();
 
+  // todo: make this reusable
   let mut port = String::new();
   reader.read_to_string(&mut port).unwrap();
   let port = port.parse::<u16>().unwrap();
@@ -17,7 +18,7 @@ fn node_creates_file() {
     .args(["upload", &format!("127.0.0.1:{port}"), "foo"])
     .success();
 
-  let node = node.success();
+  let node = node.terminate().success();
 
   let path = node
     .path()

@@ -118,7 +118,10 @@ use {
     path::{Path, PathBuf},
     process, ptr,
     str::{self, FromStr, Utf8Error},
-    sync::LazyLock,
+    sync::{
+      LazyLock,
+      atomic::{self, AtomicBool},
+    },
     time::{SystemTime, SystemTimeError, UNIX_EPOCH},
   },
   strum::{
