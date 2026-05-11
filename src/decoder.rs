@@ -218,6 +218,32 @@ mod tests {
   }
 
   #[test]
+  fn signed_integer_range() {
+    #[track_caller]
+    fn case<T: Debug + Decode>(bytes: &[u8]) {
+      assert_matches!(
+        T::decode_from_slice(bytes),
+        Err(DecodeError::IntegerRange { .. }),
+      );
+    }
+
+    case::<i32>(&[0x1a, 0x80, 0x00, 0x00, 0x00]);
+    case::<i32>(&[0x3a, 0x80, 0x00, 0x00, 0x00]);
+    case::<i64>(&[0x1b, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
+    case::<i64>(&[0x3b, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
+  }
+
+  #[test]
+  fn signed_integer_type_mismatch() {
+    assert_matches!(
+      Decoder::new(&[0x60]).signed_integer(),
+      Err(DecodeError::ExpectedInteger {
+        actual: MajorType::Text,
+      }),
+    );
+  }
+
+  #[test]
   fn truncated() {
     assert_matches!(Decoder::new(&[]).head(), Err(DecodeError::Truncated));
   }
