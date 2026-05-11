@@ -7,7 +7,9 @@ use {
   proc_macro::TokenStream,
   quote::quote,
   std::collections::HashSet,
-  syn::{Attribute, DeriveInput, Error, Ident, Index, LitInt, Member, Path, Result, Type, TypePath},
+  syn::{
+    Attribute, DeriveInput, Error, Ident, Index, LitInt, Member, Path, Result, Type, TypePath,
+  },
   usized::IntoU64,
   variant::Variant,
 };

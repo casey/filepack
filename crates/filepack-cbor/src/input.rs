@@ -261,11 +261,21 @@ impl Input {
       .collect::<Result<Vec<ParsedVariant>>>()?;
 
     let mut n = HashSet::new();
-    for variant in &variants {
+    for (i, variant) in variants.iter().enumerate() {
       if !n.insert(variant.n) {
         return Err(Error::new_spanned(
           variant.ident,
           format!("duplicate key {}", variant.n),
+        ));
+      }
+
+      if variant.n != i.into_u64() {
+        return Err(Error::new_spanned(
+          variant.ident,
+          format!(
+            "keys must be contiguous starting from 0: expected {i}, found {}",
+            variant.n
+          ),
         ));
       }
     }
