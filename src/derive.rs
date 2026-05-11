@@ -224,10 +224,10 @@ fn encode_with_required() {
 
 #[test]
 fn enum_invalid_discriminant() {
-  #[derive(Debug, Decode, FromRepr)]
-  #[repr(u8)]
+  #[derive(Debug, Decode)]
   enum Foo {
-    Bar = 0,
+    #[n(0)]
+    Bar,
   }
 
   #[track_caller]
@@ -247,11 +247,12 @@ fn enum_invalid_discriminant() {
 
 #[test]
 fn enum_round_trip() {
-  #[derive(Clone, Copy, Debug, Decode, Encode, FromRepr, PartialEq)]
-  #[repr(u8)]
+  #[derive(Debug, Decode, Encode, PartialEq)]
   enum Foo {
-    Bar = 0,
-    Baz = 1,
+    #[n(0)]
+    Bar,
+    #[n(1)]
+    Baz,
   }
 
   assert_cbor(Foo::Bar, &[0x00]);
@@ -260,10 +261,10 @@ fn enum_round_trip() {
 
 #[test]
 fn enum_unexpected_type() {
-  #[derive(Debug, Decode, FromRepr)]
-  #[repr(u8)]
+  #[derive(Debug, Decode)]
   enum Foo {
-    Bar = 0,
+    #[n(0)]
+    Bar,
   }
 
   assert_matches!(

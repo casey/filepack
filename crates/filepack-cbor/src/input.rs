@@ -1,15 +1,12 @@
-#![allow(clippy::needless_continue)]
+#![expect(clippy::needless_continue)]
 
 use super::*;
 
 #[derive(FromDeriveInput)]
-#[darling(
-  supports(struct_named, struct_newtype, enum_unit),
-  forward_attrs(cbor, repr)
-)]
+#[darling(supports(struct_named, struct_newtype, enum_unit), forward_attrs(cbor))]
 pub(crate) struct Input {
   attrs: Vec<Attribute>,
-  data: Data<(), Field>,
+  data: Data<Variant, Field>,
   ident: Ident,
 }
 
@@ -30,19 +27,23 @@ impl Input {
   pub(crate) fn decode_enum(&self) -> Result<proc_macro2::TokenStream> {
     let name = &self.ident;
 
-    let repr = self.parse_repr()?;
+    let variants = self.parse_variants()?;
+
+    let arms = variants.iter().map(|ParsedVariant { ident, n }| {
+      quote! { #n => Ok(Self::#ident), }
+    });
 
     Ok(quote! {
       impl Decode for #name {
         fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
           let discriminant = decoder.integer()?;
-          #repr::try_from(discriminant)
-            .ok()
-            .and_then(Self::from_repr)
-            .context(decode_error::InvalidDiscriminant {
+          match discriminant {
+            #(#arms)*
+            _ => Err(decode_error::InvalidDiscriminant {
               discriminant,
               name: stringify!(#name),
-            })
+            }.build()),
+          }
         }
       }
     })
@@ -115,12 +116,19 @@ impl Input {
   pub(crate) fn encode_enum(&self) -> Result<proc_macro2::TokenStream> {
     let name = &self.ident;
 
-    let repr = self.parse_repr()?;
+    let variants = self.parse_variants()?;
+
+    let arms = variants.iter().map(|ParsedVariant { ident, n }| {
+      quote! { Self::#ident => #n, }
+    });
 
     Ok(quote! {
       impl Encode for #name {
         fn encode(&self, encoder: &mut Encoder) {
-          (*self as #repr).encode(encoder);
+          let discriminant = match self {
+            #(#arms)*
+          };
+          discriminant.encode(encoder);
         }
       }
     })
@@ -208,7 +216,7 @@ impl Input {
     if data.is_tuple() {
       return Err(Error::new_spanned(
         &self.ident,
-        "tuple struct must use `#[cbor(transparent)]` attribute to derive `Decode` or `Encode`",
+        "tuple structs must use `#[cbor(transparent)]` attribute to derive `Decode` or `Encode`",
       ));
     }
 
@@ -222,7 +230,7 @@ impl Input {
       if !n.insert(field.n) {
         return Err(Error::new_spanned(
           field.ident,
-          format!("duplicate key {}", field.n),
+          format!("duplicate #[n] attribute {}", field.n),
         ));
       }
 
@@ -230,7 +238,7 @@ impl Input {
         return Err(Error::new_spanned(
           field.ident,
           format!(
-            "keys must be contiguous starting from 0: expected {i}, found {}",
+            "#[n] attributes must be contiguous starting from 0: expected {i}, found {}",
             field.n
           ),
         ));
@@ -240,19 +248,37 @@ impl Input {
     Ok(fields)
   }
 
-  fn parse_repr(&self) -> Result<Type> {
-    let mut repr = None;
+  fn parse_variants(&self) -> Result<Vec<ParsedVariant>> {
+    let variants = self
+      .data
+      .as_ref()
+      .take_enum()
+      .unwrap()
+      .into_iter()
+      .map(Variant::parse)
+      .collect::<Result<Vec<ParsedVariant>>>()?;
 
-    for attribute in &self.attrs {
-      if attribute.path().is_ident("repr") {
-        if repr.is_some() {
-          return Err(Error::new_spanned(attribute, "duplicate #[repr] attribute"));
-        }
-        repr = Some(attribute.parse_args::<Type>()?);
+    let mut n = HashSet::new();
+    for (i, variant) in variants.iter().enumerate() {
+      if !n.insert(variant.n) {
+        return Err(Error::new_spanned(
+          variant.ident,
+          format!("duplicate #[n] attribute {}", variant.n),
+        ));
+      }
+
+      if variant.n != i.into_u64() {
+        return Err(Error::new_spanned(
+          variant.ident,
+          format!(
+            "#[n] attributes must be contiguous starting from 0: expected {i}, found {}",
+            variant.n
+          ),
+        ));
       }
     }
 
-    repr.ok_or_else(|| Error::new_spanned(&self.ident, "missing #[repr(...)] attribute"))
+    Ok(variants)
   }
 
   fn transparent_member(&self) -> Result<Member> {

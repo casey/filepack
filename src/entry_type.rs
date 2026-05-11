@@ -1,10 +1,12 @@
 use super::*;
 
-#[derive(Clone, Copy, Debug, Decode, Encode, FromRepr, PartialEq)]
-#[repr(u8)]
+#[allow(clippy::arbitrary_source_item_ordering)]
+#[derive(Clone, Copy, Debug, Decode, Encode, PartialEq)]
 pub(crate) enum EntryType {
-  File = 0,
-  Directory = 1,
+  #[n(0)]
+  File,
+  #[n(1)]
+  Directory,
 }
 
 #[cfg(test)]

@@ -1,8 +1,9 @@
 use {
   self::input::Input,
-  darling::{FromDeriveInput, FromField, ast::Data},
+  darling::{FromDeriveInput, FromField, FromVariant, ast::Data},
   field::Field,
   parsed_field::ParsedField,
+  parsed_variant::ParsedVariant,
   proc_macro::TokenStream,
   quote::quote,
   std::collections::HashSet,
@@ -10,11 +11,14 @@ use {
     Attribute, DeriveInput, Error, Ident, Index, LitInt, Member, Path, Result, Type, TypePath,
   },
   usized::IntoU64,
+  variant::Variant,
 };
 
 mod field;
 mod input;
 mod parsed_field;
+mod parsed_variant;
+mod variant;
 
 #[proc_macro_derive(Decode, attributes(cbor, n))]
 pub fn decode(input: TokenStream) -> TokenStream {
@@ -82,4 +86,19 @@ pub fn encode_display(input: TokenStream) -> TokenStream {
     }
   }
   .into()
+}
+
+fn n(ident: &Ident, attributes: &[Attribute]) -> Result<u64> {
+  let mut n = None;
+
+  for attribute in attributes {
+    if attribute.path().is_ident("n") {
+      if n.is_some() {
+        return Err(Error::new_spanned(attribute, "duplicate #[n] attribute"));
+      }
+      n = Some(attribute.parse_args::<LitInt>()?.base10_parse::<u64>()?);
+    }
+  }
+
+  n.ok_or_else(|| Error::new_spanned(ident, "missing #[n(N)] attribute"))
 }
