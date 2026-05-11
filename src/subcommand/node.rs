@@ -14,17 +14,24 @@ impl Node {
     loop {
       let (mut stream, addr) = listener.accept().unwrap();
 
-      let message = Message::read_frame(&mut stream);
+      let message = Message::read(&mut stream);
 
       match message {
+        Message::Download(download) => {
+          let path = files.join(download.hash.to_string());
+          let file = filesystem::read(&path)?;
+          Message::File(message::File { file }).write(&mut stream);
+          stream.shutdown(net::Shutdown::Both).unwrap();
+        }
         Message::Upload(upload) => {
           let actual = Hash::bytes(&upload.file);
           assert_eq!(actual, upload.hash);
-          filesystem::write(&files, upload.file)?;
-          Message::Ok.write_frame(&mut stream);
-          stream.shutdown(net::Shutdown::Write).unwrap();
+          let path = files.join(actual.to_string());
+          filesystem::write(&path, upload.file)?;
+          Message::Ok.write(&mut stream);
+          stream.shutdown(net::Shutdown::Both).unwrap();
         }
-        Message::Ok => todo!(),
+        Message::File(_) | Message::Ok => todo!(),
       }
     }
 

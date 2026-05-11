@@ -10,6 +10,7 @@ mod archive;
 mod bech32;
 mod contains;
 mod create;
+mod download;
 mod files;
 mod fingerprint;
 mod hash;
@@ -54,6 +55,8 @@ pub(crate) enum Subcommand {
   Contains(contains::Contains),
   #[command(about = "Create manifest")]
   Create(create::Create),
+  #[command(about = "Download file from node")]
+  Download(download::Download),
   #[command(about = "List manifest files")]
   Files(files::Files),
   #[command(about = "Print package fingerprint")]
@@ -84,7 +87,7 @@ pub(crate) enum Subcommand {
   Signatures(signatures::Signatures),
   #[command(about = "Print manifest total file size")]
   Size(size::Size),
-  #[command(about = "Upload to node")]
+  #[command(about = "Upload file to node")]
   Upload(upload::Upload),
   #[command(about = "Verify manifest")]
   Verify(verify::Verify),
@@ -97,6 +100,7 @@ impl Subcommand {
       Self::Bech32(bech32) => bech32.run(),
       Self::Contains(contains) => contains.run(options),
       Self::Create(create) => create.run(options),
+      Self::Download(download) => download.run(),
       Self::Files(files) => files.run(),
       Self::Fingerprint(fingerprint) => fingerprint.run(),
       Self::Hash(hash) => hash.run(options),

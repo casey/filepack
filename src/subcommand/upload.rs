@@ -16,9 +16,9 @@ impl Upload {
 
     let message = Message::Upload(message::Upload { hash, file });
 
-    message.write_frame(&mut stream);
+    message.write(&mut stream);
 
-    let message = Message::read_frame(&mut stream);
+    let message = Message::read(&mut stream);
 
     assert_eq!(message, Message::Ok);
 
