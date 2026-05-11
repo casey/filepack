@@ -50,8 +50,8 @@ impl PrivateKey {
   pub(crate) fn sign(&self, statement: &Statement) -> Signature {
     use ed25519_dalek::Signer;
     Signature::new(
-      statement.clone(),
       self.public_key(),
+      statement.clone(),
       self.0.sign(statement.digest().as_bytes()),
     )
   }

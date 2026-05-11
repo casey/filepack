@@ -2,12 +2,13 @@ use super::*;
 
 const TIMESTAMP: Fe32 = Fe32::T;
 
+#[allow(clippy::arbitrary_source_item_ordering)]
 #[derive(Clone, Debug, Decode, Encode, DeserializeFromStr, Eq, PartialEq, SerializeDisplay)]
 pub struct Signature {
   #[n(0)]
-  statement: Statement,
-  #[n(1)]
   public_key: PublicKey,
+  #[n(1)]
+  statement: Statement,
   #[n(2)]
   #[cbor(decode_with = Signature::decode_signature, encode_with = Signature::encode_signature)]
   signature: ed25519_dalek::Signature,
@@ -26,24 +27,24 @@ impl Signature {
     encoder.bytes(&signature.to_bytes());
   }
 
-  pub fn statement(&self) -> &Statement {
-    &self.statement
-  }
-
   pub(crate) fn new(
-    statement: Statement,
     public_key: PublicKey,
+    statement: Statement,
     signature: ed25519_dalek::Signature,
   ) -> Self {
     Self {
-      statement,
       public_key,
+      statement,
       signature,
     }
   }
 
   pub fn public_key(&self) -> PublicKey {
     self.public_key
+  }
+
+  pub fn statement(&self) -> &Statement {
+    &self.statement
   }
 
   pub(crate) fn verify(&self, fingerprint: Fingerprint) -> Result {

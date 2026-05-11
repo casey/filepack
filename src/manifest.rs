@@ -106,13 +106,6 @@ impl Manifest {
     Ok(manifest)
   }
 
-  pub(crate) fn statement(&self, timestamp: bool) -> Result<Statement> {
-    Ok(Statement {
-      fingerprint: self.fingerprint(),
-      timestamp: timestamp.then(now).transpose()?,
-    })
-  }
-
   pub fn save(&self, path: &Utf8Path) -> Result {
     let cbor = Archive::pack(self).encode_to_vec();
     filesystem::write(path, cbor)
@@ -131,6 +124,13 @@ impl Manifest {
     self.signatures.insert(signature);
 
     Ok(())
+  }
+
+  pub(crate) fn statement(&self, timestamp: bool) -> Result<Statement> {
+    Ok(Statement {
+      fingerprint: self.fingerprint(),
+      timestamp: timestamp.then(now).transpose()?,
+    })
   }
 
   pub(crate) fn total_size(&self) -> u128 {
