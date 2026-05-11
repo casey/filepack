@@ -249,9 +249,11 @@ impl Input {
   }
 
   fn parse_variants(&self) -> Result<Vec<ParsedVariant>> {
-    let data = self.data.as_ref().take_enum().unwrap();
-
-    let variants = data
+    let variants = self
+      .data
+      .as_ref()
+      .take_enum()
+      .unwrap()
       .into_iter()
       .map(Variant::parse)
       .collect::<Result<Vec<ParsedVariant>>>()?;
