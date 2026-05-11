@@ -3,13 +3,10 @@
 use super::*;
 
 #[derive(FromDeriveInput)]
-#[darling(
-  supports(struct_named, struct_newtype, enum_unit),
-  forward_attrs(cbor, repr)
-)]
+#[darling(supports(struct_named, struct_newtype, enum_unit), forward_attrs(cbor))]
 pub(crate) struct Input {
   attrs: Vec<Attribute>,
-  data: Data<(), Field>,
+  data: Data<Variant, Field>,
   ident: Ident,
 }
 
@@ -30,19 +27,25 @@ impl Input {
   pub(crate) fn decode_enum(&self) -> Result<proc_macro2::TokenStream> {
     let name = &self.ident;
 
-    let repr = self.parse_repr()?;
+    let variants = self.parse_variants()?;
+
+    let arms = variants.iter().map(|variant| {
+      let ident = variant.ident;
+      let n = variant.n;
+      quote! { #n => Ok(Self::#ident), }
+    });
 
     Ok(quote! {
       impl Decode for #name {
         fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
           let discriminant = decoder.integer()?;
-          #repr::try_from(discriminant)
-            .ok()
-            .and_then(Self::from_repr)
-            .context(decode_error::InvalidDiscriminant {
+          match discriminant {
+            #(#arms)*
+            _ => Err(decode_error::InvalidDiscriminant {
               discriminant,
               name: stringify!(#name),
-            })
+            }.build()),
+          }
         }
       }
     })
@@ -115,12 +118,21 @@ impl Input {
   pub(crate) fn encode_enum(&self) -> Result<proc_macro2::TokenStream> {
     let name = &self.ident;
 
-    let repr = self.parse_repr()?;
+    let variants = self.parse_variants()?;
+
+    let arms = variants.iter().map(|variant| {
+      let ident = variant.ident;
+      let n = variant.n;
+      quote! { Self::#ident => #n, }
+    });
 
     Ok(quote! {
       impl Encode for #name {
         fn encode(&self, encoder: &mut Encoder) {
-          (*self as #repr).encode(encoder);
+          let discriminant: u64 = match self {
+            #(#arms)*
+          };
+          discriminant.encode(encoder);
         }
       }
     })
@@ -240,19 +252,25 @@ impl Input {
     Ok(fields)
   }
 
-  fn parse_repr(&self) -> Result<Type> {
-    let mut repr = None;
+  fn parse_variants(&self) -> Result<Vec<ParsedVariant>> {
+    let data = self.data.as_ref().take_enum().unwrap();
 
-    for attribute in &self.attrs {
-      if attribute.path().is_ident("repr") {
-        if repr.is_some() {
-          return Err(Error::new_spanned(attribute, "duplicate #[repr] attribute"));
-        }
-        repr = Some(attribute.parse_args::<Type>()?);
+    let variants = data
+      .into_iter()
+      .map(Variant::parse)
+      .collect::<Result<Vec<ParsedVariant>>>()?;
+
+    let mut n = HashSet::new();
+    for variant in &variants {
+      if !n.insert(variant.n) {
+        return Err(Error::new_spanned(
+          variant.ident,
+          format!("duplicate key {}", variant.n),
+        ));
       }
     }
 
-    repr.ok_or_else(|| Error::new_spanned(&self.ident, "missing #[repr(...)] attribute"))
+    Ok(variants)
   }
 
   fn transparent_member(&self) -> Result<Member> {

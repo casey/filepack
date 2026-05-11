@@ -1,10 +1,10 @@
 use super::*;
 
-#[derive(Clone, Copy, Debug, Decode, Default, Encode, FromRepr, PartialEq)]
-#[repr(u8)]
+#[derive(Clone, Copy, Debug, Decode, Default, Encode, PartialEq)]
 pub(crate) enum Version {
   #[default]
-  Zero = 0,
+  #[n(0)]
+  Zero,
 }
 
 #[cfg(test)]
