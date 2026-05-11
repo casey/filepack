@@ -230,7 +230,7 @@ impl Input {
       if !n.insert(field.n) {
         return Err(Error::new_spanned(
           field.ident,
-          format!("duplicate key {}", field.n),
+          format!("duplicate #[n] attribute {}", field.n),
         ));
       }
 
@@ -238,7 +238,7 @@ impl Input {
         return Err(Error::new_spanned(
           field.ident,
           format!(
-            "keys must be contiguous starting from 0: expected {i}, found {}",
+            "#[n] attribute must be contiguous starting from 0: expected {i}, found {}",
             field.n
           ),
         ));
@@ -263,7 +263,7 @@ impl Input {
       if !n.insert(variant.n) {
         return Err(Error::new_spanned(
           variant.ident,
-          format!("duplicate key {}", variant.n),
+          format!("duplicate #[n] attribute {}", variant.n),
         ));
       }
 
@@ -271,7 +271,7 @@ impl Input {
         return Err(Error::new_spanned(
           variant.ident,
           format!(
-            "keys must be contiguous starting from 0: expected {i}, found {}",
+            "#[n] attributes must be contiguous starting from 0: expected {i}, found {}",
             variant.n
           ),
         ));
