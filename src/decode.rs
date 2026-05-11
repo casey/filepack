@@ -42,6 +42,24 @@ impl Decode for Vec<u8> {
   }
 }
 
+impl Decode for i32 {
+  fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
+    decoder
+      .signed_integer()?
+      .try_into()
+      .context(decode_error::IntegerRange)
+  }
+}
+
+impl Decode for i64 {
+  fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
+    decoder
+      .signed_integer()?
+      .try_into()
+      .context(decode_error::IntegerRange)
+  }
+}
+
 impl Decode for u8 {
   fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
     decoder

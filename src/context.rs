@@ -1,7 +1,7 @@
 use super::*;
 
-#[derive(DecodeFromStr, EncodeDisplay, EnumString, Display)]
-#[strum(serialize_all = "kebab-case")]
+#[derive(Encode)]
 pub(crate) enum Context {
+  #[n(0)]
   Statement,
 }

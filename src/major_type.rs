@@ -5,7 +5,7 @@ use super::*;
 #[repr(u8)]
 pub enum MajorType {
   UnsignedInteger = 0,
-  SignedInteger = 1,
+  NegativeInteger = 1,
   Bytes = 2,
   Text = 3,
   Array = 4,

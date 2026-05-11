@@ -44,6 +44,18 @@ impl Encode for Vec<u8> {
   }
 }
 
+impl Encode for i32 {
+  fn encode(&self, encoder: &mut Encoder) {
+    encoder.signed_integer((*self).into());
+  }
+}
+
+impl Encode for i64 {
+  fn encode(&self, encoder: &mut Encoder) {
+    encoder.signed_integer(*self);
+  }
+}
+
 impl Encode for str {
   fn encode(&self, encoder: &mut Encoder) {
     encoder.text(self);
@@ -82,6 +94,28 @@ mod tests {
   fn bytes() {
     assert_cbor(Vec::<u8>::new(), &[0x40]);
     assert_cbor(b"bar".to_vec(), &[0x43, 0x62, 0x61, 0x72]);
+  }
+
+  #[test]
+  fn i32() {
+    assert_cbor(0i32, &[0x0]);
+    assert_cbor(-1i32, &[0x20]);
+    assert_cbor(i32::MAX, &[0x1A, 0x7F, 0xFF, 0xFF, 0xFF]);
+    assert_cbor(i32::MIN, &[0x3A, 0x7F, 0xFF, 0xFF, 0xFF]);
+  }
+
+  #[test]
+  fn i64() {
+    assert_cbor(0i64, &[0x0]);
+    assert_cbor(-1i64, &[0x20]);
+    assert_cbor(
+      i64::MAX,
+      &[0x1B, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF],
+    );
+    assert_cbor(
+      i64::MIN,
+      &[0x3B, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF],
+    );
   }
 
   #[test]

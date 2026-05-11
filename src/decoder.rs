@@ -112,6 +112,16 @@ impl<'a> Decoder<'a> {
     self.stack.push(self.position);
   }
 
+  pub(crate) fn signed_integer(&mut self) -> Result<i128, DecodeError> {
+    let Head { major_type, value } = self.head()?;
+
+    match major_type {
+      MajorType::UnsignedInteger => Ok(value.into()),
+      MajorType::NegativeInteger => Ok(-1 - i128::from(value)),
+      actual => Err(decode_error::ExpectedInteger { actual }.build()),
+    }
+  }
+
   fn slice(&mut self, n: usize) -> Result<&[u8], DecodeError> {
     let start = self.position;
     let end = start + n;
@@ -204,6 +214,32 @@ mod tests {
     assert_matches!(
       Decoder::new(&[0x1c]).head(),
       Err(DecodeError::ReservedAdditionalInformation { value }) if value == 28,
+    );
+  }
+
+  #[test]
+  fn signed_integer_range() {
+    #[track_caller]
+    fn case<T: Debug + Decode>(bytes: &[u8]) {
+      assert_matches!(
+        T::decode_from_slice(bytes),
+        Err(DecodeError::IntegerRange { .. }),
+      );
+    }
+
+    case::<i32>(&[0x1a, 0x80, 0x00, 0x00, 0x00]);
+    case::<i32>(&[0x3a, 0x80, 0x00, 0x00, 0x00]);
+    case::<i64>(&[0x1b, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
+    case::<i64>(&[0x3b, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
+  }
+
+  #[test]
+  fn signed_integer_type_mismatch() {
+    assert_matches!(
+      Decoder::new(&[0x60]).signed_integer(),
+      Err(DecodeError::ExpectedInteger {
+        actual: MajorType::Text,
+      }),
     );
   }
 

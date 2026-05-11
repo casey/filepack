@@ -13,6 +13,12 @@ pub enum DecodeError {
   Component { source: ComponentError },
   #[snafu(display("failed to parse datetime"))]
   DateTime { source: chrono::ParseError },
+  #[snafu(display(
+    "expected {} or {} but found {actual}",
+    MajorType::UnsignedInteger,
+    MajorType::NegativeInteger,
+  ))]
+  ExpectedInteger { actual: MajorType },
   #[snafu(display("failed to parse {name}"))]
   FromStr {
     name: &'static str,
