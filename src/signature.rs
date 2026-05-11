@@ -2,20 +2,21 @@ use super::*;
 
 const TIMESTAMP: Fe32 = Fe32::T;
 
+#[allow(clippy::arbitrary_source_item_ordering)]
 #[derive(Clone, Debug, Decode, Encode, DeserializeFromStr, Eq, PartialEq, SerializeDisplay)]
 pub struct Signature {
   #[n(0)]
-  message: Message,
-  #[n(1)]
   public_key: PublicKey,
+  #[n(1)]
+  statement: Statement,
   #[n(2)]
   #[cbor(decode_with = Signature::decode_signature, encode_with = Signature::encode_signature)]
   signature: ed25519_dalek::Signature,
 }
 
 impl Signature {
-  fn comparison_key(&self) -> (PublicKey, &Message, [u8; 64]) {
-    (self.public_key, &self.message, self.signature.to_bytes())
+  fn comparison_key(&self) -> (PublicKey, &Statement, [u8; 64]) {
+    (self.public_key, &self.statement, self.signature.to_bytes())
   }
 
   fn decode_signature(decoder: &mut Decoder) -> Result<ed25519_dalek::Signature, DecodeError> {
@@ -26,18 +27,14 @@ impl Signature {
     encoder.bytes(&signature.to_bytes());
   }
 
-  pub fn message(&self) -> &Message {
-    &self.message
-  }
-
   pub(crate) fn new(
-    message: Message,
     public_key: PublicKey,
+    statement: Statement,
     signature: ed25519_dalek::Signature,
   ) -> Self {
     Self {
-      message,
       public_key,
+      statement,
       signature,
     }
   }
@@ -46,11 +43,15 @@ impl Signature {
     self.public_key
   }
 
+  pub fn statement(&self) -> &Statement {
+    &self.statement
+  }
+
   pub(crate) fn verify(&self, fingerprint: Fingerprint) -> Result {
     ensure! {
-      fingerprint == self.message.fingerprint,
+      fingerprint == self.statement.fingerprint,
       error::SignatureFingerprintMismatch {
-        signature: self.message.fingerprint,
+        signature: self.statement.fingerprint,
         package: fingerprint,
       },
     }
@@ -58,7 +59,7 @@ impl Signature {
     self
       .public_key
       .inner()
-      .verify_strict(self.message.digest().as_bytes(), &self.signature)
+      .verify_strict(self.statement.digest().as_bytes(), &self.signature)
       .map_err(DalekSignatureError)
       .context(error::SignatureInvalid {
         public_key: self.public_key,
@@ -70,9 +71,9 @@ impl Display for Signature {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     let mut encoder = Bech32Encoder::new(Bech32Type::Signature);
     encoder.bytes(&self.public_key.inner().to_bytes());
-    encoder.bytes(self.message.fingerprint.as_bytes());
+    encoder.bytes(self.statement.fingerprint.as_bytes());
     encoder.bytes(&self.signature.to_bytes());
-    if let Some(timestamp) = self.message.timestamp {
+    if let Some(timestamp) = self.statement.timestamp {
       encoder.fe(TIMESTAMP);
       encoder.bytes(&timestamp.to_le_bytes());
     }
@@ -97,7 +98,7 @@ impl FromStr for Signature {
 
     decoder.done()?;
     Ok(Self {
-      message: Message {
+      statement: Statement {
         fingerprint: Fingerprint::from_bytes(fingerprint),
         timestamp,
       },
@@ -127,12 +128,12 @@ mod tests {
   fn modifying_fingerprint_invalidates_signature() {
     let private_key = test::PRIVATE_KEY.parse::<PrivateKey>().unwrap();
     let fingerprint = test::FINGERPRINT.parse::<Fingerprint>().unwrap();
-    let message = Message {
+    let statement = Statement {
       fingerprint,
       timestamp: Some(1000),
     };
-    let mut signature = private_key.sign(&message);
-    signature.message.fingerprint = Fingerprint::from_bytes(default());
+    let mut signature = private_key.sign(&statement);
+    signature.statement.fingerprint = Fingerprint::from_bytes(default());
     assert_matches!(
       signature.verify(fingerprint).unwrap_err(),
       Error::SignatureFingerprintMismatch { .. },
@@ -143,12 +144,12 @@ mod tests {
   fn modifying_time_invalidates_signature() {
     let private_key = test::PRIVATE_KEY.parse::<PrivateKey>().unwrap();
     let fingerprint = test::FINGERPRINT.parse::<Fingerprint>().unwrap();
-    let message = Message {
+    let statement = Statement {
       fingerprint,
       timestamp: Some(1000),
     };
-    let mut signature = private_key.sign(&message);
-    signature.message.timestamp = Some(2000);
+    let mut signature = private_key.sign(&statement);
+    signature.statement.timestamp = Some(2000);
     assert_matches!(
       signature.verify(fingerprint).unwrap_err(),
       Error::SignatureInvalid { .. },
@@ -159,12 +160,12 @@ mod tests {
   fn removing_time_invalidates_signature() {
     let private_key = test::PRIVATE_KEY.parse::<PrivateKey>().unwrap();
     let fingerprint = test::FINGERPRINT.parse::<Fingerprint>().unwrap();
-    let message = Message {
+    let statement = Statement {
       fingerprint,
       timestamp: Some(1000),
     };
-    let mut signature = private_key.sign(&message);
-    signature.message.timestamp = None;
+    let mut signature = private_key.sign(&statement);
+    signature.statement.timestamp = None;
     assert_matches!(
       signature.verify(fingerprint).unwrap_err(),
       Error::SignatureInvalid { .. },
