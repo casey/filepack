@@ -216,7 +216,7 @@ impl Input {
     if data.is_tuple() {
       return Err(Error::new_spanned(
         &self.ident,
-        "tuple struct must use `#[cbor(transparent)]` attribute to derive `Decode` or `Encode`",
+        "tuple structs must use `#[cbor(transparent)]` attribute to derive `Decode` or `Encode`",
       ));
     }
 
