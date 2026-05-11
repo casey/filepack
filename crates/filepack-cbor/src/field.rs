@@ -15,16 +15,16 @@ impl Field {
     self.ident.as_ref()
   }
 
-  pub(crate) fn n_attribute(&self) -> Option<&Attribute> {
-    self.attrs.iter().find(|attr| attr.path().is_ident("n"))
-  }
-
   fn is_option(&self) -> bool {
     if let Type::Path(TypePath { qself: None, path }) = &self.ty {
       path.leading_colon.is_none() && path.segments.len() == 1 && path.segments[0].ident == "Option"
     } else {
       false
     }
+  }
+
+  pub(crate) fn n_attribute(&self) -> Option<&Attribute> {
+    self.attrs.iter().find(|attr| attr.path().is_ident("n"))
   }
 
   pub(crate) fn parse(&self) -> Result<ParsedField> {
