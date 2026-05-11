@@ -52,7 +52,7 @@ impl Encode for i32 {
 
 impl Encode for i64 {
   fn encode(&self, encoder: &mut Encoder) {
-    encoder.signed_integer((*self).into());
+    encoder.signed_integer(*self);
   }
 }
 
