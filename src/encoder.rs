@@ -48,6 +48,14 @@ impl Encoder {
     Self { buffer: Vec::new() }
   }
 
+  pub fn signed_integer(&mut self, integer: i64) {
+    if integer.is_negative() {
+      self.head(MajorType::NegativeInteger.head(integer.unsigned_abs() - 1));
+    } else {
+      self.integer(integer.unsigned_abs());
+    }
+  }
+
   pub fn text(&mut self, text: &str) {
     self.head(MajorType::Text.head(text.len().into_u64()));
     self.buffer.extend(text.as_bytes());

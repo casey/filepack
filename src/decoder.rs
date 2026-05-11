@@ -91,6 +91,16 @@ impl<'a> Decoder<'a> {
     self.expect(MajorType::UnsignedInteger)
   }
 
+  pub(crate) fn signed_integer(&mut self) -> Result<i128, DecodeError> {
+    let Head { major_type, value } = self.head()?;
+
+    match major_type {
+      MajorType::UnsignedInteger => Ok(value.into()),
+      MajorType::NegativeInteger => Ok(-1 - i128::from(value)),
+      actual => Err(decode_error::ExpectedInteger { actual }.build()),
+    }
+  }
+
   pub(crate) fn map<'b, K>(&'b mut self) -> Result<MapDecoder<'b, 'a, K>, DecodeError> {
     let len = self.expect(MajorType::Map)?;
     Ok(MapDecoder::new(self, len))

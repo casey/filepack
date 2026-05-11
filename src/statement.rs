@@ -31,7 +31,7 @@ mod tests {
     {
       let mut encoder = encoder.map::<u64>(3);
       encoder.item(0, "filepack");
-      encoder.item(1, "statement");
+      encoder.item(1, 0);
       encoder.item(2, &statement);
     }
 
