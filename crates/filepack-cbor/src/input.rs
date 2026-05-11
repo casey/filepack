@@ -113,14 +113,25 @@ impl Input {
 
   pub(crate) fn encode(&self) -> Result<proc_macro2::TokenStream> {
     let transparent = self.is_transparent()?;
+
     match self.data {
-      Data::Enum(_) if transparent => Err(Error::new_spanned(
-        &self.ident,
-        "#[cbor(transparent)] cannot be used with enums",
-      )),
-      Data::Enum(_) => self.encode_enum(),
-      Data::Struct(_) if transparent => self.encode_transparent(),
-      Data::Struct(_) => self.encode_struct(),
+      Data::Enum(_) => {
+        if transparent {
+          Err(Error::new_spanned(
+            &self.ident,
+            "#[cbor(transparent)] cannot be used with enums",
+          ))
+        } else {
+          self.encode_enum()
+        }
+      }
+      Data::Struct(_) => {
+        if transparent {
+          self.encode_transparent()
+        } else {
+          self.encode_struct()
+        }
+      }
     }
   }
 
