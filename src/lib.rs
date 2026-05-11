@@ -61,6 +61,7 @@ use {
     lint_error::{Lint, LintError},
     lint_group::LintGroup,
     map_decoder::MapDecoder,
+    message::Message,
     metadata::Metadata,
     mode::Mode,
     options::Options,
@@ -111,7 +112,7 @@ use {
     io::{self, IsTerminal, Read, Write},
     iter,
     marker::PhantomData,
-    net::{TcpListener, TcpStream},
+    net::{self, TcpListener, TcpStream},
     num::TryFromIntError,
     ops::Deref,
     path::{Path, PathBuf},
@@ -221,6 +222,7 @@ mod major_type;
 mod manifest;
 mod map_decoder;
 mod map_encoder;
+mod message;
 mod metadata;
 mod mode;
 mod options;

@@ -108,7 +108,7 @@ impl Subcommand {
       Self::Man => man::run(),
       Self::Manifest(manifest) => manifest.run(),
       Self::Metadata(metadata) => metadata.run(),
-      Self::Node(node) => node.run(),
+      Self::Node(node) => node.run(options),
       Self::Sign(sign) => sign.run(options),
       Self::Signatures(signatures) => signatures.run(),
       Self::Size(size) => size.run(),
