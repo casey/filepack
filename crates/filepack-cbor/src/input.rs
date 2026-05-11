@@ -29,9 +29,7 @@ impl Input {
 
     let variants = self.parse_variants()?;
 
-    let arms = variants.iter().map(|variant| {
-      let ident = variant.ident;
-      let n = variant.n;
+    let arms = variants.iter().map(|ParsedVariant { ident, n }| {
       quote! { #n => Ok(Self::#ident), }
     });
 
