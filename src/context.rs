@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Decode, Encode)]
+#[derive(Encode)]
 pub(crate) enum Context {
   #[n(0)]
   Statement,
