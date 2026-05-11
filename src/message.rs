@@ -42,7 +42,7 @@ impl Decode for Message {
         let upload = decoder.element::<Upload>()?;
         Ok(Self::Upload(upload))
       }
-      2 => {
+      3 => {
         let file = decoder.element::<File>()?;
         Ok(Self::File(file))
       }
