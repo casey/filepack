@@ -125,7 +125,7 @@ impl Input {
     Ok(quote! {
       impl Encode for #name {
         fn encode(&self, encoder: &mut Encoder) {
-          let discriminant: u64 = match self {
+          let discriminant = match self {
             #(#arms)*
           };
           discriminant.encode(encoder);
