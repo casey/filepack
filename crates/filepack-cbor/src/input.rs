@@ -238,7 +238,7 @@ impl Input {
         return Err(Error::new_spanned(
           field.ident,
           format!(
-            "#[n] attribute must be contiguous starting from 0: expected {i}, found {}",
+            "#[n] attributes must be contiguous starting from 0: expected {i}, found {}",
             field.n
           ),
         ));
