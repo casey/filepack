@@ -1,12 +1,13 @@
 use {
-  self::{expected::Expected, test::Test},
+  self::{child::Child, expected::Expected, test::Test},
   camino::{Utf8Path, Utf8PathBuf},
   filepack::{Encoder, Hash, Manifest, PrivateKey, PublicKey, assert_matches},
   regex::Regex,
   std::{
     collections::BTreeMap,
     fs,
-    io::Write,
+    io::{self, PipeReader, PipeWriter, Read, Write},
+    os::{fd::AsRawFd, unix::process::CommandExt},
     path::{MAIN_SEPARATOR_STR, Path},
     process::{Command, Stdio},
     str,
@@ -17,6 +18,7 @@ use {
 
 mod archive;
 mod bech32;
+mod child;
 mod contains;
 mod create;
 mod data_dir;

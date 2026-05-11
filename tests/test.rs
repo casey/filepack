@@ -11,9 +11,17 @@ pub(crate) struct Test {
   stdin: Option<String>,
   stdout: Expected,
   tempdir: TempDir,
+  ready_fd: Option<PipeWriter>,
 }
 
 impl Test {
+  pub(crate) fn ready_fd(&mut self) -> PipeReader {
+    assert!(self.ready_fd.is_none());
+    let (reader, writer) = std::io::pipe().unwrap();
+    self.ready_fd = Some(writer);
+    reader
+  }
+
   pub(crate) fn arg(self, arg: &str) -> Self {
     self.args([arg])
   }
@@ -139,7 +147,7 @@ impl Test {
   }
 
   #[track_caller]
-  pub(crate) fn status(self, code: i32) -> Self {
+  pub(crate) fn spawn(mut self) -> Child {
     let mut command = Command::new(env!("CARGO_BIN_EXE_filepack"));
 
     let current_dir = if let Some(ref subdir) = self.current_dir {
@@ -170,12 +178,37 @@ impl Test {
 
     command.args(&self.args);
 
+    if let Some(writer) = &self.ready_fd {
+      let fd = writer.as_raw_fd();
+      unsafe {
+        command.pre_exec(move || {
+          if fd == 3 {
+            let flags = libc::fcntl(fd, libc::F_GETFD);
+
+            if flags == -1 {
+              return Err(io::Error::last_os_error());
+            }
+
+            if libc::fcntl(fd, libc::F_SETFD, flags & !libc::FD_CLOEXEC) == -1 {
+              return Err(io::Error::last_os_error());
+            }
+          } else if libc::dup2(fd, 3) == -1 {
+            return Err(io::Error::last_os_error());
+          }
+
+          Ok(())
+        });
+      }
+    }
+
     let child = command
       .stdin(Stdio::piped())
       .stdout(Stdio::piped())
       .stderr(Stdio::piped())
       .spawn()
       .unwrap();
+
+    self.ready_fd.take();
 
     if let Some(stdin) = &self.stdin {
       child
@@ -186,8 +219,11 @@ impl Test {
         .unwrap();
     }
 
-    let output = child.wait_with_output().unwrap();
+    Child::new(child, self)
+  }
 
+  #[track_caller]
+  pub(crate) fn foo(self, code: i32, output: std::process::Output) -> Self {
     let stdout = str::from_utf8(&output.stdout).unwrap();
 
     let stderr = str::from_utf8(&output.stderr).unwrap();
@@ -220,6 +256,15 @@ impl Test {
     }
 
     Self::with_tempdir(self.tempdir)
+  }
+
+  #[track_caller]
+  pub(crate) fn status(self, code: i32) -> Self {
+    let (child, test) = self.spawn().take();
+
+    let output = child.wait_with_output().unwrap();
+
+    test.foo(code, output)
   }
 
   pub(crate) fn stderr(mut self, stderr: &str) -> Self {
@@ -327,6 +372,7 @@ impl Test {
       env: BTreeMap::new(),
       files: BTreeMap::new(),
       manifests: BTreeMap::new(),
+      ready_fd: None,
       stderr: Expected::Empty,
       stdin: None,
       stdout: Expected::Empty,
