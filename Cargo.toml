@@ -25,6 +25,7 @@ filepack-cbor = { version = "0.0.0", path = "crates/filepack-cbor" }
 hex = "0.4.3"
 indicatif = "0.18.0"
 lexiclean = "0.0.1"
+libc = "0.2.186"
 num-traits = "0.2.19"
 owo-colors = "4"
 rand = "0.8.5"

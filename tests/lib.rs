@@ -40,7 +40,15 @@ mod sign;
 mod signatures;
 mod size;
 mod test;
+mod upload;
 mod verify;
+
+fn tempdir() -> TempDir {
+  tempfile::Builder::new()
+    .prefix("filepack-test-tempdir")
+    .tempdir()
+    .unwrap()
+}
 
 const EMPTY_HASH: &str = "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262";
 

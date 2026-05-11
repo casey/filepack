@@ -96,12 +96,7 @@ impl Test {
   }
 
   pub(crate) fn new() -> Self {
-    Self::with_tempdir(
-      tempfile::Builder::new()
-        .prefix("filepack-test-tempdir")
-        .tempdir()
-        .unwrap(),
-    )
+    Self::with_tempdir(tempdir())
   }
 
   pub(crate) fn path(&self) -> Utf8PathBuf {
