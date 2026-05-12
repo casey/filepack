@@ -9,21 +9,21 @@ pub(crate) enum Message {
 }
 
 impl Message {
-  pub(crate) fn write(&self, stream: &mut TcpStream) {
+  pub(crate) fn write(&self, connection: &mut dyn Connection) {
     let message = self.encode_to_vec();
     let len = u32::try_from(message.len()).unwrap();
     let len = len.to_be_bytes();
-    stream.write_all(&len).unwrap();
-    stream.write_all(&message).unwrap();
+    connection.write_all(&len).unwrap();
+    connection.write_all(&message).unwrap();
   }
 
-  pub(crate) fn read(stream: &mut TcpStream) -> Self {
+  pub(crate) fn read(connection: &mut dyn Connection) -> Self {
     let mut len = [0; 4];
-    stream.read_exact(&mut len).unwrap();
+    connection.read_exact(&mut len).unwrap();
     let len = u32::from_be_bytes(len);
     let len = len.into_usize();
     let mut payload = vec![0; len];
-    stream.read_exact(&mut payload).unwrap();
+    connection.read_exact(&mut payload).unwrap();
     Self::decode_from_slice(&payload).unwrap()
   }
 }

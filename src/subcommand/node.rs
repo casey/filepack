@@ -55,8 +55,9 @@ impl Node {
 
     while !SHUTTING_DOWN.load(atomic::Ordering::Relaxed) {
       match listener.accept() {
-        Ok((stream, _addr)) => {
-          node.serve(stream)?;
+        Ok((mut stream, _addr)) => {
+          node.serve(&mut stream)?;
+          stream.shutdown(net::Shutdown::Both).unwrap();
         }
         Err(err) if err.kind() == io::ErrorKind::WouldBlock => {
           std::thread::sleep(std::time::Duration::from_millis(10));

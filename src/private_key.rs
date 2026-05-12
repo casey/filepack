@@ -135,11 +135,11 @@ mod tests {
 
   #[test]
   fn whitespace_is_trimmed_when_loading_from_disk() {
-    let dir = tempdir();
+    let (_dir, path) = tempdir();
 
-    filesystem::chmod(Utf8Path::from_path(dir.path()).unwrap(), 0o700).unwrap();
+    filesystem::chmod(&path, 0o700).unwrap();
 
-    let path = Utf8PathBuf::from_path_buf(dir.path().join("key")).unwrap();
+    let path = path.join("key");
 
     filesystem::write(&path, format!(" \t{}\n", test::PRIVATE_KEY)).unwrap();
 

@@ -33,6 +33,7 @@ use {
     component::Component,
     component_buf::ComponentBuf,
     component_error::ComponentError,
+    connection::Connection,
     context::Context,
     count::Count,
     dalek_signature_error::DalekSignatureError,
@@ -186,6 +187,7 @@ mod bech32_type;
 mod component;
 mod component_buf;
 mod component_error;
+mod connection;
 mod context;
 mod count;
 mod dalek_signature_error;
