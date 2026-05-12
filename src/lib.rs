@@ -64,6 +64,7 @@ use {
     message::Message,
     metadata::Metadata,
     mode::Mode,
+    node::Node,
     options::Options,
     owo_colorize_ext::OwoColorizeExt,
     package::Package,
@@ -228,6 +229,7 @@ mod map_encoder;
 mod message;
 mod metadata;
 mod mode;
+mod node;
 mod options;
 mod owo_colorize_ext;
 mod package;

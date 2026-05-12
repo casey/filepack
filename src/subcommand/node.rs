@@ -2,6 +2,10 @@ use super::*;
 
 // todo:
 // - write an error string to ready_fd if we fail to start
+// - going to have to test a lot of errors which can only occur through client misbehaviour
+//   that can't be done through filepack commands, so they'll either need to be
+//   integration tests which write raw bytes to the node, or unit tests with
+//   an in-process node
 
 static SHUTTING_DOWN: AtomicBool = AtomicBool::new(false);
 
@@ -47,29 +51,12 @@ impl Node {
       assert_eq!(result, 0);
     }
 
+    let node = crate::Node::new(files);
+
     while !SHUTTING_DOWN.load(atomic::Ordering::Relaxed) {
       match listener.accept() {
-        Ok((mut stream, _addr)) => {
-          let message = Message::read(&mut stream);
-
-          match message {
-            Message::Download(download) => {
-              let path = files.join(download.hash.to_string());
-              let file = filesystem::read(&path)?;
-              Message::File(message::File { file }).write(&mut stream);
-              stream.shutdown(net::Shutdown::Both).unwrap();
-            }
-            Message::Upload(upload) => {
-              let actual = Hash::bytes(&upload.file);
-              assert_eq!(actual, upload.hash);
-              let path = files.join(actual.to_string());
-              // todo: don't write if it already exists (use create options)
-              filesystem::write(&path, upload.file)?;
-              Message::Ok.write(&mut stream);
-              stream.shutdown(net::Shutdown::Both).unwrap();
-            }
-            Message::File(_) | Message::Ok => todo!(),
-          }
+        Ok((stream, _addr)) => {
+          node.serve(stream)?;
         }
         Err(err) if err.kind() == io::ErrorKind::WouldBlock => {
           std::thread::sleep(std::time::Duration::from_millis(10));
