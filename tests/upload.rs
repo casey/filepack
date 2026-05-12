@@ -7,11 +7,6 @@ fn node_creates_file() {
     .ready_fd()
     .spawn();
 
-  // // todo: make this reusable
-  // let mut port = String::new();
-  // reader.read_to_string(&mut port).unwrap();
-  // let port = port.parse::<u16>().unwrap();
-
   Test::new()
     .write("foo", "bar")
     .args(["upload", &format!("127.0.0.1:{}", node.port()), "foo"])
