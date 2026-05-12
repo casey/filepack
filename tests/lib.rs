@@ -22,6 +22,7 @@ mod child;
 mod contains;
 mod create;
 mod data_dir;
+mod download;
 mod expected;
 mod files;
 mod fingerprint;

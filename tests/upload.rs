@@ -1,9 +1,10 @@
 use super::*;
 
 #[test]
-fn node_creates_file() {
+fn upload_creates_file() {
   let node = Test::new()
     .args(["node", "--ready-fd", "3", "127.0.0.1:0"])
+    .assert_file(&format!("files/{}", Hash::bytes(b"bar")), "bar")
     .ready_fd()
     .spawn();
 
@@ -12,12 +13,5 @@ fn node_creates_file() {
     .args(["upload", &format!("127.0.0.1:{}", node.port()), "foo"])
     .success();
 
-  let node = node.terminate().success();
-
-  let path = node
-    .path()
-    .join("files")
-    .join(Hash::bytes(b"bar").to_string());
-
-  assert_eq!(fs::read(path).unwrap(), b"bar");
+  node.terminate().success();
 }

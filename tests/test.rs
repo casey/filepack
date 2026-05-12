@@ -33,6 +33,16 @@ impl Test {
     self
   }
 
+  pub(crate) fn assert_file(mut self, path: &str, contents: &str) -> Self {
+    assert!(
+      self
+        .files
+        .insert(path.into(), Expected::string(contents))
+        .is_none()
+    );
+    self
+  }
+
   pub(crate) fn assert_file_regex(mut self, path: &str, pattern: &str) -> Self {
     assert!(
       self
