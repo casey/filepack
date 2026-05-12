@@ -63,7 +63,7 @@ impl Node {
               let actual = Hash::bytes(&upload.file);
               assert_eq!(actual, upload.hash);
               let path = files.join(actual.to_string());
-              // don't write if it already exists (use create options)
+              // todo: don't write if it already exists (use create options)
               filesystem::write(&path, upload.file)?;
               Message::Ok.write(&mut stream);
               stream.shutdown(net::Shutdown::Both).unwrap();
