@@ -232,6 +232,7 @@ mod message;
 mod metadata;
 mod mode;
 mod node;
+mod node_error;
 mod options;
 mod owo_colorize_ext;
 mod package;

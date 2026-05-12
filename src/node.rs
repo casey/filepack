@@ -1,5 +1,9 @@
 use super::*;
 
+// later:
+// - reading and writing files should be incremental
+// - don't allow large messages
+
 pub(crate) struct Node {
   files: Utf8PathBuf,
 }

@@ -2,10 +2,6 @@ use super::*;
 
 // todo:
 // - write an error string to ready_fd if we fail to start
-// - going to have to test a lot of errors which can only occur through client misbehaviour
-//   that can't be done through filepack commands, so they'll either need to be
-//   integration tests which write raw bytes to the node, or unit tests with
-//   an in-process node
 
 static SHUTTING_DOWN: AtomicBool = AtomicBool::new(false);
 
