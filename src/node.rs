@@ -3,6 +3,12 @@ use super::*;
 // later:
 // - reading and writing files should be incremental
 // - don't allow large messages
+// - return error messages when things go wrong
+// - return an error message when file doesn't exist
+// - should I use mut dyn Connection or generic?
+// - add logging for node errors
+// - figure out if I want to add peer address to all errors
+// - derive message Encode and Decode
 
 pub(crate) struct Node {
   files: Utf8PathBuf,
@@ -13,27 +19,50 @@ impl Node {
     Self { files }
   }
 
-  pub(crate) fn serve(&self, mut connection: &mut dyn Connection) -> Result {
-    let message = Message::read(connection);
+  fn read_file(&self, hash: Hash) -> NodeResult<Vec<u8>> {
+    let path = self.files.join(hash.to_string());
+    fs::read(&path).context(node_error::FilesystemIo { path })
+  }
+
+  pub(crate) fn serve(&self, connection: &mut dyn Connection) -> NodeResult {
+    let message = Message::read(connection)?;
 
     match message {
       Message::Download(download) => {
-        let path = self.files.join(download.hash.to_string());
-        let file = filesystem::read(&path)?;
-        Message::File(message::File { file }).write(connection);
+        let file = self.read_file(download.hash)?;
+        Message::File(message::File { file }).write(connection)?;
       }
       Message::Upload(upload) => {
-        let actual = Hash::bytes(&upload.file);
-        assert_eq!(actual, upload.hash);
-        let path = self.files.join(actual.to_string());
-        // todo: don't write if it already exists (use create options)
-        filesystem::write(&path, upload.file)?;
-        Message::Ok.write(connection);
+        let hash = Hash::bytes(&upload.file);
+        assert_eq!(hash, upload.hash);
+        self.write_file(hash, &upload.file)?;
+        Message::Ok.write(connection)?;
       }
-      Message::File(_) | Message::Ok => todo!(),
+      Message::File(_) | Message::Ok => {
+        return Err(node_error::UnexpectedMessage { message }.build());
+      }
     }
 
     Ok(())
+  }
+
+  fn write_file(&self, hash: Hash, contents: &[u8]) -> NodeResult {
+    let path = self.files.join(hash.to_string());
+
+    let mut file = match OpenOptions::new().write(true).create_new(true).open(&path) {
+      Ok(file) => file,
+      Err(err) => {
+        if err.kind() == io::ErrorKind::AlreadyExists {
+          return Ok(());
+        }
+
+        return Err(node_error::FilesystemIo { path }.into_error(err));
+      }
+    };
+
+    file
+      .write_all(contents)
+      .context(node_error::FilesystemIo { path })
   }
 }
 
@@ -46,6 +75,14 @@ mod tests {
     read: VecDeque<u8>,
     write: Vec<u8>,
   }
+
+  impl TestConnection {
+    fn new() -> Self {
+      Self::default()
+    }
+  }
+
+  impl Connection for TestConnection {}
 
   impl Read for TestConnection {
     fn read(&mut self, buffer: &mut [u8]) -> io::Result<usize> {
@@ -68,5 +105,9 @@ mod tests {
     let (_dir, path) = tempdir();
 
     let node = Node::new(path);
+
+    let mut connection = TestConnection::new();
+
+    node.serve(&mut connection).unwrap();
   }
 }

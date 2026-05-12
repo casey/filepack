@@ -66,6 +66,7 @@ use {
     metadata::Metadata,
     mode::Mode,
     node::Node,
+    node_error::NodeError,
     options::Options,
     owo_colorize_ext::OwoColorizeExt,
     package::Package,
@@ -100,7 +101,7 @@ use {
     DeserializeFromStr, MapPreventDuplicates, SerializeDisplay, SetPreventDuplicates, serde_as,
     skip_serializing_none,
   },
-  snafu::{ErrorCompat, OptionExt, ResultExt, Snafu, ensure},
+  snafu::{ErrorCompat, IntoError, OptionExt, ResultExt, Snafu, ensure},
   std::{
     array,
     backtrace::{Backtrace, BacktraceStatus},
@@ -110,7 +111,7 @@ use {
     collections::{BTreeMap, BTreeSet, HashMap},
     env,
     fmt::{self, Debug, Display, Formatter},
-    fs::{self, Permissions},
+    fs::{self, OpenOptions, Permissions},
     io::{self, IsTerminal, Read, Write},
     iter,
     marker::PhantomData,
@@ -264,6 +265,7 @@ mod test;
 
 const BECH32_VERSION: Fe32 = Fe32::A;
 
+type NodeResult<T = (), E = NodeError> = std::result::Result<T, E>;
 type Result<T = (), E = Error> = std::result::Result<T, E>;
 
 pub fn run() {

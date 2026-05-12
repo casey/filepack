@@ -1,30 +1,40 @@
 use super::*;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, IntoStaticStr)]
+#[strum(serialize_all = "kebab-case")]
 pub(crate) enum Message {
-  Ok,
   Download(Download),
-  Upload(Upload),
   File(File),
+  Ok,
+  Upload(Upload),
 }
 
 impl Message {
-  pub(crate) fn write(&self, connection: &mut dyn Connection) {
-    let message = self.encode_to_vec();
-    let len = u32::try_from(message.len()).unwrap();
-    let len = len.to_be_bytes();
-    connection.write_all(&len).unwrap();
-    connection.write_all(&message).unwrap();
-  }
-
-  pub(crate) fn read(connection: &mut dyn Connection) -> Self {
+  pub(crate) fn read(connection: &mut dyn Connection) -> NodeResult<Self> {
     let mut len = [0; 4];
-    connection.read_exact(&mut len).unwrap();
+    connection
+      .read_exact(&mut len)
+      .context(node_error::ConnectionIo)?;
     let len = u32::from_be_bytes(len);
     let len = len.into_usize();
     let mut payload = vec![0; len];
-    connection.read_exact(&mut payload).unwrap();
-    Self::decode_from_slice(&payload).unwrap()
+    connection
+      .read_exact(&mut payload)
+      .context(node_error::ConnectionIo)?;
+    Self::decode_from_slice(&payload).context(node_error::DecodeMessage)
+  }
+
+  pub(crate) fn write(&self, connection: &mut dyn Connection) -> NodeResult {
+    let message = self.encode_to_vec();
+    let size = message.len();
+    let size = u32::try_from(size).context(node_error::MessageSize { size })?;
+    connection
+      .write_all(&size.to_be_bytes())
+      .context(node_error::ConnectionIo)?;
+    connection
+      .write_all(&message)
+      .context(node_error::ConnectionIo)?;
+    Ok(())
   }
 }
 
@@ -46,7 +56,13 @@ impl Decode for Message {
         let file = decoder.element::<File>()?;
         Ok(Self::File(file))
       }
-      _ => todo!(),
+      _ => Err(
+        decode_error::InvalidDiscriminant {
+          discriminant,
+          name: "Message",
+        }
+        .build(),
+      ),
     }
   }
 }
@@ -90,6 +106,7 @@ pub(crate) struct File {
 }
 
 #[derive(Debug, Decode, Encode, PartialEq)]
+#[allow(clippy::arbitrary_source_item_ordering)]
 pub(crate) struct Upload {
   #[n(0)]
   pub(crate) hash: Hash,

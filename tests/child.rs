@@ -25,7 +25,7 @@ impl Child {
 
     let output = child.wait_with_output().unwrap();
 
-    test.foo(0, output)
+    test.status_with_output(0, output)
   }
 
   pub(crate) fn take(&mut self) -> (std::process::Child, Test) {
@@ -37,9 +37,7 @@ impl Child {
 
     let result = unsafe { libc::kill(pid.try_into().unwrap(), libc::SIGTERM) };
 
-    if result == -1 {
-      panic!("{}", std::io::Error::last_os_error());
-    }
+    assert!(result != -1, "{}", std::io::Error::last_os_error());
 
     self
   }

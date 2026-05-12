@@ -113,16 +113,6 @@ impl<'a> Decoder<'a> {
     self.stack.push(self.position);
   }
 
-  pub(crate) fn signed_integer(&mut self) -> Result<i128, DecodeError> {
-    let Head { major_type, value } = self.head()?;
-
-    match major_type {
-      MajorType::UnsignedInteger => Ok(value.into()),
-      MajorType::NegativeInteger => Ok(-1 - i128::from(value)),
-      actual => Err(decode_error::ExpectedInteger { actual }.build()),
-    }
-  }
-
   fn raw_array<const N: usize>(&mut self) -> Result<[u8; N], DecodeError> {
     Ok(self.raw_slice(N)?.try_into().unwrap())
   }
@@ -139,6 +129,16 @@ impl<'a> Decoder<'a> {
     self.position = end;
 
     Ok(&self.buffer[start..end])
+  }
+
+  pub(crate) fn signed_integer(&mut self) -> Result<i128, DecodeError> {
+    let Head { major_type, value } = self.head()?;
+
+    match major_type {
+      MajorType::UnsignedInteger => Ok(value.into()),
+      MajorType::NegativeInteger => Ok(-1 - i128::from(value)),
+      actual => Err(decode_error::ExpectedInteger { actual }.build()),
+    }
   }
 
   pub(crate) fn text(&mut self) -> Result<&str, DecodeError> {

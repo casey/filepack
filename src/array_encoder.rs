@@ -8,7 +8,7 @@ pub struct ArrayEncoder<'a> {
 impl<'a> ArrayEncoder<'a> {
   pub(crate) fn element(&mut self, value: impl Encode) {
     assert!(self.remaining > 0, "too many items");
-    value.encode(&mut self.encoder);
+    value.encode(self.encoder);
     self.remaining -= 1;
   }
 

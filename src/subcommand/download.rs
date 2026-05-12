@@ -13,9 +13,9 @@ impl Download {
 
     let message = Message::Download(message::Download { hash: self.hash });
 
-    message.write(&mut stream);
+    message.write(&mut stream)?;
 
-    let message = Message::read(&mut stream);
+    let message = Message::read(&mut stream)?;
 
     let Message::File(message::File { file }) = message else {
       todo!();

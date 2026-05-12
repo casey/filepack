@@ -51,7 +51,7 @@ impl Node {
 
     while !SHUTTING_DOWN.load(atomic::Ordering::Relaxed) {
       match listener.accept() {
-        Ok((mut stream, _addr)) => {
+        Ok((mut stream, _address)) => {
           node.serve(&mut stream)?;
           stream.shutdown(net::Shutdown::Both).unwrap();
         }

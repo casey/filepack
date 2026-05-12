@@ -15,12 +15,6 @@ pub(crate) struct Test {
 }
 
 impl Test {
-  pub(crate) fn ready_fd(mut self) -> Self {
-    assert!(!self.ready_fd);
-    self.ready_fd = true;
-    self
-  }
-
   pub(crate) fn arg(self, arg: &str) -> Self {
     self.args([arg])
   }
@@ -140,6 +134,12 @@ impl Test {
       .unwrap()
   }
 
+  pub(crate) fn ready_fd(mut self) -> Self {
+    assert!(!self.ready_fd);
+    self.ready_fd = true;
+    self
+  }
+
   pub(crate) fn remove_dir(self, path: &str) -> Self {
     fs::remove_dir(self.join(path)).unwrap();
     self
@@ -247,7 +247,16 @@ impl Test {
   }
 
   #[track_caller]
-  pub(crate) fn foo(self, code: i32, output: std::process::Output) -> Self {
+  pub(crate) fn status(self, code: i32) -> Self {
+    let (child, test) = self.spawn().take();
+
+    let output = child.wait_with_output().unwrap();
+
+    test.status_with_output(code, output)
+  }
+
+  #[track_caller]
+  pub(crate) fn status_with_output(self, code: i32, output: std::process::Output) -> Self {
     let stdout = str::from_utf8(&output.stdout).unwrap();
 
     let stderr = str::from_utf8(&output.stderr).unwrap();
@@ -280,15 +289,6 @@ impl Test {
     }
 
     Self::with_tempdir(self.tempdir)
-  }
-
-  #[track_caller]
-  pub(crate) fn status(self, code: i32) -> Self {
-    let (child, test) = self.spawn().take();
-
-    let output = child.wait_with_output().unwrap();
-
-    test.foo(code, output)
   }
 
   pub(crate) fn stderr(mut self, stderr: &str) -> Self {
