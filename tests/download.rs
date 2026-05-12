@@ -7,17 +7,15 @@ fn download_retrieves_file() {
     .ready_fd()
     .spawn();
 
-  let address = format!("127.0.0.1:{}", node.port());
-
   Test::new()
     .write("foo", "bar")
-    .args(["upload", &address, "foo"])
+    .args(["upload", &node.address(), "foo"])
     .success();
 
   let hash = Hash::bytes(b"bar");
 
   Test::new()
-    .args(["download", &address, &hash.to_string(), "foo"])
+    .args(["download", &node.address(), &hash.to_string(), "foo"])
     .assert_file("foo", "bar")
     .success();
 

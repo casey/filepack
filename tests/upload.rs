@@ -10,7 +10,7 @@ fn upload_creates_file() {
 
   Test::new()
     .write("foo", "bar")
-    .args(["upload", &format!("127.0.0.1:{}", node.port()), "foo"])
+    .args(["upload", &node.address(), "foo"])
     .success();
 
   node.terminate().success();

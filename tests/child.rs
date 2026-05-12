@@ -7,16 +7,16 @@ pub(crate) struct Child {
 }
 
 impl Child {
+  pub(crate) fn address(&self) -> String {
+    format!("127.0.0.1:{}", self.port.unwrap())
+  }
+
   pub(crate) fn new(child: std::process::Child, port: Option<u16>, test: Test) -> Self {
     Self {
       child: Some(child),
       port,
       test: Some(test),
     }
-  }
-
-  pub(crate) fn port(&self) -> u16 {
-    self.port.unwrap()
   }
 
   #[track_caller]
