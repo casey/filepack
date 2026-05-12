@@ -3,9 +3,9 @@ use super::*;
 #[test]
 fn download_retrieves_file() {
   let node = Test::new()
-    .args(["node", "--ready-fd", "3", "127.0.0.1:0"])
-    .assert_file(&format!("files/{}", Hash::bytes(b"bar")), "bar")
+    .args(["node", "127.0.0.1:0"])
     .ready_fd()
+    .assert_file(&format!("files/{}", Hash::bytes(b"bar")), "bar")
     .spawn();
 
   Test::new()

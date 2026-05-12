@@ -188,6 +188,8 @@ impl Test {
     command.args(&self.args);
 
     let ready_pipe = if self.ready_fd {
+      command.args(["--ready-fd", "3"]);
+
       let (reader, writer) = std::io::pipe().unwrap();
 
       let fd = writer.as_raw_fd();
