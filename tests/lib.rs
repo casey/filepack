@@ -6,7 +6,7 @@ use {
   std::{
     collections::BTreeMap,
     fs,
-    io::{self, PipeReader, PipeWriter, Read, Write},
+    io::{self, Read, Write},
     os::{fd::AsRawFd, unix::process::CommandExt},
     path::{MAIN_SEPARATOR_STR, Path},
     process::{Command, Stdio},

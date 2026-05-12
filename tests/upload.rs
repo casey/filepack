@@ -2,20 +2,19 @@ use super::*;
 
 #[test]
 fn node_creates_file() {
-  let mut node = Test::new().args(["node", "--ready-fd", "3", "127.0.0.1:0"]);
+  let node = Test::new()
+    .args(["node", "--ready-fd", "3", "127.0.0.1:0"])
+    .ready_fd()
+    .spawn();
 
-  let mut reader = node.ready_fd();
-
-  let node = node.spawn();
-
-  // todo: make this reusable
-  let mut port = String::new();
-  reader.read_to_string(&mut port).unwrap();
-  let port = port.parse::<u16>().unwrap();
+  // // todo: make this reusable
+  // let mut port = String::new();
+  // reader.read_to_string(&mut port).unwrap();
+  // let port = port.parse::<u16>().unwrap();
 
   Test::new()
     .write("foo", "bar")
-    .args(["upload", &format!("127.0.0.1:{port}"), "foo"])
+    .args(["upload", &format!("127.0.0.1:{}", node.port()), "foo"])
     .success();
 
   let node = node.terminate().success();

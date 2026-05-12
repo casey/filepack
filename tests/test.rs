@@ -7,19 +7,18 @@ pub(crate) struct Test {
   env: BTreeMap<String, Option<String>>,
   files: BTreeMap<String, Expected>,
   manifests: BTreeMap<String, Expected>,
+  ready_fd: bool,
   stderr: Expected,
   stdin: Option<String>,
   stdout: Expected,
   tempdir: TempDir,
-  ready_fd: Option<PipeWriter>,
 }
 
 impl Test {
-  pub(crate) fn ready_fd(&mut self) -> PipeReader {
-    assert!(self.ready_fd.is_none());
-    let (reader, writer) = std::io::pipe().unwrap();
-    self.ready_fd = Some(writer);
-    reader
+  pub(crate) fn ready_fd(mut self) -> Self {
+    assert!(!self.ready_fd);
+    self.ready_fd = true;
+    self
   }
 
   pub(crate) fn arg(self, arg: &str) -> Self {
@@ -147,7 +146,7 @@ impl Test {
   }
 
   #[track_caller]
-  pub(crate) fn spawn(mut self) -> Child {
+  pub(crate) fn spawn(self) -> Child {
     let mut command = Command::new(env!("CARGO_BIN_EXE_filepack"));
 
     let current_dir = if let Some(ref subdir) = self.current_dir {
@@ -178,8 +177,11 @@ impl Test {
 
     command.args(&self.args);
 
-    if let Some(writer) = &self.ready_fd {
+    let ready_pipe = if self.ready_fd {
+      let (reader, writer) = std::io::pipe().unwrap();
+
       let fd = writer.as_raw_fd();
+
       unsafe {
         command.pre_exec(move || {
           if fd == 3 {
@@ -199,7 +201,11 @@ impl Test {
           Ok(())
         });
       }
-    }
+
+      Some((reader, writer))
+    } else {
+      None
+    };
 
     let child = command
       .stdin(Stdio::piped())
@@ -208,7 +214,15 @@ impl Test {
       .spawn()
       .unwrap();
 
-    self.ready_fd.take();
+    let port = if let Some((mut reader, writer)) = ready_pipe {
+      drop(writer);
+      let mut port = String::new();
+      reader.read_to_string(&mut port).unwrap();
+      let port = port.parse::<u16>().unwrap();
+      Some(port)
+    } else {
+      None
+    };
 
     if let Some(stdin) = &self.stdin {
       child
@@ -219,7 +233,7 @@ impl Test {
         .unwrap();
     }
 
-    Child::new(child, self)
+    Child::new(child, port, self)
   }
 
   #[track_caller]
@@ -372,7 +386,7 @@ impl Test {
       env: BTreeMap::new(),
       files: BTreeMap::new(),
       manifests: BTreeMap::new(),
-      ready_fd: None,
+      ready_fd: false,
       stderr: Expected::Empty,
       stdin: None,
       stdout: Expected::Empty,
