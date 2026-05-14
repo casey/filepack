@@ -33,6 +33,7 @@ num-traits = "0.2.19"
 owo-colors = "4"
 rand = "0.8.5"
 regex = "1.10.6"
+reqwest = { version = "0.13.3", features = ["blocking"] }
 serde = { version = "1.0.209", features = ["derive"] }
 serde_ignored = "0.1.14"
 serde_json = "1.0.127"

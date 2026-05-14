@@ -12,8 +12,14 @@ use {
 // - should use multi-threading in production and current thread in tests?
 //   should i wait and benchmark this?
 // - avoid copying whole file into memory
+// - use in-process server tests
+// - write an error string to ready_fd if we fail to start
 // - test:
 //   - http2 is supported
+
+static LISTENERS: Mutex<Vec<axum_server::Handle<SocketAddr>>> = Mutex::new(Vec::new());
+
+static SHUTTING_DOWN: AtomicBool = AtomicBool::new(false);
 
 struct Server {
   files: Utf8PathBuf,
@@ -48,6 +54,8 @@ impl Server {
 #[derive(Parser)]
 pub(crate) struct Serve {
   address: String,
+  #[arg(long)]
+  ready_fd: Option<std::os::fd::RawFd>,
 }
 
 impl Serve {
@@ -63,6 +71,25 @@ impl Serve {
   }
 
   async fn serve(self, options: Options) -> Result {
+    let handle = axum_server::Handle::new();
+
+    LISTENERS.lock().unwrap().push(handle.clone());
+
+    ctrlc::set_handler(move || {
+      dbg!();
+
+      if SHUTTING_DOWN.fetch_or(true, atomic::Ordering::Relaxed) {
+        process::exit(1);
+      }
+
+      LISTENERS
+        .lock()
+        .unwrap()
+        .iter()
+        .for_each(|handle| handle.graceful_shutdown(Some(Duration::from_millis(100))));
+    })
+    .expect("failed to set <CTRL-C> handler");
+
     let server = Arc::new(Server {
       files: options.data_dir()?.join("files"),
     });
@@ -78,8 +105,27 @@ impl Serve {
       .into_std()
       .unwrap();
 
+    if let Some(fd) = self.ready_fd {
+      assert!(fd >= 3);
+
+      let local_address = listener.local_addr().unwrap();
+
+      let bytes = local_address.port().to_string();
+
+      let result = unsafe { libc::write(fd, bytes.as_ptr().cast(), bytes.len()) };
+
+      assert!(result >= 0);
+
+      assert_eq!(usize::try_from(result).unwrap(), bytes.len());
+
+      let result = unsafe { libc::close(fd) };
+
+      assert_eq!(result, 0);
+    }
+
     axum_server::from_tcp(listener)
       .unwrap()
+      .handle(handle)
       .serve(router.into_make_service())
       .await
       .unwrap();

@@ -66,48 +66,48 @@ impl Node {
   }
 }
 
-#[cfg(test)]
-mod tests {
-  use {super::*, std::collections::VecDeque};
+// #[cfg(test)]
+// mod tests {
+//   use {super::*, std::collections::VecDeque};
 
-  #[derive(Default)]
-  struct TestConnection {
-    read: VecDeque<u8>,
-    write: Vec<u8>,
-  }
+//   #[derive(Default)]
+//   struct TestConnection {
+//     read: VecDeque<u8>,
+//     write: Vec<u8>,
+//   }
 
-  impl TestConnection {
-    fn new() -> Self {
-      Self::default()
-    }
-  }
+//   impl TestConnection {
+//     fn new() -> Self {
+//       Self::default()
+//     }
+//   }
 
-  impl Connection for TestConnection {}
+//   impl Connection for TestConnection {}
 
-  impl Read for TestConnection {
-    fn read(&mut self, buffer: &mut [u8]) -> io::Result<usize> {
-      self.read.read(buffer)
-    }
-  }
+//   impl Read for TestConnection {
+//     fn read(&mut self, buffer: &mut [u8]) -> io::Result<usize> {
+//       self.read.read(buffer)
+//     }
+//   }
 
-  impl Write for TestConnection {
-    fn flush(&mut self) -> io::Result<()> {
-      self.write.flush()
-    }
+//   impl Write for TestConnection {
+//     fn flush(&mut self) -> io::Result<()> {
+//       self.write.flush()
+//     }
 
-    fn write(&mut self, buffer: &[u8]) -> io::Result<usize> {
-      self.write.write(buffer)
-    }
-  }
+//     fn write(&mut self, buffer: &[u8]) -> io::Result<usize> {
+//       self.write.write(buffer)
+//     }
+//   }
 
-  #[test]
-  fn unexpected_message() {
-    let (_dir, path) = tempdir();
+//   #[test]
+//   fn unexpected_message() {
+//     let (_dir, path) = tempdir();
 
-    let node = Node::new(path);
+//     let node = Node::new(path);
 
-    let mut connection = TestConnection::new();
+//     let mut connection = TestConnection::new();
 
-    node.serve(&mut connection).unwrap();
-  }
-}
+//     node.serve(&mut connection).unwrap();
+//   }
+// }

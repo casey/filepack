@@ -1,5 +1,9 @@
 use super::*;
 
+// todo:
+// - change address to URL
+// - make sure I only have a single TLS crate and crypto provider in-tree
+
 #[derive(Parser)]
 pub(crate) struct Upload {
   address: String,
@@ -8,19 +12,17 @@ pub(crate) struct Upload {
 
 impl Upload {
   pub(crate) fn run(self) -> Result {
-    let mut stream = TcpStream::connect(self.address).unwrap();
-
     let file = filesystem::read(&self.file)?;
 
-    let hash = Hash::bytes(&file);
+    let client = reqwest::blocking::Client::new();
 
-    let message = Message::Upload(message::Upload { hash, file });
-
-    message.write(&mut stream)?;
-
-    let message = Message::read(&mut stream)?;
-
-    assert_eq!(message, Message::Ok);
+    client
+      .put(self.address)
+      .body(file)
+      .send()
+      .unwrap()
+      .error_for_status()
+      .unwrap();
 
     Ok(())
   }

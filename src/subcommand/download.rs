@@ -1,5 +1,9 @@
 use super::*;
 
+// todo:
+// - change address to URL
+// - complain if file already exists?
+
 #[derive(Parser)]
 pub(crate) struct Download {
   address: String,
@@ -9,21 +13,14 @@ pub(crate) struct Download {
 
 impl Download {
   pub(crate) fn run(self) -> Result {
-    let mut stream = TcpStream::connect(self.address).unwrap();
-
-    let message = Message::Download(message::Download { hash: self.hash });
-
-    message.write(&mut stream)?;
-
-    let message = Message::read(&mut stream)?;
-
-    let Message::File(message::File { file }) = message else {
-      todo!();
-    };
-
-    let hash = Hash::bytes(&file);
-
-    assert_eq!(hash, self.hash);
+    let file = reqwest::blocking::Client::new()
+      .get(self.address)
+      .send()
+      .unwrap()
+      .error_for_status()
+      .unwrap()
+      .bytes()
+      .unwrap();
 
     filesystem::write(&self.output, file).unwrap();
 
