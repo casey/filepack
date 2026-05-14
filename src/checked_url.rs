@@ -60,7 +60,7 @@ mod tests {
   }
 
   #[test]
-  fn url_is_not_normalized() {
+  fn checked_url_is_not_normalized() {
     assert_eq!(
       "http://example.com".parse::<CheckedUrl>().unwrap().as_str(),
       "http://example.com",
