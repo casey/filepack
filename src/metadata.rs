@@ -12,7 +12,7 @@ pub(crate) struct Metadata {
   #[n(3)]
   pub(crate) description: Option<String>,
   #[n(4)]
-  pub(crate) homepage: Option<Url>,
+  pub(crate) homepage: Option<CheckedUrl>,
   #[n(5)]
   pub(crate) language: Option<Language>,
   #[n(6)]
