@@ -122,7 +122,7 @@ use {
     process, ptr,
     str::{self, FromStr, Utf8Error},
     sync::{
-      LazyLock,
+      Arc, LazyLock,
       atomic::{self, AtomicBool},
     },
     time::{SystemTime, SystemTimeError, UNIX_EPOCH},

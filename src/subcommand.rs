@@ -23,6 +23,7 @@ mod man;
 mod manifest;
 mod metadata;
 mod node;
+mod serve;
 mod sign;
 mod signatures;
 mod size;
@@ -81,6 +82,8 @@ pub(crate) enum Subcommand {
   Metadata(metadata::Metadata),
   #[command(about = "Start node")]
   Node(node::Node),
+  #[command(about = "Start server")]
+  Serve(serve::Serve),
   #[command(about = "Sign manifest")]
   Sign(sign::Sign),
   #[command(about = "List manifest signatures")]
@@ -113,6 +116,7 @@ impl Subcommand {
       Self::Manifest(manifest) => manifest.run(),
       Self::Metadata(metadata) => metadata.run(),
       Self::Node(node) => node.run(options),
+      Self::Serve(serve) => serve.run(options),
       Self::Sign(sign) => sign.run(options),
       Self::Signatures(signatures) => signatures.run(),
       Self::Size(size) => size.run(),

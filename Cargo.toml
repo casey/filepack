@@ -13,6 +13,8 @@ repository = "https://github.com/casey/filepack"
 include = ["CHANGELOG.md", "CONTRIBUTING", "LICENSE", "README.md", "src", "tests"]
 
 [dependencies]
+axum = { version = "0.8.9", features = ["http2"] }
+axum-server = "0.8.0"
 bech32 = "0.11.1"
 blake3 = { version = "1.5.4", features = ["mmap", "rayon", "serde"] }
 camino = { version = "1.1.9", features = ["serde1"] }
@@ -39,6 +41,7 @@ serde_yaml = "0.9.34"
 sha2 = "0.10"
 snafu = "0.8.4"
 strum = { version = "0.27.2", features = ["derive"] }
+tokio = "1.52.3"
 url = "2.5.8"
 usized = "0.0.2"
 walkdir = "2.5.0"
