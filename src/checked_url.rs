@@ -13,7 +13,7 @@ impl FromStr for CheckedUrl {
   type Err = ::url::ParseError;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
-    s.parse::<::url::Url>()?;
+    s.parse::<Url>()?;
     Ok(Self(s.into()))
   }
 }
