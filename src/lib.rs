@@ -62,13 +62,13 @@ use {
     map_decoder::MapDecoder,
     metadata::Metadata,
     mode::Mode,
-    node_error::NodeError,
     options::Options,
     owo_colorize_ext::OwoColorizeExt,
     package::Package,
     path_error::PathError,
     private_key_error::PrivateKeyError,
     public_key_error::PublicKeyError,
+    server_error::ServerError,
     sign_options::SignOptions,
     signature_error::SignatureError,
     style::Style,
@@ -225,7 +225,6 @@ mod map_decoder;
 mod map_encoder;
 mod metadata;
 mod mode;
-mod node_error;
 mod options;
 mod owo_colorize_ext;
 mod package;
@@ -237,6 +236,7 @@ mod public_key;
 mod public_key_error;
 mod re;
 mod relative_path;
+mod server_error;
 mod sign_options;
 mod signature;
 mod signature_error;
@@ -256,7 +256,7 @@ mod test;
 
 const BECH32_VERSION: Fe32 = Fe32::A;
 
-type NodeResult<T = (), E = NodeError> = std::result::Result<T, E>;
+type ServerResult<T = (), E = ServerError> = std::result::Result<T, E>;
 type Result<T = (), E = Error> = std::result::Result<T, E>;
 
 pub fn run() {

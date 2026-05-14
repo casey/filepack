@@ -211,8 +211,6 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     filename: RelativePath,
   },
-  #[snafu(transparent)]
-  Node { source: NodeError },
   #[snafu(display("invalid path `{path}`"))]
   Path {
     path: DisplayPath,

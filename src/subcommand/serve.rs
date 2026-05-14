@@ -44,12 +44,12 @@ impl Server {
     Ok(Self { files })
   }
 
-  fn read_file(&self, hash: Hash) -> NodeResult<Vec<u8>> {
+  fn read_file(&self, hash: Hash) -> ServerResult<Vec<u8>> {
     let path = self.files.join(hash.to_string());
-    fs::read(&path).context(node_error::FilesystemIo { path })
+    fs::read(&path).context(server_error::FilesystemIo { path })
   }
 
-  fn write_file(&self, hash: Hash, contents: &[u8]) -> NodeResult {
+  fn write_file(&self, hash: Hash, contents: &[u8]) -> ServerResult {
     let path = self.files.join(hash.to_string());
 
     let mut file = match OpenOptions::new().write(true).create_new(true).open(&path) {
@@ -59,13 +59,13 @@ impl Server {
           return Ok(());
         }
 
-        return Err(node_error::FilesystemIo { path }.into_error(err));
+        return Err(server_error::FilesystemIo { path }.into_error(err));
       }
     };
 
     file
       .write_all(contents)
-      .context(node_error::FilesystemIo { path })
+      .context(server_error::FilesystemIo { path })
   }
 }
 
