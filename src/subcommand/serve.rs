@@ -76,8 +76,6 @@ impl Serve {
     LISTENERS.lock().unwrap().push(handle.clone());
 
     ctrlc::set_handler(move || {
-      dbg!();
-
       if SHUTTING_DOWN.fetch_or(true, atomic::Ordering::Relaxed) {
         process::exit(1);
       }

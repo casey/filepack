@@ -2,11 +2,12 @@ use super::*;
 
 // todo:
 // - change address to URL
+// - accept domain without HTTP or HTTPS
 // - make sure I only have a single TLS crate and crypto provider in-tree
 
 #[derive(Parser)]
 pub(crate) struct Upload {
-  address: String,
+  address: Url,
   file: Utf8PathBuf,
 }
 
@@ -16,8 +17,10 @@ impl Upload {
 
     let client = reqwest::blocking::Client::new();
 
+    let hash = Hash::bytes(&file);
+
     client
-      .put(self.address)
+      .put(format!("{}/{hash}", self.address))
       .body(file)
       .send()
       .unwrap()
