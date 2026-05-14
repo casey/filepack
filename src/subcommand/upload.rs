@@ -20,7 +20,7 @@ impl Upload {
     let hash = Hash::bytes(&file);
 
     client
-      .put(format!("{}/{hash}", self.address))
+      .put(self.address.join(&hash.to_string()).unwrap())
       .body(file)
       .send()
       .unwrap()

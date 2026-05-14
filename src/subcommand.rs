@@ -22,7 +22,6 @@ mod lints;
 mod man;
 mod manifest;
 mod metadata;
-mod node;
 mod serve;
 mod sign;
 mod signatures;
@@ -80,8 +79,6 @@ pub(crate) enum Subcommand {
   Manifest(manifest::Manifest),
   #[command(about = "Print metadata")]
   Metadata(metadata::Metadata),
-  #[command(about = "Start node")]
-  Node(node::Node),
   #[command(about = "Start server")]
   Serve(serve::Serve),
   #[command(about = "Sign manifest")]
@@ -115,7 +112,6 @@ impl Subcommand {
       Self::Man => man::run(),
       Self::Manifest(manifest) => manifest.run(),
       Self::Metadata(metadata) => metadata.run(),
-      Self::Node(node) => node.run(options),
       Self::Serve(serve) => serve.run(options),
       Self::Sign(sign) => sign.run(options),
       Self::Signatures(signatures) => signatures.run(),

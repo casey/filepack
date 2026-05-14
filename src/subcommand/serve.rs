@@ -8,6 +8,16 @@ use {
   },
 };
 
+// node later:
+// - reading and writing files should be incremental
+// - don't allow large messages
+// - return error messages when things go wrong
+// - return an error message when file doesn't exist
+// - should I use mut dyn Connection or generic?
+// - add logging for node errors
+// - figure out if I want to add peer address to all errors
+// - derive message Encode and Decode
+
 // todo:
 // - should use multi-threading in production and current thread in tests?
 //   should i wait and benchmark this?
@@ -26,6 +36,14 @@ struct Server {
 }
 
 impl Server {
+  fn new(options: Options) -> Result<Self> {
+    let files = options.data_dir()?.join("files");
+
+    filesystem::create_dir_all(&files)?;
+
+    Ok(Self { files })
+  }
+
   fn read_file(&self, hash: Hash) -> NodeResult<Vec<u8>> {
     let path = self.files.join(hash.to_string());
     fs::read(&path).context(node_error::FilesystemIo { path })
@@ -88,9 +106,7 @@ impl Serve {
     })
     .expect("failed to set <CTRL-C> handler");
 
-    let server = Arc::new(Server {
-      files: options.data_dir()?.join("files"),
-    });
+    let server = Arc::new(Server::new(options)?);
 
     let router = Router::new()
       .route("/{hash}", get(Self::get_file))

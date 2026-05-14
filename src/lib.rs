@@ -24,8 +24,6 @@ use {
     archive_builder::ArchiveBuilder,
     archive_error::ArchiveError,
     arguments::Arguments,
-    array_decoder::ArrayDecoder,
-    array_encoder::ArrayEncoder,
     bech32_decoder::Bech32Decoder,
     bech32_encoder::Bech32Encoder,
     bech32_error::Bech32Error,
@@ -34,7 +32,6 @@ use {
     component::Component,
     component_buf::ComponentBuf,
     component_error::ComponentError,
-    connection::Connection,
     context::Context,
     count::Count,
     dalek_signature_error::DalekSignatureError,
@@ -63,10 +60,8 @@ use {
     lint_error::{Lint, LintError},
     lint_group::LintGroup,
     map_decoder::MapDecoder,
-    message::Message,
     metadata::Metadata,
     mode::Mode,
-    node::Node,
     node_error::NodeError,
     options::Options,
     owo_colorize_ext::OwoColorizeExt,
@@ -112,10 +107,10 @@ use {
     env,
     fmt::{self, Debug, Display, Formatter},
     fs::{self, OpenOptions, Permissions},
-    io::{self, IsTerminal, Read, Write},
+    io::{self, IsTerminal, Write},
     iter,
     marker::PhantomData,
-    net::{self, SocketAddr, TcpListener, TcpStream},
+    net::SocketAddr,
     num::TryFromIntError,
     ops::Deref,
     path::{Path, PathBuf},
@@ -131,7 +126,7 @@ use {
     Display, EnumDiscriminants, EnumIter, EnumString, FromRepr, IntoEnumIterator, IntoStaticStr,
   },
   url::Url,
-  usized::{IntoU64, IntoUsize},
+  usized::IntoU64,
   walkdir::WalkDir,
 };
 
@@ -180,8 +175,6 @@ mod archive;
 mod archive_builder;
 mod archive_error;
 mod arguments;
-mod array_decoder;
-mod array_encoder;
 mod bech32_decoder;
 mod bech32_encoder;
 mod bech32_error;
@@ -190,7 +183,6 @@ mod checked_url;
 mod component;
 mod component_buf;
 mod component_error;
-mod connection;
 mod context;
 mod count;
 mod dalek_signature_error;
@@ -231,10 +223,8 @@ mod major_type;
 mod manifest;
 mod map_decoder;
 mod map_encoder;
-mod message;
 mod metadata;
 mod mode;
-mod node;
 mod node_error;
 mod options;
 mod owo_colorize_ext;

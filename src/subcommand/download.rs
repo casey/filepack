@@ -6,7 +6,7 @@ use super::*;
 
 #[derive(Parser)]
 pub(crate) struct Download {
-  address: String,
+  address: Url,
   hash: Hash,
   output: Utf8PathBuf,
 }
@@ -14,7 +14,7 @@ pub(crate) struct Download {
 impl Download {
   pub(crate) fn run(self) -> Result {
     let file = reqwest::blocking::Client::new()
-      .get(self.address)
+      .get(self.address.join(&self.hash.to_string()).unwrap())
       .send()
       .unwrap()
       .error_for_status()

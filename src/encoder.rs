@@ -5,10 +5,6 @@ pub struct Encoder {
 }
 
 impl Encoder {
-  pub fn array(&mut self, length: u64) -> ArrayEncoder {
-    ArrayEncoder::new(self, length)
-  }
-
   pub fn bytes(&mut self, bytes: &[u8]) {
     self.head(MajorType::Bytes.head(bytes.len().into_u64()));
     self.buffer.extend(bytes);
