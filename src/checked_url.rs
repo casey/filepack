@@ -44,6 +44,20 @@ mod tests {
   use super::*;
 
   #[test]
+  fn checked_url_is_not_normalized() {
+    assert_eq!(
+      "http://example.com".parse::<CheckedUrl>().unwrap().as_str(),
+      "http://example.com",
+    );
+
+    // an example of url::Url normalization
+    assert_eq!(
+      "http://example.com".parse::<::url::Url>().unwrap().as_str(),
+      "http://example.com/",
+    );
+  }
+
+  #[test]
   fn decode_error() {
     assert_matches!(
       CheckedUrl::decode(&mut Decoder::new(&"foo".encode_to_vec())),
@@ -56,20 +70,6 @@ mod tests {
     assert_cbor(
       "http://example.com".parse::<CheckedUrl>().unwrap(),
       &"http://example.com".encode_to_vec(),
-    );
-  }
-
-  #[test]
-  fn checked_url_is_not_normalized() {
-    assert_eq!(
-      "http://example.com".parse::<CheckedUrl>().unwrap().as_str(),
-      "http://example.com",
-    );
-
-    // an example of ::url::Url normalization
-    assert_eq!(
-      "http://example.com".parse::<::url::Url>().unwrap().as_str(),
-      "http://example.com/",
     );
   }
 }
