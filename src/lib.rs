@@ -130,6 +130,7 @@ use {
   strum::{
     Display, EnumDiscriminants, EnumIter, EnumString, FromRepr, IntoEnumIterator, IntoStaticStr,
   },
+  url::Url,
   usized::{IntoU64, IntoUsize},
   walkdir::WalkDir,
 };

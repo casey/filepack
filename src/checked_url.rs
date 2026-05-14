@@ -10,7 +10,7 @@ impl CheckedUrl {
 }
 
 impl FromStr for CheckedUrl {
-  type Err = ::url::ParseError;
+  type Err = url::ParseError;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     s.parse::<Url>()?;
@@ -52,7 +52,7 @@ mod tests {
 
     // an example of url::Url normalization
     assert_eq!(
-      "http://example.com".parse::<::url::Url>().unwrap().as_str(),
+      "http://example.com".parse::<Url>().unwrap().as_str(),
       "http://example.com/",
     );
   }
