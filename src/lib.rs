@@ -68,6 +68,7 @@ use {
     path_error::PathError,
     private_key_error::PrivateKeyError,
     public_key_error::PublicKeyError,
+    server::Server,
     server_error::ServerError,
     sign_options::SignOptions,
     signature_error::SignatureError,
@@ -236,6 +237,7 @@ mod public_key;
 mod public_key_error;
 mod re;
 mod relative_path;
+mod server;
 mod server_error;
 mod sign_options;
 mod signature;
