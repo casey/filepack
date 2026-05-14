@@ -28,6 +28,7 @@ use {
     bech32_encoder::Bech32Encoder,
     bech32_error::Bech32Error,
     bech32_type::Bech32Type,
+    checked_url::CheckedUrl,
     component::Component,
     component_buf::ComponentBuf,
     component_error::ComponentError,
@@ -73,7 +74,6 @@ use {
     subcommand::Subcommand,
     tag::Tag,
     ticked::Ticked,
-    url::Url,
     utf8_path_ext::Utf8PathExt,
     version::Version,
   },
@@ -173,6 +173,7 @@ mod bech32_decoder;
 mod bech32_encoder;
 mod bech32_error;
 mod bech32_type;
+mod checked_url;
 mod component;
 mod component_buf;
 mod component_error;
@@ -238,7 +239,6 @@ mod subcommand;
 mod tag;
 mod tag_error;
 mod ticked;
-mod url;
 mod utf8_path_ext;
 mod version;
 
