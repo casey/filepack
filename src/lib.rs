@@ -96,6 +96,7 @@ use {
   num_traits::One,
   owo_colors::Styled,
   regex::Regex,
+  reqwest::blocking::Client,
   serde::{Deserialize, Deserializer, Serialize, Serializer},
   serde_with::{
     DeserializeFromStr, MapPreventDuplicates, SerializeDisplay, SetPreventDuplicates, serde_as,

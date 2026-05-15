@@ -12,14 +12,22 @@ pub(crate) struct Download {
 
 impl Download {
   pub(crate) fn run(self) -> Result {
-    let response = reqwest::blocking::Client::new()
-      .get(self.server.join(&self.hash.to_string()).unwrap())
+    let url = self
+      .server
+      .join(&self.hash.to_string())
+      .context(error::UrlParse)?;
+
+    let response = Client::new()
+      .get(url.clone())
       .send()
-      .unwrap();
+      .with_context(|_| error::Request { url: url.clone() })?;
 
-    assert_eq!(response.status(), 200);
+    ensure! {
+      response.status() == 200,
+      error::ResponseStatus { status: response.status(), url: url.clone() }
+    }
 
-    let file = response.bytes().unwrap();
+    let file = response.bytes().context(error::ResponseBody { url })?;
 
     filesystem::write_new(&self.output, file)?;
 

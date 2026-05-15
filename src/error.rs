@@ -280,6 +280,24 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     source: io::Error,
   },
+  #[snafu(display("request to {url} failed"))]
+  Request {
+    backtrace: Option<Backtrace>,
+    source: reqwest::Error,
+    url: Url,
+  },
+  #[snafu(display("failed to read body from response from {url}"))]
+  ResponseBody {
+    backtrace: Option<Backtrace>,
+    source: reqwest::Error,
+    url: Url,
+  },
+  #[snafu(display("response from {url} failed with status code: {status}"))]
+  ResponseStatus {
+    backtrace: Option<Backtrace>,
+    status: StatusCode,
+    url: Url,
+  },
   #[snafu(display("server failed"))]
   Serve {
     backtrace: Option<Backtrace>,
@@ -344,6 +362,11 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
     unexpected: Ticked<RelativePath>,
+  },
+  #[snafu(display("failed to parse URL"))]
+  UrlParse {
+    backtrace: Option<Backtrace>,
+    source: url::ParseError,
   },
   #[snafu(transparent)]
   WalkDir {

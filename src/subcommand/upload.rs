@@ -14,13 +14,21 @@ impl Upload {
 
     let hash = Hash::bytes(&file);
 
-    let response = reqwest::blocking::Client::new()
-      .put(self.server.join(&hash.to_string()).unwrap())
+    let url = self
+      .server
+      .join(&hash.to_string())
+      .context(error::UrlParse)?;
+
+    let response = Client::new()
+      .put(url.clone())
       .body(file)
       .send()
-      .unwrap();
+      .with_context(|_| error::Request { url: url.clone() })?;
 
-    assert_eq!(response.status(), 200);
+    ensure! {
+      response.status() == 200,
+      error::ResponseStatus { status: response.status(), url }
+    }
 
     Ok(())
   }

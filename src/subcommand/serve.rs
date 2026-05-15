@@ -11,13 +11,9 @@ use {
   tokio::{net::TcpListener, runtime},
 };
 
-// test:
-// - http1 and http2 are supported
-// - download fails if file already exists
-
 static HANDLE: LazyLock<Handle<SocketAddr>> = LazyLock::new(|| Handle::new());
-static THREAD_COUNTER: AtomicU64 = AtomicU64::new(0);
 static SHUTTING_DOWN: AtomicBool = AtomicBool::new(false);
+static THREAD_COUNTER: AtomicU64 = AtomicU64::new(0);
 
 #[derive(Parser)]
 pub(crate) struct Serve {
