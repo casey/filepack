@@ -1,28 +1,27 @@
 use super::*;
 
 // todo:
-// - change address to URL
 // - complain if file already exists?
 
 #[derive(Parser)]
 pub(crate) struct Download {
-  address: Url,
+  server: Url,
   hash: Hash,
   output: Utf8PathBuf,
 }
 
 impl Download {
   pub(crate) fn run(self) -> Result {
-    let file = reqwest::blocking::Client::new()
-      .get(self.address.join(&self.hash.to_string()).unwrap())
+    let response = reqwest::blocking::Client::new()
+      .get(self.server.join(&self.hash.to_string()).unwrap())
       .send()
-      .unwrap()
-      .error_for_status()
-      .unwrap()
-      .bytes()
       .unwrap();
 
-    filesystem::write(&self.output, file).unwrap();
+    assert_eq!(response.status(), 400);
+
+    let file = response.bytes().unwrap();
+
+    filesystem::write_new(&self.output, file)?;
 
     Ok(())
   }

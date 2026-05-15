@@ -12,9 +12,11 @@ use {
 };
 
 // todo:
-// - default to listen on all interfaces
-// - test:
-//   - http1 and http2 are supported
+// - make sure I only have a single TLS crate and crypto provider in-tree
+//
+// test:
+// - http1 and http2 are supported
+// - download fails if file already exists
 
 static HANDLE: LazyLock<Handle<SocketAddr>> = LazyLock::new(|| Handle::new());
 static THREAD_COUNTER: AtomicU64 = AtomicU64::new(0);
@@ -64,8 +66,8 @@ impl Serve {
     let server = Arc::new(Server::new(options)?);
 
     let router = Router::new()
-      .route("/{hash}", get(Self::get_file))
-      .route("/{hash}", put(Self::put_file))
+      .route("/{hash}", get(Self::download))
+      .route("/{hash}", put(Self::upload))
       .layer(Extension(server));
 
     let listener = TcpListener::bind(&self.address)
@@ -109,11 +111,11 @@ impl Serve {
     Ok(())
   }
 
-  async fn get_file(server: Extension<Arc<Server>>, hash: Path<Hash>) -> ServerResult<Vec<u8>> {
+  async fn download(server: Extension<Arc<Server>>, hash: Path<Hash>) -> ServerResult<Vec<u8>> {
     server.read_file(*hash)
   }
 
-  async fn put_file(server: Extension<Arc<Server>>, hash: Path<Hash>, file: Bytes) -> ServerResult {
+  async fn upload(server: Extension<Arc<Server>>, hash: Path<Hash>, file: Bytes) -> ServerResult {
     server.write_file(*hash, &file)
   }
 }
