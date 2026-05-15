@@ -26,7 +26,7 @@ impl Upload {
       .with_context(|_| error::Request { url: url.clone() })?;
 
     ensure! {
-      response.status() == 200,
+      response.status().is_success(),
       error::ResponseStatus { status: response.status(), url }
     }
 
