@@ -7,6 +7,7 @@ use {
     routing::{get, put},
   },
   axum_server::Handle,
+  clap::value_parser,
 };
 
 // node later:
@@ -36,7 +37,7 @@ static SHUTTING_DOWN: AtomicBool = AtomicBool::new(false);
 #[derive(Parser)]
 pub(crate) struct Serve {
   address: String,
-  #[arg(long, value_parser = clap::value_parser!(RawFd).range(3..))]
+  #[arg(long, value_parser = value_parser!(RawFd).range(3..))]
   ready_fd: Option<RawFd>,
 }
 
@@ -76,21 +77,26 @@ impl Serve {
       .unwrap();
 
     if let Some(fd) = self.ready_fd {
-      assert!(fd >= 3);
+      let local_address = listener.local_addr().context(error::LocalAddress)?;
 
-      let local_address = listener.local_addr().unwrap();
+      let port = local_address.port().to_string();
 
-      let bytes = local_address.port().to_string();
+      let mut written = 0;
+      while written < port.len() {
+        let result = unsafe { libc::write(fd, port.as_ptr().cast(), port.len()) };
 
-      let result = unsafe { libc::write(fd, bytes.as_ptr().cast(), bytes.len()) };
+        if result < 0 {
+          todo!()
+        }
 
-      assert!(result >= 0);
-
-      assert_eq!(usize::try_from(result).unwrap(), bytes.len());
+        written += usize::try_from(result).unwrap();
+      }
 
       let result = unsafe { libc::close(fd) };
 
-      assert_eq!(result, 0);
+      if result < 0 {
+        todo!()
+      }
     }
 
     axum_server::from_tcp(listener)

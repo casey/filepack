@@ -172,6 +172,8 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     count: u64,
   },
+  #[snafu(display("failed to get socket address"))]
+  LocalAddress { source: io::Error },
   #[snafu(display("manifest `{path}` already exists"))]
   ManifestAlreadyExists {
     backtrace: Option<Backtrace>,
