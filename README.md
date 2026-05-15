@@ -16,7 +16,7 @@
 
 <br>
 
-`filepack` is a command-line file hashing, singing, and verification utility
+`filepack` is a command-line file hashing, signing, and verification utility
 written in Rust.
 
 It is an alternative to `.sfv` files, tools like `shasum`, and PGP signing and
