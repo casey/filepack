@@ -6,7 +6,7 @@ pub(crate) struct Download {
   hash: Hash,
   #[arg(help = "Download to <PATH>", long, value_name = "PATH")]
   output: Utf8PathBuf,
-  #[arg(help = "Upload to server at <URL>", long, value_name = "URL")]
+  #[arg(help = "Download from server at <URL>", long, value_name = "URL")]
   server: Url,
 }
 

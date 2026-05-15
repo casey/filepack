@@ -78,11 +78,12 @@ impl Serve {
     if let Some(fd) = self.ready_fd {
       let local_address = listener.local_addr().context(error::LocalAddress)?;
 
-      let port = local_address.port().to_string();
+      let port = local_address.port().to_string().into_bytes();
 
       let mut written = 0;
       while written < port.len() {
-        let result = unsafe { libc::write(fd, port.as_ptr().cast(), port.len()) };
+        let buffer = &port[written..];
+        let result = unsafe { libc::write(fd, buffer.as_ptr().cast(), buffer.len()) };
 
         if result < 0 {
           return Err(error::ReadyFd.into_error(io::Error::last_os_error()));
