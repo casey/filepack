@@ -16,12 +16,14 @@
 
 <br>
 
-`filepack` is a command-line file hashing and verification utility written in
-Rust.
+`filepack` is a command-line file hashing, singing, and verification utility
+written in Rust.
 
-It is an alternative to `.sfv` files and tools like `shasum`. Files are hashed
-using [BLAKE3](https://github.com/BLAKE3-team/BLAKE3/), a fast, cryptographic
-hash function.
+It is an alternative to `.sfv` files, tools like `shasum`, and PGP signing and
+verification. Files are hashed using
+[BLAKE3](https://github.com/BLAKE3-team/BLAKE3/), a fast, cryptographic hash
+function, collected into manifests which commit to the contents of a directory,
+and signed with Ed25519.
 
 A manifest named `manifest.filepack` containing the hashes of files in a
 directory can be created with:

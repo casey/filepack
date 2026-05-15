@@ -41,7 +41,7 @@ impl Serve {
           THREAD_COUNTER.fetch_add(1, atomic::Ordering::Relaxed)
         )
       })
-      .enable_io()
+      .enable_all()
       .build()
       .context(error::ServerRuntime)?;
 
