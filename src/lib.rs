@@ -124,7 +124,7 @@ use {
     str::{self, FromStr, Utf8Error},
     sync::{
       Arc, LazyLock,
-      atomic::{self, AtomicBool},
+      atomic::{self, AtomicBool, AtomicU64},
     },
     time::{Duration, SystemTime, SystemTimeError, UNIX_EPOCH},
   },

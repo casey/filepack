@@ -8,35 +8,21 @@ use {
   },
   axum_server::Handle,
   clap::value_parser,
-  tokio::net::TcpListener,
+  tokio::{net::TcpListener, runtime},
 };
 
-// node later:
-// - reading and writing files should be incremental
-// - don't allow large messages
-// - return error messages when things go wrong
-// - return an error message when file doesn't exist
-// - should I use mut dyn Connection or generic?
-// - add logging for node errors
-// - figure out if I want to add peer address to all errors
-// - derive message Encode and Decode
-// - quota or don't exceed some percentage disk usage
-
 // todo:
-// - write to tempfile and then move into place
-// - should use multi-threading in production and current thread in tests?
-//   should i wait and benchmark this?
-// - avoid copying whole file into memory
-// - use in-process server tests
+// - default to listen on all interfaces
 // - test:
 //   - http1 and http2 are supported
 
 static HANDLE: LazyLock<Handle<SocketAddr>> = LazyLock::new(|| Handle::new());
-
+static THREAD_COUNTER: AtomicU64 = AtomicU64::new(0);
 static SHUTTING_DOWN: AtomicBool = AtomicBool::new(false);
 
 #[derive(Parser)]
 pub(crate) struct Serve {
+  #[arg(help = "Listen on <ADDRESS> for incoming requests.", long)]
   address: String,
   #[arg(long, value_parser = value_parser!(RawFd).range(3..))]
   ready_fd: Option<RawFd>,
@@ -44,12 +30,19 @@ pub(crate) struct Serve {
 
 impl Serve {
   pub(crate) fn run(self, options: Options) -> Result {
-    let runtime = tokio::runtime::Builder::new_current_thread()
+    let runtime = runtime::Builder::new_multi_thread()
+      .name("server")
+      .thread_name_fn(|| {
+        format!(
+          "server-thread-{}",
+          THREAD_COUNTER.fetch_add(1, atomic::Ordering::Relaxed)
+        )
+      })
       .enable_io()
       .build()
-      .unwrap();
+      .context(error::ServerRuntime)?;
 
-    runtime.block_on(self.serve(options)).unwrap();
+    runtime.block_on(self.serve(options))?;
 
     Ok(())
   }

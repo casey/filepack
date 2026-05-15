@@ -285,6 +285,11 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     source: io::Error,
   },
+  #[snafu(display("failed to build server runtime"))]
+  ServerRuntime {
+    backtrace: Option<Backtrace>,
+    source: io::Error,
+  },
   #[snafu(display(
     "signature fingerprint `{signature}` does not match package fingerprint `{package}`"
   ))]
