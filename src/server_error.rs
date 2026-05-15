@@ -9,3 +9,23 @@ pub(crate) enum ServerError {
     source: io::Error,
   },
 }
+
+impl ServerError {
+  fn status_code(&self) -> StatusCode {
+    match self {
+      Self::FilesystemIo { .. } => StatusCode::INTERNAL_SERVER_ERROR,
+    }
+  }
+
+  fn message(&self) -> &'static str {
+    match self {
+      Self::FilesystemIo { .. } => "error serving request: filesystem I/O error",
+    }
+  }
+}
+
+impl IntoResponse for ServerError {
+  fn into_response(self) -> Response {
+    (self.status_code(), self.message()).into_response()
+  }
+}

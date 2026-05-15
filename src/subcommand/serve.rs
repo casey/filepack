@@ -23,9 +23,8 @@ use {
 //   should i wait and benchmark this?
 // - avoid copying whole file into memory
 // - use in-process server tests
-// - write an error string to ready_fd if we fail to start
 // - test:
-//   - http2 is supported
+//   - http1 and http2 are supported
 
 static LISTENERS: Mutex<Vec<axum_server::Handle<SocketAddr>>> = Mutex::new(Vec::new());
 
@@ -66,7 +65,7 @@ impl Serve {
         .iter()
         .for_each(|handle| handle.graceful_shutdown(Some(Duration::from_millis(100))));
     })
-    .expect("failed to set <CTRL-C> handler");
+    .unwrap();
 
     let server = Arc::new(Server::new(options)?);
 
@@ -109,11 +108,11 @@ impl Serve {
     Ok(())
   }
 
-  async fn get_file(server: Extension<Arc<Server>>, hash: Path<Hash>) -> Vec<u8> {
-    server.read_file(*hash).unwrap()
+  async fn get_file(server: Extension<Arc<Server>>, hash: Path<Hash>) -> ServerResult<Vec<u8>> {
+    server.read_file(*hash)
   }
 
-  async fn put_file(server: Extension<Arc<Server>>, hash: Path<Hash>, file: Bytes) {
-    server.write_file(*hash, &file).unwrap();
+  async fn put_file(server: Extension<Arc<Server>>, hash: Path<Hash>, file: Bytes) -> ServerResult {
+    server.write_file(*hash, &file)
   }
 }
