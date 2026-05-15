@@ -157,11 +157,6 @@ pub enum Error {
     path: DisplayPath,
     source: PublicKeyError,
   },
-  #[snafu(display("failed to convert tokio socket into standard socket"))]
-  ListenerIntoStandard {
-    backtrace: Option<Backtrace>,
-    source: io::Error,
-  },
   #[snafu(display("keychain directory `{path}` has insecure permissions {mode}"))]
   KeychainPermissions {
     backtrace: Option<Backtrace>,
@@ -182,6 +177,11 @@ pub enum Error {
   Lint {
     backtrace: Option<Backtrace>,
     count: u64,
+  },
+  #[snafu(display("failed to convert tokio socket into standard socket"))]
+  ListenerIntoStandard {
+    backtrace: Option<Backtrace>,
+    source: io::Error,
   },
   #[snafu(display("failed to get socket address"))]
   LocalAddress {

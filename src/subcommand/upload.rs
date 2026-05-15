@@ -2,10 +2,10 @@ use super::*;
 
 #[derive(Parser)]
 pub(crate) struct Upload {
-  #[arg(help = "Upload to server at <URL>", long, value_name = "URL")]
-  server: Url,
   #[arg(help = "Upload file at <PATH>", long, value_name = "PATH")]
   file: Utf8PathBuf,
+  #[arg(help = "Upload to server at <URL>", long, value_name = "URL")]
+  server: Url,
 }
 
 impl Upload {

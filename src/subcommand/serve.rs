@@ -11,7 +11,7 @@ use {
   tokio::{net::TcpListener, runtime},
 };
 
-static HANDLE: LazyLock<Handle<SocketAddr>> = LazyLock::new(|| Handle::new());
+static HANDLE: LazyLock<Handle<SocketAddr>> = LazyLock::new(Handle::new);
 static SHUTTING_DOWN: AtomicBool = AtomicBool::new(false);
 static THREAD_COUNTER: AtomicU64 = AtomicU64::new(0);
 
@@ -28,6 +28,10 @@ pub(crate) struct Serve {
 }
 
 impl Serve {
+  async fn download(server: Extension<Arc<Server>>, hash: Path<Hash>) -> ServerResult<Vec<u8>> {
+    server.read_file(*hash)
+  }
+
   pub(crate) fn run(self, options: Options) -> Result {
     let runtime = runtime::Builder::new_multi_thread()
       .name("server")
@@ -102,10 +106,6 @@ impl Serve {
       .context(error::Serve)?;
 
     Ok(())
-  }
-
-  async fn download(server: Extension<Arc<Server>>, hash: Path<Hash>) -> ServerResult<Vec<u8>> {
-    server.read_file(*hash)
   }
 
   async fn upload(server: Extension<Arc<Server>>, hash: Path<Hash>, file: Bytes) -> ServerResult {

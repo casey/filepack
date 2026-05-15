@@ -11,15 +11,15 @@ pub(crate) enum ServerError {
 }
 
 impl ServerError {
-  fn status_code(&self) -> StatusCode {
-    match self {
-      Self::FilesystemIo { .. } => StatusCode::INTERNAL_SERVER_ERROR,
-    }
-  }
-
   fn message(&self) -> &'static str {
     match self {
       Self::FilesystemIo { .. } => "error serving request: filesystem I/O error",
+    }
+  }
+
+  fn status_code(&self) -> StatusCode {
+    match self {
+      Self::FilesystemIo { .. } => StatusCode::INTERNAL_SERVER_ERROR,
     }
   }
 }

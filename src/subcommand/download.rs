@@ -2,12 +2,12 @@ use super::*;
 
 #[derive(Parser)]
 pub(crate) struct Download {
-  #[arg(help = "Upload to server at <URL>", long, value_name = "URL")]
-  server: Url,
   #[arg(help = "Download file with <HASH>", long)]
   hash: Hash,
   #[arg(help = "Download to <PATH>", long, value_name = "PATH")]
   output: Utf8PathBuf,
+  #[arg(help = "Upload to server at <URL>", long, value_name = "URL")]
+  server: Url,
 }
 
 impl Download {
