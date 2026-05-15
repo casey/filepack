@@ -15,7 +15,16 @@ impl Server {
 
   pub(crate) fn read_file(&self, hash: Hash) -> ServerResult<Vec<u8>> {
     let path = self.files.join(hash.to_string());
-    fs::read(&path).context(server_error::FilesystemIo { path })
+    match fs::read(&path) {
+      Err(err) => {
+        if err.kind() == io::ErrorKind::NotFound {
+          Err(server_error::FileNotFound { hash }.into_error(err))
+        } else {
+          Err(server_error::FilesystemIo { path }.into_error(err))
+        }
+      }
+      Ok(file) => Ok(file),
+    }
   }
 
   pub(crate) fn write_file(&self, hash: Hash, contents: &[u8]) -> ServerResult {
