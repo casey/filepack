@@ -47,6 +47,12 @@ pub enum Error {
   },
   #[snafu(display("bech32 version character missing"))]
   Bech32VersionMissing { backtrace: Option<Backtrace> },
+  #[snafu(display("failed to bind listener to {address}"))]
+  BindListener {
+    address: String,
+    source: io::Error,
+    backtrace: Option<Backtrace>,
+  },
   #[snafu(display("failed to get current directory"))]
   CurrentDir {
     backtrace: Option<Backtrace>,
@@ -151,6 +157,11 @@ pub enum Error {
     path: DisplayPath,
     source: PublicKeyError,
   },
+  #[snafu(display("failed to convert tokio socket into standard socket"))]
+  ListenerIntoStandard {
+    backtrace: Option<Backtrace>,
+    source: io::Error,
+  },
   #[snafu(display("keychain directory `{path}` has insecure permissions {mode}"))]
   KeychainPermissions {
     backtrace: Option<Backtrace>,
@@ -173,7 +184,10 @@ pub enum Error {
     count: u64,
   },
   #[snafu(display("failed to get socket address"))]
-  LocalAddress { source: io::Error },
+  LocalAddress {
+    backtrace: Option<Backtrace>,
+    source: io::Error,
+  },
   #[snafu(display("manifest `{path}` already exists"))]
   ManifestAlreadyExists {
     backtrace: Option<Backtrace>,
@@ -260,6 +274,16 @@ pub enum Error {
   PublicKeyNotFound {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
+  },
+  #[snafu(display("failed to write listening port to ready file descriptor"))]
+  ReadyFd {
+    backtrace: Option<Backtrace>,
+    source: io::Error,
+  },
+  #[snafu(display("server failed"))]
+  Serve {
+    backtrace: Option<Backtrace>,
+    source: io::Error,
   },
   #[snafu(display(
     "signature fingerprint `{signature}` does not match package fingerprint `{package}`"

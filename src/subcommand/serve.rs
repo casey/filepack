@@ -8,6 +8,7 @@ use {
   },
   axum_server::Handle,
   clap::value_parser,
+  tokio::net::TcpListener,
 };
 
 // node later:
@@ -70,11 +71,13 @@ impl Serve {
       .route("/{hash}", put(Self::put_file))
       .layer(Extension(server));
 
-    let listener = tokio::net::TcpListener::bind(&self.address)
+    let listener = TcpListener::bind(&self.address)
       .await
-      .unwrap()
+      .context(error::BindListener {
+        address: self.address,
+      })?
       .into_std()
-      .unwrap();
+      .context(error::ListenerIntoStandard)?;
 
     if let Some(fd) = self.ready_fd {
       let local_address = listener.local_addr().context(error::LocalAddress)?;
@@ -86,7 +89,7 @@ impl Serve {
         let result = unsafe { libc::write(fd, port.as_ptr().cast(), port.len()) };
 
         if result < 0 {
-          todo!()
+          return Err(error::ReadyFd.into_error(io::Error::last_os_error()));
         }
 
         written += usize::try_from(result).unwrap();
@@ -95,7 +98,7 @@ impl Serve {
       let result = unsafe { libc::close(fd) };
 
       if result < 0 {
-        todo!()
+        return Err(error::ReadyFd.into_error(io::Error::last_os_error()));
       }
     }
 
@@ -104,7 +107,7 @@ impl Serve {
       .handle(HANDLE.clone())
       .serve(router.into_make_service())
       .await
-      .unwrap();
+      .context(error::Serve)?;
 
     Ok(())
   }
