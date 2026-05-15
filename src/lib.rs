@@ -118,11 +118,12 @@ use {
     net::SocketAddr,
     num::TryFromIntError,
     ops::Deref,
+    os::fd::RawFd,
     path::{Path, PathBuf},
     process, ptr,
     str::{self, FromStr, Utf8Error},
     sync::{
-      Arc, LazyLock, Mutex,
+      Arc, LazyLock,
       atomic::{self, AtomicBool},
     },
     time::{Duration, SystemTime, SystemTimeError, UNIX_EPOCH},

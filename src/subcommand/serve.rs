@@ -6,6 +6,7 @@ use {
     extract::{Extension, Path},
     routing::{get, put},
   },
+  axum_server::Handle,
 };
 
 // node later:
@@ -17,8 +18,10 @@ use {
 // - add logging for node errors
 // - figure out if I want to add peer address to all errors
 // - derive message Encode and Decode
+// - quota or don't exceed some percentage disk usage
 
 // todo:
+// - write to tempfile and then move into place
 // - should use multi-threading in production and current thread in tests?
 //   should i wait and benchmark this?
 // - avoid copying whole file into memory
@@ -26,15 +29,15 @@ use {
 // - test:
 //   - http1 and http2 are supported
 
-static LISTENERS: Mutex<Vec<axum_server::Handle<SocketAddr>>> = Mutex::new(Vec::new());
+static HANDLE: LazyLock<Handle<SocketAddr>> = LazyLock::new(|| Handle::new());
 
 static SHUTTING_DOWN: AtomicBool = AtomicBool::new(false);
 
 #[derive(Parser)]
 pub(crate) struct Serve {
   address: String,
-  #[arg(long)]
-  ready_fd: Option<std::os::fd::RawFd>,
+  #[arg(long, value_parser = clap::value_parser!(RawFd).range(3..))]
+  ready_fd: Option<RawFd>,
 }
 
 impl Serve {
@@ -50,20 +53,12 @@ impl Serve {
   }
 
   async fn serve(self, options: Options) -> Result {
-    let handle = axum_server::Handle::new();
-
-    LISTENERS.lock().unwrap().push(handle.clone());
-
     ctrlc::set_handler(move || {
       if SHUTTING_DOWN.fetch_or(true, atomic::Ordering::Relaxed) {
         process::exit(1);
       }
 
-      LISTENERS
-        .lock()
-        .unwrap()
-        .iter()
-        .for_each(|handle| handle.graceful_shutdown(Some(Duration::from_millis(100))));
+      HANDLE.graceful_shutdown(Some(Duration::from_millis(100)));
     })
     .unwrap();
 
@@ -100,7 +95,7 @@ impl Serve {
 
     axum_server::from_tcp(listener)
       .unwrap()
-      .handle(handle)
+      .handle(HANDLE.clone())
       .serve(router.into_make_service())
       .await
       .unwrap();

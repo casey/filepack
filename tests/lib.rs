@@ -39,6 +39,7 @@ mod man;
 mod manifest;
 mod metadata;
 mod misc;
+mod serve;
 mod sign;
 mod signatures;
 mod size;
