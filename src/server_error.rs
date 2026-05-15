@@ -3,13 +3,13 @@ use super::*;
 #[derive(Debug, Snafu)]
 #[snafu(context(suffix(false)), visibility(pub(crate)))]
 pub(crate) enum ServerError {
+  #[snafu(display("file with hash {hash} not found"))]
+  FileNotFound { hash: Hash, source: io::Error },
   #[snafu(display("I/O error at {path}"))]
   FilesystemIo {
     path: Utf8PathBuf,
     source: io::Error,
   },
-  #[snafu(display("file with hash {hash} not found"))]
-  FileNotFound { hash: Hash, source: io::Error },
 }
 
 impl ServerError {
