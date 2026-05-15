@@ -24,7 +24,11 @@ static SHUTTING_DOWN: AtomicBool = AtomicBool::new(false);
 pub(crate) struct Serve {
   #[arg(help = "Listen on <ADDRESS> for incoming requests.", long)]
   address: String,
-  #[arg(long, value_parser = value_parser!(RawFd).range(3..))]
+  #[arg(
+    help = "Write local listening port to file descriptor <READY_FD>, which must be open and be passed by the caller.",
+    long,
+    value_parser = value_parser!(RawFd).range(3..),
+  )]
   ready_fd: Option<RawFd>,
 }
 
