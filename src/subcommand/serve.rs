@@ -11,9 +11,6 @@ use {
   tokio::{net::TcpListener, runtime},
 };
 
-// todo:
-// - make sure I only have a single TLS crate and crypto provider in-tree
-//
 // test:
 // - http1 and http2 are supported
 // - download fails if file already exists
@@ -24,10 +21,10 @@ static SHUTTING_DOWN: AtomicBool = AtomicBool::new(false);
 
 #[derive(Parser)]
 pub(crate) struct Serve {
-  #[arg(help = "Listen on <ADDRESS> for incoming requests.", long)]
+  #[arg(help = "Listen on <ADDRESS> for incoming requests", long)]
   address: String,
   #[arg(
-    help = "Write local listening port to file descriptor <READY_FD>, which must be open and be passed by the caller.",
+    help = "Write local listening port to file descriptor <READY_FD>, which must be open and be passed by the caller",
     long,
     value_parser = value_parser!(RawFd).range(3..),
   )]

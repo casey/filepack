@@ -1,12 +1,12 @@
 use super::*;
 
-// todo:
-// - complain if file already exists?
-
 #[derive(Parser)]
 pub(crate) struct Download {
+  #[arg(help = "Upload to server at <URL>", long, value_name = "URL")]
   server: Url,
+  #[arg(help = "Download file with <HASH>", long)]
   hash: Hash,
+  #[arg(help = "Download to <PATH>", long, value_name = "PATH")]
   output: Utf8PathBuf,
 }
 
@@ -17,7 +17,7 @@ impl Download {
       .send()
       .unwrap();
 
-    assert_eq!(response.status(), 400);
+    assert_eq!(response.status(), 200);
 
     let file = response.bytes().unwrap();
 

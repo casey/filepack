@@ -1,11 +1,10 @@
 use super::*;
 
-// todo:
-// - change address to URL
-
 #[derive(Parser)]
 pub(crate) struct Upload {
+  #[arg(help = "Upload to server at <URL>", long, value_name = "URL")]
   server: Url,
+  #[arg(help = "Upload file at <PATH>", long, value_name = "PATH")]
   file: Utf8PathBuf,
 }
 
@@ -21,7 +20,7 @@ impl Upload {
       .send()
       .unwrap();
 
-    assert_eq!(response.status(), 400);
+    assert_eq!(response.status(), 200);
 
     Ok(())
   }

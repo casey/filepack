@@ -37,7 +37,7 @@ impl Child {
 
     let result = unsafe { libc::kill(pid.try_into().unwrap(), libc::SIGTERM) };
 
-    assert!(result != -1, "{}", std::io::Error::last_os_error());
+    assert_eq!(result, 0, "{}", std::io::Error::last_os_error());
 
     self
   }
