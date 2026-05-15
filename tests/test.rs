@@ -226,15 +226,12 @@ impl Test {
       .spawn()
       .unwrap();
 
-    let port = if let Some((mut reader, writer)) = ready_pipe {
+    let port = ready_pipe.map(|(mut reader, writer)| {
       drop(writer);
       let mut port = String::new();
       reader.read_to_string(&mut port).unwrap();
-      let port = port.parse::<u16>().unwrap();
-      Some(port)
-    } else {
-      None
-    };
+      port.parse::<u16>().unwrap()
+    });
 
     if let Some(stdin) = &self.stdin {
       child
