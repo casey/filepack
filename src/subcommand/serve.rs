@@ -140,6 +140,16 @@ mod tests {
   }
 
   impl TestServer {
+    #[track_caller]
+    fn assert_incoming_empty(&self) {
+      assert_eq!(
+        fs::read_dir(self.data_dir.join("incoming"))
+          .unwrap()
+          .count(),
+        0,
+      );
+    }
+
     async fn get(&self, path: &str) -> Response {
       self
         .router
@@ -223,12 +233,7 @@ mod tests {
       b"bar",
     );
 
-    assert_eq!(
-      fs::read_dir(server.data_dir.join("incoming"))
-        .unwrap()
-        .count(),
-      0,
-    );
+    server.assert_incoming_empty();
   }
 
   #[tokio::test]
@@ -248,12 +253,7 @@ mod tests {
       b"bar",
     );
 
-    assert_eq!(
-      fs::read_dir(server.data_dir.join("incoming"))
-        .unwrap()
-        .count(),
-      0,
-    );
+    server.assert_incoming_empty();
   }
 
   #[tokio::test]
@@ -274,11 +274,6 @@ mod tests {
       format!("expected upload with hash {expected} but got {actual}"),
     );
 
-    assert_eq!(
-      fs::read_dir(server.data_dir.join("incoming"))
-        .unwrap()
-        .count(),
-      0,
-    );
+    server.assert_incoming_empty();
   }
 }
