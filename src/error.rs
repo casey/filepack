@@ -90,7 +90,7 @@ pub enum Error {
     path: DisplayPath,
     unknown: Ticked<String>,
   },
-  #[snafu(display("failed to get local data directory"))]
+  #[snafu(display("downloaded file hash mismatch: expected {expected} but got {actual}"))]
   DownloadHashMismatch {
     actual: Hash,
     backtrace: Option<Backtrace>,
