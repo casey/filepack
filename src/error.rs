@@ -298,9 +298,10 @@ pub enum Error {
     source: reqwest::Error,
     url: Url,
   },
-  #[snafu(display("response from {url} failed with status code: {status}"))]
+  #[snafu(display("response from {url} failed with status {status}: {body}"))]
   ResponseStatus {
     backtrace: Option<Backtrace>,
+    body: String,
     status: StatusCode,
     url: Url,
   },

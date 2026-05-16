@@ -25,9 +25,15 @@ impl Upload {
       .send()
       .with_context(|_| error::Request { url: url.clone() })?;
 
-    ensure! {
-      response.status().is_success(),
-      error::ResponseStatus { status: response.status(), url }
+    if !response.status().is_success() {
+      return Err(
+        error::ResponseStatus {
+          status: response.status(),
+          url: url.clone(),
+          body: response.text().context(error::ResponseBody { url })?,
+        }
+        .build(),
+      );
     }
 
     Ok(())
