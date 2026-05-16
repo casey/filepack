@@ -11,8 +11,6 @@ use {
   tokio::{net::TcpListener, runtime},
 };
 
-static HANDLE: LazyLock<Handle<SocketAddr>> = LazyLock::new(Handle::new);
-static SHUTTING_DOWN: AtomicBool = AtomicBool::new(false);
 static THREAD_COUNTER: AtomicU64 = AtomicU64::new(0);
 
 #[derive(Parser)]
@@ -51,14 +49,22 @@ impl Serve {
   }
 
   async fn serve(self, options: Options) -> Result {
-    ctrlc::set_handler(move || {
-      if SHUTTING_DOWN.fetch_or(true, atomic::Ordering::Relaxed) {
-        process::exit(1);
-      }
+    let handle = Handle::new();
 
-      HANDLE.graceful_shutdown(Some(Duration::from_millis(100)));
-    })
-    .unwrap();
+    {
+      let handle = handle.clone();
+      let mut shutting_down = false;
+      ctrlc::set_handler(move || {
+        if shutting_down {
+          process::exit(1);
+        }
+
+        handle.graceful_shutdown(Some(Duration::from_millis(100)));
+
+        shutting_down = true;
+      })
+      .unwrap();
+    }
 
     let server = Arc::new(Server::new(options)?);
 
@@ -86,7 +92,13 @@ impl Serve {
         let result = unsafe { libc::write(fd, buffer.as_ptr().cast(), buffer.len()) };
 
         if result < 0 {
-          return Err(error::ReadyFd.into_error(io::Error::last_os_error()));
+          let err = io::Error::last_os_error();
+
+          if err.kind() == io::ErrorKind::Interrupted {
+            continue;
+          }
+
+          return Err(error::ReadyFd.into_error(err));
         }
 
         written += usize::try_from(result).unwrap();
@@ -100,8 +112,8 @@ impl Serve {
     }
 
     axum_server::from_tcp(listener)
-      .unwrap()
-      .handle(HANDLE.clone())
+      .context(error::Serve)?
+      .handle(handle)
       .serve(router.into_make_service())
       .await
       .context(error::Serve)?;

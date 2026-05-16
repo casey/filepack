@@ -116,7 +116,6 @@ use {
     io::{self, IsTerminal, Write},
     iter,
     marker::PhantomData,
-    net::SocketAddr,
     num::TryFromIntError,
     ops::Deref,
     os::fd::RawFd,
@@ -125,7 +124,7 @@ use {
     str::{self, FromStr, Utf8Error},
     sync::{
       Arc, LazyLock,
-      atomic::{self, AtomicBool, AtomicU64},
+      atomic::{self, AtomicU64},
     },
     time::{Duration, SystemTime, SystemTimeError, UNIX_EPOCH},
   },

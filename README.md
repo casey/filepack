@@ -107,7 +107,8 @@ Usage
 -----
 
 Filepack supports a number of subcommands, including `filepack create` to
-create a manifest, and `filepack verify` to verify a manifest.
+create a manifest, `filepack verify` to verify a manifest, and `filepack serve`
+to start an HTTP file server.
 
 See `filepack help` for supported subcommands and `filepack help SUBCOMMAND`
 for information about a particular subcommand.

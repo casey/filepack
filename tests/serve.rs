@@ -1,4 +1,7 @@
-use {super::*, reqwest::Version};
+use {
+  super::*,
+  reqwest::{StatusCode, Version},
+};
 
 #[test]
 fn http1_is_supported() {
@@ -16,6 +19,7 @@ fn http1_is_supported() {
     .unwrap();
 
   assert_eq!(response.version(), Version::HTTP_11);
+  assert_eq!(response.status(), StatusCode::NOT_FOUND);
 
   server.terminate().success();
 }
@@ -36,6 +40,7 @@ fn http2_is_supported() {
     .unwrap();
 
   assert_eq!(response.version(), Version::HTTP_2);
+  assert_eq!(response.status(), StatusCode::NOT_FOUND);
 
   server.terminate().success();
 }

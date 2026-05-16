@@ -28,6 +28,16 @@ impl Server {
   }
 
   pub(crate) fn write_file(&self, hash: Hash, contents: &[u8]) -> ServerResult {
+    let actual = Hash::bytes(contents);
+
+    ensure!(
+      actual == hash,
+      server_error::HashMismatch {
+        actual,
+        expected: hash,
+      },
+    );
+
     let path = self.files.join(hash.to_string());
 
     let mut file = match OpenOptions::new().write(true).create_new(true).open(&path) {
