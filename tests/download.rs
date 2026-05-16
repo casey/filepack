@@ -60,7 +60,7 @@ fn download_fails_with_404_when_file_missing() {
 }
 
 #[test]
-fn download_fails_with_hash_mismatch() {
+fn download_fails_on_hash_mismatch() {
   let expected = Hash::bytes(b"baz");
   let actual = Hash::bytes(b"bar");
 
