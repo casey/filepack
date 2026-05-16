@@ -21,7 +21,7 @@ static THREAD_COUNTER: AtomicU64 = AtomicU64::new(0);
 
 enum SpawnConfig {
   Http,
-  Https(AxumAcceptor),
+  Https,
   Redirect(String),
 }
 
@@ -230,37 +230,31 @@ impl Serve {
       .unwrap();
     }
 
-    let data_dir = options.data_dir()?;
-    let acme_cache = self
-      .acme_cache
-      .clone()
-      .unwrap_or_else(|| data_dir.join("acme-cache"));
-    let http_port = self.http_port();
-    let https_port = self.https_port();
-
-    let server = Arc::new(Server::with_data_dir(&data_dir)?);
+    let server = Arc::new(Server::with_data_dir(&options.data_dir()?)?);
 
     let router = Self::router(server);
 
-    match (http_port, https_port) {
+    match (self.http_port(), self.https_port()) {
       (Some(http_port), None) => {
         self
-          .spawn(router, handle, http_port, SpawnConfig::Http, true)
+          .spawn(SpawnConfig::Http, handle, &options, http_port, true, router)
           .await?;
       }
       (None, Some(https_port)) => {
         self
           .spawn(
-            router,
+            SpawnConfig::Https,
             handle,
+            &options,
             https_port,
-            SpawnConfig::Https(self.acceptor(acme_cache)?),
             true,
+            router,
           )
           .await?;
       }
       (Some(http_port), Some(https_port)) => {
         let acme_domains = self.acme_domains()?;
+
         let http_spawn_config = if self.redirect_http_to_https {
           SpawnConfig::Redirect(Self::redirect_destination(&acme_domains, https_port))
         } else {
@@ -269,18 +263,20 @@ impl Serve {
 
         tokio::try_join!(
           self.spawn(
-            router.clone(),
-            handle.clone(),
-            http_port,
             http_spawn_config,
+            handle.clone(),
+            &options,
+            http_port,
             true,
+            router.clone(),
           ),
           self.spawn(
-            router,
+            SpawnConfig::Https,
             handle,
+            &options,
             https_port,
-            SpawnConfig::Https(self.acceptor(acme_cache)?),
             false,
+            router,
           ),
         )?;
       }
@@ -292,11 +288,12 @@ impl Serve {
 
   async fn spawn(
     &self,
-    router: Router,
-    handle: Handle<SocketAddr>,
-    port: u16,
     config: SpawnConfig,
+    handle: Handle<SocketAddr>,
+    options: &Options,
+    port: u16,
     ready: bool,
+    router: Router,
   ) -> Result {
     let listener = TcpListener::bind((self.address.as_str(), port))
       .await
@@ -325,11 +322,18 @@ impl Serve {
           .await
           .context(error::Serve)?;
       }
-      SpawnConfig::Https(acceptor) => {
+      SpawnConfig::Https => {
+        let data_dir = options.data_dir()?;
+
+        let acme_cache = self
+          .acme_cache
+          .clone()
+          .unwrap_or_else(|| data_dir.join("acme-cache"));
+
         axum_server::from_tcp(listener)
           .context(error::Serve)?
           .handle(handle)
-          .acceptor(acceptor)
+          .acceptor(self.acceptor(acme_cache)?)
           .serve(router.into_make_service())
           .await
           .context(error::Serve)?;
