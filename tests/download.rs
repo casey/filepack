@@ -4,34 +4,20 @@ use super::*;
 fn download_fails_if_output_already_exists() {
   let hash = Hash::bytes(b"bar");
 
-  let server = Test::new()
-    .args(["serve", "--address", "127.0.0.1:0"])
-    .ready_address()
-    .write(&format!("files/{hash}"), "bar")
-    .spawn();
-
   Test::new()
     .write("foo", "original")
     .args([
       "download",
       "--server",
-      &server.address(),
+      "http://127.0.0.1:1",
       "--hash",
       &hash.to_string(),
       "--output",
       "foo",
     ])
     .assert_file("foo", "original")
-    .stderr(if cfg!(windows) {
-      "error: I/O error at `foo`
-       └─ The file exists. (os error 80)\n"
-    } else {
-      "error: I/O error at `foo`
-       └─ File exists (os error 17)\n"
-    })
+    .stderr("error: file `foo` already exists\n")
     .failure();
-
-  server.terminate().success();
 }
 
 #[test]

@@ -51,6 +51,7 @@ use {
     format::Format,
     functions::{current_dir, decode_path, default, is_lowercase_hex, now},
     hash_error::HashError,
+    hashing_writer::HashingWriter,
     head::Head,
     key_identifier::KeyIdentifier,
     key_name::KeyName,
@@ -112,7 +113,7 @@ use {
     collections::{BTreeMap, BTreeSet, HashMap},
     env,
     fmt::{self, Debug, Display, Formatter},
-    fs::{self, OpenOptions, Permissions},
+    fs::{self, Permissions},
     io::{self, IsTerminal, Write},
     iter,
     marker::PhantomData,
@@ -131,6 +132,7 @@ use {
   strum::{
     Display, EnumDiscriminants, EnumIter, EnumString, FromRepr, IntoEnumIterator, IntoStaticStr,
   },
+  tempfile::NamedTempFile,
   url::Url,
   usized::IntoU64,
   walkdir::WalkDir,
@@ -216,6 +218,7 @@ mod format;
 mod functions;
 mod hash;
 mod hash_error;
+mod hashing_writer;
 mod head;
 mod key_identifier;
 mod key_name;

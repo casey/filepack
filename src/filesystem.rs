@@ -78,18 +78,9 @@ pub(crate) fn write(path: &Utf8Path, contents: impl AsRef<[u8]>) -> Result {
   fs::write(path, contents).context(error::FilesystemIo { path })
 }
 
-pub(crate) fn write_new(path: &Utf8Path, contents: impl AsRef<[u8]>) -> Result {
-  OpenOptions::new()
-    .write(true)
-    .create_new(true)
-    .open(path)
-    .and_then(|mut file| file.write_all(contents.as_ref()))
-    .context(error::FilesystemIo { path })
-}
-
 #[cfg(unix)]
 pub(crate) fn write_with_mode(path: &Utf8Path, contents: impl AsRef<[u8]>, mode: u32) -> Result {
-  use std::os::unix::fs::OpenOptionsExt;
+  use {fs::OpenOptions, std::os::unix::fs::OpenOptionsExt};
 
   OpenOptions::new()
     .write(true)
