@@ -27,17 +27,23 @@ enum SpawnConfig {
 
 #[derive(Parser)]
 pub(crate) struct Serve {
-  #[arg(help = "Store ACME TLS certificates in <ACME_CACHE>", long)]
+  #[arg(
+    help = "Store ACME TLS certificates in <PATH>",
+    long,
+    value_name = "PATH"
+  )]
   acme_cache: Option<Utf8PathBuf>,
   #[arg(
-    help = "Provide ACME contact <ACME_CONTACT>, email addresses must include `mailto:` prefix",
-    long
+    help = "Provide ACME contact <CONTACT>, email addresses must include `mailto:` prefix",
+    long,
+    value_name = "CONTACT"
   )]
   acme_contact: Vec<String>,
   #[arg(
-    help = "Request ACME TLS certificate for <ACME_DOMAIN>, this server must be reachable at \
-    <ACME_DOMAIN>:443 to respond to Encrypt ACME challenges",
-    long
+    help = "Request ACME TLS certificate for <DOMAIN>, this server must be reachable at \
+            <DOMAIN>:443 to respond to Encrypt ACME challenges",
+    long,
+    value_name = "DOMAIN"
   )]
   acme_domain: Vec<String>,
   #[arg(
@@ -49,15 +55,17 @@ pub(crate) struct Serve {
   #[arg(help = "Serve HTTP traffic", long)]
   http: bool,
   #[arg(
-    help = "Listen on <HTTP_PORT> for incoming HTTP requests [default: 80]",
-    long
+    help = "Listen on <PORT> for incoming HTTP requests [default: 80]",
+    long,
+    value_name = "PORT"
   )]
   http_port: Option<u16>,
   #[arg(help = "Serve HTTPS traffic", long)]
   https: bool,
   #[arg(
-    help = "Listen on <HTTPS_PORT> for incoming HTTPS requests [default: 443]",
-    long
+    help = "Listen on <PORT> for incoming HTTPS requests [default: 443]",
+    long,
+    value_name = "PORT"
   )]
   https_port: Option<u16>,
   #[arg(
