@@ -35,7 +35,8 @@ pub(crate) struct Serve {
   )]
   acme_contact: Vec<String>,
   #[arg(
-    help = "Request ACME TLS certificate for <ACME_DOMAIN>, this server must be reachable at <ACME_DOMAIN>:443 to respond to Let's Encrypt ACME challenges",
+    help = "Request ACME TLS certificate for <ACME_DOMAIN>, this server must be reachable at \
+    <ACME_DOMAIN>:443 to respond to Encrypt ACME challenges",
     long
   )]
   acme_domain: Vec<String>,
