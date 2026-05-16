@@ -108,7 +108,7 @@ impl Serve {
 
   fn acme_domains(&self) -> Result<Vec<String>> {
     if self.acme_domain.is_empty() {
-      Ok(vec![System::host_name().context(error::Hostname)?])
+      Ok(vec![System::host_name().context(error::AcmeHostname)?])
     } else {
       Ok(self.acme_domain.clone())
     }

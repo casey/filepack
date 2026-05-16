@@ -3,6 +3,8 @@ use super::*;
 #[derive(Debug, Snafu)]
 #[snafu(context(suffix(false)), visibility(pub(crate)))]
 pub enum Error {
+  #[snafu(display("no hostname found for use as ACME domain"))]
+  AcmeHostname { backtrace: Option<Backtrace> },
   #[snafu(display("file hash {actual} not equal to expected {expected}"))]
   Assert {
     backtrace: Option<Backtrace>,
@@ -148,8 +150,6 @@ pub enum Error {
     hex: String,
     source: hex::FromHexError,
   },
-  #[snafu(display("no hostname found"))]
-  Hostname { backtrace: Option<Backtrace> },
   #[snafu(display("internal error, this may indicate a bug in filepack: {message}"))]
   Internal {
     backtrace: Option<Backtrace>,
