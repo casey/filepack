@@ -43,9 +43,10 @@ impl Server {
       },
     );
 
-    let mut tempfile = NamedTempFile::new_in(&self.incoming).context(server_error::FilesystemIo {
-      path: &self.incoming,
-    })?;
+    let mut tempfile =
+      NamedTempFile::new_in(&self.incoming).context(server_error::FilesystemIo {
+        path: &self.incoming,
+      })?;
 
     let tempfile_path = Utf8Path::from_path(tempfile.path()).unwrap().to_owned();
 
