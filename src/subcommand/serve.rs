@@ -2,7 +2,6 @@ use {
   super::*,
   axum::{
     Router,
-    body::Body,
     extract::{Extension, Path},
     http::header,
     routing::{get, put},

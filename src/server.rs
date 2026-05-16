@@ -43,7 +43,7 @@ impl Server {
     Ok(Self { files, incoming })
   }
 
-  pub(crate) async fn write_file(&self, hash: Hash, body: axum::body::Body) -> ServerResult {
+  pub(crate) async fn write_file(&self, hash: Hash, body: Body) -> ServerResult {
     let (file, temp_path) = tempfile::Builder::new()
       .prefix(&format!("{hash}-"))
       .tempfile_in(&self.incoming)

@@ -81,6 +81,7 @@ use {
     version::Version,
   },
   axum::{
+    body::Body,
     http::StatusCode,
     response::{IntoResponse, Response},
   },
