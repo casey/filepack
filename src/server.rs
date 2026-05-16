@@ -43,8 +43,10 @@ impl Server {
       },
     );
 
-    let mut tempfile =
-      NamedTempFile::new_in(&self.incoming).context(server_error::FilesystemIo {
+    let mut tempfile = tempfile::Builder::new()
+      .prefix(&hash.to_string())
+      .tempfile_in(&self.incoming)
+      .context(server_error::FilesystemIo {
         path: &self.incoming,
       })?;
 

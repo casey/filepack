@@ -131,7 +131,6 @@ use {
   strum::{
     Display, EnumDiscriminants, EnumIter, EnumString, FromRepr, IntoEnumIterator, IntoStaticStr,
   },
-  tempfile::NamedTempFile,
   url::Url,
   usized::IntoU64,
   walkdir::WalkDir,
