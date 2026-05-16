@@ -32,12 +32,26 @@ impl Child {
     (self.child.take().unwrap(), self.test.take().unwrap())
   }
 
+  #[cfg(unix)]
   pub(crate) fn terminate(self) -> Self {
     let pid = self.child.as_ref().unwrap().id();
 
     let result = unsafe { libc::kill(pid.try_into().unwrap(), libc::SIGTERM) };
 
     assert_eq!(result, 0, "{}", std::io::Error::last_os_error());
+
+    self
+  }
+
+  #[cfg(windows)]
+  pub(crate) fn terminate(self) -> Self {
+    use windows_sys::Win32::System::Console::{CTRL_BREAK_EVENT, GenerateConsoleCtrlEvent};
+
+    let pid = self.child.as_ref().unwrap().id();
+
+    let result = unsafe { GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, pid) };
+
+    assert_ne!(result, 0, "{}", std::io::Error::last_os_error());
 
     self
   }

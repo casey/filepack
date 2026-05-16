@@ -91,3 +91,6 @@ unreachable_pub = "deny"
 [[test]]
 name = "integration"
 path = "tests/lib.rs"
+
+[target."cfg(windows)".dev-dependencies]
+windows-sys = { version = "0.61.2", features = ["Win32_System_Console", "Win32_System_Threading"] }

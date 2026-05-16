@@ -159,6 +159,15 @@ impl Test {
   pub(crate) fn spawn(self) -> Child {
     let mut command = Command::new(env!("CARGO_BIN_EXE_filepack"));
 
+    #[cfg(windows)]
+    {
+      use {
+        std::os::windows::process::CommandExt,
+        windows_sys::Win32::System::Threading::CREATE_NEW_PROCESS_GROUP,
+      };
+      command.creation_flags(CREATE_NEW_PROCESS_GROUP);
+    }
+
     let current_dir = if let Some(ref subdir) = self.current_dir {
       self.join(subdir)
     } else {
