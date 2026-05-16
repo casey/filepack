@@ -2,15 +2,20 @@ use super::*;
 
 pub(crate) struct Server {
   files: Utf8PathBuf,
+  incoming: Utf8PathBuf,
 }
 
 impl Server {
   pub(crate) fn new(options: Options) -> Result<Self> {
-    let files = options.data_dir()?.join("files");
+    let data_dir = options.data_dir()?;
 
+    let files = data_dir.join("files");
     filesystem::create_dir_all(&files)?;
 
-    Ok(Self { files })
+    let incoming = data_dir.join("incoming");
+    filesystem::create_dir_all(&incoming)?;
+
+    Ok(Self { files, incoming })
   }
 
   pub(crate) fn read_file(&self, hash: Hash) -> ServerResult<Vec<u8>> {
@@ -38,21 +43,32 @@ impl Server {
       },
     );
 
+    let mut tempfile = tempfile::Builder::new()
+      .prefix(&format!("{hash}-"))
+      .tempfile_in(&self.incoming)
+      .context(server_error::FilesystemIo {
+        path: &self.incoming,
+      })?;
+
+    let tempfile_path = Utf8Path::from_path(tempfile.path()).unwrap().to_owned();
+
+    tempfile
+      .write_all(contents)
+      .with_context(|_| server_error::FilesystemIo {
+        path: &tempfile_path,
+      })?;
+
+    tempfile
+      .keep()
+      .map_err(|error| error.error)
+      .with_context(|_| server_error::FilesystemIo {
+        path: &tempfile_path,
+      })?;
+
     let path = self.files.join(hash.to_string());
 
-    let mut file = match OpenOptions::new().write(true).create_new(true).open(&path) {
-      Ok(file) => file,
-      Err(err) => {
-        if err.kind() == io::ErrorKind::AlreadyExists {
-          return Ok(());
-        }
+    fs::rename(tempfile_path, &path).context(server_error::FilesystemIo { path: &path })?;
 
-        return Err(server_error::FilesystemIo { path }.into_error(err));
-      }
-    };
-
-    file
-      .write_all(contents)
-      .context(server_error::FilesystemIo { path })
+    Ok(())
   }
 }

@@ -42,6 +42,7 @@ serde_yaml = "0.9.34"
 sha2 = "0.10"
 snafu = "0.8.4"
 strum = { version = "0.27.2", features = ["derive"] }
+tempfile = "3.24.0"
 tokio = { version = "1.52.3", features = ["rt-multi-thread"] }
 url = "2.5.8"
 usized = "0.0.2"
@@ -49,7 +50,6 @@ walkdir = "2.5.0"
 
 [dev-dependencies]
 pretty_assertions = "1.4.1"
-tempfile = "3.24.0"
 
 [lib]
 doctest = false
