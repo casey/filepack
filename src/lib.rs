@@ -148,6 +148,7 @@ pub use self::{
 #[cfg(test)]
 use {
   strum::IntoDiscriminant,
+  tempfile::TempDir,
   test::{assert_cbor, assert_encoding, tempdir},
 };
 

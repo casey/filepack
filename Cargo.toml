@@ -51,6 +51,8 @@ walkdir = "2.5.0"
 
 [dev-dependencies]
 pretty_assertions = "1.4.1"
+tokio = { version = "1.52.3", features = ["macros"] }
+tower = { version = "0.5.3", features = ["util"] }
 
 [lib]
 doctest = false

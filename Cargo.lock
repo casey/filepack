@@ -771,6 +771,7 @@ dependencies = [
  "tempfile",
  "tokio",
  "tokio-util",
+ "tower",
  "url",
  "usized",
  "walkdir",
