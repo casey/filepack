@@ -9,15 +9,17 @@ pub(crate) struct Upload {
 }
 
 impl Upload {
-  pub(crate) fn run(self) -> Result {
-    let file = filesystem::read(&self.file)?;
-
-    let hash = Hash::bytes(&file);
+  pub(crate) fn run(self, options: Options) -> Result {
+    let file = options
+      .hash_file(&self.file)
+      .context(error::FilesystemIo { path: &self.file })?;
 
     let url = self
       .server
-      .join(&hash.to_string())
+      .join(&file.hash.to_string())
       .context(error::UrlParse)?;
+
+    let file = filesystem::open(&self.file)?;
 
     let response = Client::new()
       .put(url.clone())

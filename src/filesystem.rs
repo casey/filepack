@@ -46,6 +46,10 @@ pub(crate) fn mode(path: &Utf8Path) -> Result<Mode> {
   Ok(metadata(path)?.permissions().into())
 }
 
+pub(crate) fn open(path: &Utf8Path) -> Result<fs::File> {
+  fs::File::open(path).context(error::FilesystemIo { path })
+}
+
 pub(crate) fn read(path: &Utf8Path) -> Result<Vec<u8>> {
   fs::read(path).context(error::FilesystemIo { path })
 }
