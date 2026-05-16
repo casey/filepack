@@ -2,13 +2,15 @@ use {
   super::*,
   axum::{
     Router,
-    body::Bytes,
+    body::{Body, Bytes},
     extract::{Extension, Path},
+    http::header,
     routing::{get, put},
   },
   axum_server::Handle,
   std::net::TcpStream,
   tokio::{net::TcpListener, runtime},
+  tokio_util::io::ReaderStream,
 };
 
 static THREAD_COUNTER: AtomicU64 = AtomicU64::new(0);
@@ -26,8 +28,16 @@ pub(crate) struct Serve {
 }
 
 impl Serve {
-  async fn download(server: Extension<Arc<Server>>, hash: Path<Hash>) -> ServerResult<Vec<u8>> {
-    server.read_file(*hash)
+  async fn download(server: Extension<Arc<Server>>, hash: Path<Hash>) -> ServerResult<Response> {
+    let (file, len) = server.open_file(*hash).await?;
+
+    Ok(
+      Response::builder()
+        .header(header::CONTENT_LENGTH, len)
+        .header(header::CONTENT_TYPE, "application/octet-stream")
+        .body(Body::from_stream(ReaderStream::new(file)))
+        .unwrap(),
+    )
   }
 
   pub(crate) fn run(self, options: Options) -> Result {
