@@ -10,6 +10,8 @@ pub(crate) enum ServerError {
     path: Utf8PathBuf,
     source: io::Error,
   },
+  #[snafu(display("error reading body of upload with hash {hash}"))]
+  UploadBodyRead { hash: Hash, source: axum::Error },
   #[snafu(display("expected upload with hash {expected} but got {actual}"))]
   UploadHashMismatch { actual: Hash, expected: Hash },
 }
@@ -18,7 +20,9 @@ impl ServerError {
   fn message(&self) -> String {
     match self {
       Self::FilesystemIo { .. } => "filesystem I/O error".into(),
-      Self::FileNotFound { .. } | Self::UploadHashMismatch { .. } => self.to_string(),
+      Self::FileNotFound { .. } | Self::UploadBodyRead { .. } | Self::UploadHashMismatch { .. } => {
+        self.to_string()
+      }
     }
   }
 
@@ -26,7 +30,7 @@ impl ServerError {
     match self {
       Self::FileNotFound { .. } => StatusCode::NOT_FOUND,
       Self::FilesystemIo { .. } => StatusCode::INTERNAL_SERVER_ERROR,
-      Self::UploadHashMismatch { .. } => StatusCode::BAD_REQUEST,
+      Self::UploadBodyRead { .. } | Self::UploadHashMismatch { .. } => StatusCode::BAD_REQUEST,
     }
   }
 }

@@ -27,6 +27,13 @@ pub(crate) fn now() -> Result<u64> {
   )
 }
 
+pub(crate) fn transfer_tempfile(hash: Hash, path: &Utf8Path) -> io::Result<NamedTempFile> {
+  tempfile::Builder::new()
+    .prefix(&format!("{hash}-"))
+    .suffix(".incomplete")
+    .tempfile_in(path)
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;

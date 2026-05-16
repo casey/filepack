@@ -750,6 +750,7 @@ dependencies = [
  "dirs",
  "ed25519-dalek",
  "filepack-cbor",
+ "futures-util",
  "hex",
  "indicatif",
  "lexiclean",

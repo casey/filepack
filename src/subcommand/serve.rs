@@ -2,7 +2,6 @@ use {
   super::*,
   axum::{
     Router,
-    body::{Body, Bytes},
     extract::{Extension, Path},
     http::header,
     routing::{get, put},
@@ -120,8 +119,8 @@ impl Serve {
     Ok(())
   }
 
-  async fn upload(server: Extension<Arc<Server>>, hash: Path<Hash>, file: Bytes) -> ServerResult {
-    server.write_file(*hash, &file)
+  async fn upload(server: Extension<Arc<Server>>, hash: Path<Hash>, body: Body) -> ServerResult {
+    server.write_file(*hash, body).await
   }
 }
 
@@ -141,6 +140,16 @@ mod tests {
   }
 
   impl TestServer {
+    #[track_caller]
+    fn assert_incoming_empty(&self) {
+      assert_eq!(
+        fs::read_dir(self.data_dir.join("incoming"))
+          .unwrap()
+          .count(),
+        0,
+      );
+    }
+
     async fn get(&self, path: &str) -> Response {
       self
         .router
@@ -210,6 +219,44 @@ mod tests {
   }
 
   #[tokio::test]
+  async fn upload_creates_file() {
+    let server = TestServer::new();
+
+    let hash = Hash::bytes(b"bar");
+
+    let response = server.put(&format!("/{hash}"), b"bar").await;
+
+    assert_eq!(response.status(), StatusCode::OK);
+
+    assert_eq!(
+      fs::read(server.data_dir.join("files").join(hash.to_string())).unwrap(),
+      b"bar",
+    );
+
+    server.assert_incoming_empty();
+  }
+
+  #[tokio::test]
+  async fn upload_short_circuits_when_file_exists() {
+    let server = TestServer::new();
+
+    let hash = Hash::bytes(b"bar");
+
+    server.write_file(hash, b"bar");
+
+    let response = server.put(&format!("/{hash}"), b"bar").await;
+
+    assert_eq!(response.status(), StatusCode::OK);
+
+    assert_eq!(
+      fs::read(server.data_dir.join("files").join(hash.to_string())).unwrap(),
+      b"bar",
+    );
+
+    server.assert_incoming_empty();
+  }
+
+  #[tokio::test]
   async fn upload_with_wrong_hash_fails() {
     let server = TestServer::new();
 
@@ -226,5 +273,7 @@ mod tests {
       str::from_utf8(&body).unwrap(),
       format!("expected upload with hash {expected} but got {actual}"),
     );
+
+    server.assert_incoming_empty();
   }
 }
