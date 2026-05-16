@@ -44,7 +44,7 @@ impl Server {
     );
 
     let mut tempfile = tempfile::Builder::new()
-      .prefix(&hash.to_string())
+      .prefix(&format!("{hash}-"))
       .tempfile_in(&self.incoming)
       .context(server_error::FilesystemIo {
         path: &self.incoming,
