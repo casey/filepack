@@ -25,7 +25,7 @@ enum SpawnConfig {
   Redirect(String),
 }
 
-#[derive(Parser)]
+#[derive(Debug, Parser, PartialEq)]
 pub(crate) struct Serve {
   #[arg(
     help = "Store ACME TLS certificates in <PATH>",
@@ -358,6 +358,23 @@ impl Serve {
   }
 }
 
+impl Default for Serve {
+  fn default() -> Self {
+    Self {
+      acme_cache: None,
+      acme_contact: Vec::new(),
+      acme_domain: Vec::new(),
+      address: "0.0.0.0".into(),
+      http: false,
+      http_port: None,
+      https: false,
+      https_port: None,
+      ready_address: None,
+      redirect_http_to_https: false,
+    }
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use {
@@ -430,7 +447,7 @@ mod tests {
   #[test]
   fn acme_domain_defaults_to_hostname() {
     assert_eq!(
-      serve().acme_domains().unwrap(),
+      Serve::default().acme_domains().unwrap(),
       vec![System::host_name().unwrap()]
     );
   }
@@ -440,11 +457,19 @@ mod tests {
     assert_eq!(
       Serve {
         acme_domain: vec!["foo".into(), "bar".into()],
-        ..serve()
+        ..Serve::default()
       }
       .acme_domains()
       .unwrap(),
       vec!["foo".to_string(), "bar".to_string()],
+    );
+  }
+
+  #[test]
+  fn default_serve_matches_parsed() {
+    assert_eq!(
+      Serve::default(),
+      Serve::try_parse_from(["filepack"]).unwrap(),
     );
   }
 
@@ -481,11 +506,11 @@ mod tests {
       assert_eq!(serve.https_port(), https_port);
     }
 
-    case(serve(), Some(80), None);
+    case(Serve::default(), Some(80), None);
     case(
       Serve {
         https: true,
-        ..serve()
+        ..Serve::default()
       },
       None,
       Some(443),
@@ -493,7 +518,7 @@ mod tests {
     case(
       Serve {
         https_port: Some(433),
-        ..serve()
+        ..Serve::default()
       },
       None,
       Some(433),
@@ -502,7 +527,7 @@ mod tests {
       Serve {
         http: true,
         https: true,
-        ..serve()
+        ..Serve::default()
       },
       Some(80),
       Some(443),
@@ -511,7 +536,7 @@ mod tests {
       Serve {
         http_port: Some(8080),
         https_port: Some(8443),
-        ..serve()
+        ..Serve::default()
       },
       Some(8080),
       Some(8443),
@@ -519,7 +544,7 @@ mod tests {
     case(
       Serve {
         redirect_http_to_https: true,
-        ..serve()
+        ..Serve::default()
       },
       Some(80),
       Some(443),
@@ -554,21 +579,6 @@ mod tests {
     case("/", "https://foo/").await;
     case("/bar", "https://foo/bar").await;
     case("/bar?baz=qux", "https://foo/bar?baz=qux").await;
-  }
-
-  fn serve() -> Serve {
-    Serve {
-      acme_cache: None,
-      acme_contact: Vec::new(),
-      acme_domain: Vec::new(),
-      address: "0.0.0.0".into(),
-      http: false,
-      http_port: None,
-      https: false,
-      https_port: None,
-      ready_address: None,
-      redirect_http_to_https: false,
-    }
   }
 
   #[tokio::test]
