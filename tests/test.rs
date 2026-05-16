@@ -155,6 +155,12 @@ impl Test {
     self
   }
 
+  pub(crate) fn serve(mut self) -> Self {
+    self
+      .ready_address()
+      .args(["serve", "--address", "127.0.0.1", "--http-port", "0"])
+  }
+
   #[track_caller]
   pub(crate) fn spawn(self) -> Child {
     let mut command = Command::new(env!("CARGO_BIN_EXE_filepack"));

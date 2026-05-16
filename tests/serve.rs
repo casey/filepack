@@ -2,10 +2,7 @@ use {super::*, reqwest::Version};
 
 #[test]
 fn http1_is_supported() {
-  let server = Test::new()
-    .args(["serve", "--address", "127.0.0.1", "--http-port", "0"])
-    .ready_address()
-    .spawn();
+  let server = Test::new().serve().spawn();
 
   let response = reqwest::blocking::Client::builder()
     .http1_only()
@@ -23,10 +20,7 @@ fn http1_is_supported() {
 
 #[test]
 fn http2_is_supported() {
-  let server = Test::new()
-    .args(["serve", "--address", "127.0.0.1", "--http-port", "0"])
-    .ready_address()
-    .spawn();
+  let server = Test::new().serve().spawn();
 
   let response = reqwest::blocking::Client::builder()
     .http2_prior_knowledge()
