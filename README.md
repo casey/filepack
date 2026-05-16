@@ -149,12 +149,23 @@ filepack verify --print | jq
 
 ### `filepack serve`
 
-Start an HTTP file server. The filepack server has no authentication or disk
-usage quota and should be considered experimental.
+Start HTTP server. The filepack server has no authentication or disk usage
+quota and should be considered experimental.
+
+To serve HTTP on `0.0.0.0:80`:
 
 ```shell
-filepack serve --address 0.0.0.0:80
+filepack serve
 ```
+
+To serve HTTPS on `0.0.0.0:443` with an ACME TLS certificate using the hostname
+as the domain:
+
+```shell
+filepack serve --https
+```
+
+See `filepack serve --help` for more details.
 
 Files can be uploaded with `filepack upload` and downloaded with
 `filepack download`.

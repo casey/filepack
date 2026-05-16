@@ -3,6 +3,8 @@ use super::*;
 #[derive(Debug, Snafu)]
 #[snafu(context(suffix(false)), visibility(pub(crate)))]
 pub enum Error {
+  #[snafu(display("no hostname found for use as ACME domain"))]
+  AcmeHostname { backtrace: Option<Backtrace> },
   #[snafu(display("file hash {actual} not equal to expected {expected}"))]
   Assert {
     backtrace: Option<Backtrace>,
@@ -311,6 +313,8 @@ pub enum Error {
     status: StatusCode,
     url: Url,
   },
+  #[snafu(display("failed to install rustls ring crypto provider"))]
+  RustlsProvider { backtrace: Option<Backtrace> },
   #[snafu(display("server failed"))]
   Serve {
     backtrace: Option<Backtrace>,
