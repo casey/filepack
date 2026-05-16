@@ -7,7 +7,7 @@ pub(crate) struct Test {
   env: BTreeMap<String, Option<String>>,
   files: BTreeMap<String, Expected>,
   manifests: BTreeMap<String, Expected>,
-  ready_fd: bool,
+  ready_address: bool,
   stderr: Expected,
   stdin: Option<String>,
   stdout: Expected,
@@ -134,9 +134,9 @@ impl Test {
       .unwrap()
   }
 
-  pub(crate) fn ready_fd(mut self) -> Self {
-    assert!(!self.ready_fd);
-    self.ready_fd = true;
+  pub(crate) fn ready_address(mut self) -> Self {
+    assert!(!self.ready_address);
+    self.ready_address = true;
     self
   }
 
@@ -187,34 +187,11 @@ impl Test {
 
     command.args(&self.args);
 
-    let ready_pipe = if self.ready_fd {
-      command.args(["--ready-fd", "3"]);
-
-      let (reader, writer) = std::io::pipe().unwrap();
-
-      let fd = writer.as_raw_fd();
-
-      unsafe {
-        command.pre_exec(move || {
-          if fd == 3 {
-            let flags = libc::fcntl(fd, libc::F_GETFD);
-
-            if flags == -1 {
-              return Err(io::Error::last_os_error());
-            }
-
-            if libc::fcntl(fd, libc::F_SETFD, flags & !libc::FD_CLOEXEC) == -1 {
-              return Err(io::Error::last_os_error());
-            }
-          } else if libc::dup2(fd, 3) == -1 {
-            return Err(io::Error::last_os_error());
-          }
-
-          Ok(())
-        });
-      }
-
-      Some((reader, writer))
+    let ready_listener = if self.ready_address {
+      let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+      let address = listener.local_addr().unwrap();
+      command.args(["--ready-address", &address.to_string()]);
+      Some(listener)
     } else {
       None
     };
@@ -226,10 +203,10 @@ impl Test {
       .spawn()
       .unwrap();
 
-    let port = ready_pipe.map(|(mut reader, writer)| {
-      drop(writer);
+    let port = ready_listener.map(|listener| {
+      let (mut stream, _) = listener.accept().unwrap();
       let mut port = String::new();
-      reader.read_to_string(&mut port).unwrap();
+      stream.read_to_string(&mut port).unwrap();
       port.parse::<u16>().unwrap()
     });
 
@@ -395,7 +372,7 @@ impl Test {
       env: BTreeMap::new(),
       files: BTreeMap::new(),
       manifests: BTreeMap::new(),
-      ready_fd: false,
+      ready_address: false,
       stderr: Expected::Empty,
       stdin: None,
       stdout: Expected::Empty,

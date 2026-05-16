@@ -7,7 +7,7 @@ use {
     routing::{get, put},
   },
   axum_server::Handle,
-  clap::value_parser,
+  std::net::TcpStream,
   tokio::{net::TcpListener, runtime},
 };
 
@@ -18,11 +18,11 @@ pub(crate) struct Serve {
   #[arg(help = "Listen on <ADDRESS> for incoming requests", long)]
   address: String,
   #[arg(
-    help = "Write local listening port to file descriptor <READY_FD>, which must be open and be passed by the caller",
+    help = "Write listening port to <ADDRESS>",
     long,
-    value_parser = value_parser!(RawFd).range(3..),
+    value_name = "ADDRESS"
   )]
-  ready_fd: Option<RawFd>,
+  ready_address: Option<SocketAddr>,
 }
 
 impl Serve {
@@ -81,34 +81,14 @@ impl Serve {
       .into_std()
       .context(error::ListenerIntoStandard)?;
 
-    if let Some(fd) = self.ready_fd {
-      let local_address = listener.local_addr().context(error::LocalAddress)?;
+    if let Some(address) = self.ready_address {
+      let port = listener.local_addr().context(error::LocalAddress)?.port();
 
-      let port = local_address.port().to_string().into_bytes();
+      let mut stream = TcpStream::connect(address).context(error::ReadyAddress { address })?;
 
-      let mut written = 0;
-      while written < port.len() {
-        let buffer = &port[written..];
-        let result = unsafe { libc::write(fd, buffer.as_ptr().cast(), buffer.len()) };
-
-        if result < 0 {
-          let err = io::Error::last_os_error();
-
-          if err.kind() == io::ErrorKind::Interrupted {
-            continue;
-          }
-
-          return Err(error::ReadyFd.into_error(err));
-        }
-
-        written += usize::try_from(result).unwrap();
-      }
-
-      let result = unsafe { libc::close(fd) };
-
-      if result < 0 {
-        return Err(error::ReadyFd.into_error(io::Error::last_os_error()));
-      }
+      stream
+        .write_all(port.to_string().as_bytes())
+        .context(error::ReadyAddress { address })?;
     }
 
     axum_server::from_tcp(listener)

@@ -4,7 +4,7 @@ use {super::*, reqwest::Version};
 fn http1_is_supported() {
   let server = Test::new()
     .args(["serve", "--address", "127.0.0.1:0"])
-    .ready_fd()
+    .ready_address()
     .spawn();
 
   let response = reqwest::blocking::Client::builder()
@@ -25,7 +25,7 @@ fn http1_is_supported() {
 fn http2_is_supported() {
   let server = Test::new()
     .args(["serve", "--address", "127.0.0.1:0"])
-    .ready_fd()
+    .ready_address()
     .spawn();
 
   let response = reqwest::blocking::Client::builder()
@@ -40,14 +40,4 @@ fn http2_is_supported() {
   assert_eq!(response.status(), StatusCode::NOT_FOUND);
 
   server.terminate().success();
-}
-
-#[test]
-fn ready_fd_must_not_conflict_with_standard_streams() {
-  Test::new()
-    .args(["serve", "--address", "127.0.0.1:0", "--ready-fd", "2"])
-    .stderr_regex(
-      r"error: invalid value '2' for '--ready-fd <READY_FD>': 2 is not in 3\.\.=2147483647\n\n.*",
-    )
-    .status(2);
 }

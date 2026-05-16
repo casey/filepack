@@ -281,8 +281,9 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
-  #[snafu(display("failed to write listening port to ready file descriptor"))]
-  ReadyFd {
+  #[snafu(display("failed to write listening port to `{address}`"))]
+  ReadyAddress {
+    address: SocketAddr,
     backtrace: Option<Backtrace>,
     source: io::Error,
   },

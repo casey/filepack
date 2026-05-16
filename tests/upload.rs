@@ -4,7 +4,7 @@ use {super::*, reqwest::StatusCode};
 fn reupload_succeeds() {
   let server = Test::new()
     .args(["serve", "--address", "127.0.0.1:0"])
-    .ready_fd()
+    .ready_address()
     .assert_file(&format!("files/{}", Hash::bytes(b"bar")), "bar")
     .spawn();
 
@@ -22,7 +22,7 @@ fn reupload_succeeds() {
 fn upload_creates_file() {
   let server = Test::new()
     .args(["serve", "--address", "127.0.0.1:0"])
-    .ready_fd()
+    .ready_address()
     .assert_file(&format!("files/{}", Hash::bytes(b"bar")), "bar")
     .spawn();
 
@@ -38,7 +38,7 @@ fn upload_creates_file() {
 fn upload_with_wrong_hash_fails() {
   let server = Test::new()
     .args(["serve", "--address", "127.0.0.1:0"])
-    .ready_fd()
+    .ready_address()
     .spawn();
 
   let actual = Hash::bytes(b"bar");
