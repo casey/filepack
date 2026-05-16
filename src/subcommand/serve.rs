@@ -120,12 +120,8 @@ impl Serve {
     Ok(())
   }
 
-  async fn upload(
-    Extension(server): Extension<Arc<Server>>,
-    Path(hash): Path<Hash>,
-    body: Body,
-  ) -> ServerResult {
-    server.write_file(hash, body).await
+  async fn upload(server: Extension<Arc<Server>>, hash: Path<Hash>, body: Body) -> ServerResult {
+    server.write_file(*hash, body).await
   }
 }
 
