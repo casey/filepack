@@ -46,6 +46,7 @@ impl Download {
 
     let tempfile = tempfile::Builder::new()
       .prefix(&format!("{}-", self.hash))
+      .suffix(".incomplete")
       .tempfile_in(output_directory)
       .context(error::FilesystemIo {
         path: output_directory,
