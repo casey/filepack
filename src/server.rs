@@ -18,18 +18,27 @@ impl Server {
     Ok(Self { files, incoming })
   }
 
-  pub(crate) fn read_file(&self, hash: Hash) -> ServerResult<Vec<u8>> {
+  pub(crate) async fn open_file(&self, hash: Hash) -> ServerResult<(tokio::fs::File, u64)> {
     let path = self.files.join(hash.to_string());
-    match fs::read(&path) {
+
+    let file = match tokio::fs::File::open(&path).await {
       Err(err) => {
-        if err.kind() == io::ErrorKind::NotFound {
+        return if err.kind() == io::ErrorKind::NotFound {
           Err(server_error::FileNotFound { hash }.into_error(err))
         } else {
           Err(server_error::FilesystemIo { path }.into_error(err))
-        }
+        };
       }
-      Ok(file) => Ok(file),
-    }
+      Ok(file) => file,
+    };
+
+    let len = file
+      .metadata()
+      .await
+      .context(server_error::FilesystemIo { path })?
+      .len();
+
+    Ok((file, len))
   }
 
   pub(crate) fn write_file(&self, hash: Hash, contents: &[u8]) -> ServerResult {
