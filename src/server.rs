@@ -1,0 +1,58 @@
+use super::*;
+
+pub(crate) struct Server {
+  files: Utf8PathBuf,
+}
+
+impl Server {
+  pub(crate) fn new(options: Options) -> Result<Self> {
+    let files = options.data_dir()?.join("files");
+
+    filesystem::create_dir_all(&files)?;
+
+    Ok(Self { files })
+  }
+
+  pub(crate) fn read_file(&self, hash: Hash) -> ServerResult<Vec<u8>> {
+    let path = self.files.join(hash.to_string());
+    match fs::read(&path) {
+      Err(err) => {
+        if err.kind() == io::ErrorKind::NotFound {
+          Err(server_error::FileNotFound { hash }.into_error(err))
+        } else {
+          Err(server_error::FilesystemIo { path }.into_error(err))
+        }
+      }
+      Ok(file) => Ok(file),
+    }
+  }
+
+  pub(crate) fn write_file(&self, hash: Hash, contents: &[u8]) -> ServerResult {
+    let actual = Hash::bytes(contents);
+
+    ensure!(
+      actual == hash,
+      server_error::UploadHashMismatch {
+        actual,
+        expected: hash,
+      },
+    );
+
+    let path = self.files.join(hash.to_string());
+
+    let mut file = match OpenOptions::new().write(true).create_new(true).open(&path) {
+      Ok(file) => file,
+      Err(err) => {
+        if err.kind() == io::ErrorKind::AlreadyExists {
+          return Ok(());
+        }
+
+        return Err(server_error::FilesystemIo { path }.into_error(err));
+      }
+    };
+
+    file
+      .write_all(contents)
+      .context(server_error::FilesystemIo { path })
+  }
+}

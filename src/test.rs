@@ -78,9 +78,13 @@ fn signature_matches() {
   assert_eq!(signature.to_string(), SIGNATURE);
 }
 
-pub(crate) fn tempdir() -> tempfile::TempDir {
-  tempfile::Builder::new()
+pub(crate) fn tempdir() -> (tempfile::TempDir, Utf8PathBuf) {
+  let tempdir = tempfile::Builder::new()
     .prefix("filepack-test-tempdir")
     .tempdir()
-    .unwrap()
+    .unwrap();
+
+  let path = Utf8Path::from_path(tempdir.path()).unwrap().into();
+
+  (tempdir, path)
 }

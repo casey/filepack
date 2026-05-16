@@ -13,22 +13,27 @@ repository = "https://github.com/casey/filepack"
 include = ["CHANGELOG.md", "CONTRIBUTING", "LICENSE", "README.md", "src", "tests"]
 
 [dependencies]
+axum = "0.8.9"
+axum-server = "0.8.0"
 bech32 = "0.11.1"
 blake3 = { version = "1.5.4", features = ["mmap", "rayon", "serde"] }
 camino = { version = "1.1.9", features = ["serde1"] }
 chrono = { version = "0.4.43", features = ["serde"] }
 clap = { version = "4.5.16", features = ["derive"] }
 clap_mangen = "0.2.23"
+ctrlc = { version = "3.5.2", features = ["termination"] }
 dirs = "6.0.0"
 ed25519-dalek = { version = "2.1.1", features = ["rand_core"] }
 filepack-cbor = { version = "0.0.0", path = "crates/filepack-cbor" }
 hex = "0.4.3"
 indicatif = "0.18.0"
 lexiclean = "0.0.1"
+libc = "0.2.186"
 num-traits = "0.2.19"
 owo-colors = "4"
 rand = "0.8.5"
 regex = "1.10.6"
+reqwest = { version = "0.13.3", features = ["blocking", "http2"] }
 serde = { version = "1.0.209", features = ["derive"] }
 serde_ignored = "0.1.14"
 serde_json = "1.0.127"
@@ -37,6 +42,7 @@ serde_yaml = "0.9.34"
 sha2 = "0.10"
 snafu = "0.8.4"
 strum = { version = "0.27.2", features = ["derive"] }
+tokio = { version = "1.52.3", features = ["rt-multi-thread"] }
 url = "2.5.8"
 usized = "0.0.2"
 walkdir = "2.5.0"
@@ -85,3 +91,6 @@ unreachable_pub = "deny"
 [[test]]
 name = "integration"
 path = "tests/lib.rs"
+
+[target."cfg(windows)".dev-dependencies]
+windows-sys = { version = "0.61.2", features = ["Win32_System_Console", "Win32_System_Threading"] }

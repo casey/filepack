@@ -68,6 +68,8 @@ use {
     path_error::PathError,
     private_key_error::PrivateKeyError,
     public_key_error::PublicKeyError,
+    server::Server,
+    server_error::ServerError,
     sign_options::SignOptions,
     signature_error::SignatureError,
     style::Style,
@@ -76,6 +78,10 @@ use {
     ticked::Ticked,
     utf8_path_ext::Utf8PathExt,
     version::Version,
+  },
+  axum::{
+    http::StatusCode,
+    response::{IntoResponse, Response},
   },
   bech32::{
     ByteIterExt, Fe32, Fe32IterExt, Hrp,
@@ -90,12 +96,13 @@ use {
   num_traits::One,
   owo_colors::Styled,
   regex::Regex,
+  reqwest::blocking::Client,
   serde::{Deserialize, Deserializer, Serialize, Serializer},
   serde_with::{
     DeserializeFromStr, MapPreventDuplicates, SerializeDisplay, SetPreventDuplicates, serde_as,
     skip_serializing_none,
   },
-  snafu::{ErrorCompat, OptionExt, ResultExt, Snafu, ensure},
+  snafu::{ErrorCompat, IntoError, OptionExt, ResultExt, Snafu, ensure},
   std::{
     array,
     backtrace::{Backtrace, BacktraceStatus},
@@ -104,18 +111,22 @@ use {
     cmp::Ordering,
     collections::{BTreeMap, BTreeSet, HashMap},
     env,
-    fmt::{self, Debug, Display, Formatter, Write},
-    fs::{self, Permissions},
-    io::{self, IsTerminal},
+    fmt::{self, Debug, Display, Formatter},
+    fs::{self, OpenOptions, Permissions},
+    io::{self, IsTerminal, Write},
     iter,
     marker::PhantomData,
+    net::SocketAddr,
     num::TryFromIntError,
     ops::Deref,
     path::{Path, PathBuf},
     process, ptr,
     str::{self, FromStr, Utf8Error},
-    sync::LazyLock,
-    time::{SystemTime, SystemTimeError, UNIX_EPOCH},
+    sync::{
+      Arc, LazyLock,
+      atomic::{self, AtomicU64},
+    },
+    time::{Duration, SystemTime, SystemTimeError, UNIX_EPOCH},
   },
   strum::{
     Display, EnumDiscriminants, EnumIter, EnumString, FromRepr, IntoEnumIterator, IntoStaticStr,
@@ -231,6 +242,8 @@ mod public_key;
 mod public_key_error;
 mod re;
 mod relative_path;
+mod server;
+mod server_error;
 mod sign_options;
 mod signature;
 mod signature_error;
@@ -250,6 +263,7 @@ mod test;
 
 const BECH32_VERSION: Fe32 = Fe32::A;
 
+type ServerResult<T = (), E = ServerError> = std::result::Result<T, E>;
 type Result<T = (), E = Error> = std::result::Result<T, E>;
 
 pub fn run() {

@@ -7,6 +7,7 @@ pub(crate) struct Test {
   env: BTreeMap<String, Option<String>>,
   files: BTreeMap<String, Expected>,
   manifests: BTreeMap<String, Expected>,
+  ready_address: bool,
   stderr: Expected,
   stdin: Option<String>,
   stdout: Expected,
@@ -23,6 +24,16 @@ impl Test {
     for arg in args {
       self.args.push(arg.as_ref().into());
     }
+    self
+  }
+
+  pub(crate) fn assert_file(mut self, path: &str, contents: &str) -> Self {
+    assert!(
+      self
+        .files
+        .insert(path.into(), Expected::string(contents))
+        .is_none()
+    );
     self
   }
 
@@ -96,12 +107,7 @@ impl Test {
   }
 
   pub(crate) fn new() -> Self {
-    Self::with_tempdir(
-      tempfile::Builder::new()
-        .prefix("filepack-test-tempdir")
-        .tempdir()
-        .unwrap(),
-    )
+    Self::with_tempdir(tempdir())
   }
 
   pub(crate) fn path(&self) -> Utf8PathBuf {
@@ -128,6 +134,12 @@ impl Test {
       .unwrap()
   }
 
+  pub(crate) fn ready_address(mut self) -> Self {
+    assert!(!self.ready_address);
+    self.ready_address = true;
+    self
+  }
+
   pub(crate) fn remove_dir(self, path: &str) -> Self {
     fs::remove_dir(self.join(path)).unwrap();
     self
@@ -144,8 +156,17 @@ impl Test {
   }
 
   #[track_caller]
-  pub(crate) fn status(self, code: i32) -> Self {
+  pub(crate) fn spawn(self) -> Child {
     let mut command = Command::new(env!("CARGO_BIN_EXE_filepack"));
+
+    #[cfg(windows)]
+    {
+      use {
+        std::os::windows::process::CommandExt,
+        windows_sys::Win32::System::Threading::CREATE_NEW_PROCESS_GROUP,
+      };
+      command.creation_flags(CREATE_NEW_PROCESS_GROUP);
+    }
 
     let current_dir = if let Some(ref subdir) = self.current_dir {
       self.join(subdir)
@@ -175,12 +196,28 @@ impl Test {
 
     command.args(&self.args);
 
+    let ready_listener = if self.ready_address {
+      let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+      let address = listener.local_addr().unwrap();
+      command.args(["--ready-address", &address.to_string()]);
+      Some(listener)
+    } else {
+      None
+    };
+
     let child = command
       .stdin(Stdio::piped())
       .stdout(Stdio::piped())
       .stderr(Stdio::piped())
       .spawn()
       .unwrap();
+
+    let port = ready_listener.map(|listener| {
+      let (mut stream, _) = listener.accept().unwrap();
+      let mut port = String::new();
+      stream.read_to_string(&mut port).unwrap();
+      port.parse::<u16>().unwrap()
+    });
 
     if let Some(stdin) = &self.stdin {
       child
@@ -191,8 +228,20 @@ impl Test {
         .unwrap();
     }
 
+    Child::new(child, port, self)
+  }
+
+  #[track_caller]
+  pub(crate) fn status(self, code: i32) -> Self {
+    let (child, test) = self.spawn().take();
+
     let output = child.wait_with_output().unwrap();
 
+    test.status_with_output(code, output)
+  }
+
+  #[track_caller]
+  pub(crate) fn status_with_output(self, code: i32, output: std::process::Output) -> Self {
     let stdout = str::from_utf8(&output.stdout).unwrap();
 
     let stderr = str::from_utf8(&output.stderr).unwrap();
@@ -332,6 +381,7 @@ impl Test {
       env: BTreeMap::new(),
       files: BTreeMap::new(),
       manifests: BTreeMap::new(),
+      ready_address: false,
       stderr: Expected::Empty,
       stdin: None,
       stdout: Expected::Empty,

@@ -7,6 +7,8 @@ check: (watch 'lcheck --tests --all --all-targets')
 
 test: (watch 'ltest --all --all-targets')
 
+unit: (watch 'ltest --lib')
+
 ci: lint
   cargo test --workspace
 

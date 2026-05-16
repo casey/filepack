@@ -10,6 +10,7 @@ mod archive;
 mod bech32;
 mod contains;
 mod create;
+mod download;
 mod files;
 mod fingerprint;
 mod hash;
@@ -21,9 +22,11 @@ mod lints;
 mod man;
 mod manifest;
 mod metadata;
+mod serve;
 mod sign;
 mod signatures;
 mod size;
+mod upload;
 mod verify;
 
 const MANIFEST_PATH_HELP: &str = "\
@@ -52,6 +55,8 @@ pub(crate) enum Subcommand {
   Contains(contains::Contains),
   #[command(about = "Create manifest")]
   Create(create::Create),
+  #[command(about = "Download file from server")]
+  Download(download::Download),
   #[command(about = "List manifest files")]
   Files(files::Files),
   #[command(about = "Print package fingerprint")]
@@ -74,12 +79,16 @@ pub(crate) enum Subcommand {
   Manifest(manifest::Manifest),
   #[command(about = "Print metadata")]
   Metadata(metadata::Metadata),
+  #[command(about = "Start server")]
+  Serve(serve::Serve),
   #[command(about = "Sign manifest")]
   Sign(sign::Sign),
   #[command(about = "List manifest signatures")]
   Signatures(signatures::Signatures),
   #[command(about = "Print manifest total file size")]
   Size(size::Size),
+  #[command(about = "Upload file to server")]
+  Upload(upload::Upload),
   #[command(about = "Verify manifest")]
   Verify(verify::Verify),
 }
@@ -91,6 +100,7 @@ impl Subcommand {
       Self::Bech32(bech32) => bech32.run(),
       Self::Contains(contains) => contains.run(options),
       Self::Create(create) => create.run(options),
+      Self::Download(download) => download.run(),
       Self::Files(files) => files.run(),
       Self::Fingerprint(fingerprint) => fingerprint.run(),
       Self::Hash(hash) => hash.run(options),
@@ -102,9 +112,11 @@ impl Subcommand {
       Self::Man => man::run(),
       Self::Manifest(manifest) => manifest.run(),
       Self::Metadata(metadata) => metadata.run(),
+      Self::Serve(serve) => serve.run(options),
       Self::Sign(sign) => sign.run(options),
       Self::Signatures(signatures) => signatures.run(),
       Self::Size(size) => size.run(),
+      Self::Upload(upload) => upload.run(),
       Self::Verify(verify) => verify.run(options),
     }
   }

@@ -47,6 +47,12 @@ pub enum Error {
   },
   #[snafu(display("bech32 version character missing"))]
   Bech32VersionMissing { backtrace: Option<Backtrace> },
+  #[snafu(display("failed to bind listener to {address}"))]
+  BindListener {
+    address: String,
+    source: io::Error,
+    backtrace: Option<Backtrace>,
+  },
   #[snafu(display("failed to get current directory"))]
   CurrentDir {
     backtrace: Option<Backtrace>,
@@ -83,6 +89,12 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
     unknown: Ticked<String>,
+  },
+  #[snafu(display("downloaded file hash mismatch: expected {expected} but got {actual}"))]
+  DownloadHashMismatch {
+    actual: Hash,
+    backtrace: Option<Backtrace>,
+    expected: Hash,
   },
   #[snafu(display(
     "duplicate key: {}",
@@ -172,6 +184,16 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     count: u64,
   },
+  #[snafu(display("failed to convert tokio socket into standard socket"))]
+  ListenerIntoStandard {
+    backtrace: Option<Backtrace>,
+    source: io::Error,
+  },
+  #[snafu(display("failed to get socket address"))]
+  LocalAddress {
+    backtrace: Option<Backtrace>,
+    source: io::Error,
+  },
   #[snafu(display("manifest `{path}` already exists"))]
   ManifestAlreadyExists {
     backtrace: Option<Backtrace>,
@@ -259,6 +281,41 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
+  #[snafu(display("failed to write listening port to `{address}`"))]
+  ReadyAddress {
+    address: SocketAddr,
+    backtrace: Option<Backtrace>,
+    source: io::Error,
+  },
+  #[snafu(display("request to {url} failed"))]
+  Request {
+    backtrace: Option<Backtrace>,
+    source: reqwest::Error,
+    url: Url,
+  },
+  #[snafu(display("failed to read body from response from {url}"))]
+  ResponseBody {
+    backtrace: Option<Backtrace>,
+    source: reqwest::Error,
+    url: Url,
+  },
+  #[snafu(display("response from {url} failed with status {status}: {body}"))]
+  ResponseStatus {
+    backtrace: Option<Backtrace>,
+    body: String,
+    status: StatusCode,
+    url: Url,
+  },
+  #[snafu(display("server failed"))]
+  Serve {
+    backtrace: Option<Backtrace>,
+    source: io::Error,
+  },
+  #[snafu(display("failed to build server runtime"))]
+  ServerRuntime {
+    backtrace: Option<Backtrace>,
+    source: io::Error,
+  },
   #[snafu(display(
     "signature fingerprint `{signature}` does not match package fingerprint `{package}`"
   ))]
@@ -313,6 +370,11 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
     unexpected: Ticked<RelativePath>,
+  },
+  #[snafu(display("failed to parse URL"))]
+  UrlParse {
+    backtrace: Option<Backtrace>,
+    source: url::ParseError,
   },
   #[snafu(transparent)]
   WalkDir {
