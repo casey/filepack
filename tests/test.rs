@@ -213,10 +213,17 @@ impl Test {
       .unwrap();
 
     let port = ready_listener.map(|listener| {
-      let (mut stream, _) = listener.accept().unwrap();
-      let mut port = String::new();
-      stream.read_to_string(&mut port).unwrap();
-      port.parse::<u16>().unwrap()
+      let (tx, rx) = mpsc::channel();
+
+      thread::spawn(move || {
+        let (mut stream, _) = listener.accept().unwrap();
+        let mut port = String::new();
+        stream.read_to_string(&mut port).unwrap();
+        tx.send(port.parse::<u16>().unwrap()).unwrap();
+      });
+
+      rx.recv_timeout(Duration::from_secs(1))
+        .expect("timed out waiting for port")
     });
 
     if let Some(stdin) = &self.stdin {
