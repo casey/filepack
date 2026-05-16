@@ -149,8 +149,8 @@ filepack verify --print | jq
 
 ### `filepack serve`
 
-Start a file server. The filepack server has no authentication or disk
-usage quota and should be considered experimental.
+Start HTTP server. The filepack server has no authentication or disk usage
+quota and should be considered experimental.
 
 To serve HTTP on `0.0.0.0:80`:
 
