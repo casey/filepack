@@ -3,7 +3,7 @@ use {super::*, reqwest::Version};
 #[test]
 fn http1_is_supported() {
   let server = Test::new()
-    .args(["serve", "--address", "127.0.0.1:0"])
+    .args(["serve", "--address", "127.0.0.1", "--http-port", "0"])
     .ready_address()
     .spawn();
 
@@ -24,7 +24,7 @@ fn http1_is_supported() {
 #[test]
 fn http2_is_supported() {
   let server = Test::new()
-    .args(["serve", "--address", "127.0.0.1:0"])
+    .args(["serve", "--address", "127.0.0.1", "--http-port", "0"])
     .ready_address()
     .spawn();
 

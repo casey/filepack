@@ -148,6 +148,8 @@ pub enum Error {
     hex: String,
     source: hex::FromHexError,
   },
+  #[snafu(display("no hostname found"))]
+  Hostname { backtrace: Option<Backtrace> },
   #[snafu(display("internal error, this may indicate a bug in filepack: {message}"))]
   Internal {
     backtrace: Option<Backtrace>,
@@ -311,6 +313,8 @@ pub enum Error {
     status: StatusCode,
     url: Url,
   },
+  #[snafu(display("failed to install rustls ring crypto provider"))]
+  RustlsProvider { backtrace: Option<Backtrace> },
   #[snafu(display("server failed"))]
   Serve {
     backtrace: Option<Backtrace>,

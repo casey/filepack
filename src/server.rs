@@ -6,10 +6,6 @@ pub(crate) struct Server {
 }
 
 impl Server {
-  pub(crate) fn new(options: Options) -> Result<Self> {
-    Self::with_data_dir(&options.data_dir()?)
-  }
-
   pub(crate) async fn open_file(&self, hash: Hash) -> ServerResult<(tokio::fs::File, u64)> {
     let path = self.files.join(hash.to_string());
 

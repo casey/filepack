@@ -26,7 +26,7 @@ fn download_fails_on_hash_mismatch() {
   let actual = Hash::bytes(b"bar");
 
   let server = Test::new()
-    .args(["serve", "--address", "127.0.0.1:0"])
+    .args(["serve", "--address", "127.0.0.1", "--http-port", "0"])
     .ready_address()
     .write(&format!("files/{expected}"), "bar")
     .spawn();
@@ -52,7 +52,7 @@ fn download_fails_on_hash_mismatch() {
 #[test]
 fn download_fails_with_404_when_file_missing() {
   let server = Test::new()
-    .args(["serve", "--address", "127.0.0.1:0"])
+    .args(["serve", "--address", "127.0.0.1", "--http-port", "0"])
     .ready_address()
     .spawn();
 
@@ -80,7 +80,7 @@ fn download_fails_with_404_when_file_missing() {
 #[test]
 fn download_retrieves_file() {
   let server = Test::new()
-    .args(["serve", "--address", "127.0.0.1:0"])
+    .args(["serve", "--address", "127.0.0.1", "--http-port", "0"])
     .ready_address()
     .assert_file(&format!("files/{}", Hash::bytes(b"bar")), "bar")
     .spawn();
