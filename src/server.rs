@@ -43,6 +43,15 @@ impl Server {
       },
     );
 
+    let path = self.files.join(hash.to_string());
+
+    if path
+      .try_exists()
+      .context(server_error::FilesystemIo { path: &path })?
+    {
+      return Ok(());
+    }
+
     let mut tempfile = tempfile::Builder::new()
       .prefix(&format!("{hash}-"))
       .tempfile_in(&self.incoming)
@@ -59,15 +68,9 @@ impl Server {
       })?;
 
     tempfile
-      .keep()
+      .persist(&path)
       .map_err(|error| error.error)
-      .with_context(|_| server_error::FilesystemIo {
-        path: &tempfile_path,
-      })?;
-
-    let path = self.files.join(hash.to_string());
-
-    fs::rename(tempfile_path, &path).context(server_error::FilesystemIo { path: &path })?;
+      .context(server_error::FilesystemIo { path: &path })?;
 
     Ok(())
   }
