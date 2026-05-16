@@ -158,6 +158,15 @@ To serve HTTP on `0.0.0.0:80`:
 filepack serve
 ```
 
+To serve HTTPS on `0.0.0.0:443` with an ACME TLS certificate using the hostname
+as the domain:
+
+```shell
+filepack serve --https
+```
+
+See `filepack serve --help` for more details.
+
 Files can be uploaded with `filepack upload` and downloaded with
 `filepack download`.
 
