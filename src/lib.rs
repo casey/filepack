@@ -113,7 +113,7 @@ use {
     collections::{BTreeMap, BTreeSet, HashMap},
     env,
     fmt::{self, Debug, Display, Formatter},
-    fs::{self, OpenOptions, Permissions},
+    fs::{self, Permissions},
     io::{self, IsTerminal, Write},
     iter,
     marker::PhantomData,

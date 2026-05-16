@@ -80,7 +80,7 @@ pub(crate) fn write(path: &Utf8Path, contents: impl AsRef<[u8]>) -> Result {
 
 #[cfg(unix)]
 pub(crate) fn write_with_mode(path: &Utf8Path, contents: impl AsRef<[u8]>, mode: u32) -> Result {
-  use std::os::unix::fs::OpenOptionsExt;
+  use {fs::OpenOptions, std::os::unix::fs::OpenOptionsExt};
 
   OpenOptions::new()
     .write(true)
