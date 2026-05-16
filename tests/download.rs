@@ -22,13 +22,7 @@ fn download_fails_if_output_already_exists() {
       "foo",
     ])
     .assert_file("foo", "original")
-    .stderr(if cfg!(windows) {
-      "error: I/O error at `foo`
-       └─ The file exists. (os error 80)\n"
-    } else {
-      "error: I/O error at `foo`
-       └─ File exists (os error 17)\n"
-    })
+    .stderr("error: file `foo` already exists\n")
     .failure();
 
   server.terminate().success();

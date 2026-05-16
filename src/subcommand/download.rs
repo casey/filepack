@@ -12,12 +12,17 @@ pub(crate) struct Download {
 
 impl Download {
   pub(crate) fn run(self) -> Result {
+    ensure! {
+      !filesystem::exists(&self.output)?,
+      error::FileAlreadyExists { path: &self.output },
+    }
+
     let url = self
       .server
       .join(&self.hash.to_string())
       .context(error::UrlParse)?;
 
-    let response = Client::new()
+    let mut response = Client::new()
       .get(url.clone())
       .send()
       .with_context(|_| error::Request { url: url.clone() })?;
@@ -33,16 +38,36 @@ impl Download {
       );
     }
 
-    let file = response.bytes().context(error::ResponseBody { url })?;
+    let output_directory = self
+      .output
+      .parent()
+      .filter(|parent| !parent.as_str().is_empty())
+      .unwrap_or(Utf8Path::new("."));
 
-    let actual = Hash::bytes(&file);
+    let tempfile = tempfile::Builder::new()
+      .prefix(&format!("{}-", self.hash))
+      .tempfile_in(output_directory)
+      .context(error::FilesystemIo {
+        path: output_directory,
+      })?;
+
+    let mut writer = HashingWriter::new(tempfile);
+
+    response
+      .copy_to(&mut writer)
+      .with_context(|_| error::ResponseBody { url: url.clone() })?;
+
+    let (actual, tempfile) = writer.finalize();
 
     ensure! {
       actual == self.hash,
       error::DownloadHashMismatch { actual, expected: self.hash },
     }
 
-    filesystem::write_new(&self.output, file)?;
+    tempfile
+      .persist_noclobber(&self.output)
+      .map_err(|error| error.error)
+      .context(error::FilesystemIo { path: &self.output })?;
 
     Ok(())
   }

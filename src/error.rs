@@ -124,6 +124,11 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
+  #[snafu(display("file `{path}` already exists"))]
+  FileAlreadyExists {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+  },
   #[snafu(display("manifest does not contain file with hash `{hash}`"))]
   FileNotFound {
     backtrace: Option<Backtrace>,
