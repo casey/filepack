@@ -12,7 +12,9 @@ use {
     path::{MAIN_SEPARATOR_STR, Path},
     process::{Command, Stdio},
     str,
-    time::{SystemTime, UNIX_EPOCH},
+    sync::mpsc,
+    thread,
+    time::{Duration, SystemTime, UNIX_EPOCH},
   },
   tempfile::{NamedTempFile, TempDir},
 };
