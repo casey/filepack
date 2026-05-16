@@ -298,7 +298,7 @@ impl Serve {
     let listener = TcpListener::bind((self.address.as_str(), port))
       .await
       .context(error::BindListener {
-        address: if address.contains(':') {
+        address: if self.address.contains(':') {
           format!("[{}]:{port}", self.address)
         } else {
           format!("{}:{port}", self.address)
