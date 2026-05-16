@@ -10,7 +10,7 @@ pub(crate) enum ServerError {
     path: Utf8PathBuf,
     source: io::Error,
   },
-  #[snafu(display("expected upload with hash {expected} but got {expected}"))]
+  #[snafu(display("expected upload with hash {expected} but got {actual}"))]
   UploadHashMismatch { actual: Hash, expected: Hash },
 }
 

@@ -54,7 +54,7 @@ fn upload_with_wrong_hash_fails() {
 
   assert_eq!(
     response.text().unwrap(),
-    format!("contents hash to {actual}, but URL hash is {expected}"),
+    format!("expected upload with hash {expected} but got {actual}"),
   );
 
   server.terminate().success();
