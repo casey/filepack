@@ -44,9 +44,7 @@ impl Server {
   }
 
   pub(crate) async fn write_file(&self, hash: Hash, body: Body) -> ServerResult {
-    let (file, temp_path) = tempfile::Builder::new()
-      .prefix(&format!("{hash}-"))
-      .tempfile_in(&self.incoming)
+    let (file, temp_path) = transfer_tempfile(hash, &self.incoming)
       .context(server_error::FilesystemIo {
         path: &self.incoming,
       })?

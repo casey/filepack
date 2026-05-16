@@ -44,13 +44,9 @@ impl Download {
       .filter(|parent| !parent.as_str().is_empty())
       .unwrap_or(Utf8Path::new("."));
 
-    let tempfile = tempfile::Builder::new()
-      .prefix(&format!("{}-", self.hash))
-      .suffix(".incomplete")
-      .tempfile_in(output_directory)
-      .context(error::FilesystemIo {
-        path: output_directory,
-      })?;
+    let tempfile = transfer_tempfile(self.hash, output_directory).context(error::FilesystemIo {
+      path: output_directory,
+    })?;
 
     let mut writer = HashingWriter::new(tempfile);
 
