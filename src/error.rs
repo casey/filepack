@@ -90,6 +90,12 @@ pub enum Error {
     path: DisplayPath,
     unknown: Ticked<String>,
   },
+  #[snafu(display("failed to get local data directory"))]
+  DownloadHashMismatch {
+    actual: Hash,
+    backtrace: Option<Backtrace>,
+    expected: Hash,
+  },
   #[snafu(display(
     "duplicate key: {}",
     if first == second {

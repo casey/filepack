@@ -17,7 +17,7 @@ pub(crate) enum ServerError {
 impl ServerError {
   fn message(&self) -> String {
     match self {
-      Self::FilesystemIo { .. } => "error serving request: filesystem I/O error".into(),
+      Self::FilesystemIo { .. } => "filesystem I/O error".into(),
       Self::FileNotFound { .. } | Self::HashMismatch { .. } => self.to_string(),
     }
   }

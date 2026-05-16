@@ -29,6 +29,13 @@ impl Download {
 
     let file = response.bytes().context(error::ResponseBody { url })?;
 
+    let actual = Hash::bytes(&file);
+
+    ensure! {
+      actual == self.hash,
+      error::DownloadHashMismatch { actual, expected: self.hash },
+    }
+
     filesystem::write_new(&self.output, file)?;
 
     Ok(())
