@@ -43,8 +43,41 @@ impl Server {
     Ok(Self { files, incoming })
   }
 
-  pub(crate) fn write_file(&self, hash: Hash, contents: &[u8]) -> ServerResult {
-    let actual = Hash::bytes(contents);
+  pub(crate) async fn write_file(&self, hash: Hash, body: axum::body::Body) -> ServerResult {
+    let (file, temp_path) = tempfile::Builder::new()
+      .prefix(&format!("{hash}-"))
+      .tempfile_in(&self.incoming)
+      .context(server_error::FilesystemIo {
+        path: &self.incoming,
+      })?
+      .into_parts();
+
+    let temp_path_utf8 = Utf8Path::from_path(&temp_path).unwrap().to_owned();
+
+    let mut writer = tokio::io::BufWriter::new(tokio::fs::File::from_std(file));
+
+    let mut hasher = Hasher::new();
+
+    let mut stream = body.into_data_stream();
+
+    while let Some(chunk) = stream.next().await {
+      let chunk = chunk.context(server_error::UploadBodyRead)?;
+
+      hasher.update(&chunk);
+
+      writer
+        .write_all(&chunk)
+        .await
+        .context(server_error::FilesystemIo {
+          path: &temp_path_utf8,
+        })?;
+    }
+
+    writer.flush().await.context(server_error::FilesystemIo {
+      path: &temp_path_utf8,
+    })?;
+
+    let actual = Hash::from(hasher.finalize());
 
     ensure!(
       actual == hash,
@@ -56,29 +89,14 @@ impl Server {
 
     let path = self.files.join(hash.to_string());
 
-    if path
-      .try_exists()
+    if tokio::fs::try_exists(&path)
+      .await
       .context(server_error::FilesystemIo { path: &path })?
     {
       return Ok(());
     }
 
-    let mut tempfile = tempfile::Builder::new()
-      .prefix(&format!("{hash}-"))
-      .tempfile_in(&self.incoming)
-      .context(server_error::FilesystemIo {
-        path: &self.incoming,
-      })?;
-
-    let tempfile_path = Utf8Path::from_path(tempfile.path()).unwrap().to_owned();
-
-    tempfile
-      .write_all(contents)
-      .with_context(|_| server_error::FilesystemIo {
-        path: &tempfile_path,
-      })?;
-
-    tempfile
+    temp_path
       .persist(&path)
       .map_err(|error| error.error)
       .context(server_error::FilesystemIo { path: &path })?;

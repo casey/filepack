@@ -2,7 +2,7 @@ use {
   super::*,
   axum::{
     Router,
-    body::{Body, Bytes},
+    body::Body,
     extract::{Extension, Path},
     http::header,
     routing::{get, put},
@@ -120,8 +120,12 @@ impl Serve {
     Ok(())
   }
 
-  async fn upload(server: Extension<Arc<Server>>, hash: Path<Hash>, file: Bytes) -> ServerResult {
-    server.write_file(*hash, &file)
+  async fn upload(
+    Extension(server): Extension<Arc<Server>>,
+    Path(hash): Path<Hash>,
+    body: Body,
+  ) -> ServerResult {
+    server.write_file(hash, body).await
   }
 }
 
@@ -210,6 +214,54 @@ mod tests {
   }
 
   #[tokio::test]
+  async fn upload_creates_file() {
+    let server = TestServer::new();
+
+    let hash = Hash::bytes(b"bar");
+
+    let response = server.put(&format!("/{hash}"), b"bar").await;
+
+    assert_eq!(response.status(), StatusCode::OK);
+
+    assert_eq!(
+      fs::read(server.data_dir.join("files").join(hash.to_string())).unwrap(),
+      b"bar",
+    );
+
+    assert_eq!(
+      fs::read_dir(server.data_dir.join("incoming"))
+        .unwrap()
+        .count(),
+      0,
+    );
+  }
+
+  #[tokio::test]
+  async fn upload_short_circuits_when_file_exists() {
+    let server = TestServer::new();
+
+    let hash = Hash::bytes(b"bar");
+
+    server.write_file(hash, b"bar");
+
+    let response = server.put(&format!("/{hash}"), b"bar").await;
+
+    assert_eq!(response.status(), StatusCode::OK);
+
+    assert_eq!(
+      fs::read(server.data_dir.join("files").join(hash.to_string())).unwrap(),
+      b"bar",
+    );
+
+    assert_eq!(
+      fs::read_dir(server.data_dir.join("incoming"))
+        .unwrap()
+        .count(),
+      0,
+    );
+  }
+
+  #[tokio::test]
   async fn upload_with_wrong_hash_fails() {
     let server = TestServer::new();
 
@@ -225,6 +277,13 @@ mod tests {
     assert_eq!(
       str::from_utf8(&body).unwrap(),
       format!("expected upload with hash {expected} but got {actual}"),
+    );
+
+    assert_eq!(
+      fs::read_dir(server.data_dir.join("incoming"))
+        .unwrap()
+        .count(),
+      0,
     );
   }
 }
