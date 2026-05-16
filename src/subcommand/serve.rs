@@ -160,14 +160,6 @@ impl Serve {
     }
   }
 
-  fn listener_address(address: &str, port: u16) -> String {
-    if address.contains(':') {
-      format!("[{address}]:{port}")
-    } else {
-      format!("{address}:{port}")
-    }
-  }
-
   fn redirect_destination(acme_domains: &[String], https_port: u16) -> String {
     if https_port == 443 {
       format!("https://{}", acme_domains[0])
