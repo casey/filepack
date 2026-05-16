@@ -29,7 +29,10 @@ enum SpawnConfig {
 pub(crate) struct Serve {
   #[arg(help = "Store ACME TLS certificates in <ACME_CACHE>", long)]
   acme_cache: Option<Utf8PathBuf>,
-  #[arg(help = "Provide ACME contact <ACME_CONTACT>", long)]
+  #[arg(
+    help = "Provide ACME contact <ACME_CONTACT>, email addresses must include `mailto:` prefix",
+    long
+  )]
   acme_contact: Vec<String>,
   #[arg(
     help = "Request ACME TLS certificate for <ACME_DOMAIN>, this server must be reachable at <ACME_DOMAIN>:443 to respond to Let's Encrypt ACME challenges",
