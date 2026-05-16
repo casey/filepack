@@ -9,10 +9,7 @@ use {
   },
   axum_server::Handle,
   rustls_acme::{
-    AcmeConfig,
-    acme::{LETS_ENCRYPT_PRODUCTION_DIRECTORY, LETS_ENCRYPT_STAGING_DIRECTORY},
-    axum::AxumAcceptor,
-    caches::DirCache,
+    AcmeConfig, acme::LETS_ENCRYPT_PRODUCTION_DIRECTORY, axum::AxumAcceptor, caches::DirCache,
   },
   std::net::TcpStream,
   sysinfo::System,
@@ -35,26 +32,27 @@ pub(crate) struct Serve {
   #[arg(help = "Provide ACME contact <ACME_CONTACT>", long)]
   acme_contact: Vec<String>,
   #[arg(
-    help = "Request ACME TLS certificate for <ACME_DOMAIN>. This filepack instance must be reachable at <ACME_DOMAIN>:443 to respond to Let's Encrypt ACME challenges.",
+    help = "Request ACME TLS certificate for <ACME_DOMAIN>, this server must be reachable at <ACME_DOMAIN>:443 to respond to Let's Encrypt ACME challenges",
     long
   )]
   acme_domain: Vec<String>,
   #[arg(
-    help = "Listen on <ADDRESS> for incoming requests. [default: 0.0.0.0]",
+    default_value = "0.0.0.0",
+    help = "Listen on <ADDRESS> for incoming requests",
     long
   )]
-  address: Option<String>,
+  address: String,
   #[arg(help = "Serve HTTP traffic", long)]
   http: bool,
   #[arg(
-    help = "Listen on <HTTP_PORT> for incoming HTTP requests. [default: 80]",
+    help = "Listen on <HTTP_PORT> for incoming HTTP requests [default: 80]",
     long
   )]
   http_port: Option<u16>,
   #[arg(help = "Serve HTTPS traffic", long)]
   https: bool,
   #[arg(
-    help = "Listen on <HTTPS_PORT> for incoming HTTPS requests. [default: 443]",
+    help = "Listen on <HTTPS_PORT> for incoming HTTPS requests [default: 443]",
     long
   )]
   https_port: Option<u16>,
@@ -81,11 +79,7 @@ impl Serve {
     let config = AcmeConfig::new(self.acme_domains()?)
       .contact(&self.acme_contact)
       .cache_option(Some(DirCache::new(acme_cache)))
-      .directory(if cfg!(test) {
-        LETS_ENCRYPT_STAGING_DIRECTORY
-      } else {
-        LETS_ENCRYPT_PRODUCTION_DIRECTORY
-      });
+      .directory(LETS_ENCRYPT_PRODUCTION_DIRECTORY);
 
     let mut state = config.state();
 
@@ -122,10 +116,6 @@ impl Serve {
     } else {
       Ok(self.acme_domain.clone())
     }
-  }
-
-  fn address(&self) -> String {
-    self.address.clone().unwrap_or("0.0.0.0".into())
   }
 
   async fn download(
@@ -246,26 +236,20 @@ impl Serve {
 
     match (http_port, https_port) {
       (Some(http_port), None) => {
-        Self::serve_listener(
-          router,
-          handle,
-          self.address(),
-          http_port,
-          SpawnConfig::Http,
-          self.ready_address,
-        )
-        .await?;
+        self
+          .spawn(router, handle, http_port, SpawnConfig::Http, true)
+          .await?;
       }
       (None, Some(https_port)) => {
-        Self::serve_listener(
-          router,
-          handle,
-          self.address(),
-          https_port,
-          SpawnConfig::Https(self.acceptor(acme_cache)?),
-          self.ready_address,
-        )
-        .await?;
+        self
+          .spawn(
+            router,
+            handle,
+            https_port,
+            SpawnConfig::Https(self.acceptor(acme_cache)?),
+            true,
+          )
+          .await?;
       }
       (Some(http_port), Some(https_port)) => {
         let acme_domains = self.acme_domains()?;
@@ -276,21 +260,19 @@ impl Serve {
         };
 
         tokio::try_join!(
-          Self::serve_listener(
+          self.spawn(
             router.clone(),
             handle.clone(),
-            self.address(),
             http_port,
             http_spawn_config,
-            self.ready_address,
+            true,
           ),
-          Self::serve_listener(
+          self.spawn(
             router,
             handle,
-            self.address(),
             https_port,
             SpawnConfig::Https(self.acceptor(acme_cache)?),
-            None,
+            false,
           ),
         )?;
       }
@@ -300,23 +282,23 @@ impl Serve {
     Ok(())
   }
 
-  async fn serve_listener(
+  async fn spawn(
+    &self,
     router: Router,
     handle: Handle<SocketAddr>,
-    address: String,
     port: u16,
     config: SpawnConfig,
-    ready_address: Option<SocketAddr>,
+    ready: bool,
   ) -> Result {
-    let listener = TcpListener::bind((address.as_str(), port))
+    let listener = TcpListener::bind((self.address.as_str(), port))
       .await
       .context(error::BindListener {
-        address: Self::listener_address(&address, port),
+        address: Self::listener_address(&self.address, port),
       })?
       .into_std()
       .context(error::ListenerIntoStandard)?;
 
-    if let Some(address) = ready_address {
+    if ready && let Some(address) = self.ready_address {
       let port = listener.local_addr().context(error::LocalAddress)?.port();
 
       let mut stream = TcpStream::connect(address).context(error::ReadyAddress { address })?;
@@ -585,7 +567,7 @@ mod tests {
       acme_cache: None,
       acme_contact: Vec::new(),
       acme_domain: Vec::new(),
-      address: None,
+      address: "0.0.0.0".into(),
       http: false,
       http_port: None,
       https: false,

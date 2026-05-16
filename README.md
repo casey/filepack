@@ -152,8 +152,10 @@ filepack verify --print | jq
 Start a file server. The filepack server has no authentication or disk
 usage quota and should be considered experimental.
 
+To serve HTTP on `0.0.0.0:80`:
+
 ```shell
-filepack serve --address 0.0.0.0 --http-port 80
+filepack serve
 ```
 
 Files can be uploaded with `filepack upload` and downloaded with
