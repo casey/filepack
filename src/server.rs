@@ -7,15 +7,7 @@ pub(crate) struct Server {
 
 impl Server {
   pub(crate) fn new(options: Options) -> Result<Self> {
-    let data_dir = options.data_dir()?;
-
-    let files = data_dir.join("files");
-    filesystem::create_dir_all(&files)?;
-
-    let incoming = data_dir.join("incoming");
-    filesystem::create_dir_all(&incoming)?;
-
-    Ok(Self { files, incoming })
+    Self::with_data_dir(&options.data_dir()?)
   }
 
   pub(crate) async fn open_file(&self, hash: Hash) -> ServerResult<(tokio::fs::File, u64)> {
@@ -39,6 +31,16 @@ impl Server {
       .len();
 
     Ok((file, len))
+  }
+
+  pub(crate) fn with_data_dir(data_dir: &Utf8Path) -> Result<Self> {
+    let files = data_dir.join("files");
+    filesystem::create_dir_all(&files)?;
+
+    let incoming = data_dir.join("incoming");
+    filesystem::create_dir_all(&incoming)?;
+
+    Ok(Self { files, incoming })
   }
 
   pub(crate) fn write_file(&self, hash: Hash, contents: &[u8]) -> ServerResult {

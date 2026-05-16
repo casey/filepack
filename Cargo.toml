@@ -43,7 +43,7 @@ sha2 = "0.10"
 snafu = "0.8.4"
 strum = { version = "0.27.2", features = ["derive"] }
 tempfile = "3.24.0"
-tokio = { version = "1.52.3", features = ["fs", "rt-multi-thread"] }
+tokio = { version = "1.52.3", features = ["fs", "macros", "rt-multi-thread"] }
 tokio-util = { version = "0.7.18", features = ["io"] }
 url = "2.5.8"
 usized = "0.0.2"
@@ -51,6 +51,7 @@ walkdir = "2.5.0"
 
 [dev-dependencies]
 pretty_assertions = "1.4.1"
+tower = { version = "0.5.3", features = ["util"] }
 
 [lib]
 doctest = false

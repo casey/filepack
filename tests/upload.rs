@@ -1,4 +1,4 @@
-use {super::*, reqwest::StatusCode};
+use super::*;
 
 #[test]
 fn reupload_succeeds() {
@@ -30,32 +30,6 @@ fn upload_creates_file() {
     .write("foo", "bar")
     .args(["upload", "--server", &server.address(), "--file", "foo"])
     .success();
-
-  server.terminate().success();
-}
-
-#[test]
-fn upload_with_wrong_hash_fails() {
-  let server = Test::new()
-    .args(["serve", "--address", "127.0.0.1:0"])
-    .ready_address()
-    .spawn();
-
-  let actual = Hash::bytes(b"bar");
-  let expected = Hash::bytes(b"baz");
-
-  let response = reqwest::blocking::Client::new()
-    .put(format!("{}/{expected}", server.address()))
-    .body("bar")
-    .send()
-    .unwrap();
-
-  assert_eq!(response.status(), StatusCode::BAD_REQUEST);
-
-  assert_eq!(
-    response.text().unwrap(),
-    format!("expected upload with hash {expected} but got {actual}"),
-  );
 
   server.terminate().success();
 }
