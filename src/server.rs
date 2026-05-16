@@ -32,7 +32,7 @@ impl Server {
 
     ensure!(
       actual == hash,
-      server_error::HashMismatch {
+      server_error::UploadHashMismatch {
         actual,
         expected: hash,
       },
