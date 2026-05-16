@@ -59,7 +59,7 @@ impl Server {
     let mut stream = body.into_data_stream();
 
     while let Some(chunk) = stream.next().await {
-      let chunk = chunk.context(server_error::UploadBodyRead)?;
+      let chunk = chunk.context(server_error::UploadBodyRead { hash })?;
 
       hasher.update(&chunk);
 

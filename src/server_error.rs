@@ -10,8 +10,8 @@ pub(crate) enum ServerError {
     path: Utf8PathBuf,
     source: io::Error,
   },
-  #[snafu(display("error reading upload body"))]
-  UploadBodyRead { source: axum::Error },
+  #[snafu(display("error reading body of upload with hash {hash}"))]
+  UploadBodyRead { hash: Hash, source: axum::Error },
   #[snafu(display("expected upload with hash {expected} but got {actual}"))]
   UploadHashMismatch { actual: Hash, expected: Hash },
 }
