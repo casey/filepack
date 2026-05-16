@@ -1,7 +1,4 @@
-use {
-  super::*,
-  reqwest::{StatusCode, Version},
-};
+use {super::*, reqwest::Version};
 
 #[test]
 fn http1_is_supported() {

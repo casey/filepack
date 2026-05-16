@@ -3,6 +3,7 @@ use {
   camino::{Utf8Path, Utf8PathBuf},
   filepack::{Encoder, Hash, Manifest, PrivateKey, PublicKey, assert_matches},
   regex::Regex,
+  reqwest::StatusCode,
   std::{
     collections::BTreeMap,
     fs,
