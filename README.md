@@ -147,6 +147,14 @@ ensure that you the manifest has been verified before proceeding:
 filepack verify --print | jq
 ```
 
+### `filepack serve`
+
+Start an HTTP file server.
+
+```shell
+filepack serve --address 0.0.0.0:80
+```
+
 Data Directory
 --------------
 
