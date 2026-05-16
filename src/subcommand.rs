@@ -55,7 +55,7 @@ pub(crate) enum Subcommand {
   Contains(contains::Contains),
   #[command(about = "Create manifest")]
   Create(create::Create),
-  #[command(about = "Download file from node")]
+  #[command(about = "Download file from server")]
   Download(download::Download),
   #[command(about = "List manifest files")]
   Files(files::Files),
@@ -87,7 +87,7 @@ pub(crate) enum Subcommand {
   Signatures(signatures::Signatures),
   #[command(about = "Print manifest total file size")]
   Size(size::Size),
-  #[command(about = "Upload file to node")]
+  #[command(about = "Upload file to server")]
   Upload(upload::Upload),
   #[command(about = "Verify manifest")]
   Verify(verify::Verify),
