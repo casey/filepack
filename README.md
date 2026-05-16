@@ -149,11 +149,15 @@ filepack verify --print | jq
 
 ### `filepack serve`
 
-Start an HTTP file server.
+Start an HTTP file server. The filepack server has no authentication or disk
+usage quota and should be considered experimental.
 
 ```shell
 filepack serve --address 0.0.0.0:80
 ```
+
+Files can be uploaded with `filepack upload` and downloaded with
+`filepack download`.
 
 Data Directory
 --------------
