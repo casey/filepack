@@ -74,7 +74,7 @@ pub(crate) struct Serve {
     value_name = "ADDRESS"
   )]
   ready_address: Option<SocketAddr>,
-  #[arg(help = "Redirect HTTP traffic to HTTPS", long)]
+  #[arg(help = "Redirect HTTP to HTTPS", long)]
   redirect_http_to_https: bool,
 }
 
