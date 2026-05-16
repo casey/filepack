@@ -103,13 +103,6 @@ impl Serve {
     Ok(acceptor)
   }
 
-  fn acme_cache(acme_cache: Option<&Utf8PathBuf>, data_dir: &Utf8Path) -> Utf8PathBuf {
-    match acme_cache {
-      Some(acme_cache) => acme_cache.clone(),
-      None => data_dir.join("acme-cache"),
-    }
-  }
-
   fn acme_domains(&self) -> Result<Vec<String>> {
     if self.acme_domain.is_empty() {
       Ok(vec![System::host_name().context(error::Hostname)?])
@@ -226,7 +219,10 @@ impl Serve {
     }
 
     let data_dir = options.data_dir()?;
-    let acme_cache = Self::acme_cache(self.acme_cache.as_ref(), &data_dir);
+    let acme_cache = self
+      .acme_cache
+      .clone()
+      .unwrap_or_else(|| data_dir.join("acme-cache"));
     let http_port = self.http_port();
     let https_port = self.https_port();
 
@@ -416,21 +412,6 @@ mod tests {
     fn write_file(&self, hash: Hash, content: &[u8]) {
       fs::write(self.data_dir.join("files").join(hash.to_string()), content).unwrap();
     }
-  }
-
-  #[test]
-  fn acme_cache() {
-    let data_dir = Utf8PathBuf::from("foo");
-
-    assert_eq!(
-      Serve::acme_cache(None, &data_dir),
-      data_dir.join("acme-cache")
-    );
-
-    assert_eq!(
-      Serve::acme_cache(Some(&Utf8PathBuf::from("bar")), &data_dir),
-      Utf8PathBuf::from("bar"),
-    );
   }
 
   #[test]
