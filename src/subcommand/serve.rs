@@ -245,10 +245,11 @@ impl Serve {
           .await?;
       }
       (Some(http_port), Some(https_port)) => {
-        let acme_domains = self.acme_domains()?;
-
         let http_spawn_config = if self.redirect_http_to_https {
-          SpawnConfig::Redirect(Self::redirect_destination(&acme_domains, https_port))
+          SpawnConfig::Redirect(Self::redirect_destination(
+            &self.acme_domains()?,
+            https_port,
+          ))
         } else {
           SpawnConfig::Http
         };
