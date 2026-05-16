@@ -298,7 +298,11 @@ impl Serve {
     let listener = TcpListener::bind((self.address.as_str(), port))
       .await
       .context(error::BindListener {
-        address: Self::listener_address(&self.address, port),
+        address: if address.contains(':') {
+          format!("[{}]:{port}", self.address)
+        } else {
+          format!("{}:{port}", self.address)
+        },
       })?
       .into_std()
       .context(error::ListenerIntoStandard)?;
