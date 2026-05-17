@@ -1,24 +1,22 @@
 use super::*;
 
 pub(crate) trait ReqwestResultExt {
-  fn check_status(self, url: &Url) -> Result<reqwest::blocking::Response>;
+  fn check_status(self) -> Result<reqwest::blocking::Response>;
 }
 
 impl ReqwestResultExt for reqwest::Result<reqwest::blocking::Response> {
-  fn check_status(self, url: &Url) -> Result<reqwest::blocking::Response> {
-    let response = self.with_context(|_| error::Request { url: url.clone() })?;
+  fn check_status(self) -> Result<reqwest::blocking::Response> {
+    let response = self.context(error::Request)?;
 
-    if !response.status().is_success() {
-      return Err(
-        error::ResponseStatus {
-          status: response.status(),
-          url: url.clone(),
-          body: response
-            .text()
-            .with_context(|_| error::ResponseBody { url: url.clone() })?,
-        }
-        .build(),
-      );
+    let status = response.status();
+    let url = response.url().clone();
+
+    if !status.is_success() {
+      let body = response
+        .text()
+        .with_context(|_| error::ResponseBody { url: url.clone() })?;
+
+      return Err(error::ResponseStatus { status, url, body }.build());
     }
 
     Ok(response)

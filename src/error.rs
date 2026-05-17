@@ -294,11 +294,10 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     source: io::Error,
   },
-  #[snafu(display("request to {url} failed"))]
+  #[snafu(display("request failed"))]
   Request {
     backtrace: Option<Backtrace>,
     source: reqwest::Error,
-    url: Url,
   },
   #[snafu(display("failed to read body from response from {url}"))]
   ResponseBody {
@@ -363,7 +362,7 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
-  #[snafu(display("failed to get curent time"))]
+  #[snafu(display("failed to get current time"))]
   Time {
     backtrace: Option<Backtrace>,
     source: SystemTimeError,

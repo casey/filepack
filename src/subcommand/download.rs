@@ -138,7 +138,7 @@ impl Download {
       .join(&hash.to_string())
       .context(error::UrlParse)?;
 
-    let response = Client::new().get(url.clone()).send().check_status(&url)?;
+    let response = Client::new().get(url).send().check_status()?;
 
     Ok(response)
   }

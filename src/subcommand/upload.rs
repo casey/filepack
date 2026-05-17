@@ -30,11 +30,7 @@ impl Upload {
       .join(&hash.to_string())
       .context(error::UrlParse)?;
 
-    Client::new()
-      .put(url.clone())
-      .body(body)
-      .send()
-      .check_status(&url)?;
+    Client::new().put(url).body(body).send().check_status()?;
 
     Ok(())
   }
