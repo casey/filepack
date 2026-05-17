@@ -12,8 +12,12 @@ pub(crate) struct Archive {
 }
 
 impl Archive {
-  pub(crate) const PACKAGE: &str = "package";
-  pub(crate) const SIGNATURES: &str = "signatures";
+  const PACKAGE: &str = "package";
+  const SIGNATURES: &str = "signatures";
+
+  pub(crate) fn signatures_component() -> &'static Component {
+    Component::new(Self::SIGNATURES).unwrap()
+  }
 
   fn decode_directory(
     &self,
@@ -73,6 +77,10 @@ impl Archive {
     }
 
     builder.build_package(package, &manifest.signatures)
+  }
+
+  pub(crate) fn package_component() -> &'static Component {
+    Component::new(Self::PACKAGE).unwrap()
   }
 
   pub(crate) fn unpack(&self) -> Result<Manifest, ArchiveError> {

@@ -12,7 +12,7 @@ impl ArchiveBuilder {
   ) -> Archive {
     let mut root = BTreeMap::new();
 
-    root.insert(Archive::PACKAGE.parse::<ComponentBuf>().unwrap(), package);
+    root.insert(Archive::package_component().to_owned(), package);
 
     let mut entries = BTreeMap::new();
     for (i, signature) in signatures.iter().enumerate() {
@@ -29,7 +29,7 @@ impl ArchiveBuilder {
 
     let signatures = self.entry(EntryType::Directory, signatures.encode_to_vec());
 
-    root.insert(Archive::SIGNATURES.parse().unwrap(), signatures);
+    root.insert(Archive::signatures_component().to_owned(), signatures);
 
     let root = Directory {
       entries: root,
