@@ -87,18 +87,47 @@ impl Download {
 
       let directory = Directory::decode_from_slice(&cbor).unwrap();
 
-      files.insert(hash, cbor);
+      files.insert(hash, cbor.to_vec());
 
       filesystem::create_dir_all(&path)?;
 
       for (component, entry) in directory.entries {
         let path = path.join(component);
         match entry.ty {
-          EntryType::Directory => directories.push((hash, path)),
-          EntryType::File => self.download_file(hash, &path)?,
+          EntryType::Directory => directories.push((entry.hash, path)),
+          EntryType::File => self.download_file(entry.hash, &path)?,
         }
       }
     }
+
+    let mut builder = ArchiveBuilder::new();
+    builder.files = files;
+
+    let package = Entry {
+      ty: EntryType::Directory,
+      hash: root,
+      size: builder.files[&root].len().into_u64(),
+    };
+
+    let signatures = builder.entry(EntryType::Directory, Directory::default().encode_to_vec());
+
+    let root = Directory {
+      version: Version::Zero,
+      entries: BTreeMap::from([
+        ("package".parse().unwrap(), package),
+        ("signatures".parse().unwrap(), signatures),
+      ]),
+    };
+
+    let root = builder.entry(EntryType::Directory, root.encode_to_vec());
+
+    let archive = builder.build(root.hash);
+
+    filesystem::write(
+      &self.output.join(Manifest::FILENAME),
+      archive.encode_to_vec(),
+    )
+    .unwrap();
 
     Ok(())
   }
