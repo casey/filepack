@@ -71,6 +71,11 @@ impl Download {
   }
 
   pub(crate) fn download_package(self, root: Hash) -> Result {
+    ensure! {
+      !filesystem::exists(&self.output)?,
+      error::FileAlreadyExists { path: &self.output },
+    }
+
     let mut directories = vec![(root, self.output.clone())];
 
     let mut files = BTreeMap::new();

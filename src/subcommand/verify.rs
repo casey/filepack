@@ -126,30 +126,7 @@ fingerprint mismatch: `{source}`
 
     if !mismatches.is_empty() {
       for (path, (actual, expected)) in &mismatches {
-        let style = Style::stderr();
-
-        let hash_style = if expected.hash == actual.hash {
-          style.good()
-        } else {
-          style.bad()
-        };
-
-        let size_style = if expected.size == actual.size {
-          style.good()
-        } else {
-          style.bad()
-        };
-
-        eprintln!(
-          "\
-mismatched file: `{path}`
-       manifest: {} ({} bytes)
-           file: {} ({} bytes)",
-          expected.hash.style(style.good()),
-          expected.size.style(style.good()),
-          actual.hash.style(hash_style),
-          actual.size.style(size_style),
-        );
+        File::eprint_mismatch(*actual, **expected, path.as_ref());
       }
 
       return Err(

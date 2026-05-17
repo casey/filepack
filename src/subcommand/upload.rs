@@ -48,6 +48,28 @@ impl Upload {
     Ok(())
   }
 
+  fn upload_package_file(&self, path: &Utf8Path, expected: &Entry, options: &Options) -> Result {
+    let actual = options
+      .hash_file(path)
+      .context(error::FilesystemIo { path })?;
+
+    let expected = File {
+      hash: expected.hash,
+      size: expected.size,
+    };
+
+    if actual != expected {
+      File::eprint_mismatch(actual, expected, path.as_ref());
+      return Err(error::FileMismatch { path }.build());
+    }
+
+    let file = filesystem::open(path)?;
+
+    self.upload_body(expected.hash, file.into())?;
+
+    Ok(())
+  }
+
   fn upload_package(&self, archive_path: &Utf8Path, options: Options) -> Result {
     let archive = Archive::load_with_path(archive_path, archive_path)?;
 
@@ -75,7 +97,7 @@ impl Upload {
         let path = path.join(component);
         match entry.ty {
           EntryType::Directory => directories.push((entry.hash, path)),
-          EntryType::File => self.upload_file(&path, &options)?,
+          EntryType::File => self.upload_package_file(&path, &entry, &options)?,
         }
       }
     }
