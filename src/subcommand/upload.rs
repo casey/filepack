@@ -66,7 +66,10 @@ impl Upload {
   fn upload_package(&self, path: &Utf8Path, options: Options) -> Result {
     let archive = Archive::load_with_path(path, path)?;
 
-    let mut directories = vec![(archive.root, path.parent().unwrap().to_owned())];
+    let mut directories = vec![(
+      archive.fingerprint().into(),
+      path.parent().unwrap().to_owned(),
+    )];
 
     while let Some((hash, path)) = directories.pop() {
       let directory = archive.files.get(&hash).unwrap();

@@ -27,6 +27,12 @@ impl From<blake3::Hash> for Hash {
   }
 }
 
+impl From<Fingerprint> for Hash {
+  fn from(fingerprint: Fingerprint) -> Self {
+    fingerprint.0
+  }
+}
+
 impl From<[u8; Hash::LEN]> for Hash {
   fn from(bytes: [u8; Hash::LEN]) -> Self {
     Self(bytes.into())

@@ -160,13 +160,6 @@ impl Serve {
     }
   }
 
-  async fn package(
-    server: Extension<Arc<Server>>,
-    Path(hash): Path<Hash>,
-  ) -> ServerResult<Response> {
-    todo!()
-  }
-
   fn redirect_destination(acme_domains: &[String], https_port: u16) -> String {
     if https_port == 443 {
       format!("https://{}", acme_domains[0])
@@ -188,7 +181,6 @@ impl Serve {
 
   pub(crate) fn router(server: Arc<Server>) -> Router {
     Router::new()
-      .route("/package/{hash}", put(Self::package))
       .route("/{hash}", get(Self::download))
       .route("/{hash}", put(Self::upload))
       .layer(Extension(server))
