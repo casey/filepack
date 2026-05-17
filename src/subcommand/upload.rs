@@ -30,22 +30,11 @@ impl Upload {
       .join(&hash.to_string())
       .context(error::UrlParse)?;
 
-    let response = Client::new()
+    Client::new()
       .put(url.clone())
       .body(body)
       .send()
-      .with_context(|_| error::Request { url: url.clone() })?;
-
-    if !response.status().is_success() {
-      return Err(
-        error::ResponseStatus {
-          status: response.status(),
-          url: url.clone(),
-          body: response.text().context(error::ResponseBody { url })?,
-        }
-        .build(),
-      );
-    }
+      .check_status(&url)?;
 
     Ok(())
   }

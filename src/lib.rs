@@ -69,6 +69,7 @@ use {
     path_error::PathError,
     private_key_error::PrivateKeyError,
     public_key_error::PublicKeyError,
+    reqwest_result_ext::ReqwestResultExt,
     server::Server,
     server_error::ServerError,
     sign_options::SignOptions,
@@ -249,6 +250,7 @@ mod public_key;
 mod public_key_error;
 mod re;
 mod relative_path;
+mod reqwest_result_ext;
 mod server;
 mod server_error;
 mod sign_options;

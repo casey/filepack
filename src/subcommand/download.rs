@@ -138,21 +138,7 @@ impl Download {
       .join(&hash.to_string())
       .context(error::UrlParse)?;
 
-    let response = Client::new()
-      .get(url.clone())
-      .send()
-      .with_context(|_| error::Request { url: url.clone() })?;
-
-    if !response.status().is_success() {
-      return Err(
-        error::ResponseStatus {
-          status: response.status(),
-          url: url.clone(),
-          body: response.text().context(error::ResponseBody { url })?,
-        }
-        .build(),
-      );
-    }
+    let response = Client::new().get(url.clone()).send().check_status(&url)?;
 
     Ok(response)
   }
