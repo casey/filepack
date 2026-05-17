@@ -74,6 +74,45 @@ fn download_fails_with_404_when_file_missing() {
 }
 
 #[test]
+fn download_package_fails_if_output_directory_already_exists() {
+  let server = Test::new().serve().spawn();
+
+  let test = Test::new()
+    .write("foo", "aaa")
+    .args(["create", "."])
+    .success();
+
+  let manifest = Manifest::load(Some(&test.path().join("manifest.filepack"))).unwrap();
+  let package = Hash::from(manifest.fingerprint());
+
+  test
+    .args([
+      "upload",
+      "--server",
+      &server.address(),
+      "--package",
+      "manifest.filepack",
+    ])
+    .success();
+
+  Test::new()
+    .create_dir("out")
+    .args([
+      "download",
+      "--server",
+      &server.address(),
+      "--package",
+      &package.to_string(),
+      "--output",
+      "out",
+    ])
+    .stderr("error: file `out` already exists\n")
+    .failure();
+
+  server.terminate().success();
+}
+
+#[test]
 fn download_package_fails_if_output_file_already_exists() {
   let server = Test::new().serve().spawn();
 
@@ -113,40 +152,31 @@ fn download_package_fails_if_output_file_already_exists() {
 }
 
 #[test]
-fn download_package_fails_if_output_directory_already_exists() {
-  let server = Test::new().serve().spawn();
-
-  let test = Test::new()
-    .write("foo", "aaa")
-    .args(["create", "."])
-    .success();
-
-  let manifest = Manifest::load(Some(&test.path().join("manifest.filepack"))).unwrap();
-  let package = Hash::from(manifest.fingerprint());
-
-  test
-    .args([
-      "upload",
-      "--server",
-      &server.address(),
-      "--package",
-      "manifest.filepack",
-    ])
-    .success();
+fn download_retrieves_file() {
+  let server = Test::new()
+    .serve()
+    .assert_file(&format!("files/{}", Hash::bytes(b"bar")), "bar")
+    .spawn();
 
   Test::new()
-    .create_dir("out")
+    .write("foo", "bar")
+    .args(["upload", "--server", &server.address(), "--file", "foo"])
+    .success();
+
+  let hash = Hash::bytes(b"bar");
+
+  Test::new()
     .args([
       "download",
       "--server",
       &server.address(),
-      "--package",
-      &package.to_string(),
+      "--file",
+      &hash.to_string(),
       "--output",
-      "out",
+      "foo",
     ])
-    .stderr("error: file `out` already exists\n")
-    .failure();
+    .assert_file("foo", "bar")
+    .success();
 
   server.terminate().success();
 }
@@ -201,36 +231,6 @@ fn download_retrieves_package() {
   downloaded
     .args(["verify", "out"])
     .stderr("successfully verified 4 files totaling 12 bytes\n")
-    .success();
-
-  server.terminate().success();
-}
-
-#[test]
-fn download_retrieves_file() {
-  let server = Test::new()
-    .serve()
-    .assert_file(&format!("files/{}", Hash::bytes(b"bar")), "bar")
-    .spawn();
-
-  Test::new()
-    .write("foo", "bar")
-    .args(["upload", "--server", &server.address(), "--file", "foo"])
-    .success();
-
-  let hash = Hash::bytes(b"bar");
-
-  Test::new()
-    .args([
-      "download",
-      "--server",
-      &server.address(),
-      "--file",
-      &hash.to_string(),
-      "--output",
-      "foo",
-    ])
-    .assert_file("foo", "bar")
     .success();
 
   server.terminate().success();

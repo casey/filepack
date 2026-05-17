@@ -5,6 +5,14 @@ pub(crate) struct ArchiveBuilder {
 }
 
 impl ArchiveBuilder {
+  pub(crate) fn build(self, root: Hash) -> Archive {
+    Archive {
+      files: self.files,
+      root,
+      version: Version::Zero,
+    }
+  }
+
   pub(crate) fn build_package(
     mut self,
     package: Entry,
@@ -39,14 +47,6 @@ impl ArchiveBuilder {
     let entry = self.entry(EntryType::Directory, root.encode_to_vec());
 
     self.build(entry.hash)
-  }
-
-  pub(crate) fn build(self, root: Hash) -> Archive {
-    Archive {
-      files: self.files,
-      root,
-      version: Version::Zero,
-    }
   }
 
   pub(crate) fn directory(&mut self, directory: &DirectoryTree) -> Entry {

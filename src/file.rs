@@ -8,14 +8,6 @@ pub(crate) struct File {
 }
 
 impl File {
-  #[cfg(test)]
-  pub(crate) fn new(bytes: &[u8]) -> Self {
-    Self {
-      hash: Hash::bytes(bytes),
-      size: bytes.len().into_u64(),
-    }
-  }
-
   pub(crate) fn eprint_mismatch(actual: Self, expected: Self, path: &str) {
     let style = Style::stderr();
 
@@ -41,6 +33,14 @@ mismatched file: `{path}`
       actual.hash.style(hash_style),
       actual.size.style(size_style),
     );
+  }
+
+  #[cfg(test)]
+  pub(crate) fn new(bytes: &[u8]) -> Self {
+    Self {
+      hash: Hash::bytes(bytes),
+      size: bytes.len().into_u64(),
+    }
   }
 }
 

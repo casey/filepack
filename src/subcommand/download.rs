@@ -18,14 +18,6 @@ pub(crate) struct Download {
 }
 
 impl Download {
-  pub(crate) fn run(self) -> Result {
-    match (self.file, self.package) {
-      (Some(hash), None) => self.download_file(hash, &self.output),
-      (None, Some(hash)) => self.download_package(hash),
-      (None, None) | (Some(_), Some(_)) => unreachable!(),
-    }
-  }
-
   pub(crate) fn download_file(&self, hash: Hash, path: &Utf8Path) -> Result {
     ensure! {
       !filesystem::exists(path)?,
@@ -136,5 +128,13 @@ impl Download {
     let response = Client::new().get(url).send().check_status()?;
 
     Ok(response)
+  }
+
+  pub(crate) fn run(self) -> Result {
+    match (self.file, self.package) {
+      (Some(hash), None) => self.download_file(hash, &self.output),
+      (None, Some(hash)) => self.download_package(hash),
+      (None, None) | (Some(_), Some(_)) => unreachable!(),
+    }
   }
 }

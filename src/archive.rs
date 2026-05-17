@@ -15,10 +15,6 @@ impl Archive {
   const PACKAGE: &str = "package";
   const SIGNATURES: &str = "signatures";
 
-  pub(crate) fn signatures_component() -> &'static Component {
-    Component::new(Self::SIGNATURES).unwrap()
-  }
-
   fn decode_directory(
     &self,
     loose: Option<&mut BTreeSet<Hash>>,
@@ -40,7 +36,7 @@ impl Archive {
     self
       .files
       .get(&hash)
-      .map(|file| file.as_slice())
+      .map(Vec::as_slice)
       .context(archive_error::FileMissing { hash })
   }
 
@@ -81,6 +77,10 @@ impl Archive {
 
   pub(crate) fn package_component() -> &'static Component {
     Component::new(Self::PACKAGE).unwrap()
+  }
+
+  pub(crate) fn signatures_component() -> &'static Component {
+    Component::new(Self::SIGNATURES).unwrap()
   }
 
   pub(crate) fn unpack(&self) -> Result<Manifest, ArchiveError> {

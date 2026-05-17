@@ -18,8 +18,8 @@ pub(crate) struct Upload {
 impl Upload {
   pub(crate) fn run(self, options: Options) -> Result {
     match (&self.file, &self.package) {
-      (Some(path), None) => self.upload_file(&path, &options),
-      (None, Some(path)) => self.upload_package(&path, options),
+      (Some(path), None) => self.upload_file(path, &options),
+      (None, Some(path)) => self.upload_package(path, options),
       (None, None) | (Some(_), Some(_)) => unreachable!(),
     }
   }
@@ -37,35 +37,13 @@ impl Upload {
 
   fn upload_file(&self, path: &Utf8Path, options: &Options) -> Result {
     let hash = options
-      .hash_file(&path)
+      .hash_file(path)
       .context(error::FilesystemIo { path })?
       .hash;
 
-    let file = filesystem::open(&path)?;
-
-    self.upload_body(hash, file.into())?;
-
-    Ok(())
-  }
-
-  fn upload_package_file(&self, path: &Utf8Path, expected: &Entry, options: &Options) -> Result {
-    let actual = options
-      .hash_file(path)
-      .context(error::FilesystemIo { path })?;
-
-    let expected = File {
-      hash: expected.hash,
-      size: expected.size,
-    };
-
-    if actual != expected {
-      File::eprint_mismatch(actual, expected, path.as_ref());
-      return Err(error::FileMismatch { path }.build());
-    }
-
     let file = filesystem::open(path)?;
 
-    self.upload_body(expected.hash, file.into())?;
+    self.upload_body(hash, file.into())?;
 
     Ok(())
   }
@@ -101,6 +79,28 @@ impl Upload {
         }
       }
     }
+
+    Ok(())
+  }
+
+  fn upload_package_file(&self, path: &Utf8Path, expected: &Entry, options: &Options) -> Result {
+    let actual = options
+      .hash_file(path)
+      .context(error::FilesystemIo { path })?;
+
+    let expected = File {
+      hash: expected.hash,
+      size: expected.size,
+    };
+
+    if actual != expected {
+      File::eprint_mismatch(actual, expected, path.as_ref());
+      return Err(error::FileMismatch { path }.build());
+    }
+
+    let file = filesystem::open(path)?;
+
+    self.upload_body(expected.hash, file.into())?;
 
     Ok(())
   }

@@ -16,7 +16,7 @@ impl ReqwestResultExt for reqwest::Result<reqwest::blocking::Response> {
         .text()
         .with_context(|_| error::ResponseBody { url: url.clone() })?;
 
-      return Err(error::ResponseStatus { status, url, body }.build());
+      return Err(error::ResponseStatus { body, status, url }.build());
     }
 
     Ok(response)
