@@ -81,7 +81,7 @@ impl Upload {
       for (component, entry) in directory.entries {
         let path = path.join(component);
         match entry.ty {
-          EntryType::Directory => directories.push((hash, path)),
+          EntryType::Directory => directories.push((entry.hash, path)),
           EntryType::File => self.upload_file(&path, &options)?,
         }
       }

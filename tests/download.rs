@@ -74,6 +74,61 @@ fn download_fails_with_404_when_file_missing() {
 }
 
 #[test]
+fn download_retrieves_package() {
+  let server = Test::new().serve().spawn();
+
+  let test = Test::new()
+    .write("foo", "aaa")
+    .write("bar", "bbb")
+    .create_dir("empty")
+    .write("sub/baz", "ccc")
+    .write("sub/qux", "ddd")
+    .args(["create", "."])
+    .success();
+
+  let manifest = Manifest::load(Some(&test.path().join("manifest.filepack"))).unwrap();
+  let package = Hash::from(manifest.fingerprint());
+
+  test
+    .args([
+      "upload",
+      "--server",
+      &server.address(),
+      "--package",
+      "manifest.filepack",
+    ])
+    .success();
+
+  let downloaded = Test::new()
+    .args([
+      "download",
+      "--server",
+      &server.address(),
+      "--package",
+      &package.to_string(),
+      "--output",
+      "out",
+    ])
+    .assert_file("out/foo", "aaa")
+    .assert_file("out/bar", "bbb")
+    .assert_file("out/sub/baz", "ccc")
+    .assert_file("out/sub/qux", "ddd")
+    .success();
+
+  assert_eq!(
+    Manifest::load(Some(&downloaded.path().join("out/manifest.filepack"))).unwrap(),
+    manifest,
+  );
+
+  downloaded
+    .args(["verify", "out"])
+    .stderr("successfully verified 4 files totaling 12 bytes\n")
+    .success();
+
+  server.terminate().success();
+}
+
+#[test]
 fn download_retrieves_file() {
   let server = Test::new()
     .serve()
