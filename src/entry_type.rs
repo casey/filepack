@@ -1,8 +1,9 @@
 use super::*;
 
 #[allow(clippy::arbitrary_source_item_ordering)]
-#[derive(Clone, Copy, Debug, Decode, Encode, PartialEq)]
-pub(crate) enum EntryType {
+#[derive(Clone, Copy, Debug, Decode, Encode, PartialEq, IntoStaticStr, Display)]
+#[strum(serialize_all = "kebab-case")]
+pub enum EntryType {
   #[n(0)]
   File,
   #[n(1)]

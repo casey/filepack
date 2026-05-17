@@ -48,20 +48,28 @@ impl Upload {
     Ok(())
   }
 
-  fn upload_package(&self, path: &Utf8Path, options: Options) -> Result {
-    let archive = Archive::load_with_path(path, path)?;
+  fn upload_package(&self, archive_path: &Utf8Path, options: Options) -> Result {
+    let archive = Archive::load_with_path(archive_path, archive_path)?;
+
+    let fingerprint = archive
+      .fingerprint()
+      .context(error::UnarchiveManifest { path: archive_path })?;
 
     let mut directories = vec![(
-      archive.fingerprint().into(),
-      path.parent().unwrap().to_owned(),
+      fingerprint.into(),
+      archive_path.parent().unwrap().to_owned(),
     )];
 
     while let Some((hash, path)) = directories.pop() {
-      let directory = archive.files.get(&hash).unwrap();
+      let cbor = archive
+        .file(hash)
+        .context(error::UnarchiveManifest { path: archive_path })?;
 
-      self.upload_body(hash, directory.clone().into())?;
+      let directory = Directory::decode_from_slice(cbor)
+        .context(archive_error::DirectoryDecode)
+        .context(error::UnarchiveManifest { path: archive_path })?;
 
-      let directory = Directory::decode_from_slice(directory).unwrap();
+      self.upload_body(hash, cbor.to_vec().into())?;
 
       for (component, entry) in directory.entries {
         let path = path.join(component);

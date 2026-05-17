@@ -46,7 +46,7 @@ impl Manifest {
   }
 
   pub fn fingerprint(&self) -> Fingerprint {
-    Archive::pack(self).fingerprint()
+    Archive::pack(self).fingerprint().unwrap()
   }
 
   pub(crate) fn from_json(json: &str, path: &Utf8Path) -> Result<Self> {

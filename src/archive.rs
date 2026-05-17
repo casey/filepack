@@ -17,7 +17,7 @@ impl Archive {
 
   fn decode_directory(
     &self,
-    loose: &mut BTreeSet<Hash>,
+    loose: Option<&mut BTreeSet<Hash>>,
     hash: Hash,
   ) -> Result<Directory, ArchiveError> {
     let file = self
@@ -25,15 +25,35 @@ impl Archive {
       .get(&hash)
       .context(archive_error::FileMissing { hash })?;
 
-    loose.remove(&hash);
+    if let Some(loose) = loose {
+      loose.remove(&hash);
+    }
 
     Directory::decode_from_slice(file).context(archive_error::DirectoryDecode)
   }
 
-  pub(crate) fn fingerprint(&self) -> Fingerprint {
-    let root = &self.files[&self.root];
-    let root = Directory::decode_from_slice(root).unwrap();
-    Fingerprint(root.entries[Self::PACKAGE].hash)
+  pub(crate) fn file(&self, hash: Hash) -> Result<&[u8], ArchiveError> {
+    self
+      .files
+      .get(&hash)
+      .map(|file| file.as_slice())
+      .context(archive_error::FileMissing { hash })
+  }
+
+  pub(crate) fn fingerprint(&self) -> Result<Fingerprint, ArchiveError> {
+    let root = self.decode_directory(None, self.root)?;
+
+    let package = root
+      .entries
+      .get(Self::PACKAGE)
+      .context(archive_error::PackageMissing)?;
+
+    ensure! {
+      package.ty == EntryType::Directory,
+      archive_error::PackageType { ty: package.ty },
+    }
+
+    Ok(Fingerprint(package.hash))
   }
 
   pub(crate) fn load_with_path(path: &Utf8Path, display_path: &Utf8Path) -> Result<Self> {
@@ -99,12 +119,17 @@ impl Archive {
       }
     }
 
-    let root = self.decode_directory(&mut loose, self.root)?;
+    let root = self.decode_directory(Some(&mut loose), self.root)?;
 
     let package = root
       .entries
       .get(Self::PACKAGE)
       .context(archive_error::PackageMissing)?;
+
+    ensure! {
+      package.ty == EntryType::Directory,
+      archive_error::PackageType { ty: package.ty },
+    }
 
     let mut embedded = BTreeMap::new();
 
@@ -116,7 +141,12 @@ impl Archive {
         .get(Self::SIGNATURES)
         .context(archive_error::SignaturesMissing)?;
 
-      let directory = self.decode_directory(&mut loose, entry.hash)?;
+      ensure! {
+        entry.ty == EntryType::Directory,
+        archive_error::SignaturesType { ty: entry.ty },
+      }
+
+      let directory = self.decode_directory(Some(&mut loose), entry.hash)?;
 
       let mut signatures = BTreeSet::new();
       for entry in directory.entries.values() {
@@ -166,7 +196,7 @@ impl Archive {
     entry: &Entry,
     prefix: Option<&RelativePath>,
   ) -> Result<DirectoryTree, ArchiveError> {
-    let directory = self.decode_directory(loose, entry.hash)?;
+    let directory = self.decode_directory(Some(loose), entry.hash)?;
 
     let mut entries = BTreeMap::new();
     for (name, entry) in &directory.entries {

@@ -13,10 +13,14 @@ pub enum ArchiveError {
   LooseFiles { hashes: Ticked<Hash> },
   #[snafu(display("archive missing package directory"))]
   PackageMissing,
+  #[snafu(display("expected archive `package` entry to be directory but found {ty}"))]
+  PackageType { ty: EntryType },
   #[snafu(display("failed to decode signature"))]
   SignatureDecode { source: DecodeError },
   #[snafu(display("archive missing signatures directory"))]
   SignaturesMissing,
+  #[snafu(display("expected archive `signature` entry to be directory but found {ty}"))]
+  SignaturesType { ty: EntryType },
   #[snafu(display("archive contains unexpected embedded files: {paths}"))]
   UnexpectedEmbeddedFiles { paths: Ticked<RelativePath> },
 }
