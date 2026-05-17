@@ -74,6 +74,84 @@ fn download_fails_with_404_when_file_missing() {
 }
 
 #[test]
+fn download_package_fails_if_output_file_already_exists() {
+  let server = Test::new().serve().spawn();
+
+  let test = Test::new()
+    .write("foo", "aaa")
+    .args(["create", "."])
+    .success();
+
+  let manifest = Manifest::load(Some(&test.path().join("manifest.filepack"))).unwrap();
+  let package = Hash::from(manifest.fingerprint());
+
+  test
+    .args([
+      "upload",
+      "--server",
+      &server.address(),
+      "--package",
+      "manifest.filepack",
+    ])
+    .success();
+
+  Test::new()
+    .write("out", "original")
+    .args([
+      "download",
+      "--server",
+      &server.address(),
+      "--package",
+      &package.to_string(),
+      "--output",
+      "out",
+    ])
+    .stderr("error: file `out` already exists\n")
+    .failure();
+
+  server.terminate().success();
+}
+
+#[test]
+fn download_package_fails_if_output_directory_already_exists() {
+  let server = Test::new().serve().spawn();
+
+  let test = Test::new()
+    .write("foo", "aaa")
+    .args(["create", "."])
+    .success();
+
+  let manifest = Manifest::load(Some(&test.path().join("manifest.filepack"))).unwrap();
+  let package = Hash::from(manifest.fingerprint());
+
+  test
+    .args([
+      "upload",
+      "--server",
+      &server.address(),
+      "--package",
+      "manifest.filepack",
+    ])
+    .success();
+
+  Test::new()
+    .create_dir("out")
+    .args([
+      "download",
+      "--server",
+      &server.address(),
+      "--package",
+      &package.to_string(),
+      "--output",
+      "out",
+    ])
+    .stderr("error: file `out` already exists\n")
+    .failure();
+
+  server.terminate().success();
+}
+
+#[test]
 fn download_retrieves_package() {
   let server = Test::new().serve().spawn();
 

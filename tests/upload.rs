@@ -63,6 +63,58 @@ fn upload_package_uploads_files() {
 }
 
 #[test]
+fn file_and_package_conflict() {
+  Test::new()
+    .args([
+      "upload",
+      "--server",
+      "http://127.0.0.1:1",
+      "--file",
+      "foo",
+      "--package",
+      "bar",
+    ])
+    .stderr_regex(
+      "error: the argument '--file <PATH>' cannot be used with '--package <PATH>'\n.*",
+    )
+    .status(2);
+}
+
+#[test]
+fn upload_package_checks_file_hashes_locally() {
+  let server = Test::new().serve().spawn();
+
+  let test = Test::new()
+    .write("foo", "aaa")
+    .args(["create", "."])
+    .success()
+    .write("foo", "bar");
+
+  let expected = Hash::bytes(b"aaa");
+  let actual = Hash::bytes(b"bar");
+
+  test
+    .args([
+      "upload",
+      "--server",
+      &server.address(),
+      "--package",
+      "manifest.filepack",
+    ])
+    .stderr(&format!(
+      "\
+mismatched file: `foo`
+       manifest: {expected} (3 bytes)
+           file: {actual} (3 bytes)
+error: 1 mismatched file
+",
+    ))
+    .failure();
+
+  server.terminate().success();
+}
+
+#[test]
 fn reupload_package_succeeds() {
   let server = Test::new()
     .serve()
