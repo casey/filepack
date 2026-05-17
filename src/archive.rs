@@ -36,6 +36,13 @@ impl Archive {
     Fingerprint(root.entries[Self::PACKAGE].hash)
   }
 
+  pub(crate) fn load_with_path(path: &Utf8Path, display_path: &Utf8Path) -> Result<Self> {
+    let cbor = filesystem::read_opt(path)?
+      .ok_or_else(|| error::ManifestNotFound { path: display_path }.build())?;
+
+    Self::decode_from_slice(&cbor).context(error::DecodeManifest { path: display_path })
+  }
+
   pub(crate) fn pack(manifest: &Manifest) -> Self {
     let mut builder = ArchiveBuilder::new();
 

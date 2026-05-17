@@ -1,4 +1,4 @@
-use {super::*, clap::ArgGroup};
+use {super::*, reqwest::blocking::Body};
 
 #[derive(Parser)]
 #[command(group(
@@ -9,7 +9,7 @@ use {super::*, clap::ArgGroup};
 pub(crate) struct Upload {
   #[arg(help = "Upload file at <PATH>", long, value_name = "PATH")]
   file: Option<Utf8PathBuf>,
-  #[arg(help = "Upload file at <PATH>", long, value_name = "PATH")]
+  #[arg(help = "Upload package at <PATH>", long, value_name = "PATH")]
   package: Option<Utf8PathBuf>,
   #[arg(help = "Upload to server at <URL>", long, value_name = "URL")]
   server: Url,
@@ -18,27 +18,21 @@ pub(crate) struct Upload {
 impl Upload {
   pub(crate) fn run(self, options: Options) -> Result {
     match (&self.file, &self.package) {
-      (Some(path), None) => self.upload_file(&path, options),
+      (Some(path), None) => self.upload_file(&path, &options),
       (None, Some(path)) => self.upload_package(&path, options),
       (None, None) | (Some(_), Some(_)) => unreachable!(),
     }
   }
 
-  pub(crate) fn upload_file(&self, path: &Utf8Path, options: Options) -> Result {
-    let file = options
-      .hash_file(&path)
-      .context(error::FilesystemIo { path })?;
-
+  fn upload_body(&self, hash: Hash, body: Body) -> Result {
     let url = self
       .server
-      .join(&file.hash.to_string())
+      .join(&hash.to_string())
       .context(error::UrlParse)?;
-
-    let file = filesystem::open(&path)?;
 
     let response = Client::new()
       .put(url.clone())
-      .body(file)
+      .body(body)
       .send()
       .with_context(|_| error::Request { url: url.clone() })?;
 
@@ -52,10 +46,44 @@ impl Upload {
         .build(),
       );
     }
+
     Ok(())
   }
 
-  pub(crate) fn upload_package(&self, path: &Utf8Path, options: Options) -> Result {
-    todo!()
+  fn upload_file(&self, path: &Utf8Path, options: &Options) -> Result {
+    let hash = options
+      .hash_file(&path)
+      .context(error::FilesystemIo { path })?
+      .hash;
+
+    let file = filesystem::open(&path)?;
+
+    self.upload_body(hash, file.into())?;
+
+    Ok(())
+  }
+
+  fn upload_package(&self, path: &Utf8Path, options: Options) -> Result {
+    let archive = Archive::load_with_path(path, path)?;
+
+    let mut directories = vec![(archive.root, path.parent().unwrap().to_owned())];
+
+    while let Some((hash, path)) = directories.pop() {
+      let directory = archive.files.get(&hash).unwrap();
+
+      self.upload_body(hash, directory.clone().into())?;
+
+      let directory = Directory::decode_from_slice(directory).unwrap();
+
+      for (component, entry) in directory.entries {
+        let path = path.join(component);
+        match entry.ty {
+          EntryType::Directory => directories.push((hash, path)),
+          EntryType::File => self.upload_file(&path, &options)?,
+        }
+      }
+    }
+
+    Ok(())
   }
 }
