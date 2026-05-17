@@ -12,8 +12,8 @@ pub(crate) struct Archive {
 }
 
 impl Archive {
-  const PACKAGE: &str = "package";
-  const SIGNATURES: &str = "signatures";
+  pub(crate) const PACKAGE: &str = "package";
+  pub(crate) const SIGNATURES: &str = "signatures";
 
   fn decode_directory(
     &self,
@@ -72,35 +72,7 @@ impl Archive {
       builder.files.insert(*hash, content.clone());
     }
 
-    let mut root = BTreeMap::new();
-
-    root.insert(Self::PACKAGE.parse::<ComponentBuf>().unwrap(), package);
-
-    let mut entries = BTreeMap::new();
-    for (i, signature) in manifest.signatures.iter().enumerate() {
-      entries.insert(
-        i.to_string().parse::<ComponentBuf>().unwrap(),
-        builder.entry(EntryType::File, signature.encode_to_vec()),
-      );
-    }
-
-    let signatures = Directory {
-      entries,
-      version: Version::Zero,
-    };
-
-    let signatures = builder.entry(EntryType::Directory, signatures.encode_to_vec());
-
-    root.insert(Self::SIGNATURES.parse().unwrap(), signatures);
-
-    let root = Directory {
-      entries: root,
-      version: Version::Zero,
-    };
-
-    let entry = builder.entry(EntryType::Directory, root.encode_to_vec());
-
-    builder.build(entry.hash)
+    builder.build_package(package, &manifest.signatures)
   }
 
   pub(crate) fn unpack(&self) -> Result<Manifest, ArchiveError> {

@@ -83,9 +83,12 @@ impl Download {
 
       let response = self.get_file(hash)?;
 
-      let cbor = response.bytes().context(error::ResponseBody { url })?;
+      let cbor = response
+        .bytes()
+        .with_context(|_| error::ResponseBody { url: url.clone() })?;
 
-      let directory = Directory::decode_from_slice(&cbor).unwrap();
+      let directory =
+        Directory::decode_from_slice(&cbor).context(error::DecodeResponseDirectory { url })?;
 
       files.insert(hash, cbor.to_vec());
 
@@ -109,25 +112,12 @@ impl Download {
       size: builder.files[&root].len().into_u64(),
     };
 
-    let signatures = builder.entry(EntryType::Directory, Directory::default().encode_to_vec());
-
-    let root = Directory {
-      version: Version::Zero,
-      entries: BTreeMap::from([
-        ("package".parse().unwrap(), package),
-        ("signatures".parse().unwrap(), signatures),
-      ]),
-    };
-
-    let root = builder.entry(EntryType::Directory, root.encode_to_vec());
-
-    let archive = builder.build(root.hash);
+    let archive = builder.build_package(package, &BTreeSet::new());
 
     filesystem::write(
       &self.output.join(Manifest::FILENAME),
       archive.encode_to_vec(),
-    )
-    .unwrap();
+    )?;
 
     Ok(())
   }

@@ -5,6 +5,42 @@ pub(crate) struct ArchiveBuilder {
 }
 
 impl ArchiveBuilder {
+  pub(crate) fn build_package(
+    mut self,
+    package: Entry,
+    signatures: &BTreeSet<Signature>,
+  ) -> Archive {
+    let mut root = BTreeMap::new();
+
+    root.insert(Archive::PACKAGE.parse::<ComponentBuf>().unwrap(), package);
+
+    let mut entries = BTreeMap::new();
+    for (i, signature) in signatures.iter().enumerate() {
+      entries.insert(
+        i.to_string().parse::<ComponentBuf>().unwrap(),
+        self.entry(EntryType::File, signature.encode_to_vec()),
+      );
+    }
+
+    let signatures = Directory {
+      entries,
+      version: Version::Zero,
+    };
+
+    let signatures = self.entry(EntryType::Directory, signatures.encode_to_vec());
+
+    root.insert(Archive::SIGNATURES.parse().unwrap(), signatures);
+
+    let root = Directory {
+      entries: root,
+      version: Version::Zero,
+    };
+
+    let entry = self.entry(EntryType::Directory, root.encode_to_vec());
+
+    self.build(entry.hash)
+  }
+
   pub(crate) fn build(self, root: Hash) -> Archive {
     Archive {
       files: self.files,
