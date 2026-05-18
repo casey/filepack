@@ -21,6 +21,7 @@ pub(crate) struct AuthConfig {
 pub(crate) struct Authenticated;
 
 #[derive(Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct Claims {
   aud: String,
   exp: u64,
