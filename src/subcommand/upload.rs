@@ -11,7 +11,7 @@ pub(crate) struct Upload {
   file: Option<Utf8PathBuf>,
   #[arg(help = "Upload package at <PATH>", long, value_name = "PATH")]
   package: Option<Utf8PathBuf>,
-  #[arg(help = "Upload to server at <URL>", long, value_name = "URL")]
+  #[arg(help = "Upload to server at <URL>", long, value_name = "URL", value_parser = parse_http_url)]
   server: Url,
 }
 
@@ -25,13 +25,8 @@ impl Upload {
   }
 
   fn upload_body(&self, hash: Hash, body: Body) -> Result {
-    let url = self
-      .server
-      .join(&hash.to_string())
-      .context(error::UrlParse)?;
-
+    let url = self.server.join(&hash.to_string()).unwrap();
     Client::new().put(url).body(body).send().check_status()?;
-
     Ok(())
   }
 

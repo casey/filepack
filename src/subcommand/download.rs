@@ -13,7 +13,7 @@ pub(crate) struct Download {
   output: Utf8PathBuf,
   #[arg(help = "Download package with <HASH>", long)]
   package: Option<Hash>,
-  #[arg(help = "Download from server at <URL>", long, value_name = "URL")]
+  #[arg(help = "Download from server at <URL>", long, value_name = "URL", value_parser = parse_http_url)]
   server: Url,
 }
 
@@ -38,14 +38,11 @@ impl Download {
 
     let mut writer = HashingWriter::new(tempfile);
 
-    let url = self
-      .server
-      .join(&hash.to_string())
-      .context(error::UrlParse)?;
-
     response
       .copy_to(&mut writer)
-      .with_context(|_| error::ResponseBody { url: url.clone() })?;
+      .with_context(|_| error::ResponseBody {
+        url: self.file_url(hash),
+      })?;
 
     let (actual, tempfile) = writer.finalize();
 
@@ -73,10 +70,7 @@ impl Download {
     let mut files = BTreeMap::new();
 
     while let Some((hash, path)) = directories.pop() {
-      let url = self
-        .server
-        .join(&hash.to_string())
-        .context(error::UrlParse)?;
+      let url = self.file_url(hash);
 
       let response = self.get_file(hash)?;
 
@@ -119,11 +113,12 @@ impl Download {
     Ok(())
   }
 
+  fn file_url(&self, hash: Hash) -> Url {
+    self.server.join(&hash.to_string()).unwrap()
+  }
+
   fn get_file(&self, hash: Hash) -> Result<Response> {
-    let url = self
-      .server
-      .join(&hash.to_string())
-      .context(error::UrlParse)?;
+    let url = self.file_url(hash);
 
     let response = Client::new().get(url).send().check_status()?;
 
