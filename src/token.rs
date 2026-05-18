@@ -55,7 +55,7 @@ impl Token {
     validation.set_issuer(&[admin.to_string()]);
 
     jsonwebtoken::decode::<Self>(token, &key, &validation)
-      .context(server_error::UploadAuthInvalid)?;
+      .context(server_error::AuthorizationInvalid)?;
 
     Ok(())
   }
