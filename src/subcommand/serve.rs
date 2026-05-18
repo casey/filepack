@@ -489,21 +489,21 @@ mod tests {
   }
 
   #[test]
-  fn acme_domain_defaults_to_hostname() {
+  fn domain_defaults_to_hostname() {
     assert_eq!(
-      Serve::default().acme_domains().unwrap(),
+      Serve::default().domains().unwrap(),
       vec![System::host_name().unwrap()]
     );
   }
 
   #[test]
-  fn acme_domain_flag_is_respected() {
+  fn domain_flag_is_respected() {
     assert_eq!(
       Serve {
-        acme_domain: vec!["foo".into(), "bar".into()],
+        domains: vec!["foo".into(), "bar".into()],
         ..Serve::default()
       }
-      .acme_domains()
+      .domains()
       .unwrap(),
       vec!["foo".to_string(), "bar".to_string()],
     );
