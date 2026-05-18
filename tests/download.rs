@@ -108,6 +108,34 @@ fn download_package_fails_if_output_file_already_exists() {
 }
 
 #[test]
+fn download_package_fails_on_hash_mismatch() {
+  let expected = Hash::bytes(b"baz");
+  let actual = Hash::bytes(b"bar");
+
+  let server = Test::new()
+    .serve()
+    .write(&format!("files/{expected}"), "bar")
+    .spawn();
+
+  Test::new()
+    .args([
+      "download",
+      "--server",
+      &server.address(),
+      "--package",
+      &expected.to_string(),
+      "--output",
+      "out",
+    ])
+    .stderr(&format!(
+      "error: downloaded file hash mismatch: expected {expected} but got {actual}\n",
+    ))
+    .failure();
+
+  server.terminate().success();
+}
+
+#[test]
 fn download_retrieves_file() {
   let server = Test::new()
     .serve()
