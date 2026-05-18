@@ -25,14 +25,14 @@ pub(crate) struct Token {
 
 impl Token {
   pub(crate) fn encode(private_key: &PrivateKey, audience: &str) -> Result<String> {
-    let issued_at_time = now()?;
+    let now = now()?;
 
     let claims = Self {
       audience: audience.into(),
-      expiration_time: issued_at_time + TTL,
-      issued_at_time,
+      expiration_time: now + TTL,
+      issued_at_time: now,
       issuer: private_key.public_key().to_string(),
-      not_before_time: issued_at_time,
+      not_before_time: now,
     };
 
     let der = private_key.inner_secret().to_pkcs8_der().unwrap();
@@ -74,15 +74,15 @@ mod tests {
   #[test]
   fn expired() {
     let private_key = PrivateKey::generate();
-    let issued_at_time = now().unwrap() - LEEWAY - TTL - 10;
+    let now = now().unwrap() - LEEWAY - TTL - 10;
     let token = mint(
       &private_key,
       &Token {
         audience: AUDIENCE.into(),
-        expiration_time: issued_at_time + TTL,
-        issued_at_time,
+        expiration_time: now + TTL,
+        issued_at_time: now,
         issuer: private_key.public_key().to_string(),
-        not_before_time: issued_at_time,
+        not_before_time: now,
       },
     );
     assert_matches!(
@@ -94,15 +94,15 @@ mod tests {
   #[test]
   fn future_nbf() {
     let private_key = PrivateKey::generate();
-    let issued_at_time = now().unwrap();
+    let now = now().unwrap();
     let token = mint(
       &private_key,
       &Token {
         audience: AUDIENCE.into(),
-        expiration_time: issued_at_time + TTL,
-        issued_at_time,
+        expiration_time: now + TTL,
+        issued_at_time: now,
         issuer: private_key.public_key().to_string(),
-        not_before_time: issued_at_time + LEEWAY + 10,
+        not_before_time: now + LEEWAY + 10,
       },
     );
     assert_matches!(
@@ -176,15 +176,15 @@ mod tests {
   #[test]
   fn wrong_issuer() {
     let admin = PrivateKey::generate();
-    let issued_at_time = now().unwrap();
+    let now = now().unwrap();
     let token = mint(
       &admin,
       &Token {
         audience: AUDIENCE.into(),
-        expiration_time: issued_at_time + TTL,
-        issued_at_time,
+        expiration_time: now + TTL,
+        issued_at_time: now,
         issuer: PrivateKey::generate().public_key().to_string(),
-        not_before_time: issued_at_time,
+        not_before_time: now,
       },
     );
     assert_matches!(
