@@ -60,7 +60,7 @@ pub(crate) struct Serve {
   #[arg(
     help = "Admin public key",
     long,
-    requires = "restrict_upload",
+    requires = "restrict_uploads",
     value_name = "KEY"
   )]
   admin_key: Option<KeyIdentifier>,
@@ -193,14 +193,14 @@ impl Serve {
     Redirect::to(&destination)
   }
 
-  pub(crate) fn router(server: Arc<Server>, auth: Option<Arc<AuthConfig>>) -> Router {
+  pub(crate) fn router(server: Arc<Server>, auth_config: Option<Arc<AuthConfig>>) -> Router {
     let router = Router::new()
       .route("/{hash}", get(Self::download))
       .route("/{hash}", put(Self::upload))
       .layer(Extension(server));
 
-    if let Some(auth) = auth {
-      router.layer(Extension(auth))
+    if let Some(auth_config) = auth_config {
+      router.layer(Extension(auth_config))
     } else {
       router
     }
@@ -244,7 +244,7 @@ impl Serve {
 
     let server = Arc::new(Server::with_data_dir(&options.data_dir()?)?);
 
-    let auth = if self.restrict_uploads {
+    let auth_config = if self.restrict_uploads {
       let admin = if let Some(identifier) = &self.admin_key {
         Some(Keychain::load(&options)?.identifier_public_key(identifier)?)
       } else {
@@ -258,7 +258,7 @@ impl Serve {
       None
     };
 
-    let router = Self::router(server, auth);
+    let router = Self::router(server, auth_config);
 
     match (self.http_port(), self.https_port()) {
       (Some(http_port), None) => {
@@ -456,18 +456,13 @@ mod tests {
     }
 
     async fn put(&self, path: &str, content: &[u8]) -> Response {
-      self.put_with_header(path, content, None).await
+      self.put_with_token(path, content, None).await
     }
 
-    async fn put_with_header(
-      &self,
-      path: &str,
-      content: &[u8],
-      authorization: Option<&str>,
-    ) -> Response {
+    async fn put_with_token(&self, path: &str, content: &[u8], token: Option<&str>) -> Response {
       let mut request = Request::builder().method("PUT").uri(path);
-      if let Some(authorization) = authorization {
-        request = request.header(header::AUTHORIZATION, authorization);
+      if let Some(token) = token {
+        request = request.header(header::AUTHORIZATION, format!("Bearer {token}"));
       }
       self
         .router
@@ -477,12 +472,12 @@ mod tests {
         .unwrap()
     }
 
-    fn with_auth(auth: Option<Arc<AuthConfig>>) -> Self {
+    fn with_auth(auth_config: Option<Arc<AuthConfig>>) -> Self {
       let (tempdir, data_dir) = tempdir();
 
       let server = Arc::new(Server::with_data_dir(&data_dir).unwrap());
 
-      let router = Serve::router(server, auth);
+      let router = Serve::router(server, auth_config);
 
       Self {
         data_dir,
@@ -664,11 +659,7 @@ mod tests {
     let token = Token::encode(&admin, "filepack.example").unwrap();
 
     let response = server
-      .put_with_header(
-        &format!("/{hash}"),
-        b"bar",
-        Some(&format!("Bearer {token}")),
-      )
+      .put_with_token(&format!("/{hash}"), b"bar", Some(&token))
       .await;
 
     assert_eq!(response.status(), StatusCode::OK);
@@ -691,11 +682,7 @@ mod tests {
     let token = Token::encode(&intruder, "filepack.example").unwrap();
 
     let response = server
-      .put_with_header(
-        &format!("/{hash}"),
-        b"bar",
-        Some(&format!("Bearer {token}")),
-      )
+      .put_with_token(&format!("/{hash}"), b"bar", Some(&token))
       .await;
 
     assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
