@@ -89,7 +89,7 @@ pub(crate) struct Serve {
   #[arg(help = "Redirect HTTP to HTTPS", long)]
   redirect_http_to_https: bool,
   #[arg(help = "Restrict uploads to admin key holder", long)]
-  restrict_upload: bool,
+  restrict_uploads: bool,
 }
 
 impl Serve {
@@ -244,7 +244,7 @@ impl Serve {
 
     let server = Arc::new(Server::with_data_dir(&options.data_dir()?)?);
 
-    let auth = if self.restrict_upload {
+    let auth = if self.restrict_uploads {
       let admin = if let Some(identifier) = &self.admin_key {
         Some(Keychain::load(&options)?.identifier_public_key(identifier)?)
       } else {
@@ -411,7 +411,7 @@ impl Default for Serve {
       https_port: None,
       ready_address: None,
       redirect_http_to_https: false,
-      restrict_upload: false,
+      restrict_uploads: false,
     }
   }
 }
