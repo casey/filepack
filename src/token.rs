@@ -198,8 +198,8 @@ mod tests {
   #[test]
   fn wrong_signer() {
     let admin = PrivateKey::generate();
-    let intruder = PrivateKey::generate();
-    let token = Token::encode(&intruder, AUDIENCE).unwrap();
+    let wrong = PrivateKey::generate();
+    let token = Token::encode(&wrong, AUDIENCE).unwrap();
     assert_matches!(
       Token::verify(admin.public_key(), &audiences(), &token).unwrap_err(),
       ServerError::AuthorizationInvalid { source } if matches!(source.kind(), ErrorKind::InvalidSignature),
