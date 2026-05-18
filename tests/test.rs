@@ -282,7 +282,7 @@ impl Test {
     self.stdout.check(stdout, "stdout");
 
     for path in &self.directories {
-      assert!(self.join(path).try_exists().unwrap());
+      assert!(self.join(path).is_dir());
     }
 
     for (path, expected) in &self.files {
