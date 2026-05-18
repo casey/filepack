@@ -25,7 +25,6 @@ enum SpawnConfig {
   Redirect(String),
 }
 
-#[allow(clippy::struct_excessive_bools)]
 #[derive(Debug, Parser, PartialEq)]
 pub(crate) struct Serve {
   #[arg(
