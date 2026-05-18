@@ -22,7 +22,7 @@ mod lints;
 mod man;
 mod manifest;
 mod metadata;
-mod serve;
+pub(crate) mod serve;
 mod sign;
 mod signatures;
 mod size;

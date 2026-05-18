@@ -24,6 +24,7 @@ use {
     archive_builder::ArchiveBuilder,
     archive_error::ArchiveError,
     arguments::Arguments,
+    authenticated::Authenticated,
     bech32_decoder::Bech32Decoder,
     bech32_encoder::Bech32Encoder,
     bech32_error::Bech32Error,
@@ -55,7 +56,6 @@ use {
     hash_error::HashError,
     hashing_writer::HashingWriter,
     head::Head,
-    jwt::{AuthConfig, Authenticated},
     key_identifier::KeyIdentifier,
     key_name::KeyName,
     key_type::KeyType,
@@ -81,6 +81,7 @@ use {
     subcommand::Subcommand,
     tag::Tag,
     ticked::Ticked,
+    token::Token,
     utf8_path_ext::Utf8PathExt,
     version::Version,
   },
@@ -191,6 +192,7 @@ mod archive;
 mod archive_builder;
 mod archive_error;
 mod arguments;
+mod authenticated;
 mod bech32_decoder;
 mod bech32_encoder;
 mod bech32_error;
@@ -228,7 +230,6 @@ mod hash;
 mod hash_error;
 mod hashing_writer;
 mod head;
-mod jwt;
 mod key_identifier;
 mod key_name;
 mod key_type;
@@ -266,6 +267,7 @@ mod subcommand;
 mod tag;
 mod tag_error;
 mod ticked;
+mod token;
 mod utf8_path_ext;
 mod version;
 

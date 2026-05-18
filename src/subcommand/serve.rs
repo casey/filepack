@@ -19,6 +19,11 @@ use {
 
 static THREAD_COUNTER: AtomicU64 = AtomicU64::new(0);
 
+pub(crate) struct AuthConfig {
+  pub(crate) admin: Option<PublicKey>,
+  pub(crate) audiences: Vec<String>,
+}
+
 enum SpawnConfig {
   Http,
   Https,
@@ -656,7 +661,7 @@ mod tests {
     })));
 
     let hash = Hash::bytes(b"bar");
-    let token = jwt::encode(&admin, "filepack.example").unwrap();
+    let token = Token::encode(&admin, "filepack.example").unwrap();
 
     let response = server
       .put_with_header(
@@ -683,7 +688,7 @@ mod tests {
     })));
 
     let hash = Hash::bytes(b"bar");
-    let token = jwt::encode(&intruder, "filepack.example").unwrap();
+    let token = Token::encode(&intruder, "filepack.example").unwrap();
 
     let response = server
       .put_with_header(

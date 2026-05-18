@@ -38,7 +38,7 @@ impl Upload {
         })?
         .to_owned();
 
-      Some(jwt::encode(&private_key, &host)?)
+      Some(Token::encode(&private_key, &host)?)
     } else {
       None
     };
