@@ -1,6 +1,39 @@
 use super::*;
 
 #[test]
+fn restricted_server_rejects_unauthenticated_upload() {
+  let server = Test::new()
+    .write("keychain/master.public", PUBLIC_KEY)
+    .write("keychain/master.private", PRIVATE_KEY)
+    .chmod("keychain", 0o700)
+    .chmod("keychain/master.private", 0o600)
+    .ready_address()
+    .args([
+      "serve",
+      "--address",
+      "127.0.0.1",
+      "--http-port",
+      "0",
+      "--acme-domain",
+      "127.0.0.1",
+      "--restrict-upload",
+      "--admin-key",
+      "master",
+    ])
+    .spawn();
+
+  let response = reqwest::blocking::Client::new()
+    .put(format!("{}/{}", server.address(), Hash::bytes(b"bar")))
+    .body("bar")
+    .send()
+    .unwrap();
+
+  assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+
+  server.terminate().success();
+}
+
+#[test]
 fn reupload_package_succeeds() {
   let server = Test::new()
     .serve()
@@ -112,6 +145,22 @@ fn upload_creates_file() {
     .success();
 
   server.terminate().success();
+}
+
+#[test]
+fn upload_key_requires_https() {
+  Test::new()
+    .args([
+      "upload",
+      "--server",
+      "http://127.0.0.1:1",
+      "--key",
+      "master",
+      "--file",
+      "foo",
+    ])
+    .stderr("error: cannot use upload key with non-HTTPS server `http://127.0.0.1:1/`\n")
+    .failure();
 }
 
 #[test]

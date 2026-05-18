@@ -55,6 +55,7 @@ use {
     hash_error::HashError,
     hashing_writer::HashingWriter,
     head::Head,
+    jwt::AuthConfig,
     key_identifier::KeyIdentifier,
     key_name::KeyName,
     key_type::KeyType,
@@ -227,6 +228,7 @@ mod hash;
 mod hash_error;
 mod hashing_writer;
 mod head;
+mod jwt;
 mod key_identifier;
 mod key_name;
 mod key_type;

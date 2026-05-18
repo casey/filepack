@@ -6,26 +6,61 @@ pub(crate) struct Upload {
   file: bool,
   #[arg(help = "Upload <PATH>", value_name = "PATH")]
   input: Utf8PathBuf,
+  #[arg(
+    help = "Authenticate upload with private key <KEY>",
+    long,
+    value_name = "KEY"
+  )]
+  key: Option<KeyName>,
   #[arg(help = "Upload to server at <URL>", long, value_name = "URL", value_parser = parse_server_url)]
   server: Url,
 }
 
 impl Upload {
   pub(crate) fn run(self, options: Options) -> Result {
-    if self.file {
-      self.upload_file(&self.input, &options)
+    let token = if let Some(name) = &self.key {
+      ensure!(
+        self.server.scheme() == "https",
+        error::InsecureUploadKey {
+          server: self.server.clone(),
+        },
+      );
+
+      let keychain = Keychain::load(&options)?;
+
+      let private_key = PrivateKey::load(&keychain.path.join(name.private_key_filename()))?;
+
+      let host = self
+        .server
+        .host_str()
+        .context(error::ServerHost {
+          server: self.server.clone(),
+        })?
+        .to_owned();
+
+      Some(jwt::encode(&private_key, &host)?)
     } else {
-      self.upload_package(&self.input, &options)
+      None
+    };
+
+    if self.file {
+      self.upload_file(&self.input, &options, token.as_deref())
+    } else {
+      self.upload_package(&self.input, &options, token.as_deref())
     }
   }
 
-  fn upload_body(&self, hash: Hash, body: Body) -> Result {
+  fn upload_body(&self, hash: Hash, body: Body, token: Option<&str>) -> Result {
     let url = self.server.join(&hash.to_string()).unwrap();
-    Client::new().put(url).body(body).send().check_status()?;
+    let mut request = Client::new().put(url).body(body);
+    if let Some(token) = token {
+      request = request.bearer_auth(token);
+    }
+    request.send().check_status()?;
     Ok(())
   }
 
-  fn upload_file(&self, path: &Utf8Path, options: &Options) -> Result {
+  fn upload_file(&self, path: &Utf8Path, options: &Options, token: Option<&str>) -> Result {
     let hash = options
       .hash_file(path)
       .context(error::FilesystemIo { path })?
@@ -33,12 +68,17 @@ impl Upload {
 
     let file = filesystem::open(path)?;
 
-    self.upload_body(hash, file.into())?;
+    self.upload_body(hash, file.into(), token)?;
 
     Ok(())
   }
 
-  fn upload_package(&self, archive_path: &Utf8Path, options: &Options) -> Result {
+  fn upload_package(
+    &self,
+    archive_path: &Utf8Path,
+    options: &Options,
+    token: Option<&str>,
+  ) -> Result {
     let archive = Archive::load_with_path(archive_path, archive_path)?;
 
     let context = error::UnarchiveManifest { path: archive_path };
@@ -57,13 +97,13 @@ impl Upload {
         .context(archive_error::DirectoryDecode)
         .context(context)?;
 
-      self.upload_body(hash, cbor.to_vec().into())?;
+      self.upload_body(hash, cbor.to_vec().into(), token)?;
 
       for (component, entry) in directory.entries {
         let path = path.join(component);
         match entry.ty {
           EntryType::Directory => directories.push((entry.hash, path)),
-          EntryType::File => self.upload_package_file(&path, &entry, options)?,
+          EntryType::File => self.upload_package_file(&path, &entry, options, token)?,
         }
       }
     }
@@ -71,7 +111,13 @@ impl Upload {
     Ok(())
   }
 
-  fn upload_package_file(&self, path: &Utf8Path, expected: &Entry, options: &Options) -> Result {
+  fn upload_package_file(
+    &self,
+    path: &Utf8Path,
+    expected: &Entry,
+    options: &Options,
+    token: Option<&str>,
+  ) -> Result {
     let actual = options
       .hash_file(path)
       .context(error::FilesystemIo { path })?;
@@ -88,7 +134,7 @@ impl Upload {
 
     let file = filesystem::open(path)?;
 
-    self.upload_body(expected.hash, file.into())?;
+    self.upload_body(expected.hash, file.into(), token)?;
 
     Ok(())
   }

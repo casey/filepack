@@ -3,7 +3,7 @@ use {
   axum::{
     Router,
     extract::{Extension, Path},
-    http::{Uri, header},
+    http::{HeaderMap, Uri, header},
     response::Redirect,
     routing::{get, put},
   },
@@ -25,6 +25,7 @@ enum SpawnConfig {
   Redirect(String),
 }
 
+#[allow(clippy::struct_excessive_bools)]
 #[derive(Debug, Parser, PartialEq)]
 pub(crate) struct Serve {
   #[arg(
@@ -52,6 +53,8 @@ pub(crate) struct Serve {
     long
   )]
   address: String,
+  #[arg(help = "Admin upload key", long, value_name = "KEY")]
+  admin_key: Option<KeyIdentifier>,
   #[arg(help = "Serve HTTP traffic", long)]
   http: bool,
   #[arg(
@@ -76,6 +79,12 @@ pub(crate) struct Serve {
   ready_address: Option<SocketAddr>,
   #[arg(help = "Redirect HTTP to HTTPS", long)]
   redirect_http_to_https: bool,
+  #[arg(
+    help = "Restrict uploads to admin key holder",
+    long,
+    requires = "admin_key"
+  )]
+  restrict_upload: bool,
 }
 
 impl Serve {
@@ -179,11 +188,17 @@ impl Serve {
     Redirect::to(&destination)
   }
 
-  pub(crate) fn router(server: Arc<Server>) -> Router {
-    Router::new()
+  pub(crate) fn router(server: Arc<Server>, auth: Option<Arc<AuthConfig>>) -> Router {
+    let router = Router::new()
       .route("/{hash}", get(Self::download))
       .route("/{hash}", put(Self::upload))
-      .layer(Extension(server))
+      .layer(Extension(server));
+
+    if let Some(auth) = auth {
+      router.layer(Extension(auth))
+    } else {
+      router
+    }
   }
 
   pub(crate) fn run(self, options: Options) -> Result {
@@ -224,7 +239,18 @@ impl Serve {
 
     let server = Arc::new(Server::with_data_dir(&options.data_dir()?)?);
 
-    let router = Self::router(server);
+    let auth = if self.restrict_upload {
+      let admin =
+        Keychain::load(&options)?.identifier_public_key(self.admin_key.as_ref().unwrap())?;
+      Some(Arc::new(AuthConfig {
+        admin,
+        audiences: self.acme_domains()?,
+      }))
+    } else {
+      None
+    };
+
+    let router = Self::router(server, auth);
 
     match (self.http_port(), self.https_port()) {
       (Some(http_port), None) => {
@@ -353,7 +379,16 @@ impl Serve {
     Ok(())
   }
 
-  async fn upload(server: Extension<Arc<Server>>, hash: Path<Hash>, body: Body) -> ServerResult {
+  async fn upload(
+    auth: Option<Extension<Arc<AuthConfig>>>,
+    server: Extension<Arc<Server>>,
+    headers: HeaderMap,
+    hash: Path<Hash>,
+    body: Body,
+  ) -> ServerResult {
+    if let Some(Extension(auth)) = auth {
+      jwt::verify(&auth, &headers)?;
+    }
     server.write_file(*hash, body).await
   }
 }
@@ -365,12 +400,14 @@ impl Default for Serve {
       acme_contact: Vec::new(),
       acme_domain: Vec::new(),
       address: "0.0.0.0".into(),
+      admin_key: None,
       http: false,
       http_port: None,
       https: false,
       https_port: None,
       ready_address: None,
       redirect_http_to_https: false,
+      restrict_upload: false,
     }
   }
 }
@@ -411,32 +448,43 @@ mod tests {
     }
 
     fn new() -> Self {
+      Self::with_auth(None)
+    }
+
+    async fn put(&self, path: &str, content: &[u8]) -> Response {
+      self.put_with_header(path, content, None).await
+    }
+
+    async fn put_with_header(
+      &self,
+      path: &str,
+      content: &[u8],
+      authorization: Option<&str>,
+    ) -> Response {
+      let mut request = Request::builder().method("PUT").uri(path);
+      if let Some(authorization) = authorization {
+        request = request.header(header::AUTHORIZATION, authorization);
+      }
+      self
+        .router
+        .clone()
+        .oneshot(request.body(Body::from(content.to_vec())).unwrap())
+        .await
+        .unwrap()
+    }
+
+    fn with_auth(auth: Option<Arc<AuthConfig>>) -> Self {
       let (tempdir, data_dir) = tempdir();
 
       let server = Arc::new(Server::with_data_dir(&data_dir).unwrap());
 
-      let router = Serve::router(server);
+      let router = Serve::router(server, auth);
 
       Self {
         data_dir,
         router,
         tempdir,
       }
-    }
-
-    async fn put(&self, path: &str, content: &[u8]) -> Response {
-      self
-        .router
-        .clone()
-        .oneshot(
-          Request::builder()
-            .method("PUT")
-            .uri(path)
-            .body(Body::from(content.to_vec()))
-            .unwrap(),
-        )
-        .await
-        .unwrap()
     }
 
     fn write_file(&self, hash: Hash, content: &[u8]) {
@@ -579,6 +627,75 @@ mod tests {
     case("/", "https://foo/").await;
     case("/bar", "https://foo/bar").await;
     case("/bar?baz=qux", "https://foo/bar?baz=qux").await;
+  }
+
+  #[test]
+  fn restrict_upload_requires_admin_key() {
+    let err = Serve::try_parse_from(["filepack", "--restrict-upload"]).unwrap_err();
+    assert_eq!(err.kind(), clap::error::ErrorKind::MissingRequiredArgument);
+  }
+
+  #[tokio::test]
+  async fn restricted_upload_accepts_admin_token() {
+    let admin = PrivateKey::generate();
+    let server = TestServer::with_auth(Some(Arc::new(AuthConfig {
+      admin: admin.public_key(),
+      audiences: vec!["filepack.example".into()],
+    })));
+
+    let hash = Hash::bytes(b"bar");
+    let token = jwt::encode(&admin, "filepack.example").unwrap();
+
+    let response = server
+      .put_with_header(
+        &format!("/{hash}"),
+        b"bar",
+        Some(&format!("Bearer {token}")),
+      )
+      .await;
+
+    assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(
+      fs::read(server.data_dir.join("files").join(hash.to_string())).unwrap(),
+      b"bar",
+    );
+  }
+
+  #[tokio::test]
+  async fn restricted_upload_rejects_intruder() {
+    let admin = PrivateKey::generate();
+    let intruder = PrivateKey::generate();
+    let server = TestServer::with_auth(Some(Arc::new(AuthConfig {
+      admin: admin.public_key(),
+      audiences: vec!["filepack.example".into()],
+    })));
+
+    let hash = Hash::bytes(b"bar");
+    let token = jwt::encode(&intruder, "filepack.example").unwrap();
+
+    let response = server
+      .put_with_header(
+        &format!("/{hash}"),
+        b"bar",
+        Some(&format!("Bearer {token}")),
+      )
+      .await;
+
+    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+  }
+
+  #[tokio::test]
+  async fn restricted_upload_rejects_missing_header() {
+    let admin = PrivateKey::generate();
+    let server = TestServer::with_auth(Some(Arc::new(AuthConfig {
+      admin: admin.public_key(),
+      audiences: vec!["filepack.example".into()],
+    })));
+
+    let hash = Hash::bytes(b"bar");
+    let response = server.put(&format!("/{hash}"), b"bar").await;
+
+    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
   }
 
   #[tokio::test]

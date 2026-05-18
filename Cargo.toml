@@ -28,6 +28,7 @@ filepack-cbor = { version = "0.0.0", path = "crates/filepack-cbor" }
 futures-util = { version = "0.3.32", default-features = false, features = ["std"] }
 hex = "0.4.3"
 indicatif = "0.18.0"
+jsonwebtoken = "9"
 lexiclean = "0.0.1"
 libc = "0.2.186"
 num-traits = "0.2.19"

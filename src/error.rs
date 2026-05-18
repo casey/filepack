@@ -161,10 +161,20 @@ pub enum Error {
     hex: String,
     source: hex::FromHexError,
   },
+  #[snafu(display("cannot use upload key with non-HTTPS server `{server}`"))]
+  InsecureUploadKey {
+    backtrace: Option<Backtrace>,
+    server: Url,
+  },
   #[snafu(display("internal error, this may indicate a bug in filepack: {message}"))]
   Internal {
     backtrace: Option<Backtrace>,
     message: String,
+  },
+  #[snafu(display("failed to encode upload JWT"))]
+  JwtEncode {
+    backtrace: Option<Backtrace>,
+    source: jsonwebtoken::errors::Error,
   },
   #[snafu(display(
     "public key `{}` doesn't match private key `{}`",
@@ -329,6 +339,11 @@ pub enum Error {
   Serve {
     backtrace: Option<Backtrace>,
     source: io::Error,
+  },
+  #[snafu(display("server URL `{server}` has no host"))]
+  ServerHost {
+    backtrace: Option<Backtrace>,
+    server: Url,
   },
   #[snafu(display("failed to build server runtime"))]
   ServerRuntime {

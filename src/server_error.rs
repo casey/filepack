@@ -10,6 +10,12 @@ pub(crate) enum ServerError {
     path: Utf8PathBuf,
     source: io::Error,
   },
+  #[snafu(display("invalid upload JWT"))]
+  UploadAuthInvalid { source: jsonwebtoken::errors::Error },
+  #[snafu(display("malformed Authorization header"))]
+  UploadAuthMalformed,
+  #[snafu(display("missing Authorization header"))]
+  UploadAuthMissing,
   #[snafu(display("error reading body of upload with hash {hash}"))]
   UploadBodyRead { hash: Hash, source: axum::Error },
   #[snafu(display("expected upload with hash {expected} but got {actual}"))]
@@ -20,6 +26,9 @@ impl ServerError {
   fn message(&self) -> String {
     match self {
       Self::FilesystemIo { .. } => "filesystem I/O error".into(),
+      Self::UploadAuthInvalid { .. } | Self::UploadAuthMalformed | Self::UploadAuthMissing => {
+        "unauthorized".into()
+      }
       Self::FileNotFound { .. } | Self::UploadBodyRead { .. } | Self::UploadHashMismatch { .. } => {
         self.to_string()
       }
@@ -30,6 +39,9 @@ impl ServerError {
     match self {
       Self::FileNotFound { .. } => StatusCode::NOT_FOUND,
       Self::FilesystemIo { .. } => StatusCode::INTERNAL_SERVER_ERROR,
+      Self::UploadAuthInvalid { .. } | Self::UploadAuthMalformed | Self::UploadAuthMissing => {
+        StatusCode::UNAUTHORIZED
+      }
       Self::UploadBodyRead { .. } | Self::UploadHashMismatch { .. } => StatusCode::BAD_REQUEST,
     }
   }
