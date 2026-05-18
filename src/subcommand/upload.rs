@@ -1,4 +1,4 @@
-use {super::*, reqwest::blocking::Body};
+use {super::*, reqwest::blocking::Body, url::Host};
 
 #[derive(Parser)]
 pub(crate) struct Upload {
@@ -15,11 +15,10 @@ pub(crate) struct Upload {
 impl Upload {
   pub(crate) fn run(self, options: Options) -> Result {
     let key = if let Some(name) = &self.auth {
-      let host_is_loopback = match self.server.host() {
-        Some(url::Host::Domain(domain)) => domain == "localhost",
-        Some(url::Host::Ipv4(addr)) => addr.is_loopback(),
-        Some(url::Host::Ipv6(addr)) => addr.is_loopback(),
-        None => false,
+      let host_is_loopback = match self.server.host().unwrap() {
+        Host::Domain(domain) => domain == "localhost",
+        Host::Ipv4(addr) => addr.is_loopback(),
+        Host::Ipv6(addr) => addr.is_loopback(),
       };
 
       ensure!(
