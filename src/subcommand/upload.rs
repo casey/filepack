@@ -21,7 +21,7 @@ impl Upload {
     let token = if let Some(name) = &self.key {
       ensure!(
         self.server.scheme() == "https",
-        error::InsecureAuthentication {
+        error::AuthenticationOverHttp {
           server: self.server.clone(),
         },
       );
