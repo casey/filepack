@@ -63,7 +63,7 @@ impl Upload {
         let path = path.join(component);
         match entry.ty {
           EntryType::Directory => directories.push((entry.hash, path)),
-          EntryType::File => self.upload_package_file(&path, &entry, &options)?,
+          EntryType::File => self.upload_package_file(&path, &entry, options)?,
         }
       }
     }
