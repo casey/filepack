@@ -78,6 +78,13 @@ impl Download {
         .bytes()
         .with_context(|_| error::ResponseBody { url: url.clone() })?;
 
+      let actual = Hash::bytes(&cbor);
+
+      ensure! {
+        actual == hash,
+        error::DownloadHashMismatch { actual, expected: hash },
+      }
+
       let directory =
         Directory::decode_from_slice(&cbor).context(error::DecodeResponseDirectory { url })?;
 
