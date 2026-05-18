@@ -11,7 +11,7 @@ pub(crate) struct Upload {
   file: Option<Utf8PathBuf>,
   #[arg(help = "Upload package at <PATH>", long, value_name = "PATH")]
   package: Option<Utf8PathBuf>,
-  #[arg(help = "Upload to server at <URL>", long, value_name = "URL", value_parser = parse_http_url)]
+  #[arg(help = "Upload to server at <URL>", long, value_name = "URL", value_parser = parse_server_url)]
   server: Url,
 }
 

@@ -13,7 +13,7 @@ pub(crate) struct Download {
   output: Utf8PathBuf,
   #[arg(help = "Download package with <HASH>", long)]
   package: Option<Hash>,
-  #[arg(help = "Download from server at <URL>", long, value_name = "URL", value_parser = parse_http_url)]
+  #[arg(help = "Download from server at <URL>", long, value_name = "URL", value_parser = parse_server_url)]
   server: Url,
 }
 

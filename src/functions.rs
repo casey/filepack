@@ -27,7 +27,7 @@ pub(crate) fn now() -> Result<u64> {
   )
 }
 
-pub(crate) fn parse_http_url(s: &str) -> Result<Url, String> {
+pub(crate) fn parse_server_url(s: &str) -> Result<Url, String> {
   let url = s.parse::<Url>().map_err(|err| err.to_string())?;
 
   let scheme = url.scheme();
