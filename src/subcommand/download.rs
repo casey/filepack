@@ -1,18 +1,13 @@
 use {super::*, reqwest::blocking::Response};
 
 #[derive(Parser)]
-#[command(group(
-  ArgGroup::new("input")
-    .required(true)
-    .args(["file", "package"]),
-))]
 pub(crate) struct Download {
-  #[arg(help = "Download file with <HASH>", long, value_name = "HASH")]
-  file: Option<Hash>,
-  #[arg(help = "Download to <PATH>", long, value_name = "PATH")]
+  #[arg(help = "Download file instead of package", long)]
+  file: bool,
+  #[arg(help = "Download package or file with <HASH>", long)]
+  hash: Hash,
+  #[arg(help = "Download to <PATH>", value_name = "PATH")]
   output: Utf8PathBuf,
-  #[arg(help = "Download package with <HASH>", long, value_name = "HASH")]
-  package: Option<Hash>,
   #[arg(help = "Download from server at <URL>", long, value_name = "URL", value_parser = parse_server_url)]
   server: Url,
 }
@@ -26,8 +21,7 @@ impl Download {
 
     let mut response = self.get_file(hash)?;
 
-    let output_directory = self
-      .output
+    let output_directory = path
       .parent()
       .filter(|parent| !parent.as_str().is_empty())
       .unwrap_or(Utf8Path::new("."));
@@ -59,7 +53,7 @@ impl Download {
     Ok(())
   }
 
-  pub(crate) fn download_package(self, root: Hash) -> Result {
+  pub(crate) fn download_package(&self, root: Hash) -> Result {
     ensure! {
       !filesystem::exists(&self.output)?,
       error::FileAlreadyExists { path: &self.output },
@@ -133,10 +127,10 @@ impl Download {
   }
 
   pub(crate) fn run(self) -> Result {
-    match (self.file, self.package) {
-      (Some(hash), None) => self.download_file(hash, &self.output),
-      (None, Some(hash)) => self.download_package(hash),
-      (None, None) | (Some(_), Some(_)) => unreachable!(),
+    if self.file {
+      self.download_file(self.hash, &self.output)
+    } else {
+      self.download_package(self.hash)
     }
   }
 }

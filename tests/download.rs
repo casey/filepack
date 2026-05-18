@@ -11,8 +11,8 @@ fn download_fails_if_output_already_exists() {
       "--server",
       "http://127.0.0.1:1",
       "--file",
+      "--hash",
       &hash.to_string(),
-      "--output",
       "foo",
     ])
     .assert_file("foo", "original")
@@ -36,8 +36,8 @@ fn download_fails_on_hash_mismatch() {
       "--server",
       &server.address(),
       "--file",
+      "--hash",
       &expected.to_string(),
-      "--output",
       "foo",
     ])
     .stderr(&format!(
@@ -60,8 +60,8 @@ fn download_fails_with_404_when_file_missing() {
       "--server",
       &server.address(),
       "--file",
+      "--hash",
       &hash.to_string(),
-      "--output",
       "foo",
     ])
     .stderr(&format!(
@@ -81,9 +81,8 @@ fn download_package_fails_if_output_directory_already_exists() {
       "download",
       "--server",
       "http://example.com",
-      "--package",
+      "--hash",
       &Hash::bytes(&[]).to_string(),
-      "--output",
       "out",
     ])
     .stderr("error: `out` already exists\n")
@@ -98,9 +97,8 @@ fn download_package_fails_if_output_file_already_exists() {
       "download",
       "--server",
       "http://example.com",
-      "--package",
+      "--hash",
       &Hash::bytes(&[]).to_string(),
-      "--output",
       "out",
     ])
     .stderr("error: `out` already exists\n")
@@ -122,9 +120,8 @@ fn download_package_fails_on_hash_mismatch() {
       "download",
       "--server",
       &server.address(),
-      "--package",
+      "--hash",
       &expected.to_string(),
-      "--output",
       "out",
     ])
     .stderr(&format!(
@@ -155,8 +152,8 @@ fn download_retrieves_file() {
       "--server",
       &server.address(),
       "--file",
+      "--hash",
       &hash.to_string(),
-      "--output",
       "foo",
     ])
     .assert_file("foo", "bar")
@@ -182,13 +179,7 @@ fn download_retrieves_package() {
   let package = Hash::from(manifest.fingerprint());
 
   test
-    .args([
-      "upload",
-      "--server",
-      &server.address(),
-      "--package",
-      "manifest.filepack",
-    ])
+    .args(["upload", "--server", &server.address(), "manifest.filepack"])
     .success();
 
   let downloaded = Test::new()
@@ -196,9 +187,8 @@ fn download_retrieves_package() {
       "download",
       "--server",
       &server.address(),
-      "--package",
+      "--hash",
       &package.to_string(),
-      "--output",
       "out",
     ])
     .assert_file("out/foo", "aaa")
@@ -219,24 +209,6 @@ fn download_retrieves_package() {
     .success();
 
   server.terminate().success();
-}
-
-#[test]
-fn file_and_package_conflict() {
-  Test::new()
-    .args([
-      "download",
-      "--server",
-      "http://127.0.0.1:1",
-      "--output",
-      "out",
-      "--file",
-      &Hash::bytes(&[]).to_string(),
-      "--package",
-      &Hash::bytes(&[]).to_string(),
-    ])
-    .stderr_regex("error: the argument '--file <HASH>' cannot be used with '--package <HASH>'\n.*")
-    .status(USAGE_ERROR);
 }
 
 #[test]
