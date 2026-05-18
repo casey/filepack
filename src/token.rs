@@ -89,7 +89,7 @@ mod tests {
     );
     assert_matches!(
       Token::verify(private_key.public_key(), &audiences(), &token).unwrap_err(),
-      ServerError::UploadAuthInvalid { source } if matches!(source.kind(), ErrorKind::ExpiredSignature),
+      ServerError::AuthorizationInvalid { source } if matches!(source.kind(), ErrorKind::ExpiredSignature),
     );
   }
 
@@ -109,7 +109,7 @@ mod tests {
     );
     assert_matches!(
       Token::verify(private_key.public_key(), &audiences(), &token).unwrap_err(),
-      ServerError::UploadAuthInvalid { source } if matches!(source.kind(), ErrorKind::ImmatureSignature),
+      ServerError::AuthorizationInvalid { source } if matches!(source.kind(), ErrorKind::ImmatureSignature),
     );
   }
 
@@ -161,7 +161,7 @@ mod tests {
     .unwrap();
     assert_matches!(
       Token::verify(private_key.public_key(), &audiences(), &token).unwrap_err(),
-      ServerError::UploadAuthInvalid { source } if matches!(source.kind(), ErrorKind::Json(_)),
+      ServerError::AuthorizationInvalid { source } if matches!(source.kind(), ErrorKind::Json(_)),
     );
   }
 
@@ -171,7 +171,7 @@ mod tests {
     let token = Token::encode(&private_key, "evil.example").unwrap();
     assert_matches!(
       Token::verify(private_key.public_key(), &audiences(), &token).unwrap_err(),
-      ServerError::UploadAuthInvalid { source } if matches!(source.kind(), ErrorKind::InvalidAudience),
+      ServerError::AuthorizationInvalid { source } if matches!(source.kind(), ErrorKind::InvalidAudience),
     );
   }
 
@@ -191,7 +191,7 @@ mod tests {
     );
     assert_matches!(
       Token::verify(admin.public_key(), &audiences(), &token).unwrap_err(),
-      ServerError::UploadAuthInvalid { source } if matches!(source.kind(), ErrorKind::InvalidIssuer),
+      ServerError::AuthorizationInvalid { source } if matches!(source.kind(), ErrorKind::InvalidIssuer),
     );
   }
 
@@ -202,7 +202,7 @@ mod tests {
     let token = Token::encode(&intruder, AUDIENCE).unwrap();
     assert_matches!(
       Token::verify(admin.public_key(), &audiences(), &token).unwrap_err(),
-      ServerError::UploadAuthInvalid { source } if matches!(source.kind(), ErrorKind::InvalidSignature),
+      ServerError::AuthorizationInvalid { source } if matches!(source.kind(), ErrorKind::InvalidSignature),
     );
   }
 }
