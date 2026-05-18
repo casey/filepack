@@ -132,7 +132,7 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
-  #[snafu(display("file `{path}` already exists"))]
+  #[snafu(display("`{path}` already exists"))]
   FileAlreadyExists {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
