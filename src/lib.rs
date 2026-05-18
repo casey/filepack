@@ -55,7 +55,7 @@ use {
     hash_error::HashError,
     hashing_writer::HashingWriter,
     head::Head,
-    jwt::AuthConfig,
+    jwt::{AuthConfig, Authenticated},
     key_identifier::KeyIdentifier,
     key_name::KeyName,
     key_type::KeyType,

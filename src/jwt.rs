@@ -1,6 +1,10 @@
 use {
   super::*,
-  axum::http::{HeaderMap, header},
+  axum::{RequestPartsExt, extract::FromRequestParts, http::request::Parts},
+  axum_extra::{
+    TypedHeader,
+    headers::{Authorization, authorization::Bearer},
+  },
   ed25519_dalek::pkcs8::EncodePrivateKey,
   jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation},
 };
@@ -14,6 +18,8 @@ pub(crate) struct AuthConfig {
   pub(crate) audiences: Vec<String>,
 }
 
+pub(crate) struct Authenticated;
+
 #[derive(Serialize, Deserialize)]
 struct Claims {
   aud: String,
@@ -21,6 +27,31 @@ struct Claims {
   iat: u64,
   iss: String,
   nbf: u64,
+}
+
+impl<S: Send + Sync> FromRequestParts<S> for Authenticated {
+  type Rejection = ServerError;
+
+  async fn from_request_parts(parts: &mut Parts, _state: &S) -> ServerResult<Self> {
+    let Some(auth) = parts.extensions.get::<Arc<AuthConfig>>().cloned() else {
+      return Ok(Self);
+    };
+
+    let TypedHeader(Authorization(bearer)) = parts
+      .extract::<TypedHeader<Authorization<Bearer>>>()
+      .await
+      .map_err(|err| {
+        if err.is_missing() {
+          server_error::UploadAuthMissing.build()
+        } else {
+          server_error::UploadAuthMalformed.build()
+        }
+      })?;
+
+    verify(&auth, bearer.token())?;
+
+    Ok(Self)
+  }
 }
 
 pub(crate) fn encode(private_key: &PrivateKey, audience: &str) -> Result<String> {
@@ -44,15 +75,7 @@ pub(crate) fn encode(private_key: &PrivateKey, audience: &str) -> Result<String>
   .context(error::JwtEncode)
 }
 
-pub(crate) fn verify(auth: &AuthConfig, headers: &HeaderMap) -> ServerResult {
-  let token = headers
-    .get(header::AUTHORIZATION)
-    .context(server_error::UploadAuthMissing)?
-    .to_str()
-    .ok()
-    .and_then(|value| value.strip_prefix("Bearer "))
-    .context(server_error::UploadAuthMalformed)?;
-
+pub(crate) fn verify(auth: &AuthConfig, token: &str) -> ServerResult {
   let key = DecodingKey::from_ed_der(auth.admin.inner().as_bytes());
 
   let mut validation = Validation::new(Algorithm::EdDSA);
@@ -70,7 +93,7 @@ pub(crate) fn verify(auth: &AuthConfig, headers: &HeaderMap) -> ServerResult {
 
 #[cfg(test)]
 mod tests {
-  use {super::*, axum::http::HeaderValue, jsonwebtoken::errors::ErrorKind};
+  use {super::*, jsonwebtoken::errors::ErrorKind};
 
   fn config(admin: PublicKey) -> AuthConfig {
     AuthConfig {
@@ -95,32 +118,8 @@ mod tests {
       },
     );
     assert_matches!(
-      verify(&auth, &headers(&token)).unwrap_err(),
+      verify(&auth, &token).unwrap_err(),
       ServerError::UploadAuthInvalid { source } if matches!(source.kind(), ErrorKind::ExpiredSignature),
-    );
-  }
-
-  fn headers(token: &str) -> HeaderMap {
-    let mut headers = HeaderMap::new();
-    headers.insert(
-      header::AUTHORIZATION,
-      HeaderValue::from_str(&format!("Bearer {token}")).unwrap(),
-    );
-    headers
-  }
-
-  #[test]
-  fn malformed_header() {
-    let private_key = PrivateKey::generate();
-    let auth = config(private_key.public_key());
-    let mut headers = HeaderMap::new();
-    headers.insert(
-      header::AUTHORIZATION,
-      HeaderValue::from_static("not bearer"),
-    );
-    assert_matches!(
-      verify(&auth, &headers).unwrap_err(),
-      ServerError::UploadAuthMalformed,
     );
   }
 
@@ -135,21 +134,11 @@ mod tests {
   }
 
   #[test]
-  fn missing_header() {
-    let private_key = PrivateKey::generate();
-    let auth = config(private_key.public_key());
-    assert_matches!(
-      verify(&auth, &HeaderMap::new()).unwrap_err(),
-      ServerError::UploadAuthMissing,
-    );
-  }
-
-  #[test]
   fn roundtrip() {
     let private_key = PrivateKey::generate();
     let auth = config(private_key.public_key());
     let token = encode(&private_key, "filepack.example").unwrap();
-    verify(&auth, &headers(&token)).unwrap();
+    verify(&auth, &token).unwrap();
   }
 
   #[test]
@@ -158,7 +147,7 @@ mod tests {
     let auth = config(private_key.public_key());
     let token = encode(&private_key, "evil.example").unwrap();
     assert_matches!(
-      verify(&auth, &headers(&token)).unwrap_err(),
+      verify(&auth, &token).unwrap_err(),
       ServerError::UploadAuthInvalid { source } if matches!(source.kind(), ErrorKind::InvalidAudience),
     );
   }
@@ -179,7 +168,7 @@ mod tests {
       },
     );
     assert_matches!(
-      verify(&auth, &headers(&token)).unwrap_err(),
+      verify(&auth, &token).unwrap_err(),
       ServerError::UploadAuthInvalid { source } if matches!(source.kind(), ErrorKind::InvalidIssuer),
     );
   }
@@ -191,7 +180,7 @@ mod tests {
     let auth = config(admin.public_key());
     let token = encode(&intruder, "filepack.example").unwrap();
     assert_matches!(
-      verify(&auth, &headers(&token)).unwrap_err(),
+      verify(&auth, &token).unwrap_err(),
       ServerError::UploadAuthInvalid { source } if matches!(source.kind(), ErrorKind::InvalidSignature),
     );
   }

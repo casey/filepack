@@ -3,7 +3,7 @@ use {
   axum::{
     Router,
     extract::{Extension, Path},
-    http::{HeaderMap, Uri, header},
+    http::{Uri, header},
     response::Redirect,
     routing::{get, put},
   },
@@ -380,15 +380,11 @@ impl Serve {
   }
 
   async fn upload(
-    auth: Option<Extension<Arc<AuthConfig>>>,
+    _: Authenticated,
     server: Extension<Arc<Server>>,
-    headers: HeaderMap,
     hash: Path<Hash>,
     body: Body,
   ) -> ServerResult {
-    if let Some(Extension(auth)) = auth {
-      jwt::verify(&auth, &headers)?;
-    }
     server.write_file(*hash, body).await
   }
 }

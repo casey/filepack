@@ -14,6 +14,7 @@ include = ["CHANGELOG.md", "CONTRIBUTING", "LICENSE", "README.md", "src", "tests
 
 [dependencies]
 axum = "0.8.9"
+axum-extra = { version = "0.12.6", features = ["typed-header"] }
 axum-server = "0.8.0"
 bech32 = "0.11.1"
 blake3 = { version = "1.5.4", features = ["mmap", "rayon", "serde"] }
