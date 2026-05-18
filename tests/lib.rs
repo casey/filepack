@@ -56,6 +56,8 @@ const PRIVATE_KEY: &str = "private1a24p4zsr2nh04f4pkgtxfzv5yle473x4jue7s6lkwg9td
 
 const PUBLIC_KEY: &str = "public1a67dndhhmae7p6fsfnj0z37zf78cde6mwqgtms0y87h8ldlvvflyqcxnd63";
 
+const USAGE_ERROR: i32 = 2;
+
 fn tempdir() -> TempDir {
   tempfile::Builder::new()
     .prefix("filepack-test-tempdir")

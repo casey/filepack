@@ -71,7 +71,7 @@ fn encode_requires_hrp() {
   Test::new()
     .args(["bech32", "--encode", "666f6f"])
     .stderr_regex("error: the following required arguments were not provided:.*--hrp.*")
-    .status(2);
+    .status(USAGE_ERROR);
 }
 
 #[test]
@@ -91,5 +91,5 @@ fn source_required() {
     .stderr_regex(
       "error: the following required arguments were not provided:.*--decode.*--encode.*",
     )
-    .status(2);
+    .status(USAGE_ERROR);
 }

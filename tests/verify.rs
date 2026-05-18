@@ -389,7 +389,7 @@ fn named_key_invalid() {
       "error: invalid value '@invalid' for '--key <KEY>': invalid public key name `@invalid`\n\n\
       For more information, try '--help'.\n",
     )
-    .status(2);
+    .status(USAGE_ERROR);
 }
 
 #[test]

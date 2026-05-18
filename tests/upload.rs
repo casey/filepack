@@ -13,7 +13,7 @@ fn file_and_package_conflict() {
       "bar",
     ])
     .stderr_regex("error: the argument '--file <PATH>' cannot be used with '--package <PATH>'\n.*")
-    .status(2);
+    .status(USAGE_ERROR);
 }
 
 #[test]
@@ -65,6 +65,14 @@ fn reupload_succeeds() {
   }
 
   server.terminate().success();
+}
+
+#[test]
+fn server_url_must_be_http_or_https() {
+  Test::new()
+    .args(["upload", "--server", "ftp://127.0.0.1:1"])
+    .stderr_regex("error: the argument '--file <PATH>' cannot be used with '--package <PATH>'\n.*")
+    .status(USAGE_ERROR);
 }
 
 #[test]

@@ -42,7 +42,7 @@ fn invalid_name() {
       "error: invalid value '@invalid' for '--name <NAME>': invalid public key name `@invalid`\n\n\
       For more information, try '--help'.\n",
     )
-    .status(2);
+    .status(USAGE_ERROR);
 }
 
 #[test]
