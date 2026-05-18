@@ -14,6 +14,7 @@ include = ["CHANGELOG.md", "CONTRIBUTING", "LICENSE", "README.md", "src", "tests
 
 [dependencies]
 axum = "0.8.9"
+axum-extra = { version = "0.12.6", features = ["typed-header"] }
 axum-server = "0.8.0"
 bech32 = "0.11.1"
 blake3 = { version = "1.5.4", features = ["mmap", "rayon", "serde"] }
@@ -23,11 +24,12 @@ clap = { version = "4.5.16", features = ["derive"] }
 clap_mangen = "0.2.23"
 ctrlc = { version = "3.5.2", features = ["termination"] }
 dirs = "6.0.0"
-ed25519-dalek = { version = "2.1.1", features = ["rand_core"] }
+ed25519-dalek = { version = "2.1.1", features = ["pkcs8", "rand_core"] }
 filepack-cbor = { version = "0.0.0", path = "crates/filepack-cbor" }
 futures-util = { version = "0.3.32", default-features = false, features = ["std"] }
 hex = "0.4.3"
 indicatif = "0.18.0"
+jsonwebtoken = "9"
 lexiclean = "0.0.1"
 libc = "0.2.186"
 num-traits = "0.2.19"
@@ -85,6 +87,7 @@ pedantic = { level = "deny", priority = -1 }
 result-large-err = "allow"
 self-named-constructors = "allow"
 similar-names = "allow"
+struct-excessive-bools = "allow"
 struct-field-names = "allow"
 too-many-lines = "allow"
 unused-async = "allow"

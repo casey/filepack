@@ -11,6 +11,11 @@ pub enum Error {
     actual: Hash,
     expected: Hash,
   },
+  #[snafu(display("cannot use authentication with non-HTTPS server `{server}`"))]
+  AuthenticationOverHttp {
+    backtrace: Option<Backtrace>,
+    server: Url,
+  },
   #[snafu(display("failed to decode bech32 `{bech32}`"))]
   Bech32Decode {
     backtrace: Option<Backtrace>,

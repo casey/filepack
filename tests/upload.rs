@@ -1,6 +1,49 @@
 use super::*;
 
 #[test]
+fn restricted_upload_succeeds_with_auth() {
+  let server = Test::new()
+    .write("keychain/master.public", PUBLIC_KEY)
+    .write("keychain/master.private", PRIVATE_KEY)
+    .chmod("keychain", 0o700)
+    .chmod("keychain/master.private", 0o600)
+    .assert_file(&format!("files/{}", Hash::bytes(b"bar")), "bar")
+    .ready_address()
+    .args([
+      "serve",
+      "--address",
+      "127.0.0.1",
+      "--http-port",
+      "0",
+      "--domain",
+      "127.0.0.1",
+      "--restrict-uploads",
+      "--admin-key",
+      "master",
+    ])
+    .spawn();
+
+  Test::new()
+    .write("keychain/master.public", PUBLIC_KEY)
+    .write("keychain/master.private", PRIVATE_KEY)
+    .chmod("keychain", 0o700)
+    .chmod("keychain/master.private", 0o600)
+    .write("foo", "bar")
+    .args([
+      "upload",
+      "--server",
+      &server.address(),
+      "--auth",
+      "master",
+      "--file",
+      "foo",
+    ])
+    .success();
+
+  server.terminate().success();
+}
+
+#[test]
 fn reupload_package_succeeds() {
   let server = Test::new()
     .serve()
@@ -41,6 +84,68 @@ fn reupload_succeeds() {
       .args(["upload", "--server", &server.address(), "--file", "foo"])
       .success();
   }
+
+  server.terminate().success();
+}
+
+#[test]
+fn serve_admin_key_by_name() {
+  let server = Test::new()
+    .write("keychain/master.public", PUBLIC_KEY)
+    .write("keychain/master.private", PRIVATE_KEY)
+    .chmod("keychain", 0o700)
+    .chmod("keychain/master.private", 0o600)
+    .ready_address()
+    .args([
+      "serve",
+      "--address",
+      "127.0.0.1",
+      "--http-port",
+      "0",
+      "--domain",
+      "127.0.0.1",
+      "--restrict-uploads",
+      "--admin-key",
+      "master",
+    ])
+    .spawn();
+
+  let response = reqwest::blocking::Client::new()
+    .put(format!("{}/{}", server.address(), Hash::bytes(b"bar")))
+    .body("bar")
+    .send()
+    .unwrap();
+
+  assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+
+  server.terminate().success();
+}
+
+#[test]
+fn serve_admin_key_by_public_key() {
+  let server = Test::new()
+    .ready_address()
+    .args([
+      "serve",
+      "--address",
+      "127.0.0.1",
+      "--http-port",
+      "0",
+      "--domain",
+      "127.0.0.1",
+      "--restrict-uploads",
+      "--admin-key",
+      PUBLIC_KEY,
+    ])
+    .spawn();
+
+  let response = reqwest::blocking::Client::new()
+    .put(format!("{}/{}", server.address(), Hash::bytes(b"bar")))
+    .body("bar")
+    .send()
+    .unwrap();
+
+  assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
 
   server.terminate().success();
 }
@@ -97,6 +202,22 @@ fn signatures_are_not_uploaded() {
   );
 
   server.terminate().success();
+}
+
+#[test]
+fn upload_auth_requires_https() {
+  Test::new()
+    .args([
+      "upload",
+      "--server",
+      "http://example.com",
+      "--auth",
+      "master",
+      "--file",
+      "foo",
+    ])
+    .stderr("error: cannot use authentication with non-HTTPS server `http://example.com/`\n")
+    .failure();
 }
 
 #[test]

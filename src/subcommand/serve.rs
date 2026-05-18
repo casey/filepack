@@ -19,6 +19,11 @@ use {
 
 static THREAD_COUNTER: AtomicU64 = AtomicU64::new(0);
 
+pub(crate) struct AuthConfig {
+  pub(crate) admin: Option<PublicKey>,
+  pub(crate) audiences: Vec<String>,
+}
+
 enum SpawnConfig {
   Http,
   Https,
@@ -40,18 +45,26 @@ pub(crate) struct Serve {
   )]
   acme_contact: Vec<String>,
   #[arg(
-    help = "Request ACME TLS certificate for <DOMAIN>, this server must be reachable at \
-            <DOMAIN>:443 to respond to Encrypt ACME challenges",
-    long,
-    value_name = "DOMAIN"
-  )]
-  acme_domain: Vec<String>,
-  #[arg(
     default_value = "0.0.0.0",
     help = "Listen on <ADDRESS> for incoming requests",
     long
   )]
   address: String,
+  #[arg(
+    help = "Admin public key",
+    long,
+    requires = "restrict_uploads",
+    value_name = "KEY"
+  )]
+  admin_key: Option<KeyIdentifier>,
+  #[arg(
+    help = "Request ACME TLS certificate and accept authorization tokens for <DOMAIN>, as well as \
+            redirect HTTP to HTTPS at <DOMAIN> if enabled, this server must be reachable at \
+            <DOMAIN>:443 to respond to Encrypt ACME challenges",
+    long = "domain",
+    value_name = "DOMAIN"
+  )]
+  domains: Vec<String>,
   #[arg(help = "Serve HTTP traffic", long)]
   http: bool,
   #[arg(
@@ -76,6 +89,8 @@ pub(crate) struct Serve {
   ready_address: Option<SocketAddr>,
   #[arg(help = "Redirect HTTP to HTTPS", long)]
   redirect_http_to_https: bool,
+  #[arg(help = "Restrict uploads to admin", long)]
+  restrict_uploads: bool,
 }
 
 impl Serve {
@@ -88,7 +103,7 @@ impl Serve {
 
     ensure!(*RUSTLS_PROVIDER_INSTALLED, error::RustlsProvider);
 
-    let config = AcmeConfig::new(self.acme_domains()?)
+    let config = AcmeConfig::new(self.domains()?)
       .contact(&self.acme_contact)
       .cache_option(Some(DirCache::new(acme_cache)))
       .directory(LETS_ENCRYPT_PRODUCTION_DIRECTORY);
@@ -115,11 +130,11 @@ impl Serve {
     Ok(acceptor)
   }
 
-  fn acme_domains(&self) -> Result<Vec<String>> {
-    if self.acme_domain.is_empty() {
+  fn domains(&self) -> Result<Vec<String>> {
+    if self.domains.is_empty() {
       Ok(vec![System::host_name().context(error::AcmeHostname)?])
     } else {
-      Ok(self.acme_domain.clone())
+      Ok(self.domains.clone())
     }
   }
 
@@ -160,11 +175,11 @@ impl Serve {
     }
   }
 
-  fn redirect_destination(acme_domains: &[String], https_port: u16) -> String {
+  fn redirect_destination(domains: &[String], https_port: u16) -> String {
     if https_port == 443 {
-      format!("https://{}", acme_domains[0])
+      format!("https://{}", domains[0])
     } else {
-      format!("https://{}:{https_port}", acme_domains[0])
+      format!("https://{}:{https_port}", domains[0])
     }
   }
 
@@ -179,11 +194,17 @@ impl Serve {
     Redirect::to(&destination)
   }
 
-  pub(crate) fn router(server: Arc<Server>) -> Router {
-    Router::new()
+  pub(crate) fn router(server: Arc<Server>, auth_config: Option<Arc<AuthConfig>>) -> Router {
+    let router = Router::new()
       .route("/{hash}", get(Self::download))
       .route("/{hash}", put(Self::upload))
-      .layer(Extension(server))
+      .layer(Extension(server));
+
+    if let Some(auth_config) = auth_config {
+      router.layer(Extension(auth_config))
+    } else {
+      router
+    }
   }
 
   pub(crate) fn run(self, options: Options) -> Result {
@@ -224,7 +245,21 @@ impl Serve {
 
     let server = Arc::new(Server::with_data_dir(&options.data_dir()?)?);
 
-    let router = Self::router(server);
+    let auth_config = if self.restrict_uploads {
+      let admin = if let Some(identifier) = &self.admin_key {
+        Some(Keychain::load(&options)?.identifier_public_key(identifier)?)
+      } else {
+        None
+      };
+      Some(Arc::new(AuthConfig {
+        admin,
+        audiences: self.domains()?,
+      }))
+    } else {
+      None
+    };
+
+    let router = Self::router(server, auth_config);
 
     match (self.http_port(), self.https_port()) {
       (Some(http_port), None) => {
@@ -246,10 +281,7 @@ impl Serve {
       }
       (Some(http_port), Some(https_port)) => {
         let http_spawn_config = if self.redirect_http_to_https {
-          SpawnConfig::Redirect(Self::redirect_destination(
-            &self.acme_domains()?,
-            https_port,
-          ))
+          SpawnConfig::Redirect(Self::redirect_destination(&self.domains()?, https_port))
         } else {
           SpawnConfig::Http
         };
@@ -353,7 +385,12 @@ impl Serve {
     Ok(())
   }
 
-  async fn upload(server: Extension<Arc<Server>>, hash: Path<Hash>, body: Body) -> ServerResult {
+  async fn upload(
+    _: Authenticated,
+    server: Extension<Arc<Server>>,
+    hash: Path<Hash>,
+    body: Body,
+  ) -> ServerResult {
     server.write_file(*hash, body).await
   }
 }
@@ -363,14 +400,16 @@ impl Default for Serve {
     Self {
       acme_cache: None,
       acme_contact: Vec::new(),
-      acme_domain: Vec::new(),
       address: "0.0.0.0".into(),
+      admin_key: None,
+      domains: Vec::new(),
       http: false,
       http_port: None,
       https: false,
       https_port: None,
       ready_address: None,
       redirect_http_to_https: false,
+      restrict_uploads: false,
     }
   }
 }
@@ -411,11 +450,32 @@ mod tests {
     }
 
     fn new() -> Self {
+      Self::with_auth(None)
+    }
+
+    async fn put(&self, path: &str, content: &[u8]) -> Response {
+      self.put_with_token(path, content, None).await
+    }
+
+    async fn put_with_token(&self, path: &str, content: &[u8], token: Option<&str>) -> Response {
+      let mut request = Request::builder().method("PUT").uri(path);
+      if let Some(token) = token {
+        request = request.header(header::AUTHORIZATION, format!("Bearer {token}"));
+      }
+      self
+        .router
+        .clone()
+        .oneshot(request.body(Body::from(content.to_vec())).unwrap())
+        .await
+        .unwrap()
+    }
+
+    fn with_auth(auth_config: Option<Arc<AuthConfig>>) -> Self {
       let (tempdir, data_dir) = tempdir();
 
       let server = Arc::new(Server::with_data_dir(&data_dir).unwrap());
 
-      let router = Serve::router(server);
+      let router = Serve::router(server, auth_config);
 
       Self {
         data_dir,
@@ -424,45 +484,28 @@ mod tests {
       }
     }
 
-    async fn put(&self, path: &str, content: &[u8]) -> Response {
-      self
-        .router
-        .clone()
-        .oneshot(
-          Request::builder()
-            .method("PUT")
-            .uri(path)
-            .body(Body::from(content.to_vec()))
-            .unwrap(),
-        )
-        .await
-        .unwrap()
-    }
-
     fn write_file(&self, hash: Hash, content: &[u8]) {
       fs::write(self.data_dir.join("files").join(hash.to_string()), content).unwrap();
     }
   }
 
   #[test]
-  fn acme_domain_defaults_to_hostname() {
-    assert_eq!(
-      Serve::default().acme_domains().unwrap(),
-      vec![System::host_name().unwrap()]
-    );
+  fn admin_key_requires_restrict_upload() {
+    let err = Serve::try_parse_from(["filepack", "--admin-key", test::PUBLIC_KEY]).unwrap_err();
+    assert_eq!(err.kind(), clap::error::ErrorKind::MissingRequiredArgument);
   }
 
-  #[test]
-  fn acme_domain_flag_is_respected() {
-    assert_eq!(
-      Serve {
-        acme_domain: vec!["foo".into(), "bar".into()],
-        ..Serve::default()
-      }
-      .acme_domains()
-      .unwrap(),
-      vec!["foo".to_string(), "bar".to_string()],
-    );
+  #[tokio::test]
+  async fn closed_server_forbids_uploads() {
+    let server = TestServer::with_auth(Some(Arc::new(AuthConfig {
+      admin: None,
+      audiences: Vec::new(),
+    })));
+
+    let hash = Hash::bytes(b"bar");
+    let response = server.put(&format!("/{hash}"), b"bar").await;
+
+    assert_eq!(response.status(), StatusCode::FORBIDDEN);
   }
 
   #[test]
@@ -470,6 +513,27 @@ mod tests {
     assert_eq!(
       Serve::default(),
       Serve::try_parse_from(["filepack"]).unwrap(),
+    );
+  }
+
+  #[test]
+  fn domain_defaults_to_hostname() {
+    assert_eq!(
+      Serve::default().domains().unwrap(),
+      vec![System::host_name().unwrap()]
+    );
+  }
+
+  #[test]
+  fn domain_flag_is_respected() {
+    assert_eq!(
+      Serve {
+        domains: vec!["foo".into(), "bar".into()],
+        ..Serve::default()
+      }
+      .domains()
+      .unwrap(),
+      vec!["foo".to_string(), "bar".to_string()],
     );
   }
 
@@ -579,6 +643,61 @@ mod tests {
     case("/", "https://foo/").await;
     case("/bar", "https://foo/bar").await;
     case("/bar?baz=qux", "https://foo/bar?baz=qux").await;
+  }
+
+  #[tokio::test]
+  async fn restricted_upload_accepts_admin_token() {
+    let admin = PrivateKey::generate();
+    let server = TestServer::with_auth(Some(Arc::new(AuthConfig {
+      admin: Some(admin.public_key()),
+      audiences: vec!["filepack.example".into()],
+    })));
+
+    let hash = Hash::bytes(b"bar");
+    let token = Token::encode(&admin, "filepack.example").unwrap();
+
+    let response = server
+      .put_with_token(&format!("/{hash}"), b"bar", Some(&token))
+      .await;
+
+    assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(
+      fs::read(server.data_dir.join("files").join(hash.to_string())).unwrap(),
+      b"bar",
+    );
+  }
+
+  #[tokio::test]
+  async fn restricted_upload_rejects_missing_header() {
+    let admin = PrivateKey::generate();
+    let server = TestServer::with_auth(Some(Arc::new(AuthConfig {
+      admin: Some(admin.public_key()),
+      audiences: vec!["filepack.example".into()],
+    })));
+
+    let hash = Hash::bytes(b"bar");
+    let response = server.put(&format!("/{hash}"), b"bar").await;
+
+    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+  }
+
+  #[tokio::test]
+  async fn restricted_upload_rejects_others() {
+    let admin = PrivateKey::generate();
+    let other = PrivateKey::generate();
+    let server = TestServer::with_auth(Some(Arc::new(AuthConfig {
+      admin: Some(admin.public_key()),
+      audiences: vec!["filepack.example".into()],
+    })));
+
+    let hash = Hash::bytes(b"bar");
+    let token = Token::encode(&other, "filepack.example").unwrap();
+
+    let response = server
+      .put_with_token(&format!("/{hash}"), b"bar", Some(&token))
+      .await;
+
+    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
   }
 
   #[tokio::test]
