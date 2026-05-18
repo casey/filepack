@@ -161,8 +161,8 @@ pub enum Error {
     hex: String,
     source: hex::FromHexError,
   },
-  #[snafu(display("cannot use upload key with non-HTTPS server `{server}`"))]
-  InsecureUploadKey {
+  #[snafu(display("cannot use authentication with non-HTTPS server `{server}`"))]
+  InsecureAuthentication {
     backtrace: Option<Backtrace>,
     server: Url,
   },
