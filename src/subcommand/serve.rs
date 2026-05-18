@@ -489,27 +489,6 @@ mod tests {
   }
 
   #[test]
-  fn domain_defaults_to_hostname() {
-    assert_eq!(
-      Serve::default().domains().unwrap(),
-      vec![System::host_name().unwrap()]
-    );
-  }
-
-  #[test]
-  fn domain_flag_is_respected() {
-    assert_eq!(
-      Serve {
-        domains: vec!["foo".into(), "bar".into()],
-        ..Serve::default()
-      }
-      .domains()
-      .unwrap(),
-      vec!["foo".to_string(), "bar".to_string()],
-    );
-  }
-
-  #[test]
   fn admin_key_requires_restrict_upload() {
     let err = Serve::try_parse_from(["filepack", "--admin-key", test::PUBLIC_KEY]).unwrap_err();
     assert_eq!(err.kind(), clap::error::ErrorKind::MissingRequiredArgument);
@@ -533,6 +512,27 @@ mod tests {
     assert_eq!(
       Serve::default(),
       Serve::try_parse_from(["filepack"]).unwrap(),
+    );
+  }
+
+  #[test]
+  fn domain_defaults_to_hostname() {
+    assert_eq!(
+      Serve::default().domains().unwrap(),
+      vec![System::host_name().unwrap()]
+    );
+  }
+
+  #[test]
+  fn domain_flag_is_respected() {
+    assert_eq!(
+      Serve {
+        domains: vec!["foo".into(), "bar".into()],
+        ..Serve::default()
+      }
+      .domains()
+      .unwrap(),
+      vec!["foo".to_string(), "bar".to_string()],
     );
   }
 
