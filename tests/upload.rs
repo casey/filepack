@@ -178,6 +178,195 @@ error: file did not match manifest entry
 }
 
 #[test]
+fn upload_package_fails_when_manifest_decode_fails() {
+  Test::new()
+    .write("manifest.filepack", "not cbor")
+    .args([
+      "upload",
+      "--server",
+      "http://127.0.0.1:1",
+      "--package",
+      "manifest.filepack",
+    ])
+    .stderr(
+      "\
+error: failed to decode manifest at `manifest.filepack`
+       └─ expected map but found text
+",
+    )
+    .failure();
+}
+
+#[test]
+fn upload_package_fails_when_manifest_missing() {
+  Test::new()
+    .args([
+      "upload",
+      "--server",
+      "http://127.0.0.1:1",
+      "--package",
+      "manifest.filepack",
+    ])
+    .stderr("error: manifest `manifest.filepack` not found\n")
+    .failure();
+}
+
+#[test]
+fn upload_package_fails_when_package_is_not_directory() {
+  let payload_hash = Hash::bytes(b"payload");
+
+  let mut dir_encoder = Encoder::new();
+  let mut dir_map = dir_encoder.map::<u8>(2);
+  dir_map.item(0, 0u8);
+  dir_map.item_with(1, &(), |(), encoder| {
+    let mut entries = encoder.map::<&str>(1);
+    entries.item_with("package", &(), |(), encoder| {
+      let mut entry = encoder.map::<u8>(3);
+      entry.item(0, 0u8);
+      entry.item(1, payload_hash);
+      entry.item(2, 0u64);
+      drop(entry);
+    });
+    drop(entries);
+  });
+  drop(dir_map);
+  let dir_bytes = dir_encoder.finish();
+
+  let root = Hash::bytes(&dir_bytes);
+
+  let mut files = BTreeMap::new();
+  files.insert(root, dir_bytes);
+
+  let mut encoder = Encoder::new();
+  let mut archive = encoder.map::<u8>(3);
+  archive.item(0, 0u8);
+  archive.item(1, root);
+  archive.item(2, &files);
+  drop(archive);
+
+  Test::new()
+    .write("manifest.filepack", encoder.finish())
+    .args([
+      "upload",
+      "--server",
+      "http://127.0.0.1:1",
+      "--package",
+      "manifest.filepack",
+    ])
+    .stderr(
+      "\
+error: failed to unarchive manifest
+       └─ expected archive `package` entry to be directory but found file
+",
+    )
+    .failure();
+}
+
+#[test]
+fn upload_package_fails_when_package_missing() {
+  let mut dir_encoder = Encoder::new();
+  let mut dir_map = dir_encoder.map::<u8>(2);
+  dir_map.item(0, 0u8);
+  dir_map.item(1, BTreeMap::<String, u8>::new());
+  drop(dir_map);
+  let dir_bytes = dir_encoder.finish();
+
+  let root = Hash::bytes(&dir_bytes);
+
+  let mut files = BTreeMap::new();
+  files.insert(root, dir_bytes);
+
+  let mut encoder = Encoder::new();
+  let mut archive = encoder.map::<u8>(3);
+  archive.item(0, 0u8);
+  archive.item(1, root);
+  archive.item(2, &files);
+  drop(archive);
+
+  Test::new()
+    .write("manifest.filepack", encoder.finish())
+    .args([
+      "upload",
+      "--server",
+      "http://127.0.0.1:1",
+      "--package",
+      "manifest.filepack",
+    ])
+    .stderr(
+      "\
+error: failed to unarchive manifest
+       └─ archive missing package directory
+",
+    )
+    .failure();
+}
+
+#[test]
+fn upload_package_fails_when_root_file_missing() {
+  let missing = Hash::bytes(b"missing");
+
+  let mut encoder = Encoder::new();
+  let mut archive = encoder.map::<u8>(3);
+  archive.item(0, 0u8);
+  archive.item(1, missing);
+  archive.item(2, BTreeMap::<Hash, Vec<u8>>::new());
+  drop(archive);
+
+  Test::new()
+    .write("manifest.filepack", encoder.finish())
+    .args([
+      "upload",
+      "--server",
+      "http://127.0.0.1:1",
+      "--package",
+      "manifest.filepack",
+    ])
+    .stderr(&format!(
+      "\
+error: failed to unarchive manifest
+       └─ archive missing entry for hash {missing}
+",
+    ))
+    .failure();
+}
+
+#[test]
+fn upload_package_fails_when_root_not_directory_cbor() {
+  let mut text_encoder = Encoder::new();
+  text_encoder.text("not a directory");
+  let junk = text_encoder.finish();
+  let root = Hash::bytes(&junk);
+
+  let mut files = BTreeMap::new();
+  files.insert(root, junk);
+
+  let mut encoder = Encoder::new();
+  let mut archive = encoder.map::<u8>(3);
+  archive.item(0, 0u8);
+  archive.item(1, root);
+  archive.item(2, &files);
+  drop(archive);
+
+  Test::new()
+    .write("manifest.filepack", encoder.finish())
+    .args([
+      "upload",
+      "--server",
+      "http://127.0.0.1:1",
+      "--package",
+      "manifest.filepack",
+    ])
+    .stderr(
+      "\
+error: failed to unarchive manifest
+       ├─ failed to decode directory
+       └─ expected map but found text
+",
+    )
+    .failure();
+}
+
+#[test]
 fn upload_package_uploads_files() {
   let server = Test::new()
     .serve()
