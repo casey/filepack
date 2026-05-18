@@ -123,6 +123,26 @@ mod tests {
     );
   }
 
+  #[test]
+  fn future_nbf() {
+    let private_key = PrivateKey::generate();
+    let iat = now().unwrap();
+    let token = mint(
+      &private_key,
+      &Claims {
+        aud: AUDIENCE.into(),
+        exp: iat + TTL,
+        iat,
+        iss: private_key.public_key().to_string(),
+        nbf: iat + LEEWAY + 10,
+      },
+    );
+    assert_matches!(
+      verify(private_key.public_key(), &audiences(), &token).unwrap_err(),
+      ServerError::UploadAuthInvalid { source } if matches!(source.kind(), ErrorKind::ImmatureSignature),
+    );
+  }
+
   fn mint(private_key: &PrivateKey, claims: &Claims) -> String {
     let der = private_key.inner_secret().to_pkcs8_der().unwrap();
     jsonwebtoken::encode(
@@ -138,6 +158,41 @@ mod tests {
     let private_key = PrivateKey::generate();
     let token = encode(&private_key, AUDIENCE).unwrap();
     verify(private_key.public_key(), &audiences(), &token).unwrap();
+  }
+
+  #[test]
+  fn unknown_claim_rejected() {
+    #[derive(Serialize)]
+    struct ExtraClaims {
+      aud: String,
+      exp: u64,
+      extra: String,
+      iat: u64,
+      iss: String,
+      nbf: u64,
+    }
+
+    let private_key = PrivateKey::generate();
+    let iat = now().unwrap();
+    let claims = ExtraClaims {
+      aud: AUDIENCE.into(),
+      exp: iat + TTL,
+      extra: "junk".into(),
+      iat,
+      iss: private_key.public_key().to_string(),
+      nbf: iat,
+    };
+    let der = private_key.inner_secret().to_pkcs8_der().unwrap();
+    let token = jsonwebtoken::encode(
+      &Header::new(Algorithm::EdDSA),
+      &claims,
+      &EncodingKey::from_ed_der(der.as_bytes()),
+    )
+    .unwrap();
+    assert_matches!(
+      verify(private_key.public_key(), &audiences(), &token).unwrap_err(),
+      ServerError::UploadAuthInvalid { source } if matches!(source.kind(), ErrorKind::Json(_)),
+    );
   }
 
   #[test]
