@@ -11,23 +11,28 @@ const TTL: u64 = 60;
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct Token {
-  aud: String,
-  exp: u64,
-  iat: u64,
-  iss: String,
-  nbf: u64,
+  #[serde(rename = "aud")]
+  audience: String,
+  #[serde(rename = "exp")]
+  expiration_time: u64,
+  #[serde(rename = "iat")]
+  issued_at_time: u64,
+  #[serde(rename = "iss")]
+  issuer: String,
+  #[serde(rename = "nbf")]
+  not_before_time: u64,
 }
 
 impl Token {
   pub(crate) fn encode(private_key: &PrivateKey, audience: &str) -> Result<String> {
-    let iat = now()?;
+    let issued_at_time = now()?;
 
     let claims = Self {
-      aud: audience.into(),
-      exp: iat + TTL,
-      iat,
-      iss: private_key.public_key().to_string(),
-      nbf: iat,
+      audience: audience.into(),
+      expiration_time: issued_at_time + TTL,
+      issued_at_time,
+      issuer: private_key.public_key().to_string(),
+      not_before_time: issued_at_time,
     };
 
     let der = private_key.inner_secret().to_pkcs8_der().unwrap();
@@ -69,15 +74,15 @@ mod tests {
   #[test]
   fn expired() {
     let private_key = PrivateKey::generate();
-    let iat = now().unwrap() - LEEWAY - TTL - 10;
+    let issued_at_time = now().unwrap() - LEEWAY - TTL - 10;
     let token = mint(
       &private_key,
       &Token {
-        aud: AUDIENCE.into(),
-        exp: iat + TTL,
-        iat,
-        iss: private_key.public_key().to_string(),
-        nbf: iat,
+        audience: AUDIENCE.into(),
+        expiration_time: issued_at_time + TTL,
+        issued_at_time,
+        issuer: private_key.public_key().to_string(),
+        not_before_time: issued_at_time,
       },
     );
     assert_matches!(
@@ -89,15 +94,15 @@ mod tests {
   #[test]
   fn future_nbf() {
     let private_key = PrivateKey::generate();
-    let iat = now().unwrap();
+    let issued_at_time = now().unwrap();
     let token = mint(
       &private_key,
       &Token {
-        aud: AUDIENCE.into(),
-        exp: iat + TTL,
-        iat,
-        iss: private_key.public_key().to_string(),
-        nbf: iat + LEEWAY + 10,
+        audience: AUDIENCE.into(),
+        expiration_time: issued_at_time + TTL,
+        issued_at_time,
+        issuer: private_key.public_key().to_string(),
+        not_before_time: issued_at_time + LEEWAY + 10,
       },
     );
     assert_matches!(
@@ -171,15 +176,15 @@ mod tests {
   #[test]
   fn wrong_issuer() {
     let admin = PrivateKey::generate();
-    let iat = now().unwrap();
+    let issued_at_time = now().unwrap();
     let token = mint(
       &admin,
       &Token {
-        aud: AUDIENCE.into(),
-        exp: iat + TTL,
-        iat,
-        iss: PrivateKey::generate().public_key().to_string(),
-        nbf: iat,
+        audience: AUDIENCE.into(),
+        expiration_time: issued_at_time + TTL,
+        issued_at_time,
+        issuer: PrivateKey::generate().public_key().to_string(),
+        not_before_time: issued_at_time,
       },
     );
     assert_matches!(
