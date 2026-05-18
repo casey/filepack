@@ -1,26 +1,21 @@
 use {super::*, reqwest::blocking::Body};
 
 #[derive(Parser)]
-#[command(group(
-  ArgGroup::new("input")
-    .required(true)
-    .args(["file", "package"]),
-))]
 pub(crate) struct Upload {
-  #[arg(help = "Upload file at <PATH>", long, value_name = "PATH")]
-  file: Option<Utf8PathBuf>,
-  #[arg(help = "Upload package at <PATH>", long, value_name = "PATH")]
-  package: Option<Utf8PathBuf>,
+  #[arg(help = "Upload file instead of package", long)]
+  file: bool,
+  #[arg(help = "Upload <PATH>", value_name = "PATH")]
+  input: Utf8PathBuf,
   #[arg(help = "Upload to server at <URL>", long, value_name = "URL", value_parser = parse_server_url)]
   server: Url,
 }
 
 impl Upload {
   pub(crate) fn run(self, options: Options) -> Result {
-    match (&self.file, &self.package) {
-      (Some(path), None) => self.upload_file(path, &options),
-      (None, Some(path)) => self.upload_package(path, options),
-      (None, None) | (Some(_), Some(_)) => unreachable!(),
+    if self.file {
+      self.upload_file(&self.input, &options)
+    } else {
+      self.upload_package(&self.input, &options)
     }
   }
 
@@ -43,7 +38,7 @@ impl Upload {
     Ok(())
   }
 
-  fn upload_package(&self, archive_path: &Utf8Path, options: Options) -> Result {
+  fn upload_package(&self, archive_path: &Utf8Path, options: &Options) -> Result {
     let archive = Archive::load_with_path(archive_path, archive_path)?;
 
     let context = error::UnarchiveManifest { path: archive_path };
