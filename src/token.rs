@@ -37,12 +37,14 @@ impl Token {
 
     let der = private_key.inner_secret().to_pkcs8_der().unwrap();
 
-    jsonwebtoken::encode(
-      &Header::new(Algorithm::EdDSA),
-      &claims,
-      &EncodingKey::from_ed_der(der.as_bytes()),
+    Ok(
+      jsonwebtoken::encode(
+        &Header::new(Algorithm::EdDSA),
+        &claims,
+        &EncodingKey::from_ed_der(der.as_bytes()),
+      )
+      .unwrap(),
     )
-    .context(error::JwtEncode)
   }
 
   pub(crate) fn verify(admin: PublicKey, audiences: &[String], token: &str) -> ServerResult {

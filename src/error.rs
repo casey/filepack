@@ -171,11 +171,6 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     message: String,
   },
-  #[snafu(display("failed to encode upload JWT"))]
-  JwtEncode {
-    backtrace: Option<Backtrace>,
-    source: jsonwebtoken::errors::Error,
-  },
   #[snafu(display(
     "public key `{}` doesn't match private key `{}`",
     key.public_key_filename(),
