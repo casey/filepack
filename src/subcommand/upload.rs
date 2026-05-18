@@ -15,14 +15,14 @@ pub(crate) struct Upload {
 impl Upload {
   pub(crate) fn run(self, options: Options) -> Result {
     let key = if let Some(name) = &self.auth {
-      let host_is_loopback = match self.server.host().unwrap() {
+      let loopback = match self.server.host().unwrap() {
         Host::Domain(domain) => domain == "localhost",
         Host::Ipv4(addr) => addr.is_loopback(),
         Host::Ipv6(addr) => addr.is_loopback(),
       };
 
       ensure!(
-        self.server.scheme() == "https" || host_is_loopback,
+        self.server.scheme() == "https" || loopback,
         error::AuthenticationOverHttp {
           server: self.server.clone(),
         },
