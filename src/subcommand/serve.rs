@@ -45,13 +45,6 @@ pub(crate) struct Serve {
   )]
   acme_contact: Vec<String>,
   #[arg(
-    help = "Request ACME TLS certificate for <DOMAIN>, this server must be reachable at \
-            <DOMAIN>:443 to respond to Encrypt ACME challenges",
-    long,
-    value_name = "DOMAIN"
-  )]
-  acme_domain: Vec<String>,
-  #[arg(
     default_value = "0.0.0.0",
     help = "Listen on <ADDRESS> for incoming requests",
     long
@@ -64,6 +57,13 @@ pub(crate) struct Serve {
     value_name = "KEY"
   )]
   admin_key: Option<KeyIdentifier>,
+  #[arg(
+    help = "Request ACME TLS certificate and accept authorization tokens for <DOMAIN>, this server \
+            must be reachable at <DOMAIN>:443 to respond to Encrypt ACME challenges",
+    long = "domain",
+    value_name = "DOMAIN"
+  )]
+  domains: Vec<String>,
   #[arg(help = "Serve HTTP traffic", long)]
   http: bool,
   #[arg(
@@ -102,7 +102,7 @@ impl Serve {
 
     ensure!(*RUSTLS_PROVIDER_INSTALLED, error::RustlsProvider);
 
-    let config = AcmeConfig::new(self.acme_domains()?)
+    let config = AcmeConfig::new(self.domains()?)
       .contact(&self.acme_contact)
       .cache_option(Some(DirCache::new(acme_cache)))
       .directory(LETS_ENCRYPT_PRODUCTION_DIRECTORY);
@@ -129,11 +129,11 @@ impl Serve {
     Ok(acceptor)
   }
 
-  fn acme_domains(&self) -> Result<Vec<String>> {
-    if self.acme_domain.is_empty() {
+  fn domains(&self) -> Result<Vec<String>> {
+    if self.domains.is_empty() {
       Ok(vec![System::host_name().context(error::AcmeHostname)?])
     } else {
-      Ok(self.acme_domain.clone())
+      Ok(self.domains.clone())
     }
   }
 
@@ -252,7 +252,7 @@ impl Serve {
       };
       Some(Arc::new(AuthConfig {
         admin,
-        audiences: self.acme_domains()?,
+        audiences: self.domains()?,
       }))
     } else {
       None
@@ -280,10 +280,7 @@ impl Serve {
       }
       (Some(http_port), Some(https_port)) => {
         let http_spawn_config = if self.redirect_http_to_https {
-          SpawnConfig::Redirect(Self::redirect_destination(
-            &self.acme_domains()?,
-            https_port,
-          ))
+          SpawnConfig::Redirect(Self::redirect_destination(&self.domains()?, https_port))
         } else {
           SpawnConfig::Http
         };
@@ -402,9 +399,9 @@ impl Default for Serve {
     Self {
       acme_cache: None,
       acme_contact: Vec::new(),
-      acme_domain: Vec::new(),
       address: "0.0.0.0".into(),
       admin_key: None,
+      domains: Vec::new(),
       http: false,
       http_port: None,
       https: false,
