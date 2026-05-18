@@ -30,13 +30,7 @@ impl Upload {
 
       let private_key = PrivateKey::load(&keychain.path.join(name.private_key_filename()))?;
 
-      let host = self
-        .server
-        .host_str()
-        .context(error::ServerHost {
-          server: self.server.clone(),
-        })?
-        .to_owned();
+      let host = self.server.host_str().unwrap().to_owned();
 
       Some(Token::encode(&private_key, &host)?)
     } else {

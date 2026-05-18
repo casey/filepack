@@ -335,11 +335,6 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     source: io::Error,
   },
-  #[snafu(display("server URL `{server}` has no host"))]
-  ServerHost {
-    backtrace: Option<Backtrace>,
-    server: Url,
-  },
   #[snafu(display("failed to build server runtime"))]
   ServerRuntime {
     backtrace: Option<Backtrace>,
