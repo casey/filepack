@@ -79,6 +79,56 @@ fn server_url_must_be_http_or_https() {
 }
 
 #[test]
+fn signatures_are_not_uploaded() {
+  let server = Test::new().serve().spawn();
+
+  let test = Test::new()
+    .arg("keygen")
+    .success()
+    .write("foo", "aaa")
+    .args(["create", "."])
+    .success()
+    .args(["sign", "manifest.filepack"])
+    .success();
+
+  let manifest = Manifest::load(Some(&test.path().join("manifest.filepack"))).unwrap();
+  assert_eq!(manifest.signatures.len(), 1);
+
+  let package = Hash::from(manifest.fingerprint());
+
+  test
+    .args([
+      "upload",
+      "--server",
+      &server.address(),
+      "--package",
+      "manifest.filepack",
+    ])
+    .success();
+
+  let downloaded = Test::new()
+    .args([
+      "download",
+      "--server",
+      &server.address(),
+      "--package",
+      &package.to_string(),
+      "--output",
+      "out",
+    ])
+    .success();
+
+  assert!(
+    Manifest::load(Some(&downloaded.path().join("out/manifest.filepack")))
+      .unwrap()
+      .signatures
+      .is_empty(),
+  );
+
+  server.terminate().success();
+}
+
+#[test]
 fn upload_creates_file() {
   let server = Test::new()
     .serve()

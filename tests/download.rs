@@ -194,6 +194,24 @@ fn download_retrieves_package() {
 }
 
 #[test]
+fn file_and_package_conflict() {
+  Test::new()
+    .args([
+      "download",
+      "--server",
+      "http://127.0.0.1:1",
+      "--output",
+      "out",
+      "--file",
+      &Hash::bytes(&[]).to_string(),
+      "--package",
+      &Hash::bytes(&[]).to_string(),
+    ])
+    .stderr_regex("error: the argument '--file <HASH>' cannot be used with '--package <HASH>'\n.*")
+    .status(USAGE_ERROR);
+}
+
+#[test]
 fn server_url_must_be_http_or_https() {
   Test::new()
     .args(["download", "--server", "ftp://example.com"])

@@ -7,11 +7,11 @@ use {super::*, reqwest::blocking::Response};
     .args(["file", "package"]),
 ))]
 pub(crate) struct Download {
-  #[arg(help = "Download file with <HASH>", long)]
+  #[arg(help = "Download file with <HASH>", long, value_name = "HASH")]
   file: Option<Hash>,
   #[arg(help = "Download to <PATH>", long, value_name = "PATH")]
   output: Utf8PathBuf,
-  #[arg(help = "Download package with <HASH>", long)]
+  #[arg(help = "Download package with <HASH>", long, value_name = "HASH")]
   package: Option<Hash>,
   #[arg(help = "Download from server at <URL>", long, value_name = "URL", value_parser = parse_server_url)]
   server: Url,
