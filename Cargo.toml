@@ -23,7 +23,7 @@ clap = { version = "4.5.16", features = ["derive"] }
 clap_mangen = "0.2.23"
 ctrlc = { version = "3.5.2", features = ["termination"] }
 dirs = "6.0.0"
-ed25519-dalek = { version = "2.1.1", features = ["rand_core"] }
+ed25519-dalek = { version = "2.1.1", features = ["pkcs8", "rand_core"] }
 filepack-cbor = { version = "0.0.0", path = "crates/filepack-cbor" }
 futures-util = { version = "0.3.32", default-features = false, features = ["std"] }
 hex = "0.4.3"
@@ -33,8 +33,9 @@ libc = "0.2.186"
 num-traits = "0.2.19"
 owo-colors = "4"
 rand = "0.8.5"
+rcgen = { version = "0.14.8", default-features = false, features = ["pem", "ring"] }
 regex = "1.10.6"
-reqwest = { version = "0.13.3", features = ["blocking", "http2"] }
+reqwest = { version = "0.13.3", features = ["blocking", "http2", "rustls"], default-features = false }
 rustls = { version = "0.23.40", features = ["ring"] }
 rustls-acme = { version = "0.15.2", features = ["axum"] }
 serde = { version = "1.0.209", features = ["derive"] }
@@ -48,14 +49,16 @@ strum = { version = "0.27.2", features = ["derive"] }
 sysinfo = { version = "0.39.1", default-features = false, features = ["system"] }
 tempfile = "3.24.0"
 tokio = { version = "1.52.3", features = ["fs", "io-util", "macros", "rt-multi-thread"] }
+tokio-rustls = { version = "0.26.4", default-features = false, features = ["ring"] }
 tokio-util = { version = "0.7.18", features = ["io"] }
+tower = { version = "0.5.3", features = ["util"] }
 url = "2.5.8"
 usized = "0.0.2"
 walkdir = "2.5.0"
+x509-parser = "0.18.1"
 
 [dev-dependencies]
 pretty_assertions = "1.4.1"
-tower = { version = "0.5.3", features = ["util"] }
 
 [lib]
 doctest = false

@@ -166,6 +166,8 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     message: String,
   },
+  #[snafu(display("`--key` cannot be combined with ACME options"))]
+  KeyConflictsWithAcme { backtrace: Option<Backtrace> },
   #[snafu(display(
     "public key `{}` doesn't match private key `{}`",
     key.public_key_filename(),
@@ -181,6 +183,8 @@ pub enum Error {
     path: DisplayPath,
     source: PublicKeyError,
   },
+  #[snafu(display("`--key` requires `--tls-cert` and `--tls-key`"))]
+  KeyRequiresTlsCert { backtrace: Option<Backtrace> },
   #[snafu(display("keychain directory `{path}` has insecure permissions {mode}"))]
   KeychainPermissions {
     backtrace: Option<Backtrace>,
@@ -323,6 +327,11 @@ pub enum Error {
     status: StatusCode,
     url: Url,
   },
+  #[snafu(display("rustls error"))]
+  Rustls {
+    backtrace: Option<Backtrace>,
+    source: rustls::Error,
+  },
   #[snafu(display("failed to install rustls ring crypto provider"))]
   RustlsProvider { backtrace: Option<Backtrace> },
   #[snafu(display("server failed"))]
@@ -377,6 +386,22 @@ pub enum Error {
   Time {
     backtrace: Option<Backtrace>,
     source: SystemTimeError,
+  },
+  #[snafu(display("failed to load TLS certificate from `{path}`"))]
+  TlsCert {
+    backtrace: Option<Backtrace>,
+    path: String,
+    source: rustls::pki_types::pem::Error,
+  },
+  #[snafu(display("`--tls-cert`/`--tls-key` cannot be combined with ACME options"))]
+  TlsCertConflictsWithAcme { backtrace: Option<Backtrace> },
+  #[snafu(display("`--tls-cert` and `--tls-key` must be provided together"))]
+  TlsCertKeyPair { backtrace: Option<Backtrace> },
+  #[snafu(display("failed to load TLS private key from `{path}`"))]
+  TlsKey {
+    backtrace: Option<Backtrace>,
+    path: String,
+    source: rustls::pki_types::pem::Error,
   },
   #[snafu(display("failed to unarchive manifest"))]
   UnarchiveManifest {

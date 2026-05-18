@@ -348,3 +348,118 @@ fn upload_package_uploads_files() {
 
   server.terminate().success();
 }
+
+#[test]
+fn upload_with_key_fails_without_key_arg() {
+  let (server_cert_pem, server_key_pem) = filepack::generate_server_certificate("127.0.0.1");
+
+  let upload_key = PrivateKey::generate();
+
+  let test = Test::new()
+    .write("tls.cert", &server_cert_pem)
+    .write("tls.key", &server_key_pem);
+
+  let test = write_keychain(test, "foo", &upload_key);
+
+  let server = test
+    .ready_address()
+    .args([
+      "serve",
+      "--address",
+      "127.0.0.1",
+      "--https-port",
+      "0",
+      "--tls-cert",
+      "tls.cert",
+      "--tls-key",
+      "tls.key",
+      "--key",
+      "foo",
+    ])
+    .spawn();
+
+  Test::new()
+    .write("foo", "bar")
+    .write("ca.cert", &server_cert_pem)
+    .args([
+      "upload",
+      "--server",
+      &server.address_https(),
+      "--ca-cert",
+      "ca.cert",
+      "--file",
+      "foo",
+    ])
+    .stderr_regex(".*401.*")
+    .failure();
+
+  server.terminate().success();
+}
+
+#[test]
+fn upload_with_key_succeeds() {
+  let (server_cert_pem, server_key_pem) = filepack::generate_server_certificate("127.0.0.1");
+
+  let upload_key = PrivateKey::generate();
+
+  let test = Test::new()
+    .write("tls.cert", &server_cert_pem)
+    .write("tls.key", &server_key_pem);
+
+  let test = write_keychain(test, "foo", &upload_key);
+
+  let server = test
+    .ready_address()
+    .args([
+      "serve",
+      "--address",
+      "127.0.0.1",
+      "--https-port",
+      "0",
+      "--tls-cert",
+      "tls.cert",
+      "--tls-key",
+      "tls.key",
+      "--key",
+      "foo",
+    ])
+    .assert_file(&format!("files/{}", Hash::bytes(b"bar")), "bar")
+    .spawn();
+
+  let test = Test::new()
+    .write("foo", "bar")
+    .write("ca.cert", &server_cert_pem);
+
+  let test = write_keychain(test, "foo", &upload_key);
+
+  test
+    .args([
+      "upload",
+      "--server",
+      &server.address_https(),
+      "--key",
+      "foo",
+      "--ca-cert",
+      "ca.cert",
+      "--file",
+      "foo",
+    ])
+    .success();
+
+  server.terminate().success();
+}
+
+fn write_keychain(test: Test, name: &str, private_key: &PrivateKey) -> Test {
+  let test = test.create_dir("keychain");
+  test
+    .chmod("keychain", 0o700)
+    .write(
+      &format!("keychain/{name}.private"),
+      format!("{}\n", private_key.display_secret()),
+    )
+    .chmod(&format!("keychain/{name}.private"), 0o600)
+    .write(
+      &format!("keychain/{name}.public"),
+      format!("{}\n", private_key.public_key()),
+    )
+}

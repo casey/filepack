@@ -3,6 +3,7 @@ use super::*;
 pub(crate) struct Server {
   files: Utf8PathBuf,
   incoming: Utf8PathBuf,
+  upload_key: Option<PublicKey>,
 }
 
 impl Server {
@@ -29,14 +30,22 @@ impl Server {
     Ok((file, len))
   }
 
-  pub(crate) fn with_data_dir(data_dir: &Utf8Path) -> Result<Self> {
+  pub(crate) fn upload_key(&self) -> Option<PublicKey> {
+    self.upload_key
+  }
+
+  pub(crate) fn with_data_dir(data_dir: &Utf8Path, upload_key: Option<PublicKey>) -> Result<Self> {
     let files = data_dir.join("files");
     filesystem::create_dir_all(&files)?;
 
     let incoming = data_dir.join("incoming");
     filesystem::create_dir_all(&incoming)?;
 
-    Ok(Self { files, incoming })
+    Ok(Self {
+      files,
+      incoming,
+      upload_key,
+    })
   }
 
   pub(crate) async fn write_file(&self, hash: Hash, body: Body) -> ServerResult {

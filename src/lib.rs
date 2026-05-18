@@ -69,6 +69,7 @@ use {
     owo_colorize_ext::OwoColorizeExt,
     package::Package,
     path_error::PathError,
+    peer_cert_acceptor::{PeerCertAcceptor, PeerPublicKey},
     private_key_error::PrivateKeyError,
     public_key_error::PublicKeyError,
     reqwest_result_ext::ReqwestResultExt,
@@ -145,10 +146,23 @@ use {
 };
 
 pub use self::{
-  directory_tree::DirectoryTree, encode::Encode, encoder::Encoder, error::Error,
-  fingerprint::Fingerprint, hash::Hash, language_error::LanguageError, major_type::MajorType,
-  manifest::Manifest, map_encoder::MapEncoder, private_key::PrivateKey, public_key::PublicKey,
-  relative_path::RelativePath, signature::Signature, statement::Statement, tag_error::TagError,
+  directory_tree::DirectoryTree,
+  encode::Encode,
+  encoder::Encoder,
+  error::Error,
+  fingerprint::Fingerprint,
+  hash::Hash,
+  language_error::LanguageError,
+  major_type::MajorType,
+  manifest::Manifest,
+  map_encoder::MapEncoder,
+  private_key::PrivateKey,
+  public_key::PublicKey,
+  relative_path::RelativePath,
+  signature::Signature,
+  statement::Statement,
+  tag_error::TagError,
+  tls::{generate_server_certificate, self_signed_cert},
 };
 
 #[cfg(test)]
@@ -195,6 +209,7 @@ mod bech32_encoder;
 mod bech32_error;
 mod bech32_type;
 mod checked_url;
+mod client_cert_verifier;
 mod component;
 mod component_buf;
 mod component_error;
@@ -245,6 +260,7 @@ mod options;
 mod owo_colorize_ext;
 mod package;
 mod path_error;
+mod peer_cert_acceptor;
 mod private_key;
 mod private_key_error;
 mod progress_bar;
@@ -264,6 +280,7 @@ mod subcommand;
 mod tag;
 mod tag_error;
 mod ticked;
+mod tls;
 mod utf8_path_ext;
 mod version;
 

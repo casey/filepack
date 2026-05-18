@@ -20,7 +20,7 @@ impl PrivateKey {
     Self(inner)
   }
 
-  pub(crate) fn generate() -> Self {
+  pub fn generate() -> Self {
     let inner = ed25519_dalek::SigningKey::generate(&mut rand::thread_rng());
     let verifying_key = inner.verifying_key();
     assert!(!verifying_key.is_weak());

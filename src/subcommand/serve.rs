@@ -69,6 +69,12 @@ pub(crate) struct Serve {
   )]
   https_port: Option<u16>,
   #[arg(
+    help = "Require client certificate authenticated by <KEY> from the keychain for uploads",
+    long,
+    value_name = "KEY"
+  )]
+  key: Option<KeyName>,
+  #[arg(
     help = "Write listening port to <ADDRESS>",
     long,
     value_name = "ADDRESS"
@@ -76,17 +82,23 @@ pub(crate) struct Serve {
   ready_address: Option<SocketAddr>,
   #[arg(help = "Redirect HTTP to HTTPS", long)]
   redirect_http_to_https: bool,
+  #[arg(
+    help = "TLS server certificate chain at <PATH> (PEM-encoded)",
+    long,
+    value_name = "PATH"
+  )]
+  tls_cert: Option<Utf8PathBuf>,
+  #[arg(
+    help = "TLS server private key at <PATH> (PEM-encoded)",
+    long,
+    value_name = "PATH"
+  )]
+  tls_key: Option<Utf8PathBuf>,
 }
 
 impl Serve {
-  fn acceptor(&self, acme_cache: Utf8PathBuf) -> Result<AxumAcceptor> {
-    static RUSTLS_PROVIDER_INSTALLED: LazyLock<bool> = LazyLock::new(|| {
-      rustls::crypto::ring::default_provider()
-        .install_default()
-        .is_ok()
-    });
-
-    ensure!(*RUSTLS_PROVIDER_INSTALLED, error::RustlsProvider);
+  fn acme_acceptor(&self, acme_cache: Utf8PathBuf) -> Result<AxumAcceptor> {
+    Self::install_rustls_provider()?;
 
     let config = AcmeConfig::new(self.acme_domains()?)
       .contact(&self.acme_contact)
@@ -153,11 +165,28 @@ impl Serve {
   }
 
   fn https_port(&self) -> Option<u16> {
-    if self.redirect_http_to_https || self.https || self.https_port.is_some() {
+    if self.redirect_http_to_https
+      || self.https
+      || self.https_port.is_some()
+      || self.tls_cert.is_some()
+      || self.tls_key.is_some()
+    {
       Some(self.https_port.unwrap_or(443))
     } else {
       None
     }
+  }
+
+  fn install_rustls_provider() -> Result {
+    static RUSTLS_PROVIDER_INSTALLED: LazyLock<bool> = LazyLock::new(|| {
+      rustls::crypto::ring::default_provider()
+        .install_default()
+        .is_ok()
+    });
+
+    ensure!(*RUSTLS_PROVIDER_INSTALLED, error::RustlsProvider);
+
+    Ok(())
   }
 
   fn redirect_destination(acme_domains: &[String], https_port: u16) -> String {
@@ -179,10 +208,30 @@ impl Serve {
     Redirect::to(&destination)
   }
 
+  async fn require_upload_auth(
+    Extension(server): Extension<Arc<Server>>,
+    peer: Option<Extension<PeerPublicKey>>,
+    request: axum::extract::Request,
+    next: axum::middleware::Next,
+  ) -> Response {
+    if server.upload_key().is_some() {
+      let presented = peer.and_then(|extension| extension.0.0).is_some();
+
+      if !presented {
+        return StatusCode::UNAUTHORIZED.into_response();
+      }
+    }
+
+    next.run(request).await
+  }
+
   pub(crate) fn router(server: Arc<Server>) -> Router {
     Router::new()
       .route("/{hash}", get(Self::download))
-      .route("/{hash}", put(Self::upload))
+      .route(
+        "/{hash}",
+        put(Self::upload).layer(axum::middleware::from_fn(Self::require_upload_auth)),
+      )
       .layer(Extension(server))
   }
 
@@ -205,6 +254,8 @@ impl Serve {
   }
 
   async fn serve(self, options: Options) -> Result {
+    self.validate()?;
+
     let handle = Handle::new();
 
     {
@@ -222,7 +273,13 @@ impl Serve {
       .unwrap();
     }
 
-    let server = Arc::new(Server::with_data_dir(&options.data_dir()?)?);
+    let upload_key = if let Some(name) = &self.key {
+      Some(Keychain::load(&options)?.public_key(name)?)
+    } else {
+      None
+    };
+
+    let server = Arc::new(Server::with_data_dir(&options.data_dir()?, upload_key)?);
 
     let router = Self::router(server);
 
@@ -320,20 +377,32 @@ impl Serve {
           .context(error::Serve)?;
       }
       SpawnConfig::Https => {
-        let data_dir = options.data_dir()?;
+        if let (Some(tls_cert), Some(tls_key)) = (&self.tls_cert, &self.tls_key) {
+          let acceptor = self.static_acceptor(tls_cert, tls_key, options)?;
 
-        let acme_cache = self
-          .acme_cache
-          .clone()
-          .unwrap_or_else(|| data_dir.join("acme-cache"));
+          axum_server::from_tcp(listener)
+            .context(error::Serve)?
+            .handle(handle)
+            .acceptor(acceptor)
+            .serve(router.into_make_service())
+            .await
+            .context(error::Serve)?;
+        } else {
+          let data_dir = options.data_dir()?;
 
-        axum_server::from_tcp(listener)
-          .context(error::Serve)?
-          .handle(handle)
-          .acceptor(self.acceptor(acme_cache)?)
-          .serve(router.into_make_service())
-          .await
-          .context(error::Serve)?;
+          let acme_cache = self
+            .acme_cache
+            .clone()
+            .unwrap_or_else(|| data_dir.join("acme-cache"));
+
+          axum_server::from_tcp(listener)
+            .context(error::Serve)?
+            .handle(handle)
+            .acceptor(self.acme_acceptor(acme_cache)?)
+            .serve(router.into_make_service())
+            .await
+            .context(error::Serve)?;
+        }
       }
       SpawnConfig::Redirect(destination) => {
         axum_server::from_tcp(listener)
@@ -353,8 +422,84 @@ impl Serve {
     Ok(())
   }
 
+  fn static_acceptor(
+    &self,
+    tls_cert: &Utf8Path,
+    tls_key: &Utf8Path,
+    options: &Options,
+  ) -> Result<PeerCertAcceptor> {
+    use rustls::pki_types::{CertificateDer, PrivateKeyDer, pem::PemObject};
+
+    Self::install_rustls_provider()?;
+
+    let cert_pem = fs::read(tls_cert).context(error::FilesystemIo {
+      path: tls_cert.as_str(),
+    })?;
+
+    let cert_chain = CertificateDer::pem_slice_iter(&cert_pem)
+      .collect::<std::result::Result<Vec<_>, _>>()
+      .context(error::TlsCert {
+        path: tls_cert.as_str(),
+      })?;
+
+    let key_pem = fs::read(tls_key).context(error::FilesystemIo {
+      path: tls_key.as_str(),
+    })?;
+
+    let key = PrivateKeyDer::from_pem_slice(&key_pem).context(error::TlsKey {
+      path: tls_key.as_str(),
+    })?;
+
+    let provider = Arc::new(rustls::crypto::ring::default_provider());
+
+    let builder = rustls::ServerConfig::builder_with_provider(provider.clone())
+      .with_safe_default_protocol_versions()
+      .context(error::Rustls)?;
+
+    let builder = if let Some(name) = &self.key {
+      let allowed = Keychain::load(options)?.public_key(name)?;
+
+      builder.with_client_cert_verifier(Arc::new(client_cert_verifier::Verifier {
+        allowed,
+        provider: provider.clone(),
+      }))
+    } else {
+      builder.with_no_client_auth()
+    };
+
+    let mut server_config = builder
+      .with_single_cert(cert_chain, key)
+      .context(error::Rustls)?;
+
+    server_config.alpn_protocols = vec!["h2".into(), "http/1.1".into()];
+
+    let config = axum_server::tls_rustls::RustlsConfig::from_config(Arc::new(server_config));
+
+    Ok(PeerCertAcceptor {
+      inner: axum_server::tls_rustls::RustlsAcceptor::new(config),
+    })
+  }
+
   async fn upload(server: Extension<Arc<Server>>, hash: Path<Hash>, body: Body) -> ServerResult {
     server.write_file(*hash, body).await
+  }
+
+  fn validate(&self) -> Result {
+    let tls_cert = self.tls_cert.is_some();
+    let tls_key = self.tls_key.is_some();
+
+    ensure!(tls_cert == tls_key, error::TlsCertKeyPair);
+
+    if self.key.is_some() {
+      ensure!(tls_cert, error::KeyRequiresTlsCert);
+      ensure!(self.acme_domain.is_empty(), error::KeyConflictsWithAcme);
+    }
+
+    if tls_cert {
+      ensure!(self.acme_domain.is_empty(), error::TlsCertConflictsWithAcme);
+    }
+
+    Ok(())
   }
 }
 
@@ -369,8 +514,11 @@ impl Default for Serve {
       http_port: None,
       https: false,
       https_port: None,
+      key: None,
       ready_address: None,
       redirect_http_to_https: false,
+      tls_cert: None,
+      tls_key: None,
     }
   }
 }
@@ -413,7 +561,7 @@ mod tests {
     fn new() -> Self {
       let (tempdir, data_dir) = tempdir();
 
-      let server = Arc::new(Server::with_data_dir(&data_dir).unwrap());
+      let server = Arc::new(Server::with_data_dir(&data_dir, None).unwrap());
 
       let router = Serve::router(server);
 

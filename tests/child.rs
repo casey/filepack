@@ -11,6 +11,10 @@ impl Child {
     format!("http://127.0.0.1:{}", self.port.unwrap())
   }
 
+  pub(crate) fn address_https(&self) -> String {
+    format!("https://127.0.0.1:{}", self.port.unwrap())
+  }
+
   pub(crate) fn new(child: std::process::Child, port: Option<u16>, test: Test) -> Self {
     Self {
       child: Some(child),
