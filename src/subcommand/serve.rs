@@ -174,11 +174,11 @@ impl Serve {
     }
   }
 
-  fn redirect_destination(acme_domains: &[String], https_port: u16) -> String {
+  fn redirect_destination(domains: &[String], https_port: u16) -> String {
     if https_port == 443 {
-      format!("https://{}", acme_domains[0])
+      format!("https://{}", domains[0])
     } else {
-      format!("https://{}:{https_port}", acme_domains[0])
+      format!("https://{}:{https_port}", domains[0])
     }
   }
 
