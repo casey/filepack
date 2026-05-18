@@ -58,7 +58,7 @@ pub(crate) struct Serve {
   )]
   address: String,
   #[arg(
-    help = "Admin upload key",
+    help = "Admin public key",
     long,
     requires = "restrict_upload",
     value_name = "KEY"
