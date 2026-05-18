@@ -46,7 +46,7 @@ impl Manifest {
   }
 
   pub fn fingerprint(&self) -> Fingerprint {
-    Archive::pack(self).fingerprint()
+    Archive::pack(self).fingerprint().unwrap()
   }
 
   pub(crate) fn from_json(json: &str, path: &Utf8Path) -> Result<Self> {
@@ -91,11 +91,7 @@ impl Manifest {
   }
 
   pub(crate) fn load_with_path(path: &Utf8Path, display_path: &Utf8Path) -> Result<Self> {
-    let cbor = filesystem::read_opt(path)?
-      .ok_or_else(|| error::ManifestNotFound { path: display_path }.build())?;
-
-    let archive =
-      Archive::decode_from_slice(&cbor).context(error::DecodeManifest { path: display_path })?;
+    let archive = Archive::load_with_path(path, display_path)?;
 
     let manifest = archive
       .unpack()

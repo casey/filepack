@@ -49,7 +49,9 @@ use {
     envelope::Envelope,
     file::File,
     format::Format,
-    functions::{current_dir, decode_path, default, is_lowercase_hex, now, transfer_tempfile},
+    functions::{
+      current_dir, decode_path, default, is_lowercase_hex, now, parse_server_url, transfer_tempfile,
+    },
     hash_error::HashError,
     hashing_writer::HashingWriter,
     head::Head,
@@ -69,6 +71,7 @@ use {
     path_error::PathError,
     private_key_error::PrivateKeyError,
     public_key_error::PublicKeyError,
+    reqwest_result_ext::ReqwestResultExt,
     server::Server,
     server_error::ServerError,
     sign_options::SignOptions,
@@ -249,6 +252,7 @@ mod public_key;
 mod public_key_error;
 mod re;
 mod relative_path;
+mod reqwest_result_ext;
 mod server;
 mod server_error;
 mod sign_options;

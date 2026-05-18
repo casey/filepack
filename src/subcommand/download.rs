@@ -1,42 +1,30 @@
-use super::*;
+use {super::*, reqwest::blocking::Response};
 
 #[derive(Parser)]
+#[command(group(
+  ArgGroup::new("input")
+    .required(true)
+    .args(["file", "package"]),
+))]
 pub(crate) struct Download {
-  #[arg(help = "Download file with <HASH>", long)]
-  hash: Hash,
+  #[arg(help = "Download file with <HASH>", long, value_name = "HASH")]
+  file: Option<Hash>,
   #[arg(help = "Download to <PATH>", long, value_name = "PATH")]
   output: Utf8PathBuf,
-  #[arg(help = "Download from server at <URL>", long, value_name = "URL")]
+  #[arg(help = "Download package with <HASH>", long, value_name = "HASH")]
+  package: Option<Hash>,
+  #[arg(help = "Download from server at <URL>", long, value_name = "URL", value_parser = parse_server_url)]
   server: Url,
 }
 
 impl Download {
-  pub(crate) fn run(self) -> Result {
+  pub(crate) fn download_file(&self, hash: Hash, path: &Utf8Path) -> Result {
     ensure! {
-      !filesystem::exists(&self.output)?,
-      error::FileAlreadyExists { path: &self.output },
+      !filesystem::exists(path)?,
+      error::FileAlreadyExists { path },
     }
 
-    let url = self
-      .server
-      .join(&self.hash.to_string())
-      .context(error::UrlParse)?;
-
-    let mut response = Client::new()
-      .get(url.clone())
-      .send()
-      .with_context(|_| error::Request { url: url.clone() })?;
-
-    if !response.status().is_success() {
-      return Err(
-        error::ResponseStatus {
-          status: response.status(),
-          url: url.clone(),
-          body: response.text().context(error::ResponseBody { url })?,
-        }
-        .build(),
-      );
-    }
+    let mut response = self.get_file(hash)?;
 
     let output_directory = self
       .output
@@ -44,7 +32,7 @@ impl Download {
       .filter(|parent| !parent.as_str().is_empty())
       .unwrap_or(Utf8Path::new("."));
 
-    let tempfile = transfer_tempfile(self.hash, output_directory).context(error::FilesystemIo {
+    let tempfile = transfer_tempfile(hash, output_directory).context(error::FilesystemIo {
       path: output_directory,
     })?;
 
@@ -52,20 +40,103 @@ impl Download {
 
     response
       .copy_to(&mut writer)
-      .with_context(|_| error::ResponseBody { url: url.clone() })?;
+      .with_context(|_| error::ResponseBody {
+        url: self.file_url(hash),
+      })?;
 
     let (actual, tempfile) = writer.finalize();
 
     ensure! {
-      actual == self.hash,
-      error::DownloadHashMismatch { actual, expected: self.hash },
+      actual == hash,
+      error::DownloadHashMismatch { actual, expected: hash },
     }
 
     tempfile
-      .persist_noclobber(&self.output)
+      .persist_noclobber(path)
       .map_err(|error| error.error)
-      .context(error::FilesystemIo { path: &self.output })?;
+      .context(error::FilesystemIo { path })?;
 
     Ok(())
+  }
+
+  pub(crate) fn download_package(self, root: Hash) -> Result {
+    ensure! {
+      !filesystem::exists(&self.output)?,
+      error::FileAlreadyExists { path: &self.output },
+    }
+
+    let mut directories = vec![(root, self.output.clone())];
+
+    let mut files = BTreeMap::new();
+
+    while let Some((hash, path)) = directories.pop() {
+      let url = self.file_url(hash);
+
+      let response = self.get_file(hash)?;
+
+      let cbor = response
+        .bytes()
+        .with_context(|_| error::ResponseBody { url: url.clone() })?;
+
+      let actual = Hash::bytes(&cbor);
+
+      ensure! {
+        actual == hash,
+        error::DownloadHashMismatch { actual, expected: hash },
+      }
+
+      let directory =
+        Directory::decode_from_slice(&cbor).context(error::DecodeResponseDirectory { url })?;
+
+      files.insert(hash, cbor.to_vec());
+
+      filesystem::create_dir_all(&path)?;
+
+      for (component, entry) in directory.entries {
+        let path = path.join(component);
+        match entry.ty {
+          EntryType::Directory => directories.push((entry.hash, path)),
+          EntryType::File => self.download_file(entry.hash, &path)?,
+        }
+      }
+    }
+
+    let mut builder = ArchiveBuilder::new();
+    builder.files = files;
+
+    let package = Entry {
+      ty: EntryType::Directory,
+      hash: root,
+      size: builder.files[&root].len().into_u64(),
+    };
+
+    let archive = builder.build_package(package, &BTreeSet::new());
+
+    filesystem::write(
+      &self.output.join(Manifest::FILENAME),
+      archive.encode_to_vec(),
+    )?;
+
+    Ok(())
+  }
+
+  fn file_url(&self, hash: Hash) -> Url {
+    self.server.join(&hash.to_string()).unwrap()
+  }
+
+  fn get_file(&self, hash: Hash) -> Result<Response> {
+    let url = self.file_url(hash);
+
+    let response = Client::new().get(url).send().check_status()?;
+
+    Ok(response)
+  }
+
+  pub(crate) fn run(self) -> Result {
+    match (self.file, self.package) {
+      (Some(hash), None) => self.download_file(hash, &self.output),
+      (None, Some(hash)) => self.download_package(hash),
+      (None, None) | (Some(_), Some(_)) => unreachable!(),
+    }
   }
 }

@@ -5,7 +5,7 @@ use {
   regex::Regex,
   reqwest::StatusCode,
   std::{
-    collections::BTreeMap,
+    collections::{BTreeMap, BTreeSet},
     fs,
     io::{Read, Write},
     net::TcpListener,
@@ -55,6 +55,8 @@ const EMPTY_HASH: &str = "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93
 const PRIVATE_KEY: &str = "private1a24p4zsr2nh04f4pkgtxfzv5yle473x4jue7s6lkwg9tdkk73q59qluezpp";
 
 const PUBLIC_KEY: &str = "public1a67dndhhmae7p6fsfnj0z37zf78cde6mwqgtms0y87h8ldlvvflyqcxnd63";
+
+const USAGE_ERROR: i32 = 2;
 
 fn tempdir() -> TempDir {
   tempfile::Builder::new()

@@ -10,13 +10,13 @@ fn download_fails_if_output_already_exists() {
       "download",
       "--server",
       "http://127.0.0.1:1",
-      "--hash",
+      "--file",
       &hash.to_string(),
       "--output",
       "foo",
     ])
     .assert_file("foo", "original")
-    .stderr("error: file `foo` already exists\n")
+    .stderr("error: `foo` already exists\n")
     .failure();
 }
 
@@ -35,7 +35,7 @@ fn download_fails_on_hash_mismatch() {
       "download",
       "--server",
       &server.address(),
-      "--hash",
+      "--file",
       &expected.to_string(),
       "--output",
       "foo",
@@ -59,7 +59,7 @@ fn download_fails_with_404_when_file_missing() {
       "download",
       "--server",
       &server.address(),
-      "--hash",
+      "--file",
       &hash.to_string(),
       "--output",
       "foo",
@@ -71,6 +71,40 @@ fn download_fails_with_404_when_file_missing() {
     .failure();
 
   server.terminate().success();
+}
+
+#[test]
+fn download_package_fails_if_output_directory_already_exists() {
+  Test::new()
+    .create_dir("out")
+    .args([
+      "download",
+      "--server",
+      "http://example.com",
+      "--package",
+      &Hash::bytes(&[]).to_string(),
+      "--output",
+      "out",
+    ])
+    .stderr("error: `out` already exists\n")
+    .failure();
+}
+
+#[test]
+fn download_package_fails_if_output_file_already_exists() {
+  Test::new()
+    .write("out", "")
+    .args([
+      "download",
+      "--server",
+      "http://example.com",
+      "--package",
+      &Hash::bytes(&[]).to_string(),
+      "--output",
+      "out",
+    ])
+    .stderr("error: `out` already exists\n")
+    .failure();
 }
 
 #[test]
@@ -92,7 +126,7 @@ fn download_retrieves_file() {
       "download",
       "--server",
       &server.address(),
-      "--hash",
+      "--file",
       &hash.to_string(),
       "--output",
       "foo",
@@ -101,4 +135,89 @@ fn download_retrieves_file() {
     .success();
 
   server.terminate().success();
+}
+
+#[test]
+fn download_retrieves_package() {
+  let server = Test::new().serve().spawn();
+
+  let test = Test::new()
+    .write("foo", "aaa")
+    .write("bar", "bbb")
+    .create_dir("empty")
+    .write("sub/baz", "ccc")
+    .write("sub/qux", "ddd")
+    .args(["create", "."])
+    .success();
+
+  let manifest = Manifest::load(Some(&test.path().join("manifest.filepack"))).unwrap();
+  let package = Hash::from(manifest.fingerprint());
+
+  test
+    .args([
+      "upload",
+      "--server",
+      &server.address(),
+      "--package",
+      "manifest.filepack",
+    ])
+    .success();
+
+  let downloaded = Test::new()
+    .args([
+      "download",
+      "--server",
+      &server.address(),
+      "--package",
+      &package.to_string(),
+      "--output",
+      "out",
+    ])
+    .assert_file("out/foo", "aaa")
+    .assert_file("out/bar", "bbb")
+    .assert_file("out/sub/baz", "ccc")
+    .assert_file("out/sub/qux", "ddd")
+    .assert_dir("out/empty")
+    .success();
+
+  assert_eq!(
+    Manifest::load(Some(&downloaded.path().join("out/manifest.filepack"))).unwrap(),
+    manifest,
+  );
+
+  downloaded
+    .args(["verify", "out"])
+    .stderr("successfully verified 4 files totaling 12 bytes\n")
+    .success();
+
+  server.terminate().success();
+}
+
+#[test]
+fn file_and_package_conflict() {
+  Test::new()
+    .args([
+      "download",
+      "--server",
+      "http://127.0.0.1:1",
+      "--output",
+      "out",
+      "--file",
+      &Hash::bytes(&[]).to_string(),
+      "--package",
+      &Hash::bytes(&[]).to_string(),
+    ])
+    .stderr_regex("error: the argument '--file <HASH>' cannot be used with '--package <HASH>'\n.*")
+    .status(USAGE_ERROR);
+}
+
+#[test]
+fn server_url_must_be_http_or_https() {
+  Test::new()
+    .args(["download", "--server", "ftp://example.com"])
+    .stderr_regex(
+      "error: invalid value 'ftp://example.com' for '--server <URL>': URL scheme 'ftp' not \
+       allowed, must be 'http' or 'https'\n.*",
+    )
+    .status(USAGE_ERROR);
 }

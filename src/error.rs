@@ -74,6 +74,12 @@ pub enum Error {
     path: DisplayPath,
     source: DecodeError,
   },
+  #[snafu(display("failed to decode downloaded directory from `{url}`"))]
+  DecodeResponseDirectory {
+    backtrace: Option<Backtrace>,
+    source: DecodeError,
+    url: Url,
+  },
   #[snafu(display("failed to deserialize manifest at `{path}`"))]
   DeserializeManifest {
     backtrace: Option<Backtrace>,
@@ -126,8 +132,13 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
-  #[snafu(display("file `{path}` already exists"))]
+  #[snafu(display("`{path}` already exists"))]
   FileAlreadyExists {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+  },
+  #[snafu(display("file did not match manifest entry"))]
+  FileMismatch {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
@@ -294,11 +305,10 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     source: io::Error,
   },
-  #[snafu(display("request to {url} failed"))]
+  #[snafu(display("request failed"))]
   Request {
     backtrace: Option<Backtrace>,
     source: reqwest::Error,
-    url: Url,
   },
   #[snafu(display("failed to read body from response from {url}"))]
   ResponseBody {
@@ -363,7 +373,7 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
-  #[snafu(display("failed to get curent time"))]
+  #[snafu(display("failed to get current time"))]
   Time {
     backtrace: Option<Backtrace>,
     source: SystemTimeError,
@@ -379,11 +389,6 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
     unexpected: Ticked<RelativePath>,
-  },
-  #[snafu(display("failed to parse URL"))]
-  UrlParse {
-    backtrace: Option<Backtrace>,
-    source: url::ParseError,
   },
   #[snafu(transparent)]
   WalkDir {

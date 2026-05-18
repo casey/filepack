@@ -75,5 +75,5 @@ fn target_is_required() {
     .success()
     .arg("contains")
     .stderr_regex("error: the following required arguments were not provided:.*--hash.*--file.*")
-    .status(2);
+    .status(USAGE_ERROR);
 }
