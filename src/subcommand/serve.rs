@@ -88,7 +88,7 @@ pub(crate) struct Serve {
   ready_address: Option<SocketAddr>,
   #[arg(help = "Redirect HTTP to HTTPS", long)]
   redirect_http_to_https: bool,
-  #[arg(help = "Restrict uploads to admin key holder", long)]
+  #[arg(help = "Restrict uploads to admin", long)]
   restrict_uploads: bool,
 }
 
