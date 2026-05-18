@@ -34,7 +34,7 @@ pub(crate) fn parse_server_url(s: &str) -> Result<Url, String> {
 
   if !matches!(scheme, "http" | "https") {
     return Err(format!(
-      "URL scheme `{scheme}` not allowed, must be `http` or `https`"
+      "URL scheme '{scheme}' not allowed, must be 'http' or 'https'"
     ));
   }
 

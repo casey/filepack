@@ -70,8 +70,11 @@ fn reupload_succeeds() {
 #[test]
 fn server_url_must_be_http_or_https() {
   Test::new()
-    .args(["upload", "--server", "ftp://127.0.0.1:1"])
-    .stderr_regex("error: the argument '--file <PATH>' cannot be used with '--package <PATH>'\n.*")
+    .args(["upload", "--server", "ftp://example.com"])
+    .stderr_regex(
+      "error: invalid value 'ftp://example.com' for '--server <URL>': URL scheme 'ftp' not \
+       allowed, must be 'http' or 'https'\n.*",
+    )
     .status(USAGE_ERROR);
 }
 
