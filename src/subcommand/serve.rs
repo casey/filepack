@@ -670,16 +670,16 @@ mod tests {
   }
 
   #[tokio::test]
-  async fn restricted_upload_rejects_intruder() {
+  async fn restricted_upload_rejects_others() {
     let admin = PrivateKey::generate();
-    let intruder = PrivateKey::generate();
+    let other = PrivateKey::generate();
     let server = TestServer::with_auth(Some(Arc::new(AuthConfig {
       admin: Some(admin.public_key()),
       audiences: vec!["filepack.example".into()],
     })));
 
     let hash = Hash::bytes(b"bar");
-    let token = Token::encode(&intruder, "filepack.example").unwrap();
+    let token = Token::encode(&other, "filepack.example").unwrap();
 
     let response = server
       .put_with_token(&format!("/{hash}"), b"bar", Some(&token))
