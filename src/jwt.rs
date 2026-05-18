@@ -1,14 +1,11 @@
 use {
   super::*,
   axum::http::{HeaderMap, header},
+  ed25519_dalek::pkcs8::EncodePrivateKey,
   jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation},
 };
 
 const LEEWAY: u64 = 30;
-
-const PKCS8_PREFIX: [u8; 16] = [
-  0x30, 0x2e, 0x02, 0x01, 0x00, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x70, 0x04, 0x22, 0x04, 0x20,
-];
 
 const TTL: u64 = 60;
 
@@ -37,21 +34,14 @@ pub(crate) fn encode(private_key: &PrivateKey, audience: &str) -> Result<String>
     nbf: iat,
   };
 
-  let der = pkcs8(&private_key.as_secret_bytes());
+  let der = private_key.inner_secret().to_pkcs8_der().unwrap();
 
   jsonwebtoken::encode(
     &Header::new(Algorithm::EdDSA),
     &claims,
-    &EncodingKey::from_ed_der(&der),
+    &EncodingKey::from_ed_der(der.as_bytes()),
   )
   .context(error::JwtEncode)
-}
-
-fn pkcs8(seed: &[u8; PrivateKey::LEN]) -> [u8; 48] {
-  let mut der = [0; 48];
-  der[..16].copy_from_slice(&PKCS8_PREFIX);
-  der[16..].copy_from_slice(seed);
-  der
 }
 
 pub(crate) fn verify(auth: &AuthConfig, headers: &HeaderMap) -> ServerResult {
@@ -135,11 +125,11 @@ mod tests {
   }
 
   fn mint(private_key: &PrivateKey, claims: &Claims) -> String {
-    let der = pkcs8(&private_key.as_secret_bytes());
+    let der = private_key.inner_secret().to_pkcs8_der().unwrap();
     jsonwebtoken::encode(
       &Header::new(Algorithm::EdDSA),
       claims,
-      &EncodingKey::from_ed_der(&der),
+      &EncodingKey::from_ed_der(der.as_bytes()),
     )
     .unwrap()
   }
@@ -152,11 +142,6 @@ mod tests {
       verify(&auth, &HeaderMap::new()).unwrap_err(),
       ServerError::UploadAuthMissing,
     );
-  }
-
-  #[test]
-  fn pkcs8_prefix_is_correct_length() {
-    assert_eq!(PKCS8_PREFIX.len(), 16);
   }
 
   #[test]
