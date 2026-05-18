@@ -14,7 +14,7 @@ const LEEWAY: u64 = 30;
 const TTL: u64 = 60;
 
 pub(crate) struct AuthConfig {
-  pub(crate) admin: PublicKey,
+  pub(crate) admin: Option<PublicKey>,
   pub(crate) audiences: Vec<String>,
 }
 
@@ -37,6 +37,8 @@ impl<S: Send + Sync> FromRequestParts<S> for Authenticated {
       return Ok(Self);
     };
 
+    let admin = auth.admin.context(server_error::UploadForbidden)?;
+
     let TypedHeader(Authorization(bearer)) = parts
       .extract::<TypedHeader<Authorization<Bearer>>>()
       .await
@@ -48,7 +50,7 @@ impl<S: Send + Sync> FromRequestParts<S> for Authenticated {
         }
       })?;
 
-    verify(&auth, bearer.token())?;
+    verify(admin, &auth.audiences, bearer.token())?;
 
     Ok(Self)
   }
@@ -75,15 +77,15 @@ pub(crate) fn encode(private_key: &PrivateKey, audience: &str) -> Result<String>
   .context(error::JwtEncode)
 }
 
-pub(crate) fn verify(auth: &AuthConfig, token: &str) -> ServerResult {
-  let key = DecodingKey::from_ed_der(auth.admin.inner().as_bytes());
+pub(crate) fn verify(admin: PublicKey, audiences: &[String], token: &str) -> ServerResult {
+  let key = DecodingKey::from_ed_der(admin.inner().as_bytes());
 
   let mut validation = Validation::new(Algorithm::EdDSA);
   validation.leeway = LEEWAY;
   validation.validate_nbf = true;
   validation.set_required_spec_claims(&["aud", "exp", "iss", "nbf"]);
-  validation.set_audience(&auth.audiences);
-  validation.set_issuer(&[auth.admin.to_string()]);
+  validation.set_audience(audiences);
+  validation.set_issuer(&[admin.to_string()]);
 
   jsonwebtoken::decode::<Claims>(token, &key, &validation)
     .context(server_error::UploadAuthInvalid)?;
@@ -95,22 +97,20 @@ pub(crate) fn verify(auth: &AuthConfig, token: &str) -> ServerResult {
 mod tests {
   use {super::*, jsonwebtoken::errors::ErrorKind};
 
-  fn config(admin: PublicKey) -> AuthConfig {
-    AuthConfig {
-      admin,
-      audiences: vec!["filepack.example".into()],
-    }
+  const AUDIENCE: &str = "filepack.example";
+
+  fn audiences() -> Vec<String> {
+    vec![AUDIENCE.into()]
   }
 
   #[test]
   fn expired() {
     let private_key = PrivateKey::generate();
-    let auth = config(private_key.public_key());
     let iat = now().unwrap() - LEEWAY - TTL - 10;
     let token = mint(
       &private_key,
       &Claims {
-        aud: "filepack.example".into(),
+        aud: AUDIENCE.into(),
         exp: iat + TTL,
         iat,
         iss: private_key.public_key().to_string(),
@@ -118,7 +118,7 @@ mod tests {
       },
     );
     assert_matches!(
-      verify(&auth, &token).unwrap_err(),
+      verify(private_key.public_key(), &audiences(), &token).unwrap_err(),
       ServerError::UploadAuthInvalid { source } if matches!(source.kind(), ErrorKind::ExpiredSignature),
     );
   }
@@ -136,18 +136,16 @@ mod tests {
   #[test]
   fn roundtrip() {
     let private_key = PrivateKey::generate();
-    let auth = config(private_key.public_key());
-    let token = encode(&private_key, "filepack.example").unwrap();
-    verify(&auth, &token).unwrap();
+    let token = encode(&private_key, AUDIENCE).unwrap();
+    verify(private_key.public_key(), &audiences(), &token).unwrap();
   }
 
   #[test]
   fn wrong_audience() {
     let private_key = PrivateKey::generate();
-    let auth = config(private_key.public_key());
     let token = encode(&private_key, "evil.example").unwrap();
     assert_matches!(
-      verify(&auth, &token).unwrap_err(),
+      verify(private_key.public_key(), &audiences(), &token).unwrap_err(),
       ServerError::UploadAuthInvalid { source } if matches!(source.kind(), ErrorKind::InvalidAudience),
     );
   }
@@ -155,12 +153,11 @@ mod tests {
   #[test]
   fn wrong_issuer() {
     let admin = PrivateKey::generate();
-    let auth = config(admin.public_key());
     let iat = now().unwrap();
     let token = mint(
       &admin,
       &Claims {
-        aud: "filepack.example".into(),
+        aud: AUDIENCE.into(),
         exp: iat + TTL,
         iat,
         iss: PrivateKey::generate().public_key().to_string(),
@@ -168,7 +165,7 @@ mod tests {
       },
     );
     assert_matches!(
-      verify(&auth, &token).unwrap_err(),
+      verify(admin.public_key(), &audiences(), &token).unwrap_err(),
       ServerError::UploadAuthInvalid { source } if matches!(source.kind(), ErrorKind::InvalidIssuer),
     );
   }
@@ -177,10 +174,9 @@ mod tests {
   fn wrong_signer() {
     let admin = PrivateKey::generate();
     let intruder = PrivateKey::generate();
-    let auth = config(admin.public_key());
-    let token = encode(&intruder, "filepack.example").unwrap();
+    let token = encode(&intruder, AUDIENCE).unwrap();
     assert_matches!(
-      verify(&auth, &token).unwrap_err(),
+      verify(admin.public_key(), &audiences(), &token).unwrap_err(),
       ServerError::UploadAuthInvalid { source } if matches!(source.kind(), ErrorKind::InvalidSignature),
     );
   }

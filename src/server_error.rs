@@ -18,6 +18,8 @@ pub(crate) enum ServerError {
   UploadAuthMissing,
   #[snafu(display("error reading body of upload with hash {hash}"))]
   UploadBodyRead { hash: Hash, source: axum::Error },
+  #[snafu(display("uploads forbidden"))]
+  UploadForbidden,
   #[snafu(display("expected upload with hash {expected} but got {actual}"))]
   UploadHashMismatch { actual: Hash, expected: Hash },
 }
@@ -29,9 +31,10 @@ impl ServerError {
       Self::UploadAuthInvalid { .. } | Self::UploadAuthMalformed | Self::UploadAuthMissing => {
         "unauthorized".into()
       }
-      Self::FileNotFound { .. } | Self::UploadBodyRead { .. } | Self::UploadHashMismatch { .. } => {
-        self.to_string()
-      }
+      Self::FileNotFound { .. }
+      | Self::UploadBodyRead { .. }
+      | Self::UploadForbidden
+      | Self::UploadHashMismatch { .. } => self.to_string(),
     }
   }
 
@@ -42,6 +45,7 @@ impl ServerError {
       Self::UploadAuthInvalid { .. } | Self::UploadAuthMalformed | Self::UploadAuthMissing => {
         StatusCode::UNAUTHORIZED
       }
+      Self::UploadForbidden => StatusCode::FORBIDDEN,
       Self::UploadBodyRead { .. } | Self::UploadHashMismatch { .. } => StatusCode::BAD_REQUEST,
     }
   }

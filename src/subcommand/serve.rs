@@ -52,7 +52,12 @@ pub(crate) struct Serve {
     long
   )]
   address: String,
-  #[arg(help = "Admin upload key", long, value_name = "KEY")]
+  #[arg(
+    help = "Admin upload key",
+    long,
+    requires = "restrict_upload",
+    value_name = "KEY"
+  )]
   admin_key: Option<KeyIdentifier>,
   #[arg(help = "Serve HTTP traffic", long)]
   http: bool,
@@ -78,11 +83,7 @@ pub(crate) struct Serve {
   ready_address: Option<SocketAddr>,
   #[arg(help = "Redirect HTTP to HTTPS", long)]
   redirect_http_to_https: bool,
-  #[arg(
-    help = "Restrict uploads to admin key holder",
-    long,
-    requires = "admin_key"
-  )]
+  #[arg(help = "Restrict uploads to admin key holder", long)]
   restrict_upload: bool,
 }
 
@@ -239,8 +240,11 @@ impl Serve {
     let server = Arc::new(Server::with_data_dir(&options.data_dir()?)?);
 
     let auth = if self.restrict_upload {
-      let admin =
-        Keychain::load(&options)?.identifier_public_key(self.admin_key.as_ref().unwrap())?;
+      let admin = if let Some(identifier) = &self.admin_key {
+        Some(Keychain::load(&options)?.identifier_public_key(identifier)?)
+      } else {
+        None
+      };
       Some(Arc::new(AuthConfig {
         admin,
         audiences: self.acme_domains()?,
@@ -509,6 +513,25 @@ mod tests {
   }
 
   #[test]
+  fn admin_key_requires_restrict_upload() {
+    let err = Serve::try_parse_from(["filepack", "--admin-key", test::PUBLIC_KEY]).unwrap_err();
+    assert_eq!(err.kind(), clap::error::ErrorKind::MissingRequiredArgument);
+  }
+
+  #[tokio::test]
+  async fn closed_server_forbids_uploads() {
+    let server = TestServer::with_auth(Some(Arc::new(AuthConfig {
+      admin: None,
+      audiences: Vec::new(),
+    })));
+
+    let hash = Hash::bytes(b"bar");
+    let response = server.put(&format!("/{hash}"), b"bar").await;
+
+    assert_eq!(response.status(), StatusCode::FORBIDDEN);
+  }
+
+  #[test]
   fn default_serve_matches_parsed() {
     assert_eq!(
       Serve::default(),
@@ -624,17 +647,11 @@ mod tests {
     case("/bar?baz=qux", "https://foo/bar?baz=qux").await;
   }
 
-  #[test]
-  fn restrict_upload_requires_admin_key() {
-    let err = Serve::try_parse_from(["filepack", "--restrict-upload"]).unwrap_err();
-    assert_eq!(err.kind(), clap::error::ErrorKind::MissingRequiredArgument);
-  }
-
   #[tokio::test]
   async fn restricted_upload_accepts_admin_token() {
     let admin = PrivateKey::generate();
     let server = TestServer::with_auth(Some(Arc::new(AuthConfig {
-      admin: admin.public_key(),
+      admin: Some(admin.public_key()),
       audiences: vec!["filepack.example".into()],
     })));
 
@@ -661,7 +678,7 @@ mod tests {
     let admin = PrivateKey::generate();
     let intruder = PrivateKey::generate();
     let server = TestServer::with_auth(Some(Arc::new(AuthConfig {
-      admin: admin.public_key(),
+      admin: Some(admin.public_key()),
       audiences: vec!["filepack.example".into()],
     })));
 
@@ -683,7 +700,7 @@ mod tests {
   async fn restricted_upload_rejects_missing_header() {
     let admin = PrivateKey::generate();
     let server = TestServer::with_auth(Some(Arc::new(AuthConfig {
-      admin: admin.public_key(),
+      admin: Some(admin.public_key()),
       audiences: vec!["filepack.example".into()],
     })));
 
