@@ -177,6 +177,7 @@ fn download_retrieves_package() {
     .assert_file("out/bar", "bbb")
     .assert_file("out/sub/baz", "ccc")
     .assert_file("out/sub/qux", "ddd")
+    .assert_dir("out/empty")
     .success();
 
   assert_eq!(

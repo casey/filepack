@@ -4,6 +4,7 @@ pub(crate) struct Test {
   args: Vec<String>,
   current_dir: Option<String>,
   data_dir: Option<String>,
+  directories: BTreeSet<String>,
   env: BTreeMap<String, Option<String>>,
   files: BTreeMap<String, Expected>,
   manifests: BTreeMap<String, Expected>,
@@ -24,6 +25,11 @@ impl Test {
     for arg in args {
       self.args.push(arg.as_ref().into());
     }
+    self
+  }
+
+  pub(crate) fn assert_dir(mut self, path: &str) -> Self {
+    assert!(self.directories.insert(path.into()));
     self
   }
 
@@ -275,6 +281,10 @@ impl Test {
 
     self.stdout.check(stdout, "stdout");
 
+    for path in &self.directories {
+      assert!(self.join(path).try_exists().unwrap());
+    }
+
     for (path, expected) in &self.files {
       let actual = fs::read_to_string(self.join(path)).unwrap();
       expected.check(&actual, &format!("file `{path}`"));
@@ -391,6 +401,7 @@ impl Test {
       args: Vec::new(),
       current_dir: None,
       data_dir: None,
+      directories: BTreeSet::new(),
       env: BTreeMap::new(),
       files: BTreeMap::new(),
       manifests: BTreeMap::new(),

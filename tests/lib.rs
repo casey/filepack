@@ -5,7 +5,7 @@ use {
   regex::Regex,
   reqwest::StatusCode,
   std::{
-    collections::BTreeMap,
+    collections::{BTreeMap, BTreeSet},
     fs,
     io::{Read, Write},
     net::TcpListener,
