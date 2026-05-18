@@ -84,7 +84,6 @@ pub(crate) fn verify(admin: PublicKey, audiences: &[String], token: &str) -> Ser
   let mut validation = Validation::new(Algorithm::EdDSA);
   validation.leeway = LEEWAY;
   validation.validate_nbf = true;
-  validation.set_required_spec_claims(&["aud", "exp", "iss", "nbf"]);
   validation.set_audience(audiences);
   validation.set_issuer(&[admin.to_string()]);
 
