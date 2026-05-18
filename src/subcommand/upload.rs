@@ -46,9 +46,9 @@ impl Upload {
   fn upload_package(&self, archive_path: &Utf8Path, options: Options) -> Result {
     let archive = Archive::load_with_path(archive_path, archive_path)?;
 
-    let fingerprint = archive
-      .fingerprint()
-      .context(error::UnarchiveManifest { path: archive_path })?;
+    let context = error::UnarchiveManifest { path: archive_path };
+
+    let fingerprint = archive.fingerprint().context(context)?;
 
     let mut directories = vec![(
       fingerprint.into(),
@@ -56,13 +56,11 @@ impl Upload {
     )];
 
     while let Some((hash, path)) = directories.pop() {
-      let cbor = archive
-        .file(hash)
-        .context(error::UnarchiveManifest { path: archive_path })?;
+      let cbor = archive.file(hash).context(context)?;
 
       let directory = Directory::decode_from_slice(cbor)
         .context(archive_error::DirectoryDecode)
-        .context(error::UnarchiveManifest { path: archive_path })?;
+        .context(context)?;
 
       self.upload_body(hash, cbor.to_vec().into())?;
 

@@ -390,11 +390,6 @@ pub enum Error {
     path: DisplayPath,
     unexpected: Ticked<RelativePath>,
   },
-  #[snafu(display("failed to parse URL"))]
-  UrlParse {
-    backtrace: Option<Backtrace>,
-    source: url::ParseError,
-  },
   #[snafu(transparent)]
   WalkDir {
     backtrace: Option<Backtrace>,
