@@ -670,6 +670,20 @@ mod tests {
   }
 
   #[tokio::test]
+  async fn restricted_upload_rejects_missing_header() {
+    let admin = PrivateKey::generate();
+    let server = TestServer::with_auth(Some(Arc::new(AuthConfig {
+      admin: Some(admin.public_key()),
+      audiences: vec!["filepack.example".into()],
+    })));
+
+    let hash = Hash::bytes(b"bar");
+    let response = server.put(&format!("/{hash}"), b"bar").await;
+
+    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+  }
+
+  #[tokio::test]
   async fn restricted_upload_rejects_others() {
     let admin = PrivateKey::generate();
     let other = PrivateKey::generate();
@@ -684,20 +698,6 @@ mod tests {
     let response = server
       .put_with_token(&format!("/{hash}"), b"bar", Some(&token))
       .await;
-
-    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
-  }
-
-  #[tokio::test]
-  async fn restricted_upload_rejects_missing_header() {
-    let admin = PrivateKey::generate();
-    let server = TestServer::with_auth(Some(Arc::new(AuthConfig {
-      admin: Some(admin.public_key()),
-      audiences: vec!["filepack.example".into()],
-    })));
-
-    let hash = Hash::bytes(b"bar");
-    let response = server.put(&format!("/{hash}"), b"bar").await;
 
     assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
   }

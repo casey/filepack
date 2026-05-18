@@ -2,12 +2,12 @@ use {super::*, reqwest::blocking::Body};
 
 #[derive(Parser)]
 pub(crate) struct Upload {
+  #[arg(help = "Authenticate with key <KEY>", long, value_name = "KEY")]
+  auth: Option<KeyName>,
   #[arg(help = "Upload file instead of package", long)]
   file: bool,
   #[arg(help = "Upload <PATH>", value_name = "PATH")]
   input: Utf8PathBuf,
-  #[arg(help = "Authenticate with key <KEY>", long, value_name = "KEY")]
-  auth: Option<KeyName>,
   #[arg(help = "Upload to server at <URL>", long, value_name = "URL", value_parser = parse_server_url)]
   server: Url,
 }
@@ -15,8 +15,15 @@ pub(crate) struct Upload {
 impl Upload {
   pub(crate) fn run(self, options: Options) -> Result {
     let key = if let Some(name) = &self.auth {
+      let host_is_loopback = match self.server.host() {
+        Some(url::Host::Domain(domain)) => domain == "localhost",
+        Some(url::Host::Ipv4(addr)) => addr.is_loopback(),
+        Some(url::Host::Ipv6(addr)) => addr.is_loopback(),
+        None => false,
+      };
+
       ensure!(
-        self.server.scheme() == "https",
+        self.server.scheme() == "https" || host_is_loopback,
         error::AuthenticationOverHttp {
           server: self.server.clone(),
         },
@@ -43,7 +50,7 @@ impl Upload {
     let mut request = Client::new().put(url).body(body);
     if let Some(key) = key {
       let host = self.server.host_str().unwrap().to_owned();
-      request = request.bearer_auth(Token::encode(&key, &host)?);
+      request = request.bearer_auth(Token::encode(key, &host)?);
     }
     request.send().check_status()?;
     Ok(())
