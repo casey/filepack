@@ -1,22 +1,6 @@
 use super::*;
 
 #[test]
-fn file_and_package_conflict() {
-  Test::new()
-    .args([
-      "upload",
-      "--server",
-      "http://127.0.0.1:1",
-      "--file",
-      "foo",
-      "--package",
-      "bar",
-    ])
-    .stderr_regex("error: the argument '--file <PATH>' cannot be used with '--package <PATH>'\n.*")
-    .status(USAGE_ERROR);
-}
-
-#[test]
 fn reupload_package_succeeds() {
   let server = Test::new()
     .serve()
@@ -37,13 +21,7 @@ fn reupload_package_succeeds() {
 
   for _ in 0..2 {
     test = test
-      .args([
-        "upload",
-        "--server",
-        &server.address(),
-        "--package",
-        "manifest.filepack",
-      ])
+      .args(["upload", "--server", &server.address(), "manifest.filepack"])
       .success();
   }
 
@@ -97,13 +75,7 @@ fn signatures_are_not_uploaded() {
   let package = Hash::from(manifest.fingerprint());
 
   test
-    .args([
-      "upload",
-      "--server",
-      &server.address(),
-      "--package",
-      "manifest.filepack",
-    ])
+    .args(["upload", "--server", &server.address(), "manifest.filepack"])
     .success();
 
   let downloaded = Test::new()
@@ -111,9 +83,8 @@ fn signatures_are_not_uploaded() {
       "download",
       "--server",
       &server.address(),
-      "--package",
+      "--hash",
       &package.to_string(),
-      "--output",
       "out",
     ])
     .success();
@@ -157,13 +128,7 @@ fn upload_package_checks_file_hashes_locally() {
   let actual = Hash::bytes(b"bar");
 
   test
-    .args([
-      "upload",
-      "--server",
-      &server.address(),
-      "--package",
-      "manifest.filepack",
-    ])
+    .args(["upload", "--server", &server.address(), "manifest.filepack"])
     .stderr(&format!(
       "\
 mismatched file: `foo`
@@ -185,7 +150,6 @@ fn upload_package_fails_when_manifest_decode_fails() {
       "upload",
       "--server",
       "http://127.0.0.1:1",
-      "--package",
       "manifest.filepack",
     ])
     .stderr(
@@ -204,7 +168,6 @@ fn upload_package_fails_when_manifest_missing() {
       "upload",
       "--server",
       "http://127.0.0.1:1",
-      "--package",
       "manifest.filepack",
     ])
     .stderr("error: manifest `manifest.filepack` not found\n")
@@ -250,7 +213,6 @@ fn upload_package_fails_when_package_is_not_directory() {
       "upload",
       "--server",
       "http://127.0.0.1:1",
-      "--package",
       "manifest.filepack",
     ])
     .stderr(
@@ -289,7 +251,6 @@ fn upload_package_fails_when_package_missing() {
       "upload",
       "--server",
       "http://127.0.0.1:1",
-      "--package",
       "manifest.filepack",
     ])
     .stderr(
@@ -318,7 +279,6 @@ fn upload_package_fails_when_root_file_missing() {
       "upload",
       "--server",
       "http://127.0.0.1:1",
-      "--package",
       "manifest.filepack",
     ])
     .stderr(&format!(
@@ -353,7 +313,6 @@ fn upload_package_fails_when_root_not_directory_cbor() {
       "upload",
       "--server",
       "http://127.0.0.1:1",
-      "--package",
       "manifest.filepack",
     ])
     .stderr(
@@ -384,13 +343,7 @@ fn upload_package_uploads_files() {
     .write("sub/qux", "ddd")
     .args(["create", "."])
     .success()
-    .args([
-      "upload",
-      "--server",
-      &server.address(),
-      "--package",
-      "manifest.filepack",
-    ])
+    .args(["upload", "--server", &server.address(), "manifest.filepack"])
     .success();
 
   server.terminate().success();
