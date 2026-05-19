@@ -587,6 +587,54 @@ mod tests {
     assert_eq!(&body[..], b"bar");
   }
 
+  #[tokio::test]
+  async fn fallback() {
+    let server = TestServer::new();
+
+    let response = server.get("/nonexistent").await;
+
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+
+    let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
+    assert_eq!(&body[..], include_bytes!("../../static/404.html"));
+  }
+
+  #[tokio::test]
+  async fn favicon() {
+    let server = TestServer::new();
+
+    let response = server.get("/favicon.ico").await;
+
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
+    assert_eq!(&body[..], include_bytes!("../../static/favicon.ico"));
+  }
+
+  #[tokio::test]
+  async fn home() {
+    let server = TestServer::new();
+
+    let response = server.get("/").await;
+
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
+    assert_eq!(&body[..], include_bytes!("../../static/index.html"));
+  }
+
+  #[tokio::test]
+  async fn install_script() {
+    let server = TestServer::new();
+
+    let response = server.get("/install.sh").await;
+
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
+    assert_eq!(&body[..], include_bytes!("../../static/install.sh"));
+  }
+
   #[test]
   fn ports() {
     #[track_caller]
@@ -723,6 +771,18 @@ mod tests {
       .await;
 
     assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+  }
+
+  #[tokio::test]
+  async fn static_files() {
+    let server = TestServer::new();
+
+    let response = server.get("/static/index.css").await;
+
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
+    assert_eq!(&body[..], include_bytes!("../../static/index.css"));
   }
 
   #[tokio::test]
