@@ -36,12 +36,24 @@ enum SpawnConfig {
 struct StaticAssets;
 
 impl StaticAssets {
-  fn response(path: &str) -> ServerResult<impl IntoResponse + use<>> {
+  fn asset(path: &str) -> ServerResult<StaticAsset> {
     let content = Self::get(path).context(server_error::PageNotFound)?;
-    Ok((
-      [(header::CONTENT_TYPE, content.metadata.mimetype().to_owned())],
-      content.data,
-    ))
+
+    Ok(StaticAsset {
+      content: content.data,
+      content_type: content.metadata.mimetype().to_owned(),
+    })
+  }
+}
+
+struct StaticAsset {
+  content: Cow<'static, [u8]>,
+  content_type: String,
+}
+
+impl IntoResponse for StaticAsset {
+  fn into_response(self) -> Response<Body> {
+    ([(header::CONTENT_TYPE, self.content_type)], self.content).into_response()
   }
 }
 
@@ -170,8 +182,8 @@ impl Serve {
     )
   }
 
-  async fn home() -> impl IntoResponse {
-    StaticAssets::response("index.html")
+  async fn home() -> ServerResult<StaticAsset> {
+    StaticAssets::asset("index.html")
   }
 
   fn http_port(&self) -> Option<u16> {
@@ -213,12 +225,17 @@ impl Serve {
     Redirect::to(&destination)
   }
 
+  async fn fallback() -> ServerResult<StaticAsset> {
+    StaticAssets::asset("404.html")
+  }
+
   pub(crate) fn router(server: Arc<Server>, auth_config: Option<Arc<AuthConfig>>) -> Router {
     let router = Router::new()
       .route("/", get(Self::home))
       .route("/file/{hash}", get(Self::download))
       .route("/file/{hash}", put(Self::upload))
       .route("/static/{*path}", get(Self::static_asset))
+      .fallback(Self::fallback)
       .layer(Extension(server));
 
     if let Some(auth_config) = auth_config {
@@ -406,8 +423,8 @@ impl Serve {
     Ok(())
   }
 
-  async fn static_asset(path: Path<String>) -> impl IntoResponse {
-    StaticAssets::response(&path)
+  async fn static_asset(path: Path<String>) -> ServerResult<StaticAsset> {
+    StaticAssets::asset(&path)
   }
 
   async fn upload(
