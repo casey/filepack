@@ -13,7 +13,6 @@ ExecStart=/usr/local/bin/filepack \
   serve \
   --acme-contact mailto:casey@rodarmor.com \
   --admin-key public1agawgz7p373kz2yyepzsgrncfrwcj0c82gld68q568ksq8klvpvkqddsly5 \
-  --domain filepack.com \
   --http \
   --https \
   --redirect-http-to-https \
