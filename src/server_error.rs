@@ -16,6 +16,8 @@ pub(crate) enum ServerError {
     path: Utf8PathBuf,
     source: io::Error,
   },
+  #[snafu(display("page not found"))]
+  PageNotFound,
   #[snafu(display("error reading body of upload with hash {hash}"))]
   UploadBodyRead { hash: Hash, source: axum::Error },
   #[snafu(display("uploads forbidden"))]
@@ -31,6 +33,7 @@ impl ServerError {
       | Self::AuthorizationMalformed
       | Self::AuthorizationMissing
       | Self::FileNotFound { .. }
+      | Self::PageNotFound
       | Self::UploadBodyRead { .. }
       | Self::UploadForbidden
       | Self::UploadHashMismatch { .. } => self.to_string(),
@@ -43,7 +46,7 @@ impl ServerError {
       Self::AuthorizationInvalid { .. }
       | Self::AuthorizationMalformed
       | Self::AuthorizationMissing => StatusCode::UNAUTHORIZED,
-      Self::FileNotFound { .. } => StatusCode::NOT_FOUND,
+      Self::FileNotFound { .. } | Self::PageNotFound => StatusCode::NOT_FOUND,
       Self::FilesystemIo { .. } => StatusCode::INTERNAL_SERVER_ERROR,
       Self::UploadForbidden => StatusCode::FORBIDDEN,
       Self::UploadBodyRead { .. } | Self::UploadHashMismatch { .. } => StatusCode::BAD_REQUEST,
