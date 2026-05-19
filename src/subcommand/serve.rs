@@ -3,7 +3,7 @@ use {
   axum::{
     Router,
     extract::{Extension, Path},
-    http::{Uri, header},
+    http::{HeaderValue, Uri, header},
     response::Redirect,
     routing::{get, put},
   },
@@ -15,6 +15,7 @@ use {
   sysinfo::System,
   tokio::{net::TcpListener, runtime},
   tokio_util::io::ReaderStream,
+  tower_http::set_header::SetResponseHeaderLayer,
 };
 
 static THREAD_COUNTER: AtomicU64 = AtomicU64::new(0);
@@ -210,6 +211,16 @@ impl Serve {
     Redirect::to(&destination)
   }
 
+  fn redirect_router(destination: String) -> Router {
+    Router::new()
+      .fallback(Self::redirect_http_to_https)
+      .layer(Extension(destination))
+      .layer(SetResponseHeaderLayer::overriding(
+        header::X_CONTENT_TYPE_OPTIONS,
+        HeaderValue::from_static("nosniff"),
+      ))
+  }
+
   pub(crate) fn router(server: Arc<Server>, auth_config: Option<Arc<AuthConfig>>) -> Router {
     let router = Router::new()
       .route("/", get(Self::home))
@@ -219,7 +230,11 @@ impl Serve {
       .route("/install.sh", get(Self::install_script))
       .route("/static/{*path}", get(Self::static_asset))
       .fallback(Self::fallback)
-      .layer(Extension(server));
+      .layer(Extension(server))
+      .layer(SetResponseHeaderLayer::overriding(
+        header::X_CONTENT_TYPE_OPTIONS,
+        HeaderValue::from_static("nosniff"),
+      ));
 
     if let Some(auth_config) = auth_config {
       router.layer(Extension(auth_config))
@@ -392,12 +407,7 @@ impl Serve {
         axum_server::from_tcp(listener)
           .context(error::Serve)?
           .handle(handle)
-          .serve(
-            Router::new()
-              .fallback(Self::redirect_http_to_https)
-              .layer(Extension(destination))
-              .into_make_service(),
-          )
+          .serve(Self::redirect_router(destination).into_make_service())
           .await
           .context(error::Serve)?;
       }
@@ -488,7 +498,10 @@ mod tests {
         method,
         path: path.into(),
         response_body: Vec::new(),
-        response_headers: BTreeMap::new(),
+        response_headers: BTreeMap::from([(
+          header::X_CONTENT_TYPE_OPTIONS.to_string(),
+          "nosniff".into(),
+        )]),
         router,
         status: StatusCode::OK,
         token: None,
@@ -773,15 +786,17 @@ mod tests {
   #[tokio::test]
   async fn redirect_http_to_https() {
     async fn case(path: &str, location: &str) {
-      let response = Router::new()
-        .fallback(Serve::redirect_http_to_https)
-        .layer(Extension("https://foo".to_string()))
+      let response = Serve::redirect_router("https://foo".into())
         .oneshot(Request::builder().uri(path).body(Body::empty()).unwrap())
         .await
         .unwrap();
 
       assert_eq!(response.status(), StatusCode::SEE_OTHER);
       assert_eq!(response.headers()[header::LOCATION], location);
+      assert_eq!(
+        response.headers()[header::X_CONTENT_TYPE_OPTIONS],
+        "nosniff"
+      );
     }
 
     case("/", "https://foo/").await;
