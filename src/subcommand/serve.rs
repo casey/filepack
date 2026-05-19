@@ -160,7 +160,7 @@ impl Serve {
   }
 
   async fn favicon() -> ServerResult<StaticAsset> {
-    StaticAsset::get("favicon.ico")
+    StaticAsset::get("favicon.png")
   }
 
   async fn home() -> ServerResult<StaticAsset> {
@@ -594,6 +594,7 @@ mod tests {
     let response = server.get("/nonexistent").await;
 
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
+    assert_eq!(response.headers()[header::CONTENT_TYPE], "text/html");
 
     let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
     assert_eq!(&body[..], include_bytes!("../../static/404.html"));
@@ -606,9 +607,10 @@ mod tests {
     let response = server.get("/favicon.ico").await;
 
     assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(response.headers()[header::CONTENT_TYPE], "image/png");
 
     let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
-    assert_eq!(&body[..], include_bytes!("../../static/favicon.ico"));
+    assert_eq!(&body[..], include_bytes!("../../static/favicon.png"));
   }
 
   #[tokio::test]
@@ -618,6 +620,7 @@ mod tests {
     let response = server.get("/").await;
 
     assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(response.headers()[header::CONTENT_TYPE], "text/html");
 
     let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
     assert_eq!(&body[..], include_bytes!("../../static/index.html"));
@@ -630,6 +633,7 @@ mod tests {
     let response = server.get("/install.sh").await;
 
     assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(response.headers()[header::CONTENT_TYPE], "application/x-sh");
 
     let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
     assert_eq!(&body[..], include_bytes!("../../static/install.sh"));
@@ -780,6 +784,7 @@ mod tests {
     let response = server.get("/static/index.css").await;
 
     assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(response.headers()[header::CONTENT_TYPE], "text/css");
 
     let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
     assert_eq!(&body[..], include_bytes!("../../static/index.css"));
