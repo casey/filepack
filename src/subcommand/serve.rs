@@ -60,7 +60,7 @@ pub(crate) struct Serve {
   #[arg(
     help = "Request ACME TLS certificate and accept authorization tokens for <DOMAIN>, as well as \
             redirect HTTP to HTTPS at <DOMAIN> if enabled, this server must be reachable at \
-            <DOMAIN>:443 to respond to Encrypt ACME challenges",
+            <DOMAIN>:443 to respond to Let's Encrypt ACME challenges",
     long = "domain",
     value_name = "DOMAIN"
   )]
