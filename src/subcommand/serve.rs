@@ -155,6 +155,14 @@ impl Serve {
     )
   }
 
+  async fn fallback() -> ServerResult<StaticAsset> {
+    StaticAsset::get("404.html")
+  }
+
+  async fn favicon() -> ServerResult<StaticAsset> {
+    StaticAsset::get("favicon.ico")
+  }
+
   async fn home() -> ServerResult<StaticAsset> {
     StaticAsset::get("index.html")
   }
@@ -198,13 +206,10 @@ impl Serve {
     Redirect::to(&destination)
   }
 
-  async fn fallback() -> ServerResult<StaticAsset> {
-    StaticAsset::get("404.html")
-  }
-
   pub(crate) fn router(server: Arc<Server>, auth_config: Option<Arc<AuthConfig>>) -> Router {
     let router = Router::new()
       .route("/", get(Self::home))
+      .route("/favicon.ico", get(Self::favicon))
       .route("/file/{hash}", get(Self::download))
       .route("/file/{hash}", put(Self::upload))
       .route("/static/{*path}", get(Self::static_asset))
