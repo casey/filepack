@@ -443,9 +443,85 @@ impl Default for Serve {
 mod tests {
   use {
     super::*,
-    axum::{body::to_bytes, http::Request},
+    axum::{
+      body,
+      http::{Request, header::HeaderName},
+    },
     tower::ServiceExt,
   };
+
+  struct TestRequestBuilder {
+    body: Option<String>,
+    method: &'static str,
+    path: String,
+    response_body: Vec<u8>,
+    response_headers: BTreeMap<String, String>,
+    router: Router,
+    status: StatusCode,
+  }
+
+  impl TestRequestBuilder {
+    fn assert_body(mut self, body: impl AsRef<[u8]>) -> Self {
+      self.response_body = body.as_ref().into();
+      self
+    }
+
+    fn assert_header(mut self, name: HeaderName, value: impl Into<String>) -> Self {
+      assert!(
+        self
+          .response_headers
+          .insert(name.to_string(), value.into())
+          .is_none()
+      );
+      self
+    }
+
+    fn body(mut self, body: &str) -> Self {
+      self.body = Some(body.into());
+      self
+    }
+
+    fn put(mut self) -> Self {
+      self.method = "PUT";
+      self
+    }
+
+    fn status(mut self, status: StatusCode) -> Self {
+      self.status = status;
+      self
+    }
+
+    async fn send(self) {
+      let response = self
+        .router
+        .oneshot(
+          Request::builder()
+            .method(self.method)
+            .uri(self.path)
+            .body(if let Some(body) = self.body {
+              Body::from(body)
+            } else {
+              Body::empty()
+            })
+            .unwrap(),
+        )
+        .await
+        .unwrap();
+
+      assert_eq!(response.status(), self.status);
+
+      let headers = response.headers();
+
+      for (name, value) in self.response_headers {
+        assert_eq!(headers[name], value);
+      }
+
+      let body = body::to_bytes(response.into_body(), usize::MAX)
+        .await
+        .unwrap();
+      assert_eq!(body, self.response_body);
+    }
+  }
 
   struct TestServer {
     data_dir: Utf8PathBuf,
@@ -463,6 +539,18 @@ mod tests {
           .count(),
         0,
       );
+    }
+
+    fn request(&self, path: impl Into<String>) -> TestRequestBuilder {
+      TestRequestBuilder {
+        body: None,
+        method: "GET",
+        path: path.into(),
+        response_body: Vec::new(),
+        response_headers: BTreeMap::new(),
+        router: self.router.clone(),
+        status: StatusCode::OK,
+      }
     }
 
     async fn get(&self, path: &str) -> Response {
@@ -522,15 +610,19 @@ mod tests {
 
   #[tokio::test]
   async fn closed_server_forbids_uploads() {
-    let server = TestServer::with_auth(Some(Arc::new(AuthConfig {
+    let hash = Hash::bytes(b"bar");
+
+    TestServer::with_auth(Some(Arc::new(AuthConfig {
       admin: None,
       audiences: Vec::new(),
-    })));
-
-    let hash = Hash::bytes(b"bar");
-    let response = server.put(&format!("/file/{hash}"), b"bar").await;
-
-    assert_eq!(response.status(), StatusCode::FORBIDDEN);
+    })))
+    .request(format!("/file/{hash}"))
+    .put()
+    .body("bar")
+    .status(StatusCode::FORBIDDEN)
+    .assert_body("uploads forbidden")
+    .send()
+    .await;
   }
 
   #[test]
@@ -569,74 +661,56 @@ mod tests {
     let hash = Hash::bytes(b"bar");
     server.write_file(hash, b"bar");
 
-    let response = server.get(&format!("/file/{hash}")).await;
-
-    assert_eq!(response.status(), StatusCode::OK);
-
-    let headers = response.headers();
-
-    assert_eq!(
-      headers[header::CACHE_CONTROL],
-      "public, max-age=31536000, immutable",
-    );
-    assert_eq!(headers[header::CONTENT_LENGTH], "3");
-    assert_eq!(headers[header::CONTENT_TYPE], "application/octet-stream");
-    assert_eq!(headers[header::ETAG], format!("\"{hash}\""));
-
-    let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
-    assert_eq!(&body[..], b"bar");
+    server
+      .request(&format!("/file/{hash}"))
+      .assert_header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
+      .assert_header(header::CONTENT_LENGTH, "3")
+      .assert_header(header::CONTENT_TYPE, "application/octet-stream")
+      .assert_header(header::ETAG, format!("\"{hash}\""))
+      .assert_body("bar")
+      .send()
+      .await;
   }
 
   #[tokio::test]
   async fn fallback() {
-    let server = TestServer::new();
-
-    let response = server.get("/nonexistent").await;
-
-    assert_eq!(response.status(), StatusCode::NOT_FOUND);
-    assert_eq!(response.headers()[header::CONTENT_TYPE], "text/html");
-
-    let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
-    assert_eq!(&body[..], include_bytes!("../../static/404.html"));
+    TestServer::new()
+      .request("/nonexistent")
+      .status(StatusCode::NOT_FOUND)
+      .assert_header(header::CONTENT_TYPE, "text/html")
+      .assert_body(include_str!("../../static/404.html"))
+      .send()
+      .await;
   }
 
   #[tokio::test]
   async fn favicon() {
-    let server = TestServer::new();
-
-    let response = server.get("/favicon.ico").await;
-
-    assert_eq!(response.status(), StatusCode::OK);
-    assert_eq!(response.headers()[header::CONTENT_TYPE], "image/png");
-
-    let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
-    assert_eq!(&body[..], include_bytes!("../../static/favicon.png"));
+    TestServer::new()
+      .request("/favicon.ico")
+      .assert_header(header::CONTENT_TYPE, "image/png")
+      .assert_body(include_bytes!("../../static/favicon.png"))
+      .send()
+      .await;
   }
 
   #[tokio::test]
   async fn home() {
-    let server = TestServer::new();
-
-    let response = server.get("/").await;
-
-    assert_eq!(response.status(), StatusCode::OK);
-    assert_eq!(response.headers()[header::CONTENT_TYPE], "text/html");
-
-    let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
-    assert_eq!(&body[..], include_bytes!("../../static/index.html"));
+    TestServer::new()
+      .request("/")
+      .assert_header(header::CONTENT_TYPE, "text/html")
+      .assert_body(include_bytes!("../../static/index.html"))
+      .send()
+      .await;
   }
 
   #[tokio::test]
   async fn install_script() {
-    let server = TestServer::new();
-
-    let response = server.get("/install.sh").await;
-
-    assert_eq!(response.status(), StatusCode::OK);
-    assert_eq!(response.headers()[header::CONTENT_TYPE], "application/x-sh");
-
-    let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
-    assert_eq!(&body[..], include_bytes!("../../static/install.sh"));
+    TestServer::new()
+      .request("/install.sh")
+      .assert_header(header::CONTENT_TYPE, "application/x-sh")
+      .assert_body(include_bytes!("../../static/install.sh"))
+      .send()
+      .await;
   }
 
   #[test]
@@ -786,7 +860,9 @@ mod tests {
     assert_eq!(response.status(), StatusCode::OK);
     assert_eq!(response.headers()[header::CONTENT_TYPE], "text/css");
 
-    let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
+    let body = body::to_bytes(response.into_body(), usize::MAX)
+      .await
+      .unwrap();
     assert_eq!(&body[..], include_bytes!("../../static/index.css"));
   }
 
@@ -839,7 +915,9 @@ mod tests {
 
     assert_eq!(response.status(), StatusCode::BAD_REQUEST);
 
-    let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
+    let body = body::to_bytes(response.into_body(), usize::MAX)
+      .await
+      .unwrap();
 
     assert_eq!(
       str::from_utf8(&body).unwrap(),
