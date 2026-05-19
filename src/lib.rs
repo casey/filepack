@@ -77,6 +77,7 @@ use {
     server_error::ServerError,
     sign_options::SignOptions,
     signature_error::SignatureError,
+    static_asset::StaticAsset,
     style::Style,
     subcommand::Subcommand,
     tag::Tag,
@@ -262,6 +263,7 @@ mod sign_options;
 mod signature;
 mod signature_error;
 mod statement;
+mod static_asset;
 mod style;
 mod subcommand;
 mod tag;

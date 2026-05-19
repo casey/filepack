@@ -8,7 +8,6 @@ use {
     routing::{get, put},
   },
   axum_server::Handle,
-  rust_embed::RustEmbed,
   rustls_acme::{
     AcmeConfig, acme::LETS_ENCRYPT_PRODUCTION_DIRECTORY, axum::AxumAcceptor, caches::DirCache,
   },
@@ -29,32 +28,6 @@ enum SpawnConfig {
   Http,
   Https,
   Redirect(String),
-}
-
-#[derive(RustEmbed)]
-#[folder = "static"]
-struct StaticAssets;
-
-impl StaticAssets {
-  fn asset(path: &str) -> ServerResult<StaticAsset> {
-    let content = Self::get(path).context(server_error::PageNotFound)?;
-
-    Ok(StaticAsset {
-      content: content.data,
-      content_type: content.metadata.mimetype().to_owned(),
-    })
-  }
-}
-
-struct StaticAsset {
-  content: Cow<'static, [u8]>,
-  content_type: String,
-}
-
-impl IntoResponse for StaticAsset {
-  fn into_response(self) -> Response<Body> {
-    ([(header::CONTENT_TYPE, self.content_type)], self.content).into_response()
-  }
 }
 
 #[derive(Debug, Parser, PartialEq)]
@@ -183,7 +156,7 @@ impl Serve {
   }
 
   async fn home() -> ServerResult<StaticAsset> {
-    StaticAssets::asset("index.html")
+    StaticAsset::get("index.html")
   }
 
   fn http_port(&self) -> Option<u16> {
@@ -226,7 +199,7 @@ impl Serve {
   }
 
   async fn fallback() -> ServerResult<StaticAsset> {
-    StaticAssets::asset("404.html")
+    StaticAsset::get("404.html")
   }
 
   pub(crate) fn router(server: Arc<Server>, auth_config: Option<Arc<AuthConfig>>) -> Router {
@@ -424,7 +397,7 @@ impl Serve {
   }
 
   async fn static_asset(path: Path<String>) -> ServerResult<StaticAsset> {
-    StaticAssets::asset(&path)
+    StaticAsset::get(&path)
   }
 
   async fn upload(
