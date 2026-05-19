@@ -45,7 +45,7 @@ impl Upload {
   }
 
   fn upload_body(&self, hash: Hash, body: Body, key: Option<&PrivateKey>) -> Result {
-    let url = self.server.join(&hash.to_string()).unwrap();
+    let url = self.server.join(&format!("file/{hash}")).unwrap();
     let mut request = Client::new().put(url).body(body);
     if let Some(key) = key {
       let host = self.server.host_str().unwrap().to_owned();

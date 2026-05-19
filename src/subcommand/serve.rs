@@ -216,9 +216,9 @@ impl Serve {
   pub(crate) fn router(server: Arc<Server>, auth_config: Option<Arc<AuthConfig>>) -> Router {
     let router = Router::new()
       .route("/", get(Self::home))
+      .route("/file/{hash}", get(Self::download))
+      .route("/file/{hash}", put(Self::upload))
       .route("/static/{*path}", get(Self::static_asset))
-      .route("/{hash}", get(Self::download))
-      .route("/{hash}", put(Self::upload))
       .layer(Extension(server));
 
     if let Some(auth_config) = auth_config {
@@ -528,7 +528,7 @@ mod tests {
     })));
 
     let hash = Hash::bytes(b"bar");
-    let response = server.put(&format!("/{hash}"), b"bar").await;
+    let response = server.put(&format!("/file/{hash}"), b"bar").await;
 
     assert_eq!(response.status(), StatusCode::FORBIDDEN);
   }
@@ -569,7 +569,7 @@ mod tests {
     let hash = Hash::bytes(b"bar");
     server.write_file(hash, b"bar");
 
-    let response = server.get(&format!("/{hash}")).await;
+    let response = server.get(&format!("/file/{hash}")).await;
 
     assert_eq!(response.status(), StatusCode::OK);
 
@@ -682,7 +682,7 @@ mod tests {
     let token = Token::encode(&admin, "filepack.example").unwrap();
 
     let response = server
-      .put_with_token(&format!("/{hash}"), b"bar", Some(&token))
+      .put_with_token(&format!("/file/{hash}"), b"bar", Some(&token))
       .await;
 
     assert_eq!(response.status(), StatusCode::OK);
@@ -701,7 +701,7 @@ mod tests {
     })));
 
     let hash = Hash::bytes(b"bar");
-    let response = server.put(&format!("/{hash}"), b"bar").await;
+    let response = server.put(&format!("/file/{hash}"), b"bar").await;
 
     assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
   }
@@ -719,7 +719,7 @@ mod tests {
     let token = Token::encode(&other, "filepack.example").unwrap();
 
     let response = server
-      .put_with_token(&format!("/{hash}"), b"bar", Some(&token))
+      .put_with_token(&format!("/file/{hash}"), b"bar", Some(&token))
       .await;
 
     assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
@@ -731,7 +731,7 @@ mod tests {
 
     let hash = Hash::bytes(b"bar");
 
-    let response = server.put(&format!("/{hash}"), b"bar").await;
+    let response = server.put(&format!("/file/{hash}"), b"bar").await;
 
     assert_eq!(response.status(), StatusCode::OK);
 
@@ -751,7 +751,7 @@ mod tests {
 
     server.write_file(hash, b"bar");
 
-    let response = server.put(&format!("/{hash}"), b"bar").await;
+    let response = server.put(&format!("/file/{hash}"), b"bar").await;
 
     assert_eq!(response.status(), StatusCode::OK);
 
@@ -770,7 +770,7 @@ mod tests {
     let actual = Hash::bytes(b"bar");
     let expected = Hash::bytes(b"baz");
 
-    let response = server.put(&format!("/{expected}"), b"bar").await;
+    let response = server.put(&format!("/file/{expected}"), b"bar").await;
 
     assert_eq!(response.status(), StatusCode::BAD_REQUEST);
 
