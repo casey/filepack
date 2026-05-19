@@ -12,6 +12,9 @@ lib *args: (watch f'ltest --lib')
 ci: lint
   cargo test --workspace
 
+serve:
+  cargo run serve
+
 lint:
   cargo clippy --workspace --all-targets -- --deny warnings
   ./bin/forbid
