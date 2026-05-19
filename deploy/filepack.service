@@ -1,0 +1,38 @@
+[Unit]
+After=network.target
+Description=Filepack server
+StartLimitBurst=120
+StartLimitIntervalSec=10m
+
+[Service]
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+Environment=FILEPACK_DATA_DIR=/var/lib/filepack
+Environment=RUST_BACKTRACE=1
+Environment=RUST_LOG=info
+ExecStart=/usr/local/bin/filepack \
+  serve \
+  --acme-contact mailto:casey@rodarmor.com \
+  --admin-key public1agawgz7p373kz2yyepzsgrncfrwcj0c82gld68q568ksq8klvpvkqddsly5 \
+  --http \
+  --https \
+  --redirect-http-to-https \
+  --restrict-uploads
+Group=filepack
+LimitNOFILE=65536
+MemoryDenyWriteExecute=true
+NoNewPrivileges=true
+PrivateDevices=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+Restart=on-failure
+RestartSec=5s
+StateDirectory=filepack
+StateDirectoryMode=0700
+TimeoutStopSec=10m
+Type=exec
+User=filepack
+WorkingDirectory=/var/lib/filepack
+
+[Install]
+WantedBy=multi-user.target

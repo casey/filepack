@@ -12,6 +12,22 @@ lib *args: (watch f'ltest --lib')
 ci: lint
   cargo test --workspace
 
+serve:
+  cargo run serve
+
+deploy branch='master' remote='casey/filepack' domain='filepack.com':
+  ssh root@{{domain}} '\
+    export DEBIAN_FRONTEND=noninteractive \
+    && mkdir -p deploy \
+    && apt-get update --yes \
+    && apt-get upgrade --yes \
+    && apt-get install --yes git rsync'
+  rsync -avz deploy/checkout root@{{domain}}:deploy/checkout
+  ssh root@{{domain}} 'cd deploy && ./checkout {{branch}} {{remote}} {{domain}}'
+
+log unit='filepack' domain='filepack.com':
+  ssh root@{{domain}} 'journalctl -fu {{unit}}'
+
 lint:
   cargo clippy --workspace --all-targets -- --deny warnings
   ./bin/forbid

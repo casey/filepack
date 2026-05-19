@@ -155,6 +155,18 @@ impl Serve {
     )
   }
 
+  async fn fallback() -> ServerResult<StaticAsset> {
+    Ok(StaticAsset::get("404.html")?.status(StatusCode::NOT_FOUND))
+  }
+
+  async fn favicon() -> ServerResult<StaticAsset> {
+    StaticAsset::get("favicon.png")
+  }
+
+  async fn home() -> ServerResult<StaticAsset> {
+    StaticAsset::get("index.html")
+  }
+
   fn http_port(&self) -> Option<u16> {
     if self.redirect_http_to_https
       || self.http
@@ -173,6 +185,10 @@ impl Serve {
     } else {
       None
     }
+  }
+
+  async fn install_script() -> ServerResult<StaticAsset> {
+    StaticAsset::get("install.sh")
   }
 
   fn redirect_destination(domains: &[String], https_port: u16) -> String {
@@ -196,8 +212,13 @@ impl Serve {
 
   pub(crate) fn router(server: Arc<Server>, auth_config: Option<Arc<AuthConfig>>) -> Router {
     let router = Router::new()
-      .route("/{hash}", get(Self::download))
-      .route("/{hash}", put(Self::upload))
+      .route("/", get(Self::home))
+      .route("/favicon.ico", get(Self::favicon))
+      .route("/file/{hash}", get(Self::download))
+      .route("/file/{hash}", put(Self::upload))
+      .route("/install.sh", get(Self::install_script))
+      .route("/static/{*path}", get(Self::static_asset))
+      .fallback(Self::fallback)
       .layer(Extension(server));
 
     if let Some(auth_config) = auth_config {
@@ -385,6 +406,10 @@ impl Serve {
     Ok(())
   }
 
+  async fn static_asset(path: Path<String>) -> ServerResult<StaticAsset> {
+    StaticAsset::get(&path)
+  }
+
   async fn upload(
     _: Authenticated,
     server: Extension<Arc<Server>>,
@@ -418,9 +443,103 @@ impl Default for Serve {
 mod tests {
   use {
     super::*,
-    axum::{body::to_bytes, http::Request},
+    axum::{
+      body,
+      http::{Request, header::HeaderName},
+    },
     tower::ServiceExt,
   };
+
+  struct TestRequestBuilder {
+    body: Option<String>,
+    method: &'static str,
+    path: String,
+    response_body: Vec<u8>,
+    response_headers: BTreeMap<String, String>,
+    router: Router,
+    status: StatusCode,
+    token: Option<String>,
+  }
+
+  impl TestRequestBuilder {
+    fn assert_body(mut self, body: impl AsRef<[u8]>) -> Self {
+      self.response_body = body.as_ref().into();
+      self
+    }
+
+    fn assert_header(mut self, name: HeaderName, value: impl Into<String>) -> Self {
+      assert!(
+        self
+          .response_headers
+          .insert(name.to_string(), value.into())
+          .is_none()
+      );
+      self
+    }
+
+    fn body(mut self, body: &str) -> Self {
+      self.body = Some(body.into());
+      self
+    }
+
+    fn new(method: &'static str, path: impl Into<String>, router: Router) -> Self {
+      Self {
+        body: None,
+        method,
+        path: path.into(),
+        response_body: Vec::new(),
+        response_headers: BTreeMap::new(),
+        router,
+        status: StatusCode::OK,
+        token: None,
+      }
+    }
+
+    async fn send(self) {
+      let mut request = Request::builder().method(self.method).uri(self.path);
+
+      if let Some(token) = self.token {
+        request = request.header(header::AUTHORIZATION, format!("Bearer {token}"));
+      }
+
+      let response = self
+        .router
+        .oneshot(
+          request
+            .body(if let Some(body) = self.body {
+              Body::from(body)
+            } else {
+              Body::empty()
+            })
+            .unwrap(),
+        )
+        .await
+        .unwrap();
+
+      assert_eq!(response.status(), self.status);
+
+      let headers = response.headers();
+
+      for (name, value) in self.response_headers {
+        assert_eq!(headers[name], value);
+      }
+
+      let body = body::to_bytes(response.into_body(), usize::MAX)
+        .await
+        .unwrap();
+      assert_eq!(body, self.response_body);
+    }
+
+    fn status(mut self, status: StatusCode) -> Self {
+      self.status = status;
+      self
+    }
+
+    fn token(mut self, token: String) -> Self {
+      self.token = Some(token);
+      self
+    }
+  }
 
   struct TestServer {
     data_dir: Utf8PathBuf,
@@ -431,6 +550,12 @@ mod tests {
 
   impl TestServer {
     #[track_caller]
+    fn assert_file(&self, hash: Hash) {
+      let contents = fs::read(self.data_dir.join("files").join(hash.to_string())).unwrap();
+      assert_eq!(Hash::bytes(&contents), hash);
+    }
+
+    #[track_caller]
     fn assert_incoming_empty(&self) {
       assert_eq!(
         fs::read_dir(self.data_dir.join("incoming"))
@@ -440,34 +565,16 @@ mod tests {
       );
     }
 
-    async fn get(&self, path: &str) -> Response {
-      self
-        .router
-        .clone()
-        .oneshot(Request::builder().uri(path).body(Body::empty()).unwrap())
-        .await
-        .unwrap()
+    fn get(&self, path: impl Into<String>) -> TestRequestBuilder {
+      TestRequestBuilder::new("GET", path, self.router.clone())
     }
 
     fn new() -> Self {
       Self::with_auth(None)
     }
 
-    async fn put(&self, path: &str, content: &[u8]) -> Response {
-      self.put_with_token(path, content, None).await
-    }
-
-    async fn put_with_token(&self, path: &str, content: &[u8], token: Option<&str>) -> Response {
-      let mut request = Request::builder().method("PUT").uri(path);
-      if let Some(token) = token {
-        request = request.header(header::AUTHORIZATION, format!("Bearer {token}"));
-      }
-      self
-        .router
-        .clone()
-        .oneshot(request.body(Body::from(content.to_vec())).unwrap())
-        .await
-        .unwrap()
+    fn put(&self, path: impl Into<String>) -> TestRequestBuilder {
+      TestRequestBuilder::new("PUT", path, self.router.clone())
     }
 
     fn with_auth(auth_config: Option<Arc<AuthConfig>>) -> Self {
@@ -497,15 +604,18 @@ mod tests {
 
   #[tokio::test]
   async fn closed_server_forbids_uploads() {
-    let server = TestServer::with_auth(Some(Arc::new(AuthConfig {
+    let hash = Hash::bytes(b"bar");
+
+    TestServer::with_auth(Some(Arc::new(AuthConfig {
       admin: None,
       audiences: Vec::new(),
-    })));
-
-    let hash = Hash::bytes(b"bar");
-    let response = server.put(&format!("/{hash}"), b"bar").await;
-
-    assert_eq!(response.status(), StatusCode::FORBIDDEN);
+    })))
+    .put(format!("/file/{hash}"))
+    .body("bar")
+    .status(StatusCode::FORBIDDEN)
+    .assert_body("uploads forbidden")
+    .send()
+    .await;
   }
 
   #[test]
@@ -544,22 +654,56 @@ mod tests {
     let hash = Hash::bytes(b"bar");
     server.write_file(hash, b"bar");
 
-    let response = server.get(&format!("/{hash}")).await;
+    server
+      .get(format!("/file/{hash}"))
+      .assert_header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
+      .assert_header(header::CONTENT_LENGTH, "3")
+      .assert_header(header::CONTENT_TYPE, "application/octet-stream")
+      .assert_header(header::ETAG, format!("\"{hash}\""))
+      .assert_body("bar")
+      .send()
+      .await;
+  }
 
-    assert_eq!(response.status(), StatusCode::OK);
+  #[tokio::test]
+  async fn fallback() {
+    TestServer::new()
+      .get("/nonexistent")
+      .status(StatusCode::NOT_FOUND)
+      .assert_header(header::CONTENT_TYPE, "text/html")
+      .assert_body(include_str!("../../static/404.html"))
+      .send()
+      .await;
+  }
 
-    let headers = response.headers();
+  #[tokio::test]
+  async fn favicon() {
+    TestServer::new()
+      .get("/favicon.ico")
+      .assert_header(header::CONTENT_TYPE, "image/png")
+      .assert_body(include_bytes!("../../static/favicon.png"))
+      .send()
+      .await;
+  }
 
-    assert_eq!(
-      headers[header::CACHE_CONTROL],
-      "public, max-age=31536000, immutable",
-    );
-    assert_eq!(headers[header::CONTENT_LENGTH], "3");
-    assert_eq!(headers[header::CONTENT_TYPE], "application/octet-stream");
-    assert_eq!(headers[header::ETAG], format!("\"{hash}\""));
+  #[tokio::test]
+  async fn home() {
+    TestServer::new()
+      .get("/")
+      .assert_header(header::CONTENT_TYPE, "text/html")
+      .assert_body(include_bytes!("../../static/index.html"))
+      .send()
+      .await;
+  }
 
-    let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
-    assert_eq!(&body[..], b"bar");
+  #[tokio::test]
+  async fn install_script() {
+    TestServer::new()
+      .get("/install.sh")
+      .assert_header(header::CONTENT_TYPE, "application/x-sh")
+      .assert_body(include_bytes!("../../static/install.sh"))
+      .send()
+      .await;
   }
 
   #[test]
@@ -648,23 +792,22 @@ mod tests {
   #[tokio::test]
   async fn restricted_upload_accepts_admin_token() {
     let admin = PrivateKey::generate();
+    let hash = Hash::bytes(b"bar");
+    let token = Token::encode(&admin, "filepack.example").unwrap();
+
     let server = TestServer::with_auth(Some(Arc::new(AuthConfig {
       admin: Some(admin.public_key()),
       audiences: vec!["filepack.example".into()],
     })));
 
-    let hash = Hash::bytes(b"bar");
-    let token = Token::encode(&admin, "filepack.example").unwrap();
-
-    let response = server
-      .put_with_token(&format!("/{hash}"), b"bar", Some(&token))
+    server
+      .put(format!("/file/{hash}"))
+      .body("bar")
+      .token(token)
+      .send()
       .await;
 
-    assert_eq!(response.status(), StatusCode::OK);
-    assert_eq!(
-      fs::read(server.data_dir.join("files").join(hash.to_string())).unwrap(),
-      b"bar",
-    );
+    server.assert_file(hash);
   }
 
   #[tokio::test]
@@ -676,9 +819,14 @@ mod tests {
     })));
 
     let hash = Hash::bytes(b"bar");
-    let response = server.put(&format!("/{hash}"), b"bar").await;
 
-    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+    server
+      .put(format!("/file/{hash}"))
+      .body("bar")
+      .status(StatusCode::UNAUTHORIZED)
+      .assert_body("missing authorization header")
+      .send()
+      .await;
   }
 
   #[tokio::test]
@@ -693,11 +841,24 @@ mod tests {
     let hash = Hash::bytes(b"bar");
     let token = Token::encode(&other, "filepack.example").unwrap();
 
-    let response = server
-      .put_with_token(&format!("/{hash}"), b"bar", Some(&token))
+    server
+      .put(format!("/file/{hash}"))
+      .body("bar")
+      .token(token)
+      .status(StatusCode::UNAUTHORIZED)
+      .assert_body("invalid authorization token")
+      .send()
       .await;
+  }
 
-    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+  #[tokio::test]
+  async fn static_files() {
+    TestServer::new()
+      .get("/static/index.css")
+      .assert_header(header::CONTENT_TYPE, "text/css")
+      .assert_body(include_bytes!("../../static/index.css"))
+      .send()
+      .await;
   }
 
   #[tokio::test]
@@ -706,14 +867,9 @@ mod tests {
 
     let hash = Hash::bytes(b"bar");
 
-    let response = server.put(&format!("/{hash}"), b"bar").await;
+    server.put(format!("/file/{hash}")).body("bar").send().await;
 
-    assert_eq!(response.status(), StatusCode::OK);
-
-    assert_eq!(
-      fs::read(server.data_dir.join("files").join(hash.to_string())).unwrap(),
-      b"bar",
-    );
+    server.assert_file(hash);
 
     server.assert_incoming_empty();
   }
@@ -726,14 +882,9 @@ mod tests {
 
     server.write_file(hash, b"bar");
 
-    let response = server.put(&format!("/{hash}"), b"bar").await;
+    server.put(format!("/file/{hash}")).body("bar").send().await;
 
-    assert_eq!(response.status(), StatusCode::OK);
-
-    assert_eq!(
-      fs::read(server.data_dir.join("files").join(hash.to_string())).unwrap(),
-      b"bar",
-    );
+    server.assert_file(hash);
 
     server.assert_incoming_empty();
   }
@@ -745,16 +896,15 @@ mod tests {
     let actual = Hash::bytes(b"bar");
     let expected = Hash::bytes(b"baz");
 
-    let response = server.put(&format!("/{expected}"), b"bar").await;
-
-    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
-
-    let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
-
-    assert_eq!(
-      str::from_utf8(&body).unwrap(),
-      format!("expected upload with hash {expected} but got {actual}"),
-    );
+    server
+      .put(format!("/file/{expected}"))
+      .body("bar")
+      .status(StatusCode::BAD_REQUEST)
+      .assert_body(format!(
+        "expected upload with hash {expected} but got {actual}"
+      ))
+      .send()
+      .await;
 
     server.assert_incoming_empty();
   }

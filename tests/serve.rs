@@ -8,7 +8,7 @@ fn http1_is_supported() {
     .http1_only()
     .build()
     .unwrap()
-    .get(format!("{}/{}", server.address(), Hash::bytes(b"")))
+    .get(format!("{}/file/{}", server.address(), Hash::bytes(b"")))
     .send()
     .unwrap();
 
@@ -26,7 +26,7 @@ fn http2_is_supported() {
     .http2_prior_knowledge()
     .build()
     .unwrap()
-    .get(format!("{}/{}", server.address(), Hash::bytes(b"")))
+    .get(format!("{}/file/{}", server.address(), Hash::bytes(b"")))
     .send()
     .unwrap();
 

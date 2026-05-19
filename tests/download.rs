@@ -65,7 +65,7 @@ fn download_fails_with_404_when_file_missing() {
       "foo",
     ])
     .stderr(&format!(
-      "error: response from {}/{hash} failed with status 404 Not Found: file with hash f2e897eed7d206cd855d441598fa521abc75aa96953e97c030c9612c30c1293d not found\n",
+      "error: response from {}/file/{hash} failed with status 404 Not Found: file with hash f2e897eed7d206cd855d441598fa521abc75aa96953e97c030c9612c30c1293d not found\n",
       server.address(),
     ))
     .failure();

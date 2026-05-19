@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+
+# This script is idempotent.
+
+set -euxo pipefail
+
+DOMAIN=$1
+
+export DEBIAN_FRONTEND=noninteractive
+
+touch ~/.hushlogin
+
+hostnamectl set-hostname $DOMAIN
+
+apt-get install --yes \
+  acl \
+  clang \
+  curl \
+  libssl-dev \
+  locales-all \
+  pkg-config \
+  ufw \
+  vim
+
+apt-get remove --yes --auto-remove
+
+sed -i -E 's/#?PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
+sshd -t
+systemctl restart sshd
+
+ufw default allow outgoing
+ufw default deny incoming
+
+ufw allow http
+ufw allow https
+ufw allow ssh
+
+ufw --force enable
+
+if [[ ! -e ~/.cargo/env ]]; then
+  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+fi
+
+source ~/.cargo/env
+
+rustup update stable
+
+cargo build --release
+install --backup target/release/filepack /usr/local/bin/filepack
+
+id --user filepack || useradd --system filepack
+
+cp deploy/filepack.service /etc/systemd/system/
+systemctl daemon-reload
+systemctl enable filepack
+systemctl restart filepack
+
+while ! curl --fail https://$DOMAIN/ > /dev/null; do
+  echo "Waiting for filepack at https://$DOMAIN/…"
+  sleep 1
+done

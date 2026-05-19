@@ -115,7 +115,7 @@ impl Download {
   }
 
   fn file_url(&self, hash: Hash) -> Url {
-    self.server.join(&hash.to_string()).unwrap()
+    self.server.join(&format!("file/{hash}")).unwrap()
   }
 
   fn get_file(&self, hash: Hash) -> Result<Response> {
