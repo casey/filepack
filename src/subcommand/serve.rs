@@ -495,11 +495,6 @@ mod tests {
       }
     }
 
-    fn status(mut self, status: StatusCode) -> Self {
-      self.status = status;
-      self
-    }
-
     async fn send(self) {
       let mut request = Request::builder().method(self.method).uri(self.path);
 
@@ -533,6 +528,11 @@ mod tests {
         .await
         .unwrap();
       assert_eq!(body, self.response_body);
+    }
+
+    fn status(mut self, status: StatusCode) -> Self {
+      self.status = status;
+      self
     }
 
     fn token(mut self, token: String) -> Self {
@@ -569,12 +569,12 @@ mod tests {
       TestRequestBuilder::new("GET", path, self.router.clone())
     }
 
-    fn put(&self, path: impl Into<String>) -> TestRequestBuilder {
-      TestRequestBuilder::new("PUT", path, self.router.clone())
-    }
-
     fn new() -> Self {
       Self::with_auth(None)
+    }
+
+    fn put(&self, path: impl Into<String>) -> TestRequestBuilder {
+      TestRequestBuilder::new("PUT", path, self.router.clone())
     }
 
     fn with_auth(auth_config: Option<Arc<AuthConfig>>) -> Self {
@@ -655,7 +655,7 @@ mod tests {
     server.write_file(hash, b"bar");
 
     server
-      .get(&format!("/file/{hash}"))
+      .get(format!("/file/{hash}"))
       .assert_header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
       .assert_header(header::CONTENT_LENGTH, "3")
       .assert_header(header::CONTENT_TYPE, "application/octet-stream")
@@ -821,7 +821,7 @@ mod tests {
     let hash = Hash::bytes(b"bar");
 
     server
-      .put(&format!("/file/{hash}"))
+      .put(format!("/file/{hash}"))
       .body("bar")
       .status(StatusCode::UNAUTHORIZED)
       .assert_body("missing authorization header")
