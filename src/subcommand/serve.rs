@@ -156,7 +156,7 @@ impl Serve {
   }
 
   async fn fallback() -> ServerResult<StaticAsset> {
-    StaticAsset::get("404.html")
+    Ok(StaticAsset::get("404.html")?.status(StatusCode::NOT_FOUND))
   }
 
   async fn favicon() -> ServerResult<StaticAsset> {
@@ -187,6 +187,10 @@ impl Serve {
     }
   }
 
+  async fn install_script() -> ServerResult<StaticAsset> {
+    StaticAsset::get("install.sh")
+  }
+
   fn redirect_destination(domains: &[String], https_port: u16) -> String {
     if https_port == 443 {
       format!("https://{}", domains[0])
@@ -212,6 +216,7 @@ impl Serve {
       .route("/favicon.ico", get(Self::favicon))
       .route("/file/{hash}", get(Self::download))
       .route("/file/{hash}", put(Self::upload))
+      .route("/install.sh", get(Self::install_script))
       .route("/static/{*path}", get(Self::static_asset))
       .fallback(Self::fallback)
       .layer(Extension(server));

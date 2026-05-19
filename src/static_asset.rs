@@ -7,6 +7,7 @@ struct StaticAssets;
 pub(crate) struct StaticAsset {
   content: Cow<'static, [u8]>,
   content_type: String,
+  status: StatusCode,
 }
 
 impl StaticAsset {
@@ -16,12 +17,23 @@ impl StaticAsset {
     Ok(Self {
       content: content.data,
       content_type: content.metadata.mimetype().to_owned(),
+      status: StatusCode::OK,
     })
+  }
+
+  pub(crate) fn status(mut self, status: StatusCode) -> Self {
+    self.status = status;
+    self
   }
 }
 
 impl IntoResponse for StaticAsset {
   fn into_response(self) -> Response<Body> {
-    ([(header::CONTENT_TYPE, self.content_type)], self.content).into_response()
+    (
+      self.status,
+      [(header::CONTENT_TYPE, self.content_type)],
+      self.content,
+    )
+      .into_response()
   }
 }
