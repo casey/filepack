@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang=en>
+  <head>
+    <meta charset=utf-8>
+    <meta name=format-detection content='telephone=no'>
+    <meta name=viewport content='width=device-width,initial-scale=1.0'>
+    <title>Filepack</title>
+  </head>
+  <body>
+    <h1>Files</h1>
+    <ul>
+%% for file in &self.files {
+      <li>{{ file }}</li>
+%% }
+    </ul>
+  </body>
+</html>

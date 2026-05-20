@@ -13,12 +13,15 @@ use {
   },
   std::net::TcpStream,
   sysinfo::System,
+  templates::FilesHtml,
   tokio::{net::TcpListener, runtime},
   tokio_util::io::ReaderStream,
   tower_http::set_header::SetResponseHeaderLayer,
 };
 
 static THREAD_COUNTER: AtomicU64 = AtomicU64::new(0);
+
+type ServerExtension = Extension<Arc<Server>>;
 
 pub(crate) struct AuthConfig {
   pub(crate) admin: Option<PublicKey>,
@@ -139,10 +142,7 @@ impl Serve {
     }
   }
 
-  async fn download(
-    server: Extension<Arc<Server>>,
-    Path(hash): Path<Hash>,
-  ) -> ServerResult<Response> {
+  async fn download(server: ServerExtension, Path(hash): Path<Hash>) -> ServerResult<Response> {
     let (file, len) = server.open_file(hash).await?;
 
     Ok(
@@ -221,12 +221,19 @@ impl Serve {
       ))
   }
 
+  async fn files(server: ServerExtension) -> ServerResult<FilesHtml> {
+    Ok(FilesHtml {
+      files: server.files().await?,
+    })
+  }
+
   pub(crate) fn router(server: Arc<Server>, auth_config: Option<Arc<AuthConfig>>) -> Router {
     let router = Router::new()
       .route("/", get(Self::home))
       .route("/favicon.ico", get(Self::favicon))
       .route("/file/{hash}", get(Self::download))
       .route("/file/{hash}", put(Self::upload))
+      .route("/files", get(Self::files))
       .route("/install.sh", get(Self::install_script))
       .route("/static/{*path}", get(Self::static_asset))
       .fallback(Self::fallback)
@@ -422,7 +429,7 @@ impl Serve {
 
   async fn upload(
     _: Authenticated,
-    server: Extension<Arc<Server>>,
+    server: ServerExtension,
     hash: Path<Hash>,
     body: Body,
   ) -> ServerResult {

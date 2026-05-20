@@ -428,6 +428,36 @@ dependencies = [
 ]
 
 [[package]]
+name = "boilerplate"
+version = "1.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4e3b0e30ddbe071ebebe3a1165e7e3bcb0bb30a2fc67fddf68fcb75c792f4326"
+dependencies = [
+ "boilerplate-macros",
+]
+
+[[package]]
+name = "boilerplate-macros"
+version = "0.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dc0c044dd06b51561ddd553ee6454111f161347aadc7726e15bae8e1f115539d"
+dependencies = [
+ "boilerplate-parser",
+ "darling",
+ "mime",
+ "new_mime_guess",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "boilerplate-parser"
+version = "0.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e7ea04f808c8ddbd69a3f919bb45b32f3f822b52d0c407ce1a1f0666ff9d5c60"
+
+[[package]]
 name = "bs58"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -970,6 +1000,7 @@ dependencies = [
  "axum-server",
  "bech32",
  "blake3",
+ "boilerplate",
  "camino",
  "chrono",
  "clap",
@@ -1806,6 +1837,16 @@ dependencies = [
  "libc",
  "wasi",
  "windows-sys 0.61.2",
+]
+
+[[package]]
+name = "new_mime_guess"
+version = "4.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "02a2dfb3559d53e90b709376af1c379462f7fb3085a0177deb73e6ea0d99eff4"
+dependencies = [
+ "mime",
+ "unicase",
 ]
 
 [[package]]

@@ -6,8 +6,34 @@ pub(crate) struct Server {
 }
 
 impl Server {
+  pub(crate) async fn files(&self) -> ServerResult<Vec<Hash>> {
+    let context = server_error::FilesystemIo { path: &self.files };
+
+    let mut entries = tokio::fs::read_dir(&self.files).await.context(context)?;
+
+    let mut files = Vec::new();
+
+    while let Some(entry) = entries.next_entry().await.context(context)? {
+      let Ok(name) = entry.file_name().into_string() else {
+        continue;
+      };
+
+      if let Ok(hash) = name.parse() {
+        files.push(hash);
+      }
+    }
+
+    files.sort();
+
+    Ok(files)
+  }
+
+  fn file_path(&self, hash: Hash) -> Utf8PathBuf {
+    self.files.join(hash.to_string())
+  }
+
   pub(crate) async fn open_file(&self, hash: Hash) -> ServerResult<(tokio::fs::File, u64)> {
-    let path = self.files.join(hash.to_string());
+    let path = self.file_path(hash);
 
     let file = match tokio::fs::File::open(&path).await {
       Err(err) => {
@@ -81,7 +107,7 @@ impl Server {
       },
     );
 
-    let path = self.files.join(hash.to_string());
+    let path = self.file_path(hash);
 
     if tokio::fs::try_exists(&path)
       .await

@@ -96,6 +96,7 @@ use {
     primitives::decode::{CheckedHrpstring, CheckedHrpstringError},
   },
   blake3::Hasher,
+  boilerplate::Boilerplate,
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},
   clap::{Parser, ValueEnum},
   filepack_cbor::{Decode, DecodeFromStr, Encode, EncodeDisplay},
@@ -268,6 +269,7 @@ mod style;
 mod subcommand;
 mod tag;
 mod tag_error;
+mod templates;
 mod ticked;
 mod token;
 mod utf8_path_ext;
