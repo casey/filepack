@@ -496,6 +496,12 @@ mod tests {
       self
     }
 
+    fn assert_response(mut self, response: impl IntoResponse) -> Self {
+      let response = response.into_response();
+      todo!();
+      self
+    }
+
     fn body(mut self, body: &str) -> Self {
       self.body = Some(body.into());
       self
@@ -613,8 +619,15 @@ mod tests {
       }
     }
 
-    fn write_file(&self, hash: Hash, content: &[u8]) {
-      fs::write(self.data_dir.join("files").join(hash.to_string()), content).unwrap();
+    fn write_file(&self, content: &[u8]) {
+      fs::write(
+        self
+          .data_dir
+          .join("files")
+          .join(Hash::bytes(content).to_string()),
+        content,
+      )
+      .unwrap();
     }
   }
 
@@ -674,7 +687,7 @@ mod tests {
     let server = TestServer::new();
 
     let hash = Hash::bytes(b"bar");
-    server.write_file(hash, b"bar");
+    server.write_file(b"bar");
 
     server
       .get(format!("/file/{hash}"))
@@ -715,12 +728,7 @@ mod tests {
     TestServer::new()
       .get("/files")
       .assert_header(header::CONTENT_TYPE, "text/html;charset=utf-8")
-      .assert_body(
-        FilesHtml {
-          files: Vec::new(),
-        }
-        .to_string(),
-      )
+      .assert_response(FilesHtml { files: Vec::new() })
       .send()
       .await;
   }
@@ -729,17 +737,17 @@ mod tests {
   async fn files_lists_sorted_hash_named_entries() {
     let server = TestServer::new();
 
-    let foo = Hash::bytes(b"foo");
-    let bar = Hash::bytes(b"bar");
-    let baz = Hash::bytes(b"baz");
+    let foo = b"foo";
+    let bar = b"bar";
+    let baz = b"baz";
 
-    server.write_file(foo, b"foo");
-    server.write_file(bar, b"bar");
-    server.write_file(baz, b"baz");
+    server.write_file(foo);
+    server.write_file(bar);
+    server.write_file(baz);
 
     fs::write(server.data_dir.join("files").join("not-a-hash"), "").unwrap();
 
-    let mut files = vec![foo, bar, baz];
+    let mut files = vec![Hash::bytes(foo), Hash::bytes(bar), Hash::bytes(baz)];
     files.sort();
 
     server
@@ -946,7 +954,7 @@ mod tests {
 
     let hash = Hash::bytes(b"bar");
 
-    server.write_file(hash, b"bar");
+    server.write_file(b"bar");
 
     server.put(format!("/file/{hash}")).body("bar").send().await;
 
