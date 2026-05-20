@@ -148,7 +148,9 @@ impl Serve {
     Ok(
       Response::builder()
         .header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
+        .header(header::CONTENT_DISPOSITION, "attachment")
         .header(header::CONTENT_LENGTH, len)
+        .header(header::CONTENT_SECURITY_POLICY, "sandbox")
         .header(header::CONTENT_TYPE, "application/octet-stream")
         .header(header::ETAG, format!("\"{hash}\""))
         .body(Body::from_stream(ReaderStream::new(file)))
