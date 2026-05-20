@@ -6,6 +6,10 @@ pub(crate) struct Server {
 }
 
 impl Server {
+  fn file_path(&self, hash: Hash) -> Utf8PathBuf {
+    self.files.join(hash.to_string())
+  }
+
   pub(crate) async fn files(&self) -> ServerResult<Vec<Hash>> {
     let context = server_error::FilesystemIo { path: &self.files };
 
@@ -26,10 +30,6 @@ impl Server {
     files.sort();
 
     Ok(files)
-  }
-
-  fn file_path(&self, hash: Hash) -> Utf8PathBuf {
-    self.files.join(hash.to_string())
   }
 
   pub(crate) async fn open_file(&self, hash: Hash) -> ServerResult<(tokio::fs::File, u64)> {

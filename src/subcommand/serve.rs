@@ -166,6 +166,12 @@ impl Serve {
     StaticAsset::get("favicon.png")
   }
 
+  async fn files(server: ServerExtension) -> ServerResult<FilesHtml> {
+    Ok(FilesHtml {
+      files: server.files().await?,
+    })
+  }
+
   async fn home() -> ServerResult<StaticAsset> {
     StaticAsset::get("index.html")
   }
@@ -221,12 +227,6 @@ impl Serve {
         header::X_CONTENT_TYPE_OPTIONS,
         HeaderValue::from_static("nosniff"),
       ))
-  }
-
-  async fn files(server: ServerExtension) -> ServerResult<FilesHtml> {
-    Ok(FilesHtml {
-      files: server.files().await?,
-    })
   }
 
   pub(crate) fn router(server: Arc<Server>, auth_config: Option<Arc<AuthConfig>>) -> Router {
