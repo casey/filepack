@@ -679,7 +679,9 @@ mod tests {
     server
       .get(format!("/file/{hash}"))
       .assert_header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
+      .assert_header(header::CONTENT_DISPOSITION, "attachment")
       .assert_header(header::CONTENT_LENGTH, "3")
+      .assert_header(header::CONTENT_SECURITY_POLICY, "sandbox")
       .assert_header(header::CONTENT_TYPE, "application/octet-stream")
       .assert_header(header::ETAG, format!("\"{hash}\""))
       .assert_body("bar")
@@ -704,6 +706,46 @@ mod tests {
       .get("/favicon.ico")
       .assert_header(header::CONTENT_TYPE, "image/png")
       .assert_body(include_bytes!("../../static/favicon.png"))
+      .send()
+      .await;
+  }
+
+  #[tokio::test]
+  async fn files_empty() {
+    TestServer::new()
+      .get("/files")
+      .assert_header(header::CONTENT_TYPE, "text/html;charset=utf-8")
+      .assert_body(
+        FilesHtml {
+          files: Vec::new(),
+        }
+        .to_string(),
+      )
+      .send()
+      .await;
+  }
+
+  #[tokio::test]
+  async fn files_lists_sorted_hash_named_entries() {
+    let server = TestServer::new();
+
+    let foo = Hash::bytes(b"foo");
+    let bar = Hash::bytes(b"bar");
+    let baz = Hash::bytes(b"baz");
+
+    server.write_file(foo, b"foo");
+    server.write_file(bar, b"bar");
+    server.write_file(baz, b"baz");
+
+    fs::write(server.data_dir.join("files").join("not-a-hash"), "").unwrap();
+
+    let mut files = vec![foo, bar, baz];
+    files.sort();
+
+    server
+      .get("/files")
+      .assert_header(header::CONTENT_TYPE, "text/html;charset=utf-8")
+      .assert_body(FilesHtml { files }.to_string())
       .send()
       .await;
   }
