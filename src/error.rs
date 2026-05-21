@@ -67,6 +67,14 @@ pub enum Error {
   },
   #[snafu(display("failed to get local data directory"))]
   DataLocalDir { backtrace: Option<Backtrace> },
+  #[snafu(display("database schema version `{actual}` does not match expected `{expected}`"))]
+  DatabaseSchemaVersionMismatch {
+    actual: u64,
+    backtrace: Option<Backtrace>,
+    expected: u64,
+  },
+  #[snafu(display("database is missing schema version"))]
+  DatabaseSchemaVersionMissing { backtrace: Option<Backtrace> },
   #[snafu(display("failed to decode manifest at `{path}`"))]
   DecodeManifest {
     backtrace: Option<Backtrace>,
@@ -310,6 +318,18 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     source: io::Error,
   },
+  #[snafu(transparent)]
+  Redb { source: redb::Error },
+  #[snafu(transparent)]
+  RedbCommit { source: redb::CommitError },
+  #[snafu(transparent)]
+  RedbDatabase { source: redb::DatabaseError },
+  #[snafu(transparent)]
+  RedbStorage { source: redb::StorageError },
+  #[snafu(transparent)]
+  RedbTable { source: redb::TableError },
+  #[snafu(transparent)]
+  RedbTransaction { source: redb::TransactionError },
   #[snafu(display("request failed"))]
   Request {
     backtrace: Option<Backtrace>,

@@ -94,16 +94,9 @@ impl Server {
       Directory::decode_from_slice(&cbor).context(server_error::DirectoryDecode { hash })?;
 
     {
-      let tx = self
-        .database
-        .begin_read()
-        .map_err(redb::Error::from)
-        .context(server_error::Database)?;
+      let tx = self.database.begin_read()?;
 
-      let directories = tx
-        .open_table(DIRECTORIES)
-        .map_err(redb::Error::from)
-        .context(server_error::Database)?;
+      let directories = tx.open_table(DIRECTORIES)?;
 
       for entry in directory.entries.values() {
         match entry.ty {
@@ -121,11 +114,7 @@ impl Server {
             );
           }
           EntryType::Directory => {
-            let verified = directories
-              .get(&entry.hash)
-              .map_err(redb::Error::from)
-              .context(server_error::Database)?
-              .is_some();
+            let verified = directories.get(&entry.hash)?.is_some();
             ensure!(
               verified,
               server_error::DirectorySubdirectoryUnverified {
@@ -138,62 +127,52 @@ impl Server {
       }
     }
 
-    let tx = self
-      .database
-      .begin_write()
-      .map_err(redb::Error::from)
-      .context(server_error::Database)?;
+    let tx = self.database.begin_write()?;
 
     {
-      let mut directories = tx
-        .open_table(DIRECTORIES)
-        .map_err(redb::Error::from)
-        .context(server_error::Database)?;
+      let mut directories = tx.open_table(DIRECTORIES)?;
 
-      directories
-        .insert(&hash, &())
-        .map_err(redb::Error::from)
-        .context(server_error::Database)?;
+      directories.insert(&hash, &())?;
     }
 
-    tx.commit()
-      .map_err(redb::Error::from)
-      .context(server_error::Database)?;
+    tx.commit()?;
 
     Ok(())
   }
 
   pub(crate) fn with_data_dir(data_dir: &Utf8Path) -> Result<Self> {
-    let database = Database::create(data_dir.join("database.redb")).unwrap();
+    let database = Database::create(data_dir.join("database.redb"))?;
 
-    let tx = database.begin_write().unwrap();
+    let tx = database.begin_write()?;
 
-    if tx.list_tables().unwrap().count() == 0 {
+    if tx.list_tables()?.count() == 0 {
       {
-        let mut metadata = tx.open_table(METADATA).unwrap();
+        let mut metadata = tx.open_table(METADATA)?;
 
-        metadata
-          .insert(&MetadataKey::Schema.key(), &SCHEMA_VERSION)
-          .unwrap();
+        metadata.insert(&MetadataKey::Schema.key(), &SCHEMA_VERSION)?;
 
-        tx.open_table(DIRECTORIES).unwrap();
+        tx.open_table(DIRECTORIES)?;
 
-        tx.open_table(PACKAGES).unwrap();
+        tx.open_table(PACKAGES)?;
       }
 
-      tx.commit().unwrap();
+      tx.commit()?;
     } else {
       let schema_version = tx
-        .open_table(METADATA)
-        .unwrap()
-        .get(&MetadataKey::Schema.key())
-        .unwrap()
-        .unwrap()
+        .open_table(METADATA)?
+        .get(&MetadataKey::Schema.key())?
+        .context(error::DatabaseSchemaVersionMissing)?
         .value();
 
-      assert_eq!(schema_version, SCHEMA_VERSION);
+      ensure!(
+        schema_version == SCHEMA_VERSION,
+        error::DatabaseSchemaVersionMismatch {
+          actual: schema_version,
+          expected: SCHEMA_VERSION,
+        },
+      );
 
-      drop(tx)
+      drop(tx);
     }
 
     let files = data_dir.join("files");

@@ -9,8 +9,6 @@ pub(crate) enum ServerError {
   AuthorizationMalformed,
   #[snafu(display("missing authorization header"))]
   AuthorizationMissing,
-  #[snafu(display("database error"))]
-  Database { source: redb::Error },
   #[snafu(display("failed to decode directory {hash}"))]
   DirectoryDecode { hash: Hash, source: DecodeError },
   #[snafu(display("directory {directory} references missing file {file}"))]
@@ -26,6 +24,18 @@ pub(crate) enum ServerError {
   },
   #[snafu(display("page not found"))]
   PageNotFound,
+  #[snafu(transparent)]
+  Redb { source: redb::Error },
+  #[snafu(transparent)]
+  RedbCommit { source: redb::CommitError },
+  #[snafu(transparent)]
+  RedbDatabase { source: redb::DatabaseError },
+  #[snafu(transparent)]
+  RedbStorage { source: redb::StorageError },
+  #[snafu(transparent)]
+  RedbTable { source: redb::TableError },
+  #[snafu(transparent)]
+  RedbTransaction { source: redb::TransactionError },
   #[snafu(display("error reading body of upload with hash {hash}"))]
   UploadBodyRead { hash: Hash, source: axum::Error },
   #[snafu(display("uploads forbidden"))]
@@ -48,7 +58,12 @@ impl ServerError {
       | Self::UploadBodyRead { .. }
       | Self::UploadForbidden
       | Self::UploadHashMismatch { .. } => self.to_string(),
-      Self::Database { .. } => "database error".into(),
+      Self::Redb { .. }
+      | Self::RedbCommit { .. }
+      | Self::RedbDatabase { .. }
+      | Self::RedbStorage { .. }
+      | Self::RedbTable { .. }
+      | Self::RedbTransaction { .. } => "database error".into(),
       Self::FilesystemIo { .. } => "filesystem I/O error".into(),
     }
   }
@@ -58,7 +73,13 @@ impl ServerError {
       Self::AuthorizationInvalid { .. }
       | Self::AuthorizationMalformed
       | Self::AuthorizationMissing => StatusCode::UNAUTHORIZED,
-      Self::Database { .. } | Self::FilesystemIo { .. } => StatusCode::INTERNAL_SERVER_ERROR,
+      Self::FilesystemIo { .. }
+      | Self::Redb { .. }
+      | Self::RedbCommit { .. }
+      | Self::RedbDatabase { .. }
+      | Self::RedbStorage { .. }
+      | Self::RedbTable { .. }
+      | Self::RedbTransaction { .. } => StatusCode::INTERNAL_SERVER_ERROR,
       Self::DirectoryDecode { .. }
       | Self::DirectoryFileMissing { .. }
       | Self::DirectorySubdirectoryUnverified { .. }
