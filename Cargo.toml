@@ -36,6 +36,7 @@ libc = "0.2.186"
 num-traits = "0.2.19"
 owo-colors = "4"
 rand = "0.8.5"
+redb = "4.1.0"
 regex = "1.10.6"
 reqwest = { version = "0.13.3", features = ["blocking", "http2"] }
 rust-embed = { version = "8.11.0", features = ["mime-guess"] }

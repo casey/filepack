@@ -1,6 +1,41 @@
-use super::*;
+use {
+  super::*,
+  redb::{Database, ReadableTable, TableDefinition},
+};
+
+#[macro_export]
+macro_rules! define_table {
+  ($name:ident, $key:ty, $value:ty) => {
+    const $name: TableDefinition<$key, $value> = TableDefinition::new(stringify!($name));
+  };
+}
+
+#[macro_export]
+macro_rules! define_multimap_table {
+  ($name:ident, $key:ty, $value:ty) => {
+    const $name: MultimapTableDefinition<$key, $value> =
+      MultimapTableDefinition::new(stringify!($name));
+  };
+}
+
+const SCHEMA_VERSION: u64 = 0;
+
+const METADATA: TableDefinition<u64, u64> = TableDefinition::new("metadata");
+const PACKAGES: TableDefinition<Hash, ()> = TableDefinition::new("packages");
+
+#[derive(Copy, Clone)]
+pub(crate) enum MetadataKey {
+  Schema = 0,
+}
+
+impl MetadataKey {
+  fn key(self) -> u64 {
+    self as u64
+  }
+}
 
 pub(crate) struct Server {
+  database: Database,
   files: Utf8PathBuf,
   incoming: Utf8PathBuf,
 }
@@ -56,13 +91,47 @@ impl Server {
   }
 
   pub(crate) fn with_data_dir(data_dir: &Utf8Path) -> Result<Self> {
+    let database = Database::create(data_dir.join("database.redb")).unwrap();
+
+    let tx = database.begin_write().unwrap();
+
+    if tx.list_tables().unwrap().count() == 0 {
+      {
+        let mut metadata = tx.open_table(METADATA).unwrap();
+
+        metadata
+          .insert(&MetadataKey::Schema.key(), &SCHEMA_VERSION)
+          .unwrap();
+
+        tx.open_table(PACKAGES).unwrap();
+      }
+
+      tx.commit().unwrap();
+    } else {
+      let schema_version = tx
+        .open_table(METADATA)
+        .unwrap()
+        .get(&MetadataKey::Schema.key())
+        .unwrap()
+        .unwrap()
+        .value();
+
+      assert_eq!(schema_version, SCHEMA_VERSION);
+
+      drop(tx)
+    }
+
     let files = data_dir.join("files");
     filesystem::create_dir_all(&files)?;
 
     let incoming = data_dir.join("incoming");
     filesystem::create_dir_all(&incoming)?;
 
-    Ok(Self { files, incoming })
+    Ok(Self {
+      database,
+      files,
+      incoming,
+    })
   }
 
   pub(crate) async fn write_file(&self, hash: Hash, body: Body) -> ServerResult {
