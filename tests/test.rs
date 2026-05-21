@@ -6,6 +6,7 @@ pub(crate) struct Test {
   data_dir: Option<String>,
   directories: BTreeSet<String>,
   env: BTreeMap<String, Option<String>>,
+  file_counts: BTreeMap<String, usize>,
   files: BTreeMap<String, Expected>,
   manifests: BTreeMap<String, Expected>,
   ready_address: bool,
@@ -40,6 +41,11 @@ impl Test {
         .insert(path.into(), Expected::string(contents))
         .is_none()
     );
+    self
+  }
+
+  pub(crate) fn assert_file_count(mut self, path: &str, count: usize) -> Self {
+    assert!(self.file_counts.insert(path.into(), count).is_none());
     self
   }
 
@@ -290,6 +296,14 @@ impl Test {
       expected.check(&actual, &format!("file `{path}`"));
     }
 
+    for (path, expected) in &self.file_counts {
+      let actual = fs::read_dir(self.join(path)).unwrap().count();
+      assert_eq!(
+        actual, *expected,
+        "directory `{path}` has {actual} files, expected {expected}",
+      );
+    }
+
     for (path, expected) in &self.manifests {
       let manifest = Manifest::load(Some(&self.join(path))).unwrap();
       let actual = format!("{}\n", serde_json::to_string_pretty(&manifest).unwrap());
@@ -403,6 +417,7 @@ impl Test {
       data_dir: None,
       directories: BTreeSet::new(),
       env: BTreeMap::new(),
+      file_counts: BTreeMap::new(),
       files: BTreeMap::new(),
       manifests: BTreeMap::new(),
       ready_address: false,

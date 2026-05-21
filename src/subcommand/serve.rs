@@ -13,7 +13,7 @@ use {
   },
   std::net::TcpStream,
   sysinfo::System,
-  templates::FilesHtml,
+  templates::{DirectoryHtml, FilesHtml},
   tokio::{net::TcpListener, runtime},
   tokio_util::io::ReaderStream,
   tower_http::set_header::SetResponseHeaderLayer,
@@ -229,9 +229,14 @@ impl Serve {
       ))
   }
 
+  async fn directory(server: ServerExtension) -> ServerResult<DirectoryHtml> {
+    todo!()
+  }
+
   pub(crate) fn router(server: Arc<Server>, auth_config: Option<Arc<AuthConfig>>) -> Router {
     let router = Router::new()
       .route("/", get(Self::home))
+      .route("/directory/{hash}", get(Self::directory))
       .route("/directory/{hash}", post(Self::verify_directory))
       .route("/favicon.ico", get(Self::favicon))
       .route("/file/{hash}", get(Self::download))
