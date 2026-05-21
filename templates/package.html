@@ -32,6 +32,10 @@
       <dt>homepage</dt>
       <dd><a href={{ homepage }}>{{ homepage }}</a></dd>
 %%   }
+%%   if let Some(language) = &metadata.language {
+      <dt>language</dt>
+      <dd>{{ language }}</dd>
+%%   }
     </dl>
 %% }
   </body>

@@ -34,14 +34,14 @@ pub(crate) enum ServerError {
     path: Utf8PathBuf,
     source: io::Error,
   },
-  #[snafu(display("page not found"))]
-  PageNotFound,
   #[snafu(display("failed to decode metadata for package {hash}"))]
   PackageMetadataDecode { hash: Hash, source: DecodeError },
   #[snafu(display("package {hash} not found"))]
   PackageNotFound { hash: Hash },
   #[snafu(display("package {hash} root directory is unverified"))]
   PackageUnverified { hash: Hash },
+  #[snafu(display("page not found"))]
+  PageNotFound,
   #[snafu(display("error reading body of upload with hash {hash}"))]
   UploadBodyRead { hash: Hash, source: axum::Error },
   #[snafu(display("uploads forbidden"))]

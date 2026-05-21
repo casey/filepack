@@ -359,6 +359,80 @@ fn get_directory_succeeds() {
 }
 
 #[test]
+fn get_package_not_found() {
+  let server = TestServer::new();
+
+  let hash = Hash::bytes(b"foo");
+
+  server
+    .get(format!("/package/{hash}"))
+    .status(StatusCode::NOT_FOUND)
+    .assert_body(format!("package {hash} not found"))
+    .send();
+}
+
+#[test]
+fn get_package_with_metadata() {
+  let server = TestServer::new();
+
+  let metadata = Metadata {
+    artwork: None,
+    creator: None,
+    date: None,
+    description: None,
+    homepage: None,
+    language: None,
+    package: None,
+    readme: None,
+    title: Some("foo".parse().unwrap()),
+  };
+  let metadata_cbor = metadata.encode_to_vec();
+  let metadata_hash = Hash::bytes(&metadata_cbor);
+  server.write_file(&metadata_cbor);
+
+  let cbor = directory(&[(
+    Metadata::CBOR_FILENAME,
+    EntryType::File,
+    metadata_hash,
+    metadata_cbor.len() as u64,
+  )])
+  .encode_to_vec();
+  let hash = Hash::bytes(&cbor);
+  server.write_file(&cbor);
+
+  server.post(format!("/directory/{hash}")).send();
+  server.post(format!("/package/{hash}")).send();
+
+  server
+    .get(format!("/package/{hash}"))
+    .assert_response(PackageHtml {
+      hash,
+      metadata: Some(metadata),
+    })
+    .send();
+}
+
+#[test]
+fn get_package_without_metadata() {
+  let server = TestServer::new();
+
+  let cbor = directory(&[]).encode_to_vec();
+  let hash = Hash::bytes(&cbor);
+  server.write_file(&cbor);
+
+  server.post(format!("/directory/{hash}")).send();
+  server.post(format!("/package/{hash}")).send();
+
+  server
+    .get(format!("/package/{hash}"))
+    .assert_response(PackageHtml {
+      hash,
+      metadata: None,
+    })
+    .send();
+}
+
+#[test]
 fn home() {
   TestServer::new()
     .get("/")
@@ -704,76 +778,29 @@ fn verify_directory_succeeds() {
 }
 
 #[test]
-fn get_package_not_found() {
+fn verify_directory_unverified_subdirectory() {
   let server = TestServer::new();
 
-  let hash = Hash::bytes(b"foo");
+  let child_cbor = directory(&[]).encode_to_vec();
+  let child_hash = Hash::bytes(&child_cbor);
+  server.write_file(&child_cbor);
 
-  server
-    .get(format!("/package/{hash}"))
-    .status(StatusCode::NOT_FOUND)
-    .assert_body(format!("package {hash} not found"))
-    .send();
-}
-
-#[test]
-fn get_package_without_metadata() {
-  let server = TestServer::new();
-
-  let cbor = directory(&[]).encode_to_vec();
-  let hash = Hash::bytes(&cbor);
-  server.write_file(&cbor);
-
-  server.post(format!("/directory/{hash}")).send();
-  server.post(format!("/package/{hash}")).send();
-
-  server
-    .get(format!("/package/{hash}"))
-    .assert_response(PackageHtml {
-      hash,
-      metadata: None,
-    })
-    .send();
-}
-
-#[test]
-fn get_package_with_metadata() {
-  let server = TestServer::new();
-
-  let metadata = Metadata {
-    artwork: None,
-    creator: None,
-    date: None,
-    description: None,
-    homepage: None,
-    language: None,
-    package: None,
-    readme: None,
-    title: Some("foo".parse().unwrap()),
-  };
-  let metadata_cbor = metadata.encode_to_vec();
-  let metadata_hash = Hash::bytes(&metadata_cbor);
-  server.write_file(&metadata_cbor);
-
-  let cbor = directory(&[(
-    Metadata::CBOR_FILENAME,
-    EntryType::File,
-    metadata_hash,
-    metadata_cbor.len() as u64,
+  let parent_cbor = directory(&[(
+    "child",
+    EntryType::Directory,
+    child_hash,
+    child_cbor.len() as u64,
   )])
   .encode_to_vec();
-  let hash = Hash::bytes(&cbor);
-  server.write_file(&cbor);
-
-  server.post(format!("/directory/{hash}")).send();
-  server.post(format!("/package/{hash}")).send();
+  let parent_hash = Hash::bytes(&parent_cbor);
+  server.write_file(&parent_cbor);
 
   server
-    .get(format!("/package/{hash}"))
-    .assert_response(PackageHtml {
-      hash,
-      metadata: Some(metadata),
-    })
+    .post(format!("/directory/{parent_hash}"))
+    .status(StatusCode::BAD_REQUEST)
+    .assert_body(format!(
+      "directory {parent_hash} references unverified subdirectory {child_hash}"
+    ))
     .send();
 }
 
@@ -816,32 +843,5 @@ fn verify_package_unverified() {
     .post(format!("/package/{hash}"))
     .status(StatusCode::BAD_REQUEST)
     .assert_body(format!("package {hash} root directory is unverified"))
-    .send();
-}
-
-#[test]
-fn verify_directory_unverified_subdirectory() {
-  let server = TestServer::new();
-
-  let child_cbor = directory(&[]).encode_to_vec();
-  let child_hash = Hash::bytes(&child_cbor);
-  server.write_file(&child_cbor);
-
-  let parent_cbor = directory(&[(
-    "child",
-    EntryType::Directory,
-    child_hash,
-    child_cbor.len() as u64,
-  )])
-  .encode_to_vec();
-  let parent_hash = Hash::bytes(&parent_cbor);
-  server.write_file(&parent_cbor);
-
-  server
-    .post(format!("/directory/{parent_hash}"))
-    .status(StatusCode::BAD_REQUEST)
-    .assert_body(format!(
-      "directory {parent_hash} references unverified subdirectory {child_hash}"
-    ))
     .send();
 }
