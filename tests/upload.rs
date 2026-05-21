@@ -447,6 +447,31 @@ error: failed to unarchive manifest
 }
 
 #[test]
+fn upload_package_succeeds() {
+  let server = Test::new()
+    .serve()
+    .assert_file(&format!("files/{}", Hash::bytes(b"aaa")), "aaa")
+    .assert_file(&format!("files/{}", Hash::bytes(b"bbb")), "bbb")
+    .assert_file(&format!("files/{}", Hash::bytes(b"ccc")), "ccc")
+    .assert_file(&format!("files/{}", Hash::bytes(b"ddd")), "ddd")
+    .spawn();
+
+  Test::new()
+    .write("foo", "aaa")
+    .write("bar", "bbb")
+    .create_dir("empty")
+    .write("sub/baz", "ccc")
+    .write("sub/qux", "ddd")
+    .create_dir("sub/empty")
+    .args(["create", "."])
+    .success()
+    .args(["upload", "--server", &server.address(), "manifest.filepack"])
+    .success();
+
+  server.terminate().success();
+}
+
+#[test]
 fn upload_package_uploads_files() {
   let server = Test::new()
     .serve()
