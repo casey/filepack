@@ -34,9 +34,7 @@ impl Upload {
 
       ensure!(
         self.server.scheme() == "https" || loopback,
-        error::AuthenticationOverHttp {
-          server: self.server.clone(),
-        },
+        error::TokenOverHttp,
       );
 
       let keychain = Keychain::load(&options)?;

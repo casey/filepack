@@ -11,11 +11,6 @@ pub enum Error {
     actual: Hash,
     expected: Hash,
   },
-  #[snafu(display("cannot use authentication with non-HTTPS server `{server}`"))]
-  AuthenticationOverHttp {
-    backtrace: Option<Backtrace>,
-    server: Url,
-  },
   #[snafu(display("failed to decode bech32 `{bech32}`"))]
   Bech32Decode {
     backtrace: Option<Backtrace>,
@@ -401,6 +396,8 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     source: SystemTimeError,
   },
+  #[snafu(display("authentication tokens may only be used with server over HTTPS or loopback"))]
+  TokenOverHttp { backtrace: Option<Backtrace> },
   #[snafu(display("failed to unarchive manifest"))]
   UnarchiveManifest {
     backtrace: Option<Backtrace>,
