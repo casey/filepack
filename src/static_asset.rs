@@ -37,3 +37,19 @@ impl IntoResponse for StaticAsset {
       .into_response()
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn content_type() {
+    #[track_caller]
+    fn case(path: &str, content_type: &str) {
+      assert_eq!(StaticAsset::get(path).unwrap().content_type, content_type);
+    }
+
+    case("index.css", "text/css");
+    case("index.html", "text/html");
+  }
+}
