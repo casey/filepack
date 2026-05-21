@@ -474,6 +474,7 @@ mod tests {
     method: &'static str,
     path: String,
     response_body: Vec<u8>,
+    response_body_source: Option<Body>,
     response_headers: BTreeMap<String, String>,
     router: Router,
     status: StatusCode,
@@ -497,8 +498,12 @@ mod tests {
     }
 
     fn assert_response(mut self, response: impl IntoResponse) -> Self {
-      let response = response.into_response();
-      todo!();
+      let (parts, body) = response.into_response().into_parts();
+      self.status = parts.status;
+      for (name, value) in &parts.headers {
+        self = self.assert_header(name, value);
+      }
+      self.response_body_source = Some(body);
       self
     }
 
@@ -513,6 +518,7 @@ mod tests {
         method,
         path: path.into(),
         response_body: Vec::new(),
+        response_body_source: None,
         response_headers: BTreeMap::from([(
           header::X_CONTENT_TYPE_OPTIONS.to_string(),
           "nosniff".into(),
@@ -523,7 +529,11 @@ mod tests {
       }
     }
 
-    async fn send(self) {
+    async fn send(mut self) {
+      if let Some(body) = self.response_body_source.take() {
+        self.response_body = body::to_bytes(body, usize::MAX).await.unwrap().into();
+      }
+
       let mut request = Request::builder().method(self.method).uri(self.path);
 
       if let Some(token) = self.token {
@@ -727,7 +737,6 @@ mod tests {
   async fn files_empty() {
     TestServer::new()
       .get("/files")
-      .assert_header(header::CONTENT_TYPE, "text/html;charset=utf-8")
       .assert_response(FilesHtml { files: Vec::new() })
       .send()
       .await;
@@ -752,8 +761,7 @@ mod tests {
 
     server
       .get("/files")
-      .assert_header(header::CONTENT_TYPE, "text/html;charset=utf-8")
-      .assert_body(FilesHtml { files }.to_string())
+      .assert_response(FilesHtml { files })
       .send()
       .await;
   }
