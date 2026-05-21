@@ -9,6 +9,16 @@ pub(crate) enum ServerError {
   AuthorizationMalformed,
   #[snafu(display("missing authorization header"))]
   AuthorizationMissing,
+  #[snafu(transparent)]
+  Database { source: redb::DatabaseError },
+  #[snafu(transparent)]
+  DatabaseCommit { source: redb::CommitError },
+  #[snafu(transparent)]
+  DatabaseStorage { source: redb::StorageError },
+  #[snafu(transparent)]
+  DatabaseTable { source: redb::TableError },
+  #[snafu(transparent)]
+  DatabaseTransaction { source: redb::TransactionError },
   #[snafu(display("failed to decode directory {hash}"))]
   DirectoryDecode { hash: Hash, source: DecodeError },
   #[snafu(display("directory {directory} references missing file {file}"))]
@@ -24,16 +34,6 @@ pub(crate) enum ServerError {
   },
   #[snafu(display("page not found"))]
   PageNotFound,
-  #[snafu(transparent)]
-  Database { source: redb::DatabaseError },
-  #[snafu(transparent)]
-  DatabaseCommit { source: redb::CommitError },
-  #[snafu(transparent)]
-  DatabaseStorage { source: redb::StorageError },
-  #[snafu(transparent)]
-  DatabaseTable { source: redb::TableError },
-  #[snafu(transparent)]
-  DatabaseTransaction { source: redb::TransactionError },
   #[snafu(display("error reading body of upload with hash {hash}"))]
   UploadBodyRead { hash: Hash, source: axum::Error },
   #[snafu(display("uploads forbidden"))]

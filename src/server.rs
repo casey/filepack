@@ -3,10 +3,9 @@ use {
   redb::{Database, ReadableDatabase, ReadableTable, TableDefinition},
 };
 
-const SCHEMA_VERSION: u64 = 0;
-
 const DIRECTORIES: TableDefinition<Hash, ()> = TableDefinition::new("directories");
 const METADATA: TableDefinition<DatabaseMetadata, u64> = TableDefinition::new("metadata");
+const SCHEMA_VERSION: u64 = 0;
 
 #[derive(Copy, Clone, Debug, FromRepr)]
 #[repr(u64)]

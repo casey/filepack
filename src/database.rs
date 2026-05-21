@@ -11,15 +11,22 @@ impl Key for DatabaseMetadata {
 }
 
 impl Value for DatabaseMetadata {
+  type AsBytes<'a>
+    = <u64 as Value>::AsBytes<'a>
+  where
+    Self: 'a;
+
   type SelfType<'a>
     = Self
   where
     Self: 'a;
 
-  type AsBytes<'a>
-    = <u64 as Value>::AsBytes<'a>
+  fn as_bytes<'a, 'b: 'a>(value: &'a Self::SelfType<'b>) -> <u64 as Value>::AsBytes<'a>
   where
-    Self: 'a;
+    Self: 'b,
+  {
+    u64::as_bytes(&(*value as u64))
+  }
 
   fn fixed_width() -> Option<usize> {
     u64::fixed_width()
@@ -30,13 +37,6 @@ impl Value for DatabaseMetadata {
     Self: 'a,
   {
     Self::from_repr(u64::from_bytes(data)).unwrap()
-  }
-
-  fn as_bytes<'a, 'b: 'a>(value: &'a Self::SelfType<'b>) -> <u64 as Value>::AsBytes<'a>
-  where
-    Self: 'b,
-  {
-    u64::as_bytes(&(*value as u64))
   }
 
   fn type_name() -> TypeName {
@@ -51,32 +51,32 @@ impl Key for Hash {
 }
 
 impl Value for Hash {
-  type SelfType<'a>
-    = Hash
-  where
-    Self: 'a;
-
   type AsBytes<'a>
     = &'a [u8; Self::LEN]
   where
     Self: 'a;
 
-  fn fixed_width() -> Option<usize> {
-    Some(Self::LEN)
-  }
-
-  fn from_bytes<'a>(data: &'a [u8]) -> Self
+  type SelfType<'a>
+    = Hash
   where
-    Self: 'a,
-  {
-    <[u8; Self::LEN]>::try_from(data).unwrap().into()
-  }
+    Self: 'a;
 
-  fn as_bytes<'a, 'b: 'a>(value: &'a Self::SelfType<'b>) -> &'a [u8; Self::LEN]
+  fn as_bytes<'a, 'b: 'a>(value: &'a Self::SelfType<'b>) -> Self::AsBytes<'a>
   where
     Self: 'b,
   {
     value.as_bytes()
+  }
+
+  fn fixed_width() -> Option<usize> {
+    Some(Self::LEN)
+  }
+
+  fn from_bytes<'a>(data: &'a [u8]) -> Self::SelfType<'a>
+  where
+    Self: 'a,
+  {
+    <[u8; Self::LEN]>::try_from(data).unwrap().into()
   }
 
   fn type_name() -> TypeName {
