@@ -46,7 +46,6 @@ use {
     display_secret::DisplaySecret,
     entries::Entries,
     entry::Entry,
-    entry_type::EntryType,
     envelope::Envelope,
     file::File,
     format::Format,
@@ -149,10 +148,11 @@ use {
 };
 
 pub use self::{
-  directory_tree::DirectoryTree, encode::Encode, encoder::Encoder, error::Error,
-  fingerprint::Fingerprint, hash::Hash, language_error::LanguageError, major_type::MajorType,
-  manifest::Manifest, map_encoder::MapEncoder, private_key::PrivateKey, public_key::PublicKey,
-  relative_path::RelativePath, signature::Signature, statement::Statement, tag_error::TagError,
+  directory_tree::DirectoryTree, encode::Encode, encoder::Encoder, entry_type::EntryType,
+  error::Error, fingerprint::Fingerprint, hash::Hash, language_error::LanguageError,
+  major_type::MajorType, manifest::Manifest, map_encoder::MapEncoder, private_key::PrivateKey,
+  public_key::PublicKey, relative_path::RelativePath, signature::Signature, statement::Statement,
+  tag_error::TagError,
 };
 
 #[cfg(test)]

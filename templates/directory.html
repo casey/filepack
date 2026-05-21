@@ -12,7 +12,7 @@
 %% for (name, entry) in &self.directory.entries {
 %% match entry.ty {
 %%   EntryType::Directory => {
-      <li><a href=/directory/{{ entry.hash }}>{{ name }}</a></li>
+      <li><a href=/directory/{{ entry.hash }}>{{ name }}/</a></li>
 %%   }
 %%   EntryType::File => {
       <li><a href=/file/{{ entry.hash }}>{{ name }}</a></li>
