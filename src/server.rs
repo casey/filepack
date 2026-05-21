@@ -127,9 +127,8 @@ impl Server {
 
     if tx.list_tables()?.count() == 0 && tx.list_multimap_tables()?.count() == 0 {
       {
-        let mut metadata = tx.open_table(METADATA)?;
-
-        metadata.insert(DatabaseMetadata::Schema, &SCHEMA_VERSION)?;
+        tx.open_table(METADATA)?
+          .insert(DatabaseMetadata::Schema, &SCHEMA_VERSION)?;
 
         tx.open_table(DIRECTORIES)?;
       }
