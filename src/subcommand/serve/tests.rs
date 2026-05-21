@@ -44,6 +44,10 @@ impl TestRequestBuilder {
     self
   }
 
+  fn assert_static(self, path: &str) -> Self {
+    self.assert_response(StaticAsset::get(path).unwrap())
+  }
+
   fn body(mut self, body: &str) -> Self {
     self.body = Some(body.into());
     self
@@ -184,13 +188,11 @@ fn admin_key_requires_restrict_upload() {
 
 #[tokio::test]
 async fn closed_server_forbids_uploads() {
-  let hash = Hash::bytes(b"bar");
-
   TestServer::with_auth(Some(Arc::new(AuthConfig {
     admin: None,
     audiences: Vec::new(),
   })))
-  .put(format!("/file/{hash}"))
+  .put(format!("/file/{}", Hash::bytes(b"bar")))
   .body("bar")
   .status(StatusCode::FORBIDDEN)
   .assert_body("uploads forbidden")
@@ -251,9 +253,8 @@ async fn download_response() {
 async fn fallback() {
   TestServer::new()
     .get("/nonexistent")
+    .assert_static("404.html")
     .status(StatusCode::NOT_FOUND)
-    .assert_header(header::CONTENT_TYPE, "text/html")
-    .assert_body(include_str!("../../../static/404.html"))
     .send()
     .await;
 }
@@ -262,8 +263,7 @@ async fn fallback() {
 async fn favicon() {
   TestServer::new()
     .get("/favicon.ico")
-    .assert_header(header::CONTENT_TYPE, "image/png")
-    .assert_body(include_bytes!("../../../static/favicon.png"))
+    .assert_static("favicon.png")
     .send()
     .await;
 }
@@ -305,8 +305,7 @@ async fn files_lists_sorted_hash_named_entries() {
 async fn home() {
   TestServer::new()
     .get("/")
-    .assert_header(header::CONTENT_TYPE, "text/html")
-    .assert_body(include_bytes!("../../../static/index.html"))
+    .assert_static("index.html")
     .send()
     .await;
 }
@@ -315,8 +314,7 @@ async fn home() {
 async fn install_script() {
   TestServer::new()
     .get("/install.sh")
-    .assert_header(header::CONTENT_TYPE, "application/x-sh")
-    .assert_body(include_bytes!("../../../static/install.sh"))
+    .assert_static("install.sh")
     .send()
     .await;
 }
@@ -472,8 +470,7 @@ async fn restricted_upload_rejects_others() {
 async fn static_files() {
   TestServer::new()
     .get("/static/index.css")
-    .assert_header(header::CONTENT_TYPE, "text/css")
-    .assert_body(include_bytes!("../../../static/index.css"))
+    .assert_static("index.css")
     .send()
     .await;
 }
