@@ -50,16 +50,13 @@ impl Server {
   pub(crate) async fn open_file(&self, hash: Hash) -> ServerResult<(tokio::fs::File, u64)> {
     let path = self.file_path(hash);
 
-    let file = match tokio::fs::File::open(&path).await {
-      Err(err) => {
-        return if err.kind() == io::ErrorKind::NotFound {
-          Err(server_error::FileNotFound { hash }.into_error(err))
-        } else {
-          Err(server_error::FilesystemIo { path }.into_error(err))
-        };
+    let file = tokio::fs::File::open(&path).await.map_err(|err| {
+      if err.kind() == io::ErrorKind::NotFound {
+        server_error::FileNotFound { hash }.into_error(err)
+      } else {
+        server_error::FilesystemIo { path: &path }.into_error(err)
       }
-      Ok(file) => file,
-    };
+    })?;
 
     let len = file
       .metadata()
@@ -73,16 +70,13 @@ impl Server {
   pub(crate) async fn verify_directory(&self, hash: Hash) -> ServerResult {
     let path = self.file_path(hash);
 
-    let cbor = match tokio::fs::read(&path).await {
-      Err(err) => {
-        return if err.kind() == io::ErrorKind::NotFound {
-          Err(server_error::FileNotFound { hash }.into_error(err))
-        } else {
-          Err(server_error::FilesystemIo { path }.into_error(err))
-        };
+    let cbor = tokio::fs::read(&path).await.map_err(|err| {
+      if err.kind() == io::ErrorKind::NotFound {
+        server_error::FileNotFound { hash }.into_error(err)
+      } else {
+        server_error::FilesystemIo { path }.into_error(err)
       }
-      Ok(cbor) => cbor,
-    };
+    })?;
 
     let directory =
       Directory::decode_from_slice(&cbor).context(server_error::DirectoryDecode { hash })?;
