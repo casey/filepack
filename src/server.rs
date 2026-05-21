@@ -20,6 +20,20 @@ pub(crate) struct Server {
 }
 
 impl Server {
+  pub(crate) async fn directory(&self, hash: Hash) -> ServerResult<Directory> {
+    ensure!(
+      self
+        .database
+        .begin_read()?
+        .open_table(DIRECTORIES)?
+        .get(&hash)?
+        .is_some(),
+      server_error::DirectoryNotFound { hash },
+    );
+
+    self.read_directory(hash).await
+  }
+
   fn file_path(&self, hash: Hash) -> Utf8PathBuf {
     self.files.join(hash.to_string())
   }
@@ -78,20 +92,6 @@ impl Server {
     })?;
 
     Directory::decode_from_slice(&cbor).context(server_error::DirectoryDecode { hash })
-  }
-
-  pub(crate) async fn directory(&self, hash: Hash) -> ServerResult<Directory> {
-    ensure!(
-      self
-        .database
-        .begin_read()?
-        .open_table(DIRECTORIES)?
-        .get(&hash)?
-        .is_some(),
-      server_error::DirectoryNotFound { hash },
-    );
-
-    self.read_directory(hash).await
   }
 
   pub(crate) async fn verify_directory(&self, hash: Hash) -> ServerResult {

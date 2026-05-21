@@ -134,6 +134,16 @@ impl Serve {
     Ok(acceptor)
   }
 
+  async fn directory(
+    server: ServerExtension,
+    Path(hash): Path<Hash>,
+  ) -> ServerResult<DirectoryHtml> {
+    Ok(DirectoryHtml {
+      directory: server.directory(hash).await?,
+      hash,
+    })
+  }
+
   fn domains(&self) -> Result<Vec<String>> {
     if self.domains.is_empty() {
       Ok(vec![System::host_name().context(error::AcmeHostname)?])
@@ -227,16 +237,6 @@ impl Serve {
         header::X_CONTENT_TYPE_OPTIONS,
         HeaderValue::from_static("nosniff"),
       ))
-  }
-
-  async fn directory(
-    server: ServerExtension,
-    Path(hash): Path<Hash>,
-  ) -> ServerResult<DirectoryHtml> {
-    Ok(DirectoryHtml {
-      directory: server.directory(hash).await?,
-      hash,
-    })
   }
 
   pub(crate) fn router(server: Arc<Server>, auth_config: Option<Arc<AuthConfig>>) -> Router {
