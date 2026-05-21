@@ -81,20 +81,17 @@ impl Server {
       Directory::decode_from_slice(&cbor).context(server_error::DirectoryDecode { hash })?;
 
     for entry in directory.entries.values() {
-      match entry.ty {
-        EntryType::File => {
-          let path = self.file_path(entry.hash);
-          ensure!(
-            tokio::fs::try_exists(&path)
-              .await
-              .context(server_error::FilesystemIo { path })?,
-            server_error::DirectoryFileMissing {
-              directory: hash,
-              file: entry.hash,
-            },
-          );
-        }
-        EntryType::Directory => {}
+      if entry.ty == EntryType::File {
+        let path = self.file_path(entry.hash);
+        ensure!(
+          tokio::fs::try_exists(&path)
+            .await
+            .context(server_error::FilesystemIo { path })?,
+          server_error::DirectoryFileMissing {
+            directory: hash,
+            file: entry.hash,
+          },
+        );
       }
     }
 
@@ -104,17 +101,14 @@ impl Server {
       let mut directories = tx.open_table(DIRECTORIES)?;
 
       for entry in directory.entries.values() {
-        match entry.ty {
-          EntryType::File => {}
-          EntryType::Directory => {
-            ensure!(
-              directories.get(&entry.hash)?.is_some(),
-              server_error::DirectoryUnverified {
-                directory: hash,
-                subdirectory: entry.hash,
-              },
-            );
-          }
+        if entry.ty == EntryType::Directory {
+          ensure!(
+            directories.get(&entry.hash)?.is_some(),
+            server_error::DirectoryUnverified {
+              directory: hash,
+              subdirectory: entry.hash,
+            },
+          );
         }
       }
 
