@@ -8,20 +8,18 @@
   </head>
   <body>
     <h1>Directory {{ self.hash }}</h1>
-    <dl>
+    <ul>
 %% for (name, entry) in &self.directory.entries {
-      <dt>{{ name }}</dt>
-      <dd>
 %% match entry.ty {
 %%   EntryType::Directory => {
-        <a href=/directory/{{ entry.hash }}>{{ entry.hash }}</a>
+      <li><a href=/directory/{{ entry.hash }}>{{ name }}</a></li>
 %%   }
 %%   EntryType::File => {
-        <a href=/file/{{ entry.hash }}>{{ entry.hash }}</a>
+      <li><a href=/file/{{ entry.hash }}>{{ name }}</a></li>
 %%   }
 %% }
       </dd>
 %% }
-    </dl>
+    </ul>
   </body>
 </html>
