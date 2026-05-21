@@ -1,6 +1,6 @@
 use {
   super::*,
-  redb::{Database, ReadableDatabase, ReadableTable, TableDefinition},
+  redb::{Database, ReadableTable, TableDefinition},
 };
 
 const DIRECTORIES: TableDefinition<Hash, ()> = TableDefinition::new("directories");
@@ -80,25 +80,32 @@ impl Server {
     let directory =
       Directory::decode_from_slice(&cbor).context(server_error::DirectoryDecode { hash })?;
 
-    {
-      let tx = self.database.begin_read()?;
+    for entry in directory.entries.values() {
+      match entry.ty {
+        EntryType::File => {
+          let path = self.file_path(entry.hash);
+          ensure!(
+            tokio::fs::try_exists(&path)
+              .await
+              .context(server_error::FilesystemIo { path })?,
+            server_error::DirectoryFileMissing {
+              directory: hash,
+              file: entry.hash,
+            },
+          );
+        }
+        EntryType::Directory => {}
+      }
+    }
 
-      let directories = tx.open_table(DIRECTORIES)?;
+    let tx = self.database.begin_write()?;
+
+    {
+      let mut directories = tx.open_table(DIRECTORIES)?;
 
       for entry in directory.entries.values() {
         match entry.ty {
-          EntryType::File => {
-            let path = self.file_path(entry.hash);
-            ensure!(
-              tokio::fs::try_exists(&path)
-                .await
-                .context(server_error::FilesystemIo { path })?,
-              server_error::DirectoryFileMissing {
-                directory: hash,
-                file: entry.hash,
-              },
-            );
-          }
+          EntryType::File => {}
           EntryType::Directory => {
             ensure!(
               directories.get(&entry.hash)?.is_some(),
@@ -110,12 +117,6 @@ impl Server {
           }
         }
       }
-    }
-
-    let tx = self.database.begin_write()?;
-
-    {
-      let mut directories = tx.open_table(DIRECTORIES)?;
 
       directories.insert(&hash, &())?;
     }
