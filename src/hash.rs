@@ -126,8 +126,7 @@ impl redb::Value for Hash {
   where
     Self: 'a,
   {
-    let array: [u8; Self::LEN] = data.try_into().unwrap();
-    array.into()
+    <[u8; Self::LEN]>::try_from(data).unwrap().into()
   }
 
   fn as_bytes<'a, 'b: 'a>(value: &'a Self::SelfType<'b>) -> &'a [u8; Self::LEN]
