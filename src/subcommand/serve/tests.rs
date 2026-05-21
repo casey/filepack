@@ -150,6 +150,10 @@ impl TestServer {
     Self::with_auth(None)
   }
 
+  fn post(&self, path: impl Into<String>) -> TestRequestBuilder {
+    TestRequestBuilder::new("POST", path, self.router.clone())
+  }
+
   fn put(&self, path: impl Into<String>) -> TestRequestBuilder {
     TestRequestBuilder::new("PUT", path, self.router.clone())
   }
@@ -206,6 +210,26 @@ fn default_serve_matches_parsed() {
     Serve::default(),
     Serve::try_parse_from(["filepack"]).unwrap(),
   );
+}
+
+fn directory_cbor(entries: &[(&str, EntryType, Hash, u64)]) -> Vec<u8> {
+  Directory {
+    version: Version::Zero,
+    entries: entries
+      .iter()
+      .map(|(name, ty, hash, size)| {
+        (
+          name.parse().unwrap(),
+          Entry {
+            ty: *ty,
+            hash: *hash,
+            size: *size,
+          },
+        )
+      })
+      .collect(),
+  }
+  .encode_to_vec()
 }
 
 #[test]
@@ -521,4 +545,127 @@ async fn upload_with_wrong_hash_fails() {
     .await;
 
   server.assert_incoming_empty();
+}
+
+#[tokio::test]
+async fn verify_directory_decode_error() {
+  let server = TestServer::new();
+
+  let junk = b"junk";
+  let hash = Hash::bytes(junk);
+  server.write_file(junk);
+
+  server
+    .post(format!("/directory/{hash}"))
+    .status(StatusCode::BAD_REQUEST)
+    .assert_body(format!("failed to decode directory {hash}"))
+    .send()
+    .await;
+}
+
+#[tokio::test]
+async fn verify_directory_file_not_found() {
+  let server = TestServer::new();
+
+  let hash = Hash::bytes(b"foo");
+
+  server
+    .post(format!("/directory/{hash}"))
+    .status(StatusCode::NOT_FOUND)
+    .assert_body(format!("file with hash {hash} not found"))
+    .send()
+    .await;
+}
+
+#[tokio::test]
+async fn verify_directory_missing_file() {
+  let server = TestServer::new();
+
+  let missing = Hash::bytes(b"foo");
+  let cbor = directory_cbor(&[("foo", EntryType::File, missing, 3)]);
+  let hash = Hash::bytes(&cbor);
+  server.write_file(&cbor);
+
+  server
+    .post(format!("/directory/{hash}"))
+    .status(StatusCode::BAD_REQUEST)
+    .assert_body(format!(
+      "directory {hash} references missing file {missing}"
+    ))
+    .send()
+    .await;
+}
+
+#[tokio::test]
+async fn verify_directory_rejects_missing_auth_header() {
+  let admin = PrivateKey::generate();
+  let server = TestServer::with_auth(Some(Arc::new(AuthConfig {
+    admin: Some(admin.public_key()),
+    audiences: vec!["filepack.example".into()],
+  })));
+
+  let hash = Hash::bytes(b"foo");
+
+  server
+    .post(format!("/directory/{hash}"))
+    .status(StatusCode::UNAUTHORIZED)
+    .assert_body("missing authorization header")
+    .send()
+    .await;
+}
+
+#[tokio::test]
+async fn verify_directory_succeeds() {
+  let server = TestServer::new();
+
+  let file = b"foo";
+  let file_hash = Hash::bytes(file);
+  server.write_file(file);
+
+  let child_cbor = directory_cbor(&[("foo", EntryType::File, file_hash, file.len() as u64)]);
+  let child_hash = Hash::bytes(&child_cbor);
+  server.write_file(&child_cbor);
+
+  server.post(format!("/directory/{child_hash}")).send().await;
+
+  let parent_cbor = directory_cbor(&[(
+    "child",
+    EntryType::Directory,
+    child_hash,
+    child_cbor.len() as u64,
+  )]);
+  let parent_hash = Hash::bytes(&parent_cbor);
+  server.write_file(&parent_cbor);
+
+  server
+    .post(format!("/directory/{parent_hash}"))
+    .send()
+    .await;
+}
+
+#[tokio::test]
+async fn verify_directory_unverified_subdirectory() {
+  let server = TestServer::new();
+
+  let child_cbor = directory_cbor(&[]);
+  let child_hash = Hash::bytes(&child_cbor);
+  server.write_file(&child_cbor);
+
+  let parent_cbor = directory_cbor(&[(
+    "child",
+    EntryType::Directory,
+    child_hash,
+    child_cbor.len() as u64,
+  )]);
+  let parent_hash = Hash::bytes(&parent_cbor);
+  server.write_file(&parent_cbor);
+
+  server
+    .post(format!("/directory/{parent_hash}"))
+    .status(StatusCode::BAD_REQUEST)
+    .assert_body(format!(
+      "directory {parent_hash} references unverified subdirectory {child_hash}"
+    ))
+    .send()
+    .await;
 }

@@ -9,6 +9,14 @@ pub(crate) enum ServerError {
   AuthorizationMalformed,
   #[snafu(display("missing authorization header"))]
   AuthorizationMissing,
+  #[snafu(display("database error"))]
+  Database { source: redb::Error },
+  #[snafu(display("failed to decode directory {hash}"))]
+  DirectoryDecode { hash: Hash, source: DecodeError },
+  #[snafu(display("directory {directory} references missing file {file}"))]
+  DirectoryFileMissing { directory: Hash, file: Hash },
+  #[snafu(display("directory {directory} references unverified subdirectory {subdirectory}"))]
+  DirectorySubdirectoryUnverified { directory: Hash, subdirectory: Hash },
   #[snafu(display("file with hash {hash} not found"))]
   FileNotFound { hash: Hash, source: io::Error },
   #[snafu(display("I/O error at {path}"))]
@@ -32,11 +40,15 @@ impl ServerError {
       Self::AuthorizationInvalid { .. }
       | Self::AuthorizationMalformed
       | Self::AuthorizationMissing
+      | Self::DirectoryDecode { .. }
+      | Self::DirectoryFileMissing { .. }
+      | Self::DirectorySubdirectoryUnverified { .. }
       | Self::FileNotFound { .. }
       | Self::PageNotFound
       | Self::UploadBodyRead { .. }
       | Self::UploadForbidden
       | Self::UploadHashMismatch { .. } => self.to_string(),
+      Self::Database { .. } => "database error".into(),
       Self::FilesystemIo { .. } => "filesystem I/O error".into(),
     }
   }
@@ -46,10 +58,14 @@ impl ServerError {
       Self::AuthorizationInvalid { .. }
       | Self::AuthorizationMalformed
       | Self::AuthorizationMissing => StatusCode::UNAUTHORIZED,
+      Self::Database { .. } | Self::FilesystemIo { .. } => StatusCode::INTERNAL_SERVER_ERROR,
+      Self::DirectoryDecode { .. }
+      | Self::DirectoryFileMissing { .. }
+      | Self::DirectorySubdirectoryUnverified { .. }
+      | Self::UploadBodyRead { .. }
+      | Self::UploadHashMismatch { .. } => StatusCode::BAD_REQUEST,
       Self::FileNotFound { .. } | Self::PageNotFound => StatusCode::NOT_FOUND,
-      Self::FilesystemIo { .. } => StatusCode::INTERNAL_SERVER_ERROR,
       Self::UploadForbidden => StatusCode::FORBIDDEN,
-      Self::UploadBodyRead { .. } | Self::UploadHashMismatch { .. } => StatusCode::BAD_REQUEST,
     }
   }
 }

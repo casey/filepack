@@ -5,7 +5,7 @@ use {
     extract::{Extension, Path},
     http::{HeaderValue, Uri, header},
     response::Redirect,
-    routing::{get, put},
+    routing::{get, post, put},
   },
   axum_server::Handle,
   rustls_acme::{
@@ -232,6 +232,7 @@ impl Serve {
   pub(crate) fn router(server: Arc<Server>, auth_config: Option<Arc<AuthConfig>>) -> Router {
     let router = Router::new()
       .route("/", get(Self::home))
+      .route("/directory/{hash}", post(Self::verify_directory))
       .route("/favicon.ico", get(Self::favicon))
       .route("/file/{hash}", get(Self::download))
       .route("/file/{hash}", put(Self::upload))
@@ -436,6 +437,14 @@ impl Serve {
     body: Body,
   ) -> ServerResult {
     server.write_file(*hash, body).await
+  }
+
+  async fn verify_directory(
+    _: Authenticated,
+    server: ServerExtension,
+    Path(hash): Path<Hash>,
+  ) -> ServerResult {
+    server.verify_directory(hash).await
   }
 }
 

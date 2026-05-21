@@ -1,10 +1,11 @@
 use {
   super::*,
-  redb::{Database, ReadableTable, TableDefinition},
+  redb::{Database, ReadableDatabase, ReadableTable, TableDefinition},
 };
 
 const SCHEMA_VERSION: u64 = 0;
 
+const DIRECTORIES: TableDefinition<Hash, ()> = TableDefinition::new("directories");
 const METADATA: TableDefinition<u64, u64> = TableDefinition::new("metadata");
 const PACKAGES: TableDefinition<Hash, ()> = TableDefinition::new("packages");
 
@@ -75,6 +76,93 @@ impl Server {
     Ok((file, len))
   }
 
+  pub(crate) async fn verify_directory(&self, hash: Hash) -> ServerResult {
+    let path = self.file_path(hash);
+
+    let cbor = match tokio::fs::read(&path).await {
+      Err(err) => {
+        return if err.kind() == io::ErrorKind::NotFound {
+          Err(server_error::FileNotFound { hash }.into_error(err))
+        } else {
+          Err(server_error::FilesystemIo { path }.into_error(err))
+        };
+      }
+      Ok(cbor) => cbor,
+    };
+
+    let directory =
+      Directory::decode_from_slice(&cbor).context(server_error::DirectoryDecode { hash })?;
+
+    {
+      let tx = self
+        .database
+        .begin_read()
+        .map_err(redb::Error::from)
+        .context(server_error::Database)?;
+
+      let directories = tx
+        .open_table(DIRECTORIES)
+        .map_err(redb::Error::from)
+        .context(server_error::Database)?;
+
+      for entry in directory.entries.values() {
+        match entry.ty {
+          EntryType::File => {
+            let file_path = self.file_path(entry.hash);
+            let exists = tokio::fs::try_exists(&file_path)
+              .await
+              .context(server_error::FilesystemIo { path: &file_path })?;
+            ensure!(
+              exists,
+              server_error::DirectoryFileMissing {
+                directory: hash,
+                file: entry.hash,
+              },
+            );
+          }
+          EntryType::Directory => {
+            let verified = directories
+              .get(&entry.hash)
+              .map_err(redb::Error::from)
+              .context(server_error::Database)?
+              .is_some();
+            ensure!(
+              verified,
+              server_error::DirectorySubdirectoryUnverified {
+                directory: hash,
+                subdirectory: entry.hash,
+              },
+            );
+          }
+        }
+      }
+    }
+
+    let tx = self
+      .database
+      .begin_write()
+      .map_err(redb::Error::from)
+      .context(server_error::Database)?;
+
+    {
+      let mut directories = tx
+        .open_table(DIRECTORIES)
+        .map_err(redb::Error::from)
+        .context(server_error::Database)?;
+
+      directories
+        .insert(&hash, &())
+        .map_err(redb::Error::from)
+        .context(server_error::Database)?;
+    }
+
+    tx.commit()
+      .map_err(redb::Error::from)
+      .context(server_error::Database)?;
+
+    Ok(())
+  }
+
   pub(crate) fn with_data_dir(data_dir: &Utf8Path) -> Result<Self> {
     let database = Database::create(data_dir.join("database.redb")).unwrap();
 
@@ -87,6 +175,8 @@ impl Server {
         metadata
           .insert(&MetadataKey::Schema.key(), &SCHEMA_VERSION)
           .unwrap();
+
+        tx.open_table(DIRECTORIES).unwrap();
 
         tx.open_table(PACKAGES).unwrap();
       }

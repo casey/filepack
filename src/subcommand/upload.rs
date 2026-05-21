@@ -13,6 +13,17 @@ pub(crate) struct Upload {
 }
 
 impl Upload {
+  fn post(&self, kind: &str, hash: Hash, key: Option<&PrivateKey>) -> Result {
+    let url = self.server.join(&format!("{kind}/{hash}")).unwrap();
+    let mut request = Client::new().post(url);
+    if let Some(key) = key {
+      let host = self.server.host_str().unwrap().to_owned();
+      request = request.bearer_auth(Token::encode(key, &host)?);
+    }
+    request.send().check_status()?;
+    Ok(())
+  }
+
   pub(crate) fn run(self, options: Options) -> Result {
     let key = if let Some(name) = &self.auth {
       let loopback = match self.server.host().unwrap() {
@@ -55,6 +66,40 @@ impl Upload {
     Ok(())
   }
 
+  fn upload_directory(
+    &self,
+    archive_path: &Utf8Path,
+    archive: &Archive,
+    hash: Hash,
+    path: &Utf8Path,
+    options: &Options,
+    key: Option<&PrivateKey>,
+  ) -> Result {
+    let context = error::UnarchiveManifest { path: archive_path };
+
+    let cbor = archive.file(hash).context(context)?;
+
+    let directory = Directory::decode_from_slice(cbor)
+      .context(archive_error::DirectoryDecode)
+      .context(context)?;
+
+    self.upload_body(hash, cbor.to_vec().into(), key)?;
+
+    for (component, entry) in &directory.entries {
+      let child_path = path.join(component);
+      match entry.ty {
+        EntryType::Directory => {
+          self.upload_directory(archive_path, archive, entry.hash, &child_path, options, key)?;
+        }
+        EntryType::File => self.upload_package_file(&child_path, entry, options, key)?,
+      }
+    }
+
+    self.post("directory", hash, key)?;
+
+    Ok(())
+  }
+
   fn upload_file(&self, path: &Utf8Path, options: &Options, key: Option<&PrivateKey>) -> Result {
     let hash = options
       .hash_file(path)
@@ -76,32 +121,18 @@ impl Upload {
   ) -> Result {
     let archive = Archive::load_with_path(archive_path, archive_path)?;
 
-    let context = error::UnarchiveManifest { path: archive_path };
+    let fingerprint = archive
+      .fingerprint()
+      .context(error::UnarchiveManifest { path: archive_path })?;
 
-    let fingerprint = archive.fingerprint().context(context)?;
-
-    let mut directories = vec![(
+    self.upload_directory(
+      archive_path,
+      &archive,
       fingerprint.into(),
-      archive_path.parent().unwrap().to_owned(),
-    )];
-
-    while let Some((hash, path)) = directories.pop() {
-      let cbor = archive.file(hash).context(context)?;
-
-      let directory = Directory::decode_from_slice(cbor)
-        .context(archive_error::DirectoryDecode)
-        .context(context)?;
-
-      self.upload_body(hash, cbor.to_vec().into(), key)?;
-
-      for (component, entry) in directory.entries {
-        let path = path.join(component);
-        match entry.ty {
-          EntryType::Directory => directories.push((entry.hash, path)),
-          EntryType::File => self.upload_package_file(&path, &entry, options, key)?,
-        }
-      }
-    }
+      archive_path.parent().unwrap(),
+      options,
+      key,
+    )?;
 
     Ok(())
   }
