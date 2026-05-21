@@ -21,7 +21,7 @@ impl Value for DatabaseMetadata {
   where
     Self: 'a;
 
-  fn as_bytes<'a, 'b: 'a>(value: &'a Self::SelfType<'b>) -> <u64 as Value>::AsBytes<'a>
+  fn as_bytes<'a, 'b: 'a>(value: &'a Self::SelfType<'b>) -> Self::AsBytes<'a>
   where
     Self: 'b,
   {
