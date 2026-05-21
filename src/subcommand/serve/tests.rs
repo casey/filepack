@@ -614,6 +614,28 @@ async fn verify_directory_file_not_found() {
 }
 
 #[tokio::test]
+async fn verify_directory_idempotent() {
+  let server = TestServer::new();
+
+  let dir = directory(&[]);
+  let cbor = dir.encode_to_vec();
+  let hash = Hash::bytes(&cbor);
+  server.write_file(&cbor);
+
+  server.post(format!("/directory/{hash}")).send().await;
+  server.post(format!("/directory/{hash}")).send().await;
+
+  server
+    .get(format!("/directory/{hash}"))
+    .assert_response(DirectoryHtml {
+      directory: dir,
+      hash,
+    })
+    .send()
+    .await;
+}
+
+#[tokio::test]
 async fn verify_directory_missing_file() {
   let server = TestServer::new();
 

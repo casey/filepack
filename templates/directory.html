@@ -7,7 +7,7 @@
     <meta name=description content='Filepack package server'>
   </head>
   <body>
-    <h1>Files</h1>
+    <h1>Directory {{ self.hash }}</h1>
     <dl>
 %% for (name, entry) in &self.directory.entries {
       <dt>{{ name }}</dt>
