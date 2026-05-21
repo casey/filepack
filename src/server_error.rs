@@ -14,7 +14,7 @@ pub(crate) enum ServerError {
   #[snafu(display("directory {directory} references missing file {file}"))]
   DirectoryFileMissing { directory: Hash, file: Hash },
   #[snafu(display("directory {directory} references unverified subdirectory {subdirectory}"))]
-  DirectorySubdirectoryUnverified { directory: Hash, subdirectory: Hash },
+  DirectoryUnverified { directory: Hash, subdirectory: Hash },
   #[snafu(display("file with hash {hash} not found"))]
   FileNotFound { hash: Hash, source: io::Error },
   #[snafu(display("I/O error at {path}"))]
@@ -52,7 +52,7 @@ impl ServerError {
       | Self::AuthorizationMissing
       | Self::DirectoryDecode { .. }
       | Self::DirectoryFileMissing { .. }
-      | Self::DirectorySubdirectoryUnverified { .. }
+      | Self::DirectoryUnverified { .. }
       | Self::FileNotFound { .. }
       | Self::PageNotFound
       | Self::UploadBodyRead { .. }
@@ -82,7 +82,7 @@ impl ServerError {
       | Self::RedbTransaction { .. } => StatusCode::INTERNAL_SERVER_ERROR,
       Self::DirectoryDecode { .. }
       | Self::DirectoryFileMissing { .. }
-      | Self::DirectorySubdirectoryUnverified { .. }
+      | Self::DirectoryUnverified { .. }
       | Self::UploadBodyRead { .. }
       | Self::UploadHashMismatch { .. } => StatusCode::BAD_REQUEST,
       Self::FileNotFound { .. } | Self::PageNotFound => StatusCode::NOT_FOUND,

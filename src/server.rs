@@ -116,7 +116,7 @@ impl Server {
             let verified = directories.get(&entry.hash)?.is_some();
             ensure!(
               verified,
-              server_error::DirectorySubdirectoryUnverified {
+              server_error::DirectoryUnverified {
                 directory: hash,
                 subdirectory: entry.hash,
               },
