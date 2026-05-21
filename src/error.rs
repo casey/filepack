@@ -319,17 +319,15 @@ pub enum Error {
     source: io::Error,
   },
   #[snafu(transparent)]
-  Redb { source: redb::Error },
+  Database { source: redb::DatabaseError },
   #[snafu(transparent)]
-  RedbCommit { source: redb::CommitError },
+  DatabaseCommit { source: redb::CommitError },
   #[snafu(transparent)]
-  RedbDatabase { source: redb::DatabaseError },
+  DatabaseStorage { source: redb::StorageError },
   #[snafu(transparent)]
-  RedbStorage { source: redb::StorageError },
+  DatabaseTable { source: redb::TableError },
   #[snafu(transparent)]
-  RedbTable { source: redb::TableError },
-  #[snafu(transparent)]
-  RedbTransaction { source: redb::TransactionError },
+  DatabaseTransaction { source: redb::TransactionError },
   #[snafu(display("request failed"))]
   Request {
     backtrace: Option<Backtrace>,
