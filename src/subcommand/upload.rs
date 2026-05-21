@@ -1,4 +1,8 @@
-use {super::*, reqwest::blocking::Body, url::Host};
+use {
+  super::*,
+  reqwest::blocking::{Body, RequestBuilder},
+  url::Host,
+};
 
 #[derive(Parser)]
 pub(crate) struct Upload {
@@ -13,15 +17,17 @@ pub(crate) struct Upload {
 }
 
 impl Upload {
-  fn post(&self, kind: &str, hash: Hash, key: Option<&PrivateKey>) -> Result {
-    let url = self.server.join(&format!("{kind}/{hash}")).unwrap();
-    let mut request = Client::new().post(url);
+  fn request_with_token(
+    &self,
+    mut builder: RequestBuilder,
+    key: Option<&PrivateKey>,
+  ) -> Result<RequestBuilder> {
     if let Some(key) = key {
       let host = self.server.host_str().unwrap().to_owned();
-      request = request.bearer_auth(Token::encode(key, &host)?);
+      builder = builder.bearer_auth(Token::encode(key, &host)?);
     }
-    request.send().check_status()?;
-    Ok(())
+
+    Ok(builder)
   }
 
   pub(crate) fn run(self, options: Options) -> Result {
@@ -55,12 +61,11 @@ impl Upload {
 
   fn upload_body(&self, hash: Hash, body: Body, key: Option<&PrivateKey>) -> Result {
     let url = self.server.join(&format!("file/{hash}")).unwrap();
-    let mut request = Client::new().put(url).body(body);
-    if let Some(key) = key {
-      let host = self.server.host_str().unwrap().to_owned();
-      request = request.bearer_auth(Token::encode(key, &host)?);
-    }
-    request.send().check_status()?;
+    let request = Client::new().put(url).body(body);
+    self
+      .request_with_token(request, key)?
+      .send()
+      .check_status()?;
     Ok(())
   }
 
@@ -93,7 +98,12 @@ impl Upload {
       }
     }
 
-    self.post("directory", hash, key)?;
+    let url = self.server.join(&format!("directory/{hash}")).unwrap();
+    let request = Client::new().post(url);
+    self
+      .request_with_token(request, key)?
+      .send()
+      .check_status()?;
 
     Ok(())
   }
