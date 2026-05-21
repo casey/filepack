@@ -278,7 +278,7 @@ async fn files_empty() {
 }
 
 #[tokio::test]
-async fn files_lists_sorted_hash_named_entries() {
+async fn files_non_empty() {
   let server = TestServer::new();
 
   let foo = b"foo";
