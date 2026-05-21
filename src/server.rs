@@ -88,12 +88,11 @@ impl Server {
       for entry in directory.entries.values() {
         match entry.ty {
           EntryType::File => {
-            let file_path = self.file_path(entry.hash);
-            let exists = tokio::fs::try_exists(&file_path)
-              .await
-              .context(server_error::FilesystemIo { path: &file_path })?;
+            let path = self.file_path(entry.hash);
             ensure!(
-              exists,
+              tokio::fs::try_exists(&path)
+                .await
+                .context(server_error::FilesystemIo { path })?,
               server_error::DirectoryFileMissing {
                 directory: hash,
                 file: entry.hash,
@@ -101,9 +100,8 @@ impl Server {
             );
           }
           EntryType::Directory => {
-            let verified = directories.get(&entry.hash)?.is_some();
             ensure!(
-              verified,
+              directories.get(&entry.hash)?.is_some(),
               server_error::DirectoryUnverified {
                 directory: hash,
                 subdirectory: entry.hash,
