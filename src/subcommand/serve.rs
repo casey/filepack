@@ -696,7 +696,6 @@ mod tests {
   async fn download_response() {
     let server = TestServer::new();
 
-    let hash = Hash::bytes(b"bar");
     server.write_file(b"bar");
 
     server
@@ -706,7 +705,7 @@ mod tests {
       .assert_header(header::CONTENT_LENGTH, "3")
       .assert_header(header::CONTENT_SECURITY_POLICY, "sandbox")
       .assert_header(header::CONTENT_TYPE, "application/octet-stream")
-      .assert_header(header::ETAG, format!("\"{hash}\""))
+      .assert_header(header::ETAG, format!("\"{}\"", Hash::bytes(b"bar")))
       .assert_body("bar")
       .send()
       .await;
