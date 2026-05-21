@@ -7,7 +7,6 @@ const SCHEMA_VERSION: u64 = 0;
 
 const DIRECTORIES: TableDefinition<Hash, ()> = TableDefinition::new("directories");
 const METADATA: TableDefinition<u64, u64> = TableDefinition::new("metadata");
-const PACKAGES: TableDefinition<Hash, ()> = TableDefinition::new("packages");
 
 #[derive(Copy, Clone)]
 pub(crate) enum MetadataKey {
@@ -152,8 +151,6 @@ impl Server {
         metadata.insert(&MetadataKey::Schema.key(), &SCHEMA_VERSION)?;
 
         tx.open_table(DIRECTORIES)?;
-
-        tx.open_table(PACKAGES)?;
       }
 
       tx.commit()?;
