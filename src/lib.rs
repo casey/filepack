@@ -206,6 +206,7 @@ mod component_error;
 mod context;
 mod count;
 mod dalek_signature_error;
+mod database;
 mod date_time;
 mod decode;
 mod decode_error;

@@ -2,14 +2,14 @@ use {
   super::*,
   axum::{
     body,
-    http::{Request, header::HeaderName},
+    http::{Method, Request, header::HeaderName},
   },
   tower::ServiceExt,
 };
 
 struct TestRequestBuilder {
   body: Option<String>,
-  method: &'static str,
+  method: Method,
   path: String,
   response_body: Body,
   response_headers: BTreeMap<String, String>,
@@ -53,7 +53,7 @@ impl TestRequestBuilder {
     self
   }
 
-  fn new(method: &'static str, path: impl Into<String>, router: Router) -> Self {
+  fn new(method: Method, path: impl Into<String>, router: Router) -> Self {
     Self {
       body: None,
       method,
@@ -143,15 +143,19 @@ impl TestServer {
   }
 
   fn get(&self, path: impl Into<String>) -> TestRequestBuilder {
-    TestRequestBuilder::new("GET", path, self.router.clone())
+    TestRequestBuilder::new(Method::GET, path, self.router.clone())
   }
 
   fn new() -> Self {
     Self::with_auth(None)
   }
 
+  fn post(&self, path: impl Into<String>) -> TestRequestBuilder {
+    TestRequestBuilder::new(Method::POST, path, self.router.clone())
+  }
+
   fn put(&self, path: impl Into<String>) -> TestRequestBuilder {
-    TestRequestBuilder::new("PUT", path, self.router.clone())
+    TestRequestBuilder::new(Method::PUT, path, self.router.clone())
   }
 
   fn with_auth(auth_config: Option<Arc<AuthConfig>>) -> Self {
@@ -206,6 +210,25 @@ fn default_serve_matches_parsed() {
     Serve::default(),
     Serve::try_parse_from(["filepack"]).unwrap(),
   );
+}
+
+fn directory(entries: &[(&str, EntryType, Hash, u64)]) -> Directory {
+  Directory {
+    version: Version::Zero,
+    entries: entries
+      .iter()
+      .map(|(name, ty, hash, size)| {
+        (
+          name.parse().unwrap(),
+          Entry {
+            ty: *ty,
+            hash: *hash,
+            size: *size,
+          },
+        )
+      })
+      .collect(),
+  }
 }
 
 #[test]
@@ -297,6 +320,43 @@ async fn files_non_empty() {
   server
     .get("/files")
     .assert_response(FilesHtml { files })
+    .send()
+    .await;
+}
+
+#[tokio::test]
+async fn get_directory_not_found() {
+  let server = TestServer::new();
+
+  let cbor = directory(&[]).encode_to_vec();
+  let hash = Hash::bytes(&cbor);
+  server.write_file(&cbor);
+
+  server
+    .get(format!("/directory/{hash}"))
+    .status(StatusCode::NOT_FOUND)
+    .assert_body(format!("directory {hash} not found"))
+    .send()
+    .await;
+}
+
+#[tokio::test]
+async fn get_directory_succeeds() {
+  let server = TestServer::new();
+
+  let dir = directory(&[]);
+  let cbor = dir.encode_to_vec();
+  let hash = Hash::bytes(&cbor);
+  server.write_file(&cbor);
+
+  server.post(format!("/directory/{hash}")).send().await;
+
+  server
+    .get(format!("/directory/{hash}"))
+    .assert_response(DirectoryHtml {
+      directory: dir,
+      hash,
+    })
     .send()
     .await;
 }
@@ -521,4 +581,170 @@ async fn upload_with_wrong_hash_fails() {
     .await;
 
   server.assert_incoming_empty();
+}
+
+#[tokio::test]
+async fn verify_directory_decode_error() {
+  let server = TestServer::new();
+
+  let junk = b"junk";
+  let hash = Hash::bytes(junk);
+  server.write_file(junk);
+
+  server
+    .post(format!("/directory/{hash}"))
+    .status(StatusCode::BAD_REQUEST)
+    .assert_body(format!("failed to decode directory {hash}"))
+    .send()
+    .await;
+}
+
+#[tokio::test]
+async fn verify_directory_file_not_found() {
+  let server = TestServer::new();
+
+  let hash = Hash::bytes(b"foo");
+
+  server
+    .post(format!("/directory/{hash}"))
+    .status(StatusCode::NOT_FOUND)
+    .assert_body(format!("file with hash {hash} not found"))
+    .send()
+    .await;
+}
+
+#[tokio::test]
+async fn verify_directory_idempotent() {
+  let server = TestServer::new();
+
+  let dir = directory(&[]);
+  let cbor = dir.encode_to_vec();
+  let hash = Hash::bytes(&cbor);
+  server.write_file(&cbor);
+
+  server.post(format!("/directory/{hash}")).send().await;
+  server.post(format!("/directory/{hash}")).send().await;
+
+  server
+    .get(format!("/directory/{hash}"))
+    .assert_response(DirectoryHtml {
+      directory: dir,
+      hash,
+    })
+    .send()
+    .await;
+}
+
+#[tokio::test]
+async fn verify_directory_missing_file() {
+  let server = TestServer::new();
+
+  let missing = Hash::bytes(b"foo");
+  let cbor = directory(&[("foo", EntryType::File, missing, 3)]).encode_to_vec();
+  let hash = Hash::bytes(&cbor);
+  server.write_file(&cbor);
+
+  server
+    .post(format!("/directory/{hash}"))
+    .status(StatusCode::BAD_REQUEST)
+    .assert_body(format!(
+      "directory {hash} references missing file {missing}"
+    ))
+    .send()
+    .await;
+}
+
+#[tokio::test]
+async fn verify_directory_rejects_missing_auth_header() {
+  let admin = PrivateKey::generate();
+  let server = TestServer::with_auth(Some(Arc::new(AuthConfig {
+    admin: Some(admin.public_key()),
+    audiences: vec!["filepack.example".into()],
+  })));
+
+  let hash = Hash::bytes(b"foo");
+
+  server
+    .post(format!("/directory/{hash}"))
+    .status(StatusCode::UNAUTHORIZED)
+    .assert_body("missing authorization header")
+    .send()
+    .await;
+}
+
+#[tokio::test]
+async fn verify_directory_succeeds() {
+  let server = TestServer::new();
+
+  let file = b"foo";
+  let file_hash = Hash::bytes(file);
+  server.write_file(file);
+
+  let child = directory(&[("foo", EntryType::File, file_hash, file.len() as u64)]);
+  let child_cbor = child.encode_to_vec();
+  let child_hash = Hash::bytes(&child_cbor);
+  server.write_file(&child_cbor);
+
+  server.post(format!("/directory/{child_hash}")).send().await;
+
+  server
+    .get(format!("/directory/{child_hash}"))
+    .assert_response(DirectoryHtml {
+      directory: child,
+      hash: child_hash,
+    })
+    .send()
+    .await;
+
+  let parent = directory(&[(
+    "child",
+    EntryType::Directory,
+    child_hash,
+    child_cbor.len() as u64,
+  )]);
+  let parent_cbor = parent.encode_to_vec();
+  let parent_hash = Hash::bytes(&parent_cbor);
+  server.write_file(&parent_cbor);
+
+  server
+    .post(format!("/directory/{parent_hash}"))
+    .send()
+    .await;
+
+  server
+    .get(format!("/directory/{parent_hash}"))
+    .assert_response(DirectoryHtml {
+      directory: parent,
+      hash: parent_hash,
+    })
+    .send()
+    .await;
+}
+
+#[tokio::test]
+async fn verify_directory_unverified_subdirectory() {
+  let server = TestServer::new();
+
+  let child_cbor = directory(&[]).encode_to_vec();
+  let child_hash = Hash::bytes(&child_cbor);
+  server.write_file(&child_cbor);
+
+  let parent_cbor = directory(&[(
+    "child",
+    EntryType::Directory,
+    child_hash,
+    child_cbor.len() as u64,
+  )])
+  .encode_to_vec();
+  let parent_hash = Hash::bytes(&parent_cbor);
+  server.write_file(&parent_cbor);
+
+  server
+    .post(format!("/directory/{parent_hash}"))
+    .status(StatusCode::BAD_REQUEST)
+    .assert_body(format!(
+      "directory {parent_hash} references unverified subdirectory {child_hash}"
+    ))
+    .send()
+    .await;
 }

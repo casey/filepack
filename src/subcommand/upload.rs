@@ -1,4 +1,8 @@
-use {super::*, reqwest::blocking::Body, url::Host};
+use {
+  super::*,
+  reqwest::blocking::{Body, RequestBuilder},
+  url::Host,
+};
 
 #[derive(Parser)]
 pub(crate) struct Upload {
@@ -13,6 +17,19 @@ pub(crate) struct Upload {
 }
 
 impl Upload {
+  fn request_with_token(
+    &self,
+    mut builder: RequestBuilder,
+    key: Option<&PrivateKey>,
+  ) -> Result<RequestBuilder> {
+    if let Some(key) = key {
+      let host = self.server.host_str().unwrap().to_owned();
+      builder = builder.bearer_auth(Token::encode(key, &host)?);
+    }
+
+    Ok(builder)
+  }
+
   pub(crate) fn run(self, options: Options) -> Result {
     let key = if let Some(name) = &self.auth {
       let loopback = match self.server.host().unwrap() {
@@ -23,9 +40,7 @@ impl Upload {
 
       ensure!(
         self.server.scheme() == "https" || loopback,
-        error::AuthenticationOverHttp {
-          server: self.server.clone(),
-        },
+        error::TokenOverHttp,
       );
 
       let keychain = Keychain::load(&options)?;
@@ -46,12 +61,50 @@ impl Upload {
 
   fn upload_body(&self, hash: Hash, body: Body, key: Option<&PrivateKey>) -> Result {
     let url = self.server.join(&format!("file/{hash}")).unwrap();
-    let mut request = Client::new().put(url).body(body);
-    if let Some(key) = key {
-      let host = self.server.host_str().unwrap().to_owned();
-      request = request.bearer_auth(Token::encode(key, &host)?);
+    let request = Client::new().put(url).body(body);
+    self
+      .request_with_token(request, key)?
+      .send()
+      .check_status()?;
+    Ok(())
+  }
+
+  fn upload_directory(
+    &self,
+    archive: &Archive,
+    archive_path: &Utf8Path,
+    file_path: &Utf8Path,
+    hash: Hash,
+    key: Option<&PrivateKey>,
+    options: &Options,
+  ) -> Result {
+    let context = error::UnarchiveManifest { path: archive_path };
+
+    let cbor = archive.file(hash).context(context)?;
+
+    let directory = Directory::decode_from_slice(cbor)
+      .context(archive_error::DirectoryDecode)
+      .context(context)?;
+
+    self.upload_body(hash, cbor.to_vec().into(), key)?;
+
+    for (component, entry) in &directory.entries {
+      let file_path = file_path.join(component);
+      match entry.ty {
+        EntryType::Directory => {
+          self.upload_directory(archive, archive_path, &file_path, entry.hash, key, options)?;
+        }
+        EntryType::File => self.upload_package_file(entry, key, options, &file_path)?,
+      }
     }
-    request.send().check_status()?;
+
+    let url = self.server.join(&format!("directory/{hash}")).unwrap();
+    let request = Client::new().post(url);
+    self
+      .request_with_token(request, key)?
+      .send()
+      .check_status()?;
+
     Ok(())
   }
 
@@ -76,42 +129,28 @@ impl Upload {
   ) -> Result {
     let archive = Archive::load_with_path(archive_path, archive_path)?;
 
-    let context = error::UnarchiveManifest { path: archive_path };
+    let fingerprint = archive
+      .fingerprint()
+      .context(error::UnarchiveManifest { path: archive_path })?;
 
-    let fingerprint = archive.fingerprint().context(context)?;
-
-    let mut directories = vec![(
+    self.upload_directory(
+      &archive,
+      archive_path,
+      archive_path.parent().unwrap(),
       fingerprint.into(),
-      archive_path.parent().unwrap().to_owned(),
-    )];
-
-    while let Some((hash, path)) = directories.pop() {
-      let cbor = archive.file(hash).context(context)?;
-
-      let directory = Directory::decode_from_slice(cbor)
-        .context(archive_error::DirectoryDecode)
-        .context(context)?;
-
-      self.upload_body(hash, cbor.to_vec().into(), key)?;
-
-      for (component, entry) in directory.entries {
-        let path = path.join(component);
-        match entry.ty {
-          EntryType::Directory => directories.push((entry.hash, path)),
-          EntryType::File => self.upload_package_file(&path, &entry, options, key)?,
-        }
-      }
-    }
+      key,
+      options,
+    )?;
 
     Ok(())
   }
 
   fn upload_package_file(
     &self,
-    path: &Utf8Path,
     expected: &Entry,
-    options: &Options,
     key: Option<&PrivateKey>,
+    options: &Options,
+    path: &Utf8Path,
   ) -> Result {
     let actual = options
       .hash_file(path)

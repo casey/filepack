@@ -216,7 +216,7 @@ fn upload_auth_requires_https() {
       "--file",
       "foo",
     ])
-    .stderr("error: cannot use authentication with non-HTTPS server `http://example.com/`\n")
+    .stderr("error: authentication tokens may only be used over HTTPS or loopback\n")
     .failure();
 }
 
@@ -454,18 +454,41 @@ fn upload_package_uploads_files() {
     .assert_file(&format!("files/{}", Hash::bytes(b"bbb")), "bbb")
     .assert_file(&format!("files/{}", Hash::bytes(b"ccc")), "ccc")
     .assert_file(&format!("files/{}", Hash::bytes(b"ddd")), "ddd")
+    .assert_file_count("files", 7)
     .spawn();
 
-  Test::new()
+  let test = Test::new()
     .write("foo", "aaa")
     .write("bar", "bbb")
     .create_dir("empty")
     .write("sub/baz", "ccc")
     .write("sub/qux", "ddd")
+    .create_dir("sub/empty")
     .args(["create", "."])
-    .success()
+    .success();
+
+  let root = Hash::from(
+    Manifest::load(Some(&test.path().join("manifest.filepack")))
+      .unwrap()
+      .fingerprint(),
+  );
+
+  test
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
     .success();
+
+  let response = reqwest::blocking::get(format!("{}/directory/{root}", server.address())).unwrap();
+
+  assert_eq!(response.status(), StatusCode::OK);
+
+  let body = response.text().unwrap();
+
+  for name in ["bar", "empty", "foo", "sub"] {
+    assert!(
+      body.contains(&format!("<dt>{name}</dt>")),
+      "body missing `{name}`: {body}"
+    );
+  }
 
   server.terminate().success();
 }

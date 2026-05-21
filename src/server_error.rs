@@ -9,6 +9,24 @@ pub(crate) enum ServerError {
   AuthorizationMalformed,
   #[snafu(display("missing authorization header"))]
   AuthorizationMissing,
+  #[snafu(transparent)]
+  Database { source: redb::DatabaseError },
+  #[snafu(transparent)]
+  DatabaseCommit { source: redb::CommitError },
+  #[snafu(transparent)]
+  DatabaseStorage { source: redb::StorageError },
+  #[snafu(transparent)]
+  DatabaseTable { source: redb::TableError },
+  #[snafu(transparent)]
+  DatabaseTransaction { source: redb::TransactionError },
+  #[snafu(display("failed to decode directory {hash}"))]
+  DirectoryDecode { hash: Hash, source: DecodeError },
+  #[snafu(display("directory {directory} references missing file {file}"))]
+  DirectoryFileMissing { directory: Hash, file: Hash },
+  #[snafu(display("directory {hash} not found"))]
+  DirectoryNotFound { hash: Hash },
+  #[snafu(display("directory {directory} references unverified subdirectory {subdirectory}"))]
+  DirectoryUnverified { directory: Hash, subdirectory: Hash },
   #[snafu(display("file with hash {hash} not found"))]
   FileNotFound { hash: Hash, source: io::Error },
   #[snafu(display("I/O error at {path}"))]
@@ -32,11 +50,20 @@ impl ServerError {
       Self::AuthorizationInvalid { .. }
       | Self::AuthorizationMalformed
       | Self::AuthorizationMissing
+      | Self::DirectoryDecode { .. }
+      | Self::DirectoryFileMissing { .. }
+      | Self::DirectoryNotFound { .. }
+      | Self::DirectoryUnverified { .. }
       | Self::FileNotFound { .. }
       | Self::PageNotFound
       | Self::UploadBodyRead { .. }
       | Self::UploadForbidden
       | Self::UploadHashMismatch { .. } => self.to_string(),
+      Self::Database { .. }
+      | Self::DatabaseCommit { .. }
+      | Self::DatabaseStorage { .. }
+      | Self::DatabaseTable { .. }
+      | Self::DatabaseTransaction { .. } => "database error".into(),
       Self::FilesystemIo { .. } => "filesystem I/O error".into(),
     }
   }
@@ -46,10 +73,21 @@ impl ServerError {
       Self::AuthorizationInvalid { .. }
       | Self::AuthorizationMalformed
       | Self::AuthorizationMissing => StatusCode::UNAUTHORIZED,
-      Self::FileNotFound { .. } | Self::PageNotFound => StatusCode::NOT_FOUND,
-      Self::FilesystemIo { .. } => StatusCode::INTERNAL_SERVER_ERROR,
+      Self::Database { .. }
+      | Self::DatabaseCommit { .. }
+      | Self::DatabaseStorage { .. }
+      | Self::DatabaseTable { .. }
+      | Self::DatabaseTransaction { .. }
+      | Self::FilesystemIo { .. } => StatusCode::INTERNAL_SERVER_ERROR,
+      Self::DirectoryDecode { .. }
+      | Self::DirectoryFileMissing { .. }
+      | Self::DirectoryUnverified { .. }
+      | Self::UploadBodyRead { .. }
+      | Self::UploadHashMismatch { .. } => StatusCode::BAD_REQUEST,
+      Self::DirectoryNotFound { .. } | Self::FileNotFound { .. } | Self::PageNotFound => {
+        StatusCode::NOT_FOUND
+      }
       Self::UploadForbidden => StatusCode::FORBIDDEN,
-      Self::UploadBodyRead { .. } | Self::UploadHashMismatch { .. } => StatusCode::BAD_REQUEST,
     }
   }
 }

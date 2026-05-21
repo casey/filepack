@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang=en>
+  <head>
+    <meta charset=utf-8>
+    <meta name=viewport content='width=device-width,initial-scale=1.0'>
+    <title>directory {{ self.hash }} · filepack</title>
+    <meta name=description content='Filepack package server'>
+  </head>
+  <body>
+    <h1>Directory {{ self.hash }}</h1>
+    <dl>
+%% for (name, entry) in &self.directory.entries {
+      <dt>{{ name }}</dt>
+      <dd>
+%% match entry.ty {
+%%   EntryType::Directory => {
+        <a href=/directory/{{ entry.hash }}>{{ entry.hash }}</a>
+%%   }
+%%   EntryType::File => {
+        <a href=/file/{{ entry.hash }}>{{ entry.hash }}</a>
+%%   }
+%% }
+      </dd>
+%% }
+    </dl>
+  </body>
+</html>

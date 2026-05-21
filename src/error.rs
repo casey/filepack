@@ -11,11 +11,6 @@ pub enum Error {
     actual: Hash,
     expected: Hash,
   },
-  #[snafu(display("cannot use authentication with non-HTTPS server `{server}`"))]
-  AuthenticationOverHttp {
-    backtrace: Option<Backtrace>,
-    server: Url,
-  },
   #[snafu(display("failed to decode bech32 `{bech32}`"))]
   Bech32Decode {
     backtrace: Option<Backtrace>,
@@ -67,6 +62,24 @@ pub enum Error {
   },
   #[snafu(display("failed to get local data directory"))]
   DataLocalDir { backtrace: Option<Backtrace> },
+  #[snafu(transparent)]
+  Database { source: redb::DatabaseError },
+  #[snafu(transparent)]
+  DatabaseCommit { source: redb::CommitError },
+  #[snafu(display("database schema version `{actual}` does not match expected `{expected}`"))]
+  DatabaseSchemaVersionMismatch {
+    actual: u64,
+    backtrace: Option<Backtrace>,
+    expected: u64,
+  },
+  #[snafu(display("database schema version missing"))]
+  DatabaseSchemaVersionMissing { backtrace: Option<Backtrace> },
+  #[snafu(transparent)]
+  DatabaseStorage { source: redb::StorageError },
+  #[snafu(transparent)]
+  DatabaseTable { source: redb::TableError },
+  #[snafu(transparent)]
+  DatabaseTransaction { source: redb::TransactionError },
   #[snafu(display("failed to decode manifest at `{path}`"))]
   DecodeManifest {
     backtrace: Option<Backtrace>,
@@ -383,6 +396,8 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     source: SystemTimeError,
   },
+  #[snafu(display("authentication tokens may only be used over HTTPS or loopback"))]
+  TokenOverHttp { backtrace: Option<Backtrace> },
   #[snafu(display("failed to unarchive manifest"))]
   UnarchiveManifest {
     backtrace: Option<Backtrace>,
