@@ -483,13 +483,17 @@ fn upload_package_uploads_files() {
 
   let body = response.text().unwrap();
 
-  for (name, kind) in [
-    ("bar", "file"),
-    ("empty", "directory"),
-    ("foo", "file"),
-    ("sub", "directory"),
+  for (name, ty) in [
+    ("bar", EntryType::File),
+    ("empty", EntryType::Directory),
+    ("foo", EntryType::File),
+    ("sub", EntryType::Directory),
   ] {
-    let pattern = format!(r"<li><a href=/{kind}/[0-9a-f]{{64}}>{name}</a></li>");
+    let pattern = match ty {
+      EntryType::Directory => format!(r"<li><a href=/directory/[0-9a-f]{{64}}>{name}/</a></li>"),
+      EntryType::File => format!(r"<li><a href=/file/[0-9a-f]{{64}}>{name}</a></li>"),
+    };
+
     assert!(
       Regex::new(&pattern).unwrap().is_match(&body),
       "body missing `{name}`: {body}"
