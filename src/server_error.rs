@@ -23,6 +23,8 @@ pub(crate) enum ServerError {
   DirectoryDecode { hash: Hash, source: DecodeError },
   #[snafu(display("directory {directory} references missing file {file}"))]
   DirectoryFileMissing { directory: Hash, file: Hash },
+  #[snafu(display("directory {hash} not found"))]
+  DirectoryNotFound { hash: Hash },
   #[snafu(display("directory {directory} references unverified subdirectory {subdirectory}"))]
   DirectoryUnverified { directory: Hash, subdirectory: Hash },
   #[snafu(display("file with hash {hash} not found"))]
@@ -50,6 +52,7 @@ impl ServerError {
       | Self::AuthorizationMissing
       | Self::DirectoryDecode { .. }
       | Self::DirectoryFileMissing { .. }
+      | Self::DirectoryNotFound { .. }
       | Self::DirectoryUnverified { .. }
       | Self::FileNotFound { .. }
       | Self::PageNotFound
@@ -81,7 +84,9 @@ impl ServerError {
       | Self::DirectoryUnverified { .. }
       | Self::UploadBodyRead { .. }
       | Self::UploadHashMismatch { .. } => StatusCode::BAD_REQUEST,
-      Self::FileNotFound { .. } | Self::PageNotFound => StatusCode::NOT_FOUND,
+      Self::DirectoryNotFound { .. } | Self::FileNotFound { .. } | Self::PageNotFound => {
+        StatusCode::NOT_FOUND
+      }
       Self::UploadForbidden => StatusCode::FORBIDDEN,
     }
   }

@@ -457,7 +457,7 @@ fn upload_package_uploads_files() {
     .assert_file_count("files", 7)
     .spawn();
 
-  Test::new()
+  let test = Test::new()
     .write("foo", "aaa")
     .write("bar", "bbb")
     .create_dir("empty")
@@ -465,9 +465,30 @@ fn upload_package_uploads_files() {
     .write("sub/qux", "ddd")
     .create_dir("sub/empty")
     .args(["create", "."])
-    .success()
+    .success();
+
+  let root = Hash::from(
+    Manifest::load(Some(&test.path().join("manifest.filepack")))
+      .unwrap()
+      .fingerprint(),
+  );
+
+  test
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
     .success();
+
+  let response = reqwest::blocking::get(format!("{}/directory/{root}", server.address())).unwrap();
+
+  assert_eq!(response.status(), StatusCode::OK);
+
+  let body = response.text().unwrap();
+
+  for name in ["bar", "empty", "foo", "sub"] {
+    assert!(
+      body.contains(&format!("<dt>{name}</dt>")),
+      "body missing `{name}`: {body}"
+    );
+  }
 
   server.terminate().success();
 }

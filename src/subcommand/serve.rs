@@ -229,8 +229,14 @@ impl Serve {
       ))
   }
 
-  async fn directory(server: ServerExtension) -> ServerResult<DirectoryHtml> {
-    todo!()
+  async fn directory(
+    server: ServerExtension,
+    Path(hash): Path<Hash>,
+  ) -> ServerResult<DirectoryHtml> {
+    Ok(DirectoryHtml {
+      directory: server.directory(hash).await?,
+      hash,
+    })
   }
 
   pub(crate) fn router(server: Arc<Server>, auth_config: Option<Arc<AuthConfig>>) -> Router {

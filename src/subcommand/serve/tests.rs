@@ -212,7 +212,7 @@ fn default_serve_matches_parsed() {
   );
 }
 
-fn directory_cbor(entries: &[(&str, EntryType, Hash, u64)]) -> Vec<u8> {
+fn directory(entries: &[(&str, EntryType, Hash, u64)]) -> Directory {
   Directory {
     version: Version::Zero,
     entries: entries
@@ -229,7 +229,6 @@ fn directory_cbor(entries: &[(&str, EntryType, Hash, u64)]) -> Vec<u8> {
       })
       .collect(),
   }
-  .encode_to_vec()
 }
 
 #[test]
@@ -321,6 +320,43 @@ async fn files_non_empty() {
   server
     .get("/files")
     .assert_response(FilesHtml { files })
+    .send()
+    .await;
+}
+
+#[tokio::test]
+async fn get_directory_not_found() {
+  let server = TestServer::new();
+
+  let cbor = directory(&[]).encode_to_vec();
+  let hash = Hash::bytes(&cbor);
+  server.write_file(&cbor);
+
+  server
+    .get(format!("/directory/{hash}"))
+    .status(StatusCode::NOT_FOUND)
+    .assert_body(format!("directory {hash} not found"))
+    .send()
+    .await;
+}
+
+#[tokio::test]
+async fn get_directory_succeeds() {
+  let server = TestServer::new();
+
+  let dir = directory(&[]);
+  let cbor = dir.encode_to_vec();
+  let hash = Hash::bytes(&cbor);
+  server.write_file(&cbor);
+
+  server.post(format!("/directory/{hash}")).send().await;
+
+  server
+    .get(format!("/directory/{hash}"))
+    .assert_response(DirectoryHtml {
+      directory: dir,
+      hash,
+    })
     .send()
     .await;
 }
@@ -582,7 +618,7 @@ async fn verify_directory_missing_file() {
   let server = TestServer::new();
 
   let missing = Hash::bytes(b"foo");
-  let cbor = directory_cbor(&[("foo", EntryType::File, missing, 3)]);
+  let cbor = directory(&[("foo", EntryType::File, missing, 3)]).encode_to_vec();
   let hash = Hash::bytes(&cbor);
   server.write_file(&cbor);
 
@@ -622,18 +658,20 @@ async fn verify_directory_succeeds() {
   let file_hash = Hash::bytes(file);
   server.write_file(file);
 
-  let child_cbor = directory_cbor(&[("foo", EntryType::File, file_hash, file.len() as u64)]);
+  let child_cbor =
+    directory(&[("foo", EntryType::File, file_hash, file.len() as u64)]).encode_to_vec();
   let child_hash = Hash::bytes(&child_cbor);
   server.write_file(&child_cbor);
 
   server.post(format!("/directory/{child_hash}")).send().await;
 
-  let parent_cbor = directory_cbor(&[(
+  let parent_cbor = directory(&[(
     "child",
     EntryType::Directory,
     child_hash,
     child_cbor.len() as u64,
-  )]);
+  )])
+  .encode_to_vec();
   let parent_hash = Hash::bytes(&parent_cbor);
   server.write_file(&parent_cbor);
 
@@ -647,16 +685,17 @@ async fn verify_directory_succeeds() {
 async fn verify_directory_unverified_subdirectory() {
   let server = TestServer::new();
 
-  let child_cbor = directory_cbor(&[]);
+  let child_cbor = directory(&[]).encode_to_vec();
   let child_hash = Hash::bytes(&child_cbor);
   server.write_file(&child_cbor);
 
-  let parent_cbor = directory_cbor(&[(
+  let parent_cbor = directory(&[(
     "child",
     EntryType::Directory,
     child_hash,
     child_cbor.len() as u64,
-  )]);
+  )])
+  .encode_to_vec();
   let parent_hash = Hash::bytes(&parent_cbor);
   server.write_file(&parent_cbor);
 

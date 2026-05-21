@@ -1,6 +1,6 @@
 use {
   super::*,
-  redb::{Database, ReadableTable, TableDefinition},
+  redb::{Database, ReadableDatabase, ReadableTable, TableDefinition},
 };
 
 const DIRECTORIES: TableDefinition<Hash, ()> = TableDefinition::new("directories");
@@ -66,7 +66,7 @@ impl Server {
     Ok((file, len))
   }
 
-  pub(crate) async fn verify_directory(&self, hash: Hash) -> ServerResult {
+  async fn read_directory(&self, hash: Hash) -> ServerResult<Directory> {
     let path = self.file_path(hash);
 
     let cbor = tokio::fs::read(&path).await.map_err(|err| {
@@ -77,8 +77,25 @@ impl Server {
       }
     })?;
 
-    let directory =
-      Directory::decode_from_slice(&cbor).context(server_error::DirectoryDecode { hash })?;
+    Directory::decode_from_slice(&cbor).context(server_error::DirectoryDecode { hash })
+  }
+
+  pub(crate) async fn directory(&self, hash: Hash) -> ServerResult<Directory> {
+    ensure!(
+      self
+        .database
+        .begin_read()?
+        .open_table(DIRECTORIES)?
+        .get(&hash)?
+        .is_some(),
+      server_error::DirectoryNotFound { hash },
+    );
+
+    self.read_directory(hash).await
+  }
+
+  pub(crate) async fn verify_directory(&self, hash: Hash) -> ServerResult {
+    let directory = self.read_directory(hash).await?;
 
     for entry in directory.entries.values() {
       if entry.ty == EntryType::File {
