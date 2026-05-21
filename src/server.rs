@@ -1,57 +1,17 @@
 use {
   super::*,
-  redb::{Database, Key, ReadableDatabase, ReadableTable, TableDefinition, TypeName, Value},
+  redb::{Database, ReadableDatabase, ReadableTable, TableDefinition},
 };
 
 const SCHEMA_VERSION: u64 = 0;
 
 const DIRECTORIES: TableDefinition<Hash, ()> = TableDefinition::new("directories");
-const METADATA: TableDefinition<MetadataKey, u64> = TableDefinition::new("metadata");
+const METADATA: TableDefinition<DatabaseMetadata, u64> = TableDefinition::new("metadata");
 
 #[derive(Copy, Clone, Debug, FromRepr)]
 #[repr(u64)]
-pub(crate) enum MetadataKey {
+pub(crate) enum DatabaseMetadata {
   Schema = 0,
-}
-
-impl Key for MetadataKey {
-  fn compare(a: &[u8], b: &[u8]) -> Ordering {
-    u64::compare(a, b)
-  }
-}
-
-impl Value for MetadataKey {
-  type SelfType<'a>
-    = Self
-  where
-    Self: 'a;
-
-  type AsBytes<'a>
-    = <u64 as Value>::AsBytes<'a>
-  where
-    Self: 'a;
-
-  fn fixed_width() -> Option<usize> {
-    u64::fixed_width()
-  }
-
-  fn from_bytes<'a>(data: &'a [u8]) -> Self
-  where
-    Self: 'a,
-  {
-    Self::from_repr(u64::from_bytes(data)).unwrap()
-  }
-
-  fn as_bytes<'a, 'b: 'a>(value: &'a Self::SelfType<'b>) -> <u64 as Value>::AsBytes<'a>
-  where
-    Self: 'b,
-  {
-    u64::as_bytes(&(*value as u64))
-  }
-
-  fn type_name() -> TypeName {
-    TypeName::new("filepack-metadata-key")
-  }
 }
 
 pub(crate) struct Server {
@@ -183,7 +143,7 @@ impl Server {
       {
         let mut metadata = tx.open_table(METADATA)?;
 
-        metadata.insert(MetadataKey::Schema, &SCHEMA_VERSION)?;
+        metadata.insert(DatabaseMetadata::Schema, &SCHEMA_VERSION)?;
 
         tx.open_table(DIRECTORIES)?;
       }
@@ -192,7 +152,7 @@ impl Server {
     } else {
       let schema_version = tx
         .open_table(METADATA)?
-        .get(MetadataKey::Schema)?
+        .get(DatabaseMetadata::Schema)?
         .context(error::DatabaseSchemaVersionMissing)?
         .value();
 
