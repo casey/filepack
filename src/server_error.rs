@@ -25,17 +25,15 @@ pub(crate) enum ServerError {
   #[snafu(display("page not found"))]
   PageNotFound,
   #[snafu(transparent)]
-  Redb { source: redb::Error },
+  Database { source: redb::DatabaseError },
   #[snafu(transparent)]
-  RedbCommit { source: redb::CommitError },
+  DatabaseCommit { source: redb::CommitError },
   #[snafu(transparent)]
-  RedbDatabase { source: redb::DatabaseError },
+  DatabaseStorage { source: redb::StorageError },
   #[snafu(transparent)]
-  RedbStorage { source: redb::StorageError },
+  DatabaseTable { source: redb::TableError },
   #[snafu(transparent)]
-  RedbTable { source: redb::TableError },
-  #[snafu(transparent)]
-  RedbTransaction { source: redb::TransactionError },
+  DatabaseTransaction { source: redb::TransactionError },
   #[snafu(display("error reading body of upload with hash {hash}"))]
   UploadBodyRead { hash: Hash, source: axum::Error },
   #[snafu(display("uploads forbidden"))]
@@ -58,12 +56,11 @@ impl ServerError {
       | Self::UploadBodyRead { .. }
       | Self::UploadForbidden
       | Self::UploadHashMismatch { .. } => self.to_string(),
-      Self::Redb { .. }
-      | Self::RedbCommit { .. }
-      | Self::RedbDatabase { .. }
-      | Self::RedbStorage { .. }
-      | Self::RedbTable { .. }
-      | Self::RedbTransaction { .. } => "database error".into(),
+      Self::Database { .. }
+      | Self::DatabaseCommit { .. }
+      | Self::DatabaseStorage { .. }
+      | Self::DatabaseTable { .. }
+      | Self::DatabaseTransaction { .. } => "database error".into(),
       Self::FilesystemIo { .. } => "filesystem I/O error".into(),
     }
   }
@@ -73,13 +70,12 @@ impl ServerError {
       Self::AuthorizationInvalid { .. }
       | Self::AuthorizationMalformed
       | Self::AuthorizationMissing => StatusCode::UNAUTHORIZED,
-      Self::FilesystemIo { .. }
-      | Self::Redb { .. }
-      | Self::RedbCommit { .. }
-      | Self::RedbDatabase { .. }
-      | Self::RedbStorage { .. }
-      | Self::RedbTable { .. }
-      | Self::RedbTransaction { .. } => StatusCode::INTERNAL_SERVER_ERROR,
+      Self::Database { .. }
+      | Self::DatabaseCommit { .. }
+      | Self::DatabaseStorage { .. }
+      | Self::DatabaseTable { .. }
+      | Self::DatabaseTransaction { .. }
+      | Self::FilesystemIo { .. } => StatusCode::INTERNAL_SERVER_ERROR,
       Self::DirectoryDecode { .. }
       | Self::DirectoryFileMissing { .. }
       | Self::DirectoryUnverified { .. }
