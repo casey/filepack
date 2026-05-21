@@ -87,7 +87,7 @@ impl Upload {
       let file_path = file_path.join(component);
       match entry.ty {
         EntryType::Directory => {
-          self.upload_directory(archive, archive_path, &file_path, entry.hash, key, options)?
+          self.upload_directory(archive, archive_path, &file_path, entry.hash, key, options)?;
         }
         EntryType::File => self.upload_package_file(entry, key, options, &file_path)?,
       }

@@ -396,7 +396,7 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     source: SystemTimeError,
   },
-  #[snafu(display("authentication tokens may only be used with server over HTTPS or loopback"))]
+  #[snafu(display("authentication tokens may only be used over HTTPS or loopback"))]
   TokenOverHttp { backtrace: Option<Backtrace> },
   #[snafu(display("failed to unarchive manifest"))]
   UnarchiveManifest {
