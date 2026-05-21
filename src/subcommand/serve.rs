@@ -442,9 +442,9 @@ impl Serve {
   async fn verify_directory(
     _: Authenticated,
     server: ServerExtension,
-    Path(hash): Path<Hash>,
+    hash: Path<Hash>,
   ) -> ServerResult {
-    server.verify_directory(hash).await
+    server.verify_directory(*hash).await
   }
 }
 
