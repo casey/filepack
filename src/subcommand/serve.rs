@@ -473,8 +473,7 @@ mod tests {
     body: Option<String>,
     method: &'static str,
     path: String,
-    response_body: Vec<u8>,
-    response_body_source: Option<Body>,
+    response_body: Body,
     response_headers: BTreeMap<String, String>,
     router: Router,
     status: StatusCode,
@@ -483,7 +482,7 @@ mod tests {
 
   impl TestRequestBuilder {
     fn assert_body(mut self, body: impl AsRef<[u8]>) -> Self {
-      self.response_body = body.as_ref().into();
+      self.response_body = Body::from(body.as_ref().to_vec());
       self
     }
 
@@ -500,10 +499,10 @@ mod tests {
     fn assert_response(mut self, response: impl IntoResponse) -> Self {
       let (parts, body) = response.into_response().into_parts();
       self.status = parts.status;
-      for (name, value) in &parts.headers {
-        self = self.assert_header(name, value);
+      for (name, value) in parts.headers {
+        self = self.assert_header(name.unwrap(), value.to_str().unwrap());
       }
-      self.response_body_source = Some(body);
+      self.response_body = body;
       self
     }
 
@@ -517,8 +516,7 @@ mod tests {
         body: None,
         method,
         path: path.into(),
-        response_body: Vec::new(),
-        response_body_source: None,
+        response_body: Body::empty(),
         response_headers: BTreeMap::from([(
           header::X_CONTENT_TYPE_OPTIONS.to_string(),
           "nosniff".into(),
@@ -529,11 +527,7 @@ mod tests {
       }
     }
 
-    async fn send(mut self) {
-      if let Some(body) = self.response_body_source.take() {
-        self.response_body = body::to_bytes(body, usize::MAX).await.unwrap().into();
-      }
-
+    async fn send(self) {
       let mut request = Request::builder().method(self.method).uri(self.path);
 
       if let Some(token) = self.token {
@@ -565,7 +559,10 @@ mod tests {
       let body = body::to_bytes(response.into_body(), usize::MAX)
         .await
         .unwrap();
-      assert_eq!(body, self.response_body);
+      let expected = body::to_bytes(self.response_body, usize::MAX)
+        .await
+        .unwrap();
+      assert_eq!(body, expected);
     }
 
     fn status(mut self, status: StatusCode) -> Self {
@@ -696,6 +693,7 @@ mod tests {
   async fn download_response() {
     let server = TestServer::new();
 
+    let hash = Hash::bytes(b"bar");
     server.write_file(b"bar");
 
     server
@@ -705,7 +703,7 @@ mod tests {
       .assert_header(header::CONTENT_LENGTH, "3")
       .assert_header(header::CONTENT_SECURITY_POLICY, "sandbox")
       .assert_header(header::CONTENT_TYPE, "application/octet-stream")
-      .assert_header(header::ETAG, format!("\"{}\"", Hash::bytes(b"bar")))
+      .assert_header(header::ETAG, format!("\"{hash}\""))
       .assert_body("bar")
       .send()
       .await;
