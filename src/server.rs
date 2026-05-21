@@ -241,3 +241,49 @@ impl Server {
     Ok(())
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn database_schema_version_mismatch() {
+    let (_tempdir, data_dir) = tempdir();
+
+    {
+      let database = Database::create(data_dir.join("database.redb")).unwrap();
+      let tx = database.begin_write().unwrap();
+      tx.open_table(METADATA)
+        .unwrap()
+        .insert(DatabaseMetadata::Schema, &SCHEMA_VERSION + 1)
+        .unwrap();
+      tx.commit().unwrap();
+    }
+
+    assert_matches!(
+      Server::with_data_dir(&data_dir).map(drop),
+      Err(Error::DatabaseSchemaVersionMismatch {
+        actual,
+        backtrace: _,
+        expected: SCHEMA_VERSION,
+      }) if actual == SCHEMA_VERSION + 1,
+    );
+  }
+
+  #[test]
+  fn database_schema_version_missing() {
+    let (_tempdir, data_dir) = tempdir();
+
+    {
+      let database = Database::create(data_dir.join("database.redb")).unwrap();
+      let tx = database.begin_write().unwrap();
+      tx.open_table(DIRECTORIES).unwrap();
+      tx.commit().unwrap();
+    }
+
+    assert_matches!(
+      Server::with_data_dir(&data_dir).map(drop),
+      Err(Error::DatabaseSchemaVersionMissing { backtrace: _ }),
+    );
+  }
+}
