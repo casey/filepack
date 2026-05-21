@@ -20,7 +20,7 @@ pub(crate) struct Server {
 }
 
 impl Server {
-  pub(crate) async fn directory(&self, hash: Hash) -> ServerResult<Directory> {
+  pub(crate) fn directory(&self, hash: Hash) -> ServerResult<Directory> {
     ensure!(
       self
         .database
@@ -31,21 +31,21 @@ impl Server {
       server_error::DirectoryNotFound { hash },
     );
 
-    self.read_directory(hash).await
+    self.read_directory(hash)
   }
 
   fn file_path(&self, hash: Hash) -> Utf8PathBuf {
     self.files.join(hash.to_string())
   }
 
-  pub(crate) async fn files(&self) -> ServerResult<Vec<Hash>> {
+  pub(crate) fn files(&self) -> ServerResult<Vec<Hash>> {
     let context = server_error::FilesystemIo { path: &self.files };
-
-    let mut entries = tokio::fs::read_dir(&self.files).await.context(context)?;
 
     let mut files = Vec::new();
 
-    while let Some(entry) = entries.next_entry().await.context(context)? {
+    for entry in std::fs::read_dir(&self.files).context(context)? {
+      let entry = entry.context(context)?;
+
       let Ok(name) = entry.file_name().into_string() else {
         continue;
       };
@@ -60,10 +60,10 @@ impl Server {
     Ok(files)
   }
 
-  pub(crate) async fn open_file(&self, hash: Hash) -> ServerResult<(tokio::fs::File, u64)> {
+  pub(crate) fn open_file(&self, hash: Hash) -> ServerResult<(tokio::fs::File, u64)> {
     let path = self.file_path(hash);
 
-    let file = tokio::fs::File::open(&path).await.map_err(|err| {
+    let file = std::fs::File::open(&path).map_err(|err| {
       if err.kind() == io::ErrorKind::NotFound {
         server_error::FileNotFound { hash }.into_error(err)
       } else {
@@ -73,17 +73,16 @@ impl Server {
 
     let len = file
       .metadata()
-      .await
       .context(server_error::FilesystemIo { path })?
       .len();
 
-    Ok((file, len))
+    Ok((tokio::fs::File::from_std(file), len))
   }
 
-  async fn read_directory(&self, hash: Hash) -> ServerResult<Directory> {
+  fn read_directory(&self, hash: Hash) -> ServerResult<Directory> {
     let path = self.file_path(hash);
 
-    let cbor = tokio::fs::read(&path).await.map_err(|err| {
+    let cbor = std::fs::read(&path).map_err(|err| {
       if err.kind() == io::ErrorKind::NotFound {
         server_error::FileNotFound { hash }.into_error(err)
       } else {
@@ -94,16 +93,16 @@ impl Server {
     Directory::decode_from_slice(&cbor).context(server_error::DirectoryDecode { hash })
   }
 
-  pub(crate) async fn verify_directory(&self, hash: Hash) -> ServerResult {
-    let directory = self.read_directory(hash).await?;
+  pub(crate) fn verify_directory(&self, hash: Hash) -> ServerResult {
+    let directory = self.read_directory(hash)?;
 
     for entry in directory.entries.values() {
       if entry.ty == EntryType::File {
         let path = self.file_path(entry.hash);
         ensure!(
-          tokio::fs::try_exists(&path)
-            .await
-            .context(server_error::FilesystemIo { path })?,
+          path
+            .try_exists()
+            .context(server_error::FilesystemIo { path: &path })?,
           server_error::DirectoryFileMissing {
             directory: hash,
             file: entry.hash,
