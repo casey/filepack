@@ -447,6 +447,54 @@ error: failed to unarchive manifest
 }
 
 #[test]
+fn upload_package_serves_package_html() {
+  let server = Test::new().serve().spawn();
+
+  let test = Test::new()
+    .write("metadata.yaml", "title: Foo\ndescription: Bar")
+    .args(["create", "."])
+    .success();
+
+  let package = Hash::from(
+    Manifest::load(Some(&test.path().join("manifest.filepack")))
+      .unwrap()
+      .fingerprint(),
+  );
+
+  test
+    .args(["upload", "--server", &server.address(), "manifest.filepack"])
+    .success();
+
+  let response = reqwest::blocking::get(format!("{}/package/{package}", server.address())).unwrap();
+
+  assert_eq!(response.status(), StatusCode::OK);
+
+  let body = response.text().unwrap();
+
+  assert!(
+    body.contains(&format!("<h1>Package {package}</h1>")),
+    "body missing package heading: {body}"
+  );
+
+  assert!(
+    body.contains(&format!("<a href=/directory/{package}>directory</a>")),
+    "body missing directory link: {body}"
+  );
+
+  assert!(
+    body.contains("<dt>title</dt>\n      <dd>Foo</dd>"),
+    "body missing title: {body}"
+  );
+
+  assert!(
+    body.contains("<dt>description</dt>\n      <dd>Bar</dd>"),
+    "body missing description: {body}"
+  );
+
+  server.terminate().success();
+}
+
+#[test]
 fn upload_package_uploads_files() {
   let server = Test::new()
     .serve()

@@ -36,6 +36,12 @@ pub(crate) enum ServerError {
   },
   #[snafu(display("page not found"))]
   PageNotFound,
+  #[snafu(display("failed to decode metadata for package {hash}"))]
+  PackageMetadataDecode { hash: Hash, source: DecodeError },
+  #[snafu(display("package {hash} not found"))]
+  PackageNotFound { hash: Hash },
+  #[snafu(display("package {hash} root directory is unverified"))]
+  PackageUnverified { hash: Hash },
   #[snafu(display("error reading body of upload with hash {hash}"))]
   UploadBodyRead { hash: Hash, source: axum::Error },
   #[snafu(display("uploads forbidden"))]
@@ -55,6 +61,9 @@ impl ServerError {
       | Self::DirectoryNotFound { .. }
       | Self::DirectoryUnverified { .. }
       | Self::FileNotFound { .. }
+      | Self::PackageMetadataDecode { .. }
+      | Self::PackageNotFound { .. }
+      | Self::PackageUnverified { .. }
       | Self::PageNotFound
       | Self::UploadBodyRead { .. }
       | Self::UploadForbidden
@@ -82,11 +91,14 @@ impl ServerError {
       Self::DirectoryDecode { .. }
       | Self::DirectoryFileMissing { .. }
       | Self::DirectoryUnverified { .. }
+      | Self::PackageMetadataDecode { .. }
+      | Self::PackageUnverified { .. }
       | Self::UploadBodyRead { .. }
       | Self::UploadHashMismatch { .. } => StatusCode::BAD_REQUEST,
-      Self::DirectoryNotFound { .. } | Self::FileNotFound { .. } | Self::PageNotFound => {
-        StatusCode::NOT_FOUND
-      }
+      Self::DirectoryNotFound { .. }
+      | Self::FileNotFound { .. }
+      | Self::PackageNotFound { .. }
+      | Self::PageNotFound => StatusCode::NOT_FOUND,
       Self::UploadForbidden => StatusCode::FORBIDDEN,
     }
   }

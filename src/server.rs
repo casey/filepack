@@ -5,7 +5,8 @@ use {
 
 const DIRECTORIES: TableDefinition<Hash, ()> = TableDefinition::new("directories");
 const METADATA: TableDefinition<DatabaseMetadata, u64> = TableDefinition::new("metadata");
-const SCHEMA_VERSION: u64 = 0;
+const PACKAGES: TableDefinition<Hash, ()> = TableDefinition::new("packages");
+const SCHEMA_VERSION: u64 = 1;
 
 #[derive(Copy, Clone, Debug, FromRepr)]
 #[repr(u64)]
@@ -60,6 +61,28 @@ impl Server {
     Ok(files)
   }
 
+  fn metadata(&self, hash: Hash) -> ServerResult<Option<Metadata>> {
+    let directory = self.read_directory(hash)?;
+
+    let Some(entry) = directory.entries.get(Metadata::CBOR_FILENAME) else {
+      return Ok(None);
+    };
+
+    let path = self.file_path(entry.hash);
+
+    let cbor = fs::read(&path).map_err(|err| {
+      if err.kind() == io::ErrorKind::NotFound {
+        server_error::FileNotFound { hash: entry.hash }.into_error(err)
+      } else {
+        server_error::FilesystemIo { path }.into_error(err)
+      }
+    })?;
+
+    Metadata::decode_from_slice(&cbor)
+      .map(Some)
+      .context(server_error::PackageMetadataDecode { hash })
+  }
+
   pub(crate) fn open_file(&self, hash: Hash) -> ServerResult<(fs::File, u64)> {
     let path = self.file_path(hash);
 
@@ -77,6 +100,20 @@ impl Server {
       .len();
 
     Ok((file, len))
+  }
+
+  pub(crate) fn package(&self, hash: Hash) -> ServerResult<Option<Metadata>> {
+    ensure!(
+      self
+        .database
+        .begin_read()?
+        .open_table(PACKAGES)?
+        .get(&hash)?
+        .is_some(),
+      server_error::PackageNotFound { hash },
+    );
+
+    self.metadata(hash)
   }
 
   fn read_directory(&self, hash: Hash) -> ServerResult<Directory> {
@@ -136,6 +173,28 @@ impl Server {
     Ok(())
   }
 
+  pub(crate) fn verify_package(&self, hash: Hash) -> ServerResult {
+    ensure!(
+      self
+        .database
+        .begin_read()?
+        .open_table(DIRECTORIES)?
+        .get(&hash)?
+        .is_some(),
+      server_error::PackageUnverified { hash },
+    );
+
+    self.metadata(hash)?;
+
+    let tx = self.database.begin_write()?;
+
+    tx.open_table(PACKAGES)?.insert(&hash, &())?;
+
+    tx.commit()?;
+
+    Ok(())
+  }
+
   pub(crate) fn with_data_dir(data_dir: &Utf8Path) -> Result<Self> {
     let database = Database::create(data_dir.join("database.redb"))?;
 
@@ -147,6 +206,7 @@ impl Server {
           .insert(DatabaseMetadata::Schema, &SCHEMA_VERSION)?;
 
         tx.open_table(DIRECTORIES)?;
+        tx.open_table(PACKAGES)?;
       }
 
       tx.commit()?;

@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang=en>
+  <head>
+    <meta charset=utf-8>
+    <meta name=viewport content='width=device-width,initial-scale=1.0'>
+    <title>package {{ self.hash }} · filepack</title>
+    <meta name=description content='Filepack package server'>
+  </head>
+  <body>
+    <h1>Package {{ self.hash }}</h1>
+    <p><a href=/directory/{{ self.hash }}>directory</a></p>
+%% if let Some(metadata) = &self.metadata {
+    <h2>Metadata</h2>
+    <dl>
+%%   if let Some(title) = &metadata.title {
+      <dt>title</dt>
+      <dd>{{ title }}</dd>
+%%   }
+%%   if let Some(creator) = &metadata.creator {
+      <dt>creator</dt>
+      <dd>{{ creator }}</dd>
+%%   }
+%%   if let Some(date) = &metadata.date {
+      <dt>date</dt>
+      <dd>{{ date }}</dd>
+%%   }
+%%   if let Some(description) = &metadata.description {
+      <dt>description</dt>
+      <dd>{{ description }}</dd>
+%%   }
+%%   if let Some(homepage) = &metadata.homepage {
+      <dt>homepage</dt>
+      <dd><a href={{ homepage }}>{{ homepage }}</a></dd>
+%%   }
+    </dl>
+%% }
+  </body>
+</html>
