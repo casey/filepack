@@ -4,8 +4,11 @@ use {
     body,
     http::{Method, Request, header::HeaderName},
   },
+  tokio::runtime::Runtime,
   tower::ServiceExt,
 };
+
+static RUNTIME: LazyLock<Runtime> = LazyLock::new(|| Runtime::new().unwrap());
 
 struct TestRequestBuilder {
   body: Option<String>,
@@ -69,42 +72,44 @@ impl TestRequestBuilder {
     }
   }
 
-  async fn send(self) {
-    let mut request = Request::builder().method(self.method).uri(self.path);
+  fn send(self) {
+    RUNTIME.block_on(async move {
+      let mut request = Request::builder().method(self.method).uri(self.path);
 
-    if let Some(token) = self.token {
-      request = request.header(header::AUTHORIZATION, format!("Bearer {token}"));
-    }
+      if let Some(token) = self.token {
+        request = request.header(header::AUTHORIZATION, format!("Bearer {token}"));
+      }
 
-    let response = self
-      .router
-      .oneshot(
-        request
-          .body(if let Some(body) = self.body {
-            Body::from(body)
-          } else {
-            Body::empty()
-          })
-          .unwrap(),
-      )
-      .await
-      .unwrap();
+      let response = self
+        .router
+        .oneshot(
+          request
+            .body(if let Some(body) = self.body {
+              Body::from(body)
+            } else {
+              Body::empty()
+            })
+            .unwrap(),
+        )
+        .await
+        .unwrap();
 
-    assert_eq!(response.status(), self.status);
+      assert_eq!(response.status(), self.status);
 
-    let headers = response.headers();
+      let headers = response.headers();
 
-    for (name, value) in self.response_headers {
-      assert_eq!(headers[name], value);
-    }
+      for (name, value) in self.response_headers {
+        assert_eq!(headers[name], value);
+      }
 
-    let body = body::to_bytes(response.into_body(), usize::MAX)
-      .await
-      .unwrap();
-    let expected = body::to_bytes(self.response_body, usize::MAX)
-      .await
-      .unwrap();
-    assert_eq!(body, expected);
+      let body = body::to_bytes(response.into_body(), usize::MAX)
+        .await
+        .unwrap();
+      let expected = body::to_bytes(self.response_body, usize::MAX)
+        .await
+        .unwrap();
+      assert_eq!(body, expected);
+    });
   }
 
   fn status(mut self, status: StatusCode) -> Self {
@@ -190,8 +195,8 @@ fn admin_key_requires_restrict_upload() {
   assert_eq!(err.kind(), clap::error::ErrorKind::MissingRequiredArgument);
 }
 
-#[tokio::test(flavor = "multi_thread")]
-async fn closed_server_forbids_uploads() {
+#[test]
+fn closed_server_forbids_uploads() {
   TestServer::with_auth(Some(Arc::new(AuthConfig {
     admin: None,
     audiences: Vec::new(),
@@ -200,8 +205,7 @@ async fn closed_server_forbids_uploads() {
   .body("bar")
   .status(StatusCode::FORBIDDEN)
   .assert_body("uploads forbidden")
-  .send()
-  .await;
+  .send();
 }
 
 #[test]
@@ -252,8 +256,8 @@ fn domain_flag_is_respected() {
   );
 }
 
-#[tokio::test(flavor = "multi_thread")]
-async fn download_response() {
+#[test]
+fn download_response() {
   let server = TestServer::new();
 
   let hash = Hash::bytes(b"bar");
@@ -268,40 +272,36 @@ async fn download_response() {
     .assert_header(header::CONTENT_TYPE, "application/octet-stream")
     .assert_header(header::ETAG, format!("\"{hash}\""))
     .assert_body("bar")
-    .send()
-    .await;
+    .send();
 }
 
-#[tokio::test(flavor = "multi_thread")]
-async fn fallback() {
+#[test]
+fn fallback() {
   TestServer::new()
     .get("/nonexistent")
     .assert_static("404.html")
     .status(StatusCode::NOT_FOUND)
-    .send()
-    .await;
+    .send();
 }
 
-#[tokio::test(flavor = "multi_thread")]
-async fn favicon() {
+#[test]
+fn favicon() {
   TestServer::new()
     .get("/favicon.ico")
     .assert_static("favicon.png")
-    .send()
-    .await;
+    .send();
 }
 
-#[tokio::test(flavor = "multi_thread")]
-async fn files_empty() {
+#[test]
+fn files_empty() {
   TestServer::new()
     .get("/files")
     .assert_response(FilesHtml { files: Vec::new() })
-    .send()
-    .await;
+    .send();
 }
 
-#[tokio::test(flavor = "multi_thread")]
-async fn files_non_empty() {
+#[test]
+fn files_non_empty() {
   let server = TestServer::new();
 
   let foo = b"foo";
@@ -320,12 +320,11 @@ async fn files_non_empty() {
   server
     .get("/files")
     .assert_response(FilesHtml { files })
-    .send()
-    .await;
+    .send();
 }
 
-#[tokio::test(flavor = "multi_thread")]
-async fn get_directory_not_found() {
+#[test]
+fn get_directory_not_found() {
   let server = TestServer::new();
 
   let cbor = directory(&[]).encode_to_vec();
@@ -336,12 +335,11 @@ async fn get_directory_not_found() {
     .get(format!("/directory/{hash}"))
     .status(StatusCode::NOT_FOUND)
     .assert_body(format!("directory {hash} not found"))
-    .send()
-    .await;
+    .send();
 }
 
-#[tokio::test(flavor = "multi_thread")]
-async fn get_directory_succeeds() {
+#[test]
+fn get_directory_succeeds() {
   let server = TestServer::new();
 
   let dir = directory(&[]);
@@ -349,7 +347,7 @@ async fn get_directory_succeeds() {
   let hash = Hash::bytes(&cbor);
   server.write_file(&cbor);
 
-  server.post(format!("/directory/{hash}")).send().await;
+  server.post(format!("/directory/{hash}")).send();
 
   server
     .get(format!("/directory/{hash}"))
@@ -357,26 +355,23 @@ async fn get_directory_succeeds() {
       directory: dir,
       hash,
     })
-    .send()
-    .await;
+    .send();
 }
 
-#[tokio::test(flavor = "multi_thread")]
-async fn home() {
+#[test]
+fn home() {
   TestServer::new()
     .get("/")
     .assert_static("index.html")
-    .send()
-    .await;
+    .send();
 }
 
-#[tokio::test(flavor = "multi_thread")]
-async fn install_script() {
+#[test]
+fn install_script() {
   TestServer::new()
     .get("/install.sh")
     .assert_static("install.sh")
-    .send()
-    .await;
+    .send();
 }
 
 #[test]
@@ -443,12 +438,14 @@ fn redirect_destination() {
   );
 }
 
-#[tokio::test(flavor = "multi_thread")]
-async fn redirect_http_to_https() {
-  async fn case(path: &str, location: &str) {
-    let response = Serve::redirect_router("https://foo".into())
-      .oneshot(Request::builder().uri(path).body(Body::empty()).unwrap())
-      .await
+#[test]
+fn redirect_http_to_https() {
+  fn case(path: &str, location: &str) {
+    let response = RUNTIME
+      .block_on(
+        Serve::redirect_router("https://foo".into())
+          .oneshot(Request::builder().uri(path).body(Body::empty()).unwrap()),
+      )
       .unwrap();
 
     assert_eq!(response.status(), StatusCode::SEE_OTHER);
@@ -459,13 +456,13 @@ async fn redirect_http_to_https() {
     );
   }
 
-  case("/", "https://foo/").await;
-  case("/bar", "https://foo/bar").await;
-  case("/bar?baz=qux", "https://foo/bar?baz=qux").await;
+  case("/", "https://foo/");
+  case("/bar", "https://foo/bar");
+  case("/bar?baz=qux", "https://foo/bar?baz=qux");
 }
 
-#[tokio::test(flavor = "multi_thread")]
-async fn restricted_upload_accepts_admin_token() {
+#[test]
+fn restricted_upload_accepts_admin_token() {
   let admin = PrivateKey::generate();
   let hash = Hash::bytes(b"bar");
   let token = Token::encode(&admin, "filepack.example").unwrap();
@@ -479,14 +476,13 @@ async fn restricted_upload_accepts_admin_token() {
     .put(format!("/file/{hash}"))
     .body("bar")
     .token(token)
-    .send()
-    .await;
+    .send();
 
   server.assert_file(hash);
 }
 
-#[tokio::test(flavor = "multi_thread")]
-async fn restricted_upload_rejects_missing_header() {
+#[test]
+fn restricted_upload_rejects_missing_header() {
   let admin = PrivateKey::generate();
   let server = TestServer::with_auth(Some(Arc::new(AuthConfig {
     admin: Some(admin.public_key()),
@@ -500,12 +496,11 @@ async fn restricted_upload_rejects_missing_header() {
     .body("bar")
     .status(StatusCode::UNAUTHORIZED)
     .assert_body("missing authorization header")
-    .send()
-    .await;
+    .send();
 }
 
-#[tokio::test(flavor = "multi_thread")]
-async fn restricted_upload_rejects_others() {
+#[test]
+fn restricted_upload_rejects_others() {
   let admin = PrivateKey::generate();
   let other = PrivateKey::generate();
   let server = TestServer::with_auth(Some(Arc::new(AuthConfig {
@@ -522,49 +517,47 @@ async fn restricted_upload_rejects_others() {
     .token(token)
     .status(StatusCode::UNAUTHORIZED)
     .assert_body("invalid authorization token")
-    .send()
-    .await;
+    .send();
 }
 
-#[tokio::test(flavor = "multi_thread")]
-async fn static_files() {
+#[test]
+fn static_files() {
   TestServer::new()
     .get("/static/index.css")
     .assert_static("index.css")
-    .send()
-    .await;
+    .send();
 }
 
-#[tokio::test(flavor = "multi_thread")]
-async fn upload_creates_file() {
+#[test]
+fn upload_creates_file() {
   let server = TestServer::new();
 
   let hash = Hash::bytes(b"bar");
 
-  server.put(format!("/file/{hash}")).body("bar").send().await;
+  server.put(format!("/file/{hash}")).body("bar").send();
 
   server.assert_file(hash);
 
   server.assert_incoming_empty();
 }
 
-#[tokio::test(flavor = "multi_thread")]
-async fn upload_short_circuits_when_file_exists() {
+#[test]
+fn upload_short_circuits_when_file_exists() {
   let server = TestServer::new();
 
   let hash = Hash::bytes(b"bar");
 
   server.write_file(b"bar");
 
-  server.put(format!("/file/{hash}")).body("bar").send().await;
+  server.put(format!("/file/{hash}")).body("bar").send();
 
   server.assert_file(hash);
 
   server.assert_incoming_empty();
 }
 
-#[tokio::test(flavor = "multi_thread")]
-async fn upload_with_wrong_hash_fails() {
+#[test]
+fn upload_with_wrong_hash_fails() {
   let server = TestServer::new();
 
   let actual = Hash::bytes(b"bar");
@@ -577,14 +570,13 @@ async fn upload_with_wrong_hash_fails() {
     .assert_body(format!(
       "expected upload with hash {expected} but got {actual}"
     ))
-    .send()
-    .await;
+    .send();
 
   server.assert_incoming_empty();
 }
 
-#[tokio::test(flavor = "multi_thread")]
-async fn verify_directory_decode_error() {
+#[test]
+fn verify_directory_decode_error() {
   let server = TestServer::new();
 
   let junk = b"junk";
@@ -595,12 +587,11 @@ async fn verify_directory_decode_error() {
     .post(format!("/directory/{hash}"))
     .status(StatusCode::BAD_REQUEST)
     .assert_body(format!("failed to decode directory {hash}"))
-    .send()
-    .await;
+    .send();
 }
 
-#[tokio::test(flavor = "multi_thread")]
-async fn verify_directory_file_not_found() {
+#[test]
+fn verify_directory_file_not_found() {
   let server = TestServer::new();
 
   let hash = Hash::bytes(b"foo");
@@ -609,12 +600,11 @@ async fn verify_directory_file_not_found() {
     .post(format!("/directory/{hash}"))
     .status(StatusCode::NOT_FOUND)
     .assert_body(format!("file with hash {hash} not found"))
-    .send()
-    .await;
+    .send();
 }
 
-#[tokio::test(flavor = "multi_thread")]
-async fn verify_directory_idempotent() {
+#[test]
+fn verify_directory_idempotent() {
   let server = TestServer::new();
 
   let dir = directory(&[]);
@@ -622,8 +612,8 @@ async fn verify_directory_idempotent() {
   let hash = Hash::bytes(&cbor);
   server.write_file(&cbor);
 
-  server.post(format!("/directory/{hash}")).send().await;
-  server.post(format!("/directory/{hash}")).send().await;
+  server.post(format!("/directory/{hash}")).send();
+  server.post(format!("/directory/{hash}")).send();
 
   server
     .get(format!("/directory/{hash}"))
@@ -631,12 +621,11 @@ async fn verify_directory_idempotent() {
       directory: dir,
       hash,
     })
-    .send()
-    .await;
+    .send();
 }
 
-#[tokio::test(flavor = "multi_thread")]
-async fn verify_directory_missing_file() {
+#[test]
+fn verify_directory_missing_file() {
   let server = TestServer::new();
 
   let missing = Hash::bytes(b"foo");
@@ -650,12 +639,11 @@ async fn verify_directory_missing_file() {
     .assert_body(format!(
       "directory {hash} references missing file {missing}"
     ))
-    .send()
-    .await;
+    .send();
 }
 
-#[tokio::test(flavor = "multi_thread")]
-async fn verify_directory_rejects_missing_auth_header() {
+#[test]
+fn verify_directory_rejects_missing_auth_header() {
   let admin = PrivateKey::generate();
   let server = TestServer::with_auth(Some(Arc::new(AuthConfig {
     admin: Some(admin.public_key()),
@@ -668,12 +656,11 @@ async fn verify_directory_rejects_missing_auth_header() {
     .post(format!("/directory/{hash}"))
     .status(StatusCode::UNAUTHORIZED)
     .assert_body("missing authorization header")
-    .send()
-    .await;
+    .send();
 }
 
-#[tokio::test(flavor = "multi_thread")]
-async fn verify_directory_succeeds() {
+#[test]
+fn verify_directory_succeeds() {
   let server = TestServer::new();
 
   let file = b"foo";
@@ -685,7 +672,7 @@ async fn verify_directory_succeeds() {
   let child_hash = Hash::bytes(&child_cbor);
   server.write_file(&child_cbor);
 
-  server.post(format!("/directory/{child_hash}")).send().await;
+  server.post(format!("/directory/{child_hash}")).send();
 
   server
     .get(format!("/directory/{child_hash}"))
@@ -693,8 +680,7 @@ async fn verify_directory_succeeds() {
       directory: child,
       hash: child_hash,
     })
-    .send()
-    .await;
+    .send();
 
   let parent = directory(&[(
     "child",
@@ -706,10 +692,7 @@ async fn verify_directory_succeeds() {
   let parent_hash = Hash::bytes(&parent_cbor);
   server.write_file(&parent_cbor);
 
-  server
-    .post(format!("/directory/{parent_hash}"))
-    .send()
-    .await;
+  server.post(format!("/directory/{parent_hash}")).send();
 
   server
     .get(format!("/directory/{parent_hash}"))
@@ -717,12 +700,11 @@ async fn verify_directory_succeeds() {
       directory: parent,
       hash: parent_hash,
     })
-    .send()
-    .await;
+    .send();
 }
 
-#[tokio::test(flavor = "multi_thread")]
-async fn verify_directory_unverified_subdirectory() {
+#[test]
+fn verify_directory_unverified_subdirectory() {
   let server = TestServer::new();
 
   let child_cbor = directory(&[]).encode_to_vec();
@@ -745,6 +727,5 @@ async fn verify_directory_unverified_subdirectory() {
     .assert_body(format!(
       "directory {parent_hash} references unverified subdirectory {child_hash}"
     ))
-    .send()
-    .await;
+    .send();
 }
