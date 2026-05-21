@@ -658,25 +658,43 @@ async fn verify_directory_succeeds() {
   let file_hash = Hash::bytes(file);
   server.write_file(file);
 
-  let child_cbor =
-    directory(&[("foo", EntryType::File, file_hash, file.len() as u64)]).encode_to_vec();
+  let child = directory(&[("foo", EntryType::File, file_hash, file.len() as u64)]);
+  let child_cbor = child.encode_to_vec();
   let child_hash = Hash::bytes(&child_cbor);
   server.write_file(&child_cbor);
 
   server.post(format!("/directory/{child_hash}")).send().await;
 
-  let parent_cbor = directory(&[(
+  server
+    .get(format!("/directory/{child_hash}"))
+    .assert_response(DirectoryHtml {
+      directory: child,
+      hash: child_hash,
+    })
+    .send()
+    .await;
+
+  let parent = directory(&[(
     "child",
     EntryType::Directory,
     child_hash,
     child_cbor.len() as u64,
-  )])
-  .encode_to_vec();
+  )]);
+  let parent_cbor = parent.encode_to_vec();
   let parent_hash = Hash::bytes(&parent_cbor);
   server.write_file(&parent_cbor);
 
   server
     .post(format!("/directory/{parent_hash}"))
+    .send()
+    .await;
+
+  server
+    .get(format!("/directory/{parent_hash}"))
+    .assert_response(DirectoryHtml {
+      directory: parent,
+      hash: parent_hash,
+    })
     .send()
     .await;
 }
