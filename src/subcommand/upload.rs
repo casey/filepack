@@ -66,12 +66,12 @@ impl Upload {
 
   fn upload_directory(
     &self,
-    archive_path: &Utf8Path,
     archive: &Archive,
+    archive_path: &Utf8Path,
+    file_path: &Utf8Path,
     hash: Hash,
-    path: &Utf8Path,
-    options: &Options,
     key: Option<&PrivateKey>,
+    options: &Options,
   ) -> Result {
     let context = error::UnarchiveManifest { path: archive_path };
 
@@ -84,12 +84,12 @@ impl Upload {
     self.upload_body(hash, cbor.to_vec().into(), key)?;
 
     for (component, entry) in &directory.entries {
-      let child_path = path.join(component);
+      let file_path = file_path.join(component);
       match entry.ty {
         EntryType::Directory => {
-          self.upload_directory(archive_path, archive, entry.hash, &child_path, options, key)?;
+          self.upload_directory(archive, archive_path, &file_path, entry.hash, key, options)?
         }
-        EntryType::File => self.upload_package_file(&child_path, entry, options, key)?,
+        EntryType::File => self.upload_package_file(entry, key, options, &file_path)?,
       }
     }
 
@@ -124,12 +124,12 @@ impl Upload {
       .context(error::UnarchiveManifest { path: archive_path })?;
 
     self.upload_directory(
-      archive_path,
       &archive,
-      fingerprint.into(),
+      archive_path,
       archive_path.parent().unwrap(),
-      options,
+      fingerprint.into(),
       key,
+      options,
     )?;
 
     Ok(())
@@ -137,10 +137,10 @@ impl Upload {
 
   fn upload_package_file(
     &self,
-    path: &Utf8Path,
     expected: &Entry,
-    options: &Options,
     key: Option<&PrivateKey>,
+    options: &Options,
+    path: &Utf8Path,
   ) -> Result {
     let actual = options
       .hash_file(path)

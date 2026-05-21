@@ -216,7 +216,7 @@ fn upload_auth_requires_https() {
       "--file",
       "foo",
     ])
-    .stderr("error: cannot use authentication with non-HTTPS server `http://example.com/`\n")
+    .stderr("error: authentication tokens may only be used with HTTPS or loopback server\n")
     .failure();
 }
 
