@@ -7,15 +7,6 @@ use {
   tower::ServiceExt,
 };
 
-// todo:
-// - we need packages
-// - either a file in /packages/<HASH> (can be empty) or a database entry
-// - does it verify anything?
-//   - directory deserializes, recursively
-//   - metadata deserializes
-//   - all file hashes are present
-//   - database could hold which files are valid directories and have all files present so we don't have to re-verify
-
 struct TestRequestBuilder {
   body: Option<String>,
   method: &'static str,
