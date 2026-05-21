@@ -2,14 +2,14 @@ use {
   super::*,
   axum::{
     body,
-    http::{Request, header::HeaderName},
+    http::{Method, Request, header::HeaderName},
   },
   tower::ServiceExt,
 };
 
 struct TestRequestBuilder {
   body: Option<String>,
-  method: &'static str,
+  method: Method,
   path: String,
   response_body: Body,
   response_headers: BTreeMap<String, String>,
@@ -53,7 +53,7 @@ impl TestRequestBuilder {
     self
   }
 
-  fn new(method: &'static str, path: impl Into<String>, router: Router) -> Self {
+  fn new(method: Method, path: impl Into<String>, router: Router) -> Self {
     Self {
       body: None,
       method,
@@ -143,7 +143,7 @@ impl TestServer {
   }
 
   fn get(&self, path: impl Into<String>) -> TestRequestBuilder {
-    TestRequestBuilder::new("GET", path, self.router.clone())
+    TestRequestBuilder::new(Method::GET, path, self.router.clone())
   }
 
   fn new() -> Self {
@@ -151,11 +151,11 @@ impl TestServer {
   }
 
   fn post(&self, path: impl Into<String>) -> TestRequestBuilder {
-    TestRequestBuilder::new("POST", path, self.router.clone())
+    TestRequestBuilder::new(Method::POST, path, self.router.clone())
   }
 
   fn put(&self, path: impl Into<String>) -> TestRequestBuilder {
-    TestRequestBuilder::new("PUT", path, self.router.clone())
+    TestRequestBuilder::new(Method::PUT, path, self.router.clone())
   }
 
   fn with_auth(auth_config: Option<Arc<AuthConfig>>) -> Self {
