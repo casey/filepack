@@ -135,16 +135,16 @@ impl Server {
 
       tx.commit()?;
     } else {
-      let schema_version = tx
+      let actual = tx
         .open_table(METADATA)?
         .get(DatabaseMetadata::Schema)?
         .context(error::DatabaseSchemaVersionMissing)?
         .value();
 
       ensure!(
-        schema_version == SCHEMA_VERSION,
+        actual == SCHEMA_VERSION,
         error::DatabaseSchemaVersionMismatch {
-          actual: schema_version,
+          actual,
           expected: SCHEMA_VERSION,
         },
       );
