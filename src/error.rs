@@ -73,7 +73,7 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     expected: u64,
   },
-  #[snafu(display("database is missing schema version"))]
+  #[snafu(display("database schema version missing"))]
   DatabaseSchemaVersionMissing { backtrace: Option<Backtrace> },
   #[snafu(display("failed to decode manifest at `{path}`"))]
   DecodeManifest {
