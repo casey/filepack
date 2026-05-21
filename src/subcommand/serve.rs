@@ -163,7 +163,9 @@ impl Serve {
         .header(header::CONTENT_SECURITY_POLICY, "sandbox")
         .header(header::CONTENT_TYPE, "application/octet-stream")
         .header(header::ETAG, format!("\"{hash}\""))
-        .body(Body::from_stream(ReaderStream::new(file)))
+        .body(Body::from_stream(ReaderStream::new(
+          tokio::fs::File::from_std(file),
+        )))
         .unwrap(),
     )
   }

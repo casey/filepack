@@ -60,7 +60,7 @@ impl Server {
     Ok(files)
   }
 
-  pub(crate) fn open_file(&self, hash: Hash) -> ServerResult<(tokio::fs::File, u64)> {
+  pub(crate) fn open_file(&self, hash: Hash) -> ServerResult<(fs::File, u64)> {
     let path = self.file_path(hash);
 
     let file = fs::File::open(&path).map_err(|err| {
@@ -76,7 +76,7 @@ impl Server {
       .context(server_error::FilesystemIo { path })?
       .len();
 
-    Ok((tokio::fs::File::from_std(file), len))
+    Ok((file, len))
   }
 
   fn read_directory(&self, hash: Hash) -> ServerResult<Directory> {
