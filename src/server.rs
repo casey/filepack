@@ -43,7 +43,7 @@ impl Server {
 
     let mut files = Vec::new();
 
-    for entry in std::fs::read_dir(&self.files).context(context)? {
+    for entry in fs::read_dir(&self.files).context(context)? {
       let entry = entry.context(context)?;
 
       let Ok(name) = entry.file_name().into_string() else {
@@ -63,7 +63,7 @@ impl Server {
   pub(crate) fn open_file(&self, hash: Hash) -> ServerResult<(tokio::fs::File, u64)> {
     let path = self.file_path(hash);
 
-    let file = std::fs::File::open(&path).map_err(|err| {
+    let file = fs::File::open(&path).map_err(|err| {
       if err.kind() == io::ErrorKind::NotFound {
         server_error::FileNotFound { hash }.into_error(err)
       } else {
@@ -82,7 +82,7 @@ impl Server {
   fn read_directory(&self, hash: Hash) -> ServerResult<Directory> {
     let path = self.file_path(hash);
 
-    let cbor = std::fs::read(&path).map_err(|err| {
+    let cbor = fs::read(&path).map_err(|err| {
       if err.kind() == io::ErrorKind::NotFound {
         server_error::FileNotFound { hash }.into_error(err)
       } else {
