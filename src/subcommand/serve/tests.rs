@@ -190,7 +190,7 @@ fn admin_key_requires_restrict_upload() {
   assert_eq!(err.kind(), clap::error::ErrorKind::MissingRequiredArgument);
 }
 
-#[tokio::test]
+#[tokio::test(flavor = "multi_thread")]
 async fn closed_server_forbids_uploads() {
   TestServer::with_auth(Some(Arc::new(AuthConfig {
     admin: None,
@@ -252,7 +252,7 @@ fn domain_flag_is_respected() {
   );
 }
 
-#[tokio::test]
+#[tokio::test(flavor = "multi_thread")]
 async fn download_response() {
   let server = TestServer::new();
 
@@ -272,7 +272,7 @@ async fn download_response() {
     .await;
 }
 
-#[tokio::test]
+#[tokio::test(flavor = "multi_thread")]
 async fn fallback() {
   TestServer::new()
     .get("/nonexistent")
@@ -282,7 +282,7 @@ async fn fallback() {
     .await;
 }
 
-#[tokio::test]
+#[tokio::test(flavor = "multi_thread")]
 async fn favicon() {
   TestServer::new()
     .get("/favicon.ico")
@@ -291,7 +291,7 @@ async fn favicon() {
     .await;
 }
 
-#[tokio::test]
+#[tokio::test(flavor = "multi_thread")]
 async fn files_empty() {
   TestServer::new()
     .get("/files")
@@ -300,7 +300,7 @@ async fn files_empty() {
     .await;
 }
 
-#[tokio::test]
+#[tokio::test(flavor = "multi_thread")]
 async fn files_non_empty() {
   let server = TestServer::new();
 
@@ -324,7 +324,7 @@ async fn files_non_empty() {
     .await;
 }
 
-#[tokio::test]
+#[tokio::test(flavor = "multi_thread")]
 async fn get_directory_not_found() {
   let server = TestServer::new();
 
@@ -340,7 +340,7 @@ async fn get_directory_not_found() {
     .await;
 }
 
-#[tokio::test]
+#[tokio::test(flavor = "multi_thread")]
 async fn get_directory_succeeds() {
   let server = TestServer::new();
 
@@ -361,7 +361,7 @@ async fn get_directory_succeeds() {
     .await;
 }
 
-#[tokio::test]
+#[tokio::test(flavor = "multi_thread")]
 async fn home() {
   TestServer::new()
     .get("/")
@@ -370,7 +370,7 @@ async fn home() {
     .await;
 }
 
-#[tokio::test]
+#[tokio::test(flavor = "multi_thread")]
 async fn install_script() {
   TestServer::new()
     .get("/install.sh")
@@ -443,7 +443,7 @@ fn redirect_destination() {
   );
 }
 
-#[tokio::test]
+#[tokio::test(flavor = "multi_thread")]
 async fn redirect_http_to_https() {
   async fn case(path: &str, location: &str) {
     let response = Serve::redirect_router("https://foo".into())
@@ -464,7 +464,7 @@ async fn redirect_http_to_https() {
   case("/bar?baz=qux", "https://foo/bar?baz=qux").await;
 }
 
-#[tokio::test]
+#[tokio::test(flavor = "multi_thread")]
 async fn restricted_upload_accepts_admin_token() {
   let admin = PrivateKey::generate();
   let hash = Hash::bytes(b"bar");
@@ -485,7 +485,7 @@ async fn restricted_upload_accepts_admin_token() {
   server.assert_file(hash);
 }
 
-#[tokio::test]
+#[tokio::test(flavor = "multi_thread")]
 async fn restricted_upload_rejects_missing_header() {
   let admin = PrivateKey::generate();
   let server = TestServer::with_auth(Some(Arc::new(AuthConfig {
@@ -504,7 +504,7 @@ async fn restricted_upload_rejects_missing_header() {
     .await;
 }
 
-#[tokio::test]
+#[tokio::test(flavor = "multi_thread")]
 async fn restricted_upload_rejects_others() {
   let admin = PrivateKey::generate();
   let other = PrivateKey::generate();
@@ -526,7 +526,7 @@ async fn restricted_upload_rejects_others() {
     .await;
 }
 
-#[tokio::test]
+#[tokio::test(flavor = "multi_thread")]
 async fn static_files() {
   TestServer::new()
     .get("/static/index.css")
@@ -535,7 +535,7 @@ async fn static_files() {
     .await;
 }
 
-#[tokio::test]
+#[tokio::test(flavor = "multi_thread")]
 async fn upload_creates_file() {
   let server = TestServer::new();
 
@@ -548,7 +548,7 @@ async fn upload_creates_file() {
   server.assert_incoming_empty();
 }
 
-#[tokio::test]
+#[tokio::test(flavor = "multi_thread")]
 async fn upload_short_circuits_when_file_exists() {
   let server = TestServer::new();
 
@@ -563,7 +563,7 @@ async fn upload_short_circuits_when_file_exists() {
   server.assert_incoming_empty();
 }
 
-#[tokio::test]
+#[tokio::test(flavor = "multi_thread")]
 async fn upload_with_wrong_hash_fails() {
   let server = TestServer::new();
 
@@ -583,7 +583,7 @@ async fn upload_with_wrong_hash_fails() {
   server.assert_incoming_empty();
 }
 
-#[tokio::test]
+#[tokio::test(flavor = "multi_thread")]
 async fn verify_directory_decode_error() {
   let server = TestServer::new();
 
@@ -599,7 +599,7 @@ async fn verify_directory_decode_error() {
     .await;
 }
 
-#[tokio::test]
+#[tokio::test(flavor = "multi_thread")]
 async fn verify_directory_file_not_found() {
   let server = TestServer::new();
 
@@ -613,7 +613,7 @@ async fn verify_directory_file_not_found() {
     .await;
 }
 
-#[tokio::test]
+#[tokio::test(flavor = "multi_thread")]
 async fn verify_directory_idempotent() {
   let server = TestServer::new();
 
@@ -635,7 +635,7 @@ async fn verify_directory_idempotent() {
     .await;
 }
 
-#[tokio::test]
+#[tokio::test(flavor = "multi_thread")]
 async fn verify_directory_missing_file() {
   let server = TestServer::new();
 
@@ -654,7 +654,7 @@ async fn verify_directory_missing_file() {
     .await;
 }
 
-#[tokio::test]
+#[tokio::test(flavor = "multi_thread")]
 async fn verify_directory_rejects_missing_auth_header() {
   let admin = PrivateKey::generate();
   let server = TestServer::with_auth(Some(Arc::new(AuthConfig {
@@ -672,7 +672,7 @@ async fn verify_directory_rejects_missing_auth_header() {
     .await;
 }
 
-#[tokio::test]
+#[tokio::test(flavor = "multi_thread")]
 async fn verify_directory_succeeds() {
   let server = TestServer::new();
 
@@ -721,7 +721,7 @@ async fn verify_directory_succeeds() {
     .await;
 }
 
-#[tokio::test]
+#[tokio::test(flavor = "multi_thread")]
 async fn verify_directory_unverified_subdirectory() {
   let server = TestServer::new();
 

@@ -14,7 +14,7 @@ use {
   std::net::TcpStream,
   sysinfo::System,
   templates::{DirectoryHtml, FilesHtml},
-  tokio::{net::TcpListener, runtime},
+  tokio::{net::TcpListener, runtime, task::block_in_place},
   tokio_util::io::ReaderStream,
   tower_http::set_header::SetResponseHeaderLayer,
 };
@@ -139,7 +139,7 @@ impl Serve {
     Path(hash): Path<Hash>,
   ) -> ServerResult<DirectoryHtml> {
     Ok(DirectoryHtml {
-      directory: server.directory(hash).await?,
+      directory: block_in_place(|| server.directory(hash))?,
       hash,
     })
   }
@@ -153,7 +153,7 @@ impl Serve {
   }
 
   async fn download(server: ServerExtension, Path(hash): Path<Hash>) -> ServerResult<Response> {
-    let (file, len) = server.open_file(hash).await?;
+    let (file, len) = block_in_place(|| server.open_file(hash))?;
 
     Ok(
       Response::builder()
@@ -163,7 +163,9 @@ impl Serve {
         .header(header::CONTENT_SECURITY_POLICY, "sandbox")
         .header(header::CONTENT_TYPE, "application/octet-stream")
         .header(header::ETAG, format!("\"{hash}\""))
-        .body(Body::from_stream(ReaderStream::new(file)))
+        .body(Body::from_stream(ReaderStream::new(
+          tokio::fs::File::from_std(file),
+        )))
         .unwrap(),
     )
   }
@@ -178,7 +180,7 @@ impl Serve {
 
   async fn files(server: ServerExtension) -> ServerResult<FilesHtml> {
     Ok(FilesHtml {
-      files: server.files().await?,
+      files: block_in_place(|| server.files())?,
     })
   }
 
@@ -455,7 +457,7 @@ impl Serve {
     server: ServerExtension,
     hash: Path<Hash>,
   ) -> ServerResult {
-    server.verify_directory(*hash).await
+    block_in_place(|| server.verify_directory(*hash))
   }
 }
 
