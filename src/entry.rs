@@ -2,13 +2,13 @@ use super::*;
 
 #[allow(clippy::arbitrary_source_item_ordering)]
 #[derive(Debug, Encode, Decode, PartialEq)]
-pub(crate) struct Entry {
+pub struct Entry {
   #[n(0)]
-  pub(crate) ty: EntryType,
+  pub ty: EntryType,
   #[n(1)]
-  pub(crate) hash: Hash,
+  pub hash: Hash,
   #[n(2)]
-  pub(crate) size: u64,
+  pub size: u64,
 }
 
 #[cfg(test)]

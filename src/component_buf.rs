@@ -1,7 +1,7 @@
 use super::*;
 
 #[derive(Clone, Debug, DeserializeFromStr, Eq, Ord, PartialEq, PartialOrd, SerializeDisplay)]
-pub(crate) struct ComponentBuf(String);
+pub struct ComponentBuf(String);
 
 impl ComponentBuf {
   pub(crate) fn from_component(component: &Component) -> Self {

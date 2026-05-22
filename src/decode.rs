@@ -1,6 +1,6 @@
 use super::*;
 
-pub(crate) trait Decode: Sized {
+pub trait Decode: Sized {
   fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError>;
 
   fn decode_from_slice(buffer: &[u8]) -> Result<Self, DecodeError> {

@@ -2,11 +2,11 @@ use super::*;
 
 #[allow(clippy::arbitrary_source_item_ordering)]
 #[derive(Debug, Default, Encode, Decode, PartialEq)]
-pub(crate) struct Directory {
+pub struct Directory {
   #[n(0)]
-  pub(crate) version: Version,
+  pub version: Version,
   #[n(1)]
-  pub(crate) entries: BTreeMap<ComponentBuf, Entry>,
+  pub entries: BTreeMap<ComponentBuf, Entry>,
 }
 
 #[cfg(test)]

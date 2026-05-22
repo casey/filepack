@@ -1,26 +1,27 @@
 use super::*;
 
+#[allow(private_interfaces)]
 #[skip_serializing_none]
-#[derive(Clone, Debug, Deserialize, Encode, Decode, PartialEq, Serialize)]
-pub(crate) struct Metadata {
+#[derive(Clone, Debug, Default, Deserialize, Encode, Decode, PartialEq, Serialize)]
+pub struct Metadata {
   #[n(0)]
-  pub(crate) artwork: Option<filename::Png>,
+  pub artwork: Option<filename::Png>,
   #[n(1)]
-  pub(crate) creator: Option<ComponentBuf>,
+  pub creator: Option<ComponentBuf>,
   #[n(2)]
-  pub(crate) date: Option<DateTime>,
+  pub date: Option<DateTime>,
   #[n(3)]
-  pub(crate) description: Option<String>,
+  pub description: Option<String>,
   #[n(4)]
-  pub(crate) homepage: Option<CheckedUrl>,
+  pub homepage: Option<CheckedUrl>,
   #[n(5)]
-  pub(crate) language: Option<Language>,
+  pub language: Option<Language>,
   #[n(6)]
-  pub(crate) package: Option<Package>,
+  pub package: Option<Package>,
   #[n(7)]
-  pub(crate) readme: Option<filename::Md>,
+  pub readme: Option<filename::Md>,
   #[n(8)]
-  pub(crate) title: Option<ComponentBuf>,
+  pub title: Option<ComponentBuf>,
 }
 
 impl Metadata {

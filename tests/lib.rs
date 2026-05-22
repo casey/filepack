@@ -1,7 +1,11 @@
 use {
   self::{child::Child, expected::Expected, test::Test},
   camino::{Utf8Path, Utf8PathBuf},
-  filepack::{Encoder, EntryType, Hash, Manifest, PrivateKey, PublicKey, assert_matches},
+  filepack::{
+    Decode, Decoder, Directory, Encoder, Hash, Manifest, Metadata, PrivateKey, PublicKey,
+    assert_matches,
+    templates::{DirectoryHtml, PackageHtml},
+  },
   regex::Regex,
   reqwest::StatusCode,
   std::{
