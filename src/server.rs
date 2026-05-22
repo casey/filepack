@@ -91,10 +91,14 @@ impl Server {
       server_error::PackageNotFound { fingerprint },
     );
 
-    self.package_metadata(fingerprint)
+    self
+      .package_metadata(fingerprint)?
+      .map(|metadata| Metadata::decode_from_slice(&metadata))
+      .transpose()
+      .context(server_error::PackageMetadataCorrupt { fingerprint })
   }
 
-  fn package_metadata(&self, fingerprint: Fingerprint) -> ServerResult<Option<Metadata>> {
+  fn package_metadata(&self, fingerprint: Fingerprint) -> ServerResult<Option<Vec<u8>>> {
     let directory = self.read_directory(fingerprint.into())?;
 
     let Some(entry) = directory.entries.get(Metadata::CBOR_FILENAME) else {
@@ -103,17 +107,15 @@ impl Server {
 
     let path = self.file_path(entry.hash);
 
-    let cbor = fs::read(&path).map_err(|err| {
-      if err.kind() == io::ErrorKind::NotFound {
-        server_error::FileNotFound { hash: entry.hash }.into_error(err)
-      } else {
-        server_error::FilesystemIo { path }.into_error(err)
-      }
-    })?;
-
-    Ok(Some(Metadata::decode_from_slice(&cbor).context(
-      server_error::PackageMetadataDecode { fingerprint },
-    )?))
+    fs::read(&path)
+      .map_err(|err| {
+        if err.kind() == io::ErrorKind::NotFound {
+          server_error::FileNotFound { hash: entry.hash }.into_error(err)
+        } else {
+          server_error::FilesystemIo { path }.into_error(err)
+        }
+      })
+      .map(Some)
   }
 
   fn read_directory(&self, hash: Hash) -> ServerResult<Directory> {
@@ -184,7 +186,10 @@ impl Server {
       server_error::PackageUnverified { fingerprint },
     );
 
-    self.package_metadata(fingerprint)?;
+    if let Some(metadata) = self.package_metadata(fingerprint)? {
+      Metadata::decode_from_slice(&metadata)
+        .context(server_error::PackageMetadataDecode { fingerprint })?;
+    }
 
     let tx = self.database.begin_write()?;
 

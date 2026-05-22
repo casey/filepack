@@ -34,6 +34,11 @@ pub(crate) enum ServerError {
     path: Utf8PathBuf,
     source: io::Error,
   },
+  #[snafu(display("stored metadata for package {fingerprint} failed to decode"))]
+  PackageMetadataCorrupt {
+    fingerprint: Fingerprint,
+    source: DecodeError,
+  },
   #[snafu(display("failed to decode metadata for package {fingerprint}"))]
   PackageMetadataDecode {
     fingerprint: Fingerprint,
@@ -64,6 +69,7 @@ impl ServerError {
       | Self::DirectoryNotFound { .. }
       | Self::DirectoryUnverified { .. }
       | Self::FileNotFound { .. }
+      | Self::PackageMetadataCorrupt { .. }
       | Self::PackageMetadataDecode { .. }
       | Self::PackageNotFound { .. }
       | Self::PackageUnverified { .. }
@@ -90,7 +96,8 @@ impl ServerError {
       | Self::DatabaseStorage { .. }
       | Self::DatabaseTable { .. }
       | Self::DatabaseTransaction { .. }
-      | Self::FilesystemIo { .. } => StatusCode::INTERNAL_SERVER_ERROR,
+      | Self::FilesystemIo { .. }
+      | Self::PackageMetadataCorrupt { .. } => StatusCode::INTERNAL_SERVER_ERROR,
       Self::DirectoryDecode { .. }
       | Self::DirectoryFileMissing { .. }
       | Self::DirectoryUnverified { .. }
