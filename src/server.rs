@@ -111,9 +111,9 @@ impl Server {
       }
     })?;
 
-    Metadata::decode_from_slice(&cbor)
-      .map(Some)
-      .context(server_error::PackageMetadataDecode { hash })
+    Ok(Some(
+      Metadata::decode_from_slice(&cbor).context(server_error::PackageMetadataDecode { hash })?,
+    ))
   }
 
   fn read_directory(&self, hash: Hash) -> ServerResult<Directory> {
