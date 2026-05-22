@@ -112,7 +112,7 @@ impl Server {
     })?;
 
     Ok(Some(Metadata::decode_from_slice(&cbor).context(
-      server_error::PackageMetadataDecode { hash: fingerprint },
+      server_error::PackageMetadataDecode { fingerprint },
     )?))
   }
 

@@ -34,8 +34,11 @@ pub(crate) enum ServerError {
     path: Utf8PathBuf,
     source: io::Error,
   },
-  #[snafu(display("failed to decode metadata for package {hash}"))]
-  PackageMetadataDecode { hash: Hash, source: DecodeError },
+  #[snafu(display("failed to decode metadata for package {fingerprint}"))]
+  PackageMetadataDecode {
+    fingerprint: Fingerprint,
+    source: DecodeError,
+  },
   #[snafu(display("package {fingerprint} not found"))]
   PackageNotFound { fingerprint: Fingerprint },
   #[snafu(display("package {fingerprint} root directory is unverified"))]
