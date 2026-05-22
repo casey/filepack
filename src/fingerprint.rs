@@ -1,6 +1,18 @@
 use super::*;
 
-#[derive(Clone, Copy, Debug, Decode, Encode, Eq, Ord, PartialEq, PartialOrd)]
+#[derive(
+  Clone,
+  Copy,
+  Debug,
+  Decode,
+  DeserializeFromStr,
+  Encode,
+  Eq,
+  Ord,
+  PartialEq,
+  PartialOrd,
+  SerializeDisplay,
+)]
 #[cbor(transparent)]
 pub struct Fingerprint(pub(crate) Hash);
 
@@ -30,5 +42,11 @@ impl FromStr for Fingerprint {
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     let inner = Bech32Decoder::decode_byte_array(Bech32Type::Fingerprint, s)?;
     Ok(Self(inner.into()))
+  }
+}
+
+impl From<[u8; Self::LEN]> for Fingerprint {
+  fn from(bytes: [u8; Self::LEN]) -> Self {
+    Self::from_bytes(bytes)
   }
 }

@@ -13,7 +13,7 @@ use {
   },
   std::net::TcpStream,
   sysinfo::System,
-  templates::{DirectoryHtml, FilesHtml},
+  templates::{DirectoryHtml, FilesHtml, PackageHtml},
   tokio::{net::TcpListener, runtime, task::block_in_place},
   tokio_util::io::ReaderStream,
   tower_http::set_header::SetResponseHeaderLayer,
@@ -212,6 +212,16 @@ impl Serve {
     StaticAsset::get("install.sh")
   }
 
+  async fn package(
+    server: ServerExtension,
+    Path(fingerprint): Path<Fingerprint>,
+  ) -> ServerResult<PackageHtml> {
+    Ok(PackageHtml {
+      fingerprint,
+      metadata: block_in_place(|| server.package(fingerprint))?,
+    })
+  }
+
   fn redirect_destination(domains: &[String], https_port: u16) -> String {
     if https_port == 443 {
       format!("https://{}", domains[0])
@@ -251,6 +261,8 @@ impl Serve {
       .route("/file/{hash}", put(Self::upload))
       .route("/files", get(Self::files))
       .route("/install.sh", get(Self::install_script))
+      .route("/package/{fingerprint}", get(Self::package))
+      .route("/package/{fingerprint}", post(Self::verify_package))
       .route("/static/{*path}", get(Self::static_asset))
       .fallback(Self::fallback)
       .layer(Extension(server))
@@ -458,6 +470,14 @@ impl Serve {
     hash: Path<Hash>,
   ) -> ServerResult {
     block_in_place(|| server.verify_directory(*hash))
+  }
+
+  async fn verify_package(
+    _: Authenticated,
+    server: ServerExtension,
+    Path(fingerprint): Path<Fingerprint>,
+  ) -> ServerResult {
+    block_in_place(|| server.verify_package(fingerprint))
   }
 }
 

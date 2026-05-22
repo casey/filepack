@@ -10,3 +10,9 @@ pub(crate) struct DirectoryHtml {
 pub(crate) struct FilesHtml {
   pub(crate) files: Vec<Hash>,
 }
+
+#[derive(Boilerplate)]
+pub(crate) struct PackageHtml {
+  pub(crate) fingerprint: Fingerprint,
+  pub(crate) metadata: Option<Metadata>,
+}

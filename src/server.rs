@@ -5,7 +5,8 @@ use {
 
 const DIRECTORIES: TableDefinition<Hash, ()> = TableDefinition::new("directories");
 const METADATA: TableDefinition<DatabaseMetadata, u64> = TableDefinition::new("metadata");
-const SCHEMA_VERSION: u64 = 0;
+const PACKAGES: TableDefinition<Fingerprint, ()> = TableDefinition::new("packages");
+const SCHEMA_VERSION: u64 = 1;
 
 #[derive(Copy, Clone, Debug, FromRepr)]
 #[repr(u64)]
@@ -79,6 +80,44 @@ impl Server {
     Ok((file, len))
   }
 
+  pub(crate) fn package(&self, fingerprint: Fingerprint) -> ServerResult<Option<Metadata>> {
+    ensure!(
+      self
+        .database
+        .begin_read()?
+        .open_table(PACKAGES)?
+        .get(&fingerprint)?
+        .is_some(),
+      server_error::PackageNotFound { fingerprint },
+    );
+
+    self
+      .package_metadata(fingerprint)?
+      .map(|metadata| Metadata::decode_from_slice(&metadata))
+      .transpose()
+      .context(server_error::PackageMetadataCorrupt { fingerprint })
+  }
+
+  fn package_metadata(&self, fingerprint: Fingerprint) -> ServerResult<Option<Vec<u8>>> {
+    let directory = self.read_directory(fingerprint.into())?;
+
+    let Some(entry) = directory.entries.get(Metadata::CBOR_FILENAME) else {
+      return Ok(None);
+    };
+
+    let path = self.file_path(entry.hash);
+
+    fs::read(&path)
+      .map_err(|err| {
+        if err.kind() == io::ErrorKind::NotFound {
+          server_error::FileNotFound { hash: entry.hash }.into_error(err)
+        } else {
+          server_error::FilesystemIo { path }.into_error(err)
+        }
+      })
+      .map(Some)
+  }
+
   fn read_directory(&self, hash: Hash) -> ServerResult<Directory> {
     let path = self.file_path(hash);
 
@@ -136,6 +175,31 @@ impl Server {
     Ok(())
   }
 
+  pub(crate) fn verify_package(&self, fingerprint: Fingerprint) -> ServerResult {
+    ensure!(
+      self
+        .database
+        .begin_read()?
+        .open_table(DIRECTORIES)?
+        .get(&fingerprint.into())?
+        .is_some(),
+      server_error::PackageUnverified { fingerprint },
+    );
+
+    if let Some(metadata) = self.package_metadata(fingerprint)? {
+      Metadata::decode_from_slice(&metadata)
+        .context(server_error::PackageMetadataDecode { fingerprint })?;
+    }
+
+    let tx = self.database.begin_write()?;
+
+    tx.open_table(PACKAGES)?.insert(&fingerprint, &())?;
+
+    tx.commit()?;
+
+    Ok(())
+  }
+
   pub(crate) fn with_data_dir(data_dir: &Utf8Path) -> Result<Self> {
     let database = Database::create(data_dir.join("database.redb"))?;
 
@@ -147,6 +211,7 @@ impl Server {
           .insert(DatabaseMetadata::Schema, &SCHEMA_VERSION)?;
 
         tx.open_table(DIRECTORIES)?;
+        tx.open_table(PACKAGES)?;
       }
 
       tx.commit()?;

@@ -193,6 +193,12 @@ pub(crate) static CODES: LazyLock<BTreeMap<&'static str, &'static str>> = LazyLo
 #[derive(Clone, Debug, DeserializeFromStr, PartialEq)]
 pub(crate) struct Language(&'static str);
 
+impl Display for Language {
+  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    write!(f, "{}", self.0)
+  }
+}
+
 impl FromStr for Language {
   type Err = LanguageError;
 

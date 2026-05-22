@@ -142,6 +142,13 @@ impl Upload {
       options,
     )?;
 
+    let url = self.server.join(&format!("package/{fingerprint}")).unwrap();
+    let request = Client::new().post(url);
+    self
+      .request_with_token(request, key)?
+      .send()
+      .check_status()?;
+
     Ok(())
   }
 

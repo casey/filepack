@@ -34,6 +34,20 @@ pub(crate) enum ServerError {
     path: Utf8PathBuf,
     source: io::Error,
   },
+  #[snafu(display("stored metadata for package {fingerprint} failed to decode"))]
+  PackageMetadataCorrupt {
+    fingerprint: Fingerprint,
+    source: DecodeError,
+  },
+  #[snafu(display("failed to decode metadata for package {fingerprint}"))]
+  PackageMetadataDecode {
+    fingerprint: Fingerprint,
+    source: DecodeError,
+  },
+  #[snafu(display("package {fingerprint} not found"))]
+  PackageNotFound { fingerprint: Fingerprint },
+  #[snafu(display("package {fingerprint} root directory is unverified"))]
+  PackageUnverified { fingerprint: Fingerprint },
   #[snafu(display("page not found"))]
   PageNotFound,
   #[snafu(display("error reading body of upload with hash {hash}"))]
@@ -55,6 +69,10 @@ impl ServerError {
       | Self::DirectoryNotFound { .. }
       | Self::DirectoryUnverified { .. }
       | Self::FileNotFound { .. }
+      | Self::PackageMetadataCorrupt { .. }
+      | Self::PackageMetadataDecode { .. }
+      | Self::PackageNotFound { .. }
+      | Self::PackageUnverified { .. }
       | Self::PageNotFound
       | Self::UploadBodyRead { .. }
       | Self::UploadForbidden
@@ -78,15 +96,19 @@ impl ServerError {
       | Self::DatabaseStorage { .. }
       | Self::DatabaseTable { .. }
       | Self::DatabaseTransaction { .. }
-      | Self::FilesystemIo { .. } => StatusCode::INTERNAL_SERVER_ERROR,
+      | Self::FilesystemIo { .. }
+      | Self::PackageMetadataCorrupt { .. } => StatusCode::INTERNAL_SERVER_ERROR,
       Self::DirectoryDecode { .. }
       | Self::DirectoryFileMissing { .. }
       | Self::DirectoryUnverified { .. }
+      | Self::PackageMetadataDecode { .. }
+      | Self::PackageUnverified { .. }
       | Self::UploadBodyRead { .. }
       | Self::UploadHashMismatch { .. } => StatusCode::BAD_REQUEST,
-      Self::DirectoryNotFound { .. } | Self::FileNotFound { .. } | Self::PageNotFound => {
-        StatusCode::NOT_FOUND
-      }
+      Self::DirectoryNotFound { .. }
+      | Self::FileNotFound { .. }
+      | Self::PackageNotFound { .. }
+      | Self::PageNotFound => StatusCode::NOT_FOUND,
       Self::UploadForbidden => StatusCode::FORBIDDEN,
     }
   }
