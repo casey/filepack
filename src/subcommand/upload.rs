@@ -137,7 +137,7 @@ impl Upload {
       &archive,
       archive_path,
       archive_path.parent().unwrap(),
-      Hash::from(fingerprint),
+      fingerprint.into(),
       key,
       options,
     )?;
