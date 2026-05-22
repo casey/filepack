@@ -1,4 +1,11 @@
-use {super::*, axum::response::IntoResponse};
+use {
+  super::*,
+  axum::{body, response::IntoResponse},
+  std::sync::LazyLock,
+  tokio::runtime::Runtime,
+};
+
+static RUNTIME: LazyLock<Runtime> = LazyLock::new(|| Runtime::new().unwrap());
 
 pub(crate) struct Child {
   child: Option<std::process::Child>,
@@ -12,14 +19,14 @@ impl Child {
   }
 
   #[track_caller]
-  pub(crate) fn assert_response(&self, path: &str, expected: impl IntoResponse + fmt::Display) {
+  pub(crate) fn assert_response(&self, path: &str, expected: impl IntoResponse) {
     let response = reqwest::blocking::get(format!("{}{path}", self.address())).unwrap();
     let actual_status = response.status();
     let actual_headers = response.headers().clone();
-    let actual_body = response.text().unwrap();
+    let actual_body = response.bytes().unwrap();
 
-    let expected_body = expected.to_string();
-    let (parts, _) = expected.into_response().into_parts();
+    let (parts, body) = expected.into_response().into_parts();
+    let expected_body = RUNTIME.block_on(body::to_bytes(body, usize::MAX)).unwrap();
 
     assert_eq!(actual_status, parts.status);
 

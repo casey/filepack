@@ -10,7 +10,7 @@ use {
   reqwest::StatusCode,
   std::{
     collections::{BTreeMap, BTreeSet},
-    fmt, fs,
+    fs,
     io::{Read, Write},
     net::TcpListener,
     path::{MAIN_SEPARATOR_STR, Path},
