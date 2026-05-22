@@ -61,28 +61,6 @@ impl Server {
     Ok(files)
   }
 
-  fn metadata(&self, hash: Hash) -> ServerResult<Option<Metadata>> {
-    let directory = self.read_directory(hash)?;
-
-    let Some(entry) = directory.entries.get(Metadata::CBOR_FILENAME) else {
-      return Ok(None);
-    };
-
-    let path = self.file_path(entry.hash);
-
-    let cbor = fs::read(&path).map_err(|err| {
-      if err.kind() == io::ErrorKind::NotFound {
-        server_error::FileNotFound { hash: entry.hash }.into_error(err)
-      } else {
-        server_error::FilesystemIo { path }.into_error(err)
-      }
-    })?;
-
-    Metadata::decode_from_slice(&cbor)
-      .map(Some)
-      .context(server_error::PackageMetadataDecode { hash })
-  }
-
   pub(crate) fn open_file(&self, hash: Hash) -> ServerResult<(fs::File, u64)> {
     let path = self.file_path(hash);
 
@@ -113,7 +91,29 @@ impl Server {
       server_error::PackageNotFound { hash },
     );
 
-    self.metadata(hash)
+    self.package_metadata(hash)
+  }
+
+  fn package_metadata(&self, hash: Hash) -> ServerResult<Option<Metadata>> {
+    let directory = self.read_directory(hash)?;
+
+    let Some(entry) = directory.entries.get(Metadata::CBOR_FILENAME) else {
+      return Ok(None);
+    };
+
+    let path = self.file_path(entry.hash);
+
+    let cbor = fs::read(&path).map_err(|err| {
+      if err.kind() == io::ErrorKind::NotFound {
+        server_error::FileNotFound { hash: entry.hash }.into_error(err)
+      } else {
+        server_error::FilesystemIo { path }.into_error(err)
+      }
+    })?;
+
+    Metadata::decode_from_slice(&cbor)
+      .map(Some)
+      .context(server_error::PackageMetadataDecode { hash })
   }
 
   fn read_directory(&self, hash: Hash) -> ServerResult<Directory> {
@@ -184,7 +184,7 @@ impl Server {
       server_error::PackageUnverified { hash },
     );
 
-    self.metadata(hash)?;
+    self.package_metadata(hash)?;
 
     let tx = self.database.begin_write()?;
 
