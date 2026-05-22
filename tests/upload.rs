@@ -477,8 +477,8 @@ fn upload_package_serves_package_html() {
   );
 
   assert!(
-    body.contains(&format!("<a href=/directory/{hash}>directory</a>")),
-    "body missing directory link: {body}"
+    body.contains(&format!("<a href=/directory/{hash}>files</a>")),
+    "body missing files link: {body}"
   );
 
   assert!(
