@@ -45,8 +45,8 @@ impl FromStr for Fingerprint {
   }
 }
 
-impl From<[u8; Hash::LEN]> for Fingerprint {
-  fn from(bytes: [u8; Hash::LEN]) -> Self {
+impl From<[u8; Self::LEN]> for Fingerprint {
+  fn from(bytes: [u8; Self::LEN]) -> Self {
     Self::from_bytes(bytes)
   }
 }
