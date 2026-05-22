@@ -5,7 +5,7 @@ use {
 
 const DIRECTORIES: TableDefinition<Hash, ()> = TableDefinition::new("directories");
 const METADATA: TableDefinition<DatabaseMetadata, u64> = TableDefinition::new("metadata");
-const PACKAGES: TableDefinition<Hash, ()> = TableDefinition::new("packages");
+const PACKAGES: TableDefinition<Fingerprint, ()> = TableDefinition::new("packages");
 const SCHEMA_VERSION: u64 = 1;
 
 #[derive(Copy, Clone, Debug, FromRepr)]
@@ -80,22 +80,22 @@ impl Server {
     Ok((file, len))
   }
 
-  pub(crate) fn package(&self, hash: Hash) -> ServerResult<Option<Metadata>> {
+  pub(crate) fn package(&self, fingerprint: Fingerprint) -> ServerResult<Option<Metadata>> {
     ensure!(
       self
         .database
         .begin_read()?
         .open_table(PACKAGES)?
-        .get(&hash)?
+        .get(&fingerprint)?
         .is_some(),
-      server_error::PackageNotFound { hash },
+      server_error::PackageNotFound { fingerprint },
     );
 
-    self.package_metadata(hash)
+    self.package_metadata(fingerprint)
   }
 
-  fn package_metadata(&self, hash: Hash) -> ServerResult<Option<Metadata>> {
-    let directory = self.read_directory(hash)?;
+  fn package_metadata(&self, fingerprint: Fingerprint) -> ServerResult<Option<Metadata>> {
+    let directory = self.read_directory(fingerprint.into())?;
 
     let Some(entry) = directory.entries.get(Metadata::CBOR_FILENAME) else {
       return Ok(None);
@@ -111,9 +111,9 @@ impl Server {
       }
     })?;
 
-    Ok(Some(
-      Metadata::decode_from_slice(&cbor).context(server_error::PackageMetadataDecode { hash })?,
-    ))
+    Ok(Some(Metadata::decode_from_slice(&cbor).context(
+      server_error::PackageMetadataDecode { hash: fingerprint },
+    )?))
   }
 
   fn read_directory(&self, hash: Hash) -> ServerResult<Directory> {
@@ -173,22 +173,22 @@ impl Server {
     Ok(())
   }
 
-  pub(crate) fn verify_package(&self, hash: Hash) -> ServerResult {
+  pub(crate) fn verify_package(&self, fingerprint: Fingerprint) -> ServerResult {
     ensure!(
       self
         .database
         .begin_read()?
         .open_table(DIRECTORIES)?
-        .get(&hash)?
+        .get(&fingerprint.into())?
         .is_some(),
-      server_error::PackageUnverified { hash },
+      server_error::PackageUnverified { fingerprint },
     );
 
-    self.package_metadata(hash)?;
+    self.package_metadata(fingerprint)?;
 
     let tx = self.database.begin_write()?;
 
-    tx.open_table(PACKAGES)?.insert(&hash, &())?;
+    tx.open_table(PACKAGES)?.insert(&fingerprint, &())?;
 
     tx.commit()?;
 

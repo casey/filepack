@@ -218,7 +218,7 @@ impl Serve {
   ) -> ServerResult<PackageHtml> {
     Ok(PackageHtml {
       fingerprint,
-      metadata: block_in_place(|| server.package(Hash::from(fingerprint)))?,
+      metadata: block_in_place(|| server.package(fingerprint))?,
     })
   }
 
@@ -477,7 +477,7 @@ impl Serve {
     server: ServerExtension,
     Path(fingerprint): Path<Fingerprint>,
   ) -> ServerResult {
-    block_in_place(|| server.verify_package(Hash::from(fingerprint)))
+    block_in_place(|| server.verify_package(fingerprint))
   }
 }
 

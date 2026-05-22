@@ -36,10 +36,10 @@ pub(crate) enum ServerError {
   },
   #[snafu(display("failed to decode metadata for package {hash}"))]
   PackageMetadataDecode { hash: Hash, source: DecodeError },
-  #[snafu(display("package {hash} not found"))]
-  PackageNotFound { hash: Hash },
-  #[snafu(display("package {hash} root directory is unverified"))]
-  PackageUnverified { hash: Hash },
+  #[snafu(display("package {fingerprint} not found"))]
+  PackageNotFound { fingerprint: Fingerprint },
+  #[snafu(display("package {fingerprint} root directory is unverified"))]
+  PackageUnverified { fingerprint: Fingerprint },
   #[snafu(display("page not found"))]
   PageNotFound,
   #[snafu(display("error reading body of upload with hash {hash}"))]
