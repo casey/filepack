@@ -830,7 +830,9 @@ fn verify_package_metadata_decode_error() {
   server
     .post(format!("/package/{fingerprint}"))
     .status(StatusCode::BAD_REQUEST)
-    .assert_body(format!("failed to decode metadata for package {hash}"))
+    .assert_body(format!(
+      "failed to decode metadata for package {fingerprint}"
+    ))
     .send();
 }
 
