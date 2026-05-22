@@ -120,6 +120,6 @@ impl Value for Hash {
   }
 
   fn type_name() -> TypeName {
-    TypeName::new("filepack-hash")
+    TypeName::new("filepack-fingerprint")
   }
 }
