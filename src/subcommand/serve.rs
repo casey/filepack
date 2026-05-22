@@ -212,10 +212,13 @@ impl Serve {
     StaticAsset::get("install.sh")
   }
 
-  async fn package(server: ServerExtension, Path(hash): Path<Hash>) -> ServerResult<PackageHtml> {
+  async fn package(
+    server: ServerExtension,
+    Path(fingerprint): Path<Fingerprint>,
+  ) -> ServerResult<PackageHtml> {
     Ok(PackageHtml {
-      hash,
-      metadata: block_in_place(|| server.package(hash))?,
+      fingerprint,
+      metadata: block_in_place(|| server.package(Hash::from(fingerprint)))?,
     })
   }
 
@@ -258,8 +261,8 @@ impl Serve {
       .route("/file/{hash}", put(Self::upload))
       .route("/files", get(Self::files))
       .route("/install.sh", get(Self::install_script))
-      .route("/package/{hash}", get(Self::package))
-      .route("/package/{hash}", post(Self::verify_package))
+      .route("/package/{fingerprint}", get(Self::package))
+      .route("/package/{fingerprint}", post(Self::verify_package))
       .route("/static/{*path}", get(Self::static_asset))
       .fallback(Self::fallback)
       .layer(Extension(server))
@@ -472,9 +475,9 @@ impl Serve {
   async fn verify_package(
     _: Authenticated,
     server: ServerExtension,
-    hash: Path<Hash>,
+    Path(fingerprint): Path<Fingerprint>,
   ) -> ServerResult {
-    block_in_place(|| server.verify_package(*hash))
+    block_in_place(|| server.verify_package(Hash::from(fingerprint)))
   }
 }
 

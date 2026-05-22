@@ -133,18 +133,16 @@ impl Upload {
       .fingerprint()
       .context(error::UnarchiveManifest { path: archive_path })?;
 
-    let hash = Hash::from(fingerprint);
-
     self.upload_directory(
       &archive,
       archive_path,
       archive_path.parent().unwrap(),
-      hash,
+      Hash::from(fingerprint),
       key,
       options,
     )?;
 
-    let url = self.server.join(&format!("package/{hash}")).unwrap();
+    let url = self.server.join(&format!("package/{fingerprint}")).unwrap();
     let request = Client::new().post(url);
     self
       .request_with_token(request, key)?

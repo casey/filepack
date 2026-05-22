@@ -455,29 +455,29 @@ fn upload_package_serves_package_html() {
     .args(["create", "."])
     .success();
 
-  let package = Hash::from(
-    Manifest::load(Some(&test.path().join("manifest.filepack")))
-      .unwrap()
-      .fingerprint(),
-  );
+  let fingerprint = Manifest::load(Some(&test.path().join("manifest.filepack")))
+    .unwrap()
+    .fingerprint();
+  let hash = Hash::from(fingerprint);
 
   test
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
     .success();
 
-  let response = reqwest::blocking::get(format!("{}/package/{package}", server.address())).unwrap();
+  let response =
+    reqwest::blocking::get(format!("{}/package/{fingerprint}", server.address())).unwrap();
 
   assert_eq!(response.status(), StatusCode::OK);
 
   let body = response.text().unwrap();
 
   assert!(
-    body.contains(&format!("<h1>Package {package}</h1>")),
+    body.contains(&format!("<h1>Package {fingerprint}</h1>")),
     "body missing package heading: {body}"
   );
 
   assert!(
-    body.contains(&format!("<a href=/directory/{package}>directory</a>")),
+    body.contains(&format!("<a href=/directory/{hash}>directory</a>")),
     "body missing directory link: {body}"
   );
 

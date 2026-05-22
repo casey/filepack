@@ -1,6 +1,18 @@
 use super::*;
 
-#[derive(Clone, Copy, Debug, Decode, Encode, Eq, Ord, PartialEq, PartialOrd)]
+#[derive(
+  Clone,
+  Copy,
+  Debug,
+  Decode,
+  DeserializeFromStr,
+  Encode,
+  Eq,
+  Ord,
+  PartialEq,
+  PartialOrd,
+  SerializeDisplay,
+)]
 #[cbor(transparent)]
 pub struct Fingerprint(pub(crate) Hash);
 

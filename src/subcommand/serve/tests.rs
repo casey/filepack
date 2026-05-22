@@ -363,9 +363,10 @@ fn get_package_not_found() {
   let server = TestServer::new();
 
   let hash = Hash::bytes(b"foo");
+  let fingerprint = Fingerprint(hash);
 
   server
-    .get(format!("/package/{hash}"))
+    .get(format!("/package/{fingerprint}"))
     .status(StatusCode::NOT_FOUND)
     .assert_body(format!("package {hash} not found"))
     .send();
@@ -398,15 +399,16 @@ fn get_package_with_metadata() {
   )])
   .encode_to_vec();
   let hash = Hash::bytes(&cbor);
+  let fingerprint = Fingerprint(hash);
   server.write_file(&cbor);
 
   server.post(format!("/directory/{hash}")).send();
-  server.post(format!("/package/{hash}")).send();
+  server.post(format!("/package/{fingerprint}")).send();
 
   server
-    .get(format!("/package/{hash}"))
+    .get(format!("/package/{fingerprint}"))
     .assert_response(PackageHtml {
-      hash,
+      fingerprint,
       metadata: Some(metadata),
     })
     .send();
@@ -418,15 +420,16 @@ fn get_package_without_metadata() {
 
   let cbor = directory(&[]).encode_to_vec();
   let hash = Hash::bytes(&cbor);
+  let fingerprint = Fingerprint(hash);
   server.write_file(&cbor);
 
   server.post(format!("/directory/{hash}")).send();
-  server.post(format!("/package/{hash}")).send();
+  server.post(format!("/package/{fingerprint}")).send();
 
   server
-    .get(format!("/package/{hash}"))
+    .get(format!("/package/{fingerprint}"))
     .assert_response(PackageHtml {
-      hash,
+      fingerprint,
       metadata: None,
     })
     .send();
@@ -820,12 +823,13 @@ fn verify_package_metadata_decode_error() {
   )])
   .encode_to_vec();
   let hash = Hash::bytes(&cbor);
+  let fingerprint = Fingerprint(hash);
   server.write_file(&cbor);
 
   server.post(format!("/directory/{hash}")).send();
 
   server
-    .post(format!("/package/{hash}"))
+    .post(format!("/package/{fingerprint}"))
     .status(StatusCode::BAD_REQUEST)
     .assert_body(format!("failed to decode metadata for package {hash}"))
     .send();
@@ -837,10 +841,11 @@ fn verify_package_unverified() {
 
   let cbor = directory(&[]).encode_to_vec();
   let hash = Hash::bytes(&cbor);
+  let fingerprint = Fingerprint(hash);
   server.write_file(&cbor);
 
   server
-    .post(format!("/package/{hash}"))
+    .post(format!("/package/{fingerprint}"))
     .status(StatusCode::BAD_REQUEST)
     .assert_body(format!("package {hash} root directory is unverified"))
     .send();

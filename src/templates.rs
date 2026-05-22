@@ -13,6 +13,6 @@ pub(crate) struct FilesHtml {
 
 #[derive(Boilerplate)]
 pub(crate) struct PackageHtml {
-  pub(crate) hash: Hash,
+  pub(crate) fingerprint: Fingerprint,
   pub(crate) metadata: Option<Metadata>,
 }

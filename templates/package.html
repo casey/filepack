@@ -3,12 +3,12 @@
   <head>
     <meta charset=utf-8>
     <meta name=viewport content='width=device-width,initial-scale=1.0'>
-    <title>package {{ self.hash }} · filepack</title>
+    <title>package {{ self.fingerprint }} · filepack</title>
     <meta name=description content='Filepack package server'>
   </head>
   <body>
-    <h1>Package {{ self.hash }}</h1>
-    <p><a href=/directory/{{ self.hash }}>directory</a></p>
+    <h1>Package {{ self.fingerprint }}</h1>
+    <p><a href=/directory/{{ Hash::from(self.fingerprint) }}>directory</a></p>
 %% if let Some(metadata) = &self.metadata {
     <h2>Metadata</h2>
     <dl>
