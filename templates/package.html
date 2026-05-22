@@ -8,10 +8,10 @@
   </head>
   <body>
     <h1>Package {{ self.fingerprint }}</h1>
-    <p><a href=/directory/{{ Hash::from(self.fingerprint) }}>directory</a></p>
 %% if let Some(metadata) = &self.metadata {
-    <h2>Metadata</h2>
     <dl>
+      <dt>files</dt>
+      <dd><a href=/directory/{{ Hash::from(self.fingerprint) }}>directory</a></dd>
 %%   if let Some(title) = &metadata.title {
       <dt>title</dt>
       <dd>{{ title }}</dd>
@@ -36,7 +36,7 @@
       <dt>language</dt>
       <dd>{{ language }}</dd>
 %%   }
-    </dl>
 %% }
+    </dl>
   </body>
 </html>
