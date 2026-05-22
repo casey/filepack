@@ -362,13 +362,12 @@ fn get_directory_succeeds() {
 fn get_package_not_found() {
   let server = TestServer::new();
 
-  let hash = Hash::bytes(b"foo");
-  let fingerprint = Fingerprint(hash);
+  let fingerprint = Fingerprint(Hash::bytes(b"foo"));
 
   server
     .get(format!("/package/{fingerprint}"))
     .status(StatusCode::NOT_FOUND)
-    .assert_body(format!("package {hash} not found"))
+    .assert_body(format!("package {fingerprint} not found"))
     .send();
 }
 
@@ -847,6 +846,8 @@ fn verify_package_unverified() {
   server
     .post(format!("/package/{fingerprint}"))
     .status(StatusCode::BAD_REQUEST)
-    .assert_body(format!("package {hash} root directory is unverified"))
+    .assert_body(format!(
+      "package {fingerprint} root directory is unverified"
+    ))
     .send();
 }
