@@ -1,6 +1,6 @@
 use super::*;
 
-pub(crate) struct Decoder<'a> {
+pub struct Decoder<'a> {
   buffer: &'a [u8],
   position: usize,
   stack: Vec<usize>,
@@ -92,7 +92,7 @@ impl<'a> Decoder<'a> {
     Ok(MapDecoder::new(self, len))
   }
 
-  pub(crate) fn new(buffer: &'a [u8]) -> Self {
+  pub fn new(buffer: &'a [u8]) -> Self {
     Self {
       buffer,
       position: 0,

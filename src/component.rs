@@ -2,7 +2,7 @@ use super::*;
 
 #[repr(transparent)]
 #[derive(Debug, Eq, Ord, PartialEq, PartialOrd)]
-pub(crate) struct Component(str);
+pub struct Component(str);
 
 impl Component {
   pub(crate) fn as_path(&self) -> RelativePath {

@@ -1,4 +1,11 @@
-use super::*;
+use {
+  super::*,
+  axum::{body, response::IntoResponse},
+  std::sync::LazyLock,
+  tokio::runtime::Runtime,
+};
+
+static RUNTIME: LazyLock<Runtime> = LazyLock::new(|| Runtime::new().unwrap());
 
 pub(crate) struct Child {
   child: Option<std::process::Child>,
@@ -9,6 +16,31 @@ pub(crate) struct Child {
 impl Child {
   pub(crate) fn address(&self) -> String {
     format!("http://127.0.0.1:{}", self.port.unwrap())
+  }
+
+  #[track_caller]
+  pub(crate) fn assert_response(&self, path: &str, expected: impl IntoResponse) {
+    let url = format!("{}{path}", self.address());
+
+    let actual = reqwest::blocking::get(&url).unwrap();
+    let actual_status = actual.status();
+    let actual_headers = actual.headers().clone();
+    let actual_body = actual.bytes().unwrap();
+
+    let (parts, body) = expected.into_response().into_parts();
+    let expected_body = RUNTIME.block_on(body::to_bytes(body, usize::MAX)).unwrap();
+
+    assert_eq!(actual_status, parts.status);
+
+    for (name, value) in &parts.headers {
+      assert_eq!(
+        actual_headers.get(name),
+        Some(value),
+        "header `{name}` mismatch",
+      );
+    }
+
+    assert_eq!(actual_body, expected_body);
   }
 
   pub(crate) fn new(child: std::process::Child, port: Option<u16>, test: Test) -> Self {

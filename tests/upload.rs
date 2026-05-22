@@ -458,37 +458,21 @@ fn upload_package_serves_package_html() {
   let fingerprint = Manifest::load(Some(&test.path().join("manifest.filepack")))
     .unwrap()
     .fingerprint();
-  let hash = Hash::from(fingerprint);
 
   test
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
     .success();
 
-  let response =
-    reqwest::blocking::get(format!("{}/package/{fingerprint}", server.address())).unwrap();
-
-  assert_eq!(response.status(), StatusCode::OK);
-
-  let body = response.text().unwrap();
-
-  assert!(
-    body.contains(&format!("<h1>Package {fingerprint}</h1>")),
-    "body missing package heading: {body}"
-  );
-
-  assert!(
-    body.contains(&format!("<a href=/directory/{hash}>files</a>")),
-    "body missing files link: {body}"
-  );
-
-  assert!(
-    body.contains("<dt>title</dt>\n      <dd>Foo</dd>"),
-    "body missing title: {body}"
-  );
-
-  assert!(
-    body.contains("<dt>description</dt>\n      <dd>Bar</dd>"),
-    "body missing description: {body}"
+  server.assert_response(
+    &format!("/package/{fingerprint}"),
+    PackageHtml {
+      fingerprint,
+      metadata: Some(Metadata {
+        description: Some("Bar".into()),
+        title: Some("Foo".parse().unwrap()),
+        ..Metadata::default()
+      }),
+    },
   );
 
   server.terminate().success();
@@ -525,28 +509,20 @@ fn upload_package_uploads_files() {
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
     .success();
 
-  let response = reqwest::blocking::get(format!("{}/directory/{root}", server.address())).unwrap();
+  let cbor = reqwest::blocking::get(format!("{}/file/{root}", server.address()))
+    .unwrap()
+    .bytes()
+    .unwrap();
 
-  assert_eq!(response.status(), StatusCode::OK);
+  let directory = Directory::decode(&mut Decoder::new(&cbor)).unwrap();
 
-  let body = response.text().unwrap();
-
-  for (name, ty) in [
-    ("bar", EntryType::File),
-    ("empty", EntryType::Directory),
-    ("foo", EntryType::File),
-    ("sub", EntryType::Directory),
-  ] {
-    let pattern = match ty {
-      EntryType::Directory => format!(r"<li><a href=/directory/[0-9a-f]{{64}}>{name}/</a></li>"),
-      EntryType::File => format!(r"<li><a href=/file/[0-9a-f]{{64}}>{name}</a></li>"),
-    };
-
-    assert!(
-      Regex::new(&pattern).unwrap().is_match(&body),
-      "body missing `{name}`: {body}"
-    );
-  }
+  server.assert_response(
+    &format!("/directory/{root}"),
+    DirectoryHtml {
+      directory,
+      hash: root,
+    },
+  );
 
   server.terminate().success();
 }

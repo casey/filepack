@@ -1,9 +1,9 @@
 use super::*;
 
 #[derive(Boilerplate)]
-pub(crate) struct DirectoryHtml {
-  pub(crate) directory: Directory,
-  pub(crate) hash: Hash,
+pub struct DirectoryHtml {
+  pub directory: Directory,
+  pub hash: Hash,
 }
 
 #[derive(Boilerplate)]
@@ -12,7 +12,7 @@ pub(crate) struct FilesHtml {
 }
 
 #[derive(Boilerplate)]
-pub(crate) struct PackageHtml {
-  pub(crate) fingerprint: Fingerprint,
-  pub(crate) metadata: Option<Metadata>,
+pub struct PackageHtml {
+  pub fingerprint: Fingerprint,
+  pub metadata: Option<Metadata>,
 }
