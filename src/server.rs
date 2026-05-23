@@ -80,6 +80,16 @@ impl Server {
     Ok((file, len))
   }
 
+  pub(crate) fn packages(&self) -> ServerResult<Vec<Fingerprint>> {
+    self
+      .database
+      .begin_read()?
+      .open_table(PACKAGES)?
+      .iter()?
+      .map(|entry| Ok(entry?.0.value()))
+      .collect()
+  }
+
   pub(crate) fn package(&self, fingerprint: Fingerprint) -> ServerResult<Option<Metadata>> {
     ensure!(
       self
