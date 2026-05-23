@@ -463,16 +463,16 @@ fn upload_package_serves_package_html() {
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
     .success();
 
-  server.assert_response(
+  server.assert_page(
     &format!("/package/{fingerprint}"),
-    PageHtml::from(PackageHtml {
+    PackageHtml {
       fingerprint,
       metadata: Some(Metadata {
         description: Some("Bar".into()),
         title: Some("Foo".parse().unwrap()),
         ..Metadata::default()
       }),
-    }),
+    },
   );
 
   server.terminate().success();
@@ -516,12 +516,12 @@ fn upload_package_uploads_files() {
 
   let directory = Directory::decode(&mut Decoder::new(&cbor)).unwrap();
 
-  server.assert_response(
+  server.assert_page(
     &format!("/directory/{root}"),
-    PageHtml::from(DirectoryHtml {
+    DirectoryHtml {
       directory,
       hash: root,
-    }),
+    },
   );
 
   server.terminate().success();

@@ -19,13 +19,16 @@ impl Child {
   }
 
   #[track_caller]
-  pub(crate) fn assert_response(&self, path: &str, expected: impl IntoResponse) {
+  pub(crate) fn assert_page(&self, path: &str, expected: impl Page) {
     let response = reqwest::blocking::get(format!("{}{path}", self.address())).unwrap();
     let actual_status = response.status();
     let actual_headers = response.headers().clone();
     let actual_body = response.bytes().unwrap();
 
-    let (parts, body) = expected.into_response().into_parts();
+    let (parts, body) = PageHtml::from(expected)
+      .into_response()
+      .into_response()
+      .into_parts();
     let expected_body = RUNTIME.block_on(body::to_bytes(body, usize::MAX)).unwrap();
 
     assert_eq!(actual_status, parts.status);

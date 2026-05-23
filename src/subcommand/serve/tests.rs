@@ -695,7 +695,7 @@ fn verify_directory_idempotent() {
 
   server
     .get(format!("/directory/{hash}"))
-    .assert_response(DirectoryHtml {
+    .assert_page(DirectoryHtml {
       directory: dir,
       hash,
     })
