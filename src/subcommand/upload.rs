@@ -9,6 +9,7 @@ struct Context<'a> {
   archive: &'a Archive,
   archive_path: &'a Utf8Path,
   bar: &'a ProgressBar,
+  client: &'a Client,
   files_uploaded: Cell<u64>,
   key: Option<&'a PrivateKey>,
   options: &'a Options,
@@ -63,16 +64,24 @@ impl Upload {
       None
     };
 
+    let client = Client::new();
+
     if self.file {
-      self.upload_file(&self.input, &options, key.as_ref())
+      self.upload_file(&client, &self.input, &options, key.as_ref())
     } else {
-      self.upload_package(&self.input, &options, key.as_ref())
+      self.upload_package(&client, &self.input, &options, key.as_ref())
     }
   }
 
-  fn upload_body(&self, hash: Hash, body: Body, key: Option<&PrivateKey>) -> Result {
+  fn upload_body(
+    &self,
+    client: &Client,
+    hash: Hash,
+    body: Body,
+    key: Option<&PrivateKey>,
+  ) -> Result {
     let url = self.server.join(&format!("file/{hash}")).unwrap();
-    let request = Client::new().put(url).body(body);
+    let request = client.put(url).body(body);
     self
       .request_with_token(request, key)?
       .send()
@@ -91,7 +100,7 @@ impl Upload {
       .context(archive_error::DirectoryDecode)
       .context(error_context)?;
 
-    self.upload_body(hash, cbor.to_vec().into(), ctx.key)?;
+    self.upload_body(ctx.client, hash, cbor.to_vec().into(), ctx.key)?;
 
     for (component, entry) in &directory.entries {
       let file_path = file_path.join(component);
@@ -112,7 +121,7 @@ impl Upload {
     }
 
     let url = self.server.join(&format!("directory/{hash}")).unwrap();
-    let request = Client::new().post(url);
+    let request = ctx.client.post(url);
     self
       .request_with_token(request, ctx.key)?
       .send()
@@ -121,7 +130,13 @@ impl Upload {
     Ok(())
   }
 
-  fn upload_file(&self, path: &Utf8Path, options: &Options, key: Option<&PrivateKey>) -> Result {
+  fn upload_file(
+    &self,
+    client: &Client,
+    path: &Utf8Path,
+    options: &Options,
+    key: Option<&PrivateKey>,
+  ) -> Result {
     let File { hash, size } = options
       .hash_file(path)
       .context(error::FilesystemIo { path })?;
@@ -132,7 +147,7 @@ impl Upload {
 
     let body = Body::sized(bar.wrap_read(file), size);
 
-    self.upload_body(hash, body, key)?;
+    self.upload_body(client, hash, body, key)?;
 
     bar.set_message("1/1 files".to_owned());
     bar.finish();
@@ -142,6 +157,7 @@ impl Upload {
 
   fn upload_package(
     &self,
+    client: &Client,
     archive_path: &Utf8Path,
     options: &Options,
     key: Option<&PrivateKey>,
@@ -163,6 +179,7 @@ impl Upload {
       archive: &archive,
       archive_path,
       bar: &bar,
+      client,
       files_uploaded: Cell::new(0),
       key,
       options,
@@ -172,7 +189,7 @@ impl Upload {
     self.upload_directory(&ctx, archive_path.parent().unwrap(), fingerprint.into())?;
 
     let url = self.server.join(&format!("package/{fingerprint}")).unwrap();
-    let request = Client::new().post(url);
+    let request = client.post(url);
     self
       .request_with_token(request, key)?
       .send()
@@ -203,7 +220,7 @@ impl Upload {
 
     let body = Body::sized(ctx.bar.wrap_read(file), expected.size);
 
-    self.upload_body(expected.hash, body, ctx.key)?;
+    self.upload_body(ctx.client, expected.hash, body, ctx.key)?;
 
     Ok(())
   }
