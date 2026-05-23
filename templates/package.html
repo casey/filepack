@@ -1,41 +1,30 @@
-<!doctype html>
-<html lang=en>
-  <head>
-    <meta charset=utf-8>
-    <meta name=viewport content='width=device-width,initial-scale=1.0'>
-    <title>package {{ self.fingerprint }} · filepack</title>
-    <meta name=description content='Filepack package server'>
-  </head>
-  <body>
-    <h1>Package {{ self.fingerprint }}</h1>
-    <a href=/directory/{{ Hash::from(self.fingerprint) }}>files</a>
+<h1>Package {{ self.fingerprint }}</h1>
+<a href=/directory/{{ Hash::from(self.fingerprint) }}>files</a>
 %% if let Some(metadata) = &self.metadata {
-    <dl>
+<dl>
 %%   if let Some(title) = &metadata.title {
-      <dt>title</dt>
-      <dd>{{ title }}</dd>
+  <dt>title</dt>
+  <dd>{{ title }}</dd>
 %%   }
 %%   if let Some(creator) = &metadata.creator {
-      <dt>creator</dt>
-      <dd>{{ creator }}</dd>
+  <dt>creator</dt>
+  <dd>{{ creator }}</dd>
 %%   }
 %%   if let Some(date) = &metadata.date {
-      <dt>date</dt>
-      <dd>{{ date }}</dd>
+  <dt>date</dt>
+  <dd>{{ date }}</dd>
 %%   }
 %%   if let Some(description) = &metadata.description {
-      <dt>description</dt>
-      <dd>{{ description }}</dd>
+  <dt>description</dt>
+  <dd>{{ description }}</dd>
 %%   }
 %%   if let Some(homepage) = &metadata.homepage {
-      <dt>homepage</dt>
-      <dd><a href={{ homepage }}>{{ homepage }}</a></dd>
+  <dt>homepage</dt>
+  <dd><a href={{ homepage }}>{{ homepage }}</a></dd>
 %%   }
 %%   if let Some(language) = &metadata.language {
-      <dt>language</dt>
-      <dd>{{ language }}</dd>
+  <dt>language</dt>
+  <dd>{{ language }}</dd>
 %%   }
-    </dl>
+</dl>
 %% }
-  </body>
-</html>

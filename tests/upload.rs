@@ -463,7 +463,7 @@ fn upload_package_serves_package_html() {
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
     .success();
 
-  server.assert_response(
+  server.assert_page(
     &format!("/package/{fingerprint}"),
     PackageHtml {
       fingerprint,
@@ -516,7 +516,7 @@ fn upload_package_uploads_files() {
 
   let directory = Directory::decode(&mut Decoder::new(&cbor)).unwrap();
 
-  server.assert_response(
+  server.assert_page(
     &format!("/directory/{root}"),
     DirectoryHtml {
       directory,

@@ -1,17 +1,6 @@
-<!doctype html>
-<html lang=en>
-  <head>
-    <meta charset=utf-8>
-    <meta name=viewport content='width=device-width,initial-scale=1.0'>
-    <title>files · filepack</title>
-    <meta name=description content='Filepack package server'>
-  </head>
-  <body>
-    <h1>Files</h1>
-    <ul>
+<h1>Files</h1>
+<ul>
 %% for file in &self.files {
-      <li><a href=/file/{{ file }}>{{ file }}</a></li>
+  <li><a href=/file/{{ file }}>{{ file }}</a></li>
 %% }
-    </ul>
-  </body>
-</html>
+</ul>
