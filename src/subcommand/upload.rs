@@ -1,8 +1,19 @@
 use {
   super::*,
   reqwest::blocking::{Body, RequestBuilder},
+  std::cell::Cell,
   url::Host,
 };
+
+struct Context<'a> {
+  archive: &'a Archive,
+  archive_path: &'a Utf8Path,
+  bar: &'a ProgressBar,
+  files_uploaded: Cell<u64>,
+  key: Option<&'a PrivateKey>,
+  options: &'a Options,
+  total_files: u64,
+}
 
 #[derive(Parser)]
 pub(crate) struct Upload {
@@ -69,39 +80,41 @@ impl Upload {
     Ok(())
   }
 
-  fn upload_directory(
-    &self,
-    archive: &Archive,
-    archive_path: &Utf8Path,
-    file_path: &Utf8Path,
-    hash: Hash,
-    key: Option<&PrivateKey>,
-    options: &Options,
-  ) -> Result {
-    let context = error::UnarchiveManifest { path: archive_path };
+  fn upload_directory(&self, ctx: &Context, file_path: &Utf8Path, hash: Hash) -> Result {
+    let error_context = error::UnarchiveManifest {
+      path: ctx.archive_path,
+    };
 
-    let cbor = archive.file(hash).context(context)?;
+    let cbor = ctx.archive.file(hash).context(error_context)?;
 
     let directory = Directory::decode_from_slice(cbor)
       .context(archive_error::DirectoryDecode)
-      .context(context)?;
+      .context(error_context)?;
 
-    self.upload_body(hash, cbor.to_vec().into(), key)?;
+    self.upload_body(hash, cbor.to_vec().into(), ctx.key)?;
 
     for (component, entry) in &directory.entries {
       let file_path = file_path.join(component);
       match entry.ty {
         EntryType::Directory => {
-          self.upload_directory(archive, archive_path, &file_path, entry.hash, key, options)?;
+          self.upload_directory(ctx, &file_path, entry.hash)?;
         }
-        EntryType::File => self.upload_package_file(entry, key, options, &file_path)?,
+        EntryType::File => {
+          self.upload_package_file(ctx, entry, &file_path)?;
+          ctx.files_uploaded.set(ctx.files_uploaded.get() + 1);
+          ctx.bar.set_message(format!(
+            "{}/{} files",
+            ctx.files_uploaded.get(),
+            ctx.total_files,
+          ));
+        }
       }
     }
 
     let url = self.server.join(&format!("directory/{hash}")).unwrap();
     let request = Client::new().post(url);
     self
-      .request_with_token(request, key)?
+      .request_with_token(request, ctx.key)?
       .send()
       .check_status()?;
 
@@ -109,14 +122,20 @@ impl Upload {
   }
 
   fn upload_file(&self, path: &Utf8Path, options: &Options, key: Option<&PrivateKey>) -> Result {
-    let hash = options
+    let File { hash, size } = options
       .hash_file(path)
-      .context(error::FilesystemIo { path })?
-      .hash;
+      .context(error::FilesystemIo { path })?;
+
+    let bar = progress_bar::with_files(options, size, 1);
 
     let file = filesystem::open(path)?;
 
-    self.upload_body(hash, file.into(), key)?;
+    let body = Body::sized(bar.wrap_read(file), size);
+
+    self.upload_body(hash, body, key)?;
+
+    bar.set_message("1/1 files".to_owned());
+    bar.finish();
 
     Ok(())
   }
@@ -129,18 +148,28 @@ impl Upload {
   ) -> Result {
     let archive = Archive::load_with_path(archive_path, archive_path)?;
 
-    let fingerprint = archive
-      .fingerprint()
+    let manifest = archive
+      .unpack()
       .context(error::UnarchiveManifest { path: archive_path })?;
 
-    self.upload_directory(
-      &archive,
+    let fingerprint = manifest.fingerprint();
+
+    let total_files = manifest.files().len().into_u64();
+    let total_bytes = u64::try_from(manifest.total_size()).unwrap_or(u64::MAX);
+
+    let bar = progress_bar::with_files(options, total_bytes, total_files);
+
+    let ctx = Context {
+      archive: &archive,
       archive_path,
-      archive_path.parent().unwrap(),
-      fingerprint.into(),
+      bar: &bar,
+      files_uploaded: Cell::new(0),
       key,
       options,
-    )?;
+      total_files,
+    };
+
+    self.upload_directory(&ctx, archive_path.parent().unwrap(), fingerprint.into())?;
 
     let url = self.server.join(&format!("package/{fingerprint}")).unwrap();
     let request = Client::new().post(url);
@@ -149,17 +178,14 @@ impl Upload {
       .send()
       .check_status()?;
 
+    bar.finish();
+
     Ok(())
   }
 
-  fn upload_package_file(
-    &self,
-    expected: &Entry,
-    key: Option<&PrivateKey>,
-    options: &Options,
-    path: &Utf8Path,
-  ) -> Result {
-    let actual = options
+  fn upload_package_file(&self, ctx: &Context, expected: &Entry, path: &Utf8Path) -> Result {
+    let actual = ctx
+      .options
       .hash_file(path)
       .context(error::FilesystemIo { path })?;
 
@@ -175,7 +201,9 @@ impl Upload {
 
     let file = filesystem::open(path)?;
 
-    self.upload_body(expected.hash, file.into(), key)?;
+    let body = Body::sized(ctx.bar.wrap_read(file), expected.size);
+
+    self.upload_body(expected.hash, body, ctx.key)?;
 
     Ok(())
   }
