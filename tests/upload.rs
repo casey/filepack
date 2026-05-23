@@ -465,14 +465,14 @@ fn upload_package_serves_package_html() {
 
   server.assert_response(
     &format!("/package/{fingerprint}"),
-    PackageHtml {
+    PageHtml::from(PackageHtml {
       fingerprint,
       metadata: Some(Metadata {
         description: Some("Bar".into()),
         title: Some("Foo".parse().unwrap()),
         ..Metadata::default()
       }),
-    },
+    }),
   );
 
   server.terminate().success();
@@ -518,10 +518,10 @@ fn upload_package_uploads_files() {
 
   server.assert_response(
     &format!("/directory/{root}"),
-    DirectoryHtml {
+    PageHtml::from(DirectoryHtml {
       directory,
       hash: root,
-    },
+    }),
   );
 
   server.terminate().success();

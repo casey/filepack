@@ -136,14 +136,14 @@ impl Serve {
     Ok(acceptor)
   }
 
-  async fn directory(
-    server: ServerExtension,
-    Path(hash): Path<Hash>,
-  ) -> ServerResult<DirectoryHtml> {
-    Ok(DirectoryHtml {
-      directory: block_in_place(|| server.directory(hash))?,
-      hash,
-    })
+  async fn directory(server: ServerExtension, Path(hash): Path<Hash>) -> PageResult<DirectoryHtml> {
+    Ok(
+      DirectoryHtml {
+        directory: block_in_place(|| server.directory(hash))?,
+        hash,
+      }
+      .into(),
+    )
   }
 
   fn domains(&self) -> Result<Vec<String>> {
@@ -180,10 +180,13 @@ impl Serve {
     StaticAsset::get("favicon.png")
   }
 
-  async fn files(server: ServerExtension) -> ServerResult<FilesHtml> {
-    Ok(FilesHtml {
-      files: block_in_place(|| server.files())?,
-    })
+  async fn files(server: ServerExtension) -> PageResult<FilesHtml> {
+    Ok(
+      FilesHtml {
+        files: block_in_place(|| server.files())?,
+      }
+      .into(),
+    )
   }
 
   async fn home() -> ServerResult<StaticAsset> {

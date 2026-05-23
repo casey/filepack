@@ -430,8 +430,6 @@ dependencies = [
 [[package]]
 name = "boilerplate"
 version = "1.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4e3b0e30ddbe071ebebe3a1165e7e3bcb0bb30a2fc67fddf68fcb75c792f4326"
 dependencies = [
  "boilerplate-macros",
 ]
@@ -439,8 +437,6 @@ dependencies = [
 [[package]]
 name = "boilerplate-macros"
 version = "0.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dc0c044dd06b51561ddd553ee6454111f161347aadc7726e15bae8e1f115539d"
 dependencies = [
  "boilerplate-parser",
  "darling",
@@ -454,8 +450,6 @@ dependencies = [
 [[package]]
 name = "boilerplate-parser"
 version = "0.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e7ea04f808c8ddbd69a3f919bb45b32f3f822b52d0c407ce1a1f0666ff9d5c60"
 
 [[package]]
 name = "bs58"

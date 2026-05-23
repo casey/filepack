@@ -4,6 +4,7 @@ use {
     body,
     http::{Method, Request, header::HeaderName},
   },
+  templates::Page,
   tokio::runtime::Runtime,
   tower::ServiceExt,
 };
@@ -35,6 +36,10 @@ impl TestRequestBuilder {
         .is_none()
     );
     self
+  }
+
+  fn assert_page(self, page: impl Page) -> Self {
+    self.assert_response(PageHtml::from(page))
   }
 
   fn assert_response(mut self, response: impl IntoResponse) -> Self {
@@ -296,7 +301,7 @@ fn favicon() {
 fn files_empty() {
   TestServer::new()
     .get("/files")
-    .assert_response(FilesHtml { files: Vec::new() })
+    .assert_page(FilesHtml { files: Vec::new() })
     .send();
 }
 
@@ -317,10 +322,7 @@ fn files_non_empty() {
   let mut files = vec![Hash::bytes(foo), Hash::bytes(bar), Hash::bytes(baz)];
   files.sort();
 
-  server
-    .get("/files")
-    .assert_response(FilesHtml { files })
-    .send();
+  server.get("/files").assert_page(FilesHtml { files }).send();
 }
 
 #[test]
@@ -351,7 +353,7 @@ fn get_directory_succeeds() {
 
   server
     .get(format!("/directory/{hash}"))
-    .assert_response(DirectoryHtml {
+    .assert_page(DirectoryHtml {
       directory: dir,
       hash,
     })
@@ -406,7 +408,7 @@ fn get_package_with_metadata() {
 
   server
     .get(format!("/package/{fingerprint}"))
-    .assert_response(PackageHtml {
+    .assert_page(PackageHtml {
       fingerprint,
       metadata: Some(metadata),
     })
@@ -427,7 +429,7 @@ fn get_package_without_metadata() {
 
   server
     .get(format!("/package/{fingerprint}"))
-    .assert_response(PackageHtml {
+    .assert_page(PackageHtml {
       fingerprint,
       metadata: None,
     })
@@ -752,7 +754,7 @@ fn verify_directory_succeeds() {
 
   server
     .get(format!("/directory/{child_hash}"))
-    .assert_response(DirectoryHtml {
+    .assert_page(DirectoryHtml {
       directory: child,
       hash: child_hash,
     })
@@ -772,7 +774,7 @@ fn verify_directory_succeeds() {
 
   server
     .get(format!("/directory/{parent_hash}"))
-    .assert_response(DirectoryHtml {
+    .assert_page(DirectoryHtml {
       directory: parent,
       hash: parent_hash,
     })

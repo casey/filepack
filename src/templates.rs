@@ -6,9 +6,21 @@ pub struct DirectoryHtml {
   pub hash: Hash,
 }
 
+impl Page for DirectoryHtml {
+  fn title(&self) -> String {
+    format!("directory {} · filepack", self.hash)
+  }
+}
+
 #[derive(Boilerplate)]
 pub(crate) struct FilesHtml {
   pub(crate) files: Vec<Hash>,
+}
+
+impl Page for FilesHtml {
+  fn title(&self) -> String {
+    "files · filepack".into()
+  }
 }
 
 #[derive(Boilerplate)]
@@ -24,15 +36,15 @@ impl Page for PackageHtml {
 }
 
 #[derive(Boilerplate)]
-pub(crate) struct PageHtml<T: Display + Page> {
+pub struct PageHtml<T: Page> {
   content: T,
 }
 
-pub(crate) trait Page {
+pub trait Page: Display {
   fn title(&self) -> String;
 }
 
-impl<T: Display + Page> From<T> for PageHtml<T> {
+impl<T: Page> From<T> for PageHtml<T> {
   fn from(page: T) -> PageHtml<T> {
     PageHtml { content: page }
   }

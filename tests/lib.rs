@@ -4,7 +4,7 @@ use {
   filepack::{
     Decode, Decoder, Directory, Encoder, Hash, Manifest, Metadata, PrivateKey, PublicKey,
     assert_matches,
-    templates::{DirectoryHtml, PackageHtml},
+    templates::{DirectoryHtml, PackageHtml, PageHtml},
   },
   regex::Regex,
   reqwest::StatusCode,
