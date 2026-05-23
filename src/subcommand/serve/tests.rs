@@ -326,47 +326,6 @@ fn files_non_empty() {
 }
 
 #[test]
-fn packages_empty() {
-  TestServer::new()
-    .get("/packages")
-    .assert_page(PackagesHtml {
-      packages: Vec::new(),
-    })
-    .send();
-}
-
-#[test]
-fn packages_non_empty() {
-  let server = TestServer::new();
-
-  let mut packages = Vec::new();
-
-  for content in [b"foo".as_slice(), b"bar", b"baz"] {
-    server.write_file(content);
-    let cbor = directory(&[(
-      "file",
-      EntryType::File,
-      Hash::bytes(content),
-      content.len() as u64,
-    )])
-    .encode_to_vec();
-    let hash = Hash::bytes(&cbor);
-    let fingerprint = Fingerprint(hash);
-    server.write_file(&cbor);
-    server.post(format!("/directory/{hash}")).send();
-    server.post(format!("/package/{fingerprint}")).send();
-    packages.push(fingerprint);
-  }
-
-  packages.sort();
-
-  server
-    .get("/packages")
-    .assert_page(PackagesHtml { packages })
-    .send();
-}
-
-#[test]
 fn get_directory_not_found() {
   let server = TestServer::new();
 
@@ -490,6 +449,47 @@ fn install_script() {
   TestServer::new()
     .get("/install.sh")
     .assert_static("install.sh")
+    .send();
+}
+
+#[test]
+fn packages_empty() {
+  TestServer::new()
+    .get("/packages")
+    .assert_page(PackagesHtml {
+      packages: Vec::new(),
+    })
+    .send();
+}
+
+#[test]
+fn packages_non_empty() {
+  let server = TestServer::new();
+
+  let mut packages = Vec::new();
+
+  for content in [b"foo".as_slice(), b"bar", b"baz"] {
+    server.write_file(content);
+    let cbor = directory(&[(
+      "file",
+      EntryType::File,
+      Hash::bytes(content),
+      content.len() as u64,
+    )])
+    .encode_to_vec();
+    let hash = Hash::bytes(&cbor);
+    let fingerprint = Fingerprint(hash);
+    server.write_file(&cbor);
+    server.post(format!("/directory/{hash}")).send();
+    server.post(format!("/package/{fingerprint}")).send();
+    packages.push(fingerprint);
+  }
+
+  packages.sort();
+
+  server
+    .get("/packages")
+    .assert_page(PackagesHtml { packages })
     .send();
 }
 
