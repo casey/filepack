@@ -118,6 +118,16 @@ impl Server {
       .map(Some)
   }
 
+  pub(crate) fn packages(&self) -> ServerResult<Vec<Fingerprint>> {
+    self
+      .database
+      .begin_read()?
+      .open_table(PACKAGES)?
+      .iter()?
+      .map(|entry| Ok(entry?.0.value()))
+      .collect()
+  }
+
   fn read_directory(&self, hash: Hash) -> ServerResult<Directory> {
     let path = self.file_path(hash);
 

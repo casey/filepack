@@ -13,7 +13,7 @@ use {
   },
   std::net::TcpStream,
   sysinfo::System,
-  templates::{DirectoryHtml, FilesHtml, PackageHtml, PageHtml},
+  templates::{DirectoryHtml, FilesHtml, PackageHtml, PackagesHtml, PageHtml},
   tokio::{net::TcpListener, runtime, task::block_in_place},
   tokio_util::io::ReaderStream,
   tower_http::set_header::SetResponseHeaderLayer,
@@ -230,6 +230,15 @@ impl Serve {
     )
   }
 
+  async fn packages(server: ServerExtension) -> PageResult<PackagesHtml> {
+    Ok(
+      PackagesHtml {
+        packages: block_in_place(|| server.packages())?,
+      }
+      .into(),
+    )
+  }
+
   fn redirect_destination(domains: &[String], https_port: u16) -> String {
     if https_port == 443 {
       format!("https://{}", domains[0])
@@ -271,6 +280,7 @@ impl Serve {
       .route("/install.sh", get(Self::install_script))
       .route("/package/{fingerprint}", get(Self::package))
       .route("/package/{fingerprint}", post(Self::verify_package))
+      .route("/packages", get(Self::packages))
       .route("/static/{*path}", get(Self::static_asset))
       .fallback(Self::fallback)
       .layer(Extension(server))

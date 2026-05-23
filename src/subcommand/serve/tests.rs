@@ -453,6 +453,47 @@ fn install_script() {
 }
 
 #[test]
+fn packages_empty() {
+  TestServer::new()
+    .get("/packages")
+    .assert_page(PackagesHtml {
+      packages: Vec::new(),
+    })
+    .send();
+}
+
+#[test]
+fn packages_non_empty() {
+  let server = TestServer::new();
+
+  let mut packages = Vec::new();
+
+  for content in [b"foo".as_slice(), b"bar", b"baz"] {
+    server.write_file(content);
+    let cbor = directory(&[(
+      "file",
+      EntryType::File,
+      Hash::bytes(content),
+      content.len() as u64,
+    )])
+    .encode_to_vec();
+    let hash = Hash::bytes(&cbor);
+    let fingerprint = Fingerprint(hash);
+    server.write_file(&cbor);
+    server.post(format!("/directory/{hash}")).send();
+    server.post(format!("/package/{fingerprint}")).send();
+    packages.push(fingerprint);
+  }
+
+  packages.sort();
+
+  server
+    .get("/packages")
+    .assert_page(PackagesHtml { packages })
+    .send();
+}
+
+#[test]
 fn ports() {
   #[track_caller]
   fn case(serve: Serve, http_port: Option<u16>, https_port: Option<u16>) {
