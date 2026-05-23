@@ -13,7 +13,7 @@ use {
   },
   std::net::TcpStream,
   sysinfo::System,
-  templates::{DirectoryHtml, FilesHtml, PackageHtml},
+  templates::{DirectoryHtml, FilesHtml, PackageHtml, PageHtml},
   tokio::{net::TcpListener, runtime, task::block_in_place},
   tokio_util::io::ReaderStream,
   tower_http::set_header::SetResponseHeaderLayer,
@@ -22,6 +22,8 @@ use {
 static THREAD_COUNTER: AtomicU64 = AtomicU64::new(0);
 
 type ServerExtension = Extension<Arc<Server>>;
+
+type PageResult<T> = ServerResult<PageHtml<T>>;
 
 pub(crate) struct AuthConfig {
   pub(crate) admin: Option<PublicKey>,
@@ -215,11 +217,14 @@ impl Serve {
   async fn package(
     server: ServerExtension,
     Path(fingerprint): Path<Fingerprint>,
-  ) -> ServerResult<PackageHtml> {
-    Ok(PackageHtml {
-      fingerprint,
-      metadata: block_in_place(|| server.package(fingerprint))?,
-    })
+  ) -> PageResult<PackageHtml> {
+    Ok(
+      PackageHtml {
+        fingerprint,
+        metadata: block_in_place(|| server.package(fingerprint))?,
+      }
+      .into(),
+    )
   }
 
   fn redirect_destination(domains: &[String], https_port: u16) -> String {

@@ -88,7 +88,7 @@ use {
     primitives::decode::{CheckedHrpstring, CheckedHrpstringError},
   },
   blake3::Hasher,
-  boilerplate::Boilerplate,
+  boilerplate::{Boilerplate, Trusted},
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},
   clap::{Parser, ValueEnum},
   filepack_cbor::{Decode, DecodeFromStr, Encode, EncodeDisplay},
