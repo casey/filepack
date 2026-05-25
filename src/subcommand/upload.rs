@@ -7,11 +7,11 @@ use {
 struct Context {
   archive: Archive,
   client: Client,
+  files: u64,
   files_uploaded: u64,
   key: Option<PrivateKey>,
   options: Options,
   progress_bar: ProgressBar,
-  files: u64,
 }
 
 #[derive(Parser)]
