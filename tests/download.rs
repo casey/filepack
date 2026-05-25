@@ -10,7 +10,6 @@ fn download_fails_if_output_already_exists() {
       "download",
       "--server",
       "http://127.0.0.1:1",
-      "--file",
       "--hash",
       &hash.to_string(),
       "foo",
@@ -35,7 +34,6 @@ fn download_fails_on_hash_mismatch() {
       "download",
       "--server",
       &server.address(),
-      "--file",
       "--hash",
       &expected.to_string(),
       "foo",
@@ -59,7 +57,6 @@ fn download_fails_with_404_when_file_missing() {
       "download",
       "--server",
       &server.address(),
-      "--file",
       "--hash",
       &hash.to_string(),
       "foo",
@@ -81,8 +78,8 @@ fn download_package_fails_if_output_directory_already_exists() {
       "download",
       "--server",
       "http://example.com",
-      "--hash",
-      &Hash::bytes(&[]).to_string(),
+      "--fingerprint",
+      &Fingerprint::from(Hash::bytes(&[])).to_string(),
       "out",
     ])
     .stderr("error: `out` already exists\n")
@@ -97,8 +94,8 @@ fn download_package_fails_if_output_file_already_exists() {
       "download",
       "--server",
       "http://example.com",
-      "--hash",
-      &Hash::bytes(&[]).to_string(),
+      "--fingerprint",
+      &Fingerprint::from(Hash::bytes(&[])).to_string(),
       "out",
     ])
     .stderr("error: `out` already exists\n")
@@ -120,8 +117,8 @@ fn download_package_fails_on_hash_mismatch() {
       "download",
       "--server",
       &server.address(),
-      "--hash",
-      &expected.to_string(),
+      "--fingerprint",
+      &Fingerprint::from(expected).to_string(),
       "out",
     ])
     .stderr(&format!(
@@ -151,7 +148,6 @@ fn download_retrieves_file() {
       "download",
       "--server",
       &server.address(),
-      "--file",
       "--hash",
       &hash.to_string(),
       "foo",
@@ -176,7 +172,7 @@ fn download_retrieves_package() {
     .success();
 
   let manifest = Manifest::load(Some(&test.path().join("manifest.filepack"))).unwrap();
-  let package = Hash::from(manifest.fingerprint());
+  let fingerprint = manifest.fingerprint();
 
   test
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
@@ -187,8 +183,8 @@ fn download_retrieves_package() {
       "download",
       "--server",
       &server.address(),
-      "--hash",
-      &package.to_string(),
+      "--fingerprint",
+      &fingerprint.to_string(),
       "out",
     ])
     .assert_file("out/foo", "aaa")

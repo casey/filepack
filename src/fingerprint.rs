@@ -50,3 +50,9 @@ impl From<[u8; Self::LEN]> for Fingerprint {
     Self::from_bytes(bytes)
   }
 }
+
+impl From<Hash> for Fingerprint {
+  fn from(hash: Hash) -> Self {
+    Self(hash)
+  }
+}

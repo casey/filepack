@@ -150,9 +150,17 @@ languages:
     /opt/homebrew/share/iso-codes/json/iso_639-3.json
 
 upload:
-  rm -rf tmp/filepack
-  git clone . tmp/filepack
-  rm -rf tmp/filepack/.git
+  rm -rf tmp/upload
+  git clone . tmp/upload
+  rm -rf tmp/upload/.git
   cargo build --release
-  ./target/release/filepack create tmp/filepack
-  ./target/release/filepack upload tmp/filepack/manifest.filepack --server https://filepack.com --auth master
+  ./target/release/filepack create tmp/upload
+  ./target/release/filepack upload tmp/upload/manifest.filepack --server https://filepack.com --auth master
+
+download:
+  #!/usr/bin/env bash
+  set -euxo pipefail
+  rm -rf tmp/download
+  cargo build --release
+  fingerprint=`./target/release/filepack fingerprint tmp/upload/manifest.filepack`
+  ./target/release/filepack download --server https://filepack.com --fingerprint $fingerprint tmp/download

@@ -100,7 +100,7 @@ impl Subcommand {
       Self::Bech32(bech32) => bech32.run(),
       Self::Contains(contains) => contains.run(options),
       Self::Create(create) => create.run(options),
-      Self::Download(download) => download.run(),
+      Self::Download(download) => download.run(options),
       Self::Files(files) => files.run(),
       Self::Fingerprint(fingerprint) => fingerprint.run(),
       Self::Hash(hash) => hash.run(options),
