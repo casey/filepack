@@ -1,7 +1,7 @@
 use super::*;
 
 #[derive(Parser)]
-#[group(required = true)]
+#[command(group = ArgGroup::new("target").required(true))]
 pub(crate) struct Contains {
   #[arg(group = "target", help = "Search manifest for <FILE>.", long)]
   file: Option<Utf8PathBuf>,
@@ -15,16 +15,14 @@ impl Contains {
   pub(crate) fn run(self, options: Options) -> Result {
     let manifest = Manifest::load(self.manifest.as_deref())?;
 
-    let (hash, size) = if let Some(hash) = self.hash {
-      (hash, None)
-    } else {
-      let path = self.file.unwrap();
-
+    let (hash, size) = if let Some(path) = self.file {
       let file = options
         .hash_file(&path)
         .context(error::FilesystemIo { path })?;
 
       (file.hash, Some(file.size))
+    } else {
+      (self.hash.unwrap(), None)
     };
 
     let file = manifest

@@ -1,7 +1,7 @@
 use super::*;
 
 #[derive(Parser)]
-#[group(required = true)]
+#[command(group = ArgGroup::new("source").required(true))]
 pub(crate) struct Bech32 {
   #[arg(
     group = "source",
