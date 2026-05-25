@@ -130,7 +130,7 @@ impl Download {
     Ok(())
   }
 
-  fn download_single_file(&self, options: &Options, hash: Hash, path: &Utf8Path) -> Result {
+  fn download_file(&self, options: &Options, hash: Hash, path: &Utf8Path) -> Result {
     ensure! {
       !filesystem::exists(path)?,
       error::FileAlreadyExists { path },
@@ -163,7 +163,7 @@ impl Download {
 
   pub(crate) fn run(self, options: Options) -> Result {
     if let Some(hash) = self.hash {
-      self.download_single_file(&options, hash, &self.output)
+      self.download_file(&options, hash, &self.output)
     } else {
       self.download_package(&options, self.fingerprint.unwrap().into())
     }
