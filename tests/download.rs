@@ -10,7 +10,7 @@ fn download_fails_if_output_already_exists() {
       "download",
       "--server",
       "http://127.0.0.1:1",
-      "--hash",
+      "--file",
       &hash.to_string(),
       "foo",
     ])
@@ -34,7 +34,7 @@ fn download_fails_on_hash_mismatch() {
       "download",
       "--server",
       &server.address(),
-      "--hash",
+      "--file",
       &expected.to_string(),
       "foo",
     ])
@@ -57,7 +57,7 @@ fn download_fails_with_404_when_file_missing() {
       "download",
       "--server",
       &server.address(),
-      "--hash",
+      "--file",
       &hash.to_string(),
       "foo",
     ])
@@ -78,7 +78,7 @@ fn download_package_fails_if_output_directory_already_exists() {
       "download",
       "--server",
       "http://example.com",
-      "--fingerprint",
+      "--package",
       &Fingerprint::from(Hash::bytes(&[])).to_string(),
       "out",
     ])
@@ -94,7 +94,7 @@ fn download_package_fails_if_output_file_already_exists() {
       "download",
       "--server",
       "http://example.com",
-      "--fingerprint",
+      "--package",
       &Fingerprint::from(Hash::bytes(&[])).to_string(),
       "out",
     ])
@@ -117,7 +117,7 @@ fn download_package_fails_on_hash_mismatch() {
       "download",
       "--server",
       &server.address(),
-      "--fingerprint",
+      "--package",
       &Fingerprint::from(expected).to_string(),
       "out",
     ])
@@ -148,7 +148,7 @@ fn download_retrieves_file() {
       "download",
       "--server",
       &server.address(),
-      "--hash",
+      "--file",
       &hash.to_string(),
       "foo",
     ])
@@ -183,7 +183,7 @@ fn download_retrieves_package() {
       "download",
       "--server",
       &server.address(),
-      "--fingerprint",
+      "--package",
       &fingerprint.to_string(),
       "out",
     ])

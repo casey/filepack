@@ -10,12 +10,22 @@ struct Context {
 #[derive(Parser)]
 #[command(group = ArgGroup::new("target").required(true))]
 pub(crate) struct Download {
-  #[arg(group = "target", help = "Download package with <FINGERPRINT>", long)]
-  fingerprint: Option<Fingerprint>,
-  #[arg(group = "target", help = "Download file with <HASH>", long)]
-  hash: Option<Hash>,
+  #[arg(
+    group = "target",
+    help = "Download file with <HASH>",
+    long,
+    value_name = "HASH"
+  )]
+  file: Option<Hash>,
   #[arg(help = "Download to <PATH>", value_name = "PATH")]
   output: Utf8PathBuf,
+  #[arg(
+    group = "target",
+    help = "Download package with <FINGERPRINT>",
+    long,
+    value_name = "FINGERPRINT"
+  )]
+  package: Option<Fingerprint>,
   #[arg(help = "Download from server at <URL>", long, value_name = "URL", value_parser = parse_server_url)]
   server: Url,
 }
@@ -162,10 +172,10 @@ impl Download {
   }
 
   pub(crate) fn run(self, options: Options) -> Result {
-    if let Some(hash) = self.hash {
+    if let Some(hash) = self.file {
       self.download_file(&options, hash, &self.output)
     } else {
-      self.download_package(&options, self.fingerprint.unwrap())
+      self.download_package(&options, self.package.unwrap())
     }
   }
 

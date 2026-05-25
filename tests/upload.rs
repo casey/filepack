@@ -188,7 +188,7 @@ fn signatures_are_not_uploaded() {
       "download",
       "--server",
       &server.address(),
-      "--fingerprint",
+      "--package",
       &fingerprint.to_string(),
       "out",
     ])
