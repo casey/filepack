@@ -148,3 +148,11 @@ languages:
     | select(.["alpha_2"] != null) \
     | "(\"\( .["alpha_2"] )\", \"\( .name | gsub(" \\([^)]*\\)"; "") )\"),"' \
     /opt/homebrew/share/iso-codes/json/iso_639-3.json
+
+upload:
+  rm -rf tmp/filepack
+  git clone . tmp/filepack
+  rm -rf tmp/filepack/.git
+  cargo build --release
+  ./target/release/filepack create tmp/filepack
+  ./target/release/filepack upload tmp/filepack/manifest.filepack --server https://filepack.com --auth master

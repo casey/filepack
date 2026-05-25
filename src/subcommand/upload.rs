@@ -4,6 +4,16 @@ use {
   url::Host,
 };
 
+struct Context {
+  archive: Archive,
+  client: Client,
+  files: u64,
+  files_uploaded: u64,
+  key: Option<PrivateKey>,
+  options: Options,
+  progress_bar: ProgressBar,
+}
+
 #[derive(Parser)]
 pub(crate) struct Upload {
   #[arg(help = "Authenticate with key <KEY>", long, value_name = "KEY")]
@@ -53,15 +63,21 @@ impl Upload {
     };
 
     if self.file {
-      self.upload_file(&self.input, &options, key.as_ref())
+      self.upload_file(&options, key.as_ref())
     } else {
-      self.upload_package(&self.input, &options, key.as_ref())
+      self.upload_package(options, key)
     }
   }
 
-  fn upload_body(&self, hash: Hash, body: Body, key: Option<&PrivateKey>) -> Result {
+  fn upload_body(
+    &self,
+    client: &Client,
+    hash: Hash,
+    body: Body,
+    key: Option<&PrivateKey>,
+  ) -> Result {
     let url = self.server.join(&format!("file/{hash}")).unwrap();
-    let request = Client::new().put(url).body(body);
+    let request = client.put(url).body(body);
     self
       .request_with_token(request, key)?
       .send()
@@ -69,97 +85,119 @@ impl Upload {
     Ok(())
   }
 
-  fn upload_directory(
-    &self,
-    archive: &Archive,
-    archive_path: &Utf8Path,
-    file_path: &Utf8Path,
-    hash: Hash,
-    key: Option<&PrivateKey>,
-    options: &Options,
-  ) -> Result {
-    let context = error::UnarchiveManifest { path: archive_path };
+  fn upload_directory(&self, context: &mut Context, file_path: &Utf8Path, hash: Hash) -> Result {
+    let error_context = error::UnarchiveManifest { path: &self.input };
 
-    let cbor = archive.file(hash).context(context)?;
+    let cbor = context.archive.file(hash).context(error_context)?;
 
     let directory = Directory::decode_from_slice(cbor)
       .context(archive_error::DirectoryDecode)
-      .context(context)?;
+      .context(error_context)?;
 
-    self.upload_body(hash, cbor.to_vec().into(), key)?;
+    self.upload_body(
+      &context.client,
+      hash,
+      cbor.to_vec().into(),
+      context.key.as_ref(),
+    )?;
 
     for (component, entry) in &directory.entries {
       let file_path = file_path.join(component);
       match entry.ty {
         EntryType::Directory => {
-          self.upload_directory(archive, archive_path, &file_path, entry.hash, key, options)?;
+          self.upload_directory(context, &file_path, entry.hash)?;
         }
-        EntryType::File => self.upload_package_file(entry, key, options, &file_path)?,
+        EntryType::File => {
+          self.upload_package_file(context, entry, &file_path)?;
+          context.files_uploaded += 1;
+          context
+            .progress_bar
+            .set_message(progress_bar::file_progress_message(
+              context.files_uploaded,
+              context.files,
+            ));
+        }
       }
     }
 
     let url = self.server.join(&format!("directory/{hash}")).unwrap();
-    let request = Client::new().post(url);
+    let request = context.client.post(url);
     self
-      .request_with_token(request, key)?
+      .request_with_token(request, context.key.as_ref())?
       .send()
       .check_status()?;
 
     Ok(())
   }
 
-  fn upload_file(&self, path: &Utf8Path, options: &Options, key: Option<&PrivateKey>) -> Result {
-    let hash = options
-      .hash_file(path)
-      .context(error::FilesystemIo { path })?
-      .hash;
+  fn upload_file(&self, options: &Options, key: Option<&PrivateKey>) -> Result {
+    let File { hash, size } = options
+      .hash_file(&self.input)
+      .context(error::FilesystemIo { path: &self.input })?;
 
-    let file = filesystem::open(path)?;
+    let bar = progress_bar::new(options, size);
 
-    self.upload_body(hash, file.into(), key)?;
+    let file = filesystem::open(&self.input)?;
+
+    let body = Body::sized(bar.wrap_read(file), size);
+
+    let client = Client::new();
+
+    self.upload_body(&client, hash, body, key)?;
+
+    bar.finish();
 
     Ok(())
   }
 
-  fn upload_package(
-    &self,
-    archive_path: &Utf8Path,
-    options: &Options,
-    key: Option<&PrivateKey>,
-  ) -> Result {
-    let archive = Archive::load_with_path(archive_path, archive_path)?;
+  fn upload_package(&self, options: Options, key: Option<PrivateKey>) -> Result {
+    let archive = Archive::load_with_path(&self.input, &self.input)?;
 
-    let fingerprint = archive
-      .fingerprint()
-      .context(error::UnarchiveManifest { path: archive_path })?;
+    let error_context = error::UnarchiveManifest { path: &self.input };
 
-    self.upload_directory(
-      &archive,
-      archive_path,
-      archive_path.parent().unwrap(),
-      fingerprint.into(),
+    let fingerprint = archive.fingerprint().context(error_context)?;
+
+    let manifest = archive.unpack().context(error_context)?;
+
+    let files = manifest.files().len().into_u64();
+
+    let bytes = manifest.total_size_u64();
+
+    let client = Client::new();
+
+    let progress_bar = progress_bar::with_files(&options, bytes, files);
+
+    let mut context = Context {
+      archive,
+      progress_bar,
+      client,
+      files_uploaded: 0,
       key,
       options,
+      files,
+    };
+
+    self.upload_directory(
+      &mut context,
+      self.input.parent().unwrap(),
+      fingerprint.into(),
     )?;
 
     let url = self.server.join(&format!("package/{fingerprint}")).unwrap();
-    let request = Client::new().post(url);
+    let request = context.client.post(url);
     self
-      .request_with_token(request, key)?
+      .request_with_token(request, context.key.as_ref())?
       .send()
       .check_status()?;
+
+    context.progress_bar.finish();
 
     Ok(())
   }
 
-  fn upload_package_file(
-    &self,
-    expected: &Entry,
-    key: Option<&PrivateKey>,
-    options: &Options,
-    path: &Utf8Path,
-  ) -> Result {
-    let actual = options
+  fn upload_package_file(&self, context: &Context, expected: &Entry, path: &Utf8Path) -> Result {
+    let actual = context
+      .options
       .hash_file(path)
       .context(error::FilesystemIo { path })?;
 
@@ -175,7 +213,9 @@ impl Upload {
 
     let file = filesystem::open(path)?;
 
-    self.upload_body(expected.hash, file.into(), key)?;
+    let body = Body::sized(context.progress_bar.wrap_read(file), expected.size);
+
+    self.upload_body(&context.client, expected.hash, body, context.key.as_ref())?;
 
     Ok(())
   }

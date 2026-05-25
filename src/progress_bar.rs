@@ -6,6 +6,10 @@ const TEMPLATE: &str = "{spinner:.green} ⟪{elapsed_precise}⟫ ⟦{wide_bar:.c
                         {binary_bytes}/{binary_total_bytes} \
                         ⟨{binary_bytes_per_sec}, {eta}⟩";
 
+const TEMPLATE_WITH_FILES: &str = "{spinner:.green} ⟪{elapsed_precise}⟫ ⟦{wide_bar:.cyan}⟧ \
+                                   {binary_bytes}/{binary_total_bytes} ⟦{msg}⟧ \
+                                   ⟨{binary_bytes_per_sec}, {eta}⟩";
+
 const TICK_CHARS: &str = concat!(
   "⠀⠁⠈⠉⠂⠃⠊⠋⠐⠑⠘⠙⠒⠓⠚⠛",
   "⠄⠅⠌⠍⠆⠇⠎⠏⠔⠕⠜⠝⠖⠗⠞⠟",
@@ -41,6 +45,10 @@ const TICK_CHARS: &str = concat!(
   "⠛⠚⠓⠒⠙⠘⠑⠐⠋⠊⠃⠂⠉⠈⠁",
 );
 
+pub(crate) fn file_progress_message(uploaded: u64, files: u64) -> String {
+  format!("{uploaded}/{files} files")
+}
+
 pub(crate) fn new(options: &Options, bytes: u64) -> ProgressBar {
   if options.quiet {
     ProgressBar::hidden()
@@ -52,5 +60,21 @@ pub(crate) fn new(options: &Options, bytes: u64) -> ProgressBar {
         .unwrap()
         .tick_chars(TICK_CHARS),
     )
+  }
+}
+
+pub(crate) fn with_files(options: &Options, bytes: u64, files: u64) -> ProgressBar {
+  if options.quiet {
+    ProgressBar::hidden()
+  } else {
+    ProgressBar::new(bytes)
+      .with_style(
+        ProgressStyle::default_bar()
+          .progress_chars(PROGRESS_CHARS)
+          .template(TEMPLATE_WITH_FILES)
+          .unwrap()
+          .tick_chars(TICK_CHARS),
+      )
+      .with_message(file_progress_message(0, files))
   }
 }
