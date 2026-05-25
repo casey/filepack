@@ -93,3 +93,23 @@ fn source_required() {
     )
     .status(USAGE_ERROR);
 }
+
+#[test]
+fn source_required_with_hrp() {
+  Test::new()
+    .args(["bech32", "--hrp", "foo"])
+    .stderr_regex(
+      "error: the following required arguments were not provided:.*--decode.*--encode.*",
+    )
+    .status(USAGE_ERROR);
+}
+
+#[test]
+fn source_required_with_prefix() {
+  Test::new()
+    .args(["bech32", "--prefix", "q"])
+    .stderr_regex(
+      "error: the following required arguments were not provided:.*--decode.*--encode.*",
+    )
+    .status(USAGE_ERROR);
+}
