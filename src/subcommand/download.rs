@@ -40,7 +40,7 @@ impl Download {
     Ok(())
   }
 
-  fn download_package(&self, options: &Options, root: Hash) -> Result {
+  fn download_package(&self, options: &Options, fingerprint: Fingerprint) -> Result {
     ensure! {
       !filesystem::exists(&self.output)?,
       error::FileAlreadyExists { path: &self.output },
@@ -48,7 +48,7 @@ impl Download {
 
     let client = Client::new();
 
-    let mut stack = vec![(root, self.output.clone())];
+    let mut stack = vec![(Hash::from(fingerprint), self.output.clone())];
 
     let mut directories = BTreeMap::new();
 
@@ -111,8 +111,8 @@ impl Download {
 
     let package = Entry {
       ty: EntryType::Directory,
-      hash: root,
-      size: builder.files[&root].len().into_u64(),
+      hash: fingerprint.into(),
+      size: builder.files[&fingerprint.into()].len().into_u64(),
     };
 
     let archive = builder.build_package(package, &BTreeSet::new());
