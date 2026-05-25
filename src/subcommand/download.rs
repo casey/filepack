@@ -10,12 +10,22 @@ struct Context {
 #[derive(Parser)]
 #[command(group = ArgGroup::new("target").required(true))]
 pub(crate) struct Download {
-  #[arg(group = "target", help = "Download file with <HASH>", long, value_name = "HASH")]
+  #[arg(
+    group = "target",
+    help = "Download file with <HASH>",
+    long,
+    value_name = "HASH"
+  )]
   file: Option<Hash>,
-  #[arg(group = "target", help = "Download package with <FINGERPRINT>", long, value_name = "FINGERPRINT")]
-  package: Option<Fingerprint>,
   #[arg(help = "Download to <PATH>", value_name = "PATH")]
   output: Utf8PathBuf,
+  #[arg(
+    group = "target",
+    help = "Download package with <FINGERPRINT>",
+    long,
+    value_name = "FINGERPRINT"
+  )]
+  package: Option<Fingerprint>,
   #[arg(help = "Download from server at <URL>", long, value_name = "URL", value_parser = parse_server_url)]
   server: Url,
 }
