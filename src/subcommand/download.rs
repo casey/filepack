@@ -21,6 +21,25 @@ pub(crate) struct Download {
 }
 
 impl Download {
+  fn download_file(&self, options: &Options, hash: Hash, path: &Utf8Path) -> Result {
+    ensure! {
+      !filesystem::exists(path)?,
+      error::FileAlreadyExists { path },
+    }
+
+    let client = Client::new();
+
+    let response = self.get_file(&client, hash)?;
+
+    let bar = progress_bar::new(options, response.content_length().unwrap_or(0));
+
+    self.write_response(response, hash, path, &bar)?;
+
+    bar.finish();
+
+    Ok(())
+  }
+
   fn download_package(&self, options: &Options, root: Hash) -> Result {
     ensure! {
       !filesystem::exists(&self.output)?,
@@ -126,25 +145,6 @@ impl Download {
         context.files_downloaded,
         context.files,
       ));
-
-    Ok(())
-  }
-
-  fn download_file(&self, options: &Options, hash: Hash, path: &Utf8Path) -> Result {
-    ensure! {
-      !filesystem::exists(path)?,
-      error::FileAlreadyExists { path },
-    }
-
-    let client = Client::new();
-
-    let response = self.get_file(&client, hash)?;
-
-    let bar = progress_bar::new(options, response.content_length().unwrap_or(0));
-
-    self.write_response(response, hash, path, &bar)?;
-
-    bar.finish();
 
     Ok(())
   }
