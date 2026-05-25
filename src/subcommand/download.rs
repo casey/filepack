@@ -165,7 +165,7 @@ impl Download {
     if let Some(hash) = self.hash {
       self.download_file(&options, hash, &self.output)
     } else {
-      self.download_package(&options, self.fingerprint.unwrap().into())
+      self.download_package(&options, self.fingerprint.unwrap())
     }
   }
 
