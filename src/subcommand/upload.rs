@@ -165,11 +165,11 @@ impl Upload {
 
     let client = Client::new();
 
-    let bar = progress_bar::with_files(&options, bytes, files);
+    let progress_bar = progress_bar::with_files(&options, bytes, files);
 
     let mut context = Context {
       archive,
-      progress_bar: bar,
+      progress_bar,
       client,
       files_uploaded: 0,
       key,
