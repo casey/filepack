@@ -1,5 +1,12 @@
 use {super::*, reqwest::blocking::Response};
 
+struct Context {
+  client: Client,
+  files: u64,
+  files_downloaded: u64,
+  progress_bar: ProgressBar,
+}
+
 #[derive(Parser)]
 pub(crate) struct Download {
   #[arg(help = "Download file instead of package", long)]
@@ -13,60 +20,26 @@ pub(crate) struct Download {
 }
 
 impl Download {
-  pub(crate) fn download_file(&self, hash: Hash, path: &Utf8Path) -> Result {
-    ensure! {
-      !filesystem::exists(path)?,
-      error::FileAlreadyExists { path },
-    }
-
-    let mut response = self.get_file(hash)?;
-
-    let output_directory = path
-      .parent()
-      .filter(|parent| !parent.as_str().is_empty())
-      .unwrap_or(Utf8Path::new("."));
-
-    let tempfile = transfer_tempfile(hash, output_directory).context(error::FilesystemIo {
-      path: output_directory,
-    })?;
-
-    let mut writer = HashingWriter::new(tempfile);
-
-    response
-      .copy_to(&mut writer)
-      .with_context(|_| error::ResponseBody {
-        url: self.file_url(hash),
-      })?;
-
-    let (actual, tempfile) = writer.finalize();
-
-    ensure! {
-      actual == hash,
-      error::DownloadHashMismatch { actual, expected: hash },
-    }
-
-    tempfile
-      .persist_noclobber(path)
-      .map_err(|error| error.error)
-      .context(error::FilesystemIo { path })?;
-
-    Ok(())
-  }
-
-  pub(crate) fn download_package(&self, root: Hash) -> Result {
+  fn download_package(&self, options: &Options, root: Hash) -> Result {
     ensure! {
       !filesystem::exists(&self.output)?,
       error::FileAlreadyExists { path: &self.output },
     }
 
+    let client = Client::new();
+
     let mut directories = vec![(root, self.output.clone())];
 
     let mut files = BTreeMap::new();
 
+    let mut file_downloads = Vec::<(Hash, Utf8PathBuf)>::new();
+
+    let mut total_bytes = 0u64;
+
     while let Some((hash, path)) = directories.pop() {
       let url = self.file_url(hash);
 
-      let response = self.get_file(hash)?;
+      let response = self.get_file(&client, hash)?;
 
       let cbor = response
         .bytes()
@@ -90,9 +63,27 @@ impl Download {
         let path = path.join(component);
         match entry.ty {
           EntryType::Directory => directories.push((entry.hash, path)),
-          EntryType::File => self.download_file(entry.hash, &path)?,
+          EntryType::File => {
+            total_bytes = total_bytes.saturating_add(entry.size);
+            file_downloads.push((entry.hash, path));
+          }
         }
       }
+    }
+
+    let file_count = file_downloads.len().into_u64();
+
+    let progress_bar = progress_bar::with_files(options, total_bytes, file_count);
+
+    let mut context = Context {
+      client,
+      files: file_count,
+      files_downloaded: 0,
+      progress_bar,
+    };
+
+    for (hash, path) in &file_downloads {
+      self.download_package_file(&mut context, *hash, path)?;
     }
 
     let mut builder = ArchiveBuilder::new();
@@ -111,6 +102,49 @@ impl Download {
       archive.encode_to_vec(),
     )?;
 
+    context.progress_bar.finish();
+
+    Ok(())
+  }
+
+  fn download_package_file(&self, context: &mut Context, hash: Hash, path: &Utf8Path) -> Result {
+    ensure! {
+      !filesystem::exists(path)?,
+      error::FileAlreadyExists { path },
+    }
+
+    let response = self.get_file(&context.client, hash)?;
+
+    self.write_response(response, hash, path, &context.progress_bar)?;
+
+    context.files_downloaded += 1;
+
+    context
+      .progress_bar
+      .set_message(progress_bar::file_progress_message(
+        context.files_downloaded,
+        context.files,
+      ));
+
+    Ok(())
+  }
+
+  fn download_single_file(&self, options: &Options, hash: Hash, path: &Utf8Path) -> Result {
+    ensure! {
+      !filesystem::exists(path)?,
+      error::FileAlreadyExists { path },
+    }
+
+    let client = Client::new();
+
+    let response = self.get_file(&client, hash)?;
+
+    let bar = progress_bar::new(options, response.content_length().unwrap_or(0));
+
+    self.write_response(response, hash, path, &bar)?;
+
+    bar.finish();
+
     Ok(())
   }
 
@@ -118,19 +152,58 @@ impl Download {
     self.server.join(&format!("file/{hash}")).unwrap()
   }
 
-  fn get_file(&self, hash: Hash) -> Result<Response> {
+  fn get_file(&self, client: &Client, hash: Hash) -> Result<Response> {
     let url = self.file_url(hash);
 
-    let response = Client::new().get(url).send().check_status()?;
+    let response = client.get(url).send().check_status()?;
 
     Ok(response)
   }
 
-  pub(crate) fn run(self) -> Result {
+  pub(crate) fn run(self, options: Options) -> Result {
     if self.file {
-      self.download_file(self.hash, &self.output)
+      self.download_single_file(&options, self.hash, &self.output)
     } else {
-      self.download_package(self.hash)
+      self.download_package(&options, self.hash)
     }
+  }
+
+  fn write_response(
+    &self,
+    mut response: Response,
+    hash: Hash,
+    path: &Utf8Path,
+    bar: &ProgressBar,
+  ) -> Result {
+    let output_directory = path
+      .parent()
+      .filter(|parent| !parent.as_str().is_empty())
+      .unwrap_or(Utf8Path::new("."));
+
+    let tempfile = transfer_tempfile(hash, output_directory).context(error::FilesystemIo {
+      path: output_directory,
+    })?;
+
+    let mut writer = HashingWriter::new(tempfile);
+
+    response
+      .copy_to(&mut bar.wrap_write(&mut writer))
+      .with_context(|_| error::ResponseBody {
+        url: self.file_url(hash),
+      })?;
+
+    let (actual, tempfile) = writer.finalize();
+
+    ensure! {
+      actual == hash,
+      error::DownloadHashMismatch { actual, expected: hash },
+    }
+
+    tempfile
+      .persist_noclobber(path)
+      .map_err(|error| error.error)
+      .context(error::FilesystemIo { path })?;
+
+    Ok(())
   }
 }
