@@ -2,8 +2,8 @@ use {
   self::{child::Child, expected::Expected, test::Test},
   camino::{Utf8Path, Utf8PathBuf},
   filepack::{
-    Decode, Decoder, Directory, Encoder, Hash, Manifest, Metadata, PrivateKey, PublicKey,
-    assert_matches,
+    Decode, Decoder, Directory, Encoder, Fingerprint, Hash, Manifest, Metadata, PrivateKey,
+    PublicKey, assert_matches,
     templates::{DirectoryHtml, PackageHtml, Page, PageHtml},
   },
   regex::Regex,

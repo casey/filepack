@@ -177,7 +177,7 @@ fn signatures_are_not_uploaded() {
   let manifest = Manifest::load(Some(&test.path().join("manifest.filepack"))).unwrap();
   assert_eq!(manifest.signatures.len(), 1);
 
-  let package = Hash::from(manifest.fingerprint());
+  let fingerprint = manifest.fingerprint();
 
   test
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
@@ -188,8 +188,8 @@ fn signatures_are_not_uploaded() {
       "download",
       "--server",
       &server.address(),
-      "--hash",
-      &package.to_string(),
+      "--fingerprint",
+      &fingerprint.to_string(),
       "out",
     ])
     .success();

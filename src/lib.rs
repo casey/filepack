@@ -90,7 +90,7 @@ use {
   blake3::Hasher,
   boilerplate::{Boilerplate, Trusted},
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},
-  clap::{Parser, ValueEnum},
+  clap::{ArgGroup, Parser, ValueEnum},
   filepack_cbor::{Decode, DecodeFromStr, Encode, EncodeDisplay},
   futures_util::StreamExt,
   indicatif::{ProgressBar, ProgressStyle},
