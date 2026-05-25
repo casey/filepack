@@ -45,6 +45,10 @@ const TICK_CHARS: &str = concat!(
   "⠛⠚⠓⠒⠙⠘⠑⠐⠋⠊⠃⠂⠉⠈⠁",
 );
 
+pub(crate) fn file_progress_message(uploaded: u64, files: u64) -> String {
+  format!("{uploaded}/{files} files")
+}
+
 pub(crate) fn new(options: &Options, bytes: u64) -> ProgressBar {
   if options.quiet {
     ProgressBar::hidden()
@@ -71,6 +75,6 @@ pub(crate) fn with_files(options: &Options, bytes: u64, files: u64) -> ProgressB
           .unwrap()
           .tick_chars(TICK_CHARS),
       )
-      .with_message(format!("0/{files} files"))
+      .with_message(file_progress_message(0, files))
   }
 }
