@@ -11,7 +11,7 @@ struct Context {
   key: Option<PrivateKey>,
   options: Options,
   progress_bar: ProgressBar,
-  total_files: u64,
+  files: u64,
 }
 
 #[derive(Parser)]
@@ -114,7 +114,7 @@ impl Upload {
             .progress_bar
             .set_message(progress_bar::file_progress_message(
               context.files_uploaded,
-              context.total_files,
+              context.files,
             ));
         }
       }
@@ -153,18 +153,19 @@ impl Upload {
   fn upload_package(&self, options: Options, key: Option<PrivateKey>) -> Result {
     let archive = Archive::load_with_path(&self.input, &self.input)?;
 
-    let manifest = archive
-      .unpack()
-      .context(error::UnarchiveManifest { path: &self.input })?;
+    let error_context = error::UnarchiveManifest { path: &self.input };
 
-    let fingerprint = manifest.fingerprint();
+    let fingerprint = archive.fingerprint().context(error_context)?;
 
-    let total_files = manifest.files().len().into_u64();
-    let total_bytes = u64::try_from(manifest.total_size()).unwrap_or(u64::MAX);
+    let manifest = archive.unpack().context(error_context)?;
+
+    let files = manifest.files().len().into_u64();
+
+    let bytes = manifest.total_size_u64();
 
     let client = Client::new();
 
-    let bar = progress_bar::with_files(&options, total_bytes, total_files);
+    let bar = progress_bar::with_files(&options, bytes, files);
 
     let mut context = Context {
       archive,
@@ -173,7 +174,7 @@ impl Upload {
       files_uploaded: 0,
       key,
       options,
-      total_files,
+      files,
     };
 
     self.upload_directory(

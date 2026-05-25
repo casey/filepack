@@ -139,6 +139,10 @@ impl Manifest {
     size
   }
 
+  pub(crate) fn total_size_u64(&self) -> u64 {
+    self.total_size().try_into().unwrap_or(u64::MAX)
+  }
+
   fn verify_signatures(&self) -> Result {
     let fingerprint = self.fingerprint();
 
