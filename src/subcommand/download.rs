@@ -29,15 +29,15 @@ impl Download {
 
     let client = Client::new();
 
-    let mut directories = vec![(root, self.output.clone())];
+    let mut stack = vec![(root, self.output.clone())];
 
-    let mut files = BTreeMap::new();
+    let mut directories = BTreeMap::new();
 
-    let mut file_downloads = Vec::<(Hash, Utf8PathBuf)>::new();
+    let mut files = Vec::new();
 
-    let mut total_bytes = 0u64;
+    let mut bytes = 0u64;
 
-    while let Some((hash, path)) = directories.pop() {
+    while let Some((hash, path)) = stack.pop() {
       let url = self.file_url(hash);
 
       let response = self.get_file(&client, hash)?;
@@ -56,25 +56,25 @@ impl Download {
       let directory =
         Directory::decode_from_slice(&cbor).context(error::DecodeResponseDirectory { url })?;
 
-      files.insert(hash, cbor.to_vec());
+      directories.insert(hash, cbor.to_vec());
 
       filesystem::create_dir_all(&path)?;
 
       for (component, entry) in directory.entries {
         let path = path.join(component);
         match entry.ty {
-          EntryType::Directory => directories.push((entry.hash, path)),
+          EntryType::Directory => stack.push((entry.hash, path)),
           EntryType::File => {
-            total_bytes = total_bytes.saturating_add(entry.size);
-            file_downloads.push((entry.hash, path));
+            bytes = bytes.saturating_add(entry.size);
+            files.push((entry.hash, path));
           }
         }
       }
     }
 
-    let file_count = file_downloads.len().into_u64();
+    let file_count = files.len().into_u64();
 
-    let progress_bar = progress_bar::with_files(options, total_bytes, file_count);
+    let progress_bar = progress_bar::with_files(options, bytes, file_count);
 
     let mut context = Context {
       client,
@@ -83,12 +83,12 @@ impl Download {
       progress_bar,
     };
 
-    for (hash, path) in &file_downloads {
+    for (hash, path) in &files {
       self.download_package_file(&mut context, *hash, path)?;
     }
 
     let mut builder = ArchiveBuilder::new();
-    builder.files = files;
+    builder.files = directories;
 
     let package = Entry {
       ty: EntryType::Directory,
