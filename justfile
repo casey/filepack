@@ -163,4 +163,4 @@ download:
   rm -rf tmp/download
   cargo build --release
   fingerprint=`./target/release/filepack fingerprint tmp/upload/manifest.filepack`
-  ./target/release/filepack download --server https://filepack.com --fingerprint $fingerprint tmp/download
+  ./target/release/filepack download --server https://filepack.com --package $fingerprint tmp/download
