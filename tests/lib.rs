@@ -3,12 +3,13 @@ use {
   camino::{Utf8Path, Utf8PathBuf},
   filepack::{
     Decode, Decoder, Directory, Encoder, Fingerprint, Hash, Manifest, Metadata, PrivateKey,
-    PublicKey, assert_matches,
+    PublicKey,
     templates::{DirectoryHtml, PackageHtml, Page, PageHtml},
   },
   regex::Regex,
   reqwest::StatusCode,
   std::{
+    assert_matches,
     collections::{BTreeMap, BTreeSet},
     fs,
     io::{Read, Write},

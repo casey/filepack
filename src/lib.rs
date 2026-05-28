@@ -152,24 +152,11 @@ pub use self::{
 
 #[cfg(test)]
 use {
+  std::assert_matches,
   strum::IntoDiscriminant,
   tempfile::TempDir,
   test::{assert_cbor, assert_encoding, tempdir},
 };
-
-#[macro_export]
-macro_rules! assert_matches {
-  ($expression:expr, $( $pattern:pat_param )|+ $( if $guard:expr )? $(,)?) => {
-    match $expression {
-      $( $pattern )|+ $( if $guard )? => {}
-      left => panic!(
-        "assertion failed: (left ~= right)\n  left: `{:?}`\n right: `{}`",
-        left,
-        stringify!($($pattern)|+ $(if $guard)?)
-      ),
-    }
-  }
-}
 
 #[cfg(test)]
 macro_rules! assert_matches_regex {
