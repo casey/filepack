@@ -5,7 +5,7 @@ use super::*;
 #[derive(Clone, Debug, Default, Deserialize, Encode, Decode, PartialEq, Serialize)]
 pub struct Metadata {
   #[n(0)]
-  pub artwork: Option<filename::Png>,
+  pub artwork: Option<filename::Artwork>,
   #[n(1)]
   pub creator: Option<ComponentBuf>,
   #[n(2)]
