@@ -47,7 +47,7 @@ fn artwork_invalid() {
 #[test]
 fn artwork_valid() {
   #[track_caller]
-  fn case(filename: &str, bytes: impl AsRef<[u8]>) {
+  fn case(filename: &str, bytes: Vec<u8>) {
     Test::new()
       .write(filename, bytes)
       .write("metadata.yaml", format!("title: Foo\nartwork: {filename}"))
