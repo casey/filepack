@@ -11,6 +11,7 @@ struct Context {
   files_uploaded: u64,
   key: Option<PrivateKey>,
   options: Options,
+  path: Utf8PathBuf,
   progress_bar: ProgressBar,
 }
 
@@ -20,8 +21,12 @@ pub(crate) struct Upload {
   auth: Option<KeyName>,
   #[arg(help = "Upload file instead of package", long)]
   file: bool,
-  #[arg(help = "Upload <PATH>", value_name = "PATH")]
-  input: Utf8PathBuf,
+  #[arg(
+    help = "Upload <PATH>, defaults to current directory for packages",
+    required_if_eq("file", "true"),
+    value_name = "PATH"
+  )]
+  input: Option<Utf8PathBuf>,
   #[arg(help = "Upload to server at <URL>", long, value_name = "URL", value_parser = parse_server_url)]
   server: Url,
 }
@@ -86,7 +91,9 @@ impl Upload {
   }
 
   fn upload_directory(&self, context: &mut Context, file_path: &Utf8Path, hash: Hash) -> Result {
-    let error_context = error::UnarchiveManifest { path: &self.input };
+    let error_context = error::UnarchiveManifest {
+      path: &context.path,
+    };
 
     let cbor = context.archive.file(hash).context(error_context)?;
 
@@ -131,13 +138,15 @@ impl Upload {
   }
 
   fn upload_file(&self, options: &Options, key: Option<&PrivateKey>) -> Result {
+    let input = self.input.as_deref().unwrap();
+
     let File { hash, size } = options
-      .hash_file(&self.input)
-      .context(error::FilesystemIo { path: &self.input })?;
+      .hash_file(input)
+      .context(error::FilesystemIo { path: input })?;
 
     let bar = progress_bar::new(options, size);
 
-    let file = filesystem::open(&self.input)?;
+    let file = filesystem::open(input)?;
 
     let body = Body::sized(bar.wrap_read(file), size);
 
@@ -151,9 +160,9 @@ impl Upload {
   }
 
   fn upload_package(&self, options: Options, key: Option<PrivateKey>) -> Result {
-    let archive = Archive::load_with_path(&self.input, &self.input)?;
+    let (path, archive) = Archive::load_with_opt_path(self.input.as_deref())?;
 
-    let error_context = error::UnarchiveManifest { path: &self.input };
+    let error_context = error::UnarchiveManifest { path: &path };
 
     let fingerprint = archive.fingerprint().context(error_context)?;
 
@@ -174,14 +183,13 @@ impl Upload {
       files_uploaded: 0,
       key,
       options,
+      path,
       files,
     };
 
-    self.upload_directory(
-      &mut context,
-      self.input.parent().unwrap(),
-      fingerprint.into(),
-    )?;
+    let root = context.path.parent().unwrap().to_owned();
+
+    self.upload_directory(&mut context, &root, fingerprint.into())?;
 
     let url = self.server.join(&format!("package/{fingerprint}")).unwrap();
     let request = context.client.post(url);

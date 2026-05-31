@@ -56,6 +56,22 @@ impl Archive {
     Ok(Fingerprint(package.hash))
   }
 
+  pub(crate) fn load_with_opt_path(path: Option<&Utf8Path>) -> Result<(Utf8PathBuf, Self)> {
+    let path = if let Some(path) = path {
+      if filesystem::exists(path)? && filesystem::metadata(path)?.is_dir() {
+        path.join(Manifest::FILENAME)
+      } else {
+        path.into()
+      }
+    } else {
+      current_dir()?.join(Manifest::FILENAME)
+    };
+
+    let archive = Self::load_with_path(&path, &path)?;
+
+    Ok((path, archive))
+  }
+
   pub(crate) fn load_with_path(path: &Utf8Path, display_path: &Utf8Path) -> Result<Self> {
     let cbor = filesystem::read_opt(path)?
       .ok_or_else(|| error::ManifestNotFound { path: display_path }.build())?;
