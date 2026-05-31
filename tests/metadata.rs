@@ -55,8 +55,8 @@ fn artwork_valid() {
       .success();
   }
 
-  case("cover.jpg", image(1, 1, ImageFormat::Jpeg));
-  case("cover.png", image(1, 1, ImageFormat::Png));
+  case("cover.jpg", image(10, 10, ImageFormat::Jpeg));
+  case("cover.png", image(20, 20, ImageFormat::Png));
 }
 
 #[test]
