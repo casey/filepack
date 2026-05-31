@@ -1,6 +1,54 @@
 use super::*;
 
 #[test]
+fn download_checks_metadata() {
+  let test = Test::new()
+    .touch("README.md")
+    .write("metadata.yaml", "title: Foo\nreadme: README.md")
+    .arg("create")
+    .success();
+
+  let metadata = fs::read(test.path().join("metadata.filepack")).unwrap();
+
+  let metadata_hash = Hash::bytes(&metadata);
+
+  let directory = Directory {
+    version: Version::Zero,
+    entries: BTreeMap::from([(
+      "metadata.filepack".parse::<ComponentBuf>().unwrap(),
+      Entry {
+        ty: EntryType::File,
+        hash: metadata_hash,
+        size: u64::try_from(metadata.len()).unwrap(),
+      },
+    )]),
+  }
+  .encode_to_vec();
+
+  let fingerprint = Fingerprint::from(Hash::bytes(&directory));
+
+  let server = Test::new()
+    .serve()
+    .write(&format!("files/{}", Hash::bytes(&directory)), &directory)
+    .write(&format!("files/{metadata_hash}"), &metadata)
+    .spawn();
+
+  Test::new()
+    .args([
+      "download",
+      "--server",
+      &server.address(),
+      "--package",
+      &fingerprint.to_string(),
+      "out",
+    ])
+    .stderr("error: file referenced in metadata missing: `README.md`\n")
+    .failure();
+
+  server.terminate().success();
+}
+
+#[test]
 fn download_fails_if_output_already_exists() {
   let hash = Hash::bytes(b"bar");
 
@@ -202,6 +250,52 @@ fn download_retrieves_package() {
   downloaded
     .args(["verify", "out"])
     .stderr("successfully verified 4 files totaling 12 bytes\n")
+    .success();
+
+  server.terminate().success();
+}
+
+#[test]
+fn download_retrieves_package_with_metadata() {
+  let server = Test::new().serve().spawn();
+
+  let mut artwork = Cursor::new(Vec::new());
+  DynamicImage::new_rgb8(10, 10)
+    .write_to(&mut artwork, ImageFormat::Png)
+    .unwrap();
+
+  let test = Test::new()
+    .write("foo", "bar")
+    .write("cover.png", artwork.into_inner())
+    .write("README.md", "baz")
+    .write(
+      "metadata.yaml",
+      "title: Foo\nartwork: cover.png\nreadme: README.md",
+    )
+    .args(["create", "."])
+    .success();
+
+  let manifest = Manifest::load(Some(&test.path().join("manifest.filepack"))).unwrap();
+  let fingerprint = manifest.fingerprint();
+
+  test
+    .args(["upload", "--server", &server.address(), "manifest.filepack"])
+    .success();
+
+  Test::new()
+    .args([
+      "download",
+      "--server",
+      &server.address(),
+      "--package",
+      &fingerprint.to_string(),
+      "out",
+    ])
+    .assert_file("out/foo", "bar")
+    .assert_file("out/README.md", "baz")
+    .success()
+    .args(["verify", "out"])
+    .stderr("successfully verified 5 files totaling 240 bytes\n")
     .success();
 
   server.terminate().success();
