@@ -5,6 +5,13 @@ use super::*;
 pub enum Error {
   #[snafu(display("no hostname found for use as ACME domain"))]
   AcmeHostname { backtrace: Option<Backtrace> },
+  #[snafu(display("artwork `{path}` is {width}x{height}, but must be square"))]
+  ArtworkDimensions {
+    backtrace: Option<Backtrace>,
+    height: u32,
+    path: DisplayPath,
+    width: u32,
+  },
   #[snafu(display("file hash {actual} not equal to expected {expected}"))]
   Assert {
     actual: Hash,
@@ -100,6 +107,18 @@ pub enum Error {
   DatabaseTransaction {
     backtrace: Option<Backtrace>,
     source: redb::TransactionError,
+  },
+  #[snafu(display("failed to decode JPEG artwork `{path}`"))]
+  DecodeArtworkJpeg {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+    source: zune_jpeg::errors::DecodeErrors,
+  },
+  #[snafu(display("failed to decode PNG artwork `{path}`"))]
+  DecodeArtworkPng {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+    source: png::DecodingError,
   },
   #[snafu(display("failed to decode manifest at `{path}`"))]
   DecodeManifest {

@@ -21,7 +21,83 @@ pub(crate) struct Create {
   timestamp: bool,
 }
 
+#[derive(Copy, Clone)]
+struct Dimensions {
+  height: u32,
+  width: u32,
+}
+
+impl Dimensions {
+  fn is_square(self) -> bool {
+    self.width == self.height
+  }
+}
+
 impl Create {
+  fn check_artwork(root: &Utf8Path, artwork: &crate::filename::Artwork) -> Result {
+    let path = root.join(artwork.as_path());
+
+    let dimensions = match artwork.ty() {
+      ArtworkType::Jpeg => Self::decode_jpeg(&path)?,
+      ArtworkType::Png => Self::decode_png(&path)?,
+    };
+
+    if !dimensions.is_square() {
+      return Err(
+        error::ArtworkDimensions {
+          height: dimensions.height,
+          path: root.join(artwork.as_path()),
+          width: dimensions.width,
+        }
+        .build(),
+      );
+    }
+
+    Ok(())
+  }
+
+  fn decode_jpeg(path: &Utf8Path) -> Result<Dimensions> {
+    let bytes = filesystem::read(path)?;
+
+    let mut decoder = zune_jpeg::JpegDecoder::new(io::Cursor::new(bytes));
+
+    decoder
+      .decode()
+      .context(error::DecodeArtworkJpeg { path })?;
+
+    let info = decoder.info().unwrap();
+
+    Ok(Dimensions {
+      width: u32::from(info.width),
+      height: u32::from(info.height),
+    })
+  }
+
+  fn decode_png(path: &Utf8Path) -> Result<Dimensions> {
+    let bytes = filesystem::read(path)?;
+
+    let mut reader = png::Decoder::new(io::Cursor::new(bytes))
+      .read_info()
+      .context(error::DecodeArtworkPng { path })?;
+
+    let dimensions = Dimensions {
+      width: reader.info().width,
+      height: reader.info().height,
+    };
+
+    let size = reader.output_buffer_size().unwrap();
+
+    let mut buffer = vec![0; size];
+
+    reader
+      .next_frame(&mut buffer)
+      .context(error::DecodeArtworkPng { path })?;
+
+    reader.finish().context(error::DecodeArtworkPng { path })?;
+
+    Ok(dimensions)
+  }
+
   pub(crate) fn run(self, options: Options) -> Result {
     let current_dir = current_dir()?;
 
@@ -145,10 +221,7 @@ impl Create {
       }
 
       if let Some(artwork) = &metadata.artwork {
-        match artwork.ty() {
-          ArtworkType::Jpeg => todo!(),
-          ArtworkType::Png => todo!(),
-        }
+        Self::check_artwork(&root, artwork)?;
       }
     }
 

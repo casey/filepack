@@ -36,6 +36,7 @@ libc = "0.2.186"
 mime = "0.3.17"
 num-traits = "0.2.19"
 owo-colors = "4"
+png = "0.18.1"
 rand = "0.8.5"
 redb = "4.1.0"
 regex = "1.10.6"
@@ -59,6 +60,7 @@ tower-http = { version = "0.6.11", features = ["set-header"] }
 url = "2.5.8"
 usized = "0.0.2"
 walkdir = "2.5.0"
+zune-jpeg = "0.5.15"
 
 [dev-dependencies]
 pretty_assertions = "1.4.1"
