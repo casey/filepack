@@ -115,8 +115,7 @@ impl Server {
         return Ok(false);
       }
 
-      let hash = entry.hash;
-      directory = self.read_directory(hash)?;
+      directory = self.read_directory(entry.hash)?;
     }
 
     Ok(false)
