@@ -225,7 +225,7 @@ impl Server {
 
       for path in metadata.files() {
         ensure!(
-          self.package_contains_file(fingerprint.into(), &path)?,
+          self.package_contains_file(fingerprint, &path)?,
           server_error::PackageMetadataFileMissing { fingerprint, path },
         );
       }
