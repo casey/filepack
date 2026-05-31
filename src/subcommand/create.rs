@@ -44,7 +44,7 @@ impl Create {
   fn decode_jpeg(path: &Utf8Path) -> Result<Dimensions> {
     let bytes = filesystem::read(path)?;
 
-    let mut decoder = zune_jpeg::JpegDecoder::new(io::Cursor::new(bytes));
+    let mut decoder = JpegDecoder::new(io::Cursor::new(bytes));
 
     decoder
       .decode()
@@ -61,9 +61,11 @@ impl Create {
   fn decode_png(path: &Utf8Path) -> Result<Dimensions> {
     let bytes = filesystem::read(path)?;
 
-    let reader = png::Decoder::new(io::Cursor::new(bytes))
+    let mut reader = png::Decoder::new(io::Cursor::new(bytes))
       .read_info()
       .context(error::ArtworkDecodePng { path })?;
+
+    reader.finish().context(error::ArtworkDecodePng { path })?;
 
     let info = reader.info();
 
