@@ -61,26 +61,16 @@ impl Create {
   fn decode_png(path: &Utf8Path) -> Result<Dimensions> {
     let bytes = filesystem::read(path)?;
 
-    let mut reader = png::Decoder::new(io::Cursor::new(bytes))
+    let reader = png::Decoder::new(io::Cursor::new(bytes))
       .read_info()
       .context(error::ArtworkDecodePng { path })?;
 
-    let dimensions = Dimensions {
-      width: reader.info().width,
-      height: reader.info().height,
-    };
+    let info = reader.info();
 
-    let size = reader.output_buffer_size().unwrap();
-
-    let mut buffer = vec![0; size];
-
-    reader
-      .next_frame(&mut buffer)
-      .context(error::ArtworkDecodePng { path })?;
-
-    reader.finish().context(error::ArtworkDecodePng { path })?;
-
-    Ok(dimensions)
+    Ok(Dimensions {
+      width: info.width,
+      height: info.height,
+    })
   }
 
   pub(crate) fn run(self, options: Options) -> Result {
