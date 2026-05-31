@@ -10,10 +10,13 @@ test *args: (watch f'ltest --all --all-targets {{args}}')
 lib *args: (watch f'ltest --lib')
 
 ci: lint
-  cargo test --workspace
+  cargo ltest --workspace
 
-serve:
-  cargo run --release serve --listen localhost
+build:
+  cargo lbuild --release
+
+serve: build
+  sudo ./target/release/filepack serve --address localhost
 
 install:
   cargo install --path .

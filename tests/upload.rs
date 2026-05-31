@@ -236,6 +236,31 @@ fn upload_creates_file() {
 }
 
 #[test]
+fn upload_file_requires_path() {
+  Test::new()
+    .args(["upload", "--server", "http://127.0.0.1:1", "--file"])
+    .stderr_regex("error: the following required arguments were not provided:.*<PATH>.*")
+    .status(USAGE_ERROR);
+}
+
+#[test]
+fn upload_package_accepts_directory() {
+  let server = Test::new()
+    .serve()
+    .assert_file(&format!("files/{}", Hash::bytes(b"bar")), "bar")
+    .spawn();
+
+  Test::new()
+    .write("foo/bar", "bar")
+    .args(["create", "foo"])
+    .success()
+    .args(["upload", "--server", &server.address(), "foo"])
+    .success();
+
+  server.terminate().success();
+}
+
+#[test]
 fn upload_package_checks_file_hashes_locally() {
   let server = Test::new().serve().spawn();
 
@@ -259,6 +284,23 @@ error: file did not match manifest entry
 ",
     ))
     .failure();
+
+  server.terminate().success();
+}
+
+#[test]
+fn upload_package_defaults_to_current_directory() {
+  let server = Test::new()
+    .serve()
+    .assert_file(&format!("files/{}", Hash::bytes(b"bar")), "bar")
+    .spawn();
+
+  Test::new()
+    .write("foo", "bar")
+    .args(["create", "."])
+    .success()
+    .args(["upload", "--server", &server.address()])
+    .success();
 
   server.terminate().success();
 }
