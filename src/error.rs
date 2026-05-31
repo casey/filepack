@@ -62,10 +62,17 @@ pub enum Error {
   },
   #[snafu(display("failed to get local data directory"))]
   DataLocalDir { backtrace: Option<Backtrace> },
-  #[snafu(transparent)]
-  Database { source: redb::DatabaseError },
-  #[snafu(transparent)]
-  DatabaseCommit { source: redb::CommitError },
+  #[snafu(display("failed to commit to database"))]
+  DatabaseCommit {
+    backtrace: Option<Backtrace>,
+    source: redb::CommitError,
+  },
+  #[snafu(display("error opening database at `{path}`"))]
+  DatabaseOpen {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+    source: redb::DatabaseError,
+  },
   #[snafu(display("database schema version `{actual}` does not match expected `{expected}`"))]
   DatabaseSchemaVersionMismatch {
     actual: u64,
@@ -74,12 +81,21 @@ pub enum Error {
   },
   #[snafu(display("database schema version missing"))]
   DatabaseSchemaVersionMissing { backtrace: Option<Backtrace> },
-  #[snafu(transparent)]
-  DatabaseStorage { source: redb::StorageError },
-  #[snafu(transparent)]
-  DatabaseTable { source: redb::TableError },
-  #[snafu(transparent)]
-  DatabaseTransaction { source: redb::TransactionError },
+  #[snafu(display("database storage error"))]
+  DatabaseStorage {
+    backtrace: Option<Backtrace>,
+    source: redb::StorageError,
+  },
+  #[snafu(display("failed to open database table"))]
+  DatabaseTableOpen {
+    backtrace: Option<Backtrace>,
+    source: redb::TableError,
+  },
+  #[snafu(display("database transaction error"))]
+  DatabaseTransaction {
+    backtrace: Option<Backtrace>,
+    source: redb::TransactionError,
+  },
   #[snafu(display("failed to decode manifest at `{path}`"))]
   DecodeManifest {
     backtrace: Option<Backtrace>,
@@ -410,9 +426,39 @@ pub enum Error {
     path: DisplayPath,
     unexpected: Ticked<RelativePath>,
   },
-  #[snafu(transparent)]
+  #[snafu(display("error walking directory"))]
   WalkDir {
     backtrace: Option<Backtrace>,
     source: walkdir::Error,
   },
+}
+
+impl From<redb::CommitError> for Error {
+  fn from(source: redb::CommitError) -> Self {
+    DatabaseCommit {}.into_error(source)
+  }
+}
+
+impl From<redb::StorageError> for Error {
+  fn from(source: redb::StorageError) -> Self {
+    DatabaseStorage {}.into_error(source)
+  }
+}
+
+impl From<redb::TableError> for Error {
+  fn from(source: redb::TableError) -> Self {
+    DatabaseTableOpen {}.into_error(source)
+  }
+}
+
+impl From<redb::TransactionError> for Error {
+  fn from(source: redb::TransactionError) -> Self {
+    DatabaseTransaction {}.into_error(source)
+  }
+}
+
+impl From<walkdir::Error> for Error {
+  fn from(source: walkdir::Error) -> Self {
+    WalkDir {}.into_error(source)
+  }
 }

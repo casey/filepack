@@ -211,7 +211,8 @@ impl Server {
   }
 
   pub(crate) fn with_data_dir(data_dir: &Utf8Path) -> Result<Self> {
-    let database = Database::create(data_dir.join("database.redb"))?;
+    let path = data_dir.join("database.redb");
+    let database = Database::create(&path).context(error::DatabaseOpen { path })?;
 
     let tx = database.begin_write()?;
 
