@@ -74,16 +74,20 @@ impl Manifest {
     Ok(Self::load_with_opt_path(path)?.1)
   }
 
-  pub(crate) fn load_with_opt_path(path: Option<&Utf8Path>) -> Result<(Utf8PathBuf, Self)> {
-    let path = if let Some(path) = path {
+  pub(crate) fn opt_path(path: Option<&Utf8Path>) -> Result<Utf8PathBuf> {
+    Ok(if let Some(path) = path {
       if path.is_dir() {
-        path.join(Manifest::FILENAME)
+        path.join(Self::FILENAME)
       } else {
         path.into()
       }
     } else {
-      current_dir()?.join(Manifest::FILENAME)
-    };
+      current_dir()?.join(Self::FILENAME)
+    })
+  }
+
+  pub(crate) fn load_with_opt_path(path: Option<&Utf8Path>) -> Result<(Utf8PathBuf, Self)> {
+    let path = Self::opt_path(path)?;
 
     let manifest = Self::load_with_path(&path, &path)?;
 
