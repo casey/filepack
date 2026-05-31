@@ -117,7 +117,6 @@ impl Download {
     }
 
     let metadata_path = self.output.join(Metadata::CBOR_FILENAME);
-
     if let Some(cbor) = filesystem::read_opt(&metadata_path)? {
       let paths = files
         .iter()
