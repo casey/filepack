@@ -8,12 +8,6 @@ const METADATA: TableDefinition<DatabaseMetadata, u64> = TableDefinition::new("m
 const PACKAGES: TableDefinition<Fingerprint, ()> = TableDefinition::new("packages");
 const SCHEMA_VERSION: u64 = 1;
 
-#[derive(Copy, Clone, Debug, FromRepr)]
-#[repr(u64)]
-pub(crate) enum DatabaseMetadata {
-  Schema = 0,
-}
-
 pub(crate) struct Server {
   database: Database,
   files: Utf8PathBuf,

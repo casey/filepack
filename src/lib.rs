@@ -36,6 +36,7 @@ use {
     context::Context,
     count::Count,
     dalek_signature_error::DalekSignatureError,
+    database_metadata::DatabaseMetadata,
     date_time::DateTime,
     decode_error::DecodeError,
     dimensions::Dimensions,
@@ -80,6 +81,7 @@ use {
     tag::Tag,
     ticked::Ticked,
     token::Token,
+    type_name::TypeName,
     utf8_path_ext::Utf8PathExt,
   },
   axum::{
@@ -195,7 +197,7 @@ mod component_error;
 mod context;
 mod count;
 mod dalek_signature_error;
-mod database;
+mod database_metadata;
 mod date_time;
 mod decode;
 mod decode_error;
@@ -264,6 +266,7 @@ mod tag_error;
 pub mod templates;
 mod ticked;
 mod token;
+mod type_name;
 mod utf8_path_ext;
 mod version;
 
