@@ -242,7 +242,7 @@ impl Test {
         tx.send(port.parse::<u16>().unwrap()).unwrap();
       });
 
-      let deadline = Instant::now() + Duration::from_secs(60);
+      let deadline = Instant::now() + Duration::from_mins(1);
 
       loop {
         match rx.recv_timeout(Duration::from_millis(100)) {
