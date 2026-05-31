@@ -174,6 +174,14 @@ impl Serve {
     ))
   }
 
+  async fn fallback() -> ServerResult<StaticAsset> {
+    Ok(StaticAsset::get("404.html")?.status(StatusCode::NOT_FOUND))
+  }
+
+  async fn favicon() -> ServerResult<StaticAsset> {
+    StaticAsset::get("favicon.png")
+  }
+
   fn file_response(
     content_disposition: Option<&str>,
     content_length: u64,
@@ -197,14 +205,6 @@ impl Serve {
         tokio::fs::File::from_std(file),
       )))
       .unwrap()
-  }
-
-  async fn fallback() -> ServerResult<StaticAsset> {
-    Ok(StaticAsset::get("404.html")?.status(StatusCode::NOT_FOUND))
-  }
-
-  async fn favicon() -> ServerResult<StaticAsset> {
-    StaticAsset::get("favicon.png")
   }
 
   async fn files(server: ServerExtension) -> PageResult<FilesHtml> {
