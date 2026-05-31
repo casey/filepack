@@ -396,7 +396,7 @@ fn get_package_with_metadata() {
     Metadata::CBOR_FILENAME,
     EntryType::File,
     metadata_hash,
-    metadata_cbor.len() as u64,
+    metadata_cbor.len().into_u64(),
   )])
   .encode_to_vec();
   let hash = Hash::bytes(&cbor);
@@ -474,7 +474,7 @@ fn packages_non_empty() {
       "file",
       EntryType::File,
       Hash::bytes(content),
-      content.len() as u64,
+      content.len().into_u64(),
     )])
     .encode_to_vec();
     let hash = Hash::bytes(&cbor);
@@ -786,7 +786,7 @@ fn verify_directory_succeeds() {
   let file_hash = Hash::bytes(file);
   server.write_file(file);
 
-  let child = directory(&[("foo", EntryType::File, file_hash, file.len() as u64)]);
+  let child = directory(&[("foo", EntryType::File, file_hash, file.len().into_u64())]);
   let child_cbor = child.encode_to_vec();
   let child_hash = Hash::bytes(&child_cbor);
   server.write_file(&child_cbor);
@@ -805,7 +805,7 @@ fn verify_directory_succeeds() {
     "child",
     EntryType::Directory,
     child_hash,
-    child_cbor.len() as u64,
+    child_cbor.len().into_u64(),
   )]);
   let parent_cbor = parent.encode_to_vec();
   let parent_hash = Hash::bytes(&parent_cbor);
@@ -834,7 +834,7 @@ fn verify_directory_unverified_subdirectory() {
     "child",
     EntryType::Directory,
     child_hash,
-    child_cbor.len() as u64,
+    child_cbor.len().into_u64(),
   )])
   .encode_to_vec();
   let parent_hash = Hash::bytes(&parent_cbor);
@@ -861,7 +861,7 @@ fn verify_package_metadata_decode_error() {
     Metadata::CBOR_FILENAME,
     EntryType::File,
     metadata_hash,
-    junk.len() as u64,
+    junk.len().into_u64(),
   )])
   .encode_to_vec();
   let hash = Hash::bytes(&cbor);
@@ -895,7 +895,7 @@ fn verify_package_metadata_references_missing_file() {
     Metadata::CBOR_FILENAME,
     EntryType::File,
     metadata_hash,
-    metadata.len() as u64,
+    metadata.len().into_u64(),
   )])
   .encode_to_vec();
   let hash = Hash::bytes(&cbor);
@@ -934,13 +934,13 @@ fn verify_package_metadata_references_present_file() {
       "cover.png",
       EntryType::File,
       artwork_hash,
-      artwork.len() as u64,
+      artwork.len().into_u64(),
     ),
     (
       Metadata::CBOR_FILENAME,
       EntryType::File,
       metadata_hash,
-      metadata.len() as u64,
+      metadata.len().into_u64(),
     ),
   ])
   .encode_to_vec();
