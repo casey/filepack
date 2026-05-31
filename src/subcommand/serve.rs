@@ -134,7 +134,7 @@ impl Serve {
     server: ServerExtension,
     fingerprint: Path<Fingerprint>,
   ) -> ServerResult<Response> {
-    let (file, content_length, content_type, hash) =
+    let (file, content_length, hash, content_type) =
       block_in_place(|| server.artwork(*fingerprint))?;
     Ok(Self::file_response(
       None,
