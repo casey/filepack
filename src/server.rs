@@ -34,7 +34,7 @@ impl Server {
 
     let hash = self
       .package_file(fingerprint, &artwork.as_path())?
-      .context(server_error::ArtworkNotFound { fingerprint })?;
+      .context(server_error::ArtworkMissing { fingerprint })?;
 
     let (file, len) = self.open_file(hash)?;
 
