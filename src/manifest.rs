@@ -65,8 +65,6 @@ impl Manifest {
       error::UnexpectedEmbeddedFiles { path, unexpected },
     }
 
-    manifest.verify_signatures()?;
-
     Ok(manifest)
   }
 
@@ -88,8 +86,6 @@ impl Manifest {
     let manifest = archive
       .unpack()
       .context(error::UnarchiveManifest { path: display_path })?;
-
-    manifest.verify_signatures()?;
 
     Ok(manifest)
   }
@@ -147,7 +143,7 @@ impl Manifest {
     self.total_size().try_into().unwrap_or(u64::MAX)
   }
 
-  fn verify_signatures(&self) -> Result {
+  pub(crate) fn verify_signatures(&self) -> Result {
     let fingerprint = self.fingerprint();
 
     for signature in &self.signatures {
