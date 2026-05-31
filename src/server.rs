@@ -99,9 +99,9 @@ impl Server {
   }
 
   fn package_contains_file(&self, root: Fingerprint, path: &RelativePath) -> ServerResult<bool> {
-    let mut directory = self.read_directory(root.into())?;
     let mut components = path.components().peekable();
 
+    let mut directory = self.read_directory(root.into())?;
     while let Some(component) = components.next() {
       let Some(entry) = directory.entries.get(component) else {
         return Ok(false);
