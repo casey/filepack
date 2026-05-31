@@ -53,8 +53,8 @@ impl Create {
     let info = decoder.info().unwrap();
 
     Ok(Dimensions {
-      width: u32::from(info.width),
-      height: u32::from(info.height),
+      height: info.height.into(),
+      width: info.width.into(),
     })
   }
 
@@ -70,8 +70,8 @@ impl Create {
     let info = reader.info();
 
     Ok(Dimensions {
-      width: info.width,
       height: info.height,
+      width: info.width,
     })
   }
 
