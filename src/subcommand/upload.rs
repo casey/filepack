@@ -150,7 +150,7 @@ impl Upload {
 
     let body = Body::sized(bar.wrap_read(file), size);
 
-    let client = Client::new();
+    let client = client()?;
 
     self.upload_body(&client, hash, body, key)?;
 
@@ -172,7 +172,7 @@ impl Upload {
 
     let bytes = manifest.total_size_u64();
 
-    let client = Client::new();
+    let client = client()?;
 
     let progress_bar = progress_bar::with_files(&options, bytes, files);
 

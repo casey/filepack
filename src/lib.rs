@@ -45,7 +45,8 @@ use {
     file::File,
     format::Format,
     functions::{
-      current_dir, decode_path, default, is_lowercase_hex, now, parse_server_url, transfer_tempfile,
+      client, current_dir, decode_path, default, is_lowercase_hex, now, parse_server_url,
+      transfer_tempfile,
     },
     hash_error::HashError,
     hashing_writer::HashingWriter,
