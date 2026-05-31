@@ -47,7 +47,7 @@ impl Create {
     let mut decoder = JpegDecoder::new(io::Cursor::new(bytes));
 
     decoder
-      .decode()
+      .decode_headers()
       .context(error::ArtworkDecodeJpeg { path })?;
 
     let info = decoder.info().unwrap();
@@ -61,11 +61,9 @@ impl Create {
   fn decode_png(path: &Utf8Path) -> Result<Dimensions> {
     let bytes = filesystem::read(path)?;
 
-    let mut reader = png::Decoder::new(io::Cursor::new(bytes))
+    let reader = png::Decoder::new(io::Cursor::new(bytes))
       .read_info()
       .context(error::ArtworkDecodePng { path })?;
-
-    reader.finish().context(error::ArtworkDecodePng { path })?;
 
     let info = reader.info();
 
