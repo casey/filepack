@@ -1,7 +1,7 @@
 <h1>Package {{ self.fingerprint }}</h1>
 %% if let Some(metadata) = &self.metadata {
 %%   if metadata.artwork.is_some() {
-<img src=/artwork/{{ self.fingerprint }} width=640 height=640>
+<img src=/artwork/{{ self.fingerprint }} width=720 height=720>
 %%   }
 <dl>
 %%   if let Some(title) = &metadata.title {
