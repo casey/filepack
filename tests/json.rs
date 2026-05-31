@@ -1,4 +1,4 @@
-use {crate::EMPTY_HASH, pretty_assertions::assert_eq};
+use {super::*, pretty_assertions::assert_eq};
 
 #[macro_export]
 macro_rules! json {
