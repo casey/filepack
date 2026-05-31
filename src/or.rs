@@ -1,18 +1,18 @@
 use super::*;
 
-pub(crate) struct Or {
-  items: Vec<String>,
+pub(crate) struct Or<T> {
+  items: Vec<T>,
 }
 
-impl Or {
-  pub(crate) fn new<I: Display>(items: impl IntoIterator<Item = I>) -> Self {
+impl<T: Display> Or<T> {
+  pub(crate) fn new(items: impl IntoIterator<Item = T>) -> Self {
     Self {
-      items: items.into_iter().map(|item| item.to_string()).collect(),
+      items: items.into_iter().collect(),
     }
   }
 }
 
-impl Display for Or {
+impl<T: Display> Display for Or<T> {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     match self.items.len() {
       0 => Ok(()),
