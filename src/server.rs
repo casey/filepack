@@ -21,30 +21,6 @@ pub(crate) struct Server {
 }
 
 impl Server {
-  fn contains_file(&self, root: Fingerprint, path: &RelativePath) -> ServerResult<bool> {
-    let mut directory = self.read_directory(root.into())?;
-    let mut components = path.components().peekable();
-
-    while let Some(component) = components.next() {
-      let Some(entry) = directory.entries.get(component) else {
-        return Ok(false);
-      };
-
-      if components.peek().is_none() {
-        return Ok(entry.ty == EntryType::File);
-      }
-
-      if entry.ty != EntryType::Directory {
-        return Ok(false);
-      }
-
-      let hash = entry.hash;
-      directory = self.read_directory(hash)?;
-    }
-
-    Ok(false)
-  }
-
   pub(crate) fn directory(&self, hash: Hash) -> ServerResult<Directory> {
     ensure!(
       self
@@ -120,6 +96,30 @@ impl Server {
       .map(|metadata| Metadata::decode_from_slice(&metadata))
       .transpose()
       .context(server_error::PackageMetadataCorrupt { fingerprint })
+  }
+
+  fn package_contains_file(&self, root: Fingerprint, path: &RelativePath) -> ServerResult<bool> {
+    let mut directory = self.read_directory(root.into())?;
+    let mut components = path.components().peekable();
+
+    while let Some(component) = components.next() {
+      let Some(entry) = directory.entries.get(component) else {
+        return Ok(false);
+      };
+
+      if components.peek().is_none() {
+        return Ok(entry.ty == EntryType::File);
+      }
+
+      if entry.ty != EntryType::Directory {
+        return Ok(false);
+      }
+
+      let hash = entry.hash;
+      directory = self.read_directory(hash)?;
+    }
+
+    Ok(false)
   }
 
   fn package_metadata(&self, fingerprint: Fingerprint) -> ServerResult<Option<Vec<u8>>> {
@@ -226,7 +226,7 @@ impl Server {
 
       for path in metadata.files() {
         ensure!(
-          self.contains_file(fingerprint.into(), &path)?,
+          self.package_contains_file(fingerprint.into(), &path)?,
           server_error::PackageMetadataFileMissing { fingerprint, path },
         );
       }
