@@ -145,7 +145,8 @@ use {
 pub use self::{
   component_buf::ComponentBuf, decode::Decode, decoder::Decoder, directory::Directory,
   directory_tree::DirectoryTree, encode::Encode, encoder::Encoder, entry::Entry,
-  entry_type::EntryType, error::Error, fingerprint::Fingerprint, hash::Hash,
+  entry_type::EntryType, error::Error, fingerprint::Fingerprint,
+  functions::install_default_crypto_provider, hash::Hash,
   language_error::LanguageError, major_type::MajorType, manifest::Manifest,
   map_encoder::MapEncoder, metadata::Metadata, private_key::PrivateKey, public_key::PublicKey,
   relative_path::RelativePath, signature::Signature, statement::Statement, tag_error::TagError,

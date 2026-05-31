@@ -38,10 +38,10 @@ owo-colors = "4"
 rand = "0.8.5"
 redb = "4.1.0"
 regex = "1.10.6"
-reqwest = { version = "0.13.3", features = ["blocking", "http2"] }
+reqwest = { version = "0.13.3", default-features = false, features = ["blocking", "charset", "http2", "rustls-no-provider", "system-proxy"] }
 rust-embed = { version = "8.11.0", features = ["mime-guess"] }
-rustls = { version = "0.23.40", features = ["ring"] }
-rustls-acme = { version = "0.15.2", features = ["axum"] }
+rustls = { version = "0.23.40", default-features = false, features = ["logging", "ring", "std", "tls12"] }
+rustls-acme = { version = "0.15.2", default-features = false, features = ["axum", "ring", "tls12", "webpki-roots"] }
 serde = { version = "1.0.209", features = ["derive"] }
 serde_ignored = "0.1.14"
 serde_json = "1.0.127"

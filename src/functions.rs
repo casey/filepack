@@ -1,6 +1,8 @@
 use super::*;
 
 pub(crate) fn client() -> Result<Client> {
+  ensure!(install_default_crypto_provider(), error::RustlsProvider);
+
   Client::builder()
     .connect_timeout(Duration::from_secs(30))
     .http2_adaptive_window(true)
@@ -26,6 +28,16 @@ pub(crate) fn decode_path(path: &Path) -> Result<&Utf8Path> {
 
 pub(crate) fn default<T: Default>() -> T {
   Default::default()
+}
+
+pub fn install_default_crypto_provider() -> bool {
+  static INSTALLED: LazyLock<bool> = LazyLock::new(|| {
+    rustls::crypto::ring::default_provider()
+      .install_default()
+      .is_ok()
+  });
+
+  *INSTALLED
 }
 
 pub(crate) fn is_lowercase_hex(s: &str) -> bool {

@@ -101,13 +101,7 @@ pub(crate) struct Serve {
 
 impl Serve {
   fn acceptor(&self, acme_cache: Utf8PathBuf) -> Result<AxumAcceptor> {
-    static RUSTLS_PROVIDER_INSTALLED: LazyLock<bool> = LazyLock::new(|| {
-      rustls::crypto::ring::default_provider()
-        .install_default()
-        .is_ok()
-    });
-
-    ensure!(*RUSTLS_PROVIDER_INSTALLED, error::RustlsProvider);
+    ensure!(install_default_crypto_provider(), error::RustlsProvider);
 
     let config = AcmeConfig::new(self.domains()?)
       .contact(&self.acme_contact)

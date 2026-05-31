@@ -175,6 +175,8 @@ impl Test {
 
   #[track_caller]
   pub(crate) fn spawn(self) -> Child {
+    filepack::install_default_crypto_provider();
+
     let mut command = Command::new(env!("CARGO_BIN_EXE_filepack"));
 
     #[cfg(windows)]
