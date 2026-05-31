@@ -35,12 +35,12 @@ fn artwork_invalid() {
   case(
     "cover.jpg",
     image(2, 1, ImageFormat::Jpeg),
-    "error: artwork `.*cover\\.jpg` is 2x1, but must be square\n",
+    "error: artwork `.*cover\\.jpg` is 2×1, but must be square\n",
   );
   case(
     "cover.png",
     image(2, 1, ImageFormat::Png),
-    "error: artwork `.*cover\\.png` is 2x1, but must be square\n",
+    "error: artwork `.*cover\\.png` is 2×1, but must be square\n",
   );
 }
 
@@ -99,7 +99,7 @@ package:
     .arg("create")
     .success()
     .arg("verify")
-    .stderr("successfully verified 6 files totaling 181 bytes\n")
+    .stderr("successfully verified 6 files totaling 185 bytes\n")
     .success();
 }
 
