@@ -116,7 +116,7 @@ use {
     borrow::Borrow,
     borrow::Cow,
     cmp::Ordering,
-    collections::{BTreeMap, BTreeSet, HashMap},
+    collections::{BTreeMap, BTreeSet, HashMap, HashSet},
     env,
     fmt::{self, Debug, Display, Formatter},
     fs::{self, Permissions},

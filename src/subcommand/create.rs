@@ -22,57 +22,6 @@ pub(crate) struct Create {
 }
 
 impl Create {
-  fn check_artwork(root: &Utf8Path, artwork: &crate::filename::Artwork) -> Result {
-    let path = root.join(artwork.as_path());
-
-    let dimensions = match artwork.ty() {
-      ArtworkType::Jpeg => Self::decode_jpeg(&path)?,
-      ArtworkType::Png => Self::decode_png(&path)?,
-    };
-
-    ensure! {
-      dimensions.width == dimensions.height,
-      error::ArtworkDimensions {
-        dimensions,
-        path,
-      }
-    }
-
-    Ok(())
-  }
-
-  fn decode_jpeg(path: &Utf8Path) -> Result<Dimensions> {
-    let bytes = filesystem::read(path)?;
-
-    let mut decoder = JpegDecoder::new(io::Cursor::new(bytes));
-
-    decoder
-      .decode_headers()
-      .context(error::ArtworkDecodeJpeg { path })?;
-
-    let info = decoder.info().unwrap();
-
-    Ok(Dimensions {
-      height: info.height.into(),
-      width: info.width.into(),
-    })
-  }
-
-  fn decode_png(path: &Utf8Path) -> Result<Dimensions> {
-    let bytes = filesystem::read(path)?;
-
-    let reader = png::Decoder::new(io::Cursor::new(bytes))
-      .read_info()
-      .context(error::ArtworkDecodePng { path })?;
-
-    let info = reader.info();
-
-    Ok(Dimensions {
-      height: info.height,
-      width: info.width,
-    })
-  }
-
   pub(crate) fn run(self, options: Options) -> Result {
     let current_dir = current_dir()?;
 
@@ -189,15 +138,7 @@ impl Create {
     }
 
     if let Some(metadata) = &metadata {
-      for filename in metadata.files() {
-        if !paths.contains_key(&filename) {
-          return Err(error::MissingMetadataFile { filename }.build());
-        }
-      }
-
-      if let Some(artwork) = &metadata.artwork {
-        Self::check_artwork(&root, artwork)?;
-      }
+      metadata.check(&root, paths.keys().cloned().collect())?;
     }
 
     ensure! {
