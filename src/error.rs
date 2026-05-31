@@ -7,8 +7,8 @@ pub enum Error {
   AcmeHostname { backtrace: Option<Backtrace> },
   #[snafu(display("file hash {actual} not equal to expected {expected}"))]
   Assert {
-    backtrace: Option<Backtrace>,
     actual: Hash,
+    backtrace: Option<Backtrace>,
     expected: Hash,
   },
   #[snafu(display("failed to decode bech32 `{bech32}`"))]
@@ -43,8 +43,8 @@ pub enum Error {
   },
   #[snafu(display("bech32 version `{actual}` does not match expected `{expected}`"))]
   Bech32VersionMismatch {
-    backtrace: Option<Backtrace>,
     actual: bech32::Fe32,
+    backtrace: Option<Backtrace>,
     expected: bech32::Fe32,
   },
   #[snafu(display("bech32 version character missing"))]
@@ -52,13 +52,13 @@ pub enum Error {
   #[snafu(display("failed to bind listener to {address}"))]
   BindListener {
     address: String,
-    source: io::Error,
     backtrace: Option<Backtrace>,
+    source: io::Error,
   },
   #[snafu(display("failed to build HTTP client"))]
   ClientBuild {
-    source: reqwest::Error,
     backtrace: Option<Backtrace>,
+    source: reqwest::Error,
   },
   #[snafu(display("failed to get current directory"))]
   CurrentDir {
