@@ -28,7 +28,7 @@ impl Metadata {
   pub(crate) const CBOR_FILENAME: &'static str = "metadata.filepack";
   pub(crate) const YAML_FILENAME: &'static str = "metadata.yaml";
 
-  pub(crate) fn check(&self, root: &Utf8Path, paths: HashSet<RelativePath>) -> Result {
+  pub(crate) fn check(&self, root: &Utf8Path, paths: &HashSet<RelativePath>) -> Result {
     for filename in self.files() {
       ensure! {
         paths.contains(&filename),
@@ -37,7 +37,7 @@ impl Metadata {
     }
 
     if let Some(artwork) = &self.artwork {
-      Self::check_artwork(&root, artwork)?;
+      Self::check_artwork(root, artwork)?;
     }
 
     Ok(())

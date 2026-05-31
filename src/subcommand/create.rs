@@ -138,7 +138,7 @@ impl Create {
     }
 
     if let Some(metadata) = &metadata {
-      metadata.check(&root, paths.keys().cloned().collect())?;
+      metadata.check(&root, &paths.keys().cloned().collect())?;
     }
 
     ensure! {
