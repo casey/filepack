@@ -24,22 +24,22 @@ fn artwork_invalid() {
   );
   case(
     "cover.jpg",
-    png_bytes(1, 1),
+    image(1, 1, ImageFormat::Png),
     "error: failed to decode JPEG artwork `.*cover\\.jpg`\n.*",
   );
   case(
     "cover.png",
-    jpeg_bytes(1, 1),
+    image(1, 1, ImageFormat::Jpeg),
     "error: failed to decode PNG artwork `.*cover\\.png`\n.*",
   );
   case(
     "cover.jpg",
-    jpeg_bytes(2, 1),
+    image(2, 1, ImageFormat::Jpeg),
     "error: artwork `.*cover\\.jpg` is 2x1, but must be square\n",
   );
   case(
     "cover.png",
-    png_bytes(2, 1),
+    image(2, 1, ImageFormat::Png),
     "error: artwork `.*cover\\.png` is 2x1, but must be square\n",
   );
 }
@@ -55,8 +55,8 @@ fn artwork_valid() {
       .success();
   }
 
-  case("cover.jpg", jpeg_bytes(1, 1));
-  case("cover.png", png_bytes(1, 1));
+  case("cover.jpg", image(1, 1, ImageFormat::Jpeg));
+  case("cover.png", image(1, 1, ImageFormat::Png));
 }
 
 #[test]
@@ -83,7 +83,7 @@ package:
 fn files() {
   Test::new()
     .touch("content")
-    .write("cover.png", png_bytes(1, 1))
+    .write("cover.png", image(1, 1, ImageFormat::Png))
     .touch("info.nfo")
     .touch("README.md")
     .write(
@@ -225,10 +225,10 @@ fn invalid_package_homepage() {
     .failure();
 }
 
-fn jpeg_bytes(width: u32, height: u32) -> Vec<u8> {
+fn image(width: u32, height: u32, image_format: ImageFormat) -> Vec<u8> {
   let mut buffer = Cursor::new(Vec::new());
   DynamicImage::new_rgb8(width, height)
-    .write_to(&mut buffer, ImageFormat::Jpeg)
+    .write_to(&mut buffer, image_format)
     .unwrap();
   buffer.into_inner()
 }
@@ -335,32 +335,6 @@ fn metadata_subcommand_path_is_file() {
 "#,
     )
     .success();
-}
-
-fn png_bytes(width: u32, height: u32) -> Vec<u8> {
-  let mut bytes = Vec::new();
-
-  {
-    let mut encoder = png::Encoder::new(&mut bytes, width, height);
-    encoder.set_color(png::ColorType::Rgba);
-    encoder.set_depth(png::BitDepth::Eight);
-
-    let mut writer = encoder.write_header().unwrap();
-    let width = usize::try_from(width).unwrap();
-    let height = usize::try_from(height).unwrap();
-    writer
-      .write_image_data(&vec![
-        0;
-        width
-          .checked_mul(height)
-          .unwrap()
-          .checked_mul(4)
-          .unwrap()
-      ])
-      .unwrap();
-  }
-
-  bytes
 }
 
 #[test]
