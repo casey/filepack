@@ -278,6 +278,7 @@ fn artwork_response() {
       .assert_header(header::CONTENT_LENGTH, "3")
       .assert_header(header::CONTENT_SECURITY_POLICY, "sandbox")
       .assert_header(header::CONTENT_TYPE, content_type)
+      .assert_header(header::ETAG, format!("\"{artwork_hash}\""))
       .assert_body(artwork)
       .send();
   }

@@ -24,7 +24,7 @@ impl Server {
   pub(crate) fn artwork(
     &self,
     fingerprint: Fingerprint,
-  ) -> ServerResult<(fs::File, u64, &'static str)> {
+  ) -> ServerResult<(fs::File, u64, &'static str, Hash)> {
     let artwork = self
       .package(fingerprint)?
       .and_then(|metadata| metadata.artwork)
@@ -42,7 +42,7 @@ impl Server {
 
     let (file, len) = self.open_file(hash)?;
 
-    Ok((file, len, content_type))
+    Ok((file, len, content_type, hash))
   }
 
   pub(crate) fn directory(&self, hash: Hash) -> ServerResult<Directory> {

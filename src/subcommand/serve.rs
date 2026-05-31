@@ -134,19 +134,15 @@ impl Serve {
     server: ServerExtension,
     fingerprint: Path<Fingerprint>,
   ) -> ServerResult<Response> {
-    let (file, len, content_type) = block_in_place(|| server.artwork(*fingerprint))?;
-
-    Ok(
-      Response::builder()
-        .header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
-        .header(header::CONTENT_LENGTH, len)
-        .header(header::CONTENT_SECURITY_POLICY, "sandbox")
-        .header(header::CONTENT_TYPE, content_type)
-        .body(Body::from_stream(ReaderStream::new(
-          tokio::fs::File::from_std(file),
-        )))
-        .unwrap(),
-    )
+    let (file, content_length, content_type, hash) =
+      block_in_place(|| server.artwork(*fingerprint))?;
+    Ok(Self::file_response(
+      None,
+      content_length,
+      content_type,
+      file,
+      hash,
+    ))
   }
 
   async fn directory(server: ServerExtension, Path(hash): Path<Hash>) -> PageResult<DirectoryHtml> {
@@ -167,22 +163,40 @@ impl Serve {
     }
   }
 
-  async fn download(server: ServerExtension, Path(hash): Path<Hash>) -> ServerResult<Response> {
-    let (file, len) = block_in_place(|| server.open_file(hash))?;
+  fn file_response(
+    content_disposition: Option<&str>,
+    content_length: u64,
+    content_type: &str,
+    file: fs::File,
+    hash: Hash,
+  ) -> Response {
+    let mut builder = Response::builder()
+      .header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
+      .header(header::CONTENT_LENGTH, content_length)
+      .header(header::CONTENT_SECURITY_POLICY, "sandbox")
+      .header(header::CONTENT_TYPE, content_type)
+      .header(header::ETAG, format!("\"{hash}\""));
 
-    Ok(
-      Response::builder()
-        .header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
-        .header(header::CONTENT_DISPOSITION, "attachment")
-        .header(header::CONTENT_LENGTH, len)
-        .header(header::CONTENT_SECURITY_POLICY, "sandbox")
-        .header(header::CONTENT_TYPE, "application/octet-stream")
-        .header(header::ETAG, format!("\"{hash}\""))
-        .body(Body::from_stream(ReaderStream::new(
-          tokio::fs::File::from_std(file),
-        )))
-        .unwrap(),
-    )
+    if let Some(content_disposition) = content_disposition {
+      builder = builder.header(header::CONTENT_DISPOSITION, content_disposition);
+    }
+
+    builder
+      .body(Body::from_stream(ReaderStream::new(
+        tokio::fs::File::from_std(file),
+      )))
+      .unwrap()
+  }
+
+  async fn download(server: ServerExtension, hash: Path<Hash>) -> ServerResult<Response> {
+    let (file, content_length) = block_in_place(|| server.open_file(*hash))?;
+    Ok(Self::file_response(
+      Some("attachment"),
+      content_length,
+      "application/octet-stream",
+      file,
+      *hash,
+    ))
   }
 
   async fn fallback() -> ServerResult<StaticAsset> {
