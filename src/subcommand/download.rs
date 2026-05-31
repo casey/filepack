@@ -121,11 +121,11 @@ impl Download {
     if let Some(cbor) = filesystem::read_opt(&path)? {
       let paths = files
         .iter()
-        .map(|(_, path)| {
+        .map(|(_hash, path)| {
           let path = path.strip_prefix(&self.output).unwrap();
-          RelativePath::try_from(path).context(error::Path { path })
+          path.try_into().context(error::Path { path })
         })
-        .collect::<Result<HashSet<_>>>()?;
+        .collect::<Result<HashSet<RelativePath>>>()?;
 
       Metadata::decode_from_slice(&cbor)
         .context(error::DecodeMetadataCbor { path })?
