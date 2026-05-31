@@ -130,6 +130,25 @@ impl Serve {
     Ok(acceptor)
   }
 
+  async fn artwork(
+    server: ServerExtension,
+    Path(fingerprint): Path<Fingerprint>,
+  ) -> ServerResult<Response> {
+    let (file, len, content_type) = block_in_place(|| server.artwork(fingerprint))?;
+
+    Ok(
+      Response::builder()
+        .header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
+        .header(header::CONTENT_LENGTH, len)
+        .header(header::CONTENT_SECURITY_POLICY, "sandbox")
+        .header(header::CONTENT_TYPE, content_type)
+        .body(Body::from_stream(ReaderStream::new(
+          tokio::fs::File::from_std(file),
+        )))
+        .unwrap(),
+    )
+  }
+
   async fn directory(server: ServerExtension, Path(hash): Path<Hash>) -> PageResult<DirectoryHtml> {
     Ok(
       DirectoryHtml {
@@ -265,6 +284,7 @@ impl Serve {
   pub(crate) fn router(server: Arc<Server>, auth_config: Option<Arc<AuthConfig>>) -> Router {
     let router = Router::new()
       .route("/", get(Self::home))
+      .route("/artwork/{fingerprint}", get(Self::artwork))
       .route("/directory/{hash}", get(Self::directory))
       .route("/directory/{hash}", post(Self::verify_directory))
       .route("/favicon.ico", get(Self::favicon))

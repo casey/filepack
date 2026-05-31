@@ -21,6 +21,30 @@ pub(crate) struct Server {
 }
 
 impl Server {
+  pub(crate) fn artwork(
+    &self,
+    fingerprint: Fingerprint,
+  ) -> ServerResult<(fs::File, u64, &'static str)> {
+    let artwork = self
+      .package(fingerprint)?
+      .and_then(|metadata| metadata.artwork)
+      .context(server_error::ArtworkNotFound { fingerprint })?;
+
+    let content_type = match artwork.extension() {
+      Some("jpg") => "image/jpeg",
+      Some("png") => "image/png",
+      _ => return Err(server_error::ArtworkContentType { fingerprint }.build()),
+    };
+
+    let hash = self
+      .package_file(fingerprint, &artwork.as_path())?
+      .context(server_error::ArtworkNotFound { fingerprint })?;
+
+    let (file, len) = self.open_file(hash)?;
+
+    Ok((file, len, content_type))
+  }
+
   pub(crate) fn directory(&self, hash: Hash) -> ServerResult<Directory> {
     ensure!(
       self
@@ -98,27 +122,27 @@ impl Server {
       .context(server_error::PackageMetadataCorrupt { fingerprint })
   }
 
-  fn package_contains_file(&self, root: Fingerprint, path: &RelativePath) -> ServerResult<bool> {
+  fn package_file(&self, root: Fingerprint, path: &RelativePath) -> ServerResult<Option<Hash>> {
     let mut components = path.components().peekable();
 
     let mut directory = self.read_directory(root.into())?;
     while let Some(component) = components.next() {
       let Some(entry) = directory.entries.get(component) else {
-        return Ok(false);
+        return Ok(None);
       };
 
       if components.peek().is_none() {
-        return Ok(entry.ty == EntryType::File);
+        return Ok((entry.ty == EntryType::File).then_some(entry.hash));
       }
 
       if entry.ty != EntryType::Directory {
-        return Ok(false);
+        return Ok(None);
       }
 
       directory = self.read_directory(entry.hash)?;
     }
 
-    Ok(false)
+    Ok(None)
   }
 
   fn package_metadata(&self, fingerprint: Fingerprint) -> ServerResult<Option<Vec<u8>>> {
@@ -225,7 +249,7 @@ impl Server {
 
       for path in metadata.files() {
         ensure!(
-          self.package_contains_file(fingerprint, &path)?,
+          self.package_file(fingerprint, &path)?.is_some(),
           server_error::PackageMetadataFileMissing { fingerprint, path },
         );
       }

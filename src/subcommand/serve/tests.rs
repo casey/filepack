@@ -201,6 +201,92 @@ fn admin_key_requires_restrict_upload() {
 }
 
 #[test]
+fn artwork_not_found_without_artwork() {
+  let server = TestServer::new();
+
+  let cbor = directory(&[]).encode_to_vec();
+  let hash = Hash::bytes(&cbor);
+  let fingerprint = Fingerprint(hash);
+  server.write_file(&cbor);
+
+  server.post(format!("/directory/{hash}")).send();
+  server.post(format!("/package/{fingerprint}")).send();
+
+  server
+    .get(format!("/artwork/{fingerprint}"))
+    .status(StatusCode::NOT_FOUND)
+    .assert_body(format!("package {fingerprint} artwork not found"))
+    .send();
+}
+
+#[test]
+fn artwork_package_not_found() {
+  let server = TestServer::new();
+
+  let fingerprint = Fingerprint(Hash::bytes(b"foo"));
+
+  server
+    .get(format!("/artwork/{fingerprint}"))
+    .status(StatusCode::NOT_FOUND)
+    .assert_body(format!("package {fingerprint} not found"))
+    .send();
+}
+
+#[test]
+fn artwork_response() {
+  #[track_caller]
+  fn case(filename: &str, content_type: &str) {
+    let server = TestServer::new();
+
+    let artwork = b"foo";
+    let artwork_hash = Hash::bytes(artwork);
+    server.write_file(artwork);
+
+    let metadata = Metadata {
+      artwork: Some(filename.parse().unwrap()),
+      ..Metadata::default()
+    };
+    let metadata_cbor = metadata.encode_to_vec();
+    let metadata_hash = Hash::bytes(&metadata_cbor);
+    server.write_file(&metadata_cbor);
+
+    let cbor = directory(&[
+      (
+        filename,
+        EntryType::File,
+        artwork_hash,
+        artwork.len().into_u64(),
+      ),
+      (
+        Metadata::CBOR_FILENAME,
+        EntryType::File,
+        metadata_hash,
+        metadata_cbor.len().into_u64(),
+      ),
+    ])
+    .encode_to_vec();
+    let hash = Hash::bytes(&cbor);
+    let fingerprint = Fingerprint(hash);
+    server.write_file(&cbor);
+
+    server.post(format!("/directory/{hash}")).send();
+    server.post(format!("/package/{fingerprint}")).send();
+
+    server
+      .get(format!("/artwork/{fingerprint}"))
+      .assert_header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
+      .assert_header(header::CONTENT_LENGTH, "3")
+      .assert_header(header::CONTENT_SECURITY_POLICY, "sandbox")
+      .assert_header(header::CONTENT_TYPE, content_type)
+      .assert_body(artwork)
+      .send();
+  }
+
+  case("cover.png", "image/png");
+  case("cover.jpg", "image/jpeg");
+}
+
+#[test]
 fn closed_server_forbids_uploads() {
   TestServer::with_auth(Some(Arc::new(AuthConfig {
     admin: None,
