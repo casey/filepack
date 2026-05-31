@@ -58,7 +58,7 @@ impl Archive {
 
   pub(crate) fn load_with_opt_path(path: Option<&Utf8Path>) -> Result<(Utf8PathBuf, Self)> {
     let path = if let Some(path) = path {
-      if filesystem::exists(path)? && filesystem::metadata(path)?.is_dir() {
+      if path.is_dir() {
         path.join(Manifest::FILENAME)
       } else {
         path.into()
