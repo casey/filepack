@@ -1,6 +1,54 @@
 use super::*;
 
 #[test]
+fn download_checks_metadata() {
+  let test = Test::new()
+    .touch("README.md")
+    .write("metadata.yaml", "title: Foo\nreadme: README.md")
+    .arg("create")
+    .success();
+
+  let metadata = fs::read(test.path().join("metadata.filepack")).unwrap();
+
+  let metadata_hash = Hash::bytes(&metadata);
+
+  let directory = Directory {
+    version: Version::Zero,
+    entries: BTreeMap::from([(
+      "metadata.filepack".parse::<ComponentBuf>().unwrap(),
+      Entry {
+        ty: EntryType::File,
+        hash: metadata_hash,
+        size: u64::try_from(metadata.len()).unwrap(),
+      },
+    )]),
+  }
+  .encode_to_vec();
+
+  let fingerprint = Fingerprint::from(Hash::bytes(&directory));
+
+  let server = Test::new()
+    .serve()
+    .write(&format!("files/{}", Hash::bytes(&directory)), &directory)
+    .write(&format!("files/{metadata_hash}"), &metadata)
+    .spawn();
+
+  Test::new()
+    .args([
+      "download",
+      "--server",
+      &server.address(),
+      "--package",
+      &fingerprint.to_string(),
+      "out",
+    ])
+    .stderr("error: file referenced in metadata missing: `README.md`\n")
+    .failure();
+
+  server.terminate().success();
+}
+
+#[test]
 fn download_fails_if_output_already_exists() {
   let hash = Hash::bytes(b"bar");
 

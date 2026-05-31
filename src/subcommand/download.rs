@@ -116,6 +116,22 @@ impl Download {
       self.download_package_file(&mut context, *hash, path)?;
     }
 
+    let path = self.output.join(Metadata::CBOR_FILENAME);
+
+    if let Some(cbor) = filesystem::read_opt(&path)? {
+      let paths = files
+        .iter()
+        .map(|(_, path)| {
+          let path = path.strip_prefix(&self.output).unwrap();
+          RelativePath::try_from(path).context(error::Path { path })
+        })
+        .collect::<Result<HashSet<_>>>()?;
+
+      Metadata::decode_from_slice(&cbor)
+        .context(error::DecodeMetadataCbor { path })?
+        .check(&self.output, &paths)?;
+    }
+
     let mut builder = ArchiveBuilder::new();
     builder.files = directories;
 
