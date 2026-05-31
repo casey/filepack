@@ -5,9 +5,9 @@ pub(crate) struct Or {
 }
 
 impl Or {
-  pub(crate) fn new(items: impl IntoIterator<Item = String>) -> Self {
+  pub(crate) fn new<I: Display>(items: impl IntoIterator<Item = I>) -> Self {
     Self {
-      items: items.into_iter().collect(),
+      items: items.into_iter().map(|item| item.to_string()).collect(),
     }
   }
 }
@@ -28,11 +28,30 @@ impl Display for Or {
             write!(f, "or ")?;
           }
 
-          write!(f, "{}", item)?;
+          write!(f, "{item}")?;
         }
 
         Ok(())
       }
     }
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn or() {
+    #[track_caller]
+    fn case(items: &[&str], expected: &str) {
+      assert_eq!(Or::new(items).to_string(), expected);
+    }
+
+    case(&[], "");
+    case(&["foo"], "foo");
+    case(&["foo", "bar"], "foo or bar");
+    case(&["foo", "bar", "bob"], "foo, bar, or bob");
+    case(&["foo", "bar", "bob", "baz"], "foo, bar, bob, or baz");
   }
 }

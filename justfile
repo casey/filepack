@@ -32,7 +32,7 @@ log unit='filepack' domain='filepack.com':
   ssh root@{{domain}} 'journalctl -fu {{unit}}'
 
 lint:
-  cargo clippy --workspace --all-targets -- --deny warnings
+  cargo lclippy --workspace --all-targets -- --deny warnings
   ./bin/forbid
   cargo fmt --all -- --check
 
