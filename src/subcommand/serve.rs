@@ -163,6 +163,17 @@ impl Serve {
     }
   }
 
+  async fn download(server: ServerExtension, hash: Path<Hash>) -> ServerResult<Response> {
+    let (file, content_length) = block_in_place(|| server.open_file(*hash))?;
+    Ok(Self::file_response(
+      Some("attachment"),
+      content_length,
+      mime::APPLICATION_OCTET_STREAM,
+      file,
+      *hash,
+    ))
+  }
+
   fn file_response(
     content_disposition: Option<&str>,
     content_length: u64,
@@ -186,17 +197,6 @@ impl Serve {
         tokio::fs::File::from_std(file),
       )))
       .unwrap()
-  }
-
-  async fn download(server: ServerExtension, hash: Path<Hash>) -> ServerResult<Response> {
-    let (file, content_length) = block_in_place(|| server.open_file(*hash))?;
-    Ok(Self::file_response(
-      Some("attachment"),
-      content_length,
-      mime::APPLICATION_OCTET_STREAM,
-      file,
-      *hash,
-    ))
   }
 
   async fn fallback() -> ServerResult<StaticAsset> {
