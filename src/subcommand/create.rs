@@ -143,6 +143,13 @@ impl Create {
           return Err(error::MissingMetadataFile { filename }.build());
         }
       }
+
+      if let Some(artwork) = &metadata.artwork {
+        match artwork.ty() {
+          ArtworkType::Jpeg => todo!(),
+          ArtworkType::Png => todo!(),
+        }
+      }
     }
 
     ensure! {

@@ -30,11 +30,7 @@ impl Server {
       .and_then(|metadata| metadata.artwork)
       .context(server_error::ArtworkNotFound { fingerprint })?;
 
-    let content_type = match artwork.extension() {
-      Some("jpg") => mime::IMAGE_JPEG,
-      Some("png") => mime::IMAGE_PNG,
-      _ => unreachable!(),
-    };
+    let content_type = artwork.content_type();
 
     let hash = self
       .package_file(fingerprint, &artwork.as_path())?

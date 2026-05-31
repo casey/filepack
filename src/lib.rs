@@ -24,6 +24,7 @@ use {
     archive_builder::ArchiveBuilder,
     archive_error::ArchiveError,
     arguments::Arguments,
+    artwork_type::ArtworkType,
     authenticated::Authenticated,
     bech32_decoder::Bech32Decoder,
     bech32_encoder::Bech32Encoder,
@@ -179,6 +180,7 @@ mod archive;
 mod archive_builder;
 mod archive_error;
 mod arguments;
+mod artwork_type;
 mod authenticated;
 mod bech32_decoder;
 mod bech32_encoder;
