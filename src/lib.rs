@@ -143,6 +143,7 @@ use {
   url::Url,
   usized::IntoU64,
   walkdir::WalkDir,
+  zune_jpeg::JpegDecoder,
 };
 
 pub use self::{
