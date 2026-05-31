@@ -407,18 +407,18 @@ dependencies = [
 
 [[package]]
 name = "boilerplate"
-version = "1.1.1"
+version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4e3b0e30ddbe071ebebe3a1165e7e3bcb0bb30a2fc67fddf68fcb75c792f4326"
+checksum = "ea22276cc682b55f7bfc3b66871e9a010be65a47023b6c2f4869c17baa2c3c74"
 dependencies = [
  "boilerplate-macros",
 ]
 
 [[package]]
 name = "boilerplate-macros"
-version = "0.0.1"
+version = "0.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dc0c044dd06b51561ddd553ee6454111f161347aadc7726e15bae8e1f115539d"
+checksum = "800299ec9eb129c995c1c37e6c08b909c4ca6b1fd792c818ca9a9eca45640442"
 dependencies = [
  "boilerplate-parser",
  "darling",
