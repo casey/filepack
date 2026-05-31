@@ -256,6 +256,54 @@ fn download_retrieves_package() {
 }
 
 #[test]
+fn download_retrieves_package_with_metadata() {
+  let server = Test::new().serve().spawn();
+
+  let mut artwork = Cursor::new(Vec::new());
+  DynamicImage::new_rgb8(10, 10)
+    .write_to(&mut artwork, ImageFormat::Png)
+    .unwrap();
+
+  let test = Test::new()
+    .write("foo", "bar")
+    .write("cover.png", artwork.into_inner())
+    .write("README.md", "baz")
+    .write(
+      "metadata.yaml",
+      "title: Foo\nartwork: cover.png\nreadme: README.md",
+    )
+    .args(["create", "."])
+    .success();
+
+  let manifest = Manifest::load(Some(&test.path().join("manifest.filepack"))).unwrap();
+  let fingerprint = manifest.fingerprint();
+
+  test
+    .args(["upload", "--server", &server.address(), "manifest.filepack"])
+    .success();
+
+  let downloaded = Test::new()
+    .args([
+      "download",
+      "--server",
+      &server.address(),
+      "--package",
+      &fingerprint.to_string(),
+      "out",
+    ])
+    .assert_file("out/foo", "bar")
+    .assert_file("out/README.md", "baz")
+    .success();
+
+  assert_eq!(
+    Manifest::load(Some(&downloaded.path().join("out/manifest.filepack"))).unwrap(),
+    manifest,
+  );
+
+  server.terminate().success();
+}
+
+#[test]
 fn server_url_must_be_http_or_https() {
   Test::new()
     .args(["download", "--server", "ftp://example.com"])
