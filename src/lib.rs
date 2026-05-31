@@ -60,6 +60,7 @@ use {
     map_decoder::MapDecoder,
     mode::Mode,
     options::Options,
+    or::Or,
     owo_colorize_ext::OwoColorizeExt,
     package::Package,
     path_error::PathError,
@@ -230,6 +231,7 @@ mod map_encoder;
 mod metadata;
 mod mode;
 mod options;
+mod or;
 mod owo_colorize_ext;
 mod package;
 mod path_error;

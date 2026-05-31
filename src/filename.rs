@@ -1,26 +1,26 @@
 use super::*;
 
 macro_rules! filename {
-  { $alias:ident, $extension:ident, $literal:literal } => {
+  { $alias:ident, $extension:ident, $($literal:literal),+ } => {
     #[derive(Clone, Debug, PartialEq)]
     pub(crate) struct $extension;
 
     impl Extension for $extension {
-      const EXTENSION: &str = $literal;
+      const EXTENSIONS: &[&str] = &[$($literal),+];
     }
 
     pub(crate) type $alias = Filename<$extension>;
   }
 }
 
-filename! { Png, PngExtension, "png" }
+filename! { Artwork, ArtworkExtension, "jpg", "png" }
 
 filename! { Nfo, NfoExtension, "nfo" }
 
 filename! { Md, MdExtension, "md" }
 
 pub(crate) trait Extension {
-  const EXTENSION: &str;
+  const EXTENSIONS: &[&str];
 }
 
 #[derive(Clone, Debug, DeserializeFromStr, PartialEq)]
@@ -59,9 +59,12 @@ impl<T: Extension> FromStr for Filename<T> {
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     let component = s.parse::<ComponentBuf>()?;
 
-    if component.extension() != Some(T::EXTENSION) {
+    if component
+      .extension()
+      .is_none_or(|extension| !T::EXTENSIONS.contains(&extension))
+    {
       return Err(ComponentError::Extension {
-        extension: T::EXTENSION,
+        extensions: T::EXTENSIONS,
       });
     }
 
@@ -79,9 +82,11 @@ mod tests {
   #[test]
   fn decode_error() {
     assert_matches!(
-      Png::decode(&mut Decoder::new(&"cover.jpg".encode_to_vec())),
+      Artwork::decode(&mut Decoder::new(&"cover.svg".encode_to_vec())),
       Err(DecodeError::Component {
-        source: ComponentError::Extension { extension: "png" },
+        source: ComponentError::Extension {
+          extensions: &["jpg", "png"]
+        },
       }),
     );
   }
@@ -89,8 +94,8 @@ mod tests {
   #[test]
   fn encoding() {
     assert_cbor(
-      "cover.png".parse::<Png>().unwrap(),
-      &"cover.png".encode_to_vec(),
+      "cover.md".parse::<Md>().unwrap(),
+      &"cover.md".encode_to_vec(),
     );
   }
 
@@ -104,11 +109,26 @@ mod tests {
       assert_eq!(input.parse::<T>().unwrap_err(), expected);
     }
 
-    case::<Md>("README.txt", ComponentError::Extension { extension: "md" });
-    case::<Nfo>("info.txt", ComponentError::Extension { extension: "nfo" });
-    case::<Png>("", ComponentError::Empty);
-    case::<Png>("cover.jpg", ComponentError::Extension { extension: "png" });
-    case::<Png>("foo/bar.png", ComponentError::Separator { character: '/' });
+    case::<Artwork>(
+      "cover.svg",
+      ComponentError::Extension {
+        extensions: &["jpg", "png"],
+      },
+    );
+    case::<Md>(
+      "README.txt",
+      ComponentError::Extension {
+        extensions: &["md"],
+      },
+    );
+    case::<Nfo>(
+      "info.txt",
+      ComponentError::Extension {
+        extensions: &["nfo"],
+      },
+    );
+    case::<Md>("", ComponentError::Empty);
+    case::<Md>("foo/bar.md", ComponentError::Separator { character: '/' });
   }
 
   #[test]
@@ -118,8 +138,9 @@ mod tests {
       input.parse::<T>().unwrap();
     }
 
+    case::<Artwork>("cover.jpg");
+    case::<Artwork>("cover.png");
     case::<Md>("README.md");
     case::<Nfo>("info.nfo");
-    case::<Png>("cover.png");
   }
 }

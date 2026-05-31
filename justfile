@@ -13,7 +13,10 @@ ci: lint
   cargo test --workspace
 
 serve:
-  cargo run serve
+  cargo run --release serve --listen localhost
+
+install:
+  cargo install --path .
 
 deploy branch='master' remote='casey/filepack' domain='filepack.com':
   ssh root@{{domain}} '\
@@ -29,7 +32,7 @@ log unit='filepack' domain='filepack.com':
   ssh root@{{domain}} 'journalctl -fu {{unit}}'
 
 lint:
-  cargo clippy --workspace --all-targets -- --deny warnings
+  cargo lclippy --workspace --all-targets -- --deny warnings
   ./bin/forbid
   cargo fmt --all -- --check
 

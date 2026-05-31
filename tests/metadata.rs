@@ -84,9 +84,9 @@ fn files_wrong_extension() {
   }
 
   case(
-    "title: Foo\nartwork: cover.jpg",
-    "cover.jpg",
-    ".*component must end in `.png`.*",
+    "title: Foo\nartwork: cover.svg",
+    "cover.svg",
+    ".*component must end in `.jpg` or `.png`.*",
   );
 
   case(
