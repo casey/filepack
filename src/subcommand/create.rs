@@ -34,7 +34,7 @@ impl Create {
       dimensions.width == dimensions.height,
       error::ArtworkDimensions {
         dimensions,
-        path: root.join(artwork.as_path()),
+        path,
       }
     }
 
