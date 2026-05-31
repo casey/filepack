@@ -282,7 +282,7 @@ fn download_retrieves_package_with_metadata() {
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
     .success();
 
-  let downloaded = Test::new()
+  Test::new()
     .args([
       "download",
       "--server",
@@ -293,12 +293,10 @@ fn download_retrieves_package_with_metadata() {
     ])
     .assert_file("out/foo", "bar")
     .assert_file("out/README.md", "baz")
+    .success()
+    .args(["verify", "out"])
+    .stderr("successfully verified 5 files totaling 240 bytes\n")
     .success();
-
-  assert_eq!(
-    Manifest::load(Some(&downloaded.path().join("out/manifest.filepack"))).unwrap(),
-    manifest,
-  );
 
   server.terminate().success();
 }
