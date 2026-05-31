@@ -28,7 +28,6 @@ dirs = "6.0.0"
 ed25519-dalek = { version = "2.1.1", features = ["pkcs8", "rand_core"] }
 filepack-cbor = { version = "0.0.0", path = "crates/filepack-cbor" }
 futures-util = { version = "0.3.32", default-features = false, features = ["std"] }
-heck = "0.5.0"
 hex = "0.4.3"
 indicatif = "0.18.0"
 jsonwebtoken = "9"
