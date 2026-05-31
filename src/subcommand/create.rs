@@ -21,18 +21,6 @@ pub(crate) struct Create {
   timestamp: bool,
 }
 
-#[derive(Copy, Clone)]
-struct Dimensions {
-  height: u32,
-  width: u32,
-}
-
-impl Dimensions {
-  fn is_square(self) -> bool {
-    self.width == self.height
-  }
-}
-
 impl Create {
   fn check_artwork(root: &Utf8Path, artwork: &crate::filename::Artwork) -> Result {
     let path = root.join(artwork.as_path());
@@ -42,15 +30,12 @@ impl Create {
       ArtworkType::Png => Self::decode_png(&path)?,
     };
 
-    if !dimensions.is_square() {
-      return Err(
-        error::ArtworkDimensions {
-          height: dimensions.height,
-          path: root.join(artwork.as_path()),
-          width: dimensions.width,
-        }
-        .build(),
-      );
+    ensure! {
+      dimensions.width == dimensions.height,
+      error::ArtworkDimensions {
+        dimensions,
+        path: root.join(artwork.as_path()),
+      }
     }
 
     Ok(())
@@ -63,7 +48,7 @@ impl Create {
 
     decoder
       .decode()
-      .context(error::DecodeArtworkJpeg { path })?;
+      .context(error::ArtworkDecodeJpeg { path })?;
 
     let info = decoder.info().unwrap();
 
@@ -78,7 +63,7 @@ impl Create {
 
     let mut reader = png::Decoder::new(io::Cursor::new(bytes))
       .read_info()
-      .context(error::DecodeArtworkPng { path })?;
+      .context(error::ArtworkDecodePng { path })?;
 
     let dimensions = Dimensions {
       width: reader.info().width,
@@ -91,9 +76,9 @@ impl Create {
 
     reader
       .next_frame(&mut buffer)
-      .context(error::DecodeArtworkPng { path })?;
+      .context(error::ArtworkDecodePng { path })?;
 
-    reader.finish().context(error::DecodeArtworkPng { path })?;
+    reader.finish().context(error::ArtworkDecodePng { path })?;
 
     Ok(dimensions)
   }

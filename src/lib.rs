@@ -38,6 +38,7 @@ use {
     dalek_signature_error::DalekSignatureError,
     date_time::DateTime,
     decode_error::DecodeError,
+    dimensions::Dimensions,
     directory_tree_entry::DirectoryTreeEntry,
     display_path::DisplayPath,
     display_secret::DisplaySecret,
@@ -198,6 +199,7 @@ mod date_time;
 mod decode;
 mod decode_error;
 mod decoder;
+mod dimensions;
 mod directory;
 mod directory_tree;
 mod directory_tree_entry;
