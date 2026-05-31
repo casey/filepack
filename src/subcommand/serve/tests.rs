@@ -880,6 +880,80 @@ fn verify_package_metadata_decode_error() {
 }
 
 #[test]
+fn verify_package_metadata_references_missing_file() {
+  let server = TestServer::new();
+
+  let metadata = Metadata {
+    artwork: Some("cover.png".parse().unwrap()),
+    ..default()
+  }
+  .encode_to_vec();
+  let metadata_hash = Hash::bytes(&metadata);
+  server.write_file(&metadata);
+
+  let cbor = directory(&[(
+    Metadata::CBOR_FILENAME,
+    EntryType::File,
+    metadata_hash,
+    metadata.len() as u64,
+  )])
+  .encode_to_vec();
+  let hash = Hash::bytes(&cbor);
+  let fingerprint = Fingerprint(hash);
+  server.write_file(&cbor);
+
+  server.post(format!("/directory/{hash}")).send();
+
+  server
+    .post(format!("/package/{fingerprint}"))
+    .status(StatusCode::BAD_REQUEST)
+    .assert_body(format!(
+      "package {fingerprint} metadata references missing file `cover.png`"
+    ))
+    .send();
+}
+
+#[test]
+fn verify_package_metadata_references_present_file() {
+  let server = TestServer::new();
+
+  let artwork = b"artwork";
+  let artwork_hash = Hash::bytes(artwork);
+  server.write_file(artwork);
+
+  let metadata = Metadata {
+    artwork: Some("cover.png".parse().unwrap()),
+    ..default()
+  }
+  .encode_to_vec();
+  let metadata_hash = Hash::bytes(&metadata);
+  server.write_file(&metadata);
+
+  let cbor = directory(&[
+    (
+      "cover.png",
+      EntryType::File,
+      artwork_hash,
+      artwork.len() as u64,
+    ),
+    (
+      Metadata::CBOR_FILENAME,
+      EntryType::File,
+      metadata_hash,
+      metadata.len() as u64,
+    ),
+  ])
+  .encode_to_vec();
+  let hash = Hash::bytes(&cbor);
+  let fingerprint = Fingerprint(hash);
+  server.write_file(&cbor);
+
+  server.post(format!("/directory/{hash}")).send();
+
+  server.post(format!("/package/{fingerprint}")).send();
+}
+
+#[test]
 fn verify_package_unverified() {
   let server = TestServer::new();
 

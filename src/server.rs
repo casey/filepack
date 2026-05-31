@@ -21,6 +21,30 @@ pub(crate) struct Server {
 }
 
 impl Server {
+  fn contains_file(&self, root: Fingerprint, path: &RelativePath) -> ServerResult<bool> {
+    let mut directory = self.read_directory(root.into())?;
+    let mut components = path.components().peekable();
+
+    while let Some(component) = components.next() {
+      let Some(entry) = directory.entries.get(component) else {
+        return Ok(false);
+      };
+
+      if components.peek().is_none() {
+        return Ok(entry.ty == EntryType::File);
+      }
+
+      if entry.ty != EntryType::Directory {
+        return Ok(false);
+      }
+
+      let hash = entry.hash;
+      directory = self.read_directory(hash)?;
+    }
+
+    Ok(false)
+  }
+
   pub(crate) fn directory(&self, hash: Hash) -> ServerResult<Directory> {
     ensure!(
       self
@@ -197,8 +221,15 @@ impl Server {
     );
 
     if let Some(metadata) = self.package_metadata(fingerprint)? {
-      Metadata::decode_from_slice(&metadata)
+      let metadata = Metadata::decode_from_slice(&metadata)
         .context(server_error::PackageMetadataDecode { fingerprint })?;
+
+      for path in metadata.files() {
+        ensure!(
+          self.contains_file(fingerprint.into(), &path)?,
+          server_error::PackageMetadataFileMissing { fingerprint, path },
+        );
+      }
     }
 
     let tx = self.database.begin_write()?;

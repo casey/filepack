@@ -44,6 +44,11 @@ pub(crate) enum ServerError {
     fingerprint: Fingerprint,
     source: DecodeError,
   },
+  #[snafu(display("package {fingerprint} metadata references missing file `{path}`"))]
+  PackageMetadataFileMissing {
+    fingerprint: Fingerprint,
+    path: RelativePath,
+  },
   #[snafu(display("package {fingerprint} not found"))]
   PackageNotFound { fingerprint: Fingerprint },
   #[snafu(display("package {fingerprint} root directory is unverified"))]
@@ -71,6 +76,7 @@ impl ServerError {
       | Self::FileNotFound { .. }
       | Self::PackageMetadataCorrupt { .. }
       | Self::PackageMetadataDecode { .. }
+      | Self::PackageMetadataFileMissing { .. }
       | Self::PackageNotFound { .. }
       | Self::PackageUnverified { .. }
       | Self::PageNotFound
@@ -102,6 +108,7 @@ impl ServerError {
       | Self::DirectoryFileMissing { .. }
       | Self::DirectoryUnverified { .. }
       | Self::PackageMetadataDecode { .. }
+      | Self::PackageMetadataFileMissing { .. }
       | Self::PackageUnverified { .. }
       | Self::UploadBodyRead { .. }
       | Self::UploadHashMismatch { .. } => StatusCode::BAD_REQUEST,
