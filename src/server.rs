@@ -33,7 +33,7 @@ impl Server {
     let content_type = match artwork.extension() {
       Some("jpg") => "image/jpeg",
       Some("png") => "image/png",
-      _ => return Err(server_error::ArtworkContentType { fingerprint }.build()),
+      _ => unreachable!(),
     };
 
     let hash = self

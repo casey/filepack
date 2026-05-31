@@ -3,8 +3,6 @@ use super::*;
 #[derive(Debug, Snafu)]
 #[snafu(context(suffix(false)), visibility(pub(crate)))]
 pub(crate) enum ServerError {
-  #[snafu(display("package {fingerprint} artwork has unexpected file extension"))]
-  ArtworkContentType { fingerprint: Fingerprint },
   #[snafu(display("package {fingerprint} artwork not found"))]
   ArtworkNotFound { fingerprint: Fingerprint },
   #[snafu(display("invalid authorization token"))]
@@ -70,8 +68,7 @@ pub(crate) enum ServerError {
 impl ServerError {
   fn message(&self) -> String {
     match self {
-      Self::ArtworkContentType { .. }
-      | Self::ArtworkNotFound { .. }
+      Self::ArtworkNotFound { .. }
       | Self::AuthorizationInvalid { .. }
       | Self::AuthorizationMalformed
       | Self::AuthorizationMissing
@@ -104,7 +101,6 @@ impl ServerError {
       | Self::AuthorizationMalformed
       | Self::AuthorizationMissing => StatusCode::UNAUTHORIZED,
       Self::Database { .. }
-      | Self::ArtworkContentType { .. }
       | Self::DatabaseCommit { .. }
       | Self::DatabaseStorage { .. }
       | Self::DatabaseTable { .. }
