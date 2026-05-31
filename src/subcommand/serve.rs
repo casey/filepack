@@ -132,9 +132,9 @@ impl Serve {
 
   async fn artwork(
     server: ServerExtension,
-    Path(fingerprint): Path<Fingerprint>,
+    fingerprint: Path<Fingerprint>,
   ) -> ServerResult<Response> {
-    let (file, len, content_type) = block_in_place(|| server.artwork(fingerprint))?;
+    let (file, len, content_type) = block_in_place(|| server.artwork(*fingerprint))?;
 
     Ok(
       Response::builder()
