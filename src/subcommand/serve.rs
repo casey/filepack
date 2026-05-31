@@ -130,6 +130,21 @@ impl Serve {
     Ok(acceptor)
   }
 
+  async fn artwork(
+    server: ServerExtension,
+    fingerprint: Path<Fingerprint>,
+  ) -> ServerResult<Response> {
+    let (file, content_length, hash, content_type) =
+      block_in_place(|| server.artwork(*fingerprint))?;
+    Ok(Self::file_response(
+      None,
+      content_length,
+      content_type,
+      file,
+      hash,
+    ))
+  }
+
   async fn directory(server: ServerExtension, Path(hash): Path<Hash>) -> PageResult<DirectoryHtml> {
     Ok(
       DirectoryHtml {
@@ -148,22 +163,15 @@ impl Serve {
     }
   }
 
-  async fn download(server: ServerExtension, Path(hash): Path<Hash>) -> ServerResult<Response> {
-    let (file, len) = block_in_place(|| server.open_file(hash))?;
-
-    Ok(
-      Response::builder()
-        .header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
-        .header(header::CONTENT_DISPOSITION, "attachment")
-        .header(header::CONTENT_LENGTH, len)
-        .header(header::CONTENT_SECURITY_POLICY, "sandbox")
-        .header(header::CONTENT_TYPE, "application/octet-stream")
-        .header(header::ETAG, format!("\"{hash}\""))
-        .body(Body::from_stream(ReaderStream::new(
-          tokio::fs::File::from_std(file),
-        )))
-        .unwrap(),
-    )
+  async fn download(server: ServerExtension, hash: Path<Hash>) -> ServerResult<Response> {
+    let (file, content_length) = block_in_place(|| server.open_file(*hash))?;
+    Ok(Self::file_response(
+      Some("attachment"),
+      content_length,
+      mime::APPLICATION_OCTET_STREAM,
+      file,
+      *hash,
+    ))
   }
 
   async fn fallback() -> ServerResult<StaticAsset> {
@@ -172,6 +180,31 @@ impl Serve {
 
   async fn favicon() -> ServerResult<StaticAsset> {
     StaticAsset::get("favicon.png")
+  }
+
+  fn file_response(
+    content_disposition: Option<&str>,
+    content_length: u64,
+    content_type: Mime,
+    file: fs::File,
+    hash: Hash,
+  ) -> Response {
+    let mut builder = Response::builder()
+      .header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
+      .header(header::CONTENT_LENGTH, content_length)
+      .header(header::CONTENT_SECURITY_POLICY, "sandbox")
+      .header(header::CONTENT_TYPE, content_type.essence_str())
+      .header(header::ETAG, format!("\"{hash}\""));
+
+    if let Some(content_disposition) = content_disposition {
+      builder = builder.header(header::CONTENT_DISPOSITION, content_disposition);
+    }
+
+    builder
+      .body(Body::from_stream(ReaderStream::new(
+        tokio::fs::File::from_std(file),
+      )))
+      .unwrap()
   }
 
   async fn files(server: ServerExtension) -> PageResult<FilesHtml> {
@@ -265,6 +298,7 @@ impl Serve {
   pub(crate) fn router(server: Arc<Server>, auth_config: Option<Arc<AuthConfig>>) -> Router {
     let router = Router::new()
       .route("/", get(Self::home))
+      .route("/artwork/{fingerprint}", get(Self::artwork))
       .route("/directory/{hash}", get(Self::directory))
       .route("/directory/{hash}", post(Self::verify_directory))
       .route("/favicon.ico", get(Self::favicon))

@@ -33,6 +33,10 @@ impl<T: Extension> Filename<T> {
   pub(crate) fn as_path(&self) -> RelativePath {
     self.component.as_path()
   }
+
+  pub(crate) fn extension(&self) -> Option<&str> {
+    self.component.extension()
+  }
 }
 
 impl<T: Extension> Serialize for Filename<T> {

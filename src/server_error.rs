@@ -3,6 +3,8 @@ use super::*;
 #[derive(Debug, Snafu)]
 #[snafu(context(suffix(false)), visibility(pub(crate)))]
 pub(crate) enum ServerError {
+  #[snafu(display("package {fingerprint} artwork not found"))]
+  ArtworkNotFound { fingerprint: Fingerprint },
   #[snafu(display("invalid authorization token"))]
   AuthorizationInvalid { source: jsonwebtoken::errors::Error },
   #[snafu(display("malformed authorization header"))]
@@ -66,7 +68,8 @@ pub(crate) enum ServerError {
 impl ServerError {
   fn message(&self) -> String {
     match self {
-      Self::AuthorizationInvalid { .. }
+      Self::ArtworkNotFound { .. }
+      | Self::AuthorizationInvalid { .. }
       | Self::AuthorizationMalformed
       | Self::AuthorizationMissing
       | Self::DirectoryDecode { .. }
@@ -112,7 +115,8 @@ impl ServerError {
       | Self::PackageUnverified { .. }
       | Self::UploadBodyRead { .. }
       | Self::UploadHashMismatch { .. } => StatusCode::BAD_REQUEST,
-      Self::DirectoryNotFound { .. }
+      Self::ArtworkNotFound { .. }
+      | Self::DirectoryNotFound { .. }
       | Self::FileNotFound { .. }
       | Self::PackageNotFound { .. }
       | Self::PageNotFound => StatusCode::NOT_FOUND,

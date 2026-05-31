@@ -97,6 +97,7 @@ use {
   futures_util::StreamExt,
   indicatif::{ProgressBar, ProgressStyle},
   lexiclean::Lexiclean,
+  mime::Mime,
   num_traits::One,
   owo_colors::Styled,
   regex::Regex,
