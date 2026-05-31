@@ -116,9 +116,9 @@ impl Download {
       self.download_package_file(&mut context, *hash, path)?;
     }
 
-    let path = self.output.join(Metadata::CBOR_FILENAME);
+    let metadata_path = self.output.join(Metadata::CBOR_FILENAME);
 
-    if let Some(cbor) = filesystem::read_opt(&path)? {
+    if let Some(cbor) = filesystem::read_opt(&metadata_path)? {
       let paths = files
         .iter()
         .map(|(_hash, path)| {
@@ -128,7 +128,9 @@ impl Download {
         .collect::<Result<HashSet<RelativePath>>>()?;
 
       Metadata::decode_from_slice(&cbor)
-        .context(error::DecodeMetadataCbor { path })?
+        .context(error::DecodeMetadataCbor {
+          path: metadata_path,
+        })?
         .check(&self.output, &paths)?;
     }
 
