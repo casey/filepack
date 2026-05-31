@@ -1170,6 +1170,7 @@ dependencies = [
  "ed25519-dalek",
  "filepack-cbor",
  "futures-util",
+ "heck",
  "hex",
  "image",
  "indicatif",

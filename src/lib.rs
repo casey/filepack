@@ -81,6 +81,7 @@ use {
     tag::Tag,
     ticked::Ticked,
     token::Token,
+    type_name::TypeName,
     utf8_path_ext::Utf8PathExt,
   },
   axum::{
@@ -265,6 +266,7 @@ mod tag_error;
 pub mod templates;
 mod ticked;
 mod token;
+mod type_name;
 mod utf8_path_ext;
 mod version;
 

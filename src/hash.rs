@@ -137,7 +137,7 @@ impl redb::Value for Hash {
   }
 
   fn type_name() -> redb::TypeName {
-    redb::TypeName::new("filepack-hash")
+    TypeName::Hash.into()
   }
 }
 

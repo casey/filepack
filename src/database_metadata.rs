@@ -42,6 +42,6 @@ impl redb::Value for DatabaseMetadata {
   }
 
   fn type_name() -> redb::TypeName {
-    redb::TypeName::new("filepack-metadata-key")
+    TypeName::DatabaseMetadata.into()
   }
 }

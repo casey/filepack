@@ -93,6 +93,6 @@ impl redb::Value for Fingerprint {
   }
 
   fn type_name() -> redb::TypeName {
-    redb::TypeName::new("filepack-fingerprint")
+    TypeName::Fingerprint.into()
   }
 }
