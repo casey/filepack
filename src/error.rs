@@ -67,9 +67,10 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     source: redb::CommitError,
   },
-  #[snafu(display("error opening database"))]
+  #[snafu(display("error opening database at `{path}`"))]
   DatabaseOpen {
     backtrace: Option<Backtrace>,
+    path: DisplayPath,
     source: redb::DatabaseError,
   },
   #[snafu(display("database schema version `{actual}` does not match expected `{expected}`"))]
@@ -435,12 +436,6 @@ pub enum Error {
 impl From<redb::CommitError> for Error {
   fn from(source: redb::CommitError) -> Self {
     DatabaseCommit {}.into_error(source)
-  }
-}
-
-impl From<redb::DatabaseError> for Error {
-  fn from(source: redb::DatabaseError) -> Self {
-    DatabaseOpen {}.into_error(source)
   }
 }
 
