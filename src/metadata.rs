@@ -134,10 +134,6 @@ impl Metadata {
 
     files
   }
-
-  pub(crate) fn load_strict(path: &Utf8Path) -> Result<Self> {
-    Self::deserialize_strict(path, &filesystem::read_to_string(path)?)
-  }
 }
 
 #[cfg(test)]
@@ -181,7 +177,11 @@ mod tests {
 
   #[test]
   fn filepack_metadata_is_valid() {
-    Metadata::load_strict(Metadata::YAML_FILENAME.as_ref()).unwrap();
+    Metadata::deserialize_strict(
+      Metadata::YAML_FILENAME.as_ref(),
+      &filesystem::read_to_string(Metadata::YAML_FILENAME).unwrap(),
+    )
+    .unwrap();
   }
 
   #[test]

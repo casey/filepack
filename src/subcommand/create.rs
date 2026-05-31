@@ -33,15 +33,11 @@ impl Create {
       root.join(Manifest::FILENAME)
     };
 
-    let metadata = root.join(Metadata::YAML_FILENAME);
+    let path = root.join(Metadata::YAML_FILENAME);
 
-    let metadata = filesystem::exists(&metadata)?
-      .then(|| Metadata::load_strict(&metadata))
-      .transpose()?;
+    let metadata_cbor = if let Some(yaml) = filesystem::read_to_string_opt(&path)? {
+      let cbor = Metadata::deserialize_strict(&path, &yaml)?.encode_to_vec();
 
-    let metadata_cbor = metadata.as_ref().map(Metadata::encode_to_vec);
-
-    if let Some(metadata_cbor) = &metadata_cbor {
       let path = root.join(Metadata::CBOR_FILENAME);
 
       ensure! {
@@ -51,8 +47,12 @@ impl Create {
         },
       }
 
-      filesystem::write(&path, metadata_cbor)?;
-    }
+      filesystem::write(&path, &cbor)?;
+
+      Some(cbor)
+    } else {
+      filesystem::read_opt(&root.join(Metadata::CBOR_FILENAME))?
+    };
 
     let cleaned_manifest = current_dir.join(&manifest_path).lexiclean();
 
@@ -137,8 +137,12 @@ impl Create {
       return Err(error::Lint { count: lint_errors }.build());
     }
 
-    if let Some(metadata) = &metadata {
-      metadata.check(&root, &paths.keys().cloned().collect())?;
+    if let Some(cbor) = &metadata_cbor {
+      let path = root.join(Metadata::CBOR_FILENAME);
+
+      Metadata::decode_from_slice(cbor)
+        .context(error::DecodeMetadataCbor { path })?
+        .check(&root, &paths.keys().cloned().collect())?;
     }
 
     ensure! {

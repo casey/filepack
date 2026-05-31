@@ -717,6 +717,39 @@ fn valid_signature_for_wrong_pubkey() {
 }
 
 #[test]
+fn verify_checks_metadata() {
+  let test = Test::new()
+    .touch("README.md")
+    .write("metadata.yaml", "title: Foo\nreadme: README.md")
+    .arg("create")
+    .success();
+
+  let cbor = fs::read(test.path().join("metadata.filepack")).unwrap();
+
+  let hash = blake3::hash(&cbor).to_string();
+
+  test
+    .remove_file("README.md")
+    .remove_file("metadata.yaml")
+    .write_manifest(
+      "manifest.filepack",
+      json! {
+        embedded: {},
+        package: {
+          "metadata.filepack": {
+            hash: hash,
+            size: 17,
+          }
+        },
+        signatures: [],
+      },
+    )
+    .arg("verify")
+    .stderr("error: file referenced in metadata missing: `README.md`\n")
+    .failure();
+}
+
+#[test]
 fn verify_fingerprint() {
   Test::new()
     .touch("foo")
