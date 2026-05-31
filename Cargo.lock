@@ -976,6 +976,7 @@ dependencies = [
  "jsonwebtoken",
  "lexiclean",
  "libc",
+ "mime",
  "num-traits",
  "owo-colors",
  "pretty_assertions",

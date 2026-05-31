@@ -24,15 +24,15 @@ impl Server {
   pub(crate) fn artwork(
     &self,
     fingerprint: Fingerprint,
-  ) -> ServerResult<(fs::File, u64, &'static str, Hash)> {
+  ) -> ServerResult<(fs::File, u64, Mime, Hash)> {
     let artwork = self
       .package(fingerprint)?
       .and_then(|metadata| metadata.artwork)
       .context(server_error::ArtworkNotFound { fingerprint })?;
 
     let content_type = match artwork.extension() {
-      Some("jpg") => "image/jpeg",
-      Some("png") => "image/png",
+      Some("jpg") => mime::IMAGE_JPEG,
+      Some("png") => mime::IMAGE_PNG,
       _ => unreachable!(),
     };
 

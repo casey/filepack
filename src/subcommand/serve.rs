@@ -166,7 +166,7 @@ impl Serve {
   fn file_response(
     content_disposition: Option<&str>,
     content_length: u64,
-    content_type: &str,
+    content_type: Mime,
     file: fs::File,
     hash: Hash,
   ) -> Response {
@@ -174,7 +174,7 @@ impl Serve {
       .header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
       .header(header::CONTENT_LENGTH, content_length)
       .header(header::CONTENT_SECURITY_POLICY, "sandbox")
-      .header(header::CONTENT_TYPE, content_type)
+      .header(header::CONTENT_TYPE, content_type.essence_str())
       .header(header::ETAG, format!("\"{hash}\""));
 
     if let Some(content_disposition) = content_disposition {
@@ -193,7 +193,7 @@ impl Serve {
     Ok(Self::file_response(
       Some("attachment"),
       content_length,
-      "application/octet-stream",
+      mime::APPLICATION_OCTET_STREAM,
       file,
       *hash,
     ))
