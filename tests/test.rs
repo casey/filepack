@@ -225,7 +225,7 @@ impl Test {
       None
     };
 
-    let child = command
+    let mut child = command
       .stdin(Stdio::piped())
       .stdout(Stdio::piped())
       .stderr(Stdio::piped())
@@ -242,8 +242,27 @@ impl Test {
         tx.send(port.parse::<u16>().unwrap()).unwrap();
       });
 
-      rx.recv_timeout(Duration::from_secs(1))
-        .expect("timed out waiting for port")
+      let deadline = Instant::now() + Duration::from_mins(1);
+
+      loop {
+        match rx.recv_timeout(Duration::from_millis(100)) {
+          Ok(port) => break port,
+          Err(mpsc::RecvTimeoutError::Disconnected) => panic!("ready listener disconnected"),
+          Err(mpsc::RecvTimeoutError::Timeout) => {
+            if let Some(status) = child.try_wait().unwrap() {
+              let mut stderr = String::new();
+              child
+                .stderr
+                .take()
+                .unwrap()
+                .read_to_string(&mut stderr)
+                .unwrap();
+              panic!("server exited with {status} before becoming ready:\n{stderr}");
+            }
+            assert!(Instant::now() < deadline, "timed out waiting for port");
+          }
+        }
+      }
     });
 
     if let Some(stdin) = &self.stdin {
