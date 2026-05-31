@@ -79,6 +79,23 @@ impl<T: Extension> FromStr for Filename<T> {
   }
 }
 
+impl Artwork {
+  pub(crate) fn content_type(&self) -> Mime {
+    match self.ty() {
+      ArtworkType::Jpeg => mime::IMAGE_JPEG,
+      ArtworkType::Png => mime::IMAGE_PNG,
+    }
+  }
+
+  pub(crate) fn ty(&self) -> ArtworkType {
+    match self.extension().unwrap() {
+      "jpg" => ArtworkType::Jpeg,
+      "png" => ArtworkType::Png,
+      _ => unreachable!(),
+    }
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;

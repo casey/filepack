@@ -24,6 +24,7 @@ use {
     archive_builder::ArchiveBuilder,
     archive_error::ArchiveError,
     arguments::Arguments,
+    artwork_type::ArtworkType,
     authenticated::Authenticated,
     bech32_decoder::Bech32Decoder,
     bech32_encoder::Bech32Encoder,
@@ -37,6 +38,7 @@ use {
     dalek_signature_error::DalekSignatureError,
     date_time::DateTime,
     decode_error::DecodeError,
+    dimensions::Dimensions,
     directory_tree_entry::DirectoryTreeEntry,
     display_path::DisplayPath,
     display_secret::DisplaySecret,
@@ -179,6 +181,7 @@ mod archive;
 mod archive_builder;
 mod archive_error;
 mod arguments;
+mod artwork_type;
 mod authenticated;
 mod bech32_decoder;
 mod bech32_encoder;
@@ -196,6 +199,7 @@ mod date_time;
 mod decode;
 mod decode_error;
 mod decoder;
+mod dimensions;
 mod directory;
 mod directory_tree;
 mod directory_tree_entry;

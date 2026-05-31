@@ -1,6 +1,65 @@
 use super::*;
 
 #[test]
+fn artwork_invalid() {
+  #[track_caller]
+  fn case(filename: &str, bytes: impl AsRef<[u8]>, stderr: &str) {
+    Test::new()
+      .write(filename, bytes)
+      .write("metadata.yaml", format!("title: Foo\nartwork: {filename}"))
+      .arg("create")
+      .stderr_regex(stderr)
+      .failure();
+  }
+
+  case(
+    "cover.jpg",
+    b"bar",
+    "error: failed to decode JPEG artwork `.*cover\\.jpg`\n.*",
+  );
+  case(
+    "cover.png",
+    b"bar",
+    "error: failed to decode PNG artwork `.*cover\\.png`\n.*",
+  );
+  case(
+    "cover.jpg",
+    image(1, 1, ImageFormat::Png),
+    "error: failed to decode JPEG artwork `.*cover\\.jpg`\n.*",
+  );
+  case(
+    "cover.png",
+    image(1, 1, ImageFormat::Jpeg),
+    "error: failed to decode PNG artwork `.*cover\\.png`\n.*",
+  );
+  case(
+    "cover.jpg",
+    image(2, 1, ImageFormat::Jpeg),
+    "error: artwork `.*cover\\.jpg` is 2×1 but must be square\n",
+  );
+  case(
+    "cover.png",
+    image(2, 1, ImageFormat::Png),
+    "error: artwork `.*cover\\.png` is 2×1 but must be square\n",
+  );
+}
+
+#[test]
+fn artwork_valid() {
+  #[track_caller]
+  fn case(filename: &str, bytes: Vec<u8>) {
+    Test::new()
+      .write(filename, bytes)
+      .write("metadata.yaml", format!("title: Foo\nartwork: {filename}"))
+      .arg("create")
+      .success();
+  }
+
+  case("cover.jpg", image(10, 10, ImageFormat::Jpeg));
+  case("cover.png", image(20, 20, ImageFormat::Png));
+}
+
+#[test]
 fn dates() {
   Test::new()
     .touch("content")
@@ -24,7 +83,7 @@ package:
 fn files() {
   Test::new()
     .touch("content")
-    .touch("cover.png")
+    .write("cover.png", image(1, 1, ImageFormat::Png))
     .touch("info.nfo")
     .touch("README.md")
     .write(
@@ -40,7 +99,7 @@ package:
     .arg("create")
     .success()
     .arg("verify")
-    .stderr("successfully verified 6 files totaling 113 bytes\n")
+    .stderr("successfully verified 6 files totaling 185 bytes\n")
     .success();
 }
 
@@ -100,6 +159,14 @@ fn files_wrong_extension() {
     "README.txt",
     ".*component must end in `.md`.*",
   );
+}
+
+fn image(width: u32, height: u32, image_format: ImageFormat) -> Vec<u8> {
+  let mut buffer = Cursor::new(Vec::new());
+  DynamicImage::new_rgb8(width, height)
+    .write_to(&mut buffer, image_format)
+    .unwrap();
+  buffer.into_inner()
 }
 
 #[test]
