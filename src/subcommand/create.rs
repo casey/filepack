@@ -22,57 +22,6 @@ pub(crate) struct Create {
 }
 
 impl Create {
-  fn check_artwork(root: &Utf8Path, artwork: &crate::filename::Artwork) -> Result {
-    let path = root.join(artwork.as_path());
-
-    let dimensions = match artwork.ty() {
-      ArtworkType::Jpeg => Self::decode_jpeg(&path)?,
-      ArtworkType::Png => Self::decode_png(&path)?,
-    };
-
-    ensure! {
-      dimensions.width == dimensions.height,
-      error::ArtworkDimensions {
-        dimensions,
-        path,
-      }
-    }
-
-    Ok(())
-  }
-
-  fn decode_jpeg(path: &Utf8Path) -> Result<Dimensions> {
-    let bytes = filesystem::read(path)?;
-
-    let mut decoder = JpegDecoder::new(io::Cursor::new(bytes));
-
-    decoder
-      .decode_headers()
-      .context(error::ArtworkDecodeJpeg { path })?;
-
-    let info = decoder.info().unwrap();
-
-    Ok(Dimensions {
-      height: info.height.into(),
-      width: info.width.into(),
-    })
-  }
-
-  fn decode_png(path: &Utf8Path) -> Result<Dimensions> {
-    let bytes = filesystem::read(path)?;
-
-    let reader = png::Decoder::new(io::Cursor::new(bytes))
-      .read_info()
-      .context(error::ArtworkDecodePng { path })?;
-
-    let info = reader.info();
-
-    Ok(Dimensions {
-      height: info.height,
-      width: info.width,
-    })
-  }
-
   pub(crate) fn run(self, options: Options) -> Result {
     let current_dir = current_dir()?;
 
@@ -84,15 +33,11 @@ impl Create {
       root.join(Manifest::FILENAME)
     };
 
-    let metadata = root.join(Metadata::YAML_FILENAME);
+    let path = root.join(Metadata::YAML_FILENAME);
 
-    let metadata = filesystem::exists(&metadata)?
-      .then(|| Metadata::load_strict(&metadata))
-      .transpose()?;
+    let metadata_cbor = if let Some(yaml) = filesystem::read_to_string_opt(&path)? {
+      let cbor = Metadata::deserialize_strict(&path, &yaml)?.encode_to_vec();
 
-    let metadata_cbor = metadata.as_ref().map(Metadata::encode_to_vec);
-
-    if let Some(metadata_cbor) = &metadata_cbor {
       let path = root.join(Metadata::CBOR_FILENAME);
 
       ensure! {
@@ -102,8 +47,12 @@ impl Create {
         },
       }
 
-      filesystem::write(&path, metadata_cbor)?;
-    }
+      filesystem::write(&path, &cbor)?;
+
+      Some(cbor)
+    } else {
+      filesystem::read_opt(&root.join(Metadata::CBOR_FILENAME))?
+    };
 
     let cleaned_manifest = current_dir.join(&manifest_path).lexiclean();
 
@@ -188,16 +137,12 @@ impl Create {
       return Err(error::Lint { count: lint_errors }.build());
     }
 
-    if let Some(metadata) = &metadata {
-      for filename in metadata.files() {
-        if !paths.contains_key(&filename) {
-          return Err(error::MissingMetadataFile { filename }.build());
-        }
-      }
+    if let Some(cbor) = &metadata_cbor {
+      let path = root.join(Metadata::CBOR_FILENAME);
 
-      if let Some(artwork) = &metadata.artwork {
-        Self::check_artwork(&root, artwork)?;
-      }
+      Metadata::decode_from_slice(cbor)
+        .context(error::DecodeMetadataCbor { path })?
+        .check(&root, &paths.keys().cloned().collect())?;
     }
 
     ensure! {

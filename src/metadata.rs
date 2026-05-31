@@ -28,6 +28,72 @@ impl Metadata {
   pub(crate) const CBOR_FILENAME: &'static str = "metadata.filepack";
   pub(crate) const YAML_FILENAME: &'static str = "metadata.yaml";
 
+  pub(crate) fn check(&self, root: &Utf8Path, paths: &HashSet<RelativePath>) -> Result {
+    for filename in self.files() {
+      ensure! {
+        paths.contains(&filename),
+        error::MissingMetadataFile { filename },
+      }
+    }
+
+    if let Some(artwork) = &self.artwork {
+      Self::check_artwork(root, artwork)?;
+    }
+
+    Ok(())
+  }
+
+  fn check_artwork(root: &Utf8Path, artwork: &filename::Artwork) -> Result {
+    let path = root.join(artwork.as_path());
+
+    let dimensions = match artwork.ty() {
+      ArtworkType::Jpeg => Self::decode_jpeg(&path)?,
+      ArtworkType::Png => Self::decode_png(&path)?,
+    };
+
+    ensure! {
+      dimensions.width == dimensions.height,
+      error::ArtworkDimensions {
+        dimensions,
+        path,
+      }
+    }
+
+    Ok(())
+  }
+
+  fn decode_jpeg(path: &Utf8Path) -> Result<Dimensions> {
+    let bytes = filesystem::read(path)?;
+
+    let mut decoder = JpegDecoder::new(io::Cursor::new(bytes));
+
+    decoder
+      .decode_headers()
+      .context(error::ArtworkDecodeJpeg { path })?;
+
+    let info = decoder.info().unwrap();
+
+    Ok(Dimensions {
+      height: info.height.into(),
+      width: info.width.into(),
+    })
+  }
+
+  fn decode_png(path: &Utf8Path) -> Result<Dimensions> {
+    let bytes = filesystem::read(path)?;
+
+    let reader = png::Decoder::new(io::Cursor::new(bytes))
+      .read_info()
+      .context(error::ArtworkDecodePng { path })?;
+
+    let info = reader.info();
+
+    Ok(Dimensions {
+      height: info.height,
+      width: info.width,
+    })
+  }
+
   pub(crate) fn deserialize(path: &Utf8Path, yaml: &str) -> Result<Self> {
     serde_yaml::from_str(yaml).context(error::DeserializeMetadata { path })
   }
@@ -67,10 +133,6 @@ impl Metadata {
     }
 
     files
-  }
-
-  pub(crate) fn load_strict(path: &Utf8Path) -> Result<Self> {
-    Self::deserialize_strict(path, &filesystem::read_to_string(path)?)
   }
 }
 
@@ -115,7 +177,11 @@ mod tests {
 
   #[test]
   fn filepack_metadata_is_valid() {
-    Metadata::load_strict(Metadata::YAML_FILENAME.as_ref()).unwrap();
+    Metadata::deserialize_strict(
+      Metadata::YAML_FILENAME.as_ref(),
+      &filesystem::read_to_string(Metadata::YAML_FILENAME).unwrap(),
+    )
+    .unwrap();
   }
 
   #[test]

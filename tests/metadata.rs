@@ -60,6 +60,33 @@ fn artwork_valid() {
 }
 
 #[test]
+fn create_uses_existing_metadata_cbor() {
+  let test = Test::new()
+    .touch("README.md")
+    .write("metadata.yaml", "title: Foo\nreadme: README.md")
+    .arg("create")
+    .success()
+    .remove_file("metadata.yaml")
+    .args(["create", "--force"])
+    .success();
+
+  let cbor = fs::read(test.path().join("metadata.filepack")).unwrap();
+
+  let manifest = Manifest::load(Some(&test.path().join("manifest.filepack"))).unwrap();
+
+  assert_eq!(
+    manifest.embedded,
+    BTreeMap::from([(Hash::bytes(&cbor), cbor)]),
+  );
+
+  test
+    .remove_file("README.md")
+    .args(["create", "--force"])
+    .stderr("error: file referenced in metadata missing: `README.md`\n")
+    .failure();
+}
+
+#[test]
 fn dates() {
   Test::new()
     .touch("content")
