@@ -19,7 +19,7 @@ use {
     str,
     sync::mpsc,
     thread,
-    time::{Duration, SystemTime, UNIX_EPOCH},
+    time::{Duration, Instant, SystemTime, UNIX_EPOCH},
   },
   tempfile::{NamedTempFile, TempDir},
 };
