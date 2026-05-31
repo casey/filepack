@@ -72,6 +72,8 @@ impl Verify {
 
     let manifest = Manifest::load_with_path(&source, display_path)?;
 
+    manifest.verify_signatures()?;
+
     let mut verified = Verified::default();
 
     verified.signatures += manifest.signatures.len().into_u64();
