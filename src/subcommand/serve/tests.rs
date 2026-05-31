@@ -201,6 +201,60 @@ fn admin_key_requires_restrict_upload() {
 }
 
 #[test]
+fn artwork_missing() {
+  let server = TestServer::new();
+
+  let artwork = b"foo";
+  let artwork_hash = Hash::bytes(artwork);
+  server.write_file(artwork);
+
+  let metadata = Metadata {
+    artwork: Some("cover.png".parse().unwrap()),
+    ..Metadata::default()
+  };
+  let metadata_cbor = metadata.encode_to_vec();
+  let metadata_hash = Hash::bytes(&metadata_cbor);
+  server.write_file(&metadata_cbor);
+
+  let metadata_entry = (
+    Metadata::CBOR_FILENAME,
+    EntryType::File,
+    metadata_hash,
+    metadata_cbor.len().into_u64(),
+  );
+
+  let cbor = directory(&[
+    (
+      "cover.png",
+      EntryType::File,
+      artwork_hash,
+      artwork.len().into_u64(),
+    ),
+    metadata_entry,
+  ])
+  .encode_to_vec();
+  let hash = Hash::bytes(&cbor);
+  let fingerprint = Fingerprint(hash);
+  server.write_file(&cbor);
+
+  server.post(format!("/directory/{hash}")).send();
+  server.post(format!("/package/{fingerprint}")).send();
+
+  let corrupt = directory(&[metadata_entry]).encode_to_vec();
+  fs::write(
+    server.data_dir.join("files").join(hash.to_string()),
+    &corrupt,
+  )
+  .unwrap();
+
+  server
+    .get(format!("/artwork/{fingerprint}"))
+    .status(StatusCode::INTERNAL_SERVER_ERROR)
+    .assert_body(format!("package {fingerprint} artwork missing"))
+    .send();
+}
+
+#[test]
 fn artwork_not_found_without_artwork() {
   let server = TestServer::new();
 
@@ -285,60 +339,6 @@ fn artwork_response() {
 
   case("cover.png", "image/png");
   case("cover.jpg", "image/jpeg");
-}
-
-#[test]
-fn artwork_missing() {
-  let server = TestServer::new();
-
-  let artwork = b"foo";
-  let artwork_hash = Hash::bytes(artwork);
-  server.write_file(artwork);
-
-  let metadata = Metadata {
-    artwork: Some("cover.png".parse().unwrap()),
-    ..Metadata::default()
-  };
-  let metadata_cbor = metadata.encode_to_vec();
-  let metadata_hash = Hash::bytes(&metadata_cbor);
-  server.write_file(&metadata_cbor);
-
-  let metadata_entry = (
-    Metadata::CBOR_FILENAME,
-    EntryType::File,
-    metadata_hash,
-    metadata_cbor.len().into_u64(),
-  );
-
-  let cbor = directory(&[
-    (
-      "cover.png",
-      EntryType::File,
-      artwork_hash,
-      artwork.len().into_u64(),
-    ),
-    metadata_entry,
-  ])
-  .encode_to_vec();
-  let hash = Hash::bytes(&cbor);
-  let fingerprint = Fingerprint(hash);
-  server.write_file(&cbor);
-
-  server.post(format!("/directory/{hash}")).send();
-  server.post(format!("/package/{fingerprint}")).send();
-
-  let corrupt = directory(&[metadata_entry]).encode_to_vec();
-  fs::write(
-    server.data_dir.join("files").join(hash.to_string()),
-    &corrupt,
-  )
-  .unwrap();
-
-  server
-    .get(format!("/artwork/{fingerprint}"))
-    .status(StatusCode::INTERNAL_SERVER_ERROR)
-    .assert_body(format!("package {fingerprint} artwork missing"))
-    .send();
 }
 
 #[test]
