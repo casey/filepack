@@ -1,7 +1,7 @@
 use super::*;
 
 pub(crate) fn client() -> Result<Client> {
-  ensure!(install_default_crypto_provider(), error::RustlsProvider);
+  install_default_crypto_provider()?;
 
   Client::builder()
     .connect_timeout(Duration::from_secs(30))
@@ -30,14 +30,16 @@ pub(crate) fn default<T: Default>() -> T {
   Default::default()
 }
 
-pub fn install_default_crypto_provider() -> bool {
+pub fn install_default_crypto_provider() -> Result {
   static INSTALLED: LazyLock<bool> = LazyLock::new(|| {
     rustls::crypto::ring::default_provider()
       .install_default()
       .is_ok()
   });
 
-  *INSTALLED
+  ensure!(*INSTALLED, error::RustlsProvider);
+
+  Ok(())
 }
 
 pub(crate) fn is_lowercase_hex(s: &str) -> bool {

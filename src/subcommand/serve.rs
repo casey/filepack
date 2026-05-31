@@ -101,7 +101,7 @@ pub(crate) struct Serve {
 
 impl Serve {
   fn acceptor(&self, acme_cache: Utf8PathBuf) -> Result<AxumAcceptor> {
-    ensure!(install_default_crypto_provider(), error::RustlsProvider);
+    install_default_crypto_provider()?;
 
     let config = AcmeConfig::new(self.domains()?)
       .contact(&self.acme_contact)
