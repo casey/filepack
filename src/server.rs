@@ -98,6 +98,29 @@ impl Server {
       .context(server_error::PackageMetadataCorrupt { fingerprint })
   }
 
+  fn package_contains_file(&self, root: Fingerprint, path: &RelativePath) -> ServerResult<bool> {
+    let mut components = path.components().peekable();
+
+    let mut directory = self.read_directory(root.into())?;
+    while let Some(component) = components.next() {
+      let Some(entry) = directory.entries.get(component) else {
+        return Ok(false);
+      };
+
+      if components.peek().is_none() {
+        return Ok(entry.ty == EntryType::File);
+      }
+
+      if entry.ty != EntryType::Directory {
+        return Ok(false);
+      }
+
+      directory = self.read_directory(entry.hash)?;
+    }
+
+    Ok(false)
+  }
+
   fn package_metadata(&self, fingerprint: Fingerprint) -> ServerResult<Option<Vec<u8>>> {
     let directory = self.read_directory(fingerprint.into())?;
 
@@ -197,8 +220,15 @@ impl Server {
     );
 
     if let Some(metadata) = self.package_metadata(fingerprint)? {
-      Metadata::decode_from_slice(&metadata)
+      let metadata = Metadata::decode_from_slice(&metadata)
         .context(server_error::PackageMetadataDecode { fingerprint })?;
+
+      for path in metadata.files() {
+        ensure!(
+          self.package_contains_file(fingerprint, &path)?,
+          server_error::PackageMetadataFileMissing { fingerprint, path },
+        );
+      }
     }
 
     let tx = self.database.begin_write()?;
