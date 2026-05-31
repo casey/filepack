@@ -36,6 +36,7 @@ use {
     context::Context,
     count::Count,
     dalek_signature_error::DalekSignatureError,
+    database_metadata::DatabaseMetadata,
     date_time::DateTime,
     decode_error::DecodeError,
     dimensions::Dimensions,
@@ -195,7 +196,7 @@ mod component_error;
 mod context;
 mod count;
 mod dalek_signature_error;
-mod database;
+mod database_metadata;
 mod date_time;
 mod decode;
 mod decode_error;

@@ -56,3 +56,43 @@ impl From<Hash> for Fingerprint {
     Self(hash)
   }
 }
+
+impl redb::Key for Fingerprint {
+  fn compare(a: &[u8], b: &[u8]) -> Ordering {
+    a.cmp(b)
+  }
+}
+
+impl redb::Value for Fingerprint {
+  type AsBytes<'a>
+    = &'a [u8; Self::LEN]
+  where
+    Self: 'a;
+
+  type SelfType<'a>
+    = Fingerprint
+  where
+    Self: 'a;
+
+  fn as_bytes<'a, 'b: 'a>(value: &'a Self::SelfType<'b>) -> Self::AsBytes<'a>
+  where
+    Self: 'b,
+  {
+    value.as_bytes()
+  }
+
+  fn fixed_width() -> Option<usize> {
+    Some(Self::LEN)
+  }
+
+  fn from_bytes<'a>(data: &'a [u8]) -> Self::SelfType<'a>
+  where
+    Self: 'a,
+  {
+    <[u8; Self::LEN]>::try_from(data).unwrap().into()
+  }
+
+  fn type_name() -> redb::TypeName {
+    redb::TypeName::new("filepack-fingerprint")
+  }
+}
