@@ -55,6 +55,11 @@ pub enum Error {
     source: io::Error,
     backtrace: Option<Backtrace>,
   },
+  #[snafu(display("failed to build HTTP client"))]
+  ClientBuild {
+    source: reqwest::Error,
+    backtrace: Option<Backtrace>,
+  },
   #[snafu(display("failed to get current directory"))]
   CurrentDir {
     backtrace: Option<Backtrace>,

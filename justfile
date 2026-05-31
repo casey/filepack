@@ -16,7 +16,10 @@ build:
   cargo lbuild --release
 
 serve: build
-  sudo ./target/release/filepack serve --address localhost
+  ./target/release/filepack serve --address localhost --http-port 8000
+
+open:
+  open http://localhost:8000
 
 install:
   cargo install --path .

@@ -37,7 +37,7 @@ impl Download {
       error::FileAlreadyExists { path },
     }
 
-    let client = Client::new();
+    let client = client()?;
 
     let response = self.get_file(&client, hash)?;
 
@@ -56,7 +56,7 @@ impl Download {
       error::FileAlreadyExists { path: &self.output },
     }
 
-    let client = Client::new();
+    let client = client()?;
 
     let mut stack = vec![(Hash::from(fingerprint), self.output.clone())];
 

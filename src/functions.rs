@@ -1,5 +1,20 @@
 use super::*;
 
+pub(crate) fn client() -> Result<Client> {
+  Client::builder()
+    .connect_timeout(Duration::from_secs(30))
+    .http2_adaptive_window(true)
+    .tcp_keepalive(Duration::from_secs(30))
+    .timeout(None::<Duration>)
+    .user_agent(concat!(
+      env!("CARGO_PKG_NAME"),
+      "/",
+      env!("CARGO_PKG_VERSION")
+    ))
+    .build()
+    .context(error::ClientBuild)
+}
+
 pub(crate) fn current_dir() -> Result<Utf8PathBuf> {
   Utf8PathBuf::from_path_buf(env::current_dir().context(error::CurrentDir)?)
     .map_err(|path| error::PathUnicode { path }.build())
