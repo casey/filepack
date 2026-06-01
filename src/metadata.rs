@@ -138,13 +138,63 @@ impl Metadata {
 
 #[cfg(test)]
 mod tests {
-  use super::*;
+  use {super::*, image::ImageFormat};
 
   const UNKNOWN_FIELD: &str = "title: foo\nbar: 1";
 
   #[test]
   fn deserialize_allows_missing_optional_fields() {
     Metadata::deserialize(Metadata::YAML_FILENAME.as_ref(), "title: Foo").unwrap();
+  }
+
+  #[test]
+  fn deserialize_rejects_invalid_values() {
+    #[track_caller]
+    fn case(yaml: &str, expected: &str) {
+      let error = Metadata::deserialize(Metadata::YAML_FILENAME.as_ref(), yaml).unwrap_err();
+
+      let chain = error
+        .iter_chain()
+        .map(ToString::to_string)
+        .collect::<Vec<String>>()
+        .join(": ");
+
+      assert_matches_regex!(chain, expected);
+    }
+
+    case(
+      "title: Foo\ndate: 2024/06/15",
+      "date: input contains invalid characters",
+    );
+    case(
+      "title: Foo\nhomepage: not-a-valid-url",
+      "homepage: relative URL without a base",
+    );
+    case("title: Foo\nlanguage: ac", "unknown language code `ac`");
+    case(
+      "title: Foo\npackage:\n  creator_tag: foo",
+      r"package\.creator_tag: tags must match regex",
+    );
+    case(
+      "title: Foo\npackage:\n  date: not-a-date",
+      r"package\.date: input contains invalid characters",
+    );
+    case(
+      "title: Foo\npackage:\n  homepage: :::invalid",
+      "package.homepage: relative URL without a base",
+    );
+    case(
+      "title: Foo\nartwork: cover.svg",
+      "artwork: component must end in `.jpg` or `.png`",
+    );
+    case(
+      "title: Foo\npackage:\n  nfo: info.txt",
+      "nfo: component must end in `.nfo`",
+    );
+    case(
+      "title: Foo\nreadme: README.txt",
+      "readme: component must end in `.md`",
+    );
   }
 
   #[test]
@@ -182,6 +232,67 @@ mod tests {
       &filesystem::read_to_string(Metadata::YAML_FILENAME).unwrap(),
     )
     .unwrap();
+  }
+
+  fn image(width: u32, height: u32, image_format: ImageFormat) -> Vec<u8> {
+    let mut buffer = io::Cursor::new(Vec::new());
+    image::DynamicImage::new_rgb8(width, height)
+      .write_to(&mut buffer, image_format)
+      .unwrap();
+    buffer.into_inner()
+  }
+
+  #[test]
+  fn invalid_artwork() {
+    #[track_caller]
+    fn case(filename: &str, bytes: Vec<u8>, expected: &str) {
+      let (_tempdir, root) = tempdir();
+
+      std::fs::write(root.join(filename), bytes).unwrap();
+
+      let metadata = Metadata {
+        artwork: Some(filename.parse().unwrap()),
+        ..default()
+      };
+
+      let paths = HashSet::from([filename.parse::<RelativePath>().unwrap()]);
+
+      assert_matches_regex!(
+        metadata.check(&root, &paths).unwrap_err().to_string(),
+        expected
+      );
+    }
+
+    case(
+      "cover.jpg",
+      b"bar".to_vec(),
+      "failed to decode JPEG artwork `.*cover\\.jpg`",
+    );
+    case(
+      "cover.png",
+      b"bar".to_vec(),
+      "failed to decode PNG artwork `.*cover\\.png`",
+    );
+    case(
+      "cover.jpg",
+      image(1, 1, ImageFormat::Png),
+      "failed to decode JPEG artwork `.*cover\\.jpg`",
+    );
+    case(
+      "cover.png",
+      image(1, 1, ImageFormat::Jpeg),
+      "failed to decode PNG artwork `.*cover\\.png`",
+    );
+    case(
+      "cover.jpg",
+      image(2, 1, ImageFormat::Jpeg),
+      "^artwork `.*cover\\.jpg` is 2×1 but must be square$",
+    );
+    case(
+      "cover.png",
+      image(2, 1, ImageFormat::Png),
+      "^artwork `.*cover\\.png` is 2×1 but must be square$",
+    );
   }
 
   #[test]
@@ -242,6 +353,56 @@ mod tests {
   }
 
   #[test]
+  fn missing_files() {
+    #[track_caller]
+    fn case(metadata: Metadata, filename: &str) {
+      assert_eq!(
+        metadata
+          .check(Utf8Path::new(""), &HashSet::new())
+          .unwrap_err()
+          .to_string(),
+        format!("file referenced in metadata missing: `{filename}`"),
+      );
+    }
+
+    case(
+      Metadata {
+        artwork: Some("cover.png".parse().unwrap()),
+        ..default()
+      },
+      "cover.png",
+    );
+
+    case(
+      Metadata {
+        readme: Some("README.md".parse().unwrap()),
+        ..default()
+      },
+      "README.md",
+    );
+
+    case(
+      Metadata {
+        package: Some(nfo_package("info.nfo")),
+        ..default()
+      },
+      "info.nfo",
+    );
+  }
+
+  fn nfo_package(nfo: &str) -> Package {
+    Package {
+      creator: None,
+      creator_tag: None,
+      date: None,
+      description: None,
+      homepage: None,
+      nfo: Some(nfo.parse().unwrap()),
+      title: None,
+    }
+  }
+
+  #[test]
   fn strict_deserialize_rejects_unknown_fields() {
     assert_eq!(
       Metadata::deserialize_strict(Metadata::YAML_FILENAME.as_ref(), UNKNOWN_FIELD)
@@ -249,5 +410,32 @@ mod tests {
         .to_string(),
       "unknown fields in metadata at `metadata.yaml`: `bar`",
     );
+  }
+
+  #[test]
+  fn valid_artwork() {
+    #[track_caller]
+    fn case(artwork: &str, bytes: Vec<u8>) {
+      let (_tempdir, root) = tempdir();
+
+      std::fs::write(root.join(artwork), bytes).unwrap();
+
+      let metadata = Metadata {
+        artwork: Some(artwork.parse().unwrap()),
+        package: Some(nfo_package("info.nfo")),
+        readme: Some("README.md".parse().unwrap()),
+        ..default()
+      };
+
+      let paths = [artwork, "info.nfo", "README.md"]
+        .into_iter()
+        .map(|path| path.parse::<RelativePath>().unwrap())
+        .collect();
+
+      metadata.check(&root, &paths).unwrap();
+    }
+
+    case("cover.jpg", image(10, 10, ImageFormat::Jpeg));
+    case("cover.png", image(20, 20, ImageFormat::Png));
   }
 }
