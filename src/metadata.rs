@@ -162,35 +162,38 @@ mod tests {
       assert_matches_regex!(chain, expected);
     }
 
-    case("title: Foo\ndate: 2024/06/15", "invalid characters");
+    case(
+      "title: Foo\ndate: 2024/06/15",
+      "date: input contains invalid characters",
+    );
     case(
       "title: Foo\nhomepage: not-a-valid-url",
-      "relative URL without a base",
+      "homepage: relative URL without a base",
     );
     case("title: Foo\nlanguage: ac", "unknown language code `ac`");
     case(
       "title: Foo\npackage:\n  creator_tag: foo",
-      "tags must match regex",
+      r"package\.creator_tag: tags must match regex",
     );
     case(
       "title: Foo\npackage:\n  date: not-a-date",
-      "invalid characters",
+      r"package\.date: input contains invalid characters",
     );
     case(
       "title: Foo\npackage:\n  homepage: :::invalid",
-      "relative URL without a base",
+      "package.homepage: relative URL without a base",
     );
     case(
       "title: Foo\nartwork: cover.svg",
-      "component must end in `.jpg` or `.png`",
+      "artwork: component must end in `.jpg` or `.png`",
     );
     case(
       "title: Foo\npackage:\n  nfo: info.txt",
-      "component must end in `.nfo`",
+      "nfo: component must end in `.nfo`",
     );
     case(
       "title: Foo\nreadme: README.txt",
-      "component must end in `.md`",
+      "readme: component must end in `.md`",
     );
   }
 
