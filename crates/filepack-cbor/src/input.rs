@@ -54,7 +54,7 @@ impl Input {
       .iter()
       .filter(|variant| !variant.fields.is_empty())
       .map(|ParsedVariant { fields, ident, n }| {
-        let decode = ParsedField::decode(&fields);
+        let decode = ParsedField::decode(fields);
         let idents = fields.iter().map(|field| field.ident);
         quote! {
           #n => {
@@ -180,7 +180,7 @@ impl Input {
         quote! { Self::#ident => #n.encode(encoder), }
       } else {
         let idents = fields.iter().map(|field| field.ident);
-        let (length, items) = ParsedField::encode(&fields, Receiver::Binding);
+        let (length, items) = ParsedField::encode(fields, Receiver::Binding);
         quote! {
           Self::#ident { #(#idents),* } => {
             let mut array = encoder.array(2);
