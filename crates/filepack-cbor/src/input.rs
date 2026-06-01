@@ -179,15 +179,12 @@ impl Input {
 
     let variants = self.parse_variants()?;
 
-    let arms = variants.iter().map(|variant| {
-      let ident = variant.ident;
-      let n = variant.n;
-
-      if variant.fields.is_empty() {
+    let arms = variants.iter().map(|ParsedVariant { ident, n, fields }| {
+      if fields.is_empty() {
         quote! { Self::#ident => #n.encode(encoder), }
       } else {
-        let idents = variant.fields.iter().map(|field| field.ident);
-        let (length, items) = encode_field_items(&variant.fields, Receiver::Binding);
+        let idents = fields.iter().map(|field| field.ident);
+        let (length, items) = encode_field_items(&fields, Receiver::Binding);
         quote! {
           Self::#ident { #(#idents),* } => {
             let mut array = encoder.array(2);
