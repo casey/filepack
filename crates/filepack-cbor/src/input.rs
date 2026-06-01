@@ -175,7 +175,7 @@ impl Input {
 
     let variants = self.parse_variants()?;
 
-    let arms = variants.iter().map(|ParsedVariant { ident, n, fields }| {
+    let arms = variants.iter().map(|ParsedVariant { fields, ident, n }| {
       if fields.is_empty() {
         quote! { Self::#ident => #n.encode(encoder), }
       } else {
@@ -186,8 +186,7 @@ impl Input {
             let mut array = encoder.array(2);
             array.item(#n);
             array.item_with(|encoder| {
-              let length = #length;
-              let mut map = encoder.map::<u64>(length);
+              let mut map = encoder.map::<u64>(#length);
               #(#items)*
             });
           }
