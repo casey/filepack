@@ -58,7 +58,7 @@ impl Input {
       .map(|variant| {
         let ident = variant.ident;
         let n = variant.n;
-        let decode = decode_fields(&variant.fields);
+        let decode = ParsedField::decode_fields(&variant.fields);
         let idents = variant.fields.iter().map(|field| field.ident);
         quote! {
           #n => {
@@ -113,7 +113,7 @@ impl Input {
 
     let fields = self.parse_fields()?;
 
-    let decode = decode_fields(&fields);
+    let decode = ParsedField::decode_fields(&fields);
 
     let idents = fields.iter().map(|field| field.ident);
 
@@ -184,7 +184,7 @@ impl Input {
         quote! { Self::#ident => #n.encode(encoder), }
       } else {
         let idents = fields.iter().map(|field| field.ident);
-        let (length, items) = encode_fields(&fields, Receiver::Binding);
+        let (length, items) = ParsedField::encode_fields(&fields, Receiver::Binding);
         quote! {
           Self::#ident { #(#idents),* } => {
             let mut array = encoder.array(2);
@@ -215,7 +215,7 @@ impl Input {
 
     let fields = self.parse_fields()?;
 
-    let (length, items) = encode_fields(&fields, Receiver::Field);
+    let (length, items) = ParsedField::encode_fields(&fields, Receiver::Field);
 
     Ok(quote! {
       impl Encode for #name {
@@ -325,55 +325,4 @@ impl Input {
       None => Member::Unnamed(Index::from(0)),
     })
   }
-}
-
-fn decode_fields(fields: &[ParsedField]) -> Vec<proc_macro2::TokenStream> {
-  fields
-    .iter()
-    .map(|field| {
-      let ident = field.ident;
-      let n = field.n;
-      match (&field.decode_with, field.optional) {
-        (Some(path), true) => quote! { let #ident = map.optional_key_with(#n, #path)?; },
-        (Some(path), false) => quote! { let #ident = map.required_key_with(#n, #path)?; },
-        (None, true) => quote! { let #ident = map.optional_key(#n)?; },
-        (None, false) => quote! { let #ident = map.required_key(#n)?; },
-      }
-    })
-    .collect()
-}
-
-fn encode_fields(
-  fields: &[ParsedField],
-  receiver: Receiver,
-) -> (proc_macro2::TokenStream, Vec<proc_macro2::TokenStream>) {
-  let required = fields
-    .iter()
-    .filter(|field| !field.optional)
-    .count()
-    .into_u64();
-
-  let optional = fields.iter().filter(|field| field.optional).map(|field| {
-    let base = receiver.base(field.ident);
-    quote! { + u64::from(#base.is_some()) }
-  });
-
-  let length = quote! { #required #(#optional)* };
-
-  let items = fields
-    .iter()
-    .map(|field| {
-      let n = field.n;
-      let base = receiver.base(field.ident);
-      let reference = receiver.reference(field.ident);
-      match (&field.encode_with, field.optional) {
-        (Some(path), true) => quote! { map.optional_item_with(#n, #base.as_ref(), #path); },
-        (Some(path), false) => quote! { map.item_with(#n, #reference, #path); },
-        (None, true) => quote! { map.optional_item(#n, #base.as_ref()); },
-        (None, false) => quote! { map.item(#n, #reference); },
-      }
-    })
-    .collect();
-
-  (length, items)
 }
