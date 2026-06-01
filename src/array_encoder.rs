@@ -1,16 +1,18 @@
+#![cfg(test)]
+
 use super::*;
 
-pub struct ArrayEncoder<'a> {
+pub(crate) struct ArrayEncoder<'a> {
   encoder: &'a mut Encoder,
   remaining: u64,
 }
 
 impl<'a> ArrayEncoder<'a> {
-  pub fn item(&mut self, value: impl Encode) {
+  pub(crate) fn item(&mut self, value: impl Encode) {
     self.item_with(|encoder| value.encode(encoder));
   }
 
-  pub fn item_with(&mut self, encode: impl FnOnce(&mut Encoder)) {
+  pub(crate) fn item_with(&mut self, encode: impl FnOnce(&mut Encoder)) {
     assert!(self.remaining > 0, "too many items");
     encode(self.encoder);
     self.remaining -= 1;

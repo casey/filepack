@@ -5,7 +5,8 @@ pub struct Encoder {
 }
 
 impl Encoder {
-  pub fn array(&mut self, length: u64) -> ArrayEncoder {
+  #[cfg(test)]
+  pub(crate) fn array(&mut self, length: u64) -> ArrayEncoder {
     ArrayEncoder::new(self, length)
   }
 

@@ -7,7 +7,7 @@ pub struct Decoder<'a> {
 }
 
 impl<'a> Decoder<'a> {
-  #[cfg_attr(not(test), allow(dead_code))]
+  #[cfg(test)]
   pub(crate) fn array<'b>(&'b mut self) -> Result<ArrayDecoder<'b, 'a>, DecodeError> {
     let len = self.expect(MajorType::Array)?;
     Ok(ArrayDecoder::new(self, len))
