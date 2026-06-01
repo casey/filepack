@@ -121,10 +121,7 @@ impl Input {
               array.finish()?;
               Ok(value)
             }
-            actual => Err(decode_error::UnexpectedType {
-              expected: MajorType::UnsignedInteger,
-              actual,
-            }.build()),
+            actual => Err(decode_error::UnexpectedVariantType { actual }.build()),
           }
         }
       }

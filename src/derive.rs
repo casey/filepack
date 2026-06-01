@@ -291,8 +291,7 @@ fn enum_array_unexpected_type() {
 
   assert_matches!(
     Foo::decode_from_slice(&"foo".encode_to_vec()),
-    Err(DecodeError::UnexpectedType {
-      expected: MajorType::UnsignedInteger,
+    Err(DecodeError::UnexpectedVariantType {
       actual: MajorType::Text,
     }),
   );

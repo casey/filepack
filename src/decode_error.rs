@@ -69,6 +69,12 @@ pub enum DecodeError {
     actual: String,
     expected: &'static str,
   },
+  #[snafu(display(
+    "expected {} or {} but found {actual}",
+    MajorType::UnsignedInteger,
+    MajorType::Array,
+  ))]
+  UnexpectedVariantType { actual: MajorType },
   #[snafu(display("string not valid unicode"))]
   Unicode { source: Utf8Error },
   #[snafu(display("unsupported additional information value: {value}"))]
