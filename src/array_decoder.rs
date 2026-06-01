@@ -1,5 +1,3 @@
-#![cfg_attr(not(test), allow(dead_code))]
-
 use super::*;
 
 pub(crate) struct ArrayDecoder<'a, 'b> {
@@ -8,6 +6,7 @@ pub(crate) struct ArrayDecoder<'a, 'b> {
 }
 
 impl<'a, 'b> ArrayDecoder<'a, 'b> {
+  #[cfg_attr(not(test), allow(dead_code))]
   pub(crate) fn finish(&mut self) -> Result<(), DecodeError> {
     ensure!(self.remaining == 0, decode_error::UnconsumedElements);
     Ok(())
