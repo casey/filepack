@@ -88,6 +88,15 @@ impl<'a> Decoder<'a> {
     Ok(Head { major_type, value })
   }
 
+  pub(crate) fn peek(&self) -> Result<MajorType, DecodeError> {
+    Ok(MajorType::from_initial_byte(
+      *self
+        .buffer
+        .get(self.position)
+        .context(decode_error::Truncated)?,
+    ))
+  }
+
   pub(crate) fn integer(&mut self) -> Result<u64, DecodeError> {
     self.expect(MajorType::UnsignedInteger)
   }

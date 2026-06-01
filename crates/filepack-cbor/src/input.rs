@@ -58,7 +58,7 @@ impl Input {
       .map(|variant| {
         let ident = variant.ident;
         let n = variant.n;
-        let decode = decode_field_items(&variant.fields);
+        let decode = decode_fields(&variant.fields);
         let idents = variant.fields.iter().map(|field| field.ident);
         quote! {
           #n => {
@@ -79,10 +79,7 @@ impl Input {
     Ok(quote! {
       impl Decode for #name {
         fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
-          decoder.push_position();
-          let major_type = decoder.head()?.major_type;
-          decoder.pop_position();
-          match major_type {
+          match decoder.peek()? {
             MajorType::UnsignedInteger => {
               let discriminant = decoder.integer()?;
               match discriminant {
@@ -116,7 +113,7 @@ impl Input {
 
     let fields = self.parse_fields()?;
 
-    let decode = decode_field_items(&fields);
+    let decode = decode_fields(&fields);
 
     let idents = fields.iter().map(|field| field.ident);
 
@@ -355,7 +352,7 @@ impl Receiver {
   }
 }
 
-fn decode_field_items(fields: &[ParsedField]) -> Vec<proc_macro2::TokenStream> {
+fn decode_fields(fields: &[ParsedField]) -> Vec<proc_macro2::TokenStream> {
   fields
     .iter()
     .map(|field| {
