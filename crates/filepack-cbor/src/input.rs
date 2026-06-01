@@ -184,7 +184,7 @@ impl Input {
         quote! { Self::#ident => #n.encode(encoder), }
       } else {
         let idents = fields.iter().map(|field| field.ident);
-        let (length, items) = encode_field_items(&fields, Receiver::Binding);
+        let (length, items) = encode_fields(&fields, Receiver::Binding);
         quote! {
           Self::#ident { #(#idents),* } => {
             let mut array = encoder.array(2);
@@ -215,7 +215,7 @@ impl Input {
 
     let fields = self.parse_fields()?;
 
-    let (length, items) = encode_field_items(&fields, Receiver::Field);
+    let (length, items) = encode_fields(&fields, Receiver::Field);
 
     Ok(quote! {
       impl Encode for #name {
@@ -327,28 +327,6 @@ impl Input {
   }
 }
 
-#[derive(Clone, Copy)]
-enum Receiver {
-  Binding,
-  Field,
-}
-
-impl Receiver {
-  fn base(self, ident: &Ident) -> proc_macro2::TokenStream {
-    match self {
-      Self::Binding => quote! { #ident },
-      Self::Field => quote! { self.#ident },
-    }
-  }
-
-  fn reference(self, ident: &Ident) -> proc_macro2::TokenStream {
-    match self {
-      Self::Binding => quote! { #ident },
-      Self::Field => quote! { &self.#ident },
-    }
-  }
-}
-
 fn decode_fields(fields: &[ParsedField]) -> Vec<proc_macro2::TokenStream> {
   fields
     .iter()
@@ -365,7 +343,7 @@ fn decode_fields(fields: &[ParsedField]) -> Vec<proc_macro2::TokenStream> {
     .collect()
 }
 
-fn encode_field_items(
+fn encode_fields(
   fields: &[ParsedField],
   receiver: Receiver,
 ) -> (proc_macro2::TokenStream, Vec<proc_macro2::TokenStream>) {

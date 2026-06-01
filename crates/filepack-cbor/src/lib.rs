@@ -1,9 +1,9 @@
 use {
-  self::input::Input,
+  self::{
+    field::Field, input::Input, parsed_field::ParsedField, parsed_variant::ParsedVariant,
+    receiver::Receiver, variant::Variant,
+  },
   darling::{FromDeriveInput, FromField, FromVariant, ast::Data, ast::Fields},
-  field::Field,
-  parsed_field::ParsedField,
-  parsed_variant::ParsedVariant,
   proc_macro::TokenStream,
   quote::quote,
   std::collections::HashSet,
@@ -11,13 +11,13 @@ use {
     Attribute, DeriveInput, Error, Ident, Index, LitInt, Member, Path, Result, Type, TypePath,
   },
   usized::IntoU64,
-  variant::Variant,
 };
 
 mod field;
 mod input;
 mod parsed_field;
 mod parsed_variant;
+mod receiver;
 mod variant;
 
 #[proc_macro_derive(Decode, attributes(cbor, n))]
