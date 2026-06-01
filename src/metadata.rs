@@ -143,124 +143,6 @@ mod tests {
   const UNKNOWN_FIELD: &str = "title: foo\nbar: 1";
 
   #[test]
-  fn check_accepts_valid_metadata() {
-    #[track_caller]
-    fn case(artwork: &str, bytes: Vec<u8>) {
-      let (_tempdir, root) = tempdir();
-
-      std::fs::write(root.join(artwork), bytes).unwrap();
-
-      let metadata = Metadata {
-        artwork: Some(artwork.parse().unwrap()),
-        package: Some(nfo_package("info.nfo")),
-        readme: Some("README.md".parse().unwrap()),
-        ..default()
-      };
-
-      let paths = [artwork, "info.nfo", "README.md"]
-        .into_iter()
-        .map(|path| path.parse::<RelativePath>().unwrap())
-        .collect();
-
-      metadata.check(&root, &paths).unwrap();
-    }
-
-    case("cover.jpg", image(10, 10, ImageFormat::Jpeg));
-    case("cover.png", image(20, 20, ImageFormat::Png));
-  }
-
-  #[test]
-  fn check_detects_invalid_artwork() {
-    #[track_caller]
-    fn case(filename: &str, bytes: Vec<u8>, expected: &str) {
-      let (_tempdir, root) = tempdir();
-
-      std::fs::write(root.join(filename), bytes).unwrap();
-
-      let metadata = Metadata {
-        artwork: Some(filename.parse().unwrap()),
-        ..default()
-      };
-
-      let paths = HashSet::from([filename.parse::<RelativePath>().unwrap()]);
-
-      assert_matches_regex!(
-        metadata.check(&root, &paths).unwrap_err().to_string(),
-        expected
-      );
-    }
-
-    case(
-      "cover.jpg",
-      b"bar".to_vec(),
-      "failed to decode JPEG artwork `.*cover\\.jpg`",
-    );
-    case(
-      "cover.png",
-      b"bar".to_vec(),
-      "failed to decode PNG artwork `.*cover\\.png`",
-    );
-    case(
-      "cover.jpg",
-      image(1, 1, ImageFormat::Png),
-      "failed to decode JPEG artwork `.*cover\\.jpg`",
-    );
-    case(
-      "cover.png",
-      image(1, 1, ImageFormat::Jpeg),
-      "failed to decode PNG artwork `.*cover\\.png`",
-    );
-    case(
-      "cover.jpg",
-      image(2, 1, ImageFormat::Jpeg),
-      "^artwork `.*cover\\.jpg` is 2×1 but must be square$",
-    );
-    case(
-      "cover.png",
-      image(2, 1, ImageFormat::Png),
-      "^artwork `.*cover\\.png` is 2×1 but must be square$",
-    );
-  }
-
-  #[test]
-  fn check_detects_missing_files() {
-    #[track_caller]
-    fn case(metadata: Metadata, filename: &str) {
-      assert_eq!(
-        metadata
-          .check(Utf8Path::new(""), &HashSet::new())
-          .unwrap_err()
-          .to_string(),
-        format!("file referenced in metadata missing: `{filename}`"),
-      );
-    }
-
-    case(
-      Metadata {
-        artwork: Some("cover.png".parse().unwrap()),
-        ..default()
-      },
-      "cover.png",
-    );
-
-    case(
-      Metadata {
-        readme: Some("README.md".parse().unwrap()),
-        ..default()
-      },
-      "README.md",
-    );
-
-    case(
-      Metadata {
-        package: Some(nfo_package("info.nfo")),
-        ..default()
-      },
-      "info.nfo",
-    );
-  }
-
-  #[test]
   fn deserialize_allows_missing_optional_fields() {
     Metadata::deserialize(Metadata::YAML_FILENAME.as_ref(), "title: Foo").unwrap();
   }
@@ -358,6 +240,59 @@ mod tests {
   }
 
   #[test]
+  fn invalid_artwork() {
+    #[track_caller]
+    fn case(filename: &str, bytes: Vec<u8>, expected: &str) {
+      let (_tempdir, root) = tempdir();
+
+      std::fs::write(root.join(filename), bytes).unwrap();
+
+      let metadata = Metadata {
+        artwork: Some(filename.parse().unwrap()),
+        ..default()
+      };
+
+      let paths = HashSet::from([filename.parse::<RelativePath>().unwrap()]);
+
+      assert_matches_regex!(
+        metadata.check(&root, &paths).unwrap_err().to_string(),
+        expected
+      );
+    }
+
+    case(
+      "cover.jpg",
+      b"bar".to_vec(),
+      "failed to decode JPEG artwork `.*cover\\.jpg`",
+    );
+    case(
+      "cover.png",
+      b"bar".to_vec(),
+      "failed to decode PNG artwork `.*cover\\.png`",
+    );
+    case(
+      "cover.jpg",
+      image(1, 1, ImageFormat::Png),
+      "failed to decode JPEG artwork `.*cover\\.jpg`",
+    );
+    case(
+      "cover.png",
+      image(1, 1, ImageFormat::Jpeg),
+      "failed to decode PNG artwork `.*cover\\.png`",
+    );
+    case(
+      "cover.jpg",
+      image(2, 1, ImageFormat::Jpeg),
+      "^artwork `.*cover\\.jpg` is 2×1 but must be square$",
+    );
+    case(
+      "cover.png",
+      image(2, 1, ImageFormat::Png),
+      "^artwork `.*cover\\.png` is 2×1 but must be square$",
+    );
+  }
+
+  #[test]
   fn metadata_in_readme_is_valid() {
     let readme = filesystem::read_to_string("README.md").unwrap();
 
@@ -414,6 +349,44 @@ mod tests {
     }
   }
 
+  #[test]
+  fn missing_files() {
+    #[track_caller]
+    fn case(metadata: Metadata, filename: &str) {
+      assert_eq!(
+        metadata
+          .check(Utf8Path::new(""), &HashSet::new())
+          .unwrap_err()
+          .to_string(),
+        format!("file referenced in metadata missing: `{filename}`"),
+      );
+    }
+
+    case(
+      Metadata {
+        artwork: Some("cover.png".parse().unwrap()),
+        ..default()
+      },
+      "cover.png",
+    );
+
+    case(
+      Metadata {
+        readme: Some("README.md".parse().unwrap()),
+        ..default()
+      },
+      "README.md",
+    );
+
+    case(
+      Metadata {
+        package: Some(nfo_package("info.nfo")),
+        ..default()
+      },
+      "info.nfo",
+    );
+  }
+
   fn nfo_package(nfo: &str) -> Package {
     Package {
       creator: None,
@@ -434,5 +407,32 @@ mod tests {
         .to_string(),
       "unknown fields in metadata at `metadata.yaml`: `bar`",
     );
+  }
+
+  #[test]
+  fn valid_artwork() {
+    #[track_caller]
+    fn case(artwork: &str, bytes: Vec<u8>) {
+      let (_tempdir, root) = tempdir();
+
+      std::fs::write(root.join(artwork), bytes).unwrap();
+
+      let metadata = Metadata {
+        artwork: Some(artwork.parse().unwrap()),
+        package: Some(nfo_package("info.nfo")),
+        readme: Some("README.md".parse().unwrap()),
+        ..default()
+      };
+
+      let paths = [artwork, "info.nfo", "README.md"]
+        .into_iter()
+        .map(|path| path.parse::<RelativePath>().unwrap())
+        .collect();
+
+      metadata.check(&root, &paths).unwrap();
+    }
+
+    case("cover.jpg", image(10, 10, ImageFormat::Jpeg));
+    case("cover.png", image(20, 20, ImageFormat::Png));
   }
 }
