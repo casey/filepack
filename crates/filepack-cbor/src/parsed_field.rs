@@ -9,7 +9,7 @@ pub(crate) struct ParsedField<'a> {
 }
 
 impl ParsedField<'_> {
-  pub(crate) fn decode_fields(fields: &[Self]) -> Vec<proc_macro2::TokenStream> {
+  pub(crate) fn decode(fields: &[Self]) -> Vec<proc_macro2::TokenStream> {
     fields
       .iter()
       .map(|field| {
@@ -25,7 +25,7 @@ impl ParsedField<'_> {
       .collect()
   }
 
-  pub(crate) fn encode_fields(
+  pub(crate) fn encode(
     fields: &[Self],
     receiver: Receiver,
   ) -> (proc_macro2::TokenStream, Vec<proc_macro2::TokenStream>) {
