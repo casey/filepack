@@ -6,14 +6,14 @@ pub struct ArrayEncoder<'a> {
 }
 
 impl<'a> ArrayEncoder<'a> {
-  pub fn item(&mut self, value: impl Encode) {
-    self.item_with(|encoder| value.encode(encoder));
+  pub fn element(&mut self) -> &mut Encoder {
+    assert!(self.remaining > 0, "too many items");
+    self.remaining -= 1;
+    &mut *self.encoder
   }
 
-  pub fn item_with(&mut self, encode: impl FnOnce(&mut Encoder)) {
-    assert!(self.remaining > 0, "too many items");
-    encode(self.encoder);
-    self.remaining -= 1;
+  pub fn item(&mut self, value: impl Encode) {
+    value.encode(self.element());
   }
 
   pub(crate) fn new(encoder: &'a mut Encoder, length: u64) -> Self {
@@ -48,6 +48,15 @@ mod tests {
   }
 
   #[test]
+  fn element() {
+    let mut encoder = Encoder::new();
+    let mut array = encoder.array(1);
+    42u64.encode(array.element());
+    drop(array);
+    assert_eq!(encoder.finish(), vec![0x81, 0x18, 0x2a]);
+  }
+
+  #[test]
   fn item() {
     let mut encoder = Encoder::new();
     let mut array = encoder.array(2);
@@ -55,15 +64,6 @@ mod tests {
     array.item("foo");
     drop(array);
     assert_eq!(encoder.finish(), vec![0x82, 0x00, 0x63, 0x66, 0x6f, 0x6f]);
-  }
-
-  #[test]
-  fn item_with() {
-    let mut encoder = Encoder::new();
-    let mut array = encoder.array(1);
-    array.item_with(|encoder| 42u64.encode(encoder));
-    drop(array);
-    assert_eq!(encoder.finish(), vec![0x81, 0x18, 0x2a]);
   }
 
   #[test]

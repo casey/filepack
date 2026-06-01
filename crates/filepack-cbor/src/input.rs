@@ -183,10 +183,8 @@ impl Input {
           Self::#ident { #(#idents),* } => {
             let mut array = encoder.array(2);
             array.item(#n);
-            array.item_with(|encoder| {
-              let mut map = encoder.map::<u64>(#length);
-              #(#items)*
-            });
+            let mut map = array.element().map::<u64>(#length);
+            #(#items)*
           }
         }
       }
