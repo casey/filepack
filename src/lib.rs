@@ -238,6 +238,7 @@ mod manifest;
 mod map_decoder;
 mod map_encoder;
 mod metadata;
+mod metadata_type;
 mod mode;
 mod options;
 mod or;
