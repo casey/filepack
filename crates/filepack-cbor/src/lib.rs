@@ -1,6 +1,6 @@
 use {
   self::input::Input,
-  darling::{FromDeriveInput, FromField, FromVariant, ast::Data},
+  darling::{FromDeriveInput, FromField, FromVariant, ast::Data, ast::Fields},
   field::Field,
   parsed_field::ParsedField,
   parsed_variant::ParsedVariant,
@@ -101,4 +101,26 @@ fn n(ident: &Ident, attributes: &[Attribute]) -> Result<u64> {
   }
 
   n.ok_or_else(|| Error::new_spanned(ident, "missing #[n(N)] attribute"))
+}
+
+fn validate_ns<'a>(ns: impl IntoIterator<Item = (&'a Ident, u64)>) -> Result<()> {
+  let mut seen = HashSet::new();
+
+  for (i, (ident, n)) in ns.into_iter().enumerate() {
+    if !seen.insert(n) {
+      return Err(Error::new_spanned(
+        ident,
+        format!("duplicate #[n] attribute {n}"),
+      ));
+    }
+
+    if n != i.into_u64() {
+      return Err(Error::new_spanned(
+        ident,
+        format!("#[n] attributes must be contiguous starting from 0: expected {i}, found {n}"),
+      ));
+    }
+  }
+
+  Ok(())
 }

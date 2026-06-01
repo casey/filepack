@@ -35,6 +35,8 @@ pub enum DecodeError {
   KeyOrder,
   #[snafu(display("failed to parse language code"))]
   Language { source: LanguageError },
+  #[snafu(display("missing array element"))]
+  MissingElement,
   #[snafu(display("missing required field: {key}"))]
   MissingField { key: String },
   #[snafu(display("overlong integer"))]
@@ -51,6 +53,8 @@ pub enum DecodeError {
   TrailingBytes,
   #[snafu(display("truncated"))]
   Truncated,
+  #[snafu(display("unconsumed array elements"))]
+  UnconsumedElements,
   #[snafu(display("unconsumed map entries"))]
   UnconsumedEntries,
   #[snafu(display("unexpected key"))]

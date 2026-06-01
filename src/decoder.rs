@@ -7,6 +7,12 @@ pub struct Decoder<'a> {
 }
 
 impl<'a> Decoder<'a> {
+  #[cfg_attr(not(test), allow(dead_code))]
+  pub(crate) fn array<'b>(&'b mut self) -> Result<ArrayDecoder<'b, 'a>, DecodeError> {
+    let len = self.expect(MajorType::Array)?;
+    Ok(ArrayDecoder::new(self, len))
+  }
+
   pub(crate) fn byte_array<const N: usize>(&mut self) -> Result<[u8; N], DecodeError> {
     let bytes = self.bytes()?;
 
