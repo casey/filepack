@@ -111,7 +111,7 @@ impl Input {
 
     let decode = ParsedField::decode(&fields);
 
-    let idents = fields.iter().map(|field| field.ident);
+    let fields = fields.iter().map(|field| field.ident);
 
     Ok(quote! {
       impl Decode for #name {
@@ -120,7 +120,7 @@ impl Input {
           #(#decode)*
           map.finish()?;
           Ok(Self {
-            #(#idents,)*
+            #(#fields,)*
           })
         }
       }
