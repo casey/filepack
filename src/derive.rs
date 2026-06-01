@@ -279,25 +279,6 @@ fn enum_array_unconsumed_elements() {
 }
 
 #[test]
-fn enum_array_unexpected_type() {
-  #[derive(Debug, Decode, PartialEq)]
-  enum Foo {
-    #[n(0)]
-    Bar {
-      #[n(0)]
-      bar: u64,
-    },
-  }
-
-  assert_matches!(
-    Foo::decode_from_slice(&"foo".encode_to_vec()),
-    Err(DecodeError::UnexpectedVariantType {
-      actual: MajorType::Text,
-    }),
-  );
-}
-
-#[test]
 fn enum_invalid_discriminant() {
   #[derive(Debug, Decode)]
   enum Foo {
@@ -412,8 +393,7 @@ fn enum_unexpected_type() {
 
   assert_matches!(
     Foo::decode_from_slice(&"foo".encode_to_vec()),
-    Err(DecodeError::UnexpectedType {
-      expected: MajorType::UnsignedInteger,
+    Err(DecodeError::UnexpectedVariantType {
       actual: MajorType::Text,
     }),
   );

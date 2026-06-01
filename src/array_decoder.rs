@@ -1,4 +1,4 @@
-#![cfg(test)]
+#![cfg_attr(not(test), allow(dead_code))]
 
 use super::*;
 

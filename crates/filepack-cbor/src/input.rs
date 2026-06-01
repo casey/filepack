@@ -43,27 +43,6 @@ impl Input {
 
     let variants = self.parse_variants()?;
 
-    if variants.iter().all(|variant| variant.fields.is_empty()) {
-      let arms = variants.iter().map(|ParsedVariant { ident, n, .. }| {
-        quote! { #n => Ok(Self::#ident), }
-      });
-
-      return Ok(quote! {
-        impl Decode for #name {
-          fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
-            let discriminant = decoder.integer()?;
-            match discriminant {
-              #(#arms)*
-              _ => Err(decode_error::InvalidDiscriminant {
-                discriminant,
-                name: stringify!(#name),
-              }.build()),
-            }
-          }
-        }
-      });
-    }
-
     let unit_arms = variants
       .iter()
       .filter(|variant| variant.fields.is_empty())
@@ -82,24 +61,30 @@ impl Input {
         let decode = decode_field_items(&variant.fields);
         let idents = variant.fields.iter().map(|field| field.ident);
         quote! {
-          #n => array.item_with(|decoder| {
-            let mut map = decoder.map::<u64>()?;
-            #(#decode)*
-            map.finish()?;
-            Ok(Self::#ident {
-              #(#idents,)*
-            })
-          })?,
+          #n => {
+            let value = array.item_with(|decoder| {
+              let mut map = decoder.map::<u64>()?;
+              #(#decode)*
+              map.finish()?;
+              Ok(Self::#ident {
+                #(#idents,)*
+              })
+            })?;
+            array.finish()?;
+            Ok(value)
+          }
         }
       });
 
     Ok(quote! {
       impl Decode for #name {
         fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
-          let head = decoder.head()?;
-          match head.major_type {
+          decoder.push_position();
+          let major_type = decoder.head()?.major_type;
+          decoder.pop_position();
+          match major_type {
             MajorType::UnsignedInteger => {
-              let discriminant = head.value;
+              let discriminant = decoder.integer()?;
               match discriminant {
                 #(#unit_arms)*
                 _ => Err(decode_error::InvalidDiscriminant {
@@ -109,17 +94,15 @@ impl Input {
               }
             }
             MajorType::Array => {
-              let mut array = ArrayDecoder::new(decoder, head.value);
+              let mut array = decoder.array()?;
               let discriminant = array.item::<u64>()?;
-              let value = match discriminant {
+              match discriminant {
                 #(#field_arms)*
-                _ => return Err(decode_error::InvalidDiscriminant {
+                _ => Err(decode_error::InvalidDiscriminant {
                   discriminant,
                   name: stringify!(#name),
                 }.build()),
-              };
-              array.finish()?;
-              Ok(value)
+              }
             }
             actual => Err(decode_error::UnexpectedVariantType { actual }.build()),
           }
@@ -198,23 +181,6 @@ impl Input {
     let name = &self.ident;
 
     let variants = self.parse_variants()?;
-
-    if variants.iter().all(|variant| variant.fields.is_empty()) {
-      let arms = variants.iter().map(|ParsedVariant { ident, n, .. }| {
-        quote! { Self::#ident => #n, }
-      });
-
-      return Ok(quote! {
-        impl Encode for #name {
-          fn encode(&self, encoder: &mut Encoder) {
-            let discriminant = match self {
-              #(#arms)*
-            };
-            discriminant.encode(encoder);
-          }
-        }
-      });
-    }
 
     let arms = variants.iter().map(|variant| {
       let ident = variant.ident;
