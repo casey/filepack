@@ -46,20 +46,16 @@ impl Input {
     let unit_arms = variants
       .iter()
       .filter(|variant| variant.fields.is_empty())
-      .map(|variant| {
-        let ident = variant.ident;
-        let n = variant.n;
+      .map(|ParsedVariant { ident, n, .. }| {
         quote! { #n => Ok(Self::#ident), }
       });
 
     let field_arms = variants
       .iter()
       .filter(|variant| !variant.fields.is_empty())
-      .map(|variant| {
-        let ident = variant.ident;
-        let n = variant.n;
-        let decode = ParsedField::decode_fields(&variant.fields);
-        let idents = variant.fields.iter().map(|field| field.ident);
+      .map(|ParsedVariant { fields, ident, n }| {
+        let decode = ParsedField::decode_fields(&fields);
+        let idents = fields.iter().map(|field| field.ident);
         quote! {
           #n => {
             let value = array.item_with(|decoder| {
