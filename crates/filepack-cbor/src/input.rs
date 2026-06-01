@@ -3,7 +3,10 @@
 use super::*;
 
 #[derive(FromDeriveInput)]
-#[darling(supports(struct_named, struct_newtype, enum_unit), forward_attrs(cbor))]
+#[darling(
+  supports(struct_named, struct_newtype, enum_named, enum_unit),
+  forward_attrs(cbor)
+)]
 pub(crate) struct Input {
   attrs: Vec<Attribute>,
   data: Data<Variant, Field>,
@@ -40,20 +43,59 @@ impl Input {
 
     let variants = self.parse_variants()?;
 
-    let arms = variants.iter().map(|ParsedVariant { ident, n }| {
-      quote! { #n => Ok(Self::#ident), }
-    });
+    let unit_arms = variants
+      .iter()
+      .filter(|variant| variant.fields.is_empty())
+      .map(|ParsedVariant { ident, n, .. }| {
+        quote! { #n => Ok(Self::#ident), }
+      });
+
+    let field_arms = variants
+      .iter()
+      .filter(|variant| !variant.fields.is_empty())
+      .map(|ParsedVariant { fields, ident, n }| {
+        let decode = ParsedField::decode(fields);
+        let idents = fields.iter().map(|field| field.ident);
+        quote! {
+          #n => {
+            let decoder = array.element()?;
+            let mut map = decoder.map::<u64>()?;
+            #(#decode)*
+            map.finish()?;
+            array.finish()?;
+            Ok(Self::#ident {
+              #(#idents,)*
+            })
+          }
+        }
+      });
 
     Ok(quote! {
       impl Decode for #name {
         fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
-          let discriminant = decoder.integer()?;
-          match discriminant {
-            #(#arms)*
-            _ => Err(decode_error::InvalidDiscriminant {
-              discriminant,
-              name: stringify!(#name),
-            }.build()),
+          match decoder.peek()? {
+            MajorType::UnsignedInteger => {
+              let discriminant = decoder.integer()?;
+              match discriminant {
+                #(#unit_arms)*
+                _ => Err(decode_error::InvalidDiscriminant {
+                  discriminant,
+                  name: stringify!(#name),
+                }.build()),
+              }
+            }
+            MajorType::Array => {
+              let mut array = decoder.array()?;
+              let discriminant = array.item::<u64>()?;
+              match discriminant {
+                #(#field_arms)*
+                _ => Err(decode_error::InvalidDiscriminant {
+                  discriminant,
+                  name: stringify!(#name),
+                }.build()),
+              }
+            }
+            actual => Err(decode_error::UnexpectedVariantType { actual }.build()),
           }
         }
       }
@@ -65,16 +107,7 @@ impl Input {
 
     let fields = self.parse_fields()?;
 
-    let decode = fields.iter().map(|field| {
-      let ident = field.ident;
-      let n = field.n;
-      match (&field.decode_with, field.optional) {
-        (Some(path), true) => quote! { let #ident = map.optional_key_with(#n, #path)?; },
-        (Some(path), false) => quote! { let #ident = map.required_key_with(#n, #path)?; },
-        (None, true) => quote! { let #ident = map.optional_key(#n)?; },
-        (None, false) => quote! { let #ident = map.required_key(#n)?; },
-      }
-    });
+    let decode = ParsedField::decode(&fields);
 
     let fields = fields.iter().map(|field| field.ident);
 
@@ -140,17 +173,29 @@ impl Input {
 
     let variants = self.parse_variants()?;
 
-    let arms = variants.iter().map(|ParsedVariant { ident, n }| {
-      quote! { Self::#ident => #n, }
+    let arms = variants.iter().map(|ParsedVariant { fields, ident, n }| {
+      if fields.is_empty() {
+        quote! { Self::#ident => #n.encode(encoder), }
+      } else {
+        let idents = fields.iter().map(|field| field.ident);
+        let (length, items) = ParsedField::encode(fields, Receiver::Binding);
+        quote! {
+          Self::#ident { #(#idents),* } => {
+            let mut array = encoder.array(2);
+            array.item(#n);
+            let mut map = array.element().map::<u64>(#length);
+            #(#items)*
+          }
+        }
+      }
     });
 
     Ok(quote! {
       impl Encode for #name {
         fn encode(&self, encoder: &mut Encoder) {
-          let discriminant = match self {
+          match self {
             #(#arms)*
-          };
-          discriminant.encode(encoder);
+          }
         }
       }
     })
@@ -161,33 +206,12 @@ impl Input {
 
     let fields = self.parse_fields()?;
 
-    let required = fields
-      .iter()
-      .filter(|field| !field.optional)
-      .count()
-      .into_u64();
-
-    let optional = fields.iter().filter(|field| field.optional).map(|field| {
-      let ident = field.ident;
-      quote! { + u64::from(self.#ident.is_some()) }
-    });
-
-    let items = fields.iter().map(|field| {
-      let ident = field.ident;
-      let n = field.n;
-      match (&field.encode_with, field.optional) {
-        (Some(path), true) => quote! { map.optional_item_with(#n, self.#ident.as_ref(), #path); },
-        (Some(path), false) => quote! { map.item_with(#n, &self.#ident, #path); },
-        (None, true) => quote! { map.optional_item(#n, self.#ident.as_ref()); },
-        (None, false) => quote! { map.item(#n, &self.#ident); },
-      }
-    });
+    let (length, items) = ParsedField::encode(&fields, Receiver::Field);
 
     Ok(quote! {
       impl Encode for #name {
         fn encode(&self, encoder: &mut Encoder) {
-          let length = #required #(#optional)*;
-          let mut map = encoder.map::<u64>(length);
+          let mut map = encoder.map::<u64>(#length);
           #(#items)*
         }
       }
@@ -247,25 +271,7 @@ impl Input {
       .map(Field::parse)
       .collect::<Result<Vec<ParsedField>>>()?;
 
-    let mut n = HashSet::new();
-    for (i, field) in fields.iter().enumerate() {
-      if !n.insert(field.n) {
-        return Err(Error::new_spanned(
-          field.ident,
-          format!("duplicate #[n] attribute {}", field.n),
-        ));
-      }
-
-      if field.n != i.into_u64() {
-        return Err(Error::new_spanned(
-          field.ident,
-          format!(
-            "#[n] attributes must be contiguous starting from 0: expected {i}, found {}",
-            field.n
-          ),
-        ));
-      }
-    }
+    validate_numbers(fields.iter().map(|field| (field.ident, field.n)))?;
 
     Ok(fields)
   }
@@ -280,25 +286,7 @@ impl Input {
       .map(Variant::parse)
       .collect::<Result<Vec<ParsedVariant>>>()?;
 
-    let mut n = HashSet::new();
-    for (i, variant) in variants.iter().enumerate() {
-      if !n.insert(variant.n) {
-        return Err(Error::new_spanned(
-          variant.ident,
-          format!("duplicate #[n] attribute {}", variant.n),
-        ));
-      }
-
-      if variant.n != i.into_u64() {
-        return Err(Error::new_spanned(
-          variant.ident,
-          format!(
-            "#[n] attributes must be contiguous starting from 0: expected {i}, found {}",
-            variant.n
-          ),
-        ));
-      }
-    }
+    validate_numbers(variants.iter().map(|variant| (variant.ident, variant.n)))?;
 
     Ok(variants)
   }

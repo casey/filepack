@@ -1,9 +1,9 @@
 use {
-  self::input::Input,
-  darling::{FromDeriveInput, FromField, FromVariant, ast::Data},
-  field::Field,
-  parsed_field::ParsedField,
-  parsed_variant::ParsedVariant,
+  self::{
+    field::Field, input::Input, parsed_field::ParsedField, parsed_variant::ParsedVariant,
+    receiver::Receiver, variant::Variant,
+  },
+  darling::{FromDeriveInput, FromField, FromVariant, ast::Data, ast::Fields},
   proc_macro::TokenStream,
   quote::quote,
   std::collections::HashSet,
@@ -11,13 +11,13 @@ use {
     Attribute, DeriveInput, Error, Ident, Index, LitInt, Member, Path, Result, Type, TypePath,
   },
   usized::IntoU64,
-  variant::Variant,
 };
 
 mod field;
 mod input;
 mod parsed_field;
 mod parsed_variant;
+mod receiver;
 mod variant;
 
 #[proc_macro_derive(Decode, attributes(cbor, n))]
@@ -88,7 +88,7 @@ pub fn encode_display(input: TokenStream) -> TokenStream {
   .into()
 }
 
-fn n(ident: &Ident, attributes: &[Attribute]) -> Result<u64> {
+fn number(ident: &Ident, attributes: &[Attribute]) -> Result<u64> {
   let mut n = None;
 
   for attribute in attributes {
@@ -101,4 +101,26 @@ fn n(ident: &Ident, attributes: &[Attribute]) -> Result<u64> {
   }
 
   n.ok_or_else(|| Error::new_spanned(ident, "missing #[n(N)] attribute"))
+}
+
+fn validate_numbers<'a>(ns: impl IntoIterator<Item = (&'a Ident, u64)>) -> Result<()> {
+  let mut seen = HashSet::new();
+
+  for (i, (ident, n)) in ns.into_iter().enumerate() {
+    if !seen.insert(n) {
+      return Err(Error::new_spanned(
+        ident,
+        format!("duplicate #[n] attribute {n}"),
+      ));
+    }
+
+    if n != i.into_u64() {
+      return Err(Error::new_spanned(
+        ident,
+        format!("#[n] attributes must be contiguous starting from 0: expected {i}, found {n}"),
+      ));
+    }
+  }
+
+  Ok(())
 }

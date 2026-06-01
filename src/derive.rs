@@ -223,6 +223,62 @@ fn encode_with_required() {
 }
 
 #[test]
+fn enum_array_invalid_discriminant() {
+  #[derive(Debug, Decode, PartialEq)]
+  enum Foo {
+    #[n(0)]
+    Bar,
+    #[n(1)]
+    Baz {
+      #[n(0)]
+      baz: u64,
+    },
+  }
+
+  assert_matches!(
+    Foo::decode_from_slice(&[0x82, 0x05, 0xa0]),
+    Err(DecodeError::InvalidDiscriminant {
+      discriminant: 5,
+      name: "Foo",
+    }),
+  );
+}
+
+#[test]
+fn enum_array_missing_element() {
+  #[derive(Debug, Decode, PartialEq)]
+  enum Foo {
+    #[n(0)]
+    Bar {
+      #[n(0)]
+      bar: u64,
+    },
+  }
+
+  assert_matches!(
+    Foo::decode_from_slice(&[0x81, 0x00]),
+    Err(DecodeError::MissingElement),
+  );
+}
+
+#[test]
+fn enum_array_unconsumed_elements() {
+  #[derive(Debug, Decode, PartialEq)]
+  enum Foo {
+    #[n(0)]
+    Bar {
+      #[n(0)]
+      bar: u64,
+    },
+  }
+
+  assert_matches!(
+    Foo::decode_from_slice(&[0x83, 0x00, 0xa1, 0x00, 0x05, 0x00]),
+    Err(DecodeError::UnconsumedElements),
+  );
+}
+
+#[test]
 fn enum_invalid_discriminant() {
   #[derive(Debug, Decode)]
   enum Foo {
@@ -243,6 +299,74 @@ fn enum_invalid_discriminant() {
 
   case(&[0x01], 1);
   case(&256u64.encode_to_vec(), 256);
+}
+
+#[test]
+fn enum_mixed() {
+  #[derive(Debug, Decode, Encode, PartialEq)]
+  enum Foo {
+    #[n(0)]
+    Bar,
+    #[n(1)]
+    Baz {
+      #[n(0)]
+      baz: u64,
+    },
+  }
+
+  assert_cbor(Foo::Bar, &[0x00]);
+  assert_cbor(Foo::Baz { baz: 99 }, &[0x82, 0x01, 0xa1, 0x00, 0x18, 0x63]);
+}
+
+#[test]
+fn enum_named_field() {
+  #[derive(Debug, Decode, Encode, PartialEq)]
+  enum Foo {
+    #[n(0)]
+    Bar {
+      #[n(0)]
+      bar: u64,
+      #[n(1)]
+      baz: String,
+    },
+  }
+
+  assert_cbor(
+    Foo::Bar {
+      bar: 42,
+      baz: "foo".into(),
+    },
+    &[
+      0x82, 0x00, 0xa2, 0x00, 0x18, 0x2a, 0x01, 0x63, 0x66, 0x6f, 0x6f,
+    ],
+  );
+}
+
+#[test]
+fn enum_named_field_optional() {
+  #[derive(Debug, Decode, Encode, PartialEq)]
+  enum Foo {
+    #[n(0)]
+    Bar {
+      #[n(0)]
+      bar: Option<u64>,
+      #[n(1)]
+      baz: u64,
+    },
+  }
+
+  assert_cbor(
+    Foo::Bar {
+      bar: Some(1),
+      baz: 2,
+    },
+    &[0x82, 0x00, 0xa2, 0x00, 0x01, 0x01, 0x02],
+  );
+
+  assert_cbor(
+    Foo::Bar { bar: None, baz: 2 },
+    &[0x82, 0x00, 0xa1, 0x01, 0x02],
+  );
 }
 
 #[test]
@@ -269,10 +393,33 @@ fn enum_unexpected_type() {
 
   assert_matches!(
     Foo::decode_from_slice(&"foo".encode_to_vec()),
-    Err(DecodeError::UnexpectedType {
-      expected: MajorType::UnsignedInteger,
+    Err(DecodeError::UnexpectedVariantType {
       actual: MajorType::Text,
     }),
+  );
+}
+
+#[test]
+fn enum_variant_encode_with() {
+  struct Foreign(u64);
+
+  fn encode_foreign(value: &Foreign, encoder: &mut Encoder) {
+    (value.0 + 1).encode(encoder);
+  }
+
+  #[derive(Encode)]
+  enum Foo {
+    #[n(0)]
+    Bar {
+      #[cbor(encode_with = encode_foreign)]
+      #[n(0)]
+      bar: Foreign,
+    },
+  }
+
+  assert_eq!(
+    Foo::Bar { bar: Foreign(99) }.encode_to_vec(),
+    [0x82, 0x00, 0xa1, 0x00, 0x18, 0x64],
   );
 }
 

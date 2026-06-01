@@ -24,6 +24,7 @@ use {
     archive_builder::ArchiveBuilder,
     archive_error::ArchiveError,
     arguments::Arguments,
+    array_decoder::ArrayDecoder,
     artwork_type::ArtworkType,
     authenticated::Authenticated,
     bech32_decoder::Bech32Decoder,
@@ -149,9 +150,9 @@ use {
 };
 
 pub use self::{
-  component_buf::ComponentBuf, decode::Decode, decoder::Decoder, directory::Directory,
-  directory_tree::DirectoryTree, encode::Encode, encoder::Encoder, entry::Entry,
-  entry_type::EntryType, error::Error, fingerprint::Fingerprint,
+  array_encoder::ArrayEncoder, component_buf::ComponentBuf, decode::Decode, decoder::Decoder,
+  directory::Directory, directory_tree::DirectoryTree, encode::Encode, encoder::Encoder,
+  entry::Entry, entry_type::EntryType, error::Error, fingerprint::Fingerprint,
   functions::install_default_crypto_provider, hash::Hash, language_error::LanguageError,
   major_type::MajorType, manifest::Manifest, map_encoder::MapEncoder, metadata::Metadata,
   private_key::PrivateKey, public_key::PublicKey, relative_path::RelativePath,
@@ -184,6 +185,8 @@ mod archive;
 mod archive_builder;
 mod archive_error;
 mod arguments;
+mod array_decoder;
+mod array_encoder;
 mod artwork_type;
 mod authenticated;
 mod bech32_decoder;
