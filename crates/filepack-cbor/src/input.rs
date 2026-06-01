@@ -215,8 +215,7 @@ impl Input {
     Ok(quote! {
       impl Encode for #name {
         fn encode(&self, encoder: &mut Encoder) {
-          let length = #length;
-          let mut map = encoder.map::<u64>(length);
+          let mut map = encoder.map::<u64>(#length);
           #(#items)*
         }
       }
