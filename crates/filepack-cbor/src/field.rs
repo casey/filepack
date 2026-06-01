@@ -34,7 +34,7 @@ impl Field {
       decode_with,
       encode_with,
       ident: self.ident.as_ref().unwrap(),
-      n: n(self.ident.as_ref().unwrap(), &self.attrs)?,
+      n: number(self.ident.as_ref().unwrap(), &self.attrs)?,
       optional: self.is_option(),
     })
   }

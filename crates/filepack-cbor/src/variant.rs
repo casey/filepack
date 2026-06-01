@@ -18,12 +18,12 @@ impl Variant {
       .map(Field::parse)
       .collect::<Result<Vec<ParsedField>>>()?;
 
-    validate_ns(fields.iter().map(|field| (field.ident, field.n)))?;
+    validate_numbers(fields.iter().map(|field| (field.ident, field.n)))?;
 
     Ok(ParsedVariant {
       fields,
       ident: &self.ident,
-      n: n(&self.ident, &self.attrs)?,
+      n: number(&self.ident, &self.attrs)?,
     })
   }
 }

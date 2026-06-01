@@ -275,7 +275,7 @@ impl Input {
       .map(Field::parse)
       .collect::<Result<Vec<ParsedField>>>()?;
 
-    validate_ns(fields.iter().map(|field| (field.ident, field.n)))?;
+    validate_numbers(fields.iter().map(|field| (field.ident, field.n)))?;
 
     Ok(fields)
   }
@@ -290,7 +290,7 @@ impl Input {
       .map(Variant::parse)
       .collect::<Result<Vec<ParsedVariant>>>()?;
 
-    validate_ns(variants.iter().map(|variant| (variant.ident, variant.n)))?;
+    validate_numbers(variants.iter().map(|variant| (variant.ident, variant.n)))?;
 
     Ok(variants)
   }

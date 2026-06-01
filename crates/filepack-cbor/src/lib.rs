@@ -88,7 +88,7 @@ pub fn encode_display(input: TokenStream) -> TokenStream {
   .into()
 }
 
-fn n(ident: &Ident, attributes: &[Attribute]) -> Result<u64> {
+fn number(ident: &Ident, attributes: &[Attribute]) -> Result<u64> {
   let mut n = None;
 
   for attribute in attributes {
@@ -103,7 +103,7 @@ fn n(ident: &Ident, attributes: &[Attribute]) -> Result<u64> {
   n.ok_or_else(|| Error::new_spanned(ident, "missing #[n(N)] attribute"))
 }
 
-fn validate_ns<'a>(ns: impl IntoIterator<Item = (&'a Ident, u64)>) -> Result<()> {
+fn validate_numbers<'a>(ns: impl IntoIterator<Item = (&'a Ident, u64)>) -> Result<()> {
   let mut seen = HashSet::new();
 
   for (i, (ident, n)) in ns.into_iter().enumerate() {
