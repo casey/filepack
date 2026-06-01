@@ -58,16 +58,14 @@ impl Input {
         let idents = fields.iter().map(|field| field.ident);
         quote! {
           #n => {
-            let value = array.item_with(|decoder| {
-              let mut map = decoder.map::<u64>()?;
-              #(#decode)*
-              map.finish()?;
-              Ok(Self::#ident {
-                #(#idents,)*
-              })
-            })?;
+            let decoder = array.element()?;
+            let mut map = decoder.map::<u64>()?;
+            #(#decode)*
+            map.finish()?;
             array.finish()?;
-            Ok(value)
+            Ok(Self::#ident {
+              #(#idents,)*
+            })
           }
         }
       });

@@ -6,6 +6,12 @@ pub(crate) struct ArrayDecoder<'a, 'b> {
 }
 
 impl<'a, 'b> ArrayDecoder<'a, 'b> {
+  pub(crate) fn element(&mut self) -> Result<&mut Decoder<'b>, DecodeError> {
+    ensure!(self.remaining > 0, decode_error::MissingElement);
+    self.remaining -= 1;
+    Ok(&mut *self.decoder)
+  }
+
   #[cfg_attr(not(test), allow(dead_code))]
   pub(crate) fn finish(&mut self) -> Result<(), DecodeError> {
     ensure!(self.remaining == 0, decode_error::UnconsumedElements);
@@ -13,16 +19,7 @@ impl<'a, 'b> ArrayDecoder<'a, 'b> {
   }
 
   pub(crate) fn item<V: Decode>(&mut self) -> Result<V, DecodeError> {
-    self.item_with(V::decode)
-  }
-
-  pub(crate) fn item_with<V>(
-    &mut self,
-    decode: impl FnOnce(&mut Decoder) -> Result<V, DecodeError>,
-  ) -> Result<V, DecodeError> {
-    ensure!(self.remaining > 0, decode_error::MissingElement);
-    self.remaining -= 1;
-    decode(self.decoder)
+    V::decode(self.element()?)
   }
 
   pub(crate) fn new(decoder: &'a mut Decoder<'b>, len: u64) -> Self {
@@ -37,8 +34,12 @@ impl<'a, 'b> ArrayDecoder<'a, 'b> {
 mod tests {
   use super::*;
 
-  fn decode_offset(decoder: &mut Decoder) -> Result<u64, DecodeError> {
-    Ok(decoder.integer()? + 1)
+  #[test]
+  fn element() {
+    let mut decoder = Decoder::new(&[0x81, 0x18, 0x2a]);
+    let mut array = decoder.array().unwrap();
+    assert_matches!(array.element().unwrap().integer(), Ok(42));
+    array.finish().unwrap();
   }
 
   #[test]
@@ -47,14 +48,6 @@ mod tests {
     let mut array = decoder.array().unwrap();
     assert_matches!(array.item::<u64>(), Ok(0));
     assert_matches!(array.item::<u64>(), Ok(42));
-    array.finish().unwrap();
-  }
-
-  #[test]
-  fn item_with() {
-    let mut decoder = Decoder::new(&[0x81, 0x18, 0x2a]);
-    let mut array = decoder.array().unwrap();
-    assert_matches!(array.item_with(decode_offset), Ok(43));
     array.finish().unwrap();
   }
 
