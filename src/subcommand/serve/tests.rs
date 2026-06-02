@@ -525,6 +525,7 @@ fn get_package_with_metadata() {
     description: None,
     homepage: None,
     language: None,
+    media: None,
     package: None,
     readme: None,
     title: Some("foo".parse().unwrap()),

@@ -108,6 +108,7 @@ impl Artwork {
 }
 
 impl Flac {
+  #[expect(clippy::unused_self)]
   pub(crate) fn content_type(&self) -> Mime {
     "audio/flac".parse().unwrap()
   }

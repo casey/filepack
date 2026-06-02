@@ -219,6 +219,9 @@ mod tests {
       description: Some("bar".into()),
       homepage: Some("http://example.com".parse().unwrap()),
       language: Some("en".parse().unwrap()),
+      media: Some(Media::Audio {
+        tracks: vec!["track.flac".parse().unwrap()],
+      }),
       package: Some(Package {
         creator: Some("baz".parse().unwrap()),
         creator_tag: Some("A0".parse().unwrap()),
@@ -322,6 +325,7 @@ mod tests {
         package,
         readme,
         title,
+        media,
       } = metadata;
 
       if title
@@ -339,6 +343,7 @@ mod tests {
       assert!(language.is_some());
       assert!(readme.is_some());
       assert!(title.is_some());
+      assert!(media.is_none());
 
       let Package {
         creator,
