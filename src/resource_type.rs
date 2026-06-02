@@ -1,7 +1,5 @@
 use super::*;
 
-static AUDIO_FLAC: LazyLock<Mime> = LazyLock::new(|| "audio/flac".parse().unwrap());
-
 #[derive(Clone, Copy)]
 pub(crate) enum ResourceType {
   Binary,
@@ -18,12 +16,12 @@ impl ResourceType {
     }
   }
 
-  pub(crate) fn content_type(self) -> &'static Mime {
+  pub(crate) fn content_type(self) -> Mime {
     match self {
-      Self::Binary => &mime::APPLICATION_OCTET_STREAM,
-      Self::Flac => &AUDIO_FLAC,
-      Self::Jpeg => &mime::IMAGE_JPEG,
-      Self::Png => &mime::IMAGE_PNG,
+      Self::Binary => mime::APPLICATION_OCTET_STREAM,
+      Self::Flac => "audio/flac".parse().unwrap(),
+      Self::Jpeg => mime::IMAGE_JPEG,
+      Self::Png => mime::IMAGE_PNG,
     }
   }
 }
