@@ -3,7 +3,7 @@ use {
   axum::{
     Router,
     extract::{Extension, Path},
-    http::{HeaderValue, Uri, header},
+    http::{HeaderValue, Uri},
     response::Redirect,
     routing::{get, post, put},
   },
@@ -15,7 +15,6 @@ use {
   sysinfo::System,
   templates::{DirectoryHtml, FilesHtml, PackageHtml, PackagesHtml, PageHtml},
   tokio::{net::TcpListener, runtime, task::block_in_place},
-  tokio_util::io::ReaderStream,
   tower_http::set_header::SetResponseHeaderLayer,
 };
 
@@ -133,9 +132,11 @@ impl Serve {
   async fn artwork(
     server: ServerExtension,
     fingerprint: Path<Fingerprint>,
-  ) -> ServerResult<Response> {
-    let resource = block_in_place(|| server.artwork(*fingerprint))?;
-    Ok(Self::resource_response(resource, None))
+  ) -> ServerResult<Resource> {
+    Ok(
+      block_in_place(|| server.artwork(*fingerprint))?
+        .with_content_disposition(ContentDisposition::Inline),
+    )
   }
 
   async fn directory(server: ServerExtension, Path(hash): Path<Hash>) -> PageResult<DirectoryHtml> {
@@ -156,9 +157,8 @@ impl Serve {
     }
   }
 
-  async fn download(server: ServerExtension, hash: Path<Hash>) -> ServerResult<Response> {
-    let resource = block_in_place(|| server.open_file(*hash))?;
-    Ok(Self::resource_response(resource, Some("attachment")))
+  async fn download(server: ServerExtension, hash: Path<Hash>) -> ServerResult<Resource> {
+    block_in_place(|| server.open_file(*hash))
   }
 
   async fn fallback() -> ServerResult<StaticAsset> {
@@ -209,9 +209,11 @@ impl Serve {
   async fn media_audio_track(
     server: ServerExtension,
     Path((fingerprint, n)): Path<(Fingerprint, usize)>,
-  ) -> ServerResult<Response> {
-    let resource = block_in_place(|| server.media_audio_track(fingerprint, n))?;
-    Ok(Self::resource_response(resource, None))
+  ) -> ServerResult<Resource> {
+    Ok(
+      block_in_place(|| server.media_audio_track(fingerprint, n))?
+        .with_content_disposition(ContentDisposition::Inline),
+    )
   }
 
   async fn package(
@@ -263,25 +265,6 @@ impl Serve {
         header::X_CONTENT_TYPE_OPTIONS,
         HeaderValue::from_static("nosniff"),
       ))
-  }
-
-  fn resource_response(resource: Resource, content_disposition: Option<&str>) -> Response {
-    let mut builder = Response::builder()
-      .header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
-      .header(header::CONTENT_LENGTH, resource.content_length)
-      .header(header::CONTENT_SECURITY_POLICY, "sandbox")
-      .header(header::CONTENT_TYPE, resource.content_type.essence_str())
-      .header(header::ETAG, format!("\"{}\"", resource.hash));
-
-    if let Some(content_disposition) = content_disposition {
-      builder = builder.header(header::CONTENT_DISPOSITION, content_disposition);
-    }
-
-    builder
-      .body(Body::from_stream(ReaderStream::new(
-        tokio::fs::File::from_std(resource.file),
-      )))
-      .unwrap()
   }
 
   pub(crate) fn router(server: Arc<Server>, auth_config: Option<Arc<AuthConfig>>) -> Router {

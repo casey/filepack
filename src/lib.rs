@@ -34,6 +34,7 @@ use {
     checked_url::CheckedUrl,
     component::Component,
     component_error::ComponentError,
+    content_disposition::ContentDisposition,
     context::Context,
     count::Count,
     dalek_signature_error::DalekSignatureError,
@@ -90,6 +91,7 @@ use {
   axum::{
     body::Body,
     http::StatusCode,
+    http::header,
     response::{IntoResponse, Response},
   },
   bech32::{
@@ -145,6 +147,7 @@ use {
   },
   tempfile::NamedTempFile,
   tokio::io::AsyncWriteExt,
+  tokio_util::io::ReaderStream,
   url::Url,
   usized::IntoU64,
   walkdir::WalkDir,
@@ -199,6 +202,7 @@ mod checked_url;
 mod component;
 mod component_buf;
 mod component_error;
+mod content_disposition;
 mod context;
 mod count;
 mod dalek_signature_error;

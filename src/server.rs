@@ -87,6 +87,7 @@ impl Server {
       .len();
 
     Ok(Resource {
+      content_disposition: ContentDisposition::Attachment,
       content_length,
       content_type: mime::APPLICATION_OCTET_STREAM,
       file,
