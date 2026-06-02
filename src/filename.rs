@@ -14,12 +14,9 @@ macro_rules! filename {
 }
 
 filename! { Artwork, ArtworkExtension, "jpg", "png" }
-
-filename! { Nfo, NfoExtension, "nfo" }
-
 filename! { Flac, FlacExtension, "flac" }
-
 filename! { Md, MdExtension, "md" }
+filename! { Nfo, NfoExtension, "nfo" }
 
 pub(crate) trait Extension {
   const EXTENSIONS: &[&str];
