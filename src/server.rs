@@ -94,6 +94,29 @@ impl Server {
     Ok((file, len))
   }
 
+  pub(crate) fn media_audio_track(
+    &self,
+    fingerprint: Fingerprint,
+    n: usize,
+  ) -> ServerResult<(fs::File, Hash, u64)> {
+    let Some(metadata) = self.package(fingerprint)? else {
+      todo!();
+    };
+
+    let Some(media) = metadata.media else {
+      todo!();
+    };
+
+    match media {
+      Media::Audio { tracks } => {
+        let track = tracks.get(n).unwrap();
+        let hash = self.package_file(fingerprint, &track.as_path())?.unwrap();
+        let (file, len) = self.open_file(hash)?;
+        Ok((file, hash, len))
+      }
+    }
+  }
+
   pub(crate) fn package(&self, fingerprint: Fingerprint) -> ServerResult<Option<Metadata>> {
     ensure!(
       self

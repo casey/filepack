@@ -17,10 +17,12 @@ pub struct Metadata {
   #[n(5)]
   pub language: Option<Language>,
   #[n(6)]
-  pub package: Option<Package>,
+  pub media: Option<Media>,
   #[n(7)]
-  pub readme: Option<filename::Md>,
+  pub package: Option<Package>,
   #[n(8)]
+  pub readme: Option<filename::Md>,
+  #[n(9)]
   pub title: Option<ComponentBuf>,
 }
 

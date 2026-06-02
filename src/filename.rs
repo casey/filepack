@@ -17,6 +17,8 @@ filename! { Artwork, ArtworkExtension, "jpg", "png" }
 
 filename! { Nfo, NfoExtension, "nfo" }
 
+filename! { Flac, FlacExtension, "flac" }
+
 filename! { Md, MdExtension, "md" }
 
 pub(crate) trait Extension {
@@ -48,6 +50,12 @@ impl<T: Extension> Serialize for Filename<T> {
 impl<T: Extension> Decode for Filename<T> {
   fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
     decoder.text()?.parse().context(decode_error::Component)
+  }
+}
+
+impl<T: Extension> Display for Filename<T> {
+  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    write!(f, "{}", self.component)
   }
 }
 

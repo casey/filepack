@@ -30,6 +30,23 @@
   <dt>language</dt>
   <dd>{{ language }}</dd>
 %%   }
+%%   if let Some(media) = &metadata.media {
+%%     match media {
+%%       Media::Audio { tracks } => {
+  <dt>tracks</dt>
+  <dd>
+    <ul>
+%%         for (i, track) in tracks.iter().enumerate() {
+      <li>
+        <div>{{ track }}<div>
+        <audio controls src=/media/{{ self.fingerprint }}/track/{{ i }}></audio>
+      </li>
+%%         }
+    </ul>
+  </dd>
+%%       }
+%%     }
+%%   }
 </dl>
 %% }
 <a href=/directory/{{ Hash::from(self.fingerprint) }}>files</a>

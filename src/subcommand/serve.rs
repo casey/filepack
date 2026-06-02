@@ -244,6 +244,21 @@ impl Serve {
     StaticAsset::get("install.sh")
   }
 
+  async fn media_audio_track(
+    server: ServerExtension,
+    Path((fingerprint, n)): Path<(Fingerprint, usize)>,
+  ) -> ServerResult<Response> {
+    let (file, hash, content_length) = block_in_place(|| server.media_audio_track(fingerprint, n))?;
+
+    Ok(Self::file_response(
+      None,
+      content_length,
+      "audio/flac".parse().unwrap(),
+      file,
+      hash,
+    ))
+  }
+
   async fn package(
     server: ServerExtension,
     Path(fingerprint): Path<Fingerprint>,
@@ -306,6 +321,10 @@ impl Serve {
       .route("/file/{hash}", put(Self::upload))
       .route("/files", get(Self::files))
       .route("/install.sh", get(Self::install_script))
+      .route(
+        "/media/{fingerprint}/track/{n}",
+        get(Self::media_audio_track),
+      )
       .route("/package/{fingerprint}", get(Self::package))
       .route("/package/{fingerprint}", post(Self::verify_package))
       .route("/packages", get(Self::packages))

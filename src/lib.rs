@@ -63,6 +63,7 @@ use {
     lint_error::{Lint, LintError},
     lint_group::LintGroup,
     map_decoder::MapDecoder,
+    media::Media,
     mode::Mode,
     options::Options,
     or::Or,
@@ -240,6 +241,7 @@ mod major_type;
 mod manifest;
 mod map_decoder;
 mod map_encoder;
+mod media;
 mod metadata;
 mod mode;
 mod options;
