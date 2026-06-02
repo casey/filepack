@@ -34,7 +34,7 @@ use {
     checked_url::CheckedUrl,
     component::Component,
     component_error::ComponentError,
-    content_disposition::ContentDisposition,
+    content_type::ResourceType,
     context::Context,
     count::Count,
     dalek_signature_error::DalekSignatureError,
@@ -203,7 +203,7 @@ mod checked_url;
 mod component;
 mod component_buf;
 mod component_error;
-mod content_disposition;
+mod content_type;
 mod context;
 mod count;
 mod dalek_signature_error;
