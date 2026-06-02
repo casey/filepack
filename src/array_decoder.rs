@@ -12,7 +12,6 @@ impl<'a, 'b> ArrayDecoder<'a, 'b> {
     Ok(&mut *self.decoder)
   }
 
-  #[cfg_attr(not(test), allow(dead_code))]
   pub(crate) fn finish(&mut self) -> Result<(), DecodeError> {
     ensure!(self.remaining == 0, decode_error::UnconsumedElements);
     Ok(())

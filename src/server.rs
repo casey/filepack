@@ -15,10 +15,7 @@ pub(crate) struct Server {
 }
 
 impl Server {
-  pub(crate) fn artwork(
-    &self,
-    fingerprint: Fingerprint,
-  ) -> ServerResult<(fs::File, u64, Hash, Mime)> {
+  pub(crate) fn artwork(&self, fingerprint: Fingerprint) -> ServerResult<Resource> {
     let artwork = self
       .package(fingerprint)?
       .and_then(|metadata| metadata.artwork)
@@ -26,13 +23,14 @@ impl Server {
 
     let content_type = artwork.content_type();
 
-    let hash = self
-      .package_file(fingerprint, &artwork.as_path())?
-      .context(server_error::ArtworkMissing { fingerprint })?;
+    let hash = self.verified_package_file(fingerprint, &artwork.as_path())?;
 
-    let (file, len) = self.open_file(hash)?;
-
-    Ok((file, len, hash, content_type))
+    Ok(
+      self
+        .open_file(hash)?
+        .content_disposition(ContentDisposition::Inline)
+        .content_type(content_type),
+    )
   }
 
   pub(crate) fn directory(&self, hash: Hash) -> ServerResult<Directory> {
@@ -75,7 +73,44 @@ impl Server {
     Ok(files)
   }
 
-  pub(crate) fn open_file(&self, hash: Hash) -> ServerResult<(fs::File, u64)> {
+  pub(crate) fn media_audio_track(
+    &self,
+    fingerprint: Fingerprint,
+    track: usize,
+  ) -> ServerResult<Resource> {
+    let metadata = self
+      .package(fingerprint)?
+      .context(server_error::PackageMetadataNotFound { fingerprint })?;
+
+    let media = metadata
+      .media
+      .context(server_error::PackageMediaMetadataNotFound { fingerprint })?;
+
+    match media {
+      Media::Audio { tracks } => {
+        let track = tracks
+          .get(track)
+          .context(server_error::MediaAudioTrackDoesNotExist {
+            fingerprint,
+            track,
+            tracks: tracks.len(),
+          })?;
+
+        let path = track.as_path();
+
+        let hash = self.verified_package_file(fingerprint, &path)?;
+
+        Ok(
+          self
+            .open_file(hash)?
+            .content_disposition(ContentDisposition::Inline)
+            .content_type(track.content_type()),
+        )
+      }
+    }
+  }
+
+  pub(crate) fn open_file(&self, hash: Hash) -> ServerResult<Resource> {
     let path = self.file_path(hash);
 
     let file = fs::File::open(&path).map_err(|err| {
@@ -86,12 +121,18 @@ impl Server {
       }
     })?;
 
-    let len = file
+    let content_length = file
       .metadata()
       .context(server_error::FilesystemIo { path })?
       .len();
 
-    Ok((file, len))
+    Ok(Resource {
+      content_disposition: ContentDisposition::Attachment,
+      content_length,
+      content_type: mime::APPLICATION_OCTET_STREAM,
+      file,
+      hash,
+    })
   }
 
   pub(crate) fn package(&self, fingerprint: Fingerprint) -> ServerResult<Option<Metadata>> {
@@ -177,6 +218,16 @@ impl Server {
     })?;
 
     Directory::decode_from_slice(&cbor).context(server_error::DirectoryDecode { hash })
+  }
+
+  fn verified_package_file(
+    &self,
+    fingerprint: Fingerprint,
+    path: &RelativePath,
+  ) -> ServerResult<Hash> {
+    self
+      .package_file(fingerprint, path)?
+      .context(server_error::PackageFileMissing { fingerprint, path })
   }
 
   pub(crate) fn verify_directory(&self, hash: Hash) -> ServerResult {

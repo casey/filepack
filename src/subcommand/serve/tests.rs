@@ -250,7 +250,9 @@ fn artwork_missing() {
   server
     .get(format!("/artwork/{fingerprint}"))
     .status(StatusCode::INTERNAL_SERVER_ERROR)
-    .assert_body(format!("package {fingerprint} artwork missing"))
+    .assert_body(format!(
+      "file `cover.png` missing from package {fingerprint}",
+    ))
     .send();
 }
 
@@ -525,6 +527,7 @@ fn get_package_with_metadata() {
     description: None,
     homepage: None,
     language: None,
+    media: None,
     package: None,
     readme: None,
     title: Some("foo".parse().unwrap()),
@@ -591,6 +594,201 @@ fn install_script() {
     .get("/install.sh")
     .assert_static("install.sh")
     .send();
+}
+
+#[test]
+fn media_audio_track_file_missing() {
+  let server = TestServer::new();
+
+  let foo: &[u8] = b"foo";
+
+  let metadata = Metadata {
+    media: Some(Media::Audio {
+      tracks: vec!["foo.flac".parse().unwrap()],
+    }),
+    ..default()
+  };
+
+  let fingerprint = package(&server, &metadata, &[("foo.flac", foo)]);
+
+  let metadata_cbor = metadata.encode_to_vec();
+  let corrupt = directory(&[(
+    Metadata::CBOR_FILENAME,
+    EntryType::File,
+    Hash::bytes(&metadata_cbor),
+    metadata_cbor.len().into_u64(),
+  )])
+  .encode_to_vec();
+
+  let hash = Hash::from(fingerprint);
+  fs::write(
+    server.data_dir.join("files").join(hash.to_string()),
+    &corrupt,
+  )
+  .unwrap();
+
+  server
+    .get(format!("/media/audio/{fingerprint}/track/0"))
+    .status(StatusCode::INTERNAL_SERVER_ERROR)
+    .assert_body(format!(
+      "file `foo.flac` missing from package {fingerprint}"
+    ))
+    .send();
+}
+
+#[test]
+fn media_audio_track_out_of_range() {
+  let server = TestServer::new();
+
+  let foo: &[u8] = b"foo";
+  let bar: &[u8] = b"bar";
+
+  let fingerprint = package(
+    &server,
+    &Metadata {
+      media: Some(Media::Audio {
+        tracks: vec!["foo.flac".parse().unwrap(), "bar.flac".parse().unwrap()],
+      }),
+      ..default()
+    },
+    &[("foo.flac", foo), ("bar.flac", bar)],
+  );
+
+  server
+    .get(format!("/media/audio/{fingerprint}/track/2"))
+    .status(StatusCode::NOT_FOUND)
+    .assert_body(format!(
+      "track 2 does not exist, package {fingerprint} has 2 tracks"
+    ))
+    .send();
+}
+
+#[test]
+fn media_audio_track_package_not_found() {
+  let server = TestServer::new();
+
+  let fingerprint = Fingerprint(Hash::bytes(b"foo"));
+
+  server
+    .get(format!("/media/audio/{fingerprint}/track/0"))
+    .status(StatusCode::NOT_FOUND)
+    .assert_body(format!("package {fingerprint} not found"))
+    .send();
+}
+
+#[test]
+fn media_audio_track_package_without_media() {
+  let server = TestServer::new();
+
+  let fingerprint = package(
+    &server,
+    &Metadata {
+      title: Some("foo".parse().unwrap()),
+      ..default()
+    },
+    &[],
+  );
+
+  server
+    .get(format!("/media/audio/{fingerprint}/track/0"))
+    .status(StatusCode::NOT_FOUND)
+    .assert_body(format!(
+      "package {fingerprint} does not have media metadata"
+    ))
+    .send();
+}
+
+#[test]
+fn media_audio_track_package_without_metadata() {
+  let server = TestServer::new();
+
+  let cbor = directory(&[]).encode_to_vec();
+  let hash = Hash::bytes(&cbor);
+  let fingerprint = Fingerprint(hash);
+  server.write_file(&cbor);
+
+  server.post(format!("/directory/{hash}")).send();
+  server.post(format!("/package/{fingerprint}")).send();
+
+  server
+    .get(format!("/media/audio/{fingerprint}/track/0"))
+    .status(StatusCode::NOT_FOUND)
+    .assert_body(format!("package {fingerprint} does not have metadata"))
+    .send();
+}
+
+#[test]
+fn media_audio_track_response() {
+  let server = TestServer::new();
+
+  let foo: &[u8] = b"foo";
+  let bar: &[u8] = b"barbar";
+
+  let fingerprint = package(
+    &server,
+    &Metadata {
+      media: Some(Media::Audio {
+        tracks: vec!["foo.flac".parse().unwrap(), "bar.flac".parse().unwrap()],
+      }),
+      ..default()
+    },
+    &[("foo.flac", foo), ("bar.flac", bar)],
+  );
+
+  server
+    .get(format!("/media/audio/{fingerprint}/track/0"))
+    .assert_header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
+    .assert_header(header::CONTENT_LENGTH, "3")
+    .assert_header(header::CONTENT_SECURITY_POLICY, "sandbox")
+    .assert_header(header::CONTENT_TYPE, "audio/flac")
+    .assert_header(header::ETAG, format!("\"{}\"", Hash::bytes(foo)))
+    .assert_body(foo)
+    .send();
+
+  server
+    .get(format!("/media/audio/{fingerprint}/track/1"))
+    .assert_header(header::CONTENT_LENGTH, "6")
+    .assert_header(header::CONTENT_TYPE, "audio/flac")
+    .assert_header(header::ETAG, format!("\"{}\"", Hash::bytes(bar)))
+    .assert_body(bar)
+    .send();
+}
+
+#[track_caller]
+fn package(server: &TestServer, metadata: &Metadata, files: &[(&str, &[u8])]) -> Fingerprint {
+  let metadata_cbor = metadata.encode_to_vec();
+  let metadata_hash = Hash::bytes(&metadata_cbor);
+  server.write_file(&metadata_cbor);
+
+  let mut entries = files
+    .iter()
+    .map(|&(name, content)| {
+      server.write_file(content);
+      (
+        name,
+        EntryType::File,
+        Hash::bytes(content),
+        content.len().into_u64(),
+      )
+    })
+    .collect::<Vec<(&str, EntryType, Hash, u64)>>();
+
+  entries.push((
+    Metadata::CBOR_FILENAME,
+    EntryType::File,
+    metadata_hash,
+    metadata_cbor.len().into_u64(),
+  ));
+
+  let cbor = directory(&entries).encode_to_vec();
+  let hash = Hash::bytes(&cbor);
+  let fingerprint = Fingerprint(hash);
+  server.write_file(&cbor);
+
+  server.post(format!("/directory/{hash}")).send();
+  server.post(format!("/package/{fingerprint}")).send();
+
+  fingerprint
 }
 
 #[test]

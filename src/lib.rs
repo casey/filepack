@@ -34,6 +34,7 @@ use {
     checked_url::CheckedUrl,
     component::Component,
     component_error::ComponentError,
+    content_disposition::ContentDisposition,
     context::Context,
     count::Count,
     dalek_signature_error::DalekSignatureError,
@@ -47,6 +48,7 @@ use {
     entries::Entries,
     envelope::Envelope,
     file::File,
+    filename::Filename,
     format::Format,
     functions::{
       client, current_dir, decode_path, default, is_lowercase_hex, now, parse_server_url,
@@ -63,6 +65,7 @@ use {
     lint_error::{Lint, LintError},
     lint_group::LintGroup,
     map_decoder::MapDecoder,
+    media::Media,
     mode::Mode,
     options::Options,
     or::Or,
@@ -72,6 +75,7 @@ use {
     private_key_error::PrivateKeyError,
     public_key_error::PublicKeyError,
     reqwest_result_ext::ReqwestResultExt,
+    resource::Resource,
     server::Server,
     server_error::ServerError,
     sign_options::SignOptions,
@@ -87,7 +91,7 @@ use {
   },
   axum::{
     body::Body,
-    http::StatusCode,
+    http::{HeaderValue, StatusCode, header},
     response::{IntoResponse, Response},
   },
   bech32::{
@@ -143,6 +147,7 @@ use {
   },
   tempfile::NamedTempFile,
   tokio::io::AsyncWriteExt,
+  tokio_util::io::ReaderStream,
   url::Url,
   usized::IntoU64,
   walkdir::WalkDir,
@@ -165,6 +170,7 @@ use {
   strum::IntoDiscriminant,
   tempfile::TempDir,
   test::{assert_cbor, assert_encoding, tempdir},
+  unindent::unindent,
 };
 
 #[cfg(test)]
@@ -197,6 +203,7 @@ mod checked_url;
 mod component;
 mod component_buf;
 mod component_error;
+mod content_disposition;
 mod context;
 mod count;
 mod dalek_signature_error;
@@ -240,6 +247,7 @@ mod major_type;
 mod manifest;
 mod map_decoder;
 mod map_encoder;
+mod media;
 mod metadata;
 mod mode;
 mod options;
@@ -255,6 +263,7 @@ mod public_key_error;
 mod re;
 mod relative_path;
 mod reqwest_result_ext;
+mod resource;
 mod server;
 mod server_error;
 mod sign_options;

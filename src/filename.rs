@@ -14,10 +14,9 @@ macro_rules! filename {
 }
 
 filename! { Artwork, ArtworkExtension, "jpg", "png" }
-
-filename! { Nfo, NfoExtension, "nfo" }
-
+filename! { Flac, FlacExtension, "flac" }
 filename! { Md, MdExtension, "md" }
+filename! { Nfo, NfoExtension, "nfo" }
 
 pub(crate) trait Extension {
   const EXTENSIONS: &[&str];
@@ -36,6 +35,12 @@ impl<T: Extension> Filename<T> {
 
   pub(crate) fn extension(&self) -> Option<&str> {
     self.component.extension()
+  }
+}
+
+impl<T: Extension> From<Filename<T>> for RelativePath {
+  fn from(filename: Filename<T>) -> Self {
+    filename.as_path()
   }
 }
 
@@ -96,6 +101,13 @@ impl Artwork {
   }
 }
 
+impl Flac {
+  #[expect(clippy::unused_self)]
+  pub(crate) fn content_type(&self) -> Mime {
+    "audio/flac".parse().unwrap()
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
@@ -148,6 +160,12 @@ mod tests {
         extensions: &["nfo"],
       },
     );
+    case::<Flac>(
+      "track.mp3",
+      ComponentError::Extension {
+        extensions: &["flac"],
+      },
+    );
     case::<Md>("", ComponentError::Empty);
     case::<Md>("foo/bar.md", ComponentError::Separator { character: '/' });
   }
@@ -161,6 +179,7 @@ mod tests {
 
     case::<Artwork>("cover.jpg");
     case::<Artwork>("cover.png");
+    case::<Flac>("track.flac");
     case::<Md>("README.md");
     case::<Nfo>("info.nfo");
   }

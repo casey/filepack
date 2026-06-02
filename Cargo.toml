@@ -66,6 +66,7 @@ zune-jpeg = "0.5.15"
 image = "0.25.10"
 pretty_assertions = "1.4.1"
 tower = { version = "0.5.3", features = ["util"] }
+unindent = "0.2.4"
 
 [lib]
 doctest = false

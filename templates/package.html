@@ -1,10 +1,15 @@
 <h1>Package {{ self.fingerprint }}</h1>
 %% if let Some(metadata) = &self.metadata {
 %%   if metadata.artwork.is_some() {
-<a href=/artwork/{{ self.fingerprint }}>
-  <img src=/artwork/{{ self.fingerprint }} width=500 height=500>
-</a>
+<div>
+  <a href=/artwork/{{ self.fingerprint }}>
+    <img src=/artwork/{{ self.fingerprint }} width=500 height=500>
+  </a>
+</div>
 %%   }
+%% }
+<a href=/directory/{{ Hash::from(self.fingerprint) }}>files</a>
+%% if let Some(metadata) = &self.metadata {
 <dl>
 %%   if let Some(title) = &metadata.title {
   <dt>title</dt>
@@ -30,6 +35,23 @@
   <dt>language</dt>
   <dd>{{ language }}</dd>
 %%   }
+%%   if let Some(media) = &metadata.media {
+  <dt>media</dt>
+  <dd>{{ media.name() }}</dd>
+%%     match media {
+%%       Media::Audio { tracks } => {
+  <dt>tracks</dt>
+  <dd>
+    <ol>
+%%         for (i, track) in tracks.iter().enumerate() {
+      <li>
+        <audio controls src=/media/audio/{{ self.fingerprint }}/track/{{ i }}></audio>
+      </li>
+%%         }
+    </ol>
+  </dd>
+%%       }
+%%     }
+%%   }
 </dl>
 %% }
-<a href=/directory/{{ Hash::from(self.fingerprint) }}>files</a>

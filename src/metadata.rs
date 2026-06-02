@@ -17,10 +17,12 @@ pub struct Metadata {
   #[n(5)]
   pub language: Option<Language>,
   #[n(6)]
-  pub package: Option<Package>,
+  pub media: Option<Media>,
   #[n(7)]
-  pub readme: Option<filename::Md>,
+  pub package: Option<Package>,
   #[n(8)]
+  pub readme: Option<filename::Md>,
+  #[n(9)]
   pub title: Option<ComponentBuf>,
 }
 
@@ -132,6 +134,12 @@ impl Metadata {
       files.push(readme.as_path());
     }
 
+    if let Some(media) = &self.media {
+      match media {
+        Media::Audio { tracks } => files.extend(tracks.iter().map(Filename::as_path)),
+      }
+    }
+
     files
   }
 }
@@ -148,10 +156,35 @@ mod tests {
   }
 
   #[test]
+  fn deserialize_media_audio() {
+    let metadata = Metadata::deserialize(
+      Metadata::YAML_FILENAME.as_ref(),
+      &unindent(
+        "
+          media:
+            type: audio
+            tracks:
+              - foo.flac
+              - bar.flac
+        ",
+      ),
+    )
+    .unwrap();
+
+    assert_eq!(
+      metadata.media,
+      Some(Media::Audio {
+        tracks: vec!["foo.flac".parse().unwrap(), "bar.flac".parse().unwrap()],
+      }),
+    );
+  }
+
+  #[test]
   fn deserialize_rejects_invalid_values() {
     #[track_caller]
     fn case(yaml: &str, expected: &str) {
-      let error = Metadata::deserialize(Metadata::YAML_FILENAME.as_ref(), yaml).unwrap_err();
+      let error =
+        Metadata::deserialize(Metadata::YAML_FILENAME.as_ref(), &unindent(yaml)).unwrap_err();
 
       let chain = error
         .iter_chain()
@@ -163,37 +196,81 @@ mod tests {
     }
 
     case(
-      "title: Foo\ndate: 2024/06/15",
+      "
+        title: Foo
+        date: 2024/06/15
+      ",
       "date: input contains invalid characters",
     );
     case(
-      "title: Foo\nhomepage: not-a-valid-url",
+      "
+        title: Foo
+        homepage: not-a-valid-url
+      ",
       "homepage: relative URL without a base",
     );
-    case("title: Foo\nlanguage: ac", "unknown language code `ac`");
     case(
-      "title: Foo\npackage:\n  creator_tag: foo",
+      "
+        title: Foo
+        language: ac
+      ",
+      "unknown language code `ac`",
+    );
+    case(
+      "
+        title: Foo
+        package:
+          creator_tag: foo
+      ",
       r"package\.creator_tag: tags must match regex",
     );
     case(
-      "title: Foo\npackage:\n  date: not-a-date",
+      "
+        title: Foo
+        package:
+          date: not-a-date
+      ",
       r"package\.date: input contains invalid characters",
     );
     case(
-      "title: Foo\npackage:\n  homepage: :::invalid",
+      "
+        title: Foo
+        package:
+          homepage: :::invalid
+      ",
       "package.homepage: relative URL without a base",
     );
     case(
-      "title: Foo\nartwork: cover.svg",
+      "
+        title: Foo
+        artwork: cover.svg
+      ",
       "artwork: component must end in `.jpg` or `.png`",
     );
     case(
-      "title: Foo\npackage:\n  nfo: info.txt",
+      "
+        title: Foo
+        package:
+          nfo: info.txt
+      ",
       "nfo: component must end in `.nfo`",
     );
     case(
-      "title: Foo\nreadme: README.txt",
+      "
+        title: Foo
+        readme: README.txt
+      ",
       "readme: component must end in `.md`",
+    );
+    case(
+      "
+        title: Foo
+        media:
+          type: audio
+          tracks:
+          - foo.mp3
+      ",
+      r"component must end in `\.flac`",
     );
   }
 
@@ -211,6 +288,9 @@ mod tests {
       description: Some("bar".into()),
       homepage: Some("http://example.com".parse().unwrap()),
       language: Some("en".parse().unwrap()),
+      media: Some(Media::Audio {
+        tracks: vec!["track.flac".parse().unwrap()],
+      }),
       package: Some(Package {
         creator: Some("baz".parse().unwrap()),
         creator_tag: Some("A0".parse().unwrap()),
@@ -232,6 +312,24 @@ mod tests {
       &filesystem::read_to_string(Metadata::YAML_FILENAME).unwrap(),
     )
     .unwrap();
+  }
+
+  #[test]
+  fn files_includes_audio_tracks() {
+    let metadata = Metadata {
+      media: Some(Media::Audio {
+        tracks: vec!["foo.flac".parse().unwrap(), "bar.flac".parse().unwrap()],
+      }),
+      ..default()
+    };
+
+    assert_eq!(
+      metadata.files(),
+      vec![
+        "foo.flac".parse::<RelativePath>().unwrap(),
+        "bar.flac".parse().unwrap(),
+      ],
+    );
   }
 
   fn image(width: u32, height: u32, image_format: ImageFormat) -> Vec<u8> {
@@ -314,6 +412,7 @@ mod tests {
         package,
         readme,
         title,
+        media,
       } = metadata;
 
       if title
@@ -331,6 +430,7 @@ mod tests {
       assert!(language.is_some());
       assert!(readme.is_some());
       assert!(title.is_some());
+      assert!(media.is_none());
 
       let Package {
         creator,
