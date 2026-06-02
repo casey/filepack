@@ -664,9 +664,9 @@ error: 1 mismatched file
 #[test]
 fn unarchive_error() {
   let mut dir_encoder = Encoder::new();
-  let mut dir_map = dir_encoder.map::<u8>(2);
-  dir_map.item(0, 0u8);
-  dir_map.item(1, BTreeMap::<String, u8>::new());
+  let mut dir_map = dir_encoder.map::<u64>(2);
+  dir_map.item(0, 0u64);
+  dir_map.item(1, BTreeMap::<String, u64>::new());
   drop(dir_map);
   let dir_bytes = dir_encoder.finish();
 
@@ -676,8 +676,8 @@ fn unarchive_error() {
   files.insert(root, dir_bytes);
 
   let mut encoder = Encoder::new();
-  let mut archive = encoder.map::<u8>(3);
-  archive.item(0, 0u8);
+  let mut archive = encoder.map::<u64>(3);
+  archive.item(0, 0u64);
   archive.item(1, root);
   archive.item(2, &files);
   drop(archive);
