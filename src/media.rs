@@ -1,13 +1,20 @@
 use super::*;
 
-#[derive(Clone, Debug, Deserialize, Encode, Decode, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, Encode, Decode, IntoStaticStr, PartialEq, Serialize)]
 #[serde(deny_unknown_fields, rename_all = "snake_case", tag = "type")]
+#[strum(serialize_all = "kebab-case")]
 pub(crate) enum Media {
   #[n(0)]
   Audio {
     #[n(0)]
     tracks: Vec<filename::Flac>,
   },
+}
+
+impl Media {
+  pub(crate) fn name(&self) -> &'static str {
+    self.into()
+  }
 }
 
 #[cfg(test)]

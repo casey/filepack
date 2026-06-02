@@ -36,6 +36,8 @@
   <dd>{{ language }}</dd>
 %%   }
 %%   if let Some(media) = &metadata.media {
+  <dt>media</dt>
+  <dd>{{ media.name() }} </dt>
 %%     match media {
 %%       Media::Audio { tracks } => {
   <dt>tracks</dt>
