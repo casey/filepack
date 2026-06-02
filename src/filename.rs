@@ -38,6 +38,12 @@ impl<T: Extension> Filename<T> {
   }
 }
 
+impl<T: Extension> From<Filename<T>> for RelativePath {
+  fn from(filename: Filename<T>) -> Self {
+    filename.as_path()
+  }
+}
+
 impl<T: Extension> Serialize for Filename<T> {
   fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
     self.component.serialize(serializer)

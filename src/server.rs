@@ -25,7 +25,10 @@ impl Server {
 
     let hash = self
       .package_file(fingerprint, &artwork.as_path())?
-      .context(server_error::ArtworkMissing { fingerprint })?;
+      .context(server_error::PackageFileMissing {
+        fingerprint,
+        path: artwork,
+      })?;
 
     Ok(self.open_file(hash)?.content_type(content_type))
   }
@@ -100,13 +103,13 @@ impl Server {
     fingerprint: Fingerprint,
     track: usize,
   ) -> ServerResult<Resource> {
-    let Some(metadata) = self.package(fingerprint)? else {
-      todo!();
-    };
+    let metadata = self
+      .package(fingerprint)?
+      .context(server_error::PackageMetadataNotFound { fingerprint })?;
 
-    let Some(media) = metadata.media else {
-      todo!();
-    };
+    let media = metadata
+      .media
+      .context(server_error::PackageMediaMetadataNotFound { fingerprint })?;
 
     match media {
       Media::Audio { tracks } => {
@@ -118,7 +121,12 @@ impl Server {
             tracks: tracks.len(),
           })?;
 
-        let hash = self.package_file(fingerprint, &track.as_path())?.unwrap();
+        let path = track.as_path();
+
+        let hash = self
+          .package_file(fingerprint, &path)?
+          .context(server_error::PackageFileMissing { path, fingerprint })?;
+
         Ok(self.open_file(hash)?.content_type(track.content_type()))
       }
     }

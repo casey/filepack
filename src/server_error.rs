@@ -3,8 +3,6 @@ use super::*;
 #[derive(Debug, Snafu)]
 #[snafu(context(suffix(false)), visibility(pub(crate)))]
 pub(crate) enum ServerError {
-  #[snafu(display("package {fingerprint} artwork missing"))]
-  ArtworkMissing { fingerprint: Fingerprint },
   #[snafu(display("package {fingerprint} artwork not found"))]
   ArtworkNotFound { fingerprint: Fingerprint },
   #[snafu(display("invalid authorization token"))]
@@ -38,6 +36,13 @@ pub(crate) enum ServerError {
     path: Utf8PathBuf,
     source: io::Error,
   },
+  #[snafu(display("file {path} missing from package {fingerprint}"))]
+  PackageFileMissing {
+    path: RelativePath,
+    fingerprint: Fingerprint,
+  },
+  #[snafu(display("package {fingerprint} does have media metadata`"))]
+  PackageMediaMetadataNotFound { fingerprint: Fingerprint },
   #[snafu(display("stored metadata for package {fingerprint} failed to decode"))]
   PackageMetadataCorrupt {
     fingerprint: Fingerprint,
@@ -53,6 +58,8 @@ pub(crate) enum ServerError {
     fingerprint: Fingerprint,
     path: RelativePath,
   },
+  #[snafu(display("package {fingerprint} does have metadata`"))]
+  PackageMetadataNotFound { fingerprint: Fingerprint },
   #[snafu(display("package {fingerprint} not found"))]
   PackageNotFound { fingerprint: Fingerprint },
   #[snafu(display("package {fingerprint} root directory is unverified"))]
@@ -79,8 +86,7 @@ pub(crate) enum ServerError {
 impl ServerError {
   fn message(&self) -> String {
     match self {
-      Self::ArtworkMissing { .. }
-      | Self::ArtworkNotFound { .. }
+      Self::ArtworkNotFound { .. }
       | Self::AuthorizationInvalid { .. }
       | Self::AuthorizationMalformed
       | Self::AuthorizationMissing
@@ -90,9 +96,12 @@ impl ServerError {
       | Self::DirectoryUnverified { .. }
       | Self::FileNotFound { .. }
       | Self::MediaAudioTrackDoesNotExist { .. }
+      | Self::PackageFileMissing { .. }
+      | Self::PackageMediaMetadataNotFound { .. }
       | Self::PackageMetadataCorrupt { .. }
       | Self::PackageMetadataDecode { .. }
       | Self::PackageMetadataFileMissing { .. }
+      | Self::PackageMetadataNotFound { .. }
       | Self::PackageNotFound { .. }
       | Self::PackageUnverified { .. }
       | Self::PageNotFound
@@ -113,13 +122,13 @@ impl ServerError {
       Self::AuthorizationInvalid { .. }
       | Self::AuthorizationMalformed
       | Self::AuthorizationMissing => StatusCode::UNAUTHORIZED,
-      Self::ArtworkMissing { .. }
-      | Self::Database { .. }
+      Self::Database { .. }
       | Self::DatabaseCommit { .. }
       | Self::DatabaseStorage { .. }
       | Self::DatabaseTable { .. }
       | Self::DatabaseTransaction { .. }
       | Self::FilesystemIo { .. }
+      | Self::PackageFileMissing { .. }
       | Self::PackageMetadataCorrupt { .. } => StatusCode::INTERNAL_SERVER_ERROR,
       Self::DirectoryDecode { .. }
       | Self::DirectoryFileMissing { .. }
@@ -133,6 +142,8 @@ impl ServerError {
       | Self::DirectoryNotFound { .. }
       | Self::FileNotFound { .. }
       | Self::MediaAudioTrackDoesNotExist { .. }
+      | Self::PackageMediaMetadataNotFound { .. }
+      | Self::PackageMetadataNotFound { .. }
       | Self::PackageNotFound { .. }
       | Self::PageNotFound => StatusCode::NOT_FOUND,
       Self::UploadForbidden => StatusCode::FORBIDDEN,
