@@ -33,11 +33,8 @@ impl IntoResponse for Resource {
       .header(header::CONTENT_TYPE, self.content_type.essence_str())
       .header(header::ETAG, format!("\"{}\"", self.hash));
 
-    match self.content_disposition {
-      ContentDisposition::Attachment => {
-        builder = builder.header(header::CONTENT_DISPOSITION, "attachment")
-      }
-      ContentDisposition::Inline => {}
+    if let Some(value) = self.content_disposition.value() {
+      builder = builder.header(header::CONTENT_DISPOSITION, value);
     }
 
     builder

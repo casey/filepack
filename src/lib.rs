@@ -90,8 +90,7 @@ use {
   },
   axum::{
     body::Body,
-    http::StatusCode,
-    http::header,
+    http::{HeaderValue, StatusCode, header},
     response::{IntoResponse, Response},
   },
   bech32::{
