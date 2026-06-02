@@ -7,7 +7,9 @@
   </a>
 </div>
 %%   }
+%% }
 <a href=/directory/{{ Hash::from(self.fingerprint) }}>files</a>
+%% if let Some(metadata) = &self.metadata {
 <dl>
 %%   if let Some(title) = &metadata.title {
   <dt>title</dt>
