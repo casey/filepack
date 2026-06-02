@@ -250,7 +250,9 @@ fn artwork_missing() {
   server
     .get(format!("/artwork/{fingerprint}"))
     .status(StatusCode::INTERNAL_SERVER_ERROR)
-    .assert_body(format!("package {fingerprint} artwork missing"))
+    .assert_body(format!(
+      "file `cover.png` missing from package {fingerprint}",
+    ))
     .send();
 }
 

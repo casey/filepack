@@ -45,7 +45,7 @@ pub(crate) enum ServerError {
     track: usize,
     tracks: usize,
   },
-  #[snafu(display("file {path} missing from package {fingerprint}"))]
+  #[snafu(display("file `{path}` missing from package {fingerprint}"))]
   PackageFileMissing {
     path: RelativePath,
     fingerprint: Fingerprint,
