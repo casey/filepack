@@ -28,6 +28,16 @@ impl<'a, 'b> ArrayDecoder<'a, 'b> {
       remaining: len,
     }
   }
+
+  pub(crate) fn next<V: Decode>(&mut self) -> Result<Option<V>, DecodeError> {
+    if self.remaining == 0 {
+      return Ok(None);
+    }
+
+    self.remaining -= 1;
+
+    Ok(Some(V::decode(&mut *self.decoder)?))
+  }
 }
 
 #[cfg(test)]
@@ -57,6 +67,16 @@ mod tests {
     let mut array = decoder.array().unwrap();
     array.item::<u64>().unwrap();
     assert_matches!(array.item::<u64>(), Err(DecodeError::MissingElement));
+  }
+
+  #[test]
+  fn next() {
+    let mut decoder = Decoder::new(&[0x82, 0x00, 0x18, 0x2a]);
+    let mut array = decoder.array().unwrap();
+    assert_matches!(array.next::<u64>(), Ok(Some(0)));
+    assert_matches!(array.next::<u64>(), Ok(Some(42)));
+    assert_matches!(array.next::<u64>(), Ok(None));
+    array.finish().unwrap();
   }
 
   #[test]

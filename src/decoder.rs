@@ -186,16 +186,8 @@ mod tests {
   #[test]
   fn finish_errors_on_trailing_bytes() {
     let mut decoder = Decoder::new(&[0x00, 0x00]);
-    u8::decode(&mut decoder).unwrap();
+    u64::decode(&mut decoder).unwrap();
     assert_matches!(decoder.finish(), Err(DecodeError::TrailingBytes));
-  }
-
-  #[test]
-  fn integer_range() {
-    assert!(matches!(
-      u8::decode(&mut Decoder::new(&256u64.encode_to_vec())),
-      Err(DecodeError::IntegerRange { .. }),
-    ));
   }
 
   #[test]

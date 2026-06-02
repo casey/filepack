@@ -42,6 +42,21 @@ impl Decode for Vec<u8> {
   }
 }
 
+impl<T: Decode> Decode for Vec<T> {
+  fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
+    let mut array = decoder.array()?;
+
+    let mut vec = Vec::new();
+    while let Some(item) = array.next::<T>()? {
+      vec.push(item);
+    }
+
+    array.finish()?;
+
+    Ok(vec)
+  }
+}
+
 impl Decode for i32 {
   fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
     decoder
@@ -55,15 +70,6 @@ impl Decode for i64 {
   fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
     decoder
       .signed_integer()?
-      .try_into()
-      .context(decode_error::IntegerRange)
-  }
-}
-
-impl Decode for u8 {
-  fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
-    decoder
-      .integer()?
       .try_into()
       .context(decode_error::IntegerRange)
   }
@@ -91,7 +97,7 @@ mod tests {
   #[test]
   fn decode_from_vec_errors_on_trailing_bytes() {
     assert_matches!(
-      u8::decode_from_slice(&[0x00, 0x00]),
+      u64::decode_from_slice(&[0x00, 0x00]),
       Err(DecodeError::TrailingBytes),
     );
   }

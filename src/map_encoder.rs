@@ -83,7 +83,7 @@ mod tests {
   #[test]
   fn item_with() {
     let mut encoder = Encoder::new();
-    let mut map = encoder.map::<u8>(1);
+    let mut map = encoder.map::<u64>(1);
     map.item_with(0, &Foreign(42), encode_foreign);
     drop(map);
     assert_eq!(encoder.finish(), vec![0xa1, 0x00, 0x18, 0x2b]);
@@ -92,8 +92,8 @@ mod tests {
   #[test]
   fn optional_item_none() {
     let mut encoder = Encoder::new();
-    let mut map = encoder.map::<u8>(0);
-    map.optional_item(0, None::<u8>);
+    let mut map = encoder.map::<u64>(0);
+    map.optional_item(0, None::<u64>);
     drop(map);
     assert_eq!(encoder.finish(), vec![0xa0]);
   }
@@ -101,8 +101,8 @@ mod tests {
   #[test]
   fn optional_item_some() {
     let mut encoder = Encoder::new();
-    let mut map = encoder.map::<u8>(1);
-    map.optional_item(0, Some(42u8));
+    let mut map = encoder.map::<u64>(1);
+    map.optional_item(0, Some(42u64));
     drop(map);
     assert_eq!(encoder.finish(), vec![0xa1, 0x00, 0x18, 0x2a]);
   }
@@ -110,7 +110,7 @@ mod tests {
   #[test]
   fn optional_item_with_none() {
     let mut encoder = Encoder::new();
-    let mut map = encoder.map::<u8>(0);
+    let mut map = encoder.map::<u64>(0);
     map.optional_item_with(0, None::<&Foreign>, encode_foreign);
     drop(map);
     assert_eq!(encoder.finish(), vec![0xa0]);
@@ -119,7 +119,7 @@ mod tests {
   #[test]
   fn optional_item_with_some() {
     let mut encoder = Encoder::new();
-    let mut map = encoder.map::<u8>(1);
+    let mut map = encoder.map::<u64>(1);
     map.optional_item_with(0, Some(&Foreign(42)), encode_foreign);
     drop(map);
     assert_eq!(encoder.finish(), vec![0xa1, 0x00, 0x18, 0x2b]);
@@ -130,9 +130,9 @@ mod tests {
     case(
       || {
         let mut encoder = Encoder::new();
-        let mut map = encoder.map::<u8>(2);
-        map.item(2, 1u8);
-        map.item(1, 2u8);
+        let mut map = encoder.map::<u64>(2);
+        map.item(2, 1u64);
+        map.item(1, 2u64);
       },
       "out of order key",
     );
@@ -143,8 +143,8 @@ mod tests {
     case(
       || {
         let mut encoder = Encoder::new();
-        let mut map = MapEncoder::<u8>::new(&mut encoder, 2);
-        map.item(0, 0u8);
+        let mut map = MapEncoder::<u64>::new(&mut encoder, 2);
+        map.item(0, 0u64);
       },
       "too few items",
     );
@@ -155,9 +155,9 @@ mod tests {
     case(
       || {
         let mut encoder = Encoder::new();
-        let mut map = encoder.map::<u8>(1);
-        map.item(0, 0u8);
-        map.item(1, 1u8);
+        let mut map = encoder.map::<u64>(1);
+        map.item(0, 0u64);
+        map.item(1, 1u64);
       },
       "too many items",
     );

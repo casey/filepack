@@ -44,6 +44,12 @@ impl Encode for Vec<u8> {
   }
 }
 
+impl<T: Encode> Encode for Vec<T> {
+  fn encode(&self, encoder: &mut Encoder) {
+    self.as_slice().encode(encoder);
+  }
+}
+
 impl Encode for i32 {
   fn encode(&self, encoder: &mut Encoder) {
     encoder.signed_integer((*self).into());
@@ -59,12 +65,6 @@ impl Encode for i64 {
 impl Encode for str {
   fn encode(&self, encoder: &mut Encoder) {
     encoder.text(self);
-  }
-}
-
-impl Encode for u8 {
-  fn encode(&self, encoder: &mut Encoder) {
-    encoder.integer((*self).into());
   }
 }
 
@@ -86,9 +86,24 @@ impl Encode for [u8] {
   }
 }
 
+impl<T: Encode> Encode for [T] {
+  fn encode(&self, encoder: &mut Encoder) {
+    let mut array = encoder.array(self.len().into_u64());
+    for item in self {
+      array.item(item);
+    }
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn array() {
+    assert_cbor(Vec::<u64>::new(), &[0x80]);
+    assert_cbor(vec![1u64, 2u64], &[0x82, 0x01, 0x02]);
+  }
 
   #[test]
   fn bytes() {
@@ -139,11 +154,6 @@ mod tests {
     assert_cbor(0u64, &[0x00]);
     assert_cbor(24u64, &[0x18, 0x18]);
     assert_cbor(256u64, &[0x19, 0x01, 0x00]);
-  }
-
-  #[test]
-  fn u8() {
-    assert_cbor(100u8, &[0x18, 0x64]);
   }
 
   #[test]

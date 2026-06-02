@@ -342,13 +342,13 @@ fn upload_package_fails_when_package_is_not_directory() {
   let payload_hash = Hash::bytes(b"payload");
 
   let mut dir_encoder = Encoder::new();
-  let mut dir_map = dir_encoder.map::<u8>(2);
-  dir_map.item(0, 0u8);
+  let mut dir_map = dir_encoder.map::<u64>(2);
+  dir_map.item(0, 0u64);
   dir_map.item_with(1, &(), |(), encoder| {
     let mut entries = encoder.map::<&str>(1);
     entries.item_with("package", &(), |(), encoder| {
-      let mut entry = encoder.map::<u8>(3);
-      entry.item(0, 0u8);
+      let mut entry = encoder.map::<u64>(3);
+      entry.item(0, 0u64);
       entry.item(1, payload_hash);
       entry.item(2, 0u64);
       drop(entry);
@@ -364,8 +364,8 @@ fn upload_package_fails_when_package_is_not_directory() {
   files.insert(root, dir_bytes);
 
   let mut encoder = Encoder::new();
-  let mut archive = encoder.map::<u8>(3);
-  archive.item(0, 0u8);
+  let mut archive = encoder.map::<u64>(3);
+  archive.item(0, 0u64);
   archive.item(1, root);
   archive.item(2, &files);
   drop(archive);
@@ -390,9 +390,9 @@ error: failed to unarchive manifest
 #[test]
 fn upload_package_fails_when_package_missing() {
   let mut dir_encoder = Encoder::new();
-  let mut dir_map = dir_encoder.map::<u8>(2);
-  dir_map.item(0, 0u8);
-  dir_map.item(1, BTreeMap::<String, u8>::new());
+  let mut dir_map = dir_encoder.map::<u64>(2);
+  dir_map.item(0, 0u64);
+  dir_map.item(1, BTreeMap::<String, u64>::new());
   drop(dir_map);
   let dir_bytes = dir_encoder.finish();
 
@@ -402,8 +402,8 @@ fn upload_package_fails_when_package_missing() {
   files.insert(root, dir_bytes);
 
   let mut encoder = Encoder::new();
-  let mut archive = encoder.map::<u8>(3);
-  archive.item(0, 0u8);
+  let mut archive = encoder.map::<u64>(3);
+  archive.item(0, 0u64);
   archive.item(1, root);
   archive.item(2, &files);
   drop(archive);
@@ -430,8 +430,8 @@ fn upload_package_fails_when_root_file_missing() {
   let missing = Hash::bytes(b"missing");
 
   let mut encoder = Encoder::new();
-  let mut archive = encoder.map::<u8>(3);
-  archive.item(0, 0u8);
+  let mut archive = encoder.map::<u64>(3);
+  archive.item(0, 0u64);
   archive.item(1, missing);
   archive.item(2, BTreeMap::<Hash, Vec<u8>>::new());
   drop(archive);
@@ -464,8 +464,8 @@ fn upload_package_fails_when_root_not_directory_cbor() {
   files.insert(root, junk);
 
   let mut encoder = Encoder::new();
-  let mut archive = encoder.map::<u8>(3);
-  archive.item(0, 0u8);
+  let mut archive = encoder.map::<u64>(3);
+  archive.item(0, 0u64);
   archive.item(1, root);
   archive.item(2, &files);
   drop(archive);
