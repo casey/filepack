@@ -47,8 +47,8 @@ pub(crate) enum ServerError {
   },
   #[snafu(display("file `{path}` missing from package {fingerprint}"))]
   PackageFileMissing {
-    path: RelativePath,
     fingerprint: Fingerprint,
+    path: RelativePath,
   },
   #[snafu(display("package {fingerprint} does not have media metadata"))]
   PackageMediaMetadataNotFound { fingerprint: Fingerprint },

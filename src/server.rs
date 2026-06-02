@@ -220,6 +220,16 @@ impl Server {
     Directory::decode_from_slice(&cbor).context(server_error::DirectoryDecode { hash })
   }
 
+  fn verified_package_file(
+    &self,
+    fingerprint: Fingerprint,
+    path: &RelativePath,
+  ) -> ServerResult<Hash> {
+    self
+      .package_file(fingerprint, path)?
+      .context(server_error::PackageFileMissing { fingerprint, path })
+  }
+
   pub(crate) fn verify_directory(&self, hash: Hash) -> ServerResult {
     let directory = self.read_directory(hash)?;
 
@@ -261,16 +271,6 @@ impl Server {
     tx.commit()?;
 
     Ok(())
-  }
-
-  fn verified_package_file(
-    &self,
-    fingerprint: Fingerprint,
-    path: &RelativePath,
-  ) -> ServerResult<Hash> {
-    self
-      .package_file(fingerprint, path)?
-      .context(server_error::PackageFileMissing { fingerprint, path })
   }
 
   pub(crate) fn verify_package(&self, fingerprint: Fingerprint) -> ServerResult {
