@@ -1,11 +1,15 @@
 <h1>Package {{ self.fingerprint }}</h1>
 %% if let Some(metadata) = &self.metadata {
 %%   if metadata.artwork.is_some() {
-<a href=/artwork/{{ self.fingerprint }}>
-  <img src=/artwork/{{ self.fingerprint }} width=500 height=500>
-</a>
+<div>
+  <a href=/artwork/{{ self.fingerprint }}>
+    <img src=/artwork/{{ self.fingerprint }} width=500 height=500>
+  </a>
+</div>
 %%   }
-<a href=/directory/{{ Hash::from(self.fingerprint) }}>files</a>
+</div>
+  <a href=/directory/{{ Hash::from(self.fingerprint) }}>files</a>
+</div>
 <dl>
 %%   if let Some(title) = &metadata.title {
   <dt>title</dt>
