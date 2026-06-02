@@ -13,10 +13,10 @@ ci: lint
   cargo ltest --workspace
 
 build:
-  cargo lbuild --release
+  cargo lbuild
 
 serve: build
-  ./target/release/filepack serve --address localhost --http-port 8000
+  ./target/debug/filepack serve --address localhost --http-port 8000
 
 open:
   open http://localhost:8000

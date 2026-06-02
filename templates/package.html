@@ -35,14 +35,13 @@
 %%       Media::Audio { tracks } => {
   <dt>tracks</dt>
   <dd>
-    <ul>
+    <ol>
 %%         for (i, track) in tracks.iter().enumerate() {
       <li>
-        <div>{{ track }}<div>
         <audio controls src=/media/{{ self.fingerprint }}/track/{{ i }}></audio>
       </li>
 %%         }
-    </ul>
+    </ol>
   </dd>
 %%       }
 %%     }
