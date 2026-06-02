@@ -135,7 +135,7 @@ impl Serve {
   ) -> ServerResult<Resource> {
     Ok(
       block_in_place(|| server.artwork(*fingerprint))?
-        .with_content_disposition(ContentDisposition::Inline),
+        .content_disposition(ContentDisposition::Inline),
     )
   }
 
@@ -212,7 +212,7 @@ impl Serve {
   ) -> ServerResult<Resource> {
     Ok(
       block_in_place(|| server.media_audio_track(fingerprint, n))?
-        .with_content_disposition(ContentDisposition::Inline),
+        .content_disposition(ContentDisposition::Inline),
     )
   }
 

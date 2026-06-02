@@ -9,14 +9,14 @@ pub(crate) struct Resource {
 }
 
 impl Resource {
-  pub(crate) fn with_content_disposition(self, content_disposition: ContentDisposition) -> Self {
+  pub(crate) fn content_disposition(self, content_disposition: ContentDisposition) -> Self {
     Self {
       content_disposition,
       ..self
     }
   }
 
-  pub(crate) fn with_content_type(self, content_type: Mime) -> Self {
+  pub(crate) fn content_type(self, content_type: Mime) -> Self {
     Self {
       content_type,
       ..self

@@ -27,7 +27,7 @@ impl Server {
       .package_file(fingerprint, &artwork.as_path())?
       .context(server_error::ArtworkMissing { fingerprint })?;
 
-    Ok(self.open_file(hash)?.with_content_type(content_type))
+    Ok(self.open_file(hash)?.content_type(content_type))
   }
 
   pub(crate) fn directory(&self, hash: Hash) -> ServerResult<Directory> {
@@ -115,7 +115,7 @@ impl Server {
         Ok(
           self
             .open_file(hash)?
-            .with_content_type("audio/flac".parse().unwrap()),
+            .content_type("audio/flac".parse().unwrap()),
         )
       }
     }
