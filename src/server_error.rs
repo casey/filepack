@@ -36,6 +36,15 @@ pub(crate) enum ServerError {
     path: Utf8PathBuf,
     source: io::Error,
   },
+  #[snafu(display(
+    "track {track} does not exist, package {fingerprint} has {}",
+    Count(*tracks, "track"),
+  ))]
+  MediaAudioTrackDoesNotExist {
+    fingerprint: Fingerprint,
+    track: usize,
+    tracks: usize,
+  },
   #[snafu(display("file {path} missing from package {fingerprint}"))]
   PackageFileMissing {
     path: RelativePath,
@@ -72,15 +81,6 @@ pub(crate) enum ServerError {
   UploadForbidden,
   #[snafu(display("expected upload with hash {expected} but got {actual}"))]
   UploadHashMismatch { actual: Hash, expected: Hash },
-  #[snafu(display(
-    "track {track} does not exist, package {fingerprint} has {}",
-    Count(*tracks, "track"),
-  ))]
-  MediaAudioTrackDoesNotExist {
-    fingerprint: Fingerprint,
-    track: usize,
-    tracks: usize,
-  },
 }
 
 impl ServerError {

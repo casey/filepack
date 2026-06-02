@@ -78,31 +78,6 @@ impl Server {
     Ok(files)
   }
 
-  pub(crate) fn open_file(&self, hash: Hash) -> ServerResult<Resource> {
-    let path = self.file_path(hash);
-
-    let file = fs::File::open(&path).map_err(|err| {
-      if err.kind() == io::ErrorKind::NotFound {
-        server_error::FileNotFound { hash }.into_error(err)
-      } else {
-        server_error::FilesystemIo { path: &path }.into_error(err)
-      }
-    })?;
-
-    let content_length = file
-      .metadata()
-      .context(server_error::FilesystemIo { path })?
-      .len();
-
-    Ok(Resource {
-      content_disposition: ContentDisposition::Attachment,
-      content_length,
-      content_type: mime::APPLICATION_OCTET_STREAM,
-      file,
-      hash,
-    })
-  }
-
   pub(crate) fn media_audio_track(
     &self,
     fingerprint: Fingerprint,
@@ -140,6 +115,31 @@ impl Server {
         )
       }
     }
+  }
+
+  pub(crate) fn open_file(&self, hash: Hash) -> ServerResult<Resource> {
+    let path = self.file_path(hash);
+
+    let file = fs::File::open(&path).map_err(|err| {
+      if err.kind() == io::ErrorKind::NotFound {
+        server_error::FileNotFound { hash }.into_error(err)
+      } else {
+        server_error::FilesystemIo { path: &path }.into_error(err)
+      }
+    })?;
+
+    let content_length = file
+      .metadata()
+      .context(server_error::FilesystemIo { path })?
+      .len();
+
+    Ok(Resource {
+      content_disposition: ContentDisposition::Attachment,
+      content_length,
+      content_type: mime::APPLICATION_OCTET_STREAM,
+      file,
+      hash,
+    })
   }
 
   pub(crate) fn package(&self, fingerprint: Fingerprint) -> ServerResult<Option<Metadata>> {
