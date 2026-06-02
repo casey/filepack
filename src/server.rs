@@ -23,12 +23,7 @@ impl Server {
 
     let content_type = artwork.content_type();
 
-    let hash = self
-      .package_file(fingerprint, &artwork.as_path())?
-      .context(server_error::PackageFileMissing {
-        fingerprint,
-        path: artwork,
-      })?;
+    let hash = self.verified_package_file(fingerprint, &artwork.as_path())?;
 
     Ok(
       self
@@ -103,9 +98,7 @@ impl Server {
 
         let path = track.as_path();
 
-        let hash = self
-          .package_file(fingerprint, &path)?
-          .context(server_error::PackageFileMissing { path, fingerprint })?;
+        let hash = self.verified_package_file(fingerprint, &path)?;
 
         Ok(
           self
@@ -268,6 +261,16 @@ impl Server {
     tx.commit()?;
 
     Ok(())
+  }
+
+  fn verified_package_file(
+    &self,
+    fingerprint: Fingerprint,
+    path: &RelativePath,
+  ) -> ServerResult<Hash> {
+    self
+      .package_file(fingerprint, path)?
+      .context(server_error::PackageFileMissing { fingerprint, path })
   }
 
   pub(crate) fn verify_package(&self, fingerprint: Fingerprint) -> ServerResult {
