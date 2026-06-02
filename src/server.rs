@@ -30,7 +30,12 @@ impl Server {
         path: artwork,
       })?;
 
-    Ok(self.open_file(hash)?.content_type(content_type))
+    Ok(
+      self
+        .open_file(hash)?
+        .content_disposition(ContentDisposition::Inline)
+        .content_type(content_type),
+    )
   }
 
   pub(crate) fn directory(&self, hash: Hash) -> ServerResult<Directory> {
@@ -127,7 +132,12 @@ impl Server {
           .package_file(fingerprint, &path)?
           .context(server_error::PackageFileMissing { path, fingerprint })?;
 
-        Ok(self.open_file(hash)?.content_type(track.content_type()))
+        Ok(
+          self
+            .open_file(hash)?
+            .content_disposition(ContentDisposition::Inline)
+            .content_type(track.content_type()),
+        )
       }
     }
   }

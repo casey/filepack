@@ -133,10 +133,7 @@ impl Serve {
     server: ServerExtension,
     fingerprint: Path<Fingerprint>,
   ) -> ServerResult<Resource> {
-    Ok(
-      block_in_place(|| server.artwork(*fingerprint))?
-        .content_disposition(ContentDisposition::Inline),
-    )
+    block_in_place(|| server.artwork(*fingerprint))
   }
 
   async fn directory(server: ServerExtension, Path(hash): Path<Hash>) -> PageResult<DirectoryHtml> {
@@ -210,10 +207,7 @@ impl Serve {
     server: ServerExtension,
     Path((fingerprint, n)): Path<(Fingerprint, usize)>,
   ) -> ServerResult<Resource> {
-    Ok(
-      block_in_place(|| server.media_audio_track(fingerprint, n))?
-        .content_disposition(ContentDisposition::Inline),
-    )
+    block_in_place(|| server.media_audio_track(fingerprint, n))
   }
 
   async fn package(
