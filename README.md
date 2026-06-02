@@ -493,8 +493,6 @@ produce packages which are different but which have the same fingerprint.
 Fingerprints may be used as a globally unique identifier. If two packages have
 the same fingerprint, they have the same content.
 
-For details on how fingerprints are calculated, see [DESIGN.md](DESIGN.md).
-
 Guide
 -----
 
