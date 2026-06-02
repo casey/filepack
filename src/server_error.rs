@@ -65,6 +65,15 @@ pub(crate) enum ServerError {
   UploadForbidden,
   #[snafu(display("expected upload with hash {expected} but got {actual}"))]
   UploadHashMismatch { actual: Hash, expected: Hash },
+  #[snafu(display(
+    "track {track} does not exist, package {fingerprint} has {}",
+    Count(*tracks, "track"),
+  ))]
+  MediaAudioTrackDoesNotExist {
+    fingerprint: Fingerprint,
+    track: usize,
+    tracks: usize,
+  },
 }
 
 impl ServerError {
@@ -80,6 +89,7 @@ impl ServerError {
       | Self::DirectoryNotFound { .. }
       | Self::DirectoryUnverified { .. }
       | Self::FileNotFound { .. }
+      | Self::MediaAudioTrackDoesNotExist { .. }
       | Self::PackageMetadataCorrupt { .. }
       | Self::PackageMetadataDecode { .. }
       | Self::PackageMetadataFileMissing { .. }
@@ -122,6 +132,7 @@ impl ServerError {
       Self::ArtworkNotFound { .. }
       | Self::DirectoryNotFound { .. }
       | Self::FileNotFound { .. }
+      | Self::MediaAudioTrackDoesNotExist { .. }
       | Self::PackageNotFound { .. }
       | Self::PageNotFound => StatusCode::NOT_FOUND,
       Self::UploadForbidden => StatusCode::FORBIDDEN,

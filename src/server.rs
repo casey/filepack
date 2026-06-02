@@ -98,7 +98,7 @@ impl Server {
   pub(crate) fn media_audio_track(
     &self,
     fingerprint: Fingerprint,
-    n: usize,
+    track: usize,
   ) -> ServerResult<Resource> {
     let Some(metadata) = self.package(fingerprint)? else {
       todo!();
@@ -110,13 +110,16 @@ impl Server {
 
     match media {
       Media::Audio { tracks } => {
-        let track = tracks.get(n).unwrap();
+        let track = tracks
+          .get(track)
+          .context(server_error::MediaAudioTrackDoesNotExist {
+            fingerprint,
+            track,
+            tracks: tracks.len(),
+          })?;
+
         let hash = self.package_file(fingerprint, &track.as_path())?.unwrap();
-        Ok(
-          self
-            .open_file(hash)?
-            .content_type("audio/flac".parse().unwrap()),
-        )
+        Ok(self.open_file(hash)?.content_type(track.content_type()))
       }
     }
   }

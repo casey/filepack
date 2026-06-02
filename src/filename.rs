@@ -101,6 +101,12 @@ impl Artwork {
   }
 }
 
+impl Flac {
+  pub(crate) fn content_type(&self) -> Mime {
+    "audio/flac".parse().unwrap()
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
