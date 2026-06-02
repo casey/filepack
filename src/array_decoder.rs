@@ -18,8 +18,8 @@ impl<'a, 'b> ArrayDecoder<'a, 'b> {
     Ok(())
   }
 
-  pub(crate) fn item<V: Decode>(&mut self) -> Result<V, DecodeError> {
-    V::decode(self.element()?)
+  pub(crate) fn item<T: Decode>(&mut self) -> Result<T, DecodeError> {
+    T::decode(self.element()?)
   }
 
   pub(crate) fn new(decoder: &'a mut Decoder<'b>, len: u64) -> Self {
@@ -29,14 +29,14 @@ impl<'a, 'b> ArrayDecoder<'a, 'b> {
     }
   }
 
-  pub(crate) fn next<V: Decode>(&mut self) -> Result<Option<V>, DecodeError> {
+  pub(crate) fn next<T: Decode>(&mut self) -> Result<Option<T>, DecodeError> {
     if self.remaining == 0 {
       return Ok(None);
     }
 
     self.remaining -= 1;
 
-    Ok(Some(V::decode(&mut *self.decoder)?))
+    Ok(Some(T::decode(&mut *self.decoder)?))
   }
 }
 
