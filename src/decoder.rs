@@ -191,14 +191,6 @@ mod tests {
   }
 
   #[test]
-  fn integer_range() {
-    assert!(matches!(
-      u16::decode(&mut Decoder::new(&(1 << 16).encode_to_vec())),
-      Err(DecodeError::IntegerRange { .. }),
-    ));
-  }
-
-  #[test]
   fn overlong_integer() {
     #[track_caller]
     fn case(bytes: &[u8]) {

@@ -75,15 +75,6 @@ impl Decode for i64 {
   }
 }
 
-impl Decode for u16 {
-  fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
-    decoder
-      .integer()?
-      .try_into()
-      .context(decode_error::IntegerRange)
-  }
-}
-
 impl Decode for u64 {
   fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
     decoder.integer()
