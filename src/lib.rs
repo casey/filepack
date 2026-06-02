@@ -170,6 +170,7 @@ use {
   strum::IntoDiscriminant,
   tempfile::TempDir,
   test::{assert_cbor, assert_encoding, tempdir},
+  unindent::unindent,
 };
 
 #[cfg(test)]

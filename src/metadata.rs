@@ -175,7 +175,8 @@ mod tests {
   fn deserialize_rejects_invalid_values() {
     #[track_caller]
     fn case(yaml: &str, expected: &str) {
-      let error = Metadata::deserialize(Metadata::YAML_FILENAME.as_ref(), yaml).unwrap_err();
+      let error =
+        Metadata::deserialize(Metadata::YAML_FILENAME.as_ref(), &unindent(yaml)).unwrap_err();
 
       let chain = error
         .iter_chain()
@@ -187,40 +188,80 @@ mod tests {
     }
 
     case(
-      "title: Foo\ndate: 2024/06/15",
+      "
+        title: Foo
+        date: 2024/06/15
+      ",
       "date: input contains invalid characters",
     );
     case(
-      "title: Foo\nhomepage: not-a-valid-url",
+      "
+        title: Foo
+        homepage: not-a-valid-url
+      ",
       "homepage: relative URL without a base",
     );
-    case("title: Foo\nlanguage: ac", "unknown language code `ac`");
     case(
-      "title: Foo\npackage:\n  creator_tag: foo",
+      "
+        title: Foo
+        language: ac
+      ",
+      "unknown language code `ac`",
+    );
+    case(
+      "
+        title: Foo
+        package:
+          creator_tag: foo
+      ",
       r"package\.creator_tag: tags must match regex",
     );
     case(
-      "title: Foo\npackage:\n  date: not-a-date",
+      "
+        title: Foo
+        package:
+          date: not-a-date
+      ",
       r"package\.date: input contains invalid characters",
     );
     case(
-      "title: Foo\npackage:\n  homepage: :::invalid",
+      "
+        title: Foo
+        package:
+          homepage: :::invalid
+      ",
       "package.homepage: relative URL without a base",
     );
     case(
-      "title: Foo\nartwork: cover.svg",
+      "
+        title: Foo
+        artwork: cover.svg
+      ",
       "artwork: component must end in `.jpg` or `.png`",
     );
     case(
-      "title: Foo\npackage:\n  nfo: info.txt",
+      "
+        title: Foo
+        package:
+          nfo: info.txt
+      ",
       "nfo: component must end in `.nfo`",
     );
     case(
-      "title: Foo\nreadme: README.txt",
+      "
+        title: Foo
+        readme: README.txt
+      ",
       "readme: component must end in `.md`",
     );
     case(
-      "title: Foo\nmedia:\n  type: audio\n  tracks:\n    - foo.mp3",
+      "
+        title: Foo
+        media:
+          type: audio
+          tracks:
+          - foo.mp3
+      ",
       r"component must end in `\.flac`",
     );
   }
