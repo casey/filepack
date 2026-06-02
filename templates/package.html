@@ -5,6 +5,7 @@
   <img src=/artwork/{{ self.fingerprint }} width=500 height=500>
 </a>
 %%   }
+<a href=/directory/{{ Hash::from(self.fingerprint) }}>files</a>
 <dl>
 %%   if let Some(title) = &metadata.title {
   <dt>title</dt>
@@ -48,4 +49,3 @@
 %%   }
 </dl>
 %% }
-<a href=/directory/{{ Hash::from(self.fingerprint) }}>files</a>
