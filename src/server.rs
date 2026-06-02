@@ -15,10 +15,7 @@ pub(crate) struct Server {
 }
 
 impl Server {
-  pub(crate) fn artwork(
-    &self,
-    fingerprint: Fingerprint,
-  ) -> ServerResult<(fs::File, u64, Hash, Mime)> {
+  pub(crate) fn artwork(&self, fingerprint: Fingerprint) -> ServerResult<Resource> {
     let artwork = self
       .package(fingerprint)?
       .and_then(|metadata| metadata.artwork)
@@ -30,9 +27,7 @@ impl Server {
       .package_file(fingerprint, &artwork.as_path())?
       .context(server_error::ArtworkMissing { fingerprint })?;
 
-    let (file, len) = self.open_file(hash)?;
-
-    Ok((file, len, hash, content_type))
+    Ok(self.open_file(hash)?.with_content_type(content_type))
   }
 
   pub(crate) fn directory(&self, hash: Hash) -> ServerResult<Directory> {
@@ -75,7 +70,7 @@ impl Server {
     Ok(files)
   }
 
-  pub(crate) fn open_file(&self, hash: Hash) -> ServerResult<(fs::File, u64)> {
+  pub(crate) fn open_file(&self, hash: Hash) -> ServerResult<Resource> {
     let path = self.file_path(hash);
 
     let file = fs::File::open(&path).map_err(|err| {
@@ -86,19 +81,24 @@ impl Server {
       }
     })?;
 
-    let len = file
+    let content_length = file
       .metadata()
       .context(server_error::FilesystemIo { path })?
       .len();
 
-    Ok((file, len))
+    Ok(Resource {
+      content_length,
+      content_type: mime::APPLICATION_OCTET_STREAM,
+      file,
+      hash,
+    })
   }
 
   pub(crate) fn media_audio_track(
     &self,
     fingerprint: Fingerprint,
     n: usize,
-  ) -> ServerResult<(fs::File, Hash, u64)> {
+  ) -> ServerResult<Resource> {
     let Some(metadata) = self.package(fingerprint)? else {
       todo!();
     };
@@ -111,8 +111,11 @@ impl Server {
       Media::Audio { tracks } => {
         let track = tracks.get(n).unwrap();
         let hash = self.package_file(fingerprint, &track.as_path())?.unwrap();
-        let (file, len) = self.open_file(hash)?;
-        Ok((file, hash, len))
+        Ok(
+          self
+            .open_file(hash)?
+            .with_content_type("audio/flac".parse().unwrap()),
+        )
       }
     }
   }

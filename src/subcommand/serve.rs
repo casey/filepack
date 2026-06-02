@@ -134,15 +134,8 @@ impl Serve {
     server: ServerExtension,
     fingerprint: Path<Fingerprint>,
   ) -> ServerResult<Response> {
-    let (file, content_length, hash, content_type) =
-      block_in_place(|| server.artwork(*fingerprint))?;
-    Ok(Self::file_response(
-      None,
-      content_length,
-      content_type,
-      file,
-      hash,
-    ))
+    let resource = block_in_place(|| server.artwork(*fingerprint))?;
+    Ok(Self::resource_response(resource, None))
   }
 
   async fn directory(server: ServerExtension, Path(hash): Path<Hash>) -> PageResult<DirectoryHtml> {
@@ -164,14 +157,8 @@ impl Serve {
   }
 
   async fn download(server: ServerExtension, hash: Path<Hash>) -> ServerResult<Response> {
-    let (file, content_length) = block_in_place(|| server.open_file(*hash))?;
-    Ok(Self::file_response(
-      Some("attachment"),
-      content_length,
-      mime::APPLICATION_OCTET_STREAM,
-      file,
-      *hash,
-    ))
+    let resource = block_in_place(|| server.open_file(*hash))?;
+    Ok(Self::resource_response(resource, Some("attachment")))
   }
 
   async fn fallback() -> ServerResult<StaticAsset> {
@@ -180,31 +167,6 @@ impl Serve {
 
   async fn favicon() -> ServerResult<StaticAsset> {
     StaticAsset::get("favicon.png")
-  }
-
-  fn file_response(
-    content_disposition: Option<&str>,
-    content_length: u64,
-    content_type: Mime,
-    file: fs::File,
-    hash: Hash,
-  ) -> Response {
-    let mut builder = Response::builder()
-      .header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
-      .header(header::CONTENT_LENGTH, content_length)
-      .header(header::CONTENT_SECURITY_POLICY, "sandbox")
-      .header(header::CONTENT_TYPE, content_type.essence_str())
-      .header(header::ETAG, format!("\"{hash}\""));
-
-    if let Some(content_disposition) = content_disposition {
-      builder = builder.header(header::CONTENT_DISPOSITION, content_disposition);
-    }
-
-    builder
-      .body(Body::from_stream(ReaderStream::new(
-        tokio::fs::File::from_std(file),
-      )))
-      .unwrap()
   }
 
   async fn files(server: ServerExtension) -> PageResult<FilesHtml> {
@@ -248,15 +210,8 @@ impl Serve {
     server: ServerExtension,
     Path((fingerprint, n)): Path<(Fingerprint, usize)>,
   ) -> ServerResult<Response> {
-    let (file, hash, content_length) = block_in_place(|| server.media_audio_track(fingerprint, n))?;
-
-    Ok(Self::file_response(
-      None,
-      content_length,
-      "audio/flac".parse().unwrap(),
-      file,
-      hash,
-    ))
+    let resource = block_in_place(|| server.media_audio_track(fingerprint, n))?;
+    Ok(Self::resource_response(resource, None))
   }
 
   async fn package(
@@ -308,6 +263,25 @@ impl Serve {
         header::X_CONTENT_TYPE_OPTIONS,
         HeaderValue::from_static("nosniff"),
       ))
+  }
+
+  fn resource_response(resource: Resource, content_disposition: Option<&str>) -> Response {
+    let mut builder = Response::builder()
+      .header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
+      .header(header::CONTENT_LENGTH, resource.content_length)
+      .header(header::CONTENT_SECURITY_POLICY, "sandbox")
+      .header(header::CONTENT_TYPE, resource.content_type.essence_str())
+      .header(header::ETAG, format!("\"{}\"", resource.hash));
+
+    if let Some(content_disposition) = content_disposition {
+      builder = builder.header(header::CONTENT_DISPOSITION, content_disposition);
+    }
+
+    builder
+      .body(Body::from_stream(ReaderStream::new(
+        tokio::fs::File::from_std(resource.file),
+      )))
+      .unwrap()
   }
 
   pub(crate) fn router(server: Arc<Server>, auth_config: Option<Arc<AuthConfig>>) -> Router {
