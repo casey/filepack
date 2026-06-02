@@ -205,9 +205,9 @@ impl Serve {
 
   async fn media_audio_track(
     server: ServerExtension,
-    Path((fingerprint, n)): Path<(Fingerprint, usize)>,
+    Path((fingerprint, track)): Path<(Fingerprint, usize)>,
   ) -> ServerResult<Resource> {
-    block_in_place(|| server.media_audio_track(fingerprint, n))
+    block_in_place(|| server.media_audio_track(fingerprint, track))
   }
 
   async fn package(
@@ -273,7 +273,7 @@ impl Serve {
       .route("/files", get(Self::files))
       .route("/install.sh", get(Self::install_script))
       .route(
-        "/media/{fingerprint}/track/{n}",
+        "/media/{fingerprint}/track/{track}",
         get(Self::media_audio_track),
       )
       .route("/package/{fingerprint}", get(Self::package))
