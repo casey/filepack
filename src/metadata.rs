@@ -134,6 +134,12 @@ impl Metadata {
       files.push(readme.as_path());
     }
 
+    if let Some(media) = &self.media {
+      match media {
+        Media::Audio { tracks } => files.extend(tracks.iter().map(Filename::as_path)),
+      }
+    }
+
     files
   }
 }

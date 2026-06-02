@@ -48,6 +48,7 @@ use {
     entries::Entries,
     envelope::Envelope,
     file::File,
+    filename::Filename,
     format::Format,
     functions::{
       client, current_dir, decode_path, default, is_lowercase_hex, now, parse_server_url,
