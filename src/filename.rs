@@ -85,10 +85,10 @@ impl<T: Extension> FromStr for Filename<T> {
 }
 
 impl Artwork {
-  pub(crate) fn content_type(&self) -> Mime {
+  pub(crate) fn resource_type(&self) -> ResourceType {
     match self.ty() {
-      ArtworkType::Jpeg => mime::IMAGE_JPEG,
-      ArtworkType::Png => mime::IMAGE_PNG,
+      ArtworkType::Jpeg => ResourceType::Jpeg,
+      ArtworkType::Png => ResourceType::Png,
     }
   }
 
@@ -103,8 +103,8 @@ impl Artwork {
 
 impl Flac {
   #[expect(clippy::unused_self)]
-  pub(crate) fn content_type(&self) -> Mime {
-    "audio/flac".parse().unwrap()
+  pub(crate) fn resource_type(&self) -> ResourceType {
+    ResourceType::Flac
   }
 }
 

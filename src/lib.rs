@@ -34,7 +34,6 @@ use {
     checked_url::CheckedUrl,
     component::Component,
     component_error::ComponentError,
-    content_disposition::ContentDisposition,
     context::Context,
     count::Count,
     dalek_signature_error::DalekSignatureError,
@@ -76,6 +75,7 @@ use {
     public_key_error::PublicKeyError,
     reqwest_result_ext::ReqwestResultExt,
     resource::Resource,
+    resource_type::ResourceType,
     server::Server,
     server_error::ServerError,
     sign_options::SignOptions,
@@ -203,7 +203,6 @@ mod checked_url;
 mod component;
 mod component_buf;
 mod component_error;
-mod content_disposition;
 mod context;
 mod count;
 mod dalek_signature_error;
@@ -264,6 +263,7 @@ mod re;
 mod relative_path;
 mod reqwest_result_ext;
 mod resource;
+mod resource_type;
 mod server;
 mod server_error;
 mod sign_options;
