@@ -156,6 +156,22 @@ mod tests {
   }
 
   #[test]
+  fn deserialize_media_audio() {
+    let metadata = Metadata::deserialize(
+      Metadata::YAML_FILENAME.as_ref(),
+      "media:\n  type: audio\n  tracks:\n    - foo.flac\n    - bar.flac\n",
+    )
+    .unwrap();
+
+    assert_eq!(
+      metadata.media,
+      Some(Media::Audio {
+        tracks: vec!["foo.flac".parse().unwrap(), "bar.flac".parse().unwrap()],
+      }),
+    );
+  }
+
+  #[test]
   fn deserialize_rejects_invalid_values() {
     #[track_caller]
     fn case(yaml: &str, expected: &str) {
@@ -203,6 +219,10 @@ mod tests {
       "title: Foo\nreadme: README.txt",
       "readme: component must end in `.md`",
     );
+    case(
+      "title: Foo\nmedia:\n  type: audio\n  tracks:\n    - foo.mp3",
+      r"component must end in `\.flac`",
+    );
   }
 
   #[test]
@@ -243,6 +263,24 @@ mod tests {
       &filesystem::read_to_string(Metadata::YAML_FILENAME).unwrap(),
     )
     .unwrap();
+  }
+
+  #[test]
+  fn files_includes_audio_tracks() {
+    let metadata = Metadata {
+      media: Some(Media::Audio {
+        tracks: vec!["foo.flac".parse().unwrap(), "bar.flac".parse().unwrap()],
+      }),
+      ..default()
+    };
+
+    assert_eq!(
+      metadata.files(),
+      vec![
+        "foo.flac".parse::<RelativePath>().unwrap(),
+        "bar.flac".parse().unwrap(),
+      ],
+    );
   }
 
   fn image(width: u32, height: u32, image_format: ImageFormat) -> Vec<u8> {

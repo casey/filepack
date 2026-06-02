@@ -160,6 +160,12 @@ mod tests {
         extensions: &["nfo"],
       },
     );
+    case::<Flac>(
+      "track.mp3",
+      ComponentError::Extension {
+        extensions: &["flac"],
+      },
+    );
     case::<Md>("", ComponentError::Empty);
     case::<Md>("foo/bar.md", ComponentError::Separator { character: '/' });
   }
@@ -173,6 +179,7 @@ mod tests {
 
     case::<Artwork>("cover.jpg");
     case::<Artwork>("cover.png");
+    case::<Flac>("track.flac");
     case::<Md>("README.md");
     case::<Nfo>("info.nfo");
   }

@@ -33,4 +33,9 @@ mod tests {
       ],
     );
   }
+
+  #[test]
+  fn name() {
+    assert_eq!(Media::Audio { tracks: Vec::new() }.name(), "audio");
+  }
 }
