@@ -50,7 +50,7 @@ impl RelativePath {
             return Some(LintError::WindowsReservedCharacter { character });
           }
 
-          if let 0..32 = character as u32 {
+          if let 0..32 = u32::from(character) {
             return Some(LintError::WindowsReservedCharacter { character });
           }
         }
