@@ -95,7 +95,7 @@ mod tests {
   use super::*;
 
   #[test]
-  fn decode_from_vec_errors_on_trailing_bytes() {
+  fn decode_from_slice_errors_on_trailing_bytes() {
     assert_matches!(
       u64::decode_from_slice(&[0x00, 0x00]),
       Err(DecodeError::TrailingBytes),
