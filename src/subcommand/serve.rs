@@ -273,7 +273,7 @@ impl Serve {
       .route("/files", get(Self::files))
       .route("/install.sh", get(Self::install_script))
       .route(
-        "/media/{fingerprint}/track/{track}",
+        "/media/audio/{fingerprint}/track/{track}",
         get(Self::media_audio_track),
       )
       .route("/package/{fingerprint}", get(Self::package))

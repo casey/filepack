@@ -50,7 +50,7 @@ pub(crate) enum ServerError {
     path: RelativePath,
     fingerprint: Fingerprint,
   },
-  #[snafu(display("package {fingerprint} does have media metadata`"))]
+  #[snafu(display("package {fingerprint} does not have media metadata"))]
   PackageMediaMetadataNotFound { fingerprint: Fingerprint },
   #[snafu(display("stored metadata for package {fingerprint} failed to decode"))]
   PackageMetadataCorrupt {
@@ -67,7 +67,7 @@ pub(crate) enum ServerError {
     fingerprint: Fingerprint,
     path: RelativePath,
   },
-  #[snafu(display("package {fingerprint} does have metadata`"))]
+  #[snafu(display("package {fingerprint} does not have metadata"))]
   PackageMetadataNotFound { fingerprint: Fingerprint },
   #[snafu(display("package {fingerprint} not found"))]
   PackageNotFound { fingerprint: Fingerprint },

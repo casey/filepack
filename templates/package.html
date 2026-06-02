@@ -7,9 +7,7 @@
   </a>
 </div>
 %%   }
-</div>
-  <a href=/directory/{{ Hash::from(self.fingerprint) }}>files</a>
-</div>
+<a href=/directory/{{ Hash::from(self.fingerprint) }}>files</a>
 <dl>
 %%   if let Some(title) = &metadata.title {
   <dt>title</dt>
@@ -37,7 +35,7 @@
 %%   }
 %%   if let Some(media) = &metadata.media {
   <dt>media</dt>
-  <dd>{{ media.name() }} </dt>
+  <dd>{{ media.name() }}</dd>
 %%     match media {
 %%       Media::Audio { tracks } => {
   <dt>tracks</dt>
@@ -45,7 +43,7 @@
     <ol>
 %%         for (i, track) in tracks.iter().enumerate() {
       <li>
-        <audio controls src=/media/{{ self.fingerprint }}/track/{{ i }}></audio>
+        <audio controls src=/media/audio/{{ self.fingerprint }}/track/{{ i }}></audio>
       </li>
 %%         }
     </ol>

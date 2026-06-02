@@ -56,12 +56,6 @@ impl<T: Extension> Decode for Filename<T> {
   }
 }
 
-impl<T: Extension> Display for Filename<T> {
-  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    write!(f, "{}", self.component)
-  }
-}
-
 impl<T: Extension> Encode for Filename<T> {
   fn encode(&self, encoder: &mut Encoder) {
     self.component.encode(encoder);
