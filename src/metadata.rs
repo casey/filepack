@@ -159,7 +159,15 @@ mod tests {
   fn deserialize_media_audio() {
     let metadata = Metadata::deserialize(
       Metadata::YAML_FILENAME.as_ref(),
-      "media:\n  type: audio\n  tracks:\n    - foo.flac\n    - bar.flac\n",
+      &unindent(
+        "
+          media:
+            type: audio
+            tracks:
+              - foo.flac
+              - bar.flac
+        ",
+      ),
     )
     .unwrap();
 
