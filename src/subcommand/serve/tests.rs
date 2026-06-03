@@ -15,6 +15,7 @@ struct TestRequestBuilder {
   body: Option<String>,
   method: Method,
   path: String,
+  range: Option<String>,
   response_body: Body,
   response_headers: BTreeMap<String, String>,
   router: Router,
@@ -66,6 +67,7 @@ impl TestRequestBuilder {
       body: None,
       method,
       path: path.into(),
+      range: None,
       response_body: Body::empty(),
       response_headers: BTreeMap::from([(
         header::X_CONTENT_TYPE_OPTIONS.to_string(),
@@ -77,12 +79,21 @@ impl TestRequestBuilder {
     }
   }
 
+  fn range(mut self, range: &str) -> Self {
+    self.range = Some(range.into());
+    self
+  }
+
   fn send(self) {
     RUNTIME.block_on(async move {
       let mut request = Request::builder().method(self.method).uri(self.path);
 
       if let Some(token) = self.token {
         request = request.header(header::AUTHORIZATION, format!("Bearer {token}"));
+      }
+
+      if let Some(range) = self.range {
+        request = request.header(header::RANGE, range);
       }
 
       let response = self
@@ -330,12 +341,23 @@ fn artwork_response() {
 
     server
       .get(format!("/artwork/{fingerprint}"))
+      .assert_header(header::ACCEPT_RANGES, "bytes")
       .assert_header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
       .assert_header(header::CONTENT_LENGTH, "3")
       .assert_header(header::CONTENT_SECURITY_POLICY, "sandbox")
       .assert_header(header::CONTENT_TYPE, content_type)
       .assert_header(header::ETAG, format!("\"{artwork_hash}\""))
       .assert_body(artwork)
+      .send();
+
+    server
+      .get(format!("/artwork/{fingerprint}"))
+      .range("bytes=1-2")
+      .status(StatusCode::PARTIAL_CONTENT)
+      .assert_header(header::ACCEPT_RANGES, "bytes")
+      .assert_header(header::CONTENT_RANGE, "bytes 1-2/3")
+      .assert_header(header::CONTENT_LENGTH, "2")
+      .assert_body("oo")
       .send();
   }
 
@@ -405,6 +427,25 @@ fn domain_flag_is_respected() {
 }
 
 #[test]
+fn download_range() {
+  let server = TestServer::new();
+
+  let hash = Hash::bytes(b"foobarbaz");
+  server.write_file(b"foobarbaz");
+
+  server
+    .get(format!("/file/{hash}"))
+    .range("bytes=0-2")
+    .status(StatusCode::PARTIAL_CONTENT)
+    .assert_header(header::ACCEPT_RANGES, "bytes")
+    .assert_header(header::CONTENT_DISPOSITION, "attachment")
+    .assert_header(header::CONTENT_RANGE, "bytes 0-2/9")
+    .assert_header(header::CONTENT_LENGTH, "3")
+    .assert_body("foo")
+    .send();
+}
+
+#[test]
 fn download_response() {
   let server = TestServer::new();
 
@@ -413,6 +454,7 @@ fn download_response() {
 
   server
     .get(format!("/file/{hash}"))
+    .assert_header(header::ACCEPT_RANGES, "bytes")
     .assert_header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
     .assert_header(header::CONTENT_DISPOSITION, "attachment")
     .assert_header(header::CONTENT_LENGTH, "3")
@@ -718,6 +760,80 @@ fn media_audio_track_package_without_metadata() {
 }
 
 #[test]
+fn media_audio_track_ranges() {
+  #[track_caller]
+  fn case(
+    server: &TestServer,
+    fingerprint: Fingerprint,
+    range: &str,
+    status: StatusCode,
+    content_range: &str,
+    body: &[u8],
+  ) {
+    server
+      .get(format!("/media/audio/{fingerprint}/track/0"))
+      .range(range)
+      .status(status)
+      .assert_header(header::ACCEPT_RANGES, "bytes")
+      .assert_header(header::CONTENT_RANGE, content_range)
+      .assert_header(header::CONTENT_LENGTH, body.len().to_string())
+      .assert_body(body)
+      .send();
+  }
+
+  let server = TestServer::new();
+
+  let track: &[u8] = b"foobarbaz";
+
+  let fingerprint = package(
+    &server,
+    &Metadata {
+      media: Some(Media::Audio {
+        tracks: vec!["foo.flac".parse().unwrap()],
+      }),
+      ..default()
+    },
+    &[("foo.flac", track)],
+  );
+
+  case(
+    &server,
+    fingerprint,
+    "bytes=2-5",
+    StatusCode::PARTIAL_CONTENT,
+    "bytes 2-5/9",
+    b"obar",
+  );
+
+  case(
+    &server,
+    fingerprint,
+    "bytes=3-",
+    StatusCode::PARTIAL_CONTENT,
+    "bytes 3-8/9",
+    b"barbaz",
+  );
+
+  case(
+    &server,
+    fingerprint,
+    "bytes=-3",
+    StatusCode::PARTIAL_CONTENT,
+    "bytes 6-8/9",
+    b"baz",
+  );
+
+  case(
+    &server,
+    fingerprint,
+    "bytes=100-200",
+    StatusCode::RANGE_NOT_SATISFIABLE,
+    "bytes */9",
+    b"",
+  );
+}
+
+#[test]
 fn media_audio_track_response() {
   let server = TestServer::new();
 
@@ -737,6 +853,7 @@ fn media_audio_track_response() {
 
   server
     .get(format!("/media/audio/{fingerprint}/track/0"))
+    .assert_header(header::ACCEPT_RANGES, "bytes")
     .assert_header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
     .assert_header(header::CONTENT_LENGTH, "3")
     .assert_header(header::CONTENT_SECURITY_POLICY, "sandbox")
