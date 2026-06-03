@@ -7,7 +7,6 @@ use {
     response::Redirect,
     routing::{get, post, put},
   },
-  axum_extra::{TypedHeader, headers},
   axum_server::Handle,
   rustls_acme::{
     AcmeConfig, acme::LETS_ENCRYPT_PRODUCTION_DIRECTORY, axum::AxumAcceptor, caches::DirCache,
@@ -132,12 +131,10 @@ impl Serve {
 
   async fn artwork(
     server: ServerExtension,
-    range: Option<TypedHeader<headers::Range>>,
     fingerprint: Path<Fingerprint>,
+    range: Option<TypedHeader<headers::Range>>,
   ) -> ServerResult<Resource> {
-    Ok(
-      block_in_place(|| server.artwork(*fingerprint))?.range(range.map(|TypedHeader(range)| range)),
-    )
+    Ok(block_in_place(|| server.artwork(*fingerprint))?.range(range))
   }
 
   async fn directory(server: ServerExtension, Path(hash): Path<Hash>) -> PageResult<DirectoryHtml> {
@@ -160,10 +157,10 @@ impl Serve {
 
   async fn download(
     server: ServerExtension,
-    range: Option<TypedHeader<headers::Range>>,
     hash: Path<Hash>,
+    range: Option<TypedHeader<headers::Range>>,
   ) -> ServerResult<Resource> {
-    Ok(block_in_place(|| server.open_file(*hash))?.range(range.map(|TypedHeader(range)| range)))
+    Ok(block_in_place(|| server.open_file(*hash))?.range(range))
   }
 
   async fn fallback() -> ServerResult<StaticAsset> {
@@ -213,13 +210,10 @@ impl Serve {
 
   async fn media_audio_track(
     server: ServerExtension,
-    range: Option<TypedHeader<headers::Range>>,
     Path((fingerprint, track)): Path<(Fingerprint, usize)>,
+    range: Option<TypedHeader<headers::Range>>,
   ) -> ServerResult<Resource> {
-    Ok(
-      block_in_place(|| server.media_audio_track(fingerprint, track))?
-        .range(range.map(|TypedHeader(range)| range)),
-    )
+    Ok(block_in_place(|| server.media_audio_track(fingerprint, track))?.range(range))
   }
 
   async fn package(

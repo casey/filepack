@@ -1,12 +1,4 @@
-use {
-  super::*,
-  axum_extra::headers,
-  std::{
-    io::{Seek, SeekFrom},
-    ops::Bound,
-  },
-  tokio::io::AsyncReadExt,
-};
+use super::*;
 
 pub(crate) struct Resource {
   pub(crate) content_length: u64,
@@ -17,8 +9,11 @@ pub(crate) struct Resource {
 }
 
 impl Resource {
-  pub(crate) fn range(self, range: Option<headers::Range>) -> Self {
-    Self { range, ..self }
+  pub(crate) fn range(self, range: Option<TypedHeader<headers::Range>>) -> Self {
+    Self {
+      range: range.map(|TypedHeader(range)| range),
+      ..self
+    }
   }
 
   pub(crate) fn ty(self, ty: ResourceType) -> Self {
