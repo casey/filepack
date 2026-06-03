@@ -155,20 +155,20 @@ impl Serve {
     }
   }
 
-  async fn file(
-    server: ServerExtension,
-    hash: Path<Hash>,
-    range: Option<TypedHeader<headers::Range>>,
-  ) -> ServerResult<Resource> {
-    Ok(block_in_place(|| server.open_file(*hash))?.range(range))
-  }
-
   async fn fallback() -> ServerResult<StaticAsset> {
     Ok(StaticAsset::get("404.html")?.status(StatusCode::NOT_FOUND))
   }
 
   async fn favicon() -> ServerResult<StaticAsset> {
     StaticAsset::get("favicon.png")
+  }
+
+  async fn file(
+    server: ServerExtension,
+    hash: Path<Hash>,
+    range: Option<TypedHeader<headers::Range>>,
+  ) -> ServerResult<Resource> {
+    Ok(block_in_place(|| server.open_file(*hash))?.range(range))
   }
 
   async fn files(server: ServerExtension) -> PageResult<FilesHtml> {
