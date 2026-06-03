@@ -1,6 +1,14 @@
 <h1>Packages</h1>
 <ul>
-%% for package in &self.packages {
-  <li><a href=/package/{{ package }}>{{ package }}</a></li>
+%% for (fingerprint, title) in &self.packages {
+  <li>
+    <a href=/package/{{ fingerprint }}>
+%% if let Some(title) = title {
+      {{ title }}
+%% } else {
+      {{ fingerprint }}
+%% }
+    </a>
+  </li>
 %% }
 </ul>

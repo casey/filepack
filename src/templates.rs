@@ -25,7 +25,7 @@ impl Page for FilesHtml {
 
 #[derive(Boilerplate)]
 pub(crate) struct PackagesHtml {
-  pub(crate) packages: Vec<Fingerprint>,
+  pub(crate) packages: Vec<(Fingerprint, Option<ComponentBuf>)>,
 }
 
 impl Page for PackagesHtml {

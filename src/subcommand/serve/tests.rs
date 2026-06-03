@@ -940,6 +940,27 @@ fn packages_empty() {
 }
 
 #[test]
+fn packages_include_titles() {
+  let server = TestServer::new();
+
+  let fingerprint = package(
+    &server,
+    &Metadata {
+      title: Some("foo".parse().unwrap()),
+      ..default()
+    },
+    &[],
+  );
+
+  server
+    .get("/packages")
+    .assert_page(PackagesHtml {
+      packages: vec![(fingerprint, Some("foo".parse().unwrap()))],
+    })
+    .send();
+}
+
+#[test]
 fn packages_non_empty() {
   let server = TestServer::new();
 
@@ -959,7 +980,7 @@ fn packages_non_empty() {
     server.write_file(&cbor);
     server.post(format!("/directory/{hash}")).send();
     server.post(format!("/package/{fingerprint}")).send();
-    packages.push(fingerprint);
+    packages.push((fingerprint, None));
   }
 
   packages.sort();
