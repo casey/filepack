@@ -98,6 +98,14 @@ impl Server {
     }
   }
 
+  fn metadata(&self, fingerprint: Fingerprint) -> ServerResult<Option<Metadata>> {
+    self
+      .package_metadata(fingerprint)?
+      .map(|metadata| Metadata::decode_from_slice(&metadata))
+      .transpose()
+      .context(server_error::PackageMetadataCorrupt { fingerprint })
+  }
+
   pub(crate) fn open_file(&self, hash: Hash) -> ServerResult<Resource> {
     let path = self.file_path(hash);
 
@@ -134,11 +142,7 @@ impl Server {
       server_error::PackageNotFound { fingerprint },
     );
 
-    self
-      .package_metadata(fingerprint)?
-      .map(|metadata| Metadata::decode_from_slice(&metadata))
-      .transpose()
-      .context(server_error::PackageMetadataCorrupt { fingerprint })
+    self.metadata(fingerprint)
   }
 
   fn package_file(&self, root: Fingerprint, path: &RelativePath) -> ServerResult<Option<Hash>> {
@@ -185,21 +189,16 @@ impl Server {
   }
 
   pub(crate) fn packages(&self) -> ServerResult<Vec<(Fingerprint, Option<ComponentBuf>)>> {
-    let fingerprints = self
-      .database
-      .begin_read()?
-      .open_table(PACKAGES)?
+    let read = self.database.begin_read()?;
+    let packages = read.open_table(PACKAGES)?;
+    packages
       .iter()?
-      .map(|entry| Ok(entry?.0.value()))
-      .collect::<ServerResult<Vec<Fingerprint>>>()?;
-
-    fingerprints
-      .into_iter()
-      .map(|fingerprint| {
+      .map(|entry| {
+        let fingerprint = entry?.0.value();
         Ok((
           fingerprint,
           self
-            .package(fingerprint)?
+            .metadata(fingerprint)?
             .and_then(|metadata| metadata.title),
         ))
       })
