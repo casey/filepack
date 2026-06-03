@@ -1,4 +1,9 @@
-<h1>Package {{ self.fingerprint }}</h1>
+%% if let Some(metadata) = &self.metadata
+%%   && let Some(title) = &metadata.title {
+<h1>{{ title }}</h1>
+%% } else {
+<h1>{{ self.fingerprint }}</h1>
+%% }
 %% if let Some(metadata) = &self.metadata {
 %%   if metadata.artwork.is_some() {
 <div>
@@ -9,8 +14,10 @@
 %%   }
 %% }
 <a href=/directory/{{ Hash::from(self.fingerprint) }}>files</a>
-%% if let Some(metadata) = &self.metadata {
 <dl>
+  <dt>fingerprint</dt>
+  <dd>{{ self.fingerprint }}</dd>
+%% if let Some(metadata) = &self.metadata {
 %%   if let Some(title) = &metadata.title {
   <dt>title</dt>
   <dd>{{ title }}</dd>
@@ -53,5 +60,5 @@
 %%       }
 %%     }
 %%   }
-</dl>
 %% }
+</dl>
