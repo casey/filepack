@@ -223,7 +223,7 @@ impl Serve {
     Ok(
       PackageHtml {
         fingerprint,
-        metadata: block_in_place(|| server.package(fingerprint))?,
+        metadata: block_in_place(|| server.package_metadata(fingerprint))?,
       }
       .into(),
     )

@@ -17,7 +17,7 @@ pub(crate) struct Server {
 impl Server {
   pub(crate) fn artwork(&self, fingerprint: Fingerprint) -> ServerResult<Resource> {
     let artwork = self
-      .package(fingerprint)?
+      .package_metadata(fingerprint)?
       .and_then(|metadata| metadata.artwork)
       .context(server_error::ArtworkNotFound { fingerprint })?;
 
@@ -72,7 +72,7 @@ impl Server {
     track: usize,
   ) -> ServerResult<Resource> {
     let metadata = self
-      .package(fingerprint)?
+      .package_metadata(fingerprint)?
       .context(server_error::PackageMetadataNotFound { fingerprint })?;
 
     let media = metadata
@@ -96,6 +96,34 @@ impl Server {
         Ok(self.open_file(hash)?.ty(track.resource_type()))
       }
     }
+  }
+
+  fn metadata(&self, fingerprint: Fingerprint) -> ServerResult<Option<Metadata>> {
+    self
+      .metadata_cbor(fingerprint)?
+      .map(|metadata| Metadata::decode_from_slice(&metadata))
+      .transpose()
+      .context(server_error::PackageMetadataCorrupt { fingerprint })
+  }
+
+  fn metadata_cbor(&self, fingerprint: Fingerprint) -> ServerResult<Option<Vec<u8>>> {
+    let directory = self.read_directory(fingerprint.into())?;
+
+    let Some(entry) = directory.entries.get(Metadata::CBOR_FILENAME) else {
+      return Ok(None);
+    };
+
+    let path = self.file_path(entry.hash);
+
+    fs::read(&path)
+      .map_err(|err| {
+        if err.kind() == io::ErrorKind::NotFound {
+          server_error::FileNotFound { hash: entry.hash }.into_error(err)
+        } else {
+          server_error::FilesystemIo { path }.into_error(err)
+        }
+      })
+      .map(Some)
   }
 
   pub(crate) fn open_file(&self, hash: Hash) -> ServerResult<Resource> {
@@ -123,7 +151,10 @@ impl Server {
     })
   }
 
-  pub(crate) fn package(&self, fingerprint: Fingerprint) -> ServerResult<Option<Metadata>> {
+  pub(crate) fn package_metadata(
+    &self,
+    fingerprint: Fingerprint,
+  ) -> ServerResult<Option<Metadata>> {
     ensure!(
       self
         .database
@@ -134,14 +165,42 @@ impl Server {
       server_error::PackageNotFound { fingerprint },
     );
 
-    self
-      .package_metadata(fingerprint)?
-      .map(|metadata| Metadata::decode_from_slice(&metadata))
-      .transpose()
-      .context(server_error::PackageMetadataCorrupt { fingerprint })
+    self.metadata(fingerprint)
   }
 
-  fn package_file(&self, root: Fingerprint, path: &RelativePath) -> ServerResult<Option<Hash>> {
+  pub(crate) fn packages(&self) -> ServerResult<Vec<(Fingerprint, Option<ComponentBuf>)>> {
+    self
+      .database
+      .begin_read()?
+      .open_table(PACKAGES)?
+      .iter()?
+      .map(|entry| {
+        let fingerprint = entry?.0.value();
+        Ok((
+          fingerprint,
+          self
+            .metadata(fingerprint)?
+            .and_then(|metadata| metadata.title),
+        ))
+      })
+      .collect()
+  }
+
+  fn read_directory(&self, hash: Hash) -> ServerResult<Directory> {
+    let path = self.file_path(hash);
+
+    let cbor = fs::read(&path).map_err(|err| {
+      if err.kind() == io::ErrorKind::NotFound {
+        server_error::FileNotFound { hash }.into_error(err)
+      } else {
+        server_error::FilesystemIo { path }.into_error(err)
+      }
+    })?;
+
+    Directory::decode_from_slice(&cbor).context(server_error::DirectoryDecode { hash })
+  }
+
+  fn resolve_path(&self, root: Fingerprint, path: &RelativePath) -> ServerResult<Option<Hash>> {
     let mut components = path.components().peekable();
 
     let mut directory = self.read_directory(root.into())?;
@@ -164,69 +223,13 @@ impl Server {
     Ok(None)
   }
 
-  fn package_metadata(&self, fingerprint: Fingerprint) -> ServerResult<Option<Vec<u8>>> {
-    let directory = self.read_directory(fingerprint.into())?;
-
-    let Some(entry) = directory.entries.get(Metadata::CBOR_FILENAME) else {
-      return Ok(None);
-    };
-
-    let path = self.file_path(entry.hash);
-
-    fs::read(&path)
-      .map_err(|err| {
-        if err.kind() == io::ErrorKind::NotFound {
-          server_error::FileNotFound { hash: entry.hash }.into_error(err)
-        } else {
-          server_error::FilesystemIo { path }.into_error(err)
-        }
-      })
-      .map(Some)
-  }
-
-  pub(crate) fn packages(&self) -> ServerResult<Vec<(Fingerprint, Option<ComponentBuf>)>> {
-    let fingerprints = self
-      .database
-      .begin_read()?
-      .open_table(PACKAGES)?
-      .iter()?
-      .map(|entry| Ok(entry?.0.value()))
-      .collect::<ServerResult<Vec<Fingerprint>>>()?;
-
-    fingerprints
-      .into_iter()
-      .map(|fingerprint| {
-        Ok((
-          fingerprint,
-          self
-            .package(fingerprint)?
-            .and_then(|metadata| metadata.title),
-        ))
-      })
-      .collect()
-  }
-
-  fn read_directory(&self, hash: Hash) -> ServerResult<Directory> {
-    let path = self.file_path(hash);
-
-    let cbor = fs::read(&path).map_err(|err| {
-      if err.kind() == io::ErrorKind::NotFound {
-        server_error::FileNotFound { hash }.into_error(err)
-      } else {
-        server_error::FilesystemIo { path }.into_error(err)
-      }
-    })?;
-
-    Directory::decode_from_slice(&cbor).context(server_error::DirectoryDecode { hash })
-  }
-
   fn verified_package_file(
     &self,
     fingerprint: Fingerprint,
     path: &RelativePath,
   ) -> ServerResult<Hash> {
     self
-      .package_file(fingerprint, path)?
+      .resolve_path(fingerprint, path)?
       .context(server_error::PackageFileMissing { fingerprint, path })
   }
 
@@ -284,13 +287,13 @@ impl Server {
       server_error::PackageUnverified { fingerprint },
     );
 
-    if let Some(metadata) = self.package_metadata(fingerprint)? {
+    if let Some(metadata) = self.metadata_cbor(fingerprint)? {
       let metadata = Metadata::decode_from_slice(&metadata)
         .context(server_error::PackageMetadataDecode { fingerprint })?;
 
       for path in metadata.files() {
         ensure!(
-          self.package_file(fingerprint, &path)?.is_some(),
+          self.resolve_path(fingerprint, &path)?.is_some(),
           server_error::PackageMetadataFileMissing { fingerprint, path },
         );
       }
