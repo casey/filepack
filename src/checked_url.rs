@@ -69,7 +69,7 @@ mod tests {
   fn encoding() {
     assert_cbor(
       "http://example.com".parse::<CheckedUrl>().unwrap(),
-      &"http://example.com".encode_to_vec(),
+      &hex::encode("http://example.com".encode_to_vec()),
     );
   }
 }

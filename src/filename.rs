@@ -128,7 +128,7 @@ mod tests {
   fn encoding() {
     assert_cbor(
       "cover.md".parse::<Md>().unwrap(),
-      &"cover.md".encode_to_vec(),
+      &hex::encode("cover.md".encode_to_vec()),
     );
   }
 

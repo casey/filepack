@@ -15,7 +15,7 @@ fn all_optional_all_none() {
       bar: None,
       baz: None,
     },
-    &[0xa0],
+    "a0",
   );
 }
 
@@ -34,7 +34,7 @@ fn all_optional_all_some() {
       bar: Some(1),
       baz: Some("foo".into()),
     },
-    &[0xa2, 0x00, 0x01, 0x01, 0x63, 0x66, 0x6f, 0x6f],
+    "a200010163666f6f",
   );
 }
 
@@ -53,7 +53,7 @@ fn all_optional_mixed() {
       bar: Some(1),
       baz: None,
     },
-    &[0xa1, 0x00, 0x01],
+    "a10001",
   );
 
   assert_cbor(
@@ -61,7 +61,7 @@ fn all_optional_mixed() {
       bar: None,
       baz: Some("foo".into()),
     },
-    &[0xa1, 0x01, 0x63, 0x66, 0x6f, 0x6f],
+    "a10163666f6f",
   );
 }
 
@@ -80,7 +80,7 @@ fn all_required() {
       bar: 42,
       baz: "foo".into(),
     },
-    &[0xa2, 0x00, 0x18, 0x2a, 0x01, 0x63, 0x66, 0x6f, 0x6f],
+    "a200182a0163666f6f",
   );
 }
 
@@ -314,8 +314,8 @@ fn enum_mixed() {
     },
   }
 
-  assert_cbor(Foo::Bar, &[0x00]);
-  assert_cbor(Foo::Baz { baz: 99 }, &[0x82, 0x01, 0xa1, 0x00, 0x18, 0x63]);
+  assert_cbor(Foo::Bar, "00");
+  assert_cbor(Foo::Baz { baz: 99 }, "8201a1001863");
 }
 
 #[test]
@@ -336,9 +336,7 @@ fn enum_named_field() {
       bar: 42,
       baz: "foo".into(),
     },
-    &[
-      0x82, 0x00, 0xa2, 0x00, 0x18, 0x2a, 0x01, 0x63, 0x66, 0x6f, 0x6f,
-    ],
+    "8200a200182a0163666f6f",
   );
 }
 
@@ -360,13 +358,10 @@ fn enum_named_field_optional() {
       bar: Some(1),
       baz: 2,
     },
-    &[0x82, 0x00, 0xa2, 0x00, 0x01, 0x01, 0x02],
+    "8200a200010102",
   );
 
-  assert_cbor(
-    Foo::Bar { bar: None, baz: 2 },
-    &[0x82, 0x00, 0xa1, 0x01, 0x02],
-  );
+  assert_cbor(Foo::Bar { bar: None, baz: 2 }, "8200a10102");
 }
 
 #[test]
@@ -379,8 +374,8 @@ fn enum_round_trip() {
     Baz,
   }
 
-  assert_cbor(Foo::Bar, &[0x00]);
-  assert_cbor(Foo::Baz, &[0x01]);
+  assert_cbor(Foo::Bar, "00");
+  assert_cbor(Foo::Baz, "01");
 }
 
 #[test]
@@ -438,7 +433,7 @@ fn mixed_required_and_optional() {
       bar: Some(1),
       baz: "foo".into(),
     },
-    &[0xa2, 0x00, 0x01, 0x01, 0x63, 0x66, 0x6f, 0x6f],
+    "a200010163666f6f",
   );
 
   assert_cbor(
@@ -446,7 +441,7 @@ fn mixed_required_and_optional() {
       bar: None,
       baz: "foo".into(),
     },
-    &[0xa1, 0x01, 0x63, 0x66, 0x6f, 0x6f],
+    "a10163666f6f",
   );
 }
 
@@ -458,7 +453,7 @@ fn single_field() {
     bar: u64,
   }
 
-  assert_cbor(Foo { bar: 99 }, &[0xa1, 0x00, 0x18, 0x63]);
+  assert_cbor(Foo { bar: 99 }, "a1001863");
 }
 
 #[test]
@@ -469,8 +464,11 @@ fn transparent_named() {
     bar: String,
   }
 
-  assert_cbor(Foo { bar: "foo".into() }, &[0x63, 0x66, 0x6f, 0x6f]);
-  assert_cbor(Foo { bar: "foo".into() }, &"foo".encode_to_vec());
+  assert_cbor(Foo { bar: "foo".into() }, "63666f6f");
+  assert_cbor(
+    Foo { bar: "foo".into() },
+    &hex::encode("foo".encode_to_vec()),
+  );
 }
 
 #[test]
@@ -479,6 +477,6 @@ fn transparent_newtype() {
   #[cbor(transparent)]
   struct Foo(u64);
 
-  assert_cbor(Foo(99), &[0x18, 0x63]);
-  assert_cbor(Foo(99), &99u64.encode_to_vec());
+  assert_cbor(Foo(99), "1863");
+  assert_cbor(Foo(99), &hex::encode(99u64.encode_to_vec()));
 }

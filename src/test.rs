@@ -23,9 +23,9 @@ pub(crate) const WEAK_PUBLIC_KEY: &str =
   "public1aqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqsqtuc8";
 
 #[track_caller]
-pub(crate) fn assert_cbor<T: Debug + Decode + Encode + PartialEq>(value: T, cbor: &[u8]) {
+pub(crate) fn assert_cbor<T: Debug + Decode + Encode + PartialEq>(value: T, cbor: &str) {
   let buffer = value.encode_to_vec();
-  assert_eq!(buffer, cbor);
+  assert_eq!(hex::encode(&buffer), cbor);
   let mut decoder = Decoder::new(&buffer);
   let decoded = T::decode(&mut decoder).unwrap();
   decoder.finish().unwrap();

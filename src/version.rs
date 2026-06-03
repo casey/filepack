@@ -13,6 +13,6 @@ mod tests {
 
   #[test]
   fn encoding() {
-    assert_cbor(Version::Zero, &[0x00]);
+    assert_cbor(Version::Zero, "00");
   }
 }

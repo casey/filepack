@@ -16,7 +16,7 @@ mod tests {
 
   #[test]
   fn encoding() {
-    assert_cbor(EntryType::File, &[0x00]);
-    assert_cbor(EntryType::Directory, &[0x01]);
+    assert_cbor(EntryType::File, "00");
+    assert_cbor(EntryType::Directory, "01");
   }
 }
