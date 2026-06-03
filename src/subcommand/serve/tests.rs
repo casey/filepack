@@ -12,6 +12,7 @@ use {
 static RUNTIME: LazyLock<Runtime> = LazyLock::new(|| Runtime::new().unwrap());
 
 struct TestRequestBuilder {
+  absent_headers: BTreeSet<String>,
   body: Option<String>,
   method: Method,
   path: String,
@@ -36,6 +37,11 @@ impl TestRequestBuilder {
         .insert(name.to_string(), value.into())
         .is_none()
     );
+    self
+  }
+
+  fn assert_header_absent(mut self, name: HeaderName) -> Self {
+    assert!(self.absent_headers.insert(name.to_string()));
     self
   }
 
@@ -64,6 +70,7 @@ impl TestRequestBuilder {
 
   fn new(method: Method, path: impl Into<String>, router: Router) -> Self {
     Self {
+      absent_headers: BTreeSet::new(),
       body: None,
       method,
       path: path.into(),
@@ -116,6 +123,13 @@ impl TestRequestBuilder {
 
       for (name, value) in self.response_headers {
         assert_eq!(headers[name], value);
+      }
+
+      for name in self.absent_headers {
+        assert!(
+          !headers.contains_key(name.as_str()),
+          "unexpected header {name}"
+        );
       }
 
       let body = body::to_bytes(response.into_body(), usize::MAX)
@@ -770,15 +784,22 @@ fn media_audio_track_ranges() {
     content_range: &str,
     body: &[u8],
   ) {
-    server
+    let request = server
       .get(format!("/media/audio/{fingerprint}/track/0"))
       .range(range)
       .status(status)
       .assert_header(header::ACCEPT_RANGES, "bytes")
       .assert_header(header::CONTENT_RANGE, content_range)
       .assert_header(header::CONTENT_LENGTH, body.len().to_string())
-      .assert_body(body)
-      .send();
+      .assert_body(body);
+
+    if status == StatusCode::RANGE_NOT_SATISFIABLE {
+      request.assert_header_absent(header::CACHE_CONTROL).send();
+    } else {
+      request
+        .assert_header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
+        .send();
+    }
   }
 
   let server = TestServer::new();
