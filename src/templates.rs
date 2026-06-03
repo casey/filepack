@@ -40,9 +40,19 @@ pub struct PackageHtml {
   pub metadata: Option<Metadata>,
 }
 
+impl PackageHtml {
+  fn title(&self) -> Option<&Component> {
+    self.metadata.as_ref()?.title.as_deref()
+  }
+}
+
 impl Page for PackageHtml {
   fn title(&self) -> String {
-    format!("package {} · filepack", self.fingerprint)
+    if let Some(title) = self.title() {
+      format!("{title} · filepack")
+    } else {
+      format!("{} · filepack", self.fingerprint)
+    }
   }
 }
 
