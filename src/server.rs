@@ -184,13 +184,25 @@ impl Server {
       .map(Some)
   }
 
-  pub(crate) fn packages(&self) -> ServerResult<Vec<Fingerprint>> {
-    self
+  pub(crate) fn packages(&self) -> ServerResult<Vec<(Fingerprint, Option<ComponentBuf>)>> {
+    let fingerprints = self
       .database
       .begin_read()?
       .open_table(PACKAGES)?
       .iter()?
       .map(|entry| Ok(entry?.0.value()))
+      .collect::<ServerResult<Vec<Fingerprint>>>()?;
+
+    fingerprints
+      .into_iter()
+      .map(|fingerprint| {
+        Ok((
+          fingerprint,
+          self
+            .package(fingerprint)?
+            .and_then(|metadata| metadata.title),
+        ))
+      })
       .collect()
   }
 
