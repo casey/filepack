@@ -101,63 +101,55 @@ mod tests {
 
   #[test]
   fn array() {
-    assert_cbor(Vec::<u64>::new(), &[0x80]);
-    assert_cbor(vec![1u64, 2u64], &[0x82, 0x01, 0x02]);
+    assert_cbor(Vec::<u64>::new(), "80");
+    assert_cbor(vec![1u64, 2u64], "820102");
   }
 
   #[test]
   fn bytes() {
-    assert_cbor(Vec::<u8>::new(), &[0x40]);
-    assert_cbor(b"bar".to_vec(), &[0x43, 0x62, 0x61, 0x72]);
+    assert_cbor(Vec::<u8>::new(), "40");
+    assert_cbor(b"bar".to_vec(), "43626172");
   }
 
   #[test]
   fn i32() {
-    assert_cbor(0i32, &[0x0]);
-    assert_cbor(-1i32, &[0x20]);
-    assert_cbor(i32::MAX, &[0x1A, 0x7F, 0xFF, 0xFF, 0xFF]);
-    assert_cbor(i32::MIN, &[0x3A, 0x7F, 0xFF, 0xFF, 0xFF]);
+    assert_cbor(0i32, "00");
+    assert_cbor(-1i32, "20");
+    assert_cbor(i32::MAX, "1a7fffffff");
+    assert_cbor(i32::MIN, "3a7fffffff");
   }
 
   #[test]
   fn i64() {
-    assert_cbor(0i64, &[0x0]);
-    assert_cbor(-1i64, &[0x20]);
-    assert_cbor(
-      i64::MAX,
-      &[0x1B, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF],
-    );
-    assert_cbor(
-      i64::MIN,
-      &[0x3B, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF],
-    );
+    assert_cbor(0i64, "00");
+    assert_cbor(-1i64, "20");
+    assert_cbor(i64::MAX, "1b7fffffffffffffff");
+    assert_cbor(i64::MIN, "3b7fffffffffffffff");
   }
 
   #[test]
   fn map() {
     assert_cbor(
       BTreeMap::from([("bar".to_string(), 1u64), ("foo".to_string(), 2u64)]),
-      &[
-        0xa2, 0x63, 0x62, 0x61, 0x72, 0x01, 0x63, 0x66, 0x6f, 0x6f, 0x02,
-      ],
+      "a2636261720163666f6f02",
     );
   }
 
   #[test]
   fn string() {
-    assert_cbor(String::new(), &[0x60]);
-    assert_cbor(String::from("foo"), &[0x63, 0x66, 0x6f, 0x6f]);
+    assert_cbor(String::new(), "60");
+    assert_cbor(String::from("foo"), "63666f6f");
   }
 
   #[test]
   fn u64() {
-    assert_cbor(0u64, &[0x00]);
-    assert_cbor(24u64, &[0x18, 0x18]);
-    assert_cbor(256u64, &[0x19, 0x01, 0x00]);
+    assert_cbor(0u64, "00");
+    assert_cbor(24u64, "1818");
+    assert_cbor(256u64, "190100");
   }
 
   #[test]
   fn usize() {
-    assert_cbor(42usize, &[0x18, 0x2a]);
+    assert_cbor(42usize, "182a");
   }
 }

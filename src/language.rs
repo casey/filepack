@@ -242,7 +242,10 @@ mod tests {
 
   #[test]
   fn encoding() {
-    assert_cbor("en".parse::<Language>().unwrap(), &"en".encode_to_vec());
+    assert_cbor(
+      "en".parse::<Language>().unwrap(),
+      &hex::encode("en".encode_to_vec()),
+    );
   }
 
   #[test]

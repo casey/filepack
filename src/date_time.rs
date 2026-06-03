@@ -76,14 +76,17 @@ mod tests {
 
   #[test]
   fn encoding() {
-    assert_cbor("1970".parse::<DateTime>().unwrap(), &"1970".encode_to_vec());
+    assert_cbor(
+      "1970".parse::<DateTime>().unwrap(),
+      &hex::encode("1970".encode_to_vec()),
+    );
     assert_cbor(
       "1970-01-01".parse::<DateTime>().unwrap(),
-      &"1970-01-01".encode_to_vec(),
+      &hex::encode("1970-01-01".encode_to_vec()),
     );
     assert_cbor(
       "1970-01-01T00:00:00Z".parse::<DateTime>().unwrap(),
-      &"1970-01-01 00:00:00 +00:00".encode_to_vec(),
+      &hex::encode("1970-01-01 00:00:00 +00:00".encode_to_vec()),
     );
   }
 

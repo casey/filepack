@@ -49,7 +49,10 @@ mod tests {
 
   #[test]
   fn encoding() {
-    assert_cbor("A0".parse::<Tag>().unwrap(), &"A0".encode_to_vec());
+    assert_cbor(
+      "A0".parse::<Tag>().unwrap(),
+      &hex::encode("A0".encode_to_vec()),
+    );
   }
 
   #[test]
