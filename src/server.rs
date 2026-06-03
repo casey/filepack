@@ -106,6 +106,26 @@ impl Server {
       .context(server_error::PackageMetadataCorrupt { fingerprint })
   }
 
+  fn metadata_cbor(&self, fingerprint: Fingerprint) -> ServerResult<Option<Vec<u8>>> {
+    let directory = self.read_directory(fingerprint.into())?;
+
+    let Some(entry) = directory.entries.get(Metadata::CBOR_FILENAME) else {
+      return Ok(None);
+    };
+
+    let path = self.file_path(entry.hash);
+
+    fs::read(&path)
+      .map_err(|err| {
+        if err.kind() == io::ErrorKind::NotFound {
+          server_error::FileNotFound { hash: entry.hash }.into_error(err)
+        } else {
+          server_error::FilesystemIo { path }.into_error(err)
+        }
+      })
+      .map(Some)
+  }
+
   pub(crate) fn open_file(&self, hash: Hash) -> ServerResult<Resource> {
     let path = self.file_path(hash);
 
@@ -148,49 +168,6 @@ impl Server {
     self.metadata(fingerprint)
   }
 
-  fn resolve_path(&self, root: Fingerprint, path: &RelativePath) -> ServerResult<Option<Hash>> {
-    let mut components = path.components().peekable();
-
-    let mut directory = self.read_directory(root.into())?;
-    while let Some(component) = components.next() {
-      let Some(entry) = directory.entries.get(component) else {
-        return Ok(None);
-      };
-
-      if components.peek().is_none() {
-        return Ok((entry.ty == EntryType::File).then_some(entry.hash));
-      }
-
-      if entry.ty != EntryType::Directory {
-        return Ok(None);
-      }
-
-      directory = self.read_directory(entry.hash)?;
-    }
-
-    Ok(None)
-  }
-
-  fn metadata_cbor(&self, fingerprint: Fingerprint) -> ServerResult<Option<Vec<u8>>> {
-    let directory = self.read_directory(fingerprint.into())?;
-
-    let Some(entry) = directory.entries.get(Metadata::CBOR_FILENAME) else {
-      return Ok(None);
-    };
-
-    let path = self.file_path(entry.hash);
-
-    fs::read(&path)
-      .map_err(|err| {
-        if err.kind() == io::ErrorKind::NotFound {
-          server_error::FileNotFound { hash: entry.hash }.into_error(err)
-        } else {
-          server_error::FilesystemIo { path }.into_error(err)
-        }
-      })
-      .map(Some)
-  }
-
   pub(crate) fn packages(&self) -> ServerResult<Vec<(Fingerprint, Option<ComponentBuf>)>> {
     self
       .database
@@ -221,6 +198,29 @@ impl Server {
     })?;
 
     Directory::decode_from_slice(&cbor).context(server_error::DirectoryDecode { hash })
+  }
+
+  fn resolve_path(&self, root: Fingerprint, path: &RelativePath) -> ServerResult<Option<Hash>> {
+    let mut components = path.components().peekable();
+
+    let mut directory = self.read_directory(root.into())?;
+    while let Some(component) = components.next() {
+      let Some(entry) = directory.entries.get(component) else {
+        return Ok(None);
+      };
+
+      if components.peek().is_none() {
+        return Ok((entry.ty == EntryType::File).then_some(entry.hash));
+      }
+
+      if entry.ty != EntryType::Directory {
+        return Ok(None);
+      }
+
+      directory = self.read_directory(entry.hash)?;
+    }
+
+    Ok(None)
   }
 
   fn verified_package_file(
