@@ -17,7 +17,7 @@ pub(crate) struct Server {
 impl Server {
   pub(crate) fn artwork(&self, fingerprint: Fingerprint) -> ServerResult<Resource> {
     let artwork = self
-      .package(fingerprint)?
+      .package_metadata(fingerprint)?
       .and_then(|metadata| metadata.artwork)
       .context(server_error::ArtworkNotFound { fingerprint })?;
 
@@ -72,7 +72,7 @@ impl Server {
     track: usize,
   ) -> ServerResult<Resource> {
     let metadata = self
-      .package(fingerprint)?
+      .package_metadata(fingerprint)?
       .context(server_error::PackageMetadataNotFound { fingerprint })?;
 
     let media = metadata
@@ -100,7 +100,7 @@ impl Server {
 
   fn metadata(&self, fingerprint: Fingerprint) -> ServerResult<Option<Metadata>> {
     self
-      .package_metadata(fingerprint)?
+      .metadata_cbor(fingerprint)?
       .map(|metadata| Metadata::decode_from_slice(&metadata))
       .transpose()
       .context(server_error::PackageMetadataCorrupt { fingerprint })
@@ -131,7 +131,10 @@ impl Server {
     })
   }
 
-  pub(crate) fn package(&self, fingerprint: Fingerprint) -> ServerResult<Option<Metadata>> {
+  pub(crate) fn package_metadata(
+    &self,
+    fingerprint: Fingerprint,
+  ) -> ServerResult<Option<Metadata>> {
     ensure!(
       self
         .database
@@ -145,7 +148,7 @@ impl Server {
     self.metadata(fingerprint)
   }
 
-  fn package_file(&self, root: Fingerprint, path: &RelativePath) -> ServerResult<Option<Hash>> {
+  fn resolve_path(&self, root: Fingerprint, path: &RelativePath) -> ServerResult<Option<Hash>> {
     let mut components = path.components().peekable();
 
     let mut directory = self.read_directory(root.into())?;
@@ -168,7 +171,7 @@ impl Server {
     Ok(None)
   }
 
-  fn package_metadata(&self, fingerprint: Fingerprint) -> ServerResult<Option<Vec<u8>>> {
+  fn metadata_cbor(&self, fingerprint: Fingerprint) -> ServerResult<Option<Vec<u8>>> {
     let directory = self.read_directory(fingerprint.into())?;
 
     let Some(entry) = directory.entries.get(Metadata::CBOR_FILENAME) else {
@@ -226,7 +229,7 @@ impl Server {
     path: &RelativePath,
   ) -> ServerResult<Hash> {
     self
-      .package_file(fingerprint, path)?
+      .resolve_path(fingerprint, path)?
       .context(server_error::PackageFileMissing { fingerprint, path })
   }
 
@@ -284,13 +287,13 @@ impl Server {
       server_error::PackageUnverified { fingerprint },
     );
 
-    if let Some(metadata) = self.package_metadata(fingerprint)? {
+    if let Some(metadata) = self.metadata_cbor(fingerprint)? {
       let metadata = Metadata::decode_from_slice(&metadata)
         .context(server_error::PackageMetadataDecode { fingerprint })?;
 
       for path in metadata.files() {
         ensure!(
-          self.package_file(fingerprint, &path)?.is_some(),
+          self.resolve_path(fingerprint, &path)?.is_some(),
           server_error::PackageMetadataFileMissing { fingerprint, path },
         );
       }
