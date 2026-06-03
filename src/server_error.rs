@@ -29,10 +29,10 @@ pub(crate) enum ServerError {
   DirectoryNotFound { hash: Hash },
   #[snafu(display("directory {directory} references unverified subdirectory {subdirectory}"))]
   DirectoryUnverified { directory: Hash, subdirectory: Hash },
-  #[snafu(display("file with hash {hash} not found"))]
-  FileNotFound { hash: Hash, source: io::Error },
   #[snafu(display("I/O error on file {hash}"))]
   FileIo { hash: Hash, source: io::Error },
+  #[snafu(display("file with hash {hash} not found"))]
+  FileNotFound { hash: Hash, source: io::Error },
   #[snafu(display("I/O error at {path}"))]
   FilesystemIo {
     path: Utf8PathBuf,
