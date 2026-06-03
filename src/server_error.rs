@@ -76,7 +76,7 @@ pub(crate) enum ServerError {
   #[snafu(display("package {fingerprint} not found"))]
   PackageNotFound { fingerprint: Fingerprint },
   #[snafu(display("package {fingerprint} root directory is unverified"))]
-  PackageUnverified { fingerprint: Fingerprint },
+  PackageRootUnverified { fingerprint: Fingerprint },
   #[snafu(display("page not found"))]
   PageNotFound,
   #[snafu(display("error reading body of upload with hash {hash}"))]
@@ -109,7 +109,7 @@ impl ServerError {
       | Self::PackageMetadataFileMissing { .. }
       | Self::PackageMetadataNotFound { .. }
       | Self::PackageNotFound { .. }
-      | Self::PackageUnverified { .. }
+      | Self::PackageRootUnverified { .. }
       | Self::PageNotFound
       | Self::UploadBodyRead { .. }
       | Self::UploadForbidden
@@ -143,7 +143,7 @@ impl ServerError {
       | Self::DirectoryUnverified { .. }
       | Self::PackageMetadataDecode { .. }
       | Self::PackageMetadataFileMissing { .. }
-      | Self::PackageUnverified { .. }
+      | Self::PackageRootUnverified { .. }
       | Self::UploadBodyRead { .. }
       | Self::UploadHashMismatch { .. } => StatusCode::BAD_REQUEST,
       Self::ArtworkNotFound { .. }

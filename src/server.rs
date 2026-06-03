@@ -284,7 +284,7 @@ impl Server {
         .open_table(DIRECTORIES)?
         .get(&fingerprint.into())?
         .is_some(),
-      server_error::PackageUnverified { fingerprint },
+      server_error::PackageRootUnverified { fingerprint },
     );
 
     if let Some(metadata) = self.metadata_cbor(fingerprint)? {
