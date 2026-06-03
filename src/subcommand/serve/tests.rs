@@ -15,7 +15,7 @@ struct TestRequestBuilder {
   body: Option<String>,
   method: Method,
   path: String,
-  range: Option<String>,
+  range: Option<&'static str>,
   response_body: Body,
   response_headers: BTreeMap<String, String>,
   router: Router,
@@ -79,8 +79,8 @@ impl TestRequestBuilder {
     }
   }
 
-  fn range(mut self, range: &str) -> Self {
-    self.range = Some(range.into());
+  fn range(mut self, range: &'static str) -> Self {
+    self.range = Some(range);
     self
   }
 
@@ -765,7 +765,7 @@ fn media_audio_track_ranges() {
   fn case(
     server: &TestServer,
     fingerprint: Fingerprint,
-    range: &str,
+    range: &'static str,
     status: StatusCode,
     content_range: &str,
     body: &[u8],
