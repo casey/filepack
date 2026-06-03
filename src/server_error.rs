@@ -38,7 +38,7 @@ pub(crate) enum ServerError {
     path: Utf8PathBuf,
     source: io::Error,
   },
-  #[snafu(display(""))]
+  #[snafu(display("response invalid"))]
   InvalidResponse { source: http::Error },
   #[snafu(display(
     "track {track} does not exist, package {fingerprint} has {}",
