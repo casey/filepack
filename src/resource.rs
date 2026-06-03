@@ -1,5 +1,7 @@
 use super::*;
 
+const MAX_CACHE: &str = "public, max-age=31536000, immutable";
+
 pub(crate) struct Resource {
   pub(crate) content_length: u64,
   pub(crate) file: fs::File,
@@ -22,10 +24,18 @@ impl Resource {
 }
 
 impl IntoResponse for Resource {
-  fn into_response(self) -> Response {
+  fn into_response(mut self) -> Response {
+    fn response(result: http::Result<Response>) -> Response {
+      match result {
+        Ok(response) => response,
+        Err(err) => server_error::InvalidResponse
+          .into_error(err)
+          .into_response(),
+      }
+    }
+
     let mut builder = Response::builder()
       .header(header::ACCEPT_RANGES, "bytes")
-      .header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
       .header(header::CONTENT_SECURITY_POLICY, "sandbox")
       .header(header::CONTENT_TYPE, self.ty.content_type().essence_str())
       .header(header::ETAG, format!("\"{}\"", self.hash));
@@ -34,19 +44,19 @@ impl IntoResponse for Resource {
       builder = builder.header(header::CONTENT_DISPOSITION, content_disposition);
     }
 
-    let len = self.content_length;
-
     let Some(range) = self.range else {
-      return builder
-        .header(header::CONTENT_LENGTH, len)
-        .body(Body::from_stream(ReaderStream::new(
-          tokio::fs::File::from_std(self.file),
-        )))
-        .unwrap();
+      return response(
+        builder
+          .header(header::CACHE_CONTROL, MAX_CACHE)
+          .header(header::CONTENT_LENGTH, self.content_length)
+          .body(Body::from_stream(ReaderStream::new(
+            tokio::fs::File::from_std(self.file),
+          ))),
+      );
     };
 
     let resolved = range
-      .satisfiable_ranges(len)
+      .satisfiable_ranges(self.content_length)
       .next()
       .and_then(|(start, end)| {
         let start = match start {
@@ -56,35 +66,48 @@ impl IntoResponse for Resource {
         };
 
         let end = match end {
-          Bound::Included(end) => end.min(len.saturating_sub(1)),
+          Bound::Included(end) => end.min(self.content_length.saturating_sub(1)),
           Bound::Excluded(end) => end.saturating_sub(1),
-          Bound::Unbounded => len.saturating_sub(1),
+          Bound::Unbounded => self.content_length.saturating_sub(1),
         };
 
-        (len > 0 && start < len && start <= end).then_some((start, end))
+        (self.content_length > 0 && start < self.content_length && start <= end)
+          .then_some((start, end))
       });
 
     let Some((start, end)) = resolved else {
-      return builder
-        .status(StatusCode::RANGE_NOT_SATISFIABLE)
-        .header(header::CONTENT_RANGE, format!("bytes */{len}"))
-        .header(header::CONTENT_LENGTH, 0u64)
-        .body(Body::empty())
-        .unwrap();
+      return response(
+        builder
+          .status(StatusCode::RANGE_NOT_SATISFIABLE)
+          .header(
+            header::CONTENT_RANGE,
+            format!("bytes */{}", self.content_length),
+          )
+          .header(header::CONTENT_LENGTH, 0)
+          .body(Body::empty()),
+      );
     };
 
     let length = end - start + 1;
 
-    let mut file = self.file;
-    file.seek(SeekFrom::Start(start)).unwrap();
+    if let Err(err) = self.file.seek(SeekFrom::Start(start)) {
+      return server_error::FileIo { hash: self.hash }
+        .into_error(err)
+        .into_response();
+    }
 
-    builder
-      .status(StatusCode::PARTIAL_CONTENT)
-      .header(header::CONTENT_RANGE, format!("bytes {start}-{end}/{len}"))
-      .header(header::CONTENT_LENGTH, length)
-      .body(Body::from_stream(ReaderStream::new(
-        tokio::fs::File::from_std(file).take(length),
-      )))
-      .unwrap()
+    response(
+      builder
+        .status(StatusCode::PARTIAL_CONTENT)
+        .header(header::CACHE_CONTROL, MAX_CACHE)
+        .header(
+          header::CONTENT_RANGE,
+          format!("bytes {start}-{end}/{}", self.content_length),
+        )
+        .header(header::CONTENT_LENGTH, length)
+        .body(Body::from_stream(ReaderStream::new(
+          tokio::fs::File::from_std(self.file).take(length),
+        ))),
+    )
   }
 }

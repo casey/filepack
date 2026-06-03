@@ -1,4 +1,4 @@
-use {super::*, axum::http::header, rust_embed::RustEmbed};
+use {super::*, http::header, rust_embed::RustEmbed};
 
 #[derive(RustEmbed)]
 #[folder = "static"]
