@@ -5,7 +5,7 @@ use {
     extract::{Extension, Path},
     http::{HeaderValue, Uri},
     response::Redirect,
-    routing::{get, post, put},
+    routing::get,
   },
   axum_server::Handle,
   rustls_acme::{
@@ -155,7 +155,7 @@ impl Serve {
     }
   }
 
-  async fn download(
+  async fn file(
     server: ServerExtension,
     hash: Path<Hash>,
     range: Option<TypedHeader<headers::Range>>,
@@ -271,19 +271,22 @@ impl Serve {
     let router = Router::new()
       .route("/", get(Self::home))
       .route("/artwork/{fingerprint}", get(Self::artwork))
-      .route("/directory/{hash}", get(Self::directory))
-      .route("/directory/{hash}", post(Self::verify_directory))
+      .route(
+        "/directory/{hash}",
+        get(Self::directory).post(Self::verify_directory),
+      )
       .route("/favicon.ico", get(Self::favicon))
-      .route("/file/{hash}", get(Self::download))
-      .route("/file/{hash}", put(Self::upload))
+      .route("/file/{hash}", get(Self::file).put(Self::upload_file))
       .route("/files", get(Self::files))
       .route("/install.sh", get(Self::install_script))
       .route(
         "/media/audio/{fingerprint}/track/{track}",
         get(Self::media_audio_track),
       )
-      .route("/package/{fingerprint}", get(Self::package))
-      .route("/package/{fingerprint}", post(Self::verify_package))
+      .route(
+        "/package/{fingerprint}",
+        get(Self::package).post(Self::verify_package),
+      )
       .route("/packages", get(Self::packages))
       .route("/static/{*path}", get(Self::static_asset))
       .fallback(Self::fallback)
@@ -477,7 +480,7 @@ impl Serve {
     StaticAsset::get(&path)
   }
 
-  async fn upload(
+  async fn upload_file(
     _: Authenticated,
     server: ServerExtension,
     hash: Path<Hash>,
