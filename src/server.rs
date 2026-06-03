@@ -189,9 +189,10 @@ impl Server {
   }
 
   pub(crate) fn packages(&self) -> ServerResult<Vec<(Fingerprint, Option<ComponentBuf>)>> {
-    let read = self.database.begin_read()?;
-    let packages = read.open_table(PACKAGES)?;
-    packages
+    self
+      .database
+      .begin_read()?
+      .open_table(PACKAGES)?
       .iter()?
       .map(|entry| {
         let fingerprint = entry?.0.value();
