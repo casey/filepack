@@ -118,6 +118,7 @@ impl Server {
       content_length,
       file,
       hash,
+      range: None,
       ty: ResourceType::Binary,
     })
   }

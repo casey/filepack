@@ -29,6 +29,8 @@ pub(crate) enum ServerError {
   DirectoryNotFound { hash: Hash },
   #[snafu(display("directory {directory} references unverified subdirectory {subdirectory}"))]
   DirectoryUnverified { directory: Hash, subdirectory: Hash },
+  #[snafu(display("I/O error on file {hash}"))]
+  FileIo { hash: Hash, source: io::Error },
   #[snafu(display("file with hash {hash} not found"))]
   FileNotFound { hash: Hash, source: io::Error },
   #[snafu(display("I/O error at {path}"))]
@@ -36,6 +38,8 @@ pub(crate) enum ServerError {
     path: Utf8PathBuf,
     source: io::Error,
   },
+  #[snafu(display("response invalid"))]
+  InvalidResponse { source: http::Error },
   #[snafu(display(
     "track {track} does not exist, package {fingerprint} has {}",
     Count(*tracks, "track"),
@@ -94,7 +98,9 @@ impl ServerError {
       | Self::DirectoryFileMissing { .. }
       | Self::DirectoryNotFound { .. }
       | Self::DirectoryUnverified { .. }
+      | Self::FileIo { .. }
       | Self::FileNotFound { .. }
+      | Self::InvalidResponse { .. }
       | Self::MediaAudioTrackDoesNotExist { .. }
       | Self::PackageFileMissing { .. }
       | Self::PackageMediaMetadataNotFound { .. }
@@ -127,7 +133,9 @@ impl ServerError {
       | Self::DatabaseStorage { .. }
       | Self::DatabaseTable { .. }
       | Self::DatabaseTransaction { .. }
+      | Self::FileIo { .. }
       | Self::FilesystemIo { .. }
+      | Self::InvalidResponse { .. }
       | Self::PackageFileMissing { .. }
       | Self::PackageMetadataCorrupt { .. } => StatusCode::INTERNAL_SERVER_ERROR,
       Self::DirectoryDecode { .. }
