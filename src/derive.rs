@@ -465,10 +465,7 @@ fn transparent_named() {
   }
 
   assert_cbor(Foo { bar: "foo".into() }, "63666f6f");
-  assert_cbor(
-    Foo { bar: "foo".into() },
-    &hex::encode("foo".encode_to_vec()),
-  );
+  assert_cbor_eq(Foo { bar: "foo".into() }, "foo");
 }
 
 #[test]
@@ -478,5 +475,5 @@ fn transparent_newtype() {
   struct Foo(u64);
 
   assert_cbor(Foo(99), "1863");
-  assert_cbor(Foo(99), &hex::encode(99u64.encode_to_vec()));
+  assert_cbor_eq(Foo(99), 99u64);
 }

@@ -170,7 +170,7 @@ use {
   std::assert_matches,
   strum::IntoDiscriminant,
   tempfile::TempDir,
-  test::{assert_cbor, assert_encoding, tempdir},
+  test::{assert_cbor, assert_cbor_eq, assert_encoding, tempdir},
   unindent::unindent,
 };
 

@@ -33,6 +33,14 @@ pub(crate) fn assert_cbor<T: Debug + Decode + Encode + PartialEq>(value: T, cbor
 }
 
 #[track_caller]
+pub(crate) fn assert_cbor_eq<T: Debug + Decode + Encode + PartialEq>(
+  value: T,
+  expected: impl Encode,
+) {
+  assert_cbor(value, &hex::encode(expected.encode_to_vec()));
+}
+
+#[track_caller]
 pub(crate) fn assert_encoding<T: Debug + Decode + Encode + PartialEq>(value: T) {
   let buffer = value.encode_to_vec();
   let mut decoder = Decoder::new(&buffer);
