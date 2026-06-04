@@ -31,6 +31,7 @@ use {
     bech32_encoder::Bech32Encoder,
     bech32_error::Bech32Error,
     bech32_type::Bech32Type,
+    cbor::Cbor,
     checked_url::CheckedUrl,
     component::Component,
     component_error::ComponentError,
@@ -187,6 +188,7 @@ macro_rules! assert_matches_regex {
   }};
 }
 
+pub mod api;
 mod application;
 mod archive;
 mod archive_builder;
@@ -200,6 +202,7 @@ mod bech32_decoder;
 mod bech32_encoder;
 mod bech32_error;
 mod bech32_type;
+mod cbor;
 mod checked_url;
 mod component;
 mod component_buf;

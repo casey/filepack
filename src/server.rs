@@ -126,6 +126,23 @@ impl Server {
       .map(Some)
   }
 
+  pub(crate) fn missing(&self, hashes: &[Hash]) -> ServerResult<Vec<Hash>> {
+    let mut missing = Vec::new();
+
+    for &hash in hashes {
+      let path = self.file_path(hash);
+
+      if !path
+        .try_exists()
+        .context(server_error::FilesystemIo { path: &path })?
+      {
+        missing.push(hash);
+      }
+    }
+
+    Ok(missing)
+  }
+
   pub(crate) fn open_file(&self, hash: Hash) -> ServerResult<Resource> {
     let path = self.file_path(hash);
 

@@ -520,6 +520,30 @@ fn upload_package_serves_package_html() {
 }
 
 #[test]
+fn upload_package_skips_files_already_on_server() {
+  let server = Test::new()
+    .serve()
+    .assert_file(&format!("files/{}", Hash::bytes(b"aaa")), "aaa")
+    .assert_file(&format!("files/{}", Hash::bytes(b"bbb")), "bbb")
+    .spawn();
+
+  let test = Test::new()
+    .write("foo", "aaa")
+    .args(["upload", "--server", &server.address(), "--file", "foo"])
+    .success()
+    .write("bar", "bbb")
+    .args(["create", "."])
+    .success()
+    .remove_file("foo");
+
+  test
+    .args(["upload", "--server", &server.address(), "manifest.filepack"])
+    .success();
+
+  server.terminate().success();
+}
+
+#[test]
 fn upload_package_uploads_files() {
   let server = Test::new()
     .serve()
