@@ -44,6 +44,25 @@ fn restricted_upload_succeeds_with_auth() {
 }
 
 #[test]
+fn reupload_package_skips_when_server_has_package() {
+  let server = Test::new().serve().spawn();
+
+  let test = Test::new()
+    .write("foo", "aaa")
+    .args(["create", "."])
+    .success()
+    .args(["upload", "--server", &server.address(), "manifest.filepack"])
+    .success()
+    .write("foo", "bar");
+
+  test
+    .args(["upload", "--server", &server.address(), "manifest.filepack"])
+    .success();
+
+  server.terminate().success();
+}
+
+#[test]
 fn reupload_package_succeeds() {
   let server = Test::new()
     .serve()

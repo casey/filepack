@@ -2,6 +2,7 @@ use super::*;
 
 pub(crate) trait ReqwestResultExt {
   fn check_status(self) -> Result<reqwest::blocking::Response>;
+  fn found(self) -> Result<Option<reqwest::blocking::Response>>;
 }
 
 impl ReqwestResultExt for reqwest::Result<reqwest::blocking::Response> {
@@ -20,5 +21,15 @@ impl ReqwestResultExt for reqwest::Result<reqwest::blocking::Response> {
     }
 
     Ok(response)
+  }
+
+  fn found(self) -> Result<Option<reqwest::blocking::Response>> {
+    let response = self.context(error::Request)?;
+
+    if response.status() == StatusCode::NOT_FOUND {
+      Ok(None)
+    } else {
+      Ok(Some(Ok(response).check_status()?))
+    }
   }
 }
