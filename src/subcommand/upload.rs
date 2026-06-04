@@ -166,13 +166,23 @@ impl Upload {
 
     let fingerprint = archive.fingerprint().context(error_context)?;
 
+    let client = client()?;
+
+    let url = self.server.join(&format!("package/{fingerprint}")).unwrap();
+
+    if client.head(url).send().found()?.is_some() {
+      if !options.quiet {
+        eprintln!("server already has package");
+      }
+
+      return Ok(());
+    }
+
     let manifest = archive.unpack().context(error_context)?;
 
     let files = manifest.files().len().into_u64();
 
     let bytes = manifest.total_size_u64();
-
-    let client = client()?;
 
     let progress_bar = progress_bar::with_files(&options, bytes, files);
 

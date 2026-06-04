@@ -53,20 +53,19 @@ fn reupload_package_succeeds() {
     .assert_file(&format!("files/{}", Hash::bytes(b"ddd")), "ddd")
     .spawn();
 
-  let mut test = Test::new()
+  Test::new()
     .write("foo", "aaa")
     .write("bar", "bbb")
     .create_dir("empty")
     .write("sub/baz", "ccc")
     .write("sub/qux", "ddd")
     .args(["create", "."])
+    .success()
+    .args(["upload", "--server", &server.address(), "manifest.filepack"])
+    .success()
+    .args(["upload", "--server", &server.address(), "manifest.filepack"])
+    .stderr("server already has package\n")
     .success();
-
-  for _ in 0..2 {
-    test = test
-      .args(["upload", "--server", &server.address(), "manifest.filepack"])
-      .success();
-  }
 
   server.terminate().success();
 }
