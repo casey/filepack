@@ -219,7 +219,7 @@ impl Serve {
   async fn missing(
     _: Authenticated,
     server: ServerExtension,
-    Cbor(request): Cbor<api::missing::Request>,
+    Cbor(request): Cbor<api::missing::Request, { MIB }>,
   ) -> ServerResult<Vec<u8>> {
     let missing = block_in_place(|| server.missing(&request.hashes))?;
 

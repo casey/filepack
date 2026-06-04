@@ -296,6 +296,8 @@ mod derive;
 mod test;
 
 const BECH32_VERSION: Fe32 = Fe32::A;
+const KIB: usize = 1 << 10;
+const MIB: usize = KIB << 10;
 
 type ServerResult<T = (), E = ServerError> = std::result::Result<T, E>;
 type Result<T = (), E = Error> = std::result::Result<T, E>;
