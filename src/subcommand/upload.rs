@@ -10,6 +10,7 @@ struct Context {
   files: u64,
   files_uploaded: u64,
   key: Option<PrivateKey>,
+  missing: HashSet<Hash>,
   options: Options,
   path: Utf8PathBuf,
   progress_bar: ProgressBar,
@@ -115,14 +116,16 @@ impl Upload {
           self.upload_directory(context, &file_path, entry.hash)?;
         }
         EntryType::File => {
-          self.upload_package_file(context, entry, &file_path)?;
-          context.files_uploaded += 1;
-          context
-            .progress_bar
-            .set_message(progress_bar::file_progress_message(
-              context.files_uploaded,
-              context.files,
-            ));
+          if context.missing.contains(&entry.hash) {
+            self.upload_package_file(context, entry, &file_path)?;
+            context.files_uploaded += 1;
+            context
+              .progress_bar
+              .set_message(progress_bar::file_progress_message(
+                context.files_uploaded,
+                context.files,
+              ));
+          }
         }
       }
     }
@@ -180,9 +183,47 @@ impl Upload {
 
     let manifest = archive.unpack().context(error_context)?;
 
-    let files = manifest.files().len().into_u64();
+    let manifest_files = manifest.files();
 
-    let bytes = manifest.total_size_u64();
+    let hashes = manifest_files
+      .values()
+      .map(|file| file.hash)
+      .collect::<BTreeSet<Hash>>();
+
+    let body = api::missing::Request {
+      hashes: hashes.into(),
+    }
+    .encode_to_vec();
+
+    let url = self.server.join("missing").unwrap();
+
+    let missing = self
+      .request_with_token(client.post(url).body(body), key.as_ref())?
+      .send()
+      .check_status()?
+      .cbor::<api::missing::Response>()?
+      .hashes
+      .iter()
+      .copied()
+      .collect::<HashSet<Hash>>();
+
+    let mut files = 0;
+
+    let mut bytes = 0;
+
+    for file in manifest_files.values() {
+      if missing.contains(&file.hash) {
+        files += 1;
+        bytes += file.size;
+      }
+    }
+
+    if !options.quiet {
+      eprintln!(
+        "uploading {files} of {}",
+        Count(manifest_files.len(), "file")
+      );
+    }
 
     let progress_bar = progress_bar::with_files(&options, bytes, files);
 
@@ -192,6 +233,7 @@ impl Upload {
       client,
       files_uploaded: 0,
       key,
+      missing,
       options,
       path,
       files,

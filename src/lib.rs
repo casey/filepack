@@ -31,6 +31,7 @@ use {
     bech32_encoder::Bech32Encoder,
     bech32_error::Bech32Error,
     bech32_type::Bech32Type,
+    cbor::Cbor,
     checked_url::CheckedUrl,
     component::Component,
     component_error::ComponentError,
@@ -73,6 +74,7 @@ use {
     path_error::PathError,
     private_key_error::PrivateKeyError,
     public_key_error::PublicKeyError,
+    reqwest_response_ext::ReqwestResponseExt,
     reqwest_result_ext::ReqwestResultExt,
     resource::Resource,
     resource_type::ResourceType,
@@ -162,7 +164,8 @@ pub use self::{
   functions::install_default_crypto_provider, hash::Hash, language_error::LanguageError,
   major_type::MajorType, manifest::Manifest, map_encoder::MapEncoder, metadata::Metadata,
   private_key::PrivateKey, public_key::PublicKey, relative_path::RelativePath,
-  signature::Signature, statement::Statement, tag_error::TagError, version::Version,
+  signature::Signature, sorted_set::SortedSet, statement::Statement, tag_error::TagError,
+  version::Version,
 };
 
 #[cfg(test)]
@@ -187,6 +190,7 @@ macro_rules! assert_matches_regex {
   }};
 }
 
+pub mod api;
 mod application;
 mod archive;
 mod archive_builder;
@@ -200,6 +204,7 @@ mod bech32_decoder;
 mod bech32_encoder;
 mod bech32_error;
 mod bech32_type;
+mod cbor;
 mod checked_url;
 mod component;
 mod component_buf;
@@ -262,6 +267,7 @@ mod public_key;
 mod public_key_error;
 mod re;
 mod relative_path;
+mod reqwest_response_ext;
 mod reqwest_result_ext;
 mod resource;
 mod resource_type;
@@ -270,6 +276,7 @@ mod server_error;
 mod sign_options;
 mod signature;
 mod signature_error;
+mod sorted_set;
 mod statement;
 mod static_asset;
 mod style;
@@ -289,6 +296,8 @@ mod derive;
 mod test;
 
 const BECH32_VERSION: Fe32 = Fe32::A;
+const KIB: usize = 1 << 10;
+const MIB: usize = KIB << 10;
 
 type ServerResult<T = (), E = ServerError> = std::result::Result<T, E>;
 type Result<T = (), E = Error> = std::result::Result<T, E>;

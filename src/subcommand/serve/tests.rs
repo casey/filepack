@@ -13,7 +13,7 @@ static RUNTIME: LazyLock<Runtime> = LazyLock::new(|| Runtime::new().unwrap());
 
 struct TestRequestBuilder {
   absent_headers: BTreeSet<String>,
-  body: Option<String>,
+  body: Option<Vec<u8>>,
   method: Method,
   path: String,
   range: Option<&'static str>,
@@ -63,8 +63,8 @@ impl TestRequestBuilder {
     self.assert_response(StaticAsset::get(path).unwrap())
   }
 
-  fn body(mut self, body: &str) -> Self {
-    self.body = Some(body.into());
+  fn body(mut self, body: impl AsRef<[u8]>) -> Self {
+    self.body = Some(body.as_ref().to_vec());
     self
   }
 
@@ -889,6 +889,53 @@ fn media_audio_track_response() {
     .assert_header(header::CONTENT_TYPE, "audio/flac")
     .assert_header(header::ETAG, format!("\"{}\"", Hash::bytes(bar)))
     .assert_body(bar)
+    .send();
+}
+
+#[test]
+fn missing_rejects_unsorted_hashes() {
+  let mut hashes = BTreeSet::from([Hash::bytes(b"foo"), Hash::bytes(b"bar")])
+    .into_iter()
+    .collect::<Vec<_>>();
+
+  hashes.reverse();
+
+  let mut encoder = Encoder::new();
+  let mut map = encoder.map::<u64>(1);
+  map.item(0, hashes);
+  drop(map);
+
+  TestServer::new()
+    .post("/missing")
+    .body(encoder.finish())
+    .status(StatusCode::BAD_REQUEST)
+    .assert_body("failed to decode request body")
+    .send();
+}
+
+#[test]
+fn missing_returns_missing_hashes() {
+  let server = TestServer::new();
+
+  let present = Hash::bytes(b"bar");
+  let absent = Hash::bytes(b"baz");
+
+  server.write_file(b"bar");
+
+  server
+    .post("/missing")
+    .body(
+      api::missing::Request {
+        hashes: BTreeSet::from([present, absent]).into(),
+      }
+      .encode_to_vec(),
+    )
+    .assert_body(
+      api::missing::Response {
+        hashes: BTreeSet::from([absent]).into(),
+      }
+      .encode_to_vec(),
+    )
     .send();
 }
 

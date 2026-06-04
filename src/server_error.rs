@@ -11,6 +11,10 @@ pub(crate) enum ServerError {
   AuthorizationMalformed,
   #[snafu(display("missing authorization header"))]
   AuthorizationMissing,
+  #[snafu(display("failed to read request body"))]
+  CborBody { source: axum::Error },
+  #[snafu(display("failed to decode request body"))]
+  CborDecode { source: DecodeError },
   #[snafu(transparent)]
   Database { source: redb::DatabaseError },
   #[snafu(transparent)]
@@ -94,6 +98,8 @@ impl ServerError {
       | Self::AuthorizationInvalid { .. }
       | Self::AuthorizationMalformed
       | Self::AuthorizationMissing
+      | Self::CborBody { .. }
+      | Self::CborDecode { .. }
       | Self::DirectoryDecode { .. }
       | Self::DirectoryFileMissing { .. }
       | Self::DirectoryNotFound { .. }
@@ -138,7 +144,9 @@ impl ServerError {
       | Self::InvalidResponse { .. }
       | Self::PackageFileMissing { .. }
       | Self::PackageMetadataCorrupt { .. } => StatusCode::INTERNAL_SERVER_ERROR,
-      Self::DirectoryDecode { .. }
+      Self::CborBody { .. }
+      | Self::CborDecode { .. }
+      | Self::DirectoryDecode { .. }
       | Self::DirectoryFileMissing { .. }
       | Self::DirectoryUnverified { .. }
       | Self::PackageMetadataDecode { .. }

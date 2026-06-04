@@ -131,6 +131,12 @@ pub enum Error {
     path: DisplayPath,
     source: DecodeError,
   },
+  #[snafu(display("failed to decode response from `{url}`"))]
+  DecodeResponse {
+    backtrace: Option<Backtrace>,
+    source: DecodeError,
+    url: Url,
+  },
   #[snafu(display("failed to decode downloaded directory from `{url}`"))]
   DecodeResponseDirectory {
     backtrace: Option<Backtrace>,

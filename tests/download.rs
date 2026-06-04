@@ -224,6 +224,7 @@ fn download_retrieves_package() {
 
   test
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
+    .stderr("uploading 4 of 4 files\n")
     .success();
 
   let downloaded = Test::new()
@@ -280,6 +281,7 @@ fn download_retrieves_package_with_metadata() {
 
   test
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
+    .stderr("uploading 5 of 5 files\n")
     .success();
 
   Test::new()
