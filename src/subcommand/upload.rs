@@ -171,6 +171,10 @@ impl Upload {
     let url = self.server.join(&format!("package/{fingerprint}")).unwrap();
 
     if client.head(url).send().found()?.is_some() {
+      if !options.quiet {
+        eprintln!("package already uploaded");
+      }
+
       return Ok(());
     }
 

@@ -52,11 +52,11 @@ fn reupload_package_skips_when_server_has_package() {
     .args(["create", "."])
     .success()
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
-    .success()
-    .write("foo", "bar");
+    .success();
 
   test
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
+    .stderr("package already uploaded\n")
     .success();
 
   server.terminate().success();
@@ -72,20 +72,21 @@ fn reupload_package_succeeds() {
     .assert_file(&format!("files/{}", Hash::bytes(b"ddd")), "ddd")
     .spawn();
 
-  let mut test = Test::new()
+  let test = Test::new()
     .write("foo", "aaa")
     .write("bar", "bbb")
     .create_dir("empty")
     .write("sub/baz", "ccc")
     .write("sub/qux", "ddd")
     .args(["create", "."])
+    .success()
+    .args(["upload", "--server", &server.address(), "manifest.filepack"])
     .success();
 
-  for _ in 0..2 {
-    test = test
-      .args(["upload", "--server", &server.address(), "manifest.filepack"])
-      .success();
-  }
+  test
+    .args(["upload", "--server", &server.address(), "manifest.filepack"])
+    .stderr("package already uploaded\n")
+    .success();
 
   server.terminate().success();
 }
