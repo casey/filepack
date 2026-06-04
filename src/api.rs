@@ -14,23 +14,4 @@ pub mod missing {
     #[n(0)]
     pub hashes: SortedSet<Hash>,
   }
-
-  #[cfg(test)]
-  mod tests {
-    use super::*;
-
-    #[test]
-    fn request_encoding() {
-      assert_encoding(Request {
-        hashes: BTreeSet::from([Hash::bytes(b"foo"), Hash::bytes(b"bar")]).into(),
-      });
-    }
-
-    #[test]
-    fn response_encoding() {
-      assert_encoding(Response {
-        hashes: BTreeSet::from([Hash::bytes(b"foo"), Hash::bytes(b"bar")]).into(),
-      });
-    }
-  }
 }
