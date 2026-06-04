@@ -29,7 +29,7 @@ impl ReqwestResultExt for reqwest::Result<reqwest::blocking::Response> {
     if response.status() == StatusCode::NOT_FOUND {
       Ok(None)
     } else {
-      Ok(Some(Ok(response).check_status()?))
+      Ok(response).check_status().map(Some)
     }
   }
 }
