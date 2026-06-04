@@ -53,7 +53,7 @@ fn reupload_package_succeeds() {
     .assert_file(&format!("files/{}", Hash::bytes(b"ddd")), "ddd")
     .spawn();
 
-  let test = Test::new()
+  Test::new()
     .write("foo", "aaa")
     .write("bar", "bbb")
     .create_dir("empty")
@@ -63,10 +63,8 @@ fn reupload_package_succeeds() {
     .success()
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
     .success();
-
-  test
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
-    .stderr("package already uploaded\n")
+    .stderr("server already has package\n")
     .success();
 
   server.terminate().success();

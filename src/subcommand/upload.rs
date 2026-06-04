@@ -172,7 +172,7 @@ impl Upload {
 
     if client.head(url).send().found()?.is_some() {
       if !options.quiet {
-        eprintln!("package already uploaded");
+        eprintln!("server already has package");
       }
 
       return Ok(());
