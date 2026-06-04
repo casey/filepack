@@ -10,9 +10,14 @@ fn rejects_unsorted_hashes() {
 
   hashes.reverse();
 
+  let mut encoder = Encoder::new();
+  let mut map = encoder.map::<u64>(1);
+  map.item(0, hashes);
+  drop(map);
+
   let response = reqwest::blocking::Client::new()
     .post(format!("{}/missing", server.address()))
-    .body(api::missing::Request { hashes }.encode_to_vec())
+    .body(encoder.finish())
     .send()
     .unwrap();
 
@@ -34,13 +39,16 @@ fn returns_missing_hashes() {
     .send()
     .unwrap();
 
-  let hashes = BTreeSet::from([present, absent])
-    .into_iter()
-    .collect::<Vec<_>>();
+  let hashes = BTreeSet::from([present, absent]);
 
   let response = reqwest::blocking::Client::new()
     .post(format!("{}/missing", server.address()))
-    .body(api::missing::Request { hashes }.encode_to_vec())
+    .body(
+      api::missing::Request {
+        hashes: hashes.into(),
+      }
+      .encode_to_vec(),
+    )
     .send()
     .unwrap();
 
@@ -50,7 +58,7 @@ fn returns_missing_hashes() {
 
   let missing = api::missing::Response::decode_from_slice(&bytes).unwrap();
 
-  assert_eq!(missing.hashes, vec![absent]);
+  assert_eq!(missing.hashes.into_inner(), vec![absent]);
 
   server.terminate().success();
 }

@@ -126,8 +126,8 @@ impl Server {
       .map(Some)
   }
 
-  pub(crate) fn missing(&self, hashes: &[Hash]) -> ServerResult<Vec<Hash>> {
-    let mut missing = Vec::new();
+  pub(crate) fn missing(&self, hashes: &[Hash]) -> ServerResult<BTreeSet<Hash>> {
+    let mut missing = BTreeSet::new();
 
     for &hash in hashes {
       let path = self.file_path(hash);
@@ -136,7 +136,7 @@ impl Server {
         .try_exists()
         .context(server_error::FilesystemIo { path: &path })?
       {
-        missing.push(hash);
+        missing.insert(hash);
       }
     }
 

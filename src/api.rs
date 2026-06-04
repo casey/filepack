@@ -6,13 +6,13 @@ pub mod missing {
   #[derive(Debug, Encode, Decode, PartialEq)]
   pub struct Request {
     #[n(0)]
-    pub hashes: Vec<Hash>,
+    pub hashes: Unique<Hash>,
   }
 
   #[derive(Debug, Encode, Decode, PartialEq)]
   pub struct Response {
     #[n(0)]
-    pub hashes: Vec<Hash>,
+    pub hashes: Unique<Hash>,
   }
 
   #[cfg(test)]
@@ -22,14 +22,14 @@ pub mod missing {
     #[test]
     fn request_encoding() {
       assert_encoding(Request {
-        hashes: vec![Hash::bytes(b"foo"), Hash::bytes(b"bar")],
+        hashes: BTreeSet::from([Hash::bytes(b"foo"), Hash::bytes(b"bar")]).into(),
       });
     }
 
     #[test]
     fn response_encoding() {
       assert_encoding(Response {
-        hashes: vec![Hash::bytes(b"foo"), Hash::bytes(b"bar")],
+        hashes: BTreeSet::from([Hash::bytes(b"foo"), Hash::bytes(b"bar")]).into(),
       });
     }
   }

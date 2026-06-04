@@ -191,7 +191,7 @@ impl Upload {
       .collect::<BTreeSet<Hash>>();
 
     let body = api::missing::Request {
-      hashes: hashes.into_iter().collect(),
+      hashes: hashes.into(),
     }
     .encode_to_vec();
 
@@ -209,7 +209,8 @@ impl Upload {
     )
     .context(error::DecodeMissingResponse { url })?
     .hashes
-    .into_iter()
+    .iter()
+    .copied()
     .collect::<HashSet<Hash>>();
 
     let mut files = 0;

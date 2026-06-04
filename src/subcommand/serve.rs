@@ -221,13 +221,14 @@ impl Serve {
     server: ServerExtension,
     Cbor(request): Cbor<api::missing::Request>,
   ) -> ServerResult<Vec<u8>> {
-    for window in request.hashes.windows(2) {
-      ensure!(window[0] < window[1], server_error::MissingHashesUnsorted);
-    }
-
     let missing = block_in_place(|| server.missing(&request.hashes))?;
 
-    Ok(api::missing::Response { hashes: missing }.encode_to_vec())
+    Ok(
+      api::missing::Response {
+        hashes: missing.into(),
+      }
+      .encode_to_vec(),
+    )
   }
 
   async fn package(

@@ -163,7 +163,8 @@ pub use self::{
   functions::install_default_crypto_provider, hash::Hash, language_error::LanguageError,
   major_type::MajorType, manifest::Manifest, map_encoder::MapEncoder, metadata::Metadata,
   private_key::PrivateKey, public_key::PublicKey, relative_path::RelativePath,
-  signature::Signature, statement::Statement, tag_error::TagError, version::Version,
+  signature::Signature, statement::Statement, tag_error::TagError, unique::Unique,
+  version::Version,
 };
 
 #[cfg(test)]
@@ -283,6 +284,7 @@ pub mod templates;
 mod ticked;
 mod token;
 mod type_name;
+mod unique;
 mod utf8_path_ext;
 mod version;
 

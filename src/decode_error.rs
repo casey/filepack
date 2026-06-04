@@ -77,6 +77,8 @@ pub enum DecodeError {
   UnexpectedVariantType { actual: MajorType },
   #[snafu(display("string not valid unicode"))]
   Unicode { source: Utf8Error },
+  #[snafu(display("unsorted or duplicate array elements"))]
+  Unsorted,
   #[snafu(display("unsupported additional information value: {value}"))]
   UnsupportedAdditionalInformation { value: u8 },
   #[snafu(display("failed to parse URL"))]

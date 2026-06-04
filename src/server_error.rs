@@ -53,8 +53,6 @@ pub(crate) enum ServerError {
     track: usize,
     tracks: usize,
   },
-  #[snafu(display("missing request hashes must be sorted and unique"))]
-  MissingHashesUnsorted,
   #[snafu(display("file `{path}` missing from package {fingerprint}"))]
   PackageFileMissing {
     fingerprint: Fingerprint,
@@ -110,7 +108,6 @@ impl ServerError {
       | Self::FileNotFound { .. }
       | Self::InvalidResponse { .. }
       | Self::MediaAudioTrackDoesNotExist { .. }
-      | Self::MissingHashesUnsorted
       | Self::PackageFileMissing { .. }
       | Self::PackageMediaMetadataNotFound { .. }
       | Self::PackageMetadataCorrupt { .. }
@@ -152,7 +149,6 @@ impl ServerError {
       | Self::DirectoryDecode { .. }
       | Self::DirectoryFileMissing { .. }
       | Self::DirectoryUnverified { .. }
-      | Self::MissingHashesUnsorted
       | Self::PackageMetadataDecode { .. }
       | Self::PackageMetadataFileMissing { .. }
       | Self::PackageRootUnverified { .. }
