@@ -62,7 +62,7 @@ fn reupload_package_succeeds() {
     .args(["create", "."])
     .success()
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
-    .success();
+    .success()
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
     .stderr("server already has package\n")
     .success();
