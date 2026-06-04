@@ -219,7 +219,10 @@ impl Upload {
     }
 
     if !options.quiet {
-      eprintln!("uploading {files} of {} files", manifest_files.len());
+      eprintln!(
+        "uploading {files} of {}",
+        Count(manifest_files.len(), "file")
+      );
     }
 
     let progress_bar = progress_bar::with_files(&options, bytes, files);

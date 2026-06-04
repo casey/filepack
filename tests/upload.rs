@@ -256,7 +256,7 @@ fn upload_package_accepts_directory() {
     .args(["create", "foo"])
     .success()
     .args(["upload", "--server", &server.address(), "foo"])
-    .stderr("uploading 1 of 1 files\n")
+    .stderr("uploading 1 of 1 file\n")
     .success();
 
   server.terminate().success();
@@ -279,7 +279,7 @@ fn upload_package_checks_file_hashes_locally() {
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
     .stderr(&format!(
       "\
-uploading 1 of 1 files
+uploading 1 of 1 file
 mismatched file: `foo`
        manifest: {expected} (3 bytes)
            file: {actual} (3 bytes)
@@ -303,7 +303,7 @@ fn upload_package_defaults_to_current_directory() {
     .args(["create", "."])
     .success()
     .args(["upload", "--server", &server.address()])
-    .stderr("uploading 1 of 1 files\n")
+    .stderr("uploading 1 of 1 file\n")
     .success();
 
   server.terminate().success();
