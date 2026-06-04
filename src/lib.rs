@@ -74,6 +74,7 @@ use {
     path_error::PathError,
     private_key_error::PrivateKeyError,
     public_key_error::PublicKeyError,
+    reqwest_response_ext::ReqwestResponseExt,
     reqwest_result_ext::ReqwestResultExt,
     resource::Resource,
     resource_type::ResourceType,
@@ -266,6 +267,7 @@ mod public_key;
 mod public_key_error;
 mod re;
 mod relative_path;
+mod reqwest_response_ext;
 mod reqwest_result_ext;
 mod resource;
 mod resource_type;

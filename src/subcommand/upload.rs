@@ -197,21 +197,15 @@ impl Upload {
 
     let url = self.server.join("missing").unwrap();
 
-    let response = self
-      .request_with_token(client.post(url.clone()).body(body), key.as_ref())?
+    let missing = self
+      .request_with_token(client.post(url).body(body), key.as_ref())?
       .send()
-      .check_status()?;
-
-    let missing = api::missing::Response::decode_from_slice(
-      &response
-        .bytes()
-        .with_context(|_| error::ResponseBody { url: url.clone() })?,
-    )
-    .context(error::DecodeMissingResponse { url })?
-    .hashes
-    .iter()
-    .copied()
-    .collect::<HashSet<Hash>>();
+      .check_status()?
+      .cbor::<api::missing::Response>()?
+      .hashes
+      .iter()
+      .copied()
+      .collect::<HashSet<Hash>>();
 
     let mut files = 0;
 
@@ -222,6 +216,10 @@ impl Upload {
         files += 1;
         bytes += file.size;
       }
+    }
+
+    if !options.quiet {
+      eprintln!("uploading {files} of {} files", manifest_files.len());
     }
 
     let progress_bar = progress_bar::with_files(&options, bytes, files);

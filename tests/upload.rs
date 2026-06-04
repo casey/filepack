@@ -62,6 +62,7 @@ fn reupload_package_succeeds() {
     .args(["create", "."])
     .success()
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
+    .stderr("uploading 4 of 4 files\n")
     .success()
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
     .stderr("server already has package\n")
@@ -180,6 +181,7 @@ fn signatures_are_not_uploaded() {
 
   test
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
+    .stderr("uploading 3 of 3 files\n")
     .success();
 
   let downloaded = Test::new()
@@ -254,6 +256,7 @@ fn upload_package_accepts_directory() {
     .args(["create", "foo"])
     .success()
     .args(["upload", "--server", &server.address(), "foo"])
+    .stderr("uploading 1 of 1 files\n")
     .success();
 
   server.terminate().success();
@@ -276,6 +279,7 @@ fn upload_package_checks_file_hashes_locally() {
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
     .stderr(&format!(
       "\
+uploading 1 of 1 files
 mismatched file: `foo`
        manifest: {expected} (3 bytes)
            file: {actual} (3 bytes)
@@ -299,6 +303,7 @@ fn upload_package_defaults_to_current_directory() {
     .args(["create", "."])
     .success()
     .args(["upload", "--server", &server.address()])
+    .stderr("uploading 1 of 1 files\n")
     .success();
 
   server.terminate().success();
@@ -502,6 +507,7 @@ fn upload_package_serves_package_html() {
 
   test
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
+    .stderr("uploading 2 of 2 files\n")
     .success();
 
   server.assert_page(
@@ -527,17 +533,15 @@ fn upload_package_skips_files_already_on_server() {
     .assert_file(&format!("files/{}", Hash::bytes(b"bbb")), "bbb")
     .spawn();
 
-  let test = Test::new()
+  Test::new()
     .write("foo", "aaa")
     .args(["upload", "--server", &server.address(), "--file", "foo"])
     .success()
     .write("bar", "bbb")
     .args(["create", "."])
     .success()
-    .remove_file("foo");
-
-  test
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
+    .stderr("uploading 1 of 2 files\n")
     .success();
 
   server.terminate().success();
@@ -572,6 +576,7 @@ fn upload_package_uploads_files() {
 
   test
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
+    .stderr("uploading 4 of 4 files\n")
     .success();
 
   let cbor = reqwest::blocking::get(format!("{}/file/{root}", server.address()))
