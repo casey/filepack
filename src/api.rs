@@ -6,13 +6,13 @@ pub mod missing {
   #[derive(Debug, Encode, Decode, PartialEq)]
   pub struct Request {
     #[n(0)]
-    pub hashes: Unique<Hash>,
+    pub hashes: SortedSet<Hash>,
   }
 
   #[derive(Debug, Encode, Decode, PartialEq)]
   pub struct Response {
     #[n(0)]
-    pub hashes: Unique<Hash>,
+    pub hashes: SortedSet<Hash>,
   }
 
   #[cfg(test)]

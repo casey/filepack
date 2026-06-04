@@ -163,7 +163,7 @@ pub use self::{
   functions::install_default_crypto_provider, hash::Hash, language_error::LanguageError,
   major_type::MajorType, manifest::Manifest, map_encoder::MapEncoder, metadata::Metadata,
   private_key::PrivateKey, public_key::PublicKey, relative_path::RelativePath,
-  signature::Signature, statement::Statement, tag_error::TagError, unique::Unique,
+  signature::Signature, sorted_set::SortedSet, statement::Statement, tag_error::TagError,
   version::Version,
 };
 
@@ -274,6 +274,7 @@ mod server_error;
 mod sign_options;
 mod signature;
 mod signature_error;
+mod sorted_set;
 mod statement;
 mod static_asset;
 mod style;
@@ -284,7 +285,6 @@ pub mod templates;
 mod ticked;
 mod token;
 mod type_name;
-mod unique;
 mod utf8_path_ext;
 mod version;
 
