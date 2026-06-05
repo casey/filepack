@@ -47,6 +47,9 @@ mod tests {
       // valid
       Hrp::parse(hrp).unwrap();
 
+      // lowercase
+      assert!(hrp.chars().all(|c| c.is_ascii_lowercase()));
+
       // cannot be confused with hex
       assert!(hrp.chars().any(|c| !c.is_ascii_hexdigit()));
 

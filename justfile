@@ -7,7 +7,7 @@ check: (watch 'lcheck --tests --all --all-targets')
 
 test *args: (watch f'ltest --all --all-targets {{args}}')
 
-lib *args: (watch f'ltest --lib')
+lib *args: (watch f'ltest --lib {{args}}')
 
 ci: lint
   cargo ltest --workspace
