@@ -79,23 +79,69 @@ impl Server {
       .media
       .context(server_error::PackageMediaMetadataNotFound { fingerprint })?;
 
-    match media {
-      Media::Audio { tracks } => {
-        let track = tracks
-          .get(track)
-          .context(server_error::MediaAudioTrackDoesNotExist {
-            fingerprint,
-            track,
-            tracks: tracks.len(),
-          })?;
+    let Media::Audio { tracks } = media else {
+      return Err(
+        server_error::MediaType {
+          actual: media.discriminant(),
+          expected: MediaType::Audio,
+          fingerprint,
+        }
+        .build(),
+      );
+    };
 
-        let path = track.as_path();
+    let track = tracks
+      .get(track)
+      .context(server_error::MediaAudioTrackDoesNotExist {
+        fingerprint,
+        track,
+        tracks: tracks.len(),
+      })?;
 
-        let hash = self.verified_package_file(fingerprint, &path)?;
+    let path = track.as_path();
 
-        Ok(self.open_file(hash)?.ty(track.resource_type()))
-      }
-    }
+    let hash = self.verified_package_file(fingerprint, &path)?;
+
+    Ok(self.open_file(hash)?.ty(track.resource_type()))
+  }
+
+  pub(crate) fn media_image_image(
+    &self,
+    fingerprint: Fingerprint,
+    image: usize,
+  ) -> ServerResult<Resource> {
+    let metadata = self
+      .package_metadata(fingerprint)?
+      .context(server_error::PackageMetadataNotFound { fingerprint })?;
+
+    let media = metadata
+      .media
+      .context(server_error::PackageMediaMetadataNotFound { fingerprint })?;
+
+    let Media::Image { images } = media else {
+      return Err(
+        server_error::MediaType {
+          actual: media.discriminant(),
+          expected: MediaType::Image,
+          fingerprint,
+        }
+        .build(),
+      );
+    };
+
+    let image = images
+      .get(image)
+      .context(server_error::MediaImageImageDoesNotExist {
+        fingerprint,
+        image,
+        images: images.len(),
+      })?;
+
+    let path = image.as_path();
+
+    let hash = self.verified_package_file(fingerprint, &path)?;
+
+    Ok(self.open_file(hash)?.ty(image.resource_type()))
   }
 
   fn metadata(&self, fingerprint: Fingerprint) -> ServerResult<Option<Metadata>> {

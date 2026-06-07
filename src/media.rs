@@ -1,13 +1,21 @@
 use super::*;
 
-#[derive(Clone, Debug, Deserialize, Encode, Decode, IntoStaticStr, PartialEq, Serialize)]
+#[derive(
+  Clone, Debug, Decode, Deserialize, Encode, EnumDiscriminants, IntoStaticStr, PartialEq, Serialize,
+)]
 #[serde(deny_unknown_fields, rename_all = "snake_case", tag = "type")]
 #[strum(serialize_all = "kebab-case")]
+#[strum_discriminants(derive(Display), name(MediaType), strum(serialize_all = "kebab-case"))]
 pub(crate) enum Media {
   #[n(0)]
   Audio {
     #[n(0)]
     tracks: Vec<filename::Flac>,
+  },
+  #[n(1)]
+  Image {
+    #[n(0)]
+    images: Vec<filename::Artwork>,
   },
 }
 

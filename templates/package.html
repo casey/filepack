@@ -57,6 +57,14 @@
     </ol>
   </dd>
 %%       }
+%%       Media::Image { images } => {
+  <dt>images</dt>
+  <dd>
+%%         for (i, image) in images.iter().enumerate() {
+    <img src=/media/image/{{ self.fingerprint }}/image/{{ i }}>
+%%         }
+  </dd>
+%%       }
 %%     }
 %%   }
 %% }

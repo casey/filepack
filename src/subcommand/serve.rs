@@ -216,6 +216,14 @@ impl Serve {
     Ok(block_in_place(|| server.media_audio_track(fingerprint, track))?.range(range))
   }
 
+  async fn media_image_image(
+    server: ServerExtension,
+    Path((fingerprint, image)): Path<(Fingerprint, usize)>,
+    range: Option<TypedHeader<headers::Range>>,
+  ) -> ServerResult<Resource> {
+    Ok(block_in_place(|| server.media_image_image(fingerprint, image))?.range(range))
+  }
+
   async fn missing(
     _: Authenticated,
     server: ServerExtension,
@@ -297,6 +305,10 @@ impl Serve {
       .route(
         "/media/audio/{fingerprint}/track/{track}",
         get(Self::media_audio_track),
+      )
+      .route(
+        "/media/image/{fingerprint}/image/{image}",
+        get(Self::media_image_image),
       )
       .route("/missing", post(Self::missing))
       .route(

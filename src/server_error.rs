@@ -53,6 +53,21 @@ pub(crate) enum ServerError {
     track: usize,
     tracks: usize,
   },
+  #[snafu(display(
+    "image {image} does not exist, package {fingerprint} has {}",
+    Count(*images, "track"),
+  ))]
+  MediaImageImageDoesNotExist {
+    fingerprint: Fingerprint,
+    image: usize,
+    images: usize,
+  },
+  #[snafu(display("unexpected media type {actual}, package {fingerprint} is {actual}"))]
+  MediaType {
+    fingerprint: Fingerprint,
+    actual: crate::MediaType,
+    expected: crate::MediaType,
+  },
   #[snafu(display("file `{path}` missing from package {fingerprint}"))]
   PackageFileMissing {
     fingerprint: Fingerprint,
@@ -108,6 +123,8 @@ impl ServerError {
       | Self::FileNotFound { .. }
       | Self::InvalidResponse { .. }
       | Self::MediaAudioTrackDoesNotExist { .. }
+      | Self::MediaImageImageDoesNotExist { .. }
+      | Self::MediaType { .. }
       | Self::PackageFileMissing { .. }
       | Self::PackageMediaMetadataNotFound { .. }
       | Self::PackageMetadataCorrupt { .. }
@@ -149,6 +166,7 @@ impl ServerError {
       | Self::DirectoryDecode { .. }
       | Self::DirectoryFileMissing { .. }
       | Self::DirectoryUnverified { .. }
+      | Self::MediaType { .. }
       | Self::PackageMetadataDecode { .. }
       | Self::PackageMetadataFileMissing { .. }
       | Self::PackageRootUnverified { .. }
@@ -158,6 +176,7 @@ impl ServerError {
       | Self::DirectoryNotFound { .. }
       | Self::FileNotFound { .. }
       | Self::MediaAudioTrackDoesNotExist { .. }
+      | Self::MediaImageImageDoesNotExist { .. }
       | Self::PackageMediaMetadataNotFound { .. }
       | Self::PackageMetadataNotFound { .. }
       | Self::PackageNotFound { .. }
