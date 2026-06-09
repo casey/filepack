@@ -962,7 +962,7 @@ fn media_type_mismatch() {
   fn case(server: &TestServer, path: String, body: String) {
     server
       .get(path)
-      .status(StatusCode::BAD_REQUEST)
+      .status(StatusCode::NOT_FOUND)
       .assert_body(body)
       .send();
   }

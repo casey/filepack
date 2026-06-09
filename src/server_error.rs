@@ -158,7 +158,6 @@ impl ServerError {
       | Self::DirectoryDecode { .. }
       | Self::DirectoryFileMissing { .. }
       | Self::DirectoryUnverified { .. }
-      | Self::MediaType { .. }
       | Self::PackageMetadataDecode { .. }
       | Self::PackageMetadataFileMissing { .. }
       | Self::PackageRootUnverified { .. }
@@ -168,6 +167,7 @@ impl ServerError {
       | Self::DirectoryNotFound { .. }
       | Self::FileNotFound { .. }
       | Self::MediaItemDoesNotExist { .. }
+      | Self::MediaType { .. }
       | Self::PackageMediaMetadataNotFound { .. }
       | Self::PackageMetadataNotFound { .. }
       | Self::PackageNotFound { .. }
