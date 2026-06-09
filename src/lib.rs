@@ -69,6 +69,7 @@ use {
     mode::Mode,
     options::Options,
     or::Or,
+    ordinal::Ordinal,
     owo_colorize_ext::OwoColorizeExt,
     package::Package,
     path_error::PathError,
@@ -134,7 +135,7 @@ use {
     iter,
     marker::PhantomData,
     net::SocketAddr,
-    num::TryFromIntError,
+    num::{NonZeroUsize, ParseIntError, TryFromIntError},
     ops::{Bound, Deref},
     path::{Path, PathBuf},
     process, ptr,
@@ -257,6 +258,7 @@ mod metadata;
 mod mode;
 mod options;
 mod or;
+mod ordinal;
 mod owo_colorize_ext;
 mod package;
 mod path_error;

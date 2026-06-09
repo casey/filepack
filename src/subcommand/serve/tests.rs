@@ -684,7 +684,7 @@ fn media_audio_track_file_missing() {
   .unwrap();
 
   server
-    .get(format!("/media/audio/{fingerprint}/track/0"))
+    .get(format!("/media/audio/{fingerprint}/track/1"))
     .status(StatusCode::INTERNAL_SERVER_ERROR)
     .assert_body(format!(
       "file `foo.flac` missing from package {fingerprint}"
@@ -711,11 +711,19 @@ fn media_audio_track_out_of_range() {
   );
 
   server
-    .get(format!("/media/audio/{fingerprint}/track/2"))
+    .get(format!("/media/audio/{fingerprint}/track/3"))
     .status(StatusCode::NOT_FOUND)
     .assert_body(format!(
-      "track 2 does not exist, package {fingerprint} has 2 tracks"
+      "track 3 does not exist, package {fingerprint} has 2 tracks"
     ))
+    .send();
+
+  server
+    .get(format!("/media/audio/{fingerprint}/track/0"))
+    .status(StatusCode::BAD_REQUEST)
+    .assert_body(
+      "Invalid URL: Cannot parse `track` with value `0`: number would be zero for non-zero type",
+    )
     .send();
 }
 
@@ -726,7 +734,7 @@ fn media_audio_track_package_not_found() {
   let fingerprint = Fingerprint(Hash::bytes(b"foo"));
 
   server
-    .get(format!("/media/audio/{fingerprint}/track/0"))
+    .get(format!("/media/audio/{fingerprint}/track/1"))
     .status(StatusCode::NOT_FOUND)
     .assert_body(format!("package {fingerprint} not found"))
     .send();
@@ -746,7 +754,7 @@ fn media_audio_track_package_without_media() {
   );
 
   server
-    .get(format!("/media/audio/{fingerprint}/track/0"))
+    .get(format!("/media/audio/{fingerprint}/track/1"))
     .status(StatusCode::NOT_FOUND)
     .assert_body(format!(
       "package {fingerprint} does not have media metadata"
@@ -767,7 +775,7 @@ fn media_audio_track_package_without_metadata() {
   server.post(format!("/package/{fingerprint}")).send();
 
   server
-    .get(format!("/media/audio/{fingerprint}/track/0"))
+    .get(format!("/media/audio/{fingerprint}/track/1"))
     .status(StatusCode::NOT_FOUND)
     .assert_body(format!("package {fingerprint} does not have metadata"))
     .send();
@@ -785,7 +793,7 @@ fn media_audio_track_ranges() {
     body: &[u8],
   ) {
     let request = server
-      .get(format!("/media/audio/{fingerprint}/track/0"))
+      .get(format!("/media/audio/{fingerprint}/track/1"))
       .range(range)
       .status(status)
       .assert_header(header::ACCEPT_RANGES, "bytes")
@@ -873,7 +881,7 @@ fn media_audio_track_response() {
   );
 
   server
-    .get(format!("/media/audio/{fingerprint}/track/0"))
+    .get(format!("/media/audio/{fingerprint}/track/1"))
     .assert_header(header::ACCEPT_RANGES, "bytes")
     .assert_header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
     .assert_header(header::CONTENT_LENGTH, "3")
@@ -884,7 +892,7 @@ fn media_audio_track_response() {
     .send();
 
   server
-    .get(format!("/media/audio/{fingerprint}/track/1"))
+    .get(format!("/media/audio/{fingerprint}/track/2"))
     .assert_header(header::CONTENT_LENGTH, "6")
     .assert_header(header::CONTENT_TYPE, "audio/flac")
     .assert_header(header::ETAG, format!("\"{}\"", Hash::bytes(bar)))
@@ -910,10 +918,10 @@ fn media_image_image_out_of_range() {
   );
 
   server
-    .get(format!("/media/image/{fingerprint}/image/1"))
+    .get(format!("/media/image/{fingerprint}/image/2"))
     .status(StatusCode::NOT_FOUND)
     .assert_body(format!(
-      "image 1 does not exist, package {fingerprint} has 1 image"
+      "image 2 does not exist, package {fingerprint} has 1 image"
     ))
     .send();
 }
@@ -937,7 +945,7 @@ fn media_image_image_response() {
   );
 
   server
-    .get(format!("/media/image/{fingerprint}/image/0"))
+    .get(format!("/media/image/{fingerprint}/image/1"))
     .assert_header(header::ACCEPT_RANGES, "bytes")
     .assert_header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
     .assert_header(header::CONTENT_LENGTH, "3")
@@ -948,7 +956,7 @@ fn media_image_image_response() {
     .send();
 
   server
-    .get(format!("/media/image/{fingerprint}/image/1"))
+    .get(format!("/media/image/{fingerprint}/image/2"))
     .assert_header(header::CONTENT_LENGTH, "6")
     .assert_header(header::CONTENT_TYPE, "image/jpeg")
     .assert_header(header::ETAG, format!("\"{}\"", Hash::bytes(bar)))
@@ -995,13 +1003,13 @@ fn media_type_mismatch() {
 
   case(
     &server,
-    format!("/media/image/{audio}/image/0"),
+    format!("/media/image/{audio}/image/1"),
     format!("expected media type image but package {audio} is audio"),
   );
 
   case(
     &server,
-    format!("/media/audio/{image}/track/0"),
+    format!("/media/audio/{image}/track/1"),
     format!("expected media type audio but package {image} is image"),
   );
 }
