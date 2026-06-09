@@ -62,7 +62,7 @@
 %%     match media {
 %%       Media::Audio { tracks } => {
 <ul>
-%%         for (i, track) in tracks.iter().enumerate() {
+%%         for i in 0..tracks.len() {
   <li>
     <audio controls src=/media/audio/{{ self.fingerprint }}/track/{{ i }}></audio>
   </li>
@@ -71,7 +71,7 @@
 %%       }
 %%       Media::Image { images } => {
 <ul>
-%%         for (i, image) in images.iter().enumerate() {
+%%         for i in 0..images.len() {
   <li>
     <img src=/media/image/{{ self.fingerprint }}/image/{{ i }}>
   </li>
