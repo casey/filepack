@@ -172,7 +172,6 @@ pub use self::{
 #[cfg(test)]
 use {
   std::assert_matches,
-  strum::IntoDiscriminant,
   tempfile::TempDir,
   test::{assert_cbor, assert_cbor_eq, assert_encoding, tempdir},
   unindent::unindent,
