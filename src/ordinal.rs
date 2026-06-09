@@ -10,13 +10,10 @@ impl Display for Ordinal {
 }
 
 impl FromStr for Ordinal {
-  type Err = OrdinalError;
+  type Err = ParseIntError;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
-    s.parse::<usize>()?
-      .checked_sub(1)
-      .map(Self)
-      .context(ordinal_error::Zero)
+    Ok(Self(s.parse::<NonZeroUsize>()?.get() - 1))
   }
 }
 
@@ -43,7 +40,12 @@ mod tests {
 
   #[test]
   fn from_str_errors() {
-    assert_matches!("0".parse::<Ordinal>(), Err(OrdinalError::Zero));
-    assert_matches!("foo".parse::<Ordinal>(), Err(OrdinalError::Int { .. }));
+    #[track_caller]
+    fn case(s: &str, expected: &str) {
+      assert_eq!(s.parse::<Ordinal>().unwrap_err().to_string(), expected);
+    }
+
+    case("0", "number would be zero for non-zero type");
+    case("foo", "invalid digit found in string");
   }
 }

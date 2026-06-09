@@ -721,7 +721,9 @@ fn media_audio_track_out_of_range() {
   server
     .get(format!("/media/audio/{fingerprint}/track/0"))
     .status(StatusCode::BAD_REQUEST)
-    .assert_body("Invalid URL: Cannot parse `track` with value `0`: ordinal may not be zero")
+    .assert_body(
+      "Invalid URL: Cannot parse `track` with value `0`: number would be zero for non-zero type",
+    )
     .send();
 }
 
