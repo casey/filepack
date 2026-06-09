@@ -893,6 +893,120 @@ fn media_audio_track_response() {
 }
 
 #[test]
+fn media_image_image_out_of_range() {
+  let server = TestServer::new();
+
+  let foo: &[u8] = b"foo";
+
+  let fingerprint = package(
+    &server,
+    &Metadata {
+      media: Some(Media::Image {
+        images: vec!["foo.png".parse().unwrap()],
+      }),
+      ..default()
+    },
+    &[("foo.png", foo)],
+  );
+
+  server
+    .get(format!("/media/image/{fingerprint}/image/1"))
+    .status(StatusCode::NOT_FOUND)
+    .assert_body(format!(
+      "image 1 does not exist, package {fingerprint} has 1 image"
+    ))
+    .send();
+}
+
+#[test]
+fn media_image_image_response() {
+  let server = TestServer::new();
+
+  let foo: &[u8] = b"foo";
+  let bar: &[u8] = b"barbar";
+
+  let fingerprint = package(
+    &server,
+    &Metadata {
+      media: Some(Media::Image {
+        images: vec!["foo.png".parse().unwrap(), "bar.jpg".parse().unwrap()],
+      }),
+      ..default()
+    },
+    &[("foo.png", foo), ("bar.jpg", bar)],
+  );
+
+  server
+    .get(format!("/media/image/{fingerprint}/image/0"))
+    .assert_header(header::ACCEPT_RANGES, "bytes")
+    .assert_header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
+    .assert_header(header::CONTENT_LENGTH, "3")
+    .assert_header(header::CONTENT_SECURITY_POLICY, "sandbox")
+    .assert_header(header::CONTENT_TYPE, "image/png")
+    .assert_header(header::ETAG, format!("\"{}\"", Hash::bytes(foo)))
+    .assert_body(foo)
+    .send();
+
+  server
+    .get(format!("/media/image/{fingerprint}/image/1"))
+    .assert_header(header::CONTENT_LENGTH, "6")
+    .assert_header(header::CONTENT_TYPE, "image/jpeg")
+    .assert_header(header::ETAG, format!("\"{}\"", Hash::bytes(bar)))
+    .assert_body(bar)
+    .send();
+}
+
+#[test]
+fn media_type_mismatch() {
+  #[track_caller]
+  fn case(server: &TestServer, path: String, body: String) {
+    server
+      .get(path)
+      .status(StatusCode::BAD_REQUEST)
+      .assert_body(body)
+      .send();
+  }
+
+  let server = TestServer::new();
+
+  let foo: &[u8] = b"foo";
+
+  let audio = package(
+    &server,
+    &Metadata {
+      media: Some(Media::Audio {
+        tracks: vec!["foo.flac".parse().unwrap()],
+      }),
+      ..default()
+    },
+    &[("foo.flac", foo)],
+  );
+
+  let image = package(
+    &server,
+    &Metadata {
+      media: Some(Media::Image {
+        images: vec!["foo.png".parse().unwrap()],
+      }),
+      ..default()
+    },
+    &[("foo.png", foo)],
+  );
+
+  case(
+    &server,
+    format!("/media/image/{audio}/image/0"),
+    format!("expected media type image but package {audio} is audio"),
+  );
+
+  case(
+    &server,
+    format!("/media/audio/{image}/track/0"),
+    format!("expected media type audio but package {image} is image"),
+  );
+}
+
+#[test]
 fn missing_rejects_unsorted_hashes() {
   let mut hashes = BTreeSet::from([Hash::bytes(b"foo"), Hash::bytes(b"bar")])
     .into_iter()

@@ -47,4 +47,14 @@ mod tests {
       "8200a1008268666f6f2e666c6163686261722e666c6163",
     );
   }
+
+  #[test]
+  fn image() {
+    assert_cbor(
+      Media::Image {
+        images: vec!["foo.png".parse().unwrap(), "bar.jpg".parse().unwrap()],
+      },
+      "8201a1008267666f6f2e706e67676261722e6a7067",
+    );
+  }
 }

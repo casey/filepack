@@ -333,6 +333,24 @@ mod tests {
     );
   }
 
+  #[test]
+  fn files_includes_images() {
+    let metadata = Metadata {
+      media: Some(Media::Image {
+        images: vec!["foo.png".parse().unwrap(), "bar.jpg".parse().unwrap()],
+      }),
+      ..default()
+    };
+
+    assert_eq!(
+      metadata.files(),
+      vec![
+        "foo.png".parse::<RelativePath>().unwrap(),
+        "bar.jpg".parse().unwrap(),
+      ],
+    );
+  }
+
   fn image(width: u32, height: u32, image_format: ImageFormat) -> Vec<u8> {
     let mut buffer = io::Cursor::new(Vec::new());
     image::DynamicImage::new_rgb8(width, height)
