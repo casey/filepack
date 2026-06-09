@@ -69,7 +69,7 @@ impl Server {
   pub(crate) fn media_audio_track(
     &self,
     fingerprint: Fingerprint,
-    track: usize,
+    track: Ordinal,
   ) -> ServerResult<Resource> {
     let metadata = self
       .package_metadata(fingerprint)?
@@ -91,7 +91,7 @@ impl Server {
     };
 
     let track = tracks
-      .get(track)
+      .get(track.0)
       .context(server_error::MediaItemDoesNotExist {
         count: tracks.len(),
         fingerprint,
@@ -109,7 +109,7 @@ impl Server {
   pub(crate) fn media_image_image(
     &self,
     fingerprint: Fingerprint,
-    image: usize,
+    image: Ordinal,
   ) -> ServerResult<Resource> {
     let metadata = self
       .package_metadata(fingerprint)?
@@ -131,7 +131,7 @@ impl Server {
     };
 
     let image = images
-      .get(image)
+      .get(image.0)
       .context(server_error::MediaItemDoesNotExist {
         count: images.len(),
         fingerprint,

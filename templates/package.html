@@ -64,7 +64,7 @@
 <ul>
 %%         for i in 0..tracks.len() {
   <li>
-    <audio controls src=/media/audio/{{ self.fingerprint }}/track/{{ i }}></audio>
+    <audio controls src=/media/audio/{{ self.fingerprint }}/track/{{ Ordinal(i) }}></audio>
   </li>
 %%         }
 </ul>
@@ -73,7 +73,7 @@
 <ul>
 %%         for i in 0..images.len() {
   <li>
-    <img src=/media/image/{{ self.fingerprint }}/image/{{ i }}>
+    <img src=/media/image/{{ self.fingerprint }}/image/{{ Ordinal(i) }}>
   </li>
 %%         }
 </ul>

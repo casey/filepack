@@ -52,7 +52,7 @@ pub(crate) enum ServerError {
   MediaItemDoesNotExist {
     fingerprint: Fingerprint,
     ty: crate::MediaType,
-    index: usize,
+    index: Ordinal,
     count: usize,
   },
   #[snafu(display("expected media type {expected} but package {fingerprint} is {actual}"))]
