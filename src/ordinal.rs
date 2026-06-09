@@ -17,6 +17,12 @@ impl FromStr for Ordinal {
   }
 }
 
+impl From<usize> for Ordinal {
+  fn from(i: usize) -> Self {
+    Self(i)
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;

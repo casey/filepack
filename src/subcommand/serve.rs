@@ -210,7 +210,7 @@ impl Serve {
 
   async fn media_audio_track(
     server: ServerExtension,
-    Path((fingerprint, track)): Path<(Fingerprint, Ordinal)>,
+    Path((fingerprint, Ordinal(track))): Path<(Fingerprint, Ordinal)>,
     range: Option<TypedHeader<headers::Range>>,
   ) -> ServerResult<Resource> {
     Ok(block_in_place(|| server.media_audio_track(fingerprint, track))?.range(range))
@@ -218,7 +218,7 @@ impl Serve {
 
   async fn media_image_image(
     server: ServerExtension,
-    Path((fingerprint, image)): Path<(Fingerprint, Ordinal)>,
+    Path((fingerprint, Ordinal(image))): Path<(Fingerprint, Ordinal)>,
     range: Option<TypedHeader<headers::Range>>,
   ) -> ServerResult<Resource> {
     Ok(block_in_place(|| server.media_image_image(fingerprint, image))?.range(range))
