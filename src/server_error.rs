@@ -45,24 +45,17 @@ pub(crate) enum ServerError {
   #[snafu(display("response invalid"))]
   InvalidResponse { source: http::Error },
   #[snafu(display(
-    "track {track} does not exist, package {fingerprint} has {}",
-    Count(*tracks, "track"),
+    "{} {index} does not exist, package {fingerprint} has {}",
+    ty.noun(),
+    Count(*count, ty.noun()),
   ))]
-  MediaAudioTrackDoesNotExist {
+  MediaItemDoesNotExist {
     fingerprint: Fingerprint,
-    track: usize,
-    tracks: usize,
+    ty: crate::MediaType,
+    index: usize,
+    count: usize,
   },
-  #[snafu(display(
-    "image {image} does not exist, package {fingerprint} has {}",
-    Count(*images, "track"),
-  ))]
-  MediaImageImageDoesNotExist {
-    fingerprint: Fingerprint,
-    image: usize,
-    images: usize,
-  },
-  #[snafu(display("unexpected media type {actual}, package {fingerprint} is {actual}"))]
+  #[snafu(display("expected media type {expected} but package {fingerprint} is {actual}"))]
   MediaType {
     fingerprint: Fingerprint,
     actual: crate::MediaType,
@@ -122,8 +115,7 @@ impl ServerError {
       | Self::FileIo { .. }
       | Self::FileNotFound { .. }
       | Self::InvalidResponse { .. }
-      | Self::MediaAudioTrackDoesNotExist { .. }
-      | Self::MediaImageImageDoesNotExist { .. }
+      | Self::MediaItemDoesNotExist { .. }
       | Self::MediaType { .. }
       | Self::PackageFileMissing { .. }
       | Self::PackageMediaMetadataNotFound { .. }
@@ -175,8 +167,7 @@ impl ServerError {
       Self::ArtworkNotFound { .. }
       | Self::DirectoryNotFound { .. }
       | Self::FileNotFound { .. }
-      | Self::MediaAudioTrackDoesNotExist { .. }
-      | Self::MediaImageImageDoesNotExist { .. }
+      | Self::MediaItemDoesNotExist { .. }
       | Self::PackageMediaMetadataNotFound { .. }
       | Self::PackageMetadataNotFound { .. }
       | Self::PackageNotFound { .. }

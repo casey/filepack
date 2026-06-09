@@ -92,10 +92,11 @@ impl Server {
 
     let track = tracks
       .get(track)
-      .context(server_error::MediaAudioTrackDoesNotExist {
+      .context(server_error::MediaItemDoesNotExist {
+        count: tracks.len(),
         fingerprint,
-        track,
-        tracks: tracks.len(),
+        index: track,
+        ty: MediaType::Audio,
       })?;
 
     let path = track.as_path();
@@ -131,10 +132,11 @@ impl Server {
 
     let image = images
       .get(image)
-      .context(server_error::MediaImageImageDoesNotExist {
+      .context(server_error::MediaItemDoesNotExist {
+        count: images.len(),
         fingerprint,
-        image,
-        images: images.len(),
+        index: image,
+        ty: MediaType::Image,
       })?;
 
     let path = image.as_path();

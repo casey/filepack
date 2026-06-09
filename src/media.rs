@@ -25,6 +25,15 @@ impl Media {
   }
 }
 
+impl MediaType {
+  pub(crate) fn noun(self) -> &'static str {
+    match self {
+      Self::Audio => "track",
+      Self::Image => "image",
+    }
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
