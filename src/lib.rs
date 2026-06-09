@@ -65,7 +65,7 @@ use {
     lint_error::{Lint, LintError},
     lint_group::LintGroup,
     map_decoder::MapDecoder,
-    media::Media,
+    media::{Media, MediaType},
     mode::Mode,
     options::Options,
     or::Or,
@@ -146,7 +146,8 @@ use {
     time::{Duration, SystemTime, SystemTimeError, UNIX_EPOCH},
   },
   strum::{
-    Display, EnumDiscriminants, EnumIter, EnumString, FromRepr, IntoEnumIterator, IntoStaticStr,
+    Display, EnumDiscriminants, EnumIter, EnumString, FromRepr, IntoDiscriminant, IntoEnumIterator,
+    IntoStaticStr,
   },
   tempfile::NamedTempFile,
   tokio::io::{AsyncReadExt, AsyncWriteExt},
@@ -171,7 +172,6 @@ pub use self::{
 #[cfg(test)]
 use {
   std::assert_matches,
-  strum::IntoDiscriminant,
   tempfile::TempDir,
   test::{assert_cbor, assert_cbor_eq, assert_encoding, tempdir},
   unindent::unindent,

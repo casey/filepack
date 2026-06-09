@@ -137,6 +137,7 @@ impl Metadata {
     if let Some(media) = &self.media {
       match media {
         Media::Audio { tracks } => files.extend(tracks.iter().map(Filename::as_path)),
+        Media::Image { images } => files.extend(images.iter().map(Filename::as_path)),
       }
     }
 
@@ -328,6 +329,24 @@ mod tests {
       vec![
         "foo.flac".parse::<RelativePath>().unwrap(),
         "bar.flac".parse().unwrap(),
+      ],
+    );
+  }
+
+  #[test]
+  fn files_includes_images() {
+    let metadata = Metadata {
+      media: Some(Media::Image {
+        images: vec!["foo.png".parse().unwrap(), "bar.jpg".parse().unwrap()],
+      }),
+      ..default()
+    };
+
+    assert_eq!(
+      metadata.files(),
+      vec![
+        "foo.png".parse::<RelativePath>().unwrap(),
+        "bar.jpg".parse().unwrap(),
       ],
     );
   }
