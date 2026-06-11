@@ -10,6 +10,70 @@ fn create_checks_metadata() {
 }
 
 #[test]
+fn create_extracts_artwork_dimensions() {
+  Test::new()
+    .write("cover.png", image(2, 2, ImageFormat::Png))
+    .write("metadata.yaml", "artwork: cover.png")
+    .arg("create")
+    .success()
+    .arg("metadata")
+    .stdout(
+      r#"{
+  "artwork": {
+    "dimensions": {
+      "height": 2,
+      "width": 2
+    },
+    "filename": "cover.png",
+    "type": "png"
+  }
+}
+"#,
+    )
+    .success();
+}
+
+#[test]
+fn create_extracts_image_dimensions() {
+  Test::new()
+    .write("foo.png", image(2, 1, ImageFormat::Png))
+    .write(
+      "metadata.yaml",
+      "\
+media:
+  type: image
+  images:
+    - foo.png
+",
+    )
+    .arg("create")
+    .success()
+    .arg("metadata")
+    .stdout(
+      r#"{
+  "media": {
+    "type": "image",
+    "images": [
+      {
+        "dimensions": {
+          "height": 1,
+          "width": 2
+        },
+        "filename": "foo.png",
+        "type": "png"
+      }
+    ]
+  }
+}
+"#,
+    )
+    .success()
+    .arg("verify")
+    .stderr_regex("successfully verified .*")
+    .success();
+}
+
+#[test]
 fn create_extracts_track_titles() {
   Test::new()
     .write("foo.flac", flac(&["TITLE=bar"]))
@@ -88,7 +152,7 @@ package:
     .arg("create")
     .success()
     .arg("verify")
-    .stderr("successfully verified 6 files totaling 231 bytes\n")
+    .stderr("successfully verified 6 files totaling 241 bytes\n")
     .success();
 }
 

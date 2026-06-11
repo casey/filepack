@@ -15,7 +15,7 @@ pub(crate) enum Media {
   #[n(1)]
   Image {
     #[n(0)]
-    images: Vec<filename::Image>,
+    images: Vec<Image>,
   },
 }
 
@@ -54,7 +54,7 @@ mod tests {
       Media::Image {
         images: vec!["foo.png".parse().unwrap(), "bar.jpg".parse().unwrap()],
       },
-      "8201a1008267666f6f2e706e67676261722e6a7067",
+      "8201a10082a300a2000001000167666f6f2e706e670201a300a20000010001676261722e6a70670200",
     );
   }
 }

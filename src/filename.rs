@@ -13,7 +13,6 @@ macro_rules! filename {
   }
 }
 
-filename! { Image, ImageExtension, "jpg", "png" }
 filename! { Md, MdExtension, "md" }
 filename! { Nfo, NfoExtension, "nfo" }
 
@@ -30,10 +29,6 @@ pub(crate) struct Filename<T: Extension> {
 impl<T: Extension> Filename<T> {
   pub(crate) fn as_path(&self) -> RelativePath {
     self.component.as_path()
-  }
-
-  pub(crate) fn extension(&self) -> Option<&str> {
-    self.component.extension()
   }
 }
 
@@ -83,23 +78,6 @@ impl<T: Extension> FromStr for Filename<T> {
   }
 }
 
-impl Image {
-  pub(crate) fn resource_type(&self) -> ResourceType {
-    match self.ty() {
-      ImageType::Jpeg => ResourceType::Jpeg,
-      ImageType::Png => ResourceType::Png,
-    }
-  }
-
-  pub(crate) fn ty(&self) -> ImageType {
-    match self.extension().unwrap() {
-      "jpg" => ImageType::Jpeg,
-      "png" => ImageType::Png,
-      _ => unreachable!(),
-    }
-  }
-}
-
 #[cfg(test)]
 mod tests {
   use super::*;
@@ -107,10 +85,10 @@ mod tests {
   #[test]
   fn decode_error() {
     assert_matches!(
-      Image::decode(&mut Decoder::new(&"cover.svg".encode_to_vec())),
+      Md::decode(&mut Decoder::new(&"cover.svg".encode_to_vec())),
       Err(DecodeError::Component {
         source: ComponentError::Extension {
-          extensions: &["jpg", "png"]
+          extensions: &["md"]
         },
       }),
     );
@@ -131,12 +109,6 @@ mod tests {
       assert_eq!(input.parse::<T>().unwrap_err(), expected);
     }
 
-    case::<Image>(
-      "cover.svg",
-      ComponentError::Extension {
-        extensions: &["jpg", "png"],
-      },
-    );
     case::<Md>(
       "README.txt",
       ComponentError::Extension {
@@ -160,8 +132,6 @@ mod tests {
       input.parse::<T>().unwrap();
     }
 
-    case::<Image>("cover.jpg");
-    case::<Image>("cover.png");
     case::<Md>("README.md");
     case::<Nfo>("info.nfo");
   }

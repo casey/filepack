@@ -6,7 +6,7 @@ use super::*;
 #[serde(deny_unknown_fields)]
 pub struct Metadata {
   #[n(0)]
-  pub artwork: Option<filename::Image>,
+  pub artwork: Option<Image>,
   #[n(1)]
   pub creator: Option<ComponentBuf>,
   #[n(2)]
@@ -33,7 +33,7 @@ impl Metadata {
 
   pub(crate) fn check_content(&self, root: &Utf8Path) -> Result {
     if let Some(artwork) = &self.artwork {
-      let dimensions = Self::decode_image(root, artwork)?;
+      let dimensions = artwork.check_content(root)?;
 
       ensure! {
         dimensions.width == dimensions.height,
@@ -46,7 +46,7 @@ impl Metadata {
 
     if let Some(Media::Image { images }) = &self.media {
       for image in images {
-        Self::decode_image(root, image)?;
+        image.check_content(root)?;
       }
     }
 
@@ -62,47 +62,6 @@ impl Metadata {
     }
 
     Ok(())
-  }
-
-  fn decode_image(root: &Utf8Path, image: &filename::Image) -> Result<Dimensions> {
-    let path = root.join(image.as_path());
-
-    match image.ty() {
-      ImageType::Jpeg => Self::decode_jpeg(&path),
-      ImageType::Png => Self::decode_png(&path),
-    }
-  }
-
-  fn decode_jpeg(path: &Utf8Path) -> Result<Dimensions> {
-    let bytes = filesystem::read(path)?;
-
-    let mut decoder = JpegDecoder::new(io::Cursor::new(bytes));
-
-    decoder
-      .decode_headers()
-      .context(error::ImageDecodeJpeg { path })?;
-
-    let info = decoder.info().unwrap();
-
-    Ok(Dimensions {
-      height: info.height.into(),
-      width: info.width.into(),
-    })
-  }
-
-  fn decode_png(path: &Utf8Path) -> Result<Dimensions> {
-    let bytes = filesystem::read(path)?;
-
-    let reader = png::Decoder::new(io::Cursor::new(bytes))
-      .read_info()
-      .context(error::ImageDecodePng { path })?;
-
-    let info = reader.info();
-
-    Ok(Dimensions {
-      height: info.height,
-      width: info.width,
-    })
   }
 
   pub(crate) fn deserialize(path: &Utf8Path, yaml: &str) -> Result<Self> {
@@ -129,7 +88,7 @@ impl Metadata {
     if let Some(media) = &self.media {
       match media {
         Media::Audio { tracks } => files.extend(tracks.iter().map(Track::as_path)),
-        Media::Image { images } => files.extend(images.iter().map(Filename::as_path)),
+        Media::Image { images } => files.extend(images.iter().map(Image::as_path)),
       }
     }
 
@@ -137,10 +96,22 @@ impl Metadata {
   }
 
   pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result {
-    if let Some(Media::Audio { tracks }) = &mut self.media {
-      for track in tracks {
-        track.populate(root)?;
+    if let Some(artwork) = &mut self.artwork {
+      artwork.populate(root)?;
+    }
+
+    match &mut self.media {
+      Some(Media::Audio { tracks }) => {
+        for track in tracks {
+          track.populate(root)?;
+        }
       }
+      Some(Media::Image { images }) => {
+        for image in images {
+          image.populate(root)?;
+        }
+      }
+      None => {}
     }
 
     Ok(())
@@ -149,7 +120,10 @@ impl Metadata {
 
 #[cfg(test)]
 mod tests {
-  use {super::*, image::ImageFormat};
+  use {
+    super::*,
+    ::image::{DynamicImage, ImageFormat},
+  };
 
   #[test]
   fn deserialize_media_audio() {
@@ -297,7 +271,14 @@ mod tests {
   #[test]
   fn encoding() {
     assert_encoding(Metadata {
-      artwork: Some("cover.png".parse().unwrap()),
+      artwork: Some(Image {
+        dimensions: Dimensions {
+          height: 1,
+          width: 1,
+        },
+        filename: "cover.png".parse().unwrap(),
+        ty: ImageType::Png,
+      }),
       creator: Some("foo".parse().unwrap()),
       date: Some("2024".parse().unwrap()),
       description: Some("bar".into()),
@@ -371,7 +352,7 @@ mod tests {
 
   fn image(width: u32, height: u32, image_format: ImageFormat) -> Vec<u8> {
     let mut buffer = io::Cursor::new(Vec::new());
-    image::DynamicImage::new_rgb8(width, height)
+    DynamicImage::new_rgb8(width, height)
       .write_to(&mut buffer, image_format)
       .unwrap();
     buffer.into_inner()
@@ -385,13 +366,17 @@ mod tests {
 
       std::fs::write(root.join(filename), bytes).unwrap();
 
-      let metadata = Metadata {
+      let mut metadata = Metadata {
         artwork: Some(filename.parse().unwrap()),
         ..default()
       };
 
       assert_matches_regex!(
-        metadata.check_content(&root).unwrap_err().to_string(),
+        metadata
+          .populate(&root)
+          .and_then(|()| metadata.check_content(&root))
+          .unwrap_err()
+          .to_string(),
         expected
       );
     }
@@ -436,7 +421,7 @@ mod tests {
 
       std::fs::write(root.join(filename), bytes).unwrap();
 
-      let metadata = Metadata {
+      let mut metadata = Metadata {
         media: Some(Media::Image {
           images: vec![filename.parse().unwrap()],
         }),
@@ -444,7 +429,11 @@ mod tests {
       };
 
       assert_matches_regex!(
-        metadata.check_content(&root).unwrap_err().to_string(),
+        metadata
+          .populate(&root)
+          .and_then(|()| metadata.check_content(&root))
+          .unwrap_err()
+          .to_string(),
         expected
       );
     }
@@ -578,7 +567,7 @@ mod tests {
 
       std::fs::write(root.join(artwork), bytes).unwrap();
 
-      let metadata = Metadata {
+      let mut metadata = Metadata {
         artwork: Some(artwork.parse().unwrap()),
         package: Some(nfo_package("info.nfo")),
         readme: Some("README.md".parse().unwrap()),
@@ -590,6 +579,7 @@ mod tests {
         .map(|path| path.parse::<RelativePath>().unwrap())
         .collect();
 
+      metadata.populate(&root).unwrap();
       metadata.check_files(&paths).unwrap();
       metadata.check_content(&root).unwrap();
     }
@@ -605,7 +595,7 @@ mod tests {
     std::fs::write(root.join("foo.jpg"), image(2, 1, ImageFormat::Jpeg)).unwrap();
     std::fs::write(root.join("bar.png"), image(1, 2, ImageFormat::Png)).unwrap();
 
-    let metadata = Metadata {
+    let mut metadata = Metadata {
       media: Some(Media::Image {
         images: vec!["foo.jpg".parse().unwrap(), "bar.png".parse().unwrap()],
       }),
@@ -617,6 +607,7 @@ mod tests {
       .map(|path| path.parse::<RelativePath>().unwrap())
       .collect();
 
+    metadata.populate(&root).unwrap();
     metadata.check_files(&paths).unwrap();
     metadata.check_content(&root).unwrap();
   }
