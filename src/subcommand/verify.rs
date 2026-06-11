@@ -190,7 +190,7 @@ fingerprint mismatch: `{source}`
       if let Some(cbor) = filesystem::read_opt(&path)? {
         Metadata::decode_from_slice(&cbor)
           .context(error::DecodeMetadataCbor { path })?
-          .check(&files.keys().cloned().collect())?;
+          .check_files(&files.keys().cloned().collect())?;
       }
     }
 

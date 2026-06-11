@@ -143,7 +143,7 @@ impl Create {
       let metadata =
         Metadata::decode_from_slice(cbor).context(error::DecodeMetadataCbor { path })?;
 
-      metadata.check(&paths.keys().cloned().collect())?;
+      metadata.check_files(&paths.keys().cloned().collect())?;
       metadata.check_content(&root)?;
     }
 

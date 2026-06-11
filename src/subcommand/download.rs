@@ -130,7 +130,7 @@ impl Download {
         .context(error::DecodeMetadataCbor {
           path: metadata_path,
         })?
-        .check(&paths)?;
+        .check_files(&paths)?;
     }
 
     let mut builder = ArchiveBuilder::new();

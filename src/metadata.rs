@@ -31,17 +31,6 @@ impl Metadata {
   pub(crate) const CBOR_FILENAME: &'static str = "metadata.filepack";
   pub(crate) const YAML_FILENAME: &'static str = "metadata.yaml";
 
-  pub(crate) fn check(&self, paths: &HashSet<RelativePath>) -> Result {
-    for filename in self.files() {
-      ensure! {
-        paths.contains(&filename),
-        error::MissingMetadataFile { filename },
-      }
-    }
-
-    Ok(())
-  }
-
   pub(crate) fn check_content(&self, root: &Utf8Path) -> Result {
     if let Some(artwork) = &self.artwork {
       let dimensions = Self::decode_image(root, artwork)?;
@@ -58,6 +47,17 @@ impl Metadata {
     if let Some(Media::Image { images }) = &self.media {
       for image in images {
         Self::decode_image(root, image)?;
+      }
+    }
+
+    Ok(())
+  }
+
+  pub(crate) fn check_files(&self, paths: &HashSet<RelativePath>) -> Result {
+    for filename in self.files() {
+      ensure! {
+        paths.contains(&filename),
+        error::MissingMetadataFile { filename },
       }
     }
 
@@ -511,7 +511,10 @@ mod tests {
     #[track_caller]
     fn case(metadata: Metadata, filename: &str) {
       assert_eq!(
-        metadata.check(&HashSet::new()).unwrap_err().to_string(),
+        metadata
+          .check_files(&HashSet::new())
+          .unwrap_err()
+          .to_string(),
         format!("file referenced in metadata missing: `{filename}`"),
       );
     }
@@ -573,7 +576,7 @@ mod tests {
         .map(|path| path.parse::<RelativePath>().unwrap())
         .collect();
 
-      metadata.check(&paths).unwrap();
+      metadata.check_files(&paths).unwrap();
       metadata.check_content(&root).unwrap();
     }
 
@@ -600,7 +603,7 @@ mod tests {
       .map(|path| path.parse::<RelativePath>().unwrap())
       .collect();
 
-    metadata.check(&paths).unwrap();
+    metadata.check_files(&paths).unwrap();
     metadata.check_content(&root).unwrap();
   }
 }
