@@ -1,9 +1,5 @@
 use super::*;
 
-const EMPTY_MD5: [u8; 16] = [
-  0xd4, 0x1d, 0x8c, 0xd9, 0x8f, 0x00, 0xb2, 0x04, 0xe9, 0x80, 0x09, 0x98, 0xec, 0xf8, 0x42, 0x7e,
-];
-
 #[test]
 fn create_checks_metadata() {
   Test::new()
@@ -16,7 +12,7 @@ fn create_checks_metadata() {
 #[test]
 fn create_extracts_track_titles() {
   Test::new()
-    .write("foo.flac", flac(EMPTY_MD5, &["TITLE=bar"]))
+    .write("foo.flac", flac(&["TITLE=bar"]))
     .write(
       "metadata.yaml",
       "\
@@ -123,7 +119,7 @@ fn create_uses_existing_metadata_cbor() {
     .failure();
 }
 
-fn flac(md5sum: [u8; 16], comments: &[&str]) -> Vec<u8> {
+fn flac(comments: &[&str]) -> Vec<u8> {
   let mut bytes = b"fLaC".to_vec();
 
   bytes.push(if comments.is_empty() { 0x80 } else { 0x00 });
@@ -132,8 +128,7 @@ fn flac(md5sum: [u8; 16], comments: &[&str]) -> Vec<u8> {
   bytes.extend_from_slice(&4096u16.to_be_bytes());
   bytes.extend_from_slice(&[0; 6]);
   bytes.extend_from_slice(&[0x0a, 0xc4, 0x42, 0xf0]);
-  bytes.extend_from_slice(&[0; 4]);
-  bytes.extend_from_slice(&md5sum);
+  bytes.extend_from_slice(&[0; 20]);
 
   if !comments.is_empty() {
     let mut body = Vec::new();

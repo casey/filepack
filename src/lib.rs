@@ -112,7 +112,6 @@ use {
   futures_util::StreamExt,
   indicatif::{ProgressBar, ProgressStyle},
   lexiclean::Lexiclean,
-  md5::{Digest, Md5},
   mime::Mime,
   num_traits::One,
   owo_colors::Styled,
@@ -177,7 +176,7 @@ pub use self::{
 use {
   std::assert_matches,
   tempfile::TempDir,
-  test::{EMPTY_MD5, assert_cbor, assert_cbor_eq, assert_encoding, flac, tempdir},
+  test::{assert_cbor, assert_cbor_eq, assert_encoding, flac, tempdir},
   unindent::unindent,
 };
 

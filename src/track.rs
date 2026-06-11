@@ -50,12 +50,6 @@ impl Track {
       }
     };
 
-    let streaminfo = reader.streaminfo();
-
-    let bytes = usize::try_from(streaminfo.bits_per_sample.div_ceil(8)).unwrap();
-
-    let mut hasher = Md5::new();
-
     let mut blocks = reader.blocks();
 
     let mut buffer = Vec::new();
@@ -64,24 +58,7 @@ impl Track {
       .read_next_or_eof(buffer)
       .context(error::TrackDecode { path })?
     {
-      for sample in 0..block.duration() {
-        for channel in 0..block.channels() {
-          hasher.update(&block.sample(channel, sample).to_le_bytes()[..bytes]);
-        }
-      }
-
       buffer = block.into_buffer();
-    }
-
-    let actual = hasher.finalize();
-
-    ensure! {
-      streaminfo.md5sum == [0; 16] || actual[..] == streaminfo.md5sum,
-      error::TrackMd5 {
-        actual: hex::encode(actual),
-        expected: hex::encode(streaminfo.md5sum),
-        path,
-      },
     }
 
     self.title = title;
@@ -181,15 +158,13 @@ mod tests {
     }
 
     assert_eq!(
-      case(&flac(EMPTY_MD5, &["TITLE=bar"])).unwrap().title,
+      case(&flac(&["TITLE=bar"])).unwrap().title,
       Some("bar".into()),
     );
 
-    assert_eq!(case(&flac(EMPTY_MD5, &[])).unwrap().title, None);
+    assert_eq!(case(&flac(&[])).unwrap().title, None);
 
-    assert_eq!(case(&flac(EMPTY_MD5, &["ARTIST=bar"])).unwrap().title, None,);
-
-    assert_eq!(case(&flac([0; 16], &[])).unwrap().title, None);
+    assert_eq!(case(&flac(&["ARTIST=bar"])).unwrap().title, None);
 
     assert_matches_regex!(
       case(b"foo").unwrap_err().to_string(),
@@ -197,19 +172,14 @@ mod tests {
     );
 
     assert_matches_regex!(
-      case(&flac([1; 16], &[])).unwrap_err().to_string(),
-      r"^FLAC track `.*foo\.flac` MD5 mismatch: expected 0101.* but got d41d.*$",
-    );
-
-    assert_matches_regex!(
-      case(&flac(EMPTY_MD5, &["TITLE=bar", "TITLE=baz"]))
+      case(&flac(&["TITLE=bar", "TITLE=baz"]))
         .unwrap_err()
         .to_string(),
       r"^FLAC track `.*foo\.flac` has multiple titles$",
     );
 
     assert_matches_regex!(
-      case(&flac(EMPTY_MD5, &["TITLE="])).unwrap_err().to_string(),
+      case(&flac(&["TITLE="])).unwrap_err().to_string(),
       r"^FLAC track `.*foo\.flac` has empty title$",
     );
   }

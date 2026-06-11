@@ -443,13 +443,6 @@ pub enum Error {
     path: DisplayPath,
     source: claxon::Error,
   },
-  #[snafu(display("FLAC track `{path}` MD5 mismatch: expected {expected} but got {actual}"))]
-  TrackMd5 {
-    actual: String,
-    backtrace: Option<Backtrace>,
-    expected: String,
-    path: DisplayPath,
-  },
   #[snafu(display("FLAC track `{path}` has empty title"))]
   TrackTitleEmpty {
     backtrace: Option<Backtrace>,
