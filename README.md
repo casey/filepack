@@ -19,9 +19,9 @@
 Filepack is a content-addressed package format.
 
 A package is a directory of files and a manifest containing their BLAKE3
-hashes. File and directory hashes form a Merkle tree whose root hash uniquely
-identifies the package. Packages can be signed with Ed25519 and verified
-against a manifest, root hash, or signature.
+hashes. File and directory hashes form a Merkle tree whose root hash, the
+package fingerprint, uniquely identifies the package. Packages can be signed
+with Ed25519 and verified against a manifest, fingerprint, or signature.
 
 Packages may optionally contain machine-readable metadata describing their
 content, allowing programmatic search, preview, playback, and conversion.
@@ -36,9 +36,9 @@ may change at any time.
 Quickstart
 ----------
 
-Optionally, create a metadata file describing your package:
+Optionally, add metadata describing your package:
 
-```shell
+```sh
 echo "title: Packaging Guide" > metadata.yaml
 ```
 
@@ -48,14 +48,13 @@ Create `manifest.filepack`:
 filepack create
 ```
 
-Verify the contents of the current directory against the hashes in
-`manifest.filepack`:
+Verify current directory against hashes in `manifest.filepack`:
 
 ```shell
 filepack verify
 ```
 
-Print the package fingerprint:
+Print package fingerprint:
 
 ```shell
 filepack fingerprint
