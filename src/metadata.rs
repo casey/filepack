@@ -42,23 +42,17 @@ impl Metadata {
     Ok(())
   }
 
-  fn check_artwork(root: &Utf8Path, artwork: &filename::Image) -> Result {
-    let dimensions = Self::decode_image(root, artwork)?;
-
-    ensure! {
-      dimensions.width == dimensions.height,
-      error::ArtworkDimensions {
-        dimensions,
-        path: root.join(artwork.as_path()),
-      }
-    }
-
-    Ok(())
-  }
-
   pub(crate) fn check_content(&self, root: &Utf8Path) -> Result {
     if let Some(artwork) = &self.artwork {
-      Self::check_artwork(root, artwork)?;
+      let dimensions = Self::decode_image(root, artwork)?;
+
+      ensure! {
+        dimensions.width == dimensions.height,
+        error::ArtworkDimensions {
+          dimensions,
+          path: root.join(artwork.as_path()),
+        }
+      }
     }
 
     if let Some(Media::Image { images }) = &self.media {
