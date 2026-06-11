@@ -42,17 +42,23 @@ Optionally, create a metadata file describing your package:
 echo "title: Packaging Guide" > metadata.yaml
 ```
 
-Create `manifest.filepack` containing the hashes of files in the current
-directory;
+Create `manifest.filepack`:
 
 ```shell
 filepack create
 ```
 
-Verify the contents of the current directory:
+Verify the contents of the current directory against the hashes in
+`manifest.filepack`:
 
 ```shell
 filepack verify
+```
+
+Print the package fingerprint:
+
+```shell
+filepack fingerprint
 ```
 
 Print package metadata:
