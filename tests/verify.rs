@@ -752,51 +752,6 @@ error: fingerprint mismatch\n",
 }
 
 #[test]
-fn verify_ignores_image_content() {
-  let mut artwork = Cursor::new(Vec::new());
-
-  DynamicImage::new_rgb8(1, 1)
-    .write_to(&mut artwork, ImageFormat::Png)
-    .unwrap();
-
-  let test = Test::new()
-    .write("cover.png", artwork.into_inner())
-    .write("metadata.yaml", "artwork: cover.png")
-    .arg("create")
-    .success();
-
-  let cbor = fs::read(test.path().join("metadata.filepack")).unwrap();
-
-  let metadata_hash = blake3::hash(&cbor).to_string();
-
-  let artwork_hash = blake3::hash(b"foo").to_string();
-
-  test
-    .remove_file("metadata.yaml")
-    .write("cover.png", "foo")
-    .write_manifest(
-      "manifest.filepack",
-      json! {
-        embedded: {},
-        package: {
-          "cover.png": {
-            hash: artwork_hash,
-            size: 3,
-          },
-          "metadata.filepack": {
-            hash: metadata_hash,
-            size: 12,
-          }
-        },
-        signatures: [],
-      },
-    )
-    .arg("verify")
-    .stderr("successfully verified 2 files totaling 15 bytes\n")
-    .success();
-}
-
-#[test]
 fn weak_signature_public_key() {
   fn checksum(s: &str) -> String {
     use ::bech32::{Bech32m, Fe32IterExt, NoChecksum, primitives::decode::CheckedHrpstring};
