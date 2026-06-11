@@ -185,20 +185,12 @@ fingerprint mismatch: `{source}`
     }
 
     {
-      let path = root.join(Metadata::YAML_FILENAME);
-
-      if let Some(yaml) = filesystem::read_to_string_opt(&path)? {
-        Metadata::deserialize(&path, &yaml)?;
-      }
-    }
-
-    {
       let path = root.join(Metadata::CBOR_FILENAME);
 
       if let Some(cbor) = filesystem::read_opt(&path)? {
         Metadata::decode_from_slice(&cbor)
           .context(error::DecodeMetadataCbor { path })?
-          .check(&root, &files.keys().cloned().collect())?;
+          .check_files(&files.keys().cloned().collect())?;
       }
     }
 

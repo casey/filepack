@@ -45,7 +45,6 @@ rust-embed = { version = "8.11.0", features = ["mime-guess"] }
 rustls = { version = "0.23.40", default-features = false, features = ["logging", "ring", "std", "tls12"] }
 rustls-acme = { version = "0.15.2", default-features = false, features = ["axum", "ring", "tls12", "webpki-roots"] }
 serde = { version = "1.0.209", features = ["derive"] }
-serde_ignored = "0.1.14"
 serde_json = "1.0.127"
 serde_with = { version = "3.11.0", features = ["hex"] }
 serde_yaml = "0.9.34"

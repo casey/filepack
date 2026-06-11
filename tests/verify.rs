@@ -204,58 +204,6 @@ fn manifest_paths_are_relative_to_root() {
 }
 
 #[test]
-fn metadata_allows_unknown_keys() {
-  let metadata = "title: foo\nbar: 100";
-
-  let hash = blake3::hash(metadata.as_bytes()).to_string();
-
-  Test::new()
-    .write_manifest(
-      "manifest.filepack",
-      json! {
-        embedded: {},
-        package: {
-          "metadata.yaml": {
-            hash: hash,
-            size: 19,
-          }
-        },
-        signatures: [],
-      },
-    )
-    .write("metadata.yaml", metadata)
-    .arg("verify")
-    .stderr("successfully verified 1 file totaling 19 bytes\n")
-    .success();
-}
-
-#[test]
-fn metadata_yaml_may_not_be_invalid() {
-  let metadata = "title: /\n";
-
-  let hash = blake3::hash(metadata.as_bytes()).to_string();
-
-  Test::new()
-    .write_manifest(
-      "manifest.filepack",
-      json! {
-        embedded: {},
-        package: {
-          "metadata.yaml": {
-            hash: hash,
-            size: 9,
-          }
-        },
-        signatures: [],
-      },
-    )
-    .write("metadata.yaml", metadata)
-    .arg("verify")
-    .stderr_regex("error: failed to deserialize metadata at `.*metadata.yaml`\n.*")
-    .failure();
-}
-
-#[test]
 fn missing_empty_directory_error() {
   Test::new()
     .create_dir("foo")

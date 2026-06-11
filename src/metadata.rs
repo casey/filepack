@@ -3,6 +3,7 @@ use super::*;
 #[allow(private_interfaces)]
 #[skip_serializing_none]
 #[derive(Clone, Debug, Default, Deserialize, Encode, Decode, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
 pub struct Metadata {
   #[n(0)]
   pub artwork: Option<filename::Image>,
@@ -30,16 +31,17 @@ impl Metadata {
   pub(crate) const CBOR_FILENAME: &'static str = "metadata.filepack";
   pub(crate) const YAML_FILENAME: &'static str = "metadata.yaml";
 
-  pub(crate) fn check(&self, root: &Utf8Path, paths: &HashSet<RelativePath>) -> Result {
-    for filename in self.files() {
-      ensure! {
-        paths.contains(&filename),
-        error::MissingMetadataFile { filename },
-      }
-    }
-
+  pub(crate) fn check_content(&self, root: &Utf8Path) -> Result {
     if let Some(artwork) = &self.artwork {
-      Self::check_artwork(root, artwork)?;
+      let dimensions = Self::decode_image(root, artwork)?;
+
+      ensure! {
+        dimensions.width == dimensions.height,
+        error::ArtworkDimensions {
+          dimensions,
+          path: root.join(artwork.as_path()),
+        }
+      }
     }
 
     if let Some(Media::Image { images }) = &self.media {
@@ -51,14 +53,11 @@ impl Metadata {
     Ok(())
   }
 
-  fn check_artwork(root: &Utf8Path, artwork: &filename::Image) -> Result {
-    let dimensions = Self::decode_image(root, artwork)?;
-
-    ensure! {
-      dimensions.width == dimensions.height,
-      error::ArtworkDimensions {
-        dimensions,
-        path: root.join(artwork.as_path()),
+  pub(crate) fn check_files(&self, paths: &HashSet<RelativePath>) -> Result {
+    for filename in self.files() {
+      ensure! {
+        paths.contains(&filename),
+        error::MissingMetadataFile { filename },
       }
     }
 
@@ -110,23 +109,6 @@ impl Metadata {
     serde_yaml::from_str(yaml).context(error::DeserializeMetadata { path })
   }
 
-  pub(crate) fn deserialize_strict(path: &Utf8Path, yaml: &str) -> Result<Self> {
-    let deserializer = serde_yaml::Deserializer::from_str(yaml);
-
-    let mut unknown = BTreeSet::new();
-
-    let metadata = serde_ignored::deserialize(deserializer, |path| {
-      unknown.insert(path.to_string());
-    })
-    .context(error::DeserializeMetadata { path })?;
-
-    if !unknown.is_empty() {
-      return Err(error::DeserializeMetadataStrict { path, unknown }.build());
-    }
-
-    Ok(metadata)
-  }
-
   pub(crate) fn files(&self) -> Vec<RelativePath> {
     let mut files = Vec::new();
 
@@ -158,13 +140,6 @@ impl Metadata {
 #[cfg(test)]
 mod tests {
   use {super::*, image::ImageFormat};
-
-  const UNKNOWN_FIELD: &str = "title: foo\nbar: 1";
-
-  #[test]
-  fn deserialize_allows_missing_optional_fields() {
-    Metadata::deserialize(Metadata::YAML_FILENAME.as_ref(), "title: Foo").unwrap();
-  }
 
   #[test]
   fn deserialize_media_audio() {
@@ -286,8 +261,27 @@ mod tests {
   }
 
   #[test]
-  fn deserializer_allows_unknown_fields() {
-    Metadata::deserialize(Metadata::YAML_FILENAME.as_ref(), UNKNOWN_FIELD).unwrap();
+  fn deserialize_rejects_unknown_fields() {
+    #[track_caller]
+    fn case(yaml: &str, expected: &str) {
+      let chain = Metadata::deserialize(Metadata::YAML_FILENAME.as_ref(), yaml)
+        .unwrap_err()
+        .iter_chain()
+        .map(ToString::to_string)
+        .collect::<Vec<String>>()
+        .join(": ");
+
+      assert_matches_regex!(chain, expected);
+    }
+
+    case(
+      "title: foo\nbar: 1",
+      "unknown field `bar`, expected one of ",
+    );
+    case(
+      "package:\n  bar: 1",
+      "unknown field `bar`, expected one of ",
+    );
   }
 
   #[test]
@@ -318,7 +312,7 @@ mod tests {
 
   #[test]
   fn filepack_metadata_is_valid() {
-    Metadata::deserialize_strict(
+    Metadata::deserialize(
       Metadata::YAML_FILENAME.as_ref(),
       &filesystem::read_to_string(Metadata::YAML_FILENAME).unwrap(),
     )
@@ -382,10 +376,8 @@ mod tests {
         ..default()
       };
 
-      let paths = HashSet::from([filename.parse::<RelativePath>().unwrap()]);
-
       assert_matches_regex!(
-        metadata.check(&root, &paths).unwrap_err().to_string(),
+        metadata.check_content(&root).unwrap_err().to_string(),
         expected
       );
     }
@@ -437,10 +429,8 @@ mod tests {
         ..default()
       };
 
-      let paths = HashSet::from([filename.parse::<RelativePath>().unwrap()]);
-
       assert_matches_regex!(
-        metadata.check(&root, &paths).unwrap_err().to_string(),
+        metadata.check_content(&root).unwrap_err().to_string(),
         expected
       );
     }
@@ -464,7 +454,7 @@ mod tests {
     let re = Regex::new(r"(?s)```yaml(.*?)```").unwrap();
 
     for capture in re.captures_iter(&readme) {
-      let metadata = Metadata::deserialize_strict("README.md".as_ref(), &capture[1]).unwrap();
+      let metadata = Metadata::deserialize("README.md".as_ref(), &capture[1]).unwrap();
 
       let Metadata {
         artwork,
@@ -522,7 +512,7 @@ mod tests {
     fn case(metadata: Metadata, filename: &str) {
       assert_eq!(
         metadata
-          .check(Utf8Path::new(""), &HashSet::new())
+          .check_files(&HashSet::new())
           .unwrap_err()
           .to_string(),
         format!("file referenced in metadata missing: `{filename}`"),
@@ -567,16 +557,6 @@ mod tests {
   }
 
   #[test]
-  fn strict_deserialize_rejects_unknown_fields() {
-    assert_eq!(
-      Metadata::deserialize_strict(Metadata::YAML_FILENAME.as_ref(), UNKNOWN_FIELD)
-        .unwrap_err()
-        .to_string(),
-      "unknown fields in metadata at `metadata.yaml`: `bar`",
-    );
-  }
-
-  #[test]
   fn valid_artwork() {
     #[track_caller]
     fn case(artwork: &str, bytes: Vec<u8>) {
@@ -596,7 +576,8 @@ mod tests {
         .map(|path| path.parse::<RelativePath>().unwrap())
         .collect();
 
-      metadata.check(&root, &paths).unwrap();
+      metadata.check_files(&paths).unwrap();
+      metadata.check_content(&root).unwrap();
     }
 
     case("cover.jpg", image(10, 10, ImageFormat::Jpeg));
@@ -622,6 +603,7 @@ mod tests {
       .map(|path| path.parse::<RelativePath>().unwrap())
       .collect();
 
-    metadata.check(&root, &paths).unwrap();
+    metadata.check_files(&paths).unwrap();
+    metadata.check_content(&root).unwrap();
   }
 }

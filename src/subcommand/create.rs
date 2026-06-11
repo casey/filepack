@@ -36,7 +36,7 @@ impl Create {
     let path = root.join(Metadata::YAML_FILENAME);
 
     let metadata_cbor = if let Some(yaml) = filesystem::read_to_string_opt(&path)? {
-      let cbor = Metadata::deserialize_strict(&path, &yaml)?.encode_to_vec();
+      let cbor = Metadata::deserialize(&path, &yaml)?.encode_to_vec();
 
       let path = root.join(Metadata::CBOR_FILENAME);
 
@@ -140,9 +140,11 @@ impl Create {
     if let Some(cbor) = &metadata_cbor {
       let path = root.join(Metadata::CBOR_FILENAME);
 
-      Metadata::decode_from_slice(cbor)
-        .context(error::DecodeMetadataCbor { path })?
-        .check(&root, &paths.keys().cloned().collect())?;
+      let metadata =
+        Metadata::decode_from_slice(cbor).context(error::DecodeMetadataCbor { path })?;
+
+      metadata.check_files(&paths.keys().cloned().collect())?;
+      metadata.check_content(&root)?;
     }
 
     ensure! {
