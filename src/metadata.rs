@@ -5,7 +5,7 @@ use super::*;
 #[derive(Clone, Debug, Default, Deserialize, Encode, Decode, PartialEq, Serialize)]
 pub struct Metadata {
   #[n(0)]
-  pub artwork: Option<filename::Artwork>,
+  pub artwork: Option<filename::Image>,
   #[n(1)]
   pub creator: Option<ComponentBuf>,
   #[n(2)]
@@ -45,12 +45,12 @@ impl Metadata {
     Ok(())
   }
 
-  fn check_artwork(root: &Utf8Path, artwork: &filename::Artwork) -> Result {
+  fn check_artwork(root: &Utf8Path, artwork: &filename::Image) -> Result {
     let path = root.join(artwork.as_path());
 
     let dimensions = match artwork.ty() {
-      ArtworkType::Jpeg => Self::decode_jpeg(&path)?,
-      ArtworkType::Png => Self::decode_png(&path)?,
+      ImageType::Jpeg => Self::decode_jpeg(&path)?,
+      ImageType::Png => Self::decode_png(&path)?,
     };
 
     ensure! {
