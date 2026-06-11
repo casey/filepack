@@ -76,11 +76,7 @@
 <ul>
 %%         for (i, image) in images.iter().enumerate() {
   <li>
-%%           if let Some(dimensions) = image.dimensions {
-    <img src=/media/image/{{ self.fingerprint }}/image/{{ Ordinal(i) }} width={{ dimensions.width }} height={{ dimensions.height }}>
-%%           } else {
-    <img src=/media/image/{{ self.fingerprint }}/image/{{ Ordinal(i) }}>
-%%           }
+    <img src=/media/image/{{ self.fingerprint }}/image/{{ Ordinal(i) }} width={{ image.dimensions.width }} height={{ image.dimensions.height }}>
   </li>
 %%         }
 </ul>

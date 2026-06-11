@@ -271,10 +271,10 @@ mod tests {
   fn encoding() {
     assert_encoding(Metadata {
       artwork: Some(Image {
-        dimensions: Some(Dimensions {
+        dimensions: Dimensions {
           height: 1,
           width: 1,
-        }),
+        },
         filename: "cover.png".parse().unwrap(),
         ty: ImageType::Png,
       }),
@@ -365,13 +365,17 @@ mod tests {
 
       std::fs::write(root.join(filename), bytes).unwrap();
 
-      let metadata = Metadata {
+      let mut metadata = Metadata {
         artwork: Some(filename.parse().unwrap()),
         ..default()
       };
 
       assert_matches_regex!(
-        metadata.check_content(&root).unwrap_err().to_string(),
+        metadata
+          .populate(&root)
+          .and_then(|()| metadata.check_content(&root))
+          .unwrap_err()
+          .to_string(),
         expected
       );
     }
@@ -416,7 +420,7 @@ mod tests {
 
       std::fs::write(root.join(filename), bytes).unwrap();
 
-      let metadata = Metadata {
+      let mut metadata = Metadata {
         media: Some(Media::Image {
           images: vec![filename.parse().unwrap()],
         }),
@@ -424,7 +428,11 @@ mod tests {
       };
 
       assert_matches_regex!(
-        metadata.check_content(&root).unwrap_err().to_string(),
+        metadata
+          .populate(&root)
+          .and_then(|()| metadata.check_content(&root))
+          .unwrap_err()
+          .to_string(),
         expected
       );
     }
@@ -558,7 +566,7 @@ mod tests {
 
       std::fs::write(root.join(artwork), bytes).unwrap();
 
-      let metadata = Metadata {
+      let mut metadata = Metadata {
         artwork: Some(artwork.parse().unwrap()),
         package: Some(nfo_package("info.nfo")),
         readme: Some("README.md".parse().unwrap()),
@@ -570,6 +578,7 @@ mod tests {
         .map(|path| path.parse::<RelativePath>().unwrap())
         .collect();
 
+      metadata.populate(&root).unwrap();
       metadata.check_files(&paths).unwrap();
       metadata.check_content(&root).unwrap();
     }
@@ -585,7 +594,7 @@ mod tests {
     std::fs::write(root.join("foo.jpg"), image(2, 1, ImageFormat::Jpeg)).unwrap();
     std::fs::write(root.join("bar.png"), image(1, 2, ImageFormat::Png)).unwrap();
 
-    let metadata = Metadata {
+    let mut metadata = Metadata {
       media: Some(Media::Image {
         images: vec!["foo.jpg".parse().unwrap(), "bar.png".parse().unwrap()],
       }),
@@ -597,6 +606,7 @@ mod tests {
       .map(|path| path.parse::<RelativePath>().unwrap())
       .collect();
 
+    metadata.populate(&root).unwrap();
     metadata.check_files(&paths).unwrap();
     metadata.check_content(&root).unwrap();
   }

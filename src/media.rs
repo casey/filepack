@@ -54,7 +54,7 @@ mod tests {
       Media::Image {
         images: vec!["foo.png".parse().unwrap(), "bar.jpg".parse().unwrap()],
       },
-      "8201a10082a20167666f6f2e706e670201a201676261722e6a70670200",
+      "8201a10082a300a2000001000167666f6f2e706e670201a300a20000010001676261722e6a70670200",
     );
   }
 }

@@ -1,10 +1,9 @@
 use super::*;
 
-#[skip_serializing_none]
 #[derive(Clone, Debug, Decode, DeserializeFromStr, Encode, PartialEq, Serialize)]
 pub(crate) struct Image {
   #[n(0)]
-  pub(crate) dimensions: Option<Dimensions>,
+  pub(crate) dimensions: Dimensions,
   #[n(1)]
   pub(crate) filename: ComponentBuf,
   #[n(2)]
@@ -20,15 +19,13 @@ impl Image {
   pub(crate) fn check_content(&self, root: &Utf8Path) -> Result<Dimensions> {
     let actual = self.decode(root)?;
 
-    if let Some(declared) = self.dimensions {
-      ensure! {
-        declared == actual,
-        error::ImageDimensionsMismatch {
-          actual,
-          declared,
-          path: root.join(self.as_path()),
-        },
-      }
+    ensure! {
+      self.dimensions == actual,
+      error::ImageDimensionsMismatch {
+        actual,
+        declared: self.dimensions,
+        path: root.join(self.as_path()),
+      },
     }
 
     Ok(actual)
@@ -76,7 +73,7 @@ impl Image {
   }
 
   pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result {
-    self.dimensions = Some(self.decode(root)?);
+    self.dimensions = self.decode(root)?;
 
     Ok(())
   }
@@ -99,7 +96,10 @@ impl FromStr for Image {
     };
 
     Ok(Self {
-      dimensions: None,
+      dimensions: Dimensions {
+        height: 0,
+        width: 0,
+      },
       filename,
       ty,
     })
@@ -125,10 +125,10 @@ mod tests {
     std::fs::write(root.join("foo.png"), bytes(1, 1, ImageFormat::Png)).unwrap();
 
     let image = Image {
-      dimensions: Some(Dimensions {
+      dimensions: Dimensions {
         height: 2,
         width: 2,
-      }),
+      },
       filename: "foo.png".parse().unwrap(),
       ty: ImageType::Png,
     };
@@ -143,15 +143,15 @@ mod tests {
   fn encoding() {
     assert_cbor(
       "foo.png".parse::<Image>().unwrap(),
-      "a20167666f6f2e706e670201",
+      "a300a2000001000167666f6f2e706e670201",
     );
 
     assert_cbor(
       Image {
-        dimensions: Some(Dimensions {
+        dimensions: Dimensions {
           height: 1,
           width: 2,
-        }),
+        },
         filename: "foo.jpg".parse().unwrap(),
         ty: ImageType::Jpeg,
       },
@@ -169,7 +169,10 @@ mod tests {
     assert_eq!(
       "foo.jpg".parse::<Image>().unwrap(),
       Image {
-        dimensions: None,
+        dimensions: Dimensions {
+          height: 0,
+          width: 0,
+        },
         filename: "foo.jpg".parse().unwrap(),
         ty: ImageType::Jpeg,
       },
@@ -210,20 +213,20 @@ mod tests {
       case("foo.png", &bytes(2, 1, ImageFormat::Png))
         .unwrap()
         .dimensions,
-      Some(Dimensions {
+      Dimensions {
         height: 1,
         width: 2,
-      }),
+      },
     );
 
     assert_eq!(
       case("foo.jpg", &bytes(1, 2, ImageFormat::Jpeg))
         .unwrap()
         .dimensions,
-      Some(Dimensions {
+      Dimensions {
         height: 2,
         width: 1,
-      }),
+      },
     );
 
     assert_matches_regex!(
@@ -240,16 +243,11 @@ mod tests {
   #[test]
   fn serialize() {
     assert_eq!(
-      serde_json::to_string(&"foo.png".parse::<Image>().unwrap()).unwrap(),
-      r#"{"filename":"foo.png","type":"png"}"#,
-    );
-
-    assert_eq!(
       serde_json::to_string(&Image {
-        dimensions: Some(Dimensions {
+        dimensions: Dimensions {
           height: 1,
           width: 2,
-        }),
+        },
         filename: "foo.jpg".parse().unwrap(),
         ty: ImageType::Jpeg,
       })

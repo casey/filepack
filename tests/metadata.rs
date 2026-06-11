@@ -10,6 +10,30 @@ fn create_checks_metadata() {
 }
 
 #[test]
+fn create_extracts_artwork_dimensions() {
+  Test::new()
+    .write("cover.png", image(2, 2, ImageFormat::Png))
+    .write("metadata.yaml", "artwork: cover.png")
+    .arg("create")
+    .success()
+    .arg("metadata")
+    .stdout(
+      r#"{
+  "artwork": {
+    "dimensions": {
+      "height": 2,
+      "width": 2
+    },
+    "filename": "cover.png",
+    "type": "png"
+  }
+}
+"#,
+    )
+    .success();
+}
+
+#[test]
 fn create_extracts_image_dimensions() {
   Test::new()
     .write("foo.png", image(2, 1, ImageFormat::Png))
