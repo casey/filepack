@@ -27,7 +27,7 @@ Packages may optionally contain machine-readable metadata describing their
 content, allowing programmatic search, preview, playback, and conversion.
 
 `filepack` is a command-line tool for creating, signing, and verifying
-packages, and an HTTP server for package hosting, upload, download, and
+packages, and includes an HTTP server for package upload, download, and
 display.
 
 Filepack is currently experimental. The `filepack` interface and package format
@@ -126,7 +126,7 @@ Usage
 
 Filepack supports a number of subcommands, including `filepack create` to
 create a manifest, `filepack verify` to verify a manifest, and `filepack serve`
-to start an HTTP file server.
+to start an HTTP package server.
 
 See `filepack help` for supported subcommands and `filepack help SUBCOMMAND`
 for information about a particular subcommand.
