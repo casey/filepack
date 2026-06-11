@@ -108,6 +108,7 @@ use {
   boilerplate::{Boilerplate, Trusted},
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},
   clap::{ArgGroup, Parser, ValueEnum},
+  claxon::FlacReader,
   filepack_cbor::{Decode, DecodeFromStr, Encode, EncodeDisplay},
   futures_util::StreamExt,
   indicatif::{ProgressBar, ProgressStyle},

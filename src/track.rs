@@ -26,7 +26,7 @@ impl Track {
   }
 
   fn populate_flac(&mut self, path: &Utf8Path) -> Result {
-    let mut reader = claxon::FlacReader::open(path).context(error::TrackDecode { path })?;
+    let mut reader = FlacReader::open(path).context(error::TrackDecode { path })?;
 
     let title = {
       let mut titles = reader.get_tag("title");
