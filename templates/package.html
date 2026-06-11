@@ -74,9 +74,13 @@
 %%       }
 %%       Media::Image { images } => {
 <ul>
-%%         for i in 0..images.len() {
+%%         for (i, image) in images.iter().enumerate() {
   <li>
+%%           if let Some(dimensions) = image.dimensions {
+    <img src=/media/image/{{ self.fingerprint }}/image/{{ Ordinal(i) }} width={{ dimensions.width }} height={{ dimensions.height }}>
+%%           } else {
     <img src=/media/image/{{ self.fingerprint }}/image/{{ Ordinal(i) }}>
+%%           }
   </li>
 %%         }
 </ul>
