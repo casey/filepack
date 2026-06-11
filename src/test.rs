@@ -1,5 +1,9 @@
 use super::*;
 
+pub(crate) const EMPTY_MD5: [u8; 16] = [
+  0xd4, 0x1d, 0x8c, 0xd9, 0x8f, 0x00, 0xb2, 0x04, 0xe9, 0x80, 0x09, 0x98, 0xec, 0xf8, 0x42, 0x7e,
+];
+
 pub(crate) const FINGERPRINT: &str =
   "package1a4uf5nw04lxs6dgzqfh4rdhxffxdukfwf4hq39d7vn2fu4eqlxf3ql7ykr3";
 
@@ -56,6 +60,36 @@ pub(crate) fn checksum(s: &str) -> String {
     .with_checksum::<bech32::Bech32m>(&checked_hrpstring.hrp())
     .chars()
     .collect()
+}
+
+pub(crate) fn flac(md5sum: [u8; 16], comments: &[&str]) -> Vec<u8> {
+  let mut bytes = b"fLaC".to_vec();
+
+  bytes.push(if comments.is_empty() { 0x80 } else { 0x00 });
+  bytes.extend_from_slice(&34u32.to_be_bytes()[1..]);
+  bytes.extend_from_slice(&4096u16.to_be_bytes());
+  bytes.extend_from_slice(&4096u16.to_be_bytes());
+  bytes.extend_from_slice(&[0; 6]);
+  bytes.extend_from_slice(&[0x0a, 0xc4, 0x42, 0xf0]);
+  bytes.extend_from_slice(&[0; 4]);
+  bytes.extend_from_slice(&md5sum);
+
+  if !comments.is_empty() {
+    let mut body = Vec::new();
+    body.extend_from_slice(&0u32.to_le_bytes());
+    body.extend_from_slice(&u32::try_from(comments.len()).unwrap().to_le_bytes());
+
+    for comment in comments {
+      body.extend_from_slice(&u32::try_from(comment.len()).unwrap().to_le_bytes());
+      body.extend_from_slice(comment.as_bytes());
+    }
+
+    bytes.push(0x84);
+    bytes.extend_from_slice(&u32::try_from(body.len()).unwrap().to_be_bytes()[1..]);
+    bytes.extend(body);
+  }
+
+  bytes
 }
 
 #[test]

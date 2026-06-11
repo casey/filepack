@@ -25,6 +25,7 @@ use {
     archive_error::ArchiveError,
     arguments::Arguments,
     array_decoder::ArrayDecoder,
+    audio_type::AudioType,
     authenticated::Authenticated,
     bech32_decoder::Bech32Decoder,
     bech32_encoder::Bech32Encoder,
@@ -89,6 +90,7 @@ use {
     tag::Tag,
     ticked::Ticked,
     token::Token,
+    track::Track,
     type_name::TypeName,
     utf8_path_ext::Utf8PathExt,
   },
@@ -110,6 +112,7 @@ use {
   futures_util::StreamExt,
   indicatif::{ProgressBar, ProgressStyle},
   lexiclean::Lexiclean,
+  md5::{Digest, Md5},
   mime::Mime,
   num_traits::One,
   owo_colors::Styled,
@@ -174,7 +177,7 @@ pub use self::{
 use {
   std::assert_matches,
   tempfile::TempDir,
-  test::{assert_cbor, assert_cbor_eq, assert_encoding, tempdir},
+  test::{EMPTY_MD5, assert_cbor, assert_cbor_eq, assert_encoding, flac, tempdir},
   unindent::unindent,
 };
 
@@ -199,6 +202,7 @@ mod archive_error;
 mod arguments;
 mod array_decoder;
 mod array_encoder;
+mod audio_type;
 mod authenticated;
 mod bech32_decoder;
 mod bech32_encoder;
@@ -288,6 +292,7 @@ mod tag_error;
 pub mod templates;
 mod ticked;
 mod token;
+mod track;
 mod type_name;
 mod utf8_path_ext;
 mod version;

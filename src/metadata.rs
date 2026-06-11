@@ -128,12 +128,22 @@ impl Metadata {
 
     if let Some(media) = &self.media {
       match media {
-        Media::Audio { tracks } => files.extend(tracks.iter().map(Filename::as_path)),
+        Media::Audio { tracks } => files.extend(tracks.iter().map(Track::as_path)),
         Media::Image { images } => files.extend(images.iter().map(Filename::as_path)),
       }
     }
 
     files
+  }
+
+  pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result {
+    if let Some(Media::Audio { tracks }) = &mut self.media {
+      for track in tracks {
+        track.populate(root)?;
+      }
+    }
+
+    Ok(())
   }
 }
 
@@ -294,7 +304,11 @@ mod tests {
       homepage: Some("http://example.com".parse().unwrap()),
       language: Some("en".parse().unwrap()),
       media: Some(Media::Audio {
-        tracks: vec!["track.flac".parse().unwrap()],
+        tracks: vec![Track {
+          filename: "track.flac".parse().unwrap(),
+          title: Some("foo".into()),
+          ty: AudioType::Flac,
+        }],
       }),
       package: Some(Package {
         creator: Some("baz".parse().unwrap()),
