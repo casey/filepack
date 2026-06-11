@@ -3,6 +3,7 @@ use super::*;
 #[allow(private_interfaces)]
 #[skip_serializing_none]
 #[derive(Clone, Debug, Default, Deserialize, Encode, Decode, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
 pub struct Metadata {
   #[n(0)]
   pub artwork: Option<filename::Image>,
@@ -55,7 +56,7 @@ impl Metadata {
     Ok(())
   }
 
-  pub(crate) fn check_images(&self, root: &Utf8Path) -> Result {
+  pub(crate) fn check_content(&self, root: &Utf8Path) -> Result {
     if let Some(artwork) = &self.artwork {
       Self::check_artwork(root, artwork)?;
     }
@@ -111,20 +112,7 @@ impl Metadata {
   }
 
   pub(crate) fn deserialize(path: &Utf8Path, yaml: &str) -> Result<Self> {
-    let deserializer = serde_yaml::Deserializer::from_str(yaml);
-
-    let mut unknown = BTreeSet::new();
-
-    let metadata = serde_ignored::deserialize(deserializer, |path| {
-      unknown.insert(path.to_string());
-    })
-    .context(error::DeserializeMetadata { path })?;
-
-    if !unknown.is_empty() {
-      return Err(error::DeserializeMetadataUnknownFields { path, unknown }.build());
-    }
-
-    Ok(metadata)
+    serde_yaml::from_str(yaml).context(error::DeserializeMetadata { path })
   }
 
   pub(crate) fn files(&self) -> Vec<RelativePath> {
@@ -280,11 +268,25 @@ mod tests {
 
   #[test]
   fn deserialize_rejects_unknown_fields() {
-    assert_eq!(
-      Metadata::deserialize(Metadata::YAML_FILENAME.as_ref(), "title: foo\nbar: 1")
+    #[track_caller]
+    fn case(yaml: &str, expected: &str) {
+      let chain = Metadata::deserialize(Metadata::YAML_FILENAME.as_ref(), yaml)
         .unwrap_err()
-        .to_string(),
-      "unknown fields in metadata at `metadata.yaml`: `bar`",
+        .iter_chain()
+        .map(ToString::to_string)
+        .collect::<Vec<String>>()
+        .join(": ");
+
+      assert_matches_regex!(chain, expected);
+    }
+
+    case(
+      "title: foo\nbar: 1",
+      "unknown field `bar`, expected one of ",
+    );
+    case(
+      "package:\n  bar: 1",
+      "unknown field `bar`, expected one of ",
     );
   }
 
@@ -381,7 +383,7 @@ mod tests {
       };
 
       assert_matches_regex!(
-        metadata.check_images(&root).unwrap_err().to_string(),
+        metadata.check_content(&root).unwrap_err().to_string(),
         expected
       );
     }
@@ -434,7 +436,7 @@ mod tests {
       };
 
       assert_matches_regex!(
-        metadata.check_images(&root).unwrap_err().to_string(),
+        metadata.check_content(&root).unwrap_err().to_string(),
         expected
       );
     }
@@ -578,7 +580,7 @@ mod tests {
         .collect();
 
       metadata.check(&paths).unwrap();
-      metadata.check_images(&root).unwrap();
+      metadata.check_content(&root).unwrap();
     }
 
     case("cover.jpg", image(10, 10, ImageFormat::Jpeg));
@@ -605,6 +607,6 @@ mod tests {
       .collect();
 
     metadata.check(&paths).unwrap();
-    metadata.check_images(&root).unwrap();
+    metadata.check_content(&root).unwrap();
   }
 }

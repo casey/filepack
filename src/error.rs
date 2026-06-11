@@ -143,12 +143,6 @@ pub enum Error {
     path: DisplayPath,
     source: serde_yaml::Error,
   },
-  #[snafu(display("unknown fields in metadata at `{path}`: {unknown}"))]
-  DeserializeMetadataUnknownFields {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-    unknown: Ticked<String>,
-  },
   #[snafu(display("downloaded file hash mismatch: expected {expected} but got {actual}"))]
   DownloadHashMismatch {
     actual: Hash,

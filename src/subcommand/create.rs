@@ -144,7 +144,7 @@ impl Create {
         Metadata::decode_from_slice(cbor).context(error::DecodeMetadataCbor { path })?;
 
       metadata.check(&paths.keys().cloned().collect())?;
-      metadata.check_images(&root)?;
+      metadata.check_content(&root)?;
     }
 
     ensure! {
