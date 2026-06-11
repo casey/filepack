@@ -5,18 +5,6 @@ use super::*;
 pub enum Error {
   #[snafu(display("no hostname found for use as ACME domain"))]
   AcmeHostname { backtrace: Option<Backtrace> },
-  #[snafu(display("failed to decode JPEG artwork `{path}`"))]
-  ArtworkDecodeJpeg {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-    source: zune_jpeg::errors::DecodeErrors,
-  },
-  #[snafu(display("failed to decode PNG artwork `{path}`"))]
-  ArtworkDecodePng {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-    source: png::DecodingError,
-  },
   #[snafu(display("artwork `{path}` is {dimensions} but must be square"))]
   ArtworkDimensions {
     backtrace: Option<Backtrace>,
@@ -223,6 +211,18 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     hex: String,
     source: hex::FromHexError,
+  },
+  #[snafu(display("failed to decode JPEG image `{path}`"))]
+  ImageDecodeJpeg {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+    source: zune_jpeg::errors::DecodeErrors,
+  },
+  #[snafu(display("failed to decode PNG image `{path}`"))]
+  ImageDecodePng {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+    source: png::DecodingError,
   },
   #[snafu(display("internal error, this may indicate a bug in filepack: {message}"))]
   Internal {

@@ -15,7 +15,7 @@ pub(crate) enum Media {
   #[n(1)]
   Image {
     #[n(0)]
-    images: Vec<filename::Artwork>,
+    images: Vec<filename::Image>,
   },
 }
 

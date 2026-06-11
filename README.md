@@ -308,10 +308,11 @@ metadata`. The CBOR schema is currently undocumented.
 
 Fields are given as `NAME: TYPE`. All fields are optional.
 
-Top-level fieldds
+Top-level fields
 
-- `artwork: component.png`: The filename of an PNG file containing artwork for
-  the content, for example, cover art for an album or key art for a movie.
+- `artwork: component.{jpeg,png}`: The filename of a JPEG or PNG file
+  containing artwork for the content, for example, cover art for an album or
+  key art for a movie.
 
 - `creator: component`: The person or group who created the content.
 

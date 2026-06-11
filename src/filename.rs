@@ -13,8 +13,8 @@ macro_rules! filename {
   }
 }
 
-filename! { Artwork, ArtworkExtension, "jpg", "png" }
 filename! { Flac, FlacExtension, "flac" }
+filename! { Image, ImageExtension, "jpg", "png" }
 filename! { Md, MdExtension, "md" }
 filename! { Nfo, NfoExtension, "nfo" }
 
@@ -84,18 +84,18 @@ impl<T: Extension> FromStr for Filename<T> {
   }
 }
 
-impl Artwork {
+impl Image {
   pub(crate) fn resource_type(&self) -> ResourceType {
     match self.ty() {
-      ArtworkType::Jpeg => ResourceType::Jpeg,
-      ArtworkType::Png => ResourceType::Png,
+      ImageType::Jpeg => ResourceType::Jpeg,
+      ImageType::Png => ResourceType::Png,
     }
   }
 
-  pub(crate) fn ty(&self) -> ArtworkType {
+  pub(crate) fn ty(&self) -> ImageType {
     match self.extension().unwrap() {
-      "jpg" => ArtworkType::Jpeg,
-      "png" => ArtworkType::Png,
+      "jpg" => ImageType::Jpeg,
+      "png" => ImageType::Png,
       _ => unreachable!(),
     }
   }
@@ -115,7 +115,7 @@ mod tests {
   #[test]
   fn decode_error() {
     assert_matches!(
-      Artwork::decode(&mut Decoder::new(&"cover.svg".encode_to_vec())),
+      Image::decode(&mut Decoder::new(&"cover.svg".encode_to_vec())),
       Err(DecodeError::Component {
         source: ComponentError::Extension {
           extensions: &["jpg", "png"]
@@ -139,7 +139,7 @@ mod tests {
       assert_eq!(input.parse::<T>().unwrap_err(), expected);
     }
 
-    case::<Artwork>(
+    case::<Image>(
       "cover.svg",
       ComponentError::Extension {
         extensions: &["jpg", "png"],
@@ -174,8 +174,8 @@ mod tests {
       input.parse::<T>().unwrap();
     }
 
-    case::<Artwork>("cover.jpg");
-    case::<Artwork>("cover.png");
+    case::<Image>("cover.jpg");
+    case::<Image>("cover.png");
     case::<Flac>("track.flac");
     case::<Md>("README.md");
     case::<Nfo>("info.nfo");

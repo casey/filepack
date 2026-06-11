@@ -25,7 +25,6 @@ use {
     archive_error::ArchiveError,
     arguments::Arguments,
     array_decoder::ArrayDecoder,
-    artwork_type::ArtworkType,
     authenticated::Authenticated,
     bech32_decoder::Bech32Decoder,
     bech32_encoder::Bech32Encoder,
@@ -57,6 +56,7 @@ use {
     hash_error::HashError,
     hashing_writer::HashingWriter,
     head::Head,
+    image_type::ImageType,
     key_identifier::KeyIdentifier,
     key_name::KeyName,
     key_type::KeyType,
@@ -199,7 +199,6 @@ mod archive_error;
 mod arguments;
 mod array_decoder;
 mod array_encoder;
-mod artwork_type;
 mod authenticated;
 mod bech32_decoder;
 mod bech32_encoder;
@@ -241,6 +240,7 @@ mod hash;
 mod hash_error;
 mod hashing_writer;
 mod head;
+mod image_type;
 mod key_identifier;
 mod key_name;
 mod key_type;
