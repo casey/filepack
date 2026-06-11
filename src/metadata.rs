@@ -120,9 +120,10 @@ impl Metadata {
 
 #[cfg(test)]
 mod tests {
-  use super::*;
-
-  use ::image::ImageFormat;
+  use {
+    super::*,
+    ::image::{DynamicImage, ImageFormat},
+  };
 
   #[test]
   fn deserialize_media_audio() {
@@ -351,7 +352,7 @@ mod tests {
 
   fn image(width: u32, height: u32, image_format: ImageFormat) -> Vec<u8> {
     let mut buffer = io::Cursor::new(Vec::new());
-    ::image::DynamicImage::new_rgb8(width, height)
+    DynamicImage::new_rgb8(width, height)
       .write_to(&mut buffer, image_format)
       .unwrap();
     buffer.into_inner()
