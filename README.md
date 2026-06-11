@@ -26,9 +26,9 @@ against a manifest, root hash, or signature.
 Packages may optionally contain machine-readable metadata describing their
 content, allowing programmatic search, preview, playback, and conversion.
 
-`filepack` is a command-line tool written in Rust for creating, signing, and
-verifying packages, and an HTTP server for package hosting, upload, download,
-and display.
+`filepack` is a command-line tool for creating, signing, and verifying
+packages, and an HTTP server for package hosting, upload, download, and
+display.
 
 Filepack is currently experimental. The `filepack` interface and package format
 may change at any time.
@@ -304,7 +304,7 @@ metadata, but `metadata.filepack` is the authoritative source of metadata. For
 consumption by scripts and tools, `filepack metadata` prints the contents of
 `metadata.filepack` as JSON.
 
-Filepack metadata is intended to a broadly useful machine and human readable
+Filepack metadata is intended to be a broadly useful machine and human readable
 description of the contents of a package, covering personal, distribution, and
 archival use-cases.
 
@@ -948,7 +948,7 @@ signature.
 
 Package fingerprints are the BLAKE3 hash of a canonical CBOR serialization of
 the contents of the manifest. Fingerprints are constructed to be unique,
-meaning meaning that it is impossible for two different packages with different
+meaning that it is impossible for two different packages with different
 contents to have the same fingerprint.
 
 Currently, no fingerprint test vectors exist, and the best documentation is the
