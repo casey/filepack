@@ -10,7 +10,7 @@ pub(crate) enum Media {
   #[n(0)]
   Audio {
     #[n(0)]
-    tracks: Vec<filename::Flac>,
+    tracks: Vec<Track>,
   },
   #[n(1)]
   Image {
@@ -44,7 +44,7 @@ mod tests {
       Media::Audio {
         tracks: vec!["foo.flac".parse().unwrap(), "bar.flac".parse().unwrap()],
       },
-      "8200a1008268666f6f2e666c6163686261722e666c6163",
+      "8200a10082a20068666f6f2e666c61630200a200686261722e666c61630200",
     );
   }
 

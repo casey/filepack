@@ -13,7 +13,6 @@ macro_rules! filename {
   }
 }
 
-filename! { Flac, FlacExtension, "flac" }
 filename! { Image, ImageExtension, "jpg", "png" }
 filename! { Md, MdExtension, "md" }
 filename! { Nfo, NfoExtension, "nfo" }
@@ -101,13 +100,6 @@ impl Image {
   }
 }
 
-impl Flac {
-  #[expect(clippy::unused_self)]
-  pub(crate) fn resource_type(&self) -> ResourceType {
-    ResourceType::Flac
-  }
-}
-
 #[cfg(test)]
 mod tests {
   use super::*;
@@ -157,12 +149,6 @@ mod tests {
         extensions: &["nfo"],
       },
     );
-    case::<Flac>(
-      "track.mp3",
-      ComponentError::Extension {
-        extensions: &["flac"],
-      },
-    );
     case::<Md>("", ComponentError::Empty);
     case::<Md>("foo/bar.md", ComponentError::Separator { character: '/' });
   }
@@ -176,7 +162,6 @@ mod tests {
 
     case::<Image>("cover.jpg");
     case::<Image>("cover.png");
-    case::<Flac>("track.flac");
     case::<Md>("README.md");
     case::<Nfo>("info.nfo");
   }

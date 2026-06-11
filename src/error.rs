@@ -437,6 +437,22 @@ pub enum Error {
   },
   #[snafu(display("authentication tokens may only be used over HTTPS or loopback"))]
   TokenOverHttp { backtrace: Option<Backtrace> },
+  #[snafu(display("failed to decode FLAC track `{path}`"))]
+  TrackDecode {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+    source: claxon::Error,
+  },
+  #[snafu(display("FLAC track `{path}` has empty title"))]
+  TrackTitleEmpty {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+  },
+  #[snafu(display("FLAC track `{path}` has multiple titles"))]
+  TrackTitleMultiple {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+  },
   #[snafu(display("failed to unarchive manifest"))]
   UnarchiveManifest {
     backtrace: Option<Backtrace>,

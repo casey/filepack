@@ -10,6 +10,63 @@ fn create_checks_metadata() {
 }
 
 #[test]
+fn create_extracts_track_titles() {
+  Test::new()
+    .write("foo.flac", flac(&["TITLE=bar"]))
+    .write(
+      "metadata.yaml",
+      "\
+media:
+  type: audio
+  tracks:
+    - foo.flac
+",
+    )
+    .arg("create")
+    .success()
+    .arg("metadata")
+    .stdout(
+      r#"{
+  "media": {
+    "type": "audio",
+    "tracks": [
+      {
+        "filename": "foo.flac",
+        "title": "bar",
+        "type": "flac"
+      }
+    ]
+  }
+}
+"#,
+    )
+    .success()
+    .arg("verify")
+    .stderr_regex("successfully verified .*")
+    .success();
+}
+
+#[test]
+fn create_rejects_invalid_tracks() {
+  Test::new()
+    .write("foo.flac", "barbar")
+    .write(
+      "metadata.yaml",
+      "\
+media:
+  type: audio
+  tracks:
+    - foo.flac
+",
+    )
+    .arg("create")
+    .stderr_regex(
+      "error: failed to decode FLAC track `.*foo.flac`\n       └─ Ill-formed FLAC stream: .*\n",
+    )
+    .failure();
+}
+
+#[test]
 fn create_succeeds_with_valid_metadata() {
   Test::new()
     .touch("content")
@@ -60,6 +117,35 @@ fn create_uses_existing_metadata_cbor() {
     .args(["create", "--force"])
     .stderr("error: file referenced in metadata missing: `README.md`\n")
     .failure();
+}
+
+fn flac(comments: &[&str]) -> Vec<u8> {
+  let mut bytes = b"fLaC".to_vec();
+
+  bytes.push(if comments.is_empty() { 0x80 } else { 0x00 });
+  bytes.extend_from_slice(&34u32.to_be_bytes()[1..]);
+  bytes.extend_from_slice(&4096u16.to_be_bytes());
+  bytes.extend_from_slice(&4096u16.to_be_bytes());
+  bytes.extend_from_slice(&[0; 6]);
+  bytes.extend_from_slice(&[0x0a, 0xc4, 0x42, 0xf0]);
+  bytes.extend_from_slice(&[0; 20]);
+
+  if !comments.is_empty() {
+    let mut body = Vec::new();
+    body.extend_from_slice(&0u32.to_le_bytes());
+    body.extend_from_slice(&u32::try_from(comments.len()).unwrap().to_le_bytes());
+
+    for comment in comments {
+      body.extend_from_slice(&u32::try_from(comment.len()).unwrap().to_le_bytes());
+      body.extend_from_slice(comment.as_bytes());
+    }
+
+    bytes.push(0x84);
+    bytes.extend_from_slice(&u32::try_from(body.len()).unwrap().to_be_bytes()[1..]);
+    bytes.extend(body);
+  }
+
+  bytes
 }
 
 fn image(width: u32, height: u32, image_format: ImageFormat) -> Vec<u8> {

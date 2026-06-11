@@ -58,6 +58,35 @@ pub(crate) fn checksum(s: &str) -> String {
     .collect()
 }
 
+pub(crate) fn flac(comments: &[&str]) -> Vec<u8> {
+  let mut bytes = b"fLaC".to_vec();
+
+  bytes.push(if comments.is_empty() { 0x80 } else { 0x00 });
+  bytes.extend_from_slice(&34u32.to_be_bytes()[1..]);
+  bytes.extend_from_slice(&4096u16.to_be_bytes());
+  bytes.extend_from_slice(&4096u16.to_be_bytes());
+  bytes.extend_from_slice(&[0; 6]);
+  bytes.extend_from_slice(&[0x0a, 0xc4, 0x42, 0xf0]);
+  bytes.extend_from_slice(&[0; 20]);
+
+  if !comments.is_empty() {
+    let mut body = Vec::new();
+    body.extend_from_slice(&0u32.to_le_bytes());
+    body.extend_from_slice(&u32::try_from(comments.len()).unwrap().to_le_bytes());
+
+    for comment in comments {
+      body.extend_from_slice(&u32::try_from(comment.len()).unwrap().to_le_bytes());
+      body.extend_from_slice(comment.as_bytes());
+    }
+
+    bytes.push(0x84);
+    bytes.extend_from_slice(&u32::try_from(body.len()).unwrap().to_be_bytes()[1..]);
+    bytes.extend(body);
+  }
+
+  bytes
+}
+
 #[test]
 fn hash_is_valid() {
   HASH.parse::<Hash>().unwrap();

@@ -62,8 +62,11 @@
 %%     match media {
 %%       Media::Audio { tracks } => {
 <ul>
-%%         for i in 0..tracks.len() {
+%%         for (i, track) in tracks.iter().enumerate() {
   <li>
+%%           if let Some(title) = &track.title {
+    {{ title }}
+%%           }
     <audio controls src=/media/audio/{{ self.fingerprint }}/track/{{ Ordinal(i) }}></audio>
   </li>
 %%         }
