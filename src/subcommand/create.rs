@@ -36,7 +36,7 @@ impl Create {
     let path = root.join(Metadata::YAML_FILENAME);
 
     let metadata_cbor = if let Some(yaml) = filesystem::read_to_string_opt(&path)? {
-      let cbor = Metadata::deserialize_strict(&path, &yaml)?.encode_to_vec();
+      let cbor = Metadata::deserialize(&path, &yaml)?.encode_to_vec();
 
       let path = root.join(Metadata::CBOR_FILENAME);
 

@@ -110,7 +110,7 @@ impl Metadata {
     })
   }
 
-  pub(crate) fn deserialize_strict(path: &Utf8Path, yaml: &str) -> Result<Self> {
+  pub(crate) fn deserialize(path: &Utf8Path, yaml: &str) -> Result<Self> {
     let deserializer = serde_yaml::Deserializer::from_str(yaml);
 
     let mut unknown = BTreeSet::new();
@@ -121,7 +121,7 @@ impl Metadata {
     .context(error::DeserializeMetadata { path })?;
 
     if !unknown.is_empty() {
-      return Err(error::DeserializeMetadataStrict { path, unknown }.build());
+      return Err(error::DeserializeMetadataUnknownFields { path, unknown }.build());
     }
 
     Ok(metadata)
@@ -159,16 +159,9 @@ impl Metadata {
 mod tests {
   use {super::*, image::ImageFormat};
 
-  const UNKNOWN_FIELD: &str = "title: foo\nbar: 1";
-
-  #[test]
-  fn deserialize_allows_missing_optional_fields() {
-    Metadata::deserialize_strict(Metadata::YAML_FILENAME.as_ref(), "title: Foo").unwrap();
-  }
-
   #[test]
   fn deserialize_media_audio() {
-    let metadata = Metadata::deserialize_strict(
+    let metadata = Metadata::deserialize(
       Metadata::YAML_FILENAME.as_ref(),
       &unindent(
         "
@@ -194,8 +187,8 @@ mod tests {
   fn deserialize_rejects_invalid_values() {
     #[track_caller]
     fn case(yaml: &str, expected: &str) {
-      let error = Metadata::deserialize_strict(Metadata::YAML_FILENAME.as_ref(), &unindent(yaml))
-        .unwrap_err();
+      let error =
+        Metadata::deserialize(Metadata::YAML_FILENAME.as_ref(), &unindent(yaml)).unwrap_err();
 
       let chain = error
         .iter_chain()
@@ -286,6 +279,16 @@ mod tests {
   }
 
   #[test]
+  fn deserialize_rejects_unknown_fields() {
+    assert_eq!(
+      Metadata::deserialize(Metadata::YAML_FILENAME.as_ref(), "title: foo\nbar: 1")
+        .unwrap_err()
+        .to_string(),
+      "unknown fields in metadata at `metadata.yaml`: `bar`",
+    );
+  }
+
+  #[test]
   fn encoding() {
     assert_encoding(Metadata {
       artwork: Some("cover.png".parse().unwrap()),
@@ -313,7 +316,7 @@ mod tests {
 
   #[test]
   fn filepack_metadata_is_valid() {
-    Metadata::deserialize_strict(
+    Metadata::deserialize(
       Metadata::YAML_FILENAME.as_ref(),
       &filesystem::read_to_string(Metadata::YAML_FILENAME).unwrap(),
     )
@@ -455,7 +458,7 @@ mod tests {
     let re = Regex::new(r"(?s)```yaml(.*?)```").unwrap();
 
     for capture in re.captures_iter(&readme) {
-      let metadata = Metadata::deserialize_strict("README.md".as_ref(), &capture[1]).unwrap();
+      let metadata = Metadata::deserialize("README.md".as_ref(), &capture[1]).unwrap();
 
       let Metadata {
         artwork,
@@ -552,16 +555,6 @@ mod tests {
       nfo: Some(nfo.parse().unwrap()),
       title: None,
     }
-  }
-
-  #[test]
-  fn strict_deserialize_rejects_unknown_fields() {
-    assert_eq!(
-      Metadata::deserialize_strict(Metadata::YAML_FILENAME.as_ref(), UNKNOWN_FIELD)
-        .unwrap_err()
-        .to_string(),
-      "unknown fields in metadata at `metadata.yaml`: `bar`",
-    );
   }
 
   #[test]

@@ -144,7 +144,7 @@ pub enum Error {
     source: serde_yaml::Error,
   },
   #[snafu(display("unknown fields in metadata at `{path}`: {unknown}"))]
-  DeserializeMetadataStrict {
+  DeserializeMetadataUnknownFields {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
     unknown: Ticked<String>,
