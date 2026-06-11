@@ -16,37 +16,50 @@
 
 <br>
 
-`filepack` is a command-line file hashing, signing, and verification utility
-written in Rust.
+Filepack is a content-addressed package format.
 
-It is an alternative to `.sfv` files, tools like `shasum`, and PGP signing and
-verification. Files are hashed using
-[BLAKE3](https://github.com/BLAKE3-team/BLAKE3/), a fast, cryptographic hash
-function, and signed with Ed25519.
+A package is a directory of files and a manifest containing their BLAKE3
+hashes. File and directory hashes form a Merkle tree whose root hash uniquely
+identifies the package. Packages can be signed with Ed25519 and verified
+against a manifest, root hash, or signature.
 
-A manifest named `manifest.filepack` containing the hashes of files in a
-directory can be created with:
+Packages may optionally contain machine-readable metadata describing their
+content, allowing programmatic search, preview, playback, and conversion.
+
+`filepack` is a command-line tool written in Rust for creating, signing, and
+verifying packages, and an HTTP server for package hosting, upload, download,
+and display.
+
+Filepack is currently experimental. The `filepack` interface and package format
+may change at any time.
+
+Quickstart
+----------
+
+Optionally, create a metadata file describing your package:
 
 ```shell
-filepack create path/to/directory
+echo "title: Packaging Guide" > metadata.yaml
 ```
 
-Which will write the manifest to `path/to/directory/manifest.filepack`.
-
-Files can later be verified with:
+Create `manifest.filepack` containing the hashes of files in the current
+directory;
 
 ```shell
-filepack verify path/to/directory
+filepack create
 ```
 
-To protect against accidental or malicious corruption, as long as the manifest
-has not been tampered with.
+Verify the contents of the current directory:
 
-If you run `filepack` a lot, you might want to `alias fp=filepack`.
+```shell
+filepack verify
+```
 
-`filepack` is currently unstable: the interface and file format may change at
-any time. Additionally, the code has not been extensively reviewed and should
-be considered experimental.
+Print package metadata:
+
+```shell
+filepack metadata
+```
 
 Installation
 ------------
