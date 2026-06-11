@@ -42,26 +42,36 @@ impl Metadata {
       Self::check_artwork(root, artwork)?;
     }
 
+    if let Some(Media::Image { images }) = &self.media {
+      for image in images {
+        Self::decode_image(root, image)?;
+      }
+    }
+
     Ok(())
   }
 
   fn check_artwork(root: &Utf8Path, artwork: &filename::Image) -> Result {
-    let path = root.join(artwork.as_path());
-
-    let dimensions = match artwork.ty() {
-      ImageType::Jpeg => Self::decode_jpeg(&path)?,
-      ImageType::Png => Self::decode_png(&path)?,
-    };
+    let dimensions = Self::decode_image(root, artwork)?;
 
     ensure! {
       dimensions.width == dimensions.height,
       error::ArtworkDimensions {
         dimensions,
-        path,
+        path: root.join(artwork.as_path()),
       }
     }
 
     Ok(())
+  }
+
+  fn decode_image(root: &Utf8Path, image: &filename::Image) -> Result<Dimensions> {
+    let path = root.join(image.as_path());
+
+    match image.ty() {
+      ImageType::Jpeg => Self::decode_jpeg(&path),
+      ImageType::Png => Self::decode_png(&path),
+    }
   }
 
   fn decode_jpeg(path: &Utf8Path) -> Result<Dimensions> {
@@ -71,7 +81,7 @@ impl Metadata {
 
     decoder
       .decode_headers()
-      .context(error::ArtworkDecodeJpeg { path })?;
+      .context(error::ImageDecodeJpeg { path })?;
 
     let info = decoder.info().unwrap();
 
@@ -86,7 +96,7 @@ impl Metadata {
 
     let reader = png::Decoder::new(io::Cursor::new(bytes))
       .read_info()
-      .context(error::ArtworkDecodePng { path })?;
+      .context(error::ImageDecodePng { path })?;
 
     let info = reader.info();
 
@@ -383,22 +393,22 @@ mod tests {
     case(
       "cover.jpg",
       b"bar".to_vec(),
-      "failed to decode JPEG artwork `.*cover\\.jpg`",
+      "failed to decode JPEG image `.*cover\\.jpg`",
     );
     case(
       "cover.png",
       b"bar".to_vec(),
-      "failed to decode PNG artwork `.*cover\\.png`",
+      "failed to decode PNG image `.*cover\\.png`",
     );
     case(
       "cover.jpg",
       image(1, 1, ImageFormat::Png),
-      "failed to decode JPEG artwork `.*cover\\.jpg`",
+      "failed to decode JPEG image `.*cover\\.jpg`",
     );
     case(
       "cover.png",
       image(1, 1, ImageFormat::Jpeg),
-      "failed to decode PNG artwork `.*cover\\.png`",
+      "failed to decode PNG image `.*cover\\.png`",
     );
     case(
       "cover.jpg",
@@ -409,6 +419,41 @@ mod tests {
       "cover.png",
       image(2, 1, ImageFormat::Png),
       "^artwork `.*cover\\.png` is 2×1 but must be square$",
+    );
+  }
+
+  #[test]
+  fn invalid_image() {
+    #[track_caller]
+    fn case(filename: &str, bytes: Vec<u8>, expected: &str) {
+      let (_tempdir, root) = tempdir();
+
+      std::fs::write(root.join(filename), bytes).unwrap();
+
+      let metadata = Metadata {
+        media: Some(Media::Image {
+          images: vec![filename.parse().unwrap()],
+        }),
+        ..default()
+      };
+
+      let paths = HashSet::from([filename.parse::<RelativePath>().unwrap()]);
+
+      assert_matches_regex!(
+        metadata.check(&root, &paths).unwrap_err().to_string(),
+        expected
+      );
+    }
+
+    case(
+      "foo.jpg",
+      b"bar".to_vec(),
+      "failed to decode JPEG image `.*foo\\.jpg`",
+    );
+    case(
+      "foo.png",
+      b"bar".to_vec(),
+      "failed to decode PNG image `.*foo\\.png`",
     );
   }
 
@@ -556,5 +601,27 @@ mod tests {
 
     case("cover.jpg", image(10, 10, ImageFormat::Jpeg));
     case("cover.png", image(20, 20, ImageFormat::Png));
+  }
+
+  #[test]
+  fn valid_images() {
+    let (_tempdir, root) = tempdir();
+
+    std::fs::write(root.join("foo.jpg"), image(2, 1, ImageFormat::Jpeg)).unwrap();
+    std::fs::write(root.join("bar.png"), image(1, 2, ImageFormat::Png)).unwrap();
+
+    let metadata = Metadata {
+      media: Some(Media::Image {
+        images: vec!["foo.jpg".parse().unwrap(), "bar.png".parse().unwrap()],
+      }),
+      ..default()
+    };
+
+    let paths = ["foo.jpg", "bar.png"]
+      .into_iter()
+      .map(|path| path.parse::<RelativePath>().unwrap())
+      .collect();
+
+    metadata.check(&root, &paths).unwrap();
   }
 }
