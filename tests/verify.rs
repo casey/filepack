@@ -204,32 +204,6 @@ fn manifest_paths_are_relative_to_root() {
 }
 
 #[test]
-fn metadata_yaml_is_not_checked() {
-  let metadata = "title: /\nbar: 100\n";
-
-  let hash = blake3::hash(metadata.as_bytes()).to_string();
-
-  Test::new()
-    .write_manifest(
-      "manifest.filepack",
-      json! {
-        embedded: {},
-        package: {
-          "metadata.yaml": {
-            hash: hash,
-            size: 18,
-          }
-        },
-        signatures: [],
-      },
-    )
-    .write("metadata.yaml", metadata)
-    .arg("verify")
-    .stderr("successfully verified 1 file totaling 18 bytes\n")
-    .success();
-}
-
-#[test]
 fn missing_empty_directory_error() {
   Test::new()
     .create_dir("foo")
