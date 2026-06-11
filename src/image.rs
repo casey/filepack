@@ -23,7 +23,7 @@ impl Image {
       self.dimensions == actual,
       error::ImageDimensionsMismatch {
         actual,
-        declared: self.dimensions,
+        expected: self.dimensions,
         path: root.join(self.as_path()),
       },
     }
@@ -135,7 +135,7 @@ mod tests {
 
     assert_matches_regex!(
       image.check_content(&root).unwrap_err().to_string(),
-      r"^image `.*foo\.png` is 1×1 but metadata declares 2×2$",
+      r"^image `.*foo\.png` is 1×1 but metadata dimensions are 2×2$",
     );
   }
 

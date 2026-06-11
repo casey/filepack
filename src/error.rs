@@ -218,11 +218,11 @@ pub enum Error {
     path: DisplayPath,
     source: png::DecodingError,
   },
-  #[snafu(display("image `{path}` is {actual} but metadata declares {declared}"))]
+  #[snafu(display("image `{path}` is {actual} but metadata dimensions are {expected}"))]
   ImageDimensionsMismatch {
     actual: Dimensions,
     backtrace: Option<Backtrace>,
-    declared: Dimensions,
+    expected: Dimensions,
     path: DisplayPath,
   },
   #[snafu(display("internal error, this may indicate a bug in filepack: {message}"))]
