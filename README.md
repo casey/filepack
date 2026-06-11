@@ -16,37 +16,55 @@
 
 <br>
 
-`filepack` is a command-line file hashing, signing, and verification utility
-written in Rust.
+Filepack is a content-addressed package format.
 
-It is an alternative to `.sfv` files, tools like `shasum`, and PGP signing and
-verification. Files are hashed using
-[BLAKE3](https://github.com/BLAKE3-team/BLAKE3/), a fast, cryptographic hash
-function, and signed with Ed25519.
+A package is a directory of files and a manifest containing their BLAKE3
+hashes. File and directory hashes form a Merkle tree whose root hash, the
+package fingerprint, uniquely identifies the package. Packages can be signed
+with Ed25519 and verified against a manifest, fingerprint, or signature.
 
-A manifest named `manifest.filepack` containing the hashes of files in a
-directory can be created with:
+Packages may optionally contain machine-readable metadata describing their
+content, allowing programmatic search, preview, playback, and conversion.
 
-```shell
-filepack create path/to/directory
+`filepack` is a command-line tool for creating, signing, and verifying
+packages, and includes an HTTP server for package upload, download, and
+display.
+
+Filepack is currently experimental. The `filepack` interface and package format
+may change at any time.
+
+Quickstart
+----------
+
+Optionally, add metadata describing your package:
+
+```sh
+echo "title: Packaging Guide" > metadata.yaml
 ```
 
-Which will write the manifest to `path/to/directory/manifest.filepack`.
-
-Files can later be verified with:
+Create `manifest.filepack`:
 
 ```shell
-filepack verify path/to/directory
+filepack create
 ```
 
-To protect against accidental or malicious corruption, as long as the manifest
-has not been tampered with.
+Verify current directory against hashes in `manifest.filepack`:
 
-If you run `filepack` a lot, you might want to `alias fp=filepack`.
+```shell
+filepack verify
+```
 
-`filepack` is currently unstable: the interface and file format may change at
-any time. Additionally, the code has not been extensively reviewed and should
-be considered experimental.
+Print package fingerprint:
+
+```shell
+filepack fingerprint
+```
+
+Print package metadata:
+
+```shell
+filepack metadata
+```
 
 Installation
 ------------
@@ -108,7 +126,7 @@ Usage
 
 Filepack supports a number of subcommands, including `filepack create` to
 create a manifest, `filepack verify` to verify a manifest, and `filepack serve`
-to start an HTTP file server.
+to start an HTTP package server.
 
 See `filepack help` for supported subcommands and `filepack help SUBCOMMAND`
 for information about a particular subcommand.
@@ -291,7 +309,7 @@ metadata, but `metadata.filepack` is the authoritative source of metadata. For
 consumption by scripts and tools, `filepack metadata` prints the contents of
 `metadata.filepack` as JSON.
 
-Filepack metadata is intended to a broadly useful machine and human readable
+Filepack metadata is intended to be a broadly useful machine and human readable
 description of the contents of a package, covering personal, distribution, and
 archival use-cases.
 
@@ -935,7 +953,7 @@ signature.
 
 Package fingerprints are the BLAKE3 hash of a canonical CBOR serialization of
 the contents of the manifest. Fingerprints are constructed to be unique,
-meaning meaning that it is impossible for two different packages with different
+meaning that it is impossible for two different packages with different
 contents to have the same fingerprint.
 
 Currently, no fingerprint test vectors exist, and the best documentation is the
