@@ -20,6 +20,16 @@ error: invalid path `\\`
 }
 
 #[test]
+fn create_rejects_invalid_artwork() {
+  Test::new()
+    .write("cover.png", "foo")
+    .write("metadata.yaml", "artwork: cover.png")
+    .arg("create")
+    .stderr_regex("error: failed to decode PNG image `.*cover\\.png`\n.*")
+    .failure();
+}
+
+#[test]
 fn empty_directories_are_included() {
   Test::new()
     .create_dir("foo")

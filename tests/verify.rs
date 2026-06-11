@@ -204,8 +204,8 @@ fn manifest_paths_are_relative_to_root() {
 }
 
 #[test]
-fn metadata_allows_unknown_keys() {
-  let metadata = "title: foo\nbar: 100";
+fn metadata_yaml_is_not_checked() {
+  let metadata = "title: /\nbar: 100\n";
 
   let hash = blake3::hash(metadata.as_bytes()).to_string();
 
@@ -217,7 +217,7 @@ fn metadata_allows_unknown_keys() {
         package: {
           "metadata.yaml": {
             hash: hash,
-            size: 19,
+            size: 18,
           }
         },
         signatures: [],
@@ -225,34 +225,8 @@ fn metadata_allows_unknown_keys() {
     )
     .write("metadata.yaml", metadata)
     .arg("verify")
-    .stderr("successfully verified 1 file totaling 19 bytes\n")
+    .stderr("successfully verified 1 file totaling 18 bytes\n")
     .success();
-}
-
-#[test]
-fn metadata_yaml_may_not_be_invalid() {
-  let metadata = "title: /\n";
-
-  let hash = blake3::hash(metadata.as_bytes()).to_string();
-
-  Test::new()
-    .write_manifest(
-      "manifest.filepack",
-      json! {
-        embedded: {},
-        package: {
-          "metadata.yaml": {
-            hash: hash,
-            size: 9,
-          }
-        },
-        signatures: [],
-      },
-    )
-    .write("metadata.yaml", metadata)
-    .arg("verify")
-    .stderr_regex("error: failed to deserialize metadata at `.*metadata.yaml`\n.*")
-    .failure();
 }
 
 #[test]
@@ -775,6 +749,51 @@ fingerprint mismatch: `.*manifest\\.filepack`
 error: fingerprint mismatch\n",
     )
     .failure();
+}
+
+#[test]
+fn verify_ignores_image_content() {
+  let mut artwork = Cursor::new(Vec::new());
+
+  DynamicImage::new_rgb8(1, 1)
+    .write_to(&mut artwork, ImageFormat::Png)
+    .unwrap();
+
+  let test = Test::new()
+    .write("cover.png", artwork.into_inner())
+    .write("metadata.yaml", "artwork: cover.png")
+    .arg("create")
+    .success();
+
+  let cbor = fs::read(test.path().join("metadata.filepack")).unwrap();
+
+  let metadata_hash = blake3::hash(&cbor).to_string();
+
+  let artwork_hash = blake3::hash(b"foo").to_string();
+
+  test
+    .remove_file("metadata.yaml")
+    .write("cover.png", "foo")
+    .write_manifest(
+      "manifest.filepack",
+      json! {
+        embedded: {},
+        package: {
+          "cover.png": {
+            hash: artwork_hash,
+            size: 3,
+          },
+          "metadata.filepack": {
+            hash: metadata_hash,
+            size: 12,
+          }
+        },
+        signatures: [],
+      },
+    )
+    .arg("verify")
+    .stderr("successfully verified 2 files totaling 15 bytes\n")
+    .success();
 }
 
 #[test]

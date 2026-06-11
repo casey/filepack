@@ -140,9 +140,11 @@ impl Create {
     if let Some(cbor) = &metadata_cbor {
       let path = root.join(Metadata::CBOR_FILENAME);
 
-      Metadata::decode_from_slice(cbor)
-        .context(error::DecodeMetadataCbor { path })?
-        .check(&root, &paths.keys().cloned().collect())?;
+      let metadata =
+        Metadata::decode_from_slice(cbor).context(error::DecodeMetadataCbor { path })?;
+
+      metadata.check(&paths.keys().cloned().collect())?;
+      metadata.check_images(&root)?;
     }
 
     ensure! {

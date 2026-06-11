@@ -30,21 +30,11 @@ impl Metadata {
   pub(crate) const CBOR_FILENAME: &'static str = "metadata.filepack";
   pub(crate) const YAML_FILENAME: &'static str = "metadata.yaml";
 
-  pub(crate) fn check(&self, root: &Utf8Path, paths: &HashSet<RelativePath>) -> Result {
+  pub(crate) fn check(&self, paths: &HashSet<RelativePath>) -> Result {
     for filename in self.files() {
       ensure! {
         paths.contains(&filename),
         error::MissingMetadataFile { filename },
-      }
-    }
-
-    if let Some(artwork) = &self.artwork {
-      Self::check_artwork(root, artwork)?;
-    }
-
-    if let Some(Media::Image { images }) = &self.media {
-      for image in images {
-        Self::decode_image(root, image)?;
       }
     }
 
@@ -59,6 +49,20 @@ impl Metadata {
       error::ArtworkDimensions {
         dimensions,
         path: root.join(artwork.as_path()),
+      }
+    }
+
+    Ok(())
+  }
+
+  pub(crate) fn check_images(&self, root: &Utf8Path) -> Result {
+    if let Some(artwork) = &self.artwork {
+      Self::check_artwork(root, artwork)?;
+    }
+
+    if let Some(Media::Image { images }) = &self.media {
+      for image in images {
+        Self::decode_image(root, image)?;
       }
     }
 
@@ -104,10 +108,6 @@ impl Metadata {
       height: info.height,
       width: info.width,
     })
-  }
-
-  pub(crate) fn deserialize(path: &Utf8Path, yaml: &str) -> Result<Self> {
-    serde_yaml::from_str(yaml).context(error::DeserializeMetadata { path })
   }
 
   pub(crate) fn deserialize_strict(path: &Utf8Path, yaml: &str) -> Result<Self> {
@@ -163,12 +163,12 @@ mod tests {
 
   #[test]
   fn deserialize_allows_missing_optional_fields() {
-    Metadata::deserialize(Metadata::YAML_FILENAME.as_ref(), "title: Foo").unwrap();
+    Metadata::deserialize_strict(Metadata::YAML_FILENAME.as_ref(), "title: Foo").unwrap();
   }
 
   #[test]
   fn deserialize_media_audio() {
-    let metadata = Metadata::deserialize(
+    let metadata = Metadata::deserialize_strict(
       Metadata::YAML_FILENAME.as_ref(),
       &unindent(
         "
@@ -194,8 +194,8 @@ mod tests {
   fn deserialize_rejects_invalid_values() {
     #[track_caller]
     fn case(yaml: &str, expected: &str) {
-      let error =
-        Metadata::deserialize(Metadata::YAML_FILENAME.as_ref(), &unindent(yaml)).unwrap_err();
+      let error = Metadata::deserialize_strict(Metadata::YAML_FILENAME.as_ref(), &unindent(yaml))
+        .unwrap_err();
 
       let chain = error
         .iter_chain()
@@ -283,11 +283,6 @@ mod tests {
       ",
       r"component must end in `\.flac`",
     );
-  }
-
-  #[test]
-  fn deserializer_allows_unknown_fields() {
-    Metadata::deserialize(Metadata::YAML_FILENAME.as_ref(), UNKNOWN_FIELD).unwrap();
   }
 
   #[test]
@@ -382,10 +377,8 @@ mod tests {
         ..default()
       };
 
-      let paths = HashSet::from([filename.parse::<RelativePath>().unwrap()]);
-
       assert_matches_regex!(
-        metadata.check(&root, &paths).unwrap_err().to_string(),
+        metadata.check_images(&root).unwrap_err().to_string(),
         expected
       );
     }
@@ -437,10 +430,8 @@ mod tests {
         ..default()
       };
 
-      let paths = HashSet::from([filename.parse::<RelativePath>().unwrap()]);
-
       assert_matches_regex!(
-        metadata.check(&root, &paths).unwrap_err().to_string(),
+        metadata.check_images(&root).unwrap_err().to_string(),
         expected
       );
     }
@@ -521,10 +512,7 @@ mod tests {
     #[track_caller]
     fn case(metadata: Metadata, filename: &str) {
       assert_eq!(
-        metadata
-          .check(Utf8Path::new(""), &HashSet::new())
-          .unwrap_err()
-          .to_string(),
+        metadata.check(&HashSet::new()).unwrap_err().to_string(),
         format!("file referenced in metadata missing: `{filename}`"),
       );
     }
@@ -596,7 +584,8 @@ mod tests {
         .map(|path| path.parse::<RelativePath>().unwrap())
         .collect();
 
-      metadata.check(&root, &paths).unwrap();
+      metadata.check(&paths).unwrap();
+      metadata.check_images(&root).unwrap();
     }
 
     case("cover.jpg", image(10, 10, ImageFormat::Jpeg));
@@ -622,6 +611,7 @@ mod tests {
       .map(|path| path.parse::<RelativePath>().unwrap())
       .collect();
 
-    metadata.check(&root, &paths).unwrap();
+    metadata.check(&paths).unwrap();
+    metadata.check_images(&root).unwrap();
   }
 }
