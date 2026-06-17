@@ -666,7 +666,7 @@ fn malformed_fingerprint_returns_error() {
   TestServer::new()
     .get("/package1invalid")
     .status(StatusCode::BAD_REQUEST)
-    .assert_body("failed to parse package fingerprint")
+    .assert_body("failed to decode bech32 package fingerprint")
     .send();
 }
 
