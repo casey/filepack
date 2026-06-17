@@ -35,3 +35,53 @@ fn http2_is_supported() {
 
   server.terminate().success();
 }
+
+#[test]
+fn redirect_http_to_https() {
+  #[track_caller]
+  fn case(client: &reqwest::blocking::Client, address: &str, path: &str, location: &str) {
+    let response = client.get(format!("{address}{path}")).send().unwrap();
+
+    assert_eq!(response.status(), StatusCode::SEE_OTHER);
+    assert_eq!(response.headers()[reqwest::header::LOCATION], location);
+    assert_eq!(
+      response.headers()[reqwest::header::X_CONTENT_TYPE_OPTIONS],
+      "nosniff",
+    );
+  }
+
+  let server = Test::new()
+    .ready_address()
+    .stderr_regex(".*")
+    .args([
+      "serve",
+      "--address",
+      "127.0.0.1",
+      "--http-port",
+      "0",
+      "--https-port",
+      "0",
+      "--redirect-http-to-https",
+      "--domain",
+      "foo",
+    ])
+    .spawn();
+
+  let client = reqwest::blocking::Client::builder()
+    .redirect(reqwest::redirect::Policy::none())
+    .build()
+    .unwrap();
+
+  let address = server.address();
+
+  case(&client, &address, "/", "https://foo:0/");
+  case(&client, &address, "/bar", "https://foo:0/bar");
+  case(
+    &client,
+    &address,
+    "/bar?baz=qux",
+    "https://foo:0/bar?baz=qux",
+  );
+
+  server.terminate().success();
+}

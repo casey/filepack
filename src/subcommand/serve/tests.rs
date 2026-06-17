@@ -1241,40 +1241,6 @@ fn ports() {
 }
 
 #[test]
-fn redirect_destination() {
-  let domains = vec!["foo".to_string()];
-
-  assert_eq!(Serve::redirect_destination(&domains, 443), "https://foo");
-  assert_eq!(
-    Serve::redirect_destination(&domains, 8443),
-    "https://foo:8443",
-  );
-}
-
-#[test]
-fn redirect_http_to_https() {
-  fn case(path: &str, location: &str) {
-    let response = RUNTIME
-      .block_on(
-        Serve::redirect_router("https://foo".into())
-          .oneshot(Request::builder().uri(path).body(Body::empty()).unwrap()),
-      )
-      .unwrap();
-
-    assert_eq!(response.status(), StatusCode::SEE_OTHER);
-    assert_eq!(response.headers()[header::LOCATION], location);
-    assert_eq!(
-      response.headers()[header::X_CONTENT_TYPE_OPTIONS],
-      "nosniff"
-    );
-  }
-
-  case("/", "https://foo/");
-  case("/bar", "https://foo/bar");
-  case("/bar?baz=qux", "https://foo/bar?baz=qux");
-}
-
-#[test]
 fn restricted_upload_accepts_admin_token() {
   let admin = PrivateKey::generate();
   let hash = Hash::bytes(b"bar");
