@@ -1342,6 +1342,21 @@ fn static_files() {
 }
 
 #[test]
+fn strict_transport_security() {
+  let response = RUNTIME
+    .block_on(
+      Serve::strict_transport_security(Router::new().fallback(|| async { "" }))
+        .oneshot(Request::builder().uri("/").body(Body::empty()).unwrap()),
+    )
+    .unwrap();
+
+  assert_eq!(
+    response.headers()[header::STRICT_TRANSPORT_SECURITY],
+    "max-age=31536000",
+  );
+}
+
+#[test]
 fn upload_creates_file() {
   let server = TestServer::new();
 

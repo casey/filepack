@@ -502,7 +502,7 @@ impl Serve {
           .context(error::Serve)?
           .handle(handle)
           .acceptor(self.acceptor(acme_cache)?)
-          .serve(router.into_make_service())
+          .serve(Self::strict_transport_security(router).into_make_service())
           .await
           .context(error::Serve)?;
       }
@@ -521,6 +521,13 @@ impl Serve {
 
   async fn static_asset(path: Path<String>) -> ServerResult<StaticAsset> {
     StaticAsset::get(&path)
+  }
+
+  fn strict_transport_security(router: Router) -> Router {
+    router.layer(SetResponseHeaderLayer::overriding(
+      header::STRICT_TRANSPORT_SECURITY,
+      HeaderValue::from_static("max-age=31536000"),
+    ))
   }
 
   async fn upload_file(
