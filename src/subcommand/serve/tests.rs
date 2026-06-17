@@ -526,12 +526,10 @@ fn files_non_empty() {
 
 #[test]
 fn fingerprint_redirects_to_package() {
-  let fingerprint = Fingerprint(Hash::bytes(b"foo"));
-
   TestServer::new()
-    .get(format!("/{fingerprint}"))
+    .get(format!("/{}", test::FINGERPRINT))
     .status(StatusCode::TEMPORARY_REDIRECT)
-    .assert_header(header::LOCATION, format!("/package/{fingerprint}"))
+    .assert_header(header::LOCATION, format!("/package/{}", test::FINGERPRINT))
     .send();
 }
 
