@@ -198,7 +198,7 @@ impl TestServer {
 
     let server = Arc::new(Server::with_data_dir(&data_dir).unwrap());
 
-    let router = Serve::router(server, auth_config);
+    let router = Serve::router(server, auth_config, None);
 
     Self {
       data_dir,
