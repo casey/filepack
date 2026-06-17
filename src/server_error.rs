@@ -42,6 +42,8 @@ pub(crate) enum ServerError {
     path: Utf8PathBuf,
     source: io::Error,
   },
+  #[snafu(display("{source}"))]
+  FingerprintParse { source: Bech32Error },
   #[snafu(display("response invalid"))]
   InvalidResponse { source: http::Error },
   #[snafu(display(
@@ -114,6 +116,7 @@ impl ServerError {
       | Self::DirectoryUnverified { .. }
       | Self::FileIo { .. }
       | Self::FileNotFound { .. }
+      | Self::FingerprintParse { .. }
       | Self::InvalidResponse { .. }
       | Self::MediaItemDoesNotExist { .. }
       | Self::MediaType { .. }
@@ -158,6 +161,7 @@ impl ServerError {
       | Self::DirectoryDecode { .. }
       | Self::DirectoryFileMissing { .. }
       | Self::DirectoryUnverified { .. }
+      | Self::FingerprintParse { .. }
       | Self::PackageMetadataDecode { .. }
       | Self::PackageMetadataFileMissing { .. }
       | Self::PackageRootUnverified { .. }

@@ -525,6 +525,15 @@ fn files_non_empty() {
 }
 
 #[test]
+fn fingerprint_redirects_to_package() {
+  TestServer::new()
+    .get(format!("/{}", test::FINGERPRINT))
+    .status(StatusCode::TEMPORARY_REDIRECT)
+    .assert_header(header::LOCATION, format!("/package/{}", test::FINGERPRINT))
+    .send();
+}
+
+#[test]
 fn get_directory_not_found() {
   let server = TestServer::new();
 
@@ -649,6 +658,15 @@ fn install_script() {
   TestServer::new()
     .get("/install.sh")
     .assert_static("install.sh")
+    .send();
+}
+
+#[test]
+fn malformed_fingerprint_returns_error() {
+  TestServer::new()
+    .get("/package1invalid")
+    .status(StatusCode::BAD_REQUEST)
+    .assert_body("failed to decode bech32 package fingerprint")
     .send();
 }
 
@@ -1061,6 +1079,15 @@ fn missing_returns_missing_hashes() {
     .send();
 }
 
+#[test]
+fn non_fingerprint_bech32_falls_through() {
+  TestServer::new()
+    .get(format!("/{}", test::PUBLIC_KEY))
+    .assert_static("404.html")
+    .status(StatusCode::NOT_FOUND)
+    .send();
+}
+
 #[track_caller]
 fn package(server: &TestServer, metadata: &Metadata, files: &[(&str, &[u8])]) -> Fingerprint {
   let metadata_cbor = metadata.encode_to_vec();
@@ -1359,6 +1386,15 @@ fn upload_with_wrong_hash_fails() {
     .send();
 
   server.assert_incoming_empty();
+}
+
+#[test]
+fn uppercase_fingerprint_redirects_to_lowercase_package() {
+  TestServer::new()
+    .get(format!("/{}", test::FINGERPRINT.to_uppercase()))
+    .status(StatusCode::TEMPORARY_REDIRECT)
+    .assert_header(header::LOCATION, format!("/package/{}", test::FINGERPRINT))
+    .send();
 }
 
 #[test]
