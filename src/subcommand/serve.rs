@@ -164,7 +164,7 @@ impl Serve {
         .parse::<Fingerprint>()
         .context(server_error::FingerprintParse)?;
 
-      return Ok(Redirect::permanent(&format!("/package/{fingerprint}")).into_response());
+      return Ok(Redirect::temporary(&format!("/package/{fingerprint}")).into_response());
     }
 
     Ok(

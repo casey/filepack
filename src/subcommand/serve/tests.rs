@@ -530,7 +530,7 @@ fn fingerprint_redirects_to_package() {
 
   TestServer::new()
     .get(format!("/{fingerprint}"))
-    .status(StatusCode::PERMANENT_REDIRECT)
+    .status(StatusCode::TEMPORARY_REDIRECT)
     .assert_header(header::LOCATION, format!("/package/{fingerprint}"))
     .send();
 }
@@ -668,7 +668,7 @@ fn malformed_fingerprint_returns_error() {
   TestServer::new()
     .get("/package1invalid")
     .status(StatusCode::BAD_REQUEST)
-    .assert_body("failed to decode bech32 package fingerprint")
+    .assert_body("failed to parse package fingerprint")
     .send();
 }
 
@@ -1394,7 +1394,7 @@ fn upload_with_wrong_hash_fails() {
 fn uppercase_fingerprint_redirects_to_lowercase_package() {
   TestServer::new()
     .get(format!("/{}", test::FINGERPRINT.to_uppercase()))
-    .status(StatusCode::PERMANENT_REDIRECT)
+    .status(StatusCode::TEMPORARY_REDIRECT)
     .assert_header(header::LOCATION, format!("/package/{}", test::FINGERPRINT))
     .send();
 }
