@@ -42,7 +42,7 @@ pub(crate) enum ServerError {
     path: Utf8PathBuf,
     source: io::Error,
   },
-  #[snafu(display("failed to parse package fingerprint"))]
+  #[snafu(display("{source}"))]
   FingerprintParse { source: Bech32Error },
   #[snafu(display("response invalid"))]
   InvalidResponse { source: http::Error },
