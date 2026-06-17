@@ -155,8 +155,23 @@ impl Serve {
     }
   }
 
-  async fn fallback() -> ServerResult<StaticAsset> {
-    Ok(StaticAsset::get("404.html")?.status(StatusCode::NOT_FOUND))
+  async fn fallback(uri: Uri) -> ServerResult<Response> {
+    if let Some(component) = uri.path().strip_prefix('/')
+      && !component.contains('/')
+      && component.to_ascii_lowercase().starts_with("package1")
+    {
+      let fingerprint = component
+        .parse::<Fingerprint>()
+        .context(server_error::FingerprintParse)?;
+
+      return Ok(Redirect::permanent(&format!("/package/{fingerprint}")).into_response());
+    }
+
+    Ok(
+      StaticAsset::get("404.html")?
+        .status(StatusCode::NOT_FOUND)
+        .into_response(),
+    )
   }
 
   async fn favicon() -> ServerResult<StaticAsset> {
