@@ -49,10 +49,6 @@ impl RelativePath {
           if Self::WINDOWS_RESERVED_CHARACTERS.contains(&character) {
             return Some(LintError::WindowsReservedCharacter { character });
           }
-
-          if let 0..32 = u32::from(character) {
-            return Some(LintError::WindowsReservedCharacter { character });
-          }
         }
       }
 
@@ -280,7 +276,7 @@ mod tests {
       "\0",
       PathError::Component {
         component: "\0".to_string(),
-        source: ComponentError::Nul,
+        source: ComponentError::Control { character: '\0' },
       },
     );
   }
@@ -295,14 +291,6 @@ mod tests {
       assert_eq!(path.lint(&[lint].into()).unwrap(), expected,);
 
       assert_eq!(path.lint(&[].into()), None);
-    }
-
-    for i in 1..32 {
-      let character = char::from_u32(i).unwrap();
-      case(
-        &character.to_string(),
-        LintError::WindowsReservedCharacter { character },
-      );
     }
 
     case("*", LintError::WindowsReservedCharacter { character: '*' });
@@ -379,7 +367,7 @@ mod tests {
       RelativePath::try_from(Utf8Path::new("\0")).unwrap_err(),
       PathError::Component {
         component: "\0".into(),
-        source: ComponentError::Nul,
+        source: ComponentError::Control { character: '\0' },
       },
     );
     assert_eq!(
