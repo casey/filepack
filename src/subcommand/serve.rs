@@ -295,16 +295,6 @@ impl Serve {
     Redirect::to(&destination)
   }
 
-  fn redirect_router(destination: String) -> Router {
-    Router::new()
-      .fallback(Self::redirect_http_to_https)
-      .layer(Extension(destination))
-      .layer(SetResponseHeaderLayer::overriding(
-        header::X_CONTENT_TYPE_OPTIONS,
-        HeaderValue::from_static("nosniff"),
-      ))
-  }
-
   pub(crate) fn router(server: Arc<Server>, auth_config: Option<Arc<AuthConfig>>) -> Router {
     let router = Router::new()
       .route("/", get(Self::home))
@@ -498,19 +488,32 @@ impl Serve {
           .clone()
           .unwrap_or_else(|| data_dir.join("acme-cache"));
 
+        let router = router.layer(SetResponseHeaderLayer::overriding(
+          header::STRICT_TRANSPORT_SECURITY,
+          HeaderValue::from_static("max-age=31536000"),
+        ));
+
         axum_server::from_tcp(listener)
           .context(error::Serve)?
           .handle(handle)
           .acceptor(self.acceptor(acme_cache)?)
-          .serve(Self::strict_transport_security(router).into_make_service())
+          .serve(router.into_make_service())
           .await
           .context(error::Serve)?;
       }
       SpawnConfig::Redirect(destination) => {
+        let router = Router::new()
+          .fallback(Self::redirect_http_to_https)
+          .layer(Extension(destination))
+          .layer(SetResponseHeaderLayer::overriding(
+            header::X_CONTENT_TYPE_OPTIONS,
+            HeaderValue::from_static("nosniff"),
+          ));
+
         axum_server::from_tcp(listener)
           .context(error::Serve)?
           .handle(handle)
-          .serve(Self::redirect_router(destination).into_make_service())
+          .serve(router.into_make_service())
           .await
           .context(error::Serve)?;
       }
@@ -521,13 +524,6 @@ impl Serve {
 
   async fn static_asset(path: Path<String>) -> ServerResult<StaticAsset> {
     StaticAsset::get(&path)
-  }
-
-  fn strict_transport_security(router: Router) -> Router {
-    router.layer(SetResponseHeaderLayer::overriding(
-      header::STRICT_TRANSPORT_SECURITY,
-      HeaderValue::from_static("max-age=31536000"),
-    ))
   }
 
   async fn upload_file(
