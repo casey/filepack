@@ -50,8 +50,8 @@ impl Component {
         return Err(ComponentError::Separator { character });
       }
 
-      if character == '\0' {
-        return Err(ComponentError::Nul);
+      if character.is_control() {
+        return Err(ComponentError::Control { character });
       }
     }
 
@@ -111,6 +111,22 @@ mod tests {
   use super::*;
 
   #[test]
+  fn control() {
+    #[track_caller]
+    fn case(character: char) {
+      assert_eq!(
+        Component::new(&format!("foo{character}bar")).unwrap_err(),
+        ComponentError::Control { character },
+      );
+    }
+
+    case('\u{00}');
+    case('\u{1f}');
+    case('\u{7f}');
+    case('\u{9f}');
+  }
+
+  #[test]
   fn current() {
     assert_eq!(
       Component::new(".").unwrap_err(),
@@ -155,11 +171,6 @@ mod tests {
       Component::new(&"a".repeat(256)).unwrap_err(),
       ComponentError::Length,
     );
-  }
-
-  #[test]
-  fn nul() {
-    assert_eq!(Component::new("foo\0bar").unwrap_err(), ComponentError::Nul);
   }
 
   #[test]
