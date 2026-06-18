@@ -99,7 +99,7 @@ fn redirect_http_to_https() {
 
   let server = Test::new()
     .ready_address()
-    .stderr_regex("ACME event: AccountCacheStore\n")
+    .stderr("ACME event: AccountCacheStore\n")
     .args([
       "serve",
       "--address",
