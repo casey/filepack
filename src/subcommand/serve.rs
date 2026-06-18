@@ -288,7 +288,7 @@ impl Serve {
     )
   }
 
-  async fn redirect(
+  async fn redirect_layer(
     Extension(redirect_config): Extension<Arc<RedirectConfig>>,
     host: Option<TypedHeader<headers::Host>>,
     request: Request,
@@ -414,7 +414,7 @@ impl Serve {
 
     if let Some(redirect_config) = redirect_config {
       router
-        .layer(middleware::from_fn(Self::redirect))
+        .layer(middleware::from_fn(Self::redirect_layer))
         .layer(Extension(redirect_config))
     } else {
       router
