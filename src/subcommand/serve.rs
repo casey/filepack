@@ -67,7 +67,12 @@ pub(crate) struct Serve {
     value_name = "KEY"
   )]
   admin_key: Option<KeyIdentifier>,
-  #[arg(help = "Use <DOMAIN> as canonical domain", long, value_name = "DOMAIN")]
+  #[arg(
+    help = "Use <DOMAIN> as canonical domain: request ACME TLS certificates for it, accept \
+            authentication tokens scoped to it, and redirect to it",
+    long,
+    value_name = "DOMAIN"
+  )]
   domain: Option<String>,
   #[arg(help = "Serve HTTP traffic", long)]
   http: bool,
@@ -95,7 +100,8 @@ pub(crate) struct Serve {
   #[arg(help = "Redirect HTTP to HTTPS", long, requires = "domain")]
   redirect_http_to_https: bool,
   #[arg(
-    help = "Redirect requests for `Host: <DOMAIN>` to the canonical domain",
+    help = "Redirect requests for `Host: <DOMAIN>` to the canonical domain, and request ACME TLS \
+            certificates for it",
     long = "redirect",
     requires = "domain",
     value_name = "DOMAIN"
