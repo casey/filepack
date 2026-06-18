@@ -423,8 +423,7 @@ fn directory(entries: &[(&str, EntryType, Hash, u64)]) -> Directory {
 fn domain_required_for_canonical_domain_options() {
   #[track_caller]
   fn case(args: &[&str]) {
-    let err =
-      Serve::try_parse_from(["filepack"].into_iter().chain(args.iter().cloned())).unwrap_err();
+    let err = Serve::try_parse_from(["filepack"].iter().chain(args)).unwrap_err();
     assert_eq!(err.kind(), clap::error::ErrorKind::MissingRequiredArgument);
   }
 
