@@ -67,11 +67,7 @@ pub(crate) struct Serve {
     value_name = "KEY"
   )]
   admin_key: Option<KeyIdentifier>,
-  #[arg(
-    help = "Use <DOMAIN> as the canonical domain",
-    long,
-    value_name = "DOMAIN"
-  )]
+  #[arg(help = "Use <DOMAIN> as canonical domain", long, value_name = "DOMAIN")]
   domain: Option<String>,
   #[arg(help = "Serve HTTP traffic", long)]
   http: bool,
