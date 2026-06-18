@@ -309,6 +309,35 @@ impl Serve {
     }
   }
 
+  fn redirect_config(&self) -> Result<Option<Arc<RedirectConfig>>> {
+    let domains = self.domains()?;
+
+    for redirect in &self.redirects {
+      ensure!(
+        *redirect != domains[0],
+        error::RedirectDomainCanonical {
+          domain: redirect.clone()
+        },
+      );
+
+      ensure!(
+        domains.contains(redirect),
+        error::RedirectDomainNotServed {
+          domain: redirect.clone()
+        },
+      );
+    }
+
+    if self.redirects.is_empty() {
+      return Ok(None);
+    }
+
+    Ok(Some(Arc::new(RedirectConfig {
+      destination: self.redirect_url()?,
+      domains: self.redirects.iter().cloned().collect(),
+    })))
+  }
+
   async fn redirect_http_to_https(
     Extension(mut destination): Extension<String>,
     uri: Uri,
@@ -337,35 +366,6 @@ impl Serve {
         format!("http://{domain}:{port}")
       }
     })
-  }
-
-  fn redirect_config(&self) -> Result<Option<Arc<RedirectConfig>>> {
-    let domains = self.domains()?;
-
-    for redirect in &self.redirects {
-      ensure!(
-        *redirect != domains[0],
-        error::RedirectDomainCanonical {
-          domain: redirect.clone()
-        },
-      );
-
-      ensure!(
-        domains.contains(redirect),
-        error::RedirectDomainNotServed {
-          domain: redirect.clone()
-        },
-      );
-    }
-
-    if self.redirects.is_empty() {
-      return Ok(None);
-    }
-
-    Ok(Some(Arc::new(RedirectConfig {
-      destination: self.redirect_url()?,
-      domains: self.redirects.iter().cloned().collect(),
-    })))
   }
 
   pub(crate) fn router(

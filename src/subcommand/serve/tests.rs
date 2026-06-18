@@ -1241,6 +1241,30 @@ fn ports() {
 }
 
 #[test]
+fn redirect_url_omits_default_ports() {
+  assert_eq!(
+    Serve {
+      domains: vec!["foo".into()],
+      ..Serve::default()
+    }
+    .redirect_url()
+    .unwrap(),
+    "http://foo",
+  );
+
+  assert_eq!(
+    Serve {
+      domains: vec!["foo".into()],
+      https: true,
+      ..Serve::default()
+    }
+    .redirect_url()
+    .unwrap(),
+    "https://foo",
+  );
+}
+
+#[test]
 fn restricted_upload_accepts_admin_token() {
   let admin = PrivateKey::generate();
   let hash = Hash::bytes(b"bar");
