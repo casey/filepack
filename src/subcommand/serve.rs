@@ -100,7 +100,7 @@ pub(crate) struct Serve {
   #[arg(help = "Redirect HTTP to HTTPS", long, requires = "domain")]
   redirect_http_to_https: bool,
   #[arg(
-    help = "Redirect requests for `Host: <DOMAIN>` to the canonical domain, and request ACME TLS \
+    help = "Redirect requests for <DOMAIN> to the canonical domain, and request ACME TLS \
             certificates for it",
     long = "redirect",
     requires = "domain",
