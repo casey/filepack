@@ -31,7 +31,7 @@ impl<S: Send + Sync> FromRequestParts<S> for Authenticated {
         }
       })?;
 
-    Token::verify(admin, &auth.audiences, bearer.token())?;
+    Token::verify(admin, auth.audience.as_deref(), bearer.token())?;
 
     Ok(Self)
   }

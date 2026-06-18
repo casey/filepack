@@ -13,7 +13,6 @@ use {
     AcmeConfig, acme::LETS_ENCRYPT_PRODUCTION_DIRECTORY, axum::AxumAcceptor, caches::DirCache,
   },
   std::net::TcpStream,
-  sysinfo::System,
   templates::{DirectoryHtml, FilesHtml, PackageHtml, PackagesHtml, PageHtml},
   tokio::{net::TcpListener, runtime, task::block_in_place},
   tower_http::set_header::SetResponseHeaderLayer,
@@ -27,7 +26,7 @@ type PageResult<T> = ServerResult<PageHtml<T>>;
 
 pub(crate) struct AuthConfig {
   pub(crate) admin: Option<PublicKey>,
-  pub(crate) audiences: Vec<String>,
+  pub(crate) audience: Option<String>,
 }
 
 pub(crate) struct RedirectConfig {
@@ -69,13 +68,12 @@ pub(crate) struct Serve {
   )]
   admin_key: Option<KeyIdentifier>,
   #[arg(
-    help = "Request ACME TLS certificate and accept authorization tokens for <DOMAIN>, as well as \
-            redirect HTTP to HTTPS at <DOMAIN> if enabled, this server must be reachable at \
-            <DOMAIN>:443 to respond to Let's Encrypt ACME challenges",
-    long = "domain",
+    help = "Use <DOMAIN> as canonical domain: request ACME TLS certificates for it, accept \
+            authentication tokens scoped to it, and redirect to it",
+    long,
     value_name = "DOMAIN"
   )]
-  domains: Vec<String>,
+  domain: Option<String>,
   #[arg(help = "Serve HTTP traffic", long)]
   http: bool,
   #[arg(
@@ -84,11 +82,12 @@ pub(crate) struct Serve {
     value_name = "PORT"
   )]
   http_port: Option<u16>,
-  #[arg(help = "Serve HTTPS traffic", long)]
+  #[arg(help = "Serve HTTPS traffic", long, requires = "domain")]
   https: bool,
   #[arg(
     help = "Listen on <PORT> for incoming HTTPS requests [default: 443]",
     long,
+    requires = "domain",
     value_name = "PORT"
   )]
   https_port: Option<u16>,
@@ -98,11 +97,13 @@ pub(crate) struct Serve {
     value_name = "ADDRESS"
   )]
   ready_address: Option<SocketAddr>,
-  #[arg(help = "Redirect HTTP to HTTPS", long)]
+  #[arg(help = "Redirect HTTP to HTTPS", long, requires = "domain")]
   redirect_http_to_https: bool,
   #[arg(
-    help = "Redirect requests for `Host: <DOMAIN>` to the canonical domain.",
+    help = "Redirect requests for <DOMAIN> to the canonical domain, and request ACME TLS \
+            certificates for it",
     long = "redirect",
+    requires = "domain",
     value_name = "DOMAIN"
   )]
   redirects: Vec<String>,
@@ -114,7 +115,7 @@ impl Serve {
   fn acceptor(&self, acme_cache: Utf8PathBuf) -> Result<AxumAcceptor> {
     install_default_crypto_provider()?;
 
-    let config = AcmeConfig::new(self.domains()?)
+    let config = AcmeConfig::new(self.domains())
       .contact(&self.acme_contact)
       .cache_option(Some(DirCache::new(acme_cache)))
       .directory(LETS_ENCRYPT_PRODUCTION_DIRECTORY);
@@ -149,6 +150,10 @@ impl Serve {
     Ok(block_in_place(|| server.artwork(*fingerprint))?.range(range))
   }
 
+  fn canonical(&self) -> &str {
+    self.domain.as_deref().unwrap()
+  }
+
   async fn directory(server: ServerExtension, Path(hash): Path<Hash>) -> PageResult<DirectoryHtml> {
     Ok(
       DirectoryHtml {
@@ -159,12 +164,10 @@ impl Serve {
     )
   }
 
-  fn domains(&self) -> Result<Vec<String>> {
-    if self.domains.is_empty() {
-      Ok(vec![System::host_name().context(error::AcmeHostname)?])
-    } else {
-      Ok(self.domains.clone())
-    }
+  fn domains(&self) -> Vec<String> {
+    let mut domains = vec![self.canonical().to_string()];
+    domains.extend(self.redirects.iter().cloned());
+    domains
   }
 
   async fn fallback(uri: Uri) -> ServerResult<Response> {
@@ -289,30 +292,23 @@ impl Serve {
   }
 
   fn redirect_config(&self) -> Result<Option<Arc<RedirectConfig>>> {
-    let domains = self.domains()?;
-
-    for redirect in &self.redirects {
-      ensure!(
-        *redirect != domains[0],
-        error::RedirectDomainCanonical {
-          domain: redirect.clone()
-        },
-      );
-
-      ensure!(
-        domains.contains(redirect),
-        error::RedirectDomainNotServed {
-          domain: redirect.clone()
-        },
-      );
-    }
-
     if self.redirects.is_empty() {
       return Ok(None);
     }
 
+    let canonical = self.canonical();
+
+    for redirect in &self.redirects {
+      ensure!(
+        redirect.as_str() != canonical,
+        error::RedirectDomainCanonical {
+          domain: redirect.clone()
+        },
+      );
+    }
+
     Ok(Some(Arc::new(RedirectConfig {
-      destination: self.redirect_url()?,
+      destination: self.redirect_url(),
       domains: self.redirects.iter().cloned().collect(),
     })))
   }
@@ -349,10 +345,10 @@ impl Serve {
     }
   }
 
-  fn redirect_url(&self) -> Result<String> {
-    let domain = self.domains()?.into_iter().next().unwrap();
+  fn redirect_url(&self) -> String {
+    let domain = self.canonical();
 
-    Ok(if let Some(port) = self.https_port() {
+    if let Some(port) = self.https_port() {
       if port == 443 {
         format!("https://{domain}")
       } else {
@@ -365,7 +361,7 @@ impl Serve {
       } else {
         format!("http://{domain}:{port}")
       }
-    })
+    }
   }
 
   pub(crate) fn router(
@@ -467,7 +463,7 @@ impl Serve {
       };
       Some(Arc::new(AuthConfig {
         admin,
-        audiences: self.domains()?,
+        audience: self.domain.clone(),
       }))
     } else {
       None
@@ -497,7 +493,7 @@ impl Serve {
       }
       (Some(http_port), Some(https_port)) => {
         let http_spawn_config = if self.redirect_http_to_https {
-          SpawnConfig::Redirect(self.redirect_url()?)
+          SpawnConfig::Redirect(self.redirect_url())
         } else {
           SpawnConfig::Http
         };
@@ -646,7 +642,7 @@ impl Default for Serve {
       acme_contact: Vec::new(),
       address: "0.0.0.0".into(),
       admin_key: None,
-      domains: Vec::new(),
+      domain: None,
       http: false,
       http_port: None,
       https: false,

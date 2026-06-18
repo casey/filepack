@@ -48,8 +48,6 @@ fn redirect_alias() {
       "0",
       "--domain",
       "foo",
-      "--domain",
-      "bar",
       "--redirect",
       "bar",
     ])
@@ -112,7 +110,7 @@ fn redirect_http_to_https() {
       "0",
       "--redirect-http-to-https",
       "--domain",
-      "foo",
+      "foo.com",
     ])
     .spawn();
 
@@ -123,13 +121,13 @@ fn redirect_http_to_https() {
 
   let address = server.address();
 
-  case(&client, &address, "/", "https://foo:0/");
-  case(&client, &address, "/bar", "https://foo:0/bar");
+  case(&client, &address, "/", "https://foo.com:0/");
+  case(&client, &address, "/bar", "https://foo.com:0/bar");
   case(
     &client,
     &address,
     "/bar?baz=qux",
-    "https://foo:0/bar?baz=qux",
+    "https://foo.com:0/bar?baz=qux",
   );
 
   server.terminate().success();
@@ -140,13 +138,5 @@ fn redirect_rejects_canonical_domain() {
   Test::new()
     .args(["serve", "--domain", "foo", "--redirect", "foo"])
     .stderr("error: redirect domain `foo` is the canonical domain\n")
-    .failure();
-}
-
-#[test]
-fn redirect_requires_served_domain() {
-  Test::new()
-    .args(["serve", "--domain", "foo", "--redirect", "bar"])
-    .stderr("error: redirect domain `bar` is not in the served domains\n")
     .failure();
 }

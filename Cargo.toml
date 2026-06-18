@@ -52,7 +52,6 @@ serde_yaml = "0.9.34"
 sha2 = "0.10"
 snafu = "0.8.4"
 strum = { version = "0.27.2", features = ["derive"] }
-sysinfo = { version = "0.39.1", default-features = false, features = ["system"] }
 tempfile = "3.24.0"
 tokio = { version = "1.52.3", features = ["fs", "io-util", "macros", "rt-multi-thread"] }
 tokio-util = { version = "0.7.18", features = ["io"] }
