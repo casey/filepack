@@ -32,7 +32,7 @@ pub(crate) struct AuthConfig {
 
 pub(crate) struct RedirectConfig {
   destination: String,
-  domains: BTreeSet<String>,
+  domains: HashSet<String>,
 }
 
 enum SpawnConfig {
@@ -339,7 +339,7 @@ impl Serve {
     })
   }
 
-  fn redirects(&self) -> Result<&[String]> {
+  fn redirect_config(&self) -> Result<Option<Arc<RedirectConfig>>> {
     let domains = self.domains()?;
 
     for redirect in &self.redirects {
@@ -358,7 +358,14 @@ impl Serve {
       );
     }
 
-    Ok(&self.redirects)
+    if self.redirects.is_empty() {
+      return Ok(None);
+    }
+
+    Ok(Some(Arc::new(RedirectConfig {
+      destination: self.redirect_url()?,
+      domains: self.redirects.iter().cloned().collect(),
+    })))
   }
 
   pub(crate) fn router(
@@ -466,18 +473,9 @@ impl Serve {
       None
     };
 
-    let redirects = self.redirects()?;
+    let redirect_config = self.redirect_config()?;
 
-    let redirect = if redirects.is_empty() {
-      None
-    } else {
-      Some(Arc::new(RedirectConfig {
-        destination: self.redirect_url()?,
-        domains: redirects.iter().cloned().collect(),
-      }))
-    };
-
-    let router = Self::router(server, auth_config, redirect);
+    let router = Self::router(server, auth_config, redirect_config);
 
     match (self.http_port(), self.https_port()) {
       (Some(http_port), None) => {
