@@ -15,6 +15,7 @@ ExecStart=/usr/local/bin/filepack \
   --admin-key public1agawgz7p373kz2yyepzsgrncfrwcj0c82gld68q568ksq8klvpvkqddsly5 \
   --http \
   --https \
+  --redirect www.filepack.com \
   --redirect-http-to-https \
   --restrict-uploads
 Group=filepack
