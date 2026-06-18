@@ -152,10 +152,7 @@ impl Serve {
   }
 
   fn canonical(&self) -> &str {
-    self
-      .domain
-      .as_deref()
-      .expect("--domain is required when a canonical domain is needed")
+    self.domain.as_deref().unwrap()
   }
 
   async fn directory(server: ServerExtension, Path(hash): Path<Hash>) -> PageResult<DirectoryHtml> {
