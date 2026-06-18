@@ -374,11 +374,6 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     domain: String,
   },
-  #[snafu(display("redirect domain `{domain}` is not in the served domains"))]
-  RedirectDomainNotServed {
-    backtrace: Option<Backtrace>,
-    domain: String,
-  },
   #[snafu(display("request failed"))]
   Request {
     backtrace: Option<Backtrace>,

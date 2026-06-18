@@ -69,13 +69,13 @@ pub(crate) struct Serve {
   )]
   admin_key: Option<KeyIdentifier>,
   #[arg(
-    help = "Request ACME TLS certificate and accept authorization tokens for <DOMAIN>, as well as \
-            redirect HTTP to HTTPS at <DOMAIN> if enabled, this server must be reachable at \
-            <DOMAIN>:443 to respond to Let's Encrypt ACME challenges",
-    long = "domain",
+    help = "Use <DOMAIN> as the canonical domain: request an ACME TLS certificate for it, accept \
+            authorization tokens for it, and redirect HTTP to HTTPS at it if enabled, this server \
+            must be reachable at <DOMAIN>:443 to respond to Let's Encrypt ACME challenges",
+    long,
     value_name = "DOMAIN"
   )]
-  domains: Vec<String>,
+  domain: Option<String>,
   #[arg(help = "Serve HTTP traffic", long)]
   http: bool,
   #[arg(
@@ -101,7 +101,8 @@ pub(crate) struct Serve {
   #[arg(help = "Redirect HTTP to HTTPS", long)]
   redirect_http_to_https: bool,
   #[arg(
-    help = "Redirect requests for `Host: <DOMAIN>` to the canonical domain.",
+    help = "Redirect requests for `Host: <DOMAIN>` to the canonical domain, requesting an ACME TLS \
+            certificate for <DOMAIN>.",
     long = "redirect",
     value_name = "DOMAIN"
   )]
@@ -149,6 +150,14 @@ impl Serve {
     Ok(block_in_place(|| server.artwork(*fingerprint))?.range(range))
   }
 
+  fn canonical(&self) -> Result<String> {
+    if let Some(domain) = &self.domain {
+      Ok(domain.clone())
+    } else {
+      System::host_name().context(error::AcmeHostname)
+    }
+  }
+
   async fn directory(server: ServerExtension, Path(hash): Path<Hash>) -> PageResult<DirectoryHtml> {
     Ok(
       DirectoryHtml {
@@ -160,11 +169,9 @@ impl Serve {
   }
 
   fn domains(&self) -> Result<Vec<String>> {
-    if self.domains.is_empty() {
-      Ok(vec![System::host_name().context(error::AcmeHostname)?])
-    } else {
-      Ok(self.domains.clone())
-    }
+    let mut domains = vec![self.canonical()?];
+    domains.extend(self.redirects.iter().cloned());
+    Ok(domains)
   }
 
   async fn fallback(uri: Uri) -> ServerResult<Response> {
@@ -289,26 +296,19 @@ impl Serve {
   }
 
   fn redirect_config(&self) -> Result<Option<Arc<RedirectConfig>>> {
-    let domains = self.domains()?;
+    if self.redirects.is_empty() {
+      return Ok(None);
+    }
+
+    let canonical = self.canonical()?;
 
     for redirect in &self.redirects {
       ensure!(
-        *redirect != domains[0],
+        *redirect != canonical,
         error::RedirectDomainCanonical {
           domain: redirect.clone()
         },
       );
-
-      ensure!(
-        domains.contains(redirect),
-        error::RedirectDomainNotServed {
-          domain: redirect.clone()
-        },
-      );
-    }
-
-    if self.redirects.is_empty() {
-      return Ok(None);
     }
 
     Ok(Some(Arc::new(RedirectConfig {
@@ -350,7 +350,7 @@ impl Serve {
   }
 
   fn redirect_url(&self) -> Result<String> {
-    let domain = self.domains()?.into_iter().next().unwrap();
+    let domain = self.canonical()?;
 
     Ok(if let Some(port) = self.https_port() {
       if port == 443 {
@@ -467,7 +467,7 @@ impl Serve {
       };
       Some(Arc::new(AuthConfig {
         admin,
-        audiences: self.domains()?,
+        audiences: vec![self.canonical()?],
       }))
     } else {
       None
@@ -646,7 +646,7 @@ impl Default for Serve {
       acme_contact: Vec::new(),
       address: "0.0.0.0".into(),
       admin_key: None,
-      domains: Vec::new(),
+      domain: None,
       http: false,
       http_port: None,
       https: false,

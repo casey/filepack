@@ -428,10 +428,11 @@ fn domain_defaults_to_hostname() {
 }
 
 #[test]
-fn domain_flag_is_respected() {
+fn domains_include_redirects() {
   assert_eq!(
     Serve {
-      domains: vec!["foo".into(), "bar".into()],
+      domain: Some("foo".into()),
+      redirects: vec!["bar".into()],
       ..Serve::default()
     }
     .domains()
@@ -1244,7 +1245,7 @@ fn ports() {
 fn redirect_omits_default_ports() {
   assert_eq!(
     Serve {
-      domains: vec!["foo".into()],
+      domain: Some("foo".into()),
       ..Serve::default()
     }
     .redirect_url()
@@ -1254,7 +1255,7 @@ fn redirect_omits_default_ports() {
 
   assert_eq!(
     Serve {
-      domains: vec!["foo".into()],
+      domain: Some("foo".into()),
       https: true,
       ..Serve::default()
     }

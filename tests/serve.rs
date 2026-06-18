@@ -48,8 +48,6 @@ fn redirect_alias() {
       "0",
       "--domain",
       "foo",
-      "--domain",
-      "bar",
       "--redirect",
       "bar",
     ])
@@ -140,13 +138,5 @@ fn redirect_rejects_canonical_domain() {
   Test::new()
     .args(["serve", "--domain", "foo", "--redirect", "foo"])
     .stderr("error: redirect domain `foo` is the canonical domain\n")
-    .failure();
-}
-
-#[test]
-fn redirect_requires_served_domain() {
-  Test::new()
-    .args(["serve", "--domain", "foo", "--redirect", "bar"])
-    .stderr("error: redirect domain `bar` is not in the served domains\n")
     .failure();
 }
