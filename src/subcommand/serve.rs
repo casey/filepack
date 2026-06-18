@@ -68,9 +68,7 @@ pub(crate) struct Serve {
   )]
   admin_key: Option<KeyIdentifier>,
   #[arg(
-    help = "Use <DOMAIN> as the canonical domain: request an ACME TLS certificate for it, accept \
-            authorization tokens for it, and redirect HTTP to HTTPS at it if enabled, this server \
-            must be reachable at <DOMAIN>:443 to respond to Let's Encrypt ACME challenges",
+    help = "Use <DOMAIN> as the canonical domain",
     long,
     value_name = "DOMAIN"
   )]
@@ -101,8 +99,7 @@ pub(crate) struct Serve {
   #[arg(help = "Redirect HTTP to HTTPS", long, requires = "domain")]
   redirect_http_to_https: bool,
   #[arg(
-    help = "Redirect requests for `Host: <DOMAIN>` to the canonical domain, requesting an ACME TLS \
-            certificate for <DOMAIN>.",
+    help = "Redirect requests for `Host: <DOMAIN>` to the canonical domain",
     long = "redirect",
     requires = "domain",
     value_name = "DOMAIN"
