@@ -3,8 +3,6 @@ use super::*;
 #[derive(Debug, Snafu)]
 #[snafu(context(suffix(false)), visibility(pub(crate)))]
 pub enum Error {
-  #[snafu(display("no hostname found for use as ACME domain"))]
-  AcmeHostname { backtrace: Option<Backtrace> },
   #[snafu(display("artwork `{path}` is {dimensions} but must be square"))]
   ArtworkDimensions {
     backtrace: Option<Backtrace>,

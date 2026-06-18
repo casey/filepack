@@ -13,7 +13,6 @@ use {
     AcmeConfig, acme::LETS_ENCRYPT_PRODUCTION_DIRECTORY, axum::AxumAcceptor, caches::DirCache,
   },
   std::net::TcpStream,
-  sysinfo::System,
   templates::{DirectoryHtml, FilesHtml, PackageHtml, PackagesHtml, PageHtml},
   tokio::{net::TcpListener, runtime, task::block_in_place},
   tower_http::set_header::SetResponseHeaderLayer,
@@ -84,11 +83,12 @@ pub(crate) struct Serve {
     value_name = "PORT"
   )]
   http_port: Option<u16>,
-  #[arg(help = "Serve HTTPS traffic", long)]
+  #[arg(help = "Serve HTTPS traffic", long, requires = "domain")]
   https: bool,
   #[arg(
     help = "Listen on <PORT> for incoming HTTPS requests [default: 443]",
     long,
+    requires = "domain",
     value_name = "PORT"
   )]
   https_port: Option<u16>,
@@ -98,16 +98,17 @@ pub(crate) struct Serve {
     value_name = "ADDRESS"
   )]
   ready_address: Option<SocketAddr>,
-  #[arg(help = "Redirect HTTP to HTTPS", long)]
+  #[arg(help = "Redirect HTTP to HTTPS", long, requires = "domain")]
   redirect_http_to_https: bool,
   #[arg(
     help = "Redirect requests for `Host: <DOMAIN>` to the canonical domain, requesting an ACME TLS \
             certificate for <DOMAIN>.",
     long = "redirect",
+    requires = "domain",
     value_name = "DOMAIN"
   )]
   redirects: Vec<String>,
-  #[arg(help = "Restrict uploads to admin", long)]
+  #[arg(help = "Restrict uploads to admin", long, requires = "domain")]
   restrict_uploads: bool,
 }
 
@@ -115,7 +116,7 @@ impl Serve {
   fn acceptor(&self, acme_cache: Utf8PathBuf) -> Result<AxumAcceptor> {
     install_default_crypto_provider()?;
 
-    let config = AcmeConfig::new(self.domains()?)
+    let config = AcmeConfig::new(self.domains())
       .contact(&self.acme_contact)
       .cache_option(Some(DirCache::new(acme_cache)))
       .directory(LETS_ENCRYPT_PRODUCTION_DIRECTORY);
@@ -150,12 +151,11 @@ impl Serve {
     Ok(block_in_place(|| server.artwork(*fingerprint))?.range(range))
   }
 
-  fn canonical(&self) -> Result<String> {
-    if let Some(domain) = &self.domain {
-      Ok(domain.clone())
-    } else {
-      System::host_name().context(error::AcmeHostname)
-    }
+  fn canonical(&self) -> &str {
+    self
+      .domain
+      .as_deref()
+      .expect("--domain is required when a canonical domain is needed")
   }
 
   async fn directory(server: ServerExtension, Path(hash): Path<Hash>) -> PageResult<DirectoryHtml> {
@@ -168,10 +168,10 @@ impl Serve {
     )
   }
 
-  fn domains(&self) -> Result<Vec<String>> {
-    let mut domains = vec![self.canonical()?];
+  fn domains(&self) -> Vec<String> {
+    let mut domains = vec![self.canonical().to_string()];
     domains.extend(self.redirects.iter().cloned());
-    Ok(domains)
+    domains
   }
 
   async fn fallback(uri: Uri) -> ServerResult<Response> {
@@ -300,11 +300,11 @@ impl Serve {
       return Ok(None);
     }
 
-    let canonical = self.canonical()?;
+    let canonical = self.canonical();
 
     for redirect in &self.redirects {
       ensure!(
-        *redirect != canonical,
+        redirect.as_str() != canonical,
         error::RedirectDomainCanonical {
           domain: redirect.clone()
         },
@@ -312,7 +312,7 @@ impl Serve {
     }
 
     Ok(Some(Arc::new(RedirectConfig {
-      destination: self.redirect_url()?,
+      destination: self.redirect_url(),
       domains: self.redirects.iter().cloned().collect(),
     })))
   }
@@ -349,10 +349,10 @@ impl Serve {
     }
   }
 
-  fn redirect_url(&self) -> Result<String> {
-    let domain = self.canonical()?;
+  fn redirect_url(&self) -> String {
+    let domain = self.canonical();
 
-    Ok(if let Some(port) = self.https_port() {
+    if let Some(port) = self.https_port() {
       if port == 443 {
         format!("https://{domain}")
       } else {
@@ -365,7 +365,7 @@ impl Serve {
       } else {
         format!("http://{domain}:{port}")
       }
-    })
+    }
   }
 
   pub(crate) fn router(
@@ -467,7 +467,7 @@ impl Serve {
       };
       Some(Arc::new(AuthConfig {
         admin,
-        audiences: vec![self.canonical()?],
+        audiences: vec![self.canonical().to_string()],
       }))
     } else {
       None
@@ -497,7 +497,7 @@ impl Serve {
       }
       (Some(http_port), Some(https_port)) => {
         let http_spawn_config = if self.redirect_http_to_https {
-          SpawnConfig::Redirect(self.redirect_url()?)
+          SpawnConfig::Redirect(self.redirect_url())
         } else {
           SpawnConfig::Http
         };

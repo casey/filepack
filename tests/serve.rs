@@ -99,7 +99,7 @@ fn redirect_http_to_https() {
 
   let server = Test::new()
     .ready_address()
-    .stderr("ACME event: AccountCacheStore\n")
+    .stderr_regex("ACME event: AccountCacheStore\n")
     .args([
       "serve",
       "--address",
@@ -110,7 +110,7 @@ fn redirect_http_to_https() {
       "0",
       "--redirect-http-to-https",
       "--domain",
-      "foo",
+      "foo.example",
     ])
     .spawn();
 
@@ -121,13 +121,13 @@ fn redirect_http_to_https() {
 
   let address = server.address();
 
-  case(&client, &address, "/", "https://foo:0/");
-  case(&client, &address, "/bar", "https://foo:0/bar");
+  case(&client, &address, "/", "https://foo.example:0/");
+  case(&client, &address, "/bar", "https://foo.example:0/bar");
   case(
     &client,
     &address,
     "/bar?baz=qux",
-    "https://foo:0/bar?baz=qux",
+    "https://foo.example:0/bar?baz=qux",
   );
 
   server.terminate().success();

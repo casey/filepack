@@ -420,11 +420,18 @@ fn directory(entries: &[(&str, EntryType, Hash, u64)]) -> Directory {
 }
 
 #[test]
-fn domain_defaults_to_hostname() {
-  assert_eq!(
-    Serve::default().domains().unwrap(),
-    vec![System::host_name().unwrap()]
-  );
+fn domain_required_for_canonical_domain_options() {
+  #[track_caller]
+  fn case<const N: usize>(args: [&str; N]) {
+    let err = Serve::try_parse_from(["filepack"].into_iter().chain(args)).unwrap_err();
+    assert_eq!(err.kind(), clap::error::ErrorKind::MissingRequiredArgument);
+  }
+
+  case(["--https"]);
+  case(["--https-port", "443"]);
+  case(["--redirect", "bar"]);
+  case(["--redirect-http-to-https"]);
+  case(["--restrict-uploads"]);
 }
 
 #[test]
@@ -435,8 +442,7 @@ fn domains_include_redirects() {
       redirects: vec!["bar".into()],
       ..Serve::default()
     }
-    .domains()
-    .unwrap(),
+    .domains(),
     vec!["foo".to_string(), "bar".to_string()],
   );
 }
@@ -1248,8 +1254,7 @@ fn redirect_omits_default_ports() {
       domain: Some("foo".into()),
       ..Serve::default()
     }
-    .redirect_url()
-    .unwrap(),
+    .redirect_url(),
     "http://foo",
   );
 
@@ -1259,8 +1264,7 @@ fn redirect_omits_default_ports() {
       https: true,
       ..Serve::default()
     }
-    .redirect_url()
-    .unwrap(),
+    .redirect_url(),
     "https://foo",
   );
 }
