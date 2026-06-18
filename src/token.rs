@@ -69,10 +69,6 @@ mod tests {
 
   const AUDIENCE: &str = "filepack.example";
 
-  fn audience() -> Option<&'static str> {
-    Some(AUDIENCE)
-  }
-
   #[test]
   fn expired() {
     let private_key = PrivateKey::generate();
@@ -88,7 +84,7 @@ mod tests {
       },
     );
     assert_matches!(
-      Token::verify(private_key.public_key(), audience(), &token).unwrap_err(),
+      Token::verify(private_key.public_key(), Some(AUDIENCE), &token).unwrap_err(),
       ServerError::AuthorizationInvalid { source } if matches!(source.kind(), ErrorKind::ExpiredSignature),
     );
   }
@@ -108,7 +104,7 @@ mod tests {
       },
     );
     assert_matches!(
-      Token::verify(private_key.public_key(), audience(), &token).unwrap_err(),
+      Token::verify(private_key.public_key(), Some(AUDIENCE), &token).unwrap_err(),
       ServerError::AuthorizationInvalid { source } if matches!(source.kind(), ErrorKind::ImmatureSignature),
     );
   }
@@ -127,7 +123,7 @@ mod tests {
   fn roundtrip() {
     let private_key = PrivateKey::generate();
     let token = Token::encode(&private_key, AUDIENCE).unwrap();
-    Token::verify(private_key.public_key(), audience(), &token).unwrap();
+    Token::verify(private_key.public_key(), Some(AUDIENCE), &token).unwrap();
   }
 
   #[test]
@@ -160,7 +156,7 @@ mod tests {
     )
     .unwrap();
     assert_matches!(
-      Token::verify(private_key.public_key(), audience(), &token).unwrap_err(),
+      Token::verify(private_key.public_key(), Some(AUDIENCE), &token).unwrap_err(),
       ServerError::AuthorizationInvalid { source } if matches!(source.kind(), ErrorKind::Json(_)),
     );
   }
@@ -170,7 +166,7 @@ mod tests {
     let private_key = PrivateKey::generate();
     let token = Token::encode(&private_key, "evil.example").unwrap();
     assert_matches!(
-      Token::verify(private_key.public_key(), audience(), &token).unwrap_err(),
+      Token::verify(private_key.public_key(), Some(AUDIENCE), &token).unwrap_err(),
       ServerError::AuthorizationInvalid { source } if matches!(source.kind(), ErrorKind::InvalidAudience),
     );
   }
@@ -190,7 +186,7 @@ mod tests {
       },
     );
     assert_matches!(
-      Token::verify(admin.public_key(), audience(), &token).unwrap_err(),
+      Token::verify(admin.public_key(), Some(AUDIENCE), &token).unwrap_err(),
       ServerError::AuthorizationInvalid { source } if matches!(source.kind(), ErrorKind::InvalidIssuer),
     );
   }
@@ -201,7 +197,7 @@ mod tests {
     let wrong = PrivateKey::generate();
     let token = Token::encode(&wrong, AUDIENCE).unwrap();
     assert_matches!(
-      Token::verify(admin.public_key(), audience(), &token).unwrap_err(),
+      Token::verify(admin.public_key(), Some(AUDIENCE), &token).unwrap_err(),
       ServerError::AuthorizationInvalid { source } if matches!(source.kind(), ErrorKind::InvalidSignature),
     );
   }
