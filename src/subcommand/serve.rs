@@ -176,7 +176,7 @@ impl Serve {
         .parse::<Fingerprint>()
         .context(server_error::FingerprintParse)?;
 
-      return Ok(Redirect::temporary(&format!("/package/{fingerprint}")).into_response());
+      return Ok(Redirect::permanent(&format!("/package/{fingerprint}")).into_response());
     }
 
     Ok(
@@ -288,27 +288,6 @@ impl Serve {
     )
   }
 
-  async fn redirect_layer(
-    Extension(redirect_config): Extension<Arc<RedirectConfig>>,
-    host: Option<TypedHeader<headers::Host>>,
-    request: Request,
-    next: Next,
-  ) -> Response {
-    if let Some(TypedHeader(host)) = host
-      && redirect_config.domains.contains(host.hostname())
-    {
-      let mut destination = redirect_config.destination.clone();
-
-      if let Some(path_and_query) = request.uri().path_and_query() {
-        destination.push_str(path_and_query.as_str());
-      }
-
-      Redirect::permanent(&destination).into_response()
-    } else {
-      next.run(request).await
-    }
-  }
-
   fn redirect_config(&self) -> Result<Option<Arc<RedirectConfig>>> {
     let domains = self.domains()?;
 
@@ -347,6 +326,27 @@ impl Serve {
     }
 
     Redirect::permanent(&destination)
+  }
+
+  async fn redirect_layer(
+    Extension(redirect_config): Extension<Arc<RedirectConfig>>,
+    host: Option<TypedHeader<headers::Host>>,
+    request: Request,
+    next: Next,
+  ) -> Response {
+    if let Some(TypedHeader(host)) = host
+      && redirect_config.domains.contains(host.hostname())
+    {
+      let mut destination = redirect_config.destination.clone();
+
+      if let Some(path_and_query) = request.uri().path_and_query() {
+        destination.push_str(path_and_query.as_str());
+      }
+
+      Redirect::permanent(&destination).into_response()
+    } else {
+      next.run(request).await
+    }
   }
 
   fn redirect_url(&self) -> Result<String> {

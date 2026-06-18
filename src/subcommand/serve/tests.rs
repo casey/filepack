@@ -528,7 +528,7 @@ fn files_non_empty() {
 fn fingerprint_redirects_to_package() {
   TestServer::new()
     .get(format!("/{}", test::FINGERPRINT))
-    .status(StatusCode::TEMPORARY_REDIRECT)
+    .status(StatusCode::PERMANENT_REDIRECT)
     .assert_header(header::LOCATION, format!("/package/{}", test::FINGERPRINT))
     .send();
 }
@@ -1382,7 +1382,7 @@ fn upload_with_wrong_hash_fails() {
 fn uppercase_fingerprint_redirects_to_lowercase_package() {
   TestServer::new()
     .get(format!("/{}", test::FINGERPRINT.to_uppercase()))
-    .status(StatusCode::TEMPORARY_REDIRECT)
+    .status(StatusCode::PERMANENT_REDIRECT)
     .assert_header(header::LOCATION, format!("/package/{}", test::FINGERPRINT))
     .send();
 }
