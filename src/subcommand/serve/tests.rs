@@ -422,15 +422,16 @@ fn directory(entries: &[(&str, EntryType, Hash, u64)]) -> Directory {
 #[test]
 fn domain_required_for_canonical_domain_options() {
   #[track_caller]
-  fn case<const N: usize>(args: [&str; N]) {
-    let err = Serve::try_parse_from(["filepack"].into_iter().chain(args)).unwrap_err();
+  fn case(args: &[&str]) {
+    let err =
+      Serve::try_parse_from(["filepack"].into_iter().chain(args.iter().cloned())).unwrap_err();
     assert_eq!(err.kind(), clap::error::ErrorKind::MissingRequiredArgument);
   }
 
-  case(["--https"]);
-  case(["--https-port", "443"]);
-  case(["--redirect", "bar"]);
-  case(["--redirect-http-to-https"]);
+  case(&["--https"]);
+  case(&["--https-port", "443"]);
+  case(&["--redirect", "bar"]);
+  case(&["--redirect-http-to-https"]);
 }
 
 #[test]
