@@ -198,7 +198,7 @@ impl TestServer {
 
     let server = Arc::new(Server::with_data_dir(&data_dir).unwrap());
 
-    let router = Serve::router(server, auth_config);
+    let router = Serve::router(server, auth_config, None);
 
     Self {
       data_dir,
@@ -528,7 +528,7 @@ fn files_non_empty() {
 fn fingerprint_redirects_to_package() {
   TestServer::new()
     .get(format!("/{}", test::FINGERPRINT))
-    .status(StatusCode::TEMPORARY_REDIRECT)
+    .status(StatusCode::PERMANENT_REDIRECT)
     .assert_header(header::LOCATION, format!("/package/{}", test::FINGERPRINT))
     .send();
 }
@@ -1241,6 +1241,30 @@ fn ports() {
 }
 
 #[test]
+fn redirect_omits_default_ports() {
+  assert_eq!(
+    Serve {
+      domains: vec!["foo".into()],
+      ..Serve::default()
+    }
+    .redirect_url()
+    .unwrap(),
+    "http://foo",
+  );
+
+  assert_eq!(
+    Serve {
+      domains: vec!["foo".into()],
+      https: true,
+      ..Serve::default()
+    }
+    .redirect_url()
+    .unwrap(),
+    "https://foo",
+  );
+}
+
+#[test]
 fn restricted_upload_accepts_admin_token() {
   let admin = PrivateKey::generate();
   let hash = Hash::bytes(b"bar");
@@ -1358,7 +1382,7 @@ fn upload_with_wrong_hash_fails() {
 fn uppercase_fingerprint_redirects_to_lowercase_package() {
   TestServer::new()
     .get(format!("/{}", test::FINGERPRINT.to_uppercase()))
-    .status(StatusCode::TEMPORARY_REDIRECT)
+    .status(StatusCode::PERMANENT_REDIRECT)
     .assert_header(header::LOCATION, format!("/package/{}", test::FINGERPRINT))
     .send();
 }

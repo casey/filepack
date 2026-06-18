@@ -369,6 +369,16 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     source: io::Error,
   },
+  #[snafu(display("redirect domain `{domain}` is the canonical domain"))]
+  RedirectDomainCanonical {
+    backtrace: Option<Backtrace>,
+    domain: String,
+  },
+  #[snafu(display("redirect domain `{domain}` is not in the served domains"))]
+  RedirectDomainNotServed {
+    backtrace: Option<Backtrace>,
+    domain: String,
+  },
   #[snafu(display("request failed"))]
   Request {
     backtrace: Option<Backtrace>,

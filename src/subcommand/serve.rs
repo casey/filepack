@@ -2,9 +2,10 @@ use {
   super::*,
   axum::{
     Router,
-    extract::{Extension, Path},
+    extract::{Extension, Path, Request},
     http::{HeaderValue, Uri},
-    response::Redirect,
+    middleware::{self, Next},
+    response::{IntoResponse, Redirect, Response},
     routing::{get, post},
   },
   axum_server::Handle,
@@ -27,6 +28,11 @@ type PageResult<T> = ServerResult<PageHtml<T>>;
 pub(crate) struct AuthConfig {
   pub(crate) admin: Option<PublicKey>,
   pub(crate) audiences: Vec<String>,
+}
+
+pub(crate) struct RedirectConfig {
+  destination: String,
+  domains: HashSet<String>,
 }
 
 enum SpawnConfig {
@@ -94,6 +100,12 @@ pub(crate) struct Serve {
   ready_address: Option<SocketAddr>,
   #[arg(help = "Redirect HTTP to HTTPS", long)]
   redirect_http_to_https: bool,
+  #[arg(
+    help = "Redirect requests for `Host: <DOMAIN>` to the canonical domain.",
+    long = "redirect",
+    value_name = "DOMAIN"
+  )]
+  redirects: Vec<String>,
   #[arg(help = "Restrict uploads to admin", long)]
   restrict_uploads: bool,
 }
@@ -164,7 +176,7 @@ impl Serve {
         .parse::<Fingerprint>()
         .context(server_error::FingerprintParse)?;
 
-      return Ok(Redirect::temporary(&format!("/package/{fingerprint}")).into_response());
+      return Ok(Redirect::permanent(&format!("/package/{fingerprint}")).into_response());
     }
 
     Ok(
@@ -276,12 +288,33 @@ impl Serve {
     )
   }
 
-  fn redirect_destination(domains: &[String], https_port: u16) -> String {
-    if https_port == 443 {
-      format!("https://{}", domains[0])
-    } else {
-      format!("https://{}:{https_port}", domains[0])
+  fn redirect_config(&self) -> Result<Option<Arc<RedirectConfig>>> {
+    let domains = self.domains()?;
+
+    for redirect in &self.redirects {
+      ensure!(
+        *redirect != domains[0],
+        error::RedirectDomainCanonical {
+          domain: redirect.clone()
+        },
+      );
+
+      ensure!(
+        domains.contains(redirect),
+        error::RedirectDomainNotServed {
+          domain: redirect.clone()
+        },
+      );
     }
+
+    if self.redirects.is_empty() {
+      return Ok(None);
+    }
+
+    Ok(Some(Arc::new(RedirectConfig {
+      destination: self.redirect_url()?,
+      domains: self.redirects.iter().cloned().collect(),
+    })))
   }
 
   async fn redirect_http_to_https(
@@ -292,10 +325,54 @@ impl Serve {
       destination.push_str(path_and_query.as_str());
     }
 
-    Redirect::to(&destination)
+    Redirect::permanent(&destination)
   }
 
-  pub(crate) fn router(server: Arc<Server>, auth_config: Option<Arc<AuthConfig>>) -> Router {
+  async fn redirect_layer(
+    Extension(redirect_config): Extension<Arc<RedirectConfig>>,
+    host: Option<TypedHeader<headers::Host>>,
+    request: Request,
+    next: Next,
+  ) -> Response {
+    if let Some(TypedHeader(host)) = host
+      && redirect_config.domains.contains(host.hostname())
+    {
+      let mut destination = redirect_config.destination.clone();
+
+      if let Some(path_and_query) = request.uri().path_and_query() {
+        destination.push_str(path_and_query.as_str());
+      }
+
+      Redirect::permanent(&destination).into_response()
+    } else {
+      next.run(request).await
+    }
+  }
+
+  fn redirect_url(&self) -> Result<String> {
+    let domain = self.domains()?.into_iter().next().unwrap();
+
+    Ok(if let Some(port) = self.https_port() {
+      if port == 443 {
+        format!("https://{domain}")
+      } else {
+        format!("https://{domain}:{port}")
+      }
+    } else {
+      let port = self.http_port().unwrap();
+      if port == 80 {
+        format!("http://{domain}")
+      } else {
+        format!("http://{domain}:{port}")
+      }
+    })
+  }
+
+  pub(crate) fn router(
+    server: Arc<Server>,
+    auth_config: Option<Arc<AuthConfig>>,
+    redirect_config: Option<Arc<RedirectConfig>>,
+  ) -> Router {
     let router = Router::new()
       .route("/", get(Self::home))
       .route("/artwork/{fingerprint}", get(Self::artwork))
@@ -329,8 +406,16 @@ impl Serve {
         HeaderValue::from_static("nosniff"),
       ));
 
-    if let Some(auth_config) = auth_config {
+    let router = if let Some(auth_config) = auth_config {
       router.layer(Extension(auth_config))
+    } else {
+      router
+    };
+
+    if let Some(redirect_config) = redirect_config {
+      router
+        .layer(middleware::from_fn(Self::redirect_layer))
+        .layer(Extension(redirect_config))
     } else {
       router
     }
@@ -388,7 +473,9 @@ impl Serve {
       None
     };
 
-    let router = Self::router(server, auth_config);
+    let redirect_config = self.redirect_config()?;
+
+    let router = Self::router(server, auth_config, redirect_config);
 
     match (self.http_port(), self.https_port()) {
       (Some(http_port), None) => {
@@ -410,7 +497,7 @@ impl Serve {
       }
       (Some(http_port), Some(https_port)) => {
         let http_spawn_config = if self.redirect_http_to_https {
-          SpawnConfig::Redirect(Self::redirect_destination(&self.domains()?, https_port))
+          SpawnConfig::Redirect(self.redirect_url()?)
         } else {
           SpawnConfig::Http
         };
@@ -566,6 +653,7 @@ impl Default for Serve {
       https_port: None,
       ready_address: None,
       redirect_http_to_https: false,
+      redirects: Vec::new(),
       restrict_uploads: false,
     }
   }
