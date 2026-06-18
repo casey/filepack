@@ -26,7 +26,7 @@ type PageResult<T> = ServerResult<PageHtml<T>>;
 
 pub(crate) struct AuthConfig {
   pub(crate) admin: Option<PublicKey>,
-  pub(crate) audiences: Vec<String>,
+  pub(crate) audience: Option<String>,
 }
 
 pub(crate) struct RedirectConfig {
@@ -101,7 +101,7 @@ pub(crate) struct Serve {
     value_name = "DOMAIN"
   )]
   redirects: Vec<String>,
-  #[arg(help = "Restrict uploads to admin", long, requires = "domain")]
+  #[arg(help = "Restrict uploads to admin", long)]
   restrict_uploads: bool,
 }
 
@@ -457,7 +457,7 @@ impl Serve {
       };
       Some(Arc::new(AuthConfig {
         admin,
-        audiences: vec![self.canonical().to_string()],
+        audience: self.domain.clone(),
       }))
     } else {
       None

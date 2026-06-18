@@ -383,7 +383,7 @@ fn artwork_response() {
 fn closed_server_forbids_uploads() {
   TestServer::with_auth(Some(Arc::new(AuthConfig {
     admin: None,
-    audiences: Vec::new(),
+    audience: None,
   })))
   .put(format!("/file/{}", Hash::bytes(b"bar")))
   .body("bar")
@@ -431,7 +431,6 @@ fn domain_required_for_canonical_domain_options() {
   case(["--https-port", "443"]);
   case(["--redirect", "bar"]);
   case(["--redirect-http-to-https"]);
-  case(["--restrict-uploads"]);
 }
 
 #[test]
@@ -1277,7 +1276,7 @@ fn restricted_upload_accepts_admin_token() {
 
   let server = TestServer::with_auth(Some(Arc::new(AuthConfig {
     admin: Some(admin.public_key()),
-    audiences: vec!["filepack.example".into()],
+    audience: Some("filepack.example".into()),
   })));
 
   server
@@ -1294,7 +1293,7 @@ fn restricted_upload_rejects_missing_header() {
   let admin = PrivateKey::generate();
   let server = TestServer::with_auth(Some(Arc::new(AuthConfig {
     admin: Some(admin.public_key()),
-    audiences: vec!["filepack.example".into()],
+    audience: Some("filepack.example".into()),
   })));
 
   let hash = Hash::bytes(b"bar");
@@ -1313,7 +1312,7 @@ fn restricted_upload_rejects_others() {
   let other = PrivateKey::generate();
   let server = TestServer::with_auth(Some(Arc::new(AuthConfig {
     admin: Some(admin.public_key()),
-    audiences: vec!["filepack.example".into()],
+    audience: Some("filepack.example".into()),
   })));
 
   let hash = Hash::bytes(b"bar");
@@ -1464,7 +1463,7 @@ fn verify_directory_rejects_missing_auth_header() {
   let admin = PrivateKey::generate();
   let server = TestServer::with_auth(Some(Arc::new(AuthConfig {
     admin: Some(admin.public_key()),
-    audiences: vec!["filepack.example".into()],
+    audience: Some("filepack.example".into()),
   })));
 
   let hash = Hash::bytes(b"foo");
