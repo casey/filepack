@@ -1241,7 +1241,7 @@ fn ports() {
 }
 
 #[test]
-fn redirect_url_omits_default_ports() {
+fn redirect_omits_default_ports() {
   assert_eq!(
     Serve {
       domains: vec!["foo".into()],
