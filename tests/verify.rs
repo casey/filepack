@@ -827,3 +827,16 @@ fn with_manifest_path() {
     .stderr("successfully verified 1 file totaling 0 bytes\n")
     .success();
 }
+
+#[test]
+fn scratch_dir_with_only_ignored_contents() {
+  Test::new()
+    .write_manifest(
+      "manifest.filepack",
+      json! { embedded: {}, package: {}, signatures: [] },
+    )
+    .touch("foo/bar")
+    .args(["verify", "--ignore", "foo/bar", "."])
+    .stderr("error: extraneous directory not in manifest: `foo`\n")
+    .failure();
+}
