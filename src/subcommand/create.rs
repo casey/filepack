@@ -150,6 +150,7 @@ impl Create {
       let files = paths.keys().cloned().collect::<HashSet<RelativePath>>();
 
       metadata.check_files(&files)?;
+
       metadata.check_content(&root)?;
 
       if metadata.media.is_some() {
