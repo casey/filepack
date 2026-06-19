@@ -133,7 +133,7 @@ fn ignore_directory() {
     .touch("foo")
     .touch("bar/baz")
     .touch("bar/qux")
-    .args(["create", "--ignore", "bar", "."])
+    .args(["create", "--ignore", "bar"])
     .assert_manifest(
       "manifest.filepack",
       json_pretty! {
@@ -155,7 +155,7 @@ fn ignore_file() {
   Test::new()
     .touch("foo")
     .touch("bar")
-    .args(["create", "--ignore", "bar", "."])
+    .args(["create", "--ignore", "bar"])
     .assert_manifest(
       "manifest.filepack",
       json_pretty! {
@@ -170,7 +170,7 @@ fn ignore_file() {
       },
     )
     .success()
-    .args(["verify", "--ignore", "bar", "."])
+    .args(["verify", "--ignore", "bar"])
     .stderr("successfully verified 1 file totaling 0 bytes\n")
     .success();
 }
@@ -179,7 +179,7 @@ fn ignore_file() {
 fn ignore_file_leaves_empty_parent_directory() {
   Test::new()
     .touch("foo/bar")
-    .args(["create", "--ignore", "foo/bar", "."])
+    .args(["create", "--ignore", "foo/bar"])
     .assert_manifest(
       "manifest.filepack",
       json_pretty! {
@@ -192,7 +192,7 @@ fn ignore_file_leaves_empty_parent_directory() {
       },
     )
     .success()
-    .args(["verify", "--ignore", "foo/bar", "."])
+    .args(["verify", "--ignore", "foo/bar"])
     .stderr("successfully verified 0 files\n")
     .success();
 }
@@ -202,7 +202,7 @@ fn ignore_is_component_wise() {
   Test::new()
     .touch("foo")
     .touch("foobar")
-    .args(["create", "--ignore", "foo", "."])
+    .args(["create", "--ignore", "foo"])
     .assert_manifest(
       "manifest.filepack",
       json_pretty! {
@@ -225,28 +225,7 @@ fn ignore_multiple() {
     .touch("foo")
     .touch("bar")
     .touch("baz")
-    .args(["create", "--ignore", "bar", "--ignore", "baz", "."])
-    .assert_manifest(
-      "manifest.filepack",
-      json_pretty! {
-        embedded: {},
-        package: {
-          foo: {
-            hash: EMPTY_HASH,
-            size: 0
-          }
-        },
-        signatures: [],
-      },
-    )
-    .success();
-}
-
-#[test]
-fn ignore_nonexistent_is_accepted() {
-  Test::new()
-    .touch("foo")
-    .args(["create", "--ignore", "bar", "."])
+    .args(["create", "--ignore", "bar", "--ignore", "baz"])
     .assert_manifest(
       "manifest.filepack",
       json_pretty! {
