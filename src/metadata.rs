@@ -148,25 +148,30 @@ mod tests {
 
   #[test]
   fn check_content_rejects_invalid_readme_extension() {
-    #[track_caller]
-    fn case(metadata: Metadata) {
-      let (_tempdir, root) = tempdir();
+    let (_tempdir, root) = tempdir();
 
-      assert_eq!(
-        metadata.check_content(&root).unwrap_err().to_string(),
-        "readme `README.txt` must end in `.md`",
-      );
-    }
+    assert_eq!(
+      Metadata {
+        readme: Some("README.txt".parse().unwrap()),
+        ..default()
+      }
+      .check_content(&root)
+      .unwrap_err()
+      .to_string(),
+      "readme `README.txt` must end in `.md`",
+    );
 
-    case(Metadata {
-      readme: Some("README.txt".parse().unwrap()),
-      ..default()
-    });
-
-    case(Metadata {
-      package: Some(readme_package("README.txt")),
-      ..default()
-    });
+    assert_eq!(
+      Metadata {
+        package: Some(readme_package("README.txt")),
+        ..default()
+      }
+      .check_content(&root)
+      .unwrap_err()
+      .to_string(),
+      "readme `README.txt` must end in `.md`",
+    );
+    case();
   }
 
   #[test]
