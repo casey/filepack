@@ -68,7 +68,7 @@ impl Metadata {
     files: &HashSet<RelativePath>,
     empty: &[RelativePath],
   ) -> Result {
-    let entries = files
+    let present = files
       .iter()
       .cloned()
       .chain(empty.iter().cloned())
@@ -78,16 +78,16 @@ impl Metadata {
     allowed.insert(Self::YAML_FILENAME.parse().unwrap());
     allowed.insert(Self::CBOR_FILENAME.parse().unwrap());
 
-    let mut paths = entries
+    let mut extra = present
       .difference(&allowed)
       .cloned()
       .collect::<Vec<RelativePath>>();
 
-    paths.sort();
+    extra.sort();
 
     ensure! {
-      paths.is_empty(),
-      error::ExtraFiles { paths },
+      extra.is_empty(),
+      error::ExtraFiles { paths: extra },
     }
 
     Ok(())
