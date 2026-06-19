@@ -87,7 +87,6 @@ use {
     static_asset::StaticAsset,
     style::Style,
     subcommand::Subcommand,
-    tag::Tag,
     ticked::Ticked,
     token::Token,
     track::Track,
@@ -169,8 +168,7 @@ pub use self::{
   functions::install_default_crypto_provider, hash::Hash, language_error::LanguageError,
   major_type::MajorType, manifest::Manifest, map_encoder::MapEncoder, metadata::Metadata,
   private_key::PrivateKey, public_key::PublicKey, relative_path::RelativePath,
-  signature::Signature, sorted_set::SortedSet, statement::Statement, tag_error::TagError,
-  version::Version,
+  signature::Signature, sorted_set::SortedSet, statement::Statement, version::Version,
 };
 
 #[cfg(test)]
@@ -288,8 +286,6 @@ mod statement;
 mod static_asset;
 mod style;
 mod subcommand;
-mod tag;
-mod tag_error;
 pub mod templates;
 mod ticked;
 mod token;

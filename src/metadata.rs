@@ -190,14 +190,6 @@ mod tests {
       "
         title: Foo
         package:
-          creator_tag: foo
-      ",
-      r"package\.creator_tag: tags must match regex",
-    );
-    case(
-      "
-        title: Foo
-        package:
           date: not-a-date
       ",
       r"package\.date: input contains invalid characters",
@@ -293,7 +285,6 @@ mod tests {
       }),
       package: Some(Package {
         creator: Some("baz".parse().unwrap()),
-        creator_tag: Some("A0".parse().unwrap()),
         date: Some("2024-01-01".parse().unwrap()),
         description: Some("qux".into()),
         homepage: Some("http://example.com/foo".parse().unwrap()),
@@ -491,7 +482,6 @@ mod tests {
 
       let Package {
         creator,
-        creator_tag,
         date,
         description,
         homepage,
@@ -500,7 +490,6 @@ mod tests {
       } = package.unwrap();
 
       assert!(creator.is_some());
-      assert!(creator_tag.is_some());
       assert!(date.is_some());
       assert!(description.is_some());
       assert!(homepage.is_some());
@@ -550,7 +539,6 @@ mod tests {
   fn nfo_package(nfo: &str) -> Package {
     Package {
       creator: None,
-      creator_tag: None,
       date: None,
       description: None,
       homepage: None,
