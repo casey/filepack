@@ -74,12 +74,15 @@ impl Metadata {
       .chain(empty.iter().cloned())
       .collect::<HashSet<RelativePath>>();
 
-    let mut allowed = self.files().into_iter().collect::<HashSet<RelativePath>>();
-    allowed.insert(Self::YAML_FILENAME.parse().unwrap());
-    allowed.insert(Self::CBOR_FILENAME.parse().unwrap());
+    let referenced = self
+      .files()
+      .into_iter()
+      .chain(iter::once(Self::YAML_FILENAME.parse().unwrap()))
+      .chain(iter::once(Self::CBOR_FILENAME.parse().unwrap()))
+      .collect::<HashSet<RelativePath>>();
 
     let mut extra = present
-      .difference(&allowed)
+      .difference(&referenced)
       .cloned()
       .collect::<Vec<RelativePath>>();
 
