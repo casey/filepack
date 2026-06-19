@@ -128,7 +128,7 @@ media:
     .arg("create")
     .stderr(
       "\
-error: files not referenced in metadata:
+error: found 2 extra files not referenced in metadata
        ├─ `bar.txt`
        └─ `empty`
 ",

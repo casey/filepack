@@ -165,7 +165,7 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     count: usize,
   },
-  #[snafu(display("files not referenced in metadata:{}", format_extras(paths)))]
+  #[snafu(display("found {} not referenced in metadata", Count(paths.len(), "extra file")))]
   ExtraFiles {
     backtrace: Option<Backtrace>,
     paths: Vec<RelativePath>,
@@ -492,6 +492,18 @@ pub enum Error {
   },
 }
 
+impl Error {
+  pub(crate) fn causes<'a>(&'a self) -> Vec<Cause<'a>> {
+    match self {
+      Self::ExtraFiles {
+        backtrace: _,
+        paths,
+      } => paths.iter().map(Cause::Path).collect(),
+      _ => self.iter_chain().skip(1).map(Cause::Error).collect(),
+    }
+  }
+}
+
 impl From<redb::CommitError> for Error {
   fn from(source: redb::CommitError) -> Self {
     DatabaseCommit {}.into_error(source)
@@ -520,17 +532,4 @@ impl From<walkdir::Error> for Error {
   fn from(source: walkdir::Error) -> Self {
     WalkDir {}.into_error(source)
   }
-}
-
-fn format_extras(paths: &[RelativePath]) -> String {
-  use std::fmt::Write;
-
-  let mut extras = String::new();
-
-  for (i, path) in paths.iter().enumerate() {
-    let branch = if i == paths.len() - 1 { '└' } else { '├' };
-    write!(extras, "\n       {branch}─ `{path}`").unwrap();
-  }
-
-  extras
 }

@@ -31,6 +31,7 @@ use {
     bech32_encoder::Bech32Encoder,
     bech32_error::Bech32Error,
     bech32_type::Bech32Type,
+    cause::Cause,
     cbor::Cbor,
     checked_url::CheckedUrl,
     component::Component,
@@ -206,6 +207,7 @@ mod bech32_decoder;
 mod bech32_encoder;
 mod bech32_error;
 mod bech32_type;
+mod cause;
 mod cbor;
 mod checked_url;
 mod component;
@@ -316,10 +318,12 @@ pub fn run() {
       err.style(style.message()),
     );
 
-    let causes = err.iter_chain().skip(1).count();
-
-    for (i, err) in err.iter_chain().skip(1).enumerate() {
-      eprintln!("       {}─ {err}", if i == causes - 1 { '└' } else { '├' });
+    let causes = err.causes();
+    for (i, cause) in causes.iter().enumerate() {
+      eprintln!(
+        "       {}─ {cause}",
+        if i == causes.len() - 1 { '└' } else { '├' }
+      );
     }
 
     if let Some(backtrace) = err.backtrace()
