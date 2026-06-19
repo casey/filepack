@@ -171,7 +171,6 @@ mod tests {
       .to_string(),
       "readme `README.txt` must end in `.md`",
     );
-    case();
   }
 
   #[test]
