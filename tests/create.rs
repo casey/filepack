@@ -176,6 +176,28 @@ fn ignore_file() {
 }
 
 #[test]
+fn ignore_file_leaves_empty_parent_directory() {
+  Test::new()
+    .touch("foo/bar")
+    .args(["create", "--ignore", "foo/bar", "."])
+    .assert_manifest(
+      "manifest.filepack",
+      json_pretty! {
+        embedded: {},
+        package: {
+          foo: {
+          },
+        },
+        signatures: [],
+      },
+    )
+    .success()
+    .args(["verify", "--ignore", "foo/bar", "."])
+    .stderr("successfully verified 0 files\n")
+    .success();
+}
+
+#[test]
 fn ignore_is_component_wise() {
   Test::new()
     .touch("foo")
