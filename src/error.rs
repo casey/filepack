@@ -165,6 +165,11 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     count: usize,
   },
+  #[snafu(display("found {} not referenced in metadata", Count(paths.len(), "extra file")))]
+  ExtraFiles {
+    backtrace: Option<Backtrace>,
+    paths: Vec<RelativePath>,
+  },
   #[snafu(display("extraneous directory not in manifest: `{path}`"))]
   ExtraneousDirectory {
     backtrace: Option<Backtrace>,
@@ -490,6 +495,18 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     source: walkdir::Error,
   },
+}
+
+impl Error {
+  pub(crate) fn causes(&self) -> Vec<Cause> {
+    match self {
+      Self::ExtraFiles {
+        backtrace: _,
+        paths,
+      } => paths.iter().map(Cause::Path).collect(),
+      _ => self.iter_chain().skip(1).map(Cause::Error).collect(),
+    }
+  }
 }
 
 impl From<redb::CommitError> for Error {

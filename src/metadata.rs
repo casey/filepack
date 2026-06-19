@@ -63,6 +63,39 @@ impl Metadata {
     Ok(())
   }
 
+  pub(crate) fn check_extras(
+    &self,
+    files: &HashSet<RelativePath>,
+    empty: &[RelativePath],
+  ) -> Result {
+    let present = files
+      .iter()
+      .cloned()
+      .chain(empty.iter().cloned())
+      .collect::<HashSet<RelativePath>>();
+
+    let referenced = self
+      .files()
+      .into_iter()
+      .chain(iter::once(Self::YAML_FILENAME.parse().unwrap()))
+      .chain(iter::once(Self::CBOR_FILENAME.parse().unwrap()))
+      .collect::<HashSet<RelativePath>>();
+
+    let mut extra = present
+      .difference(&referenced)
+      .cloned()
+      .collect::<Vec<RelativePath>>();
+
+    extra.sort();
+
+    ensure! {
+      extra.is_empty(),
+      error::ExtraFiles { paths: extra },
+    }
+
+    Ok(())
+  }
+
   pub(crate) fn check_files(&self, paths: &HashSet<RelativePath>) -> Result {
     for filename in self.files() {
       ensure! {
