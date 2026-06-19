@@ -165,6 +165,11 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     count: usize,
   },
+  #[snafu(display("files not referenced in metadata:{}", format_extras(paths)))]
+  ExtraFiles {
+    backtrace: Option<Backtrace>,
+    paths: Vec<RelativePath>,
+  },
   #[snafu(display("extraneous directory not in manifest: `{path}`"))]
   ExtraneousDirectory {
     backtrace: Option<Backtrace>,
@@ -515,4 +520,17 @@ impl From<walkdir::Error> for Error {
   fn from(source: walkdir::Error) -> Self {
     WalkDir {}.into_error(source)
   }
+}
+
+fn format_extras(paths: &[RelativePath]) -> String {
+  use std::fmt::Write;
+
+  paths
+    .iter()
+    .enumerate()
+    .fold(String::new(), |mut result, (i, path)| {
+      let branch = if i < paths.len() - 1 { '├' } else { '└' };
+      write!(result, "\n       {branch}─ `{path}`").unwrap();
+      result
+    })
 }

@@ -147,8 +147,14 @@ impl Create {
       let metadata =
         Metadata::decode_from_slice(cbor).context(error::DecodeMetadataCbor { path })?;
 
-      metadata.check_files(&paths.keys().cloned().collect())?;
+      let files = paths.keys().cloned().collect::<HashSet<RelativePath>>();
+
+      metadata.check_files(&files)?;
       metadata.check_content(&root)?;
+
+      let mut entries = files;
+      entries.extend(empty.iter().cloned());
+      metadata.check_extras(&entries)?;
     }
 
     ensure! {

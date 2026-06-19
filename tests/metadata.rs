@@ -111,6 +111,32 @@ media:
 }
 
 #[test]
+fn create_rejects_extra_files_in_media_packages() {
+  Test::new()
+    .write("foo.flac", flac(&["TITLE=bar"]))
+    .write(
+      "metadata.yaml",
+      "\
+media:
+  type: audio
+  tracks:
+    - foo.flac
+",
+    )
+    .touch("bar.txt")
+    .create_dir("empty")
+    .arg("create")
+    .stderr(
+      "\
+error: files not referenced in metadata:
+       ├─ `bar.txt`
+       └─ `empty`
+",
+    )
+    .failure();
+}
+
+#[test]
 fn create_rejects_invalid_tracks() {
   Test::new()
     .write("foo.flac", "barbar")
