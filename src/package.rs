@@ -13,7 +13,7 @@ pub(crate) struct Package {
   #[n(3)]
   pub(crate) homepage: Option<CheckedUrl>,
   #[n(4)]
-  pub(crate) readme: Option<filename::Md>,
+  pub(crate) readme: Option<ComponentBuf>,
   #[n(5)]
   pub(crate) title: Option<ComponentBuf>,
 }

@@ -22,16 +22,27 @@ pub struct Metadata {
   #[n(7)]
   pub package: Option<Package>,
   #[n(8)]
-  pub readme: Option<filename::Md>,
+  pub readme: Option<ComponentBuf>,
   #[n(9)]
   pub title: Option<ComponentBuf>,
 }
 
 impl Metadata {
   pub(crate) const CBOR_FILENAME: &'static str = "metadata.filepack";
+  pub(crate) const README_EXTENSIONS: &[&str] = &["md"];
   pub(crate) const YAML_FILENAME: &'static str = "metadata.yaml";
 
   pub(crate) fn check_content(&self, root: &Utf8Path) -> Result {
+    if let Some(readme) = &self.readme {
+      Self::check_readme(readme)?;
+    }
+
+    if let Some(package) = &self.package
+      && let Some(readme) = &package.readme
+    {
+      Self::check_readme(readme)?;
+    }
+
     if let Some(artwork) = &self.artwork {
       let dimensions = artwork.check_content(root)?;
 
@@ -59,6 +70,20 @@ impl Metadata {
         paths.contains(&filename),
         error::MissingMetadataFile { filename },
       }
+    }
+
+    Ok(())
+  }
+
+  fn check_readme(readme: &ComponentBuf) -> Result {
+    ensure! {
+      readme
+        .extension()
+        .is_some_and(|extension| Self::README_EXTENSIONS.contains(&extension)),
+      error::ReadmeExtension {
+        extensions: Self::README_EXTENSIONS,
+        readme: readme.clone(),
+      },
     }
 
     Ok(())
@@ -124,6 +149,29 @@ mod tests {
     super::*,
     ::image::{DynamicImage, ImageFormat},
   };
+
+  #[test]
+  fn check_content_rejects_invalid_readme_extension() {
+    #[track_caller]
+    fn case(metadata: Metadata) {
+      let (_tempdir, root) = tempdir();
+
+      assert_eq!(
+        metadata.check_content(&root).unwrap_err().to_string(),
+        "readme `README.txt` must end in `.md`",
+      );
+    }
+
+    case(Metadata {
+      readme: Some("README.txt".parse().unwrap()),
+      ..default()
+    });
+
+    case(Metadata {
+      package: Some(readme_package("README.txt")),
+      ..default()
+    });
+  }
 
   #[test]
   fn deserialize_media_audio() {
@@ -208,21 +256,6 @@ mod tests {
         artwork: cover.svg
       ",
       "artwork: component must end in `.jpg` or `.png`",
-    );
-    case(
-      "
-        title: Foo
-        package:
-          readme: README.txt
-      ",
-      "readme: component must end in `.md`",
-    );
-    case(
-      "
-        title: Foo
-        readme: README.txt
-      ",
-      "readme: component must end in `.md`",
     );
     case(
       "
