@@ -29,7 +29,6 @@ pub struct Metadata {
 
 impl Metadata {
   pub(crate) const CBOR_FILENAME: &'static str = "metadata.filepack";
-  pub(crate) const README_EXTENSIONS: &[&str] = &["md"];
   pub(crate) const YAML_FILENAME: &'static str = "metadata.yaml";
 
   pub(crate) fn check_content(&self, root: &Utf8Path) -> Result {
@@ -77,11 +76,8 @@ impl Metadata {
 
   fn check_readme(readme: &ComponentBuf) -> Result {
     ensure! {
-      readme
-        .extension()
-        .is_some_and(|extension| Self::README_EXTENSIONS.contains(&extension)),
+      readme.extension().is_some_and(|extension| extension == "md"),
       error::ReadmeExtension {
-        extensions: Self::README_EXTENSIONS,
         readme: readme.clone(),
       },
     }
