@@ -52,6 +52,10 @@ impl Child {
     }
   }
 
+  pub(crate) fn port(&self) -> u16 {
+    self.port.unwrap()
+  }
+
   #[track_caller]
   pub(crate) fn success(mut self) -> Test {
     let (child, test) = self.take();

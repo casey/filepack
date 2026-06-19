@@ -72,6 +72,25 @@ fn redirect_alias() {
     "http://foo:0/baz?qux=quux",
   );
 
+  let client = reqwest::blocking::Client::builder()
+    .http2_prior_knowledge()
+    .redirect(reqwest::redirect::Policy::none())
+    .resolve(
+      "bar",
+      format!("127.0.0.1:{}", server.port()).parse().unwrap(),
+    )
+    .build()
+    .unwrap();
+
+  let response = client.get("http://bar/baz?qux=quux").send().unwrap();
+
+  assert_eq!(response.version(), Version::HTTP_2);
+  assert_eq!(response.status(), StatusCode::PERMANENT_REDIRECT);
+  assert_eq!(
+    response.headers()[reqwest::header::LOCATION],
+    "http://foo:0/baz?qux=quux",
+  );
+
   let response = client
     .get(format!("{address}/"))
     .header(reqwest::header::HOST, "foo")

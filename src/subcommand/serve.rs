@@ -330,8 +330,14 @@ impl Serve {
     request: Request,
     next: Next,
   ) -> Response {
-    if let Some(TypedHeader(host)) = host
-      && redirect_config.domains.contains(host.hostname())
+    if let Some(host) = request
+      .uri()
+      .host()
+      .or(host.as_ref().map(|TypedHeader(host)| host.hostname()))
+      && redirect_config
+        .domains
+        .iter()
+        .any(|domain| domain.eq_ignore_ascii_case(host))
     {
       let mut destination = redirect_config.destination.clone();
 
