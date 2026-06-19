@@ -672,7 +672,7 @@ fn verify_checks_metadata() {
     .arg("create")
     .success();
 
-  let cbor = fs::read(test.path().join("metadata.filepack")).unwrap();
+  let cbor = fs::read(test.path().join("metadata.filemeta")).unwrap();
 
   let hash = blake3::hash(&cbor).to_string();
 
@@ -684,7 +684,7 @@ fn verify_checks_metadata() {
       json! {
         embedded: {},
         package: {
-          "metadata.filepack": {
+          "metadata.filemeta": {
             hash: hash,
             size: 17,
           }

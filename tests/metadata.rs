@@ -166,7 +166,7 @@ fn create_uses_existing_metadata_cbor() {
     .args(["create", "--force"])
     .success();
 
-  let cbor = fs::read(test.path().join("metadata.filepack")).unwrap();
+  let cbor = fs::read(test.path().join("metadata.filemeta")).unwrap();
 
   let manifest = Manifest::load(Some(&test.path().join("manifest.filepack"))).unwrap();
 
@@ -223,9 +223,9 @@ fn image(width: u32, height: u32, image_format: ImageFormat) -> Vec<u8> {
 fn metadata_cbor_already_exists() {
   Test::new()
     .write("metadata.yaml", "title: Foo")
-    .touch("metadata.filepack")
+    .touch("metadata.filemeta")
     .arg("create")
-    .stderr_regex("error: metadata `.*metadata.filepack` already exists\n")
+    .stderr_regex("error: metadata `.*metadata.filemeta` already exists\n")
     .failure();
 }
 
@@ -233,7 +233,7 @@ fn metadata_cbor_already_exists() {
 fn metadata_cbor_force() {
   Test::new()
     .write("metadata.yaml", "title: Foo")
-    .touch("metadata.filepack")
+    .touch("metadata.filemeta")
     .args(["create", "--force"])
     .success()
     .arg("verify")
@@ -301,7 +301,7 @@ fn metadata_subcommand_path_is_file() {
     .write("pkg/metadata.yaml", "title: Foo")
     .args(["create", "pkg"])
     .success()
-    .args(["metadata", "pkg/metadata.filepack"])
+    .args(["metadata", "pkg/metadata.filemeta"])
     .stdout(
       r#"{
   "title": "Foo"

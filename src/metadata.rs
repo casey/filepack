@@ -28,7 +28,7 @@ pub struct Metadata {
 }
 
 impl Metadata {
-  pub(crate) const CBOR_FILENAME: &'static str = "metadata.filepack";
+  pub(crate) const CBOR_FILENAME: &'static str = "metadata.filemeta";
   pub(crate) const YAML_FILENAME: &'static str = "metadata.yaml";
 
   pub(crate) fn check_content(&self, root: &Utf8Path) -> Result {

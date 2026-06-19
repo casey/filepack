@@ -8,14 +8,14 @@ fn download_checks_metadata() {
     .arg("create")
     .success();
 
-  let metadata = fs::read(test.path().join("metadata.filepack")).unwrap();
+  let metadata = fs::read(test.path().join("metadata.filemeta")).unwrap();
 
   let metadata_hash = Hash::bytes(&metadata);
 
   let directory = Directory {
     version: Version::Zero,
     entries: BTreeMap::from([(
-      "metadata.filepack".parse::<ComponentBuf>().unwrap(),
+      "metadata.filemeta".parse::<ComponentBuf>().unwrap(),
       Entry {
         ty: EntryType::File,
         hash: metadata_hash,

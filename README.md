@@ -229,7 +229,7 @@ hex-encoded file contents. The `package` object only includes file names,
 hashes, and sizes, but files may be embedded in the manifest archive in the
 `embedded` map.
 
-This is currently only used to embed `metadata.filepack`.
+This is currently only used to embed `metadata.filemeta`.
 
 ### `package`
 
@@ -294,19 +294,19 @@ BLAKE3 file hashes are 64-character lowercase hexadecimal.
 Metadata
 --------
 
-Filepack packages may contain a file named `metadata.filepack` describing the
-package and its contents. If present, `metadata.filepack` is also embedded in
+Filepack packages may contain a file named `metadata.filemeta` describing the
+package and its contents. If present, `metadata.filemeta` is also embedded in
 the `manifest.filepack` archive.
 
 Metadata is authored by creating a file named `metadata.yaml` in the root of a
 new package. `filepack create` then loads `metadata.yaml` if present, checks
 for validity and unknown fields, and writes the CBOR serialization to
-`metadata.filepack` in the package root.
+`metadata.filemeta` in the package root.
 
 `metadata.yaml` is retained as a human-readable reference and for amending
-metadata, but `metadata.filepack` is the authoritative source of metadata. For
+metadata, but `metadata.filemeta` is the authoritative source of metadata. For
 consumption by scripts and tools, `filepack metadata` prints the contents of
-`metadata.filepack` as JSON.
+`metadata.filemeta` as JSON.
 
 Filepack metadata is intended to be a broadly useful machine and human readable
 description of the contents of a package, covering personal, distribution, and
@@ -555,7 +555,7 @@ Then, to create the package:
 filepack create [DIRECTORY]
 ```
 
-Which will validate metadata if present and write it to `metadata.filepack`, as
+Which will validate metadata if present and write it to `metadata.filemeta`, as
 well as include it in `manifest.filepack`.
 
 See [metadata](#metadata) for the full schema.
@@ -876,7 +876,7 @@ content.
 Filepack seeks to rectify this by standardizing machine-readable metadata that
 can be included with folder-of-files content.
 
-Filepack metadata is stored a file, `metadata.filepack`, in the root of a
+Filepack metadata is stored a file, `metadata.filemeta`, in the root of a
 filepack package as well as in the `manifest.filepack` archive, and contains
 information related to what the package contains, which files in the package
 contain the package content and their file formats, and who created the

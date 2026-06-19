@@ -6,7 +6,7 @@ pub(crate) struct Metadata {
   format: Format,
   #[arg(
     help = "Load CBOR metadata from <PATH>. May be path to metadata, to directory containing named \
-    `metadata.filepack`, or omitted, in which case metadata named `metadata.filepack` in the \
+    `metadata.filemeta`, or omitted, in which case metadata named `metadata.filemeta` in the \
     current directory is loaded."
   )]
   path: Option<Utf8PathBuf>,
