@@ -120,6 +120,54 @@ error: 1 mismatched file
 }
 
 #[test]
+fn ignore_directory_containing_package_file_error() {
+  Test::new()
+    .touch("foo/bar")
+    .args(["create"])
+    .success()
+    .args(["verify", "--ignore", "foo"])
+    .stderr("error: ignored path `foo` is included in package\n")
+    .failure();
+}
+
+#[test]
+fn ignore_extraneous_directory() {
+  Test::new()
+    .args(["create"])
+    .success()
+    .create_dir("foo")
+    .args(["verify", "--ignore", "foo"])
+    .stderr("successfully verified 0 files\n")
+    .success();
+}
+
+#[test]
+fn ignore_extraneous_file() {
+  Test::new()
+    .write_manifest(
+      "manifest.filepack",
+      json! { embedded: {}, package: {}, signatures: [] },
+    )
+    .touch("foo")
+    .args(["verify", "--ignore", "foo"])
+    .stderr("successfully verified 0 files\n")
+    .success();
+}
+
+#[test]
+fn ignore_file_does_not_suppress_parent_directory() {
+  Test::new()
+    .write_manifest(
+      "manifest.filepack",
+      json! { embedded: {}, package: {}, signatures: [] },
+    )
+    .touch("foo/bar")
+    .args(["verify", "--ignore", "foo/bar"])
+    .stderr("error: extraneous directory not in manifest: `foo`\n")
+    .failure();
+}
+
+#[test]
 fn ignore_missing() {
   Test::new()
     .write_manifest(
@@ -141,6 +189,17 @@ fn ignore_missing() {
     .args(["verify", "--ignore-missing"])
     .stderr("successfully verified 0 files\n")
     .success();
+}
+
+#[test]
+fn ignore_path_in_package_error() {
+  Test::new()
+    .touch("foo")
+    .args(["create"])
+    .success()
+    .args(["verify", "--ignore", "foo"])
+    .stderr("error: ignored path `foo` is included in package\n")
+    .failure();
 }
 
 #[test]

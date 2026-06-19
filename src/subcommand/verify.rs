@@ -4,6 +4,8 @@ use super::*;
 pub(crate) struct Verify {
   #[arg(help = "Verify package fingerprint is <FINGERPRINT>", long)]
   fingerprint: Option<Fingerprint>,
+  #[arg(help = "Ignore <PATH>", long, value_name = "PATH")]
+  ignore: Vec<RelativePath>,
   #[arg(help = "Ignore missing files", long)]
   ignore_missing: bool,
   #[arg(
@@ -101,6 +103,15 @@ fingerprint mismatch: `{source}`
 
     let files = manifest.files();
 
+    let manifest_empty = manifest.empty_directories();
+
+    for ignore in &self.ignore {
+      ensure! {
+        !files.keys().chain(&manifest_empty).any(|path| path.starts_with(ignore)),
+        error::IgnoredPath { path: ignore.clone() },
+      }
+    }
+
     for (path, expected) in &files {
       let actual = match options.hash_file(&root.join(path)) {
         Err(err) if err.kind() == io::ErrorKind::NotFound => {
@@ -155,6 +166,10 @@ fingerprint mismatch: `{source}`
 
       let path = RelativePath::try_from(path).context(error::Path { path })?;
 
+      if self.ignore.iter().any(|ignore| path.starts_with(ignore)) {
+        continue;
+      }
+
       empty.pop_if(|dir| path.starts_with(dir));
 
       if entry.file_type().is_dir() {
@@ -167,8 +182,6 @@ fingerprint mismatch: `{source}`
         error::ExtraneousFile { path },
       }
     }
-
-    let manifest_empty = manifest.empty_directories();
 
     for path in &manifest_empty {
       ensure! {

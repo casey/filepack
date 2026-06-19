@@ -6,6 +6,8 @@ pub(crate) struct Create {
   deny: Option<LintGroup>,
   #[arg(help = "Overwrite manifest if it already exists", long)]
   force: bool,
+  #[arg(help = "Ignore <PATH>", long, value_name = "PATH")]
+  ignore: Vec<RelativePath>,
   #[arg(default_value_t = KeyName::DEFAULT, help = "Sign with <KEY>", long, requires = "sign")]
   key: KeyName,
   #[arg(
@@ -85,6 +87,18 @@ impl Create {
         continue;
       }
 
+      let relative = path.strip_prefix(&root).unwrap();
+
+      let relative = RelativePath::try_from(relative).context(error::Path { path: relative })?;
+
+      if self
+        .ignore
+        .iter()
+        .any(|ignore| relative.starts_with(ignore))
+      {
+        continue;
+      }
+
       ensure! {
         !entry.file_type().is_symlink(),
         error::Symlink { path },
@@ -92,31 +106,27 @@ impl Create {
 
       let metadata = filesystem::metadata(path)?;
 
-      let path = path.strip_prefix(&root).unwrap();
-
-      let path = RelativePath::try_from(path).context(error::Path { path })?;
-
-      if let Some(lint) = path.lint(&lints) {
-        eprintln!("error: path failed lint: `{path}`");
+      if let Some(lint) = relative.lint(&lints) {
+        eprintln!("error: path failed lint: `{relative}`");
         eprintln!("       └─ {lint}");
         lint_errors += 1;
       }
 
       if lints.contains(&Lint::CaseConflict) {
         case_conflicts
-          .entry(path.to_lowercase())
+          .entry(relative.to_lowercase())
           .or_default()
-          .push(path.clone());
+          .push(relative.clone());
       }
 
-      empty.pop_if(|dir| path.starts_with(dir));
+      empty.pop_if(|dir| relative.starts_with(dir));
 
       if entry.file_type().is_dir() {
-        empty.push(path);
+        empty.push(relative);
         continue;
       }
 
-      paths.insert(path, metadata.len());
+      paths.insert(relative, metadata.len());
     }
 
     for mut originals in case_conflicts.into_values() {

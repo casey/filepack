@@ -209,6 +209,11 @@ pub enum Error {
     hex: String,
     source: hex::FromHexError,
   },
+  #[snafu(display("ignored path `{path}` is included in package"))]
+  IgnoredPath {
+    backtrace: Option<Backtrace>,
+    path: RelativePath,
+  },
   #[snafu(display("failed to decode JPEG image `{path}`"))]
   ImageDecodeJpeg {
     backtrace: Option<Backtrace>,
