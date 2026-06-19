@@ -126,7 +126,7 @@ fn ignore_directory_containing_package_file_error() {
     .args(["create", "."])
     .success()
     .args(["verify", "--ignore", "foo", "."])
-    .stderr("error: ignored path `foo` is part of the package\n")
+    .stderr("error: ignored path `foo` is included in package\n")
     .failure();
 }
 
@@ -198,7 +198,7 @@ fn ignore_path_in_package_error() {
     .args(["create", "."])
     .success()
     .args(["verify", "--ignore", "foo", "."])
-    .stderr("error: ignored path `foo` is part of the package\n")
+    .stderr("error: ignored path `foo` is included in package\n")
     .failure();
 }
 
