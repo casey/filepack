@@ -152,9 +152,9 @@ impl Create {
       metadata.check_files(&files)?;
       metadata.check_content(&root)?;
 
-      let mut entries = files;
-      entries.extend(empty.iter().cloned());
-      metadata.check_extras(&entries)?;
+      if metadata.media.is_some() {
+        metadata.check_extras(&files, &empty)?;
+      }
     }
 
     ensure! {

@@ -525,12 +525,12 @@ impl From<walkdir::Error> for Error {
 fn format_extras(paths: &[RelativePath]) -> String {
   use std::fmt::Write;
 
-  paths
-    .iter()
-    .enumerate()
-    .fold(String::new(), |mut result, (i, path)| {
-      let branch = if i == paths.len() - 1 { '└' } else { '├' };
-      write!(result, "\n       {branch}─ `{path}`").unwrap();
-      result
-    })
+  let mut extras = String::new();
+
+  for (i, path) in paths.iter().enumerate() {
+    let branch = if i == paths.len() - 1 { '└' } else { '├' };
+    write!(extras, "\n       {branch}─ `{path}`").unwrap();
+  }
+
+  extras
 }

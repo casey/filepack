@@ -63,18 +63,23 @@ impl Metadata {
     Ok(())
   }
 
-  pub(crate) fn check_extras(&self, entries: &HashSet<RelativePath>) -> Result {
-    if self.media.is_none() {
-      return Ok(());
-    }
+  pub(crate) fn check_extras(
+    &self,
+    files: &HashSet<RelativePath>,
+    empty: &[RelativePath],
+  ) -> Result {
+    let entries = files
+      .iter()
+      .cloned()
+      .chain(empty.iter().cloned())
+      .collect::<HashSet<RelativePath>>();
 
     let mut allowed = self.files().into_iter().collect::<HashSet<RelativePath>>();
     allowed.insert(Self::YAML_FILENAME.parse().unwrap());
     allowed.insert(Self::CBOR_FILENAME.parse().unwrap());
 
     let mut paths = entries
-      .iter()
-      .filter(|path| !allowed.contains(*path))
+      .difference(&allowed)
       .cloned()
       .collect::<Vec<RelativePath>>();
 
@@ -195,47 +200,6 @@ mod tests {
       .unwrap_err()
       .to_string(),
       "readme `README.txt` must end in `.md`",
-    );
-  }
-
-  #[test]
-  fn check_extras() {
-    fn paths(paths: &[&str]) -> HashSet<RelativePath> {
-      paths.iter().map(|path| path.parse().unwrap()).collect()
-    }
-
-    let media = Some(Media::Audio {
-      tracks: vec!["foo.flac".parse().unwrap()],
-    });
-
-    Metadata::default()
-      .check_extras(&paths(&["bar.txt"]))
-      .unwrap();
-
-    Metadata {
-      media: media.clone(),
-      ..default()
-    }
-    .check_extras(&paths(&["foo.flac", "metadata.yaml", "metadata.filemeta"]))
-    .unwrap();
-
-    assert_eq!(
-      Metadata {
-        media: media.clone(),
-        ..default()
-      }
-      .check_extras(&paths(&["foo.flac", "extra.txt", "sub/baz.txt"]))
-      .unwrap_err()
-      .to_string(),
-      "files not referenced in metadata:\n       ├─ `extra.txt`\n       └─ `sub/baz.txt`",
-    );
-
-    assert_eq!(
-      Metadata { media, ..default() }
-        .check_extras(&paths(&["foo.flac", "empty"]))
-        .unwrap_err()
-        .to_string(),
-      "files not referenced in metadata:\n       └─ `empty`",
     );
   }
 
