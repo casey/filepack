@@ -361,6 +361,11 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
+  #[snafu(display("readme `{readme}` must end in `.md`",))]
+  ReadmeExtension {
+    backtrace: Option<Backtrace>,
+    readme: ComponentBuf,
+  },
   #[snafu(display("failed to write listening port to `{address}`"))]
   ReadyAddress {
     address: SocketAddr,

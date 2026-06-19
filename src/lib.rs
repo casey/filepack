@@ -135,7 +135,6 @@ use {
     fs::{self, Permissions},
     io::{self, IsTerminal, Seek, SeekFrom, Write},
     iter,
-    marker::PhantomData,
     net::SocketAddr,
     num::{NonZeroUsize, ParseIntError, TryFromIntError},
     ops::{Bound, Deref},
@@ -233,7 +232,6 @@ mod entry_type;
 mod envelope;
 mod error;
 mod file;
-mod filename;
 mod filesystem;
 mod fingerprint;
 mod format;
