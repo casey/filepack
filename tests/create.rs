@@ -143,7 +143,7 @@ fn metadata_cbor_is_embedded_in_manifest_archive() {
     .arg("create")
     .success();
 
-  let cbor = fs::read(test.path().join("metadata.filepack")).unwrap();
+  let cbor = fs::read(test.path().join("metadata.filemeta")).unwrap();
 
   let manifest = Manifest::load(Some(&test.path().join("manifest.filepack"))).unwrap();
 
@@ -523,7 +523,7 @@ fn with_metadata() {
     .arg("create")
     .success()
     .arg("manifest")
-    .stdout_regex(r#".*"metadata\.filepack".*"metadata\.yaml".*"#)
+    .stdout_regex(r#".*"metadata\.filemeta".*"metadata\.yaml".*"#)
     .success()
     .arg("verify")
     .stderr("successfully verified 3 files totaling 16 bytes\n")

@@ -39,7 +39,7 @@ fn embedded_preserved() {
           *hash: hex_content
         },
         package: {
-          "metadata.filepack": {
+          "metadata.filemeta": {
             hash: hash,
             size: 3
           }
@@ -55,7 +55,7 @@ fn embedded_preserved() {
         *hash: hex_content
       },
       package: {
-        "metadata.filepack": {
+        "metadata.filemeta": {
           hash: hash,
           size: 3
         }
