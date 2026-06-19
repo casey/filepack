@@ -529,7 +529,7 @@ fn format_extras(paths: &[RelativePath]) -> String {
     .iter()
     .enumerate()
     .fold(String::new(), |mut result, (i, path)| {
-      let branch = if i < paths.len() - 1 { '├' } else { '└' };
+      let branch = if i == paths.len() - 1 { '└' } else { '├' };
       write!(result, "\n       {branch}─ `{path}`").unwrap();
       result
     })

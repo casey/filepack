@@ -319,7 +319,7 @@ pub fn run() {
     let causes = err.iter_chain().skip(1).count();
 
     for (i, err) in err.iter_chain().skip(1).enumerate() {
-      eprintln!("       {}─ {err}", if i < causes - 1 { '├' } else { '└' });
+      eprintln!("       {}─ {err}", if i == causes - 1 { '└' } else { '├' });
     }
 
     if let Some(backtrace) = err.backtrace()
