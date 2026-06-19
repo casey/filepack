@@ -26,7 +26,7 @@ impl Track {
   }
 
   fn populate_flac(&mut self, path: &Utf8Path) -> Result {
-    let mut reader = FlacReader::open(path).context(error::TrackDecode { path })?;
+    let reader = FlacReader::open(path).context(error::TrackDecode { path })?;
 
     let title = {
       let mut titles = reader.get_tag("title");
@@ -49,17 +49,6 @@ impl Track {
         None
       }
     };
-
-    let mut blocks = reader.blocks();
-
-    let mut buffer = Vec::new();
-
-    while let Some(block) = blocks
-      .read_next_or_eof(buffer)
-      .context(error::TrackDecode { path })?
-    {
-      buffer = block.into_buffer();
-    }
 
     self.title = title;
 
