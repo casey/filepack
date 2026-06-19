@@ -14,7 +14,6 @@ macro_rules! filename {
 }
 
 filename! { Md, MdExtension, "md" }
-filename! { Nfo, NfoExtension, "nfo" }
 
 pub(crate) trait Extension {
   const EXTENSIONS: &[&str];
@@ -115,12 +114,6 @@ mod tests {
         extensions: &["md"],
       },
     );
-    case::<Nfo>(
-      "info.txt",
-      ComponentError::Extension {
-        extensions: &["nfo"],
-      },
-    );
     case::<Md>("", ComponentError::Empty);
     case::<Md>("foo/bar.md", ComponentError::Separator { character: '/' });
   }
@@ -133,6 +126,5 @@ mod tests {
     }
 
     case::<Md>("README.md");
-    case::<Nfo>("info.nfo");
   }
 }

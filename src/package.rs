@@ -13,7 +13,7 @@ pub(crate) struct Package {
   #[n(3)]
   pub(crate) homepage: Option<CheckedUrl>,
   #[n(4)]
-  pub(crate) nfo: Option<filename::Nfo>,
+  pub(crate) readme: Option<filename::Md>,
   #[n(5)]
   pub(crate) title: Option<ComponentBuf>,
 }
@@ -29,7 +29,7 @@ mod tests {
       date: Some("2024-01-01".parse().unwrap()),
       description: Some("bar".into()),
       homepage: Some("http://example.com".parse().unwrap()),
-      nfo: Some("info.nfo".parse().unwrap()),
+      readme: Some("README.md".parse().unwrap()),
       title: Some("foo-A0".parse().unwrap()),
     });
   }

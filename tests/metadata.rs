@@ -135,7 +135,6 @@ fn create_succeeds_with_valid_metadata() {
   Test::new()
     .touch("content")
     .write("cover.png", image(1, 1, ImageFormat::Png))
-    .touch("info.nfo")
     .touch("README.md")
     .write(
       "metadata.yaml",
@@ -146,13 +145,13 @@ language: en
 artwork: cover.png
 readme: README.md
 package:
-  nfo: info.nfo
+  readme: README.md
 ",
     )
     .arg("create")
     .success()
     .arg("verify")
-    .stderr("successfully verified 6 files totaling 241 bytes\n")
+    .stderr("successfully verified 5 files totaling 246 bytes\n")
     .success();
 }
 

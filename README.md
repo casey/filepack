@@ -359,7 +359,7 @@ Fields of `package` describing the package itself, as opposed its content:
 
 - `homepage: url`: Primary URL for the package.
 
-- `nfo: component.nfo`: The filename of the package nfo file.
+- `readme: component.md`: The filename of the package readme.
 
 - `title: component`: The package's title. May contain details related to the
   source, packager, or encoding. May to be used as a directory name when saving
@@ -415,7 +415,7 @@ package:
     First edition on loan from NYPL Main Branch research stacks. Captured via
     Microtek MS-300A flatbed scanner.
   homepage: https://ghost-busters.net/~egon
-  nfo: tobins.nfo
+  readme: tobins.md
 ```
 
 The `homepage` URLs are of course anachronistic, as the World Wide Web was
@@ -883,26 +883,6 @@ contain the package content and their file formats, and who created the
 package. This metadata can serve as a base for the creation of rich local and
 distributed applications and services, with user experiences that compete with
 and exceed those of closed centralized alternatives.
-
-Future Directions
------------------
-
-Ideas for future features include:
-
-- Deterministic multi-part RAR archive packing and unpacking
-
-- `.nfo` file generation from templates and metadata
-
-- Additional lints for complex naming conventions
-
-- Content-type specific metadata
-
-- Packages of packages
-
-- Chain packages where each package points to the previous package by the same
-  packager
-
-- Semantic signatures for package revocation, invalidation, or replacement
 
 Design
 ------
