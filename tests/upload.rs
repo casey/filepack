@@ -515,7 +515,7 @@ fn upload_package_serves_package_html() {
     PackageHtml {
       fingerprint,
       metadata: Some(Metadata {
-        description: Some("Bar".into()),
+        description: Some("Bar".parse().unwrap()),
         title: Some("Foo".parse().unwrap()),
         ..Metadata::default()
       }),

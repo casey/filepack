@@ -12,7 +12,7 @@ pub struct Metadata {
   #[n(2)]
   pub date: Option<DateTime>,
   #[n(3)]
-  pub description: Option<String>,
+  pub description: Option<Text>,
   #[n(4)]
   pub homepage: Option<CheckedUrl>,
   #[n(5)]
@@ -267,6 +267,21 @@ mod tests {
       ",
       r"component must end in `\.flac`",
     );
+    case(
+      "
+        title: Foo
+        description: \"foo\\tbar\"
+      ",
+      r"description: text may not contain control character `\\t`",
+    );
+    case(
+      "
+        title: Foo
+        package:
+          description: \"foo\\tbar\"
+      ",
+      r"package\.description: text may not contain control character `\\t`",
+    );
   }
 
   #[test]
@@ -306,7 +321,7 @@ mod tests {
       }),
       creator: Some("foo".parse().unwrap()),
       date: Some("2024".parse().unwrap()),
-      description: Some("bar".into()),
+      description: Some("bar".parse().unwrap()),
       homepage: Some("http://example.com".parse().unwrap()),
       language: Some("en".parse().unwrap()),
       media: Some(Media::Audio {
@@ -319,7 +334,7 @@ mod tests {
       package: Some(Package {
         creator: Some("baz".parse().unwrap()),
         date: Some("2024-01-01".parse().unwrap()),
-        description: Some("qux".into()),
+        description: Some("qux".parse().unwrap()),
         homepage: Some("http://example.com/foo".parse().unwrap()),
         readme: Some("README.md".parse().unwrap()),
         title: Some("foo-bar".parse().unwrap()),

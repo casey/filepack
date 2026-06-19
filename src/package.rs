@@ -9,7 +9,7 @@ pub(crate) struct Package {
   #[n(1)]
   pub(crate) date: Option<DateTime>,
   #[n(2)]
-  pub(crate) description: Option<String>,
+  pub(crate) description: Option<Text>,
   #[n(3)]
   pub(crate) homepage: Option<CheckedUrl>,
   #[n(4)]
@@ -27,7 +27,7 @@ mod tests {
     assert_encoding(Package {
       creator: Some("foo".parse().unwrap()),
       date: Some("2024-01-01".parse().unwrap()),
-      description: Some("bar".into()),
+      description: Some("bar".parse().unwrap()),
       homepage: Some("http://example.com".parse().unwrap()),
       readme: Some("README.md".parse().unwrap()),
       title: Some("foo-A0".parse().unwrap()),
