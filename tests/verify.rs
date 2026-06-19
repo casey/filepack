@@ -155,6 +155,19 @@ fn ignore_extraneous_file() {
 }
 
 #[test]
+fn ignore_file_does_not_suppress_parent_directory() {
+  Test::new()
+    .write_manifest(
+      "manifest.filepack",
+      json! { embedded: {}, package: {}, signatures: [] },
+    )
+    .touch("foo/bar")
+    .args(["verify", "--ignore", "foo/bar", "."])
+    .stderr("error: extraneous directory not in manifest: `foo`\n")
+    .failure();
+}
+
+#[test]
 fn ignore_missing() {
   Test::new()
     .write_manifest(
@@ -826,17 +839,4 @@ fn with_manifest_path() {
     .args(["verify", "--manifest", "hello.json"])
     .stderr("successfully verified 1 file totaling 0 bytes\n")
     .success();
-}
-
-#[test]
-fn scratch_dir_with_only_ignored_contents() {
-  Test::new()
-    .write_manifest(
-      "manifest.filepack",
-      json! { embedded: {}, package: {}, signatures: [] },
-    )
-    .touch("foo/bar")
-    .args(["verify", "--ignore", "foo/bar", "."])
-    .stderr("error: extraneous directory not in manifest: `foo`\n")
-    .failure();
 }
