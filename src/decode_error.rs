@@ -47,6 +47,8 @@ pub enum DecodeError {
   ReservedAdditionalInformation { value: u8 },
   #[snafu(display("size out of range"))]
   SizeRange { source: TryFromIntError },
+  #[snafu(display("failed to parse text"))]
+  Text { source: TextError },
   #[snafu(display("trailing bytes"))]
   TrailingBytes,
   #[snafu(display("truncated"))]
