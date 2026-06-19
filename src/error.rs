@@ -498,7 +498,7 @@ pub enum Error {
 }
 
 impl Error {
-  pub(crate) fn causes<'a>(&'a self) -> Vec<Cause<'a>> {
+  pub(crate) fn causes(&self) -> Vec<Cause> {
     match self {
       Self::ExtraFiles {
         backtrace: _,
