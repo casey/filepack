@@ -353,8 +353,6 @@ Fields of `package` describing the package itself, as opposed its content:
 
 - `creator: component`: The person or group who created the package.
 
-- `creator_tag: tag`: The tag of the person or group who created the package.
-
 - `date: date`: The date the package was created.
 
 - `description: markdown`: A description of the package.
@@ -385,9 +383,6 @@ Types:
 
 - `markdown`: A string containing CommonMark markdown.
 
-- `tag`: A string containing a tag, commonly an abbreviation of a release group
-  name. Must match the regular expression `[0-9A-Z]+(\.[0-9A-Z]+)*`.
-
 - `url`: A string containing a URL.
 
 Example dates:
@@ -415,7 +410,6 @@ readme: README.md
 package:
   title: Tobin's Spirit Guide - First Edition
   creator: Egon Spengler
-  creator_tag: ES
   date: 1984-07-08 19:32:00 -04:00
   description: >
     First edition on loan from NYPL Main Branch research stacks. Captured via
