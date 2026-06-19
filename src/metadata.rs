@@ -76,9 +76,9 @@ impl Metadata {
     }
 
     if let Some(package) = &self.package
-      && let Some(nfo) = &package.nfo
+      && let Some(readme) = &package.readme
     {
-      files.push(nfo.as_path());
+      files.push(readme.as_path());
     }
 
     if let Some(readme) = &self.readme {
@@ -213,9 +213,9 @@ mod tests {
       "
         title: Foo
         package:
-          nfo: info.txt
+          readme: README.txt
       ",
-      "nfo: component must end in `.nfo`",
+      "readme: component must end in `.md`",
     );
     case(
       "
@@ -288,7 +288,7 @@ mod tests {
         date: Some("2024-01-01".parse().unwrap()),
         description: Some("qux".into()),
         homepage: Some("http://example.com/foo".parse().unwrap()),
-        nfo: Some("info.nfo".parse().unwrap()),
+        readme: Some("README.md".parse().unwrap()),
         title: Some("foo-bar".parse().unwrap()),
       }),
       readme: Some("README.md".parse().unwrap()),
@@ -485,7 +485,7 @@ mod tests {
         date,
         description,
         homepage,
-        nfo,
+        readme,
         title,
       } = package.unwrap();
 
@@ -493,7 +493,7 @@ mod tests {
       assert!(date.is_some());
       assert!(description.is_some());
       assert!(homepage.is_some());
-      assert!(nfo.is_some());
+      assert!(readme.is_some());
       assert!(title.is_some());
     }
   }
@@ -529,20 +529,20 @@ mod tests {
 
     case(
       Metadata {
-        package: Some(nfo_package("info.nfo")),
+        package: Some(readme_package("README.md")),
         ..default()
       },
-      "info.nfo",
+      "README.md",
     );
   }
 
-  fn nfo_package(nfo: &str) -> Package {
+  fn readme_package(readme: &str) -> Package {
     Package {
       creator: None,
       date: None,
       description: None,
       homepage: None,
-      nfo: Some(nfo.parse().unwrap()),
+      readme: Some(readme.parse().unwrap()),
       title: None,
     }
   }
@@ -557,12 +557,12 @@ mod tests {
 
       let mut metadata = Metadata {
         artwork: Some(artwork.parse().unwrap()),
-        package: Some(nfo_package("info.nfo")),
+        package: Some(readme_package("README.md")),
         readme: Some("README.md".parse().unwrap()),
         ..default()
       };
 
-      let paths = [artwork, "info.nfo", "README.md"]
+      let paths = [artwork, "README.md"]
         .into_iter()
         .map(|path| path.parse::<RelativePath>().unwrap())
         .collect();
