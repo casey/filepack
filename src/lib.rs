@@ -46,6 +46,8 @@ use {
     directory_tree_entry::DirectoryTreeEntry,
     display_path::DisplayPath,
     display_secret::DisplaySecret,
+    domain::Domain,
+    domain_error::DomainError,
     entries::Entries,
     envelope::Envelope,
     file::File,
@@ -230,6 +232,8 @@ mod directory_tree;
 mod directory_tree_entry;
 mod display_path;
 mod display_secret;
+mod domain;
+mod domain_error;
 mod encode;
 mod encoder;
 mod entries;

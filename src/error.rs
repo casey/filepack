@@ -385,7 +385,7 @@ pub enum Error {
   #[snafu(display("redirect domain `{domain}` is the canonical domain"))]
   RedirectDomainCanonical {
     backtrace: Option<Backtrace>,
-    domain: String,
+    domain: Domain,
   },
   #[snafu(display("request failed"))]
   Request {

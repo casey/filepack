@@ -28,12 +28,12 @@ type PageResult<T> = ServerResult<PageHtml<T>>;
 
 pub(crate) struct AuthConfig {
   pub(crate) admin: Option<PublicKey>,
-  pub(crate) audience: Option<String>,
+  pub(crate) audience: Option<Domain>,
 }
 
 pub(crate) struct RedirectConfig {
   destination: Url,
-  domains: HashSet<String>,
+  domains: HashSet<Domain>,
 }
 
 impl RedirectConfig {
@@ -84,7 +84,7 @@ pub(crate) struct Serve {
     long,
     value_name = "DOMAIN"
   )]
-  domain: Option<String>,
+  domain: Option<Domain>,
   #[arg(help = "Serve HTTP traffic", long)]
   http: bool,
   #[arg(
@@ -117,7 +117,7 @@ pub(crate) struct Serve {
     requires = "domain",
     value_name = "DOMAIN"
   )]
-  redirects: Vec<String>,
+  redirects: Vec<Domain>,
   #[arg(help = "Restrict uploads to admin", long)]
   restrict_uploads: bool,
 }
@@ -169,8 +169,8 @@ impl Serve {
     Ok(block_in_place(|| server.artwork(*fingerprint))?.range(range))
   }
 
-  fn canonical(&self) -> &str {
-    self.domain.as_deref().unwrap()
+  fn canonical(&self) -> &Domain {
+    self.domain.as_ref().unwrap()
   }
 
   async fn directory(server: ServerExtension, Path(hash): Path<Hash>) -> PageResult<DirectoryHtml> {
@@ -183,8 +183,8 @@ impl Serve {
     )
   }
 
-  fn domains(&self) -> Vec<String> {
-    let mut domains = vec![self.canonical().to_string()];
+  fn domains(&self) -> Vec<Domain> {
+    let mut domains = vec![self.canonical().clone()];
     domains.extend(self.redirects.iter().cloned());
     domains
   }
@@ -336,7 +336,7 @@ impl Serve {
 
     for redirect in &self.redirects {
       ensure!(
-        redirect.as_str() != canonical,
+        redirect != canonical,
         error::RedirectDomainCanonical {
           domain: redirect.clone()
         },
@@ -366,7 +366,7 @@ impl Serve {
       && redirect_config
         .domains
         .iter()
-        .any(|domain| domain.eq_ignore_ascii_case(host))
+        .any(|domain| domain.equivalent(host))
     {
       Redirect::permanent(redirect_config.with_path_and_query(request.uri()).as_str())
         .into_response()
