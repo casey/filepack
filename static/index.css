@@ -17,6 +17,10 @@ html {
   font-family: sans-serif;
 }
 
+.size {
+  text-align: right;
+}
+
 #grid {
   display: grid;
   font-size: var(--size);
