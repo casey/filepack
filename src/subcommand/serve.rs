@@ -10,7 +10,8 @@ use {
   },
   axum_server::Handle,
   rustls_acme::{
-    AcmeConfig, acme::LETS_ENCRYPT_PRODUCTION_DIRECTORY, axum::AxumAcceptor, caches::DirCache,
+    AcmeConfig, EventOk, acme::LETS_ENCRYPT_PRODUCTION_DIRECTORY, axum::AxumAcceptor,
+    caches::DirCache,
   },
   std::net::TcpStream,
   templates::{DirectoryHtml, FilesHtml, PackageHtml, PackagesHtml, PageHtml},
@@ -133,8 +134,16 @@ impl Serve {
     tokio::spawn(async move {
       while let Some(result) = state.next().await {
         match result {
-          Ok(ok) => eprintln!("ACME event: {ok:?}"),
-          Err(err) => eprintln!("ACME error: {err:?}"),
+          Ok(event) => {
+            let event = match event {
+              EventOk::AccountCacheStore => "cached new account credentials",
+              EventOk::CertCacheStore => "cached new certificate",
+              EventOk::DeployedCachedCert => "deployed cached certifiacte",
+              EventOk::DeployedNewCert => "deployed new certifiacte",
+            };
+            log::info!("ACME event: {event}");
+          }
+          Err(err) => log::error!("ACME error: {err}"),
         }
       }
     });
