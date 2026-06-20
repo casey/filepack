@@ -138,8 +138,8 @@ impl Serve {
             let event = match event {
               EventOk::AccountCacheStore => "cached new account credentials",
               EventOk::CertCacheStore => "cached new certificate",
-              EventOk::DeployedCachedCert => "deployed cached certifiacte",
-              EventOk::DeployedNewCert => "deployed new certifiacte",
+              EventOk::DeployedCachedCert => "deployed cached certificate",
+              EventOk::DeployedNewCert => "deployed new certificate",
             };
             log::info!("ACME event: {event}");
           }
