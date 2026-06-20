@@ -6,15 +6,15 @@
   --width-target: calc(100vw / 6);
 }
 
+a {
+  color: #4169e1;
+  text-decoration: none;
+}
+
 html {
   background-color: black;
   color: white;
   font-family: sans-serif;
-}
-
-a {
-  color: #4169e1;
-  text-decoration: none;
 }
 
 #grid {
