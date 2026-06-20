@@ -66,6 +66,14 @@ pub(crate) struct Serve {
   )]
   acme_contact: Vec<String>,
   #[arg(
+    default_value = LETS_ENCRYPT_PRODUCTION_DIRECTORY,
+    env = "FILEPACK_ACME_DIRECTORY",
+    help = "Request ACME TLS certificates from <DIRECTORY>",
+    long,
+    value_name = "DIRECTORY"
+  )]
+  acme_directory: Url,
+  #[arg(
     default_value = "0.0.0.0",
     help = "Listen on <ADDRESS> for incoming requests",
     long
@@ -129,7 +137,7 @@ impl Serve {
     let config = AcmeConfig::new(self.domains())
       .contact(&self.acme_contact)
       .cache_option(Some(DirCache::new(acme_cache)))
-      .directory(LETS_ENCRYPT_PRODUCTION_DIRECTORY);
+      .directory(&self.acme_directory);
 
     let mut state = config.state();
 
@@ -676,6 +684,7 @@ impl Default for Serve {
     Self {
       acme_cache: None,
       acme_contact: Vec::new(),
+      acme_directory: LETS_ENCRYPT_PRODUCTION_DIRECTORY.parse().unwrap(),
       address: "0.0.0.0".into(),
       admin_key: None,
       domain: None,
