@@ -69,6 +69,16 @@ impl FromStr for Domain {
       return Err(DomainError::TooFewLabels);
     }
 
+    if s
+      .rsplit('.')
+      .next()
+      .unwrap()
+      .chars()
+      .all(|c| c.is_ascii_digit())
+    {
+      return Err(DomainError::NumericTld);
+    }
+
     Ok(Domain(s.to_owned()))
   }
 }
@@ -106,6 +116,8 @@ mod tests {
     }
 
     case("localhost", DomainError::TooFewLabels);
+    case("1.2.3.4", DomainError::NumericTld);
+    case("foo.123", DomainError::NumericTld);
     case("", DomainError::Empty);
     case("-example.com", DomainError::LeadingHyphen);
     case("example-.com", DomainError::TrailingHyphen);

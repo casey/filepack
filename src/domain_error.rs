@@ -15,6 +15,8 @@ pub enum DomainError {
   LeadingHyphen,
   #[snafu(display("domain length {len} exceeds 253 byte maximum"))]
   Length { len: usize },
+  #[snafu(display("domain top-level label may not be entirely numeric"))]
+  NumericTld,
   #[snafu(display("domain must have at least two labels"))]
   TooFewLabels,
   #[snafu(display("domain label may not end with hyphen"))]
