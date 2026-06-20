@@ -310,6 +310,8 @@ type ServerResult<T = (), E = ServerError> = std::result::Result<T, E>;
 type Result<T = (), E = Error> = std::result::Result<T, E>;
 
 pub fn run() {
+  env_logger::Builder::from_env(env_logger::Env::new().filter("FILEPACK_LOG")).init();
+
   if let Err(err) = Arguments::parse().run() {
     let style = Style::stderr();
     eprintln!(
