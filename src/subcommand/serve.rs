@@ -21,6 +21,7 @@ use {
 
 static THREAD_COUNTER: AtomicU64 = AtomicU64::new(0);
 
+type RedirectConfigExtension = Extension<Arc<RedirectConfig>>;
 type ServerExtension = Extension<Arc<Server>>;
 
 type PageResult<T> = ServerResult<PageHtml<T>>;
@@ -31,14 +32,23 @@ pub(crate) struct AuthConfig {
 }
 
 pub(crate) struct RedirectConfig {
-  destination: String,
+  destination: Url,
   domains: HashSet<String>,
+}
+
+impl RedirectConfig {
+  fn with_path_and_query(&self, uri: &Uri) -> Url {
+    let mut destination = self.destination.clone();
+    destination.set_path(uri.path());
+    destination.set_query(uri.query());
+    destination
+  }
 }
 
 enum SpawnConfig {
   Http,
   Https,
-  Redirect(String),
+  Redirect(Url),
 }
 
 #[derive(Debug, Parser, PartialEq)]
@@ -210,6 +220,23 @@ impl Serve {
     Ok(block_in_place(|| server.open_file(*hash))?.range(range))
   }
 
+  async fn file_with_name(
+    server: ServerExtension,
+    Path((hash, name)): Path<(Hash, ComponentBuf)>,
+    range: Option<TypedHeader<headers::Range>>,
+  ) -> ServerResult<Response> {
+    let Some(resource_type) = ResourceType::from_filename(&name) else {
+      return Ok(Redirect::temporary(&format!("/file/{hash}")).into_response());
+    };
+
+    Ok(
+      block_in_place(|| server.open_file(hash))?
+        .ty(resource_type)
+        .range(range)
+        .into_response(),
+    )
+  }
+
   async fn files(server: ServerExtension) -> PageResult<FilesHtml> {
     Ok(
       FilesHtml {
@@ -322,19 +349,12 @@ impl Serve {
     })))
   }
 
-  async fn redirect_http_to_https(
-    Extension(mut destination): Extension<String>,
-    uri: Uri,
-  ) -> Redirect {
-    if let Some(path_and_query) = uri.path_and_query() {
-      destination.push_str(path_and_query.as_str());
-    }
-
-    Redirect::permanent(&destination)
+  async fn redirect_http_to_https(redirect_config: RedirectConfigExtension, uri: Uri) -> Redirect {
+    Redirect::permanent(redirect_config.with_path_and_query(&uri).as_str())
   }
 
   async fn redirect_layer(
-    Extension(redirect_config): Extension<Arc<RedirectConfig>>,
+    redirect_config: RedirectConfigExtension,
     host: Option<TypedHeader<headers::Host>>,
     request: Request,
     next: Next,
@@ -348,35 +368,32 @@ impl Serve {
         .iter()
         .any(|domain| domain.eq_ignore_ascii_case(host))
     {
-      let mut destination = redirect_config.destination.clone();
-
-      if let Some(path_and_query) = request.uri().path_and_query() {
-        destination.push_str(path_and_query.as_str());
-      }
-
-      Redirect::permanent(&destination).into_response()
+      Redirect::permanent(redirect_config.with_path_and_query(request.uri()).as_str())
+        .into_response()
     } else {
       next.run(request).await
     }
   }
 
-  fn redirect_url(&self) -> String {
+  fn redirect_url(&self) -> Url {
     let domain = self.canonical();
 
     if let Some(port) = self.https_port() {
       if port == 443 {
-        format!("https://{domain}")
+        format!("https://{domain}/")
       } else {
-        format!("https://{domain}:{port}")
+        format!("https://{domain}:{port}/")
       }
     } else {
       let port = self.http_port().unwrap();
       if port == 80 {
-        format!("http://{domain}")
+        format!("http://{domain}/")
       } else {
-        format!("http://{domain}:{port}")
+        format!("http://{domain}:{port}/")
       }
     }
+    .parse()
+    .unwrap()
   }
 
   pub(crate) fn router(
@@ -393,6 +410,7 @@ impl Serve {
       )
       .route("/favicon.ico", get(Self::favicon))
       .route("/file/{hash}", get(Self::file).put(Self::upload_file))
+      .route("/file/{hash}/{name}", get(Self::file_with_name))
       .route("/files", get(Self::files))
       .route("/install.sh", get(Self::install_script))
       .route(
@@ -602,7 +620,10 @@ impl Serve {
       SpawnConfig::Redirect(destination) => {
         let router = Router::new()
           .fallback(Self::redirect_http_to_https)
-          .layer(Extension(destination))
+          .layer(Extension(Arc::new(RedirectConfig {
+            destination,
+            domains: HashSet::new(),
+          })))
           .layer(SetResponseHeaderLayer::overriding(
             header::X_CONTENT_TYPE_OPTIONS,
             HeaderValue::from_static("nosniff"),
