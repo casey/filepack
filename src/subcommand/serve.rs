@@ -36,6 +36,15 @@ pub(crate) struct RedirectConfig {
   domains: HashSet<String>,
 }
 
+impl RedirectConfig {
+  fn with_path_and_query(&self, uri: &Uri) -> Url {
+    let mut destination = self.destination.clone();
+    destination.set_path(uri.path());
+    destination.set_query(uri.query());
+    destination
+  }
+}
+
 enum SpawnConfig {
   Http,
   Https,
@@ -341,10 +350,7 @@ impl Serve {
   }
 
   async fn redirect_http_to_https(redirect_config: RedirectConfigExtension, uri: Uri) -> Redirect {
-    let mut destination = redirect_config.destination.clone();
-    destination.set_path(uri.path());
-    destination.set_query(uri.query());
-    Redirect::permanent(destination.as_str())
+    Redirect::permanent(redirect_config.with_path_and_query(&uri).as_str())
   }
 
   async fn redirect_layer(
@@ -362,10 +368,8 @@ impl Serve {
         .iter()
         .any(|domain| domain.eq_ignore_ascii_case(host))
     {
-      let mut destination = redirect_config.destination.clone();
-      destination.set_path(request.uri().path());
-      destination.set_query(request.uri().query());
-      Redirect::permanent(destination.as_str()).into_response()
+      Redirect::permanent(redirect_config.with_path_and_query(&request.uri()).as_str())
+        .into_response()
     } else {
       next.run(request).await
     }

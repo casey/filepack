@@ -33,5 +33,6 @@ mod tests {
   #[test]
   fn encoding() {
     assert_eq!("foo bar".percent_encode_segment().to_string(), "foo%20bar");
+    assert_eq!("foo/bar".percent_encode_segment().to_string(), "foo%2Fbar");
   }
 }
