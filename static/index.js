@@ -1,11 +1,11 @@
 function html([source]) {
-  const template = document.createElement('template');
+  let template = document.createElement('template');
   template.innerHTML = source;
   return template;
 }
 
 function css([source]) {
-  const sheet = new CSSStyleSheet();
+  let sheet = new CSSStyleSheet();
   sheet.replaceSync(source);
   return sheet;
 }
@@ -36,12 +36,12 @@ class PlayButton extends HTMLElement {
   constructor() {
     super();
 
-    const shadow = this.attachShadow({ mode: 'open' });
+    let shadow = this.attachShadow({ mode: 'open' });
     shadow.adoptedStyleSheets = [this.constructor.styles];
     shadow.append(this.constructor.template.content.cloneNode(true));
 
-    const audio = shadow.querySelector('audio');
-    const button = shadow.querySelector('button');
+    let audio = shadow.querySelector('audio');
+    let button = shadow.querySelector('button');
 
     button.addEventListener('click', () => {
       if (audio.paused) {
