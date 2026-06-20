@@ -6,6 +6,7 @@
     <title>{{ self.content.title() }}</title>
     <meta name=description content='Filepack package server'>
     <link href=/static/index.css rel=stylesheet>
+    <script type=module src=/static/index.js></script>
   </head>
   <body>
     {{ Trusted(&self.content) }}
