@@ -206,6 +206,13 @@ impl Test {
       command.env("FILEPACK_DATA_DIR", data_dir);
     }
 
+    if !self.env.contains_key("FILEPACK_ACME_DIRECTORY") {
+      command.env(
+        "FILEPACK_ACME_DIRECTORY",
+        rustls_acme::acme::LETS_ENCRYPT_STAGING_DIRECTORY,
+      );
+    }
+
     for (key, value) in &self.env {
       if let Some(value) = value {
         command.env(key, value);
