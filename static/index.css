@@ -22,11 +22,8 @@ html {
 }
 
 play-button:not(:defined) {
-  display: none;
-}
-
-play-button:defined ~ audio {
-  display: none;
+  display: inline-block;
+  content: '▶';
 }
 
 #grid {
