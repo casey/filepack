@@ -1187,6 +1187,7 @@ dependencies = [
  "mime",
  "num-traits",
  "owo-colors",
+ "percent-encoding",
  "png",
  "pretty_assertions",
  "rand 0.8.6",

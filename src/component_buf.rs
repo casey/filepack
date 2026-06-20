@@ -9,6 +9,12 @@ impl ComponentBuf {
   }
 }
 
+impl AsRef<str> for ComponentBuf {
+  fn as_ref(&self) -> &str {
+    self.0.as_ref()
+  }
+}
+
 impl AsRef<Utf8Path> for ComponentBuf {
   fn as_ref(&self) -> &Utf8Path {
     self.0.as_ref()

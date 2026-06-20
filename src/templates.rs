@@ -89,11 +89,27 @@ mod tests {
           },
         ),
         (
+          "baz.png".parse().unwrap(),
+          Entry {
+            ty: EntryType::File,
+            hash: Hash::bytes(b"baz"),
+            size: 1500,
+          },
+        ),
+        (
           "foo".parse().unwrap(),
           Entry {
             ty: EntryType::Directory,
             hash: Hash::bytes(b"foo"),
             size: 2_500_000,
+          },
+        ),
+        (
+          "qux quux.png".parse().unwrap(),
+          Entry {
+            ty: EntryType::File,
+            hash: Hash::bytes(b"qux"),
+            size: 1500,
           },
         ),
       ]),
@@ -121,8 +137,16 @@ mod tests {
                 <td class=size>1\.5 KiB</td>
               </tr>
               <tr>
+                <td><a href=/file/[[:xdigit:]]{64}/baz\.png>baz\.png</a></td>
+                <td class=size>1\.5 KiB</td>
+              </tr>
+              <tr>
                 <td><a href=/directory/[[:xdigit:]]{64}>foo/</a></td>
                 <td class=size>2\.4 MiB</td>
+              </tr>
+              <tr>
+                <td><a href=/file/[[:xdigit:]]{64}/qux%20quux\.png>qux quux\.png</a></td>
+                <td class=size>1\.5 KiB</td>
               </tr>
             </tbody>
           </table>

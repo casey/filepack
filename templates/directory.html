@@ -14,7 +14,11 @@
       <td><a href=/directory/{{ entry.hash }}>{{ name }}/</a></td>
 %%     }
 %%     EntryType::File => {
+%%       if ResourceType::from_filename(name).is_some() {
+      <td><a href=/file/{{ entry.hash }}/{{ name.percent_encode_segment() }}>{{ name }}</a></td>
+%%       } else {
       <td><a href=/file/{{ entry.hash }} download="{{ name }}">{{ name }}</a></td>
+%%       }
 %%     }
 %%   }
       <td class=size>{{ entry.formatted_size() }}</td>

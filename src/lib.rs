@@ -75,6 +75,7 @@ use {
     owo_colorize_ext::OwoColorizeExt,
     package::Package,
     path_error::PathError,
+    percent_encode::PercentEncode,
     private_key_error::PrivateKeyError,
     public_key_error::PublicKeyError,
     reqwest_response_ext::ReqwestResponseExt,
@@ -268,6 +269,7 @@ mod ordinal;
 mod owo_colorize_ext;
 mod package;
 mod path_error;
+mod percent_encode;
 mod private_key;
 mod private_key_error;
 mod progress_bar;

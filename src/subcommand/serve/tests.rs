@@ -503,6 +503,32 @@ fn favicon() {
 }
 
 #[test]
+fn file_with_name_inline() {
+  let server = TestServer::new();
+
+  server.write_file(b"foo");
+
+  server
+    .get(format!("/file/{}/bar.png", Hash::bytes(b"foo")))
+    .assert_header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
+    .assert_header(header::CONTENT_TYPE, "image/png")
+    .assert_header_absent(header::CONTENT_DISPOSITION)
+    .assert_body("foo")
+    .send();
+}
+
+#[test]
+fn file_with_name_redirect() {
+  let hash = Hash::bytes(b"foo");
+
+  TestServer::new()
+    .get(format!("/file/{hash}/bar.txt"))
+    .status(StatusCode::TEMPORARY_REDIRECT)
+    .assert_header(header::LOCATION, format!("/file/{hash}"))
+    .send();
+}
+
+#[test]
 fn files_empty() {
   TestServer::new()
     .get("/files")
@@ -1253,8 +1279,9 @@ fn redirect_omits_default_ports() {
       domain: Some("foo".into()),
       ..Serve::default()
     }
-    .redirect_url(),
-    "http://foo",
+    .redirect_url()
+    .as_str(),
+    "http://foo/",
   );
 
   assert_eq!(
@@ -1263,8 +1290,9 @@ fn redirect_omits_default_ports() {
       https: true,
       ..Serve::default()
     }
-    .redirect_url(),
-    "https://foo",
+    .redirect_url()
+    .as_str(),
+    "https://foo/",
   );
 }
 
