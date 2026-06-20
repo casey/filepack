@@ -368,7 +368,7 @@ impl Serve {
         .iter()
         .any(|domain| domain.eq_ignore_ascii_case(host))
     {
-      Redirect::permanent(redirect_config.with_path_and_query(&request.uri()).as_str())
+      Redirect::permanent(redirect_config.with_path_and_query(request.uri()).as_str())
         .into_response()
     } else {
       next.run(request).await
