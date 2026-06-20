@@ -70,3 +70,64 @@ impl<T: Page> From<T> for PageHtml<T> {
     PageHtml { content: page }
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn directory_listing() {
+    let directory = Directory {
+      version: Version::Zero,
+      entries: BTreeMap::from([
+        (
+          "bar".parse().unwrap(),
+          Entry {
+            ty: EntryType::File,
+            hash: Hash::bytes(b"bar"),
+            size: 1500,
+          },
+        ),
+        (
+          "foo".parse().unwrap(),
+          Entry {
+            ty: EntryType::Directory,
+            hash: Hash::bytes(b"foo"),
+            size: 2_500_000,
+          },
+        ),
+      ]),
+    };
+
+    assert_matches_regex!(
+      DirectoryHtml {
+        hash: Hash::bytes(b"baz"),
+        directory,
+      }
+      .to_string(),
+      unindent(
+        r#"
+          <h1>Directory [[:xdigit:]]{64}</h1>
+          <table>
+            <thead>
+              <tr>
+                <th>name</th>
+                <th class=size>size</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><a href=/file/[[:xdigit:]]{64} download="bar">bar</a></td>
+                <td class=size>1\.5 KiB</td>
+              </tr>
+              <tr>
+                <td><a href=/directory/[[:xdigit:]]{64}>foo/</a></td>
+                <td class=size>2\.4 MiB</td>
+              </tr>
+            </tbody>
+          </table>
+        "#,
+      ),
+    );
+  }
+}

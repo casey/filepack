@@ -112,6 +112,7 @@ use {
   claxon::FlacReader,
   filepack_cbor::{Decode, DecodeFromStr, Encode, EncodeDisplay},
   futures_util::StreamExt,
+  humansize::{BINARY, FormatSizeOptions, SizeFormatter},
   indicatif::{ProgressBar, ProgressStyle},
   lexiclean::Lexiclean,
   mime::Mime,

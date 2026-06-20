@@ -11,6 +11,12 @@ pub struct Entry {
   pub size: u64,
 }
 
+impl Entry {
+  pub fn formatted_size(&self) -> SizeFormatter<u64, FormatSizeOptions> {
+    SizeFormatter::new(self.size, FormatSizeOptions::from(BINARY).decimal_places(1))
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
