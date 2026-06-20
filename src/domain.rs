@@ -78,7 +78,13 @@ mod tests {
   use super::*;
 
   #[test]
-  fn parse() {
+  fn display() {
+    let d = "example.com".parse::<Domain>().unwrap();
+    assert_eq!(d.to_string(), "example.com");
+  }
+
+  #[test]
+  fn from_str() {
     #[track_caller]
     fn case(s: &str) {
       assert!(s.parse::<Domain>().is_ok());
@@ -93,16 +99,10 @@ mod tests {
   }
 
   #[test]
-  fn display() {
-    let d = "example.com".parse::<Domain>().unwrap();
-    assert_eq!(d.to_string(), "example.com");
-  }
-
-  #[test]
   fn parse_error() {
     #[track_caller]
     fn case(s: &str, expected: DomainError) {
-      assert_eq!(s.parse::<Domain>().unwrap_err(), expected)
+      assert_eq!(s.parse::<Domain>().unwrap_err(), expected);
     }
 
     case("localhost", DomainError::TooFewLabels);
