@@ -46,11 +46,30 @@ class PlayButton extends HTMLElement {
     let audio = shadow.querySelector('audio');
     let button = shadow.querySelector('button');
 
+    let context;
+    let gain;
+    const fade = 0.020;
+
     button.addEventListener('click', () => {
+      if (!context) {
+        context = new AudioContext();
+        gain = context.createGain();
+        context.createMediaElementSource(audio).connect(gain);
+        gain.connect(context.destination);
+      }
+      context.resume();
+
+      let now = context.currentTime;
+      gain.gain.cancelScheduledValues(now);
+
       if (audio.paused) {
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(1, now + fade);
         audio.play();
       } else {
-        audio.pause();
+        gain.gain.setValueAtTime(gain.gain.value, now);
+        gain.gain.linearRampToValueAtTime(0, now + fade);
+        setTimeout(() => audio.pause(), fade * 1000);
       }
     });
 
