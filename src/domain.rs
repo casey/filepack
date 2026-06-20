@@ -19,7 +19,7 @@ impl Domain {
 
     for c in label.chars() {
       if !(c.is_ascii_alphanumeric() || c == '-') {
-        return Err(DomainError::Character { c });
+        return Err(DomainError::InvalidCharacter { c });
       }
     }
 
@@ -112,8 +112,8 @@ mod tests {
     case("example..com", DomainError::EmptyLabel);
     case(".example.com", DomainError::EmptyLabel);
     case("example.com.", DomainError::EmptyLabel);
-    case("exa_mple.com", DomainError::Character { c: '_' });
-    case("münchen.de", DomainError::Character { c: 'ü' });
+    case("exa_mple.com", DomainError::InvalidCharacter { c: '_' });
+    case("münchen.de", DomainError::InvalidCharacter { c: 'ü' });
     case(
       &format!("{}.com", "a".repeat(64)),
       DomainError::LabelLength { len: 64 },
