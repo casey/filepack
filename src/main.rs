@@ -1,3 +1,3 @@
-fn main() {
-  filepack::run();
+fn main() -> std::process::ExitCode {
+  filepack::run()
 }

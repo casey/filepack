@@ -141,7 +141,8 @@ use {
     num::{NonZeroUsize, ParseIntError, TryFromIntError},
     ops::{Bound, Deref},
     path::{Path, PathBuf},
-    process, ptr,
+    process::{self, ExitCode},
+    ptr,
     str::{self, FromStr, Utf8Error},
     sync::{
       Arc, LazyLock,
@@ -309,39 +310,58 @@ const MIB: usize = KIB << 10;
 type ServerResult<T = (), E = ServerError> = std::result::Result<T, E>;
 type Result<T = (), E = Error> = std::result::Result<T, E>;
 
-#[cfg(target_os = "linux")]
-fn journald_layer() -> Option<tracing_journald::Layer> {
-  if std::env::var_os("JOURNAL_STREAM").is_some() {
-    tracing_journald::layer().ok()
-  } else {
-    None
+fn initialize_tracing() -> Result<(), Box<dyn std::error::Error>> {
+  use {
+    tracing::level_filters::LevelFilter,
+    tracing_subscriber::{
+      EnvFilter,
+      layer::{Identity, SubscriberExt},
+      util::SubscriberInitExt,
+    },
+  };
+
+  #[cfg(not(target_os = "linux"))]
+  use tracing_subscriber::layer::Identity;
+
+  #[cfg(target_os = "linux")]
+  fn journal_layer() -> Result<Option<tracing_journald::Layer>, Box<dyn std::error::Error>> {
+    if std::env::var_os("JOURNAL_STREAM").is_some_and(|value| !value.is_empty()) {
+      Ok(Some(tracing_journald::layer()?))
+    } else {
+      Ok(None)
+    }
   }
-}
 
-#[cfg(not(target_os = "linux"))]
-fn journald_layer() -> Option<tracing_subscriber::layer::Identity> {
-  None
-}
+  #[cfg(not(target_os = "linux"))]
+  fn journal_layer() -> Result<Option<Identity>, Box<dyn std::error::Error>> {
+    Ok(None)
+  }
 
-pub fn run() {
-  use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-
-  let filter = tracing_subscriber::EnvFilter::builder()
-    .with_default_directive(tracing::level_filters::LevelFilter::INFO.into())
+  let filter = EnvFilter::builder()
+    .with_default_directive(LevelFilter::ERROR.into())
     .with_env_var("FILEPACK_LOG")
-    .from_env_lossy();
+    .from_env()?;
 
-  let journald = journald_layer();
+  let journal = journal_layer()?;
 
-  let fmt = journald
+  let stderr = journal
     .is_none()
     .then(|| tracing_subscriber::fmt::layer().with_writer(io::stderr));
 
   tracing_subscriber::registry()
     .with(filter)
-    .with(journald)
-    .with(fmt)
-    .init();
+    .with(journal)
+    .with(stderr)
+    .try_init()?;
+
+  Ok(())
+}
+
+pub fn run() -> ExitCode {
+  if let Err(err) = initialize_tracing() {
+    eprintln!("failed to initialize tracing: {}", err);
+    return ExitCode::FAILURE;
+  }
 
   if let Err(err) = Arguments::parse().run() {
     let style = Style::stderr();
@@ -367,6 +387,8 @@ pub fn run() {
       eprintln!("{backtrace}");
     }
 
-    process::exit(1);
+    return ExitCode::FAILURE;
   }
+
+  ExitCode::SUCCESS
 }
