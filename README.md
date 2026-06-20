@@ -16,7 +16,7 @@
 
 <br>
 
-Filepack is a content-addressed package format.
+Filepack is a content-addressed package format with self-describing metadata.
 
 A package is a directory of files and a manifest containing their BLAKE3
 hashes. File and directory hashes form a Merkle tree whose root hash, the
