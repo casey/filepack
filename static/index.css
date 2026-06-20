@@ -21,22 +21,6 @@ html {
   text-align: right;
 }
 
-play-button {
-  button {
-    background: none;
-    border: none;
-    color: inherit;
-    cursor: pointer;
-    height: 1rem;
-    padding: 0;
-    width: 1rem;
-
-    &:hover {
-      text-shadow: 0 0 5px #fff;
-    }
-  }
-}
-
 #grid {
   display: grid;
   font-size: var(--size);

@@ -4,24 +4,44 @@ function html([source]) {
   return template;
 }
 
+function css([source]) {
+  const sheet = new CSSStyleSheet();
+  sheet.replaceSync(source);
+  return sheet;
+}
+
 class PlayButton extends HTMLElement {
+  static styles = css`
+    button {
+      background: none;
+      border: none;
+      color: inherit;
+      cursor: pointer;
+      height: 1rem;
+      padding: 0;
+      width: 1rem;
+    }
+
+    button:hover {
+      text-shadow: 0 0 5px #fff;
+    }
+  `;
+
   static template = html`<button>▶</button><audio></audio>`;
 
   static get observedAttributes() {
     return ['src'];
   }
 
-  connectedCallback() {
-    if (this.querySelector('button')) {
-      return;
-    }
+  constructor() {
+    super();
 
-    this.append(this.constructor.template.content.cloneNode(true));
+    const shadow = this.attachShadow({ mode: 'open' });
+    shadow.adoptedStyleSheets = [this.constructor.styles];
+    shadow.append(this.constructor.template.content.cloneNode(true));
 
-    const audio = this.querySelector('audio');
-    const button = this.querySelector('button');
-
-    audio.src = this.getAttribute('src');
+    const audio = shadow.querySelector('audio');
+    const button = shadow.querySelector('button');
 
     button.addEventListener('click', () => {
       if (audio.paused) {
@@ -46,10 +66,7 @@ class PlayButton extends HTMLElement {
     }
 
     if (name == 'src') {
-      const audio = this.querySelector('audio');
-      if (audio) {
-        audio.src = value;
-      }
+      this.shadowRoot.querySelector('audio').src = value;
     }
   }
 }
