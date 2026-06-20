@@ -309,8 +309,39 @@ const MIB: usize = KIB << 10;
 type ServerResult<T = (), E = ServerError> = std::result::Result<T, E>;
 type Result<T = (), E = Error> = std::result::Result<T, E>;
 
+#[cfg(target_os = "linux")]
+fn journald_layer() -> Option<tracing_journald::Layer> {
+  if std::env::var_os("JOURNAL_STREAM").is_some() {
+    tracing_journald::layer().ok()
+  } else {
+    None
+  }
+}
+
+#[cfg(not(target_os = "linux"))]
+fn journald_layer() -> Option<tracing_subscriber::layer::Identity> {
+  None
+}
+
 pub fn run() {
-  env_logger::Builder::from_env(env_logger::Env::new().filter("FILEPACK_LOG")).init();
+  use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+
+  let filter = tracing_subscriber::EnvFilter::builder()
+    .with_default_directive(tracing::level_filters::LevelFilter::INFO.into())
+    .with_env_var("FILEPACK_LOG")
+    .from_env_lossy();
+
+  let journald = journald_layer();
+
+  let fmt = journald
+    .is_none()
+    .then(|| tracing_subscriber::fmt::layer().with_writer(io::stderr));
+
+  tracing_subscriber::registry()
+    .with(filter)
+    .with(journald)
+    .with(fmt)
+    .init();
 
   if let Err(err) = Arguments::parse().run() {
     let style = Style::stderr();

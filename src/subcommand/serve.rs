@@ -141,9 +141,9 @@ impl Serve {
               EventOk::DeployedCachedCert => "deployed cached certificate",
               EventOk::DeployedNewCert => "deployed new certificate",
             };
-            log::info!("ACME event: {event}");
+            tracing::info!("ACME event: {event}");
           }
-          Err(err) => log::error!("ACME error: {err}"),
+          Err(err) => tracing::error!("ACME error: {err}"),
         }
       }
     });

@@ -27,7 +27,6 @@ claxon = "0.4.3"
 ctrlc = { version = "3.5.2", features = ["termination"] }
 dirs = "6.0.0"
 ed25519-dalek = { version = "2.1.1", features = ["pkcs8", "rand_core"] }
-env_logger = "0.11.10"
 filepack-cbor = { version = "0.0.0", path = "crates/filepack-cbor" }
 futures-util = { version = "0.3.32", default-features = false, features = ["std"] }
 hex = "0.4.3"
@@ -35,7 +34,6 @@ indicatif = "0.18.0"
 jsonwebtoken = "9"
 lexiclean = "0.0.1"
 libc = "0.2.186"
-log = "0.4.32"
 mime = "0.3.17"
 num-traits = "0.2.19"
 owo-colors = "4"
@@ -58,6 +56,8 @@ tempfile = "3.24.0"
 tokio = { version = "1.52.3", features = ["fs", "io-util", "macros", "rt-multi-thread"] }
 tokio-util = { version = "0.7.18", features = ["io"] }
 tower-http = { version = "0.6.11", features = ["set-header"] }
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 url = "2.5.8"
 usized = "0.0.2"
 walkdir = "2.5.0"
@@ -113,3 +113,6 @@ path = "tests/lib.rs"
 
 [target."cfg(windows)".dev-dependencies]
 windows-sys = { version = "0.61.2", features = ["Win32_System_Console", "Win32_System_Threading"] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+tracing-journald = "0.3.2"
