@@ -8,20 +8,17 @@
   </thead>
   <tbody>
 %% for (name, entry) in &self.directory.entries {
-%% match entry.ty {
-%%   EntryType::Directory => {
     <tr>
+%%   match entry.ty {
+%%     EntryType::Directory => {
       <td><a href=/directory/{{ entry.hash }}>{{ name }}/</a></td>
-      <td class=size>{{ entry.formatted_size() }}</td>
-    </tr>
-%%   }
-%%   EntryType::File => {
-    <tr>
+%%     }
+%%     EntryType::File => {
       <td><a href=/file/{{ entry.hash }} download="{{ name }}">{{ name }}</a></td>
+%%     }
+%%   }
       <td class=size>{{ entry.formatted_size() }}</td>
     </tr>
-%%   }
-%% }
 %% }
   </tbody>
 </table>
