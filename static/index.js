@@ -27,7 +27,10 @@ class PlayButton extends HTMLElement {
     }
   `;
 
-  static template = html`<button>▶</button><audio></audio>`;
+  static template = html`
+    <button>▶</button>
+    <audio></audio>
+  `;
 
   static get observedAttributes() {
     return ['src'];
