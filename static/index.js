@@ -1,41 +1,27 @@
-const style = new CSSStyleSheet()
-
-style.replaceSync(`
-button {
-  background: none;
-  border: none;
-  color: inherit;
-  cursor: pointer;
-  height: 1rem;
-  padding: 0;
-  width: 1rem;
+function html([source]) {
+  const template = document.createElement('template');
+  template.innerHTML = source;
+  return template;
 }
-
-button:hover {
-  text-shadow: 0 0 5px #fff;
-}
-`);
-
-const template = document.createElement('template')
-template.innerHTML = `
-  <button>▶</button>
-  <audio></audio>
-`;
 
 class PlayButton extends HTMLElement {
+  static template = html`<button>▶</button><audio></audio>`;
+
   static get observedAttributes() {
     return ['src'];
   }
 
-  constructor() {
-    super();
+  connectedCallback() {
+    if (this.querySelector('button')) {
+      return;
+    }
 
-    const shadow = this.attachShadow({ mode: 'open' });
-    shadow.adoptedStyleSheets = [style];
-    shadow.append(template.content.cloneNode(true));
+    this.append(this.constructor.template.content.cloneNode(true));
 
-    const audio = shadow.querySelector('audio');
-    const button = shadow.querySelector('button');
+    const audio = this.querySelector('audio');
+    const button = this.querySelector('button');
+
+    audio.src = this.getAttribute('src');
 
     button.addEventListener('click', () => {
       if (audio.paused) {
@@ -46,11 +32,11 @@ class PlayButton extends HTMLElement {
     });
 
     audio.addEventListener('play', () => {
-      button.textContent = '⏸'
+      button.textContent = '⏸';
     });
 
     audio.addEventListener('pause', () => {
-      button.textContent = '▶'
+      button.textContent = '▶';
     });
   }
 
@@ -60,7 +46,10 @@ class PlayButton extends HTMLElement {
     }
 
     if (name == 'src') {
-      this.shadowRoot.querySelector('audio').src = value;
+      const audio = this.querySelector('audio');
+      if (audio) {
+        audio.src = value;
+      }
     }
   }
 }
