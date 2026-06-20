@@ -28,12 +28,12 @@ type PageResult<T> = ServerResult<PageHtml<T>>;
 
 pub(crate) struct AuthConfig {
   pub(crate) admin: Option<PublicKey>,
-  pub(crate) audience: Option<String>,
+  pub(crate) audience: Option<Domain>,
 }
 
 pub(crate) struct RedirectConfig {
   destination: Url,
-  domains: HashSet<String>,
+  domains: HashSet<Domain>,
 }
 
 impl RedirectConfig {
@@ -66,6 +66,14 @@ pub(crate) struct Serve {
   )]
   acme_contact: Vec<String>,
   #[arg(
+    default_value = LETS_ENCRYPT_PRODUCTION_DIRECTORY,
+    env = "FILEPACK_ACME_DIRECTORY",
+    help = "Request ACME TLS certificates from <DIRECTORY>",
+    long,
+    value_name = "DIRECTORY"
+  )]
+  acme_directory: Url,
+  #[arg(
     default_value = "0.0.0.0",
     help = "Listen on <ADDRESS> for incoming requests",
     long
@@ -84,7 +92,7 @@ pub(crate) struct Serve {
     long,
     value_name = "DOMAIN"
   )]
-  domain: Option<String>,
+  domain: Option<Domain>,
   #[arg(help = "Serve HTTP traffic", long)]
   http: bool,
   #[arg(
@@ -117,7 +125,7 @@ pub(crate) struct Serve {
     requires = "domain",
     value_name = "DOMAIN"
   )]
-  redirects: Vec<String>,
+  redirects: Vec<Domain>,
   #[arg(help = "Restrict uploads to admin", long)]
   restrict_uploads: bool,
 }
@@ -129,7 +137,7 @@ impl Serve {
     let config = AcmeConfig::new(self.domains())
       .contact(&self.acme_contact)
       .cache_option(Some(DirCache::new(acme_cache)))
-      .directory(LETS_ENCRYPT_PRODUCTION_DIRECTORY);
+      .directory(&self.acme_directory);
 
     let mut state = config.state();
 
@@ -169,8 +177,8 @@ impl Serve {
     Ok(block_in_place(|| server.artwork(*fingerprint))?.range(range))
   }
 
-  fn canonical(&self) -> &str {
-    self.domain.as_deref().unwrap()
+  fn canonical(&self) -> &Domain {
+    self.domain.as_ref().unwrap()
   }
 
   async fn directory(server: ServerExtension, Path(hash): Path<Hash>) -> PageResult<DirectoryHtml> {
@@ -183,8 +191,8 @@ impl Serve {
     )
   }
 
-  fn domains(&self) -> Vec<String> {
-    let mut domains = vec![self.canonical().to_string()];
+  fn domains(&self) -> Vec<Domain> {
+    let mut domains = vec![self.canonical().clone()];
     domains.extend(self.redirects.iter().cloned());
     domains
   }
@@ -336,7 +344,7 @@ impl Serve {
 
     for redirect in &self.redirects {
       ensure!(
-        redirect.as_str() != canonical,
+        !redirect.is_equivalent(canonical),
         error::RedirectDomainCanonical {
           domain: redirect.clone()
         },
@@ -366,7 +374,7 @@ impl Serve {
       && redirect_config
         .domains
         .iter()
-        .any(|domain| domain.eq_ignore_ascii_case(host))
+        .any(|domain| domain.is_equivalent(host))
     {
       Redirect::permanent(redirect_config.with_path_and_query(request.uri()).as_str())
         .into_response()
@@ -676,6 +684,7 @@ impl Default for Serve {
     Self {
       acme_cache: None,
       acme_contact: Vec::new(),
+      acme_directory: LETS_ENCRYPT_PRODUCTION_DIRECTORY.parse().unwrap(),
       address: "0.0.0.0".into(),
       admin_key: None,
       domain: None,

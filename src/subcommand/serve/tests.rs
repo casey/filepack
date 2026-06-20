@@ -429,7 +429,7 @@ fn domain_required_for_canonical_domain_options() {
 
   case(&["--https"]);
   case(&["--https-port", "443"]);
-  case(&["--redirect", "bar"]);
+  case(&["--redirect", "bar.com"]);
   case(&["--redirect-http-to-https"]);
 }
 
@@ -437,12 +437,15 @@ fn domain_required_for_canonical_domain_options() {
 fn domains_include_redirects() {
   assert_eq!(
     Serve {
-      domain: Some("foo".into()),
-      redirects: vec!["bar".into()],
+      domain: Some("foo.com".parse::<Domain>().unwrap()),
+      redirects: vec!["bar.com".parse::<Domain>().unwrap()],
       ..Serve::default()
     }
     .domains(),
-    vec!["foo".to_string(), "bar".to_string()],
+    vec![
+      "foo.com".parse::<Domain>().unwrap(),
+      "bar.com".parse::<Domain>().unwrap()
+    ],
   );
 }
 
@@ -1276,23 +1279,23 @@ fn ports() {
 fn redirect_omits_default_ports() {
   assert_eq!(
     Serve {
-      domain: Some("foo".into()),
+      domain: Some("foo.com".parse::<Domain>().unwrap()),
       ..Serve::default()
     }
     .redirect_url()
     .as_str(),
-    "http://foo/",
+    "http://foo.com/",
   );
 
   assert_eq!(
     Serve {
-      domain: Some("foo".into()),
+      domain: Some("foo.com".parse::<Domain>().unwrap()),
       https: true,
       ..Serve::default()
     }
     .redirect_url()
     .as_str(),
-    "https://foo/",
+    "https://foo.com/",
   );
 }
 
@@ -1304,7 +1307,7 @@ fn restricted_upload_accepts_admin_token() {
 
   let server = TestServer::with_auth(Some(Arc::new(AuthConfig {
     admin: Some(admin.public_key()),
-    audience: Some("filepack.example".into()),
+    audience: Some("filepack.example".parse::<Domain>().unwrap()),
   })));
 
   server
@@ -1321,7 +1324,7 @@ fn restricted_upload_rejects_missing_header() {
   let admin = PrivateKey::generate();
   let server = TestServer::with_auth(Some(Arc::new(AuthConfig {
     admin: Some(admin.public_key()),
-    audience: Some("filepack.example".into()),
+    audience: Some("filepack.example".parse::<Domain>().unwrap()),
   })));
 
   let hash = Hash::bytes(b"bar");
@@ -1340,7 +1343,7 @@ fn restricted_upload_rejects_others() {
   let other = PrivateKey::generate();
   let server = TestServer::with_auth(Some(Arc::new(AuthConfig {
     admin: Some(admin.public_key()),
-    audience: Some("filepack.example".into()),
+    audience: Some("filepack.example".parse::<Domain>().unwrap()),
   })));
 
   let hash = Hash::bytes(b"bar");
@@ -1491,7 +1494,7 @@ fn verify_directory_rejects_missing_auth_header() {
   let admin = PrivateKey::generate();
   let server = TestServer::with_auth(Some(Arc::new(AuthConfig {
     admin: Some(admin.public_key()),
-    audience: Some("filepack.example".into()),
+    audience: Some("filepack.example".parse::<Domain>().unwrap()),
   })));
 
   let hash = Hash::bytes(b"foo");
