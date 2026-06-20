@@ -47,9 +47,9 @@ fn redirect_alias() {
       "--http-port",
       "0",
       "--domain",
-      "foo",
+      "foo.com",
       "--redirect",
-      "bar",
+      "bar.com",
     ])
     .spawn();
 
@@ -62,38 +62,38 @@ fn redirect_alias() {
 
   let response = client
     .get(format!("{address}/baz?qux=quux"))
-    .header(reqwest::header::HOST, "bar")
+    .header(reqwest::header::HOST, "bar.com")
     .send()
     .unwrap();
 
   assert_eq!(response.status(), StatusCode::PERMANENT_REDIRECT);
   assert_eq!(
     response.headers()[reqwest::header::LOCATION],
-    "http://foo:0/baz?qux=quux",
+    "http://foo.com:0/baz?qux=quux",
   );
 
   let client = reqwest::blocking::Client::builder()
     .http2_prior_knowledge()
     .redirect(reqwest::redirect::Policy::none())
     .resolve(
-      "bar",
+      "bar.com",
       format!("127.0.0.1:{}", server.port()).parse().unwrap(),
     )
     .build()
     .unwrap();
 
-  let response = client.get("http://bar/baz?qux=quux").send().unwrap();
+  let response = client.get("http://bar.com/baz?qux=quux").send().unwrap();
 
   assert_eq!(response.version(), Version::HTTP_2);
   assert_eq!(response.status(), StatusCode::PERMANENT_REDIRECT);
   assert_eq!(
     response.headers()[reqwest::header::LOCATION],
-    "http://foo:0/baz?qux=quux",
+    "http://foo.com:0/baz?qux=quux",
   );
 
   let response = client
     .get(format!("{address}/"))
-    .header(reqwest::header::HOST, "foo")
+    .header(reqwest::header::HOST, "foo.com")
     .send()
     .unwrap();
 
@@ -154,7 +154,7 @@ fn redirect_http_to_https() {
 #[test]
 fn redirect_rejects_canonical_domain() {
   Test::new()
-    .args(["serve", "--domain", "foo", "--redirect", "foo"])
-    .stderr("error: redirect domain `foo` is the canonical domain\n")
+    .args(["serve", "--domain", "foo.com", "--redirect", "foo.com"])
+    .stderr("error: redirect domain `foo.com` is the canonical domain\n")
     .failure();
 }
