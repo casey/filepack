@@ -11,12 +11,12 @@ pub enum DomainError {
   TooFewLabels,
   #[snafu(display("domain contains empty label"))]
   EmptyLabel,
-  #[snafu(display("label length {len} exceeds maximum of 63 bytes"))]
+  #[snafu(display("domain label length {len} exceeds maximum of 63 bytes"))]
   LabelLength { len: usize },
   #[snafu(display("invalid character {} in domain", c.escape_debug()))]
   Character { c: char },
-  #[snafu(display("label may not start with a hyphen"))]
+  #[snafu(display("domain label may not start with a hyphen"))]
   LeadingHyphen,
-  #[snafu(display("label may not end with a hyphen"))]
+  #[snafu(display("domain label may not end with a hyphen"))]
   TrailingHyphen,
 }
