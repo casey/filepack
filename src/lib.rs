@@ -313,11 +313,7 @@ type Result<T = (), E = Error> = std::result::Result<T, E>;
 fn initialize_tracing() -> Result<(), Box<dyn std::error::Error>> {
   use {
     tracing::level_filters::LevelFilter,
-    tracing_subscriber::{
-      EnvFilter,
-      layer::{Identity, SubscriberExt},
-      util::SubscriberInitExt,
-    },
+    tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt},
   };
 
   #[cfg(not(target_os = "linux"))]
@@ -333,6 +329,7 @@ fn initialize_tracing() -> Result<(), Box<dyn std::error::Error>> {
   }
 
   #[cfg(not(target_os = "linux"))]
+  #[allow(clippy::unnecessary_wraps)]
   fn journal_layer() -> Result<Option<Identity>, Box<dyn std::error::Error>> {
     Ok(None)
   }
@@ -359,7 +356,7 @@ fn initialize_tracing() -> Result<(), Box<dyn std::error::Error>> {
 
 pub fn run() -> ExitCode {
   if let Err(err) = initialize_tracing() {
-    eprintln!("failed to initialize tracing: {}", err);
+    eprintln!("failed to initialize tracing: {err}");
     return ExitCode::FAILURE;
   }
 
