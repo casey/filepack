@@ -68,7 +68,7 @@ class PlayButton extends HTMLElement {
       return;
     }
 
-    if (name == 'src') {
+    if (name === 'src') {
       this.shadowRoot.querySelector('audio').src = value;
     }
   }
