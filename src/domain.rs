@@ -4,8 +4,8 @@ use super::*;
 pub struct Domain(String);
 
 impl Domain {
-  pub(crate) fn equivalent(&self, other: &str) -> bool {
-    self.0.eq_ignore_ascii_case(other)
+  pub(crate) fn is_equivalent(&self, other: impl AsRef<str>) -> bool {
+    self.0.eq_ignore_ascii_case(other.as_ref())
   }
 
   fn validate_label(label: &str) -> Result<(), DomainError> {

@@ -33,7 +33,7 @@ impl<S: Send + Sync> FromRequestParts<S> for Authenticated {
 
     Token::verify(
       admin,
-      auth.audience.as_ref().map(|domain| domain.as_ref()),
+      auth.audience.as_ref().map(Domain::as_ref),
       bearer.token(),
     )?;
 

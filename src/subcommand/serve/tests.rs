@@ -1279,23 +1279,23 @@ fn ports() {
 fn redirect_omits_default_ports() {
   assert_eq!(
     Serve {
-      domain: Some("foo".parse::<Domain>().unwrap()),
+      domain: Some("foo.com".parse::<Domain>().unwrap()),
       ..Serve::default()
     }
     .redirect_url()
     .as_str(),
-    "http://foo/",
+    "http://foo.com/",
   );
 
   assert_eq!(
     Serve {
-      domain: Some("foo".parse::<Domain>().unwrap()),
+      domain: Some("foo.com".parse::<Domain>().unwrap()),
       https: true,
       ..Serve::default()
     }
     .redirect_url()
     .as_str(),
-    "https://foo/",
+    "https://foo.com/",
   );
 }
 

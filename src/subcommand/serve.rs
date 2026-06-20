@@ -336,7 +336,7 @@ impl Serve {
 
     for redirect in &self.redirects {
       ensure!(
-        redirect != canonical,
+        !redirect.is_equivalent(canonical),
         error::RedirectDomainCanonical {
           domain: redirect.clone()
         },
@@ -366,7 +366,7 @@ impl Serve {
       && redirect_config
         .domains
         .iter()
-        .any(|domain| domain.equivalent(host))
+        .any(|domain| domain.is_equivalent(host))
     {
       Redirect::permanent(redirect_config.with_path_and_query(request.uri()).as_str())
         .into_response()
