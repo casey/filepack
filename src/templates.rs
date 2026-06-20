@@ -76,7 +76,7 @@ mod tests {
   use super::*;
 
   #[test]
-  fn directory_listing() {
+  fn directory() {
     let directory = Directory {
       version: Version::Zero,
       entries: BTreeMap::from([
