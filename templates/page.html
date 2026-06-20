@@ -5,6 +5,7 @@
     <meta name=viewport content='width=device-width,initial-scale=1.0'>
     <title>{{ self.content.title() }}</title>
     <meta name=description content='Filepack package server'>
+    <link href=/static/index.css rel=stylesheet>
   </head>
   <body>
     {{ Trusted(&self.content) }}

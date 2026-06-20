@@ -6,37 +6,28 @@
   --width-target: calc(100vw / 6);
 }
 
-* {
-  margin: 0;
-  padding: 0;
-}
-
-a {
-  color: white;
-  text-decoration: none;
-}
-
-a:hover {
-  text-shadow: 0 0 5px #fff;
-}
-
 html {
   background-color: black;
   color: white;
   font-family: sans-serif;
-  font-size: var(--size);
-  line-height: var(--size);
-  overflow: hidden;
-  text-align: center;
+}
+
+a {
+  color: #4169e1;
+  text-decoration: none;
 }
 
 #grid {
   display: grid;
+  font-size: var(--size);
   grid-template-columns: repeat(4, 1fr);
+  line-height: var(--size);
   margin-bottom: var(--margin-vertical);
   margin-left: var(--margin-horizontal);
   margin-right: var(--margin-horizontal);
   margin-top: var(--margin-vertical);
+  overflow: hidden;
+  text-align: center;
 }
 
 #grid > * {
@@ -46,11 +37,16 @@ html {
 
 #grid > a {
   align-items: center;
+  color: white;
   display: flex;
   font-size: calc(var(--size) / 9);
   height: calc(var(--size) / 2);
   justify-content: center;
   line-height: calc(var(--size) / 9);
+}
+
+#grid > a:hover {
+  text-shadow: 0 0 5px #fff;
 }
 
 #grid > div {
