@@ -129,8 +129,6 @@ fn redirect_http_to_https() {
       "--redirect-http-to-https",
       "--domain",
       "foo.com",
-      "--acme-directory",
-      rustls_acme::acme::LETS_ENCRYPT_STAGING_DIRECTORY,
     ])
     .spawn();
 

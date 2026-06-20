@@ -67,6 +67,7 @@ pub(crate) struct Serve {
   acme_contact: Vec<String>,
   #[arg(
     default_value = LETS_ENCRYPT_PRODUCTION_DIRECTORY,
+    env = "FILEPACK_ACME_DIRECTORY",
     help = "Request ACME TLS certificates from <DIRECTORY>",
     long,
     value_name = "DIRECTORY"
