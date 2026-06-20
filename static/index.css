@@ -31,8 +31,8 @@ a {
 }
 
 #grid > * {
-  width: var(--size);
   height: var(--size);
+  width: var(--size);
 }
 
 #grid > a {
