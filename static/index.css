@@ -21,11 +21,6 @@ html {
   text-align: right;
 }
 
-play-button:not(:defined) {
-  display: inline-block;
-  content: '▶';
-}
-
 #grid {
   display: grid;
   font-size: var(--size);
