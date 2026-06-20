@@ -64,6 +64,7 @@
 <ul>
 %%         for (i, track) in tracks.iter().enumerate() {
   <li>
+    <play-button src=/media/audio/{{ self.fingerprint }}/track/{{ Ordinal(i) }}></play-button>
 %%           if let Some(title) = &track.title {
     {{ title }}
 %%           }

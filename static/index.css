@@ -21,6 +21,14 @@ html {
   text-align: right;
 }
 
+play-button:not(:defined) {
+  display: none;
+}
+
+play-button:defined ~ audio {
+  display: none;
+}
+
 #grid {
   display: grid;
   font-size: var(--size);
