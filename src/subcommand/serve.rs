@@ -19,6 +19,10 @@ use {
   tower_http::set_header::SetResponseHeaderLayer,
 };
 
+mod route;
+#[cfg(test)]
+mod tests;
+
 static THREAD_COUNTER: AtomicU64 = AtomicU64::new(0);
 
 type RedirectConfigExtension = Extension<Arc<RedirectConfig>>;
@@ -169,93 +173,14 @@ impl Serve {
     Ok(acceptor)
   }
 
-  async fn artwork(
-    server: ServerExtension,
-    fingerprint: Path<Fingerprint>,
-    range: Option<TypedHeader<headers::Range>>,
-  ) -> ServerResult<Resource> {
-    Ok(block_in_place(|| server.artwork(*fingerprint))?.range(range))
-  }
-
   fn canonical(&self) -> &str {
     self.domain.as_deref().unwrap()
-  }
-
-  async fn directory(server: ServerExtension, Path(hash): Path<Hash>) -> PageResult<DirectoryHtml> {
-    Ok(
-      DirectoryHtml {
-        directory: block_in_place(|| server.directory(hash))?,
-        hash,
-      }
-      .into(),
-    )
   }
 
   fn domains(&self) -> Vec<String> {
     let mut domains = vec![self.canonical().to_string()];
     domains.extend(self.redirects.iter().cloned());
     domains
-  }
-
-  async fn fallback(uri: Uri) -> ServerResult<Response> {
-    if let Some(component) = uri.path().strip_prefix('/')
-      && !component.contains('/')
-      && component.to_ascii_lowercase().starts_with("package1")
-    {
-      let fingerprint = component
-        .parse::<Fingerprint>()
-        .context(server_error::FingerprintParse)?;
-
-      return Ok(Redirect::permanent(&format!("/package/{fingerprint}")).into_response());
-    }
-
-    Ok(
-      StaticAsset::get("404.html")?
-        .status(StatusCode::NOT_FOUND)
-        .into_response(),
-    )
-  }
-
-  async fn favicon() -> ServerResult<StaticAsset> {
-    StaticAsset::get("favicon.png")
-  }
-
-  async fn file(
-    server: ServerExtension,
-    hash: Path<Hash>,
-    range: Option<TypedHeader<headers::Range>>,
-  ) -> ServerResult<Resource> {
-    Ok(block_in_place(|| server.open_file(*hash))?.range(range))
-  }
-
-  async fn file_with_name(
-    server: ServerExtension,
-    Path((hash, name)): Path<(Hash, ComponentBuf)>,
-    range: Option<TypedHeader<headers::Range>>,
-  ) -> ServerResult<Response> {
-    let Some(resource_type) = ResourceType::from_filename(&name) else {
-      return Ok(Redirect::temporary(&format!("/file/{hash}")).into_response());
-    };
-
-    Ok(
-      block_in_place(|| server.open_file(hash))?
-        .ty(resource_type)
-        .range(range)
-        .into_response(),
-    )
-  }
-
-  async fn files(server: ServerExtension) -> PageResult<FilesHtml> {
-    Ok(
-      FilesHtml {
-        files: block_in_place(|| server.files())?,
-      }
-      .into(),
-    )
-  }
-
-  async fn home() -> ServerResult<StaticAsset> {
-    StaticAsset::get("index.html")
   }
 
   fn http_port(&self) -> Option<u16> {
@@ -276,63 +201,6 @@ impl Serve {
     } else {
       None
     }
-  }
-
-  async fn install_script() -> ServerResult<StaticAsset> {
-    StaticAsset::get("install.sh")
-  }
-
-  async fn media_audio_track(
-    server: ServerExtension,
-    Path((fingerprint, Ordinal(track))): Path<(Fingerprint, Ordinal)>,
-    range: Option<TypedHeader<headers::Range>>,
-  ) -> ServerResult<Resource> {
-    Ok(block_in_place(|| server.media_audio_track(fingerprint, track))?.range(range))
-  }
-
-  async fn media_image_image(
-    server: ServerExtension,
-    Path((fingerprint, Ordinal(image))): Path<(Fingerprint, Ordinal)>,
-    range: Option<TypedHeader<headers::Range>>,
-  ) -> ServerResult<Resource> {
-    Ok(block_in_place(|| server.media_image_image(fingerprint, image))?.range(range))
-  }
-
-  async fn missing(
-    _: Authenticated,
-    server: ServerExtension,
-    Cbor(request): Cbor<api::missing::Request, { MIB }>,
-  ) -> ServerResult<Vec<u8>> {
-    let missing = block_in_place(|| server.missing(&request.hashes))?;
-
-    Ok(
-      api::missing::Response {
-        hashes: missing.into(),
-      }
-      .encode_to_vec(),
-    )
-  }
-
-  async fn package(
-    server: ServerExtension,
-    Path(fingerprint): Path<Fingerprint>,
-  ) -> PageResult<PackageHtml> {
-    Ok(
-      PackageHtml {
-        fingerprint,
-        metadata: block_in_place(|| server.package_metadata(fingerprint))?,
-      }
-      .into(),
-    )
-  }
-
-  async fn packages(server: ServerExtension) -> PageResult<PackagesHtml> {
-    Ok(
-      PackagesHtml {
-        packages: block_in_place(|| server.packages())?,
-      }
-      .into(),
-    )
   }
 
   fn redirect_config(&self) -> Result<Option<Arc<RedirectConfig>>> {
@@ -410,33 +278,33 @@ impl Serve {
     redirect_config: Option<Arc<RedirectConfig>>,
   ) -> Router {
     let router = Router::new()
-      .route("/", get(Self::home))
-      .route("/artwork/{fingerprint}", get(Self::artwork))
+      .route("/", get(route::home))
+      .route("/artwork/{fingerprint}", get(route::artwork))
       .route(
         "/directory/{hash}",
-        get(Self::directory).post(Self::verify_directory),
+        get(route::directory).post(route::verify_directory),
       )
-      .route("/favicon.ico", get(Self::favicon))
-      .route("/file/{hash}", get(Self::file).put(Self::upload_file))
-      .route("/file/{hash}/{name}", get(Self::file_with_name))
-      .route("/files", get(Self::files))
-      .route("/install.sh", get(Self::install_script))
+      .route("/favicon.ico", get(route::favicon))
+      .route("/file/{hash}", get(route::file).put(route::upload_file))
+      .route("/file/{hash}/{name}", get(route::file_with_name))
+      .route("/files", get(route::files))
+      .route("/install.sh", get(route::install_script))
       .route(
         "/media/audio/{fingerprint}/track/{track}",
-        get(Self::media_audio_track),
+        get(route::media_audio_track),
       )
       .route(
         "/media/image/{fingerprint}/image/{image}",
-        get(Self::media_image_image),
+        get(route::media_image_image),
       )
-      .route("/missing", post(Self::missing))
+      .route("/missing", post(route::missing))
       .route(
         "/package/{fingerprint}",
-        get(Self::package).post(Self::verify_package),
+        get(route::package).post(route::verify_package),
       )
-      .route("/packages", get(Self::packages))
-      .route("/static/{*path}", get(Self::static_asset))
-      .fallback(Self::fallback)
+      .route("/packages", get(route::packages))
+      .route("/static/{*path}", get(route::static_asset))
+      .fallback(route::fallback)
       .layer(Extension(server))
       .layer(SetResponseHeaderLayer::overriding(
         header::X_CONTENT_TYPE_OPTIONS,
@@ -648,35 +516,6 @@ impl Serve {
 
     Ok(())
   }
-
-  async fn static_asset(path: Path<String>) -> ServerResult<StaticAsset> {
-    StaticAsset::get(&path)
-  }
-
-  async fn upload_file(
-    _: Authenticated,
-    server: ServerExtension,
-    hash: Path<Hash>,
-    body: Body,
-  ) -> ServerResult {
-    server.write_file(*hash, body).await
-  }
-
-  async fn verify_directory(
-    _: Authenticated,
-    server: ServerExtension,
-    hash: Path<Hash>,
-  ) -> ServerResult {
-    block_in_place(|| server.verify_directory(*hash))
-  }
-
-  async fn verify_package(
-    _: Authenticated,
-    server: ServerExtension,
-    Path(fingerprint): Path<Fingerprint>,
-  ) -> ServerResult {
-    block_in_place(|| server.verify_package(fingerprint))
-  }
 }
 
 impl Default for Serve {
@@ -699,6 +538,3 @@ impl Default for Serve {
     }
   }
 }
-
-#[cfg(test)]
-mod tests;
