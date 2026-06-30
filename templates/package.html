@@ -73,9 +73,9 @@
 %%       }
 %%       Media::Image { images } => {
 <ul>
-%%         for (i, image) in images.iter().enumerate() {
+%%         for (i, _image) in images.iter().enumerate() {
   <li>
-    <a href=/package/{{ self.fingerprint }}/{{ Ordinal(i) }}>{{ i }}</a>
+    <a href=/package/{{ self.fingerprint }}/{{ Ordinal(i) }}>{{ Ordinal(i) }}</a>
   </li>
 %%         }
 </ul>
