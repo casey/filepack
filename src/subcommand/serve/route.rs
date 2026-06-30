@@ -208,6 +208,7 @@ pub(crate) async fn packages(server: ServerExtension) -> PageResult<PackagesHtml
     )
   })
 }
+
 pub(crate) async fn static_asset(path: Path<String>) -> ServerResult<StaticAsset> {
   StaticAsset::get(&path)
 }
