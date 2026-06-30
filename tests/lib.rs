@@ -3,8 +3,8 @@ use {
   camino::{Utf8Path, Utf8PathBuf},
   filepack::{
     ComponentBuf, Decode, Decoder, Directory, Encode, Encoder, Entry, EntryType, Fingerprint, Hash,
-    Manifest, Metadata, PrivateKey, PublicKey, Version,
-    templates::{DirectoryHtml, PackageHtml, Page, PageHtml},
+    Manifest, Metadata, Page, PrivateKey, PublicKey, Version,
+    templates::{DirectoryHtml, PackageHtml, PageHtml},
   },
   image::{DynamicImage, ImageFormat},
   regex::Regex,

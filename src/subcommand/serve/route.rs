@@ -5,20 +5,22 @@ pub(crate) async fn artwork(
   fingerprint: Path<Fingerprint>,
   range: Option<TypedHeader<headers::Range>>,
 ) -> ServerResult<Resource> {
-  Ok(block_in_place(|| server.artwork(*fingerprint))?.range(range))
+  block_in_place(|| Ok(server.artwork(*fingerprint)?.range(range)))
 }
 
 pub(crate) async fn directory(
   server: ServerExtension,
   Path(hash): Path<Hash>,
 ) -> PageResult<DirectoryHtml> {
-  Ok(
-    DirectoryHtml {
-      directory: block_in_place(|| server.directory(hash))?,
-      hash,
-    }
-    .into(),
-  )
+  block_in_place(|| {
+    Ok(
+      DirectoryHtml {
+        directory: server.directory(hash)?,
+        hash,
+      }
+      .into(),
+    )
+  })
 }
 
 pub(crate) async fn fallback(uri: Uri) -> ServerResult<Response> {
@@ -49,7 +51,7 @@ pub(crate) async fn file(
   hash: Path<Hash>,
   range: Option<TypedHeader<headers::Range>>,
 ) -> ServerResult<Resource> {
-  Ok(block_in_place(|| server.open_file(*hash))?.range(range))
+  block_in_place(|| Ok(server.open_file(*hash)?.range(range)))
 }
 
 pub(crate) async fn file_with_name(
@@ -57,25 +59,30 @@ pub(crate) async fn file_with_name(
   Path((hash, name)): Path<(Hash, ComponentBuf)>,
   range: Option<TypedHeader<headers::Range>>,
 ) -> ServerResult<Response> {
-  let Some(resource_type) = ResourceType::from_filename(&name) else {
-    return Ok(Redirect::temporary(&format!("/file/{hash}")).into_response());
-  };
+  block_in_place(|| {
+    let Some(resource_type) = ResourceType::from_filename(&name) else {
+      return Ok(Redirect::temporary(&format!("/file/{hash}")).into_response());
+    };
 
-  Ok(
-    block_in_place(|| server.open_file(hash))?
-      .ty(resource_type)
-      .range(range)
-      .into_response(),
-  )
+    Ok(
+      server
+        .open_file(hash)?
+        .ty(resource_type)
+        .range(range)
+        .into_response(),
+    )
+  })
 }
 
 pub(crate) async fn files(server: ServerExtension) -> PageResult<FilesHtml> {
-  Ok(
-    FilesHtml {
-      files: block_in_place(|| server.files())?,
-    }
-    .into(),
-  )
+  block_in_place(|| {
+    Ok(
+      FilesHtml {
+        files: server.files()?,
+      }
+      .into(),
+    )
+  })
 }
 
 pub(crate) async fn home() -> ServerResult<StaticAsset> {
@@ -91,7 +98,7 @@ pub(crate) async fn media_audio_track(
   Path((fingerprint, Ordinal(track))): Path<(Fingerprint, Ordinal)>,
   range: Option<TypedHeader<headers::Range>>,
 ) -> ServerResult<Resource> {
-  Ok(block_in_place(|| server.media_audio_track(fingerprint, track))?.range(range))
+  block_in_place(|| Ok(server.media_audio_track(fingerprint, track)?.range(range)))
 }
 
 pub(crate) async fn media_image_image(
@@ -99,7 +106,7 @@ pub(crate) async fn media_image_image(
   Path((fingerprint, Ordinal(image))): Path<(Fingerprint, Ordinal)>,
   range: Option<TypedHeader<headers::Range>>,
 ) -> ServerResult<Resource> {
-  Ok(block_in_place(|| server.media_image_image(fingerprint, image))?.range(range))
+  block_in_place(|| Ok(server.media_image_image(fingerprint, image)?.range(range)))
 }
 
 pub(crate) async fn missing(
@@ -107,36 +114,99 @@ pub(crate) async fn missing(
   server: ServerExtension,
   Cbor(request): Cbor<api::missing::Request, { MIB }>,
 ) -> ServerResult<Vec<u8>> {
-  let missing = block_in_place(|| server.missing(&request.hashes))?;
-
-  Ok(
-    api::missing::Response {
-      hashes: missing.into(),
-    }
-    .encode_to_vec(),
-  )
+  block_in_place(|| {
+    Ok(
+      api::missing::Response {
+        hashes: server.missing(&request.hashes)?.into(),
+      }
+      .encode_to_vec(),
+    )
+  })
 }
 
 pub(crate) async fn package(
   server: ServerExtension,
   Path(fingerprint): Path<Fingerprint>,
 ) -> PageResult<PackageHtml> {
-  Ok(
-    PackageHtml {
-      fingerprint,
-      metadata: block_in_place(|| server.package_metadata(fingerprint))?,
+  block_in_place(|| {
+    Ok(
+      PackageHtml {
+        fingerprint,
+        metadata: server.package_metadata_opt(fingerprint)?,
+      }
+      .into(),
+    )
+  })
+}
+
+pub(crate) async fn package_item(
+  server: ServerExtension,
+  Path((fingerprint, Ordinal(index))): Path<(Fingerprint, Ordinal)>,
+) -> ServerResult<Response> {
+  block_in_place(|| {
+    let metadata = server.package_metadata(fingerprint)?;
+
+    let media = metadata
+      .media
+      .as_ref()
+      .context(server_error::PackageMediaMetadataNotFound { fingerprint })?;
+
+    match media {
+      Media::Audio { tracks } => {
+        ensure! {
+          tracks.len() > index,
+          server_error::MediaItemDoesNotExist {
+            count: tracks.len(),
+            fingerprint,
+            index,
+            ty: media.discriminant(),
+          },
+        }
+
+        Ok(
+          TrackHtml {
+            fingerprint,
+            metadata,
+            track: index,
+          }
+          .page()
+          .into_response(),
+        )
+      }
+      Media::Image { images } => {
+        ensure! {
+          images.len() > index,
+          server_error::MediaItemDoesNotExist {
+            count: images.len(),
+            fingerprint,
+            index,
+            ty: media.discriminant(),
+          },
+        }
+
+        Ok(
+          ImageHtml {
+            fingerprint,
+            image: index,
+            metadata,
+          }
+          .page()
+          .into_response(),
+        )
+      }
     }
-    .into(),
-  )
+  })
 }
 
 pub(crate) async fn packages(server: ServerExtension) -> PageResult<PackagesHtml> {
-  Ok(
-    PackagesHtml {
-      packages: block_in_place(|| server.packages())?,
-    }
-    .into(),
-  )
+  block_in_place(|| {
+    Ok(
+      PackagesHtml {
+        packages: server.packages()?,
+      }
+      .into(),
+    )
+  })
 }
 pub(crate) async fn static_asset(path: Path<String>) -> ServerResult<StaticAsset> {
   StaticAsset::get(&path)

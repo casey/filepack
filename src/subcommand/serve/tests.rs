@@ -4,7 +4,6 @@ use {
     body,
     http::{Method, Request, header::HeaderName},
   },
-  templates::Page,
   tokio::runtime::Runtime,
   tower::ServiceExt,
 };

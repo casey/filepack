@@ -1,0 +1,21 @@
+body {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  margin: 0;
+}
+
+img {
+  flex: 1;
+  min-height: 0;
+  object-fit: cover;
+  width: 100%;
+}
+
+audio {
+  width: 100%;
+
+  &::-webkit-media-controls-enclosure {
+    border-radius: 0;
+  }
+}

@@ -18,7 +18,7 @@ impl Server {
   pub(crate) fn artwork(&self, fingerprint: Fingerprint) -> ServerResult<Resource> {
     let artwork = self
       .package_metadata(fingerprint)?
-      .and_then(|metadata| metadata.artwork)
+      .artwork
       .context(server_error::ArtworkNotFound { fingerprint })?;
 
     let hash = self.verified_package_file(fingerprint, &artwork.as_path())?;
@@ -71,15 +71,13 @@ impl Server {
     fingerprint: Fingerprint,
     track: usize,
   ) -> ServerResult<Resource> {
-    let metadata = self
-      .package_metadata(fingerprint)?
-      .context(server_error::PackageMetadataNotFound { fingerprint })?;
+    let metadata = self.package_metadata(fingerprint)?;
 
     let media = metadata
       .media
       .context(server_error::PackageMediaMetadataNotFound { fingerprint })?;
 
-    let Media::Audio { tracks } = media else {
+    let Media::Audio { tracks } = &media else {
       return Err(
         server_error::MediaType {
           actual: media.discriminant(),
@@ -96,7 +94,7 @@ impl Server {
         count: tracks.len(),
         fingerprint,
         index: track,
-        ty: MediaType::Audio,
+        ty: media.discriminant(),
       })?;
 
     let path = track.as_path();
@@ -111,15 +109,13 @@ impl Server {
     fingerprint: Fingerprint,
     image: usize,
   ) -> ServerResult<Resource> {
-    let metadata = self
-      .package_metadata(fingerprint)?
-      .context(server_error::PackageMetadataNotFound { fingerprint })?;
+    let metadata = self.package_metadata(fingerprint)?;
 
     let media = metadata
       .media
       .context(server_error::PackageMediaMetadataNotFound { fingerprint })?;
 
-    let Media::Image { images } = media else {
+    let Media::Image { images } = &media else {
       return Err(
         server_error::MediaType {
           actual: media.discriminant(),
@@ -136,7 +132,7 @@ impl Server {
         count: images.len(),
         fingerprint,
         index: image,
-        ty: MediaType::Image,
+        ty: media.discriminant(),
       })?;
 
     let path = image.as_path();
@@ -216,7 +212,13 @@ impl Server {
     })
   }
 
-  pub(crate) fn package_metadata(
+  pub(crate) fn package_metadata(&self, fingerprint: Fingerprint) -> ServerResult<Metadata> {
+    self
+      .package_metadata_opt(fingerprint)?
+      .context(server_error::PackageMetadataNotFound { fingerprint })
+  }
+
+  pub(crate) fn package_metadata_opt(
     &self,
     fingerprint: Fingerprint,
   ) -> ServerResult<Option<Metadata>> {
