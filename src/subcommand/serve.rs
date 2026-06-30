@@ -14,7 +14,7 @@ use {
     caches::DirCache,
   },
   std::net::TcpStream,
-  templates::{DirectoryHtml, FilesHtml, PackageHtml, PackagesHtml, PageHtml},
+  templates::{DirectoryHtml, FilesHtml, ImageHtml, PackageHtml, PackagesHtml, TrackHtml},
   tokio::{net::TcpListener, runtime, task::block_in_place},
   tower_http::set_header::SetResponseHeaderLayer,
 };
@@ -27,8 +27,6 @@ static THREAD_COUNTER: AtomicU64 = AtomicU64::new(0);
 
 type RedirectConfigExtension = Extension<Arc<RedirectConfig>>;
 type ServerExtension = Extension<Arc<Server>>;
-
-type PageResult<T> = ServerResult<PageHtml<T>>;
 
 pub(crate) struct AuthConfig {
   pub(crate) admin: Option<PublicKey>,
@@ -302,6 +300,7 @@ impl Serve {
         "/package/{fingerprint}",
         get(route::package).post(route::verify_package),
       )
+      .route("/package/{fingerprint}/{item}", get(route::package_item))
       .route("/packages", get(route::packages))
       .route("/static/{*path}", get(route::static_asset))
       .fallback(route::fallback)

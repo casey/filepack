@@ -4,7 +4,6 @@ use {
     body,
     http::{Method, Request, header::HeaderName},
   },
-  templates::Page,
   tokio::runtime::Runtime,
   tower::ServiceExt,
 };
@@ -285,13 +284,7 @@ fn artwork_missing() {
 fn artwork_not_found_without_artwork() {
   let server = TestServer::new();
 
-  let cbor = directory(&[]).encode_to_vec();
-  let hash = Hash::bytes(&cbor);
-  let fingerprint = Fingerprint(hash);
-  server.write_file(&cbor);
-
-  server.post(format!("/directory/{hash}")).send();
-  server.post(format!("/package/{fingerprint}")).send();
+  let fingerprint = package(&server, &default(), &[]);
 
   server
     .get(format!("/artwork/{fingerprint}"))
@@ -1155,6 +1148,230 @@ fn package(server: &TestServer, metadata: &Metadata, files: &[(&str, &[u8])]) ->
   server.post(format!("/package/{fingerprint}")).send();
 
   fingerprint
+}
+
+#[test]
+fn package_item_image() {
+  let server = TestServer::new();
+
+  let metadata = Metadata {
+    media: Some(Media::Image {
+      images: vec![Image {
+        dimensions: Dimensions {
+          height: 1,
+          width: 2,
+        },
+        filename: "foo.png".parse().unwrap(),
+        ty: ImageType::Png,
+      }],
+    }),
+    ..default()
+  };
+
+  let fingerprint = package(&server, &metadata, &[("foo.png", b"foo")]);
+
+  server
+    .get(format!("/package/{fingerprint}/1"))
+    .assert_page(ImageHtml {
+      fingerprint,
+      image: 0,
+      metadata,
+    })
+    .send();
+}
+
+#[test]
+fn package_item_image_out_of_range() {
+  let server = TestServer::new();
+
+  let fingerprint = package(
+    &server,
+    &Metadata {
+      media: Some(Media::Image {
+        images: vec![Image {
+          dimensions: Dimensions {
+            height: 1,
+            width: 1,
+          },
+          filename: "foo.png".parse().unwrap(),
+          ty: ImageType::Png,
+        }],
+      }),
+      ..default()
+    },
+    &[("foo.png", b"foo")],
+  );
+
+  server
+    .get(format!("/package/{fingerprint}/2"))
+    .status(StatusCode::NOT_FOUND)
+    .assert_body(format!(
+      "image 2 does not exist, package {fingerprint} has 1 image"
+    ))
+    .send();
+}
+
+#[test]
+fn package_item_package_not_found() {
+  let server = TestServer::new();
+
+  let fingerprint = Fingerprint(Hash::bytes(b"foo"));
+
+  server
+    .get(format!("/package/{fingerprint}/1"))
+    .status(StatusCode::NOT_FOUND)
+    .assert_body(format!("package {fingerprint} not found"))
+    .send();
+}
+
+#[test]
+fn package_item_track() {
+  let server = TestServer::new();
+
+  let metadata = Metadata {
+    media: Some(Media::Audio {
+      tracks: vec!["foo.flac".parse().unwrap()],
+    }),
+    ..default()
+  };
+
+  let fingerprint = package(&server, &metadata, &[("foo.flac", b"foo")]);
+
+  server
+    .get(format!("/package/{fingerprint}/1"))
+    .assert_page(TrackHtml {
+      fingerprint,
+      metadata,
+      track: 0,
+    })
+    .send();
+}
+
+#[test]
+fn package_item_track_out_of_range() {
+  let server = TestServer::new();
+
+  let fingerprint = package(
+    &server,
+    &Metadata {
+      media: Some(Media::Audio {
+        tracks: vec!["foo.flac".parse().unwrap()],
+      }),
+      ..default()
+    },
+    &[("foo.flac", b"foo")],
+  );
+
+  server
+    .get(format!("/package/{fingerprint}/2"))
+    .status(StatusCode::NOT_FOUND)
+    .assert_body(format!(
+      "track 2 does not exist, package {fingerprint} has 1 track"
+    ))
+    .send();
+}
+
+#[test]
+fn package_item_without_media() {
+  let server = TestServer::new();
+
+  let fingerprint = package(
+    &server,
+    &Metadata {
+      title: Some("foo".parse().unwrap()),
+      ..default()
+    },
+    &[],
+  );
+
+  server
+    .get(format!("/package/{fingerprint}/1"))
+    .status(StatusCode::NOT_FOUND)
+    .assert_body(format!(
+      "package {fingerprint} does not have media metadata"
+    ))
+    .send();
+}
+
+#[test]
+fn package_item_without_metadata() {
+  let server = TestServer::new();
+
+  let cbor = directory(&[]).encode_to_vec();
+  let hash = Hash::bytes(&cbor);
+  let fingerprint = Fingerprint(hash);
+  server.write_file(&cbor);
+
+  server.post(format!("/directory/{hash}")).send();
+  server.post(format!("/package/{fingerprint}")).send();
+
+  server
+    .get(format!("/package/{fingerprint}/1"))
+    .status(StatusCode::NOT_FOUND)
+    .assert_body(format!("package {fingerprint} does not have metadata"))
+    .send();
+}
+
+#[test]
+fn package_page_renders_audio_media() {
+  let server = TestServer::new();
+
+  let metadata = Metadata {
+    media: Some(Media::Audio {
+      tracks: vec![
+        Track {
+          filename: "foo.flac".parse().unwrap(),
+          title: Some("foo".into()),
+          ty: AudioType::Flac,
+        },
+        "bar.flac".parse().unwrap(),
+      ],
+    }),
+    ..default()
+  };
+
+  let fingerprint = package(
+    &server,
+    &metadata,
+    &[("foo.flac", b"foo"), ("bar.flac", b"bar")],
+  );
+
+  server
+    .get(format!("/package/{fingerprint}"))
+    .assert_page(PackageHtml {
+      fingerprint,
+      metadata: Some(metadata),
+    })
+    .send();
+}
+
+#[test]
+fn package_page_renders_image_media() {
+  let server = TestServer::new();
+
+  let metadata = Metadata {
+    media: Some(Media::Image {
+      images: vec![Image {
+        dimensions: Dimensions {
+          height: 1,
+          width: 2,
+        },
+        filename: "foo.png".parse().unwrap(),
+        ty: ImageType::Png,
+      }],
+    }),
+    ..default()
+  };
+
+  let fingerprint = package(&server, &metadata, &[("foo.png", b"foo")]);
+
+  server
+    .get(format!("/package/{fingerprint}"))
+    .assert_page(PackageHtml {
+      fingerprint,
+      metadata: Some(metadata),
+    })
+    .send();
 }
 
 #[test]

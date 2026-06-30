@@ -58,6 +58,10 @@ impl Track {
   pub(crate) fn resource_type(&self) -> ResourceType {
     self.ty.resource_type()
   }
+
+  pub(crate) fn title(&self) -> &str {
+    self.title.as_deref().unwrap_or("Untitled")
+  }
 }
 
 impl FromStr for Track {

@@ -1,0 +1,62 @@
+:root {
+  --height-target: calc(100vh / 4);
+  --margin-horizontal: calc((100vw - var(--size) * 5) / 2);
+  --margin-vertical: calc((100vh - var(--size) * 2.5) / 2);
+  --size: min(var(--width-target), var(--height-target));
+  --width-target: calc(100vw / 6);
+}
+
+body {
+  display: grid;
+  font-size: var(--size);
+  grid-template-columns: repeat(4, 1fr);
+  line-height: var(--size);
+  margin-bottom: var(--margin-vertical);
+  margin-left: var(--margin-horizontal);
+  margin-right: var(--margin-horizontal);
+  margin-top: var(--margin-vertical);
+  overflow: hidden;
+  text-align: center;
+}
+
+body > * {
+  height: var(--size);
+  width: var(--size);
+}
+
+a {
+  align-items: center;
+  color: white;
+  display: flex;
+  font-size: calc(var(--size) / 9);
+  height: calc(var(--size) / 2);
+  justify-content: center;
+  line-height: calc(var(--size) / 9);
+}
+
+a:hover {
+  text-shadow: 0 0 5px #fff;
+  text-decoration: none;
+}
+
+div {
+  text-shadow: 0 0 5px #fff;
+}
+
+/* filepack is an isogram */
+.f:after { content: 'F'; }
+.i:after { content: 'I'; }
+.l:after { content: 'L'; }
+.e:after { content: 'E'; }
+.p:after { content: 'P'; }
+.a:after { content: 'A'; }
+.c:after { content: 'C'; }
+.k:after { content: 'K'; }
+.f:hover:after { content: '⠋'; }
+.i:hover:after { content: '⠊'; }
+.l:hover:after { content: '⠇'; }
+.e:hover:after { content: '⠑'; }
+.p:hover:after { content: '⠏'; }
+.a:hover:after { content: '⠁'; }
+.c:hover:after { content: '⠉'; }
+.k:hover:after { content: '⠅'; }

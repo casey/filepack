@@ -89,6 +89,7 @@ use {
     static_asset::StaticAsset,
     style::Style,
     subcommand::Subcommand,
+    templates::PageHtml,
     text_error::TextError,
     ticked::Ticked,
     token::Token,
@@ -171,7 +172,7 @@ pub use self::{
   entry::Entry, entry_type::EntryType, error::Error, fingerprint::Fingerprint,
   functions::install_default_crypto_provider, hash::Hash, language_error::LanguageError,
   major_type::MajorType, manifest::Manifest, map_encoder::MapEncoder, metadata::Metadata,
-  private_key::PrivateKey, public_key::PublicKey, relative_path::RelativePath,
+  page::Page, private_key::PrivateKey, public_key::PublicKey, relative_path::RelativePath,
   signature::Signature, sorted_set::SortedSet, statement::Statement, text::Text, version::Version,
 };
 
@@ -268,6 +269,7 @@ mod or;
 mod ordinal;
 mod owo_colorize_ext;
 mod package;
+mod page;
 mod path_error;
 mod percent_encode;
 mod private_key;
@@ -310,8 +312,9 @@ const BECH32_VERSION: Fe32 = Fe32::A;
 const KIB: usize = 1 << 10;
 const MIB: usize = KIB << 10;
 
-type ServerResult<T = (), E = ServerError> = std::result::Result<T, E>;
+type PageResult<T> = ServerResult<PageHtml<T>>;
 type Result<T = (), E = Error> = std::result::Result<T, E>;
+type ServerResult<T = (), E = ServerError> = std::result::Result<T, E>;
 
 fn initialize_tracing() -> Result<(), Box<dyn std::error::Error>> {
   use {

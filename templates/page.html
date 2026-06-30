@@ -6,6 +6,9 @@
     <title>{{ self.content.title() }}</title>
     <meta name=description content='Filepack package server'>
     <link href=/static/index.css rel=stylesheet>
+%% if let Some(stylesheet) = self.content.stylesheet() {
+    <link href={{ stylesheet }} rel=stylesheet>
+%% }
   </head>
   <body>
     {{ Trusted(&self.content) }}

@@ -64,10 +64,9 @@
 <ul>
 %%         for (i, track) in tracks.iter().enumerate() {
   <li>
-%%           if let Some(title) = &track.title {
-    {{ title }}
-%%           }
-    <audio controls src=/media/audio/{{ self.fingerprint }}/track/{{ Ordinal(i) }}></audio>
+    <a href=/package/{{ self.fingerprint }}/{{ Ordinal(i) }}>
+      {{ track.title() }}
+    </a>
   </li>
 %%         }
 </ul>
@@ -76,7 +75,7 @@
 <ul>
 %%         for (i, image) in images.iter().enumerate() {
   <li>
-    <img src=/media/image/{{ self.fingerprint }}/image/{{ Ordinal(i) }} width={{ image.dimensions.width }} height={{ image.dimensions.height }}>
+    <a href=/package/{{ self.fingerprint }}/{{ Ordinal(i) }}>{{ i }}</a>
   </li>
 %%         }
 </ul>
