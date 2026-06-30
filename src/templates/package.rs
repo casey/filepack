@@ -13,6 +13,10 @@ impl PackageHtml {
 }
 
 impl Page for PackageHtml {
+  fn stylesheet(&self) -> Option<&'static str> {
+    Some("/static/package.css")
+  }
+
   fn title(&self) -> String {
     if let Some(title) = self.title() {
       format!("{title} · filepack")

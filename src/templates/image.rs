@@ -18,7 +18,7 @@ impl ImageHtml {
 }
 
 impl Page for ImageHtml {
-  fn stylesheet(&self) -> Option<&str> {
+  fn stylesheet(&self) -> Option<&'static str> {
     Some("/static/image.css")
   }
 
