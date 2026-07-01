@@ -74,7 +74,7 @@
 %%         for (i, image) in images.iter().enumerate() {
   <li>
     <a href=/package/{{ self.fingerprint }}/{{ Ordinal(i) }}>
-      <img src=/media/image/{{ self.fingerprint }}/image/{{ Ordinal(i) }}>
+      <img loading=lazy src=/media/image/{{ self.fingerprint }}/image/{{ Ordinal(i) }} >
     </a>
   </li>
 %%         }
