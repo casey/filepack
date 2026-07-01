@@ -4,10 +4,22 @@ use super::*;
 #[derive(Clone, Debug, Decode, DeserializeFromStr, Encode, PartialEq, Serialize)]
 pub(crate) struct Track {
   #[n(0)]
-  pub(crate) filename: ComponentBuf,
+  pub(crate) bits_per_sample: Byte,
   #[n(1)]
-  pub(crate) title: Option<String>,
+  pub(crate) channel_count: u64,
   #[n(2)]
+  pub(crate) disc_number: u64,
+  #[n(3)]
+  pub(crate) filename: ComponentBuf,
+  #[n(4)]
+  pub(crate) sample_count: u64,
+  #[n(5)]
+  pub(crate) sample_rate: u64,
+  #[n(6)]
+  pub(crate) title: Option<String>,
+  #[n(7)]
+  pub(crate) track_number: u64,
+  #[n(8)]
   #[serde(rename = "type")]
   pub(crate) ty: AudioType,
 }
@@ -15,6 +27,25 @@ pub(crate) struct Track {
 impl Track {
   pub(crate) fn as_path(&self) -> RelativePath {
     self.filename.as_path()
+  }
+
+  fn number<R: io::Read>(reader: &FlacReader<R>, path: &Utf8Path, tag: &str) -> Result<u64> {
+    let mut values = reader.get_tag(tag);
+
+    let value = values
+      .next()
+      .context(error::TrackNumberMissing { path, tag })?;
+
+    ensure! {
+      values.next().is_none(),
+      error::TrackNumberMultiple { path, tag },
+    }
+
+    value
+      .parse::<u64>()
+      .ok()
+      .filter(|_| re::NUMBER.is_match(value))
+      .context(error::TrackNumberInvalid { path, tag, value })
   }
 
   pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result {
@@ -50,7 +81,17 @@ impl Track {
       }
     };
 
+    let streaminfo = reader.streaminfo();
+
     self.title = title;
+    self.track_number = Self::number(&reader, path, "TRACKNUMBER")?;
+    self.disc_number = Self::number(&reader, path, "DISCNUMBER")?;
+    self.channel_count = streaminfo.channels.into();
+    self.sample_rate = streaminfo.sample_rate.into();
+    self.sample_count = streaminfo
+      .samples
+      .context(error::TrackSampleCountMissing { path })?;
+    self.bits_per_sample = Byte(streaminfo.bits_per_sample.try_into().unwrap());
 
     Ok(())
   }
@@ -80,6 +121,12 @@ impl FromStr for Track {
       filename,
       title: None,
       ty,
+      track_number: 0,
+      disc_number: 0,
+      channel_count: 0,
+      sample_rate: 0,
+      sample_count: 0,
+      bits_per_sample: Byte(0),
     })
   }
 }
@@ -92,7 +139,7 @@ mod tests {
   fn encoding() {
     assert_cbor(
       "foo.flac".parse::<Track>().unwrap(),
-      "a20068666f6f2e666c61630200",
+      "a80000010002000368666f6f2e666c61630400050007000800",
     );
 
     assert_cbor(
@@ -100,8 +147,14 @@ mod tests {
         filename: "foo.flac".parse().unwrap(),
         title: Some("bar".into()),
         ty: AudioType::Flac,
+        track_number: 1,
+        disc_number: 2,
+        channel_count: 3,
+        sample_rate: 4,
+        sample_count: 5,
+        bits_per_sample: Byte(6),
       },
-      "a30068666f6f2e666c616301636261720200",
+      "a90006010302020368666f6f2e666c616304050504066362617207010800",
     );
   }
 
@@ -118,6 +171,12 @@ mod tests {
         filename: "foo.flac".parse().unwrap(),
         title: None,
         ty: AudioType::Flac,
+        track_number: 0,
+        disc_number: 0,
+        channel_count: 0,
+        sample_rate: 0,
+        sample_count: 0,
+        bits_per_sample: Byte(0),
       },
     );
 
@@ -151,13 +210,33 @@ mod tests {
     }
 
     assert_eq!(
-      case(&flac(&["TITLE=bar"])).unwrap().title,
-      Some("bar".into()),
+      case(&flac(&["TITLE=bar", "TRACKNUMBER=7", "DISCNUMBER=3"])).unwrap(),
+      Track {
+        filename: "foo.flac".parse().unwrap(),
+        title: Some("bar".into()),
+        ty: AudioType::Flac,
+        track_number: 7,
+        disc_number: 3,
+        channel_count: 2,
+        sample_rate: 44100,
+        sample_count: 44100,
+        bits_per_sample: Byte(16),
+      },
     );
 
-    assert_eq!(case(&flac(&[])).unwrap().title, None);
+    assert_eq!(
+      case(&flac(&["TRACKNUMBER=1", "DISCNUMBER=1"]))
+        .unwrap()
+        .title,
+      None,
+    );
 
-    assert_eq!(case(&flac(&["ARTIST=bar"])).unwrap().title, None);
+    assert_eq!(
+      case(&flac(&["ARTIST=bar", "TRACKNUMBER=1", "DISCNUMBER=1"]))
+        .unwrap()
+        .title,
+      None,
+    );
 
     assert_matches_regex!(
       case(b"foo").unwrap_err().to_string(),
@@ -175,13 +254,46 @@ mod tests {
       case(&flac(&["TITLE="])).unwrap_err().to_string(),
       r"^FLAC track `.*foo\.flac` has empty title$",
     );
+
+    assert_matches_regex!(
+      case(&flac(&["DISCNUMBER=1"])).unwrap_err().to_string(),
+      r"^FLAC track `.*foo\.flac` is missing `TRACKNUMBER` comment$",
+    );
+
+    assert_matches_regex!(
+      case(&flac(&["TRACKNUMBER=1", "TRACKNUMBER=2", "DISCNUMBER=1"]))
+        .unwrap_err()
+        .to_string(),
+      r"^FLAC track `.*foo\.flac` has multiple `TRACKNUMBER` comments$",
+    );
+
+    assert_matches_regex!(
+      case(&flac(&["TRACKNUMBER=01", "DISCNUMBER=1"]))
+        .unwrap_err()
+        .to_string(),
+      r"^FLAC track `.*foo\.flac` has invalid `TRACKNUMBER` comment `01`$",
+    );
+
+    assert_matches_regex!(
+      case(&flac(&["TRACKNUMBER=1/12", "DISCNUMBER=1"]))
+        .unwrap_err()
+        .to_string(),
+      r"^FLAC track `.*foo\.flac` has invalid `TRACKNUMBER` comment `1/12`$",
+    );
+
+    let mut bytes = flac(&["TRACKNUMBER=1", "DISCNUMBER=1"]);
+    bytes[22..26].copy_from_slice(&[0; 4]);
+    assert_matches_regex!(
+      case(&bytes).unwrap_err().to_string(),
+      r"^FLAC track `.*foo\.flac` has unknown sample count$",
+    );
   }
 
   #[test]
   fn serialize() {
     assert_eq!(
       serde_json::to_string(&"foo.flac".parse::<Track>().unwrap()).unwrap(),
-      r#"{"filename":"foo.flac","type":"flac"}"#,
+      r#"{"bits_per_sample":0,"channel_count":0,"disc_number":0,"filename":"foo.flac","sample_count":0,"sample_rate":0,"track_number":0,"type":"flac"}"#,
     );
 
     assert_eq!(
@@ -189,9 +301,15 @@ mod tests {
         filename: "foo.flac".parse().unwrap(),
         title: Some("bar".into()),
         ty: AudioType::Flac,
+        track_number: 1,
+        disc_number: 2,
+        channel_count: 3,
+        sample_rate: 4,
+        sample_count: 5,
+        bits_per_sample: Byte(6),
       })
       .unwrap(),
-      r#"{"filename":"foo.flac","title":"bar","type":"flac"}"#,
+      r#"{"bits_per_sample":6,"channel_count":3,"disc_number":2,"filename":"foo.flac","sample_count":5,"sample_rate":4,"title":"bar","track_number":1,"type":"flac"}"#,
     );
   }
 }

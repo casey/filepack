@@ -67,7 +67,8 @@ pub(crate) fn flac(comments: &[&str]) -> Vec<u8> {
   bytes.extend_from_slice(&4096u16.to_be_bytes());
   bytes.extend_from_slice(&[0; 6]);
   bytes.extend_from_slice(&[0x0a, 0xc4, 0x42, 0xf0]);
-  bytes.extend_from_slice(&[0; 20]);
+  bytes.extend_from_slice(&[0x00, 0x00, 0xac, 0x44]);
+  bytes.extend_from_slice(&[0; 16]);
 
   if !comments.is_empty() {
     let mut body = Vec::new();

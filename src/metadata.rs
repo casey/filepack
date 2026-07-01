@@ -362,6 +362,12 @@ mod tests {
           filename: "track.flac".parse().unwrap(),
           title: Some("foo".into()),
           ty: AudioType::Flac,
+          track_number: 0,
+          disc_number: 0,
+          channel_count: 0,
+          sample_rate: 0,
+          sample_count: 0,
+          bits_per_sample: Byte(0),
         }],
       }),
       package: Some(Package {

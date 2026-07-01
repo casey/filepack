@@ -76,7 +76,10 @@ media:
 #[test]
 fn create_extracts_track_titles() {
   Test::new()
-    .write("foo.flac", flac(&["TITLE=bar"]))
+    .write(
+      "foo.flac",
+      flac(&["TITLE=bar", "TRACKNUMBER=1", "DISCNUMBER=2"]),
+    )
     .write(
       "metadata.yaml",
       "\
@@ -95,8 +98,14 @@ media:
     "type": "audio",
     "tracks": [
       {
+        "bits_per_sample": 16,
+        "channel_count": 2,
+        "disc_number": 2,
         "filename": "foo.flac",
+        "sample_count": 44100,
+        "sample_rate": 44100,
         "title": "bar",
+        "track_number": 1,
         "type": "flac"
       }
     ]
@@ -113,7 +122,10 @@ media:
 #[test]
 fn create_rejects_extra_files_in_media_packages() {
   Test::new()
-    .write("foo.flac", flac(&["TITLE=bar"]))
+    .write(
+      "foo.flac",
+      flac(&["TITLE=bar", "TRACKNUMBER=1", "DISCNUMBER=1"]),
+    )
     .write(
       "metadata.yaml",
       "\
@@ -217,7 +229,8 @@ fn flac(comments: &[&str]) -> Vec<u8> {
   bytes.extend_from_slice(&4096u16.to_be_bytes());
   bytes.extend_from_slice(&[0; 6]);
   bytes.extend_from_slice(&[0x0a, 0xc4, 0x42, 0xf0]);
-  bytes.extend_from_slice(&[0; 20]);
+  bytes.extend_from_slice(&[0x00, 0x00, 0xac, 0x44]);
+  bytes.extend_from_slice(&[0; 16]);
 
   if !comments.is_empty() {
     let mut body = Vec::new();

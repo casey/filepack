@@ -468,6 +468,30 @@ pub enum Error {
     path: DisplayPath,
     source: claxon::Error,
   },
+  #[snafu(display("FLAC track `{path}` has invalid `{tag}` comment `{value}`"))]
+  TrackNumberInvalid {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+    tag: String,
+    value: String,
+  },
+  #[snafu(display("FLAC track `{path}` is missing `{tag}` comment"))]
+  TrackNumberMissing {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+    tag: String,
+  },
+  #[snafu(display("FLAC track `{path}` has multiple `{tag}` comments"))]
+  TrackNumberMultiple {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+    tag: String,
+  },
+  #[snafu(display("FLAC track `{path}` has unknown sample count"))]
+  TrackSampleCountMissing {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+  },
   #[snafu(display("FLAC track `{path}` has empty title"))]
   TrackTitleEmpty {
     backtrace: Option<Backtrace>,
