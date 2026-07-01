@@ -4,12 +4,23 @@
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   list-style: none;
   padding-left: 0;
-}
 
-.thumbnails img {
-  aspect-ratio: 1 / 1;
-  border-radius: 8px;
-  display: block;
-  object-fit: cover;
-  width: 100%;
+  a {
+    border-radius: 8px;
+    border: 1px solid #222;
+    display: block;
+    overflow: hidden;
+    transition: border-color 150ms;
+
+    &:hover, &:focus-visible {
+      border-color: #444;
+    }
+  }
+
+  img {
+    aspect-ratio: 1 / 1;
+    display: block;
+    object-fit: contain;
+    width: 100%;
+  }
 }
