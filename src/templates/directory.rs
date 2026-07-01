@@ -7,7 +7,7 @@ pub struct DirectoryHtml {
 }
 
 impl Page for DirectoryHtml {
-  fn stylesheet(&self) -> Option<&str> {
+  fn stylesheet(&self) -> Option<&'static str> {
     Some("/static/directory.css")
   }
 

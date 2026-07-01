@@ -18,7 +18,7 @@ impl TrackHtml {
 }
 
 impl Page for TrackHtml {
-  fn stylesheet(&self) -> Option<&str> {
+  fn stylesheet(&self) -> Option<&'static str> {
     Some("/static/track.css")
   }
 

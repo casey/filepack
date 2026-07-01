@@ -5,7 +5,7 @@ pub trait Page: Display + Sized {
     PageHtml { content: self }
   }
 
-  fn stylesheet(&self) -> Option<&str> {
+  fn stylesheet(&self) -> Option<&'static str> {
     None
   }
 

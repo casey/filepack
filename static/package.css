@@ -1,0 +1,15 @@
+.thumbnails {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  list-style: none;
+  padding-left: 0;
+}
+
+.thumbnails img {
+  aspect-ratio: 1 / 1;
+  border-radius: 8px;
+  display: block;
+  object-fit: cover;
+  width: 100%;
+}

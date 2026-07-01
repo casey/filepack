@@ -70,10 +70,12 @@
 </ul>
 %%       }
 %%       Media::Image { images } => {
-<ul>
-%%         for (i, _image) in images.iter().enumerate() {
+<ul class=thumbnails>
+%%         for (i, image) in images.iter().enumerate() {
   <li>
-    <a href=/package/{{ self.fingerprint }}/{{ Ordinal(i) }}>{{ Ordinal(i) }}</a>
+    <a href=/package/{{ self.fingerprint }}/{{ Ordinal(i) }}>
+      <img src=/media/image/{{ self.fingerprint }}/image/{{ Ordinal(i) }}>
+    </a>
   </li>
 %%         }
 </ul>
