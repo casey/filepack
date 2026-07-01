@@ -7,8 +7,9 @@
 }
 
 .thumbnails img {
-  width: 100%;
   aspect-ratio: 1 / 1;
-  object-fit: cover;
   border-radius: 8px;
+  display: block;
+  object-fit: cover;
+  width: 100%;
 }
