@@ -143,7 +143,25 @@ mod tests {
   }
 
   #[test]
-  fn populate() {
+  fn populate_ok() {
+    let (_tempdir, root) = tempdir();
+
+    std::fs::write(
+      root.join("foo.flac"),
+      flac(&["ALBUM=qux", "ARTIST=baz", "TITLE=bar"]),
+    )
+    .unwrap();
+
+    let mut track = "foo.flac".parse::<Track>().unwrap();
+    track.populate(&root).unwrap();
+
+    assert_eq!(track.album.as_str(), "qux");
+    assert_eq!(track.artist.as_str(), "baz");
+    assert_eq!(track.title.as_str(), "bar");
+  }
+
+  #[test]
+  fn populate_err() {
     #[track_caller]
     fn case(bytes: &[u8]) -> Result<Track> {
       let (_tempdir, root) = tempdir();
