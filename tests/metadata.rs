@@ -161,7 +161,8 @@ media:
     )
     .arg("create")
     .stderr_regex(
-      "error: failed to decode FLAC track `.*foo.flac`\n       └─ Ill-formed FLAC stream: .*\n",
+      "error: failed to decode track `.*foo.flac`
+       └─ Ill-formed FLAC stream: .*\n",
     )
     .failure();
 }
