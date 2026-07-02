@@ -1,6 +1,8 @@
 use super::*;
 
-#[derive(Clone, Debug, DeserializeFromStr, Eq, Ord, PartialEq, PartialOrd, SerializeDisplay)]
+#[derive(
+  Clone, Debug, Default, DeserializeFromStr, Eq, Ord, PartialEq, PartialOrd, SerializeDisplay,
+)]
 pub struct Text(String);
 
 impl Text {

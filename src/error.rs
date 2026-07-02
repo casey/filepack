@@ -474,6 +474,13 @@ pub enum Error {
     path: DisplayPath,
     tag: &'static str,
   },
+  #[snafu(display("FLAC track `{path}` has invalid `{tag}` tag"))]
+  TrackTagInvalid {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+    source: TextError,
+    tag: &'static str,
+  },
   #[snafu(display("FLAC track `{path}` is missing `{tag}` tag"))]
   TrackTagMissing {
     backtrace: Option<Backtrace>,

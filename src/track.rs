@@ -3,13 +3,13 @@ use super::*;
 #[derive(Clone, Debug, Decode, DeserializeFromStr, Encode, PartialEq, Serialize)]
 pub(crate) struct Track {
   #[n(0)]
-  pub(crate) album: String,
+  pub(crate) album: Text,
   #[n(1)]
-  pub(crate) artist: String,
+  pub(crate) artist: Text,
   #[n(2)]
   pub(crate) filename: ComponentBuf,
   #[n(3)]
-  pub(crate) title: String,
+  pub(crate) title: Text,
   #[n(4)]
   #[serde(rename = "type")]
   pub(crate) ty: AudioType,
@@ -42,7 +42,7 @@ impl Track {
     self.ty.resource_type()
   }
 
-  fn tag(reader: &FlacReader<fs::File>, path: &Utf8Path, tag: &'static str) -> Result<String> {
+  fn tag(reader: &FlacReader<fs::File>, path: &Utf8Path, tag: &'static str) -> Result<Text> {
     let mut values = reader.get_tag(tag);
 
     let value = values
@@ -59,7 +59,7 @@ impl Track {
       error::TrackTagEmpty { path, tag },
     }
 
-    Ok(value.into())
+    value.parse().context(error::TrackTagInvalid { path, tag })
   }
 }
 
@@ -76,10 +76,10 @@ impl FromStr for Track {
     };
 
     Ok(Self {
-      album: String::new(),
-      artist: String::new(),
+      album: Text::default(),
+      artist: Text::default(),
       filename,
-      title: String::new(),
+      title: Text::default(),
       ty,
     })
   }
@@ -98,10 +98,10 @@ mod tests {
 
     assert_cbor(
       Track {
-        album: "qux".into(),
-        artist: "baz".into(),
+        album: "qux".parse().unwrap(),
+        artist: "baz".parse().unwrap(),
         filename: "foo.flac".parse().unwrap(),
-        title: "bar".into(),
+        title: "bar".parse().unwrap(),
         ty: AudioType::Flac,
       },
       "a50063717578016362617a0268666f6f2e666c616303636261720400",
@@ -118,10 +118,10 @@ mod tests {
     assert_eq!(
       "foo.flac".parse::<Track>().unwrap(),
       Track {
-        album: String::new(),
-        artist: String::new(),
+        album: Text::default(),
+        artist: Text::default(),
         filename: "foo.flac".parse().unwrap(),
-        title: String::new(),
+        title: Text::default(),
         ty: AudioType::Flac,
       },
     );
@@ -156,9 +156,9 @@ mod tests {
     }
 
     let track = case(&flac(&["ALBUM=qux", "ARTIST=baz", "TITLE=bar"])).unwrap();
-    assert_eq!(track.album, "qux");
-    assert_eq!(track.artist, "baz");
-    assert_eq!(track.title, "bar");
+    assert_eq!(track.album.as_str(), "qux");
+    assert_eq!(track.artist.as_str(), "baz");
+    assert_eq!(track.title.as_str(), "bar");
 
     assert_matches_regex!(
       case(b"foo").unwrap_err().to_string(),
@@ -202,6 +202,13 @@ mod tests {
         .to_string(),
       r"^FLAC track `.*foo\.flac` has empty `title` tag$",
     );
+
+    assert_matches_regex!(
+      case(&flac(&["ALBUM=qux", "ARTIST=baz", "TITLE=foo\tbar"]))
+        .unwrap_err()
+        .to_string(),
+      r"^FLAC track `.*foo\.flac` has invalid `title` tag$",
+    );
   }
 
   #[test]
@@ -213,10 +220,10 @@ mod tests {
 
     assert_eq!(
       serde_json::to_string(&Track {
-        album: "qux".into(),
-        artist: "baz".into(),
+        album: "qux".parse().unwrap(),
+        artist: "baz".parse().unwrap(),
         filename: "foo.flac".parse().unwrap(),
-        title: "bar".into(),
+        title: "bar".parse().unwrap(),
         ty: AudioType::Flac,
       })
       .unwrap(),
