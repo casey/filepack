@@ -63,15 +63,15 @@ impl Track {
 
   pub(crate) fn duration(&self) -> Duration {
     if self.sample_rate == 0 {
-      Duration::ZERO
-    } else {
-      let subsecond = u128::from(self.sample_count % self.sample_rate);
-
-      Duration::new(
-        self.sample_count / self.sample_rate,
-        u32::try_from(subsecond * 1_000_000_000 / u128::from(self.sample_rate)).unwrap(),
-      )
+      return Duration::ZERO;
     }
+
+    let subsecond = u128::from(self.sample_count % self.sample_rate);
+
+    Duration::new(
+      self.sample_count / self.sample_rate,
+      u32::try_from(subsecond * 1_000_000_000 / u128::from(self.sample_rate)).unwrap(),
+    )
   }
 
   pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result {
