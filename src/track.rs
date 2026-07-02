@@ -143,6 +143,61 @@ mod tests {
   }
 
   #[test]
+  fn populate_err() {
+    #[track_caller]
+    fn case(bytes: &[u8]) -> Error {
+      let (_tempdir, root) = tempdir();
+
+      std::fs::write(root.join("foo.flac"), bytes).unwrap();
+
+      let mut track = "foo.flac".parse::<Track>().unwrap();
+
+      track.populate(&root).unwrap_err()
+    }
+
+    assert_matches!(case(b"foo"), Error::TrackDecode { .. });
+
+    assert_matches!(
+      case(&flac(&[])),
+      Error::TrackTagMissing { tag: "album", .. },
+    );
+
+    assert_matches!(
+      case(&flac(&["ALBUM=qux", "TITLE=bar"])),
+      Error::TrackTagMissing { tag: "artist", .. },
+    );
+
+    assert_matches!(
+      case(&flac(&["ALBUM=qux", "ARTIST=baz"])),
+      Error::TrackTagMissing { tag: "title", .. },
+    );
+
+    assert_matches!(
+      case(&flac(&[
+        "ALBUM=qux",
+        "ALBUM=quux",
+        "ARTIST=baz",
+        "TITLE=bar"
+      ])),
+      Error::TrackTagMultiple { tag: "album", .. },
+    );
+
+    assert_matches!(
+      case(&flac(&["ALBUM=qux", "ARTIST=baz", "TITLE="])),
+      Error::TrackTagEmpty { tag: "title", .. },
+    );
+
+    assert_matches!(
+      case(&flac(&["ALBUM=qux", "ARTIST=baz", "TITLE=foo\tbar"])),
+      Error::TrackTagInvalid {
+        source: TextError::Control { character: '\t' },
+        tag: "title",
+        ..
+      },
+    );
+  }
+
+  #[test]
   fn populate_ok() {
     let (_tempdir, root) = tempdir();
 
@@ -158,75 +213,6 @@ mod tests {
     assert_eq!(track.album.as_str(), "qux");
     assert_eq!(track.artist.as_str(), "baz");
     assert_eq!(track.title.as_str(), "bar");
-  }
-
-  #[test]
-  fn populate_err() {
-    #[track_caller]
-    fn case(bytes: &[u8]) -> Result<Track> {
-      let (_tempdir, root) = tempdir();
-
-      std::fs::write(root.join("foo.flac"), bytes).unwrap();
-
-      let mut track = "foo.flac".parse::<Track>().unwrap();
-
-      track.populate(&root).map(|()| track)
-    }
-
-    let track = case(&flac(&["ALBUM=qux", "ARTIST=baz", "TITLE=bar"])).unwrap();
-    assert_eq!(track.album.as_str(), "qux");
-    assert_eq!(track.artist.as_str(), "baz");
-    assert_eq!(track.title.as_str(), "bar");
-
-    assert_matches_regex!(
-      case(b"foo").unwrap_err().to_string(),
-      r"^failed to decode FLAC track `.*foo\.flac`$",
-    );
-
-    assert_matches_regex!(
-      case(&flac(&[])).unwrap_err().to_string(),
-      r"^FLAC track `.*foo\.flac` is missing `album` tag$",
-    );
-
-    assert_matches_regex!(
-      case(&flac(&["ALBUM=qux", "TITLE=bar"]))
-        .unwrap_err()
-        .to_string(),
-      r"^FLAC track `.*foo\.flac` is missing `artist` tag$",
-    );
-
-    assert_matches_regex!(
-      case(&flac(&["ALBUM=qux", "ARTIST=baz"]))
-        .unwrap_err()
-        .to_string(),
-      r"^FLAC track `.*foo\.flac` is missing `title` tag$",
-    );
-
-    assert_matches_regex!(
-      case(&flac(&[
-        "ALBUM=qux",
-        "ALBUM=quux",
-        "ARTIST=baz",
-        "TITLE=bar"
-      ]))
-      .unwrap_err()
-      .to_string(),
-      r"^FLAC track `.*foo\.flac` has multiple `album` tags$",
-    );
-
-    assert_matches_regex!(
-      case(&flac(&["ALBUM=qux", "ARTIST=baz", "TITLE="]))
-        .unwrap_err()
-        .to_string(),
-      r"^FLAC track `.*foo\.flac` has empty `title` tag$",
-    );
-
-    assert_matches_regex!(
-      case(&flac(&["ALBUM=qux", "ARTIST=baz", "TITLE=foo\tbar"]))
-        .unwrap_err()
-        .to_string(),
-      r"^FLAC track `.*foo\.flac` has invalid `title` tag$",
-    );
   }
 
   #[test]
