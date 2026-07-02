@@ -1,2 +1,6 @@
 <img src=/artwork/{{ self.fingerprint }}>
 <audio controls src=/media/audio/{{ self.fingerprint }}/track/{{ Ordinal(self.track) }}></audio>
+<dl>
+  <dt>duration</dt>
+  <dd>{{ DisplayDuration(self.track().duration()) }}</dd>
+</dl>

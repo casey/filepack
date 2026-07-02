@@ -468,6 +468,27 @@ pub enum Error {
     path: DisplayPath,
     source: claxon::Error,
   },
+  #[snafu(display("track `{path}` has {actual} samples but metadata sample count is {expected}"))]
+  TrackSampleCountMismatch {
+    actual: u64,
+    backtrace: Option<Backtrace>,
+    expected: u64,
+    path: DisplayPath,
+  },
+  #[snafu(display("FLAC track `{path}` has unknown sample count"))]
+  TrackSampleCountUnknown {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+  },
+  #[snafu(display(
+    "track `{path}` has sample rate {actual} but metadata sample rate is {expected}"
+  ))]
+  TrackSampleRateMismatch {
+    actual: u64,
+    backtrace: Option<Backtrace>,
+    expected: u64,
+    path: DisplayPath,
+  },
   #[snafu(display("FLAC track `{path}` has empty title"))]
   TrackTitleEmpty {
     backtrace: Option<Backtrace>,

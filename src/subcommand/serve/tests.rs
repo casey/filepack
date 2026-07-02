@@ -1321,6 +1321,8 @@ fn package_page_renders_audio_media() {
       tracks: vec![
         Track {
           filename: "foo.flac".parse().unwrap(),
+          sample_count: 9_922_500,
+          sample_rate: 44100,
           title: Some("foo".into()),
           ty: AudioType::Flac,
         },

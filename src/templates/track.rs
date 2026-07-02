@@ -26,3 +26,44 @@ impl Page for TrackHtml {
     format!("{} · filepack", self.track().title())
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn duration() {
+    let metadata = Metadata {
+      media: Some(Media::Audio {
+        tracks: vec![Track {
+          filename: "foo.flac".parse().unwrap(),
+          sample_count: 9_922_500,
+          sample_rate: 44100,
+          title: Some("foo".into()),
+          ty: AudioType::Flac,
+        }],
+      }),
+      ..default()
+    };
+
+    assert_eq!(
+      TrackHtml {
+        fingerprint: test::FINGERPRINT.parse().unwrap(),
+        metadata,
+        track: 0,
+      }
+      .to_string(),
+      unindent(&format!(
+        "
+          <img src=/artwork/{fingerprint}>
+          <audio controls src=/media/audio/{fingerprint}/track/1></audio>
+          <dl>
+            <dt>duration</dt>
+            <dd>3:45</dd>
+          </dl>
+        ",
+        fingerprint = test::FINGERPRINT,
+      )),
+    );
+  }
+}

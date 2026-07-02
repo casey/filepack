@@ -54,10 +54,18 @@ impl Metadata {
       }
     }
 
-    if let Some(Media::Image { images }) = &self.media {
-      for image in images {
-        image.check_content(root)?;
+    match &self.media {
+      Some(Media::Audio { tracks }) => {
+        for track in tracks {
+          track.check_content(root)?;
+        }
       }
+      Some(Media::Image { images }) => {
+        for image in images {
+          image.check_content(root)?;
+        }
+      }
+      None => {}
     }
 
     Ok(())
@@ -360,6 +368,8 @@ mod tests {
       media: Some(Media::Audio {
         tracks: vec![Track {
           filename: "track.flac".parse().unwrap(),
+          sample_count: 2,
+          sample_rate: 1,
           title: Some("foo".into()),
           ty: AudioType::Flac,
         }],

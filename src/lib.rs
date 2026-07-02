@@ -44,6 +44,7 @@ use {
     decode_error::DecodeError,
     dimensions::Dimensions,
     directory_tree_entry::DirectoryTreeEntry,
+    display_duration::DisplayDuration,
     display_path::DisplayPath,
     display_secret::DisplaySecret,
     entries::Entries,
@@ -229,6 +230,7 @@ mod dimensions;
 mod directory;
 mod directory_tree;
 mod directory_tree_entry;
+mod display_duration;
 mod display_path;
 mod display_secret;
 mod encode;

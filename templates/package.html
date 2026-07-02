@@ -48,6 +48,8 @@
 %%       Media::Audio { tracks } => {
   <dt>tracks</dt>
   <dd>{{ tracks.len() }}</dd>
+  <dt>duration</dt>
+  <dd>{{ DisplayDuration(tracks.iter().map(Track::duration).sum()) }}</dd>
 %%       }
 %%       Media::Image { images } => {
   <dt>images</dt>
@@ -65,6 +67,7 @@
 %%         for (i, track) in tracks.iter().enumerate() {
   <li>
     <a href=/package/{{ self.fingerprint }}/{{ Ordinal(i) }}>{{ track.title() }}</a>
+    {{ DisplayDuration(track.duration()) }}
   </li>
 %%         }
 </ul>
