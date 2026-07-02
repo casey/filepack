@@ -76,10 +76,10 @@ impl FromStr for Track {
     };
 
     Ok(Self {
-      album: Text::default(),
-      artist: Text::default(),
+      album: Text::new(),
+      artist: Text::new(),
       filename,
-      title: Text::default(),
+      title: Text::new(),
       ty,
     })
   }
@@ -118,10 +118,10 @@ mod tests {
     assert_eq!(
       "foo.flac".parse::<Track>().unwrap(),
       Track {
-        album: Text::default(),
-        artist: Text::default(),
+        album: Text::new(),
+        artist: Text::new(),
         filename: "foo.flac".parse().unwrap(),
-        title: Text::default(),
+        title: Text::new(),
         ty: AudioType::Flac,
       },
     );

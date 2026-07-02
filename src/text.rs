@@ -9,6 +9,10 @@ impl Text {
   pub(crate) fn as_str(&self) -> &str {
     &self.0
   }
+
+  pub(crate) fn new() -> Self {
+    Self::default()
+  }
 }
 
 impl FromStr for Text {
