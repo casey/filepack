@@ -359,8 +359,10 @@ mod tests {
       language: Some("en".parse().unwrap()),
       media: Some(Media::Audio {
         tracks: vec![Track {
+          album: "bar".into(),
+          artist: "baz".into(),
           filename: "track.flac".parse().unwrap(),
-          title: Some("foo".into()),
+          title: "foo".into(),
           ty: AudioType::Flac,
         }],
       }),

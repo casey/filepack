@@ -468,15 +468,23 @@ pub enum Error {
     path: DisplayPath,
     source: claxon::Error,
   },
-  #[snafu(display("FLAC track `{path}` has empty title"))]
-  TrackTitleEmpty {
+  #[snafu(display("FLAC track `{path}` has empty `{tag}` tag"))]
+  TrackTagEmpty {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
+    tag: &'static str,
   },
-  #[snafu(display("FLAC track `{path}` has multiple titles"))]
-  TrackTitleMultiple {
+  #[snafu(display("FLAC track `{path}` is missing `{tag}` tag"))]
+  TrackTagMissing {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
+    tag: &'static str,
+  },
+  #[snafu(display("FLAC track `{path}` has multiple `{tag}` tags"))]
+  TrackTagMultiple {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+    tag: &'static str,
   },
   #[snafu(display("failed to unarchive manifest"))]
   UnarchiveManifest {

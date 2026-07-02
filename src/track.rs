@@ -1,13 +1,16 @@
 use super::*;
 
-#[skip_serializing_none]
 #[derive(Clone, Debug, Decode, DeserializeFromStr, Encode, PartialEq, Serialize)]
 pub(crate) struct Track {
   #[n(0)]
-  pub(crate) filename: ComponentBuf,
+  pub(crate) album: String,
   #[n(1)]
-  pub(crate) title: Option<String>,
+  pub(crate) artist: String,
   #[n(2)]
+  pub(crate) filename: ComponentBuf,
+  #[n(3)]
+  pub(crate) title: String,
+  #[n(4)]
   #[serde(rename = "type")]
   pub(crate) ty: AudioType,
 }
@@ -28,29 +31,9 @@ impl Track {
   fn populate_flac(&mut self, path: &Utf8Path) -> Result {
     let reader = FlacReader::open(path).context(error::TrackDecode { path })?;
 
-    let title = {
-      let mut titles = reader.get_tag("title");
-
-      let title = titles.next();
-
-      ensure! {
-        titles.next().is_none(),
-        error::TrackTitleMultiple { path },
-      }
-
-      if let Some(title) = title {
-        ensure! {
-          !title.is_empty(),
-          error::TrackTitleEmpty { path },
-        }
-
-        Some(title.into())
-      } else {
-        None
-      }
-    };
-
-    self.title = title;
+    self.album = Self::tag(&reader, path, "album")?;
+    self.artist = Self::tag(&reader, path, "artist")?;
+    self.title = Self::tag(&reader, path, "title")?;
 
     Ok(())
   }
@@ -59,8 +42,24 @@ impl Track {
     self.ty.resource_type()
   }
 
-  pub(crate) fn title(&self) -> &str {
-    self.title.as_deref().unwrap_or("Untitled")
+  fn tag(reader: &FlacReader<fs::File>, path: &Utf8Path, tag: &'static str) -> Result<String> {
+    let mut values = reader.get_tag(tag);
+
+    let value = values
+      .next()
+      .context(error::TrackTagMissing { path, tag })?;
+
+    ensure! {
+      values.next().is_none(),
+      error::TrackTagMultiple { path, tag },
+    }
+
+    ensure! {
+      !value.is_empty(),
+      error::TrackTagEmpty { path, tag },
+    }
+
+    Ok(value.into())
   }
 }
 
@@ -77,8 +76,10 @@ impl FromStr for Track {
     };
 
     Ok(Self {
+      album: String::new(),
+      artist: String::new(),
       filename,
-      title: None,
+      title: String::new(),
       ty,
     })
   }
@@ -92,16 +93,18 @@ mod tests {
   fn encoding() {
     assert_cbor(
       "foo.flac".parse::<Track>().unwrap(),
-      "a20068666f6f2e666c61630200",
+      "a5006001600268666f6f2e666c616303600400",
     );
 
     assert_cbor(
       Track {
+        album: "qux".into(),
+        artist: "baz".into(),
         filename: "foo.flac".parse().unwrap(),
-        title: Some("bar".into()),
+        title: "bar".into(),
         ty: AudioType::Flac,
       },
-      "a30068666f6f2e666c616301636261720200",
+      "a50063717578016362617a0268666f6f2e666c616303636261720400",
     );
   }
 
@@ -115,8 +118,10 @@ mod tests {
     assert_eq!(
       "foo.flac".parse::<Track>().unwrap(),
       Track {
+        album: String::new(),
+        artist: String::new(),
         filename: "foo.flac".parse().unwrap(),
-        title: None,
+        title: String::new(),
         ty: AudioType::Flac,
       },
     );
@@ -150,14 +155,10 @@ mod tests {
       track.populate(&root).map(|()| track)
     }
 
-    assert_eq!(
-      case(&flac(&["TITLE=bar"])).unwrap().title,
-      Some("bar".into()),
-    );
-
-    assert_eq!(case(&flac(&[])).unwrap().title, None);
-
-    assert_eq!(case(&flac(&["ARTIST=bar"])).unwrap().title, None);
+    let track = case(&flac(&["ALBUM=qux", "ARTIST=baz", "TITLE=bar"])).unwrap();
+    assert_eq!(track.album, "qux");
+    assert_eq!(track.artist, "baz");
+    assert_eq!(track.title, "bar");
 
     assert_matches_regex!(
       case(b"foo").unwrap_err().to_string(),
@@ -165,15 +166,41 @@ mod tests {
     );
 
     assert_matches_regex!(
-      case(&flac(&["TITLE=bar", "TITLE=baz"]))
-        .unwrap_err()
-        .to_string(),
-      r"^FLAC track `.*foo\.flac` has multiple titles$",
+      case(&flac(&[])).unwrap_err().to_string(),
+      r"^FLAC track `.*foo\.flac` is missing `album` tag$",
     );
 
     assert_matches_regex!(
-      case(&flac(&["TITLE="])).unwrap_err().to_string(),
-      r"^FLAC track `.*foo\.flac` has empty title$",
+      case(&flac(&["ALBUM=qux", "TITLE=bar"]))
+        .unwrap_err()
+        .to_string(),
+      r"^FLAC track `.*foo\.flac` is missing `artist` tag$",
+    );
+
+    assert_matches_regex!(
+      case(&flac(&["ALBUM=qux", "ARTIST=baz"]))
+        .unwrap_err()
+        .to_string(),
+      r"^FLAC track `.*foo\.flac` is missing `title` tag$",
+    );
+
+    assert_matches_regex!(
+      case(&flac(&[
+        "ALBUM=qux",
+        "ALBUM=quux",
+        "ARTIST=baz",
+        "TITLE=bar"
+      ]))
+      .unwrap_err()
+      .to_string(),
+      r"^FLAC track `.*foo\.flac` has multiple `album` tags$",
+    );
+
+    assert_matches_regex!(
+      case(&flac(&["ALBUM=qux", "ARTIST=baz", "TITLE="]))
+        .unwrap_err()
+        .to_string(),
+      r"^FLAC track `.*foo\.flac` has empty `title` tag$",
     );
   }
 
@@ -181,17 +208,19 @@ mod tests {
   fn serialize() {
     assert_eq!(
       serde_json::to_string(&"foo.flac".parse::<Track>().unwrap()).unwrap(),
-      r#"{"filename":"foo.flac","type":"flac"}"#,
+      r#"{"album":"","artist":"","filename":"foo.flac","title":"","type":"flac"}"#,
     );
 
     assert_eq!(
       serde_json::to_string(&Track {
+        album: "qux".into(),
+        artist: "baz".into(),
         filename: "foo.flac".parse().unwrap(),
-        title: Some("bar".into()),
+        title: "bar".into(),
         ty: AudioType::Flac,
       })
       .unwrap(),
-      r#"{"filename":"foo.flac","title":"bar","type":"flac"}"#,
+      r#"{"album":"qux","artist":"baz","filename":"foo.flac","title":"bar","type":"flac"}"#,
     );
   }
 }

@@ -74,9 +74,9 @@ media:
 }
 
 #[test]
-fn create_extracts_track_titles() {
+fn create_extracts_track_tags() {
   Test::new()
-    .write("foo.flac", flac(&["TITLE=bar"]))
+    .write("foo.flac", flac(&["ALBUM=qux", "ARTIST=baz", "TITLE=bar"]))
     .write(
       "metadata.yaml",
       "\
@@ -95,6 +95,8 @@ media:
     "type": "audio",
     "tracks": [
       {
+        "album": "qux",
+        "artist": "baz",
         "filename": "foo.flac",
         "title": "bar",
         "type": "flac"
@@ -113,7 +115,7 @@ media:
 #[test]
 fn create_rejects_extra_files_in_media_packages() {
   Test::new()
-    .write("foo.flac", flac(&["TITLE=bar"]))
+    .write("foo.flac", flac(&["ALBUM=qux", "ARTIST=baz", "TITLE=bar"]))
     .write(
       "metadata.yaml",
       "\
