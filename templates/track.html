@@ -1,6 +1,9 @@
+%% let track = self.track();
 <img src=/artwork/{{ self.fingerprint }}>
+<div class=info>
+  <div class=title>{{ track.title }}</div>
+  <div class=artist>{{ track.artist }}</div>
+  <div class=album>{{ track.album }}</div>
+  <div class=duration>{{ DisplayDuration(track.duration()) }}</div>
+</div>
 <audio controls src=/media/audio/{{ self.fingerprint }}/track/{{ Ordinal(self.track) }}></audio>
-<dl>
-  <dt>duration</dt>
-  <dd>{{ DisplayDuration(self.track().duration()) }}</dd>
-</dl>

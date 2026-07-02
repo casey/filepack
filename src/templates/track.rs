@@ -23,7 +23,7 @@ impl Page for TrackHtml {
   }
 
   fn title(&self) -> String {
-    format!("{} · filepack", self.track().title())
+    format!("{} · filepack", self.track().title)
   }
 }
 
@@ -36,10 +36,12 @@ mod tests {
     let metadata = Metadata {
       media: Some(Media::Audio {
         tracks: vec![Track {
+          album: "qux".parse().unwrap(),
+          artist: "baz".parse().unwrap(),
           filename: "foo.flac".parse().unwrap(),
           sample_count: 9_922_500,
           sample_rate: 44100,
-          title: Some("foo".into()),
+          title: "foo".parse().unwrap(),
           ty: AudioType::Flac,
         }],
       }),
@@ -56,11 +58,13 @@ mod tests {
       unindent(&format!(
         "
           <img src=/artwork/{fingerprint}>
+          <div class=info>
+            <div class=title>foo</div>
+            <div class=artist>baz</div>
+            <div class=album>qux</div>
+            <div class=duration>3:45</div>
+          </div>
           <audio controls src=/media/audio/{fingerprint}/track/1></audio>
-          <dl>
-            <dt>duration</dt>
-            <dd>3:45</dd>
-          </dl>
         ",
         fingerprint = test::FINGERPRINT,
       )),

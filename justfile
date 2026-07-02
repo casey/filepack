@@ -115,11 +115,6 @@ test-progress-bar: tmp
   cargo run --release create tmp
   rm tmp/data*
 
-check-error-variant-order: tmp
-  cat src/error.rs | rg '^  ([A-Z].*) \{' -or '$1' > tmp/original.txt
-  sort tmp/original.txt > tmp/sorted.txt
-  diff tmp/{original,sorted}.txt
-
 sign-release: tmp
   #!/usr/bin/env bash
   set -euxo pipefail

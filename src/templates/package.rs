@@ -36,17 +36,21 @@ mod tests {
       media: Some(Media::Audio {
         tracks: vec![
           Track {
+            album: "qux".parse().unwrap(),
+            artist: "baz".parse().unwrap(),
             filename: "foo.flac".parse().unwrap(),
             sample_count: 9_922_500,
             sample_rate: 44100,
-            title: Some("foo".into()),
+            title: "foo".parse().unwrap(),
             ty: AudioType::Flac,
           },
           Track {
+            album: "qux".parse().unwrap(),
+            artist: "baz".parse().unwrap(),
             filename: "bar.flac".parse().unwrap(),
             sample_count: 44100,
             sample_rate: 44100,
-            title: None,
+            title: "bar".parse().unwrap(),
             ty: AudioType::Flac,
           },
         ],
@@ -80,7 +84,7 @@ mod tests {
               3:45
             </li>
             <li>
-              <a href=/package/{fingerprint}/2>Untitled</a>
+              <a href=/package/{fingerprint}/2>bar</a>
               0:01
             </li>
           </ul>

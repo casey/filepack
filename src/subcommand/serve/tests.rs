@@ -1320,10 +1320,12 @@ fn package_page_renders_audio_media() {
     media: Some(Media::Audio {
       tracks: vec![
         Track {
+          album: "qux".parse().unwrap(),
+          artist: "baz".parse().unwrap(),
           filename: "foo.flac".parse().unwrap(),
           sample_count: 9_922_500,
           sample_rate: 44100,
-          title: Some("foo".into()),
+          title: "foo".parse().unwrap(),
           ty: AudioType::Flac,
         },
         "bar.flac".parse().unwrap(),
