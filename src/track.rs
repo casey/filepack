@@ -273,8 +273,7 @@ mod tests {
 
   #[test]
   fn populate_err() {
-    #[track_caller]
-    fn case(bytes: &[u8]) -> Error {
+    fn err(bytes: &[u8]) -> Error {
       let (_tempdir, root) = tempdir();
 
       std::fs::write(root.join("foo.flac"), bytes).unwrap();
@@ -284,25 +283,25 @@ mod tests {
       track.populate(&root).unwrap_err()
     }
 
-    assert_matches!(case(b"foo"), Error::TrackDecode { .. });
+    assert_matches!(err(b"foo"), Error::TrackDecode { .. });
 
     assert_matches!(
-      case(&flac(&[], 44100)),
+      err(&flac(&[], 44100)),
       Error::TrackTagMissing { tag: "album", .. },
     );
 
     assert_matches!(
-      case(&flac(&["ALBUM=qux", "TITLE=bar"], 44100)),
+      err(&flac(&["ALBUM=qux", "TITLE=bar"], 44100)),
       Error::TrackTagMissing { tag: "artist", .. },
     );
 
     assert_matches!(
-      case(&flac(&["ALBUM=qux", "ARTIST=baz"], 44100)),
+      err(&flac(&["ALBUM=qux", "ARTIST=baz"], 44100)),
       Error::TrackTagMissing { tag: "title", .. },
     );
 
     assert_matches!(
-      case(&flac(
+      err(&flac(
         &["ALBUM=qux", "ALBUM=quux", "ARTIST=baz", "TITLE=bar"],
         44100,
       )),
@@ -310,12 +309,12 @@ mod tests {
     );
 
     assert_matches!(
-      case(&flac(&["ALBUM=qux", "ARTIST=baz", "TITLE="], 44100)),
+      err(&flac(&["ALBUM=qux", "ARTIST=baz", "TITLE="], 44100)),
       Error::TrackTagEmpty { tag: "title", .. },
     );
 
     assert_matches!(
-      case(&flac(&["ALBUM=qux", "ARTIST=baz", "TITLE=foo\tbar"], 44100)),
+      err(&flac(&["ALBUM=qux", "ARTIST=baz", "TITLE=foo\tbar"], 44100)),
       Error::TrackTagInvalid {
         source: TextError::Control { character: '\t' },
         tag: "title",
@@ -324,7 +323,7 @@ mod tests {
     );
 
     assert_matches!(
-      case(&flac(&["ALBUM=qux", "ARTIST=baz", "TITLE=bar"], 0)),
+      err(&flac(&["ALBUM=qux", "ARTIST=baz", "TITLE=bar"], 0)),
       Error::TrackSampleCountUnknown { .. },
     );
   }
