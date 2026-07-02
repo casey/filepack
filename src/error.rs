@@ -462,7 +462,7 @@ pub enum Error {
   },
   #[snafu(display("authentication tokens may only be used over HTTPS or loopback"))]
   TokenOverHttp { backtrace: Option<Backtrace> },
-  #[snafu(display("failed to decode FLAC track `{path}`"))]
+  #[snafu(display("failed to decode track `{path}`"))]
   TrackDecode {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
@@ -475,7 +475,7 @@ pub enum Error {
     expected: u64,
     path: DisplayPath,
   },
-  #[snafu(display("FLAC track `{path}` has unknown sample count"))]
+  #[snafu(display("track `{path}` has unknown sample count"))]
   TrackSampleCountUnknown {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
@@ -489,26 +489,26 @@ pub enum Error {
     expected: u64,
     path: DisplayPath,
   },
-  #[snafu(display("FLAC track `{path}` has empty `{tag}` tag"))]
+  #[snafu(display("track `{path}` has empty `{tag}` tag"))]
   TrackTagEmpty {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
     tag: &'static str,
   },
-  #[snafu(display("FLAC track `{path}` has invalid `{tag}` tag"))]
+  #[snafu(display("track `{path}` has invalid `{tag}` tag"))]
   TrackTagInvalid {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
     source: TextError,
     tag: &'static str,
   },
-  #[snafu(display("FLAC track `{path}` is missing `{tag}` tag"))]
+  #[snafu(display("track `{path}` is missing `{tag}` tag"))]
   TrackTagMissing {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
     tag: &'static str,
   },
-  #[snafu(display("FLAC track `{path}` has multiple `{tag}` tags"))]
+  #[snafu(display("track `{path}` has multiple `{tag}` tags"))]
   TrackTagMultiple {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
