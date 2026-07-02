@@ -9,8 +9,12 @@ pub(crate) struct Track {
   #[n(2)]
   pub(crate) filename: ComponentBuf,
   #[n(3)]
-  pub(crate) title: Text,
+  pub(crate) sample_count: u64,
   #[n(4)]
+  pub(crate) sample_rate: u64,
+  #[n(5)]
+  pub(crate) title: Text,
+  #[n(6)]
   #[serde(rename = "type")]
   pub(crate) ty: AudioType,
 }
@@ -18,6 +22,56 @@ pub(crate) struct Track {
 impl Track {
   pub(crate) fn as_path(&self) -> RelativePath {
     self.filename.as_path()
+  }
+
+  pub(crate) fn check_content(&self, root: &Utf8Path) -> Result {
+    let path = root.join(self.as_path());
+
+    match self.ty {
+      AudioType::Flac => self.check_content_flac(&path),
+    }
+  }
+
+  fn check_content_flac(&self, path: &Utf8Path) -> Result {
+    let reader = FlacReader::open(path).context(error::TrackDecode { path })?;
+
+    let Streaminfo {
+      sample_count,
+      sample_rate,
+    } = Self::streaminfo(&reader, path)?;
+
+    ensure! {
+      sample_count == self.sample_count,
+      error::TrackSampleCountMismatch {
+        actual: sample_count,
+        expected: self.sample_count,
+        path,
+      },
+    }
+
+    ensure! {
+      sample_rate == self.sample_rate,
+      error::TrackSampleRateMismatch {
+        actual: sample_rate,
+        expected: self.sample_rate,
+        path,
+      },
+    }
+
+    Ok(())
+  }
+
+  pub(crate) fn duration(&self) -> Duration {
+    if self.sample_rate == 0 {
+      return Duration::ZERO;
+    }
+
+    let subsecond = u128::from(self.sample_count % self.sample_rate);
+
+    Duration::new(
+      self.sample_count / self.sample_rate,
+      u32::try_from(subsecond * 1_000_000_000 / u128::from(self.sample_rate)).unwrap(),
+    )
   }
 
   pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result {
@@ -31,8 +85,15 @@ impl Track {
   fn populate_flac(&mut self, path: &Utf8Path) -> Result {
     let reader = FlacReader::open(path).context(error::TrackDecode { path })?;
 
+    let Streaminfo {
+      sample_count,
+      sample_rate,
+    } = Self::streaminfo(&reader, path)?;
+
     self.album = Self::tag(&reader, path, "album")?;
     self.artist = Self::tag(&reader, path, "artist")?;
+    self.sample_count = sample_count;
+    self.sample_rate = sample_rate;
     self.title = Self::tag(&reader, path, "title")?;
 
     Ok(())
@@ -40,6 +101,19 @@ impl Track {
 
   pub(crate) fn resource_type(&self) -> ResourceType {
     self.ty.resource_type()
+  }
+
+  fn streaminfo(reader: &FlacReader<fs::File>, path: &Utf8Path) -> Result<Streaminfo> {
+    let streaminfo = reader.streaminfo();
+
+    let sample_count = streaminfo
+      .samples
+      .context(error::TrackSampleCountUnknown { path })?;
+
+    Ok(Streaminfo {
+      sample_count,
+      sample_rate: streaminfo.sample_rate.into(),
+    })
   }
 
   fn tag(reader: &FlacReader<fs::File>, path: &Utf8Path, tag: &'static str) -> Result<Text> {
@@ -79,6 +153,8 @@ impl FromStr for Track {
       album: Text::new(),
       artist: Text::new(),
       filename,
+      sample_count: 0,
+      sample_rate: 0,
       title: Text::new(),
       ty,
     })
@@ -90,10 +166,59 @@ mod tests {
   use super::*;
 
   #[test]
+  fn check_content() {
+    #[track_caller]
+    fn case(track: &Track) -> Result {
+      let (_tempdir, root) = tempdir();
+
+      std::fs::write(root.join("foo.flac"), flac(&[], 44100)).unwrap();
+
+      track.check_content(&root)
+    }
+
+    let mut track = "foo.flac".parse::<Track>().unwrap();
+    track.sample_count = 44100;
+    track.sample_rate = 44100;
+
+    case(&track).unwrap();
+
+    track.sample_count = 1;
+
+    assert_matches_regex!(
+      case(&track).unwrap_err().to_string(),
+      r"^track `.*foo\.flac` has 44100 samples but metadata sample count is 1$",
+    );
+
+    track.sample_count = 44100;
+    track.sample_rate = 22050;
+
+    assert_matches_regex!(
+      case(&track).unwrap_err().to_string(),
+      r"^track `.*foo\.flac` has sample rate 44100 but metadata sample rate is 22050$",
+    );
+  }
+
+  #[test]
+  fn duration() {
+    #[track_caller]
+    fn case(sample_count: u64, sample_rate: u64, expected: Duration) {
+      let mut track = "foo.flac".parse::<Track>().unwrap();
+      track.sample_count = sample_count;
+      track.sample_rate = sample_rate;
+      assert_eq!(track.duration(), expected);
+    }
+
+    case(0, 0, Duration::ZERO);
+    case(44100, 44100, Duration::from_secs(1));
+    case(66150, 44100, Duration::from_millis(1500));
+    case(u64::MAX, u64::MAX - 1, Duration::new(1, 0));
+  }
+
+  #[test]
   fn encoding() {
     assert_cbor(
       "foo.flac".parse::<Track>().unwrap(),
-      "a5006001600268666f6f2e666c616303600400",
+      "a7006001600268666f6f2e666c61630300040005600600",
     );
 
     assert_cbor(
@@ -101,10 +226,12 @@ mod tests {
         album: "qux".parse().unwrap(),
         artist: "baz".parse().unwrap(),
         filename: "foo.flac".parse().unwrap(),
+        sample_count: 2,
+        sample_rate: 1,
         title: "bar".parse().unwrap(),
         ty: AudioType::Flac,
       },
-      "a50063717578016362617a0268666f6f2e666c616303636261720400",
+      "a70063717578016362617a0268666f6f2e666c61630302040105636261720600",
     );
   }
 
@@ -121,6 +248,8 @@ mod tests {
         album: Text::new(),
         artist: Text::new(),
         filename: "foo.flac".parse().unwrap(),
+        sample_count: 0,
+        sample_rate: 0,
         title: Text::new(),
         ty: AudioType::Flac,
       },
@@ -144,8 +273,7 @@ mod tests {
 
   #[test]
   fn populate_err() {
-    #[track_caller]
-    fn case(bytes: &[u8]) -> Error {
+    fn err(bytes: &[u8]) -> Error {
       let (_tempdir, root) = tempdir();
 
       std::fs::write(root.join("foo.flac"), bytes).unwrap();
@@ -155,45 +283,48 @@ mod tests {
       track.populate(&root).unwrap_err()
     }
 
-    assert_matches!(case(b"foo"), Error::TrackDecode { .. });
+    assert_matches!(err(b"foo"), Error::TrackDecode { .. });
 
     assert_matches!(
-      case(&flac(&[])),
+      err(&flac(&[], 44100)),
       Error::TrackTagMissing { tag: "album", .. },
     );
 
     assert_matches!(
-      case(&flac(&["ALBUM=qux", "TITLE=bar"])),
+      err(&flac(&["ALBUM=qux", "TITLE=bar"], 44100)),
       Error::TrackTagMissing { tag: "artist", .. },
     );
 
     assert_matches!(
-      case(&flac(&["ALBUM=qux", "ARTIST=baz"])),
+      err(&flac(&["ALBUM=qux", "ARTIST=baz"], 44100)),
       Error::TrackTagMissing { tag: "title", .. },
     );
 
     assert_matches!(
-      case(&flac(&[
-        "ALBUM=qux",
-        "ALBUM=quux",
-        "ARTIST=baz",
-        "TITLE=bar"
-      ])),
+      err(&flac(
+        &["ALBUM=qux", "ALBUM=quux", "ARTIST=baz", "TITLE=bar"],
+        44100,
+      )),
       Error::TrackTagMultiple { tag: "album", .. },
     );
 
     assert_matches!(
-      case(&flac(&["ALBUM=qux", "ARTIST=baz", "TITLE="])),
+      err(&flac(&["ALBUM=qux", "ARTIST=baz", "TITLE="], 44100)),
       Error::TrackTagEmpty { tag: "title", .. },
     );
 
     assert_matches!(
-      case(&flac(&["ALBUM=qux", "ARTIST=baz", "TITLE=foo\tbar"])),
+      err(&flac(&["ALBUM=qux", "ARTIST=baz", "TITLE=foo\tbar"], 44100)),
       Error::TrackTagInvalid {
         source: TextError::Control { character: '\t' },
         tag: "title",
         ..
       },
+    );
+
+    assert_matches!(
+      err(&flac(&["ALBUM=qux", "ARTIST=baz", "TITLE=bar"], 0)),
+      Error::TrackSampleCountUnknown { .. },
     );
   }
 
@@ -203,7 +334,7 @@ mod tests {
 
     std::fs::write(
       root.join("foo.flac"),
-      flac(&["ALBUM=qux", "ARTIST=baz", "TITLE=bar"]),
+      flac(&["ALBUM=qux", "ARTIST=baz", "TITLE=bar"], 66150),
     )
     .unwrap();
 
@@ -212,6 +343,8 @@ mod tests {
 
     assert_eq!(track.album.as_str(), "qux");
     assert_eq!(track.artist.as_str(), "baz");
+    assert_eq!(track.sample_count, 66150);
+    assert_eq!(track.sample_rate, 44100);
     assert_eq!(track.title.as_str(), "bar");
   }
 
@@ -219,7 +352,7 @@ mod tests {
   fn serialize() {
     assert_eq!(
       serde_json::to_string(&"foo.flac".parse::<Track>().unwrap()).unwrap(),
-      r#"{"album":"","artist":"","filename":"foo.flac","title":"","type":"flac"}"#,
+      r#"{"album":"","artist":"","filename":"foo.flac","sample_count":0,"sample_rate":0,"title":"","type":"flac"}"#,
     );
 
     assert_eq!(
@@ -227,11 +360,13 @@ mod tests {
         album: "qux".parse().unwrap(),
         artist: "baz".parse().unwrap(),
         filename: "foo.flac".parse().unwrap(),
+        sample_count: 2,
+        sample_rate: 1,
         title: "bar".parse().unwrap(),
         ty: AudioType::Flac,
       })
       .unwrap(),
-      r#"{"album":"qux","artist":"baz","filename":"foo.flac","title":"bar","type":"flac"}"#,
+      r#"{"album":"qux","artist":"baz","filename":"foo.flac","sample_count":2,"sample_rate":1,"title":"bar","type":"flac"}"#,
     );
   }
 }

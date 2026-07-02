@@ -44,6 +44,7 @@ use {
     decode_error::DecodeError,
     dimensions::Dimensions,
     directory_tree_entry::DirectoryTreeEntry,
+    display_duration::DisplayDuration,
     display_path::DisplayPath,
     display_secret::DisplaySecret,
     entries::Entries,
@@ -87,6 +88,7 @@ use {
     sign_options::SignOptions,
     signature_error::SignatureError,
     static_asset::StaticAsset,
+    streaminfo::Streaminfo,
     style::Style,
     subcommand::Subcommand,
     templates::PageHtml,
@@ -229,6 +231,7 @@ mod dimensions;
 mod directory;
 mod directory_tree;
 mod directory_tree_entry;
+mod display_duration;
 mod display_path;
 mod display_secret;
 mod encode;
@@ -291,6 +294,7 @@ mod signature_error;
 mod sorted_set;
 mod statement;
 mod static_asset;
+mod streaminfo;
 mod style;
 mod subcommand;
 pub mod templates;

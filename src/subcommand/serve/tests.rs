@@ -1323,6 +1323,8 @@ fn package_page_renders_audio_media() {
           album: "qux".parse().unwrap(),
           artist: "baz".parse().unwrap(),
           filename: "foo.flac".parse().unwrap(),
+          sample_count: 9_922_500,
+          sample_rate: 44100,
           title: "foo".parse().unwrap(),
           ty: AudioType::Flac,
         },
