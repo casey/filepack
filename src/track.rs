@@ -1,13 +1,16 @@
 use super::*;
 
-#[skip_serializing_none]
 #[derive(Clone, Debug, Decode, DeserializeFromStr, Encode, PartialEq, Serialize)]
 pub(crate) struct Track {
   #[n(0)]
-  pub(crate) filename: ComponentBuf,
+  pub(crate) album: Text,
   #[n(1)]
-  pub(crate) title: Option<String>,
+  pub(crate) artist: Text,
   #[n(2)]
+  pub(crate) filename: ComponentBuf,
+  #[n(3)]
+  pub(crate) title: Text,
+  #[n(4)]
   #[serde(rename = "type")]
   pub(crate) ty: AudioType,
 }
@@ -28,29 +31,9 @@ impl Track {
   fn populate_flac(&mut self, path: &Utf8Path) -> Result {
     let reader = FlacReader::open(path).context(error::TrackDecode { path })?;
 
-    let title = {
-      let mut titles = reader.get_tag("title");
-
-      let title = titles.next();
-
-      ensure! {
-        titles.next().is_none(),
-        error::TrackTitleMultiple { path },
-      }
-
-      if let Some(title) = title {
-        ensure! {
-          !title.is_empty(),
-          error::TrackTitleEmpty { path },
-        }
-
-        Some(title.into())
-      } else {
-        None
-      }
-    };
-
-    self.title = title;
+    self.album = Self::tag(&reader, path, "album")?;
+    self.artist = Self::tag(&reader, path, "artist")?;
+    self.title = Self::tag(&reader, path, "title")?;
 
     Ok(())
   }
@@ -59,8 +42,24 @@ impl Track {
     self.ty.resource_type()
   }
 
-  pub(crate) fn title(&self) -> &str {
-    self.title.as_deref().unwrap_or("Untitled")
+  fn tag(reader: &FlacReader<fs::File>, path: &Utf8Path, tag: &'static str) -> Result<Text> {
+    let mut values = reader.get_tag(tag);
+
+    let value = values
+      .next()
+      .context(error::TrackTagMissing { path, tag })?;
+
+    ensure! {
+      values.next().is_none(),
+      error::TrackTagMultiple { path, tag },
+    }
+
+    ensure! {
+      !value.is_empty(),
+      error::TrackTagEmpty { path, tag },
+    }
+
+    value.parse().context(error::TrackTagInvalid { path, tag })
   }
 }
 
@@ -77,8 +76,10 @@ impl FromStr for Track {
     };
 
     Ok(Self {
+      album: Text::new(),
+      artist: Text::new(),
       filename,
-      title: None,
+      title: Text::new(),
       ty,
     })
   }
@@ -92,16 +93,18 @@ mod tests {
   fn encoding() {
     assert_cbor(
       "foo.flac".parse::<Track>().unwrap(),
-      "a20068666f6f2e666c61630200",
+      "a5006001600268666f6f2e666c616303600400",
     );
 
     assert_cbor(
       Track {
+        album: "qux".parse().unwrap(),
+        artist: "baz".parse().unwrap(),
         filename: "foo.flac".parse().unwrap(),
-        title: Some("bar".into()),
+        title: "bar".parse().unwrap(),
         ty: AudioType::Flac,
       },
-      "a30068666f6f2e666c616301636261720200",
+      "a50063717578016362617a0268666f6f2e666c616303636261720400",
     );
   }
 
@@ -115,8 +118,10 @@ mod tests {
     assert_eq!(
       "foo.flac".parse::<Track>().unwrap(),
       Track {
+        album: Text::new(),
+        artist: Text::new(),
         filename: "foo.flac".parse().unwrap(),
-        title: None,
+        title: Text::new(),
         ty: AudioType::Flac,
       },
     );
@@ -138,60 +143,95 @@ mod tests {
   }
 
   #[test]
-  fn populate() {
+  fn populate_err() {
     #[track_caller]
-    fn case(bytes: &[u8]) -> Result<Track> {
+    fn case(bytes: &[u8]) -> Error {
       let (_tempdir, root) = tempdir();
 
       std::fs::write(root.join("foo.flac"), bytes).unwrap();
 
       let mut track = "foo.flac".parse::<Track>().unwrap();
 
-      track.populate(&root).map(|()| track)
+      track.populate(&root).unwrap_err()
     }
 
-    assert_eq!(
-      case(&flac(&["TITLE=bar"])).unwrap().title,
-      Some("bar".into()),
+    assert_matches!(case(b"foo"), Error::TrackDecode { .. });
+
+    assert_matches!(
+      case(&flac(&[])),
+      Error::TrackTagMissing { tag: "album", .. },
     );
 
-    assert_eq!(case(&flac(&[])).unwrap().title, None);
-
-    assert_eq!(case(&flac(&["ARTIST=bar"])).unwrap().title, None);
-
-    assert_matches_regex!(
-      case(b"foo").unwrap_err().to_string(),
-      r"^failed to decode FLAC track `.*foo\.flac`$",
+    assert_matches!(
+      case(&flac(&["ALBUM=qux", "TITLE=bar"])),
+      Error::TrackTagMissing { tag: "artist", .. },
     );
 
-    assert_matches_regex!(
-      case(&flac(&["TITLE=bar", "TITLE=baz"]))
-        .unwrap_err()
-        .to_string(),
-      r"^FLAC track `.*foo\.flac` has multiple titles$",
+    assert_matches!(
+      case(&flac(&["ALBUM=qux", "ARTIST=baz"])),
+      Error::TrackTagMissing { tag: "title", .. },
     );
 
-    assert_matches_regex!(
-      case(&flac(&["TITLE="])).unwrap_err().to_string(),
-      r"^FLAC track `.*foo\.flac` has empty title$",
+    assert_matches!(
+      case(&flac(&[
+        "ALBUM=qux",
+        "ALBUM=quux",
+        "ARTIST=baz",
+        "TITLE=bar"
+      ])),
+      Error::TrackTagMultiple { tag: "album", .. },
     );
+
+    assert_matches!(
+      case(&flac(&["ALBUM=qux", "ARTIST=baz", "TITLE="])),
+      Error::TrackTagEmpty { tag: "title", .. },
+    );
+
+    assert_matches!(
+      case(&flac(&["ALBUM=qux", "ARTIST=baz", "TITLE=foo\tbar"])),
+      Error::TrackTagInvalid {
+        source: TextError::Control { character: '\t' },
+        tag: "title",
+        ..
+      },
+    );
+  }
+
+  #[test]
+  fn populate_ok() {
+    let (_tempdir, root) = tempdir();
+
+    std::fs::write(
+      root.join("foo.flac"),
+      flac(&["ALBUM=qux", "ARTIST=baz", "TITLE=bar"]),
+    )
+    .unwrap();
+
+    let mut track = "foo.flac".parse::<Track>().unwrap();
+    track.populate(&root).unwrap();
+
+    assert_eq!(track.album.as_str(), "qux");
+    assert_eq!(track.artist.as_str(), "baz");
+    assert_eq!(track.title.as_str(), "bar");
   }
 
   #[test]
   fn serialize() {
     assert_eq!(
       serde_json::to_string(&"foo.flac".parse::<Track>().unwrap()).unwrap(),
-      r#"{"filename":"foo.flac","type":"flac"}"#,
+      r#"{"album":"","artist":"","filename":"foo.flac","title":"","type":"flac"}"#,
     );
 
     assert_eq!(
       serde_json::to_string(&Track {
+        album: "qux".parse().unwrap(),
+        artist: "baz".parse().unwrap(),
         filename: "foo.flac".parse().unwrap(),
-        title: Some("bar".into()),
+        title: "bar".parse().unwrap(),
         ty: AudioType::Flac,
       })
       .unwrap(),
-      r#"{"filename":"foo.flac","title":"bar","type":"flac"}"#,
+      r#"{"album":"qux","artist":"baz","filename":"foo.flac","title":"bar","type":"flac"}"#,
     );
   }
 }

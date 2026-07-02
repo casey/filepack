@@ -23,6 +23,6 @@ impl Page for TrackHtml {
   }
 
   fn title(&self) -> String {
-    format!("{} · filepack", self.track().title())
+    format!("{} · filepack", self.track().title)
   }
 }

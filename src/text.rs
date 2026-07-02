@@ -1,11 +1,17 @@
 use super::*;
 
-#[derive(Clone, Debug, DeserializeFromStr, Eq, Ord, PartialEq, PartialOrd, SerializeDisplay)]
+#[derive(
+  Clone, Debug, Default, DeserializeFromStr, Eq, Ord, PartialEq, PartialOrd, SerializeDisplay,
+)]
 pub struct Text(String);
 
 impl Text {
   pub(crate) fn as_str(&self) -> &str {
     &self.0
+  }
+
+  pub(crate) fn new() -> Self {
+    Self::default()
   }
 }
 
