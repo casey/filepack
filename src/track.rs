@@ -1,5 +1,10 @@
 use super::*;
 
+struct Streaminfo {
+  sample_count: u64,
+  sample_rate: u64,
+}
+
 #[derive(Clone, Debug, Decode, DeserializeFromStr, Encode, PartialEq, Serialize)]
 pub(crate) struct Track {
   #[n(0)]
@@ -35,7 +40,10 @@ impl Track {
   fn check_content_flac(&self, path: &Utf8Path) -> Result {
     let reader = FlacReader::open(path).context(error::TrackDecode { path })?;
 
-    let (sample_count, sample_rate) = Self::streaminfo(&reader, path)?;
+    let Streaminfo {
+      sample_count,
+      sample_rate,
+    } = Self::streaminfo(&reader, path)?;
 
     ensure! {
       sample_count == self.sample_count,
@@ -82,7 +90,10 @@ impl Track {
   fn populate_flac(&mut self, path: &Utf8Path) -> Result {
     let reader = FlacReader::open(path).context(error::TrackDecode { path })?;
 
-    let (sample_count, sample_rate) = Self::streaminfo(&reader, path)?;
+    let Streaminfo {
+      sample_count,
+      sample_rate,
+    } = Self::streaminfo(&reader, path)?;
 
     self.album = Self::tag(&reader, path, "album")?;
     self.artist = Self::tag(&reader, path, "artist")?;
@@ -97,14 +108,17 @@ impl Track {
     self.ty.resource_type()
   }
 
-  fn streaminfo(reader: &FlacReader<fs::File>, path: &Utf8Path) -> Result<(u64, u64)> {
+  fn streaminfo(reader: &FlacReader<fs::File>, path: &Utf8Path) -> Result<Streaminfo> {
     let streaminfo = reader.streaminfo();
 
     let sample_count = streaminfo
       .samples
       .context(error::TrackSampleCountUnknown { path })?;
 
-    Ok((sample_count, streaminfo.sample_rate.into()))
+    Ok(Streaminfo {
+      sample_count,
+      sample_rate: streaminfo.sample_rate.into(),
+    })
   }
 
   fn tag(reader: &FlacReader<fs::File>, path: &Utf8Path, tag: &'static str) -> Result<Text> {
