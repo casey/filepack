@@ -32,7 +32,7 @@ mod tests {
   use super::*;
 
   #[test]
-  fn duration() {
+  fn track() {
     let metadata = Metadata {
       media: Some(Media::Audio {
         tracks: vec![Track {
@@ -62,7 +62,6 @@ mod tests {
             <div class=title>foo</div>
             <div class=artist>baz</div>
             <div class=album>qux</div>
-            <div class=duration>3:45</div>
           </div>
           <audio controls src=/media/audio/{fingerprint}/track/1></audio>
         ",

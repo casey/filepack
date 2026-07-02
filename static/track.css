@@ -15,7 +15,7 @@ img {
 .info {
   padding: 0.75em 1em;
 
-  .album, .artist, .duration {
+  .album, .artist {
     color: #aaa;
     font-size: 0.875em;
   }

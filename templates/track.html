@@ -4,6 +4,5 @@
   <div class=title>{{ track.title }}</div>
   <div class=artist>{{ track.artist }}</div>
   <div class=album>{{ track.album }}</div>
-  <div class=duration>{{ DisplayDuration(track.duration()) }}</div>
 </div>
 <audio controls src=/media/audio/{{ self.fingerprint }}/track/{{ Ordinal(self.track) }}></audio>
