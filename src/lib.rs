@@ -88,6 +88,7 @@ use {
     sign_options::SignOptions,
     signature_error::SignatureError,
     static_asset::StaticAsset,
+    streaminfo::Streaminfo,
     style::Style,
     subcommand::Subcommand,
     templates::PageHtml,
@@ -293,6 +294,7 @@ mod signature_error;
 mod sorted_set;
 mod statement;
 mod static_asset;
+mod streaminfo;
 mod style;
 mod subcommand;
 pub mod templates;

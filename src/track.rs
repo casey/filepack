@@ -1,10 +1,5 @@
 use super::*;
 
-struct Streaminfo {
-  sample_count: u64,
-  sample_rate: u64,
-}
-
 #[derive(Clone, Debug, Decode, DeserializeFromStr, Encode, PartialEq, Serialize)]
 pub(crate) struct Track {
   #[n(0)]
