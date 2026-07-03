@@ -5,6 +5,13 @@ pub(crate) struct ArchiveBuilder {
 }
 
 impl ArchiveBuilder {
+  fn add(&mut self, file: Vec<u8>) -> (Hash, u64) {
+    let size = file.len().into_u64();
+    let hash = Hash::bytes(&file);
+    self.files.insert(hash, file);
+    (hash, size)
+  }
+
   pub(crate) fn build(self, root: Hash) -> Archive {
     Archive {
       files: self.files,
@@ -26,7 +33,7 @@ impl ArchiveBuilder {
     for (i, signature) in signatures.iter().enumerate() {
       entries.insert(
         i.to_string().parse::<ComponentBuf>().unwrap(),
-        self.entry(EntryType::File, signature.encode_to_vec()),
+        self.file_entry(signature.encode_to_vec()),
       );
     }
 
@@ -35,7 +42,7 @@ impl ArchiveBuilder {
       version: Version::Zero,
     };
 
-    let signatures = self.entry(EntryType::Directory, signatures.encode_to_vec());
+    let signatures = self.directory_entry(&signatures);
 
     root.insert(Archive::signatures_component().to_owned(), signatures);
 
@@ -44,7 +51,7 @@ impl ArchiveBuilder {
       version: Version::Zero,
     };
 
-    let entry = self.entry(EntryType::Directory, root.encode_to_vec());
+    let entry = self.directory_entry(&root);
 
     self.build(entry.hash)
   }
@@ -58,9 +65,9 @@ impl ArchiveBuilder {
         .map(|(name, entry)| {
           let entry = match entry {
             DirectoryTreeEntry::File(file) => Entry {
+              ty: EntryType::File,
               hash: file.hash,
               size: file.size,
-              ty: EntryType::File,
             },
             DirectoryTreeEntry::Directory(directory) => self.directory(directory),
           };
@@ -70,14 +77,27 @@ impl ArchiveBuilder {
         .collect(),
     };
 
-    self.entry(EntryType::Directory, directory.encode_to_vec())
+    self.directory_entry(&directory)
   }
 
-  pub(crate) fn entry(&mut self, ty: EntryType, file: Vec<u8>) -> Entry {
-    let size = file.len().into_u64();
-    let hash = Hash::bytes(&file);
-    self.files.insert(hash, file);
-    Entry { ty, hash, size }
+  pub(crate) fn directory_entry(&mut self, directory: &Directory) -> Entry {
+    let (hash, size) = self.add(directory.encode_to_vec());
+
+    Entry {
+      ty: EntryType::Directory,
+      hash,
+      size,
+    }
+  }
+
+  pub(crate) fn file_entry(&mut self, file: Vec<u8>) -> Entry {
+    let (hash, size) = self.add(file);
+
+    Entry {
+      ty: EntryType::File,
+      hash,
+      size,
+    }
   }
 
   pub(crate) fn new() -> Self {

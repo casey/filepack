@@ -242,18 +242,12 @@ fn artwork_missing() {
 
   let metadata_entry = (
     Metadata::CBOR_FILENAME,
-    EntryType::File,
     metadata_hash,
     metadata_cbor.len().into_u64(),
   );
 
   let cbor = directory(&[
-    (
-      "cover.png",
-      EntryType::File,
-      artwork_hash,
-      artwork.len().into_u64(),
-    ),
+    ("cover.png", artwork_hash, artwork.len().into_u64()),
     metadata_entry,
   ])
   .encode_to_vec();
@@ -325,15 +319,9 @@ fn artwork_response() {
     server.write_file(&metadata_cbor);
 
     let cbor = directory(&[
-      (
-        filename,
-        EntryType::File,
-        artwork_hash,
-        artwork.len().into_u64(),
-      ),
+      (filename, artwork_hash, artwork.len().into_u64()),
       (
         Metadata::CBOR_FILENAME,
-        EntryType::File,
         metadata_hash,
         metadata_cbor.len().into_u64(),
       ),
@@ -393,16 +381,16 @@ fn default_serve_matches_parsed() {
   );
 }
 
-fn directory(entries: &[(&str, EntryType, Hash, u64)]) -> Directory {
+fn directory(entries: &[(&str, Hash, u64)]) -> Directory {
   Directory {
     version: Version::Zero,
     entries: entries
       .iter()
-      .map(|(name, ty, hash, size)| {
+      .map(|(name, hash, size)| {
         (
           name.parse().unwrap(),
           Entry {
-            ty: *ty,
+            ty: EntryType::File,
             hash: *hash,
             size: *size,
           },
@@ -628,7 +616,6 @@ fn get_package_with_metadata() {
 
   let cbor = directory(&[(
     Metadata::CBOR_FILENAME,
-    EntryType::File,
     metadata_hash,
     metadata_cbor.len().into_u64(),
   )])
@@ -713,7 +700,6 @@ fn media_audio_track_file_missing() {
   let metadata_cbor = metadata.encode_to_vec();
   let corrupt = directory(&[(
     Metadata::CBOR_FILENAME,
-    EntryType::File,
     Hash::bytes(&metadata_cbor),
     metadata_cbor.len().into_u64(),
   )])
@@ -1123,18 +1109,12 @@ fn package(server: &TestServer, metadata: &Metadata, files: &[(&str, &[u8])]) ->
     .iter()
     .map(|&(name, content)| {
       server.write_file(content);
-      (
-        name,
-        EntryType::File,
-        Hash::bytes(content),
-        content.len().into_u64(),
-      )
+      (name, Hash::bytes(content), content.len().into_u64())
     })
-    .collect::<Vec<(&str, EntryType, Hash, u64)>>();
+    .collect::<Vec<(&str, Hash, u64)>>();
 
   entries.push((
     Metadata::CBOR_FILENAME,
-    EntryType::File,
     metadata_hash,
     metadata_cbor.len().into_u64(),
   ));
@@ -1417,13 +1397,8 @@ fn packages_non_empty() {
 
   for content in [b"foo".as_slice(), b"bar", b"baz"] {
     server.write_file(content);
-    let cbor = directory(&[(
-      "file",
-      EntryType::File,
-      Hash::bytes(content),
-      content.len().into_u64(),
-    )])
-    .encode_to_vec();
+    let cbor =
+      directory(&[("file", Hash::bytes(content), content.len().into_u64())]).encode_to_vec();
     let hash = Hash::bytes(&cbor);
     let fingerprint = Fingerprint(hash);
     server.write_file(&cbor);
@@ -1694,7 +1669,7 @@ fn verify_directory_missing_file() {
   let server = TestServer::new();
 
   let missing = Hash::bytes(b"foo");
-  let cbor = directory(&[("foo", EntryType::File, missing, 3)]).encode_to_vec();
+  let cbor = directory(&[("foo", missing, 3)]).encode_to_vec();
   let hash = Hash::bytes(&cbor);
   server.write_file(&cbor);
 
@@ -1732,7 +1707,7 @@ fn verify_directory_succeeds() {
   let file_hash = Hash::bytes(file);
   server.write_file(file);
 
-  let child = directory(&[("foo", EntryType::File, file_hash, file.len().into_u64())]);
+  let child = directory(&[("foo", file_hash, file.len().into_u64())]);
   let child_cbor = child.encode_to_vec();
   let child_hash = Hash::bytes(&child_cbor);
   server.write_file(&child_cbor);
@@ -1747,12 +1722,17 @@ fn verify_directory_succeeds() {
     })
     .send();
 
-  let parent = directory(&[(
-    "child",
-    EntryType::Directory,
-    child_hash,
-    child_cbor.len().into_u64(),
-  )]);
+  let parent = Directory {
+    version: Version::Zero,
+    entries: BTreeMap::from([(
+      "child".parse().unwrap(),
+      Entry {
+        ty: EntryType::Directory,
+        hash: child_hash,
+        size: child_cbor.len().into_u64(),
+      },
+    )]),
+  };
   let parent_cbor = parent.encode_to_vec();
   let parent_hash = Hash::bytes(&parent_cbor);
   server.write_file(&parent_cbor);
@@ -1776,12 +1756,17 @@ fn verify_directory_unverified_subdirectory() {
   let child_hash = Hash::bytes(&child_cbor);
   server.write_file(&child_cbor);
 
-  let parent_cbor = directory(&[(
-    "child",
-    EntryType::Directory,
-    child_hash,
-    child_cbor.len().into_u64(),
-  )])
+  let parent_cbor = Directory {
+    version: Version::Zero,
+    entries: BTreeMap::from([(
+      "child".parse().unwrap(),
+      Entry {
+        ty: EntryType::Directory,
+        hash: child_hash,
+        size: child_cbor.len().into_u64(),
+      },
+    )]),
+  }
   .encode_to_vec();
   let parent_hash = Hash::bytes(&parent_cbor);
   server.write_file(&parent_cbor);
@@ -1805,7 +1790,6 @@ fn verify_package_metadata_decode_error() {
 
   let cbor = directory(&[(
     Metadata::CBOR_FILENAME,
-    EntryType::File,
     metadata_hash,
     junk.len().into_u64(),
   )])
@@ -1839,7 +1823,6 @@ fn verify_package_metadata_references_missing_file() {
 
   let cbor = directory(&[(
     Metadata::CBOR_FILENAME,
-    EntryType::File,
     metadata_hash,
     metadata.len().into_u64(),
   )])
@@ -1876,15 +1859,9 @@ fn verify_package_metadata_references_present_file() {
   server.write_file(&metadata);
 
   let cbor = directory(&[
-    (
-      "cover.png",
-      EntryType::File,
-      artwork_hash,
-      artwork.len().into_u64(),
-    ),
+    ("cover.png", artwork_hash, artwork.len().into_u64()),
     (
       Metadata::CBOR_FILENAME,
-      EntryType::File,
       metadata_hash,
       metadata.len().into_u64(),
     ),
