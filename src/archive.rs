@@ -143,7 +143,7 @@ impl Archive {
 
       let directory = self.decode_directory(Some(&mut loose), entry.hash)?;
 
-      let totals = Totals::directory(&directory).context(archive_error::TotalsOverflow)?;
+      let totals = Totals::new(&directory).context(archive_error::TotalsOverflow)?;
 
       ensure! {
         entry.totals == Some(totals),
@@ -232,7 +232,7 @@ impl Archive {
       entries.insert(name.clone(), crate_entry);
     }
 
-    let totals = Totals::directory(&directory).context(archive_error::TotalsOverflow)?;
+    let totals = Totals::new(&directory).context(archive_error::TotalsOverflow)?;
 
     Ok((DirectoryTree { entries }, totals))
   }

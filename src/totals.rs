@@ -13,7 +13,7 @@ pub struct Totals {
 }
 
 impl Totals {
-  pub fn directory(directory: &Directory) -> Option<Self> {
+  pub fn new(directory: &Directory) -> Option<Self> {
     let mut totals = Self {
       directories: 0,
       directory_size: 0,

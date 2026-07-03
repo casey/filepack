@@ -335,7 +335,7 @@ impl Server {
             .context(server_error::DirectoryDecode { hash: entry.hash })?;
 
           let totals =
-            Totals::directory(&subdirectory).context(server_error::DirectoryTotalsOverflow {
+            Totals::new(&subdirectory).context(server_error::DirectoryTotalsOverflow {
               directory: entry.hash,
             })?;
 
@@ -350,7 +350,7 @@ impl Server {
       }
 
       ensure!(
-        Totals::directory(&directory).is_some(),
+        Totals::new(&directory).is_some(),
         server_error::DirectoryTotalsOverflow { directory: hash },
       );
 

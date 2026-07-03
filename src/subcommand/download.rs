@@ -142,7 +142,7 @@ impl Download {
 
     let size = cbor.len().into_u64();
 
-    let totals = Totals::directory(&root).context(error::TotalsOverflow)?;
+    let totals = Totals::new(&root).context(error::TotalsOverflow)?;
 
     let package = Entry {
       ty: EntryType::Directory,
