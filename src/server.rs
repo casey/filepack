@@ -157,7 +157,7 @@ impl Server {
       return Ok(None);
     };
 
-    self.read_file(entry.hash).map(Some)
+    Ok(Some(self.read_file(entry.hash)?))
   }
 
   pub(crate) fn missing(&self, hashes: &[Hash]) -> ServerResult<BTreeSet<Hash>> {
