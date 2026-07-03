@@ -74,7 +74,7 @@ impl Archive {
   pub(crate) fn pack(manifest: &Manifest) -> Self {
     let mut builder = ArchiveBuilder::new();
 
-    let package = builder.directory(&manifest.package);
+    let package = builder.pack_directory(&manifest.package);
 
     for (hash, content) in &manifest.embedded {
       builder.files.insert(*hash, content.clone());
@@ -442,7 +442,7 @@ mod tests {
       entries: BTreeMap::new(),
     };
 
-    let package = builder.directory_entry(&package);
+    let package = builder.directory(&package);
 
     let public_key = test::PUBLIC_KEY.parse::<PublicKey>().unwrap();
 
@@ -459,14 +459,14 @@ mod tests {
     drop(map);
     let signature_bytes = encoder.finish();
 
-    let signature = builder.file_entry(signature_bytes);
+    let signature = builder.file(signature_bytes);
 
     let signatures = Directory {
       version: Version::Zero,
       entries: BTreeMap::from([("0".parse().unwrap(), signature)]),
     };
 
-    let signatures = builder.directory_entry(&signatures);
+    let signatures = builder.directory(&signatures);
 
     let root = Directory {
       version: Version::Zero,
@@ -476,7 +476,7 @@ mod tests {
       ]),
     };
 
-    let root = builder.directory_entry(&root);
+    let root = builder.directory(&root);
 
     let archive = builder.build(root.hash);
 
@@ -496,14 +496,14 @@ mod tests {
   fn signatures_missing() {
     let mut builder = ArchiveBuilder::new();
 
-    let package = builder.directory_entry(&Directory::default());
+    let package = builder.directory(&Directory::default());
 
     let root = Directory {
       version: Version::Zero,
       entries: BTreeMap::from([("package".parse().unwrap(), package)]),
     };
 
-    let root = builder.directory_entry(&root);
+    let root = builder.directory(&root);
 
     let archive = builder.build(root.hash);
 
@@ -523,11 +523,11 @@ mod tests {
 
     let mut builder = ArchiveBuilder::new();
 
-    let package = builder.directory(&package);
+    let package = builder.pack_directory(&package);
 
     builder.files.insert(Hash::bytes(content), content.to_vec());
 
-    let signatures = builder.directory_entry(&Directory::default());
+    let signatures = builder.directory(&Directory::default());
 
     let root = Directory {
       version: Version::Zero,
@@ -537,7 +537,7 @@ mod tests {
       ]),
     };
 
-    let root = builder.directory_entry(&root);
+    let root = builder.directory(&root);
 
     let archive = builder.build(root.hash);
 
