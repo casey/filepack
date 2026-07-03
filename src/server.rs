@@ -244,9 +244,8 @@ impl Server {
   }
 
   fn read_directory(&self, hash: Hash) -> ServerResult<Directory> {
-    let cbor = self.read_file(hash)?;
-
-    Directory::decode_from_slice(&cbor).context(server_error::DirectoryDecode { hash })
+    Directory::decode_from_slice(&self.read_file(hash)?)
+      .context(server_error::DirectoryDecode { hash })
   }
 
   fn read_file(&self, hash: Hash) -> ServerResult<Vec<u8>> {
