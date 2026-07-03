@@ -24,7 +24,7 @@ impl Totals {
     for entry in directory.entries.values() {
       match entry.ty {
         EntryType::Directory => {
-          let child = entry.totals.expect("directory entry missing totals");
+          let child = entry.totals.unwrap();
           totals.directories = totals
             .directories
             .checked_add(1)?
