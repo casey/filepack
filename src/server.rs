@@ -157,17 +157,7 @@ impl Server {
       return Ok(None);
     };
 
-    let path = self.file_path(entry.hash);
-
-    fs::read(&path)
-      .map_err(|err| {
-        if err.kind() == io::ErrorKind::NotFound {
-          server_error::FileNotFound { hash: entry.hash }.into_error(err)
-        } else {
-          server_error::FilesystemIo { path }.into_error(err)
-        }
-      })
-      .map(Some)
+    Ok(Some(self.read_file(entry.hash)?))
   }
 
   pub(crate) fn missing(&self, hashes: &[Hash]) -> ServerResult<BTreeSet<Hash>> {
@@ -254,17 +244,20 @@ impl Server {
   }
 
   fn read_directory(&self, hash: Hash) -> ServerResult<Directory> {
+    Directory::decode_from_slice(&self.read_file(hash)?)
+      .context(server_error::DirectoryDecode { hash })
+  }
+
+  fn read_file(&self, hash: Hash) -> ServerResult<Vec<u8>> {
     let path = self.file_path(hash);
 
-    let cbor = fs::read(&path).map_err(|err| {
+    fs::read(&path).map_err(|err| {
       if err.kind() == io::ErrorKind::NotFound {
         server_error::FileNotFound { hash }.into_error(err)
       } else {
         server_error::FilesystemIo { path }.into_error(err)
       }
-    })?;
-
-    Directory::decode_from_slice(&cbor).context(server_error::DirectoryDecode { hash })
+    })
   }
 
   fn resolve_path(&self, root: Fingerprint, path: &RelativePath) -> ServerResult<Option<Hash>> {
