@@ -136,10 +136,19 @@ impl Download {
     let mut builder = ArchiveBuilder::new();
     builder.files = directories;
 
+    let cbor = &builder.files[&fingerprint.into()];
+
+    let root = Directory::decode_from_slice(cbor).unwrap();
+
+    let size = cbor.len().into_u64();
+
+    let totals = Totals::directory(&root).context(error::TotalsOverflow)?;
+
     let package = Entry {
       ty: EntryType::Directory,
       hash: fingerprint.into(),
-      size: builder.files[&fingerprint.into()].len().into_u64(),
+      size,
+      totals: Some(totals),
     };
 
     let archive = builder.build_package(package, &BTreeSet::new());

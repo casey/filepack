@@ -294,7 +294,10 @@ impl Server {
   }
 
   pub(crate) fn verify_directory(&self, hash: Hash) -> ServerResult {
-    let directory = self.read_directory(hash)?;
+    let cbor = self.read_file(hash)?;
+
+    let directory =
+      Directory::decode_from_slice(&cbor).context(server_error::DirectoryDecode { hash })?;
 
     for entry in directory.entries.values() {
       if entry.ty == EntryType::File {
@@ -325,8 +328,31 @@ impl Server {
               subdirectory: entry.hash,
             },
           );
+
+          let cbor = self.read_file(entry.hash)?;
+
+          let subdirectory = Directory::decode_from_slice(&cbor)
+            .context(server_error::DirectoryDecode { hash: entry.hash })?;
+
+          let totals =
+            Totals::directory(&subdirectory).context(server_error::DirectoryTotalsOverflow {
+              directory: entry.hash,
+            })?;
+
+          ensure!(
+            entry.totals == Some(totals),
+            server_error::DirectoryTotalsMismatch {
+              directory: hash,
+              subdirectory: entry.hash,
+            },
+          );
         }
       }
+
+      ensure!(
+        Totals::directory(&directory).is_some(),
+        server_error::DirectoryTotalsOverflow { directory: hash },
+      );
 
       directories.insert(&hash, &())?;
     }

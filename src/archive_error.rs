@@ -21,6 +21,10 @@ pub enum ArchiveError {
   SignaturesMissing,
   #[snafu(display("expected archive `signature` entry to be directory but found {ty}"))]
   SignaturesType { ty: EntryType },
+  #[snafu(display("directory {hash} totals mismatch"))]
+  TotalsMismatch { hash: Hash },
+  #[snafu(display("directory totals overflow"))]
+  TotalsOverflow,
   #[snafu(display("archive contains unexpected embedded files: {paths}"))]
   UnexpectedEmbeddedFiles { paths: Ticked<RelativePath> },
 }

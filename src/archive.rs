@@ -121,7 +121,14 @@ impl Archive {
 
     let mut embedded = BTreeMap::new();
 
-    let package = self.unpack_directory(&mut loose, &mut embedded, package, None)?;
+    let (tree, totals) = self.unpack_directory(&mut loose, &mut embedded, package, None)?;
+
+    ensure! {
+      package.totals == Some(totals),
+      archive_error::TotalsMismatch { hash: package.hash },
+    }
+
+    let package = tree;
 
     let signatures = {
       let entry = root
@@ -135,6 +142,13 @@ impl Archive {
       }
 
       let directory = self.decode_directory(Some(&mut loose), entry.hash)?;
+
+      let totals = Totals::directory(&directory).context(archive_error::TotalsOverflow)?;
+
+      ensure! {
+        entry.totals == Some(totals),
+        archive_error::TotalsMismatch { hash: entry.hash },
+      }
 
       let mut signatures = BTreeSet::new();
       for entry in directory.entries.values() {
@@ -183,7 +197,7 @@ impl Archive {
     embedded: &mut BTreeMap<RelativePath, Hash>,
     entry: &Entry,
     prefix: Option<&RelativePath>,
-  ) -> Result<DirectoryTree, ArchiveError> {
+  ) -> Result<(DirectoryTree, Totals), ArchiveError> {
     let directory = self.decode_directory(Some(loose), entry.hash)?;
 
     let mut entries = BTreeMap::new();
@@ -199,17 +213,28 @@ impl Archive {
             size: entry.size,
           })
         }
-        EntryType::Directory => DirectoryTreeEntry::Directory(self.unpack_directory(
-          loose,
-          embedded,
-          entry,
-          Some(&RelativePath::join_opt(prefix, name)),
-        )?),
+        EntryType::Directory => {
+          let (tree, totals) = self.unpack_directory(
+            loose,
+            embedded,
+            entry,
+            Some(&RelativePath::join_opt(prefix, name)),
+          )?;
+
+          ensure! {
+            entry.totals == Some(totals),
+            archive_error::TotalsMismatch { hash: entry.hash },
+          }
+
+          DirectoryTreeEntry::Directory(tree)
+        }
       };
       entries.insert(name.clone(), crate_entry);
     }
 
-    Ok(DirectoryTree { entries })
+    let totals = Totals::directory(&directory).context(archive_error::TotalsOverflow)?;
+
+    Ok((DirectoryTree { entries }, totals))
   }
 }
 
@@ -508,6 +533,83 @@ mod tests {
     let archive = builder.build(root.hash);
 
     assert_matches!(archive.unpack(), Err(ArchiveError::SignaturesMissing));
+  }
+
+  #[test]
+  fn totals_mismatch() {
+    let mut builder = ArchiveBuilder::new();
+
+    let child = builder.directory(&Directory::default());
+
+    let child_hash = child.hash;
+
+    let child = Entry {
+      totals: Some(Totals {
+        files: 1,
+        ..child.totals.unwrap()
+      }),
+      ..child
+    };
+
+    let package = Directory {
+      version: Version::Zero,
+      entries: BTreeMap::from([("foo".parse().unwrap(), child)]),
+    };
+
+    let package = builder.directory(&package);
+
+    let archive = builder.build_package(package, &BTreeSet::new());
+
+    assert_matches!(
+      archive.unpack(),
+      Err(ArchiveError::TotalsMismatch { hash }) if hash == child_hash,
+    );
+  }
+
+  #[test]
+  fn totals_overflow() {
+    let mut builder = ArchiveBuilder::new();
+
+    let directory = Directory {
+      version: Version::Zero,
+      entries: BTreeMap::from([(
+        "foo".parse().unwrap(),
+        Entry {
+          ty: EntryType::File,
+          hash: Hash::bytes(b"foo"),
+          size: u64::MAX,
+          totals: None,
+        },
+      )]),
+    };
+
+    let package = Directory {
+      version: Version::Zero,
+      entries: BTreeMap::from([
+        ("bar".parse().unwrap(), builder.directory(&directory)),
+        ("baz".parse().unwrap(), builder.directory(&directory)),
+      ]),
+    };
+
+    let cbor = package.encode_to_vec();
+    let hash = Hash::bytes(&cbor);
+    builder.files.insert(hash, cbor.clone());
+
+    let package = Entry {
+      ty: EntryType::Directory,
+      hash,
+      size: cbor.len().into_u64(),
+      totals: Some(Totals {
+        directories: 1,
+        directory_size: 0,
+        file_size: 0,
+        files: 0,
+      }),
+    };
+
+    let archive = builder.build_package(package, &BTreeSet::new());
+
+    assert_matches!(archive.unpack(), Err(ArchiveError::TotalsOverflow));
   }
 
   #[test]

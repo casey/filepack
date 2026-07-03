@@ -60,10 +60,13 @@ impl ArchiveBuilder {
   pub(crate) fn directory(&mut self, directory: &Directory) -> Entry {
     let (hash, size) = self.add(directory.encode_to_vec());
 
+    let totals = Totals::directory(directory).expect("totals overflow");
+
     Entry {
       ty: EntryType::Directory,
       hash,
       size,
+      totals: Some(totals),
     }
   }
 
@@ -74,6 +77,7 @@ impl ArchiveBuilder {
       ty: EntryType::File,
       hash,
       size,
+      totals: None,
     }
   }
 
@@ -93,6 +97,7 @@ impl ArchiveBuilder {
               ty: EntryType::File,
               hash: file.hash,
               size: file.size,
+              totals: None,
             },
             DirectoryTreeEntry::Directory(directory) => self.pack_directory(directory),
           };

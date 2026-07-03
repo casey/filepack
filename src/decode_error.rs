@@ -13,6 +13,8 @@ pub enum DecodeError {
   Component { source: ComponentError },
   #[snafu(display("failed to parse datetime"))]
   DateTime { source: chrono::ParseError },
+  #[snafu(display("{ty} entry totals mismatch"))]
+  EntryTotals { ty: EntryType },
   #[snafu(display(
     "expected {} or {} but found {actual}",
     MajorType::UnsignedInteger,

@@ -393,6 +393,7 @@ fn directory(entries: &[(&str, Hash, u64)]) -> Directory {
             ty: EntryType::File,
             hash: *hash,
             size: *size,
+            totals: None,
           },
         )
       })
@@ -1714,6 +1715,8 @@ fn verify_directory_succeeds() {
 
   server.post(format!("/directory/{child_hash}")).send();
 
+  let totals = Totals::directory(&child).unwrap();
+
   server
     .get(format!("/directory/{child_hash}"))
     .assert_page(DirectoryHtml {
@@ -1730,6 +1733,7 @@ fn verify_directory_succeeds() {
         ty: EntryType::Directory,
         hash: child_hash,
         size: child_cbor.len().into_u64(),
+        totals: Some(totals),
       },
     )]),
   };
@@ -1749,10 +1753,50 @@ fn verify_directory_succeeds() {
 }
 
 #[test]
+fn verify_directory_totals_mismatch() {
+  let server = TestServer::new();
+
+  let child = directory(&[]);
+  let child_cbor = child.encode_to_vec();
+  let child_hash = Hash::bytes(&child_cbor);
+  server.write_file(&child_cbor);
+
+  server.post(format!("/directory/{child_hash}")).send();
+
+  let parent_cbor = Directory {
+    version: Version::Zero,
+    entries: BTreeMap::from([(
+      "child".parse().unwrap(),
+      Entry {
+        ty: EntryType::Directory,
+        hash: child_hash,
+        size: child_cbor.len().into_u64(),
+        totals: Some(Totals {
+          files: 1,
+          ..Totals::directory(&child).unwrap()
+        }),
+      },
+    )]),
+  }
+  .encode_to_vec();
+  let parent_hash = Hash::bytes(&parent_cbor);
+  server.write_file(&parent_cbor);
+
+  server
+    .post(format!("/directory/{parent_hash}"))
+    .status(StatusCode::BAD_REQUEST)
+    .assert_body(format!(
+      "directory {parent_hash} totals mismatch for subdirectory {child_hash}"
+    ))
+    .send();
+}
+
+#[test]
 fn verify_directory_unverified_subdirectory() {
   let server = TestServer::new();
 
-  let child_cbor = directory(&[]).encode_to_vec();
+  let child = directory(&[]);
+  let child_cbor = child.encode_to_vec();
   let child_hash = Hash::bytes(&child_cbor);
   server.write_file(&child_cbor);
 
@@ -1764,6 +1808,7 @@ fn verify_directory_unverified_subdirectory() {
         ty: EntryType::Directory,
         hash: child_hash,
         size: child_cbor.len().into_u64(),
+        totals: Some(Totals::directory(&child).unwrap()),
       },
     )]),
   }

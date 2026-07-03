@@ -175,7 +175,8 @@ pub use self::{
   functions::install_default_crypto_provider, hash::Hash, language_error::LanguageError,
   major_type::MajorType, manifest::Manifest, map_encoder::MapEncoder, metadata::Metadata,
   page::Page, private_key::PrivateKey, public_key::PublicKey, relative_path::RelativePath,
-  signature::Signature, sorted_set::SortedSet, statement::Statement, text::Text, version::Version,
+  signature::Signature, sorted_set::SortedSet, statement::Statement, text::Text, totals::Totals,
+  version::Version,
 };
 
 #[cfg(test)]
@@ -302,6 +303,7 @@ mod text;
 mod text_error;
 mod ticked;
 mod token;
+mod totals;
 mod track;
 mod type_name;
 mod utf8_path_ext;
