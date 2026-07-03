@@ -462,6 +462,8 @@ pub enum Error {
   },
   #[snafu(display("authentication tokens may only be used over HTTPS or loopback"))]
   TokenOverHttp { backtrace: Option<Backtrace> },
+  #[snafu(display("downloaded directory totals overflow"))]
+  TotalsOverflow { backtrace: Option<Backtrace> },
   #[snafu(display("failed to decode track `{path}`"))]
   TrackDecode {
     backtrace: Option<Backtrace>,

@@ -157,17 +157,7 @@ impl Server {
       return Ok(None);
     };
 
-    let path = self.file_path(entry.hash);
-
-    fs::read(&path)
-      .map_err(|err| {
-        if err.kind() == io::ErrorKind::NotFound {
-          server_error::FileNotFound { hash: entry.hash }.into_error(err)
-        } else {
-          server_error::FilesystemIo { path }.into_error(err)
-        }
-      })
-      .map(Some)
+    self.read_file(entry.hash).map(Some)
   }
 
   pub(crate) fn missing(&self, hashes: &[Hash]) -> ServerResult<BTreeSet<Hash>> {
@@ -235,6 +225,17 @@ impl Server {
     self.metadata(fingerprint)
   }
 
+  pub(crate) fn package_totals(&self, fingerprint: Fingerprint) -> ServerResult<Totals> {
+    let hash = Hash::from(fingerprint);
+
+    let cbor = self.read_file(hash)?;
+
+    let directory =
+      Directory::decode_from_slice(&cbor).context(server_error::DirectoryDecode { hash })?;
+
+    Totals::directory(&directory).context(server_error::DirectoryTotalsOverflow { directory: hash })
+  }
+
   pub(crate) fn packages(&self) -> ServerResult<Vec<(Fingerprint, Option<ComponentBuf>)>> {
     self
       .database
@@ -254,17 +255,21 @@ impl Server {
   }
 
   fn read_directory(&self, hash: Hash) -> ServerResult<Directory> {
+    let cbor = self.read_file(hash)?;
+
+    Directory::decode_from_slice(&cbor).context(server_error::DirectoryDecode { hash })
+  }
+
+  fn read_file(&self, hash: Hash) -> ServerResult<Vec<u8>> {
     let path = self.file_path(hash);
 
-    let cbor = fs::read(&path).map_err(|err| {
+    fs::read(&path).map_err(|err| {
       if err.kind() == io::ErrorKind::NotFound {
         server_error::FileNotFound { hash }.into_error(err)
       } else {
         server_error::FilesystemIo { path }.into_error(err)
       }
-    })?;
-
-    Directory::decode_from_slice(&cbor).context(server_error::DirectoryDecode { hash })
+    })
   }
 
   fn resolve_path(&self, root: Fingerprint, path: &RelativePath) -> ServerResult<Option<Hash>> {
@@ -301,7 +306,10 @@ impl Server {
   }
 
   pub(crate) fn verify_directory(&self, hash: Hash) -> ServerResult {
-    let directory = self.read_directory(hash)?;
+    let cbor = self.read_file(hash)?;
+
+    let directory =
+      Directory::decode_from_slice(&cbor).context(server_error::DirectoryDecode { hash })?;
 
     for entry in directory.entries.values() {
       if entry.ty == EntryType::File {
@@ -332,8 +340,31 @@ impl Server {
               subdirectory: entry.hash,
             },
           );
+
+          let cbor = self.read_file(entry.hash)?;
+
+          let subdirectory = Directory::decode_from_slice(&cbor)
+            .context(server_error::DirectoryDecode { hash: entry.hash })?;
+
+          let totals =
+            Totals::directory(&subdirectory).context(server_error::DirectoryTotalsOverflow {
+              directory: entry.hash,
+            })?;
+
+          ensure!(
+            entry.totals == Some(totals),
+            server_error::DirectoryTotalsMismatch {
+              directory: hash,
+              subdirectory: entry.hash,
+            },
+          );
         }
       }
+
+      ensure!(
+        Totals::directory(&directory).is_some(),
+        server_error::DirectoryTotalsOverflow { directory: hash },
+      );
 
       directories.insert(&hash, &())?;
     }

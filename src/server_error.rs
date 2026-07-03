@@ -31,6 +31,10 @@ pub(crate) enum ServerError {
   DirectoryFileMissing { directory: Hash, file: Hash },
   #[snafu(display("directory {hash} not found"))]
   DirectoryNotFound { hash: Hash },
+  #[snafu(display("directory {directory} totals mismatch for subdirectory {subdirectory}"))]
+  DirectoryTotalsMismatch { directory: Hash, subdirectory: Hash },
+  #[snafu(display("directory {directory} totals overflow"))]
+  DirectoryTotalsOverflow { directory: Hash },
   #[snafu(display("directory {directory} references unverified subdirectory {subdirectory}"))]
   DirectoryUnverified { directory: Hash, subdirectory: Hash },
   #[snafu(display("I/O error on file {hash}"))]
@@ -113,6 +117,8 @@ impl ServerError {
       | Self::DirectoryDecode { .. }
       | Self::DirectoryFileMissing { .. }
       | Self::DirectoryNotFound { .. }
+      | Self::DirectoryTotalsMismatch { .. }
+      | Self::DirectoryTotalsOverflow { .. }
       | Self::DirectoryUnverified { .. }
       | Self::FileIo { .. }
       | Self::FileNotFound { .. }
@@ -160,6 +166,8 @@ impl ServerError {
       | Self::CborDecode { .. }
       | Self::DirectoryDecode { .. }
       | Self::DirectoryFileMissing { .. }
+      | Self::DirectoryTotalsMismatch { .. }
+      | Self::DirectoryTotalsOverflow { .. }
       | Self::DirectoryUnverified { .. }
       | Self::FingerprintParse { .. }
       | Self::PackageMetadataDecode { .. }

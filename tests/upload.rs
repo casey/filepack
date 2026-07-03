@@ -510,6 +510,19 @@ fn upload_package_serves_package_html() {
     .stderr("uploading 2 of 2 files\n")
     .success();
 
+  let cbor = reqwest::blocking::get(format!(
+    "{}/file/{}",
+    server.address(),
+    Hash::from(fingerprint)
+  ))
+  .unwrap()
+  .bytes()
+  .unwrap();
+
+  let directory = Directory::decode_from_slice(&cbor).unwrap();
+
+  let totals = Totals::directory(&directory).unwrap();
+
   server.assert_page(
     &format!("/package/{fingerprint}"),
     PackageHtml {
@@ -519,6 +532,7 @@ fn upload_package_serves_package_html() {
         title: Some("Foo".parse().unwrap()),
         ..Metadata::default()
       }),
+      totals,
     },
   );
 

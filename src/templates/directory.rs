@@ -31,6 +31,7 @@ mod tests {
             ty: EntryType::File,
             hash: Hash::bytes(b"bar"),
             size: 1500,
+            totals: None,
           },
         ),
         (
@@ -39,6 +40,7 @@ mod tests {
             ty: EntryType::File,
             hash: Hash::bytes(b"baz"),
             size: 1500,
+            totals: None,
           },
         ),
         (
@@ -46,7 +48,13 @@ mod tests {
           Entry {
             ty: EntryType::Directory,
             hash: Hash::bytes(b"foo"),
-            size: 2_500_000,
+            size: 100,
+            totals: Some(Totals {
+              directories: 2,
+              directory_size: 500_000,
+              file_size: 2_000_000,
+              files: 3,
+            }),
           },
         ),
         (
@@ -55,6 +63,7 @@ mod tests {
             ty: EntryType::File,
             hash: Hash::bytes(b"qux"),
             size: 1500,
+            totals: None,
           },
         ),
       ]),

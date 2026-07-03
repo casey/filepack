@@ -23,6 +23,7 @@ mod tests {
           ty: EntryType::File,
           size: 0,
           hash: Hash::bytes(b"bar"),
+          totals: None,
         },
       )]),
     });

@@ -242,18 +242,12 @@ fn artwork_missing() {
 
   let metadata_entry = (
     Metadata::CBOR_FILENAME,
-    EntryType::File,
     metadata_hash,
     metadata_cbor.len().into_u64(),
   );
 
   let cbor = directory(&[
-    (
-      "cover.png",
-      EntryType::File,
-      artwork_hash,
-      artwork.len().into_u64(),
-    ),
+    ("cover.png", artwork_hash, artwork.len().into_u64()),
     metadata_entry,
   ])
   .encode_to_vec();
@@ -284,7 +278,7 @@ fn artwork_missing() {
 fn artwork_not_found_without_artwork() {
   let server = TestServer::new();
 
-  let fingerprint = package(&server, &default(), &[]);
+  let (fingerprint, _) = package(&server, &default(), &[]);
 
   server
     .get(format!("/artwork/{fingerprint}"))
@@ -325,15 +319,9 @@ fn artwork_response() {
     server.write_file(&metadata_cbor);
 
     let cbor = directory(&[
-      (
-        filename,
-        EntryType::File,
-        artwork_hash,
-        artwork.len().into_u64(),
-      ),
+      (filename, artwork_hash, artwork.len().into_u64()),
       (
         Metadata::CBOR_FILENAME,
-        EntryType::File,
         metadata_hash,
         metadata_cbor.len().into_u64(),
       ),
@@ -393,18 +381,19 @@ fn default_serve_matches_parsed() {
   );
 }
 
-fn directory(entries: &[(&str, EntryType, Hash, u64)]) -> Directory {
+fn directory(entries: &[(&str, Hash, u64)]) -> Directory {
   Directory {
     version: Version::Zero,
     entries: entries
       .iter()
-      .map(|(name, ty, hash, size)| {
+      .map(|(name, hash, size)| {
         (
           name.parse().unwrap(),
           Entry {
-            ty: *ty,
+            ty: EntryType::File,
             hash: *hash,
             size: *size,
+            totals: None,
           },
         )
       })
@@ -626,13 +615,12 @@ fn get_package_with_metadata() {
   let metadata_hash = Hash::bytes(&metadata_cbor);
   server.write_file(&metadata_cbor);
 
-  let cbor = directory(&[(
+  let directory = directory(&[(
     Metadata::CBOR_FILENAME,
-    EntryType::File,
     metadata_hash,
     metadata_cbor.len().into_u64(),
-  )])
-  .encode_to_vec();
+  )]);
+  let cbor = directory.encode_to_vec();
   let hash = Hash::bytes(&cbor);
   let fingerprint = Fingerprint(hash);
   server.write_file(&cbor);
@@ -645,6 +633,7 @@ fn get_package_with_metadata() {
     .assert_page(PackageHtml {
       fingerprint,
       metadata: Some(metadata),
+      totals: Totals::directory(&directory).unwrap(),
     })
     .send();
 }
@@ -653,7 +642,8 @@ fn get_package_with_metadata() {
 fn get_package_without_metadata() {
   let server = TestServer::new();
 
-  let cbor = directory(&[]).encode_to_vec();
+  let directory = directory(&[]);
+  let cbor = directory.encode_to_vec();
   let hash = Hash::bytes(&cbor);
   let fingerprint = Fingerprint(hash);
   server.write_file(&cbor);
@@ -666,6 +656,7 @@ fn get_package_without_metadata() {
     .assert_page(PackageHtml {
       fingerprint,
       metadata: None,
+      totals: Totals::directory(&directory).unwrap(),
     })
     .send();
 }
@@ -708,12 +699,11 @@ fn media_audio_track_file_missing() {
     ..default()
   };
 
-  let fingerprint = package(&server, &metadata, &[("foo.flac", foo)]);
+  let (fingerprint, _) = package(&server, &metadata, &[("foo.flac", foo)]);
 
   let metadata_cbor = metadata.encode_to_vec();
   let corrupt = directory(&[(
     Metadata::CBOR_FILENAME,
-    EntryType::File,
     Hash::bytes(&metadata_cbor),
     metadata_cbor.len().into_u64(),
   )])
@@ -742,7 +732,7 @@ fn media_audio_track_out_of_range() {
   let foo: &[u8] = b"foo";
   let bar: &[u8] = b"bar";
 
-  let fingerprint = package(
+  let (fingerprint, _) = package(
     &server,
     &Metadata {
       media: Some(Media::Audio {
@@ -787,7 +777,7 @@ fn media_audio_track_package_not_found() {
 fn media_audio_track_package_without_media() {
   let server = TestServer::new();
 
-  let fingerprint = package(
+  let (fingerprint, _) = package(
     &server,
     &Metadata {
       title: Some("foo".parse().unwrap()),
@@ -857,7 +847,7 @@ fn media_audio_track_ranges() {
 
   let track: &[u8] = b"foobarbaz";
 
-  let fingerprint = package(
+  let (fingerprint, _) = package(
     &server,
     &Metadata {
       media: Some(Media::Audio {
@@ -912,7 +902,7 @@ fn media_audio_track_response() {
   let foo: &[u8] = b"foo";
   let bar: &[u8] = b"barbar";
 
-  let fingerprint = package(
+  let (fingerprint, _) = package(
     &server,
     &Metadata {
       media: Some(Media::Audio {
@@ -949,7 +939,7 @@ fn media_image_image_out_of_range() {
 
   let foo: &[u8] = b"foo";
 
-  let fingerprint = package(
+  let (fingerprint, _) = package(
     &server,
     &Metadata {
       media: Some(Media::Image {
@@ -976,7 +966,7 @@ fn media_image_image_response() {
   let foo: &[u8] = b"foo";
   let bar: &[u8] = b"barbar";
 
-  let fingerprint = package(
+  let (fingerprint, _) = package(
     &server,
     &Metadata {
       media: Some(Media::Image {
@@ -1022,7 +1012,7 @@ fn media_type_mismatch() {
 
   let foo: &[u8] = b"foo";
 
-  let audio = package(
+  let (audio, _) = package(
     &server,
     &Metadata {
       media: Some(Media::Audio {
@@ -1033,7 +1023,7 @@ fn media_type_mismatch() {
     &[("foo.flac", foo)],
   );
 
-  let image = package(
+  let (image, _) = package(
     &server,
     &Metadata {
       media: Some(Media::Image {
@@ -1114,7 +1104,11 @@ fn non_fingerprint_bech32_falls_through() {
 }
 
 #[track_caller]
-fn package(server: &TestServer, metadata: &Metadata, files: &[(&str, &[u8])]) -> Fingerprint {
+fn package(
+  server: &TestServer,
+  metadata: &Metadata,
+  files: &[(&str, &[u8])],
+) -> (Fingerprint, Totals) {
   let metadata_cbor = metadata.encode_to_vec();
   let metadata_hash = Hash::bytes(&metadata_cbor);
   server.write_file(&metadata_cbor);
@@ -1123,31 +1117,28 @@ fn package(server: &TestServer, metadata: &Metadata, files: &[(&str, &[u8])]) ->
     .iter()
     .map(|&(name, content)| {
       server.write_file(content);
-      (
-        name,
-        EntryType::File,
-        Hash::bytes(content),
-        content.len().into_u64(),
-      )
+      (name, Hash::bytes(content), content.len().into_u64())
     })
-    .collect::<Vec<(&str, EntryType, Hash, u64)>>();
+    .collect::<Vec<(&str, Hash, u64)>>();
 
   entries.push((
     Metadata::CBOR_FILENAME,
-    EntryType::File,
     metadata_hash,
     metadata_cbor.len().into_u64(),
   ));
 
-  let cbor = directory(&entries).encode_to_vec();
+  let directory = directory(&entries);
+  let cbor = directory.encode_to_vec();
   let hash = Hash::bytes(&cbor);
   let fingerprint = Fingerprint(hash);
   server.write_file(&cbor);
 
+  let totals = Totals::directory(&directory).unwrap();
+
   server.post(format!("/directory/{hash}")).send();
   server.post(format!("/package/{fingerprint}")).send();
 
-  fingerprint
+  (fingerprint, totals)
 }
 
 #[test]
@@ -1168,7 +1159,7 @@ fn package_item_image() {
     ..default()
   };
 
-  let fingerprint = package(&server, &metadata, &[("foo.png", b"foo")]);
+  let (fingerprint, _) = package(&server, &metadata, &[("foo.png", b"foo")]);
 
   server
     .get(format!("/package/{fingerprint}/1"))
@@ -1184,7 +1175,7 @@ fn package_item_image() {
 fn package_item_image_out_of_range() {
   let server = TestServer::new();
 
-  let fingerprint = package(
+  let (fingerprint, _) = package(
     &server,
     &Metadata {
       media: Some(Media::Image {
@@ -1235,7 +1226,7 @@ fn package_item_track() {
     ..default()
   };
 
-  let fingerprint = package(&server, &metadata, &[("foo.flac", b"foo")]);
+  let (fingerprint, _) = package(&server, &metadata, &[("foo.flac", b"foo")]);
 
   server
     .get(format!("/package/{fingerprint}/1"))
@@ -1251,7 +1242,7 @@ fn package_item_track() {
 fn package_item_track_out_of_range() {
   let server = TestServer::new();
 
-  let fingerprint = package(
+  let (fingerprint, _) = package(
     &server,
     &Metadata {
       media: Some(Media::Audio {
@@ -1275,7 +1266,7 @@ fn package_item_track_out_of_range() {
 fn package_item_without_media() {
   let server = TestServer::new();
 
-  let fingerprint = package(
+  let (fingerprint, _) = package(
     &server,
     &Metadata {
       title: Some("foo".parse().unwrap()),
@@ -1334,7 +1325,7 @@ fn package_page_renders_audio_media() {
     ..default()
   };
 
-  let fingerprint = package(
+  let (fingerprint, totals) = package(
     &server,
     &metadata,
     &[("foo.flac", b"foo"), ("bar.flac", b"bar")],
@@ -1345,6 +1336,7 @@ fn package_page_renders_audio_media() {
     .assert_page(PackageHtml {
       fingerprint,
       metadata: Some(metadata),
+      totals,
     })
     .send();
 }
@@ -1367,13 +1359,14 @@ fn package_page_renders_image_media() {
     ..default()
   };
 
-  let fingerprint = package(&server, &metadata, &[("foo.png", b"foo")]);
+  let (fingerprint, totals) = package(&server, &metadata, &[("foo.png", b"foo")]);
 
   server
     .get(format!("/package/{fingerprint}"))
     .assert_page(PackageHtml {
       fingerprint,
       metadata: Some(metadata),
+      totals,
     })
     .send();
 }
@@ -1392,7 +1385,7 @@ fn packages_empty() {
 fn packages_include_titles() {
   let server = TestServer::new();
 
-  let fingerprint = package(
+  let (fingerprint, _) = package(
     &server,
     &Metadata {
       title: Some("foo".parse().unwrap()),
@@ -1417,13 +1410,8 @@ fn packages_non_empty() {
 
   for content in [b"foo".as_slice(), b"bar", b"baz"] {
     server.write_file(content);
-    let cbor = directory(&[(
-      "file",
-      EntryType::File,
-      Hash::bytes(content),
-      content.len().into_u64(),
-    )])
-    .encode_to_vec();
+    let cbor =
+      directory(&[("file", Hash::bytes(content), content.len().into_u64())]).encode_to_vec();
     let hash = Hash::bytes(&cbor);
     let fingerprint = Fingerprint(hash);
     server.write_file(&cbor);
@@ -1694,7 +1682,7 @@ fn verify_directory_missing_file() {
   let server = TestServer::new();
 
   let missing = Hash::bytes(b"foo");
-  let cbor = directory(&[("foo", EntryType::File, missing, 3)]).encode_to_vec();
+  let cbor = directory(&[("foo", missing, 3)]).encode_to_vec();
   let hash = Hash::bytes(&cbor);
   server.write_file(&cbor);
 
@@ -1732,12 +1720,14 @@ fn verify_directory_succeeds() {
   let file_hash = Hash::bytes(file);
   server.write_file(file);
 
-  let child = directory(&[("foo", EntryType::File, file_hash, file.len().into_u64())]);
+  let child = directory(&[("foo", file_hash, file.len().into_u64())]);
   let child_cbor = child.encode_to_vec();
   let child_hash = Hash::bytes(&child_cbor);
   server.write_file(&child_cbor);
 
   server.post(format!("/directory/{child_hash}")).send();
+
+  let totals = Totals::directory(&child).unwrap();
 
   server
     .get(format!("/directory/{child_hash}"))
@@ -1747,12 +1737,18 @@ fn verify_directory_succeeds() {
     })
     .send();
 
-  let parent = directory(&[(
-    "child",
-    EntryType::Directory,
-    child_hash,
-    child_cbor.len().into_u64(),
-  )]);
+  let parent = Directory {
+    version: Version::Zero,
+    entries: BTreeMap::from([(
+      "child".parse().unwrap(),
+      Entry {
+        ty: EntryType::Directory,
+        hash: child_hash,
+        size: child_cbor.len().into_u64(),
+        totals: Some(totals),
+      },
+    )]),
+  };
   let parent_cbor = parent.encode_to_vec();
   let parent_hash = Hash::bytes(&parent_cbor);
   server.write_file(&parent_cbor);
@@ -1769,19 +1765,65 @@ fn verify_directory_succeeds() {
 }
 
 #[test]
-fn verify_directory_unverified_subdirectory() {
+fn verify_directory_totals_mismatch() {
   let server = TestServer::new();
 
-  let child_cbor = directory(&[]).encode_to_vec();
+  let child = directory(&[]);
+  let child_cbor = child.encode_to_vec();
   let child_hash = Hash::bytes(&child_cbor);
   server.write_file(&child_cbor);
 
-  let parent_cbor = directory(&[(
-    "child",
-    EntryType::Directory,
-    child_hash,
-    child_cbor.len().into_u64(),
-  )])
+  server.post(format!("/directory/{child_hash}")).send();
+
+  let parent_cbor = Directory {
+    version: Version::Zero,
+    entries: BTreeMap::from([(
+      "child".parse().unwrap(),
+      Entry {
+        ty: EntryType::Directory,
+        hash: child_hash,
+        size: child_cbor.len().into_u64(),
+        totals: Some(Totals {
+          files: 1,
+          ..Totals::directory(&child).unwrap()
+        }),
+      },
+    )]),
+  }
+  .encode_to_vec();
+  let parent_hash = Hash::bytes(&parent_cbor);
+  server.write_file(&parent_cbor);
+
+  server
+    .post(format!("/directory/{parent_hash}"))
+    .status(StatusCode::BAD_REQUEST)
+    .assert_body(format!(
+      "directory {parent_hash} totals mismatch for subdirectory {child_hash}"
+    ))
+    .send();
+}
+
+#[test]
+fn verify_directory_unverified_subdirectory() {
+  let server = TestServer::new();
+
+  let child = directory(&[]);
+  let child_cbor = child.encode_to_vec();
+  let child_hash = Hash::bytes(&child_cbor);
+  server.write_file(&child_cbor);
+
+  let parent_cbor = Directory {
+    version: Version::Zero,
+    entries: BTreeMap::from([(
+      "child".parse().unwrap(),
+      Entry {
+        ty: EntryType::Directory,
+        hash: child_hash,
+        size: child_cbor.len().into_u64(),
+        totals: Some(Totals::directory(&child).unwrap()),
+      },
+    )]),
+  }
   .encode_to_vec();
   let parent_hash = Hash::bytes(&parent_cbor);
   server.write_file(&parent_cbor);
@@ -1805,7 +1847,6 @@ fn verify_package_metadata_decode_error() {
 
   let cbor = directory(&[(
     Metadata::CBOR_FILENAME,
-    EntryType::File,
     metadata_hash,
     junk.len().into_u64(),
   )])
@@ -1839,7 +1880,6 @@ fn verify_package_metadata_references_missing_file() {
 
   let cbor = directory(&[(
     Metadata::CBOR_FILENAME,
-    EntryType::File,
     metadata_hash,
     metadata.len().into_u64(),
   )])
@@ -1876,15 +1916,9 @@ fn verify_package_metadata_references_present_file() {
   server.write_file(&metadata);
 
   let cbor = directory(&[
-    (
-      "cover.png",
-      EntryType::File,
-      artwork_hash,
-      artwork.len().into_u64(),
-    ),
+    ("cover.png", artwork_hash, artwork.len().into_u64()),
     (
       Metadata::CBOR_FILENAME,
-      EntryType::File,
       metadata_hash,
       metadata.len().into_u64(),
     ),

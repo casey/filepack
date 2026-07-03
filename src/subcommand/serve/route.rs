@@ -133,6 +133,7 @@ pub(crate) async fn package(
       PackageHtml {
         fingerprint,
         metadata: server.package_metadata_opt(fingerprint)?,
+        totals: server.package_totals(fingerprint)?,
       }
       .into(),
     )
