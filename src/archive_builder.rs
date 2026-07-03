@@ -1,5 +1,6 @@
 use super::*;
 
+#[derive(Default)]
 pub(crate) struct ArchiveBuilder {
   pub(crate) files: BTreeMap<Hash, Vec<u8>>,
 }
@@ -101,8 +102,6 @@ impl ArchiveBuilder {
   }
 
   pub(crate) fn new() -> Self {
-    Self {
-      files: BTreeMap::new(),
-    }
+    Self::default()
   }
 }
