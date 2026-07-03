@@ -123,9 +123,12 @@ impl Archive {
 
     let (tree, totals) = self.unpack_directory(&mut loose, &mut embedded, package, None)?;
 
-    ensure! {
-      package.totals == Some(totals),
-      archive_error::TotalsMismatch { hash: package.hash },
+    {
+      let actual = package.totals.unwrap();
+      ensure! {
+        actual == totals,
+        archive_error::TotalsMismatch { actual, hash: package.hash },
+      }
     }
 
     let package = tree;
@@ -145,9 +148,12 @@ impl Archive {
 
       let totals = Totals::new(&directory).context(archive_error::TotalsOverflow)?;
 
-      ensure! {
-        entry.totals == Some(totals),
-        archive_error::TotalsMismatch { hash: entry.hash },
+      {
+        let actual = entry.totals.unwrap();
+        ensure! {
+          actual == totals,
+          archive_error::TotalsMismatch { actual, hash: entry.hash },
+        }
       }
 
       let mut signatures = BTreeSet::new();
@@ -221,9 +227,12 @@ impl Archive {
             Some(&RelativePath::join_opt(prefix, name)),
           )?;
 
-          ensure! {
-            entry.totals == Some(totals),
-            archive_error::TotalsMismatch { hash: entry.hash },
+          {
+            let actual = entry.totals.unwrap();
+            ensure! {
+              actual == totals,
+              archive_error::TotalsMismatch { actual, hash: entry.hash },
+            }
           }
 
           DirectoryTreeEntry::Directory(tree)
@@ -558,11 +567,13 @@ mod tests {
 
     let package = builder.directory(&package);
 
+    let actual_totals = package.totals.unwrap();
+
     let archive = builder.build_package(package, &BTreeSet::new());
 
     assert_matches!(
       archive.unpack(),
-      Err(ArchiveError::TotalsMismatch { hash }) if hash == child_hash,
+      Err(ArchiveError::TotalsMismatch { hash, .. }) if hash == child_hash,
     );
   }
 

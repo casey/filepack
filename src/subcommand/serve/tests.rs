@@ -1715,7 +1715,7 @@ fn verify_directory_succeeds() {
 
   server.post(format!("/directory/{child_hash}")).send();
 
-  let totals = Totals::directory(&child).unwrap();
+  let totals = Totals::new(&child).unwrap();
 
   server
     .get(format!("/directory/{child_hash}"))
@@ -1773,7 +1773,7 @@ fn verify_directory_totals_mismatch() {
         size: child_cbor.len().into_u64(),
         totals: Some(Totals {
           files: 1,
-          ..Totals::directory(&child).unwrap()
+          ..Totals::new(&child).unwrap()
         }),
       },
     )]),
@@ -1808,7 +1808,7 @@ fn verify_directory_unverified_subdirectory() {
         ty: EntryType::Directory,
         hash: child_hash,
         size: child_cbor.len().into_u64(),
-        totals: Some(Totals::directory(&child).unwrap()),
+        totals: Some(Totals::new(&child).unwrap()),
       },
     )]),
   }
