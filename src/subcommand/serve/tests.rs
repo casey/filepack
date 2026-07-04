@@ -10,6 +10,59 @@ use {
 
 static RUNTIME: LazyLock<Runtime> = LazyLock::new(|| Runtime::new().unwrap());
 
+struct PackageBuilder<'a> {
+  directory: Directory,
+  files: BTreeMap<&'a str, &'a [u8]>,
+  metadata: Option<&'a Metadata>,
+}
+
+impl<'a> PackageBuilder<'a> {
+  fn file(mut self, name: &'a str, content: &'a [u8]) -> Self {
+    assert!(self.files.insert(name, content).is_none());
+    self
+  }
+
+  fn metadata(mut self, metadata: &'a Metadata) -> Self {
+    self.metadata = Some(metadata);
+    self
+  }
+
+  fn new() -> Self {
+    Self {
+      directory: Directory::new(),
+      files: BTreeMap::new(),
+      metadata: None,
+    }
+  }
+
+  fn upload(mut self, server: &TestServer) -> Fingerprint {
+    if let Some(metadata) = self.metadata {
+      let metadata = metadata.encode_to_vec();
+
+      self
+        .directory
+        .insert_file(Metadata::CBOR_FILENAME, &metadata);
+
+      server.write_file(&metadata);
+    }
+
+    for (name, content) in self.files {
+      server.write_file(content);
+      self.directory.insert_file(name, content);
+    }
+
+    let (cbor, hash) = self.directory.cbor();
+
+    let fingerprint = Fingerprint(hash);
+    server.write_file(&cbor);
+
+    server.post(format!("/directory/{hash}")).send();
+    server.post(format!("/package/{fingerprint}")).send();
+
+    fingerprint
+  }
+}
+
 struct TestRequestBuilder {
   absent_headers: BTreeSet<String>,
   body: Option<Vec<u8>>,
@@ -268,7 +321,9 @@ fn artwork_missing() {
 fn artwork_not_found_without_artwork() {
   let server = TestServer::new();
 
-  let fingerprint = package(&server, &default(), &[]);
+  let fingerprint = PackageBuilder::new()
+    .metadata(&Metadata::default())
+    .upload(&server);
 
   server
     .get(format!("/artwork/{fingerprint}"))
@@ -649,7 +704,10 @@ fn media_audio_track_file_missing() {
     ..default()
   };
 
-  let fingerprint = package(&server, &metadata, &[("foo.flac", foo)]);
+  let fingerprint = PackageBuilder::new()
+    .metadata(&metadata)
+    .file("foo.flac", foo)
+    .upload(&server);
 
   let metadata_cbor = metadata.encode_to_vec();
 
@@ -676,16 +734,16 @@ fn media_audio_track_out_of_range() {
   let foo: &[u8] = b"foo";
   let bar: &[u8] = b"bar";
 
-  let fingerprint = package(
-    &server,
-    &Metadata {
+  let fingerprint = PackageBuilder::new()
+    .metadata(&Metadata {
       media: Some(Media::Audio {
         tracks: vec!["foo.flac".parse().unwrap(), "bar.flac".parse().unwrap()],
       }),
       ..default()
-    },
-    &[("foo.flac", foo), ("bar.flac", bar)],
-  );
+    })
+    .file("foo.flac", foo)
+    .file("bar.flac", bar)
+    .upload(&server);
 
   server
     .get(format!("/media/audio/{fingerprint}/track/3"))
@@ -721,14 +779,12 @@ fn media_audio_track_package_not_found() {
 fn media_audio_track_package_without_media() {
   let server = TestServer::new();
 
-  let fingerprint = package(
-    &server,
-    &Metadata {
+  let fingerprint = PackageBuilder::new()
+    .metadata(&Metadata {
       title: Some("foo".parse().unwrap()),
       ..default()
-    },
-    &[],
-  );
+    })
+    .upload(&server);
 
   server
     .get(format!("/media/audio/{fingerprint}/track/1"))
@@ -790,16 +846,15 @@ fn media_audio_track_ranges() {
 
   let track: &[u8] = b"foobarbaz";
 
-  let fingerprint = package(
-    &server,
-    &Metadata {
+  let fingerprint = PackageBuilder::new()
+    .metadata(&Metadata {
       media: Some(Media::Audio {
         tracks: vec!["foo.flac".parse().unwrap()],
       }),
       ..default()
-    },
-    &[("foo.flac", track)],
-  );
+    })
+    .file("foo.flac", track)
+    .upload(&server);
 
   case(
     &server,
@@ -845,16 +900,16 @@ fn media_audio_track_response() {
   let foo: &[u8] = b"foo";
   let bar: &[u8] = b"barbar";
 
-  let fingerprint = package(
-    &server,
-    &Metadata {
+  let fingerprint = PackageBuilder::new()
+    .metadata(&Metadata {
       media: Some(Media::Audio {
         tracks: vec!["foo.flac".parse().unwrap(), "bar.flac".parse().unwrap()],
       }),
       ..default()
-    },
-    &[("foo.flac", foo), ("bar.flac", bar)],
-  );
+    })
+    .file("foo.flac", foo)
+    .file("bar.flac", bar)
+    .upload(&server);
 
   server
     .get(format!("/media/audio/{fingerprint}/track/1"))
@@ -882,16 +937,15 @@ fn media_image_image_out_of_range() {
 
   let foo: &[u8] = b"foo";
 
-  let fingerprint = package(
-    &server,
-    &Metadata {
+  let fingerprint = PackageBuilder::new()
+    .metadata(&Metadata {
       media: Some(Media::Image {
         images: vec!["foo.png".parse().unwrap()],
       }),
       ..default()
-    },
-    &[("foo.png", foo)],
-  );
+    })
+    .file("foo.png", foo)
+    .upload(&server);
 
   server
     .get(format!("/media/image/{fingerprint}/image/2"))
@@ -909,16 +963,16 @@ fn media_image_image_response() {
   let foo: &[u8] = b"foo";
   let bar: &[u8] = b"barbar";
 
-  let fingerprint = package(
-    &server,
-    &Metadata {
+  let fingerprint = PackageBuilder::new()
+    .metadata(&Metadata {
       media: Some(Media::Image {
         images: vec!["foo.png".parse().unwrap(), "bar.jpg".parse().unwrap()],
       }),
       ..default()
-    },
-    &[("foo.png", foo), ("bar.jpg", bar)],
-  );
+    })
+    .file("foo.png", foo)
+    .file("bar.jpg", bar)
+    .upload(&server);
 
   server
     .get(format!("/media/image/{fingerprint}/image/1"))
@@ -955,27 +1009,25 @@ fn media_type_mismatch() {
 
   let foo: &[u8] = b"foo";
 
-  let audio = package(
-    &server,
-    &Metadata {
+  let audio = PackageBuilder::new()
+    .metadata(&Metadata {
       media: Some(Media::Audio {
         tracks: vec!["foo.flac".parse().unwrap()],
       }),
       ..default()
-    },
-    &[("foo.flac", foo)],
-  );
+    })
+    .file("foo.flac", foo)
+    .upload(&server);
 
-  let image = package(
-    &server,
-    &Metadata {
+  let image = PackageBuilder::new()
+    .metadata(&Metadata {
       media: Some(Media::Image {
         images: vec!["foo.png".parse().unwrap()],
       }),
       ..default()
-    },
-    &[("foo.png", foo)],
-  );
+    })
+    .file("foo.png", foo)
+    .upload(&server);
 
   case(
     &server,
@@ -1046,31 +1098,6 @@ fn non_fingerprint_bech32_falls_through() {
     .send();
 }
 
-#[track_caller]
-fn package(server: &TestServer, metadata: &Metadata, files: &[(&str, &[u8])]) -> Fingerprint {
-  let mut directory = Directory::new();
-
-  let metadata_cbor = metadata.encode_to_vec();
-  server.write_file(&metadata_cbor);
-
-  for (name, content) in files {
-    server.write_file(content);
-    directory.insert_file(name, content);
-  }
-
-  let (cbor, hash) = directory
-    .insert_file(Metadata::CBOR_FILENAME, &metadata_cbor)
-    .cbor();
-
-  let fingerprint = Fingerprint(hash);
-  server.write_file(&cbor);
-
-  server.post(format!("/directory/{hash}")).send();
-  server.post(format!("/package/{fingerprint}")).send();
-
-  fingerprint
-}
-
 #[test]
 fn package_item_image() {
   let server = TestServer::new();
@@ -1089,7 +1116,10 @@ fn package_item_image() {
     ..default()
   };
 
-  let fingerprint = package(&server, &metadata, &[("foo.png", b"foo")]);
+  let fingerprint = PackageBuilder::new()
+    .metadata(&metadata)
+    .file("foo.png", b"foo")
+    .upload(&server);
 
   server
     .get(format!("/package/{fingerprint}/1"))
@@ -1105,9 +1135,8 @@ fn package_item_image() {
 fn package_item_image_out_of_range() {
   let server = TestServer::new();
 
-  let fingerprint = package(
-    &server,
-    &Metadata {
+  let fingerprint = PackageBuilder::new()
+    .metadata(&Metadata {
       media: Some(Media::Image {
         images: vec![Image {
           dimensions: Dimensions {
@@ -1119,9 +1148,9 @@ fn package_item_image_out_of_range() {
         }],
       }),
       ..default()
-    },
-    &[("foo.png", b"foo")],
-  );
+    })
+    .file("foo.png", b"foo")
+    .upload(&server);
 
   server
     .get(format!("/package/{fingerprint}/2"))
@@ -1156,7 +1185,10 @@ fn package_item_track() {
     ..default()
   };
 
-  let fingerprint = package(&server, &metadata, &[("foo.flac", b"foo")]);
+  let fingerprint = PackageBuilder::new()
+    .metadata(&metadata)
+    .file("foo.flac", b"foo")
+    .upload(&server);
 
   server
     .get(format!("/package/{fingerprint}/1"))
@@ -1172,16 +1204,15 @@ fn package_item_track() {
 fn package_item_track_out_of_range() {
   let server = TestServer::new();
 
-  let fingerprint = package(
-    &server,
-    &Metadata {
+  let fingerprint = PackageBuilder::new()
+    .metadata(&Metadata {
       media: Some(Media::Audio {
         tracks: vec!["foo.flac".parse().unwrap()],
       }),
       ..default()
-    },
-    &[("foo.flac", b"foo")],
-  );
+    })
+    .file("foo.flac", b"foo")
+    .upload(&server);
 
   server
     .get(format!("/package/{fingerprint}/2"))
@@ -1196,14 +1227,12 @@ fn package_item_track_out_of_range() {
 fn package_item_without_media() {
   let server = TestServer::new();
 
-  let fingerprint = package(
-    &server,
-    &Metadata {
+  let fingerprint = PackageBuilder::new()
+    .metadata(&Metadata {
       title: Some("foo".parse().unwrap()),
       ..default()
-    },
-    &[],
-  );
+    })
+    .upload(&server);
 
   server
     .get(format!("/package/{fingerprint}/1"))
@@ -1254,11 +1283,11 @@ fn package_page_renders_audio_media() {
     ..default()
   };
 
-  let fingerprint = package(
-    &server,
-    &metadata,
-    &[("foo.flac", b"foo"), ("bar.flac", b"bar")],
-  );
+  let fingerprint = PackageBuilder::new()
+    .metadata(&metadata)
+    .file("foo.flac", b"foo")
+    .file("bar.flac", b"bar")
+    .upload(&server);
 
   server
     .get(format!("/package/{fingerprint}"))
@@ -1287,7 +1316,10 @@ fn package_page_renders_image_media() {
     ..default()
   };
 
-  let fingerprint = package(&server, &metadata, &[("foo.png", b"foo")]);
+  let fingerprint = PackageBuilder::new()
+    .metadata(&metadata)
+    .file("foo.png", b"foo")
+    .upload(&server);
 
   server
     .get(format!("/package/{fingerprint}"))
@@ -1312,14 +1344,12 @@ fn packages_empty() {
 fn packages_include_titles() {
   let server = TestServer::new();
 
-  let fingerprint = package(
-    &server,
-    &Metadata {
+  let fingerprint = PackageBuilder::new()
+    .metadata(&Metadata {
       title: Some("foo".parse().unwrap()),
       ..default()
-    },
-    &[],
-  );
+    })
+    .upload(&server);
 
   server
     .get("/packages")
