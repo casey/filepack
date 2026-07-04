@@ -27,7 +27,6 @@ mod tests {
       ty: EntryType::File,
       size: 100,
       hash: Hash::bytes(b"foo"),
-      total_file_size: None,
     });
   }
 }

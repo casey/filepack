@@ -20,7 +20,6 @@ fn download_checks_metadata() {
         ty: EntryType::File,
         hash: metadata_hash,
         size: u64::try_from(metadata.len()).unwrap(),
-        total_file_size: None,
       },
     )]),
   }

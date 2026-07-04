@@ -24,16 +24,6 @@ impl Directory {
       ty: EntryType::Directory,
       hash: Hash::bytes(&cbor),
       size: cbor.len().into_u64(),
-      total_file_size: Some(
-        self
-          .entries
-          .values()
-          .map(|entry| match entry.ty {
-            EntryType::File => entry.size,
-            EntryType::Directory => entry.total_file_size.unwrap(),
-          })
-          .sum(),
-      ),
     }
   }
 
@@ -52,7 +42,6 @@ impl Directory {
         ty: EntryType::File,
         hash: Hash::bytes(contents),
         size: contents.len().into_u64(),
-        total_file_size: None,
       },
     );
   }
@@ -76,7 +65,6 @@ mod tests {
           ty: EntryType::File,
           size: 0,
           hash: Hash::bytes(b"bar"),
-          total_file_size: None,
         },
       )]),
     });
