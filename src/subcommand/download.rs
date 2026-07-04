@@ -137,9 +137,9 @@ impl Download {
     builder.files = directories;
 
     let package = Entry {
+      ty: EntryType::Directory,
       hash: fingerprint.into(),
       size: builder.files[&fingerprint.into()].len().into_u64(),
-      ty: EntryType::Directory,
     };
 
     let archive = builder.build_package(package, &BTreeSet::new());
