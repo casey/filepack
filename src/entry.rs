@@ -1,7 +1,7 @@
 use super::*;
 
 #[allow(clippy::arbitrary_source_item_ordering)]
-#[derive(Debug, Encode, Decode, PartialEq)]
+#[derive(Clone, Debug, Encode, Decode, PartialEq)]
 pub struct Entry {
   #[n(0)]
   pub ty: EntryType,

@@ -229,7 +229,6 @@ fn artwork_missing() {
   let server = TestServer::new();
 
   let artwork = b"foo";
-  let artwork_hash = Hash::bytes(artwork);
   server.write_file(artwork);
 
   let metadata = Metadata {
@@ -237,28 +236,22 @@ fn artwork_missing() {
     ..Metadata::default()
   };
   let metadata_cbor = metadata.encode_to_vec();
-  let metadata_hash = Hash::bytes(&metadata_cbor);
   server.write_file(&metadata_cbor);
 
-  let metadata_entry = (
-    Metadata::CBOR_FILENAME,
-    metadata_hash,
-    metadata_cbor.len().into_u64(),
-  );
+  let mut directory = Directory::new();
+  directory.insert_file("cover.png,", artwork);
 
-  let cbor = directory(&[
-    ("cover.png", artwork_hash, artwork.len().into_u64()),
-    metadata_entry,
-  ])
-  .encode_to_vec();
-  let hash = Hash::bytes(&cbor);
+  let (cbor, hash) = directory.cbor();
   let fingerprint = Fingerprint(hash);
   server.write_file(&cbor);
 
   server.post(format!("/directory/{hash}")).send();
   server.post(format!("/package/{fingerprint}")).send();
 
-  let corrupt = directory(&[metadata_entry]).encode_to_vec();
+  let mut corrupt = Directory::new();
+  corrupt.insert_file(Metadata::CBOR_FILENAME, &metadata_cbor);
+
+  let corrupt = corrupt.encode_to_vec();
   fs::write(
     server.data_dir.join("files").join(hash.to_string()),
     &corrupt,
@@ -315,19 +308,13 @@ fn artwork_response() {
       ..Metadata::default()
     };
     let metadata_cbor = metadata.encode_to_vec();
-    let metadata_hash = Hash::bytes(&metadata_cbor);
     server.write_file(&metadata_cbor);
 
-    let cbor = directory(&[
-      (filename, artwork_hash, artwork.len().into_u64()),
-      (
-        Metadata::CBOR_FILENAME,
-        metadata_hash,
-        metadata_cbor.len().into_u64(),
-      ),
-    ])
-    .encode_to_vec();
-    let hash = Hash::bytes(&cbor);
+    let mut directory = Directory::new();
+    directory.insert_file(filename, artwork);
+    directory.insert_file(Metadata::CBOR_FILENAME, &metadata_cbor);
+
+    let (cbor, hash) = directory.cbor();
     let fingerprint = Fingerprint(hash);
     server.write_file(&cbor);
 
@@ -379,25 +366,6 @@ fn default_serve_matches_parsed() {
     Serve::default(),
     Serve::try_parse_from(["filepack"]).unwrap(),
   );
-}
-
-fn directory(entries: &[(&str, Hash, u64)]) -> Directory {
-  Directory {
-    version: Version::Zero,
-    entries: entries
-      .iter()
-      .map(|(name, hash, size)| {
-        (
-          name.parse().unwrap(),
-          Entry {
-            ty: EntryType::File,
-            hash: *hash,
-            size: *size,
-          },
-        )
-      })
-      .collect(),
-  }
 }
 
 #[test]
@@ -550,8 +518,7 @@ fn fingerprint_redirects_to_package() {
 fn get_directory_not_found() {
   let server = TestServer::new();
 
-  let cbor = directory(&[]).encode_to_vec();
-  let hash = Hash::bytes(&cbor);
+  let (cbor, hash) = Directory::new().cbor();
   server.write_file(&cbor);
 
   server
@@ -565,19 +532,15 @@ fn get_directory_not_found() {
 fn get_directory_succeeds() {
   let server = TestServer::new();
 
-  let dir = directory(&[]);
-  let cbor = dir.encode_to_vec();
-  let hash = Hash::bytes(&cbor);
+  let directory = Directory::new();
+  let (cbor, hash) = directory.cbor();
   server.write_file(&cbor);
 
   server.post(format!("/directory/{hash}")).send();
 
   server
     .get(format!("/directory/{hash}"))
-    .assert_page(DirectoryHtml {
-      directory: dir,
-      hash,
-    })
+    .assert_page(DirectoryHtml { directory, hash })
     .send();
 }
 
@@ -611,16 +574,11 @@ fn get_package_with_metadata() {
     title: Some("foo".parse().unwrap()),
   };
   let metadata_cbor = metadata.encode_to_vec();
-  let metadata_hash = Hash::bytes(&metadata_cbor);
   server.write_file(&metadata_cbor);
 
-  let cbor = directory(&[(
-    Metadata::CBOR_FILENAME,
-    metadata_hash,
-    metadata_cbor.len().into_u64(),
-  )])
-  .encode_to_vec();
-  let hash = Hash::bytes(&cbor);
+  let mut directory = Directory::new();
+  directory.insert_file(Metadata::CBOR_FILENAME, &metadata_cbor);
+  let (cbor, hash) = directory.cbor();
   let fingerprint = Fingerprint(hash);
   server.write_file(&cbor);
 
@@ -640,8 +598,7 @@ fn get_package_with_metadata() {
 fn get_package_without_metadata() {
   let server = TestServer::new();
 
-  let cbor = directory(&[]).encode_to_vec();
-  let hash = Hash::bytes(&cbor);
+  let (cbor, hash) = Directory::new().cbor();
   let fingerprint = Fingerprint(hash);
   server.write_file(&cbor);
 
@@ -698,19 +655,13 @@ fn media_audio_track_file_missing() {
   let fingerprint = package(&server, &metadata, &[("foo.flac", foo)]);
 
   let metadata_cbor = metadata.encode_to_vec();
-  let corrupt = directory(&[(
-    Metadata::CBOR_FILENAME,
-    Hash::bytes(&metadata_cbor),
-    metadata_cbor.len().into_u64(),
-  )])
-  .encode_to_vec();
+
+  let mut corrupt = Directory::new();
+  corrupt.insert_file(Metadata::CBOR_FILENAME, &metadata_cbor);
+  let (cbor, _hash) = corrupt.cbor();
 
   let hash = Hash::from(fingerprint);
-  fs::write(
-    server.data_dir.join("files").join(hash.to_string()),
-    &corrupt,
-  )
-  .unwrap();
+  fs::write(server.data_dir.join("files").join(hash.to_string()), &cbor).unwrap();
 
   server
     .get(format!("/media/audio/{fingerprint}/track/1"))
@@ -795,8 +746,7 @@ fn media_audio_track_package_without_media() {
 fn media_audio_track_package_without_metadata() {
   let server = TestServer::new();
 
-  let cbor = directory(&[]).encode_to_vec();
-  let hash = Hash::bytes(&cbor);
+  let (cbor, hash) = Directory::new().cbor();
   let fingerprint = Fingerprint(hash);
   server.write_file(&cbor);
 
@@ -1101,26 +1051,19 @@ fn non_fingerprint_bech32_falls_through() {
 
 #[track_caller]
 fn package(server: &TestServer, metadata: &Metadata, files: &[(&str, &[u8])]) -> Fingerprint {
+  let mut directory = Directory::new();
+
   let metadata_cbor = metadata.encode_to_vec();
-  let metadata_hash = Hash::bytes(&metadata_cbor);
   server.write_file(&metadata_cbor);
 
-  let mut entries = files
-    .iter()
-    .map(|&(name, content)| {
-      server.write_file(content);
-      (name, Hash::bytes(content), content.len().into_u64())
-    })
-    .collect::<Vec<(&str, Hash, u64)>>();
+  for (name, content) in files {
+    server.write_file(content);
+    directory.insert_file(name, content);
+  }
 
-  entries.push((
-    Metadata::CBOR_FILENAME,
-    metadata_hash,
-    metadata_cbor.len().into_u64(),
-  ));
+  directory.insert_file(Metadata::CBOR_FILENAME, &metadata_cbor);
 
-  let cbor = directory(&entries).encode_to_vec();
-  let hash = Hash::bytes(&cbor);
+  let (cbor, hash) = directory.cbor();
   let fingerprint = Fingerprint(hash);
   server.write_file(&cbor);
 
@@ -1277,8 +1220,7 @@ fn package_item_without_media() {
 fn package_item_without_metadata() {
   let server = TestServer::new();
 
-  let cbor = directory(&[]).encode_to_vec();
-  let hash = Hash::bytes(&cbor);
+  let (cbor, hash) = Directory::new().cbor();
   let fingerprint = Fingerprint(hash);
   server.write_file(&cbor);
 
@@ -1397,9 +1339,9 @@ fn packages_non_empty() {
 
   for content in [b"foo".as_slice(), b"bar", b"baz"] {
     server.write_file(content);
-    let cbor =
-      directory(&[("file", Hash::bytes(content), content.len().into_u64())]).encode_to_vec();
-    let hash = Hash::bytes(&cbor);
+    let mut directory = Directory::new();
+    directory.insert_file("file", content);
+    let (cbor, hash) = directory.cbor();
     let fingerprint = Fingerprint(hash);
     server.write_file(&cbor);
     server.post(format!("/directory/{hash}")).send();
@@ -1647,9 +1589,8 @@ fn verify_directory_file_not_found() {
 fn verify_directory_idempotent() {
   let server = TestServer::new();
 
-  let dir = directory(&[]);
-  let cbor = dir.encode_to_vec();
-  let hash = Hash::bytes(&cbor);
+  let directory = Directory::new();
+  let (cbor, hash) = directory.cbor();
   server.write_file(&cbor);
 
   server.post(format!("/directory/{hash}")).send();
@@ -1657,10 +1598,7 @@ fn verify_directory_idempotent() {
 
   server
     .get(format!("/directory/{hash}"))
-    .assert_page(DirectoryHtml {
-      directory: dir,
-      hash,
-    })
+    .assert_page(DirectoryHtml { directory, hash })
     .send();
 }
 
@@ -1668,16 +1606,19 @@ fn verify_directory_idempotent() {
 fn verify_directory_missing_file() {
   let server = TestServer::new();
 
-  let missing = Hash::bytes(b"foo");
-  let cbor = directory(&[("foo", missing, 3)]).encode_to_vec();
-  let hash = Hash::bytes(&cbor);
+  let missing = b"foo";
+
+  let mut directory = Directory::new();
+  directory.insert_file("foo", missing);
+  let (cbor, hash) = directory.cbor();
   server.write_file(&cbor);
 
   server
     .post(format!("/directory/{hash}"))
     .status(StatusCode::BAD_REQUEST)
     .assert_body(format!(
-      "directory {hash} references missing file {missing}"
+      "directory {hash} references missing file {}",
+      Hash::bytes(missing),
     ))
     .send();
 }
@@ -1704,12 +1645,12 @@ fn verify_directory_succeeds() {
   let server = TestServer::new();
 
   let file = b"foo";
-  let file_hash = Hash::bytes(file);
   server.write_file(file);
 
-  let child = directory(&[("foo", file_hash, file.len().into_u64())]);
-  let child_cbor = child.encode_to_vec();
-  let child_hash = Hash::bytes(&child_cbor);
+  let mut child = Directory::new();
+  child.insert_file("foo", file);
+
+  let (child_cbor, child_hash) = child.cbor();
   server.write_file(&child_cbor);
 
   server.post(format!("/directory/{child_hash}")).send();
@@ -1717,24 +1658,15 @@ fn verify_directory_succeeds() {
   server
     .get(format!("/directory/{child_hash}"))
     .assert_page(DirectoryHtml {
-      directory: child,
+      directory: child.clone(),
       hash: child_hash,
     })
     .send();
 
-  let parent = Directory {
-    version: Version::Zero,
-    entries: BTreeMap::from([(
-      "child".parse().unwrap(),
-      Entry {
-        ty: EntryType::Directory,
-        hash: child_hash,
-        size: child_cbor.len().into_u64(),
-      },
-    )]),
-  };
-  let parent_cbor = parent.encode_to_vec();
-  let parent_hash = Hash::bytes(&parent_cbor);
+  let mut parent = Directory::new();
+  parent.insert_directory("child", &child);
+
+  let (parent_cbor, parent_hash) = parent.cbor();
   server.write_file(&parent_cbor);
 
   server.post(format!("/directory/{parent_hash}")).send();
@@ -1752,23 +1684,14 @@ fn verify_directory_succeeds() {
 fn verify_directory_unverified_subdirectory() {
   let server = TestServer::new();
 
-  let child_cbor = directory(&[]).encode_to_vec();
-  let child_hash = Hash::bytes(&child_cbor);
+  let child = Directory::new();
+  let (child_cbor, child_hash) = child.cbor();
   server.write_file(&child_cbor);
 
-  let parent_cbor = Directory {
-    version: Version::Zero,
-    entries: BTreeMap::from([(
-      "child".parse().unwrap(),
-      Entry {
-        ty: EntryType::Directory,
-        hash: child_hash,
-        size: child_cbor.len().into_u64(),
-      },
-    )]),
-  }
-  .encode_to_vec();
-  let parent_hash = Hash::bytes(&parent_cbor);
+  let mut parent = Directory::new();
+  parent.insert_directory("child", &child);
+
+  let (parent_cbor, parent_hash) = parent.cbor();
   server.write_file(&parent_cbor);
 
   server
@@ -1784,17 +1707,12 @@ fn verify_directory_unverified_subdirectory() {
 fn verify_package_metadata_decode_error() {
   let server = TestServer::new();
 
-  let junk = b"not cbor";
-  let metadata_hash = Hash::bytes(junk);
+  let junk = b"foo";
   server.write_file(junk);
 
-  let cbor = directory(&[(
-    Metadata::CBOR_FILENAME,
-    metadata_hash,
-    junk.len().into_u64(),
-  )])
-  .encode_to_vec();
-  let hash = Hash::bytes(&cbor);
+  let mut directory = Directory::new();
+  directory.insert_file(Metadata::CBOR_FILENAME, junk);
+  let (cbor, hash) = directory.cbor();
   let fingerprint = Fingerprint(hash);
   server.write_file(&cbor);
 
@@ -1818,16 +1736,11 @@ fn verify_package_metadata_references_missing_file() {
     ..default()
   }
   .encode_to_vec();
-  let metadata_hash = Hash::bytes(&metadata);
   server.write_file(&metadata);
 
-  let cbor = directory(&[(
-    Metadata::CBOR_FILENAME,
-    metadata_hash,
-    metadata.len().into_u64(),
-  )])
-  .encode_to_vec();
-  let hash = Hash::bytes(&cbor);
+  let mut directory = Directory::new();
+  directory.insert_file(Metadata::CBOR_FILENAME, &metadata);
+  let (cbor, hash) = directory.cbor();
   let fingerprint = Fingerprint(hash);
   server.write_file(&cbor);
 
@@ -1847,7 +1760,6 @@ fn verify_package_metadata_references_present_file() {
   let server = TestServer::new();
 
   let artwork = b"artwork";
-  let artwork_hash = Hash::bytes(artwork);
   server.write_file(artwork);
 
   let metadata = Metadata {
@@ -1855,19 +1767,12 @@ fn verify_package_metadata_references_present_file() {
     ..default()
   }
   .encode_to_vec();
-  let metadata_hash = Hash::bytes(&metadata);
   server.write_file(&metadata);
 
-  let cbor = directory(&[
-    ("cover.png", artwork_hash, artwork.len().into_u64()),
-    (
-      Metadata::CBOR_FILENAME,
-      metadata_hash,
-      metadata.len().into_u64(),
-    ),
-  ])
-  .encode_to_vec();
-  let hash = Hash::bytes(&cbor);
+  let mut directory = Directory::new();
+  directory.insert_file("cover.png", artwork);
+  directory.insert_file(Metadata::CBOR_FILENAME, &metadata);
+  let (cbor, hash) = directory.cbor();
   let fingerprint = Fingerprint(hash);
   server.write_file(&cbor);
 
@@ -1880,8 +1785,7 @@ fn verify_package_metadata_references_present_file() {
 fn verify_package_unverified() {
   let server = TestServer::new();
 
-  let cbor = directory(&[]).encode_to_vec();
-  let hash = Hash::bytes(&cbor);
+  let (cbor, hash) = Directory::new().cbor();
   let fingerprint = Fingerprint(hash);
   server.write_file(&cbor);
 
