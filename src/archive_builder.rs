@@ -64,16 +64,6 @@ impl ArchiveBuilder {
       ty: EntryType::Directory,
       hash,
       size,
-      total_file_size: Some(
-        directory
-          .entries
-          .values()
-          .map(|entry| match entry.ty {
-            EntryType::Directory => entry.total_file_size.unwrap(),
-            EntryType::File => entry.size,
-          })
-          .sum(),
-      ),
     }
   }
 
@@ -84,7 +74,6 @@ impl ArchiveBuilder {
       ty: EntryType::File,
       hash,
       size,
-      total_file_size: None,
     }
   }
 
@@ -104,7 +93,6 @@ impl ArchiveBuilder {
               ty: EntryType::File,
               hash: file.hash,
               size: file.size,
-              total_file_size: None,
             },
             DirectoryTreeEntry::Directory(directory) => self.pack_directory(directory),
           };

@@ -9,8 +9,6 @@ pub struct Entry {
   pub hash: Hash,
   #[n(2)]
   pub size: u64,
-  #[n(3)]
-  pub total_file_size: Option<u64>,
 }
 
 impl Entry {
