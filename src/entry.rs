@@ -1,7 +1,7 @@
 use super::*;
 
 #[allow(clippy::arbitrary_source_item_ordering)]
-#[derive(Debug, Encode, Decode, PartialEq)]
+#[derive(Clone, Debug, Encode, Decode, PartialEq)]
 pub struct Entry {
   #[n(0)]
   pub ty: EntryType,
@@ -9,6 +9,8 @@ pub struct Entry {
   pub hash: Hash,
   #[n(2)]
   pub size: u64,
+  #[n(3)]
+  pub total_file_size: Option<u64>,
 }
 
 impl Entry {
@@ -27,6 +29,7 @@ mod tests {
       ty: EntryType::File,
       size: 100,
       hash: Hash::bytes(b"foo"),
+      total_file_size: None,
     });
   }
 }

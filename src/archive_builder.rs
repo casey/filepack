@@ -6,7 +6,7 @@ pub(crate) struct ArchiveBuilder {
 }
 
 impl ArchiveBuilder {
-  fn add(&mut self, file: Vec<u8>) -> (Hash, u64) {
+  fn add_file(&mut self, file: Vec<u8>) -> (Hash, u64) {
     let size = file.len().into_u64();
     let hash = Hash::bytes(&file);
     self.files.insert(hash, file);
@@ -58,22 +58,33 @@ impl ArchiveBuilder {
   }
 
   pub(crate) fn directory(&mut self, directory: &Directory) -> Entry {
-    let (hash, size) = self.add(directory.encode_to_vec());
+    let (hash, size) = self.add_file(directory.encode_to_vec());
 
     Entry {
       ty: EntryType::Directory,
       hash,
       size,
+      total_file_size: Some(
+        directory
+          .entries
+          .values()
+          .map(|entry| match entry.ty {
+            EntryType::Directory => entry.total_file_size.unwrap(),
+            EntryType::File => entry.size,
+          })
+          .sum(),
+      ),
     }
   }
 
   pub(crate) fn file(&mut self, file: Vec<u8>) -> Entry {
-    let (hash, size) = self.add(file);
+    let (hash, size) = self.add_file(file);
 
     Entry {
       ty: EntryType::File,
       hash,
       size,
+      total_file_size: None,
     }
   }
 
@@ -93,6 +104,7 @@ impl ArchiveBuilder {
               ty: EntryType::File,
               hash: file.hash,
               size: file.size,
+              total_file_size: None,
             },
             DirectoryTreeEntry::Directory(directory) => self.pack_directory(directory),
           };

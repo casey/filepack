@@ -64,7 +64,7 @@ impl Download {
 
     let mut files = Vec::new();
 
-    let mut bytes = 0u64;
+    let mut total_file_size = 0u64;
 
     while let Some((hash, path)) = stack.pop() {
       let url = self.file_url(hash);
@@ -94,7 +94,7 @@ impl Download {
         match entry.ty {
           EntryType::Directory => stack.push((entry.hash, path)),
           EntryType::File => {
-            bytes = bytes.saturating_add(entry.size);
+            total_file_size = total_file_size.saturating_add(entry.size);
             files.push((entry.hash, path));
           }
         }
@@ -103,7 +103,7 @@ impl Download {
 
     let file_count = files.len().into_u64();
 
-    let progress_bar = progress_bar::with_files(options, bytes, file_count);
+    let progress_bar = progress_bar::with_files(options, total_file_size, file_count);
 
     let mut context = Context {
       client,
@@ -137,9 +137,10 @@ impl Download {
     builder.files = directories;
 
     let package = Entry {
-      ty: EntryType::Directory,
       hash: fingerprint.into(),
       size: builder.files[&fingerprint.into()].len().into_u64(),
+      total_file_size: Some(total_file_size),
+      ty: EntryType::Directory,
     };
 
     let archive = builder.build_package(package, &BTreeSet::new());

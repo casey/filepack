@@ -393,6 +393,7 @@ fn directory(entries: &[(&str, Hash, u64)]) -> Directory {
             ty: EntryType::File,
             hash: *hash,
             size: *size,
+            total_file_size: None,
           },
         )
       })
@@ -550,8 +551,7 @@ fn fingerprint_redirects_to_package() {
 fn get_directory_not_found() {
   let server = TestServer::new();
 
-  let cbor = directory(&[]).encode_to_vec();
-  let hash = Hash::bytes(&cbor);
+  let (cbor, hash) = Directory::new().cbor();
   server.write_file(&cbor);
 
   server
@@ -1704,12 +1704,12 @@ fn verify_directory_succeeds() {
   let server = TestServer::new();
 
   let file = b"foo";
-  let file_hash = Hash::bytes(file);
   server.write_file(file);
 
-  let child = directory(&[("foo", file_hash, file.len().into_u64())]);
-  let child_cbor = child.encode_to_vec();
-  let child_hash = Hash::bytes(&child_cbor);
+  let mut child = Directory::new();
+  child.insert_file("foo", file);
+
+  let (child_cbor, child_hash) = child.cbor();
   server.write_file(&child_cbor);
 
   server.post(format!("/directory/{child_hash}")).send();
@@ -1717,24 +1717,15 @@ fn verify_directory_succeeds() {
   server
     .get(format!("/directory/{child_hash}"))
     .assert_page(DirectoryHtml {
-      directory: child,
+      directory: child.clone(),
       hash: child_hash,
     })
     .send();
 
-  let parent = Directory {
-    version: Version::Zero,
-    entries: BTreeMap::from([(
-      "child".parse().unwrap(),
-      Entry {
-        ty: EntryType::Directory,
-        hash: child_hash,
-        size: child_cbor.len().into_u64(),
-      },
-    )]),
-  };
-  let parent_cbor = parent.encode_to_vec();
-  let parent_hash = Hash::bytes(&parent_cbor);
+  let mut parent = Directory::new();
+  parent.insert_directory("child", &child);
+
+  let (parent_cbor, parent_hash) = parent.cbor();
   server.write_file(&parent_cbor);
 
   server.post(format!("/directory/{parent_hash}")).send();
@@ -1752,23 +1743,14 @@ fn verify_directory_succeeds() {
 fn verify_directory_unverified_subdirectory() {
   let server = TestServer::new();
 
-  let child_cbor = directory(&[]).encode_to_vec();
-  let child_hash = Hash::bytes(&child_cbor);
+  let child = Directory::new();
+  let (child_cbor, child_hash) = child.cbor();
   server.write_file(&child_cbor);
 
-  let parent_cbor = Directory {
-    version: Version::Zero,
-    entries: BTreeMap::from([(
-      "child".parse().unwrap(),
-      Entry {
-        ty: EntryType::Directory,
-        hash: child_hash,
-        size: child_cbor.len().into_u64(),
-      },
-    )]),
-  }
-  .encode_to_vec();
-  let parent_hash = Hash::bytes(&parent_cbor);
+  let mut parent = Directory::new();
+  parent.insert_directory("child", &child);
+
+  let (parent_cbor, parent_hash) = parent.cbor();
   server.write_file(&parent_cbor);
 
   server
