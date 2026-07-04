@@ -27,15 +27,16 @@ impl Directory {
     }
   }
 
-  pub(crate) fn insert_directory(&mut self, name: &str, directory: &Directory) {
-    self.insert_entry(name, directory.entry());
+  pub(crate) fn insert_directory(&mut self, name: &str, directory: &Directory) -> &mut Self {
+    self.insert_entry(name, directory.entry())
   }
 
-  fn insert_entry(&mut self, name: &str, entry: Entry) {
+  fn insert_entry(&mut self, name: &str, entry: Entry) -> &mut Self {
     assert!(self.entries.insert(name.parse().unwrap(), entry).is_none());
+    self
   }
 
-  pub(crate) fn insert_file(&mut self, name: &str, contents: &[u8]) {
+  pub(crate) fn insert_file(&mut self, name: &str, contents: &[u8]) -> &mut Self {
     self.insert_entry(
       name,
       Entry {
@@ -43,7 +44,7 @@ impl Directory {
         hash: Hash::bytes(contents),
         size: contents.len().into_u64(),
       },
-    );
+    )
   }
 
   pub(crate) fn new() -> Self {

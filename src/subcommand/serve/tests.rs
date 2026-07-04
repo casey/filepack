@@ -238,10 +238,7 @@ fn artwork_missing() {
   let metadata_cbor = metadata.encode_to_vec();
   server.write_file(&metadata_cbor);
 
-  let mut directory = Directory::new();
-  directory.insert_file("cover.png,", artwork);
-
-  let (cbor, hash) = directory.cbor();
+  let (cbor, hash) = Directory::new().insert_file("cover.png,", artwork).cbor();
   let fingerprint = Fingerprint(hash);
   server.write_file(&cbor);
 
@@ -310,11 +307,11 @@ fn artwork_response() {
     let metadata_cbor = metadata.encode_to_vec();
     server.write_file(&metadata_cbor);
 
-    let mut directory = Directory::new();
-    directory.insert_file(filename, artwork);
-    directory.insert_file(Metadata::CBOR_FILENAME, &metadata_cbor);
+    let (cbor, hash) = Directory::new()
+      .insert_file(filename, artwork)
+      .insert_file(Metadata::CBOR_FILENAME, &metadata_cbor)
+      .cbor();
 
-    let (cbor, hash) = directory.cbor();
     let fingerprint = Fingerprint(hash);
     server.write_file(&cbor);
 
@@ -576,9 +573,9 @@ fn get_package_with_metadata() {
   let metadata_cbor = metadata.encode_to_vec();
   server.write_file(&metadata_cbor);
 
-  let mut directory = Directory::new();
-  directory.insert_file(Metadata::CBOR_FILENAME, &metadata_cbor);
-  let (cbor, hash) = directory.cbor();
+  let (cbor, hash) = Directory::new()
+    .insert_file(Metadata::CBOR_FILENAME, &metadata_cbor)
+    .cbor();
   let fingerprint = Fingerprint(hash);
   server.write_file(&cbor);
 
@@ -656,9 +653,9 @@ fn media_audio_track_file_missing() {
 
   let metadata_cbor = metadata.encode_to_vec();
 
-  let mut corrupt = Directory::new();
-  corrupt.insert_file(Metadata::CBOR_FILENAME, &metadata_cbor);
-  let (cbor, _hash) = corrupt.cbor();
+  let (cbor, _hash) = Directory::new()
+    .insert_file(Metadata::CBOR_FILENAME, &metadata_cbor)
+    .cbor();
 
   let hash = Hash::from(fingerprint);
   fs::write(server.data_dir.join("files").join(hash.to_string()), &cbor).unwrap();
@@ -1061,9 +1058,10 @@ fn package(server: &TestServer, metadata: &Metadata, files: &[(&str, &[u8])]) ->
     directory.insert_file(name, content);
   }
 
-  directory.insert_file(Metadata::CBOR_FILENAME, &metadata_cbor);
+  let (cbor, hash) = directory
+    .insert_file(Metadata::CBOR_FILENAME, &metadata_cbor)
+    .cbor();
 
-  let (cbor, hash) = directory.cbor();
   let fingerprint = Fingerprint(hash);
   server.write_file(&cbor);
 
@@ -1339,9 +1337,7 @@ fn packages_non_empty() {
 
   for content in [b"foo".as_slice(), b"bar", b"baz"] {
     server.write_file(content);
-    let mut directory = Directory::new();
-    directory.insert_file("file", content);
-    let (cbor, hash) = directory.cbor();
+    let (cbor, hash) = Directory::new().insert_file("file", content).cbor();
     let fingerprint = Fingerprint(hash);
     server.write_file(&cbor);
     server.post(format!("/directory/{hash}")).send();
@@ -1608,9 +1604,7 @@ fn verify_directory_missing_file() {
 
   let missing = b"foo";
 
-  let mut directory = Directory::new();
-  directory.insert_file("foo", missing);
-  let (cbor, hash) = directory.cbor();
+  let (cbor, hash) = Directory::new().insert_file("foo", missing).cbor();
   server.write_file(&cbor);
 
   server
@@ -1648,9 +1642,8 @@ fn verify_directory_succeeds() {
   server.write_file(file);
 
   let mut child = Directory::new();
-  child.insert_file("foo", file);
+  let (child_cbor, child_hash) = child.insert_file("foo", file).cbor();
 
-  let (child_cbor, child_hash) = child.cbor();
   server.write_file(&child_cbor);
 
   server.post(format!("/directory/{child_hash}")).send();
@@ -1688,10 +1681,7 @@ fn verify_directory_unverified_subdirectory() {
   let (child_cbor, child_hash) = child.cbor();
   server.write_file(&child_cbor);
 
-  let mut parent = Directory::new();
-  parent.insert_directory("child", &child);
-
-  let (parent_cbor, parent_hash) = parent.cbor();
+  let (parent_cbor, parent_hash) = Directory::new().insert_directory("child", &child).cbor();
   server.write_file(&parent_cbor);
 
   server
@@ -1710,9 +1700,9 @@ fn verify_package_metadata_decode_error() {
   let junk = b"foo";
   server.write_file(junk);
 
-  let mut directory = Directory::new();
-  directory.insert_file(Metadata::CBOR_FILENAME, junk);
-  let (cbor, hash) = directory.cbor();
+  let (cbor, hash) = Directory::new()
+    .insert_file(Metadata::CBOR_FILENAME, junk)
+    .cbor();
   let fingerprint = Fingerprint(hash);
   server.write_file(&cbor);
 
@@ -1738,9 +1728,9 @@ fn verify_package_metadata_references_missing_file() {
   .encode_to_vec();
   server.write_file(&metadata);
 
-  let mut directory = Directory::new();
-  directory.insert_file(Metadata::CBOR_FILENAME, &metadata);
-  let (cbor, hash) = directory.cbor();
+  let (cbor, hash) = Directory::new()
+    .insert_file(Metadata::CBOR_FILENAME, &metadata)
+    .cbor();
   let fingerprint = Fingerprint(hash);
   server.write_file(&cbor);
 
@@ -1769,10 +1759,10 @@ fn verify_package_metadata_references_present_file() {
   .encode_to_vec();
   server.write_file(&metadata);
 
-  let mut directory = Directory::new();
-  directory.insert_file("cover.png", artwork);
-  directory.insert_file(Metadata::CBOR_FILENAME, &metadata);
-  let (cbor, hash) = directory.cbor();
+  let (cbor, hash) = Directory::new()
+    .insert_file("cover.png", artwork)
+    .insert_file(Metadata::CBOR_FILENAME, &metadata)
+    .cbor();
   let fingerprint = Fingerprint(hash);
   server.write_file(&cbor);
 
