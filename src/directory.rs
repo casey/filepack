@@ -11,26 +11,6 @@ pub struct Directory {
 
 #[cfg(test)]
 impl Directory {
-  pub(crate) fn insert_file(&mut self, name: &str, contents: &[u8]) {
-    self.insert_entry(
-      name,
-      Entry {
-        ty: EntryType::File,
-        hash: Hash::bytes(contents),
-        size: contents.len().into_u64(),
-        total_file_size: None,
-      },
-    );
-  }
-
-  pub(crate) fn insert_directory(&mut self, name: &str, directory: &Directory) {
-    self.insert_entry(name, directory.entry());
-  }
-
-  fn insert_entry(&mut self, name: &str, entry: Entry) {
-    assert!(self.entries.insert(name.parse().unwrap(), entry).is_none());
-  }
-
   pub(crate) fn cbor(&self) -> (Vec<u8>, Hash) {
     let cbor = self.encode_to_vec();
     let hash = Hash::bytes(&cbor);
@@ -55,6 +35,26 @@ impl Directory {
           .sum(),
       ),
     }
+  }
+
+  pub(crate) fn insert_directory(&mut self, name: &str, directory: &Directory) {
+    self.insert_entry(name, directory.entry());
+  }
+
+  fn insert_entry(&mut self, name: &str, entry: Entry) {
+    assert!(self.entries.insert(name.parse().unwrap(), entry).is_none());
+  }
+
+  pub(crate) fn insert_file(&mut self, name: &str, contents: &[u8]) {
+    self.insert_entry(
+      name,
+      Entry {
+        ty: EntryType::File,
+        hash: Hash::bytes(contents),
+        size: contents.len().into_u64(),
+        total_file_size: None,
+      },
+    );
   }
 
   pub(crate) fn new() -> Self {
