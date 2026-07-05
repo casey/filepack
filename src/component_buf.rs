@@ -7,6 +7,10 @@ impl ComponentBuf {
   pub(crate) fn from_component(component: &Component) -> Self {
     Self(component.as_str().to_owned())
   }
+
+  pub(crate) fn from_integer(i: usize) -> Self {
+    i.to_string().parse().unwrap()
+  }
 }
 
 impl AsRef<str> for ComponentBuf {

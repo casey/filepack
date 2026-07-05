@@ -442,6 +442,38 @@ mod tests {
   }
 
   #[test]
+  fn root_total_file_size_overflow() {
+    let mut package = DirectoryTree::new();
+
+    package
+      .create_file(
+        &"foo".parse().unwrap(),
+        File {
+          hash: Hash::bytes(b"bar"),
+          size: u64::MAX,
+        },
+      )
+      .unwrap();
+
+    let private_key = test::PRIVATE_KEY.parse::<PrivateKey>().unwrap();
+
+    let statement = Statement {
+      fingerprint: Fingerprint::from_bytes([0; Fingerprint::LEN]),
+      timestamp: None,
+    };
+
+    let manifest = Manifest {
+      embedded: BTreeMap::new(),
+      package,
+      signatures: BTreeSet::from([private_key.sign(&statement)]),
+    };
+
+    let archive = Archive::pack(&manifest);
+
+    assert_eq!(archive.unpack().unwrap(), manifest);
+  }
+
+  #[test]
   fn round_trip_empty() {
     let manifest = Manifest {
       embedded: BTreeMap::new(),

@@ -33,7 +33,7 @@ impl ArchiveBuilder {
     let mut entries = BTreeMap::new();
     for (i, signature) in signatures.iter().enumerate() {
       entries.insert(
-        i.to_string().parse::<ComponentBuf>().unwrap(),
+        ComponentBuf::from_integer(i),
         self.file(signature.encode_to_vec()),
       );
     }
@@ -46,9 +46,9 @@ impl ArchiveBuilder {
 
     let root = Directory::with_entries(root);
 
-    let entry = self.directory(&root);
+    let (hash, _size) = self.add_file(root.encode_to_vec());
 
-    self.build(entry.hash())
+    self.build(hash)
   }
 
   pub(crate) fn directory(&mut self, directory: &Directory) -> Entry {
