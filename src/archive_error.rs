@@ -25,11 +25,11 @@ pub enum ArchiveError {
   PackageType { ty: EntryType },
   #[snafu(display("failed to decode signature"))]
   SignatureDecode { source: DecodeError },
-  #[snafu(display("found sub directory in `signature` directory"))]
+  #[snafu(display("found subdirectory in `signatures` directory"))]
   SignaturesDirectory,
   #[snafu(display("archive missing signatures directory"))]
   SignaturesMissing,
-  #[snafu(display("expected archive `signature` entry to be directory but found {ty}"))]
+  #[snafu(display("expected archive `signatures` entry to be directory but found {ty}"))]
   SignaturesType { ty: EntryType },
   #[snafu(display("archive contains unexpected embedded files: {paths}"))]
   UnexpectedEmbeddedFiles { paths: Ticked<RelativePath> },
