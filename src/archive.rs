@@ -187,7 +187,7 @@ impl Archive {
         match entry {
           Entry::File { hash, .. } => {
             loose.remove(hash);
-            let signature = Signature::decode_from_slice(&self.files[hash])
+            let signature = Signature::decode_from_slice(self.file(*hash)?)
               .context(archive_error::SignatureDecode)?;
             signatures.insert(signature);
           }
@@ -610,6 +610,34 @@ mod tests {
           ..
         },
       })
+    );
+  }
+
+  #[test]
+  fn signature_file_missing() {
+    let mut builder = ArchiveBuilder::new();
+
+    let package = builder.directory(&Directory::new());
+
+    let missing_file = Hash::bytes(b"foo");
+
+    let mut signatures = Directory::new();
+    signatures.insert_entry("0", Entry::file(missing_file, 0));
+
+    let signatures = builder.directory(&signatures);
+
+    let mut root = Directory::new();
+    root
+      .insert_entry("package", package)
+      .insert_entry("signatures", signatures);
+
+    let root = builder.directory(&root);
+
+    let archive = builder.build(root.hash());
+
+    assert_matches!(
+      archive.unpack(),
+      Err(ArchiveError::FileMissing { hash }) if hash == missing_file,
     );
   }
 
