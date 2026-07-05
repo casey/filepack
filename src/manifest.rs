@@ -65,6 +65,11 @@ impl Manifest {
       error::UnexpectedEmbeddedFiles { path, unexpected },
     }
 
+    manifest
+      .package
+      .total_file_size()
+      .context(error::ManifestTotalFileSizeOverflow { path })?;
+
     Ok(manifest)
   }
 
@@ -129,18 +134,8 @@ impl Manifest {
     })
   }
 
-  pub(crate) fn total_size(&self) -> u128 {
-    let mut size = 0u128;
-    for (_path, entry) in self.entries() {
-      if let DirectoryTreeEntry::File(file) = entry {
-        size = size.checked_add(file.size.into()).unwrap();
-      }
-    }
-    size
-  }
-
-  pub(crate) fn total_size_u64(&self) -> u64 {
-    self.total_size().try_into().unwrap_or(u64::MAX)
+  pub(crate) fn total_file_size(&self) -> Option<u64> {
+    self.package.total_file_size()
   }
 
   pub(crate) fn verify_signatures(&self) -> Result {

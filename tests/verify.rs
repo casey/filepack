@@ -263,6 +263,22 @@ fn manifest_paths_are_relative_to_root() {
 }
 
 #[test]
+fn many_files() {
+  let mut test = Test::new();
+
+  for i in 0..65 {
+    test = test.write(&format!("foo{i}"), "x");
+  }
+
+  test
+    .args(["create", "."])
+    .success()
+    .args(["verify", "."])
+    .stderr("successfully verified 65 files totaling 65 bytes\n")
+    .success();
+}
+
+#[test]
 fn missing_empty_directory_error() {
   Test::new()
     .create_dir("foo")
@@ -765,7 +781,7 @@ fn verify_fingerprint() {
     .args([
       "verify",
       "--fingerprint",
-      "package1azljtch6chgyjc8rk7hd74wvnsqhl88zgl2g326jqpxnjlfsaaseqffcrlp",
+      "package1akzf8204dnnly606mjw376rx2xslf8m2tptptrmk2h7vtxaplqs9qpjvqax",
     ])
     .stderr("successfully verified 1 file totaling 0 bytes\n")
     .success()
@@ -778,7 +794,7 @@ fn verify_fingerprint() {
       "\
 fingerprint mismatch: `.*manifest\\.filepack`
             expected: package1a4uf5nw04lxs6dgzqfh4rdhxffxdukfwf4hq39d7vn2fu4eqlxf3ql7ykr3
-              actual: package1azljtch6chgyjc8rk7hd74wvnsqhl88zgl2g326jqpxnjlfsaaseqffcrlp
+              actual: package1akzf8204dnnly606mjw376rx2xslf8m2tptptrmk2h7vtxaplqs9qpjvqax
 error: fingerprint mismatch\n",
     )
     .failure();

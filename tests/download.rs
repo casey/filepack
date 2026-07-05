@@ -12,24 +12,15 @@ fn download_checks_metadata() {
 
   let metadata_hash = Hash::bytes(&metadata);
 
-  let directory = Directory {
-    version: Version::Zero,
-    entries: BTreeMap::from([(
-      "metadata.filemeta".parse::<ComponentBuf>().unwrap(),
-      Entry {
-        ty: EntryType::File,
-        hash: metadata_hash,
-        size: u64::try_from(metadata.len()).unwrap(),
-      },
-    )]),
-  }
-  .encode_to_vec();
+  let (directory, hash) = Directory::new()
+    .insert_file("metadata.filemeta", &metadata)
+    .cbor();
 
   let fingerprint = Fingerprint::from(Hash::bytes(&directory));
 
   let server = Test::new()
     .serve()
-    .write(&format!("files/{}", Hash::bytes(&directory)), &directory)
+    .write(&format!("files/{hash}"), &directory)
     .write(&format!("files/{metadata_hash}"), &metadata)
     .spawn();
 
@@ -148,6 +139,78 @@ fn download_package_fails_if_output_file_already_exists() {
     ])
     .stderr("error: `out` already exists\n")
     .failure();
+}
+
+#[test]
+fn download_package_fails_on_directory_total_file_size_mismatch() {
+  let mut subdirectory = Directory::new();
+  subdirectory.insert_file("foo", b"bar");
+
+  let (subdirectory_cbor, subdirectory_hash) = subdirectory.cbor();
+
+  let root = Directory::new()
+    .insert_entry(
+      "sub",
+      Entry::Directory {
+        hash: subdirectory_hash,
+        size: u64::try_from(subdirectory_cbor.len()).unwrap(),
+        total_file_size: 100,
+      },
+    )
+    .encode_to_vec();
+
+  let fingerprint = Fingerprint::from(Hash::bytes(&root));
+
+  let server = Test::new()
+    .serve()
+    .write(&format!("files/{}", Hash::bytes(&root)), &root)
+    .write(&format!("files/{subdirectory_hash}"), &subdirectory_cbor)
+    .spawn();
+
+  Test::new()
+    .args([
+      "download",
+      "--server",
+      &server.address(),
+      "--package",
+      &fingerprint.to_string(),
+      "out",
+    ])
+    .stderr(&format!(
+      "error: found directory `{subdirectory_hash}` total file size 3 but expected 100\n",
+    ))
+    .failure();
+
+  server.terminate().success();
+}
+
+#[test]
+fn download_package_fails_on_directory_total_file_size_overflow() {
+  let (root, hash) = Directory::new()
+    .insert_entry("bar", Entry::file(Hash::bytes(b"bar"), u64::MAX))
+    .insert_file("foo", b"f")
+    .cbor();
+
+  let server = Test::new()
+    .serve()
+    .write(&format!("files/{hash}"), &root)
+    .spawn();
+
+  Test::new()
+    .args([
+      "download",
+      "--server",
+      &server.address(),
+      "--package",
+      &Fingerprint::from(hash).to_string(),
+      "out",
+    ])
+    .stderr(&format!(
+      "error: directory `{hash}` total file size overflowed 64-bit integer\n",
+    ))
+    .failure();
+
+  server.terminate().success();
 }
 
 #[test]

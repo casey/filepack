@@ -58,15 +58,15 @@ impl Download {
 
     let client = client()?;
 
-    let mut stack = vec![(Hash::from(fingerprint), self.output.clone())];
+    let mut stack = vec![(Hash::from(fingerprint), self.output.clone(), None)];
 
     let mut directories = BTreeMap::new();
 
     let mut files = Vec::new();
 
-    let mut bytes = 0u64;
+    let mut root_total_file_size = None;
 
-    while let Some((hash, path)) = stack.pop() {
+    while let Some((hash, path, expected_total_file_size)) = stack.pop() {
       let url = self.file_url(hash);
 
       let response = self.get_file(&client, hash)?;
@@ -85,25 +85,46 @@ impl Download {
       let directory =
         Directory::decode_from_slice(&cbor).context(error::DecodeResponseDirectory { url })?;
 
+      let actual = directory
+        .total_file_size()
+        .context(error::DirectoryTotalFileSizeOverflow { hash })?;
+
+      if let Some(expected) = expected_total_file_size {
+        ensure! {
+          actual == expected,
+          error::DirectoryTotalFileSizeMismatch {
+            actual,
+            expected,
+            hash,
+          },
+        }
+      } else {
+        assert!(root_total_file_size.is_none());
+        root_total_file_size = Some(actual);
+      }
+
       directories.insert(hash, cbor.to_vec());
 
       filesystem::create_dir_all(&path)?;
 
       for (component, entry) in directory.entries {
         let path = path.join(component);
-        match entry.ty {
-          EntryType::Directory => stack.push((entry.hash, path)),
-          EntryType::File => {
-            bytes = bytes.saturating_add(entry.size);
-            files.push((entry.hash, path));
-          }
+        match entry {
+          Entry::File { hash, .. } => files.push((hash, path)),
+          Entry::Directory {
+            hash,
+            total_file_size,
+            ..
+          } => stack.push((hash, path, Some(total_file_size))),
         }
       }
     }
 
+    let total_file_size = root_total_file_size.unwrap();
+
     let file_count = files.len().into_u64();
 
-    let progress_bar = progress_bar::with_files(options, bytes, file_count);
+    let progress_bar = progress_bar::with_files(options, total_file_size, file_count);
 
     let mut context = Context {
       client,
@@ -136,10 +157,10 @@ impl Download {
     let mut builder = ArchiveBuilder::new();
     builder.files = directories;
 
-    let package = Entry {
-      ty: EntryType::Directory,
+    let package = Entry::Directory {
       hash: fingerprint.into(),
       size: builder.files[&fingerprint.into()].len().into_u64(),
+      total_file_size,
     };
 
     let archive = builder.build_package(package, &BTreeSet::new());

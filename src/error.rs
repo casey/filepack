@@ -141,6 +141,18 @@ pub enum Error {
     path: DisplayPath,
     source: serde_yaml::Error,
   },
+  #[snafu(display("found directory `{hash}` total file size {actual} but expected {expected}"))]
+  DirectoryTotalFileSizeMismatch {
+    actual: u64,
+    backtrace: Option<Backtrace>,
+    expected: u64,
+    hash: Hash,
+  },
+  #[snafu(display("directory `{hash}` total file size overflowed 64-bit integer"))]
+  DirectoryTotalFileSizeOverflow {
+    backtrace: Option<Backtrace>,
+    hash: Hash,
+  },
   #[snafu(display("downloaded file hash mismatch: expected {expected} but got {actual}"))]
   DownloadHashMismatch {
     actual: Hash,
@@ -296,6 +308,11 @@ pub enum Error {
   },
   #[snafu(display("manifest `{path}` not found"))]
   ManifestNotFound {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+  },
+  #[snafu(display("manifest `{path}` total file size overflowed 64-bit integer"))]
+  ManifestTotalFileSizeOverflow {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
@@ -462,6 +479,8 @@ pub enum Error {
   },
   #[snafu(display("authentication tokens may only be used over HTTPS or loopback"))]
   TokenOverHttp { backtrace: Option<Backtrace> },
+  #[snafu(display("total file size overflowed 64-bit integer"))]
+  TotalFileSizeOverflow { backtrace: Option<Backtrace> },
   #[snafu(display("failed to decode track `{path}`"))]
   TrackDecode {
     backtrace: Option<Backtrace>,

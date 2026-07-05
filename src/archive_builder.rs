@@ -38,43 +38,32 @@ impl ArchiveBuilder {
       );
     }
 
-    let signatures = Directory {
-      entries,
-      version: Version::Zero,
-    };
+    let signatures = Directory::with_entries(entries);
 
     let signatures = self.directory(&signatures);
 
     root.insert(Archive::signatures_component().to_owned(), signatures);
 
-    let root = Directory {
-      entries: root,
-      version: Version::Zero,
-    };
+    let root = Directory::with_entries(root);
 
     let entry = self.directory(&root);
 
-    self.build(entry.hash)
+    self.build(entry.hash())
   }
 
   pub(crate) fn directory(&mut self, directory: &Directory) -> Entry {
     let (hash, size) = self.add_file(directory.encode_to_vec());
-
-    Entry {
-      ty: EntryType::Directory,
+    Entry::Directory {
       hash,
       size,
+      total_file_size: directory.total_file_size().unwrap(),
     }
   }
 
   pub(crate) fn file(&mut self, file: Vec<u8>) -> Entry {
     let (hash, size) = self.add_file(file);
 
-    Entry {
-      ty: EntryType::File,
-      hash,
-      size,
-    }
+    Entry::file(hash, size)
   }
 
   pub(crate) fn new() -> Self {
@@ -82,25 +71,20 @@ impl ArchiveBuilder {
   }
 
   pub(crate) fn pack_directory(&mut self, directory: &DirectoryTree) -> Entry {
-    let directory = Directory {
-      version: Version::Zero,
-      entries: directory
+    let directory = Directory::with_entries(
+      directory
         .entries
         .iter()
         .map(|(name, entry)| {
           let entry = match entry {
-            DirectoryTreeEntry::File(file) => Entry {
-              ty: EntryType::File,
-              hash: file.hash,
-              size: file.size,
-            },
+            DirectoryTreeEntry::File(file) => Entry::file(file.hash, file.size),
             DirectoryTreeEntry::Directory(directory) => self.pack_directory(directory),
           };
 
           (name.clone(), entry)
         })
         .collect(),
-    };
+    );
 
     self.directory(&directory)
   }

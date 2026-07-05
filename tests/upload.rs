@@ -343,34 +343,15 @@ fn upload_package_fails_when_manifest_missing() {
 
 #[test]
 fn upload_package_fails_when_package_is_not_directory() {
-  let payload_hash = Hash::bytes(b"payload");
-
-  let mut dir_encoder = Encoder::new();
-  let mut dir_map = dir_encoder.map::<u64>(2);
-  dir_map.item(0, 0u64);
-  dir_map.item_with(1, &(), |(), encoder| {
-    let mut entries = encoder.map::<&str>(1);
-    entries.item_with("package", &(), |(), encoder| {
-      let mut entry = encoder.map::<u64>(3);
-      entry.item(0, 0u64);
-      entry.item(1, payload_hash);
-      entry.item(2, 0u64);
-      drop(entry);
-    });
-    drop(entries);
-  });
-  drop(dir_map);
-  let dir_bytes = dir_encoder.finish();
-
-  let root = Hash::bytes(&dir_bytes);
+  let (cbor, hash) = Directory::new().insert_file("package", b"foo").cbor();
 
   let mut files = BTreeMap::new();
-  files.insert(root, dir_bytes);
+  files.insert(hash, cbor);
 
   let mut encoder = Encoder::new();
   let mut archive = encoder.map::<u64>(3);
   archive.item(0, 0u64);
-  archive.item(1, root);
+  archive.item(1, hash);
   archive.item(2, &files);
   drop(archive);
 
