@@ -53,11 +53,7 @@ impl ArchiveBuilder {
 
   pub(crate) fn directory(&mut self, directory: &Directory) -> Entry {
     let (hash, size) = self.add_file(directory.encode_to_vec());
-    Entry::Directory {
-      hash,
-      size,
-      total_file_size: directory.total_file_size().unwrap(),
-    }
+    Entry::directory(hash, size, directory.totals().unwrap())
   }
 
   pub(crate) fn file(&mut self, file: Vec<u8>) -> Entry {

@@ -23,7 +23,7 @@ pub enum Entry {
     #[n(1)]
     size: u64,
     #[n(2)]
-    total_file_size: u64,
+    totals: Totals,
   },
 }
 
@@ -32,11 +32,12 @@ impl Entry {
     Self::File { hash, size }
   }
 
+  pub fn directory(hash: Hash, size: u64, totals: Totals) -> Self {
+    Self::Directory { hash, size, totals }
+  }
+
   pub fn formatted_size(&self) -> SizeFormatter<u64, FormatSizeOptions> {
-    SizeFormatter::new(
-      self.size(),
-      FormatSizeOptions::from(BINARY).decimal_places(1),
-    )
+    format_size(self.size())
   }
 
   pub fn hash(&self) -> Hash {

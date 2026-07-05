@@ -12,8 +12,10 @@ impl Size {
     println!(
       "{}",
       manifest
-        .total_file_size()
-        .context(error::ManifestTotalFileSizeOverflow { path })?
+        .package
+        .totals()
+        .context(error::ManifestTotals { path })?
+        .file_size
     );
     Ok(())
   }

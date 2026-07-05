@@ -14,21 +14,24 @@ impl Directory {
     Self::default()
   }
 
-  pub(crate) fn total_file_size(&self) -> Option<u64> {
-    let mut total_file_size = 0u64;
+  pub(crate) fn totals(&self) -> Result<Totals, TotalsError> {
+    let mut totals = Totals::default();
 
     for entry in self.entries.values() {
-      let file_size = match entry {
-        Entry::File { size, .. } => *size,
-        Entry::Directory {
-          total_file_size, ..
-        } => *total_file_size,
+      let entry_totals = match entry {
+        Entry::File { size, .. } => Totals {
+          file_size: *size,
+          files: 1,
+        },
+        Entry::Directory { totals, .. } => *totals,
       };
 
-      total_file_size = total_file_size.checked_add(file_size)?;
+      totals = totals
+        .checked_add(entry_totals)
+        .context(totals_error::Overflow)?;
     }
 
-    Some(total_file_size)
+    Ok(totals)
   }
 
   pub(crate) fn with_entries(entries: BTreeMap<ComponentBuf, Entry>) -> Self {

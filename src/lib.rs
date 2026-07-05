@@ -52,8 +52,8 @@ use {
     file::File,
     format::Format,
     functions::{
-      client, current_dir, decode_path, default, is_lowercase_hex, now, parse_server_url,
-      transfer_tempfile,
+      client, current_dir, decode_path, default, format_size, is_lowercase_hex, now,
+      parse_server_url, transfer_tempfile,
     },
     hash_error::HashError,
     hashing_writer::HashingWriter,
@@ -95,6 +95,8 @@ use {
     text_error::TextError,
     ticked::Ticked,
     token::Token,
+    totals::Totals,
+    totals_error::TotalsError,
     track::Track,
     type_name::TypeName,
     utf8_path_ext::Utf8PathExt,
@@ -323,6 +325,8 @@ mod text;
 mod text_error;
 mod ticked;
 mod token;
+mod totals;
+mod totals_error;
 mod track;
 mod type_name;
 mod utf8_path_ext;

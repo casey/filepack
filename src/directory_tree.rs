@@ -59,20 +59,25 @@ impl DirectoryTree {
     Self::default()
   }
 
-  pub(crate) fn total_file_size(&self) -> Option<u64> {
-    let mut total_file_size = 0u64;
+  pub(crate) fn totals(&self) -> Result<Totals, TotalsError> {
+    let mut file_size = 0u64;
+    let mut files = 0;
     let mut stack = vec![self];
     while let Some(directory) = stack.pop() {
       for entry in directory.entries.values() {
         match entry {
           DirectoryTreeEntry::File(file) => {
-            total_file_size = total_file_size.checked_add(file.size)?;
+            files += 1;
+            file_size = file_size
+              .checked_add(file.size)
+              .context(totals_error::Overflow)?;
           }
           DirectoryTreeEntry::Directory(directory) => stack.push(directory),
         }
       }
     }
-    Some(total_file_size)
+
+    Ok(Totals { files, file_size })
   }
 }
 

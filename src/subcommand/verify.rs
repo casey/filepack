@@ -97,8 +97,10 @@ fingerprint mismatch: `{source}`
     let bar = progress_bar::new(
       &options,
       manifest
-        .total_file_size()
-        .context(error::ManifestTotalFileSizeOverflow { path: &source })?,
+        .package
+        .totals()
+        .context(error::ManifestTotals { path: &source })?
+        .file_size,
     );
 
     let mut mismatches = BTreeMap::new();
