@@ -46,9 +46,9 @@ impl ArchiveBuilder {
 
     let root = Directory::with_entries(root);
 
-    let entry = self.directory(&root);
+    let (hash, _size) = self.add_file(root.encode_to_vec());
 
-    self.build(entry.hash())
+    self.build(hash)
   }
 
   pub(crate) fn directory(&mut self, directory: &Directory) -> Entry {
