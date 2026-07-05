@@ -33,7 +33,7 @@ impl ArchiveBuilder {
     let mut entries = BTreeMap::new();
     for (i, signature) in signatures.iter().enumerate() {
       entries.insert(
-        i.to_string().parse::<ComponentBuf>().unwrap(),
+        ComponentBuf::from_integer(i),
         self.file(signature.encode_to_vec()),
       );
     }
