@@ -98,6 +98,7 @@ use {
     track::Track,
     type_name::TypeName,
     utf8_path_ext::Utf8PathExt,
+    version::Version,
   },
   axum::{
     body::Body,
@@ -169,17 +170,37 @@ use {
 };
 
 pub use self::{
-  array_encoder::ArrayEncoder, component_buf::ComponentBuf, decode::Decode, decoder::Decoder,
-  directory::Directory, directory_tree::DirectoryTree, encode::Encode, encoder::Encoder,
-  entry::Entry, entry_type::EntryType, error::Error, fingerprint::Fingerprint,
-  functions::install_default_crypto_provider, hash::Hash, language_error::LanguageError,
-  major_type::MajorType, manifest::Manifest, map_encoder::MapEncoder, metadata::Metadata,
-  page::Page, private_key::PrivateKey, public_key::PublicKey, relative_path::RelativePath,
-  signature::Signature, sorted_set::SortedSet, statement::Statement, text::Text, version::Version,
+  array_encoder::ArrayEncoder,
+  component_buf::ComponentBuf,
+  decode::Decode,
+  decoder::Decoder,
+  directory::Directory,
+  directory_tree::DirectoryTree,
+  encode::Encode,
+  encoder::Encoder,
+  entry::{Entry, EntryType},
+  error::Error,
+  fingerprint::Fingerprint,
+  functions::install_default_crypto_provider,
+  hash::Hash,
+  language_error::LanguageError,
+  major_type::MajorType,
+  manifest::Manifest,
+  map_encoder::MapEncoder,
+  metadata::Metadata,
+  page::Page,
+  private_key::PrivateKey,
+  public_key::PublicKey,
+  relative_path::RelativePath,
+  signature::Signature,
+  sorted_set::SortedSet,
+  statement::Statement,
+  text::Text,
 };
 
 #[cfg(test)]
 use {
+  directory_ext::DirectoryExt,
   std::assert_matches,
   tempfile::TempDir,
   test::{assert_cbor, assert_cbor_eq, assert_encoding, flac, tempdir},
@@ -229,6 +250,7 @@ mod decode_error;
 mod decoder;
 mod dimensions;
 mod directory;
+pub mod directory_ext;
 mod directory_tree;
 mod directory_tree_entry;
 mod display_duration;
@@ -238,7 +260,6 @@ mod encode;
 mod encoder;
 mod entries;
 mod entry;
-mod entry_type;
 mod envelope;
 mod error;
 mod file;

@@ -58,6 +58,22 @@ impl DirectoryTree {
   pub fn new() -> Self {
     Self::default()
   }
+
+  pub(crate) fn total_file_size(&self) -> Option<u64> {
+    let mut total_file_size = 0u64;
+    let mut stack = vec![self];
+    while let Some(directory) = stack.pop() {
+      for entry in directory.entries.values() {
+        match entry {
+          DirectoryTreeEntry::File(file) => {
+            total_file_size = total_file_size.checked_add(file.size)?;
+          }
+          DirectoryTreeEntry::Directory(directory) => stack.push(directory),
+        }
+      }
+    }
+    Some(total_file_size)
+  }
 }
 
 #[cfg(test)]
@@ -72,5 +88,33 @@ mod tests {
         .to_string(),
       "invalid entry: found duplicate key at line 1 column 15",
     );
+  }
+
+  #[test]
+  fn total_file_size() {
+    #[track_caller]
+    fn case(files: &[(&str, u64)], expected: Option<u64>) {
+      let mut tree = DirectoryTree::new();
+
+      for (path, size) in files {
+        tree
+          .create_file(
+            &path.parse().unwrap(),
+            File {
+              hash: Hash::bytes(b"foo"),
+              size: *size,
+            },
+          )
+          .unwrap();
+      }
+
+      assert_eq!(tree.total_file_size(), expected);
+    }
+
+    case(&[], Some(0));
+    case(&[("bar", 1), ("baz", 2)], Some(3));
+    case(&[("bar/baz", 1), ("foo", 2)], Some(3));
+    case(&[("bar", u64::MAX), ("baz", 0)], Some(u64::MAX));
+    case(&[("bar", u64::MAX), ("baz", 1)], None);
   }
 }

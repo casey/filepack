@@ -8,8 +8,13 @@ pub(crate) struct Size {
 
 impl Size {
   pub(crate) fn run(self) -> Result {
-    let manifest = Manifest::load(self.path.as_deref())?;
-    println!("{}", manifest.total_size());
+    let (path, manifest) = Manifest::load_with_opt_path(self.path.as_deref())?;
+    println!(
+      "{}",
+      manifest
+        .total_file_size()
+        .context(error::ManifestTotalFileSizeOverflow { path })?
+    );
     Ok(())
   }
 }

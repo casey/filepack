@@ -4,51 +4,38 @@ use super::*;
 #[derive(Clone, Debug, Default, Encode, Decode, PartialEq)]
 pub struct Directory {
   #[n(0)]
-  pub version: Version,
+  pub(crate) version: Version,
   #[n(1)]
-  pub entries: BTreeMap<ComponentBuf, Entry>,
+  pub(crate) entries: BTreeMap<ComponentBuf, Entry>,
 }
 
-#[cfg(test)]
 impl Directory {
-  pub(crate) fn cbor(&self) -> (Vec<u8>, Hash) {
-    let cbor = self.encode_to_vec();
-    let hash = Hash::bytes(&cbor);
-    (cbor, hash)
-  }
-
-  pub(crate) fn entry(&self) -> Entry {
-    let cbor = self.encode_to_vec();
-
-    Entry {
-      ty: EntryType::Directory,
-      hash: Hash::bytes(&cbor),
-      size: cbor.len().into_u64(),
-    }
-  }
-
-  pub(crate) fn insert_directory(&mut self, name: &str, directory: &Directory) -> &mut Self {
-    self.insert_entry(name, directory.entry())
-  }
-
-  fn insert_entry(&mut self, name: &str, entry: Entry) -> &mut Self {
-    assert!(self.entries.insert(name.parse().unwrap(), entry).is_none());
-    self
-  }
-
-  pub(crate) fn insert_file(&mut self, name: &str, contents: &[u8]) -> &mut Self {
-    self.insert_entry(
-      name,
-      Entry {
-        ty: EntryType::File,
-        hash: Hash::bytes(contents),
-        size: contents.len().into_u64(),
-      },
-    )
-  }
-
-  pub(crate) fn new() -> Self {
+  pub fn new() -> Self {
     Self::default()
+  }
+
+  pub(crate) fn total_file_size(&self) -> Option<u64> {
+    let mut total_file_size = 0u64;
+
+    for entry in self.entries.values() {
+      let file_size = match entry {
+        Entry::File { size, .. } => *size,
+        Entry::Directory {
+          total_file_size, ..
+        } => *total_file_size,
+      };
+
+      total_file_size = total_file_size.checked_add(file_size)?;
+    }
+
+    Some(total_file_size)
+  }
+
+  pub(crate) fn with_entries(entries: BTreeMap<ComponentBuf, Entry>) -> Self {
+    Self {
+      version: Version::Zero,
+      entries,
+    }
   }
 }
 
@@ -62,12 +49,39 @@ mod tests {
       version: Version::Zero,
       entries: BTreeMap::from([(
         "foo".parse::<ComponentBuf>().unwrap(),
-        Entry {
-          ty: EntryType::File,
-          size: 0,
-          hash: Hash::bytes(b"bar"),
-        },
+        Entry::file(Hash::bytes(b"bar"), 0),
       )]),
     });
+  }
+
+  #[test]
+  fn total_file_size() {
+    assert_eq!(Directory::new().total_file_size(), Some(0));
+
+    let mut subdirectory = Directory::new();
+    subdirectory.insert_file("foo", b"xy");
+
+    let mut directory = Directory::new();
+    directory
+      .insert_file("bar", b"x")
+      .insert_directory("baz", &subdirectory);
+
+    assert_eq!(directory.total_file_size(), Some(3));
+
+    let hash = Hash::bytes(b"foo");
+
+    let mut directory = Directory::new();
+    directory
+      .insert_entry("bar", Entry::file(hash, u64::MAX))
+      .insert_entry(
+        "baz",
+        Entry::Directory {
+          hash,
+          size: 0,
+          total_file_size: 1,
+        },
+      );
+
+    assert_eq!(directory.total_file_size(), None);
   }
 }

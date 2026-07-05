@@ -175,7 +175,14 @@ impl Create {
       },
     }
 
-    let bar = progress_bar::new(&options, paths.values().sum());
+    let mut total_file_size = 0u64;
+    for size in paths.values() {
+      total_file_size = total_file_size
+        .checked_add(*size)
+        .context(error::TotalFileSizeOverflow)?;
+    }
+
+    let bar = progress_bar::new(&options, total_file_size);
 
     let mut package = DirectoryTree::new();
 

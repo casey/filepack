@@ -157,7 +157,7 @@ impl Server {
       return Ok(None);
     };
 
-    Ok(Some(self.read_file(entry.hash)?))
+    Ok(Some(self.read_file(entry.hash())?))
   }
 
   pub(crate) fn missing(&self, hashes: &[Hash]) -> ServerResult<BTreeSet<Hash>> {
@@ -270,14 +270,14 @@ impl Server {
       };
 
       if components.peek().is_none() {
-        return Ok((entry.ty == EntryType::File).then_some(entry.hash));
+        return Ok((entry.ty() == EntryType::File).then_some(entry.hash()));
       }
 
-      if entry.ty != EntryType::Directory {
+      if entry.ty() != EntryType::Directory {
         return Ok(None);
       }
 
-      directory = self.read_directory(entry.hash)?;
+      directory = self.read_directory(entry.hash())?;
     }
 
     Ok(None)
@@ -297,15 +297,15 @@ impl Server {
     let directory = self.read_directory(hash)?;
 
     for entry in directory.entries.values() {
-      if entry.ty == EntryType::File {
-        let path = self.file_path(entry.hash);
+      if entry.ty() == EntryType::File {
+        let path = self.file_path(entry.hash());
         ensure!(
           path
             .try_exists()
             .context(server_error::FilesystemIo { path: &path })?,
           server_error::DirectoryFileMissing {
             directory: hash,
-            file: entry.hash,
+            file: entry.hash(),
           },
         );
       }
@@ -317,12 +317,12 @@ impl Server {
       let mut directories = tx.open_table(DIRECTORIES)?;
 
       for entry in directory.entries.values() {
-        if entry.ty == EntryType::Directory {
+        if entry.ty() == EntryType::Directory {
           ensure!(
-            directories.get(&entry.hash)?.is_some(),
+            directories.get(&entry.hash())?.is_some(),
             server_error::DirectoryUnverified {
               directory: hash,
-              subdirectory: entry.hash,
+              subdirectory: entry.hash(),
             },
           );
         }

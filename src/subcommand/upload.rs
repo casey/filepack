@@ -111,12 +111,10 @@ impl Upload {
 
     for (component, entry) in &directory.entries {
       let file_path = file_path.join(component);
-      match entry.ty {
-        EntryType::Directory => {
-          self.upload_directory(context, &file_path, entry.hash)?;
-        }
-        EntryType::File => {
-          if context.missing.contains(&entry.hash) {
+      match entry {
+        Entry::Directory { hash, .. } => self.upload_directory(context, &file_path, *hash)?,
+        Entry::File { hash, .. } => {
+          if context.missing.contains(hash) {
             self.upload_package_file(context, entry, &file_path)?;
             context.files_uploaded += 1;
             context
@@ -262,8 +260,8 @@ impl Upload {
       .context(error::FilesystemIo { path })?;
 
     let expected = File {
-      hash: expected.hash,
-      size: expected.size,
+      hash: expected.hash(),
+      size: expected.size(),
     };
 
     if actual != expected {

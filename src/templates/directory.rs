@@ -22,43 +22,19 @@ mod tests {
 
   #[test]
   fn directory() {
-    let directory = Directory {
-      version: Version::Zero,
-      entries: BTreeMap::from([
-        (
-          "bar".parse().unwrap(),
-          Entry {
-            ty: EntryType::File,
-            hash: Hash::bytes(b"bar"),
-            size: 1500,
-          },
-        ),
-        (
-          "baz.png".parse().unwrap(),
-          Entry {
-            ty: EntryType::File,
-            hash: Hash::bytes(b"baz"),
-            size: 1500,
-          },
-        ),
-        (
-          "foo".parse().unwrap(),
-          Entry {
-            ty: EntryType::Directory,
-            hash: Hash::bytes(b"foo"),
-            size: 2_500_000,
-          },
-        ),
-        (
-          "qux quux.png".parse().unwrap(),
-          Entry {
-            ty: EntryType::File,
-            hash: Hash::bytes(b"qux"),
-            size: 1500,
-          },
-        ),
-      ]),
-    };
+    let mut directory = Directory::new();
+    directory
+      .insert_entry("bar", Entry::file(Hash::bytes(b"bar"), 1500))
+      .insert_entry("baz.png", Entry::file(Hash::bytes(b"baz"), 1500))
+      .insert_entry(
+        "foo",
+        Entry::Directory {
+          hash: Hash::bytes(b"foo"),
+          size: 2_500_000,
+          total_file_size: 10_000_000,
+        },
+      )
+      .insert_entry("qux quux.png", Entry::file(Hash::bytes(b"qux"), 1500));
 
     assert_matches_regex!(
       DirectoryHtml {

@@ -1,7 +1,7 @@
 use super::*;
 
 #[derive(Clone, Copy, Debug, Decode, Default, Encode, PartialEq)]
-pub enum Version {
+pub(crate) enum Version {
   #[default]
   #[n(0)]
   Zero,

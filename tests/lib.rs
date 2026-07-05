@@ -2,8 +2,9 @@ use {
   self::{child::Child, expected::Expected, test::Test},
   camino::{Utf8Path, Utf8PathBuf},
   filepack::{
-    ComponentBuf, Decode, Decoder, Directory, Encode, Encoder, Entry, EntryType, Fingerprint, Hash,
-    Manifest, Metadata, Page, PrivateKey, PublicKey, Version,
+    Decode, Decoder, Directory, Encode, Encoder, Entry, Fingerprint, Hash, Manifest, Metadata,
+    Page, PrivateKey, PublicKey,
+    directory_ext::DirectoryExt,
     templates::{DirectoryHtml, PackageHtml, PageHtml},
   },
   image::{DynamicImage, ImageFormat},

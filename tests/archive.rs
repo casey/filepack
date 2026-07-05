@@ -66,6 +66,33 @@ fn embedded_preserved() {
 }
 
 #[test]
+fn rejects_total_file_size_overflow() {
+  Test::new()
+    .write(
+      "manifest.json",
+      json! {
+        embedded: {},
+        package: {
+          bar: {
+            hash: EMPTY_HASH,
+            size: 18446744073709551615
+          },
+          foo: {
+            hash: EMPTY_HASH,
+            size: 1
+          }
+        },
+        signatures: [],
+      },
+    )
+    .args(["archive", "manifest.json", "manifest.filepack"])
+    .stderr_regex_path(
+      "error: manifest `.*manifest.json` total file size overflowed 64-bit integer\n",
+    )
+    .failure();
+}
+
+#[test]
 fn rejects_unexpected_embedded_files() {
   let content = b"foo";
   let hash = Hash::bytes(content).to_string();
