@@ -24,6 +24,7 @@ use {
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
   },
   tempfile::{NamedTempFile, TempDir},
+  unindent::unindent,
 };
 
 mod archive;

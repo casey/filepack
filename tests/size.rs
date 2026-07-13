@@ -8,6 +8,14 @@ fn size() {
     .args(["create", "."])
     .success()
     .arg("size")
-    .stdout("12\n")
+    .stdout(unindent(
+      r#"{
+        "files": 2,
+        "file_size": 12,
+        "directories": 2,
+        "directory_size": 153
+      }
+      "#,
+    ))
     .success();
 }
