@@ -13,7 +13,7 @@ pub enum Bech32Error {
     ty.hrp(),
   ))]
   Hrp { ty: Bech32Type, actual: crate::Hrp },
-  #[snafu(display("bech32 {ty} overlong by {}", Count(*excess, "character")))]
+  #[snafu(display("bech32 {ty} overlong by {}", Count::new(*excess, "character")))]
   Overlong { excess: usize, ty: Bech32Type },
   #[snafu(display("bech32 {ty} has nonzero padding"))]
   Padding { ty: Bech32Type },

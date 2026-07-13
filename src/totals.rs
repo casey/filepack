@@ -36,9 +36,11 @@ impl Display for Totals {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     write!(
       f,
-      "{} in {}",
-      Count(self.file_size, "byte"),
-      Count(self.files, "file"),
+      "{} in {} and {} in {}",
+      Count::new(self.file_size, "byte"),
+      Count::new(self.files, "file"),
+      Count::new(self.directory_size, "byte"),
+      Count::irregular(self.directories, "directory", "directories"),
     )
   }
 }
@@ -56,39 +58,69 @@ mod tests {
 
     case(
       Totals {
-        file_size: 1,
-        files: 2,
-      },
-      Totals {
+        directories: 1,
+        directory_size: 2,
         file_size: 3,
         files: 4,
       },
+      Totals {
+        directories: 5,
+        directory_size: 6,
+        file_size: 7,
+        files: 8,
+      },
       Some(Totals {
-        file_size: 4,
-        files: 6,
+        directories: 6,
+        directory_size: 8,
+        file_size: 10,
+        files: 12,
       }),
     );
 
     case(
       Totals {
-        file_size: u64::MAX,
-        files: 0,
+        directories: u64::MAX,
+        ..Totals::default()
       },
       Totals {
-        file_size: 1,
-        files: 0,
+        directories: 1,
+        ..Totals::default()
       },
       None,
     );
 
     case(
       Totals {
-        file_size: 0,
-        files: u64::MAX,
+        directory_size: u64::MAX,
+        ..Totals::default()
       },
       Totals {
-        file_size: 0,
+        directory_size: 1,
+        ..Totals::default()
+      },
+      None,
+    );
+
+    case(
+      Totals {
+        file_size: u64::MAX,
+        ..Totals::default()
+      },
+      Totals {
+        file_size: 1,
+        ..Totals::default()
+      },
+      None,
+    );
+
+    case(
+      Totals {
+        files: u64::MAX,
+        ..Totals::default()
+      },
+      Totals {
         files: 1,
+        ..Totals::default()
       },
       None,
     );
@@ -101,16 +133,12 @@ mod tests {
       assert_eq!(totals.to_string(), expected);
     }
 
-    case(
-      Totals {
-        file_size: 0,
-        files: 0,
-      },
-      "0 bytes in 0 files",
-    );
+    case(Totals::default(), "0 bytes in 0 files");
 
     case(
       Totals {
+        directories: 0,
+        directory_size: 0,
         file_size: 1,
         files: 1,
       },
@@ -119,6 +147,8 @@ mod tests {
 
     case(
       Totals {
+        directories: 0,
+        directory_size: 0,
         file_size: 3,
         files: 2,
       },
@@ -130,23 +160,29 @@ mod tests {
   fn encoding() {
     assert_cbor(
       Totals {
-        file_size: 1,
-        files: 2,
+        directories: 1,
+        directory_size: 2,
+        file_size: 3,
+        files: 4,
       },
-      "a200010102",
+      "a40001010202030304",
     );
   }
 
   #[test]
   fn expect() {
     let actual = Totals {
-      file_size: 1,
-      files: 2,
+      directories: 1,
+      directory_size: 2,
+      file_size: 3,
+      files: 4,
     };
 
     let expected = Totals {
-      file_size: 3,
-      files: 4,
+      directories: 5,
+      directory_size: 6,
+      file_size: 7,
+      files: 8,
     };
 
     assert_eq!(actual.expect(actual), Ok(()));

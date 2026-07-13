@@ -155,6 +155,8 @@ fn download_package_fails_on_directory_totals_mismatch() {
         hash: subdirectory_hash,
         size: u64::try_from(subdirectory_cbor.len()).unwrap(),
         totals: Totals {
+          directories: 0,
+          directory_size: 0,
           file_size: 100,
           files: 1,
         },

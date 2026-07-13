@@ -75,6 +75,8 @@ mod tests {
       hash: Hash::bytes(b"foo"),
       size: 100,
       totals: Totals {
+        directories: 1,
+        directory_size: 50,
         file_size: 200,
         files: 3,
       },

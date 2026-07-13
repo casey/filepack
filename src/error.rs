@@ -171,7 +171,7 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     count: usize,
   },
-  #[snafu(display("found {} not referenced in metadata", Count(paths.len(), "extra file")))]
+  #[snafu(display("found {} not referenced in metadata", Count::new(paths.len(), "extra file")))]
   ExtraFiles {
     backtrace: Option<Backtrace>,
     paths: Vec<RelativePath>,
