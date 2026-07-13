@@ -59,20 +59,25 @@ impl DirectoryTree {
     Self::default()
   }
 
-  pub(crate) fn total_file_size(&self) -> Option<u64> {
-    let mut total_file_size = 0u64;
+  pub(crate) fn totals(&self) -> Result<Totals, TotalsError> {
+    let mut file_size = 0u64;
+    let mut files = 0;
     let mut stack = vec![self];
     while let Some(directory) = stack.pop() {
       for entry in directory.entries.values() {
         match entry {
           DirectoryTreeEntry::File(file) => {
-            total_file_size = total_file_size.checked_add(file.size)?;
+            files += 1;
+            file_size = file_size
+              .checked_add(file.size)
+              .context(totals_error::Overflow)?;
           }
           DirectoryTreeEntry::Directory(directory) => stack.push(directory),
         }
       }
     }
-    Some(total_file_size)
+
+    Ok(Totals { file_size, files })
   }
 }
 
@@ -91,9 +96,9 @@ mod tests {
   }
 
   #[test]
-  fn total_file_size() {
+  fn totals() {
     #[track_caller]
-    fn case(files: &[(&str, u64)], expected: Option<u64>) {
+    fn case(files: &[(&str, u64)], expected: Result<Totals, TotalsError>) {
       let mut tree = DirectoryTree::new();
 
       for (path, size) in files {
@@ -108,13 +113,31 @@ mod tests {
           .unwrap();
       }
 
-      assert_eq!(tree.total_file_size(), expected);
+      assert_eq!(tree.totals(), expected);
     }
 
-    case(&[], Some(0));
-    case(&[("bar", 1), ("baz", 2)], Some(3));
-    case(&[("bar/baz", 1), ("foo", 2)], Some(3));
-    case(&[("bar", u64::MAX), ("baz", 0)], Some(u64::MAX));
-    case(&[("bar", u64::MAX), ("baz", 1)], None);
+    case(&[], Ok(Totals::default()));
+    case(
+      &[("bar", 1), ("baz", 2)],
+      Ok(Totals {
+        file_size: 3,
+        files: 2,
+      }),
+    );
+    case(
+      &[("bar/baz", 1), ("foo", 2)],
+      Ok(Totals {
+        file_size: 3,
+        files: 2,
+      }),
+    );
+    case(
+      &[("bar", u64::MAX), ("baz", 0)],
+      Ok(Totals {
+        file_size: u64::MAX,
+        files: 2,
+      }),
+    );
+    case(&[("bar", u64::MAX), ("baz", 1)], Err(TotalsError::Overflow));
   }
 }

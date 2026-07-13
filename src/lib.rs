@@ -95,6 +95,7 @@ use {
     text_error::TextError,
     ticked::Ticked,
     token::Token,
+    totals_error::TotalsError,
     track::Track,
     type_name::TypeName,
     utf8_path_ext::Utf8PathExt,
@@ -196,6 +197,7 @@ pub use self::{
   sorted_set::SortedSet,
   statement::Statement,
   text::Text,
+  totals::Totals,
 };
 
 #[cfg(test)]
@@ -323,6 +325,8 @@ mod text;
 mod text_error;
 mod ticked;
 mod token;
+mod totals;
+mod totals_error;
 mod track;
 mod type_name;
 mod utf8_path_ext;

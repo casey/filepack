@@ -5,14 +5,8 @@ use super::*;
 pub enum ArchiveError {
   #[snafu(display("failed to decode directory"))]
   DirectoryDecode { source: DecodeError },
-  #[snafu(display("found directory `{hash}` total file size {actual} but expected {expected}"))]
-  DirectoryTotalFileSizeMismatch {
-    actual: u64,
-    expected: u64,
-    hash: Hash,
-  },
-  #[snafu(display("directory `{hash}` total file size overflows 64-bit integer"))]
-  DirectoryTotalFileSizeOverflow { hash: Hash },
+  #[snafu(display("directory `{hash}` totals error"))]
+  DirectoryTotals { hash: Hash, source: TotalsError },
   #[snafu(display("archive file hash mismatch: expected {expected} but got {actual}"))]
   FileHashMismatch { actual: Hash, expected: Hash },
   #[snafu(display("archive missing entry for hash {hash}"))]

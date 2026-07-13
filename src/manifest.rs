@@ -67,8 +67,8 @@ impl Manifest {
 
     manifest
       .package
-      .total_file_size()
-      .context(error::ManifestTotalFileSizeOverflow { path })?;
+      .totals()
+      .context(error::ManifestTotals { path })?;
 
     Ok(manifest)
   }
@@ -132,10 +132,6 @@ impl Manifest {
       fingerprint: self.fingerprint(),
       timestamp: timestamp.then(now).transpose()?,
     })
-  }
-
-  pub(crate) fn total_file_size(&self) -> Option<u64> {
-    self.package.total_file_size()
   }
 
   pub(crate) fn verify_signatures(&self) -> Result {

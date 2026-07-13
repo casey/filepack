@@ -15,23 +15,18 @@ impl Archive {
   const PACKAGE: &str = "package";
   const SIGNATURES: &str = "signatures";
 
-  fn check_directory_total_file_size(
+  fn check_directory_totals(
     directory: &Directory,
-    expected: u64,
+    expected: Totals,
     hash: Hash,
   ) -> Result<(), ArchiveError> {
     let actual = directory
-      .total_file_size()
-      .context(archive_error::DirectoryTotalFileSizeOverflow { hash })?;
+      .totals()
+      .context(archive_error::DirectoryTotals { hash })?;
 
-    ensure! {
-      actual == expected,
-      archive_error::DirectoryTotalFileSizeMismatch {
-        actual,
-        expected,
-        hash,
-      },
-    }
+    actual
+      .expect(expected)
+      .context(archive_error::DirectoryTotals { hash })?;
 
     Ok(())
   }
@@ -149,19 +144,13 @@ impl Archive {
       .get(Self::PACKAGE)
       .context(archive_error::PackageMissing)?;
 
-    let Entry::Directory {
-      hash,
-      total_file_size,
-      ..
-    } = package
-    else {
+    let Entry::Directory { hash, totals, .. } = package else {
       return Err(ArchiveError::PackageType { ty: package.ty() });
     };
 
     let mut embedded = BTreeMap::new();
 
-    let package =
-      self.unpack_directory(&mut loose, &mut embedded, *hash, None, *total_file_size)?;
+    let package = self.unpack_directory(&mut loose, &mut embedded, *hash, None, *totals)?;
 
     let signatures = {
       let entry = root
@@ -169,18 +158,13 @@ impl Archive {
         .get(Self::SIGNATURES)
         .context(archive_error::SignaturesMissing)?;
 
-      let Entry::Directory {
-        hash,
-        total_file_size,
-        ..
-      } = entry
-      else {
+      let Entry::Directory { hash, totals, .. } = entry else {
         return Err(ArchiveError::SignaturesType { ty: entry.ty() });
       };
 
       let directory = self.decode_directory(Some(&mut loose), *hash)?;
 
-      Self::check_directory_total_file_size(&directory, *total_file_size, *hash)?;
+      Self::check_directory_totals(&directory, *totals, *hash)?;
 
       let mut signatures = BTreeSet::new();
       for entry in directory.entries.values() {
@@ -234,11 +218,11 @@ impl Archive {
     embedded: &mut BTreeMap<RelativePath, Hash>,
     hash: Hash,
     prefix: Option<&RelativePath>,
-    expected_total_file_size: u64,
+    expected_totals: Totals,
   ) -> Result<DirectoryTree, ArchiveError> {
     let directory = self.decode_directory(Some(loose), hash)?;
 
-    Self::check_directory_total_file_size(&directory, expected_total_file_size, hash)?;
+    Self::check_directory_totals(&directory, expected_totals, hash)?;
 
     let mut entries = BTreeMap::new();
     for (name, entry) in &directory.entries {
@@ -253,17 +237,15 @@ impl Archive {
             size: *size,
           })
         }
-        Entry::Directory {
-          hash,
-          total_file_size,
-          ..
-        } => DirectoryTreeEntry::Directory(self.unpack_directory(
-          loose,
-          embedded,
-          *hash,
-          Some(&RelativePath::join_opt(prefix, name)),
-          *total_file_size,
-        )?),
+        Entry::Directory { hash, totals, .. } => {
+          DirectoryTreeEntry::Directory(self.unpack_directory(
+            loose,
+            embedded,
+            *hash,
+            Some(&RelativePath::join_opt(prefix, name)),
+            *totals,
+          )?)
+        }
       };
       entries.insert(name.clone(), crate_entry);
     }
@@ -320,7 +302,7 @@ mod tests {
   }
 
   #[test]
-  fn directory_total_file_size_overflow() {
+  fn directory_totals_overflow() {
     let mut builder = ArchiveBuilder::new();
 
     let (cbor, hash) = Directory::new()
@@ -333,7 +315,7 @@ mod tests {
     let package = Entry::Directory {
       hash,
       size,
-      total_file_size: 0,
+      totals: Totals::default(),
     };
 
     let signatures = builder.directory(&Directory::new());
@@ -349,7 +331,7 @@ mod tests {
 
     assert_matches!(
       archive.unpack(),
-      Err(ArchiveError::DirectoryTotalFileSizeOverflow { hash: h }) if h == hash,
+      Err(ArchiveError::DirectoryTotals { hash: h, source: TotalsError::Overflow }) if h == hash,
     );
   }
 
@@ -406,7 +388,7 @@ mod tests {
   }
 
   #[test]
-  fn package_total_file_size_mismatch() {
+  fn package_totals_mismatch() {
     let mut builder = ArchiveBuilder::new();
 
     let mut package = Directory::new();
@@ -417,7 +399,10 @@ mod tests {
     let package = Entry::Directory {
       hash: entry.hash(),
       size: entry.size(),
-      total_file_size: 100,
+      totals: Totals {
+        file_size: 100,
+        files: 1,
+      },
     };
 
     let signatures = builder.directory(&Directory::default());
@@ -433,16 +418,18 @@ mod tests {
 
     assert_matches!(
       archive.unpack(),
-      Err(ArchiveError::DirectoryTotalFileSizeMismatch {
-        actual: 3,
-        expected: 100,
+      Err(ArchiveError::DirectoryTotals {
         hash,
+        source: TotalsError::Mismatch {
+          actual: Totals { file_size: 3, files: 1 },
+          expected: Totals { file_size: 100, files: 1 },
+        },
       }) if hash == entry.hash(),
     );
   }
 
   #[test]
-  fn root_total_file_size_overflow() {
+  fn root_totals_overflow() {
     let mut package = DirectoryTree::new();
 
     package
@@ -713,7 +700,7 @@ mod tests {
   }
 
   #[test]
-  fn signatures_total_file_size_mismatch() {
+  fn signatures_totals_mismatch() {
     let mut builder = ArchiveBuilder::new();
 
     let package = builder.directory(&Directory::new());
@@ -723,7 +710,10 @@ mod tests {
     let signatures = Entry::Directory {
       hash: entry.hash(),
       size: entry.size(),
-      total_file_size: 1,
+      totals: Totals {
+        file_size: 1,
+        files: 1,
+      },
     };
 
     let mut root = Directory::new();
@@ -737,10 +727,12 @@ mod tests {
 
     assert_matches!(
       archive.unpack(),
-      Err(ArchiveError::DirectoryTotalFileSizeMismatch {
-        actual: 0,
-        expected: 1,
+      Err(ArchiveError::DirectoryTotals {
         hash,
+        source: TotalsError::Mismatch {
+          actual: Totals { file_size: 0, files: 0 },
+          expected: Totals { file_size: 1, files: 1 },
+        }
       }) if hash == entry.hash(),
     );
   }

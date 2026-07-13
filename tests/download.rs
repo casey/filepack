@@ -142,7 +142,7 @@ fn download_package_fails_if_output_file_already_exists() {
 }
 
 #[test]
-fn download_package_fails_on_directory_total_file_size_mismatch() {
+fn download_package_fails_on_directory_totals_mismatch() {
   let mut subdirectory = Directory::new();
   subdirectory.insert_file("foo", b"bar");
 
@@ -154,7 +154,10 @@ fn download_package_fails_on_directory_total_file_size_mismatch() {
       Entry::Directory {
         hash: subdirectory_hash,
         size: u64::try_from(subdirectory_cbor.len()).unwrap(),
-        total_file_size: 100,
+        totals: Totals {
+          file_size: 100,
+          files: 1,
+        },
       },
     )
     .encode_to_vec();
@@ -177,7 +180,8 @@ fn download_package_fails_on_directory_total_file_size_mismatch() {
       "out",
     ])
     .stderr(&format!(
-      "error: found directory `{subdirectory_hash}` total file size 3 but expected 100\n",
+      "error: directory `{subdirectory_hash}` totals error\n       \
+       └─ totals mismatch, found 3 bytes in 1 file but expected 100 bytes in 1 file\n",
     ))
     .failure();
 
@@ -185,7 +189,7 @@ fn download_package_fails_on_directory_total_file_size_mismatch() {
 }
 
 #[test]
-fn download_package_fails_on_directory_total_file_size_overflow() {
+fn download_package_fails_on_directory_totals_overflow() {
   let (root, hash) = Directory::new()
     .insert_entry("bar", Entry::file(Hash::bytes(b"bar"), u64::MAX))
     .insert_file("foo", b"f")
@@ -206,7 +210,8 @@ fn download_package_fails_on_directory_total_file_size_overflow() {
       "out",
     ])
     .stderr(&format!(
-      "error: directory `{hash}` total file size overflowed 64-bit integer\n",
+      "error: directory `{hash}` totals error\n       \
+       └─ totals overflowed\n",
     ))
     .failure();
 

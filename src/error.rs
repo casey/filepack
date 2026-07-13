@@ -141,17 +141,11 @@ pub enum Error {
     path: DisplayPath,
     source: serde_yaml::Error,
   },
-  #[snafu(display("found directory `{hash}` total file size {actual} but expected {expected}"))]
-  DirectoryTotalFileSizeMismatch {
-    actual: u64,
-    backtrace: Option<Backtrace>,
-    expected: u64,
-    hash: Hash,
-  },
-  #[snafu(display("directory `{hash}` total file size overflowed 64-bit integer"))]
-  DirectoryTotalFileSizeOverflow {
+  #[snafu(display("directory `{hash}` totals error"))]
+  DirectoryTotals {
     backtrace: Option<Backtrace>,
     hash: Hash,
+    source: TotalsError,
   },
   #[snafu(display("downloaded file hash mismatch: expected {expected} but got {actual}"))]
   DownloadHashMismatch {
@@ -311,10 +305,11 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
-  #[snafu(display("manifest `{path}` total file size overflowed 64-bit integer"))]
-  ManifestTotalFileSizeOverflow {
+  #[snafu(display("manifest `{path}` totals error"))]
+  ManifestTotals {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
+    source: TotalsError,
   },
   #[snafu(display("manifest cannot be formatted as TSV"))]
   ManifestTsv { backtrace: Option<Backtrace> },

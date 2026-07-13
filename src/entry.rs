@@ -23,11 +23,15 @@ pub enum Entry {
     #[n(1)]
     size: u64,
     #[n(2)]
-    total_file_size: u64,
+    totals: Totals,
   },
 }
 
 impl Entry {
+  pub fn directory(hash: Hash, size: u64, totals: Totals) -> Self {
+    Self::Directory { hash, size, totals }
+  }
+
   pub fn file(hash: Hash, size: u64) -> Self {
     Self::File { hash, size }
   }
@@ -70,7 +74,10 @@ mod tests {
     assert_encoding(Entry::Directory {
       hash: Hash::bytes(b"foo"),
       size: 100,
-      total_file_size: 200,
+      totals: Totals {
+        file_size: 200,
+        files: 3,
+      },
     });
   }
 }

@@ -66,7 +66,7 @@ fn embedded_preserved() {
 }
 
 #[test]
-fn rejects_total_file_size_overflow() {
+fn rejects_totals_overflow() {
   Test::new()
     .write(
       "manifest.json",
@@ -87,7 +87,8 @@ fn rejects_total_file_size_overflow() {
     )
     .args(["archive", "manifest.json", "manifest.filepack"])
     .stderr_regex_path(
-      "error: manifest `.*manifest.json` total file size overflowed 64-bit integer\n",
+      "error: manifest `.*manifest.json` totals error\n       \
+       └─ totals overflowed\n",
     )
     .failure();
 }

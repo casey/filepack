@@ -22,11 +22,11 @@ impl DirectoryExt for Directory {
   fn entry(&self) -> Entry {
     let cbor = self.encode_to_vec();
 
-    Entry::Directory {
-      hash: Hash::bytes(&cbor),
-      size: cbor.len().into_u64(),
-      total_file_size: self.total_file_size().unwrap(),
-    }
+    Entry::directory(
+      Hash::bytes(&cbor),
+      cbor.len().into_u64(),
+      self.totals().unwrap(),
+    )
   }
 
   fn insert_directory(&mut self, name: &str, directory: &Directory) -> &mut Self {
