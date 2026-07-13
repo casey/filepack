@@ -1,15 +1,16 @@
 use super::*;
 
+#[allow(clippy::arbitrary_source_item_ordering)]
 #[derive(Clone, Copy, Debug, Decode, Default, Encode, PartialEq)]
 pub struct Totals {
   #[n(0)]
-  pub directories: u64,
-  #[n(1)]
-  pub directory_size: u64,
-  #[n(2)]
-  pub file_size: u64,
-  #[n(3)]
   pub files: u64,
+  #[n(1)]
+  pub file_size: u64,
+  #[n(2)]
+  pub directories: u64,
+  #[n(3)]
+  pub directory_size: u64,
 }
 
 impl Totals {
@@ -133,26 +134,29 @@ mod tests {
       assert_eq!(totals.to_string(), expected);
     }
 
-    case(Totals::default(), "0 bytes in 0 files");
-
     case(
-      Totals {
-        directories: 0,
-        directory_size: 0,
-        file_size: 1,
-        files: 1,
-      },
-      "1 byte in 1 file",
+      Totals::default(),
+      "0 bytes in 0 files and 0 bytes in 0 directories",
     );
 
     case(
       Totals {
-        directories: 0,
-        directory_size: 0,
-        file_size: 3,
-        files: 2,
+        directories: 1,
+        directory_size: 1,
+        file_size: 1,
+        files: 1,
       },
-      "3 bytes in 2 files",
+      "1 byte in 1 file and 1 byte in 1 directory",
+    );
+
+    case(
+      Totals {
+        directories: 2,
+        directory_size: 3,
+        file_size: 3,
+        files: 5,
+      },
+      "3 bytes in 5 files and 3 bytes in 2 directories",
     );
   }
 
@@ -165,7 +169,7 @@ mod tests {
         file_size: 3,
         files: 4,
       },
-      "a40001010202030304",
+      "a40004010302010302",
     );
   }
 
