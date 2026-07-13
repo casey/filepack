@@ -71,8 +71,8 @@ impl Verify {
 
     let archive = Archive::load(&source)?;
 
-    let manifest = archive
-      .unpack()
+    let (manifest, totals) = archive
+      .unpack_with_totals()
       .context(error::UnarchiveManifest { path: &source })?;
 
     manifest.verify_signatures()?;
@@ -97,14 +97,6 @@ fingerprint mismatch: `{source}`
       );
       return Err(error::FingerprintMismatch.build());
     }
-
-    let package = archive
-      .package()
-      .context(error::UnarchiveManifest { path: &source })?;
-
-    let Entry::Directory { totals, .. } = package else {
-      unreachable!();
-    };
 
     let bar = progress_bar::new(&options, totals.file_size);
 

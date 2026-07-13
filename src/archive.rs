@@ -112,6 +112,10 @@ impl Archive {
   }
 
   pub(crate) fn unpack(&self) -> Result<Manifest, ArchiveError> {
+    Ok(self.unpack_with_totals()?.0)
+  }
+
+  pub(crate) fn unpack_with_totals(&self) -> Result<(Manifest, Totals), ArchiveError> {
     let mut loose = self.files.keys().copied().collect();
 
     ensure! {
@@ -209,11 +213,14 @@ impl Archive {
       .map(|hash| (hash, self.files[&hash].clone()))
       .collect();
 
-    Ok(Manifest {
-      embedded,
-      package,
-      signatures,
-    })
+    Ok((
+      Manifest {
+        embedded,
+        package,
+        signatures,
+      },
+      *totals,
+    ))
   }
 
   fn unpack_directory(
