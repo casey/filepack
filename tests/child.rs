@@ -24,7 +24,7 @@ impl Child {
     let response = reqwest::blocking::get(format!("{}{path}", self.address())).unwrap();
     let actual_status = response.status();
     let actual_headers = response.headers().clone();
-    let actual_body = String::from_utf8(Vec::from(response.bytes().unwrap())).unwrap();
+    let actual_body = response.text().unwrap();
 
     let (parts, body) = PageHtml::from(expected)
       .into_response()
