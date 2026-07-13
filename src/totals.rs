@@ -14,6 +14,7 @@ pub struct Totals {
 }
 
 impl Totals {
+  #[must_use]
   pub(crate) fn checked_add(self, other: Self) -> Option<Self> {
     Some(Self {
       directories: self.directories.checked_add(other.directories)?,
