@@ -25,6 +25,7 @@ use {
   },
   tempfile::{NamedTempFile, TempDir},
   unindent::unindent,
+  usized::IntoU64,
 };
 
 mod archive;

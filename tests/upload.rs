@@ -491,15 +491,25 @@ fn upload_package_serves_package_html() {
     .stderr("uploading 2 of 2 files\n")
     .success();
 
+  let metadata = Metadata {
+    description: Some("Bar".parse().unwrap()),
+    title: Some("Foo".parse().unwrap()),
+    ..Metadata::default()
+  };
+
+  let totals = Totals {
+    directories: 0,
+    directory_size: 0,
+    file_size: metadata.encode_to_vec().len().into_u64() + 27,
+    files: 2,
+  };
+
   server.assert_page(
     &format!("/package/{fingerprint}"),
     PackageHtml {
       fingerprint,
-      metadata: Some(Metadata {
-        description: Some("Bar".parse().unwrap()),
-        title: Some("Foo".parse().unwrap()),
-        ..Metadata::default()
-      }),
+      metadata: Some(metadata),
+      totals,
     },
   );
 

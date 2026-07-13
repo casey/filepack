@@ -31,7 +31,7 @@ pub(crate) enum ServerError {
   DirectoryFileMissing { directory: Hash, file: Hash },
   #[snafu(display("directory {hash} not found"))]
   DirectoryNotFound { hash: Hash },
-  #[snafu(display("directory `{hash}` totals error"))]
+  #[snafu(display("directory {hash} totals error"))]
   DirectoryTotals { hash: Hash, source: TotalsError },
   #[snafu(display("directory {directory} references unverified subdirectory {subdirectory}"))]
   DirectoryUnverified { directory: Hash, subdirectory: Hash },

@@ -642,6 +642,12 @@ fn get_package_with_metadata() {
     .assert_page(PackageHtml {
       fingerprint,
       metadata: Some(metadata),
+      totals: Totals {
+        directories: 0,
+        directory_size: 0,
+        file_size: metadata_cbor.len().into_u64(),
+        files: 1,
+      },
     })
     .send();
 }
@@ -662,6 +668,7 @@ fn get_package_without_metadata() {
     .assert_page(PackageHtml {
       fingerprint,
       metadata: None,
+      totals: Totals::default(),
     })
     .send();
 }
@@ -1283,6 +1290,13 @@ fn package_page_renders_audio_media() {
     ..default()
   };
 
+  let totals = Totals {
+    directories: 0,
+    directory_size: 0,
+    file_size: metadata.encode_to_vec().len().into_u64() + 6,
+    files: 3,
+  };
+
   let fingerprint = PackageBuilder::new()
     .metadata(&metadata)
     .file("foo.flac", b"foo")
@@ -1294,6 +1308,7 @@ fn package_page_renders_audio_media() {
     .assert_page(PackageHtml {
       fingerprint,
       metadata: Some(metadata),
+      totals,
     })
     .send();
 }
@@ -1316,6 +1331,13 @@ fn package_page_renders_image_media() {
     ..default()
   };
 
+  let totals = Totals {
+    directories: 0,
+    directory_size: 0,
+    file_size: metadata.encode_to_vec().len().into_u64() + 3,
+    files: 2,
+  };
+
   let fingerprint = PackageBuilder::new()
     .metadata(&metadata)
     .file("foo.png", b"foo")
@@ -1326,6 +1348,7 @@ fn package_page_renders_image_media() {
     .assert_page(PackageHtml {
       fingerprint,
       metadata: Some(metadata),
+      totals,
     })
     .send();
 }
@@ -1700,6 +1723,27 @@ fn verify_directory_succeeds() {
       directory: parent,
       hash: parent_hash,
     })
+    .send();
+}
+
+#[test]
+fn verify_directory_totals_overflow() {
+  let server = TestServer::new();
+
+  let file = Hash::bytes(b"foo");
+
+  let mut directory = Directory::new();
+  directory
+    .insert_entry("bar", Entry::file(file, u64::MAX))
+    .insert_entry("baz", Entry::file(file, 1));
+
+  let (cbor, hash) = directory.cbor();
+  server.write_file(&cbor);
+
+  server
+    .post(format!("/directory/{hash}"))
+    .status(StatusCode::BAD_REQUEST)
+    .assert_body(format!("directory {hash} totals error"))
     .send();
 }
 

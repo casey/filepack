@@ -15,6 +15,10 @@
 <dl>
   <dt>fingerprint</dt>
   <dd>{{ self.fingerprint }}</dd>
+  <dt>size</dt>
+  <dd>{{ format_size(self.totals.file_size) }}</dd>
+  <dt>files</dt>
+  <dd><a href=/directory/{{ Hash::from(self.fingerprint) }}>{{ self.totals.files }} files</a></dd>
 %% if let Some(metadata) = &self.metadata {
 %%   if let Some(title) = &metadata.title {
   <dt>title</dt>
@@ -40,10 +44,6 @@
   <dt>language</dt>
   <dd>{{ language }}</dd>
 %%   }
-  <dt>size</dt>
-  <dd>{{ format_size(self.totals.file_size) }}</dd>
-  <dt>files</dt>
-  <dd><a href=/directory/{{ Hash::from(self.fingerprint) }}>{{ self.totals.files }} files</a></dd>
 %%   if let Some(media) = &metadata.media {
   <dt>media</dt>
   <dd>{{ media.name() }}</dd>

@@ -1,6 +1,7 @@
 use {
   super::*,
   axum::{body, response::IntoResponse},
+  pretty_assertions::assert_eq,
   std::sync::LazyLock,
   tokio::runtime::Runtime,
 };
@@ -23,13 +24,17 @@ impl Child {
     let response = reqwest::blocking::get(format!("{}{path}", self.address())).unwrap();
     let actual_status = response.status();
     let actual_headers = response.headers().clone();
-    let actual_body = response.bytes().unwrap();
+    let actual_body = String::from_utf8(Vec::from(response.bytes().unwrap())).unwrap();
 
     let (parts, body) = PageHtml::from(expected)
       .into_response()
       .into_response()
       .into_parts();
-    let expected_body = RUNTIME.block_on(body::to_bytes(body, usize::MAX)).unwrap();
+
+    let expected_body = String::from_utf8(Vec::from(
+      RUNTIME.block_on(body::to_bytes(body, usize::MAX)).unwrap(),
+    ))
+    .unwrap();
 
     assert_eq!(actual_status, parts.status);
 
