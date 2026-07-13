@@ -52,7 +52,7 @@ impl Verify {
 
     let current_dir = current_dir()?;
 
-    let root = self.root.unwrap_or_else(|| current_dir.clone());
+    let root = self.root.clone().unwrap_or_else(|| current_dir.clone());
 
     let source = if let Some(manifest) = &self.manifest {
       ensure! {
@@ -63,16 +63,13 @@ impl Verify {
       }
 
       manifest.clone()
-    } else {
+    } else if let Some(root) = &self.root {
       root.join(Manifest::FILENAME)
+    } else {
+      Manifest::FILENAME.into()
     };
 
-    let display_path = self
-      .manifest
-      .as_deref()
-      .unwrap_or(Utf8Path::new(Manifest::FILENAME));
-
-    let manifest = Manifest::load_with_path(&source, display_path)?;
+    let manifest = Manifest::load_with_path(&source)?;
 
     manifest.verify_signatures()?;
 
@@ -101,7 +98,7 @@ fingerprint mismatch: `{source}`
       &options,
       manifest
         .total_file_size()
-        .context(error::ManifestTotalFileSizeOverflow { path: display_path })?,
+        .context(error::ManifestTotalFileSizeOverflow { path: &source })?,
     );
 
     let mut mismatches = BTreeMap::new();

@@ -790,9 +790,9 @@ fn verify_fingerprint() {
       "--fingerprint",
       "package1a4uf5nw04lxs6dgzqfh4rdhxffxdukfwf4hq39d7vn2fu4eqlxf3ql7ykr3",
     ])
-    .stderr_regex(
+    .stderr(
       "\
-fingerprint mismatch: `.*manifest\\.filepack`
+fingerprint mismatch: `manifest.filepack`
             expected: package1a4uf5nw04lxs6dgzqfh4rdhxffxdukfwf4hq39d7vn2fu4eqlxf3ql7ykr3
               actual: package1akzf8204dnnly606mjw376rx2xslf8m2tptptrmk2h7vtxaplqs9qpjvqax
 error: fingerprint mismatch\n",

@@ -77,19 +77,19 @@ impl Archive {
     Ok(Fingerprint(package.hash()))
   }
 
-  pub(crate) fn load_with_opt_path(path: Option<&Utf8Path>) -> Result<(Utf8PathBuf, Self)> {
-    let path = Manifest::opt_path(path)?;
+  pub(crate) fn load(path: &Utf8Path) -> Result<Self> {
+    let cbor =
+      filesystem::read_opt(path)?.ok_or_else(|| error::ManifestNotFound { path }.build())?;
 
-    let archive = Self::load_with_path(&path, &path)?;
-
-    Ok((path, archive))
+    Self::decode_from_slice(&cbor).context(error::DecodeManifest { path })
   }
 
-  pub(crate) fn load_with_path(path: &Utf8Path, display_path: &Utf8Path) -> Result<Self> {
-    let cbor = filesystem::read_opt(path)?
-      .ok_or_else(|| error::ManifestNotFound { path: display_path }.build())?;
+  pub(crate) fn load_with_opt_path(path: Option<&Utf8Path>) -> Result<(Utf8PathBuf, Self)> {
+    let path = Manifest::opt_path(path);
 
-    Self::decode_from_slice(&cbor).context(error::DecodeManifest { path: display_path })
+    let archive = Self::load(&path)?;
+
+    Ok((path, archive))
   }
 
   pub(crate) fn pack(manifest: &Manifest) -> Self {
