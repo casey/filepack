@@ -1,10 +1,10 @@
 use {super::*, reqwest::blocking::Response};
 
 struct Context {
-  client: Client,
   entries: u64,
   entries_downloaded: u64,
   progress_bar: ProgressBar,
+  totals: Totals,
 }
 
 impl Context {
@@ -16,6 +16,21 @@ impl Context {
         self.entries_downloaded,
         self.entries,
       ));
+  }
+
+  fn new(options: &Options, totals: Totals) -> Self {
+    let entries = totals.files.saturating_add(totals.directories);
+
+    Self {
+      entries,
+      entries_downloaded: 0,
+      progress_bar: progress_bar::with_message(
+        options,
+        totals.file_size.saturating_add(totals.directory_size),
+        progress_bar::entry_progress_message(0, entries),
+      ),
+      totals,
+    }
   }
 }
 
@@ -70,61 +85,53 @@ impl Download {
 
     let client = client()?;
 
-    let root = Hash::from(fingerprint);
-
-    let (cbor, directory) = self.get_directory(&client, root)?;
-
-    let totals = directory
-      .totals()
-      .context(error::DirectoryTotals { hash: root })?;
-
-    let entries = totals.files.saturating_add(totals.directories);
-
-    let progress_bar = progress_bar::with_message(
-      options,
-      totals.file_size.saturating_add(totals.directory_size),
-      progress_bar::entry_progress_message(0, entries),
-    );
-
-    let mut context = Context {
-      client,
-      entries,
-      entries_downloaded: 0,
-      progress_bar,
-    };
+    let mut stack = vec![(Hash::from(fingerprint), self.output.clone(), None)];
 
     let mut directories = BTreeMap::new();
 
     let mut files = Vec::new();
 
-    let mut stack = Vec::new();
+    let mut context = None::<Context>;
 
-    directories.insert(root, cbor);
+    while let Some((hash, path, expected_totals)) = stack.pop() {
+      let url = self.file_url(hash);
 
-    filesystem::create_dir_all(&self.output)?;
+      let response = self.get_file(&client, hash)?;
 
-    for (component, entry) in directory.entries {
-      let path = self.output.join(component);
-      match entry {
-        Entry::File { hash, .. } => files.push((hash, path)),
-        Entry::Directory { hash, totals, .. } => stack.push((hash, path, totals)),
+      let cbor = response
+        .bytes()
+        .with_context(|_| error::ResponseBody { url: url.clone() })?;
+
+      let actual = Hash::bytes(&cbor);
+
+      ensure! {
+        actual == hash,
+        error::DownloadHashMismatch { actual, expected: hash },
       }
-    }
 
-    while let Some((hash, path, expected)) = stack.pop() {
-      let (cbor, directory) = self.get_directory(&context.client, hash)?;
+      let directory =
+        Directory::decode_from_slice(&cbor).context(error::DecodeResponseDirectory { url })?;
 
-      directory
+      let actual = directory
         .totals()
-        .context(error::DirectoryTotals { hash })?
-        .expect(expected)
         .context(error::DirectoryTotals { hash })?;
 
-      context.progress_bar.inc(cbor.len().into_u64());
+      if let Some(expected) = expected_totals {
+        actual
+          .expect(expected)
+          .context(error::DirectoryTotals { hash })?;
 
-      context.entry_downloaded();
+        let context = context.as_mut().unwrap();
 
-      directories.insert(hash, cbor);
+        context.progress_bar.inc(cbor.len().into_u64());
+
+        context.entry_downloaded();
+      } else {
+        assert!(context.is_none());
+        context = Some(Context::new(options, actual));
+      }
+
+      directories.insert(hash, cbor.to_vec());
 
       filesystem::create_dir_all(&path)?;
 
@@ -132,13 +139,15 @@ impl Download {
         let path = path.join(component);
         match entry {
           Entry::File { hash, .. } => files.push((hash, path)),
-          Entry::Directory { hash, totals, .. } => stack.push((hash, path, totals)),
+          Entry::Directory { hash, totals, .. } => stack.push((hash, path, Some(totals))),
         }
       }
     }
 
+    let mut context = context.unwrap();
+
     for (hash, path) in &files {
-      self.download_package_file(&mut context, *hash, path)?;
+      self.download_package_file(&client, &mut context, *hash, path)?;
     }
 
     let metadata_path = self.output.join(Metadata::CBOR_FILENAME);
@@ -164,7 +173,7 @@ impl Download {
     let package = Entry::directory(
       fingerprint.into(),
       builder.files[&fingerprint.into()].len().into_u64(),
-      totals,
+      context.totals,
     );
 
     let archive = builder.build_package(package, &BTreeSet::new()).unwrap();
@@ -179,13 +188,19 @@ impl Download {
     Ok(())
   }
 
-  fn download_package_file(&self, context: &mut Context, hash: Hash, path: &Utf8Path) -> Result {
+  fn download_package_file(
+    &self,
+    client: &Client,
+    context: &mut Context,
+    hash: Hash,
+    path: &Utf8Path,
+  ) -> Result {
     ensure! {
       !filesystem::exists(path)?,
       error::FileAlreadyExists { path },
     }
 
-    let response = self.get_file(&context.client, hash)?;
+    let response = self.get_file(client, hash)?;
 
     self.write_response(response, hash, path, &context.progress_bar)?;
 
@@ -196,28 +211,6 @@ impl Download {
 
   fn file_url(&self, hash: Hash) -> Url {
     self.server.join(&format!("file/{hash}")).unwrap()
-  }
-
-  fn get_directory(&self, client: &Client, hash: Hash) -> Result<(Vec<u8>, Directory)> {
-    let url = self.file_url(hash);
-
-    let response = self.get_file(client, hash)?;
-
-    let cbor = response
-      .bytes()
-      .with_context(|_| error::ResponseBody { url: url.clone() })?;
-
-    let actual = Hash::bytes(&cbor);
-
-    ensure! {
-      actual == hash,
-      error::DownloadHashMismatch { actual, expected: hash },
-    }
-
-    let directory =
-      Directory::decode_from_slice(&cbor).context(error::DecodeResponseDirectory { url })?;
-
-    Ok((cbor.to_vec(), directory))
   }
 
   fn get_file(&self, client: &Client, hash: Hash) -> Result<Response> {
