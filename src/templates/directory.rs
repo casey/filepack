@@ -31,7 +31,10 @@ mod tests {
         Entry::Directory {
           hash: Hash::bytes(b"foo"),
           size: 2_500_000,
-          total_file_size: 10_000_000,
+          totals: Totals {
+            file_size: 10_000_000,
+            files: 3,
+          },
         },
       )
       .insert_entry("qux quux.png", Entry::file(Hash::bytes(b"qux"), 1500));

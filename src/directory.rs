@@ -58,8 +58,8 @@ mod tests {
   }
 
   #[test]
-  fn total_file_size() {
-    assert_eq!(Directory::new().total_file_size(), Some(0));
+  fn totals() {
+    assert_eq!(Directory::new().totals(), Ok(Totals::default()));
 
     let mut subdirectory = Directory::new();
     subdirectory.insert_file("foo", b"xy");
@@ -69,7 +69,13 @@ mod tests {
       .insert_file("bar", b"x")
       .insert_directory("baz", &subdirectory);
 
-    assert_eq!(directory.total_file_size(), Some(3));
+    assert_eq!(
+      directory.totals(),
+      Ok(Totals {
+        file_size: 3,
+        files: 2,
+      }),
+    );
 
     let hash = Hash::bytes(b"foo");
 
@@ -81,10 +87,30 @@ mod tests {
         Entry::Directory {
           hash,
           size: 0,
-          total_file_size: 1,
+          totals: Totals {
+            file_size: 1,
+            files: 1,
+          },
         },
       );
 
-    assert_eq!(directory.total_file_size(), None);
+    assert_eq!(directory.totals(), Err(TotalsError::Overflow));
+
+    let mut directory = Directory::new();
+    directory
+      .insert_entry(
+        "bar",
+        Entry::Directory {
+          hash,
+          size: 0,
+          totals: Totals {
+            file_size: 0,
+            files: u64::MAX,
+          },
+        },
+      )
+      .insert_entry("baz", Entry::file(hash, 0));
+
+    assert_eq!(directory.totals(), Err(TotalsError::Overflow));
   }
 }

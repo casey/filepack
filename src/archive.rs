@@ -302,7 +302,7 @@ mod tests {
   }
 
   #[test]
-  fn directory_total_file_size_overflow() {
+  fn directory_totals_overflow() {
     let mut builder = ArchiveBuilder::new();
 
     let (cbor, hash) = Directory::new()
@@ -315,7 +315,7 @@ mod tests {
     let package = Entry::Directory {
       hash,
       size,
-      total_file_size: 0,
+      totals: Totals::default(),
     };
 
     let signatures = builder.directory(&Directory::new());
@@ -388,7 +388,7 @@ mod tests {
   }
 
   #[test]
-  fn package_total_file_size_mismatch() {
+  fn package_totals_mismatch() {
     let mut builder = ArchiveBuilder::new();
 
     let mut package = Directory::new();
@@ -399,7 +399,10 @@ mod tests {
     let package = Entry::Directory {
       hash: entry.hash(),
       size: entry.size(),
-      total_file_size: 100,
+      totals: Totals {
+        file_size: 100,
+        files: 1,
+      },
     };
 
     let signatures = builder.directory(&Directory::default());
@@ -426,7 +429,7 @@ mod tests {
   }
 
   #[test]
-  fn root_total_file_size_overflow() {
+  fn root_totals_overflow() {
     let mut package = DirectoryTree::new();
 
     package
@@ -697,7 +700,7 @@ mod tests {
   }
 
   #[test]
-  fn signatures_total_file_size_mismatch() {
+  fn signatures_totals_mismatch() {
     let mut builder = ArchiveBuilder::new();
 
     let package = builder.directory(&Directory::new());
@@ -707,7 +710,10 @@ mod tests {
     let signatures = Entry::Directory {
       hash: entry.hash(),
       size: entry.size(),
-      total_file_size: 1,
+      totals: Totals {
+        file_size: 1,
+        files: 1,
+      },
     };
 
     let mut root = Directory::new();

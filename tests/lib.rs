@@ -3,7 +3,7 @@ use {
   camino::{Utf8Path, Utf8PathBuf},
   filepack::{
     Decode, Decoder, Directory, Encode, Encoder, Entry, Fingerprint, Hash, Manifest, Metadata,
-    Page, PrivateKey, PublicKey,
+    Page, PrivateKey, PublicKey, Totals,
     directory_ext::DirectoryExt,
     templates::{DirectoryHtml, PackageHtml, PageHtml},
   },

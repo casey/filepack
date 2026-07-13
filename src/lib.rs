@@ -95,7 +95,6 @@ use {
     text_error::TextError,
     ticked::Ticked,
     token::Token,
-    totals::Totals,
     totals_error::TotalsError,
     track::Track,
     type_name::TypeName,
@@ -198,6 +197,7 @@ pub use self::{
   sorted_set::SortedSet,
   statement::Statement,
   text::Text,
+  totals::Totals,
 };
 
 #[cfg(test)]
