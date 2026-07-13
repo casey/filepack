@@ -223,7 +223,11 @@ impl Upload {
       );
     }
 
-    let progress_bar = progress_bar::with_files(&options, bytes, files);
+    let progress_bar = progress_bar::with_message(
+      &options,
+      bytes,
+      progress_bar::file_progress_message(0, files),
+    );
 
     let mut context = Context {
       archive,
