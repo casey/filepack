@@ -68,7 +68,7 @@ mod tests {
               </tr>
               <tr>
                 <td><a href=/directory/[[:xdigit:]]{64}>foo/</a></td>
-                <td class=size>2\.4 MiB</td>
+                <td class=size>9\.5 MiB</td>
               </tr>
               <tr>
                 <td><a href=/file/[[:xdigit:]]{64}/qux%20quux\.png>qux quux\.png</a></td>

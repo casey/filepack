@@ -211,14 +211,13 @@ use {
 
 #[cfg(test)]
 macro_rules! assert_matches_regex {
-  ($haystack:expr, $re:expr $(,)?) => {{
+  ($haystack:expr, $pattern:expr $(,)?) => {{
     let haystack = $haystack;
-    let re = Regex::new(&$re).unwrap();
-    assert!(
-      re.is_match(&haystack),
-      "assertion failed: `{haystack:?}` does not match `{}`",
-      re.as_str(),
-    );
+    let re = Regex::new(&format!("^(?s){}$", $pattern)).unwrap();
+    if !re.is_match(haystack.as_ref()) {
+      eprintln!("Regex did not match:");
+      pretty_assertions::assert_eq!(re.as_str(), haystack);
+    }
   }};
 }
 
