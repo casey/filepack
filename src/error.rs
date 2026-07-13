@@ -419,6 +419,11 @@ pub enum Error {
   },
   #[snafu(display("failed to install rustls ring crypto provider"))]
   RustlsProvider { backtrace: Option<Backtrace> },
+  #[snafu(display("failed to serialize JSON to stdout"))]
+  SerializeStdout {
+    backtrace: Option<Backtrace>,
+    source: serde_json::Error,
+  },
   #[snafu(display("server failed"))]
   Serve {
     backtrace: Option<Backtrace>,

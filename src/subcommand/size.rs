@@ -14,7 +14,9 @@ impl Size {
       .unpack_with_totals()
       .context(error::UnarchiveManifest { path: &path })?;
 
-    println!("{}", totals.file_size);
+    serde_json::to_writer_pretty(io::stdout(), &totals).context(error::SerializeStdout)?;
+
+    println!();
 
     Ok(())
   }
