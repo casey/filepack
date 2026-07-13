@@ -57,7 +57,19 @@ impl Archive {
   }
 
   pub(crate) fn fingerprint(&self) -> Result<Fingerprint, ArchiveError> {
-    Ok(Fingerprint(self.package()?.hash()))
+    let root = self.decode_directory(None, self.root)?;
+
+    let package = root
+      .entries
+      .get(Self::PACKAGE)
+      .context(archive_error::PackageMissing)?;
+
+    ensure! {
+      package.ty() == EntryType::Directory,
+      archive_error::PackageType { ty: package.ty() },
+    }
+
+    Ok(Fingerprint(package.hash()))
   }
 
   pub(crate) fn load(path: &Utf8Path) -> Result<Self> {
@@ -85,22 +97,6 @@ impl Archive {
     }
 
     builder.build_package(package, &manifest.signatures)
-  }
-
-  pub(crate) fn package(&self) -> Result<Entry, ArchiveError> {
-    let root = self.decode_directory(None, self.root)?;
-
-    let package = root
-      .entries
-      .get(Self::PACKAGE)
-      .context(archive_error::PackageMissing)?;
-
-    ensure! {
-      package.ty() == EntryType::Directory,
-      archive_error::PackageType { ty: package.ty() },
-    }
-
-    Ok(package.clone())
   }
 
   pub(crate) fn package_component() -> &'static Component {
