@@ -2,8 +2,8 @@ use {super::*, reqwest::blocking::Response};
 
 struct Context {
   client: Client,
-  files: u64,
-  files_downloaded: u64,
+  entries: u64,
+  entries_downloaded: u64,
   progress_bar: ProgressBar,
 }
 
@@ -64,7 +64,11 @@ impl Download {
 
     let mut files = Vec::new();
 
-    let mut totals = None;
+    let mut totals = None::<Totals>;
+
+    let mut entries_downloaded = 0;
+
+    let mut progress_bar = None::<ProgressBar>;
 
     while let Some((hash, path, expected_totals)) = stack.pop() {
       let url = self.file_url(hash);
@@ -93,9 +97,28 @@ impl Download {
         actual
           .expect(expected)
           .context(error::DirectoryTotals { hash })?;
+
+        let totals = totals.unwrap();
+
+        entries_downloaded += 1;
+
+        let progress_bar = progress_bar.as_ref().unwrap();
+
+        progress_bar.inc(cbor.len().into_u64());
+
+        progress_bar.set_message(progress_bar::entry_progress_message(
+          entries_downloaded,
+          totals.files.saturating_add(totals.directories),
+        ));
       } else {
         assert!(totals.is_none());
         totals = Some(actual);
+
+        progress_bar = Some(progress_bar::with_message(
+          options,
+          actual.file_size.saturating_add(actual.directory_size),
+          progress_bar::entry_progress_message(0, actual.files.saturating_add(actual.directories)),
+        ));
       }
 
       directories.insert(hash, cbor.to_vec());
@@ -113,13 +136,11 @@ impl Download {
 
     let totals = totals.unwrap();
 
-    let progress_bar = progress_bar::with_files(options, totals.file_size, totals.files);
-
     let mut context = Context {
       client,
-      files: totals.files,
-      files_downloaded: 0,
-      progress_bar,
+      entries: totals.files.saturating_add(totals.directories),
+      entries_downloaded,
+      progress_bar: progress_bar.unwrap(),
     };
 
     for (hash, path) in &files {
@@ -174,13 +195,13 @@ impl Download {
 
     self.write_response(response, hash, path, &context.progress_bar)?;
 
-    context.files_downloaded += 1;
+    context.entries_downloaded += 1;
 
     context
       .progress_bar
-      .set_message(progress_bar::file_progress_message(
-        context.files_downloaded,
-        context.files,
+      .set_message(progress_bar::entry_progress_message(
+        context.entries_downloaded,
+        context.entries,
       ));
 
     Ok(())
