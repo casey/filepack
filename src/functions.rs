@@ -30,10 +30,6 @@ pub(crate) fn default<T: Default>() -> T {
   Default::default()
 }
 
-pub(crate) fn format_size(bytes: u64) -> SizeFormatter<u64, FormatSizeOptions> {
-  SizeFormatter::new(bytes, FormatSizeOptions::from(BINARY).decimal_places(1))
-}
-
 pub fn install_default_crypto_provider() -> Result {
   static INSTALLED: LazyLock<bool> = LazyLock::new(|| {
     rustls::crypto::ring::default_provider()

@@ -37,7 +37,10 @@ impl Entry {
   }
 
   pub fn formatted_size(&self) -> SizeFormatter<u64, FormatSizeOptions> {
-    format_size(self.size())
+    SizeFormatter::new(
+      self.size(),
+      FormatSizeOptions::from(BINARY).decimal_places(1),
+    )
   }
 
   pub fn hash(&self) -> Hash {
