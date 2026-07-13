@@ -126,20 +126,9 @@ pub(crate) async fn missing(
 
 pub(crate) async fn package(
   server: ServerExtension,
-  Path(fingerprint): Path<Fingerprint>,
+  fingerprint: Path<Fingerprint>,
 ) -> PageResult<PackageHtml> {
-  block_in_place(|| {
-    let metadata = server.package_metadata_opt(fingerprint)?;
-    let totals = server.directory(fingerprint.into())?.totals().unwrap();
-    Ok(
-      PackageHtml {
-        fingerprint,
-        metadata,
-        totals,
-      }
-      .into(),
-    )
-  })
+  block_in_place(|| Ok(server.package_html(*fingerprint)?.into()))
 }
 
 pub(crate) async fn package_item(
