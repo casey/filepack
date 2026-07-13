@@ -3,14 +3,20 @@ use super::*;
 #[derive(Clone, Copy, Debug, Decode, Default, Encode, PartialEq)]
 pub struct Totals {
   #[n(0)]
-  pub file_size: u64,
+  pub directories: u64,
   #[n(1)]
+  pub directory_size: u64,
+  #[n(2)]
+  pub file_size: u64,
+  #[n(3)]
   pub files: u64,
 }
 
 impl Totals {
   pub(crate) fn checked_add(self, other: Self) -> Option<Self> {
     Some(Self {
+      directories: self.directories.checked_add(other.directories)?,
+      directory_size: self.directory_size.checked_add(other.directory_size)?,
       file_size: self.file_size.checked_add(other.file_size)?,
       files: self.files.checked_add(other.files)?,
     })

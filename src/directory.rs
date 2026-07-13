@@ -20,10 +20,19 @@ impl Directory {
     for entry in self.entries.values() {
       let entry_totals = match entry {
         Entry::File { size, .. } => Totals {
+          directories: 0,
+          directory_size: 0,
           file_size: *size,
           files: 1,
         },
-        Entry::Directory { totals, .. } => *totals,
+        Entry::Directory { size, totals, .. } => totals
+          .checked_add(Totals {
+            directories: 1,
+            directory_size: *size,
+            file_size: 0,
+            files: 0,
+          })
+          .context(totals_error::Overflow)?,
       };
 
       totals = totals
