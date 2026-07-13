@@ -4,6 +4,7 @@ use super::*;
 pub struct PackageHtml {
   pub fingerprint: Fingerprint,
   pub metadata: Option<Metadata>,
+  pub totals: Totals,
 }
 
 impl PackageHtml {
