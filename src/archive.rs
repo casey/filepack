@@ -115,6 +115,47 @@ impl Archive {
     Ok(self.unpack_with_totals()?.0)
   }
 
+  fn unpack_directory(
+    &self,
+    loose: &mut BTreeSet<Hash>,
+    embedded: &mut BTreeMap<RelativePath, Hash>,
+    hash: Hash,
+    prefix: Option<&RelativePath>,
+    expected_totals: Totals,
+  ) -> Result<DirectoryTree, ArchiveError> {
+    let directory = self.decode_directory(Some(loose), hash)?;
+
+    Self::check_directory_totals(&directory, expected_totals, hash)?;
+
+    let mut entries = BTreeMap::new();
+    for (name, entry) in &directory.entries {
+      let crate_entry = match entry {
+        Entry::File { hash, size } => {
+          if self.files.contains_key(hash) {
+            loose.remove(hash);
+            embedded.insert(RelativePath::join_opt(prefix, name), *hash);
+          }
+          DirectoryTreeEntry::File(File {
+            hash: *hash,
+            size: *size,
+          })
+        }
+        Entry::Directory { hash, totals, .. } => {
+          DirectoryTreeEntry::Directory(self.unpack_directory(
+            loose,
+            embedded,
+            *hash,
+            Some(&RelativePath::join_opt(prefix, name)),
+            *totals,
+          )?)
+        }
+      };
+      entries.insert(name.clone(), crate_entry);
+    }
+
+    Ok(DirectoryTree { entries })
+  }
+
   pub(crate) fn unpack_with_totals(&self) -> Result<(Manifest, Totals), ArchiveError> {
     let mut loose = self.files.keys().copied().collect();
 
@@ -221,47 +262,6 @@ impl Archive {
       },
       *totals,
     ))
-  }
-
-  fn unpack_directory(
-    &self,
-    loose: &mut BTreeSet<Hash>,
-    embedded: &mut BTreeMap<RelativePath, Hash>,
-    hash: Hash,
-    prefix: Option<&RelativePath>,
-    expected_totals: Totals,
-  ) -> Result<DirectoryTree, ArchiveError> {
-    let directory = self.decode_directory(Some(loose), hash)?;
-
-    Self::check_directory_totals(&directory, expected_totals, hash)?;
-
-    let mut entries = BTreeMap::new();
-    for (name, entry) in &directory.entries {
-      let crate_entry = match entry {
-        Entry::File { hash, size } => {
-          if self.files.contains_key(hash) {
-            loose.remove(hash);
-            embedded.insert(RelativePath::join_opt(prefix, name), *hash);
-          }
-          DirectoryTreeEntry::File(File {
-            hash: *hash,
-            size: *size,
-          })
-        }
-        Entry::Directory { hash, totals, .. } => {
-          DirectoryTreeEntry::Directory(self.unpack_directory(
-            loose,
-            embedded,
-            *hash,
-            Some(&RelativePath::join_opt(prefix, name)),
-            *totals,
-          )?)
-        }
-      };
-      entries.insert(name.clone(), crate_entry);
-    }
-
-    Ok(DirectoryTree { entries })
   }
 }
 
