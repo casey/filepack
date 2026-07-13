@@ -1,37 +1,10 @@
 use {super::*, reqwest::blocking::Response};
 
 struct Context {
+  client: Client,
   entries: u64,
   entries_downloaded: u64,
   progress_bar: ProgressBar,
-  totals: Totals,
-}
-
-impl Context {
-  fn entry_downloaded(&mut self) {
-    self.entries_downloaded += 1;
-    self
-      .progress_bar
-      .set_message(progress_bar::entry_progress_message(
-        self.entries_downloaded,
-        self.entries,
-      ));
-  }
-
-  fn new(options: &Options, totals: Totals) -> Self {
-    let entries = totals.files.saturating_add(totals.directories);
-
-    Self {
-      entries,
-      entries_downloaded: 0,
-      progress_bar: progress_bar::with_message(
-        options,
-        totals.file_size.saturating_add(totals.directory_size),
-        progress_bar::entry_progress_message(0, entries),
-      ),
-      totals,
-    }
-  }
 }
 
 #[derive(Parser)]
@@ -91,7 +64,11 @@ impl Download {
 
     let mut files = Vec::new();
 
-    let mut context = None::<Context>;
+    let mut totals = None::<Totals>;
+
+    let mut entries_downloaded = 0;
+
+    let mut progress_bar = None::<ProgressBar>;
 
     while let Some((hash, path, expected_totals)) = stack.pop() {
       let url = self.file_url(hash);
@@ -121,14 +98,27 @@ impl Download {
           .expect(expected)
           .context(error::DirectoryTotals { hash })?;
 
-        let context = context.as_mut().unwrap();
+        let totals = totals.unwrap();
 
-        context.progress_bar.inc(cbor.len().into_u64());
+        entries_downloaded += 1;
 
-        context.entry_downloaded();
+        let progress_bar = progress_bar.as_ref().unwrap();
+
+        progress_bar.inc(cbor.len().into_u64());
+
+        progress_bar.set_message(progress_bar::entry_progress_message(
+          entries_downloaded,
+          totals.files.saturating_add(totals.directories),
+        ));
       } else {
-        assert!(context.is_none());
-        context = Some(Context::new(options, actual));
+        assert!(totals.is_none());
+        totals = Some(actual);
+
+        progress_bar = Some(progress_bar::with_message(
+          options,
+          actual.file_size.saturating_add(actual.directory_size),
+          progress_bar::entry_progress_message(0, actual.files.saturating_add(actual.directories)),
+        ));
       }
 
       directories.insert(hash, cbor.to_vec());
@@ -144,10 +134,17 @@ impl Download {
       }
     }
 
-    let mut context = context.unwrap();
+    let totals = totals.unwrap();
+
+    let mut context = Context {
+      client,
+      entries: totals.files.saturating_add(totals.directories),
+      entries_downloaded,
+      progress_bar: progress_bar.unwrap(),
+    };
 
     for (hash, path) in &files {
-      self.download_package_file(&client, &mut context, *hash, path)?;
+      self.download_package_file(&mut context, *hash, path)?;
     }
 
     let metadata_path = self.output.join(Metadata::CBOR_FILENAME);
@@ -173,7 +170,7 @@ impl Download {
     let package = Entry::directory(
       fingerprint.into(),
       builder.files[&fingerprint.into()].len().into_u64(),
-      context.totals,
+      totals,
     );
 
     let archive = builder.build_package(package, &BTreeSet::new()).unwrap();
@@ -188,23 +185,24 @@ impl Download {
     Ok(())
   }
 
-  fn download_package_file(
-    &self,
-    client: &Client,
-    context: &mut Context,
-    hash: Hash,
-    path: &Utf8Path,
-  ) -> Result {
+  fn download_package_file(&self, context: &mut Context, hash: Hash, path: &Utf8Path) -> Result {
     ensure! {
       !filesystem::exists(path)?,
       error::FileAlreadyExists { path },
     }
 
-    let response = self.get_file(client, hash)?;
+    let response = self.get_file(&context.client, hash)?;
 
     self.write_response(response, hash, path, &context.progress_bar)?;
 
-    context.entry_downloaded();
+    context.entries_downloaded += 1;
+
+    context
+      .progress_bar
+      .set_message(progress_bar::entry_progress_message(
+        context.entries_downloaded,
+        context.entries,
+      ));
 
     Ok(())
   }
