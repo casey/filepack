@@ -4,6 +4,7 @@ use super::*;
 pub struct PackageHtml {
   pub fingerprint: Fingerprint,
   pub metadata: Option<Metadata>,
+  pub totals: Totals,
 }
 
 impl PackageHtml {
@@ -62,15 +63,24 @@ mod tests {
       PackageHtml {
         fingerprint: test::FINGERPRINT.parse().unwrap(),
         metadata: Some(metadata),
+        totals: Totals {
+          directories: 0,
+          directory_size: 0,
+          file_size: 6,
+          files: 2,
+        },
       }
       .to_string(),
       unindent(&format!(
         "
           <h1>{fingerprint}</h1>
-          <a href=/directory/{hash}>files</a>
           <dl>
             <dt>fingerprint</dt>
             <dd>{fingerprint}</dd>
+            <dt>size</dt>
+            <dd>6 B</dd>
+            <dt>files</dt>
+            <dd><a href=/directory/{hash}>2 files</a></dd>
             <dt>media</dt>
             <dd>audio</dd>
             <dt>tracks</dt>

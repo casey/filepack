@@ -129,10 +129,13 @@ pub(crate) async fn package(
   Path(fingerprint): Path<Fingerprint>,
 ) -> PageResult<PackageHtml> {
   block_in_place(|| {
+    let metadata = server.package_metadata_opt(fingerprint)?;
+    let totals = server.directory(fingerprint.into())?.totals().unwrap();
     Ok(
       PackageHtml {
         fingerprint,
-        metadata: server.package_metadata_opt(fingerprint)?,
+        metadata,
+        totals,
       }
       .into(),
     )

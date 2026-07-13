@@ -244,8 +244,14 @@ impl Server {
   }
 
   fn read_directory(&self, hash: Hash) -> ServerResult<Directory> {
-    Directory::decode_from_slice(&self.read_file(hash)?)
-      .context(server_error::DirectoryDecode { hash })
+    let directory = Directory::decode_from_slice(&self.read_file(hash)?)
+      .context(server_error::DirectoryDecode { hash })?;
+
+    directory
+      .totals()
+      .context(server_error::DirectoryTotals { hash })?;
+
+    Ok(directory)
   }
 
   fn read_file(&self, hash: Hash) -> ServerResult<Vec<u8>> {
