@@ -219,14 +219,17 @@ fingerprint mismatch: `{source}`
       println!("{}", serde_json::to_string_pretty(&manifest).unwrap());
     }
 
-    eprint!("successfully verified {}", Count(verified.files, "file"));
+    eprint!(
+      "successfully verified {}",
+      Count::new(verified.files, "file")
+    );
 
     if verified.files > 0 {
-      eprint!(" totaling {}", Count(verified.bytes, "byte"));
+      eprint!(" totaling {}", Count::new(verified.bytes, "byte"));
     }
 
     if verified.signatures > 0 {
-      eprint!(" with {}", Count(verified.signatures, "signature"));
+      eprint!(" with {}", Count::new(verified.signatures, "signature"));
     }
 
     eprintln!();

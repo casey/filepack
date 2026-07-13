@@ -219,7 +219,7 @@ impl Upload {
     if !options.quiet {
       eprintln!(
         "uploading {files} of {}",
-        Count(manifest_files.len(), "file")
+        Count::new(manifest_files.len(), "file")
       );
     }
 

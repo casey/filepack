@@ -49,7 +49,7 @@ pub(crate) enum ServerError {
   #[snafu(display(
     "{} {index} does not exist, package {fingerprint} has {}",
     ty.noun(),
-    Count(*count, ty.noun()),
+    Count::new(*count, ty.noun()),
   ))]
   MediaItemDoesNotExist {
     fingerprint: Fingerprint,

@@ -1,16 +1,23 @@
 use super::*;
 
+#[allow(clippy::arbitrary_source_item_ordering)]
 #[derive(Clone, Copy, Debug, Decode, Default, Encode, PartialEq)]
 pub struct Totals {
   #[n(0)]
-  pub file_size: u64,
-  #[n(1)]
   pub files: u64,
+  #[n(1)]
+  pub file_size: u64,
+  #[n(2)]
+  pub directories: u64,
+  #[n(3)]
+  pub directory_size: u64,
 }
 
 impl Totals {
   pub(crate) fn checked_add(self, other: Self) -> Option<Self> {
     Some(Self {
+      directories: self.directories.checked_add(other.directories)?,
+      directory_size: self.directory_size.checked_add(other.directory_size)?,
       file_size: self.file_size.checked_add(other.file_size)?,
       files: self.files.checked_add(other.files)?,
     })
@@ -30,9 +37,11 @@ impl Display for Totals {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     write!(
       f,
-      "{} in {}",
-      Count(self.file_size, "byte"),
-      Count(self.files, "file"),
+      "{} in {} and {} in {}",
+      Count::new(self.file_size, "byte"),
+      Count::new(self.files, "file"),
+      Count::new(self.directory_size, "byte"),
+      Count::irregular(self.directories, "directory", "directories"),
     )
   }
 }
@@ -50,39 +59,69 @@ mod tests {
 
     case(
       Totals {
-        file_size: 1,
-        files: 2,
-      },
-      Totals {
+        directories: 1,
+        directory_size: 2,
         file_size: 3,
         files: 4,
       },
+      Totals {
+        directories: 5,
+        directory_size: 6,
+        file_size: 7,
+        files: 8,
+      },
       Some(Totals {
-        file_size: 4,
-        files: 6,
+        directories: 6,
+        directory_size: 8,
+        file_size: 10,
+        files: 12,
       }),
     );
 
     case(
       Totals {
-        file_size: u64::MAX,
-        files: 0,
+        directories: u64::MAX,
+        ..Totals::default()
       },
       Totals {
-        file_size: 1,
-        files: 0,
+        directories: 1,
+        ..Totals::default()
       },
       None,
     );
 
     case(
       Totals {
-        file_size: 0,
-        files: u64::MAX,
+        directory_size: u64::MAX,
+        ..Totals::default()
       },
       Totals {
-        file_size: 0,
+        directory_size: 1,
+        ..Totals::default()
+      },
+      None,
+    );
+
+    case(
+      Totals {
+        file_size: u64::MAX,
+        ..Totals::default()
+      },
+      Totals {
+        file_size: 1,
+        ..Totals::default()
+      },
+      None,
+    );
+
+    case(
+      Totals {
+        files: u64::MAX,
+        ..Totals::default()
+      },
+      Totals {
         files: 1,
+        ..Totals::default()
       },
       None,
     );
@@ -96,27 +135,28 @@ mod tests {
     }
 
     case(
-      Totals {
-        file_size: 0,
-        files: 0,
-      },
-      "0 bytes in 0 files",
+      Totals::default(),
+      "0 bytes in 0 files and 0 bytes in 0 directories",
     );
 
     case(
       Totals {
+        directories: 1,
+        directory_size: 1,
         file_size: 1,
         files: 1,
       },
-      "1 byte in 1 file",
+      "1 byte in 1 file and 1 byte in 1 directory",
     );
 
     case(
       Totals {
+        directories: 2,
+        directory_size: 3,
         file_size: 3,
-        files: 2,
+        files: 5,
       },
-      "3 bytes in 2 files",
+      "3 bytes in 5 files and 3 bytes in 2 directories",
     );
   }
 
@@ -124,23 +164,29 @@ mod tests {
   fn encoding() {
     assert_cbor(
       Totals {
-        file_size: 1,
-        files: 2,
+        directories: 1,
+        directory_size: 2,
+        file_size: 3,
+        files: 4,
       },
-      "a200010102",
+      "a40004010302010302",
     );
   }
 
   #[test]
   fn expect() {
     let actual = Totals {
-      file_size: 1,
-      files: 2,
+      directories: 1,
+      directory_size: 2,
+      file_size: 3,
+      files: 4,
     };
 
     let expected = Totals {
-      file_size: 3,
-      files: 4,
+      directories: 5,
+      directory_size: 6,
+      file_size: 7,
+      files: 8,
     };
 
     assert_eq!(actual.expect(actual), Ok(()));

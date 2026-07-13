@@ -20,10 +20,19 @@ impl Directory {
     for entry in self.entries.values() {
       let entry_totals = match entry {
         Entry::File { size, .. } => Totals {
+          directories: 0,
+          directory_size: 0,
           file_size: *size,
           files: 1,
         },
-        Entry::Directory { totals, .. } => *totals,
+        Entry::Directory { size, totals, .. } => totals
+          .checked_add(Totals {
+            directories: 1,
+            directory_size: *size,
+            file_size: 0,
+            files: 0,
+          })
+          .context(totals_error::Overflow)?,
       };
 
       totals = totals
@@ -64,6 +73,8 @@ mod tests {
     let mut subdirectory = Directory::new();
     subdirectory.insert_file("foo", b"xy");
 
+    let (cbor, _hash) = subdirectory.cbor();
+
     let mut directory = Directory::new();
     directory
       .insert_file("bar", b"x")
@@ -72,6 +83,8 @@ mod tests {
     assert_eq!(
       directory.totals(),
       Ok(Totals {
+        directories: 1,
+        directory_size: cbor.len().into_u64(),
         file_size: 3,
         files: 2,
       }),
@@ -88,6 +101,8 @@ mod tests {
           hash,
           size: 0,
           totals: Totals {
+            directories: 0,
+            directory_size: 0,
             file_size: 1,
             files: 1,
           },
@@ -104,12 +119,48 @@ mod tests {
           hash,
           size: 0,
           totals: Totals {
+            directories: 0,
+            directory_size: 0,
             file_size: 0,
             files: u64::MAX,
           },
         },
       )
       .insert_entry("baz", Entry::file(hash, 0));
+
+    assert_eq!(directory.totals(), Err(TotalsError::Overflow));
+
+    let mut directory = Directory::new();
+    directory.insert_entry(
+      "bar",
+      Entry::Directory {
+        hash,
+        size: 1,
+        totals: Totals {
+          directories: 0,
+          directory_size: u64::MAX,
+          file_size: 0,
+          files: 0,
+        },
+      },
+    );
+
+    assert_eq!(directory.totals(), Err(TotalsError::Overflow));
+
+    let mut directory = Directory::new();
+    directory.insert_entry(
+      "bar",
+      Entry::Directory {
+        hash,
+        size: 0,
+        totals: Totals {
+          directories: u64::MAX,
+          directory_size: 0,
+          file_size: 0,
+          files: 0,
+        },
+      },
+    );
 
     assert_eq!(directory.totals(), Err(TotalsError::Overflow));
   }

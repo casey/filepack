@@ -440,6 +440,8 @@ mod tests {
       hash: entry.hash(),
       size: entry.size(),
       totals: Totals {
+        directories: 0,
+        directory_size: 0,
         file_size: 100,
         files: 1,
       },
@@ -461,8 +463,18 @@ mod tests {
       Err(ArchiveError::DirectoryTotals {
         hash,
         source: TotalsError::Mismatch {
-          actual: Totals { file_size: 3, files: 1 },
-          expected: Totals { file_size: 100, files: 1 },
+          actual: Totals {
+            directories: 0,
+            directory_size: 0,
+            file_size: 3,
+            files: 1,
+          },
+          expected: Totals {
+            directories: 0,
+            directory_size: 0,
+            file_size: 100,
+            files: 1,
+          },
         },
       }) if hash == entry.hash(),
     );
@@ -751,6 +763,8 @@ mod tests {
       hash: entry.hash(),
       size: entry.size(),
       totals: Totals {
+        directories: 0,
+        directory_size: 0,
         file_size: 1,
         files: 1,
       },
@@ -770,8 +784,18 @@ mod tests {
       Err(ArchiveError::DirectoryTotals {
         hash,
         source: TotalsError::Mismatch {
-          actual: Totals { file_size: 0, files: 0 },
-          expected: Totals { file_size: 1, files: 1 },
+          actual: Totals {
+            directories: 0,
+            directory_size: 0,
+            file_size: 0,
+            files: 0,
+          },
+          expected: Totals {
+            directories: 0,
+            directory_size: 0,
+            file_size: 1,
+            files: 1,
+          },
         }
       }) if hash == entry.hash(),
     );
