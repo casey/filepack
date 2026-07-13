@@ -53,7 +53,7 @@ impl Deref for ComponentBuf {
 
 impl Display for ComponentBuf {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    write!(f, "{}", &self.0)
+    write!(f, "{}", self.0)
   }
 }
 
