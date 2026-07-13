@@ -1,26 +1,38 @@
 use super::*;
 
-pub(crate) struct Count<N>(N, &'static str, Option<&'static str>);
+pub(crate) struct Count<N> {
+  n: N,
+  noun: &'static str,
+  plural: Option<&'static str>,
+}
 
 impl<N> Count<N> {
-  pub(crate) fn new(n: N, s: &'static str) -> Self {
-    Self(n, s, None)
+  pub(crate) fn new(n: N, noun: &'static str) -> Self {
+    Self {
+      n,
+      noun,
+      plural: None,
+    }
   }
 
-  pub(crate) fn irregular(n: N, s: &'static str, i: &'static str) -> Self {
-    Self(n, s, Some(i))
+  pub(crate) fn irregular(n: N, noun: &'static str, plural: &'static str) -> Self {
+    Self {
+      n,
+      noun,
+      plural: Some(plural),
+    }
   }
 }
 
 impl<N: Display + One + PartialEq> Display for Count<N> {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    if self.0.is_one() {
-      write!(f, "{} {}", self.0, self.1)?;
+    if self.n.is_one() {
+      write!(f, "{} {}", self.n, self.noun)?;
     } else {
-      if let Some(s) = self.2 {
-        write!(f, "{} {s}", self.0)?;
+      if let Some(plural) = self.plural {
+        write!(f, "{} {plural}", self.n)?;
       } else {
-        write!(f, "{} {}s", self.0, self.1)?;
+        write!(f, "{} {}s", self.n, self.noun)?;
       }
     }
     Ok(())

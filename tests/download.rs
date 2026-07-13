@@ -183,7 +183,8 @@ fn download_package_fails_on_directory_totals_mismatch() {
     ])
     .stderr(&format!(
       "error: directory `{subdirectory_hash}` totals error\n       \
-       └─ totals mismatch, found 3 bytes in 1 file but expected 100 bytes in 1 file\n",
+       └─ totals mismatch, found 3 bytes in 1 file and 0 bytes in 0 \
+       directories but expected 100 bytes in 1 file and 0 bytes in 0 directories\n",
     ))
     .failure();
 
