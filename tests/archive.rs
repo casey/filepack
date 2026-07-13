@@ -87,7 +87,7 @@ fn rejects_totals_overflow() {
     )
     .args(["archive", "manifest.json", "manifest.filepack"])
     .stderr_regex_path(
-      "error: manifest `.*manifest.json` totals error\n       \
+      "error: manifest `.*manifest.filepack` totals error\n       \
        └─ totals overflowed\n",
     )
     .failure();

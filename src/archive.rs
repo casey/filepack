@@ -87,10 +87,10 @@ impl Archive {
     Ok((path, archive))
   }
 
-  pub(crate) fn pack(manifest: &Manifest) -> Self {
+  pub(crate) fn pack(manifest: &Manifest) -> Result<Self, TotalsError> {
     let mut builder = ArchiveBuilder::new();
 
-    let package = builder.pack_directory(&manifest.package);
+    let package = builder.pack_directory(&manifest.package)?;
 
     for (hash, content) in &manifest.embedded {
       builder.files.insert(*hash, content.clone());
@@ -108,6 +108,51 @@ impl Archive {
   }
 
   pub(crate) fn unpack(&self) -> Result<Manifest, ArchiveError> {
+    Ok(self.unpack_with_totals()?.0)
+  }
+
+  fn unpack_directory(
+    &self,
+    loose: &mut BTreeSet<Hash>,
+    embedded: &mut BTreeMap<RelativePath, Hash>,
+    hash: Hash,
+    prefix: Option<&RelativePath>,
+    expected_totals: Totals,
+  ) -> Result<DirectoryTree, ArchiveError> {
+    let directory = self.decode_directory(Some(loose), hash)?;
+
+    Self::check_directory_totals(&directory, expected_totals, hash)?;
+
+    let mut entries = BTreeMap::new();
+    for (name, entry) in &directory.entries {
+      let crate_entry = match entry {
+        Entry::File { hash, size } => {
+          if self.files.contains_key(hash) {
+            loose.remove(hash);
+            embedded.insert(RelativePath::join_opt(prefix, name), *hash);
+          }
+          DirectoryTreeEntry::File(File {
+            hash: *hash,
+            size: *size,
+          })
+        }
+        Entry::Directory { hash, totals, .. } => {
+          DirectoryTreeEntry::Directory(self.unpack_directory(
+            loose,
+            embedded,
+            *hash,
+            Some(&RelativePath::join_opt(prefix, name)),
+            *totals,
+          )?)
+        }
+      };
+      entries.insert(name.clone(), crate_entry);
+    }
+
+    Ok(DirectoryTree { entries })
+  }
+
+  pub(crate) fn unpack_with_totals(&self) -> Result<(Manifest, Totals), ArchiveError> {
     let mut loose = self.files.keys().copied().collect();
 
     ensure! {
@@ -205,52 +250,14 @@ impl Archive {
       .map(|hash| (hash, self.files[&hash].clone()))
       .collect();
 
-    Ok(Manifest {
-      embedded,
-      package,
-      signatures,
-    })
-  }
-
-  fn unpack_directory(
-    &self,
-    loose: &mut BTreeSet<Hash>,
-    embedded: &mut BTreeMap<RelativePath, Hash>,
-    hash: Hash,
-    prefix: Option<&RelativePath>,
-    expected_totals: Totals,
-  ) -> Result<DirectoryTree, ArchiveError> {
-    let directory = self.decode_directory(Some(loose), hash)?;
-
-    Self::check_directory_totals(&directory, expected_totals, hash)?;
-
-    let mut entries = BTreeMap::new();
-    for (name, entry) in &directory.entries {
-      let crate_entry = match entry {
-        Entry::File { hash, size } => {
-          if self.files.contains_key(hash) {
-            loose.remove(hash);
-            embedded.insert(RelativePath::join_opt(prefix, name), *hash);
-          }
-          DirectoryTreeEntry::File(File {
-            hash: *hash,
-            size: *size,
-          })
-        }
-        Entry::Directory { hash, totals, .. } => {
-          DirectoryTreeEntry::Directory(self.unpack_directory(
-            loose,
-            embedded,
-            *hash,
-            Some(&RelativePath::join_opt(prefix, name)),
-            *totals,
-          )?)
-        }
-      };
-      entries.insert(name.clone(), crate_entry);
-    }
-
-    Ok(DirectoryTree { entries })
+    Ok((
+      Manifest {
+        embedded,
+        package,
+        signatures,
+      },
+      *totals,
+    ))
   }
 }
 
@@ -275,7 +282,7 @@ mod tests {
       signatures: BTreeSet::new(),
     };
 
-    let archive = Archive::pack(&manifest);
+    let archive = Archive::pack(&manifest).unwrap();
     assert_eq!(archive.unpack().unwrap(), manifest);
   }
 
@@ -318,14 +325,14 @@ mod tests {
       totals: Totals::default(),
     };
 
-    let signatures = builder.directory(&Directory::new());
+    let signatures = builder.directory(&Directory::new()).unwrap();
 
     let mut root = Directory::new();
     root
       .insert_entry("package", package)
       .insert_entry("signatures", signatures);
 
-    let root = builder.directory(&root);
+    let root = builder.directory(&root).unwrap();
 
     let archive = builder.build(root.hash());
 
@@ -337,7 +344,7 @@ mod tests {
 
   #[test]
   fn file_hash_mismatch() {
-    let mut archive = Archive::pack(&manifest());
+    let mut archive = Archive::pack(&manifest()).unwrap();
     let &expected = archive.files.keys().next().unwrap();
     archive.files.insert(expected, b"foo".to_vec());
     let actual = Hash::bytes(b"foo");
@@ -364,13 +371,46 @@ mod tests {
 
   #[test]
   fn missing_root() {
-    let mut archive = Archive::pack(&manifest());
+    let mut archive = Archive::pack(&manifest()).unwrap();
     let missing = Hash::bytes(&[]);
     archive.root = missing;
     assert_matches!(
       archive.unpack(),
       Err(ArchiveError::FileMissing { hash }) if hash == missing,
     );
+  }
+
+  #[test]
+  fn pack_totals_overflow() {
+    let mut package = DirectoryTree::new();
+
+    package
+      .create_file(
+        &"bar".parse().unwrap(),
+        File {
+          hash: Hash::bytes(b"bar"),
+          size: u64::MAX,
+        },
+      )
+      .unwrap();
+
+    package
+      .create_file(
+        &"foo".parse().unwrap(),
+        File {
+          hash: Hash::bytes(b"foo"),
+          size: 1,
+        },
+      )
+      .unwrap();
+
+    let manifest = Manifest {
+      embedded: BTreeMap::new(),
+      package,
+      signatures: BTreeSet::new(),
+    };
+
+    assert_eq!(Archive::pack(&manifest).err(), Some(TotalsError::Overflow));
   }
 
   #[test]
@@ -394,7 +434,7 @@ mod tests {
     let mut package = Directory::new();
     package.insert_file("foo", b"bar");
 
-    let entry = builder.directory(&package);
+    let entry = builder.directory(&package).unwrap();
 
     let package = Entry::Directory {
       hash: entry.hash(),
@@ -405,14 +445,14 @@ mod tests {
       },
     };
 
-    let signatures = builder.directory(&Directory::default());
+    let signatures = builder.directory(&Directory::default()).unwrap();
 
     let mut root = Directory::new();
     root
       .insert_entry("package", package)
       .insert_entry("signatures", signatures);
 
-    let root = builder.directory(&root);
+    let root = builder.directory(&root).unwrap();
 
     let archive = builder.build(root.hash());
 
@@ -455,7 +495,7 @@ mod tests {
       signatures: BTreeSet::from([private_key.sign(&statement)]),
     };
 
-    let archive = Archive::pack(&manifest);
+    let archive = Archive::pack(&manifest).unwrap();
 
     assert_eq!(archive.unpack().unwrap(), manifest);
   }
@@ -467,7 +507,7 @@ mod tests {
       package: DirectoryTree::new(),
       signatures: BTreeSet::new(),
     };
-    let archive = Archive::pack(&manifest);
+    let archive = Archive::pack(&manifest).unwrap();
     let bytes = archive.encode_to_vec();
     let decoded = Archive::decode_from_slice(&bytes).unwrap();
     assert_eq!(decoded.unpack().unwrap(), manifest);
@@ -486,7 +526,7 @@ mod tests {
       signatures: BTreeSet::new(),
     };
 
-    let archive = Archive::pack(&manifest);
+    let archive = Archive::pack(&manifest).unwrap();
     let bytes = archive.encode_to_vec();
     let decoded = Archive::decode_from_slice(&bytes).unwrap();
     assert_eq!(decoded.unpack().unwrap(), manifest);
@@ -495,7 +535,7 @@ mod tests {
   #[test]
   fn round_trip_encode_decode() {
     let manifest = manifest();
-    let archive = Archive::pack(&manifest);
+    let archive = Archive::pack(&manifest).unwrap();
     let bytes = archive.encode_to_vec();
     let decoded = Archive::decode_from_slice(&bytes).unwrap();
     assert_eq!(decoded.unpack().unwrap(), manifest);
@@ -517,7 +557,7 @@ mod tests {
       signatures: BTreeSet::new(),
     };
 
-    let archive = Archive::pack(&manifest);
+    let archive = Archive::pack(&manifest).unwrap();
     let bytes = archive.encode_to_vec();
     let decoded = Archive::decode_from_slice(&bytes).unwrap();
     assert_eq!(decoded.unpack().unwrap(), manifest);
@@ -541,7 +581,7 @@ mod tests {
       signatures: BTreeSet::new(),
     };
 
-    let archive = Archive::pack(&manifest);
+    let archive = Archive::pack(&manifest).unwrap();
     let bytes = archive.encode_to_vec();
     let decoded = Archive::decode_from_slice(&bytes).unwrap();
     assert_eq!(decoded.unpack().unwrap(), manifest);
@@ -550,7 +590,7 @@ mod tests {
   #[test]
   fn round_trip_pack_unpack() {
     let manifest = manifest();
-    let archive = Archive::pack(&manifest);
+    let archive = Archive::pack(&manifest).unwrap();
     assert_eq!(archive.unpack().unwrap(), manifest);
   }
 
@@ -575,7 +615,7 @@ mod tests {
       signatures: BTreeSet::from([signature]),
     };
 
-    let archive = Archive::pack(&manifest);
+    let archive = Archive::pack(&manifest).unwrap();
     let bytes = archive.encode_to_vec();
     let decoded = Archive::decode_from_slice(&bytes).unwrap();
     assert_eq!(decoded.unpack().unwrap(), manifest);
@@ -587,7 +627,7 @@ mod tests {
 
     let package = Directory::new();
 
-    let package = builder.directory(&package);
+    let package = builder.directory(&package).unwrap();
 
     let public_key = test::PUBLIC_KEY.parse::<PublicKey>().unwrap();
 
@@ -609,14 +649,14 @@ mod tests {
     let mut signatures = Directory::new();
     signatures.insert_entry("0", signature);
 
-    let signatures = builder.directory(&signatures);
+    let signatures = builder.directory(&signatures).unwrap();
 
     let mut root = Directory::new();
     root
       .insert_entry("package", package)
       .insert_entry("signatures", signatures);
 
-    let root = builder.directory(&root);
+    let root = builder.directory(&root).unwrap();
 
     let archive = builder.build(root.hash());
 
@@ -636,21 +676,21 @@ mod tests {
   fn signature_file_missing() {
     let mut builder = ArchiveBuilder::new();
 
-    let package = builder.directory(&Directory::new());
+    let package = builder.directory(&Directory::new()).unwrap();
 
     let missing_file = Hash::bytes(b"foo");
 
     let mut signatures = Directory::new();
     signatures.insert_entry("0", Entry::file(missing_file, 0));
 
-    let signatures = builder.directory(&signatures);
+    let signatures = builder.directory(&signatures).unwrap();
 
     let mut root = Directory::new();
     root
       .insert_entry("package", package)
       .insert_entry("signatures", signatures);
 
-    let root = builder.directory(&root);
+    let root = builder.directory(&root).unwrap();
 
     let archive = builder.build(root.hash());
 
@@ -664,19 +704,19 @@ mod tests {
   fn signatures_directory() {
     let mut builder = ArchiveBuilder::new();
 
-    let package = builder.directory(&Directory::new());
+    let package = builder.directory(&Directory::new()).unwrap();
 
     let mut signatures = Directory::new();
     signatures.insert_directory("0", &Directory::new());
 
-    let signatures = builder.directory(&signatures);
+    let signatures = builder.directory(&signatures).unwrap();
 
     let mut root = Directory::new();
     root
       .insert_entry("package", package)
       .insert_entry("signatures", signatures);
 
-    let root = builder.directory(&root);
+    let root = builder.directory(&root).unwrap();
 
     let archive = builder.build(root.hash());
 
@@ -687,12 +727,12 @@ mod tests {
   fn signatures_missing() {
     let mut builder = ArchiveBuilder::new();
 
-    let package = builder.directory(&Directory::default());
+    let package = builder.directory(&Directory::default()).unwrap();
 
     let mut root = Directory::new();
     root.insert_entry("package", package);
 
-    let root = builder.directory(&root);
+    let root = builder.directory(&root).unwrap();
 
     let archive = builder.build(root.hash());
 
@@ -703,9 +743,9 @@ mod tests {
   fn signatures_totals_mismatch() {
     let mut builder = ArchiveBuilder::new();
 
-    let package = builder.directory(&Directory::new());
+    let package = builder.directory(&Directory::new()).unwrap();
 
-    let entry = builder.directory(&Directory::new());
+    let entry = builder.directory(&Directory::new()).unwrap();
 
     let signatures = Entry::Directory {
       hash: entry.hash(),
@@ -721,7 +761,7 @@ mod tests {
       .insert_entry("package", package)
       .insert_entry("signatures", signatures);
 
-    let root = builder.directory(&root);
+    let root = builder.directory(&root).unwrap();
 
     let archive = builder.build(root.hash());
 
@@ -750,18 +790,18 @@ mod tests {
 
     let mut builder = ArchiveBuilder::new();
 
-    let package = builder.pack_directory(&package);
+    let package = builder.pack_directory(&package).unwrap();
 
     builder.files.insert(Hash::bytes(content), content.to_vec());
 
-    let signatures = builder.directory(&Directory::default());
+    let signatures = builder.directory(&Directory::default()).unwrap();
 
     let mut root = Directory::new();
     root
       .insert_entry("package", package)
       .insert_entry("signatures", signatures);
 
-    let root = builder.directory(&root);
+    let root = builder.directory(&root).unwrap();
 
     let archive = builder.build(root.hash());
 
@@ -776,9 +816,9 @@ mod tests {
   fn unexpected_entries() {
     let mut builder = ArchiveBuilder::new();
 
-    let package = builder.directory(&Directory::new());
+    let package = builder.directory(&Directory::new()).unwrap();
 
-    let signatures = builder.directory(&Directory::new());
+    let signatures = builder.directory(&Directory::new()).unwrap();
 
     let mut root = Directory::new();
     root
@@ -786,7 +826,7 @@ mod tests {
       .insert_entry("signatures", signatures)
       .insert_file("foo", b"bar");
 
-    let root = builder.directory(&root);
+    let root = builder.directory(&root).unwrap();
 
     let archive = builder.build(root.hash());
 
@@ -798,7 +838,7 @@ mod tests {
 
   #[test]
   fn unreferenced_files() {
-    let mut archive = Archive::pack(&manifest());
+    let mut archive = Archive::pack(&manifest()).unwrap();
     let file = b"foo".to_vec();
     let hash = Hash::bytes(&file);
     archive.files.insert(hash, file);

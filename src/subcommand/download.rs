@@ -152,7 +152,7 @@ impl Download {
       totals,
     );
 
-    let archive = builder.build_package(package, &BTreeSet::new());
+    let archive = builder.build_package(package, &BTreeSet::new()).unwrap();
 
     filesystem::write(
       &self.output.join(Manifest::FILENAME),
