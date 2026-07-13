@@ -251,7 +251,7 @@ mod tests {
         .collect::<Vec<String>>()
         .join(": ");
 
-      assert_matches_regex!(chain, expected);
+      assert_matches_regex!(chain, format!(".*{}.*", expected));
     }
 
     case(
@@ -341,11 +341,11 @@ mod tests {
 
     case(
       "title: foo\nbar: 1",
-      "unknown field `bar`, expected one of ",
+      ".*unknown field `bar`, expected one of .*",
     );
     case(
       "package:\n  bar: 1",
-      "unknown field `bar`, expected one of ",
+      ".*unknown field `bar`, expected one of .*",
     );
   }
 

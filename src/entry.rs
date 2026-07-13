@@ -36,13 +36,6 @@ impl Entry {
     Self::File { hash, size }
   }
 
-  pub fn formatted_size(&self) -> SizeFormatter<u64, FormatSizeOptions> {
-    SizeFormatter::new(
-      self.size(),
-      FormatSizeOptions::from(BINARY).decimal_places(1),
-    )
-  }
-
   pub fn hash(&self) -> Hash {
     match self {
       Self::File { hash, .. } | Self::Directory { hash, .. } => *hash,
