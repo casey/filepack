@@ -59,8 +59,14 @@ update-changelog:
 update-contributors:
   cargo run --release --package update-contributors
 
-doc:
-  cargo doc --all --open
+doc package='':
+  #!/usr/bin/env zsh
+  set -euo pipefail
+  if [ {{ package }} ]; then
+    cargo doc --package {{ package }} --open
+  else
+    cargo doc --all --open
+  fi
 
 tmp:
   rm -rf tmp

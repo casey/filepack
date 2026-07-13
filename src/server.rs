@@ -1,6 +1,7 @@
 use {
   super::*,
-  redb::{Database, ReadableDatabase, ReadableTable, TableDefinition},
+  redb::{Database, ReadOnlyTable, ReadableDatabase, ReadableTable, TableDefinition},
+  templates::PackageHtml,
 };
 
 const DIRECTORIES: TableDefinition<Hash, ()> = TableDefinition::new("directories");
@@ -27,13 +28,20 @@ impl Server {
   }
 
   pub(crate) fn directory(&self, hash: Hash) -> ServerResult<Directory> {
+    let tx = self.database.begin_read()?;
+
+    let directories = tx.open_table(DIRECTORIES)?;
+
+    self.directory_ext(&directories, hash)
+  }
+
+  pub(crate) fn directory_ext(
+    &self,
+    directories: &ReadOnlyTable<Hash, ()>,
+    hash: Hash,
+  ) -> ServerResult<Directory> {
     ensure!(
-      self
-        .database
-        .begin_read()?
-        .open_table(DIRECTORIES)?
-        .get(&hash)?
-        .is_some(),
+      directories.get(&hash)?.is_some(),
       server_error::DirectoryNotFound { hash },
     );
 
@@ -202,6 +210,27 @@ impl Server {
     })
   }
 
+  pub(crate) fn package_html(&self, fingerprint: Fingerprint) -> ServerResult<PackageHtml> {
+    let tx = self.database.begin_read()?;
+
+    let packages = tx.open_table(PACKAGES)?;
+
+    let metadata = self.package_metadata_opt_ext(&packages, fingerprint)?;
+
+    let directories = tx.open_table(DIRECTORIES)?;
+
+    let totals = self
+      .directory_ext(&directories, fingerprint.into())?
+      .totals()
+      .unwrap();
+
+    Ok(PackageHtml {
+      fingerprint,
+      metadata,
+      totals,
+    })
+  }
+
   pub(crate) fn package_metadata(&self, fingerprint: Fingerprint) -> ServerResult<Metadata> {
     self
       .package_metadata_opt(fingerprint)?
@@ -212,13 +241,20 @@ impl Server {
     &self,
     fingerprint: Fingerprint,
   ) -> ServerResult<Option<Metadata>> {
+    let tx = self.database.begin_read()?;
+
+    let packages = tx.open_table(PACKAGES)?;
+
+    self.package_metadata_opt_ext(&packages, fingerprint)
+  }
+
+  pub(crate) fn package_metadata_opt_ext(
+    &self,
+    packages: &ReadOnlyTable<Fingerprint, ()>,
+    fingerprint: Fingerprint,
+  ) -> ServerResult<Option<Metadata>> {
     ensure!(
-      self
-        .database
-        .begin_read()?
-        .open_table(PACKAGES)?
-        .get(&fingerprint)?
-        .is_some(),
+      packages.get(&fingerprint)?.is_some(),
       server_error::PackageNotFound { fingerprint },
     );
 
