@@ -25,7 +25,7 @@ impl ArchiveBuilder {
     mut self,
     package: Entry,
     signatures: &BTreeSet<Signature>,
-  ) -> Archive {
+  ) -> Result<Archive, TotalsError> {
     let mut root = BTreeMap::new();
 
     root.insert(Archive::package_component().to_owned(), package);
@@ -40,7 +40,7 @@ impl ArchiveBuilder {
 
     let signatures = Directory::with_entries(entries);
 
-    let signatures = self.directory(&signatures);
+    let signatures = self.directory(&signatures)?;
 
     root.insert(Archive::signatures_component().to_owned(), signatures);
 
@@ -48,12 +48,13 @@ impl ArchiveBuilder {
 
     let (hash, _size) = self.add_file(root.encode_to_vec());
 
-    self.build(hash)
+    Ok(self.build(hash))
   }
 
-  pub(crate) fn directory(&mut self, directory: &Directory) -> Entry {
+  pub(crate) fn directory(&mut self, directory: &Directory) -> Result<Entry, TotalsError> {
+    let totals = directory.totals()?;
     let (hash, size) = self.add_file(directory.encode_to_vec());
-    Entry::directory(hash, size, directory.totals().unwrap())
+    Ok(Entry::directory(hash, size, totals))
   }
 
   pub(crate) fn file(&mut self, file: Vec<u8>) -> Entry {
@@ -66,20 +67,20 @@ impl ArchiveBuilder {
     Self::default()
   }
 
-  pub(crate) fn pack_directory(&mut self, directory: &DirectoryTree) -> Entry {
+  pub(crate) fn pack_directory(&mut self, directory: &DirectoryTree) -> Result<Entry, TotalsError> {
     let directory = Directory::with_entries(
       directory
         .entries
         .iter()
         .map(|(name, entry)| {
           let entry = match entry {
-            DirectoryTreeEntry::File(file) => Entry::file(file.hash, file.size),
+            DirectoryTreeEntry::File(file) => Ok(Entry::file(file.hash, file.size)),
             DirectoryTreeEntry::Directory(directory) => self.pack_directory(directory),
           };
 
-          (name.clone(), entry)
+          Ok((name.clone(), entry?))
         })
-        .collect(),
+        .collect::<Result<_, TotalsError>>()?,
     );
 
     self.directory(&directory)

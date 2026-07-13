@@ -8,15 +8,22 @@ pub(crate) struct Size {
 
 impl Size {
   pub(crate) fn run(self) -> Result {
-    let (path, manifest) = Manifest::load_with_opt_path(self.path.as_deref())?;
-    println!(
-      "{}",
-      manifest
-        .package
-        .totals()
-        .context(error::ManifestTotals { path })?
-        .file_size
-    );
+    let (path, archive) = Archive::load_with_opt_path(self.path.as_deref())?;
+
+    archive
+      .unpack()
+      .context(error::UnarchiveManifest { path: &path })?;
+
+    let package = archive
+      .package()
+      .context(error::UnarchiveManifest { path: &path })?;
+
+    let Entry::Directory { totals, .. } = package else {
+      unreachable!();
+    };
+
+    println!("{}", totals.file_size);
+
     Ok(())
   }
 }

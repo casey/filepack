@@ -46,7 +46,7 @@ impl Manifest {
   }
 
   pub fn fingerprint(&self) -> Fingerprint {
-    Archive::pack(self).fingerprint().unwrap()
+    Archive::pack(self).unwrap().fingerprint().unwrap()
   }
 
   pub(crate) fn from_json(json: &str, path: &Utf8Path) -> Result<Self> {
@@ -64,11 +64,6 @@ impl Manifest {
       unexpected.is_empty(),
       error::UnexpectedEmbeddedFiles { path, unexpected },
     }
-
-    manifest
-      .package
-      .totals()
-      .context(error::ManifestTotals { path })?;
 
     Ok(manifest)
   }
@@ -108,7 +103,9 @@ impl Manifest {
   }
 
   pub fn save(&self, path: &Utf8Path) -> Result {
-    let cbor = Archive::pack(self).encode_to_vec();
+    let cbor = Archive::pack(self)
+      .context(error::ManifestTotals { path })?
+      .encode_to_vec();
     filesystem::write(path, cbor)
   }
 

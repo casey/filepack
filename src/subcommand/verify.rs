@@ -69,7 +69,11 @@ impl Verify {
       Manifest::FILENAME.into()
     };
 
-    let manifest = Manifest::load_with_path(&source)?;
+    let archive = Archive::load(&source)?;
+
+    let manifest = archive
+      .unpack()
+      .context(error::UnarchiveManifest { path: &source })?;
 
     manifest.verify_signatures()?;
 
@@ -94,14 +98,15 @@ fingerprint mismatch: `{source}`
       return Err(error::FingerprintMismatch.build());
     }
 
-    let bar = progress_bar::new(
-      &options,
-      manifest
-        .package
-        .totals()
-        .context(error::ManifestTotals { path: &source })?
-        .file_size,
-    );
+    let package = archive
+      .package()
+      .context(error::UnarchiveManifest { path: &source })?;
+
+    let Entry::Directory { totals, .. } = package else {
+      unreachable!();
+    };
+
+    let bar = progress_bar::new(&options, totals.file_size);
 
     let mut mismatches = BTreeMap::new();
 
