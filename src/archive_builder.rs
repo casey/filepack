@@ -80,7 +80,7 @@ impl ArchiveBuilder {
 
           Ok((name.clone(), entry?))
         })
-        .collect::<Result<_, TotalsError>>()?,
+        .collect::<Result<BTreeMap<ComponentBuf, Entry>, TotalsError>>()?,
     );
 
     self.directory(&directory)
