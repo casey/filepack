@@ -7,19 +7,19 @@ pub(crate) struct Count<N> {
 }
 
 impl<N> Count<N> {
-  pub(crate) fn new(n: N, noun: &'static str) -> Self {
-    Self {
-      n,
-      noun,
-      plural: None,
-    }
-  }
-
   pub(crate) fn irregular(n: N, noun: &'static str, plural: &'static str) -> Self {
     Self {
       n,
       noun,
       plural: Some(plural),
+    }
+  }
+
+  pub(crate) fn new(n: N, noun: &'static str) -> Self {
+    Self {
+      n,
+      noun,
+      plural: None,
     }
   }
 }
@@ -28,12 +28,10 @@ impl<N: Display + One + PartialEq> Display for Count<N> {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     if self.n.is_one() {
       write!(f, "{} {}", self.n, self.noun)?;
+    } else if let Some(plural) = self.plural {
+      write!(f, "{} {plural}", self.n)?;
     } else {
-      if let Some(plural) = self.plural {
-        write!(f, "{} {plural}", self.n)?;
-      } else {
-        write!(f, "{} {}s", self.n, self.noun)?;
-      }
+      write!(f, "{} {}s", self.n, self.noun)?;
     }
     Ok(())
   }
