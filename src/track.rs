@@ -166,7 +166,7 @@ impl Track {
   }
 
   fn number_tag(reader: &FlacReader<fs::File>, path: &Utf8Path, tag: &'static str) -> Result<u64> {
-    Self::raw_tag(reader, path, tag)?
+    Self::tag(reader, path, tag)?
       .parse()
       .context(error::TrackTagInteger { path, tag })
   }
@@ -187,20 +187,20 @@ impl Track {
       sample_rate,
     } = Self::streaminfo(&reader, path)?;
 
-    self.album = Self::tag(&reader, path, "album")?;
-    self.artist = Self::tag(&reader, path, "artist")?;
+    self.album = Self::text_tag(&reader, path, "album")?;
+    self.artist = Self::text_tag(&reader, path, "artist")?;
     self.disc = Self::number_tag(&reader, path, "discnumber")?;
     self.discs = Self::number_tag(&reader, path, "disctotal")?;
     self.sample_count = sample_count;
     self.sample_rate = sample_rate;
-    self.title = Self::tag(&reader, path, "title")?;
+    self.title = Self::text_tag(&reader, path, "title")?;
     self.track = Self::number_tag(&reader, path, "tracknumber")?;
     self.tracks = Self::number_tag(&reader, path, "tracktotal")?;
 
     Ok(())
   }
 
-  fn raw_tag<'a>(
+  fn tag<'a>(
     reader: &'a FlacReader<fs::File>,
     path: &Utf8Path,
     tag: &'static str,
@@ -247,8 +247,8 @@ impl Track {
     })
   }
 
-  fn tag(reader: &FlacReader<fs::File>, path: &Utf8Path, tag: &'static str) -> Result<Text> {
-    Self::raw_tag(reader, path, tag)?
+  fn text_tag(reader: &FlacReader<fs::File>, path: &Utf8Path, tag: &'static str) -> Result<Text> {
+    Self::tag(reader, path, tag)?
       .parse()
       .context(error::TrackTagInvalid { path, tag })
   }
