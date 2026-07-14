@@ -9,7 +9,7 @@ a {
 }
 
 a:hover {
- text-shadow: 0 0 100px #fff;
+ text-shadow: 0 0 100px;
 }
 
 body {
