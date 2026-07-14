@@ -59,7 +59,7 @@ mod tests {
             </thead>
             <tbody>
               <tr>
-                <td>bar</td>
+                <td><a>bar</a></td>
                 <td class=size><a href=/file/[[:xdigit:]]{64} download="bar">1\.5 KiB</a></td>
               </tr>
               <tr>
