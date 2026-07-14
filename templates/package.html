@@ -52,7 +52,7 @@
   <dt>tracks</dt>
   <dd>{{ tracks.len() }}</dd>
   <dt>duration</dt>
-  <dd>{{ DisplayDuration(tracks.iter().map(Track::duration).sum()) }}</dd>
+  <dd>{{ DisplayDuration(Track::sum_durations(tracks)) }}</dd>
 %%       }
 %%       Media::Image { images } => {
   <dt>images</dt>
