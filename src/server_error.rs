@@ -27,7 +27,9 @@ pub(crate) enum ServerError {
   DatabaseTransaction { source: redb::TransactionError },
   #[snafu(display("failed to decode directory {hash}"))]
   DirectoryDecode { hash: Hash, source: DecodeError },
-  #[snafu(display("directory {directory} references missing {ty} entry {name} with hash {hash}"))]
+  #[snafu(display(
+    "directory {directory} references missing {ty} entry `{name}` with hash {hash}"
+  ))]
   DirectoryEntryMissing {
     directory: Hash,
     hash: Hash,

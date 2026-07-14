@@ -1664,7 +1664,7 @@ fn verify_directory_missing_file() {
     .post(format!("/directory/{hash}"))
     .status(StatusCode::BAD_REQUEST)
     .assert_body(format!(
-      "directory {hash} references missing file {}",
+      "directory {hash} references missing file entry `foo` with hash {}",
       Hash::bytes(missing),
     ))
     .send();
