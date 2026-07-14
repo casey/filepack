@@ -54,7 +54,7 @@ mod tests {
             <thead>
               <tr>
                 <th>name</th>
-                <th class=size>download</th>
+                <th>download</th>
               </tr>
             </thead>
             <tbody>
