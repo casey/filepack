@@ -2,6 +2,11 @@ time {
   margin-left: 0.5rem;
 }
 
+.artwork {
+  height: auto;
+  max-width: 100%;
+}
+
 .thumbnails {
   display: grid;
   gap: 12px;
