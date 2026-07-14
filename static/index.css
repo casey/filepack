@@ -25,6 +25,10 @@ h1 {
   white-space: nowrap;
 }
 
+dd {
+  overflow-wrap: anywhere;
+}
+
 html {
   background-color: #121212;
   color-scheme: dark;
