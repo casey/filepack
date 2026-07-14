@@ -66,14 +66,21 @@
 %%   if let Some(media) = &metadata.media {
 %%     match media {
 %%       Media::Audio { tracks } => {
-<ul>
-%%         for (i, track) in tracks.iter().enumerate() {
+%%         let mut i = 0;
+%%         for disc in tracks.chunk_by(|a, b| a.disc == b.disc) {
+%%           if disc[0].discs > 1 {
+<h2>disc {{ disc[0].disc }}</h2>
+%%           }
+<ol>
+%%           for track in disc {
   <li>
     <a href=/package/{{ self.fingerprint }}/{{ Ordinal(i) }}>{{ track.title }}</a>
     {{ DisplayDuration(track.duration()) }}
   </li>
+%%             i += 1;
+%%           }
+</ol>
 %%         }
-</ul>
 %%       }
 %%       Media::Image { images } => {
 <ul class=thumbnails>
