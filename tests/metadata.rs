@@ -115,8 +115,8 @@ media:
         "discs": 1,
         "filename": "foo.flac",
         "sample_bits": 16,
-        "sample_count": 44100,
         "sample_rate": 44100,
+        "samples": 44100,
         "title": "bar",
         "track": 1,
         "tracks": 1,
@@ -283,7 +283,7 @@ fn create_uses_existing_metadata_cbor() {
     .failure();
 }
 
-fn flac(comments: &[&str], sample_count: u32) -> Vec<u8> {
+fn flac(comments: &[&str], samples: u32) -> Vec<u8> {
   let mut bytes = b"fLaC".to_vec();
 
   bytes.push(if comments.is_empty() { 0x80 } else { 0x00 });
@@ -292,7 +292,7 @@ fn flac(comments: &[&str], sample_count: u32) -> Vec<u8> {
   bytes.extend_from_slice(&4096u16.to_be_bytes());
   bytes.extend_from_slice(&[0; 6]);
   bytes.extend_from_slice(&[0x0a, 0xc4, 0x42, 0xf0]);
-  bytes.extend_from_slice(&sample_count.to_be_bytes());
+  bytes.extend_from_slice(&samples.to_be_bytes());
   bytes.extend_from_slice(&[0; 16]);
 
   if !comments.is_empty() {
