@@ -1,7 +1,6 @@
 :root {
   --primary: rgb(255 255 255 / 87%);
   --secondary: rgb(255 255 255 / 60%);
-  --tertiary: rgb(255 255 255 / 38%);
 }
 
 *, *::before, *::after {
