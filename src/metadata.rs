@@ -119,7 +119,7 @@ impl Metadata {
     ensure! {
       readme.extension().is_some_and(|extension| extension == "md"),
       error::ReadmeExtension {
-        readme: readme.clone(),
+        readme,
       },
     }
 

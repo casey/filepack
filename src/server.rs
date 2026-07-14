@@ -338,40 +338,61 @@ impl Server {
       .totals()
       .context(server_error::DirectoryTotals { hash })?;
 
-    for entry in directory.entries.values() {
-      if entry.ty() == EntryType::File {
-        let path = self.file_path(entry.hash());
+    let tx = self.database.begin_read()?;
+
+    let directories = tx.open_table(DIRECTORIES)?;
+
+    for (name, entry) in &directory.entries {
+      let path = self.file_path(entry.hash());
+
+      let metadata = match path.metadata() {
+        Ok(metadata) => metadata,
+        Err(error) => {
+          if error.kind() == io::ErrorKind::NotFound {
+            return Err(
+              server_error::DirectoryEntryMissing {
+                directory: hash,
+                hash: entry.hash(),
+                name,
+                ty: entry.ty(),
+              }
+              .build(),
+            );
+          } else {
+            return Err(server_error::FilesystemIo { path }.into_error(error));
+          }
+        }
+      };
+
+      ensure! {
+        metadata.len() == entry.size(),
+        server_error::DirectoryEntrySizeMismatch { directory: hash, entry: name },
+      }
+
+      if let Entry::Directory { totals, .. } = entry {
         ensure!(
-          path
-            .try_exists()
-            .context(server_error::FilesystemIo { path: &path })?,
-          server_error::DirectoryFileMissing {
+          directories.get(&entry.hash())?.is_some(),
+          server_error::DirectoryUnverified {
             directory: hash,
-            file: entry.hash(),
+            subdirectory: entry.hash(),
           },
         );
+
+        self
+          .read_directory(entry.hash())?
+          .totals()
+          .unwrap()
+          .expect(*totals)
+          .context(server_error::DirectoryEntryTotals {
+            directory: hash,
+            entry: name,
+          })?;
       }
     }
 
     let tx = self.database.begin_write()?;
 
-    {
-      let mut directories = tx.open_table(DIRECTORIES)?;
-
-      for entry in directory.entries.values() {
-        if entry.ty() == EntryType::Directory {
-          ensure!(
-            directories.get(&entry.hash())?.is_some(),
-            server_error::DirectoryUnverified {
-              directory: hash,
-              subdirectory: entry.hash(),
-            },
-          );
-        }
-      }
-
-      directories.insert(&hash, &())?;
-    }
+    tx.open_table(DIRECTORIES)?.insert(&hash, &())?;
 
     tx.commit()?;
 
