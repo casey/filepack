@@ -488,7 +488,7 @@ pub enum Error {
     source: claxon::Error,
   },
   #[snafu(display("invalid track positions"))]
-  TrackPositions {
+  TrackPosition {
     backtrace: Option<Backtrace>,
     source: TrackError,
   },

@@ -56,7 +56,7 @@ impl Metadata {
 
     match &self.media {
       Some(Media::Audio { tracks }) => {
-        Track::check_positions(tracks).context(error::TrackPositions)?;
+        Track::check_positions(tracks).context(error::TrackPosition)?;
 
         for track in tracks {
           track.check_content(root)?;
