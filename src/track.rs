@@ -116,6 +116,12 @@ impl Track {
     })
   }
 
+  pub(crate) fn sum_durations(tracks: &[Track]) -> Duration {
+    tracks.iter().fold(Duration::ZERO, |sum, track| {
+      sum.saturating_add(track.duration())
+    })
+  }
+
   fn tag(reader: &FlacReader<fs::File>, path: &Utf8Path, tag: &'static str) -> Result<Text> {
     let mut values = reader.get_tag(tag);
 
