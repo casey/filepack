@@ -53,7 +53,7 @@ mod tests {
           <table>
             <thead>
               <tr>
-                <th>name</th>
+                <th>open</th>
                 <th>download</th>
               </tr>
             </thead>
