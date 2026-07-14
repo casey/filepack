@@ -487,7 +487,7 @@ pub enum Error {
     path: DisplayPath,
     source: claxon::Error,
   },
-  #[snafu(display("invalid track positions"))]
+  #[snafu(display("invalid track position"))]
   TrackPosition {
     backtrace: Option<Backtrace>,
     source: TrackError,
