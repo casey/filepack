@@ -58,9 +58,9 @@ mod tests {
             disc: 1,
             discs: 1,
             filename: "bar.flac".parse().unwrap(),
-            sample_bits: 16,
-            sample_rate: 44100,
-            samples: 44100,
+            sample_bits: 24,
+            sample_rate: 96000,
+            samples: 96000,
             title: "bar".parse().unwrap(),
             track: 2,
             tracks: 2,
@@ -99,6 +99,9 @@ mod tests {
             <dd>2</dd>
             <dt>duration</dt>
             <dd>3:46</dd>
+            <dt>format</dt>
+            <dd>FLAC 16-bit 44.1 kHz stereo (lossless)</dd>
+            <dd>FLAC 24-bit 96 kHz stereo (lossless)</dd>
           </dl>
           <ol>
             <li>
@@ -200,6 +203,8 @@ mod tests {
             <dd>3</dd>
             <dt>duration</dt>
             <dd>0:03</dd>
+            <dt>format</dt>
+            <dd>FLAC 16-bit 44.1 kHz stereo (lossless)</dd>
           </dl>
           <h2>disc 1</h2>
           <ol>
@@ -279,6 +284,8 @@ mod tests {
             <dd>2</dd>
             <dt>duration</dt>
             <dd>5124095576030431:00:15</dd>
+            <dt>format</dt>
+            <dd>FLAC 16-bit 0.001 kHz stereo (lossless)</dd>
           </dl>
           <ol>
             <li>

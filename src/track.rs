@@ -189,6 +189,15 @@ impl Track {
     )
   }
 
+  pub(crate) fn format(&self) -> AudioFormat {
+    AudioFormat {
+      channels: self.channels,
+      sample_bits: self.sample_bits,
+      sample_rate: self.sample_rate,
+      ty: self.ty,
+    }
+  }
+
   fn number_tag(reader: &FlacReader<fs::File>, path: &Utf8Path, tag: &'static str) -> Result<u64> {
     Self::tag(reader, path, tag)?
       .parse()
@@ -547,6 +556,24 @@ mod tests {
         ty: AudioType::Flac,
       },
       "ad0063717578016362617a0208030304040568666f6f2e666c616306070701080209636261720a050b060c00",
+    );
+  }
+
+  #[test]
+  fn format() {
+    let mut track = "foo.flac".parse::<Track>().unwrap();
+    track.channels = 2;
+    track.sample_bits = 16;
+    track.sample_rate = 44100;
+
+    assert_eq!(
+      track.format(),
+      AudioFormat {
+        channels: 2,
+        sample_bits: 16,
+        sample_rate: 44100,
+        ty: AudioType::Flac,
+      },
     );
   }
 
