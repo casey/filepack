@@ -39,6 +39,7 @@ mod tests {
           Track {
             album: "qux".parse().unwrap(),
             artist: "baz".parse().unwrap(),
+            channels: 2,
             disc: 1,
             discs: 1,
             filename: "foo.flac".parse().unwrap(),
@@ -53,6 +54,7 @@ mod tests {
           Track {
             album: "qux".parse().unwrap(),
             artist: "baz".parse().unwrap(),
+            channels: 2,
             disc: 1,
             discs: 1,
             filename: "bar.flac".parse().unwrap(),
@@ -123,6 +125,7 @@ mod tests {
           Track {
             album: "qux".parse().unwrap(),
             artist: "baz".parse().unwrap(),
+            channels: 2,
             disc: 1,
             discs: 2,
             filename: "foo.flac".parse().unwrap(),
@@ -137,6 +140,7 @@ mod tests {
           Track {
             album: "qux".parse().unwrap(),
             artist: "baz".parse().unwrap(),
+            channels: 2,
             disc: 1,
             discs: 2,
             filename: "bar.flac".parse().unwrap(),
@@ -151,6 +155,7 @@ mod tests {
           Track {
             album: "qux".parse().unwrap(),
             artist: "baz".parse().unwrap(),
+            channels: 2,
             disc: 2,
             discs: 2,
             filename: "baz.flac".parse().unwrap(),
@@ -226,6 +231,7 @@ mod tests {
     let track = Track {
       album: "qux".parse().unwrap(),
       artist: "baz".parse().unwrap(),
+      channels: 2,
       disc: 1,
       discs: 1,
       filename: "foo.flac".parse().unwrap(),

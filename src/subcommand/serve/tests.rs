@@ -1278,6 +1278,7 @@ fn package_page_renders_audio_media() {
         Track {
           album: "qux".parse().unwrap(),
           artist: "baz".parse().unwrap(),
+          channels: 2,
           disc: 1,
           discs: 1,
           filename: "foo.flac".parse().unwrap(),
@@ -1292,6 +1293,7 @@ fn package_page_renders_audio_media() {
         Track {
           album: "qux".parse().unwrap(),
           artist: "baz".parse().unwrap(),
+          channels: 2,
           disc: 1,
           discs: 1,
           filename: "bar.flac".parse().unwrap(),
