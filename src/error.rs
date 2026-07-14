@@ -487,6 +487,11 @@ pub enum Error {
     path: DisplayPath,
     source: claxon::Error,
   },
+  #[snafu(display("invalid track positions"))]
+  TrackPositions {
+    backtrace: Option<Backtrace>,
+    source: TrackError,
+  },
   #[snafu(display("track `{path}` has {actual} samples but metadata sample count is {expected}"))]
   TrackSampleCountMismatch {
     actual: u64,
@@ -512,6 +517,13 @@ pub enum Error {
   TrackTagEmpty {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
+    tag: &'static str,
+  },
+  #[snafu(display("track `{path}` has non-integer `{tag}` tag"))]
+  TrackTagInteger {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+    source: ParseIntError,
     tag: &'static str,
   },
   #[snafu(display("track `{path}` has invalid `{tag}` tag"))]

@@ -7,14 +7,22 @@ pub(crate) struct Track {
   #[n(1)]
   pub(crate) artist: Text,
   #[n(2)]
-  pub(crate) filename: ComponentBuf,
+  pub(crate) disc: u64,
   #[n(3)]
-  pub(crate) sample_count: u64,
+  pub(crate) discs: u64,
   #[n(4)]
-  pub(crate) sample_rate: u64,
+  pub(crate) filename: ComponentBuf,
   #[n(5)]
-  pub(crate) title: Text,
+  pub(crate) sample_count: u64,
   #[n(6)]
+  pub(crate) sample_rate: u64,
+  #[n(7)]
+  pub(crate) title: Text,
+  #[n(8)]
+  pub(crate) track: u64,
+  #[n(9)]
+  pub(crate) tracks: u64,
+  #[n(10)]
   #[serde(rename = "type")]
   pub(crate) ty: AudioType,
 }
@@ -61,6 +69,89 @@ impl Track {
     Ok(())
   }
 
+  pub(crate) fn check_positions(tracks: &[Track]) -> Result<(), TrackError> {
+    let Some(first) = tracks.first() else {
+      return Ok(());
+    };
+
+    let discs = first.discs;
+
+    let mut expected_disc = 1;
+    let mut expected_track = 1;
+    let mut disc_tracks = 0;
+
+    for track in tracks {
+      ensure! {
+        track.discs == discs,
+        track_error::DiscTotalMismatch {
+          actual: track.discs,
+          expected: discs,
+          filename: track.filename.clone(),
+        },
+      }
+
+      ensure! {
+        track.disc == expected_disc && track.track == expected_track,
+        track_error::PositionMismatch {
+          disc: track.disc,
+          expected_disc,
+          expected_track,
+          filename: track.filename.clone(),
+          track: track.track,
+        },
+      }
+
+      ensure! {
+        track.disc <= discs,
+        track_error::DiscNumberExceedsTotal {
+          filename: track.filename.clone(),
+          number: track.disc,
+          total: discs,
+        },
+      }
+
+      if expected_track == 1 {
+        disc_tracks = track.tracks;
+      } else {
+        ensure! {
+          track.tracks == disc_tracks,
+          track_error::TotalMismatch {
+            actual: track.tracks,
+            disc: expected_disc,
+            expected: disc_tracks,
+            filename: track.filename.clone(),
+          },
+        }
+      }
+
+      ensure! {
+        track.track <= disc_tracks,
+        track_error::NumberExceedsTotal {
+          filename: track.filename.clone(),
+          number: track.track,
+          total: disc_tracks,
+        },
+      }
+
+      if expected_track == disc_tracks {
+        expected_disc += 1;
+        expected_track = 1;
+      } else {
+        expected_track += 1;
+      }
+    }
+
+    ensure! {
+      expected_disc > discs,
+      track_error::Missing {
+        disc: expected_disc,
+        track: expected_track,
+      },
+    }
+
+    Ok(())
+  }
+
   pub(crate) fn duration(&self) -> Duration {
     if self.sample_rate == 0 {
       return Duration::ZERO;
@@ -72,6 +163,12 @@ impl Track {
       self.sample_count / self.sample_rate,
       u32::try_from(subsecond * 1_000_000_000 / u128::from(self.sample_rate)).unwrap(),
     )
+  }
+
+  fn number_tag(reader: &FlacReader<fs::File>, path: &Utf8Path, tag: &'static str) -> Result<u64> {
+    Self::raw_tag(reader, path, tag)?
+      .parse()
+      .context(error::TrackTagInteger { path, tag })
   }
 
   pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result {
@@ -92,11 +189,39 @@ impl Track {
 
     self.album = Self::tag(&reader, path, "album")?;
     self.artist = Self::tag(&reader, path, "artist")?;
+    self.disc = Self::number_tag(&reader, path, "discnumber")?;
+    self.discs = Self::number_tag(&reader, path, "disctotal")?;
     self.sample_count = sample_count;
     self.sample_rate = sample_rate;
     self.title = Self::tag(&reader, path, "title")?;
+    self.track = Self::number_tag(&reader, path, "tracknumber")?;
+    self.tracks = Self::number_tag(&reader, path, "tracktotal")?;
 
     Ok(())
+  }
+
+  fn raw_tag<'a>(
+    reader: &'a FlacReader<fs::File>,
+    path: &Utf8Path,
+    tag: &'static str,
+  ) -> Result<&'a str> {
+    let mut values = reader.get_tag(tag);
+
+    let value = values
+      .next()
+      .context(error::TrackTagMissing { path, tag })?;
+
+    ensure! {
+      values.next().is_none(),
+      error::TrackTagMultiple { path, tag },
+    }
+
+    ensure! {
+      !value.is_empty(),
+      error::TrackTagEmpty { path, tag },
+    }
+
+    Ok(value)
   }
 
   pub(crate) fn resource_type(&self) -> ResourceType {
@@ -123,23 +248,9 @@ impl Track {
   }
 
   fn tag(reader: &FlacReader<fs::File>, path: &Utf8Path, tag: &'static str) -> Result<Text> {
-    let mut values = reader.get_tag(tag);
-
-    let value = values
-      .next()
-      .context(error::TrackTagMissing { path, tag })?;
-
-    ensure! {
-      values.next().is_none(),
-      error::TrackTagMultiple { path, tag },
-    }
-
-    ensure! {
-      !value.is_empty(),
-      error::TrackTagEmpty { path, tag },
-    }
-
-    value.parse().context(error::TrackTagInvalid { path, tag })
+    Self::raw_tag(reader, path, tag)?
+      .parse()
+      .context(error::TrackTagInvalid { path, tag })
   }
 }
 
@@ -158,10 +269,14 @@ impl FromStr for Track {
     Ok(Self {
       album: Text::new(),
       artist: Text::new(),
+      disc: 0,
+      discs: 0,
       filename,
       sample_count: 0,
       sample_rate: 0,
       title: Text::new(),
+      track: 0,
+      tracks: 0,
       ty,
     })
   }
@@ -205,6 +320,144 @@ mod tests {
   }
 
   #[test]
+  fn check_positions() {
+    #[track_caller]
+    fn case(positions: &[(u64, u64, u64, u64)], expected: Result<(), TrackError>) {
+      let tracks = positions
+        .iter()
+        .enumerate()
+        .map(|(i, (disc, discs, track, tracks))| {
+          let mut t = format!("{i}.flac").parse::<Track>().unwrap();
+          t.disc = *disc;
+          t.discs = *discs;
+          t.track = *track;
+          t.tracks = *tracks;
+          t
+        })
+        .collect::<Vec<Track>>();
+
+      assert_eq!(Track::check_positions(&tracks), expected);
+    }
+
+    case(&[], Ok(()));
+
+    case(&[(1, 1, 1, 1)], Ok(()));
+
+    case(&[(1, 2, 1, 2), (1, 2, 2, 2), (2, 2, 1, 1)], Ok(()));
+
+    case(
+      &[(1, 1, 2, 2), (1, 1, 1, 2)],
+      Err(TrackError::PositionMismatch {
+        disc: 1,
+        expected_disc: 1,
+        expected_track: 1,
+        filename: "0.flac".parse().unwrap(),
+        track: 2,
+      }),
+    );
+
+    case(
+      &[(1, 1, 1, 2), (1, 1, 1, 2)],
+      Err(TrackError::PositionMismatch {
+        disc: 1,
+        expected_disc: 1,
+        expected_track: 2,
+        filename: "1.flac".parse().unwrap(),
+        track: 1,
+      }),
+    );
+
+    case(
+      &[(1, 1, 1, 3), (1, 1, 3, 3)],
+      Err(TrackError::PositionMismatch {
+        disc: 1,
+        expected_disc: 1,
+        expected_track: 2,
+        filename: "1.flac".parse().unwrap(),
+        track: 3,
+      }),
+    );
+
+    case(
+      &[(1, 1, 1, 2)],
+      Err(TrackError::Missing { disc: 1, track: 2 }),
+    );
+
+    case(
+      &[(1, 2, 1, 1)],
+      Err(TrackError::Missing { disc: 2, track: 1 }),
+    );
+
+    case(
+      &[(1, 2, 1, 1), (2, 1, 1, 1)],
+      Err(TrackError::DiscTotalMismatch {
+        actual: 1,
+        expected: 2,
+        filename: "1.flac".parse().unwrap(),
+      }),
+    );
+
+    case(
+      &[(1, 1, 1, 2), (1, 1, 2, 3)],
+      Err(TrackError::TotalMismatch {
+        actual: 3,
+        disc: 1,
+        expected: 2,
+        filename: "1.flac".parse().unwrap(),
+      }),
+    );
+
+    case(
+      &[(1, 1, 1, 1), (2, 1, 1, 1)],
+      Err(TrackError::DiscNumberExceedsTotal {
+        filename: "1.flac".parse().unwrap(),
+        number: 2,
+        total: 1,
+      }),
+    );
+
+    case(
+      &[(1, 0, 1, 1)],
+      Err(TrackError::DiscNumberExceedsTotal {
+        filename: "0.flac".parse().unwrap(),
+        number: 1,
+        total: 0,
+      }),
+    );
+
+    case(
+      &[(1, 1, 1, 0)],
+      Err(TrackError::NumberExceedsTotal {
+        filename: "0.flac".parse().unwrap(),
+        number: 1,
+        total: 0,
+      }),
+    );
+
+    case(
+      &[(0, 1, 1, 1)],
+      Err(TrackError::PositionMismatch {
+        disc: 0,
+        expected_disc: 1,
+        expected_track: 1,
+        filename: "0.flac".parse().unwrap(),
+        track: 1,
+      }),
+    );
+
+    case(
+      &[(1, 1, 0, 1)],
+      Err(TrackError::PositionMismatch {
+        disc: 1,
+        expected_disc: 1,
+        expected_track: 1,
+        filename: "0.flac".parse().unwrap(),
+        track: 0,
+      }),
+    );
+  }
+
+  #[test]
   fn duration() {
     #[track_caller]
     fn case(sample_count: u64, sample_rate: u64, expected: Duration) {
@@ -224,20 +477,24 @@ mod tests {
   fn encoding() {
     assert_cbor(
       "foo.flac".parse::<Track>().unwrap(),
-      "a7006001600268666f6f2e666c61630300040005600600",
+      "ab00600160020003000468666f6f2e666c6163050006000760080009000a00",
     );
 
     assert_cbor(
       Track {
         album: "qux".parse().unwrap(),
         artist: "baz".parse().unwrap(),
+        disc: 3,
+        discs: 4,
         filename: "foo.flac".parse().unwrap(),
         sample_count: 2,
         sample_rate: 1,
         title: "bar".parse().unwrap(),
+        track: 5,
+        tracks: 6,
         ty: AudioType::Flac,
       },
-      "a70063717578016362617a0268666f6f2e666c61630302040105636261720600",
+      "ab0063717578016362617a020303040468666f6f2e666c6163050206010763626172080509060a00",
     );
   }
 
@@ -253,10 +510,14 @@ mod tests {
       Track {
         album: Text::new(),
         artist: Text::new(),
+        disc: 0,
+        discs: 0,
         filename: "foo.flac".parse().unwrap(),
         sample_count: 0,
         sample_rate: 0,
         title: Text::new(),
+        track: 0,
+        tracks: 0,
         ty: AudioType::Flac,
       },
     );
@@ -302,7 +563,10 @@ mod tests {
     );
 
     assert_matches!(
-      err(&flac(&["ALBUM=qux", "ARTIST=baz"], 44100)),
+      err(&flac(
+        &["ALBUM=qux", "ARTIST=baz", "DISCNUMBER=1", "DISCTOTAL=1"],
+        44100,
+      )),
       Error::TrackTagMissing { tag: "title", .. },
     );
 
@@ -315,12 +579,30 @@ mod tests {
     );
 
     assert_matches!(
-      err(&flac(&["ALBUM=qux", "ARTIST=baz", "TITLE="], 44100)),
+      err(&flac(
+        &[
+          "ALBUM=qux",
+          "ARTIST=baz",
+          "DISCNUMBER=1",
+          "DISCTOTAL=1",
+          "TITLE="
+        ],
+        44100,
+      )),
       Error::TrackTagEmpty { tag: "title", .. },
     );
 
     assert_matches!(
-      err(&flac(&["ALBUM=qux", "ARTIST=baz", "TITLE=foo\tbar"], 44100)),
+      err(&flac(
+        &[
+          "ALBUM=qux",
+          "ARTIST=baz",
+          "DISCNUMBER=1",
+          "DISCTOTAL=1",
+          "TITLE=foo\tbar",
+        ],
+        44100,
+      )),
       Error::TrackTagInvalid {
         source: TextError::Control { character: '\t' },
         tag: "title",
@@ -329,7 +611,71 @@ mod tests {
     );
 
     assert_matches!(
-      err(&flac(&["ALBUM=qux", "ARTIST=baz", "TITLE=bar"], 0)),
+      err(&flac(
+        &[
+          "ALBUM=qux",
+          "ARTIST=baz",
+          "DISCNUMBER=1",
+          "DISCTOTAL=1",
+          "TITLE=bar",
+        ],
+        44100,
+      )),
+      Error::TrackTagMissing {
+        tag: "tracknumber",
+        ..
+      },
+    );
+
+    assert_matches!(
+      err(&flac(
+        &[
+          "ALBUM=qux",
+          "ARTIST=baz",
+          "DISCNUMBER=1",
+          "DISCTOTAL=1",
+          "TITLE=bar",
+          "TRACKNUMBER=foo",
+        ],
+        44100,
+      )),
+      Error::TrackTagInteger {
+        tag: "tracknumber",
+        ..
+      },
+    );
+
+    assert_matches!(
+      err(&flac(
+        &[
+          "ALBUM=qux",
+          "ARTIST=baz",
+          "DISCNUMBER=1",
+          "DISCTOTAL=1",
+          "TITLE=bar",
+          "TRACKNUMBER=3/12",
+        ],
+        44100,
+      )),
+      Error::TrackTagInteger {
+        tag: "tracknumber",
+        ..
+      },
+    );
+
+    assert_matches!(
+      err(&flac(
+        &[
+          "ALBUM=qux",
+          "ARTIST=baz",
+          "DISCNUMBER=1",
+          "DISCTOTAL=1",
+          "TITLE=bar",
+          "TRACKNUMBER=1",
+          "TRACKTOTAL=1",
+        ],
+        0,
+      )),
       Error::TrackSampleCountUnknown { .. },
     );
   }
@@ -340,7 +686,18 @@ mod tests {
 
     std::fs::write(
       root.join("foo.flac"),
-      flac(&["ALBUM=qux", "ARTIST=baz", "TITLE=bar"], 66150),
+      flac(
+        &[
+          "ALBUM=qux",
+          "ARTIST=baz",
+          "DISCNUMBER=1",
+          "DISCTOTAL=2",
+          "TITLE=bar",
+          "TRACKNUMBER=3",
+          "TRACKTOTAL=4",
+        ],
+        66150,
+      ),
     )
     .unwrap();
 
@@ -349,30 +706,38 @@ mod tests {
 
     assert_eq!(track.album.as_str(), "qux");
     assert_eq!(track.artist.as_str(), "baz");
+    assert_eq!(track.disc, 1);
+    assert_eq!(track.discs, 2);
     assert_eq!(track.sample_count, 66150);
     assert_eq!(track.sample_rate, 44100);
     assert_eq!(track.title.as_str(), "bar");
+    assert_eq!(track.track, 3);
+    assert_eq!(track.tracks, 4);
   }
 
   #[test]
   fn serialize() {
     assert_eq!(
       serde_json::to_string(&"foo.flac".parse::<Track>().unwrap()).unwrap(),
-      r#"{"album":"","artist":"","filename":"foo.flac","sample_count":0,"sample_rate":0,"title":"","type":"flac"}"#,
+      r#"{"album":"","artist":"","disc":0,"discs":0,"filename":"foo.flac","sample_count":0,"sample_rate":0,"title":"","track":0,"tracks":0,"type":"flac"}"#,
     );
 
     assert_eq!(
       serde_json::to_string(&Track {
         album: "qux".parse().unwrap(),
         artist: "baz".parse().unwrap(),
+        disc: 3,
+        discs: 4,
         filename: "foo.flac".parse().unwrap(),
         sample_count: 2,
         sample_rate: 1,
         title: "bar".parse().unwrap(),
+        track: 5,
+        tracks: 6,
         ty: AudioType::Flac,
       })
       .unwrap(),
-      r#"{"album":"qux","artist":"baz","filename":"foo.flac","sample_count":2,"sample_rate":1,"title":"bar","type":"flac"}"#,
+      r#"{"album":"qux","artist":"baz","disc":3,"discs":4,"filename":"foo.flac","sample_count":2,"sample_rate":1,"title":"bar","track":5,"tracks":6,"type":"flac"}"#,
     );
   }
 }

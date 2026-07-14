@@ -78,7 +78,18 @@ fn create_extracts_track_tags() {
   Test::new()
     .write(
       "foo.flac",
-      flac(&["ALBUM=qux", "ARTIST=baz", "TITLE=bar"], 44100),
+      flac(
+        &[
+          "ALBUM=qux",
+          "ARTIST=baz",
+          "DISCNUMBER=1",
+          "DISCTOTAL=1",
+          "TITLE=bar",
+          "TRACKNUMBER=1",
+          "TRACKTOTAL=1",
+        ],
+        44100,
+      ),
     )
     .write(
       "metadata.yaml",
@@ -100,10 +111,14 @@ media:
       {
         "album": "qux",
         "artist": "baz",
+        "disc": 1,
+        "discs": 1,
         "filename": "foo.flac",
         "sample_count": 44100,
         "sample_rate": 44100,
         "title": "bar",
+        "track": 1,
+        "tracks": 1,
         "type": "flac"
       }
     ]
@@ -122,7 +137,18 @@ fn create_rejects_extra_files_in_media_packages() {
   Test::new()
     .write(
       "foo.flac",
-      flac(&["ALBUM=qux", "ARTIST=baz", "TITLE=bar"], 44100),
+      flac(
+        &[
+          "ALBUM=qux",
+          "ARTIST=baz",
+          "DISCNUMBER=1",
+          "DISCTOTAL=1",
+          "TITLE=bar",
+          "TRACKNUMBER=1",
+          "TRACKTOTAL=1",
+        ],
+        44100,
+      ),
     )
     .write(
       "metadata.yaml",
@@ -141,6 +167,43 @@ media:
 error: found 2 extra files not referenced in metadata
        ├─ `bar.txt`
        └─ `empty`
+",
+    )
+    .failure();
+}
+
+#[test]
+fn create_rejects_invalid_track_positions() {
+  Test::new()
+    .write(
+      "foo.flac",
+      flac(
+        &[
+          "ALBUM=qux",
+          "ARTIST=baz",
+          "DISCNUMBER=1",
+          "DISCTOTAL=1",
+          "TITLE=bar",
+          "TRACKNUMBER=2",
+          "TRACKTOTAL=2",
+        ],
+        44100,
+      ),
+    )
+    .write(
+      "metadata.yaml",
+      "\
+media:
+  type: audio
+  tracks:
+    - foo.flac
+",
+    )
+    .arg("create")
+    .stderr(
+      "\
+error: invalid track positions
+       └─ track `foo.flac` is disc 1 track 2 but expected disc 1 track 1
 ",
     )
     .failure();
