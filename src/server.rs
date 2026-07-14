@@ -283,10 +283,6 @@ impl Server {
     let directory = Directory::decode_from_slice(&self.read_file(hash)?)
       .context(server_error::DirectoryDecode { hash })?;
 
-    directory
-      .totals()
-      .context(server_error::DirectoryTotals { hash })?;
-
     Ok(directory)
   }
 
@@ -337,6 +333,10 @@ impl Server {
 
   pub(crate) fn verify_directory(&self, hash: Hash) -> ServerResult {
     let directory = self.read_directory(hash)?;
+
+    directory
+      .totals()
+      .context(server_error::DirectoryTotals { hash })?;
 
     for entry in directory.entries.values() {
       if entry.ty() == EntryType::File {
