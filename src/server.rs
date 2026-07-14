@@ -420,6 +420,11 @@ impl Server {
           server_error::PackageMetadataFileMissing { fingerprint, path },
         );
       }
+
+      if let Some(Media::Audio { tracks }) = &metadata.media {
+        Track::check_positions(tracks)
+          .context(server_error::PackageTrackPosition { fingerprint })?;
+      }
     }
 
     let tx = self.database.begin_write()?;

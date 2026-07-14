@@ -706,7 +706,7 @@ fn media_audio_track_file_missing() {
 
   let metadata = Metadata {
     media: Some(Media::Audio {
-      tracks: vec!["foo.flac".parse().unwrap()],
+      tracks: tracks(&["foo.flac"]),
     }),
     ..default()
   };
@@ -744,7 +744,7 @@ fn media_audio_track_out_of_range() {
   let fingerprint = PackageBuilder::new()
     .metadata(&Metadata {
       media: Some(Media::Audio {
-        tracks: vec!["foo.flac".parse().unwrap(), "bar.flac".parse().unwrap()],
+        tracks: tracks(&["foo.flac", "bar.flac"]),
       }),
       ..default()
     })
@@ -856,7 +856,7 @@ fn media_audio_track_ranges() {
   let fingerprint = PackageBuilder::new()
     .metadata(&Metadata {
       media: Some(Media::Audio {
-        tracks: vec!["foo.flac".parse().unwrap()],
+        tracks: tracks(&["foo.flac"]),
       }),
       ..default()
     })
@@ -910,7 +910,7 @@ fn media_audio_track_response() {
   let fingerprint = PackageBuilder::new()
     .metadata(&Metadata {
       media: Some(Media::Audio {
-        tracks: vec!["foo.flac".parse().unwrap(), "bar.flac".parse().unwrap()],
+        tracks: tracks(&["foo.flac", "bar.flac"]),
       }),
       ..default()
     })
@@ -1019,7 +1019,7 @@ fn media_type_mismatch() {
   let audio = PackageBuilder::new()
     .metadata(&Metadata {
       media: Some(Media::Audio {
-        tracks: vec!["foo.flac".parse().unwrap()],
+        tracks: tracks(&["foo.flac"]),
       }),
       ..default()
     })
@@ -1187,7 +1187,7 @@ fn package_item_track() {
 
   let metadata = Metadata {
     media: Some(Media::Audio {
-      tracks: vec!["foo.flac".parse().unwrap()],
+      tracks: tracks(&["foo.flac"]),
     }),
     ..default()
   };
@@ -1214,7 +1214,7 @@ fn package_item_track_out_of_range() {
   let fingerprint = PackageBuilder::new()
     .metadata(&Metadata {
       media: Some(Media::Audio {
-        tracks: vec!["foo.flac".parse().unwrap()],
+        tracks: tracks(&["foo.flac"]),
       }),
       ..default()
     })
@@ -1288,7 +1288,19 @@ fn package_page_renders_audio_media() {
           tracks: 2,
           ty: AudioType::Flac,
         },
-        "bar.flac".parse().unwrap(),
+        Track {
+          album: "qux".parse().unwrap(),
+          artist: "baz".parse().unwrap(),
+          disc: 1,
+          discs: 1,
+          filename: "bar.flac".parse().unwrap(),
+          sample_count: 44100,
+          sample_rate: 44100,
+          title: "bar".parse().unwrap(),
+          track: 2,
+          tracks: 2,
+          ty: AudioType::Flac,
+        },
       ],
     }),
     ..default()
@@ -1552,6 +1564,21 @@ fn static_files() {
     .get("/static/index.css")
     .assert_static("index.css")
     .send();
+}
+
+fn tracks(filenames: &[&str]) -> Vec<Track> {
+  filenames
+    .iter()
+    .enumerate()
+    .map(|(i, filename)| {
+      let mut track = filename.parse::<Track>().unwrap();
+      track.disc = 1;
+      track.discs = 1;
+      track.track = i.into_u64() + 1;
+      track.tracks = filenames.len().into_u64();
+      track
+    })
+    .collect()
 }
 
 #[test]
@@ -1845,6 +1872,47 @@ fn verify_directory_unverified_subdirectory() {
     .status(StatusCode::BAD_REQUEST)
     .assert_body(format!(
       "directory {parent_hash} references unverified subdirectory {child_hash}"
+    ))
+    .send();
+}
+
+#[test]
+fn verify_package_invalid_track_position() {
+  let server = TestServer::new();
+
+  let audio = b"foo";
+  server.write_file(audio);
+
+  let mut track = "foo.flac".parse::<Track>().unwrap();
+  track.disc = 1;
+  track.discs = 1;
+  track.track = 2;
+  track.tracks = 2;
+
+  let metadata = Metadata {
+    media: Some(Media::Audio {
+      tracks: vec![track],
+    }),
+    ..default()
+  }
+  .encode_to_vec();
+  server.write_file(&metadata);
+
+  let (cbor, hash) = Directory::new()
+    .insert_file("foo.flac", audio)
+    .insert_file(Metadata::CBOR_FILENAME, &metadata)
+    .cbor();
+  let fingerprint = Fingerprint(hash);
+  server.write_file(&cbor);
+
+  server.post(format!("/directory/{hash}")).send();
+
+  server
+    .post(format!("/package/{fingerprint}"))
+    .status(StatusCode::BAD_REQUEST)
+    .assert_body(format!(
+      "package {fingerprint} has invalid track position: \
+       track `foo.flac` is disc 1 track 2 but expected disc 1 track 1"
     ))
     .send();
 }
