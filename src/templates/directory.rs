@@ -53,31 +53,26 @@ mod tests {
           <table>
             <thead>
               <tr>
-                <th>name</th>
-                <th class=size>size</th>
+                <th>open</th>
                 <th>download</th>
               </tr>
             </thead>
             <tbody>
               <tr>
                 <td>bar</td>
-                <td class=size>1\.5 KiB</td>
-                <td><a href=/file/[[:xdigit:]]{64} download="bar">download</a></td>
+                <td class=size><a href=/file/[[:xdigit:]]{64} download="bar">1\.5 KiB</a></td>
               </tr>
               <tr>
                 <td><a href=/file/[[:xdigit:]]{64}/baz\.png>baz\.png</a></td>
-                <td class=size>1\.5 KiB</td>
-                <td><a href=/file/[[:xdigit:]]{64} download="baz\.png">download</a></td>
+                <td class=size><a href=/file/[[:xdigit:]]{64} download="baz\.png">1\.5 KiB</a></td>
               </tr>
               <tr>
                 <td><a href=/directory/[[:xdigit:]]{64}>foo/</a></td>
-                <td class=size>9\.5 MiB</td>
-                <td><a href=/file/[[:xdigit:]]{64} download="foo">download</a></td>
+                <td class=size><a href=/file/[[:xdigit:]]{64} download="foo">2\.4 MiB</a></td>
               </tr>
               <tr>
                 <td><a href=/file/[[:xdigit:]]{64}/qux%20quux\.png>qux quux\.png</a></td>
-                <td class=size>1\.5 KiB</td>
-                <td><a href=/file/[[:xdigit:]]{64} download="qux quux\.png">download</a></td>
+                <td class=size><a href=/file/[[:xdigit:]]{64} download="qux quux\.png">1\.5 KiB</a></td>
               </tr>
             </tbody>
           </table>
