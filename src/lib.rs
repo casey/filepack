@@ -25,6 +25,7 @@ use {
     archive_error::ArchiveError,
     arguments::Arguments,
     array_decoder::ArrayDecoder,
+    audio_format::AudioFormat,
     audio_type::AudioType,
     authenticated::Authenticated,
     bech32_decoder::Bech32Decoder,
@@ -230,6 +231,7 @@ mod archive_error;
 mod arguments;
 mod array_decoder;
 mod array_encoder;
+mod audio_format;
 mod audio_type;
 mod authenticated;
 mod bech32_decoder;

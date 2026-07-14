@@ -53,6 +53,12 @@
   <dd>{{ tracks.len() }}</dd>
   <dt>duration</dt>
   <dd>{{ DisplayDuration(Track::sum_durations(tracks)) }}</dd>
+%%         if !tracks.is_empty() {
+  <dt>format</dt>
+%%           for format in Track::formats(tracks) {
+  <dd>{{ format }}</dd>
+%%           }
+%%         }
 %%       }
 %%       Media::Image { images } => {
   <dt>images</dt>
