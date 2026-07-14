@@ -106,11 +106,11 @@ mod tests {
           <ol>
             <li>
               <a href=/package/{fingerprint}/1>foo</a>
-              3:45
+              <time datetime=PT3M45S>3:45</time>
             </li>
             <li>
               <a href=/package/{fingerprint}/2>bar</a>
-              0:01
+              <time datetime=PT0M1S>0:01</time>
             </li>
           </ol>
         ",
@@ -210,18 +210,18 @@ mod tests {
           <ol>
             <li>
               <a href=/package/{fingerprint}/1>foo</a>
-              0:01
+              <time datetime=PT0M1S>0:01</time>
             </li>
             <li>
               <a href=/package/{fingerprint}/2>bar</a>
-              0:01
+              <time datetime=PT0M1S>0:01</time>
             </li>
           </ol>
           <h2>disc 2</h2>
           <ol>
             <li>
               <a href=/package/{fingerprint}/3>baz</a>
-              0:01
+              <time datetime=PT0M1S>0:01</time>
             </li>
           </ol>
         ",
@@ -290,11 +290,11 @@ mod tests {
           <ol>
             <li>
               <a href=/package/{fingerprint}/1>foo</a>
-              5124095576030431:00:15
+              <time datetime=PT5124095576030431H0M15S>5124095576030431:00:15</time>
             </li>
             <li>
               <a href=/package/{fingerprint}/2>foo</a>
-              5124095576030431:00:15
+              <time datetime=PT5124095576030431H0M15S>5124095576030431:00:15</time>
             </li>
           </ol>
         ",

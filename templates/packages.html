@@ -2,13 +2,7 @@
 <ul>
 %% for (fingerprint, title) in &self.packages {
   <li>
-    <a href=/package/{{ fingerprint }}>
-%% if let Some(title) = title {
-      {{ title }}
-%% } else {
-      {{ fingerprint }}
-%% }
-    </a>
+    <a href=/package/{{ fingerprint }}>{% if let Some(title) = title { %}{{ title }}{% } else { %}{{ fingerprint }}{% } %}</a>
   </li>
 %% }
 </ul>
