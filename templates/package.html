@@ -81,9 +81,7 @@
 %%           for track in disc {
   <li>
     <a href=/package/{{ self.fingerprint }}/{{ Ordinal(i) }}>{{ track.title }}</a>
-    <time datetime={{ Iso8601Duration(track.duration()) }}>
-      {{ DisplayDuration(track.duration()) }}
-    </time>
+    <time datetime={{ Iso8601Duration(track.duration()) }}>{{ DisplayDuration(track.duration()) }}</time>
   </li>
 %%             i += 1;
 %%           }
