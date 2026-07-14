@@ -346,24 +346,19 @@ impl Server {
       for (name, entry) in &directory.entries {
         let path = self.file_path(entry.hash());
 
-        let metadata = match path.metadata() {
-          Ok(metadata) => metadata,
-          Err(error) => {
-            if error.kind() == io::ErrorKind::NotFound {
-              return Err(
-                server_error::DirectoryEntryMissing {
-                  directory: hash,
-                  hash: entry.hash(),
-                  name,
-                  ty: entry.ty(),
-                }
-                .build(),
-              );
-            } else {
-              return Err(server_error::FilesystemIo { path }.into_error(error));
+        let metadata = path.metadata().map_err(|error| {
+          if error.kind() == io::ErrorKind::NotFound {
+            server_error::DirectoryEntryMissing {
+              directory: hash,
+              hash: entry.hash(),
+              name,
+              ty: entry.ty(),
             }
+            .build()
+          } else {
+            server_error::FilesystemIo { path: &path }.into_error(error)
           }
-        };
+        })?;
 
         ensure! {
           metadata.len() == entry.size(),
