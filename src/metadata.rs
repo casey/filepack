@@ -56,6 +56,8 @@ impl Metadata {
 
     match &self.media {
       Some(Media::Audio { tracks }) => {
+        Track::check_positions(tracks).context(error::TrackPosition)?;
+
         for track in tracks {
           track.check_content(root)?;
         }
@@ -369,10 +371,14 @@ mod tests {
         tracks: vec![Track {
           album: "bar".parse().unwrap(),
           artist: "baz".parse().unwrap(),
+          disc: 3,
+          discs: 4,
           filename: "track.flac".parse().unwrap(),
           sample_count: 2,
           sample_rate: 1,
           title: "foo".parse().unwrap(),
+          track: 5,
+          tracks: 6,
           ty: AudioType::Flac,
         }],
       }),
