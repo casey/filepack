@@ -34,10 +34,14 @@ pub(crate) enum ServerError {
     name: ComponentBuf,
     ty: EntryType,
   },
-  #[snafu(display("directory {directory} entry {entry}"))]
+  #[snafu(display(
+    "directory {directory} entry {entry} size mismatch, expected {expected} but found {actual}",
+  ))]
   DirectoryEntrySizeMismatch {
+    actual: u64,
     directory: Hash,
     entry: ComponentBuf,
+    expected: u64,
   },
   #[snafu(display("directory {directory} entry {entry}"))]
   DirectoryEntryTotals {

@@ -338,61 +338,66 @@ impl Server {
       .totals()
       .context(server_error::DirectoryTotals { hash })?;
 
-    let tx = self.database.begin_read()?;
-
-    let directories = tx.open_table(DIRECTORIES)?;
-
-    for (name, entry) in &directory.entries {
-      let path = self.file_path(entry.hash());
-
-      let metadata = match path.metadata() {
-        Ok(metadata) => metadata,
-        Err(error) => {
-          if error.kind() == io::ErrorKind::NotFound {
-            return Err(
-              server_error::DirectoryEntryMissing {
-                directory: hash,
-                hash: entry.hash(),
-                name,
-                ty: entry.ty(),
-              }
-              .build(),
-            );
-          } else {
-            return Err(server_error::FilesystemIo { path }.into_error(error));
-          }
-        }
-      };
-
-      ensure! {
-        metadata.len() == entry.size(),
-        server_error::DirectoryEntrySizeMismatch { directory: hash, entry: name },
-      }
-
-      if let Entry::Directory { totals, .. } = entry {
-        ensure!(
-          directories.get(&entry.hash())?.is_some(),
-          server_error::DirectoryUnverified {
-            directory: hash,
-            subdirectory: entry.hash(),
-          },
-        );
-
-        self
-          .read_directory(entry.hash())?
-          .totals()
-          .unwrap()
-          .expect(*totals)
-          .context(server_error::DirectoryEntryTotals {
-            directory: hash,
-            entry: name,
-          })?;
-      }
-    }
-
     let tx = self.database.begin_write()?;
 
-    tx.open_table(DIRECTORIES)?.insert(&hash, &())?;
+    {
+      let mut directories = tx.open_table(DIRECTORIES)?;
+
+      for (name, entry) in &directory.entries {
+        let path = self.file_path(entry.hash());
+
+        let metadata = match path.metadata() {
+          Ok(metadata) => metadata,
+          Err(error) => {
+            if error.kind() == io::ErrorKind::NotFound {
+              return Err(
+                server_error::DirectoryEntryMissing {
+                  directory: hash,
+                  hash: entry.hash(),
+                  name,
+                  ty: entry.ty(),
+                }
+                .build(),
+              );
+            } else {
+              return Err(server_error::FilesystemIo { path }.into_error(error));
+            }
+          }
+        };
+
+        ensure! {
+          metadata.len() == entry.size(),
+          server_error::DirectoryEntrySizeMismatch {
+            actual: metadata.len(),
+            directory: hash,
+            entry: name,
+            expected: entry.size(),
+          },
+        }
+
+        if let Entry::Directory { totals, .. } = entry {
+          ensure!(
+            directories.get(&entry.hash())?.is_some(),
+            server_error::DirectoryUnverified {
+              directory: hash,
+              subdirectory: entry.hash(),
+            },
+          );
+
+          self
+            .read_directory(entry.hash())?
+            .totals()
+            .unwrap()
+            .expect(*totals)
+            .context(server_error::DirectoryEntryTotals {
+              directory: hash,
+              entry: name,
+            })?;
+        }
+      }
+
+      directories.insert(&hash, &())?;
+    }
 
     tx.commit()?;
 
