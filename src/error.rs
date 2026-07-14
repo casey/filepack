@@ -519,7 +519,7 @@ pub enum Error {
     path: DisplayPath,
     tag: &'static str,
   },
-  #[snafu(display("track `{path}` has non-integer `{tag}` tag"))]
+  #[snafu(display("track `{path}` has invalid integer `{tag}` tag"))]
   TrackTagInteger {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
