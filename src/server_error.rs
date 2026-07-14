@@ -27,8 +27,30 @@ pub(crate) enum ServerError {
   DatabaseTransaction { source: redb::TransactionError },
   #[snafu(display("failed to decode directory {hash}"))]
   DirectoryDecode { hash: Hash, source: DecodeError },
-  #[snafu(display("directory {directory} references missing file {file}"))]
-  DirectoryFileMissing { directory: Hash, file: Hash },
+  #[snafu(display(
+    "directory {directory} references missing {ty} entry `{name}` with hash {hash}"
+  ))]
+  DirectoryEntryMissing {
+    directory: Hash,
+    hash: Hash,
+    name: ComponentBuf,
+    ty: EntryType,
+  },
+  #[snafu(display(
+    "directory {directory} entry `{entry}` size mismatch, expected {expected} but found {actual}",
+  ))]
+  DirectoryEntrySizeMismatch {
+    actual: u64,
+    directory: Hash,
+    entry: ComponentBuf,
+    expected: u64,
+  },
+  #[snafu(display("directory {directory} entry `{entry}` totals error: {source}"))]
+  DirectoryEntryTotals {
+    directory: Hash,
+    entry: ComponentBuf,
+    source: TotalsError,
+  },
   #[snafu(display("directory {hash} not found"))]
   DirectoryNotFound { hash: Hash },
   #[snafu(display("directory {hash} totals error"))]
@@ -113,7 +135,9 @@ impl ServerError {
       | Self::CborBody { .. }
       | Self::CborDecode { .. }
       | Self::DirectoryDecode { .. }
-      | Self::DirectoryFileMissing { .. }
+      | Self::DirectoryEntryMissing { .. }
+      | Self::DirectoryEntrySizeMismatch { .. }
+      | Self::DirectoryEntryTotals { .. }
       | Self::DirectoryNotFound { .. }
       | Self::DirectoryTotals { .. }
       | Self::DirectoryUnverified { .. }
@@ -162,7 +186,9 @@ impl ServerError {
       Self::CborBody { .. }
       | Self::CborDecode { .. }
       | Self::DirectoryDecode { .. }
-      | Self::DirectoryFileMissing { .. }
+      | Self::DirectoryEntryMissing { .. }
+      | Self::DirectoryEntrySizeMismatch { .. }
+      | Self::DirectoryEntryTotals { .. }
       | Self::DirectoryTotals { .. }
       | Self::DirectoryUnverified { .. }
       | Self::FingerprintParse { .. }

@@ -63,6 +63,12 @@ impl Encode for ComponentBuf {
   }
 }
 
+impl From<&Self> for ComponentBuf {
+  fn from(component: &Self) -> Self {
+    component.clone()
+  }
+}
+
 impl FromStr for ComponentBuf {
   type Err = ComponentError;
 

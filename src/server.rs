@@ -338,28 +338,39 @@ impl Server {
       .totals()
       .context(server_error::DirectoryTotals { hash })?;
 
-    for entry in directory.entries.values() {
-      if entry.ty() == EntryType::File {
-        let path = self.file_path(entry.hash());
-        ensure!(
-          path
-            .try_exists()
-            .context(server_error::FilesystemIo { path: &path })?,
-          server_error::DirectoryFileMissing {
-            directory: hash,
-            file: entry.hash(),
-          },
-        );
-      }
-    }
-
     let tx = self.database.begin_write()?;
 
     {
       let mut directories = tx.open_table(DIRECTORIES)?;
 
-      for entry in directory.entries.values() {
-        if entry.ty() == EntryType::Directory {
+      for (name, entry) in &directory.entries {
+        let path = self.file_path(entry.hash());
+
+        let metadata = path.metadata().map_err(|error| {
+          if error.kind() == io::ErrorKind::NotFound {
+            server_error::DirectoryEntryMissing {
+              directory: hash,
+              hash: entry.hash(),
+              name,
+              ty: entry.ty(),
+            }
+            .build()
+          } else {
+            server_error::FilesystemIo { path: &path }.into_error(error)
+          }
+        })?;
+
+        ensure! {
+          metadata.len() == entry.size(),
+          server_error::DirectoryEntrySizeMismatch {
+            actual: metadata.len(),
+            directory: hash,
+            entry: name,
+            expected: entry.size(),
+          },
+        }
+
+        if let Entry::Directory { totals, .. } = entry {
           ensure!(
             directories.get(&entry.hash())?.is_some(),
             server_error::DirectoryUnverified {
@@ -367,6 +378,16 @@ impl Server {
               subdirectory: entry.hash(),
             },
           );
+
+          self
+            .read_directory(entry.hash())?
+            .totals()
+            .unwrap()
+            .expect(*totals)
+            .context(server_error::DirectoryEntryTotals {
+              directory: hash,
+              entry: name,
+            })?;
         }
       }
 

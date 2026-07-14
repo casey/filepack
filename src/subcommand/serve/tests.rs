@@ -1622,6 +1622,27 @@ fn verify_directory_decode_error() {
 }
 
 #[test]
+fn verify_directory_entry_size_mismatch() {
+  let server = TestServer::new();
+
+  let contents = b"bar";
+  server.write_file(contents);
+
+  let (cbor, hash) = Directory::new()
+    .insert_entry("foo", Entry::file(Hash::bytes(contents), 4))
+    .cbor();
+  server.write_file(&cbor);
+
+  server
+    .post(format!("/directory/{hash}"))
+    .status(StatusCode::BAD_REQUEST)
+    .assert_body(format!(
+      "directory {hash} entry `foo` size mismatch, expected 4 but found 3"
+    ))
+    .send();
+}
+
+#[test]
 fn verify_directory_file_not_found() {
   let server = TestServer::new();
 
@@ -1664,8 +1685,27 @@ fn verify_directory_missing_file() {
     .post(format!("/directory/{hash}"))
     .status(StatusCode::BAD_REQUEST)
     .assert_body(format!(
-      "directory {hash} references missing file {}",
+      "directory {hash} references missing file entry `foo` with hash {}",
       Hash::bytes(missing),
+    ))
+    .send();
+}
+
+#[test]
+fn verify_directory_missing_subdirectory() {
+  let server = TestServer::new();
+
+  let child = Directory::new();
+  let (_, child_hash) = child.cbor();
+
+  let (parent_cbor, parent_hash) = Directory::new().insert_directory("child", &child).cbor();
+  server.write_file(&parent_cbor);
+
+  server
+    .post(format!("/directory/{parent_hash}"))
+    .status(StatusCode::BAD_REQUEST)
+    .assert_body(format!(
+      "directory {parent_hash} references missing directory entry `child` with hash {child_hash}"
     ))
     .send();
 }
@@ -1684,6 +1724,44 @@ fn verify_directory_rejects_missing_auth_header() {
     .post(format!("/directory/{hash}"))
     .status(StatusCode::UNAUTHORIZED)
     .assert_body("missing authorization header")
+    .send();
+}
+
+#[test]
+fn verify_directory_subdirectory_totals_mismatch() {
+  let server = TestServer::new();
+
+  let child = Directory::new();
+  let (child_cbor, child_hash) = child.cbor();
+  server.write_file(&child_cbor);
+
+  server.post(format!("/directory/{child_hash}")).send();
+
+  let (parent_cbor, parent_hash) = Directory::new()
+    .insert_entry(
+      "child",
+      Entry::directory(
+        child_hash,
+        child_cbor.len().into_u64(),
+        Totals {
+          directories: 0,
+          directory_size: 0,
+          file_size: 0,
+          files: 1,
+        },
+      ),
+    )
+    .cbor();
+  server.write_file(&parent_cbor);
+
+  server
+    .post(format!("/directory/{parent_hash}"))
+    .status(StatusCode::BAD_REQUEST)
+    .assert_body(format!(
+      "directory {parent_hash} entry `child` totals error: totals mismatch, found 0 bytes in 0 \
+      files and 0 bytes in 0 directories but expected 0 bytes in 1 file and 0 bytes in 0 \
+      directories"
+    ))
     .send();
 }
 
