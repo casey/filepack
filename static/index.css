@@ -13,6 +13,6 @@ a:not(:hover) {
 html {
   background-color: black;
   color-scheme: dark;
-  color: white;
+  color: rgb(255 255 255 / 87%);
   font-family: sans-serif;
 }

@@ -1,3 +1,7 @@
+time {
+  margin-left: 0.5rem;
+}
+
 .thumbnails {
   display: grid;
   gap: 12px;

@@ -61,6 +61,7 @@ use {
     head::Head,
     image::Image,
     image_type::ImageType,
+    iso8601_duration::Iso8601Duration,
     key_identifier::KeyIdentifier,
     key_name::KeyName,
     key_type::KeyType,
@@ -277,6 +278,7 @@ mod hashing_writer;
 mod head;
 mod image;
 mod image_type;
+mod iso8601_duration;
 mod key_identifier;
 mod key_name;
 mod key_type;
