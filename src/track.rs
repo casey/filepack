@@ -198,6 +198,19 @@ impl Track {
     }
   }
 
+  pub(crate) fn formats(tracks: &[Track]) -> Vec<AudioFormat> {
+    let mut formats = Vec::new();
+
+    for track in tracks {
+      let format = track.format();
+      if !formats.contains(&format) {
+        formats.push(format);
+      }
+    }
+
+    formats
+  }
+
   fn number_tag(reader: &FlacReader<fs::File>, path: &Utf8Path, tag: &'static str) -> Result<u64> {
     Self::tag(reader, path, tag)?
       .parse()
@@ -574,6 +587,22 @@ mod tests {
         sample_rate: 44100,
         ty: AudioType::Flac,
       },
+    );
+  }
+
+  #[test]
+  fn formats() {
+    let mut foo = "foo.flac".parse::<Track>().unwrap();
+    foo.channels = 2;
+    foo.sample_bits = 16;
+    foo.sample_rate = 44100;
+
+    let mut bar = foo.clone();
+    bar.sample_bits = 24;
+
+    assert_eq!(
+      Track::formats(&[foo.clone(), bar.clone(), foo.clone()]),
+      [foo.format(), bar.format()],
     );
   }
 

@@ -53,16 +53,9 @@
   <dd>{{ tracks.len() }}</dd>
   <dt>duration</dt>
   <dd>{{ DisplayDuration(Track::sum_durations(tracks)) }}</dd>
-%%         let mut formats = Vec::new();
-%%         for track in tracks {
-%%           let format = track.format();
-%%           if !formats.contains(&format) {
-%%             formats.push(format);
-%%           }
-%%         }
-%%         if !formats.is_empty() {
+%%         if !tracks.is_empty() {
   <dt>format</dt>
-%%           for format in formats {
+%%           for format in Track::formats(tracks) {
   <dd>{{ format }}</dd>
 %%           }
 %%         }
