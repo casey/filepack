@@ -13,16 +13,18 @@ pub(crate) struct Track {
   #[n(4)]
   pub(crate) filename: ComponentBuf,
   #[n(5)]
-  pub(crate) sample_count: u64,
+  pub(crate) sample_bits: u64,
   #[n(6)]
-  pub(crate) sample_rate: u64,
+  pub(crate) sample_count: u64,
   #[n(7)]
-  pub(crate) title: Text,
+  pub(crate) sample_rate: u64,
   #[n(8)]
-  pub(crate) track: u64,
+  pub(crate) title: Text,
   #[n(9)]
-  pub(crate) tracks: u64,
+  pub(crate) track: u64,
   #[n(10)]
+  pub(crate) tracks: u64,
+  #[n(11)]
   #[serde(rename = "type")]
   pub(crate) ty: AudioType,
 }
@@ -44,9 +46,19 @@ impl Track {
     let reader = FlacReader::open(path).context(error::TrackDecode { path })?;
 
     let Streaminfo {
+      sample_bits,
       sample_count,
       sample_rate,
     } = Self::streaminfo(&reader, path)?;
+
+    ensure! {
+      sample_bits == self.sample_bits,
+      error::TrackSampleBitsMismatch {
+        actual: sample_bits,
+        expected: self.sample_bits,
+        path,
+      },
+    }
 
     ensure! {
       sample_count == self.sample_count,
@@ -183,6 +195,7 @@ impl Track {
     let reader = FlacReader::open(path).context(error::TrackDecode { path })?;
 
     let Streaminfo {
+      sample_bits,
       sample_count,
       sample_rate,
     } = Self::streaminfo(&reader, path)?;
@@ -191,6 +204,7 @@ impl Track {
     self.artist = Self::text_tag(&reader, path, "artist")?;
     self.disc = Self::number_tag(&reader, path, "discnumber")?;
     self.discs = Self::number_tag(&reader, path, "disctotal")?;
+    self.sample_bits = sample_bits;
     self.sample_count = sample_count;
     self.sample_rate = sample_rate;
     self.title = Self::text_tag(&reader, path, "title")?;
@@ -212,6 +226,7 @@ impl Track {
       .context(error::TrackSampleCountUnknown { path })?;
 
     Ok(Streaminfo {
+      sample_bits: streaminfo.bits_per_sample.into(),
       sample_count,
       sample_rate: streaminfo.sample_rate.into(),
     })
@@ -272,6 +287,7 @@ impl FromStr for Track {
       disc: 0,
       discs: 0,
       filename,
+      sample_bits: 0,
       sample_count: 0,
       sample_rate: 0,
       title: Text::new(),
@@ -298,6 +314,7 @@ mod tests {
     }
 
     let mut track = "foo.flac".parse::<Track>().unwrap();
+    track.sample_bits = 16;
     track.sample_count = 44100;
     track.sample_rate = 44100;
 
@@ -316,6 +333,14 @@ mod tests {
     assert_matches_regex!(
       case(&track).unwrap_err().to_string(),
       r"^track `.*foo\.flac` has sample rate 44100 but metadata sample rate is 22050$",
+    );
+
+    track.sample_rate = 44100;
+    track.sample_bits = 24;
+
+    assert_matches_regex!(
+      case(&track).unwrap_err().to_string(),
+      r"^track `.*foo\.flac` has 16 bits per sample but metadata sample bits is 24$",
     );
   }
 
@@ -477,7 +502,7 @@ mod tests {
   fn encoding() {
     assert_cbor(
       "foo.flac".parse::<Track>().unwrap(),
-      "ab00600160020003000468666f6f2e666c6163050006000760080009000a00",
+      "ac00600160020003000468666f6f2e666c6163050006000700086009000a000b00",
     );
 
     assert_cbor(
@@ -487,6 +512,7 @@ mod tests {
         disc: 3,
         discs: 4,
         filename: "foo.flac".parse().unwrap(),
+        sample_bits: 7,
         sample_count: 2,
         sample_rate: 1,
         title: "bar".parse().unwrap(),
@@ -494,7 +520,7 @@ mod tests {
         tracks: 6,
         ty: AudioType::Flac,
       },
-      "ab0063717578016362617a020303040468666f6f2e666c6163050206010763626172080509060a00",
+      "ac0063717578016362617a020303040468666f6f2e666c6163050706020701086362617209050a060b00",
     );
   }
 
@@ -513,6 +539,7 @@ mod tests {
         disc: 0,
         discs: 0,
         filename: "foo.flac".parse().unwrap(),
+        sample_bits: 0,
         sample_count: 0,
         sample_rate: 0,
         title: Text::new(),
@@ -708,6 +735,7 @@ mod tests {
     assert_eq!(track.artist.as_str(), "baz");
     assert_eq!(track.disc, 1);
     assert_eq!(track.discs, 2);
+    assert_eq!(track.sample_bits, 16);
     assert_eq!(track.sample_count, 66150);
     assert_eq!(track.sample_rate, 44100);
     assert_eq!(track.title.as_str(), "bar");
@@ -719,7 +747,7 @@ mod tests {
   fn serialize() {
     assert_eq!(
       serde_json::to_string(&"foo.flac".parse::<Track>().unwrap()).unwrap(),
-      r#"{"album":"","artist":"","disc":0,"discs":0,"filename":"foo.flac","sample_count":0,"sample_rate":0,"title":"","track":0,"tracks":0,"type":"flac"}"#,
+      r#"{"album":"","artist":"","disc":0,"discs":0,"filename":"foo.flac","sample_bits":0,"sample_count":0,"sample_rate":0,"title":"","track":0,"tracks":0,"type":"flac"}"#,
     );
 
     assert_eq!(
@@ -729,6 +757,7 @@ mod tests {
         disc: 3,
         discs: 4,
         filename: "foo.flac".parse().unwrap(),
+        sample_bits: 7,
         sample_count: 2,
         sample_rate: 1,
         title: "bar".parse().unwrap(),
@@ -737,7 +766,7 @@ mod tests {
         ty: AudioType::Flac,
       })
       .unwrap(),
-      r#"{"album":"qux","artist":"baz","disc":3,"discs":4,"filename":"foo.flac","sample_count":2,"sample_rate":1,"title":"bar","track":5,"tracks":6,"type":"flac"}"#,
+      r#"{"album":"qux","artist":"baz","disc":3,"discs":4,"filename":"foo.flac","sample_bits":7,"sample_count":2,"sample_rate":1,"title":"bar","track":5,"tracks":6,"type":"flac"}"#,
     );
   }
 }

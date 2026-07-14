@@ -374,6 +374,7 @@ mod tests {
           disc: 3,
           discs: 4,
           filename: "track.flac".parse().unwrap(),
+          sample_bits: 7,
           sample_count: 2,
           sample_rate: 1,
           title: "foo".parse().unwrap(),

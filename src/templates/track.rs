@@ -41,6 +41,7 @@ mod tests {
           disc: 1,
           discs: 1,
           filename: "foo.flac".parse().unwrap(),
+          sample_bits: 16,
           sample_count: 9_922_500,
           sample_rate: 44100,
           title: "foo".parse().unwrap(),

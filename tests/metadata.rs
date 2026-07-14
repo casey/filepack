@@ -114,6 +114,7 @@ media:
         "disc": 1,
         "discs": 1,
         "filename": "foo.flac",
+        "sample_bits": 16,
         "sample_count": 44100,
         "sample_rate": 44100,
         "title": "bar",

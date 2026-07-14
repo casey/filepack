@@ -492,6 +492,15 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     source: TrackError,
   },
+  #[snafu(display(
+    "track `{path}` has {actual} bits per sample but metadata sample bits is {expected}"
+  ))]
+  TrackSampleBitsMismatch {
+    actual: u64,
+    backtrace: Option<Backtrace>,
+    expected: u64,
+    path: DisplayPath,
+  },
   #[snafu(display("track `{path}` has {actual} samples but metadata sample count is {expected}"))]
   TrackSampleCountMismatch {
     actual: u64,
