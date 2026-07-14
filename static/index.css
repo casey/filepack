@@ -11,7 +11,7 @@ a:not(:hover) {
 }
 
 html {
-  background-color: black;
+  background-color: #121212;
   color-scheme: dark;
   color: rgb(255 255 255 / 87%);
   font-family: sans-serif;
