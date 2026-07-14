@@ -200,6 +200,29 @@ impl Track {
     Ok(())
   }
 
+  pub(crate) fn resource_type(&self) -> ResourceType {
+    self.ty.resource_type()
+  }
+
+  fn streaminfo(reader: &FlacReader<fs::File>, path: &Utf8Path) -> Result<Streaminfo> {
+    let streaminfo = reader.streaminfo();
+
+    let sample_count = streaminfo
+      .samples
+      .context(error::TrackSampleCountUnknown { path })?;
+
+    Ok(Streaminfo {
+      sample_count,
+      sample_rate: streaminfo.sample_rate.into(),
+    })
+  }
+
+  pub(crate) fn sum_durations(tracks: &[Track]) -> Duration {
+    tracks.iter().fold(Duration::ZERO, |sum, track| {
+      sum.saturating_add(track.duration())
+    })
+  }
+
   fn tag<'a>(
     reader: &'a FlacReader<fs::File>,
     path: &Utf8Path,
@@ -222,29 +245,6 @@ impl Track {
     }
 
     Ok(value)
-  }
-
-  pub(crate) fn resource_type(&self) -> ResourceType {
-    self.ty.resource_type()
-  }
-
-  fn streaminfo(reader: &FlacReader<fs::File>, path: &Utf8Path) -> Result<Streaminfo> {
-    let streaminfo = reader.streaminfo();
-
-    let sample_count = streaminfo
-      .samples
-      .context(error::TrackSampleCountUnknown { path })?;
-
-    Ok(Streaminfo {
-      sample_count,
-      sample_rate: streaminfo.sample_rate.into(),
-    })
-  }
-
-  pub(crate) fn sum_durations(tracks: &[Track]) -> Duration {
-    tracks.iter().fold(Duration::ZERO, |sum, track| {
-      sum.saturating_add(track.duration())
-    })
   }
 
   fn text_tag(reader: &FlacReader<fs::File>, path: &Utf8Path, tag: &'static str) -> Result<Text> {
