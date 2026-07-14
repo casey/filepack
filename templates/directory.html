@@ -4,6 +4,7 @@
     <tr>
       <th>name</th>
       <th class=size>size</th>
+      <th>download</th>
     </tr>
   </thead>
   <tbody>
@@ -18,11 +19,12 @@
 %%       if ResourceType::from_filename(name).is_some() {
       <td><a href=/file/{{ hash }}/{{ name.percent_encode_segment() }}>{{ name }}</a></td>
 %%       } else {
-      <td><a href=/file/{{ hash }} download="{{ name }}">{{ name }}</a></td>
+      <td>{{ name }}</td>
 %%       }
       <td class=size>{{ format_size(*size) }}</td>
 %%     }
 %%   }
+      <td><a href=/file/{{ entry.hash() }} download="{{ name }}">download</a></td>
     </tr>
 %% }
   </tbody>
