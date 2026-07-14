@@ -11,12 +11,18 @@ a {
   color: #4169e1;
 }
 
+a:not(:hover) {
+  text-decoration: none;
+}
+
 a:not([href]) {
   color: var(--primary);
 }
 
-a:not(:hover) {
-  text-decoration: none;
+h1 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 html {
