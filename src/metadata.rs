@@ -371,6 +371,7 @@ mod tests {
         tracks: vec![Track {
           album: "bar".parse().unwrap(),
           artist: "baz".parse().unwrap(),
+          channels: 8,
           disc: 3,
           discs: 4,
           filename: "track.flac".parse().unwrap(),

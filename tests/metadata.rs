@@ -111,6 +111,7 @@ media:
       {
         "album": "qux",
         "artist": "baz",
+        "channels": 2,
         "disc": 1,
         "discs": 1,
         "filename": "foo.flac",

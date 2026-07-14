@@ -481,6 +481,15 @@ pub enum Error {
   TokenOverHttp { backtrace: Option<Backtrace> },
   #[snafu(display("total file size overflowed 64-bit integer"))]
   TotalFileSizeOverflow { backtrace: Option<Backtrace> },
+  #[snafu(display(
+    "track `{path}` has {actual} channels but metadata channel count is {expected}"
+  ))]
+  TrackChannelsMismatch {
+    actual: u64,
+    backtrace: Option<Backtrace>,
+    expected: u64,
+    path: DisplayPath,
+  },
   #[snafu(display("failed to decode track `{path}`"))]
   TrackDecode {
     backtrace: Option<Backtrace>,
