@@ -3,14 +3,14 @@ use super::*;
 #[derive(Debug, PartialEq, Snafu)]
 #[snafu(context(suffix(false)), visibility(pub(crate)))]
 pub enum TrackError {
-  #[snafu(display("track `{filename}` has disc number {number} but disc total is {total}"))]
+  #[snafu(display("track `{filename}` disc number {number} exceeds disc total of {total}"))]
   DiscNumberExceedsTotal {
     filename: ComponentBuf,
     number: u64,
     total: u64,
   },
   #[snafu(display(
-    "track `{filename}` has disc total {actual} but first track has disc total {expected}"
+    "track `{filename}` disc total {actual} doesn't match first track disc total {expected}"
   ))]
   DiscTotalMismatch {
     actual: u64,
@@ -19,7 +19,7 @@ pub enum TrackError {
   },
   #[snafu(display("package is missing disc {disc} track {track}"))]
   Missing { disc: u64, track: u64 },
-  #[snafu(display("track `{filename}` has track number {number} but track total is {total}"))]
+  #[snafu(display("track `{filename}` track number {number} exceeds track total {total}"))]
   NumberExceedsTotal {
     filename: ComponentBuf,
     number: u64,
