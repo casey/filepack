@@ -1,9 +1,18 @@
+:root {
+  --primary: rgb(255 255 255 / 87%);
+  --secondary: rgb(255 255 255 / 60%);
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
 }
 
 a {
   color: #4169e1;
+}
+
+a:not([href]) {
+  color: var(--primary);
 }
 
 a:not(:hover) {
@@ -13,6 +22,6 @@ a:not(:hover) {
 html {
   background-color: #121212;
   color-scheme: dark;
-  color: rgb(255 255 255 / 87%);
+  color: var(--primary);
   font-family: sans-serif;
 }

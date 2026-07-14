@@ -39,12 +39,12 @@ a {
 }
 
 a:hover {
-  text-shadow: 0 0 5px #fff;
+  text-shadow: 0 0 5px;
   text-decoration: none;
 }
 
 div {
-  text-shadow: 0 0 5px #fff;
+  text-shadow: 0 0 5px;
 }
 
 /* filepack is an isogram */
