@@ -202,7 +202,7 @@ media:
     .arg("create")
     .stderr(
       "\
-error: invalid track positions
+error: invalid track position
        └─ track `foo.flac` is disc 1 track 2 but expected disc 1 track 1
 ",
     )
