@@ -142,7 +142,7 @@ impl Track {
     }
 
     ensure! {
-      expected_disc > discs,
+      expected_disc == discs + 1,
       track_error::Missing {
         disc: expected_disc,
         track: expected_track,
