@@ -6,6 +6,10 @@
   --width-target: calc(100vw / 6);
 }
 
+html {
+  color: white;
+}
+
 body {
   display: grid;
   font-size: var(--size);
