@@ -100,8 +100,8 @@ mod tests {
             <dt>duration</dt>
             <dd>3:46</dd>
             <dt>format</dt>
-            <dd>FLAC 16-bit 44.1 kHz stereo (lossless)</dd>
-            <dd>FLAC 24-bit 96 kHz stereo (lossless)</dd>
+            <dd>FLAC 16-bit 44.1 kHz stereo, lossless</dd>
+            <dd>FLAC 24-bit 96 kHz stereo, lossless</dd>
           </dl>
           <ol>
             <li>
@@ -204,7 +204,7 @@ mod tests {
             <dt>duration</dt>
             <dd>0:03</dd>
             <dt>format</dt>
-            <dd>FLAC 16-bit 44.1 kHz stereo (lossless)</dd>
+            <dd>FLAC 16-bit 44.1 kHz stereo, lossless</dd>
           </dl>
           <h2>disc 1</h2>
           <ol>
@@ -285,7 +285,7 @@ mod tests {
             <dt>duration</dt>
             <dd>5124095576030431:00:15</dd>
             <dt>format</dt>
-            <dd>FLAC 16-bit 0.001 kHz stereo (lossless)</dd>
+            <dd>FLAC 16-bit 0.001 kHz stereo, lossless</dd>
           </dl>
           <ol>
             <li>

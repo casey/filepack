@@ -35,7 +35,7 @@ impl Display for AudioFormat {
     }
 
     match self.ty {
-      AudioType::Flac => write!(f, " (lossless)")?,
+      AudioType::Flac => write!(f, ", lossless")?,
     }
 
     Ok(())
@@ -62,11 +62,11 @@ mod tests {
       );
     }
 
-    case(2, 16, 44100, "FLAC 16-bit 44.1 kHz stereo (lossless)");
-    case(2, 24, 96000, "FLAC 24-bit 96 kHz stereo (lossless)");
-    case(1, 16, 22050, "FLAC 16-bit 22.05 kHz mono (lossless)");
-    case(6, 24, 48000, "FLAC 24-bit 48 kHz 5.1 (lossless)");
-    case(8, 24, 192_000, "FLAC 24-bit 192 kHz 7.1 (lossless)");
-    case(3, 16, 44100, "FLAC 16-bit 44.1 kHz 3 channels (lossless)");
+    case(2, 16, 44100, "FLAC 16-bit 44.1 kHz stereo, lossless");
+    case(2, 24, 96000, "FLAC 24-bit 96 kHz stereo, lossless");
+    case(1, 16, 22050, "FLAC 16-bit 22.05 kHz mono, lossless");
+    case(6, 24, 48000, "FLAC 24-bit 48 kHz 5.1, lossless");
+    case(8, 24, 192_000, "FLAC 24-bit 192 kHz 7.1, lossless");
+    case(3, 16, 44100, "FLAC 16-bit 44.1 kHz 3 channels, lossless");
   }
 }
