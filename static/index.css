@@ -29,6 +29,10 @@ dd {
   overflow-wrap: anywhere;
 }
 
+code, .code {
+  font-family: monospace, monospace;
+}
+
 html {
   background-color: #121212;
   color-scheme: dark;

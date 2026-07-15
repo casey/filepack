@@ -1,7 +1,7 @@
 %% if let Some(title) = self.title() {
 <h1>{{ title }}</h1>
 %% } else {
-<h1>{{ self.fingerprint }}</h1>
+<h1 class=code>{{ self.fingerprint }}</h1>
 %% }
 %% if let Some(metadata) = &self.metadata {
 %%   if metadata.artwork.is_some() {
@@ -14,7 +14,7 @@
 %% }
 <dl>
   <dt>fingerprint</dt>
-  <dd>{{ self.fingerprint }}</dd>
+  <dd class=code>{{ self.fingerprint }}</dd>
   <dt>size</dt>
   <dd>{{ format_size(self.totals.file_size) }}</dd>
   <dt>files</dt>
