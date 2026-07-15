@@ -303,4 +303,71 @@ mod tests {
       )),
     );
   }
+
+  #[test]
+  fn image() {
+    let metadata = Metadata {
+      media: Some(Media::Image {
+        images: vec![
+          "foo.png".parse().unwrap(),
+          "bar.jpg".parse().unwrap(),
+          "baz.png".parse().unwrap(),
+        ],
+      }),
+      ..default()
+    };
+
+    assert_eq!(
+      PackageHtml {
+        fingerprint: test::FINGERPRINT.parse().unwrap(),
+        metadata: Some(metadata),
+        totals: Totals {
+          directories: 0,
+          directory_size: 0,
+          file_size: 9,
+          files: 3,
+        },
+      }
+      .to_string(),
+      unindent(&format!(
+        "
+          <h1>{fingerprint}</h1>
+          <dl>
+            <dt>fingerprint</dt>
+            <dd>{fingerprint}</dd>
+            <dt>size</dt>
+            <dd>9 B</dd>
+            <dt>files</dt>
+            <dd><a href=/directory/{hash}>3 files</a></dd>
+            <dt>media</dt>
+            <dd>image</dd>
+            <dt>images</dt>
+            <dd>3</dd>
+            <dt>format</dt>
+            <dd>PNG</dd>
+            <dd>JPEG</dd>
+          </dl>
+          <ul class=thumbnails>
+            <li>
+              <a href=/package/{fingerprint}/1>
+                <img loading=lazy src=/media/image/{fingerprint}/image/1>
+              </a>
+            </li>
+            <li>
+              <a href=/package/{fingerprint}/2>
+                <img loading=lazy src=/media/image/{fingerprint}/image/2>
+              </a>
+            </li>
+            <li>
+              <a href=/package/{fingerprint}/3>
+                <img loading=lazy src=/media/image/{fingerprint}/image/3>
+              </a>
+            </li>
+          </ul>
+        ",
+        fingerprint = test::FINGERPRINT,
+        hash = test::HASH,
+      )),
+    );
+  }
 }

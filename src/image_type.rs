@@ -1,7 +1,8 @@
 use super::*;
 
-#[derive(Clone, Copy, Debug, Decode, Encode, PartialEq, Serialize)]
+#[derive(Clone, Copy, Debug, Decode, Display, Encode, PartialEq, Serialize)]
 #[serde(rename_all = "kebab-case")]
+#[strum(serialize_all = "UPPERCASE")]
 pub(crate) enum ImageType {
   #[n(0)]
   Jpeg,

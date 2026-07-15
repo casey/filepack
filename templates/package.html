@@ -63,6 +63,12 @@
 %%       Media::Image { images } => {
   <dt>images</dt>
   <dd>{{ images.len() }}</dd>
+%%         if !images.is_empty() {
+  <dt>format</dt>
+%%           for format in Image::formats(images) {
+  <dd>{{ format }}</dd>
+%%           }
+%%         }
 %%       }
 %%     }
 %%   }
