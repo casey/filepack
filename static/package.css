@@ -3,6 +3,7 @@ time {
 }
 
 .artwork {
+  border-radius: 2%;
   height: auto;
   max-width: 100%;
 }
