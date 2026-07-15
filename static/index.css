@@ -19,18 +19,18 @@ a:not([href]) {
   color: var(--primary);
 }
 
-h1 {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+code, .code {
+  font-family: monospace, monospace;
 }
 
 dd {
   overflow-wrap: anywhere;
 }
 
-code, .code {
-  font-family: monospace, monospace;
+h1 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 html {
