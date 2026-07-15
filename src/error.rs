@@ -575,6 +575,12 @@ pub enum Error {
     path: DisplayPath,
     unexpected: Ticked<RelativePath>,
   },
+  #[snafu(display("invalid video `{path}`"))]
+  Video {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+    source: VideoError,
+  },
   #[snafu(display("error walking directory"))]
   WalkDir {
     backtrace: Option<Backtrace>,

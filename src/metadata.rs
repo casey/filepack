@@ -54,20 +54,26 @@ impl Metadata {
       }
     }
 
-    match &self.media {
-      Some(Media::Audio { tracks }) => {
-        Track::check_positions(tracks).context(error::TrackPosition)?;
+    if let Some(media) = &self.media {
+      match media {
+        Media::Audio { tracks } => {
+          Track::check_positions(tracks).context(error::TrackPosition)?;
 
-        for track in tracks {
-          track.check_content(root)?;
+          for track in tracks {
+            track.check_content(root)?;
+          }
+        }
+        Media::Image { images } => {
+          for image in images {
+            image.check_content(root)?;
+          }
+        }
+        Media::Video { videos } => {
+          for video in videos {
+            video.check_content(root)?;
+          }
         }
       }
-      Some(Media::Image { images }) => {
-        for image in images {
-          image.check_content(root)?;
-        }
-      }
-      None => {}
     }
 
     Ok(())
@@ -153,6 +159,7 @@ impl Metadata {
       match media {
         Media::Audio { tracks } => files.extend(tracks.iter().map(Track::as_path)),
         Media::Image { images } => files.extend(images.iter().map(Image::as_path)),
+        Media::Video { videos } => files.extend(videos.iter().map(Video::as_path)),
       }
     }
 
@@ -164,18 +171,24 @@ impl Metadata {
       artwork.populate(root)?;
     }
 
-    match &mut self.media {
-      Some(Media::Audio { tracks }) => {
-        for track in tracks {
-          track.populate(root)?;
+    if let Some(media) = self.media.as_mut() {
+      match media {
+        Media::Audio { tracks } => {
+          for track in tracks {
+            track.populate(root)?;
+          }
+        }
+        Media::Image { images } => {
+          for image in images {
+            image.populate(root)?;
+          }
+        }
+        Media::Video { videos } => {
+          for video in videos {
+            video.populate(root)?;
+          }
         }
       }
-      Some(Media::Image { images }) => {
-        for image in images {
-          image.populate(root)?;
-        }
-      }
-      None => {}
     }
 
     Ok(())
@@ -236,6 +249,30 @@ mod tests {
       metadata.media,
       Some(Media::Audio {
         tracks: vec!["foo.flac".parse().unwrap(), "bar.flac".parse().unwrap()],
+      }),
+    );
+  }
+
+  #[test]
+  fn deserialize_media_video() {
+    let metadata = Metadata::deserialize(
+      Metadata::YAML_FILENAME.as_ref(),
+      &unindent(
+        "
+          media:
+            type: video
+            videos:
+              - foo.mp4
+              - bar.mp4
+        ",
+      ),
+    )
+    .unwrap();
+
+    assert_eq!(
+      metadata.media,
+      Some(Media::Video {
+        videos: vec!["foo.mp4".parse().unwrap(), "bar.mp4".parse().unwrap()],
       }),
     );
   }
@@ -438,6 +475,24 @@ mod tests {
       vec![
         "foo.png".parse::<RelativePath>().unwrap(),
         "bar.jpg".parse().unwrap(),
+      ],
+    );
+  }
+
+  #[test]
+  fn files_includes_videos() {
+    let metadata = Metadata {
+      media: Some(Media::Video {
+        videos: vec!["foo.mp4".parse().unwrap(), "bar.mp4".parse().unwrap()],
+      }),
+      ..default()
+    };
+
+    assert_eq!(
+      metadata.files(),
+      vec![
+        "foo.mp4".parse::<RelativePath>().unwrap(),
+        "bar.mp4".parse().unwrap(),
       ],
     );
   }

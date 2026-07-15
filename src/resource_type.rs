@@ -5,6 +5,7 @@ pub(crate) enum ResourceType {
   Binary,
   Flac,
   Jpeg,
+  Mp4,
   Png,
 }
 
@@ -12,7 +13,7 @@ impl ResourceType {
   pub(crate) fn content_disposition(self) -> Option<HeaderValue> {
     match self {
       Self::Binary => Some(HeaderValue::from_static("attachment")),
-      Self::Flac | Self::Jpeg | Self::Png => None,
+      Self::Flac | Self::Jpeg | Self::Mp4 | Self::Png => None,
     }
   }
 
@@ -21,6 +22,7 @@ impl ResourceType {
       Self::Binary => mime::APPLICATION_OCTET_STREAM,
       Self::Flac => "audio/flac".parse().unwrap(),
       Self::Jpeg => mime::IMAGE_JPEG,
+      Self::Mp4 => "video/mp4".parse().unwrap(),
       Self::Png => mime::IMAGE_PNG,
     }
   }

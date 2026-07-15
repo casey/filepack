@@ -109,6 +109,14 @@ pub(crate) async fn media_image_image(
   block_in_place(|| Ok(server.media_image_image(fingerprint, image)?.range(range)))
 }
 
+pub(crate) async fn media_video_video(
+  server: ServerExtension,
+  Path((fingerprint, Ordinal(video))): Path<(Fingerprint, Ordinal)>,
+  range: Option<TypedHeader<headers::Range>>,
+) -> ServerResult<Resource> {
+  block_in_place(|| Ok(server.media_video_video(fingerprint, video)?.range(range)))
+}
+
 pub(crate) async fn missing(
   _: Authenticated,
   server: ServerExtension,
@@ -181,6 +189,26 @@ pub(crate) async fn package_item(
             fingerprint,
             image: index,
             metadata,
+          }
+          .page()
+          .into_response(),
+        )
+      }
+      Media::Video { videos } => {
+        ensure! {
+          videos.len() > index,
+          server_error::MediaItemDoesNotExist {
+            count: videos.len(),
+            fingerprint,
+            index,
+            ty: media.discriminant(),
+          },
+        }
+
+        Ok(
+          VideoHtml {
+            fingerprint,
+            video: index,
           }
           .page()
           .into_response(),

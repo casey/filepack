@@ -25,6 +25,7 @@ use {
     archive_error::ArchiveError,
     arguments::Arguments,
     array_decoder::ArrayDecoder,
+    audio_codec::AudioCodec,
     audio_format::AudioFormat,
     audio_type::AudioType,
     authenticated::Authenticated,
@@ -103,6 +104,10 @@ use {
     type_name::TypeName,
     utf8_path_ext::Utf8PathExt,
     version::Version,
+    video::Video,
+    video_codec::VideoCodec,
+    video_error::VideoError,
+    video_type::VideoType,
   },
   axum::{
     body::Body,
@@ -232,6 +237,7 @@ mod archive_error;
 mod arguments;
 mod array_decoder;
 mod array_encoder;
+mod audio_codec;
 mod audio_format;
 mod audio_type;
 mod authenticated;
@@ -336,6 +342,10 @@ mod track_error;
 mod type_name;
 mod utf8_path_ext;
 mod version;
+mod video;
+mod video_codec;
+mod video_error;
+mod video_type;
 
 #[cfg(test)]
 mod derive;

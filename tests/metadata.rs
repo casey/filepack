@@ -1,5 +1,36 @@
 use super::*;
 
+fn atom(fourcc: [u8; 4], payload: &[u8]) -> Vec<u8> {
+  let mut atom = Vec::new();
+  atom.extend_from_slice(&u32::try_from(payload.len() + 8).unwrap().to_be_bytes());
+  atom.extend_from_slice(&fourcc);
+  atom.extend_from_slice(payload);
+  atom
+}
+
+fn audio_entry(object_type: u8) -> Vec<u8> {
+  let mut descriptor = vec![0x04, 13, object_type];
+  descriptor.extend_from_slice(&[0; 12]);
+
+  let mut es = vec![0x03, u8::try_from(descriptor.len() + 3).unwrap(), 0, 1, 0];
+  es.extend_from_slice(&descriptor);
+
+  let mut esds = vec![0, 0, 0, 0];
+  esds.extend_from_slice(&es);
+
+  let mut payload = Vec::new();
+  payload.extend_from_slice(&[0; 6]);
+  payload.extend_from_slice(&[0, 1]);
+  payload.extend_from_slice(&[0; 8]);
+  payload.extend_from_slice(&2u16.to_be_bytes());
+  payload.extend_from_slice(&16u16.to_be_bytes());
+  payload.extend_from_slice(&[0; 4]);
+  payload.extend_from_slice(&(44100u32 << 16).to_be_bytes());
+  payload.extend_from_slice(&atom(*b"esds", &esds));
+
+  atom(*b"mp4a", &payload)
+}
+
 #[test]
 fn create_checks_metadata() {
   Test::new()
@@ -135,6 +166,54 @@ media:
 }
 
 #[test]
+fn create_extracts_video_metadata() {
+  Test::new()
+    .write(
+      "foo.mp4",
+      mp4(&[
+        trak(*b"vide", &[video_entry(*b"s263", *b"d263", 2, 1)]),
+        trak(*b"soun", &[audio_entry(0x40)]),
+      ]),
+    )
+    .write(
+      "metadata.yaml",
+      "\
+media:
+  type: video
+  videos:
+    - foo.mp4
+",
+    )
+    .arg("create")
+    .success()
+    .arg("metadata")
+    .stdout(
+      r#"{
+  "media": {
+    "type": "video",
+    "videos": [
+      {
+        "audio_codec": "aac",
+        "dimensions": {
+          "height": 1,
+          "width": 2
+        },
+        "filename": "foo.mp4",
+        "type": "mp4",
+        "video_codec": "h263"
+      }
+    ]
+  }
+}
+"#,
+    )
+    .success()
+    .arg("verify")
+    .stderr_regex("successfully verified .*")
+    .success();
+}
+
+#[test]
 fn create_rejects_extra_files_in_media_packages() {
   Test::new()
     .write(
@@ -228,6 +307,28 @@ media:
     .stderr_regex(
       "error: failed to decode track `.*foo.flac`
        └─ Ill-formed FLAC stream: .*\n",
+    )
+    .failure();
+}
+
+#[test]
+fn create_rejects_invalid_videos() {
+  Test::new()
+    .write("foo.mp4", "barbar")
+    .write(
+      "metadata.yaml",
+      "\
+media:
+  type: video
+  videos:
+    - foo.mp4
+",
+    )
+    .arg("create")
+    .stderr_regex(
+      "error: invalid video `.*foo.mp4`
+       ├─ failed to decode MP4
+       └─ .*\n",
     )
     .failure();
 }
@@ -412,4 +513,43 @@ fn metadata_subcommand_path_is_file() {
 "#,
     )
     .success();
+}
+
+fn mp4(traks: &[Vec<u8>]) -> Vec<u8> {
+  let mut ftyp = Vec::new();
+  ftyp.extend_from_slice(b"isom");
+  ftyp.extend_from_slice(&[0; 4]);
+  ftyp.extend_from_slice(b"isom");
+
+  [atom(*b"ftyp", &ftyp), atom(*b"moov", &traks.concat())].concat()
+}
+
+fn trak(handler: [u8; 4], descriptions: &[Vec<u8>]) -> Vec<u8> {
+  let mut hdlr = vec![0; 8];
+  hdlr.extend_from_slice(&handler);
+  hdlr.extend_from_slice(&[0; 12]);
+  hdlr.push(0);
+
+  let mut stsd = vec![0, 0, 0, 0];
+  stsd.extend_from_slice(&u32::try_from(descriptions.len()).unwrap().to_be_bytes());
+  stsd.extend_from_slice(&descriptions.concat());
+
+  let stbl = atom(*b"stbl", &atom(*b"stsd", &stsd));
+  let minf = atom(*b"minf", &stbl);
+  let mdia = [atom(*b"hdlr", &hdlr), minf].concat();
+
+  atom(*b"trak", &atom(*b"mdia", &mdia))
+}
+
+fn video_entry(entry: [u8; 4], config: [u8; 4], width: u16, height: u16) -> Vec<u8> {
+  let mut payload = Vec::new();
+  payload.extend_from_slice(&[0; 6]);
+  payload.extend_from_slice(&[0, 1]);
+  payload.extend_from_slice(&[0; 16]);
+  payload.extend_from_slice(&width.to_be_bytes());
+  payload.extend_from_slice(&height.to_be_bytes());
+  payload.extend_from_slice(&[0; 50]);
+  payload.extend_from_slice(&atom(config, &[]));
+
+  atom(entry, &payload)
 }
