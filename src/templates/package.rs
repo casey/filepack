@@ -29,7 +29,7 @@ impl Page for PackageHtml {
 
 #[cfg(test)]
 mod tests {
-  use super::*;
+  use {super::*, pretty_assertions::assert_eq};
 
   #[test]
   fn audio() {
@@ -331,10 +331,10 @@ mod tests {
       .to_string(),
       unindent(&format!(
         "
-          <h1>{fingerprint}</h1>
+          <h1 class=code>{fingerprint}</h1>
           <dl>
             <dt>fingerprint</dt>
-            <dd>{fingerprint}</dd>
+            <dd class=code>{fingerprint}</dd>
             <dt>size</dt>
             <dd>9 B</dd>
             <dt>files</dt>
