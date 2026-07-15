@@ -72,6 +72,18 @@ impl Image {
     })
   }
 
+  pub(crate) fn formats(images: &[Image]) -> Vec<ImageType> {
+    let mut formats = Vec::new();
+
+    for image in images {
+      if !formats.contains(&image.ty) {
+        formats.push(image.ty);
+      }
+    }
+
+    formats
+  }
+
   pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result {
     self.dimensions = self.decode(root)?;
 
@@ -156,6 +168,18 @@ mod tests {
         ty: ImageType::Jpeg,
       },
       "a300a2000101020167666f6f2e6a70670200",
+    );
+  }
+
+  #[test]
+  fn formats() {
+    let foo = "foo.png".parse::<Image>().unwrap();
+    let bar = "bar.jpg".parse::<Image>().unwrap();
+    let baz = "baz.png".parse::<Image>().unwrap();
+
+    assert_eq!(
+      Image::formats(&[foo, bar, baz]),
+      [ImageType::Png, ImageType::Jpeg],
     );
   }
 
