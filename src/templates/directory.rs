@@ -49,7 +49,7 @@ mod tests {
       .to_string(),
       unindent(
         r#"
-          <h1>Directory [[:xdigit:]]{64}</h1>
+          <h1>Directory <code>[[:xdigit:]]{64}</code></h1>
           <table>
             <thead>
               <tr>
