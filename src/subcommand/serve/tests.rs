@@ -1100,7 +1100,7 @@ fn media_video_video_response() {
 
   server
     .get(format!("/media/video/{fingerprint}/video/2"))
-    .assert_header(header::CONTENT_LENGTH, "6")
+    .assert_header(header::CONTENT_LENGTH, "3")
     .assert_header(header::CONTENT_TYPE, "video/mp4")
     .assert_header(header::ETAG, format!("\"{}\"", Hash::bytes(b"bar")))
     .assert_body(b"bar")
