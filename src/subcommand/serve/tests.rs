@@ -541,17 +541,17 @@ fn files_empty() {
 fn files_non_empty() {
   let server = TestServer::new();
 
-  let foo = b"foo";
-  let bar = b"bar";
-  let baz = b"baz";
-
-  server.write_file(foo);
-  server.write_file(bar);
-  server.write_file(baz);
+  server.write_file(b"foo");
+  server.write_file(b"bar");
+  server.write_file(b"baz");
 
   fs::write(server.data_dir.join("files").join("not-a-hash"), "").unwrap();
 
-  let mut files = vec![Hash::bytes(foo), Hash::bytes(bar), Hash::bytes(baz)];
+  let mut files = vec![
+    Hash::bytes(b"foo"),
+    Hash::bytes(b"bar"),
+    Hash::bytes(b"baz"),
+  ];
   files.sort();
 
   server.get("/files").assert_page(FilesHtml { files }).send();
@@ -702,8 +702,6 @@ fn malformed_fingerprint_returns_error() {
 fn media_audio_track_file_missing() {
   let server = TestServer::new();
 
-  let foo: &[u8] = b"foo";
-
   let metadata = Metadata {
     media: Some(Media::Audio {
       tracks: tracks(&["foo.flac"]),
@@ -713,7 +711,7 @@ fn media_audio_track_file_missing() {
 
   let fingerprint = PackageBuilder::new()
     .metadata(&metadata)
-    .file("foo.flac", foo)
+    .file("foo.flac", b"foo")
     .upload(&server);
 
   let metadata_cbor = metadata.encode_to_vec();
@@ -738,9 +736,6 @@ fn media_audio_track_file_missing() {
 fn media_audio_track_out_of_range() {
   let server = TestServer::new();
 
-  let foo: &[u8] = b"foo";
-  let bar: &[u8] = b"bar";
-
   let fingerprint = PackageBuilder::new()
     .metadata(&Metadata {
       media: Some(Media::Audio {
@@ -748,8 +743,8 @@ fn media_audio_track_out_of_range() {
       }),
       ..default()
     })
-    .file("foo.flac", foo)
-    .file("bar.flac", bar)
+    .file("foo.flac", b"foo")
+    .file("bar.flac", b"bar")
     .upload(&server);
 
   server
