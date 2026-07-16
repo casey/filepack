@@ -1053,8 +1053,6 @@ fn media_type_mismatch() {
 fn media_video_video_out_of_range() {
   let server = TestServer::new();
 
-  let foo: &[u8] = b"foo";
-
   let fingerprint = PackageBuilder::new()
     .metadata(&Metadata {
       media: Some(Media::Video {
@@ -1062,7 +1060,7 @@ fn media_video_video_out_of_range() {
       }),
       ..default()
     })
-    .file("foo.mp4", foo)
+    .file("foo.mp4", b"foo")
     .upload(&server);
 
   server
@@ -1078,9 +1076,6 @@ fn media_video_video_out_of_range() {
 fn media_video_video_response() {
   let server = TestServer::new();
 
-  let foo: &[u8] = b"foo";
-  let bar: &[u8] = b"barbar";
-
   let fingerprint = PackageBuilder::new()
     .metadata(&Metadata {
       media: Some(Media::Video {
@@ -1088,8 +1083,8 @@ fn media_video_video_response() {
       }),
       ..default()
     })
-    .file("foo.mp4", foo)
-    .file("bar.mp4", bar)
+    .file("foo.mp4", b"foo")
+    .file("bar.mp4", b"bar")
     .upload(&server);
 
   server
@@ -1099,16 +1094,16 @@ fn media_video_video_response() {
     .assert_header(header::CONTENT_LENGTH, "3")
     .assert_header(header::CONTENT_SECURITY_POLICY, "sandbox")
     .assert_header(header::CONTENT_TYPE, "video/mp4")
-    .assert_header(header::ETAG, format!("\"{}\"", Hash::bytes(foo)))
-    .assert_body(foo)
+    .assert_header(header::ETAG, format!("\"{}\"", Hash::bytes(b"foo")))
+    .assert_body(b"foo")
     .send();
 
   server
     .get(format!("/media/video/{fingerprint}/video/2"))
     .assert_header(header::CONTENT_LENGTH, "6")
     .assert_header(header::CONTENT_TYPE, "video/mp4")
-    .assert_header(header::ETAG, format!("\"{}\"", Hash::bytes(bar)))
-    .assert_body(bar)
+    .assert_header(header::ETAG, format!("\"{}\"", Hash::bytes(b"bar")))
+    .assert_body(b"bar")
     .send();
 }
 
