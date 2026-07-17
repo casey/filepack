@@ -94,22 +94,69 @@ impl Video {
 
     let context = mp4parse::read_mp4(reader).context(video_error::DecodeMp4)?;
 
-    let mut audio = None;
-    let mut video = None;
+    let mut video_codec = None;
+    let mut dimensions = None;
+    let mut audio_codec = None;
 
     for track in &context.tracks {
       match &track.track_type {
         TrackType::Audio => {
-          ensure!(audio.is_none(), video_error::AudioTrackMultiple);
-          audio = Some(track);
+          ensure!(audio_codec.is_none(), video_error::AudioTrackMultiple);
+
+          let SampleEntry::Audio(audio) = Self::track_description(track)? else {
+            return video_error::AudioCodecUnsupported {
+              codec: "unknown",
+              track: track.id,
+            }
+            .fail();
+          };
+
+          audio_codec = Some(match audio.codec_type {
+            CodecType::AAC => AudioCodec::Aac,
+            CodecType::MP3 => AudioCodec::Mp3,
+            codec => {
+              return Err(
+                video_error::AudioCodecUnsupported {
+                  codec: codec_name(codec),
+                  track: track.id,
+                }
+                .build(),
+              );
+            }
+          });
         }
         TrackType::Video => {
-          ensure!(video.is_none(), video_error::VideoTrackMultiple);
-          video = Some(track);
+          ensure!(video_codec.is_none(), video_error::VideoTrackMultiple);
+          let SampleEntry::Video(video) = Self::track_description(track)? else {
+            return video_error::VideoCodecUnsupported {
+              codec: "unknown",
+              track: track.id,
+            }
+            .fail();
+          };
+
+          video_codec = Some(match video.codec_type {
+            CodecType::H263 => VideoCodec::H263,
+            codec => {
+              return Err(
+                video_error::VideoCodecUnsupported {
+                  codec: codec_name(codec),
+                  track: track.id,
+                }
+                .build(),
+              );
+            }
+          });
+
+          dimensions = Some(Dimensions {
+            height: video.height.into(),
+            width: video.width.into(),
+          });
         }
         ty => {
           return Err(
             video_error::TrackUnsupported {
+              track: track.id,
               ty: match ty {
                 TrackType::Audio => "audio",
                 TrackType::AuxiliaryVideo => "auixiliary video",
@@ -125,48 +172,13 @@ impl Video {
       }
     }
 
-    let video = video.context(video_error::VideoTrackMissing)?;
-    let audio = audio.context(video_error::AudioTrackMissing)?;
-
-    let SampleEntry::Video(video) = Self::track_description(video)? else {
-      return video_error::VideoCodecUnsupported { codec: "unknown" }.fail();
-    };
-
-    let video_codec = match video.codec_type {
-      CodecType::H263 => VideoCodec::H263,
-      codec => {
-        return Err(
-          video_error::VideoCodecUnsupported {
-            codec: codec_name(codec),
-          }
-          .build(),
-        );
-      }
-    };
-
-    let SampleEntry::Audio(audio) = Self::track_description(audio)? else {
-      return video_error::AudioCodecUnsupported { codec: "unknown" }.fail();
-    };
-
-    let audio_codec = match audio.codec_type {
-      CodecType::AAC => AudioCodec::Aac,
-      CodecType::MP3 => AudioCodec::Mp3,
-      codec => {
-        return Err(
-          video_error::AudioCodecUnsupported {
-            codec: codec_name(codec),
-          }
-          .build(),
-        );
-      }
-    };
+    let video_codec = video_codec.context(video_error::VideoTrackMissing)?;
+    let dimensions = dimensions.unwrap();
+    let audio_codec = audio_codec.context(video_error::AudioTrackMissing)?;
 
     Ok(VideoInfo {
       audio_codec,
-      dimensions: Dimensions {
-        height: video.height.into(),
-        width: video.width.into(),
-      },
+      dimensions,
       video_codec,
     })
   }
@@ -176,15 +188,15 @@ impl Video {
       .stsd
       .as_ref()
       .map(|stsd| &*stsd.descriptions)
-      .context(video_error::SampleDescriptionMissing)?;
+      .context(video_error::SampleDescriptionMissing { track: track.id })?;
 
     if descriptions.len() > 1 {
-      return Err(video_error::SampleDescriptionMultiple.build());
+      return Err(video_error::SampleDescriptionMultiple { track: track.id }.build());
     }
 
     descriptions
       .first()
-      .context(video_error::SampleDescriptionMissing)
+      .context(video_error::SampleDescriptionMissing { track: track.id })
   }
 
   pub(crate) fn format(&self) -> VideoFormat {
@@ -365,7 +377,7 @@ mod tests {
         .video_track(2, 1)
         .audio_track(0x40)
         .track(*b"meta", &[]),
-      "unsupported track type `metadata`",
+      "track 2 has unsupported track type `metadata`",
     );
     error(
       VideoBuilder::new()
@@ -374,11 +386,11 @@ mod tests {
           &[VideoBuilder::video_entry(*b"avc1", *b"avcC", 2, 1)],
         )
         .audio_track(0x40),
-      "unsupported video codec `H.264`",
+      "track 0 has unsupported video codec `H.264`",
     );
     error(
       VideoBuilder::new().video_track(2, 1).audio_track(0x11),
-      "unsupported audio codec `unknown`",
+      "track 1 has unsupported audio codec `unknown`",
     );
     error(
       VideoBuilder::new().video_track(2, 1).track(
