@@ -158,7 +158,7 @@ impl Video {
           };
 
           video_codec = Some(match video.codec_type {
-            CodecType::H263 => VideoCodec::H263,
+            CodecType::H264 => VideoCodec::H264,
             codec => {
               return Err(
                 video_error::VideoCodecUnsupported {
@@ -253,7 +253,7 @@ impl FromStr for Video {
       dimensions: Dimensions::default(),
       filename,
       ty,
-      video_codec: VideoCodec::H263,
+      video_codec: VideoCodec::H264,
     })
   }
 }
@@ -270,7 +270,7 @@ mod tests {
       .check_info(&VideoInfo {
         audio_codec: AudioCodec::Aac,
         dimensions: Dimensions::default(),
-        video_codec: VideoCodec::H263,
+        video_codec: VideoCodec::H264,
       })
       .unwrap();
 
@@ -282,7 +282,7 @@ mod tests {
             height: 1,
             width: 2,
           },
-          video_codec: VideoCodec::H263,
+          video_codec: VideoCodec::H264,
         })
         .unwrap_err()
         .to_string(),
@@ -294,7 +294,7 @@ mod tests {
         .check_info(&VideoInfo {
           audio_codec: AudioCodec::Mp3,
           dimensions: Dimensions::default(),
-          video_codec: VideoCodec::H263,
+          video_codec: VideoCodec::H264,
         })
         .unwrap_err()
         .to_string(),
@@ -348,7 +348,7 @@ mod tests {
         },
         filename: "foo.mp4".parse().unwrap(),
         ty: VideoType::Mp4,
-        video_codec: VideoCodec::H263,
+        video_codec: VideoCodec::H264,
       },
       "a5000101a2000101020267666f6f2e6d703403000400",
     );
@@ -366,7 +366,7 @@ mod tests {
         .iter()
         .map(ToString::to_string)
         .collect::<Vec<String>>(),
-      ["MP4 H263 AAC", "MP4 H263 MP3"],
+      ["MP4 H264 AAC", "MP4 H264 MP3"],
     );
   }
 
@@ -384,7 +384,7 @@ mod tests {
         dimensions: Dimensions::default(),
         filename: "foo.mp4".parse().unwrap(),
         ty: VideoType::Mp4,
-        video_codec: VideoCodec::H263,
+        video_codec: VideoCodec::H264,
       },
     );
 
@@ -424,7 +424,7 @@ mod tests {
           height: 1,
           width: 2,
         },
-        video_codec: VideoCodec::H263,
+        video_codec: VideoCodec::H264,
       },
     );
 
@@ -455,10 +455,10 @@ mod tests {
       VideoBuilder::new()
         .track(
           *b"vide",
-          &[VideoBuilder::video_entry(*b"avc1", *b"avcC", 2, 1)],
+          &[VideoBuilder::video_entry(*b"s263", *b"d263", 2, 1)],
         )
         .audio_track(0x40),
-      "track 0 has unsupported video codec `H.264`",
+      "track 0 has unsupported video codec `H.263`",
     );
     error(
       VideoBuilder::new().video_track(2, 1).audio_track(0x11),
@@ -516,7 +516,7 @@ mod tests {
         },
         filename: "foo.mp4".parse().unwrap(),
         ty: VideoType::Mp4,
-        video_codec: VideoCodec::H263,
+        video_codec: VideoCodec::H264,
       },
     );
 
@@ -549,10 +549,10 @@ mod tests {
         },
         filename: "foo.mp4".parse().unwrap(),
         ty: VideoType::Mp4,
-        video_codec: VideoCodec::H263,
+        video_codec: VideoCodec::H264,
       })
       .unwrap(),
-      r#"{"audio_codec":"mp3","dimensions":{"height":1,"width":2},"filename":"foo.mp4","type":"mp4","video_codec":"h263"}"#,
+      r#"{"audio_codec":"mp3","dimensions":{"height":1,"width":2},"filename":"foo.mp4","type":"mp4","video_codec":"h264"}"#,
     );
   }
 }

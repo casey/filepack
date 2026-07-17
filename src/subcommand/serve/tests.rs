@@ -1297,7 +1297,7 @@ fn package_item_video() {
         },
         filename: "foo.mp4".parse().unwrap(),
         ty: VideoType::Mp4,
-        video_codec: VideoCodec::H263,
+        video_codec: VideoCodec::H264,
       }],
     }),
     ..default()
@@ -1497,7 +1497,7 @@ fn package_page_renders_video_media() {
         },
         filename: "foo.mp4".parse().unwrap(),
         ty: VideoType::Mp4,
-        video_codec: VideoCodec::H263,
+        video_codec: VideoCodec::H264,
       }],
     }),
     ..default()

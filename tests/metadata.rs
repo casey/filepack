@@ -169,7 +169,7 @@ media:
         },
         "filename": "foo.mp4",
         "type": "mp4",
-        "video_codec": "h263"
+        "video_codec": "h264"
       }
     ]
   }
