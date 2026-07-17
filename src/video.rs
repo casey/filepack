@@ -60,7 +60,10 @@ impl Video {
     let path = root.join(self.as_path());
 
     match self.ty {
-      VideoType::Mp4 => Self::decode_mp4(filesystem::open(&path)?).context(error::Video { path }),
+      VideoType::Mp4 => {
+        let file = filesystem::open(&path)?;
+        Self::decode_mp4(file).context(error::Video { path })
+      }
     }
   }
 
