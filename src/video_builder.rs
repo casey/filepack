@@ -94,7 +94,7 @@ impl VideoBuilder {
 
   #[must_use]
   pub fn video_track(self, width: u16, height: u16) -> Self {
-    let entry = Self::video_entry(*b"s263", *b"d263", width, height);
+    let entry = Self::video_entry(*b"avc1", *b"avcC", width, height);
     self.track(*b"vide", &[entry])
   }
 }

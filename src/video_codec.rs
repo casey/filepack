@@ -5,7 +5,7 @@ use super::*;
 #[strum(serialize_all = "UPPERCASE")]
 pub enum VideoCodec {
   #[n(0)]
-  H263,
+  H264,
 }
 
 #[cfg(test)]
@@ -14,6 +14,6 @@ mod tests {
 
   #[test]
   fn encoding() {
-    assert_cbor(VideoCodec::H263, "00");
+    assert_cbor(VideoCodec::H264, "00");
   }
 }
