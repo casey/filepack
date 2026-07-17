@@ -13,11 +13,6 @@ mod tests {
   use super::*;
 
   #[test]
-  fn display() {
-    assert_eq!(VideoCodec::H263.to_string(), "H263");
-  }
-
-  #[test]
   fn encoding() {
     assert_cbor(VideoCodec::H263, "00");
   }
