@@ -2,11 +2,9 @@ use {
   self::{child::Child, expected::Expected, test::Test},
   camino::{Utf8Path, Utf8PathBuf},
   filepack::{
-    Decode, Decoder, Directory, Encode, Encoder, Entry, Fingerprint, Hash, Manifest, Metadata,
-    Page, PrivateKey, PublicKey, Totals,
-    directory_ext::DirectoryExt,
+    Decode, Decoder, Directory, DirectoryExt, Encode, Encoder, Entry, Fingerprint, Hash, Manifest,
+    Metadata, Page, PrivateKey, PublicKey, Totals, VideoBuilder,
     templates::{DirectoryHtml, PackageHtml, PageHtml},
-    video_builder::VideoBuilder,
   },
   image::{DynamicImage, ImageFormat},
   regex::Regex,

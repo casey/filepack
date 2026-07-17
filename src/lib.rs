@@ -185,6 +185,7 @@ pub use self::{
   decode::Decode,
   decoder::Decoder,
   directory::Directory,
+  directory_ext::DirectoryExt,
   directory_tree::DirectoryTree,
   encode::Encode,
   encoder::Encoder,
@@ -207,16 +208,15 @@ pub use self::{
   statement::Statement,
   text::Text,
   totals::Totals,
+  video_builder::VideoBuilder,
 };
 
 #[cfg(test)]
 use {
-  directory_ext::DirectoryExt,
   std::assert_matches,
   tempfile::TempDir,
   test::{assert_cbor, assert_cbor_eq, assert_encoding, flac, tempdir},
   unindent::unindent,
-  video_builder::VideoBuilder,
 };
 
 #[cfg(test)]
@@ -263,7 +263,7 @@ mod decode_error;
 mod decoder;
 mod dimensions;
 mod directory;
-pub mod directory_ext;
+mod directory_ext;
 mod directory_tree;
 mod directory_tree_entry;
 mod display_duration;
@@ -345,7 +345,7 @@ mod type_name;
 mod utf8_path_ext;
 mod version;
 mod video;
-pub mod video_builder;
+mod video_builder;
 mod video_codec;
 mod video_error;
 mod video_format;
