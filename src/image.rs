@@ -108,10 +108,7 @@ impl FromStr for Image {
     };
 
     Ok(Self {
-      dimensions: Dimensions {
-        height: 0,
-        width: 0,
-      },
+      dimensions: Dimensions::default(),
       filename,
       ty,
     })

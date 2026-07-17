@@ -70,6 +70,16 @@
 %%           }
 %%         }
 %%       }
+%%       Media::Video { videos } => {
+  <dt>videos</dt>
+  <dd>{{ videos.len() }}</dd>
+%%         if !videos.is_empty() {
+  <dt>format</dt>
+%%           for format in Video::formats(videos) {
+  <dd>{{ format }}</dd>
+%%           }
+%%         }
+%%       }
 %%     }
 %%   }
 %% }
@@ -104,6 +114,13 @@
   </li>
 %%         }
 </ul>
+%%       }
+%%       Media::Video { videos } => {
+<ol>
+%%         for (i, video) in videos.iter().enumerate() {
+  <li><a href=/package/{{ self.fingerprint }}/{{ Ordinal(i) }}>{{ video.filename }}</a></li>
+%%         }
+</ol>
 %%       }
 %%     }
 %%   }

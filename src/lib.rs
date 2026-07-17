@@ -25,6 +25,7 @@ use {
     archive_error::ArchiveError,
     arguments::Arguments,
     array_decoder::ArrayDecoder,
+    audio_codec::AudioCodec,
     audio_format::AudioFormat,
     audio_type::AudioType,
     authenticated::Authenticated,
@@ -103,6 +104,12 @@ use {
     type_name::TypeName,
     utf8_path_ext::Utf8PathExt,
     version::Version,
+    video::Video,
+    video_codec::VideoCodec,
+    video_error::VideoError,
+    video_format::VideoFormat,
+    video_info::VideoInfo,
+    video_type::VideoType,
   },
   axum::{
     body::Body,
@@ -145,7 +152,7 @@ use {
     env,
     fmt::{self, Debug, Display, Formatter},
     fs::{self, Permissions},
-    io::{self, IsTerminal, Seek, SeekFrom, Write},
+    io::{self, BufReader, IsTerminal, Read, Seek, SeekFrom, Write},
     iter,
     net::SocketAddr,
     num::{NonZeroUsize, ParseIntError, TryFromIntError},
@@ -179,6 +186,7 @@ pub use self::{
   decode::Decode,
   decoder::Decoder,
   directory::Directory,
+  directory_ext::DirectoryExt,
   directory_tree::DirectoryTree,
   encode::Encode,
   encoder::Encoder,
@@ -201,11 +209,11 @@ pub use self::{
   statement::Statement,
   text::Text,
   totals::Totals,
+  video_builder::VideoBuilder,
 };
 
 #[cfg(test)]
 use {
-  directory_ext::DirectoryExt,
   std::assert_matches,
   tempfile::TempDir,
   test::{assert_cbor, assert_cbor_eq, assert_encoding, flac, tempdir},
@@ -232,6 +240,7 @@ mod archive_error;
 mod arguments;
 mod array_decoder;
 mod array_encoder;
+mod audio_codec;
 mod audio_format;
 mod audio_type;
 mod authenticated;
@@ -255,7 +264,7 @@ mod decode_error;
 mod decoder;
 mod dimensions;
 mod directory;
-pub mod directory_ext;
+mod directory_ext;
 mod directory_tree;
 mod directory_tree_entry;
 mod display_duration;
@@ -336,6 +345,13 @@ mod track_error;
 mod type_name;
 mod utf8_path_ext;
 mod version;
+mod video;
+mod video_builder;
+mod video_codec;
+mod video_error;
+mod video_format;
+mod video_info;
+mod video_type;
 
 #[cfg(test)]
 mod derive;

@@ -17,6 +17,11 @@ pub(crate) enum Media {
     #[n(0)]
     images: Vec<Image>,
   },
+  #[n(2)]
+  Video {
+    #[n(0)]
+    videos: Vec<Video>,
+  },
 }
 
 impl Media {
@@ -30,6 +35,7 @@ impl MediaType {
     match self {
       Self::Audio => "track",
       Self::Image => "image",
+      Self::Video => "video",
     }
   }
 }

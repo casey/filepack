@@ -541,17 +541,17 @@ fn files_empty() {
 fn files_non_empty() {
   let server = TestServer::new();
 
-  let foo = b"foo";
-  let bar = b"bar";
-  let baz = b"baz";
-
-  server.write_file(foo);
-  server.write_file(bar);
-  server.write_file(baz);
+  server.write_file(b"foo");
+  server.write_file(b"bar");
+  server.write_file(b"baz");
 
   fs::write(server.data_dir.join("files").join("not-a-hash"), "").unwrap();
 
-  let mut files = vec![Hash::bytes(foo), Hash::bytes(bar), Hash::bytes(baz)];
+  let mut files = vec![
+    Hash::bytes(b"foo"),
+    Hash::bytes(b"bar"),
+    Hash::bytes(b"baz"),
+  ];
   files.sort();
 
   server.get("/files").assert_page(FilesHtml { files }).send();
@@ -702,8 +702,6 @@ fn malformed_fingerprint_returns_error() {
 fn media_audio_track_file_missing() {
   let server = TestServer::new();
 
-  let foo: &[u8] = b"foo";
-
   let metadata = Metadata {
     media: Some(Media::Audio {
       tracks: tracks(&["foo.flac"]),
@@ -713,7 +711,7 @@ fn media_audio_track_file_missing() {
 
   let fingerprint = PackageBuilder::new()
     .metadata(&metadata)
-    .file("foo.flac", foo)
+    .file("foo.flac", b"foo")
     .upload(&server);
 
   let metadata_cbor = metadata.encode_to_vec();
@@ -738,9 +736,6 @@ fn media_audio_track_file_missing() {
 fn media_audio_track_out_of_range() {
   let server = TestServer::new();
 
-  let foo: &[u8] = b"foo";
-  let bar: &[u8] = b"bar";
-
   let fingerprint = PackageBuilder::new()
     .metadata(&Metadata {
       media: Some(Media::Audio {
@@ -748,8 +743,8 @@ fn media_audio_track_out_of_range() {
       }),
       ..default()
     })
-    .file("foo.flac", foo)
-    .file("bar.flac", bar)
+    .file("foo.flac", b"foo")
+    .file("bar.flac", b"bar")
     .upload(&server);
 
   server
@@ -1050,6 +1045,64 @@ fn media_type_mismatch() {
 }
 
 #[test]
+fn media_video_video_out_of_range() {
+  let server = TestServer::new();
+
+  let fingerprint = PackageBuilder::new()
+    .metadata(&Metadata {
+      media: Some(Media::Video {
+        videos: vec!["foo.mp4".parse().unwrap()],
+      }),
+      ..default()
+    })
+    .file("foo.mp4", b"foo")
+    .upload(&server);
+
+  server
+    .get(format!("/media/video/{fingerprint}/video/2"))
+    .status(StatusCode::NOT_FOUND)
+    .assert_body(format!(
+      "video 2 does not exist, package {fingerprint} has 1 video"
+    ))
+    .send();
+}
+
+#[test]
+fn media_video_video_response() {
+  let server = TestServer::new();
+
+  let fingerprint = PackageBuilder::new()
+    .metadata(&Metadata {
+      media: Some(Media::Video {
+        videos: vec!["foo.mp4".parse().unwrap(), "bar.mp4".parse().unwrap()],
+      }),
+      ..default()
+    })
+    .file("foo.mp4", b"foo")
+    .file("bar.mp4", b"bar")
+    .upload(&server);
+
+  server
+    .get(format!("/media/video/{fingerprint}/video/1"))
+    .assert_header(header::ACCEPT_RANGES, "bytes")
+    .assert_header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
+    .assert_header(header::CONTENT_LENGTH, "3")
+    .assert_header(header::CONTENT_SECURITY_POLICY, "sandbox")
+    .assert_header(header::CONTENT_TYPE, "video/mp4")
+    .assert_header(header::ETAG, format!("\"{}\"", Hash::bytes(b"foo")))
+    .assert_body(b"foo")
+    .send();
+
+  server
+    .get(format!("/media/video/{fingerprint}/video/2"))
+    .assert_header(header::CONTENT_LENGTH, "3")
+    .assert_header(header::CONTENT_TYPE, "video/mp4")
+    .assert_header(header::ETAG, format!("\"{}\"", Hash::bytes(b"bar")))
+    .assert_body(b"bar")
+    .send();
+}
+
+#[test]
 fn missing_rejects_unsorted_hashes() {
   let mut hashes = BTreeSet::from([Hash::bytes(b"foo"), Hash::bytes(b"bar")])
     .into_iter()
@@ -1231,6 +1284,63 @@ fn package_item_track_out_of_range() {
 }
 
 #[test]
+fn package_item_video() {
+  let server = TestServer::new();
+
+  let metadata = Metadata {
+    media: Some(Media::Video {
+      videos: vec![Video {
+        audio_codec: AudioCodec::Aac,
+        dimensions: Dimensions {
+          height: 1,
+          width: 2,
+        },
+        filename: "foo.mp4".parse().unwrap(),
+        ty: VideoType::Mp4,
+        video_codec: VideoCodec::H263,
+      }],
+    }),
+    ..default()
+  };
+
+  let fingerprint = PackageBuilder::new()
+    .metadata(&metadata)
+    .file("foo.mp4", b"foo")
+    .upload(&server);
+
+  server
+    .get(format!("/package/{fingerprint}/1"))
+    .assert_page(VideoHtml {
+      fingerprint,
+      video: 0,
+    })
+    .send();
+}
+
+#[test]
+fn package_item_video_out_of_range() {
+  let server = TestServer::new();
+
+  let fingerprint = PackageBuilder::new()
+    .metadata(&Metadata {
+      media: Some(Media::Video {
+        videos: vec!["foo.mp4".parse().unwrap()],
+      }),
+      ..default()
+    })
+    .file("foo.mp4", b"foo")
+    .upload(&server);
+
+  server
+    .get(format!("/package/{fingerprint}/2"))
+    .status(StatusCode::NOT_FOUND)
+    .assert_body(format!(
+      "video 2 does not exist, package {fingerprint} has 1 video"
+    ))
+    .send();
+}
+
+#[test]
 fn package_item_without_media() {
   let server = TestServer::new();
 
@@ -1361,6 +1471,48 @@ fn package_page_renders_image_media() {
   let fingerprint = PackageBuilder::new()
     .metadata(&metadata)
     .file("foo.png", b"foo")
+    .upload(&server);
+
+  server
+    .get(format!("/package/{fingerprint}"))
+    .assert_page(PackageHtml {
+      fingerprint,
+      metadata: Some(metadata),
+      totals,
+    })
+    .send();
+}
+
+#[test]
+fn package_page_renders_video_media() {
+  let server = TestServer::new();
+
+  let metadata = Metadata {
+    media: Some(Media::Video {
+      videos: vec![Video {
+        audio_codec: AudioCodec::Aac,
+        dimensions: Dimensions {
+          height: 1,
+          width: 2,
+        },
+        filename: "foo.mp4".parse().unwrap(),
+        ty: VideoType::Mp4,
+        video_codec: VideoCodec::H263,
+      }],
+    }),
+    ..default()
+  };
+
+  let totals = Totals {
+    directories: 0,
+    directory_size: 0,
+    file_size: metadata.encode_to_vec().len().into_u64() + 3,
+    files: 2,
+  };
+
+  let fingerprint = PackageBuilder::new()
+    .metadata(&metadata)
+    .file("foo.mp4", b"foo")
     .upload(&server);
 
   server

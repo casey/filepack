@@ -135,6 +135,54 @@ media:
 }
 
 #[test]
+fn create_extracts_video_metadata() {
+  Test::new()
+    .write(
+      "foo.mp4",
+      VideoBuilder::new()
+        .video_track(2, 1)
+        .audio_track(0x40)
+        .build(),
+    )
+    .write(
+      "metadata.yaml",
+      "\
+media:
+  type: video
+  videos:
+    - foo.mp4
+",
+    )
+    .arg("create")
+    .success()
+    .arg("metadata")
+    .stdout(
+      r#"{
+  "media": {
+    "type": "video",
+    "videos": [
+      {
+        "audio_codec": "aac",
+        "dimensions": {
+          "height": 1,
+          "width": 2
+        },
+        "filename": "foo.mp4",
+        "type": "mp4",
+        "video_codec": "h263"
+      }
+    ]
+  }
+}
+"#,
+    )
+    .success()
+    .arg("verify")
+    .stderr_regex("successfully verified .*")
+    .success();
+}
+
+#[test]
 fn create_rejects_extra_files_in_media_packages() {
   Test::new()
     .write(
@@ -228,6 +276,28 @@ media:
     .stderr_regex(
       "error: failed to decode track `.*foo.flac`
        └─ Ill-formed FLAC stream: .*\n",
+    )
+    .failure();
+}
+
+#[test]
+fn create_rejects_invalid_videos() {
+  Test::new()
+    .write("foo.mp4", "barbar")
+    .write(
+      "metadata.yaml",
+      "\
+media:
+  type: video
+  videos:
+    - foo.mp4
+",
+    )
+    .arg("create")
+    .stderr_regex(
+      "error: invalid video `.*foo.mp4`
+       ├─ failed to decode MP4
+       └─ .*\n",
     )
     .failure();
 }

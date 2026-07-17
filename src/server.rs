@@ -150,6 +150,44 @@ impl Server {
     Ok(self.open_file(hash)?.ty(image.resource_type()))
   }
 
+  pub(crate) fn media_video_video(
+    &self,
+    fingerprint: Fingerprint,
+    video: usize,
+  ) -> ServerResult<Resource> {
+    let metadata = self.package_metadata(fingerprint)?;
+
+    let media = metadata
+      .media
+      .context(server_error::PackageMediaMetadataNotFound { fingerprint })?;
+
+    let Media::Video { videos } = &media else {
+      return Err(
+        server_error::MediaType {
+          actual: media.discriminant(),
+          expected: MediaType::Video,
+          fingerprint,
+        }
+        .build(),
+      );
+    };
+
+    let video = videos
+      .get(video)
+      .context(server_error::MediaItemDoesNotExist {
+        count: videos.len(),
+        fingerprint,
+        index: video,
+        ty: media.discriminant(),
+      })?;
+
+    let path = video.as_path();
+
+    let hash = self.verified_package_file(fingerprint, &path)?;
+
+    Ok(self.open_file(hash)?.ty(video.resource_type()))
+  }
+
   fn metadata(&self, fingerprint: Fingerprint) -> ServerResult<Option<Metadata>> {
     self
       .metadata_cbor(fingerprint)?

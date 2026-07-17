@@ -14,7 +14,9 @@ use {
     caches::DirCache,
   },
   std::net::TcpStream,
-  templates::{DirectoryHtml, FilesHtml, ImageHtml, PackageHtml, PackagesHtml, TrackHtml},
+  templates::{
+    DirectoryHtml, FilesHtml, ImageHtml, PackageHtml, PackagesHtml, TrackHtml, VideoHtml,
+  },
   tokio::{net::TcpListener, runtime, task::block_in_place},
   tower_http::set_header::SetResponseHeaderLayer,
 };
@@ -294,6 +296,10 @@ impl Serve {
       .route(
         "/media/image/{fingerprint}/image/{image}",
         get(route::media_image_image),
+      )
+      .route(
+        "/media/video/{fingerprint}/video/{video}",
+        get(route::media_video_video),
       )
       .route("/missing", post(route::missing))
       .route(
