@@ -67,7 +67,9 @@ impl Video {
     }
   }
 
-  fn info_mp4(file: fs::File) -> Result<VideoInfo, VideoError> {
+  fn info_mp4<T: Read>(reader: T) -> Result<VideoInfo, VideoError> {
+    let reader = &mut BufReader::new(reader);
+
     use mp4parse::{CodecType, SampleEntry, TrackType};
 
     fn codec_name(ty: CodecType) -> &'static str {
@@ -90,7 +92,6 @@ impl Video {
       }
     }
 
-    let reader = &mut BufReader::new(file);
     let context = mp4parse::read_mp4(reader).context(video_error::DecodeMp4)?;
 
     let mut audio = None;
@@ -177,9 +178,8 @@ impl Video {
       .map(|stsd| &*stsd.descriptions)
       .context(video_error::SampleDescriptionMissing)?;
 
-    ensure! {
-      descriptions.len() > 1,
-      video_error::SampleDescriptionMultiple,
+    if descriptions.len() > 1 {
+      return Err(video_error::SampleDescriptionMultiple.build());
     }
 
     descriptions
@@ -324,7 +324,7 @@ mod tests {
   fn mp4_info() {
     #[track_caller]
     fn case(builder: VideoBuilder) -> Result<VideoInfo, VideoError> {
-      Video::info_mp4(&mut io::Cursor::new(builder.build()))
+      Video::info_mp4(io::Cursor::new(builder.build()))
     }
 
     #[track_caller]
@@ -365,7 +365,7 @@ mod tests {
         .video_track(2, 1)
         .audio_track(0x40)
         .track(*b"meta", &[]),
-      "unsupported track type `Metadata`",
+      "unsupported track type `metadata`",
     );
     error(
       VideoBuilder::new()
@@ -374,11 +374,11 @@ mod tests {
           &[VideoBuilder::video_entry(*b"avc1", *b"avcC", 2, 1)],
         )
         .audio_track(0x40),
-      "unsupported video codec `H264`",
+      "unsupported video codec `H.264`",
     );
     error(
       VideoBuilder::new().video_track(2, 1).audio_track(0x11),
-      "unsupported audio codec `Unknown`",
+      "unsupported audio codec `unknown`",
     );
     error(
       VideoBuilder::new().video_track(2, 1).track(
@@ -388,15 +388,15 @@ mod tests {
           VideoBuilder::audio_entry(0x40),
         ],
       ),
-      "track has 2 sample descriptions",
+      "track has multiple sample descriptions",
     );
     error(
       VideoBuilder::new().video_track(2, 1).track(*b"soun", &[]),
-      "track has 0 sample descriptions",
+      "track has missing sample description",
     );
 
     assert_eq!(
-      Video::info_mp4(&mut io::Cursor::new(b"foo"))
+      Video::info_mp4(io::Cursor::new(b"foo"))
         .unwrap_err()
         .to_string(),
       "failed to decode MP4",
