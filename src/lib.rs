@@ -107,6 +107,7 @@ use {
     video::Video,
     video_codec::VideoCodec,
     video_error::VideoError,
+    video_format::VideoFormat,
     video_type::VideoType,
   },
   axum::{
@@ -345,6 +346,7 @@ mod version;
 mod video;
 mod video_codec;
 mod video_error;
+mod video_format;
 mod video_type;
 
 #[cfg(test)]

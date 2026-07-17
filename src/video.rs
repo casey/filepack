@@ -224,23 +224,6 @@ impl FromStr for Video {
   }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub(crate) struct VideoFormat {
-  audio_codec: AudioCodec,
-  ty: VideoType,
-  video_codec: VideoCodec,
-}
-
-impl Display for VideoFormat {
-  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    write!(
-      f,
-      "{} / {} / {}",
-      self.ty, self.video_codec, self.audio_codec
-    )
-  }
-}
-
 #[cfg(test)]
 mod tests {
   use super::*;
