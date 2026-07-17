@@ -1,34 +1,94 @@
 use super::*;
 
-fn atom(fourcc: [u8; 4], payload: &[u8]) -> Vec<u8> {
-  let mut atom = Vec::new();
-  atom.extend_from_slice(&u32::try_from(payload.len() + 8).unwrap().to_be_bytes());
-  atom.extend_from_slice(&fourcc);
-  atom.extend_from_slice(payload);
-  atom
+struct VideoBuilder {
+  traks: Vec<Vec<u8>>,
 }
 
-fn audio_entry(object_type: u8) -> Vec<u8> {
-  let mut descriptor = vec![0x04, 13, object_type];
-  descriptor.extend_from_slice(&[0; 12]);
+impl VideoBuilder {
+  fn atom(fourcc: [u8; 4], payload: &[u8]) -> Vec<u8> {
+    let mut atom = Vec::new();
+    atom.extend_from_slice(&u32::try_from(payload.len() + 8).unwrap().to_be_bytes());
+    atom.extend_from_slice(&fourcc);
+    atom.extend_from_slice(payload);
+    atom
+  }
 
-  let mut es = vec![0x03, u8::try_from(descriptor.len() + 3).unwrap(), 0, 1, 0];
-  es.extend_from_slice(&descriptor);
+  fn audio_track(mut self, object_type: u8) -> Self {
+    let mut descriptor = vec![0x04, 13, object_type];
+    descriptor.extend_from_slice(&[0; 12]);
 
-  let mut esds = vec![0, 0, 0, 0];
-  esds.extend_from_slice(&es);
+    let mut es = vec![0x03, u8::try_from(descriptor.len() + 3).unwrap(), 0, 1, 0];
+    es.extend_from_slice(&descriptor);
 
-  let mut payload = Vec::new();
-  payload.extend_from_slice(&[0; 6]);
-  payload.extend_from_slice(&[0, 1]);
-  payload.extend_from_slice(&[0; 8]);
-  payload.extend_from_slice(&2u16.to_be_bytes());
-  payload.extend_from_slice(&16u16.to_be_bytes());
-  payload.extend_from_slice(&[0; 4]);
-  payload.extend_from_slice(&(44100u32 << 16).to_be_bytes());
-  payload.extend_from_slice(&atom(*b"esds", &esds));
+    let mut esds = vec![0, 0, 0, 0];
+    esds.extend_from_slice(&es);
 
-  atom(*b"mp4a", &payload)
+    let mut payload = Vec::new();
+    payload.extend_from_slice(&[0; 6]);
+    payload.extend_from_slice(&[0, 1]);
+    payload.extend_from_slice(&[0; 8]);
+    payload.extend_from_slice(&2u16.to_be_bytes());
+    payload.extend_from_slice(&16u16.to_be_bytes());
+    payload.extend_from_slice(&[0; 4]);
+    payload.extend_from_slice(&(44100u32 << 16).to_be_bytes());
+    payload.extend_from_slice(&Self::atom(*b"esds", &esds));
+
+    self
+      .traks
+      .push(Self::trak(*b"soun", &Self::atom(*b"mp4a", &payload)));
+
+    self
+  }
+
+  fn build(self) -> Vec<u8> {
+    let mut ftyp = Vec::new();
+    ftyp.extend_from_slice(b"isom");
+    ftyp.extend_from_slice(&[0; 4]);
+    ftyp.extend_from_slice(b"isom");
+
+    [
+      Self::atom(*b"ftyp", &ftyp),
+      Self::atom(*b"moov", &self.traks.concat()),
+    ]
+    .concat()
+  }
+
+  fn new() -> Self {
+    Self { traks: Vec::new() }
+  }
+
+  fn trak(handler: [u8; 4], description: &[u8]) -> Vec<u8> {
+    let mut hdlr = vec![0; 8];
+    hdlr.extend_from_slice(&handler);
+    hdlr.extend_from_slice(&[0; 12]);
+    hdlr.push(0);
+
+    let mut stsd = vec![0, 0, 0, 0, 0, 0, 0, 1];
+    stsd.extend_from_slice(description);
+
+    let stbl = Self::atom(*b"stbl", &Self::atom(*b"stsd", &stsd));
+    let minf = Self::atom(*b"minf", &stbl);
+    let mdia = [Self::atom(*b"hdlr", &hdlr), minf].concat();
+
+    Self::atom(*b"trak", &Self::atom(*b"mdia", &mdia))
+  }
+
+  fn video_track(mut self, width: u16, height: u16) -> Self {
+    let mut payload = Vec::new();
+    payload.extend_from_slice(&[0; 6]);
+    payload.extend_from_slice(&[0, 1]);
+    payload.extend_from_slice(&[0; 16]);
+    payload.extend_from_slice(&width.to_be_bytes());
+    payload.extend_from_slice(&height.to_be_bytes());
+    payload.extend_from_slice(&[0; 50]);
+    payload.extend_from_slice(&Self::atom(*b"d263", &[]));
+
+    self
+      .traks
+      .push(Self::trak(*b"vide", &Self::atom(*b"s263", &payload)));
+
+    self
+  }
 }
 
 #[test]
@@ -170,10 +230,10 @@ fn create_extracts_video_metadata() {
   Test::new()
     .write(
       "foo.mp4",
-      mp4(&[
-        trak(*b"vide", &[video_entry(*b"s263", *b"d263", 2, 1)]),
-        trak(*b"soun", &[audio_entry(0x40)]),
-      ]),
+      VideoBuilder::new()
+        .video_track(2, 1)
+        .audio_track(0x40)
+        .build(),
     )
     .write(
       "metadata.yaml",
@@ -513,43 +573,4 @@ fn metadata_subcommand_path_is_file() {
 "#,
     )
     .success();
-}
-
-fn mp4(traks: &[Vec<u8>]) -> Vec<u8> {
-  let mut ftyp = Vec::new();
-  ftyp.extend_from_slice(b"isom");
-  ftyp.extend_from_slice(&[0; 4]);
-  ftyp.extend_from_slice(b"isom");
-
-  [atom(*b"ftyp", &ftyp), atom(*b"moov", &traks.concat())].concat()
-}
-
-fn trak(handler: [u8; 4], descriptions: &[Vec<u8>]) -> Vec<u8> {
-  let mut hdlr = vec![0; 8];
-  hdlr.extend_from_slice(&handler);
-  hdlr.extend_from_slice(&[0; 12]);
-  hdlr.push(0);
-
-  let mut stsd = vec![0, 0, 0, 0];
-  stsd.extend_from_slice(&u32::try_from(descriptions.len()).unwrap().to_be_bytes());
-  stsd.extend_from_slice(&descriptions.concat());
-
-  let stbl = atom(*b"stbl", &atom(*b"stsd", &stsd));
-  let minf = atom(*b"minf", &stbl);
-  let mdia = [atom(*b"hdlr", &hdlr), minf].concat();
-
-  atom(*b"trak", &atom(*b"mdia", &mdia))
-}
-
-fn video_entry(entry: [u8; 4], config: [u8; 4], width: u16, height: u16) -> Vec<u8> {
-  let mut payload = Vec::new();
-  payload.extend_from_slice(&[0; 6]);
-  payload.extend_from_slice(&[0, 1]);
-  payload.extend_from_slice(&[0; 16]);
-  payload.extend_from_slice(&width.to_be_bytes());
-  payload.extend_from_slice(&height.to_be_bytes());
-  payload.extend_from_slice(&[0; 50]);
-  payload.extend_from_slice(&atom(config, &[]));
-
-  atom(entry, &payload)
 }
