@@ -22,7 +22,7 @@ impl Video {
 
   fn check(&self, info: &VideoInfo) -> Result<(), VideoError> {
     ensure! {
-      info.dimensions == self.dimensions,
+      self.dimensions == info.dimensions,
       video_error::DimensionsMismatch {
         actual: info.dimensions,
         expected: self.dimensions,
@@ -30,7 +30,7 @@ impl Video {
     }
 
     ensure! {
-      info.video_codec == self.video_codec,
+      self.video_codec == info.video_codec,
       video_error::VideoCodecMismatch {
         actual: info.video_codec,
         expected: self.video_codec,
@@ -38,7 +38,7 @@ impl Video {
     }
 
     ensure! {
-      info.audio_codec == self.audio_codec,
+      self.audio_codec == info.audio_codec,
       video_error::AudioCodecMismatch {
         actual: info.audio_codec,
         expected: self.audio_codec,
@@ -51,24 +51,21 @@ impl Video {
   pub(crate) fn check_content(&self, root: &Utf8Path) -> Result {
     let path = root.join(self.as_path());
 
-    let info = self.decode(root)?;
+    let info = self.info(root)?;
 
     self.check(&info).context(error::Video { path })
   }
 
-  fn decode(&self, root: &Utf8Path) -> Result<VideoInfo> {
+  fn info(&self, root: &Utf8Path) -> Result<VideoInfo> {
     let path = root.join(self.as_path());
 
     match self.ty {
-      VideoType::Mp4 => {
-        let file = filesystem::open(&path)?;
-
-        Self::decode_mp4(&mut io::BufReader::new(file)).context(error::Video { path })
-      }
+      VideoType::Mp4 => Self::decode_mp4(filesystem::open(&path)?).context(error::Video { path }),
     }
   }
 
-  fn decode_mp4<T: Read>(reader: &mut T) -> Result<VideoInfo, VideoError> {
+  fn decode_mp4(file: fs::File) -> Result<VideoInfo, VideoError> {
+    let reader = &mut BufReader::new(file);
     let context = mp4parse::read_mp4(reader).context(video_error::Decode)?;
 
     let mut audio = None;
@@ -177,7 +174,7 @@ impl Video {
   }
 
   pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result {
-    let info = self.decode(root)?;
+    let info = self.info(root)?;
 
     self.audio_codec = info.audio_codec;
     self.dimensions = info.dimensions;
