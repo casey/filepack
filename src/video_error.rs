@@ -15,14 +15,16 @@ pub enum VideoError {
   #[snafu(display("multiple audio tracks"))]
   AudioTrackMultiple,
   #[snafu(display("failed to decode MP4"))]
-  Decode { source: mp4parse::Error },
+  DecodeMp4 { source: mp4parse::Error },
   #[snafu(display("video is {actual} but metadata dimensions are {expected}"))]
   DimensionsMismatch {
     actual: Dimensions,
     expected: Dimensions,
   },
-  #[snafu(display("track has {count} sample descriptions"))]
-  SampleDescriptions { count: usize },
+  #[snafu(display("track has missing sample description"))]
+  SampleDescriptionMissing,
+  #[snafu(display("track has multiple sample descriptions"))]
+  SampleDescriptionMultiple,
   #[snafu(display("unsupported track type `{ty}`"))]
   TrackUnsupported { ty: String },
   #[snafu(display("video codec {actual} doesn't match metadata video codec {expected}"))]

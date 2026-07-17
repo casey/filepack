@@ -91,7 +91,7 @@ impl Video {
     }
 
     let reader = &mut BufReader::new(file);
-    let context = mp4parse::read_mp4(reader).context(video_error::Decode)?;
+    let context = mp4parse::read_mp4(reader).context(video_error::DecodeMp4)?;
 
     let mut audio = None;
     let mut video = None;
@@ -175,16 +175,16 @@ impl Video {
       .stsd
       .as_ref()
       .map(|stsd| &*stsd.descriptions)
-      .unwrap_or_default();
+      .context(video_error::SampleDescriptionMissing)?;
 
     ensure! {
-      descriptions.len() == 1,
-      video_error::SampleDescriptions {
-        count: descriptions.len(),
-      },
+      descriptions.len() > 1,
+      video_error::SampleDescriptionMultiple,
     }
 
-    Ok(&descriptions[0])
+    descriptions
+      .first()
+      .context(video_error::SampleDescriptionMissing)
   }
 
   pub(crate) fn format(&self) -> VideoFormat {
