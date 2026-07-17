@@ -444,7 +444,7 @@ mod tests {
   }
 
   #[test]
-  fn files_includes_audio_tracks() {
+  fn files_include_audio_tracks() {
     let metadata = Metadata {
       media: Some(Media::Audio {
         tracks: vec!["foo.flac".parse().unwrap(), "bar.flac".parse().unwrap()],
@@ -462,7 +462,7 @@ mod tests {
   }
 
   #[test]
-  fn files_includes_images() {
+  fn files_include_images() {
     let metadata = Metadata {
       media: Some(Media::Image {
         images: vec!["foo.png".parse().unwrap(), "bar.jpg".parse().unwrap()],
@@ -480,7 +480,7 @@ mod tests {
   }
 
   #[test]
-  fn files_includes_videos() {
+  fn files_include_videos() {
     let metadata = Metadata {
       media: Some(Media::Video {
         videos: vec!["foo.mp4".parse().unwrap(), "bar.mp4".parse().unwrap()],
