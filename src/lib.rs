@@ -151,7 +151,7 @@ use {
     env,
     fmt::{self, Debug, Display, Formatter},
     fs::{self, Permissions},
-    io::{self, IsTerminal, Seek, SeekFrom, Write},
+    io::{self, IsTerminal, Read, Seek, SeekFrom, Write},
     iter,
     net::SocketAddr,
     num::{NonZeroUsize, ParseIntError, TryFromIntError},

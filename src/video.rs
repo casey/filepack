@@ -36,8 +36,8 @@ impl Mp4Info {
     Ok(())
   }
 
-  fn decode(bytes: Vec<u8>) -> Result<Self, VideoError> {
-    let context = mp4parse::read_mp4(&mut io::Cursor::new(bytes)).context(video_error::Decode)?;
+  fn decode<T: Read>(reader: &mut T) -> Result<Self, VideoError> {
+    let context = mp4parse::read_mp4(reader).context(video_error::Decode)?;
 
     let mut audio = None;
     let mut video = None;
@@ -160,9 +160,9 @@ impl Video {
   }
 
   fn decode_mp4(path: &Utf8Path) -> Result<Mp4Info> {
-    let bytes = filesystem::read(path)?;
+    let file = filesystem::open(path)?;
 
-    Mp4Info::decode(bytes).context(error::Video { path })
+    Mp4Info::decode(&mut io::BufReader::new(file)).context(error::Video { path })
   }
 
   pub(crate) fn format(&self) -> VideoFormat {
@@ -302,7 +302,7 @@ mod tests {
   fn decode() {
     #[track_caller]
     fn case(builder: VideoBuilder) -> Result<Mp4Info, VideoError> {
-      Mp4Info::decode(builder.build())
+      Mp4Info::decode(&mut io::Cursor::new(builder.build()))
     }
 
     #[track_caller]
@@ -374,7 +374,9 @@ mod tests {
     );
 
     assert_eq!(
-      Mp4Info::decode(b"foo".to_vec()).unwrap_err().to_string(),
+      Mp4Info::decode(&mut io::Cursor::new(b"foo"))
+        .unwrap_err()
+        .to_string(),
       "failed to decode MP4",
     );
   }
