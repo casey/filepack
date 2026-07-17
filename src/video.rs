@@ -20,7 +20,15 @@ impl Video {
     self.filename.as_path()
   }
 
-  fn check(&self, info: &VideoInfo) -> Result<(), VideoError> {
+  pub(crate) fn check_content(&self, root: &Utf8Path) -> Result {
+    let path = root.join(self.as_path());
+
+    let info = self.info(root)?;
+
+    self.check_info(&info).context(error::Video { path })
+  }
+
+  fn check_info(&self, info: &VideoInfo) -> Result<(), VideoError> {
     ensure! {
       self.dimensions == info.dimensions,
       video_error::DimensionsMismatch {
@@ -46,14 +54,6 @@ impl Video {
     }
 
     Ok(())
-  }
-
-  pub(crate) fn check_content(&self, root: &Utf8Path) -> Result {
-    let path = root.join(self.as_path());
-
-    let info = self.info(root)?;
-
-    self.check(&info).context(error::Video { path })
   }
 
   pub(crate) fn format(&self) -> VideoFormat {
@@ -267,7 +267,7 @@ mod tests {
     let video = "foo.mp4".parse::<Video>().unwrap();
 
     video
-      .check(&VideoInfo {
+      .check_info(&VideoInfo {
         audio_codec: AudioCodec::Aac,
         dimensions: Dimensions::default(),
         video_codec: VideoCodec::H263,
@@ -276,7 +276,7 @@ mod tests {
 
     assert_eq!(
       video
-        .check(&VideoInfo {
+        .check_info(&VideoInfo {
           audio_codec: AudioCodec::Aac,
           dimensions: Dimensions {
             height: 1,
@@ -291,7 +291,7 @@ mod tests {
 
     assert_eq!(
       video
-        .check(&VideoInfo {
+        .check_info(&VideoInfo {
           audio_codec: AudioCodec::Mp3,
           dimensions: Dimensions::default(),
           video_codec: VideoCodec::H263,
