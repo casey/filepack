@@ -108,6 +108,7 @@ use {
     video_codec::VideoCodec,
     video_error::VideoError,
     video_format::VideoFormat,
+    video_info::VideoInfo,
     video_type::VideoType,
   },
   axum::{
@@ -349,6 +350,7 @@ mod video_builder;
 mod video_codec;
 mod video_error;
 mod video_format;
+mod video_info;
 mod video_type;
 
 #[cfg(test)]
