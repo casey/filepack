@@ -13,7 +13,7 @@ pub enum VideoError {
   #[snafu(display("no audio track"))]
   AudioTrackMissing,
   #[snafu(display("multiple audio tracks"))]
-  AudioTracksMultiple,
+  AudioTrackMultiple,
   #[snafu(display("failed to decode MP4"))]
   Decode { source: mp4parse::Error },
   #[snafu(display("video is {actual} but metadata dimensions are {expected}"))]
@@ -35,5 +35,5 @@ pub enum VideoError {
   #[snafu(display("no video track"))]
   VideoTrackMissing,
   #[snafu(display("multiple video tracks"))]
-  VideoTracksMultiple,
+  VideoTrackMultiple,
 }

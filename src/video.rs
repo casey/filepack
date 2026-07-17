@@ -45,11 +45,11 @@ impl Mp4Info {
     for track in &context.tracks {
       match &track.track_type {
         mp4parse::TrackType::Audio => {
-          ensure!(audio.is_none(), video_error::AudioTracksMultiple);
+          ensure!(audio.is_none(), video_error::AudioTrackMultiple);
           audio = Some(track);
         }
         mp4parse::TrackType::Video => {
-          ensure!(video.is_none(), video_error::VideoTracksMultiple);
+          ensure!(video.is_none(), video_error::VideoTrackMultiple);
           video = Some(track);
         }
         ty => {
