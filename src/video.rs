@@ -62,12 +62,34 @@ impl Video {
     match self.ty {
       VideoType::Mp4 => {
         let file = filesystem::open(&path)?;
-        Self::decode_mp4(file).context(error::Video { path })
+        Self::info_mp4(file).context(error::Video { path })
       }
     }
   }
 
-  fn decode_mp4(file: fs::File) -> Result<VideoInfo, VideoError> {
+  fn info_mp4(file: fs::File) -> Result<VideoInfo, VideoError> {
+    use mp4parse::{CodecType, SampleEntry, TrackType};
+
+    fn codec_name(ty: CodecType) -> &'static str {
+      match ty {
+        CodecType::AAC => "AAC",
+        CodecType::ALAC => "ALAC",
+        CodecType::AV1 => "AV1",
+        CodecType::EncryptedAudio => "encrypted audio",
+        CodecType::EncryptedVideo => "encrypted video",
+        CodecType::FLAC => "FLAC",
+        CodecType::H263 => "H.263",
+        CodecType::H264 => "H.264",
+        CodecType::LPCM => "LPCM",
+        CodecType::MP3 => "MP3",
+        CodecType::MP4V => "MP4V",
+        CodecType::Opus => "Opus",
+        CodecType::Unknown => "unknown",
+        CodecType::VP8 => "VP8",
+        CodecType::VP9 => "VP9",
+      }
+    }
+
     let reader = &mut BufReader::new(file);
     let context = mp4parse::read_mp4(reader).context(video_error::Decode)?;
 
@@ -76,19 +98,28 @@ impl Video {
 
     for track in &context.tracks {
       match &track.track_type {
-        mp4parse::TrackType::Audio => {
+        TrackType::Audio => {
           ensure!(audio.is_none(), video_error::AudioTrackMultiple);
           audio = Some(track);
         }
-        mp4parse::TrackType::Video => {
+        TrackType::Video => {
           ensure!(video.is_none(), video_error::VideoTrackMultiple);
           video = Some(track);
         }
         ty => {
-          return video_error::TrackUnsupported {
-            ty: format!("{ty:?}"),
-          }
-          .fail();
+          return Err(
+            video_error::TrackUnsupported {
+              ty: match ty {
+                TrackType::Audio => "audio",
+                TrackType::AuxiliaryVideo => "auixiliary video",
+                TrackType::Metadata => "metadata",
+                TrackType::Picture => "picture",
+                TrackType::Unknown => "unknown",
+                TrackType::Video => "video",
+              },
+            }
+            .build(),
+          );
         }
       }
     }
@@ -96,43 +127,45 @@ impl Video {
     let video = video.context(video_error::VideoTrackMissing)?;
     let audio = audio.context(video_error::AudioTrackMissing)?;
 
-    let mp4parse::SampleEntry::Video(video) = Self::description(video)? else {
+    let SampleEntry::Video(video) = Self::description(video)? else {
       return video_error::VideoCodecUnsupported { codec: "unknown" }.fail();
     };
 
     let video_codec = match video.codec_type {
-      mp4parse::CodecType::H263 => VideoCodec::H263,
+      CodecType::H263 => VideoCodec::H263,
       codec => {
-        return video_error::VideoCodecUnsupported {
-          codec: format!("{codec:?}"),
-        }
-        .fail();
+        return Err(
+          video_error::VideoCodecUnsupported {
+            codec: codec_name(codec),
+          }
+          .build(),
+        );
       }
     };
 
-    let dimensions = Dimensions {
-      height: video.height.into(),
-      width: video.width.into(),
-    };
-
-    let mp4parse::SampleEntry::Audio(audio) = Self::description(audio)? else {
+    let SampleEntry::Audio(audio) = Self::description(audio)? else {
       return video_error::AudioCodecUnsupported { codec: "unknown" }.fail();
     };
 
     let audio_codec = match audio.codec_type {
-      mp4parse::CodecType::AAC => AudioCodec::Aac,
-      mp4parse::CodecType::MP3 => AudioCodec::Mp3,
+      CodecType::AAC => AudioCodec::Aac,
+      CodecType::MP3 => AudioCodec::Mp3,
       codec => {
-        return video_error::AudioCodecUnsupported {
-          codec: format!("{codec:?}"),
-        }
-        .fail();
+        return Err(
+          video_error::AudioCodecUnsupported {
+            codec: codec_name(codec),
+          }
+          .build(),
+        );
       }
     };
 
     Ok(VideoInfo {
       audio_codec,
-      dimensions,
+      dimensions: Dimensions {
+        height: video.height.into(),
+        width: video.width.into(),
+      },
       video_codec,
     })
   }
@@ -291,7 +324,7 @@ mod tests {
   fn decode_mp4() {
     #[track_caller]
     fn case(builder: VideoBuilder) -> Result<VideoInfo, VideoError> {
-      Video::decode_mp4(&mut io::Cursor::new(builder.build()))
+      Video::info_mp4(&mut io::Cursor::new(builder.build()))
     }
 
     #[track_caller]
@@ -363,7 +396,7 @@ mod tests {
     );
 
     assert_eq!(
-      Video::decode_mp4(&mut io::Cursor::new(b"foo"))
+      Video::info_mp4(&mut io::Cursor::new(b"foo"))
         .unwrap_err()
         .to_string(),
       "failed to decode MP4",
