@@ -127,7 +127,7 @@ impl Video {
     let video = video.context(video_error::VideoTrackMissing)?;
     let audio = audio.context(video_error::AudioTrackMissing)?;
 
-    let SampleEntry::Video(video) = Self::description(video)? else {
+    let SampleEntry::Video(video) = Self::track_description(video)? else {
       return video_error::VideoCodecUnsupported { codec: "unknown" }.fail();
     };
 
@@ -143,7 +143,7 @@ impl Video {
       }
     };
 
-    let SampleEntry::Audio(audio) = Self::description(audio)? else {
+    let SampleEntry::Audio(audio) = Self::track_description(audio)? else {
       return video_error::AudioCodecUnsupported { codec: "unknown" }.fail();
     };
 
@@ -170,7 +170,7 @@ impl Video {
     })
   }
 
-  fn description(track: &mp4parse::Track) -> Result<&mp4parse::SampleEntry, VideoError> {
+  fn track_description(track: &mp4parse::Track) -> Result<&mp4parse::SampleEntry, VideoError> {
     let descriptions = track
       .stsd
       .as_ref()
@@ -321,7 +321,7 @@ mod tests {
   }
 
   #[test]
-  fn decode_mp4() {
+  fn mp4_info() {
     #[track_caller]
     fn case(builder: VideoBuilder) -> Result<VideoInfo, VideoError> {
       Video::info_mp4(&mut io::Cursor::new(builder.build()))
