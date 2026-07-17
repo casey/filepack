@@ -6,6 +6,7 @@ use {
     Page, PrivateKey, PublicKey, Totals,
     directory_ext::DirectoryExt,
     templates::{DirectoryHtml, PackageHtml, PageHtml},
+    video_builder::VideoBuilder,
   },
   image::{DynamicImage, ImageFormat},
   regex::Regex,

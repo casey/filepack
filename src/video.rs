@@ -228,37 +228,6 @@ impl FromStr for Video {
 mod tests {
   use super::*;
 
-  fn atom(fourcc: [u8; 4], payload: &[u8]) -> Vec<u8> {
-    let mut atom = Vec::new();
-    atom.extend_from_slice(&u32::try_from(payload.len() + 8).unwrap().to_be_bytes());
-    atom.extend_from_slice(&fourcc);
-    atom.extend_from_slice(payload);
-    atom
-  }
-
-  fn audio_entry(object_type: u8) -> Vec<u8> {
-    let mut descriptor = vec![0x04, 13, object_type];
-    descriptor.extend_from_slice(&[0; 12]);
-
-    let mut es = vec![0x03, u8::try_from(descriptor.len() + 3).unwrap(), 0, 1, 0];
-    es.extend_from_slice(&descriptor);
-
-    let mut esds = vec![0, 0, 0, 0];
-    esds.extend_from_slice(&es);
-
-    let mut payload = Vec::new();
-    payload.extend_from_slice(&[0; 6]);
-    payload.extend_from_slice(&[0, 1]);
-    payload.extend_from_slice(&[0; 8]);
-    payload.extend_from_slice(&2u16.to_be_bytes());
-    payload.extend_from_slice(&16u16.to_be_bytes());
-    payload.extend_from_slice(&[0; 4]);
-    payload.extend_from_slice(&(44100u32 << 16).to_be_bytes());
-    payload.extend_from_slice(&atom(*b"esds", &esds));
-
-    atom(*b"mp4a", &payload)
-  }
-
   #[test]
   fn check() {
     let video = "foo.mp4".parse::<Video>().unwrap();
@@ -305,10 +274,10 @@ mod tests {
 
     std::fs::write(
       root.join("foo.mp4"),
-      mp4(&[
-        trak(*b"vide", &[video_entry(*b"s263", *b"d263", 2, 1)]),
-        trak(*b"soun", &[audio_entry(0x40)]),
-      ]),
+      VideoBuilder::new()
+        .video_track(2, 1)
+        .audio_track(0x40)
+        .build(),
     )
     .unwrap();
 
@@ -332,20 +301,17 @@ mod tests {
   #[test]
   fn decode() {
     #[track_caller]
-    fn case(traks: &[Vec<u8>]) -> Result<Mp4Info, VideoError> {
-      Mp4Info::decode(mp4(traks))
+    fn case(builder: VideoBuilder) -> Result<Mp4Info, VideoError> {
+      Mp4Info::decode(builder.build())
     }
 
     #[track_caller]
-    fn error(traks: &[Vec<u8>], expected: &str) {
-      assert_eq!(case(traks).unwrap_err().to_string(), expected);
+    fn error(builder: VideoBuilder, expected: &str) {
+      assert_eq!(case(builder).unwrap_err().to_string(), expected);
     }
 
-    let video = trak(*b"vide", &[video_entry(*b"s263", *b"d263", 2, 1)]);
-    let audio = trak(*b"soun", &[audio_entry(0x40)]);
-
     assert_eq!(
-      case(&[video.clone(), audio.clone()]).unwrap(),
+      case(VideoBuilder::new().video_track(2, 1).audio_track(0x40)).unwrap(),
       Mp4Info {
         audio_codec: AudioCodec::Aac,
         dimensions: Dimensions {
@@ -356,40 +322,54 @@ mod tests {
       },
     );
 
-    error(std::slice::from_ref(&audio), "no video track");
-    error(std::slice::from_ref(&video), "no audio track");
+    error(VideoBuilder::new().audio_track(0x40), "no video track");
+    error(VideoBuilder::new().video_track(2, 1), "no audio track");
     error(
-      &[video.clone(), video.clone(), audio.clone()],
+      VideoBuilder::new()
+        .video_track(2, 1)
+        .video_track(2, 1)
+        .audio_track(0x40),
       "multiple video tracks",
     );
     error(
-      &[video.clone(), audio.clone(), audio.clone()],
+      VideoBuilder::new()
+        .video_track(2, 1)
+        .audio_track(0x40)
+        .audio_track(0x40),
       "multiple audio tracks",
     );
     error(
-      &[video.clone(), audio.clone(), trak(*b"meta", &[])],
+      VideoBuilder::new()
+        .video_track(2, 1)
+        .audio_track(0x40)
+        .track(*b"meta", &[]),
       "unsupported track type `Metadata`",
     );
     error(
-      &[
-        trak(*b"vide", &[video_entry(*b"avc1", *b"avcC", 2, 1)]),
-        audio.clone(),
-      ],
+      VideoBuilder::new()
+        .track(
+          *b"vide",
+          &[VideoBuilder::video_entry(*b"avc1", *b"avcC", 2, 1)],
+        )
+        .audio_track(0x40),
       "unsupported video codec `H264`",
     );
     error(
-      &[video.clone(), trak(*b"soun", &[audio_entry(0x11)])],
+      VideoBuilder::new().video_track(2, 1).audio_track(0x11),
       "unsupported audio codec `Unknown`",
     );
     error(
-      &[
-        video.clone(),
-        trak(*b"soun", &[audio_entry(0x40), audio_entry(0x40)]),
-      ],
+      VideoBuilder::new().video_track(2, 1).track(
+        *b"soun",
+        &[
+          VideoBuilder::audio_entry(0x40),
+          VideoBuilder::audio_entry(0x40),
+        ],
+      ),
       "track has 2 sample descriptions",
     );
     error(
-      &[video.clone(), trak(*b"soun", &[])],
+      VideoBuilder::new().video_track(2, 1).track(*b"soun", &[]),
       "track has 0 sample descriptions",
     );
 
@@ -471,15 +451,6 @@ mod tests {
     case("foo/bar.mp4", ComponentError::Separator { character: '/' });
   }
 
-  fn mp4(traks: &[Vec<u8>]) -> Vec<u8> {
-    let mut ftyp = Vec::new();
-    ftyp.extend_from_slice(b"isom");
-    ftyp.extend_from_slice(&[0; 4]);
-    ftyp.extend_from_slice(b"isom");
-
-    [atom(*b"ftyp", &ftyp), atom(*b"moov", &traks.concat())].concat()
-  }
-
   #[test]
   fn populate() {
     #[track_caller]
@@ -494,10 +465,12 @@ mod tests {
     }
 
     assert_eq!(
-      case(&mp4(&[
-        trak(*b"vide", &[video_entry(*b"s263", *b"d263", 2, 1)]),
-        trak(*b"soun", &[audio_entry(0x40)]),
-      ]))
+      case(
+        &VideoBuilder::new()
+          .video_track(2, 1)
+          .audio_track(0x40)
+          .build()
+      )
       .unwrap(),
       Video {
         audio_codec: AudioCodec::Aac,
@@ -512,10 +485,12 @@ mod tests {
     );
 
     assert_eq!(
-      case(&mp4(&[
-        trak(*b"vide", &[video_entry(*b"s263", *b"d263", 2, 1)]),
-        trak(*b"soun", &[audio_entry(0x6b)]),
-      ]))
+      case(
+        &VideoBuilder::new()
+          .video_track(2, 1)
+          .audio_track(0x6b)
+          .build()
+      )
       .unwrap()
       .audio_codec,
       AudioCodec::Mp3,
@@ -543,35 +518,5 @@ mod tests {
       .unwrap(),
       r#"{"audio_codec":"mp3","dimensions":{"height":1,"width":2},"filename":"foo.mp4","type":"mp4","video_codec":"h263"}"#,
     );
-  }
-
-  fn trak(handler: [u8; 4], descriptions: &[Vec<u8>]) -> Vec<u8> {
-    let mut hdlr = vec![0; 8];
-    hdlr.extend_from_slice(&handler);
-    hdlr.extend_from_slice(&[0; 12]);
-    hdlr.push(0);
-
-    let mut stsd = vec![0, 0, 0, 0];
-    stsd.extend_from_slice(&u32::try_from(descriptions.len()).unwrap().to_be_bytes());
-    stsd.extend_from_slice(&descriptions.concat());
-
-    let stbl = atom(*b"stbl", &atom(*b"stsd", &stsd));
-    let minf = atom(*b"minf", &stbl);
-    let mdia = [atom(*b"hdlr", &hdlr), minf].concat();
-
-    atom(*b"trak", &atom(*b"mdia", &mdia))
-  }
-
-  fn video_entry(entry: [u8; 4], config: [u8; 4], width: u16, height: u16) -> Vec<u8> {
-    let mut payload = Vec::new();
-    payload.extend_from_slice(&[0; 6]);
-    payload.extend_from_slice(&[0, 1]);
-    payload.extend_from_slice(&[0; 16]);
-    payload.extend_from_slice(&width.to_be_bytes());
-    payload.extend_from_slice(&height.to_be_bytes());
-    payload.extend_from_slice(&[0; 50]);
-    payload.extend_from_slice(&atom(config, &[]));
-
-    atom(entry, &payload)
   }
 }

@@ -216,6 +216,7 @@ use {
   tempfile::TempDir,
   test::{assert_cbor, assert_cbor_eq, assert_encoding, flac, tempdir},
   unindent::unindent,
+  video_builder::VideoBuilder,
 };
 
 #[cfg(test)]
@@ -344,6 +345,7 @@ mod type_name;
 mod utf8_path_ext;
 mod version;
 mod video;
+pub mod video_builder;
 mod video_codec;
 mod video_error;
 mod video_format;
