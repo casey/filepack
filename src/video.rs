@@ -56,6 +56,28 @@ impl Video {
     self.check(&info).context(error::Video { path })
   }
 
+  pub(crate) fn format(&self) -> VideoFormat {
+    VideoFormat {
+      audio_codec: self.audio_codec,
+      ty: self.ty,
+      video_codec: self.video_codec,
+    }
+  }
+
+  pub(crate) fn formats(videos: &[Video]) -> Vec<VideoFormat> {
+    let mut formats = Vec::new();
+
+    for video in videos {
+      let format = video.format();
+
+      if !formats.contains(&format) {
+        formats.push(format);
+      }
+    }
+
+    formats
+  }
+
   fn info(&self, root: &Utf8Path) -> Result<VideoInfo> {
     let path = root.join(self.as_path());
 
@@ -68,8 +90,6 @@ impl Video {
   }
 
   fn info_mp4<T: Read>(reader: T) -> Result<VideoInfo, VideoError> {
-    let reader = &mut BufReader::new(reader);
-
     use mp4parse::{CodecType, SampleEntry, TrackType};
 
     fn codec_name(ty: CodecType) -> &'static str {
@@ -91,6 +111,8 @@ impl Video {
         CodecType::VP9 => "VP9",
       }
     }
+
+    let reader = &mut BufReader::new(reader);
 
     let context = mp4parse::read_mp4(reader).context(video_error::DecodeMp4)?;
 
@@ -183,6 +205,20 @@ impl Video {
     })
   }
 
+  pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result {
+    let info = self.info(root)?;
+
+    self.audio_codec = info.audio_codec;
+    self.dimensions = info.dimensions;
+    self.video_codec = info.video_codec;
+
+    Ok(())
+  }
+
+  pub(crate) fn resource_type(&self) -> ResourceType {
+    self.ty.resource_type()
+  }
+
   fn track_description(track: &mp4parse::Track) -> Result<&mp4parse::SampleEntry, VideoError> {
     let descriptions = track
       .stsd
@@ -197,42 +233,6 @@ impl Video {
     descriptions
       .first()
       .context(video_error::SampleDescriptionMissing { track: track.id })
-  }
-
-  pub(crate) fn format(&self) -> VideoFormat {
-    VideoFormat {
-      audio_codec: self.audio_codec,
-      ty: self.ty,
-      video_codec: self.video_codec,
-    }
-  }
-
-  pub(crate) fn formats(videos: &[Video]) -> Vec<VideoFormat> {
-    let mut formats = Vec::new();
-
-    for video in videos {
-      let format = video.format();
-
-      if !formats.contains(&format) {
-        formats.push(format);
-      }
-    }
-
-    formats
-  }
-
-  pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result {
-    let info = self.info(root)?;
-
-    self.audio_codec = info.audio_codec;
-    self.dimensions = info.dimensions;
-    self.video_codec = info.video_codec;
-
-    Ok(())
-  }
-
-  pub(crate) fn resource_type(&self) -> ResourceType {
-    self.ty.resource_type()
   }
 }
 
@@ -333,6 +333,78 @@ mod tests {
   }
 
   #[test]
+  fn encoding() {
+    assert_cbor(
+      "foo.mp4".parse::<Video>().unwrap(),
+      "a5000001a2000001000267666f6f2e6d703403000400",
+    );
+
+    assert_cbor(
+      Video {
+        audio_codec: AudioCodec::Mp3,
+        dimensions: Dimensions {
+          height: 1,
+          width: 2,
+        },
+        filename: "foo.mp4".parse().unwrap(),
+        ty: VideoType::Mp4,
+        video_codec: VideoCodec::H263,
+      },
+      "a5000101a2000101020267666f6f2e6d703403000400",
+    );
+  }
+
+  #[test]
+  fn formats() {
+    let foo = "foo.mp4".parse::<Video>().unwrap();
+    let mut bar = "bar.mp4".parse::<Video>().unwrap();
+    bar.audio_codec = AudioCodec::Mp3;
+    let baz = "baz.mp4".parse::<Video>().unwrap();
+
+    assert_eq!(
+      Video::formats(&[foo, bar, baz])
+        .iter()
+        .map(ToString::to_string)
+        .collect::<Vec<String>>(),
+      ["MP4 H263 AAC", "MP4 H263 MP3"],
+    );
+  }
+
+  #[test]
+  fn from_str() {
+    #[track_caller]
+    fn case(s: &str, expected: ComponentError) {
+      assert_eq!(s.parse::<Video>().unwrap_err(), expected);
+    }
+
+    assert_eq!(
+      "foo.mp4".parse::<Video>().unwrap(),
+      Video {
+        audio_codec: AudioCodec::Aac,
+        dimensions: Dimensions::default(),
+        filename: "foo.mp4".parse().unwrap(),
+        ty: VideoType::Mp4,
+        video_codec: VideoCodec::H263,
+      },
+    );
+
+    case(
+      "foo.avi",
+      ComponentError::Extension {
+        extensions: &["mp4"],
+      },
+    );
+    case(
+      "foo",
+      ComponentError::Extension {
+        extensions: &["mp4"],
+      },
+    );
+    case("", ComponentError::Empty);
+    case("foo/bar.mp4", ComponentError::Separator { character: '/' });
+  }
+
+  #[test]
   fn mp4_info() {
     #[track_caller]
     fn case(builder: VideoBuilder) -> Result<VideoInfo, VideoError> {
@@ -413,78 +485,6 @@ mod tests {
         .to_string(),
       "failed to decode MP4",
     );
-  }
-
-  #[test]
-  fn encoding() {
-    assert_cbor(
-      "foo.mp4".parse::<Video>().unwrap(),
-      "a5000001a2000001000267666f6f2e6d703403000400",
-    );
-
-    assert_cbor(
-      Video {
-        audio_codec: AudioCodec::Mp3,
-        dimensions: Dimensions {
-          height: 1,
-          width: 2,
-        },
-        filename: "foo.mp4".parse().unwrap(),
-        ty: VideoType::Mp4,
-        video_codec: VideoCodec::H263,
-      },
-      "a5000101a2000101020267666f6f2e6d703403000400",
-    );
-  }
-
-  #[test]
-  fn formats() {
-    let foo = "foo.mp4".parse::<Video>().unwrap();
-    let mut bar = "bar.mp4".parse::<Video>().unwrap();
-    bar.audio_codec = AudioCodec::Mp3;
-    let baz = "baz.mp4".parse::<Video>().unwrap();
-
-    assert_eq!(
-      Video::formats(&[foo, bar, baz])
-        .iter()
-        .map(ToString::to_string)
-        .collect::<Vec<String>>(),
-      ["MP4 H263 AAC", "MP4 H263 MP3"],
-    );
-  }
-
-  #[test]
-  fn from_str() {
-    #[track_caller]
-    fn case(s: &str, expected: ComponentError) {
-      assert_eq!(s.parse::<Video>().unwrap_err(), expected);
-    }
-
-    assert_eq!(
-      "foo.mp4".parse::<Video>().unwrap(),
-      Video {
-        audio_codec: AudioCodec::Aac,
-        dimensions: Dimensions::default(),
-        filename: "foo.mp4".parse().unwrap(),
-        ty: VideoType::Mp4,
-        video_codec: VideoCodec::H263,
-      },
-    );
-
-    case(
-      "foo.avi",
-      ComponentError::Extension {
-        extensions: &["mp4"],
-      },
-    );
-    case(
-      "foo",
-      ComponentError::Extension {
-        extensions: &["mp4"],
-      },
-    );
-    case("", ComponentError::Empty);
-    case("foo/bar.mp4", ComponentError::Separator { character: '/' });
   }
 
   #[test]
