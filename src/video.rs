@@ -400,11 +400,11 @@ mod tests {
           VideoBuilder::audio_entry(0x40),
         ],
       ),
-      "track has multiple sample descriptions",
+      "track 1 has multiple sample descriptions",
     );
     error(
       VideoBuilder::new().video_track(2, 1).track(*b"soun", &[]),
-      "track has missing sample description",
+      "track 1 has missing sample description",
     );
 
     assert_eq!(
