@@ -262,21 +262,6 @@ impl Track {
     self.ty.resource_type()
   }
 
-  fn track_info(reader: &FlacReader<fs::File>, path: &Utf8Path) -> Result<TrackInfo> {
-    let streaminfo = reader.streaminfo();
-
-    let samples = streaminfo
-      .samples
-      .context(error::TrackSampleCountUnknown { path })?;
-
-    Ok(TrackInfo {
-      channels: streaminfo.channels.into(),
-      sample_bits: streaminfo.bits_per_sample.into(),
-      sample_rate: streaminfo.sample_rate.into(),
-      samples,
-    })
-  }
-
   pub(crate) fn sum_durations(tracks: &[Track]) -> Duration {
     tracks.iter().fold(Duration::ZERO, |sum, track| {
       sum.saturating_add(track.duration())
@@ -311,6 +296,21 @@ impl Track {
     Self::tag(reader, path, tag)?
       .parse()
       .context(error::TrackTagInvalid { path, tag })
+  }
+
+  fn track_info(reader: &FlacReader<fs::File>, path: &Utf8Path) -> Result<TrackInfo> {
+    let streaminfo = reader.streaminfo();
+
+    let samples = streaminfo
+      .samples
+      .context(error::TrackSampleCountUnknown { path })?;
+
+    Ok(TrackInfo {
+      channels: streaminfo.channels.into(),
+      sample_bits: streaminfo.bits_per_sample.into(),
+      sample_rate: streaminfo.sample_rate.into(),
+      samples,
+    })
   }
 }
 
