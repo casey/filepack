@@ -7,6 +7,10 @@ pub(crate) struct VideoHtml {
 }
 
 impl Page for VideoHtml {
+  fn stylesheet(&self) -> Option<&'static str> {
+    Some("/static/video.css")
+  }
+
   fn title(&self) -> String {
     format!("video {} · filepack", self.video)
   }

@@ -1,0 +1,9 @@
+body {
+  margin: 0;
+}
+
+video {
+  display: block;
+  height: 100vh;
+  width: 100vw;
+}
