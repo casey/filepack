@@ -25,6 +25,14 @@ pub(crate) enum Media {
 }
 
 impl Media {
+  pub(crate) fn items(&self) -> usize {
+    match self {
+      Self::Audio { tracks } => tracks.len(),
+      Self::Image { images } => images.len(),
+      Self::Video { videos } => videos.len(),
+    }
+  }
+
   pub(crate) fn name(&self) -> &'static str {
     self.into()
   }
