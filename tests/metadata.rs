@@ -162,14 +162,20 @@ media:
     "type": "video",
     "videos": [
       {
-        "audio_codec": "aac",
-        "dimensions": {
-          "height": 1,
-          "width": 2
-        },
         "filename": "foo.mp4",
-        "type": "mp4",
-        "video_codec": "h264"
+        "tracks": [
+          {
+            "codec": "h264",
+            "dimensions": {
+              "height": 1,
+              "width": 2
+            }
+          },
+          {
+            "codec": "aac"
+          }
+        ],
+        "type": "mp4"
       }
     ]
   }
