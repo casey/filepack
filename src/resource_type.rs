@@ -31,8 +31,16 @@ impl ResourceType {
     match component.extension()? {
       "flac" => Some(Self::Flac),
       "jpeg" | "jpg" => Some(Self::Jpeg),
+      "mp4" => Some(Self::Mp4),
       "png" => Some(Self::Png),
       _ => None,
+    }
+  }
+
+  pub(crate) fn sandbox(self) -> bool {
+    match self {
+      Self::Binary | Self::Jpeg | Self::Png => true,
+      Self::Flac | Self::Mp4 => false,
     }
   }
 }

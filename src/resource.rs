@@ -36,9 +36,12 @@ impl IntoResponse for Resource {
 
     let mut builder = Response::builder()
       .header(header::ACCEPT_RANGES, "bytes")
-      .header(header::CONTENT_SECURITY_POLICY, "sandbox")
       .header(header::CONTENT_TYPE, self.ty.content_type().essence_str())
       .header(header::ETAG, format!("\"{}\"", self.hash));
+
+    if self.ty.sandbox() {
+      builder = builder.header(header::CONTENT_SECURITY_POLICY, "sandbox");
+    }
 
     if let Some(content_disposition) = self.ty.content_disposition() {
       builder = builder.header(header::CONTENT_DISPOSITION, content_disposition);
