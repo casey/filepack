@@ -36,7 +36,7 @@ mod tests {
     let metadata = Metadata {
       media: Some(Media::Audio {
         tracks: vec![
-          Track {
+          Audio {
             album: "qux".parse().unwrap(),
             artist: "baz".parse().unwrap(),
             channels: 2,
@@ -51,7 +51,7 @@ mod tests {
             tracks: 2,
             ty: AudioType::Flac,
           },
-          Track {
+          Audio {
             album: "qux".parse().unwrap(),
             artist: "baz".parse().unwrap(),
             channels: 2,
@@ -125,7 +125,7 @@ mod tests {
     let metadata = Metadata {
       media: Some(Media::Audio {
         tracks: vec![
-          Track {
+          Audio {
             album: "qux".parse().unwrap(),
             artist: "baz".parse().unwrap(),
             channels: 2,
@@ -140,7 +140,7 @@ mod tests {
             tracks: 2,
             ty: AudioType::Flac,
           },
-          Track {
+          Audio {
             album: "qux".parse().unwrap(),
             artist: "baz".parse().unwrap(),
             channels: 2,
@@ -155,7 +155,7 @@ mod tests {
             tracks: 2,
             ty: AudioType::Flac,
           },
-          Track {
+          Audio {
             album: "qux".parse().unwrap(),
             artist: "baz".parse().unwrap(),
             channels: 2,
@@ -233,7 +233,7 @@ mod tests {
 
   #[test]
   fn duration_saturates() {
-    let track = Track {
+    let audio = Audio {
       album: "qux".parse().unwrap(),
       artist: "baz".parse().unwrap(),
       channels: 2,
@@ -251,7 +251,7 @@ mod tests {
 
     let metadata = Metadata {
       media: Some(Media::Audio {
-        tracks: vec![track.clone(), track],
+        tracks: vec![audio.clone(), audio],
       }),
       ..default()
     };

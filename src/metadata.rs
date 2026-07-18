@@ -57,10 +57,10 @@ impl Metadata {
     if let Some(media) = &self.media {
       match media {
         Media::Audio { tracks } => {
-          Track::check_positions(tracks).context(error::TrackPosition)?;
+          Audio::check_positions(tracks).context(error::AudioPosition)?;
 
-          for track in tracks {
-            track.check_content(root)?;
+          for audio in tracks {
+            audio.check_content(root)?;
           }
         }
         Media::Image { images } => {
@@ -157,7 +157,7 @@ impl Metadata {
 
     if let Some(media) = &self.media {
       match media {
-        Media::Audio { tracks } => files.extend(tracks.iter().map(Track::as_path)),
+        Media::Audio { tracks } => files.extend(tracks.iter().map(Audio::as_path)),
         Media::Image { images } => files.extend(images.iter().map(Image::as_path)),
         Media::Video { videos } => files.extend(videos.iter().map(Video::as_path)),
       }
@@ -174,8 +174,8 @@ impl Metadata {
     if let Some(media) = self.media.as_mut() {
       match media {
         Media::Audio { tracks } => {
-          for track in tracks {
-            track.populate(root)?;
+          for audio in tracks {
+            audio.populate(root)?;
           }
         }
         Media::Image { images } => {
@@ -405,7 +405,7 @@ mod tests {
       homepage: Some("http://example.com".parse().unwrap()),
       language: Some("en".parse().unwrap()),
       media: Some(Media::Audio {
-        tracks: vec![Track {
+        tracks: vec![Audio {
           album: "bar".parse().unwrap(),
           artist: "baz".parse().unwrap(),
           channels: 8,

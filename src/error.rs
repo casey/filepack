@@ -15,6 +15,88 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     expected: Hash,
   },
+  #[snafu(display(
+    "track `{path}` has {actual} channels but metadata channel count is {expected}"
+  ))]
+  AudioChannelsMismatch {
+    actual: u64,
+    backtrace: Option<Backtrace>,
+    expected: u64,
+    path: DisplayPath,
+  },
+  #[snafu(display("failed to decode track `{path}`"))]
+  AudioDecode {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+    source: claxon::Error,
+  },
+  #[snafu(display("invalid track position"))]
+  AudioPosition {
+    backtrace: Option<Backtrace>,
+    source: AudioError,
+  },
+  #[snafu(display(
+    "track `{path}` has {actual} bits per sample but metadata sample bits is {expected}"
+  ))]
+  AudioSampleBitsMismatch {
+    actual: u64,
+    backtrace: Option<Backtrace>,
+    expected: u64,
+    path: DisplayPath,
+  },
+  #[snafu(display("track `{path}` has {actual} samples but metadata sample count is {expected}"))]
+  AudioSampleCountMismatch {
+    actual: u64,
+    backtrace: Option<Backtrace>,
+    expected: u64,
+    path: DisplayPath,
+  },
+  #[snafu(display("track `{path}` has unknown sample count"))]
+  AudioSampleCountUnknown {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+  },
+  #[snafu(display(
+    "track `{path}` has sample rate {actual} but metadata sample rate is {expected}"
+  ))]
+  AudioSampleRateMismatch {
+    actual: u64,
+    backtrace: Option<Backtrace>,
+    expected: u64,
+    path: DisplayPath,
+  },
+  #[snafu(display("track `{path}` has empty `{tag}` tag"))]
+  AudioTagEmpty {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+    tag: &'static str,
+  },
+  #[snafu(display("track `{path}` has invalid integer `{tag}` tag"))]
+  AudioTagInteger {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+    source: ParseIntError,
+    tag: &'static str,
+  },
+  #[snafu(display("track `{path}` has invalid `{tag}` tag"))]
+  AudioTagInvalid {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+    source: TextError,
+    tag: &'static str,
+  },
+  #[snafu(display("track `{path}` is missing `{tag}` tag"))]
+  AudioTagMissing {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+    tag: &'static str,
+  },
+  #[snafu(display("track `{path}` has multiple `{tag}` tags"))]
+  AudioTagMultiple {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+    tag: &'static str,
+  },
   #[snafu(display("failed to decode bech32 `{bech32}`"))]
   Bech32Decode {
     backtrace: Option<Backtrace>,
@@ -481,88 +563,6 @@ pub enum Error {
   TokenOverHttp { backtrace: Option<Backtrace> },
   #[snafu(display("total file size overflowed 64-bit integer"))]
   TotalFileSizeOverflow { backtrace: Option<Backtrace> },
-  #[snafu(display(
-    "track `{path}` has {actual} channels but metadata channel count is {expected}"
-  ))]
-  TrackChannelsMismatch {
-    actual: u64,
-    backtrace: Option<Backtrace>,
-    expected: u64,
-    path: DisplayPath,
-  },
-  #[snafu(display("failed to decode track `{path}`"))]
-  TrackDecode {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-    source: claxon::Error,
-  },
-  #[snafu(display("invalid track position"))]
-  TrackPosition {
-    backtrace: Option<Backtrace>,
-    source: TrackError,
-  },
-  #[snafu(display(
-    "track `{path}` has {actual} bits per sample but metadata sample bits is {expected}"
-  ))]
-  TrackSampleBitsMismatch {
-    actual: u64,
-    backtrace: Option<Backtrace>,
-    expected: u64,
-    path: DisplayPath,
-  },
-  #[snafu(display("track `{path}` has {actual} samples but metadata sample count is {expected}"))]
-  TrackSampleCountMismatch {
-    actual: u64,
-    backtrace: Option<Backtrace>,
-    expected: u64,
-    path: DisplayPath,
-  },
-  #[snafu(display("track `{path}` has unknown sample count"))]
-  TrackSampleCountUnknown {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-  },
-  #[snafu(display(
-    "track `{path}` has sample rate {actual} but metadata sample rate is {expected}"
-  ))]
-  TrackSampleRateMismatch {
-    actual: u64,
-    backtrace: Option<Backtrace>,
-    expected: u64,
-    path: DisplayPath,
-  },
-  #[snafu(display("track `{path}` has empty `{tag}` tag"))]
-  TrackTagEmpty {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-    tag: &'static str,
-  },
-  #[snafu(display("track `{path}` has invalid integer `{tag}` tag"))]
-  TrackTagInteger {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-    source: ParseIntError,
-    tag: &'static str,
-  },
-  #[snafu(display("track `{path}` has invalid `{tag}` tag"))]
-  TrackTagInvalid {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-    source: TextError,
-    tag: &'static str,
-  },
-  #[snafu(display("track `{path}` is missing `{tag}` tag"))]
-  TrackTagMissing {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-    tag: &'static str,
-  },
-  #[snafu(display("track `{path}` has multiple `{tag}` tags"))]
-  TrackTagMultiple {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-    tag: &'static str,
-  },
   #[snafu(display("failed to unarchive manifest"))]
   UnarchiveManifest {
     backtrace: Option<Backtrace>,

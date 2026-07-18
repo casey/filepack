@@ -96,7 +96,7 @@ impl Server {
       );
     };
 
-    let track = tracks
+    let audio = tracks
       .get(track)
       .context(server_error::MediaItemDoesNotExist {
         count: tracks.len(),
@@ -105,11 +105,11 @@ impl Server {
         ty: media.discriminant(),
       })?;
 
-    let path = track.as_path();
+    let path = audio.as_path();
 
     let hash = self.verified_package_file(fingerprint, &path)?;
 
-    Ok(self.open_file(hash)?.ty(track.resource_type()))
+    Ok(self.open_file(hash)?.ty(audio.resource_type()))
   }
 
   pub(crate) fn media_image_image(
@@ -460,8 +460,8 @@ impl Server {
       }
 
       if let Some(Media::Audio { tracks }) = &metadata.media {
-        Track::check_positions(tracks)
-          .context(server_error::PackageTrackPosition { fingerprint })?;
+        Audio::check_positions(tracks)
+          .context(server_error::PackageAudioPosition { fingerprint })?;
       }
     }
 

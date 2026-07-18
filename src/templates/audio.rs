@@ -1,29 +1,29 @@
 use super::*;
 
 #[derive(Boilerplate)]
-pub(crate) struct TrackHtml {
+pub(crate) struct AudioHtml {
+  pub(crate) audio: usize,
   pub(crate) fingerprint: Fingerprint,
   pub(crate) metadata: Metadata,
-  pub(crate) track: usize,
 }
 
-impl TrackHtml {
-  fn track(&self) -> &Track {
+impl AudioHtml {
+  fn audio(&self) -> &Audio {
     let Media::Audio { tracks } = self.metadata.media.as_ref().unwrap() else {
       unreachable!();
     };
 
-    &tracks[self.track]
+    &tracks[self.audio]
   }
 }
 
-impl Page for TrackHtml {
+impl Page for AudioHtml {
   fn stylesheet(&self) -> Option<&'static str> {
-    Some("/static/track.css")
+    Some("/static/audio.css")
   }
 
   fn title(&self) -> String {
-    format!("{} · filepack", self.track().title)
+    format!("{} · filepack", self.audio().title)
   }
 }
 
@@ -32,10 +32,10 @@ mod tests {
   use super::*;
 
   #[test]
-  fn track() {
+  fn audio() {
     let metadata = Metadata {
       media: Some(Media::Audio {
-        tracks: vec![Track {
+        tracks: vec![Audio {
           album: "qux".parse().unwrap(),
           artist: "baz".parse().unwrap(),
           channels: 2,
@@ -55,10 +55,10 @@ mod tests {
     };
 
     assert_eq!(
-      TrackHtml {
+      AudioHtml {
+        audio: 0,
         fingerprint: test::FINGERPRINT.parse().unwrap(),
         metadata,
-        track: 0,
       }
       .to_string(),
       unindent(&format!(
