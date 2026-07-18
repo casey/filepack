@@ -151,69 +151,43 @@ pub(crate) async fn package_item(
       .as_ref()
       .context(server_error::PackageMediaMetadataNotFound { fingerprint })?;
 
+    ensure! {
+      media.items() > index,
+      server_error::MediaItemDoesNotExist {
+        count: media.items(),
+        fingerprint,
+        index,
+        ty: media.discriminant(),
+      },
+    }
+
     match media {
-      Media::Audio { tracks } => {
-        ensure! {
-          tracks.len() > index,
-          server_error::MediaItemDoesNotExist {
-            count: tracks.len(),
-            fingerprint,
-            index,
-            ty: media.discriminant(),
-          },
+      Media::Audio { .. } => Ok(
+        TrackHtml {
+          fingerprint,
+          metadata,
+          track: index,
         }
-
-        Ok(
-          TrackHtml {
-            fingerprint,
-            metadata,
-            track: index,
-          }
-          .page()
-          .into_response(),
-        )
-      }
-      Media::Image { images } => {
-        ensure! {
-          images.len() > index,
-          server_error::MediaItemDoesNotExist {
-            count: images.len(),
-            fingerprint,
-            index,
-            ty: media.discriminant(),
-          },
+        .page()
+        .into_response(),
+      ),
+      Media::Image { .. } => Ok(
+        ImageHtml {
+          fingerprint,
+          image: index,
+          metadata,
         }
-
-        Ok(
-          ImageHtml {
-            fingerprint,
-            image: index,
-            metadata,
-          }
-          .page()
-          .into_response(),
-        )
-      }
-      Media::Video { videos } => {
-        ensure! {
-          videos.len() > index,
-          server_error::MediaItemDoesNotExist {
-            count: videos.len(),
-            fingerprint,
-            index,
-            ty: media.discriminant(),
-          },
+        .page()
+        .into_response(),
+      ),
+      Media::Video { .. } => Ok(
+        VideoHtml {
+          fingerprint,
+          video: index,
         }
-
-        Ok(
-          VideoHtml {
-            fingerprint,
-            video: index,
-          }
-          .page()
-          .into_response(),
-        )
-      }
+        .page()
+        .into_response(),
+      ),
     }
   })
 }
