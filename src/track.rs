@@ -243,14 +243,15 @@ impl Track {
       samples,
     } = track_info;
 
-    self.album = Self::text_tag(&reader, path, "album")?;
-    self.artist = Self::text_tag(&reader, path, "artist")?;
     self.channels = channels;
-    self.disc = Self::number_tag(&reader, path, "discnumber")?;
-    self.discs = Self::number_tag(&reader, path, "disctotal")?;
     self.sample_bits = sample_bits;
     self.sample_rate = sample_rate;
     self.samples = samples;
+
+    self.album = Self::text_tag(&reader, path, "album")?;
+    self.artist = Self::text_tag(&reader, path, "artist")?;
+    self.disc = Self::number_tag(&reader, path, "discnumber")?;
+    self.discs = Self::number_tag(&reader, path, "disctotal")?;
     self.title = Self::text_tag(&reader, path, "title")?;
     self.track = Self::number_tag(&reader, path, "tracknumber")?;
     self.tracks = Self::number_tag(&reader, path, "tracktotal")?;
