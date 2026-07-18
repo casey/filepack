@@ -45,14 +45,14 @@ impl Track {
   }
 
   fn check_content_flac(&self, path: &Utf8Path) -> Result {
-    let reader = FlacReader::open(path).context(error::TrackDecode { path })?;
+    let (_reader, track_info) = Self::flac_reader(path)?;
 
-    let Streaminfo {
+    let TrackInfo {
       channels,
       sample_bits,
       sample_rate,
       samples,
-    } = Self::streaminfo(&reader, path)?;
+    } = track_info;
 
     ensure! {
       channels == self.channels,
@@ -189,6 +189,14 @@ impl Track {
     )
   }
 
+  fn flac_reader(path: &Utf8Path) -> Result<(FlacReader<fs::File>, TrackInfo)> {
+    let reader = FlacReader::open(path).context(error::TrackDecode { path })?;
+
+    let track_info = Self::track_info(&reader, path)?;
+
+    Ok((reader, track_info))
+  }
+
   pub(crate) fn format(&self) -> AudioFormat {
     AudioFormat {
       channels: self.channels,
@@ -226,14 +234,14 @@ impl Track {
   }
 
   fn populate_flac(&mut self, path: &Utf8Path) -> Result {
-    let reader = FlacReader::open(path).context(error::TrackDecode { path })?;
+    let (reader, track_info) = Self::flac_reader(path)?;
 
-    let Streaminfo {
+    let TrackInfo {
       channels,
       sample_bits,
       sample_rate,
       samples,
-    } = Self::streaminfo(&reader, path)?;
+    } = track_info;
 
     self.album = Self::text_tag(&reader, path, "album")?;
     self.artist = Self::text_tag(&reader, path, "artist")?;
@@ -254,14 +262,14 @@ impl Track {
     self.ty.resource_type()
   }
 
-  fn streaminfo(reader: &FlacReader<fs::File>, path: &Utf8Path) -> Result<Streaminfo> {
+  fn track_info(reader: &FlacReader<fs::File>, path: &Utf8Path) -> Result<TrackInfo> {
     let streaminfo = reader.streaminfo();
 
     let samples = streaminfo
       .samples
       .context(error::TrackSampleCountUnknown { path })?;
 
-    Ok(Streaminfo {
+    Ok(TrackInfo {
       channels: streaminfo.channels.into(),
       sample_bits: streaminfo.bits_per_sample.into(),
       sample_rate: streaminfo.sample_rate.into(),

@@ -91,7 +91,6 @@ use {
     sign_options::SignOptions,
     signature_error::SignatureError,
     static_asset::StaticAsset,
-    streaminfo::Streaminfo,
     style::Style,
     subcommand::Subcommand,
     templates::PageHtml,
@@ -101,6 +100,7 @@ use {
     totals_error::TotalsError,
     track::Track,
     track_error::TrackError,
+    track_info::TrackInfo,
     type_name::TypeName,
     utf8_path_ext::Utf8PathExt,
     version::Version,
@@ -330,7 +330,6 @@ mod signature_error;
 mod sorted_set;
 mod statement;
 mod static_asset;
-mod streaminfo;
 mod style;
 mod subcommand;
 pub mod templates;
@@ -342,6 +341,7 @@ mod totals;
 mod totals_error;
 mod track;
 mod track_error;
+mod track_info;
 mod type_name;
 mod utf8_path_ext;
 mod version;
