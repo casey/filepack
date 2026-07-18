@@ -163,10 +163,10 @@ pub(crate) async fn package_item(
 
     match media {
       Media::Audio { .. } => Ok(
-        TrackHtml {
+        AudioHtml {
+          audio: index,
           fingerprint,
           metadata,
-          track: index,
         }
         .page()
         .into_response(),

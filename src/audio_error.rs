@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(Debug, PartialEq, Snafu)]
 #[snafu(context(suffix(false)), visibility(pub(crate)))]
-pub enum TrackError {
+pub enum AudioError {
   #[snafu(display("track `{filename}` disc number {number} exceeds disc total of {total}"))]
   DiscNumberExceedsTotal {
     filename: ComponentBuf,

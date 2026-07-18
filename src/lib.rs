@@ -25,8 +25,11 @@ use {
     archive_error::ArchiveError,
     arguments::Arguments,
     array_decoder::ArrayDecoder,
+    audio::Audio,
     audio_codec::AudioCodec,
+    audio_error::AudioError,
     audio_format::AudioFormat,
+    audio_info::AudioInfo,
     audio_type::AudioType,
     authenticated::Authenticated,
     bech32_decoder::Bech32Decoder,
@@ -98,9 +101,6 @@ use {
     ticked::Ticked,
     token::Token,
     totals_error::TotalsError,
-    track::Track,
-    track_error::TrackError,
-    track_info::TrackInfo,
     type_name::TypeName,
     utf8_path_ext::Utf8PathExt,
     version::Version,
@@ -240,8 +240,11 @@ mod archive_error;
 mod arguments;
 mod array_decoder;
 mod array_encoder;
+mod audio;
 mod audio_codec;
+mod audio_error;
 mod audio_format;
+mod audio_info;
 mod audio_type;
 mod authenticated;
 mod bech32_decoder;
@@ -339,9 +342,6 @@ mod ticked;
 mod token;
 mod totals;
 mod totals_error;
-mod track;
-mod track_error;
-mod track_info;
 mod type_name;
 mod utf8_path_ext;
 mod version;

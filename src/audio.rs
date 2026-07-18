@@ -1,7 +1,7 @@
 use super::*;
 
 #[derive(Clone, Debug, Decode, DeserializeFromStr, Encode, PartialEq, Serialize)]
-pub(crate) struct Track {
+pub(crate) struct Audio {
   #[n(0)]
   pub(crate) album: Text,
   #[n(1)]
@@ -31,9 +31,24 @@ pub(crate) struct Track {
   pub(crate) ty: AudioType,
 }
 
-impl Track {
+impl Audio {
   pub(crate) fn as_path(&self) -> RelativePath {
     self.filename.as_path()
+  }
+
+  fn audio_info(reader: &FlacReader<fs::File>, path: &Utf8Path) -> Result<AudioInfo> {
+    let streaminfo = reader.streaminfo();
+
+    let samples = streaminfo
+      .samples
+      .context(error::AudioSampleCountUnknown { path })?;
+
+    Ok(AudioInfo {
+      channels: streaminfo.channels.into(),
+      sample_bits: streaminfo.bits_per_sample.into(),
+      sample_rate: streaminfo.sample_rate.into(),
+      samples,
+    })
   }
 
   pub(crate) fn check_content(&self, root: &Utf8Path) -> Result {
@@ -45,18 +60,18 @@ impl Track {
   }
 
   fn check_content_flac(&self, path: &Utf8Path) -> Result {
-    let (_reader, track_info) = Self::flac_reader(path)?;
+    let (_reader, audio_info) = Self::flac_reader(path)?;
 
-    let TrackInfo {
+    let AudioInfo {
       channels,
       sample_bits,
       sample_rate,
       samples,
-    } = track_info;
+    } = audio_info;
 
     ensure! {
       channels == self.channels,
-      error::TrackChannelsMismatch {
+      error::AudioChannelsMismatch {
         actual: channels,
         expected: self.channels,
         path,
@@ -65,7 +80,7 @@ impl Track {
 
     ensure! {
       sample_bits == self.sample_bits,
-      error::TrackSampleBitsMismatch {
+      error::AudioSampleBitsMismatch {
         actual: sample_bits,
         expected: self.sample_bits,
         path,
@@ -74,7 +89,7 @@ impl Track {
 
     ensure! {
       sample_rate == self.sample_rate,
-      error::TrackSampleRateMismatch {
+      error::AudioSampleRateMismatch {
         actual: sample_rate,
         expected: self.sample_rate,
         path,
@@ -83,7 +98,7 @@ impl Track {
 
     ensure! {
       samples == self.samples,
-      error::TrackSampleCountMismatch {
+      error::AudioSampleCountMismatch {
         actual: samples,
         expected: self.samples,
         path,
@@ -93,7 +108,7 @@ impl Track {
     Ok(())
   }
 
-  pub(crate) fn check_positions(tracks: &[Track]) -> Result<(), TrackError> {
+  pub(crate) fn check_positions(tracks: &[Audio]) -> Result<(), AudioError> {
     let Some(first) = tracks.first() else {
       return Ok(());
     };
@@ -104,55 +119,55 @@ impl Track {
     let mut expected_track = 1;
     let mut disc_tracks = 0;
 
-    for track in tracks {
+    for audio in tracks {
       ensure! {
-        track.discs == discs,
-        track_error::DiscTotalMismatch {
-          actual: track.discs,
+        audio.discs == discs,
+        audio_error::DiscTotalMismatch {
+          actual: audio.discs,
           expected: discs,
-          filename: track.filename.clone(),
+          filename: audio.filename.clone(),
         },
       }
 
       ensure! {
-        track.disc == expected_disc && track.track == expected_track,
-        track_error::PositionMismatch {
-          disc: track.disc,
+        audio.disc == expected_disc && audio.track == expected_track,
+        audio_error::PositionMismatch {
+          disc: audio.disc,
           expected_disc,
           expected_track,
-          filename: track.filename.clone(),
-          track: track.track,
+          filename: audio.filename.clone(),
+          track: audio.track,
         },
       }
 
       ensure! {
-        track.disc <= discs,
-        track_error::DiscNumberExceedsTotal {
-          filename: track.filename.clone(),
-          number: track.disc,
+        audio.disc <= discs,
+        audio_error::DiscNumberExceedsTotal {
+          filename: audio.filename.clone(),
+          number: audio.disc,
           total: discs,
         },
       }
 
       if expected_track == 1 {
-        disc_tracks = track.tracks;
+        disc_tracks = audio.tracks;
       } else {
         ensure! {
-          track.tracks == disc_tracks,
-          track_error::TotalMismatch {
-            actual: track.tracks,
+          audio.tracks == disc_tracks,
+          audio_error::TotalMismatch {
+            actual: audio.tracks,
             disc: expected_disc,
             expected: disc_tracks,
-            filename: track.filename.clone(),
+            filename: audio.filename.clone(),
           },
         }
       }
 
       ensure! {
-        track.track <= disc_tracks,
-        track_error::NumberExceedsTotal {
-          filename: track.filename.clone(),
-          number: track.track,
+        audio.track <= disc_tracks,
+        audio_error::NumberExceedsTotal {
+          filename: audio.filename.clone(),
+          number: audio.track,
           total: disc_tracks,
         },
       }
@@ -167,7 +182,7 @@ impl Track {
 
     ensure! {
       expected_disc == discs + 1,
-      track_error::Missing {
+      audio_error::Missing {
         disc: expected_disc,
         track: expected_track,
       },
@@ -189,12 +204,12 @@ impl Track {
     )
   }
 
-  fn flac_reader(path: &Utf8Path) -> Result<(FlacReader<fs::File>, TrackInfo)> {
-    let reader = FlacReader::open(path).context(error::TrackDecode { path })?;
+  fn flac_reader(path: &Utf8Path) -> Result<(FlacReader<fs::File>, AudioInfo)> {
+    let reader = FlacReader::open(path).context(error::AudioDecode { path })?;
 
-    let track_info = Self::track_info(&reader, path)?;
+    let audio_info = Self::audio_info(&reader, path)?;
 
-    Ok((reader, track_info))
+    Ok((reader, audio_info))
   }
 
   pub(crate) fn format(&self) -> AudioFormat {
@@ -206,11 +221,11 @@ impl Track {
     }
   }
 
-  pub(crate) fn formats(tracks: &[Track]) -> Vec<AudioFormat> {
+  pub(crate) fn formats(tracks: &[Audio]) -> Vec<AudioFormat> {
     let mut formats = Vec::new();
 
-    for track in tracks {
-      let format = track.format();
+    for audio in tracks {
+      let format = audio.format();
       if !formats.contains(&format) {
         formats.push(format);
       }
@@ -222,7 +237,7 @@ impl Track {
   fn number_tag(reader: &FlacReader<fs::File>, path: &Utf8Path, tag: &'static str) -> Result<u64> {
     Self::tag(reader, path, tag)?
       .parse()
-      .context(error::TrackTagInteger { path, tag })
+      .context(error::AudioTagInteger { path, tag })
   }
 
   pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result {
@@ -234,14 +249,14 @@ impl Track {
   }
 
   fn populate_flac(&mut self, path: &Utf8Path) -> Result {
-    let (reader, track_info) = Self::flac_reader(path)?;
+    let (reader, audio_info) = Self::flac_reader(path)?;
 
-    let TrackInfo {
+    let AudioInfo {
       channels,
       sample_bits,
       sample_rate,
       samples,
-    } = track_info;
+    } = audio_info;
 
     self.channels = channels;
     self.sample_bits = sample_bits;
@@ -263,9 +278,9 @@ impl Track {
     self.ty.resource_type()
   }
 
-  pub(crate) fn sum_durations(tracks: &[Track]) -> Duration {
-    tracks.iter().fold(Duration::ZERO, |sum, track| {
-      sum.saturating_add(track.duration())
+  pub(crate) fn sum_durations(tracks: &[Audio]) -> Duration {
+    tracks.iter().fold(Duration::ZERO, |sum, audio| {
+      sum.saturating_add(audio.duration())
     })
   }
 
@@ -278,16 +293,16 @@ impl Track {
 
     let value = values
       .next()
-      .context(error::TrackTagMissing { path, tag })?;
+      .context(error::AudioTagMissing { path, tag })?;
 
     ensure! {
       values.next().is_none(),
-      error::TrackTagMultiple { path, tag },
+      error::AudioTagMultiple { path, tag },
     }
 
     ensure! {
       !value.is_empty(),
-      error::TrackTagEmpty { path, tag },
+      error::AudioTagEmpty { path, tag },
     }
 
     Ok(value)
@@ -296,26 +311,11 @@ impl Track {
   fn text_tag(reader: &FlacReader<fs::File>, path: &Utf8Path, tag: &'static str) -> Result<Text> {
     Self::tag(reader, path, tag)?
       .parse()
-      .context(error::TrackTagInvalid { path, tag })
-  }
-
-  fn track_info(reader: &FlacReader<fs::File>, path: &Utf8Path) -> Result<TrackInfo> {
-    let streaminfo = reader.streaminfo();
-
-    let samples = streaminfo
-      .samples
-      .context(error::TrackSampleCountUnknown { path })?;
-
-    Ok(TrackInfo {
-      channels: streaminfo.channels.into(),
-      sample_bits: streaminfo.bits_per_sample.into(),
-      sample_rate: streaminfo.sample_rate.into(),
-      samples,
-    })
+      .context(error::AudioTagInvalid { path, tag })
   }
 }
 
-impl FromStr for Track {
+impl FromStr for Audio {
   type Err = ComponentError;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -352,50 +352,50 @@ mod tests {
   #[test]
   fn check_content() {
     #[track_caller]
-    fn case(track: &Track) -> Result {
+    fn case(audio: &Audio) -> Result {
       let (_tempdir, root) = tempdir();
 
       std::fs::write(root.join("foo.flac"), flac(&[], 44100)).unwrap();
 
-      track.check_content(&root)
+      audio.check_content(&root)
     }
 
-    let mut track = "foo.flac".parse::<Track>().unwrap();
-    track.channels = 2;
-    track.sample_bits = 16;
-    track.sample_rate = 44100;
-    track.samples = 44100;
+    let mut audio = "foo.flac".parse::<Audio>().unwrap();
+    audio.channels = 2;
+    audio.sample_bits = 16;
+    audio.sample_rate = 44100;
+    audio.samples = 44100;
 
-    case(&track).unwrap();
+    case(&audio).unwrap();
 
-    track.samples = 1;
+    audio.samples = 1;
 
     assert_matches_regex!(
-      case(&track).unwrap_err().to_string(),
+      case(&audio).unwrap_err().to_string(),
       r"^track `.*foo\.flac` has 44100 samples but metadata sample count is 1$",
     );
 
-    track.samples = 44100;
-    track.sample_rate = 22050;
+    audio.samples = 44100;
+    audio.sample_rate = 22050;
 
     assert_matches_regex!(
-      case(&track).unwrap_err().to_string(),
+      case(&audio).unwrap_err().to_string(),
       r"^track `.*foo\.flac` has sample rate 44100 but metadata sample rate is 22050$",
     );
 
-    track.sample_rate = 44100;
-    track.sample_bits = 24;
+    audio.sample_rate = 44100;
+    audio.sample_bits = 24;
 
     assert_matches_regex!(
-      case(&track).unwrap_err().to_string(),
+      case(&audio).unwrap_err().to_string(),
       r"^track `.*foo\.flac` has 16 bits per sample but metadata sample bits is 24$",
     );
 
-    track.sample_bits = 16;
-    track.channels = 1;
+    audio.sample_bits = 16;
+    audio.channels = 1;
 
     assert_matches_regex!(
-      case(&track).unwrap_err().to_string(),
+      case(&audio).unwrap_err().to_string(),
       r"^track `.*foo\.flac` has 2 channels but metadata channel count is 1$",
     );
   }
@@ -403,21 +403,21 @@ mod tests {
   #[test]
   fn check_positions() {
     #[track_caller]
-    fn case(positions: &[(u64, u64, u64, u64)], expected: Result<(), TrackError>) {
+    fn case(positions: &[(u64, u64, u64, u64)], expected: Result<(), AudioError>) {
       let tracks = positions
         .iter()
         .enumerate()
         .map(|(i, (disc, discs, track, tracks))| {
-          let mut t = format!("{i}.flac").parse::<Track>().unwrap();
+          let mut t = format!("{i}.flac").parse::<Audio>().unwrap();
           t.disc = *disc;
           t.discs = *discs;
           t.track = *track;
           t.tracks = *tracks;
           t
         })
-        .collect::<Vec<Track>>();
+        .collect::<Vec<Audio>>();
 
-      assert_eq!(Track::check_positions(&tracks), expected);
+      assert_eq!(Audio::check_positions(&tracks), expected);
     }
 
     case(&[], Ok(()));
@@ -428,7 +428,7 @@ mod tests {
 
     case(
       &[(1, 1, 2, 2), (1, 1, 1, 2)],
-      Err(TrackError::PositionMismatch {
+      Err(AudioError::PositionMismatch {
         disc: 1,
         expected_disc: 1,
         expected_track: 1,
@@ -439,7 +439,7 @@ mod tests {
 
     case(
       &[(1, 1, 1, 2), (1, 1, 1, 2)],
-      Err(TrackError::PositionMismatch {
+      Err(AudioError::PositionMismatch {
         disc: 1,
         expected_disc: 1,
         expected_track: 2,
@@ -450,7 +450,7 @@ mod tests {
 
     case(
       &[(1, 1, 1, 3), (1, 1, 3, 3)],
-      Err(TrackError::PositionMismatch {
+      Err(AudioError::PositionMismatch {
         disc: 1,
         expected_disc: 1,
         expected_track: 2,
@@ -461,17 +461,17 @@ mod tests {
 
     case(
       &[(1, 1, 1, 2)],
-      Err(TrackError::Missing { disc: 1, track: 2 }),
+      Err(AudioError::Missing { disc: 1, track: 2 }),
     );
 
     case(
       &[(1, 2, 1, 1)],
-      Err(TrackError::Missing { disc: 2, track: 1 }),
+      Err(AudioError::Missing { disc: 2, track: 1 }),
     );
 
     case(
       &[(1, 2, 1, 1), (2, 1, 1, 1)],
-      Err(TrackError::DiscTotalMismatch {
+      Err(AudioError::DiscTotalMismatch {
         actual: 1,
         expected: 2,
         filename: "1.flac".parse().unwrap(),
@@ -480,7 +480,7 @@ mod tests {
 
     case(
       &[(1, 1, 1, 2), (1, 1, 2, 3)],
-      Err(TrackError::TotalMismatch {
+      Err(AudioError::TotalMismatch {
         actual: 3,
         disc: 1,
         expected: 2,
@@ -490,7 +490,7 @@ mod tests {
 
     case(
       &[(1, 1, 1, 1), (2, 1, 1, 1)],
-      Err(TrackError::DiscNumberExceedsTotal {
+      Err(AudioError::DiscNumberExceedsTotal {
         filename: "1.flac".parse().unwrap(),
         number: 2,
         total: 1,
@@ -499,7 +499,7 @@ mod tests {
 
     case(
       &[(1, 0, 1, 1)],
-      Err(TrackError::DiscNumberExceedsTotal {
+      Err(AudioError::DiscNumberExceedsTotal {
         filename: "0.flac".parse().unwrap(),
         number: 1,
         total: 0,
@@ -508,7 +508,7 @@ mod tests {
 
     case(
       &[(1, 1, 1, 0)],
-      Err(TrackError::NumberExceedsTotal {
+      Err(AudioError::NumberExceedsTotal {
         filename: "0.flac".parse().unwrap(),
         number: 1,
         total: 0,
@@ -517,7 +517,7 @@ mod tests {
 
     case(
       &[(0, 1, 1, 1)],
-      Err(TrackError::PositionMismatch {
+      Err(AudioError::PositionMismatch {
         disc: 0,
         expected_disc: 1,
         expected_track: 1,
@@ -528,7 +528,7 @@ mod tests {
 
     case(
       &[(1, 1, 0, 1)],
-      Err(TrackError::PositionMismatch {
+      Err(AudioError::PositionMismatch {
         disc: 1,
         expected_disc: 1,
         expected_track: 1,
@@ -542,10 +542,10 @@ mod tests {
   fn duration() {
     #[track_caller]
     fn case(samples: u64, sample_rate: u64, expected: Duration) {
-      let mut track = "foo.flac".parse::<Track>().unwrap();
-      track.sample_rate = sample_rate;
-      track.samples = samples;
-      assert_eq!(track.duration(), expected);
+      let mut audio = "foo.flac".parse::<Audio>().unwrap();
+      audio.sample_rate = sample_rate;
+      audio.samples = samples;
+      assert_eq!(audio.duration(), expected);
     }
 
     case(0, 0, Duration::ZERO);
@@ -557,12 +557,12 @@ mod tests {
   #[test]
   fn encoding() {
     assert_cbor(
-      "foo.flac".parse::<Track>().unwrap(),
+      "foo.flac".parse::<Audio>().unwrap(),
       "ad006001600200030004000568666f6f2e666c616306000700080009600a000b000c00",
     );
 
     assert_cbor(
-      Track {
+      Audio {
         album: "qux".parse().unwrap(),
         artist: "baz".parse().unwrap(),
         channels: 8,
@@ -583,13 +583,13 @@ mod tests {
 
   #[test]
   fn format() {
-    let mut track = "foo.flac".parse::<Track>().unwrap();
-    track.channels = 2;
-    track.sample_bits = 16;
-    track.sample_rate = 44100;
+    let mut audio = "foo.flac".parse::<Audio>().unwrap();
+    audio.channels = 2;
+    audio.sample_bits = 16;
+    audio.sample_rate = 44100;
 
     assert_eq!(
-      track.format(),
+      audio.format(),
       AudioFormat {
         channels: 2,
         sample_bits: 16,
@@ -601,7 +601,7 @@ mod tests {
 
   #[test]
   fn formats() {
-    let mut foo = "foo.flac".parse::<Track>().unwrap();
+    let mut foo = "foo.flac".parse::<Audio>().unwrap();
     foo.channels = 2;
     foo.sample_bits = 16;
     foo.sample_rate = 44100;
@@ -610,7 +610,7 @@ mod tests {
     bar.sample_bits = 24;
 
     assert_eq!(
-      Track::formats(&[foo.clone(), bar.clone(), foo.clone()]),
+      Audio::formats(&[foo.clone(), bar.clone(), foo.clone()]),
       [foo.format(), bar.format()],
     );
   }
@@ -619,12 +619,12 @@ mod tests {
   fn from_str() {
     #[track_caller]
     fn case(s: &str, expected: ComponentError) {
-      assert_eq!(s.parse::<Track>().unwrap_err(), expected);
+      assert_eq!(s.parse::<Audio>().unwrap_err(), expected);
     }
 
     assert_eq!(
-      "foo.flac".parse::<Track>().unwrap(),
-      Track {
+      "foo.flac".parse::<Audio>().unwrap(),
+      Audio {
         album: Text::new(),
         artist: Text::new(),
         channels: 0,
@@ -664,21 +664,21 @@ mod tests {
 
       std::fs::write(root.join("foo.flac"), bytes).unwrap();
 
-      let mut track = "foo.flac".parse::<Track>().unwrap();
+      let mut audio = "foo.flac".parse::<Audio>().unwrap();
 
-      track.populate(&root).unwrap_err()
+      audio.populate(&root).unwrap_err()
     }
 
-    assert_matches!(err(b"foo"), Error::TrackDecode { .. });
+    assert_matches!(err(b"foo"), Error::AudioDecode { .. });
 
     assert_matches!(
       err(&flac(&[], 44100)),
-      Error::TrackTagMissing { tag: "album", .. },
+      Error::AudioTagMissing { tag: "album", .. },
     );
 
     assert_matches!(
       err(&flac(&["ALBUM=qux", "TITLE=bar"], 44100)),
-      Error::TrackTagMissing { tag: "artist", .. },
+      Error::AudioTagMissing { tag: "artist", .. },
     );
 
     assert_matches!(
@@ -686,7 +686,7 @@ mod tests {
         &["ALBUM=qux", "ARTIST=baz", "DISCNUMBER=1", "DISCTOTAL=1"],
         44100,
       )),
-      Error::TrackTagMissing { tag: "title", .. },
+      Error::AudioTagMissing { tag: "title", .. },
     );
 
     assert_matches!(
@@ -694,7 +694,7 @@ mod tests {
         &["ALBUM=qux", "ALBUM=quux", "ARTIST=baz", "TITLE=bar"],
         44100,
       )),
-      Error::TrackTagMultiple { tag: "album", .. },
+      Error::AudioTagMultiple { tag: "album", .. },
     );
 
     assert_matches!(
@@ -708,7 +708,7 @@ mod tests {
         ],
         44100,
       )),
-      Error::TrackTagEmpty { tag: "title", .. },
+      Error::AudioTagEmpty { tag: "title", .. },
     );
 
     assert_matches!(
@@ -722,7 +722,7 @@ mod tests {
         ],
         44100,
       )),
-      Error::TrackTagInvalid {
+      Error::AudioTagInvalid {
         source: TextError::Control { character: '\t' },
         tag: "title",
         ..
@@ -740,7 +740,7 @@ mod tests {
         ],
         44100,
       )),
-      Error::TrackTagMissing {
+      Error::AudioTagMissing {
         tag: "tracknumber",
         ..
       },
@@ -758,7 +758,7 @@ mod tests {
         ],
         44100,
       )),
-      Error::TrackTagInteger {
+      Error::AudioTagInteger {
         tag: "tracknumber",
         ..
       },
@@ -776,7 +776,7 @@ mod tests {
         ],
         44100,
       )),
-      Error::TrackTagInteger {
+      Error::AudioTagInteger {
         tag: "tracknumber",
         ..
       },
@@ -795,7 +795,7 @@ mod tests {
         ],
         0,
       )),
-      Error::TrackSampleCountUnknown { .. },
+      Error::AudioSampleCountUnknown { .. },
     );
   }
 
@@ -820,31 +820,31 @@ mod tests {
     )
     .unwrap();
 
-    let mut track = "foo.flac".parse::<Track>().unwrap();
-    track.populate(&root).unwrap();
+    let mut audio = "foo.flac".parse::<Audio>().unwrap();
+    audio.populate(&root).unwrap();
 
-    assert_eq!(track.album.as_str(), "qux");
-    assert_eq!(track.artist.as_str(), "baz");
-    assert_eq!(track.channels, 2);
-    assert_eq!(track.disc, 1);
-    assert_eq!(track.discs, 2);
-    assert_eq!(track.sample_bits, 16);
-    assert_eq!(track.sample_rate, 44100);
-    assert_eq!(track.samples, 66150);
-    assert_eq!(track.title.as_str(), "bar");
-    assert_eq!(track.track, 3);
-    assert_eq!(track.tracks, 4);
+    assert_eq!(audio.album.as_str(), "qux");
+    assert_eq!(audio.artist.as_str(), "baz");
+    assert_eq!(audio.channels, 2);
+    assert_eq!(audio.disc, 1);
+    assert_eq!(audio.discs, 2);
+    assert_eq!(audio.sample_bits, 16);
+    assert_eq!(audio.sample_rate, 44100);
+    assert_eq!(audio.samples, 66150);
+    assert_eq!(audio.title.as_str(), "bar");
+    assert_eq!(audio.track, 3);
+    assert_eq!(audio.tracks, 4);
   }
 
   #[test]
   fn serialize() {
     assert_eq!(
-      serde_json::to_string(&"foo.flac".parse::<Track>().unwrap()).unwrap(),
+      serde_json::to_string(&"foo.flac".parse::<Audio>().unwrap()).unwrap(),
       r#"{"album":"","artist":"","channels":0,"disc":0,"discs":0,"filename":"foo.flac","sample_bits":0,"sample_rate":0,"samples":0,"title":"","track":0,"tracks":0,"type":"flac"}"#,
     );
 
     assert_eq!(
-      serde_json::to_string(&Track {
+      serde_json::to_string(&Audio {
         album: "qux".parse().unwrap(),
         artist: "baz".parse().unwrap(),
         channels: 8,

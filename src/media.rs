@@ -10,7 +10,7 @@ pub(crate) enum Media {
   #[n(0)]
   Audio {
     #[n(0)]
-    tracks: Vec<Track>,
+    tracks: Vec<Audio>,
   },
   #[n(1)]
   Image {

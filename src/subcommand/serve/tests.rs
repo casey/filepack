@@ -846,7 +846,7 @@ fn media_audio_track_ranges() {
 
   let server = TestServer::new();
 
-  let track: &[u8] = b"foobarbaz";
+  let audio: &[u8] = b"foobarbaz";
 
   let fingerprint = PackageBuilder::new()
     .metadata(&Metadata {
@@ -855,7 +855,7 @@ fn media_audio_track_ranges() {
       }),
       ..default()
     })
-    .file("foo.flac", track)
+    .file("foo.flac", audio)
     .upload(&server);
 
   case(
@@ -1157,6 +1157,55 @@ fn non_fingerprint_bech32_falls_through() {
 }
 
 #[test]
+fn package_item_audio() {
+  let server = TestServer::new();
+
+  let metadata = Metadata {
+    media: Some(Media::Audio {
+      tracks: tracks(&["foo.flac"]),
+    }),
+    ..default()
+  };
+
+  let fingerprint = PackageBuilder::new()
+    .metadata(&metadata)
+    .file("foo.flac", b"foo")
+    .upload(&server);
+
+  server
+    .get(format!("/package/{fingerprint}/1"))
+    .assert_page(AudioHtml {
+      audio: 0,
+      fingerprint,
+      metadata,
+    })
+    .send();
+}
+
+#[test]
+fn package_item_audio_out_of_range() {
+  let server = TestServer::new();
+
+  let fingerprint = PackageBuilder::new()
+    .metadata(&Metadata {
+      media: Some(Media::Audio {
+        tracks: tracks(&["foo.flac"]),
+      }),
+      ..default()
+    })
+    .file("foo.flac", b"foo")
+    .upload(&server);
+
+  server
+    .get(format!("/package/{fingerprint}/2"))
+    .status(StatusCode::NOT_FOUND)
+    .assert_body(format!(
+      "track 2 does not exist, package {fingerprint} has 1 track"
+    ))
+    .send();
+}
+
+#[test]
 fn package_item_image() {
   let server = TestServer::new();
 
@@ -1229,55 +1278,6 @@ fn package_item_package_not_found() {
     .get(format!("/package/{fingerprint}/1"))
     .status(StatusCode::NOT_FOUND)
     .assert_body(format!("package {fingerprint} not found"))
-    .send();
-}
-
-#[test]
-fn package_item_track() {
-  let server = TestServer::new();
-
-  let metadata = Metadata {
-    media: Some(Media::Audio {
-      tracks: tracks(&["foo.flac"]),
-    }),
-    ..default()
-  };
-
-  let fingerprint = PackageBuilder::new()
-    .metadata(&metadata)
-    .file("foo.flac", b"foo")
-    .upload(&server);
-
-  server
-    .get(format!("/package/{fingerprint}/1"))
-    .assert_page(TrackHtml {
-      fingerprint,
-      metadata,
-      track: 0,
-    })
-    .send();
-}
-
-#[test]
-fn package_item_track_out_of_range() {
-  let server = TestServer::new();
-
-  let fingerprint = PackageBuilder::new()
-    .metadata(&Metadata {
-      media: Some(Media::Audio {
-        tracks: tracks(&["foo.flac"]),
-      }),
-      ..default()
-    })
-    .file("foo.flac", b"foo")
-    .upload(&server);
-
-  server
-    .get(format!("/package/{fingerprint}/2"))
-    .status(StatusCode::NOT_FOUND)
-    .assert_body(format!(
-      "track 2 does not exist, package {fingerprint} has 1 track"
-    ))
     .send();
 }
 
@@ -1383,7 +1383,7 @@ fn package_page_renders_audio_media() {
   let metadata = Metadata {
     media: Some(Media::Audio {
       tracks: vec![
-        Track {
+        Audio {
           album: "qux".parse().unwrap(),
           artist: "baz".parse().unwrap(),
           channels: 2,
@@ -1398,7 +1398,7 @@ fn package_page_renders_audio_media() {
           tracks: 2,
           ty: AudioType::Flac,
         },
-        Track {
+        Audio {
           album: "qux".parse().unwrap(),
           artist: "baz".parse().unwrap(),
           channels: 2,
@@ -1720,17 +1720,17 @@ fn static_files() {
     .send();
 }
 
-fn tracks(filenames: &[&str]) -> Vec<Track> {
+fn tracks(filenames: &[&str]) -> Vec<Audio> {
   filenames
     .iter()
     .enumerate()
     .map(|(i, filename)| {
-      let mut track = filename.parse::<Track>().unwrap();
-      track.disc = 1;
-      track.discs = 1;
-      track.track = i.into_u64() + 1;
-      track.tracks = filenames.len().into_u64();
-      track
+      let mut audio = filename.parse::<Audio>().unwrap();
+      audio.disc = 1;
+      audio.discs = 1;
+      audio.track = i.into_u64() + 1;
+      audio.tracks = filenames.len().into_u64();
+      audio
     })
     .collect()
 }
@@ -2034,18 +2034,17 @@ fn verify_directory_unverified_subdirectory() {
 fn verify_package_invalid_track_position() {
   let server = TestServer::new();
 
-  let audio = b"foo";
-  server.write_file(audio);
+  server.write_file(b"foo");
 
-  let mut track = "foo.flac".parse::<Track>().unwrap();
-  track.disc = 1;
-  track.discs = 1;
-  track.track = 2;
-  track.tracks = 2;
+  let mut audio = "foo.flac".parse::<Audio>().unwrap();
+  audio.disc = 1;
+  audio.discs = 1;
+  audio.track = 2;
+  audio.tracks = 2;
 
   let metadata = Metadata {
     media: Some(Media::Audio {
-      tracks: vec![track],
+      tracks: vec![audio],
     }),
     ..default()
   }
@@ -2053,7 +2052,7 @@ fn verify_package_invalid_track_position() {
   server.write_file(&metadata);
 
   let (cbor, hash) = Directory::new()
-    .insert_file("foo.flac", audio)
+    .insert_file("foo.flac", b"foo")
     .insert_file(Metadata::CBOR_FILENAME, &metadata)
     .cbor();
   let fingerprint = Fingerprint(hash);

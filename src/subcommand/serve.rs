@@ -15,7 +15,7 @@ use {
   },
   std::net::TcpStream,
   templates::{
-    DirectoryHtml, FilesHtml, ImageHtml, PackageHtml, PackagesHtml, TrackHtml, VideoHtml,
+    AudioHtml, DirectoryHtml, FilesHtml, ImageHtml, PackageHtml, PackagesHtml, VideoHtml,
   },
   tokio::{net::TcpListener, runtime, task::block_in_place},
   tower_http::set_header::SetResponseHeaderLayer,

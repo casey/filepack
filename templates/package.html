@@ -52,10 +52,10 @@
   <dt>tracks</dt>
   <dd>{{ tracks.len() }}</dd>
   <dt>duration</dt>
-  <dd>{{ DisplayDuration(Track::sum_durations(tracks)) }}</dd>
+  <dd>{{ DisplayDuration(Audio::sum_durations(tracks)) }}</dd>
 %%         if !tracks.is_empty() {
   <dt>format</dt>
-%%           for format in Track::formats(tracks) {
+%%           for format in Audio::formats(tracks) {
   <dd>{{ format }}</dd>
 %%           }
 %%         }
@@ -94,10 +94,10 @@
 <h2>disc {{ disc[0].disc }}</h2>
 %%           }
 <ol>
-%%           for track in disc {
+%%           for audio in disc {
   <li>
-    <a href=/package/{{ self.fingerprint }}/{{ Ordinal(i) }}>{{ track.title }}</a>
-    <time datetime={{ Iso8601Duration(track.duration()) }}>{{ DisplayDuration(track.duration()) }}</time>
+    <a href=/package/{{ self.fingerprint }}/{{ Ordinal(i) }}>{{ audio.title }}</a>
+    <time datetime={{ Iso8601Duration(audio.duration()) }}>{{ DisplayDuration(audio.duration()) }}</time>
   </li>
 %%             i += 1;
 %%           }
