@@ -5,7 +5,7 @@ pub struct Track {
   #[n(0)]
   pub(crate) codec: Codec,
   #[n(1)]
-  #[serde(flatten)]
+  #[serde(rename = "type")]
   pub(crate) ty: TrackType,
 }
 
@@ -86,7 +86,7 @@ mod tests {
         ty: TrackType::Audio,
       })
       .unwrap(),
-      r#"{"codec":"aac","type":"audio"}"#,
+      r#"{"codec":"aac","type":{"type":"audio"}}"#,
     );
 
     assert_eq!(
@@ -100,7 +100,7 @@ mod tests {
         },
       })
       .unwrap(),
-      r#"{"codec":"h264","type":"video","dimensions":{"height":1,"width":2}}"#,
+      r#"{"codec":"h264","type":{"type":"video","dimensions":{"height":1,"width":2}}}"#,
     );
   }
 }

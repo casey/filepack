@@ -656,7 +656,7 @@ mod tests {
         ty: VideoType::Mp4,
       })
       .unwrap(),
-      r#"{"filename":"foo.mp4","tracks":[{"codec":"h264","type":"video","dimensions":{"height":1,"width":2}},{"codec":"mp3","type":"audio"}],"type":"mp4"}"#,
+      r#"{"filename":"foo.mp4","tracks":[{"codec":"h264","type":{"type":"video","dimensions":{"height":1,"width":2}}},{"codec":"mp3","type":{"type":"audio"}}],"type":"mp4"}"#,
     );
   }
 }

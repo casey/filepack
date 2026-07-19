@@ -166,15 +166,19 @@ media:
         "tracks": [
           {
             "codec": "h264",
-            "type": "video",
-            "dimensions": {
-              "height": 1,
-              "width": 2
+            "type": {
+              "type": "video",
+              "dimensions": {
+                "height": 1,
+                "width": 2
+              }
             }
           },
           {
             "codec": "aac",
-            "type": "audio"
+            "type": {
+              "type": "audio"
+            }
           }
         ],
         "type": "mp4"
