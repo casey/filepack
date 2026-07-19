@@ -26,11 +26,22 @@ impl Video {
 
   fn check_info(&self, tracks: &[Track]) -> Result<(), VideoError> {
     ensure! {
-      self.tracks == tracks,
-      video_error::TracksMismatch {
-        actual: tracks.to_vec(),
-        expected: self.tracks.clone(),
+      tracks.len() == self.tracks.len(),
+      video_error::TrackCountMismatch {
+        actual: tracks.len(),
+        expected: self.tracks.len(),
       },
+    }
+
+    for (index, (actual, expected)) in tracks.iter().zip(&self.tracks).enumerate() {
+      ensure! {
+        actual == expected,
+        video_error::TrackMismatch {
+          actual: actual.clone(),
+          expected: expected.clone(),
+          index,
+        },
+      }
     }
 
     Ok(())
@@ -268,6 +279,17 @@ mod tests {
 
     assert_eq!(
       video
+        .check_info(&[Track {
+          codec: Codec::H264,
+          dimensions: Some(Dimensions::default()),
+        }])
+        .unwrap_err()
+        .to_string(),
+      "video has 1 track but metadata has 2 tracks",
+    );
+
+    assert_eq!(
+      video
         .check_info(&[
           Track {
             codec: Codec::H264,
@@ -283,7 +305,7 @@ mod tests {
         ])
         .unwrap_err()
         .to_string(),
-      "video tracks `H264 2×1, AAC` don't match metadata tracks `H264 0×0, AAC`",
+      "video track 0 `H264 2×1` doesn't match metadata track `H264 0×0`",
     );
 
     assert_eq!(
@@ -300,7 +322,7 @@ mod tests {
         ])
         .unwrap_err()
         .to_string(),
-      "video tracks `H264 0×0, MP3` don't match metadata tracks `H264 0×0, AAC`",
+      "video track 1 `MP3` doesn't match metadata track `AAC`",
     );
   }
 
