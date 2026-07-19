@@ -1,19 +1,14 @@
 use super::*;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub(crate) struct VideoFormat {
-  pub(crate) codecs: Vec<Codec>,
+  pub(crate) audio_codec: Codec,
   pub(crate) ty: VideoType,
+  pub(crate) video_codec: Codec,
 }
 
 impl Display for VideoFormat {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    write!(f, "{}", self.ty)?;
-
-    for codec in &self.codecs {
-      write!(f, " {codec}")?;
-    }
-
-    Ok(())
+    write!(f, "{} {} {}", self.ty, self.video_codec, self.audio_codec)
   }
 }

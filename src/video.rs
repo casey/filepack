@@ -47,20 +47,31 @@ impl Video {
     Ok(())
   }
 
-  pub(crate) fn format(&self) -> VideoFormat {
-    VideoFormat {
-      codecs: self.tracks.iter().map(|track| track.codec).collect(),
+  fn format(&self) -> Option<VideoFormat> {
+    let video_codec = self.tracks.iter().find_map(|track| match track.ty {
+      TrackType::Video { .. } => Some(track.codec),
+      TrackType::Audio => None,
+    })?;
+
+    let audio_codec = self.tracks.iter().find_map(|track| match track.ty {
+      TrackType::Audio => Some(track.codec),
+      TrackType::Video { .. } => None,
+    })?;
+
+    Some(VideoFormat {
+      audio_codec,
       ty: self.ty,
-    }
+      video_codec,
+    })
   }
 
   pub(crate) fn formats(videos: &[Video]) -> Vec<VideoFormat> {
     let mut formats = Vec::new();
 
     for video in videos {
-      let format = video.format();
-
-      if !formats.contains(&format) {
+      if let Some(format) = video.format()
+        && !formats.contains(&format)
+      {
         formats.push(format);
       }
     }
