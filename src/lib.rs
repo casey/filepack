@@ -102,6 +102,7 @@ use {
     token::Token,
     totals_error::TotalsError,
     track::Track,
+    track_type::TrackType,
     type_name::TypeName,
     utf8_path_ext::Utf8PathExt,
     version::Version,
@@ -342,6 +343,7 @@ mod token;
 mod totals;
 mod totals_error;
 mod track;
+mod track_type;
 mod type_name;
 mod utf8_path_ext;
 mod version;

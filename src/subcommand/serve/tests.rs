@@ -1292,14 +1292,16 @@ fn package_item_video() {
         tracks: vec![
           Track {
             codec: Codec::H264,
-            dimensions: Some(Dimensions {
-              height: 1,
-              width: 2,
-            }),
+            ty: TrackType::Video {
+              dimensions: Dimensions {
+                height: 1,
+                width: 2,
+              },
+            },
           },
           Track {
             codec: Codec::Aac,
-            dimensions: None,
+            ty: TrackType::Audio,
           },
         ],
         ty: VideoType::Mp4,
@@ -1499,14 +1501,16 @@ fn package_page_renders_video_media() {
         tracks: vec![
           Track {
             codec: Codec::H264,
-            dimensions: Some(Dimensions {
-              height: 1,
-              width: 2,
-            }),
+            ty: TrackType::Video {
+              dimensions: Dimensions {
+                height: 1,
+                width: 2,
+              },
+            },
           },
           Track {
             codec: Codec::Aac,
-            dimensions: None,
+            ty: TrackType::Audio,
           },
         ],
         ty: VideoType::Mp4,

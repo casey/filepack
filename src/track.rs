@@ -1,19 +1,19 @@
 use super::*;
 
-#[skip_serializing_none]
-#[derive(Clone, Debug, Decode, Encode, PartialEq, Serialize)]
+#[derive(Clone, Copy, Debug, Decode, Encode, PartialEq, Serialize)]
 pub struct Track {
   #[n(0)]
   pub(crate) codec: Codec,
   #[n(1)]
-  pub(crate) dimensions: Option<Dimensions>,
+  #[serde(flatten)]
+  pub(crate) ty: TrackType,
 }
 
 impl Display for Track {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     write!(f, "{}", self.codec)?;
 
-    if let Some(dimensions) = self.dimensions {
+    if let TrackType::Video { dimensions } = self.ty {
       write!(f, " {dimensions}")?;
     }
 
@@ -35,7 +35,7 @@ mod tests {
     case(
       Track {
         codec: Codec::Aac,
-        dimensions: None,
+        ty: TrackType::Audio,
       },
       "AAC",
     );
@@ -43,10 +43,12 @@ mod tests {
     case(
       Track {
         codec: Codec::H264,
-        dimensions: Some(Dimensions {
-          height: 1,
-          width: 2,
-        }),
+        ty: TrackType::Video {
+          dimensions: Dimensions {
+            height: 1,
+            width: 2,
+          },
+        },
       },
       "H264 2×1",
     );
@@ -57,20 +59,22 @@ mod tests {
     assert_cbor(
       Track {
         codec: Codec::Aac,
-        dimensions: None,
+        ty: TrackType::Audio,
       },
-      "a10000",
+      "a200000100",
     );
 
     assert_cbor(
       Track {
         codec: Codec::H264,
-        dimensions: Some(Dimensions {
-          height: 1,
-          width: 2,
-        }),
+        ty: TrackType::Video {
+          dimensions: Dimensions {
+            height: 1,
+            width: 2,
+          },
+        },
       },
-      "a2000101a200010102",
+      "a20001018201a100a200010102",
     );
   }
 
@@ -79,22 +83,24 @@ mod tests {
     assert_eq!(
       serde_json::to_string(&Track {
         codec: Codec::Aac,
-        dimensions: None,
+        ty: TrackType::Audio,
       })
       .unwrap(),
-      r#"{"codec":"aac"}"#,
+      r#"{"codec":"aac","type":"audio"}"#,
     );
 
     assert_eq!(
       serde_json::to_string(&Track {
         codec: Codec::H264,
-        dimensions: Some(Dimensions {
-          height: 1,
-          width: 2,
-        }),
+        ty: TrackType::Video {
+          dimensions: Dimensions {
+            height: 1,
+            width: 2,
+          },
+        },
       })
       .unwrap(),
-      r#"{"codec":"h264","dimensions":{"height":1,"width":2}}"#,
+      r#"{"codec":"h264","type":"video","dimensions":{"height":1,"width":2}}"#,
     );
   }
 }
