@@ -11,7 +11,7 @@ impl Display for VideoFormat {
     write!(f, "{}", self.ty)?;
 
     for track in &self.tracks {
-      write!(f, " {track}")?;
+      write!(f, " · {track}")?;
     }
 
     Ok(())
