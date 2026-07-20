@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(Boilerplate)]
 pub(crate) struct PackagesHtml {
-  pub(crate) packages: Vec<(Fingerprint, Option<ComponentBuf>)>,
+  pub(crate) packages: Vec<(Fingerprint, Option<Metadata>)>,
 }
 
 impl Page for PackagesHtml {

@@ -1,8 +1,13 @@
 <h1>Packages</h1>
 <ul>
-%% for (fingerprint, title) in &self.packages {
+%% for (fingerprint, metadata) in &self.packages {
+%% let creator = metadata.as_ref().and_then(|metadata| metadata.creator.as_ref());
+%% let title = metadata.as_ref().and_then(|metadata| metadata.title.as_ref());
   <li>
     <a href=/package/{{ fingerprint }}>
+%% if let Some(creator) = creator {
+      {{ creator }} -
+%% }
 %% if let Some(title) = title {
       {{ title }}
 %% } else {
