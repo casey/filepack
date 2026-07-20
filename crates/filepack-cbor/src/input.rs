@@ -15,7 +15,17 @@ pub(crate) struct Input {
 
 impl Input {
   pub(crate) fn decode(&self) -> Result<proc_macro2::TokenStream> {
-    let transparent = self.is_transparent()?;
+    let Attributes {
+      transparent,
+      validate,
+    } = Attributes::parse(&self.attrs)?;
+
+    if validate && !transparent {
+      return Err(Error::new_spanned(
+        &self.ident,
+        "#[cbor(validate)] requires #[cbor(transparent)]",
+      ));
+    }
 
     match self.data {
       Data::Enum(_) => {
@@ -30,7 +40,7 @@ impl Input {
       }
       Data::Struct(_) => {
         if transparent {
-          self.decode_transparent()
+          self.decode_transparent(validate)
         } else {
           self.decode_struct()
         }
@@ -125,7 +135,7 @@ impl Input {
     })
   }
 
-  pub(crate) fn decode_transparent(&self) -> Result<proc_macro2::TokenStream> {
+  pub(crate) fn decode_transparent(&self, validate: bool) -> Result<proc_macro2::TokenStream> {
     let name = &self.ident;
 
     let member = self.transparent_member()?;
@@ -135,17 +145,29 @@ impl Input {
       Member::Unnamed(_) => quote! { Self(Decode::decode(decoder)?) },
     };
 
+    let body = if validate {
+      quote! {
+        let value = #constructor;
+        Validate::validate(&value)?;
+        Ok(value)
+      }
+    } else {
+      quote! {
+        Ok(#constructor)
+      }
+    };
+
     Ok(quote! {
       impl Decode for #name {
         fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
-          Ok(#constructor)
+          #body
         }
       }
     })
   }
 
   pub(crate) fn encode(&self) -> Result<proc_macro2::TokenStream> {
-    let transparent = self.is_transparent()?;
+    let Attributes { transparent, .. } = Attributes::parse(&self.attrs)?;
 
     match self.data {
       Data::Enum(_) => {
@@ -230,30 +252,6 @@ impl Input {
         }
       }
     })
-  }
-
-  fn is_transparent(&self) -> Result<bool> {
-    let mut transparent = false;
-
-    for attribute in &self.attrs {
-      if !attribute.path().is_ident("cbor") {
-        continue;
-      }
-
-      attribute.parse_nested_meta(|meta| {
-        if meta.path.is_ident("transparent") {
-          if transparent {
-            return Err(meta.error("duplicate `transparent` attribute"));
-          }
-          transparent = true;
-          Ok(())
-        } else {
-          Err(meta.error("unknown cbor attribute"))
-        }
-      })?;
-    }
-
-    Ok(transparent)
   }
 
   fn parse_fields(&self) -> Result<Vec<ParsedField>> {

@@ -1,13 +1,34 @@
 use super::*;
 
 #[derive(
-  Clone, Debug, Default, DeserializeFromStr, Eq, Ord, PartialEq, PartialOrd, SerializeDisplay,
+  Clone,
+  Debug,
+  Decode,
+  Default,
+  DeserializeFromStr,
+  Encode,
+  Eq,
+  Ord,
+  PartialEq,
+  PartialOrd,
+  SerializeDisplay,
 )]
+#[cbor(transparent, validate)]
 pub struct Text(String);
 
 impl Text {
   pub(crate) fn as_str(&self) -> &str {
     &self.0
+  }
+
+  fn check(s: &str) -> Result<(), TextError> {
+    for character in s.chars() {
+      if character != '\n' && character.is_control() {
+        return Err(TextError::Control { character });
+      }
+    }
+
+    Ok(())
   }
 
   pub(crate) fn new() -> Self {
@@ -19,11 +40,7 @@ impl FromStr for Text {
   type Err = TextError;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
-    for character in s.chars() {
-      if character != '\n' && character.is_control() {
-        return Err(TextError::Control { character });
-      }
-    }
+    Self::check(s)?;
 
     Ok(Self(s.into()))
   }
@@ -35,15 +52,9 @@ impl Display for Text {
   }
 }
 
-impl Decode for Text {
-  fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
-    decoder.text()?.parse().context(decode_error::Text)
-  }
-}
-
-impl Encode for Text {
-  fn encode(&self, encoder: &mut Encoder) {
-    self.as_str().encode(encoder);
+impl Validate for Text {
+  fn validate(&self) -> Result<(), DecodeError> {
+    Self::check(self.as_str()).context(decode_error::Text)
   }
 }
 

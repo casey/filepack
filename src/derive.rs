@@ -477,3 +477,33 @@ fn transparent_newtype() {
   assert_cbor(Foo(99), "1863");
   assert_cbor_eq(Foo(99), 99u64);
 }
+
+#[test]
+fn validate() {
+  #[derive(Debug, Encode, Decode, PartialEq)]
+  #[cbor(transparent, validate)]
+  struct Foo(u64);
+
+  impl Validate for Foo {
+    fn validate(&self) -> Result<(), DecodeError> {
+      ensure!(
+        self.0 != 0,
+        decode_error::UnexpectedValue {
+          actual: self.0.to_string(),
+          expected: "nonzero integer",
+        }
+      );
+      Ok(())
+    }
+  }
+
+  assert_cbor(Foo(99), "1863");
+
+  assert_matches!(
+    Foo::decode_from_slice(&[0x00]),
+    Err(DecodeError::UnexpectedValue {
+      ref actual,
+      expected: "nonzero integer",
+    }) if actual == "0",
+  );
+}
