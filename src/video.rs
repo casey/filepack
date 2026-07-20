@@ -186,18 +186,20 @@ impl Video {
 
     let video_codec = video_codec.context(video_error::VideoTrackMissing)?;
     let dimensions = dimensions.unwrap();
-    let audio_codec = audio_codec.context(video_error::AudioTrackMissing)?;
 
-    Ok(vec![
-      Track {
-        codec: video_codec,
-        info: TrackInfo::Video { dimensions },
-      },
-      Track {
+    let mut tracks = vec![Track {
+      codec: video_codec,
+      info: TrackInfo::Video { dimensions },
+    }];
+
+    if let Some(audio_codec) = audio_codec {
+      tracks.push(Track {
         codec: audio_codec,
         info: TrackInfo::Audio,
-      },
-    ])
+      });
+    }
+
+    Ok(tracks)
   }
 
   pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result {
@@ -241,18 +243,7 @@ impl FromStr for Video {
 
     Ok(Self {
       filename,
-      tracks: vec![
-        Track {
-          codec: Codec::H264,
-          info: TrackInfo::Video {
-            dimensions: Dimensions::default(),
-          },
-        },
-        Track {
-          codec: Codec::Aac,
-          info: TrackInfo::Audio,
-        },
-      ],
+      tracks: Vec::new(),
       ty,
     })
   }
@@ -264,7 +255,20 @@ mod tests {
 
   #[test]
   fn check() {
-    let video = "foo.mp4".parse::<Video>().unwrap();
+    let mut video = "foo.mp4".parse::<Video>().unwrap();
+
+    video.tracks = vec![
+      Track {
+        codec: Codec::H264,
+        info: TrackInfo::Video {
+          dimensions: Dimensions::default(),
+        },
+      },
+      Track {
+        codec: Codec::Aac,
+        info: TrackInfo::Audio,
+      },
+    ];
 
     video
       .check_info(&[
@@ -372,7 +376,7 @@ mod tests {
   fn encoding() {
     assert_cbor(
       "foo.mp4".parse::<Video>().unwrap(),
-      "a30067666f6f2e6d70340182a20001018201a100a200000100a2000001000200",
+      "a30067666f6f2e6d703401800200",
     );
 
     assert_cbor(
@@ -401,10 +405,25 @@ mod tests {
 
   #[test]
   fn formats() {
-    let foo = "foo.mp4".parse::<Video>().unwrap();
-    let mut bar = "bar.mp4".parse::<Video>().unwrap();
+    let mut foo = "foo.mp4".parse::<Video>().unwrap();
+
+    foo.tracks = vec![
+      Track {
+        codec: Codec::H264,
+        info: TrackInfo::Video {
+          dimensions: Dimensions::default(),
+        },
+      },
+      Track {
+        codec: Codec::Aac,
+        info: TrackInfo::Audio,
+      },
+    ];
+
+    let mut bar = foo.clone();
     bar.tracks[1].codec = Codec::Mp3;
-    let baz = "baz.mp4".parse::<Video>().unwrap();
+
+    let baz = foo.clone();
 
     assert_eq!(
       Video::formats(&[foo, bar, baz])
@@ -426,18 +445,7 @@ mod tests {
       "foo.mp4".parse::<Video>().unwrap(),
       Video {
         filename: "foo.mp4".parse().unwrap(),
-        tracks: vec![
-          Track {
-            codec: Codec::H264,
-            info: TrackInfo::Video {
-              dimensions: Dimensions::default()
-            },
-          },
-          Track {
-            codec: Codec::Aac,
-            info: TrackInfo::Audio,
-          },
-        ],
+        tracks: Vec::new(),
         ty: VideoType::Mp4,
       },
     );
@@ -489,8 +497,20 @@ mod tests {
       ],
     );
 
+    assert_eq!(
+      case(VideoBuilder::new().video_track(2, 1)).unwrap(),
+      vec![Track {
+        codec: Codec::H264,
+        info: TrackInfo::Video {
+          dimensions: Dimensions {
+            height: 1,
+            width: 2,
+          }
+        },
+      }],
+    );
+
     error(VideoBuilder::new().audio_track(0x40), "no video track");
-    error(VideoBuilder::new().video_track(2, 1), "no audio track");
     error(
       VideoBuilder::new()
         .video_track(2, 1)
