@@ -1552,20 +1552,21 @@ fn packages_empty() {
 }
 
 #[test]
-fn packages_include_titles() {
+fn packages_include_creators_and_titles() {
   let server = TestServer::new();
 
-  let fingerprint = PackageBuilder::new()
-    .metadata(&Metadata {
-      title: Some("foo".parse().unwrap()),
-      ..default()
-    })
-    .upload(&server);
+  let metadata = Metadata {
+    creator: Some("foo".parse().unwrap()),
+    title: Some("bar".parse().unwrap()),
+    ..default()
+  };
+
+  let fingerprint = PackageBuilder::new().metadata(&metadata).upload(&server);
 
   server
     .get("/packages")
     .assert_page(PackagesHtml {
-      packages: vec![(fingerprint, Some("foo".parse().unwrap()))],
+      packages: vec![(fingerprint, Some(metadata))],
     })
     .send();
 }
@@ -1586,7 +1587,7 @@ fn packages_non_empty() {
     packages.push((fingerprint, None));
   }
 
-  packages.sort();
+  packages.sort_by_key(|&(fingerprint, _)| fingerprint);
 
   server
     .get("/packages")

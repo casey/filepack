@@ -299,7 +299,7 @@ impl Server {
     self.metadata(fingerprint)
   }
 
-  pub(crate) fn packages(&self) -> ServerResult<Vec<(Fingerprint, Option<ComponentBuf>)>> {
+  pub(crate) fn packages(&self) -> ServerResult<Vec<(Fingerprint, Option<Metadata>)>> {
     self
       .database
       .begin_read()?
@@ -307,12 +307,7 @@ impl Server {
       .iter()?
       .map(|entry| {
         let fingerprint = entry?.0.value();
-        Ok((
-          fingerprint,
-          self
-            .metadata(fingerprint)?
-            .and_then(|metadata| metadata.title),
-        ))
+        Ok((fingerprint, self.metadata(fingerprint)?))
       })
       .collect()
   }
