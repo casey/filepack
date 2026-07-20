@@ -430,7 +430,7 @@ mod tests {
         .iter()
         .map(ToString::to_string)
         .collect::<Vec<String>>(),
-      ["MP4 H264 0×0 AAC", "MP4 H264 0×0 MP3"],
+      ["MP4 · H264 0×0 · AAC", "MP4 · H264 0×0 · MP3"],
     );
   }
 
