@@ -26,7 +26,6 @@ use {
     arguments::Arguments,
     array_decoder::ArrayDecoder,
     audio::Audio,
-    audio_codec::AudioCodec,
     audio_error::AudioError,
     audio_format::AudioFormat,
     audio_info::AudioInfo,
@@ -39,6 +38,7 @@ use {
     cause::Cause,
     cbor::Cbor,
     checked_url::CheckedUrl,
+    codec::Codec,
     component::Component,
     component_error::ComponentError,
     context::Context,
@@ -101,14 +101,14 @@ use {
     ticked::Ticked,
     token::Token,
     totals_error::TotalsError,
+    track::Track,
+    track_info::TrackInfo,
     type_name::TypeName,
     utf8_path_ext::Utf8PathExt,
     version::Version,
     video::Video,
-    video_codec::VideoCodec,
     video_error::VideoError,
     video_format::VideoFormat,
-    video_info::VideoInfo,
     video_type::VideoType,
   },
   axum::{
@@ -241,7 +241,6 @@ mod arguments;
 mod array_decoder;
 mod array_encoder;
 mod audio;
-mod audio_codec;
 mod audio_error;
 mod audio_format;
 mod audio_info;
@@ -254,6 +253,7 @@ mod bech32_type;
 mod cause;
 mod cbor;
 mod checked_url;
+mod codec;
 mod component;
 mod component_buf;
 mod component_error;
@@ -342,15 +342,15 @@ mod ticked;
 mod token;
 mod totals;
 mod totals_error;
+mod track;
+mod track_info;
 mod type_name;
 mod utf8_path_ext;
 mod version;
 mod video;
 mod video_builder;
-mod video_codec;
 mod video_error;
 mod video_format;
-mod video_info;
 mod video_type;
 
 #[cfg(test)]

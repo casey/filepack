@@ -1288,14 +1288,23 @@ fn package_item_video() {
   let metadata = Metadata {
     media: Some(Media::Video {
       videos: vec![Video {
-        audio_codec: AudioCodec::Aac,
-        dimensions: Dimensions {
-          height: 1,
-          width: 2,
-        },
         filename: "foo.mp4".parse().unwrap(),
+        tracks: vec![
+          Track {
+            codec: Codec::H264,
+            info: TrackInfo::Video {
+              dimensions: Dimensions {
+                height: 1,
+                width: 2,
+              },
+            },
+          },
+          Track {
+            codec: Codec::Aac,
+            info: TrackInfo::Audio,
+          },
+        ],
         ty: VideoType::Mp4,
-        video_codec: VideoCodec::H264,
       }],
     }),
     ..default()
@@ -1488,14 +1497,23 @@ fn package_page_renders_video_media() {
   let metadata = Metadata {
     media: Some(Media::Video {
       videos: vec![Video {
-        audio_codec: AudioCodec::Aac,
-        dimensions: Dimensions {
-          height: 1,
-          width: 2,
-        },
         filename: "foo.mp4".parse().unwrap(),
+        tracks: vec![
+          Track {
+            codec: Codec::H264,
+            info: TrackInfo::Video {
+              dimensions: Dimensions {
+                height: 1,
+                width: 2,
+              },
+            },
+          },
+          Track {
+            codec: Codec::Aac,
+            info: TrackInfo::Audio,
+          },
+        ],
         ty: VideoType::Mp4,
-        video_codec: VideoCodec::H264,
       }],
     }),
     ..default()

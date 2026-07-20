@@ -3,16 +3,12 @@ use super::*;
 #[derive(Clone, Debug, Decode, DeserializeFromStr, Encode, PartialEq, Serialize)]
 pub(crate) struct Video {
   #[n(0)]
-  pub(crate) audio_codec: AudioCodec,
-  #[n(1)]
-  pub(crate) dimensions: Dimensions,
-  #[n(2)]
   pub(crate) filename: ComponentBuf,
-  #[n(3)]
+  #[n(1)]
+  pub(crate) tracks: Vec<Track>,
+  #[n(2)]
   #[serde(rename = "type")]
   pub(crate) ty: VideoType,
-  #[n(4)]
-  pub(crate) video_codec: VideoCodec,
 }
 
 impl Video {
@@ -23,54 +19,59 @@ impl Video {
   pub(crate) fn check_content(&self, root: &Utf8Path) -> Result {
     let path = root.join(self.as_path());
 
-    let info = self.info(root)?;
+    let tracks = self.info(root)?;
 
-    self.check_info(&info).context(error::Video { path })
+    self.check_info(&tracks).context(error::Video { path })
   }
 
-  fn check_info(&self, info: &VideoInfo) -> Result<(), VideoError> {
+  fn check_info(&self, tracks: &[Track]) -> Result<(), VideoError> {
     ensure! {
-      self.dimensions == info.dimensions,
-      video_error::DimensionsMismatch {
-        actual: info.dimensions,
-        expected: self.dimensions,
+      tracks.len() == self.tracks.len(),
+      video_error::TrackCountMismatch {
+        actual: tracks.len(),
+        expected: self.tracks.len(),
       },
     }
 
-    ensure! {
-      self.video_codec == info.video_codec,
-      video_error::VideoCodecMismatch {
-        actual: info.video_codec,
-        expected: self.video_codec,
-      },
-    }
-
-    ensure! {
-      self.audio_codec == info.audio_codec,
-      video_error::AudioCodecMismatch {
-        actual: info.audio_codec,
-        expected: self.audio_codec,
-      },
+    for (index, (actual, expected)) in tracks.iter().zip(&self.tracks).enumerate() {
+      ensure! {
+        actual == expected,
+        video_error::TrackMismatch {
+          actual: *actual,
+          expected: *expected,
+          index,
+        },
+      }
     }
 
     Ok(())
   }
 
-  pub(crate) fn format(&self) -> VideoFormat {
-    VideoFormat {
-      audio_codec: self.audio_codec,
+  fn format(&self) -> Option<VideoFormat> {
+    let video_codec = self.tracks.iter().find_map(|track| match track.info {
+      TrackInfo::Video { .. } => Some(track.codec),
+      TrackInfo::Audio => None,
+    })?;
+
+    let audio_codec = self.tracks.iter().find_map(|track| match track.info {
+      TrackInfo::Audio => Some(track.codec),
+      TrackInfo::Video { .. } => None,
+    })?;
+
+    Some(VideoFormat {
+      audio_codec,
       ty: self.ty,
-      video_codec: self.video_codec,
-    }
+      video_codec,
+    })
   }
 
   pub(crate) fn formats(videos: &[Video]) -> Vec<VideoFormat> {
     let mut formats = Vec::new();
 
     for video in videos {
-      let format = video.format();
-
-      if !formats.contains(&format) {
+      if let Some(format) = video.format()
+        && !formats.contains(&format)
+      {
         formats.push(format);
       }
     }
@@ -78,7 +79,7 @@ impl Video {
     formats
   }
 
-  fn info(&self, root: &Utf8Path) -> Result<VideoInfo> {
+  fn info(&self, root: &Utf8Path) -> Result<Vec<Track>> {
     let path = root.join(self.as_path());
 
     match self.ty {
@@ -89,7 +90,7 @@ impl Video {
     }
   }
 
-  fn info_mp4<T: Read>(reader: T) -> Result<VideoInfo, VideoError> {
+  fn info_mp4<T: Read>(reader: T) -> Result<Vec<Track>, VideoError> {
     use mp4parse::{CodecType, SampleEntry, TrackType};
 
     fn codec_name(ty: CodecType) -> &'static str {
@@ -134,8 +135,8 @@ impl Video {
           };
 
           audio_codec = Some(match audio.codec_type {
-            CodecType::AAC => AudioCodec::Aac,
-            CodecType::MP3 => AudioCodec::Mp3,
+            CodecType::AAC => Codec::Aac,
+            CodecType::MP3 => Codec::Mp3,
             codec => {
               return Err(
                 video_error::AudioCodecUnsupported {
@@ -158,7 +159,7 @@ impl Video {
           };
 
           video_codec = Some(match video.codec_type {
-            CodecType::H264 => VideoCodec::H264,
+            CodecType::H264 => Codec::H264,
             codec => {
               return Err(
                 video_error::VideoCodecUnsupported {
@@ -198,19 +199,20 @@ impl Video {
     let dimensions = dimensions.unwrap();
     let audio_codec = audio_codec.context(video_error::AudioTrackMissing)?;
 
-    Ok(VideoInfo {
-      audio_codec,
-      dimensions,
-      video_codec,
-    })
+    Ok(vec![
+      Track {
+        codec: video_codec,
+        info: TrackInfo::Video { dimensions },
+      },
+      Track {
+        codec: audio_codec,
+        info: TrackInfo::Audio,
+      },
+    ])
   }
 
   pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result {
-    let info = self.info(root)?;
-
-    self.audio_codec = info.audio_codec;
-    self.dimensions = info.dimensions;
-    self.video_codec = info.video_codec;
+    self.tracks = self.info(root)?;
 
     Ok(())
   }
@@ -249,11 +251,20 @@ impl FromStr for Video {
     };
 
     Ok(Self {
-      audio_codec: AudioCodec::Aac,
-      dimensions: Dimensions::default(),
       filename,
+      tracks: vec![
+        Track {
+          codec: Codec::H264,
+          info: TrackInfo::Video {
+            dimensions: Dimensions::default(),
+          },
+        },
+        Track {
+          codec: Codec::Aac,
+          info: TrackInfo::Audio,
+        },
+      ],
       ty,
-      video_codec: VideoCodec::H264,
     })
   }
 }
@@ -267,38 +278,72 @@ mod tests {
     let video = "foo.mp4".parse::<Video>().unwrap();
 
     video
-      .check_info(&VideoInfo {
-        audio_codec: AudioCodec::Aac,
-        dimensions: Dimensions::default(),
-        video_codec: VideoCodec::H264,
-      })
+      .check_info(&[
+        Track {
+          codec: Codec::H264,
+          info: TrackInfo::Video {
+            dimensions: Dimensions::default(),
+          },
+        },
+        Track {
+          codec: Codec::Aac,
+          info: TrackInfo::Audio,
+        },
+      ])
       .unwrap();
 
     assert_eq!(
       video
-        .check_info(&VideoInfo {
-          audio_codec: AudioCodec::Aac,
-          dimensions: Dimensions {
-            height: 1,
-            width: 2,
+        .check_info(&[Track {
+          codec: Codec::H264,
+          info: TrackInfo::Video {
+            dimensions: Dimensions::default()
           },
-          video_codec: VideoCodec::H264,
-        })
+        }])
         .unwrap_err()
         .to_string(),
-      "video is 2×1 but metadata dimensions are 0×0",
+      "video has 1 track but metadata has 2 tracks",
     );
 
     assert_eq!(
       video
-        .check_info(&VideoInfo {
-          audio_codec: AudioCodec::Mp3,
-          dimensions: Dimensions::default(),
-          video_codec: VideoCodec::H264,
-        })
+        .check_info(&[
+          Track {
+            codec: Codec::H264,
+            info: TrackInfo::Video {
+              dimensions: Dimensions {
+                height: 1,
+                width: 2,
+              }
+            },
+          },
+          Track {
+            codec: Codec::Aac,
+            info: TrackInfo::Audio,
+          },
+        ])
         .unwrap_err()
         .to_string(),
-      "audio codec MP3 doesn't match metadata audio codec AAC",
+      "video track 0 `H264 2×1` doesn't match metadata track `H264 0×0`",
+    );
+
+    assert_eq!(
+      video
+        .check_info(&[
+          Track {
+            codec: Codec::H264,
+            info: TrackInfo::Video {
+              dimensions: Dimensions::default()
+            },
+          },
+          Track {
+            codec: Codec::Mp3,
+            info: TrackInfo::Audio,
+          },
+        ])
+        .unwrap_err()
+        .to_string(),
+      "video track 1 `MP3` doesn't match metadata track `AAC`",
     );
   }
 
@@ -321,9 +366,11 @@ mod tests {
 
     video.check_content(&root).unwrap();
 
-    video.dimensions = Dimensions {
-      height: 4,
-      width: 4,
+    video.tracks[0].info = TrackInfo::Video {
+      dimensions: Dimensions {
+        height: 4,
+        width: 4,
+      },
     };
 
     assert_matches_regex!(
@@ -336,21 +383,30 @@ mod tests {
   fn encoding() {
     assert_cbor(
       "foo.mp4".parse::<Video>().unwrap(),
-      "a5000001a2000001000267666f6f2e6d703403000400",
+      "a30067666f6f2e6d70340182a20001018201a100a200000100a2000001000200",
     );
 
     assert_cbor(
       Video {
-        audio_codec: AudioCodec::Mp3,
-        dimensions: Dimensions {
-          height: 1,
-          width: 2,
-        },
         filename: "foo.mp4".parse().unwrap(),
+        tracks: vec![
+          Track {
+            codec: Codec::H264,
+            info: TrackInfo::Video {
+              dimensions: Dimensions {
+                height: 1,
+                width: 2,
+              },
+            },
+          },
+          Track {
+            codec: Codec::Mp3,
+            info: TrackInfo::Audio,
+          },
+        ],
         ty: VideoType::Mp4,
-        video_codec: VideoCodec::H264,
       },
-      "a5000101a2000101020267666f6f2e6d703403000400",
+      "a30067666f6f2e6d70340182a20001018201a100a200010102a2000201000200",
     );
   }
 
@@ -358,7 +414,7 @@ mod tests {
   fn formats() {
     let foo = "foo.mp4".parse::<Video>().unwrap();
     let mut bar = "bar.mp4".parse::<Video>().unwrap();
-    bar.audio_codec = AudioCodec::Mp3;
+    bar.tracks[1].codec = Codec::Mp3;
     let baz = "baz.mp4".parse::<Video>().unwrap();
 
     assert_eq!(
@@ -380,11 +436,20 @@ mod tests {
     assert_eq!(
       "foo.mp4".parse::<Video>().unwrap(),
       Video {
-        audio_codec: AudioCodec::Aac,
-        dimensions: Dimensions::default(),
         filename: "foo.mp4".parse().unwrap(),
+        tracks: vec![
+          Track {
+            codec: Codec::H264,
+            info: TrackInfo::Video {
+              dimensions: Dimensions::default()
+            },
+          },
+          Track {
+            codec: Codec::Aac,
+            info: TrackInfo::Audio,
+          },
+        ],
         ty: VideoType::Mp4,
-        video_codec: VideoCodec::H264,
       },
     );
 
@@ -407,7 +472,7 @@ mod tests {
   #[test]
   fn mp4_info() {
     #[track_caller]
-    fn case(builder: VideoBuilder) -> Result<VideoInfo, VideoError> {
+    fn case(builder: VideoBuilder) -> Result<Vec<Track>, VideoError> {
       Video::info_mp4(io::Cursor::new(builder.build()))
     }
 
@@ -418,14 +483,21 @@ mod tests {
 
     assert_eq!(
       case(VideoBuilder::new().video_track(2, 1).audio_track(0x40)).unwrap(),
-      VideoInfo {
-        audio_codec: AudioCodec::Aac,
-        dimensions: Dimensions {
-          height: 1,
-          width: 2,
+      vec![
+        Track {
+          codec: Codec::H264,
+          info: TrackInfo::Video {
+            dimensions: Dimensions {
+              height: 1,
+              width: 2,
+            }
+          },
         },
-        video_codec: VideoCodec::H264,
-      },
+        Track {
+          codec: Codec::Aac,
+          info: TrackInfo::Audio,
+        },
+      ],
     );
 
     error(VideoBuilder::new().audio_track(0x40), "no video track");
@@ -509,14 +581,23 @@ mod tests {
       )
       .unwrap(),
       Video {
-        audio_codec: AudioCodec::Aac,
-        dimensions: Dimensions {
-          height: 1,
-          width: 2,
-        },
         filename: "foo.mp4".parse().unwrap(),
+        tracks: vec![
+          Track {
+            codec: Codec::H264,
+            info: TrackInfo::Video {
+              dimensions: Dimensions {
+                height: 1,
+                width: 2,
+              }
+            },
+          },
+          Track {
+            codec: Codec::Aac,
+            info: TrackInfo::Audio,
+          },
+        ],
         ty: VideoType::Mp4,
-        video_codec: VideoCodec::H264,
       },
     );
 
@@ -528,8 +609,22 @@ mod tests {
           .build()
       )
       .unwrap()
-      .audio_codec,
-      AudioCodec::Mp3,
+      .tracks,
+      vec![
+        Track {
+          codec: Codec::H264,
+          info: TrackInfo::Video {
+            dimensions: Dimensions {
+              height: 1,
+              width: 2,
+            }
+          },
+        },
+        Track {
+          codec: Codec::Mp3,
+          info: TrackInfo::Audio,
+        },
+      ],
     );
 
     assert_matches_regex!(
@@ -542,17 +637,26 @@ mod tests {
   fn serialize() {
     assert_eq!(
       serde_json::to_string(&Video {
-        audio_codec: AudioCodec::Mp3,
-        dimensions: Dimensions {
-          height: 1,
-          width: 2,
-        },
         filename: "foo.mp4".parse().unwrap(),
+        tracks: vec![
+          Track {
+            codec: Codec::H264,
+            info: TrackInfo::Video {
+              dimensions: Dimensions {
+                height: 1,
+                width: 2,
+              }
+            },
+          },
+          Track {
+            codec: Codec::Mp3,
+            info: TrackInfo::Audio,
+          },
+        ],
         ty: VideoType::Mp4,
-        video_codec: VideoCodec::H264,
       })
       .unwrap(),
-      r#"{"audio_codec":"mp3","dimensions":{"height":1,"width":2},"filename":"foo.mp4","type":"mp4","video_codec":"h264"}"#,
+      r#"{"filename":"foo.mp4","tracks":[{"codec":"h264","info":{"type":"video","dimensions":{"height":1,"width":2}}},{"codec":"mp3","info":{"type":"audio"}}],"type":"mp4"}"#,
     );
   }
 }

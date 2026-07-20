@@ -2,9 +2,9 @@ use super::*;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub(crate) struct VideoFormat {
-  pub(crate) audio_codec: AudioCodec,
+  pub(crate) audio_codec: Codec,
   pub(crate) ty: VideoType,
-  pub(crate) video_codec: VideoCodec,
+  pub(crate) video_codec: Codec,
 }
 
 impl Display for VideoFormat {
