@@ -5,8 +5,6 @@ use super::*;
 pub enum VideoError {
   #[snafu(display("track {track} has unsupported audio codec `{codec}`"))]
   AudioCodecUnsupported { codec: String, track: usize },
-  #[snafu(display("no audio track"))]
-  AudioTrackMissing,
   #[snafu(display("multiple audio tracks"))]
   AudioTrackMultiple,
   #[snafu(display("failed to decode MP4"))]
