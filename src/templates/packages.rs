@@ -8,16 +8,16 @@ pub(crate) struct PackagesHtml {
 impl PackagesHtml {
   fn packages(
     &self,
-  ) -> impl Iterator<Item = (Fingerprint, Option<&ComponentBuf>, Option<&ComponentBuf>)> {
+  ) -> impl Iterator<Item = (Fingerprint, Option<&Component>, Option<&Component>)> {
     self.packages.iter().map(|(fingerprint, metadata)| {
       (
         *fingerprint,
         metadata
           .as_ref()
-          .and_then(|metadata| metadata.creator.as_ref()),
+          .and_then(|metadata| metadata.creator.as_deref()),
         metadata
           .as_ref()
-          .and_then(|metadata| metadata.title.as_ref()),
+          .and_then(|metadata| metadata.title.as_deref()),
       )
     })
   }
