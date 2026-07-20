@@ -5,15 +5,14 @@ pub struct Track {
   #[n(0)]
   pub(crate) codec: Codec,
   #[n(1)]
-  #[serde(rename = "type")]
-  pub(crate) ty: TrackType,
+  pub(crate) info: TrackInfo,
 }
 
 impl Display for Track {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     write!(f, "{}", self.codec)?;
 
-    if let TrackType::Video { dimensions } = self.ty {
+    if let TrackInfo::Video { dimensions } = self.info {
       write!(f, " {dimensions}")?;
     }
 
@@ -35,7 +34,7 @@ mod tests {
     case(
       Track {
         codec: Codec::Aac,
-        ty: TrackType::Audio,
+        info: TrackInfo::Audio,
       },
       "AAC",
     );
@@ -43,7 +42,7 @@ mod tests {
     case(
       Track {
         codec: Codec::H264,
-        ty: TrackType::Video {
+        info: TrackInfo::Video {
           dimensions: Dimensions {
             height: 1,
             width: 2,
@@ -59,7 +58,7 @@ mod tests {
     assert_cbor(
       Track {
         codec: Codec::Aac,
-        ty: TrackType::Audio,
+        info: TrackInfo::Audio,
       },
       "a200000100",
     );
@@ -67,7 +66,7 @@ mod tests {
     assert_cbor(
       Track {
         codec: Codec::H264,
-        ty: TrackType::Video {
+        info: TrackInfo::Video {
           dimensions: Dimensions {
             height: 1,
             width: 2,
@@ -83,16 +82,16 @@ mod tests {
     assert_eq!(
       serde_json::to_string(&Track {
         codec: Codec::Aac,
-        ty: TrackType::Audio,
+        info: TrackInfo::Audio,
       })
       .unwrap(),
-      r#"{"codec":"aac","type":{"type":"audio"}}"#,
+      r#"{"codec":"aac","info":{"type":"audio"}}"#,
     );
 
     assert_eq!(
       serde_json::to_string(&Track {
         codec: Codec::H264,
-        ty: TrackType::Video {
+        info: TrackInfo::Video {
           dimensions: Dimensions {
             height: 1,
             width: 2,
@@ -100,7 +99,7 @@ mod tests {
         },
       })
       .unwrap(),
-      r#"{"codec":"h264","type":{"type":"video","dimensions":{"height":1,"width":2}}}"#,
+      r#"{"codec":"h264","info":{"type":"video","dimensions":{"height":1,"width":2}}}"#,
     );
   }
 }

@@ -48,14 +48,14 @@ impl Video {
   }
 
   fn format(&self) -> Option<VideoFormat> {
-    let video_codec = self.tracks.iter().find_map(|track| match track.ty {
-      TrackType::Video { .. } => Some(track.codec),
-      TrackType::Audio => None,
+    let video_codec = self.tracks.iter().find_map(|track| match track.info {
+      TrackInfo::Video { .. } => Some(track.codec),
+      TrackInfo::Audio => None,
     })?;
 
-    let audio_codec = self.tracks.iter().find_map(|track| match track.ty {
-      TrackType::Audio => Some(track.codec),
-      TrackType::Video { .. } => None,
+    let audio_codec = self.tracks.iter().find_map(|track| match track.info {
+      TrackInfo::Audio => Some(track.codec),
+      TrackInfo::Video { .. } => None,
     })?;
 
     Some(VideoFormat {
@@ -91,7 +91,7 @@ impl Video {
   }
 
   fn info_mp4<T: Read>(reader: T) -> Result<Vec<Track>, VideoError> {
-    use mp4parse::{CodecType, SampleEntry};
+    use mp4parse::{CodecType, SampleEntry, TrackType};
 
     fn codec_name(ty: CodecType) -> &'static str {
       match ty {
@@ -123,7 +123,7 @@ impl Video {
 
     for track in &context.tracks {
       match &track.track_type {
-        mp4parse::TrackType::Audio => {
+        TrackType::Audio => {
           ensure!(audio_codec.is_none(), video_error::AudioTrackMultiple);
 
           let SampleEntry::Audio(audio) = Self::track_description(track)? else {
@@ -148,7 +148,7 @@ impl Video {
             }
           });
         }
-        mp4parse::TrackType::Video => {
+        TrackType::Video => {
           ensure!(video_codec.is_none(), video_error::VideoTrackMultiple);
           let SampleEntry::Video(video) = Self::track_description(track)? else {
             return video_error::VideoCodecUnsupported {
@@ -181,12 +181,12 @@ impl Video {
             video_error::TrackUnsupported {
               track: track.id,
               ty: match ty {
-                mp4parse::TrackType::Audio => "audio",
-                mp4parse::TrackType::AuxiliaryVideo => "auixiliary video",
-                mp4parse::TrackType::Metadata => "metadata",
-                mp4parse::TrackType::Picture => "picture",
-                mp4parse::TrackType::Unknown => "unknown",
-                mp4parse::TrackType::Video => "video",
+                TrackType::Audio => "audio",
+                TrackType::AuxiliaryVideo => "auixiliary video",
+                TrackType::Metadata => "metadata",
+                TrackType::Picture => "picture",
+                TrackType::Unknown => "unknown",
+                TrackType::Video => "video",
               },
             }
             .build(),
@@ -202,11 +202,11 @@ impl Video {
     Ok(vec![
       Track {
         codec: video_codec,
-        ty: TrackType::Video { dimensions },
+        info: TrackInfo::Video { dimensions },
       },
       Track {
         codec: audio_codec,
-        ty: TrackType::Audio,
+        info: TrackInfo::Audio,
       },
     ])
   }
@@ -255,13 +255,13 @@ impl FromStr for Video {
       tracks: vec![
         Track {
           codec: Codec::H264,
-          ty: TrackType::Video {
+          info: TrackInfo::Video {
             dimensions: Dimensions::default(),
           },
         },
         Track {
           codec: Codec::Aac,
-          ty: TrackType::Audio,
+          info: TrackInfo::Audio,
         },
       ],
       ty,
@@ -281,13 +281,13 @@ mod tests {
       .check_info(&[
         Track {
           codec: Codec::H264,
-          ty: TrackType::Video {
+          info: TrackInfo::Video {
             dimensions: Dimensions::default(),
           },
         },
         Track {
           codec: Codec::Aac,
-          ty: TrackType::Audio,
+          info: TrackInfo::Audio,
         },
       ])
       .unwrap();
@@ -296,7 +296,7 @@ mod tests {
       video
         .check_info(&[Track {
           codec: Codec::H264,
-          ty: TrackType::Video {
+          info: TrackInfo::Video {
             dimensions: Dimensions::default()
           },
         }])
@@ -310,7 +310,7 @@ mod tests {
         .check_info(&[
           Track {
             codec: Codec::H264,
-            ty: TrackType::Video {
+            info: TrackInfo::Video {
               dimensions: Dimensions {
                 height: 1,
                 width: 2,
@@ -319,7 +319,7 @@ mod tests {
           },
           Track {
             codec: Codec::Aac,
-            ty: TrackType::Audio,
+            info: TrackInfo::Audio,
           },
         ])
         .unwrap_err()
@@ -332,13 +332,13 @@ mod tests {
         .check_info(&[
           Track {
             codec: Codec::H264,
-            ty: TrackType::Video {
+            info: TrackInfo::Video {
               dimensions: Dimensions::default()
             },
           },
           Track {
             codec: Codec::Mp3,
-            ty: TrackType::Audio,
+            info: TrackInfo::Audio,
           },
         ])
         .unwrap_err()
@@ -366,7 +366,7 @@ mod tests {
 
     video.check_content(&root).unwrap();
 
-    video.tracks[0].ty = TrackType::Video {
+    video.tracks[0].info = TrackInfo::Video {
       dimensions: Dimensions {
         height: 4,
         width: 4,
@@ -392,7 +392,7 @@ mod tests {
         tracks: vec![
           Track {
             codec: Codec::H264,
-            ty: TrackType::Video {
+            info: TrackInfo::Video {
               dimensions: Dimensions {
                 height: 1,
                 width: 2,
@@ -401,7 +401,7 @@ mod tests {
           },
           Track {
             codec: Codec::Mp3,
-            ty: TrackType::Audio,
+            info: TrackInfo::Audio,
           },
         ],
         ty: VideoType::Mp4,
@@ -440,13 +440,13 @@ mod tests {
         tracks: vec![
           Track {
             codec: Codec::H264,
-            ty: TrackType::Video {
+            info: TrackInfo::Video {
               dimensions: Dimensions::default()
             },
           },
           Track {
             codec: Codec::Aac,
-            ty: TrackType::Audio,
+            info: TrackInfo::Audio,
           },
         ],
         ty: VideoType::Mp4,
@@ -486,7 +486,7 @@ mod tests {
       vec![
         Track {
           codec: Codec::H264,
-          ty: TrackType::Video {
+          info: TrackInfo::Video {
             dimensions: Dimensions {
               height: 1,
               width: 2,
@@ -495,7 +495,7 @@ mod tests {
         },
         Track {
           codec: Codec::Aac,
-          ty: TrackType::Audio,
+          info: TrackInfo::Audio,
         },
       ],
     );
@@ -585,7 +585,7 @@ mod tests {
         tracks: vec![
           Track {
             codec: Codec::H264,
-            ty: TrackType::Video {
+            info: TrackInfo::Video {
               dimensions: Dimensions {
                 height: 1,
                 width: 2,
@@ -594,7 +594,7 @@ mod tests {
           },
           Track {
             codec: Codec::Aac,
-            ty: TrackType::Audio,
+            info: TrackInfo::Audio,
           },
         ],
         ty: VideoType::Mp4,
@@ -613,7 +613,7 @@ mod tests {
       vec![
         Track {
           codec: Codec::H264,
-          ty: TrackType::Video {
+          info: TrackInfo::Video {
             dimensions: Dimensions {
               height: 1,
               width: 2,
@@ -622,7 +622,7 @@ mod tests {
         },
         Track {
           codec: Codec::Mp3,
-          ty: TrackType::Audio,
+          info: TrackInfo::Audio,
         },
       ],
     );
@@ -641,7 +641,7 @@ mod tests {
         tracks: vec![
           Track {
             codec: Codec::H264,
-            ty: TrackType::Video {
+            info: TrackInfo::Video {
               dimensions: Dimensions {
                 height: 1,
                 width: 2,
@@ -650,13 +650,13 @@ mod tests {
           },
           Track {
             codec: Codec::Mp3,
-            ty: TrackType::Audio,
+            info: TrackInfo::Audio,
           },
         ],
         ty: VideoType::Mp4,
       })
       .unwrap(),
-      r#"{"filename":"foo.mp4","tracks":[{"codec":"h264","type":{"type":"video","dimensions":{"height":1,"width":2}}},{"codec":"mp3","type":{"type":"audio"}}],"type":"mp4"}"#,
+      r#"{"filename":"foo.mp4","tracks":[{"codec":"h264","info":{"type":"video","dimensions":{"height":1,"width":2}}},{"codec":"mp3","info":{"type":"audio"}}],"type":"mp4"}"#,
     );
   }
 }

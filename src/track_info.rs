@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(Clone, Copy, Debug, Decode, Encode, PartialEq, Serialize)]
 #[serde(rename_all = "snake_case", tag = "type")]
-pub(crate) enum TrackType {
+pub(crate) enum TrackInfo {
   #[n(0)]
   Audio,
   #[n(1)]
@@ -18,10 +18,10 @@ mod tests {
 
   #[test]
   fn encoding() {
-    assert_cbor(TrackType::Audio, "00");
+    assert_cbor(TrackInfo::Audio, "00");
 
     assert_cbor(
-      TrackType::Video {
+      TrackInfo::Video {
         dimensions: Dimensions {
           height: 1,
           width: 2,

@@ -166,7 +166,7 @@ media:
         "tracks": [
           {
             "codec": "h264",
-            "type": {
+            "info": {
               "type": "video",
               "dimensions": {
                 "height": 1,
@@ -176,7 +176,7 @@ media:
           },
           {
             "codec": "aac",
-            "type": {
+            "info": {
               "type": "audio"
             }
           }
