@@ -47,31 +47,20 @@ impl Video {
     Ok(())
   }
 
-  fn format(&self) -> Option<VideoFormat> {
-    let video_codec = self.tracks.iter().find_map(|track| match track.info {
-      TrackInfo::Video { .. } => Some(track.codec),
-      TrackInfo::Audio => None,
-    })?;
-
-    let audio_codec = self.tracks.iter().find_map(|track| match track.info {
-      TrackInfo::Audio => Some(track.codec),
-      TrackInfo::Video { .. } => None,
-    })?;
-
-    Some(VideoFormat {
-      audio_codec,
+  fn format(&self) -> VideoFormat {
+    VideoFormat {
+      tracks: self.tracks.clone(),
       ty: self.ty,
-      video_codec,
-    })
+    }
   }
 
   pub(crate) fn formats(videos: &[Video]) -> Vec<VideoFormat> {
     let mut formats = Vec::new();
 
     for video in videos {
-      if let Some(format) = video.format()
-        && !formats.contains(&format)
-      {
+      let format = video.format();
+
+      if !formats.contains(&format) {
         formats.push(format);
       }
     }
@@ -422,7 +411,7 @@ mod tests {
         .iter()
         .map(ToString::to_string)
         .collect::<Vec<String>>(),
-      ["MP4 H264 AAC", "MP4 H264 MP3"],
+      ["MP4 H264 0×0 AAC", "MP4 H264 0×0 MP3"],
     );
   }
 
