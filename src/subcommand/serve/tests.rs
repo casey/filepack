@@ -724,7 +724,7 @@ fn media_audio_item_file_missing() {
   fs::write(server.data_dir.join("files").join(hash.to_string()), &cbor).unwrap();
 
   server
-    .get(format!("/media/audio/{fingerprint}/track/1"))
+    .get(format!("/media/audio/{fingerprint}/item/1"))
     .status(StatusCode::INTERNAL_SERVER_ERROR)
     .assert_body(format!(
       "file `foo.flac` missing from package {fingerprint}"
@@ -748,7 +748,7 @@ fn media_audio_item_out_of_range() {
     .upload(&server);
 
   server
-    .get(format!("/media/audio/{fingerprint}/track/3"))
+    .get(format!("/media/audio/{fingerprint}/item/3"))
     .status(StatusCode::NOT_FOUND)
     .assert_body(format!(
       "track 3 does not exist, package {fingerprint} has 2 tracks"
@@ -756,10 +756,10 @@ fn media_audio_item_out_of_range() {
     .send();
 
   server
-    .get(format!("/media/audio/{fingerprint}/track/0"))
+    .get(format!("/media/audio/{fingerprint}/item/0"))
     .status(StatusCode::BAD_REQUEST)
     .assert_body(
-      "Invalid URL: Cannot parse `track` with value `0`: number would be zero for non-zero type",
+      "Invalid URL: Cannot parse `item` with value `0`: number would be zero for non-zero type",
     )
     .send();
 }
@@ -771,7 +771,7 @@ fn media_audio_item_package_not_found() {
   let fingerprint = Fingerprint(Hash::bytes(b"foo"));
 
   server
-    .get(format!("/media/audio/{fingerprint}/track/1"))
+    .get(format!("/media/audio/{fingerprint}/item/1"))
     .status(StatusCode::NOT_FOUND)
     .assert_body(format!("package {fingerprint} not found"))
     .send();
@@ -789,7 +789,7 @@ fn media_audio_item_package_without_media() {
     .upload(&server);
 
   server
-    .get(format!("/media/audio/{fingerprint}/track/1"))
+    .get(format!("/media/audio/{fingerprint}/item/1"))
     .status(StatusCode::NOT_FOUND)
     .assert_body(format!(
       "package {fingerprint} does not have media metadata"
@@ -809,7 +809,7 @@ fn media_audio_item_package_without_metadata() {
   server.post(format!("/package/{fingerprint}")).send();
 
   server
-    .get(format!("/media/audio/{fingerprint}/track/1"))
+    .get(format!("/media/audio/{fingerprint}/item/1"))
     .status(StatusCode::NOT_FOUND)
     .assert_body(format!("package {fingerprint} does not have metadata"))
     .send();
@@ -827,7 +827,7 @@ fn media_audio_item_ranges() {
     body: &[u8],
   ) {
     let request = server
-      .get(format!("/media/audio/{fingerprint}/track/1"))
+      .get(format!("/media/audio/{fingerprint}/item/1"))
       .range(range)
       .status(status)
       .assert_header(header::ACCEPT_RANGES, "bytes")
@@ -914,7 +914,7 @@ fn media_audio_item_response() {
     .upload(&server);
 
   server
-    .get(format!("/media/audio/{fingerprint}/track/1"))
+    .get(format!("/media/audio/{fingerprint}/item/1"))
     .assert_header(header::ACCEPT_RANGES, "bytes")
     .assert_header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
     .assert_header(header::CONTENT_LENGTH, "3")
@@ -924,7 +924,7 @@ fn media_audio_item_response() {
     .send();
 
   server
-    .get(format!("/media/audio/{fingerprint}/track/2"))
+    .get(format!("/media/audio/{fingerprint}/item/2"))
     .assert_header(header::CONTENT_LENGTH, "6")
     .assert_header(header::CONTENT_TYPE, "audio/flac")
     .assert_header(header::ETAG, format!("\"{}\"", Hash::bytes(bar)))
@@ -949,7 +949,7 @@ fn media_image_item_out_of_range() {
     .upload(&server);
 
   server
-    .get(format!("/media/image/{fingerprint}/image/2"))
+    .get(format!("/media/image/{fingerprint}/item/2"))
     .status(StatusCode::NOT_FOUND)
     .assert_body(format!(
       "image 2 does not exist, package {fingerprint} has 1 image"
@@ -976,7 +976,7 @@ fn media_image_item_response() {
     .upload(&server);
 
   server
-    .get(format!("/media/image/{fingerprint}/image/1"))
+    .get(format!("/media/image/{fingerprint}/item/1"))
     .assert_header(header::ACCEPT_RANGES, "bytes")
     .assert_header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
     .assert_header(header::CONTENT_LENGTH, "3")
@@ -987,7 +987,7 @@ fn media_image_item_response() {
     .send();
 
   server
-    .get(format!("/media/image/{fingerprint}/image/2"))
+    .get(format!("/media/image/{fingerprint}/item/2"))
     .assert_header(header::CONTENT_LENGTH, "6")
     .assert_header(header::CONTENT_TYPE, "image/jpeg")
     .assert_header(header::ETAG, format!("\"{}\"", Hash::bytes(bar)))
@@ -1032,13 +1032,13 @@ fn media_type_mismatch() {
 
   case(
     &server,
-    format!("/media/image/{audio}/image/1"),
+    format!("/media/image/{audio}/item/1"),
     format!("expected media type image but package {audio} is audio"),
   );
 
   case(
     &server,
-    format!("/media/audio/{image}/track/1"),
+    format!("/media/audio/{image}/item/1"),
     format!("expected media type audio but package {image} is image"),
   );
 }
@@ -1058,7 +1058,7 @@ fn media_video_item_out_of_range() {
     .upload(&server);
 
   server
-    .get(format!("/media/video/{fingerprint}/video/2"))
+    .get(format!("/media/video/{fingerprint}/item/2"))
     .status(StatusCode::NOT_FOUND)
     .assert_body(format!(
       "video 2 does not exist, package {fingerprint} has 1 video"
@@ -1082,7 +1082,7 @@ fn media_video_item_response() {
     .upload(&server);
 
   server
-    .get(format!("/media/video/{fingerprint}/video/1"))
+    .get(format!("/media/video/{fingerprint}/item/1"))
     .assert_header(header::ACCEPT_RANGES, "bytes")
     .assert_header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
     .assert_header(header::CONTENT_LENGTH, "3")
@@ -1092,7 +1092,7 @@ fn media_video_item_response() {
     .send();
 
   server
-    .get(format!("/media/video/{fingerprint}/video/2"))
+    .get(format!("/media/video/{fingerprint}/item/2"))
     .assert_header(header::CONTENT_LENGTH, "3")
     .assert_header(header::CONTENT_TYPE, "video/mp4")
     .assert_header(header::ETAG, format!("\"{}\"", Hash::bytes(b"bar")))

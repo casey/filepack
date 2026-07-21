@@ -69,7 +69,7 @@ mod tests {
             <div class=artist>baz</div>
             <div class=album>qux</div>
           </div>
-          <audio controls src=/media/audio/{fingerprint}/track/1></audio>
+          <audio controls src=/media/audio/{fingerprint}/item/1></audio>
         ",
         fingerprint = test::FINGERPRINT,
       )),
