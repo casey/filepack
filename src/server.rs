@@ -74,10 +74,11 @@ impl Server {
     Ok(files)
   }
 
-  pub(crate) fn media_audio_item(
+  pub(crate) fn media_item(
     &self,
     fingerprint: Fingerprint,
     track: usize,
+    ty: MediaType,
   ) -> ServerResult<Resource> {
     let metadata = self.package_metadata(fingerprint)?;
 
@@ -85,107 +86,29 @@ impl Server {
       .media
       .context(server_error::PackageMediaMetadataNotFound { fingerprint })?;
 
-    let Media::Audio { tracks } = &media else {
-      return Err(
-        server_error::MediaType {
-          actual: media.discriminant(),
-          expected: MediaType::Audio,
-          fingerprint,
-        }
-        .build(),
-      );
-    };
+    ensure! {
+      media.ty() == ty,
+      server_error::MediaType {
+        actual: media.ty(),
+        expected: ty,
+        fingerprint,
+      },
+    }
 
-    let audio = tracks
-      .get(track)
+    let item = media
+      .item(track)
       .context(server_error::MediaItemDoesNotExist {
-        count: tracks.len(),
+        count: media.items(),
         fingerprint,
         index: track,
         ty: media.discriminant(),
       })?;
 
-    let path = audio.as_path();
+    let path = item.path();
 
     let hash = self.verified_package_file(fingerprint, &path)?;
 
-    Ok(self.open_file(hash)?.ty(audio.resource_type()))
-  }
-
-  pub(crate) fn media_image_item(
-    &self,
-    fingerprint: Fingerprint,
-    image: usize,
-  ) -> ServerResult<Resource> {
-    let metadata = self.package_metadata(fingerprint)?;
-
-    let media = metadata
-      .media
-      .context(server_error::PackageMediaMetadataNotFound { fingerprint })?;
-
-    let Media::Image { images } = &media else {
-      return Err(
-        server_error::MediaType {
-          actual: media.discriminant(),
-          expected: MediaType::Image,
-          fingerprint,
-        }
-        .build(),
-      );
-    };
-
-    let image = images
-      .get(image)
-      .context(server_error::MediaItemDoesNotExist {
-        count: images.len(),
-        fingerprint,
-        index: image,
-        ty: media.discriminant(),
-      })?;
-
-    let path = image.as_path();
-
-    let hash = self.verified_package_file(fingerprint, &path)?;
-
-    Ok(self.open_file(hash)?.ty(image.resource_type()))
-  }
-
-  pub(crate) fn media_video_item(
-    &self,
-    fingerprint: Fingerprint,
-    video: usize,
-  ) -> ServerResult<Resource> {
-    let metadata = self.package_metadata(fingerprint)?;
-
-    let media = metadata
-      .media
-      .context(server_error::PackageMediaMetadataNotFound { fingerprint })?;
-
-    let Media::Video { videos } = &media else {
-      return Err(
-        server_error::MediaType {
-          actual: media.discriminant(),
-          expected: MediaType::Video,
-          fingerprint,
-        }
-        .build(),
-      );
-    };
-
-    let video = videos
-      .get(video)
-      .context(server_error::MediaItemDoesNotExist {
-        count: videos.len(),
-        fingerprint,
-        index: video,
-        ty: media.discriminant(),
-      })?;
-
-    let path = video.as_path();
-
-    let hash = self.verified_package_file(fingerprint, &path)?;
-
-    Ok(self.open_file(hash)?.ty(video.resource_type()))
+    Ok(self.open_file(hash)?.ty(item.resource_type()))
   }
 
   fn metadata(&self, fingerprint: Fingerprint) -> ServerResult<Option<Metadata>> {
