@@ -344,8 +344,8 @@ mod tests {
             <dt>images</dt>
             <dd>3</dd>
             <dt>format</dt>
-            <dd>PNG</dd>
-            <dd>JPEG</dd>
+            <dd>PNG · 0×0</dd>
+            <dd>JPEG · 0×0</dd>
           </dl>
           <ul class=thumbnails>
             <li>
