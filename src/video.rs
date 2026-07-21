@@ -90,7 +90,7 @@ impl Video {
   }
 
   fn info_mp4<T: Read + Seek>(reader: T, size: u64) -> Result<Vec<Track>, VideoError> {
-    use re_mp4::{Mp4aBox, StsdBoxContent};
+    use re_mp4::{Mp4, Mp4aBox, StsdBoxContent};
 
     fn mp4a_codec(mp4a: &Mp4aBox) -> Option<Codec> {
       match mp4a
@@ -122,7 +122,7 @@ impl Video {
       }
     }
 
-    let mp4 = re_mp4::Mp4::read(BufReader::new(reader), size).context(video_error::DecodeMp4)?;
+    let mp4 = Mp4::read(BufReader::new(reader), size).context(video_error::DecodeMp4)?;
 
     let mut video_codec = None;
     let mut dimensions = None;
