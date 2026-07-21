@@ -25,7 +25,7 @@ fn create_rejects_invalid_artwork() {
     .write("cover.png", "foo")
     .write("metadata.yaml", "artwork: cover.png")
     .arg("create")
-    .stderr_regex("error: failed to decode PNG image `.*cover\\.png`\n.*")
+    .stderr_regex("error: invalid image `.*cover\\.png`\n.*")
     .failure();
 }
 

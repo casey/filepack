@@ -19,35 +19,40 @@ impl Image {
   pub(crate) fn check_content(&self, root: &Utf8Path) -> Result<Dimensions> {
     let actual = self.decode(root)?;
 
+    self.check_dimensions(actual).context(error::Image {
+      path: root.join(self.as_path()),
+    })?;
+
+    Ok(actual)
+  }
+
+  fn check_dimensions(&self, actual: Dimensions) -> Result<(), ImageError> {
     ensure! {
       self.dimensions == actual,
-      error::ImageDimensionsMismatch {
+      image_error::DimensionsMismatch {
         actual,
         expected: self.dimensions,
-        path: root.join(self.as_path()),
       },
     }
 
-    Ok(actual)
+    Ok(())
   }
 
   fn decode(&self, root: &Utf8Path) -> Result<Dimensions> {
     let path = root.join(self.as_path());
 
+    let bytes = filesystem::read(&path)?;
+
     match self.ty {
-      ImageType::Jpeg => Self::decode_jpeg(&path),
-      ImageType::Png => Self::decode_png(&path),
+      ImageType::Jpeg => Self::decode_jpeg(bytes).context(error::Image { path }),
+      ImageType::Png => Self::decode_png(bytes).context(error::Image { path }),
     }
   }
 
-  fn decode_jpeg(path: &Utf8Path) -> Result<Dimensions> {
-    let bytes = filesystem::read(path)?;
-
+  fn decode_jpeg(bytes: Vec<u8>) -> Result<Dimensions, ImageError> {
     let mut decoder = JpegDecoder::new(io::Cursor::new(bytes));
 
-    decoder
-      .decode_headers()
-      .context(error::ImageDecodeJpeg { path })?;
+    decoder.decode_headers().context(image_error::DecodeJpeg)?;
 
     let info = decoder.info().unwrap();
 
@@ -57,12 +62,10 @@ impl Image {
     })
   }
 
-  fn decode_png(path: &Utf8Path) -> Result<Dimensions> {
-    let bytes = filesystem::read(path)?;
-
+  fn decode_png(bytes: Vec<u8>) -> Result<Dimensions, ImageError> {
     let reader = png::Decoder::new(io::Cursor::new(bytes))
       .read_info()
-      .context(error::ImageDecodePng { path })?;
+      .context(image_error::DecodePng)?;
 
     let info = reader.info();
 
@@ -163,7 +166,18 @@ mod tests {
 
     assert_matches_regex!(
       image.check_content(&root).unwrap_err().to_string(),
-      r"^image `.*foo\.png` is 1×1 but metadata dimensions are 2×2$",
+      r"^invalid image `.*foo\.png`$",
+    );
+
+    assert_eq!(
+      image
+        .check_dimensions(Dimensions {
+          height: 1,
+          width: 1,
+        })
+        .unwrap_err()
+        .to_string(),
+      "image is 1×1 but metadata dimensions are 2×2",
     );
   }
 
@@ -301,14 +315,20 @@ mod tests {
       },
     );
 
-    assert_matches_regex!(
-      case("foo.png", b"bar").unwrap_err().to_string(),
-      r"^failed to decode PNG image `.*foo\.png`$",
+    assert_matches!(
+      case("foo.png", b"bar").unwrap_err(),
+      Error::Image {
+        source: ImageError::DecodePng { .. },
+        ..
+      },
     );
 
-    assert_matches_regex!(
-      case("foo.jpg", b"bar").unwrap_err().to_string(),
-      r"^failed to decode JPEG image `.*foo\.jpg`$",
+    assert_matches!(
+      case("foo.jpg", b"bar").unwrap_err(),
+      Error::Image {
+        source: ImageError::DecodeJpeg { .. },
+        ..
+      },
     );
   }
 

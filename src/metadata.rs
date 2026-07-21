@@ -518,45 +518,49 @@ mod tests {
         ..default()
       };
 
-      assert_matches_regex!(
-        metadata
-          .populate(&root)
-          .and_then(|()| metadata.check_content(&root))
-          .unwrap_err()
-          .to_string(),
-        expected
-      );
+      let error = metadata
+        .populate(&root)
+        .and_then(|()| metadata.check_content(&root))
+        .unwrap_err();
+
+      let chain = error
+        .iter_chain()
+        .map(ToString::to_string)
+        .collect::<Vec<String>>()
+        .join(": ");
+
+      assert_matches_regex!(chain, expected);
     }
 
     case(
       "cover.jpg",
       b"bar".to_vec(),
-      "failed to decode JPEG image `.*cover\\.jpg`",
+      "invalid image `.*cover\\.jpg`: failed to decode JPEG.*",
     );
     case(
       "cover.png",
       b"bar".to_vec(),
-      "failed to decode PNG image `.*cover\\.png`",
+      "invalid image `.*cover\\.png`: failed to decode PNG.*",
     );
     case(
       "cover.jpg",
       image(1, 1, ImageFormat::Png),
-      "failed to decode JPEG image `.*cover\\.jpg`",
+      "invalid image `.*cover\\.jpg`: failed to decode JPEG.*",
     );
     case(
       "cover.png",
       image(1, 1, ImageFormat::Jpeg),
-      "failed to decode PNG image `.*cover\\.png`",
+      "invalid image `.*cover\\.png`: failed to decode PNG.*",
     );
     case(
       "cover.jpg",
       image(2, 1, ImageFormat::Jpeg),
-      "^artwork `.*cover\\.jpg` is 2×1 but must be square$",
+      "artwork `.*cover\\.jpg` is 2×1 but must be square",
     );
     case(
       "cover.png",
       image(2, 1, ImageFormat::Png),
-      "^artwork `.*cover\\.png` is 2×1 but must be square$",
+      "artwork `.*cover\\.png` is 2×1 but must be square",
     );
   }
 
@@ -575,25 +579,29 @@ mod tests {
         ..default()
       };
 
-      assert_matches_regex!(
-        metadata
-          .populate(&root)
-          .and_then(|()| metadata.check_content(&root))
-          .unwrap_err()
-          .to_string(),
-        expected
-      );
+      let error = metadata
+        .populate(&root)
+        .and_then(|()| metadata.check_content(&root))
+        .unwrap_err();
+
+      let chain = error
+        .iter_chain()
+        .map(ToString::to_string)
+        .collect::<Vec<String>>()
+        .join(": ");
+
+      assert_matches_regex!(chain, expected);
     }
 
     case(
       "foo.jpg",
       b"bar".to_vec(),
-      "failed to decode JPEG image `.*foo\\.jpg`",
+      "invalid image `.*foo\\.jpg`: failed to decode JPEG.*",
     );
     case(
       "foo.png",
       b"bar".to_vec(),
-      "failed to decode PNG image `.*foo\\.png`",
+      "invalid image `.*foo\\.png`: failed to decode PNG.*",
     );
   }
 

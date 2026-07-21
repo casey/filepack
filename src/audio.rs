@@ -36,12 +36,12 @@ impl Audio {
     self.filename.as_path()
   }
 
-  fn audio_info(reader: &FlacReader<fs::File>, path: &Utf8Path) -> Result<AudioInfo> {
+  fn audio_info(reader: &FlacReader<fs::File>) -> Result<AudioInfo, AudioError> {
     let streaminfo = reader.streaminfo();
 
     let samples = streaminfo
       .samples
-      .context(error::AudioSampleCountUnknown { path })?;
+      .context(audio_error::SampleCountUnknown)?;
 
     Ok(AudioInfo {
       channels: streaminfo.channels.into(),
@@ -55,11 +55,13 @@ impl Audio {
     let path = root.join(self.as_path());
 
     match self.ty {
-      AudioType::Flac => self.check_content_flac(&path),
+      AudioType::Flac => self
+        .check_content_flac(&path)
+        .context(error::Audio { path }),
     }
   }
 
-  fn check_content_flac(&self, path: &Utf8Path) -> Result {
+  fn check_content_flac(&self, path: &Utf8Path) -> Result<(), AudioError> {
     let (_reader, audio_info) = Self::flac_reader(path)?;
 
     let AudioInfo {
@@ -71,37 +73,33 @@ impl Audio {
 
     ensure! {
       channels == self.channels,
-      error::AudioChannelsMismatch {
+      audio_error::ChannelsMismatch {
         actual: channels,
         expected: self.channels,
-        path,
       },
     }
 
     ensure! {
       sample_bits == self.sample_bits,
-      error::AudioSampleBitsMismatch {
+      audio_error::SampleBitsMismatch {
         actual: sample_bits,
         expected: self.sample_bits,
-        path,
       },
     }
 
     ensure! {
       sample_rate == self.sample_rate,
-      error::AudioSampleRateMismatch {
+      audio_error::SampleRateMismatch {
         actual: sample_rate,
         expected: self.sample_rate,
-        path,
       },
     }
 
     ensure! {
       samples == self.samples,
-      error::AudioSampleCountMismatch {
+      audio_error::SampleCountMismatch {
         actual: samples,
         expected: self.samples,
-        path,
       },
     }
 
@@ -204,10 +202,10 @@ impl Audio {
     )
   }
 
-  fn flac_reader(path: &Utf8Path) -> Result<(FlacReader<fs::File>, AudioInfo)> {
-    let reader = FlacReader::open(path).context(error::AudioDecode { path })?;
+  fn flac_reader(path: &Utf8Path) -> Result<(FlacReader<fs::File>, AudioInfo), AudioError> {
+    let reader = FlacReader::open(path).context(audio_error::Decode)?;
 
-    let audio_info = Self::audio_info(&reader, path)?;
+    let audio_info = Self::audio_info(&reader)?;
 
     Ok((reader, audio_info))
   }
@@ -234,21 +232,21 @@ impl Audio {
     formats
   }
 
-  fn number_tag(reader: &FlacReader<fs::File>, path: &Utf8Path, tag: &'static str) -> Result<u64> {
-    Self::tag(reader, path, tag)?
+  fn number_tag(reader: &FlacReader<fs::File>, tag: &'static str) -> Result<u64, AudioError> {
+    Self::tag(reader, tag)?
       .parse()
-      .context(error::AudioTagInteger { path, tag })
+      .context(audio_error::TagInteger { tag })
   }
 
   pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result {
     let path = root.join(self.as_path());
 
     match self.ty {
-      AudioType::Flac => self.populate_flac(&path),
+      AudioType::Flac => self.populate_flac(&path).context(error::Audio { path }),
     }
   }
 
-  fn populate_flac(&mut self, path: &Utf8Path) -> Result {
+  fn populate_flac(&mut self, path: &Utf8Path) -> Result<(), AudioError> {
     let (reader, audio_info) = Self::flac_reader(path)?;
 
     let AudioInfo {
@@ -263,13 +261,13 @@ impl Audio {
     self.sample_rate = sample_rate;
     self.samples = samples;
 
-    self.album = Self::text_tag(&reader, path, "album")?;
-    self.artist = Self::text_tag(&reader, path, "artist")?;
-    self.disc = Self::number_tag(&reader, path, "discnumber")?;
-    self.discs = Self::number_tag(&reader, path, "disctotal")?;
-    self.title = Self::text_tag(&reader, path, "title")?;
-    self.track = Self::number_tag(&reader, path, "tracknumber")?;
-    self.tracks = Self::number_tag(&reader, path, "tracktotal")?;
+    self.album = Self::text_tag(&reader, "album")?;
+    self.artist = Self::text_tag(&reader, "artist")?;
+    self.disc = Self::number_tag(&reader, "discnumber")?;
+    self.discs = Self::number_tag(&reader, "disctotal")?;
+    self.title = Self::text_tag(&reader, "title")?;
+    self.track = Self::number_tag(&reader, "tracknumber")?;
+    self.tracks = Self::number_tag(&reader, "tracktotal")?;
 
     Ok(())
   }
@@ -284,34 +282,28 @@ impl Audio {
     })
   }
 
-  fn tag<'a>(
-    reader: &'a FlacReader<fs::File>,
-    path: &Utf8Path,
-    tag: &'static str,
-  ) -> Result<&'a str> {
+  fn tag<'a>(reader: &'a FlacReader<fs::File>, tag: &'static str) -> Result<&'a str, AudioError> {
     let mut values = reader.get_tag(tag);
 
-    let value = values
-      .next()
-      .context(error::AudioTagMissing { path, tag })?;
+    let value = values.next().context(audio_error::TagMissing { tag })?;
 
     ensure! {
       values.next().is_none(),
-      error::AudioTagMultiple { path, tag },
+      audio_error::TagMultiple { tag },
     }
 
     ensure! {
       !value.is_empty(),
-      error::AudioTagEmpty { path, tag },
+      audio_error::TagEmpty { tag },
     }
 
     Ok(value)
   }
 
-  fn text_tag(reader: &FlacReader<fs::File>, path: &Utf8Path, tag: &'static str) -> Result<Text> {
-    Self::tag(reader, path, tag)?
+  fn text_tag(reader: &FlacReader<fs::File>, tag: &'static str) -> Result<Text, AudioError> {
+    Self::tag(reader, tag)?
       .parse()
-      .context(error::AudioTagInvalid { path, tag })
+      .context(audio_error::TagInvalid { tag })
   }
 }
 
@@ -362,12 +354,12 @@ mod tests {
   #[test]
   fn check_content() {
     #[track_caller]
-    fn case(audio: &Audio) -> Result {
+    fn case(audio: &Audio) -> Result<(), AudioError> {
       let (_tempdir, root) = tempdir();
 
       std::fs::write(root.join("foo.flac"), flac(&[], 44100)).unwrap();
 
-      audio.check_content(&root)
+      audio.check_content_flac(&root.join("foo.flac"))
     }
 
     let mut audio = "foo.flac".parse::<Audio>().unwrap();
@@ -380,40 +372,49 @@ mod tests {
 
     audio.samples = 1;
 
-    assert_matches_regex!(
+    assert_eq!(
       case(&audio).unwrap_err().to_string(),
-      r"^track `.*foo\.flac` has 44100 samples but metadata sample count is 1$",
+      "track has 44100 samples but metadata sample count is 1",
     );
 
     audio.samples = 44100;
     audio.sample_rate = 22050;
 
-    assert_matches_regex!(
+    assert_eq!(
       case(&audio).unwrap_err().to_string(),
-      r"^track `.*foo\.flac` has sample rate 44100 but metadata sample rate is 22050$",
+      "track has sample rate 44100 but metadata sample rate is 22050",
     );
 
     audio.sample_rate = 44100;
     audio.sample_bits = 24;
 
-    assert_matches_regex!(
+    assert_eq!(
       case(&audio).unwrap_err().to_string(),
-      r"^track `.*foo\.flac` has 16 bits per sample but metadata sample bits is 24$",
+      "track has 16 bits per sample but metadata sample bits is 24",
     );
 
     audio.sample_bits = 16;
     audio.channels = 1;
 
-    assert_matches_regex!(
+    assert_eq!(
       case(&audio).unwrap_err().to_string(),
-      r"^track `.*foo\.flac` has 2 channels but metadata channel count is 1$",
+      "track has 2 channels but metadata channel count is 1",
+    );
+
+    let (_tempdir, root) = tempdir();
+
+    std::fs::write(root.join("foo.flac"), flac(&[], 44100)).unwrap();
+
+    assert_matches_regex!(
+      audio.check_content(&root).unwrap_err().to_string(),
+      r"^invalid track `.*foo\.flac`$",
     );
   }
 
   #[test]
   fn check_positions() {
     #[track_caller]
-    fn case(positions: &[(u64, u64, u64, u64)], expected: Result<(), AudioError>) {
+    fn case(positions: &[(u64, u64, u64, u64)], expected: Result<(), &str>) {
       let tracks = positions
         .iter()
         .enumerate()
@@ -427,7 +428,10 @@ mod tests {
         })
         .collect::<Vec<Audio>>();
 
-      assert_eq!(Audio::check_positions(&tracks), expected);
+      assert_eq!(
+        Audio::check_positions(&tracks).map_err(|error| error.to_string()),
+        expected.map_err(str::to_string),
+      );
     }
 
     case(&[], Ok(()));
@@ -438,113 +442,56 @@ mod tests {
 
     case(
       &[(1, 1, 2, 2), (1, 1, 1, 2)],
-      Err(AudioError::PositionMismatch {
-        disc: 1,
-        expected_disc: 1,
-        expected_track: 1,
-        filename: "0.flac".parse().unwrap(),
-        track: 2,
-      }),
+      Err("track `0.flac` is disc 1 track 2 but expected disc 1 track 1"),
     );
 
     case(
       &[(1, 1, 1, 2), (1, 1, 1, 2)],
-      Err(AudioError::PositionMismatch {
-        disc: 1,
-        expected_disc: 1,
-        expected_track: 2,
-        filename: "1.flac".parse().unwrap(),
-        track: 1,
-      }),
+      Err("track `1.flac` is disc 1 track 1 but expected disc 1 track 2"),
     );
 
     case(
       &[(1, 1, 1, 3), (1, 1, 3, 3)],
-      Err(AudioError::PositionMismatch {
-        disc: 1,
-        expected_disc: 1,
-        expected_track: 2,
-        filename: "1.flac".parse().unwrap(),
-        track: 3,
-      }),
+      Err("track `1.flac` is disc 1 track 3 but expected disc 1 track 2"),
     );
 
-    case(
-      &[(1, 1, 1, 2)],
-      Err(AudioError::Missing { disc: 1, track: 2 }),
-    );
+    case(&[(1, 1, 1, 2)], Err("package is missing disc 1 track 2"));
 
-    case(
-      &[(1, 2, 1, 1)],
-      Err(AudioError::Missing { disc: 2, track: 1 }),
-    );
+    case(&[(1, 2, 1, 1)], Err("package is missing disc 2 track 1"));
 
     case(
       &[(1, 2, 1, 1), (2, 1, 1, 1)],
-      Err(AudioError::DiscTotalMismatch {
-        actual: 1,
-        expected: 2,
-        filename: "1.flac".parse().unwrap(),
-      }),
+      Err("track `1.flac` disc total 1 doesn't match first track disc total 2"),
     );
 
     case(
       &[(1, 1, 1, 2), (1, 1, 2, 3)],
-      Err(AudioError::TotalMismatch {
-        actual: 3,
-        disc: 1,
-        expected: 2,
-        filename: "1.flac".parse().unwrap(),
-      }),
+      Err("track `1.flac` has track total 3 but disc 1 has track total 2"),
     );
 
     case(
       &[(1, 1, 1, 1), (2, 1, 1, 1)],
-      Err(AudioError::DiscNumberExceedsTotal {
-        filename: "1.flac".parse().unwrap(),
-        number: 2,
-        total: 1,
-      }),
+      Err("track `1.flac` disc number 2 exceeds disc total of 1"),
     );
 
     case(
       &[(1, 0, 1, 1)],
-      Err(AudioError::DiscNumberExceedsTotal {
-        filename: "0.flac".parse().unwrap(),
-        number: 1,
-        total: 0,
-      }),
+      Err("track `0.flac` disc number 1 exceeds disc total of 0"),
     );
 
     case(
       &[(1, 1, 1, 0)],
-      Err(AudioError::NumberExceedsTotal {
-        filename: "0.flac".parse().unwrap(),
-        number: 1,
-        total: 0,
-      }),
+      Err("track `0.flac` track number 1 exceeds track total 0"),
     );
 
     case(
       &[(0, 1, 1, 1)],
-      Err(AudioError::PositionMismatch {
-        disc: 0,
-        expected_disc: 1,
-        expected_track: 1,
-        filename: "0.flac".parse().unwrap(),
-        track: 1,
-      }),
+      Err("track `0.flac` is disc 0 track 1 but expected disc 1 track 1"),
     );
 
     case(
       &[(1, 1, 0, 1)],
-      Err(AudioError::PositionMismatch {
-        disc: 1,
-        expected_disc: 1,
-        expected_track: 1,
-        filename: "0.flac".parse().unwrap(),
-        track: 0,
-      }),
+      Err("track `0.flac` is disc 1 track 0 but expected disc 1 track 1"),
     );
   }
 
@@ -679,16 +626,28 @@ mod tests {
       audio.populate(&root).unwrap_err()
     }
 
-    assert_matches!(err(b"foo"), Error::AudioDecode { .. });
+    assert_matches!(
+      err(b"foo"),
+      Error::Audio {
+        source: AudioError::Decode { .. },
+        ..
+      },
+    );
 
     assert_matches!(
       err(&flac(&[], 44100)),
-      Error::AudioTagMissing { tag: "album", .. },
+      Error::Audio {
+        source: AudioError::TagMissing { tag: "album" },
+        ..
+      },
     );
 
     assert_matches!(
       err(&flac(&["ALBUM=qux", "TITLE=bar"], 44100)),
-      Error::AudioTagMissing { tag: "artist", .. },
+      Error::Audio {
+        source: AudioError::TagMissing { tag: "artist" },
+        ..
+      },
     );
 
     assert_matches!(
@@ -696,7 +655,10 @@ mod tests {
         &["ALBUM=qux", "ARTIST=baz", "DISCNUMBER=1", "DISCTOTAL=1"],
         44100,
       )),
-      Error::AudioTagMissing { tag: "title", .. },
+      Error::Audio {
+        source: AudioError::TagMissing { tag: "title" },
+        ..
+      },
     );
 
     assert_matches!(
@@ -704,7 +666,10 @@ mod tests {
         &["ALBUM=qux", "ALBUM=quux", "ARTIST=baz", "TITLE=bar"],
         44100,
       )),
-      Error::AudioTagMultiple { tag: "album", .. },
+      Error::Audio {
+        source: AudioError::TagMultiple { tag: "album" },
+        ..
+      },
     );
 
     assert_matches!(
@@ -718,7 +683,10 @@ mod tests {
         ],
         44100,
       )),
-      Error::AudioTagEmpty { tag: "title", .. },
+      Error::Audio {
+        source: AudioError::TagEmpty { tag: "title" },
+        ..
+      },
     );
 
     assert_matches!(
@@ -732,9 +700,11 @@ mod tests {
         ],
         44100,
       )),
-      Error::AudioTagInvalid {
-        source: TextError::Control { character: '\t' },
-        tag: "title",
+      Error::Audio {
+        source: AudioError::TagInvalid {
+          source: TextError::Control { character: '\t' },
+          tag: "title",
+        },
         ..
       },
     );
@@ -750,8 +720,8 @@ mod tests {
         ],
         44100,
       )),
-      Error::AudioTagMissing {
-        tag: "tracknumber",
+      Error::Audio {
+        source: AudioError::TagMissing { tag: "tracknumber" },
         ..
       },
     );
@@ -768,8 +738,11 @@ mod tests {
         ],
         44100,
       )),
-      Error::AudioTagInteger {
-        tag: "tracknumber",
+      Error::Audio {
+        source: AudioError::TagInteger {
+          tag: "tracknumber",
+          ..
+        },
         ..
       },
     );
@@ -786,8 +759,11 @@ mod tests {
         ],
         44100,
       )),
-      Error::AudioTagInteger {
-        tag: "tracknumber",
+      Error::Audio {
+        source: AudioError::TagInteger {
+          tag: "tracknumber",
+          ..
+        },
         ..
       },
     );
@@ -805,7 +781,10 @@ mod tests {
         ],
         0,
       )),
-      Error::AudioSampleCountUnknown { .. },
+      Error::Audio {
+        source: AudioError::SampleCountUnknown,
+        ..
+      },
     );
   }
 

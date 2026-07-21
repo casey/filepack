@@ -15,87 +15,16 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     expected: Hash,
   },
-  #[snafu(display(
-    "track `{path}` has {actual} channels but metadata channel count is {expected}"
-  ))]
-  AudioChannelsMismatch {
-    actual: u64,
-    backtrace: Option<Backtrace>,
-    expected: u64,
-    path: DisplayPath,
-  },
-  #[snafu(display("failed to decode track `{path}`"))]
-  AudioDecode {
+  #[snafu(display("invalid track `{path}`"))]
+  Audio {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
-    source: claxon::Error,
+    source: AudioError,
   },
   #[snafu(display("invalid track position"))]
   AudioPosition {
     backtrace: Option<Backtrace>,
     source: AudioError,
-  },
-  #[snafu(display(
-    "track `{path}` has {actual} bits per sample but metadata sample bits is {expected}"
-  ))]
-  AudioSampleBitsMismatch {
-    actual: u64,
-    backtrace: Option<Backtrace>,
-    expected: u64,
-    path: DisplayPath,
-  },
-  #[snafu(display("track `{path}` has {actual} samples but metadata sample count is {expected}"))]
-  AudioSampleCountMismatch {
-    actual: u64,
-    backtrace: Option<Backtrace>,
-    expected: u64,
-    path: DisplayPath,
-  },
-  #[snafu(display("track `{path}` has unknown sample count"))]
-  AudioSampleCountUnknown {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-  },
-  #[snafu(display(
-    "track `{path}` has sample rate {actual} but metadata sample rate is {expected}"
-  ))]
-  AudioSampleRateMismatch {
-    actual: u64,
-    backtrace: Option<Backtrace>,
-    expected: u64,
-    path: DisplayPath,
-  },
-  #[snafu(display("track `{path}` has empty `{tag}` tag"))]
-  AudioTagEmpty {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-    tag: &'static str,
-  },
-  #[snafu(display("track `{path}` has invalid integer `{tag}` tag"))]
-  AudioTagInteger {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-    source: ParseIntError,
-    tag: &'static str,
-  },
-  #[snafu(display("track `{path}` has invalid `{tag}` tag"))]
-  AudioTagInvalid {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-    source: TextError,
-    tag: &'static str,
-  },
-  #[snafu(display("track `{path}` is missing `{tag}` tag"))]
-  AudioTagMissing {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-    tag: &'static str,
-  },
-  #[snafu(display("track `{path}` has multiple `{tag}` tags"))]
-  AudioTagMultiple {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-    tag: &'static str,
   },
   #[snafu(display("failed to decode bech32 `{bech32}`"))]
   Bech32Decode {
@@ -302,24 +231,11 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: RelativePath,
   },
-  #[snafu(display("failed to decode JPEG image `{path}`"))]
-  ImageDecodeJpeg {
+  #[snafu(display("invalid image `{path}`"))]
+  Image {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
-    source: zune_jpeg::errors::DecodeErrors,
-  },
-  #[snafu(display("failed to decode PNG image `{path}`"))]
-  ImageDecodePng {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-    source: png::DecodingError,
-  },
-  #[snafu(display("image `{path}` is {actual} but metadata dimensions are {expected}"))]
-  ImageDimensionsMismatch {
-    actual: Dimensions,
-    backtrace: Option<Backtrace>,
-    expected: Dimensions,
-    path: DisplayPath,
+    source: ImageError,
   },
   #[snafu(display("internal error, this may indicate a bug in filepack: {message}"))]
   Internal {
