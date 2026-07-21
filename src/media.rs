@@ -25,6 +25,14 @@ pub(crate) enum Media {
 }
 
 impl Media {
+  pub(crate) fn item(&self, i: usize) -> Option<&dyn Item> {
+    match self {
+      Self::Audio { tracks } => tracks.get(i).map(|item| item as &dyn Item),
+      Self::Image { images } => images.get(i).map(|item| item as &dyn Item),
+      Self::Video { videos } => videos.get(i).map(|item| item as &dyn Item),
+    }
+  }
+
   pub(crate) fn items(&self) -> usize {
     match self {
       Self::Audio { tracks } => tracks.len(),
@@ -35,6 +43,10 @@ impl Media {
 
   pub(crate) fn name(&self) -> &'static str {
     self.into()
+  }
+
+  pub(crate) fn ty(&self) -> MediaType {
+    self.discriminant()
   }
 }
 

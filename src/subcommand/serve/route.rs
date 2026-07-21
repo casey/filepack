@@ -95,26 +95,44 @@ pub(crate) async fn install_script() -> ServerResult<StaticAsset> {
 
 pub(crate) async fn media_audio_item(
   server: ServerExtension,
-  Path((fingerprint, Ordinal(track))): Path<(Fingerprint, Ordinal)>,
+  Path((fingerprint, Ordinal(item))): Path<(Fingerprint, Ordinal)>,
   range: Option<TypedHeader<headers::Range>>,
 ) -> ServerResult<Resource> {
-  block_in_place(|| Ok(server.media_audio_item(fingerprint, track)?.range(range)))
+  block_in_place(|| {
+    Ok(
+      server
+        .media_item(fingerprint, item, MediaType::Audio)?
+        .range(range),
+    )
+  })
 }
 
 pub(crate) async fn media_image_item(
   server: ServerExtension,
-  Path((fingerprint, Ordinal(image))): Path<(Fingerprint, Ordinal)>,
+  Path((fingerprint, Ordinal(item))): Path<(Fingerprint, Ordinal)>,
   range: Option<TypedHeader<headers::Range>>,
 ) -> ServerResult<Resource> {
-  block_in_place(|| Ok(server.media_image_item(fingerprint, image)?.range(range)))
+  block_in_place(|| {
+    Ok(
+      server
+        .media_item(fingerprint, item, MediaType::Image)?
+        .range(range),
+    )
+  })
 }
 
 pub(crate) async fn media_video_item(
   server: ServerExtension,
-  Path((fingerprint, Ordinal(video))): Path<(Fingerprint, Ordinal)>,
+  Path((fingerprint, Ordinal(item))): Path<(Fingerprint, Ordinal)>,
   range: Option<TypedHeader<headers::Range>>,
 ) -> ServerResult<Resource> {
-  block_in_place(|| Ok(server.media_video_item(fingerprint, video)?.range(range)))
+  block_in_place(|| {
+    Ok(
+      server
+        .media_item(fingerprint, item, MediaType::Video)?
+        .range(range),
+    )
+  })
 }
 
 pub(crate) async fn missing(

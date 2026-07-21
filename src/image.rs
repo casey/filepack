@@ -115,6 +115,16 @@ impl FromStr for Image {
   }
 }
 
+impl Item for Image {
+  fn path(&self) -> RelativePath {
+    self.as_path()
+  }
+
+  fn resource_type(&self) -> ResourceType {
+    self.resource_type()
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use {super::*, ::image::ImageFormat};

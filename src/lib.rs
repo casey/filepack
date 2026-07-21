@@ -66,6 +66,7 @@ use {
     image::Image,
     image_type::ImageType,
     iso8601_duration::Iso8601Duration,
+    item::Item,
     key_identifier::KeyIdentifier,
     key_name::KeyName,
     key_type::KeyType,
@@ -292,6 +293,7 @@ mod head;
 mod image;
 mod image_type;
 mod iso8601_duration;
+mod item;
 mod key_identifier;
 mod key_name;
 mod key_type;

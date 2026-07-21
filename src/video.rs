@@ -249,6 +249,16 @@ impl FromStr for Video {
   }
 }
 
+impl Item for Video {
+  fn path(&self) -> RelativePath {
+    self.as_path()
+  }
+
+  fn resource_type(&self) -> ResourceType {
+    self.resource_type()
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;

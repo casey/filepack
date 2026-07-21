@@ -345,6 +345,16 @@ impl FromStr for Audio {
   }
 }
 
+impl Item for Audio {
+  fn path(&self) -> RelativePath {
+    self.as_path()
+  }
+
+  fn resource_type(&self) -> ResourceType {
+    self.resource_type()
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
