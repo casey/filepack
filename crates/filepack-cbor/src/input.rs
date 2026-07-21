@@ -158,7 +158,7 @@ impl Input {
       }
     };
 
-    let mut generics = self.generics(parse_quote!(Decode));
+    let mut generics = self.generics(syn::parse_quote!(Decode));
 
     if validate {
       let (_impl_generics, ty_generics, _where_clause) = self.generics.split_for_impl();
@@ -166,7 +166,7 @@ impl Input {
       generics
         .make_where_clause()
         .predicates
-        .push(parse_quote!(#name #ty_generics: Validate));
+        .push(syn::parse_quote!(#name #ty_generics: Validate));
     }
 
     let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
@@ -259,7 +259,7 @@ impl Input {
 
     let member = self.transparent_member()?;
 
-    let generics = self.generics(parse_quote!(Encode));
+    let generics = self.generics(syn::parse_quote!(Encode));
 
     let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 

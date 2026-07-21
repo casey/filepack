@@ -9,7 +9,7 @@ use {
   std::collections::HashSet,
   syn::{
     Attribute, DeriveInput, Error, Generics, Ident, Index, LitInt, Member, Path, Result, Type,
-    TypeParamBound, TypePath, parse_quote,
+    TypeParamBound, TypePath,
   },
   usized::IntoU64,
 };
