@@ -75,6 +75,12 @@ pub enum Error {
   AudioTagInteger {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
+    tag: &'static str,
+  },
+  #[snafu(display("track `{path}` has out-of-range integer `{tag}` tag"))]
+  AudioTagIntegerRange {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
     source: ParseIntError,
     tag: &'static str,
   },
