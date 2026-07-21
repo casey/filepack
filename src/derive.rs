@@ -502,7 +502,7 @@ fn validate() {
   assert_matches!(
     Foo::decode_from_slice(&"bar".encode_to_vec()),
     Err(DecodeError::UnexpectedValue {
-      ref actual,
+      actual,
       expected: "foo",
     }) if actual == "bar",
   );
