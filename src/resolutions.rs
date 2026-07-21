@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(Debug, PartialEq)]
 pub(crate) struct Resolutions {
-  max: Option<Dimensions>,
+  max: Dimensions,
   min: Dimensions,
   shorthand: bool,
 }
@@ -26,12 +26,9 @@ impl Resolutions {
 
     dimensions.sort_by_key(|dimensions| (dimensions.area(), dimensions.width));
 
-    let min = *dimensions.first()?;
-    let max = *dimensions.last()?;
-
     Some(Self {
-      max: (max != min).then_some(max),
-      min,
+      max: *dimensions.last()?,
+      min: *dimensions.first()?,
       shorthand,
     })
   }
@@ -41,8 +38,8 @@ impl Display for Resolutions {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     write!(f, "{}", self.entry(self.min))?;
 
-    if let Some(max) = self.max {
-      write!(f, " – {}", self.entry(max))?;
+    if self.min != self.max {
+      write!(f, "–{}", self.entry(self.max))?;
     }
 
     Ok(())
@@ -73,12 +70,12 @@ mod tests {
 
     case(&[(2, 1)], false, "2×1");
     case(&[(2, 1), (2, 1)], false, "2×1");
-    case(&[(4, 4), (2, 1)], false, "2×1 – 4×4");
-    case(&[(4, 4), (2, 1), (3, 2)], false, "2×1 – 4×4");
-    case(&[(4, 1), (2, 2), (1, 4)], false, "1×4 – 4×1");
+    case(&[(4, 4), (2, 1)], false, "2×1–4×4");
+    case(&[(4, 4), (2, 1), (3, 2)], false, "2×1–4×4");
+    case(&[(4, 1), (2, 2), (1, 4)], false, "1×4–4×1");
     case(&[(1920, 1080)], false, "1920×1080");
     case(&[(1920, 1080)], true, "1080p");
-    case(&[(3840, 2160), (2, 1), (1920, 1080)], true, "2×1 – 4K");
+    case(&[(3840, 2160), (2, 1), (1920, 1080)], true, "2×1–4K");
   }
 
   #[test]

@@ -365,7 +365,7 @@ mod tests {
             <dd>PNG</dd>
             <dd>JPEG</dd>
             <dt>resolution</dt>
-            <dd>0×0 – 2×1</dd>
+            <dd>0×0–2×1</dd>
           </dl>
           <ul class=thumbnails>
             <li>
