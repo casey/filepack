@@ -76,6 +76,10 @@ impl Video {
         let file = filesystem::open(&path)?;
         Self::info_mp4(file).context(error::Video { path })
       }
+      VideoType::Webm => {
+        let file = filesystem::open(&path)?;
+        Self::info_webm(file).context(error::Video { path })
+      }
     }
   }
 
@@ -174,6 +178,107 @@ impl Video {
                 TrackType::AuxiliaryVideo => "auixiliary video",
                 TrackType::Metadata => "metadata",
                 TrackType::Picture => "picture",
+                TrackType::Unknown => "unknown",
+                TrackType::Video => "video",
+              },
+            }
+            .build(),
+          );
+        }
+      }
+    }
+
+    let video_codec = video_codec.context(video_error::VideoTrackMissing)?;
+    let dimensions = dimensions.unwrap();
+
+    let mut tracks = vec![Track {
+      codec: video_codec,
+      info: TrackInfo::Video { dimensions },
+    }];
+
+    if let Some(audio_codec) = audio_codec {
+      tracks.push(Track {
+        codec: audio_codec,
+        info: TrackInfo::Audio,
+      });
+    }
+
+    Ok(tracks)
+  }
+
+  fn info_webm<T: Read + Seek>(reader: T) -> Result<Vec<Track>, VideoError> {
+    use matroska_demuxer::{MatroskaFile, TrackType};
+
+    let file = MatroskaFile::open(BufReader::new(reader)).context(video_error::DecodeWebm)?;
+
+    let doc_type = file.ebml_header().doc_type().trim_end_matches('\0');
+
+    ensure! {
+      doc_type == "webm",
+      video_error::WebmDocType { doc_type },
+    }
+
+    let mut video_codec = None;
+    let mut dimensions = None;
+    let mut audio_codec = None;
+
+    for (index, track) in file.tracks().iter().enumerate() {
+      match track.track_type() {
+        TrackType::Audio => {
+          ensure!(audio_codec.is_none(), video_error::AudioTrackMultiple);
+
+          audio_codec = Some(match track.codec_id() {
+            "A_OPUS" => Codec::Opus,
+            "A_VORBIS" => Codec::Vorbis,
+            codec => {
+              return Err(
+                video_error::AudioCodecUnsupported {
+                  codec,
+                  track: index,
+                }
+                .build(),
+              );
+            }
+          });
+        }
+        TrackType::Video => {
+          ensure!(video_codec.is_none(), video_error::VideoTrackMultiple);
+
+          video_codec = Some(match track.codec_id() {
+            "V_VP8" => Codec::Vp8,
+            "V_VP9" => Codec::Vp9,
+            codec => {
+              return Err(
+                video_error::VideoCodecUnsupported {
+                  codec,
+                  track: index,
+                }
+                .build(),
+              );
+            }
+          });
+
+          let video = track
+            .video()
+            .context(video_error::VideoSettingsMissing { track: index })?;
+
+          dimensions = Some(Dimensions {
+            height: video.pixel_height().get(),
+            width: video.pixel_width().get(),
+          });
+        }
+        ty => {
+          return Err(
+            video_error::TrackUnsupported {
+              track: index,
+              ty: match ty {
+                TrackType::Audio => "audio",
+                TrackType::Buttons => "buttons",
+                TrackType::Complex => "complex",
+                TrackType::Control => "control",
+                TrackType::Logo => "logo",
+                TrackType::Metadata => "metadata",
+                TrackType::Subtitle => "subtitle",
                 TrackType::Unknown => "unknown",
                 TrackType::Video => "video",
               },
@@ -356,7 +461,7 @@ mod tests {
 
     std::fs::write(
       root.join("foo.mp4"),
-      VideoBuilder::new()
+      Mp4Builder::new()
         .video_track(2, 1)
         .audio_track(0x40)
         .build(),
@@ -435,12 +540,31 @@ mod tests {
 
     let baz = foo.clone();
 
+    let mut bob = "bob.webm".parse::<Video>().unwrap();
+
+    bob.tracks = vec![
+      Track {
+        codec: Codec::Vp9,
+        info: TrackInfo::Video {
+          dimensions: Dimensions::default(),
+        },
+      },
+      Track {
+        codec: Codec::Opus,
+        info: TrackInfo::Audio,
+      },
+    ];
+
     assert_eq!(
-      Video::formats(&[foo, bar, baz])
+      Video::formats(&[foo, bar, baz, bob])
         .iter()
         .map(ToString::to_string)
         .collect::<Vec<String>>(),
-      ["MP4 · H.264 0×0 · AAC", "MP4 · H.264 0×0 · MP3"],
+      [
+        "MP4 · H.264 0×0 · AAC",
+        "MP4 · H.264 0×0 · MP3",
+        "WebM · VP9 0×0 · Opus",
+      ],
     );
   }
 
@@ -460,16 +584,25 @@ mod tests {
       },
     );
 
+    assert_eq!(
+      "foo.webm".parse::<Video>().unwrap(),
+      Video {
+        filename: "foo.webm".parse().unwrap(),
+        tracks: Vec::new(),
+        ty: VideoType::Webm,
+      },
+    );
+
     case(
       "foo.avi",
       ComponentError::Extension {
-        extensions: &["mp4"],
+        extensions: &["mp4", "webm"],
       },
     );
     case(
       "foo",
       ComponentError::Extension {
-        extensions: &["mp4"],
+        extensions: &["mp4", "webm"],
       },
     );
     case("", ComponentError::Empty);
@@ -479,17 +612,17 @@ mod tests {
   #[test]
   fn mp4_info() {
     #[track_caller]
-    fn case(builder: VideoBuilder) -> Result<Vec<Track>, VideoError> {
+    fn case(builder: Mp4Builder) -> Result<Vec<Track>, VideoError> {
       Video::info_mp4(io::Cursor::new(builder.build()))
     }
 
     #[track_caller]
-    fn error(builder: VideoBuilder, expected: &str) {
+    fn error(builder: Mp4Builder, expected: &str) {
       assert_eq!(case(builder).unwrap_err().to_string(), expected);
     }
 
     assert_eq!(
-      case(VideoBuilder::new().video_track(2, 1).audio_track(0x40)).unwrap(),
+      case(Mp4Builder::new().video_track(2, 1).audio_track(0x40)).unwrap(),
       vec![
         Track {
           codec: Codec::H264,
@@ -508,7 +641,7 @@ mod tests {
     );
 
     assert_eq!(
-      case(VideoBuilder::new().video_track(2, 1)).unwrap(),
+      case(Mp4Builder::new().video_track(2, 1)).unwrap(),
       vec![Track {
         codec: Codec::H264,
         info: TrackInfo::Video {
@@ -520,53 +653,50 @@ mod tests {
       }],
     );
 
-    error(VideoBuilder::new().audio_track(0x40), "no video track");
+    error(Mp4Builder::new().audio_track(0x40), "no video track");
     error(
-      VideoBuilder::new()
+      Mp4Builder::new()
         .video_track(2, 1)
         .video_track(2, 1)
         .audio_track(0x40),
       "multiple video tracks",
     );
     error(
-      VideoBuilder::new()
+      Mp4Builder::new()
         .video_track(2, 1)
         .audio_track(0x40)
         .audio_track(0x40),
       "multiple audio tracks",
     );
     error(
-      VideoBuilder::new()
+      Mp4Builder::new()
         .video_track(2, 1)
         .audio_track(0x40)
         .track(*b"meta", &[]),
       "track 2 has unsupported track type `metadata`",
     );
     error(
-      VideoBuilder::new()
+      Mp4Builder::new()
         .track(
           *b"vide",
-          &[VideoBuilder::video_entry(*b"s263", *b"d263", 2, 1)],
+          &[Mp4Builder::video_entry(*b"s263", *b"d263", 2, 1)],
         )
         .audio_track(0x40),
       "track 0 has unsupported video codec `H.263`",
     );
     error(
-      VideoBuilder::new().video_track(2, 1).audio_track(0x11),
+      Mp4Builder::new().video_track(2, 1).audio_track(0x11),
       "track 1 has unsupported audio codec `unknown`",
     );
     error(
-      VideoBuilder::new().video_track(2, 1).track(
+      Mp4Builder::new().video_track(2, 1).track(
         *b"soun",
-        &[
-          VideoBuilder::audio_entry(0x40),
-          VideoBuilder::audio_entry(0x40),
-        ],
+        &[Mp4Builder::audio_entry(0x40), Mp4Builder::audio_entry(0x40)],
       ),
       "track 1 has multiple sample descriptions",
     );
     error(
-      VideoBuilder::new().video_track(2, 1).track(*b"soun", &[]),
+      Mp4Builder::new().video_track(2, 1).track(*b"soun", &[]),
       "track 1 has missing sample description",
     );
 
@@ -593,7 +723,7 @@ mod tests {
 
     assert_eq!(
       case(
-        &VideoBuilder::new()
+        &Mp4Builder::new()
           .video_track(2, 1)
           .audio_track(0x40)
           .build()
@@ -622,7 +752,7 @@ mod tests {
 
     assert_eq!(
       case(
-        &VideoBuilder::new()
+        &Mp4Builder::new()
           .video_track(2, 1)
           .audio_track(0x6b)
           .build()
@@ -676,6 +806,122 @@ mod tests {
       })
       .unwrap(),
       r#"{"filename":"foo.mp4","tracks":[{"codec":"h264","info":{"type":"video","dimensions":{"height":1,"width":2}}},{"codec":"mp3","info":{"type":"audio"}}],"type":"mp4"}"#,
+    );
+  }
+
+  #[test]
+  fn webm_info() {
+    #[track_caller]
+    fn case(builder: WebmBuilder) -> Result<Vec<Track>, VideoError> {
+      Video::info_webm(io::Cursor::new(builder.build()))
+    }
+
+    #[track_caller]
+    fn error(builder: WebmBuilder, expected: &str) {
+      assert_eq!(case(builder).unwrap_err().to_string(), expected);
+    }
+
+    assert_eq!(
+      case(WebmBuilder::new().video_track(2, 1).audio_track("A_OPUS")).unwrap(),
+      vec![
+        Track {
+          codec: Codec::Vp9,
+          info: TrackInfo::Video {
+            dimensions: Dimensions {
+              height: 1,
+              width: 2,
+            }
+          },
+        },
+        Track {
+          codec: Codec::Opus,
+          info: TrackInfo::Audio,
+        },
+      ],
+    );
+
+    assert_eq!(
+      case(
+        WebmBuilder::new()
+          .track(1, "V_VP8", &WebmBuilder::video_settings(2, 1))
+          .audio_track("A_VORBIS"),
+      )
+      .unwrap(),
+      vec![
+        Track {
+          codec: Codec::Vp8,
+          info: TrackInfo::Video {
+            dimensions: Dimensions {
+              height: 1,
+              width: 2,
+            }
+          },
+        },
+        Track {
+          codec: Codec::Vorbis,
+          info: TrackInfo::Audio,
+        },
+      ],
+    );
+
+    assert_eq!(
+      case(WebmBuilder::new().video_track(2, 1)).unwrap(),
+      vec![Track {
+        codec: Codec::Vp9,
+        info: TrackInfo::Video {
+          dimensions: Dimensions {
+            height: 1,
+            width: 2,
+          }
+        },
+      }],
+    );
+
+    error(WebmBuilder::new().audio_track("A_OPUS"), "no video track");
+    error(
+      WebmBuilder::new()
+        .video_track(2, 1)
+        .video_track(2, 1)
+        .audio_track("A_OPUS"),
+      "multiple video tracks",
+    );
+    error(
+      WebmBuilder::new()
+        .video_track(2, 1)
+        .audio_track("A_OPUS")
+        .audio_track("A_OPUS"),
+      "multiple audio tracks",
+    );
+    error(
+      WebmBuilder::new()
+        .video_track(2, 1)
+        .track(0x11, "S_TEXT/UTF8", &[]),
+      "track 1 has unsupported track type `subtitle`",
+    );
+    error(
+      WebmBuilder::new()
+        .track(1, "V_MPEG4/ISO/AVC", &WebmBuilder::video_settings(2, 1))
+        .audio_track("A_OPUS"),
+      "track 0 has unsupported video codec `V_MPEG4/ISO/AVC`",
+    );
+    error(
+      WebmBuilder::new().video_track(2, 1).audio_track("A_AAC"),
+      "track 1 has unsupported audio codec `A_AAC`",
+    );
+    error(
+      WebmBuilder::new().track(1, "V_VP9", &[]),
+      "track 0 has missing video settings",
+    );
+    error(
+      WebmBuilder::new().video_track(2, 1).doc_type("matroska"),
+      "expected DocType `webm` but found `matroska`",
+    );
+
+    assert_eq!(
+      Video::info_webm(io::Cursor::new(b"foo"))
+        .unwrap_err()
+        .to_string(),
+      "failed to decode WebM",
     );
   }
 }

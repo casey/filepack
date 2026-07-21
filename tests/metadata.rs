@@ -139,7 +139,7 @@ fn create_extracts_video_metadata() {
   Test::new()
     .write(
       "foo.mp4",
-      VideoBuilder::new()
+      Mp4Builder::new()
         .video_track(2, 1)
         .audio_track(0x40)
         .build(),

@@ -1220,6 +1220,7 @@ dependencies = [
  "jsonwebtoken",
  "lexiclean",
  "libc",
+ "matroska-demuxer",
  "mime",
  "mp4parse",
  "num-traits",
@@ -2138,6 +2139,12 @@ name = "matchit"
 version = "0.8.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "47e1ffaa40ddd1f3ed91f717a33c8c0ee23fff369e3aa8772b9605cc1d22f4c3"
+
+[[package]]
+name = "matroska-demuxer"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7037404c874fc7a465dd0356d7d8f9f3237b425511942eb64dbe956e6adc7c01"
 
 [[package]]
 name = "maybe-rayon"

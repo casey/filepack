@@ -202,6 +202,7 @@ pub use self::{
   manifest::Manifest,
   map_encoder::MapEncoder,
   metadata::Metadata,
+  mp4_builder::Mp4Builder,
   page::Page,
   private_key::PrivateKey,
   public_key::PublicKey,
@@ -211,7 +212,7 @@ pub use self::{
   statement::Statement,
   text::Text,
   totals::Totals,
-  video_builder::VideoBuilder,
+  webm_builder::WebmBuilder,
 };
 
 #[cfg(test)]
@@ -309,6 +310,7 @@ mod map_encoder;
 mod media;
 mod metadata;
 mod mode;
+mod mp4_builder;
 mod options;
 mod or;
 mod ordinal;
@@ -352,10 +354,10 @@ mod utf8_path_ext;
 mod validate;
 mod version;
 mod video;
-mod video_builder;
 mod video_error;
 mod video_format;
 mod video_type;
+mod webm_builder;
 
 #[cfg(test)]
 mod derive;
