@@ -202,6 +202,7 @@ pub use self::{
   manifest::Manifest,
   map_encoder::MapEncoder,
   metadata::Metadata,
+  mp4_builder::Mp4Builder,
   page::Page,
   private_key::PrivateKey,
   public_key::PublicKey,
@@ -211,7 +212,6 @@ pub use self::{
   statement::Statement,
   text::Text,
   totals::Totals,
-  video_builder::VideoBuilder,
 };
 
 #[cfg(test)]
@@ -220,6 +220,7 @@ use {
   tempfile::TempDir,
   test::{assert_cbor, assert_cbor_eq, assert_encoding, flac, tempdir},
   unindent::unindent,
+  webm_builder::WebmBuilder,
 };
 
 #[cfg(test)]
@@ -309,6 +310,7 @@ mod map_encoder;
 mod media;
 mod metadata;
 mod mode;
+mod mp4_builder;
 mod options;
 mod or;
 mod ordinal;
@@ -352,7 +354,6 @@ mod utf8_path_ext;
 mod validate;
 mod version;
 mod video;
-mod video_builder;
 mod video_error;
 mod video_format;
 mod video_type;
@@ -361,6 +362,8 @@ mod video_type;
 mod derive;
 #[cfg(test)]
 mod test;
+#[cfg(test)]
+mod webm_builder;
 
 const BECH32_VERSION: Fe32 = Fe32::A;
 const KIB: usize = 1 << 10;

@@ -1,8 +1,8 @@
-pub struct VideoBuilder {
+pub struct Mp4Builder {
   traks: Vec<Vec<u8>>,
 }
 
-impl VideoBuilder {
+impl Mp4Builder {
   fn atom(fourcc: [u8; 4], payload: &[u8]) -> Vec<u8> {
     let mut atom = Vec::new();
     atom.extend_from_slice(&u32::try_from(payload.len() + 8).unwrap().to_be_bytes());

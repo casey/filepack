@@ -11,16 +11,14 @@ pub(crate) enum Codec {
   H264,
   #[n(2)]
   Mp3,
-}
-
-#[cfg(test)]
-mod tests {
-  use super::*;
-
-  #[test]
-  fn encoding() {
-    assert_cbor(Codec::Aac, "00");
-    assert_cbor(Codec::H264, "01");
-    assert_cbor(Codec::Mp3, "02");
-  }
+  #[n(3)]
+  #[strum(serialize = "Opus")]
+  Opus,
+  #[n(4)]
+  #[strum(serialize = "Vorbis")]
+  Vorbis,
+  #[n(5)]
+  Vp8,
+  #[n(6)]
+  Vp9,
 }

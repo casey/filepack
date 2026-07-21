@@ -9,6 +9,12 @@ pub enum VideoError {
   AudioTrackMultiple,
   #[snafu(display("failed to decode MP4"))]
   DecodeMp4 { source: mp4parse::Error },
+  #[snafu(display("failed to decode WebM"))]
+  DecodeWebm {
+    source: matroska_demuxer::DemuxError,
+  },
+  #[snafu(display("expected DocType `webm` but found `{doc_type}`"))]
+  DocType { doc_type: String },
   #[snafu(display("track {track} has missing sample description"))]
   SampleDescriptionMissing { track: usize },
   #[snafu(display("track {track} has multiple sample descriptions"))]
@@ -29,6 +35,8 @@ pub enum VideoError {
   TrackUnsupported { track: usize, ty: String },
   #[snafu(display("track {track} has unsupported video codec `{codec}`"))]
   VideoCodecUnsupported { codec: String, track: usize },
+  #[snafu(display("track {track} has missing video settings"))]
+  VideoSettingsMissing { track: usize },
   #[snafu(display("no video track"))]
   VideoTrackMissing,
   #[snafu(display("multiple video tracks"))]

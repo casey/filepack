@@ -1101,6 +1101,27 @@ fn media_video_item_response() {
 }
 
 #[test]
+fn media_webm_item_response() {
+  let server = TestServer::new();
+
+  let fingerprint = PackageBuilder::new()
+    .metadata(&Metadata {
+      media: Some(Media::Video {
+        videos: vec!["foo.webm".parse().unwrap()],
+      }),
+      ..default()
+    })
+    .file("foo.webm", b"foo")
+    .upload(&server);
+
+  server
+    .get(format!("/media/video/{fingerprint}/item/1"))
+    .assert_header(header::CONTENT_TYPE, "video/webm")
+    .assert_body(b"foo")
+    .send();
+}
+
+#[test]
 fn missing_rejects_unsorted_hashes() {
   let mut hashes = BTreeSet::from([Hash::bytes(b"foo"), Hash::bytes(b"bar")])
     .into_iter()
