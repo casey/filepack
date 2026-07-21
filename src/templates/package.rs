@@ -306,13 +306,20 @@ mod tests {
 
   #[test]
   fn image() {
+    let mut foo = "foo.png".parse::<Image>().unwrap();
+    let bar = "bar.jpg".parse::<Image>().unwrap();
+    let mut baz = "baz.png".parse::<Image>().unwrap();
+
+    foo.dimensions = Dimensions {
+      height: 1,
+      width: 2,
+    };
+
+    baz.dimensions = foo.dimensions;
+
     let metadata = Metadata {
       media: Some(Media::Image {
-        images: vec![
-          "foo.png".parse().unwrap(),
-          "bar.jpg".parse().unwrap(),
-          "baz.png".parse().unwrap(),
-        ],
+        images: vec![foo, bar, baz],
       }),
       ..default()
     };
@@ -344,8 +351,11 @@ mod tests {
             <dt>images</dt>
             <dd>3</dd>
             <dt>format</dt>
-            <dd>PNG · 0×0</dd>
-            <dd>JPEG · 0×0</dd>
+            <dd>PNG</dd>
+            <dd>JPEG</dd>
+            <dt>resolution</dt>
+            <dd>0×0</dd>
+            <dd>2×1</dd>
           </dl>
           <ul class=thumbnails>
             <li>
@@ -364,6 +374,72 @@ mod tests {
               </a>
             </li>
           </ul>
+        ",
+        fingerprint = test::FINGERPRINT,
+        hash = test::HASH,
+      )),
+    );
+  }
+
+  #[test]
+  fn video() {
+    let mut foo = "foo.mp4".parse::<Video>().unwrap();
+
+    foo.tracks = vec![
+      Track {
+        codec: Codec::H264,
+        info: TrackInfo::Video {
+          dimensions: Dimensions {
+            height: 1,
+            width: 2,
+          },
+        },
+      },
+      Track {
+        codec: Codec::Aac,
+        info: TrackInfo::Audio,
+      },
+    ];
+
+    let metadata = Metadata {
+      media: Some(Media::Video { videos: vec![foo] }),
+      ..default()
+    };
+
+    assert_eq!(
+      PackageHtml {
+        fingerprint: test::FINGERPRINT.parse().unwrap(),
+        metadata: Some(metadata),
+        totals: Totals {
+          directories: 0,
+          directory_size: 0,
+          file_size: 3,
+          files: 1,
+        },
+      }
+      .to_string(),
+      unindent(&format!(
+        "
+          <h1 class=code>{fingerprint}</h1>
+          <dl>
+            <dt>fingerprint</dt>
+            <dd class=code>{fingerprint}</dd>
+            <dt>size</dt>
+            <dd>3 B</dd>
+            <dt>files</dt>
+            <dd><a href=/directory/{hash}>1 files</a></dd>
+            <dt>media</dt>
+            <dd>video</dd>
+            <dt>videos</dt>
+            <dd>1</dd>
+            <dt>format</dt>
+            <dd>MP4 · H.264 · AAC</dd>
+            <dt>resolution</dt>
+            <dd>2×1</dd>
+          </dl>
+          <ol>
+            <li><a href=/package/{fingerprint}/1>foo.mp4</a></li>
+          </ol>
         ",
         fingerprint = test::FINGERPRINT,
         hash = test::HASH,

@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct VideoFormat {
-  pub(crate) tracks: Vec<Track>,
+  pub(crate) codecs: Vec<Codec>,
   pub(crate) ty: VideoType,
 }
 
@@ -10,8 +10,8 @@ impl Display for VideoFormat {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     write!(f, "{}", self.ty)?;
 
-    for track in &self.tracks {
-      write!(f, " · {track}")?;
+    for codec in &self.codecs {
+      write!(f, " · {codec}")?;
     }
 
     Ok(())

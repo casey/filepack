@@ -72,21 +72,12 @@ impl Image {
     })
   }
 
-  fn format(&self) -> ImageFormat {
-    ImageFormat {
-      dimensions: self.dimensions,
-      ty: self.ty,
-    }
-  }
-
-  pub(crate) fn formats(images: &[Image]) -> Vec<ImageFormat> {
+  pub(crate) fn formats(images: &[Image]) -> Vec<ImageType> {
     let mut formats = Vec::new();
 
     for image in images {
-      let format = image.format();
-
-      if !formats.contains(&format) {
-        formats.push(format);
+      if !formats.contains(&image.ty) {
+        formats.push(image.ty);
       }
     }
 
@@ -97,6 +88,10 @@ impl Image {
     self.dimensions = self.decode(root)?;
 
     Ok(())
+  }
+
+  pub(crate) fn resolutions(images: &[Image]) -> Resolutions {
+    Resolutions::new(images.iter().map(|image| image.dimensions), false)
   }
 
   pub(crate) fn resource_type(&self) -> ResourceType {
@@ -192,42 +187,20 @@ mod tests {
     let mut foo = "foo.png".parse::<Image>().unwrap();
     let bar = "bar.jpg".parse::<Image>().unwrap();
     let mut baz = "baz.png".parse::<Image>().unwrap();
-    let mut bob = "bob.png".parse::<Image>().unwrap();
 
     foo.dimensions = Dimensions {
       height: 1,
       width: 2,
     };
 
-    baz.dimensions = foo.dimensions;
-
-    bob.dimensions = Dimensions {
+    baz.dimensions = Dimensions {
       height: 3,
       width: 4,
     };
 
     assert_eq!(
-      Image::formats(&[foo, bar, baz, bob]),
-      [
-        ImageFormat {
-          dimensions: Dimensions {
-            height: 1,
-            width: 2,
-          },
-          ty: ImageType::Png,
-        },
-        ImageFormat {
-          dimensions: Dimensions::default(),
-          ty: ImageType::Jpeg,
-        },
-        ImageFormat {
-          dimensions: Dimensions {
-            height: 3,
-            width: 4,
-          },
-          ty: ImageType::Png,
-        },
-      ],
+      Image::formats(&[foo, bar, baz]),
+      [ImageType::Png, ImageType::Jpeg],
     );
   }
 

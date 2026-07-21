@@ -68,6 +68,10 @@
 %%           for format in Image::formats(images) {
   <dd>{{ format }}</dd>
 %%           }
+  <dt>resolution</dt>
+%%           for resolution in Image::resolutions(images).entries() {
+  <dd>{{ resolution }}</dd>
+%%           }
 %%         }
 %%       }
 %%       Media::Video { videos } => {
@@ -77,6 +81,10 @@
   <dt>format</dt>
 %%           for format in Video::formats(videos) {
   <dd>{{ format }}</dd>
+%%           }
+  <dt>resolution</dt>
+%%           for resolution in Video::resolutions(videos).entries() {
+  <dd>{{ resolution }}</dd>
 %%           }
 %%         }
 %%       }

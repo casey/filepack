@@ -47,9 +47,16 @@ impl Video {
     Ok(())
   }
 
+  pub(crate) fn dimensions(&self) -> Option<Dimensions> {
+    self.tracks.iter().find_map(|track| match track.info {
+      TrackInfo::Video { dimensions } => Some(dimensions),
+      TrackInfo::Audio => None,
+    })
+  }
+
   fn format(&self) -> VideoFormat {
     VideoFormat {
-      tracks: self.tracks.clone(),
+      codecs: self.tracks.iter().map(|track| track.codec).collect(),
       ty: self.ty,
     }
   }
@@ -315,6 +322,10 @@ impl Video {
     Ok(())
   }
 
+  pub(crate) fn resolutions(videos: &[Video]) -> Resolutions {
+    Resolutions::new(videos.iter().filter_map(Video::dimensions), true)
+  }
+
   pub(crate) fn resource_type(&self) -> ResourceType {
     self.ty.resource_type()
   }
@@ -474,6 +485,37 @@ mod tests {
   }
 
   #[test]
+  fn dimensions() {
+    let mut foo = "foo.mp4".parse::<Video>().unwrap();
+
+    assert_eq!(foo.dimensions(), None);
+
+    foo.tracks = vec![
+      Track {
+        codec: Codec::Aac,
+        info: TrackInfo::Audio,
+      },
+      Track {
+        codec: Codec::H264,
+        info: TrackInfo::Video {
+          dimensions: Dimensions {
+            height: 1,
+            width: 2,
+          },
+        },
+      },
+    ];
+
+    assert_eq!(
+      foo.dimensions(),
+      Some(Dimensions {
+        height: 1,
+        width: 2,
+      }),
+    );
+  }
+
+  #[test]
   fn encoding() {
     assert_cbor(
       "foo.mp4".parse::<Video>().unwrap(),
@@ -524,7 +566,14 @@ mod tests {
     let mut bar = foo.clone();
     bar.tracks[1].codec = Codec::Mp3;
 
-    let baz = foo.clone();
+    let mut baz = foo.clone();
+
+    baz.tracks[0].info = TrackInfo::Video {
+      dimensions: Dimensions {
+        height: 1,
+        width: 2,
+      },
+    };
 
     let mut bob = "bob.webm".parse::<Video>().unwrap();
 
@@ -547,9 +596,9 @@ mod tests {
         .map(ToString::to_string)
         .collect::<Vec<String>>(),
       [
-        "MP4 · H.264 0×0 · AAC",
-        "MP4 · H.264 0×0 · MP3",
-        "WebM · VP9 0×0 · Opus",
+        "MP4 · H.264 · AAC",
+        "MP4 · H.264 · MP3",
+        "WebM · VP9 · Opus"
       ],
     );
   }
