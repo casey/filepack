@@ -74,7 +74,13 @@ impl Video {
     match self.ty {
       VideoType::Mp4 => {
         let file = filesystem::open(&path)?;
-        Self::info_mp4(file).context(error::Video { path })
+
+        let size = file
+          .metadata()
+          .context(error::FilesystemIo { path: &path })?
+          .len();
+
+        Self::info_mp4(file, size).context(error::Video { path })
       }
       VideoType::Webm => {
         let file = filesystem::open(&path)?;
@@ -83,7 +89,7 @@ impl Video {
     }
   }
 
-  fn info_mp4<T: Read + Seek>(reader: T) -> Result<Vec<Track>, VideoError> {
+  fn info_mp4<T: Read + Seek>(reader: T, size: u64) -> Result<Vec<Track>, VideoError> {
     use re_mp4::{Mp4aBox, StsdBoxContent};
 
     fn mp4a_codec(mp4a: &Mp4aBox) -> Option<Codec> {
@@ -116,16 +122,7 @@ impl Video {
       }
     }
 
-    let reader = &mut BufReader::new(reader);
-
-    let mp4 = reader
-      .seek(SeekFrom::End(0))
-      .map_err(re_mp4::Error::from)
-      .and_then(|size| {
-        reader.rewind()?;
-        re_mp4::Mp4::read(reader, size)
-      })
-      .context(video_error::DecodeMp4)?;
+    let mp4 = re_mp4::Mp4::read(BufReader::new(reader), size).context(video_error::DecodeMp4)?;
 
     let mut video_codec = None;
     let mut dimensions = None;
@@ -602,7 +599,9 @@ mod tests {
   fn mp4_info() {
     #[track_caller]
     fn case(builder: Mp4Builder) -> Result<Vec<Track>, VideoError> {
-      Video::info_mp4(io::Cursor::new(builder.build()))
+      let bytes = builder.build();
+      let size = bytes.len().try_into().unwrap();
+      Video::info_mp4(io::Cursor::new(bytes), size)
     }
 
     #[track_caller]
@@ -679,7 +678,7 @@ mod tests {
     );
 
     assert_eq!(
-      Video::info_mp4(io::Cursor::new(b"foo"))
+      Video::info_mp4(io::Cursor::new(b"foo"), 3)
         .unwrap_err()
         .to_string(),
       "failed to decode MP4",
