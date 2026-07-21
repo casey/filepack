@@ -13,7 +13,11 @@ impl Display for Track {
     write!(f, "{}", self.codec)?;
 
     if let TrackInfo::Video { dimensions } = self.info {
-      write!(f, " {dimensions}")?;
+      if let Some(shorthand) = dimensions.shorthand() {
+        write!(f, " {shorthand}")?;
+      } else {
+        write!(f, " {dimensions}")?;
+      }
     }
 
     Ok(())
@@ -50,6 +54,19 @@ mod tests {
         },
       },
       "H264 2×1",
+    );
+
+    case(
+      Track {
+        codec: Codec::H264,
+        info: TrackInfo::Video {
+          dimensions: Dimensions {
+            height: 1080,
+            width: 1920,
+          },
+        },
+      },
+      "H264 1080p",
     );
   }
 
