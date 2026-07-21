@@ -161,7 +161,7 @@ impl Input {
     let mut generics = self.generics(parse_quote!(Decode));
 
     if validate {
-      let (_, ty_generics, _) = self.generics.split_for_impl();
+      let (_impl_generics, ty_generics, _where_clause) = self.generics.split_for_impl();
 
       generics
         .make_where_clause()
