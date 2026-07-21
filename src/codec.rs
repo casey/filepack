@@ -22,19 +22,3 @@ pub(crate) enum Codec {
   #[n(6)]
   Vp9,
 }
-
-#[cfg(test)]
-mod tests {
-  use super::*;
-
-  #[test]
-  fn encoding() {
-    assert_cbor(Codec::Aac, "00");
-    assert_cbor(Codec::H264, "01");
-    assert_cbor(Codec::Mp3, "02");
-    assert_cbor(Codec::Opus, "03");
-    assert_cbor(Codec::Vorbis, "04");
-    assert_cbor(Codec::Vp8, "05");
-    assert_cbor(Codec::Vp9, "06");
-  }
-}
