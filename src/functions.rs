@@ -61,8 +61,9 @@ pub(crate) fn now() -> Result<u64> {
 }
 
 pub(crate) fn parse_number<T: FromStr<Err = ParseIntError>>(s: &str) -> Result<T, NumberError> {
-  if !re::NUMBER.is_match(s) {
-    return Err(number_error::Invalid { number: s }.build());
+  ensure! {
+    re::NUMBER.is_match(s),
+    number_error::Invalid { number: s },
   }
 
   Ok(s.parse()?)
