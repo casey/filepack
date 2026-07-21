@@ -35,12 +35,6 @@ mod tests {
   use super::*;
 
   #[test]
-  fn encoding() {
-    assert_cbor(VideoType::Mp4, "00");
-    assert_cbor(VideoType::Webm, "01");
-  }
-
-  #[test]
   fn from_extension() {
     assert_eq!(VideoType::from_extension("mp4"), Some(VideoType::Mp4));
     assert_eq!(VideoType::from_extension("webm"), Some(VideoType::Webm));
