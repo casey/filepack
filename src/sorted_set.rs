@@ -1,6 +1,7 @@
 use super::*;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Decode, Encode, PartialEq)]
+#[cbor(transparent, validate)]
 pub struct SortedSet<T>(Vec<T>);
 
 impl<T> SortedSet<T> {
@@ -23,21 +24,13 @@ impl<T> Deref for SortedSet<T> {
   }
 }
 
-impl<T: Encode> Encode for SortedSet<T> {
-  fn encode(&self, encoder: &mut Encoder) {
-    self.0.encode(encoder);
-  }
-}
-
-impl<T: Decode + PartialOrd> Decode for SortedSet<T> {
-  fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
-    let elements = Vec::<T>::decode(decoder)?;
-
-    for window in elements.windows(2) {
+impl<T: PartialOrd> Validate for SortedSet<T> {
+  fn validate(&self) -> Result<(), DecodeError> {
+    for window in self.0.windows(2) {
       ensure!(window[0] < window[1], decode_error::Unsorted);
     }
 
-    Ok(Self(elements))
+    Ok(())
   }
 }
 

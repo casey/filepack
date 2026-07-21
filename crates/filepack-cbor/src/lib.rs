@@ -8,7 +8,8 @@ use {
   quote::quote,
   std::collections::HashSet,
   syn::{
-    Attribute, DeriveInput, Error, Ident, Index, LitInt, Member, Path, Result, Type, TypePath,
+    Attribute, DeriveInput, Error, Generics, Ident, Index, LitInt, Member, Path, Result, Type,
+    TypeParamBound, TypePath, parse_quote,
   },
   usized::IntoU64,
 };
