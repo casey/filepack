@@ -64,7 +64,6 @@ use {
     hashing_writer::HashingWriter,
     head::Head,
     image::Image,
-    image_format::ImageFormat,
     image_type::ImageType,
     iso8601_duration::Iso8601Duration,
     item::Item,
@@ -90,6 +89,7 @@ use {
     public_key_error::PublicKeyError,
     reqwest_response_ext::ReqwestResponseExt,
     reqwest_result_ext::ReqwestResultExt,
+    resolutions::Resolutions,
     resource::Resource,
     resource_type::ResourceType,
     server::Server,
@@ -294,7 +294,6 @@ mod hash_error;
 mod hashing_writer;
 mod head;
 mod image;
-mod image_format;
 mod image_type;
 mod iso8601_duration;
 mod item;
@@ -332,6 +331,7 @@ mod re;
 mod relative_path;
 mod reqwest_response_ext;
 mod reqwest_result_ext;
+mod resolutions;
 mod resource;
 mod resource_type;
 mod server;

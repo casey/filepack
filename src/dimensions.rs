@@ -9,6 +9,10 @@ pub struct Dimensions {
 }
 
 impl Dimensions {
+  pub(crate) fn area(self) -> u128 {
+    u128::from(self.width) * u128::from(self.height)
+  }
+
   pub(crate) fn shorthand(self) -> Option<&'static str> {
     match (self.width, self.height) {
       (1280, 720) => Some("720p"),
@@ -30,6 +34,21 @@ impl Display for Dimensions {
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn area() {
+    #[track_caller]
+    fn case(width: u64, height: u64, expected: u128) {
+      assert_eq!(Dimensions { height, width }.area(), expected);
+    }
+
+    case(2, 3, 6);
+    case(
+      u64::MAX,
+      u64::MAX,
+      340_282_366_920_938_463_426_481_119_284_349_108_225,
+    );
+  }
 
   #[test]
   fn encoding() {
