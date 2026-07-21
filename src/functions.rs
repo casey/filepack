@@ -60,6 +60,15 @@ pub(crate) fn now() -> Result<u64> {
   )
 }
 
+pub(crate) fn parse_number<T: FromStr<Err = ParseIntError>>(s: &str) -> Result<T, NumberError> {
+  ensure! {
+    re::NUMBER.is_match(s),
+    number_error::Invalid { number: s },
+  }
+
+  Ok(s.parse()?)
+}
+
 pub(crate) fn parse_server_url(s: &str) -> Result<Url, String> {
   let url = s.parse::<Url>().map_err(|err| err.to_string())?;
 

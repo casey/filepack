@@ -236,15 +236,7 @@ impl Audio {
 
   fn number_tag(reader: &FlacReader<fs::File>, path: &Utf8Path, tag: &'static str) -> Result<u64> {
     let value = Self::tag(reader, path, tag)?;
-
-    ensure! {
-      re::NUMBER.is_match(value),
-      error::AudioTagInteger { path, tag },
-    }
-
-    value
-      .parse()
-      .context(error::AudioTagIntegerRange { path, tag })
+    parse_number(value).context(error::AudioTagInteger { path, tag })
   }
 
   pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result {
@@ -776,6 +768,7 @@ mod tests {
         44100,
       )),
       Error::AudioTagInteger {
+        source: NumberError::Invalid { .. },
         tag: "tracknumber",
         ..
       },
@@ -794,6 +787,7 @@ mod tests {
         44100,
       )),
       Error::AudioTagInteger {
+        source: NumberError::Invalid { .. },
         tag: "tracknumber",
         ..
       },
@@ -812,6 +806,7 @@ mod tests {
         44100,
       )),
       Error::AudioTagInteger {
+        source: NumberError::Invalid { .. },
         tag: "tracknumber",
         ..
       },
@@ -830,6 +825,7 @@ mod tests {
         44100,
       )),
       Error::AudioTagInteger {
+        source: NumberError::Invalid { .. },
         tag: "tracknumber",
         ..
       },
@@ -847,7 +843,8 @@ mod tests {
         ],
         44100,
       )),
-      Error::AudioTagIntegerRange {
+      Error::AudioTagInteger {
+        source: NumberError::Integer { .. },
         tag: "tracknumber",
         ..
       },
