@@ -19,9 +19,11 @@ impl Image {
   pub(crate) fn check_content(&self, root: &Utf8Path) -> Result<Dimensions> {
     let actual = self.decode(root)?;
 
-    self.check_dimensions(actual).context(error::Image {
-      path: root.join(self.as_path()),
-    })?;
+    self
+      .check_dimensions(actual)
+      .with_context(|_| error::Image {
+        path: root.join(self.as_path()),
+      })?;
 
     Ok(actual)
   }

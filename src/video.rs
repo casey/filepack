@@ -17,11 +17,11 @@ impl Video {
   }
 
   pub(crate) fn check_content(&self, root: &Utf8Path) -> Result {
-    let path = root.join(self.as_path());
-
     let tracks = self.info(root)?;
 
-    self.check_info(&tracks).context(error::Video { path })
+    self.check_info(&tracks).with_context(|_| error::Video {
+      path: root.join(self.as_path()),
+    })
   }
 
   fn check_info(&self, tracks: &[Track]) -> Result<(), VideoError> {
