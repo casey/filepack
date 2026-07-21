@@ -10,6 +10,7 @@ use super::*;
 pub(crate) struct Input {
   attrs: Vec<Attribute>,
   data: Data<Variant, Field>,
+  generics: Generics,
   ident: Ident,
 }
 
@@ -157,8 +158,21 @@ impl Input {
       }
     };
 
+    let mut generics = self.generics(syn::parse_quote!(Decode));
+
+    if validate {
+      let (_impl_generics, ty_generics, _where_clause) = self.generics.split_for_impl();
+
+      generics
+        .make_where_clause()
+        .predicates
+        .push(syn::parse_quote!(#name #ty_generics: Validate));
+    }
+
+    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+
     Ok(quote! {
-      impl Decode for #name {
+      impl #impl_generics Decode for #name #ty_generics #where_clause {
         fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
           #body
         }
@@ -245,13 +259,27 @@ impl Input {
 
     let member = self.transparent_member()?;
 
+    let generics = self.generics(syn::parse_quote!(Encode));
+
+    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+
     Ok(quote! {
-      impl Encode for #name {
+      impl #impl_generics Encode for #name #ty_generics #where_clause {
         fn encode(&self, encoder: &mut Encoder) {
           self.#member.encode(encoder);
         }
       }
     })
+  }
+
+  fn generics(&self, bound: TypeParamBound) -> Generics {
+    let mut generics = self.generics.clone();
+
+    for param in generics.type_params_mut() {
+      param.bounds.push(bound.clone());
+    }
+
+    generics
   }
 
   fn parse_fields(&self) -> Result<Vec<ParsedField>> {
