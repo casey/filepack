@@ -1,18 +1,20 @@
 use {
   self::{
-    field::Field, input::Input, parsed_field::ParsedField, parsed_variant::ParsedVariant,
-    receiver::Receiver, variant::Variant,
+    attributes::Attributes, field::Field, input::Input, parsed_field::ParsedField,
+    parsed_variant::ParsedVariant, receiver::Receiver, variant::Variant,
   },
   darling::{FromDeriveInput, FromField, FromVariant, ast::Data, ast::Fields},
   proc_macro::TokenStream,
   quote::quote,
   std::collections::HashSet,
   syn::{
-    Attribute, DeriveInput, Error, Ident, Index, LitInt, Member, Path, Result, Type, TypePath,
+    Attribute, DeriveInput, Error, Generics, Ident, Index, LitInt, Member, Path, Result, Type,
+    TypeParamBound, TypePath,
   },
   usized::IntoU64,
 };
 
+mod attributes;
 mod field;
 mod input;
 mod parsed_field;

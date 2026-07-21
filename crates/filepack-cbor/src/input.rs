@@ -10,12 +10,23 @@ use super::*;
 pub(crate) struct Input {
   attrs: Vec<Attribute>,
   data: Data<Variant, Field>,
+  generics: Generics,
   ident: Ident,
 }
 
 impl Input {
   pub(crate) fn decode(&self) -> Result<proc_macro2::TokenStream> {
-    let transparent = self.is_transparent()?;
+    let Attributes {
+      transparent,
+      validate,
+    } = Attributes::parse(&self.attrs)?;
+
+    if validate && !transparent {
+      return Err(Error::new_spanned(
+        &self.ident,
+        "#[cbor(validate)] requires #[cbor(transparent)]",
+      ));
+    }
 
     match self.data {
       Data::Enum(_) => {
@@ -30,7 +41,7 @@ impl Input {
       }
       Data::Struct(_) => {
         if transparent {
-          self.decode_transparent()
+          self.decode_transparent(validate)
         } else {
           self.decode_struct()
         }
@@ -125,7 +136,7 @@ impl Input {
     })
   }
 
-  pub(crate) fn decode_transparent(&self) -> Result<proc_macro2::TokenStream> {
+  pub(crate) fn decode_transparent(&self, validate: bool) -> Result<proc_macro2::TokenStream> {
     let name = &self.ident;
 
     let member = self.transparent_member()?;
@@ -135,17 +146,42 @@ impl Input {
       Member::Unnamed(_) => quote! { Self(Decode::decode(decoder)?) },
     };
 
+    let body = if validate {
+      quote! {
+        let value = #constructor;
+        Validate::validate(&value)?;
+        Ok(value)
+      }
+    } else {
+      quote! {
+        Ok(#constructor)
+      }
+    };
+
+    let mut generics = self.generics(syn::parse_quote!(Decode));
+
+    if validate {
+      let (_impl_generics, ty_generics, _where_clause) = self.generics.split_for_impl();
+
+      generics
+        .make_where_clause()
+        .predicates
+        .push(syn::parse_quote!(#name #ty_generics: Validate));
+    }
+
+    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+
     Ok(quote! {
-      impl Decode for #name {
+      impl #impl_generics Decode for #name #ty_generics #where_clause {
         fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
-          Ok(#constructor)
+          #body
         }
       }
     })
   }
 
   pub(crate) fn encode(&self) -> Result<proc_macro2::TokenStream> {
-    let transparent = self.is_transparent()?;
+    let Attributes { transparent, .. } = Attributes::parse(&self.attrs)?;
 
     match self.data {
       Data::Enum(_) => {
@@ -223,8 +259,12 @@ impl Input {
 
     let member = self.transparent_member()?;
 
+    let generics = self.generics(syn::parse_quote!(Encode));
+
+    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+
     Ok(quote! {
-      impl Encode for #name {
+      impl #impl_generics Encode for #name #ty_generics #where_clause {
         fn encode(&self, encoder: &mut Encoder) {
           self.#member.encode(encoder);
         }
@@ -232,28 +272,14 @@ impl Input {
     })
   }
 
-  fn is_transparent(&self) -> Result<bool> {
-    let mut transparent = false;
+  fn generics(&self, bound: TypeParamBound) -> Generics {
+    let mut generics = self.generics.clone();
 
-    for attribute in &self.attrs {
-      if !attribute.path().is_ident("cbor") {
-        continue;
-      }
-
-      attribute.parse_nested_meta(|meta| {
-        if meta.path.is_ident("transparent") {
-          if transparent {
-            return Err(meta.error("duplicate `transparent` attribute"));
-          }
-          transparent = true;
-          Ok(())
-        } else {
-          Err(meta.error("unknown cbor attribute"))
-        }
-      })?;
+    for param in generics.type_params_mut() {
+      param.bounds.push(bound.clone());
     }
 
-    Ok(transparent)
+    generics
   }
 
   fn parse_fields(&self) -> Result<Vec<ParsedField>> {

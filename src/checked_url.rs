@@ -1,6 +1,7 @@
 use super::*;
 
-#[derive(Clone, Debug, DeserializeFromStr, PartialEq, SerializeDisplay)]
+#[derive(Clone, Debug, Decode, DeserializeFromStr, Encode, PartialEq, SerializeDisplay)]
+#[cbor(transparent, validate)]
 pub(crate) struct CheckedUrl(String);
 
 impl CheckedUrl {
@@ -24,18 +25,10 @@ impl Display for CheckedUrl {
   }
 }
 
-impl Decode for CheckedUrl {
-  fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
-    decoder
-      .text()?
-      .parse::<CheckedUrl>()
-      .context(decode_error::Url)
-  }
-}
-
-impl Encode for CheckedUrl {
-  fn encode(&self, encoder: &mut Encoder) {
-    self.as_str().encode(encoder);
+impl Validate for CheckedUrl {
+  fn validate(&self) -> Result<(), DecodeError> {
+    self.as_str().parse::<Url>().context(decode_error::Url)?;
+    Ok(())
   }
 }
 
