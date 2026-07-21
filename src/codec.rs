@@ -7,6 +7,7 @@ pub(crate) enum Codec {
   #[n(0)]
   Aac,
   #[n(1)]
+  #[strum(serialize = "H.264")]
   H264,
   #[n(2)]
   Mp3,
