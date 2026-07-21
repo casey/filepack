@@ -290,15 +290,15 @@ impl Serve {
       .route("/files", get(route::files))
       .route("/install.sh", get(route::install_script))
       .route(
-        "/media/audio/{fingerprint}/track/{track}",
+        "/media/audio/{fingerprint}/item/{item}",
         get(route::media_audio_item),
       )
       .route(
-        "/media/image/{fingerprint}/image/{image}",
+        "/media/image/{fingerprint}/item/{item}",
         get(route::media_image_item),
       )
       .route(
-        "/media/video/{fingerprint}/video/{video}",
+        "/media/video/{fingerprint}/item/{item}",
         get(route::media_video_item),
       )
       .route("/missing", post(route::missing))

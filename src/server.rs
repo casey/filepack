@@ -77,7 +77,7 @@ impl Server {
   pub(crate) fn media_item(
     &self,
     fingerprint: Fingerprint,
-    track: usize,
+    item: usize,
     ty: MediaType,
   ) -> ServerResult<Resource> {
     let metadata = self.package_metadata(fingerprint)?;
@@ -96,11 +96,11 @@ impl Server {
     }
 
     let item = media
-      .item(track)
+      .item(item)
       .context(server_error::MediaItemDoesNotExist {
         count: media.items(),
         fingerprint,
-        index: track,
+        index: item,
         ty: media.discriminant(),
       })?;
 
