@@ -235,9 +235,16 @@ impl Audio {
   }
 
   fn number_tag(reader: &FlacReader<fs::File>, path: &Utf8Path, tag: &'static str) -> Result<u64> {
-    Self::tag(reader, path, tag)?
+    let value = Self::tag(reader, path, tag)?;
+
+    ensure! {
+      re::NUMBER.is_match(value),
+      error::AudioTagInteger { path, tag },
+    }
+
+    value
       .parse()
-      .context(error::AudioTagInteger { path, tag })
+      .context(error::AudioTagIntegerRange { path, tag })
   }
 
   pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result {
@@ -787,6 +794,60 @@ mod tests {
         44100,
       )),
       Error::AudioTagInteger {
+        tag: "tracknumber",
+        ..
+      },
+    );
+
+    assert_matches!(
+      err(&flac(
+        &[
+          "ALBUM=qux",
+          "ARTIST=baz",
+          "DISCNUMBER=1",
+          "DISCTOTAL=1",
+          "TITLE=bar",
+          "TRACKNUMBER=01",
+        ],
+        44100,
+      )),
+      Error::AudioTagInteger {
+        tag: "tracknumber",
+        ..
+      },
+    );
+
+    assert_matches!(
+      err(&flac(
+        &[
+          "ALBUM=qux",
+          "ARTIST=baz",
+          "DISCNUMBER=1",
+          "DISCTOTAL=1",
+          "TITLE=bar",
+          "TRACKNUMBER=+1",
+        ],
+        44100,
+      )),
+      Error::AudioTagInteger {
+        tag: "tracknumber",
+        ..
+      },
+    );
+
+    assert_matches!(
+      err(&flac(
+        &[
+          "ALBUM=qux",
+          "ARTIST=baz",
+          "DISCNUMBER=1",
+          "DISCTOTAL=1",
+          "TITLE=bar",
+          "TRACKNUMBER=18446744073709551616",
+        ],
+        44100,
+      )),
+      Error::AudioTagIntegerRange {
         tag: "tracknumber",
         ..
       },
