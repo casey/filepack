@@ -317,7 +317,7 @@ mod tests {
         ])
         .unwrap_err()
         .to_string(),
-      "video track 0 `H264 2×1` doesn't match metadata track `H264 0×0`",
+      "video track 0 `H.264 2×1` doesn't match metadata track `H.264 0×0`",
     );
 
     assert_eq!(
@@ -430,7 +430,7 @@ mod tests {
         .iter()
         .map(ToString::to_string)
         .collect::<Vec<String>>(),
-      ["MP4 · H264 0×0 · AAC", "MP4 · H264 0×0 · MP3"],
+      ["MP4 · H.264 0×0 · AAC", "MP4 · H.264 0×0 · MP3"],
     );
   }
 
