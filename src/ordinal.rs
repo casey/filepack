@@ -10,10 +10,10 @@ impl Display for Ordinal {
 }
 
 impl FromStr for Ordinal {
-  type Err = ParseIntError;
+  type Err = NumberError;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
-    Ok(Self(s.parse::<NonZeroUsize>()?.get() - 1))
+    Ok(Self(parse_number::<NonZeroUsize>(s)?.get() - 1))
   }
 }
 
@@ -51,7 +51,9 @@ mod tests {
       assert_eq!(s.parse::<Ordinal>().unwrap_err().to_string(), expected);
     }
 
+    case("+1", "invalid number `+1`");
     case("0", "number would be zero for non-zero type");
-    case("foo", "invalid digit found in string");
+    case("01", "invalid number `01`");
+    case("foo", "invalid number `foo`");
   }
 }

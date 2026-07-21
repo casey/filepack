@@ -57,7 +57,7 @@ use {
     file::File,
     format::Format,
     functions::{
-      client, current_dir, decode_path, default, format_size, is_lowercase_hex, now,
+      client, current_dir, decode_path, default, format_size, is_lowercase_hex, now, parse_number,
       parse_server_url, transfer_tempfile,
     },
     hash_error::HashError,
@@ -78,6 +78,7 @@ use {
     map_decoder::MapDecoder,
     media::{Media, MediaType},
     mode::Mode,
+    number_error::NumberError,
     options::Options,
     or::Or,
     ordinal::Ordinal,
@@ -313,6 +314,7 @@ mod media;
 mod metadata;
 mod mode;
 mod mp4_builder;
+mod number_error;
 mod options;
 mod or;
 mod ordinal;
