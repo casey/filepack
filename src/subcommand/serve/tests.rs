@@ -699,7 +699,7 @@ fn malformed_fingerprint_returns_error() {
 }
 
 #[test]
-fn media_audio_track_file_missing() {
+fn media_audio_item_file_missing() {
   let server = TestServer::new();
 
   let metadata = Metadata {
@@ -733,7 +733,7 @@ fn media_audio_track_file_missing() {
 }
 
 #[test]
-fn media_audio_track_out_of_range() {
+fn media_audio_item_out_of_range() {
   let server = TestServer::new();
 
   let fingerprint = PackageBuilder::new()
@@ -765,7 +765,7 @@ fn media_audio_track_out_of_range() {
 }
 
 #[test]
-fn media_audio_track_package_not_found() {
+fn media_audio_item_package_not_found() {
   let server = TestServer::new();
 
   let fingerprint = Fingerprint(Hash::bytes(b"foo"));
@@ -778,7 +778,7 @@ fn media_audio_track_package_not_found() {
 }
 
 #[test]
-fn media_audio_track_package_without_media() {
+fn media_audio_item_package_without_media() {
   let server = TestServer::new();
 
   let fingerprint = PackageBuilder::new()
@@ -798,7 +798,7 @@ fn media_audio_track_package_without_media() {
 }
 
 #[test]
-fn media_audio_track_package_without_metadata() {
+fn media_audio_item_package_without_metadata() {
   let server = TestServer::new();
 
   let (cbor, hash) = Directory::new().cbor();
@@ -816,7 +816,7 @@ fn media_audio_track_package_without_metadata() {
 }
 
 #[test]
-fn media_audio_track_ranges() {
+fn media_audio_item_ranges() {
   #[track_caller]
   fn case(
     server: &TestServer,
@@ -896,7 +896,7 @@ fn media_audio_track_ranges() {
 }
 
 #[test]
-fn media_audio_track_response() {
+fn media_audio_item_response() {
   let server = TestServer::new();
 
   let foo: &[u8] = b"foo";
@@ -933,7 +933,7 @@ fn media_audio_track_response() {
 }
 
 #[test]
-fn media_image_image_out_of_range() {
+fn media_image_item_out_of_range() {
   let server = TestServer::new();
 
   let foo: &[u8] = b"foo";
@@ -958,7 +958,7 @@ fn media_image_image_out_of_range() {
 }
 
 #[test]
-fn media_image_image_response() {
+fn media_image_item_response() {
   let server = TestServer::new();
 
   let foo: &[u8] = b"foo";
@@ -1044,7 +1044,7 @@ fn media_type_mismatch() {
 }
 
 #[test]
-fn media_video_video_out_of_range() {
+fn media_video_item_out_of_range() {
   let server = TestServer::new();
 
   let fingerprint = PackageBuilder::new()
@@ -1067,7 +1067,7 @@ fn media_video_video_out_of_range() {
 }
 
 #[test]
-fn media_video_video_response() {
+fn media_video_item_response() {
   let server = TestServer::new();
 
   let fingerprint = PackageBuilder::new()

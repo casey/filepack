@@ -93,28 +93,28 @@ pub(crate) async fn install_script() -> ServerResult<StaticAsset> {
   StaticAsset::get("install.sh")
 }
 
-pub(crate) async fn media_audio_track(
+pub(crate) async fn media_audio_item(
   server: ServerExtension,
   Path((fingerprint, Ordinal(track))): Path<(Fingerprint, Ordinal)>,
   range: Option<TypedHeader<headers::Range>>,
 ) -> ServerResult<Resource> {
-  block_in_place(|| Ok(server.media_audio_track(fingerprint, track)?.range(range)))
+  block_in_place(|| Ok(server.media_audio_item(fingerprint, track)?.range(range)))
 }
 
-pub(crate) async fn media_image_image(
+pub(crate) async fn media_image_item(
   server: ServerExtension,
   Path((fingerprint, Ordinal(image))): Path<(Fingerprint, Ordinal)>,
   range: Option<TypedHeader<headers::Range>>,
 ) -> ServerResult<Resource> {
-  block_in_place(|| Ok(server.media_image_image(fingerprint, image)?.range(range)))
+  block_in_place(|| Ok(server.media_image_item(fingerprint, image)?.range(range)))
 }
 
-pub(crate) async fn media_video_video(
+pub(crate) async fn media_video_item(
   server: ServerExtension,
   Path((fingerprint, Ordinal(video))): Path<(Fingerprint, Ordinal)>,
   range: Option<TypedHeader<headers::Range>>,
 ) -> ServerResult<Resource> {
-  block_in_place(|| Ok(server.media_video_video(fingerprint, video)?.range(range)))
+  block_in_place(|| Ok(server.media_video_item(fingerprint, video)?.range(range)))
 }
 
 pub(crate) async fn missing(

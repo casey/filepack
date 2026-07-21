@@ -74,7 +74,7 @@ impl Server {
     Ok(files)
   }
 
-  pub(crate) fn media_audio_track(
+  pub(crate) fn media_audio_item(
     &self,
     fingerprint: Fingerprint,
     track: usize,
@@ -112,7 +112,7 @@ impl Server {
     Ok(self.open_file(hash)?.ty(audio.resource_type()))
   }
 
-  pub(crate) fn media_image_image(
+  pub(crate) fn media_image_item(
     &self,
     fingerprint: Fingerprint,
     image: usize,
@@ -150,7 +150,7 @@ impl Server {
     Ok(self.open_file(hash)?.ty(image.resource_type()))
   }
 
-  pub(crate) fn media_video_video(
+  pub(crate) fn media_video_item(
     &self,
     fingerprint: Fingerprint,
     video: usize,
