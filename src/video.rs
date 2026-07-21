@@ -131,16 +131,15 @@ impl Video {
 
     let mp4 = Mp4::read(BufReader::new(reader), size).context(video_error::DecodeMp4)?;
 
-    let mut video_codec = None;
-    let mut dimensions = None;
-    let mut audio_codec = None;
+    let mut video_track = None;
+    let mut audio_track = None;
 
     for (index, trak) in mp4.moov.traks.iter().enumerate() {
       let contents = &trak.mdia.minf.stbl.stsd.contents;
 
       match &trak.mdia.hdlr.handler_type.value[..] {
         b"soun" => {
-          ensure!(audio_codec.is_none(), video_error::AudioTrackMultiple);
+          ensure!(audio_track.is_none(), video_error::AudioTrackMultiple);
 
           let codec = if let StsdBoxContent::Mp4a(mp4a) = contents {
             mp4a_codec(mp4a)
@@ -158,10 +157,13 @@ impl Video {
             );
           };
 
-          audio_codec = Some(codec);
+          audio_track = Some(Track {
+            codec,
+            info: TrackInfo::Audio,
+          });
         }
         b"vide" => {
-          ensure!(video_codec.is_none(), video_error::VideoTrackMultiple);
+          ensure!(video_track.is_none(), video_error::VideoTrackMultiple);
 
           let StsdBoxContent::Avc1(avc1) = contents else {
             return Err(
@@ -173,11 +175,14 @@ impl Video {
             );
           };
 
-          video_codec = Some(Codec::H264);
-
-          dimensions = Some(Dimensions {
-            height: avc1.height.into(),
-            width: avc1.width.into(),
+          video_track = Some(Track {
+            codec: Codec::H264,
+            info: TrackInfo::Video {
+              dimensions: Dimensions {
+                height: avc1.height.into(),
+                width: avc1.width.into(),
+              },
+            },
           });
         }
         ty => {
@@ -197,19 +202,10 @@ impl Video {
       }
     }
 
-    let video_codec = video_codec.context(video_error::VideoTrackMissing)?;
-    let dimensions = dimensions.unwrap();
+    let mut tracks = vec![video_track.context(video_error::VideoTrackMissing)?];
 
-    let mut tracks = vec![Track {
-      codec: video_codec,
-      info: TrackInfo::Video { dimensions },
-    }];
-
-    if let Some(audio_codec) = audio_codec {
-      tracks.push(Track {
-        codec: audio_codec,
-        info: TrackInfo::Audio,
-      });
+    if let Some(track) = audio_track {
+      tracks.push(track);
     }
 
     Ok(tracks)
