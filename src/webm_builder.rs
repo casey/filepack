@@ -1,15 +1,15 @@
-pub struct WebmBuilder {
+pub(crate) struct WebmBuilder {
   doc_type: String,
   tracks: Vec<Vec<u8>>,
 }
 
 impl WebmBuilder {
   #[must_use]
-  pub fn audio_track(self, codec_id: &str) -> Self {
+  pub(crate) fn audio_track(self, codec_id: &str) -> Self {
     self.track(2, codec_id, &[])
   }
 
-  pub fn build(self) -> Vec<u8> {
+  pub(crate) fn build(self) -> Vec<u8> {
     let header = [
       Self::string(&[0x42, 0x82], &self.doc_type),
       Self::unsigned(&[0x42, 0x87], 4),
@@ -38,7 +38,7 @@ impl WebmBuilder {
   }
 
   #[must_use]
-  pub fn doc_type(mut self, doc_type: &str) -> Self {
+  pub(crate) fn doc_type(mut self, doc_type: &str) -> Self {
     self.doc_type = doc_type.into();
     self
   }
@@ -51,7 +51,7 @@ impl WebmBuilder {
     element
   }
 
-  pub fn new() -> Self {
+  pub(crate) fn new() -> Self {
     Self {
       doc_type: "webm".into(),
       tracks: Vec::new(),
@@ -63,7 +63,7 @@ impl WebmBuilder {
   }
 
   #[must_use]
-  pub fn track(mut self, ty: u64, codec_id: &str, settings: &[u8]) -> Self {
+  pub(crate) fn track(mut self, ty: u64, codec_id: &str, settings: &[u8]) -> Self {
     let number = u64::try_from(self.tracks.len() + 1).unwrap();
 
     let entry = [
@@ -84,7 +84,7 @@ impl WebmBuilder {
     Self::element(id, &value.to_be_bytes())
   }
 
-  pub fn video_settings(width: u64, height: u64) -> Vec<u8> {
+  pub(crate) fn video_settings(width: u64, height: u64) -> Vec<u8> {
     Self::element(
       &[0xE0],
       &[
@@ -96,7 +96,7 @@ impl WebmBuilder {
   }
 
   #[must_use]
-  pub fn video_track(self, width: u64, height: u64) -> Self {
+  pub(crate) fn video_track(self, width: u64, height: u64) -> Self {
     let settings = Self::video_settings(width, height);
     self.track(1, "V_VP9", &settings)
   }

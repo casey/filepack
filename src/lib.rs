@@ -212,7 +212,6 @@ pub use self::{
   statement::Statement,
   text::Text,
   totals::Totals,
-  webm_builder::WebmBuilder,
 };
 
 #[cfg(test)]
@@ -221,6 +220,7 @@ use {
   tempfile::TempDir,
   test::{assert_cbor, assert_cbor_eq, assert_encoding, flac, tempdir},
   unindent::unindent,
+  webm_builder::WebmBuilder,
 };
 
 #[cfg(test)]
@@ -357,12 +357,13 @@ mod video;
 mod video_error;
 mod video_format;
 mod video_type;
-mod webm_builder;
 
 #[cfg(test)]
 mod derive;
 #[cfg(test)]
 mod test;
+#[cfg(test)]
+mod webm_builder;
 
 const BECH32_VERSION: Fe32 = Fe32::A;
 const KIB: usize = 1 << 10;
