@@ -215,7 +215,7 @@ impl Video {
 
     ensure! {
       doc_type == "webm",
-      video_error::WebmDocType { doc_type },
+      video_error::DocType { doc_type },
     }
 
     let mut video_codec = None;

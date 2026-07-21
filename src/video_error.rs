@@ -13,6 +13,8 @@ pub enum VideoError {
   DecodeWebm {
     source: matroska_demuxer::DemuxError,
   },
+  #[snafu(display("expected DocType `webm` but found `{doc_type}`"))]
+  DocType { doc_type: String },
   #[snafu(display("track {track} has missing sample description"))]
   SampleDescriptionMissing { track: usize },
   #[snafu(display("track {track} has multiple sample descriptions"))]
@@ -39,6 +41,4 @@ pub enum VideoError {
   VideoTrackMissing,
   #[snafu(display("multiple video tracks"))]
   VideoTrackMultiple,
-  #[snafu(display("expected DocType `webm` but found `{doc_type}`"))]
-  WebmDocType { doc_type: String },
 }
