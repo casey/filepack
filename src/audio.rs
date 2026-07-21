@@ -235,7 +235,8 @@ impl Audio {
   }
 
   fn number_tag(reader: &FlacReader<fs::File>, path: &Utf8Path, tag: &'static str) -> Result<u64> {
-    parse_number(Self::tag(reader, path, tag)?).context(error::AudioTagInteger { path, tag })
+    let value = Self::tag(reader, path, tag)?;
+    parse_number(value).context(error::AudioTagInteger { path, tag })
   }
 
   pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result {
