@@ -72,12 +72,21 @@ impl Image {
     })
   }
 
-  pub(crate) fn formats(images: &[Image]) -> Vec<ImageType> {
+  fn format(&self) -> ImageFormat {
+    ImageFormat {
+      dimensions: self.dimensions,
+      ty: self.ty,
+    }
+  }
+
+  pub(crate) fn formats(images: &[Image]) -> Vec<ImageFormat> {
     let mut formats = Vec::new();
 
     for image in images {
-      if !formats.contains(&image.ty) {
-        formats.push(image.ty);
+      let format = image.format();
+
+      if !formats.contains(&format) {
+        formats.push(format);
       }
     }
 
@@ -127,9 +136,9 @@ impl Item for Image {
 
 #[cfg(test)]
 mod tests {
-  use {super::*, ::image::ImageFormat};
+  use super::*;
 
-  fn bytes(width: u32, height: u32, image_format: ImageFormat) -> Vec<u8> {
+  fn bytes(width: u32, height: u32, image_format: ::image::ImageFormat) -> Vec<u8> {
     let mut buffer = io::Cursor::new(Vec::new());
     ::image::DynamicImage::new_rgb8(width, height)
       .write_to(&mut buffer, image_format)
@@ -141,7 +150,7 @@ mod tests {
   fn check_content_rejects_dimensions_mismatch() {
     let (_tempdir, root) = tempdir();
 
-    std::fs::write(root.join("foo.png"), bytes(1, 1, ImageFormat::Png)).unwrap();
+    std::fs::write(root.join("foo.png"), bytes(1, 1, ::image::ImageFormat::Png)).unwrap();
 
     let image = Image {
       dimensions: Dimensions {
@@ -180,13 +189,45 @@ mod tests {
 
   #[test]
   fn formats() {
-    let foo = "foo.png".parse::<Image>().unwrap();
+    let mut foo = "foo.png".parse::<Image>().unwrap();
     let bar = "bar.jpg".parse::<Image>().unwrap();
-    let baz = "baz.png".parse::<Image>().unwrap();
+    let mut baz = "baz.png".parse::<Image>().unwrap();
+    let mut bob = "bob.png".parse::<Image>().unwrap();
+
+    foo.dimensions = Dimensions {
+      height: 1,
+      width: 2,
+    };
+
+    baz.dimensions = foo.dimensions;
+
+    bob.dimensions = Dimensions {
+      height: 3,
+      width: 4,
+    };
 
     assert_eq!(
-      Image::formats(&[foo, bar, baz]),
-      [ImageType::Png, ImageType::Jpeg],
+      Image::formats(&[foo, bar, baz, bob]),
+      [
+        ImageFormat {
+          dimensions: Dimensions {
+            height: 1,
+            width: 2,
+          },
+          ty: ImageType::Png,
+        },
+        ImageFormat {
+          dimensions: Dimensions::default(),
+          ty: ImageType::Jpeg,
+        },
+        ImageFormat {
+          dimensions: Dimensions {
+            height: 3,
+            width: 4,
+          },
+          ty: ImageType::Png,
+        },
+      ],
     );
   }
 
@@ -241,7 +282,7 @@ mod tests {
     }
 
     assert_eq!(
-      case("foo.png", &bytes(2, 1, ImageFormat::Png))
+      case("foo.png", &bytes(2, 1, ::image::ImageFormat::Png))
         .unwrap()
         .dimensions,
       Dimensions {
@@ -251,7 +292,7 @@ mod tests {
     );
 
     assert_eq!(
-      case("foo.jpg", &bytes(1, 2, ImageFormat::Jpeg))
+      case("foo.jpg", &bytes(1, 2, ::image::ImageFormat::Jpeg))
         .unwrap()
         .dimensions,
       Dimensions {
