@@ -12,10 +12,10 @@ impl Resolutions {
     if self.shorthand
       && let Some(shorthand) = dimensions.shorthand()
     {
-      return shorthand.into();
+      shorthand.into()
+    } else {
+      dimensions.to_string()
     }
-
-    dimensions.to_string()
   }
 
   pub(crate) fn new(
