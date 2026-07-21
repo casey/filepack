@@ -1,6 +1,9 @@
 use super::*;
 
-#[derive(Clone, Debug, DeserializeFromStr, Eq, Ord, PartialEq, PartialOrd, SerializeDisplay)]
+#[derive(
+  Clone, Debug, Decode, DeserializeFromStr, Encode, Eq, Ord, PartialEq, PartialOrd, SerializeDisplay,
+)]
+#[cbor(transparent, validate)]
 pub struct ComponentBuf(String);
 
 impl ComponentBuf {
@@ -37,12 +40,6 @@ impl Borrow<str> for ComponentBuf {
   }
 }
 
-impl Decode for ComponentBuf {
-  fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
-    decoder.text()?.parse().context(decode_error::Component)
-  }
-}
-
 impl Deref for ComponentBuf {
   type Target = Component;
 
@@ -54,12 +51,6 @@ impl Deref for ComponentBuf {
 impl Display for ComponentBuf {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     write!(f, "{}", self.0)
-  }
-}
-
-impl Encode for ComponentBuf {
-  fn encode(&self, encoder: &mut Encoder) {
-    self.0.as_str().encode(encoder);
   }
 }
 
@@ -80,6 +71,13 @@ impl FromStr for ComponentBuf {
 impl PartialEq<&str> for ComponentBuf {
   fn eq(&self, s: &&str) -> bool {
     self.as_str().eq(*s)
+  }
+}
+
+impl Validate for ComponentBuf {
+  fn validate(&self) -> Result<(), DecodeError> {
+    Component::new(&self.0).context(decode_error::Component)?;
+    Ok(())
   }
 }
 

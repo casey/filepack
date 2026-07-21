@@ -105,6 +105,7 @@ use {
     track_info::TrackInfo,
     type_name::TypeName,
     utf8_path_ext::Utf8PathExt,
+    validate::Validate,
     version::Version,
     video::Video,
     video_error::VideoError,
@@ -346,6 +347,7 @@ mod track;
 mod track_info;
 mod type_name;
 mod utf8_path_ext;
+mod validate;
 mod version;
 mod video;
 mod video_builder;

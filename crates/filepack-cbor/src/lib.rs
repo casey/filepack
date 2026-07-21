@@ -1,7 +1,7 @@
 use {
   self::{
-    field::Field, input::Input, parsed_field::ParsedField, parsed_variant::ParsedVariant,
-    receiver::Receiver, variant::Variant,
+    attributes::Attributes, field::Field, input::Input, parsed_field::ParsedField,
+    parsed_variant::ParsedVariant, receiver::Receiver, variant::Variant,
   },
   darling::{FromDeriveInput, FromField, FromVariant, ast::Data, ast::Fields},
   proc_macro::TokenStream,
@@ -13,6 +13,7 @@ use {
   usized::IntoU64,
 };
 
+mod attributes;
 mod field;
 mod input;
 mod parsed_field;
