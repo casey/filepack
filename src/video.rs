@@ -74,7 +74,13 @@ impl Video {
     match self.ty {
       VideoType::Mp4 => {
         let file = filesystem::open(&path)?;
-        Self::info_mp4(file).context(error::Video { path })
+
+        let size = file
+          .metadata()
+          .context(error::FilesystemIo { path: &path })?
+          .len();
+
+        Self::info_mp4(file, size).context(error::Video { path })
       }
       VideoType::Webm => {
         let file = filesystem::open(&path)?;
@@ -83,103 +89,99 @@ impl Video {
     }
   }
 
-  fn info_mp4<T: Read>(reader: T) -> Result<Vec<Track>, VideoError> {
-    use mp4parse::{CodecType, SampleEntry, TrackType};
+  fn info_mp4<T: Read + Seek>(reader: T, size: u64) -> Result<Vec<Track>, VideoError> {
+    use re_mp4::{Mp4, Mp4aBox, StsdBoxContent};
 
-    fn codec_name(ty: CodecType) -> &'static str {
-      match ty {
-        CodecType::AAC => "AAC",
-        CodecType::ALAC => "ALAC",
-        CodecType::AV1 => "AV1",
-        CodecType::EncryptedAudio => "encrypted audio",
-        CodecType::EncryptedVideo => "encrypted video",
-        CodecType::FLAC => "FLAC",
-        CodecType::H263 => "H.263",
-        CodecType::H264 => "H.264",
-        CodecType::LPCM => "LPCM",
-        CodecType::MP3 => "MP3",
-        CodecType::MP4V => "MP4V",
-        CodecType::Opus => "Opus",
-        CodecType::Unknown => "unknown",
-        CodecType::VP8 => "VP8",
-        CodecType::VP9 => "VP9",
+    fn mp4a_codec(mp4a: &Mp4aBox) -> Option<Codec> {
+      match mp4a
+        .esds
+        .as_ref()?
+        .es_desc
+        .dec_config
+        .object_type_indication
+      {
+        0x40 | 0x66 | 0x67 => Some(Codec::Aac),
+        0x69 | 0x6b => Some(Codec::Mp3),
+        _ => None,
       }
     }
 
-    let reader = &mut BufReader::new(reader);
+    fn codec_name(contents: &StsdBoxContent) -> String {
+      match contents {
+        StsdBoxContent::Av01(_) => "AV1".into(),
+        StsdBoxContent::Avc1(_) => "H.264".into(),
+        StsdBoxContent::Hev1(_) | StsdBoxContent::Hvc1(_) => "H.265".into(),
+        StsdBoxContent::Mp4a(mp4a) => match mp4a_codec(mp4a) {
+          Some(codec) => codec.to_string(),
+          None => "unknown".into(),
+        },
+        StsdBoxContent::Tx3g(_) => "TTXT".into(),
+        StsdBoxContent::Unknown(fourcc) => fourcc.to_string(),
+        StsdBoxContent::Vp08(_) => "VP8".into(),
+        StsdBoxContent::Vp09(_) => "VP9".into(),
+      }
+    }
 
-    let context = mp4parse::read_mp4(reader).context(video_error::DecodeMp4)?;
+    let mp4 = Mp4::read(BufReader::new(reader), size).context(video_error::DecodeMp4)?;
 
     let mut video_codec = None;
     let mut dimensions = None;
     let mut audio_codec = None;
 
-    for track in &context.tracks {
-      match &track.track_type {
-        TrackType::Audio => {
+    for (index, trak) in mp4.moov.traks.iter().enumerate() {
+      let contents = &trak.mdia.minf.stbl.stsd.contents;
+
+      match &trak.mdia.hdlr.handler_type.value[..] {
+        b"soun" => {
           ensure!(audio_codec.is_none(), video_error::AudioTrackMultiple);
 
-          let SampleEntry::Audio(audio) = Self::track_description(track)? else {
-            return video_error::AudioCodecUnsupported {
-              codec: "unknown",
-              track: track.id,
-            }
-            .fail();
+          let codec = if let StsdBoxContent::Mp4a(mp4a) = contents {
+            mp4a_codec(mp4a)
+          } else {
+            None
           };
 
-          audio_codec = Some(match audio.codec_type {
-            CodecType::AAC => Codec::Aac,
-            CodecType::MP3 => Codec::Mp3,
-            codec => {
-              return Err(
-                video_error::AudioCodecUnsupported {
-                  codec: codec_name(codec),
-                  track: track.id,
-                }
-                .build(),
-              );
-            }
-          });
+          let Some(codec) = codec else {
+            return Err(
+              video_error::AudioCodecUnsupported {
+                codec: codec_name(contents),
+                track: index,
+              }
+              .build(),
+            );
+          };
+
+          audio_codec = Some(codec);
         }
-        TrackType::Video => {
+        b"vide" => {
           ensure!(video_codec.is_none(), video_error::VideoTrackMultiple);
-          let SampleEntry::Video(video) = Self::track_description(track)? else {
-            return video_error::VideoCodecUnsupported {
-              codec: "unknown",
-              track: track.id,
-            }
-            .fail();
+
+          let StsdBoxContent::Avc1(avc1) = contents else {
+            return Err(
+              video_error::VideoCodecUnsupported {
+                codec: codec_name(contents),
+                track: index,
+              }
+              .build(),
+            );
           };
 
-          video_codec = Some(match video.codec_type {
-            CodecType::H264 => Codec::H264,
-            codec => {
-              return Err(
-                video_error::VideoCodecUnsupported {
-                  codec: codec_name(codec),
-                  track: track.id,
-                }
-                .build(),
-              );
-            }
-          });
+          video_codec = Some(Codec::H264);
 
           dimensions = Some(Dimensions {
-            height: video.height.into(),
-            width: video.width.into(),
+            height: avc1.height.into(),
+            width: avc1.width.into(),
           });
         }
         ty => {
           return Err(
             video_error::TrackUnsupported {
-              track: track.id,
+              track: index,
               ty: match ty {
-                TrackType::Audio => "audio",
-                TrackType::AuxiliaryVideo => "auixiliary video",
-                TrackType::Metadata => "metadata",
-                TrackType::Picture => "picture",
-                TrackType::Unknown => "unknown",
-                TrackType::Video => "video",
+                b"auxv" => "auxiliary video",
+                b"meta" => "metadata",
+                b"pict" => "picture",
+                _ => "unknown",
               },
             }
             .build(),
@@ -315,22 +317,6 @@ impl Video {
 
   pub(crate) fn resource_type(&self) -> ResourceType {
     self.ty.resource_type()
-  }
-
-  fn track_description(track: &mp4parse::Track) -> Result<&mp4parse::SampleEntry, VideoError> {
-    let descriptions = track
-      .stsd
-      .as_ref()
-      .map(|stsd| &*stsd.descriptions)
-      .context(video_error::SampleDescriptionMissing { track: track.id })?;
-
-    if descriptions.len() > 1 {
-      return Err(video_error::SampleDescriptionMultiple { track: track.id }.build());
-    }
-
-    descriptions
-      .first()
-      .context(video_error::SampleDescriptionMissing { track: track.id })
   }
 }
 
@@ -613,7 +599,9 @@ mod tests {
   fn mp4_info() {
     #[track_caller]
     fn case(builder: Mp4Builder) -> Result<Vec<Track>, VideoError> {
-      Video::info_mp4(io::Cursor::new(builder.build()))
+      let bytes = builder.build();
+      let size = bytes.len().try_into().unwrap();
+      Video::info_mp4(io::Cursor::new(bytes), size)
     }
 
     #[track_caller]
@@ -682,26 +670,15 @@ mod tests {
           &[Mp4Builder::video_entry(*b"s263", *b"d263", 2, 1)],
         )
         .audio_track(0x40),
-      "track 0 has unsupported video codec `H.263`",
+      "track 0 has unsupported video codec `s263`",
     );
     error(
       Mp4Builder::new().video_track(2, 1).audio_track(0x11),
       "track 1 has unsupported audio codec `unknown`",
     );
-    error(
-      Mp4Builder::new().video_track(2, 1).track(
-        *b"soun",
-        &[Mp4Builder::audio_entry(0x40), Mp4Builder::audio_entry(0x40)],
-      ),
-      "track 1 has multiple sample descriptions",
-    );
-    error(
-      Mp4Builder::new().video_track(2, 1).track(*b"soun", &[]),
-      "track 1 has missing sample description",
-    );
 
     assert_eq!(
-      Video::info_mp4(io::Cursor::new(b"foo"))
+      Video::info_mp4(io::Cursor::new(b"foo"), 3)
         .unwrap_err()
         .to_string(),
       "failed to decode MP4",

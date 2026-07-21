@@ -309,7 +309,8 @@ media:
     .stderr_regex(
       "error: invalid video `.*foo.mp4`
        ├─ failed to decode MP4
-       └─ .*\n",
+       ├─ failed to fill whole buffer
+       └─ failed to fill whole buffer\n",
     )
     .failure();
 }
