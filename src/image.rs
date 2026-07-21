@@ -90,7 +90,7 @@ impl Image {
     Ok(())
   }
 
-  pub(crate) fn resolutions(images: &[Image]) -> Resolutions {
+  pub(crate) fn resolutions(images: &[Image]) -> Option<Resolutions> {
     Resolutions::new(images.iter().map(|image| image.dimensions), false)
   }
 
@@ -184,18 +184,28 @@ mod tests {
 
   #[test]
   fn formats() {
-    let mut foo = "foo.png".parse::<Image>().unwrap();
-    let bar = "bar.jpg".parse::<Image>().unwrap();
-    let mut baz = "baz.png".parse::<Image>().unwrap();
-
-    foo.dimensions = Dimensions {
-      height: 1,
-      width: 2,
+    let foo = Image {
+      dimensions: Dimensions {
+        height: 1,
+        width: 2,
+      },
+      filename: "foo.png".parse().unwrap(),
+      ty: ImageType::Png,
     };
 
-    baz.dimensions = Dimensions {
-      height: 3,
-      width: 4,
+    let bar = Image {
+      dimensions: Dimensions::default(),
+      filename: "bar.jpg".parse().unwrap(),
+      ty: ImageType::Jpeg,
+    };
+
+    let baz = Image {
+      dimensions: Dimensions {
+        height: 3,
+        width: 4,
+      },
+      filename: "baz.png".parse().unwrap(),
+      ty: ImageType::Png,
     };
 
     assert_eq!(

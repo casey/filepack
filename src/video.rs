@@ -322,7 +322,7 @@ impl Video {
     Ok(())
   }
 
-  pub(crate) fn resolutions(videos: &[Video]) -> Resolutions {
+  pub(crate) fn resolutions(videos: &[Video]) -> Option<Resolutions> {
     Resolutions::new(videos.iter().filter_map(Video::dimensions), true)
   }
 

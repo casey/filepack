@@ -2,23 +2,12 @@ use super::*;
 
 #[derive(Debug, PartialEq)]
 pub(crate) struct Resolutions {
-  dimensions: Vec<Dimensions>,
+  max: Option<Dimensions>,
+  min: Dimensions,
   shorthand: bool,
 }
 
 impl Resolutions {
-  pub(crate) fn entries(&self) -> Vec<String> {
-    match self.dimensions.as_slice() {
-      [first, .., last] if self.dimensions.len() > 2 => {
-        vec![format!("{} – {}", self.entry(*first), self.entry(*last))]
-      }
-      dimensions => dimensions
-        .iter()
-        .map(|dimensions| self.entry(*dimensions))
-        .collect(),
-    }
-  }
-
   fn entry(&self, dimensions: Dimensions) -> String {
     if self.shorthand
       && let Some(shorthand) = dimensions.shorthand()
@@ -29,21 +18,34 @@ impl Resolutions {
     dimensions.to_string()
   }
 
-  pub(crate) fn new(dimensions: impl IntoIterator<Item = Dimensions>, shorthand: bool) -> Self {
-    let mut distinct = Vec::<Dimensions>::new();
+  pub(crate) fn new(
+    dimensions: impl IntoIterator<Item = Dimensions>,
+    shorthand: bool,
+  ) -> Option<Self> {
+    let mut dimensions = dimensions.into_iter().collect::<Vec<Dimensions>>();
 
-    for dimensions in dimensions {
-      if !distinct.contains(&dimensions) {
-        distinct.push(dimensions);
-      }
-    }
+    dimensions.sort_by_key(|dimensions| (dimensions.area(), dimensions.width));
 
-    distinct.sort_by_key(|dimensions| (dimensions.area(), dimensions.width));
+    let min = *dimensions.first()?;
+    let max = *dimensions.last()?;
 
-    Self {
-      dimensions: distinct,
+    Some(Self {
+      max: (max != min).then_some(max),
+      min,
       shorthand,
+    })
+  }
+}
+
+impl Display for Resolutions {
+  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    write!(f, "{}", self.entry(self.min))?;
+
+    if let Some(max) = self.max {
+      write!(f, " – {}", self.entry(max))?;
     }
+
+    Ok(())
   }
 }
 
@@ -52,9 +54,9 @@ mod tests {
   use super::*;
 
   #[test]
-  fn entries() {
+  fn display() {
     #[track_caller]
-    fn case(dimensions: &[(u64, u64)], shorthand: bool, expected: &[&str]) {
+    fn case(dimensions: &[(u64, u64)], shorthand: bool, expected: &str) {
       assert_eq!(
         Resolutions::new(
           dimensions.iter().map(|(width, height)| Dimensions {
@@ -63,20 +65,24 @@ mod tests {
           }),
           shorthand,
         )
-        .entries(),
+        .unwrap()
+        .to_string(),
         expected,
       );
     }
 
-    case(&[], false, &[]);
-    case(&[(2, 1)], false, &["2×1"]);
-    case(&[(2, 1), (2, 1)], false, &["2×1"]);
-    case(&[(4, 4), (2, 1)], false, &["2×1", "4×4"]);
-    case(&[(4, 4), (2, 1), (3, 2)], false, &["2×1 – 4×4"]);
-    case(&[(4, 1), (2, 2), (1, 4)], false, &["1×4 – 4×1"]);
-    case(&[(1920, 1080)], false, &["1920×1080"]);
-    case(&[(1920, 1080)], true, &["1080p"]);
-    case(&[(1920, 1080), (2, 1)], true, &["2×1", "1080p"]);
-    case(&[(3840, 2160), (2, 1), (1920, 1080)], true, &["2×1 – 4K"]);
+    case(&[(2, 1)], false, "2×1");
+    case(&[(2, 1), (2, 1)], false, "2×1");
+    case(&[(4, 4), (2, 1)], false, "2×1 – 4×4");
+    case(&[(4, 4), (2, 1), (3, 2)], false, "2×1 – 4×4");
+    case(&[(4, 1), (2, 2), (1, 4)], false, "1×4 – 4×1");
+    case(&[(1920, 1080)], false, "1920×1080");
+    case(&[(1920, 1080)], true, "1080p");
+    case(&[(3840, 2160), (2, 1), (1920, 1080)], true, "2×1 – 4K");
+  }
+
+  #[test]
+  fn empty() {
+    assert_eq!(Resolutions::new(Vec::new(), false), None);
   }
 }

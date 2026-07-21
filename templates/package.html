@@ -68,9 +68,9 @@
 %%           for format in Image::formats(images) {
   <dd>{{ format }}</dd>
 %%           }
+%%           if let Some(resolutions) = Image::resolutions(images) {
   <dt>resolution</dt>
-%%           for resolution in Image::resolutions(images).entries() {
-  <dd>{{ resolution }}</dd>
+  <dd>{{ resolutions }}</dd>
 %%           }
 %%         }
 %%       }
@@ -82,9 +82,9 @@
 %%           for format in Video::formats(videos) {
   <dd>{{ format }}</dd>
 %%           }
+%%           if let Some(resolutions) = Video::resolutions(videos) {
   <dt>resolution</dt>
-%%           for resolution in Video::resolutions(videos).entries() {
-  <dd>{{ resolution }}</dd>
+  <dd>{{ resolutions }}</dd>
 %%           }
 %%         }
 %%       }

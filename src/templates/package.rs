@@ -306,20 +306,31 @@ mod tests {
 
   #[test]
   fn image() {
-    let mut foo = "foo.png".parse::<Image>().unwrap();
-    let bar = "bar.jpg".parse::<Image>().unwrap();
-    let mut baz = "baz.png".parse::<Image>().unwrap();
-
-    foo.dimensions = Dimensions {
-      height: 1,
-      width: 2,
-    };
-
-    baz.dimensions = foo.dimensions;
-
     let metadata = Metadata {
       media: Some(Media::Image {
-        images: vec![foo, bar, baz],
+        images: vec![
+          Image {
+            dimensions: Dimensions {
+              height: 1,
+              width: 2,
+            },
+            filename: "foo.png".parse().unwrap(),
+            ty: ImageType::Png,
+          },
+          Image {
+            dimensions: Dimensions::default(),
+            filename: "bar.jpg".parse().unwrap(),
+            ty: ImageType::Jpeg,
+          },
+          Image {
+            dimensions: Dimensions {
+              height: 1,
+              width: 2,
+            },
+            filename: "baz.png".parse().unwrap(),
+            ty: ImageType::Png,
+          },
+        ],
       }),
       ..default()
     };
@@ -354,8 +365,7 @@ mod tests {
             <dd>PNG</dd>
             <dd>JPEG</dd>
             <dt>resolution</dt>
-            <dd>0×0</dd>
-            <dd>2×1</dd>
+            <dd>0×0 – 2×1</dd>
           </dl>
           <ul class=thumbnails>
             <li>
@@ -383,26 +393,28 @@ mod tests {
 
   #[test]
   fn video() {
-    let mut foo = "foo.mp4".parse::<Video>().unwrap();
-
-    foo.tracks = vec![
-      Track {
-        codec: Codec::H264,
-        info: TrackInfo::Video {
-          dimensions: Dimensions {
-            height: 1,
-            width: 2,
-          },
-        },
-      },
-      Track {
-        codec: Codec::Aac,
-        info: TrackInfo::Audio,
-      },
-    ];
-
     let metadata = Metadata {
-      media: Some(Media::Video { videos: vec![foo] }),
+      media: Some(Media::Video {
+        videos: vec![Video {
+          filename: "foo.mp4".parse().unwrap(),
+          tracks: vec![
+            Track {
+              codec: Codec::H264,
+              info: TrackInfo::Video {
+                dimensions: Dimensions {
+                  height: 1,
+                  width: 2,
+                },
+              },
+            },
+            Track {
+              codec: Codec::Aac,
+              info: TrackInfo::Audio,
+            },
+          ],
+          ty: VideoType::Mp4,
+        }],
+      }),
       ..default()
     };
 
