@@ -46,11 +46,15 @@ impl Mp4Builder {
     ftyp.extend_from_slice(&[0; 4]);
     ftyp.extend_from_slice(b"isom");
 
-    [
-      Self::atom(*b"ftyp", &ftyp),
-      Self::atom(*b"moov", &self.traks.concat()),
-    ]
-    .concat()
+    let mut mvhd = vec![0; 12];
+    mvhd.extend_from_slice(&1000u32.to_be_bytes());
+    mvhd.extend_from_slice(&[0; 4]);
+    mvhd.extend_from_slice(&0x0001_0000u32.to_be_bytes());
+    mvhd.extend_from_slice(&[0; 76]);
+
+    let moov = [Self::atom(*b"mvhd", &mvhd), self.traks.concat()].concat();
+
+    [Self::atom(*b"ftyp", &ftyp), Self::atom(*b"moov", &moov)].concat()
   }
 
   pub fn new() -> Self {
@@ -59,22 +63,46 @@ impl Mp4Builder {
 
   #[must_use]
   pub fn track(mut self, handler: [u8; 4], descriptions: &[Vec<u8>]) -> Self {
+    let mut tkhd = vec![0; 12];
+    tkhd.extend_from_slice(&u32::try_from(self.traks.len() + 1).unwrap().to_be_bytes());
+    tkhd.extend_from_slice(&[0; 68]);
+
+    let mut mdhd = vec![0; 12];
+    mdhd.extend_from_slice(&1000u32.to_be_bytes());
+    mdhd.extend_from_slice(&[0; 8]);
+
     let mut hdlr = vec![0; 8];
     hdlr.extend_from_slice(&handler);
     hdlr.extend_from_slice(&[0; 12]);
     hdlr.push(0);
 
+    let dinf = Self::atom(*b"dinf", &Self::atom(*b"dref", &[0; 8]));
+
     let mut stsd = vec![0, 0, 0, 0];
     stsd.extend_from_slice(&u32::try_from(descriptions.len()).unwrap().to_be_bytes());
     stsd.extend_from_slice(&descriptions.concat());
 
-    let stbl = Self::atom(*b"stbl", &Self::atom(*b"stsd", &stsd));
-    let minf = Self::atom(*b"minf", &stbl);
-    let mdia = [Self::atom(*b"hdlr", &hdlr), minf].concat();
+    let stbl = [
+      Self::atom(*b"stsd", &stsd),
+      Self::atom(*b"stts", &[0; 8]),
+      Self::atom(*b"stsc", &[0; 8]),
+      Self::atom(*b"stsz", &[0; 12]),
+      Self::atom(*b"stco", &[0; 8]),
+    ]
+    .concat();
 
-    self
-      .traks
-      .push(Self::atom(*b"trak", &Self::atom(*b"mdia", &mdia)));
+    let minf = [dinf, Self::atom(*b"stbl", &stbl)].concat();
+
+    let mdia = [
+      Self::atom(*b"mdhd", &mdhd),
+      Self::atom(*b"hdlr", &hdlr),
+      Self::atom(*b"minf", &minf),
+    ]
+    .concat();
+
+    let trak = [Self::atom(*b"tkhd", &tkhd), Self::atom(*b"mdia", &mdia)].concat();
+
+    self.traks.push(Self::atom(*b"trak", &trak));
 
     self
   }
@@ -87,7 +115,7 @@ impl Mp4Builder {
     payload.extend_from_slice(&width.to_be_bytes());
     payload.extend_from_slice(&height.to_be_bytes());
     payload.extend_from_slice(&[0; 50]);
-    payload.extend_from_slice(&Self::atom(config, &[]));
+    payload.extend_from_slice(&Self::atom(config, &[1, 0, 0, 0, 0xff, 0xe0, 0]));
 
     Self::atom(entry, &payload)
   }

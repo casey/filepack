@@ -8,17 +8,13 @@ pub enum VideoError {
   #[snafu(display("multiple audio tracks"))]
   AudioTrackMultiple,
   #[snafu(display("failed to decode MP4"))]
-  DecodeMp4 { source: mp4parse::Error },
+  DecodeMp4 { source: re_mp4::Error },
   #[snafu(display("failed to decode WebM"))]
   DecodeWebm {
     source: matroska_demuxer::DemuxError,
   },
   #[snafu(display("expected DocType `webm` but found `{doc_type}`"))]
   DocType { doc_type: String },
-  #[snafu(display("track {track} has missing sample description"))]
-  SampleDescriptionMissing { track: usize },
-  #[snafu(display("track {track} has multiple sample descriptions"))]
-  SampleDescriptionMultiple { track: usize },
   #[snafu(display(
     "video has {} but metadata has {}",
     Count::new(*actual, "track"),
