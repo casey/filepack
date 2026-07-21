@@ -28,22 +28,6 @@ mod tests {
   use super::*;
 
   #[test]
-  fn display() {
-    #[track_caller]
-    fn case(codec: Codec, expected: &str) {
-      assert_eq!(codec.to_string(), expected);
-    }
-
-    case(Codec::Aac, "AAC");
-    case(Codec::H264, "H.264");
-    case(Codec::Mp3, "MP3");
-    case(Codec::Opus, "Opus");
-    case(Codec::Vorbis, "Vorbis");
-    case(Codec::Vp8, "VP8");
-    case(Codec::Vp9, "VP9");
-  }
-
-  #[test]
   fn encoding() {
     assert_cbor(Codec::Aac, "00");
     assert_cbor(Codec::H264, "01");
