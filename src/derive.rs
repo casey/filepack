@@ -507,3 +507,73 @@ fn validate() {
     }) if actual == "bar",
   );
 }
+
+#[test]
+fn validate_enum() {
+  #[derive(Debug, Encode, Decode, PartialEq)]
+  #[cbor(validate)]
+  enum Foo {
+    #[n(0)]
+    Bar {
+      #[n(0)]
+      baz: String,
+    },
+  }
+
+  impl Validate for Foo {
+    fn validate(&self) -> Result<(), DecodeError> {
+      let Self::Bar { baz } = self;
+      ensure!(
+        baz == "foo",
+        decode_error::UnexpectedValue {
+          actual: baz.clone(),
+          expected: "foo",
+        }
+      );
+      Ok(())
+    }
+  }
+
+  assert_cbor(Foo::Bar { baz: "foo".into() }, "8200a10063666f6f");
+
+  assert_matches!(
+    Foo::decode_from_slice(&Foo::Bar { baz: "bar".into() }.encode_to_vec()),
+    Err(DecodeError::UnexpectedValue {
+      actual,
+      expected: "foo",
+    }) if actual == "bar",
+  );
+}
+
+#[test]
+fn validate_struct() {
+  #[derive(Debug, Encode, Decode, PartialEq)]
+  #[cbor(validate)]
+  struct Foo {
+    #[n(0)]
+    bar: String,
+  }
+
+  impl Validate for Foo {
+    fn validate(&self) -> Result<(), DecodeError> {
+      ensure!(
+        self.bar == "foo",
+        decode_error::UnexpectedValue {
+          actual: self.bar.clone(),
+          expected: "foo",
+        }
+      );
+      Ok(())
+    }
+  }
+
+  assert_cbor(Foo { bar: "foo".into() }, "a10063666f6f");
+
+  assert_matches!(
+    Foo::decode_from_slice(&Foo { bar: "bar".into() }.encode_to_vec()),
+    Err(DecodeError::UnexpectedValue {
+      actual,
+      expected: "foo",
+    }) if actual == "bar",
+  );
+}

@@ -21,13 +21,6 @@ impl Input {
       validate,
     } = Attributes::parse(&self.attrs)?;
 
-    if validate && !transparent {
-      return Err(Error::new_spanned(
-        &self.ident,
-        "#[cbor(validate)] requires #[cbor(transparent)]",
-      ));
-    }
-
     match self.data {
       Data::Enum(_) => {
         if transparent {
@@ -36,20 +29,20 @@ impl Input {
             "#[cbor(transparent)] cannot be used with enums",
           ))
         } else {
-          self.decode_enum()
+          self.decode_enum(validate)
         }
       }
       Data::Struct(_) => {
         if transparent {
           self.decode_transparent(validate)
         } else {
-          self.decode_struct()
+          self.decode_struct(validate)
         }
       }
     }
   }
 
-  pub(crate) fn decode_enum(&self) -> Result<proc_macro2::TokenStream> {
+  pub(crate) fn decode_enum(&self, validate: bool) -> Result<proc_macro2::TokenStream> {
     let name = &self.ident;
 
     let variants = self.parse_variants()?;
@@ -81,39 +74,53 @@ impl Input {
         }
       });
 
+    let body = quote! {
+      match decoder.peek()? {
+        MajorType::UnsignedInteger => {
+          let discriminant = decoder.integer()?;
+          match discriminant {
+            #(#unit_arms)*
+            _ => Err(decode_error::InvalidDiscriminant {
+              discriminant,
+              name: stringify!(#name),
+            }.build()),
+          }
+        }
+        MajorType::Array => {
+          let mut array = decoder.array()?;
+          let discriminant = array.item::<u64>()?;
+          match discriminant {
+            #(#field_arms)*
+            _ => Err(decode_error::InvalidDiscriminant {
+              discriminant,
+              name: stringify!(#name),
+            }.build()),
+          }
+        }
+        actual => Err(decode_error::UnexpectedVariantType { actual }.build()),
+      }
+    };
+
+    let body = if validate {
+      quote! {
+        let value = #body?;
+        Validate::validate(&value)?;
+        Ok(value)
+      }
+    } else {
+      body
+    };
+
     Ok(quote! {
       impl Decode for #name {
         fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
-          match decoder.peek()? {
-            MajorType::UnsignedInteger => {
-              let discriminant = decoder.integer()?;
-              match discriminant {
-                #(#unit_arms)*
-                _ => Err(decode_error::InvalidDiscriminant {
-                  discriminant,
-                  name: stringify!(#name),
-                }.build()),
-              }
-            }
-            MajorType::Array => {
-              let mut array = decoder.array()?;
-              let discriminant = array.item::<u64>()?;
-              match discriminant {
-                #(#field_arms)*
-                _ => Err(decode_error::InvalidDiscriminant {
-                  discriminant,
-                  name: stringify!(#name),
-                }.build()),
-              }
-            }
-            actual => Err(decode_error::UnexpectedVariantType { actual }.build()),
-          }
+          #body
         }
       }
     })
   }
 
-  pub(crate) fn decode_struct(&self) -> Result<proc_macro2::TokenStream> {
+  pub(crate) fn decode_struct(&self, validate: bool) -> Result<proc_macro2::TokenStream> {
     let name = &self.ident;
 
     let fields = self.parse_fields()?;
@@ -122,15 +129,31 @@ impl Input {
 
     let fields = fields.iter().map(|field| field.ident);
 
+    let constructor = quote! {
+      Self {
+        #(#fields,)*
+      }
+    };
+
+    let body = if validate {
+      quote! {
+        let value = #constructor;
+        Validate::validate(&value)?;
+        Ok(value)
+      }
+    } else {
+      quote! {
+        Ok(#constructor)
+      }
+    };
+
     Ok(quote! {
       impl Decode for #name {
         fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
           let mut map = decoder.map::<u64>()?;
           #(#decode)*
           map.finish()?;
-          Ok(Self {
-            #(#fields,)*
-          })
+          #body
         }
       }
     })
