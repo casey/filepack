@@ -11,8 +11,6 @@ pub enum DecodeError {
   },
   #[snafu(display("failed to parse component"))]
   Component { source: ComponentError },
-  #[snafu(display("failed to parse datetime"))]
-  DateTime { source: chrono::ParseError },
   #[snafu(display(
     "expected {} or {} but found {actual}",
     MajorType::UnsignedInteger,
@@ -49,6 +47,8 @@ pub enum DecodeError {
   SizeRange { source: TryFromIntError },
   #[snafu(display("failed to parse text"))]
   Text { source: TextError },
+  #[snafu(display("invalid time"))]
+  Time { source: TimeError },
   #[snafu(display("trailing bytes"))]
   TrailingBytes,
   #[snafu(display("truncated"))]

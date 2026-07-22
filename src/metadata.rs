@@ -10,19 +10,19 @@ pub struct Metadata {
   #[n(1)]
   pub creator: Option<ComponentBuf>,
   #[n(2)]
-  pub date: Option<DateTime>,
-  #[n(3)]
   pub description: Option<Text>,
-  #[n(4)]
+  #[n(3)]
   pub homepage: Option<CheckedUrl>,
-  #[n(5)]
+  #[n(4)]
   pub language: Option<Language>,
-  #[n(6)]
+  #[n(5)]
   pub media: Option<Media>,
-  #[n(7)]
+  #[n(6)]
   pub package: Option<Package>,
-  #[n(8)]
+  #[n(7)]
   pub readme: Option<ComponentBuf>,
+  #[n(8)]
+  pub time: Option<Time>,
   #[n(9)]
   pub title: Option<ComponentBuf>,
 }
@@ -296,9 +296,9 @@ mod tests {
     case(
       "
         title: Foo
-        date: 2024/06/15
+        time: 2024/06/15
       ",
-      "date: input contains invalid characters",
+      "time: invalid time `2024/06/15`",
     );
     case(
       "
@@ -318,9 +318,9 @@ mod tests {
       "
         title: Foo
         package:
-          date: not-a-date
+          time: not-a-time
       ",
-      r"package\.date: input contains invalid characters",
+      r"package\.time: invalid time `not-a-time`",
     );
     case(
       "
@@ -400,7 +400,6 @@ mod tests {
         ty: ImageType::Png,
       }),
       creator: Some("foo".parse().unwrap()),
-      date: Some("2024".parse().unwrap()),
       description: Some("bar".parse().unwrap()),
       homepage: Some("http://example.com".parse().unwrap()),
       language: Some("en".parse().unwrap()),
@@ -423,13 +422,14 @@ mod tests {
       }),
       package: Some(Package {
         creator: Some("baz".parse().unwrap()),
-        date: Some("2024-01-01".parse().unwrap()),
         description: Some("qux".parse().unwrap()),
         homepage: Some("http://example.com/foo".parse().unwrap()),
         readme: Some("README.md".parse().unwrap()),
+        time: Some("2024-01-01".parse().unwrap()),
         title: Some("foo-bar".parse().unwrap()),
       }),
       readme: Some("README.md".parse().unwrap()),
+      time: Some("2024".parse().unwrap()),
       title: Some("foo".parse().unwrap()),
     });
   }
@@ -609,12 +609,12 @@ mod tests {
       let Metadata {
         artwork,
         creator,
-        date,
         description,
         homepage,
         language,
         package,
         readme,
+        time,
         title,
         media,
       } = metadata;
@@ -628,28 +628,28 @@ mod tests {
 
       assert!(artwork.is_some());
       assert!(creator.is_some());
-      assert!(date.is_some());
       assert!(description.is_some());
       assert!(homepage.is_some());
       assert!(language.is_some());
       assert!(readme.is_some());
+      assert!(time.is_some());
       assert!(title.is_some());
       assert!(media.is_none());
 
       let Package {
         creator,
-        date,
         description,
         homepage,
         readme,
+        time,
         title,
       } = package.unwrap();
 
       assert!(creator.is_some());
-      assert!(date.is_some());
       assert!(description.is_some());
       assert!(homepage.is_some());
       assert!(readme.is_some());
+      assert!(time.is_some());
       assert!(title.is_some());
     }
   }
@@ -695,10 +695,10 @@ mod tests {
   fn readme_package(readme: &str) -> Package {
     Package {
       creator: None,
-      date: None,
       description: None,
       homepage: None,
       readme: Some(readme.parse().unwrap()),
+      time: None,
       title: None,
     }
   }

@@ -333,8 +333,6 @@ Top-level fields
 
 - `creator: component`: The person or group who created the content.
 
-- `date: date`: The date the content was created or released.
-
 - `description: markdown`: A description of the content.
 
 - `homepage: url`: Primary URL for the content. Should be the official homepage
@@ -347,19 +345,21 @@ Top-level fields
 
 - `readme: component.md`: The filename of the content readme.
 
+- `time: time`: The time the content was created or released.
+
 - `title: component`: The content's human-readable title.
 
 Fields of `package` describing the package itself, as opposed its content:
 
 - `creator: component`: The person or group who created the package.
 
-- `date: date`: The date the package was created.
-
 - `description: markdown`: A description of the package.
 
 - `homepage: url`: Primary URL for the package.
 
 - `readme: component.md`: The filename of the package readme.
+
+- `time: time`: The time the package was created.
 
 - `title: component`: The package's title. May contain details related to the
   source, packager, or encoding. May to be used as a directory name when saving
@@ -374,26 +374,33 @@ Types:
 
 - `component.EXTENSION`: A component that must end with `.EXTENSION`.
 
-- `date`: A string containing a date in one of several formats: as a year only,
-  when the date and time is unknown, a date only, when the time is unknown, or
-  a date and time with a mandatory time zone.
-
 - `language`: A string containing an ISO 639-1 two-character language code. See
   `filepack languages` for valid language codes.
 
 - `markdown`: A string containing CommonMark markdown.
 
+- `time`: A string containing a time in one of two canonical formats: a year
+  only, when the month and day are unknown, or a full date, written
+  `<year>-MM-DD`. Times use the proleptic Gregorian calendar with astronomical
+  year numbering, so year 0 is 1 BC, year -1 is 2 BC, and so on. Years are
+  written without leading zeros or padding, and may be negative. A year-only
+  time may be any 64-bit signed integer. Full dates are limited to years -9999
+  through 9999. Each time has exactly one valid representation, so equivalent
+  non-canonical forms are not permitted.
+
 - `url`: A string containing a URL.
 
-Example dates:
+Example times:
 
 ```tsv
-1970
+0
+-44
+1929
+-13787000000
+0-01-01
+929-01-01
 1970-01-01
-1970-01-01T00:00:00Z
-1970-01-01 00:00:00Z
-1970-01-01T00:00:00+00:00
-1970-01-01 00:00:00 +00:00
+-44-03-15
 ```
 
 ### Example
@@ -402,7 +409,7 @@ Example dates:
 title: Tobin's Spirit Guide
 creator: John Horace Tobin
 artwork: cover.png
-date: 1929
+time: 1929
 description: A compilation of supernatural occurrences, entities, and facts.
 homepage: https://tobin-society.org/spirit-guide
 language: en
@@ -410,7 +417,7 @@ readme: README.md
 package:
   title: Tobin's Spirit Guide - First Edition
   creator: Egon Spengler
-  date: 1984-07-08 19:32:00 -04:00
+  time: 1984-07-08
   description: >
     First edition on loan from NYPL Main Branch research stacks. Captured via
     Microtek MS-300A flatbed scanner.

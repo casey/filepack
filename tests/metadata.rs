@@ -325,7 +325,7 @@ fn create_succeeds_with_valid_metadata() {
       "metadata.yaml",
       "\
 title: Foo
-date: 2024-01-01
+time: 2024-01-01
 language: en
 artwork: cover.png
 readme: README.md
@@ -336,7 +336,7 @@ package:
     .arg("create")
     .success()
     .arg("verify")
-    .stderr("successfully verified 5 files totaling 246 bytes\n")
+    .stderr("successfully verified 5 files totaling 242 bytes\n")
     .success();
 }
 

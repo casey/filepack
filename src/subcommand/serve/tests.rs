@@ -616,13 +616,13 @@ fn get_package_with_metadata() {
   let metadata = Metadata {
     artwork: None,
     creator: None,
-    date: None,
     description: None,
     homepage: None,
     language: None,
     media: None,
     package: None,
     readme: None,
+    time: None,
     title: Some("foo".parse().unwrap()),
   };
   let metadata_cbor = metadata.encode_to_vec();

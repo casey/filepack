@@ -7,13 +7,13 @@ pub(crate) struct Package {
   #[n(0)]
   pub(crate) creator: Option<ComponentBuf>,
   #[n(1)]
-  pub(crate) date: Option<DateTime>,
-  #[n(2)]
   pub(crate) description: Option<Text>,
-  #[n(3)]
+  #[n(2)]
   pub(crate) homepage: Option<CheckedUrl>,
-  #[n(4)]
+  #[n(3)]
   pub(crate) readme: Option<ComponentBuf>,
+  #[n(4)]
+  pub(crate) time: Option<Time>,
   #[n(5)]
   pub(crate) title: Option<ComponentBuf>,
 }
@@ -26,10 +26,10 @@ mod tests {
   fn encoding() {
     assert_encoding(Package {
       creator: Some("foo".parse().unwrap()),
-      date: Some("2024-01-01".parse().unwrap()),
       description: Some("bar".parse().unwrap()),
       homepage: Some("http://example.com".parse().unwrap()),
       readme: Some("README.md".parse().unwrap()),
+      time: Some("2024-01-01".parse().unwrap()),
       title: Some("foo-A0".parse().unwrap()),
     });
   }
