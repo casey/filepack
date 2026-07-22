@@ -507,3 +507,73 @@ fn validate() {
     }) if actual == "bar",
   );
 }
+
+#[test]
+fn validate_enum() {
+  #[derive(Debug, Encode, Decode, PartialEq)]
+  #[cbor(validate)]
+  enum Foo {
+    #[n(0)]
+    Bar {
+      #[n(0)]
+      baz: u64,
+    },
+  }
+
+  impl Validate for Foo {
+    fn validate(&self) -> Result<(), DecodeError> {
+      let Self::Bar { baz } = self;
+      ensure!(
+        *baz == 1,
+        decode_error::UnexpectedValue {
+          actual: baz.to_string(),
+          expected: "1",
+        }
+      );
+      Ok(())
+    }
+  }
+
+  assert_cbor(Foo::Bar { baz: 1 }, "8200a10001");
+
+  assert_matches!(
+    Foo::decode_from_slice(&Foo::Bar { baz: 2 }.encode_to_vec()),
+    Err(DecodeError::UnexpectedValue {
+      actual,
+      expected: "1",
+    }) if actual == "2",
+  );
+}
+
+#[test]
+fn validate_struct() {
+  #[derive(Debug, Encode, Decode, PartialEq)]
+  #[cbor(validate)]
+  struct Foo {
+    #[n(0)]
+    bar: u64,
+  }
+
+  impl Validate for Foo {
+    fn validate(&self) -> Result<(), DecodeError> {
+      ensure!(
+        self.bar == 1,
+        decode_error::UnexpectedValue {
+          actual: self.bar.to_string(),
+          expected: "1",
+        }
+      );
+      Ok(())
+    }
+  }
+
+  assert_cbor(Foo { bar: 1 }, "a10001");
+
+  assert_matches!(
+    Foo::decode_from_slice(&Foo { bar: 2 }.encode_to_vec()),
+    Err(DecodeError::UnexpectedValue {
+      actual,
+      expected: "1",
+    }) if actual == "2",
+  );
+}
