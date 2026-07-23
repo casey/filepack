@@ -45,7 +45,6 @@ use {
     count::Count,
     dalek_signature_error::DalekSignatureError,
     database_metadata::DatabaseMetadata,
-    date_time::DateTime,
     decode_error::DecodeError,
     dimensions::Dimensions,
     directory_tree_entry::DirectoryTreeEntry,
@@ -102,6 +101,8 @@ use {
     templates::PageHtml,
     text_error::TextError,
     ticked::Ticked,
+    time::Time,
+    time_error::TimeError,
     token::Token,
     totals_error::TotalsError,
     track::Track,
@@ -134,6 +135,7 @@ use {
   futures_util::StreamExt,
   humansize::{BINARY, FormatSizeOptions, SizeFormatter},
   indicatif::{ProgressBar, ProgressStyle},
+  jiff::{self, civil},
   lexiclean::Lexiclean,
   mime::Mime,
   num_traits::One,
@@ -266,7 +268,6 @@ mod context;
 mod count;
 mod dalek_signature_error;
 mod database_metadata;
-mod date_time;
 mod decode;
 mod decode_error;
 mod decoder;
@@ -348,6 +349,8 @@ pub mod templates;
 mod text;
 mod text_error;
 mod ticked;
+mod time;
+mod time_error;
 mod token;
 mod totals;
 mod totals_error;
