@@ -379,14 +379,9 @@ Types:
 
 - `markdown`: A string containing CommonMark markdown.
 
-- `time`: A string containing a time in one of two canonical formats: a year
-  only, when the month and day are unknown, or a full date, written
-  `<year>-MM-DD`. Times use the proleptic Gregorian calendar with astronomical
-  year numbering, so year 0 is 1 BC, year -1 is 2 BC, and so on. Years are
-  written without leading zeros or padding, and may be negative. A year-only
-  time may be any 64-bit signed integer. Full dates are limited to years -9999
-  through 9999. Each time has exactly one valid representation, so equivalent
-  non-canonical forms are not permitted.
+- `time`: A string containing a time with one of two precisions, a year only,
+  or a year, month, and day, written `Y-MM-DD`. Times use the proleptic
+  Gregorian calendar with astronomical year numbering.
 
 - `url`: A string containing a URL.
 
