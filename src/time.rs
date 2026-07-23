@@ -1,7 +1,4 @@
-use {
-  super::*,
-  jiff::{Span, civil},
-};
+use super::*;
 
 const EPOCH: civil::Date = civil::date(1970, 1, 1);
 
@@ -29,7 +26,7 @@ pub(crate) enum Time {
 
 impl Time {
   fn date(days: i32) -> Result<civil::Date, TimeError> {
-    Span::new()
+    jiff::Span::new()
       .try_days(days)
       .ok()
       .and_then(|span| EPOCH.checked_add(span).ok())
