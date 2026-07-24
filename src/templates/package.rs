@@ -402,6 +402,7 @@ mod tests {
             Track {
               codec: Codec::H264,
               info: TrackInfo::Video {
+                bit_depth: Some(8),
                 dimensions: Dimensions {
                   height: 1,
                   width: 2,

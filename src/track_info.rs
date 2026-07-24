@@ -1,5 +1,6 @@
 use super::*;
 
+#[skip_serializing_none]
 #[derive(Clone, Copy, Debug, Decode, Encode, PartialEq, Serialize)]
 #[serde(rename_all = "snake_case", tag = "type")]
 pub(crate) enum TrackInfo {
@@ -8,8 +9,10 @@ pub(crate) enum TrackInfo {
   #[n(1)]
   Video {
     #[n(0)]
-    dimensions: Dimensions,
+    bit_depth: Option<u64>,
     #[n(1)]
+    dimensions: Dimensions,
+    #[n(2)]
     frames: u64,
   },
 }
@@ -24,13 +27,26 @@ mod tests {
 
     assert_cbor(
       TrackInfo::Video {
+        bit_depth: Some(8),
         dimensions: Dimensions {
           height: 1,
           width: 2,
         },
         frames: 0,
       },
-      "8201a200a2000101020100",
+      "8201a3000801a2000101020200",
+    );
+
+    assert_cbor(
+      TrackInfo::Video {
+        bit_depth: None,
+        dimensions: Dimensions {
+          height: 1,
+          width: 2,
+        },
+        frames: 0,
+      },
+      "8201a201a2000101020200",
     );
   }
 }

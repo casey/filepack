@@ -35,4 +35,6 @@ pub enum VideoError {
   VideoTrackMissing,
   #[snafu(display("multiple video tracks"))]
   VideoTrackMultiple,
+  #[snafu(display("invalid VP9 frame header"))]
+  Vp9FrameHeaderInvalid,
 }
