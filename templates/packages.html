@@ -14,7 +14,7 @@
 %% match self.view {
 %%   View::Grid => {
 <ul class=grid>
-%%     for (fingerprint, artwork, _creator, _title) in self.packages() {
+%%     for (fingerprint, artwork, creator, title) in self.packages() {
   <li>
 %%       if artwork {
     <a href=/package/{{ fingerprint }}>
@@ -22,6 +22,12 @@
     </a>
 %%       } else {
     <a href=/package/{{ fingerprint }}></a>
+%%       }
+%%       if let Some(title) = title {
+    <span class=title>{{ title }}</span>
+%%       }
+%%       if let Some(creator) = creator {
+    <span class=creator>{{ creator }}</span>
 %%       }
   </li>
 %%     }
