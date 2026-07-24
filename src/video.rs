@@ -46,6 +46,54 @@ impl Video {
     formats
   }
 
+  fn h264_bit_depth(sps: &[u8]) -> Option<u64> {
+    let mut rbsp = Vec::new();
+
+    // skip NAL unit header
+    for &byte in sps.get(1..)? {
+      // remove emulation prevention bytes
+      if byte == 3 && rbsp.ends_with(&[0, 0]) {
+        continue;
+      }
+
+      rbsp.push(byte);
+    }
+
+    let mut reader = BitReader::new(&rbsp);
+
+    // profile_idc
+    let profile_idc = reader.bits(8)?;
+
+    // constraint flags
+    reader.bits(8)?;
+
+    // level_idc
+    reader.bits(8)?;
+
+    // seq_parameter_set_id
+    reader.ue()?;
+
+    if !Self::h264_high_profile(profile_idc) {
+      return Some(8);
+    }
+
+    // chroma_format_idc
+    if reader.ue()? == 3 {
+      // separate_colour_plane_flag
+      reader.bit()?;
+    }
+
+    // bit_depth_luma_minus8
+    Some(8 + reader.ue()?)
+  }
+
+  fn h264_high_profile(profile_idc: u64) -> bool {
+    matches!(
+      profile_idc,
+      44 | 83 | 86 | 100 | 110 | 118 | 122 | 128 | 134 | 135 | 138 | 139 | 244
+    )
+  }
+
   fn info(&self, root: &Utf8Path) -> Result<VideoInfo> {
     let path = root.join(self.as_path());
 
@@ -163,10 +211,21 @@ impl Video {
             );
           };
 
+          let bit_depth = if let Some(sps) = avc1.avcc.sequence_parameter_sets.first() {
+            Some(Self::h264_bit_depth(&sps.bytes).context(video_error::SpsInvalid)?)
+          } else {
+            ensure!(
+              !Self::h264_high_profile(avc1.avcc.avc_profile_indication.into()),
+              video_error::SpsMissing,
+            );
+
+            Some(8)
+          };
+
           video_track = Some(Track {
             codec: Codec::H264,
             info: TrackInfo::Video {
-              bit_depth: None,
+              bit_depth,
               dimensions: Dimensions {
                 height: avc1.height.into(),
                 width: avc1.width.into(),
@@ -642,6 +701,22 @@ mod tests {
   }
 
   #[test]
+  fn h264_bit_depth() {
+    #[track_caller]
+    fn case(sps: &[u8], expected: Option<u64>) {
+      assert_eq!(Video::h264_bit_depth(sps), expected);
+    }
+
+    case(&[0x67, 66, 0, 30, 0x80], Some(8));
+    case(&[0x67, 100, 0, 31, 0xA6], Some(10));
+    case(&[0x67, 100, 0, 31, 0x91], Some(8));
+    case(&[0x67, 100, 0, 0, 0x03, 0xA6], Some(10));
+    case(&[0x67, 100, 0, 31], None);
+    case(&[0x67], None);
+    case(&[], None);
+  }
+
+  #[test]
   fn mp4_info() {
     #[track_caller]
     fn case(builder: Mp4Builder) -> Result<VideoInfo, VideoError> {
@@ -663,7 +738,7 @@ mod tests {
           Track {
             codec: Codec::H264,
             info: TrackInfo::Video {
-              bit_depth: None,
+              bit_depth: Some(8),
               dimensions: Dimensions {
                 height: 1,
                 width: 2,
@@ -688,7 +763,7 @@ mod tests {
         tracks: vec![Track {
           codec: Codec::H264,
           info: TrackInfo::Video {
-            bit_depth: None,
+            bit_depth: Some(8),
             dimensions: Dimensions {
               height: 1,
               width: 2,
@@ -725,7 +800,7 @@ mod tests {
         .tracks[0]
         .info,
       TrackInfo::Video {
-        bit_depth: None,
+        bit_depth: Some(8),
         dimensions: Dimensions {
           height: 1,
           width: 2,
@@ -754,7 +829,7 @@ mod tests {
       Track {
         codec: Codec::H264,
         info: TrackInfo::Video {
-          bit_depth: None,
+          bit_depth: Some(8),
           dimensions: Dimensions {
             height: 1,
             width: 2,
@@ -763,6 +838,35 @@ mod tests {
         },
         size: 8,
       },
+    );
+
+    assert_eq!(
+      case(
+        Mp4Builder::new()
+          .sps(&[0x67, 100, 0, 31, 0xA6])
+          .video_track(2, 1),
+      )
+      .unwrap()
+      .tracks[0]
+        .info,
+      TrackInfo::Video {
+        bit_depth: Some(10),
+        dimensions: Dimensions {
+          height: 1,
+          width: 2,
+        },
+        frames: 0,
+      },
+    );
+
+    error(
+      Mp4Builder::new().sps(&[0x67, 100, 0, 31]).video_track(2, 1),
+      "invalid SPS",
+    );
+
+    error(
+      Mp4Builder::new().avcc_profile(100).video_track(2, 1),
+      "missing SPS",
     );
 
     error(
@@ -796,7 +900,13 @@ mod tests {
       Mp4Builder::new()
         .track(
           *b"vide",
-          &[Mp4Builder::video_entry(*b"s263", *b"d263", 2, 1)],
+          &[Mp4Builder::video_entry(
+            *b"s263",
+            *b"d263",
+            &[1, 0, 0, 0, 0xff, 0xe0, 0],
+            2,
+            1,
+          )],
         )
         .audio_track(0x40),
       "track 0 has unsupported video codec `s263`",
@@ -843,7 +953,7 @@ mod tests {
           Track {
             codec: Codec::H264,
             info: TrackInfo::Video {
-              bit_depth: None,
+              bit_depth: Some(8),
               dimensions: Dimensions {
                 height: 1,
                 width: 2,
@@ -875,7 +985,7 @@ mod tests {
         Track {
           codec: Codec::H264,
           info: TrackInfo::Video {
-            bit_depth: None,
+            bit_depth: Some(8),
             dimensions: Dimensions {
               height: 1,
               width: 2,
