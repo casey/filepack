@@ -17,7 +17,7 @@ impl Vp9FrameHeader {
     let profile_high_bit = reader.bit()?;
     let profile = profile_high_bit << 1 | profile_low_bit;
 
-    // reserved zero bit
+    // reserved_zero
     if profile == 3 && reader.bit()? != 0 {
       return None;
     }
@@ -32,8 +32,11 @@ impl Vp9FrameHeader {
       return None;
     }
 
-    // show_frame and error_resilient_mode
-    reader.bits(2)?;
+    // show_frame
+    reader.bits(1)?;
+
+    // error_resilient_mode
+    reader.bits(1)?;
 
     // frame_sync_code
     if reader.bits(24)? != 0x0049_8342 {
@@ -41,6 +44,7 @@ impl Vp9FrameHeader {
     }
 
     let bit_depth = if profile >= 2 {
+      // ten_or_twelve_bit
       if reader.bit()? == 0 { 10 } else { 12 }
     } else {
       8
