@@ -359,11 +359,6 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
-  #[snafu(display("metadata `{path}` exists but `metadata.yaml` does not"))]
-  MetadataOrphan {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-  },
   #[snafu(display("metadata cannot be formatted as TSV"))]
   MetadataTsv { backtrace: Option<Backtrace> },
   #[snafu(display("directory missing: `{path}`"))]
@@ -507,6 +502,11 @@ pub enum Error {
     disk: u64,
     hash: Hash,
     manifest: u64,
+  },
+  #[snafu(display("metadata `{path}` exists but `metadata.yaml` does not"))]
+  StaleMetadata {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
   },
   #[snafu(display("I/O error reading standard input"))]
   StandardInputIo {

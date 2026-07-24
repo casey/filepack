@@ -63,7 +63,7 @@ impl Create {
 
       ensure! {
         !filesystem::exists(&path)?,
-        error::MetadataOrphan {
+        error::StaleMetadata {
           path,
         },
       }
