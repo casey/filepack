@@ -8,6 +8,7 @@ impl Vp9FrameHeader {
   pub(crate) fn parse(data: &[u8]) -> Option<Self> {
     let mut reader = BitReader::new(data);
 
+    // frame_marker
     if reader.bits(2)? != 2 {
       return None;
     }
@@ -16,20 +17,25 @@ impl Vp9FrameHeader {
     let profile_high_bit = reader.bit()?;
     let profile = profile_high_bit << 1 | profile_low_bit;
 
+    // reserved zero bit
     if profile == 3 && reader.bit()? != 0 {
       return None;
     }
 
+    // show_existing_frame
     if reader.bit()? != 0 {
       return None;
     }
 
+    // frame_type
     if reader.bit()? != 0 {
       return None;
     }
 
+    // show_frame and error_resilient_mode
     reader.bits(2)?;
 
+    // frame_sync_code
     if reader.bits(24)? != 0x0049_8342 {
       return None;
     }
