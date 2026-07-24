@@ -83,7 +83,6 @@ use {
     ordinal::Ordinal,
     owo_colorize_ext::OwoColorizeExt,
     package::Package,
-    package_view::PackageView,
     path_error::PathError,
     percent_encode::PercentEncode,
     private_key_error::PrivateKeyError,
@@ -118,6 +117,7 @@ use {
     video_format::VideoFormat,
     video_info::VideoInfo,
     video_type::VideoType,
+    view::View,
   },
   axum::{
     body::Body,
@@ -324,7 +324,6 @@ mod or;
 mod ordinal;
 mod owo_colorize_ext;
 mod package;
-mod package_view;
 mod page;
 mod path_error;
 mod percent_encode;
@@ -370,6 +369,7 @@ mod video_error;
 mod video_format;
 mod video_info;
 mod video_type;
+mod view;
 
 #[cfg(test)]
 mod derive;

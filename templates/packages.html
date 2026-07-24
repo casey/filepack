@@ -1,6 +1,6 @@
 <h1>Packages</h1>
 %% match self.view {
-%%   PackageView::Grid => {
+%%   View::Grid => {
 <ul class=grid>
 %%     for (fingerprint, artwork, _creator, _title) in self.packages() {
   <li>
@@ -15,7 +15,7 @@
 %%     }
 </ul>
 %%   }
-%%   PackageView::List => {
+%%   View::List => {
 <ul>
 %%     for (fingerprint, _artwork, creator, title) in self.packages() {
   <li>

@@ -37,7 +37,7 @@ pub(crate) struct AuthConfig {
 
 #[derive(Deserialize)]
 pub(crate) struct PackagesQuery {
-  view: Option<PackageView>,
+  view: Option<View>,
 }
 
 pub(crate) struct RedirectConfig {

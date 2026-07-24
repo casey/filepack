@@ -3,7 +3,7 @@ use super::*;
 #[derive(Boilerplate)]
 pub(crate) struct PackagesHtml {
   pub(crate) packages: Vec<(Fingerprint, Option<Metadata>)>,
-  pub(crate) view: PackageView,
+  pub(crate) view: View,
 }
 
 impl PackagesHtml {
@@ -53,7 +53,7 @@ mod tests {
     assert_eq!(
       PackagesHtml {
         packages: vec![(fingerprint, Some(metadata)), (fingerprint, None)],
-        view: PackageView::Grid,
+        view: View::Grid,
       }
       .to_string(),
       unindent(&format!(
