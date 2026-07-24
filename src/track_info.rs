@@ -10,7 +10,7 @@ pub(crate) enum TrackInfo {
     #[n(0)]
     dimensions: Dimensions,
     #[n(1)]
-    frame_count: u64,
+    frames: u64,
   },
 }
 
@@ -28,7 +28,7 @@ mod tests {
           height: 1,
           width: 2,
         },
-        frame_count: 0,
+        frames: 0,
       },
       "8201a200a2000101020100",
     );

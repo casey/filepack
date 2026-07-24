@@ -161,7 +161,7 @@ impl Video {
                 height: avc1.height.into(),
                 width: avc1.width.into(),
               },
-              frame_count: trak.mdia.minf.stbl.stsz.sample_count.into(),
+              frames: trak.mdia.minf.stbl.stsz.sample_count.into(),
             },
           });
         }
@@ -221,17 +221,15 @@ impl Video {
       .ok()
       .context(video_error::DurationOverflow)?;
 
-    let mut video_codec = None;
-    let mut video_track_number = None;
-    let mut dimensions = None;
-    let mut audio_codec = None;
+    let mut video_track = None;
+    let mut audio_track = None;
 
     for (index, track) in file.tracks().iter().enumerate() {
       match track.track_type() {
         TrackType::Audio => {
-          ensure!(audio_codec.is_none(), video_error::AudioTrackMultiple);
+          ensure!(audio_track.is_none(), video_error::AudioTrackMultiple);
 
-          audio_codec = Some(match track.codec_id() {
+          let codec = match track.codec_id() {
             "A_OPUS" => Codec::Opus,
             "A_VORBIS" => Codec::Vorbis,
             codec => {
@@ -243,12 +241,17 @@ impl Video {
                 .build(),
               );
             }
+          };
+
+          audio_track = Some(Track {
+            codec,
+            info: TrackInfo::Audio,
           });
         }
         TrackType::Video => {
-          ensure!(video_codec.is_none(), video_error::VideoTrackMultiple);
+          ensure!(video_track.is_none(), video_error::VideoTrackMultiple);
 
-          video_codec = Some(match track.codec_id() {
+          let codec = match track.codec_id() {
             "V_VP8" => Codec::Vp8,
             "V_VP9" => Codec::Vp9,
             codec => {
@@ -260,18 +263,25 @@ impl Video {
                 .build(),
               );
             }
-          });
+          };
 
           let video = track
             .video()
             .context(video_error::VideoSettingsMissing { track: index })?;
 
-          dimensions = Some(Dimensions {
-            height: video.pixel_height().get(),
-            width: video.pixel_width().get(),
-          });
-
-          video_track_number = Some(track.track_number().get());
+          video_track = Some((
+            Track {
+              codec,
+              info: TrackInfo::Video {
+                dimensions: Dimensions {
+                  height: video.pixel_height().get(),
+                  width: video.pixel_width().get(),
+                },
+                frames: 0,
+              },
+            },
+            track.track_number().get(),
+          ));
         }
         ty => {
           return Err(
@@ -295,35 +305,34 @@ impl Video {
       }
     }
 
-    let video_codec = video_codec.context(video_error::VideoTrackMissing)?;
-    let dimensions = dimensions.unwrap();
-    let video_track_number = video_track_number.unwrap();
+    let (mut video_track, video_track_number) =
+      video_track.context(video_error::VideoTrackMissing)?;
 
-    let mut frame_count = 0;
-    let mut frame = Frame::default();
-
-    while file
-      .next_frame(&mut frame)
-      .context(video_error::DecodeWebm)?
     {
-      if frame.track == video_track_number {
-        frame_count += 1;
+      let TrackInfo::Video {
+        frames: frame_count,
+        ..
+      } = &mut video_track.info
+      else {
+        unreachable!();
+      };
+
+      let mut frame = Frame::default();
+
+      while file
+        .next_frame(&mut frame)
+        .context(video_error::DecodeWebm)?
+      {
+        if frame.track == video_track_number {
+          *frame_count += 1;
+        }
       }
     }
 
-    let mut tracks = vec![Track {
-      codec: video_codec,
-      info: TrackInfo::Video {
-        dimensions,
-        frame_count,
-      },
-    }];
+    let mut tracks = vec![video_track];
 
-    if let Some(audio_codec) = audio_codec {
-      tracks.push(Track {
-        codec: audio_codec,
-        info: TrackInfo::Audio,
-      });
+    if let Some(audio_track) = audio_track {
+      tracks.push(audio_track);
     }
 
     Ok(VideoInfo { duration, tracks })
@@ -400,7 +409,7 @@ mod tests {
             height: 1,
             width: 2,
           },
-          frame_count: 0,
+          frames: 0,
         },
       },
     ];
@@ -433,7 +442,7 @@ mod tests {
                 height: 1,
                 width: 2,
               },
-              frame_count: 0,
+              frames: 0,
             },
           },
           Track {
@@ -456,7 +465,7 @@ mod tests {
         codec: Codec::H264,
         info: TrackInfo::Video {
           dimensions: Dimensions::default(),
-          frame_count: 0,
+          frames: 0,
         },
       },
       Track {
@@ -475,7 +484,7 @@ mod tests {
         height: 1,
         width: 2,
       },
-      frame_count: 0,
+      frames: 0,
     };
 
     let mut bob = "bob.webm".parse::<Video>().unwrap();
@@ -485,7 +494,7 @@ mod tests {
         codec: Codec::Vp9,
         info: TrackInfo::Video {
           dimensions: Dimensions::default(),
-          frame_count: 0,
+          frames: 0,
         },
       },
       Track {
@@ -576,7 +585,7 @@ mod tests {
                 height: 1,
                 width: 2,
               },
-              frame_count: 0,
+              frames: 0,
             },
           },
           Track {
@@ -598,7 +607,7 @@ mod tests {
               height: 1,
               width: 2,
             },
-            frame_count: 0,
+            frames: 0,
           },
         }],
       },
@@ -633,7 +642,7 @@ mod tests {
           height: 1,
           width: 2,
         },
-        frame_count: 3,
+        frames: 3,
       },
     );
 
@@ -719,7 +728,7 @@ mod tests {
                 height: 1,
                 width: 2,
               },
-              frame_count: 0,
+              frames: 0,
             },
           },
           Track {
@@ -748,7 +757,7 @@ mod tests {
               height: 1,
               width: 2,
             },
-            frame_count: 0,
+            frames: 0,
           },
         },
         Track {
@@ -778,7 +787,7 @@ mod tests {
                 height: 1,
                 width: 2,
               },
-              frame_count: 0,
+              frames: 0,
             },
           },
           Track {
@@ -817,7 +826,7 @@ mod tests {
                 height: 1,
                 width: 2,
               },
-              frame_count: 0,
+              frames: 0,
             },
           },
           Track {
@@ -845,7 +854,7 @@ mod tests {
                 height: 1,
                 width: 2,
               },
-              frame_count: 0,
+              frames: 0,
             },
           },
           Track {
@@ -867,7 +876,7 @@ mod tests {
               height: 1,
               width: 2,
             },
-            frame_count: 0,
+            frames: 0,
           },
         }],
       },
@@ -902,7 +911,7 @@ mod tests {
           height: 1,
           width: 2,
         },
-        frame_count: 2,
+        frames: 2,
       },
     );
 
@@ -922,7 +931,7 @@ mod tests {
           height: 1,
           width: 2,
         },
-        frame_count: 1,
+        frames: 1,
       },
     );
 
