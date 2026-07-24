@@ -175,7 +175,7 @@ media:
                 "height": 1,
                 "width": 2
               },
-              "frame_count": 30
+              "frames": 30
             }
           },
           {
