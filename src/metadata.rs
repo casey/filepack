@@ -31,54 +31,6 @@ impl Metadata {
   pub(crate) const CBOR_FILENAME: &'static str = "metadata.filemeta";
   pub(crate) const YAML_FILENAME: &'static str = "metadata.yaml";
 
-  pub(crate) fn check_content(&self, root: &Utf8Path) -> Result {
-    if let Some(readme) = &self.readme {
-      Self::check_readme(readme)?;
-    }
-
-    if let Some(package) = &self.package
-      && let Some(readme) = &package.readme
-    {
-      Self::check_readme(readme)?;
-    }
-
-    if let Some(artwork) = &self.artwork {
-      let dimensions = artwork.check_content(root)?;
-
-      ensure! {
-        dimensions.width == dimensions.height,
-        error::ArtworkDimensions {
-          dimensions,
-          path: root.join(artwork.as_path()),
-        }
-      }
-    }
-
-    if let Some(media) = &self.media {
-      match media {
-        Media::Audio { tracks } => {
-          Audio::check_positions(tracks).context(error::AudioPosition)?;
-
-          for audio in tracks {
-            audio.check_content(root)?;
-          }
-        }
-        Media::Image { images } => {
-          for image in images {
-            image.check_content(root)?;
-          }
-        }
-        Media::Video { videos } => {
-          for video in videos {
-            video.check_content(root)?;
-          }
-        }
-      }
-    }
-
-    Ok(())
-  }
-
   pub(crate) fn check_extras(
     &self,
     files: &HashSet<RelativePath>,
@@ -193,6 +145,34 @@ impl Metadata {
 
     Ok(())
   }
+
+  pub(crate) fn validate(&self, root: &Utf8Path) -> Result {
+    if let Some(readme) = &self.readme {
+      Self::check_readme(readme)?;
+    }
+
+    if let Some(package) = &self.package
+      && let Some(readme) = &package.readme
+    {
+      Self::check_readme(readme)?;
+    }
+
+    if let Some(artwork) = &self.artwork {
+      ensure! {
+        artwork.dimensions.width == artwork.dimensions.height,
+        error::ArtworkDimensions {
+          dimensions: artwork.dimensions,
+          path: root.join(artwork.as_path()),
+        }
+      }
+    }
+
+    if let Some(Media::Audio { tracks }) = &self.media {
+      Audio::check_positions(tracks).context(error::AudioPosition)?;
+    }
+
+    Ok(())
+  }
 }
 
 #[cfg(test)]
@@ -201,33 +181,6 @@ mod tests {
     super::*,
     ::image::{DynamicImage, ImageFormat},
   };
-
-  #[test]
-  fn check_content_rejects_invalid_readme_extension() {
-    let (_tempdir, root) = tempdir();
-
-    assert_eq!(
-      Metadata {
-        readme: Some("README.txt".parse().unwrap()),
-        ..default()
-      }
-      .check_content(&root)
-      .unwrap_err()
-      .to_string(),
-      "readme `README.txt` must end in `.md`",
-    );
-
-    assert_eq!(
-      Metadata {
-        package: Some(readme_package("README.txt")),
-        ..default()
-      }
-      .check_content(&root)
-      .unwrap_err()
-      .to_string(),
-      "readme `README.txt` must end in `.md`",
-    );
-  }
 
   #[test]
   fn deserialize_media_audio() {
@@ -521,7 +474,7 @@ mod tests {
       assert_matches_regex!(
         metadata
           .populate(&root)
-          .and_then(|()| metadata.check_content(&root))
+          .and_then(|()| metadata.validate(&root))
           .unwrap_err()
           .to_string(),
         expected
@@ -575,14 +528,7 @@ mod tests {
         ..default()
       };
 
-      assert_matches_regex!(
-        metadata
-          .populate(&root)
-          .and_then(|()| metadata.check_content(&root))
-          .unwrap_err()
-          .to_string(),
-        expected
-      );
+      assert_matches_regex!(metadata.populate(&root).unwrap_err().to_string(), expected);
     }
 
     case(
@@ -725,7 +671,7 @@ mod tests {
 
       metadata.populate(&root).unwrap();
       metadata.check_files(&paths).unwrap();
-      metadata.check_content(&root).unwrap();
+      metadata.validate(&root).unwrap();
     }
 
     case("cover.jpg", image(10, 10, ImageFormat::Jpeg));
@@ -753,6 +699,33 @@ mod tests {
 
     metadata.populate(&root).unwrap();
     metadata.check_files(&paths).unwrap();
-    metadata.check_content(&root).unwrap();
+    metadata.validate(&root).unwrap();
+  }
+
+  #[test]
+  fn validate_rejects_invalid_readme_extension() {
+    let (_tempdir, root) = tempdir();
+
+    assert_eq!(
+      Metadata {
+        readme: Some("README.txt".parse().unwrap()),
+        ..default()
+      }
+      .validate(&root)
+      .unwrap_err()
+      .to_string(),
+      "readme `README.txt` must end in `.md`",
+    );
+
+    assert_eq!(
+      Metadata {
+        package: Some(readme_package("README.txt")),
+        ..default()
+      }
+      .validate(&root)
+      .unwrap_err()
+      .to_string(),
+      "readme `README.txt` must end in `.md`",
+    );
   }
 }

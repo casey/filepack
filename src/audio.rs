@@ -51,63 +51,6 @@ impl Audio {
     })
   }
 
-  pub(crate) fn check_content(&self, root: &Utf8Path) -> Result {
-    let path = root.join(self.as_path());
-
-    match self.ty {
-      AudioType::Flac => self.check_content_flac(&path),
-    }
-  }
-
-  fn check_content_flac(&self, path: &Utf8Path) -> Result {
-    let (_reader, audio_info) = Self::flac_reader(path)?;
-
-    let AudioInfo {
-      channels,
-      sample_bits,
-      sample_rate,
-      samples,
-    } = audio_info;
-
-    ensure! {
-      channels == self.channels,
-      error::AudioChannelsMismatch {
-        actual: channels,
-        expected: self.channels,
-        path,
-      },
-    }
-
-    ensure! {
-      sample_bits == self.sample_bits,
-      error::AudioSampleBitsMismatch {
-        actual: sample_bits,
-        expected: self.sample_bits,
-        path,
-      },
-    }
-
-    ensure! {
-      sample_rate == self.sample_rate,
-      error::AudioSampleRateMismatch {
-        actual: sample_rate,
-        expected: self.sample_rate,
-        path,
-      },
-    }
-
-    ensure! {
-      samples == self.samples,
-      error::AudioSampleCountMismatch {
-        actual: samples,
-        expected: self.samples,
-        path,
-      },
-    }
-
-    Ok(())
-  }
-
   pub(crate) fn check_positions(tracks: &[Audio]) -> Result<(), AudioError> {
     let Some(first) = tracks.first() else {
       return Ok(());
@@ -357,57 +300,6 @@ impl Item for Audio {
 #[cfg(test)]
 mod tests {
   use super::*;
-
-  #[test]
-  fn check_content() {
-    #[track_caller]
-    fn case(audio: &Audio) -> Result {
-      let (_tempdir, root) = tempdir();
-
-      std::fs::write(root.join("foo.flac"), flac(&[], 44100)).unwrap();
-
-      audio.check_content(&root)
-    }
-
-    let mut audio = "foo.flac".parse::<Audio>().unwrap();
-    audio.channels = 2;
-    audio.sample_bits = 16;
-    audio.sample_rate = 44100;
-    audio.samples = 44100;
-
-    case(&audio).unwrap();
-
-    audio.samples = 1;
-
-    assert_matches_regex!(
-      case(&audio).unwrap_err().to_string(),
-      r"^track `.*foo\.flac` has 44100 samples but metadata sample count is 1$",
-    );
-
-    audio.samples = 44100;
-    audio.sample_rate = 22050;
-
-    assert_matches_regex!(
-      case(&audio).unwrap_err().to_string(),
-      r"^track `.*foo\.flac` has sample rate 44100 but metadata sample rate is 22050$",
-    );
-
-    audio.sample_rate = 44100;
-    audio.sample_bits = 24;
-
-    assert_matches_regex!(
-      case(&audio).unwrap_err().to_string(),
-      r"^track `.*foo\.flac` has 16 bits per sample but metadata sample bits is 24$",
-    );
-
-    audio.sample_bits = 16;
-    audio.channels = 1;
-
-    assert_matches_regex!(
-      case(&audio).unwrap_err().to_string(),
-      r"^track `.*foo\.flac` has 2 channels but metadata channel count is 1$",
-    );
-  }
 
   #[test]
   fn check_positions() {

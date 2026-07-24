@@ -37,10 +37,12 @@ impl Create {
 
     let path = root.join(Metadata::YAML_FILENAME);
 
-    let metadata_cbor = if let Some(yaml) = filesystem::read_to_string_opt(&path)? {
+    let metadata = if let Some(yaml) = filesystem::read_to_string_opt(&path)? {
       let mut metadata = Metadata::deserialize(&path, &yaml)?;
 
       metadata.populate(&root)?;
+
+      metadata.validate(&root)?;
 
       let cbor = metadata.encode_to_vec();
 
@@ -55,9 +57,18 @@ impl Create {
 
       filesystem::write(&path, &cbor)?;
 
-      Some(cbor)
+      Some((metadata, cbor))
     } else {
-      filesystem::read_opt(&root.join(Metadata::CBOR_FILENAME))?
+      let path = root.join(Metadata::CBOR_FILENAME);
+
+      ensure! {
+        !filesystem::exists(&path)?,
+        error::MetadataOrphan {
+          path,
+        },
+      }
+
+      None
     };
 
     let cleaned_manifest = current_dir.join(&manifest_path).lexiclean();
@@ -151,17 +162,10 @@ impl Create {
       return Err(error::Lint { count: lint_errors }.build());
     }
 
-    if let Some(cbor) = &metadata_cbor {
-      let path = root.join(Metadata::CBOR_FILENAME);
-
-      let metadata =
-        Metadata::decode_from_slice(cbor).context(error::DecodeMetadataCbor { path })?;
-
+    if let Some((metadata, _cbor)) = &metadata {
       let files = paths.keys().cloned().collect::<HashSet<RelativePath>>();
 
       metadata.check_files(&files)?;
-
-      metadata.check_content(&root)?;
 
       if metadata.media.is_some() {
         metadata.check_extras(&files, &empty)?;
@@ -198,7 +202,7 @@ impl Create {
       bar.inc(file.size);
     }
 
-    let embedded = if let Some(cbor) = metadata_cbor {
+    let embedded = if let Some((_metadata, cbor)) = metadata {
       BTreeMap::from([(Hash::bytes(&cbor), cbor)])
     } else {
       BTreeMap::new()

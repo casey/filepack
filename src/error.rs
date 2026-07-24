@@ -15,15 +15,6 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     expected: Hash,
   },
-  #[snafu(display(
-    "track `{path}` has {actual} channels but metadata channel count is {expected}"
-  ))]
-  AudioChannelsMismatch {
-    actual: u64,
-    backtrace: Option<Backtrace>,
-    expected: u64,
-    path: DisplayPath,
-  },
   #[snafu(display("failed to decode track `{path}`"))]
   AudioDecode {
     backtrace: Option<Backtrace>,
@@ -35,34 +26,9 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     source: AudioError,
   },
-  #[snafu(display(
-    "track `{path}` has {actual} bits per sample but metadata sample bits is {expected}"
-  ))]
-  AudioSampleBitsMismatch {
-    actual: u64,
-    backtrace: Option<Backtrace>,
-    expected: u64,
-    path: DisplayPath,
-  },
-  #[snafu(display("track `{path}` has {actual} samples but metadata sample count is {expected}"))]
-  AudioSampleCountMismatch {
-    actual: u64,
-    backtrace: Option<Backtrace>,
-    expected: u64,
-    path: DisplayPath,
-  },
   #[snafu(display("track `{path}` has unknown sample count"))]
   AudioSampleCountUnknown {
     backtrace: Option<Backtrace>,
-    path: DisplayPath,
-  },
-  #[snafu(display(
-    "track `{path}` has sample rate {actual} but metadata sample rate is {expected}"
-  ))]
-  AudioSampleRateMismatch {
-    actual: u64,
-    backtrace: Option<Backtrace>,
-    expected: u64,
     path: DisplayPath,
   },
   #[snafu(display("track `{path}` has empty `{tag}` tag"))]
@@ -314,13 +280,6 @@ pub enum Error {
     path: DisplayPath,
     source: png::DecodingError,
   },
-  #[snafu(display("image `{path}` is {actual} but metadata dimensions are {expected}"))]
-  ImageDimensionsMismatch {
-    actual: Dimensions,
-    backtrace: Option<Backtrace>,
-    expected: Dimensions,
-    path: DisplayPath,
-  },
   #[snafu(display("internal error, this may indicate a bug in filepack: {message}"))]
   Internal {
     backtrace: Option<Backtrace>,
@@ -397,6 +356,11 @@ pub enum Error {
   ManifestTsv { backtrace: Option<Backtrace> },
   #[snafu(display("metadata `{path}` already exists"))]
   MetadataAlreadyExists {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+  },
+  #[snafu(display("metadata `{path}` exists but `metadata.yaml` does not"))]
+  MetadataOrphan {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
