@@ -51,7 +51,7 @@ mod tests {
             height: 1,
             width: 2,
           },
-          frame_count: 0,
+          frames: 0,
         },
       },
       "H.264 2×1",
@@ -65,7 +65,7 @@ mod tests {
             height: 1080,
             width: 1920,
           },
-          frame_count: 0,
+          frames: 0,
         },
       },
       "H.264 1080p",
@@ -90,7 +90,7 @@ mod tests {
             height: 1,
             width: 2,
           },
-          frame_count: 0,
+          frames: 0,
         },
       },
       "a20001018201a200a2000101020100",
@@ -116,11 +116,11 @@ mod tests {
             height: 1,
             width: 2,
           },
-          frame_count: 0,
+          frames: 0,
         },
       })
       .unwrap(),
-      r#"{"codec":"h264","info":{"type":"video","dimensions":{"height":1,"width":2},"frame_count":0}}"#,
+      r#"{"codec":"h264","info":{"type":"video","dimensions":{"height":1,"width":2},"frames":0}}"#,
     );
   }
 }

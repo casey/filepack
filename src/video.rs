@@ -798,7 +798,7 @@ mod tests {
         ty: VideoType::Mp4,
       })
       .unwrap(),
-      r#"{"duration":0,"filename":"foo.mp4","tracks":[{"codec":"h264","info":{"type":"video","dimensions":{"height":1,"width":2},"frame_count":0}},{"codec":"mp3","info":{"type":"audio"}}],"type":"mp4"}"#,
+      r#"{"duration":0,"filename":"foo.mp4","tracks":[{"codec":"h264","info":{"type":"video","dimensions":{"height":1,"width":2},"frames":0}},{"codec":"mp3","info":{"type":"audio"}}],"type":"mp4"}"#,
     );
   }
 
