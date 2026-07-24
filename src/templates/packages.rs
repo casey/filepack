@@ -47,6 +47,8 @@ mod tests {
 
     let metadata = Metadata {
       artwork: Some("foo.png".parse().unwrap()),
+      creator: Some("foo".parse().unwrap()),
+      title: Some("bar".parse().unwrap()),
       ..default()
     };
 
@@ -69,6 +71,8 @@ mod tests {
               <a href=/package/{fingerprint}>
                 <img loading=lazy src=/artwork/{fingerprint} width=150 height=150>
               </a>
+              <span class=title>bar</span>
+              <span class=creator>foo</span>
             </li>
             <li>
               <a href=/package/{fingerprint}></a>

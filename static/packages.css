@@ -24,6 +24,16 @@
     object-fit: contain;
     width: 100%;
   }
+
+  .title {
+    color: var(--primary);
+    display: block;
+  }
+
+  .creator {
+    color: var(--secondary);
+    display: block;
+  }
 }
 
 header {
