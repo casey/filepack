@@ -1,17 +1,36 @@
 <h1>Packages</h1>
+%% match self.view {
+%%   View::Grid => {
+<ul class=grid>
+%%     for (fingerprint, metadata) in &self.packages {
+  <li>
+%%       if metadata.as_ref().is_some_and(|metadata| metadata.artwork.is_some()) {
+    <a href=/package/{{ fingerprint }}>
+      <img loading=lazy src=/artwork/{{ fingerprint }} width=150 height=150>
+    </a>
+%%       } else {
+    <a href=/package/{{ fingerprint }}></a>
+%%       }
+  </li>
+%%     }
+</ul>
+%%   }
+%%   View::List => {
 <ul>
-%% for (fingerprint, creator, title) in self.packages() {
+%%     for (fingerprint, creator, title) in self.packages() {
   <li>
     <a href=/package/{{ fingerprint }}>
-%% if let Some(title) = title {
-%%   if let Some(creator) = creator {
+%%       if let Some(title) = title {
+%%         if let Some(creator) = creator {
       {{ creator }} -
-%%   }
+%%         }
       {{ title }}
-%% } else {
+%%       } else {
       <code>{{ fingerprint }}</code>
-%% }
+%%       }
     </a>
   </li>
-%% }
+%%     }
 </ul>
+%%   }
+%% }

@@ -2,7 +2,7 @@ use {
   super::*,
   axum::{
     Router,
-    extract::{Extension, Path, Request},
+    extract::{Extension, Path, Query, Request},
     http::{HeaderValue, Uri},
     middleware::{self, Next},
     response::{IntoResponse, Redirect, Response},
@@ -15,7 +15,7 @@ use {
   },
   std::net::TcpStream,
   templates::{
-    AudioHtml, DirectoryHtml, FilesHtml, ImageHtml, PackageHtml, PackagesHtml, VideoHtml,
+    AudioHtml, DirectoryHtml, FilesHtml, ImageHtml, PackageHtml, PackagesHtml, VideoHtml, View,
   },
   tokio::{net::TcpListener, runtime, task::block_in_place},
   tower_http::set_header::SetResponseHeaderLayer,
