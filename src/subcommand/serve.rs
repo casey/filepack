@@ -2,7 +2,7 @@ use {
   super::*,
   axum::{
     Router,
-    extract::{Extension, Path, Request},
+    extract::{Extension, Path, Query, Request},
     http::{HeaderValue, Uri},
     middleware::{self, Next},
     response::{IntoResponse, Redirect, Response},
@@ -33,6 +33,11 @@ type ServerExtension = Extension<Arc<Server>>;
 pub(crate) struct AuthConfig {
   pub(crate) admin: Option<PublicKey>,
   pub(crate) audience: Option<String>,
+}
+
+#[derive(Deserialize)]
+pub(crate) struct PackagesQuery {
+  view: Option<View>,
 }
 
 pub(crate) struct RedirectConfig {

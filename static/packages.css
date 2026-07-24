@@ -1,14 +1,4 @@
-time {
-  margin-left: 0.5rem;
-}
-
-.artwork {
-  border-radius: 2%;
-  height: auto;
-  max-width: 100%;
-}
-
-.thumbnails {
+.grid {
   display: grid;
   gap: 12px;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -16,6 +6,7 @@ time {
   padding-left: 0;
 
   a {
+    aspect-ratio: 1 / 1;
     border-radius: 8px;
     border: 1px solid var(--border);
     display: block;
@@ -28,8 +19,8 @@ time {
   }
 
   img {
-    aspect-ratio: 1 / 1;
     display: block;
+    height: 100%;
     object-fit: contain;
     width: 100%;
   }

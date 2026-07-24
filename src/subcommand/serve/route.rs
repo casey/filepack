@@ -210,11 +210,15 @@ pub(crate) async fn package_item(
   })
 }
 
-pub(crate) async fn packages(server: ServerExtension) -> PageResult<PackagesHtml> {
+pub(crate) async fn packages(
+  server: ServerExtension,
+  Query(query): Query<PackagesQuery>,
+) -> PageResult<PackagesHtml> {
   block_in_place(|| {
     Ok(
       PackagesHtml {
         packages: server.packages()?,
+        view: query.view.unwrap_or_default(),
       }
       .into(),
     )

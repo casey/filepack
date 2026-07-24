@@ -1578,6 +1578,30 @@ fn packages_empty() {
     .get("/packages")
     .assert_page(PackagesHtml {
       packages: Vec::new(),
+      view: View::List,
+    })
+    .send();
+}
+
+#[test]
+fn packages_grid() {
+  let server = TestServer::new();
+
+  let metadata = Metadata {
+    artwork: Some("foo.png".parse().unwrap()),
+    ..default()
+  };
+
+  let fingerprint = PackageBuilder::new()
+    .metadata(&metadata)
+    .file("foo.png", b"bar")
+    .upload(&server);
+
+  server
+    .get("/packages?view=grid")
+    .assert_page(PackagesHtml {
+      packages: vec![(fingerprint, Some(metadata))],
+      view: View::Grid,
     })
     .send();
 }
@@ -1598,7 +1622,19 @@ fn packages_include_creators_and_titles() {
     .get("/packages")
     .assert_page(PackagesHtml {
       packages: vec![(fingerprint, Some(metadata))],
+      view: View::List,
     })
+    .send();
+}
+
+#[test]
+fn packages_invalid_view() {
+  TestServer::new()
+    .get("/packages?view=foo")
+    .status(StatusCode::BAD_REQUEST)
+    .assert_body(
+      "Failed to deserialize query string: view: unknown variant `foo`, expected `grid` or `list`",
+    )
     .send();
 }
 
@@ -1622,7 +1658,10 @@ fn packages_non_empty() {
 
   server
     .get("/packages")
-    .assert_page(PackagesHtml { packages })
+    .assert_page(PackagesHtml {
+      packages,
+      view: View::List,
+    })
     .send();
 }
 
