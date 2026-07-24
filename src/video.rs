@@ -21,31 +21,29 @@ impl Video {
   pub(crate) fn check_content(&self, root: &Utf8Path) -> Result {
     let path = root.join(self.as_path());
 
-    let (duration, tracks) = self.info(root)?;
+    let info = self.info(root)?;
 
-    self
-      .check_info(duration, &tracks)
-      .context(error::Video { path })
+    self.check_info(&info).context(error::Video { path })
   }
 
-  fn check_info(&self, duration: u64, tracks: &[Track]) -> Result<(), VideoError> {
+  fn check_info(&self, info: &VideoInfo) -> Result<(), VideoError> {
     ensure! {
-      duration == self.duration,
+      info.duration == self.duration,
       video_error::DurationMismatch {
-        actual: duration,
+        actual: info.duration,
         expected: self.duration,
       },
     }
 
     ensure! {
-      tracks.len() == self.tracks.len(),
+      info.tracks.len() == self.tracks.len(),
       video_error::TrackCountMismatch {
-        actual: tracks.len(),
+        actual: info.tracks.len(),
         expected: self.tracks.len(),
       },
     }
 
-    for (index, (actual, expected)) in tracks.iter().zip(&self.tracks).enumerate() {
+    for (index, (actual, expected)) in info.tracks.iter().zip(&self.tracks).enumerate() {
       ensure! {
         actual == expected,
         video_error::TrackMismatch {
@@ -87,7 +85,7 @@ impl Video {
     formats
   }
 
-  fn info(&self, root: &Utf8Path) -> Result<(u64, Vec<Track>)> {
+  fn info(&self, root: &Utf8Path) -> Result<VideoInfo> {
     let path = root.join(self.as_path());
 
     match self.ty {
@@ -108,7 +106,7 @@ impl Video {
     }
   }
 
-  fn info_mp4<T: Read + Seek>(reader: T, size: u64) -> Result<(u64, Vec<Track>), VideoError> {
+  fn info_mp4<T: Read + Seek>(reader: T, size: u64) -> Result<VideoInfo, VideoError> {
     use re_mp4::{Mp4, Mp4aBox, StsdBoxContent};
 
     fn mp4a_codec(mp4a: &Mp4aBox) -> Option<Codec> {
@@ -228,10 +226,10 @@ impl Video {
       tracks.push(track);
     }
 
-    Ok((duration, tracks))
+    Ok(VideoInfo { duration, tracks })
   }
 
-  fn info_webm<T: Read + Seek>(reader: T) -> Result<(u64, Vec<Track>), VideoError> {
+  fn info_webm<T: Read + Seek>(reader: T) -> Result<VideoInfo, VideoError> {
     use matroska_demuxer::{MatroskaFile, TrackType};
 
     let file = MatroskaFile::open(BufReader::new(reader)).context(video_error::DecodeWebm)?;
@@ -346,14 +344,14 @@ impl Video {
       });
     }
 
-    Ok((duration, tracks))
+    Ok(VideoInfo { duration, tracks })
   }
 
   pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result {
-    let (duration, tracks) = self.info(root)?;
+    let info = self.info(root)?;
 
-    self.duration = duration;
-    self.tracks = tracks;
+    self.duration = info.duration;
+    self.tracks = info.tracks;
 
     Ok(())
   }
@@ -420,9 +418,9 @@ mod tests {
     ];
 
     video
-      .check_info(
-        0,
-        &[
+      .check_info(&VideoInfo {
+        duration: 0,
+        tracks: vec![
           Track {
             codec: Codec::H264,
             info: TrackInfo::Video {
@@ -434,25 +432,31 @@ mod tests {
             info: TrackInfo::Audio,
           },
         ],
-      )
+      })
       .unwrap();
 
     assert_eq!(
-      video.check_info(1, &[]).unwrap_err().to_string(),
+      video
+        .check_info(&VideoInfo {
+          duration: 1,
+          tracks: Vec::new(),
+        })
+        .unwrap_err()
+        .to_string(),
       "video has duration 1ms but metadata has duration 0ms",
     );
 
     assert_eq!(
       video
-        .check_info(
-          0,
-          &[Track {
+        .check_info(&VideoInfo {
+          duration: 0,
+          tracks: vec![Track {
             codec: Codec::H264,
             info: TrackInfo::Video {
               dimensions: Dimensions::default()
             },
           }],
-        )
+        })
         .unwrap_err()
         .to_string(),
       "video has 1 track but metadata has 2 tracks",
@@ -460,9 +464,9 @@ mod tests {
 
     assert_eq!(
       video
-        .check_info(
-          0,
-          &[
+        .check_info(&VideoInfo {
+          duration: 0,
+          tracks: vec![
             Track {
               codec: Codec::H264,
               info: TrackInfo::Video {
@@ -477,7 +481,7 @@ mod tests {
               info: TrackInfo::Audio,
             },
           ],
-        )
+        })
         .unwrap_err()
         .to_string(),
       "video track 0 `H.264 2×1` doesn't match metadata track `H.264 0×0`",
@@ -485,9 +489,9 @@ mod tests {
 
     assert_eq!(
       video
-        .check_info(
-          0,
-          &[
+        .check_info(&VideoInfo {
+          duration: 0,
+          tracks: vec![
             Track {
               codec: Codec::H264,
               info: TrackInfo::Video {
@@ -499,7 +503,7 @@ mod tests {
               info: TrackInfo::Audio,
             },
           ],
-        )
+        })
         .unwrap_err()
         .to_string(),
       "video track 1 `MP3` doesn't match metadata track `AAC`",
@@ -704,7 +708,7 @@ mod tests {
   #[test]
   fn mp4_info() {
     #[track_caller]
-    fn case(builder: Mp4Builder) -> Result<(u64, Vec<Track>), VideoError> {
+    fn case(builder: Mp4Builder) -> Result<VideoInfo, VideoError> {
       let bytes = builder.build();
       let size = bytes.len().try_into().unwrap();
       Video::info_mp4(io::Cursor::new(bytes), size)
@@ -717,9 +721,9 @@ mod tests {
 
     assert_eq!(
       case(Mp4Builder::new().video_track(2, 1).audio_track(0x40)).unwrap(),
-      (
-        0,
-        vec![
+      VideoInfo {
+        duration: 0,
+        tracks: vec![
           Track {
             codec: Codec::H264,
             info: TrackInfo::Video {
@@ -734,14 +738,14 @@ mod tests {
             info: TrackInfo::Audio,
           },
         ],
-      ),
+      },
     );
 
     assert_eq!(
       case(Mp4Builder::new().video_track(2, 1)).unwrap(),
-      (
-        0,
-        vec![Track {
+      VideoInfo {
+        duration: 0,
+        tracks: vec![Track {
           codec: Codec::H264,
           info: TrackInfo::Video {
             dimensions: Dimensions {
@@ -750,7 +754,7 @@ mod tests {
             }
           },
         }],
-      ),
+      },
     );
 
     assert_eq!(
@@ -761,14 +765,14 @@ mod tests {
           .video_track(2, 1),
       )
       .unwrap()
-      .0,
+      .duration,
       500,
     );
 
     assert_eq!(
       case(Mp4Builder::new().timescale(3).duration(1).video_track(2, 1))
         .unwrap()
-        .0,
+        .duration,
       333,
     );
 
@@ -928,7 +932,7 @@ mod tests {
   #[test]
   fn webm_info() {
     #[track_caller]
-    fn case(builder: WebmBuilder) -> Result<(u64, Vec<Track>), VideoError> {
+    fn case(builder: WebmBuilder) -> Result<VideoInfo, VideoError> {
       Video::info_webm(io::Cursor::new(builder.build()))
     }
 
@@ -939,9 +943,9 @@ mod tests {
 
     assert_eq!(
       case(WebmBuilder::new().video_track(2, 1).audio_track("A_OPUS")).unwrap(),
-      (
-        0,
-        vec![
+      VideoInfo {
+        duration: 0,
+        tracks: vec![
           Track {
             codec: Codec::Vp9,
             info: TrackInfo::Video {
@@ -956,7 +960,7 @@ mod tests {
             info: TrackInfo::Audio,
           },
         ],
-      ),
+      },
     );
 
     assert_eq!(
@@ -966,9 +970,9 @@ mod tests {
           .audio_track("A_VORBIS"),
       )
       .unwrap(),
-      (
-        0,
-        vec![
+      VideoInfo {
+        duration: 0,
+        tracks: vec![
           Track {
             codec: Codec::Vp8,
             info: TrackInfo::Video {
@@ -983,14 +987,14 @@ mod tests {
             info: TrackInfo::Audio,
           },
         ],
-      ),
+      },
     );
 
     assert_eq!(
       case(WebmBuilder::new().video_track(2, 1)).unwrap(),
-      (
-        0,
-        vec![Track {
+      VideoInfo {
+        duration: 0,
+        tracks: vec![Track {
           codec: Codec::Vp9,
           info: TrackInfo::Video {
             dimensions: Dimensions {
@@ -999,13 +1003,13 @@ mod tests {
             }
           },
         }],
-      ),
+      },
     );
 
     assert_eq!(
       case(WebmBuilder::new().duration(1500.0).video_track(2, 1))
         .unwrap()
-        .0,
+        .duration,
       1500,
     );
 
@@ -1017,7 +1021,7 @@ mod tests {
           .video_track(2, 1),
       )
       .unwrap()
-      .0,
+      .duration,
       6,
     );
 
