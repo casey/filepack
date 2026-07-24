@@ -252,6 +252,7 @@ impl Video {
       .context(video_error::TimestampScale { timestamp_scale })?;
 
     let duration = Duration::try_from_secs_f64(ticks * f64::from(timestamp_scale) / 1e9)
+      .ok()
       .context(video_error::DurationInvalid)?;
 
     let duration = u64::try_from(duration.as_millis())

@@ -16,9 +16,7 @@ pub enum VideoError {
   #[snafu(display("expected DocType `webm` but found `{doc_type}`"))]
   DocType { doc_type: String },
   #[snafu(display("invalid duration"))]
-  DurationInvalid {
-    source: std::time::TryFromFloatSecsError,
-  },
+  DurationInvalid,
   #[snafu(display("video has duration {actual}ms but metadata has duration {expected}ms"))]
   DurationMismatch { actual: u64, expected: u64 },
   #[snafu(display("missing duration"))]
