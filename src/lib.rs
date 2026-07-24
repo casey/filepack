@@ -117,7 +117,6 @@ use {
     video_format::VideoFormat,
     video_info::VideoInfo,
     video_type::VideoType,
-    vp9_frame_header::Vp9FrameHeader,
   },
   axum::{
     body::Body,
@@ -369,7 +368,6 @@ mod video_error;
 mod video_format;
 mod video_info;
 mod video_type;
-mod vp9_frame_header;
 
 #[cfg(test)]
 mod derive;
