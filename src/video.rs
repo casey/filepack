@@ -231,6 +231,19 @@ impl Video {
       .ok()
       .context(video_error::DurationOverflow)?;
 
+    let mut frame = Frame::default();
+
+    let mut frames = HashMap::<u64, (u64, u64)>::new();
+
+    while file
+      .next_frame(&mut frame)
+      .context(video_error::DecodeWebm)?
+    {
+      let (count, size) = frames.entry(frame.track).or_default();
+      *count += 1;
+      *size += frame.data.len().into_u64();
+    }
+
     let mut video_track = None;
     let mut audio_track = None;
 
@@ -253,14 +266,16 @@ impl Video {
             }
           };
 
-          audio_track = Some((
-            Track {
-              codec,
-              info: TrackInfo::Audio,
-              size: 0,
-            },
-            track.track_number().get(),
-          ));
+          let (_frames, size) = frames
+            .get(&track.track_number().into())
+            .copied()
+            .unwrap_or_default();
+
+          audio_track = Some(Track {
+            codec,
+            info: TrackInfo::Audio,
+            size,
+          });
         }
         TrackType::Video => {
           ensure!(video_track.is_none(), video_error::VideoTrackMultiple);
@@ -283,20 +298,22 @@ impl Video {
             .video()
             .context(video_error::VideoSettingsMissing { track: index })?;
 
-          video_track = Some((
-            Track {
-              codec,
-              info: TrackInfo::Video {
-                dimensions: Dimensions {
-                  height: video.pixel_height().get(),
-                  width: video.pixel_width().get(),
-                },
-                frames: 0,
+          let (frames, size) = frames
+            .get(&track.track_number().into())
+            .copied()
+            .unwrap_or_default();
+
+          video_track = Some(Track {
+            codec,
+            info: TrackInfo::Video {
+              dimensions: Dimensions {
+                height: video.pixel_height().get(),
+                width: video.pixel_width().get(),
               },
-              size: 0,
+              frames,
             },
-            track.track_number().get(),
-          ));
+            size,
+          });
         }
         ty => {
           return Err(
@@ -320,40 +337,11 @@ impl Video {
       }
     }
 
-    let (mut video_track, video_track_number) =
-      video_track.context(video_error::VideoTrackMissing)?;
-
-    {
-      let TrackInfo::Video {
-        frames: frame_count,
-        ..
-      } = &mut video_track.info
-      else {
-        unreachable!();
-      };
-
-      let mut frame = Frame::default();
-
-      while file
-        .next_frame(&mut frame)
-        .context(video_error::DecodeWebm)?
-      {
-        let size = u64::try_from(frame.data.len()).unwrap();
-
-        if frame.track == video_track_number {
-          *frame_count += 1;
-          video_track.size += size;
-        } else if let Some((audio_track, audio_track_number)) = &mut audio_track
-          && frame.track == *audio_track_number
-        {
-          audio_track.size += size;
-        }
-      }
-    }
+    let video_track = video_track.context(video_error::VideoTrackMissing)?;
 
     let mut tracks = vec![video_track];
 
-    if let Some((audio_track, _)) = audio_track {
+    if let Some(audio_track) = audio_track {
       tracks.push(audio_track);
     }
 
