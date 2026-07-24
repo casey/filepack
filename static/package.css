@@ -17,13 +17,13 @@ time {
 
   a {
     border-radius: 8px;
-    border: 1px solid #222;
+    border: 1px solid var(--border);
     display: block;
     overflow: hidden;
     transition: border-color 150ms;
 
     &:hover, &:focus-visible {
-      border-color: #444;
+      border-color: var(--border-hover);
     }
   }
 
