@@ -396,7 +396,7 @@ mod tests {
     let metadata = Metadata {
       media: Some(Media::Video {
         videos: vec![Video {
-          duration: 0,
+          duration: 225_000,
           filename: "foo.mp4".parse().unwrap(),
           tracks: vec![
             Track {
@@ -451,7 +451,10 @@ mod tests {
             <dd>2×1</dd>
           </dl>
           <ol>
-            <li><a href=/package/{fingerprint}/1>foo.mp4</a></li>
+            <li>
+              <a href=/package/{fingerprint}/1>foo.mp4</a>
+              <time datetime=PT3M45S>3:45</time>
+            </li>
           </ol>
         ",
         fingerprint = test::FINGERPRINT,
