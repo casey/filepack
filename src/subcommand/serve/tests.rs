@@ -1319,6 +1319,7 @@ fn package_item_video() {
                 height: 1,
                 width: 2,
               },
+              frame_count: 0,
             },
           },
           Track {
@@ -1529,6 +1530,7 @@ fn package_page_renders_video_media() {
                 height: 1,
                 width: 2,
               },
+              frame_count: 0,
             },
           },
           Track {

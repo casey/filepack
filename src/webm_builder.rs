@@ -1,4 +1,5 @@
 pub(crate) struct WebmBuilder {
+  blocks: Vec<Vec<u8>>,
   doc_type: String,
   duration: Option<f64>,
   timestamp_scale: Option<u64>,
@@ -36,7 +37,7 @@ impl WebmBuilder {
     let segment = [
       Self::element(&[0x15, 0x49, 0xA9, 0x66], &info),
       Self::element(&[0x16, 0x54, 0xAE, 0x6B], &self.tracks.concat()),
-      Self::element(&[0x1F, 0x43, 0xB6, 0x75], &[]),
+      Self::element(&[0x1F, 0x43, 0xB6, 0x75], &self.blocks.concat()),
     ]
     .concat();
 
@@ -71,8 +72,20 @@ impl WebmBuilder {
     Self::element(id, &value.to_be_bytes())
   }
 
+  #[must_use]
+  pub(crate) fn frame(mut self, track: u8) -> Self {
+    let mut payload = vec![0x80 | track];
+    payload.extend_from_slice(&[0, 0]);
+    payload.push(0x80);
+
+    self.blocks.push(Self::element(&[0xA3], &payload));
+
+    self
+  }
+
   pub(crate) fn new() -> Self {
     Self {
+      blocks: Vec::new(),
       doc_type: "webm".into(),
       duration: Some(0.0),
       timestamp_scale: None,

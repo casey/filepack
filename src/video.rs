@@ -20,7 +20,7 @@ impl Video {
 
   pub(crate) fn dimensions(&self) -> Option<Dimensions> {
     self.tracks.iter().find_map(|track| match track.info {
-      TrackInfo::Video { dimensions } => Some(dimensions),
+      TrackInfo::Video { dimensions, .. } => Some(dimensions),
       TrackInfo::Audio => None,
     })
   }
@@ -161,6 +161,7 @@ impl Video {
                 height: avc1.height.into(),
                 width: avc1.width.into(),
               },
+              frame_count: trak.mdia.minf.stbl.stsz.sample_count.into(),
             },
           });
         }
@@ -191,9 +192,9 @@ impl Video {
   }
 
   fn info_webm<T: Read + Seek>(reader: T) -> Result<VideoInfo, VideoError> {
-    use matroska_demuxer::{MatroskaFile, TrackType};
+    use matroska_demuxer::{Frame, MatroskaFile, TrackType};
 
-    let file = MatroskaFile::open(BufReader::new(reader)).context(video_error::DecodeWebm)?;
+    let mut file = MatroskaFile::open(BufReader::new(reader)).context(video_error::DecodeWebm)?;
 
     let doc_type = file.ebml_header().doc_type().trim_end_matches('\0');
 
@@ -221,6 +222,7 @@ impl Video {
       .context(video_error::DurationOverflow)?;
 
     let mut video_codec = None;
+    let mut video_track_number = None;
     let mut dimensions = None;
     let mut audio_codec = None;
 
@@ -268,6 +270,8 @@ impl Video {
             height: video.pixel_height().get(),
             width: video.pixel_width().get(),
           });
+
+          video_track_number = Some(track.track_number().get());
         }
         ty => {
           return Err(
@@ -293,10 +297,26 @@ impl Video {
 
     let video_codec = video_codec.context(video_error::VideoTrackMissing)?;
     let dimensions = dimensions.unwrap();
+    let video_track_number = video_track_number.unwrap();
+
+    let mut frame_count = 0;
+    let mut frame = Frame::default();
+
+    while file
+      .next_frame(&mut frame)
+      .context(video_error::DecodeWebm)?
+    {
+      if frame.track == video_track_number {
+        frame_count += 1;
+      }
+    }
 
     let mut tracks = vec![Track {
       codec: video_codec,
-      info: TrackInfo::Video { dimensions },
+      info: TrackInfo::Video {
+        dimensions,
+        frame_count,
+      },
     }];
 
     if let Some(audio_codec) = audio_codec {
@@ -380,6 +400,7 @@ mod tests {
             height: 1,
             width: 2,
           },
+          frame_count: 0,
         },
       },
     ];
@@ -412,6 +433,7 @@ mod tests {
                 height: 1,
                 width: 2,
               },
+              frame_count: 0,
             },
           },
           Track {
@@ -421,7 +443,7 @@ mod tests {
         ],
         ty: VideoType::Mp4,
       },
-      "a400030167666f6f2e6d70340282a20001018201a100a200010102a2000201000300",
+      "a400030167666f6f2e6d70340282a20001018201a200a2000101020100a2000201000300",
     );
   }
 
@@ -434,6 +456,7 @@ mod tests {
         codec: Codec::H264,
         info: TrackInfo::Video {
           dimensions: Dimensions::default(),
+          frame_count: 0,
         },
       },
       Track {
@@ -452,6 +475,7 @@ mod tests {
         height: 1,
         width: 2,
       },
+      frame_count: 0,
     };
 
     let mut bob = "bob.webm".parse::<Video>().unwrap();
@@ -461,6 +485,7 @@ mod tests {
         codec: Codec::Vp9,
         info: TrackInfo::Video {
           dimensions: Dimensions::default(),
+          frame_count: 0,
         },
       },
       Track {
@@ -550,7 +575,8 @@ mod tests {
               dimensions: Dimensions {
                 height: 1,
                 width: 2,
-              }
+              },
+              frame_count: 0,
             },
           },
           Track {
@@ -571,7 +597,8 @@ mod tests {
             dimensions: Dimensions {
               height: 1,
               width: 2,
-            }
+            },
+            frame_count: 0,
           },
         }],
       },
@@ -594,6 +621,20 @@ mod tests {
         .unwrap()
         .duration,
       333,
+    );
+
+    assert_eq!(
+      case(Mp4Builder::new().frame_count(3).video_track(2, 1))
+        .unwrap()
+        .tracks[0]
+        .info,
+      TrackInfo::Video {
+        dimensions: Dimensions {
+          height: 1,
+          width: 2,
+        },
+        frame_count: 3,
+      },
     );
 
     error(
@@ -677,7 +718,8 @@ mod tests {
               dimensions: Dimensions {
                 height: 1,
                 width: 2,
-              }
+              },
+              frame_count: 0,
             },
           },
           Track {
@@ -705,7 +747,8 @@ mod tests {
             dimensions: Dimensions {
               height: 1,
               width: 2,
-            }
+            },
+            frame_count: 0,
           },
         },
         Track {
@@ -734,7 +777,8 @@ mod tests {
               dimensions: Dimensions {
                 height: 1,
                 width: 2,
-              }
+              },
+              frame_count: 0,
             },
           },
           Track {
@@ -745,7 +789,7 @@ mod tests {
         ty: VideoType::Mp4,
       })
       .unwrap(),
-      r#"{"duration":0,"filename":"foo.mp4","tracks":[{"codec":"h264","info":{"type":"video","dimensions":{"height":1,"width":2}}},{"codec":"mp3","info":{"type":"audio"}}],"type":"mp4"}"#,
+      r#"{"duration":0,"filename":"foo.mp4","tracks":[{"codec":"h264","info":{"type":"video","dimensions":{"height":1,"width":2},"frame_count":0}},{"codec":"mp3","info":{"type":"audio"}}],"type":"mp4"}"#,
     );
   }
 
@@ -772,7 +816,8 @@ mod tests {
               dimensions: Dimensions {
                 height: 1,
                 width: 2,
-              }
+              },
+              frame_count: 0,
             },
           },
           Track {
@@ -799,7 +844,8 @@ mod tests {
               dimensions: Dimensions {
                 height: 1,
                 width: 2,
-              }
+              },
+              frame_count: 0,
             },
           },
           Track {
@@ -820,7 +866,8 @@ mod tests {
             dimensions: Dimensions {
               height: 1,
               width: 2,
-            }
+            },
+            frame_count: 0,
           },
         }],
       },
@@ -843,6 +890,40 @@ mod tests {
       .unwrap()
       .duration,
       6,
+    );
+
+    assert_eq!(
+      case(WebmBuilder::new().video_track(2, 1).frame(1).frame(1))
+        .unwrap()
+        .tracks[0]
+        .info,
+      TrackInfo::Video {
+        dimensions: Dimensions {
+          height: 1,
+          width: 2,
+        },
+        frame_count: 2,
+      },
+    );
+
+    assert_eq!(
+      case(
+        WebmBuilder::new()
+          .video_track(2, 1)
+          .audio_track("A_OPUS")
+          .frame(1)
+          .frame(2),
+      )
+      .unwrap()
+      .tracks[0]
+        .info,
+      TrackInfo::Video {
+        dimensions: Dimensions {
+          height: 1,
+          width: 2,
+        },
+        frame_count: 1,
+      },
     );
 
     error(

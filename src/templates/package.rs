@@ -406,6 +406,7 @@ mod tests {
                   height: 1,
                   width: 2,
                 },
+                frame_count: 0,
               },
             },
             Track {
