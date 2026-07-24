@@ -2,9 +2,9 @@
 %% match self.view {
 %%   PackageView::Grid => {
 <ul class=grid>
-%%     for (fingerprint, metadata) in &self.packages {
+%%     for (fingerprint, artwork, _creator, _title) in self.packages() {
   <li>
-%%       if metadata.as_ref().is_some_and(|metadata| metadata.artwork.is_some()) {
+%%       if artwork {
     <a href=/package/{{ fingerprint }}>
       <img loading=lazy src=/artwork/{{ fingerprint }} width=150 height=150>
     </a>
@@ -17,7 +17,7 @@
 %%   }
 %%   PackageView::List => {
 <ul>
-%%     for (fingerprint, creator, title) in self.packages() {
+%%     for (fingerprint, _artwork, creator, title) in self.packages() {
   <li>
     <a href=/package/{{ fingerprint }}>
 %%       if let Some(title) = title {

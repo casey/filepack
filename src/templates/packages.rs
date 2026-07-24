@@ -9,10 +9,13 @@ pub(crate) struct PackagesHtml {
 impl PackagesHtml {
   fn packages(
     &self,
-  ) -> impl Iterator<Item = (Fingerprint, Option<&Component>, Option<&Component>)> {
+  ) -> impl Iterator<Item = (Fingerprint, bool, Option<&Component>, Option<&Component>)> {
     self.packages.iter().map(|(fingerprint, metadata)| {
       (
         *fingerprint,
+        metadata
+          .as_ref()
+          .is_some_and(|metadata| metadata.artwork.is_some()),
         metadata
           .as_ref()
           .and_then(|metadata| metadata.creator.as_deref()),
