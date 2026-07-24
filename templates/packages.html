@@ -1,4 +1,16 @@
-<h1>Packages</h1>
+<header>
+  <h1>Packages</h1>
+  <nav>
+%% match self.view {
+%%   View::List => {
+    <a>List</a> | <a href=/packages?view=grid>Grid</a>
+%%   }
+%%   View::Grid => {
+    <a href=/packages>List</a> | <a>Grid</a>
+%%   }
+%% }
+  </nav>
+</header>
 %% match self.view {
 %%   View::Grid => {
 <ul class=grid>

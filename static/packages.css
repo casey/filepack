@@ -25,3 +25,9 @@
     width: 100%;
   }
 }
+
+header {
+  align-items: baseline;
+  display: flex;
+  justify-content: space-between;
+}
