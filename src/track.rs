@@ -6,6 +6,8 @@ pub(crate) struct Track {
   pub(crate) codec: Codec,
   #[n(1)]
   pub(crate) info: TrackInfo,
+  #[n(2)]
+  pub(crate) size: u64,
 }
 
 impl Display for Track {
@@ -39,6 +41,7 @@ mod tests {
       Track {
         codec: Codec::Aac,
         info: TrackInfo::Audio,
+        size: 0,
       },
       "AAC",
     );
@@ -53,6 +56,7 @@ mod tests {
           },
           frames: 0,
         },
+        size: 0,
       },
       "H.264 2×1",
     );
@@ -67,6 +71,7 @@ mod tests {
           },
           frames: 0,
         },
+        size: 0,
       },
       "H.264 1080p",
     );
@@ -78,8 +83,9 @@ mod tests {
       Track {
         codec: Codec::Aac,
         info: TrackInfo::Audio,
+        size: 0,
       },
-      "a200000100",
+      "a3000001000200",
     );
 
     assert_cbor(
@@ -92,8 +98,9 @@ mod tests {
           },
           frames: 0,
         },
+        size: 0,
       },
-      "a20001018201a200a2000101020100",
+      "a30001018201a200a20001010201000200",
     );
   }
 
@@ -103,9 +110,10 @@ mod tests {
       serde_json::to_string(&Track {
         codec: Codec::Aac,
         info: TrackInfo::Audio,
+        size: 0,
       })
       .unwrap(),
-      r#"{"codec":"aac","info":{"type":"audio"}}"#,
+      r#"{"codec":"aac","info":{"type":"audio"},"size":0}"#,
     );
 
     assert_eq!(
@@ -118,9 +126,10 @@ mod tests {
           },
           frames: 0,
         },
+        size: 0,
       })
       .unwrap(),
-      r#"{"codec":"h264","info":{"type":"video","dimensions":{"height":1,"width":2},"frames":0}}"#,
+      r#"{"codec":"h264","info":{"type":"video","dimensions":{"height":1,"width":2},"frames":0},"size":0}"#,
     );
   }
 }

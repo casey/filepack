@@ -408,10 +408,12 @@ mod tests {
                 },
                 frames: 0,
               },
+              size: 0,
             },
             Track {
               codec: Codec::Aac,
               info: TrackInfo::Audio,
+              size: 0,
             },
           ],
           ty: VideoType::Mp4,
