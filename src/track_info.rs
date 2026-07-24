@@ -9,6 +9,8 @@ pub(crate) enum TrackInfo {
   Video {
     #[n(0)]
     dimensions: Dimensions,
+    #[n(1)]
+    frame_count: u64,
   },
 }
 
@@ -26,8 +28,9 @@ mod tests {
           height: 1,
           width: 2,
         },
+        frame_count: 0,
       },
-      "8201a100a200010102",
+      "8201a200a2000101020100",
     );
   }
 }

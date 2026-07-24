@@ -1,5 +1,6 @@
 pub struct Mp4Builder {
   duration: u32,
+  frame_count: u32,
   timescale: u32,
   tracks: Vec<Vec<u8>>,
 }
@@ -65,9 +66,16 @@ impl Mp4Builder {
     self
   }
 
+  #[must_use]
+  pub fn frame_count(mut self, frame_count: u32) -> Self {
+    self.frame_count = frame_count;
+    self
+  }
+
   pub fn new() -> Self {
     Self {
       duration: 0,
+      frame_count: 0,
       timescale: 1000,
       tracks: Vec::new(),
     }
@@ -87,7 +95,8 @@ impl Mp4Builder {
 
     let mut mdhd = vec![0; 12];
     mdhd.extend_from_slice(&1000u32.to_be_bytes());
-    mdhd.extend_from_slice(&[0; 8]);
+    mdhd.extend_from_slice(&self.frame_count.to_be_bytes());
+    mdhd.extend_from_slice(&[0; 4]);
 
     let mut hdlr = vec![0; 8];
     hdlr.extend_from_slice(&handler);
@@ -100,14 +109,44 @@ impl Mp4Builder {
     stsd.extend_from_slice(&u32::try_from(descriptions.len()).unwrap().to_be_bytes());
     stsd.extend_from_slice(&descriptions.concat());
 
-    let stbl = [
-      Self::atom(*b"stsd", &stsd),
-      Self::atom(*b"stts", &[0; 8]),
-      Self::atom(*b"stsc", &[0; 8]),
-      Self::atom(*b"stsz", &[0; 12]),
-      Self::atom(*b"stco", &[0; 8]),
-    ]
-    .concat();
+    let stbl = if self.frame_count > 0 {
+      let mut stts = vec![0; 4];
+      stts.extend_from_slice(&1u32.to_be_bytes());
+      stts.extend_from_slice(&self.frame_count.to_be_bytes());
+      stts.extend_from_slice(&1u32.to_be_bytes());
+
+      let mut stsc = vec![0; 4];
+      stsc.extend_from_slice(&1u32.to_be_bytes());
+      stsc.extend_from_slice(&1u32.to_be_bytes());
+      stsc.extend_from_slice(&self.frame_count.to_be_bytes());
+      stsc.extend_from_slice(&1u32.to_be_bytes());
+
+      let mut stsz = vec![0; 4];
+      stsz.extend_from_slice(&1u32.to_be_bytes());
+      stsz.extend_from_slice(&self.frame_count.to_be_bytes());
+
+      let mut stco = vec![0; 4];
+      stco.extend_from_slice(&1u32.to_be_bytes());
+      stco.extend_from_slice(&0u32.to_be_bytes());
+
+      [
+        Self::atom(*b"stsd", &stsd),
+        Self::atom(*b"stts", &stts),
+        Self::atom(*b"stsc", &stsc),
+        Self::atom(*b"stsz", &stsz),
+        Self::atom(*b"stco", &stco),
+      ]
+      .concat()
+    } else {
+      [
+        Self::atom(*b"stsd", &stsd),
+        Self::atom(*b"stts", &[0; 8]),
+        Self::atom(*b"stsc", &[0; 8]),
+        Self::atom(*b"stsz", &[0; 12]),
+        Self::atom(*b"stco", &[0; 8]),
+      ]
+      .concat()
+    };
 
     let minf = [dinf, Self::atom(*b"stbl", &stbl)].concat();
 

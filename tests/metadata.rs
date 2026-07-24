@@ -141,6 +141,7 @@ fn create_extracts_video_metadata() {
       "foo.mp4",
       Mp4Builder::new()
         .duration(1500)
+        .frame_count(30)
         .video_track(2, 1)
         .audio_track(0x40)
         .build(),
@@ -173,7 +174,8 @@ media:
               "dimensions": {
                 "height": 1,
                 "width": 2
-              }
+              },
+              "frame_count": 30
             }
           },
           {
