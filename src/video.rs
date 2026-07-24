@@ -63,8 +63,11 @@ impl Video {
     // profile_idc
     let profile_idc = reader.bits(8)?;
 
-    // constraint flags and level_idc
-    reader.bits(16)?;
+    // constraint flags
+    reader.bits(8)?;
+
+    // level_idc
+    reader.bits(8)?;
 
     // seq_parameter_set_id
     reader.ue()?;
