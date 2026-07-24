@@ -46,7 +46,44 @@ impl Video {
     formats
   }
 
-  fn high_profile(profile_idc: u64) -> bool {
+  fn h264_bit_depth(sps: &[u8]) -> Option<u64> {
+    let mut rbsp = Vec::new();
+
+    // skip NAL unit header and remove emulation prevention bytes
+    for &byte in sps.get(1..)? {
+      if byte == 3 && rbsp.ends_with(&[0, 0]) {
+        continue;
+      }
+
+      rbsp.push(byte);
+    }
+
+    let mut reader = BitReader::new(&rbsp);
+
+    // profile_idc
+    let profile_idc = reader.bits(8)?;
+
+    // constraint flags and level_idc
+    reader.bits(16)?;
+
+    // seq_parameter_set_id
+    reader.ue()?;
+
+    if !Self::h264_high_profile(profile_idc) {
+      return Some(8);
+    }
+
+    // chroma_format_idc
+    if reader.ue()? == 3 {
+      // separate_colour_plane_flag
+      reader.bit()?;
+    }
+
+    // bit_depth_luma_minus8
+    Some(8 + reader.ue()?)
+  }
+
+  fn h264_high_profile(profile_idc: u64) -> bool {
     matches!(
       profile_idc,
       44 | 83 | 86 | 100 | 110 | 118 | 122 | 128 | 134 | 135 | 138 | 139 | 244
@@ -171,10 +208,10 @@ impl Video {
           };
 
           let bit_depth = if let Some(sps) = avc1.avcc.sequence_parameter_sets.first() {
-            Some(Self::sps_bit_depth(&sps.bytes).context(video_error::SpsInvalid)?)
+            Some(Self::h264_bit_depth(&sps.bytes).context(video_error::SpsInvalid)?)
           } else {
             ensure!(
-              !Self::high_profile(avc1.avcc.avc_profile_indication.into()),
+              !Self::h264_high_profile(avc1.avcc.avc_profile_indication.into()),
               video_error::SpsMissing,
             );
 
@@ -392,43 +429,6 @@ impl Video {
 
   pub(crate) fn resource_type(&self) -> ResourceType {
     self.ty.resource_type()
-  }
-
-  fn sps_bit_depth(sps: &[u8]) -> Option<u64> {
-    let mut rbsp = Vec::new();
-
-    // skip NAL unit header and remove emulation prevention bytes
-    for &byte in sps.get(1..)? {
-      if byte == 3 && rbsp.ends_with(&[0, 0]) {
-        continue;
-      }
-
-      rbsp.push(byte);
-    }
-
-    let mut reader = BitReader::new(&rbsp);
-
-    // profile_idc
-    let profile_idc = reader.bits(8)?;
-
-    // constraint flags and level_idc
-    reader.bits(16)?;
-
-    // seq_parameter_set_id
-    reader.ue()?;
-
-    if !Self::high_profile(profile_idc) {
-      return Some(8);
-    }
-
-    // chroma_format_idc
-    if reader.ue()? == 3 {
-      // separate_colour_plane_flag
-      reader.bit()?;
-    }
-
-    // bit_depth_luma_minus8
-    Some(8 + reader.ue()?)
   }
 
   fn vp9_bit_depth(data: &[u8]) -> Option<u64> {
@@ -694,6 +694,22 @@ mod tests {
     );
     case("", ComponentError::Empty);
     case("foo/bar.mp4", ComponentError::Separator { character: '/' });
+  }
+
+  #[test]
+  fn h264_bit_depth() {
+    #[track_caller]
+    fn case(sps: &[u8], expected: Option<u64>) {
+      assert_eq!(Video::h264_bit_depth(sps), expected);
+    }
+
+    case(&[0x67, 66, 0, 30, 0x80], Some(8));
+    case(&[0x67, 100, 0, 31, 0xA6], Some(10));
+    case(&[0x67, 100, 0, 31, 0x91], Some(8));
+    case(&[0x67, 100, 0, 0, 0x03, 0xA6], Some(10));
+    case(&[0x67, 100, 0, 31], None);
+    case(&[0x67], None);
+    case(&[], None);
   }
 
   #[test]
@@ -1018,22 +1034,6 @@ mod tests {
       .unwrap(),
       r#"{"duration":0,"filename":"foo.mp4","tracks":[{"codec":"h264","info":{"type":"video","bit_depth":8,"dimensions":{"height":1,"width":2},"frames":0},"size":0},{"codec":"mp3","info":{"type":"audio"},"size":0}],"type":"mp4"}"#,
     );
-  }
-
-  #[test]
-  fn sps_bit_depth() {
-    #[track_caller]
-    fn case(sps: &[u8], expected: Option<u64>) {
-      assert_eq!(Video::sps_bit_depth(sps), expected);
-    }
-
-    case(&[0x67, 66, 0, 30, 0x80], Some(8));
-    case(&[0x67, 100, 0, 31, 0xA6], Some(10));
-    case(&[0x67, 100, 0, 31, 0x91], Some(8));
-    case(&[0x67, 100, 0, 0, 0x03, 0xA6], Some(10));
-    case(&[0x67, 100, 0, 31], None);
-    case(&[0x67], None);
-    case(&[], None);
   }
 
   #[test]
