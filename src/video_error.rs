@@ -21,6 +21,10 @@ pub enum VideoError {
   DurationMissing,
   #[snafu(display("duration overflow"))]
   DurationOverflow,
+  #[snafu(display("invalid SPS"))]
+  SpsInvalid,
+  #[snafu(display("missing SPS"))]
+  SpsMissing,
   #[snafu(display("zero timescale"))]
   TimescaleZero,
   #[snafu(display("unsupported timestamp scale {timestamp_scale}"))]
@@ -35,4 +39,6 @@ pub enum VideoError {
   VideoTrackMissing,
   #[snafu(display("multiple video tracks"))]
   VideoTrackMultiple,
+  #[snafu(display("invalid VP9 frame header"))]
+  Vp9FrameHeaderInvalid,
 }

@@ -50,6 +50,7 @@ mod tests {
       Track {
         codec: Codec::H264,
         info: TrackInfo::Video {
+          bit_depth: Some(8),
           dimensions: Dimensions {
             height: 1,
             width: 2,
@@ -65,6 +66,7 @@ mod tests {
       Track {
         codec: Codec::H264,
         info: TrackInfo::Video {
+          bit_depth: Some(8),
           dimensions: Dimensions {
             height: 1080,
             width: 1920,
@@ -92,6 +94,7 @@ mod tests {
       Track {
         codec: Codec::H264,
         info: TrackInfo::Video {
+          bit_depth: Some(8),
           dimensions: Dimensions {
             height: 1,
             width: 2,
@@ -100,7 +103,7 @@ mod tests {
         },
         size: 0,
       },
-      "a30001018201a200a20001010201000200",
+      "a30001018201a3000801a20001010202000200",
     );
   }
 
@@ -120,6 +123,24 @@ mod tests {
       serde_json::to_string(&Track {
         codec: Codec::H264,
         info: TrackInfo::Video {
+          bit_depth: Some(8),
+          dimensions: Dimensions {
+            height: 1,
+            width: 2,
+          },
+          frames: 0,
+        },
+        size: 0,
+      })
+      .unwrap(),
+      r#"{"codec":"h264","info":{"type":"video","bit_depth":8,"dimensions":{"height":1,"width":2},"frames":0},"size":0}"#,
+    );
+
+    assert_eq!(
+      serde_json::to_string(&Track {
+        codec: Codec::H264,
+        info: TrackInfo::Video {
+          bit_depth: None,
           dimensions: Dimensions {
             height: 1,
             width: 2,

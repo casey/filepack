@@ -163,9 +163,23 @@ impl Video {
             );
           };
 
+          let bit_depth = if let Some(sps) = avc1.avcc.sequence_parameter_sets.first() {
+            Sps::parse(&sps.bytes)
+              .context(video_error::SpsInvalid)?
+              .bit_depth
+          } else {
+            ensure!(
+              !Sps::high_profile(avc1.avcc.avc_profile_indication.into()),
+              video_error::SpsMissing,
+            );
+
+            8
+          };
+
           video_track = Some(Track {
             codec: Codec::H264,
             info: TrackInfo::Video {
+              bit_depth: Some(bit_depth),
               dimensions: Dimensions {
                 height: avc1.height.into(),
                 width: avc1.width.into(),
@@ -233,15 +247,16 @@ impl Video {
 
     let mut frame = Frame::default();
 
-    let mut frames = HashMap::<u64, (u64, u64)>::new();
+    let mut frames = HashMap::<u64, (u64, u64, Option<Vec<u8>>)>::new();
 
     while file
       .next_frame(&mut frame)
       .context(video_error::DecodeWebm)?
     {
-      let (count, size) = frames.entry(frame.track).or_default();
+      let (count, size, first) = frames.entry(frame.track).or_default();
       *count += 1;
       *size += frame.data.len().into_u64();
+      first.get_or_insert_with(|| frame.data.clone());
     }
 
     let mut video_track = None;
@@ -266,9 +281,9 @@ impl Video {
             }
           };
 
-          let (_frames, size) = frames
+          let (_frames, size, _first) = frames
             .get(&track.track_number().into())
-            .copied()
+            .cloned()
             .unwrap_or_default();
 
           audio_track = Some(Track {
@@ -298,14 +313,25 @@ impl Video {
             .video()
             .context(video_error::VideoSettingsMissing { track: index })?;
 
-          let (frames, size) = frames
+          let (frames, size, first) = frames
             .get(&track.track_number().into())
-            .copied()
+            .cloned()
             .unwrap_or_default();
+
+          let bit_depth = match (codec, first) {
+            (Codec::Vp9, Some(first)) => Some(
+              Vp9FrameHeader::parse(&first)
+                .context(video_error::Vp9FrameHeaderInvalid)?
+                .bit_depth,
+            ),
+            (Codec::Vp9, None) => None,
+            _ => Some(8),
+          };
 
           video_track = Some(Track {
             codec,
             info: TrackInfo::Video {
+              bit_depth,
               dimensions: Dimensions {
                 height: video.pixel_height().get(),
                 width: video.pixel_width().get(),
@@ -416,6 +442,7 @@ mod tests {
       Track {
         codec: Codec::H264,
         info: TrackInfo::Video {
+          bit_depth: Some(8),
           dimensions: Dimensions {
             height: 1,
             width: 2,
@@ -450,6 +477,7 @@ mod tests {
           Track {
             codec: Codec::H264,
             info: TrackInfo::Video {
+              bit_depth: Some(8),
               dimensions: Dimensions {
                 height: 1,
                 width: 2,
@@ -466,7 +494,7 @@ mod tests {
         ],
         ty: VideoType::Mp4,
       },
-      "a400030167666f6f2e6d70340282a30001018201a200a20001010201000200a30002010002000300",
+      "a400030167666f6f2e6d70340282a30001018201a3000801a20001010202000200a30002010002000300",
     );
   }
 
@@ -478,6 +506,7 @@ mod tests {
       Track {
         codec: Codec::H264,
         info: TrackInfo::Video {
+          bit_depth: Some(8),
           dimensions: Dimensions::default(),
           frames: 0,
         },
@@ -496,6 +525,7 @@ mod tests {
     let mut baz = foo.clone();
 
     baz.tracks[0].info = TrackInfo::Video {
+      bit_depth: Some(8),
       dimensions: Dimensions {
         height: 1,
         width: 2,
@@ -509,6 +539,7 @@ mod tests {
       Track {
         codec: Codec::Vp9,
         info: TrackInfo::Video {
+          bit_depth: Some(8),
           dimensions: Dimensions::default(),
           frames: 0,
         },
@@ -599,6 +630,7 @@ mod tests {
           Track {
             codec: Codec::H264,
             info: TrackInfo::Video {
+              bit_depth: Some(8),
               dimensions: Dimensions {
                 height: 1,
                 width: 2,
@@ -623,6 +655,7 @@ mod tests {
         tracks: vec![Track {
           codec: Codec::H264,
           info: TrackInfo::Video {
+            bit_depth: Some(8),
             dimensions: Dimensions {
               height: 1,
               width: 2,
@@ -659,6 +692,7 @@ mod tests {
         .tracks[0]
         .info,
       TrackInfo::Video {
+        bit_depth: Some(8),
         dimensions: Dimensions {
           height: 1,
           width: 2,
@@ -681,12 +715,42 @@ mod tests {
     );
 
     assert_eq!(
+      case(
+        Mp4Builder::new()
+          .sps(&[0x67, 100, 0, 31, 0xA6])
+          .video_track(2, 1),
+      )
+      .unwrap()
+      .tracks[0]
+        .info,
+      TrackInfo::Video {
+        bit_depth: Some(10),
+        dimensions: Dimensions {
+          height: 1,
+          width: 2,
+        },
+        frames: 0,
+      },
+    );
+
+    error(
+      Mp4Builder::new().sps(&[0x67, 100, 0, 31]).video_track(2, 1),
+      "invalid SPS",
+    );
+
+    error(
+      Mp4Builder::new().avcc_profile(100).video_track(2, 1),
+      "missing SPS",
+    );
+
+    assert_eq!(
       case(Mp4Builder::new().sample_sizes(&[3, 5]).video_track(2, 1))
         .unwrap()
         .tracks[0],
       Track {
         codec: Codec::H264,
         info: TrackInfo::Video {
+          bit_depth: Some(8),
           dimensions: Dimensions {
             height: 1,
             width: 2,
@@ -728,7 +792,13 @@ mod tests {
       Mp4Builder::new()
         .track(
           *b"vide",
-          &[Mp4Builder::video_entry(*b"s263", *b"d263", 2, 1)],
+          &[Mp4Builder::video_entry(
+            *b"s263",
+            *b"d263",
+            &[1, 0, 0, 0, 0xff, 0xe0, 0],
+            2,
+            1,
+          )],
         )
         .audio_track(0x40),
       "track 0 has unsupported video codec `s263`",
@@ -775,6 +845,7 @@ mod tests {
           Track {
             codec: Codec::H264,
             info: TrackInfo::Video {
+              bit_depth: Some(8),
               dimensions: Dimensions {
                 height: 1,
                 width: 2,
@@ -806,6 +877,7 @@ mod tests {
         Track {
           codec: Codec::H264,
           info: TrackInfo::Video {
+            bit_depth: Some(8),
             dimensions: Dimensions {
               height: 1,
               width: 2,
@@ -838,6 +910,7 @@ mod tests {
           Track {
             codec: Codec::H264,
             info: TrackInfo::Video {
+              bit_depth: Some(8),
               dimensions: Dimensions {
                 height: 1,
                 width: 2,
@@ -855,7 +928,7 @@ mod tests {
         ty: VideoType::Mp4,
       })
       .unwrap(),
-      r#"{"duration":0,"filename":"foo.mp4","tracks":[{"codec":"h264","info":{"type":"video","dimensions":{"height":1,"width":2},"frames":0},"size":0},{"codec":"mp3","info":{"type":"audio"},"size":0}],"type":"mp4"}"#,
+      r#"{"duration":0,"filename":"foo.mp4","tracks":[{"codec":"h264","info":{"type":"video","bit_depth":8,"dimensions":{"height":1,"width":2},"frames":0},"size":0},{"codec":"mp3","info":{"type":"audio"},"size":0}],"type":"mp4"}"#,
     );
   }
 
@@ -879,6 +952,7 @@ mod tests {
           Track {
             codec: Codec::Vp9,
             info: TrackInfo::Video {
+              bit_depth: None,
               dimensions: Dimensions {
                 height: 1,
                 width: 2,
@@ -909,6 +983,7 @@ mod tests {
           Track {
             codec: Codec::Vp8,
             info: TrackInfo::Video {
+              bit_depth: Some(8),
               dimensions: Dimensions {
                 height: 1,
                 width: 2,
@@ -933,6 +1008,7 @@ mod tests {
         tracks: vec![Track {
           codec: Codec::Vp9,
           info: TrackInfo::Video {
+            bit_depth: None,
             dimensions: Dimensions {
               height: 1,
               width: 2,
@@ -967,13 +1043,14 @@ mod tests {
       case(
         WebmBuilder::new()
           .video_track(2, 1)
-          .frame(1, b"")
+          .frame(1, &[0x82, 0x49, 0x83, 0x42])
           .frame(1, b"")
       )
       .unwrap()
       .tracks[0]
         .info,
       TrackInfo::Video {
+        bit_depth: Some(8),
         dimensions: Dimensions {
           height: 1,
           width: 2,
@@ -987,7 +1064,7 @@ mod tests {
         WebmBuilder::new()
           .video_track(2, 1)
           .audio_track("A_OPUS")
-          .frame(1, b"foo")
+          .frame(1, &[0x82, 0x49, 0x83, 0x42])
           .frame(2, b"ab"),
       )
       .unwrap()
@@ -996,13 +1073,14 @@ mod tests {
         Track {
           codec: Codec::Vp9,
           info: TrackInfo::Video {
+            bit_depth: Some(8),
             dimensions: Dimensions {
               height: 1,
               width: 2,
             },
             frames: 1,
           },
-          size: 3,
+          size: 4,
         },
         Track {
           codec: Codec::Opus,
@@ -1010,6 +1088,30 @@ mod tests {
           size: 2,
         },
       ],
+    );
+
+    assert_eq!(
+      case(
+        WebmBuilder::new()
+          .video_track(2, 1)
+          .frame(1, &[0x92, 0x49, 0x83, 0x42, 0x00]),
+      )
+      .unwrap()
+      .tracks[0]
+        .info,
+      TrackInfo::Video {
+        bit_depth: Some(10),
+        dimensions: Dimensions {
+          height: 1,
+          width: 2,
+        },
+        frames: 1,
+      },
+    );
+
+    error(
+      WebmBuilder::new().video_track(2, 1).frame(1, b"foo"),
+      "invalid VP9 frame header",
     );
 
     error(

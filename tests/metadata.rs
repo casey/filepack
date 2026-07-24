@@ -171,6 +171,7 @@ media:
             "codec": "h264",
             "info": {
               "type": "video",
+              "bit_depth": 8,
               "dimensions": {
                 "height": 1,
                 "width": 2
