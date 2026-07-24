@@ -116,6 +116,14 @@ impl Video {
     for (index, trak) in mp4.moov.traks.iter().enumerate() {
       let contents = &trak.mdia.minf.stbl.stsd.contents;
 
+      let stsz = &trak.mdia.minf.stbl.stsz;
+
+      let size = if stsz.sample_size == 0 {
+        stsz.sample_sizes.iter().copied().map(u64::from).sum()
+      } else {
+        u64::from(stsz.sample_size) * u64::from(stsz.sample_count)
+      };
+
       match &trak.mdia.hdlr.handler_type.value[..] {
         b"soun" => {
           ensure!(audio_track.is_none(), video_error::AudioTrackMultiple);
@@ -139,6 +147,7 @@ impl Video {
           audio_track = Some(Track {
             codec,
             info: TrackInfo::Audio,
+            size,
           });
         }
         b"vide" => {
@@ -161,8 +170,9 @@ impl Video {
                 height: avc1.height.into(),
                 width: avc1.width.into(),
               },
-              frames: trak.mdia.minf.stbl.stsz.sample_count.into(),
+              frames: stsz.sample_count.into(),
             },
+            size,
           });
         }
         ty => {
@@ -221,6 +231,19 @@ impl Video {
       .ok()
       .context(video_error::DurationOverflow)?;
 
+    let mut frame = Frame::default();
+
+    let mut frames = HashMap::<u64, (u64, u64)>::new();
+
+    while file
+      .next_frame(&mut frame)
+      .context(video_error::DecodeWebm)?
+    {
+      let (count, size) = frames.entry(frame.track).or_default();
+      *count += 1;
+      *size += frame.data.len().into_u64();
+    }
+
     let mut video_track = None;
     let mut audio_track = None;
 
@@ -243,9 +266,15 @@ impl Video {
             }
           };
 
+          let (_frames, size) = frames
+            .get(&track.track_number().into())
+            .copied()
+            .unwrap_or_default();
+
           audio_track = Some(Track {
             codec,
             info: TrackInfo::Audio,
+            size,
           });
         }
         TrackType::Video => {
@@ -269,19 +298,22 @@ impl Video {
             .video()
             .context(video_error::VideoSettingsMissing { track: index })?;
 
-          video_track = Some((
-            Track {
-              codec,
-              info: TrackInfo::Video {
-                dimensions: Dimensions {
-                  height: video.pixel_height().get(),
-                  width: video.pixel_width().get(),
-                },
-                frames: 0,
+          let (frames, size) = frames
+            .get(&track.track_number().into())
+            .copied()
+            .unwrap_or_default();
+
+          video_track = Some(Track {
+            codec,
+            info: TrackInfo::Video {
+              dimensions: Dimensions {
+                height: video.pixel_height().get(),
+                width: video.pixel_width().get(),
               },
+              frames,
             },
-            track.track_number().get(),
-          ));
+            size,
+          });
         }
         ty => {
           return Err(
@@ -305,29 +337,7 @@ impl Video {
       }
     }
 
-    let (mut video_track, video_track_number) =
-      video_track.context(video_error::VideoTrackMissing)?;
-
-    {
-      let TrackInfo::Video {
-        frames: frame_count,
-        ..
-      } = &mut video_track.info
-      else {
-        unreachable!();
-      };
-
-      let mut frame = Frame::default();
-
-      while file
-        .next_frame(&mut frame)
-        .context(video_error::DecodeWebm)?
-      {
-        if frame.track == video_track_number {
-          *frame_count += 1;
-        }
-      }
-    }
+    let video_track = video_track.context(video_error::VideoTrackMissing)?;
 
     let mut tracks = vec![video_track];
 
@@ -401,6 +411,7 @@ mod tests {
       Track {
         codec: Codec::Aac,
         info: TrackInfo::Audio,
+        size: 0,
       },
       Track {
         codec: Codec::H264,
@@ -411,6 +422,7 @@ mod tests {
           },
           frames: 0,
         },
+        size: 0,
       },
     ];
 
@@ -444,15 +456,17 @@ mod tests {
               },
               frames: 0,
             },
+            size: 0,
           },
           Track {
             codec: Codec::Mp3,
             info: TrackInfo::Audio,
+            size: 0,
           },
         ],
         ty: VideoType::Mp4,
       },
-      "a400030167666f6f2e6d70340282a20001018201a200a2000101020100a2000201000300",
+      "a400030167666f6f2e6d70340282a30001018201a200a20001010201000200a30002010002000300",
     );
   }
 
@@ -467,10 +481,12 @@ mod tests {
           dimensions: Dimensions::default(),
           frames: 0,
         },
+        size: 0,
       },
       Track {
         codec: Codec::Aac,
         info: TrackInfo::Audio,
+        size: 0,
       },
     ];
 
@@ -496,10 +512,12 @@ mod tests {
           dimensions: Dimensions::default(),
           frames: 0,
         },
+        size: 0,
       },
       Track {
         codec: Codec::Opus,
         info: TrackInfo::Audio,
+        size: 0,
       },
     ];
 
@@ -587,10 +605,12 @@ mod tests {
               },
               frames: 0,
             },
+            size: 0,
           },
           Track {
             codec: Codec::Aac,
             info: TrackInfo::Audio,
+            size: 0,
           },
         ],
       },
@@ -609,6 +629,7 @@ mod tests {
             },
             frames: 0,
           },
+          size: 0,
         }],
       },
     );
@@ -643,6 +664,36 @@ mod tests {
           width: 2,
         },
         frames: 3,
+      },
+    );
+
+    assert_eq!(
+      case(
+        Mp4Builder::new()
+          .frame_count(3)
+          .sample_size(5)
+          .video_track(2, 1),
+      )
+      .unwrap()
+      .tracks[0]
+        .size,
+      15,
+    );
+
+    assert_eq!(
+      case(Mp4Builder::new().sample_sizes(&[3, 5]).video_track(2, 1))
+        .unwrap()
+        .tracks[0],
+      Track {
+        codec: Codec::H264,
+        info: TrackInfo::Video {
+          dimensions: Dimensions {
+            height: 1,
+            width: 2,
+          },
+          frames: 2,
+        },
+        size: 8,
       },
     );
 
@@ -730,10 +781,12 @@ mod tests {
               },
               frames: 0,
             },
+            size: 0,
           },
           Track {
             codec: Codec::Aac,
             info: TrackInfo::Audio,
+            size: 0,
           },
         ],
         ty: VideoType::Mp4,
@@ -759,10 +812,12 @@ mod tests {
             },
             frames: 0,
           },
+          size: 0,
         },
         Track {
           codec: Codec::Mp3,
           info: TrackInfo::Audio,
+          size: 0,
         },
       ],
     );
@@ -789,16 +844,18 @@ mod tests {
               },
               frames: 0,
             },
+            size: 0,
           },
           Track {
             codec: Codec::Mp3,
             info: TrackInfo::Audio,
+            size: 0,
           },
         ],
         ty: VideoType::Mp4,
       })
       .unwrap(),
-      r#"{"duration":0,"filename":"foo.mp4","tracks":[{"codec":"h264","info":{"type":"video","dimensions":{"height":1,"width":2},"frames":0}},{"codec":"mp3","info":{"type":"audio"}}],"type":"mp4"}"#,
+      r#"{"duration":0,"filename":"foo.mp4","tracks":[{"codec":"h264","info":{"type":"video","dimensions":{"height":1,"width":2},"frames":0},"size":0},{"codec":"mp3","info":{"type":"audio"},"size":0}],"type":"mp4"}"#,
     );
   }
 
@@ -828,10 +885,12 @@ mod tests {
               },
               frames: 0,
             },
+            size: 0,
           },
           Track {
             codec: Codec::Opus,
             info: TrackInfo::Audio,
+            size: 0,
           },
         ],
       },
@@ -856,10 +915,12 @@ mod tests {
               },
               frames: 0,
             },
+            size: 0,
           },
           Track {
             codec: Codec::Vorbis,
             info: TrackInfo::Audio,
+            size: 0,
           },
         ],
       },
@@ -878,6 +939,7 @@ mod tests {
             },
             frames: 0,
           },
+          size: 0,
         }],
       },
     );
@@ -902,9 +964,14 @@ mod tests {
     );
 
     assert_eq!(
-      case(WebmBuilder::new().video_track(2, 1).frame(1).frame(1))
-        .unwrap()
-        .tracks[0]
+      case(
+        WebmBuilder::new()
+          .video_track(2, 1)
+          .frame(1, b"")
+          .frame(1, b"")
+      )
+      .unwrap()
+      .tracks[0]
         .info,
       TrackInfo::Video {
         dimensions: Dimensions {
@@ -920,19 +987,29 @@ mod tests {
         WebmBuilder::new()
           .video_track(2, 1)
           .audio_track("A_OPUS")
-          .frame(1)
-          .frame(2),
+          .frame(1, b"foo")
+          .frame(2, b"ab"),
       )
       .unwrap()
-      .tracks[0]
-        .info,
-      TrackInfo::Video {
-        dimensions: Dimensions {
-          height: 1,
-          width: 2,
+      .tracks,
+      vec![
+        Track {
+          codec: Codec::Vp9,
+          info: TrackInfo::Video {
+            dimensions: Dimensions {
+              height: 1,
+              width: 2,
+            },
+            frames: 1,
+          },
+          size: 3,
         },
-        frames: 1,
-      },
+        Track {
+          codec: Codec::Opus,
+          info: TrackInfo::Audio,
+          size: 2,
+        },
+      ],
     );
 
     error(

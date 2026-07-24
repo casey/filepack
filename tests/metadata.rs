@@ -176,13 +176,15 @@ media:
                 "width": 2
               },
               "frames": 30
-            }
+            },
+            "size": 30
           },
           {
             "codec": "aac",
             "info": {
               "type": "audio"
-            }
+            },
+            "size": 30
           }
         ],
         "type": "mp4"

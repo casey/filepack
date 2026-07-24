@@ -1,6 +1,8 @@
 pub struct Mp4Builder {
   duration: u32,
   frame_count: u32,
+  sample_size: u32,
+  sample_sizes: Vec<u32>,
   timescale: u32,
   tracks: Vec<Vec<u8>>,
 }
@@ -76,9 +78,24 @@ impl Mp4Builder {
     Self {
       duration: 0,
       frame_count: 0,
+      sample_size: 1,
+      sample_sizes: Vec::new(),
       timescale: 1000,
       tracks: Vec::new(),
     }
+  }
+
+  #[must_use]
+  pub fn sample_size(mut self, sample_size: u32) -> Self {
+    self.sample_size = sample_size;
+    self
+  }
+
+  #[must_use]
+  pub fn sample_sizes(mut self, sample_sizes: &[u32]) -> Self {
+    self.frame_count = sample_sizes.len().try_into().unwrap();
+    self.sample_sizes = sample_sizes.into();
+    self
   }
 
   #[must_use]
@@ -122,8 +139,17 @@ impl Mp4Builder {
       stsc.extend_from_slice(&1u32.to_be_bytes());
 
       let mut stsz = vec![0; 4];
-      stsz.extend_from_slice(&1u32.to_be_bytes());
-      stsz.extend_from_slice(&self.frame_count.to_be_bytes());
+
+      if self.sample_sizes.is_empty() {
+        stsz.extend_from_slice(&self.sample_size.to_be_bytes());
+        stsz.extend_from_slice(&self.frame_count.to_be_bytes());
+      } else {
+        stsz.extend_from_slice(&0u32.to_be_bytes());
+        stsz.extend_from_slice(&self.frame_count.to_be_bytes());
+        for sample_size in &self.sample_sizes {
+          stsz.extend_from_slice(&sample_size.to_be_bytes());
+        }
+      }
 
       let mut stco = vec![0; 4];
       stco.extend_from_slice(&1u32.to_be_bytes());

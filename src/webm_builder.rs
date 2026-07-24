@@ -73,10 +73,11 @@ impl WebmBuilder {
   }
 
   #[must_use]
-  pub(crate) fn frame(mut self, track: u8) -> Self {
+  pub(crate) fn frame(mut self, track: u8, data: &[u8]) -> Self {
     let mut payload = vec![0x80 | track];
     payload.extend_from_slice(&[0, 0]);
     payload.push(0x80);
+    payload.extend_from_slice(data);
 
     self.blocks.push(Self::element(&[0xA3], &payload));
 
