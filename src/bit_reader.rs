@@ -1,13 +1,13 @@
 pub(crate) struct BitReader<'a> {
-  bit: usize,
-  data: &'a [u8],
+  i: usize,
+  bytes: &'a [u8],
 }
 
 impl<'a> BitReader<'a> {
   pub(crate) fn bit(&mut self) -> Option<u64> {
-    let byte = self.data.get(self.bit / 8)?;
-    let bit = u64::from(byte >> (7 - self.bit % 8) & 1);
-    self.bit += 1;
+    let byte = self.bytes.get(self.i / 8)?;
+    let bit = u64::from(byte >> (7 - self.i % 8) & 1);
+    self.i += 1;
     Some(bit)
   }
 
@@ -21,8 +21,8 @@ impl<'a> BitReader<'a> {
     Some(value)
   }
 
-  pub(crate) fn new(data: &'a [u8]) -> Self {
-    Self { bit: 0, data }
+  pub(crate) fn new(bytes: &'a [u8]) -> Self {
+    Self { i: 0, bytes }
   }
 }
 
