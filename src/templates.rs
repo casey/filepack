@@ -3,11 +3,7 @@ use super::*;
 pub use self::{directory::DirectoryHtml, package::PackageHtml, page::PageHtml};
 
 pub(crate) use self::{
-  audio::AudioHtml,
-  files::FilesHtml,
-  image::ImageHtml,
-  packages::{PackagesHtml, View},
-  video::VideoHtml,
+  audio::AudioHtml, files::FilesHtml, image::ImageHtml, packages::PackagesHtml, video::VideoHtml,
 };
 
 mod audio;

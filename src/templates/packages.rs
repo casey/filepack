@@ -1,17 +1,9 @@
 use super::*;
 
-#[derive(Default, Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub(crate) enum View {
-  Grid,
-  #[default]
-  List,
-}
-
 #[derive(Boilerplate)]
 pub(crate) struct PackagesHtml {
   pub(crate) packages: Vec<(Fingerprint, Option<Metadata>)>,
-  pub(crate) view: View,
+  pub(crate) view: PackageView,
 }
 
 impl PackagesHtml {
@@ -58,7 +50,7 @@ mod tests {
     assert_eq!(
       PackagesHtml {
         packages: vec![(fingerprint, Some(metadata)), (fingerprint, None)],
-        view: View::Grid,
+        view: PackageView::Grid,
       }
       .to_string(),
       unindent(&format!(

@@ -1578,7 +1578,7 @@ fn packages_empty() {
     .get("/packages")
     .assert_page(PackagesHtml {
       packages: Vec::new(),
-      view: View::List,
+      view: PackageView::List,
     })
     .send();
 }
@@ -1601,7 +1601,7 @@ fn packages_grid() {
     .get("/packages?view=grid")
     .assert_page(PackagesHtml {
       packages: vec![(fingerprint, Some(metadata))],
-      view: View::Grid,
+      view: PackageView::Grid,
     })
     .send();
 }
@@ -1622,7 +1622,7 @@ fn packages_include_creators_and_titles() {
     .get("/packages")
     .assert_page(PackagesHtml {
       packages: vec![(fingerprint, Some(metadata))],
-      view: View::List,
+      view: PackageView::List,
     })
     .send();
 }
@@ -1660,7 +1660,7 @@ fn packages_non_empty() {
     .get("/packages")
     .assert_page(PackagesHtml {
       packages,
-      view: View::List,
+      view: PackageView::List,
     })
     .send();
 }

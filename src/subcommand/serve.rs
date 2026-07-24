@@ -15,7 +15,7 @@ use {
   },
   std::net::TcpStream,
   templates::{
-    AudioHtml, DirectoryHtml, FilesHtml, ImageHtml, PackageHtml, PackagesHtml, VideoHtml, View,
+    AudioHtml, DirectoryHtml, FilesHtml, ImageHtml, PackageHtml, PackagesHtml, VideoHtml,
   },
   tokio::{net::TcpListener, runtime, task::block_in_place},
   tower_http::set_header::SetResponseHeaderLayer,
@@ -33,6 +33,11 @@ type ServerExtension = Extension<Arc<Server>>;
 pub(crate) struct AuthConfig {
   pub(crate) admin: Option<PublicKey>,
   pub(crate) audience: Option<String>,
+}
+
+#[derive(Deserialize)]
+pub(crate) struct PackagesQuery {
+  view: Option<PackageView>,
 }
 
 pub(crate) struct RedirectConfig {

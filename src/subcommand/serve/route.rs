@@ -1,10 +1,5 @@
 use super::*;
 
-#[derive(Deserialize)]
-pub(crate) struct PackagesQuery {
-  view: Option<View>,
-}
-
 pub(crate) async fn artwork(
   server: ServerExtension,
   fingerprint: Path<Fingerprint>,
