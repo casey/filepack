@@ -4,7 +4,7 @@ use super::*;
 #[snafu(context(suffix(false)), visibility(pub(crate)))]
 pub enum Error {
   #[snafu(display("artwork `{path}` is {dimensions} but must be square"))]
-  ArtworkDimensions {
+  ArtworkAspectRatio {
     backtrace: Option<Backtrace>,
     dimensions: Dimensions,
     path: DisplayPath,

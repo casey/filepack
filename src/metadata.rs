@@ -160,7 +160,7 @@ impl Metadata {
     if let Some(artwork) = &self.artwork {
       ensure! {
         artwork.dimensions.width == artwork.dimensions.height,
-        error::ArtworkDimensions {
+        error::ArtworkAspectRatio {
           dimensions: artwork.dimensions,
           path: root.join(artwork.as_path()),
         }
