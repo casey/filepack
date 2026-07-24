@@ -58,7 +58,12 @@ mod tests {
       .to_string(),
       unindent(&format!(
         "
-          <h1>Packages</h1>
+          <header>
+            <h1>Packages</h1>
+            <nav>
+              <a href=/packages>List</a> | <a>Grid</a>
+            </nav>
+          </header>
           <ul class=grid>
             <li>
               <a href=/package/{fingerprint}>
@@ -67,6 +72,37 @@ mod tests {
             </li>
             <li>
               <a href=/package/{fingerprint}></a>
+            </li>
+          </ul>
+        ",
+        fingerprint = test::FINGERPRINT,
+      )),
+    );
+  }
+
+  #[test]
+  fn list() {
+    let fingerprint = test::FINGERPRINT.parse::<Fingerprint>().unwrap();
+
+    assert_eq!(
+      PackagesHtml {
+        packages: vec![(fingerprint, None)],
+        view: View::List,
+      }
+      .to_string(),
+      unindent(&format!(
+        "
+          <header>
+            <h1>Packages</h1>
+            <nav>
+              <a>List</a> | <a href=/packages?view=grid>Grid</a>
+            </nav>
+          </header>
+          <ul>
+            <li>
+              <a href=/package/{fingerprint}>
+                <code>{fingerprint}</code>
+              </a>
             </li>
           </ul>
         ",
