@@ -1,6 +1,6 @@
 pub(crate) struct BitReader<'a> {
-  i: usize,
   bytes: &'a [u8],
+  i: usize,
 }
 
 impl<'a> BitReader<'a> {
@@ -22,7 +22,7 @@ impl<'a> BitReader<'a> {
   }
 
   pub(crate) fn new(bytes: &'a [u8]) -> Self {
-    Self { i: 0, bytes }
+    Self { bytes, i: 0 }
   }
 }
 
