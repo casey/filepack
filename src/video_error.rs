@@ -17,8 +17,6 @@ pub enum VideoError {
   DocType { doc_type: String },
   #[snafu(display("invalid duration"))]
   DurationInvalid,
-  #[snafu(display("video has duration {actual}ms but metadata has duration {expected}ms"))]
-  DurationMismatch { actual: u64, expected: u64 },
   #[snafu(display("missing duration"))]
   DurationMissing,
   #[snafu(display("duration overflow"))]
@@ -27,18 +25,6 @@ pub enum VideoError {
   TimescaleZero,
   #[snafu(display("unsupported timestamp scale {timestamp_scale}"))]
   TimestampScale { timestamp_scale: u64 },
-  #[snafu(display(
-    "video has {} but metadata has {}",
-    Count::new(*actual, "track"),
-    Count::new(*expected, "track"),
-  ))]
-  TrackCountMismatch { actual: usize, expected: usize },
-  #[snafu(display("video track {index} `{actual}` doesn't match metadata track `{expected}`"))]
-  TrackMismatch {
-    actual: Track,
-    expected: Track,
-    index: usize,
-  },
   #[snafu(display("track {track} has unsupported track type `{ty}`"))]
   TrackUnsupported { track: usize, ty: String },
   #[snafu(display("track {track} has unsupported video codec `{codec}`"))]

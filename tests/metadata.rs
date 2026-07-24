@@ -318,6 +318,19 @@ media:
 }
 
 #[test]
+fn create_rejects_metadata_cbor_without_yaml() {
+  Test::new()
+    .touch("README.md")
+    .write("metadata.yaml", "title: Foo\nreadme: README.md")
+    .arg("create")
+    .success()
+    .remove_file("metadata.yaml")
+    .args(["create", "--force"])
+    .stderr_regex("error: metadata `.*metadata.filemeta` already exists\n")
+    .failure();
+}
+
+#[test]
 fn create_succeeds_with_valid_metadata() {
   Test::new()
     .touch("content")
@@ -340,33 +353,6 @@ package:
     .arg("verify")
     .stderr("successfully verified 5 files totaling 242 bytes\n")
     .success();
-}
-
-#[test]
-fn create_uses_existing_metadata_cbor() {
-  let test = Test::new()
-    .touch("README.md")
-    .write("metadata.yaml", "title: Foo\nreadme: README.md")
-    .arg("create")
-    .success()
-    .remove_file("metadata.yaml")
-    .args(["create", "--force"])
-    .success();
-
-  let cbor = fs::read(test.path().join("metadata.filemeta")).unwrap();
-
-  let manifest = Manifest::load(Some(&test.path().join("manifest.filepack"))).unwrap();
-
-  assert_eq!(
-    manifest.embedded,
-    BTreeMap::from([(Hash::bytes(&cbor), cbor)]),
-  );
-
-  test
-    .remove_file("README.md")
-    .args(["create", "--force"])
-    .stderr("error: file referenced in metadata missing: `README.md`\n")
-    .failure();
 }
 
 fn flac(comments: &[&str], samples: u32) -> Vec<u8> {

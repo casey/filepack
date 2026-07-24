@@ -16,21 +16,6 @@ impl Image {
     self.filename.as_path()
   }
 
-  pub(crate) fn check_content(&self, root: &Utf8Path) -> Result<Dimensions> {
-    let actual = self.decode(root)?;
-
-    ensure! {
-      self.dimensions == actual,
-      error::ImageDimensionsMismatch {
-        actual,
-        expected: self.dimensions,
-        path: root.join(self.as_path()),
-      },
-    }
-
-    Ok(actual)
-  }
-
   fn decode(&self, root: &Utf8Path) -> Result<Dimensions> {
     let path = root.join(self.as_path());
 
@@ -139,27 +124,6 @@ mod tests {
       .write_to(&mut buffer, image_format)
       .unwrap();
     buffer.into_inner()
-  }
-
-  #[test]
-  fn check_content_rejects_dimensions_mismatch() {
-    let (_tempdir, root) = tempdir();
-
-    std::fs::write(root.join("foo.png"), bytes(1, 1, ::image::ImageFormat::Png)).unwrap();
-
-    let image = Image {
-      dimensions: Dimensions {
-        height: 2,
-        width: 2,
-      },
-      filename: "foo.png".parse().unwrap(),
-      ty: ImageType::Png,
-    };
-
-    assert_matches_regex!(
-      image.check_content(&root).unwrap_err().to_string(),
-      r"^image `.*foo\.png` is 1×1 but metadata dimensions are 2×2$",
-    );
   }
 
   #[test]

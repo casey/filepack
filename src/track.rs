@@ -1,7 +1,7 @@
 use super::*;
 
 #[derive(Clone, Copy, Debug, Decode, Encode, PartialEq, Serialize)]
-pub struct Track {
+pub(crate) struct Track {
   #[n(0)]
   pub(crate) codec: Codec,
   #[n(1)]
