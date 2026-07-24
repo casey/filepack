@@ -503,7 +503,7 @@ pub enum Error {
     hash: Hash,
     manifest: u64,
   },
-  #[snafu(display("metadata `{path}` exists but `metadata.yaml` does not"))]
+  #[snafu(display("metadata `{path}` already exists"))]
   StaleMetadata {
     backtrace: Option<Backtrace>,
     path: DisplayPath,

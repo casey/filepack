@@ -326,7 +326,7 @@ fn create_rejects_metadata_cbor_without_yaml() {
     .success()
     .remove_file("metadata.yaml")
     .args(["create", "--force"])
-    .stderr_regex("error: metadata `.*metadata.filemeta` exists but `metadata.yaml` does not\n")
+    .stderr_regex("error: metadata `.*metadata.filemeta` already exists\n")
     .failure();
 }
 
