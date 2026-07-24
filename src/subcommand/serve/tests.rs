@@ -1309,6 +1309,7 @@ fn package_item_video() {
   let metadata = Metadata {
     media: Some(Media::Video {
       videos: vec![Video {
+        duration: 0,
         filename: "foo.mp4".parse().unwrap(),
         tracks: vec![
           Track {
@@ -1518,6 +1519,7 @@ fn package_page_renders_video_media() {
   let metadata = Metadata {
     media: Some(Media::Video {
       videos: vec![Video {
+        duration: 0,
         filename: "foo.mp4".parse().unwrap(),
         tracks: vec![
           Track {

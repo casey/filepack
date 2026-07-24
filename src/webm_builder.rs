@@ -1,5 +1,7 @@
 pub(crate) struct WebmBuilder {
   doc_type: String,
+  duration: Option<f64>,
+  timestamp_scale: Option<u64>,
   tracks: Vec<Vec<u8>>,
 }
 
@@ -18,6 +20,14 @@ impl WebmBuilder {
     .concat();
 
     let info = [
+      self
+        .timestamp_scale
+        .map(|timestamp_scale| Self::unsigned(&[0x2A, 0xD7, 0xB1], timestamp_scale))
+        .unwrap_or_default(),
+      self
+        .duration
+        .map(|duration| Self::float(&[0x44, 0x89], duration))
+        .unwrap_or_default(),
       Self::string(&[0x4D, 0x80], "foo"),
       Self::string(&[0x57, 0x41], "bar"),
     ]
@@ -43,6 +53,12 @@ impl WebmBuilder {
     self
   }
 
+  #[must_use]
+  pub(crate) fn duration(mut self, duration: f64) -> Self {
+    self.duration = Some(duration);
+    self
+  }
+
   fn element(id: &[u8], payload: &[u8]) -> Vec<u8> {
     let mut element = id.to_vec();
     element.push(0x01);
@@ -51,15 +67,33 @@ impl WebmBuilder {
     element
   }
 
+  fn float(id: &[u8], value: f64) -> Vec<u8> {
+    Self::element(id, &value.to_be_bytes())
+  }
+
   pub(crate) fn new() -> Self {
     Self {
       doc_type: "webm".into(),
+      duration: Some(0.0),
+      timestamp_scale: None,
       tracks: Vec::new(),
     }
   }
 
+  #[must_use]
+  pub(crate) fn no_duration(mut self) -> Self {
+    self.duration = None;
+    self
+  }
+
   fn string(id: &[u8], value: &str) -> Vec<u8> {
     Self::element(id, value.as_bytes())
+  }
+
+  #[must_use]
+  pub(crate) fn timestamp_scale(mut self, timestamp_scale: u64) -> Self {
+    self.timestamp_scale = Some(timestamp_scale);
+    self
   }
 
   #[must_use]

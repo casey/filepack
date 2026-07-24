@@ -1,4 +1,6 @@
 pub struct Mp4Builder {
+  duration: u32,
+  timescale: u32,
   traks: Vec<Vec<u8>>,
 }
 
@@ -47,8 +49,8 @@ impl Mp4Builder {
     ftyp.extend_from_slice(b"isom");
 
     let mut mvhd = vec![0; 12];
-    mvhd.extend_from_slice(&1000u32.to_be_bytes());
-    mvhd.extend_from_slice(&[0; 4]);
+    mvhd.extend_from_slice(&self.timescale.to_be_bytes());
+    mvhd.extend_from_slice(&self.duration.to_be_bytes());
     mvhd.extend_from_slice(&0x0001_0000u32.to_be_bytes());
     mvhd.extend_from_slice(&[0; 76]);
 
@@ -57,8 +59,24 @@ impl Mp4Builder {
     [Self::atom(*b"ftyp", &ftyp), Self::atom(*b"moov", &moov)].concat()
   }
 
+  #[must_use]
+  pub fn duration(mut self, duration: u32) -> Self {
+    self.duration = duration;
+    self
+  }
+
   pub fn new() -> Self {
-    Self { traks: Vec::new() }
+    Self {
+      duration: 0,
+      timescale: 1000,
+      traks: Vec::new(),
+    }
+  }
+
+  #[must_use]
+  pub fn timescale(mut self, timescale: u32) -> Self {
+    self.timescale = timescale;
+    self
   }
 
   #[must_use]

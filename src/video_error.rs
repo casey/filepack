@@ -15,6 +15,20 @@ pub enum VideoError {
   },
   #[snafu(display("expected DocType `webm` but found `{doc_type}`"))]
   DocType { doc_type: String },
+  #[snafu(display("invalid duration"))]
+  DurationInvalid {
+    source: std::time::TryFromFloatSecsError,
+  },
+  #[snafu(display("video has duration {actual}ms but metadata has duration {expected}ms"))]
+  DurationMismatch { actual: u64, expected: u64 },
+  #[snafu(display("missing duration"))]
+  DurationMissing,
+  #[snafu(display("duration overflow"))]
+  DurationOverflow,
+  #[snafu(display("zero timescale"))]
+  TimescaleZero,
+  #[snafu(display("unsupported timestamp scale {timestamp_scale}"))]
+  TimestampScale { timestamp_scale: u64 },
   #[snafu(display(
     "video has {} but metadata has {}",
     Count::new(*actual, "track"),

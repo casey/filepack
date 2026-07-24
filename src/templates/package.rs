@@ -396,6 +396,7 @@ mod tests {
     let metadata = Metadata {
       media: Some(Media::Video {
         videos: vec![Video {
+          duration: 0,
           filename: "foo.mp4".parse().unwrap(),
           tracks: vec![
             Track {
