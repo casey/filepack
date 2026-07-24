@@ -96,7 +96,6 @@ use {
     server_error::ServerError,
     sign_options::SignOptions,
     signature_error::SignatureError,
-    sps::Sps,
     static_asset::StaticAsset,
     style::Style,
     subcommand::Subcommand,
@@ -346,7 +345,6 @@ mod sign_options;
 mod signature;
 mod signature_error;
 mod sorted_set;
-mod sps;
 mod statement;
 mod static_asset;
 mod style;

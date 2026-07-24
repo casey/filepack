@@ -1,10 +1,8 @@
 pub struct Mp4Builder {
-  avcc_profile: u8,
   duration: u32,
   frame_count: u32,
   sample_size: u32,
   sample_sizes: Vec<u32>,
-  sps: Vec<u8>,
   timescale: u32,
   tracks: Vec<Vec<u8>>,
 }
@@ -47,12 +45,6 @@ impl Mp4Builder {
     self.track(*b"soun", &[entry])
   }
 
-  #[must_use]
-  pub fn avcc_profile(mut self, avcc_profile: u8) -> Self {
-    self.avcc_profile = avcc_profile;
-    self
-  }
-
   pub fn build(self) -> Vec<u8> {
     let mut ftyp = Vec::new();
     ftyp.extend_from_slice(b"isom");
@@ -84,12 +76,10 @@ impl Mp4Builder {
 
   pub fn new() -> Self {
     Self {
-      avcc_profile: 0,
       duration: 0,
       frame_count: 0,
       sample_size: 1,
       sample_sizes: Vec::new(),
-      sps: Vec::new(),
       timescale: 1000,
       tracks: Vec::new(),
     }
@@ -105,12 +95,6 @@ impl Mp4Builder {
   pub fn sample_sizes(mut self, sample_sizes: &[u32]) -> Self {
     self.frame_count = sample_sizes.len().try_into().unwrap();
     self.sample_sizes = sample_sizes.into();
-    self
-  }
-
-  #[must_use]
-  pub fn sps(mut self, sps: &[u8]) -> Self {
-    self.sps = sps.into();
     self
   }
 
@@ -206,13 +190,7 @@ impl Mp4Builder {
     self
   }
 
-  pub fn video_entry(
-    entry: [u8; 4],
-    config: [u8; 4],
-    config_payload: &[u8],
-    width: u16,
-    height: u16,
-  ) -> Vec<u8> {
+  pub fn video_entry(entry: [u8; 4], config: [u8; 4], width: u16, height: u16) -> Vec<u8> {
     let mut payload = Vec::new();
     payload.extend_from_slice(&[0; 6]);
     payload.extend_from_slice(&[0, 1]);
@@ -220,24 +198,14 @@ impl Mp4Builder {
     payload.extend_from_slice(&width.to_be_bytes());
     payload.extend_from_slice(&height.to_be_bytes());
     payload.extend_from_slice(&[0; 50]);
-    payload.extend_from_slice(&Self::atom(config, config_payload));
+    payload.extend_from_slice(&Self::atom(config, &[1, 0, 0, 0, 0xff, 0xe0, 0]));
 
     Self::atom(entry, &payload)
   }
 
   #[must_use]
   pub fn video_track(self, width: u16, height: u16) -> Self {
-    let avcc = if self.sps.is_empty() {
-      vec![1, self.avcc_profile, 0, 0, 0xff, 0xe0, 0]
-    } else {
-      let mut avcc = vec![1, self.sps[1], self.sps[2], self.sps[3], 0xff, 0xe1];
-      avcc.extend_from_slice(&u16::try_from(self.sps.len()).unwrap().to_be_bytes());
-      avcc.extend_from_slice(&self.sps);
-      avcc.push(0);
-      avcc
-    };
-
-    let entry = Self::video_entry(*b"avc1", *b"avcC", &avcc, width, height);
+    let entry = Self::video_entry(*b"avc1", *b"avcC", width, height);
     self.track(*b"vide", &[entry])
   }
 }
