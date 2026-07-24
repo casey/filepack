@@ -1,5 +1,7 @@
 pub struct Mp4Builder {
-  traks: Vec<Vec<u8>>,
+  duration: u32,
+  timescale: u32,
+  tracks: Vec<Vec<u8>>,
 }
 
 impl Mp4Builder {
@@ -47,24 +49,40 @@ impl Mp4Builder {
     ftyp.extend_from_slice(b"isom");
 
     let mut mvhd = vec![0; 12];
-    mvhd.extend_from_slice(&1000u32.to_be_bytes());
-    mvhd.extend_from_slice(&[0; 4]);
+    mvhd.extend_from_slice(&self.timescale.to_be_bytes());
+    mvhd.extend_from_slice(&self.duration.to_be_bytes());
     mvhd.extend_from_slice(&0x0001_0000u32.to_be_bytes());
     mvhd.extend_from_slice(&[0; 76]);
 
-    let moov = [Self::atom(*b"mvhd", &mvhd), self.traks.concat()].concat();
+    let moov = [Self::atom(*b"mvhd", &mvhd), self.tracks.concat()].concat();
 
     [Self::atom(*b"ftyp", &ftyp), Self::atom(*b"moov", &moov)].concat()
   }
 
+  #[must_use]
+  pub fn duration(mut self, duration: u32) -> Self {
+    self.duration = duration;
+    self
+  }
+
   pub fn new() -> Self {
-    Self { traks: Vec::new() }
+    Self {
+      duration: 0,
+      timescale: 1000,
+      tracks: Vec::new(),
+    }
+  }
+
+  #[must_use]
+  pub fn timescale(mut self, timescale: u32) -> Self {
+    self.timescale = timescale;
+    self
   }
 
   #[must_use]
   pub fn track(mut self, handler: [u8; 4], descriptions: &[Vec<u8>]) -> Self {
     let mut tkhd = vec![0; 12];
-    tkhd.extend_from_slice(&u32::try_from(self.traks.len() + 1).unwrap().to_be_bytes());
+    tkhd.extend_from_slice(&u32::try_from(self.tracks.len() + 1).unwrap().to_be_bytes());
     tkhd.extend_from_slice(&[0; 68]);
 
     let mut mdhd = vec![0; 12];
@@ -102,7 +120,7 @@ impl Mp4Builder {
 
     let trak = [Self::atom(*b"tkhd", &tkhd), Self::atom(*b"mdia", &mdia)].concat();
 
-    self.traks.push(Self::atom(*b"trak", &trak));
+    self.tracks.push(Self::atom(*b"trak", &trak));
 
     self
   }

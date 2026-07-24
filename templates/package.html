@@ -126,7 +126,11 @@
 %%       Media::Video { videos } => {
 <ol>
 %%         for (i, video) in videos.iter().enumerate() {
-  <li><a href=/package/{{ self.fingerprint }}/{{ Ordinal(i) }}>{{ video.filename }}</a></li>
+%%           let duration = Duration::from_millis(video.duration);
+  <li>
+    <a href=/package/{{ self.fingerprint }}/{{ Ordinal(i) }}>{{ video.filename }}</a>
+    <time datetime={{ Iso8601Duration(duration) }}>{{ DisplayDuration(duration) }}</time>
+  </li>
 %%         }
 </ol>
 %%       }

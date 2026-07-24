@@ -3,10 +3,12 @@ use super::*;
 #[derive(Clone, Debug, Decode, DeserializeFromStr, Encode, PartialEq, Serialize)]
 pub(crate) struct Video {
   #[n(0)]
-  pub(crate) filename: ComponentBuf,
+  pub(crate) duration: u64,
   #[n(1)]
-  pub(crate) tracks: Vec<Track>,
+  pub(crate) filename: ComponentBuf,
   #[n(2)]
+  pub(crate) tracks: Vec<Track>,
+  #[n(3)]
   #[serde(rename = "type")]
   pub(crate) ty: VideoType,
 }
@@ -19,21 +21,29 @@ impl Video {
   pub(crate) fn check_content(&self, root: &Utf8Path) -> Result {
     let path = root.join(self.as_path());
 
-    let tracks = self.info(root)?;
+    let info = self.info(root)?;
 
-    self.check_info(&tracks).context(error::Video { path })
+    self.check_info(&info).context(error::Video { path })
   }
 
-  fn check_info(&self, tracks: &[Track]) -> Result<(), VideoError> {
+  fn check_info(&self, info: &VideoInfo) -> Result<(), VideoError> {
     ensure! {
-      tracks.len() == self.tracks.len(),
+      info.duration == self.duration,
+      video_error::DurationMismatch {
+        actual: info.duration,
+        expected: self.duration,
+      },
+    }
+
+    ensure! {
+      info.tracks.len() == self.tracks.len(),
       video_error::TrackCountMismatch {
-        actual: tracks.len(),
+        actual: info.tracks.len(),
         expected: self.tracks.len(),
       },
     }
 
-    for (index, (actual, expected)) in tracks.iter().zip(&self.tracks).enumerate() {
+    for (index, (actual, expected)) in info.tracks.iter().zip(&self.tracks).enumerate() {
       ensure! {
         actual == expected,
         video_error::TrackMismatch {
@@ -75,7 +85,7 @@ impl Video {
     formats
   }
 
-  fn info(&self, root: &Utf8Path) -> Result<Vec<Track>> {
+  fn info(&self, root: &Utf8Path) -> Result<VideoInfo> {
     let path = root.join(self.as_path());
 
     match self.ty {
@@ -96,7 +106,7 @@ impl Video {
     }
   }
 
-  fn info_mp4<T: Read + Seek>(reader: T, size: u64) -> Result<Vec<Track>, VideoError> {
+  fn info_mp4<T: Read + Seek>(reader: T, size: u64) -> Result<VideoInfo, VideoError> {
     use re_mp4::{Mp4, Mp4aBox, StsdBoxContent};
 
     fn mp4a_codec(mp4a: &Mp4aBox) -> Option<Codec> {
@@ -130,6 +140,14 @@ impl Video {
     }
 
     let mp4 = Mp4::read(BufReader::new(reader), size).context(video_error::DecodeMp4)?;
+
+    let mvhd = &mp4.moov.mvhd;
+
+    ensure!(mvhd.timescale != 0, video_error::TimescaleZero);
+
+    let duration = u64::try_from(u128::from(mvhd.duration) * 1000 / u128::from(mvhd.timescale))
+      .ok()
+      .context(video_error::DurationOverflow)?;
 
     let mut video_track = None;
     let mut audio_track = None;
@@ -208,10 +226,10 @@ impl Video {
       tracks.push(track);
     }
 
-    Ok(tracks)
+    Ok(VideoInfo { duration, tracks })
   }
 
-  fn info_webm<T: Read + Seek>(reader: T) -> Result<Vec<Track>, VideoError> {
+  fn info_webm<T: Read + Seek>(reader: T) -> Result<VideoInfo, VideoError> {
     use matroska_demuxer::{MatroskaFile, TrackType};
 
     let file = MatroskaFile::open(BufReader::new(reader)).context(video_error::DecodeWebm)?;
@@ -222,6 +240,24 @@ impl Video {
       doc_type == "webm",
       video_error::DocType { doc_type },
     }
+
+    let info = file.info();
+
+    let ticks = info.duration().context(video_error::DurationMissing)?;
+
+    let timestamp_scale = info.timestamp_scale().get();
+
+    let timestamp_scale = u32::try_from(timestamp_scale)
+      .ok()
+      .context(video_error::TimestampScale { timestamp_scale })?;
+
+    let duration = Duration::try_from_secs_f64(ticks * f64::from(timestamp_scale) / 1e9)
+      .ok()
+      .context(video_error::DurationInvalid)?;
+
+    let duration = u64::try_from(duration.as_millis())
+      .ok()
+      .context(video_error::DurationOverflow)?;
 
     let mut video_codec = None;
     let mut dimensions = None;
@@ -309,11 +345,14 @@ impl Video {
       });
     }
 
-    Ok(tracks)
+    Ok(VideoInfo { duration, tracks })
   }
 
   pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result {
-    self.tracks = self.info(root)?;
+    let info = self.info(root)?;
+
+    self.duration = info.duration;
+    self.tracks = info.tracks;
 
     Ok(())
   }
@@ -340,6 +379,7 @@ impl FromStr for Video {
     };
 
     Ok(Self {
+      duration: 0,
       filename,
       tracks: Vec::new(),
       ty,
@@ -379,28 +419,45 @@ mod tests {
     ];
 
     video
-      .check_info(&[
-        Track {
-          codec: Codec::H264,
-          info: TrackInfo::Video {
-            dimensions: Dimensions::default(),
+      .check_info(&VideoInfo {
+        duration: 0,
+        tracks: vec![
+          Track {
+            codec: Codec::H264,
+            info: TrackInfo::Video {
+              dimensions: Dimensions::default(),
+            },
           },
-        },
-        Track {
-          codec: Codec::Aac,
-          info: TrackInfo::Audio,
-        },
-      ])
+          Track {
+            codec: Codec::Aac,
+            info: TrackInfo::Audio,
+          },
+        ],
+      })
       .unwrap();
 
     assert_eq!(
       video
-        .check_info(&[Track {
-          codec: Codec::H264,
-          info: TrackInfo::Video {
-            dimensions: Dimensions::default()
-          },
-        }])
+        .check_info(&VideoInfo {
+          duration: 1,
+          tracks: Vec::new(),
+        })
+        .unwrap_err()
+        .to_string(),
+      "video has duration 1ms but metadata has duration 0ms",
+    );
+
+    assert_eq!(
+      video
+        .check_info(&VideoInfo {
+          duration: 0,
+          tracks: vec![Track {
+            codec: Codec::H264,
+            info: TrackInfo::Video {
+              dimensions: Dimensions::default()
+            },
+          }],
+        })
         .unwrap_err()
         .to_string(),
       "video has 1 track but metadata has 2 tracks",
@@ -408,21 +465,24 @@ mod tests {
 
     assert_eq!(
       video
-        .check_info(&[
-          Track {
-            codec: Codec::H264,
-            info: TrackInfo::Video {
-              dimensions: Dimensions {
-                height: 1,
-                width: 2,
-              }
+        .check_info(&VideoInfo {
+          duration: 0,
+          tracks: vec![
+            Track {
+              codec: Codec::H264,
+              info: TrackInfo::Video {
+                dimensions: Dimensions {
+                  height: 1,
+                  width: 2,
+                }
+              },
             },
-          },
-          Track {
-            codec: Codec::Aac,
-            info: TrackInfo::Audio,
-          },
-        ])
+            Track {
+              codec: Codec::Aac,
+              info: TrackInfo::Audio,
+            },
+          ],
+        })
         .unwrap_err()
         .to_string(),
       "video track 0 `H.264 2×1` doesn't match metadata track `H.264 0×0`",
@@ -430,18 +490,21 @@ mod tests {
 
     assert_eq!(
       video
-        .check_info(&[
-          Track {
-            codec: Codec::H264,
-            info: TrackInfo::Video {
-              dimensions: Dimensions::default()
+        .check_info(&VideoInfo {
+          duration: 0,
+          tracks: vec![
+            Track {
+              codec: Codec::H264,
+              info: TrackInfo::Video {
+                dimensions: Dimensions::default()
+              },
             },
-          },
-          Track {
-            codec: Codec::Mp3,
-            info: TrackInfo::Audio,
-          },
-        ])
+            Track {
+              codec: Codec::Mp3,
+              info: TrackInfo::Audio,
+            },
+          ],
+        })
         .unwrap_err()
         .to_string(),
       "video track 1 `MP3` doesn't match metadata track `AAC`",
@@ -515,11 +578,12 @@ mod tests {
   fn encoding() {
     assert_cbor(
       "foo.mp4".parse::<Video>().unwrap(),
-      "a30067666f6f2e6d703401800200",
+      "a400000167666f6f2e6d703402800300",
     );
 
     assert_cbor(
       Video {
+        duration: 3,
         filename: "foo.mp4".parse().unwrap(),
         tracks: vec![
           Track {
@@ -538,7 +602,7 @@ mod tests {
         ],
         ty: VideoType::Mp4,
       },
-      "a30067666f6f2e6d70340182a20001018201a100a200010102a2000201000200",
+      "a400030167666f6f2e6d70340282a20001018201a100a200010102a2000201000300",
     );
   }
 
@@ -609,6 +673,7 @@ mod tests {
     assert_eq!(
       "foo.mp4".parse::<Video>().unwrap(),
       Video {
+        duration: 0,
         filename: "foo.mp4".parse().unwrap(),
         tracks: Vec::new(),
         ty: VideoType::Mp4,
@@ -618,6 +683,7 @@ mod tests {
     assert_eq!(
       "foo.webm".parse::<Video>().unwrap(),
       Video {
+        duration: 0,
         filename: "foo.webm".parse().unwrap(),
         tracks: Vec::new(),
         ty: VideoType::Webm,
@@ -643,7 +709,7 @@ mod tests {
   #[test]
   fn mp4_info() {
     #[track_caller]
-    fn case(builder: Mp4Builder) -> Result<Vec<Track>, VideoError> {
+    fn case(builder: Mp4Builder) -> Result<VideoInfo, VideoError> {
       let bytes = builder.build();
       let size = bytes.len().try_into().unwrap();
       Video::info_mp4(io::Cursor::new(bytes), size)
@@ -656,8 +722,31 @@ mod tests {
 
     assert_eq!(
       case(Mp4Builder::new().video_track(2, 1).audio_track(0x40)).unwrap(),
-      vec![
-        Track {
+      VideoInfo {
+        duration: 0,
+        tracks: vec![
+          Track {
+            codec: Codec::H264,
+            info: TrackInfo::Video {
+              dimensions: Dimensions {
+                height: 1,
+                width: 2,
+              }
+            },
+          },
+          Track {
+            codec: Codec::Aac,
+            info: TrackInfo::Audio,
+          },
+        ],
+      },
+    );
+
+    assert_eq!(
+      case(Mp4Builder::new().video_track(2, 1)).unwrap(),
+      VideoInfo {
+        duration: 0,
+        tracks: vec![Track {
           codec: Codec::H264,
           info: TrackInfo::Video {
             dimensions: Dimensions {
@@ -665,25 +754,32 @@ mod tests {
               width: 2,
             }
           },
-        },
-        Track {
-          codec: Codec::Aac,
-          info: TrackInfo::Audio,
-        },
-      ],
+        }],
+      },
     );
 
     assert_eq!(
-      case(Mp4Builder::new().video_track(2, 1)).unwrap(),
-      vec![Track {
-        codec: Codec::H264,
-        info: TrackInfo::Video {
-          dimensions: Dimensions {
-            height: 1,
-            width: 2,
-          }
-        },
-      }],
+      case(
+        Mp4Builder::new()
+          .timescale(90000)
+          .duration(45000)
+          .video_track(2, 1),
+      )
+      .unwrap()
+      .duration,
+      500,
+    );
+
+    assert_eq!(
+      case(Mp4Builder::new().timescale(3).duration(1).video_track(2, 1))
+        .unwrap()
+        .duration,
+      333,
+    );
+
+    error(
+      Mp4Builder::new().timescale(0).video_track(2, 1),
+      "zero timescale",
     );
 
     error(Mp4Builder::new().audio_track(0x40), "no video track");
@@ -746,12 +842,14 @@ mod tests {
     assert_eq!(
       case(
         &Mp4Builder::new()
+          .duration(2)
           .video_track(2, 1)
           .audio_track(0x40)
           .build()
       )
       .unwrap(),
       Video {
+        duration: 2,
         filename: "foo.mp4".parse().unwrap(),
         tracks: vec![
           Track {
@@ -808,6 +906,7 @@ mod tests {
   fn serialize() {
     assert_eq!(
       serde_json::to_string(&Video {
+        duration: 0,
         filename: "foo.mp4".parse().unwrap(),
         tracks: vec![
           Track {
@@ -827,14 +926,14 @@ mod tests {
         ty: VideoType::Mp4,
       })
       .unwrap(),
-      r#"{"filename":"foo.mp4","tracks":[{"codec":"h264","info":{"type":"video","dimensions":{"height":1,"width":2}}},{"codec":"mp3","info":{"type":"audio"}}],"type":"mp4"}"#,
+      r#"{"duration":0,"filename":"foo.mp4","tracks":[{"codec":"h264","info":{"type":"video","dimensions":{"height":1,"width":2}}},{"codec":"mp3","info":{"type":"audio"}}],"type":"mp4"}"#,
     );
   }
 
   #[test]
   fn webm_info() {
     #[track_caller]
-    fn case(builder: WebmBuilder) -> Result<Vec<Track>, VideoError> {
+    fn case(builder: WebmBuilder) -> Result<VideoInfo, VideoError> {
       Video::info_webm(io::Cursor::new(builder.build()))
     }
 
@@ -845,21 +944,24 @@ mod tests {
 
     assert_eq!(
       case(WebmBuilder::new().video_track(2, 1).audio_track("A_OPUS")).unwrap(),
-      vec![
-        Track {
-          codec: Codec::Vp9,
-          info: TrackInfo::Video {
-            dimensions: Dimensions {
-              height: 1,
-              width: 2,
-            }
+      VideoInfo {
+        duration: 0,
+        tracks: vec![
+          Track {
+            codec: Codec::Vp9,
+            info: TrackInfo::Video {
+              dimensions: Dimensions {
+                height: 1,
+                width: 2,
+              }
+            },
           },
-        },
-        Track {
-          codec: Codec::Opus,
-          info: TrackInfo::Audio,
-        },
-      ],
+          Track {
+            codec: Codec::Opus,
+            info: TrackInfo::Audio,
+          },
+        ],
+      },
     );
 
     assert_eq!(
@@ -869,34 +971,81 @@ mod tests {
           .audio_track("A_VORBIS"),
       )
       .unwrap(),
-      vec![
-        Track {
-          codec: Codec::Vp8,
+      VideoInfo {
+        duration: 0,
+        tracks: vec![
+          Track {
+            codec: Codec::Vp8,
+            info: TrackInfo::Video {
+              dimensions: Dimensions {
+                height: 1,
+                width: 2,
+              }
+            },
+          },
+          Track {
+            codec: Codec::Vorbis,
+            info: TrackInfo::Audio,
+          },
+        ],
+      },
+    );
+
+    assert_eq!(
+      case(WebmBuilder::new().video_track(2, 1)).unwrap(),
+      VideoInfo {
+        duration: 0,
+        tracks: vec![Track {
+          codec: Codec::Vp9,
           info: TrackInfo::Video {
             dimensions: Dimensions {
               height: 1,
               width: 2,
             }
           },
-        },
-        Track {
-          codec: Codec::Vorbis,
-          info: TrackInfo::Audio,
-        },
-      ],
+        }],
+      },
     );
 
     assert_eq!(
-      case(WebmBuilder::new().video_track(2, 1)).unwrap(),
-      vec![Track {
-        codec: Codec::Vp9,
-        info: TrackInfo::Video {
-          dimensions: Dimensions {
-            height: 1,
-            width: 2,
-          }
-        },
-      }],
+      case(WebmBuilder::new().duration(1500.0).video_track(2, 1))
+        .unwrap()
+        .duration,
+      1500,
+    );
+
+    assert_eq!(
+      case(
+        WebmBuilder::new()
+          .timestamp_scale(2_000_000)
+          .duration(3.0)
+          .video_track(2, 1),
+      )
+      .unwrap()
+      .duration,
+      6,
+    );
+
+    error(
+      WebmBuilder::new().no_duration().video_track(2, 1),
+      "missing duration",
+    );
+
+    error(
+      WebmBuilder::new().duration(f64::NAN).video_track(2, 1),
+      "invalid duration",
+    );
+
+    error(
+      WebmBuilder::new().duration(1e22).video_track(2, 1),
+      "duration overflow",
+    );
+
+    error(
+      WebmBuilder::new()
+        .timestamp_scale(u64::from(u32::MAX) + 1)
+        .video_track(2, 1),
+      "unsupported timestamp scale 4294967296",
     );
 
     error(WebmBuilder::new().audio_track("A_OPUS"), "no video track");
