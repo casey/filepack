@@ -49,8 +49,9 @@ impl Video {
   fn h264_bit_depth(sps: &[u8]) -> Option<u64> {
     let mut rbsp = Vec::new();
 
-    // skip NAL unit header and remove emulation prevention bytes
+    // skip NAL unit header
     for &byte in sps.get(1..)? {
+      // remove emulation prevention bytes
       if byte == 3 && rbsp.ends_with(&[0, 0]) {
         continue;
       }
