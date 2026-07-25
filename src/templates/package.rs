@@ -315,11 +315,13 @@ mod tests {
               width: 2,
             },
             filename: "foo.png".parse().unwrap(),
+            orientation: Orientation::default(),
             ty: ImageType::Png,
           },
           Image {
             dimensions: Dimensions::default(),
             filename: "bar.jpg".parse().unwrap(),
+            orientation: Orientation::default(),
             ty: ImageType::Jpeg,
           },
           Image {
@@ -328,6 +330,7 @@ mod tests {
               width: 2,
             },
             filename: "baz.png".parse().unwrap(),
+            orientation: Orientation::default(),
             ty: ImageType::Png,
           },
         ],

@@ -58,6 +58,22 @@ pub(crate) fn checksum(s: &str) -> String {
     .collect()
 }
 
+pub(crate) fn exif(orientation: u16) -> Vec<u8> {
+  let mut bytes = b"II".to_vec();
+
+  bytes.extend_from_slice(&42u16.to_le_bytes());
+  bytes.extend_from_slice(&8u32.to_le_bytes());
+  bytes.extend_from_slice(&1u16.to_le_bytes());
+  bytes.extend_from_slice(&0x0112u16.to_le_bytes());
+  bytes.extend_from_slice(&3u16.to_le_bytes());
+  bytes.extend_from_slice(&1u32.to_le_bytes());
+  bytes.extend_from_slice(&orientation.to_le_bytes());
+  bytes.extend_from_slice(&[0; 2]);
+  bytes.extend_from_slice(&0u32.to_le_bytes());
+
+  bytes
+}
+
 pub(crate) fn flac(comments: &[&str], samples: u32) -> Vec<u8> {
   let mut bytes = b"fLaC".to_vec();
 

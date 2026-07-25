@@ -1,2 +1,3 @@
 %% let image = self.image();
-<img src=/media/image/{{ self.fingerprint }}/item/{{ Ordinal(self.image) }} width={{ image.dimensions.width }} height={{ image.dimensions.height }}>
+%% let dimensions = image.oriented_dimensions();
+<img src=/media/image/{{ self.fingerprint }}/item/{{ Ordinal(self.image) }} width={{ dimensions.width }} height={{ dimensions.height }}>

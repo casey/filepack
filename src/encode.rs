@@ -32,6 +32,12 @@ where
   }
 }
 
+impl Encode for bool {
+  fn encode(&self, encoder: &mut Encoder) {
+    encoder.boolean(*self);
+  }
+}
+
 impl Encode for String {
   fn encode(&self, encoder: &mut Encoder) {
     self.as_str().encode(encoder);
@@ -103,6 +109,12 @@ mod tests {
   fn array() {
     assert_cbor(Vec::<u64>::new(), "80");
     assert_cbor(vec![1u64, 2u64], "820102");
+  }
+
+  #[test]
+  fn boolean() {
+    assert_cbor(false, "f4");
+    assert_cbor(true, "f5");
   }
 
   #[test]

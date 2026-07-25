@@ -9,6 +9,8 @@ pub enum DecodeError {
     expected: usize,
     source: array::TryFromSliceError,
   },
+  #[snafu(display("invalid boolean value {value}"))]
+  Boolean { value: u64 },
   #[snafu(display("failed to parse component"))]
   Component { source: ComponentError },
   #[snafu(display(

@@ -7,6 +7,8 @@ pub(crate) struct Image {
   #[n(1)]
   pub(crate) filename: ComponentBuf,
   #[n(2)]
+  pub(crate) orientation: Orientation,
+  #[n(3)]
   #[serde(rename = "type")]
   pub(crate) ty: ImageType,
 }
@@ -16,7 +18,7 @@ impl Image {
     self.filename.as_path()
   }
 
-  fn decode(&self, root: &Utf8Path) -> Result<Dimensions> {
+  fn decode(&self, root: &Utf8Path) -> Result<(Dimensions, Orientation)> {
     let path = root.join(self.as_path());
 
     match self.ty {
@@ -25,7 +27,7 @@ impl Image {
     }
   }
 
-  fn decode_jpeg(path: &Utf8Path) -> Result<Dimensions> {
+  fn decode_jpeg(path: &Utf8Path) -> Result<(Dimensions, Orientation)> {
     let bytes = filesystem::read(path)?;
 
     let mut decoder = JpegDecoder::new(io::Cursor::new(bytes));
@@ -34,15 +36,24 @@ impl Image {
       .decode_headers()
       .context(error::ImageDecodeJpeg { path })?;
 
+    let orientation = if let Some(exif) = decoder.exif() {
+      Orientation::from_exif(exif).context(error::ImageExif { path })?
+    } else {
+      Orientation::default()
+    };
+
     let info = decoder.info().unwrap();
 
-    Ok(Dimensions {
-      height: info.height.into(),
-      width: info.width.into(),
-    })
+    Ok((
+      Dimensions {
+        height: info.height.into(),
+        width: info.width.into(),
+      },
+      orientation,
+    ))
   }
 
-  fn decode_png(path: &Utf8Path) -> Result<Dimensions> {
+  fn decode_png(path: &Utf8Path) -> Result<(Dimensions, Orientation)> {
     let bytes = filesystem::read(path)?;
 
     let reader = png::Decoder::new(io::Cursor::new(bytes))
@@ -51,10 +62,19 @@ impl Image {
 
     let info = reader.info();
 
-    Ok(Dimensions {
-      height: info.height.into(),
-      width: info.width.into(),
-    })
+    let orientation = if let Some(exif) = &info.exif_metadata {
+      Orientation::from_exif(exif).context(error::ImageExif { path })?
+    } else {
+      Orientation::default()
+    };
+
+    Ok((
+      Dimensions {
+        height: info.height.into(),
+        width: info.width.into(),
+      },
+      orientation,
+    ))
   }
 
   pub(crate) fn formats(images: &[Image]) -> Vec<ImageType> {
@@ -69,14 +89,21 @@ impl Image {
     formats
   }
 
+  pub(crate) fn oriented_dimensions(&self) -> Dimensions {
+    self.orientation.dimensions(self.dimensions)
+  }
+
   pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result {
-    self.dimensions = self.decode(root)?;
+    let (dimensions, orientation) = self.decode(root)?;
+
+    self.dimensions = dimensions;
+    self.orientation = orientation;
 
     Ok(())
   }
 
   pub(crate) fn resolutions(images: &[Image]) -> Option<Resolutions> {
-    Resolutions::new(images.iter().map(|image| image.dimensions), false)
+    Resolutions::new(images.iter().map(Image::oriented_dimensions), false)
   }
 
   pub(crate) fn resource_type(&self) -> ResourceType {
@@ -99,6 +126,7 @@ impl FromStr for Image {
     Ok(Self {
       dimensions: Dimensions::default(),
       filename,
+      orientation: Orientation::default(),
       ty,
     })
   }
@@ -130,7 +158,7 @@ mod tests {
   fn encoding() {
     assert_cbor(
       "foo.png".parse::<Image>().unwrap(),
-      "a300a2000001000167666f6f2e706e670201",
+      "a400a2000001000167666f6f2e706e6702a200f401000301",
     );
 
     assert_cbor(
@@ -140,9 +168,13 @@ mod tests {
           width: 2,
         },
         filename: "foo.jpg".parse().unwrap(),
+        orientation: Orientation {
+          mirrored: true,
+          rotation: Rotation::R90,
+        },
         ty: ImageType::Jpeg,
       },
-      "a300a2000101020167666f6f2e6a70670200",
+      "a400a2000101020167666f6f2e6a706702a200f501030300",
     );
   }
 
@@ -154,12 +186,14 @@ mod tests {
         width: 2,
       },
       filename: "foo.png".parse().unwrap(),
+      orientation: Orientation::default(),
       ty: ImageType::Png,
     };
 
     let bar = Image {
       dimensions: Dimensions::default(),
       filename: "bar.jpg".parse().unwrap(),
+      orientation: Orientation::default(),
       ty: ImageType::Jpeg,
     };
 
@@ -169,6 +203,7 @@ mod tests {
         width: 4,
       },
       filename: "baz.png".parse().unwrap(),
+      orientation: Orientation::default(),
       ty: ImageType::Png,
     };
 
@@ -193,6 +228,7 @@ mod tests {
           width: 0,
         },
         filename: "foo.jpg".parse().unwrap(),
+        orientation: Orientation::default(),
         ty: ImageType::Jpeg,
       },
     );
@@ -213,6 +249,64 @@ mod tests {
     );
     case("", ComponentError::Empty);
     case("foo/bar.png", ComponentError::Separator { character: '/' });
+  }
+
+  fn jpeg_with_exif(width: u32, height: u32, exif: &[u8]) -> Vec<u8> {
+    let jpeg = bytes(width, height, ::image::ImageFormat::Jpeg);
+
+    let mut app1 = b"Exif\0\0".to_vec();
+    app1.extend_from_slice(exif);
+
+    let mut spliced = jpeg[..2].to_vec();
+    spliced.extend_from_slice(&[0xFF, 0xE1]);
+    spliced.extend_from_slice(&u16::try_from(app1.len() + 2).unwrap().to_be_bytes());
+    spliced.extend_from_slice(&app1);
+    spliced.extend_from_slice(&jpeg[2..]);
+    spliced
+  }
+
+  #[test]
+  fn oriented_dimensions() {
+    let mut image = "foo.png".parse::<Image>().unwrap();
+
+    image.dimensions = Dimensions {
+      height: 1,
+      width: 2,
+    };
+
+    assert_eq!(
+      image.oriented_dimensions(),
+      Dimensions {
+        height: 1,
+        width: 2,
+      },
+    );
+
+    image.orientation.rotation = Rotation::R90;
+
+    assert_eq!(
+      image.oriented_dimensions(),
+      Dimensions {
+        height: 2,
+        width: 1,
+      },
+    );
+  }
+
+  fn png_with_exif(width: u32, height: u32, exif: &[u8]) -> Vec<u8> {
+    let mut buffer = Vec::new();
+
+    let mut encoder = png::Encoder::new(&mut buffer, width, height);
+    encoder.set_color(png::ColorType::Rgb);
+
+    let mut writer = encoder.write_header().unwrap();
+    writer.write_chunk(png::chunk::eXIf, exif).unwrap();
+    writer
+      .write_image_data(&vec![0; usize::try_from(width * height * 3).unwrap()])
+      .unwrap();
+    writer.finish().unwrap();
+
+    buffer
   }
 
   #[test]
@@ -248,6 +342,38 @@ mod tests {
       },
     );
 
+    assert_eq!(
+      case("foo.jpg", &jpeg_with_exif(2, 1, &exif(6))).unwrap(),
+      Image {
+        dimensions: Dimensions {
+          height: 1,
+          width: 2,
+        },
+        filename: "foo.jpg".parse().unwrap(),
+        orientation: Orientation {
+          mirrored: false,
+          rotation: Rotation::R90,
+        },
+        ty: ImageType::Jpeg,
+      },
+    );
+
+    assert_eq!(
+      case("foo.png", &png_with_exif(2, 1, &exif(5))).unwrap(),
+      Image {
+        dimensions: Dimensions {
+          height: 1,
+          width: 2,
+        },
+        filename: "foo.png".parse().unwrap(),
+        orientation: Orientation {
+          mirrored: true,
+          rotation: Rotation::R90,
+        },
+        ty: ImageType::Png,
+      },
+    );
+
     assert_matches_regex!(
       case("foo.png", b"bar").unwrap_err().to_string(),
       r"^failed to decode PNG image `.*foo\.png`$",
@@ -256,6 +382,20 @@ mod tests {
     assert_matches_regex!(
       case("foo.jpg", b"bar").unwrap_err().to_string(),
       r"^failed to decode JPEG image `.*foo\.jpg`$",
+    );
+
+    assert_matches_regex!(
+      case("foo.jpg", &jpeg_with_exif(2, 1, b"foo"))
+        .unwrap_err()
+        .to_string(),
+      r"^invalid EXIF in image `.*foo\.jpg`$",
+    );
+
+    assert_matches_regex!(
+      case("foo.png", &png_with_exif(2, 1, b"foo"))
+        .unwrap_err()
+        .to_string(),
+      r"^invalid EXIF in image `.*foo\.png`$",
     );
   }
 
@@ -268,10 +408,14 @@ mod tests {
           width: 2,
         },
         filename: "foo.jpg".parse().unwrap(),
+        orientation: Orientation {
+          mirrored: true,
+          rotation: Rotation::R90,
+        },
         ty: ImageType::Jpeg,
       })
       .unwrap(),
-      r#"{"dimensions":{"height":1,"width":2},"filename":"foo.jpg","type":"jpeg"}"#,
+      r#"{"dimensions":{"height":1,"width":2},"filename":"foo.jpg","orientation":{"mirrored":true,"rotation":90},"type":"jpeg"}"#,
     );
   }
 }
