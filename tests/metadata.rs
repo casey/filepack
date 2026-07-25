@@ -25,6 +25,10 @@ fn create_extracts_artwork_dimensions() {
       "width": 2
     },
     "filename": "cover.png",
+    "orientation": {
+      "mirrored": false,
+      "rotation": 0
+    },
     "type": "png"
   }
 }
@@ -60,6 +64,10 @@ media:
           "width": 2
         },
         "filename": "foo.png",
+        "orientation": {
+          "mirrored": false,
+          "rotation": 0
+        },
         "type": "png"
       }
     ]
@@ -356,7 +364,7 @@ package:
     .arg("create")
     .success()
     .arg("verify")
-    .stderr("successfully verified 5 files totaling 242 bytes\n")
+    .stderr("successfully verified 5 files totaling 248 bytes\n")
     .success();
 }
 

@@ -30,6 +30,12 @@ where
   }
 }
 
+impl Decode for bool {
+  fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
+    decoder.boolean()
+  }
+}
+
 impl Decode for String {
   fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
     Ok(decoder.text()?.to_owned())

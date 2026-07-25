@@ -280,6 +280,12 @@ pub enum Error {
     path: DisplayPath,
     source: png::DecodingError,
   },
+  #[snafu(display("invalid EXIF in image `{path}`"))]
+  ImageExif {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+    source: ExifError,
+  },
   #[snafu(display("internal error, this may indicate a bug in filepack: {message}"))]
   Internal {
     backtrace: Option<Backtrace>,

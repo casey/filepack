@@ -12,6 +12,14 @@ impl<'a> Decoder<'a> {
     Ok(ArrayDecoder::new(self, len))
   }
 
+  pub(crate) fn boolean(&mut self) -> Result<bool, DecodeError> {
+    match self.expect(MajorType::Value)? {
+      20 => Ok(false),
+      21 => Ok(true),
+      value => Err(decode_error::Boolean { value }.build()),
+    }
+  }
+
   pub(crate) fn byte_array<const N: usize>(&mut self) -> Result<[u8; N], DecodeError> {
     let bytes = self.bytes()?;
 
@@ -163,6 +171,14 @@ impl<'a> Decoder<'a> {
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn boolean() {
+    assert_matches!(
+      Decoder::new(&[0xf6]).boolean(),
+      Err(DecodeError::Boolean { value: 22 }),
+    );
+  }
 
   #[test]
   fn byte_array() {

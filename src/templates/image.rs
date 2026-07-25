@@ -26,3 +26,40 @@ impl Page for ImageHtml {
     format!("image {} · filepack", self.image)
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use {super::*, pretty_assertions::assert_eq};
+
+  #[test]
+  fn oriented_dimensions() {
+    assert_eq!(
+      ImageHtml {
+        fingerprint: test::FINGERPRINT.parse().unwrap(),
+        image: 0,
+        metadata: Metadata {
+          media: Some(Media::Image {
+            images: vec![Image {
+              dimensions: Dimensions {
+                height: 1,
+                width: 2,
+              },
+              filename: "foo.png".parse().unwrap(),
+              orientation: Orientation {
+                mirrored: false,
+                rotation: Rotation::R90,
+              },
+              ty: ImageType::Png,
+            }],
+          }),
+          ..default()
+        },
+      }
+      .to_string(),
+      format!(
+        "<img src=/media/image/{}/item/1 width=1 height=2>\n",
+        test::FINGERPRINT,
+      ),
+    );
+  }
+}

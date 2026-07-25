@@ -350,6 +350,7 @@ mod tests {
           width: 1,
         },
         filename: "cover.png".parse().unwrap(),
+        orientation: Orientation::new(),
         ty: ImageType::Png,
       }),
       creator: Some("foo".parse().unwrap()),

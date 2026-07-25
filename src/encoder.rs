@@ -9,6 +9,10 @@ impl Encoder {
     ArrayEncoder::new(self, length)
   }
 
+  pub fn boolean(&mut self, boolean: bool) {
+    self.head(MajorType::Value.head(if boolean { 21 } else { 20 }));
+  }
+
   pub fn bytes(&mut self, bytes: &[u8]) {
     self.head(MajorType::Bytes.head(bytes.len().into_u64()));
     self.buffer.extend(bytes);

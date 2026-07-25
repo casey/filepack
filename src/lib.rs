@@ -54,6 +54,8 @@ use {
     display_secret::DisplaySecret,
     entries::Entries,
     envelope::Envelope,
+    exif_decoder::ExifDecoder,
+    exif_error::ExifError,
     file::File,
     format::Format,
     functions::{
@@ -64,6 +66,7 @@ use {
     hashing_writer::HashingWriter,
     head::Head,
     image::Image,
+    image_info::ImageInfo,
     image_type::ImageType,
     iso8601_duration::Iso8601Duration,
     item::Item,
@@ -81,6 +84,7 @@ use {
     options::Options,
     or::Or,
     ordinal::Ordinal,
+    orientation::Orientation,
     owo_colorize_ext::OwoColorizeExt,
     package::Package,
     path_error::PathError,
@@ -92,6 +96,7 @@ use {
     resolutions::Resolutions,
     resource::Resource,
     resource_type::ResourceType,
+    rotation::Rotation,
     server::Server,
     server_error::ServerError,
     sign_options::SignOptions,
@@ -225,7 +230,7 @@ pub use self::{
 use {
   std::assert_matches,
   tempfile::TempDir,
-  test::{assert_cbor, assert_cbor_eq, assert_encoding, flac, tempdir},
+  test::{assert_cbor, assert_cbor_eq, assert_encoding, exif, flac, tempdir},
   unindent::unindent,
   webm_builder::WebmBuilder,
 };
@@ -289,6 +294,8 @@ mod entries;
 mod entry;
 mod envelope;
 mod error;
+mod exif_decoder;
+mod exif_error;
 mod file;
 mod filesystem;
 mod fingerprint;
@@ -299,6 +306,7 @@ mod hash_error;
 mod hashing_writer;
 mod head;
 mod image;
+mod image_info;
 mod image_type;
 mod iso8601_duration;
 mod item;
@@ -322,6 +330,7 @@ mod number_error;
 mod options;
 mod or;
 mod ordinal;
+mod orientation;
 mod owo_colorize_ext;
 mod package;
 mod page;
@@ -339,6 +348,7 @@ mod reqwest_result_ext;
 mod resolutions;
 mod resource;
 mod resource_type;
+mod rotation;
 mod server;
 mod server_error;
 mod sign_options;
