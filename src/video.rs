@@ -87,27 +87,6 @@ impl Video {
     )
   }
 
-  fn info(&self, root: &Utf8Path) -> Result<VideoInfo> {
-    let path = root.join(self.as_path());
-
-    match self.ty {
-      VideoType::Mp4 => {
-        let file = filesystem::open(&path)?;
-
-        let size = file
-          .metadata()
-          .context(error::FilesystemIo { path: &path })?
-          .len();
-
-        Self::info_mp4(file, size).context(error::Video { path })
-      }
-      VideoType::Webm => {
-        let file = filesystem::open(&path)?;
-        Self::info_webm(file).context(error::Video { path })
-      }
-    }
-  }
-
   fn info_mp4<T: Read + Seek>(reader: T, size: u64) -> Result<VideoInfo, VideoError> {
     use re_mp4::{Mp4, Mp4aBox, StsdBoxContent, TkhdBox};
 
@@ -449,7 +428,24 @@ impl Video {
   }
 
   pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result {
-    let info = self.info(root)?;
+    let path = root.join(self.as_path());
+
+    let info = match self.ty {
+      VideoType::Mp4 => {
+        let file = filesystem::open(&path)?;
+
+        let size = file
+          .metadata()
+          .context(error::FilesystemIo { path: &path })?
+          .len();
+
+        Self::info_mp4(file, size).context(error::Video { path })?
+      }
+      VideoType::Webm => {
+        let file = filesystem::open(&path)?;
+        Self::info_webm(file).context(error::Video { path })?
+      }
+    };
 
     self.duration = info.duration;
     self.tracks = info.tracks;
@@ -536,6 +532,21 @@ impl FromStr for Video {
 }
 
 impl Item for Video {
+  fn info(&self) -> Info {
+    Info::Map(vec![
+      ("filename".into(), Info::Value(self.filename.to_string())),
+      ("type".into(), Info::Value(self.ty.to_string())),
+      (
+        "duration".into(),
+        Info::Value(DisplayDuration(Duration::from_millis(self.duration)).to_string()),
+      ),
+      (
+        "tracks".into(),
+        Info::List(self.tracks.iter().map(Track::info).collect()),
+      ),
+    ])
+  }
+
   fn path(&self) -> RelativePath {
     self.as_path()
   }

@@ -15,7 +15,7 @@ use {
   },
   std::net::TcpStream,
   templates::{
-    AudioHtml, DirectoryHtml, FilesHtml, ImageHtml, PackageHtml, PackagesHtml, VideoHtml,
+    AudioHtml, DirectoryHtml, FilesHtml, ImageHtml, MediaHtml, PackageHtml, PackagesHtml, VideoHtml,
   },
   tokio::{net::TcpListener, runtime, task::block_in_place},
   tower_http::set_header::SetResponseHeaderLayer,
@@ -311,7 +311,11 @@ impl Serve {
         "/package/{fingerprint}",
         get(route::package).post(route::verify_package),
       )
-      .route("/package/{fingerprint}/{item}", get(route::package_item))
+      .route(
+        "/package/{fingerprint}/item/{item}",
+        get(route::package_item),
+      )
+      .route("/package/{fingerprint}/media", get(route::package_media))
       .route("/packages", get(route::packages))
       .route("/static/{*path}", get(route::static_asset))
       .fallback(route::fallback)

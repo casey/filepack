@@ -210,6 +210,28 @@ pub(crate) async fn package_item(
   })
 }
 
+pub(crate) async fn package_media(
+  server: ServerExtension,
+  Path(fingerprint): Path<Fingerprint>,
+) -> PageResult<MediaHtml> {
+  block_in_place(|| {
+    let metadata = server.package_metadata(fingerprint)?;
+
+    ensure! {
+      metadata.media.is_some(),
+      server_error::PackageMediaMetadataNotFound { fingerprint },
+    }
+
+    Ok(
+      MediaHtml {
+        fingerprint,
+        metadata,
+      }
+      .into(),
+    )
+  })
+}
+
 pub(crate) async fn packages(
   server: ServerExtension,
   Query(query): Query<PackagesQuery>,

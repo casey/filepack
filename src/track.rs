@@ -10,6 +10,47 @@ pub(crate) struct Track {
   pub(crate) size: u64,
 }
 
+impl Track {
+  pub(crate) fn info(&self) -> Info {
+    let mut entries = vec![
+      (
+        "type".into(),
+        Info::Value(
+          match self.info {
+            TrackInfo::Audio => "audio",
+            TrackInfo::Video { .. } => "video",
+          }
+          .into(),
+        ),
+      ),
+      ("codec".into(), Info::Value(self.codec.to_string())),
+    ];
+
+    if let TrackInfo::Video {
+      bit_depth,
+      dimensions,
+      frames,
+      orientation,
+    } = self.info
+    {
+      entries.push(("dimensions".into(), Info::Value(dimensions.to_string())));
+      entries.push(("orientation".into(), Info::Value(orientation.to_string())));
+      entries.push(("frames".into(), Info::Value(frames.to_string())));
+
+      if let Some(bit_depth) = bit_depth {
+        entries.push(("bit depth".into(), Info::Value(format!("{bit_depth}-bit"))));
+      }
+    }
+
+    entries.push((
+      "size".into(),
+      Info::Value(format_size(self.size).to_string()),
+    ));
+
+    Info::Map(entries)
+  }
+}
+
 impl Display for Track {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     write!(f, "{}", self.codec)?;

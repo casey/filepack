@@ -133,6 +133,21 @@ impl FromStr for Image {
 }
 
 impl Item for Image {
+  fn info(&self) -> Info {
+    Info::Map(vec![
+      ("filename".into(), Info::Value(self.filename.to_string())),
+      ("type".into(), Info::Value(self.ty.to_string())),
+      (
+        "dimensions".into(),
+        Info::Value(self.dimensions.to_string()),
+      ),
+      (
+        "orientation".into(),
+        Info::Value(self.orientation.to_string()),
+      ),
+    ])
+  }
+
   fn path(&self) -> RelativePath {
     self.as_path()
   }
