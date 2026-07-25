@@ -5,6 +5,7 @@ pub struct PackageHtml {
   pub fingerprint: Fingerprint,
   pub metadata: Option<Metadata>,
   pub totals: Totals,
+  pub view: PackageView,
 }
 
 impl PackageHtml {
@@ -81,11 +82,17 @@ mod tests {
           file_size: 6,
           files: 2,
         },
+        view: PackageView::List,
       }
       .to_string(),
       unindent(&format!(
         "
-          <h1 class=code>{fingerprint}</h1>
+          <header>
+            <h1 class=code>{fingerprint}</h1>
+            <nav>
+              <a>List</a> | <a href=/package/{fingerprint}?view=details>Details</a>
+            </nav>
+          </header>
           <dl>
             <dt>fingerprint</dt>
             <dd class=code>{fingerprint}</dd>
@@ -113,6 +120,106 @@ mod tests {
               <time datetime=PT0M1S>0:01</time>
             </li>
           </ol>
+        ",
+        fingerprint = test::FINGERPRINT,
+        hash = test::HASH,
+      )),
+    );
+  }
+
+  #[test]
+  fn audio_details() {
+    let metadata = Metadata {
+      media: Some(Media::Audio {
+        tracks: vec![Audio {
+          album: "qux".parse().unwrap(),
+          artist: "baz".parse().unwrap(),
+          channels: 2,
+          disc: 1,
+          discs: 1,
+          filename: "foo.flac".parse().unwrap(),
+          sample_bits: 16,
+          sample_rate: 44100,
+          samples: 9_922_500,
+          title: "foo".parse().unwrap(),
+          track: 1,
+          tracks: 1,
+          ty: AudioType::Flac,
+        }],
+      }),
+      ..default()
+    };
+
+    assert_eq!(
+      PackageHtml {
+        fingerprint: test::FINGERPRINT.parse().unwrap(),
+        metadata: Some(metadata),
+        totals: Totals {
+          directories: 0,
+          directory_size: 0,
+          file_size: 3,
+          files: 1,
+        },
+        view: PackageView::Details,
+      }
+      .to_string(),
+      unindent(&format!(
+        "
+          <header>
+            <h1 class=code>{fingerprint}</h1>
+            <nav>
+              <a href=/package/{fingerprint}>List</a> | <a>Details</a>
+            </nav>
+          </header>
+          <dl>
+            <dt>fingerprint</dt>
+            <dd class=code>{fingerprint}</dd>
+            <dt>size</dt>
+            <dd>3 B</dd>
+            <dt>files</dt>
+            <dd><a href=/directory/{hash}>1 files</a></dd>
+            <dt>media</dt>
+            <dd>audio</dd>
+            <dt>tracks</dt>
+            <dd>1</dd>
+            <dt>duration</dt>
+            <dd>3:45</dd>
+            <dt>format</dt>
+            <dd>FLAC · 16-bit 44.1 kHz stereo · lossless</dd>
+          </dl>
+          <section>
+            <h2><a href=/package/{fingerprint}/1>foo.flac</a></h2>
+          <dl>
+            <dt>album</dt>
+            <dd>qux</dd>
+            <dt>artist</dt>
+            <dd>baz</dd>
+            <dt>channels</dt>
+            <dd>2</dd>
+            <dt>disc</dt>
+            <dd>1</dd>
+            <dt>discs</dt>
+            <dd>1</dd>
+            <dt>duration</dt>
+            <dd>3:45</dd>
+            <dt>filename</dt>
+            <dd>foo.flac</dd>
+            <dt>sample bits</dt>
+            <dd>16</dd>
+            <dt>sample rate</dt>
+            <dd>44100</dd>
+            <dt>samples</dt>
+            <dd>9922500</dd>
+            <dt>title</dt>
+            <dd>foo</dd>
+            <dt>track</dt>
+            <dd>1</dd>
+            <dt>tracks</dt>
+            <dd>1</dd>
+            <dt>type</dt>
+            <dd>FLAC</dd>
+          </dl>
+          </section>
         ",
         fingerprint = test::FINGERPRINT,
         hash = test::HASH,
@@ -185,11 +292,17 @@ mod tests {
           file_size: 9,
           files: 3,
         },
+        view: PackageView::List,
       }
       .to_string(),
       unindent(&format!(
         "
-          <h1 class=code>{fingerprint}</h1>
+          <header>
+            <h1 class=code>{fingerprint}</h1>
+            <nav>
+              <a>List</a> | <a href=/package/{fingerprint}?view=details>Details</a>
+            </nav>
+          </header>
           <dl>
             <dt>fingerprint</dt>
             <dd class=code>{fingerprint}</dd>
@@ -266,11 +379,17 @@ mod tests {
           file_size: 6,
           files: 2,
         },
+        view: PackageView::List,
       }
       .to_string(),
       unindent(&format!(
         "
-          <h1 class=code>{fingerprint}</h1>
+          <header>
+            <h1 class=code>{fingerprint}</h1>
+            <nav>
+              <a>List</a> | <a href=/package/{fingerprint}?view=details>Details</a>
+            </nav>
+          </header>
           <dl>
             <dt>fingerprint</dt>
             <dd class=code>{fingerprint}</dd>
@@ -345,11 +464,17 @@ mod tests {
           file_size: 9,
           files: 3,
         },
+        view: PackageView::List,
       }
       .to_string(),
       unindent(&format!(
         "
-          <h1 class=code>{fingerprint}</h1>
+          <header>
+            <h1 class=code>{fingerprint}</h1>
+            <nav>
+              <a>List</a> | <a href=/package/{fingerprint}?view=details>Details</a>
+            </nav>
+          </header>
           <dl>
             <dt>fingerprint</dt>
             <dd class=code>{fingerprint}</dd>
@@ -384,6 +509,77 @@ mod tests {
               </a>
             </li>
           </ul>
+        ",
+        fingerprint = test::FINGERPRINT,
+        hash = test::HASH,
+      )),
+    );
+  }
+
+  #[test]
+  fn image_details() {
+    let metadata = Metadata {
+      media: Some(Media::Image {
+        images: vec![Image {
+          dimensions: Dimensions {
+            height: 1,
+            width: 2,
+          },
+          filename: "foo.png".parse().unwrap(),
+          ty: ImageType::Png,
+        }],
+      }),
+      ..default()
+    };
+
+    assert_eq!(
+      PackageHtml {
+        fingerprint: test::FINGERPRINT.parse().unwrap(),
+        metadata: Some(metadata),
+        totals: Totals {
+          directories: 0,
+          directory_size: 0,
+          file_size: 3,
+          files: 1,
+        },
+        view: PackageView::Details,
+      }
+      .to_string(),
+      unindent(&format!(
+        "
+          <header>
+            <h1 class=code>{fingerprint}</h1>
+            <nav>
+              <a href=/package/{fingerprint}>List</a> | <a>Details</a>
+            </nav>
+          </header>
+          <dl>
+            <dt>fingerprint</dt>
+            <dd class=code>{fingerprint}</dd>
+            <dt>size</dt>
+            <dd>3 B</dd>
+            <dt>files</dt>
+            <dd><a href=/directory/{hash}>1 files</a></dd>
+            <dt>media</dt>
+            <dd>image</dd>
+            <dt>images</dt>
+            <dd>1</dd>
+            <dt>format</dt>
+            <dd>PNG</dd>
+            <dt>resolution</dt>
+            <dd>2×1</dd>
+          </dl>
+          <section>
+            <h2><a href=/package/{fingerprint}/1>foo.png</a></h2>
+          <dl>
+            <dt>dimensions</dt>
+            <dd>2×1</dd>
+            <dt>filename</dt>
+            <dd>foo.png</dd>
+            <dt>type</dt>
+            <dd>PNG</dd>
+          </dl>
+          </section>
         ",
         fingerprint = test::FINGERPRINT,
         hash = test::HASH,
@@ -433,11 +629,17 @@ mod tests {
           file_size: 3,
           files: 1,
         },
+        view: PackageView::List,
       }
       .to_string(),
       unindent(&format!(
         "
-          <h1 class=code>{fingerprint}</h1>
+          <header>
+            <h1 class=code>{fingerprint}</h1>
+            <nav>
+              <a>List</a> | <a href=/package/{fingerprint}?view=details>Details</a>
+            </nav>
+          </header>
           <dl>
             <dt>fingerprint</dt>
             <dd class=code>{fingerprint}</dd>
@@ -460,6 +662,127 @@ mod tests {
               <time datetime=PT3M45S>3:45</time>
             </li>
           </ol>
+        ",
+        fingerprint = test::FINGERPRINT,
+        hash = test::HASH,
+      )),
+    );
+  }
+
+  #[test]
+  fn video_details() {
+    let metadata = Metadata {
+      media: Some(Media::Video {
+        videos: vec![Video {
+          duration: 225_000,
+          filename: "foo.mp4".parse().unwrap(),
+          tracks: vec![
+            Track {
+              codec: Codec::H264,
+              info: TrackInfo::Video {
+                bit_depth: Some(8),
+                dimensions: Dimensions {
+                  height: 1,
+                  width: 2,
+                },
+                frames: 3,
+              },
+              size: 0,
+            },
+            Track {
+              codec: Codec::Aac,
+              info: TrackInfo::Audio,
+              size: 0,
+            },
+          ],
+          ty: VideoType::Mp4,
+        }],
+      }),
+      ..default()
+    };
+
+    assert_eq!(
+      PackageHtml {
+        fingerprint: test::FINGERPRINT.parse().unwrap(),
+        metadata: Some(metadata),
+        totals: Totals {
+          directories: 0,
+          directory_size: 0,
+          file_size: 3,
+          files: 1,
+        },
+        view: PackageView::Details,
+      }
+      .to_string(),
+      unindent(&format!(
+        "
+          <header>
+            <h1 class=code>{fingerprint}</h1>
+            <nav>
+              <a href=/package/{fingerprint}>List</a> | <a>Details</a>
+            </nav>
+          </header>
+          <dl>
+            <dt>fingerprint</dt>
+            <dd class=code>{fingerprint}</dd>
+            <dt>size</dt>
+            <dd>3 B</dd>
+            <dt>files</dt>
+            <dd><a href=/directory/{hash}>1 files</a></dd>
+            <dt>media</dt>
+            <dd>video</dd>
+            <dt>videos</dt>
+            <dd>1</dd>
+            <dt>format</dt>
+            <dd>MP4 · H.264 · AAC</dd>
+            <dt>resolution</dt>
+            <dd>2×1</dd>
+          </dl>
+          <section>
+            <h2><a href=/package/{fingerprint}/1>foo.mp4</a></h2>
+          <dl>
+            <dt>duration</dt>
+            <dd>3:45</dd>
+            <dt>filename</dt>
+            <dd>foo.mp4</dd>
+            <dt>track 1</dt>
+            <dd><dl>
+            <dt>codec</dt>
+            <dd>H.264</dd>
+            <dt>info</dt>
+            <dd><dl>
+            <dt>bit depth</dt>
+            <dd>8</dd>
+            <dt>dimensions</dt>
+            <dd>2×1</dd>
+            <dt>frames</dt>
+            <dd>3</dd>
+            <dt>type</dt>
+            <dd>video</dd>
+          </dl>
+          </dd>
+            <dt>size</dt>
+            <dd>0 B</dd>
+          </dl>
+          </dd>
+            <dt>track 2</dt>
+            <dd><dl>
+            <dt>codec</dt>
+            <dd>AAC</dd>
+            <dt>info</dt>
+            <dd><dl>
+            <dt>type</dt>
+            <dd>audio</dd>
+          </dl>
+          </dd>
+            <dt>size</dt>
+            <dd>0 B</dd>
+          </dl>
+          </dd>
+            <dt>type</dt>
+            <dd>MP4</dd>
+          </dl>
+          </section>
         ",
         fingerprint = test::FINGERPRINT,
         hash = test::HASH,

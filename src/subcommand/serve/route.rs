@@ -153,8 +153,15 @@ pub(crate) async fn missing(
 pub(crate) async fn package(
   server: ServerExtension,
   fingerprint: Path<Fingerprint>,
+  Query(query): Query<PackageQuery>,
 ) -> PageResult<PackageHtml> {
-  block_in_place(|| Ok(server.package_html(*fingerprint)?.into()))
+  block_in_place(|| {
+    Ok(
+      server
+        .package_html(*fingerprint, query.view.unwrap_or_default())?
+        .into(),
+    )
+  })
 }
 
 pub(crate) async fn package_item(

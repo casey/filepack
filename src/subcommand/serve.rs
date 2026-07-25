@@ -36,6 +36,11 @@ pub(crate) struct AuthConfig {
 }
 
 #[derive(Deserialize)]
+pub(crate) struct PackageQuery {
+  view: Option<PackageView>,
+}
+
+#[derive(Deserialize)]
 pub(crate) struct PackagesQuery {
   view: Option<View>,
 }

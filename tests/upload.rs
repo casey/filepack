@@ -510,6 +510,7 @@ fn upload_package_serves_package_html() {
       fingerprint,
       metadata: Some(metadata),
       totals,
+      view: PackageView::List,
     },
   );
 

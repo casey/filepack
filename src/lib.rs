@@ -111,6 +111,7 @@ use {
     type_name::TypeName,
     utf8_path_ext::Utf8PathExt,
     validate::Validate,
+    value::Value,
     version::Version,
     video::Video,
     video_error::VideoError,
@@ -210,6 +211,7 @@ pub use self::{
   map_encoder::MapEncoder,
   metadata::Metadata,
   mp4_builder::Mp4Builder,
+  package_view::PackageView,
   page::Page,
   private_key::PrivateKey,
   public_key::PublicKey,
@@ -324,6 +326,7 @@ mod or;
 mod ordinal;
 mod owo_colorize_ext;
 mod package;
+mod package_view;
 mod page;
 mod path_error;
 mod percent_encode;
@@ -363,6 +366,7 @@ mod track_info;
 mod type_name;
 mod utf8_path_ext;
 mod validate;
+mod value;
 mod version;
 mod video;
 mod video_error;

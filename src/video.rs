@@ -510,6 +510,24 @@ impl Item for Video {
     self.as_path()
   }
 
+  fn properties(&self) -> Vec<(String, Value)> {
+    let mut properties = vec![
+      (
+        "duration".into(),
+        Value::scalar(DisplayDuration(Duration::from_millis(self.duration))),
+      ),
+      ("filename".into(), Value::scalar(&self.filename)),
+    ];
+
+    for (i, track) in self.tracks.iter().enumerate() {
+      properties.push((format!("track {}", Ordinal(i)), track.properties()));
+    }
+
+    properties.push(("type".into(), Value::scalar(self.ty)));
+
+    properties
+  }
+
   fn resource_type(&self) -> ResourceType {
     self.resource_type()
   }

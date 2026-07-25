@@ -648,6 +648,7 @@ fn get_package_with_metadata() {
         file_size: metadata_cbor.len().into_u64(),
         files: 1,
       },
+      view: PackageView::List,
     })
     .send();
 }
@@ -669,6 +670,7 @@ fn get_package_without_metadata() {
       fingerprint,
       metadata: None,
       totals: Totals::default(),
+      view: PackageView::List,
     })
     .send();
 }
@@ -1178,6 +1180,75 @@ fn non_fingerprint_bech32_falls_through() {
 }
 
 #[test]
+fn package_details() {
+  let server = TestServer::new();
+
+  let metadata = Metadata {
+    media: Some(Media::Video {
+      videos: vec![Video {
+        duration: 0,
+        filename: "foo.mp4".parse().unwrap(),
+        tracks: vec![
+          Track {
+            codec: Codec::H264,
+            info: TrackInfo::Video {
+              bit_depth: Some(8),
+              dimensions: Dimensions {
+                height: 1,
+                width: 2,
+              },
+              frames: 0,
+            },
+            size: 0,
+          },
+          Track {
+            codec: Codec::Aac,
+            info: TrackInfo::Audio,
+            size: 0,
+          },
+        ],
+        ty: VideoType::Mp4,
+      }],
+    }),
+    ..default()
+  };
+
+  let totals = Totals {
+    directories: 0,
+    directory_size: 0,
+    file_size: metadata.encode_to_vec().len().into_u64() + 3,
+    files: 2,
+  };
+
+  let fingerprint = PackageBuilder::new()
+    .metadata(&metadata)
+    .file("foo.mp4", b"foo")
+    .upload(&server);
+
+  server
+    .get(format!("/package/{fingerprint}?view=details"))
+    .assert_page(PackageHtml {
+      fingerprint,
+      metadata: Some(metadata),
+      totals,
+      view: PackageView::Details,
+    })
+    .send();
+}
+
+#[test]
+fn package_invalid_view() {
+  TestServer::new()
+    .get(format!("/package/{}?view=foo", test::FINGERPRINT))
+    .status(StatusCode::BAD_REQUEST)
+    .assert_body(
+      "Failed to deserialize query string: view: unknown variant `foo`, expected `details` or \
+       `list`",
+    )
+    .send();
+}
+
+#[test]
 fn package_item_audio() {
   let server = TestServer::new();
 
@@ -1472,6 +1543,7 @@ fn package_page_renders_audio_media() {
       fingerprint,
       metadata: Some(metadata),
       totals,
+      view: PackageView::List,
     })
     .send();
 }
@@ -1512,6 +1584,7 @@ fn package_page_renders_image_media() {
       fingerprint,
       metadata: Some(metadata),
       totals,
+      view: PackageView::List,
     })
     .send();
 }
@@ -1568,6 +1641,7 @@ fn package_page_renders_video_media() {
       fingerprint,
       metadata: Some(metadata),
       totals,
+      view: PackageView::List,
     })
     .send();
 }

@@ -10,6 +10,16 @@ pub(crate) struct Track {
   pub(crate) size: u64,
 }
 
+impl Track {
+  pub(crate) fn properties(&self) -> Value {
+    Value::Group(vec![
+      ("codec".into(), Value::scalar(self.codec)),
+      ("info".into(), self.info.properties()),
+      ("size".into(), Value::scalar(format_size(self.size))),
+    ])
+  }
+}
+
 impl Display for Track {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     write!(f, "{}", self.codec)?;

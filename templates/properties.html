@@ -1,0 +1,13 @@
+<dl>
+%% for (name, value) in self.properties {
+  <dt>{{ name }}</dt>
+%%   match value {
+%%     Value::Scalar(scalar) => {
+  <dd>{{ scalar }}</dd>
+%%     }
+%%     Value::Group(properties) => {
+  <dd>{{ Trusted(PropertiesHtml { properties }) }}</dd>
+%%     }
+%%   }
+%% }
+</dl>

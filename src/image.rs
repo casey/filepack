@@ -109,6 +109,14 @@ impl Item for Image {
     self.as_path()
   }
 
+  fn properties(&self) -> Vec<(String, Value)> {
+    vec![
+      ("dimensions".into(), Value::scalar(self.dimensions)),
+      ("filename".into(), Value::scalar(&self.filename)),
+      ("type".into(), Value::scalar(self.ty)),
+    ]
+  }
+
   fn resource_type(&self) -> ResourceType {
     self.resource_type()
   }

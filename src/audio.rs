@@ -292,6 +292,28 @@ impl Item for Audio {
     self.as_path()
   }
 
+  fn properties(&self) -> Vec<(String, Value)> {
+    vec![
+      ("album".into(), Value::scalar(&self.album)),
+      ("artist".into(), Value::scalar(&self.artist)),
+      ("channels".into(), Value::scalar(self.channels)),
+      ("disc".into(), Value::scalar(self.disc)),
+      ("discs".into(), Value::scalar(self.discs)),
+      (
+        "duration".into(),
+        Value::scalar(DisplayDuration(self.duration())),
+      ),
+      ("filename".into(), Value::scalar(&self.filename)),
+      ("sample bits".into(), Value::scalar(self.sample_bits)),
+      ("sample rate".into(), Value::scalar(self.sample_rate)),
+      ("samples".into(), Value::scalar(self.samples)),
+      ("title".into(), Value::scalar(&self.title)),
+      ("track".into(), Value::scalar(self.track)),
+      ("tracks".into(), Value::scalar(self.tracks)),
+      ("type".into(), Value::scalar(self.ty)),
+    ]
+  }
+
   fn resource_type(&self) -> ResourceType {
     self.resource_type()
   }

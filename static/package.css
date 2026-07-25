@@ -1,3 +1,15 @@
+dd > dl {
+  border-left: 1px solid var(--border);
+  margin: 0;
+  padding-left: 1rem;
+}
+
+header {
+  align-items: baseline;
+  display: flex;
+  justify-content: space-between;
+}
+
 time {
   margin-left: 0.5rem;
 }

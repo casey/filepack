@@ -171,7 +171,11 @@ impl Server {
     })
   }
 
-  pub(crate) fn package_html(&self, fingerprint: Fingerprint) -> ServerResult<PackageHtml> {
+  pub(crate) fn package_html(
+    &self,
+    fingerprint: Fingerprint,
+    view: PackageView,
+  ) -> ServerResult<PackageHtml> {
     let tx = self.database.begin_read()?;
 
     let packages = tx.open_table(PACKAGES)?;
@@ -189,6 +193,7 @@ impl Server {
       fingerprint,
       metadata,
       totals,
+      view,
     })
   }
 

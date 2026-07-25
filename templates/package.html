@@ -1,8 +1,20 @@
+<header>
 %% if let Some(title) = self.title() {
-<h1>{{ title }}</h1>
+  <h1>{{ title }}</h1>
 %% } else {
-<h1 class=code>{{ self.fingerprint }}</h1>
+  <h1 class=code>{{ self.fingerprint }}</h1>
 %% }
+  <nav>
+%% match self.view {
+%%   PackageView::Details => {
+    <a href=/package/{{ self.fingerprint }}>List</a> | <a>Details</a>
+%%   }
+%%   PackageView::List => {
+    <a>List</a> | <a href=/package/{{ self.fingerprint }}?view=details>Details</a>
+%%   }
+%% }
+  </nav>
+</header>
 %% if let Some(metadata) = &self.metadata {
 %%   if metadata.artwork.is_some() {
 <div>
@@ -94,45 +106,57 @@
 </dl>
 %% if let Some(metadata) = &self.metadata {
 %%   if let Some(media) = &metadata.media {
-%%     match media {
-%%       Media::Audio { tracks } => {
-%%         let mut i = 0;
-%%         for disc in tracks.chunk_by(|a, b| a.disc == b.disc) {
-%%           if disc[0].discs > 1 {
+%%     match self.view {
+%%       PackageView::Details => {
+%%         for i in 0..media.items() {
+%%           let item = media.item(i).unwrap();
+<section>
+  <h2><a href=/package/{{ self.fingerprint }}/{{ Ordinal(i) }}>{{ item.path() }}</a></h2>
+{{ Trusted(PropertiesHtml { properties: &item.properties() }) }}</section>
+%%         }
+%%       }
+%%       PackageView::List => {
+%%         match media {
+%%           Media::Audio { tracks } => {
+%%             let mut i = 0;
+%%             for disc in tracks.chunk_by(|a, b| a.disc == b.disc) {
+%%               if disc[0].discs > 1 {
 <h2>disc {{ disc[0].disc }}</h2>
-%%           }
+%%               }
 <ol>
-%%           for audio in disc {
+%%               for audio in disc {
   <li>
     <a href=/package/{{ self.fingerprint }}/{{ Ordinal(i) }}>{{ audio.title }}</a>
     <time datetime={{ Iso8601Duration(audio.duration()) }}>{{ DisplayDuration(audio.duration()) }}</time>
   </li>
-%%             i += 1;
-%%           }
+%%                 i += 1;
+%%               }
 </ol>
-%%         }
-%%       }
-%%       Media::Image { images } => {
+%%             }
+%%           }
+%%           Media::Image { images } => {
 <ul class=thumbnails>
-%%         for (i, image) in images.iter().enumerate() {
+%%             for (i, image) in images.iter().enumerate() {
   <li>
     <a href=/package/{{ self.fingerprint }}/{{ Ordinal(i) }}>
       <img loading=lazy src=/media/image/{{ self.fingerprint }}/item/{{ Ordinal(i) }}>
     </a>
   </li>
-%%         }
+%%             }
 </ul>
-%%       }
-%%       Media::Video { videos } => {
+%%           }
+%%           Media::Video { videos } => {
 <ol>
-%%         for (i, video) in videos.iter().enumerate() {
-%%           let duration = Duration::from_millis(video.duration);
+%%             for (i, video) in videos.iter().enumerate() {
+%%               let duration = Duration::from_millis(video.duration);
   <li>
     <a href=/package/{{ self.fingerprint }}/{{ Ordinal(i) }}>{{ video.filename }}</a>
     <time datetime={{ Iso8601Duration(duration) }}>{{ DisplayDuration(duration) }}</time>
   </li>
-%%         }
+%%             }
 </ol>
+%%           }
+%%         }
 %%       }
 %%     }
 %%   }
