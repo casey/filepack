@@ -32,6 +32,13 @@ impl Time {
       .and_then(|span| EPOCH.checked_add(span).ok())
       .context(time_error::Days { days })
   }
+
+  pub(crate) fn year(&self) -> i64 {
+    match self {
+      Self::Day { days } => Self::date(*days).unwrap().year().into(),
+      Self::Year { year } => *year,
+    }
+  }
 }
 
 impl Display for Time {
@@ -223,5 +230,17 @@ mod tests {
     case("2024-02-29", Time::Day { days: 19_782 });
     case("-9999-01-01", Time::Day { days: -4_371_587 });
     case("9999-12-31", Time::Day { days: 2_932_896 });
+  }
+
+  #[test]
+  fn year() {
+    #[track_caller]
+    fn case(s: &str, expected: i64) {
+      assert_eq!(s.parse::<Time>().unwrap().year(), expected);
+    }
+
+    case("2024", 2024);
+    case("2024-01-15", 2024);
+    case("-44-03-15", -44);
   }
 }

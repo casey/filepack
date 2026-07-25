@@ -14,19 +14,19 @@
 %% match self.view {
 %%   View::Grid => {
 <ul class=grid>
-%%     for (fingerprint, artwork, creator, title) in self.packages() {
+%%     for package in self.packages() {
   <li>
-%%       if artwork {
-    <a href=/package/{{ fingerprint }}>
-      <img loading=lazy src=/artwork/{{ fingerprint }} width=150 height=150>
+%%       if package.artwork {
+    <a href=/package/{{ package.fingerprint }}>
+      <img loading=lazy src=/artwork/{{ package.fingerprint }} width=150 height=150>
     </a>
 %%       } else {
-    <a href=/package/{{ fingerprint }}></a>
+    <a href=/package/{{ package.fingerprint }}></a>
 %%       }
-%%       if let Some(title) = title {
+%%       if let Some(title) = package.title {
     <span class=title>{{ title }}</span>
 %%       }
-%%       if let Some(creator) = creator {
+%%       if let Some(creator) = package.creator {
     <span class=creator>{{ creator }}</span>
 %%       }
   </li>
@@ -34,21 +34,45 @@
 </ul>
 %%   }
 %%   View::List => {
-<ul>
-%%     for (fingerprint, _artwork, creator, title) in self.packages() {
-  <li>
-    <a href=/package/{{ fingerprint }}>
-%%       if let Some(title) = title {
-%%         if let Some(creator) = creator {
-      {{ creator }} -
-%%         }
-      {{ title }}
+<table>
+  <thead>
+    <tr>
+      <th>title</th>
+      <th>creator</th>
+      <th>year</th>
+      <th>media</th>
+      <th class=right>files</th>
+      <th class=right>size</th>
+    </tr>
+  </thead>
+  <tbody>
+%%     for package in self.packages() {
+    <tr>
+%%       if let Some(title) = package.title {
+      <td><a href=/package/{{ package.fingerprint }}>{{ title }}</a></td>
 %%       } else {
-      <code>{{ fingerprint }}</code>
+      <td><a href=/package/{{ package.fingerprint }}><code>{{ package.fingerprint }}</code></a></td>
 %%       }
-    </a>
-  </li>
+%%       if let Some(creator) = package.creator {
+      <td>{{ creator }}</td>
+%%       } else {
+      <td></td>
+%%       }
+%%       if let Some(year) = package.year {
+      <td>{{ year }}</td>
+%%       } else {
+      <td></td>
+%%       }
+%%       if let Some(media) = package.media {
+      <td>{{ media }}</td>
+%%       } else {
+      <td></td>
+%%       }
+      <td class=right><a href=/directory/{{ Hash::from(package.fingerprint) }}>{{ package.files }}</a></td>
+      <td class=right>{{ format_size(package.file_size) }}</td>
+    </tr>
 %%     }
-</ul>
+  </tbody>
+</table>
 %%   }
 %% }
