@@ -10,11 +10,7 @@ pub(crate) struct AudioFormat {
 
 impl Display for AudioFormat {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    match self.ty {
-      AudioType::Flac => write!(f, "FLAC")?,
-    }
-
-    write!(f, " · {}-bit", self.sample_bits)?;
+    write!(f, "{} · {}-bit", self.ty, self.sample_bits)?;
 
     let khz = self.sample_rate / 1000;
     let frac = format!("{:03}", self.sample_rate % 1000);
