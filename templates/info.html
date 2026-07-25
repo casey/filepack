@@ -1,4 +1,7 @@
 %% match self.0 {
+%%   Info::Link { text, url } => {
+<a href={{ url }}>{{ text }}</a>
+%%   }
 %%   Info::List(items) => {
 <ol>
 %%     for item in items {

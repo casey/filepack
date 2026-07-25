@@ -288,9 +288,15 @@ impl FromStr for Audio {
 }
 
 impl Item for Audio {
-  fn info(&self) -> Info {
+  fn info(&self, url: String) -> Info {
     Info::Map(vec![
-      ("filename".into(), Info::Value(self.filename.to_string())),
+      (
+        "filename".into(),
+        Info::Link {
+          text: self.filename.to_string(),
+          url,
+        },
+      ),
       ("title".into(), Info::Value(self.title.to_string())),
       ("artist".into(), Info::Value(self.artist.to_string())),
       ("album".into(), Info::Value(self.album.to_string())),
