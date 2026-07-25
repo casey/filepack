@@ -1,6 +1,6 @@
 :root {
-  --border: #222;
-  --border-hover: #444;
+  --border-hover: rgb(255 255 255 / 25%);
+  --border: rgb(255 255 255 / 15%);
   --primary: rgb(255 255 255 / 87%);
   --secondary: rgb(255 255 255 / 60%);
 }
