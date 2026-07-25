@@ -1,8 +1,9 @@
 %% if let Some(title) = self.title() {
-<h1><a href=/package/{{ self.fingerprint }}>{{ title }}</a></h1>
+<h1>{{ title }}</h1>
 %% } else {
-<h1 class=code><a href=/package/{{ self.fingerprint }}>{{ self.fingerprint }}</a></h1>
+<h1 class=code>{{ self.fingerprint }}</h1>
 %% }
+<a href=/package/{{ self.fingerprint }}>package</a>
 %% let media = self.metadata.media.as_ref().unwrap();
 <ol>
 %% for i in 0..media.items() {
