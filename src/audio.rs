@@ -288,6 +288,29 @@ impl FromStr for Audio {
 }
 
 impl Item for Audio {
+  fn info(&self) -> Info {
+    Info::Map(vec![
+      ("filename".into(), Info::Value(self.filename.to_string())),
+      ("title".into(), Info::Value(self.title.to_string())),
+      ("artist".into(), Info::Value(self.artist.to_string())),
+      ("album".into(), Info::Value(self.album.to_string())),
+      (
+        "disc".into(),
+        Info::Value(format!("{} of {}", self.disc, self.discs)),
+      ),
+      (
+        "track".into(),
+        Info::Value(format!("{} of {}", self.track, self.tracks)),
+      ),
+      (
+        "duration".into(),
+        Info::Value(DisplayDuration(self.duration()).to_string()),
+      ),
+      ("format".into(), Info::Value(self.format().to_string())),
+      ("samples".into(), Info::Value(self.samples.to_string())),
+    ])
+  }
+
   fn path(&self) -> RelativePath {
     self.as_path()
   }

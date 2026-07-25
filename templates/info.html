@@ -1,0 +1,24 @@
+%% match self.0 {
+%%   Info::List(items) => {
+<ol>
+%%     for item in items {
+  <li>
+    {{ Trusted(InfoHtml(item)) }}
+  </li>
+%%     }
+</ol>
+%%   }
+%%   Info::Map(entries) => {
+<dl>
+%%     for (key, value) in entries {
+  <dt>{{ key }}</dt>
+  <dd>
+    {{ Trusted(InfoHtml(value)) }}
+  </dd>
+%%     }
+</dl>
+%%   }
+%%   Info::Value(value) => {
+{{ value }}
+%%   }
+%% }

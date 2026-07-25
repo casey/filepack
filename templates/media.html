@@ -1,0 +1,16 @@
+%% if let Some(title) = self.title() {
+<h1><a href=/package/{{ self.fingerprint }}>{{ title }}</a></h1>
+%% } else {
+<h1 class=code><a href=/package/{{ self.fingerprint }}>{{ self.fingerprint }}</a></h1>
+%% }
+%% let media = self.metadata.media.as_ref().unwrap();
+<ol>
+%% for i in 0..media.items() {
+%%   let item = media.item(i).unwrap();
+%%   let info = item.info();
+  <li>
+    <a href=/package/{{ self.fingerprint }}/item/{{ Ordinal(i) }}>{{ item.path() }}</a>
+    {{ Trusted(InfoHtml(&info)) }}
+  </li>
+%% }
+</ol>

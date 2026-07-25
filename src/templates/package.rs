@@ -94,7 +94,7 @@ mod tests {
             <dt>files</dt>
             <dd><a href=/directory/{hash}>2 files</a></dd>
             <dt>media</dt>
-            <dd>audio</dd>
+            <dd><a href=/package/{fingerprint}/media>audio</a></dd>
             <dt>tracks</dt>
             <dd>2</dd>
             <dt>duration</dt>
@@ -105,11 +105,11 @@ mod tests {
           </dl>
           <ol>
             <li>
-              <a href=/package/{fingerprint}/1>foo</a>
+              <a href=/package/{fingerprint}/item/1>foo</a>
               <time datetime=PT3M45S>3:45</time>
             </li>
             <li>
-              <a href=/package/{fingerprint}/2>bar</a>
+              <a href=/package/{fingerprint}/item/2>bar</a>
               <time datetime=PT0M1S>0:01</time>
             </li>
           </ol>
@@ -198,7 +198,7 @@ mod tests {
             <dt>files</dt>
             <dd><a href=/directory/{hash}>3 files</a></dd>
             <dt>media</dt>
-            <dd>audio</dd>
+            <dd><a href=/package/{fingerprint}/media>audio</a></dd>
             <dt>tracks</dt>
             <dd>3</dd>
             <dt>duration</dt>
@@ -209,18 +209,18 @@ mod tests {
           <h2>disc 1</h2>
           <ol>
             <li>
-              <a href=/package/{fingerprint}/1>foo</a>
+              <a href=/package/{fingerprint}/item/1>foo</a>
               <time datetime=PT0M1S>0:01</time>
             </li>
             <li>
-              <a href=/package/{fingerprint}/2>bar</a>
+              <a href=/package/{fingerprint}/item/2>bar</a>
               <time datetime=PT0M1S>0:01</time>
             </li>
           </ol>
           <h2>disc 2</h2>
           <ol>
             <li>
-              <a href=/package/{fingerprint}/3>baz</a>
+              <a href=/package/{fingerprint}/item/3>baz</a>
               <time datetime=PT0M1S>0:01</time>
             </li>
           </ol>
@@ -279,7 +279,7 @@ mod tests {
             <dt>files</dt>
             <dd><a href=/directory/{hash}>2 files</a></dd>
             <dt>media</dt>
-            <dd>audio</dd>
+            <dd><a href=/package/{fingerprint}/media>audio</a></dd>
             <dt>tracks</dt>
             <dd>2</dd>
             <dt>duration</dt>
@@ -289,11 +289,11 @@ mod tests {
           </dl>
           <ol>
             <li>
-              <a href=/package/{fingerprint}/1>foo</a>
+              <a href=/package/{fingerprint}/item/1>foo</a>
               <time datetime=PT5124095576030431H0M15S>5124095576030431:00:15</time>
             </li>
             <li>
-              <a href=/package/{fingerprint}/2>foo</a>
+              <a href=/package/{fingerprint}/item/2>foo</a>
               <time datetime=PT5124095576030431H0M15S>5124095576030431:00:15</time>
             </li>
           </ol>
@@ -361,7 +361,7 @@ mod tests {
             <dt>files</dt>
             <dd><a href=/directory/{hash}>3 files</a></dd>
             <dt>media</dt>
-            <dd>image</dd>
+            <dd><a href=/package/{fingerprint}/media>image</a></dd>
             <dt>images</dt>
             <dd>3</dd>
             <dt>format</dt>
@@ -372,17 +372,17 @@ mod tests {
           </dl>
           <ul class=thumbnails>
             <li>
-              <a href=/package/{fingerprint}/1>
+              <a href=/package/{fingerprint}/item/1>
                 <img loading=lazy src=/media/image/{fingerprint}/item/1>
               </a>
             </li>
             <li>
-              <a href=/package/{fingerprint}/2>
+              <a href=/package/{fingerprint}/item/2>
                 <img loading=lazy src=/media/image/{fingerprint}/item/2>
               </a>
             </li>
             <li>
-              <a href=/package/{fingerprint}/3>
+              <a href=/package/{fingerprint}/item/3>
                 <img loading=lazy src=/media/image/{fingerprint}/item/3>
               </a>
             </li>
@@ -450,7 +450,7 @@ mod tests {
             <dt>files</dt>
             <dd><a href=/directory/{hash}>1 files</a></dd>
             <dt>media</dt>
-            <dd>video</dd>
+            <dd><a href=/package/{fingerprint}/media>video</a></dd>
             <dt>videos</dt>
             <dd>1</dd>
             <dt>format</dt>
@@ -460,7 +460,7 @@ mod tests {
           </dl>
           <ol>
             <li>
-              <a href=/package/{fingerprint}/1>foo.mp4</a>
+              <a href=/package/{fingerprint}/item/1>foo.mp4</a>
               <time datetime=PT3M45S>3:45</time>
             </li>
           </ol>

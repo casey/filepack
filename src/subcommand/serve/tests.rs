@@ -1194,7 +1194,7 @@ fn package_item_audio() {
     .upload(&server);
 
   server
-    .get(format!("/package/{fingerprint}/1"))
+    .get(format!("/package/{fingerprint}/item/1"))
     .assert_page(AudioHtml {
       audio: 0,
       fingerprint,
@@ -1218,7 +1218,7 @@ fn package_item_audio_out_of_range() {
     .upload(&server);
 
   server
-    .get(format!("/package/{fingerprint}/2"))
+    .get(format!("/package/{fingerprint}/item/2"))
     .status(StatusCode::NOT_FOUND)
     .assert_body(format!(
       "track 2 does not exist, package {fingerprint} has 1 track"
@@ -1251,7 +1251,7 @@ fn package_item_image() {
     .upload(&server);
 
   server
-    .get(format!("/package/{fingerprint}/1"))
+    .get(format!("/package/{fingerprint}/item/1"))
     .assert_page(ImageHtml {
       fingerprint,
       image: 0,
@@ -1283,7 +1283,7 @@ fn package_item_image_out_of_range() {
     .upload(&server);
 
   server
-    .get(format!("/package/{fingerprint}/2"))
+    .get(format!("/package/{fingerprint}/item/2"))
     .status(StatusCode::NOT_FOUND)
     .assert_body(format!(
       "image 2 does not exist, package {fingerprint} has 1 image"
@@ -1298,7 +1298,7 @@ fn package_item_package_not_found() {
   let fingerprint = Fingerprint(Hash::bytes(b"foo"));
 
   server
-    .get(format!("/package/{fingerprint}/1"))
+    .get(format!("/package/{fingerprint}/item/1"))
     .status(StatusCode::NOT_FOUND)
     .assert_body(format!("package {fingerprint} not found"))
     .send();
@@ -1345,7 +1345,7 @@ fn package_item_video() {
     .upload(&server);
 
   server
-    .get(format!("/package/{fingerprint}/1"))
+    .get(format!("/package/{fingerprint}/item/1"))
     .assert_page(VideoHtml {
       fingerprint,
       video: 0,
@@ -1368,7 +1368,7 @@ fn package_item_video_out_of_range() {
     .upload(&server);
 
   server
-    .get(format!("/package/{fingerprint}/2"))
+    .get(format!("/package/{fingerprint}/item/2"))
     .status(StatusCode::NOT_FOUND)
     .assert_body(format!(
       "video 2 does not exist, package {fingerprint} has 1 video"
@@ -1388,7 +1388,7 @@ fn package_item_without_media() {
     .upload(&server);
 
   server
-    .get(format!("/package/{fingerprint}/1"))
+    .get(format!("/package/{fingerprint}/item/1"))
     .status(StatusCode::NOT_FOUND)
     .assert_body(format!(
       "package {fingerprint} does not have media metadata"
@@ -1408,9 +1408,54 @@ fn package_item_without_metadata() {
   server.post(format!("/package/{fingerprint}")).send();
 
   server
-    .get(format!("/package/{fingerprint}/1"))
+    .get(format!("/package/{fingerprint}/item/1"))
     .status(StatusCode::NOT_FOUND)
     .assert_body(format!("package {fingerprint} does not have metadata"))
+    .send();
+}
+
+#[test]
+fn package_media() {
+  let server = TestServer::new();
+
+  let metadata = Metadata {
+    media: Some(Media::Audio {
+      tracks: tracks(&["foo.flac"]),
+    }),
+    ..default()
+  };
+
+  let fingerprint = PackageBuilder::new()
+    .metadata(&metadata)
+    .file("foo.flac", b"foo")
+    .upload(&server);
+
+  server
+    .get(format!("/package/{fingerprint}/media"))
+    .assert_page(MediaHtml {
+      fingerprint,
+      metadata,
+    })
+    .send();
+}
+
+#[test]
+fn package_media_without_media() {
+  let server = TestServer::new();
+
+  let fingerprint = PackageBuilder::new()
+    .metadata(&Metadata {
+      title: Some("foo".parse().unwrap()),
+      ..default()
+    })
+    .upload(&server);
+
+  server
+    .get(format!("/package/{fingerprint}/media"))
+    .status(StatusCode::NOT_FOUND)
+    .assert_body(format!(
+      "package {fingerprint} does not have media metadata"
+    ))
     .send();
 }
 
