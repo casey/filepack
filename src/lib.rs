@@ -54,6 +54,7 @@ use {
     display_secret::DisplaySecret,
     entries::Entries,
     envelope::Envelope,
+    exif_decoder::ExifDecoder,
     exif_error::ExifError,
     file::File,
     format::Format,
@@ -292,6 +293,7 @@ mod entries;
 mod entry;
 mod envelope;
 mod error;
+mod exif_decoder;
 mod exif_error;
 mod file;
 mod filesystem;

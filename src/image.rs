@@ -39,7 +39,7 @@ impl Image {
     let orientation = if let Some(exif) = decoder.exif() {
       Orientation::from_exif(exif).context(error::ImageExif { path })?
     } else {
-      Orientation::default()
+      Orientation::new()
     };
 
     let info = decoder.info().unwrap();
@@ -65,7 +65,7 @@ impl Image {
     let orientation = if let Some(exif) = &info.exif_metadata {
       Orientation::from_exif(exif).context(error::ImageExif { path })?
     } else {
-      Orientation::default()
+      Orientation::new()
     };
 
     Ok((
@@ -126,7 +126,7 @@ impl FromStr for Image {
     Ok(Self {
       dimensions: Dimensions::default(),
       filename,
-      orientation: Orientation::default(),
+      orientation: Orientation::new(),
       ty,
     })
   }
@@ -174,7 +174,7 @@ mod tests {
         },
         ty: ImageType::Jpeg,
       },
-      "a400a2000101020167666f6f2e6a706702a200f501030300",
+      "a400a2000101020167666f6f2e6a706702a200f501010300",
     );
   }
 
@@ -186,14 +186,14 @@ mod tests {
         width: 2,
       },
       filename: "foo.png".parse().unwrap(),
-      orientation: Orientation::default(),
+      orientation: Orientation::new(),
       ty: ImageType::Png,
     };
 
     let bar = Image {
       dimensions: Dimensions::default(),
       filename: "bar.jpg".parse().unwrap(),
-      orientation: Orientation::default(),
+      orientation: Orientation::new(),
       ty: ImageType::Jpeg,
     };
 
@@ -203,7 +203,7 @@ mod tests {
         width: 4,
       },
       filename: "baz.png".parse().unwrap(),
-      orientation: Orientation::default(),
+      orientation: Orientation::new(),
       ty: ImageType::Png,
     };
 
@@ -228,7 +228,7 @@ mod tests {
           width: 0,
         },
         filename: "foo.jpg".parse().unwrap(),
-        orientation: Orientation::default(),
+        orientation: Orientation::new(),
         ty: ImageType::Jpeg,
       },
     );

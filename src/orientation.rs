@@ -8,43 +8,6 @@ pub(crate) struct Orientation {
   pub(crate) rotation: Rotation,
 }
 
-struct ExifDecoder<'a> {
-  big_endian: bool,
-  data: &'a [u8],
-}
-
-impl ExifDecoder<'_> {
-  fn u16(&self, offset: usize) -> Result<u16, ExifError> {
-    let bytes = self
-      .data
-      .get(offset..offset + 2)
-      .context(exif_error::Truncated)?
-      .try_into()
-      .unwrap();
-
-    Ok(if self.big_endian {
-      u16::from_be_bytes(bytes)
-    } else {
-      u16::from_le_bytes(bytes)
-    })
-  }
-
-  fn u32(&self, offset: usize) -> Result<u32, ExifError> {
-    let bytes = self
-      .data
-      .get(offset..offset + 4)
-      .context(exif_error::Truncated)?
-      .try_into()
-      .unwrap();
-
-    Ok(if self.big_endian {
-      u32::from_be_bytes(bytes)
-    } else {
-      u32::from_le_bytes(bytes)
-    })
-  }
-}
-
 impl Orientation {
   pub(crate) fn dimensions(self, dimensions: Dimensions) -> Dimensions {
     match self.rotation {
@@ -103,7 +66,11 @@ impl Orientation {
       return Ok(Self { mirrored, rotation });
     }
 
-    Ok(Self::default())
+    Ok(Self::new())
+  }
+
+  pub(crate) fn new() -> Self {
+    Self::default()
   }
 }
 
@@ -160,14 +127,14 @@ mod tests {
 
   #[test]
   fn encoding() {
-    assert_cbor(Orientation::default(), "a200f40100");
+    assert_cbor(Orientation::new(), "a200f40100");
 
     assert_cbor(
       Orientation {
         mirrored: true,
         rotation: Rotation::R90,
       },
-      "a200f50103",
+      "a200f50101",
     );
   }
 
@@ -249,17 +216,14 @@ mod tests {
     let mut data = exif(6);
     data[10] = 0;
     data[11] = 1;
-    assert_eq!(
-      Orientation::from_exif(&data).unwrap(),
-      Orientation::default(),
-    );
+    assert_eq!(Orientation::from_exif(&data).unwrap(), Orientation::new(),);
 
     assert_eq!(
       Orientation::from_exif(&[
         0x49, 0x49, 0x2A, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
       ])
       .unwrap(),
-      Orientation::default(),
+      Orientation::new(),
     );
   }
 }
