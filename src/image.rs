@@ -18,7 +18,7 @@ impl Image {
     self.filename.as_path()
   }
 
-  fn decode(&self, root: &Utf8Path) -> Result<(Dimensions, Orientation)> {
+  fn decode(&self, root: &Utf8Path) -> Result<ImageInfo> {
     let path = root.join(self.as_path());
 
     match self.ty {
@@ -27,7 +27,7 @@ impl Image {
     }
   }
 
-  fn decode_jpeg(path: &Utf8Path) -> Result<(Dimensions, Orientation)> {
+  fn decode_jpeg(path: &Utf8Path) -> Result<ImageInfo> {
     let bytes = filesystem::read(path)?;
 
     let mut decoder = JpegDecoder::new(io::Cursor::new(bytes));
@@ -44,16 +44,16 @@ impl Image {
 
     let info = decoder.info().unwrap();
 
-    Ok((
-      Dimensions {
+    Ok(ImageInfo {
+      dimensions: Dimensions {
         height: info.height.into(),
         width: info.width.into(),
       },
       orientation,
-    ))
+    })
   }
 
-  fn decode_png(path: &Utf8Path) -> Result<(Dimensions, Orientation)> {
+  fn decode_png(path: &Utf8Path) -> Result<ImageInfo> {
     let bytes = filesystem::read(path)?;
 
     let reader = png::Decoder::new(io::Cursor::new(bytes))
@@ -68,13 +68,13 @@ impl Image {
       Orientation::new()
     };
 
-    Ok((
-      Dimensions {
+    Ok(ImageInfo {
+      dimensions: Dimensions {
         height: info.height.into(),
         width: info.width.into(),
       },
       orientation,
-    ))
+    })
   }
 
   pub(crate) fn formats(images: &[Image]) -> Vec<ImageType> {
@@ -94,10 +94,10 @@ impl Image {
   }
 
   pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result {
-    let (dimensions, orientation) = self.decode(root)?;
+    let info = self.decode(root)?;
 
-    self.dimensions = dimensions;
-    self.orientation = orientation;
+    self.dimensions = info.dimensions;
+    self.orientation = info.orientation;
 
     Ok(())
   }

@@ -66,6 +66,7 @@ use {
     hashing_writer::HashingWriter,
     head::Head,
     image::Image,
+    image_info::ImageInfo,
     image_type::ImageType,
     iso8601_duration::Iso8601Duration,
     item::Item,
@@ -305,6 +306,7 @@ mod hash_error;
 mod hashing_writer;
 mod head;
 mod image;
+mod image_info;
 mod image_type;
 mod iso8601_duration;
 mod item;
