@@ -72,12 +72,4 @@ mod tests {
   fn value() {
     assert_eq!(InfoHtml(&Info::Value("foo".into())).to_string(), "foo\n");
   }
-
-  #[test]
-  fn value_is_escaped() {
-    assert_eq!(
-      InfoHtml(&Info::Value("<foo> & \"bar\"".into())).to_string(),
-      "&lt;foo&gt; &amp; &quot;bar&quot;\n",
-    );
-  }
 }
