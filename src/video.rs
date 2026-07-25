@@ -911,7 +911,7 @@ mod tests {
 
     error(
       Mp4Builder::new().matrix([0; 9]).video_track(2, 1),
-      "track 0 has unsupported matrix",
+      "track 0 has unsupported transformation matrix",
     );
 
     error(
