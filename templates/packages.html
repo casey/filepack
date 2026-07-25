@@ -14,19 +14,19 @@
 %% match self.view {
 %%   View::Grid => {
 <ul class=grid>
-%%     for row in self.rows() {
+%%     for package in self.packages() {
   <li>
-%%       if row.artwork {
-    <a href=/package/{{ row.fingerprint }}>
-      <img loading=lazy src=/artwork/{{ row.fingerprint }} width=150 height=150>
+%%       if package.artwork {
+    <a href=/package/{{ package.fingerprint }}>
+      <img loading=lazy src=/artwork/{{ package.fingerprint }} width=150 height=150>
     </a>
 %%       } else {
-    <a href=/package/{{ row.fingerprint }}></a>
+    <a href=/package/{{ package.fingerprint }}></a>
 %%       }
-%%       if let Some(title) = row.title {
+%%       if let Some(title) = package.title {
     <span class=title>{{ title }}</span>
 %%       }
-%%       if let Some(creator) = row.creator {
+%%       if let Some(creator) = package.creator {
     <span class=creator>{{ creator }}</span>
 %%       }
   </li>
@@ -46,30 +46,30 @@
     </tr>
   </thead>
   <tbody>
-%%     for row in self.rows() {
+%%     for package in self.packages() {
     <tr>
-%%       if let Some(title) = row.title {
-      <td><a href=/package/{{ row.fingerprint }}>{{ title }}</a></td>
+%%       if let Some(title) = package.title {
+      <td><a href=/package/{{ package.fingerprint }}>{{ title }}</a></td>
 %%       } else {
-      <td><a href=/package/{{ row.fingerprint }}><code>{{ row.fingerprint }}</code></a></td>
+      <td><a href=/package/{{ package.fingerprint }}><code>{{ package.fingerprint }}</code></a></td>
 %%       }
-%%       if let Some(creator) = row.creator {
+%%       if let Some(creator) = package.creator {
       <td>{{ creator }}</td>
 %%       } else {
       <td></td>
 %%       }
-%%       if let Some(year) = row.year {
+%%       if let Some(year) = package.year {
       <td>{{ year }}</td>
 %%       } else {
       <td></td>
 %%       }
-%%       if let Some(media) = row.media {
+%%       if let Some(media) = package.media {
       <td>{{ media }}</td>
 %%       } else {
       <td></td>
 %%       }
-      <td class=number><a href=/directory/{{ Hash::from(row.fingerprint) }}>{{ row.files }}</a></td>
-      <td class=number>{{ format_size(row.file_size) }}</td>
+      <td class=number><a href=/directory/{{ Hash::from(package.fingerprint) }}>{{ package.files }}</a></td>
+      <td class=number>{{ format_size(package.file_size) }}</td>
     </tr>
 %%     }
   </tbody>

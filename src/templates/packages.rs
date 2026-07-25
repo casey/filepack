@@ -6,7 +6,7 @@ pub(crate) struct PackagesHtml {
   pub(crate) view: View,
 }
 
-struct Row<'a> {
+struct Package<'a> {
   artwork: bool,
   creator: Option<&'a Component>,
   file_size: u64,
@@ -18,11 +18,11 @@ struct Row<'a> {
 }
 
 impl PackagesHtml {
-  fn rows(&self) -> impl Iterator<Item = Row<'_>> {
+  fn packages(&self) -> impl Iterator<Item = Package<'_>> {
     self
       .packages
       .iter()
-      .map(|(fingerprint, metadata, totals)| Row {
+      .map(|(fingerprint, metadata, totals)| Package {
         artwork: metadata
           .as_ref()
           .is_some_and(|metadata| metadata.artwork.is_some()),
