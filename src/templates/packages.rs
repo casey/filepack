@@ -150,8 +150,8 @@ mod tests {
                 <th>creator</th>
                 <th>year</th>
                 <th>media</th>
-                <th class=number>files</th>
-                <th class=number>size</th>
+                <th class=right>files</th>
+                <th class=right>size</th>
               </tr>
             </thead>
             <tbody>
@@ -160,16 +160,16 @@ mod tests {
                 <td>foo</td>
                 <td>2024</td>
                 <td>audio</td>
-                <td class=number><a href=/directory/{hash}>2</a></td>
-                <td class=number>1.5 KiB</td>
+                <td class=right><a href=/directory/{hash}>2</a></td>
+                <td class=right>1.5 KiB</td>
               </tr>
               <tr>
                 <td><a href=/package/{fingerprint}><code>{fingerprint}</code></a></td>
                 <td></td>
                 <td></td>
                 <td></td>
-                <td class=number><a href=/directory/{hash}>0</a></td>
-                <td class=number>0 B</td>
+                <td class=right><a href=/directory/{hash}>0</a></td>
+                <td class=right>0 B</td>
               </tr>
             </tbody>
           </table>

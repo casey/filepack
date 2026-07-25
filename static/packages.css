@@ -36,10 +36,6 @@
   }
 }
 
-.number {
-  text-align: right;
-}
-
 header {
   align-items: baseline;
   display: flex;

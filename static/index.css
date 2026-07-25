@@ -9,6 +9,10 @@
   box-sizing: border-box;
 }
 
+.right {
+  text-align: right;
+}
+
 a {
   color: #4169e1;
 }
