@@ -8,6 +8,18 @@ mod tests {
   use {super::*, pretty_assertions::assert_eq};
 
   #[test]
+  fn link() {
+    assert_eq!(
+      InfoHtml(&Info::Link {
+        text: "foo".into(),
+        url: "/bar".into(),
+      })
+      .to_string(),
+      "<a href=/bar>foo</a>\n",
+    );
+  }
+
+  #[test]
   fn list() {
     assert_eq!(
       InfoHtml(&Info::List(vec![

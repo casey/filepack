@@ -133,9 +133,15 @@ impl FromStr for Image {
 }
 
 impl Item for Image {
-  fn info(&self) -> Info {
+  fn info(&self, url: String) -> Info {
     Info::Map(vec![
-      ("filename".into(), Info::Value(self.filename.to_string())),
+      (
+        "filename".into(),
+        Info::Link {
+          text: self.filename.to_string(),
+          url,
+        },
+      ),
       ("type".into(), Info::Value(self.ty.to_string())),
       (
         "dimensions".into(),

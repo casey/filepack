@@ -1,7 +1,7 @@
 use super::*;
 
 pub(crate) trait Item {
-  fn info(&self) -> Info;
+  fn info(&self, url: String) -> Info;
 
   fn path(&self) -> RelativePath;
 
