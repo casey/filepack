@@ -1,11 +1,11 @@
 use super::*;
 
 pub(crate) struct ExifDecoder<'a> {
-  pub(crate) big_endian: bool,
-  pub(crate) data: &'a [u8],
+  big_endian: bool,
+  data: &'a [u8],
 }
 
-impl ExifDecoder<'_> {
+impl<'a> ExifDecoder<'a> {
   fn array<const N: usize>(&self, offset: usize) -> Result<[u8; N], ExifError> {
     Ok(
       self
@@ -15,6 +15,16 @@ impl ExifDecoder<'_> {
         .try_into()
         .unwrap(),
     )
+  }
+
+  pub(crate) fn new(data: &'a [u8]) -> Result<Self, ExifError> {
+    let big_endian = match data.get(0..2).context(exif_error::Truncated)? {
+      b"II" => false,
+      b"MM" => true,
+      _ => return Err(exif_error::ByteOrder.build()),
+    };
+
+    Ok(Self { big_endian, data })
   }
 
   pub(crate) fn u16(&self, offset: usize) -> Result<u16, ExifError> {

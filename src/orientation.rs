@@ -20,13 +20,7 @@ impl Orientation {
   }
 
   pub(crate) fn from_exif(data: &[u8]) -> Result<Self, ExifError> {
-    let big_endian = match data.get(0..2).context(exif_error::Truncated)? {
-      b"II" => false,
-      b"MM" => true,
-      _ => return Err(exif_error::ByteOrder.build()),
-    };
-
-    let decoder = ExifDecoder { big_endian, data };
+    let decoder = ExifDecoder::new(data)?;
 
     let magic = decoder.u16(2)?;
 
