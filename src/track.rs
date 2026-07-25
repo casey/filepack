@@ -56,6 +56,7 @@ mod tests {
             width: 2,
           },
           frames: 0,
+          orientation: Orientation::new(),
         },
         size: 0,
       },
@@ -72,6 +73,7 @@ mod tests {
             width: 1920,
           },
           frames: 0,
+          orientation: Orientation::new(),
         },
         size: 0,
       },
@@ -100,10 +102,11 @@ mod tests {
             width: 2,
           },
           frames: 0,
+          orientation: Orientation::new(),
         },
         size: 0,
       },
-      "a30001018201a3000801a20001010202000200",
+      "a30001018201a4000801a200010102020003a200f401000200",
     );
   }
 
@@ -129,11 +132,12 @@ mod tests {
             width: 2,
           },
           frames: 0,
+          orientation: Orientation::new(),
         },
         size: 0,
       })
       .unwrap(),
-      r#"{"codec":"h264","info":{"type":"video","bit_depth":8,"dimensions":{"height":1,"width":2},"frames":0},"size":0}"#,
+      r#"{"codec":"h264","info":{"type":"video","bit_depth":8,"dimensions":{"height":1,"width":2},"frames":0,"orientation":{"mirrored":false,"rotation":0}},"size":0}"#,
     );
 
     assert_eq!(
@@ -146,11 +150,12 @@ mod tests {
             width: 2,
           },
           frames: 0,
+          orientation: Orientation::new(),
         },
         size: 0,
       })
       .unwrap(),
-      r#"{"codec":"h264","info":{"type":"video","dimensions":{"height":1,"width":2},"frames":0},"size":0}"#,
+      r#"{"codec":"h264","info":{"type":"video","dimensions":{"height":1,"width":2},"frames":0,"orientation":{"mirrored":false,"rotation":0}},"size":0}"#,
     );
   }
 }
