@@ -14,6 +14,8 @@ pub(crate) enum TrackInfo {
     dimensions: Dimensions,
     #[n(2)]
     frames: u64,
+    #[n(3)]
+    orientation: Orientation,
   },
 }
 
@@ -33,8 +35,9 @@ mod tests {
           width: 2,
         },
         frames: 0,
+        orientation: Orientation::new(),
       },
-      "8201a3000801a2000101020200",
+      "8201a4000801a200010102020003a200f40100",
     );
 
     assert_cbor(
@@ -45,8 +48,9 @@ mod tests {
           width: 2,
         },
         frames: 0,
+        orientation: Orientation::new(),
       },
-      "8201a201a2000101020200",
+      "8201a301a200010102020003a200f40100",
     );
   }
 }

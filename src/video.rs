@@ -18,13 +18,6 @@ impl Video {
     self.filename.as_path()
   }
 
-  pub(crate) fn dimensions(&self) -> Option<Dimensions> {
-    self.tracks.iter().find_map(|track| match track.info {
-      TrackInfo::Video { dimensions, .. } => Some(dimensions),
-      TrackInfo::Audio => None,
-    })
-  }
-
   fn format(&self) -> VideoFormat {
     VideoFormat {
       codecs: self.tracks.iter().map(|track| track.codec).collect(),
@@ -116,7 +109,7 @@ impl Video {
   }
 
   fn info_mp4<T: Read + Seek>(reader: T, size: u64) -> Result<VideoInfo, VideoError> {
-    use re_mp4::{Mp4, Mp4aBox, StsdBoxContent};
+    use re_mp4::{Mp4, Mp4aBox, StsdBoxContent, TkhdBox};
 
     fn mp4a_codec(mp4a: &Mp4aBox) -> Option<Codec> {
       match mp4a
@@ -130,6 +123,27 @@ impl Video {
         0x69 | 0x6b => Some(Codec::Mp3),
         _ => None,
       }
+    }
+
+    fn orientation(tkhd: &TkhdBox) -> Option<Orientation> {
+      const U: i32 = 0x0001_0000;
+      const N: i32 = -0x0001_0000;
+
+      let matrix = &tkhd.matrix;
+
+      let (mirrored, rotation) = match (matrix.a, matrix.b, matrix.c, matrix.d) {
+        (U, 0, 0, U) => (false, Rotation::R0),
+        (N, 0, 0, U) => (true, Rotation::R0),
+        (0, U, N, 0) => (false, Rotation::R90),
+        (0, U, U, 0) => (true, Rotation::R90),
+        (N, 0, 0, N) => (false, Rotation::R180),
+        (U, 0, 0, N) => (true, Rotation::R180),
+        (0, N, U, 0) => (false, Rotation::R270),
+        (0, N, N, 0) => (true, Rotation::R270),
+        _ => return None,
+      };
+
+      Some(Orientation { mirrored, rotation })
     }
 
     fn codec_name(contents: &StsdBoxContent) -> String {
@@ -222,6 +236,9 @@ impl Video {
             Some(8)
           };
 
+          let orientation =
+            orientation(&trak.tkhd).context(video_error::MatrixUnsupported { track: index })?;
+
           video_track = Some(Track {
             codec: Codec::H264,
             info: TrackInfo::Video {
@@ -231,6 +248,7 @@ impl Video {
                 width: avc1.width.into(),
               },
               frames: stsz.sample_count.into(),
+              orientation,
             },
             size,
           });
@@ -381,6 +399,7 @@ impl Video {
                 width: video.pixel_width().get(),
               },
               frames,
+              orientation: Orientation::new(),
             },
             size,
           });
@@ -418,6 +437,17 @@ impl Video {
     Ok(VideoInfo { duration, tracks })
   }
 
+  pub(crate) fn oriented_dimensions(&self) -> Option<Dimensions> {
+    self.tracks.iter().find_map(|track| match track.info {
+      TrackInfo::Video {
+        dimensions,
+        orientation,
+        ..
+      } => Some(orientation.dimensions(dimensions)),
+      TrackInfo::Audio => None,
+    })
+  }
+
   pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result {
     let info = self.info(root)?;
 
@@ -428,7 +458,7 @@ impl Video {
   }
 
   pub(crate) fn resolutions(videos: &[Video]) -> Option<Resolutions> {
-    Resolutions::new(videos.iter().filter_map(Video::dimensions), true)
+    Resolutions::new(videos.iter().filter_map(Video::oriented_dimensions), true)
   }
 
   pub(crate) fn resource_type(&self) -> ResourceType {
@@ -520,41 +550,6 @@ mod tests {
   use super::*;
 
   #[test]
-  fn dimensions() {
-    let mut foo = "foo.mp4".parse::<Video>().unwrap();
-
-    assert_eq!(foo.dimensions(), None);
-
-    foo.tracks = vec![
-      Track {
-        codec: Codec::Aac,
-        info: TrackInfo::Audio,
-        size: 0,
-      },
-      Track {
-        codec: Codec::H264,
-        info: TrackInfo::Video {
-          bit_depth: Some(8),
-          dimensions: Dimensions {
-            height: 1,
-            width: 2,
-          },
-          frames: 0,
-        },
-        size: 0,
-      },
-    ];
-
-    assert_eq!(
-      foo.dimensions(),
-      Some(Dimensions {
-        height: 1,
-        width: 2,
-      }),
-    );
-  }
-
-  #[test]
   fn encoding() {
     assert_cbor(
       "foo.mp4".parse::<Video>().unwrap(),
@@ -575,6 +570,7 @@ mod tests {
                 width: 2,
               },
               frames: 0,
+              orientation: Orientation::new(),
             },
             size: 0,
           },
@@ -586,7 +582,7 @@ mod tests {
         ],
         ty: VideoType::Mp4,
       },
-      "a400030167666f6f2e6d70340282a30001018201a3000801a20001010202000200a30002010002000300",
+      "a400030167666f6f2e6d70340282a30001018201a4000801a200010102020003a200f401000200a30002010002000300",
     );
   }
 
@@ -601,6 +597,7 @@ mod tests {
           bit_depth: Some(8),
           dimensions: Dimensions::default(),
           frames: 0,
+          orientation: Orientation::new(),
         },
         size: 0,
       },
@@ -623,6 +620,7 @@ mod tests {
         width: 2,
       },
       frames: 0,
+      orientation: Orientation::new(),
     };
 
     let mut bob = "bob.webm".parse::<Video>().unwrap();
@@ -634,6 +632,7 @@ mod tests {
           bit_depth: Some(8),
           dimensions: Dimensions::default(),
           frames: 0,
+          orientation: Orientation::new(),
         },
         size: 0,
       },
@@ -744,6 +743,7 @@ mod tests {
                 width: 2,
               },
               frames: 0,
+              orientation: Orientation::new(),
             },
             size: 0,
           },
@@ -769,6 +769,7 @@ mod tests {
               width: 2,
             },
             frames: 0,
+            orientation: Orientation::new(),
           },
           size: 0,
         }],
@@ -806,6 +807,7 @@ mod tests {
           width: 2,
         },
         frames: 3,
+        orientation: Orientation::new(),
       },
     );
 
@@ -835,6 +837,7 @@ mod tests {
             width: 2,
           },
           frames: 2,
+          orientation: Orientation::new(),
         },
         size: 8,
       },
@@ -856,7 +859,59 @@ mod tests {
           width: 2,
         },
         frames: 0,
+        orientation: Orientation::new(),
       },
+    );
+
+    assert_eq!(
+      case(
+        Mp4Builder::new()
+          .matrix([0, 0x0001_0000, 0, -0x0001_0000, 0, 0, 0, 0, 0x4000_0000])
+          .video_track(2, 1),
+      )
+      .unwrap()
+      .tracks[0]
+        .info,
+      TrackInfo::Video {
+        bit_depth: Some(8),
+        dimensions: Dimensions {
+          height: 1,
+          width: 2,
+        },
+        frames: 0,
+        orientation: Orientation {
+          mirrored: false,
+          rotation: Rotation::R90,
+        },
+      },
+    );
+
+    assert_eq!(
+      case(
+        Mp4Builder::new()
+          .matrix([-0x0001_0000, 0, 0, 0, 0x0001_0000, 0, 0, 0, 0x4000_0000])
+          .video_track(2, 1),
+      )
+      .unwrap()
+      .tracks[0]
+        .info,
+      TrackInfo::Video {
+        bit_depth: Some(8),
+        dimensions: Dimensions {
+          height: 1,
+          width: 2,
+        },
+        frames: 0,
+        orientation: Orientation {
+          mirrored: true,
+          rotation: Rotation::R0,
+        },
+      },
+    );
+
+    error(
+      Mp4Builder::new().matrix([0; 9]).video_track(2, 1),
+      "track 0 has unsupported matrix",
     );
 
     error(
@@ -925,6 +980,63 @@ mod tests {
   }
 
   #[test]
+  fn oriented_dimensions() {
+    let mut foo = "foo.mp4".parse::<Video>().unwrap();
+
+    assert_eq!(foo.oriented_dimensions(), None);
+
+    foo.tracks = vec![
+      Track {
+        codec: Codec::Aac,
+        info: TrackInfo::Audio,
+        size: 0,
+      },
+      Track {
+        codec: Codec::H264,
+        info: TrackInfo::Video {
+          bit_depth: Some(8),
+          dimensions: Dimensions {
+            height: 1,
+            width: 2,
+          },
+          frames: 0,
+          orientation: Orientation::new(),
+        },
+        size: 0,
+      },
+    ];
+
+    assert_eq!(
+      foo.oriented_dimensions(),
+      Some(Dimensions {
+        height: 1,
+        width: 2,
+      }),
+    );
+
+    foo.tracks[1].info = TrackInfo::Video {
+      bit_depth: Some(8),
+      dimensions: Dimensions {
+        height: 1,
+        width: 2,
+      },
+      frames: 0,
+      orientation: Orientation {
+        mirrored: false,
+        rotation: Rotation::R90,
+      },
+    };
+
+    assert_eq!(
+      foo.oriented_dimensions(),
+      Some(Dimensions {
+        height: 2,
+        width: 1,
+      }),
+    );
+  }
+
+  #[test]
   fn populate() {
     #[track_caller]
     fn case(bytes: &[u8]) -> Result<Video> {
@@ -959,6 +1071,7 @@ mod tests {
                 width: 2,
               },
               frames: 0,
+              orientation: Orientation::new(),
             },
             size: 0,
           },
@@ -991,6 +1104,7 @@ mod tests {
               width: 2,
             },
             frames: 0,
+            orientation: Orientation::new(),
           },
           size: 0,
         },
@@ -1024,6 +1138,7 @@ mod tests {
                 width: 2,
               },
               frames: 0,
+              orientation: Orientation::new(),
             },
             size: 0,
           },
@@ -1036,7 +1151,7 @@ mod tests {
         ty: VideoType::Mp4,
       })
       .unwrap(),
-      r#"{"duration":0,"filename":"foo.mp4","tracks":[{"codec":"h264","info":{"type":"video","bit_depth":8,"dimensions":{"height":1,"width":2},"frames":0},"size":0},{"codec":"mp3","info":{"type":"audio"},"size":0}],"type":"mp4"}"#,
+      r#"{"duration":0,"filename":"foo.mp4","tracks":[{"codec":"h264","info":{"type":"video","bit_depth":8,"dimensions":{"height":1,"width":2},"frames":0,"orientation":{"mirrored":false,"rotation":0}},"size":0},{"codec":"mp3","info":{"type":"audio"},"size":0}],"type":"mp4"}"#,
     );
   }
 
@@ -1084,6 +1199,7 @@ mod tests {
                 width: 2,
               },
               frames: 0,
+              orientation: Orientation::new(),
             },
             size: 0,
           },
@@ -1115,6 +1231,7 @@ mod tests {
                 width: 2,
               },
               frames: 0,
+              orientation: Orientation::new(),
             },
             size: 0,
           },
@@ -1140,6 +1257,7 @@ mod tests {
               width: 2,
             },
             frames: 0,
+            orientation: Orientation::new(),
           },
           size: 0,
         }],
@@ -1182,6 +1300,7 @@ mod tests {
           width: 2,
         },
         frames: 2,
+        orientation: Orientation::new(),
       },
     );
 
@@ -1205,6 +1324,7 @@ mod tests {
               width: 2,
             },
             frames: 1,
+            orientation: Orientation::new(),
           },
           size: 4,
         },
@@ -1232,6 +1352,7 @@ mod tests {
           width: 2,
         },
         frames: 1,
+        orientation: Orientation::new(),
       },
     );
 

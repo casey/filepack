@@ -411,6 +411,7 @@ mod tests {
                   width: 2,
                 },
                 frames: 0,
+                orientation: Orientation::new(),
               },
               size: 0,
             },

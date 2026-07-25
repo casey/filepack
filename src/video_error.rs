@@ -21,6 +21,8 @@ pub enum VideoError {
   DurationMissing,
   #[snafu(display("duration overflow"))]
   DurationOverflow,
+  #[snafu(display("track {track} has unsupported matrix"))]
+  MatrixUnsupported { track: usize },
   #[snafu(display("invalid SPS"))]
   SpsInvalid,
   #[snafu(display("missing SPS"))]

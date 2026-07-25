@@ -184,7 +184,11 @@ media:
                 "height": 1,
                 "width": 2
               },
-              "frames": 30
+              "frames": 30,
+              "orientation": {
+                "mirrored": false,
+                "rotation": 0
+              }
             },
             "size": 30
           },

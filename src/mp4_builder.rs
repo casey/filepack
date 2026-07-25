@@ -2,6 +2,7 @@ pub struct Mp4Builder {
   avcc_profile: u8,
   duration: u32,
   frame_count: u32,
+  matrix: [i32; 9],
   sample_size: u32,
   sample_sizes: Vec<u32>,
   sps: Vec<u8>,
@@ -82,11 +83,18 @@ impl Mp4Builder {
     self
   }
 
+  #[must_use]
+  pub fn matrix(mut self, matrix: [i32; 9]) -> Self {
+    self.matrix = matrix;
+    self
+  }
+
   pub fn new() -> Self {
     Self {
       avcc_profile: 0,
       duration: 0,
       frame_count: 0,
+      matrix: [0x0001_0000, 0, 0, 0, 0x0001_0000, 0, 0, 0, 0x4000_0000],
       sample_size: 1,
       sample_sizes: Vec::new(),
       sps: Vec::new(),
@@ -124,7 +132,11 @@ impl Mp4Builder {
   pub fn track(mut self, handler: [u8; 4], descriptions: &[Vec<u8>]) -> Self {
     let mut tkhd = vec![0; 12];
     tkhd.extend_from_slice(&u32::try_from(self.tracks.len() + 1).unwrap().to_be_bytes());
-    tkhd.extend_from_slice(&[0; 68]);
+    tkhd.extend_from_slice(&[0; 24]);
+    for value in self.matrix {
+      tkhd.extend_from_slice(&value.to_be_bytes());
+    }
+    tkhd.extend_from_slice(&[0; 8]);
 
     let mut mdhd = vec![0; 12];
     mdhd.extend_from_slice(&1000u32.to_be_bytes());
