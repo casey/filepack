@@ -222,15 +222,22 @@ impl Server {
     self.metadata(fingerprint)
   }
 
-  pub(crate) fn packages(&self) -> ServerResult<Vec<(Fingerprint, Option<Metadata>)>> {
-    self
-      .database
-      .begin_read()?
-      .open_table(PACKAGES)?
+  pub(crate) fn packages(&self) -> ServerResult<Vec<(Fingerprint, Option<Metadata>, Totals)>> {
+    let tx = self.database.begin_read()?;
+
+    let directories = tx.open_table(DIRECTORIES)?;
+
+    tx.open_table(PACKAGES)?
       .iter()?
       .map(|entry| {
         let fingerprint = entry?.0.value();
-        Ok((fingerprint, self.metadata(fingerprint)?))
+
+        let totals = self
+          .directory_ext(&directories, fingerprint.into())?
+          .totals()
+          .unwrap();
+
+        Ok((fingerprint, self.metadata(fingerprint)?, totals))
       })
       .collect()
   }

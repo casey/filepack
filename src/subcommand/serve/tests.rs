@@ -1592,6 +1592,13 @@ fn packages_grid() {
     ..default()
   };
 
+  let totals = Totals {
+    directories: 0,
+    directory_size: 0,
+    file_size: metadata.encode_to_vec().len().into_u64() + 3,
+    files: 2,
+  };
+
   let fingerprint = PackageBuilder::new()
     .metadata(&metadata)
     .file("foo.png", b"bar")
@@ -1600,7 +1607,7 @@ fn packages_grid() {
   server
     .get("/packages?view=grid")
     .assert_page(PackagesHtml {
-      packages: vec![(fingerprint, Some(metadata))],
+      packages: vec![(fingerprint, Some(metadata), totals)],
       view: View::Grid,
     })
     .send();
@@ -1616,12 +1623,19 @@ fn packages_include_creators_and_titles() {
     ..default()
   };
 
+  let totals = Totals {
+    directories: 0,
+    directory_size: 0,
+    file_size: metadata.encode_to_vec().len().into_u64(),
+    files: 1,
+  };
+
   let fingerprint = PackageBuilder::new().metadata(&metadata).upload(&server);
 
   server
     .get("/packages")
     .assert_page(PackagesHtml {
-      packages: vec![(fingerprint, Some(metadata))],
+      packages: vec![(fingerprint, Some(metadata), totals)],
       view: View::List,
     })
     .send();
@@ -1651,10 +1665,19 @@ fn packages_non_empty() {
     server.write_file(&cbor);
     server.post(format!("/directory/{hash}")).send();
     server.post(format!("/package/{fingerprint}")).send();
-    packages.push((fingerprint, None));
+    packages.push((
+      fingerprint,
+      None,
+      Totals {
+        directories: 0,
+        directory_size: 0,
+        file_size: 3,
+        files: 1,
+      },
+    ));
   }
 
-  packages.sort_by_key(|&(fingerprint, _)| fingerprint);
+  packages.sort_by_key(|&(fingerprint, ..)| fingerprint);
 
   server
     .get("/packages")
