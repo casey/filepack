@@ -68,6 +68,18 @@ impl Orientation {
   }
 }
 
+impl Display for Orientation {
+  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    write!(f, "{}°", self.rotation.degrees())?;
+
+    if self.mirrored {
+      write!(f, " mirrored")?;
+    }
+
+    Ok(())
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
@@ -117,6 +129,19 @@ mod tests {
         width: 1,
       },
     );
+  }
+
+  #[test]
+  fn display() {
+    #[track_caller]
+    fn case(mirrored: bool, rotation: Rotation, expected: &str) {
+      assert_eq!(Orientation { mirrored, rotation }.to_string(), expected);
+    }
+
+    case(false, Rotation::R0, "0°");
+    case(false, Rotation::R90, "90°");
+    case(true, Rotation::R0, "0° mirrored");
+    case(true, Rotation::R270, "270° mirrored");
   }
 
   #[test]

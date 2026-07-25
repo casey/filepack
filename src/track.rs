@@ -30,9 +30,11 @@ impl Track {
       bit_depth,
       dimensions,
       frames,
+      orientation,
     } = self.info
     {
       entries.push(("dimensions".into(), Info::Value(dimensions.to_string())));
+      entries.push(("orientation".into(), Info::Value(orientation.to_string())));
       entries.push(("frames".into(), Info::Value(frames.to_string())));
 
       if let Some(bit_depth) = bit_depth {

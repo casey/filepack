@@ -141,6 +141,10 @@ impl Item for Image {
         "dimensions".into(),
         Info::Value(self.dimensions.to_string()),
       ),
+      (
+        "orientation".into(),
+        Info::Value(self.orientation.to_string()),
+      ),
     ])
   }
 

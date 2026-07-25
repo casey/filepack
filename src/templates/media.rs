@@ -118,6 +118,10 @@ mod tests {
             width: 2,
           },
           filename: "foo.png".parse().unwrap(),
+          orientation: Orientation {
+            mirrored: true,
+            rotation: Rotation::R90,
+          },
           ty: ImageType::Png,
         }],
       }),
@@ -149,6 +153,10 @@ mod tests {
                 <dd>
                   2×1
                 </dd>
+                <dt>orientation</dt>
+                <dd>
+                  90° mirrored
+                </dd>
               </dl>
             </li>
           </ol>
@@ -175,6 +183,7 @@ mod tests {
                   width: 2,
                 },
                 frames: 0,
+                orientation: Orientation::new(),
               },
               size: 0,
             },
@@ -231,6 +240,10 @@ mod tests {
                         <dt>dimensions</dt>
                         <dd>
                           2×1
+                        </dd>
+                        <dt>orientation</dt>
+                        <dd>
+                          0°
                         </dd>
                         <dt>frames</dt>
                         <dd>
