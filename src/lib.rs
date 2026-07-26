@@ -50,6 +50,7 @@ use {
     dimensions::Dimensions,
     directory_tree_entry::DirectoryTreeEntry,
     display_duration::DisplayDuration,
+    display_frame_rate::DisplayFrameRate,
     display_path::DisplayPath,
     display_sample_rate::DisplaySampleRate,
     display_secret::DisplaySecret,
@@ -289,6 +290,7 @@ mod directory_ext;
 mod directory_tree;
 mod directory_tree_entry;
 mod display_duration;
+mod display_frame_rate;
 mod display_path;
 mod display_sample_rate;
 mod display_secret;

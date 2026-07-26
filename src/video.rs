@@ -571,7 +571,7 @@ impl Item for Video {
       ),
       (
         "tracks".into(),
-        Info::List(self.tracks.iter().map(Track::info).collect()),
+        Info::List(self.tracks.iter().map(|track| track.info(self)).collect()),
       ),
     ])
   }
