@@ -39,7 +39,9 @@ use {
     cause::Cause,
     cbor::Cbor,
     checked_url::CheckedUrl,
+    chroma_subsampling::ChromaSubsampling,
     codec::Codec,
+    color_info::ColorInfo,
     component::Component,
     component_error::ComponentError,
     context::Context,
@@ -273,7 +275,9 @@ mod bit_reader;
 mod cause;
 mod cbor;
 mod checked_url;
+mod chroma_subsampling;
 mod codec;
+mod color_info;
 mod component;
 mod component_buf;
 mod component_error;
