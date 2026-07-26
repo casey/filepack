@@ -8,16 +8,7 @@ pub(crate) struct DisplayBitsPerPixel {
 impl Display for DisplayBitsPerPixel {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     let milli = (u128::from(self.size) * 8 * 1000 + self.pixels / 2) / self.pixels;
-
-    let whole = milli / 1000;
-    let frac = format!("{:03}", milli % 1000);
-    let frac = frac.trim_end_matches('0');
-
-    if frac.is_empty() {
-      write!(f, "{whole}")
-    } else {
-      write!(f, "{whole}.{frac}")
-    }
+    write!(f, "{}", DisplayMillis(milli))
   }
 }
 

@@ -8,18 +8,8 @@ pub(crate) struct DisplayFrameRate {
 impl Display for DisplayFrameRate {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     let duration = u128::from(self.duration);
-
     let milli_fps = (u128::from(self.frames) * 1_000_000 + duration / 2) / duration;
-
-    let fps = milli_fps / 1000;
-    let frac = format!("{:03}", milli_fps % 1000);
-    let frac = frac.trim_end_matches('0');
-
-    if frac.is_empty() {
-      write!(f, "{fps} fps")
-    } else {
-      write!(f, "{fps}.{frac} fps")
-    }
+    write!(f, "{} fps", DisplayMillis(milli_fps))
   }
 }
 

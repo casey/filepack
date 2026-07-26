@@ -4,15 +4,7 @@ pub(crate) struct DisplaySampleRate(pub(crate) u64);
 
 impl Display for DisplaySampleRate {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    let khz = self.0 / 1000;
-    let frac = format!("{:03}", self.0 % 1000);
-    let frac = frac.trim_end_matches('0');
-
-    if frac.is_empty() {
-      write!(f, "{khz} kHz")
-    } else {
-      write!(f, "{khz}.{frac} kHz")
-    }
+    write!(f, "{} kHz", DisplayMillis(self.0.into()))
   }
 }
 
