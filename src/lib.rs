@@ -51,6 +51,8 @@ use {
     decode_error::DecodeError,
     dimensions::Dimensions,
     directory_tree_entry::DirectoryTreeEntry,
+    display_bitrate::DisplayBitrate,
+    display_bits_per_pixel::DisplayBitsPerPixel,
     display_duration::DisplayDuration,
     display_frame_rate::DisplayFrameRate,
     display_path::DisplayPath,
@@ -147,7 +149,7 @@ use {
   claxon::FlacReader,
   filepack_cbor::{Decode, DecodeFromStr, Encode, EncodeDisplay},
   futures_util::StreamExt,
-  humansize::{BINARY, FormatSizeOptions, SizeFormatter},
+  humansize::{BINARY, BaseUnit, DECIMAL, FormatSizeOptions, SizeFormatter},
   indicatif::{ProgressBar, ProgressStyle},
   jiff::{self, civil},
   lexiclean::Lexiclean,
@@ -293,6 +295,8 @@ mod directory;
 mod directory_ext;
 mod directory_tree;
 mod directory_tree_entry;
+mod display_bitrate;
+mod display_bits_per_pixel;
 mod display_duration;
 mod display_frame_rate;
 mod display_path;

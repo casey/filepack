@@ -36,6 +36,19 @@ impl Track {
           "sample rate".into(),
           Info::Value(DisplaySampleRate(sample_rate).to_string()),
         ));
+
+        if video.duration > 0 {
+          entries.push((
+            "bit rate".into(),
+            Info::Value(
+              DisplayBitrate {
+                duration: video.duration,
+                size: self.size,
+              }
+              .to_string(),
+            ),
+          ));
+        }
       }
       TrackInfo::Video {
         bit_depth,
@@ -55,6 +68,33 @@ impl Track {
               DisplayFrameRate {
                 duration: video.duration,
                 frames,
+              }
+              .to_string(),
+            ),
+          ));
+
+          entries.push((
+            "bit rate".into(),
+            Info::Value(
+              DisplayBitrate {
+                duration: video.duration,
+                size: self.size,
+              }
+              .to_string(),
+            ),
+          ));
+        }
+
+        let pixels =
+          u128::from(dimensions.width) * u128::from(dimensions.height) * u128::from(frames);
+
+        if pixels > 0 {
+          entries.push((
+            "bits per pixel".into(),
+            Info::Value(
+              DisplayBitsPerPixel {
+                pixels,
+                size: self.size,
               }
               .to_string(),
             ),
@@ -206,7 +246,7 @@ mod tests {
         frames: 240,
         orientation: Orientation::new(),
       },
-      size: 0,
+      size: 1500,
     };
 
     let mut video = "foo.mp4".parse::<Video>().unwrap();
@@ -222,8 +262,10 @@ mod tests {
         ("orientation".into(), Info::Value("0°".into())),
         ("frames".into(), Info::Value("240".into())),
         ("frame rate".into(), Info::Value("24 fps".into())),
+        ("bit rate".into(), Info::Value("1.2 kbit/s".into())),
+        ("bits per pixel".into(), Info::Value("25".into())),
         ("bit depth".into(), Info::Value("8-bit".into())),
-        ("size".into(), Info::Value("0 B".into())),
+        ("size".into(), Info::Value("1.5 KiB".into())),
       ]),
     );
 
@@ -237,8 +279,45 @@ mod tests {
         ("dimensions".into(), Info::Value("2×1".into())),
         ("orientation".into(), Info::Value("0°".into())),
         ("frames".into(), Info::Value("240".into())),
+        ("bits per pixel".into(), Info::Value("25".into())),
         ("bit depth".into(), Info::Value("8-bit".into())),
-        ("size".into(), Info::Value("0 B".into())),
+        ("size".into(), Info::Value("1.5 KiB".into())),
+      ]),
+    );
+
+    let track = Track {
+      codec: Codec::Aac,
+      info: TrackInfo::Audio {
+        channels: 2,
+        sample_rate: 44100,
+      },
+      size: 1250,
+    };
+
+    video.duration = 10_000;
+
+    assert_eq!(
+      track.info(&video),
+      Info::Map(vec![
+        ("type".into(), Info::Value("audio".into())),
+        ("codec".into(), Info::Value("AAC".into())),
+        ("channels".into(), Info::Value("2".into())),
+        ("sample rate".into(), Info::Value("44.1 kHz".into())),
+        ("bit rate".into(), Info::Value("1 kbit/s".into())),
+        ("size".into(), Info::Value("1.2 KiB".into())),
+      ]),
+    );
+
+    video.duration = 0;
+
+    assert_eq!(
+      track.info(&video),
+      Info::Map(vec![
+        ("type".into(), Info::Value("audio".into())),
+        ("codec".into(), Info::Value("AAC".into())),
+        ("channels".into(), Info::Value("2".into())),
+        ("sample rate".into(), Info::Value("44.1 kHz".into())),
+        ("size".into(), Info::Value("1.2 KiB".into())),
       ]),
     );
   }
