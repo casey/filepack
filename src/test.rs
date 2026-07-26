@@ -149,6 +149,7 @@ pub(crate) fn tempdir() -> (TempDir, Utf8PathBuf) {
   (tempdir, path)
 }
 
+#[cfg(test)]
 mod tests {
   use super::*;
 
