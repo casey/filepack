@@ -87,8 +87,10 @@ impl Video {
     };
 
     // bit_depth_luma_minus8
+    let bit_depth = 8 + reader.ue()?;
+
     Some(ColorInfo {
-      bit_depth: 8 + reader.ue()?,
+      bit_depth,
       chroma_subsampling,
     })
   }
