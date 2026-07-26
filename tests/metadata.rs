@@ -180,6 +180,7 @@ media:
             "info": {
               "type": "video",
               "bit_depth": 8,
+              "chroma_subsampling": "4:2:0",
               "dimensions": {
                 "height": 1,
                 "width": 2

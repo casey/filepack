@@ -39,7 +39,7 @@ impl Video {
     formats
   }
 
-  fn h264_bit_depth(sps: &[u8]) -> Option<u64> {
+  fn h264_color_info(sps: &[u8]) -> Option<ColorInfo> {
     let mut rbsp = Vec::new();
 
     // skip NAL unit header
@@ -67,17 +67,30 @@ impl Video {
     reader.ue()?;
 
     if !Self::h264_high_profile(profile_idc) {
-      return Some(8);
+      return Some(ColorInfo {
+        bit_depth: 8,
+        chroma_subsampling: ChromaSubsampling::Yuv420,
+      });
     }
 
     // chroma_format_idc
-    if reader.ue()? == 3 {
-      // separate_colour_plane_flag
-      reader.bit()?;
-    }
+    let chroma_subsampling = match reader.ue()? {
+      0 => ChromaSubsampling::Yuv400,
+      1 => ChromaSubsampling::Yuv420,
+      2 => ChromaSubsampling::Yuv422,
+      3 => {
+        // separate_colour_plane_flag
+        reader.bit()?;
+        ChromaSubsampling::Yuv444
+      }
+      _ => return None,
+    };
 
     // bit_depth_luma_minus8
-    Some(8 + reader.ue()?)
+    Some(ColorInfo {
+      bit_depth: 8 + reader.ue()?,
+      chroma_subsampling,
+    })
   }
 
   fn h264_high_profile(profile_idc: u64) -> bool {
@@ -211,15 +224,18 @@ impl Video {
             );
           };
 
-          let bit_depth = if let Some(sps) = avc1.avcc.sequence_parameter_sets.first() {
-            Some(Self::h264_bit_depth(&sps.bytes).context(video_error::SpsInvalid)?)
+          let color_info = if let Some(sps) = avc1.avcc.sequence_parameter_sets.first() {
+            Self::h264_color_info(&sps.bytes).context(video_error::SpsInvalid)?
           } else {
             ensure!(
               !Self::h264_high_profile(avc1.avcc.avc_profile_indication.into()),
               video_error::SpsMissing,
             );
 
-            Some(8)
+            ColorInfo {
+              bit_depth: 8,
+              chroma_subsampling: ChromaSubsampling::Yuv420,
+            }
           };
 
           let orientation =
@@ -228,7 +244,8 @@ impl Video {
           video_track = Some(Track {
             codec: Codec::H264,
             info: TrackInfo::Video {
-              bit_depth,
+              bit_depth: Some(color_info.bit_depth),
+              chroma_subsampling: Some(color_info.chroma_subsampling),
               dimensions: Dimensions {
                 height: avc1.height.into(),
                 width: avc1.width.into(),
@@ -384,18 +401,22 @@ impl Video {
             .cloned()
             .unwrap_or_default();
 
-          let bit_depth = match (codec, first) {
+          let color_info = match (codec, first) {
             (Codec::Vp9, Some(first)) => {
-              Some(Self::vp9_bit_depth(&first).context(video_error::Vp9FrameHeaderInvalid)?)
+              Some(Self::vp9_color_info(&first).context(video_error::Vp9FrameHeaderInvalid)?)
             }
             (Codec::Vp9, None) => None,
-            _ => Some(8),
+            _ => Some(ColorInfo {
+              bit_depth: 8,
+              chroma_subsampling: ChromaSubsampling::Yuv420,
+            }),
           };
 
           video_track = Some(Track {
             codec,
             info: TrackInfo::Video {
-              bit_depth,
+              bit_depth: color_info.map(|color_info| color_info.bit_depth),
+              chroma_subsampling: color_info.map(|color_info| color_info.chroma_subsampling),
               dimensions: Dimensions {
                 height: video.pixel_height().get(),
                 width: video.pixel_width().get(),
@@ -484,7 +505,7 @@ impl Video {
     self.ty.resource_type()
   }
 
-  fn vp9_bit_depth(data: &[u8]) -> Option<u64> {
+  fn vp9_color_info(data: &[u8]) -> Option<ColorInfo> {
     let mut reader = BitReader::new(data);
 
     // frame_marker
@@ -529,7 +550,48 @@ impl Video {
       8
     };
 
-    Some(bit_depth)
+    // color_space
+    let color_space = reader.bits(3)?;
+
+    let chroma_subsampling = if color_space == 7 {
+      if profile == 1 || profile == 3 {
+        // reserved_zero
+        if reader.bit()? != 0 {
+          return None;
+        }
+
+        ChromaSubsampling::Yuv444
+      } else {
+        return None;
+      }
+    } else {
+      // color_range
+      reader.bit()?;
+
+      if profile == 1 || profile == 3 {
+        let subsampling_x = reader.bit()?;
+        let subsampling_y = reader.bit()?;
+
+        // reserved_zero
+        if reader.bit()? != 0 {
+          return None;
+        }
+
+        match (subsampling_x, subsampling_y) {
+          (0, 0) => ChromaSubsampling::Yuv444,
+          (0, 1) => ChromaSubsampling::Yuv440,
+          (1, 0) => ChromaSubsampling::Yuv422,
+          _ => return None,
+        }
+      } else {
+        ChromaSubsampling::Yuv420
+      }
+    };
+
+    Some(ColorInfo {
+      bit_depth,
+      chroma_subsampling,
+    })
   }
 }
 
@@ -605,6 +667,7 @@ mod tests {
             codec: Codec::H264,
             info: TrackInfo::Video {
               bit_depth: Some(8),
+              chroma_subsampling: Some(ChromaSubsampling::Yuv420),
               dimensions: Dimensions {
                 height: 1,
                 width: 2,
@@ -625,7 +688,7 @@ mod tests {
         ],
         ty: VideoType::Mp4,
       },
-      "a400030167666f6f2e6d70340282a30001018201a4000801a200010102020003a200f401000200a30002018200a200020119ac4402000300",
+      "a400030167666f6f2e6d70340282a30001018201a50008010102a200010102030004a200f401000200a30002018200a200020119ac4402000300",
     );
   }
 
@@ -638,6 +701,7 @@ mod tests {
         codec: Codec::H264,
         info: TrackInfo::Video {
           bit_depth: Some(8),
+          chroma_subsampling: Some(ChromaSubsampling::Yuv420),
           dimensions: Dimensions::default(),
           frames: 0,
           orientation: Orientation::new(),
@@ -661,6 +725,7 @@ mod tests {
 
     baz.tracks[0].info = TrackInfo::Video {
       bit_depth: Some(8),
+      chroma_subsampling: Some(ChromaSubsampling::Yuv420),
       dimensions: Dimensions {
         height: 1,
         width: 2,
@@ -676,6 +741,7 @@ mod tests {
         codec: Codec::Vp9,
         info: TrackInfo::Video {
           bit_depth: Some(8),
+          chroma_subsampling: Some(ChromaSubsampling::Yuv420),
           dimensions: Dimensions::default(),
           frames: 0,
           orientation: Orientation::new(),
@@ -749,16 +815,43 @@ mod tests {
   }
 
   #[test]
-  fn h264_bit_depth() {
+  fn h264_color_info() {
     #[track_caller]
-    fn case(sps: &[u8], expected: Option<u64>) {
-      assert_eq!(Video::h264_bit_depth(sps), expected);
+    fn case(sps: &[u8], expected: Option<ColorInfo>) {
+      assert_eq!(Video::h264_color_info(sps), expected);
     }
 
-    case(&[0x67, 66, 0, 30, 0x80], Some(8));
-    case(&[0x67, 100, 0, 31, 0xA6], Some(10));
-    case(&[0x67, 100, 0, 31, 0x91], Some(8));
-    case(&[0x67, 100, 0, 0, 0x03, 0xA6], Some(10));
+    fn config(bit_depth: u64, chroma_subsampling: ChromaSubsampling) -> ColorInfo {
+      ColorInfo {
+        bit_depth,
+        chroma_subsampling,
+      }
+    }
+
+    case(
+      &[0x67, 66, 0, 30, 0x80],
+      Some(config(8, ChromaSubsampling::Yuv420)),
+    );
+    case(
+      &[0x67, 100, 0, 31, 0xA6],
+      Some(config(10, ChromaSubsampling::Yuv420)),
+    );
+    case(
+      &[0x67, 100, 0, 31, 0xB8],
+      Some(config(8, ChromaSubsampling::Yuv422)),
+    );
+    case(
+      &[0x67, 100, 0, 31, 0x91],
+      Some(config(8, ChromaSubsampling::Yuv444)),
+    );
+    case(
+      &[0x67, 100, 0, 31, 0xE0],
+      Some(config(8, ChromaSubsampling::Yuv400)),
+    );
+    case(
+      &[0x67, 100, 0, 0, 0x03, 0xA6],
+      Some(config(10, ChromaSubsampling::Yuv420)),
+    );
     case(&[0x67, 100, 0, 31], None);
     case(&[0x67], None);
     case(&[], None);
@@ -787,6 +880,7 @@ mod tests {
             codec: Codec::H264,
             info: TrackInfo::Video {
               bit_depth: Some(8),
+              chroma_subsampling: Some(ChromaSubsampling::Yuv420),
               dimensions: Dimensions {
                 height: 1,
                 width: 2,
@@ -816,6 +910,7 @@ mod tests {
           codec: Codec::H264,
           info: TrackInfo::Video {
             bit_depth: Some(8),
+            chroma_subsampling: Some(ChromaSubsampling::Yuv420),
             dimensions: Dimensions {
               height: 1,
               width: 2,
@@ -854,6 +949,7 @@ mod tests {
         .info,
       TrackInfo::Video {
         bit_depth: Some(8),
+        chroma_subsampling: Some(ChromaSubsampling::Yuv420),
         dimensions: Dimensions {
           height: 1,
           width: 2,
@@ -884,6 +980,7 @@ mod tests {
         codec: Codec::H264,
         info: TrackInfo::Video {
           bit_depth: Some(8),
+          chroma_subsampling: Some(ChromaSubsampling::Yuv420),
           dimensions: Dimensions {
             height: 1,
             width: 2,
@@ -906,6 +1003,7 @@ mod tests {
         .info,
       TrackInfo::Video {
         bit_depth: Some(10),
+        chroma_subsampling: Some(ChromaSubsampling::Yuv420),
         dimensions: Dimensions {
           height: 1,
           width: 2,
@@ -926,6 +1024,7 @@ mod tests {
         .info,
       TrackInfo::Video {
         bit_depth: Some(8),
+        chroma_subsampling: Some(ChromaSubsampling::Yuv420),
         dimensions: Dimensions {
           height: 1,
           width: 2,
@@ -949,6 +1048,7 @@ mod tests {
         .info,
       TrackInfo::Video {
         bit_depth: Some(8),
+        chroma_subsampling: Some(ChromaSubsampling::Yuv420),
         dimensions: Dimensions {
           height: 1,
           width: 2,
@@ -1050,6 +1150,7 @@ mod tests {
         codec: Codec::H264,
         info: TrackInfo::Video {
           bit_depth: Some(8),
+          chroma_subsampling: Some(ChromaSubsampling::Yuv420),
           dimensions: Dimensions {
             height: 1,
             width: 2,
@@ -1071,6 +1172,7 @@ mod tests {
 
     foo.tracks[1].info = TrackInfo::Video {
       bit_depth: Some(8),
+      chroma_subsampling: Some(ChromaSubsampling::Yuv420),
       dimensions: Dimensions {
         height: 1,
         width: 2,
@@ -1121,6 +1223,7 @@ mod tests {
             codec: Codec::H264,
             info: TrackInfo::Video {
               bit_depth: Some(8),
+              chroma_subsampling: Some(ChromaSubsampling::Yuv420),
               dimensions: Dimensions {
                 height: 1,
                 width: 2,
@@ -1157,6 +1260,7 @@ mod tests {
           codec: Codec::H264,
           info: TrackInfo::Video {
             bit_depth: Some(8),
+            chroma_subsampling: Some(ChromaSubsampling::Yuv420),
             dimensions: Dimensions {
               height: 1,
               width: 2,
@@ -1194,6 +1298,7 @@ mod tests {
             codec: Codec::H264,
             info: TrackInfo::Video {
               bit_depth: Some(8),
+              chroma_subsampling: Some(ChromaSubsampling::Yuv420),
               dimensions: Dimensions {
                 height: 1,
                 width: 2,
@@ -1215,20 +1320,56 @@ mod tests {
         ty: VideoType::Mp4,
       })
       .unwrap(),
-      r#"{"duration":0,"filename":"foo.mp4","tracks":[{"codec":"h264","info":{"type":"video","bit_depth":8,"dimensions":{"height":1,"width":2},"frames":0,"orientation":{"mirrored":false,"rotation":0}},"size":0},{"codec":"mp3","info":{"type":"audio","channels":2,"sample_rate":44100},"size":0}],"type":"mp4"}"#,
+      r#"{"duration":0,"filename":"foo.mp4","tracks":[{"codec":"h264","info":{"type":"video","bit_depth":8,"chroma_subsampling":"4:2:0","dimensions":{"height":1,"width":2},"frames":0,"orientation":{"mirrored":false,"rotation":0}},"size":0},{"codec":"mp3","info":{"type":"audio","channels":2,"sample_rate":44100},"size":0}],"type":"mp4"}"#,
     );
   }
 
   #[test]
-  fn vp9_bit_depth() {
+  fn vp9_color_info() {
     #[track_caller]
-    fn case(data: &[u8], expected: Option<u64>) {
-      assert_eq!(Video::vp9_bit_depth(data), expected,);
+    fn case(data: &[u8], expected: Option<ColorInfo>) {
+      assert_eq!(Video::vp9_color_info(data), expected);
     }
 
-    case(&[0x82, 0x49, 0x83, 0x42], Some(8));
-    case(&[0x92, 0x49, 0x83, 0x42, 0x00], Some(10));
-    case(&[0x92, 0x49, 0x83, 0x42, 0x80], Some(12));
+    fn config(bit_depth: u64, chroma_subsampling: ChromaSubsampling) -> ColorInfo {
+      ColorInfo {
+        bit_depth,
+        chroma_subsampling,
+      }
+    }
+
+    case(
+      &[0x82, 0x49, 0x83, 0x42, 0x00],
+      Some(config(8, ChromaSubsampling::Yuv420)),
+    );
+    case(
+      &[0x92, 0x49, 0x83, 0x42, 0x00],
+      Some(config(10, ChromaSubsampling::Yuv420)),
+    );
+    case(
+      &[0x92, 0x49, 0x83, 0x42, 0x80],
+      Some(config(12, ChromaSubsampling::Yuv420)),
+    );
+    case(
+      &[0xA2, 0x49, 0x83, 0x42, 0x08],
+      Some(config(8, ChromaSubsampling::Yuv422)),
+    );
+    case(
+      &[0xA2, 0x49, 0x83, 0x42, 0x04],
+      Some(config(8, ChromaSubsampling::Yuv440)),
+    );
+    case(
+      &[0xA2, 0x49, 0x83, 0x42, 0x00],
+      Some(config(8, ChromaSubsampling::Yuv444)),
+    );
+    case(
+      &[0xA2, 0x49, 0x83, 0x42, 0xE0],
+      Some(config(8, ChromaSubsampling::Yuv444)),
+    );
+    case(&[0xA2, 0x49, 0x83, 0x42, 0x0C], None);
+    case(&[0xA2, 0x49, 0x83, 0x42, 0x0A], None);
+    case(&[0x82, 0x49, 0x83, 0x42, 0xE0], None);
+    case(&[0x82, 0x49, 0x83, 0x42], None);
     case(&[0x84, 0x49, 0x83, 0x42], None);
     case(&[0x88, 0x49, 0x83, 0x42], None);
     case(&[0x82, 0x49, 0x83, 0x43], None);
@@ -1258,6 +1399,7 @@ mod tests {
             codec: Codec::Vp9,
             info: TrackInfo::Video {
               bit_depth: None,
+              chroma_subsampling: None,
               dimensions: Dimensions {
                 height: 1,
                 width: 2,
@@ -1293,6 +1435,7 @@ mod tests {
             codec: Codec::Vp8,
             info: TrackInfo::Video {
               bit_depth: Some(8),
+              chroma_subsampling: Some(ChromaSubsampling::Yuv420),
               dimensions: Dimensions {
                 height: 1,
                 width: 2,
@@ -1322,6 +1465,7 @@ mod tests {
           codec: Codec::Vp9,
           info: TrackInfo::Video {
             bit_depth: None,
+            chroma_subsampling: None,
             dimensions: Dimensions {
               height: 1,
               width: 2,
@@ -1357,7 +1501,7 @@ mod tests {
       case(
         WebmBuilder::new()
           .video_track(2, 1)
-          .frame(1, &[0x82, 0x49, 0x83, 0x42])
+          .frame(1, &[0x82, 0x49, 0x83, 0x42, 0x00])
           .frame(1, b"")
       )
       .unwrap()
@@ -1365,6 +1509,7 @@ mod tests {
         .info,
       TrackInfo::Video {
         bit_depth: Some(8),
+        chroma_subsampling: Some(ChromaSubsampling::Yuv420),
         dimensions: Dimensions {
           height: 1,
           width: 2,
@@ -1379,7 +1524,7 @@ mod tests {
         WebmBuilder::new()
           .video_track(2, 1)
           .audio_track("A_OPUS")
-          .frame(1, &[0x82, 0x49, 0x83, 0x42])
+          .frame(1, &[0x82, 0x49, 0x83, 0x42, 0x00])
           .frame(2, b"ab"),
       )
       .unwrap()
@@ -1389,6 +1534,7 @@ mod tests {
           codec: Codec::Vp9,
           info: TrackInfo::Video {
             bit_depth: Some(8),
+            chroma_subsampling: Some(ChromaSubsampling::Yuv420),
             dimensions: Dimensions {
               height: 1,
               width: 2,
@@ -1396,7 +1542,7 @@ mod tests {
             frames: 1,
             orientation: Orientation::new(),
           },
-          size: 4,
+          size: 5,
         },
         Track {
           codec: Codec::Opus,
@@ -1420,6 +1566,7 @@ mod tests {
         .info,
       TrackInfo::Video {
         bit_depth: Some(10),
+        chroma_subsampling: Some(ChromaSubsampling::Yuv420),
         dimensions: Dimensions {
           height: 1,
           width: 2,

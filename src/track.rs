@@ -39,6 +39,7 @@ impl Track {
       }
       TrackInfo::Video {
         bit_depth,
+        chroma_subsampling,
         dimensions,
         frames,
         orientation,
@@ -62,6 +63,13 @@ impl Track {
 
         if let Some(bit_depth) = bit_depth {
           entries.push(("bit depth".into(), Info::Value(format!("{bit_depth}-bit"))));
+        }
+
+        if let Some(chroma_subsampling) = chroma_subsampling {
+          entries.push((
+            "chroma subsampling".into(),
+            Info::Value(chroma_subsampling.to_string()),
+          ));
         }
       }
     }
@@ -119,6 +127,7 @@ mod tests {
         codec: Codec::H264,
         info: TrackInfo::Video {
           bit_depth: Some(8),
+          chroma_subsampling: Some(ChromaSubsampling::Yuv420),
           dimensions: Dimensions {
             height: 1,
             width: 2,
@@ -136,6 +145,7 @@ mod tests {
         codec: Codec::H264,
         info: TrackInfo::Video {
           bit_depth: Some(8),
+          chroma_subsampling: Some(ChromaSubsampling::Yuv420),
           dimensions: Dimensions {
             height: 1080,
             width: 1920,
@@ -168,6 +178,7 @@ mod tests {
         codec: Codec::H264,
         info: TrackInfo::Video {
           bit_depth: Some(8),
+          chroma_subsampling: Some(ChromaSubsampling::Yuv420),
           dimensions: Dimensions {
             height: 1,
             width: 2,
@@ -177,7 +188,7 @@ mod tests {
         },
         size: 0,
       },
-      "a30001018201a4000801a200010102020003a200f401000200",
+      "a30001018201a50008010102a200010102030004a200f401000200",
     );
   }
 
@@ -187,6 +198,7 @@ mod tests {
       codec: Codec::H264,
       info: TrackInfo::Video {
         bit_depth: Some(8),
+        chroma_subsampling: None,
         dimensions: Dimensions {
           height: 1,
           width: 2,
@@ -251,6 +263,7 @@ mod tests {
         codec: Codec::H264,
         info: TrackInfo::Video {
           bit_depth: Some(8),
+          chroma_subsampling: Some(ChromaSubsampling::Yuv420),
           dimensions: Dimensions {
             height: 1,
             width: 2,
@@ -261,7 +274,7 @@ mod tests {
         size: 0,
       })
       .unwrap(),
-      r#"{"codec":"h264","info":{"type":"video","bit_depth":8,"dimensions":{"height":1,"width":2},"frames":0,"orientation":{"mirrored":false,"rotation":0}},"size":0}"#,
+      r#"{"codec":"h264","info":{"type":"video","bit_depth":8,"chroma_subsampling":"4:2:0","dimensions":{"height":1,"width":2},"frames":0,"orientation":{"mirrored":false,"rotation":0}},"size":0}"#,
     );
 
     assert_eq!(
@@ -269,6 +282,7 @@ mod tests {
         codec: Codec::H264,
         info: TrackInfo::Video {
           bit_depth: None,
+          chroma_subsampling: None,
           dimensions: Dimensions {
             height: 1,
             width: 2,

@@ -16,10 +16,12 @@ pub(crate) enum TrackInfo {
     #[n(0)]
     bit_depth: Option<u64>,
     #[n(1)]
-    dimensions: Dimensions,
+    chroma_subsampling: Option<ChromaSubsampling>,
     #[n(2)]
-    frames: u64,
+    dimensions: Dimensions,
     #[n(3)]
+    frames: u64,
+    #[n(4)]
     orientation: Orientation,
   },
 }
@@ -41,6 +43,7 @@ mod tests {
     assert_cbor(
       TrackInfo::Video {
         bit_depth: Some(8),
+        chroma_subsampling: Some(ChromaSubsampling::Yuv420),
         dimensions: Dimensions {
           height: 1,
           width: 2,
@@ -48,12 +51,13 @@ mod tests {
         frames: 0,
         orientation: Orientation::new(),
       },
-      "8201a4000801a200010102020003a200f40100",
+      "8201a50008010102a200010102030004a200f40100",
     );
 
     assert_cbor(
       TrackInfo::Video {
         bit_depth: None,
+        chroma_subsampling: None,
         dimensions: Dimensions {
           height: 1,
           width: 2,
@@ -61,7 +65,7 @@ mod tests {
         frames: 0,
         orientation: Orientation::new(),
       },
-      "8201a301a200010102020003a200f40100",
+      "8201a302a200010102030004a200f40100",
     );
   }
 }
