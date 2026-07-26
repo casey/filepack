@@ -312,7 +312,24 @@ impl Item for Audio {
         "duration".into(),
         Info::Value(DisplayDuration(self.duration()).to_string()),
       ),
-      ("format".into(), Info::Value(self.format().to_string())),
+      ("type".into(), Info::Value(self.ty.to_string())),
+      (
+        "sample bits".into(),
+        Info::Value(format!("{}-bit", self.sample_bits)),
+      ),
+      (
+        "sample rate".into(),
+        Info::Value(DisplaySampleRate(self.sample_rate).to_string()),
+      ),
+      (
+        "compression mode".into(),
+        Info::Value(
+          match self.ty {
+            AudioType::Flac => "lossless",
+          }
+          .into(),
+        ),
+      ),
       ("samples".into(), Info::Value(self.samples.to_string())),
     ])
   }
@@ -585,6 +602,46 @@ mod tests {
     );
     case("", ComponentError::Empty);
     case("foo/bar.flac", ComponentError::Separator { character: '/' });
+  }
+
+  #[test]
+  fn info() {
+    let mut audio = "foo.flac".parse::<Audio>().unwrap();
+    audio.album = "qux".parse().unwrap();
+    audio.artist = "baz".parse().unwrap();
+    audio.channels = 2;
+    audio.disc = 1;
+    audio.discs = 2;
+    audio.sample_bits = 16;
+    audio.sample_rate = 44100;
+    audio.samples = 66150;
+    audio.title = "bar".parse().unwrap();
+    audio.track = 3;
+    audio.tracks = 4;
+
+    assert_eq!(
+      Item::info(&audio, "bob".into()),
+      Info::Map(vec![
+        (
+          "filename".into(),
+          Info::Link {
+            text: "foo.flac".into(),
+            url: "bob".into(),
+          },
+        ),
+        ("title".into(), Info::Value("bar".into())),
+        ("artist".into(), Info::Value("baz".into())),
+        ("album".into(), Info::Value("qux".into())),
+        ("disc".into(), Info::Value("1 of 2".into())),
+        ("track".into(), Info::Value("3 of 4".into())),
+        ("duration".into(), Info::Value("0:01".into())),
+        ("type".into(), Info::Value("FLAC".into())),
+        ("sample bits".into(), Info::Value("16-bit".into())),
+        ("sample rate".into(), Info::Value("44.1 kHz".into())),
+        ("compression mode".into(), Info::Value("lossless".into())),
+        ("samples".into(), Info::Value("66150".into())),
+      ]),
+    );
   }
 
   #[test]

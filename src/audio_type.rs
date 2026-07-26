@@ -7,6 +7,14 @@ pub(crate) enum AudioType {
   Flac,
 }
 
+impl Display for AudioType {
+  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    match self {
+      Self::Flac => write!(f, "FLAC"),
+    }
+  }
+}
+
 impl AudioType {
   pub(crate) const EXTENSIONS: &[&str] = &["flac"];
 
@@ -27,6 +35,11 @@ impl AudioType {
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn display() {
+    assert_eq!(AudioType::Flac.to_string(), "FLAC");
+  }
 
   #[test]
   fn encoding() {
