@@ -1,18 +1,11 @@
 use super::*;
 
-#[derive(Clone, Copy, Debug, Decode, Encode, PartialEq, Serialize)]
+#[derive(Clone, Copy, Debug, Decode, Display, Encode, PartialEq, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub(crate) enum AudioType {
   #[n(0)]
+  #[strum(serialize = "FLAC")]
   Flac,
-}
-
-impl Display for AudioType {
-  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    match self {
-      Self::Flac => write!(f, "FLAC"),
-    }
-  }
 }
 
 impl AudioType {

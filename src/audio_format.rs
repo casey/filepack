@@ -10,9 +10,7 @@ pub(crate) struct AudioFormat {
 
 impl Display for AudioFormat {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    match self.ty {
-      AudioType::Flac => write!(f, "FLAC")?,
-    }
+    write!(f, "{}", self.ty)?;
 
     write!(f, " · {}-bit", self.sample_bits)?;
 

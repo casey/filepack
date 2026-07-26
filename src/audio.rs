@@ -321,6 +321,7 @@ impl Item for Audio {
         "sample rate".into(),
         Info::Value(DisplaySampleRate(self.sample_rate).to_string()),
       ),
+      ("channels".into(), Info::Value(self.channels.to_string())),
       (
         "compression mode".into(),
         Info::Value(
@@ -638,6 +639,7 @@ mod tests {
         ("type".into(), Info::Value("FLAC".into())),
         ("sample bits".into(), Info::Value("16-bit".into())),
         ("sample rate".into(), Info::Value("44.1 kHz".into())),
+        ("channels".into(), Info::Value("2".into())),
         ("compression mode".into(), Info::Value("lossless".into())),
         ("samples".into(), Info::Value("66150".into())),
       ]),
