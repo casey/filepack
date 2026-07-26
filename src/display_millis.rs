@@ -4,14 +4,13 @@ pub(crate) struct DisplayMillis(pub(crate) u128);
 
 impl Display for DisplayMillis {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    let foo = self.0 / 1000;
-    let frac = format!("{:03}", self.0 % 1000);
-    let frac = frac.trim_end_matches('0');
-
-    if frac.is_empty() {
-      write!(f, "{foo}")
+    let integer = self.0 / 1000;
+    let fractional = format!("{:03}", self.0 % 1000);
+    let fractional = fractional.trim_end_matches('0');
+    if fractional.is_empty() {
+      write!(f, "{integer}")
     } else {
-      write!(f, "{foo}.{frac}")
+      write!(f, "{integer}.{fractional}")
     }
   }
 }
