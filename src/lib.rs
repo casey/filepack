@@ -58,6 +58,7 @@ use {
     exif_decoder::ExifDecoder,
     exif_error::ExifError,
     file::File,
+    float_ext::FloatExt,
     format::Format,
     functions::{
       client, current_dir, decode_path, default, format_size, is_lowercase_hex, now, parse_number,
@@ -302,6 +303,7 @@ mod exif_error;
 mod file;
 mod filesystem;
 mod fingerprint;
+mod float_ext;
 mod format;
 mod functions;
 mod hash;

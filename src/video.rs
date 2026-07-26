@@ -335,18 +335,14 @@ impl Video {
             .audio()
             .context(video_error::AudioSettingsMissing { track: index })?;
 
-          let sampling_frequency = audio.sampling_frequency();
-
-          #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-          let sample_rate = sampling_frequency as u32;
-
-          ensure! {
-            f64::from(sample_rate) == sampling_frequency,
-            video_error::SampleRateInvalid {
-              sample_rate: sampling_frequency,
-              track: index,
-            },
-          }
+          let sample_rate =
+            audio
+              .sampling_frequency()
+              .into_u64()
+              .context(video_error::SampleRateInvalid {
+                sample_rate: audio.sampling_frequency(),
+                track: index,
+              })?;
 
           let (_frames, size, _first) = frames
             .get(&track.track_number().into())
@@ -357,7 +353,7 @@ impl Video {
             codec,
             info: TrackInfo::Audio {
               channels: audio.channels().get(),
-              sample_rate: sample_rate.into(),
+              sample_rate,
             },
             size,
           });
