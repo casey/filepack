@@ -454,6 +454,8 @@ mod tests {
             <dd><a href=/package/{fingerprint}/media>video</a></dd>
             <dt>videos</dt>
             <dd>1</dd>
+            <dt>duration</dt>
+            <dd>3:45</dd>
             <dt>format</dt>
             <dd>MP4</dd>
           </dl>
