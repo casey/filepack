@@ -169,13 +169,17 @@ impl Video {
         b"soun" => {
           ensure!(audio_track.is_none(), video_error::AudioTrackMultiple);
 
-          let codec = if let StsdBoxContent::Mp4a(mp4a) = contents {
-            mp4a_codec(mp4a)
-          } else {
-            None
+          let StsdBoxContent::Mp4a(mp4a) = contents else {
+            return Err(
+              video_error::AudioCodecUnsupported {
+                codec: codec_name(contents),
+                track: index,
+              }
+              .build(),
+            );
           };
 
-          let Some(codec) = codec else {
+          let Some(codec) = mp4a_codec(mp4a) else {
             return Err(
               video_error::AudioCodecUnsupported {
                 codec: codec_name(contents),
@@ -187,7 +191,10 @@ impl Video {
 
           audio_track = Some(Track {
             codec,
-            info: TrackInfo::Audio,
+            info: TrackInfo::Audio {
+              channels: mp4a.channelcount.into(),
+              sample_rate: mp4a.samplerate.value().into(),
+            },
             size,
           });
         }
@@ -324,6 +331,19 @@ impl Video {
             }
           };
 
+          let audio = track
+            .audio()
+            .context(video_error::AudioSettingsMissing { track: index })?;
+
+          let sample_rate =
+            audio
+              .sampling_frequency()
+              .into_u64()
+              .context(video_error::SampleRateInvalid {
+                sample_rate: audio.sampling_frequency(),
+                track: index,
+              })?;
+
           let (_frames, size, _first) = frames
             .get(&track.track_number().into())
             .cloned()
@@ -331,7 +351,10 @@ impl Video {
 
           audio_track = Some(Track {
             codec,
-            info: TrackInfo::Audio,
+            info: TrackInfo::Audio {
+              channels: audio.channels().get(),
+              sample_rate,
+            },
             size,
           });
         }
@@ -423,7 +446,7 @@ impl Video {
         orientation,
         ..
       } => Some(orientation.dimensions(dimensions)),
-      TrackInfo::Audio => None,
+      TrackInfo::Audio { .. } => None,
     })
   }
 
@@ -593,13 +616,16 @@ mod tests {
           },
           Track {
             codec: Codec::Mp3,
-            info: TrackInfo::Audio,
+            info: TrackInfo::Audio {
+              channels: 2,
+              sample_rate: 44100,
+            },
             size: 0,
           },
         ],
         ty: VideoType::Mp4,
       },
-      "a400030167666f6f2e6d70340282a30001018201a4000801a200010102020003a200f401000200a30002010002000300",
+      "a400030167666f6f2e6d70340282a30001018201a4000801a200010102020003a200f401000200a30002018200a200020119ac4402000300",
     );
   }
 
@@ -620,7 +646,10 @@ mod tests {
       },
       Track {
         codec: Codec::Aac,
-        info: TrackInfo::Audio,
+        info: TrackInfo::Audio {
+          channels: 2,
+          sample_rate: 44100,
+        },
         size: 0,
       },
     ];
@@ -655,7 +684,10 @@ mod tests {
       },
       Track {
         codec: Codec::Opus,
-        info: TrackInfo::Audio,
+        info: TrackInfo::Audio {
+          channels: 2,
+          sample_rate: 44100,
+        },
         size: 0,
       },
     ];
@@ -766,7 +798,10 @@ mod tests {
           },
           Track {
             codec: Codec::Aac,
-            info: TrackInfo::Audio,
+            info: TrackInfo::Audio {
+              channels: 2,
+              sample_rate: 44100,
+            },
             size: 0,
           },
         ],
@@ -1005,7 +1040,10 @@ mod tests {
     foo.tracks = vec![
       Track {
         codec: Codec::Aac,
-        info: TrackInfo::Audio,
+        info: TrackInfo::Audio {
+          channels: 2,
+          sample_rate: 44100,
+        },
         size: 0,
       },
       Track {
@@ -1094,7 +1132,10 @@ mod tests {
           },
           Track {
             codec: Codec::Aac,
-            info: TrackInfo::Audio,
+            info: TrackInfo::Audio {
+              channels: 2,
+              sample_rate: 44100,
+            },
             size: 0,
           },
         ],
@@ -1127,7 +1168,10 @@ mod tests {
         },
         Track {
           codec: Codec::Mp3,
-          info: TrackInfo::Audio,
+          info: TrackInfo::Audio {
+            channels: 2,
+            sample_rate: 44100,
+          },
           size: 0,
         },
       ],
@@ -1161,14 +1205,17 @@ mod tests {
           },
           Track {
             codec: Codec::Mp3,
-            info: TrackInfo::Audio,
+            info: TrackInfo::Audio {
+              channels: 2,
+              sample_rate: 44100,
+            },
             size: 0,
           },
         ],
         ty: VideoType::Mp4,
       })
       .unwrap(),
-      r#"{"duration":0,"filename":"foo.mp4","tracks":[{"codec":"h264","info":{"type":"video","bit_depth":8,"dimensions":{"height":1,"width":2},"frames":0,"orientation":{"mirrored":false,"rotation":0}},"size":0},{"codec":"mp3","info":{"type":"audio"},"size":0}],"type":"mp4"}"#,
+      r#"{"duration":0,"filename":"foo.mp4","tracks":[{"codec":"h264","info":{"type":"video","bit_depth":8,"dimensions":{"height":1,"width":2},"frames":0,"orientation":{"mirrored":false,"rotation":0}},"size":0},{"codec":"mp3","info":{"type":"audio","channels":2,"sample_rate":44100},"size":0}],"type":"mp4"}"#,
     );
   }
 
@@ -1222,7 +1269,10 @@ mod tests {
           },
           Track {
             codec: Codec::Opus,
-            info: TrackInfo::Audio,
+            info: TrackInfo::Audio {
+              channels: 2,
+              sample_rate: 44100,
+            },
             size: 0,
           },
         ],
@@ -1254,7 +1304,10 @@ mod tests {
           },
           Track {
             codec: Codec::Vorbis,
-            info: TrackInfo::Audio,
+            info: TrackInfo::Audio {
+              channels: 2,
+              sample_rate: 44100,
+            },
             size: 0,
           },
         ],
@@ -1347,7 +1400,10 @@ mod tests {
         },
         Track {
           codec: Codec::Opus,
-          info: TrackInfo::Audio,
+          info: TrackInfo::Audio {
+            channels: 2,
+            sample_rate: 44100,
+          },
           size: 2,
         },
       ],
@@ -1434,6 +1490,16 @@ mod tests {
     error(
       WebmBuilder::new().track(1, "V_VP9", &[]),
       "track 0 has missing video settings",
+    );
+    error(
+      WebmBuilder::new().video_track(2, 1).track(2, "A_OPUS", &[]),
+      "track 1 has missing audio settings",
+    );
+    error(
+      WebmBuilder::new()
+        .video_track(2, 1)
+        .track(2, "A_OPUS", &WebmBuilder::audio_settings(2, 0.5)),
+      "track 1 has invalid sample rate 0.5",
     );
     error(
       WebmBuilder::new().video_track(2, 1).doc_type("matroska"),

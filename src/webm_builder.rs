@@ -7,9 +7,21 @@ pub(crate) struct WebmBuilder {
 }
 
 impl WebmBuilder {
+  pub(crate) fn audio_settings(channels: u64, sampling_frequency: f64) -> Vec<u8> {
+    Self::element(
+      &[0xE1],
+      &[
+        Self::unsigned(&[0x9F], channels),
+        Self::float(&[0xB5], sampling_frequency),
+      ]
+      .concat(),
+    )
+  }
+
   #[must_use]
   pub(crate) fn audio_track(self, codec_id: &str) -> Self {
-    self.track(2, codec_id, &[])
+    let settings = Self::audio_settings(2, 44100.0);
+    self.track(2, codec_id, &settings)
   }
 
   pub(crate) fn build(self) -> Vec<u8> {

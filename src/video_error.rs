@@ -5,6 +5,8 @@ use super::*;
 pub enum VideoError {
   #[snafu(display("track {track} has unsupported audio codec `{codec}`"))]
   AudioCodecUnsupported { codec: String, track: usize },
+  #[snafu(display("track {track} has missing audio settings"))]
+  AudioSettingsMissing { track: usize },
   #[snafu(display("multiple audio tracks"))]
   AudioTrackMultiple,
   #[snafu(display("failed to decode MP4"))]
@@ -23,6 +25,8 @@ pub enum VideoError {
   DurationOverflow,
   #[snafu(display("track {track} has unsupported transformation matrix"))]
   MatrixUnsupported { track: usize },
+  #[snafu(display("track {track} has invalid sample rate {sample_rate}"))]
+  SampleRateInvalid { sample_rate: f64, track: usize },
   #[snafu(display("invalid SPS"))]
   SpsInvalid,
   #[snafu(display("missing SPS"))]

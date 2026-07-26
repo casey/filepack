@@ -417,7 +417,10 @@ mod tests {
             },
             Track {
               codec: Codec::Aac,
-              info: TrackInfo::Audio,
+              info: TrackInfo::Audio {
+                channels: 2,
+                sample_rate: 44100,
+              },
               size: 0,
             },
           ],

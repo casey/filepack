@@ -5,7 +5,12 @@ use super::*;
 #[serde(rename_all = "snake_case", tag = "type")]
 pub(crate) enum TrackInfo {
   #[n(0)]
-  Audio,
+  Audio {
+    #[n(0)]
+    channels: u64,
+    #[n(1)]
+    sample_rate: u64,
+  },
   #[n(1)]
   Video {
     #[n(0)]
@@ -25,7 +30,13 @@ mod tests {
 
   #[test]
   fn encoding() {
-    assert_cbor(TrackInfo::Audio, "00");
+    assert_cbor(
+      TrackInfo::Audio {
+        channels: 2,
+        sample_rate: 44100,
+      },
+      "8200a200020119ac44",
+    );
 
     assert_cbor(
       TrackInfo::Video {

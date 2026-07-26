@@ -51,12 +51,14 @@ use {
     directory_tree_entry::DirectoryTreeEntry,
     display_duration::DisplayDuration,
     display_path::DisplayPath,
+    display_sample_rate::DisplaySampleRate,
     display_secret::DisplaySecret,
     entries::Entries,
     envelope::Envelope,
     exif_decoder::ExifDecoder,
     exif_error::ExifError,
     file::File,
+    float_ext::FloatExt,
     format::Format,
     functions::{
       client, current_dir, decode_path, default, format_size, is_lowercase_hex, now, parse_number,
@@ -288,6 +290,7 @@ mod directory_tree;
 mod directory_tree_entry;
 mod display_duration;
 mod display_path;
+mod display_sample_rate;
 mod display_secret;
 mod encode;
 mod encoder;
@@ -300,6 +303,7 @@ mod exif_error;
 mod file;
 mod filesystem;
 mod fingerprint;
+mod float_ext;
 mod format;
 mod functions;
 mod hash;
