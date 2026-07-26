@@ -17,7 +17,7 @@ impl Track {
         "type".into(),
         Info::Value(
           match self.info {
-            TrackInfo::Audio => "audio",
+            TrackInfo::Audio { .. } => "audio",
             TrackInfo::Video { .. } => "video",
           }
           .into(),
@@ -25,6 +25,18 @@ impl Track {
       ),
       ("codec".into(), Info::Value(self.codec.to_string())),
     ];
+
+    if let TrackInfo::Audio {
+      channels,
+      sample_rate,
+    } = self.info
+    {
+      entries.push(("channels".into(), Info::Value(channels.to_string())));
+      entries.push((
+        "sample rate".into(),
+        Info::Value(DisplaySampleRate(sample_rate).to_string()),
+      ));
+    }
 
     if let TrackInfo::Video {
       bit_depth,
@@ -81,7 +93,10 @@ mod tests {
     case(
       Track {
         codec: Codec::Aac,
-        info: TrackInfo::Audio,
+        info: TrackInfo::Audio {
+          channels: 2,
+          sample_rate: 44100,
+        },
         size: 0,
       },
       "AAC",
@@ -127,10 +142,13 @@ mod tests {
     assert_cbor(
       Track {
         codec: Codec::Aac,
-        info: TrackInfo::Audio,
+        info: TrackInfo::Audio {
+          channels: 2,
+          sample_rate: 44100,
+        },
         size: 0,
       },
-      "a3000001000200",
+      "a30000018200a200020119ac440200",
     );
 
     assert_cbor(
@@ -156,11 +174,14 @@ mod tests {
     assert_eq!(
       serde_json::to_string(&Track {
         codec: Codec::Aac,
-        info: TrackInfo::Audio,
+        info: TrackInfo::Audio {
+          channels: 2,
+          sample_rate: 44100,
+        },
         size: 0,
       })
       .unwrap(),
-      r#"{"codec":"aac","info":{"type":"audio"},"size":0}"#,
+      r#"{"codec":"aac","info":{"type":"audio","channels":2,"sample_rate":44100},"size":0}"#,
     );
 
     assert_eq!(

@@ -51,6 +51,7 @@ use {
     directory_tree_entry::DirectoryTreeEntry,
     display_duration::DisplayDuration,
     display_path::DisplayPath,
+    display_sample_rate::DisplaySampleRate,
     display_secret::DisplaySecret,
     entries::Entries,
     envelope::Envelope,
@@ -288,6 +289,7 @@ mod directory_tree;
 mod directory_tree_entry;
 mod display_duration;
 mod display_path;
+mod display_sample_rate;
 mod display_secret;
 mod encode;
 mod encoder;

@@ -195,7 +195,9 @@ media:
           {
             "codec": "aac",
             "info": {
-              "type": "audio"
+              "type": "audio",
+              "channels": 2,
+              "sample_rate": 44100
             },
             "size": 30
           }

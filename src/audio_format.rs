@@ -16,15 +16,7 @@ impl Display for AudioFormat {
 
     write!(f, " · {}-bit", self.sample_bits)?;
 
-    let khz = self.sample_rate / 1000;
-    let frac = format!("{:03}", self.sample_rate % 1000);
-    let frac = frac.trim_end_matches('0');
-
-    if frac.is_empty() {
-      write!(f, " {khz} kHz")?;
-    } else {
-      write!(f, " {khz}.{frac} kHz")?;
-    }
+    write!(f, " {}", DisplaySampleRate(self.sample_rate))?;
 
     match self.channels {
       1 => write!(f, " mono")?,

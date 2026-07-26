@@ -1329,7 +1329,10 @@ fn package_item_video() {
           },
           Track {
             codec: Codec::Aac,
-            info: TrackInfo::Audio,
+            info: TrackInfo::Audio {
+              channels: 2,
+              sample_rate: 44100,
+            },
             size: 0,
           },
         ],
@@ -1590,7 +1593,10 @@ fn package_page_renders_video_media() {
           },
           Track {
             codec: Codec::Aac,
-            info: TrackInfo::Audio,
+            info: TrackInfo::Audio {
+              channels: 2,
+              sample_rate: 44100,
+            },
             size: 0,
           },
         ],
