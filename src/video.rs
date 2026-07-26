@@ -483,6 +483,12 @@ impl Video {
     self.ty.resource_type()
   }
 
+  pub(crate) fn sum_durations(videos: &[Video]) -> Duration {
+    videos.iter().fold(Duration::ZERO, |sum, video| {
+      sum.saturating_add(Duration::from_millis(video.duration))
+    })
+  }
+
   fn vp9_color_info(data: &[u8]) -> Option<ColorInfo> {
     let mut reader = BitReader::new(data);
 
@@ -1171,6 +1177,26 @@ mod tests {
       .unwrap(),
       r#"{"duration":0,"filename":"foo.mp4","tracks":[{"codec":"h264","info":{"type":"video","bit_depth":8,"chroma_subsampling":"4:2:0","dimensions":{"height":1,"width":2},"frames":0,"orientation":{"mirrored":false,"rotation":0}},"size":0},{"codec":"mp3","info":{"type":"audio","channels":2,"sample_rate":44100},"size":0}],"type":"mp4"}"#,
     );
+  }
+
+  #[test]
+  fn sum_durations() {
+    #[track_caller]
+    fn case(durations: &[u64], expected: Duration) {
+      let videos = durations
+        .iter()
+        .map(|duration| {
+          let mut video = "foo.mp4".parse::<Video>().unwrap();
+          video.duration = *duration;
+          video
+        })
+        .collect::<Vec<Video>>();
+
+      assert_eq!(Video::sum_durations(&videos), expected);
+    }
+
+    case(&[], Duration::ZERO);
+    case(&[1500, 600], Duration::from_millis(2100));
   }
 
   #[test]

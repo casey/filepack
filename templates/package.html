@@ -73,6 +73,8 @@
 %%       Media::Video { videos } => {
   <dt>videos</dt>
   <dd>{{ videos.len() }}</dd>
+  <dt>duration</dt>
+  <dd>{{ DisplayDuration(Video::sum_durations(videos)) }}</dd>
 %%         if !videos.is_empty() {
   <dt>format</dt>
 %%           for format in Video::formats(videos) {
