@@ -128,11 +128,7 @@ impl Display for Track {
     write!(f, "{}", self.codec)?;
 
     if let TrackInfo::Video { dimensions, .. } = self.info {
-      if let Some(shorthand) = dimensions.shorthand() {
-        write!(f, " {shorthand}")?;
-      } else {
-        write!(f, " {dimensions}")?;
-      }
+      write!(f, " {dimensions}")?;
     }
 
     Ok(())
@@ -178,24 +174,6 @@ mod tests {
         size: 0,
       },
       "H.264 2×1",
-    );
-
-    case(
-      Track {
-        codec: Codec::H264,
-        info: TrackInfo::Video {
-          bit_depth: Some(8),
-          chroma_subsampling: Some(ChromaSubsampling::Yuv420),
-          dimensions: Dimensions {
-            height: 1080,
-            width: 1920,
-          },
-          frames: 0,
-          orientation: Orientation::new(),
-        },
-        size: 0,
-      },
-      "H.264 1080p",
     );
   }
 

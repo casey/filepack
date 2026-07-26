@@ -102,10 +102,6 @@ impl Image {
     Ok(())
   }
 
-  pub(crate) fn resolutions(images: &[Image]) -> Option<Resolutions> {
-    Resolutions::new(images.iter().map(Image::oriented_dimensions), false)
-  }
-
   pub(crate) fn resource_type(&self) -> ResourceType {
     self.ty.resource_type()
   }

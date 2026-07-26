@@ -100,8 +100,7 @@ mod tests {
             <dt>duration</dt>
             <dd>3:46</dd>
             <dt>format</dt>
-            <dd>FLAC · 16-bit 44.1 kHz stereo · lossless</dd>
-            <dd>FLAC · 24-bit 96 kHz stereo · lossless</dd>
+            <dd>FLAC</dd>
           </dl>
           <ol>
             <li>
@@ -204,7 +203,7 @@ mod tests {
             <dt>duration</dt>
             <dd>0:03</dd>
             <dt>format</dt>
-            <dd>FLAC · 16-bit 44.1 kHz stereo · lossless</dd>
+            <dd>FLAC</dd>
           </dl>
           <h2>disc 1</h2>
           <ol>
@@ -285,7 +284,7 @@ mod tests {
             <dt>duration</dt>
             <dd>5124095576030431:00:15</dd>
             <dt>format</dt>
-            <dd>FLAC · 16-bit 0.001 kHz stereo · lossless</dd>
+            <dd>FLAC</dd>
           </dl>
           <ol>
             <li>
@@ -367,8 +366,6 @@ mod tests {
             <dt>format</dt>
             <dd>PNG</dd>
             <dd>JPEG</dd>
-            <dt>resolution</dt>
-            <dd>0×0–2×1</dd>
           </dl>
           <ul class=thumbnails>
             <li>
@@ -458,9 +455,7 @@ mod tests {
             <dt>videos</dt>
             <dd>1</dd>
             <dt>format</dt>
-            <dd>MP4 · H.264 · AAC</dd>
-            <dt>resolution</dt>
-            <dd>2×1</dd>
+            <dd>MP4</dd>
           </dl>
           <ol>
             <li>

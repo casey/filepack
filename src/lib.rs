@@ -27,7 +27,6 @@ use {
     array_decoder::ArrayDecoder,
     audio::Audio,
     audio_error::AudioError,
-    audio_format::AudioFormat,
     audio_info::AudioInfo,
     audio_type::AudioType,
     authenticated::Authenticated,
@@ -101,7 +100,6 @@ use {
     public_key_error::PublicKeyError,
     reqwest_response_ext::ReqwestResponseExt,
     reqwest_result_ext::ReqwestResultExt,
-    resolutions::Resolutions,
     resource::Resource,
     resource_type::ResourceType,
     rotation::Rotation,
@@ -127,7 +125,6 @@ use {
     version::Version,
     video::Video,
     video_error::VideoError,
-    video_format::VideoFormat,
     video_info::VideoInfo,
     video_type::VideoType,
     view::View,
@@ -265,7 +262,6 @@ mod array_decoder;
 mod array_encoder;
 mod audio;
 mod audio_error;
-mod audio_format;
 mod audio_info;
 mod audio_type;
 mod authenticated;
@@ -361,7 +357,6 @@ mod re;
 mod relative_path;
 mod reqwest_response_ext;
 mod reqwest_result_ext;
-mod resolutions;
 mod resource;
 mod resource_type;
 mod rotation;
@@ -392,7 +387,6 @@ mod validate;
 mod version;
 mod video;
 mod video_error;
-mod video_format;
 mod video_info;
 mod video_type;
 mod view;
