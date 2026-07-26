@@ -55,7 +55,7 @@ pub(crate) enum Subcommand {
   Contains(contains::Contains),
   #[command(about = "Create manifest")]
   Create(create::Create),
-  #[command(about = "Download package or file from server")]
+  #[command(about = "Download package or file from a filepack server")]
   Download(download::Download),
   #[command(about = "List manifest files")]
   Files(files::Files),
@@ -79,7 +79,7 @@ pub(crate) enum Subcommand {
   Manifest(manifest::Manifest),
   #[command(about = "Print metadata")]
   Metadata(metadata::Metadata),
-  #[command(about = "Start server")]
+  #[command(about = "Start a filepack server")]
   Serve(serve::Serve),
   #[command(about = "Sign manifest")]
   Sign(sign::Sign),
@@ -87,7 +87,7 @@ pub(crate) enum Subcommand {
   Signatures(signatures::Signatures),
   #[command(about = "Print manifest total file size")]
   Size(size::Size),
-  #[command(about = "Upload package or file to server")]
+  #[command(about = "Upload package or file to a filepack server")]
   Upload(upload::Upload),
   #[command(about = "Verify manifest")]
   Verify(verify::Verify),
