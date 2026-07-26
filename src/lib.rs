@@ -236,7 +236,10 @@ pub use self::{
 use {
   std::assert_matches,
   tempfile::TempDir,
-  test::{assert_cbor, assert_cbor_eq, assert_encoding, exif, flac, tempdir},
+  test::{
+    assert_cbor, assert_cbor_eq, assert_encoding, exif, flac, jpeg_with_exif, png_with_exif,
+    tempdir,
+  },
   unindent::unindent,
   webm_builder::WebmBuilder,
 };
