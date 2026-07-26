@@ -11,7 +11,7 @@ pub(crate) struct Track {
 }
 
 impl Track {
-  pub(crate) fn info(&self) -> Info {
+  pub(crate) fn info(&self, video: &Video) -> Info {
     let mut entries = vec![
       (
         "type".into(),
@@ -46,6 +46,19 @@ impl Track {
         entries.push(("dimensions".into(), Info::Value(dimensions.to_string())));
         entries.push(("orientation".into(), Info::Value(orientation.to_string())));
         entries.push(("frames".into(), Info::Value(frames.to_string())));
+
+        if video.duration > 0 {
+          entries.push((
+            "frame rate".into(),
+            Info::Value(
+              DisplayFrameRate {
+                duration: video.duration,
+                frames,
+              }
+              .to_string(),
+            ),
+          ));
+        }
 
         if let Some(bit_depth) = bit_depth {
           entries.push(("bit depth".into(), Info::Value(format!("{bit_depth}-bit"))));
@@ -133,6 +146,56 @@ mod tests {
         size: 0,
       },
       "H.264 1080p",
+    );
+  }
+
+  #[test]
+  fn info() {
+    let track = Track {
+      codec: Codec::H264,
+      info: TrackInfo::Video {
+        bit_depth: Some(8),
+        dimensions: Dimensions {
+          height: 1,
+          width: 2,
+        },
+        frames: 240,
+        orientation: Orientation::new(),
+      },
+      size: 0,
+    };
+
+    let mut video = "foo.mp4".parse::<Video>().unwrap();
+
+    video.duration = 10_000;
+
+    assert_eq!(
+      track.info(&video),
+      Info::Map(vec![
+        ("type".into(), Info::Value("video".into())),
+        ("codec".into(), Info::Value("H.264".into())),
+        ("dimensions".into(), Info::Value("2×1".into())),
+        ("orientation".into(), Info::Value("0°".into())),
+        ("frames".into(), Info::Value("240".into())),
+        ("frame rate".into(), Info::Value("24 fps".into())),
+        ("bit depth".into(), Info::Value("8-bit".into())),
+        ("size".into(), Info::Value("0 B".into())),
+      ]),
+    );
+
+    video.duration = 0;
+
+    assert_eq!(
+      track.info(&video),
+      Info::Map(vec![
+        ("type".into(), Info::Value("video".into())),
+        ("codec".into(), Info::Value("H.264".into())),
+        ("dimensions".into(), Info::Value("2×1".into())),
+        ("orientation".into(), Info::Value("0°".into())),
+        ("frames".into(), Info::Value("240".into())),
+        ("bit depth".into(), Info::Value("8-bit".into())),
+        ("size".into(), Info::Value("0 B".into())),
+      ]),
     );
   }
 
