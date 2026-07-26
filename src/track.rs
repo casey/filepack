@@ -26,31 +26,30 @@ impl Track {
       ("codec".into(), Info::Value(self.codec.to_string())),
     ];
 
-    if let TrackInfo::Audio {
-      channels,
-      sample_rate,
-    } = self.info
-    {
-      entries.push(("channels".into(), Info::Value(channels.to_string())));
-      entries.push((
-        "sample rate".into(),
-        Info::Value(DisplaySampleRate(sample_rate).to_string()),
-      ));
-    }
+    match self.info {
+      TrackInfo::Audio {
+        channels,
+        sample_rate,
+      } => {
+        entries.push(("channels".into(), Info::Value(channels.to_string())));
+        entries.push((
+          "sample rate".into(),
+          Info::Value(DisplaySampleRate(sample_rate).to_string()),
+        ));
+      }
+      TrackInfo::Video {
+        bit_depth,
+        dimensions,
+        frames,
+        orientation,
+      } => {
+        entries.push(("dimensions".into(), Info::Value(dimensions.to_string())));
+        entries.push(("orientation".into(), Info::Value(orientation.to_string())));
+        entries.push(("frames".into(), Info::Value(frames.to_string())));
 
-    if let TrackInfo::Video {
-      bit_depth,
-      dimensions,
-      frames,
-      orientation,
-    } = self.info
-    {
-      entries.push(("dimensions".into(), Info::Value(dimensions.to_string())));
-      entries.push(("orientation".into(), Info::Value(orientation.to_string())));
-      entries.push(("frames".into(), Info::Value(frames.to_string())));
-
-      if let Some(bit_depth) = bit_depth {
-        entries.push(("bit depth".into(), Info::Value(format!("{bit_depth}-bit"))));
+        if let Some(bit_depth) = bit_depth {
+          entries.push(("bit depth".into(), Info::Value(format!("{bit_depth}-bit"))));
+        }
       }
     }
 
