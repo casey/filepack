@@ -104,32 +104,38 @@ pub(crate) fn flac(comments: &[&str], samples: u32) -> Vec<u8> {
   bytes
 }
 
-#[test]
-fn hash_is_valid() {
-  HASH.parse::<Hash>().unwrap();
+pub(crate) fn jpeg_with_exif(width: u32, height: u32, exif: &[u8]) -> Vec<u8> {
+  let mut buffer = io::Cursor::new(Vec::new());
+  ::image::DynamicImage::new_rgb8(width, height)
+    .write_to(&mut buffer, ::image::ImageFormat::Jpeg)
+    .unwrap();
+  let buffer = buffer.into_inner();
+
+  let mut app1 = b"Exif\0\0".to_vec();
+  app1.extend_from_slice(exif);
+
+  let mut spliced = buffer[..2].to_vec();
+  spliced.extend_from_slice(&[0xFF, 0xE1]);
+  spliced.extend_from_slice(&u16::try_from(app1.len() + 2).unwrap().to_be_bytes());
+  spliced.extend_from_slice(&app1);
+  spliced.extend_from_slice(&buffer[2..]);
+  spliced
 }
 
-#[test]
-fn private_key_is_valid() {
-  assert_eq!(
-    test::PRIVATE_KEY
-      .parse::<PrivateKey>()
-      .unwrap()
-      .display_secret()
-      .to_string(),
-    test::PRIVATE_KEY,
-  );
-}
+pub(crate) fn png_with_exif(width: u32, height: u32, exif: &[u8]) -> Vec<u8> {
+  let mut buffer = Vec::new();
 
-#[test]
-fn signature_matches() {
-  let private_key = PRIVATE_KEY.parse::<PrivateKey>().unwrap();
-  let statement = Statement {
-    fingerprint: FINGERPRINT.parse().unwrap(),
-    timestamp: None,
-  };
-  let signature = private_key.sign(&statement);
-  assert_eq!(signature.to_string(), SIGNATURE);
+  let mut encoder = png::Encoder::new(&mut buffer, width, height);
+  encoder.set_color(png::ColorType::Rgb);
+
+  let mut writer = encoder.write_header().unwrap();
+  writer.write_chunk(png::chunk::eXIf, exif).unwrap();
+  writer
+    .write_image_data(&vec![0; usize::try_from(width * height * 3).unwrap()])
+    .unwrap();
+  writer.finish().unwrap();
+
+  buffer
 }
 
 pub(crate) fn tempdir() -> (TempDir, Utf8PathBuf) {
@@ -141,4 +147,37 @@ pub(crate) fn tempdir() -> (TempDir, Utf8PathBuf) {
   let path = Utf8Path::from_path(tempdir.path()).unwrap().into();
 
   (tempdir, path)
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn hash_is_valid() {
+    HASH.parse::<Hash>().unwrap();
+  }
+
+  #[test]
+  fn private_key_is_valid() {
+    assert_eq!(
+      test::PRIVATE_KEY
+        .parse::<PrivateKey>()
+        .unwrap()
+        .display_secret()
+        .to_string(),
+      test::PRIVATE_KEY,
+    );
+  }
+
+  #[test]
+  fn signature_matches() {
+    let private_key = PRIVATE_KEY.parse::<PrivateKey>().unwrap();
+    let statement = Statement {
+      fingerprint: FINGERPRINT.parse().unwrap(),
+      timestamp: None,
+    };
+    let signature = private_key.sign(&statement);
+    assert_eq!(signature.to_string(), SIGNATURE);
+  }
 }

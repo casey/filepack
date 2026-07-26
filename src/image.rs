@@ -163,14 +163,6 @@ impl Item for Image {
 mod tests {
   use super::*;
 
-  fn bytes(width: u32, height: u32, image_format: ::image::ImageFormat) -> Vec<u8> {
-    let mut buffer = io::Cursor::new(Vec::new());
-    ::image::DynamicImage::new_rgb8(width, height)
-      .write_to(&mut buffer, image_format)
-      .unwrap();
-    buffer.into_inner()
-  }
-
   #[test]
   fn encoding() {
     assert_cbor(
@@ -268,20 +260,6 @@ mod tests {
     case("foo/bar.png", ComponentError::Separator { character: '/' });
   }
 
-  fn jpeg_with_exif(width: u32, height: u32, exif: &[u8]) -> Vec<u8> {
-    let jpeg = bytes(width, height, ::image::ImageFormat::Jpeg);
-
-    let mut app1 = b"Exif\0\0".to_vec();
-    app1.extend_from_slice(exif);
-
-    let mut spliced = jpeg[..2].to_vec();
-    spliced.extend_from_slice(&[0xFF, 0xE1]);
-    spliced.extend_from_slice(&u16::try_from(app1.len() + 2).unwrap().to_be_bytes());
-    spliced.extend_from_slice(&app1);
-    spliced.extend_from_slice(&jpeg[2..]);
-    spliced
-  }
-
   #[test]
   fn oriented_dimensions() {
     let mut image = "foo.png".parse::<Image>().unwrap();
@@ -310,22 +288,6 @@ mod tests {
     );
   }
 
-  fn png_with_exif(width: u32, height: u32, exif: &[u8]) -> Vec<u8> {
-    let mut buffer = Vec::new();
-
-    let mut encoder = png::Encoder::new(&mut buffer, width, height);
-    encoder.set_color(png::ColorType::Rgb);
-
-    let mut writer = encoder.write_header().unwrap();
-    writer.write_chunk(png::chunk::eXIf, exif).unwrap();
-    writer
-      .write_image_data(&vec![0; usize::try_from(width * height * 3).unwrap()])
-      .unwrap();
-    writer.finish().unwrap();
-
-    buffer
-  }
-
   #[test]
   fn populate() {
     #[track_caller]
@@ -340,7 +302,7 @@ mod tests {
     }
 
     assert_eq!(
-      case("foo.png", &bytes(2, 1, ::image::ImageFormat::Png))
+      case("foo.png", &png_with_exif(2, 1, &exif(5)))
         .unwrap()
         .dimensions,
       Dimensions {
@@ -350,7 +312,7 @@ mod tests {
     );
 
     assert_eq!(
-      case("foo.jpg", &bytes(1, 2, ::image::ImageFormat::Jpeg))
+      case("foo.jpg", &jpeg_with_exif(1, 2, &exif(5)))
         .unwrap()
         .dimensions,
       Dimensions {
