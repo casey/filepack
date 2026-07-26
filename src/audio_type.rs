@@ -1,9 +1,10 @@
 use super::*;
 
-#[derive(Clone, Copy, Debug, Decode, Encode, PartialEq, Serialize)]
+#[derive(Clone, Copy, Debug, Decode, Display, Encode, PartialEq, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub(crate) enum AudioType {
   #[n(0)]
+  #[strum(serialize = "FLAC")]
   Flac,
 }
 
@@ -27,6 +28,11 @@ impl AudioType {
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn display() {
+    assert_eq!(AudioType::Flac.to_string(), "FLAC");
+  }
 
   #[test]
   fn encoding() {
