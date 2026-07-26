@@ -155,22 +155,12 @@ impl Audio {
     Ok((reader, audio_info))
   }
 
-  pub(crate) fn format(&self) -> AudioFormat {
-    AudioFormat {
-      channels: self.channels,
-      sample_bits: self.sample_bits,
-      sample_rate: self.sample_rate,
-      ty: self.ty,
-    }
-  }
-
-  pub(crate) fn formats(tracks: &[Audio]) -> Vec<AudioFormat> {
+  pub(crate) fn formats(tracks: &[Audio]) -> Vec<AudioType> {
     let mut formats = Vec::new();
 
     for audio in tracks {
-      let format = audio.format();
-      if !formats.contains(&format) {
-        formats.push(format);
+      if !formats.contains(&audio.ty) {
+        formats.push(audio.ty);
       }
     }
 
@@ -530,37 +520,11 @@ mod tests {
   }
 
   #[test]
-  fn format() {
-    let mut audio = "foo.flac".parse::<Audio>().unwrap();
-    audio.channels = 2;
-    audio.sample_bits = 16;
-    audio.sample_rate = 44100;
-
-    assert_eq!(
-      audio.format(),
-      AudioFormat {
-        channels: 2,
-        sample_bits: 16,
-        sample_rate: 44100,
-        ty: AudioType::Flac,
-      },
-    );
-  }
-
-  #[test]
   fn formats() {
-    let mut foo = "foo.flac".parse::<Audio>().unwrap();
-    foo.channels = 2;
-    foo.sample_bits = 16;
-    foo.sample_rate = 44100;
+    let foo = "foo.flac".parse::<Audio>().unwrap();
+    let bar = "bar.flac".parse::<Audio>().unwrap();
 
-    let mut bar = foo.clone();
-    bar.sample_bits = 24;
-
-    assert_eq!(
-      Audio::formats(&[foo.clone(), bar.clone(), foo.clone()]),
-      [foo.format(), bar.format()],
-    );
+    assert_eq!(Audio::formats(&[foo, bar]), [AudioType::Flac]);
   }
 
   #[test]

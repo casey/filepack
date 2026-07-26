@@ -18,21 +18,12 @@ impl Video {
     self.filename.as_path()
   }
 
-  fn format(&self) -> VideoFormat {
-    VideoFormat {
-      codecs: self.tracks.iter().map(|track| track.codec).collect(),
-      ty: self.ty,
-    }
-  }
-
-  pub(crate) fn formats(videos: &[Video]) -> Vec<VideoFormat> {
+  pub(crate) fn formats(videos: &[Video]) -> Vec<VideoType> {
     let mut formats = Vec::new();
 
     for video in videos {
-      let format = video.format();
-
-      if !formats.contains(&format) {
-        formats.push(format);
+      if !formats.contains(&video.ty) {
+        formats.push(video.ty);
       }
     }
 
@@ -462,17 +453,6 @@ impl Video {
     Ok(VideoInfo { duration, tracks })
   }
 
-  pub(crate) fn oriented_dimensions(&self) -> Option<Dimensions> {
-    self.tracks.iter().find_map(|track| match track.info {
-      TrackInfo::Video {
-        dimensions,
-        orientation,
-        ..
-      } => Some(orientation.dimensions(dimensions)),
-      TrackInfo::Audio { .. } => None,
-    })
-  }
-
   pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result {
     let path = root.join(self.as_path());
 
@@ -497,10 +477,6 @@ impl Video {
     self.tracks = info.tracks;
 
     Ok(())
-  }
-
-  pub(crate) fn resolutions(videos: &[Video]) -> Option<Resolutions> {
-    Resolutions::new(videos.iter().filter_map(Video::oriented_dimensions), true)
   }
 
   pub(crate) fn resource_type(&self) -> ResourceType {
@@ -696,80 +672,13 @@ mod tests {
 
   #[test]
   fn formats() {
-    let mut foo = "foo.mp4".parse::<Video>().unwrap();
-
-    foo.tracks = vec![
-      Track {
-        codec: Codec::H264,
-        info: TrackInfo::Video {
-          bit_depth: Some(8),
-          chroma_subsampling: Some(ChromaSubsampling::Yuv420),
-          dimensions: Dimensions::default(),
-          frames: 0,
-          orientation: Orientation::new(),
-        },
-        size: 0,
-      },
-      Track {
-        codec: Codec::Aac,
-        info: TrackInfo::Audio {
-          channels: 2,
-          sample_rate: 44100,
-        },
-        size: 0,
-      },
-    ];
-
-    let mut bar = foo.clone();
-    bar.tracks[1].codec = Codec::Mp3;
-
-    let mut baz = foo.clone();
-
-    baz.tracks[0].info = TrackInfo::Video {
-      bit_depth: Some(8),
-      chroma_subsampling: Some(ChromaSubsampling::Yuv420),
-      dimensions: Dimensions {
-        height: 1,
-        width: 2,
-      },
-      frames: 0,
-      orientation: Orientation::new(),
-    };
-
-    let mut bob = "bob.webm".parse::<Video>().unwrap();
-
-    bob.tracks = vec![
-      Track {
-        codec: Codec::Vp9,
-        info: TrackInfo::Video {
-          bit_depth: Some(8),
-          chroma_subsampling: Some(ChromaSubsampling::Yuv420),
-          dimensions: Dimensions::default(),
-          frames: 0,
-          orientation: Orientation::new(),
-        },
-        size: 0,
-      },
-      Track {
-        codec: Codec::Opus,
-        info: TrackInfo::Audio {
-          channels: 2,
-          sample_rate: 44100,
-        },
-        size: 0,
-      },
-    ];
+    let foo = "foo.mp4".parse::<Video>().unwrap();
+    let bar = "bar.mp4".parse::<Video>().unwrap();
+    let baz = "baz.webm".parse::<Video>().unwrap();
 
     assert_eq!(
-      Video::formats(&[foo, bar, baz, bob])
-        .iter()
-        .map(ToString::to_string)
-        .collect::<Vec<String>>(),
-      [
-        "MP4 · H.264 · AAC",
-        "MP4 · H.264 · MP3",
-        "WebM · VP9 · Opus"
-      ],
+      Video::formats(&[foo, bar, baz]),
+      [VideoType::Mp4, VideoType::Webm],
     );
   }
 
@@ -1130,68 +1039,6 @@ mod tests {
         .unwrap_err()
         .to_string(),
       "failed to decode MP4",
-    );
-  }
-
-  #[test]
-  fn oriented_dimensions() {
-    let mut foo = "foo.mp4".parse::<Video>().unwrap();
-
-    assert_eq!(foo.oriented_dimensions(), None);
-
-    foo.tracks = vec![
-      Track {
-        codec: Codec::Aac,
-        info: TrackInfo::Audio {
-          channels: 2,
-          sample_rate: 44100,
-        },
-        size: 0,
-      },
-      Track {
-        codec: Codec::H264,
-        info: TrackInfo::Video {
-          bit_depth: Some(8),
-          chroma_subsampling: Some(ChromaSubsampling::Yuv420),
-          dimensions: Dimensions {
-            height: 1,
-            width: 2,
-          },
-          frames: 0,
-          orientation: Orientation::new(),
-        },
-        size: 0,
-      },
-    ];
-
-    assert_eq!(
-      foo.oriented_dimensions(),
-      Some(Dimensions {
-        height: 1,
-        width: 2,
-      }),
-    );
-
-    foo.tracks[1].info = TrackInfo::Video {
-      bit_depth: Some(8),
-      chroma_subsampling: Some(ChromaSubsampling::Yuv420),
-      dimensions: Dimensions {
-        height: 1,
-        width: 2,
-      },
-      frames: 0,
-      orientation: Orientation {
-        mirrored: false,
-        rotation: Rotation::R90,
-      },
-    };
-
-    assert_eq!(
-      foo.oriented_dimensions(),
-      Some(Dimensions {
-        height: 2,
-        width: 1,
-      }),
     );
   }
 

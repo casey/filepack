@@ -8,23 +8,6 @@ pub struct Dimensions {
   pub(crate) width: u64,
 }
 
-impl Dimensions {
-  pub(crate) fn area(self) -> u128 {
-    u128::from(self.width) * u128::from(self.height)
-  }
-
-  pub(crate) fn shorthand(self) -> Option<&'static str> {
-    match (self.width, self.height) {
-      (1280, 720) => Some("720p"),
-      (1920, 1080) => Some("1080p"),
-      (2560, 1440) => Some("1440p"),
-      (3840, 2160) => Some("4K"),
-      (7680, 4320) => Some("8K"),
-      _ => None,
-    }
-  }
-}
-
 impl Display for Dimensions {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     write!(f, "{}×{}", self.width, self.height)
@@ -36,21 +19,6 @@ mod tests {
   use super::*;
 
   #[test]
-  fn area() {
-    #[track_caller]
-    fn case(width: u64, height: u64, expected: u128) {
-      assert_eq!(Dimensions { height, width }.area(), expected);
-    }
-
-    case(2, 3, 6);
-    case(
-      u64::MAX,
-      u64::MAX,
-      340_282_366_920_938_463_426_481_119_284_349_108_225,
-    );
-  }
-
-  #[test]
   fn encoding() {
     assert_cbor(
       Dimensions {
@@ -59,21 +27,5 @@ mod tests {
       },
       "a200010102",
     );
-  }
-
-  #[test]
-  fn shorthand() {
-    #[track_caller]
-    fn case(width: u64, height: u64, expected: Option<&'static str>) {
-      assert_eq!(Dimensions { height, width }.shorthand(), expected);
-    }
-
-    case(1280, 720, Some("720p"));
-    case(1920, 1080, Some("1080p"));
-    case(2560, 1440, Some("1440p"));
-    case(3840, 2160, Some("4K"));
-    case(7680, 4320, Some("8K"));
-    case(720, 1280, None);
-    case(2, 1, None);
   }
 }
