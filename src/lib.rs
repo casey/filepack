@@ -54,6 +54,7 @@ use {
     display_bits_per_pixel::DisplayBitsPerPixel,
     display_duration::DisplayDuration,
     display_frame_rate::DisplayFrameRate,
+    display_millis::DisplayMillis,
     display_path::DisplayPath,
     display_sample_rate::DisplaySampleRate,
     display_secret::DisplaySecret,
@@ -295,6 +296,7 @@ mod display_bitrate;
 mod display_bits_per_pixel;
 mod display_duration;
 mod display_frame_rate;
+mod display_millis;
 mod display_path;
 mod display_sample_rate;
 mod display_secret;
