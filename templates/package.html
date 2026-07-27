@@ -38,11 +38,38 @@
 %%   }
 %%   if let Some(homepage) = &metadata.homepage {
   <dt>homepage</dt>
-  <dd><a href={{ homepage }}>{{ homepage }}</a></dd>
+  <dd><a href='{{ homepage }}'>{{ homepage }}</a></dd>
 %%   }
 %%   if let Some(language) = &metadata.language {
   <dt>language</dt>
   <dd>{{ language }}</dd>
+%%   }
+%%   if let Some(package) = &metadata.package {
+  <dt>package</dt>
+  <dd>
+    <dl>
+%%     if let Some(title) = &package.title {
+      <dt>title</dt>
+      <dd>{{ title }}</dd>
+%%     }
+%%     if let Some(creator) = &package.creator {
+      <dt>creator</dt>
+      <dd>{{ creator }}</dd>
+%%     }
+%%     if let Some(time) = &package.time {
+      <dt>time</dt>
+      <dd>{{ time }}</dd>
+%%     }
+%%     if let Some(description) = &package.description {
+      <dt>description</dt>
+      <dd>{{ description }}</dd>
+%%     }
+%%     if let Some(homepage) = &package.homepage {
+      <dt>homepage</dt>
+      <dd><a href='{{ homepage }}'>{{ homepage }}</a></dd>
+%%     }
+    </dl>
+  </dd>
 %%   }
 %%   if let Some(media) = &metadata.media {
   <dt>media</dt>

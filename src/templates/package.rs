@@ -392,6 +392,65 @@ mod tests {
   }
 
   #[test]
+  fn package() {
+    let metadata = Metadata {
+      package: Some(Package {
+        creator: Some("foo".parse().unwrap()),
+        description: Some("bar".parse().unwrap()),
+        homepage: Some("http://example.com".parse().unwrap()),
+        readme: Some("README.md".parse().unwrap()),
+        time: Some("2024-01-01".parse().unwrap()),
+        title: Some("baz".parse().unwrap()),
+      }),
+      ..default()
+    };
+
+    assert_eq!(
+      PackageHtml {
+        fingerprint: test::FINGERPRINT.parse().unwrap(),
+        metadata: Some(metadata),
+        totals: Totals {
+          directories: 0,
+          directory_size: 0,
+          file_size: 3,
+          files: 1,
+        },
+      }
+      .to_string(),
+      unindent(&format!(
+        "
+          <h1 class=code>{fingerprint}</h1>
+          <dl>
+            <dt>fingerprint</dt>
+            <dd class=code>{fingerprint}</dd>
+            <dt>size</dt>
+            <dd>3 B</dd>
+            <dt>files</dt>
+            <dd><a href=/directory/{hash}>1 files</a></dd>
+            <dt>package</dt>
+            <dd>
+              <dl>
+                <dt>title</dt>
+                <dd>baz</dd>
+                <dt>creator</dt>
+                <dd>foo</dd>
+                <dt>time</dt>
+                <dd>2024-01-01</dd>
+                <dt>description</dt>
+                <dd>bar</dd>
+                <dt>homepage</dt>
+                <dd><a href='http://example.com'>http://example.com</a></dd>
+              </dl>
+            </dd>
+          </dl>
+        ",
+        fingerprint = test::FINGERPRINT,
+        hash = test::HASH,
+      )),
+    );
+  }
+
+  #[test]
   fn video() {
     let metadata = Metadata {
       media: Some(Media::Video {
