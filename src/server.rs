@@ -185,9 +185,28 @@ impl Server {
       .totals()
       .unwrap();
 
+    let package_readme = if let Some(metadata) = &metadata
+      && let Some(package) = &metadata.package
+      && let Some(readme) = &package.readme
+    {
+      Some(self.verified_package_file(fingerprint, &readme.as_path())?)
+    } else {
+      None
+    };
+
+    let readme = if let Some(metadata) = &metadata
+      && let Some(readme) = &metadata.readme
+    {
+      Some(self.verified_package_file(fingerprint, &readme.as_path())?)
+    } else {
+      None
+    };
+
     Ok(PackageHtml {
       fingerprint,
       metadata,
+      package_readme,
+      readme,
       totals,
     })
   }

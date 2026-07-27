@@ -509,6 +509,8 @@ fn upload_package_serves_package_html() {
     PackageHtml {
       fingerprint,
       metadata: Some(metadata),
+      package_readme: None,
+      readme: None,
       totals,
     },
   );
