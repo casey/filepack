@@ -656,11 +656,13 @@ fn get_package_with_metadata() {
   let metadata_cbor = metadata.encode_to_vec();
   server.write_file(&metadata_cbor);
 
-  let (cbor, hash) = Directory::new()
+  let mut directory = Directory::new();
+  directory
     .insert_file("PACKAGE.md", package_readme)
     .insert_file("README.md", readme)
-    .insert_file(Metadata::CBOR_FILENAME, &metadata_cbor)
-    .cbor();
+    .insert_file(Metadata::CBOR_FILENAME, &metadata_cbor);
+
+  let (cbor, hash) = directory.cbor();
   let fingerprint = Fingerprint(hash);
   server.write_file(&cbor);
 
@@ -670,6 +672,7 @@ fn get_package_with_metadata() {
   server
     .get(format!("/package/{fingerprint}"))
     .assert_page(PackageHtml {
+      directory,
       fingerprint,
       metadata: Some(metadata),
       package_readme: Some(Hash::bytes(package_readme)),
@@ -698,6 +701,7 @@ fn get_package_without_metadata() {
   server
     .get(format!("/package/{fingerprint}"))
     .assert_page(PackageHtml {
+      directory: Directory::new(),
       fingerprint,
       metadata: None,
       package_readme: None,
@@ -1555,6 +1559,7 @@ fn package_page_renders_audio_media() {
   server
     .get(format!("/package/{fingerprint}"))
     .assert_page(PackageHtml {
+      directory: Directory::new(),
       fingerprint,
       metadata: Some(metadata),
       package_readme: None,
@@ -1598,6 +1603,7 @@ fn package_page_renders_image_media() {
   server
     .get(format!("/package/{fingerprint}"))
     .assert_page(PackageHtml {
+      directory: Directory::new(),
       fingerprint,
       metadata: Some(metadata),
       package_readme: None,
@@ -1661,6 +1667,7 @@ fn package_page_renders_video_media() {
   server
     .get(format!("/package/{fingerprint}"))
     .assert_page(PackageHtml {
+      directory: Directory::new(),
       fingerprint,
       metadata: Some(metadata),
       package_readme: None,

@@ -2,6 +2,7 @@ use super::*;
 
 #[derive(Boilerplate)]
 pub struct PackageHtml {
+  pub directory: Directory,
   pub fingerprint: Fingerprint,
   pub metadata: Option<Metadata>,
   pub package_readme: Option<Hash>,
@@ -75,6 +76,7 @@ mod tests {
 
     assert_eq!(
       PackageHtml {
+        directory: Directory::new(),
         fingerprint: test::FINGERPRINT.parse().unwrap(),
         metadata: Some(metadata),
         package_readme: None,
@@ -180,6 +182,7 @@ mod tests {
 
     assert_eq!(
       PackageHtml {
+        directory: Directory::new(),
         fingerprint: test::FINGERPRINT.parse().unwrap(),
         metadata: Some(metadata),
         package_readme: None,
@@ -263,6 +266,7 @@ mod tests {
 
     assert_eq!(
       PackageHtml {
+        directory: Directory::new(),
         fingerprint: test::FINGERPRINT.parse().unwrap(),
         metadata: Some(metadata),
         package_readme: None,
@@ -347,6 +351,7 @@ mod tests {
 
     assert_eq!(
       PackageHtml {
+        directory: Directory::new(),
         fingerprint: test::FINGERPRINT.parse().unwrap(),
         metadata: Some(metadata),
         package_readme: None,
@@ -416,8 +421,12 @@ mod tests {
       ..default()
     };
 
+    let mut directory = Directory::new();
+    directory.insert_file("foo", b"bar");
+
     assert_eq!(
       PackageHtml {
+        directory,
         fingerprint: test::FINGERPRINT.parse().unwrap(),
         metadata: Some(metadata),
         package_readme: Some(test::HASH.parse().unwrap()),
@@ -460,9 +469,24 @@ mod tests {
               </dl>
             </dd>
           </dl>
+          <table>
+            <thead>
+              <tr>
+                <th>open</th>
+                <th>download</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><a>foo</a></td>
+                <td class=right><a href=/file/{file_hash} download=\"foo\">3 B</a></td>
+              </tr>
+            </tbody>
+          </table>
         ",
         fingerprint = test::FINGERPRINT,
         hash = test::HASH,
+        file_hash = Hash::bytes(b"bar"),
       )),
     );
   }
@@ -506,6 +530,7 @@ mod tests {
 
     assert_eq!(
       PackageHtml {
+        directory: Directory::new(),
         fingerprint: test::FINGERPRINT.parse().unwrap(),
         metadata: Some(metadata),
         package_readme: None,

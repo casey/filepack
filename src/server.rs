@@ -180,10 +180,9 @@ impl Server {
 
     let directories = tx.open_table(DIRECTORIES)?;
 
-    let totals = self
-      .directory_ext(&directories, fingerprint.into())?
-      .totals()
-      .unwrap();
+    let directory = self.directory_ext(&directories, fingerprint.into())?;
+
+    let totals = directory.totals().unwrap();
 
     let package_readme = if let Some(metadata) = &metadata
       && let Some(package) = &metadata.package
@@ -203,6 +202,7 @@ impl Server {
     };
 
     Ok(PackageHtml {
+      directory,
       fingerprint,
       metadata,
       package_readme,

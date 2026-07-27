@@ -504,9 +504,15 @@ fn upload_package_serves_package_html() {
     files: 2,
   };
 
+  let mut directory = Directory::new();
+  directory
+    .insert_file("metadata.filemeta", &metadata.encode_to_vec())
+    .insert_file("metadata.yaml", b"title: Foo\ndescription: Bar");
+
   server.assert_page(
     &format!("/package/{fingerprint}"),
     PackageHtml {
+      directory,
       fingerprint,
       metadata: Some(metadata),
       package_readme: None,
