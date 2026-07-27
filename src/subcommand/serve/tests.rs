@@ -519,6 +519,21 @@ fn file_with_name_inline() {
 }
 
 #[test]
+fn file_with_name_markdown() {
+  let server = TestServer::new();
+
+  server.write_file(b"foo");
+
+  server
+    .get(format!("/file/{}/bar.md", Hash::bytes(b"foo")))
+    .assert_header(header::CONTENT_SECURITY_POLICY, "sandbox")
+    .assert_header(header::CONTENT_TYPE, "text/plain; charset=utf-8")
+    .assert_header_absent(header::CONTENT_DISPOSITION)
+    .assert_body("foo")
+    .send();
+}
+
+#[test]
 fn file_with_name_redirect() {
   let hash = Hash::bytes(b"foo");
 
@@ -613,6 +628,12 @@ fn get_package_not_found() {
 fn get_package_with_metadata() {
   let server = TestServer::new();
 
+  let readme = b"foo";
+  server.write_file(readme);
+
+  let package_readme = b"bar";
+  server.write_file(package_readme);
+
   let metadata = Metadata {
     artwork: None,
     creator: None,
@@ -620,8 +641,15 @@ fn get_package_with_metadata() {
     homepage: None,
     language: None,
     media: None,
-    package: None,
-    readme: None,
+    package: Some(Package {
+      creator: None,
+      description: None,
+      homepage: None,
+      readme: Some("PACKAGE.md".parse().unwrap()),
+      time: None,
+      title: None,
+    }),
+    readme: Some("README.md".parse().unwrap()),
     time: None,
     title: Some("foo".parse().unwrap()),
   };
@@ -629,6 +657,8 @@ fn get_package_with_metadata() {
   server.write_file(&metadata_cbor);
 
   let (cbor, hash) = Directory::new()
+    .insert_file("PACKAGE.md", package_readme)
+    .insert_file("README.md", readme)
     .insert_file(Metadata::CBOR_FILENAME, &metadata_cbor)
     .cbor();
   let fingerprint = Fingerprint(hash);
@@ -642,11 +672,13 @@ fn get_package_with_metadata() {
     .assert_page(PackageHtml {
       fingerprint,
       metadata: Some(metadata),
+      package_readme: Some(Hash::bytes(package_readme)),
+      readme: Some(Hash::bytes(readme)),
       totals: Totals {
         directories: 0,
         directory_size: 0,
-        file_size: metadata_cbor.len().into_u64(),
-        files: 1,
+        file_size: metadata_cbor.len().into_u64() + 6,
+        files: 3,
       },
     })
     .send();
@@ -668,6 +700,8 @@ fn get_package_without_metadata() {
     .assert_page(PackageHtml {
       fingerprint,
       metadata: None,
+      package_readme: None,
+      readme: None,
       totals: Totals::default(),
     })
     .send();
@@ -1523,6 +1557,8 @@ fn package_page_renders_audio_media() {
     .assert_page(PackageHtml {
       fingerprint,
       metadata: Some(metadata),
+      package_readme: None,
+      readme: None,
       totals,
     })
     .send();
@@ -1564,6 +1600,8 @@ fn package_page_renders_image_media() {
     .assert_page(PackageHtml {
       fingerprint,
       metadata: Some(metadata),
+      package_readme: None,
+      readme: None,
       totals,
     })
     .send();
@@ -1625,6 +1663,8 @@ fn package_page_renders_video_media() {
     .assert_page(PackageHtml {
       fingerprint,
       metadata: Some(metadata),
+      package_readme: None,
+      readme: None,
       totals,
     })
     .send();

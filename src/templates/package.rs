@@ -4,6 +4,8 @@ use super::*;
 pub struct PackageHtml {
   pub fingerprint: Fingerprint,
   pub metadata: Option<Metadata>,
+  pub package_readme: Option<Hash>,
+  pub readme: Option<Hash>,
   pub totals: Totals,
 }
 
@@ -75,6 +77,8 @@ mod tests {
       PackageHtml {
         fingerprint: test::FINGERPRINT.parse().unwrap(),
         metadata: Some(metadata),
+        package_readme: None,
+        readme: None,
         totals: Totals {
           directories: 0,
           directory_size: 0,
@@ -178,6 +182,8 @@ mod tests {
       PackageHtml {
         fingerprint: test::FINGERPRINT.parse().unwrap(),
         metadata: Some(metadata),
+        package_readme: None,
+        readme: None,
         totals: Totals {
           directories: 0,
           directory_size: 0,
@@ -259,6 +265,8 @@ mod tests {
       PackageHtml {
         fingerprint: test::FINGERPRINT.parse().unwrap(),
         metadata: Some(metadata),
+        package_readme: None,
+        readme: None,
         totals: Totals {
           directories: 0,
           directory_size: 0,
@@ -341,6 +349,8 @@ mod tests {
       PackageHtml {
         fingerprint: test::FINGERPRINT.parse().unwrap(),
         metadata: Some(metadata),
+        package_readme: None,
+        readme: None,
         totals: Totals {
           directories: 0,
           directory_size: 0,
@@ -398,10 +408,11 @@ mod tests {
         creator: Some("foo".parse().unwrap()),
         description: Some("bar".parse().unwrap()),
         homepage: Some("http://example.com".parse().unwrap()),
-        readme: Some("README.md".parse().unwrap()),
+        readme: Some("PACKAGE.md".parse().unwrap()),
         time: Some("2024-01-01".parse().unwrap()),
         title: Some("baz".parse().unwrap()),
       }),
+      readme: Some("README.md".parse().unwrap()),
       ..default()
     };
 
@@ -409,6 +420,8 @@ mod tests {
       PackageHtml {
         fingerprint: test::FINGERPRINT.parse().unwrap(),
         metadata: Some(metadata),
+        package_readme: Some(test::HASH.parse().unwrap()),
+        readme: Some(test::HASH.parse().unwrap()),
         totals: Totals {
           directories: 0,
           directory_size: 0,
@@ -427,6 +440,8 @@ mod tests {
             <dd>3 B</dd>
             <dt>files</dt>
             <dd><a href=/directory/{hash}>1 files</a></dd>
+            <dt>readme</dt>
+            <dd><a href=/file/{hash}/README.md>view</a></dd>
             <dt>package</dt>
             <dd>
               <dl>
@@ -438,6 +453,8 @@ mod tests {
                 <dd>2024-01-01</dd>
                 <dt>description</dt>
                 <dd>bar</dd>
+                <dt>readme</dt>
+                <dd><a href=/file/{hash}/PACKAGE.md>view</a></dd>
                 <dt>homepage</dt>
                 <dd><a href='http://example.com'>http://example.com</a></dd>
               </dl>
@@ -491,6 +508,8 @@ mod tests {
       PackageHtml {
         fingerprint: test::FINGERPRINT.parse().unwrap(),
         metadata: Some(metadata),
+        package_readme: None,
+        readme: None,
         totals: Totals {
           directories: 0,
           directory_size: 0,

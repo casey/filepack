@@ -36,7 +36,7 @@ impl IntoResponse for Resource {
 
     let mut builder = Response::builder()
       .header(header::ACCEPT_RANGES, "bytes")
-      .header(header::CONTENT_TYPE, self.ty.content_type().essence_str())
+      .header(header::CONTENT_TYPE, self.ty.content_type().as_ref())
       .header(header::ETAG, format!("\"{}\"", self.hash));
 
     if self.ty.sandbox() {

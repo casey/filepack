@@ -36,6 +36,10 @@
   <dt>description</dt>
   <dd>{{ description }}</dd>
 %%   }
+%%   if let (Some(filename), Some(hash)) = (&metadata.readme, self.readme) {
+  <dt>readme</dt>
+  <dd><a href=/file/{{ hash }}/{{ filename }}>view</a></dd>
+%%   }
 %%   if let Some(homepage) = &metadata.homepage {
   <dt>homepage</dt>
   <dd><a href='{{ homepage }}'>{{ homepage }}</a></dd>
@@ -63,6 +67,10 @@
 %%     if let Some(description) = &package.description {
       <dt>description</dt>
       <dd>{{ description }}</dd>
+%%     }
+%%     if let (Some(filename), Some(hash)) = (&package.readme, self.package_readme) {
+      <dt>readme</dt>
+      <dd><a href=/file/{{ hash }}/{{ filename }}>view</a></dd>
 %%     }
 %%     if let Some(homepage) = &package.homepage {
       <dt>homepage</dt>
