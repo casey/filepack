@@ -30,6 +30,8 @@ allowing programmatic search, preview, playback, and conversion.
 packages, and includes an HTTP server for package upload, download, and
 display.
 
+A demo server is running at [filepack.com](https://filepack.com).
+
 Filepack is currently experimental. The `filepack` interface and package format
 may change at any time.
 
