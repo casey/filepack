@@ -354,13 +354,13 @@ Top-level fields
 
 Fields of `package` describing the package itself, as opposed its content:
 
+- `colophon: component.md`: The filename of the package colophon.
+
 - `creator: component`: The person or group who created the package.
 
 - `description: markdown`: A description of the package.
 
 - `homepage: url`: Primary URL for the package.
-
-- `readme: component.md`: The filename of the package readme.
 
 - `time: time`: The time the package was created.
 
@@ -420,7 +420,7 @@ package:
     First edition on loan from NYPL Main Branch research stacks. Captured via
     Microtek MS-300A flatbed scanner.
   homepage: https://ghost-busters.net/~egon
-  readme: tobins.md
+  colophon: COLOPHON.md
 ```
 
 The `homepage` URLs are of course anachronistic, as the World Wide Web was

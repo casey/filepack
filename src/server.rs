@@ -185,11 +185,11 @@ impl Server {
       .totals()
       .unwrap();
 
-    let package_readme = if let Some(metadata) = &metadata
+    let package_colophon = if let Some(metadata) = &metadata
       && let Some(package) = &metadata.package
-      && let Some(readme) = &package.readme
+      && let Some(colophon) = &package.colophon
     {
-      Some(self.verified_package_file(fingerprint, &readme.as_path())?)
+      Some(self.verified_package_file(fingerprint, &colophon.as_path())?)
     } else {
       None
     };
@@ -205,7 +205,7 @@ impl Server {
     Ok(PackageHtml {
       fingerprint,
       metadata,
-      package_readme,
+      package_colophon,
       readme,
       totals,
     })

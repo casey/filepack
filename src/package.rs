@@ -5,13 +5,13 @@ use super::*;
 #[serde(deny_unknown_fields)]
 pub(crate) struct Package {
   #[n(0)]
-  pub(crate) creator: Option<ComponentBuf>,
+  pub(crate) colophon: Option<ComponentBuf>,
   #[n(1)]
-  pub(crate) description: Option<Text>,
+  pub(crate) creator: Option<ComponentBuf>,
   #[n(2)]
-  pub(crate) homepage: Option<CheckedUrl>,
+  pub(crate) description: Option<Text>,
   #[n(3)]
-  pub(crate) readme: Option<ComponentBuf>,
+  pub(crate) homepage: Option<CheckedUrl>,
   #[n(4)]
   pub(crate) time: Option<Time>,
   #[n(5)]
@@ -25,10 +25,10 @@ mod tests {
   #[test]
   fn encoding() {
     assert_encoding(Package {
+      colophon: Some("COLOPHON.md".parse().unwrap()),
       creator: Some("foo".parse().unwrap()),
       description: Some("bar".parse().unwrap()),
       homepage: Some("http://example.com".parse().unwrap()),
-      readme: Some("README.md".parse().unwrap()),
       time: Some("2024-01-01".parse().unwrap()),
       title: Some("foo-A0".parse().unwrap()),
     });

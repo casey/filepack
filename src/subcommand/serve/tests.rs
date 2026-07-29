@@ -631,8 +631,8 @@ fn get_package_with_metadata() {
   let readme = b"foo";
   server.write_file(readme);
 
-  let package_readme = b"bar";
-  server.write_file(package_readme);
+  let package_colophon = b"bar";
+  server.write_file(package_colophon);
 
   let metadata = Metadata {
     artwork: None,
@@ -642,10 +642,10 @@ fn get_package_with_metadata() {
     language: None,
     media: None,
     package: Some(Package {
+      colophon: Some("COLOPHON.md".parse().unwrap()),
       creator: None,
       description: None,
       homepage: None,
-      readme: Some("PACKAGE.md".parse().unwrap()),
       time: None,
       title: None,
     }),
@@ -657,7 +657,7 @@ fn get_package_with_metadata() {
   server.write_file(&metadata_cbor);
 
   let (cbor, hash) = Directory::new()
-    .insert_file("PACKAGE.md", package_readme)
+    .insert_file("COLOPHON.md", package_colophon)
     .insert_file("README.md", readme)
     .insert_file(Metadata::CBOR_FILENAME, &metadata_cbor)
     .cbor();
@@ -672,7 +672,7 @@ fn get_package_with_metadata() {
     .assert_page(PackageHtml {
       fingerprint,
       metadata: Some(metadata),
-      package_readme: Some(Hash::bytes(package_readme)),
+      package_colophon: Some(Hash::bytes(package_colophon)),
       readme: Some(Hash::bytes(readme)),
       totals: Totals {
         directories: 0,
@@ -700,7 +700,7 @@ fn get_package_without_metadata() {
     .assert_page(PackageHtml {
       fingerprint,
       metadata: None,
-      package_readme: None,
+      package_colophon: None,
       readme: None,
       totals: Totals::default(),
     })
@@ -1557,7 +1557,7 @@ fn package_page_renders_audio_media() {
     .assert_page(PackageHtml {
       fingerprint,
       metadata: Some(metadata),
-      package_readme: None,
+      package_colophon: None,
       readme: None,
       totals,
     })
@@ -1600,7 +1600,7 @@ fn package_page_renders_image_media() {
     .assert_page(PackageHtml {
       fingerprint,
       metadata: Some(metadata),
-      package_readme: None,
+      package_colophon: None,
       readme: None,
       totals,
     })
@@ -1663,7 +1663,7 @@ fn package_page_renders_video_media() {
     .assert_page(PackageHtml {
       fingerprint,
       metadata: Some(metadata),
-      package_readme: None,
+      package_colophon: None,
       readme: None,
       totals,
     })

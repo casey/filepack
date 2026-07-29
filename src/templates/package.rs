@@ -4,7 +4,7 @@ use super::*;
 pub struct PackageHtml {
   pub fingerprint: Fingerprint,
   pub metadata: Option<Metadata>,
-  pub package_readme: Option<Hash>,
+  pub package_colophon: Option<Hash>,
   pub readme: Option<Hash>,
   pub totals: Totals,
 }
@@ -77,7 +77,7 @@ mod tests {
       PackageHtml {
         fingerprint: test::FINGERPRINT.parse().unwrap(),
         metadata: Some(metadata),
-        package_readme: None,
+        package_colophon: None,
         readme: None,
         totals: Totals {
           directories: 0,
@@ -182,7 +182,7 @@ mod tests {
       PackageHtml {
         fingerprint: test::FINGERPRINT.parse().unwrap(),
         metadata: Some(metadata),
-        package_readme: None,
+        package_colophon: None,
         readme: None,
         totals: Totals {
           directories: 0,
@@ -265,7 +265,7 @@ mod tests {
       PackageHtml {
         fingerprint: test::FINGERPRINT.parse().unwrap(),
         metadata: Some(metadata),
-        package_readme: None,
+        package_colophon: None,
         readme: None,
         totals: Totals {
           directories: 0,
@@ -349,7 +349,7 @@ mod tests {
       PackageHtml {
         fingerprint: test::FINGERPRINT.parse().unwrap(),
         metadata: Some(metadata),
-        package_readme: None,
+        package_colophon: None,
         readme: None,
         totals: Totals {
           directories: 0,
@@ -405,10 +405,10 @@ mod tests {
   fn package() {
     let metadata = Metadata {
       package: Some(Package {
+        colophon: Some("COLOPHON.md".parse().unwrap()),
         creator: Some("foo".parse().unwrap()),
         description: Some("bar".parse().unwrap()),
         homepage: Some("http://example.com".parse().unwrap()),
-        readme: Some("PACKAGE.md".parse().unwrap()),
         time: Some("2024-01-01".parse().unwrap()),
         title: Some("baz".parse().unwrap()),
       }),
@@ -420,7 +420,7 @@ mod tests {
       PackageHtml {
         fingerprint: test::FINGERPRINT.parse().unwrap(),
         metadata: Some(metadata),
-        package_readme: Some(test::HASH.parse().unwrap()),
+        package_colophon: Some(test::HASH.parse().unwrap()),
         readme: Some(test::HASH.parse().unwrap()),
         totals: Totals {
           directories: 0,
@@ -453,8 +453,8 @@ mod tests {
                 <dd>2024-01-01</dd>
                 <dt>description</dt>
                 <dd>bar</dd>
-                <dt>readme</dt>
-                <dd><a href=/file/{hash}/PACKAGE.md>view</a></dd>
+                <dt>colophon</dt>
+                <dd><a href=/file/{hash}/COLOPHON.md>view</a></dd>
                 <dt>homepage</dt>
                 <dd><a href='http://example.com'>http://example.com</a></dd>
               </dl>
@@ -508,7 +508,7 @@ mod tests {
       PackageHtml {
         fingerprint: test::FINGERPRINT.parse().unwrap(),
         metadata: Some(metadata),
-        package_readme: None,
+        package_colophon: None,
         readme: None,
         totals: Totals {
           directories: 0,
