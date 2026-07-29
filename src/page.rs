@@ -1,8 +1,15 @@
 use super::*;
 
 pub trait Page: Display + Sized {
-  fn page(self) -> PageHtml<Self> {
-    PageHtml { content: self }
+  fn og_image(&self) -> Option<String> {
+    None
+  }
+
+  fn page(self, base: Option<Url>) -> PageHtml<Self> {
+    PageHtml {
+      base,
+      content: self,
+    }
   }
 
   fn stylesheet(&self) -> Option<&'static str> {
@@ -10,10 +17,4 @@ pub trait Page: Display + Sized {
   }
 
   fn title(&self) -> String;
-}
-
-impl<T: Page> From<T> for PageHtml<T> {
-  fn from(content: T) -> PageHtml<T> {
-    content.page()
-  }
 }

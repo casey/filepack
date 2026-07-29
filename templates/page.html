@@ -5,6 +5,11 @@
     <meta name=viewport content='width=device-width,initial-scale=1.0'>
     <title>{{ self.content.title() }}</title>
     <meta name=description content='Filepack package server'>
+%% if let Some(base) = &self.base
+%%   && let Some(og_image) = self.content.og_image()
+%% {
+    <meta property=og:image content={{ base.join(&og_image).unwrap() }}>
+%% }
     <link href=/static/index.css rel=stylesheet>
 %% if let Some(stylesheet) = self.content.stylesheet() {
     <link href={{ stylesheet }} rel=stylesheet>

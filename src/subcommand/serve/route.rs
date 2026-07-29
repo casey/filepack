@@ -10,6 +10,7 @@ pub(crate) async fn artwork(
 
 pub(crate) async fn directory(
   server: ServerExtension,
+  server_config: ServerConfigExtension,
   Path(hash): Path<Hash>,
 ) -> PageResult<DirectoryHtml> {
   block_in_place(|| {
@@ -18,7 +19,7 @@ pub(crate) async fn directory(
         directory: server.directory(hash)?,
         hash,
       }
-      .into(),
+      .page(server_config.url.clone()),
     )
   })
 }
@@ -74,13 +75,16 @@ pub(crate) async fn file_with_name(
   })
 }
 
-pub(crate) async fn files(server: ServerExtension) -> PageResult<FilesHtml> {
+pub(crate) async fn files(
+  server: ServerExtension,
+  server_config: ServerConfigExtension,
+) -> PageResult<FilesHtml> {
   block_in_place(|| {
     Ok(
       FilesHtml {
         files: server.files()?,
       }
-      .into(),
+      .page(server_config.url.clone()),
     )
   })
 }
@@ -152,13 +156,21 @@ pub(crate) async fn missing(
 
 pub(crate) async fn package(
   server: ServerExtension,
+  server_config: ServerConfigExtension,
   fingerprint: Path<Fingerprint>,
 ) -> PageResult<PackageHtml> {
-  block_in_place(|| Ok(server.package_html(*fingerprint)?.into()))
+  block_in_place(|| {
+    Ok(
+      server
+        .package_html(*fingerprint)?
+        .page(server_config.url.clone()),
+    )
+  })
 }
 
 pub(crate) async fn package_item(
   server: ServerExtension,
+  server_config: ServerConfigExtension,
   Path((fingerprint, Ordinal(index))): Path<(Fingerprint, Ordinal)>,
 ) -> ServerResult<Response> {
   block_in_place(|| {
@@ -186,7 +198,7 @@ pub(crate) async fn package_item(
           fingerprint,
           metadata,
         }
-        .page()
+        .page(server_config.url.clone())
         .into_response(),
       ),
       Media::Image { .. } => Ok(
@@ -195,7 +207,7 @@ pub(crate) async fn package_item(
           image: index,
           metadata,
         }
-        .page()
+        .page(server_config.url.clone())
         .into_response(),
       ),
       Media::Video { .. } => Ok(
@@ -203,7 +215,7 @@ pub(crate) async fn package_item(
           fingerprint,
           video: index,
         }
-        .page()
+        .page(server_config.url.clone())
         .into_response(),
       ),
     }
@@ -212,6 +224,7 @@ pub(crate) async fn package_item(
 
 pub(crate) async fn package_media(
   server: ServerExtension,
+  server_config: ServerConfigExtension,
   Path(fingerprint): Path<Fingerprint>,
 ) -> PageResult<MediaHtml> {
   block_in_place(|| {
@@ -227,13 +240,14 @@ pub(crate) async fn package_media(
         fingerprint,
         metadata,
       }
-      .into(),
+      .page(server_config.url.clone()),
     )
   })
 }
 
 pub(crate) async fn packages(
   server: ServerExtension,
+  server_config: ServerConfigExtension,
   Query(query): Query<PackagesQuery>,
 ) -> PageResult<PackagesHtml> {
   block_in_place(|| {
@@ -242,7 +256,7 @@ pub(crate) async fn packages(
         packages: server.packages()?,
         view: query.view.unwrap_or_default(),
       }
-      .into(),
+      .page(server_config.url.clone()),
     )
   })
 }

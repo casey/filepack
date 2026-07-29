@@ -26,7 +26,8 @@ impl Child {
     let actual_headers = response.headers().clone();
     let actual_body = response.text().unwrap();
 
-    let (parts, body) = PageHtml::from(expected)
+    let (parts, body) = expected
+      .page(None)
       .into_response()
       .into_response()
       .into_parts();

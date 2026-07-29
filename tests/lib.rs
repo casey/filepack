@@ -4,7 +4,7 @@ use {
   filepack::{
     Decode, Decoder, Directory, DirectoryExt, Encode, Encoder, Entry, Fingerprint, Hash, Manifest,
     Metadata, Mp4Builder, Page, PrivateKey, PublicKey, Totals,
-    templates::{DirectoryHtml, PackageHtml, PageHtml},
+    templates::{DirectoryHtml, PackageHtml},
   },
   image::{DynamicImage, ImageFormat},
   regex::Regex,

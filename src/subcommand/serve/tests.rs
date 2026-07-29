@@ -98,7 +98,7 @@ impl TestRequestBuilder {
   }
 
   fn assert_page(self, page: impl Page) -> Self {
-    self.assert_response(PageHtml::from(page))
+    self.assert_response(page.page(None))
   }
 
   fn assert_response(mut self, response: impl IntoResponse) -> Self {
@@ -229,12 +229,19 @@ impl TestServer {
     );
   }
 
+  fn builder() -> TestServerBuilder {
+    TestServerBuilder {
+      auth_config: None,
+      url: None,
+    }
+  }
+
   fn get(&self, path: impl Into<String>) -> TestRequestBuilder {
     TestRequestBuilder::new(Method::GET, path, self.router.clone())
   }
 
   fn new() -> Self {
-    Self::with_auth(None)
+    Self::builder().build()
   }
 
   fn post(&self, path: impl Into<String>) -> TestRequestBuilder {
@@ -243,20 +250,6 @@ impl TestServer {
 
   fn put(&self, path: impl Into<String>) -> TestRequestBuilder {
     TestRequestBuilder::new(Method::PUT, path, self.router.clone())
-  }
-
-  fn with_auth(auth_config: Option<Arc<AuthConfig>>) -> Self {
-    let (tempdir, data_dir) = tempdir();
-
-    let server = Arc::new(Server::with_data_dir(&data_dir).unwrap());
-
-    let router = Serve::router(server, auth_config, None);
-
-    Self {
-      data_dir,
-      router,
-      tempdir,
-    }
   }
 
   fn write_file(&self, content: &[u8]) {
@@ -268,6 +261,42 @@ impl TestServer {
       content,
     )
     .unwrap();
+  }
+}
+
+struct TestServerBuilder {
+  auth_config: Option<Arc<AuthConfig>>,
+  url: Option<Url>,
+}
+
+impl TestServerBuilder {
+  fn auth_config(mut self, auth_config: AuthConfig) -> Self {
+    self.auth_config = Some(Arc::new(auth_config));
+    self
+  }
+
+  fn build(self) -> TestServer {
+    let (tempdir, data_dir) = tempdir();
+
+    let server = Arc::new(Server::with_data_dir(&data_dir).unwrap());
+
+    let router = Serve::router(
+      server,
+      self.auth_config,
+      None,
+      Arc::new(ServerConfig { url: self.url }),
+    );
+
+    TestServer {
+      data_dir,
+      router,
+      tempdir,
+    }
+  }
+
+  fn url(mut self, url: Url) -> Self {
+    self.url = Some(url);
+    self
   }
 }
 
@@ -401,15 +430,17 @@ fn artwork_response() {
 
 #[test]
 fn closed_server_forbids_uploads() {
-  TestServer::with_auth(Some(Arc::new(AuthConfig {
-    admin: None,
-    audience: None,
-  })))
-  .put(format!("/file/{}", Hash::bytes(b"bar")))
-  .body("bar")
-  .status(StatusCode::FORBIDDEN)
-  .assert_body("uploads forbidden")
-  .send();
+  TestServer::builder()
+    .auth_config(AuthConfig {
+      admin: None,
+      audience: None,
+    })
+    .build()
+    .put(format!("/file/{}", Hash::bytes(b"bar")))
+    .body("bar")
+    .status(StatusCode::FORBIDDEN)
+    .assert_body("uploads forbidden")
+    .send();
 }
 
 #[test]
@@ -1498,6 +1529,52 @@ fn package_media_without_media() {
 }
 
 #[test]
+fn package_page_og_image() {
+  let url = "https://example.com".parse::<Url>().unwrap();
+
+  let server = TestServer::builder().url(url.clone()).build();
+
+  let artwork = b"foo";
+  server.write_file(artwork);
+
+  let metadata = Metadata {
+    artwork: Some("bar.png".parse().unwrap()),
+    ..Metadata::default()
+  };
+  let metadata_cbor = metadata.encode_to_vec();
+  server.write_file(&metadata_cbor);
+
+  let (cbor, hash) = Directory::new()
+    .insert_file("bar.png", artwork)
+    .insert_file(Metadata::CBOR_FILENAME, &metadata_cbor)
+    .cbor();
+  let fingerprint = Fingerprint(hash);
+  server.write_file(&cbor);
+
+  server.post(format!("/directory/{hash}")).send();
+  server.post(format!("/package/{fingerprint}")).send();
+
+  server
+    .get(format!("/package/{fingerprint}"))
+    .assert_response(
+      PackageHtml {
+        colophon: None,
+        fingerprint,
+        metadata: Some(metadata),
+        readme: None,
+        totals: Totals {
+          directories: 0,
+          directory_size: 0,
+          file_size: metadata_cbor.len().into_u64() + 3,
+          files: 2,
+        },
+      }
+      .page(Some(url)),
+    )
+    .send();
+}
+
+#[test]
 fn package_page_renders_audio_media() {
   let server = TestServer::new();
 
@@ -1869,10 +1946,12 @@ fn restricted_upload_accepts_admin_token() {
   let hash = Hash::bytes(b"bar");
   let token = Token::encode(&admin, "filepack.example").unwrap();
 
-  let server = TestServer::with_auth(Some(Arc::new(AuthConfig {
-    admin: Some(admin.public_key()),
-    audience: Some("filepack.example".into()),
-  })));
+  let server = TestServer::builder()
+    .auth_config(AuthConfig {
+      admin: Some(admin.public_key()),
+      audience: Some("filepack.example".into()),
+    })
+    .build();
 
   server
     .put(format!("/file/{hash}"))
@@ -1886,10 +1965,12 @@ fn restricted_upload_accepts_admin_token() {
 #[test]
 fn restricted_upload_rejects_missing_header() {
   let admin = PrivateKey::generate();
-  let server = TestServer::with_auth(Some(Arc::new(AuthConfig {
-    admin: Some(admin.public_key()),
-    audience: Some("filepack.example".into()),
-  })));
+  let server = TestServer::builder()
+    .auth_config(AuthConfig {
+      admin: Some(admin.public_key()),
+      audience: Some("filepack.example".into()),
+    })
+    .build();
 
   let hash = Hash::bytes(b"bar");
 
@@ -1905,10 +1986,12 @@ fn restricted_upload_rejects_missing_header() {
 fn restricted_upload_rejects_others() {
   let admin = PrivateKey::generate();
   let other = PrivateKey::generate();
-  let server = TestServer::with_auth(Some(Arc::new(AuthConfig {
-    admin: Some(admin.public_key()),
-    audience: Some("filepack.example".into()),
-  })));
+  let server = TestServer::builder()
+    .auth_config(AuthConfig {
+      admin: Some(admin.public_key()),
+      audience: Some("filepack.example".into()),
+    })
+    .build();
 
   let hash = Hash::bytes(b"bar");
   let token = Token::encode(&other, "filepack.example").unwrap();
@@ -1920,6 +2003,34 @@ fn restricted_upload_rejects_others() {
     .status(StatusCode::UNAUTHORIZED)
     .assert_body("invalid authorization token")
     .send();
+}
+
+#[test]
+fn server_config() {
+  #[track_caller]
+  fn case(serve: Serve, url: Option<&str>) {
+    assert_eq!(
+      serve.server_config().url,
+      url.map(|url| url.parse().unwrap()),
+    );
+  }
+
+  case(Serve::default(), None);
+  case(
+    Serve {
+      domain: Some("foo".into()),
+      ..Serve::default()
+    },
+    Some("http://foo/"),
+  );
+  case(
+    Serve {
+      domain: Some("foo".into()),
+      https: true,
+      ..Serve::default()
+    },
+    Some("https://foo/"),
+  );
 }
 
 #[test]
@@ -2108,10 +2219,12 @@ fn verify_directory_missing_subdirectory() {
 #[test]
 fn verify_directory_rejects_missing_auth_header() {
   let admin = PrivateKey::generate();
-  let server = TestServer::with_auth(Some(Arc::new(AuthConfig {
-    admin: Some(admin.public_key()),
-    audience: Some("filepack.example".into()),
-  })));
+  let server = TestServer::builder()
+    .auth_config(AuthConfig {
+      admin: Some(admin.public_key()),
+      audience: Some("filepack.example".into()),
+    })
+    .build();
 
   let hash = Hash::bytes(b"foo");
 
