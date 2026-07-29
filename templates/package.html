@@ -68,8 +68,8 @@
       <dt>description</dt>
       <dd>{{ description }}</dd>
 %%     }
-%%     if let (Some(filename), Some(hash)) = (&package.readme, self.package_readme) {
-      <dt>readme</dt>
+%%     if let (Some(filename), Some(hash)) = (&package.colophon, self.colophon) {
+      <dt>colophon</dt>
       <dd><a href=/file/{{ hash }}/{{ filename }}>view</a></dd>
 %%     }
 %%     if let Some(homepage) = &package.homepage {

@@ -356,6 +356,7 @@ fn create_succeeds_with_valid_metadata() {
     .touch("content")
     .write("cover.png", image(1, 1, ImageFormat::Png))
     .touch("README.md")
+    .touch("COLOPHON.md")
     .write(
       "metadata.yaml",
       "\
@@ -365,13 +366,13 @@ language: en
 artwork: cover.png
 readme: README.md
 package:
-  readme: README.md
+  colophon: COLOPHON.md
 ",
     )
     .arg("create")
     .success()
     .arg("verify")
-    .stderr("successfully verified 5 files totaling 248 bytes\n")
+    .stderr("successfully verified 6 files totaling 254 bytes\n")
     .success();
 }
 

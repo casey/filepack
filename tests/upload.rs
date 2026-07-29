@@ -507,9 +507,9 @@ fn upload_package_serves_package_html() {
   server.assert_page(
     &format!("/package/{fingerprint}"),
     PackageHtml {
+      colophon: None,
       fingerprint,
       metadata: Some(metadata),
-      package_readme: None,
       readme: None,
       totals,
     },

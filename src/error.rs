@@ -112,6 +112,11 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     source: reqwest::Error,
   },
+  #[snafu(display("colophon `{colophon}` must end in `.md`",))]
+  ColophonExtension {
+    backtrace: Option<Backtrace>,
+    colophon: ComponentBuf,
+  },
   #[snafu(display("failed to get current directory"))]
   CurrentDir {
     backtrace: Option<Backtrace>,

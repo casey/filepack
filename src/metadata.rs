@@ -31,6 +31,17 @@ impl Metadata {
   pub(crate) const CBOR_FILENAME: &'static str = "metadata.filemeta";
   pub(crate) const YAML_FILENAME: &'static str = "metadata.yaml";
 
+  fn check_colophon(colophon: &ComponentBuf) -> Result {
+    ensure! {
+      colophon.extension().is_some_and(|extension| extension == "md"),
+      error::ColophonExtension {
+        colophon,
+      },
+    }
+
+    Ok(())
+  }
+
   pub(crate) fn check_extras(
     &self,
     files: &HashSet<RelativePath>,
@@ -98,9 +109,9 @@ impl Metadata {
     }
 
     if let Some(package) = &self.package
-      && let Some(readme) = &package.readme
+      && let Some(colophon) = &package.colophon
     {
-      files.push(readme.as_path());
+      files.push(colophon.as_path());
     }
 
     if let Some(readme) = &self.readme {
@@ -152,9 +163,9 @@ impl Metadata {
     }
 
     if let Some(package) = &self.package
-      && let Some(readme) = &package.readme
+      && let Some(colophon) = &package.colophon
     {
-      Self::check_readme(readme)?;
+      Self::check_colophon(colophon)?;
     }
 
     if let Some(artwork) = &self.artwork {
@@ -181,6 +192,17 @@ mod tests {
     super::*,
     ::image::{DynamicImage, ImageFormat},
   };
+
+  fn colophon_package(colophon: &str) -> Package {
+    Package {
+      colophon: Some(colophon.parse().unwrap()),
+      creator: None,
+      description: None,
+      homepage: None,
+      time: None,
+      title: None,
+    }
+  }
 
   #[test]
   fn deserialize_media_audio() {
@@ -375,10 +397,10 @@ mod tests {
         }],
       }),
       package: Some(Package {
+        colophon: Some("COLOPHON.md".parse().unwrap()),
         creator: Some("baz".parse().unwrap()),
         description: Some("qux".parse().unwrap()),
         homepage: Some("http://example.com/foo".parse().unwrap()),
-        readme: Some("README.md".parse().unwrap()),
         time: Some("2024-01-01".parse().unwrap()),
         title: Some("foo-bar".parse().unwrap()),
       }),
@@ -584,18 +606,18 @@ mod tests {
       assert!(media.is_none());
 
       let Package {
+        colophon,
         creator,
         description,
         homepage,
-        readme,
         time,
         title,
       } = package.unwrap();
 
+      assert!(colophon.is_some());
       assert!(creator.is_some());
       assert!(description.is_some());
       assert!(homepage.is_some());
-      assert!(readme.is_some());
       assert!(time.is_some());
       assert!(title.is_some());
     }
@@ -632,22 +654,11 @@ mod tests {
 
     case(
       Metadata {
-        package: Some(readme_package("README.md")),
+        package: Some(colophon_package("COLOPHON.md")),
         ..default()
       },
-      "README.md",
+      "COLOPHON.md",
     );
-  }
-
-  fn readme_package(readme: &str) -> Package {
-    Package {
-      creator: None,
-      description: None,
-      homepage: None,
-      readme: Some(readme.parse().unwrap()),
-      time: None,
-      title: None,
-    }
   }
 
   #[test]
@@ -660,12 +671,12 @@ mod tests {
 
       let mut metadata = Metadata {
         artwork: Some(artwork.parse().unwrap()),
-        package: Some(readme_package("README.md")),
+        package: Some(colophon_package("COLOPHON.md")),
         readme: Some("README.md".parse().unwrap()),
         ..default()
       };
 
-      let paths = [artwork, "README.md"]
+      let paths = [artwork, "README.md", "COLOPHON.md"]
         .into_iter()
         .map(|path| path.parse::<RelativePath>().unwrap())
         .collect();
@@ -720,13 +731,13 @@ mod tests {
 
     assert_eq!(
       Metadata {
-        package: Some(readme_package("README.txt")),
+        package: Some(colophon_package("COLOPHON.txt")),
         ..default()
       }
       .validate(&root)
       .unwrap_err()
       .to_string(),
-      "readme `README.txt` must end in `.md`",
+      "colophon `COLOPHON.txt` must end in `.md`",
     );
   }
 }
