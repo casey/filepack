@@ -16,7 +16,12 @@ impl StaticAsset {
 
     Ok(Self {
       content: content.data,
-      content_type: content.metadata.mimetype().to_owned(),
+      content_type: match content.metadata.mimetype() {
+        "application/x-sh" => "application/x-sh; charset=utf-8".into(),
+        "text/css" => "text/css; charset=utf-8".into(),
+        "text/html" => "text/html; charset=utf-8".into(),
+        mimetype => mimetype.into(),
+      },
       status: StatusCode::OK,
     })
   }
@@ -49,7 +54,9 @@ mod tests {
       assert_eq!(StaticAsset::get(path).unwrap().content_type, content_type);
     }
 
-    case("index.css", "text/css");
-    case("index.html", "text/html");
+    case("favicon.png", "image/png");
+    case("index.css", "text/css; charset=utf-8");
+    case("index.html", "text/html; charset=utf-8");
+    case("install.sh", "application/x-sh; charset=utf-8");
   }
 }
