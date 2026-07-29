@@ -38,7 +38,7 @@
 %%   }
 %%   if let (Some(filename), Some(hash)) = (&metadata.readme, self.readme) {
   <dt>readme</dt>
-  <dd><a href=/file/{{ hash }}/{{ filename }}>view</a></dd>
+  <dd><a href='/file/{{ hash }}/{{ filename.percent_encode_segment() }}'>view</a></dd>
 %%   }
 %%   if let Some(homepage) = &metadata.homepage {
   <dt>homepage</dt>
@@ -70,7 +70,7 @@
 %%     }
 %%     if let (Some(filename), Some(hash)) = (&package.colophon, self.colophon) {
       <dt>colophon</dt>
-      <dd><a href=/file/{{ hash }}/{{ filename }}>view</a></dd>
+      <dd><a href='/file/{{ hash }}/{{ filename.percent_encode_segment() }}'>view</a></dd>
 %%     }
 %%     if let Some(homepage) = &package.homepage {
       <dt>homepage</dt>
