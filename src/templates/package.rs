@@ -2,9 +2,9 @@ use super::*;
 
 #[derive(Boilerplate)]
 pub struct PackageHtml {
+  pub colophon: Option<Hash>,
   pub fingerprint: Fingerprint,
   pub metadata: Option<Metadata>,
-  pub package_colophon: Option<Hash>,
   pub readme: Option<Hash>,
   pub totals: Totals,
 }
@@ -75,9 +75,9 @@ mod tests {
 
     assert_eq!(
       PackageHtml {
+        colophon: None,
         fingerprint: test::FINGERPRINT.parse().unwrap(),
         metadata: Some(metadata),
-        package_colophon: None,
         readme: None,
         totals: Totals {
           directories: 0,
@@ -180,9 +180,9 @@ mod tests {
 
     assert_eq!(
       PackageHtml {
+        colophon: None,
         fingerprint: test::FINGERPRINT.parse().unwrap(),
         metadata: Some(metadata),
-        package_colophon: None,
         readme: None,
         totals: Totals {
           directories: 0,
@@ -263,9 +263,9 @@ mod tests {
 
     assert_eq!(
       PackageHtml {
+        colophon: None,
         fingerprint: test::FINGERPRINT.parse().unwrap(),
         metadata: Some(metadata),
-        package_colophon: None,
         readme: None,
         totals: Totals {
           directories: 0,
@@ -347,9 +347,9 @@ mod tests {
 
     assert_eq!(
       PackageHtml {
+        colophon: None,
         fingerprint: test::FINGERPRINT.parse().unwrap(),
         metadata: Some(metadata),
-        package_colophon: None,
         readme: None,
         totals: Totals {
           directories: 0,
@@ -418,9 +418,9 @@ mod tests {
 
     assert_eq!(
       PackageHtml {
+        colophon: Some(test::HASH.parse().unwrap()),
         fingerprint: test::FINGERPRINT.parse().unwrap(),
         metadata: Some(metadata),
-        package_colophon: Some(test::HASH.parse().unwrap()),
         readme: Some(test::HASH.parse().unwrap()),
         totals: Totals {
           directories: 0,
@@ -506,9 +506,9 @@ mod tests {
 
     assert_eq!(
       PackageHtml {
+        colophon: None,
         fingerprint: test::FINGERPRINT.parse().unwrap(),
         metadata: Some(metadata),
-        package_colophon: None,
         readme: None,
         totals: Totals {
           directories: 0,

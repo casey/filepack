@@ -631,8 +631,8 @@ fn get_package_with_metadata() {
   let readme = b"foo";
   server.write_file(readme);
 
-  let package_colophon = b"bar";
-  server.write_file(package_colophon);
+  let colophon = b"bar";
+  server.write_file(colophon);
 
   let metadata = Metadata {
     artwork: None,
@@ -657,7 +657,7 @@ fn get_package_with_metadata() {
   server.write_file(&metadata_cbor);
 
   let (cbor, hash) = Directory::new()
-    .insert_file("COLOPHON.md", package_colophon)
+    .insert_file("COLOPHON.md", colophon)
     .insert_file("README.md", readme)
     .insert_file(Metadata::CBOR_FILENAME, &metadata_cbor)
     .cbor();
@@ -670,9 +670,9 @@ fn get_package_with_metadata() {
   server
     .get(format!("/package/{fingerprint}"))
     .assert_page(PackageHtml {
+      colophon: Some(Hash::bytes(colophon)),
       fingerprint,
       metadata: Some(metadata),
-      package_colophon: Some(Hash::bytes(package_colophon)),
       readme: Some(Hash::bytes(readme)),
       totals: Totals {
         directories: 0,
@@ -698,9 +698,9 @@ fn get_package_without_metadata() {
   server
     .get(format!("/package/{fingerprint}"))
     .assert_page(PackageHtml {
+      colophon: None,
       fingerprint,
       metadata: None,
-      package_colophon: None,
       readme: None,
       totals: Totals::default(),
     })
@@ -1555,9 +1555,9 @@ fn package_page_renders_audio_media() {
   server
     .get(format!("/package/{fingerprint}"))
     .assert_page(PackageHtml {
+      colophon: None,
       fingerprint,
       metadata: Some(metadata),
-      package_colophon: None,
       readme: None,
       totals,
     })
@@ -1598,9 +1598,9 @@ fn package_page_renders_image_media() {
   server
     .get(format!("/package/{fingerprint}"))
     .assert_page(PackageHtml {
+      colophon: None,
       fingerprint,
       metadata: Some(metadata),
-      package_colophon: None,
       readme: None,
       totals,
     })
@@ -1661,9 +1661,9 @@ fn package_page_renders_video_media() {
   server
     .get(format!("/package/{fingerprint}"))
     .assert_page(PackageHtml {
+      colophon: None,
       fingerprint,
       metadata: Some(metadata),
-      package_colophon: None,
       readme: None,
       totals,
     })

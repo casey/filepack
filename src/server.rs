@@ -185,7 +185,7 @@ impl Server {
       .totals()
       .unwrap();
 
-    let package_colophon = if let Some(metadata) = &metadata
+    let colophon = if let Some(metadata) = &metadata
       && let Some(package) = &metadata.package
       && let Some(colophon) = &package.colophon
     {
@@ -203,9 +203,9 @@ impl Server {
     };
 
     Ok(PackageHtml {
+      colophon,
       fingerprint,
       metadata,
-      package_colophon,
       readme,
       totals,
     })
