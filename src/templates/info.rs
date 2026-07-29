@@ -15,7 +15,7 @@ mod tests {
         url: "/bar".into(),
       })
       .to_string(),
-      "<a href=/bar>foo</a>\n",
+      "<a href='/bar'>foo</a>\n",
     );
   }
 

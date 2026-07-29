@@ -441,7 +441,7 @@ mod tests {
             <dt>files</dt>
             <dd><a href=/directory/{hash}>1 files</a></dd>
             <dt>readme</dt>
-            <dd><a href=/file/{hash}/README.md>view</a></dd>
+            <dd><a href='/file/{hash}/README.md'>view</a></dd>
             <dt>package</dt>
             <dd>
               <dl>
@@ -454,7 +454,7 @@ mod tests {
                 <dt>description</dt>
                 <dd>bar</dd>
                 <dt>colophon</dt>
-                <dd><a href=/file/{hash}/COLOPHON.md>view</a></dd>
+                <dd><a href='/file/{hash}/COLOPHON.md'>view</a></dd>
                 <dt>homepage</dt>
                 <dd><a href='http://example.com'>http://example.com</a></dd>
               </dl>

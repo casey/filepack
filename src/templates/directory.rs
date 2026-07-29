@@ -59,7 +59,7 @@ mod tests {
                 <td class=right><a href=/file/[[:xdigit:]]{64} download="bar">1\.5 KiB</a></td>
               </tr>
               <tr>
-                <td><a href=/file/[[:xdigit:]]{64}/baz\.png>baz\.png</a></td>
+                <td><a href='/file/[[:xdigit:]]{64}/baz\.png'>baz\.png</a></td>
                 <td class=right><a href=/file/[[:xdigit:]]{64} download="baz\.png">1\.5 KiB</a></td>
               </tr>
               <tr>
@@ -67,7 +67,7 @@ mod tests {
                 <td class=right><a href=/file/[[:xdigit:]]{64} download="foo">2\.4 MiB</a></td>
               </tr>
               <tr>
-                <td><a href=/file/[[:xdigit:]]{64}/qux%20quux\.png>qux quux\.png</a></td>
+                <td><a href='/file/[[:xdigit:]]{64}/qux%20quux\.png'>qux quux\.png</a></td>
                 <td class=right><a href=/file/[[:xdigit:]]{64} download="qux quux\.png">1\.5 KiB</a></td>
               </tr>
             </tbody>
