@@ -67,7 +67,7 @@ use {
     format::Format,
     functions::{
       client, current_dir, decode_path, default, format_size, is_lowercase_hex, now, parse_number,
-      parse_server_url, transfer_tempfile,
+      transfer_tempfile,
     },
     hash_error::HashError,
     hashing_writer::HashingWriter,
