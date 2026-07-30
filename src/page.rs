@@ -1,7 +1,11 @@
 use super::*;
 
 pub trait Page: Display + Sized {
-  fn og_image(&self) -> Option<String> {
+  fn og_description(&self) -> Option<String> {
+    None
+  }
+
+  fn og_image(&self) -> Option<OpenGraphImage> {
     None
   }
 

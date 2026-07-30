@@ -17,9 +17,17 @@ impl PackageHtml {
 }
 
 impl Page for PackageHtml {
-  fn og_image(&self) -> Option<String> {
-    self.metadata.as_ref()?.artwork.as_ref()?;
-    Some(format!("artwork/{}", self.fingerprint))
+  fn og_description(&self) -> Option<String> {
+    Some(self.metadata.as_ref()?.description.as_ref()?.to_string())
+  }
+
+  fn og_image(&self) -> Option<OpenGraphImage> {
+    let artwork = self.metadata.as_ref()?.artwork.as_ref()?;
+    Some(OpenGraphImage {
+      height: artwork.dimensions.height,
+      path: format!("artwork/{}", self.fingerprint),
+      width: artwork.dimensions.width,
+    })
   }
 
   fn stylesheet(&self) -> Option<&'static str> {
@@ -409,6 +417,51 @@ mod tests {
         hash = test::HASH,
       )),
     );
+  }
+
+  #[test]
+  fn og_metadata() {
+    let html = PackageHtml {
+      colophon: None,
+      fingerprint: test::FINGERPRINT.parse().unwrap(),
+      metadata: Some(Metadata {
+        artwork: Some(Image {
+          dimensions: Dimensions {
+            height: 1,
+            width: 2,
+          },
+          filename: "foo.png".parse().unwrap(),
+          orientation: Orientation::new(),
+          ty: ImageType::Png,
+        }),
+        description: Some("bar".parse().unwrap()),
+        ..default()
+      }),
+      readme: None,
+      totals: Totals::default(),
+    };
+
+    assert_eq!(
+      html.og_image(),
+      Some(OpenGraphImage {
+        height: 1,
+        path: format!("artwork/{}", test::FINGERPRINT),
+        width: 2,
+      }),
+    );
+
+    assert_eq!(html.og_description(), Some("bar".into()));
+
+    let html = PackageHtml {
+      colophon: None,
+      fingerprint: test::FINGERPRINT.parse().unwrap(),
+      metadata: None,
+      readme: None,
+      totals: Totals::default(),
+    };
+
+    assert_eq!(html.og_image(), None);
+    assert_eq!(html.og_description(), None);
   }
 
   #[test]

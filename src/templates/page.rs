@@ -19,8 +19,16 @@ mod tests {
   }
 
   impl Page for Foo {
-    fn og_image(&self) -> Option<String> {
-      Some("bar".into())
+    fn og_description(&self) -> Option<String> {
+      Some("qux".into())
+    }
+
+    fn og_image(&self) -> Option<OpenGraphImage> {
+      Some(OpenGraphImage {
+        height: 1,
+        path: "bar".into(),
+        width: 2,
+      })
     }
 
     fn title(&self) -> String {
@@ -43,7 +51,11 @@ mod tests {
               <meta name=viewport content='width=device-width,initial-scale=1.0'>
               <title>baz</title>
               <meta name=description content='Filepack package server'>
+              <meta property=og:description content='qux'>
               <meta property=og:image content='https://example.com/bar'>
+              <meta property=og:image:height content=1>
+              <meta property=og:image:width content=2>
+              <meta property=og:site_name content=filepack>
               <link href=/static/index.css rel=stylesheet>
             </head>
             <body>
@@ -65,6 +77,8 @@ mod tests {
               <meta name=viewport content='width=device-width,initial-scale=1.0'>
               <title>baz</title>
               <meta name=description content='Filepack package server'>
+              <meta property=og:description content='qux'>
+              <meta property=og:site_name content=filepack>
               <link href=/static/index.css rel=stylesheet>
             </head>
             <body>
