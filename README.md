@@ -386,7 +386,7 @@ Types:
   or a year, month, and day, written `Y-MM-DD`. Times use the proleptic
   Gregorian calendar with astronomical year numbering.
 
-- `url`: A string containing a URL.
+- `url`: A string containing a URL with scheme `http` or `https`.
 
 Example times:
 

@@ -8,13 +8,27 @@ impl CheckedUrl {
   pub(crate) fn as_str(&self) -> &str {
     &self.0
   }
+
+  fn check(s: &str) -> Result<(), UrlError> {
+    let url = s.parse::<Url>()?;
+
+    let scheme = url.scheme();
+
+    ensure! {
+      matches!(scheme, "http" | "https"),
+      url_error::Scheme { scheme },
+    }
+
+    Ok(())
+  }
 }
 
 impl FromStr for CheckedUrl {
-  type Err = url::ParseError;
+  type Err = UrlError;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
-    s.parse::<Url>()?;
+    Self::check(s)?;
+
     Ok(Self(s.into()))
   }
 }
@@ -27,8 +41,7 @@ impl Display for CheckedUrl {
 
 impl Validate for CheckedUrl {
   fn validate(&self) -> Result<(), DecodeError> {
-    self.as_str().parse::<Url>().context(decode_error::Url)?;
-    Ok(())
+    Self::check(self.as_str()).context(decode_error::Url)
   }
 }
 
@@ -54,7 +67,16 @@ mod tests {
   fn decode_error() {
     assert_matches!(
       CheckedUrl::decode(&mut Decoder::new(&"foo".encode_to_vec())),
-      Err(DecodeError::Url { .. }),
+      Err(DecodeError::Url {
+        source: UrlError::Parse { .. }
+      }),
+    );
+
+    assert_matches!(
+      CheckedUrl::decode(&mut Decoder::new(&"ftp://example.com".encode_to_vec())),
+      Err(DecodeError::Url {
+        source: UrlError::Scheme { .. }
+      }),
     );
   }
 
@@ -64,5 +86,32 @@ mod tests {
       "http://example.com".parse::<CheckedUrl>().unwrap(),
       "http://example.com",
     );
+  }
+
+  #[test]
+  fn scheme() {
+    #[track_caller]
+    fn accepted(s: &str) {
+      assert_eq!(s.parse::<CheckedUrl>().unwrap().as_str(), s);
+    }
+
+    #[track_caller]
+    fn rejected(s: &str, scheme: &str) {
+      assert_eq!(
+        s.parse::<CheckedUrl>().unwrap_err(),
+        UrlError::Scheme {
+          scheme: scheme.into()
+        },
+      );
+    }
+
+    accepted("http://example.com");
+    accepted("https://example.com");
+    accepted("HTTPS://example.com");
+
+    rejected("ftp://example.com", "ftp");
+    rejected("javascript:alert(1)", "javascript");
+    rejected("mailto:foo@example.com", "mailto");
+    rejected("file:///foo", "file");
   }
 }
