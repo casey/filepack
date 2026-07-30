@@ -17,11 +17,11 @@ impl PackageHtml {
 }
 
 impl Page for PackageHtml {
-  fn og_description(&self) -> Option<String> {
+  fn open_graph_description(&self) -> Option<String> {
     Some(self.metadata.as_ref()?.description.as_ref()?.to_string())
   }
 
-  fn og_image(&self) -> Option<OpenGraphImage> {
+  fn open_graph_image(&self) -> Option<OpenGraphImage> {
     let artwork = self.metadata.as_ref()?.artwork.as_ref()?;
     Some(OpenGraphImage {
       height: artwork.dimensions.height,
@@ -420,7 +420,7 @@ mod tests {
   }
 
   #[test]
-  fn og_metadata() {
+  fn open_graph_metadata() {
     let html = PackageHtml {
       colophon: None,
       fingerprint: test::FINGERPRINT.parse().unwrap(),
@@ -442,7 +442,7 @@ mod tests {
     };
 
     assert_eq!(
-      html.og_image(),
+      html.open_graph_image(),
       Some(OpenGraphImage {
         height: 1,
         path: format!("artwork/{}", test::FINGERPRINT),
@@ -450,7 +450,7 @@ mod tests {
       }),
     );
 
-    assert_eq!(html.og_description(), Some("bar".into()));
+    assert_eq!(html.open_graph_description(), Some("bar".into()));
 
     let html = PackageHtml {
       colophon: None,
@@ -460,8 +460,8 @@ mod tests {
       totals: Totals::default(),
     };
 
-    assert_eq!(html.og_image(), None);
-    assert_eq!(html.og_description(), None);
+    assert_eq!(html.open_graph_image(), None);
+    assert_eq!(html.open_graph_description(), None);
   }
 
   #[test]

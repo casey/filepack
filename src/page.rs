@@ -1,11 +1,11 @@
 use super::*;
 
 pub trait Page: Display + Sized {
-  fn og_description(&self) -> Option<String> {
+  fn open_graph_description(&self) -> Option<String> {
     None
   }
 
-  fn og_image(&self) -> Option<OpenGraphImage> {
+  fn open_graph_image(&self) -> Option<OpenGraphImage> {
     None
   }
 

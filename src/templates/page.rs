@@ -19,11 +19,11 @@ mod tests {
   }
 
   impl Page for Foo {
-    fn og_description(&self) -> Option<String> {
+    fn open_graph_description(&self) -> Option<String> {
       Some("qux".into())
     }
 
-    fn og_image(&self) -> Option<OpenGraphImage> {
+    fn open_graph_image(&self) -> Option<OpenGraphImage> {
       Some(OpenGraphImage {
         height: 1,
         path: "bar".into(),
@@ -37,7 +37,7 @@ mod tests {
   }
 
   #[test]
-  fn og_image() {
+  fn open_graph_image() {
     assert_eq!(
       Foo
         .page(Some("https://example.com".parse().unwrap()))
