@@ -505,10 +505,20 @@ fn upload_package_serves_package_html() {
     files: 2,
   };
 
+  let root = Hash::from(fingerprint);
+
+  let cbor = reqwest::blocking::get(format!("{}/file/{root}", server.address()))
+    .unwrap()
+    .bytes()
+    .unwrap();
+
+  let directory = Directory::decode(&mut Decoder::new(&cbor)).unwrap();
+
   server.assert_page(
     &format!("/package/{fingerprint}"),
     PackageHtml {
       colophon: None,
+      directory,
       fingerprint,
       metadata: Some(metadata),
       readme: None,

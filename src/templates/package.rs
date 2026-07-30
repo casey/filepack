@@ -3,6 +3,7 @@ use super::*;
 #[derive(Boilerplate)]
 pub struct PackageHtml {
   pub colophon: Option<Hash>,
+  pub directory: Directory,
   pub fingerprint: Fingerprint,
   pub metadata: Option<Metadata>,
   pub readme: Option<Hash>,
@@ -81,6 +82,7 @@ mod tests {
     assert_eq!(
       PackageHtml {
         colophon: None,
+        directory: Directory::new(),
         fingerprint: test::FINGERPRINT.parse().unwrap(),
         metadata: Some(metadata),
         readme: None,
@@ -186,6 +188,7 @@ mod tests {
     assert_eq!(
       PackageHtml {
         colophon: None,
+        directory: Directory::new(),
         fingerprint: test::FINGERPRINT.parse().unwrap(),
         metadata: Some(metadata),
         readme: None,
@@ -269,6 +272,7 @@ mod tests {
     assert_eq!(
       PackageHtml {
         colophon: None,
+        directory: Directory::new(),
         fingerprint: test::FINGERPRINT.parse().unwrap(),
         metadata: Some(metadata),
         readme: None,
@@ -353,6 +357,7 @@ mod tests {
     assert_eq!(
       PackageHtml {
         colophon: None,
+        directory: Directory::new(),
         fingerprint: test::FINGERPRINT.parse().unwrap(),
         metadata: Some(metadata),
         readme: None,
@@ -421,9 +426,13 @@ mod tests {
       ..default()
     };
 
+    let mut directory = Directory::new();
+    directory.insert_entry("foo", Entry::file(Hash::bytes(b"foo"), 3));
+
     assert_eq!(
       PackageHtml {
         colophon: Some(test::HASH.parse().unwrap()),
+        directory,
         fingerprint: test::FINGERPRINT.parse().unwrap(),
         metadata: Some(metadata),
         readme: Some(test::HASH.parse().unwrap()),
@@ -465,8 +474,23 @@ mod tests {
               </dl>
             </dd>
           </dl>
+          <table>
+            <thead>
+              <tr>
+                <th>open</th>
+                <th>download</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><a>foo</a></td>
+                <td class=right><a href=/file/{foo} download=\"foo\">3 B</a></td>
+              </tr>
+            </tbody>
+          </table>
         ",
         fingerprint = test::FINGERPRINT,
+        foo = Hash::bytes(b"foo"),
         hash = test::HASH,
       )),
     );
@@ -512,6 +536,7 @@ mod tests {
     assert_eq!(
       PackageHtml {
         colophon: None,
+        directory: Directory::new(),
         fingerprint: test::FINGERPRINT.parse().unwrap(),
         metadata: Some(metadata),
         readme: None,

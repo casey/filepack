@@ -687,11 +687,12 @@ fn get_package_with_metadata() {
   let metadata_cbor = metadata.encode_to_vec();
   server.write_file(&metadata_cbor);
 
-  let (cbor, hash) = Directory::new()
+  let mut directory = Directory::new();
+  directory
     .insert_file("COLOPHON.md", colophon)
     .insert_file("README.md", readme)
-    .insert_file(Metadata::CBOR_FILENAME, &metadata_cbor)
-    .cbor();
+    .insert_file(Metadata::CBOR_FILENAME, &metadata_cbor);
+  let (cbor, hash) = directory.cbor();
   let fingerprint = Fingerprint(hash);
   server.write_file(&cbor);
 
@@ -702,6 +703,7 @@ fn get_package_with_metadata() {
     .get(format!("/package/{fingerprint}"))
     .assert_page(PackageHtml {
       colophon: Some(Hash::bytes(colophon)),
+      directory,
       fingerprint,
       metadata: Some(metadata),
       readme: Some(Hash::bytes(readme)),
@@ -719,7 +721,8 @@ fn get_package_with_metadata() {
 fn get_package_without_metadata() {
   let server = TestServer::new();
 
-  let (cbor, hash) = Directory::new().cbor();
+  let directory = Directory::new();
+  let (cbor, hash) = directory.cbor();
   let fingerprint = Fingerprint(hash);
   server.write_file(&cbor);
 
@@ -730,6 +733,7 @@ fn get_package_without_metadata() {
     .get(format!("/package/{fingerprint}"))
     .assert_page(PackageHtml {
       colophon: None,
+      directory,
       fingerprint,
       metadata: None,
       readme: None,
@@ -1544,10 +1548,11 @@ fn package_page_og_image() {
   let metadata_cbor = metadata.encode_to_vec();
   server.write_file(&metadata_cbor);
 
-  let (cbor, hash) = Directory::new()
+  let mut directory = Directory::new();
+  directory
     .insert_file("bar.png", artwork)
-    .insert_file(Metadata::CBOR_FILENAME, &metadata_cbor)
-    .cbor();
+    .insert_file(Metadata::CBOR_FILENAME, &metadata_cbor);
+  let (cbor, hash) = directory.cbor();
   let fingerprint = Fingerprint(hash);
   server.write_file(&cbor);
 
@@ -1559,6 +1564,7 @@ fn package_page_og_image() {
     .assert_response(
       PackageHtml {
         colophon: None,
+        directory,
         fingerprint,
         metadata: Some(metadata),
         readme: None,
@@ -1633,6 +1639,7 @@ fn package_page_renders_audio_media() {
     .get(format!("/package/{fingerprint}"))
     .assert_page(PackageHtml {
       colophon: None,
+      directory: Directory::new(),
       fingerprint,
       metadata: Some(metadata),
       readme: None,
@@ -1676,6 +1683,7 @@ fn package_page_renders_image_media() {
     .get(format!("/package/{fingerprint}"))
     .assert_page(PackageHtml {
       colophon: None,
+      directory: Directory::new(),
       fingerprint,
       metadata: Some(metadata),
       readme: None,
@@ -1739,6 +1747,7 @@ fn package_page_renders_video_media() {
     .get(format!("/package/{fingerprint}"))
     .assert_page(PackageHtml {
       colophon: None,
+      directory: Directory::new(),
       fingerprint,
       metadata: Some(metadata),
       readme: None,
