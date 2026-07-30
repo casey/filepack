@@ -285,6 +285,13 @@ mod tests {
     case(
       "
         title: Foo
+        homepage: ftp://example.com
+      ",
+      "homepage: URL scheme `ftp` not allowed, must be `http` or `https`",
+    );
+    case(
+      "
+        title: Foo
         language: ac
       ",
       "unknown language code `ac`",
