@@ -25,9 +25,11 @@ mod tests {
 
     fn open_graph_image(&self) -> Option<OpenGraphImage> {
       Some(OpenGraphImage {
-        height: 1,
+        dimensions: Dimensions {
+          height: 1,
+          width: 2,
+        },
         path: "bar".into(),
-        width: 2,
       })
     }
 

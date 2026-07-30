@@ -24,9 +24,8 @@ impl Page for PackageHtml {
   fn open_graph_image(&self) -> Option<OpenGraphImage> {
     let artwork = self.metadata.as_ref()?.artwork.as_ref()?;
     Some(OpenGraphImage {
-      height: artwork.dimensions.height,
+      dimensions: artwork.dimensions,
       path: format!("artwork/{}", self.fingerprint),
-      width: artwork.dimensions.width,
     })
   }
 
@@ -423,6 +422,7 @@ mod tests {
   fn open_graph_metadata() {
     let html = PackageHtml {
       colophon: None,
+      directory: Directory::new(),
       fingerprint: test::FINGERPRINT.parse().unwrap(),
       metadata: Some(Metadata {
         artwork: Some(Image {
@@ -444,9 +444,11 @@ mod tests {
     assert_eq!(
       html.open_graph_image(),
       Some(OpenGraphImage {
-        height: 1,
+        dimensions: Dimensions {
+          height: 1,
+          width: 2,
+        },
         path: format!("artwork/{}", test::FINGERPRINT),
-        width: 2,
       }),
     );
 
@@ -454,6 +456,7 @@ mod tests {
 
     let html = PackageHtml {
       colophon: None,
+      directory: Directory::new(),
       fingerprint: test::FINGERPRINT.parse().unwrap(),
       metadata: None,
       readme: None,

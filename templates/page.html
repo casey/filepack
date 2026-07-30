@@ -12,8 +12,8 @@
 %%   && let Some(open_graph_image) = self.content.open_graph_image()
 %% {
     <meta property=og:image content='{{ base.join(&open_graph_image.path).unwrap() }}'>
-    <meta property=og:image:height content={{ open_graph_image.height }}>
-    <meta property=og:image:width content={{ open_graph_image.width }}>
+    <meta property=og:image:height content={{ open_graph_image.dimensions.height }}>
+    <meta property=og:image:width content={{ open_graph_image.dimensions.width }}>
 %% }
     <meta property=og:site_name content=filepack>
     <link href=/static/index.css rel=stylesheet>
