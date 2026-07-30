@@ -9,7 +9,7 @@ impl CheckedUrl {
     &self.0
   }
 
-  fn check(s: &str) -> Result<(), UrlError> {
+  pub(crate) fn check(s: &str) -> Result<Url, UrlError> {
     let url = s.parse::<Url>()?;
 
     let scheme = url.scheme();
@@ -19,7 +19,7 @@ impl CheckedUrl {
       url_error::Scheme { scheme },
     }
 
-    Ok(())
+    Ok(url)
   }
 }
 
@@ -41,7 +41,8 @@ impl Display for CheckedUrl {
 
 impl Validate for CheckedUrl {
   fn validate(&self) -> Result<(), DecodeError> {
-    Self::check(self.as_str()).context(decode_error::Url)
+    Self::check(self.as_str()).context(decode_error::Url)?;
+    Ok(())
   }
 }
 

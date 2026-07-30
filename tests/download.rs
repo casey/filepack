@@ -378,9 +378,10 @@ fn download_retrieves_package_with_metadata() {
 fn server_url_must_be_http_or_https() {
   Test::new()
     .args(["download", "--server", "ftp://example.com"])
-    .stderr_regex(
-      "error: invalid value 'ftp://example.com' for '--server <URL>': URL scheme 'ftp' not \
-       allowed, must be 'http' or 'https'\n.*",
+    .stderr(
+      "error: invalid value 'ftp://example.com' for '--server <URL>': URL scheme `ftp` not \
+       allowed, must be `http` or `https`\n\n\
+       For more information, try '--help'.\n",
     )
     .status(USAGE_ERROR);
 }

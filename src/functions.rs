@@ -69,20 +69,6 @@ pub(crate) fn parse_number<T: FromStr<Err = ParseIntError>>(s: &str) -> Result<T
   Ok(s.parse()?)
 }
 
-pub(crate) fn parse_server_url(s: &str) -> Result<Url, String> {
-  let url = s.parse::<Url>().map_err(|err| err.to_string())?;
-
-  let scheme = url.scheme();
-
-  if !matches!(scheme, "http" | "https") {
-    return Err(format!(
-      "URL scheme '{scheme}' not allowed, must be 'http' or 'https'"
-    ));
-  }
-
-  Ok(url)
-}
-
 pub(crate) fn transfer_tempfile(hash: Hash, path: &Utf8Path) -> io::Result<NamedTempFile> {
   tempfile::Builder::new()
     .prefix(&format!("{hash}-"))

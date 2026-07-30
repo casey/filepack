@@ -26,7 +26,7 @@ pub(crate) struct Download {
     value_name = "FINGERPRINT"
   )]
   package: Option<Fingerprint>,
-  #[arg(help = "Download from server at <URL>", long, value_name = "URL", value_parser = parse_server_url)]
+  #[arg(help = "Download from server at <URL>", long, value_name = "URL", value_parser = CheckedUrl::check)]
   server: Url,
 }
 
