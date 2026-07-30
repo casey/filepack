@@ -28,6 +28,7 @@ mod tests;
 static THREAD_COUNTER: AtomicU64 = AtomicU64::new(0);
 
 type RedirectConfigExtension = Extension<Arc<RedirectConfig>>;
+type ServerConfigExtension = Extension<Arc<ServerConfig>>;
 type ServerExtension = Extension<Arc<Server>>;
 
 pub(crate) struct AuthConfig {
@@ -52,6 +53,10 @@ impl RedirectConfig {
     destination.set_query(uri.query());
     destination
   }
+}
+
+pub(crate) struct ServerConfig {
+  pub(crate) url: Option<Url>,
 }
 
 enum SpawnConfig {
@@ -281,6 +286,7 @@ impl Serve {
     server: Arc<Server>,
     auth_config: Option<Arc<AuthConfig>>,
     redirect_config: Option<Arc<RedirectConfig>>,
+    server_config: Arc<ServerConfig>,
   ) -> Router {
     let router = Router::new()
       .route("/", get(route::home))
@@ -320,6 +326,7 @@ impl Serve {
       .route("/static/{*path}", get(route::static_asset))
       .fallback(route::fallback)
       .layer(Extension(server))
+      .layer(Extension(server_config))
       .layer(SetResponseHeaderLayer::overriding(
         header::X_CONTENT_TYPE_OPTIONS,
         HeaderValue::from_static("nosniff"),
@@ -394,7 +401,7 @@ impl Serve {
 
     let redirect_config = self.redirect_config()?;
 
-    let router = Self::router(server, auth_config, redirect_config);
+    let router = Self::router(server, auth_config, redirect_config, self.server_config());
 
     match (self.http_port(), self.https_port()) {
       (Some(http_port), None) => {
@@ -444,6 +451,12 @@ impl Serve {
     }
 
     Ok(())
+  }
+
+  fn server_config(&self) -> Arc<ServerConfig> {
+    Arc::new(ServerConfig {
+      url: self.domain.as_ref().map(|_| self.redirect_url()),
+    })
   }
 
   async fn spawn(

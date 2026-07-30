@@ -16,6 +16,11 @@ impl PackageHtml {
 }
 
 impl Page for PackageHtml {
+  fn og_image(&self) -> Option<String> {
+    self.metadata.as_ref()?.artwork.as_ref()?;
+    Some(format!("artwork/{}", self.fingerprint))
+  }
+
   fn stylesheet(&self) -> Option<&'static str> {
     Some("/static/package.css")
   }
