@@ -222,6 +222,7 @@ pub use self::{
   map_encoder::MapEncoder,
   metadata::Metadata,
   mp4_builder::Mp4Builder,
+  open_graph_image::OpenGraphImage,
   page::Page,
   private_key::PrivateKey,
   public_key::PublicKey,
@@ -345,6 +346,7 @@ mod metadata;
 mod mode;
 mod mp4_builder;
 mod number_error;
+mod open_graph_image;
 mod options;
 mod or;
 mod ordinal;

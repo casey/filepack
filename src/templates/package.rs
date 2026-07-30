@@ -17,9 +17,16 @@ impl PackageHtml {
 }
 
 impl Page for PackageHtml {
-  fn og_image(&self) -> Option<String> {
-    self.metadata.as_ref()?.artwork.as_ref()?;
-    Some(format!("artwork/{}", self.fingerprint))
+  fn open_graph_description(&self) -> Option<String> {
+    Some(self.metadata.as_ref()?.description.as_ref()?.to_string())
+  }
+
+  fn open_graph_image(&self) -> Option<OpenGraphImage> {
+    let artwork = self.metadata.as_ref()?.artwork.as_ref()?;
+    Some(OpenGraphImage {
+      dimensions: artwork.dimensions,
+      path: format!("artwork/{}", self.fingerprint),
+    })
   }
 
   fn stylesheet(&self) -> Option<&'static str> {
@@ -409,6 +416,55 @@ mod tests {
         hash = test::HASH,
       )),
     );
+  }
+
+  #[test]
+  fn open_graph_metadata() {
+    let html = PackageHtml {
+      colophon: None,
+      directory: Directory::new(),
+      fingerprint: test::FINGERPRINT.parse().unwrap(),
+      metadata: Some(Metadata {
+        artwork: Some(Image {
+          dimensions: Dimensions {
+            height: 1,
+            width: 2,
+          },
+          filename: "foo.png".parse().unwrap(),
+          orientation: Orientation::new(),
+          ty: ImageType::Png,
+        }),
+        description: Some("bar".parse().unwrap()),
+        ..default()
+      }),
+      readme: None,
+      totals: Totals::default(),
+    };
+
+    assert_eq!(
+      html.open_graph_image(),
+      Some(OpenGraphImage {
+        dimensions: Dimensions {
+          height: 1,
+          width: 2,
+        },
+        path: format!("artwork/{}", test::FINGERPRINT),
+      }),
+    );
+
+    assert_eq!(html.open_graph_description(), Some("bar".into()));
+
+    let html = PackageHtml {
+      colophon: None,
+      directory: Directory::new(),
+      fingerprint: test::FINGERPRINT.parse().unwrap(),
+      metadata: None,
+      readme: None,
+      totals: Totals::default(),
+    };
+
+    assert_eq!(html.open_graph_image(), None);
+    assert_eq!(html.open_graph_description(), None);
   }
 
   #[test]
