@@ -1548,10 +1548,11 @@ fn package_page_og_image() {
   let metadata_cbor = metadata.encode_to_vec();
   server.write_file(&metadata_cbor);
 
-  let (cbor, hash) = Directory::new()
+  let mut directory = Directory::new();
+  directory
     .insert_file("bar.png", artwork)
-    .insert_file(Metadata::CBOR_FILENAME, &metadata_cbor)
-    .cbor();
+    .insert_file(Metadata::CBOR_FILENAME, &metadata_cbor);
+  let (cbor, hash) = directory.cbor();
   let fingerprint = Fingerprint(hash);
   server.write_file(&cbor);
 
@@ -1563,6 +1564,7 @@ fn package_page_og_image() {
     .assert_response(
       PackageHtml {
         colophon: None,
+        directory,
         fingerprint,
         metadata: Some(metadata),
         readme: None,
