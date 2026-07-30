@@ -121,48 +121,48 @@
 %%   }
 %% }
 </dl>
-%% if let Some(metadata) = &self.metadata {
-%%   if let Some(media) = &metadata.media {
-%%     match media {
-%%       Media::Audio { tracks } => {
-%%         let mut i = 0;
-%%         for disc in tracks.chunk_by(|a, b| a.disc == b.disc) {
-%%           if disc[0].discs > 1 {
+%% if let Some(media) = self.metadata.as_ref().and_then(|metadata| metadata.media.as_ref()) {
+%%   match media {
+%%     Media::Audio { tracks } => {
+%%       let mut i = 0;
+%%       for disc in tracks.chunk_by(|a, b| a.disc == b.disc) {
+%%         if disc[0].discs > 1 {
 <h2>disc {{ disc[0].disc }}</h2>
-%%           }
+%%         }
 <ol>
-%%           for audio in disc {
+%%         for audio in disc {
   <li>
     <a href=/package/{{ self.fingerprint }}/item/{{ Ordinal(i) }}>{{ audio.title }}</a>
     <time datetime={{ Iso8601Duration(audio.duration()) }}>{{ DisplayDuration(audio.duration()) }}</time>
   </li>
-%%             i += 1;
-%%           }
-</ol>
+%%           i += 1;
 %%         }
+</ol>
 %%       }
-%%       Media::Image { images } => {
+%%     }
+%%     Media::Image { images } => {
 <ul class=thumbnails>
-%%         for (i, image) in images.iter().enumerate() {
+%%       for (i, image) in images.iter().enumerate() {
   <li>
     <a href=/package/{{ self.fingerprint }}/item/{{ Ordinal(i) }}>
       <img loading=lazy src=/media/image/{{ self.fingerprint }}/item/{{ Ordinal(i) }}>
     </a>
   </li>
-%%         }
-</ul>
 %%       }
-%%       Media::Video { videos } => {
+</ul>
+%%     }
+%%     Media::Video { videos } => {
 <ol>
-%%         for (i, video) in videos.iter().enumerate() {
-%%           let duration = Duration::from_millis(video.duration);
+%%       for (i, video) in videos.iter().enumerate() {
+%%         let duration = Duration::from_millis(video.duration);
   <li>
     <a href=/package/{{ self.fingerprint }}/item/{{ Ordinal(i) }}>{{ video.filename }}</a>
     <time datetime={{ Iso8601Duration(duration) }}>{{ DisplayDuration(duration) }}</time>
   </li>
-%%         }
-</ol>
 %%       }
+</ol>
 %%     }
 %%   }
+%% } else {
+{{ Trusted(DirectoryTableHtml(&self.directory)) }}
 %% }
