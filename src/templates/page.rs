@@ -43,7 +43,7 @@ mod tests {
               <meta name=viewport content='width=device-width,initial-scale=1.0'>
               <title>baz</title>
               <meta name=description content='Filepack package server'>
-              <meta property=og:image content=https://example.com/bar>
+              <meta property=og:image content='https://example.com/bar'>
               <link href=/static/index.css rel=stylesheet>
             </head>
             <body>

@@ -8,7 +8,7 @@
 %% if let Some(base) = &self.base
 %%   && let Some(og_image) = self.content.og_image()
 %% {
-    <meta property=og:image content={{ base.join(&og_image).unwrap() }}>
+    <meta property=og:image content='{{ base.join(&og_image).unwrap() }}'>
 %% }
     <link href=/static/index.css rel=stylesheet>
 %% if let Some(stylesheet) = self.content.stylesheet() {
