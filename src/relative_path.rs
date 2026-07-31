@@ -1,6 +1,8 @@
 use super::*;
 
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, SerializeDisplay)]
+#[derive(
+  Clone, Debug, DeserializeFromStr, Eq, Hash, Ord, PartialEq, PartialOrd, SerializeDisplay,
+)]
 pub struct RelativePath(String);
 
 impl RelativePath {

@@ -1227,6 +1227,7 @@ dependencies = [
  "libc",
  "matroska-demuxer",
  "mime",
+ "mime_guess",
  "num-traits",
  "owo-colors",
  "percent-encoding",

@@ -154,6 +154,50 @@ pub(crate) async fn missing(
   })
 }
 
+pub(crate) async fn mount(
+  server: ServerExtension,
+  server_config: ServerConfigExtension,
+  Path(fingerprint): Path<Fingerprint>,
+  range: Option<TypedHeader<headers::Range>>,
+) -> ServerResult<Resource> {
+  mount_file(
+    server,
+    server_config,
+    Path((fingerprint, "index.html".parse().unwrap())),
+    range,
+  )
+  .await
+}
+
+pub(crate) async fn mount_file(
+  server: ServerExtension,
+  server_config: ServerConfigExtension,
+  Path((fingerprint, path)): Path<(Fingerprint, RelativePath)>,
+  range: Option<TypedHeader<headers::Range>>,
+) -> ServerResult<Resource> {
+  block_in_place(|| {
+    ensure! {
+      server_config.mounts.contains(&fingerprint),
+      server_error::PackageNotMounted { fingerprint },
+    }
+
+    let hash = server.package_file(fingerprint, &path)?;
+
+    let content_type = mime_guess::from_path(path).first_or_octet_stream();
+
+    Ok(
+      server
+        .open_file(hash)?
+        .range(range)
+        .content_type(content_type),
+    )
+  })
+}
+
+pub(crate) async fn mount_redirect(Path(fingerprint): Path<Fingerprint>) -> Redirect {
+  Redirect::permanent(&format!("/mount/{fingerprint}/"))
+}
+
 pub(crate) async fn package(
   server: ServerExtension,
   server_config: ServerConfigExtension,
@@ -181,13 +225,22 @@ pub(crate) async fn package_item(
       .as_ref()
       .context(server_error::PackageMediaMetadataNotFound { fingerprint })?;
 
+    let ty = media.discriminant();
+
+    ensure! {
+      ty.has_items(),
+      server_error::MediaTypeDoesNotHaveItems {
+        ty,
+      }
+    }
+
     ensure! {
       media.items() > index,
       server_error::MediaItemDoesNotExist {
         count: media.items(),
         fingerprint,
         index,
-        ty: media.discriminant(),
+        ty,
       },
     }
 
@@ -218,6 +271,7 @@ pub(crate) async fn package_item(
         .page(server_config.url.clone())
         .into_response(),
       ),
+      Media::Web => unreachable!(),
     }
   })
 }

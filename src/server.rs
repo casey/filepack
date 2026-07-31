@@ -101,7 +101,7 @@ impl Server {
         count: media.items(),
         fingerprint,
         index: item,
-        ty: media.discriminant(),
+        ty,
       })?;
 
     let path = item.path();
@@ -164,11 +164,31 @@ impl Server {
 
     Ok(Resource {
       content_length,
+      content_type: None,
       file,
       hash,
       range: None,
       ty: ResourceType::Binary,
     })
+  }
+
+  pub(crate) fn package_file(
+    &self,
+    fingerprint: Fingerprint,
+    path: &RelativePath,
+  ) -> ServerResult<Hash> {
+    let tx = self.database.begin_read()?;
+
+    let packages = tx.open_table(PACKAGES)?;
+
+    ensure!(
+      packages.get(&fingerprint)?.is_some(),
+      server_error::PackageNotFound { fingerprint },
+    );
+
+    self
+      .resolve_path(fingerprint, path)?
+      .context(server_error::PackageFileNotFound { fingerprint, path })
   }
 
   pub(crate) fn package_html(&self, fingerprint: Fingerprint) -> ServerResult<PackageHtml> {

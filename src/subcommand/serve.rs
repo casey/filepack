@@ -56,6 +56,7 @@ impl RedirectConfig {
 }
 
 pub(crate) struct ServerConfig {
+  pub(crate) mounts: HashSet<Fingerprint>,
   pub(crate) url: Option<Url>,
 }
 
@@ -124,6 +125,14 @@ pub(crate) struct Serve {
     value_name = "PORT"
   )]
   https_port: Option<u16>,
+  #[arg(
+    help = "Mount web package with <FINGERPRINT> at `/mount/<FINGERPRINT>`, mounted packages are \
+            unsandboxed and served with the server origin, make sure you understand the \
+            consequences of this and only mount packages you trust",
+    long = "mount",
+    value_name = "FINGERPRINT"
+  )]
+  mounts: Vec<Fingerprint>,
   #[arg(
     help = "Write listening port to <ADDRESS>",
     long,
@@ -313,6 +322,9 @@ impl Serve {
         get(route::media_video_item),
       )
       .route("/missing", post(route::missing))
+      .route("/mount/{fingerprint}", get(route::mount_redirect))
+      .route("/mount/{fingerprint}/", get(route::mount))
+      .route("/mount/{fingerprint}/{*path}", get(route::mount_file))
       .route(
         "/package/{fingerprint}",
         get(route::package).post(route::verify_package),
@@ -385,6 +397,22 @@ impl Serve {
 
     let server = Arc::new(Server::with_data_dir(&options.data_dir()?)?);
 
+    for &fingerprint in &self.mounts {
+      let metadata = server
+        .package_metadata_opt(fingerprint)
+        .context(error::Server)?
+        .context(error::MountedPackageNotFound { fingerprint })?;
+
+      let Some(media) = metadata.media else {
+        return Err(error::MountedPackageNoMediaType { fingerprint }.build());
+      };
+
+      ensure! {
+        media.ty() == MediaType::Web,
+        error::MountedPackageMediaType { fingerprint, media_type: media.ty() },
+      }
+    }
+
     let auth_config = if self.restrict_uploads {
       let admin = if let Some(identifier) = &self.admin_key {
         Some(Keychain::load(&options)?.identifier_public_key(identifier)?)
@@ -455,6 +483,7 @@ impl Serve {
 
   fn server_config(&self) -> Arc<ServerConfig> {
     Arc::new(ServerConfig {
+      mounts: self.mounts.iter().copied().collect(),
       url: self.domain.as_ref().map(|_| self.redirect_url()),
     })
   }
@@ -558,6 +587,7 @@ impl Default for Serve {
       http_port: None,
       https: false,
       https_port: None,
+      mounts: Vec::new(),
       ready_address: None,
       redirect_http_to_https: false,
       redirects: Vec::new(),

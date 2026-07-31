@@ -284,7 +284,10 @@ impl TestServerBuilder {
       server,
       self.auth_config,
       None,
-      Arc::new(ServerConfig { url: self.url }),
+      Arc::new(ServerConfig {
+        mounts: HashSet::new(),
+        url: self.url,
+      }),
     );
 
     TestServer {

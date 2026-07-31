@@ -4,6 +4,7 @@ const MAX_CACHE: &str = "public, max-age=31536000, immutable";
 
 pub(crate) struct Resource {
   pub(crate) content_length: u64,
+  pub(crate) content_type: Option<Mime>,
   pub(crate) file: fs::File,
   pub(crate) hash: Hash,
   pub(crate) range: Option<headers::Range>,
@@ -11,6 +12,13 @@ pub(crate) struct Resource {
 }
 
 impl Resource {
+  pub(crate) fn content_type(self, content_type: Mime) -> Self {
+    Self {
+      content_type: Some(content_type),
+      ..self
+    }
+  }
+
   pub(crate) fn range(self, range: Option<TypedHeader<headers::Range>>) -> Self {
     Self {
       range: range.map(|TypedHeader(range)| range),
@@ -36,15 +44,20 @@ impl IntoResponse for Resource {
 
     let mut builder = Response::builder()
       .header(header::ACCEPT_RANGES, "bytes")
-      .header(header::CONTENT_TYPE, self.ty.content_type().as_ref())
       .header(header::ETAG, format!("\"{}\"", self.hash));
 
-    if self.ty.sandbox() {
-      builder = builder.header(header::CONTENT_SECURITY_POLICY, "sandbox");
-    }
+    if let Some(content_type) = &self.content_type {
+      builder = builder.header(header::CONTENT_TYPE, content_type.to_string());
+    } else {
+      builder = builder.header(header::CONTENT_TYPE, self.ty.content_type().as_ref());
 
-    if let Some(content_disposition) = self.ty.content_disposition() {
-      builder = builder.header(header::CONTENT_DISPOSITION, content_disposition);
+      if self.ty.sandbox() {
+        builder = builder.header(header::CONTENT_SECURITY_POLICY, "sandbox");
+      }
+
+      if let Some(content_disposition) = self.ty.content_disposition() {
+        builder = builder.header(header::CONTENT_DISPOSITION, content_disposition);
+      }
     }
 
     let Some(range) = self.range else {
