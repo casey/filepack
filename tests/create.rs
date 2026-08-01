@@ -12,7 +12,7 @@ fn backslash_error() {
     .stderr(
       "\
 error: invalid path `\\`
-       ├─ paths contains invalid component `\\`
+       ├─ path contains invalid component `\\`
        └─ component may not contain path separator `\\`
 ",
     )
