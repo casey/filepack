@@ -193,7 +193,7 @@ impl Upload {
     }
     .encode_to_vec();
 
-    let url = self.server.join("missing").unwrap();
+    let url = self.server.join("api/missing").unwrap();
 
     let missing = self
       .request_with_token(client.post(url).body(body), key.as_ref())?

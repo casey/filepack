@@ -1223,7 +1223,7 @@ fn missing_rejects_unsorted_hashes() {
   drop(map);
 
   TestServer::new()
-    .post("/missing")
+    .post("/api/missing")
     .body(encoder.finish())
     .status(StatusCode::BAD_REQUEST)
     .assert_body("failed to decode request body")
@@ -1240,7 +1240,7 @@ fn missing_returns_missing_hashes() {
   server.write_file(b"bar");
 
   server
-    .post("/missing")
+    .post("/api/missing")
     .body(
       api::missing::Request {
         hashes: BTreeSet::from([present, absent]).into(),
