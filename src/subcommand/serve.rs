@@ -299,7 +299,8 @@ impl Serve {
   ) -> Router {
     let router = Router::new()
       .route("/", get(route::home))
-      .route("/api/missing", post(route::missing))
+      .route("/api/missing", post(route::api_missing))
+      .route("/api/packages", get(route::api_packages))
       .route("/artwork/{fingerprint}", get(route::artwork))
       .route(
         "/directory/{hash}",
