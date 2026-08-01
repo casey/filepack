@@ -299,6 +299,7 @@ impl Serve {
   ) -> Router {
     let router = Router::new()
       .route("/", get(route::home))
+      .route("/api/missing", post(route::missing))
       .route("/artwork/{fingerprint}", get(route::artwork))
       .route(
         "/directory/{hash}",
@@ -321,7 +322,6 @@ impl Serve {
         "/media/video/{fingerprint}/item/{item}",
         get(route::media_video_item),
       )
-      .route("/missing", post(route::missing))
       .route("/mount/{fingerprint}", get(route::mount_redirect))
       .route("/mount/{fingerprint}/", get(route::mount))
       .route("/mount/{fingerprint}/{*path}", get(route::mount_file))
