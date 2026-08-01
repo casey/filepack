@@ -1265,7 +1265,8 @@ fn mount_file() {
 
   let package = PackageBuilder::new()
     .metadata(&metadata)
-    .file("foo.css", b"bar");
+    .file("foo.css", b"bar")
+    .file("index.html", b"foo");
 
   let server = TestServer::builder().mount(package.fingerprint()).build();
 
@@ -1288,7 +1289,9 @@ fn mount_file_invalid_path() {
     ..default()
   };
 
-  let package = PackageBuilder::new().metadata(&metadata);
+  let package = PackageBuilder::new()
+    .metadata(&metadata)
+    .file("index.html", b"foo");
 
   let server = TestServer::builder().mount(package.fingerprint()).build();
 
@@ -1310,7 +1313,9 @@ fn mount_file_not_found() {
     ..default()
   };
 
-  let package = PackageBuilder::new().metadata(&metadata);
+  let package = PackageBuilder::new()
+    .metadata(&metadata)
+    .file("index.html", b"foo");
 
   let server = TestServer::builder().mount(package.fingerprint()).build();
 
@@ -1597,6 +1602,7 @@ fn package_item_web() {
       media: Some(Media::Web),
       ..default()
     })
+    .file("index.html", b"foo")
     .upload(&server);
 
   server
