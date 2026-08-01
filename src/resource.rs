@@ -12,13 +12,6 @@ pub(crate) struct Resource {
 }
 
 impl Resource {
-  pub(crate) fn unsandboxed_content_type(self, unsandboxed_content_type: Mime) -> Self {
-    Self {
-      unsandboxed_content_type: Some(unsandboxed_content_type),
-      ..self
-    }
-  }
-
   pub(crate) fn range(self, range: Option<TypedHeader<headers::Range>>) -> Self {
     Self {
       range: range.map(|TypedHeader(range)| range),
@@ -28,6 +21,13 @@ impl Resource {
 
   pub(crate) fn ty(self, ty: ResourceType) -> Self {
     Self { ty, ..self }
+  }
+
+  pub(crate) fn unsandboxed_content_type(self, unsandboxed_content_type: Mime) -> Self {
+    Self {
+      unsandboxed_content_type: Some(unsandboxed_content_type),
+      ..self
+    }
   }
 }
 
