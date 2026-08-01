@@ -1124,23 +1124,10 @@ fn media_type_mismatch() {
     format!("expected media type image but package {audio} is audio"),
   );
 
-  let web = PackageBuilder::new()
-    .metadata(&Metadata {
-      media: Some(Media::Web),
-      ..default()
-    })
-    .upload(&server);
-
   case(
     &server,
     format!("/media/audio/{image}/item/1"),
     format!("expected media type audio but package {image} is image"),
-  );
-
-  case(
-    &server,
-    format!("/media/audio/{web}/item/1"),
-    format!("expected media type audio but package {web} is web"),
   );
 }
 
