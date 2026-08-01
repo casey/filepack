@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(Debug, Snafu)]
 #[snafu(context(suffix(false)), visibility(pub(crate)))]
-pub(crate) enum ServerError {
+pub enum ServerError {
   #[snafu(display("package {fingerprint} artwork not found"))]
   ArtworkNotFound { fingerprint: Fingerprint },
   #[snafu(display("invalid authorization token"))]
@@ -72,14 +72,14 @@ pub(crate) enum ServerError {
   InvalidResponse { source: http::Error },
   #[snafu(display(
     "{} {index} does not exist, package {fingerprint} has {}",
-    ty.noun(),
-    Count::new(*count, ty.noun()),
+    ty.item_noun(),
+    Count::new(*count, ty.item_noun()),
   ))]
   MediaItemDoesNotExist {
-    fingerprint: Fingerprint,
-    ty: crate::MediaType,
-    index: Ordinal,
     count: usize,
+    fingerprint: Fingerprint,
+    index: Ordinal,
+    ty: crate::MediaType,
   },
   #[snafu(display("expected media type {expected} but package {fingerprint} is {actual}"))]
   MediaType {
@@ -87,6 +87,8 @@ pub(crate) enum ServerError {
     actual: crate::MediaType,
     expected: crate::MediaType,
   },
+  #[snafu(display("media type {ty} does not have items"))]
+  MediaTypeDoesNotHaveItems { ty: crate::MediaType },
   #[snafu(display("package {fingerprint} has invalid track position: {source}"))]
   PackageAudioPosition {
     fingerprint: Fingerprint,
@@ -94,6 +96,11 @@ pub(crate) enum ServerError {
   },
   #[snafu(display("file `{path}` missing from package {fingerprint}"))]
   PackageFileMissing {
+    fingerprint: Fingerprint,
+    path: RelativePath,
+  },
+  #[snafu(display("file `{path}` not found in package {fingerprint}"))]
+  PackageFileNotFound {
     fingerprint: Fingerprint,
     path: RelativePath,
   },
@@ -118,6 +125,8 @@ pub(crate) enum ServerError {
   PackageMetadataNotFound { fingerprint: Fingerprint },
   #[snafu(display("package {fingerprint} not found"))]
   PackageNotFound { fingerprint: Fingerprint },
+  #[snafu(display("package {fingerprint} not mounted"))]
+  PackageNotMounted { fingerprint: Fingerprint },
   #[snafu(display("package {fingerprint} root directory is unverified"))]
   PackageRootUnverified { fingerprint: Fingerprint },
   #[snafu(display("page not found"))]
@@ -152,14 +161,17 @@ impl ServerError {
       | Self::InvalidResponse { .. }
       | Self::MediaItemDoesNotExist { .. }
       | Self::MediaType { .. }
+      | Self::MediaTypeDoesNotHaveItems { .. }
       | Self::PackageAudioPosition { .. }
       | Self::PackageFileMissing { .. }
+      | Self::PackageFileNotFound { .. }
       | Self::PackageMediaMetadataNotFound { .. }
       | Self::PackageMetadataCorrupt { .. }
       | Self::PackageMetadataDecode { .. }
       | Self::PackageMetadataFileMissing { .. }
       | Self::PackageMetadataNotFound { .. }
       | Self::PackageNotFound { .. }
+      | Self::PackageNotMounted { .. }
       | Self::PackageRootUnverified { .. }
       | Self::PageNotFound
       | Self::UploadBodyRead { .. }
@@ -209,9 +221,12 @@ impl ServerError {
       | Self::FileNotFound { .. }
       | Self::MediaItemDoesNotExist { .. }
       | Self::MediaType { .. }
+      | Self::MediaTypeDoesNotHaveItems { .. }
+      | Self::PackageFileNotFound { .. }
       | Self::PackageMediaMetadataNotFound { .. }
       | Self::PackageMetadataNotFound { .. }
       | Self::PackageNotFound { .. }
+      | Self::PackageNotMounted { .. }
       | Self::PageNotFound => StatusCode::NOT_FOUND,
       Self::UploadForbidden => StatusCode::FORBIDDEN,
     }

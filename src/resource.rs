@@ -8,6 +8,7 @@ pub(crate) struct Resource {
   pub(crate) hash: Hash,
   pub(crate) range: Option<headers::Range>,
   pub(crate) ty: ResourceType,
+  pub(crate) unsandboxed_content_type: Option<Mime>,
 }
 
 impl Resource {
@@ -20,6 +21,13 @@ impl Resource {
 
   pub(crate) fn ty(self, ty: ResourceType) -> Self {
     Self { ty, ..self }
+  }
+
+  pub(crate) fn unsandboxed_content_type(self, unsandboxed_content_type: Mime) -> Self {
+    Self {
+      unsandboxed_content_type: Some(unsandboxed_content_type),
+      ..self
+    }
   }
 }
 
@@ -36,15 +44,20 @@ impl IntoResponse for Resource {
 
     let mut builder = Response::builder()
       .header(header::ACCEPT_RANGES, "bytes")
-      .header(header::CONTENT_TYPE, self.ty.content_type().as_ref())
       .header(header::ETAG, format!("\"{}\"", self.hash));
 
-    if self.ty.sandbox() {
-      builder = builder.header(header::CONTENT_SECURITY_POLICY, "sandbox");
-    }
+    if let Some(content_type) = &self.unsandboxed_content_type {
+      builder = builder.header(header::CONTENT_TYPE, content_type.to_string());
+    } else {
+      builder = builder.header(header::CONTENT_TYPE, self.ty.content_type().as_ref());
 
-    if let Some(content_disposition) = self.ty.content_disposition() {
-      builder = builder.header(header::CONTENT_DISPOSITION, content_disposition);
+      if self.ty.sandbox() {
+        builder = builder.header(header::CONTENT_SECURITY_POLICY, "sandbox");
+      }
+
+      if let Some(content_disposition) = self.ty.content_disposition() {
+        builder = builder.header(header::CONTENT_DISPOSITION, content_disposition);
+      }
     }
 
     let Some(range) = self.range else {

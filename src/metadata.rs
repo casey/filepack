@@ -47,6 +47,10 @@ impl Metadata {
     files: &HashSet<RelativePath>,
     empty: &[RelativePath],
   ) -> Result {
+    if let Some(Media::Web) = self.media {
+      return Ok(());
+    }
+
     let present = files
       .iter()
       .cloned()
@@ -123,6 +127,7 @@ impl Metadata {
         Media::Audio { tracks } => files.extend(tracks.iter().map(Audio::as_path)),
         Media::Image { images } => files.extend(images.iter().map(Image::as_path)),
         Media::Video { videos } => files.extend(videos.iter().map(Video::as_path)),
+        Media::Web => {}
       }
     }
 
@@ -151,6 +156,7 @@ impl Metadata {
             video.populate(root)?;
           }
         }
+        Media::Web => {}
       }
     }
 
@@ -250,6 +256,22 @@ mod tests {
         videos: vec!["foo.mp4".parse().unwrap(), "bar.mp4".parse().unwrap()],
       }),
     );
+  }
+
+  #[test]
+  fn deserialize_media_web() {
+    let metadata = Metadata::deserialize(
+      Metadata::YAML_FILENAME.as_ref(),
+      &unindent(
+        "
+          media:
+            type: web
+        ",
+      ),
+    )
+    .unwrap();
+
+    assert_eq!(metadata.media, Some(Media::Web));
   }
 
   #[test]

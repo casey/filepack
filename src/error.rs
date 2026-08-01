@@ -387,6 +387,27 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     filename: RelativePath,
   },
+  #[snafu(display("failed to retrieve mounted package from server"))]
+  MountedPackage {
+    backtrace: Option<Backtrace>,
+    source: error::ServerError,
+  },
+  #[snafu(display(
+    "mounted package `{fingerprint}` has unexpected media type {media_type}, only web packages may \
+     be mounted",
+  ))]
+  MountedPackageMediaType {
+    backtrace: Option<Backtrace>,
+    fingerprint: Fingerprint,
+    media_type: MediaType,
+  },
+  #[snafu(display(
+    "mounted package `{fingerprint}` has no media type, only web packages may be mounted",
+  ))]
+  MountedPackageNoMediaType {
+    backtrace: Option<Backtrace>,
+    fingerprint: Fingerprint,
+  },
   #[snafu(display("invalid path `{path}`"))]
   Path {
     path: DisplayPath,

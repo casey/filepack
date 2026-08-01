@@ -11,15 +11,32 @@ use {
 static RUNTIME: LazyLock<Runtime> = LazyLock::new(|| Runtime::new().unwrap());
 
 struct PackageBuilder<'a> {
-  directory: Directory,
   files: BTreeMap<&'a str, &'a [u8]>,
   metadata: Option<&'a Metadata>,
 }
 
 impl<'a> PackageBuilder<'a> {
+  fn directory(&self) -> Directory {
+    let mut directory = Directory::new();
+
+    if let Some(metadata) = self.metadata {
+      directory.insert_file(Metadata::CBOR_FILENAME, &metadata.encode_to_vec());
+    }
+
+    for (name, content) in &self.files {
+      directory.insert_file(name, content);
+    }
+
+    directory
+  }
+
   fn file(mut self, name: &'a str, content: &'a [u8]) -> Self {
     assert!(self.files.insert(name, content).is_none());
     self
+  }
+
+  fn fingerprint(&self) -> Fingerprint {
+    Fingerprint(self.directory().cbor().1)
   }
 
   fn metadata(mut self, metadata: &'a Metadata) -> Self {
@@ -29,29 +46,21 @@ impl<'a> PackageBuilder<'a> {
 
   fn new() -> Self {
     Self {
-      directory: Directory::new(),
       files: BTreeMap::new(),
       metadata: None,
     }
   }
 
-  fn upload(mut self, server: &TestServer) -> Fingerprint {
+  fn upload(self, server: &TestServer) -> Fingerprint {
     if let Some(metadata) = self.metadata {
-      let metadata = metadata.encode_to_vec();
-
-      self
-        .directory
-        .insert_file(Metadata::CBOR_FILENAME, &metadata);
-
-      server.write_file(&metadata);
+      server.write_file(&metadata.encode_to_vec());
     }
 
-    for (name, content) in self.files {
+    for content in self.files.values() {
       server.write_file(content);
-      self.directory.insert_file(name, content);
     }
 
-    let (cbor, hash) = self.directory.cbor();
+    let (cbor, hash) = self.directory().cbor();
 
     let fingerprint = Fingerprint(hash);
     server.write_file(&cbor);
@@ -232,6 +241,7 @@ impl TestServer {
   fn builder() -> TestServerBuilder {
     TestServerBuilder {
       auth_config: None,
+      mounts: HashSet::new(),
       url: None,
     }
   }
@@ -266,6 +276,7 @@ impl TestServer {
 
 struct TestServerBuilder {
   auth_config: Option<Arc<AuthConfig>>,
+  mounts: HashSet<Fingerprint>,
   url: Option<Url>,
 }
 
@@ -284,7 +295,10 @@ impl TestServerBuilder {
       server,
       self.auth_config,
       None,
-      Arc::new(ServerConfig { url: self.url }),
+      Arc::new(ServerConfig {
+        mounts: self.mounts,
+        url: self.url,
+      }),
     );
 
     TestServer {
@@ -292,6 +306,11 @@ impl TestServerBuilder {
       router,
       tempdir,
     }
+  }
+
+  fn mount(mut self, fingerprint: Fingerprint) -> Self {
+    self.mounts.insert(fingerprint);
+    self
   }
 
   fn url(mut self, url: Url) -> Self {
@@ -1238,6 +1257,126 @@ fn missing_returns_missing_hashes() {
 }
 
 #[test]
+fn mount_file() {
+  let metadata = Metadata {
+    media: Some(Media::Web),
+    ..default()
+  };
+
+  let package = PackageBuilder::new()
+    .metadata(&metadata)
+    .file("foo.css", b"bar");
+
+  let server = TestServer::builder().mount(package.fingerprint()).build();
+
+  let fingerprint = package.upload(&server);
+
+  server
+    .get(format!("/mount/{fingerprint}/foo.css"))
+    .assert_header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
+    .assert_header(header::CONTENT_TYPE, "text/css")
+    .assert_header_absent(header::CONTENT_SECURITY_POLICY)
+    .assert_header_absent(header::CONTENT_DISPOSITION)
+    .assert_body("bar")
+    .send();
+}
+
+#[test]
+fn mount_file_invalid_path() {
+  let metadata = Metadata {
+    media: Some(Media::Web),
+    ..default()
+  };
+
+  let package = PackageBuilder::new().metadata(&metadata);
+
+  let server = TestServer::builder().mount(package.fingerprint()).build();
+
+  let fingerprint = package.upload(&server);
+
+  server
+    .get(format!("/mount/{fingerprint}/%2e%2e/foo"))
+    .status(StatusCode::BAD_REQUEST)
+    .assert_body(
+      "Invalid URL: Cannot parse `path` with value `../foo`: path contains invalid component `..`",
+    )
+    .send();
+}
+
+#[test]
+fn mount_file_not_found() {
+  let metadata = Metadata {
+    media: Some(Media::Web),
+    ..default()
+  };
+
+  let package = PackageBuilder::new().metadata(&metadata);
+
+  let server = TestServer::builder().mount(package.fingerprint()).build();
+
+  let fingerprint = package.upload(&server);
+
+  server
+    .get(format!("/mount/{fingerprint}/foo"))
+    .status(StatusCode::NOT_FOUND)
+    .assert_body(format!("file `foo` not found in package {fingerprint}"))
+    .send();
+}
+
+#[test]
+fn mount_file_not_mounted() {
+  let server = TestServer::new();
+
+  let fingerprint = PackageBuilder::new()
+    .metadata(&Metadata {
+      media: Some(Media::Web),
+      ..default()
+    })
+    .file("index.html", b"foo")
+    .upload(&server);
+
+  server
+    .get(format!("/mount/{fingerprint}/index.html"))
+    .status(StatusCode::NOT_FOUND)
+    .assert_body(format!("package {fingerprint} not mounted"))
+    .send();
+}
+
+#[test]
+fn mount_redirect() {
+  TestServer::new()
+    .get(format!("/mount/{}", test::FINGERPRINT))
+    .status(StatusCode::PERMANENT_REDIRECT)
+    .assert_header(header::LOCATION, format!("/mount/{}/", test::FINGERPRINT))
+    .send();
+}
+
+#[test]
+fn mount_serves_index_html() {
+  let metadata = Metadata {
+    media: Some(Media::Web),
+    ..default()
+  };
+
+  let package = PackageBuilder::new()
+    .metadata(&metadata)
+    .file("index.html", b"foo");
+
+  let server = TestServer::builder().mount(package.fingerprint()).build();
+
+  let fingerprint = package.upload(&server);
+
+  server
+    .get(format!("/mount/{fingerprint}/"))
+    .assert_header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
+    .assert_header(header::CONTENT_TYPE, "text/html")
+    .assert_header_absent(header::CONTENT_SECURITY_POLICY)
+    .assert_header_absent(header::CONTENT_DISPOSITION)
+    .assert_body("foo")
+    .send();
+}
+
+#[test]
 fn non_fingerprint_bech32_falls_through() {
   TestServer::new()
     .get(format!("/{}", test::PUBLIC_KEY))
@@ -1446,6 +1585,24 @@ fn package_item_video_out_of_range() {
     .assert_body(format!(
       "video 2 does not exist, package {fingerprint} has 1 video"
     ))
+    .send();
+}
+
+#[test]
+fn package_item_web() {
+  let server = TestServer::new();
+
+  let fingerprint = PackageBuilder::new()
+    .metadata(&Metadata {
+      media: Some(Media::Web),
+      ..default()
+    })
+    .upload(&server);
+
+  server
+    .get(format!("/package/{fingerprint}/item/1"))
+    .status(StatusCode::NOT_FOUND)
+    .assert_body("media type web does not have items")
     .send();
 }
 
@@ -1757,6 +1914,43 @@ fn package_page_renders_video_media() {
 }
 
 #[test]
+fn package_page_web() {
+  let server = TestServer::new();
+
+  let metadata = Metadata {
+    media: Some(Media::Web),
+    ..default()
+  };
+
+  let metadata_cbor_len = metadata.encode_to_vec().len().into_u64();
+
+  let package = PackageBuilder::new()
+    .metadata(&metadata)
+    .file("index.html", b"foo");
+
+  let directory = package.directory();
+
+  let fingerprint = package.upload(&server);
+
+  server
+    .get(format!("/package/{fingerprint}"))
+    .assert_page(PackageHtml {
+      colophon: None,
+      directory,
+      fingerprint,
+      metadata: Some(metadata),
+      readme: None,
+      totals: Totals {
+        directories: 0,
+        directory_size: 0,
+        file_size: metadata_cbor_len + 3,
+        files: 2,
+      },
+    })
+    .send();
+}
+
+#[test]
 fn packages_empty() {
   TestServer::new()
     .get("/packages")
@@ -2039,6 +2233,18 @@ fn server_config() {
       ..Serve::default()
     },
     Some("https://foo/"),
+  );
+
+  let fingerprint = Fingerprint(Hash::bytes(b"foo"));
+
+  assert_eq!(
+    Serve {
+      mounts: vec![fingerprint],
+      ..Serve::default()
+    }
+    .server_config()
+    .mounts,
+    HashSet::from([fingerprint]),
   );
 }
 

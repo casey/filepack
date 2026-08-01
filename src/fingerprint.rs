@@ -8,6 +8,7 @@ use super::*;
   DeserializeFromStr,
   Encode,
   Eq,
+  Hash,
   Ord,
   PartialEq,
   PartialOrd,
