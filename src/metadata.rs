@@ -127,7 +127,7 @@ impl Metadata {
         Media::Audio { tracks } => files.extend(tracks.iter().map(Audio::as_path)),
         Media::Image { images } => files.extend(images.iter().map(Image::as_path)),
         Media::Video { videos } => files.extend(videos.iter().map(Video::as_path)),
-        Media::Web => {}
+        Media::Web => files.push("index.html".parse().unwrap()),
       }
     }
 
