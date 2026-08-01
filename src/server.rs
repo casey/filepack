@@ -74,6 +74,15 @@ impl Server {
     Ok(files)
   }
 
+  pub(crate) fn fingerprints(&self) -> ServerResult<BTreeSet<Fingerprint>> {
+    let tx = self.database.begin_read()?;
+
+    tx.open_table(PACKAGES)?
+      .iter()?
+      .map(|entry| Ok(entry?.0.value()))
+      .collect()
+  }
+
   pub(crate) fn media_item(
     &self,
     fingerprint: Fingerprint,

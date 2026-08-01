@@ -326,6 +326,34 @@ fn admin_key_requires_restrict_upload() {
 }
 
 #[test]
+fn api_packages_returns_package_fingerprints() {
+  let server = TestServer::new();
+
+  server
+    .get("/api/packages")
+    .assert_body(
+      api::packages::Response {
+        packages: BTreeSet::new().into(),
+      }
+      .encode_to_vec(),
+    )
+    .send();
+
+  let foo = PackageBuilder::new().file("foo", b"foo").upload(&server);
+  let bar = PackageBuilder::new().file("bar", b"bar").upload(&server);
+
+  server
+    .get("/api/packages")
+    .assert_body(
+      api::packages::Response {
+        packages: BTreeSet::from([foo, bar]).into(),
+      }
+      .encode_to_vec(),
+    )
+    .send();
+}
+
+#[test]
 fn artwork_missing() {
   let server = TestServer::new();
 

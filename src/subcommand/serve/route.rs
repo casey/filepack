@@ -1,5 +1,31 @@
 use super::*;
 
+pub(crate) async fn api_missing(
+  _: Authenticated,
+  server: ServerExtension,
+  Cbor(request): Cbor<api::missing::Request, { MIB }>,
+) -> ServerResult<Vec<u8>> {
+  block_in_place(|| {
+    Ok(
+      api::missing::Response {
+        hashes: server.missing(&request.hashes)?.into(),
+      }
+      .encode_to_vec(),
+    )
+  })
+}
+
+pub(crate) async fn api_packages(server: ServerExtension) -> ServerResult<Vec<u8>> {
+  block_in_place(|| {
+    Ok(
+      api::packages::Response {
+        packages: server.fingerprints()?.into(),
+      }
+      .encode_to_vec(),
+    )
+  })
+}
+
 pub(crate) async fn artwork(
   server: ServerExtension,
   fingerprint: Path<Fingerprint>,
@@ -135,21 +161,6 @@ pub(crate) async fn media_video_item(
       server
         .media_item(fingerprint, item, MediaType::Video)?
         .range(range),
-    )
-  })
-}
-
-pub(crate) async fn missing(
-  _: Authenticated,
-  server: ServerExtension,
-  Cbor(request): Cbor<api::missing::Request, { MIB }>,
-) -> ServerResult<Vec<u8>> {
-  block_in_place(|| {
-    Ok(
-      api::missing::Response {
-        hashes: server.missing(&request.hashes)?.into(),
-      }
-      .encode_to_vec(),
     )
   })
 }
