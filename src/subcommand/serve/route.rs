@@ -212,12 +212,12 @@ pub(crate) async fn mount_redirect(Path(fingerprint): Path<Fingerprint>) -> Redi
 pub(crate) async fn package(
   server: ServerExtension,
   server_config: ServerConfigExtension,
-  fingerprint: Path<Fingerprint>,
+  Path(fingerprint): Path<Fingerprint>,
 ) -> PageResult<PackageHtml> {
   block_in_place(|| {
     Ok(
       server
-        .package_html(*fingerprint, server_config.mounts.contains(&fingerprint))?
+        .package_html(fingerprint, server_config.mounts.contains(&fingerprint))?
         .page(server_config.url.clone()),
     )
   })
