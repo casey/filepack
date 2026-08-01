@@ -217,7 +217,7 @@ pub(crate) async fn package(
   block_in_place(|| {
     Ok(
       server
-        .package_html(*fingerprint)?
+        .package_html(*fingerprint, server_config.mounts.contains(&fingerprint))?
         .page(server_config.url.clone()),
     )
   })

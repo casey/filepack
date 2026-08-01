@@ -200,7 +200,11 @@ impl Server {
       .context(server_error::PackageFileNotFound { fingerprint, path })
   }
 
-  pub(crate) fn package_html(&self, fingerprint: Fingerprint) -> ServerResult<PackageHtml> {
+  pub(crate) fn package_html(
+    &self,
+    fingerprint: Fingerprint,
+    mounted: bool,
+  ) -> ServerResult<PackageHtml> {
     let tx = self.database.begin_read()?;
 
     let packages = tx.open_table(PACKAGES)?;
@@ -235,6 +239,7 @@ impl Server {
       directory,
       fingerprint,
       metadata,
+      mounted,
       readme,
       totals,
     })
