@@ -259,6 +259,22 @@ mod tests {
   }
 
   #[test]
+  fn deserialize_media_web() {
+    let metadata = Metadata::deserialize(
+      Metadata::YAML_FILENAME.as_ref(),
+      &unindent(
+        "
+          media:
+            type: web
+        ",
+      ),
+    )
+    .unwrap();
+
+    assert_eq!(metadata.media, Some(Media::Web));
+  }
+
+  #[test]
   fn deserialize_rejects_invalid_values() {
     #[track_caller]
     fn case(yaml: &str, expected: &str) {

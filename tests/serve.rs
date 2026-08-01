@@ -37,6 +37,78 @@ fn http2_is_supported() {
 }
 
 #[test]
+fn mount_rejects_non_web_package() {
+  let server = Test::new().serve().spawn();
+
+  let test = Test::new()
+    .write("metadata.yaml", "media:\n  type: audio\n  tracks: []\n")
+    .args(["create", "."])
+    .success();
+
+  let fingerprint = Manifest::load(Some(&test.path().join("manifest.filepack")))
+    .unwrap()
+    .fingerprint();
+
+  test
+    .args(["upload", "--server", &server.address(), "manifest.filepack"])
+    .stderr("uploading 2 of 2 files\n")
+    .success();
+
+  server
+    .terminate()
+    .success()
+    .args(["serve", "--mount", &fingerprint.to_string()])
+    .stderr(&format!(
+      "error: mounted package `{fingerprint}` has unexpected media type audio, only web packages \
+       may be mounted\n"
+    ))
+    .failure();
+}
+
+#[test]
+fn mount_rejects_package_without_media_type() {
+  let server = Test::new().serve().spawn();
+
+  let test = Test::new()
+    .write("metadata.yaml", "title: Foo")
+    .args(["create", "."])
+    .success();
+
+  let fingerprint = Manifest::load(Some(&test.path().join("manifest.filepack")))
+    .unwrap()
+    .fingerprint();
+
+  test
+    .args(["upload", "--server", &server.address(), "manifest.filepack"])
+    .stderr("uploading 2 of 2 files\n")
+    .success();
+
+  server
+    .terminate()
+    .success()
+    .args(["serve", "--mount", &fingerprint.to_string()])
+    .stderr(&format!(
+      "error: mounted package `{fingerprint}` has no media type, only web packages may be mounted\n"
+    ))
+    .failure();
+}
+
+#[test]
+fn mount_requires_existing_package() {
+  let fingerprint = "package1a4uf5nw04lxs6dgzqfh4rdhxffxdukfwf4hq39d7vn2fu4eqlxf3ql7ykr3";
+
+  Test::new()
+    .args(["serve", "--mount", fingerprint])
+    .stderr(&format!(
+      "\
+error: failed to retrieve mounted package from server
+       └─ package {fingerprint} not found
+"
+    ))
+    .failure();
+}
+
+#[test]
 fn redirect_alias() {
   let server = Test::new()
     .ready_address()

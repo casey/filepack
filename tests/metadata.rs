@@ -1,6 +1,16 @@
 use super::*;
 
 #[test]
+fn create_allows_extra_files_in_web_packages() {
+  Test::new()
+    .write("metadata.yaml", "media:\n  type: web\n")
+    .touch("index.html")
+    .touch("bar.txt")
+    .arg("create")
+    .success();
+}
+
+#[test]
 fn create_checks_metadata() {
   Test::new()
     .write("metadata.yaml", "title: Foo\nreadme: README.md")
