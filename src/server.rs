@@ -164,11 +164,11 @@ impl Server {
 
     Ok(Resource {
       content_length,
-      content_type: None,
       file,
       hash,
       range: None,
       ty: ResourceType::Binary,
+      unsandboxed_content_type: None,
     })
   }
 

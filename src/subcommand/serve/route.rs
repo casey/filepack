@@ -189,7 +189,7 @@ pub(crate) async fn mount_file(
       server
         .open_file(hash)?
         .range(range)
-        .content_type(content_type),
+        .unsandboxed_content_type(content_type),
     )
   })
 }

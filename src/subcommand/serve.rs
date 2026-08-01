@@ -399,9 +399,8 @@ impl Serve {
 
     for &fingerprint in &self.mounts {
       let metadata = server
-        .package_metadata_opt(fingerprint)
-        .context(error::Server)?
-        .context(error::MountedPackageNotFound { fingerprint })?;
+        .package_metadata(fingerprint)
+        .context(error::MountedPackage)?;
 
       let Some(media) = metadata.media else {
         return Err(error::MountedPackageNoMediaType { fingerprint }.build());

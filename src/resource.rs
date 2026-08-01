@@ -4,17 +4,17 @@ const MAX_CACHE: &str = "public, max-age=31536000, immutable";
 
 pub(crate) struct Resource {
   pub(crate) content_length: u64,
-  pub(crate) content_type: Option<Mime>,
   pub(crate) file: fs::File,
   pub(crate) hash: Hash,
   pub(crate) range: Option<headers::Range>,
   pub(crate) ty: ResourceType,
+  pub(crate) unsandboxed_content_type: Option<Mime>,
 }
 
 impl Resource {
-  pub(crate) fn content_type(self, content_type: Mime) -> Self {
+  pub(crate) fn unsandboxed_content_type(self, unsandboxed_content_type: Mime) -> Self {
     Self {
-      content_type: Some(content_type),
+      unsandboxed_content_type: Some(unsandboxed_content_type),
       ..self
     }
   }
@@ -46,7 +46,7 @@ impl IntoResponse for Resource {
       .header(header::ACCEPT_RANGES, "bytes")
       .header(header::ETAG, format!("\"{}\"", self.hash));
 
-    if let Some(content_type) = &self.content_type {
+    if let Some(content_type) = &self.unsandboxed_content_type {
       builder = builder.header(header::CONTENT_TYPE, content_type.to_string());
     } else {
       builder = builder.header(header::CONTENT_TYPE, self.ty.content_type().as_ref());

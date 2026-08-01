@@ -387,6 +387,11 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     filename: RelativePath,
   },
+  #[snafu(display("failed to retrieve mounted package from server"))]
+  MountedPackage {
+    backtrace: Option<Backtrace>,
+    source: error::ServerError,
+  },
   #[snafu(display(
     "mounted package `{fingerprint}` has unexpected media type {media_type}, only web packages may \
      be mounted",
@@ -397,15 +402,9 @@ pub enum Error {
     media_type: MediaType,
   },
   #[snafu(display(
-    "mounted package `{fingerprint}` has unexpected no media type, only web packages may be \
-     mounted",
+    "mounted package `{fingerprint}` has no media type, only web packages may be mounted",
   ))]
   MountedPackageNoMediaType {
-    backtrace: Option<Backtrace>,
-    fingerprint: Fingerprint,
-  },
-  #[snafu(display("mounted package `{fingerprint}` not found"))]
-  MountedPackageNotFound {
     backtrace: Option<Backtrace>,
     fingerprint: Fingerprint,
   },
@@ -502,11 +501,6 @@ pub enum Error {
   Serve {
     backtrace: Option<Backtrace>,
     source: io::Error,
-  },
-  #[snafu(display("server error"))]
-  Server {
-    backtrace: Option<Backtrace>,
-    source: error::ServerError,
   },
   #[snafu(display("failed to build server runtime"))]
   ServerRuntime {
