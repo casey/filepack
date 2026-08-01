@@ -361,6 +361,15 @@ fn create_rejects_metadata_cbor_without_yaml() {
 }
 
 #[test]
+fn create_requires_index_html_in_web_packages() {
+  Test::new()
+    .write("metadata.yaml", "media:\n  type: web\n")
+    .arg("create")
+    .stderr("error: file referenced in metadata missing: `index.html`\n")
+    .failure();
+}
+
+#[test]
 fn create_succeeds_with_valid_metadata() {
   Test::new()
     .touch("content")
