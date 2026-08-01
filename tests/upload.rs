@@ -521,6 +521,7 @@ fn upload_package_serves_package_html() {
       directory,
       fingerprint,
       metadata: Some(metadata),
+      mounted: false,
       readme: None,
       totals,
     },

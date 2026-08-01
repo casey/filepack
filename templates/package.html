@@ -19,6 +19,10 @@
   <dd>{{ format_size(self.totals.file_size) }}</dd>
   <dt>files</dt>
   <dd><a href=/directory/{{ Hash::from(self.fingerprint) }}>{{ self.totals.files }} files</a></dd>
+%% if self.mounted {
+  <dt>mount</dt>
+  <dd><a href=/mount/{{ self.fingerprint }}/>view</a></dd>
+%% }
 %% if let Some(metadata) = &self.metadata {
 %%   if let Some(title) = &metadata.title {
   <dt>title</dt>

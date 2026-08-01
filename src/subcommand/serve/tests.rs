@@ -753,6 +753,7 @@ fn get_package_with_metadata() {
       directory,
       fingerprint,
       metadata: Some(metadata),
+      mounted: false,
       readme: Some(Hash::bytes(readme)),
       totals: Totals {
         directories: 0,
@@ -783,6 +784,7 @@ fn get_package_without_metadata() {
       directory,
       fingerprint,
       metadata: None,
+      mounted: false,
       readme: None,
       totals: Totals::default(),
     })
@@ -1758,6 +1760,7 @@ fn package_page_og_image() {
         directory,
         fingerprint,
         metadata: Some(metadata),
+        mounted: false,
         readme: None,
         totals: Totals {
           directories: 0,
@@ -1833,6 +1836,7 @@ fn package_page_renders_audio_media() {
       directory: Directory::new(),
       fingerprint,
       metadata: Some(metadata),
+      mounted: false,
       readme: None,
       totals,
     })
@@ -1877,6 +1881,7 @@ fn package_page_renders_image_media() {
       directory: Directory::new(),
       fingerprint,
       metadata: Some(metadata),
+      mounted: false,
       readme: None,
       totals,
     })
@@ -1941,6 +1946,7 @@ fn package_page_renders_video_media() {
       directory: Directory::new(),
       fingerprint,
       metadata: Some(metadata),
+      mounted: false,
       readme: None,
       totals,
     })
@@ -1949,8 +1955,6 @@ fn package_page_renders_video_media() {
 
 #[test]
 fn package_page_web() {
-  let server = TestServer::new();
-
   let metadata = Metadata {
     media: Some(Media::Web),
     ..default()
@@ -1964,6 +1968,8 @@ fn package_page_web() {
 
   let directory = package.directory();
 
+  let server = TestServer::builder().mount(package.fingerprint()).build();
+
   let fingerprint = package.upload(&server);
 
   server
@@ -1973,6 +1979,7 @@ fn package_page_web() {
       directory,
       fingerprint,
       metadata: Some(metadata),
+      mounted: true,
       readme: None,
       totals: Totals {
         directories: 0,

@@ -6,6 +6,7 @@ pub struct PackageHtml {
   pub directory: Directory,
   pub fingerprint: Fingerprint,
   pub metadata: Option<Metadata>,
+  pub mounted: bool,
   pub readme: Option<Hash>,
   pub totals: Totals,
 }
@@ -92,6 +93,7 @@ mod tests {
         directory: Directory::new(),
         fingerprint: test::FINGERPRINT.parse().unwrap(),
         metadata: Some(metadata),
+        mounted: false,
         readme: None,
         totals: Totals {
           directories: 0,
@@ -198,6 +200,7 @@ mod tests {
         directory: Directory::new(),
         fingerprint: test::FINGERPRINT.parse().unwrap(),
         metadata: Some(metadata),
+        mounted: false,
         readme: None,
         totals: Totals {
           directories: 0,
@@ -282,6 +285,7 @@ mod tests {
         directory: Directory::new(),
         fingerprint: test::FINGERPRINT.parse().unwrap(),
         metadata: Some(metadata),
+        mounted: false,
         readme: None,
         totals: Totals {
           directories: 0,
@@ -367,6 +371,7 @@ mod tests {
         directory: Directory::new(),
         fingerprint: test::FINGERPRINT.parse().unwrap(),
         metadata: Some(metadata),
+        mounted: false,
         readme: None,
         totals: Totals {
           directories: 0,
@@ -437,6 +442,7 @@ mod tests {
         description: Some("bar".parse().unwrap()),
         ..default()
       }),
+      mounted: false,
       readme: None,
       totals: Totals::default(),
     };
@@ -459,6 +465,7 @@ mod tests {
       directory: Directory::new(),
       fingerprint: test::FINGERPRINT.parse().unwrap(),
       metadata: None,
+      mounted: false,
       readme: None,
       totals: Totals::default(),
     };
@@ -491,6 +498,7 @@ mod tests {
         directory,
         fingerprint: test::FINGERPRINT.parse().unwrap(),
         metadata: Some(metadata),
+        mounted: false,
         readme: Some(test::HASH.parse().unwrap()),
         totals: Totals {
           directories: 0,
@@ -595,6 +603,7 @@ mod tests {
         directory: Directory::new(),
         fingerprint: test::FINGERPRINT.parse().unwrap(),
         metadata: Some(metadata),
+        mounted: false,
         readme: None,
         totals: Totals {
           directories: 0,
