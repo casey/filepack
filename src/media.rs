@@ -32,6 +32,9 @@ pub(crate) enum Media {
 }
 
 impl Media {
+  pub(crate) const WEB_INDEX: &'static str = "static/index.html";
+  pub(crate) const WEB_ROOT: &'static str = "static";
+
   pub(crate) fn item(&self, i: usize) -> Option<&dyn Item> {
     match self {
       Self::Audio { tracks } => tracks.get(i).map(|item| item as &dyn Item),
