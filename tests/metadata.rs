@@ -5,7 +5,8 @@ fn create_allows_extra_files_in_web_packages() {
   Test::new()
     .write("metadata.yaml", "media:\n  type: web\n")
     .touch("static/index.html")
-    .touch("bar.txt")
+    .touch("static/bar.txt")
+    .create_dir("static/foo")
     .arg("create")
     .success();
 }
@@ -261,6 +262,22 @@ media:
 error: found 2 extra files not referenced in metadata
        ├─ `bar.txt`
        └─ `empty`
+",
+    )
+    .failure();
+}
+
+#[test]
+fn create_rejects_extra_files_in_web_packages() {
+  Test::new()
+    .write("metadata.yaml", "media:\n  type: web\n")
+    .touch("static/index.html")
+    .touch("bar.txt")
+    .arg("create")
+    .stderr(
+      "\
+error: found 1 extra file not referenced in metadata
+       └─ `bar.txt`
 ",
     )
     .failure();
