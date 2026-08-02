@@ -10,63 +10,69 @@ use {
 
 static RUNTIME: LazyLock<Runtime> = LazyLock::new(|| Runtime::new().unwrap());
 
+#[derive(Default)]
+struct DirectoryBuilder<'a> {
+  directories: BTreeMap<&'a str, DirectoryBuilder<'a>>,
+  files: BTreeMap<&'a str, Vec<u8>>,
+}
+
+impl<'a> DirectoryBuilder<'a> {
+  fn directory(&self) -> Directory {
+    let mut directory = Directory::new();
+
+    for (name, child) in &self.directories {
+      directory.insert_directory(name, &child.directory());
+    }
+
+    for (name, content) in &self.files {
+      directory.insert_file(name, content);
+    }
+
+    directory
+  }
+
+  fn file(&mut self, path: &'a str, content: &[u8]) {
+    if let Some((name, path)) = path.split_once('/') {
+      self
+        .directories
+        .entry(name)
+        .or_default()
+        .file(path, content);
+    } else {
+      assert!(self.files.insert(path, content.to_vec()).is_none());
+    }
+  }
+
+  fn upload(&self, server: &TestServer) -> Hash {
+    for child in self.directories.values() {
+      child.upload(server);
+    }
+
+    for content in self.files.values() {
+      server.write_file(content);
+    }
+
+    let (cbor, hash) = self.directory().cbor();
+
+    server.write_file(&cbor);
+    server.post(format!("/directory/{hash}")).send();
+
+    hash
+  }
+}
+
+#[derive(Default)]
 struct PackageBuilder<'a> {
-  files: BTreeMap<&'a str, &'a [u8]>,
-  metadata: Option<&'a Metadata>,
+  root: DirectoryBuilder<'a>,
 }
 
 impl<'a> PackageBuilder<'a> {
-  fn directories(&self) -> Vec<Directory> {
-    fn build<'a>(
-      files: BTreeMap<&'a str, &'a [u8]>,
-      directories: &mut Vec<Directory>,
-    ) -> Directory {
-      let mut directory = Directory::new();
-
-      let mut children = BTreeMap::<&str, BTreeMap<&str, &[u8]>>::new();
-
-      for (path, content) in files {
-        if let Some((child, rest)) = path.split_once('/') {
-          assert!(
-            children
-              .entry(child)
-              .or_default()
-              .insert(rest, content)
-              .is_none()
-          );
-        } else {
-          directory.insert_file(path, content);
-        }
-      }
-
-      for (name, files) in children {
-        let child = build(files, directories);
-        directory.insert_directory(name, &child);
-        directories.push(child);
-      }
-
-      directory
-    }
-
-    let mut directories = Vec::new();
-
-    let mut root = build(self.files.clone(), &mut directories);
-
-    if let Some(metadata) = self.metadata {
-      root.insert_file(Metadata::CBOR_FILENAME, &metadata.encode_to_vec());
-    }
-
-    directories.push(root);
-
-    directories
-  }
-
   fn directory(&self) -> Directory {
-    self.directories().pop().unwrap()
+    self.root.directory()
   }
 
-  fn file(mut self, name: &'a str, content: &'a [u8]) -> Self {
-    assert!(self.files.insert(name, content).is_none());
+  fn file(mut self, path: &'a str, content: &[u8]) -> Self {
+    self.root.file(path, content);
     self
   }
 
@@ -74,36 +80,16 @@ impl<'a> PackageBuilder<'a> {
     Fingerprint(self.directory().cbor().1)
   }
 
-  fn metadata(mut self, metadata: &'a Metadata) -> Self {
-    self.metadata = Some(metadata);
-    self
+  fn metadata(self, metadata: &Metadata) -> Self {
+    self.file(Metadata::CBOR_FILENAME, &metadata.encode_to_vec())
   }
 
   fn new() -> Self {
-    Self {
-      files: BTreeMap::new(),
-      metadata: None,
-    }
+    Self::default()
   }
 
   fn upload(self, server: &TestServer) -> Fingerprint {
-    if let Some(metadata) = self.metadata {
-      server.write_file(&metadata.encode_to_vec());
-    }
-
-    for content in self.files.values() {
-      server.write_file(content);
-    }
-
-    let directories = self.directories();
-
-    let fingerprint = Fingerprint(directories.last().unwrap().cbor().1);
-
-    for directory in &directories {
-      let (cbor, hash) = directory.cbor();
-      server.write_file(&cbor);
-      server.post(format!("/directory/{hash}")).send();
-    }
+    let fingerprint = Fingerprint(self.root.upload(server));
 
     server.post(format!("/package/{fingerprint}")).send();
 
