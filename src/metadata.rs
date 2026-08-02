@@ -47,10 +47,6 @@ impl Metadata {
     files: &HashSet<RelativePath>,
     empty: &[RelativePath],
   ) -> Result {
-    if let Some(Media::Web) = self.media {
-      return Ok(());
-    }
-
     let present = files
       .iter()
       .cloned()
@@ -68,6 +64,10 @@ impl Metadata {
       .difference(&referenced)
       .cloned()
       .collect::<Vec<RelativePath>>();
+
+    if let Some(Media::Web) = self.media {
+      extra.retain(|path| !path.starts_with("static"));
+    }
 
     extra.sort();
 
