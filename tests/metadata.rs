@@ -21,6 +21,25 @@ fn create_checks_metadata() {
 }
 
 #[test]
+fn create_does_not_write_metadata_cbor_on_failure() {
+  Test::new()
+    .write("metadata.yaml", "media:\n  type: web\n")
+    .touch("static/index.html")
+    .touch("bar.txt")
+    .arg("create")
+    .stderr(
+      "\
+error: found 1 extra file not referenced in metadata
+       └─ `bar.txt`
+",
+    )
+    .failure()
+    .remove_file("bar.txt")
+    .arg("create")
+    .success();
+}
+
+#[test]
 fn create_extracts_artwork_dimensions() {
   Test::new()
     .write("cover.png", image(2, 2, ImageFormat::Png))

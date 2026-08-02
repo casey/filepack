@@ -55,8 +55,6 @@ impl Create {
         },
       }
 
-      filesystem::write(&path, &cbor)?;
-
       Some((metadata, cbor))
     } else {
       let path = root.join(Metadata::CBOR_FILENAME);
@@ -177,6 +175,15 @@ impl Create {
       error::ManifestAlreadyExists {
         path: manifest_path,
       },
+    }
+
+    if let Some((_metadata, cbor)) = &metadata {
+      filesystem::write(&root.join(Metadata::CBOR_FILENAME), cbor)?;
+
+      paths.insert(
+        Metadata::CBOR_FILENAME.parse().unwrap(),
+        cbor.len().into_u64(),
+      );
     }
 
     let mut total_file_size = 0u64;
