@@ -146,19 +146,11 @@ impl FromStr for RelativePath {
       return Err(PathError::DoubleSlash);
     }
 
-    let mut path = String::new();
-
-    for (i, component) in s.split('/').enumerate() {
+    for component in s.split('/') {
       Component::new(component).context(path_error::Component { component })?;
-
-      if i > 0 {
-        path.push('/');
-      }
-
-      path.push_str(component);
     }
 
-    Ok(Self(path))
+    Ok(Self(s.into()))
   }
 }
 
