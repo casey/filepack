@@ -180,13 +180,9 @@ impl Create {
     if let Some((_metadata, cbor)) = &metadata {
       filesystem::write(&root.join(Metadata::CBOR_FILENAME), cbor)?;
 
-      assert!(
-        paths
-          .insert(
-            Metadata::CBOR_FILENAME.parse().unwrap(),
-            cbor.len().into_u64(),
-          )
-          .is_none(),
+      paths.insert(
+        Metadata::CBOR_FILENAME.parse().unwrap(),
+        cbor.len().into_u64(),
       );
     }
 
