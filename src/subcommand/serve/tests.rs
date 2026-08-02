@@ -12,20 +12,22 @@ static RUNTIME: LazyLock<Runtime> = LazyLock::new(|| Runtime::new().unwrap());
 
 #[derive(Default)]
 struct DirectoryBuilder<'a> {
-  directories: BTreeMap<&'a str, DirectoryBuilder<'a>>,
-  files: BTreeMap<&'a str, Vec<u8>>,
+  entries: BTreeMap<&'a str, DirectoryBuilderEntry<'a>>,
 }
 
 impl<'a> DirectoryBuilder<'a> {
   fn directory(&self) -> Directory {
     let mut directory = Directory::new();
 
-    for (name, child) in &self.directories {
-      directory.insert_directory(name, &child.directory());
-    }
-
-    for (name, content) in &self.files {
-      directory.insert_file(name, content);
+    for (name, entry) in &self.entries {
+      match entry {
+        DirectoryBuilderEntry::Directory(child) => {
+          directory.insert_directory(name, &child.directory());
+        }
+        DirectoryBuilderEntry::File(content) => {
+          directory.insert_file(name, content);
+        }
+      }
     }
 
     directory
@@ -33,23 +35,35 @@ impl<'a> DirectoryBuilder<'a> {
 
   fn file(&mut self, path: &'a str, content: &[u8]) {
     if let Some((name, path)) = path.split_once('/') {
-      self
-        .directories
+      let entry = self
+        .entries
         .entry(name)
-        .or_default()
-        .file(path, content);
+        .or_insert_with(|| DirectoryBuilderEntry::Directory(DirectoryBuilder::default()));
+
+      match entry {
+        DirectoryBuilderEntry::Directory(child) => child.file(path, content),
+        DirectoryBuilderEntry::File(_) => panic!("file entry `{name}` conflicts with directory"),
+      }
     } else {
-      assert!(self.files.insert(path, content.to_vec()).is_none());
+      assert!(
+        self
+          .entries
+          .insert(path, DirectoryBuilderEntry::File(content.to_vec()))
+          .is_none()
+      );
     }
   }
 
   fn upload(&self, server: &TestServer) -> Hash {
-    for child in self.directories.values() {
-      child.upload(server);
-    }
-
-    for content in self.files.values() {
-      server.write_file(content);
+    for entry in self.entries.values() {
+      match entry {
+        DirectoryBuilderEntry::Directory(child) => {
+          child.upload(server);
+        }
+        DirectoryBuilderEntry::File(content) => {
+          server.write_file(content);
+        }
+      }
     }
 
     let (cbor, hash) = self.directory().cbor();
@@ -59,6 +73,11 @@ impl<'a> DirectoryBuilder<'a> {
 
     hash
   }
+}
+
+enum DirectoryBuilderEntry<'a> {
+  Directory(DirectoryBuilder<'a>),
+  File(Vec<u8>),
 }
 
 #[derive(Default)]
