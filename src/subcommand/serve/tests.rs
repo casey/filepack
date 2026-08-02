@@ -33,24 +33,26 @@ impl<'a> DirectoryBuilder<'a> {
     directory
   }
 
-  fn file(&mut self, path: &'a str, content: &[u8]) {
-    if let Some((name, path)) = path.split_once('/') {
-      let entry = self
-        .entries
-        .entry(name)
-        .or_insert_with(|| DirectoryBuilderEntry::Directory(DirectoryBuilder::default()));
+  fn insert(&mut self, path: &[&'a str], content: &[u8]) {
+    let (first, rest) = path.split_first().unwrap();
 
-      match entry {
-        DirectoryBuilderEntry::Directory(child) => child.file(path, content),
-        DirectoryBuilderEntry::File(_) => panic!("file entry `{name}` conflicts with directory"),
-      }
-    } else {
+    if rest.is_empty() {
       assert!(
         self
           .entries
-          .insert(path, DirectoryBuilderEntry::File(content.to_vec()))
+          .insert(first, DirectoryBuilderEntry::File(content.to_vec()))
           .is_none()
       );
+    } else {
+      let entry = self
+        .entries
+        .entry(first)
+        .or_insert_with(|| DirectoryBuilderEntry::Directory(DirectoryBuilder::default()));
+
+      match entry {
+        DirectoryBuilderEntry::Directory(child) => child.insert(rest, content),
+        DirectoryBuilderEntry::File(_) => panic!("file name `{first}` conflicts with directory"),
+      }
     }
   }
 
@@ -91,7 +93,8 @@ impl<'a> PackageBuilder<'a> {
   }
 
   fn file(mut self, path: &'a str, content: &[u8]) -> Self {
-    self.root.file(path, content);
+    let path = path.split('/').collect::<Vec<&str>>();
+    self.root.insert(&path, content);
     self
   }
 
