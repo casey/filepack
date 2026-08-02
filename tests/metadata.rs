@@ -4,7 +4,7 @@ use super::*;
 fn create_allows_extra_files_in_web_packages() {
   Test::new()
     .write("metadata.yaml", "media:\n  type: web\n")
-    .touch("index.html")
+    .touch("static/index.html")
     .touch("bar.txt")
     .arg("create")
     .success();
@@ -365,7 +365,7 @@ fn create_requires_index_html_in_web_packages() {
   Test::new()
     .write("metadata.yaml", "media:\n  type: web\n")
     .arg("create")
-    .stderr("error: file referenced in metadata missing: `index.html`\n")
+    .stderr("error: file referenced in metadata missing: `static/index.html`\n")
     .failure();
 }
 

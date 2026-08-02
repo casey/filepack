@@ -10,28 +10,91 @@ use {
 
 static RUNTIME: LazyLock<Runtime> = LazyLock::new(|| Runtime::new().unwrap());
 
-struct PackageBuilder<'a> {
-  files: BTreeMap<&'a str, &'a [u8]>,
-  metadata: Option<&'a Metadata>,
+#[derive(Default)]
+struct DirectoryBuilder<'a> {
+  entries: BTreeMap<&'a str, DirectoryBuilderEntry<'a>>,
 }
 
-impl<'a> PackageBuilder<'a> {
-  fn directory(&self) -> Directory {
+impl<'a> DirectoryBuilder<'a> {
+  fn build(&self) -> Directory {
     let mut directory = Directory::new();
 
-    if let Some(metadata) = self.metadata {
-      directory.insert_file(Metadata::CBOR_FILENAME, &metadata.encode_to_vec());
-    }
-
-    for (name, content) in &self.files {
-      directory.insert_file(name, content);
+    for (name, entry) in &self.entries {
+      match entry {
+        DirectoryBuilderEntry::Directory(child) => {
+          directory.insert_directory(name, &child.build());
+        }
+        DirectoryBuilderEntry::File(content) => {
+          directory.insert_file(name, content);
+        }
+      }
     }
 
     directory
   }
 
-  fn file(mut self, name: &'a str, content: &'a [u8]) -> Self {
-    assert!(self.files.insert(name, content).is_none());
+  fn insert(&mut self, path: &[&'a str], content: &[u8]) {
+    let (first, rest) = path.split_first().unwrap();
+
+    if rest.is_empty() {
+      assert!(
+        self
+          .entries
+          .insert(first, DirectoryBuilderEntry::File(content.to_vec()))
+          .is_none()
+      );
+    } else {
+      let entry = self
+        .entries
+        .entry(first)
+        .or_insert_with(|| DirectoryBuilderEntry::Directory(DirectoryBuilder::default()));
+
+      match entry {
+        DirectoryBuilderEntry::Directory(child) => child.insert(rest, content),
+        DirectoryBuilderEntry::File(_) => panic!("file name `{first}` conflicts with directory"),
+      }
+    }
+  }
+
+  fn upload(&self, server: &TestServer) -> Hash {
+    for entry in self.entries.values() {
+      match entry {
+        DirectoryBuilderEntry::Directory(child) => {
+          child.upload(server);
+        }
+        DirectoryBuilderEntry::File(content) => {
+          server.write_file(content);
+        }
+      }
+    }
+
+    let (cbor, hash) = self.build().cbor();
+
+    server.write_file(&cbor);
+    server.post(format!("/directory/{hash}")).send();
+
+    hash
+  }
+}
+
+enum DirectoryBuilderEntry<'a> {
+  Directory(DirectoryBuilder<'a>),
+  File(Vec<u8>),
+}
+
+#[derive(Default)]
+struct PackageBuilder<'a> {
+  root: DirectoryBuilder<'a>,
+}
+
+impl<'a> PackageBuilder<'a> {
+  fn directory(&self) -> Directory {
+    self.root.build()
+  }
+
+  fn file(mut self, path: &'a str, content: &[u8]) -> Self {
+    let path = path.split('/').collect::<Vec<&str>>();
+    self.root.insert(&path, content);
     self
   }
 
@@ -39,33 +102,17 @@ impl<'a> PackageBuilder<'a> {
     Fingerprint(self.directory().cbor().1)
   }
 
-  fn metadata(mut self, metadata: &'a Metadata) -> Self {
-    self.metadata = Some(metadata);
-    self
+  fn metadata(self, metadata: &Metadata) -> Self {
+    self.file(Metadata::CBOR_FILENAME, &metadata.encode_to_vec())
   }
 
   fn new() -> Self {
-    Self {
-      files: BTreeMap::new(),
-      metadata: None,
-    }
+    Self::default()
   }
 
   fn upload(self, server: &TestServer) -> Fingerprint {
-    if let Some(metadata) = self.metadata {
-      server.write_file(&metadata.encode_to_vec());
-    }
+    let fingerprint = Fingerprint(self.root.upload(server));
 
-    for content in self.files.values() {
-      server.write_file(content);
-    }
-
-    let (cbor, hash) = self.directory().cbor();
-
-    let fingerprint = Fingerprint(hash);
-    server.write_file(&cbor);
-
-    server.post(format!("/directory/{hash}")).send();
     server.post(format!("/package/{fingerprint}")).send();
 
     fingerprint
@@ -1295,8 +1342,8 @@ fn mount_file() {
 
   let package = PackageBuilder::new()
     .metadata(&metadata)
-    .file("foo.css", b"bar")
-    .file("index.html", b"foo");
+    .file("static/foo.css", b"bar")
+    .file("static/index.html", b"foo");
 
   let server = TestServer::builder().mount(package.fingerprint()).build();
 
@@ -1321,7 +1368,7 @@ fn mount_file_invalid_path() {
 
   let package = PackageBuilder::new()
     .metadata(&metadata)
-    .file("index.html", b"foo");
+    .file("static/index.html", b"foo");
 
   let server = TestServer::builder().mount(package.fingerprint()).build();
 
@@ -1337,6 +1384,29 @@ fn mount_file_invalid_path() {
 }
 
 #[test]
+fn mount_file_nested() {
+  let metadata = Metadata {
+    media: Some(Media::Web),
+    ..default()
+  };
+
+  let package = PackageBuilder::new()
+    .metadata(&metadata)
+    .file("static/index.html", b"foo")
+    .file("static/foo/bar.txt", b"baz");
+
+  let server = TestServer::builder().mount(package.fingerprint()).build();
+
+  let fingerprint = package.upload(&server);
+
+  server
+    .get(format!("/mount/{fingerprint}/foo/bar.txt"))
+    .assert_header(header::CONTENT_TYPE, "text/plain")
+    .assert_body("baz")
+    .send();
+}
+
+#[test]
 fn mount_file_not_found() {
   let metadata = Metadata {
     media: Some(Media::Web),
@@ -1345,7 +1415,7 @@ fn mount_file_not_found() {
 
   let package = PackageBuilder::new()
     .metadata(&metadata)
-    .file("index.html", b"foo");
+    .file("static/index.html", b"foo");
 
   let server = TestServer::builder().mount(package.fingerprint()).build();
 
@@ -1354,7 +1424,9 @@ fn mount_file_not_found() {
   server
     .get(format!("/mount/{fingerprint}/foo"))
     .status(StatusCode::NOT_FOUND)
-    .assert_body(format!("file `foo` not found in package {fingerprint}"))
+    .assert_body(format!(
+      "file `static/foo` not found in package {fingerprint}"
+    ))
     .send();
 }
 
@@ -1367,7 +1439,7 @@ fn mount_file_not_mounted() {
       media: Some(Media::Web),
       ..default()
     })
-    .file("index.html", b"foo")
+    .file("static/index.html", b"foo")
     .upload(&server);
 
   server
@@ -1395,7 +1467,7 @@ fn mount_serves_index_html() {
 
   let package = PackageBuilder::new()
     .metadata(&metadata)
-    .file("index.html", b"foo");
+    .file("static/index.html", b"foo");
 
   let server = TestServer::builder().mount(package.fingerprint()).build();
 
@@ -1632,7 +1704,7 @@ fn package_item_web() {
       media: Some(Media::Web),
       ..default()
     })
-    .file("index.html", b"foo")
+    .file("static/index.html", b"foo")
     .upload(&server);
 
   server
@@ -1964,9 +2036,13 @@ fn package_page_web() {
 
   let package = PackageBuilder::new()
     .metadata(&metadata)
-    .file("index.html", b"foo");
+    .file("static/index.html", b"foo");
 
   let directory = package.directory();
+
+  let mut static_directory = Directory::new();
+  static_directory.insert_file("index.html", b"foo");
+  let static_cbor_len = static_directory.cbor().0.len().into_u64();
 
   let server = TestServer::builder().mount(package.fingerprint()).build();
 
@@ -1982,8 +2058,8 @@ fn package_page_web() {
       mounted: true,
       readme: None,
       totals: Totals {
-        directories: 0,
-        directory_size: 0,
+        directories: 1,
+        directory_size: static_cbor_len,
         file_size: metadata_cbor_len + 3,
         files: 2,
       },
