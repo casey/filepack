@@ -192,9 +192,7 @@ pub(crate) async fn mount_file(
       server_error::PackageNotMounted { fingerprint },
     }
 
-    let path = format!("{}/{path}", Media::WEB_ROOT)
-      .parse::<RelativePath>()
-      .unwrap();
+    let path = format!("static/{path}").parse::<RelativePath>().unwrap();
 
     let hash = server.package_file(fingerprint, &path)?;
 
