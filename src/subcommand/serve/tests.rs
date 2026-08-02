@@ -16,13 +16,13 @@ struct DirectoryBuilder<'a> {
 }
 
 impl<'a> DirectoryBuilder<'a> {
-  fn directory(&self) -> Directory {
+  fn build(&self) -> Directory {
     let mut directory = Directory::new();
 
     for (name, entry) in &self.entries {
       match entry {
         DirectoryBuilderEntry::Directory(child) => {
-          directory.insert_directory(name, &child.directory());
+          directory.insert_directory(name, &child.build());
         }
         DirectoryBuilderEntry::File(content) => {
           directory.insert_file(name, content);
@@ -66,7 +66,7 @@ impl<'a> DirectoryBuilder<'a> {
       }
     }
 
-    let (cbor, hash) = self.directory().cbor();
+    let (cbor, hash) = self.build().cbor();
 
     server.write_file(&cbor);
     server.post(format!("/directory/{hash}")).send();
@@ -87,7 +87,7 @@ struct PackageBuilder<'a> {
 
 impl<'a> PackageBuilder<'a> {
   fn directory(&self) -> Directory {
-    self.root.directory()
+    self.root.build()
   }
 
   fn file(mut self, path: &'a str, content: &[u8]) -> Self {
