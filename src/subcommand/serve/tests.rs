@@ -2698,9 +2698,7 @@ fn verify_package_invalid_track_position() {
   audio.tracks = 2;
 
   let metadata = Metadata {
-    media: Some(Media::Audio {
-      items: vec![audio],
-    }),
+    media: Some(Media::Audio { items: vec![audio] }),
     ..default()
   }
   .encode_to_vec();
