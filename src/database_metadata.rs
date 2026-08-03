@@ -52,12 +52,6 @@ mod tests {
 
   #[test]
   fn redb() {
-    let values = [DatabaseMetadata::Schema];
-
-    for value in values {
-      test::assert_redb_value(value);
-    }
-
-    test::assert_redb_key_compare(&values);
+    test::assert_redb_impls(&[DatabaseMetadata::Schema]);
   }
 }

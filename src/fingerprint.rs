@@ -104,17 +104,11 @@ mod tests {
 
   #[test]
   fn redb() {
-    let values = [
+    test::assert_redb_impls(&[
       Fingerprint::from(Hash::from([0; Hash::LEN])),
       Fingerprint::from(Hash::from([0xff; Hash::LEN])),
       Fingerprint::from(Hash::bytes(b"foo")),
       Fingerprint::from(Hash::bytes(b"bar")),
-    ];
-
-    for value in values {
-      test::assert_redb_value(value);
-    }
-
-    test::assert_redb_key_compare(&values);
+    ]);
   }
 }
