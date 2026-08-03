@@ -9,11 +9,11 @@ pub(crate) struct AudioHtml {
 
 impl AudioHtml {
   fn audio(&self) -> &Audio {
-    let Media::Audio { tracks } = self.metadata.media.as_ref().unwrap() else {
+    let Media::Audio { items } = self.metadata.media.as_ref().unwrap() else {
       unreachable!();
     };
 
-    &tracks[self.audio]
+    &items[self.audio]
   }
 }
 
@@ -35,7 +35,7 @@ mod tests {
   fn audio() {
     let metadata = Metadata {
       media: Some(Media::Audio {
-        tracks: vec![Audio {
+        items: vec![Audio {
           album: "qux".parse().unwrap(),
           artist: "baz".parse().unwrap(),
           channels: 2,

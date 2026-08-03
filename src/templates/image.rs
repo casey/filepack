@@ -9,11 +9,11 @@ pub(crate) struct ImageHtml {
 
 impl ImageHtml {
   fn image(&self) -> &Image {
-    let Media::Image { images } = self.metadata.media.as_ref().unwrap() else {
+    let Media::Image { items } = self.metadata.media.as_ref().unwrap() else {
       unreachable!();
     };
 
-    &images[self.image]
+    &items[self.image]
   }
 }
 
@@ -39,7 +39,7 @@ mod tests {
         image: 0,
         metadata: Metadata {
           media: Some(Media::Image {
-            images: vec![Image {
+            items: vec![Image {
               dimensions: Dimensions {
                 height: 1,
                 width: 2,

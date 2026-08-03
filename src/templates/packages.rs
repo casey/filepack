@@ -113,7 +113,7 @@ mod tests {
 
     let metadata = Metadata {
       creator: Some("foo".parse().unwrap()),
-      media: Some(Media::Audio { tracks: Vec::new() }),
+      media: Some(Media::Audio { items: Vec::new() }),
       time: Some("2024".parse().unwrap()),
       title: Some("bar".parse().unwrap()),
       ..default()

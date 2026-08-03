@@ -76,7 +76,7 @@ fn create_extracts_image_dimensions() {
       "\
 media:
   type: image
-  images:
+  items:
     - foo.png
 ",
     )
@@ -87,7 +87,7 @@ media:
       r#"{
   "media": {
     "type": "image",
-    "images": [
+    "items": [
       {
         "dimensions": {
           "height": 1,
@@ -134,7 +134,7 @@ fn create_extracts_track_tags() {
       "\
 media:
   type: audio
-  tracks:
+  items:
     - foo.flac
 ",
     )
@@ -145,7 +145,7 @@ media:
       r#"{
   "media": {
     "type": "audio",
-    "tracks": [
+    "items": [
       {
         "album": "qux",
         "artist": "baz",
@@ -189,7 +189,7 @@ fn create_extracts_video_metadata() {
       "\
 media:
   type: video
-  videos:
+  items:
     - foo.mp4
 ",
     )
@@ -200,7 +200,7 @@ media:
       r#"{
   "media": {
     "type": "video",
-    "videos": [
+    "items": [
       {
         "duration": 1500,
         "filename": "foo.mp4",
@@ -269,7 +269,7 @@ fn create_rejects_extra_files_in_media_packages() {
       "\
 media:
   type: audio
-  tracks:
+  items:
     - foo.flac
 ",
     )
@@ -325,7 +325,7 @@ fn create_rejects_invalid_track_positions() {
       "\
 media:
   type: audio
-  tracks:
+  items:
     - foo.flac
 ",
     )
@@ -348,7 +348,7 @@ fn create_rejects_invalid_tracks() {
       "\
 media:
   type: audio
-  tracks:
+  items:
     - foo.flac
 ",
     )
@@ -369,7 +369,7 @@ fn create_rejects_invalid_videos() {
       "\
 media:
   type: video
-  videos:
+  items:
     - foo.mp4
 ",
     )

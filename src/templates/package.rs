@@ -51,7 +51,7 @@ mod tests {
   fn audio() {
     let metadata = Metadata {
       media: Some(Media::Audio {
-        tracks: vec![
+        items: vec![
           Audio {
             album: "qux".parse().unwrap(),
             artist: "baz".parse().unwrap(),
@@ -143,7 +143,7 @@ mod tests {
   fn audio_multiple_discs() {
     let metadata = Metadata {
       media: Some(Media::Audio {
-        tracks: vec![
+        items: vec![
           Audio {
             album: "qux".parse().unwrap(),
             artist: "baz".parse().unwrap(),
@@ -274,7 +274,7 @@ mod tests {
 
     let metadata = Metadata {
       media: Some(Media::Audio {
-        tracks: vec![audio.clone(), audio],
+        items: vec![audio.clone(), audio],
       }),
       ..default()
     };
@@ -335,7 +335,7 @@ mod tests {
   fn image() {
     let metadata = Metadata {
       media: Some(Media::Image {
-        images: vec![
+        items: vec![
           Image {
             dimensions: Dimensions {
               height: 1,
@@ -564,7 +564,7 @@ mod tests {
   fn video() {
     let metadata = Metadata {
       media: Some(Media::Video {
-        videos: vec![Video {
+        items: vec![Video {
           duration: 225_000,
           filename: "foo.mp4".parse().unwrap(),
           tracks: vec![
