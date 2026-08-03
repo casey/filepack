@@ -411,8 +411,11 @@ fn named_key_invalid() {
     .success()
     .args(["verify", "--key", "@invalid"])
     .stderr(
-      "error: invalid value '@invalid' for '--key <KEY>': invalid public key name `@invalid`\n\n\
-      For more information, try '--help'.\n",
+      "
+        error: invalid value '@invalid' for '--key <KEY>': invalid public key name `@invalid`
+
+        For more information, try '--help'.
+      ",
     )
     .status(USAGE_ERROR);
 }

@@ -155,9 +155,12 @@ fn server_url_must_be_http_or_https() {
   Test::new()
     .args(["upload", "--server", "ftp://example.com"])
     .stderr(
-      "error: invalid value 'ftp://example.com' for '--server <URL>': URL scheme `ftp` not \
-       allowed, must be `http` or `https`\n\n\
-       For more information, try '--help'.\n",
+      "
+        error: invalid value 'ftp://example.com' for '--server <URL>': URL scheme `ftp` not \
+        allowed, must be `http` or `https`
+
+        For more information, try '--help'.
+      ",
     )
     .status(USAGE_ERROR);
 }

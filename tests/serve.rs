@@ -66,8 +66,10 @@ fn mount_rejects_non_web_package() {
     .success()
     .args(["serve", "--mount", &fingerprint.to_string()])
     .stderr(&format!(
-      "error: mounted package `{fingerprint}` has unexpected media type audio, only web packages \
-       may be mounted\n"
+      "
+        error: mounted package `{fingerprint}` has unexpected media type audio, only web packages \
+        may be mounted
+      "
     ))
     .failure();
 }
