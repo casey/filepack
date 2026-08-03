@@ -20,12 +20,12 @@ fn deny_case_insensitive_filesystem_path_conflict() {
     .touch("FOO")
     .args(["create", "--deny", "distribution", "."])
     .stderr(
-      "\
-error: paths would conflict on case-insensitive filesystem
-       ├─ `FOO`
-       └─ `foo`
-error: 1 lint error
-",
+      "
+        error: paths would conflict on case-insensitive filesystem
+               ├─ `FOO`
+               └─ `foo`
+        error: 1 lint error
+      ",
     )
     .failure();
 }
@@ -41,11 +41,11 @@ fn deny_compatibility_ignores_junk() {
     .touch(".DS_Store")
     .args(["create", "--deny", "compatibility", "."])
     .stderr(
-      "\
-error: path failed lint: `aux`
-       └─ Windows does not allow files named `aux`
-error: 1 lint error
-",
+      "
+        error: path failed lint: `aux`
+               └─ Windows does not allow files named `aux`
+        error: 1 lint error
+      ",
     )
     .failure();
 }
@@ -61,13 +61,13 @@ fn deny_distribution_catches_both() {
     .touch("aux")
     .args(["create", "--deny", "distribution", "."])
     .stderr(
-      "\
-error: path failed lint: `.DS_Store`
-       └─ possible junk file
-error: path failed lint: `aux`
-       └─ Windows does not allow files named `aux`
-error: 2 lint errors
-",
+      "
+        error: path failed lint: `.DS_Store`
+               └─ possible junk file
+        error: path failed lint: `aux`
+               └─ Windows does not allow files named `aux`
+        error: 2 lint errors
+      ",
     )
     .failure();
 }
@@ -83,11 +83,11 @@ fn deny_junk_ignores_compatibility() {
     .touch(".DS_Store")
     .args(["create", "--deny", "junk", "."])
     .stderr(
-      "\
-error: path failed lint: `.DS_Store`
-       └─ possible junk file
-error: 1 lint error
-",
+      "
+        error: path failed lint: `.DS_Store`
+               └─ possible junk file
+        error: 1 lint error
+      ",
     )
     .failure();
 }
@@ -102,11 +102,11 @@ fn deny_lint() {
     .touch("aux")
     .args(["create", "--deny", "distribution", "."])
     .stderr(
-      "\
-error: path failed lint: `aux`
-       └─ Windows does not allow files named `aux`
-error: 1 lint error
-",
+      "
+        error: path failed lint: `aux`
+               └─ Windows does not allow files named `aux`
+        error: 1 lint error
+      ",
     )
     .failure();
 }

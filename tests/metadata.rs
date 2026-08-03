@@ -48,21 +48,22 @@ fn create_extracts_artwork_dimensions() {
     .success()
     .arg("metadata")
     .stdout(
-      r#"{
-  "artwork": {
-    "dimensions": {
-      "height": 2,
-      "width": 2
-    },
-    "filename": "cover.png",
-    "orientation": {
-      "mirrored": false,
-      "rotation": 0
-    },
-    "type": "png"
-  }
-}
-"#,
+      r#"
+        {
+          "artwork": {
+            "dimensions": {
+              "height": 2,
+              "width": 2
+            },
+            "filename": "cover.png",
+            "orientation": {
+              "mirrored": false,
+              "rotation": 0
+            },
+            "type": "png"
+          }
+        }
+      "#,
     )
     .success();
 }
@@ -84,26 +85,27 @@ media:
     .success()
     .arg("metadata")
     .stdout(
-      r#"{
-  "media": {
-    "type": "image",
-    "items": [
-      {
-        "dimensions": {
-          "height": 1,
-          "width": 2
-        },
-        "filename": "foo.png",
-        "orientation": {
-          "mirrored": false,
-          "rotation": 0
-        },
-        "type": "png"
-      }
-    ]
-  }
-}
-"#,
+      r#"
+        {
+          "media": {
+            "type": "image",
+            "items": [
+              {
+                "dimensions": {
+                  "height": 1,
+                  "width": 2
+                },
+                "filename": "foo.png",
+                "orientation": {
+                  "mirrored": false,
+                  "rotation": 0
+                },
+                "type": "png"
+              }
+            ]
+          }
+        }
+      "#,
     )
     .success()
     .arg("verify")
@@ -142,29 +144,30 @@ media:
     .success()
     .arg("metadata")
     .stdout(
-      r#"{
-  "media": {
-    "type": "audio",
-    "items": [
-      {
-        "album": "qux",
-        "artist": "baz",
-        "channels": 2,
-        "disc": 1,
-        "discs": 1,
-        "filename": "foo.flac",
-        "sample_bits": 16,
-        "sample_rate": 44100,
-        "samples": 44100,
-        "title": "bar",
-        "track": 1,
-        "tracks": 1,
-        "type": "flac"
-      }
-    ]
-  }
-}
-"#,
+      r#"
+        {
+          "media": {
+            "type": "audio",
+            "items": [
+              {
+                "album": "qux",
+                "artist": "baz",
+                "channels": 2,
+                "disc": 1,
+                "discs": 1,
+                "filename": "foo.flac",
+                "sample_bits": 16,
+                "sample_rate": 44100,
+                "samples": 44100,
+                "title": "bar",
+                "track": 1,
+                "tracks": 1,
+                "type": "flac"
+              }
+            ]
+          }
+        }
+      "#,
     )
     .success()
     .arg("verify")
@@ -197,48 +200,49 @@ media:
     .success()
     .arg("metadata")
     .stdout(
-      r#"{
-  "media": {
-    "type": "video",
-    "items": [
-      {
-        "duration": 1500,
-        "filename": "foo.mp4",
-        "tracks": [
-          {
-            "codec": "h264",
-            "info": {
-              "type": "video",
-              "bit_depth": 8,
-              "chroma_subsampling": "4:2:0",
-              "dimensions": {
-                "height": 1,
-                "width": 2
-              },
-              "frames": 30,
-              "orientation": {
-                "mirrored": false,
-                "rotation": 0
+      r#"
+        {
+          "media": {
+            "type": "video",
+            "items": [
+              {
+                "duration": 1500,
+                "filename": "foo.mp4",
+                "tracks": [
+                  {
+                    "codec": "h264",
+                    "info": {
+                      "type": "video",
+                      "bit_depth": 8,
+                      "chroma_subsampling": "4:2:0",
+                      "dimensions": {
+                        "height": 1,
+                        "width": 2
+                      },
+                      "frames": 30,
+                      "orientation": {
+                        "mirrored": false,
+                        "rotation": 0
+                      }
+                    },
+                    "size": 30
+                  },
+                  {
+                    "codec": "aac",
+                    "info": {
+                      "type": "audio",
+                      "channels": 2,
+                      "sample_rate": 44100
+                    },
+                    "size": 30
+                  }
+                ],
+                "type": "mp4"
               }
-            },
-            "size": 30
-          },
-          {
-            "codec": "aac",
-            "info": {
-              "type": "audio",
-              "channels": 2,
-              "sample_rate": 44100
-            },
-            "size": 30
+            ]
           }
-        ],
-        "type": "mp4"
-      }
-    ]
-  }
-}
-"#,
+        }
+      "#,
     )
     .success()
     .arg("verify")
@@ -499,10 +503,11 @@ fn metadata_subcommand_default() {
     .success()
     .arg("metadata")
     .stdout(
-      r#"{
-  "title": "Foo"
-}
-"#,
+      r#"
+        {
+          "title": "Foo"
+        }
+      "#,
     )
     .success();
 }
@@ -537,10 +542,11 @@ fn metadata_subcommand_path_is_directory() {
     .success()
     .args(["metadata", "pkg"])
     .stdout(
-      r#"{
-  "title": "Foo"
-}
-"#,
+      r#"
+        {
+          "title": "Foo"
+        }
+      "#,
     )
     .success();
 }
@@ -553,10 +559,11 @@ fn metadata_subcommand_path_is_file() {
     .success()
     .args(["metadata", "pkg/metadata.filemeta"])
     .stdout(
-      r#"{
-  "title": "Foo"
-}
-"#,
+      r#"
+        {
+          "title": "Foo"
+        }
+      "#,
     )
     .success();
 }

@@ -51,9 +51,10 @@ fn files_tsv() {
     .success()
     .args(["files", "--format", "tsv"])
     .stdout(format!(
-      "foo/bar/baz\t{EMPTY_HASH}\t0
-foo/bar/bob\t{EMPTY_HASH}\t0
-"
+      "
+        foo/bar/baz\t{EMPTY_HASH}\t0
+        foo/bar/bob\t{EMPTY_HASH}\t0
+      "
     ))
     .success();
 }
