@@ -122,8 +122,6 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     source: io::Error,
   },
-  #[snafu(display("failed to get local data directory"))]
-  DataLocalDir { backtrace: Option<Backtrace> },
   #[snafu(display("failed to commit to database"))]
   DatabaseCommit {
     backtrace: Option<Backtrace>,
@@ -268,6 +266,8 @@ pub enum Error {
     hex: String,
     source: hex::FromHexError,
   },
+  #[snafu(display("failed to get home directory"))]
+  HomeDir { backtrace: Option<Backtrace> },
   #[snafu(display("ignored path `{path}` is included in package"))]
   IgnoredPath {
     backtrace: Option<Backtrace>,

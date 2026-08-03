@@ -1,5 +1,21 @@
 use super::*;
 
+#[cfg(unix)]
+#[test]
+fn default() {
+  Test::new()
+    .env_remove("FILEPACK_DATA_DIR")
+    .env_remove("XDG_DATA_HOME")
+    .env("HOME", "foo")
+    .arg("info")
+    .stdout(json_pretty! {
+      data: "foo/.filepack",
+      keychain: "foo/.filepack/keychain",
+      keys: {},
+    })
+    .success();
+}
+
 #[test]
 fn flag() {
   Test::new()
@@ -26,14 +42,17 @@ fn xdg_data_home() {
     .success();
 }
 
+#[cfg(unix)]
 #[test]
 fn xdg_data_home_empty() {
   Test::new()
+    .env_remove("FILEPACK_DATA_DIR")
+    .env("HOME", "foo")
     .env("XDG_DATA_HOME", "")
     .arg("info")
-    .stdout_regex_path(&json_regex! {
-      data: ".*filepack-test-tempdir.*",
-      keychain: ".*filepack-test-tempdir.*/keychain",
+    .stdout(json_pretty! {
+      data: "foo/.filepack",
+      keychain: "foo/.filepack/keychain",
       keys: {},
     })
     .success();

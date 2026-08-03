@@ -20,16 +20,13 @@ impl Options {
   pub(crate) fn data_dir(&self) -> Result<Utf8PathBuf> {
     if let Some(path) = &self.data_dir {
       Ok(path.into())
+    } else if let Some(dir) = env::var_os("XDG_DATA_HOME")
+      && !dir.is_empty()
+    {
+      Ok(decode_path(dir.as_ref())?.join("filepack"))
     } else {
-      let dir = if let Some(dir) = env::var_os("XDG_DATA_HOME")
-        && !dir.is_empty()
-      {
-        dir.into()
-      } else {
-        dirs::data_local_dir().context(error::DataLocalDir)?
-      };
-
-      Ok(decode_path(&dir)?.join("filepack"))
+      let home = dirs::home_dir().context(error::HomeDir)?;
+      Ok(decode_path(&home)?.join(".filepack"))
     }
   }
 
