@@ -292,10 +292,10 @@ fn upload_package_fails_when_manifest_decode_fails() {
       "manifest.filepack",
     ])
     .stderr(
-      "\
-error: failed to decode manifest at `manifest.filepack`
-       └─ expected map but found text
-",
+      "
+        error: failed to decode manifest at `manifest.filepack`
+               └─ expected map but found text
+      ",
     )
     .failure();
 }
@@ -336,10 +336,10 @@ fn upload_package_fails_when_package_is_not_directory() {
       "manifest.filepack",
     ])
     .stderr(
-      "\
-error: failed to unarchive manifest
-       └─ expected archive `package` entry to be directory but found file
-",
+      "
+        error: failed to unarchive manifest
+               └─ expected archive `package` entry to be directory but found file
+      ",
     )
     .failure();
 }
@@ -374,10 +374,10 @@ fn upload_package_fails_when_package_missing() {
       "manifest.filepack",
     ])
     .stderr(
-      "\
-error: failed to unarchive manifest
-       └─ archive missing package directory
-",
+      "
+        error: failed to unarchive manifest
+               └─ archive missing package directory
+      ",
     )
     .failure();
 }
@@ -402,10 +402,10 @@ fn upload_package_fails_when_root_file_missing() {
       "manifest.filepack",
     ])
     .stderr(&format!(
-      "\
-error: failed to unarchive manifest
-       └─ archive missing entry for hash {missing}
-",
+      "
+        error: failed to unarchive manifest
+               └─ archive missing entry for hash {missing}
+      ",
     ))
     .failure();
 }
@@ -436,11 +436,11 @@ fn upload_package_fails_when_root_not_directory_cbor() {
       "manifest.filepack",
     ])
     .stderr(
-      "\
-error: failed to unarchive manifest
-       ├─ failed to decode directory
-       └─ expected map but found text
-",
+      "
+        error: failed to unarchive manifest
+               ├─ failed to decode directory
+               └─ expected map but found text
+      ",
     )
     .failure();
 }

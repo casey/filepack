@@ -10,11 +10,11 @@ fn backslash_error() {
     .touch("\\")
     .arg("create")
     .stderr(
-      "\
-error: invalid path `\\`
-       ├─ path contains invalid component `\\`
-       └─ component may not contain path separator `\\`
-",
+      "
+        error: invalid path `\\`
+               ├─ path contains invalid component `\\`
+               └─ component may not contain path separator `\\`
+      ",
     )
     .failure();
 }

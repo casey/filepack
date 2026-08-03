@@ -100,10 +100,10 @@ fn mount_requires_existing_package() {
   Test::new()
     .args(["serve", "--mount", fingerprint])
     .stderr(&format!(
-      "\
-error: failed to retrieve mounted package from server
-       └─ package {fingerprint} not found
-"
+      "
+        error: failed to retrieve mounted package from server
+               └─ package {fingerprint} not found
+      "
     ))
     .failure();
 }

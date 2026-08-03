@@ -28,10 +28,10 @@ fn create_does_not_write_metadata_cbor_on_failure() {
     .touch("bar.txt")
     .arg("create")
     .stderr(
-      "\
-error: found 1 extra file not referenced in metadata
-       └─ `bar.txt`
-",
+      "
+        error: found 1 extra file not referenced in metadata
+               └─ `bar.txt`
+      ",
     )
     .failure()
     .remove_file("bar.txt")
@@ -277,11 +277,11 @@ media:
     .create_dir("empty")
     .arg("create")
     .stderr(
-      "\
-error: found 2 extra files not referenced in metadata
-       ├─ `bar.txt`
-       └─ `empty`
-",
+      "
+        error: found 2 extra files not referenced in metadata
+               ├─ `bar.txt`
+               └─ `empty`
+      ",
     )
     .failure();
 }
@@ -294,10 +294,10 @@ fn create_rejects_extra_files_in_web_packages() {
     .touch("bar.txt")
     .arg("create")
     .stderr(
-      "\
-error: found 1 extra file not referenced in metadata
-       └─ `bar.txt`
-",
+      "
+        error: found 1 extra file not referenced in metadata
+               └─ `bar.txt`
+      ",
     )
     .failure();
 }
@@ -331,10 +331,10 @@ media:
     )
     .arg("create")
     .stderr(
-      "\
-error: invalid track position
-       └─ track `foo.flac` is disc 1 track 2 but expected disc 1 track 1
-",
+      "
+        error: invalid track position
+               └─ track `foo.flac` is disc 1 track 2 but expected disc 1 track 1
+      ",
     )
     .failure();
 }
