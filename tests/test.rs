@@ -456,10 +456,10 @@ impl Test {
     }
   }
 
-  pub(crate) fn write(self, path: &str, content: impl Content) -> Self {
+  pub(crate) fn write(self, path: &str, content: impl Dedent) -> Self {
     let path = self.join(path);
     fs::create_dir_all(path.parent().unwrap()).unwrap();
-    fs::write(path, content.content()).unwrap();
+    fs::write(path, content.dedent()).unwrap();
     self
   }
 
