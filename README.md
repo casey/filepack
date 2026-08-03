@@ -193,25 +193,15 @@ Files can be uploaded with `filepack upload` and downloaded with
 Data Directory
 --------------
 
-Filepack stores local configuration in the `filepack` subdirectory of the
-platform data directory.
+Filepack stores local data, including private keys, in the filepack data
+directory, located in `~/.filepack`, or `$XDG_DATA_HOME/filepack` if
+`$XDG_DATA_HOME` is set and non-empty.
 
-The location of the platform data directory is platform dependent, with
-`$XDG_DATA_HOME` being respected on all platforms.
-
-| Platform | Value                               |
-| -------- | ----------------------------------- |
-| All      | `$XDG_DATA_HOME`                    |
-| Linux    | `$HOME`/.local/share                |
-| macOS    | `$HOME`/Library/Application Support |
-| Windows  | `{FOLDERID_LocalAppData}`           |
-
-Filepack stores keys in the `keychain` subdirectory of the filepack data
-directory. So if the platform data directory is `~/.local/share`, the
-`keychain` directory is `~/.local/share/filepack/keychain`.
+Filepack stores private keys in the `keychain` subdirectory of the filepack
+data directory, by default in `~/.filepack/keychain`.
 
 The location of the filepack data directory used by a command can be overridden
-with the `--data-dir` option.
+with the `--data-dir` option or the `FILEPACK_DATA_DIR` environment variable.
 
 Manifest
 --------
