@@ -26,8 +26,8 @@ fn download_checks_metadata() {
 
   let server = Test::new()
     .serve()
-    .write(&format!("files/{hash}"), &directory)
-    .write(&format!("files/{metadata_hash}"), &metadata)
+    .write(&format!("files/{hash}"), directory)
+    .write(&format!("files/{metadata_hash}"), metadata)
     .spawn();
 
   Test::new()
@@ -174,8 +174,8 @@ fn download_package_fails_on_directory_totals_mismatch() {
 
   let server = Test::new()
     .serve()
-    .write(&format!("files/{}", Hash::bytes(&root)), &root)
-    .write(&format!("files/{subdirectory_hash}"), &subdirectory_cbor)
+    .write(&format!("files/{}", Hash::bytes(&root)), root)
+    .write(&format!("files/{subdirectory_hash}"), subdirectory_cbor)
     .spawn();
 
   Test::new()
@@ -208,7 +208,7 @@ fn download_package_fails_on_directory_totals_overflow() {
 
   let server = Test::new()
     .serve()
-    .write(&format!("files/{hash}"), &root)
+    .write(&format!("files/{hash}"), root)
     .spawn();
 
   Test::new()
