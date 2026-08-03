@@ -318,7 +318,7 @@ metadata`. The CBOR schema is currently undocumented.
 
 Fields are given as `NAME: TYPE`. All fields are optional.
 
-Top-level fields
+Top-level fields:
 
 - `artwork: component.{jpeg,png}`: The filename of a JPEG or PNG file
   containing artwork for the content, for example, cover art for an album or
@@ -334,6 +334,8 @@ Top-level fields
 
 - `language: language`: The primary language of the content.
 
+- `media: object`: The media metadata
+
 - `package: object`: The package metadata.
 
 - `readme: component.md`: The filename of the content readme.
@@ -341,6 +343,28 @@ Top-level fields
 - `time: time`: The time the content was created or released.
 
 - `title: component`: The content's human-readable title.
+
+Fields of `media` containing media-specific metadata:
+
+- `type: {audio,image,video,web}`: The media type.
+
+If the media type `audio`, `image`, and `video`, the `media object` contains a
+field named `tracks`, `images`, or `videos`, respectively, each of which is a
+list of objects each containing metadata for an individual item in the package.
+
+When authoring metadata `YAML`, each item is a string with the filename to the
+package item. For example, for an `audio` package:
+
+```yaml
+media:
+  type: audio
+  tracks:
+  - foo.flac
+  - bar.flac
+```
+
+`filepack create` will replace the filenames with objects populated with
+metadata extracted from each item.
 
 Fields of `package` describing the package itself, as opposed its content:
 
