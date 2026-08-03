@@ -334,7 +334,7 @@ Top-level fields:
 
 - `language: language`: The primary language of the content.
 
-- `media: object`: The media metadata
+- `media: object`: The media metadata.
 
 - `package: object`: The package metadata.
 
