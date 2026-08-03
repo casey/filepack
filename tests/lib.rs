@@ -1,5 +1,5 @@
 use {
-  self::{child::Child, expected::Expected, test::Test},
+  self::{child::Child, dedent::Dedent, expected::Expected, test::Test},
   camino::{Utf8Path, Utf8PathBuf},
   filepack::{
     Decode, Decoder, Directory, DirectoryExt, Encode, Encoder, Entry, Fingerprint, Hash, Manifest,
@@ -33,6 +33,7 @@ mod child;
 mod contains;
 mod create;
 mod data_dir;
+mod dedent;
 mod download;
 mod expected;
 mod files;

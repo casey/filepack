@@ -3,7 +3,13 @@ use super::*;
 #[test]
 fn create_allows_extra_files_in_web_packages() {
   Test::new()
-    .write("metadata.yaml", "media:\n  type: web\n")
+    .write(
+      "metadata.yaml",
+      "
+        media:
+          type: web
+      ",
+    )
     .touch("static/index.html")
     .touch("static/bar.txt")
     .create_dir("static/foo")
@@ -23,15 +29,21 @@ fn create_checks_metadata() {
 #[test]
 fn create_does_not_write_metadata_cbor_on_failure() {
   Test::new()
-    .write("metadata.yaml", "media:\n  type: web\n")
+    .write(
+      "metadata.yaml",
+      "
+        media:
+          type: web
+      ",
+    )
     .touch("static/index.html")
     .touch("bar.txt")
     .arg("create")
     .stderr(
-      "\
-error: found 1 extra file not referenced in metadata
-       └─ `bar.txt`
-",
+      "
+        error: found 1 extra file not referenced in metadata
+               └─ `bar.txt`
+      ",
     )
     .failure()
     .remove_file("bar.txt")
@@ -48,21 +60,22 @@ fn create_extracts_artwork_dimensions() {
     .success()
     .arg("metadata")
     .stdout(
-      r#"{
-  "artwork": {
-    "dimensions": {
-      "height": 2,
-      "width": 2
-    },
-    "filename": "cover.png",
-    "orientation": {
-      "mirrored": false,
-      "rotation": 0
-    },
-    "type": "png"
-  }
-}
-"#,
+      r#"
+        {
+          "artwork": {
+            "dimensions": {
+              "height": 2,
+              "width": 2
+            },
+            "filename": "cover.png",
+            "orientation": {
+              "mirrored": false,
+              "rotation": 0
+            },
+            "type": "png"
+          }
+        }
+      "#,
     )
     .success();
 }
@@ -73,37 +86,38 @@ fn create_extracts_image_dimensions() {
     .write("foo.png", image(2, 1, ImageFormat::Png))
     .write(
       "metadata.yaml",
-      "\
-media:
-  type: image
-  items:
-    - foo.png
-",
+      "
+        media:
+          type: image
+          items:
+            - foo.png
+      ",
     )
     .arg("create")
     .success()
     .arg("metadata")
     .stdout(
-      r#"{
-  "media": {
-    "type": "image",
-    "items": [
-      {
-        "dimensions": {
-          "height": 1,
-          "width": 2
-        },
-        "filename": "foo.png",
-        "orientation": {
-          "mirrored": false,
-          "rotation": 0
-        },
-        "type": "png"
-      }
-    ]
-  }
-}
-"#,
+      r#"
+        {
+          "media": {
+            "type": "image",
+            "items": [
+              {
+                "dimensions": {
+                  "height": 1,
+                  "width": 2
+                },
+                "filename": "foo.png",
+                "orientation": {
+                  "mirrored": false,
+                  "rotation": 0
+                },
+                "type": "png"
+              }
+            ]
+          }
+        }
+      "#,
     )
     .success()
     .arg("verify")
@@ -131,40 +145,41 @@ fn create_extracts_track_tags() {
     )
     .write(
       "metadata.yaml",
-      "\
-media:
-  type: audio
-  items:
-    - foo.flac
-",
+      "
+        media:
+          type: audio
+          items:
+            - foo.flac
+      ",
     )
     .arg("create")
     .success()
     .arg("metadata")
     .stdout(
-      r#"{
-  "media": {
-    "type": "audio",
-    "items": [
-      {
-        "album": "qux",
-        "artist": "baz",
-        "channels": 2,
-        "disc": 1,
-        "discs": 1,
-        "filename": "foo.flac",
-        "sample_bits": 16,
-        "sample_rate": 44100,
-        "samples": 44100,
-        "title": "bar",
-        "track": 1,
-        "tracks": 1,
-        "type": "flac"
-      }
-    ]
-  }
-}
-"#,
+      r#"
+        {
+          "media": {
+            "type": "audio",
+            "items": [
+              {
+                "album": "qux",
+                "artist": "baz",
+                "channels": 2,
+                "disc": 1,
+                "discs": 1,
+                "filename": "foo.flac",
+                "sample_bits": 16,
+                "sample_rate": 44100,
+                "samples": 44100,
+                "title": "bar",
+                "track": 1,
+                "tracks": 1,
+                "type": "flac"
+              }
+            ]
+          }
+        }
+      "#,
     )
     .success()
     .arg("verify")
@@ -186,59 +201,60 @@ fn create_extracts_video_metadata() {
     )
     .write(
       "metadata.yaml",
-      "\
-media:
-  type: video
-  items:
-    - foo.mp4
-",
+      "
+        media:
+          type: video
+          items:
+            - foo.mp4
+      ",
     )
     .arg("create")
     .success()
     .arg("metadata")
     .stdout(
-      r#"{
-  "media": {
-    "type": "video",
-    "items": [
-      {
-        "duration": 1500,
-        "filename": "foo.mp4",
-        "tracks": [
-          {
-            "codec": "h264",
-            "info": {
-              "type": "video",
-              "bit_depth": 8,
-              "chroma_subsampling": "4:2:0",
-              "dimensions": {
-                "height": 1,
-                "width": 2
-              },
-              "frames": 30,
-              "orientation": {
-                "mirrored": false,
-                "rotation": 0
+      r#"
+        {
+          "media": {
+            "type": "video",
+            "items": [
+              {
+                "duration": 1500,
+                "filename": "foo.mp4",
+                "tracks": [
+                  {
+                    "codec": "h264",
+                    "info": {
+                      "type": "video",
+                      "bit_depth": 8,
+                      "chroma_subsampling": "4:2:0",
+                      "dimensions": {
+                        "height": 1,
+                        "width": 2
+                      },
+                      "frames": 30,
+                      "orientation": {
+                        "mirrored": false,
+                        "rotation": 0
+                      }
+                    },
+                    "size": 30
+                  },
+                  {
+                    "codec": "aac",
+                    "info": {
+                      "type": "audio",
+                      "channels": 2,
+                      "sample_rate": 44100
+                    },
+                    "size": 30
+                  }
+                ],
+                "type": "mp4"
               }
-            },
-            "size": 30
-          },
-          {
-            "codec": "aac",
-            "info": {
-              "type": "audio",
-              "channels": 2,
-              "sample_rate": 44100
-            },
-            "size": 30
+            ]
           }
-        ],
-        "type": "mp4"
-      }
-    ]
-  }
-}
-"#,
+        }
+      "#,
     )
     .success()
     .arg("verify")
@@ -266,22 +282,22 @@ fn create_rejects_extra_files_in_media_packages() {
     )
     .write(
       "metadata.yaml",
-      "\
-media:
-  type: audio
-  items:
-    - foo.flac
-",
+      "
+        media:
+          type: audio
+          items:
+            - foo.flac
+      ",
     )
     .touch("bar.txt")
     .create_dir("empty")
     .arg("create")
     .stderr(
-      "\
-error: found 2 extra files not referenced in metadata
-       ├─ `bar.txt`
-       └─ `empty`
-",
+      "
+        error: found 2 extra files not referenced in metadata
+               ├─ `bar.txt`
+               └─ `empty`
+      ",
     )
     .failure();
 }
@@ -289,15 +305,21 @@ error: found 2 extra files not referenced in metadata
 #[test]
 fn create_rejects_extra_files_in_web_packages() {
   Test::new()
-    .write("metadata.yaml", "media:\n  type: web\n")
+    .write(
+      "metadata.yaml",
+      "
+        media:
+          type: web
+      ",
+    )
     .touch("static/index.html")
     .touch("bar.txt")
     .arg("create")
     .stderr(
-      "\
-error: found 1 extra file not referenced in metadata
-       └─ `bar.txt`
-",
+      "
+        error: found 1 extra file not referenced in metadata
+               └─ `bar.txt`
+      ",
     )
     .failure();
 }
@@ -322,19 +344,19 @@ fn create_rejects_invalid_track_positions() {
     )
     .write(
       "metadata.yaml",
-      "\
-media:
-  type: audio
-  items:
-    - foo.flac
-",
+      "
+        media:
+          type: audio
+          items:
+            - foo.flac
+      ",
     )
     .arg("create")
     .stderr(
-      "\
-error: invalid track position
-       └─ track `foo.flac` is disc 1 track 2 but expected disc 1 track 1
-",
+      "
+        error: invalid track position
+               └─ track `foo.flac` is disc 1 track 2 but expected disc 1 track 1
+      ",
     )
     .failure();
 }
@@ -345,17 +367,19 @@ fn create_rejects_invalid_tracks() {
     .write("foo.flac", "barbar")
     .write(
       "metadata.yaml",
-      "\
-media:
-  type: audio
-  items:
-    - foo.flac
-",
+      "
+        media:
+          type: audio
+          items:
+            - foo.flac
+      ",
     )
     .arg("create")
     .stderr_regex(
-      "error: failed to decode track `.*foo.flac`
-       └─ Ill-formed FLAC stream: .*\n",
+      "
+        error: failed to decode track `.*foo.flac`
+               └─ Ill-formed FLAC stream: .*
+      ",
     )
     .failure();
 }
@@ -366,19 +390,21 @@ fn create_rejects_invalid_videos() {
     .write("foo.mp4", "barbar")
     .write(
       "metadata.yaml",
-      "\
-media:
-  type: video
-  items:
-    - foo.mp4
-",
+      "
+        media:
+          type: video
+          items:
+            - foo.mp4
+      ",
     )
     .arg("create")
     .stderr_regex(
-      "error: invalid video `.*foo.mp4`
-       ├─ failed to decode MP4
-       ├─ failed to fill whole buffer
-       └─ failed to fill whole buffer\n",
+      "
+        error: invalid video `.*foo.mp4`
+               ├─ failed to decode MP4
+               ├─ failed to fill whole buffer
+               └─ failed to fill whole buffer
+      ",
     )
     .failure();
 }
@@ -399,7 +425,13 @@ fn create_rejects_metadata_cbor_without_yaml() {
 #[test]
 fn create_requires_index_html_in_web_packages() {
   Test::new()
-    .write("metadata.yaml", "media:\n  type: web\n")
+    .write(
+      "metadata.yaml",
+      "
+        media:
+          type: web
+      ",
+    )
     .arg("create")
     .stderr("error: file referenced in metadata missing: `static/index.html`\n")
     .failure();
@@ -414,15 +446,15 @@ fn create_succeeds_with_valid_metadata() {
     .touch("COLOPHON.md")
     .write(
       "metadata.yaml",
-      "\
-title: Foo
-time: 2024-01-01
-language: en
-artwork: cover.png
-readme: README.md
-package:
-  colophon: COLOPHON.md
-",
+      "
+        title: Foo
+        time: 2024-01-01
+        language: en
+        artwork: cover.png
+        readme: README.md
+        package:
+          colophon: COLOPHON.md
+      ",
     )
     .arg("create")
     .success()
@@ -499,10 +531,11 @@ fn metadata_subcommand_default() {
     .success()
     .arg("metadata")
     .stdout(
-      r#"{
-  "title": "Foo"
-}
-"#,
+      r#"
+        {
+          "title": "Foo"
+        }
+      "#,
     )
     .success();
 }
@@ -537,10 +570,11 @@ fn metadata_subcommand_path_is_directory() {
     .success()
     .args(["metadata", "pkg"])
     .stdout(
-      r#"{
-  "title": "Foo"
-}
-"#,
+      r#"
+        {
+          "title": "Foo"
+        }
+      "#,
     )
     .success();
 }
@@ -553,10 +587,11 @@ fn metadata_subcommand_path_is_file() {
     .success()
     .args(["metadata", "pkg/metadata.filemeta"])
     .stdout(
-      r#"{
-  "title": "Foo"
-}
-"#,
+      r#"
+        {
+          "title": "Foo"
+        }
+      "#,
     )
     .success();
 }
