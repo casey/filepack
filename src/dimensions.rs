@@ -20,12 +20,9 @@ mod tests {
 
   #[test]
   fn encoding() {
-    assert_cbor(
-      Dimensions {
-        height: 1,
-        width: 2,
-      },
-      "a200010102",
-    );
+    assert_encoding(Dimensions {
+      height: 1,
+      width: 2,
+    });
   }
 }

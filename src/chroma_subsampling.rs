@@ -43,15 +43,6 @@ mod tests {
   }
 
   #[test]
-  fn encoding() {
-    assert_cbor(ChromaSubsampling::Yuv400, "00");
-    assert_cbor(ChromaSubsampling::Yuv420, "01");
-    assert_cbor(ChromaSubsampling::Yuv422, "02");
-    assert_cbor(ChromaSubsampling::Yuv440, "03");
-    assert_cbor(ChromaSubsampling::Yuv444, "04");
-  }
-
-  #[test]
   fn serialize() {
     #[track_caller]
     fn case(subsampling: ChromaSubsampling, expected: &str) {

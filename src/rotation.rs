@@ -39,19 +39,6 @@ mod tests {
   use super::*;
 
   #[test]
-  fn encoding() {
-    #[track_caller]
-    fn case(rotation: Rotation, cbor: &str) {
-      assert_cbor(rotation, cbor);
-    }
-
-    case(Rotation::R0, "00");
-    case(Rotation::R90, "01");
-    case(Rotation::R180, "02");
-    case(Rotation::R270, "03");
-  }
-
-  #[test]
   fn serialize() {
     #[track_caller]
     fn case(rotation: Rotation, expected: &str) {

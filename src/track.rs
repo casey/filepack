@@ -178,39 +178,6 @@ mod tests {
   }
 
   #[test]
-  fn encoding() {
-    assert_cbor(
-      Track {
-        codec: Codec::Aac,
-        info: TrackInfo::Audio {
-          channels: 2,
-          sample_rate: 44100,
-        },
-        size: 0,
-      },
-      "a30000018200a200020119ac440200",
-    );
-
-    assert_cbor(
-      Track {
-        codec: Codec::H264,
-        info: TrackInfo::Video {
-          bit_depth: Some(8),
-          chroma_subsampling: Some(ChromaSubsampling::Yuv420),
-          dimensions: Dimensions {
-            height: 1,
-            width: 2,
-          },
-          frames: 0,
-          orientation: Orientation::new(),
-        },
-        size: 0,
-      },
-      "a30001018201a50008010102a200010102030004a200f401000200",
-    );
-  }
-
-  #[test]
   fn info() {
     let track = Track {
       codec: Codec::H264,

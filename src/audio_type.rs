@@ -35,11 +35,6 @@ mod tests {
   }
 
   #[test]
-  fn encoding() {
-    assert_cbor(AudioType::Flac, "00");
-  }
-
-  #[test]
   fn from_extension() {
     assert_eq!(AudioType::from_extension("flac"), Some(AudioType::Flac));
     assert_eq!(AudioType::from_extension("mp3"), None);

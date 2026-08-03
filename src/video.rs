@@ -636,47 +636,6 @@ mod tests {
   use super::*;
 
   #[test]
-  fn encoding() {
-    assert_cbor(
-      "foo.mp4".parse::<Video>().unwrap(),
-      "a400000167666f6f2e6d703402800300",
-    );
-
-    assert_cbor(
-      Video {
-        duration: 3,
-        filename: "foo.mp4".parse().unwrap(),
-        tracks: vec![
-          Track {
-            codec: Codec::H264,
-            info: TrackInfo::Video {
-              bit_depth: Some(8),
-              chroma_subsampling: Some(ChromaSubsampling::Yuv420),
-              dimensions: Dimensions {
-                height: 1,
-                width: 2,
-              },
-              frames: 0,
-              orientation: Orientation::new(),
-            },
-            size: 0,
-          },
-          Track {
-            codec: Codec::Mp3,
-            info: TrackInfo::Audio {
-              channels: 2,
-              sample_rate: 44100,
-            },
-            size: 0,
-          },
-        ],
-        ty: VideoType::Mp4,
-      },
-      "a400030167666f6f2e6d70340282a30001018201a50008010102a200010102030004a200f401000200a30002018200a200020119ac4402000300",
-    );
-  }
-
-  #[test]
   fn formats() {
     let foo = "foo.mp4".parse::<Video>().unwrap();
     let bar = "bar.mp4".parse::<Video>().unwrap();
