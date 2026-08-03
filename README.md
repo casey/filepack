@@ -350,9 +350,9 @@ Fields of `media` containing media-specific metadata:
 
 If the media type `audio`, `image`, and `video`, the `media object` contains a
 field named `tracks`, `images`, or `videos`, respectively, each of which is a
-list of objects each containing metadata for an individual item in the package.
+list of objects containing metadata for individual items in the package.
 
-When authoring metadata `YAML`, each item is a string with the filename to the
+When authoring metadata YAML, each item is a string with the filename of the
 package item. For example, for an `audio` package:
 
 ```yaml
