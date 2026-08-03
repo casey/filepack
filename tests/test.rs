@@ -343,7 +343,7 @@ impl Test {
 
   pub(crate) fn stderr(mut self, stderr: &str) -> Self {
     assert_matches!(self.stderr, Expected::Empty);
-    self.stderr = Expected::String(stderr.into());
+    self.stderr = Expected::String(unindent(stderr));
     self
   }
 
@@ -376,7 +376,7 @@ impl Test {
 
   pub(crate) fn stdout(mut self, stdout: impl AsRef<str>) -> Self {
     assert_matches!(self.stdout, Expected::Empty);
-    self.stdout = Expected::String(stdout.as_ref().into());
+    self.stdout = Expected::String(unindent(stdout.as_ref()));
     self
   }
 

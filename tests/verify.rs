@@ -709,10 +709,10 @@ fn unarchive_error() {
     .write("manifest.filepack", encoder.finish())
     .args(["verify", "."])
     .stderr(
-      "\
-error: failed to unarchive manifest
-       └─ archive missing package directory
-",
+      "
+        error: failed to unarchive manifest
+               └─ archive missing package directory
+      ",
     )
     .failure();
 }
