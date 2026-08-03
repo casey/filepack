@@ -869,7 +869,7 @@ fn media_audio_item_file_missing() {
 
   let metadata = Metadata {
     media: Some(Media::Audio {
-      tracks: tracks(&["foo.flac"]),
+      items: tracks(&["foo.flac"]),
     }),
     ..default()
   };
@@ -904,7 +904,7 @@ fn media_audio_item_out_of_range() {
   let fingerprint = PackageBuilder::new()
     .metadata(&Metadata {
       media: Some(Media::Audio {
-        tracks: tracks(&["foo.flac", "bar.flac"]),
+        items: tracks(&["foo.flac", "bar.flac"]),
       }),
       ..default()
     })
@@ -1016,7 +1016,7 @@ fn media_audio_item_ranges() {
   let fingerprint = PackageBuilder::new()
     .metadata(&Metadata {
       media: Some(Media::Audio {
-        tracks: tracks(&["foo.flac"]),
+        items: tracks(&["foo.flac"]),
       }),
       ..default()
     })
@@ -1070,7 +1070,7 @@ fn media_audio_item_response() {
   let fingerprint = PackageBuilder::new()
     .metadata(&Metadata {
       media: Some(Media::Audio {
-        tracks: tracks(&["foo.flac", "bar.flac"]),
+        items: tracks(&["foo.flac", "bar.flac"]),
       }),
       ..default()
     })
@@ -1106,7 +1106,7 @@ fn media_image_item_out_of_range() {
   let fingerprint = PackageBuilder::new()
     .metadata(&Metadata {
       media: Some(Media::Image {
-        images: vec!["foo.png".parse().unwrap()],
+        items: vec!["foo.png".parse().unwrap()],
       }),
       ..default()
     })
@@ -1132,7 +1132,7 @@ fn media_image_item_response() {
   let fingerprint = PackageBuilder::new()
     .metadata(&Metadata {
       media: Some(Media::Image {
-        images: vec!["foo.png".parse().unwrap(), "bar.jpg".parse().unwrap()],
+        items: vec!["foo.png".parse().unwrap(), "bar.jpg".parse().unwrap()],
       }),
       ..default()
     })
@@ -1178,7 +1178,7 @@ fn media_type_mismatch() {
   let audio = PackageBuilder::new()
     .metadata(&Metadata {
       media: Some(Media::Audio {
-        tracks: tracks(&["foo.flac"]),
+        items: tracks(&["foo.flac"]),
       }),
       ..default()
     })
@@ -1188,7 +1188,7 @@ fn media_type_mismatch() {
   let image = PackageBuilder::new()
     .metadata(&Metadata {
       media: Some(Media::Image {
-        images: vec!["foo.png".parse().unwrap()],
+        items: vec!["foo.png".parse().unwrap()],
       }),
       ..default()
     })
@@ -1215,7 +1215,7 @@ fn media_video_item_out_of_range() {
   let fingerprint = PackageBuilder::new()
     .metadata(&Metadata {
       media: Some(Media::Video {
-        videos: vec!["foo.mp4".parse().unwrap()],
+        items: vec!["foo.mp4".parse().unwrap()],
       }),
       ..default()
     })
@@ -1238,7 +1238,7 @@ fn media_video_item_response() {
   let fingerprint = PackageBuilder::new()
     .metadata(&Metadata {
       media: Some(Media::Video {
-        videos: vec!["foo.mp4".parse().unwrap(), "bar.mp4".parse().unwrap()],
+        items: vec!["foo.mp4".parse().unwrap(), "bar.mp4".parse().unwrap()],
       }),
       ..default()
     })
@@ -1272,7 +1272,7 @@ fn media_webm_item_response() {
   let fingerprint = PackageBuilder::new()
     .metadata(&Metadata {
       media: Some(Media::Video {
-        videos: vec!["foo.webm".parse().unwrap()],
+        items: vec!["foo.webm".parse().unwrap()],
       }),
       ..default()
     })
@@ -1498,7 +1498,7 @@ fn package_item_audio() {
 
   let metadata = Metadata {
     media: Some(Media::Audio {
-      tracks: tracks(&["foo.flac"]),
+      items: tracks(&["foo.flac"]),
     }),
     ..default()
   };
@@ -1525,7 +1525,7 @@ fn package_item_audio_out_of_range() {
   let fingerprint = PackageBuilder::new()
     .metadata(&Metadata {
       media: Some(Media::Audio {
-        tracks: tracks(&["foo.flac"]),
+        items: tracks(&["foo.flac"]),
       }),
       ..default()
     })
@@ -1547,7 +1547,7 @@ fn package_item_image() {
 
   let metadata = Metadata {
     media: Some(Media::Image {
-      images: vec![Image {
+      items: vec![Image {
         dimensions: Dimensions {
           height: 1,
           width: 2,
@@ -1582,7 +1582,7 @@ fn package_item_image_out_of_range() {
   let fingerprint = PackageBuilder::new()
     .metadata(&Metadata {
       media: Some(Media::Image {
-        images: vec![Image {
+        items: vec![Image {
           dimensions: Dimensions {
             height: 1,
             width: 1,
@@ -1625,7 +1625,7 @@ fn package_item_video() {
 
   let metadata = Metadata {
     media: Some(Media::Video {
-      videos: vec![Video {
+      items: vec![Video {
         duration: 0,
         filename: "foo.mp4".parse().unwrap(),
         tracks: vec![
@@ -1679,7 +1679,7 @@ fn package_item_video_out_of_range() {
   let fingerprint = PackageBuilder::new()
     .metadata(&Metadata {
       media: Some(Media::Video {
-        videos: vec!["foo.mp4".parse().unwrap()],
+        items: vec!["foo.mp4".parse().unwrap()],
       }),
       ..default()
     })
@@ -1758,7 +1758,7 @@ fn package_media() {
 
   let metadata = Metadata {
     media: Some(Media::Audio {
-      tracks: tracks(&["foo.flac"]),
+      items: tracks(&["foo.flac"]),
     }),
     ..default()
   };
@@ -1852,7 +1852,7 @@ fn package_page_renders_audio_media() {
 
   let metadata = Metadata {
     media: Some(Media::Audio {
-      tracks: vec![
+      items: vec![
         Audio {
           album: "qux".parse().unwrap(),
           artist: "baz".parse().unwrap(),
@@ -1921,7 +1921,7 @@ fn package_page_renders_image_media() {
 
   let metadata = Metadata {
     media: Some(Media::Image {
-      images: vec![Image {
+      items: vec![Image {
         dimensions: Dimensions {
           height: 1,
           width: 2,
@@ -1966,7 +1966,7 @@ fn package_page_renders_video_media() {
 
   let metadata = Metadata {
     media: Some(Media::Video {
-      videos: vec![Video {
+      items: vec![Video {
         duration: 0,
         filename: "foo.mp4".parse().unwrap(),
         tracks: vec![
@@ -2698,9 +2698,7 @@ fn verify_package_invalid_track_position() {
   audio.tracks = 2;
 
   let metadata = Metadata {
-    media: Some(Media::Audio {
-      tracks: vec![audio],
-    }),
+    media: Some(Media::Audio { items: vec![audio] }),
     ..default()
   }
   .encode_to_vec();

@@ -124,9 +124,9 @@ impl Metadata {
 
     if let Some(media) = &self.media {
       match media {
-        Media::Audio { tracks } => files.extend(tracks.iter().map(Audio::as_path)),
-        Media::Image { images } => files.extend(images.iter().map(Image::as_path)),
-        Media::Video { videos } => files.extend(videos.iter().map(Video::as_path)),
+        Media::Audio { items } => files.extend(items.iter().map(Audio::as_path)),
+        Media::Image { items } => files.extend(items.iter().map(Image::as_path)),
+        Media::Video { items } => files.extend(items.iter().map(Video::as_path)),
         Media::Web => files.push("static/index.html".parse().unwrap()),
       }
     }
@@ -141,18 +141,18 @@ impl Metadata {
 
     if let Some(media) = self.media.as_mut() {
       match media {
-        Media::Audio { tracks } => {
-          for audio in tracks {
+        Media::Audio { items } => {
+          for audio in items {
             audio.populate(root)?;
           }
         }
-        Media::Image { images } => {
-          for image in images {
+        Media::Image { items } => {
+          for image in items {
             image.populate(root)?;
           }
         }
-        Media::Video { videos } => {
-          for video in videos {
+        Media::Video { items } => {
+          for video in items {
             video.populate(root)?;
           }
         }
@@ -184,8 +184,8 @@ impl Metadata {
       }
     }
 
-    if let Some(Media::Audio { tracks }) = &self.media {
-      Audio::check_positions(tracks).context(error::AudioPosition)?;
+    if let Some(Media::Audio { items }) = &self.media {
+      Audio::check_positions(items).context(error::AudioPosition)?;
     }
 
     Ok(())
@@ -218,7 +218,7 @@ mod tests {
         "
           media:
             type: audio
-            tracks:
+            items:
               - foo.flac
               - bar.flac
         ",
@@ -229,7 +229,7 @@ mod tests {
     assert_eq!(
       metadata.media,
       Some(Media::Audio {
-        tracks: vec!["foo.flac".parse().unwrap(), "bar.flac".parse().unwrap()],
+        items: vec!["foo.flac".parse().unwrap(), "bar.flac".parse().unwrap()],
       }),
     );
   }
@@ -242,7 +242,7 @@ mod tests {
         "
           media:
             type: video
-            videos:
+            items:
               - foo.mp4
               - bar.mp4
         ",
@@ -253,7 +253,7 @@ mod tests {
     assert_eq!(
       metadata.media,
       Some(Media::Video {
-        videos: vec!["foo.mp4".parse().unwrap(), "bar.mp4".parse().unwrap()],
+        items: vec!["foo.mp4".parse().unwrap(), "bar.mp4".parse().unwrap()],
       }),
     );
   }
@@ -346,7 +346,7 @@ mod tests {
         title: Foo
         media:
           type: audio
-          tracks:
+          items:
           - foo.mp3
       ",
       r"component must end in `\.flac`",
@@ -409,7 +409,7 @@ mod tests {
       homepage: Some("http://example.com".parse().unwrap()),
       language: Some("en".parse().unwrap()),
       media: Some(Media::Audio {
-        tracks: vec![Audio {
+        items: vec![Audio {
           album: "bar".parse().unwrap(),
           artist: "baz".parse().unwrap(),
           channels: 8,
@@ -452,7 +452,7 @@ mod tests {
   fn files_include_audio_tracks() {
     let metadata = Metadata {
       media: Some(Media::Audio {
-        tracks: vec!["foo.flac".parse().unwrap(), "bar.flac".parse().unwrap()],
+        items: vec!["foo.flac".parse().unwrap(), "bar.flac".parse().unwrap()],
       }),
       ..default()
     };
@@ -470,7 +470,7 @@ mod tests {
   fn files_include_images() {
     let metadata = Metadata {
       media: Some(Media::Image {
-        images: vec!["foo.png".parse().unwrap(), "bar.jpg".parse().unwrap()],
+        items: vec!["foo.png".parse().unwrap(), "bar.jpg".parse().unwrap()],
       }),
       ..default()
     };
@@ -488,7 +488,7 @@ mod tests {
   fn files_include_videos() {
     let metadata = Metadata {
       media: Some(Media::Video {
-        videos: vec!["foo.mp4".parse().unwrap(), "bar.mp4".parse().unwrap()],
+        items: vec!["foo.mp4".parse().unwrap(), "bar.mp4".parse().unwrap()],
       }),
       ..default()
     };
@@ -575,7 +575,7 @@ mod tests {
 
       let mut metadata = Metadata {
         media: Some(Media::Image {
-          images: vec![filename.parse().unwrap()],
+          items: vec![filename.parse().unwrap()],
         }),
         ..default()
       };
@@ -728,7 +728,7 @@ mod tests {
 
     let mut metadata = Metadata {
       media: Some(Media::Image {
-        images: vec!["foo.jpg".parse().unwrap(), "bar.png".parse().unwrap()],
+        items: vec!["foo.jpg".parse().unwrap(), "bar.png".parse().unwrap()],
       }),
       ..default()
     };

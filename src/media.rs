@@ -15,17 +15,17 @@ pub(crate) enum Media {
   #[n(0)]
   Audio {
     #[n(0)]
-    tracks: Vec<Audio>,
+    items: Vec<Audio>,
   },
   #[n(1)]
   Image {
     #[n(0)]
-    images: Vec<Image>,
+    items: Vec<Image>,
   },
   #[n(2)]
   Video {
     #[n(0)]
-    videos: Vec<Video>,
+    items: Vec<Video>,
   },
   #[n(3)]
   Web,
@@ -34,18 +34,18 @@ pub(crate) enum Media {
 impl Media {
   pub(crate) fn item(&self, i: usize) -> Option<&dyn Item> {
     match self {
-      Self::Audio { tracks } => tracks.get(i).map(|item| item as &dyn Item),
-      Self::Image { images } => images.get(i).map(|item| item as &dyn Item),
-      Self::Video { videos } => videos.get(i).map(|item| item as &dyn Item),
+      Self::Audio { items } => items.get(i).map(|item| item as &dyn Item),
+      Self::Image { items } => items.get(i).map(|item| item as &dyn Item),
+      Self::Video { items } => items.get(i).map(|item| item as &dyn Item),
       Self::Web => unreachable!(),
     }
   }
 
   pub(crate) fn items(&self) -> usize {
     match self {
-      Self::Audio { tracks } => tracks.len(),
-      Self::Image { images } => images.len(),
-      Self::Video { videos } => videos.len(),
+      Self::Audio { items } => items.len(),
+      Self::Image { items } => items.len(),
+      Self::Video { items } => items.len(),
       Self::Web => unreachable!(),
     }
   }

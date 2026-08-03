@@ -87,36 +87,36 @@
   <dt>media</dt>
   <dd><a href=/package/{{ self.fingerprint }}/media>{{ media.name() }}</a></dd>
 %%     match media {
-%%       Media::Audio { tracks } => {
+%%       Media::Audio { items } => {
   <dt>tracks</dt>
-  <dd>{{ tracks.len() }}</dd>
+  <dd>{{ items.len() }}</dd>
   <dt>duration</dt>
-  <dd>{{ DisplayDuration(Audio::sum_durations(tracks)) }}</dd>
-%%         if !tracks.is_empty() {
+  <dd>{{ DisplayDuration(Audio::sum_durations(items)) }}</dd>
+%%         if !items.is_empty() {
   <dt>format</dt>
-%%           for format in Audio::formats(tracks) {
+%%           for format in Audio::formats(items) {
   <dd>{{ format }}</dd>
 %%           }
 %%         }
 %%       }
-%%       Media::Image { images } => {
+%%       Media::Image { items } => {
   <dt>images</dt>
-  <dd>{{ images.len() }}</dd>
-%%         if !images.is_empty() {
+  <dd>{{ items.len() }}</dd>
+%%         if !items.is_empty() {
   <dt>format</dt>
-%%           for format in Image::formats(images) {
+%%           for format in Image::formats(items) {
   <dd>{{ format }}</dd>
 %%           }
 %%         }
 %%       }
-%%       Media::Video { videos } => {
+%%       Media::Video { items } => {
   <dt>videos</dt>
-  <dd>{{ videos.len() }}</dd>
+  <dd>{{ items.len() }}</dd>
   <dt>duration</dt>
-  <dd>{{ DisplayDuration(Video::sum_durations(videos)) }}</dd>
-%%         if !videos.is_empty() {
+  <dd>{{ DisplayDuration(Video::sum_durations(items)) }}</dd>
+%%         if !items.is_empty() {
   <dt>format</dt>
-%%           for format in Video::formats(videos) {
+%%           for format in Video::formats(items) {
   <dd>{{ format }}</dd>
 %%           }
 %%         }
@@ -130,9 +130,9 @@
 %%   && !matches!(media, Media::Web)
 %% {
 %%   match media {
-%%     Media::Audio { tracks } => {
+%%     Media::Audio { items } => {
 %%       let mut i = 0;
-%%       for disc in tracks.chunk_by(|a, b| a.disc == b.disc) {
+%%       for disc in items.chunk_by(|a, b| a.disc == b.disc) {
 %%         if disc[0].discs > 1 {
 <h2>disc {{ disc[0].disc }}</h2>
 %%         }
@@ -147,9 +147,9 @@
 </ol>
 %%       }
 %%     }
-%%     Media::Image { images } => {
+%%     Media::Image { items } => {
 <ul class=thumbnails>
-%%       for (i, image) in images.iter().enumerate() {
+%%       for (i, image) in items.iter().enumerate() {
   <li>
     <a href=/package/{{ self.fingerprint }}/item/{{ Ordinal(i) }}>
       <img loading=lazy src=/media/image/{{ self.fingerprint }}/item/{{ Ordinal(i) }}>
@@ -158,9 +158,9 @@
 %%       }
 </ul>
 %%     }
-%%     Media::Video { videos } => {
+%%     Media::Video { items } => {
 <ol>
-%%       for (i, video) in videos.iter().enumerate() {
+%%       for (i, video) in items.iter().enumerate() {
 %%         let duration = Duration::from_millis(video.duration);
   <li>
     <a href=/package/{{ self.fingerprint }}/item/{{ Ordinal(i) }}>{{ video.filename }}</a>

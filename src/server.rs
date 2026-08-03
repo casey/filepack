@@ -437,8 +437,8 @@ impl Server {
         );
       }
 
-      if let Some(Media::Audio { tracks }) = &metadata.media {
-        Audio::check_positions(tracks)
+      if let Some(Media::Audio { items }) = &metadata.media {
+        Audio::check_positions(items)
           .context(server_error::PackageAudioPosition { fingerprint })?;
       }
     }

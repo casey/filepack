@@ -41,7 +41,7 @@ fn mount_rejects_non_web_package() {
   let server = Test::new().serve().spawn();
 
   let test = Test::new()
-    .write("metadata.yaml", "media:\n  type: audio\n  tracks: []\n")
+    .write("metadata.yaml", "media:\n  type: audio\n  items: []\n")
     .args(["create", "."])
     .success();
 
