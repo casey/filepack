@@ -11,7 +11,6 @@ struct Context {
   files_uploaded: u64,
   key: Option<PrivateKey>,
   missing: HashSet<Hash>,
-  options: Options,
   path: Utf8PathBuf,
   progress_bar: ProgressBar,
 }
@@ -236,7 +235,6 @@ impl Upload {
       files_uploaded: 0,
       key,
       missing,
-      options,
       path,
       files,
     };
@@ -258,26 +256,11 @@ impl Upload {
   }
 
   fn upload_package_file(&self, context: &Context, expected: &Entry, path: &Utf8Path) -> Result {
-    let actual = context
-      .options
-      .hash_file(path)
-      .context(error::FilesystemIo { path })?;
-
-    let expected = File {
-      hash: expected.hash(),
-      size: expected.size(),
-    };
-
-    if actual != expected {
-      File::eprint_mismatch(actual, expected, path.as_ref());
-      return Err(error::FileMismatch { path }.build());
-    }
-
     let file = filesystem::open(path)?;
 
-    let body = Body::sized(context.progress_bar.wrap_read(file), expected.size);
+    let body = Body::sized(context.progress_bar.wrap_read(file), expected.size());
 
-    self.upload_body(&context.client, expected.hash, body, context.key.as_ref())?;
+    self.upload_body(&context.client, expected.hash(), body, context.key.as_ref())?;
 
     Ok(())
   }
