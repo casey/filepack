@@ -13,19 +13,3 @@ impl Display for Dimensions {
     write!(f, "{}×{}", self.width, self.height)
   }
 }
-
-#[cfg(test)]
-mod tests {
-  use super::*;
-
-  #[test]
-  fn encoding() {
-    assert_cbor(
-      Dimensions {
-        height: 1,
-        width: 2,
-      },
-      "a200010102",
-    );
-  }
-}

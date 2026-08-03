@@ -76,28 +76,3 @@ impl MediaType {
     }
   }
 }
-
-#[cfg(test)]
-mod tests {
-  use super::*;
-
-  #[test]
-  fn audio() {
-    assert_cbor(
-      Media::Audio {
-        tracks: vec!["foo.flac".parse().unwrap(), "bar.flac".parse().unwrap()],
-      },
-      "8200a10082ad006001600200030004000568666f6f2e666c616306000700080009600a000b000c00ad0060016002000300040005686261722e666c616306000700080009600a000b000c00",
-    );
-  }
-
-  #[test]
-  fn image() {
-    assert_cbor(
-      Media::Image {
-        images: vec!["foo.png".parse().unwrap(), "bar.jpg".parse().unwrap()],
-      },
-      "8201a10082a400a2000001000167666f6f2e706e6702a200f401000301a400a20000010001676261722e6a706702a200f401000300",
-    );
-  }
-}

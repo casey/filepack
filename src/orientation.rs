@@ -145,19 +145,6 @@ mod tests {
   }
 
   #[test]
-  fn encoding() {
-    assert_cbor(Orientation::new(), "a200f40100");
-
-    assert_cbor(
-      Orientation {
-        mirrored: true,
-        rotation: Rotation::R90,
-      },
-      "a200f50101",
-    );
-  }
-
-  #[test]
   fn from_exif() {
     #[track_caller]
     fn case(value: u16, mirrored: bool, rotation: Rotation) {

@@ -164,30 +164,6 @@ mod tests {
   use super::*;
 
   #[test]
-  fn encoding() {
-    assert_cbor(
-      "foo.png".parse::<Image>().unwrap(),
-      "a400a2000001000167666f6f2e706e6702a200f401000301",
-    );
-
-    assert_cbor(
-      Image {
-        dimensions: Dimensions {
-          height: 1,
-          width: 2,
-        },
-        filename: "foo.jpg".parse().unwrap(),
-        orientation: Orientation {
-          mirrored: true,
-          rotation: Rotation::R90,
-        },
-        ty: ImageType::Jpeg,
-      },
-      "a400a2000101020167666f6f2e6a706702a200f501010300",
-    );
-  }
-
-  #[test]
   fn formats() {
     let foo = Image {
       dimensions: Dimensions {

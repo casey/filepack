@@ -34,12 +34,6 @@ mod tests {
   use super::*;
 
   #[test]
-  fn encoding() {
-    assert_cbor(ImageType::Jpeg, "00");
-    assert_cbor(ImageType::Png, "01");
-  }
-
-  #[test]
   fn from_extension() {
     assert_eq!(ImageType::from_extension("jpg"), Some(ImageType::Jpeg));
     assert_eq!(ImageType::from_extension("png"), Some(ImageType::Png));

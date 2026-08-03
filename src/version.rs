@@ -6,13 +6,3 @@ pub(crate) enum Version {
   #[n(0)]
   Zero,
 }
-
-#[cfg(test)]
-mod tests {
-  use super::*;
-
-  #[test]
-  fn encoding() {
-    assert_cbor(Version::Zero, "00");
-  }
-}

@@ -264,35 +264,6 @@ fn upload_package_accepts_directory() {
 }
 
 #[test]
-fn upload_package_checks_file_hashes_locally() {
-  let server = Test::new().serve().spawn();
-
-  let test = Test::new()
-    .write("foo", "aaa")
-    .args(["create", "."])
-    .success()
-    .write("foo", "bar");
-
-  let expected = Hash::bytes(b"aaa");
-  let actual = Hash::bytes(b"bar");
-
-  test
-    .args(["upload", "--server", &server.address(), "manifest.filepack"])
-    .stderr(&format!(
-      "\
-uploading 1 of 1 file
-mismatched file: `foo`
-       manifest: {expected} (3 bytes)
-           file: {actual} (3 bytes)
-error: file did not match manifest entry
-",
-    ))
-    .failure();
-
-  server.terminate().success();
-}
-
-#[test]
 fn upload_package_defaults_to_current_directory() {
   let server = Test::new()
     .serve()

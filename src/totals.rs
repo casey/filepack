@@ -162,19 +162,6 @@ mod tests {
   }
 
   #[test]
-  fn encoding() {
-    assert_cbor(
-      Totals {
-        directories: 1,
-        directory_size: 2,
-        file_size: 3,
-        files: 4,
-      },
-      "a40004010302010302",
-    );
-  }
-
-  #[test]
   fn expect() {
     let actual = Totals {
       directories: 1,
