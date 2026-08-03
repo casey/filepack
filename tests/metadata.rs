@@ -3,7 +3,13 @@ use super::*;
 #[test]
 fn create_allows_extra_files_in_web_packages() {
   Test::new()
-    .write("metadata.yaml", "media:\n  type: web\n")
+    .write(
+      "metadata.yaml",
+      "
+        media:
+          type: web
+      ",
+    )
     .touch("static/index.html")
     .touch("static/bar.txt")
     .create_dir("static/foo")
@@ -23,7 +29,13 @@ fn create_checks_metadata() {
 #[test]
 fn create_does_not_write_metadata_cbor_on_failure() {
   Test::new()
-    .write("metadata.yaml", "media:\n  type: web\n")
+    .write(
+      "metadata.yaml",
+      "
+        media:
+          type: web
+      ",
+    )
     .touch("static/index.html")
     .touch("bar.txt")
     .arg("create")
@@ -74,12 +86,12 @@ fn create_extracts_image_dimensions() {
     .write("foo.png", image(2, 1, ImageFormat::Png))
     .write(
       "metadata.yaml",
-      "\
-media:
-  type: image
-  items:
-    - foo.png
-",
+      "
+        media:
+          type: image
+          items:
+            - foo.png
+      ",
     )
     .arg("create")
     .success()
@@ -133,12 +145,12 @@ fn create_extracts_track_tags() {
     )
     .write(
       "metadata.yaml",
-      "\
-media:
-  type: audio
-  items:
-    - foo.flac
-",
+      "
+        media:
+          type: audio
+          items:
+            - foo.flac
+      ",
     )
     .arg("create")
     .success()
@@ -189,12 +201,12 @@ fn create_extracts_video_metadata() {
     )
     .write(
       "metadata.yaml",
-      "\
-media:
-  type: video
-  items:
-    - foo.mp4
-",
+      "
+        media:
+          type: video
+          items:
+            - foo.mp4
+      ",
     )
     .arg("create")
     .success()
@@ -270,12 +282,12 @@ fn create_rejects_extra_files_in_media_packages() {
     )
     .write(
       "metadata.yaml",
-      "\
-media:
-  type: audio
-  items:
-    - foo.flac
-",
+      "
+        media:
+          type: audio
+          items:
+            - foo.flac
+      ",
     )
     .touch("bar.txt")
     .create_dir("empty")
@@ -293,7 +305,13 @@ media:
 #[test]
 fn create_rejects_extra_files_in_web_packages() {
   Test::new()
-    .write("metadata.yaml", "media:\n  type: web\n")
+    .write(
+      "metadata.yaml",
+      "
+        media:
+          type: web
+      ",
+    )
     .touch("static/index.html")
     .touch("bar.txt")
     .arg("create")
@@ -326,12 +344,12 @@ fn create_rejects_invalid_track_positions() {
     )
     .write(
       "metadata.yaml",
-      "\
-media:
-  type: audio
-  items:
-    - foo.flac
-",
+      "
+        media:
+          type: audio
+          items:
+            - foo.flac
+      ",
     )
     .arg("create")
     .stderr(
@@ -349,17 +367,19 @@ fn create_rejects_invalid_tracks() {
     .write("foo.flac", "barbar")
     .write(
       "metadata.yaml",
-      "\
-media:
-  type: audio
-  items:
-    - foo.flac
-",
+      "
+        media:
+          type: audio
+          items:
+            - foo.flac
+      ",
     )
     .arg("create")
     .stderr_regex(
-      "error: failed to decode track `.*foo.flac`
-       └─ Ill-formed FLAC stream: .*\n",
+      "
+        error: failed to decode track `.*foo.flac`
+               └─ Ill-formed FLAC stream: .*
+      ",
     )
     .failure();
 }
@@ -370,19 +390,21 @@ fn create_rejects_invalid_videos() {
     .write("foo.mp4", "barbar")
     .write(
       "metadata.yaml",
-      "\
-media:
-  type: video
-  items:
-    - foo.mp4
-",
+      "
+        media:
+          type: video
+          items:
+            - foo.mp4
+      ",
     )
     .arg("create")
     .stderr_regex(
-      "error: invalid video `.*foo.mp4`
-       ├─ failed to decode MP4
-       ├─ failed to fill whole buffer
-       └─ failed to fill whole buffer\n",
+      "
+        error: invalid video `.*foo.mp4`
+               ├─ failed to decode MP4
+               ├─ failed to fill whole buffer
+               └─ failed to fill whole buffer
+      ",
     )
     .failure();
 }
@@ -403,7 +425,13 @@ fn create_rejects_metadata_cbor_without_yaml() {
 #[test]
 fn create_requires_index_html_in_web_packages() {
   Test::new()
-    .write("metadata.yaml", "media:\n  type: web\n")
+    .write(
+      "metadata.yaml",
+      "
+        media:
+          type: web
+      ",
+    )
     .arg("create")
     .stderr("error: file referenced in metadata missing: `static/index.html`\n")
     .failure();
@@ -418,15 +446,15 @@ fn create_succeeds_with_valid_metadata() {
     .touch("COLOPHON.md")
     .write(
       "metadata.yaml",
-      "\
-title: Foo
-time: 2024-01-01
-language: en
-artwork: cover.png
-readme: README.md
-package:
-  colophon: COLOPHON.md
-",
+      "
+        title: Foo
+        time: 2024-01-01
+        language: en
+        artwork: cover.png
+        readme: README.md
+        package:
+          colophon: COLOPHON.md
+      ",
     )
     .arg("create")
     .success()

@@ -353,7 +353,7 @@ impl Test {
 
   pub(crate) fn stderr_regex(mut self, pattern: &str) -> Self {
     assert_matches!(self.stderr, Expected::Empty);
-    self.stderr = Expected::regex(pattern);
+    self.stderr = Expected::regex(&unindent(pattern));
     self
   }
 
@@ -382,7 +382,7 @@ impl Test {
 
   pub(crate) fn stdout_regex(mut self, pattern: &str) -> Self {
     assert_matches!(self.stdout, Expected::Empty);
-    self.stdout = Expected::regex(pattern);
+    self.stdout = Expected::regex(&unindent(pattern));
     self
   }
 
@@ -456,10 +456,10 @@ impl Test {
     }
   }
 
-  pub(crate) fn write(self, path: &str, content: impl AsRef<[u8]>) -> Self {
+  pub(crate) fn write(self, path: &str, content: impl Content) -> Self {
     let path = self.join(path);
     fs::create_dir_all(path.parent().unwrap()).unwrap();
-    fs::write(path, content.as_ref()).unwrap();
+    fs::write(path, content.content()).unwrap();
     self
   }
 
