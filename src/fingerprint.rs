@@ -97,3 +97,24 @@ impl redb::Value for Fingerprint {
     TypeName::Fingerprint.into()
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn redb() {
+    let values = [
+      Fingerprint::from(Hash::from([0; Hash::LEN])),
+      Fingerprint::from(Hash::from([0xff; Hash::LEN])),
+      Fingerprint::from(Hash::bytes(b"foo")),
+      Fingerprint::from(Hash::bytes(b"bar")),
+    ];
+
+    for value in values {
+      test::assert_redb_value(value);
+    }
+
+    test::assert_redb_key_compare(&values);
+  }
+}
