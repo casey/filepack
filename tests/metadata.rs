@@ -20,7 +20,13 @@ fn create_allows_extra_files_in_web_packages() {
 #[test]
 fn create_checks_metadata() {
   Test::new()
-    .write("metadata.yaml", "title: Foo\nreadme: README.md")
+    .write(
+      "metadata.yaml",
+      "
+        title: Foo
+        readme: README.md
+      ",
+    )
     .arg("create")
     .stderr("error: file referenced in metadata missing: `README.md`\n")
     .failure();
@@ -413,7 +419,13 @@ fn create_rejects_invalid_videos() {
 fn create_rejects_metadata_cbor_without_yaml() {
   Test::new()
     .touch("README.md")
-    .write("metadata.yaml", "title: Foo\nreadme: README.md")
+    .write(
+      "metadata.yaml",
+      "
+        title: Foo
+        readme: README.md
+      ",
+    )
     .arg("create")
     .success()
     .remove_file("metadata.yaml")

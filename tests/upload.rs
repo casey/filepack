@@ -453,7 +453,13 @@ fn upload_package_serves_package_html() {
   let server = Test::new().serve().spawn();
 
   let test = Test::new()
-    .write("metadata.yaml", "title: Foo\ndescription: Bar")
+    .write(
+      "metadata.yaml",
+      "
+        title: Foo
+        description: Bar
+      ",
+    )
     .args(["create", "."])
     .success();
 
@@ -475,7 +481,7 @@ fn upload_package_serves_package_html() {
   let totals = Totals {
     directories: 0,
     directory_size: 0,
-    file_size: metadata.encode_to_vec().len().into_u64() + 27,
+    file_size: metadata.encode_to_vec().len().into_u64() + 28,
     files: 2,
   };
 

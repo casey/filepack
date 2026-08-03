@@ -748,7 +748,13 @@ fn valid_signature_for_wrong_pubkey() {
 fn verify_checks_metadata() {
   let test = Test::new()
     .touch("README.md")
-    .write("metadata.yaml", "title: Foo\nreadme: README.md")
+    .write(
+      "metadata.yaml",
+      "
+        title: Foo
+        readme: README.md
+      ",
+    )
     .arg("create")
     .success();
 

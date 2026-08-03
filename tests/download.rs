@@ -4,7 +4,13 @@ use super::*;
 fn download_checks_metadata() {
   let test = Test::new()
     .touch("README.md")
-    .write("metadata.yaml", "title: Foo\nreadme: README.md")
+    .write(
+      "metadata.yaml",
+      "
+        title: Foo
+        readme: README.md
+      ",
+    )
     .arg("create")
     .success();
 
@@ -346,7 +352,11 @@ fn download_retrieves_package_with_metadata() {
     .write("README.md", "baz")
     .write(
       "metadata.yaml",
-      "title: Foo\nartwork: cover.png\nreadme: README.md",
+      "
+        title: Foo
+        artwork: cover.png
+        readme: README.md
+      ",
     )
     .args(["create", "."])
     .success();
@@ -372,7 +382,7 @@ fn download_retrieves_package_with_metadata() {
     .assert_file("out/README.md", "baz")
     .success()
     .args(["verify", "out"])
-    .stderr("successfully verified 5 files totaling 256 bytes\n")
+    .stderr("successfully verified 5 files totaling 257 bytes\n")
     .success();
 
   server.terminate().success();
