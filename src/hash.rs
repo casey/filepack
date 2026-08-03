@@ -164,6 +164,16 @@ mod tests {
   }
 
   #[test]
+  fn redb() {
+    test::assert_redb_impls(&[
+      Hash::from([0; Hash::LEN]),
+      Hash::from([0xff; Hash::LEN]),
+      Hash::bytes(b"foo"),
+      Hash::bytes(b"bar"),
+    ]);
+  }
+
+  #[test]
   fn serde() {
     let input = Hash::bytes(&[]);
     let json = serde_json::to_string(&input).unwrap();

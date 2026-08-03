@@ -49,6 +49,32 @@ pub(crate) fn assert_encoding<T: Debug + Decode + Encode + PartialEq>(value: T) 
   assert_eq!(decoded, value);
 }
 
+#[track_caller]
+pub(crate) fn assert_redb_impls<K>(values: &[K])
+where
+  K: for<'a> redb::Value<SelfType<'a> = K> + redb::Key + Ord,
+{
+  for value in values {
+    let bytes = K::as_bytes(value);
+
+    if let Some(width) = K::fixed_width() {
+      assert_eq!(bytes.as_ref().len(), width);
+    }
+
+    assert_eq!(K::from_bytes(bytes.as_ref()), *value);
+  }
+
+  for a in values {
+    for b in values {
+      assert_eq!(
+        K::compare(K::as_bytes(a).as_ref(), K::as_bytes(b).as_ref()),
+        a.cmp(b),
+        "{a:?} vs {b:?}",
+      );
+    }
+  }
+}
+
 pub(crate) fn checksum(s: &str) -> String {
   let checked_hrpstring = CheckedHrpstring::new::<bech32::NoChecksum>(s).unwrap();
   checked_hrpstring

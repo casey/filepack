@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Copy, Clone, Debug, FromRepr)]
+#[derive(Copy, Clone, Debug, Eq, FromRepr, Ord, PartialEq, PartialOrd)]
 #[repr(u64)]
 pub(crate) enum DatabaseMetadata {
   Schema = 0,
@@ -43,5 +43,15 @@ impl redb::Value for DatabaseMetadata {
 
   fn type_name() -> redb::TypeName {
     TypeName::DatabaseMetadata.into()
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn redb() {
+    test::assert_redb_impls(&[DatabaseMetadata::Schema]);
   }
 }
