@@ -411,8 +411,11 @@ fn named_key_invalid() {
     .success()
     .args(["verify", "--key", "@invalid"])
     .stderr(
-      "error: invalid value '@invalid' for '--key <KEY>': invalid public key name `@invalid`\n\n\
-      For more information, try '--help'.\n",
+      "
+        error: invalid value '@invalid' for '--key <KEY>': invalid public key name `@invalid`
+
+        For more information, try '--help'.
+      ",
     )
     .status(USAGE_ERROR);
 }
@@ -745,7 +748,13 @@ fn valid_signature_for_wrong_pubkey() {
 fn verify_checks_metadata() {
   let test = Test::new()
     .touch("README.md")
-    .write("metadata.yaml", "title: Foo\nreadme: README.md")
+    .write(
+      "metadata.yaml",
+      "
+        title: Foo
+        readme: README.md
+      ",
+    )
     .arg("create")
     .success();
 
