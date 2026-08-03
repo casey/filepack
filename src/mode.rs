@@ -5,7 +5,7 @@ pub struct Mode(u32);
 
 impl Mode {
   pub(crate) fn is_secure(self) -> bool {
-    self.0.trailing_zeros() >= 6
+    self.0 & 0o077 == 0
   }
 }
 
