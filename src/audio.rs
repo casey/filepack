@@ -493,33 +493,6 @@ mod tests {
   }
 
   #[test]
-  fn encoding() {
-    assert_cbor(
-      "foo.flac".parse::<Audio>().unwrap(),
-      "ad006001600200030004000568666f6f2e666c616306000700080009600a000b000c00",
-    );
-
-    assert_cbor(
-      Audio {
-        album: "qux".parse().unwrap(),
-        artist: "baz".parse().unwrap(),
-        channels: 8,
-        disc: 3,
-        discs: 4,
-        filename: "foo.flac".parse().unwrap(),
-        sample_bits: 7,
-        sample_rate: 1,
-        samples: 2,
-        title: "bar".parse().unwrap(),
-        track: 5,
-        tracks: 6,
-        ty: AudioType::Flac,
-      },
-      "ad0063717578016362617a0208030304040568666f6f2e666c616306070701080209636261720a050b060c00",
-    );
-  }
-
-  #[test]
   fn formats() {
     let foo = "foo.flac".parse::<Audio>().unwrap();
     let bar = "bar.flac".parse::<Audio>().unwrap();

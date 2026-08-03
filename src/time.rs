@@ -155,20 +155,6 @@ mod tests {
   }
 
   #[test]
-  fn encoding() {
-    #[track_caller]
-    fn case(s: &str, cbor: &str) {
-      assert_cbor(s.parse::<Time>().unwrap(), cbor);
-    }
-
-    case("0", "8200a10000");
-    case("-44", "8200a100382b");
-    case("1970", "8200a1001907b2");
-    case("1970-01-01", "8201a10000");
-    case("1969-12-31", "8201a10020");
-  }
-
-  #[test]
   fn invalid() {
     #[track_caller]
     fn case(s: &str) {

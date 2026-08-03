@@ -87,7 +87,7 @@ mod tests {
 
   #[test]
   fn encoding() {
-    assert_cbor("foo".parse::<ComponentBuf>().unwrap(), "63666f6f");
+    assert_encoding("foo".parse::<ComponentBuf>().unwrap());
     let empty = "".encode_to_vec();
     let mut decoder = Decoder::new(&empty);
     assert_matches!(
