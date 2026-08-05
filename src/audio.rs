@@ -294,11 +294,10 @@ impl Audio {
 
     let tag = match id3::Tag::read_from2(io::Cursor::new(&data)) {
       Err(err) => {
-        if matches!(err.kind, id3::ErrorKind::NoTag) {
+        if let id3::ErrorKind::NoTag = err.kind {
           return Err(error::Mp3TagMissing { path }.build());
-        } else {
-          return Err(error::Mp3Tag { path }.into_error(err));
         }
+        return Err(error::Mp3Tag { path }.into_error(err));
       }
       Ok(tag) => tag,
     };
