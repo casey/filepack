@@ -293,10 +293,14 @@ impl Audio {
     let data = filesystem::read(path)?;
 
     let tag = match id3::Tag::read_from2(io::Cursor::new(&data)) {
-      Err(err) if matches!(err.kind, id3::ErrorKind::NoTag) => {
-        return Err(error::Mp3TagMissing { path }.build());
+      Err(err) => {
+        if matches!(err.kind, id3::ErrorKind::NoTag) {
+          return Err(error::Mp3TagMissing { path }.build());
+        } else {
+          return Err(error::Mp3Tag { path }.into_error(err));
+        }
       }
-      result => result.context(error::Mp3Tag { path })?,
+      Ok(tag) => tag,
     };
 
     self.album = Self::id3_text_tag(&tag, path, "TALB")?;
