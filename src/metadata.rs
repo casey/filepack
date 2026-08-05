@@ -347,9 +347,9 @@ mod tests {
         media:
           type: audio
           items:
-          - foo.mp3
+          - foo.wav
       ",
-      r"component must end in `\.flac`",
+      r"component must end in `\.flac` or `\.mp3`",
     );
     case(
       "
@@ -416,7 +416,7 @@ mod tests {
           disc: 3,
           discs: 4,
           filename: "track.flac".parse().unwrap(),
-          sample_bits: 7,
+          sample_bits: Some(7),
           sample_rate: 1,
           samples: 2,
           title: "foo".parse().unwrap(),

@@ -6,6 +6,7 @@ pub(crate) enum ResourceType {
   Flac,
   Jpeg,
   Markdown,
+  Mp3,
   Mp4,
   Png,
   Webm,
@@ -15,7 +16,9 @@ impl ResourceType {
   pub(crate) fn content_disposition(self) -> Option<HeaderValue> {
     match self {
       Self::Binary => Some(HeaderValue::from_static("attachment")),
-      Self::Flac | Self::Jpeg | Self::Markdown | Self::Mp4 | Self::Png | Self::Webm => None,
+      Self::Flac | Self::Jpeg | Self::Markdown | Self::Mp3 | Self::Mp4 | Self::Png | Self::Webm => {
+        None
+      }
     }
   }
 
@@ -25,6 +28,7 @@ impl ResourceType {
       Self::Flac => "audio/flac".parse().unwrap(),
       Self::Jpeg => mime::IMAGE_JPEG,
       Self::Markdown => mime::TEXT_PLAIN_UTF_8,
+      Self::Mp3 => "audio/mpeg".parse().unwrap(),
       Self::Mp4 => "video/mp4".parse().unwrap(),
       Self::Png => mime::IMAGE_PNG,
       Self::Webm => "video/webm".parse().unwrap(),
@@ -36,6 +40,7 @@ impl ResourceType {
       "flac" => Some(Self::Flac),
       "jpeg" | "jpg" => Some(Self::Jpeg),
       "md" => Some(Self::Markdown),
+      "mp3" => Some(Self::Mp3),
       "mp4" => Some(Self::Mp4),
       "png" => Some(Self::Png),
       "webm" => Some(Self::Webm),
@@ -46,7 +51,7 @@ impl ResourceType {
   pub(crate) fn sandbox(self) -> bool {
     match self {
       Self::Binary | Self::Jpeg | Self::Markdown | Self::Png => true,
-      Self::Flac | Self::Mp4 | Self::Webm => false,
+      Self::Flac | Self::Mp3 | Self::Mp4 | Self::Webm => false,
     }
   }
 }
@@ -70,6 +75,8 @@ mod tests {
     case("foo.jpeg", Some(ResourceType::Jpeg));
     case("foo.jpg", Some(ResourceType::Jpeg));
     case("foo.md", Some(ResourceType::Markdown));
+    case("foo.mp3", Some(ResourceType::Mp3));
+    case("foo.mp4", Some(ResourceType::Mp4));
     case("foo.png", Some(ResourceType::Png));
     case("foo.webm", Some(ResourceType::Webm));
 
