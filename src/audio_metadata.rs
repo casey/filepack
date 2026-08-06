@@ -10,6 +10,7 @@ pub(crate) struct AudioMetadata {
   pub(crate) sample_bits: Option<u64>,
   pub(crate) sample_rate: u64,
   pub(crate) samples: u64,
+  pub(crate) size: u64,
   pub(crate) title: Text,
   pub(crate) track: u64,
   pub(crate) tracks: u64,

@@ -29,14 +29,7 @@ impl Track {
       } => builder
         .value("channels", channels)
         .value("sample rate", DisplaySampleRate(sample_rate))
-        .when(
-          video.duration > 0,
-          "bit rate",
-          DisplayBitrate {
-            duration: video.duration,
-            size: self.size,
-          },
-        ),
+        .optional("bit rate", DisplayBitrate::new(video.duration, self.size)),
       TrackInfo::Video {
         bit_depth,
         chroma_subsampling,
@@ -59,14 +52,7 @@ impl Track {
               frames,
             },
           )
-          .when(
-            video.duration > 0,
-            "bit rate",
-            DisplayBitrate {
-              duration: video.duration,
-              size: self.size,
-            },
-          )
+          .optional("bit rate", DisplayBitrate::new(video.duration, self.size))
           .when(
             pixels > 0,
             "bits per pixel",

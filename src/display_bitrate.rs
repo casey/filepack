@@ -1,8 +1,14 @@
 use super::*;
 
 pub(crate) struct DisplayBitrate {
-  pub(crate) duration: u64,
-  pub(crate) size: u64,
+  duration: u64,
+  size: u64,
+}
+
+impl DisplayBitrate {
+  pub(crate) fn new(duration: u64, size: u64) -> Option<Self> {
+    (duration > 0).then_some(Self { duration, size })
+  }
 }
 
 impl Display for DisplayBitrate {
@@ -32,7 +38,10 @@ mod tests {
   fn display() {
     #[track_caller]
     fn case(size: u64, duration: u64, expected: &str) {
-      assert_eq!(DisplayBitrate { duration, size }.to_string(), expected);
+      assert_eq!(
+        DisplayBitrate::new(duration, size).unwrap().to_string(),
+        expected,
+      );
     }
 
     case(0, 1000, "0 bits/s");
@@ -43,5 +52,11 @@ mod tests {
     case(125_000, 1000, "1 Mbit/s");
     case(437_500, 1000, "3.5 Mbit/s");
     case(125_000_000, 1000, "1 Gbit/s");
+  }
+
+  #[test]
+  fn new() {
+    assert!(DisplayBitrate::new(0, 1).is_none());
+    assert!(DisplayBitrate::new(1, 1).is_some());
   }
 }

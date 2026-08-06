@@ -1,13 +1,13 @@
 use super::*;
 
-pub(crate) struct FlacDecoder<T: io::Read> {
-  reader: FlacReader<T>,
+pub(crate) struct FlacDecoder<'a> {
+  reader: FlacReader<&'a [u8]>,
 }
 
-impl<T: io::Read> FlacDecoder<T> {
-  fn decode(reader: T) -> Result<AudioMetadata, AudioError> {
+impl<'a> FlacDecoder<'a> {
+  fn decode(data: &'a [u8]) -> Result<AudioMetadata, AudioError> {
     let decoder = Self {
-      reader: FlacReader::new(reader).context(audio_error::FlacDecode)?,
+      reader: FlacReader::new(data).context(audio_error::FlacDecode)?,
     };
 
     let streaminfo = decoder.reader.streaminfo();
@@ -25,15 +25,43 @@ impl<T: io::Read> FlacDecoder<T> {
       sample_bits: Some(streaminfo.bits_per_sample.into()),
       sample_rate: streaminfo.sample_rate.into(),
       samples,
+      size: (data.len() - Self::frame_offset(data)?).into_u64(),
       title: decoder.text_tag("title")?,
       track: decoder.number_tag("tracknumber")?,
       tracks: decoder.number_tag("tracktotal")?,
     })
   }
 
+  fn frame_offset(data: &[u8]) -> Result<usize, AudioError> {
+    let mut offset = 4;
+
+    loop {
+      let header = data
+        .get(offset..offset + 4)
+        .context(audio_error::FlacTruncated)?;
+
+      let length =
+        usize::from(header[1]) << 16 | usize::from(header[2]) << 8 | usize::from(header[3]);
+
+      offset += 4 + length;
+
+      ensure!(offset <= data.len(), audio_error::FlacTruncated);
+
+      if header[0] & 0x80 != 0 {
+        return Ok(offset);
+      }
+    }
+  }
+
   fn number_tag(&self, tag: &'static str) -> Result<u64, AudioError> {
     let value = self.tag(tag)?;
     parse_number(value).context(audio_error::TagInteger { tag })
+  }
+
+  pub(crate) fn read(path: &Utf8Path) -> Result<AudioMetadata> {
+    let data = filesystem::read(path)?;
+
+    FlacDecoder::decode(&data).context(error::Audio { path })
   }
 
   fn tag(&self, tag: &'static str) -> Result<&str, AudioError> {
@@ -45,14 +73,6 @@ impl<T: io::Read> FlacDecoder<T> {
       .tag(tag)?
       .parse()
       .context(audio_error::TagInvalid { tag })
-  }
-}
-
-impl FlacDecoder<fs::File> {
-  pub(crate) fn read(path: &Utf8Path) -> Result<AudioMetadata> {
-    let file = filesystem::open(path)?;
-
-    Self::decode(file).context(error::Audio { path })
   }
 }
 
@@ -247,6 +267,31 @@ mod tests {
   }
 
   #[test]
+  fn frame_offset() {
+    let bytes = flac(&[], 44100);
+    assert_eq!(
+      FlacDecoder::frame_offset(&bytes).unwrap(),
+      bytes.len() - 1024,
+    );
+
+    let bytes = flac(&["foo=bar"], 44100);
+    assert_eq!(
+      FlacDecoder::frame_offset(&bytes).unwrap(),
+      bytes.len() - 1024,
+    );
+
+    assert_matches!(
+      FlacDecoder::frame_offset(b"fLaC"),
+      Err(AudioError::FlacTruncated),
+    );
+
+    assert_matches!(
+      FlacDecoder::frame_offset(&[b"fLaC".as_slice(), &[0x80, 0x00, 0x00, 0x22]].concat()),
+      Err(AudioError::FlacTruncated),
+    );
+  }
+
+  #[test]
   fn read_ok() {
     let (_tempdir, root) = tempdir();
 
@@ -280,6 +325,7 @@ mod tests {
         sample_bits: Some(16),
         sample_rate: 44100,
         samples: 66150,
+        size: 1024,
         title: "bar".parse().unwrap(),
         track: 3,
         tracks: 4,
