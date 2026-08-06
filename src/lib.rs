@@ -74,7 +74,7 @@ use {
     hashing_writer::HashingWriter,
     head::Head,
     image::Image,
-    image_info::ImageInfo,
+    image_metadata::ImageMetadata,
     image_type::ImageType,
     info::Info,
     info_builder::InfoBuilder,
@@ -132,7 +132,7 @@ use {
     version::Version,
     video::Video,
     video_error::VideoError,
-    video_info::VideoInfo,
+    video_metadata::VideoMetadata,
     video_type::VideoType,
     view::View,
     webm_decoder::WebmDecoder,
@@ -332,7 +332,7 @@ mod hash_error;
 mod hashing_writer;
 mod head;
 mod image;
-mod image_info;
+mod image_metadata;
 mod image_type;
 mod info;
 mod info_builder;
@@ -408,7 +408,7 @@ mod validate;
 mod version;
 mod video;
 mod video_error;
-mod video_info;
+mod video_metadata;
 mod video_type;
 mod view;
 mod webm_decoder;

@@ -33,7 +33,7 @@ impl Video {
   pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result {
     let path = root.join(self.as_path());
 
-    let VideoInfo { duration, tracks } = match self.ty {
+    let VideoMetadata { duration, tracks } = match self.ty {
       VideoType::Mp4 => Mp4Decoder::read(&path)?,
       VideoType::Webm => WebmDecoder::read(&path)?,
     };

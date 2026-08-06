@@ -18,7 +18,7 @@ impl Image {
     self.filename.as_path()
   }
 
-  fn decode(&self, root: &Utf8Path) -> Result<ImageInfo> {
+  fn decode(&self, root: &Utf8Path) -> Result<ImageMetadata> {
     let path = root.join(self.as_path());
 
     match self.ty {
@@ -27,7 +27,7 @@ impl Image {
     }
   }
 
-  fn decode_jpeg(path: &Utf8Path) -> Result<ImageInfo> {
+  fn decode_jpeg(path: &Utf8Path) -> Result<ImageMetadata> {
     let bytes = filesystem::read(path)?;
 
     let mut decoder = JpegDecoder::new(io::Cursor::new(bytes));
@@ -44,7 +44,7 @@ impl Image {
 
     let info = decoder.info().unwrap();
 
-    Ok(ImageInfo {
+    Ok(ImageMetadata {
       dimensions: Dimensions {
         height: info.height.into(),
         width: info.width.into(),
@@ -53,7 +53,7 @@ impl Image {
     })
   }
 
-  fn decode_png(path: &Utf8Path) -> Result<ImageInfo> {
+  fn decode_png(path: &Utf8Path) -> Result<ImageMetadata> {
     let bytes = filesystem::read(path)?;
 
     let reader = png::Decoder::new(io::Cursor::new(bytes))
@@ -68,7 +68,7 @@ impl Image {
       Orientation::new()
     };
 
-    Ok(ImageInfo {
+    Ok(ImageMetadata {
       dimensions: Dimensions {
         height: info.height.into(),
         width: info.width.into(),

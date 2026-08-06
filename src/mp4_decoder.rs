@@ -3,7 +3,7 @@ use super::*;
 pub(crate) struct Mp4Decoder;
 
 impl Mp4Decoder {
-  fn decode<T: Read + Seek>(reader: T, size: u64) -> Result<VideoInfo, VideoError> {
+  fn decode<T: Read + Seek>(reader: T, size: u64) -> Result<VideoMetadata, VideoError> {
     use re_mp4::{Mp4, Mp4aBox, StsdBoxContent, TkhdBox};
 
     fn mp4a_codec(mp4a: &Mp4aBox) -> Option<Codec> {
@@ -182,7 +182,7 @@ impl Mp4Decoder {
       tracks.push(track);
     }
 
-    Ok(VideoInfo { duration, tracks })
+    Ok(VideoMetadata { duration, tracks })
   }
 
   fn h264_color_info(sps: &[u8]) -> Option<ColorInfo> {
@@ -248,7 +248,7 @@ impl Mp4Decoder {
     )
   }
 
-  pub(crate) fn read(path: &Utf8Path) -> Result<VideoInfo> {
+  pub(crate) fn read(path: &Utf8Path) -> Result<VideoMetadata> {
     let file = filesystem::open(path)?;
 
     let size = file.metadata().context(error::FilesystemIo { path })?.len();
@@ -264,7 +264,7 @@ mod tests {
   #[test]
   fn decode() {
     #[track_caller]
-    fn case(builder: Mp4Builder) -> Result<VideoInfo, VideoError> {
+    fn case(builder: Mp4Builder) -> Result<VideoMetadata, VideoError> {
       let bytes = builder.build();
       let size = bytes.len().try_into().unwrap();
       Mp4Decoder::decode(io::Cursor::new(bytes), size)
@@ -277,7 +277,7 @@ mod tests {
 
     assert_eq!(
       case(Mp4Builder::new().video_track(2, 1).audio_track(0x40)).unwrap(),
-      VideoInfo {
+      VideoMetadata {
         duration: 0,
         tracks: vec![
           Track {
@@ -308,7 +308,7 @@ mod tests {
 
     assert_eq!(
       case(Mp4Builder::new().video_track(2, 1)).unwrap(),
-      VideoInfo {
+      VideoMetadata {
         duration: 0,
         tracks: vec![Track {
           codec: Codec::H264,
