@@ -52,7 +52,7 @@ pub enum Error {
     path: DisplayPath,
     tag: &'static str,
   },
-  #[snafu(display("track `{path}` tag `{tag}` tag not in `NUMBER/TOTAL` form"))]
+  #[snafu(display("track `{path}` tag `{tag}` tag not in format `NUMBER/TOTAL`"))]
   AudioTagPair {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
