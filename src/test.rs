@@ -132,43 +132,6 @@ pub(crate) fn flac(comments: &[&str], samples: u32) -> Vec<u8> {
   bytes
 }
 
-pub(crate) fn jpeg(width: u32, height: u32) -> Vec<u8> {
-  let mut buffer = io::Cursor::new(Vec::new());
-  ::image::DynamicImage::new_rgb8(width, height)
-    .write_to(&mut buffer, ::image::ImageFormat::Jpeg)
-    .unwrap();
-  buffer.into_inner()
-}
-
-pub(crate) fn jpeg_grayscale(width: u32, height: u32) -> Vec<u8> {
-  let mut buffer = io::Cursor::new(Vec::new());
-  ::image::DynamicImage::new_luma8(width, height)
-    .write_to(&mut buffer, ::image::ImageFormat::Jpeg)
-    .unwrap();
-  buffer.into_inner()
-}
-
-pub(crate) fn jpeg_with_exif(width: u32, height: u32, exif: &[u8]) -> Vec<u8> {
-  let buffer = jpeg(width, height);
-
-  let mut app1 = b"Exif\0\0".to_vec();
-  app1.extend_from_slice(exif);
-
-  let mut spliced = buffer[..2].to_vec();
-  spliced.extend_from_slice(&[0xFF, 0xE1]);
-  spliced.extend_from_slice(&u16::try_from(app1.len() + 2).unwrap().to_be_bytes());
-  spliced.extend_from_slice(&app1);
-  spliced.extend_from_slice(&buffer[2..]);
-  spliced
-}
-
-pub(crate) fn jpeg_with_sampling(width: u32, height: u32, sampling: u8) -> Vec<u8> {
-  let mut bytes = jpeg(width, height);
-  let sof = bytes.windows(2).position(|w| w == [0xFF, 0xC0]).unwrap();
-  bytes[sof + 11] = sampling;
-  bytes
-}
-
 pub(crate) fn mp3(tags: &[&str], frames: u32) -> Vec<u8> {
   fn syncsafe(n: usize) -> [u8; 4] {
     let n = u32::try_from(n).unwrap();
@@ -207,56 +170,6 @@ pub(crate) fn mp3_frame() -> Vec<u8> {
   let mut bytes = vec![0xFF, 0xFB, 0x90, 0x00];
   bytes.resize(417, 0);
   bytes
-}
-
-pub(crate) fn png(
-  width: u32,
-  height: u32,
-  color_type: png::ColorType,
-  bit_depth: png::BitDepth,
-  trns: Option<&[u8]>,
-  exif: Option<&[u8]>,
-) -> Vec<u8> {
-  let mut buffer = Vec::new();
-
-  let mut encoder = png::Encoder::new(&mut buffer, width, height);
-  encoder.set_color(color_type);
-  encoder.set_depth(bit_depth);
-
-  if color_type == png::ColorType::Indexed {
-    encoder.set_palette(vec![0; 3]);
-  }
-
-  if let Some(trns) = trns {
-    encoder.set_trns(trns.to_vec());
-  }
-
-  let mut writer = encoder.write_header().unwrap();
-
-  if let Some(exif) = exif {
-    writer.write_chunk(png::chunk::eXIf, exif).unwrap();
-  }
-
-  let samples = u32::try_from(color_type.samples()).unwrap();
-  let row = (width * samples * u32::from(bit_depth as u8)).div_ceil(8);
-
-  writer
-    .write_image_data(&vec![0; usize::try_from(row * height).unwrap()])
-    .unwrap();
-  writer.finish().unwrap();
-
-  buffer
-}
-
-pub(crate) fn png_with_exif(width: u32, height: u32, exif: &[u8]) -> Vec<u8> {
-  png(
-    width,
-    height,
-    png::ColorType::Rgb,
-    png::BitDepth::Eight,
-    None,
-    Some(exif),
-  )
 }
 
 pub(crate) fn tempdir() -> (TempDir, Utf8PathBuf) {
