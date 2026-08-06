@@ -20,45 +20,80 @@ pub(crate) struct Mp3Decoder<'a> {
   data: &'a [u8],
 }
 
+#[derive(Clone, Copy)]
+enum Version {
+  Mpeg1,
+  Mpeg2,
+  Mpeg25,
+}
+
+impl Version {
+  fn bitrates(self) -> [u64; 14] {
+    match self {
+      Self::Mpeg1 => MPEG1_BITRATES,
+      Self::Mpeg2 | Self::Mpeg25 => MPEG2_BITRATES,
+    }
+  }
+
+  fn divisor(self) -> u64 {
+    match self {
+      Self::Mpeg1 => 1,
+      Self::Mpeg2 => 2,
+      Self::Mpeg25 => 4,
+    }
+  }
+
+  fn samples(self) -> u64 {
+    match self {
+      Self::Mpeg1 => 1152,
+      Self::Mpeg2 | Self::Mpeg25 => 576,
+    }
+  }
+}
+
 impl<'a> Mp3Decoder<'a> {
   pub(crate) fn decode(data: &'a [u8]) -> Result<AudioInfo, Mp3Error> {
     let decoder = Self { data };
 
     let mut offset = 0;
-    let mut first = None;
+    let mut first = Option::<Frame>::None;
     let mut samples = 0;
 
     while offset < decoder.data.len() {
       let frame = decoder.frame(offset)?;
-
-      if let Some((channels, sample_rate)) = first {
-        ensure! {
-          frame.channels == channels,
-          mp3_error::ChannelsMismatch {
-            actual: frame.channels,
-            expected: channels,
-          },
-        }
-
-        ensure! {
-          frame.sample_rate == sample_rate,
-          mp3_error::SampleRateMismatch {
-            actual: frame.sample_rate,
-            expected: sample_rate,
-          },
-        }
-      } else {
-        first = Some((frame.channels, frame.sample_rate));
-      }
 
       if !frame.metadata {
         samples += frame.samples;
       }
 
       offset += frame.size;
+
+      if let Some(first) = &first {
+        ensure! {
+          frame.channels == first.channels,
+          mp3_error::ChannelsMismatch {
+            actual: frame.channels,
+            expected: first.channels,
+          },
+        }
+
+        ensure! {
+          frame.sample_rate == first.sample_rate,
+          mp3_error::SampleRateMismatch {
+            actual: frame.sample_rate,
+            expected: first.sample_rate,
+          },
+        }
+      } else {
+        first = Some(frame);
+      }
     }
 
-    let (channels, sample_rate) = first.context(mp3_error::Empty)?;
+    let Frame {
+      channels,
+      sample_rate,
+      ..
+    } = first.context(mp3_error::Empty)?;
 
     ensure!(samples > 0, mp3_error::Empty);
 
@@ -81,10 +116,10 @@ impl<'a> Mp3Decoder<'a> {
       mp3_error::Sync { offset },
     }
 
-    let divisor = match (header[1] >> 3) & 0b11 {
-      0 => 4,
-      2 => 2,
-      3 => 1,
+    let version = match (header[1] >> 3) & 0b11 {
+      0 => Version::Mpeg25,
+      2 => Version::Mpeg2,
+      3 => Version::Mpeg1,
       _ => return Err(mp3_error::Version.build()),
     };
 
@@ -96,35 +131,29 @@ impl<'a> Mp3Decoder<'a> {
 
     let index = header[2] >> 4;
 
-    let bitrates = if divisor == 1 {
-      MPEG1_BITRATES
-    } else {
-      MPEG2_BITRATES
-    };
-
     ensure!((1..=14).contains(&index), mp3_error::Bitrate { index });
 
-    let bitrate = bitrates[usize::from(index) - 1] * 1000;
+    let bitrate = version.bitrates()[usize::from(index) - 1] * 1000;
 
     let sample_rate = match (header[2] >> 2) & 0b11 {
       3 => return Err(mp3_error::SampleRate.build()),
-      index => SAMPLE_RATES[usize::from(index)] / divisor,
+      index => SAMPLE_RATES[usize::from(index)] / version.divisor(),
     };
 
     let padding = u64::from((header[2] >> 1) & 1);
 
     let channels = if header[3] >> 6 == 3 { 1 } else { 2 };
 
-    let samples = if divisor == 1 { 1152 } else { 576 };
+    let samples = version.samples();
 
     let size = usize::try_from(samples / 8 * bitrate / sample_rate + padding).unwrap();
 
     ensure!(self.data.len() - offset >= size, mp3_error::Truncated);
 
-    let side_info = match (divisor == 1, channels == 1) {
-      (false, false) | (true, true) => 17,
-      (false, true) => 9,
-      (true, false) => 32,
+    let side_info = match (version, channels == 1) {
+      (Version::Mpeg1, false) => 32,
+      (Version::Mpeg1, true) | (Version::Mpeg2 | Version::Mpeg25, false) => 17,
+      (Version::Mpeg2 | Version::Mpeg25, true) => 9,
     };
 
     let metadata = matches!(
