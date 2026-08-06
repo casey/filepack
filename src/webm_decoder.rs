@@ -3,7 +3,7 @@ use super::*;
 pub(crate) struct WebmDecoder;
 
 impl WebmDecoder {
-  fn decode<T: Read + Seek>(reader: T) -> Result<VideoInfo, VideoError> {
+  fn decode<T: Read + Seek>(reader: T) -> Result<VideoMetadata, VideoError> {
     use matroska_demuxer::{Frame, MatroskaFile, TrackType};
 
     let mut file = MatroskaFile::open(BufReader::new(reader)).context(video_error::DecodeWebm)?;
@@ -178,10 +178,10 @@ impl WebmDecoder {
       tracks.push(audio_track);
     }
 
-    Ok(VideoInfo { duration, tracks })
+    Ok(VideoMetadata { duration, tracks })
   }
 
-  pub(crate) fn read(path: &Utf8Path) -> Result<VideoInfo> {
+  pub(crate) fn read(path: &Utf8Path) -> Result<VideoMetadata> {
     let file = filesystem::open(path)?;
 
     Self::decode(file).context(error::Video { path })
@@ -284,7 +284,7 @@ mod tests {
   #[test]
   fn decode() {
     #[track_caller]
-    fn case(builder: WebmBuilder) -> Result<VideoInfo, VideoError> {
+    fn case(builder: WebmBuilder) -> Result<VideoMetadata, VideoError> {
       WebmDecoder::decode(io::Cursor::new(builder.build()))
     }
 
@@ -295,7 +295,7 @@ mod tests {
 
     assert_eq!(
       case(WebmBuilder::new().video_track(2, 1).audio_track("A_OPUS")).unwrap(),
-      VideoInfo {
+      VideoMetadata {
         duration: 0,
         tracks: vec![
           Track {
@@ -331,7 +331,7 @@ mod tests {
           .audio_track("A_VORBIS"),
       )
       .unwrap(),
-      VideoInfo {
+      VideoMetadata {
         duration: 0,
         tracks: vec![
           Track {
@@ -362,7 +362,7 @@ mod tests {
 
     assert_eq!(
       case(WebmBuilder::new().video_track(2, 1)).unwrap(),
-      VideoInfo {
+      VideoMetadata {
         duration: 0,
         tracks: vec![Track {
           codec: Codec::Vp9,
