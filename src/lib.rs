@@ -28,6 +28,7 @@ use {
     audio::Audio,
     audio_error::AudioError,
     audio_info::AudioInfo,
+    audio_metadata::AudioMetadata,
     audio_type::AudioType,
     authenticated::Authenticated,
     bech32_decoder::Bech32Decoder,
@@ -63,11 +64,12 @@ use {
     exif_decoder::ExifDecoder,
     exif_error::ExifError,
     file::File,
+    flac_decoder::FlacDecoder,
     float_ext::FloatExt,
     format::Format,
     functions::{
-      client, current_dir, decode_path, default, format_size, is_lowercase_hex, now, parse_number,
-      transfer_tempfile,
+      audio_tag, client, current_dir, decode_path, default, format_size, is_lowercase_hex, now,
+      parse_number, transfer_tempfile,
     },
     hash_error::HashError,
     hashing_writer::HashingWriter,
@@ -273,6 +275,7 @@ mod array_encoder;
 mod audio;
 mod audio_error;
 mod audio_info;
+mod audio_metadata;
 mod audio_type;
 mod authenticated;
 mod bech32_decoder;
@@ -320,6 +323,7 @@ mod exif_error;
 mod file;
 mod filesystem;
 mod fingerprint;
+mod flac_decoder;
 mod float_ext;
 mod format;
 mod functions;

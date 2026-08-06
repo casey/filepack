@@ -133,72 +133,6 @@ impl Audio {
     )
   }
 
-  fn flac_info(reader: &FlacReader<fs::File>, path: &Utf8Path) -> Result<AudioInfo> {
-    let streaminfo = reader.streaminfo();
-
-    let samples = streaminfo
-      .samples
-      .context(error::FlacSampleCountUnknown { path })?;
-
-    Ok(AudioInfo {
-      channels: streaminfo.channels.into(),
-      sample_bits: Some(streaminfo.bits_per_sample.into()),
-      sample_rate: streaminfo.sample_rate.into(),
-      samples,
-    })
-  }
-
-  fn flac_number_tag(
-    reader: &FlacReader<fs::File>,
-    path: &Utf8Path,
-    tag: &'static str,
-  ) -> Result<u64> {
-    let value = Self::flac_tag(reader, path, tag)?;
-    parse_number(value).context(error::AudioTagInteger { path, tag })
-  }
-
-  fn flac_reader(path: &Utf8Path) -> Result<(FlacReader<fs::File>, AudioInfo)> {
-    let reader = FlacReader::open(path).context(error::FlacDecode { path })?;
-
-    let audio_info = Self::flac_info(&reader, path)?;
-
-    Ok((reader, audio_info))
-  }
-
-  fn flac_tag<'a>(
-    reader: &'a FlacReader<fs::File>,
-    path: &Utf8Path,
-    tag: &'static str,
-  ) -> Result<&'a str> {
-    let mut values = reader.get_tag(tag);
-
-    let value = values
-      .next()
-      .context(error::AudioTagMissing { path, tag })?;
-
-    ensure! {
-      values.next().is_none(),
-      error::AudioTagMultiple { path, tag },
-    }
-
-    ensure! {
-      !value.is_empty(),
-      error::AudioTagEmpty { path, tag },
-    }
-
-    Ok(value)
-  }
-
-  fn flac_text_tag(
-    reader: &FlacReader<fs::File>,
-    path: &Utf8Path,
-    tag: &'static str,
-  ) -> Result<Text> {
-    Self::flac_tag(reader, path, tag)?
-      .parse()
-      .context(error::AudioTagInvalid { path, tag })
-  }
-
   pub(crate) fn formats(tracks: &[Audio]) -> Vec<AudioType> {
     let mut formats = Vec::new();
 
@@ -211,120 +145,40 @@ impl Audio {
     formats
   }
 
-  fn id3_pair_tag(tag: &id3::Tag, path: &Utf8Path, id: &'static str) -> Result<(u64, u64)> {
-    let value = Self::id3_tag(tag, path, id)?;
-
-    let (number, total) = value
-      .split_once('/')
-      .context(error::AudioTagPair { path, tag: id })?;
-
-    Ok((
-      parse_number(number).context(error::AudioTagInteger { path, tag: id })?,
-      parse_number(total).context(error::AudioTagInteger { path, tag: id })?,
-    ))
-  }
-
-  fn id3_tag<'a>(tag: &'a id3::Tag, path: &Utf8Path, id: &'static str) -> Result<&'a str> {
-    let mut values = tag
-      .get(id)
-      .and_then(|frame| frame.content().text_values())
-      .into_iter()
-      .flatten();
-
-    let value = values
-      .next()
-      .context(error::AudioTagMissing { path, tag: id })?;
-
-    ensure! {
-      values.next().is_none(),
-      error::AudioTagMultiple { path, tag: id },
-    }
-
-    ensure! {
-      !value.is_empty(),
-      error::AudioTagEmpty { path, tag: id },
-    }
-
-    Ok(value)
-  }
-
-  fn id3_text_tag(tag: &id3::Tag, path: &Utf8Path, id: &'static str) -> Result<Text> {
-    Self::id3_tag(tag, path, id)?
-      .parse()
-      .context(error::AudioTagInvalid { path, tag: id })
-  }
-
   pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result {
     let path = root.join(self.as_path());
 
-    match self.ty {
-      AudioType::Flac => self.populate_flac(&path),
-      AudioType::Mp3 => self.populate_mp3(&path),
-    }
-  }
-
-  fn populate_flac(&mut self, path: &Utf8Path) -> Result {
-    let (reader, audio_info) = Self::flac_reader(path)?;
-
-    let AudioInfo {
-      channels,
-      sample_bits,
-      sample_rate,
-      samples,
-    } = audio_info;
-
-    self.channels = channels;
-    self.sample_bits = sample_bits;
-    self.sample_rate = sample_rate;
-    self.samples = samples;
-
-    self.album = Self::flac_text_tag(&reader, path, "album")?;
-    self.artist = Self::flac_text_tag(&reader, path, "artist")?;
-    self.disc = Self::flac_number_tag(&reader, path, "discnumber")?;
-    self.discs = Self::flac_number_tag(&reader, path, "disctotal")?;
-    self.title = Self::flac_text_tag(&reader, path, "title")?;
-    self.track = Self::flac_number_tag(&reader, path, "tracknumber")?;
-    self.tracks = Self::flac_number_tag(&reader, path, "tracktotal")?;
-
-    Ok(())
-  }
-
-  fn populate_mp3(&mut self, path: &Utf8Path) -> Result {
-    let data = filesystem::read(path)?;
-
-    let tag = match id3::Tag::read_from2(io::Cursor::new(&data)) {
-      Err(err) => {
-        if let id3::ErrorKind::NoTag = err.kind {
-          return Err(error::Mp3TagMissing { path }.build());
-        }
-        return Err(error::Mp3Tag { path }.into_error(err));
-      }
-      Ok(tag) => tag,
+    let AudioMetadata {
+      album,
+      artist,
+      disc,
+      discs,
+      info:
+        AudioInfo {
+          channels,
+          sample_bits,
+          sample_rate,
+          samples,
+        },
+      title,
+      track,
+      tracks,
+    } = match self.ty {
+      AudioType::Flac => FlacDecoder::read(&path)?,
+      AudioType::Mp3 => Mp3Decoder::read(&path)?,
     };
 
-    self.album = Self::id3_text_tag(&tag, path, "TALB")?;
-    self.artist = Self::id3_text_tag(&tag, path, "TPE1")?;
-    (self.disc, self.discs) = Self::id3_pair_tag(&tag, path, "TPOS")?;
-    self.title = Self::id3_text_tag(&tag, path, "TIT2")?;
-    (self.track, self.tracks) = Self::id3_pair_tag(&tag, path, "TRCK")?;
-
-    let mut cursor = io::Cursor::new(&data);
-
-    id3::Tag::skip(&mut cursor).context(error::Mp3Tag { path })?;
-
-    let start = usize::try_from(cursor.position()).unwrap();
-
-    let AudioInfo {
-      channels,
-      sample_bits,
-      sample_rate,
-      samples,
-    } = Mp3Decoder::decode(&data[start..]).context(error::Mp3Decode { path })?;
-
+    self.album = album;
+    self.artist = artist;
     self.channels = channels;
+    self.disc = disc;
+    self.discs = discs;
     self.sample_bits = sample_bits;
     self.sample_rate = sample_rate;
     self.samples = samples;
+    self.title = title;
+    self.track = track;
+    self.tracks = tracks;
 
     Ok(())
   }
@@ -718,208 +572,7 @@ mod tests {
   }
 
   #[test]
-  fn populate_flac_err() {
-    fn err(bytes: &[u8]) -> Error {
-      let (_tempdir, root) = tempdir();
-
-      std::fs::write(root.join("foo.flac"), bytes).unwrap();
-
-      let mut audio = "foo.flac".parse::<Audio>().unwrap();
-
-      audio.populate(&root).unwrap_err()
-    }
-
-    assert_matches!(err(b"foo"), Error::FlacDecode { .. });
-
-    assert_matches!(
-      err(&flac(&[], 44100)),
-      Error::AudioTagMissing { tag: "album", .. },
-    );
-
-    assert_matches!(
-      err(&flac(&["ALBUM=qux", "TITLE=bar"], 44100)),
-      Error::AudioTagMissing { tag: "artist", .. },
-    );
-
-    assert_matches!(
-      err(&flac(
-        &["ALBUM=qux", "ARTIST=baz", "DISCNUMBER=1", "DISCTOTAL=1"],
-        44100,
-      )),
-      Error::AudioTagMissing { tag: "title", .. },
-    );
-
-    assert_matches!(
-      err(&flac(
-        &["ALBUM=qux", "ALBUM=quux", "ARTIST=baz", "TITLE=bar"],
-        44100,
-      )),
-      Error::AudioTagMultiple { tag: "album", .. },
-    );
-
-    assert_matches!(
-      err(&flac(
-        &[
-          "ALBUM=qux",
-          "ARTIST=baz",
-          "DISCNUMBER=1",
-          "DISCTOTAL=1",
-          "TITLE="
-        ],
-        44100,
-      )),
-      Error::AudioTagEmpty { tag: "title", .. },
-    );
-
-    assert_matches!(
-      err(&flac(
-        &[
-          "ALBUM=qux",
-          "ARTIST=baz",
-          "DISCNUMBER=1",
-          "DISCTOTAL=1",
-          "TITLE=foo\tbar",
-        ],
-        44100,
-      )),
-      Error::AudioTagInvalid {
-        source: TextError::Control { character: '\t' },
-        tag: "title",
-        ..
-      },
-    );
-
-    assert_matches!(
-      err(&flac(
-        &[
-          "ALBUM=qux",
-          "ARTIST=baz",
-          "DISCNUMBER=1",
-          "DISCTOTAL=1",
-          "TITLE=bar",
-        ],
-        44100,
-      )),
-      Error::AudioTagMissing {
-        tag: "tracknumber",
-        ..
-      },
-    );
-
-    assert_matches!(
-      err(&flac(
-        &[
-          "ALBUM=qux",
-          "ARTIST=baz",
-          "DISCNUMBER=1",
-          "DISCTOTAL=1",
-          "TITLE=bar",
-          "TRACKNUMBER=foo",
-        ],
-        44100,
-      )),
-      Error::AudioTagInteger {
-        source: NumberError::Invalid { .. },
-        tag: "tracknumber",
-        ..
-      },
-    );
-
-    assert_matches!(
-      err(&flac(
-        &[
-          "ALBUM=qux",
-          "ARTIST=baz",
-          "DISCNUMBER=1",
-          "DISCTOTAL=1",
-          "TITLE=bar",
-          "TRACKNUMBER=3/12",
-        ],
-        44100,
-      )),
-      Error::AudioTagInteger {
-        source: NumberError::Invalid { .. },
-        tag: "tracknumber",
-        ..
-      },
-    );
-
-    assert_matches!(
-      err(&flac(
-        &[
-          "ALBUM=qux",
-          "ARTIST=baz",
-          "DISCNUMBER=1",
-          "DISCTOTAL=1",
-          "TITLE=bar",
-          "TRACKNUMBER=01",
-        ],
-        44100,
-      )),
-      Error::AudioTagInteger {
-        source: NumberError::Invalid { .. },
-        tag: "tracknumber",
-        ..
-      },
-    );
-
-    assert_matches!(
-      err(&flac(
-        &[
-          "ALBUM=qux",
-          "ARTIST=baz",
-          "DISCNUMBER=1",
-          "DISCTOTAL=1",
-          "TITLE=bar",
-          "TRACKNUMBER=+1",
-        ],
-        44100,
-      )),
-      Error::AudioTagInteger {
-        source: NumberError::Invalid { .. },
-        tag: "tracknumber",
-        ..
-      },
-    );
-
-    assert_matches!(
-      err(&flac(
-        &[
-          "ALBUM=qux",
-          "ARTIST=baz",
-          "DISCNUMBER=1",
-          "DISCTOTAL=1",
-          "TITLE=bar",
-          "TRACKNUMBER=18446744073709551616",
-        ],
-        44100,
-      )),
-      Error::AudioTagInteger {
-        source: NumberError::Integer { .. },
-        tag: "tracknumber",
-        ..
-      },
-    );
-
-    assert_matches!(
-      err(&flac(
-        &[
-          "ALBUM=qux",
-          "ARTIST=baz",
-          "DISCNUMBER=1",
-          "DISCTOTAL=1",
-          "TITLE=bar",
-          "TRACKNUMBER=1",
-          "TRACKTOTAL=1",
-        ],
-        0,
-      )),
-      Error::FlacSampleCountUnknown { .. },
-    );
-  }
-
-  #[test]
-  fn populate_flac_ok() {
+  fn populate() {
     let (_tempdir, root) = tempdir();
 
     std::fs::write(
@@ -939,115 +592,6 @@ mod tests {
     )
     .unwrap();
 
-    let mut audio = "foo.flac".parse::<Audio>().unwrap();
-    audio.populate(&root).unwrap();
-
-    assert_eq!(audio.album.as_str(), "qux");
-    assert_eq!(audio.artist.as_str(), "baz");
-    assert_eq!(audio.channels, 2);
-    assert_eq!(audio.disc, 1);
-    assert_eq!(audio.discs, 2);
-    assert_eq!(audio.sample_bits, Some(16));
-    assert_eq!(audio.sample_rate, 44100);
-    assert_eq!(audio.samples, 66150);
-    assert_eq!(audio.title.as_str(), "bar");
-    assert_eq!(audio.track, 3);
-    assert_eq!(audio.tracks, 4);
-  }
-
-  #[test]
-  fn populate_mp3_err() {
-    fn err(bytes: &[u8]) -> Error {
-      let (_tempdir, root) = tempdir();
-
-      std::fs::write(root.join("foo.mp3"), bytes).unwrap();
-
-      let mut audio = "foo.mp3".parse::<Audio>().unwrap();
-
-      audio.populate(&root).unwrap_err()
-    }
-
-    assert_matches!(err(b"foo"), Error::Mp3TagMissing { .. });
-
-    assert_matches!(
-      err(&mp3(&[], 1)),
-      Error::AudioTagMissing { tag: "TALB", .. },
-    );
-
-    assert_matches!(
-      err(&mp3(&["TALB=qux"], 1)),
-      Error::AudioTagMissing { tag: "TPE1", .. },
-    );
-
-    assert_matches!(
-      err(&mp3(&["TALB=qux\0quux"], 1)),
-      Error::AudioTagMultiple { tag: "TALB", .. },
-    );
-
-    assert_matches!(
-      err(&mp3(&["TALB="], 1)),
-      Error::AudioTagEmpty { tag: "TALB", .. },
-    );
-
-    assert_matches!(
-      err(&mp3(
-        &["TALB=qux", "TIT2=foo\tbar", "TPE1=baz", "TPOS=1/2"],
-        1
-      )),
-      Error::AudioTagInvalid {
-        source: TextError::Control { character: '\t' },
-        tag: "TIT2",
-        ..
-      },
-    );
-
-    assert_matches!(
-      err(&mp3(&["TALB=qux", "TPE1=baz", "TPOS=1"], 1)),
-      Error::AudioTagPair { tag: "TPOS", .. },
-    );
-
-    assert_matches!(
-      err(&mp3(
-        &["TALB=qux", "TIT2=bar", "TPE1=baz", "TPOS=1/2", "TRCK=03/12"],
-        1,
-      )),
-      Error::AudioTagInteger {
-        source: NumberError::Invalid { .. },
-        tag: "TRCK",
-        ..
-      },
-    );
-
-    assert_matches!(
-      err(&mp3(
-        &["TALB=qux", "TIT2=bar", "TPE1=baz", "TPOS=1/2", "TRCK=3/4"],
-        0,
-      )),
-      Error::Mp3Decode {
-        source: Mp3Error::Empty,
-        ..
-      },
-    );
-
-    let mut bytes = mp3(
-      &["TALB=qux", "TIT2=bar", "TPE1=baz", "TPOS=1/2", "TRCK=3/4"],
-      0,
-    );
-    bytes.extend_from_slice(b"foobar");
-
-    assert_matches!(
-      err(&bytes),
-      Error::Mp3Decode {
-        source: Mp3Error::Sync { offset: 0 },
-        ..
-      },
-    );
-  }
-
-  #[test]
-  fn populate_mp3_ok() {
-    let (_tempdir, root) = tempdir();
-
     std::fs::write(
       root.join("foo.mp3"),
       mp3(
@@ -1057,20 +601,49 @@ mod tests {
     )
     .unwrap();
 
+    let mut audio = "foo.flac".parse::<Audio>().unwrap();
+    audio.populate(&root).unwrap();
+
+    assert_eq!(
+      audio,
+      Audio {
+        album: "qux".parse().unwrap(),
+        artist: "baz".parse().unwrap(),
+        channels: 2,
+        disc: 1,
+        discs: 2,
+        filename: "foo.flac".parse().unwrap(),
+        sample_bits: Some(16),
+        sample_rate: 44100,
+        samples: 66150,
+        title: "bar".parse().unwrap(),
+        track: 3,
+        tracks: 4,
+        ty: AudioType::Flac,
+      },
+    );
+
     let mut audio = "foo.mp3".parse::<Audio>().unwrap();
     audio.populate(&root).unwrap();
 
-    assert_eq!(audio.album.as_str(), "qux");
-    assert_eq!(audio.artist.as_str(), "baz");
-    assert_eq!(audio.channels, 2);
-    assert_eq!(audio.disc, 1);
-    assert_eq!(audio.discs, 2);
-    assert_eq!(audio.sample_bits, None);
-    assert_eq!(audio.sample_rate, 44100);
-    assert_eq!(audio.samples, 2304);
-    assert_eq!(audio.title.as_str(), "bar");
-    assert_eq!(audio.track, 3);
-    assert_eq!(audio.tracks, 4);
+    assert_eq!(
+      audio,
+      Audio {
+        album: "qux".parse().unwrap(),
+        artist: "baz".parse().unwrap(),
+        channels: 2,
+        disc: 1,
+        discs: 2,
+        filename: "foo.mp3".parse().unwrap(),
+        sample_bits: None,
+        sample_rate: 44100,
+        samples: 2304,
+        title: "bar".parse().unwrap(),
+        track: 3,
+        tracks: 4,
+        ty: AudioType::Mp3,
+      },
+    );
   }
 
   #[test]
