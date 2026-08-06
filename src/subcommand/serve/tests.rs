@@ -2686,44 +2686,6 @@ fn verify_directory_unverified_subdirectory() {
 }
 
 #[test]
-fn verify_package_invalid_track_position() {
-  let server = TestServer::new();
-
-  server.write_file(b"foo");
-
-  let mut audio = "foo.flac".parse::<Audio>().unwrap();
-  audio.disc = 1;
-  audio.discs = 1;
-  audio.track = 2;
-  audio.tracks = 2;
-
-  let metadata = Metadata {
-    media: Some(Media::Audio { items: vec![audio] }),
-    ..default()
-  }
-  .encode_to_vec();
-  server.write_file(&metadata);
-
-  let (cbor, hash) = Directory::new()
-    .insert_file("foo.flac", b"foo")
-    .insert_file(Metadata::CBOR_FILENAME, &metadata)
-    .cbor();
-  let fingerprint = Fingerprint(hash);
-  server.write_file(&cbor);
-
-  server.post(format!("/directory/{hash}")).send();
-
-  server
-    .post(format!("/package/{fingerprint}"))
-    .status(StatusCode::BAD_REQUEST)
-    .assert_body(format!(
-      "package {fingerprint} has invalid track position: \
-       track `foo.flac` is disc 1 track 2 but expected disc 1 track 1"
-    ))
-    .send();
-}
-
-#[test]
 fn verify_package_metadata_decode_error() {
   let server = TestServer::new();
 

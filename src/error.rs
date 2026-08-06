@@ -15,48 +15,16 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     expected: Hash,
   },
+  #[snafu(display("invalid audio track `{path}`"))]
+  Audio {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+    source: AudioError,
+  },
   #[snafu(display("invalid track position"))]
   AudioPosition {
     backtrace: Option<Backtrace>,
-    source: AudioError,
-  },
-  #[snafu(display("track `{path}` has empty `{tag}` tag"))]
-  AudioTagEmpty {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-    tag: &'static str,
-  },
-  #[snafu(display("track `{path}` has invalid integer `{tag}` tag"))]
-  AudioTagInteger {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-    source: NumberError,
-    tag: &'static str,
-  },
-  #[snafu(display("track `{path}` has invalid `{tag}` tag"))]
-  AudioTagInvalid {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-    source: TextError,
-    tag: &'static str,
-  },
-  #[snafu(display("track `{path}` is missing `{tag}` tag"))]
-  AudioTagMissing {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-    tag: &'static str,
-  },
-  #[snafu(display("track `{path}` has multiple `{tag}` tags"))]
-  AudioTagMultiple {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-    tag: &'static str,
-  },
-  #[snafu(display("track `{path}` tag `{tag}` tag not in format `NUMBER/TOTAL`"))]
-  AudioTagPair {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-    tag: &'static str,
+    source: AudioPositionError,
   },
   #[snafu(display("failed to decode bech32 `{bech32}`"))]
   Bech32Decode {
@@ -255,17 +223,6 @@ pub enum Error {
   },
   #[snafu(display("fingerprint mismatch"))]
   FingerprintMismatch { backtrace: Option<Backtrace> },
-  #[snafu(display("failed to decode track `{path}`"))]
-  FlacDecode {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-    source: claxon::Error,
-  },
-  #[snafu(display("track `{path}` has unknown sample count"))]
-  FlacSampleCountUnknown {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-  },
   #[snafu(display("failed to parse hexadecimal `{hex}`"))]
   Hex {
     backtrace: Option<Backtrace>,
@@ -413,23 +370,6 @@ pub enum Error {
   MountedPackageNoMediaType {
     backtrace: Option<Backtrace>,
     fingerprint: Fingerprint,
-  },
-  #[snafu(display("failed to decode track `{path}`"))]
-  Mp3Decode {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-    source: Mp3Error,
-  },
-  #[snafu(display("failed to read ID3 tag from track `{path}`"))]
-  Mp3Tag {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-    source: id3::Error,
-  },
-  #[snafu(display("track `{path}` is missing ID3 tag"))]
-  Mp3TagMissing {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
   },
   #[snafu(display("invalid path `{path}`"))]
   Path {

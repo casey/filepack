@@ -28,6 +28,7 @@ use {
     audio::Audio,
     audio_error::AudioError,
     audio_metadata::AudioMetadata,
+    audio_position_error::AudioPositionError,
     audio_type::AudioType,
     authenticated::Authenticated,
     bech32_decoder::Bech32Decoder,
@@ -276,6 +277,7 @@ mod array_encoder;
 mod audio;
 mod audio_error;
 mod audio_metadata;
+mod audio_position_error;
 mod audio_type;
 mod authenticated;
 mod bech32_decoder;

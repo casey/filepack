@@ -37,7 +37,7 @@ impl Audio {
     self.filename.as_path()
   }
 
-  pub(crate) fn check_positions(tracks: &[Audio]) -> Result<(), AudioError> {
+  pub(crate) fn check_positions(tracks: &[Audio]) -> Result<(), AudioPositionError> {
     let Some(first) = tracks.first() else {
       return Ok(());
     };
@@ -51,7 +51,7 @@ impl Audio {
     for audio in tracks {
       ensure! {
         audio.discs == discs,
-        audio_error::DiscTotalMismatch {
+        audio_position_error::DiscTotalMismatch {
           actual: audio.discs,
           expected: discs,
           filename: audio.filename.clone(),
@@ -60,7 +60,7 @@ impl Audio {
 
       ensure! {
         audio.disc == expected_disc && audio.track == expected_track,
-        audio_error::PositionMismatch {
+        audio_position_error::PositionMismatch {
           disc: audio.disc,
           expected_disc,
           expected_track,
@@ -71,7 +71,7 @@ impl Audio {
 
       ensure! {
         audio.disc <= discs,
-        audio_error::DiscNumberExceedsTotal {
+        audio_position_error::DiscNumberExceedsTotal {
           filename: audio.filename.clone(),
           number: audio.disc,
           total: discs,
@@ -83,7 +83,7 @@ impl Audio {
       } else {
         ensure! {
           audio.tracks == disc_tracks,
-          audio_error::TotalMismatch {
+          audio_position_error::TotalMismatch {
             actual: audio.tracks,
             disc: expected_disc,
             expected: disc_tracks,
@@ -94,7 +94,7 @@ impl Audio {
 
       ensure! {
         audio.track <= disc_tracks,
-        audio_error::NumberExceedsTotal {
+        audio_position_error::NumberExceedsTotal {
           filename: audio.filename.clone(),
           number: audio.track,
           total: disc_tracks,
@@ -111,7 +111,7 @@ impl Audio {
 
     ensure! {
       expected_disc == discs + 1,
-      audio_error::Missing {
+      audio_position_error::Missing {
         disc: expected_disc,
         track: expected_track,
       },
@@ -194,21 +194,18 @@ impl Audio {
 
   pub(crate) fn tag<'a>(
     mut values: impl Iterator<Item = &'a str>,
-    path: &Utf8Path,
     tag: &'static str,
-  ) -> Result<&'a str> {
-    let value = values
-      .next()
-      .context(error::AudioTagMissing { path, tag })?;
+  ) -> Result<&'a str, AudioError> {
+    let value = values.next().context(audio_error::TagMissing { tag })?;
 
     ensure! {
       values.next().is_none(),
-      error::AudioTagMultiple { path, tag },
+      audio_error::TagMultiple { tag },
     }
 
     ensure! {
       !value.is_empty(),
-      error::AudioTagEmpty { path, tag },
+      audio_error::TagEmpty { tag },
     }
 
     Ok(value)
@@ -291,7 +288,7 @@ mod tests {
   #[test]
   fn check_positions() {
     #[track_caller]
-    fn case(positions: &[(u64, u64, u64, u64)], expected: Result<(), AudioError>) {
+    fn case(positions: &[(u64, u64, u64, u64)], expected: Result<(), AudioPositionError>) {
       let tracks = positions
         .iter()
         .enumerate()
@@ -316,7 +313,7 @@ mod tests {
 
     case(
       &[(1, 1, 2, 2), (1, 1, 1, 2)],
-      Err(AudioError::PositionMismatch {
+      Err(AudioPositionError::PositionMismatch {
         disc: 1,
         expected_disc: 1,
         expected_track: 1,
@@ -327,7 +324,7 @@ mod tests {
 
     case(
       &[(1, 1, 1, 2), (1, 1, 1, 2)],
-      Err(AudioError::PositionMismatch {
+      Err(AudioPositionError::PositionMismatch {
         disc: 1,
         expected_disc: 1,
         expected_track: 2,
@@ -338,7 +335,7 @@ mod tests {
 
     case(
       &[(1, 1, 1, 3), (1, 1, 3, 3)],
-      Err(AudioError::PositionMismatch {
+      Err(AudioPositionError::PositionMismatch {
         disc: 1,
         expected_disc: 1,
         expected_track: 2,
@@ -349,17 +346,17 @@ mod tests {
 
     case(
       &[(1, 1, 1, 2)],
-      Err(AudioError::Missing { disc: 1, track: 2 }),
+      Err(AudioPositionError::Missing { disc: 1, track: 2 }),
     );
 
     case(
       &[(1, 2, 1, 1)],
-      Err(AudioError::Missing { disc: 2, track: 1 }),
+      Err(AudioPositionError::Missing { disc: 2, track: 1 }),
     );
 
     case(
       &[(1, 2, 1, 1), (2, 1, 1, 1)],
-      Err(AudioError::DiscTotalMismatch {
+      Err(AudioPositionError::DiscTotalMismatch {
         actual: 1,
         expected: 2,
         filename: "1.flac".parse().unwrap(),
@@ -368,7 +365,7 @@ mod tests {
 
     case(
       &[(1, 1, 1, 2), (1, 1, 2, 3)],
-      Err(AudioError::TotalMismatch {
+      Err(AudioPositionError::TotalMismatch {
         actual: 3,
         disc: 1,
         expected: 2,
@@ -378,7 +375,7 @@ mod tests {
 
     case(
       &[(1, 1, 1, 1), (2, 1, 1, 1)],
-      Err(AudioError::DiscNumberExceedsTotal {
+      Err(AudioPositionError::DiscNumberExceedsTotal {
         filename: "1.flac".parse().unwrap(),
         number: 2,
         total: 1,
@@ -387,7 +384,7 @@ mod tests {
 
     case(
       &[(1, 0, 1, 1)],
-      Err(AudioError::DiscNumberExceedsTotal {
+      Err(AudioPositionError::DiscNumberExceedsTotal {
         filename: "0.flac".parse().unwrap(),
         number: 1,
         total: 0,
@@ -396,7 +393,7 @@ mod tests {
 
     case(
       &[(1, 1, 1, 0)],
-      Err(AudioError::NumberExceedsTotal {
+      Err(AudioPositionError::NumberExceedsTotal {
         filename: "0.flac".parse().unwrap(),
         number: 1,
         total: 0,
@@ -405,7 +402,7 @@ mod tests {
 
     case(
       &[(0, 1, 1, 1)],
-      Err(AudioError::PositionMismatch {
+      Err(AudioPositionError::PositionMismatch {
         disc: 0,
         expected_disc: 1,
         expected_track: 1,
@@ -416,7 +413,7 @@ mod tests {
 
     case(
       &[(1, 1, 0, 1)],
-      Err(AudioError::PositionMismatch {
+      Err(AudioPositionError::PositionMismatch {
         disc: 1,
         expected_disc: 1,
         expected_track: 1,

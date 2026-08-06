@@ -89,11 +89,6 @@ pub enum ServerError {
   },
   #[snafu(display("media type {ty} does not have items"))]
   MediaTypeDoesNotHaveItems { ty: crate::MediaType },
-  #[snafu(display("package {fingerprint} has invalid track position: {source}"))]
-  PackageAudioPosition {
-    fingerprint: Fingerprint,
-    source: AudioError,
-  },
   #[snafu(display("file `{path}` missing from package {fingerprint}"))]
   PackageFileMissing {
     fingerprint: Fingerprint,
@@ -162,7 +157,6 @@ impl ServerError {
       | Self::MediaItemDoesNotExist { .. }
       | Self::MediaType { .. }
       | Self::MediaTypeDoesNotHaveItems { .. }
-      | Self::PackageAudioPosition { .. }
       | Self::PackageFileMissing { .. }
       | Self::PackageFileNotFound { .. }
       | Self::PackageMediaMetadataNotFound { .. }
@@ -210,7 +204,6 @@ impl ServerError {
       | Self::DirectoryTotals { .. }
       | Self::DirectoryUnverified { .. }
       | Self::FingerprintParse { .. }
-      | Self::PackageAudioPosition { .. }
       | Self::PackageMetadataDecode { .. }
       | Self::PackageMetadataFileMissing { .. }
       | Self::PackageRootUnverified { .. }

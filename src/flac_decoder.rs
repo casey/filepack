@@ -1,33 +1,20 @@
 use super::*;
 
-pub(crate) struct FlacDecoder<'a> {
-  path: &'a Utf8Path,
-  reader: FlacReader<fs::File>,
+pub(crate) struct FlacDecoder<T: io::Read> {
+  reader: FlacReader<T>,
 }
 
-impl<'a> FlacDecoder<'a> {
-  fn new(path: &'a Utf8Path) -> Result<Self> {
-    let reader = FlacReader::open(path).context(error::FlacDecode { path })?;
-
-    Ok(Self { path, reader })
-  }
-
-  fn number_tag(&self, tag: &'static str) -> Result<u64> {
-    let value = self.tag(tag)?;
-    parse_number(value).context(error::AudioTagInteger {
-      path: self.path,
-      tag,
-    })
-  }
-
-  pub(crate) fn read(path: &'a Utf8Path) -> Result<AudioMetadata> {
-    let decoder = Self::new(path)?;
+impl<T: io::Read> FlacDecoder<T> {
+  fn decode(reader: T) -> Result<AudioMetadata, AudioError> {
+    let decoder = Self {
+      reader: FlacReader::new(reader).context(audio_error::FlacDecode)?,
+    };
 
     let streaminfo = decoder.reader.streaminfo();
 
     let samples = streaminfo
       .samples
-      .context(error::FlacSampleCountUnknown { path })?;
+      .context(audio_error::FlacSampleCountUnknown)?;
 
     Ok(AudioMetadata {
       album: decoder.text_tag("album")?,
@@ -44,15 +31,28 @@ impl<'a> FlacDecoder<'a> {
     })
   }
 
-  fn tag(&self, tag: &'static str) -> Result<&str> {
-    Audio::tag(self.reader.get_tag(tag), self.path, tag)
+  fn number_tag(&self, tag: &'static str) -> Result<u64, AudioError> {
+    let value = self.tag(tag)?;
+    parse_number(value).context(audio_error::TagInteger { tag })
   }
 
-  fn text_tag(&self, tag: &'static str) -> Result<Text> {
-    self.tag(tag)?.parse().context(error::AudioTagInvalid {
-      path: self.path,
-      tag,
-    })
+  fn tag(&self, tag: &'static str) -> Result<&str, AudioError> {
+    Audio::tag(self.reader.get_tag(tag), tag)
+  }
+
+  fn text_tag(&self, tag: &'static str) -> Result<Text, AudioError> {
+    self
+      .tag(tag)?
+      .parse()
+      .context(audio_error::TagInvalid { tag })
+  }
+}
+
+impl FlacDecoder<fs::File> {
+  pub(crate) fn read(path: &Utf8Path) -> Result<AudioMetadata> {
+    let file = filesystem::open(path)?;
+
+    Self::decode(file).context(error::Audio { path })
   }
 }
 
@@ -61,27 +61,21 @@ mod tests {
   use super::*;
 
   #[test]
-  fn read_err() {
-    fn err(bytes: &[u8]) -> Error {
-      let (_tempdir, root) = tempdir();
-
-      let path = root.join("foo.flac");
-
-      std::fs::write(&path, bytes).unwrap();
-
-      FlacDecoder::read(&path).unwrap_err()
+  fn decode_err() {
+    fn err(bytes: &[u8]) -> AudioError {
+      FlacDecoder::decode(bytes).unwrap_err()
     }
 
-    assert_matches!(err(b"foo"), Error::FlacDecode { .. });
+    assert_matches!(err(b"foo"), AudioError::FlacDecode { .. });
 
     assert_matches!(
       err(&flac(&[], 44100)),
-      Error::AudioTagMissing { tag: "album", .. },
+      AudioError::TagMissing { tag: "album" },
     );
 
     assert_matches!(
       err(&flac(&["ALBUM=qux", "TITLE=bar"], 44100)),
-      Error::AudioTagMissing { tag: "artist", .. },
+      AudioError::TagMissing { tag: "artist" },
     );
 
     assert_matches!(
@@ -89,7 +83,7 @@ mod tests {
         &["ALBUM=qux", "ARTIST=baz", "DISCNUMBER=1", "DISCTOTAL=1"],
         44100,
       )),
-      Error::AudioTagMissing { tag: "title", .. },
+      AudioError::TagMissing { tag: "title" },
     );
 
     assert_matches!(
@@ -97,7 +91,7 @@ mod tests {
         &["ALBUM=qux", "ALBUM=quux", "ARTIST=baz", "TITLE=bar"],
         44100,
       )),
-      Error::AudioTagMultiple { tag: "album", .. },
+      AudioError::TagMultiple { tag: "album" },
     );
 
     assert_matches!(
@@ -111,7 +105,7 @@ mod tests {
         ],
         44100,
       )),
-      Error::AudioTagEmpty { tag: "title", .. },
+      AudioError::TagEmpty { tag: "title" },
     );
 
     assert_matches!(
@@ -125,10 +119,9 @@ mod tests {
         ],
         44100,
       )),
-      Error::AudioTagInvalid {
+      AudioError::TagInvalid {
         source: TextError::Control { character: '\t' },
         tag: "title",
-        ..
       },
     );
 
@@ -143,10 +136,7 @@ mod tests {
         ],
         44100,
       )),
-      Error::AudioTagMissing {
-        tag: "tracknumber",
-        ..
-      },
+      AudioError::TagMissing { tag: "tracknumber" },
     );
 
     assert_matches!(
@@ -161,10 +151,9 @@ mod tests {
         ],
         44100,
       )),
-      Error::AudioTagInteger {
+      AudioError::TagInteger {
         source: NumberError::Invalid { .. },
         tag: "tracknumber",
-        ..
       },
     );
 
@@ -180,10 +169,9 @@ mod tests {
         ],
         44100,
       )),
-      Error::AudioTagInteger {
+      AudioError::TagInteger {
         source: NumberError::Invalid { .. },
         tag: "tracknumber",
-        ..
       },
     );
 
@@ -199,10 +187,9 @@ mod tests {
         ],
         44100,
       )),
-      Error::AudioTagInteger {
+      AudioError::TagInteger {
         source: NumberError::Invalid { .. },
         tag: "tracknumber",
-        ..
       },
     );
 
@@ -218,10 +205,9 @@ mod tests {
         ],
         44100,
       )),
-      Error::AudioTagInteger {
+      AudioError::TagInteger {
         source: NumberError::Invalid { .. },
         tag: "tracknumber",
-        ..
       },
     );
 
@@ -237,10 +223,9 @@ mod tests {
         ],
         44100,
       )),
-      Error::AudioTagInteger {
+      AudioError::TagInteger {
         source: NumberError::Integer { .. },
         tag: "tracknumber",
-        ..
       },
     );
 
@@ -257,7 +242,7 @@ mod tests {
         ],
         0,
       )),
-      Error::FlacSampleCountUnknown { .. },
+      AudioError::FlacSampleCountUnknown,
     );
   }
 
