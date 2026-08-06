@@ -1,14 +1,16 @@
 use super::*;
 
-pub(crate) struct InfoBuilder(Vec<(String, Info)>);
+pub(crate) struct InfoBuilder {
+  map: Vec<(String, Info)>,
+}
 
 impl InfoBuilder {
   pub(crate) fn build(self) -> Info {
-    Info::Map(self.0)
+    Info::Map(self.map)
   }
 
   pub(crate) fn link(mut self, key: &str, text: impl Display, url: String) -> Self {
-    self.0.push((
+    self.map.push((
       key.into(),
       Info::Link {
         text: text.to_string(),
@@ -20,13 +22,13 @@ impl InfoBuilder {
 
   pub(crate) fn list(mut self, key: &str, values: impl IntoIterator<Item = Info>) -> Self {
     self
-      .0
+      .map
       .push((key.into(), Info::List(values.into_iter().collect())));
     self
   }
 
   pub(crate) fn new() -> Self {
-    Self(Vec::new())
+    Self { map: Vec::new() }
   }
 
   pub(crate) fn optional(self, key: &str, value: Option<impl Display>) -> Self {
@@ -38,7 +40,7 @@ impl InfoBuilder {
   }
 
   pub(crate) fn value(mut self, key: &str, value: impl Display) -> Self {
-    self.0.push((key.into(), Info::Value(value.to_string())));
+    self.map.push((key.into(), Info::Value(value.to_string())));
     self
   }
 
