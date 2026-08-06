@@ -6,21 +6,6 @@ pub(crate) struct FlacDecoder<'a> {
 }
 
 impl<'a> FlacDecoder<'a> {
-  fn info(&self) -> Result<AudioInfo> {
-    let streaminfo = self.reader.streaminfo();
-
-    let samples = streaminfo
-      .samples
-      .context(error::FlacSampleCountUnknown { path: self.path })?;
-
-    Ok(AudioInfo {
-      channels: streaminfo.channels.into(),
-      sample_bits: Some(streaminfo.bits_per_sample.into()),
-      sample_rate: streaminfo.sample_rate.into(),
-      samples,
-    })
-  }
-
   fn new(path: &'a Utf8Path) -> Result<Self> {
     let reader = FlacReader::open(path).context(error::FlacDecode { path })?;
 
@@ -38,17 +23,40 @@ impl<'a> FlacDecoder<'a> {
   pub(crate) fn read(path: &'a Utf8Path) -> Result<AudioMetadata> {
     let decoder = Self::new(path)?;
 
-    let info = decoder.info()?;
+    let AudioStreamMetadata {
+      channels,
+      sample_bits,
+      sample_rate,
+      samples,
+    } = decoder.stream_metadata()?;
 
     Ok(AudioMetadata {
       album: decoder.text_tag("album")?,
       artist: decoder.text_tag("artist")?,
+      channels,
       disc: decoder.number_tag("discnumber")?,
       discs: decoder.number_tag("disctotal")?,
-      info,
+      sample_bits,
+      sample_rate,
+      samples,
       title: decoder.text_tag("title")?,
       track: decoder.number_tag("tracknumber")?,
       tracks: decoder.number_tag("tracktotal")?,
+    })
+  }
+
+  fn stream_metadata(&self) -> Result<AudioStreamMetadata> {
+    let streaminfo = self.reader.streaminfo();
+
+    let samples = streaminfo
+      .samples
+      .context(error::FlacSampleCountUnknown { path: self.path })?;
+
+    Ok(AudioStreamMetadata {
+      channels: streaminfo.channels.into(),
+      sample_bits: Some(streaminfo.bits_per_sample.into()),
+      sample_rate: streaminfo.sample_rate.into(),
+      samples,
     })
   }
 
@@ -297,14 +305,12 @@ mod tests {
       AudioMetadata {
         album: "qux".parse().unwrap(),
         artist: "baz".parse().unwrap(),
+        channels: 2,
         disc: 1,
         discs: 2,
-        info: AudioInfo {
-          channels: 2,
-          sample_bits: Some(16),
-          sample_rate: 44100,
-          samples: 66150,
-        },
+        sample_bits: Some(16),
+        sample_rate: 44100,
+        samples: 66150,
         title: "bar".parse().unwrap(),
         track: 3,
         tracks: 4,

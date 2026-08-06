@@ -151,15 +151,12 @@ impl Audio {
     let AudioMetadata {
       album,
       artist,
+      channels,
       disc,
       discs,
-      info:
-        AudioInfo {
-          channels,
-          sample_bits,
-          sample_rate,
-          samples,
-        },
+      sample_bits,
+      sample_rate,
+      samples,
       title,
       track,
       tracks,

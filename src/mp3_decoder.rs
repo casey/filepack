@@ -52,7 +52,7 @@ impl Version {
 }
 
 impl<'a> Mp3Decoder<'a> {
-  pub(crate) fn decode(data: &'a [u8]) -> Result<AudioInfo, Mp3Error> {
+  pub(crate) fn decode(data: &'a [u8]) -> Result<AudioStreamMetadata, Mp3Error> {
     let decoder = Self { data };
 
     let mut offset = 0;
@@ -97,7 +97,7 @@ impl<'a> Mp3Decoder<'a> {
 
     ensure!(samples > 0, mp3_error::Empty);
 
-    Ok(AudioInfo {
+    Ok(AudioStreamMetadata {
       channels,
       sample_bits: None,
       sample_rate,
@@ -210,14 +210,22 @@ impl<'a> Mp3Decoder<'a> {
 
     let start = usize::try_from(cursor.position()).unwrap();
 
-    let info = Mp3Decoder::decode(&data[start..]).context(error::Mp3Decode { path })?;
+    let AudioStreamMetadata {
+      channels,
+      sample_bits,
+      sample_rate,
+      samples,
+    } = Mp3Decoder::decode(&data[start..]).context(error::Mp3Decode { path })?;
 
     Ok(AudioMetadata {
       album,
       artist,
+      channels,
       disc,
       discs,
-      info,
+      sample_bits,
+      sample_rate,
+      samples,
       title,
       track,
       tracks,
@@ -250,7 +258,7 @@ mod tests {
   #[test]
   fn decode() {
     #[track_caller]
-    fn case(data: &[Vec<u8>], expected: Result<AudioInfo, Mp3Error>) {
+    fn case(data: &[Vec<u8>], expected: Result<AudioStreamMetadata, Mp3Error>) {
       assert_eq!(Mp3Decoder::decode(&data.concat()), expected);
     }
 
@@ -260,8 +268,8 @@ mod tests {
       bytes
     }
 
-    fn info(channels: u64, sample_rate: u64, samples: u64) -> AudioInfo {
-      AudioInfo {
+    fn stream_metadata(channels: u64, sample_rate: u64, samples: u64) -> AudioStreamMetadata {
+      AudioStreamMetadata {
         channels,
         sample_bits: None,
         sample_rate,
@@ -281,31 +289,34 @@ mod tests {
       bytes
     };
 
-    case(&[mp3_frame(), mp3_frame()], Ok(info(2, 44100, 2304)));
+    case(
+      &[mp3_frame(), mp3_frame()],
+      Ok(stream_metadata(2, 44100, 2304)),
+    );
 
     case(
       &[xing(), mp3_frame(), mp3_frame()],
-      Ok(info(2, 44100, 2304)),
+      Ok(stream_metadata(2, 44100, 2304)),
     );
 
     case(
       &[frame([0xFF, 0xFB, 0x92, 0x00], 418), mp3_frame()],
-      Ok(info(2, 44100, 2304)),
+      Ok(stream_metadata(2, 44100, 2304)),
     );
 
     case(
       &[frame([0xFF, 0xFB, 0x90, 0xC0], 417)],
-      Ok(info(1, 44100, 1152)),
+      Ok(stream_metadata(1, 44100, 1152)),
     );
 
     case(
       &[frame([0xFF, 0xF3, 0x90, 0x00], 261)],
-      Ok(info(2, 22050, 576)),
+      Ok(stream_metadata(2, 22050, 576)),
     );
 
     case(
       &[frame([0xFF, 0xE3, 0x90, 0x00], 522)],
-      Ok(info(2, 11025, 576)),
+      Ok(stream_metadata(2, 11025, 576)),
     );
 
     case(&[], Err(Mp3Error::Empty));
@@ -486,14 +497,12 @@ mod tests {
       AudioMetadata {
         album: "qux".parse().unwrap(),
         artist: "baz".parse().unwrap(),
+        channels: 2,
         disc: 1,
         discs: 2,
-        info: AudioInfo {
-          channels: 2,
-          sample_bits: None,
-          sample_rate: 44100,
-          samples: 2304,
-        },
+        sample_bits: None,
+        sample_rate: 44100,
+        samples: 2304,
         title: "bar".parse().unwrap(),
         track: 3,
         tracks: 4,
