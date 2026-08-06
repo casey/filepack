@@ -92,6 +92,7 @@ use {
     mode::Mode,
     mp3_decoder::Mp3Decoder,
     mp3_error::Mp3Error,
+    mp4_decoder::Mp4Decoder,
     number_error::NumberError,
     options::Options,
     or::Or,
@@ -134,6 +135,7 @@ use {
     video_info::VideoInfo,
     video_type::VideoType,
     view::View,
+    webm_decoder::WebmDecoder,
   },
   axum::{
     body::Body,
@@ -354,6 +356,7 @@ mod mode;
 mod mp3_decoder;
 mod mp3_error;
 mod mp4_builder;
+mod mp4_decoder;
 mod number_error;
 mod open_graph_image;
 mod options;
@@ -408,6 +411,7 @@ mod video_error;
 mod video_info;
 mod video_type;
 mod view;
+mod webm_decoder;
 
 #[cfg(test)]
 mod derive;
