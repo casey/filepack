@@ -148,6 +148,11 @@ impl Audio {
   pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result {
     let path = root.join(self.as_path());
 
+    let metadata = match self.ty {
+      AudioType::Flac => FlacDecoder::read(&path)?,
+      AudioType::Mp3 => Mp3Decoder::read(&path)?,
+    };
+
     let AudioMetadata {
       album,
       artist,
@@ -160,10 +165,7 @@ impl Audio {
       title,
       track,
       tracks,
-    } = match self.ty {
-      AudioType::Flac => FlacDecoder::read(&path)?,
-      AudioType::Mp3 => Mp3Decoder::read(&path)?,
-    };
+    } = metadata;
 
     self.album = album;
     self.artist = artist;
