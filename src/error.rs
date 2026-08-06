@@ -15,21 +15,10 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     expected: Hash,
   },
-  #[snafu(display("failed to decode track `{path}`"))]
-  AudioDecode {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-    source: claxon::Error,
-  },
   #[snafu(display("invalid track position"))]
   AudioPosition {
     backtrace: Option<Backtrace>,
     source: AudioError,
-  },
-  #[snafu(display("track `{path}` has unknown sample count"))]
-  AudioSampleCountUnknown {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
   },
   #[snafu(display("track `{path}` has empty `{tag}` tag"))]
   AudioTagEmpty {
@@ -59,6 +48,12 @@ pub enum Error {
   },
   #[snafu(display("track `{path}` has multiple `{tag}` tags"))]
   AudioTagMultiple {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+    tag: &'static str,
+  },
+  #[snafu(display("track `{path}` tag `{tag}` tag not in format `NUMBER/TOTAL`"))]
+  AudioTagPair {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
     tag: &'static str,
@@ -260,6 +255,17 @@ pub enum Error {
   },
   #[snafu(display("fingerprint mismatch"))]
   FingerprintMismatch { backtrace: Option<Backtrace> },
+  #[snafu(display("failed to decode track `{path}`"))]
+  FlacDecode {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+    source: claxon::Error,
+  },
+  #[snafu(display("track `{path}` has unknown sample count"))]
+  FlacSampleCountUnknown {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+  },
   #[snafu(display("failed to parse hexadecimal `{hex}`"))]
   Hex {
     backtrace: Option<Backtrace>,
@@ -407,6 +413,23 @@ pub enum Error {
   MountedPackageNoMediaType {
     backtrace: Option<Backtrace>,
     fingerprint: Fingerprint,
+  },
+  #[snafu(display("failed to decode track `{path}`"))]
+  Mp3Decode {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+    source: Mp3Error,
+  },
+  #[snafu(display("failed to read ID3 tag from track `{path}`"))]
+  Mp3Tag {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+    source: id3::Error,
+  },
+  #[snafu(display("track `{path}` is missing ID3 tag"))]
+  Mp3TagMissing {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
   },
   #[snafu(display("invalid path `{path}`"))]
   Path {

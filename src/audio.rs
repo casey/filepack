@@ -1,5 +1,6 @@
 use super::*;
 
+#[skip_serializing_none]
 #[derive(Clone, Debug, Decode, DeserializeFromStr, Encode, PartialEq, Serialize)]
 pub(crate) struct Audio {
   #[n(0)]
@@ -15,7 +16,7 @@ pub(crate) struct Audio {
   #[n(5)]
   pub(crate) filename: ComponentBuf,
   #[n(6)]
-  pub(crate) sample_bits: u64,
+  pub(crate) sample_bits: Option<u64>,
   #[n(7)]
   pub(crate) sample_rate: u64,
   #[n(8)]
@@ -34,21 +35,6 @@ pub(crate) struct Audio {
 impl Audio {
   pub(crate) fn as_path(&self) -> RelativePath {
     self.filename.as_path()
-  }
-
-  fn audio_info(reader: &FlacReader<fs::File>, path: &Utf8Path) -> Result<AudioInfo> {
-    let streaminfo = reader.streaminfo();
-
-    let samples = streaminfo
-      .samples
-      .context(error::AudioSampleCountUnknown { path })?;
-
-    Ok(AudioInfo {
-      channels: streaminfo.channels.into(),
-      sample_bits: streaminfo.bits_per_sample.into(),
-      sample_rate: streaminfo.sample_rate.into(),
-      samples,
-    })
   }
 
   pub(crate) fn check_positions(tracks: &[Audio]) -> Result<(), AudioError> {
@@ -147,76 +133,39 @@ impl Audio {
     )
   }
 
-  fn flac_reader(path: &Utf8Path) -> Result<(FlacReader<fs::File>, AudioInfo)> {
-    let reader = FlacReader::open(path).context(error::AudioDecode { path })?;
+  fn flac_info(reader: &FlacReader<fs::File>, path: &Utf8Path) -> Result<AudioInfo> {
+    let streaminfo = reader.streaminfo();
 
-    let audio_info = Self::audio_info(&reader, path)?;
+    let samples = streaminfo
+      .samples
+      .context(error::FlacSampleCountUnknown { path })?;
+
+    Ok(AudioInfo {
+      channels: streaminfo.channels.into(),
+      sample_bits: Some(streaminfo.bits_per_sample.into()),
+      sample_rate: streaminfo.sample_rate.into(),
+      samples,
+    })
+  }
+
+  fn flac_number_tag(
+    reader: &FlacReader<fs::File>,
+    path: &Utf8Path,
+    tag: &'static str,
+  ) -> Result<u64> {
+    let value = Self::flac_tag(reader, path, tag)?;
+    parse_number(value).context(error::AudioTagInteger { path, tag })
+  }
+
+  fn flac_reader(path: &Utf8Path) -> Result<(FlacReader<fs::File>, AudioInfo)> {
+    let reader = FlacReader::open(path).context(error::FlacDecode { path })?;
+
+    let audio_info = Self::flac_info(&reader, path)?;
 
     Ok((reader, audio_info))
   }
 
-  pub(crate) fn formats(tracks: &[Audio]) -> Vec<AudioType> {
-    let mut formats = Vec::new();
-
-    for audio in tracks {
-      if !formats.contains(&audio.ty) {
-        formats.push(audio.ty);
-      }
-    }
-
-    formats
-  }
-
-  fn number_tag(reader: &FlacReader<fs::File>, path: &Utf8Path, tag: &'static str) -> Result<u64> {
-    let value = Self::tag(reader, path, tag)?;
-    parse_number(value).context(error::AudioTagInteger { path, tag })
-  }
-
-  pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result {
-    let path = root.join(self.as_path());
-
-    match self.ty {
-      AudioType::Flac => self.populate_flac(&path),
-    }
-  }
-
-  fn populate_flac(&mut self, path: &Utf8Path) -> Result {
-    let (reader, audio_info) = Self::flac_reader(path)?;
-
-    let AudioInfo {
-      channels,
-      sample_bits,
-      sample_rate,
-      samples,
-    } = audio_info;
-
-    self.channels = channels;
-    self.sample_bits = sample_bits;
-    self.sample_rate = sample_rate;
-    self.samples = samples;
-
-    self.album = Self::text_tag(&reader, path, "album")?;
-    self.artist = Self::text_tag(&reader, path, "artist")?;
-    self.disc = Self::number_tag(&reader, path, "discnumber")?;
-    self.discs = Self::number_tag(&reader, path, "disctotal")?;
-    self.title = Self::text_tag(&reader, path, "title")?;
-    self.track = Self::number_tag(&reader, path, "tracknumber")?;
-    self.tracks = Self::number_tag(&reader, path, "tracktotal")?;
-
-    Ok(())
-  }
-
-  pub(crate) fn resource_type(&self) -> ResourceType {
-    self.ty.resource_type()
-  }
-
-  pub(crate) fn sum_durations(tracks: &[Audio]) -> Duration {
-    tracks.iter().fold(Duration::ZERO, |sum, audio| {
-      sum.saturating_add(audio.duration())
-    })
-  }
-
-  fn tag<'a>(
+  fn flac_tag<'a>(
     reader: &'a FlacReader<fs::File>,
     path: &Utf8Path,
     tag: &'static str,
@@ -240,10 +189,154 @@ impl Audio {
     Ok(value)
   }
 
-  fn text_tag(reader: &FlacReader<fs::File>, path: &Utf8Path, tag: &'static str) -> Result<Text> {
-    Self::tag(reader, path, tag)?
+  fn flac_text_tag(
+    reader: &FlacReader<fs::File>,
+    path: &Utf8Path,
+    tag: &'static str,
+  ) -> Result<Text> {
+    Self::flac_tag(reader, path, tag)?
       .parse()
       .context(error::AudioTagInvalid { path, tag })
+  }
+
+  pub(crate) fn formats(tracks: &[Audio]) -> Vec<AudioType> {
+    let mut formats = Vec::new();
+
+    for audio in tracks {
+      if !formats.contains(&audio.ty) {
+        formats.push(audio.ty);
+      }
+    }
+
+    formats
+  }
+
+  fn id3_pair_tag(tag: &id3::Tag, path: &Utf8Path, id: &'static str) -> Result<(u64, u64)> {
+    let value = Self::id3_tag(tag, path, id)?;
+
+    let (number, total) = value
+      .split_once('/')
+      .context(error::AudioTagPair { path, tag: id })?;
+
+    Ok((
+      parse_number(number).context(error::AudioTagInteger { path, tag: id })?,
+      parse_number(total).context(error::AudioTagInteger { path, tag: id })?,
+    ))
+  }
+
+  fn id3_tag<'a>(tag: &'a id3::Tag, path: &Utf8Path, id: &'static str) -> Result<&'a str> {
+    let mut values = tag
+      .get(id)
+      .and_then(|frame| frame.content().text_values())
+      .into_iter()
+      .flatten();
+
+    let value = values
+      .next()
+      .context(error::AudioTagMissing { path, tag: id })?;
+
+    ensure! {
+      values.next().is_none(),
+      error::AudioTagMultiple { path, tag: id },
+    }
+
+    ensure! {
+      !value.is_empty(),
+      error::AudioTagEmpty { path, tag: id },
+    }
+
+    Ok(value)
+  }
+
+  fn id3_text_tag(tag: &id3::Tag, path: &Utf8Path, id: &'static str) -> Result<Text> {
+    Self::id3_tag(tag, path, id)?
+      .parse()
+      .context(error::AudioTagInvalid { path, tag: id })
+  }
+
+  pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result {
+    let path = root.join(self.as_path());
+
+    match self.ty {
+      AudioType::Flac => self.populate_flac(&path),
+      AudioType::Mp3 => self.populate_mp3(&path),
+    }
+  }
+
+  fn populate_flac(&mut self, path: &Utf8Path) -> Result {
+    let (reader, audio_info) = Self::flac_reader(path)?;
+
+    let AudioInfo {
+      channels,
+      sample_bits,
+      sample_rate,
+      samples,
+    } = audio_info;
+
+    self.channels = channels;
+    self.sample_bits = sample_bits;
+    self.sample_rate = sample_rate;
+    self.samples = samples;
+
+    self.album = Self::flac_text_tag(&reader, path, "album")?;
+    self.artist = Self::flac_text_tag(&reader, path, "artist")?;
+    self.disc = Self::flac_number_tag(&reader, path, "discnumber")?;
+    self.discs = Self::flac_number_tag(&reader, path, "disctotal")?;
+    self.title = Self::flac_text_tag(&reader, path, "title")?;
+    self.track = Self::flac_number_tag(&reader, path, "tracknumber")?;
+    self.tracks = Self::flac_number_tag(&reader, path, "tracktotal")?;
+
+    Ok(())
+  }
+
+  fn populate_mp3(&mut self, path: &Utf8Path) -> Result {
+    let data = filesystem::read(path)?;
+
+    let tag = match id3::Tag::read_from2(io::Cursor::new(&data)) {
+      Err(err) => {
+        if let id3::ErrorKind::NoTag = err.kind {
+          return Err(error::Mp3TagMissing { path }.build());
+        }
+        return Err(error::Mp3Tag { path }.into_error(err));
+      }
+      Ok(tag) => tag,
+    };
+
+    self.album = Self::id3_text_tag(&tag, path, "TALB")?;
+    self.artist = Self::id3_text_tag(&tag, path, "TPE1")?;
+    (self.disc, self.discs) = Self::id3_pair_tag(&tag, path, "TPOS")?;
+    self.title = Self::id3_text_tag(&tag, path, "TIT2")?;
+    (self.track, self.tracks) = Self::id3_pair_tag(&tag, path, "TRCK")?;
+
+    let mut cursor = io::Cursor::new(&data);
+
+    id3::Tag::skip(&mut cursor).context(error::Mp3Tag { path })?;
+
+    let start = usize::try_from(cursor.position()).unwrap();
+
+    let AudioInfo {
+      channels,
+      sample_bits,
+      sample_rate,
+      samples,
+    } = Mp3Decoder::decode(&data[start..]).context(error::Mp3Decode { path })?;
+
+    self.channels = channels;
+    self.sample_bits = sample_bits;
+    self.sample_rate = sample_rate;
+    self.samples = samples;
+
+    Ok(())
+  }
+
+  pub(crate) fn resource_type(&self) -> ResourceType {
+    self.ty.resource_type()
+  }
+
+  pub(crate) fn sum_durations(tracks: &[Audio]) -> Duration {
+    tracks.iter().fold(Duration::ZERO, |sum, audio| {
+      sum.saturating_add(audio.duration())
+    })
   }
 }
 
@@ -266,7 +359,7 @@ impl FromStr for Audio {
       disc: 0,
       discs: 0,
       filename,
-      sample_bits: 0,
+      sample_bits: None,
       sample_rate: 0,
       samples: 0,
       title: Text::new(),
@@ -279,7 +372,7 @@ impl FromStr for Audio {
 
 impl Item for Audio {
   fn info(&self, url: String) -> Info {
-    Info::Map(vec![
+    let mut map = vec![
       (
         "filename".into(),
         Info::Link {
@@ -303,10 +396,16 @@ impl Item for Audio {
         Info::Value(DisplayDuration(self.duration()).to_string()),
       ),
       ("type".into(), Info::Value(self.ty.to_string())),
-      (
+    ];
+
+    if let Some(sample_bits) = self.sample_bits {
+      map.push((
         "sample bits".into(),
-        Info::Value(format!("{}-bit", self.sample_bits)),
-      ),
+        Info::Value(format!("{sample_bits}-bit")),
+      ));
+    }
+
+    map.extend([
       (
         "sample rate".into(),
         Info::Value(DisplaySampleRate(self.sample_rate).to_string()),
@@ -317,12 +416,15 @@ impl Item for Audio {
         Info::Value(
           match self.ty {
             AudioType::Flac => "lossless",
+            AudioType::Mp3 => "lossy",
           }
           .into(),
         ),
       ),
       ("samples".into(), Info::Value(self.samples.to_string())),
-    ])
+    ]);
+
+    Info::Map(map)
   }
 
   fn path(&self) -> RelativePath {
@@ -496,8 +598,12 @@ mod tests {
   fn formats() {
     let foo = "foo.flac".parse::<Audio>().unwrap();
     let bar = "bar.flac".parse::<Audio>().unwrap();
+    let baz = "baz.mp3".parse::<Audio>().unwrap();
 
-    assert_eq!(Audio::formats(&[foo, bar]), [AudioType::Flac]);
+    assert_eq!(
+      Audio::formats(&[foo, bar, baz]),
+      [AudioType::Flac, AudioType::Mp3],
+    );
   }
 
   #[test]
@@ -516,7 +622,7 @@ mod tests {
         disc: 0,
         discs: 0,
         filename: "foo.flac".parse().unwrap(),
-        sample_bits: 0,
+        sample_bits: None,
         sample_rate: 0,
         samples: 0,
         title: Text::new(),
@@ -526,16 +632,35 @@ mod tests {
       },
     );
 
+    assert_eq!(
+      "foo.mp3".parse::<Audio>().unwrap(),
+      Audio {
+        album: Text::new(),
+        artist: Text::new(),
+        channels: 0,
+        disc: 0,
+        discs: 0,
+        filename: "foo.mp3".parse().unwrap(),
+        sample_bits: None,
+        sample_rate: 0,
+        samples: 0,
+        title: Text::new(),
+        track: 0,
+        tracks: 0,
+        ty: AudioType::Mp3,
+      },
+    );
+
     case(
-      "foo.mp3",
+      "foo.wav",
       ComponentError::Extension {
-        extensions: &["flac"],
+        extensions: &["flac", "mp3"],
       },
     );
     case(
       "foo",
       ComponentError::Extension {
-        extensions: &["flac"],
+        extensions: &["flac", "mp3"],
       },
     );
     case("", ComponentError::Empty);
@@ -550,7 +675,7 @@ mod tests {
     audio.channels = 2;
     audio.disc = 1;
     audio.discs = 2;
-    audio.sample_bits = 16;
+    audio.sample_bits = Some(16);
     audio.sample_rate = 44100;
     audio.samples = 66150;
     audio.title = "bar".parse().unwrap();
@@ -581,10 +706,46 @@ mod tests {
         ("samples".into(), Info::Value("66150".into())),
       ]),
     );
+
+    let mut audio = "foo.mp3".parse::<Audio>().unwrap();
+    audio.album = "qux".parse().unwrap();
+    audio.artist = "baz".parse().unwrap();
+    audio.channels = 2;
+    audio.disc = 1;
+    audio.discs = 2;
+    audio.sample_rate = 44100;
+    audio.samples = 66150;
+    audio.title = "bar".parse().unwrap();
+    audio.track = 3;
+    audio.tracks = 4;
+
+    assert_eq!(
+      Item::info(&audio, "bob".into()),
+      Info::Map(vec![
+        (
+          "filename".into(),
+          Info::Link {
+            text: "foo.mp3".into(),
+            url: "bob".into(),
+          },
+        ),
+        ("title".into(), Info::Value("bar".into())),
+        ("artist".into(), Info::Value("baz".into())),
+        ("album".into(), Info::Value("qux".into())),
+        ("disc".into(), Info::Value("1 of 2".into())),
+        ("track".into(), Info::Value("3 of 4".into())),
+        ("duration".into(), Info::Value("0:01".into())),
+        ("type".into(), Info::Value("MP3".into())),
+        ("sample rate".into(), Info::Value("44.1 kHz".into())),
+        ("channels".into(), Info::Value("2".into())),
+        ("compression mode".into(), Info::Value("lossy".into())),
+        ("samples".into(), Info::Value("66150".into())),
+      ]),
+    );
   }
 
   #[test]
-  fn populate_err() {
+  fn populate_flac_err() {
     fn err(bytes: &[u8]) -> Error {
       let (_tempdir, root) = tempdir();
 
@@ -595,7 +756,7 @@ mod tests {
       audio.populate(&root).unwrap_err()
     }
 
-    assert_matches!(err(b"foo"), Error::AudioDecode { .. });
+    assert_matches!(err(b"foo"), Error::FlacDecode { .. });
 
     assert_matches!(
       err(&flac(&[], 44100)),
@@ -780,12 +941,12 @@ mod tests {
         ],
         0,
       )),
-      Error::AudioSampleCountUnknown { .. },
+      Error::FlacSampleCountUnknown { .. },
     );
   }
 
   #[test]
-  fn populate_ok() {
+  fn populate_flac_ok() {
     let (_tempdir, root) = tempdir();
 
     std::fs::write(
@@ -813,9 +974,127 @@ mod tests {
     assert_eq!(audio.channels, 2);
     assert_eq!(audio.disc, 1);
     assert_eq!(audio.discs, 2);
-    assert_eq!(audio.sample_bits, 16);
+    assert_eq!(audio.sample_bits, Some(16));
     assert_eq!(audio.sample_rate, 44100);
     assert_eq!(audio.samples, 66150);
+    assert_eq!(audio.title.as_str(), "bar");
+    assert_eq!(audio.track, 3);
+    assert_eq!(audio.tracks, 4);
+  }
+
+  #[test]
+  fn populate_mp3_err() {
+    fn err(bytes: &[u8]) -> Error {
+      let (_tempdir, root) = tempdir();
+
+      std::fs::write(root.join("foo.mp3"), bytes).unwrap();
+
+      let mut audio = "foo.mp3".parse::<Audio>().unwrap();
+
+      audio.populate(&root).unwrap_err()
+    }
+
+    assert_matches!(err(b"foo"), Error::Mp3TagMissing { .. });
+
+    assert_matches!(
+      err(&mp3(&[], 1)),
+      Error::AudioTagMissing { tag: "TALB", .. },
+    );
+
+    assert_matches!(
+      err(&mp3(&["TALB=qux"], 1)),
+      Error::AudioTagMissing { tag: "TPE1", .. },
+    );
+
+    assert_matches!(
+      err(&mp3(&["TALB=qux\0quux"], 1)),
+      Error::AudioTagMultiple { tag: "TALB", .. },
+    );
+
+    assert_matches!(
+      err(&mp3(&["TALB="], 1)),
+      Error::AudioTagEmpty { tag: "TALB", .. },
+    );
+
+    assert_matches!(
+      err(&mp3(
+        &["TALB=qux", "TIT2=foo\tbar", "TPE1=baz", "TPOS=1/2"],
+        1
+      )),
+      Error::AudioTagInvalid {
+        source: TextError::Control { character: '\t' },
+        tag: "TIT2",
+        ..
+      },
+    );
+
+    assert_matches!(
+      err(&mp3(&["TALB=qux", "TPE1=baz", "TPOS=1"], 1)),
+      Error::AudioTagPair { tag: "TPOS", .. },
+    );
+
+    assert_matches!(
+      err(&mp3(
+        &["TALB=qux", "TIT2=bar", "TPE1=baz", "TPOS=1/2", "TRCK=03/12"],
+        1,
+      )),
+      Error::AudioTagInteger {
+        source: NumberError::Invalid { .. },
+        tag: "TRCK",
+        ..
+      },
+    );
+
+    assert_matches!(
+      err(&mp3(
+        &["TALB=qux", "TIT2=bar", "TPE1=baz", "TPOS=1/2", "TRCK=3/4"],
+        0,
+      )),
+      Error::Mp3Decode {
+        source: Mp3Error::Empty,
+        ..
+      },
+    );
+
+    let mut bytes = mp3(
+      &["TALB=qux", "TIT2=bar", "TPE1=baz", "TPOS=1/2", "TRCK=3/4"],
+      0,
+    );
+    bytes.extend_from_slice(b"foobar");
+
+    assert_matches!(
+      err(&bytes),
+      Error::Mp3Decode {
+        source: Mp3Error::Sync { offset: 0 },
+        ..
+      },
+    );
+  }
+
+  #[test]
+  fn populate_mp3_ok() {
+    let (_tempdir, root) = tempdir();
+
+    std::fs::write(
+      root.join("foo.mp3"),
+      mp3(
+        &["TALB=qux", "TIT2=bar", "TPE1=baz", "TPOS=1/2", "TRCK=3/4"],
+        2,
+      ),
+    )
+    .unwrap();
+
+    let mut audio = "foo.mp3".parse::<Audio>().unwrap();
+    audio.populate(&root).unwrap();
+
+    assert_eq!(audio.album.as_str(), "qux");
+    assert_eq!(audio.artist.as_str(), "baz");
+    assert_eq!(audio.channels, 2);
+    assert_eq!(audio.disc, 1);
+    assert_eq!(audio.discs, 2);
+    assert_eq!(audio.sample_bits, None);
+    assert_eq!(audio.sample_rate, 44100);
+    assert_eq!(audio.samples, 2304);
     assert_eq!(audio.title.as_str(), "bar");
     assert_eq!(audio.track, 3);
     assert_eq!(audio.tracks, 4);
@@ -825,7 +1104,12 @@ mod tests {
   fn serialize() {
     assert_eq!(
       serde_json::to_string(&"foo.flac".parse::<Audio>().unwrap()).unwrap(),
-      r#"{"album":"","artist":"","channels":0,"disc":0,"discs":0,"filename":"foo.flac","sample_bits":0,"sample_rate":0,"samples":0,"title":"","track":0,"tracks":0,"type":"flac"}"#,
+      r#"{"album":"","artist":"","channels":0,"disc":0,"discs":0,"filename":"foo.flac","sample_rate":0,"samples":0,"title":"","track":0,"tracks":0,"type":"flac"}"#,
+    );
+
+    assert_eq!(
+      serde_json::to_string(&"foo.mp3".parse::<Audio>().unwrap()).unwrap(),
+      r#"{"album":"","artist":"","channels":0,"disc":0,"discs":0,"filename":"foo.mp3","sample_rate":0,"samples":0,"title":"","track":0,"tracks":0,"type":"mp3"}"#,
     );
 
     assert_eq!(
@@ -836,7 +1120,7 @@ mod tests {
         disc: 3,
         discs: 4,
         filename: "foo.flac".parse().unwrap(),
-        sample_bits: 7,
+        sample_bits: Some(7),
         sample_rate: 1,
         samples: 2,
         title: "bar".parse().unwrap(),

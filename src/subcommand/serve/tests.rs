@@ -1070,12 +1070,12 @@ fn media_audio_item_response() {
   let fingerprint = PackageBuilder::new()
     .metadata(&Metadata {
       media: Some(Media::Audio {
-        items: tracks(&["foo.flac", "bar.flac"]),
+        items: tracks(&["foo.flac", "bar.mp3"]),
       }),
       ..default()
     })
     .file("foo.flac", foo)
-    .file("bar.flac", bar)
+    .file("bar.mp3", bar)
     .upload(&server);
 
   server
@@ -1091,7 +1091,7 @@ fn media_audio_item_response() {
   server
     .get(format!("/media/audio/{fingerprint}/item/2"))
     .assert_header(header::CONTENT_LENGTH, "6")
-    .assert_header(header::CONTENT_TYPE, "audio/flac")
+    .assert_header(header::CONTENT_TYPE, "audio/mpeg")
     .assert_header(header::ETAG, format!("\"{}\"", Hash::bytes(bar)))
     .assert_body(bar)
     .send();
@@ -1860,7 +1860,7 @@ fn package_page_renders_audio_media() {
           disc: 1,
           discs: 1,
           filename: "foo.flac".parse().unwrap(),
-          sample_bits: 16,
+          sample_bits: Some(16),
           sample_rate: 44100,
           samples: 9_922_500,
           title: "foo".parse().unwrap(),
@@ -1875,7 +1875,7 @@ fn package_page_renders_audio_media() {
           disc: 1,
           discs: 1,
           filename: "bar.flac".parse().unwrap(),
-          sample_bits: 16,
+          sample_bits: Some(16),
           sample_rate: 44100,
           samples: 44100,
           title: "bar".parse().unwrap(),

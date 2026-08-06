@@ -88,6 +88,8 @@ use {
     map_decoder::MapDecoder,
     media::{Media, MediaType},
     mode::Mode,
+    mp3_decoder::Mp3Decoder,
+    mp3_error::Mp3Error,
     number_error::NumberError,
     options::Options,
     or::Or,
@@ -149,6 +151,7 @@ use {
   filepack_cbor::{Decode, DecodeFromStr, Encode, EncodeDisplay},
   futures_util::StreamExt,
   humansize::{BINARY, BaseUnit, DECIMAL, FormatSizeOptions, SizeFormatter},
+  id3::TagLike,
   indicatif::{ProgressBar, ProgressStyle},
   jiff::{self, civil},
   lexiclean::Lexiclean,
@@ -239,8 +242,8 @@ use {
   std::assert_matches,
   tempfile::TempDir,
   test::{
-    assert_cbor, assert_cbor_eq, assert_encoding, exif, flac, jpeg_with_exif, png_with_exif,
-    tempdir,
+    assert_cbor, assert_cbor_eq, assert_encoding, exif, flac, jpeg_with_exif, mp3, mp3_frame,
+    png_with_exif, tempdir,
   },
   unindent::unindent,
   webm_builder::WebmBuilder,
@@ -344,6 +347,8 @@ mod map_encoder;
 mod media;
 mod metadata;
 mod mode;
+mod mp3_decoder;
+mod mp3_error;
 mod mp4_builder;
 mod number_error;
 mod open_graph_image;
