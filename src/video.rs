@@ -602,24 +602,15 @@ impl FromStr for Video {
 
 impl Item for Video {
   fn info(&self, url: String) -> Info {
-    Info::Map(vec![
-      (
-        "filename".into(),
-        Info::Link {
-          text: self.filename.to_string(),
-          url,
-        },
-      ),
-      ("type".into(), Info::Value(self.ty.to_string())),
-      (
-        "duration".into(),
-        Info::Value(DisplayDuration(Duration::from_millis(self.duration)).to_string()),
-      ),
-      (
-        "tracks".into(),
-        Info::List(self.tracks.iter().map(|track| track.info(self)).collect()),
-      ),
-    ])
+    InfoBuilder::new()
+      .link("filename", &self.filename, url)
+      .value("type", self.ty)
+      .value(
+        "duration",
+        DisplayDuration(Duration::from_millis(self.duration)),
+      )
+      .list("tracks", self.tracks.iter().map(|track| track.info(self)))
+      .build()
   }
 
   fn path(&self) -> RelativePath {

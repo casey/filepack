@@ -130,24 +130,12 @@ impl FromStr for Image {
 
 impl Item for Image {
   fn info(&self, url: String) -> Info {
-    Info::Map(vec![
-      (
-        "filename".into(),
-        Info::Link {
-          text: self.filename.to_string(),
-          url,
-        },
-      ),
-      ("type".into(), Info::Value(self.ty.to_string())),
-      (
-        "dimensions".into(),
-        Info::Value(self.dimensions.to_string()),
-      ),
-      (
-        "orientation".into(),
-        Info::Value(self.orientation.to_string()),
-      ),
-    ])
+    InfoBuilder::new()
+      .link("filename", &self.filename, url)
+      .value("type", self.ty)
+      .value("dimensions", self.dimensions)
+      .value("orientation", self.orientation)
+      .build()
   }
 
   fn path(&self) -> RelativePath {
