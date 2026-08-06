@@ -69,6 +69,9 @@ fn create_extracts_artwork_dimensions() {
       r#"
         {
           "artwork": {
+            "alpha": false,
+            "bit_depth": 8,
+            "color_type": "rgb",
             "dimensions": {
               "height": 2,
               "width": 2
@@ -109,6 +112,9 @@ fn create_extracts_image_dimensions() {
             "type": "image",
             "items": [
               {
+                "alpha": false,
+                "bit_depth": 8,
+                "color_type": "rgb",
                 "dimensions": {
                   "height": 1,
                   "width": 2
@@ -473,7 +479,7 @@ fn create_succeeds_with_valid_metadata() {
     .arg("create")
     .success()
     .arg("verify")
-    .stderr("successfully verified 6 files totaling 254 bytes\n")
+    .stderr("successfully verified 6 files totaling 260 bytes\n")
     .success();
 }
 

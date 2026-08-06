@@ -396,6 +396,10 @@ mod tests {
   fn encoding() {
     assert_encoding(Metadata {
       artwork: Some(Image {
+        alpha: true,
+        bit_depth: 8,
+        chroma_subsampling: Some(ChromaSubsampling::Yuv420),
+        color_type: ColorType::Rgb,
         dimensions: Dimensions {
           height: 1,
           width: 1,

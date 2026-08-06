@@ -343,6 +343,10 @@ mod tests {
       media: Some(Media::Image {
         items: vec![
           Image {
+            alpha: false,
+            bit_depth: 8,
+            chroma_subsampling: None,
+            color_type: ColorType::Rgb,
             dimensions: Dimensions {
               height: 1,
               width: 2,
@@ -352,12 +356,20 @@ mod tests {
             ty: ImageType::Png,
           },
           Image {
+            alpha: false,
+            bit_depth: 8,
+            chroma_subsampling: None,
+            color_type: ColorType::Rgb,
             dimensions: Dimensions::default(),
             filename: "bar.jpg".parse().unwrap(),
             orientation: Orientation::new(),
             ty: ImageType::Jpeg,
           },
           Image {
+            alpha: false,
+            bit_depth: 8,
+            chroma_subsampling: None,
+            color_type: ColorType::Rgb,
             dimensions: Dimensions {
               height: 1,
               width: 2,
@@ -437,6 +449,10 @@ mod tests {
       fingerprint: test::FINGERPRINT.parse().unwrap(),
       metadata: Some(Metadata {
         artwork: Some(Image {
+          alpha: false,
+          bit_depth: 8,
+          chroma_subsampling: None,
+          color_type: ColorType::Rgb,
           dimensions: Dimensions {
             height: 1,
             width: 2,

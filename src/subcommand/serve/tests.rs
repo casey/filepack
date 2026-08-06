@@ -1548,6 +1548,10 @@ fn package_item_image() {
   let metadata = Metadata {
     media: Some(Media::Image {
       items: vec![Image {
+        alpha: false,
+        bit_depth: 8,
+        chroma_subsampling: None,
+        color_type: ColorType::Rgb,
         dimensions: Dimensions {
           height: 1,
           width: 2,
@@ -1583,6 +1587,10 @@ fn package_item_image_out_of_range() {
     .metadata(&Metadata {
       media: Some(Media::Image {
         items: vec![Image {
+          alpha: false,
+          bit_depth: 8,
+          chroma_subsampling: None,
+          color_type: ColorType::Rgb,
           dimensions: Dimensions {
             height: 1,
             width: 1,
@@ -1924,6 +1932,10 @@ fn package_page_renders_image_media() {
   let metadata = Metadata {
     media: Some(Media::Image {
       items: vec![Image {
+        alpha: false,
+        bit_depth: 8,
+        chroma_subsampling: None,
+        color_type: ColorType::Rgb,
         dimensions: Dimensions {
           height: 1,
           width: 2,
