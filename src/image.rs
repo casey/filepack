@@ -356,19 +356,25 @@ mod tests {
     }
 
     assert_eq!(
-      case("foo.png", &png_with_exif(2, 1, &exif(5)))
-        .unwrap()
-        .dimensions,
+      case(
+        "foo.png",
+        &PngBuilder::new().width(2).height(3).exif(&exif(5)).build(),
+      )
+      .unwrap()
+      .dimensions,
       Dimensions {
-        height: 1,
+        height: 3,
         width: 2,
       },
     );
 
     assert_eq!(
-      case("foo.jpg", &jpeg_with_exif(1, 2, &exif(5)))
-        .unwrap()
-        .dimensions,
+      case(
+        "foo.jpg",
+        &JpegBuilder::new().height(2).exif(&exif(5)).build(),
+      )
+      .unwrap()
+      .dimensions,
       Dimensions {
         height: 2,
         width: 1,
@@ -376,7 +382,11 @@ mod tests {
     );
 
     assert_eq!(
-      case("foo.jpg", &jpeg_with_exif(2, 1, &exif(6))).unwrap(),
+      case(
+        "foo.jpg",
+        &JpegBuilder::new().width(2).exif(&exif(6)).build(),
+      )
+      .unwrap(),
       Image {
         alpha: false,
         bit_depth: 8,
@@ -396,7 +406,11 @@ mod tests {
     );
 
     assert_eq!(
-      case("foo.png", &png_with_exif(2, 1, &exif(5))).unwrap(),
+      case(
+        "foo.png",
+        &PngBuilder::new().width(2).exif(&exif(5)).build(),
+      )
+      .unwrap(),
       Image {
         alpha: false,
         bit_depth: 8,
@@ -415,21 +429,21 @@ mod tests {
       },
     );
 
-    let image = case("foo.jpg", &jpeg_grayscale(1, 1)).unwrap();
+    let image = case("foo.jpg", &JpegBuilder::new().grayscale().build()).unwrap();
     assert!(!image.alpha);
     assert_eq!(image.bit_depth, 8);
     assert_eq!(image.chroma_subsampling, Some(ChromaSubsampling::Yuv400));
     assert_eq!(image.color_type, ColorType::Grayscale);
 
     assert_eq!(
-      case("foo.jpg", &jpeg_with_sampling(1, 1, 0x22))
+      case("foo.jpg", &JpegBuilder::new().sampling(0x22).build())
         .unwrap()
         .chroma_subsampling,
       Some(ChromaSubsampling::Yuv420),
     );
 
     assert_matches_regex!(
-      case("foo.jpg", &jpeg_with_sampling(1, 1, 0x41))
+      case("foo.jpg", &JpegBuilder::new().sampling(0x41).build())
         .unwrap_err()
         .to_string(),
       r"^unsupported chroma subsampling 4×1 in image `.*foo\.jpg`$",
@@ -437,14 +451,10 @@ mod tests {
 
     let image = case(
       "foo.png",
-      &png(
-        1,
-        1,
-        png::ColorType::Rgba,
-        png::BitDepth::Sixteen,
-        None,
-        None,
-      ),
+      &PngBuilder::new()
+        .color(png::ColorType::Rgba)
+        .depth(png::BitDepth::Sixteen)
+        .build(),
     )
     .unwrap();
     assert!(image.alpha);
@@ -454,14 +464,10 @@ mod tests {
 
     let image = case(
       "foo.png",
-      &png(
-        1,
-        1,
-        png::ColorType::Indexed,
-        png::BitDepth::One,
-        None,
-        None,
-      ),
+      &PngBuilder::new()
+        .color(png::ColorType::Indexed)
+        .depth(png::BitDepth::One)
+        .build(),
     )
     .unwrap();
     assert!(!image.alpha);
@@ -471,14 +477,11 @@ mod tests {
     assert!(
       case(
         "foo.png",
-        &png(
-          1,
-          1,
-          png::ColorType::Indexed,
-          png::BitDepth::One,
-          Some(&[0]),
-          None,
-        ),
+        &PngBuilder::new()
+          .color(png::ColorType::Indexed)
+          .depth(png::BitDepth::One)
+          .trns(&[0])
+          .build(),
       )
       .unwrap()
       .alpha
@@ -486,14 +489,9 @@ mod tests {
 
     let image = case(
       "foo.png",
-      &png(
-        1,
-        1,
-        png::ColorType::GrayscaleAlpha,
-        png::BitDepth::Eight,
-        None,
-        None,
-      ),
+      &PngBuilder::new()
+        .color(png::ColorType::GrayscaleAlpha)
+        .build(),
     )
     .unwrap();
     assert!(image.alpha);
@@ -501,14 +499,10 @@ mod tests {
 
     let image = case(
       "foo.png",
-      &png(
-        1,
-        1,
-        png::ColorType::Grayscale,
-        png::BitDepth::Two,
-        None,
-        None,
-      ),
+      &PngBuilder::new()
+        .color(png::ColorType::Grayscale)
+        .depth(png::BitDepth::Two)
+        .build(),
     )
     .unwrap();
     assert!(!image.alpha);
@@ -526,14 +520,14 @@ mod tests {
     );
 
     assert_matches_regex!(
-      case("foo.jpg", &jpeg_with_exif(2, 1, b"foo"))
+      case("foo.jpg", &JpegBuilder::new().width(2).exif(b"foo").build())
         .unwrap_err()
         .to_string(),
       r"^invalid EXIF in image `.*foo\.jpg`$",
     );
 
     assert_matches_regex!(
-      case("foo.png", &png_with_exif(2, 1, b"foo"))
+      case("foo.png", &PngBuilder::new().width(2).exif(b"foo").build())
         .unwrap_err()
         .to_string(),
       r"^invalid EXIF in image `.*foo\.png`$",
