@@ -1,27 +1,5 @@
 use super::*;
 
-pub(crate) fn audio_tag<'a>(
-  mut values: impl Iterator<Item = &'a str>,
-  path: &Utf8Path,
-  tag: &'static str,
-) -> Result<&'a str> {
-  let value = values
-    .next()
-    .context(error::AudioTagMissing { path, tag })?;
-
-  ensure! {
-    values.next().is_none(),
-    error::AudioTagMultiple { path, tag },
-  }
-
-  ensure! {
-    !value.is_empty(),
-    error::AudioTagEmpty { path, tag },
-  }
-
-  Ok(value)
-}
-
 pub(crate) fn client() -> Result<Client> {
   install_default_crypto_provider()?;
 

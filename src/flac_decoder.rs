@@ -45,7 +45,7 @@ impl<'a> FlacDecoder<'a> {
   }
 
   fn tag(&self, tag: &'static str) -> Result<&str> {
-    audio_tag(self.reader.get_tag(tag), self.path, tag)
+    Audio::tag(self.reader.get_tag(tag), self.path, tag)
   }
 
   fn text_tag(&self, tag: &'static str) -> Result<Text> {

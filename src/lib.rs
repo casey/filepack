@@ -67,8 +67,8 @@ use {
     float_ext::FloatExt,
     format::Format,
     functions::{
-      audio_tag, client, current_dir, decode_path, default, format_size, is_lowercase_hex, now,
-      parse_number, transfer_tempfile,
+      client, current_dir, decode_path, default, format_size, is_lowercase_hex, now, parse_number,
+      transfer_tempfile,
     },
     hash_error::HashError,
     hashing_writer::HashingWriter,

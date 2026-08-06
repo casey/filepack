@@ -191,6 +191,28 @@ impl Audio {
       sum.saturating_add(audio.duration())
     })
   }
+
+  pub(crate) fn tag<'a>(
+    mut values: impl Iterator<Item = &'a str>,
+    path: &Utf8Path,
+    tag: &'static str,
+  ) -> Result<&'a str> {
+    let value = values
+      .next()
+      .context(error::AudioTagMissing { path, tag })?;
+
+    ensure! {
+      values.next().is_none(),
+      error::AudioTagMultiple { path, tag },
+    }
+
+    ensure! {
+      !value.is_empty(),
+      error::AudioTagEmpty { path, tag },
+    }
+
+    Ok(value)
+  }
 }
 
 impl FromStr for Audio {

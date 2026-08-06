@@ -238,7 +238,7 @@ impl<'a> Mp3Decoder<'a> {
   }
 
   fn tag<'t>(tag: &'t id3::Tag, path: &Utf8Path, id: &'static str) -> Result<&'t str> {
-    audio_tag(
+    Audio::tag(
       tag
         .get(id)
         .and_then(|frame| frame.content().text_values())
