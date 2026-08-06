@@ -52,7 +52,7 @@ impl Version {
 }
 
 impl<'a> Mp3Decoder<'a> {
-  pub(crate) fn decode(data: &'a [u8]) -> Result<AudioStreamMetadata, Mp3Error> {
+  pub(crate) fn decode(data: &'a [u8]) -> Result<AudioProperties, Mp3Error> {
     let decoder = Self { data };
 
     let mut offset = 0;
@@ -97,7 +97,7 @@ impl<'a> Mp3Decoder<'a> {
 
     ensure!(samples > 0, mp3_error::Empty);
 
-    Ok(AudioStreamMetadata {
+    Ok(AudioProperties {
       channels,
       sample_bits: None,
       sample_rate,
@@ -210,7 +210,7 @@ impl<'a> Mp3Decoder<'a> {
 
     let start = usize::try_from(cursor.position()).unwrap();
 
-    let AudioStreamMetadata {
+    let AudioProperties {
       channels,
       sample_bits,
       sample_rate,
@@ -258,7 +258,7 @@ mod tests {
   #[test]
   fn decode() {
     #[track_caller]
-    fn case(data: &[Vec<u8>], expected: Result<AudioStreamMetadata, Mp3Error>) {
+    fn case(data: &[Vec<u8>], expected: Result<AudioProperties, Mp3Error>) {
       assert_eq!(Mp3Decoder::decode(&data.concat()), expected);
     }
 
@@ -268,8 +268,8 @@ mod tests {
       bytes
     }
 
-    fn stream_metadata(channels: u64, sample_rate: u64, samples: u64) -> AudioStreamMetadata {
-      AudioStreamMetadata {
+    fn properties(channels: u64, sample_rate: u64, samples: u64) -> AudioProperties {
+      AudioProperties {
         channels,
         sample_bits: None,
         sample_rate,
@@ -289,34 +289,31 @@ mod tests {
       bytes
     };
 
-    case(
-      &[mp3_frame(), mp3_frame()],
-      Ok(stream_metadata(2, 44100, 2304)),
-    );
+    case(&[mp3_frame(), mp3_frame()], Ok(properties(2, 44100, 2304)));
 
     case(
       &[xing(), mp3_frame(), mp3_frame()],
-      Ok(stream_metadata(2, 44100, 2304)),
+      Ok(properties(2, 44100, 2304)),
     );
 
     case(
       &[frame([0xFF, 0xFB, 0x92, 0x00], 418), mp3_frame()],
-      Ok(stream_metadata(2, 44100, 2304)),
+      Ok(properties(2, 44100, 2304)),
     );
 
     case(
       &[frame([0xFF, 0xFB, 0x90, 0xC0], 417)],
-      Ok(stream_metadata(1, 44100, 1152)),
+      Ok(properties(1, 44100, 1152)),
     );
 
     case(
       &[frame([0xFF, 0xF3, 0x90, 0x00], 261)],
-      Ok(stream_metadata(2, 22050, 576)),
+      Ok(properties(2, 22050, 576)),
     );
 
     case(
       &[frame([0xFF, 0xE3, 0x90, 0x00], 522)],
-      Ok(stream_metadata(2, 11025, 576)),
+      Ok(properties(2, 11025, 576)),
     );
 
     case(&[], Err(Mp3Error::Empty));
