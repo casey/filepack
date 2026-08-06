@@ -42,6 +42,7 @@ use {
     chroma_subsampling::ChromaSubsampling,
     codec::Codec,
     color_info::ColorInfo,
+    color_type::ColorType,
     component::Component,
     component_error::ComponentError,
     context::Context,
@@ -206,7 +207,7 @@ use {
   url::Url,
   usized::IntoU64,
   walkdir::WalkDir,
-  zune_jpeg::JpegDecoder,
+  zune_jpeg::{JpegDecoder, SampleRatios, zune_core::colorspace::ColorSpace},
 };
 
 pub use self::{
@@ -247,8 +248,8 @@ use {
   std::assert_matches,
   tempfile::TempDir,
   test::{
-    assert_cbor, assert_cbor_eq, assert_encoding, exif, flac, jpeg_with_exif, mp3, mp3_frame,
-    png_with_exif, tempdir,
+    assert_cbor, assert_cbor_eq, assert_encoding, exif, flac, jpeg_grayscale, jpeg_with_exif,
+    jpeg_with_sampling, mp3, mp3_frame, png, png_with_exif, tempdir,
   },
   unindent::unindent,
   webm_builder::WebmBuilder,
@@ -291,6 +292,7 @@ mod checked_url;
 mod chroma_subsampling;
 mod codec;
 mod color_info;
+mod color_type;
 mod component;
 mod component_buf;
 mod component_error;

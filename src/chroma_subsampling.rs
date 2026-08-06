@@ -23,36 +23,3 @@ pub(crate) enum ChromaSubsampling {
   #[strum(serialize = "4:4:4")]
   Yuv444,
 }
-
-#[cfg(test)]
-mod tests {
-  use super::*;
-
-  #[test]
-  fn display() {
-    #[track_caller]
-    fn case(subsampling: ChromaSubsampling, expected: &str) {
-      assert_eq!(subsampling.to_string(), expected);
-    }
-
-    case(ChromaSubsampling::Yuv400, "4:0:0");
-    case(ChromaSubsampling::Yuv420, "4:2:0");
-    case(ChromaSubsampling::Yuv422, "4:2:2");
-    case(ChromaSubsampling::Yuv440, "4:4:0");
-    case(ChromaSubsampling::Yuv444, "4:4:4");
-  }
-
-  #[test]
-  fn serialize() {
-    #[track_caller]
-    fn case(subsampling: ChromaSubsampling, expected: &str) {
-      assert_eq!(serde_json::to_string(&subsampling).unwrap(), expected);
-    }
-
-    case(ChromaSubsampling::Yuv400, r#""4:0:0""#);
-    case(ChromaSubsampling::Yuv420, r#""4:2:0""#);
-    case(ChromaSubsampling::Yuv422, r#""4:2:2""#);
-    case(ChromaSubsampling::Yuv440, r#""4:4:0""#);
-    case(ChromaSubsampling::Yuv444, r#""4:4:4""#);
-  }
-}

@@ -236,6 +236,12 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: RelativePath,
   },
+  #[snafu(display("unsupported colorspace {colorspace:?} in image `{path}`"))]
+  ImageColorspace {
+    backtrace: Option<Backtrace>,
+    colorspace: zune_jpeg::zune_core::colorspace::ColorSpace,
+    path: DisplayPath,
+  },
   #[snafu(display("failed to decode JPEG image `{path}`"))]
   ImageDecodeJpeg {
     backtrace: Option<Backtrace>,
@@ -253,6 +259,13 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
     source: ExifError,
+  },
+  #[snafu(display("unsupported chroma subsampling {horizontal}×{vertical} in image `{path}`"))]
+  ImageSampleRatio {
+    backtrace: Option<Backtrace>,
+    horizontal: usize,
+    path: DisplayPath,
+    vertical: usize,
   },
   #[snafu(display("internal error, this may indicate a bug in filepack: {message}"))]
   Internal {

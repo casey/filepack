@@ -40,6 +40,10 @@ mod tests {
         metadata: Metadata {
           media: Some(Media::Image {
             items: vec![Image {
+              alpha: false,
+              bit_depth: 8,
+              chroma_subsampling: None,
+              color_type: ColorType::Rgb,
               dimensions: Dimensions {
                 height: 1,
                 width: 2,
