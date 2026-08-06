@@ -436,11 +436,6 @@ impl Server {
           server_error::PackageMetadataFileMissing { fingerprint, path },
         );
       }
-
-      if let Some(Media::Audio { items }) = &metadata.media {
-        Audio::check_positions(items)
-          .context(server_error::PackageAudioPosition { fingerprint })?;
-      }
     }
 
     let tx = self.database.begin_write()?;

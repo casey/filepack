@@ -383,7 +383,8 @@ fn create_rejects_invalid_tracks() {
     .arg("create")
     .stderr_regex(
       "
-        error: failed to decode track `.*foo.flac`
+        error: invalid audio track `.*foo.flac`
+               ├─ failed to decode FLAC
                └─ Ill-formed FLAC stream: .*
       ",
     )

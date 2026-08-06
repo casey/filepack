@@ -178,41 +178,26 @@ impl<'a> Mp3Decoder<'a> {
     })
   }
 
-  fn pair_tag(tag: &id3::Tag, path: &Utf8Path, id: &'static str) -> Result<(u64, u64)> {
-    let value = Self::tag(tag, path, id)?;
-
-    let (number, total) = value
-      .split_once('/')
-      .context(error::AudioTagPair { path, tag: id })?;
-
-    Ok((
-      parse_number(number).context(error::AudioTagInteger { path, tag: id })?,
-      parse_number(total).context(error::AudioTagInteger { path, tag: id })?,
-    ))
-  }
-
-  pub(crate) fn read(path: &Utf8Path) -> Result<AudioMetadata> {
-    let data = filesystem::read(path)?;
-
-    let tag = match id3::Tag::read_from2(io::Cursor::new(&data)) {
+  fn metadata(data: &[u8]) -> Result<AudioMetadata, AudioError> {
+    let tag = match id3::Tag::read_from2(io::Cursor::new(data)) {
       Err(err) => {
         if let id3::ErrorKind::NoTag = err.kind {
-          return Err(error::Mp3TagMissing { path }.build());
+          return Err(audio_error::Mp3TagMissing.build());
         }
-        return Err(error::Mp3Tag { path }.into_error(err));
+        return Err(audio_error::Mp3Tag.into_error(err));
       }
       Ok(tag) => tag,
     };
 
-    let album = Self::text_tag(&tag, path, "TALB")?;
-    let artist = Self::text_tag(&tag, path, "TPE1")?;
-    let (disc, discs) = Self::pair_tag(&tag, path, "TPOS")?;
-    let title = Self::text_tag(&tag, path, "TIT2")?;
-    let (track, tracks) = Self::pair_tag(&tag, path, "TRCK")?;
+    let album = Self::text_tag(&tag, "TALB")?;
+    let artist = Self::text_tag(&tag, "TPE1")?;
+    let (disc, discs) = Self::pair_tag(&tag, "TPOS")?;
+    let title = Self::text_tag(&tag, "TIT2")?;
+    let (track, tracks) = Self::pair_tag(&tag, "TRCK")?;
 
-    let mut cursor = io::Cursor::new(&data);
+    let mut cursor = io::Cursor::new(data);
 
-    id3::Tag::skip(&mut cursor).context(error::Mp3Tag { path })?;
+    id3::Tag::skip(&mut cursor).context(audio_error::Mp3Tag)?;
 
     let start = usize::try_from(cursor.position()).unwrap();
 
@@ -220,7 +205,7 @@ impl<'a> Mp3Decoder<'a> {
       channels,
       sample_rate,
       samples,
-    } = Mp3Decoder::decode(&data[start..]).context(error::Mp3Decode { path })?;
+    } = Mp3Decoder::decode(&data[start..]).context(audio_error::Mp3Decode)?;
 
     Ok(AudioMetadata {
       album,
@@ -237,22 +222,40 @@ impl<'a> Mp3Decoder<'a> {
     })
   }
 
-  fn tag<'t>(tag: &'t id3::Tag, path: &Utf8Path, id: &'static str) -> Result<&'t str> {
+  fn pair_tag(tag: &id3::Tag, id: &'static str) -> Result<(u64, u64), AudioError> {
+    let value = Self::tag(tag, id)?;
+
+    let (number, total) = value
+      .split_once('/')
+      .context(audio_error::TagPair { tag: id })?;
+
+    Ok((
+      parse_number(number).context(audio_error::TagInteger { tag: id })?,
+      parse_number(total).context(audio_error::TagInteger { tag: id })?,
+    ))
+  }
+
+  pub(crate) fn read(path: &Utf8Path) -> Result<AudioMetadata> {
+    let data = filesystem::read(path)?;
+
+    Self::metadata(&data).context(error::Audio { path })
+  }
+
+  fn tag<'t>(tag: &'t id3::Tag, id: &'static str) -> Result<&'t str, AudioError> {
     Audio::tag(
       tag
         .get(id)
         .and_then(|frame| frame.content().text_values())
         .into_iter()
         .flatten(),
-      path,
       id,
     )
   }
 
-  fn text_tag(tag: &id3::Tag, path: &Utf8Path, id: &'static str) -> Result<Text> {
-    Self::tag(tag, path, id)?
+  fn text_tag(tag: &id3::Tag, id: &'static str) -> Result<Text, AudioError> {
+    Self::tag(tag, id)?
       .parse()
-      .context(error::AudioTagInvalid { path, tag: id })
+      .context(audio_error::TagInvalid { tag: id })
   }
 }
 
@@ -390,37 +393,28 @@ mod tests {
   }
 
   #[test]
-  fn read_err() {
-    fn err(bytes: &[u8]) -> Error {
-      let (_tempdir, root) = tempdir();
-
-      let path = root.join("foo.mp3");
-
-      std::fs::write(&path, bytes).unwrap();
-
-      Mp3Decoder::read(&path).unwrap_err()
+  fn metadata_err() {
+    fn err(bytes: &[u8]) -> AudioError {
+      Mp3Decoder::metadata(bytes).unwrap_err()
     }
 
-    assert_matches!(err(b"foo"), Error::Mp3TagMissing { .. });
+    assert_matches!(err(b"foo"), AudioError::Mp3TagMissing);
 
-    assert_matches!(
-      err(&mp3(&[], 1)),
-      Error::AudioTagMissing { tag: "TALB", .. },
-    );
+    assert_matches!(err(&mp3(&[], 1)), AudioError::TagMissing { tag: "TALB" });
 
     assert_matches!(
       err(&mp3(&["TALB=qux"], 1)),
-      Error::AudioTagMissing { tag: "TPE1", .. },
+      AudioError::TagMissing { tag: "TPE1" },
     );
 
     assert_matches!(
       err(&mp3(&["TALB=qux\0quux"], 1)),
-      Error::AudioTagMultiple { tag: "TALB", .. },
+      AudioError::TagMultiple { tag: "TALB" },
     );
 
     assert_matches!(
       err(&mp3(&["TALB="], 1)),
-      Error::AudioTagEmpty { tag: "TALB", .. },
+      AudioError::TagEmpty { tag: "TALB" },
     );
 
     assert_matches!(
@@ -428,16 +422,15 @@ mod tests {
         &["TALB=qux", "TIT2=foo\tbar", "TPE1=baz", "TPOS=1/2"],
         1
       )),
-      Error::AudioTagInvalid {
+      AudioError::TagInvalid {
         source: TextError::Control { character: '\t' },
         tag: "TIT2",
-        ..
       },
     );
 
     assert_matches!(
       err(&mp3(&["TALB=qux", "TPE1=baz", "TPOS=1"], 1)),
-      Error::AudioTagPair { tag: "TPOS", .. },
+      AudioError::TagPair { tag: "TPOS" },
     );
 
     assert_matches!(
@@ -445,10 +438,9 @@ mod tests {
         &["TALB=qux", "TIT2=bar", "TPE1=baz", "TPOS=1/2", "TRCK=03/12"],
         1,
       )),
-      Error::AudioTagInteger {
+      AudioError::TagInteger {
         source: NumberError::Invalid { .. },
         tag: "TRCK",
-        ..
       },
     );
 
@@ -457,9 +449,8 @@ mod tests {
         &["TALB=qux", "TIT2=bar", "TPE1=baz", "TPOS=1/2", "TRCK=3/4"],
         0,
       )),
-      Error::Mp3Decode {
+      AudioError::Mp3Decode {
         source: Mp3Error::Empty,
-        ..
       },
     );
 
@@ -471,9 +462,8 @@ mod tests {
 
     assert_matches!(
       err(&bytes),
-      Error::Mp3Decode {
+      AudioError::Mp3Decode {
         source: Mp3Error::Sync { offset: 0 },
-        ..
       },
     );
   }
