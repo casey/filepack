@@ -8,6 +8,13 @@ const MPEG2_BITRATES: [u64; 14] = [8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 1
 
 const SAMPLE_RATES: [u64; 3] = [44100, 48000, 32000];
 
+#[derive(Debug, PartialEq)]
+struct AudioProperties {
+  channels: u64,
+  sample_rate: u64,
+  samples: u64,
+}
+
 struct Frame {
   channels: u64,
   metadata: bool,
@@ -52,7 +59,7 @@ impl Version {
 }
 
 impl<'a> Mp3Decoder<'a> {
-  pub(crate) fn decode(data: &'a [u8]) -> Result<AudioProperties, Mp3Error> {
+  fn decode(data: &'a [u8]) -> Result<AudioProperties, Mp3Error> {
     let decoder = Self { data };
 
     let mut offset = 0;
@@ -99,7 +106,6 @@ impl<'a> Mp3Decoder<'a> {
 
     Ok(AudioProperties {
       channels,
-      sample_bits: None,
       sample_rate,
       samples,
     })
@@ -212,7 +218,6 @@ impl<'a> Mp3Decoder<'a> {
 
     let AudioProperties {
       channels,
-      sample_bits,
       sample_rate,
       samples,
     } = Mp3Decoder::decode(&data[start..]).context(error::Mp3Decode { path })?;
@@ -223,7 +228,7 @@ impl<'a> Mp3Decoder<'a> {
       channels,
       disc,
       discs,
-      sample_bits,
+      sample_bits: None,
       sample_rate,
       samples,
       title,
@@ -271,7 +276,6 @@ mod tests {
     fn properties(channels: u64, sample_rate: u64, samples: u64) -> AudioProperties {
       AudioProperties {
         channels,
-        sample_bits: None,
         sample_rate,
         samples,
       }

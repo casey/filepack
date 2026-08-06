@@ -20,39 +20,23 @@ impl<'a> FlacDecoder<'a> {
     })
   }
 
-  fn properties(&self) -> Result<AudioProperties> {
-    let streaminfo = self.reader.streaminfo();
-
-    let samples = streaminfo
-      .samples
-      .context(error::FlacSampleCountUnknown { path: self.path })?;
-
-    Ok(AudioProperties {
-      channels: streaminfo.channels.into(),
-      sample_bits: Some(streaminfo.bits_per_sample.into()),
-      sample_rate: streaminfo.sample_rate.into(),
-      samples,
-    })
-  }
-
   pub(crate) fn read(path: &'a Utf8Path) -> Result<AudioMetadata> {
     let decoder = Self::new(path)?;
 
-    let AudioProperties {
-      channels,
-      sample_bits,
-      sample_rate,
-      samples,
-    } = decoder.properties()?;
+    let streaminfo = decoder.reader.streaminfo();
+
+    let samples = streaminfo
+      .samples
+      .context(error::FlacSampleCountUnknown { path })?;
 
     Ok(AudioMetadata {
       album: decoder.text_tag("album")?,
       artist: decoder.text_tag("artist")?,
-      channels,
+      channels: streaminfo.channels.into(),
       disc: decoder.number_tag("discnumber")?,
       discs: decoder.number_tag("disctotal")?,
-      sample_bits,
-      sample_rate,
+      sample_bits: Some(streaminfo.bits_per_sample.into()),
+      sample_rate: streaminfo.sample_rate.into(),
       samples,
       title: decoder.text_tag("title")?,
       track: decoder.number_tag("tracknumber")?,
