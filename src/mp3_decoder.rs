@@ -13,6 +13,7 @@ struct AudioProperties {
   channels: u64,
   sample_rate: u64,
   samples: u64,
+  size: u64,
 }
 
 struct Frame {
@@ -65,12 +66,14 @@ impl<'a> Mp3Decoder<'a> {
     let mut offset = 0;
     let mut first = Option::<Frame>::None;
     let mut samples = 0;
+    let mut size = 0;
 
     while offset < decoder.data.len() {
       let frame = decoder.frame(offset)?;
 
       if !frame.metadata {
         samples += frame.samples;
+        size += frame.size.into_u64();
       }
 
       offset += frame.size;
@@ -108,6 +111,7 @@ impl<'a> Mp3Decoder<'a> {
       channels,
       sample_rate,
       samples,
+      size,
     })
   }
 
@@ -205,6 +209,7 @@ impl<'a> Mp3Decoder<'a> {
       channels,
       sample_rate,
       samples,
+      size,
     } = Mp3Decoder::decode(&data[start..]).context(audio_error::Mp3Decode)?;
 
     Ok(AudioMetadata {
@@ -216,6 +221,7 @@ impl<'a> Mp3Decoder<'a> {
       sample_bits: None,
       sample_rate,
       samples,
+      size,
       title,
       track,
       tracks,
@@ -276,11 +282,12 @@ mod tests {
       bytes
     }
 
-    fn properties(channels: u64, sample_rate: u64, samples: u64) -> AudioProperties {
+    fn properties(channels: u64, sample_rate: u64, samples: u64, size: u64) -> AudioProperties {
       AudioProperties {
         channels,
         sample_rate,
         samples,
+        size,
       }
     }
 
@@ -296,31 +303,34 @@ mod tests {
       bytes
     };
 
-    case(&[mp3_frame(), mp3_frame()], Ok(properties(2, 44100, 2304)));
+    case(
+      &[mp3_frame(), mp3_frame()],
+      Ok(properties(2, 44100, 2304, 834)),
+    );
 
     case(
       &[xing(), mp3_frame(), mp3_frame()],
-      Ok(properties(2, 44100, 2304)),
+      Ok(properties(2, 44100, 2304, 834)),
     );
 
     case(
       &[frame([0xFF, 0xFB, 0x92, 0x00], 418), mp3_frame()],
-      Ok(properties(2, 44100, 2304)),
+      Ok(properties(2, 44100, 2304, 835)),
     );
 
     case(
       &[frame([0xFF, 0xFB, 0x90, 0xC0], 417)],
-      Ok(properties(1, 44100, 1152)),
+      Ok(properties(1, 44100, 1152, 417)),
     );
 
     case(
       &[frame([0xFF, 0xF3, 0x90, 0x00], 261)],
-      Ok(properties(2, 22050, 576)),
+      Ok(properties(2, 22050, 576, 261)),
     );
 
     case(
       &[frame([0xFF, 0xE3, 0x90, 0x00], 522)],
-      Ok(properties(2, 11025, 576)),
+      Ok(properties(2, 11025, 576, 522)),
     );
 
     case(&[], Err(Mp3Error::Empty));
@@ -494,6 +504,7 @@ mod tests {
         sample_bits: None,
         sample_rate: 44100,
         samples: 2304,
+        size: 834,
         title: "bar".parse().unwrap(),
         track: 3,
         tracks: 4,

@@ -127,6 +127,8 @@ pub(crate) fn flac(comments: &[&str], samples: u32) -> Vec<u8> {
     bytes.extend(body);
   }
 
+  bytes.extend_from_slice(&[0; 1024]);
+
   bytes
 }
 

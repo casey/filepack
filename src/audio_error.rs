@@ -7,6 +7,8 @@ pub enum AudioError {
   FlacDecode { source: claxon::Error },
   #[snafu(display("unknown sample count"))]
   FlacSampleCountUnknown,
+  #[snafu(display("truncated FLAC metadata block"))]
+  FlacTruncated,
   #[snafu(display("failed to decode MP3"))]
   Mp3Decode { source: Mp3Error },
   #[snafu(display("failed to read ID3 tag"))]

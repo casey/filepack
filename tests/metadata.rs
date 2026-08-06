@@ -177,6 +177,7 @@ fn create_extracts_track_tags() {
                 "sample_bits": 16,
                 "sample_rate": 44100,
                 "samples": 44100,
+                "size": 1024,
                 "title": "bar",
                 "track": 1,
                 "tracks": 1,
@@ -502,6 +503,8 @@ fn flac(comments: &[&str], samples: u32) -> Vec<u8> {
     bytes.extend_from_slice(&u32::try_from(body.len()).unwrap().to_be_bytes()[1..]);
     bytes.extend(body);
   }
+
+  bytes.extend_from_slice(&[0; 1024]);
 
   bytes
 }

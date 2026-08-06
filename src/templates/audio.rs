@@ -45,6 +45,7 @@ mod tests {
           sample_bits: Some(16),
           sample_rate: 44100,
           samples: 9_922_500,
+          size: 0,
           title: "foo".parse().unwrap(),
           track: 1,
           tracks: 1,

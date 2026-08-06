@@ -22,12 +22,14 @@ pub(crate) struct Audio {
   #[n(8)]
   pub(crate) samples: u64,
   #[n(9)]
-  pub(crate) title: Text,
+  pub(crate) size: u64,
   #[n(10)]
-  pub(crate) track: u64,
+  pub(crate) title: Text,
   #[n(11)]
-  pub(crate) tracks: u64,
+  pub(crate) track: u64,
   #[n(12)]
+  pub(crate) tracks: u64,
+  #[n(13)]
   #[serde(rename = "type")]
   pub(crate) ty: AudioType,
 }
@@ -162,6 +164,7 @@ impl Audio {
       sample_bits,
       sample_rate,
       samples,
+      size,
       title,
       track,
       tracks,
@@ -175,6 +178,7 @@ impl Audio {
     self.sample_bits = sample_bits;
     self.sample_rate = sample_rate;
     self.samples = samples;
+    self.size = size;
     self.title = title;
     self.track = track;
     self.tracks = tracks;
@@ -234,6 +238,7 @@ impl FromStr for Audio {
       sample_bits: None,
       sample_rate: 0,
       samples: 0,
+      size: 0,
       title: Text::new(),
       track: 0,
       tracks: 0,
@@ -260,6 +265,13 @@ impl Item for Audio {
           .map(|sample_bits| format!("{sample_bits}-bit")),
       )
       .value("sample rate", DisplaySampleRate(self.sample_rate))
+      .optional(
+        "bit rate",
+        DisplayBitrate::new(
+          u64::try_from(self.duration().as_millis()).unwrap_or(u64::MAX),
+          self.size,
+        ),
+      )
       .value("channels", self.channels)
       .value(
         "compression mode",
@@ -470,6 +482,7 @@ mod tests {
         sample_bits: None,
         sample_rate: 0,
         samples: 0,
+        size: 0,
         title: Text::new(),
         track: 0,
         tracks: 0,
@@ -489,6 +502,7 @@ mod tests {
         sample_bits: None,
         sample_rate: 0,
         samples: 0,
+        size: 0,
         title: Text::new(),
         track: 0,
         tracks: 0,
@@ -523,6 +537,7 @@ mod tests {
     audio.sample_bits = Some(16);
     audio.sample_rate = 44100;
     audio.samples = 66150;
+    audio.size = 750;
     audio.title = "bar".parse().unwrap();
     audio.track = 3;
     audio.tracks = 4;
@@ -546,6 +561,7 @@ mod tests {
         ("type".into(), Info::Value("FLAC".into())),
         ("sample bits".into(), Info::Value("16-bit".into())),
         ("sample rate".into(), Info::Value("44.1 kHz".into())),
+        ("bit rate".into(), Info::Value("4 kbit/s".into())),
         ("channels".into(), Info::Value("2".into())),
         ("compression mode".into(), Info::Value("lossless".into())),
         ("samples".into(), Info::Value("66150".into())),
@@ -560,6 +576,7 @@ mod tests {
     audio.discs = 2;
     audio.sample_rate = 44100;
     audio.samples = 66150;
+    audio.size = 750;
     audio.title = "bar".parse().unwrap();
     audio.track = 3;
     audio.tracks = 4;
@@ -582,9 +599,37 @@ mod tests {
         ("duration".into(), Info::Value("0:01".into())),
         ("type".into(), Info::Value("MP3".into())),
         ("sample rate".into(), Info::Value("44.1 kHz".into())),
+        ("bit rate".into(), Info::Value("4 kbit/s".into())),
         ("channels".into(), Info::Value("2".into())),
         ("compression mode".into(), Info::Value("lossy".into())),
         ("samples".into(), Info::Value("66150".into())),
+      ]),
+    );
+
+    let mut audio = "foo.flac".parse::<Audio>().unwrap();
+    audio.size = 750;
+
+    assert_eq!(
+      Item::info(&audio, "bob".into()),
+      Info::Map(vec![
+        (
+          "filename".into(),
+          Info::Link {
+            text: "foo.flac".into(),
+            url: "bob".into(),
+          },
+        ),
+        ("title".into(), Info::Value(String::new())),
+        ("artist".into(), Info::Value(String::new())),
+        ("album".into(), Info::Value(String::new())),
+        ("disc".into(), Info::Value("0 of 0".into())),
+        ("track".into(), Info::Value("0 of 0".into())),
+        ("duration".into(), Info::Value("0:00".into())),
+        ("type".into(), Info::Value("FLAC".into())),
+        ("sample rate".into(), Info::Value("0 kHz".into())),
+        ("channels".into(), Info::Value("0".into())),
+        ("compression mode".into(), Info::Value("lossless".into())),
+        ("samples".into(), Info::Value("0".into())),
       ]),
     );
   }
@@ -634,6 +679,7 @@ mod tests {
         sample_bits: Some(16),
         sample_rate: 44100,
         samples: 66150,
+        size: 1024,
         title: "bar".parse().unwrap(),
         track: 3,
         tracks: 4,
@@ -656,6 +702,7 @@ mod tests {
         sample_bits: None,
         sample_rate: 44100,
         samples: 2304,
+        size: 834,
         title: "bar".parse().unwrap(),
         track: 3,
         tracks: 4,
@@ -668,12 +715,12 @@ mod tests {
   fn serialize() {
     assert_eq!(
       serde_json::to_string(&"foo.flac".parse::<Audio>().unwrap()).unwrap(),
-      r#"{"album":"","artist":"","channels":0,"disc":0,"discs":0,"filename":"foo.flac","sample_rate":0,"samples":0,"title":"","track":0,"tracks":0,"type":"flac"}"#,
+      r#"{"album":"","artist":"","channels":0,"disc":0,"discs":0,"filename":"foo.flac","sample_rate":0,"samples":0,"size":0,"title":"","track":0,"tracks":0,"type":"flac"}"#,
     );
 
     assert_eq!(
       serde_json::to_string(&"foo.mp3".parse::<Audio>().unwrap()).unwrap(),
-      r#"{"album":"","artist":"","channels":0,"disc":0,"discs":0,"filename":"foo.mp3","sample_rate":0,"samples":0,"title":"","track":0,"tracks":0,"type":"mp3"}"#,
+      r#"{"album":"","artist":"","channels":0,"disc":0,"discs":0,"filename":"foo.mp3","sample_rate":0,"samples":0,"size":0,"title":"","track":0,"tracks":0,"type":"mp3"}"#,
     );
 
     assert_eq!(
@@ -687,13 +734,14 @@ mod tests {
         sample_bits: Some(7),
         sample_rate: 1,
         samples: 2,
+        size: 9,
         title: "bar".parse().unwrap(),
         track: 5,
         tracks: 6,
         ty: AudioType::Flac,
       })
       .unwrap(),
-      r#"{"album":"qux","artist":"baz","channels":8,"disc":3,"discs":4,"filename":"foo.flac","sample_bits":7,"sample_rate":1,"samples":2,"title":"bar","track":5,"tracks":6,"type":"flac"}"#,
+      r#"{"album":"qux","artist":"baz","channels":8,"disc":3,"discs":4,"filename":"foo.flac","sample_bits":7,"sample_rate":1,"samples":2,"size":9,"title":"bar","track":5,"tracks":6,"type":"flac"}"#,
     );
   }
 }
