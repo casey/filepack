@@ -372,59 +372,32 @@ impl FromStr for Audio {
 
 impl Item for Audio {
   fn info(&self, url: String) -> Info {
-    let mut map = vec![
-      (
-        "filename".into(),
-        Info::Link {
-          text: self.filename.to_string(),
-          url,
+    InfoBuilder::new()
+      .link("filename", &self.filename, url)
+      .value("title", &self.title)
+      .value("artist", &self.artist)
+      .value("album", &self.album)
+      .value("disc", format!("{} of {}", self.disc, self.discs))
+      .value("track", format!("{} of {}", self.track, self.tracks))
+      .value("duration", DisplayDuration(self.duration()))
+      .value("type", self.ty)
+      .optional(
+        "sample bits",
+        self
+          .sample_bits
+          .map(|sample_bits| format!("{sample_bits}-bit")),
+      )
+      .value("sample rate", DisplaySampleRate(self.sample_rate))
+      .value("channels", self.channels)
+      .value(
+        "compression mode",
+        match self.ty {
+          AudioType::Flac => "lossless",
+          AudioType::Mp3 => "lossy",
         },
-      ),
-      ("title".into(), Info::Value(self.title.to_string())),
-      ("artist".into(), Info::Value(self.artist.to_string())),
-      ("album".into(), Info::Value(self.album.to_string())),
-      (
-        "disc".into(),
-        Info::Value(format!("{} of {}", self.disc, self.discs)),
-      ),
-      (
-        "track".into(),
-        Info::Value(format!("{} of {}", self.track, self.tracks)),
-      ),
-      (
-        "duration".into(),
-        Info::Value(DisplayDuration(self.duration()).to_string()),
-      ),
-      ("type".into(), Info::Value(self.ty.to_string())),
-    ];
-
-    if let Some(sample_bits) = self.sample_bits {
-      map.push((
-        "sample bits".into(),
-        Info::Value(format!("{sample_bits}-bit")),
-      ));
-    }
-
-    map.extend([
-      (
-        "sample rate".into(),
-        Info::Value(DisplaySampleRate(self.sample_rate).to_string()),
-      ),
-      ("channels".into(), Info::Value(self.channels.to_string())),
-      (
-        "compression mode".into(),
-        Info::Value(
-          match self.ty {
-            AudioType::Flac => "lossless",
-            AudioType::Mp3 => "lossy",
-          }
-          .into(),
-        ),
-      ),
-      ("samples".into(), Info::Value(self.samples.to_string())),
-    ]);
-
-    Info::Map(map)
+      )
+      .value("samples", self.samples)
+      .build()
   }
 
   fn path(&self) -> RelativePath {

@@ -12,44 +12,31 @@ pub(crate) struct Track {
 
 impl Track {
   pub(crate) fn info(&self, video: &Video) -> Info {
-    let mut entries = vec![
-      (
-        "type".into(),
-        Info::Value(
-          match self.info {
-            TrackInfo::Audio { .. } => "audio",
-            TrackInfo::Video { .. } => "video",
-          }
-          .into(),
-        ),
-      ),
-      ("codec".into(), Info::Value(self.codec.to_string())),
-    ];
+    let builder = InfoBuilder::new()
+      .value(
+        "type",
+        match self.info {
+          TrackInfo::Audio { .. } => "audio",
+          TrackInfo::Video { .. } => "video",
+        },
+      )
+      .value("codec", self.codec);
 
-    match self.info {
+    let builder = match self.info {
       TrackInfo::Audio {
         channels,
         sample_rate,
-      } => {
-        entries.push(("channels".into(), Info::Value(channels.to_string())));
-        entries.push((
-          "sample rate".into(),
-          Info::Value(DisplaySampleRate(sample_rate).to_string()),
-        ));
-
-        if video.duration > 0 {
-          entries.push((
-            "bit rate".into(),
-            Info::Value(
-              DisplayBitrate {
-                duration: video.duration,
-                size: self.size,
-              }
-              .to_string(),
-            ),
-          ));
-        }
-      }
+      } => builder
+        .value("channels", channels)
+        .value("sample rate", DisplaySampleRate(sample_rate))
+        .when(
+          video.duration > 0,
+          "bit rate",
+          DisplayBitrate {
+            duration: video.duration,
+            size: self.size,
+          },
+        ),
       TrackInfo::Video {
         bit_depth,
         chroma_subsampling,
@@ -57,69 +44,46 @@ impl Track {
         frames,
         orientation,
       } => {
-        entries.push(("dimensions".into(), Info::Value(dimensions.to_string())));
-        entries.push(("orientation".into(), Info::Value(orientation.to_string())));
-        entries.push(("frames".into(), Info::Value(frames.to_string())));
-
-        if video.duration > 0 {
-          entries.push((
-            "frame rate".into(),
-            Info::Value(
-              DisplayFrameRate {
-                duration: video.duration,
-                frames,
-              }
-              .to_string(),
-            ),
-          ));
-
-          entries.push((
-            "bit rate".into(),
-            Info::Value(
-              DisplayBitrate {
-                duration: video.duration,
-                size: self.size,
-              }
-              .to_string(),
-            ),
-          ));
-        }
-
         let pixels =
           u128::from(dimensions.width) * u128::from(dimensions.height) * u128::from(frames);
 
-        if pixels > 0 {
-          entries.push((
-            "bits per pixel".into(),
-            Info::Value(
-              DisplayBitsPerPixel {
-                pixels,
-                size: self.size,
-              }
-              .to_string(),
-            ),
-          ));
-        }
-
-        if let Some(bit_depth) = bit_depth {
-          entries.push(("bit depth".into(), Info::Value(format!("{bit_depth}-bit"))));
-        }
-
-        if let Some(chroma_subsampling) = chroma_subsampling {
-          entries.push((
-            "chroma subsampling".into(),
-            Info::Value(chroma_subsampling.to_string()),
-          ));
-        }
+        builder
+          .value("dimensions", dimensions)
+          .value("orientation", orientation)
+          .value("frames", frames)
+          .when(
+            video.duration > 0,
+            "frame rate",
+            DisplayFrameRate {
+              duration: video.duration,
+              frames,
+            },
+          )
+          .when(
+            video.duration > 0,
+            "bit rate",
+            DisplayBitrate {
+              duration: video.duration,
+              size: self.size,
+            },
+          )
+          .when(
+            pixels > 0,
+            "bits per pixel",
+            DisplayBitsPerPixel {
+              pixels,
+              size: self.size,
+            },
+          )
+          .optional(
+            "bit depth",
+            bit_depth.map(|bit_depth| format!("{bit_depth}-bit")),
+          )
+          .optional("chroma subsampling", chroma_subsampling)
       }
-    }
+    };
 
-    entries.push((
-      "size".into(),
-      Info::Value(format_size(self.size).to_string()),
-    ));
-
-    Info::Map(entries)
+    builder.value("size", format_size(self.size)).build()
   }
 }
 
