@@ -1,7 +1,6 @@
 use super::*;
 
 pub(crate) async fn api_missing(
-  _: Authenticated,
   server: ServerExtension,
   Cbor(request): Cbor<api::missing::Request, { MIB }>,
 ) -> ServerResult<Vec<u8>> {
