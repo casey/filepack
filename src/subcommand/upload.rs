@@ -194,8 +194,9 @@ impl Upload {
 
     let url = self.server.join("api/missing").unwrap();
 
-    let missing = self
-      .request_with_token(client.post(url).body(body), key.as_ref())?
+    let missing = client
+      .post(url)
+      .body(body)
       .send()
       .check_status()?
       .cbor::<api::missing::Response>()?
