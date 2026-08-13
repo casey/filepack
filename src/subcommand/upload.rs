@@ -81,7 +81,7 @@ impl Upload {
     body: Body,
     key: Option<&PrivateKey>,
   ) -> Result {
-    let url = self.server.join(&format!("file/{hash}")).unwrap();
+    let url = self.server.join(&format!("api/file/{hash}")).unwrap();
     let request = client.put(url).body(body);
     self
       .request_with_token(request, key)?
@@ -127,7 +127,7 @@ impl Upload {
       }
     }
 
-    let url = self.server.join(&format!("directory/{hash}")).unwrap();
+    let url = self.server.join(&format!("api/directory/{hash}")).unwrap();
     let request = context.client.post(url);
     self
       .request_with_token(request, context.key.as_ref())?
@@ -244,7 +244,10 @@ impl Upload {
 
     self.upload_directory(&mut context, &root, fingerprint.into())?;
 
-    let url = self.server.join(&format!("package/{fingerprint}")).unwrap();
+    let url = self
+      .server
+      .join(&format!("api/package/{fingerprint}"))
+      .unwrap();
     let request = context.client.post(url);
     self
       .request_with_token(request, context.key.as_ref())?

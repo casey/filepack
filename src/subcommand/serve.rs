@@ -6,7 +6,7 @@ use {
     http::{HeaderValue, Uri},
     middleware::{self, Next},
     response::{IntoResponse, Redirect, Response},
-    routing::{get, post},
+    routing::{get, post, put},
   },
   axum_server::Handle,
   rustls_acme::{
@@ -299,15 +299,18 @@ impl Serve {
   ) -> Router {
     let router = Router::new()
       .route("/", get(route::home))
+      .route("/api/directory/{hash}", post(route::api_verify_directory))
+      .route("/api/file/{hash}", put(route::api_upload_file))
       .route("/api/missing", post(route::api_missing))
+      .route(
+        "/api/package/{fingerprint}",
+        post(route::api_verify_package),
+      )
       .route("/api/packages", get(route::api_packages))
       .route("/artwork/{fingerprint}", get(route::artwork))
-      .route(
-        "/directory/{hash}",
-        get(route::directory).post(route::verify_directory),
-      )
+      .route("/directory/{hash}", get(route::directory))
       .route("/favicon.ico", get(route::favicon))
-      .route("/file/{hash}", get(route::file).put(route::upload_file))
+      .route("/file/{hash}", get(route::file))
       .route("/file/{hash}/{name}", get(route::file_with_name))
       .route("/files", get(route::files))
       .route("/install.sh", get(route::install_script))
@@ -326,10 +329,7 @@ impl Serve {
       .route("/mount/{fingerprint}", get(route::mount_redirect))
       .route("/mount/{fingerprint}/", get(route::mount))
       .route("/mount/{fingerprint}/{*path}", get(route::mount_file))
-      .route(
-        "/package/{fingerprint}",
-        get(route::package).post(route::verify_package),
-      )
+      .route("/package/{fingerprint}", get(route::package))
       .route(
         "/package/{fingerprint}/item/{item}",
         get(route::package_item),
