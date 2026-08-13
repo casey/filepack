@@ -60,61 +60,6 @@ impl Version {
 }
 
 impl<'a> Mp3Decoder<'a> {
-  fn decode(data: &'a [u8]) -> Result<AudioProperties, Mp3Error> {
-    let decoder = Self { data };
-
-    let mut offset = 0;
-    let mut first = Option::<Frame>::None;
-    let mut samples = 0;
-    let mut size = 0;
-
-    while offset < decoder.data.len() {
-      let frame = decoder.frame(offset)?;
-
-      if !frame.metadata {
-        samples += frame.samples;
-        size += frame.size.into_u64();
-      }
-
-      offset += frame.size;
-
-      if let Some(first) = &first {
-        ensure! {
-          frame.channels == first.channels,
-          mp3_error::ChannelsMismatch {
-            actual: frame.channels,
-            expected: first.channels,
-          },
-        }
-
-        ensure! {
-          frame.sample_rate == first.sample_rate,
-          mp3_error::SampleRateMismatch {
-            actual: frame.sample_rate,
-            expected: first.sample_rate,
-          },
-        }
-      } else {
-        first = Some(frame);
-      }
-    }
-
-    let Frame {
-      channels,
-      sample_rate,
-      ..
-    } = first.context(mp3_error::Empty)?;
-
-    ensure!(samples > 0, mp3_error::Empty);
-
-    Ok(AudioProperties {
-      channels,
-      sample_rate,
-      samples,
-      size,
-    })
-  }
-
   fn frame(&self, offset: usize) -> Result<Frame, Mp3Error> {
     let header = self
       .data
@@ -210,7 +155,7 @@ impl<'a> Mp3Decoder<'a> {
       sample_rate,
       samples,
       size,
-    } = Mp3Decoder::decode(&data[start..]).context(audio_error::Mp3Decode)?;
+    } = Mp3Decoder::properties(&data[start..]).context(audio_error::Mp3Decode)?;
 
     Ok(AudioMetadata {
       album,
@@ -239,6 +184,61 @@ impl<'a> Mp3Decoder<'a> {
       parse_number(number).context(audio_error::TagInteger { tag: id })?,
       parse_number(total).context(audio_error::TagInteger { tag: id })?,
     ))
+  }
+
+  fn properties(data: &'a [u8]) -> Result<AudioProperties, Mp3Error> {
+    let decoder = Self { data };
+
+    let mut offset = 0;
+    let mut first = Option::<Frame>::None;
+    let mut samples = 0;
+    let mut size = 0;
+
+    while offset < decoder.data.len() {
+      let frame = decoder.frame(offset)?;
+
+      if !frame.metadata {
+        samples += frame.samples;
+        size += frame.size.into_u64();
+      }
+
+      offset += frame.size;
+
+      if let Some(first) = &first {
+        ensure! {
+          frame.channels == first.channels,
+          mp3_error::ChannelsMismatch {
+            actual: frame.channels,
+            expected: first.channels,
+          },
+        }
+
+        ensure! {
+          frame.sample_rate == first.sample_rate,
+          mp3_error::SampleRateMismatch {
+            actual: frame.sample_rate,
+            expected: first.sample_rate,
+          },
+        }
+      } else {
+        first = Some(frame);
+      }
+    }
+
+    let Frame {
+      channels,
+      sample_rate,
+      ..
+    } = first.context(mp3_error::Empty)?;
+
+    ensure!(samples > 0, mp3_error::Empty);
+
+    Ok(AudioProperties {
+      channels,
+      sample_rate,
+      samples,
+      size,
+    })
   }
 
   pub(crate) fn read(path: &Utf8Path) -> Result<AudioMetadata> {

@@ -3,7 +3,70 @@ use super::*;
 pub(crate) struct Mp4Decoder;
 
 impl Mp4Decoder {
-  fn decode<T: Read + Seek>(reader: T, size: u64) -> Result<VideoMetadata, VideoError> {
+  fn h264_color_info(sps: &[u8]) -> Option<ColorInfo> {
+    let mut rbsp = Vec::new();
+
+    // skip NAL unit header
+    for &byte in sps.get(1..)? {
+      // remove emulation prevention bytes
+      if byte == 3 && rbsp.ends_with(&[0, 0]) {
+        continue;
+      }
+
+      rbsp.push(byte);
+    }
+
+    let mut reader = BitReader::new(&rbsp);
+
+    // profile_idc
+    let profile_idc = reader.bits(8)?;
+
+    // constraint flags
+    reader.bits(8)?;
+
+    // level_idc
+    reader.bits(8)?;
+
+    // seq_parameter_set_id
+    reader.ue()?;
+
+    if !Self::h264_high_profile(profile_idc) {
+      return Some(ColorInfo {
+        bit_depth: 8,
+        chroma_subsampling: ChromaSubsampling::Yuv420,
+      });
+    }
+
+    // chroma_format_idc
+    let chroma_subsampling = match reader.ue()? {
+      0 => ChromaSubsampling::Yuv400,
+      1 => ChromaSubsampling::Yuv420,
+      2 => ChromaSubsampling::Yuv422,
+      3 => {
+        // separate_colour_plane_flag
+        reader.bit()?;
+        ChromaSubsampling::Yuv444
+      }
+      _ => return None,
+    };
+
+    // bit_depth_luma_minus8
+    let bit_depth = 8 + reader.ue()?;
+
+    Some(ColorInfo {
+      bit_depth,
+      chroma_subsampling,
+    })
+  }
+
+  fn h264_high_profile(profile_idc: u64) -> bool {
+    matches!(
+      profile_idc,
+      44 | 83 | 86 | 100 | 110 | 118 | 122 | 128 | 134 | 135 | 138 | 139 | 244
+    )
+  }
+
+  fn metadata<T: Read + Seek>(reader: T, size: u64) -> Result<VideoMetadata, VideoError> {
     use re_mp4::{Mp4, Mp4aBox, StsdBoxContent, TkhdBox};
 
     fn mp4a_codec(mp4a: &Mp4aBox) -> Option<Codec> {
@@ -185,75 +248,12 @@ impl Mp4Decoder {
     Ok(VideoMetadata { duration, tracks })
   }
 
-  fn h264_color_info(sps: &[u8]) -> Option<ColorInfo> {
-    let mut rbsp = Vec::new();
-
-    // skip NAL unit header
-    for &byte in sps.get(1..)? {
-      // remove emulation prevention bytes
-      if byte == 3 && rbsp.ends_with(&[0, 0]) {
-        continue;
-      }
-
-      rbsp.push(byte);
-    }
-
-    let mut reader = BitReader::new(&rbsp);
-
-    // profile_idc
-    let profile_idc = reader.bits(8)?;
-
-    // constraint flags
-    reader.bits(8)?;
-
-    // level_idc
-    reader.bits(8)?;
-
-    // seq_parameter_set_id
-    reader.ue()?;
-
-    if !Self::h264_high_profile(profile_idc) {
-      return Some(ColorInfo {
-        bit_depth: 8,
-        chroma_subsampling: ChromaSubsampling::Yuv420,
-      });
-    }
-
-    // chroma_format_idc
-    let chroma_subsampling = match reader.ue()? {
-      0 => ChromaSubsampling::Yuv400,
-      1 => ChromaSubsampling::Yuv420,
-      2 => ChromaSubsampling::Yuv422,
-      3 => {
-        // separate_colour_plane_flag
-        reader.bit()?;
-        ChromaSubsampling::Yuv444
-      }
-      _ => return None,
-    };
-
-    // bit_depth_luma_minus8
-    let bit_depth = 8 + reader.ue()?;
-
-    Some(ColorInfo {
-      bit_depth,
-      chroma_subsampling,
-    })
-  }
-
-  fn h264_high_profile(profile_idc: u64) -> bool {
-    matches!(
-      profile_idc,
-      44 | 83 | 86 | 100 | 110 | 118 | 122 | 128 | 134 | 135 | 138 | 139 | 244
-    )
-  }
-
   pub(crate) fn read(path: &Utf8Path) -> Result<VideoMetadata> {
     let file = filesystem::open(path)?;
 
     let size = file.metadata().context(error::FilesystemIo { path })?.len();
 
-    Self::decode(file, size).context(error::Video { path })
+    Self::metadata(file, size).context(error::Video { path })
   }
 }
 
@@ -262,12 +262,55 @@ mod tests {
   use super::*;
 
   #[test]
-  fn decode() {
+  fn h264_color_info() {
+    #[track_caller]
+    fn case(sps: &[u8], expected: Option<ColorInfo>) {
+      assert_eq!(Mp4Decoder::h264_color_info(sps), expected);
+    }
+
+    fn config(bit_depth: u64, chroma_subsampling: ChromaSubsampling) -> ColorInfo {
+      ColorInfo {
+        bit_depth,
+        chroma_subsampling,
+      }
+    }
+
+    case(
+      &[0x67, 66, 0, 30, 0x80],
+      Some(config(8, ChromaSubsampling::Yuv420)),
+    );
+    case(
+      &[0x67, 100, 0, 31, 0xA6],
+      Some(config(10, ChromaSubsampling::Yuv420)),
+    );
+    case(
+      &[0x67, 100, 0, 31, 0xB8],
+      Some(config(8, ChromaSubsampling::Yuv422)),
+    );
+    case(
+      &[0x67, 100, 0, 31, 0x91],
+      Some(config(8, ChromaSubsampling::Yuv444)),
+    );
+    case(
+      &[0x67, 100, 0, 31, 0xE0],
+      Some(config(8, ChromaSubsampling::Yuv400)),
+    );
+    case(
+      &[0x67, 100, 0, 0, 0x03, 0xA6],
+      Some(config(10, ChromaSubsampling::Yuv420)),
+    );
+    case(&[0x67, 100, 0, 31], None);
+    case(&[0x67], None);
+    case(&[], None);
+  }
+
+  #[test]
+  fn metadata() {
     #[track_caller]
     fn case(builder: Mp4Builder) -> Result<VideoMetadata, VideoError> {
       let bytes = builder.build();
       let size = bytes.len().try_into().unwrap();
-      Mp4Decoder::decode(io::Cursor::new(bytes), size)
+      Mp4Decoder::metadata(io::Cursor::new(bytes), size)
     }
 
     #[track_caller]
@@ -528,53 +571,10 @@ mod tests {
     );
 
     assert_eq!(
-      Mp4Decoder::decode(io::Cursor::new(b"foo"), 3)
+      Mp4Decoder::metadata(io::Cursor::new(b"foo"), 3)
         .unwrap_err()
         .to_string(),
       "failed to decode MP4",
     );
-  }
-
-  #[test]
-  fn h264_color_info() {
-    #[track_caller]
-    fn case(sps: &[u8], expected: Option<ColorInfo>) {
-      assert_eq!(Mp4Decoder::h264_color_info(sps), expected);
-    }
-
-    fn config(bit_depth: u64, chroma_subsampling: ChromaSubsampling) -> ColorInfo {
-      ColorInfo {
-        bit_depth,
-        chroma_subsampling,
-      }
-    }
-
-    case(
-      &[0x67, 66, 0, 30, 0x80],
-      Some(config(8, ChromaSubsampling::Yuv420)),
-    );
-    case(
-      &[0x67, 100, 0, 31, 0xA6],
-      Some(config(10, ChromaSubsampling::Yuv420)),
-    );
-    case(
-      &[0x67, 100, 0, 31, 0xB8],
-      Some(config(8, ChromaSubsampling::Yuv422)),
-    );
-    case(
-      &[0x67, 100, 0, 31, 0x91],
-      Some(config(8, ChromaSubsampling::Yuv444)),
-    );
-    case(
-      &[0x67, 100, 0, 31, 0xE0],
-      Some(config(8, ChromaSubsampling::Yuv400)),
-    );
-    case(
-      &[0x67, 100, 0, 0, 0x03, 0xA6],
-      Some(config(10, ChromaSubsampling::Yuv420)),
-    );
-    case(&[0x67, 100, 0, 31], None);
-    case(&[0x67], None);
-    case(&[], None);
   }
 }

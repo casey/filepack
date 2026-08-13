@@ -3,7 +3,7 @@ use super::*;
 pub(crate) struct WebmDecoder;
 
 impl WebmDecoder {
-  fn decode<T: Read + Seek>(reader: T) -> Result<VideoMetadata, VideoError> {
+  fn metadata<T: Read + Seek>(reader: T) -> Result<VideoMetadata, VideoError> {
     use matroska_demuxer::{Frame, MatroskaFile, TrackType};
 
     let mut file = MatroskaFile::open(BufReader::new(reader)).context(video_error::DecodeWebm)?;
@@ -184,7 +184,7 @@ impl WebmDecoder {
   pub(crate) fn read(path: &Utf8Path) -> Result<VideoMetadata> {
     let file = filesystem::open(path)?;
 
-    Self::decode(file).context(error::Video { path })
+    Self::metadata(file).context(error::Video { path })
   }
 
   fn vp9_color_info(data: &[u8]) -> Option<ColorInfo> {
@@ -284,10 +284,10 @@ mod tests {
   const VP9_FRAME: &[u8] = &[0x82, 0x49, 0x83, 0x42, 0x00];
 
   #[test]
-  fn decode() {
+  fn metadata() {
     #[track_caller]
     fn case(builder: WebmBuilder) -> Result<VideoMetadata, VideoError> {
-      WebmDecoder::decode(io::Cursor::new(builder.build()))
+      WebmDecoder::metadata(io::Cursor::new(builder.build()))
     }
 
     #[track_caller]
@@ -586,7 +586,7 @@ mod tests {
     );
 
     assert_eq!(
-      WebmDecoder::decode(io::Cursor::new(b"foo"))
+      WebmDecoder::metadata(io::Cursor::new(b"foo"))
         .unwrap_err()
         .to_string(),
       "failed to decode WebM",

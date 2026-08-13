@@ -5,7 +5,28 @@ pub(crate) struct FlacDecoder<'a> {
 }
 
 impl<'a> FlacDecoder<'a> {
-  fn decode(data: &'a [u8]) -> Result<AudioMetadata, AudioError> {
+  fn frame_offset(data: &[u8]) -> Result<usize, AudioError> {
+    let mut offset = 4;
+
+    loop {
+      let header = data
+        .get(offset..offset + 4)
+        .context(audio_error::FlacTruncated)?;
+
+      let length =
+        usize::from(header[1]) << 16 | usize::from(header[2]) << 8 | usize::from(header[3]);
+
+      offset += 4 + length;
+
+      ensure!(offset <= data.len(), audio_error::FlacTruncated);
+
+      if header[0] & 0x80 != 0 {
+        return Ok(offset);
+      }
+    }
+  }
+
+  fn metadata(data: &'a [u8]) -> Result<AudioMetadata, AudioError> {
     let decoder = Self {
       reader: FlacReader::new(data).context(audio_error::FlacDecode)?,
     };
@@ -32,27 +53,6 @@ impl<'a> FlacDecoder<'a> {
     })
   }
 
-  fn frame_offset(data: &[u8]) -> Result<usize, AudioError> {
-    let mut offset = 4;
-
-    loop {
-      let header = data
-        .get(offset..offset + 4)
-        .context(audio_error::FlacTruncated)?;
-
-      let length =
-        usize::from(header[1]) << 16 | usize::from(header[2]) << 8 | usize::from(header[3]);
-
-      offset += 4 + length;
-
-      ensure!(offset <= data.len(), audio_error::FlacTruncated);
-
-      if header[0] & 0x80 != 0 {
-        return Ok(offset);
-      }
-    }
-  }
-
   fn number_tag(&self, tag: &'static str) -> Result<u64, AudioError> {
     let value = self.tag(tag)?;
     parse_number(value).context(audio_error::TagInteger { tag })
@@ -61,7 +61,7 @@ impl<'a> FlacDecoder<'a> {
   pub(crate) fn read(path: &Utf8Path) -> Result<AudioMetadata> {
     let data = filesystem::read(path)?;
 
-    FlacDecoder::decode(&data).context(error::Audio { path })
+    FlacDecoder::metadata(&data).context(error::Audio { path })
   }
 
   fn tag(&self, tag: &'static str) -> Result<&str, AudioError> {
@@ -81,13 +81,38 @@ mod tests {
   use super::*;
 
   #[test]
-  fn decode_err() {
+  fn frame_offset() {
+    let bytes = FlacBuilder::new().build();
+    assert_eq!(
+      FlacDecoder::frame_offset(&bytes).unwrap(),
+      bytes.len() - 1024,
+    );
+
+    let bytes = FlacBuilder::new().tag("foo", "bar").build();
+    assert_eq!(
+      FlacDecoder::frame_offset(&bytes).unwrap(),
+      bytes.len() - 1024,
+    );
+
+    assert_matches!(
+      FlacDecoder::frame_offset(&FlacBuilder::new().truncate(4).build()),
+      Err(AudioError::FlacTruncated),
+    );
+
+    assert_matches!(
+      FlacDecoder::frame_offset(&FlacBuilder::new().truncate(8).build()),
+      Err(AudioError::FlacTruncated),
+    );
+  }
+
+  #[test]
+  fn metadata_err() {
     fn err(builder: FlacBuilder) -> AudioError {
-      FlacDecoder::decode(&builder.build()).unwrap_err()
+      FlacDecoder::metadata(&builder.build()).unwrap_err()
     }
 
     assert_matches!(
-      FlacDecoder::decode(b"foo").unwrap_err(),
+      FlacDecoder::metadata(b"foo").unwrap_err(),
       AudioError::FlacDecode { .. },
     );
 
@@ -255,31 +280,6 @@ mod tests {
           .samples(0)
       ),
       AudioError::FlacSampleCountUnknown,
-    );
-  }
-
-  #[test]
-  fn frame_offset() {
-    let bytes = FlacBuilder::new().build();
-    assert_eq!(
-      FlacDecoder::frame_offset(&bytes).unwrap(),
-      bytes.len() - 1024,
-    );
-
-    let bytes = FlacBuilder::new().tag("foo", "bar").build();
-    assert_eq!(
-      FlacDecoder::frame_offset(&bytes).unwrap(),
-      bytes.len() - 1024,
-    );
-
-    assert_matches!(
-      FlacDecoder::frame_offset(&FlacBuilder::new().truncate(4).build()),
-      Err(AudioError::FlacTruncated),
-    );
-
-    assert_matches!(
-      FlacDecoder::frame_offset(&FlacBuilder::new().truncate(8).build()),
-      Err(AudioError::FlacTruncated),
     );
   }
 
