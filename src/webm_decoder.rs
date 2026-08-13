@@ -124,20 +124,20 @@ impl WebmDecoder {
 
           let color_info = match (codec, first) {
             (Codec::Vp9, Some(first)) => {
-              Some(Self::vp9_color_info(&first).context(video_error::Vp9FrameHeaderInvalid)?)
+              Self::vp9_color_info(&first).context(video_error::Vp9FrameHeaderInvalid)?
             }
-            (Codec::Vp9, None) => None,
-            _ => Some(ColorInfo {
+            (Codec::Vp9, None) => return Err(video_error::Vp9TrackEmpty.build()),
+            _ => ColorInfo {
               bit_depth: 8,
               chroma_subsampling: ChromaSubsampling::Yuv420,
-            }),
+            },
           };
 
           video_track = Some(Track {
             codec,
             info: TrackInfo::Video {
-              bit_depth: color_info.map(|color_info| color_info.bit_depth),
-              chroma_subsampling: color_info.map(|color_info| color_info.chroma_subsampling),
+              bit_depth: color_info.bit_depth,
+              chroma_subsampling: color_info.chroma_subsampling,
               dimensions: Dimensions {
                 height: video.pixel_height().get(),
                 width: video.pixel_width().get(),
@@ -281,6 +281,8 @@ impl WebmDecoder {
 mod tests {
   use super::*;
 
+  const VP9_FRAME: &[u8] = &[0x82, 0x49, 0x83, 0x42, 0x00];
+
   #[test]
   fn decode() {
     #[track_caller]
@@ -294,23 +296,29 @@ mod tests {
     }
 
     assert_eq!(
-      case(WebmBuilder::new().video_track(2, 1).audio_track("A_OPUS")).unwrap(),
+      case(
+        WebmBuilder::new()
+          .video_track(2, 1)
+          .audio_track("A_OPUS")
+          .frame(1, VP9_FRAME),
+      )
+      .unwrap(),
       VideoMetadata {
         duration: 0,
         tracks: vec![
           Track {
             codec: Codec::Vp9,
             info: TrackInfo::Video {
-              bit_depth: None,
-              chroma_subsampling: None,
+              bit_depth: 8,
+              chroma_subsampling: ChromaSubsampling::Yuv420,
               dimensions: Dimensions {
                 height: 1,
                 width: 2,
               },
-              frames: 0,
+              frames: 1,
               orientation: Orientation::new(),
             },
-            size: 0,
+            size: 5,
           },
           Track {
             codec: Codec::Opus,
@@ -337,8 +345,8 @@ mod tests {
           Track {
             codec: Codec::Vp8,
             info: TrackInfo::Video {
-              bit_depth: Some(8),
-              chroma_subsampling: Some(ChromaSubsampling::Yuv420),
+              bit_depth: 8,
+              chroma_subsampling: ChromaSubsampling::Yuv420,
               dimensions: Dimensions {
                 height: 1,
                 width: 2,
@@ -361,30 +369,35 @@ mod tests {
     );
 
     assert_eq!(
-      case(WebmBuilder::new().video_track(2, 1)).unwrap(),
+      case(WebmBuilder::new().video_track(2, 1).frame(1, VP9_FRAME)).unwrap(),
       VideoMetadata {
         duration: 0,
         tracks: vec![Track {
           codec: Codec::Vp9,
           info: TrackInfo::Video {
-            bit_depth: None,
-            chroma_subsampling: None,
+            bit_depth: 8,
+            chroma_subsampling: ChromaSubsampling::Yuv420,
             dimensions: Dimensions {
               height: 1,
               width: 2,
             },
-            frames: 0,
+            frames: 1,
             orientation: Orientation::new(),
           },
-          size: 0,
+          size: 5,
         }],
       },
     );
 
     assert_eq!(
-      case(WebmBuilder::new().duration(1500.0).video_track(2, 1))
-        .unwrap()
-        .duration,
+      case(
+        WebmBuilder::new()
+          .duration(1500.0)
+          .video_track(2, 1)
+          .frame(1, VP9_FRAME),
+      )
+      .unwrap()
+      .duration,
       1500,
     );
 
@@ -393,7 +406,8 @@ mod tests {
         WebmBuilder::new()
           .timestamp_scale(2_000_000)
           .duration(3.0)
-          .video_track(2, 1),
+          .video_track(2, 1)
+          .frame(1, VP9_FRAME),
       )
       .unwrap()
       .duration,
@@ -404,15 +418,15 @@ mod tests {
       case(
         WebmBuilder::new()
           .video_track(2, 1)
-          .frame(1, &[0x82, 0x49, 0x83, 0x42, 0x00])
+          .frame(1, VP9_FRAME)
           .frame(1, b"")
       )
       .unwrap()
       .tracks[0]
         .info,
       TrackInfo::Video {
-        bit_depth: Some(8),
-        chroma_subsampling: Some(ChromaSubsampling::Yuv420),
+        bit_depth: 8,
+        chroma_subsampling: ChromaSubsampling::Yuv420,
         dimensions: Dimensions {
           height: 1,
           width: 2,
@@ -427,7 +441,7 @@ mod tests {
         WebmBuilder::new()
           .video_track(2, 1)
           .audio_track("A_OPUS")
-          .frame(1, &[0x82, 0x49, 0x83, 0x42, 0x00])
+          .frame(1, VP9_FRAME)
           .frame(2, b"ab"),
       )
       .unwrap()
@@ -436,8 +450,8 @@ mod tests {
         Track {
           codec: Codec::Vp9,
           info: TrackInfo::Video {
-            bit_depth: Some(8),
-            chroma_subsampling: Some(ChromaSubsampling::Yuv420),
+            bit_depth: 8,
+            chroma_subsampling: ChromaSubsampling::Yuv420,
             dimensions: Dimensions {
               height: 1,
               width: 2,
@@ -468,8 +482,8 @@ mod tests {
       .tracks[0]
         .info,
       TrackInfo::Video {
-        bit_depth: Some(10),
-        chroma_subsampling: Some(ChromaSubsampling::Yuv420),
+        bit_depth: 10,
+        chroma_subsampling: ChromaSubsampling::Yuv420,
         dimensions: Dimensions {
           height: 1,
           width: 2,
@@ -506,25 +520,33 @@ mod tests {
       "unsupported timestamp scale 4294967296",
     );
 
+    error(
+      WebmBuilder::new().video_track(2, 1),
+      "empty VP9 video track: cannot determine color metadata without frames",
+    );
+
     error(WebmBuilder::new().audio_track("A_OPUS"), "no video track");
     error(
       WebmBuilder::new()
         .video_track(2, 1)
         .video_track(2, 1)
-        .audio_track("A_OPUS"),
+        .audio_track("A_OPUS")
+        .frame(1, VP9_FRAME),
       "multiple video tracks",
     );
     error(
       WebmBuilder::new()
         .video_track(2, 1)
         .audio_track("A_OPUS")
-        .audio_track("A_OPUS"),
+        .audio_track("A_OPUS")
+        .frame(1, VP9_FRAME),
       "multiple audio tracks",
     );
     error(
       WebmBuilder::new()
         .video_track(2, 1)
-        .track(0x11, "S_TEXT/UTF8", &[]),
+        .track(0x11, "S_TEXT/UTF8", &[])
+        .frame(1, VP9_FRAME),
       "track 1 has unsupported track type `subtitle`",
     );
     error(
@@ -534,7 +556,10 @@ mod tests {
       "track 0 has unsupported video codec `V_MPEG4/ISO/AVC`",
     );
     error(
-      WebmBuilder::new().video_track(2, 1).audio_track("A_AAC"),
+      WebmBuilder::new()
+        .video_track(2, 1)
+        .audio_track("A_AAC")
+        .frame(1, VP9_FRAME),
       "track 1 has unsupported audio codec `A_AAC`",
     );
     error(
@@ -542,13 +567,17 @@ mod tests {
       "track 0 has missing video settings",
     );
     error(
-      WebmBuilder::new().video_track(2, 1).track(2, "A_OPUS", &[]),
+      WebmBuilder::new()
+        .video_track(2, 1)
+        .track(2, "A_OPUS", &[])
+        .frame(1, VP9_FRAME),
       "track 1 has missing audio settings",
     );
     error(
       WebmBuilder::new()
         .video_track(2, 1)
-        .track(2, "A_OPUS", &WebmBuilder::audio_settings(2, 0.5)),
+        .track(2, "A_OPUS", &WebmBuilder::audio_settings(2, 0.5))
+        .frame(1, VP9_FRAME),
       "track 1 has invalid sample rate 0.5",
     );
     error(
