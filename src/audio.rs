@@ -544,28 +544,22 @@ mod tests {
 
     assert_eq!(
       Item::info(&audio, "bob".into()),
-      Info::Map(vec![
-        (
-          "filename".into(),
-          Info::Link {
-            text: "foo.flac".into(),
-            url: "bob".into(),
-          },
-        ),
-        ("title".into(), Info::Value("bar".into())),
-        ("artist".into(), Info::Value("baz".into())),
-        ("album".into(), Info::Value("qux".into())),
-        ("disc".into(), Info::Value("1 of 2".into())),
-        ("track".into(), Info::Value("3 of 4".into())),
-        ("duration".into(), Info::Value("0:01".into())),
-        ("type".into(), Info::Value("FLAC".into())),
-        ("sample bits".into(), Info::Value("16-bit".into())),
-        ("sample rate".into(), Info::Value("44.1 kHz".into())),
-        ("bit rate".into(), Info::Value("4 kbit/s".into())),
-        ("channels".into(), Info::Value("2".into())),
-        ("compression mode".into(), Info::Value("lossless".into())),
-        ("samples".into(), Info::Value("66150".into())),
-      ]),
+      InfoBuilder::new()
+        .link("filename", "foo.flac", "bob".into())
+        .value("title", "bar")
+        .value("artist", "baz")
+        .value("album", "qux")
+        .value("disc", "1 of 2")
+        .value("track", "3 of 4")
+        .value("duration", "0:01")
+        .value("type", "FLAC")
+        .value("sample bits", "16-bit")
+        .value("sample rate", "44.1 kHz")
+        .value("bit rate", "4 kbit/s")
+        .value("channels", "2")
+        .value("compression mode", "lossless")
+        .value("samples", "66150")
+        .build(),
     );
 
     let mut audio = "foo.mp3".parse::<Audio>().unwrap();
@@ -583,27 +577,21 @@ mod tests {
 
     assert_eq!(
       Item::info(&audio, "bob".into()),
-      Info::Map(vec![
-        (
-          "filename".into(),
-          Info::Link {
-            text: "foo.mp3".into(),
-            url: "bob".into(),
-          },
-        ),
-        ("title".into(), Info::Value("bar".into())),
-        ("artist".into(), Info::Value("baz".into())),
-        ("album".into(), Info::Value("qux".into())),
-        ("disc".into(), Info::Value("1 of 2".into())),
-        ("track".into(), Info::Value("3 of 4".into())),
-        ("duration".into(), Info::Value("0:01".into())),
-        ("type".into(), Info::Value("MP3".into())),
-        ("sample rate".into(), Info::Value("44.1 kHz".into())),
-        ("bit rate".into(), Info::Value("4 kbit/s".into())),
-        ("channels".into(), Info::Value("2".into())),
-        ("compression mode".into(), Info::Value("lossy".into())),
-        ("samples".into(), Info::Value("66150".into())),
-      ]),
+      InfoBuilder::new()
+        .link("filename", "foo.mp3", "bob".into())
+        .value("title", "bar")
+        .value("artist", "baz")
+        .value("album", "qux")
+        .value("disc", "1 of 2")
+        .value("track", "3 of 4")
+        .value("duration", "0:01")
+        .value("type", "MP3")
+        .value("sample rate", "44.1 kHz")
+        .value("bit rate", "4 kbit/s")
+        .value("channels", "2")
+        .value("compression mode", "lossy")
+        .value("samples", "66150")
+        .build(),
     );
 
     let mut audio = "foo.flac".parse::<Audio>().unwrap();
@@ -611,26 +599,20 @@ mod tests {
 
     assert_eq!(
       Item::info(&audio, "bob".into()),
-      Info::Map(vec![
-        (
-          "filename".into(),
-          Info::Link {
-            text: "foo.flac".into(),
-            url: "bob".into(),
-          },
-        ),
-        ("title".into(), Info::Value(String::new())),
-        ("artist".into(), Info::Value(String::new())),
-        ("album".into(), Info::Value(String::new())),
-        ("disc".into(), Info::Value("0 of 0".into())),
-        ("track".into(), Info::Value("0 of 0".into())),
-        ("duration".into(), Info::Value("0:00".into())),
-        ("type".into(), Info::Value("FLAC".into())),
-        ("sample rate".into(), Info::Value("0 kHz".into())),
-        ("channels".into(), Info::Value("0".into())),
-        ("compression mode".into(), Info::Value("lossless".into())),
-        ("samples".into(), Info::Value("0".into())),
-      ]),
+      InfoBuilder::new()
+        .link("filename", "foo.flac", "bob".into())
+        .value("title", "")
+        .value("artist", "")
+        .value("album", "")
+        .value("disc", "0 of 0")
+        .value("track", "0 of 0")
+        .value("duration", "0:00")
+        .value("type", "FLAC")
+        .value("sample rate", "0 kHz")
+        .value("channels", "0")
+        .value("compression mode", "lossless")
+        .value("samples", "0")
+        .build(),
     );
   }
 
