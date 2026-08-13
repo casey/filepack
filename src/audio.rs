@@ -622,18 +622,16 @@ mod tests {
 
     std::fs::write(
       root.join("foo.flac"),
-      flac(
-        &[
-          "ALBUM=qux",
-          "ARTIST=baz",
-          "DISCNUMBER=1",
-          "DISCTOTAL=2",
-          "TITLE=bar",
-          "TRACKNUMBER=3",
-          "TRACKTOTAL=4",
-        ],
-        66150,
-      ),
+      FlacBuilder::new()
+        .tag("ALBUM", "qux")
+        .tag("ARTIST", "baz")
+        .tag("DISCNUMBER", "1")
+        .tag("DISCTOTAL", "2")
+        .tag("TITLE", "bar")
+        .tag("TRACKNUMBER", "3")
+        .tag("TRACKTOTAL", "4")
+        .samples(66150)
+        .build(),
     )
     .unwrap();
 

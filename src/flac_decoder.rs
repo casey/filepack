@@ -82,63 +82,68 @@ mod tests {
 
   #[test]
   fn decode_err() {
-    fn err(bytes: &[u8]) -> AudioError {
-      FlacDecoder::decode(bytes).unwrap_err()
+    fn err(builder: FlacBuilder) -> AudioError {
+      FlacDecoder::decode(&builder.build()).unwrap_err()
     }
 
-    assert_matches!(err(b"foo"), AudioError::FlacDecode { .. });
+    assert_matches!(
+      FlacDecoder::decode(b"foo").unwrap_err(),
+      AudioError::FlacDecode { .. },
+    );
 
     assert_matches!(
-      err(&flac(&[], 44100)),
+      err(FlacBuilder::new()),
       AudioError::TagMissing { tag: "album" },
     );
 
     assert_matches!(
-      err(&flac(&["ALBUM=qux", "TITLE=bar"], 44100)),
+      err(FlacBuilder::new().tag("ALBUM", "qux").tag("TITLE", "bar")),
       AudioError::TagMissing { tag: "artist" },
     );
 
     assert_matches!(
-      err(&flac(
-        &["ALBUM=qux", "ARTIST=baz", "DISCNUMBER=1", "DISCTOTAL=1"],
-        44100,
-      )),
+      err(
+        FlacBuilder::new()
+          .tag("ALBUM", "qux")
+          .tag("ARTIST", "baz")
+          .tag("DISCNUMBER", "1")
+          .tag("DISCTOTAL", "1")
+      ),
       AudioError::TagMissing { tag: "title" },
     );
 
     assert_matches!(
-      err(&flac(
-        &["ALBUM=qux", "ALBUM=quux", "ARTIST=baz", "TITLE=bar"],
-        44100,
-      )),
+      err(
+        FlacBuilder::new()
+          .tag("ALBUM", "qux")
+          .tag("ALBUM", "quux")
+          .tag("ARTIST", "baz")
+          .tag("TITLE", "bar")
+      ),
       AudioError::TagMultiple { tag: "album" },
     );
 
     assert_matches!(
-      err(&flac(
-        &[
-          "ALBUM=qux",
-          "ARTIST=baz",
-          "DISCNUMBER=1",
-          "DISCTOTAL=1",
-          "TITLE="
-        ],
-        44100,
-      )),
+      err(
+        FlacBuilder::new()
+          .tag("ALBUM", "qux")
+          .tag("ARTIST", "baz")
+          .tag("DISCNUMBER", "1")
+          .tag("DISCTOTAL", "1")
+          .tag("TITLE", "")
+      ),
       AudioError::TagEmpty { tag: "title" },
     );
 
     assert_matches!(
-      err(&flac(
-        &[
-          "ALBUM=qux",
-          "ARTIST=baz",
-          "DISCNUMBER=1",
-          "DISCTOTAL=1",
-          "TITLE=foo\tbar",
-        ],
-        44100,
-      )),
+      err(
+        FlacBuilder::new()
+          .tag("ALBUM", "qux")
+          .tag("ARTIST", "baz")
+          .tag("DISCNUMBER", "1")
+          .tag("DISCTOTAL", "1")
+          .tag("TITLE", "foo\tbar")
+      ),
       AudioError::TagInvalid {
         source: TextError::Control { character: '\t' },
         tag: "title",
@@ -146,31 +151,27 @@ mod tests {
     );
 
     assert_matches!(
-      err(&flac(
-        &[
-          "ALBUM=qux",
-          "ARTIST=baz",
-          "DISCNUMBER=1",
-          "DISCTOTAL=1",
-          "TITLE=bar",
-        ],
-        44100,
-      )),
+      err(
+        FlacBuilder::new()
+          .tag("ALBUM", "qux")
+          .tag("ARTIST", "baz")
+          .tag("DISCNUMBER", "1")
+          .tag("DISCTOTAL", "1")
+          .tag("TITLE", "bar")
+      ),
       AudioError::TagMissing { tag: "tracknumber" },
     );
 
     assert_matches!(
-      err(&flac(
-        &[
-          "ALBUM=qux",
-          "ARTIST=baz",
-          "DISCNUMBER=1",
-          "DISCTOTAL=1",
-          "TITLE=bar",
-          "TRACKNUMBER=foo",
-        ],
-        44100,
-      )),
+      err(
+        FlacBuilder::new()
+          .tag("ALBUM", "qux")
+          .tag("ARTIST", "baz")
+          .tag("DISCNUMBER", "1")
+          .tag("DISCTOTAL", "1")
+          .tag("TITLE", "bar")
+          .tag("TRACKNUMBER", "foo")
+      ),
       AudioError::TagInteger {
         source: NumberError::Invalid { .. },
         tag: "tracknumber",
@@ -178,17 +179,15 @@ mod tests {
     );
 
     assert_matches!(
-      err(&flac(
-        &[
-          "ALBUM=qux",
-          "ARTIST=baz",
-          "DISCNUMBER=1",
-          "DISCTOTAL=1",
-          "TITLE=bar",
-          "TRACKNUMBER=3/12",
-        ],
-        44100,
-      )),
+      err(
+        FlacBuilder::new()
+          .tag("ALBUM", "qux")
+          .tag("ARTIST", "baz")
+          .tag("DISCNUMBER", "1")
+          .tag("DISCTOTAL", "1")
+          .tag("TITLE", "bar")
+          .tag("TRACKNUMBER", "3/12")
+      ),
       AudioError::TagInteger {
         source: NumberError::Invalid { .. },
         tag: "tracknumber",
@@ -196,17 +195,15 @@ mod tests {
     );
 
     assert_matches!(
-      err(&flac(
-        &[
-          "ALBUM=qux",
-          "ARTIST=baz",
-          "DISCNUMBER=1",
-          "DISCTOTAL=1",
-          "TITLE=bar",
-          "TRACKNUMBER=01",
-        ],
-        44100,
-      )),
+      err(
+        FlacBuilder::new()
+          .tag("ALBUM", "qux")
+          .tag("ARTIST", "baz")
+          .tag("DISCNUMBER", "1")
+          .tag("DISCTOTAL", "1")
+          .tag("TITLE", "bar")
+          .tag("TRACKNUMBER", "01")
+      ),
       AudioError::TagInteger {
         source: NumberError::Invalid { .. },
         tag: "tracknumber",
@@ -214,17 +211,15 @@ mod tests {
     );
 
     assert_matches!(
-      err(&flac(
-        &[
-          "ALBUM=qux",
-          "ARTIST=baz",
-          "DISCNUMBER=1",
-          "DISCTOTAL=1",
-          "TITLE=bar",
-          "TRACKNUMBER=+1",
-        ],
-        44100,
-      )),
+      err(
+        FlacBuilder::new()
+          .tag("ALBUM", "qux")
+          .tag("ARTIST", "baz")
+          .tag("DISCNUMBER", "1")
+          .tag("DISCTOTAL", "1")
+          .tag("TITLE", "bar")
+          .tag("TRACKNUMBER", "+1")
+      ),
       AudioError::TagInteger {
         source: NumberError::Invalid { .. },
         tag: "tracknumber",
@@ -232,17 +227,15 @@ mod tests {
     );
 
     assert_matches!(
-      err(&flac(
-        &[
-          "ALBUM=qux",
-          "ARTIST=baz",
-          "DISCNUMBER=1",
-          "DISCTOTAL=1",
-          "TITLE=bar",
-          "TRACKNUMBER=18446744073709551616",
-        ],
-        44100,
-      )),
+      err(
+        FlacBuilder::new()
+          .tag("ALBUM", "qux")
+          .tag("ARTIST", "baz")
+          .tag("DISCNUMBER", "1")
+          .tag("DISCTOTAL", "1")
+          .tag("TITLE", "bar")
+          .tag("TRACKNUMBER", "18446744073709551616")
+      ),
       AudioError::TagInteger {
         source: NumberError::Integer { .. },
         tag: "tracknumber",
@@ -250,43 +243,42 @@ mod tests {
     );
 
     assert_matches!(
-      err(&flac(
-        &[
-          "ALBUM=qux",
-          "ARTIST=baz",
-          "DISCNUMBER=1",
-          "DISCTOTAL=1",
-          "TITLE=bar",
-          "TRACKNUMBER=1",
-          "TRACKTOTAL=1",
-        ],
-        0,
-      )),
+      err(
+        FlacBuilder::new()
+          .tag("ALBUM", "qux")
+          .tag("ARTIST", "baz")
+          .tag("DISCNUMBER", "1")
+          .tag("DISCTOTAL", "1")
+          .tag("TITLE", "bar")
+          .tag("TRACKNUMBER", "1")
+          .tag("TRACKTOTAL", "1")
+          .samples(0)
+      ),
       AudioError::FlacSampleCountUnknown,
     );
   }
 
   #[test]
   fn frame_offset() {
-    let bytes = flac(&[], 44100);
+    let bytes = FlacBuilder::new().build();
     assert_eq!(
       FlacDecoder::frame_offset(&bytes).unwrap(),
       bytes.len() - 1024,
     );
 
-    let bytes = flac(&["foo=bar"], 44100);
+    let bytes = FlacBuilder::new().tag("foo", "bar").build();
     assert_eq!(
       FlacDecoder::frame_offset(&bytes).unwrap(),
       bytes.len() - 1024,
     );
 
     assert_matches!(
-      FlacDecoder::frame_offset(b"fLaC"),
+      FlacDecoder::frame_offset(&FlacBuilder::new().truncate(4).build()),
       Err(AudioError::FlacTruncated),
     );
 
     assert_matches!(
-      FlacDecoder::frame_offset(&[b"fLaC".as_slice(), &[0x80, 0x00, 0x00, 0x22]].concat()),
+      FlacDecoder::frame_offset(&FlacBuilder::new().truncate(8).build()),
       Err(AudioError::FlacTruncated),
     );
   }
@@ -299,18 +291,16 @@ mod tests {
 
     std::fs::write(
       &path,
-      flac(
-        &[
-          "ALBUM=qux",
-          "ARTIST=baz",
-          "DISCNUMBER=1",
-          "DISCTOTAL=2",
-          "TITLE=bar",
-          "TRACKNUMBER=3",
-          "TRACKTOTAL=4",
-        ],
-        66150,
-      ),
+      FlacBuilder::new()
+        .tag("ALBUM", "qux")
+        .tag("ARTIST", "baz")
+        .tag("DISCNUMBER", "1")
+        .tag("DISCTOTAL", "2")
+        .tag("TITLE", "bar")
+        .tag("TRACKNUMBER", "3")
+        .tag("TRACKTOTAL", "4")
+        .samples(66150)
+        .build(),
     )
     .unwrap();
 

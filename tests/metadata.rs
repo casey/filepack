@@ -142,18 +142,15 @@ fn create_extracts_track_tags() {
   Test::new()
     .write(
       "foo.flac",
-      flac(
-        &[
-          "ALBUM=qux",
-          "ARTIST=baz",
-          "DISCNUMBER=1",
-          "DISCTOTAL=1",
-          "TITLE=bar",
-          "TRACKNUMBER=1",
-          "TRACKTOTAL=1",
-        ],
-        44100,
-      ),
+      FlacBuilder::new()
+        .tag("ALBUM", "qux")
+        .tag("ARTIST", "baz")
+        .tag("DISCNUMBER", "1")
+        .tag("DISCTOTAL", "1")
+        .tag("TITLE", "bar")
+        .tag("TRACKNUMBER", "1")
+        .tag("TRACKTOTAL", "1")
+        .build(),
     )
     .write(
       "metadata.yaml",
@@ -280,18 +277,15 @@ fn create_rejects_extra_files_in_media_packages() {
   Test::new()
     .write(
       "foo.flac",
-      flac(
-        &[
-          "ALBUM=qux",
-          "ARTIST=baz",
-          "DISCNUMBER=1",
-          "DISCTOTAL=1",
-          "TITLE=bar",
-          "TRACKNUMBER=1",
-          "TRACKTOTAL=1",
-        ],
-        44100,
-      ),
+      FlacBuilder::new()
+        .tag("ALBUM", "qux")
+        .tag("ARTIST", "baz")
+        .tag("DISCNUMBER", "1")
+        .tag("DISCTOTAL", "1")
+        .tag("TITLE", "bar")
+        .tag("TRACKNUMBER", "1")
+        .tag("TRACKTOTAL", "1")
+        .build(),
     )
     .write(
       "metadata.yaml",
@@ -342,18 +336,15 @@ fn create_rejects_invalid_track_positions() {
   Test::new()
     .write(
       "foo.flac",
-      flac(
-        &[
-          "ALBUM=qux",
-          "ARTIST=baz",
-          "DISCNUMBER=1",
-          "DISCTOTAL=1",
-          "TITLE=bar",
-          "TRACKNUMBER=2",
-          "TRACKTOTAL=2",
-        ],
-        44100,
-      ),
+      FlacBuilder::new()
+        .tag("ALBUM", "qux")
+        .tag("ARTIST", "baz")
+        .tag("DISCNUMBER", "1")
+        .tag("DISCTOTAL", "1")
+        .tag("TITLE", "bar")
+        .tag("TRACKNUMBER", "2")
+        .tag("TRACKTOTAL", "2")
+        .build(),
     )
     .write(
       "metadata.yaml",
@@ -481,38 +472,6 @@ fn create_succeeds_with_valid_metadata() {
     .arg("verify")
     .stderr("successfully verified 6 files totaling 260 bytes\n")
     .success();
-}
-
-fn flac(comments: &[&str], samples: u32) -> Vec<u8> {
-  let mut bytes = b"fLaC".to_vec();
-
-  bytes.push(if comments.is_empty() { 0x80 } else { 0x00 });
-  bytes.extend_from_slice(&34u32.to_be_bytes()[1..]);
-  bytes.extend_from_slice(&4096u16.to_be_bytes());
-  bytes.extend_from_slice(&4096u16.to_be_bytes());
-  bytes.extend_from_slice(&[0; 6]);
-  bytes.extend_from_slice(&[0x0a, 0xc4, 0x42, 0xf0]);
-  bytes.extend_from_slice(&samples.to_be_bytes());
-  bytes.extend_from_slice(&[0; 16]);
-
-  if !comments.is_empty() {
-    let mut body = Vec::new();
-    body.extend_from_slice(&0u32.to_le_bytes());
-    body.extend_from_slice(&u32::try_from(comments.len()).unwrap().to_le_bytes());
-
-    for comment in comments {
-      body.extend_from_slice(&u32::try_from(comment.len()).unwrap().to_le_bytes());
-      body.extend_from_slice(comment.as_bytes());
-    }
-
-    bytes.push(0x84);
-    bytes.extend_from_slice(&u32::try_from(body.len()).unwrap().to_be_bytes()[1..]);
-    bytes.extend(body);
-  }
-
-  bytes.extend_from_slice(&[0; 1024]);
-
-  bytes
 }
 
 fn image(width: u32, height: u32, image_format: ImageFormat) -> Vec<u8> {

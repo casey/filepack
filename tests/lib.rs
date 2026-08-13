@@ -2,8 +2,8 @@ use {
   self::{child::Child, dedent::Dedent, expected::Expected, test::Test},
   camino::{Utf8Path, Utf8PathBuf},
   filepack::{
-    Decode, Decoder, Directory, DirectoryExt, Encode, Encoder, Entry, Fingerprint, Hash, Manifest,
-    Metadata, Mp4Builder, Page, PrivateKey, PublicKey, Totals,
+    Decode, Decoder, Directory, DirectoryExt, Encode, Encoder, Entry, Fingerprint, FlacBuilder,
+    Hash, Manifest, Metadata, Mp4Builder, Page, PrivateKey, PublicKey, Totals,
     templates::{DirectoryHtml, PackageHtml},
   },
   image::{DynamicImage, ImageFormat},
