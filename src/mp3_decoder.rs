@@ -61,10 +61,12 @@ impl Version {
 
 impl<'a> Mp3Decoder<'a> {
   fn frame(&self, offset: usize) -> Result<Frame, Mp3Error> {
-    let header = self
+    let header: [u8; 4] = self
       .data
       .get(offset..offset + 4)
-      .context(mp3_error::Truncated)?;
+      .context(mp3_error::Truncated)?
+      .try_into()
+      .unwrap();
 
     ensure! {
       header[0] == 0xFF && header[1] & 0xE0 == 0xE0,
@@ -150,12 +152,18 @@ impl<'a> Mp3Decoder<'a> {
 
     let start = usize::try_from(cursor.position()).unwrap();
 
+    let end = data
+      .len()
+      .checked_sub(128)
+      .and_then(|i| (&data[i..i + 3] == b"TAG").then_some(i))
+      .unwrap_or(data.len());
+
     let AudioProperties {
       channels,
       sample_rate,
       samples,
       size,
-    } = Mp3Decoder::properties(&data[start..]).context(audio_error::Mp3Decode)?;
+    } = Mp3Decoder::properties(&data[start..end]).context(audio_error::Mp3Decode)?;
 
     Ok(AudioMetadata {
       album,
@@ -366,11 +374,6 @@ mod tests {
     case(Mp3Builder::new().xing(), Mp3Error::Empty);
 
     case(
-      Mp3Builder::new().frames(1).id3v1(),
-      Mp3Error::Sync { offset: 417 },
-    );
-
-    case(
       Mp3Builder::new().trailing(b"foobar"),
       Mp3Error::Sync { offset: 0 },
     );
@@ -479,6 +482,16 @@ mod tests {
 
     case(
       Mp3Builder::new().frames(2),
+      AudioProperties {
+        channels: 2,
+        sample_rate: 44100,
+        samples: 2304,
+        size: 834,
+      },
+    );
+
+    case(
+      Mp3Builder::new().frames(2).id3v1(),
       AudioProperties {
         channels: 2,
         sample_rate: 44100,
