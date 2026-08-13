@@ -639,10 +639,14 @@ mod tests {
 
     std::fs::write(
       root.join("foo.mp3"),
-      mp3(
-        &["TALB=qux", "TIT2=bar", "TPE1=baz", "TPOS=1/2", "TRCK=3/4"],
-        2,
-      ),
+      Mp3Builder::new()
+        .tag("TALB", "qux")
+        .tag("TIT2", "bar")
+        .tag("TPE1", "baz")
+        .tag("TPOS", "1/2")
+        .tag("TRCK", "3/4")
+        .frames(2)
+        .build(),
     )
     .unwrap();
 

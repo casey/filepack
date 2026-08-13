@@ -270,168 +270,45 @@ mod tests {
   use super::*;
 
   #[test]
-  fn decode() {
-    #[track_caller]
-    fn case(data: &[Vec<u8>], expected: Result<AudioProperties, Mp3Error>) {
-      assert_eq!(Mp3Decoder::decode(&data.concat()), expected);
-    }
-
-    fn frame(header: [u8; 4], size: usize) -> Vec<u8> {
-      let mut bytes = header.to_vec();
-      bytes.resize(size, 0);
-      bytes
-    }
-
-    fn properties(channels: u64, sample_rate: u64, samples: u64, size: u64) -> AudioProperties {
-      AudioProperties {
-        channels,
-        sample_rate,
-        samples,
-        size,
-      }
-    }
-
-    fn xing() -> Vec<u8> {
-      let mut bytes = mp3_frame();
-      bytes[36..40].copy_from_slice(b"Xing");
-      bytes
-    }
-
-    let id3v1 = {
-      let mut bytes = b"TAG".to_vec();
-      bytes.resize(128, 0);
-      bytes
-    };
-
-    case(
-      &[mp3_frame(), mp3_frame()],
-      Ok(properties(2, 44100, 2304, 834)),
-    );
-
-    case(
-      &[xing(), mp3_frame(), mp3_frame()],
-      Ok(properties(2, 44100, 2304, 834)),
-    );
-
-    case(
-      &[frame([0xFF, 0xFB, 0x92, 0x00], 418), mp3_frame()],
-      Ok(properties(2, 44100, 2304, 835)),
-    );
-
-    case(
-      &[frame([0xFF, 0xFB, 0x90, 0xC0], 417)],
-      Ok(properties(1, 44100, 1152, 417)),
-    );
-
-    case(
-      &[frame([0xFF, 0xF3, 0x90, 0x00], 261)],
-      Ok(properties(2, 22050, 576, 261)),
-    );
-
-    case(
-      &[frame([0xFF, 0xE3, 0x90, 0x00], 522)],
-      Ok(properties(2, 11025, 576, 522)),
-    );
-
-    case(&[], Err(Mp3Error::Empty));
-
-    case(&[xing()], Err(Mp3Error::Empty));
-
-    case(&[mp3_frame(), id3v1], Err(Mp3Error::Sync { offset: 417 }));
-
-    case(&[b"foobar".to_vec()], Err(Mp3Error::Sync { offset: 0 }));
-
-    case(
-      &[mp3_frame(), b"foobar".to_vec()],
-      Err(Mp3Error::Sync { offset: 417 }),
-    );
-
-    case(&[mp3_frame()[..100].to_vec()], Err(Mp3Error::Truncated));
-
-    case(&[mp3_frame(), b"bar".to_vec()], Err(Mp3Error::Truncated));
-
-    case(
-      &[frame([0xFF, 0xEB, 0x90, 0x00], 417)],
-      Err(Mp3Error::Version),
-    );
-
-    case(
-      &[frame([0xFF, 0xF9, 0x90, 0x00], 417)],
-      Err(Mp3Error::LayerInvalid),
-    );
-
-    case(
-      &[frame([0xFF, 0xFD, 0x90, 0x00], 417)],
-      Err(Mp3Error::LayerUnsupported { layer: 2 }),
-    );
-
-    case(
-      &[frame([0xFF, 0xFF, 0x90, 0x00], 417)],
-      Err(Mp3Error::LayerUnsupported { layer: 1 }),
-    );
-
-    case(
-      &[frame([0xFF, 0xFB, 0x00, 0x00], 417)],
-      Err(Mp3Error::Bitrate { index: 0 }),
-    );
-
-    case(
-      &[frame([0xFF, 0xFB, 0xF0, 0x00], 417)],
-      Err(Mp3Error::Bitrate { index: 15 }),
-    );
-
-    case(
-      &[frame([0xFF, 0xFB, 0x9C, 0x00], 417)],
-      Err(Mp3Error::SampleRate),
-    );
-
-    case(
-      &[mp3_frame(), frame([0xFF, 0xFB, 0x90, 0xC0], 417)],
-      Err(Mp3Error::ChannelsMismatch {
-        actual: 1,
-        expected: 2,
-      }),
-    );
-
-    case(
-      &[mp3_frame(), frame([0xFF, 0xFB, 0x94, 0x00], 384)],
-      Err(Mp3Error::SampleRateMismatch {
-        actual: 48000,
-        expected: 44100,
-      }),
-    );
-  }
-
-  #[test]
   fn metadata_err() {
-    fn err(bytes: &[u8]) -> AudioError {
-      Mp3Decoder::metadata(bytes).unwrap_err()
+    fn err(builder: Mp3Builder) -> AudioError {
+      Mp3Decoder::metadata(&builder.build()).unwrap_err()
     }
-
-    assert_matches!(err(b"foo"), AudioError::Mp3TagMissing);
-
-    assert_matches!(err(&mp3(&[], 1)), AudioError::TagMissing { tag: "TALB" });
 
     assert_matches!(
-      err(&mp3(&["TALB=qux"], 1)),
+      err(Mp3Builder::new().trailing(b"foo")),
+      AudioError::Mp3TagMissing,
+    );
+
+    assert_matches!(
+      err(Mp3Builder::new().id3v2().frames(1)),
+      AudioError::TagMissing { tag: "TALB" },
+    );
+
+    assert_matches!(
+      err(Mp3Builder::new().tag("TALB", "qux").frames(1)),
       AudioError::TagMissing { tag: "TPE1" },
     );
 
     assert_matches!(
-      err(&mp3(&["TALB=qux\0quux"], 1)),
+      err(Mp3Builder::new().tag("TALB", "qux\0quux").frames(1)),
       AudioError::TagMultiple { tag: "TALB" },
     );
 
     assert_matches!(
-      err(&mp3(&["TALB="], 1)),
+      err(Mp3Builder::new().tag("TALB", "").frames(1)),
       AudioError::TagEmpty { tag: "TALB" },
     );
 
     assert_matches!(
-      err(&mp3(
-        &["TALB=qux", "TIT2=foo\tbar", "TPE1=baz", "TPOS=1/2"],
-        1
-      )),
+      err(
+        Mp3Builder::new()
+          .tag("TALB", "qux")
+          .tag("TIT2", "foo\tbar")
+          .tag("TPE1", "baz")
+          .tag("TPOS", "1/2")
+          .frames(1)
+      ),
       AudioError::TagInvalid {
         source: TextError::Control { character: '\t' },
         tag: "TIT2",
@@ -439,41 +316,226 @@ mod tests {
     );
 
     assert_matches!(
-      err(&mp3(&["TALB=qux", "TPE1=baz", "TPOS=1"], 1)),
+      err(
+        Mp3Builder::new()
+          .tag("TALB", "qux")
+          .tag("TPE1", "baz")
+          .tag("TPOS", "1")
+          .frames(1)
+      ),
       AudioError::TagPair { tag: "TPOS" },
     );
 
     assert_matches!(
-      err(&mp3(
-        &["TALB=qux", "TIT2=bar", "TPE1=baz", "TPOS=1/2", "TRCK=03/12"],
-        1,
-      )),
+      err(
+        Mp3Builder::new()
+          .tag("TALB", "qux")
+          .tag("TIT2", "bar")
+          .tag("TPE1", "baz")
+          .tag("TPOS", "1/2")
+          .tag("TRCK", "03/12")
+          .frames(1)
+      ),
       AudioError::TagInteger {
         source: NumberError::Invalid { .. },
         tag: "TRCK",
       },
     );
+  }
 
-    assert_matches!(
-      err(&mp3(
-        &["TALB=qux", "TIT2=bar", "TPE1=baz", "TPOS=1/2", "TRCK=3/4"],
-        0,
-      )),
-      AudioError::Mp3Decode {
-        source: Mp3Error::Empty,
+  #[test]
+  fn properties_err() {
+    #[track_caller]
+    fn case(builder: Mp3Builder, expected: Mp3Error) {
+      let mp3 = builder
+        .tag("TALB", "qux")
+        .tag("TIT2", "bar")
+        .tag("TPE1", "baz")
+        .tag("TPOS", "1/2")
+        .tag("TRCK", "3/4")
+        .build();
+
+      match Mp3Decoder::metadata(&mp3).unwrap_err() {
+        AudioError::Mp3Decode { source } => assert_eq!(source, expected),
+        err => panic!("unexpected error: {err}"),
+      }
+    }
+
+    case(Mp3Builder::new(), Mp3Error::Empty);
+
+    case(Mp3Builder::new().xing(), Mp3Error::Empty);
+
+    case(
+      Mp3Builder::new().frames(1).id3v1(),
+      Mp3Error::Sync { offset: 417 },
+    );
+
+    case(
+      Mp3Builder::new().trailing(b"foobar"),
+      Mp3Error::Sync { offset: 0 },
+    );
+
+    case(
+      Mp3Builder::new().frames(1).trailing(b"foobar"),
+      Mp3Error::Sync { offset: 417 },
+    );
+
+    case(
+      Mp3Builder::new().frames(1).truncate(180),
+      Mp3Error::Truncated,
+    );
+
+    case(
+      Mp3Builder::new().frames(1).trailing(b"bar"),
+      Mp3Error::Truncated,
+    );
+
+    case(
+      Mp3Builder::new().frame([0xFF, 0xEB, 0x90, 0x00], 417),
+      Mp3Error::Version,
+    );
+
+    case(
+      Mp3Builder::new().frame([0xFF, 0xF9, 0x90, 0x00], 417),
+      Mp3Error::LayerInvalid,
+    );
+
+    case(
+      Mp3Builder::new().frame([0xFF, 0xFD, 0x90, 0x00], 417),
+      Mp3Error::LayerUnsupported { layer: 2 },
+    );
+
+    case(
+      Mp3Builder::new().frame([0xFF, 0xFF, 0x90, 0x00], 417),
+      Mp3Error::LayerUnsupported { layer: 1 },
+    );
+
+    case(
+      Mp3Builder::new().frame([0xFF, 0xFB, 0x00, 0x00], 417),
+      Mp3Error::Bitrate { index: 0 },
+    );
+
+    case(
+      Mp3Builder::new().frame([0xFF, 0xFB, 0xF0, 0x00], 417),
+      Mp3Error::Bitrate { index: 15 },
+    );
+
+    case(
+      Mp3Builder::new().frame([0xFF, 0xFB, 0x9C, 0x00], 417),
+      Mp3Error::SampleRate,
+    );
+
+    case(
+      Mp3Builder::new()
+        .frames(1)
+        .frame([0xFF, 0xFB, 0x90, 0xC0], 417),
+      Mp3Error::ChannelsMismatch {
+        actual: 1,
+        expected: 2,
       },
     );
 
-    let mut bytes = mp3(
-      &["TALB=qux", "TIT2=bar", "TPE1=baz", "TPOS=1/2", "TRCK=3/4"],
-      0,
+    case(
+      Mp3Builder::new()
+        .frames(1)
+        .frame([0xFF, 0xFB, 0x94, 0x00], 384),
+      Mp3Error::SampleRateMismatch {
+        actual: 48000,
+        expected: 44100,
+      },
     );
-    bytes.extend_from_slice(b"foobar");
+  }
 
-    assert_matches!(
-      err(&bytes),
-      AudioError::Mp3Decode {
-        source: Mp3Error::Sync { offset: 0 },
+  #[test]
+  fn properties_ok() {
+    #[track_caller]
+    fn case(builder: Mp3Builder, expected: AudioProperties) {
+      let mp3 = builder
+        .tag("TALB", "qux")
+        .tag("TIT2", "bar")
+        .tag("TPE1", "baz")
+        .tag("TPOS", "1/2")
+        .tag("TRCK", "3/4")
+        .build();
+
+      let AudioMetadata {
+        channels,
+        sample_rate,
+        samples,
+        size,
+        ..
+      } = Mp3Decoder::metadata(&mp3).unwrap();
+
+      assert_eq!(
+        AudioProperties {
+          channels,
+          sample_rate,
+          samples,
+          size,
+        },
+        expected,
+      );
+    }
+
+    case(
+      Mp3Builder::new().frames(2),
+      AudioProperties {
+        channels: 2,
+        sample_rate: 44100,
+        samples: 2304,
+        size: 834,
+      },
+    );
+
+    case(
+      Mp3Builder::new().xing().frames(2),
+      AudioProperties {
+        channels: 2,
+        sample_rate: 44100,
+        samples: 2304,
+        size: 834,
+      },
+    );
+
+    case(
+      Mp3Builder::new()
+        .frame([0xFF, 0xFB, 0x92, 0x00], 418)
+        .frames(1),
+      AudioProperties {
+        channels: 2,
+        sample_rate: 44100,
+        samples: 2304,
+        size: 835,
+      },
+    );
+
+    case(
+      Mp3Builder::new().frame([0xFF, 0xFB, 0x90, 0xC0], 417),
+      AudioProperties {
+        channels: 1,
+        sample_rate: 44100,
+        samples: 1152,
+        size: 417,
+      },
+    );
+
+    case(
+      Mp3Builder::new().frame([0xFF, 0xF3, 0x90, 0x00], 261),
+      AudioProperties {
+        channels: 2,
+        sample_rate: 22050,
+        samples: 576,
+        size: 261,
+      },
+    );
+
+    case(
+      Mp3Builder::new().frame([0xFF, 0xE3, 0x90, 0x00], 522),
+      AudioProperties {
+        channels: 2,
+        sample_rate: 11025,
+        samples: 576,
+        size: 522,
       },
     );
   }
@@ -486,10 +548,14 @@ mod tests {
 
     std::fs::write(
       &path,
-      mp3(
-        &["TALB=qux", "TIT2=bar", "TPE1=baz", "TPOS=1/2", "TRCK=3/4"],
-        2,
-      ),
+      Mp3Builder::new()
+        .tag("TALB", "qux")
+        .tag("TIT2", "bar")
+        .tag("TPE1", "baz")
+        .tag("TPOS", "1/2")
+        .tag("TRCK", "3/4")
+        .frames(2)
+        .build(),
     )
     .unwrap();
 
