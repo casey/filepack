@@ -223,6 +223,7 @@ pub use self::{
   entry::{Entry, EntryType},
   error::Error,
   fingerprint::Fingerprint,
+  flac_builder::FlacBuilder,
   functions::install_default_crypto_provider,
   hash::Hash,
   language_error::LanguageError,
@@ -250,7 +251,7 @@ use {
   png_builder::PngBuilder,
   std::assert_matches,
   tempfile::TempDir,
-  test::{assert_cbor, assert_cbor_eq, assert_encoding, exif, flac, tempdir},
+  test::{assert_cbor, assert_cbor_eq, assert_encoding, exif, tempdir},
   unindent::unindent,
   webm_builder::WebmBuilder,
 };
@@ -327,6 +328,7 @@ mod exif_error;
 mod file;
 mod filesystem;
 mod fingerprint;
+mod flac_builder;
 mod flac_decoder;
 mod float_ext;
 mod format;
