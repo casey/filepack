@@ -132,46 +132,6 @@ pub(crate) fn flac(comments: &[&str], samples: u32) -> Vec<u8> {
   bytes
 }
 
-pub(crate) fn mp3(tags: &[&str], frames: u32) -> Vec<u8> {
-  fn syncsafe(n: usize) -> [u8; 4] {
-    let n = u32::try_from(n).unwrap();
-    [
-      u8::try_from((n >> 21) & 0x7F).unwrap(),
-      u8::try_from((n >> 14) & 0x7F).unwrap(),
-      u8::try_from((n >> 7) & 0x7F).unwrap(),
-      u8::try_from(n & 0x7F).unwrap(),
-    ]
-  }
-
-  let mut body = Vec::new();
-
-  for tag in tags {
-    let (id, value) = tag.split_once('=').unwrap();
-    body.extend_from_slice(id.as_bytes());
-    body.extend_from_slice(&syncsafe(value.len() + 1));
-    body.extend_from_slice(&[0; 2]);
-    body.push(3);
-    body.extend_from_slice(value.as_bytes());
-  }
-
-  let mut bytes = b"ID3".to_vec();
-  bytes.extend_from_slice(&[4, 0, 0]);
-  bytes.extend_from_slice(&syncsafe(body.len()));
-  bytes.extend(body);
-
-  for _ in 0..frames {
-    bytes.extend_from_slice(&mp3_frame());
-  }
-
-  bytes
-}
-
-pub(crate) fn mp3_frame() -> Vec<u8> {
-  let mut bytes = vec![0xFF, 0xFB, 0x90, 0x00];
-  bytes.resize(417, 0);
-  bytes
-}
-
 pub(crate) fn tempdir() -> (TempDir, Utf8PathBuf) {
   let tempdir = tempfile::Builder::new()
     .prefix("filepack-test-tempdir")

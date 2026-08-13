@@ -246,10 +246,11 @@ pub use self::{
 #[cfg(test)]
 use {
   jpeg_builder::JpegBuilder,
+  mp3_builder::Mp3Builder,
   png_builder::PngBuilder,
   std::assert_matches,
   tempfile::TempDir,
-  test::{assert_cbor, assert_cbor_eq, assert_encoding, exif, flac, mp3, mp3_frame, tempdir},
+  test::{assert_cbor, assert_cbor_eq, assert_encoding, exif, flac, tempdir},
   unindent::unindent,
   webm_builder::WebmBuilder,
 };
@@ -420,6 +421,8 @@ mod webm_decoder;
 mod derive;
 #[cfg(test)]
 mod jpeg_builder;
+#[cfg(test)]
+mod mp3_builder;
 #[cfg(test)]
 mod png_builder;
 #[cfg(test)]
