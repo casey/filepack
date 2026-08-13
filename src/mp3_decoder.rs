@@ -152,6 +152,8 @@ impl<'a> Mp3Decoder<'a> {
 
     let start = usize::try_from(cursor.position()).unwrap();
 
+    let data = &data[start..];
+
     let end = data
       .len()
       .checked_sub(128)
@@ -163,7 +165,7 @@ impl<'a> Mp3Decoder<'a> {
       sample_rate,
       samples,
       size,
-    } = Mp3Decoder::properties(&data[start..end]).context(audio_error::Mp3Decode)?;
+    } = Mp3Decoder::properties(&data[..end]).context(audio_error::Mp3Decode)?;
 
     Ok(AudioMetadata {
       album,
@@ -276,6 +278,30 @@ impl<'a> Mp3Decoder<'a> {
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn id3v1_detection_ignores_id3v2_tag_contents() {
+    let mut album = "a".repeat(28);
+    album.push_str("TAG");
+    album.push_str(&"a".repeat(69));
+
+    let mp3 = Mp3Builder::new()
+      .tag("TALB", &album)
+      .tag("TIT2", "bar")
+      .tag("TPE1", "baz")
+      .tag("TPOS", "1/2")
+      .tag("TRCK", "3/4")
+      .build();
+
+    assert_eq!(&mp3[mp3.len() - 128..mp3.len() - 125], b"TAG");
+
+    assert_matches!(
+      Mp3Decoder::metadata(&mp3).unwrap_err(),
+      AudioError::Mp3Decode {
+        source: Mp3Error::Empty,
+      },
+    );
+  }
 
   #[test]
   fn metadata_err() {
