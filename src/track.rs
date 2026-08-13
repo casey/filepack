@@ -147,36 +147,36 @@ mod tests {
 
     assert_eq!(
       track.info(&video),
-      Info::Map(vec![
-        ("type".into(), Info::Value("video".into())),
-        ("codec".into(), Info::Value("H.264".into())),
-        ("dimensions".into(), Info::Value("2×1".into())),
-        ("orientation".into(), Info::Value("0°".into())),
-        ("frames".into(), Info::Value("240".into())),
-        ("frame rate".into(), Info::Value("24 fps".into())),
-        ("bit rate".into(), Info::Value("1.2 kbit/s".into())),
-        ("bits per pixel".into(), Info::Value("25".into())),
-        ("bit depth".into(), Info::Value("8-bit".into())),
-        ("chroma subsampling".into(), Info::Value("4:2:0".into())),
-        ("size".into(), Info::Value("1.5 KiB".into())),
-      ]),
+      InfoBuilder::new()
+        .value("type", "video")
+        .value("codec", "H.264")
+        .value("dimensions", "2×1")
+        .value("orientation", "0°")
+        .value("frames", "240")
+        .value("frame rate", "24 fps")
+        .value("bit rate", "1.2 kbit/s")
+        .value("bits per pixel", "25")
+        .value("bit depth", "8-bit")
+        .value("chroma subsampling", "4:2:0")
+        .value("size", "1.5 KiB")
+        .build(),
     );
 
     video.duration = 0;
 
     assert_eq!(
       track.info(&video),
-      Info::Map(vec![
-        ("type".into(), Info::Value("video".into())),
-        ("codec".into(), Info::Value("H.264".into())),
-        ("dimensions".into(), Info::Value("2×1".into())),
-        ("orientation".into(), Info::Value("0°".into())),
-        ("frames".into(), Info::Value("240".into())),
-        ("bits per pixel".into(), Info::Value("25".into())),
-        ("bit depth".into(), Info::Value("8-bit".into())),
-        ("chroma subsampling".into(), Info::Value("4:2:0".into())),
-        ("size".into(), Info::Value("1.5 KiB".into())),
-      ]),
+      InfoBuilder::new()
+        .value("type", "video")
+        .value("codec", "H.264")
+        .value("dimensions", "2×1")
+        .value("orientation", "0°")
+        .value("frames", "240")
+        .value("bits per pixel", "25")
+        .value("bit depth", "8-bit")
+        .value("chroma subsampling", "4:2:0")
+        .value("size", "1.5 KiB")
+        .build(),
     );
 
     let track = Track {
@@ -192,27 +192,27 @@ mod tests {
 
     assert_eq!(
       track.info(&video),
-      Info::Map(vec![
-        ("type".into(), Info::Value("audio".into())),
-        ("codec".into(), Info::Value("AAC".into())),
-        ("channels".into(), Info::Value("2".into())),
-        ("sample rate".into(), Info::Value("44.1 kHz".into())),
-        ("bit rate".into(), Info::Value("1 kbit/s".into())),
-        ("size".into(), Info::Value("1.2 KiB".into())),
-      ]),
+      InfoBuilder::new()
+        .value("type", "audio")
+        .value("codec", "AAC")
+        .value("channels", "2")
+        .value("sample rate", "44.1 kHz")
+        .value("bit rate", "1 kbit/s")
+        .value("size", "1.2 KiB")
+        .build(),
     );
 
     video.duration = 0;
 
     assert_eq!(
       track.info(&video),
-      Info::Map(vec![
-        ("type".into(), Info::Value("audio".into())),
-        ("codec".into(), Info::Value("AAC".into())),
-        ("channels".into(), Info::Value("2".into())),
-        ("sample rate".into(), Info::Value("44.1 kHz".into())),
-        ("size".into(), Info::Value("1.2 KiB".into())),
-      ]),
+      InfoBuilder::new()
+        .value("type", "audio")
+        .value("codec", "AAC")
+        .value("channels", "2")
+        .value("sample rate", "44.1 kHz")
+        .value("size", "1.2 KiB")
+        .build(),
     );
   }
 
