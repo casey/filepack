@@ -47,4 +47,6 @@ pub enum VideoError {
   VideoTrackMultiple,
   #[snafu(display("invalid VP9 frame header"))]
   Vp9FrameHeaderInvalid,
+  #[snafu(display("empty VP9 video track: cannot determine color metadata without frames"))]
+  Vp9TrackEmpty,
 }

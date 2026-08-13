@@ -61,11 +61,8 @@ impl Track {
               size: self.size,
             },
           )
-          .optional(
-            "bit depth",
-            bit_depth.map(|bit_depth| format!("{bit_depth}-bit")),
-          )
-          .optional("chroma subsampling", chroma_subsampling)
+          .value("bit depth", format!("{bit_depth}-bit"))
+          .value("chroma subsampling", chroma_subsampling)
       }
     };
 
@@ -112,8 +109,8 @@ mod tests {
       Track {
         codec: Codec::H264,
         info: TrackInfo::Video {
-          bit_depth: Some(8),
-          chroma_subsampling: Some(ChromaSubsampling::Yuv420),
+          bit_depth: 8,
+          chroma_subsampling: ChromaSubsampling::Yuv420,
           dimensions: Dimensions {
             height: 1,
             width: 2,
@@ -132,8 +129,8 @@ mod tests {
     let track = Track {
       codec: Codec::H264,
       info: TrackInfo::Video {
-        bit_depth: Some(8),
-        chroma_subsampling: None,
+        bit_depth: 8,
+        chroma_subsampling: ChromaSubsampling::Yuv420,
         dimensions: Dimensions {
           height: 1,
           width: 2,
@@ -160,6 +157,7 @@ mod tests {
         ("bit rate".into(), Info::Value("1.2 kbit/s".into())),
         ("bits per pixel".into(), Info::Value("25".into())),
         ("bit depth".into(), Info::Value("8-bit".into())),
+        ("chroma subsampling".into(), Info::Value("4:2:0".into())),
         ("size".into(), Info::Value("1.5 KiB".into())),
       ]),
     );
@@ -176,6 +174,7 @@ mod tests {
         ("frames".into(), Info::Value("240".into())),
         ("bits per pixel".into(), Info::Value("25".into())),
         ("bit depth".into(), Info::Value("8-bit".into())),
+        ("chroma subsampling".into(), Info::Value("4:2:0".into())),
         ("size".into(), Info::Value("1.5 KiB".into())),
       ]),
     );
@@ -236,8 +235,8 @@ mod tests {
       serde_json::to_string(&Track {
         codec: Codec::H264,
         info: TrackInfo::Video {
-          bit_depth: Some(8),
-          chroma_subsampling: Some(ChromaSubsampling::Yuv420),
+          bit_depth: 8,
+          chroma_subsampling: ChromaSubsampling::Yuv420,
           dimensions: Dimensions {
             height: 1,
             width: 2,
@@ -249,25 +248,6 @@ mod tests {
       })
       .unwrap(),
       r#"{"codec":"h264","info":{"type":"video","bit_depth":8,"chroma_subsampling":"4:2:0","dimensions":{"height":1,"width":2},"frames":0,"orientation":{"mirrored":false,"rotation":0}},"size":0}"#,
-    );
-
-    assert_eq!(
-      serde_json::to_string(&Track {
-        codec: Codec::H264,
-        info: TrackInfo::Video {
-          bit_depth: None,
-          chroma_subsampling: None,
-          dimensions: Dimensions {
-            height: 1,
-            width: 2,
-          },
-          frames: 0,
-          orientation: Orientation::new(),
-        },
-        size: 0,
-      })
-      .unwrap(),
-      r#"{"codec":"h264","info":{"type":"video","dimensions":{"height":1,"width":2},"frames":0,"orientation":{"mirrored":false,"rotation":0}},"size":0}"#,
     );
   }
 }
