@@ -8,19 +8,19 @@ pub(crate) struct Client {
 
 impl Client {
   fn delete(&self, path: &str) -> Result<reqwest::blocking::Response> {
-    self.request(self.client.delete(self.url(path)))
+    self
+      .request(self.client.delete(self.url(path)))?
+      .check_status()
   }
 
   pub(crate) fn delete_package(&self, fingerprint: Fingerprint) -> Result {
-    self
-      .delete(&format!("api/package/{fingerprint}"))?
-      .check_status()?;
+    self.delete(&format!("api/package/{fingerprint}"))?;
 
     Ok(())
   }
 
   pub(crate) fn file(&self, hash: Hash) -> Result<reqwest::blocking::Response> {
-    self.get(&format!("file/{hash}"))?.check_status()
+    self.get(&format!("file/{hash}"))
   }
 
   pub(crate) fn file_url(&self, hash: Hash) -> Url {
@@ -28,15 +28,17 @@ impl Client {
   }
 
   fn get(&self, path: &str) -> Result<reqwest::blocking::Response> {
-    self.request(self.client.get(self.url(path)))
+    self
+      .request(self.client.get(self.url(path)))?
+      .check_status()
   }
 
   pub(crate) fn has_package(&self, fingerprint: Fingerprint) -> Result<bool> {
-    self.head(&format!("package/{fingerprint}"))?.found()
+    self.head(&format!("package/{fingerprint}"))
   }
 
-  fn head(&self, path: &str) -> Result<reqwest::blocking::Response> {
-    self.request(self.client.head(self.url(path)))
+  fn head(&self, path: &str) -> Result<bool> {
+    self.request(self.client.head(self.url(path)))?.found()
   }
 
   pub(crate) fn missing_files(&self, hashes: BTreeSet<Hash>) -> Result<HashSet<Hash>> {
@@ -48,7 +50,6 @@ impl Client {
     Ok(
       self
         .post_with_body("api/missing", body)?
-        .check_status()?
         .cbor::<api::missing::Response>()?
         .hashes
         .into_iter()
@@ -98,7 +99,9 @@ impl Client {
   }
 
   fn post(&self, path: &str) -> Result<reqwest::blocking::Response> {
-    self.request(self.client.post(self.url(path)))
+    self
+      .request(self.client.post(self.url(path)))?
+      .check_status()
   }
 
   fn post_with_body(
@@ -106,7 +109,9 @@ impl Client {
     path: &str,
     body: impl Into<reqwest::blocking::Body>,
   ) -> Result<reqwest::blocking::Response> {
-    self.request(self.client.post(self.url(path)).body(body.into()))
+    self
+      .request(self.client.post(self.url(path)).body(body.into()))?
+      .check_status()
   }
 
   fn put(
@@ -114,11 +119,13 @@ impl Client {
     path: &str,
     body: impl Into<reqwest::blocking::Body>,
   ) -> Result<reqwest::blocking::Response> {
-    self.request(self.client.put(self.url(path)).body(body.into()))
+    self
+      .request(self.client.put(self.url(path)).body(body.into()))?
+      .check_status()
   }
 
   pub(crate) fn put_file(&self, hash: Hash, body: reqwest::blocking::Body) -> Result {
-    self.put(&format!("file/{hash}"), body)?.check_status()?;
+    self.put(&format!("file/{hash}"), body)?;
 
     Ok(())
   }
@@ -137,17 +144,13 @@ impl Client {
   }
 
   pub(crate) fn verify_directory(&self, hash: Hash) -> Result {
-    self
-      .post(&format!("api/directory/{hash}"))?
-      .check_status()?;
+    self.post(&format!("api/directory/{hash}"))?;
 
     Ok(())
   }
 
   pub(crate) fn verify_package(&self, fingerprint: Fingerprint) -> Result {
-    self
-      .post(&format!("api/package/{fingerprint}"))?
-      .check_status()?;
+    self.post(&format!("api/package/{fingerprint}"))?;
 
     Ok(())
   }
