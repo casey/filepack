@@ -25,6 +25,22 @@ pub(crate) async fn api_packages(server: ServerExtension) -> ServerResult<Vec<u8
   })
 }
 
+pub(crate) async fn api_verify_directory(
+  _: Authenticated,
+  server: ServerExtension,
+  hash: Path<Hash>,
+) -> ServerResult {
+  block_in_place(|| server.verify_directory(*hash))
+}
+
+pub(crate) async fn api_verify_package(
+  _: Authenticated,
+  server: ServerExtension,
+  Path(fingerprint): Path<Fingerprint>,
+) -> ServerResult {
+  block_in_place(|| server.verify_package(fingerprint))
+}
+
 pub(crate) async fn artwork(
   server: ServerExtension,
   fingerprint: Path<Fingerprint>,
@@ -338,20 +354,4 @@ pub(crate) async fn upload_file(
   body: Body,
 ) -> ServerResult {
   server.write_file(*hash, body).await
-}
-
-pub(crate) async fn verify_directory(
-  _: Authenticated,
-  server: ServerExtension,
-  hash: Path<Hash>,
-) -> ServerResult {
-  block_in_place(|| server.verify_directory(*hash))
-}
-
-pub(crate) async fn verify_package(
-  _: Authenticated,
-  server: ServerExtension,
-  Path(fingerprint): Path<Fingerprint>,
-) -> ServerResult {
-  block_in_place(|| server.verify_package(fingerprint))
 }

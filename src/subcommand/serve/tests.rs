@@ -71,7 +71,7 @@ impl<'a> DirectoryBuilder<'a> {
     let (cbor, hash) = self.build().cbor();
 
     server.write_file(&cbor);
-    server.post(format!("/directory/{hash}")).send();
+    server.post(format!("/api/directory/{hash}")).send();
 
     hash
   }
@@ -113,7 +113,7 @@ impl<'a> PackageBuilder<'a> {
   fn upload(self, server: &TestServer) -> Fingerprint {
     let fingerprint = Fingerprint(self.root.upload(server));
 
-    server.post(format!("/package/{fingerprint}")).send();
+    server.post(format!("/api/package/{fingerprint}")).send();
 
     fingerprint
   }
@@ -418,8 +418,8 @@ fn artwork_missing() {
   let fingerprint = Fingerprint(hash);
   server.write_file(&cbor);
 
-  server.post(format!("/directory/{hash}")).send();
-  server.post(format!("/package/{fingerprint}")).send();
+  server.post(format!("/api/directory/{hash}")).send();
+  server.post(format!("/api/package/{fingerprint}")).send();
 
   let mut corrupt = Directory::new();
   corrupt.insert_file(Metadata::CBOR_FILENAME, &metadata_cbor);
@@ -493,8 +493,8 @@ fn artwork_response() {
     let fingerprint = Fingerprint(hash);
     server.write_file(&cbor);
 
-    server.post(format!("/directory/{hash}")).send();
-    server.post(format!("/package/{fingerprint}")).send();
+    server.post(format!("/api/directory/{hash}")).send();
+    server.post(format!("/api/package/{fingerprint}")).send();
 
     server
       .get(format!("/artwork/{fingerprint}"))
@@ -728,7 +728,7 @@ fn get_directory_succeeds() {
   let (cbor, hash) = directory.cbor();
   server.write_file(&cbor);
 
-  server.post(format!("/directory/{hash}")).send();
+  server.post(format!("/api/directory/{hash}")).send();
 
   server
     .get(format!("/directory/{hash}"))
@@ -790,8 +790,8 @@ fn get_package_with_metadata() {
   let fingerprint = Fingerprint(hash);
   server.write_file(&cbor);
 
-  server.post(format!("/directory/{hash}")).send();
-  server.post(format!("/package/{fingerprint}")).send();
+  server.post(format!("/api/directory/{hash}")).send();
+  server.post(format!("/api/package/{fingerprint}")).send();
 
   server
     .get(format!("/package/{fingerprint}"))
@@ -821,8 +821,8 @@ fn get_package_without_metadata() {
   let fingerprint = Fingerprint(hash);
   server.write_file(&cbor);
 
-  server.post(format!("/directory/{hash}")).send();
-  server.post(format!("/package/{fingerprint}")).send();
+  server.post(format!("/api/directory/{hash}")).send();
+  server.post(format!("/api/package/{fingerprint}")).send();
 
   server
     .get(format!("/package/{fingerprint}"))
@@ -970,8 +970,8 @@ fn media_audio_item_package_without_metadata() {
   let fingerprint = Fingerprint(hash);
   server.write_file(&cbor);
 
-  server.post(format!("/directory/{hash}")).send();
-  server.post(format!("/package/{fingerprint}")).send();
+  server.post(format!("/api/directory/{hash}")).send();
+  server.post(format!("/api/package/{fingerprint}")).send();
 
   server
     .get(format!("/media/audio/{fingerprint}/item/1"))
@@ -1750,8 +1750,8 @@ fn package_item_without_metadata() {
   let fingerprint = Fingerprint(hash);
   server.write_file(&cbor);
 
-  server.post(format!("/directory/{hash}")).send();
-  server.post(format!("/package/{fingerprint}")).send();
+  server.post(format!("/api/directory/{hash}")).send();
+  server.post(format!("/api/package/{fingerprint}")).send();
 
   server
     .get(format!("/package/{fingerprint}/item/1"))
@@ -1829,8 +1829,8 @@ fn package_page_og_image() {
   let fingerprint = Fingerprint(hash);
   server.write_file(&cbor);
 
-  server.post(format!("/directory/{hash}")).send();
-  server.post(format!("/package/{fingerprint}")).send();
+  server.post(format!("/api/directory/{hash}")).send();
+  server.post(format!("/api/package/{fingerprint}")).send();
 
   server
     .get(format!("/package/{fingerprint}"))
@@ -2172,8 +2172,8 @@ fn packages_non_empty() {
     let (cbor, hash) = Directory::new().insert_file("file", content).cbor();
     let fingerprint = Fingerprint(hash);
     server.write_file(&cbor);
-    server.post(format!("/directory/{hash}")).send();
-    server.post(format!("/package/{fingerprint}")).send();
+    server.post(format!("/api/directory/{hash}")).send();
+    server.post(format!("/api/package/{fingerprint}")).send();
     packages.push((
       fingerprint,
       None,
@@ -2467,7 +2467,7 @@ fn verify_directory_decode_error() {
   server.write_file(junk);
 
   server
-    .post(format!("/directory/{hash}"))
+    .post(format!("/api/directory/{hash}"))
     .status(StatusCode::BAD_REQUEST)
     .assert_body(format!("failed to decode directory {hash}"))
     .send();
@@ -2486,7 +2486,7 @@ fn verify_directory_entry_size_mismatch() {
   server.write_file(&cbor);
 
   server
-    .post(format!("/directory/{hash}"))
+    .post(format!("/api/directory/{hash}"))
     .status(StatusCode::BAD_REQUEST)
     .assert_body(format!(
       "directory {hash} entry `foo` size mismatch, expected 4 but found 3"
@@ -2501,7 +2501,7 @@ fn verify_directory_file_not_found() {
   let hash = Hash::bytes(b"foo");
 
   server
-    .post(format!("/directory/{hash}"))
+    .post(format!("/api/directory/{hash}"))
     .status(StatusCode::NOT_FOUND)
     .assert_body(format!("file with hash {hash} not found"))
     .send();
@@ -2515,8 +2515,8 @@ fn verify_directory_idempotent() {
   let (cbor, hash) = directory.cbor();
   server.write_file(&cbor);
 
-  server.post(format!("/directory/{hash}")).send();
-  server.post(format!("/directory/{hash}")).send();
+  server.post(format!("/api/directory/{hash}")).send();
+  server.post(format!("/api/directory/{hash}")).send();
 
   server
     .get(format!("/directory/{hash}"))
@@ -2534,7 +2534,7 @@ fn verify_directory_missing_file() {
   server.write_file(&cbor);
 
   server
-    .post(format!("/directory/{hash}"))
+    .post(format!("/api/directory/{hash}"))
     .status(StatusCode::BAD_REQUEST)
     .assert_body(format!(
       "directory {hash} references missing file entry `foo` with hash {}",
@@ -2554,7 +2554,7 @@ fn verify_directory_missing_subdirectory() {
   server.write_file(&parent_cbor);
 
   server
-    .post(format!("/directory/{parent_hash}"))
+    .post(format!("/api/directory/{parent_hash}"))
     .status(StatusCode::BAD_REQUEST)
     .assert_body(format!(
       "directory {parent_hash} references missing directory entry `child` with hash {child_hash}"
@@ -2575,7 +2575,7 @@ fn verify_directory_rejects_missing_auth_header() {
   let hash = Hash::bytes(b"foo");
 
   server
-    .post(format!("/directory/{hash}"))
+    .post(format!("/api/directory/{hash}"))
     .status(StatusCode::UNAUTHORIZED)
     .assert_body("missing authorization header")
     .send();
@@ -2589,7 +2589,7 @@ fn verify_directory_subdirectory_totals_mismatch() {
   let (child_cbor, child_hash) = child.cbor();
   server.write_file(&child_cbor);
 
-  server.post(format!("/directory/{child_hash}")).send();
+  server.post(format!("/api/directory/{child_hash}")).send();
 
   let (parent_cbor, parent_hash) = Directory::new()
     .insert_entry(
@@ -2609,7 +2609,7 @@ fn verify_directory_subdirectory_totals_mismatch() {
   server.write_file(&parent_cbor);
 
   server
-    .post(format!("/directory/{parent_hash}"))
+    .post(format!("/api/directory/{parent_hash}"))
     .status(StatusCode::BAD_REQUEST)
     .assert_body(format!(
       "directory {parent_hash} entry `child` totals error: totals mismatch, found 0 bytes in 0 \
@@ -2631,7 +2631,7 @@ fn verify_directory_succeeds() {
 
   server.write_file(&child_cbor);
 
-  server.post(format!("/directory/{child_hash}")).send();
+  server.post(format!("/api/directory/{child_hash}")).send();
 
   server
     .get(format!("/directory/{child_hash}"))
@@ -2647,7 +2647,7 @@ fn verify_directory_succeeds() {
   let (parent_cbor, parent_hash) = parent.cbor();
   server.write_file(&parent_cbor);
 
-  server.post(format!("/directory/{parent_hash}")).send();
+  server.post(format!("/api/directory/{parent_hash}")).send();
 
   server
     .get(format!("/directory/{parent_hash}"))
@@ -2673,7 +2673,7 @@ fn verify_directory_totals_overflow() {
   server.write_file(&cbor);
 
   server
-    .post(format!("/directory/{hash}"))
+    .post(format!("/api/directory/{hash}"))
     .status(StatusCode::BAD_REQUEST)
     .assert_body(format!("directory {hash} totals error"))
     .send();
@@ -2691,7 +2691,7 @@ fn verify_directory_unverified_subdirectory() {
   server.write_file(&parent_cbor);
 
   server
-    .post(format!("/directory/{parent_hash}"))
+    .post(format!("/api/directory/{parent_hash}"))
     .status(StatusCode::BAD_REQUEST)
     .assert_body(format!(
       "directory {parent_hash} references unverified subdirectory {child_hash}"
@@ -2712,10 +2712,10 @@ fn verify_package_metadata_decode_error() {
   let fingerprint = Fingerprint(hash);
   server.write_file(&cbor);
 
-  server.post(format!("/directory/{hash}")).send();
+  server.post(format!("/api/directory/{hash}")).send();
 
   server
-    .post(format!("/package/{fingerprint}"))
+    .post(format!("/api/package/{fingerprint}"))
     .status(StatusCode::BAD_REQUEST)
     .assert_body(format!(
       "failed to decode metadata for package {fingerprint}"
@@ -2740,10 +2740,10 @@ fn verify_package_metadata_references_missing_file() {
   let fingerprint = Fingerprint(hash);
   server.write_file(&cbor);
 
-  server.post(format!("/directory/{hash}")).send();
+  server.post(format!("/api/directory/{hash}")).send();
 
   server
-    .post(format!("/package/{fingerprint}"))
+    .post(format!("/api/package/{fingerprint}"))
     .status(StatusCode::BAD_REQUEST)
     .assert_body(format!(
       "package {fingerprint} metadata references missing file `cover.png`"
@@ -2772,9 +2772,9 @@ fn verify_package_metadata_references_present_file() {
   let fingerprint = Fingerprint(hash);
   server.write_file(&cbor);
 
-  server.post(format!("/directory/{hash}")).send();
+  server.post(format!("/api/directory/{hash}")).send();
 
-  server.post(format!("/package/{fingerprint}")).send();
+  server.post(format!("/api/package/{fingerprint}")).send();
 }
 
 #[test]
@@ -2786,7 +2786,7 @@ fn verify_package_unverified() {
   server.write_file(&cbor);
 
   server
-    .post(format!("/package/{fingerprint}"))
+    .post(format!("/api/package/{fingerprint}"))
     .status(StatusCode::BAD_REQUEST)
     .assert_body(format!(
       "package {fingerprint} root directory is unverified"
