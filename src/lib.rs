@@ -40,6 +40,7 @@ use {
     cbor::Cbor,
     checked_url::CheckedUrl,
     chroma_subsampling::ChromaSubsampling,
+    client::Client,
     codec::Codec,
     color_info::ColorInfo,
     color_type::ColorType,
@@ -69,8 +70,8 @@ use {
     float_ext::FloatExt,
     format::Format,
     functions::{
-      client, current_dir, decode_path, default, format_size, is_lowercase_hex, load_auth_key, now,
-      parse_number, request_with_token, transfer_tempfile,
+      current_dir, decode_path, default, format_size, is_lowercase_hex, now, parse_number,
+      transfer_tempfile,
     },
     hash_error::HashError,
     hashing_writer::HashingWriter,
@@ -107,7 +108,6 @@ use {
     private_key_error::PrivateKeyError,
     public_key_error::PublicKeyError,
     reqwest_response_ext::ReqwestResponseExt,
-    reqwest_result_ext::ReqwestResultExt,
     resource::Resource,
     resource_type::ResourceType,
     rotation::Rotation,
@@ -165,7 +165,6 @@ use {
   num_traits::One,
   owo_colors::Styled,
   regex::Regex,
-  reqwest::blocking::Client,
   serde::{Deserialize, Deserializer, Serialize, Serializer},
   serde_with::{
     DeserializeFromStr, MapPreventDuplicates, SerializeDisplay, SetPreventDuplicates, serde_as,
@@ -291,6 +290,7 @@ mod cause;
 mod cbor;
 mod checked_url;
 mod chroma_subsampling;
+mod client;
 mod codec;
 mod color_info;
 mod color_type;
@@ -382,7 +382,6 @@ mod public_key_error;
 mod re;
 mod relative_path;
 mod reqwest_response_ext;
-mod reqwest_result_ext;
 mod resource;
 mod resource_type;
 mod rotation;

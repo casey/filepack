@@ -12,19 +12,6 @@ pub(crate) struct Delete {
 
 impl Delete {
   pub(crate) fn run(self, options: Options) -> Result {
-    let key = load_auth_key(&options, &self.server, self.auth.as_ref())?;
-
-    let url = self
-      .server
-      .join(&format!("api/package/{}", self.fingerprint))
-      .unwrap();
-
-    let request = client()?.delete(url);
-
-    request_with_token(request, &self.server, key.as_ref())?
-      .send()
-      .check_status()?;
-
-    Ok(())
+    Client::new(&options, self.server.clone(), self.auth.as_ref())?.delete_package(self.fingerprint)
   }
 }

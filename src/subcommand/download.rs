@@ -37,13 +37,13 @@ impl Download {
       error::FileAlreadyExists { path },
     }
 
-    let client = client()?;
+    let client = Client::new(options, self.server.clone(), None)?;
 
-    let response = self.get_file(&client, hash)?;
+    let response = client.file(hash)?;
 
     let bar = progress_bar::new(options, response.content_length().unwrap_or(0));
 
-    self.write_response(response, hash, path, &bar)?;
+    Self::write_response(&client, response, hash, path, &bar)?;
 
     bar.finish();
 
@@ -56,7 +56,7 @@ impl Download {
       error::FileAlreadyExists { path: &self.output },
     }
 
-    let client = client()?;
+    let client = Client::new(options, self.server.clone(), None)?;
 
     let mut stack = vec![(Hash::from(fingerprint), self.output.clone(), None)];
 
@@ -71,9 +71,9 @@ impl Download {
     let mut progress_bar = None::<ProgressBar>;
 
     while let Some((hash, path, expected_totals)) = stack.pop() {
-      let url = self.file_url(hash);
+      let url = client.file_url(hash);
 
-      let response = self.get_file(&client, hash)?;
+      let response = client.file(hash)?;
 
       let cbor = response
         .bytes()
@@ -144,7 +144,7 @@ impl Download {
     };
 
     for (hash, path) in &files {
-      self.download_package_file(&mut context, *hash, path)?;
+      Self::download_package_file(&mut context, *hash, path)?;
     }
 
     let metadata_path = self.output.join(Metadata::CBOR_FILENAME);
@@ -185,15 +185,15 @@ impl Download {
     Ok(())
   }
 
-  fn download_package_file(&self, context: &mut Context, hash: Hash, path: &Utf8Path) -> Result {
+  fn download_package_file(context: &mut Context, hash: Hash, path: &Utf8Path) -> Result {
     ensure! {
       !filesystem::exists(path)?,
       error::FileAlreadyExists { path },
     }
 
-    let response = self.get_file(&context.client, hash)?;
+    let response = context.client.file(hash)?;
 
-    self.write_response(response, hash, path, &context.progress_bar)?;
+    Self::write_response(&context.client, response, hash, path, &context.progress_bar)?;
 
     context.entries_downloaded += 1;
 
@@ -207,18 +207,6 @@ impl Download {
     Ok(())
   }
 
-  fn file_url(&self, hash: Hash) -> Url {
-    self.server.join(&format!("file/{hash}")).unwrap()
-  }
-
-  fn get_file(&self, client: &Client, hash: Hash) -> Result<Response> {
-    let url = self.file_url(hash);
-
-    let response = client.get(url).send().check_status()?;
-
-    Ok(response)
-  }
-
   pub(crate) fn run(self, options: Options) -> Result {
     if let Some(hash) = self.file {
       self.download_file(&options, hash, &self.output)
@@ -228,7 +216,7 @@ impl Download {
   }
 
   fn write_response(
-    &self,
+    client: &Client,
     mut response: Response,
     hash: Hash,
     path: &Utf8Path,
@@ -248,7 +236,7 @@ impl Download {
     response
       .copy_to(&mut bar.wrap_write(&mut writer))
       .with_context(|_| error::ResponseBody {
-        url: self.file_url(hash),
+        url: client.file_url(hash),
       })?;
 
     let (actual, tempfile) = writer.finalize();

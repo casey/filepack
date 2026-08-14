@@ -5,7 +5,6 @@ struct Context {
   client: Client,
   files: u64,
   files_uploaded: u64,
-  key: Option<PrivateKey>,
   missing: HashSet<Hash>,
   path: Utf8PathBuf,
   progress_bar: ProgressBar,
@@ -29,31 +28,16 @@ pub(crate) struct Upload {
 
 impl Upload {
   pub(crate) fn run(self, options: Options) -> Result {
-    let key = load_auth_key(&options, &self.server, self.auth.as_ref())?;
+    let client = Client::new(&options, self.server.clone(), self.auth.as_ref())?;
 
     if self.file {
-      self.upload_file(&options, key.as_ref())
+      self.upload_file(&options, &client)
     } else {
-      self.upload_package(options, key)
+      self.upload_package(options, client)
     }
   }
 
-  fn upload_body(
-    &self,
-    client: &Client,
-    hash: Hash,
-    body: Body,
-    key: Option<&PrivateKey>,
-  ) -> Result {
-    let url = self.server.join(&format!("file/{hash}")).unwrap();
-    let request = client.put(url).body(body);
-    request_with_token(request, &self.server, key)?
-      .send()
-      .check_status()?;
-    Ok(())
-  }
-
-  fn upload_directory(&self, context: &mut Context, file_path: &Utf8Path, hash: Hash) -> Result {
+  fn upload_directory(context: &mut Context, file_path: &Utf8Path, hash: Hash) -> Result {
     let error_context = error::UnarchiveManifest {
       path: &context.path,
     };
@@ -64,20 +48,15 @@ impl Upload {
       .context(archive_error::DirectoryDecode)
       .context(error_context)?;
 
-    self.upload_body(
-      &context.client,
-      hash,
-      cbor.to_vec().into(),
-      context.key.as_ref(),
-    )?;
+    context.client.put_file(hash, cbor.to_vec().into())?;
 
     for (component, entry) in &directory.entries {
       let file_path = file_path.join(component);
       match entry {
-        Entry::Directory { hash, .. } => self.upload_directory(context, &file_path, *hash)?,
+        Entry::Directory { hash, .. } => Self::upload_directory(context, &file_path, *hash)?,
         Entry::File { hash, .. } => {
           if context.missing.contains(hash) {
-            self.upload_package_file(context, entry, &file_path)?;
+            Self::upload_package_file(context, entry, &file_path)?;
             context.files_uploaded += 1;
             context
               .progress_bar
@@ -90,16 +69,12 @@ impl Upload {
       }
     }
 
-    let url = self.server.join(&format!("api/directory/{hash}")).unwrap();
-    let request = context.client.post(url);
-    request_with_token(request, &self.server, context.key.as_ref())?
-      .send()
-      .check_status()?;
+    context.client.verify_directory(hash)?;
 
     Ok(())
   }
 
-  fn upload_file(&self, options: &Options, key: Option<&PrivateKey>) -> Result {
+  fn upload_file(&self, options: &Options, client: &Client) -> Result {
     let input = self.input.as_deref().unwrap();
 
     let File { hash, size } = options
@@ -112,27 +87,21 @@ impl Upload {
 
     let body = Body::sized(bar.wrap_read(file), size);
 
-    let client = client()?;
-
-    self.upload_body(&client, hash, body, key)?;
+    client.put_file(hash, body)?;
 
     bar.finish();
 
     Ok(())
   }
 
-  fn upload_package(&self, options: Options, key: Option<PrivateKey>) -> Result {
+  fn upload_package(&self, options: Options, client: Client) -> Result {
     let (path, archive) = Archive::load_with_opt_path(self.input.as_deref())?;
 
     let error_context = error::UnarchiveManifest { path: &path };
 
     let fingerprint = archive.fingerprint().context(error_context)?;
 
-    let client = client()?;
-
-    let url = self.server.join(&format!("package/{fingerprint}")).unwrap();
-
-    if client.head(url).send().found()?.is_some() {
+    if client.has_package(fingerprint)? {
       if !options.quiet {
         eprintln!("server already has package");
       }
@@ -149,23 +118,7 @@ impl Upload {
       .map(|file| file.hash)
       .collect::<BTreeSet<Hash>>();
 
-    let body = api::missing::Request {
-      hashes: hashes.into(),
-    }
-    .encode_to_vec();
-
-    let url = self.server.join("api/missing").unwrap();
-
-    let missing = client
-      .post(url)
-      .body(body)
-      .send()
-      .check_status()?
-      .cbor::<api::missing::Response>()?
-      .hashes
-      .iter()
-      .copied()
-      .collect::<HashSet<Hash>>();
+    let missing = client.missing_files(hashes)?;
 
     let mut files = 0;
 
@@ -196,7 +149,6 @@ impl Upload {
       progress_bar,
       client,
       files_uploaded: 0,
-      key,
       missing,
       path,
       files,
@@ -204,28 +156,21 @@ impl Upload {
 
     let root = context.path.parent().unwrap().to_owned();
 
-    self.upload_directory(&mut context, &root, fingerprint.into())?;
+    Self::upload_directory(&mut context, &root, fingerprint.into())?;
 
-    let url = self
-      .server
-      .join(&format!("api/package/{fingerprint}"))
-      .unwrap();
-    let request = context.client.post(url);
-    request_with_token(request, &self.server, context.key.as_ref())?
-      .send()
-      .check_status()?;
+    context.client.verify_package(fingerprint)?;
 
     context.progress_bar.finish();
 
     Ok(())
   }
 
-  fn upload_package_file(&self, context: &Context, expected: &Entry, path: &Utf8Path) -> Result {
+  fn upload_package_file(context: &Context, expected: &Entry, path: &Utf8Path) -> Result {
     let file = filesystem::open(path)?;
 
     let body = Body::sized(context.progress_bar.wrap_read(file), expected.size());
 
-    self.upload_body(&context.client, expected.hash(), body, context.key.as_ref())?;
+    context.client.put_file(expected.hash(), body)?;
 
     Ok(())
   }
