@@ -11,25 +11,21 @@ pub(crate) async fn api_delete_package(
 pub(crate) async fn api_missing(
   server: ServerExtension,
   Cbor(request): Cbor<api::missing::Request, { MIB }>,
-) -> ServerResult<Vec<u8>> {
+) -> ServerResult<CborResponse<api::missing::Response>> {
   block_in_place(|| {
-    Ok(
-      api::missing::Response {
-        hashes: server.missing(&request.hashes)?.into(),
-      }
-      .encode_to_vec(),
-    )
+    Ok(CborResponse(api::missing::Response {
+      hashes: server.missing(&request.hashes)?.into(),
+    }))
   })
 }
 
-pub(crate) async fn api_packages(server: ServerExtension) -> ServerResult<Vec<u8>> {
+pub(crate) async fn api_packages(
+  server: ServerExtension,
+) -> ServerResult<CborResponse<api::packages::Response>> {
   block_in_place(|| {
-    Ok(
-      api::packages::Response {
-        packages: server.fingerprints()?.into(),
-      }
-      .encode_to_vec(),
-    )
+    Ok(CborResponse(api::packages::Response {
+      packages: server.fingerprints()?.into(),
+    }))
   })
 }
 
