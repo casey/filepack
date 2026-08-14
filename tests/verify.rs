@@ -818,7 +818,7 @@ fn weak_signature_public_key() {
     use ::bech32::{Bech32m, Fe32IterExt, NoChecksum, primitives::decode::CheckedHrpstring};
     let checked_hrpstring = CheckedHrpstring::new::<NoChecksum>(s).unwrap();
     checked_hrpstring
-      .fe32_iter::<std::vec::IntoIter<u8>>()
+      .fe32_iter::<vec::IntoIter<u8>>()
       .with_checksum::<Bech32m>(&checked_hrpstring.hrp())
       .chars()
       .collect()

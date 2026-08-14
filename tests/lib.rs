@@ -21,6 +21,7 @@ use {
     sync::mpsc,
     thread,
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
+    vec,
   },
   tempfile::{NamedTempFile, TempDir},
   unindent::unindent,

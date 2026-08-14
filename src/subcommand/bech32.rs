@@ -43,7 +43,7 @@ impl Bech32 {
         })?;
 
       let mut fes = hrp_string
-        .fe32_iter::<std::vec::IntoIter<u8>>()
+        .fe32_iter::<vec::IntoIter<u8>>()
         .collect::<Vec<Fe32>>();
 
       if let Some(prefix) = prefix {
