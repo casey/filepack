@@ -195,6 +195,7 @@ use {
       atomic::{self, AtomicU64},
     },
     time::{Duration, SystemTime, SystemTimeError, UNIX_EPOCH},
+    vec,
   },
   strum::{
     Display, EnumDiscriminants, EnumIter, EnumString, FromRepr, IntoDiscriminant, IntoEnumIterator,

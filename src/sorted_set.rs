@@ -34,6 +34,15 @@ impl<T: PartialOrd> Validate for SortedSet<T> {
   }
 }
 
+impl<T> IntoIterator for SortedSet<T> {
+  type IntoIter = vec::IntoIter<T>;
+  type Item = T;
+
+  fn into_iter(self) -> Self::IntoIter {
+    self.0.into_iter()
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
