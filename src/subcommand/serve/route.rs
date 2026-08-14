@@ -355,4 +355,3 @@ pub(crate) async fn upload_file(
 ) -> ServerResult {
   server.write_file(*hash, body).await
 }
-
