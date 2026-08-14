@@ -363,10 +363,8 @@ fn non_unicode_path_error() {
 fn private_key_load_error_message() {
   Test::new()
     .touch("foo/bar")
-    .touch("keychain/master.private")
-    .write("keychain/master.public", PUBLIC_KEY)
-    .chmod("keychain", 0o700)
-    .chmod("keychain/master.private", 0o600)
+    .write_keypair("master")
+    .write("keychain/master.private", "")
     .args(["create", "--sign", "foo"])
     .stderr_regex("error: invalid private key `.*master.private`.*failed to decode bech32.*")
     .failure();

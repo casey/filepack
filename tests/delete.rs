@@ -74,10 +74,7 @@ fn delete_package_succeeds() {
 #[test]
 fn restricted_delete_succeeds_with_auth() {
   let server = Test::new()
-    .write("keychain/master.public", PUBLIC_KEY)
-    .write("keychain/master.private", PRIVATE_KEY)
-    .chmod("keychain", 0o700)
-    .chmod("keychain/master.private", 0o600)
+    .write_keypair("master")
     .ready_address()
     .args([
       "serve",
@@ -94,10 +91,7 @@ fn restricted_delete_succeeds_with_auth() {
     .spawn();
 
   let test = Test::new()
-    .write("keychain/master.public", PUBLIC_KEY)
-    .write("keychain/master.private", PRIVATE_KEY)
-    .chmod("keychain", 0o700)
-    .chmod("keychain/master.private", 0o600)
+    .write_keypair("master")
     .write("pkg/foo", "bar")
     .args(["create", "pkg"])
     .success();
