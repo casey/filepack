@@ -269,7 +269,7 @@ macro_rules! assert_matches_regex {
   }};
 }
 
-pub mod api;
+mod api;
 mod application;
 mod archive;
 mod archive_builder;

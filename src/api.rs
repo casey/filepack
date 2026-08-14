@@ -1,26 +1,26 @@
 use super::*;
 
-pub mod missing {
+pub(crate) mod missing {
   use super::*;
 
   #[derive(Debug, Encode, Decode, PartialEq)]
-  pub struct Request {
+  pub(crate) struct Request {
     #[n(0)]
     pub hashes: SortedSet<Hash>,
   }
 
   #[derive(Debug, Encode, Decode, PartialEq)]
-  pub struct Response {
+  pub(crate) struct Response {
     #[n(0)]
     pub hashes: SortedSet<Hash>,
   }
 }
 
-pub mod packages {
+pub(crate) mod packages {
   use super::*;
 
   #[derive(Debug, Encode, Decode, PartialEq)]
-  pub struct Response {
+  pub(crate) struct Response {
     #[n(0)]
     pub packages: SortedSet<Fingerprint>,
   }
