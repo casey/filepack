@@ -10,6 +10,7 @@ mod archive;
 mod bech32;
 mod contains;
 mod create;
+mod delete;
 mod download;
 mod files;
 mod fingerprint;
@@ -55,6 +56,8 @@ pub(crate) enum Subcommand {
   Contains(contains::Contains),
   #[command(about = "Create manifest")]
   Create(create::Create),
+  #[command(about = "Delete package from a filepack server")]
+  Delete(delete::Delete),
   #[command(about = "Download package or file from a filepack server")]
   Download(download::Download),
   #[command(about = "List manifest files")]
@@ -100,6 +103,7 @@ impl Subcommand {
       Self::Bech32(bech32) => bech32.run(),
       Self::Contains(contains) => contains.run(options),
       Self::Create(create) => create.run(options),
+      Self::Delete(delete) => delete.run(options),
       Self::Download(download) => download.run(options),
       Self::Files(files) => files.run(),
       Self::Fingerprint(fingerprint) => fingerprint.run(),

@@ -1,4 +1,4 @@
-use super::*;
+use {super::*, reqwest::blocking::RequestBuilder, url::Host};
 
 pub(crate) fn client() -> Result<Client> {
   install_default_crypto_provider()?;
@@ -51,6 +51,30 @@ pub(crate) fn is_lowercase_hex(s: &str) -> bool {
     .all(|c| c.is_ascii_hexdigit() && (c.is_numeric() || c.is_lowercase()))
 }
 
+pub(crate) fn load_auth_key(
+  options: &Options,
+  server: &Url,
+  auth: Option<&KeyName>,
+) -> Result<Option<PrivateKey>> {
+  let Some(name) = auth else {
+    return Ok(None);
+  };
+
+  let loopback = match server.host().unwrap() {
+    Host::Domain(domain) => domain == "localhost",
+    Host::Ipv4(addr) => addr.is_loopback(),
+    Host::Ipv6(addr) => addr.is_loopback(),
+  };
+
+  ensure!(server.scheme() == "https" || loopback, error::TokenOverHttp);
+
+  let keychain = Keychain::load(options)?;
+
+  Ok(Some(PrivateKey::load(
+    &keychain.path.join(name.private_key_filename()),
+  )?))
+}
+
 pub(crate) fn now() -> Result<u64> {
   Ok(
     SystemTime::now()
@@ -67,6 +91,19 @@ pub(crate) fn parse_number<T: FromStr<Err = ParseIntError>>(s: &str) -> Result<T
   }
 
   Ok(s.parse()?)
+}
+
+pub(crate) fn request_with_token(
+  mut builder: RequestBuilder,
+  server: &Url,
+  key: Option<&PrivateKey>,
+) -> Result<RequestBuilder> {
+  if let Some(key) = key {
+    let host = server.host_str().unwrap().to_owned();
+    builder = builder.bearer_auth(Token::encode(key, &host)?);
+  }
+
+  Ok(builder)
 }
 
 pub(crate) fn transfer_tempfile(hash: Hash, path: &Utf8Path) -> io::Result<NamedTempFile> {

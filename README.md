@@ -187,8 +187,10 @@ filepack serve --https --domain filepack.example
 
 See `filepack serve --help` for more details.
 
-Files can be uploaded with `filepack upload` and downloaded with
+Files and packages can be uploaded with `filepack upload` and downloaded with
 `filepack download`.
+
+Packages can be deleted with `filepack delete`.
 
 Data Directory
 --------------

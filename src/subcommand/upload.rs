@@ -1,8 +1,4 @@
-use {
-  super::*,
-  reqwest::blocking::{Body, RequestBuilder},
-  url::Host,
-};
+use {super::*, reqwest::blocking::Body};
 
 struct Context {
   archive: Archive,
@@ -32,40 +28,8 @@ pub(crate) struct Upload {
 }
 
 impl Upload {
-  fn request_with_token(
-    &self,
-    mut builder: RequestBuilder,
-    key: Option<&PrivateKey>,
-  ) -> Result<RequestBuilder> {
-    if let Some(key) = key {
-      let host = self.server.host_str().unwrap().to_owned();
-      builder = builder.bearer_auth(Token::encode(key, &host)?);
-    }
-
-    Ok(builder)
-  }
-
   pub(crate) fn run(self, options: Options) -> Result {
-    let key = if let Some(name) = &self.auth {
-      let loopback = match self.server.host().unwrap() {
-        Host::Domain(domain) => domain == "localhost",
-        Host::Ipv4(addr) => addr.is_loopback(),
-        Host::Ipv6(addr) => addr.is_loopback(),
-      };
-
-      ensure!(
-        self.server.scheme() == "https" || loopback,
-        error::TokenOverHttp,
-      );
-
-      let keychain = Keychain::load(&options)?;
-
-      Some(PrivateKey::load(
-        &keychain.path.join(name.private_key_filename()),
-      )?)
-    } else {
-      None
-    };
+    let key = load_auth_key(&options, &self.server, self.auth.as_ref())?;
 
     if self.file {
       self.upload_file(&options, key.as_ref())
@@ -83,8 +47,7 @@ impl Upload {
   ) -> Result {
     let url = self.server.join(&format!("file/{hash}")).unwrap();
     let request = client.put(url).body(body);
-    self
-      .request_with_token(request, key)?
+    request_with_token(request, &self.server, key)?
       .send()
       .check_status()?;
     Ok(())
@@ -129,8 +92,7 @@ impl Upload {
 
     let url = self.server.join(&format!("api/directory/{hash}")).unwrap();
     let request = context.client.post(url);
-    self
-      .request_with_token(request, context.key.as_ref())?
+    request_with_token(request, &self.server, context.key.as_ref())?
       .send()
       .check_status()?;
 
@@ -249,8 +211,7 @@ impl Upload {
       .join(&format!("api/package/{fingerprint}"))
       .unwrap();
     let request = context.client.post(url);
-    self
-      .request_with_token(request, context.key.as_ref())?
+    request_with_token(request, &self.server, context.key.as_ref())?
       .send()
       .check_status()?;
 
