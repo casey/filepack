@@ -1,5 +1,13 @@
 use super::*;
 
+pub(crate) async fn api_delete_package(
+  _: Authenticated,
+  server: ServerExtension,
+  Path(fingerprint): Path<Fingerprint>,
+) -> ServerResult {
+  block_in_place(|| server.delete_package(fingerprint))
+}
+
 pub(crate) async fn api_missing(
   server: ServerExtension,
   Cbor(request): Cbor<api::missing::Request, { MIB }>,
