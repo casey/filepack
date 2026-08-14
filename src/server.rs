@@ -27,6 +27,19 @@ impl Server {
     Ok(self.open_file(hash)?.ty(artwork.resource_type()))
   }
 
+  pub(crate) fn delete_package(&self, fingerprint: Fingerprint) -> ServerResult {
+    let tx = self.database.begin_write()?;
+
+    ensure!(
+      tx.open_table(PACKAGES)?.remove(&fingerprint)?.is_some(),
+      server_error::PackageNotFound { fingerprint },
+    );
+
+    tx.commit()?;
+
+    Ok(())
+  }
+
   pub(crate) fn directory(&self, hash: Hash) -> ServerResult<Directory> {
     let tx = self.database.begin_read()?;
 

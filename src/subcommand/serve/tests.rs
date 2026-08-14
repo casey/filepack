@@ -293,6 +293,10 @@ impl TestServer {
     }
   }
 
+  fn delete(&self, path: impl Into<String>) -> TestRequestBuilder {
+    TestRequestBuilder::new(Method::DELETE, path, self.router.clone())
+  }
+
   fn get(&self, path: impl Into<String>) -> TestRequestBuilder {
     TestRequestBuilder::new(Method::GET, path, self.router.clone())
   }
@@ -543,6 +547,57 @@ fn default_serve_matches_parsed() {
     Serve::default(),
     Serve::try_parse_from(["filepack"]).unwrap(),
   );
+}
+
+#[test]
+fn delete_package_not_found() {
+  let server = TestServer::new();
+
+  let fingerprint = PackageBuilder::new().fingerprint();
+
+  server
+    .delete(format!("/api/package/{fingerprint}"))
+    .status(StatusCode::NOT_FOUND)
+    .assert_body(format!("package {fingerprint} not found"))
+    .send();
+}
+
+#[test]
+fn delete_package_rejects_missing_auth_header() {
+  let admin = PrivateKey::generate();
+  let server = TestServer::builder()
+    .auth_config(AuthConfig {
+      admin: Some(admin.public_key()),
+      audience: Some("filepack.example".into()),
+    })
+    .build();
+
+  let fingerprint = PackageBuilder::new().fingerprint();
+
+  server
+    .delete(format!("/api/package/{fingerprint}"))
+    .status(StatusCode::UNAUTHORIZED)
+    .assert_body("missing authorization header")
+    .send();
+}
+
+#[test]
+fn delete_package_removes_package() {
+  let server = TestServer::new();
+
+  let fingerprint = PackageBuilder::new().file("foo", b"foo").upload(&server);
+
+  server.delete(format!("/api/package/{fingerprint}")).send();
+
+  server
+    .get("/api/packages")
+    .assert_body(
+      api::packages::Response {
+        packages: BTreeSet::new().into(),
+      }
+      .encode_to_vec(),
+    )
+    .send();
 }
 
 #[test]
