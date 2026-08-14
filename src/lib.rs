@@ -38,6 +38,7 @@ use {
     bit_reader::BitReader,
     cause::Cause,
     cbor::Cbor,
+    cbor_response::CborResponse,
     checked_url::CheckedUrl,
     chroma_subsampling::ChromaSubsampling,
     client::Client,
@@ -289,6 +290,7 @@ mod bech32_type;
 mod bit_reader;
 mod cause;
 mod cbor;
+mod cbor_response;
 mod checked_url;
 mod chroma_subsampling;
 mod client;
