@@ -34,6 +34,7 @@ mod contains;
 mod create;
 mod data_dir;
 mod dedent;
+mod delete;
 mod download;
 mod expected;
 mod files;

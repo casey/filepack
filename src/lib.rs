@@ -69,8 +69,8 @@ use {
     float_ext::FloatExt,
     format::Format,
     functions::{
-      client, current_dir, decode_path, default, format_size, is_lowercase_hex, now, parse_number,
-      transfer_tempfile,
+      client, current_dir, decode_path, default, format_size, is_lowercase_hex, load_auth_key, now,
+      parse_number, request_with_token, transfer_tempfile,
     },
     hash_error::HashError,
     hashing_writer::HashingWriter,
