@@ -463,6 +463,14 @@ impl Test {
     self
   }
 
+  pub(crate) fn write_keypair(self, name: &str) -> Self {
+    self
+      .write(&format!("keychain/{name}.public"), PUBLIC_KEY)
+      .write(&format!("keychain/{name}.private"), PRIVATE_KEY)
+      .chmod("keychain", 0o700)
+      .chmod(&format!("keychain/{name}.private"), 0o600)
+  }
+
   pub(crate) fn write_manifest(self, path: &str, json: impl AsRef<str>) -> Self {
     let mut tempfile = NamedTempFile::new().unwrap();
 

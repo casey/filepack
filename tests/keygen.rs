@@ -51,10 +51,7 @@ fn invalid_name() {
 #[test]
 fn key_already_exists() {
   Test::new()
-    .write("keychain/master.private", PRIVATE_KEY)
-    .write("keychain/master.public", PUBLIC_KEY)
-    .chmod("keychain", 0o700)
-    .chmod("keychain/master.private", 0o700)
+    .write_keypair("master")
     .arg("keygen")
     .stderr_regex("error: public key already exists: `.*master.public`\n")
     .failure();
