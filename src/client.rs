@@ -27,6 +27,10 @@ impl Client {
     self.url(&format!("file/{hash}"))
   }
 
+  pub(crate) fn gc(&self) -> Result<api::gc::Response> {
+    self.post("api/gc")?.cbor()
+  }
+
   fn get(&self, path: &str) -> Result<reqwest::blocking::Response> {
     self
       .request(self.client.get(self.url(path)))?

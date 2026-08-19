@@ -96,6 +96,77 @@ impl Server {
       .collect()
   }
 
+  pub(crate) fn gc(&self) -> ServerResult<api::gc::Response> {
+    let tx = self.database.begin_write()?;
+
+    let mut marked = HashSet::new();
+
+    let mut directories_removed = BTreeSet::new();
+
+    {
+      let mut directories = tx.open_table(DIRECTORIES)?;
+
+      let mut stack = tx
+        .open_table(PACKAGES)?
+        .iter()?
+        .map(|entry| Ok(Hash::from(entry?.0.value())))
+        .collect::<ServerResult<Vec<Hash>>>()?;
+
+      while let Some(hash) = stack.pop() {
+        if !marked.insert(hash) {
+          continue;
+        }
+
+        let directory = self.read_directory(hash)?;
+
+        for entry in directory.entries.values() {
+          match entry {
+            Entry::Directory { hash, .. } => stack.push(*hash),
+            Entry::File { hash, .. } => {
+              marked.insert(*hash);
+            }
+          }
+        }
+      }
+
+      for entry in directories.extract_from_if::<Hash, _>(.., |hash, ()| !marked.contains(&hash))? {
+        directories_removed.insert(entry?.0.value());
+      }
+    }
+
+    let mut bytes = 0;
+
+    let mut files_removed = BTreeSet::new();
+
+    for hash in self.files()? {
+      if marked.contains(&hash) {
+        continue;
+      }
+
+      let path = self.file_path(hash);
+
+      bytes += path
+        .metadata()
+        .context(server_error::FilesystemIo { path: &path })?
+        .len();
+
+      files_removed.insert(hash);
+    }
+
+    tx.commit()?;
+
+    for &hash in &files_removed {
+      let path = self.file_path(hash);
+      fs::remove_file(&path).context(server_error::FilesystemIo { path })?;
+    }
+
+    Ok(api::gc::Response {
+      bytes,
+      directories: directories_removed.into(),
+      files: files_removed.into(),
+    })
+  }
+
   pub(crate) fn media_item(
     &self,
     fingerprint: Fingerprint,

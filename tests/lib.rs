@@ -40,6 +40,7 @@ mod download;
 mod expected;
 mod files;
 mod fingerprint;
+mod gc;
 mod hash;
 mod info;
 mod json;
