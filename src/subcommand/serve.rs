@@ -480,6 +480,15 @@ impl Serve {
     Ok(())
   }
 
+  fn server(
+    handle: Handle<SocketAddr>,
+    listener: std::net::TcpListener,
+  ) -> Result<axum_server::Server<SocketAddr>> {
+    let mut server = axum_server::from_tcp(listener).context(error::Serve)?;
+    server.http_builder().http2().adaptive_window(true);
+    Ok(server.handle(handle))
+  }
+
   fn server_config(&self) -> Arc<ServerConfig> {
     Arc::new(ServerConfig {
       mounts: self.mounts.iter().copied().collect(),
@@ -520,9 +529,7 @@ impl Serve {
 
     match config {
       SpawnConfig::Http => {
-        axum_server::from_tcp(listener)
-          .context(error::Serve)?
-          .handle(handle)
+        Self::server(handle, listener)?
           .serve(router.into_make_service())
           .await
           .context(error::Serve)?;
@@ -540,9 +547,7 @@ impl Serve {
           HeaderValue::from_static("max-age=31536000"),
         ));
 
-        axum_server::from_tcp(listener)
-          .context(error::Serve)?
-          .handle(handle)
+        Self::server(handle, listener)?
           .acceptor(self.acceptor(acme_cache)?)
           .serve(router.into_make_service())
           .await
