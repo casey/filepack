@@ -9,6 +9,7 @@ use {
     routing::{delete, get, post},
   },
   axum_server::Handle,
+  hyper_util::rt::TokioTimer,
   rustls_acme::{
     AcmeConfig, EventOk, acme::LETS_ENCRYPT_PRODUCTION_DIRECTORY, axum::AxumAcceptor,
     caches::DirCache,
@@ -485,7 +486,15 @@ impl Serve {
     listener: std::net::TcpListener,
   ) -> Result<axum_server::Server<SocketAddr>> {
     let mut server = axum_server::from_tcp(listener).context(error::Serve)?;
-    server.http_builder().http2().adaptive_window(true);
+    let builder = server.http_builder();
+    builder.http1().timer(TokioTimer::new());
+    builder
+      .http2()
+      .adaptive_window(true)
+      .keep_alive_interval(Duration::from_mins(1))
+      .keep_alive_timeout(Duration::from_secs(20))
+      .max_frame_size(u32::try_from(64 * KIB).unwrap())
+      .timer(TokioTimer::new());
     Ok(server.handle(handle))
   }
 
