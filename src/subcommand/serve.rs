@@ -565,9 +565,7 @@ impl Serve {
             HeaderValue::from_static("nosniff"),
           ));
 
-        axum_server::from_tcp(listener)
-          .context(error::Serve)?
-          .handle(handle)
+        Self::server(handle, listener)?
           .serve(router.into_make_service())
           .await
           .context(error::Serve)?;
