@@ -102,6 +102,15 @@ impl Client {
     })
   }
 
+  pub(crate) fn packages(&self) -> Result<SortedSet<Fingerprint>> {
+    Ok(
+      self
+        .get("api/packages")?
+        .cbor::<api::packages::Response>()?
+        .packages,
+    )
+  }
+
   fn post(&self, path: &str) -> Result<reqwest::blocking::Response> {
     self
       .request(self.client.post(self.url(path)))?
