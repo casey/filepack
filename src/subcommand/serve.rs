@@ -301,6 +301,7 @@ impl Serve {
     let router = Router::new()
       .route("/", get(route::home))
       .route("/api/directory/{hash}", post(route::api_verify_directory))
+      .route("/api/gc", post(route::api_gc))
       .route("/api/missing", post(route::api_missing))
       .route(
         "/api/package/{fingerprint}",

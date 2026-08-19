@@ -762,6 +762,112 @@ fn fingerprint_redirects_to_package() {
 }
 
 #[test]
+fn gc_empty_server_removes_nothing() {
+  TestServer::new()
+    .post("/api/gc")
+    .assert_body(
+      api::gc::Response {
+        bytes: 0,
+        directories: BTreeSet::new().into(),
+        files: BTreeSet::new().into(),
+      }
+      .encode_to_vec(),
+    )
+    .send();
+}
+
+#[test]
+fn gc_ignores_non_hash_filenames() {
+  let server = TestServer::new();
+
+  fs::write(server.data_dir.join("files").join("not-a-hash"), "").unwrap();
+
+  server
+    .post("/api/gc")
+    .assert_body(
+      api::gc::Response {
+        bytes: 0,
+        directories: BTreeSet::new().into(),
+        files: BTreeSet::new().into(),
+      }
+      .encode_to_vec(),
+    )
+    .send();
+
+  assert!(
+    server
+      .data_dir
+      .join("files")
+      .join("not-a-hash")
+      .try_exists()
+      .unwrap()
+  );
+}
+
+#[test]
+fn gc_rejects_missing_auth_header() {
+  let admin = PrivateKey::generate();
+  let server = TestServer::builder()
+    .auth_config(AuthConfig {
+      admin: Some(admin.public_key()),
+      audience: Some("filepack.example".into()),
+    })
+    .build();
+
+  server
+    .post("/api/gc")
+    .status(StatusCode::UNAUTHORIZED)
+    .assert_body("missing authorization header")
+    .send();
+}
+
+#[test]
+fn gc_removes_unreachable_and_retains_reachable_data() {
+  let server = TestServer::new();
+
+  let retained = PackageBuilder::new().file("foo", b"foo");
+
+  let retained_hash = retained.directory().cbor().1;
+
+  retained.upload(&server);
+
+  let mut subdirectory = Directory::new();
+  subdirectory.insert_file("baz", b"baz");
+
+  let (subdirectory_cbor, subdirectory_hash) = subdirectory.cbor();
+
+  let package = PackageBuilder::new()
+    .file("bar/baz", b"baz")
+    .file("foo", b"foo");
+
+  let (root_cbor, root_hash) = package.directory().cbor();
+
+  let fingerprint = package.upload(&server);
+
+  server.delete(format!("/api/package/{fingerprint}")).send();
+
+  server
+    .post("/api/gc")
+    .assert_body(
+      api::gc::Response {
+        bytes: root_cbor.len().into_u64() + subdirectory_cbor.len().into_u64() + 3,
+        directories: BTreeSet::from([root_hash, subdirectory_hash]).into(),
+        files: BTreeSet::from([root_hash, subdirectory_hash, Hash::bytes(b"baz")]).into(),
+      }
+      .encode_to_vec(),
+    )
+    .send();
+
+  server.assert_file(retained_hash);
+  server.assert_file(Hash::bytes(b"foo"));
+
+  assert_eq!(
+    fs::read_dir(server.data_dir.join("files")).unwrap().count(),
+    2,
+  );
+}
+
+#[test]
 fn get_directory_not_found() {
   let server = TestServer::new();
 

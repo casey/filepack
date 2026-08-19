@@ -8,6 +8,13 @@ pub(crate) async fn api_delete_package(
   block_in_place(|| server.delete_package(fingerprint))
 }
 
+pub(crate) async fn api_gc(
+  _: Authenticated,
+  server: ServerExtension,
+) -> ServerResult<CborResponse<api::gc::Response>> {
+  block_in_place(|| Ok(CborResponse(server.gc()?)))
+}
+
 pub(crate) async fn api_missing(
   server: ServerExtension,
   Cbor(request): Cbor<api::missing::Request, { MIB }>,

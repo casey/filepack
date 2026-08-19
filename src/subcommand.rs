@@ -14,6 +14,7 @@ mod delete;
 mod download;
 mod files;
 mod fingerprint;
+mod gc;
 mod hash;
 mod info;
 mod key;
@@ -64,6 +65,8 @@ pub(crate) enum Subcommand {
   Files(files::Files),
   #[command(about = "Print package fingerprint")]
   Fingerprint(fingerprint::Fingerprint),
+  #[command(about = "Delete unreferenced data on a filepack server")]
+  Gc(gc::Gc),
   #[command(about = "Print file hash")]
   Hash(hash::Hash),
   #[command(about = "Print info")]
@@ -107,6 +110,7 @@ impl Subcommand {
       Self::Download(download) => download.run(options),
       Self::Files(files) => files.run(),
       Self::Fingerprint(fingerprint) => fingerprint.run(),
+      Self::Gc(gc) => gc.run(options),
       Self::Hash(hash) => hash.run(options),
       Self::Info => info::run(options),
       Self::Key(key) => key.run(options),
