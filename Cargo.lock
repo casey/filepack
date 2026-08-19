@@ -1219,6 +1219,7 @@ dependencies = [
  "futures-util",
  "hex",
  "humansize",
+ "hyper-util",
  "id3",
  "image",
  "indicatif",
