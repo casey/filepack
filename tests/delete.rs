@@ -1,6 +1,59 @@
 use super::*;
 
 #[test]
+fn delete_all() {
+  let server = Test::new().serve().spawn();
+
+  let test = Test::new()
+    .write("foo/baz", "foo")
+    .write("bar/baz", "bar")
+    .args(["create", "foo"])
+    .success()
+    .args(["create", "bar"])
+    .success();
+
+  let fingerprints = ["foo", "bar"].map(|package| {
+    Manifest::load(Some(&test.path().join(package).join("manifest.filepack")))
+      .unwrap()
+      .fingerprint()
+  });
+
+  let test = test
+    .args(["upload", "--server", &server.address(), "foo"])
+    .stderr("uploading 1 of 1 file\n")
+    .success();
+
+  test
+    .args(["upload", "--server", &server.address(), "bar"])
+    .stderr("uploading 1 of 1 file\n")
+    .success();
+
+  for fingerprint in fingerprints {
+    assert_eq!(
+      reqwest::blocking::get(format!("{}/package/{fingerprint}", server.address()))
+        .unwrap()
+        .status(),
+      StatusCode::OK,
+    );
+  }
+
+  Test::new()
+    .args(["delete", "--server", &server.address(), "--all"])
+    .success();
+
+  for fingerprint in fingerprints {
+    assert_eq!(
+      reqwest::blocking::get(format!("{}/package/{fingerprint}", server.address()))
+        .unwrap()
+        .status(),
+      StatusCode::NOT_FOUND,
+    );
+  }
+
+  server.terminate().success();
+}
+
+#[test]
 fn delete_package_not_found() {
   let server = Test::new().serve().spawn();
 
