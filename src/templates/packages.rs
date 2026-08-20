@@ -8,12 +8,12 @@ pub(crate) struct PackagesHtml {
 
 struct Package<'a> {
   artwork: bool,
-  creator: Option<&'a Component>,
+  creator: Option<&'a str>,
   file_size: u64,
   files: u64,
   fingerprint: Fingerprint,
   media: Option<MediaType>,
-  title: Option<&'a Component>,
+  title: Option<&'a str>,
   year: Option<i64>,
 }
 

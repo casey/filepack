@@ -8,7 +8,7 @@ pub struct Metadata {
   #[n(0)]
   pub artwork: Option<Image>,
   #[n(1)]
-  pub creator: Option<ComponentBuf>,
+  pub creator: Option<Text>,
   #[n(2)]
   pub description: Option<Text>,
   #[n(3)]
@@ -24,7 +24,7 @@ pub struct Metadata {
   #[n(8)]
   pub time: Option<Time>,
   #[n(9)]
-  pub title: Option<ComponentBuf>,
+  pub title: Option<Text>,
 }
 
 impl Metadata {
@@ -360,6 +360,20 @@ mod tests {
     );
     case(
       "
+        title: \"foo\\nbar\"
+      ",
+      r"title: text may not contain control character `\\n`",
+    );
+    case(
+      "
+        title: Foo
+        package:
+          creator: \"foo\\nbar\"
+      ",
+      r"package\.creator: text may not contain control character `\\n`",
+    );
+    case(
+      "
         title: Foo
         package:
           description: \"foo\\tbar\"
@@ -624,7 +638,7 @@ mod tests {
 
       if title
         .as_ref()
-        .is_none_or(|title| *title != "Tobin's Spirit Guide")
+        .is_none_or(|title| title.as_str() != "Tobin's Spirit Guide")
       {
         continue;
       }
