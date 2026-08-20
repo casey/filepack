@@ -6,11 +6,6 @@ pub enum ComponentError {
   Control { character: char },
   #[snafu(display("component may not be empty"))]
   Empty,
-  #[snafu(display(
-    "component must end in {}",
-    Or::new(extensions.iter().map(|extension| format!("`.{extension}`"))),
-  ))]
-  Extension { extensions: &'static [&'static str] },
   #[snafu(display("component exceeds 255 byte limit"))]
   Length,
   #[snafu(display("component may not be `{component}`"))]

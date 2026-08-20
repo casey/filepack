@@ -40,9 +40,9 @@
   <dt>description</dt>
   <dd>{{ description }}</dd>
 %%   }
-%%   if let (Some(filename), Some(hash)) = (&metadata.readme, self.readme) {
+%%   if let (Some(path), Some(hash)) = (&metadata.readme, self.readme) {
   <dt>readme</dt>
-  <dd><a href='/file/{{ hash }}/{{ filename.percent_encode_segment() }}'>view</a></dd>
+  <dd><a href='/file/{{ hash }}/{{ path.percent_encode_path() }}'>view</a></dd>
 %%   }
 %%   if let Some(homepage) = &metadata.homepage {
   <dt>homepage</dt>
@@ -72,9 +72,9 @@
       <dt>description</dt>
       <dd>{{ description }}</dd>
 %%     }
-%%     if let (Some(filename), Some(hash)) = (&package.colophon, self.colophon) {
+%%     if let (Some(path), Some(hash)) = (&package.colophon, self.colophon) {
       <dt>colophon</dt>
-      <dd><a href='/file/{{ hash }}/{{ filename.percent_encode_segment() }}'>view</a></dd>
+      <dd><a href='/file/{{ hash }}/{{ path.percent_encode_path() }}'>view</a></dd>
 %%     }
 %%     if let Some(homepage) = &package.homepage {
       <dt>homepage</dt>
@@ -163,7 +163,7 @@
 %%       for (i, video) in items.iter().enumerate() {
 %%         let duration = Duration::from_millis(video.duration);
   <li>
-    <a href=/package/{{ self.fingerprint }}/item/{{ Ordinal(i) }}>{{ video.filename }}</a>
+    <a href=/package/{{ self.fingerprint }}/item/{{ Ordinal(i) }}>{{ video.path }}</a>
     <time datetime={{ Iso8601Duration(duration) }}>{{ DisplayDuration(duration) }}</time>
   </li>
 %%       }

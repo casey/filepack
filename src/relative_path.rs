@@ -1,7 +1,17 @@
 use super::*;
 
 #[derive(
-  Clone, Debug, DeserializeFromStr, Eq, Hash, Ord, PartialEq, PartialOrd, SerializeDisplay,
+  Clone,
+  Debug,
+  DecodeFromStr,
+  DeserializeFromStr,
+  EncodeDisplay,
+  Eq,
+  Hash,
+  Ord,
+  PartialEq,
+  PartialOrd,
+  SerializeDisplay,
 )]
 pub struct RelativePath(String);
 
@@ -21,6 +31,14 @@ impl RelativePath {
       .0
       .split('/')
       .map(|component| Component::new(component).unwrap())
+  }
+
+  pub(crate) fn extension(&self) -> Option<&str> {
+    self.filename().extension()
+  }
+
+  pub(crate) fn filename(&self) -> &Component {
+    Component::new(self.0.rsplit('/').next().unwrap()).unwrap()
   }
 
   pub(crate) fn join(&self, component: &Component) -> Self {
@@ -216,6 +234,34 @@ impl TryFrom<&[&Component]> for RelativePath {
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn extension() {
+    #[track_caller]
+    fn case(path: &str, expected: Option<&str>) {
+      assert_eq!(path.parse::<RelativePath>().unwrap().extension(), expected);
+    }
+
+    case("foo.jpg", Some("jpg"));
+    case("foo", None);
+    case(".foo", None);
+    case("foo/bar.png", Some("png"));
+    case("foo.jpg/bar", None);
+  }
+
+  #[test]
+  fn filename() {
+    #[track_caller]
+    fn case(path: &str, expected: &str) {
+      assert_eq!(
+        path.parse::<RelativePath>().unwrap().filename().as_str(),
+        expected,
+      );
+    }
+
+    case("foo", "foo");
+    case("foo/bar.png", "bar.png");
+  }
 
   #[test]
   fn from_components() {

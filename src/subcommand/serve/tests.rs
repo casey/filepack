@@ -684,7 +684,7 @@ fn favicon() {
 }
 
 #[test]
-fn file_with_name_inline() {
+fn file_with_path_inline() {
   let server = TestServer::new();
 
   server.write_file(b"foo");
@@ -699,7 +699,7 @@ fn file_with_name_inline() {
 }
 
 #[test]
-fn file_with_name_markdown() {
+fn file_with_path_markdown() {
   let server = TestServer::new();
 
   server.write_file(b"foo");
@@ -714,7 +714,20 @@ fn file_with_name_markdown() {
 }
 
 #[test]
-fn file_with_name_redirect() {
+fn file_with_path_nested() {
+  let server = TestServer::new();
+
+  server.write_file(b"foo");
+
+  server
+    .get(format!("/file/{}/bar/baz.png", Hash::bytes(b"foo")))
+    .assert_header(header::CONTENT_TYPE, "image/png")
+    .assert_body("foo")
+    .send();
+}
+
+#[test]
+fn file_with_path_redirect() {
   let hash = Hash::bytes(b"foo");
 
   TestServer::new()
@@ -1717,8 +1730,8 @@ fn package_item_image() {
           height: 1,
           width: 2,
         },
-        filename: "foo.png".parse().unwrap(),
         orientation: Orientation::new(),
+        path: "foo.png".parse().unwrap(),
         ty: ImageType::Png,
       }],
     }),
@@ -1756,8 +1769,8 @@ fn package_item_image_out_of_range() {
             height: 1,
             width: 1,
           },
-          filename: "foo.png".parse().unwrap(),
           orientation: Orientation::new(),
+          path: "foo.png".parse().unwrap(),
           ty: ImageType::Png,
         }],
       }),
@@ -1796,7 +1809,7 @@ fn package_item_video() {
     media: Some(Media::Video {
       items: vec![Video {
         duration: 0,
-        filename: "foo.mp4".parse().unwrap(),
+        path: "foo.mp4".parse().unwrap(),
         tracks: vec![
           Track {
             codec: Codec::H264,
@@ -2028,7 +2041,7 @@ fn package_page_renders_audio_media() {
           channels: 2,
           disc: 1,
           discs: 1,
-          filename: "foo.flac".parse().unwrap(),
+          path: "foo.flac".parse().unwrap(),
           sample_bits: Some(16),
           sample_rate: 44100,
           samples: 9_922_500,
@@ -2044,7 +2057,7 @@ fn package_page_renders_audio_media() {
           channels: 2,
           disc: 1,
           discs: 1,
-          filename: "bar.flac".parse().unwrap(),
+          path: "bar.flac".parse().unwrap(),
           sample_bits: Some(16),
           sample_rate: 44100,
           samples: 44100,
@@ -2101,8 +2114,8 @@ fn package_page_renders_image_media() {
           height: 1,
           width: 2,
         },
-        filename: "foo.png".parse().unwrap(),
         orientation: Orientation::new(),
+        path: "foo.png".parse().unwrap(),
         ty: ImageType::Png,
       }],
     }),
@@ -2143,7 +2156,7 @@ fn package_page_renders_video_media() {
     media: Some(Media::Video {
       items: vec![Video {
         duration: 0,
-        filename: "foo.mp4".parse().unwrap(),
+        path: "foo.mp4".parse().unwrap(),
         tracks: vec![
           Track {
             codec: Codec::H264,

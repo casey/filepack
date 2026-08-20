@@ -78,7 +78,7 @@ pub enum Error {
   #[snafu(display("colophon `{colophon}` must end in `.md`",))]
   ColophonExtension {
     backtrace: Option<Backtrace>,
-    colophon: ComponentBuf,
+    colophon: RelativePath,
   },
   #[snafu(display("failed to get current directory"))]
   CurrentDir {
@@ -358,10 +358,10 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: RelativePath,
   },
-  #[snafu(display("file referenced in metadata missing: `{filename}`"))]
+  #[snafu(display("file referenced in metadata missing: `{path}`"))]
   MissingMetadataFile {
     backtrace: Option<Backtrace>,
-    filename: RelativePath,
+    path: RelativePath,
   },
   #[snafu(display("failed to retrieve mounted package from server"))]
   MountedPackage {
@@ -435,7 +435,7 @@ pub enum Error {
   #[snafu(display("readme `{readme}` must end in `.md`",))]
   ReadmeExtension {
     backtrace: Option<Backtrace>,
-    readme: ComponentBuf,
+    readme: RelativePath,
   },
   #[snafu(display("failed to write listening port to `{address}`"))]
   ReadyAddress {

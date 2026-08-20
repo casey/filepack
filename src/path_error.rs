@@ -12,6 +12,11 @@ pub enum PathError {
   DoubleSlash,
   #[snafu(display("paths may not be empty"))]
   Empty,
+  #[snafu(display(
+    "path must end in {}",
+    Or::new(extensions.iter().map(|extension| format!("`.{extension}`"))),
+  ))]
+  Extension { extensions: &'static [&'static str] },
   #[snafu(display("paths may not begin with slash character"))]
   LeadingSlash,
   #[snafu(display("path may not contain non-normal component `{component}`"))]

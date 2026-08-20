@@ -22,7 +22,7 @@ impl Server {
       .artwork
       .context(server_error::ArtworkNotFound { fingerprint })?;
 
-    let hash = self.verified_package_file(fingerprint, &artwork.as_path())?;
+    let hash = self.verified_package_file(fingerprint, &artwork.path)?;
 
     Ok(self.open_file(hash)?.ty(artwork.resource_type()))
   }
@@ -199,7 +199,7 @@ impl Server {
 
     let path = item.path();
 
-    let hash = self.verified_package_file(fingerprint, &path)?;
+    let hash = self.verified_package_file(fingerprint, path)?;
 
     Ok(self.open_file(hash)?.ty(item.resource_type()))
   }
@@ -305,7 +305,7 @@ impl Server {
       && let Some(package) = &metadata.package
       && let Some(colophon) = &package.colophon
     {
-      Some(self.verified_package_file(fingerprint, &colophon.as_path())?)
+      Some(self.verified_package_file(fingerprint, colophon)?)
     } else {
       None
     };
@@ -313,7 +313,7 @@ impl Server {
     let readme = if let Some(metadata) = &metadata
       && let Some(readme) = &metadata.readme
     {
-      Some(self.verified_package_file(fingerprint, &readme.as_path())?)
+      Some(self.verified_package_file(fingerprint, readme)?)
     } else {
       None
     };

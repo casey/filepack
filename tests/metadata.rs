@@ -18,6 +18,28 @@ fn create_allows_extra_files_in_web_packages() {
 }
 
 #[test]
+fn create_allows_nested_paths() {
+  Test::new()
+    .write("foo/bar.md", "baz")
+    .write("foo/baz.png", image(2, 1, ImageFormat::Png))
+    .write(
+      "metadata.yaml",
+      "
+        readme: foo/bar.md
+        media:
+          type: image
+          items:
+            - foo/baz.png
+      ",
+    )
+    .arg("create")
+    .success()
+    .arg("verify")
+    .stderr_regex("successfully verified .*")
+    .success();
+}
+
+#[test]
 fn create_checks_metadata() {
   Test::new()
     .write(
@@ -76,11 +98,11 @@ fn create_extracts_artwork_dimensions() {
               "height": 2,
               "width": 2
             },
-            "filename": "cover.png",
             "orientation": {
               "mirrored": false,
               "rotation": 0
             },
+            "path": "cover.png",
             "type": "png"
           }
         }
@@ -119,11 +141,11 @@ fn create_extracts_image_dimensions() {
                   "height": 1,
                   "width": 2
                 },
-                "filename": "foo.png",
                 "orientation": {
                   "mirrored": false,
                   "rotation": 0
                 },
+                "path": "foo.png",
                 "type": "png"
               }
             ]
@@ -176,7 +198,7 @@ fn create_extracts_track_tags() {
                 "channels": 2,
                 "disc": 1,
                 "discs": 1,
-                "filename": "foo.flac",
+                "path": "foo.flac",
                 "sample_bits": 16,
                 "sample_rate": 44100,
                 "samples": 44100,
@@ -229,7 +251,7 @@ fn create_extracts_video_metadata() {
             "items": [
               {
                 "duration": 1500,
-                "filename": "foo.mp4",
+                "path": "foo.mp4",
                 "tracks": [
                   {
                     "codec": "h264",
@@ -500,7 +522,7 @@ fn metadata_cbor_force() {
     .args(["create", "--force"])
     .success()
     .arg("verify")
-    .stderr_regex(".*successfully verified.*")
+    .stderr_regex("successfully verified .*")
     .success();
 }
 

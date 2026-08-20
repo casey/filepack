@@ -5,7 +5,7 @@ use super::*;
 #[serde(deny_unknown_fields)]
 pub(crate) struct Package {
   #[n(0)]
-  pub(crate) colophon: Option<ComponentBuf>,
+  pub(crate) colophon: Option<RelativePath>,
   #[n(1)]
   pub(crate) creator: Option<ComponentBuf>,
   #[n(2)]

@@ -322,9 +322,8 @@ Fields are given as `NAME: TYPE`. All fields are optional.
 
 Top-level fields:
 
-- `artwork: component.{jpeg,png}`: The filename of a JPEG or PNG file
-  containing artwork for the content, for example, cover art for an album or
-  key art for a movie.
+- `artwork: path.{jpeg,png}`: The path of a JPEG or PNG file containing artwork
+  for the content, for example, cover art for an album or key art for a movie.
 
 - `creator: component`: The person or group who created the content.
 
@@ -340,7 +339,7 @@ Top-level fields:
 
 - `package: object`: The package metadata.
 
-- `readme: component.md`: The filename of the content readme.
+- `readme: path.md`: The path of the content readme.
 
 - `time: time`: The time the content was created or released.
 
@@ -354,7 +353,7 @@ If the media type is `audio`, `image`, or `video`, the media object contains a
 field named `items`, which is a list of objects containing metadata for
 individual items in the package.
 
-When authoring metadata YAML, each item is a string with the filename of the
+When authoring metadata YAML, each item is a string with the path of the
 package item. For example, for an `audio` package:
 
 ```yaml
@@ -365,12 +364,12 @@ media:
   - bar.flac
 ```
 
-`filepack create` will replace the filenames with objects populated with
-metadata extracted from each item.
+`filepack create` will replace item paths with objects populated with metadata
+extracted from each item.
 
 Fields of `package` describing the package itself, as opposed its content:
 
-- `colophon: component.md`: The filename of the package colophon.
+- `colophon: path.md`: The path of the package colophon.
 
 - `creator: component`: The person or group who created the package.
 
@@ -391,12 +390,15 @@ Types:
   Note that Windows imposes additional restrictions which are not enforced, so
   components may not be valid paths on Windows.
 
-- `component.EXTENSION`: A component that must end with `.EXTENSION`.
-
 - `language`: A string containing an ISO 639-1 two-character language code. See
   `filepack languages` for valid language codes.
 
 - `markdown`: A string containing CommonMark markdown.
+
+- `path`: A string containing a relative path consisting of `/`-separated
+  components.
+
+- `path.EXTENSION`: A path that must end with `.EXTENSION`.
 
 - `time`: A string containing a time with one of two precisions, a year only,
   or a year, month, and day, written `Y-MM-DD`. Times use the proleptic
