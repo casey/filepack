@@ -5,7 +5,7 @@ pub(crate) struct Video {
   #[n(0)]
   pub(crate) duration: u64,
   #[n(1)]
-  pub(crate) filename: ComponentBuf,
+  pub(crate) path: RelativePath,
   #[n(2)]
   pub(crate) tracks: Vec<Track>,
   #[n(3)]
@@ -14,10 +14,6 @@ pub(crate) struct Video {
 }
 
 impl Video {
-  pub(crate) fn as_path(&self) -> RelativePath {
-    self.filename.as_path()
-  }
-
   pub(crate) fn formats(videos: &[Video]) -> Vec<VideoType> {
     let mut formats = Vec::new();
 
@@ -31,7 +27,7 @@ impl Video {
   }
 
   pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result {
-    let path = root.join(self.as_path());
+    let path = root.join(&self.path);
 
     let VideoMetadata { duration, tracks } = match self.ty {
       VideoType::Mp4 => Mp4Decoder::read(&path)?,
@@ -56,20 +52,20 @@ impl Video {
 }
 
 impl FromStr for Video {
-  type Err = ComponentError;
+  type Err = PathError;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
-    let filename = s.parse::<ComponentBuf>()?;
+    let path = s.parse::<RelativePath>()?;
 
-    let Some(ty) = filename.extension().and_then(VideoType::from_extension) else {
-      return Err(ComponentError::Extension {
+    let Some(ty) = path.extension().and_then(VideoType::from_extension) else {
+      return Err(PathError::Extension {
         extensions: VideoType::EXTENSIONS,
       });
     };
 
     Ok(Self {
       duration: 0,
-      filename,
+      path,
       tracks: Vec::new(),
       ty,
     })
@@ -79,7 +75,7 @@ impl FromStr for Video {
 impl Item for Video {
   fn info(&self, url: String) -> Info {
     InfoBuilder::new()
-      .link("filename", &self.filename, url)
+      .link("path", &self.path, url)
       .value("type", self.ty)
       .value(
         "duration",
@@ -89,8 +85,8 @@ impl Item for Video {
       .build()
   }
 
-  fn path(&self) -> RelativePath {
-    self.as_path()
+  fn path(&self) -> &RelativePath {
+    &self.path
   }
 
   fn resource_type(&self) -> ResourceType {
@@ -117,7 +113,7 @@ mod tests {
   #[test]
   fn from_str() {
     #[track_caller]
-    fn case(s: &str, expected: ComponentError) {
+    fn case(s: &str, expected: PathError) {
       assert_eq!(s.parse::<Video>().unwrap_err(), expected);
     }
 
@@ -125,7 +121,7 @@ mod tests {
       "foo.mp4".parse::<Video>().unwrap(),
       Video {
         duration: 0,
-        filename: "foo.mp4".parse().unwrap(),
+        path: "foo.mp4".parse().unwrap(),
         tracks: Vec::new(),
         ty: VideoType::Mp4,
       },
@@ -135,26 +131,30 @@ mod tests {
       "foo.webm".parse::<Video>().unwrap(),
       Video {
         duration: 0,
-        filename: "foo.webm".parse().unwrap(),
+        path: "foo.webm".parse().unwrap(),
         tracks: Vec::new(),
         ty: VideoType::Webm,
       },
     );
 
+    assert_eq!(
+      "foo/bar.mp4".parse::<Video>().unwrap().path,
+      "foo/bar.mp4".parse::<RelativePath>().unwrap(),
+    );
+
     case(
       "foo.avi",
-      ComponentError::Extension {
+      PathError::Extension {
         extensions: &["mp4", "webm"],
       },
     );
     case(
       "foo",
-      ComponentError::Extension {
+      PathError::Extension {
         extensions: &["mp4", "webm"],
       },
     );
-    case("", ComponentError::Empty);
-    case("foo/bar.mp4", ComponentError::Separator { character: '/' });
+    case("", PathError::Empty);
   }
 
   #[test]
@@ -181,7 +181,7 @@ mod tests {
       .unwrap(),
       Video {
         duration: 2,
-        filename: "foo.mp4".parse().unwrap(),
+        path: "foo.mp4".parse().unwrap(),
         tracks: vec![
           Track {
             codec: Codec::H264,
@@ -256,7 +256,7 @@ mod tests {
     assert_eq!(
       serde_json::to_string(&Video {
         duration: 0,
-        filename: "foo.mp4".parse().unwrap(),
+        path: "foo.mp4".parse().unwrap(),
         tracks: vec![
           Track {
             codec: Codec::H264,
@@ -284,7 +284,7 @@ mod tests {
         ty: VideoType::Mp4,
       })
       .unwrap(),
-      r#"{"duration":0,"filename":"foo.mp4","tracks":[{"codec":"h264","info":{"type":"video","bit_depth":8,"chroma_subsampling":"4:2:0","dimensions":{"height":1,"width":2},"frames":0,"orientation":{"mirrored":false,"rotation":0}},"size":0},{"codec":"mp3","info":{"type":"audio","channels":2,"sample_rate":44100},"size":0}],"type":"mp4"}"#,
+      r#"{"duration":0,"path":"foo.mp4","tracks":[{"codec":"h264","info":{"type":"video","bit_depth":8,"chroma_subsampling":"4:2:0","dimensions":{"height":1,"width":2},"frames":0,"orientation":{"mirrored":false,"rotation":0}},"size":0},{"codec":"mp3","info":{"type":"audio","channels":2,"sample_rate":44100},"size":0}],"type":"mp4"}"#,
     );
   }
 

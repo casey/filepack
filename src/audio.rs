@@ -14,7 +14,7 @@ pub(crate) struct Audio {
   #[n(4)]
   pub(crate) discs: u64,
   #[n(5)]
-  pub(crate) filename: ComponentBuf,
+  pub(crate) path: RelativePath,
   #[n(6)]
   pub(crate) sample_bits: Option<u64>,
   #[n(7)]
@@ -35,10 +35,6 @@ pub(crate) struct Audio {
 }
 
 impl Audio {
-  pub(crate) fn as_path(&self) -> RelativePath {
-    self.filename.as_path()
-  }
-
   pub(crate) fn check_positions(tracks: &[Audio]) -> Result<(), AudioPositionError> {
     let Some(first) = tracks.first() else {
       return Ok(());
@@ -56,7 +52,7 @@ impl Audio {
         audio_position_error::DiscTotalMismatch {
           actual: audio.discs,
           expected: discs,
-          filename: audio.filename.clone(),
+          path: audio.path.clone(),
         },
       }
 
@@ -66,7 +62,7 @@ impl Audio {
           disc: audio.disc,
           expected_disc,
           expected_track,
-          filename: audio.filename.clone(),
+          path: audio.path.clone(),
           track: audio.track,
         },
       }
@@ -74,7 +70,7 @@ impl Audio {
       ensure! {
         audio.disc <= discs,
         audio_position_error::DiscNumberExceedsTotal {
-          filename: audio.filename.clone(),
+          path: audio.path.clone(),
           number: audio.disc,
           total: discs,
         },
@@ -89,7 +85,7 @@ impl Audio {
             actual: audio.tracks,
             disc: expected_disc,
             expected: disc_tracks,
-            filename: audio.filename.clone(),
+            path: audio.path.clone(),
           },
         }
       }
@@ -97,7 +93,7 @@ impl Audio {
       ensure! {
         audio.track <= disc_tracks,
         audio_position_error::NumberExceedsTotal {
-          filename: audio.filename.clone(),
+          path: audio.path.clone(),
           number: audio.track,
           total: disc_tracks,
         },
@@ -148,7 +144,7 @@ impl Audio {
   }
 
   pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result {
-    let path = root.join(self.as_path());
+    let path = root.join(&self.path);
 
     let metadata = match self.ty {
       AudioType::Flac => FlacDecoder::read(&path)?,
@@ -217,13 +213,13 @@ impl Audio {
 }
 
 impl FromStr for Audio {
-  type Err = ComponentError;
+  type Err = PathError;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
-    let filename = s.parse::<ComponentBuf>()?;
+    let path = s.parse::<RelativePath>()?;
 
-    let Some(ty) = filename.extension().and_then(AudioType::from_extension) else {
-      return Err(ComponentError::Extension {
+    let Some(ty) = path.extension().and_then(AudioType::from_extension) else {
+      return Err(PathError::Extension {
         extensions: AudioType::EXTENSIONS,
       });
     };
@@ -234,7 +230,7 @@ impl FromStr for Audio {
       channels: 0,
       disc: 0,
       discs: 0,
-      filename,
+      path,
       sample_bits: None,
       sample_rate: 0,
       samples: 0,
@@ -250,7 +246,7 @@ impl FromStr for Audio {
 impl Item for Audio {
   fn info(&self, url: String) -> Info {
     InfoBuilder::new()
-      .link("filename", &self.filename, url)
+      .link("path", &self.path, url)
       .value("title", &self.title)
       .value("artist", &self.artist)
       .value("album", &self.album)
@@ -284,8 +280,8 @@ impl Item for Audio {
       .build()
   }
 
-  fn path(&self) -> RelativePath {
-    self.as_path()
+  fn path(&self) -> &RelativePath {
+    &self.path
   }
 
   fn resource_type(&self) -> ResourceType {
@@ -329,7 +325,7 @@ mod tests {
         disc: 1,
         expected_disc: 1,
         expected_track: 1,
-        filename: "0.flac".parse().unwrap(),
+        path: "0.flac".parse().unwrap(),
         track: 2,
       }),
     );
@@ -340,7 +336,7 @@ mod tests {
         disc: 1,
         expected_disc: 1,
         expected_track: 2,
-        filename: "1.flac".parse().unwrap(),
+        path: "1.flac".parse().unwrap(),
         track: 1,
       }),
     );
@@ -351,7 +347,7 @@ mod tests {
         disc: 1,
         expected_disc: 1,
         expected_track: 2,
-        filename: "1.flac".parse().unwrap(),
+        path: "1.flac".parse().unwrap(),
         track: 3,
       }),
     );
@@ -371,7 +367,7 @@ mod tests {
       Err(AudioPositionError::DiscTotalMismatch {
         actual: 1,
         expected: 2,
-        filename: "1.flac".parse().unwrap(),
+        path: "1.flac".parse().unwrap(),
       }),
     );
 
@@ -381,14 +377,14 @@ mod tests {
         actual: 3,
         disc: 1,
         expected: 2,
-        filename: "1.flac".parse().unwrap(),
+        path: "1.flac".parse().unwrap(),
       }),
     );
 
     case(
       &[(1, 1, 1, 1), (2, 1, 1, 1)],
       Err(AudioPositionError::DiscNumberExceedsTotal {
-        filename: "1.flac".parse().unwrap(),
+        path: "1.flac".parse().unwrap(),
         number: 2,
         total: 1,
       }),
@@ -397,7 +393,7 @@ mod tests {
     case(
       &[(1, 0, 1, 1)],
       Err(AudioPositionError::DiscNumberExceedsTotal {
-        filename: "0.flac".parse().unwrap(),
+        path: "0.flac".parse().unwrap(),
         number: 1,
         total: 0,
       }),
@@ -406,7 +402,7 @@ mod tests {
     case(
       &[(1, 1, 1, 0)],
       Err(AudioPositionError::NumberExceedsTotal {
-        filename: "0.flac".parse().unwrap(),
+        path: "0.flac".parse().unwrap(),
         number: 1,
         total: 0,
       }),
@@ -418,7 +414,7 @@ mod tests {
         disc: 0,
         expected_disc: 1,
         expected_track: 1,
-        filename: "0.flac".parse().unwrap(),
+        path: "0.flac".parse().unwrap(),
         track: 1,
       }),
     );
@@ -429,7 +425,7 @@ mod tests {
         disc: 1,
         expected_disc: 1,
         expected_track: 1,
-        filename: "0.flac".parse().unwrap(),
+        path: "0.flac".parse().unwrap(),
         track: 0,
       }),
     );
@@ -466,7 +462,7 @@ mod tests {
   #[test]
   fn from_str() {
     #[track_caller]
-    fn case(s: &str, expected: ComponentError) {
+    fn case(s: &str, expected: PathError) {
       assert_eq!(s.parse::<Audio>().unwrap_err(), expected);
     }
 
@@ -478,7 +474,7 @@ mod tests {
         channels: 0,
         disc: 0,
         discs: 0,
-        filename: "foo.flac".parse().unwrap(),
+        path: "foo.flac".parse().unwrap(),
         sample_bits: None,
         sample_rate: 0,
         samples: 0,
@@ -498,7 +494,7 @@ mod tests {
         channels: 0,
         disc: 0,
         discs: 0,
-        filename: "foo.mp3".parse().unwrap(),
+        path: "foo.mp3".parse().unwrap(),
         sample_bits: None,
         sample_rate: 0,
         samples: 0,
@@ -510,20 +506,24 @@ mod tests {
       },
     );
 
+    assert_eq!(
+      "foo/bar.flac".parse::<Audio>().unwrap().path,
+      "foo/bar.flac".parse::<RelativePath>().unwrap(),
+    );
+
     case(
       "foo.wav",
-      ComponentError::Extension {
+      PathError::Extension {
         extensions: &["flac", "mp3"],
       },
     );
     case(
       "foo",
-      ComponentError::Extension {
+      PathError::Extension {
         extensions: &["flac", "mp3"],
       },
     );
-    case("", ComponentError::Empty);
-    case("foo/bar.flac", ComponentError::Separator { character: '/' });
+    case("", PathError::Empty);
   }
 
   #[test]
@@ -545,7 +545,7 @@ mod tests {
     assert_eq!(
       Item::info(&audio, "bob".into()),
       InfoBuilder::new()
-        .link("filename", "foo.flac", "bob".into())
+        .link("path", "foo.flac", "bob".into())
         .value("title", "bar")
         .value("artist", "baz")
         .value("album", "qux")
@@ -578,7 +578,7 @@ mod tests {
     assert_eq!(
       Item::info(&audio, "bob".into()),
       InfoBuilder::new()
-        .link("filename", "foo.mp3", "bob".into())
+        .link("path", "foo.mp3", "bob".into())
         .value("title", "bar")
         .value("artist", "baz")
         .value("album", "qux")
@@ -600,7 +600,7 @@ mod tests {
     assert_eq!(
       Item::info(&audio, "bob".into()),
       InfoBuilder::new()
-        .link("filename", "foo.flac", "bob".into())
+        .link("path", "foo.flac", "bob".into())
         .value("title", "")
         .value("artist", "")
         .value("album", "")
@@ -659,7 +659,7 @@ mod tests {
         channels: 2,
         disc: 1,
         discs: 2,
-        filename: "foo.flac".parse().unwrap(),
+        path: "foo.flac".parse().unwrap(),
         sample_bits: Some(16),
         sample_rate: 44100,
         samples: 66150,
@@ -682,7 +682,7 @@ mod tests {
         channels: 2,
         disc: 1,
         discs: 2,
-        filename: "foo.mp3".parse().unwrap(),
+        path: "foo.mp3".parse().unwrap(),
         sample_bits: None,
         sample_rate: 44100,
         samples: 2304,
@@ -699,12 +699,12 @@ mod tests {
   fn serialize() {
     assert_eq!(
       serde_json::to_string(&"foo.flac".parse::<Audio>().unwrap()).unwrap(),
-      r#"{"album":"","artist":"","channels":0,"disc":0,"discs":0,"filename":"foo.flac","sample_rate":0,"samples":0,"size":0,"title":"","track":0,"tracks":0,"type":"flac"}"#,
+      r#"{"album":"","artist":"","channels":0,"disc":0,"discs":0,"path":"foo.flac","sample_rate":0,"samples":0,"size":0,"title":"","track":0,"tracks":0,"type":"flac"}"#,
     );
 
     assert_eq!(
       serde_json::to_string(&"foo.mp3".parse::<Audio>().unwrap()).unwrap(),
-      r#"{"album":"","artist":"","channels":0,"disc":0,"discs":0,"filename":"foo.mp3","sample_rate":0,"samples":0,"size":0,"title":"","track":0,"tracks":0,"type":"mp3"}"#,
+      r#"{"album":"","artist":"","channels":0,"disc":0,"discs":0,"path":"foo.mp3","sample_rate":0,"samples":0,"size":0,"title":"","track":0,"tracks":0,"type":"mp3"}"#,
     );
 
     assert_eq!(
@@ -714,7 +714,7 @@ mod tests {
         channels: 8,
         disc: 3,
         discs: 4,
-        filename: "foo.flac".parse().unwrap(),
+        path: "foo.flac".parse().unwrap(),
         sample_bits: Some(7),
         sample_rate: 1,
         samples: 2,
@@ -725,7 +725,7 @@ mod tests {
         ty: AudioType::Flac,
       })
       .unwrap(),
-      r#"{"album":"qux","artist":"baz","channels":8,"disc":3,"discs":4,"filename":"foo.flac","sample_bits":7,"sample_rate":1,"samples":2,"size":9,"title":"bar","track":5,"tracks":6,"type":"flac"}"#,
+      r#"{"album":"qux","artist":"baz","channels":8,"disc":3,"discs":4,"path":"foo.flac","sample_bits":7,"sample_rate":1,"samples":2,"size":9,"title":"bar","track":5,"tracks":6,"type":"flac"}"#,
     );
   }
 }

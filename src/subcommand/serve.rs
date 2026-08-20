@@ -312,7 +312,7 @@ impl Serve {
       .route("/directory/{hash}", get(route::directory))
       .route("/favicon.ico", get(route::favicon))
       .route("/file/{hash}", get(route::file).put(route::upload_file))
-      .route("/file/{hash}/{name}", get(route::file_with_name))
+      .route("/file/{hash}/{*path}", get(route::file_with_path))
       .route("/files", get(route::files))
       .route("/install.sh", get(route::install_script))
       .route(

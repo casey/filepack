@@ -48,11 +48,11 @@ mod tests {
                 height: 1,
                 width: 2,
               },
-              filename: "foo.png".parse().unwrap(),
               orientation: Orientation {
                 mirrored: false,
                 rotation: Rotation::R90,
               },
+              path: "foo.png".parse().unwrap(),
               ty: ImageType::Png,
             }],
           }),

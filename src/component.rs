@@ -5,10 +5,6 @@ use super::*;
 pub struct Component(str);
 
 impl Component {
-  pub(crate) fn as_path(&self) -> RelativePath {
-    self.as_str().parse().unwrap()
-  }
-
   pub(crate) fn as_str(&self) -> &str {
     &self.0
   }

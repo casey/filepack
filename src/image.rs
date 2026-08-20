@@ -14,21 +14,17 @@ pub(crate) struct Image {
   #[n(4)]
   pub(crate) dimensions: Dimensions,
   #[n(5)]
-  pub(crate) filename: ComponentBuf,
-  #[n(6)]
   pub(crate) orientation: Orientation,
+  #[n(6)]
+  pub(crate) path: RelativePath,
   #[n(7)]
   #[serde(rename = "type")]
   pub(crate) ty: ImageType,
 }
 
 impl Image {
-  pub(crate) fn as_path(&self) -> RelativePath {
-    self.filename.as_path()
-  }
-
   fn decode(&self, root: &Utf8Path) -> Result<ImageMetadata> {
-    let path = root.join(self.as_path());
+    let path = root.join(&self.path);
 
     match self.ty {
       ImageType::Jpeg => Self::decode_jpeg(&path),
@@ -174,13 +170,13 @@ impl Image {
 }
 
 impl FromStr for Image {
-  type Err = ComponentError;
+  type Err = PathError;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
-    let filename = s.parse::<ComponentBuf>()?;
+    let path = s.parse::<RelativePath>()?;
 
-    let Some(ty) = filename.extension().and_then(ImageType::from_extension) else {
-      return Err(ComponentError::Extension {
+    let Some(ty) = path.extension().and_then(ImageType::from_extension) else {
+      return Err(PathError::Extension {
         extensions: ImageType::EXTENSIONS,
       });
     };
@@ -191,8 +187,8 @@ impl FromStr for Image {
       chroma_subsampling: None,
       color_type: ColorType::default(),
       dimensions: Dimensions::default(),
-      filename,
       orientation: Orientation::new(),
+      path,
       ty,
     })
   }
@@ -201,7 +197,7 @@ impl FromStr for Image {
 impl Item for Image {
   fn info(&self, url: String) -> Info {
     InfoBuilder::new()
-      .link("filename", &self.filename, url)
+      .link("path", &self.path, url)
       .value("type", self.ty)
       .value("dimensions", self.dimensions)
       .value("orientation", self.orientation)
@@ -212,8 +208,8 @@ impl Item for Image {
       .build()
   }
 
-  fn path(&self) -> RelativePath {
-    self.as_path()
+  fn path(&self) -> &RelativePath {
+    &self.path
   }
 
   fn resource_type(&self) -> ResourceType {
@@ -236,8 +232,8 @@ mod tests {
         height: 1,
         width: 2,
       },
-      filename: "foo.png".parse().unwrap(),
       orientation: Orientation::new(),
+      path: "foo.png".parse().unwrap(),
       ty: ImageType::Png,
     };
 
@@ -247,8 +243,8 @@ mod tests {
       chroma_subsampling: None,
       color_type: ColorType::Rgb,
       dimensions: Dimensions::default(),
-      filename: "bar.jpg".parse().unwrap(),
       orientation: Orientation::new(),
+      path: "bar.jpg".parse().unwrap(),
       ty: ImageType::Jpeg,
     };
 
@@ -261,8 +257,8 @@ mod tests {
         height: 3,
         width: 4,
       },
-      filename: "baz.png".parse().unwrap(),
       orientation: Orientation::new(),
+      path: "baz.png".parse().unwrap(),
       ty: ImageType::Png,
     };
 
@@ -275,7 +271,7 @@ mod tests {
   #[test]
   fn from_str() {
     #[track_caller]
-    fn case(s: &str, expected: ComponentError) {
+    fn case(s: &str, expected: PathError) {
       assert_eq!(s.parse::<Image>().unwrap_err(), expected);
     }
 
@@ -290,28 +286,32 @@ mod tests {
           height: 0,
           width: 0,
         },
-        filename: "foo.jpg".parse().unwrap(),
         orientation: Orientation::new(),
+        path: "foo.jpg".parse().unwrap(),
         ty: ImageType::Jpeg,
       },
     );
 
     assert_eq!("foo.png".parse::<Image>().unwrap().ty, ImageType::Png);
 
+    assert_eq!(
+      "foo/bar.png".parse::<Image>().unwrap().path,
+      "foo/bar.png".parse::<RelativePath>().unwrap(),
+    );
+
     case(
       "foo.svg",
-      ComponentError::Extension {
+      PathError::Extension {
         extensions: &["jpg", "png"],
       },
     );
     case(
       "foo",
-      ComponentError::Extension {
+      PathError::Extension {
         extensions: &["jpg", "png"],
       },
     );
-    case("", ComponentError::Empty);
-    case("foo/bar.png", ComponentError::Separator { character: '/' });
+    case("", PathError::Empty);
   }
 
   #[test]
@@ -396,11 +396,11 @@ mod tests {
           height: 1,
           width: 2,
         },
-        filename: "foo.jpg".parse().unwrap(),
         orientation: Orientation {
           mirrored: false,
           rotation: Rotation::R90,
         },
+        path: "foo.jpg".parse().unwrap(),
         ty: ImageType::Jpeg,
       },
     );
@@ -420,11 +420,11 @@ mod tests {
           height: 1,
           width: 2,
         },
-        filename: "foo.png".parse().unwrap(),
         orientation: Orientation {
           mirrored: true,
           rotation: Rotation::R90,
         },
+        path: "foo.png".parse().unwrap(),
         ty: ImageType::Png,
       },
     );
@@ -546,15 +546,15 @@ mod tests {
           height: 1,
           width: 2,
         },
-        filename: "foo.jpg".parse().unwrap(),
         orientation: Orientation {
           mirrored: true,
           rotation: Rotation::R90,
         },
+        path: "foo.jpg".parse().unwrap(),
         ty: ImageType::Jpeg,
       })
       .unwrap(),
-      r#"{"alpha":false,"bit_depth":8,"chroma_subsampling":"4:2:0","color_type":"rgb","dimensions":{"height":1,"width":2},"filename":"foo.jpg","orientation":{"mirrored":true,"rotation":90},"type":"jpeg"}"#,
+      r#"{"alpha":false,"bit_depth":8,"chroma_subsampling":"4:2:0","color_type":"rgb","dimensions":{"height":1,"width":2},"orientation":{"mirrored":true,"rotation":90},"path":"foo.jpg","type":"jpeg"}"#,
     );
 
     assert_eq!(
@@ -567,12 +567,12 @@ mod tests {
           height: 1,
           width: 2,
         },
-        filename: "foo.png".parse().unwrap(),
         orientation: Orientation::new(),
+        path: "foo.png".parse().unwrap(),
         ty: ImageType::Png,
       })
       .unwrap(),
-      r#"{"alpha":true,"bit_depth":16,"color_type":"rgb","dimensions":{"height":1,"width":2},"filename":"foo.png","orientation":{"mirrored":false,"rotation":0},"type":"png"}"#,
+      r#"{"alpha":true,"bit_depth":16,"color_type":"rgb","dimensions":{"height":1,"width":2},"orientation":{"mirrored":false,"rotation":0},"path":"foo.png","type":"png"}"#,
     );
   }
 }

@@ -20,7 +20,7 @@ pub struct Metadata {
   #[n(6)]
   pub package: Option<Package>,
   #[n(7)]
-  pub readme: Option<ComponentBuf>,
+  pub readme: Option<RelativePath>,
   #[n(8)]
   pub time: Option<Time>,
   #[n(9)]
@@ -31,7 +31,7 @@ impl Metadata {
   pub(crate) const CBOR_FILENAME: &'static str = "metadata.filemeta";
   pub(crate) const YAML_FILENAME: &'static str = "metadata.yaml";
 
-  fn check_colophon(colophon: &ComponentBuf) -> Result {
+  fn check_colophon(colophon: &RelativePath) -> Result {
     ensure! {
       colophon.extension().is_some_and(|extension| extension == "md"),
       error::ColophonExtension {
@@ -80,17 +80,17 @@ impl Metadata {
   }
 
   pub(crate) fn check_files(&self, paths: &HashSet<RelativePath>) -> Result {
-    for filename in self.files() {
+    for path in self.files() {
       ensure! {
-        paths.contains(&filename),
-        error::MissingMetadataFile { filename },
+        paths.contains(&path),
+        error::MissingMetadataFile { path },
       }
     }
 
     Ok(())
   }
 
-  fn check_readme(readme: &ComponentBuf) -> Result {
+  fn check_readme(readme: &RelativePath) -> Result {
     ensure! {
       readme.extension().is_some_and(|extension| extension == "md"),
       error::ReadmeExtension {
@@ -109,24 +109,24 @@ impl Metadata {
     let mut files = Vec::new();
 
     if let Some(artwork) = &self.artwork {
-      files.push(artwork.as_path());
+      files.push(artwork.path.clone());
     }
 
     if let Some(package) = &self.package
       && let Some(colophon) = &package.colophon
     {
-      files.push(colophon.as_path());
+      files.push(colophon.clone());
     }
 
     if let Some(readme) = &self.readme {
-      files.push(readme.as_path());
+      files.push(readme.clone());
     }
 
     if let Some(media) = &self.media {
       match media {
-        Media::Audio { items } => files.extend(items.iter().map(Audio::as_path)),
-        Media::Image { items } => files.extend(items.iter().map(Image::as_path)),
-        Media::Video { items } => files.extend(items.iter().map(Video::as_path)),
+        Media::Audio { items } => files.extend(items.iter().map(|audio| audio.path.clone())),
+        Media::Image { items } => files.extend(items.iter().map(|image| image.path.clone())),
+        Media::Video { items } => files.extend(items.iter().map(|video| video.path.clone())),
         Media::Web => files.push("static/index.html".parse().unwrap()),
       }
     }
@@ -179,7 +179,7 @@ impl Metadata {
         artwork.dimensions.width == artwork.dimensions.height,
         error::ArtworkAspectRatio {
           dimensions: artwork.dimensions,
-          path: root.join(artwork.as_path()),
+          path: root.join(&artwork.path),
         }
       }
     }
@@ -339,7 +339,7 @@ mod tests {
         title: Foo
         artwork: cover.svg
       ",
-      "artwork: component must end in `.jpg` or `.png`",
+      "artwork: path must end in `.jpg` or `.png`",
     );
     case(
       "
@@ -349,7 +349,7 @@ mod tests {
           items:
           - foo.wav
       ",
-      r"component must end in `\.flac` or `\.mp3`",
+      r"path must end in `\.flac` or `\.mp3`",
     );
     case(
       "
@@ -404,8 +404,8 @@ mod tests {
           height: 1,
           width: 1,
         },
-        filename: "cover.png".parse().unwrap(),
         orientation: Orientation::new(),
+        path: "cover.png".parse().unwrap(),
         ty: ImageType::Png,
       }),
       creator: Some("foo".parse().unwrap()),
@@ -419,7 +419,7 @@ mod tests {
           channels: 8,
           disc: 3,
           discs: 4,
-          filename: "track.flac".parse().unwrap(),
+          path: "track.flac".parse().unwrap(),
           sample_bits: Some(7),
           sample_rate: 1,
           samples: 2,

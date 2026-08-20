@@ -107,13 +107,13 @@ pub(crate) async fn file(
   block_in_place(|| Ok(server.open_file(*hash)?.range(range)))
 }
 
-pub(crate) async fn file_with_name(
+pub(crate) async fn file_with_path(
   server: ServerExtension,
-  Path((hash, name)): Path<(Hash, ComponentBuf)>,
+  Path((hash, path)): Path<(Hash, RelativePath)>,
   range: Option<TypedHeader<headers::Range>>,
 ) -> ServerResult<Response> {
   block_in_place(|| {
-    let Some(resource_type) = ResourceType::from_filename(&name) else {
+    let Some(resource_type) = ResourceType::from_filename(path.filename()) else {
       return Ok(Redirect::temporary(&format!("/file/{hash}")).into_response());
     };
 
