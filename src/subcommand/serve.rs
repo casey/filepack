@@ -245,6 +245,7 @@ impl Serve {
     })))
   }
 
+  #[allow(clippy::unused_async_trait_impl)]
   async fn redirect_http_to_https(redirect_config: RedirectConfigExtension, uri: Uri) -> Redirect {
     Redirect::permanent(redirect_config.with_path_and_query(&uri).as_str())
   }
