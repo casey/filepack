@@ -12,7 +12,7 @@ pub struct PackageHtml {
 }
 
 impl PackageHtml {
-  fn title(&self) -> Option<&Component> {
+  fn title(&self) -> Option<&str> {
     self.metadata.as_ref()?.title.as_deref()
   }
 }

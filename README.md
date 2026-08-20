@@ -325,9 +325,9 @@ Top-level fields:
 - `artwork: path.{jpeg,png}`: The path of a JPEG or PNG file containing artwork
   for the content, for example, cover art for an album or key art for a movie.
 
-- `creator: component`: The person or group who created the content.
+- `creator: text`: The person or group who created the content.
 
-- `description: markdown`: A description of the content.
+- `description: text`: A description of the content.
 
 - `homepage: url`: Primary URL for the content. Should be the official homepage
   of the content, if any, and not, for example, a Wikipedia or media database
@@ -343,7 +343,7 @@ Top-level fields:
 
 - `time: time`: The time the content was created or released.
 
-- `title: component`: The content's human-readable title.
+- `title: text`: The content's human-readable title.
 
 Fields of `media` containing media-specific metadata:
 
@@ -371,34 +371,29 @@ Fields of `package` describing the package itself, as opposed its content:
 
 - `colophon: path.md`: The path of the package colophon.
 
-- `creator: component`: The person or group who created the package.
+- `creator: text`: The person or group who created the package.
 
-- `description: markdown`: A description of the package.
+- `description: text`: A description of the package.
 
 - `homepage: url`: Primary URL for the package.
 
 - `time: time`: The time the package was created.
 
-- `title: component`: The package's title. May contain details related to the
-  source, packager, or encoding. May to be used as a directory name when saving
-  the package if the main title field would be ambiguous.
+- `title: text`: The package's title. May contain details related to the
+  source, packager, or encoding.
 
 Types:
 
-- `component`: A string with the same restrictions as path components in the
-  manifest `package` object, allowing them to be used as unix filesystem paths.
-  Note that Windows imposes additional restrictions which are not enforced, so
-  components may not be valid paths on Windows.
-
 - `language`: A string containing an ISO 639-1 two-character language code. See
   `filepack languages` for valid language codes.
-
-- `markdown`: A string containing CommonMark markdown.
 
 - `path`: A string containing a relative path consisting of `/`-separated
   components.
 
 - `path.EXTENSION`: A path that must end with `.EXTENSION`.
+
+- `text`: A plain text string. May not contain control characters, including
+  newlines and tabs.
 
 - `time`: A string containing a time with one of two precisions, a year only,
   or a year, month, and day, written `Y-MM-DD`. Times use the proleptic
@@ -434,7 +429,7 @@ package:
   title: Tobin's Spirit Guide - First Edition
   creator: Egon Spengler
   time: 1984-07-08
-  description: >
+  description: >-
     First edition on loan from NYPL Main Branch research stacks. Captured via
     Microtek MS-300A flatbed scanner.
   homepage: https://ghost-busters.net/~egon
@@ -567,7 +562,7 @@ To create a package with metadata describing the package, create a file named
 ```yaml
 title: The Necronomicon
 creator: Abdul Alhazred
-description: >
+description: >-
   The Old Ones, their history, and the rites by which they may be summoned.
 language: la
 ```

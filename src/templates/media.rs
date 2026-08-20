@@ -7,7 +7,7 @@ pub(crate) struct MediaHtml {
 }
 
 impl MediaHtml {
-  fn title(&self) -> Option<&Component> {
+  fn title(&self) -> Option<&str> {
     self.metadata.title.as_deref()
   }
 }

@@ -7,7 +7,7 @@ pub(crate) struct Package {
   #[n(0)]
   pub(crate) colophon: Option<RelativePath>,
   #[n(1)]
-  pub(crate) creator: Option<ComponentBuf>,
+  pub(crate) creator: Option<Text>,
   #[n(2)]
   pub(crate) description: Option<Text>,
   #[n(3)]
@@ -15,7 +15,7 @@ pub(crate) struct Package {
   #[n(4)]
   pub(crate) time: Option<Time>,
   #[n(5)]
-  pub(crate) title: Option<ComponentBuf>,
+  pub(crate) title: Option<Text>,
 }
 
 #[cfg(test)]

@@ -18,13 +18,14 @@ pub struct Text(String);
 
 impl Text {
   pub(crate) fn as_str(&self) -> &str {
-    &self.0
+    self
   }
 
   fn check(s: &str) -> Result<(), TextError> {
     for character in s.chars() {
-      if character != '\n' && character.is_control() {
-        return Err(TextError::Control { character });
+      ensure! {
+        !character.is_control(),
+        text_error::Control { character },
       }
     }
 
@@ -33,6 +34,14 @@ impl Text {
 
   pub(crate) fn new() -> Self {
     Self::default()
+  }
+}
+
+impl Deref for Text {
+  type Target = str;
+
+  fn deref(&self) -> &str {
+    &self.0
   }
 }
 
@@ -76,6 +85,7 @@ mod tests {
     case('\u{1f}');
     case('\u{7f}');
     case('\u{9f}');
+    case('\n');
     case('\r');
     case('\t');
   }
@@ -93,11 +103,5 @@ mod tests {
   #[test]
   fn encoding() {
     assert_cbor_eq("foo".parse::<Text>().unwrap(), "foo");
-  }
-
-  #[test]
-  fn newline_allowed() {
-    assert_eq!("foo\nbar".parse::<Text>().unwrap().as_str(), "foo\nbar");
-    assert_eq!("foo".parse::<Text>().unwrap().as_str(), "foo");
   }
 }
