@@ -20,6 +20,9 @@
 %% if let Some(stylesheet) = self.content.stylesheet() {
     <link href={{ stylesheet }} rel=stylesheet>
 %% }
+%% if let Some(script) = self.content.script() {
+    <script type=module src={{ script }}></script>
+%% }
   </head>
   <body>
     {{ Trusted(&self.content) }}

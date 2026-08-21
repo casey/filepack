@@ -29,6 +29,10 @@ impl Page for ImageHtml {
     })
   }
 
+  fn script(&self) -> Option<&'static str> {
+    Some("/static/image.js")
+  }
+
   fn stylesheet(&self) -> Option<&'static str> {
     Some("/static/image.css")
   }

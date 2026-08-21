@@ -16,6 +16,10 @@ pub trait Page: Display + Sized {
     }
   }
 
+  fn script(&self) -> Option<&'static str> {
+    None
+  }
+
   fn stylesheet(&self) -> Option<&'static str> {
     None
   }
