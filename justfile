@@ -22,7 +22,7 @@ open:
   open http://localhost:8000
 
 install:
-  cargo install --path .
+  cargo install --locked --path .
 
 deploy branch='master' remote='casey/filepack' domain='filepack.com':
   ssh root@{{domain}} '\
