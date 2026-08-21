@@ -1849,6 +1849,7 @@ fn package_item_video() {
     .get(format!("/package/{fingerprint}/item/1"))
     .assert_page(VideoHtml {
       fingerprint,
+      metadata,
       video: 0,
     })
     .send();

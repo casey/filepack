@@ -305,6 +305,7 @@ pub(crate) async fn package_item(
       Media::Video { .. } => Ok(
         VideoHtml {
           fingerprint,
+          metadata,
           video: index,
         }
         .page(server_config.url.clone())

@@ -23,11 +23,7 @@ impl Page for PackageHtml {
   }
 
   fn open_graph_image(&self) -> Option<OpenGraphImage> {
-    let artwork = self.metadata.as_ref()?.artwork.as_ref()?;
-    Some(OpenGraphImage {
-      dimensions: artwork.dimensions,
-      path: format!("artwork/{}", self.fingerprint),
-    })
+    OpenGraphImage::artwork(self.metadata.as_ref()?, self.fingerprint)
   }
 
   fn stylesheet(&self) -> Option<&'static str> {
@@ -457,7 +453,10 @@ mod tests {
             height: 1,
             width: 2,
           },
-          orientation: Orientation::new(),
+          orientation: Orientation {
+            mirrored: false,
+            rotation: Rotation::R90,
+          },
           path: "foo.png".parse().unwrap(),
           ty: ImageType::Png,
         }),
@@ -473,8 +472,8 @@ mod tests {
       html.open_graph_image(),
       Some(OpenGraphImage {
         dimensions: Dimensions {
-          height: 1,
-          width: 2,
+          height: 2,
+          width: 1,
         },
         path: format!("artwork/{}", test::FINGERPRINT),
       }),

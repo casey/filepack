@@ -18,6 +18,10 @@ impl AudioHtml {
 }
 
 impl Page for AudioHtml {
+  fn open_graph_image(&self) -> Option<OpenGraphImage> {
+    OpenGraphImage::artwork(&self.metadata, self.fingerprint)
+  }
+
   fn stylesheet(&self) -> Option<&'static str> {
     Some("/static/audio.css")
   }
@@ -75,5 +79,33 @@ mod tests {
         fingerprint = test::FINGERPRINT,
       )),
     );
+  }
+
+  #[test]
+  fn open_graph_image() {
+    let html = AudioHtml {
+      audio: 0,
+      fingerprint: test::FINGERPRINT.parse().unwrap(),
+      metadata: Metadata {
+        artwork: Some("foo.png".parse().unwrap()),
+        ..default()
+      },
+    };
+
+    assert_eq!(
+      html.open_graph_image(),
+      Some(OpenGraphImage {
+        dimensions: Dimensions::default(),
+        path: format!("artwork/{}", test::FINGERPRINT),
+      }),
+    );
+
+    let html = AudioHtml {
+      audio: 0,
+      fingerprint: test::FINGERPRINT.parse().unwrap(),
+      metadata: default(),
+    };
+
+    assert_eq!(html.open_graph_image(), None);
   }
 }
