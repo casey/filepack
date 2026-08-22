@@ -148,7 +148,7 @@ impl Metadata {
     files
   }
 
-  pub(crate) fn generate(&mut self, root: &Utf8Path) -> Result {
+  pub(crate) fn generate(&mut self, root: &Utf8Path, force: bool) -> Result {
     assert!(self.thumbnails.is_none());
 
     let Some(Media::Image { items }) = &self.media else {
@@ -161,7 +161,7 @@ impl Metadata {
       let destination = item.default_thumbnail_path()?;
 
       ensure! {
-        !filesystem::exists(&root.join(&destination))?,
+        force || !filesystem::exists(&root.join(&destination))?,
         error::ThumbnailAlreadyExists {
           path: destination,
         },
@@ -653,7 +653,7 @@ mod tests {
     };
 
     assert_eq!(
-      metadata.generate(&root).unwrap_err().to_string(),
+      metadata.generate(&root, false).unwrap_err().to_string(),
       "thumbnail `thumbnails/foo.jpg` already exists",
     );
   }
@@ -670,7 +670,7 @@ mod tests {
     };
 
     assert_eq!(
-      metadata.generate(&root).unwrap_err().to_string(),
+      metadata.generate(&root, false).unwrap_err().to_string(),
       "thumbnail path `thumbnails/foo.jpg` for `foo.png` collides with thumbnail path for `foo.jpg`",
     );
   }

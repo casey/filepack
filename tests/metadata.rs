@@ -295,6 +295,46 @@ fn create_extracts_video_metadata() {
 }
 
 #[test]
+fn create_generate_force_overwrites_thumbnails() {
+  Test::new()
+    .write("foo.jpg", image(2, 1, ImageFormat::Jpeg))
+    .write(
+      "metadata.yaml",
+      "
+        media:
+          type: image
+          items:
+            - foo.jpg
+      ",
+    )
+    .write("thumbnails/foo.jpg", "bar")
+    .args(["create", "--generate", "--force"])
+    .success()
+    .arg("verify")
+    .stderr_regex("successfully verified .*")
+    .success();
+}
+
+#[test]
+fn create_generate_rejects_existing_thumbnails() {
+  Test::new()
+    .write("foo.jpg", image(2, 1, ImageFormat::Jpeg))
+    .write(
+      "metadata.yaml",
+      "
+        media:
+          type: image
+          items:
+            - foo.jpg
+      ",
+    )
+    .write("thumbnails/foo.jpg", "bar")
+    .args(["create", "--generate"])
+    .stderr("error: thumbnail `thumbnails/foo.jpg` already exists\n")
+    .failure();
+}
+
+#[test]
 fn create_generates_thumbnails() {
   Test::new()
     .write("foo.jpg", image(1280, 640, ImageFormat::Jpeg))
@@ -391,10 +431,7 @@ fn create_generates_thumbnails() {
     .success()
     .arg("verify")
     .stderr_regex("successfully verified .*")
-    .success()
-    .args(["create", "--generate", "--force"])
-    .stderr("error: thumbnail `thumbnails/foo.jpg` already exists\n")
-    .failure();
+    .success();
 }
 
 #[test]
