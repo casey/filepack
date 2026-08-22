@@ -20,6 +20,15 @@
 %% if let Some(stylesheet) = self.content.stylesheet() {
     <link href={{ stylesheet }} rel=stylesheet>
 %% }
+%% if let Some(next) = self.content.next() {
+    <link href={{ next }} rel=next>
+%% }
+%% if let Some(prev) = self.content.prev() {
+    <link href={{ prev }} rel=prev>
+%% }
+%% if let Some(script) = self.content.script() {
+    <script src={{ script }} type=module></script>
+%% }
   </head>
   <body>
     {{ Trusted(&self.content) }}
