@@ -4,7 +4,10 @@ use super::*;
 pub(crate) struct Create {
   #[arg(help = "Deny <LINT_GROUP>", long, value_name = "LINT_GROUP")]
   deny: Option<LintGroup>,
-  #[arg(help = "Overwrite manifest if it already exists", long)]
+  #[arg(
+    help = "Overwrite manifest and generated assets if they already exist",
+    long
+  )]
   force: bool,
   #[arg(help = "Generate derived assets", long)]
   generate: bool,
@@ -52,7 +55,7 @@ impl Create {
       }
 
       if self.generate {
-        metadata.generate(&root)?;
+        metadata.generate(&root, self.force)?;
       }
 
       metadata.populate(&root)?;
