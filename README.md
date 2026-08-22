@@ -76,13 +76,13 @@ Installation
 from source and installed from a checked-out copy of this repo with:
 
 ```sh
-cargo install --path .
+cargo install --locked --path .
 ```
 
 Or from [crates.io](https://crates.io/crates/filepack) with:
 
 ```sh
-cargo install filepack
+cargo install --locked filepack
 ```
 
 See [rustup.rs](https://rustup.rs/) for installation instructions for Rust.
