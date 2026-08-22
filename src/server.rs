@@ -172,6 +172,7 @@ impl Server {
     fingerprint: Fingerprint,
     item: usize,
     ty: MediaType,
+    thumbnail: bool,
   ) -> ServerResult<Resource> {
     let metadata = self.package_metadata(fingerprint)?;
 
@@ -197,11 +198,20 @@ impl Server {
         ty,
       })?;
 
-    let path = item.path();
+    let (path, ty) = if thumbnail
+      && let Some(thumbnail) = metadata
+        .thumbnails
+        .as_ref()
+        .and_then(|thumbnails| thumbnails.get(item.path()))
+    {
+      (&thumbnail.path, thumbnail.ty.resource_type())
+    } else {
+      (item.path(), item.resource_type())
+    };
 
     let hash = self.verified_package_file(fingerprint, path)?;
 
-    Ok(self.open_file(hash)?.ty(item.resource_type()))
+    Ok(self.open_file(hash)?.ty(ty))
   }
 
   fn metadata(&self, fingerprint: Fingerprint) -> ServerResult<Option<Metadata>> {

@@ -325,6 +325,10 @@ impl Serve {
         get(route::media_image_item),
       )
       .route(
+        "/media/image/{fingerprint}/item/{item}/thumbnail",
+        get(route::media_image_item_thumbnail),
+      )
+      .route(
         "/media/video/{fingerprint}/item/{item}",
         get(route::media_video_item),
       )
