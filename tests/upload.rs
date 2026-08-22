@@ -14,7 +14,7 @@ fn restricted_upload_succeeds_with_auth() {
       "0",
       "--domain",
       "127.0.0.1",
-      "--restrict-uploads",
+      "--restrict-writes",
       "--admin-key",
       "master",
     ])
@@ -95,7 +95,7 @@ fn serve_admin_key_by_name() {
       "0",
       "--domain",
       "127.0.0.1",
-      "--restrict-uploads",
+      "--restrict-writes",
       "--admin-key",
       "master",
     ])
@@ -124,7 +124,7 @@ fn serve_admin_key_by_public_key() {
       "0",
       "--domain",
       "127.0.0.1",
-      "--restrict-uploads",
+      "--restrict-writes",
       "--admin-key",
       PUBLIC_KEY,
     ])

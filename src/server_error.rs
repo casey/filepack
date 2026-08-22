@@ -128,10 +128,10 @@ pub enum ServerError {
   PageNotFound,
   #[snafu(display("error reading body of upload with hash {hash}"))]
   UploadBodyRead { hash: Hash, source: axum::Error },
-  #[snafu(display("uploads forbidden"))]
-  UploadForbidden,
   #[snafu(display("expected upload with hash {expected} but got {actual}"))]
   UploadHashMismatch { actual: Hash, expected: Hash },
+  #[snafu(display("writes forbidden"))]
+  WriteForbidden,
 }
 
 impl ServerError {
@@ -169,8 +169,8 @@ impl ServerError {
       | Self::PackageRootUnverified { .. }
       | Self::PageNotFound
       | Self::UploadBodyRead { .. }
-      | Self::UploadForbidden
-      | Self::UploadHashMismatch { .. } => self.to_string(),
+      | Self::UploadHashMismatch { .. }
+      | Self::WriteForbidden => self.to_string(),
       Self::Database { .. }
       | Self::DatabaseCommit { .. }
       | Self::DatabaseStorage { .. }
@@ -221,7 +221,7 @@ impl ServerError {
       | Self::PackageNotFound { .. }
       | Self::PackageNotMounted { .. }
       | Self::PageNotFound => StatusCode::NOT_FOUND,
-      Self::UploadForbidden => StatusCode::FORBIDDEN,
+      Self::WriteForbidden => StatusCode::FORBIDDEN,
     }
   }
 }

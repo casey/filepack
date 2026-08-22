@@ -137,7 +137,7 @@ fn restricted_delete_succeeds_with_auth() {
       "0",
       "--domain",
       "127.0.0.1",
-      "--restrict-uploads",
+      "--restrict-writes",
       "--admin-key",
       "master",
     ])

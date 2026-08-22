@@ -18,7 +18,7 @@ impl<S: Send + Sync> FromRequestParts<S> for Authenticated {
       return Ok(Self);
     };
 
-    let admin = auth.admin.context(server_error::UploadForbidden)?;
+    let admin = auth.admin.context(server_error::WriteForbidden)?;
 
     let TypedHeader(Authorization(bearer)) = parts
       .extract::<TypedHeader<Authorization<Bearer>>>()
