@@ -10,6 +10,8 @@ use super::*;
 pub(crate) enum LintError {
   #[snafu(display("paths would conflict on case-insensitive filesystem"))]
   CaseConflict,
+  #[snafu(display("audio file missing embedded front cover art"))]
+  CoverArtMissing,
   #[snafu(display("possible junk file"))]
   Junk,
   #[snafu(display("Windows does not allow filenames that begin with spaces"))]

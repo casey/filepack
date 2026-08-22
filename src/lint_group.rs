@@ -4,6 +4,7 @@ use super::*;
 #[serde(rename_all = "kebab-case")]
 pub(crate) enum LintGroup {
   Compatibility,
+  Content,
   Distribution,
   Junk,
 }
@@ -22,6 +23,7 @@ impl LintGroup {
         WindowsTrailingSpace,
       ]
       .into(),
+      Self::Content => [CoverArtMissing].into(),
       Self::Distribution => &Self::Junk.lints() | &Self::Compatibility.lints(),
       Self::Junk => [Junk].into(),
     }

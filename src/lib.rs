@@ -232,6 +232,7 @@ pub use self::{
   manifest::Manifest,
   map_encoder::MapEncoder,
   metadata::Metadata,
+  mp3_builder::Mp3Builder,
   mp4_builder::Mp4Builder,
   open_graph_image::OpenGraphImage,
   page::Page,
@@ -248,7 +249,6 @@ pub use self::{
 #[cfg(test)]
 use {
   jpeg_builder::JpegBuilder,
-  mp3_builder::Mp3Builder,
   png_builder::PngBuilder,
   std::assert_matches,
   tempfile::TempDir,
@@ -362,6 +362,7 @@ mod map_encoder;
 mod media;
 mod metadata;
 mod mode;
+mod mp3_builder;
 mod mp3_decoder;
 mod mp3_error;
 mod mp4_builder;
@@ -425,8 +426,6 @@ mod webm_decoder;
 mod derive;
 #[cfg(test)]
 mod jpeg_builder;
-#[cfg(test)]
-mod mp3_builder;
 #[cfg(test)]
 mod png_builder;
 #[cfg(test)]

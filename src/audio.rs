@@ -143,6 +143,18 @@ impl Audio {
     formats
   }
 
+  pub(crate) fn has_cover_art(&self, root: &Utf8Path) -> Result<bool> {
+    let path = root.join(&self.path);
+
+    let data = filesystem::read(&path)?;
+
+    match self.ty {
+      AudioType::Flac => FlacDecoder::has_cover_art(&data),
+      AudioType::Mp3 => Mp3Decoder::has_cover_art(&data),
+    }
+    .context(error::Audio { path })
+  }
+
   pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result {
     let path = root.join(&self.path);
 

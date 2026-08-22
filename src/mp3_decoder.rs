@@ -129,16 +129,16 @@ impl<'a> Mp3Decoder<'a> {
     })
   }
 
+  pub(crate) fn has_cover_art(data: &[u8]) -> Result<bool, AudioError> {
+    Ok(
+      Self::read_tag(data)?
+        .pictures()
+        .any(|picture| picture.picture_type == id3::frame::PictureType::CoverFront),
+    )
+  }
+
   fn metadata(data: &[u8]) -> Result<AudioMetadata, AudioError> {
-    let tag = match id3::Tag::read_from2(io::Cursor::new(data)) {
-      Err(err) => {
-        if let id3::ErrorKind::NoTag = err.kind {
-          return Err(audio_error::Mp3TagMissing.build());
-        }
-        return Err(audio_error::Mp3Tag.into_error(err));
-      }
-      Ok(tag) => tag,
-    };
+    let tag = Self::read_tag(data)?;
 
     let album = Self::text_tag(&tag, "TALB")?;
     let artist = Self::text_tag(&tag, "TPE1")?;
@@ -257,6 +257,19 @@ impl<'a> Mp3Decoder<'a> {
     Self::metadata(&data).context(error::Audio { path })
   }
 
+  fn read_tag(data: &[u8]) -> Result<id3::Tag, AudioError> {
+    match id3::Tag::read_from2(io::Cursor::new(data)) {
+      Err(err) => {
+        if let id3::ErrorKind::NoTag = err.kind {
+          Err(audio_error::Mp3TagMissing.build())
+        } else {
+          Err(audio_error::Mp3Tag.into_error(err))
+        }
+      }
+      Ok(tag) => Ok(tag),
+    }
+  }
+
   fn tag<'t>(tag: &'t id3::Tag, id: &'static str) -> Result<&'t str, AudioError> {
     Audio::tag(
       tag
@@ -278,6 +291,28 @@ impl<'a> Mp3Decoder<'a> {
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn has_cover_art() {
+    #[track_caller]
+    fn case(builder: Mp3Builder, expected: bool) {
+      assert_eq!(
+        Mp3Decoder::has_cover_art(&builder.build()).unwrap(),
+        expected,
+      );
+    }
+
+    case(Mp3Builder::new().id3v2(), false);
+    case(Mp3Builder::new().tag("TALB", "qux"), false);
+    case(Mp3Builder::new().picture(3), true);
+    case(Mp3Builder::new().picture(4), false);
+    case(Mp3Builder::new().picture(4).picture(3), true);
+
+    assert_matches!(
+      Mp3Decoder::has_cover_art(b"foo").unwrap_err(),
+      AudioError::Mp3TagMissing,
+    );
+  }
 
   #[test]
   fn id3v1_detection_ignores_id3v2_tag_contents() {
