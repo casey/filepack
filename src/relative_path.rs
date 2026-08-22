@@ -115,6 +115,15 @@ impl RelativePath {
     Utf8Path::new(self).starts_with(Utf8Path::new(&prefix))
   }
 
+  pub(crate) fn stem(&self) -> &str {
+    let filename = self.filename().as_str();
+
+    match filename.rfind('.') {
+      None | Some(0) => filename,
+      Some(i) => &filename[..i],
+    }
+  }
+
   pub(crate) fn to_lowercase(&self) -> Self {
     Self(self.0.to_lowercase())
   }
@@ -399,6 +408,20 @@ mod tests {
         .lint(&LintGroup::Distribution.lints())
         .is_none()
     );
+  }
+
+  #[test]
+  fn stem() {
+    #[track_caller]
+    fn case(path: &str, expected: &str) {
+      assert_eq!(path.parse::<RelativePath>().unwrap().stem(), expected);
+    }
+
+    case("foo.jpg", "foo");
+    case("foo", "foo");
+    case(".foo", ".foo");
+    case("foo.tar.gz", "foo.tar");
+    case("foo/bar.png", "bar");
   }
 
   #[test]

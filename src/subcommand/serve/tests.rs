@@ -949,6 +949,7 @@ fn get_package_with_metadata() {
       title: None,
     }),
     readme: Some("README.md".parse().unwrap()),
+    thumbnails: None,
     time: None,
     title: Some("foo".parse().unwrap()),
   };

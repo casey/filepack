@@ -155,6 +155,11 @@ pub enum Error {
     path: DisplayPath,
     source: serde_yaml::Error,
   },
+  #[snafu(display("metadata at `{path}` includes thumbnails: thumbnails must be generated",))]
+  DeserializeMetadataThumbnails {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+  },
   #[snafu(display("directory `{hash}` totals error"))]
   DirectoryTotals {
     backtrace: Option<Backtrace>,
@@ -525,6 +530,26 @@ pub enum Error {
   Symlink {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
+  },
+  #[snafu(display("thumbnail `{path}` already exists"))]
+  ThumbnailAlreadyExists {
+    backtrace: Option<Backtrace>,
+    path: RelativePath,
+  },
+  #[snafu(display(
+    "thumbnail path `{path}` for `{second}` collides with thumbnail path for `{first}`"
+  ))]
+  ThumbnailCollision {
+    backtrace: Option<Backtrace>,
+    first: RelativePath,
+    path: RelativePath,
+    second: RelativePath,
+  },
+  #[snafu(display("failed to generate thumbnail for image `{path}`"))]
+  ThumbnailGeneration {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+    source: ::image::ImageError,
   },
   #[snafu(display("failed to get current time"))]
   Time {
