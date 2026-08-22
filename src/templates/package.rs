@@ -416,17 +416,17 @@ mod tests {
           <ul class=thumbnails>
             <li>
               <a href=/package/{fingerprint}/item/1>
-                <img loading=lazy src=/media/image/{fingerprint}/item/1>
+                <img loading=lazy src=/media/image/{fingerprint}/item/1/thumbnail>
               </a>
             </li>
             <li>
               <a href=/package/{fingerprint}/item/2>
-                <img loading=lazy src=/media/image/{fingerprint}/item/2>
+                <img loading=lazy src=/media/image/{fingerprint}/item/2/thumbnail>
               </a>
             </li>
             <li>
               <a href=/package/{fingerprint}/item/3>
-                <img loading=lazy src=/media/image/{fingerprint}/item/3>
+                <img loading=lazy src=/media/image/{fingerprint}/item/3/thumbnail>
               </a>
             </li>
           </ul>

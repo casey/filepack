@@ -1336,6 +1336,59 @@ fn media_image_item_response() {
 }
 
 #[test]
+fn media_image_item_thumbnail_response() {
+  let server = TestServer::new();
+
+  let foo: &[u8] = b"foo";
+  let bar: &[u8] = b"barbar";
+  let thumbnail: &[u8] = b"bazbazbaz";
+
+  let fingerprint = PackageBuilder::new()
+    .metadata(&Metadata {
+      media: Some(Media::Image {
+        items: vec!["foo.png".parse().unwrap(), "bar.jpg".parse().unwrap()],
+      }),
+      thumbnails: Some(
+        [(
+          "foo.png".parse().unwrap(),
+          "thumbnails/foo.jpg".parse().unwrap(),
+        )]
+        .into(),
+      ),
+      ..default()
+    })
+    .file("foo.png", foo)
+    .file("bar.jpg", bar)
+    .file("thumbnails/foo.jpg", thumbnail)
+    .upload(&server);
+
+  server
+    .get(format!("/media/image/{fingerprint}/item/1/thumbnail"))
+    .assert_header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
+    .assert_header(header::CONTENT_LENGTH, "9")
+    .assert_header(header::CONTENT_TYPE, "image/jpeg")
+    .assert_header(header::ETAG, format!("\"{}\"", Hash::bytes(thumbnail)))
+    .assert_body(thumbnail)
+    .send();
+
+  server
+    .get(format!("/media/image/{fingerprint}/item/2/thumbnail"))
+    .assert_header(header::CONTENT_LENGTH, "6")
+    .assert_header(header::CONTENT_TYPE, "image/jpeg")
+    .assert_header(header::ETAG, format!("\"{}\"", Hash::bytes(bar)))
+    .assert_body(bar)
+    .send();
+
+  server
+    .get(format!("/media/image/{fingerprint}/item/3/thumbnail"))
+    .status(StatusCode::NOT_FOUND)
+    .assert_body(format!(
+      "image 3 does not exist, package {fingerprint} has 2 images"
+    ))
+    .send();
+}
+
+#[test]
 fn media_type_mismatch() {
   #[track_caller]
   fn case(server: &TestServer, path: String, body: String) {
@@ -1373,6 +1426,12 @@ fn media_type_mismatch() {
   case(
     &server,
     format!("/media/image/{audio}/item/1"),
+    format!("expected media type image but package {audio} is audio"),
+  );
+
+  case(
+    &server,
+    format!("/media/image/{audio}/item/1/thumbnail"),
     format!("expected media type image but package {audio} is audio"),
   );
 
