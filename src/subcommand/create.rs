@@ -156,6 +156,19 @@ impl Create {
       }
     }
 
+    if lints.contains(&Lint::CoverArtMissing)
+      && let Some((metadata, _cbor)) = &metadata
+      && let Some(Media::Audio { items }) = &metadata.media
+    {
+      for audio in items {
+        if !audio.has_cover_art(&root)? {
+          eprintln!("error: path failed lint: `{}`", audio.path());
+          eprintln!("       └─ {}", LintError::CoverArtMissing);
+          lint_errors += 1;
+        }
+      }
+    }
+
     if lint_errors > 0 {
       return Err(error::Lint { count: lint_errors }.build());
     }

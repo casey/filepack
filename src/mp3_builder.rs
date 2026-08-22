@@ -1,24 +1,23 @@
-pub(crate) struct Mp3Builder {
+pub struct Mp3Builder {
   frames: Vec<Vec<u8>>,
   id3v1: bool,
-  id3v2: Option<Vec<(String, String)>>,
+  id3v2: Option<Vec<(String, Vec<u8>)>>,
   trailing: Vec<u8>,
   truncate: Option<usize>,
 }
 
 impl Mp3Builder {
-  pub(crate) fn build(self) -> Vec<u8> {
+  pub fn build(self) -> Vec<u8> {
     let mut bytes = Vec::new();
 
     if let Some(tags) = self.id3v2 {
       let mut body = Vec::new();
 
-      for (id, value) in tags {
+      for (id, frame) in tags {
         body.extend_from_slice(id.as_bytes());
-        body.extend_from_slice(&Self::syncsafe(value.len() + 1));
+        body.extend_from_slice(&Self::syncsafe(frame.len()));
         body.extend_from_slice(&[0; 2]);
-        body.push(3);
-        body.extend_from_slice(value.as_bytes());
+        body.extend_from_slice(&frame);
       }
 
       bytes.extend_from_slice(b"ID3");
@@ -45,7 +44,7 @@ impl Mp3Builder {
   }
 
   #[must_use]
-  pub(crate) fn frame(mut self, header: [u8; 4], size: usize) -> Self {
+  pub fn frame(mut self, header: [u8; 4], size: usize) -> Self {
     let mut bytes = header.to_vec();
     bytes.resize(size, 0);
     self.frames.push(bytes);
@@ -53,7 +52,7 @@ impl Mp3Builder {
   }
 
   #[must_use]
-  pub(crate) fn frames(mut self, count: u32) -> Self {
+  pub fn frames(mut self, count: u32) -> Self {
     for _ in 0..count {
       self.frames.push(Self::standard());
     }
@@ -61,18 +60,18 @@ impl Mp3Builder {
   }
 
   #[must_use]
-  pub(crate) fn id3v1(mut self) -> Self {
+  pub fn id3v1(mut self) -> Self {
     self.id3v1 = true;
     self
   }
 
   #[must_use]
-  pub(crate) fn id3v2(mut self) -> Self {
+  pub fn id3v2(mut self) -> Self {
     self.id3v2.get_or_insert_default();
     self
   }
 
-  pub(crate) fn new() -> Self {
+  pub fn new() -> Self {
     Self {
       frames: Vec::new(),
       id3v1: false,
@@ -80,6 +79,20 @@ impl Mp3Builder {
       trailing: Vec::new(),
       truncate: None,
     }
+  }
+
+  #[must_use]
+  pub fn picture(mut self, picture_type: u8) -> Self {
+    let mut frame = vec![0];
+    frame.extend_from_slice(b"image/png\0");
+    frame.push(picture_type);
+    frame.extend_from_slice(b"\0");
+    frame.extend_from_slice(b"foo");
+    self
+      .id3v2
+      .get_or_insert_default()
+      .push(("APIC".into(), frame));
+    self
   }
 
   fn standard() -> Vec<u8> {
@@ -99,28 +112,27 @@ impl Mp3Builder {
   }
 
   #[must_use]
-  pub(crate) fn tag(mut self, id: &str, value: &str) -> Self {
-    self
-      .id3v2
-      .get_or_insert_default()
-      .push((id.into(), value.into()));
+  pub fn tag(mut self, id: &str, value: &str) -> Self {
+    let mut frame = vec![3];
+    frame.extend_from_slice(value.as_bytes());
+    self.id3v2.get_or_insert_default().push((id.into(), frame));
     self
   }
 
   #[must_use]
-  pub(crate) fn trailing(mut self, trailing: &[u8]) -> Self {
+  pub fn trailing(mut self, trailing: &[u8]) -> Self {
     self.trailing.extend_from_slice(trailing);
     self
   }
 
   #[must_use]
-  pub(crate) fn truncate(mut self, len: usize) -> Self {
+  pub fn truncate(mut self, len: usize) -> Self {
     self.truncate = Some(len);
     self
   }
 
   #[must_use]
-  pub(crate) fn xing(mut self) -> Self {
+  pub fn xing(mut self) -> Self {
     let mut bytes = Self::standard();
     bytes[36..40].copy_from_slice(b"Xing");
     self.frames.push(bytes);

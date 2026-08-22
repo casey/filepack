@@ -1,29 +1,83 @@
 use super::*;
 
+struct Block<'a> {
+  body: &'a [u8],
+  end: usize,
+  ty: u8,
+}
+
+struct Blocks<'a> {
+  data: &'a [u8],
+  done: bool,
+  offset: usize,
+}
+
+impl<'a> Blocks<'a> {
+  fn new(data: &'a [u8]) -> Self {
+    Self {
+      data,
+      done: false,
+      offset: 4,
+    }
+  }
+}
+
+impl<'a> Iterator for Blocks<'a> {
+  type Item = Result<Block<'a>, AudioError>;
+
+  fn next(&mut self) -> Option<Self::Item> {
+    if self.done {
+      return None;
+    }
+
+    let header_end = self.offset + 4;
+
+    let Some(header) = self.data.get(self.offset..header_end) else {
+      self.done = true;
+      return Some(Err(audio_error::FlacTruncated.build()));
+    };
+
+    let length =
+      usize::from(header[1]) << 16 | usize::from(header[2]) << 8 | usize::from(header[3]);
+
+    let end = header_end + length;
+
+    let Some(body) = self.data.get(header_end..end) else {
+      self.done = true;
+      return Some(Err(audio_error::FlacTruncated.build()));
+    };
+
+    self.done = header[0] & 0x80 != 0;
+
+    self.offset = end;
+
+    Some(Ok(Block {
+      body,
+      end,
+      ty: header[0] & 0x7F,
+    }))
+  }
+}
+
 pub(crate) struct FlacDecoder<'a> {
   reader: FlacReader<&'a [u8]>,
 }
 
 impl<'a> FlacDecoder<'a> {
   fn frame_offset(data: &[u8]) -> Result<usize, AudioError> {
-    let mut offset = 4;
+    Ok(Blocks::new(data).last().transpose()?.unwrap().end)
+  }
 
-    loop {
-      let header = data
-        .get(offset..offset + 4)
-        .context(audio_error::FlacTruncated)?;
+  pub(crate) fn has_cover_art(data: &[u8]) -> Result<bool, AudioError> {
+    for block in Blocks::new(data) {
+      let block = block?;
 
-      let length =
-        usize::from(header[1]) << 16 | usize::from(header[2]) << 8 | usize::from(header[3]);
-
-      offset += 4 + length;
-
-      ensure!(offset <= data.len(), audio_error::FlacTruncated);
-
-      if header[0] & 0x80 != 0 {
-        return Ok(offset);
+      if block.ty == 6 && block.body.get(..4) == Some(&3u32.to_be_bytes()) {
+        return Ok(true);
       }
     }
+
+    Ok(false)
   }
 
   fn metadata(data: &'a [u8]) -> Result<AudioMetadata, AudioError> {
@@ -101,6 +155,28 @@ mod tests {
 
     assert_matches!(
       FlacDecoder::frame_offset(&FlacBuilder::new().truncate(8).build()),
+      Err(AudioError::FlacTruncated),
+    );
+  }
+
+  #[test]
+  fn has_cover_art() {
+    #[track_caller]
+    fn case(builder: FlacBuilder, expected: bool) {
+      assert_eq!(
+        FlacDecoder::has_cover_art(&builder.build()).unwrap(),
+        expected,
+      );
+    }
+
+    case(FlacBuilder::new(), false);
+    case(FlacBuilder::new().tag("foo", "bar"), false);
+    case(FlacBuilder::new().picture(3), true);
+    case(FlacBuilder::new().picture(4), false);
+    case(FlacBuilder::new().picture(4).picture(3), true);
+
+    assert_matches!(
+      FlacDecoder::has_cover_art(&FlacBuilder::new().picture(3).truncate(48).build()),
       Err(AudioError::FlacTruncated),
     );
   }
