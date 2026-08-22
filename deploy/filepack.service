@@ -18,7 +18,7 @@ ExecStart=/usr/local/bin/filepack \
   --https \
   --redirect www.filepack.com \
   --redirect-http-to-https \
-  --restrict-uploads
+  --restrict-writes
 Group=filepack
 LimitNOFILE=65536
 MemoryDenyWriteExecute=true

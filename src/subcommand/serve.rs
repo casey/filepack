@@ -98,7 +98,7 @@ pub(crate) struct Serve {
   #[arg(
     help = "Admin public key",
     long,
-    requires = "restrict_uploads",
+    requires = "restrict_writes",
     value_name = "KEY"
   )]
   admin_key: Option<KeyIdentifier>,
@@ -150,8 +150,8 @@ pub(crate) struct Serve {
     value_name = "DOMAIN"
   )]
   redirects: Vec<String>,
-  #[arg(help = "Restrict uploads to admin", long)]
-  restrict_uploads: bool,
+  #[arg(help = "Restrict writes to admin", long)]
+  restrict_writes: bool,
 }
 
 impl Serve {
@@ -415,7 +415,7 @@ impl Serve {
       }
     }
 
-    let auth_config = if self.restrict_uploads {
+    let auth_config = if self.restrict_writes {
       let admin = if let Some(identifier) = &self.admin_key {
         Some(Keychain::load(&options)?.identifier_public_key(identifier)?)
       } else {
@@ -604,7 +604,7 @@ impl Default for Serve {
       ready_address: None,
       redirect_http_to_https: false,
       redirects: Vec::new(),
-      restrict_uploads: false,
+      restrict_writes: false,
     }
   }
 }

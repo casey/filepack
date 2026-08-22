@@ -371,7 +371,7 @@ impl TestServerBuilder {
 }
 
 #[test]
-fn admin_key_requires_restrict_upload() {
+fn admin_key_requires_restrict_writes() {
   let err = Serve::try_parse_from(["filepack", "--admin-key", test::PUBLIC_KEY]).unwrap_err();
   assert_eq!(err.kind(), clap::error::ErrorKind::MissingRequiredArgument);
 }
@@ -527,7 +527,7 @@ fn artwork_response() {
 }
 
 #[test]
-fn closed_server_forbids_uploads() {
+fn closed_server_forbids_writes() {
   TestServer::builder()
     .auth_config(AuthConfig {
       admin: None,
@@ -537,7 +537,7 @@ fn closed_server_forbids_uploads() {
     .put(format!("/file/{}", Hash::bytes(b"bar")))
     .body("bar")
     .status(StatusCode::FORBIDDEN)
-    .assert_body("uploads forbidden")
+    .assert_body("writes forbidden")
     .send();
 }
 
@@ -2450,7 +2450,7 @@ fn redirect_omits_default_ports() {
 }
 
 #[test]
-fn restricted_upload_accepts_admin_token() {
+fn restricted_write_accepts_admin_token() {
   let admin = PrivateKey::generate();
   let hash = Hash::bytes(b"bar");
   let token = Token::encode(&admin, "filepack.example").unwrap();
@@ -2472,7 +2472,7 @@ fn restricted_upload_accepts_admin_token() {
 }
 
 #[test]
-fn restricted_upload_rejects_missing_header() {
+fn restricted_write_rejects_missing_header() {
   let admin = PrivateKey::generate();
   let server = TestServer::builder()
     .auth_config(AuthConfig {
@@ -2492,7 +2492,7 @@ fn restricted_upload_rejects_missing_header() {
 }
 
 #[test]
-fn restricted_upload_rejects_others() {
+fn restricted_write_rejects_others() {
   let admin = PrivateKey::generate();
   let other = PrivateKey::generate();
   let server = TestServer::builder()
