@@ -10,15 +10,15 @@ pub struct PageHtml<T: Page> {
 mod tests {
   use {super::*, pretty_assertions::assert_eq};
 
-  struct Foo;
+  struct ImagePage;
 
-  impl Display for Foo {
+  impl Display for ImagePage {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
       write!(f, "foo")
     }
   }
 
-  impl Page for Foo {
+  impl Page for ImagePage {
     fn open_graph_description(&self) -> Option<String> {
       Some("qux".into())
     }
@@ -34,14 +34,81 @@ mod tests {
     }
 
     fn title(&self) -> String {
-      "baz".into()
+      "image".into()
     }
+  }
+
+  struct NavigationPage;
+
+  impl Display for NavigationPage {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+      write!(f, "bar")
+    }
+  }
+
+  impl Page for NavigationPage {
+    fn next(&self) -> Option<String> {
+      Some("/foo".into())
+    }
+
+    fn prev(&self) -> Option<String> {
+      Some("/bar".into())
+    }
+
+    fn title(&self) -> String {
+      "navigation".into()
+    }
+  }
+
+  struct ScriptPage;
+
+  impl Display for ScriptPage {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+      write!(f, "bar")
+    }
+  }
+
+  impl Page for ScriptPage {
+    fn script(&self) -> Option<&'static str> {
+      Some("/foo.js")
+    }
+
+    fn title(&self) -> String {
+      "script".into()
+    }
+  }
+
+  #[test]
+  fn navigation() {
+    assert_eq!(
+      NavigationPage.page(None).to_string(),
+      unindent(
+        "
+          <!doctype html>
+          <html lang=en>
+            <head>
+              <meta charset=utf-8>
+              <meta name=viewport content='width=device-width,initial-scale=1.0'>
+              <title>navigation</title>
+              <meta name=description content='Filepack package server'>
+              <meta property=og:site_name content=filepack>
+              <link href=/static/index.css rel=stylesheet>
+              <link href=/foo rel=next>
+              <link href=/bar rel=prev>
+            </head>
+            <body>
+              bar
+            </body>
+          </html>
+        "
+      ),
+    );
   }
 
   #[test]
   fn open_graph_image() {
     assert_eq!(
-      Foo
+      ImagePage
         .page(Some("https://example.com".parse().unwrap()))
         .to_string(),
       unindent(
@@ -51,7 +118,7 @@ mod tests {
             <head>
               <meta charset=utf-8>
               <meta name=viewport content='width=device-width,initial-scale=1.0'>
-              <title>baz</title>
+              <title>image</title>
               <meta name=description content='Filepack package server'>
               <meta property=og:description content='qux'>
               <meta property=og:image content='https://example.com/bar'>
@@ -69,7 +136,7 @@ mod tests {
     );
 
     assert_eq!(
-      Foo.page(None).to_string(),
+      ImagePage.page(None).to_string(),
       unindent(
         "
           <!doctype html>
@@ -77,7 +144,7 @@ mod tests {
             <head>
               <meta charset=utf-8>
               <meta name=viewport content='width=device-width,initial-scale=1.0'>
-              <title>baz</title>
+              <title>image</title>
               <meta name=description content='Filepack package server'>
               <meta property=og:description content='qux'>
               <meta property=og:site_name content=filepack>
@@ -85,6 +152,32 @@ mod tests {
             </head>
             <body>
               foo
+            </body>
+          </html>
+        "
+      ),
+    );
+  }
+
+  #[test]
+  fn script() {
+    assert_eq!(
+      ScriptPage.page(None).to_string(),
+      unindent(
+        "
+          <!doctype html>
+          <html lang=en>
+            <head>
+              <meta charset=utf-8>
+              <meta name=viewport content='width=device-width,initial-scale=1.0'>
+              <title>script</title>
+              <meta name=description content='Filepack package server'>
+              <meta property=og:site_name content=filepack>
+              <link href=/static/index.css rel=stylesheet>
+              <script src=/foo.js type=module></script>
+            </head>
+            <body>
+              bar
             </body>
           </html>
         "

@@ -41,6 +41,10 @@ impl Media {
     }
   }
 
+  fn item_url(&self, fingerprint: Fingerprint, item: usize) -> Option<String> {
+    (item < self.items()).then(|| format!("/package/{fingerprint}/item/{}", Ordinal(item)))
+  }
+
   pub(crate) fn items(&self) -> usize {
     match self {
       Self::Audio { items } => items.len(),
@@ -52,6 +56,14 @@ impl Media {
 
   pub(crate) fn name(&self) -> &'static str {
     self.into()
+  }
+
+  pub(crate) fn next_item_url(&self, fingerprint: Fingerprint, item: usize) -> Option<String> {
+    self.item_url(fingerprint, item.checked_add(1)?)
+  }
+
+  pub(crate) fn prev_item_url(&self, fingerprint: Fingerprint, item: usize) -> Option<String> {
+    self.item_url(fingerprint, item.checked_sub(1)?)
   }
 
   pub(crate) fn ty(&self) -> MediaType {
@@ -74,5 +86,30 @@ impl MediaType {
       Self::Video => "video",
       Self::Web => unreachable!(),
     }
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn item_url() {
+    let media = Media::Image {
+      items: vec!["foo.png".parse().unwrap(), "bar.png".parse().unwrap()],
+    };
+
+    let fingerprint = test::FINGERPRINT.parse::<Fingerprint>().unwrap();
+
+    assert_eq!(
+      media.next_item_url(fingerprint, 0),
+      Some(format!("/package/{fingerprint}/item/2")),
+    );
+    assert_eq!(media.next_item_url(fingerprint, 1), None);
+    assert_eq!(media.prev_item_url(fingerprint, 0), None);
+    assert_eq!(
+      media.prev_item_url(fingerprint, 1),
+      Some(format!("/package/{fingerprint}/item/1")),
+    );
   }
 }

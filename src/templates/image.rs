@@ -18,6 +18,15 @@ impl ImageHtml {
 }
 
 impl Page for ImageHtml {
+  fn next(&self) -> Option<String> {
+    self
+      .metadata
+      .media
+      .as_ref()
+      .unwrap()
+      .next_item_url(self.fingerprint, self.image)
+  }
+
   fn open_graph_image(&self) -> Option<OpenGraphImage> {
     Some(OpenGraphImage {
       dimensions: self.image().oriented_dimensions(),
@@ -27,6 +36,19 @@ impl Page for ImageHtml {
         Ordinal(self.image)
       ),
     })
+  }
+
+  fn prev(&self) -> Option<String> {
+    self
+      .metadata
+      .media
+      .as_ref()
+      .unwrap()
+      .prev_item_url(self.fingerprint, self.image)
+  }
+
+  fn script(&self) -> Option<&'static str> {
+    Some("/static/image.js")
   }
 
   fn stylesheet(&self) -> Option<&'static str> {
@@ -41,6 +63,26 @@ impl Page for ImageHtml {
 #[cfg(test)]
 mod tests {
   use {super::*, pretty_assertions::assert_eq};
+
+  #[test]
+  fn navigation() {
+    let html = ImageHtml {
+      fingerprint: test::FINGERPRINT.parse().unwrap(),
+      image: 0,
+      metadata: Metadata {
+        media: Some(Media::Image {
+          items: vec!["foo.png".parse().unwrap(), "bar.png".parse().unwrap()],
+        }),
+        ..default()
+      },
+    };
+
+    assert_eq!(html.prev(), None);
+    assert_eq!(
+      html.next(),
+      Some(format!("/package/{}/item/2", test::FINGERPRINT)),
+    );
+  }
 
   #[test]
   fn open_graph_image() {
