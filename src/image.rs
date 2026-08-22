@@ -23,6 +23,61 @@ pub(crate) struct Image {
 }
 
 impl Image {
+  const THUMBNAIL_QUALITY: u8 = 80;
+  const THUMBNAIL_SIZE: u32 = 1024;
+
+  pub(crate) fn create_thumbnail(&self, root: &Utf8Path) -> Result<RelativePath> {
+    use ::image::{
+      DynamicImage, ImageDecoder, ImageFormat, ImageReader, codecs::jpeg::JpegEncoder,
+      imageops::FilterType,
+    };
+
+    let destination = self.default_thumbnail_path()?;
+
+    let path = &root.join(&self.path);
+
+    let format = match self.ty {
+      ImageType::Jpeg => ImageFormat::Jpeg,
+      ImageType::Png => ImageFormat::Png,
+    };
+
+    let mut decoder = ImageReader::with_format(io::Cursor::new(filesystem::read(path)?), format)
+      .into_decoder()
+      .context(error::ThumbnailGeneration { path })?;
+
+    let orientation = decoder
+      .orientation()
+      .context(error::ThumbnailGeneration { path })?;
+
+    let image = DynamicImage::from_decoder(decoder).context(error::ThumbnailGeneration { path })?;
+
+    let mut thumbnail = image.resize(
+      Self::THUMBNAIL_SIZE,
+      Self::THUMBNAIL_SIZE,
+      FilterType::Lanczos3,
+    );
+
+    thumbnail.apply_orientation(orientation);
+
+    let thumbnail = thumbnail.into_rgb8();
+
+    let mut jpeg = Vec::new();
+
+    JpegEncoder::new_with_quality(&mut jpeg, Self::THUMBNAIL_QUALITY)
+      .encode_image(&thumbnail)
+      .context(error::ThumbnailGeneration { path })?;
+
+    {
+      let destination = root.join(&destination);
+
+      filesystem::create_dir_all(destination.parent().unwrap())?;
+
+      filesystem::write(&destination, jpeg)?;
+    }
+
+    Ok(destination)
+  }
+
   fn decode(&self, root: &Utf8Path) -> Result<ImageMetadata> {
     let path = root.join(&self.path);
 
@@ -128,6 +183,11 @@ impl Image {
     })
   }
 
+  pub(crate) fn default_thumbnail_path(&self) -> Result<RelativePath> {
+    let path = format!("thumbnails/{}.jpg", self.path.stem());
+    path.parse().context(error::Path { path: &path })
+  }
+
   pub(crate) fn formats(images: &[Image]) -> Vec<ImageType> {
     let mut formats = Vec::new();
 
@@ -219,7 +279,74 @@ impl Item for Image {
 
 #[cfg(test)]
 mod tests {
-  use super::*;
+  use {
+    super::*,
+    ::image::{DynamicImage, ImageEncoder, ImageFormat, codecs::jpeg::JpegEncoder},
+  };
+
+  #[test]
+  fn create_thumbnail() {
+    #[track_caller]
+    fn case(source: (u32, u32), expected: (u32, u32)) {
+      let (_tempdir, root) = tempdir();
+
+      DynamicImage::new_rgb8(source.0, source.1)
+        .save_with_format(root.join("foo.png"), ImageFormat::Png)
+        .unwrap();
+
+      let destination = "foo.png"
+        .parse::<Image>()
+        .unwrap()
+        .create_thumbnail(&root)
+        .unwrap();
+
+      assert_eq!(destination, "thumbnails/foo.jpg");
+
+      let thumbnail = ::image::open(root.join(&destination)).unwrap();
+
+      assert_eq!((thumbnail.width(), thumbnail.height()), expected);
+    }
+
+    case((1280, 640), (1024, 512));
+    case((1, 2), (512, 1024));
+  }
+
+  #[test]
+  fn create_thumbnail_orientation() {
+    let (_tempdir, root) = tempdir();
+
+    let mut encoded = Vec::new();
+
+    let mut encoder = JpegEncoder::new(&mut encoded);
+
+    encoder.set_exif_metadata(exif(6)).unwrap();
+
+    encoder.encode_image(&DynamicImage::new_rgb8(4, 2)).unwrap();
+
+    std::fs::write(root.join("foo.jpg"), encoded).unwrap();
+
+    let destination = "foo.jpg"
+      .parse::<Image>()
+      .unwrap()
+      .create_thumbnail(&root)
+      .unwrap();
+
+    let thumbnail = ::image::open(root.join(&destination)).unwrap();
+
+    assert_eq!((thumbnail.width(), thumbnail.height()), (512, 1024));
+  }
+
+  #[test]
+  fn default_thumbnail_path() {
+    assert_eq!(
+      "foo/bar baz.png"
+        .parse::<Image>()
+        .unwrap()
+        .default_thumbnail_path()
+        .unwrap(),
+      "thumbnails/bar baz.jpg",
+    );
+  }
 
   #[test]
   fn formats() {

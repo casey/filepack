@@ -295,6 +295,109 @@ fn create_extracts_video_metadata() {
 }
 
 #[test]
+fn create_generates_thumbnails() {
+  Test::new()
+    .write("foo.jpg", image(1280, 640, ImageFormat::Jpeg))
+    .write("bar/baz.png", image(2, 1, ImageFormat::Png))
+    .write(
+      "metadata.yaml",
+      "
+        media:
+          type: image
+          items:
+            - foo.jpg
+            - bar/baz.png
+      ",
+    )
+    .args(["create", "--generate"])
+    .success()
+    .arg("metadata")
+    .stdout(
+      r#"
+        {
+          "media": {
+            "type": "image",
+            "items": [
+              {
+                "alpha": false,
+                "bit_depth": 8,
+                "chroma_subsampling": "4:4:4",
+                "color_type": "rgb",
+                "dimensions": {
+                  "height": 640,
+                  "width": 1280
+                },
+                "orientation": {
+                  "mirrored": false,
+                  "rotation": 0
+                },
+                "path": "foo.jpg",
+                "type": "jpeg"
+              },
+              {
+                "alpha": false,
+                "bit_depth": 8,
+                "color_type": "rgb",
+                "dimensions": {
+                  "height": 1,
+                  "width": 2
+                },
+                "orientation": {
+                  "mirrored": false,
+                  "rotation": 0
+                },
+                "path": "bar/baz.png",
+                "type": "png"
+              }
+            ]
+          },
+          "thumbnails": {
+            "bar/baz.png": {
+              "alpha": false,
+              "bit_depth": 8,
+              "chroma_subsampling": "4:4:4",
+              "color_type": "rgb",
+              "dimensions": {
+                "height": 512,
+                "width": 1024
+              },
+              "orientation": {
+                "mirrored": false,
+                "rotation": 0
+              },
+              "path": "thumbnails/baz.jpg",
+              "type": "jpeg"
+            },
+            "foo.jpg": {
+              "alpha": false,
+              "bit_depth": 8,
+              "chroma_subsampling": "4:4:4",
+              "color_type": "rgb",
+              "dimensions": {
+                "height": 512,
+                "width": 1024
+              },
+              "orientation": {
+                "mirrored": false,
+                "rotation": 0
+              },
+              "path": "thumbnails/foo.jpg",
+              "type": "jpeg"
+            }
+          }
+        }
+      "#,
+    )
+    .success()
+    .arg("verify")
+    .stderr_regex("successfully verified .*")
+    .success()
+    .args(["create", "--generate", "--force"])
+    .stderr("error: thumbnail `thumbnails/foo.jpg` already exists\n")
+    .failure();
+}
+
+#[test]
 fn create_rejects_extra_files_in_media_packages() {
   Test::new()
     .write(

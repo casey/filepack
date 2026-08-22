@@ -22,8 +22,10 @@ pub struct Metadata {
   #[n(7)]
   pub readme: Option<RelativePath>,
   #[n(8)]
-  pub time: Option<Time>,
+  pub thumbnails: Option<BTreeMap<RelativePath, Image>>,
   #[n(9)]
+  pub time: Option<Time>,
+  #[n(10)]
   pub title: Option<Text>,
 }
 
@@ -102,7 +104,15 @@ impl Metadata {
   }
 
   pub(crate) fn deserialize(path: &Utf8Path, yaml: &str) -> Result<Self> {
-    serde_yaml::from_str(yaml).context(error::DeserializeMetadata { path })
+    let metadata =
+      serde_yaml::from_str::<Self>(yaml).context(error::DeserializeMetadata { path })?;
+
+    ensure! {
+      metadata.thumbnails.is_none(),
+      error::DeserializeMetadataThumbnails { path },
+    }
+
+    Ok(metadata)
   }
 
   pub(crate) fn files(&self) -> Vec<RelativePath> {
@@ -131,7 +141,58 @@ impl Metadata {
       }
     }
 
+    if let Some(thumbnails) = &self.thumbnails {
+      files.extend(thumbnails.values().map(|image| image.path.clone()));
+    }
+
     files
+  }
+
+  pub(crate) fn generate(&mut self, root: &Utf8Path) -> Result {
+    assert!(self.thumbnails.is_none());
+
+    let Some(Media::Image { items }) = &self.media else {
+      return Ok(());
+    };
+
+    let mut destinations = HashMap::new();
+
+    for item in items {
+      let destination = item.default_thumbnail_path()?;
+
+      ensure! {
+        !filesystem::exists(&root.join(&destination))?,
+        error::ThumbnailAlreadyExists {
+          path: destination,
+        },
+      }
+
+      if let Some(first) = destinations.insert(destination.clone(), item.path.clone()) {
+        return Err(
+          error::ThumbnailCollision {
+            first,
+            path: destination,
+            second: item.path.clone(),
+          }
+          .build(),
+        );
+      }
+    }
+
+    let mut thumbnails = BTreeMap::new();
+
+    for item in items {
+      let destination = item.create_thumbnail(root)?;
+
+      let image =
+        Image::from_str(destination.as_ref()).context(error::Path { path: destination })?;
+
+      thumbnails.insert(item.path.clone(), image);
+    }
+
+    self.thumbnails = Some(thumbnails);
+
+    Ok(())
   }
 
   pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result {
@@ -157,6 +218,12 @@ impl Metadata {
           }
         }
         Media::Web => {}
+      }
+    }
+
+    if let Some(thumbnails) = &mut self.thumbnails {
+      for thumbnail in thumbnails.values_mut() {
+        thumbnail.populate(root)?;
       }
     }
 
@@ -383,6 +450,24 @@ mod tests {
   }
 
   #[test]
+  fn deserialize_rejects_thumbnails() {
+    assert_eq!(
+      Metadata::deserialize(
+        Metadata::YAML_FILENAME.as_ref(),
+        &unindent(
+          "
+            thumbnails:
+              foo.png: thumbnails/foo.jpg
+          ",
+        ),
+      )
+      .unwrap_err()
+      .to_string(),
+      "metadata at `metadata.yaml` includes thumbnails: thumbnails must be generated",
+    );
+  }
+
+  #[test]
   fn deserialize_rejects_unknown_fields() {
     #[track_caller]
     fn case(yaml: &str, expected: &str) {
@@ -453,6 +538,13 @@ mod tests {
         title: Some("foo-bar".parse().unwrap()),
       }),
       readme: Some("README.md".parse().unwrap()),
+      thumbnails: Some(
+        [(
+          "bar.png".parse().unwrap(),
+          "thumbnails/bar.jpg".parse().unwrap(),
+        )]
+        .into(),
+      ),
       time: Some("2024".parse().unwrap()),
       title: Some("foo".parse().unwrap()),
     });
@@ -504,6 +596,31 @@ mod tests {
   }
 
   #[test]
+  fn files_include_thumbnails() {
+    let metadata = Metadata {
+      media: Some(Media::Image {
+        items: vec!["foo.png".parse().unwrap()],
+      }),
+      thumbnails: Some(
+        [(
+          "foo.png".parse().unwrap(),
+          "thumbnails/foo.jpg".parse().unwrap(),
+        )]
+        .into(),
+      ),
+      ..default()
+    };
+
+    assert_eq!(
+      metadata.files(),
+      vec![
+        "foo.png".parse::<RelativePath>().unwrap(),
+        "thumbnails/foo.jpg".parse().unwrap(),
+      ],
+    );
+  }
+
+  #[test]
   fn files_include_videos() {
     let metadata = Metadata {
       media: Some(Media::Video {
@@ -518,6 +635,43 @@ mod tests {
         "foo.mp4".parse::<RelativePath>().unwrap(),
         "bar.mp4".parse().unwrap(),
       ],
+    );
+  }
+
+  #[test]
+  fn generate_rejects_existing_thumbnails() {
+    let (_tempdir, root) = tempdir();
+
+    std::fs::create_dir(root.join("thumbnails")).unwrap();
+    std::fs::write(root.join("thumbnails/foo.jpg"), "bar").unwrap();
+
+    let mut metadata = Metadata {
+      media: Some(Media::Image {
+        items: vec!["foo.png".parse().unwrap()],
+      }),
+      ..default()
+    };
+
+    assert_eq!(
+      metadata.generate(&root).unwrap_err().to_string(),
+      "thumbnail `thumbnails/foo.jpg` already exists",
+    );
+  }
+
+  #[test]
+  fn generate_rejects_thumbnail_collisions() {
+    let (_tempdir, root) = tempdir();
+
+    let mut metadata = Metadata {
+      media: Some(Media::Image {
+        items: vec!["foo.jpg".parse().unwrap(), "foo.png".parse().unwrap()],
+      }),
+      ..default()
+    };
+
+    assert_eq!(
+      metadata.generate(&root).unwrap_err().to_string(),
+      "thumbnail path `thumbnails/foo.jpg` for `foo.png` collides with thumbnail path for `foo.jpg`",
     );
   }
 
@@ -629,11 +783,12 @@ mod tests {
         description,
         homepage,
         language,
+        media,
         package,
         readme,
+        thumbnails,
         time,
         title,
-        media,
       } = metadata;
 
       if title
@@ -651,7 +806,9 @@ mod tests {
       assert!(readme.is_some());
       assert!(time.is_some());
       assert!(title.is_some());
+
       assert!(media.is_none());
+      assert!(thumbnails.is_none());
 
       let Package {
         colophon,

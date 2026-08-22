@@ -6,6 +6,8 @@ pub(crate) struct Create {
   deny: Option<LintGroup>,
   #[arg(help = "Overwrite manifest if it already exists", long)]
   force: bool,
+  #[arg(help = "Generate derived assets", long)]
+  generate: bool,
   #[arg(help = "Ignore <PATH>", long, value_name = "PATH")]
   ignore: Vec<RelativePath>,
   #[arg(default_value_t = KeyName::DEFAULT, help = "Sign with <KEY>", long, requires = "sign")]
@@ -40,12 +42,6 @@ impl Create {
     let metadata = if let Some(yaml) = filesystem::read_to_string_opt(&path)? {
       let mut metadata = Metadata::deserialize(&path, &yaml)?;
 
-      metadata.populate(&root)?;
-
-      metadata.validate(&root)?;
-
-      let cbor = metadata.encode_to_vec();
-
       let path = root.join(Metadata::CBOR_FILENAME);
 
       ensure! {
@@ -54,6 +50,16 @@ impl Create {
           path,
         },
       }
+
+      if self.generate {
+        metadata.generate(&root)?;
+      }
+
+      metadata.populate(&root)?;
+
+      metadata.validate(&root)?;
+
+      let cbor = metadata.encode_to_vec();
 
       Some((metadata, cbor))
     } else {
