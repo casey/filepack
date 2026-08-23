@@ -151,14 +151,24 @@ impl Metadata {
   pub(crate) fn generate(&mut self, root: &Utf8Path, force: bool) -> Result {
     assert!(self.thumbnails.is_none());
 
-    let Some(Media::Image { items }) = &self.media else {
+    let mut images = Vec::new();
+
+    if let Some(artwork) = &self.artwork {
+      images.push(artwork);
+    }
+
+    if let Some(Media::Image { items }) = &self.media {
+      images.extend(items);
+    }
+
+    if images.is_empty() {
       return Ok(());
-    };
+    }
 
     let mut destinations = HashMap::new();
 
-    for item in items {
-      let destination = item.default_thumbnail_path()?;
+    for image in &images {
+      let destination = image.default_thumbnail_path()?;
 
       ensure! {
         force || !filesystem::exists(&root.join(&destination))?,
@@ -167,12 +177,12 @@ impl Metadata {
         },
       }
 
-      if let Some(first) = destinations.insert(destination.clone(), item.path.clone()) {
+      if let Some(first) = destinations.insert(destination.clone(), image.path.clone()) {
         return Err(
           error::ThumbnailCollision {
             first,
             path: destination,
-            second: item.path.clone(),
+            second: image.path.clone(),
           }
           .build(),
         );
@@ -181,13 +191,13 @@ impl Metadata {
 
     let mut thumbnails = BTreeMap::new();
 
-    for item in items {
-      let destination = item.create_thumbnail(root)?;
+    for image in images {
+      let thumbnail = image.create_thumbnail(root)?;
 
-      let image =
-        Image::from_str(destination.as_ref()).context(error::Path { path: destination })?;
+      let thumbnail =
+        Image::from_str(thumbnail.as_ref()).context(error::Path { path: thumbnail })?;
 
-      thumbnails.insert(item.path.clone(), image);
+      thumbnails.insert(image.path.clone(), thumbnail);
     }
 
     self.thumbnails = Some(thumbnails);
@@ -228,6 +238,10 @@ impl Metadata {
     }
 
     Ok(())
+  }
+
+  pub(crate) fn thumbnail(&self, path: &RelativePath) -> Option<&Image> {
+    self.thumbnails.as_ref()?.get(path)
   }
 
   pub(crate) fn validate(&self, root: &Utf8Path) -> Result {
@@ -634,6 +648,43 @@ mod tests {
       vec![
         "foo.mp4".parse::<RelativePath>().unwrap(),
         "bar.mp4".parse().unwrap(),
+      ],
+    );
+  }
+
+  #[test]
+  fn generate_includes_artwork() {
+    let (_tempdir, root) = tempdir();
+
+    std::fs::write(root.join("foo.png"), image(1, 1, ImageFormat::Png)).unwrap();
+    std::fs::write(root.join("bar.png"), image(1, 1, ImageFormat::Png)).unwrap();
+
+    let mut metadata = Metadata {
+      artwork: Some("foo.png".parse().unwrap()),
+      media: Some(Media::Image {
+        items: vec!["bar.png".parse().unwrap()],
+      }),
+      ..default()
+    };
+
+    metadata.generate(&root, false).unwrap();
+
+    assert_eq!(
+      metadata
+        .thumbnails
+        .unwrap()
+        .into_iter()
+        .map(|(path, thumbnail)| (path, thumbnail.path))
+        .collect::<Vec<(RelativePath, RelativePath)>>(),
+      vec![
+        (
+          "bar.png".parse().unwrap(),
+          "thumbnails/bar.jpg".parse().unwrap(),
+        ),
+        (
+          "foo.png".parse().unwrap(),
+          "thumbnails/foo.jpg".parse().unwrap(),
+        ),
       ],
     );
   }

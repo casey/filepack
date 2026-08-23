@@ -527,6 +527,55 @@ fn artwork_response() {
 }
 
 #[test]
+fn artwork_thumbnail_response() {
+  let server = TestServer::new();
+
+  let artwork: &[u8] = b"foo";
+  let thumbnail: &[u8] = b"barbar";
+
+  let with_thumbnail = PackageBuilder::new()
+    .metadata(&Metadata {
+      artwork: Some("cover.png".parse().unwrap()),
+      thumbnails: Some(
+        [(
+          "cover.png".parse().unwrap(),
+          "thumbnails/cover.jpg".parse().unwrap(),
+        )]
+        .into(),
+      ),
+      ..default()
+    })
+    .file("cover.png", artwork)
+    .file("thumbnails/cover.jpg", thumbnail)
+    .upload(&server);
+
+  server
+    .get(format!("/artwork/{with_thumbnail}/thumbnail"))
+    .assert_header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
+    .assert_header(header::CONTENT_LENGTH, "6")
+    .assert_header(header::CONTENT_TYPE, "image/jpeg")
+    .assert_header(header::ETAG, format!("\"{}\"", Hash::bytes(thumbnail)))
+    .assert_body(thumbnail)
+    .send();
+
+  let without_thumbnail = PackageBuilder::new()
+    .metadata(&Metadata {
+      artwork: Some("cover.png".parse().unwrap()),
+      ..default()
+    })
+    .file("cover.png", artwork)
+    .upload(&server);
+
+  server
+    .get(format!("/artwork/{without_thumbnail}/thumbnail"))
+    .assert_header(header::CONTENT_LENGTH, "3")
+    .assert_header(header::CONTENT_TYPE, "image/png")
+    .assert_header(header::ETAG, format!("\"{}\"", Hash::bytes(artwork)))
+    .assert_body(artwork)
+    .send();
+}
+
+#[test]
 fn closed_server_forbids_writes() {
   TestServer::builder()
     .auth_config(AuthConfig {

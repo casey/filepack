@@ -310,6 +310,10 @@ impl Serve {
       )
       .route("/api/packages", get(route::api_packages))
       .route("/artwork/{fingerprint}", get(route::artwork))
+      .route(
+        "/artwork/{fingerprint}/thumbnail",
+        get(route::artwork_thumbnail),
+      )
       .route("/directory/{hash}", get(route::directory))
       .route("/favicon.ico", get(route::favicon))
       .route("/file/{hash}", get(route::file).put(route::upload_file))

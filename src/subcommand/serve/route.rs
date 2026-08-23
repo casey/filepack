@@ -57,7 +57,15 @@ pub(crate) async fn artwork(
   fingerprint: Path<Fingerprint>,
   range: Option<TypedHeader<headers::Range>>,
 ) -> ServerResult<Resource> {
-  block_in_place(|| Ok(server.artwork(*fingerprint)?.range(range)))
+  block_in_place(|| Ok(server.artwork(*fingerprint, false)?.range(range)))
+}
+
+pub(crate) async fn artwork_thumbnail(
+  server: ServerExtension,
+  fingerprint: Path<Fingerprint>,
+  range: Option<TypedHeader<headers::Range>>,
+) -> ServerResult<Resource> {
+  block_in_place(|| Ok(server.artwork(*fingerprint, true)?.range(range)))
 }
 
 pub(crate) async fn directory(
