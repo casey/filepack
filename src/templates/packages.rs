@@ -92,7 +92,7 @@ mod tests {
           <ul class=grid>
             <li>
               <a href=/package/{fingerprint}>
-                <img loading=lazy src=/artwork/{fingerprint} width=150 height=150>
+                <img loading=lazy src=/artwork/{fingerprint}/thumbnail>
               </a>
               <span class=title>bar</span>
               <span class=creator>foo</span>

@@ -16,15 +16,27 @@ pub(crate) struct Server {
 }
 
 impl Server {
-  pub(crate) fn artwork(&self, fingerprint: Fingerprint) -> ServerResult<Resource> {
-    let artwork = self
-      .package_metadata(fingerprint)?
+  pub(crate) fn artwork(
+    &self,
+    fingerprint: Fingerprint,
+    thumbnail: bool,
+  ) -> ServerResult<Resource> {
+    let metadata = self.package_metadata(fingerprint)?;
+
+    let artwork = metadata
       .artwork
+      .as_ref()
       .context(server_error::ArtworkNotFound { fingerprint })?;
 
-    let hash = self.verified_package_file(fingerprint, &artwork.path)?;
+    let image = if thumbnail && let Some(thumbnail) = metadata.thumbnail(&artwork.path) {
+      thumbnail
+    } else {
+      artwork
+    };
 
-    Ok(self.open_file(hash)?.ty(artwork.resource_type()))
+    let hash = self.verified_package_file(fingerprint, &image.path)?;
+
+    Ok(self.open_file(hash)?.ty(image.resource_type()))
   }
 
   pub(crate) fn delete_package(&self, fingerprint: Fingerprint) -> ServerResult {
@@ -174,10 +186,15 @@ impl Server {
     ty: MediaType,
     thumbnail: bool,
   ) -> ServerResult<Resource> {
+    if thumbnail {
+      assert_eq!(ty, MediaType::Image);
+    }
+
     let metadata = self.package_metadata(fingerprint)?;
 
     let media = metadata
       .media
+      .as_ref()
       .context(server_error::PackageMediaMetadataNotFound { fingerprint })?;
 
     ensure! {
@@ -198,12 +215,7 @@ impl Server {
         ty,
       })?;
 
-    let (path, ty) = if thumbnail
-      && let Some(thumbnail) = metadata
-        .thumbnails
-        .as_ref()
-        .and_then(|thumbnails| thumbnails.get(item.path()))
-    {
+    let (path, ty) = if thumbnail && let Some(thumbnail) = metadata.thumbnail(item.path()) {
       (&thumbnail.path, thumbnail.ty.resource_type())
     } else {
       (item.path(), item.resource_type())
