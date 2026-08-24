@@ -13,6 +13,13 @@ pub(crate) enum ImageType {
 impl ImageType {
   pub(crate) const EXTENSIONS: &[&str] = &["jpg", "png"];
 
+  pub(crate) fn extension(self) -> &'static str {
+    match self {
+      Self::Jpeg => "jpg",
+      Self::Png => "png",
+    }
+  }
+
   pub(crate) fn from_extension(extension: &str) -> Option<Self> {
     match extension {
       "jpg" => Some(Self::Jpeg),
@@ -32,6 +39,12 @@ impl ImageType {
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn extension() {
+    assert_eq!(ImageType::Jpeg.extension(), "jpg");
+    assert_eq!(ImageType::Png.extension(), "png");
+  }
 
   #[test]
   fn from_extension() {

@@ -1,6 +1,6 @@
 use {
   super::*,
-  ::image::{DynamicImage, ImageBuffer, Rgb},
+  ::image::{DynamicImage, ImageBuffer, Rgb, Rgba},
 };
 
 pub(crate) fn current_dir() -> Result<Utf8PathBuf> {
@@ -26,6 +26,18 @@ pub fn gradient(width: u32, height: u32) -> DynamicImage {
       u8::try_from(x / 8 % 256).unwrap(),
       u8::try_from(y / 8 % 256).unwrap(),
       u8::try_from((x + y) / 16 % 256).unwrap(),
+    ])
+  })
+  .into()
+}
+
+pub fn gradient_alpha(width: u32, height: u32, alpha: u8) -> DynamicImage {
+  ImageBuffer::from_fn(width, height, |x, y| {
+    Rgba([
+      u8::try_from(x / 8 % 256).unwrap(),
+      u8::try_from(y / 8 % 256).unwrap(),
+      u8::try_from((x + y) / 16 % 256).unwrap(),
+      alpha,
     ])
   })
   .into()

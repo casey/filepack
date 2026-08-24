@@ -4,7 +4,7 @@ use {
   filepack::{
     Decode, Decoder, Directory, DirectoryExt, Encode, Encoder, Entry, Fingerprint, FlacBuilder,
     Hash, Manifest, Metadata, Mp3Builder, Mp4Builder, Page, PrivateKey, PublicKey, Totals,
-    gradient,
+    gradient, gradient_alpha,
     templates::{DirectoryHtml, PackageHtml},
   },
   image::{DynamicImage, ImageFormat},

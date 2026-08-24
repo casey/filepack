@@ -330,7 +330,7 @@ fn create_generate_rejects_existing_thumbnails() {
     )
     .write("thumbnails/foo.jpg", "bar")
     .args(["create", "--generate"])
-    .stderr("error: thumbnail `thumbnails/foo.jpg` already exists\n")
+    .stderr_path("error: thumbnail for `foo.jpg` conflicts with `thumbnails/foo.jpg`\n")
     .failure();
 }
 
@@ -338,7 +338,7 @@ fn create_generate_rejects_existing_thumbnails() {
 fn create_generates_thumbnails() {
   Test::new()
     .write("foo.jpg", image(1280, 640, ImageFormat::Jpeg))
-    .write("bar/baz.png", image(1280, 640, ImageFormat::Png))
+    .write("bar/baz.png", image_alpha(1280, 640, 128, ImageFormat::Png))
     .write(
       "metadata.yaml",
       "
@@ -375,7 +375,7 @@ fn create_generates_thumbnails() {
                 "type": "jpeg"
               },
               {
-                "alpha": false,
+                "alpha": true,
                 "bit_depth": 8,
                 "color_type": "rgb",
                 "dimensions": {
@@ -393,9 +393,8 @@ fn create_generates_thumbnails() {
           },
           "thumbnails": {
             "bar/baz.png": {
-              "alpha": false,
+              "alpha": true,
               "bit_depth": 8,
-              "chroma_subsampling": "4:4:4",
               "color_type": "rgb",
               "dimensions": {
                 "height": 512,
@@ -405,8 +404,8 @@ fn create_generates_thumbnails() {
                 "mirrored": false,
                 "rotation": 0
               },
-              "path": "thumbnails/baz.jpg",
-              "type": "jpeg"
+              "path": "thumbnails/baz.png",
+              "type": "png"
             },
             "foo.jpg": {
               "alpha": false,
@@ -639,6 +638,14 @@ fn create_succeeds_with_valid_metadata() {
 fn image(width: u32, height: u32, image_format: ImageFormat) -> Vec<u8> {
   let mut buffer = Cursor::new(Vec::new());
   gradient(width, height)
+    .write_to(&mut buffer, image_format)
+    .unwrap();
+  buffer.into_inner()
+}
+
+fn image_alpha(width: u32, height: u32, alpha: u8, image_format: ImageFormat) -> Vec<u8> {
+  let mut buffer = Cursor::new(Vec::new());
+  gradient_alpha(width, height, alpha)
     .write_to(&mut buffer, image_format)
     .unwrap();
   buffer.into_inner()

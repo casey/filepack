@@ -165,24 +165,41 @@ impl Metadata {
       return Ok(());
     }
 
+    let mut existing = HashMap::new();
+
+    {
+      let path = &root.join(Image::THUMBNAIL_DIR);
+      if !force && filesystem::exists(path)? {
+        for entry in path.read_dir_utf8().context(error::FilesystemIo { path })? {
+          let entry = entry
+            .context(error::FilesystemIo { path })?
+            .path()
+            .strip_prefix(root)
+            .unwrap()
+            .to_owned();
+          existing.insert(entry.file_stem().unwrap().to_owned(), entry);
+        }
+      }
+    }
+
     let mut destinations = HashMap::new();
 
     for image in &images {
-      let destination = image.default_thumbnail_path()?;
-
-      ensure! {
-        force || !filesystem::exists(&root.join(&destination))?,
-        error::ThumbnailAlreadyExists {
-          path: destination,
-        },
+      if let Some(path) = existing.get(image.path.stem()) {
+        return Err(
+          error::ThumbnailAlreadyExists {
+            image: &image.path,
+            path,
+          }
+          .build(),
+        );
       }
 
-      if let Some(first) = destinations.insert(destination.clone(), image.path.clone()) {
+      if let Some(first) = destinations.insert(image.thumbnail_stem(), image.path.clone()) {
         return Err(
           error::ThumbnailCollision {
             first,
-            path: destination,
-            second: image.path.clone(),
+            second: &image.path,
           }
           .build(),
         );
@@ -194,7 +211,11 @@ impl Metadata {
     let mut thumbnails = BTreeMap::new();
 
     for image in images {
-      let Some(thumbnail) = image.create_thumbnail(root)? else {
+      let thumbnail = image.create_thumbnail(root)?;
+
+      bar.inc(1);
+
+      let Some(thumbnail) = thumbnail else {
         continue;
       };
 
@@ -202,8 +223,6 @@ impl Metadata {
         Image::from_str(thumbnail.as_ref()).context(error::Path { path: thumbnail })?;
 
       thumbnails.insert(image.path.clone(), thumbnail);
-
-      bar.inc(1);
     }
 
     if !thumbnails.is_empty() {
@@ -755,7 +774,8 @@ mod tests {
         .generate(&root, false, true)
         .unwrap_err()
         .to_string(),
-      "thumbnail `thumbnails/foo.jpg` already exists",
+      "thumbnail for `foo.png` conflicts with `thumbnails/foo.jpg`"
+        .replace('/', std::path::MAIN_SEPARATOR_STR),
     );
   }
 
@@ -775,7 +795,7 @@ mod tests {
         .generate(&root, false, true)
         .unwrap_err()
         .to_string(),
-      "thumbnail path `thumbnails/foo.jpg` for `foo.png` collides with thumbnail path for `foo.jpg`",
+      "thumbnail for `foo.png` conflicts with thumbnail for `foo.jpg`",
     );
   }
 

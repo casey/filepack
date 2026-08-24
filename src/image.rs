@@ -23,16 +23,19 @@ pub(crate) struct Image {
 }
 
 impl Image {
+  pub(crate) const THUMBNAIL_DIR: &str = "thumbnails";
   const THUMBNAIL_QUALITY: u8 = 80;
   const THUMBNAIL_SIZE: u32 = 1024;
 
   pub(crate) fn create_thumbnail(&self, root: &Utf8Path) -> Result<Option<RelativePath>> {
     use ::image::{
-      DynamicImage, ImageDecoder, ImageFormat, ImageReader, codecs::jpeg::JpegEncoder,
-      imageops::FilterType,
+      DynamicImage, GenericImageView, ImageDecoder, ImageFormat, ImageReader,
+      codecs::{
+        jpeg::JpegEncoder,
+        png::{self, CompressionType, PngEncoder},
+      },
+      imageops,
     };
-
-    let destination = self.default_thumbnail_path()?;
 
     let path = &root.join(&self.path);
 
@@ -58,7 +61,7 @@ impl Image {
         image.resize(
           Self::THUMBNAIL_SIZE,
           Self::THUMBNAIL_SIZE,
-          FilterType::Lanczos3,
+          imageops::FilterType::Lanczos3,
         )
       } else {
         image
@@ -66,24 +69,42 @@ impl Image {
 
     thumbnail.apply_orientation(orientation);
 
-    let thumbnail = thumbnail.into_rgb8();
+    let uses_alpha =
+      thumbnail.color().has_alpha() && thumbnail.pixels().any(|(_x, _y, pixel)| pixel[3] < u8::MAX);
 
-    let mut jpeg = Vec::new();
+    let mut encoded = Vec::new();
 
-    JpegEncoder::new_with_quality(&mut jpeg, Self::THUMBNAIL_QUALITY)
-      .encode_image(&thumbnail)
-      .context(error::ThumbnailGeneration { path })?;
+    let ty = if uses_alpha {
+      thumbnail
+        .into_rgba8()
+        .write_with_encoder(PngEncoder::new_with_quality(
+          &mut encoded,
+          CompressionType::Best,
+          png::FilterType::Adaptive,
+        ))
+        .context(error::ThumbnailGeneration { path })?;
 
-    if jpeg.len() >= original.len() {
+      ImageType::Png
+    } else {
+      JpegEncoder::new_with_quality(&mut encoded, Self::THUMBNAIL_QUALITY)
+        .encode_image(&thumbnail.into_rgb8())
+        .context(error::ThumbnailGeneration { path })?;
+
+      ImageType::Jpeg
+    };
+
+    if encoded.len() >= original.len() {
       return Ok(None);
     }
+
+    let destination = self.thumbnail_path(ty)?;
 
     {
       let destination = root.join(&destination);
 
       filesystem::create_dir_all(destination.parent().unwrap())?;
 
-      filesystem::write(&destination, jpeg)?;
+      filesystem::write(&destination, encoded)?;
     }
 
     Ok(Some(destination))
@@ -194,11 +215,6 @@ impl Image {
     })
   }
 
-  pub(crate) fn default_thumbnail_path(&self) -> Result<RelativePath> {
-    let path = format!("thumbnails/{}.jpg", self.path.stem());
-    path.parse().context(error::Path { path: &path })
-  }
-
   pub(crate) fn formats(images: &[Image]) -> Vec<ImageType> {
     let mut formats = Vec::new();
 
@@ -237,6 +253,15 @@ impl Image {
 
   pub(crate) fn resource_type(&self) -> ResourceType {
     self.ty.resource_type()
+  }
+
+  pub(crate) fn thumbnail_path(&self, ty: ImageType) -> Result<RelativePath> {
+    let path = format!("{}.{}", self.thumbnail_stem(), ty.extension());
+    path.parse().context(error::Path { path: &path })
+  }
+
+  pub(crate) fn thumbnail_stem(&self) -> String {
+    format!("{}/{}", Self::THUMBNAIL_DIR, self.path.stem())
   }
 }
 
@@ -325,6 +350,40 @@ mod tests {
   }
 
   #[test]
+  fn create_thumbnail_alpha() {
+    #[track_caller]
+    fn case(alpha: u8, expected: &str) {
+      let (_tempdir, root) = tempdir();
+
+      gradient_alpha(1280, 640, alpha)
+        .save_with_format(root.join("foo.png"), ImageFormat::Png)
+        .unwrap();
+
+      let destination = "foo.png"
+        .parse::<Image>()
+        .unwrap()
+        .create_thumbnail(&root)
+        .unwrap()
+        .unwrap();
+
+      assert_eq!(destination, expected);
+
+      let thumbnail = ::image::open(root.join(&destination)).unwrap();
+
+      assert_eq!((thumbnail.width(), thumbnail.height()), (1024, 512));
+
+      assert_eq!(thumbnail.color().has_alpha(), alpha < u8::MAX);
+
+      if alpha < u8::MAX {
+        assert!(thumbnail.to_rgba8().pixels().all(|pixel| pixel[3] == alpha));
+      }
+    }
+
+    case(128, "thumbnails/foo.png");
+    case(255, "thumbnails/foo.jpg");
+  }
+
+  #[test]
   fn create_thumbnail_orientation() {
     let (_tempdir, root) = tempdir();
 
@@ -368,18 +427,6 @@ mod tests {
     );
 
     assert!(!root.join("thumbnails/foo.jpg").exists());
-  }
-
-  #[test]
-  fn default_thumbnail_path() {
-    assert_eq!(
-      "foo/bar baz.png"
-        .parse::<Image>()
-        .unwrap()
-        .default_thumbnail_path()
-        .unwrap(),
-      "thumbnails/bar baz.jpg",
-    );
   }
 
   #[test]
@@ -734,6 +781,32 @@ mod tests {
       })
       .unwrap(),
       r#"{"alpha":true,"bit_depth":16,"color_type":"rgb","dimensions":{"height":1,"width":2},"orientation":{"mirrored":false,"rotation":0},"path":"foo.png","type":"png"}"#,
+    );
+  }
+
+  #[test]
+  fn thumbnail_path() {
+    #[track_caller]
+    fn case(ty: ImageType, expected: &str) {
+      assert_eq!(
+        "foo/bar baz.png"
+          .parse::<Image>()
+          .unwrap()
+          .thumbnail_path(ty)
+          .unwrap(),
+        expected,
+      );
+    }
+
+    case(ImageType::Jpeg, "thumbnails/bar baz.jpg");
+    case(ImageType::Png, "thumbnails/bar baz.png");
+  }
+
+  #[test]
+  fn thumbnail_stem() {
+    assert_eq!(
+      "foo/bar baz.png".parse::<Image>().unwrap().thumbnail_stem(),
+      "thumbnails/bar baz",
     );
   }
 }
