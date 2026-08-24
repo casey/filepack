@@ -168,14 +168,11 @@ impl Metadata {
     let mut existing = HashMap::new();
 
     {
-      let dir = &root.join(Image::THUMBNAIL_DIR);
-      if !force && filesystem::exists(dir)? {
-        for entry in dir
-          .read_dir_utf8()
-          .context(error::FilesystemIo { path: dir })?
-        {
+      let path = &root.join(Image::THUMBNAIL_DIR);
+      if !force && filesystem::exists(path)? {
+        for entry in path.read_dir_utf8().context(error::FilesystemIo { path })? {
           let entry = entry
-            .context(error::FilesystemIo { path: dir })?
+            .context(error::FilesystemIo { path })?
             .path()
             .strip_prefix(root)
             .unwrap()
