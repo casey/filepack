@@ -32,9 +32,9 @@ impl Image {
       DynamicImage, GenericImageView, ImageDecoder, ImageFormat, ImageReader,
       codecs::{
         jpeg::JpegEncoder,
-        png::{CompressionType, PngEncoder},
+        png::{self, CompressionType, PngEncoder},
       },
-      imageops::FilterType,
+      imageops,
     };
 
     let path = &root.join(&self.path);
@@ -61,7 +61,7 @@ impl Image {
         image.resize(
           Self::THUMBNAIL_SIZE,
           Self::THUMBNAIL_SIZE,
-          FilterType::Lanczos3,
+          imageops::FilterType::Lanczos3,
         )
       } else {
         image
@@ -80,7 +80,7 @@ impl Image {
         .write_with_encoder(PngEncoder::new_with_quality(
           &mut encoded,
           CompressionType::Best,
-          ::image::codecs::png::FilterType::Adaptive,
+          png::FilterType::Adaptive,
         ))
         .context(error::ThumbnailGeneration { path })?;
 
