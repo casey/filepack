@@ -225,7 +225,7 @@ pub use self::{
   error::Error,
   fingerprint::Fingerprint,
   flac_builder::FlacBuilder,
-  functions::install_default_crypto_provider,
+  functions::{gradient, install_default_crypto_provider},
   hash::Hash,
   language_error::LanguageError,
   major_type::MajorType,

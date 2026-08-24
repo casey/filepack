@@ -1,4 +1,7 @@
-use super::*;
+use {
+  super::*,
+  ::image::{DynamicImage, ImageBuffer, Rgb},
+};
 
 pub(crate) fn current_dir() -> Result<Utf8PathBuf> {
   Utf8PathBuf::from_path_buf(env::current_dir().context(error::CurrentDir)?)
@@ -15,6 +18,17 @@ pub(crate) fn default<T: Default>() -> T {
 
 pub(crate) fn format_size(size: u64) -> SizeFormatter<u64, FormatSizeOptions> {
   SizeFormatter::new(size, FormatSizeOptions::from(BINARY).decimal_places(1))
+}
+
+pub fn gradient(width: u32, height: u32) -> DynamicImage {
+  ImageBuffer::from_fn(width, height, |x, y| {
+    Rgb([
+      u8::try_from(x / 8 % 256).unwrap(),
+      u8::try_from(y / 8 % 256).unwrap(),
+      u8::try_from((x + y) / 16 % 256).unwrap(),
+    ])
+  })
+  .into()
 }
 
 pub fn install_default_crypto_provider() -> Result {

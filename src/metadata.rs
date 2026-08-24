@@ -192,7 +192,9 @@ impl Metadata {
     let mut thumbnails = BTreeMap::new();
 
     for image in images {
-      let thumbnail = image.create_thumbnail(root)?;
+      let Some(thumbnail) = image.create_thumbnail(root)? else {
+        continue;
+      };
 
       let thumbnail =
         Image::from_str(thumbnail.as_ref()).context(error::Path { path: thumbnail })?;
@@ -200,7 +202,9 @@ impl Metadata {
       thumbnails.insert(image.path.clone(), thumbnail);
     }
 
-    self.thumbnails = Some(thumbnails);
+    if !thumbnails.is_empty() {
+      self.thumbnails = Some(thumbnails);
+    }
 
     Ok(())
   }
@@ -275,10 +279,7 @@ impl Metadata {
 
 #[cfg(test)]
 mod tests {
-  use {
-    super::*,
-    ::image::{DynamicImage, ImageFormat},
-  };
+  use {super::*, ::image::ImageFormat};
 
   fn colophon_package(colophon: &str) -> Package {
     Package {
@@ -656,8 +657,8 @@ mod tests {
   fn generate_includes_artwork() {
     let (_tempdir, root) = tempdir();
 
-    std::fs::write(root.join("foo.png"), image(1, 1, ImageFormat::Png)).unwrap();
-    std::fs::write(root.join("bar.png"), image(1, 1, ImageFormat::Png)).unwrap();
+    std::fs::write(root.join("foo.png"), image(1280, 640, ImageFormat::Png)).unwrap();
+    std::fs::write(root.join("bar.png"), image(1280, 640, ImageFormat::Png)).unwrap();
 
     let mut metadata = Metadata {
       artwork: Some("foo.png".parse().unwrap()),
@@ -687,6 +688,22 @@ mod tests {
         ),
       ],
     );
+  }
+
+  #[test]
+  fn generate_omits_thumbnails_when_all_skipped() {
+    let (_tempdir, root) = tempdir();
+
+    std::fs::write(root.join("foo.png"), image(1, 1, ImageFormat::Png)).unwrap();
+
+    let mut metadata = Metadata {
+      artwork: Some("foo.png".parse().unwrap()),
+      ..default()
+    };
+
+    metadata.generate(&root, false).unwrap();
+
+    assert_eq!(metadata.thumbnails, None);
   }
 
   #[test]
@@ -726,9 +743,41 @@ mod tests {
     );
   }
 
+  #[test]
+  fn generate_skips_larger_thumbnails() {
+    let (_tempdir, root) = tempdir();
+
+    std::fs::write(root.join("foo.png"), image(1280, 640, ImageFormat::Png)).unwrap();
+    std::fs::write(root.join("bar.png"), image(1, 1, ImageFormat::Png)).unwrap();
+
+    let mut metadata = Metadata {
+      media: Some(Media::Image {
+        items: vec!["foo.png".parse().unwrap(), "bar.png".parse().unwrap()],
+      }),
+      ..default()
+    };
+
+    metadata.generate(&root, false).unwrap();
+
+    assert_eq!(
+      metadata
+        .thumbnails
+        .unwrap()
+        .into_iter()
+        .map(|(path, thumbnail)| (path, thumbnail.path))
+        .collect::<Vec<(RelativePath, RelativePath)>>(),
+      vec![(
+        "foo.png".parse().unwrap(),
+        "thumbnails/foo.jpg".parse().unwrap(),
+      )],
+    );
+
+    assert!(!root.join("thumbnails/bar.jpg").exists());
+  }
+
   fn image(width: u32, height: u32, image_format: ImageFormat) -> Vec<u8> {
     let mut buffer = io::Cursor::new(Vec::new());
-    DynamicImage::new_rgb8(width, height)
+    gradient(width, height)
       .write_to(&mut buffer, image_format)
       .unwrap();
     buffer.into_inner()
