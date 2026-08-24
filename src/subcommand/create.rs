@@ -55,10 +55,10 @@ impl Create {
       }
 
       if self.generate {
-        metadata.generate(&root, self.force)?;
+        metadata.generate(&root, self.force, options.quiet)?;
       }
 
-      metadata.populate(&root)?;
+      metadata.populate(&root, options.quiet)?;
 
       metadata.validate(&root)?;
 

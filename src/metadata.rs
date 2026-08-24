@@ -148,7 +148,7 @@ impl Metadata {
     files
   }
 
-  pub(crate) fn generate(&mut self, root: &Utf8Path, force: bool) -> Result {
+  pub(crate) fn generate(&mut self, root: &Utf8Path, force: bool, quiet: bool) -> Result {
     assert!(self.thumbnails.is_none());
 
     let mut images = Vec::new();
@@ -206,10 +206,16 @@ impl Metadata {
       }
     }
 
+    let bar = progress_bar::count(quiet, images.len().into_u64(), "thumbnails");
+
     let mut thumbnails = BTreeMap::new();
 
     for image in images {
-      let Some(thumbnail) = image.create_thumbnail(root)? else {
+      let thumbnail = image.create_thumbnail(root)?;
+
+      bar.inc(1);
+
+      let Some(thumbnail) = thumbnail else {
         continue;
       };
 
@@ -226,9 +232,31 @@ impl Metadata {
     Ok(())
   }
 
-  pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result {
+  pub(crate) fn populate(&mut self, root: &Utf8Path, quiet: bool) -> Result {
+    let mut files = 0;
+
+    if let Some(media) = &self.media {
+      match media {
+        Media::Audio { items } => files += items.len().into_u64(),
+        Media::Image { items } => files += items.len().into_u64(),
+        Media::Video { items } => files += items.len().into_u64(),
+        Media::Web => {}
+      }
+    }
+
+    if self.artwork.is_some() {
+      files += 1;
+    }
+
+    if let Some(thumbnails) = &self.thumbnails {
+      files += thumbnails.len().into_u64();
+    }
+
+    let bar = progress_bar::count(quiet, files, "files");
+
     if let Some(artwork) = &mut self.artwork {
       artwork.populate(root)?;
+      bar.inc(1);
     }
 
     if let Some(media) = self.media.as_mut() {
@@ -236,16 +264,19 @@ impl Metadata {
         Media::Audio { items } => {
           for audio in items {
             audio.populate(root)?;
+            bar.inc(1);
           }
         }
         Media::Image { items } => {
           for image in items {
             image.populate(root)?;
+            bar.inc(1);
           }
         }
         Media::Video { items } => {
           for video in items {
             video.populate(root)?;
+            bar.inc(1);
           }
         }
         Media::Web => {}
@@ -255,6 +286,7 @@ impl Metadata {
     if let Some(thumbnails) = &mut self.thumbnails {
       for thumbnail in thumbnails.values_mut() {
         thumbnail.populate(root)?;
+        bar.inc(1);
       }
     }
 
@@ -685,7 +717,7 @@ mod tests {
       ..default()
     };
 
-    metadata.generate(&root, false).unwrap();
+    metadata.generate(&root, false, true).unwrap();
 
     assert_eq!(
       metadata
@@ -718,7 +750,7 @@ mod tests {
       ..default()
     };
 
-    metadata.generate(&root, false).unwrap();
+    metadata.generate(&root, false, true).unwrap();
 
     assert_eq!(metadata.thumbnails, None);
   }
@@ -738,7 +770,10 @@ mod tests {
     };
 
     assert_eq!(
-      metadata.generate(&root, false).unwrap_err().to_string(),
+      metadata
+        .generate(&root, false, true)
+        .unwrap_err()
+        .to_string(),
       "thumbnail for `foo.png` conflicts with `thumbnails/foo.jpg`",
     );
   }
@@ -755,7 +790,10 @@ mod tests {
     };
 
     assert_eq!(
-      metadata.generate(&root, false).unwrap_err().to_string(),
+      metadata
+        .generate(&root, false, true)
+        .unwrap_err()
+        .to_string(),
       "thumbnail for `foo.png` conflicts with thumbnail for `foo.jpg`",
     );
   }
@@ -774,7 +812,7 @@ mod tests {
       ..default()
     };
 
-    metadata.generate(&root, false).unwrap();
+    metadata.generate(&root, false, true).unwrap();
 
     assert_eq!(
       metadata
@@ -815,7 +853,7 @@ mod tests {
 
       assert_matches_regex!(
         metadata
-          .populate(&root)
+          .populate(&root, true)
           .and_then(|()| metadata.validate(&root))
           .unwrap_err()
           .to_string(),
@@ -870,7 +908,10 @@ mod tests {
         ..default()
       };
 
-      assert_matches_regex!(metadata.populate(&root).unwrap_err().to_string(), expected);
+      assert_matches_regex!(
+        metadata.populate(&root, true).unwrap_err().to_string(),
+        expected
+      );
     }
 
     case(
@@ -1003,7 +1044,7 @@ mod tests {
         .map(|path| path.parse::<RelativePath>().unwrap())
         .collect();
 
-      metadata.populate(&root).unwrap();
+      metadata.populate(&root, true).unwrap();
       metadata.check_files(&paths).unwrap();
       metadata.validate(&root).unwrap();
     }
@@ -1031,7 +1072,7 @@ mod tests {
       .map(|path| path.parse::<RelativePath>().unwrap())
       .collect();
 
-    metadata.populate(&root).unwrap();
+    metadata.populate(&root, true).unwrap();
     metadata.check_files(&paths).unwrap();
     metadata.validate(&root).unwrap();
   }
