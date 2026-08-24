@@ -531,18 +531,16 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
-  #[snafu(display("thumbnail `{path}` already exists"))]
+  #[snafu(display("thumbnail for `{image}` conflicts with `{path}`"))]
   ThumbnailAlreadyExists {
     backtrace: Option<Backtrace>,
-    path: RelativePath,
+    image: RelativePath,
+    path: DisplayPath,
   },
-  #[snafu(display(
-    "thumbnail path `{path}` for `{second}` collides with thumbnail path for `{first}`"
-  ))]
+  #[snafu(display("thumbnail for `{second}` conflicts with thumbnail for `{first}`"))]
   ThumbnailCollision {
     backtrace: Option<Backtrace>,
     first: RelativePath,
-    path: RelativePath,
     second: RelativePath,
   },
   #[snafu(display("failed to generate thumbnail for image `{path}`"))]

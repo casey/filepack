@@ -165,24 +165,42 @@ impl Metadata {
       return Ok(());
     }
 
+    let mut existing = HashMap::new();
+
+    {
+      let dir = &root.join(Image::THUMBNAIL_DIR);
+      if !force && filesystem::exists(dir)? {
+        for entry in dir
+          .read_dir_utf8()
+          .context(error::FilesystemIo { path: dir })?
+        {
+          let entry = entry.context(error::FilesystemIo { path: dir })?;
+          existing.insert(
+            entry.path().file_stem().unwrap().to_owned(),
+            entry.path().strip_prefix(root).unwrap().to_owned(),
+          );
+        }
+      }
+    }
+
     let mut destinations = HashMap::new();
 
     for image in &images {
-      let destination = image.default_thumbnail_path()?;
-
-      ensure! {
-        force || !filesystem::exists(&root.join(&destination))?,
-        error::ThumbnailAlreadyExists {
-          path: destination,
-        },
+      if let Some(path) = existing.get(image.path.stem()) {
+        return Err(
+          error::ThumbnailAlreadyExists {
+            image: &image.path,
+            path,
+          }
+          .build(),
+        );
       }
 
-      if let Some(first) = destinations.insert(destination.clone(), image.path.clone()) {
+      if let Some(first) = destinations.insert(image.thumbnail_stem(), image.path.clone()) {
         return Err(
           error::ThumbnailCollision {
             first,
-            path: destination,
-            second: image.path.clone(),
+            second: &image.path,
           }
           .build(),
         );
@@ -722,7 +740,7 @@ mod tests {
 
     assert_eq!(
       metadata.generate(&root, false).unwrap_err().to_string(),
-      "thumbnail `thumbnails/foo.jpg` already exists",
+      "thumbnail for `foo.png` conflicts with `thumbnails/foo.jpg`",
     );
   }
 
@@ -739,7 +757,7 @@ mod tests {
 
     assert_eq!(
       metadata.generate(&root, false).unwrap_err().to_string(),
-      "thumbnail path `thumbnails/foo.jpg` for `foo.png` collides with thumbnail path for `foo.jpg`",
+      "thumbnail for `foo.png` conflicts with thumbnail for `foo.jpg`",
     );
   }
 
