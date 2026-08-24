@@ -338,13 +338,7 @@ fn create_generate_rejects_existing_thumbnails() {
 fn create_generates_thumbnails() {
   Test::new()
     .write("foo.jpg", image(1280, 640, ImageFormat::Jpeg))
-    .write("bar/baz.png", {
-      let mut buffer = Cursor::new(Vec::new());
-      gradient_alpha(1280, 640, 128)
-        .write_to(&mut buffer, ImageFormat::Png)
-        .unwrap();
-      buffer.into_inner()
-    })
+    .write("bar/baz.png", image_alpha(1280, 640, 128, ImageFormat::Png))
     .write(
       "metadata.yaml",
       "
@@ -644,6 +638,14 @@ fn create_succeeds_with_valid_metadata() {
 fn image(width: u32, height: u32, image_format: ImageFormat) -> Vec<u8> {
   let mut buffer = Cursor::new(Vec::new());
   gradient(width, height)
+    .write_to(&mut buffer, image_format)
+    .unwrap();
+  buffer.into_inner()
+}
+
+fn image_alpha(width: u32, height: u32, alpha: u8, image_format: ImageFormat) -> Vec<u8> {
+  let mut buffer = Cursor::new(Vec::new());
+  gradient_alpha(width, height, alpha)
     .write_to(&mut buffer, image_format)
     .unwrap();
   buffer.into_inner()
