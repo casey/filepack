@@ -330,7 +330,7 @@ fn create_generate_rejects_existing_thumbnails() {
     )
     .write("thumbnails/foo.jpg", "bar")
     .args(["create", "--generate"])
-    .stderr("error: thumbnail for `foo.jpg` conflicts with `thumbnails/foo.jpg`\n")
+    .stderr_path("error: thumbnail for `foo.jpg` conflicts with `thumbnails/foo.jpg`\n")
     .failure();
 }
 
