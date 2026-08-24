@@ -148,7 +148,7 @@ impl Metadata {
     files
   }
 
-  pub(crate) fn generate(&mut self, root: &Utf8Path, force: bool) -> Result {
+  pub(crate) fn generate(&mut self, root: &Utf8Path, force: bool, quiet: bool) -> Result {
     assert!(self.thumbnails.is_none());
 
     let mut images = Vec::new();
@@ -189,6 +189,8 @@ impl Metadata {
       }
     }
 
+    let bar = progress_bar::count(quiet, images.len().into_u64(), "thumbnails");
+
     let mut thumbnails = BTreeMap::new();
 
     for image in images {
@@ -200,6 +202,8 @@ impl Metadata {
         Image::from_str(thumbnail.as_ref()).context(error::Path { path: thumbnail })?;
 
       thumbnails.insert(image.path.clone(), thumbnail);
+
+      bar.inc(1);
     }
 
     if !thumbnails.is_empty() {
@@ -668,7 +672,7 @@ mod tests {
       ..default()
     };
 
-    metadata.generate(&root, false).unwrap();
+    metadata.generate(&root, false, true).unwrap();
 
     assert_eq!(
       metadata
@@ -701,7 +705,7 @@ mod tests {
       ..default()
     };
 
-    metadata.generate(&root, false).unwrap();
+    metadata.generate(&root, false, true).unwrap();
 
     assert_eq!(metadata.thumbnails, None);
   }
@@ -721,7 +725,10 @@ mod tests {
     };
 
     assert_eq!(
-      metadata.generate(&root, false).unwrap_err().to_string(),
+      metadata
+        .generate(&root, false, true)
+        .unwrap_err()
+        .to_string(),
       "thumbnail `thumbnails/foo.jpg` already exists",
     );
   }
@@ -738,7 +745,10 @@ mod tests {
     };
 
     assert_eq!(
-      metadata.generate(&root, false).unwrap_err().to_string(),
+      metadata
+        .generate(&root, false, true)
+        .unwrap_err()
+        .to_string(),
       "thumbnail path `thumbnails/foo.jpg` for `foo.png` collides with thumbnail path for `foo.jpg`",
     );
   }
@@ -757,7 +767,7 @@ mod tests {
       ..default()
     };
 
-    metadata.generate(&root, false).unwrap();
+    metadata.generate(&root, false, true).unwrap();
 
     assert_eq!(
       metadata
