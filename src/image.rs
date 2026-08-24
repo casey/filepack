@@ -26,7 +26,7 @@ impl Image {
   const THUMBNAIL_QUALITY: u8 = 80;
   const THUMBNAIL_SIZE: u32 = 1024;
 
-  pub(crate) fn create_thumbnail(&self, root: &Utf8Path) -> Result<RelativePath> {
+  pub(crate) fn create_thumbnail(&self, root: &Utf8Path) -> Result<Option<RelativePath>> {
     use ::image::{
       DynamicImage, ImageDecoder, ImageFormat, ImageReader, codecs::jpeg::JpegEncoder,
       imageops::FilterType,
@@ -41,7 +41,9 @@ impl Image {
       ImageType::Png => ImageFormat::Png,
     };
 
-    let mut decoder = ImageReader::with_format(io::Cursor::new(filesystem::read(path)?), format)
+    let original = filesystem::read(path)?;
+
+    let mut decoder = ImageReader::with_format(io::Cursor::new(&original), format)
       .into_decoder()
       .context(error::ThumbnailGeneration { path })?;
 
@@ -67,6 +69,10 @@ impl Image {
       .encode_image(&thumbnail)
       .context(error::ThumbnailGeneration { path })?;
 
+    if jpeg.len() >= original.len() {
+      return Ok(None);
+    }
+
     {
       let destination = root.join(&destination);
 
@@ -75,7 +81,7 @@ impl Image {
       filesystem::write(&destination, jpeg)?;
     }
 
-    Ok(destination)
+    Ok(Some(destination))
   }
 
   fn decode(&self, root: &Utf8Path) -> Result<ImageMetadata> {
@@ -281,7 +287,7 @@ impl Item for Image {
 mod tests {
   use {
     super::*,
-    ::image::{DynamicImage, ImageEncoder, ImageFormat, codecs::jpeg::JpegEncoder},
+    ::image::{ImageEncoder, ImageFormat, codecs::jpeg::JpegEncoder},
   };
 
   #[test]
@@ -290,7 +296,7 @@ mod tests {
     fn case(source: (u32, u32), expected: (u32, u32)) {
       let (_tempdir, root) = tempdir();
 
-      DynamicImage::new_rgb8(source.0, source.1)
+      gradient(source.0, source.1)
         .save_with_format(root.join("foo.png"), ImageFormat::Png)
         .unwrap();
 
@@ -298,6 +304,7 @@ mod tests {
         .parse::<Image>()
         .unwrap()
         .create_thumbnail(&root)
+        .unwrap()
         .unwrap();
 
       assert_eq!(destination, "thumbnails/foo.jpg");
@@ -308,7 +315,7 @@ mod tests {
     }
 
     case((1280, 640), (1024, 512));
-    case((1, 2), (512, 1024));
+    case((640, 1280), (512, 1024));
   }
 
   #[test]
@@ -321,7 +328,7 @@ mod tests {
 
     encoder.set_exif_metadata(exif(6)).unwrap();
 
-    encoder.encode_image(&DynamicImage::new_rgb8(4, 2)).unwrap();
+    encoder.encode_image(&gradient(2048, 1024)).unwrap();
 
     std::fs::write(root.join("foo.jpg"), encoded).unwrap();
 
@@ -329,11 +336,32 @@ mod tests {
       .parse::<Image>()
       .unwrap()
       .create_thumbnail(&root)
+      .unwrap()
       .unwrap();
 
     let thumbnail = ::image::open(root.join(&destination)).unwrap();
 
     assert_eq!((thumbnail.width(), thumbnail.height()), (512, 1024));
+  }
+
+  #[test]
+  fn create_thumbnail_skips_larger() {
+    let (_tempdir, root) = tempdir();
+
+    gradient(1, 1)
+      .save_with_format(root.join("foo.png"), ImageFormat::Png)
+      .unwrap();
+
+    assert_eq!(
+      "foo.png"
+        .parse::<Image>()
+        .unwrap()
+        .create_thumbnail(&root)
+        .unwrap(),
+      None,
+    );
+
+    assert!(!root.join("thumbnails/foo.jpg").exists());
   }
 
   #[test]

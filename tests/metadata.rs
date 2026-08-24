@@ -297,7 +297,7 @@ fn create_extracts_video_metadata() {
 #[test]
 fn create_generate_force_overwrites_thumbnails() {
   Test::new()
-    .write("foo.jpg", image(2, 1, ImageFormat::Jpeg))
+    .write("foo.jpg", image(1280, 640, ImageFormat::Jpeg))
     .write(
       "metadata.yaml",
       "
@@ -338,7 +338,7 @@ fn create_generate_rejects_existing_thumbnails() {
 fn create_generates_thumbnails() {
   Test::new()
     .write("foo.jpg", image(1280, 640, ImageFormat::Jpeg))
-    .write("bar/baz.png", image(2, 1, ImageFormat::Png))
+    .write("bar/baz.png", image(1280, 640, ImageFormat::Png))
     .write(
       "metadata.yaml",
       "
@@ -379,8 +379,8 @@ fn create_generates_thumbnails() {
                 "bit_depth": 8,
                 "color_type": "rgb",
                 "dimensions": {
-                  "height": 1,
-                  "width": 2
+                  "height": 640,
+                  "width": 1280
                 },
                 "orientation": {
                   "mirrored": false,
@@ -638,7 +638,7 @@ fn create_succeeds_with_valid_metadata() {
 
 fn image(width: u32, height: u32, image_format: ImageFormat) -> Vec<u8> {
   let mut buffer = Cursor::new(Vec::new());
-  DynamicImage::new_rgb8(width, height)
+  gradient(width, height)
     .write_to(&mut buffer, image_format)
     .unwrap();
   buffer.into_inner()
