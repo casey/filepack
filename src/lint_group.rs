@@ -11,6 +11,14 @@ pub(crate) enum LintGroup {
 }
 
 impl LintGroup {
+  #[cfg(test)]
+  fn is_superset(self) -> bool {
+    match self {
+      Self::All | Self::Distribution => true,
+      Self::Compatibility | Self::Content | Self::Junk => false,
+    }
+  }
+
   pub(crate) fn lints(self) -> BTreeSet<Lint> {
     use Lint::*;
 
@@ -30,19 +38,19 @@ impl LintGroup {
       Self::Junk => [Junk].into(),
     }
   }
-
-  #[cfg(test)]
-  fn is_superset(self) -> bool {
-    match self {
-      Self::All | Self::Distribution => true,
-      Self::Compatibility | Self::Content | Self::Junk => false,
-    }
-  }
 }
 
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn all_lints_are_in_all_group() {
+    let all = LintGroup::All.lints();
+    for lint in Lint::iter() {
+      assert!(all.contains(&lint), "lint `{lint}` not in `all` lint group");
+    }
+  }
 
   #[test]
   fn all_lints_are_in_at_least_one_group() {
@@ -59,14 +67,6 @@ mod tests {
 
     for lint in Lint::iter() {
       assert!(lints.contains(&lint), "lint `{lint}` not in group");
-    }
-  }
-
-  #[test]
-  fn all_lints_are_in_all_group() {
-    let all = LintGroup::All.lints();
-    for lint in Lint::iter() {
-      assert!(all.contains(&lint), "lint `{lint}` not in `all` lint group");
     }
   }
 }
