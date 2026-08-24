@@ -69,12 +69,12 @@ impl Image {
 
     thumbnail.apply_orientation(orientation);
 
-    let has_alpha =
+    let uses_alpha =
       thumbnail.color().has_alpha() && thumbnail.pixels().any(|(_x, _y, pixel)| pixel[3] < u8::MAX);
 
     let mut encoded = Vec::new();
 
-    let ty = if has_alpha {
+    let ty = if uses_alpha {
       thumbnail
         .into_rgba8()
         .write_with_encoder(PngEncoder::new_with_quality(
