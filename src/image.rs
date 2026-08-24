@@ -53,11 +53,16 @@ impl Image {
 
     let image = DynamicImage::from_decoder(decoder).context(error::ThumbnailGeneration { path })?;
 
-    let mut thumbnail = image.resize(
-      Self::THUMBNAIL_SIZE,
-      Self::THUMBNAIL_SIZE,
-      FilterType::Lanczos3,
-    );
+    let mut thumbnail =
+      if image.width() > Self::THUMBNAIL_SIZE || image.height() > Self::THUMBNAIL_SIZE {
+        image.resize(
+          Self::THUMBNAIL_SIZE,
+          Self::THUMBNAIL_SIZE,
+          FilterType::Lanczos3,
+        )
+      } else {
+        image
+      };
 
     thumbnail.apply_orientation(orientation);
 
@@ -316,6 +321,8 @@ mod tests {
 
     case((1280, 640), (1024, 512));
     case((640, 1280), (512, 1024));
+    case((640, 320), (640, 320));
+    case((2048, 512), (1024, 256));
   }
 
   #[test]
