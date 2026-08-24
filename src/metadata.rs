@@ -174,11 +174,13 @@ impl Metadata {
           .read_dir_utf8()
           .context(error::FilesystemIo { path: dir })?
         {
-          let entry = entry.context(error::FilesystemIo { path: dir })?;
-          existing.insert(
-            entry.path().file_stem().unwrap().to_owned(),
-            entry.path().strip_prefix(root).unwrap().to_owned(),
-          );
+          let entry = entry
+            .context(error::FilesystemIo { path: dir })?
+            .path()
+            .strip_prefix(root)
+            .unwrap()
+            .to_owned();
+          existing.insert(entry.file_stem().unwrap().to_owned(), entry);
         }
       }
     }
