@@ -1,6 +1,6 @@
 use super::*;
 
-const PROGRESS_CHARS: &str = "█▉▊▋▌▍▎▏ ";
+const PROGRESS_CHARS: &str = "=>-";
 
 const TEMPLATE: &str = "{spinner:.green} ⟪{elapsed_precise}⟫ ⟦{wide_bar:.cyan}⟧ \
                         {binary_bytes}/{binary_total_bytes} \
