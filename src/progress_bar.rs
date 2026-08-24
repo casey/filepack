@@ -1,5 +1,8 @@
 use super::*;
 
+const COUNT_TEMPLATE: &str = "{spinner:.green} ⟪{elapsed_precise}⟫ ⟦{wide_bar:.cyan}⟧ \
+                              {pos}/{len} {msg} ⟨{eta}⟩";
+
 const PROGRESS_CHARS: &str = "=>-";
 
 const TEMPLATE: &str = "{spinner:.green} ⟪{elapsed_precise}⟫ ⟦{wide_bar:.cyan}⟧ \
@@ -44,6 +47,22 @@ const TICK_CHARS: &str = concat!(
   "⠟⠞⠗⠖⠝⠜⠕⠔⠏⠎⠇⠆⠍⠌⠅⠄",
   "⠛⠚⠓⠒⠙⠘⠑⠐⠋⠊⠃⠂⠉⠈⠁",
 );
+
+pub(crate) fn count(quiet: bool, len: u64, message: &'static str) -> ProgressBar {
+  if quiet {
+    ProgressBar::hidden()
+  } else {
+    ProgressBar::new(len)
+      .with_style(
+        ProgressStyle::default_bar()
+          .progress_chars(PROGRESS_CHARS)
+          .template(COUNT_TEMPLATE)
+          .unwrap()
+          .tick_chars(TICK_CHARS),
+      )
+      .with_message(message)
+  }
+}
 
 pub(crate) fn entry_progress_message(downloaded: u64, entries: u64) -> String {
   format!("{downloaded}/{entries} entries")
