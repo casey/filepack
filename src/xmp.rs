@@ -111,15 +111,13 @@ pub(crate) fn title(data: &[u8]) -> Result<Option<String>, XmpError> {
     item = Some(child);
   }
 
-  let item = item.context(xmp_error::TitleEmpty)?;
+  let item = item.context(xmp_error::MissingElement { name: "rdf:li" })?;
 
   if let Some(child) = children(item).next() {
     return Err(unexpected(child));
   }
 
-  let text = item.text().context(xmp_error::TitleEmpty)?;
-
-  Ok(Some(text.into()))
+  Ok(Some(item.text().unwrap_or_default().into()))
 }
 
 fn unexpected(node: Node) -> XmpError {
@@ -157,7 +155,7 @@ mod tests {
       );
     }
 
-    case(&[], Err("empty `dc:title`"));
+    case(&[], Err("missing element `rdf:li`"));
     case(&[("x-default", "foo")], Ok(Some("foo")));
     case(&[("en", "foo")], Ok(Some("foo")));
     case(
@@ -317,9 +315,10 @@ mod tests {
       "unexpected element `rdf:Bag`",
     );
 
-    error(
-      &format!(
-        r#"
+    assert_eq!(
+      xmp::title(
+        format!(
+          r#"
           <x:xmpmeta xmlns:x="{X}">
             <rdf:RDF xmlns:rdf="{RDF}">
               <rdf:Description xmlns:dc="{DC}">
@@ -332,8 +331,11 @@ mod tests {
             </rdf:RDF>
           </x:xmpmeta>
         "#
-      ),
-      "empty `dc:title`",
+        )
+        .as_bytes()
+      )
+      .unwrap(),
+      Some(String::new()),
     );
 
     error(

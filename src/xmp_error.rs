@@ -7,8 +7,6 @@ pub enum XmpError {
   MissingElement { name: &'static str },
   #[snafu(display("failed to parse XML"))]
   Parse { source: roxmltree::Error },
-  #[snafu(display("empty `dc:title`"))]
-  TitleEmpty,
   #[snafu(display("multiple `dc:title` values"))]
   TitleMultiple,
   #[snafu(display("unexpected element `{name}`"))]
