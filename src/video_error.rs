@@ -31,8 +31,6 @@ pub enum VideoError {
   SpsInvalid,
   #[snafu(display("missing SPS"))]
   SpsMissing,
-  #[snafu(display("empty `{tag}` tag"))]
-  TagEmpty { tag: &'static str },
   #[snafu(display("invalid `{tag}` tag"))]
   TagInvalid {
     source: TextError,

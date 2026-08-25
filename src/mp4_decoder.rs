@@ -280,8 +280,6 @@ impl Mp4Decoder {
 
     let title = str::from_utf8(&item.data.data).context(video_error::TagUtf8 { tag })?;
 
-    ensure!(!title.is_empty(), video_error::TagEmpty { tag });
-
     Ok(Some(
       title
         .parse::<Text>()
@@ -614,7 +612,7 @@ mod tests {
 
     error(
       Mp4Builder::new().video_track(2, 1).name(b""),
-      "empty `©nam` tag",
+      "invalid `©nam` tag",
     );
 
     error(

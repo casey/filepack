@@ -267,11 +267,6 @@ pub enum Error {
     path: DisplayPath,
     vertical: usize,
   },
-  #[snafu(display("empty title in image `{path}`"))]
-  ImageTitleEmpty {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-  },
   #[snafu(display("invalid title in image `{path}`"))]
   ImageTitleInvalid {
     backtrace: Option<Backtrace>,
