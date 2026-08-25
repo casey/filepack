@@ -134,6 +134,15 @@ impl Image {
       Orientation::new()
     };
 
+    let title = decoder
+      .xmp()
+      .map(|xmp| {
+        let title = xmp::title(xmp).context(error::ImageXmp { path })?;
+        Self::title(title, path)
+      })
+      .transpose()?
+      .flatten();
+
     let info = decoder.info().unwrap();
 
     let colorspace = decoder.input_colorspace().unwrap();
@@ -176,17 +185,38 @@ impl Image {
         width: info.width.into(),
       },
       orientation,
+      title,
     })
   }
 
   fn decode_png(path: &Utf8Path) -> Result<ImageMetadata> {
     let bytes = filesystem::read(path)?;
 
-    let reader = png::Decoder::new(io::Cursor::new(bytes))
+    let mut reader = png::Decoder::new(io::Cursor::new(bytes))
       .read_info()
       .context(error::ImageDecodePng { path })?;
 
+    reader.finish().context(error::ImageDecodePng { path })?;
+
     let info = reader.info();
+
+    let mut title = None;
+
+    for chunk in &info.uncompressed_latin1_text {
+      if chunk.keyword == "Title" {
+        ensure!(title.is_none(), error::ImageTitleMultiple { path });
+        title = Some(chunk.text.clone());
+      }
+    }
+
+    for chunk in &info.utf8_text {
+      if chunk.keyword == "Title" {
+        ensure!(title.is_none(), error::ImageTitleMultiple { path });
+        title = Some(chunk.get_text().context(error::ImageDecodePng { path })?);
+      }
+    }
+
+    let title = Self::title(title, path)?;
 
     let orientation = if let Some(exif) = &info.exif_metadata {
       Orientation::from_exif(exif).context(error::ImageExif { path })?
@@ -212,6 +242,7 @@ impl Image {
         width: info.width.into(),
       },
       orientation,
+      title,
     })
   }
 
@@ -231,7 +262,7 @@ impl Image {
     self.orientation.dimensions(self.dimensions)
   }
 
-  pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result {
+  pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result<Option<Text>> {
     let ImageMetadata {
       alpha,
       bit_depth,
@@ -239,6 +270,7 @@ impl Image {
       color_type,
       dimensions,
       orientation,
+      title,
     } = self.decode(root)?;
 
     self.alpha = alpha;
@@ -248,7 +280,7 @@ impl Image {
     self.dimensions = dimensions;
     self.orientation = orientation;
 
-    Ok(())
+    Ok(title)
   }
 
   pub(crate) fn resource_type(&self) -> ResourceType {
@@ -262,6 +294,20 @@ impl Image {
 
   pub(crate) fn thumbnail_stem(&self) -> String {
     format!("{}/{}", Self::THUMBNAIL_DIR, self.path.stem())
+  }
+
+  fn title(title: Option<String>, path: &Utf8Path) -> Result<Option<Text>> {
+    let Some(title) = title else {
+      return Ok(None);
+    };
+
+    ensure!(!title.is_empty(), error::ImageTitleEmpty { path });
+
+    Ok(Some(
+      title
+        .parse::<Text>()
+        .context(error::ImageTitleInvalid { path })?,
+    ))
   }
 }
 
@@ -560,7 +606,16 @@ mod tests {
 
       let mut image = filename.parse::<Image>().unwrap();
 
-      image.populate(&root).map(|()| image)
+      image.populate(&root).map(|_| image)
+    }
+
+    #[track_caller]
+    fn title(filename: &str, bytes: &[u8]) -> Result<Option<Text>> {
+      let (_tempdir, root) = tempdir();
+
+      std::fs::write(root.join(filename), bytes).unwrap();
+
+      filename.parse::<Image>().unwrap().populate(&root)
     }
 
     assert_eq!(
@@ -739,6 +794,82 @@ mod tests {
         .unwrap_err()
         .to_string(),
       r"^invalid EXIF in image `.*foo\.png`$",
+    );
+
+    assert_eq!(
+      title("foo.png", &PngBuilder::new().text("Title", "bar").build()).unwrap(),
+      Some("bar".parse().unwrap()),
+    );
+
+    assert_eq!(
+      title("foo.png", &PngBuilder::new().itxt("Title", "bär").build()).unwrap(),
+      Some("bär".parse().unwrap()),
+    );
+
+    assert_eq!(
+      title(
+        "foo.png",
+        &PngBuilder::new().trailing_text("Title", "bar").build(),
+      )
+      .unwrap(),
+      Some("bar".parse().unwrap()),
+    );
+
+    assert_eq!(
+      title("foo.png", &PngBuilder::new().ztxt("Title", "bar").build()).unwrap(),
+      None,
+    );
+
+    assert_eq!(
+      title("foo.png", &PngBuilder::new().text("Foo", "bar").build()).unwrap(),
+      None,
+    );
+
+    assert_matches_regex!(
+      title(
+        "foo.png",
+        &PngBuilder::new()
+          .text("Title", "bar")
+          .itxt("Title", "baz")
+          .build(),
+      )
+      .unwrap_err()
+      .to_string(),
+      r"^multiple titles in image `.*foo\.png`$",
+    );
+
+    assert_matches_regex!(
+      title("foo.png", &PngBuilder::new().text("Title", "").build())
+        .unwrap_err()
+        .to_string(),
+      r"^empty title in image `.*foo\.png`$",
+    );
+
+    assert_matches_regex!(
+      title("foo.png", &PngBuilder::new().text("Title", "\u{1}").build())
+        .unwrap_err()
+        .to_string(),
+      r"^invalid title in image `.*foo\.png`$",
+    );
+
+    assert_eq!(
+      title(
+        "foo.jpg",
+        &JpegBuilder::new()
+          .xmp(&xmp::packet(&[("x-default", "bar")]))
+          .build(),
+      )
+      .unwrap(),
+      Some("bar".parse().unwrap()),
+    );
+
+    assert_eq!(title("foo.jpg", &JpegBuilder::new().build()).unwrap(), None,);
+
+    assert_matches_regex!(
+      title("foo.jpg", &JpegBuilder::new().xmp(b"<foo").build())
+        .unwrap_err()
+        .to_string(),
+      r"^invalid XMP in image `.*foo\.jpg`$",
     );
   }
 

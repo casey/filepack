@@ -162,6 +162,54 @@ fn create_extracts_image_dimensions() {
 }
 
 #[test]
+fn create_extracts_image_title() {
+  Test::new()
+    .write("foo.png", PngBuilder::new().text("Title", "bar").build())
+    .write(
+      "metadata.yaml",
+      "
+        media:
+          type: image
+          items:
+            - foo.png
+      ",
+    )
+    .arg("create")
+    .success()
+    .arg("metadata")
+    .stdout(
+      r#"
+        {
+          "media": {
+            "type": "image",
+            "items": [
+              {
+                "content": {
+                  "alpha": false,
+                  "bit_depth": 8,
+                  "color_type": "rgb",
+                  "dimensions": {
+                    "height": 1,
+                    "width": 1
+                  },
+                  "orientation": {
+                    "mirrored": false,
+                    "rotation": 0
+                  },
+                  "path": "foo.png",
+                  "type": "png"
+                },
+                "title": "bar"
+              }
+            ]
+          }
+        }
+      "#,
+    )
+    .success();
+}
+
+#[test]
 fn create_extracts_track_tags() {
   Test::new()
     .write(

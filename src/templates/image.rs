@@ -57,7 +57,7 @@ impl Page for ImageHtml {
   }
 
   fn title(&self) -> String {
-    format!("image {} · filepack", self.image)
+    format!("{} · filepack", self.image().display_title())
   }
 }
 
@@ -198,5 +198,29 @@ mod tests {
         test::FINGERPRINT,
       ),
     );
+  }
+
+  #[test]
+  fn title() {
+    let mut html = ImageHtml {
+      fingerprint: test::FINGERPRINT.parse().unwrap(),
+      image: 0,
+      metadata: Metadata {
+        media: Some(Media::Image {
+          items: vec!["foo.png".parse().unwrap()],
+        }),
+        ..default()
+      },
+    };
+
+    assert_eq!(Page::title(&html), "foo.png · filepack");
+
+    let Some(Media::Image { items }) = html.metadata.media.as_mut() else {
+      unreachable!();
+    };
+
+    items[0].title = Some("bar".parse().unwrap());
+
+    assert_eq!(Page::title(&html), "bar · filepack");
   }
 }

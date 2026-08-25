@@ -272,6 +272,28 @@ pub enum Error {
     path: DisplayPath,
     vertical: usize,
   },
+  #[snafu(display("empty title in image `{path}`"))]
+  ImageTitleEmpty {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+  },
+  #[snafu(display("invalid title in image `{path}`"))]
+  ImageTitleInvalid {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+    source: TextError,
+  },
+  #[snafu(display("multiple titles in image `{path}`"))]
+  ImageTitleMultiple {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+  },
+  #[snafu(display("invalid XMP in image `{path}`"))]
+  ImageXmp {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+    source: XmpError,
+  },
   #[snafu(display("internal error, this may indicate a bug in filepack: {message}"))]
   Internal {
     backtrace: Option<Backtrace>,

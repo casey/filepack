@@ -25,6 +25,13 @@ impl Item<Audio> {
   }
 }
 
+impl Item<Image> {
+  pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result {
+    self.title = self.content.populate(root)?;
+    Ok(())
+  }
+}
+
 impl Item<Video> {
   pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result {
     self.title = self.content.populate(root)?;
@@ -168,6 +175,21 @@ mod tests {
     .unwrap();
 
     let mut item = "foo.flac".parse::<Item<Audio>>().unwrap();
+    item.populate(&root).unwrap();
+    assert_eq!(item.title, Some("bar".parse().unwrap()));
+  }
+
+  #[test]
+  fn populate_image() {
+    let (_tempdir, root) = tempdir();
+
+    std::fs::write(
+      root.join("foo.png"),
+      PngBuilder::new().text("Title", "bar").build(),
+    )
+    .unwrap();
+
+    let mut item = "foo.png".parse::<Item<Image>>().unwrap();
     item.populate(&root).unwrap();
     assert_eq!(item.title, Some("bar".parse().unwrap()));
   }
