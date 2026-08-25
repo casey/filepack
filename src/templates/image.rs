@@ -28,14 +28,15 @@ impl Page for ImageHtml {
   }
 
   fn open_graph_image(&self) -> Option<OpenGraphImage> {
-    Some(OpenGraphImage {
-      dimensions: self.image().oriented_dimensions(),
-      path: format!(
+    Some(OpenGraphImage::thumbnail(
+      &self.metadata,
+      self.image(),
+      format!(
         "media/image/{}/item/{}",
         self.fingerprint,
         Ordinal(self.image)
       ),
-    })
+    ))
   }
 
   fn prev(&self) -> Option<String> {
@@ -120,6 +121,39 @@ mod tests {
           width: 1,
         },
         path: format!("media/image/{}/item/1", test::FINGERPRINT),
+      }),
+    );
+
+    let mut html = html;
+
+    html.metadata.thumbnails = Some(
+      [(
+        "foo.png".parse().unwrap(),
+        Image {
+          alpha: false,
+          bit_depth: 8,
+          chroma_subsampling: None,
+          color_type: ColorType::Rgb,
+          dimensions: Dimensions {
+            height: 3,
+            width: 4,
+          },
+          orientation: Orientation::default(),
+          path: "thumbnails/foo.jpg".parse().unwrap(),
+          ty: ImageType::Jpeg,
+        },
+      )]
+      .into(),
+    );
+
+    assert_eq!(
+      html.open_graph_image(),
+      Some(OpenGraphImage {
+        dimensions: Dimensions {
+          height: 3,
+          width: 4,
+        },
+        path: format!("media/image/{}/item/1/thumbnail", test::FINGERPRINT),
       }),
     );
   }

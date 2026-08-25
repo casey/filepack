@@ -481,6 +481,39 @@ mod tests {
 
     assert_eq!(html.open_graph_description(), Some("bar".into()));
 
+    let mut html = html;
+
+    html.metadata.as_mut().unwrap().thumbnails = Some(
+      [(
+        "foo.png".parse().unwrap(),
+        Image {
+          alpha: false,
+          bit_depth: 8,
+          chroma_subsampling: None,
+          color_type: ColorType::Rgb,
+          dimensions: Dimensions {
+            height: 3,
+            width: 4,
+          },
+          orientation: Orientation::default(),
+          path: "thumbnails/foo.jpg".parse().unwrap(),
+          ty: ImageType::Jpeg,
+        },
+      )]
+      .into(),
+    );
+
+    assert_eq!(
+      html.open_graph_image(),
+      Some(OpenGraphImage {
+        dimensions: Dimensions {
+          height: 3,
+          width: 4,
+        },
+        path: format!("artwork/{}/thumbnail", test::FINGERPRINT),
+      }),
+    );
+
     let html = PackageHtml {
       colophon: None,
       directory: Directory::new(),
