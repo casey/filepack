@@ -54,20 +54,21 @@ impl Image {
       .orientation()
       .context(error::ThumbnailGeneration { path })?;
 
-    let image = DynamicImage::from_decoder(decoder).context(error::ThumbnailGeneration { path })?;
+    let mut image =
+      DynamicImage::from_decoder(decoder).context(error::ThumbnailGeneration { path })?;
 
-    let mut thumbnail =
-      if image.width() > Self::THUMBNAIL_SIZE || image.height() > Self::THUMBNAIL_SIZE {
-        image.resize(
-          Self::THUMBNAIL_SIZE,
-          Self::THUMBNAIL_SIZE,
-          imageops::FilterType::Lanczos3,
-        )
-      } else {
-        image
-      };
+    image.apply_orientation(orientation);
 
-    thumbnail.apply_orientation(orientation);
+    let thumbnail = if image.width() > Self::THUMBNAIL_SIZE || image.height() > Self::THUMBNAIL_SIZE
+    {
+      image.resize(
+        Self::THUMBNAIL_SIZE,
+        Self::THUMBNAIL_SIZE,
+        imageops::FilterType::Lanczos3,
+      )
+    } else {
+      image
+    };
 
     let uses_alpha =
       thumbnail.color().has_alpha() && thumbnail.pixels().any(|(_x, _y, pixel)| pixel[3] < u8::MAX);
