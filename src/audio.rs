@@ -220,13 +220,7 @@ impl Content for Audio {
   }
 
   fn load(root: &Utf8Path, path: RelativePath) -> Result<Item<Self>> {
-    let ty = path
-      .extension()
-      .and_then(AudioType::from_extension)
-      .ok_or(PathError::Extension {
-        extensions: AudioType::EXTENSIONS,
-      })
-      .context(error::Path { path: &path })?;
+    let ty = AudioType::from_path(&path).context(error::Path { path: &path })?;
 
     let AudioMetadata {
       album,
@@ -277,7 +271,7 @@ impl Content for Audio {
   #[cfg(test)]
   fn test(path: &str) -> Self {
     let path = path.parse::<RelativePath>().unwrap();
-    let ty = AudioType::from_extension(path.extension().unwrap()).unwrap();
+    let ty = AudioType::from_path(&path).unwrap();
     Self {
       album: "foo".parse().unwrap(),
       artist: "bar".parse().unwrap(),

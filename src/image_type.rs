@@ -11,7 +11,7 @@ pub(crate) enum ImageType {
 }
 
 impl ImageType {
-  pub(crate) const EXTENSIONS: &[&str] = &["jpg", "png"];
+  const EXTENSIONS: &[&str] = &["jpg", "png"];
 
   pub(crate) fn extension(self) -> &'static str {
     match self {
@@ -20,12 +20,21 @@ impl ImageType {
     }
   }
 
-  pub(crate) fn from_extension(extension: &str) -> Option<Self> {
+  fn from_extension(extension: &str) -> Option<Self> {
     match extension {
       "jpg" => Some(Self::Jpeg),
       "png" => Some(Self::Png),
       _ => None,
     }
+  }
+
+  pub(crate) fn from_path(path: &RelativePath) -> Result<Self, PathError> {
+    path
+      .extension()
+      .and_then(Self::from_extension)
+      .ok_or(PathError::Extension {
+        extensions: Self::EXTENSIONS,
+      })
   }
 
   pub(crate) fn resource_type(self) -> ResourceType {
@@ -47,9 +56,25 @@ mod tests {
   }
 
   #[test]
-  fn from_extension() {
-    assert_eq!(ImageType::from_extension("jpg"), Some(ImageType::Jpeg));
-    assert_eq!(ImageType::from_extension("png"), Some(ImageType::Png));
-    assert_eq!(ImageType::from_extension("svg"), None);
+  fn from_path() {
+    #[track_caller]
+    fn case(path: &str, expected: Result<ImageType, PathError>) {
+      assert_eq!(ImageType::from_path(&path.parse().unwrap()), expected);
+    }
+
+    case("foo.jpg", Ok(ImageType::Jpeg));
+    case("foo.png", Ok(ImageType::Png));
+    case(
+      "foo.svg",
+      Err(PathError::Extension {
+        extensions: &["jpg", "png"],
+      }),
+    );
+    case(
+      "foo",
+      Err(PathError::Extension {
+        extensions: &["jpg", "png"],
+      }),
+    );
   }
 }

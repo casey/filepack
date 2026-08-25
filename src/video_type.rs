@@ -12,14 +12,23 @@ pub(crate) enum VideoType {
 }
 
 impl VideoType {
-  pub(crate) const EXTENSIONS: &[&str] = &["mp4", "webm"];
+  const EXTENSIONS: &[&str] = &["mp4", "webm"];
 
-  pub(crate) fn from_extension(extension: &str) -> Option<Self> {
+  fn from_extension(extension: &str) -> Option<Self> {
     match extension {
       "mp4" => Some(Self::Mp4),
       "webm" => Some(Self::Webm),
       _ => None,
     }
+  }
+
+  pub(crate) fn from_path(path: &RelativePath) -> Result<Self, PathError> {
+    path
+      .extension()
+      .and_then(Self::from_extension)
+      .ok_or(PathError::Extension {
+        extensions: Self::EXTENSIONS,
+      })
   }
 
   pub(crate) fn resource_type(self) -> ResourceType {
@@ -35,9 +44,25 @@ mod tests {
   use super::*;
 
   #[test]
-  fn from_extension() {
-    assert_eq!(VideoType::from_extension("mp4"), Some(VideoType::Mp4));
-    assert_eq!(VideoType::from_extension("webm"), Some(VideoType::Webm));
-    assert_eq!(VideoType::from_extension("avi"), None);
+  fn from_path() {
+    #[track_caller]
+    fn case(path: &str, expected: Result<VideoType, PathError>) {
+      assert_eq!(VideoType::from_path(&path.parse().unwrap()), expected);
+    }
+
+    case("foo.mp4", Ok(VideoType::Mp4));
+    case("foo.webm", Ok(VideoType::Webm));
+    case(
+      "foo.avi",
+      Err(PathError::Extension {
+        extensions: &["mp4", "webm"],
+      }),
+    );
+    case(
+      "foo",
+      Err(PathError::Extension {
+        extensions: &["mp4", "webm"],
+      }),
+    );
   }
 }

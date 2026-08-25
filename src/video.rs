@@ -49,13 +49,7 @@ impl Content for Video {
   }
 
   fn load(root: &Utf8Path, path: RelativePath) -> Result<Item<Self>> {
-    let ty = path
-      .extension()
-      .and_then(VideoType::from_extension)
-      .ok_or(PathError::Extension {
-        extensions: VideoType::EXTENSIONS,
-      })
-      .context(error::Path { path: &path })?;
+    let ty = VideoType::from_path(&path).context(error::Path { path: &path })?;
 
     let VideoMetadata {
       duration,
@@ -88,7 +82,7 @@ impl Content for Video {
   #[cfg(test)]
   fn test(path: &str) -> Self {
     let path = path.parse::<RelativePath>().unwrap();
-    let ty = VideoType::from_extension(path.extension().unwrap()).unwrap();
+    let ty = VideoType::from_path(&path).unwrap();
     Self {
       duration: 1000,
       path,

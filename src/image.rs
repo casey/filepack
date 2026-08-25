@@ -294,13 +294,7 @@ impl Content for Image {
   }
 
   fn load(root: &Utf8Path, path: RelativePath) -> Result<Item<Self>> {
-    let ty = path
-      .extension()
-      .and_then(ImageType::from_extension)
-      .ok_or(PathError::Extension {
-        extensions: ImageType::EXTENSIONS,
-      })
-      .context(error::Path { path: &path })?;
+    let ty = ImageType::from_path(&path).context(error::Path { path: &path })?;
 
     let ImageMetadata {
       alpha,
@@ -341,7 +335,7 @@ impl Content for Image {
   #[cfg(test)]
   fn test(path: &str) -> Self {
     let path = path.parse::<RelativePath>().unwrap();
-    let ty = ImageType::from_extension(path.extension().unwrap()).unwrap();
+    let ty = ImageType::from_path(&path).unwrap();
     Self {
       alpha: false,
       bit_depth: 8,
