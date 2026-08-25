@@ -141,6 +141,7 @@ use {
     video_type::VideoType,
     view::View,
     webm_decoder::WebmDecoder,
+    xmp_error::XmpError,
   },
   axum::{
     body::Body,
@@ -238,6 +239,7 @@ pub use self::{
   mp4_builder::Mp4Builder,
   open_graph_image::OpenGraphImage,
   page::Page,
+  png_builder::PngBuilder,
   private_key::PrivateKey,
   public_key::PublicKey,
   relative_path::RelativePath,
@@ -251,7 +253,6 @@ pub use self::{
 #[cfg(test)]
 use {
   jpeg_builder::JpegBuilder,
-  png_builder::PngBuilder,
   std::assert_matches,
   tempfile::TempDir,
   test::{assert_cbor, assert_cbor_eq, assert_encoding, exif, tempdir},
@@ -382,6 +383,7 @@ mod package;
 mod page;
 mod path_error;
 mod percent_encode;
+mod png_builder;
 mod private_key;
 mod private_key_error;
 mod progress_bar;
@@ -425,13 +427,13 @@ mod video_metadata;
 mod video_type;
 mod view;
 mod webm_decoder;
+mod xmp;
+mod xmp_error;
 
 #[cfg(test)]
 mod derive;
 #[cfg(test)]
 mod jpeg_builder;
-#[cfg(test)]
-mod png_builder;
 #[cfg(test)]
 mod test;
 #[cfg(test)]

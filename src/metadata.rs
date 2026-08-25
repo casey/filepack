@@ -275,7 +275,7 @@ impl Metadata {
         }
         Media::Image { items } => {
           for image in items {
-            image.content.populate(root)?;
+            image.populate(root)?;
             bar.inc(1);
           }
         }

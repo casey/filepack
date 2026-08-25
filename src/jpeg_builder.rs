@@ -9,9 +9,22 @@ pub(crate) struct JpegBuilder {
   height: u32,
   sampling: Option<u8>,
   width: u32,
+  xmp: Option<Vec<u8>>,
 }
 
 impl JpegBuilder {
+  fn app1(header: &[u8], payload: &[u8]) -> Vec<u8> {
+    let mut segment = vec![0xFF, 0xE1];
+    segment.extend_from_slice(
+      &u16::try_from(header.len() + payload.len() + 2)
+        .unwrap()
+        .to_be_bytes(),
+    );
+    segment.extend_from_slice(header);
+    segment.extend_from_slice(payload);
+    segment
+  }
+
   pub(crate) fn build(self) -> Vec<u8> {
     let image = if self.grayscale {
       DynamicImage::new_luma8(self.width, self.height)
@@ -30,19 +43,17 @@ impl JpegBuilder {
       bytes[sof + 11] = sampling;
     }
 
-    if let Some(exif) = self.exif {
-      let mut app1 = b"Exif\0\0".to_vec();
-      app1.extend_from_slice(&exif);
+    let mut segments = Vec::new();
 
-      let mut spliced = bytes[..2].to_vec();
-      spliced.extend_from_slice(&[0xFF, 0xE1]);
-      spliced.extend_from_slice(&u16::try_from(app1.len() + 2).unwrap().to_be_bytes());
-      spliced.extend_from_slice(&app1);
-      spliced.extend_from_slice(&bytes[2..]);
-      spliced
-    } else {
-      bytes
+    if let Some(exif) = self.exif {
+      segments.push(Self::app1(b"Exif\0\0", &exif));
     }
+
+    if let Some(xmp) = self.xmp {
+      segments.push(Self::app1(b"http://ns.adobe.com/xap/1.0/\0", &xmp));
+    }
+
+    [&bytes[..2], &segments.concat(), &bytes[2..]].concat()
   }
 
   #[must_use]
@@ -70,6 +81,7 @@ impl JpegBuilder {
       height: 1,
       sampling: None,
       width: 1,
+      xmp: None,
     }
   }
 
@@ -82,6 +94,12 @@ impl JpegBuilder {
   #[must_use]
   pub(crate) fn width(mut self, width: u32) -> Self {
     self.width = width;
+    self
+  }
+
+  #[must_use]
+  pub(crate) fn xmp(mut self, xmp: &[u8]) -> Self {
+    self.xmp = Some(xmp.into());
     self
   }
 }

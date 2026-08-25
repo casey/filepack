@@ -8,4 +8,5 @@ pub(crate) struct ImageMetadata {
   pub(crate) color_type: ColorType,
   pub(crate) dimensions: Dimensions,
   pub(crate) orientation: Orientation,
+  pub(crate) title: Option<Text>,
 }
