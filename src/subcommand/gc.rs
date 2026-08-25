@@ -16,7 +16,7 @@ impl Gc {
       "removed {} and {}, freeing {}",
       Count::irregular(response.directories.len(), "directory", "directories"),
       Count::new(response.files.len(), "file"),
-      Count::new(response.bytes, "byte"),
+      format_size(response.bytes),
     );
 
     Ok(())
