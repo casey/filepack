@@ -66,7 +66,7 @@ mod tests {
     let fingerprint = test::FINGERPRINT.parse::<Fingerprint>().unwrap();
 
     let metadata = Metadata {
-      artwork: Some("foo.png".parse().unwrap()),
+      artwork: Some(Image::test("foo.png")),
       creator: Some("foo".parse().unwrap()),
       title: Some("bar".parse().unwrap()),
       ..default()

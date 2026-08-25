@@ -1,8 +1,7 @@
 use super::*;
 
 #[skip_serializing_none]
-#[derive(Clone, Debug, Deserialize, Encode, Decode, PartialEq, Serialize)]
-#[serde(deny_unknown_fields)]
+#[derive(Clone, Debug, Encode, Decode, PartialEq, Serialize)]
 pub(crate) struct Package {
   #[n(0)]
   pub(crate) colophon: Option<RelativePath>,

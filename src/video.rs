@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Clone, Debug, Decode, DeserializeFromStr, Encode, PartialEq, Serialize)]
+#[derive(Clone, Debug, Decode, Encode, PartialEq, Serialize)]
 pub(crate) struct Video {
   #[n(0)]
   pub(crate) duration: u64,
@@ -26,24 +26,6 @@ impl Video {
     formats
   }
 
-  pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result<Option<Text>> {
-    let path = root.join(&self.path);
-
-    let VideoMetadata {
-      duration,
-      title,
-      tracks,
-    } = match self.ty {
-      VideoType::Mp4 => Mp4Decoder::read(&path)?,
-      VideoType::Webm => WebmDecoder::read(&path)?,
-    };
-
-    self.duration = duration;
-    self.tracks = tracks;
-
-    Ok(title)
-  }
-
   pub(crate) fn resource_type(&self) -> ResourceType {
     self.ty.resource_type()
   }
@@ -53,26 +35,17 @@ impl Video {
       sum.saturating_add(Duration::from_millis(video.content.duration))
     })
   }
-}
 
-impl FromStr for Video {
-  type Err = PathError;
-
-  fn from_str(s: &str) -> Result<Self, Self::Err> {
-    let path = s.parse::<RelativePath>()?;
-
-    let Some(ty) = path.extension().and_then(VideoType::from_extension) else {
-      return Err(PathError::Extension {
-        extensions: VideoType::EXTENSIONS,
-      });
-    };
-
-    Ok(Self {
-      duration: 0,
+  #[cfg(test)]
+  pub(crate) fn test(path: &str) -> Self {
+    let path = path.parse::<RelativePath>().unwrap();
+    let ty = VideoType::from_extension(path.extension().unwrap()).unwrap();
+    Self {
+      duration: 1000,
       path,
       tracks: Vec::new(),
       ty,
-    })
+    }
   }
 }
 
@@ -85,6 +58,35 @@ impl Content for Video {
         DisplayDuration(Duration::from_millis(self.duration)),
       )
       .list("tracks", self.tracks.iter().map(|track| track.info(self)))
+  }
+
+  fn load(root: &Utf8Path, path: RelativePath) -> Result<Item<Self>> {
+    let ty = path
+      .extension()
+      .and_then(VideoType::from_extension)
+      .ok_or(PathError::Extension {
+        extensions: VideoType::EXTENSIONS,
+      })
+      .context(error::Path { path: &path })?;
+
+    let VideoMetadata {
+      duration,
+      title,
+      tracks,
+    } = match ty {
+      VideoType::Mp4 => Mp4Decoder::read(&root.join(&path))?,
+      VideoType::Webm => WebmDecoder::read(&root.join(&path))?,
+    };
+
+    Ok(Item {
+      content: Self {
+        duration,
+        path,
+        tracks,
+        ty,
+      },
+      title,
+    })
   }
 
   fn path(&self) -> &RelativePath {
@@ -102,9 +104,18 @@ mod tests {
 
   #[test]
   fn formats() {
-    let foo = "foo.mp4".parse::<Item<Video>>().unwrap();
-    let bar = "bar.mp4".parse::<Item<Video>>().unwrap();
-    let baz = "baz.webm".parse::<Item<Video>>().unwrap();
+    let foo = Item {
+      content: Video::test("foo.mp4"),
+      title: None,
+    };
+    let bar = Item {
+      content: Video::test("bar.mp4"),
+      title: None,
+    };
+    let baz = Item {
+      content: Video::test("baz.webm"),
+      title: None,
+    };
 
     assert_eq!(
       Video::formats(&[foo, bar, baz]),
@@ -113,63 +124,14 @@ mod tests {
   }
 
   #[test]
-  fn from_str() {
-    #[track_caller]
-    fn case(s: &str, expected: PathError) {
-      assert_eq!(s.parse::<Video>().unwrap_err(), expected);
-    }
-
-    assert_eq!(
-      "foo.mp4".parse::<Video>().unwrap(),
-      Video {
-        duration: 0,
-        path: "foo.mp4".parse().unwrap(),
-        tracks: Vec::new(),
-        ty: VideoType::Mp4,
-      },
-    );
-
-    assert_eq!(
-      "foo.webm".parse::<Video>().unwrap(),
-      Video {
-        duration: 0,
-        path: "foo.webm".parse().unwrap(),
-        tracks: Vec::new(),
-        ty: VideoType::Webm,
-      },
-    );
-
-    assert_eq!(
-      "foo/bar.mp4".parse::<Video>().unwrap().path,
-      "foo/bar.mp4".parse::<RelativePath>().unwrap(),
-    );
-
-    case(
-      "foo.avi",
-      PathError::Extension {
-        extensions: &["mp4", "webm"],
-      },
-    );
-    case(
-      "foo",
-      PathError::Extension {
-        extensions: &["mp4", "webm"],
-      },
-    );
-    case("", PathError::Empty);
-  }
-
-  #[test]
-  fn populate() {
+  fn load() {
     #[track_caller]
     fn case(bytes: &[u8]) -> Result<Video> {
       let (_tempdir, root) = tempdir();
 
       std::fs::write(root.join("foo.mp4"), bytes).unwrap();
 
-      let mut video = "foo.mp4".parse::<Video>().unwrap();
-
-      video.populate(&root).map(|_| video)
+      Video::load(&root, "foo.mp4".parse().unwrap()).map(|item| item.content)
     }
 
     assert_eq!(
@@ -297,7 +259,10 @@ mod tests {
       let videos = durations
         .iter()
         .map(|duration| {
-          let mut video = "foo.mp4".parse::<Item<Video>>().unwrap();
+          let mut video = Item {
+            content: Video::test("foo.mp4"),
+            title: None,
+          };
           video.content.duration = *duration;
           video
         })

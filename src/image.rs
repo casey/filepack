@@ -1,7 +1,7 @@
 use super::*;
 
 #[skip_serializing_none]
-#[derive(Clone, Debug, Decode, DeserializeFromStr, Encode, PartialEq, Serialize)]
+#[derive(Clone, Debug, Decode, Encode, PartialEq, Serialize)]
 pub(crate) struct Image {
   #[n(0)]
   pub(crate) alpha: bool,
@@ -108,15 +108,6 @@ impl Image {
     }
 
     Ok(Some(destination))
-  }
-
-  fn decode(&self, root: &Utf8Path) -> Result<ImageMetadata> {
-    let path = root.join(&self.path);
-
-    match self.ty {
-      ImageType::Jpeg => Self::decode_jpeg(&path),
-      ImageType::Png => Self::decode_png(&path),
-    }
   }
 
   fn decode_jpeg(path: &Utf8Path) -> Result<ImageMetadata> {
@@ -262,29 +253,27 @@ impl Image {
     self.orientation.dimensions(self.dimensions)
   }
 
-  pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result<Option<Text>> {
-    let ImageMetadata {
-      alpha,
-      bit_depth,
-      chroma_subsampling,
-      color_type,
-      dimensions,
-      orientation,
-      title,
-    } = self.decode(root)?;
-
-    self.alpha = alpha;
-    self.bit_depth = bit_depth;
-    self.chroma_subsampling = chroma_subsampling;
-    self.color_type = color_type;
-    self.dimensions = dimensions;
-    self.orientation = orientation;
-
-    Ok(title)
-  }
-
   pub(crate) fn resource_type(&self) -> ResourceType {
     self.ty.resource_type()
+  }
+
+  #[cfg(test)]
+  pub(crate) fn test(path: &str) -> Self {
+    let path = path.parse::<RelativePath>().unwrap();
+    let ty = ImageType::from_extension(path.extension().unwrap()).unwrap();
+    Self {
+      alpha: false,
+      bit_depth: 8,
+      chroma_subsampling: None,
+      color_type: ColorType::Rgb,
+      dimensions: Dimensions {
+        height: 1,
+        width: 1,
+      },
+      orientation: Orientation::new(),
+      path,
+      ty,
+    }
   }
 
   pub(crate) fn thumbnail_path(&self, ty: ImageType) -> Result<RelativePath> {
@@ -311,31 +300,6 @@ impl Image {
   }
 }
 
-impl FromStr for Image {
-  type Err = PathError;
-
-  fn from_str(s: &str) -> Result<Self, Self::Err> {
-    let path = s.parse::<RelativePath>()?;
-
-    let Some(ty) = path.extension().and_then(ImageType::from_extension) else {
-      return Err(PathError::Extension {
-        extensions: ImageType::EXTENSIONS,
-      });
-    };
-
-    Ok(Self {
-      alpha: false,
-      bit_depth: 0,
-      chroma_subsampling: None,
-      color_type: ColorType::default(),
-      dimensions: Dimensions::default(),
-      orientation: Orientation::new(),
-      path,
-      ty,
-    })
-  }
-}
-
 impl Content for Image {
   fn info(&self, builder: InfoBuilder) -> InfoBuilder {
     builder
@@ -346,6 +310,43 @@ impl Content for Image {
       .value("bit depth", format!("{}-bit", self.bit_depth))
       .optional("chroma subsampling", self.chroma_subsampling)
       .value("alpha", self.alpha)
+  }
+
+  fn load(root: &Utf8Path, path: RelativePath) -> Result<Item<Self>> {
+    let ty = path
+      .extension()
+      .and_then(ImageType::from_extension)
+      .ok_or(PathError::Extension {
+        extensions: ImageType::EXTENSIONS,
+      })
+      .context(error::Path { path: &path })?;
+
+    let ImageMetadata {
+      alpha,
+      bit_depth,
+      chroma_subsampling,
+      color_type,
+      dimensions,
+      orientation,
+      title,
+    } = match ty {
+      ImageType::Jpeg => Self::decode_jpeg(&root.join(&path))?,
+      ImageType::Png => Self::decode_png(&root.join(&path))?,
+    };
+
+    Ok(Item {
+      content: Self {
+        alpha,
+        bit_depth,
+        chroma_subsampling,
+        color_type,
+        dimensions,
+        orientation,
+        path,
+        ty,
+      },
+      title,
+    })
   }
 
   fn path(&self) -> &RelativePath {
@@ -374,9 +375,7 @@ mod tests {
         .save_with_format(root.join("foo.png"), ImageFormat::Png)
         .unwrap();
 
-      let destination = "foo.png"
-        .parse::<Image>()
-        .unwrap()
+      let destination = Image::test("foo.png")
         .create_thumbnail(&root)
         .unwrap()
         .unwrap();
@@ -403,9 +402,7 @@ mod tests {
         .save_with_format(root.join("foo.png"), ImageFormat::Png)
         .unwrap();
 
-      let destination = "foo.png"
-        .parse::<Image>()
-        .unwrap()
+      let destination = Image::test("foo.png")
         .create_thumbnail(&root)
         .unwrap()
         .unwrap();
@@ -441,9 +438,7 @@ mod tests {
 
     std::fs::write(root.join("foo.jpg"), encoded).unwrap();
 
-    let destination = "foo.jpg"
-      .parse::<Image>()
-      .unwrap()
+    let destination = Image::test("foo.jpg")
       .create_thumbnail(&root)
       .unwrap()
       .unwrap();
@@ -462,11 +457,7 @@ mod tests {
       .unwrap();
 
     assert_eq!(
-      "foo.png"
-        .parse::<Image>()
-        .unwrap()
-        .create_thumbnail(&root)
-        .unwrap(),
+      Image::test("foo.png").create_thumbnail(&root).unwrap(),
       None,
     );
 
@@ -523,90 +514,14 @@ mod tests {
   }
 
   #[test]
-  fn from_str() {
-    #[track_caller]
-    fn case(s: &str, expected: PathError) {
-      assert_eq!(s.parse::<Image>().unwrap_err(), expected);
-    }
-
-    assert_eq!(
-      "foo.jpg".parse::<Image>().unwrap(),
-      Image {
-        alpha: false,
-        bit_depth: 0,
-        chroma_subsampling: None,
-        color_type: ColorType::Rgb,
-        dimensions: Dimensions {
-          height: 0,
-          width: 0,
-        },
-        orientation: Orientation::new(),
-        path: "foo.jpg".parse().unwrap(),
-        ty: ImageType::Jpeg,
-      },
-    );
-
-    assert_eq!("foo.png".parse::<Image>().unwrap().ty, ImageType::Png);
-
-    assert_eq!(
-      "foo/bar.png".parse::<Image>().unwrap().path,
-      "foo/bar.png".parse::<RelativePath>().unwrap(),
-    );
-
-    case(
-      "foo.svg",
-      PathError::Extension {
-        extensions: &["jpg", "png"],
-      },
-    );
-    case(
-      "foo",
-      PathError::Extension {
-        extensions: &["jpg", "png"],
-      },
-    );
-    case("", PathError::Empty);
-  }
-
-  #[test]
-  fn oriented_dimensions() {
-    let mut image = "foo.png".parse::<Image>().unwrap();
-
-    image.dimensions = Dimensions {
-      height: 1,
-      width: 2,
-    };
-
-    assert_eq!(
-      image.oriented_dimensions(),
-      Dimensions {
-        height: 1,
-        width: 2,
-      },
-    );
-
-    image.orientation.rotation = Rotation::R90;
-
-    assert_eq!(
-      image.oriented_dimensions(),
-      Dimensions {
-        height: 2,
-        width: 1,
-      },
-    );
-  }
-
-  #[test]
-  fn populate() {
+  fn load() {
     #[track_caller]
     fn case(filename: &str, bytes: &[u8]) -> Result<Image> {
       let (_tempdir, root) = tempdir();
 
       std::fs::write(root.join(filename), bytes).unwrap();
 
-      let mut image = filename.parse::<Image>().unwrap();
-
-      image.populate(&root).map(|_| image)
+      Image::load(&root, filename.parse().unwrap()).map(|item| item.content)
     }
 
     #[track_caller]
@@ -615,7 +530,7 @@ mod tests {
 
       std::fs::write(root.join(filename), bytes).unwrap();
 
-      filename.parse::<Image>().unwrap().populate(&root)
+      Image::load(&root, filename.parse().unwrap()).map(|item| item.title)
     }
 
     assert_eq!(
@@ -874,6 +789,34 @@ mod tests {
   }
 
   #[test]
+  fn oriented_dimensions() {
+    let mut image = Image::test("foo.png");
+
+    image.dimensions = Dimensions {
+      height: 1,
+      width: 2,
+    };
+
+    assert_eq!(
+      image.oriented_dimensions(),
+      Dimensions {
+        height: 1,
+        width: 2,
+      },
+    );
+
+    image.orientation.rotation = Rotation::R90;
+
+    assert_eq!(
+      image.oriented_dimensions(),
+      Dimensions {
+        height: 2,
+        width: 1,
+      },
+    );
+  }
+
+  #[test]
   fn serialize() {
     assert_eq!(
       serde_json::to_string(&Image {
@@ -920,11 +863,7 @@ mod tests {
     #[track_caller]
     fn case(ty: ImageType, expected: &str) {
       assert_eq!(
-        "foo/bar baz.png"
-          .parse::<Image>()
-          .unwrap()
-          .thumbnail_path(ty)
-          .unwrap(),
+        Image::test("foo/bar baz.png").thumbnail_path(ty).unwrap(),
         expected,
       );
     }
@@ -936,7 +875,7 @@ mod tests {
   #[test]
   fn thumbnail_stem() {
     assert_eq!(
-      "foo/bar baz.png".parse::<Image>().unwrap().thumbnail_stem(),
+      Image::test("foo/bar baz.png").thumbnail_stem(),
       "thumbnails/bar baz",
     );
   }

@@ -72,7 +72,16 @@ mod tests {
       image: 0,
       metadata: Metadata {
         media: Some(Media::Image {
-          items: vec!["foo.png".parse().unwrap(), "bar.png".parse().unwrap()],
+          items: vec![
+            Item {
+              content: Image::test("foo.png"),
+              title: None,
+            },
+            Item {
+              content: Image::test("bar.png"),
+              title: None,
+            },
+          ],
         }),
         ..default()
       },
@@ -207,7 +216,10 @@ mod tests {
       image: 0,
       metadata: Metadata {
         media: Some(Media::Image {
-          items: vec!["foo.png".parse().unwrap()],
+          items: vec![Item {
+            content: Image::test("foo.png"),
+            title: None,
+          }],
         }),
         ..default()
       },

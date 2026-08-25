@@ -1,17 +1,7 @@
 use super::*;
 
 #[derive(
-  Clone,
-  Debug,
-  Decode,
-  Default,
-  DeserializeFromStr,
-  Encode,
-  Eq,
-  Ord,
-  PartialEq,
-  PartialOrd,
-  SerializeDisplay,
+  Clone, Debug, Decode, DeserializeFromStr, Encode, Eq, Ord, PartialEq, PartialOrd, SerializeDisplay,
 )]
 #[cbor(transparent, validate)]
 pub struct Text(String);
@@ -30,10 +20,6 @@ impl Text {
     }
 
     Ok(())
-  }
-
-  pub(crate) fn new() -> Self {
-    Self::default()
   }
 }
 

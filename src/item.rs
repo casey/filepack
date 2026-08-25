@@ -18,27 +18,6 @@ impl<T: Content> Item<T> {
   }
 }
 
-impl Item<Audio> {
-  pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result {
-    self.title = Some(self.content.populate(root)?);
-    Ok(())
-  }
-}
-
-impl Item<Image> {
-  pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result {
-    self.title = self.content.populate(root)?;
-    Ok(())
-  }
-}
-
-impl Item<Video> {
-  pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result {
-    self.title = self.content.populate(root)?;
-    Ok(())
-  }
-}
-
 impl<T: Content> MediaItem for Item<T> {
   fn info(&self, url: String) -> Info {
     self
@@ -60,36 +39,16 @@ impl<T: Content> MediaItem for Item<T> {
   }
 }
 
-impl<'de, T> Deserialize<'de> for Item<T>
-where
-  T: FromStr,
-  T::Err: Display,
-{
-  fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-    String::deserialize(deserializer)?
-      .parse()
-      .map_err(serde::de::Error::custom)
-  }
-}
-
-impl<T: FromStr> FromStr for Item<T> {
-  type Err = T::Err;
-
-  fn from_str(s: &str) -> Result<Self, Self::Err> {
-    Ok(Self {
-      content: s.parse()?,
-      title: None,
-    })
-  }
-}
-
 #[cfg(test)]
 mod tests {
   use super::*;
 
   #[test]
   fn display_title() {
-    let mut item = "foo.png".parse::<Item<Image>>().unwrap();
+    let mut item = Item {
+      content: Image::test("foo.png"),
+      title: None,
+    };
     assert_eq!(item.display_title(), "foo.png");
     item.title = Some("bar".parse().unwrap());
     assert_eq!(item.display_title(), "bar");
@@ -98,42 +57,27 @@ mod tests {
   #[test]
   fn encoding() {
     assert_encoding(Item {
-      content: "foo.png".parse::<Image>().unwrap(),
+      content: Image::test("foo.png"),
       title: Some("bar".parse().unwrap()),
     });
   }
 
   #[test]
-  fn from_str() {
-    assert_eq!(
-      "foo.png".parse::<Item<Image>>().unwrap(),
-      Item {
-        content: "foo.png".parse().unwrap(),
-        title: None,
-      },
-    );
-
-    assert_eq!(
-      "foo".parse::<Item<Image>>().unwrap_err(),
-      PathError::Extension {
-        extensions: ImageType::EXTENSIONS,
-      },
-    );
-  }
-
-  #[test]
   fn info() {
-    let mut item = "foo.png".parse::<Item<Image>>().unwrap();
+    let mut item = Item {
+      content: Image::test("foo.png"),
+      title: None,
+    };
 
     assert_eq!(
       MediaItem::info(&item, "bar".into()),
       InfoBuilder::new()
         .link("path", "foo.png", "bar".into())
         .value("type", "PNG")
-        .value("dimensions", "0×0")
+        .value("dimensions", "1×1")
         .value("orientation", "0°")
         .value("color type", "RGB")
-        .value("bit depth", "0-bit")
+        .value("bit depth", "8-bit")
         .value("alpha", "false")
         .build(),
     );
@@ -146,17 +90,17 @@ mod tests {
         .link("path", "foo.png", "bar".into())
         .value("title", "baz")
         .value("type", "PNG")
-        .value("dimensions", "0×0")
+        .value("dimensions", "1×1")
         .value("orientation", "0°")
         .value("color type", "RGB")
-        .value("bit depth", "0-bit")
+        .value("bit depth", "8-bit")
         .value("alpha", "false")
         .build(),
     );
   }
 
   #[test]
-  fn populate_audio() {
+  fn load_audio() {
     let (_tempdir, root) = tempdir();
 
     std::fs::write(
@@ -174,13 +118,12 @@ mod tests {
     )
     .unwrap();
 
-    let mut item = "foo.flac".parse::<Item<Audio>>().unwrap();
-    item.populate(&root).unwrap();
+    let item = Audio::load(&root, "foo.flac".parse().unwrap()).unwrap();
     assert_eq!(item.title, Some("bar".parse().unwrap()));
   }
 
   #[test]
-  fn populate_image() {
+  fn load_image() {
     let (_tempdir, root) = tempdir();
 
     std::fs::write(
@@ -189,13 +132,12 @@ mod tests {
     )
     .unwrap();
 
-    let mut item = "foo.png".parse::<Item<Image>>().unwrap();
-    item.populate(&root).unwrap();
+    let item = Image::load(&root, "foo.png".parse().unwrap()).unwrap();
     assert_eq!(item.title, Some("bar".parse().unwrap()));
   }
 
   #[test]
-  fn populate_video() {
+  fn load_video() {
     let (_tempdir, root) = tempdir();
 
     std::fs::write(
@@ -204,8 +146,7 @@ mod tests {
     )
     .unwrap();
 
-    let mut item = "foo.mp4".parse::<Item<Video>>().unwrap();
-    item.populate(&root).unwrap();
+    let item = Video::load(&root, "foo.mp4".parse().unwrap()).unwrap();
     assert_eq!(item.title, Some("bar".parse().unwrap()));
   }
 }
