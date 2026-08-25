@@ -11,14 +11,16 @@ pub(crate) enum ImageType {
 }
 
 impl ImageType {
-  const EXTENSIONS: &[&str] = &["jpg", "png"];
-
   pub(crate) fn extension(self) -> &'static str {
     match self {
       Self::Jpeg => "jpg",
       Self::Png => "png",
     }
   }
+}
+
+impl ContentType for ImageType {
+  const EXTENSIONS: &[&str] = &["jpg", "png"];
 
   fn from_extension(extension: &str) -> Option<Self> {
     match extension {
@@ -28,16 +30,7 @@ impl ImageType {
     }
   }
 
-  pub(crate) fn from_path(path: &RelativePath) -> Result<Self, PathError> {
-    path
-      .extension()
-      .and_then(Self::from_extension)
-      .ok_or(PathError::Extension {
-        extensions: Self::EXTENSIONS,
-      })
-  }
-
-  pub(crate) fn resource_type(self) -> ResourceType {
+  fn resource_type(self) -> ResourceType {
     match self {
       Self::Jpeg => ResourceType::Jpeg,
       Self::Png => ResourceType::Png,

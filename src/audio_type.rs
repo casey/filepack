@@ -11,7 +11,7 @@ pub(crate) enum AudioType {
   Mp3,
 }
 
-impl AudioType {
+impl ContentType for AudioType {
   const EXTENSIONS: &[&str] = &["flac", "mp3"];
 
   fn from_extension(extension: &str) -> Option<Self> {
@@ -22,16 +22,7 @@ impl AudioType {
     }
   }
 
-  pub(crate) fn from_path(path: &RelativePath) -> Result<Self, PathError> {
-    path
-      .extension()
-      .and_then(Self::from_extension)
-      .ok_or(PathError::Extension {
-        extensions: Self::EXTENSIONS,
-      })
-  }
-
-  pub(crate) fn resource_type(self) -> ResourceType {
+  fn resource_type(self) -> ResourceType {
     match self {
       Self::Flac => ResourceType::Flac,
       Self::Mp3 => ResourceType::Mp3,

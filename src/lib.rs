@@ -48,6 +48,7 @@ use {
     component::Component,
     component_error::ComponentError,
     content::Content,
+    content_type::ContentType,
     context::Context,
     count::Count,
     dalek_signature_error::DalekSignatureError,
@@ -304,6 +305,7 @@ mod component;
 mod component_buf;
 mod component_error;
 mod content;
+mod content_type;
 mod context;
 mod count;
 mod dalek_signature_error;

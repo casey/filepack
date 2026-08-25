@@ -237,24 +237,8 @@ impl Image {
     })
   }
 
-  pub(crate) fn formats(images: &[Item<Image>]) -> Vec<ImageType> {
-    let mut formats = Vec::new();
-
-    for image in images {
-      if !formats.contains(&image.content.ty) {
-        formats.push(image.content.ty);
-      }
-    }
-
-    formats
-  }
-
   pub(crate) fn oriented_dimensions(&self) -> Dimensions {
     self.orientation.dimensions(self.dimensions)
-  }
-
-  pub(crate) fn resource_type(&self) -> ResourceType {
-    self.ty.resource_type()
   }
 
   pub(crate) fn thumbnail_path(&self, ty: ImageType) -> Result<RelativePath> {
@@ -282,6 +266,8 @@ impl Image {
 }
 
 impl Content for Image {
+  type Type = ImageType;
+
   fn info(&self, builder: InfoBuilder) -> InfoBuilder {
     builder
       .value("type", self.ty)
@@ -328,10 +314,6 @@ impl Content for Image {
     &self.path
   }
 
-  fn resource_type(&self) -> ResourceType {
-    self.resource_type()
-  }
-
   #[cfg(test)]
   fn test(path: &str) -> Self {
     let path = path.parse::<RelativePath>().unwrap();
@@ -349,6 +331,10 @@ impl Content for Image {
       path,
       ty,
     }
+  }
+
+  fn ty(&self) -> Self::Type {
+    self.ty
   }
 }
 
@@ -456,55 +442,6 @@ mod tests {
     );
 
     assert!(!root.join("thumbnails/foo.jpg").exists());
-  }
-
-  #[test]
-  fn formats() {
-    let foo = Image {
-      alpha: false,
-      bit_depth: 8,
-      chroma_subsampling: None,
-      color_type: ColorType::Rgb,
-      dimensions: Dimensions {
-        height: 1,
-        width: 2,
-      },
-      orientation: Orientation::new(),
-      path: "foo.png".parse().unwrap(),
-      ty: ImageType::Png,
-    };
-
-    let bar = Image {
-      alpha: false,
-      bit_depth: 8,
-      chroma_subsampling: None,
-      color_type: ColorType::Rgb,
-      dimensions: Dimensions::default(),
-      orientation: Orientation::new(),
-      path: "bar.jpg".parse().unwrap(),
-      ty: ImageType::Jpeg,
-    };
-
-    let baz = Image {
-      alpha: false,
-      bit_depth: 8,
-      chroma_subsampling: None,
-      color_type: ColorType::Rgb,
-      dimensions: Dimensions {
-        height: 3,
-        width: 4,
-      },
-      orientation: Orientation::new(),
-      path: "baz.png".parse().unwrap(),
-      ty: ImageType::Png,
-    };
-
-    let items = [foo, bar, baz].map(|content| Item {
-      content,
-      title: None,
-    });
-
-    assert_eq!(Image::formats(&items), [ImageType::Png, ImageType::Jpeg]);
   }
 
   #[test]

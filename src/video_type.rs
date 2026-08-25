@@ -11,7 +11,7 @@ pub(crate) enum VideoType {
   Webm,
 }
 
-impl VideoType {
+impl ContentType for VideoType {
   const EXTENSIONS: &[&str] = &["mp4", "webm"];
 
   fn from_extension(extension: &str) -> Option<Self> {
@@ -22,16 +22,7 @@ impl VideoType {
     }
   }
 
-  pub(crate) fn from_path(path: &RelativePath) -> Result<Self, PathError> {
-    path
-      .extension()
-      .and_then(Self::from_extension)
-      .ok_or(PathError::Extension {
-        extensions: Self::EXTENSIONS,
-      })
-  }
-
-  pub(crate) fn resource_type(self) -> ResourceType {
+  fn resource_type(self) -> ResourceType {
     match self {
       Self::Mp4 => ResourceType::Mp4,
       Self::Webm => ResourceType::Webm,

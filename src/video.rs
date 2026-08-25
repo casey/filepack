@@ -14,22 +14,6 @@ pub(crate) struct Video {
 }
 
 impl Video {
-  pub(crate) fn formats(videos: &[Item<Video>]) -> Vec<VideoType> {
-    let mut formats = Vec::new();
-
-    for video in videos {
-      if !formats.contains(&video.content.ty) {
-        formats.push(video.content.ty);
-      }
-    }
-
-    formats
-  }
-
-  pub(crate) fn resource_type(&self) -> ResourceType {
-    self.ty.resource_type()
-  }
-
   pub(crate) fn sum_durations(videos: &[Item<Video>]) -> Duration {
     videos.iter().fold(Duration::ZERO, |sum, video| {
       sum.saturating_add(Duration::from_millis(video.content.duration))
@@ -38,6 +22,8 @@ impl Video {
 }
 
 impl Content for Video {
+  type Type = VideoType;
+
   fn info(&self, builder: InfoBuilder) -> InfoBuilder {
     builder
       .value("type", self.ty)
@@ -75,10 +61,6 @@ impl Content for Video {
     &self.path
   }
 
-  fn resource_type(&self) -> ResourceType {
-    self.resource_type()
-  }
-
   #[cfg(test)]
   fn test(path: &str) -> Self {
     let path = path.parse::<RelativePath>().unwrap();
@@ -90,23 +72,15 @@ impl Content for Video {
       ty,
     }
   }
+
+  fn ty(&self) -> Self::Type {
+    self.ty
+  }
 }
 
 #[cfg(test)]
 mod tests {
   use super::*;
-
-  #[test]
-  fn formats() {
-    let foo = Item::test("foo.mp4");
-    let bar = Item::test("bar.mp4");
-    let baz = Item::test("baz.webm");
-
-    assert_eq!(
-      Video::formats(&[foo, bar, baz]),
-      [VideoType::Mp4, VideoType::Webm],
-    );
-  }
 
   #[test]
   fn load() {

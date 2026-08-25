@@ -131,18 +131,6 @@ impl Audio {
     )
   }
 
-  pub(crate) fn formats(tracks: &[Item<Audio>]) -> Vec<AudioType> {
-    let mut formats = Vec::new();
-
-    for audio in tracks {
-      if !formats.contains(&audio.content.ty) {
-        formats.push(audio.content.ty);
-      }
-    }
-
-    formats
-  }
-
   pub(crate) fn has_cover_art(&self, root: &Utf8Path) -> Result<bool> {
     let path = root.join(&self.path);
 
@@ -153,10 +141,6 @@ impl Audio {
       AudioType::Mp3 => Mp3Decoder::has_cover_art(&data),
     }
     .context(error::Audio { path })
-  }
-
-  pub(crate) fn resource_type(&self) -> ResourceType {
-    self.ty.resource_type()
   }
 
   pub(crate) fn sum_durations(tracks: &[Item<Audio>]) -> Duration {
@@ -186,6 +170,8 @@ impl Audio {
 }
 
 impl Content for Audio {
+  type Type = AudioType;
+
   fn info(&self, builder: InfoBuilder) -> InfoBuilder {
     builder
       .value("artist", &self.artist)
@@ -264,10 +250,6 @@ impl Content for Audio {
     &self.path
   }
 
-  fn resource_type(&self) -> ResourceType {
-    self.resource_type()
-  }
-
   #[cfg(test)]
   fn test(path: &str) -> Self {
     let path = path.parse::<RelativePath>().unwrap();
@@ -287,6 +269,10 @@ impl Content for Audio {
       tracks: 1,
       ty,
     }
+  }
+
+  fn ty(&self) -> Self::Type {
+    self.ty
   }
 }
 
@@ -449,17 +435,6 @@ mod tests {
     case(44100, 44100, Duration::from_secs(1));
     case(66150, 44100, Duration::from_millis(1500));
     case(u64::MAX, u64::MAX - 1, Duration::new(1, 0));
-  }
-
-  #[test]
-  fn formats() {
-    let items = [
-      Item::test("foo.flac"),
-      Item::test("bar.flac"),
-      Item::test("baz.mp3"),
-    ];
-
-    assert_eq!(Audio::formats(&items), [AudioType::Flac, AudioType::Mp3]);
   }
 
   #[test]

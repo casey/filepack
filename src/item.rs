@@ -17,6 +17,18 @@ impl<T: Content> Item<T> {
     }
   }
 
+  pub(crate) fn formats(items: &[Self]) -> Vec<T::Type> {
+    let mut formats = Vec::new();
+
+    for item in items {
+      if !formats.contains(&item.content.ty()) {
+        formats.push(item.content.ty());
+      }
+    }
+
+    formats
+  }
+
   #[cfg(test)]
   pub(crate) fn test(path: &str) -> Self {
     Self {
@@ -65,6 +77,17 @@ mod tests {
       content: Image::test("foo.png"),
       title: Some("bar".parse().unwrap()),
     });
+  }
+
+  #[test]
+  fn formats() {
+    let items = [
+      Item::<Image>::test("foo.png"),
+      Item::test("bar.jpg"),
+      Item::test("baz.png"),
+    ];
+
+    assert_eq!(Item::formats(&items), [ImageType::Png, ImageType::Jpeg]);
   }
 
   #[test]
