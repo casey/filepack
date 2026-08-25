@@ -257,25 +257,6 @@ impl Image {
     self.ty.resource_type()
   }
 
-  #[cfg(test)]
-  pub(crate) fn test(path: &str) -> Self {
-    let path = path.parse::<RelativePath>().unwrap();
-    let ty = ImageType::from_extension(path.extension().unwrap()).unwrap();
-    Self {
-      alpha: false,
-      bit_depth: 8,
-      chroma_subsampling: None,
-      color_type: ColorType::Rgb,
-      dimensions: Dimensions {
-        height: 1,
-        width: 1,
-      },
-      orientation: Orientation::new(),
-      path,
-      ty,
-    }
-  }
-
   pub(crate) fn thumbnail_path(&self, ty: ImageType) -> Result<RelativePath> {
     let path = format!("{}.{}", self.thumbnail_stem(), ty.extension());
     path.parse().context(error::Path { path: &path })
@@ -355,6 +336,25 @@ impl Content for Image {
 
   fn resource_type(&self) -> ResourceType {
     self.resource_type()
+  }
+
+  #[cfg(test)]
+  fn test(path: &str) -> Self {
+    let path = path.parse::<RelativePath>().unwrap();
+    let ty = ImageType::from_extension(path.extension().unwrap()).unwrap();
+    Self {
+      alpha: false,
+      bit_depth: 8,
+      chroma_subsampling: None,
+      color_type: ColorType::Rgb,
+      dimensions: Dimensions {
+        height: 1,
+        width: 1,
+      },
+      orientation: Orientation::new(),
+      path,
+      ty,
+    }
   }
 }
 

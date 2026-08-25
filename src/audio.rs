@@ -183,27 +183,6 @@ impl Audio {
 
     Ok(value)
   }
-
-  #[cfg(test)]
-  pub(crate) fn test(path: &str) -> Self {
-    let path = path.parse::<RelativePath>().unwrap();
-    let ty = AudioType::from_extension(path.extension().unwrap()).unwrap();
-    Self {
-      album: "foo".parse().unwrap(),
-      artist: "bar".parse().unwrap(),
-      channels: 2,
-      disc: 1,
-      discs: 1,
-      path,
-      sample_bits: Some(16),
-      sample_rate: 44100,
-      samples: 44100,
-      size: 1024,
-      track: 1,
-      tracks: 1,
-      ty,
-    }
-  }
 }
 
 impl Content for Audio {
@@ -293,6 +272,27 @@ impl Content for Audio {
 
   fn resource_type(&self) -> ResourceType {
     self.resource_type()
+  }
+
+  #[cfg(test)]
+  fn test(path: &str) -> Self {
+    let path = path.parse::<RelativePath>().unwrap();
+    let ty = AudioType::from_extension(path.extension().unwrap()).unwrap();
+    Self {
+      album: "foo".parse().unwrap(),
+      artist: "bar".parse().unwrap(),
+      channels: 2,
+      disc: 1,
+      discs: 1,
+      path,
+      sample_bits: Some(16),
+      sample_rate: 44100,
+      samples: 44100,
+      size: 1024,
+      track: 1,
+      tracks: 1,
+      ty,
+    }
   }
 }
 
@@ -459,10 +459,11 @@ mod tests {
 
   #[test]
   fn formats() {
-    let items = ["foo.flac", "bar.flac", "baz.mp3"].map(|path| Item {
-      content: Audio::test(path),
-      title: None,
-    });
+    let items = [
+      Item::test("foo.flac"),
+      Item::test("bar.flac"),
+      Item::test("baz.mp3"),
+    ];
 
     assert_eq!(Audio::formats(&items), [AudioType::Flac, AudioType::Mp3]);
   }

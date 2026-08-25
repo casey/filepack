@@ -8,4 +8,7 @@ pub(crate) trait Content: Sized {
   fn path(&self) -> &RelativePath;
 
   fn resource_type(&self) -> ResourceType;
+
+  #[cfg(test)]
+  fn test(path: &str) -> Self;
 }

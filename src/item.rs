@@ -16,6 +16,14 @@ impl<T: Content> Item<T> {
       None => self.content.path().as_ref(),
     }
   }
+
+  #[cfg(test)]
+  pub(crate) fn test(path: &str) -> Self {
+    Self {
+      content: T::test(path),
+      title: None,
+    }
+  }
 }
 
 impl<T: Content> MediaItem for Item<T> {
@@ -45,10 +53,7 @@ mod tests {
 
   #[test]
   fn display_title() {
-    let mut item = Item {
-      content: Image::test("foo.png"),
-      title: None,
-    };
+    let mut item = Item::<Image>::test("foo.png");
     assert_eq!(item.display_title(), "foo.png");
     item.title = Some("bar".parse().unwrap());
     assert_eq!(item.display_title(), "bar");
@@ -64,10 +69,7 @@ mod tests {
 
   #[test]
   fn info() {
-    let mut item = Item {
-      content: Image::test("foo.png"),
-      title: None,
-    };
+    let mut item = Item::<Image>::test("foo.png");
 
     assert_eq!(
       MediaItem::info(&item, "bar".into()),

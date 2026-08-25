@@ -35,18 +35,6 @@ impl Video {
       sum.saturating_add(Duration::from_millis(video.content.duration))
     })
   }
-
-  #[cfg(test)]
-  pub(crate) fn test(path: &str) -> Self {
-    let path = path.parse::<RelativePath>().unwrap();
-    let ty = VideoType::from_extension(path.extension().unwrap()).unwrap();
-    Self {
-      duration: 1000,
-      path,
-      tracks: Vec::new(),
-      ty,
-    }
-  }
 }
 
 impl Content for Video {
@@ -96,6 +84,18 @@ impl Content for Video {
   fn resource_type(&self) -> ResourceType {
     self.resource_type()
   }
+
+  #[cfg(test)]
+  fn test(path: &str) -> Self {
+    let path = path.parse::<RelativePath>().unwrap();
+    let ty = VideoType::from_extension(path.extension().unwrap()).unwrap();
+    Self {
+      duration: 1000,
+      path,
+      tracks: Vec::new(),
+      ty,
+    }
+  }
 }
 
 #[cfg(test)]
@@ -104,18 +104,9 @@ mod tests {
 
   #[test]
   fn formats() {
-    let foo = Item {
-      content: Video::test("foo.mp4"),
-      title: None,
-    };
-    let bar = Item {
-      content: Video::test("bar.mp4"),
-      title: None,
-    };
-    let baz = Item {
-      content: Video::test("baz.webm"),
-      title: None,
-    };
+    let foo = Item::test("foo.mp4");
+    let bar = Item::test("bar.mp4");
+    let baz = Item::test("baz.webm");
 
     assert_eq!(
       Video::formats(&[foo, bar, baz]),
@@ -259,10 +250,7 @@ mod tests {
       let videos = durations
         .iter()
         .map(|duration| {
-          let mut video = Item {
-            content: Video::test("foo.mp4"),
-            title: None,
-          };
+          let mut video = Item::<Video>::test("foo.mp4");
           video.content.duration = *duration;
           video
         })

@@ -337,13 +337,7 @@ mod tests {
   fn files_include_audio_tracks() {
     let metadata = Metadata {
       media: Some(Media::Audio {
-        items: ["foo.flac", "bar.flac"]
-          .into_iter()
-          .map(|path| Item {
-            content: Audio::test(path),
-            title: None,
-          })
-          .collect(),
+        items: vec![Item::test("foo.flac"), Item::test("bar.flac")],
       }),
       ..default()
     };
@@ -361,13 +355,7 @@ mod tests {
   fn files_include_images() {
     let metadata = Metadata {
       media: Some(Media::Image {
-        items: ["foo.png", "bar.jpg"]
-          .into_iter()
-          .map(|path| Item {
-            content: Image::test(path),
-            title: None,
-          })
-          .collect(),
+        items: vec![Item::test("foo.png"), Item::test("bar.jpg")],
       }),
       ..default()
     };
@@ -385,10 +373,7 @@ mod tests {
   fn files_include_thumbnails() {
     let metadata = Metadata {
       media: Some(Media::Image {
-        items: vec![Item {
-          content: Image::test("foo.png"),
-          title: None,
-        }],
+        items: vec![Item::test("foo.png")],
       }),
       thumbnails: Some(
         [(
@@ -413,13 +398,7 @@ mod tests {
   fn files_include_videos() {
     let metadata = Metadata {
       media: Some(Media::Video {
-        items: ["foo.mp4", "bar.mp4"]
-          .into_iter()
-          .map(|path| Item {
-            content: Video::test(path),
-            title: None,
-          })
-          .collect(),
+        items: vec![Item::test("foo.mp4"), Item::test("bar.mp4")],
       }),
       ..default()
     };
@@ -443,10 +422,7 @@ mod tests {
     let mut metadata = Metadata {
       artwork: Some(Image::test("foo.png")),
       media: Some(Media::Image {
-        items: vec![Item {
-          content: Image::test("bar.png"),
-          title: None,
-        }],
+        items: vec![Item::test("bar.png")],
       }),
       ..default()
     };
@@ -533,10 +509,7 @@ mod tests {
 
     let mut metadata = Metadata {
       media: Some(Media::Image {
-        items: vec![Item {
-          content: Image::test("foo.png"),
-          title: None,
-        }],
+        items: vec![Item::test("foo.png")],
       }),
       ..default()
     };
@@ -557,13 +530,7 @@ mod tests {
 
     let mut metadata = Metadata {
       media: Some(Media::Image {
-        items: ["foo.jpg", "foo.png"]
-          .into_iter()
-          .map(|path| Item {
-            content: Image::test(path),
-            title: None,
-          })
-          .collect(),
+        items: vec![Item::test("foo.jpg"), Item::test("foo.png")],
       }),
       ..default()
     };
@@ -586,13 +553,7 @@ mod tests {
 
     let mut metadata = Metadata {
       media: Some(Media::Image {
-        items: ["foo.png", "bar.png"]
-          .into_iter()
-          .map(|path| Item {
-            content: Image::test(path),
-            title: None,
-          })
-          .collect(),
+        items: vec![Item::test("foo.png"), Item::test("bar.png")],
       }),
       ..default()
     };

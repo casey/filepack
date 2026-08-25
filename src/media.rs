@@ -94,16 +94,7 @@ mod tests {
   #[test]
   fn item_url() {
     let media = Media::Image {
-      items: vec![
-        Item {
-          content: Image::test("foo.png"),
-          title: None,
-        },
-        Item {
-          content: Image::test("bar.png"),
-          title: None,
-        },
-      ],
+      items: vec![Item::test("foo.png"), Item::test("bar.png")],
     };
 
     let fingerprint = test::FINGERPRINT.parse::<Fingerprint>().unwrap();
