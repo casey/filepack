@@ -59,16 +59,16 @@ impl Image {
 
     image.apply_orientation(orientation);
 
-    let thumbnail =
-      if image.width() > Self::THUMBNAIL_SIZE || image.height() > Self::THUMBNAIL_SIZE {
-        image.resize(
-          Self::THUMBNAIL_SIZE,
-          Self::THUMBNAIL_SIZE,
-          imageops::FilterType::Lanczos3,
-        )
-      } else {
-        image
-      };
+    let thumbnail = if image.width() > Self::THUMBNAIL_SIZE || image.height() > Self::THUMBNAIL_SIZE
+    {
+      image.resize(
+        Self::THUMBNAIL_SIZE,
+        Self::THUMBNAIL_SIZE,
+        imageops::FilterType::Lanczos3,
+      )
+    } else {
+      image
+    };
 
     let uses_alpha =
       thumbnail.color().has_alpha() && thumbnail.pixels().any(|(_x, _y, pixel)| pixel[3] < u8::MAX);
