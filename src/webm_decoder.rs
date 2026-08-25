@@ -179,7 +179,7 @@ impl WebmDecoder {
       tracks.push(audio_track);
     }
 
-    let title = Self::title(&file)?;
+    let title = Self::title(file.info())?;
 
     Ok(VideoMetadata {
       duration,
@@ -194,35 +194,12 @@ impl WebmDecoder {
     Self::metadata(file).context(error::Video { path })
   }
 
-  fn title<T: Read + Seek>(file: &MatroskaFile<T>) -> Result<Option<Text>, VideoError> {
-    let tag = "TITLE";
+  fn title(info: &matroska_demuxer::Info) -> Result<Option<Text>, VideoError> {
+    let tag = "Title";
 
-    let mut title = None;
-
-    for entry in file.tags().unwrap_or_default() {
-      if let Some(targets) = entry.targets()
-        && (!matches!(targets.target_type_value(), None | Some(50))
-          || !matches!(targets.tag_track_uid(), None | Some(0)))
-      {
-        continue;
-      }
-
-      for simple_tag in entry.simple_tags() {
-        if simple_tag.name() == tag {
-          ensure! {
-            title.is_none(),
-            video_error::TagMultiple { tag },
-          }
-          title = Some(simple_tag);
-        }
-      }
-    }
-
-    let Some(title) = title else {
+    let Some(title) = info.title() else {
       return Ok(None);
     };
-
-    let title = title.string().context(video_error::TagBinary { tag })?;
 
     ensure!(!title.is_empty(), video_error::TagEmpty { tag });
 
@@ -646,25 +623,12 @@ mod tests {
       Some("foo".parse().unwrap()),
     );
 
-    assert_eq!(
-      case(
-        WebmBuilder::new()
-          .video_track(2, 1)
-          .frame(1, VP9_FRAME)
-          .title("foo")
-          .target_type_value(30),
-      )
-      .unwrap()
-      .title,
-      None,
-    );
-
     error(
       WebmBuilder::new()
         .video_track(2, 1)
         .frame(1, VP9_FRAME)
         .title(""),
-      "empty `TITLE` tag",
+      "empty `Title` tag",
     );
 
     error(
@@ -672,24 +636,7 @@ mod tests {
         .video_track(2, 1)
         .frame(1, VP9_FRAME)
         .title("\0"),
-      "invalid `TITLE` tag",
-    );
-
-    error(
-      WebmBuilder::new()
-        .video_track(2, 1)
-        .frame(1, VP9_FRAME)
-        .binary_tag("TITLE", b"foo"),
-      "binary `TITLE` tag",
-    );
-
-    error(
-      WebmBuilder::new()
-        .video_track(2, 1)
-        .frame(1, VP9_FRAME)
-        .title("foo")
-        .title("bar"),
-      "multiple `TITLE` tags",
+      "invalid `Title` tag",
     );
 
     assert_eq!(

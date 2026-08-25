@@ -2,9 +2,8 @@ pub(crate) struct WebmBuilder {
   blocks: Vec<Vec<u8>>,
   doc_type: String,
   duration: Option<f64>,
-  tags: Vec<Vec<u8>>,
-  target_type_value: u64,
   timestamp_scale: Option<u64>,
+  title: Option<String>,
   tracks: Vec<Vec<u8>>,
 }
 
@@ -26,19 +25,6 @@ impl WebmBuilder {
     self.track(2, codec_id, &settings)
   }
 
-  #[must_use]
-  pub(crate) fn binary_tag(mut self, name: &str, value: &[u8]) -> Self {
-    self.tags.push(Self::element(
-      &[0x67, 0xC8],
-      &[
-        Self::string(&[0x45, 0xA3], name),
-        Self::element(&[0x44, 0x85], value),
-      ]
-      .concat(),
-    ));
-    self
-  }
-
   pub(crate) fn build(self) -> Vec<u8> {
     let header = [
       Self::string(&[0x42, 0x82], &self.doc_type),
@@ -56,34 +42,19 @@ impl WebmBuilder {
         .duration
         .map(|duration| Self::float(&[0x44, 0x89], duration))
         .unwrap_or_default(),
+      self
+        .title
+        .as_deref()
+        .map(|title| Self::string(&[0x7B, 0xA9], title))
+        .unwrap_or_default(),
       Self::string(&[0x4D, 0x80], "foo"),
       Self::string(&[0x57, 0x41], "bar"),
     ]
     .concat();
 
-    let tags = if self.tags.is_empty() {
-      Vec::new()
-    } else {
-      Self::element(
-        &[0x12, 0x54, 0xC3, 0x67],
-        &Self::element(
-          &[0x73, 0x73],
-          &[
-            Self::element(
-              &[0x63, 0xC0],
-              &Self::unsigned(&[0x68, 0xCA], self.target_type_value),
-            ),
-            self.tags.concat(),
-          ]
-          .concat(),
-        ),
-      )
-    };
-
     let segment = [
       Self::element(&[0x15, 0x49, 0xA9, 0x66], &info),
       Self::element(&[0x16, 0x54, 0xAE, 0x6B], &self.tracks.concat()),
-      tags,
       Self::element(&[0x1F, 0x43, 0xB6, 0x75], &self.blocks.concat()),
     ]
     .concat();
@@ -136,9 +107,8 @@ impl WebmBuilder {
       blocks: Vec::new(),
       doc_type: "webm".into(),
       duration: Some(0.0),
-      tags: Vec::new(),
-      target_type_value: 50,
       timestamp_scale: None,
+      title: None,
       tracks: Vec::new(),
     }
   }
@@ -154,12 +124,6 @@ impl WebmBuilder {
   }
 
   #[must_use]
-  pub(crate) fn target_type_value(mut self, target_type_value: u64) -> Self {
-    self.target_type_value = target_type_value;
-    self
-  }
-
-  #[must_use]
   pub(crate) fn timestamp_scale(mut self, timestamp_scale: u64) -> Self {
     self.timestamp_scale = Some(timestamp_scale);
     self
@@ -167,14 +131,7 @@ impl WebmBuilder {
 
   #[must_use]
   pub(crate) fn title(mut self, title: &str) -> Self {
-    self.tags.push(Self::element(
-      &[0x67, 0xC8],
-      &[
-        Self::string(&[0x45, 0xA3], "TITLE"),
-        Self::string(&[0x44, 0x87], title),
-      ]
-      .concat(),
-    ));
+    self.title = Some(title.into());
     self
   }
 

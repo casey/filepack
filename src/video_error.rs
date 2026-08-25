@@ -31,8 +31,6 @@ pub enum VideoError {
   SpsInvalid,
   #[snafu(display("missing SPS"))]
   SpsMissing,
-  #[snafu(display("binary `{tag}` tag"))]
-  TagBinary { tag: &'static str },
   #[snafu(display("empty `{tag}` tag"))]
   TagEmpty { tag: &'static str },
   #[snafu(display("invalid `{tag}` tag"))]
@@ -40,8 +38,6 @@ pub enum VideoError {
     source: TextError,
     tag: &'static str,
   },
-  #[snafu(display("multiple `{tag}` tags"))]
-  TagMultiple { tag: &'static str },
   #[snafu(display("`{tag}` tag is not valid UTF-8"))]
   TagUtf8 {
     source: Utf8Error,
