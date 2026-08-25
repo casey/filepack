@@ -37,7 +37,7 @@ impl Metadata {
     let files =
       u64::from(artwork.is_some()) + media.as_ref().map_or(0, |media| media.items().into_u64());
 
-    let bar = progress_bar::count(quiet, files, "files");
+    let bar = ProgressBar::count(quiet, files, "files");
 
     let artwork = if let Some(path) = artwork {
       let image = Image::load(root, path)?.content;

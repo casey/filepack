@@ -98,7 +98,7 @@ fingerprint mismatch: `{source}`
       return Err(error::FingerprintMismatch.build());
     }
 
-    let bar = progress_bar::new(&options, totals.file_size);
+    let bar = ProgressBar::bytes(&options, totals.file_size);
 
     let mut mismatches = BTreeMap::new();
 

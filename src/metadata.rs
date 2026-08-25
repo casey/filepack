@@ -199,7 +199,7 @@ impl Metadata {
       }
     }
 
-    let bar = progress_bar::count(quiet, images.len().into_u64(), "thumbnails");
+    let bar = ProgressBar::count(quiet, images.len().into_u64(), "thumbnails");
 
     let mut thumbnails = BTreeMap::new();
 

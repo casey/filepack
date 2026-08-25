@@ -170,7 +170,7 @@ impl Create {
       && let Some(Media::Audio { items }) = &metadata.media
     {
       let missing = {
-        let bar = progress_bar::count(options.quiet, items.len().into_u64(), "files");
+        let bar = ProgressBar::count(options.quiet, items.len().into_u64(), "files");
 
         let mut missing = Vec::new();
 
@@ -229,7 +229,7 @@ impl Create {
         .context(error::TotalFileSizeOverflow)?;
     }
 
-    let bar = progress_bar::new(&options, total_file_size);
+    let bar = ProgressBar::bytes(&options, total_file_size);
 
     let mut package = DirectoryTree::new();
 

@@ -3,8 +3,6 @@ use {super::*, reqwest::blocking::Body};
 struct Context {
   archive: Archive,
   client: Client,
-  files: u64,
-  files_uploaded: u64,
   missing: HashSet<Hash>,
   path: Utf8PathBuf,
   progress_bar: ProgressBar,
@@ -57,13 +55,7 @@ impl Upload {
         Entry::File { hash, .. } => {
           if context.missing.contains(hash) {
             Self::upload_package_file(context, entry, &file_path)?;
-            context.files_uploaded += 1;
-            context
-              .progress_bar
-              .set_message(progress_bar::file_progress_message(
-                context.files_uploaded,
-                context.files,
-              ));
+            context.progress_bar.item_done();
           }
         }
       }
@@ -81,7 +73,7 @@ impl Upload {
       .hash_file(input)
       .context(error::FilesystemIo { path: input })?;
 
-    let bar = progress_bar::new(options, size);
+    let bar = ProgressBar::bytes(options, size);
 
     let file = filesystem::open(input)?;
 
@@ -136,20 +128,12 @@ impl Upload {
       );
     }
 
-    let progress_bar = progress_bar::with_message(
-      &options,
-      bytes,
-      progress_bar::file_progress_message(0, files),
-    );
-
     let mut context = Context {
       archive,
-      progress_bar,
+      progress_bar: ProgressBar::items(&options, bytes, files, "files"),
       client,
-      files_uploaded: 0,
       missing,
       path,
-      files,
     };
 
     let root = context.path.parent().unwrap().to_owned();
