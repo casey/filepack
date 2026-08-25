@@ -1,11 +1,12 @@
-use super::*;
+use {
+  super::*,
+  matroska_demuxer::{Frame, MatroskaFile, TrackType},
+};
 
 pub(crate) struct WebmDecoder;
 
 impl WebmDecoder {
   fn metadata<T: Read + Seek>(reader: T) -> Result<VideoMetadata, VideoError> {
-    use matroska_demuxer::{Frame, MatroskaFile, TrackType};
-
     let mut file = MatroskaFile::open(BufReader::new(reader)).context(video_error::DecodeWebm)?;
 
     let doc_type = file.ebml_header().doc_type().trim_end_matches('\0');
@@ -178,13 +179,35 @@ impl WebmDecoder {
       tracks.push(audio_track);
     }
 
-    Ok(VideoMetadata { duration, tracks })
+    let title = Self::title(file.info())?;
+
+    Ok(VideoMetadata {
+      duration,
+      title,
+      tracks,
+    })
   }
 
   pub(crate) fn read(path: &Utf8Path) -> Result<VideoMetadata> {
     let file = filesystem::open(path)?;
 
     Self::metadata(file).context(error::Video { path })
+  }
+
+  fn title(info: &matroska_demuxer::Info) -> Result<Option<Text>, VideoError> {
+    let tag = "Title";
+
+    let Some(title) = info.title() else {
+      return Ok(None);
+    };
+
+    ensure!(!title.is_empty(), video_error::TagEmpty { tag });
+
+    Ok(Some(
+      title
+        .parse::<Text>()
+        .context(video_error::TagInvalid { tag })?,
+    ))
   }
 
   fn vp9_color_info(data: &[u8]) -> Option<ColorInfo> {
@@ -305,6 +328,7 @@ mod tests {
       .unwrap(),
       VideoMetadata {
         duration: 0,
+        title: None,
         tracks: vec![
           Track {
             codec: Codec::Vp9,
@@ -341,6 +365,7 @@ mod tests {
       .unwrap(),
       VideoMetadata {
         duration: 0,
+        title: None,
         tracks: vec![
           Track {
             codec: Codec::Vp8,
@@ -372,6 +397,7 @@ mod tests {
       case(WebmBuilder::new().video_track(2, 1).frame(1, VP9_FRAME)).unwrap(),
       VideoMetadata {
         duration: 0,
+        title: None,
         tracks: vec![Track {
           codec: Codec::Vp9,
           info: TrackInfo::Video {
@@ -583,6 +609,34 @@ mod tests {
     error(
       WebmBuilder::new().video_track(2, 1).doc_type("matroska"),
       "expected DocType `webm` but found `matroska`",
+    );
+
+    assert_eq!(
+      case(
+        WebmBuilder::new()
+          .video_track(2, 1)
+          .frame(1, VP9_FRAME)
+          .title("foo"),
+      )
+      .unwrap()
+      .title,
+      Some("foo".parse().unwrap()),
+    );
+
+    error(
+      WebmBuilder::new()
+        .video_track(2, 1)
+        .frame(1, VP9_FRAME)
+        .title(""),
+      "empty `Title` tag",
+    );
+
+    error(
+      WebmBuilder::new()
+        .video_track(2, 1)
+        .frame(1, VP9_FRAME)
+        .title("\0"),
+      "invalid `Title` tag",
     );
 
     assert_eq!(

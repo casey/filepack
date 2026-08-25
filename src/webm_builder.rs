@@ -3,6 +3,7 @@ pub(crate) struct WebmBuilder {
   doc_type: String,
   duration: Option<f64>,
   timestamp_scale: Option<u64>,
+  title: Option<String>,
   tracks: Vec<Vec<u8>>,
 }
 
@@ -40,6 +41,11 @@ impl WebmBuilder {
       self
         .duration
         .map(|duration| Self::float(&[0x44, 0x89], duration))
+        .unwrap_or_default(),
+      self
+        .title
+        .as_deref()
+        .map(|title| Self::string(&[0x7B, 0xA9], title))
         .unwrap_or_default(),
       Self::string(&[0x4D, 0x80], "foo"),
       Self::string(&[0x57, 0x41], "bar"),
@@ -102,6 +108,7 @@ impl WebmBuilder {
       doc_type: "webm".into(),
       duration: Some(0.0),
       timestamp_scale: None,
+      title: None,
       tracks: Vec::new(),
     }
   }
@@ -119,6 +126,12 @@ impl WebmBuilder {
   #[must_use]
   pub(crate) fn timestamp_scale(mut self, timestamp_scale: u64) -> Self {
     self.timestamp_scale = Some(timestamp_scale);
+    self
+  }
+
+  #[must_use]
+  pub(crate) fn title(mut self, title: &str) -> Self {
+    self.title = Some(title.into());
     self
   }
 

@@ -281,7 +281,7 @@ impl Metadata {
         }
         Media::Video { items } => {
           for video in items {
-            video.content.populate(root)?;
+            video.populate(root)?;
             bar.inc(1);
           }
         }

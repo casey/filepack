@@ -233,6 +233,7 @@ fn create_extracts_video_metadata() {
         .frame_count(30)
         .video_track(2, 1)
         .audio_track(0x40)
+        .name("bar")
         .build(),
     )
     .write(
@@ -287,7 +288,8 @@ fn create_extracts_video_metadata() {
                     }
                   ],
                   "type": "mp4"
-                }
+                },
+                "title": "bar"
               }
             ]
           }

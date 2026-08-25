@@ -3,6 +3,7 @@ pub struct Mp4Builder {
   duration: u32,
   frame_count: u32,
   matrix: [i32; 9],
+  name: Option<Vec<u8>>,
   sample_size: u32,
   sample_sizes: Vec<u32>,
   sps: Vec<u8>,
@@ -66,7 +67,31 @@ impl Mp4Builder {
     mvhd.extend_from_slice(&0x0001_0000u32.to_be_bytes());
     mvhd.extend_from_slice(&[0; 76]);
 
-    let moov = [Self::atom(*b"mvhd", &mvhd), self.tracks.concat()].concat();
+    let udta = self
+      .name
+      .as_ref()
+      .map(|name| {
+        let mut hdlr = vec![0; 8];
+        hdlr.extend_from_slice(b"mdir");
+        hdlr.extend_from_slice(&[0; 12]);
+        hdlr.push(0);
+
+        let mut data = 1u32.to_be_bytes().to_vec();
+        data.extend_from_slice(&[0; 4]);
+        data.extend_from_slice(name);
+
+        let ilst = Self::atom(
+          *b"ilst",
+          &Self::atom(*b"\xa9nam", &Self::atom(*b"data", &data)),
+        );
+
+        let meta = [vec![0; 4], Self::atom(*b"hdlr", &hdlr), ilst].concat();
+
+        Self::atom(*b"udta", &Self::atom(*b"meta", &meta))
+      })
+      .unwrap_or_default();
+
+    let moov = [Self::atom(*b"mvhd", &mvhd), self.tracks.concat(), udta].concat();
 
     [Self::atom(*b"ftyp", &ftyp), Self::atom(*b"moov", &moov)].concat()
   }
@@ -89,12 +114,19 @@ impl Mp4Builder {
     self
   }
 
+  #[must_use]
+  pub fn name(mut self, name: impl AsRef<[u8]>) -> Self {
+    self.name = Some(name.as_ref().into());
+    self
+  }
+
   pub fn new() -> Self {
     Self {
       avcc_profile: 0,
       duration: 0,
       frame_count: 0,
       matrix: [0x0001_0000, 0, 0, 0, 0x0001_0000, 0, 0, 0, 0x4000_0000],
+      name: None,
       sample_size: 1,
       sample_sizes: Vec::new(),
       sps: Vec::new(),

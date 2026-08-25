@@ -25,6 +25,13 @@ impl Item<Audio> {
   }
 }
 
+impl Item<Video> {
+  pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result {
+    self.title = self.content.populate(root)?;
+    Ok(())
+  }
+}
+
 impl<T: Content> MediaItem for Item<T> {
   fn info(&self, url: String) -> Info {
     self
@@ -142,7 +149,7 @@ mod tests {
   }
 
   #[test]
-  fn populate() {
+  fn populate_audio() {
     let (_tempdir, root) = tempdir();
 
     std::fs::write(
@@ -161,6 +168,21 @@ mod tests {
     .unwrap();
 
     let mut item = "foo.flac".parse::<Item<Audio>>().unwrap();
+    item.populate(&root).unwrap();
+    assert_eq!(item.title, Some("bar".parse().unwrap()));
+  }
+
+  #[test]
+  fn populate_video() {
+    let (_tempdir, root) = tempdir();
+
+    std::fs::write(
+      root.join("foo.mp4"),
+      Mp4Builder::new().video_track(2, 1).name("bar").build(),
+    )
+    .unwrap();
+
+    let mut item = "foo.mp4".parse::<Item<Video>>().unwrap();
     item.populate(&root).unwrap();
     assert_eq!(item.title, Some("bar".parse().unwrap()));
   }

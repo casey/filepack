@@ -1,4 +1,7 @@
-use super::*;
+use {
+  super::*,
+  re_mp4::{MetaBox, MetadataKey, Mp4, Mp4aBox, StsdBoxContent, TkhdBox},
+};
 
 pub(crate) struct Mp4Decoder;
 
@@ -67,8 +70,6 @@ impl Mp4Decoder {
   }
 
   fn metadata<T: Read + Seek>(reader: T, size: u64) -> Result<VideoMetadata, VideoError> {
-    use re_mp4::{Mp4, Mp4aBox, StsdBoxContent, TkhdBox};
-
     fn mp4a_codec(mp4a: &Mp4aBox) -> Option<Codec> {
       match mp4a
         .esds
@@ -245,7 +246,13 @@ impl Mp4Decoder {
       tracks.push(track);
     }
 
-    Ok(VideoMetadata { duration, tracks })
+    let title = Self::title(&mp4)?;
+
+    Ok(VideoMetadata {
+      duration,
+      title,
+      tracks,
+    })
   }
 
   pub(crate) fn read(path: &Utf8Path) -> Result<VideoMetadata> {
@@ -254,6 +261,32 @@ impl Mp4Decoder {
     let size = file.metadata().context(error::FilesystemIo { path })?.len();
 
     Self::metadata(file, size).context(error::Video { path })
+  }
+
+  fn title(mp4: &Mp4) -> Result<Option<Text>, VideoError> {
+    let Some(udta) = &mp4.moov.udta else {
+      return Ok(None);
+    };
+
+    let Some(MetaBox::Mdir { ilst: Some(ilst) }) = &udta.meta else {
+      return Ok(None);
+    };
+
+    let Some(item) = ilst.items.get(&MetadataKey::Title) else {
+      return Ok(None);
+    };
+
+    let tag = "©nam";
+
+    let title = str::from_utf8(&item.data.data).context(video_error::TagUtf8 { tag })?;
+
+    ensure!(!title.is_empty(), video_error::TagEmpty { tag });
+
+    Ok(Some(
+      title
+        .parse::<Text>()
+        .context(video_error::TagInvalid { tag })?,
+    ))
   }
 }
 
@@ -322,6 +355,7 @@ mod tests {
       case(Mp4Builder::new().video_track(2, 1).audio_track(0x40)).unwrap(),
       VideoMetadata {
         duration: 0,
+        title: None,
         tracks: vec![
           Track {
             codec: Codec::H264,
@@ -353,6 +387,7 @@ mod tests {
       case(Mp4Builder::new().video_track(2, 1)).unwrap(),
       VideoMetadata {
         duration: 0,
+        title: None,
         tracks: vec![Track {
           codec: Codec::H264,
           info: TrackInfo::Video {
@@ -568,6 +603,28 @@ mod tests {
     error(
       Mp4Builder::new().video_track(2, 1).audio_track(0x11),
       "track 1 has unsupported audio codec `unknown`",
+    );
+
+    assert_eq!(
+      case(Mp4Builder::new().video_track(2, 1).name("foo"))
+        .unwrap()
+        .title,
+      Some("foo".parse().unwrap()),
+    );
+
+    error(
+      Mp4Builder::new().video_track(2, 1).name(b""),
+      "empty `©nam` tag",
+    );
+
+    error(
+      Mp4Builder::new().video_track(2, 1).name(b"\xff"),
+      "`©nam` tag is not valid UTF-8",
+    );
+
+    error(
+      Mp4Builder::new().video_track(2, 1).name("\0"),
+      "invalid `©nam` tag",
     );
 
     assert_eq!(
