@@ -669,7 +669,7 @@ mod tests {
             ],
             ty: VideoType::Mp4,
           },
-          title: None,
+          title: Some("bar".parse().unwrap()),
         }],
       }),
       ..default()
@@ -712,7 +712,7 @@ mod tests {
           </dl>
           <ol>
             <li>
-              <a href=/package/{fingerprint}/item/1>foo.mp4</a>
+              <a href=/package/{fingerprint}/item/1>bar</a>
               <time datetime=PT3M45S>3:45</time>
             </li>
           </ol>

@@ -26,10 +26,14 @@ impl Video {
     formats
   }
 
-  pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result {
+  pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result<Option<Text>> {
     let path = root.join(&self.path);
 
-    let VideoMetadata { duration, tracks } = match self.ty {
+    let VideoMetadata {
+      duration,
+      title,
+      tracks,
+    } = match self.ty {
       VideoType::Mp4 => Mp4Decoder::read(&path)?,
       VideoType::Webm => WebmDecoder::read(&path)?,
     };
@@ -37,7 +41,7 @@ impl Video {
     self.duration = duration;
     self.tracks = tracks;
 
-    Ok(())
+    Ok(title)
   }
 
   pub(crate) fn resource_type(&self) -> ResourceType {
@@ -165,7 +169,7 @@ mod tests {
 
       let mut video = "foo.mp4".parse::<Video>().unwrap();
 
-      video.populate(&root).map(|()| video)
+      video.populate(&root).map(|_| video)
     }
 
     assert_eq!(

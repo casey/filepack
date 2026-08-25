@@ -163,7 +163,7 @@
 %%       for (i, video) in items.iter().enumerate() {
 %%         let duration = Duration::from_millis(video.content.duration);
   <li>
-    <a href=/package/{{ self.fingerprint }}/item/{{ Ordinal(i) }}>{{ video.content.path }}</a>
+    <a href=/package/{{ self.fingerprint }}/item/{{ Ordinal(i) }}>{{ video.display_title() }}</a>
     <time datetime={{ Iso8601Duration(duration) }}>{{ DisplayDuration(duration) }}</time>
   </li>
 %%       }

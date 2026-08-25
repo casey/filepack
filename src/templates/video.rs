@@ -7,6 +7,16 @@ pub(crate) struct VideoHtml {
   pub(crate) video: usize,
 }
 
+impl VideoHtml {
+  fn video(&self) -> &Item<Video> {
+    let Media::Video { items } = self.metadata.media.as_ref().unwrap() else {
+      unreachable!();
+    };
+
+    &items[self.video]
+  }
+}
+
 impl Page for VideoHtml {
   fn open_graph_image(&self) -> Option<OpenGraphImage> {
     OpenGraphImage::artwork(&self.metadata, self.fingerprint)
@@ -17,7 +27,7 @@ impl Page for VideoHtml {
   }
 
   fn title(&self) -> String {
-    format!("video {} · filepack", self.video)
+    format!("{} · filepack", self.video().display_title())
   }
 }
 
@@ -51,5 +61,24 @@ mod tests {
     };
 
     assert_eq!(html.open_graph_image(), None);
+  }
+
+  #[test]
+  fn title() {
+    let html = VideoHtml {
+      fingerprint: test::FINGERPRINT.parse().unwrap(),
+      metadata: Metadata {
+        media: Some(Media::Video {
+          items: vec![Item {
+            content: "foo.mp4".parse().unwrap(),
+            title: Some("bar".parse().unwrap()),
+          }],
+        }),
+        ..default()
+      },
+      video: 0,
+    };
+
+    assert_eq!(Page::title(&html), "bar · filepack");
   }
 }
