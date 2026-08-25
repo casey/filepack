@@ -215,12 +215,12 @@ impl Image {
     })
   }
 
-  pub(crate) fn formats(images: &[Image]) -> Vec<ImageType> {
+  pub(crate) fn formats(images: &[Item<Image>]) -> Vec<ImageType> {
     let mut formats = Vec::new();
 
     for image in images {
-      if !formats.contains(&image.ty) {
-        formats.push(image.ty);
+      if !formats.contains(&image.content.ty) {
+        formats.push(image.content.ty);
       }
     }
 
@@ -290,10 +290,9 @@ impl FromStr for Image {
   }
 }
 
-impl Item for Image {
-  fn info(&self, url: String) -> Info {
-    InfoBuilder::new()
-      .link("path", &self.path, url)
+impl Content for Image {
+  fn info(&self, builder: InfoBuilder) -> InfoBuilder {
+    builder
       .value("type", self.ty)
       .value("dimensions", self.dimensions)
       .value("orientation", self.orientation)
@@ -301,7 +300,6 @@ impl Item for Image {
       .value("bit depth", format!("{}-bit", self.bit_depth))
       .optional("chroma subsampling", self.chroma_subsampling)
       .value("alpha", self.alpha)
-      .build()
   }
 
   fn path(&self) -> &RelativePath {
@@ -470,10 +468,12 @@ mod tests {
       ty: ImageType::Png,
     };
 
-    assert_eq!(
-      Image::formats(&[foo, bar, baz]),
-      [ImageType::Png, ImageType::Jpeg],
-    );
+    let items = [foo, bar, baz].map(|content| Item {
+      content,
+      title: None,
+    });
+
+    assert_eq!(Image::formats(&items), [ImageType::Png, ImageType::Jpeg]);
   }
 
   #[test]

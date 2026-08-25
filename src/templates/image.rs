@@ -8,7 +8,7 @@ pub(crate) struct ImageHtml {
 }
 
 impl ImageHtml {
-  fn image(&self) -> &Image {
+  fn image(&self) -> &Item<Image> {
     let Media::Image { items } = self.metadata.media.as_ref().unwrap() else {
       unreachable!();
     };
@@ -30,7 +30,7 @@ impl Page for ImageHtml {
   fn open_graph_image(&self) -> Option<OpenGraphImage> {
     Some(OpenGraphImage::thumbnail(
       &self.metadata,
-      self.image(),
+      &self.image().content,
       format!(
         "media/image/{}/item/{}",
         self.fingerprint,
@@ -92,21 +92,24 @@ mod tests {
       image: 0,
       metadata: Metadata {
         media: Some(Media::Image {
-          items: vec![Image {
-            alpha: false,
-            bit_depth: 8,
-            chroma_subsampling: None,
-            color_type: ColorType::Rgb,
-            dimensions: Dimensions {
-              height: 1,
-              width: 2,
+          items: vec![Item {
+            content: Image {
+              alpha: false,
+              bit_depth: 8,
+              chroma_subsampling: None,
+              color_type: ColorType::Rgb,
+              dimensions: Dimensions {
+                height: 1,
+                width: 2,
+              },
+              orientation: Orientation {
+                mirrored: false,
+                rotation: Rotation::R90,
+              },
+              path: "foo.png".parse().unwrap(),
+              ty: ImageType::Png,
             },
-            orientation: Orientation {
-              mirrored: false,
-              rotation: Rotation::R90,
-            },
-            path: "foo.png".parse().unwrap(),
-            ty: ImageType::Png,
+            title: None,
           }],
         }),
         ..default()
@@ -166,21 +169,24 @@ mod tests {
         image: 0,
         metadata: Metadata {
           media: Some(Media::Image {
-            items: vec![Image {
-              alpha: false,
-              bit_depth: 8,
-              chroma_subsampling: None,
-              color_type: ColorType::Rgb,
-              dimensions: Dimensions {
-                height: 1,
-                width: 2,
+            items: vec![Item {
+              content: Image {
+                alpha: false,
+                bit_depth: 8,
+                chroma_subsampling: None,
+                color_type: ColorType::Rgb,
+                dimensions: Dimensions {
+                  height: 1,
+                  width: 2,
+                },
+                orientation: Orientation {
+                  mirrored: false,
+                  rotation: Rotation::R90,
+                },
+                path: "foo.png".parse().unwrap(),
+                ty: ImageType::Png,
               },
-              orientation: Orientation {
-                mirrored: false,
-                rotation: Rotation::R90,
-              },
-              path: "foo.png".parse().unwrap(),
-              ty: ImageType::Png,
+              title: None,
             }],
           }),
           ..default()

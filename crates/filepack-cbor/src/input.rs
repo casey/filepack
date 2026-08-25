@@ -111,13 +111,33 @@ impl Input {
       body
     };
 
+    let generics = self.decode_generics(validate);
+
+    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+
     Ok(quote! {
-      impl Decode for #name {
+      impl #impl_generics Decode for #name #ty_generics #where_clause {
         fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
           #body
         }
       }
     })
+  }
+
+  fn decode_generics(&self, validate: bool) -> Generics {
+    let mut generics = self.generics(syn::parse_quote!(Decode));
+
+    if validate {
+      let name = &self.ident;
+      let (_impl_generics, ty_generics, _where_clause) = self.generics.split_for_impl();
+
+      generics
+        .make_where_clause()
+        .predicates
+        .push(syn::parse_quote!(#name #ty_generics: Validate));
+    }
+
+    generics
   }
 
   pub(crate) fn decode_struct(&self, validate: bool) -> Result<proc_macro2::TokenStream> {
@@ -147,8 +167,12 @@ impl Input {
       }
     };
 
+    let generics = self.decode_generics(validate);
+
+    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+
     Ok(quote! {
-      impl Decode for #name {
+      impl #impl_generics Decode for #name #ty_generics #where_clause {
         fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
           let mut map = decoder.map::<u64>()?;
           #(#decode)*
@@ -181,16 +205,7 @@ impl Input {
       }
     };
 
-    let mut generics = self.generics(syn::parse_quote!(Decode));
-
-    if validate {
-      let (_impl_generics, ty_generics, _where_clause) = self.generics.split_for_impl();
-
-      generics
-        .make_where_clause()
-        .predicates
-        .push(syn::parse_quote!(#name #ty_generics: Validate));
-    }
+    let generics = self.decode_generics(validate);
 
     let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
@@ -249,8 +264,12 @@ impl Input {
       }
     });
 
+    let generics = self.encode_generics();
+
+    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+
     Ok(quote! {
-      impl Encode for #name {
+      impl #impl_generics Encode for #name #ty_generics #where_clause {
         fn encode(&self, encoder: &mut Encoder) {
           match self {
             #(#arms)*
@@ -260,6 +279,10 @@ impl Input {
     })
   }
 
+  fn encode_generics(&self) -> Generics {
+    self.generics(syn::parse_quote!(Encode))
+  }
+
   pub(crate) fn encode_struct(&self) -> Result<proc_macro2::TokenStream> {
     let name = &self.ident;
 
@@ -267,8 +290,12 @@ impl Input {
 
     let (length, items) = ParsedField::encode(&fields, Receiver::Field);
 
+    let generics = self.encode_generics();
+
+    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+
     Ok(quote! {
-      impl Encode for #name {
+      impl #impl_generics Encode for #name #ty_generics #where_clause {
         fn encode(&self, encoder: &mut Encoder) {
           let mut map = encoder.map::<u64>(#length);
           #(#items)*
@@ -282,7 +309,7 @@ impl Input {
 
     let member = self.transparent_member()?;
 
-    let generics = self.generics(syn::parse_quote!(Encode));
+    let generics = self.encode_generics();
 
     let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 

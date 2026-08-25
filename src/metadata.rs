@@ -134,9 +134,15 @@ impl Metadata {
 
     if let Some(media) = &self.media {
       match media {
-        Media::Audio { items } => files.extend(items.iter().map(|audio| audio.path.clone())),
-        Media::Image { items } => files.extend(items.iter().map(|image| image.path.clone())),
-        Media::Video { items } => files.extend(items.iter().map(|video| video.path.clone())),
+        Media::Audio { items } => {
+          files.extend(items.iter().map(|audio| audio.path().into()));
+        }
+        Media::Image { items } => {
+          files.extend(items.iter().map(|image| image.path().into()));
+        }
+        Media::Video { items } => {
+          files.extend(items.iter().map(|video| video.path().into()));
+        }
         Media::Web => files.push("static/index.html".parse().unwrap()),
       }
     }
@@ -158,7 +164,7 @@ impl Metadata {
     }
 
     if let Some(Media::Image { items }) = &self.media {
-      images.extend(items);
+      images.extend(items.iter().map(|item| &item.content));
     }
 
     if images.is_empty() {
@@ -269,13 +275,13 @@ impl Metadata {
         }
         Media::Image { items } => {
           for image in items {
-            image.populate(root)?;
+            image.content.populate(root)?;
             bar.inc(1);
           }
         }
         Media::Video { items } => {
           for video in items {
-            video.populate(root)?;
+            video.content.populate(root)?;
             bar.inc(1);
           }
         }
@@ -576,21 +582,23 @@ mod tests {
       homepage: Some("http://example.com".parse().unwrap()),
       language: Some("en".parse().unwrap()),
       media: Some(Media::Audio {
-        items: vec![Audio {
-          album: "bar".parse().unwrap(),
-          artist: "baz".parse().unwrap(),
-          channels: 8,
-          disc: 3,
-          discs: 4,
-          path: "track.flac".parse().unwrap(),
-          sample_bits: Some(7),
-          sample_rate: 1,
-          samples: 2,
-          size: 9,
-          title: "foo".parse().unwrap(),
-          track: 5,
-          tracks: 6,
-          ty: AudioType::Flac,
+        items: vec![Item {
+          content: Audio {
+            album: "bar".parse().unwrap(),
+            artist: "baz".parse().unwrap(),
+            channels: 8,
+            disc: 3,
+            discs: 4,
+            path: "track.flac".parse().unwrap(),
+            sample_bits: Some(7),
+            sample_rate: 1,
+            samples: 2,
+            size: 9,
+            track: 5,
+            tracks: 6,
+            ty: AudioType::Flac,
+          },
+          title: Some("foo".parse().unwrap()),
         }],
       }),
       package: Some(Package {
