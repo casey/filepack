@@ -43,7 +43,7 @@ impl Create {
     let path = root.join(Metadata::YAML_FILENAME);
 
     let metadata = if let Some(yaml) = filesystem::read_to_string_opt(&path)? {
-      let metadata = template::Metadata::deserialize(&path, &yaml)?;
+      let metadata = yaml::Metadata::deserialize(&path, &yaml)?;
 
       let path = root.join(Metadata::CBOR_FILENAME);
 

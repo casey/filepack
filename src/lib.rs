@@ -405,7 +405,6 @@ mod statement;
 mod static_asset;
 mod style;
 mod subcommand;
-mod template;
 pub mod templates;
 mod text;
 mod text_error;
@@ -430,6 +429,7 @@ mod view;
 mod webm_decoder;
 mod xmp;
 mod xmp_error;
+mod yaml;
 
 #[cfg(test)]
 mod derive;
