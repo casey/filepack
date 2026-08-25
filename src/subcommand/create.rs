@@ -169,12 +169,26 @@ impl Create {
       && let Some((metadata, _cbor)) = &metadata
       && let Some(Media::Audio { items }) = &metadata.media
     {
-      for audio in items {
-        if !audio.has_cover_art(&root)? {
-          eprintln!("error: path failed lint: `{}`", audio.path());
-          eprintln!("       └─ {}", LintError::CoverArtMissing);
-          lint_errors += 1;
+      let missing = {
+        let bar = progress_bar::count(options.quiet, items.len().into_u64(), "files");
+
+        let mut missing = Vec::new();
+
+        for audio in items {
+          if !audio.has_cover_art(&root)? {
+            missing.push(audio);
+          }
+
+          bar.inc(1);
         }
+
+        missing
+      };
+
+      for audio in missing {
+        eprintln!("error: path failed lint: `{}`", audio.path());
+        eprintln!("       └─ {}", LintError::CoverArtMissing);
+        lint_errors += 1;
       }
     }
 
