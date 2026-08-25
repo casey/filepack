@@ -1,7 +1,7 @@
 use super::*;
 
 #[skip_serializing_none]
-#[derive(Clone, Debug, Decode, DeserializeFromStr, Encode, PartialEq, Serialize)]
+#[derive(Clone, Debug, Decode, Encode, PartialEq, Serialize)]
 pub(crate) struct Audio {
   #[n(0)]
   pub(crate) album: Text,
@@ -131,18 +131,6 @@ impl Audio {
     )
   }
 
-  pub(crate) fn formats(tracks: &[Item<Audio>]) -> Vec<AudioType> {
-    let mut formats = Vec::new();
-
-    for audio in tracks {
-      if !formats.contains(&audio.content.ty) {
-        formats.push(audio.content.ty);
-      }
-    }
-
-    formats
-  }
-
   pub(crate) fn has_cover_art(&self, root: &Utf8Path) -> Result<bool> {
     let path = root.join(&self.path);
 
@@ -153,48 +141,6 @@ impl Audio {
       AudioType::Mp3 => Mp3Decoder::has_cover_art(&data),
     }
     .context(error::Audio { path })
-  }
-
-  pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result<Text> {
-    let path = root.join(&self.path);
-
-    let metadata = match self.ty {
-      AudioType::Flac => FlacDecoder::read(&path)?,
-      AudioType::Mp3 => Mp3Decoder::read(&path)?,
-    };
-
-    let AudioMetadata {
-      album,
-      artist,
-      channels,
-      disc,
-      discs,
-      sample_bits,
-      sample_rate,
-      samples,
-      size,
-      title,
-      track,
-      tracks,
-    } = metadata;
-
-    self.album = album;
-    self.artist = artist;
-    self.channels = channels;
-    self.disc = disc;
-    self.discs = discs;
-    self.sample_bits = sample_bits;
-    self.sample_rate = sample_rate;
-    self.samples = samples;
-    self.size = size;
-    self.track = track;
-    self.tracks = tracks;
-
-    Ok(title)
-  }
-
-  pub(crate) fn resource_type(&self) -> ResourceType {
-    self.ty.resource_type()
   }
 
   pub(crate) fn sum_durations(tracks: &[Item<Audio>]) -> Duration {
@@ -223,37 +169,9 @@ impl Audio {
   }
 }
 
-impl FromStr for Audio {
-  type Err = PathError;
-
-  fn from_str(s: &str) -> Result<Self, Self::Err> {
-    let path = s.parse::<RelativePath>()?;
-
-    let Some(ty) = path.extension().and_then(AudioType::from_extension) else {
-      return Err(PathError::Extension {
-        extensions: AudioType::EXTENSIONS,
-      });
-    };
-
-    Ok(Self {
-      album: Text::new(),
-      artist: Text::new(),
-      channels: 0,
-      disc: 0,
-      discs: 0,
-      path,
-      sample_bits: None,
-      sample_rate: 0,
-      samples: 0,
-      size: 0,
-      track: 0,
-      tracks: 0,
-      ty,
-    })
-  }
-}
-
 impl Content for Audio {
+  type Type = AudioType;
+
   fn info(&self, builder: InfoBuilder) -> InfoBuilder {
     builder
       .value("artist", &self.artist)
@@ -287,12 +205,74 @@ impl Content for Audio {
       .value("samples", self.samples)
   }
 
+  fn load(root: &Utf8Path, path: RelativePath) -> Result<Item<Self>> {
+    let ty = AudioType::from_path(&path).context(error::Path { path: &path })?;
+
+    let AudioMetadata {
+      album,
+      artist,
+      channels,
+      disc,
+      discs,
+      sample_bits,
+      sample_rate,
+      samples,
+      size,
+      title,
+      track,
+      tracks,
+    } = match ty {
+      AudioType::Flac => FlacDecoder::read(&root.join(&path))?,
+      AudioType::Mp3 => Mp3Decoder::read(&root.join(&path))?,
+    };
+
+    Ok(Item {
+      content: Self {
+        album,
+        artist,
+        channels,
+        disc,
+        discs,
+        path,
+        sample_bits,
+        sample_rate,
+        samples,
+        size,
+        track,
+        tracks,
+        ty,
+      },
+      title: Some(title),
+    })
+  }
+
   fn path(&self) -> &RelativePath {
     &self.path
   }
 
-  fn resource_type(&self) -> ResourceType {
-    self.resource_type()
+  #[cfg(test)]
+  fn test(path: &str) -> Self {
+    let path = path.parse::<RelativePath>().unwrap();
+    let ty = AudioType::from_path(&path).unwrap();
+    Self {
+      album: "foo".parse().unwrap(),
+      artist: "bar".parse().unwrap(),
+      channels: 2,
+      disc: 1,
+      discs: 1,
+      path,
+      sample_bits: Some(16),
+      sample_rate: 44100,
+      samples: 44100,
+      size: 1024,
+      track: 1,
+      tracks: 1,
+      ty,
+    }
+  }
+
+  fn ty(&self) -> Self::Type {
+    self.ty
   }
 }
 
@@ -308,12 +288,15 @@ mod tests {
         .iter()
         .enumerate()
         .map(|(i, (disc, discs, track, tracks))| {
-          let mut t = format!("{i}.flac").parse::<Item<Audio>>().unwrap();
-          t.content.disc = *disc;
-          t.content.discs = *discs;
-          t.content.track = *track;
-          t.content.tracks = *tracks;
-          t
+          let mut content = Audio::test(&format!("{i}.flac"));
+          content.disc = *disc;
+          content.discs = *discs;
+          content.track = *track;
+          content.tracks = *tracks;
+          Item {
+            content,
+            title: None,
+          }
         })
         .collect::<Vec<Item<Audio>>>();
 
@@ -442,7 +425,7 @@ mod tests {
   fn duration() {
     #[track_caller]
     fn case(samples: u64, sample_rate: u64, expected: Duration) {
-      let mut audio = "foo.flac".parse::<Audio>().unwrap();
+      let mut audio = Audio::test("foo.flac");
       audio.sample_rate = sample_rate;
       audio.samples = samples;
       assert_eq!(audio.duration(), expected);
@@ -455,92 +438,12 @@ mod tests {
   }
 
   #[test]
-  fn formats() {
-    let foo = "foo.flac".parse::<Item<Audio>>().unwrap();
-    let bar = "bar.flac".parse::<Item<Audio>>().unwrap();
-    let baz = "baz.mp3".parse::<Item<Audio>>().unwrap();
-
-    assert_eq!(
-      Audio::formats(&[foo, bar, baz]),
-      [AudioType::Flac, AudioType::Mp3],
-    );
-  }
-
-  #[test]
-  fn from_str() {
-    #[track_caller]
-    fn case(s: &str, expected: PathError) {
-      assert_eq!(s.parse::<Audio>().unwrap_err(), expected);
-    }
-
-    assert_eq!(
-      "foo.flac".parse::<Audio>().unwrap(),
-      Audio {
-        album: Text::new(),
-        artist: Text::new(),
-        channels: 0,
-        disc: 0,
-        discs: 0,
-        path: "foo.flac".parse().unwrap(),
-        sample_bits: None,
-        sample_rate: 0,
-        samples: 0,
-        size: 0,
-        track: 0,
-        tracks: 0,
-        ty: AudioType::Flac,
-      },
-    );
-
-    assert_eq!(
-      "foo.mp3".parse::<Audio>().unwrap(),
-      Audio {
-        album: Text::new(),
-        artist: Text::new(),
-        channels: 0,
-        disc: 0,
-        discs: 0,
-        path: "foo.mp3".parse().unwrap(),
-        sample_bits: None,
-        sample_rate: 0,
-        samples: 0,
-        size: 0,
-        track: 0,
-        tracks: 0,
-        ty: AudioType::Mp3,
-      },
-    );
-
-    assert_eq!(
-      "foo/bar.flac".parse::<Audio>().unwrap().path,
-      "foo/bar.flac".parse::<RelativePath>().unwrap(),
-    );
-
-    case(
-      "foo.wav",
-      PathError::Extension {
-        extensions: &["flac", "mp3"],
-      },
-    );
-    case(
-      "foo",
-      PathError::Extension {
-        extensions: &["flac", "mp3"],
-      },
-    );
-    case("", PathError::Empty);
-  }
-
-  #[test]
   fn info() {
-    let mut audio = "foo.flac".parse::<Audio>().unwrap();
+    let mut audio = Audio::test("foo.flac");
     audio.album = "qux".parse().unwrap();
     audio.artist = "baz".parse().unwrap();
-    audio.channels = 2;
     audio.disc = 1;
     audio.discs = 2;
-    audio.sample_bits = Some(16);
-    audio.sample_rate = 44100;
     audio.samples = 66150;
     audio.size = 750;
     audio.track = 3;
@@ -564,13 +467,12 @@ mod tests {
         .build(),
     );
 
-    let mut audio = "foo.mp3".parse::<Audio>().unwrap();
+    let mut audio = Audio::test("foo.mp3");
     audio.album = "qux".parse().unwrap();
     audio.artist = "baz".parse().unwrap();
-    audio.channels = 2;
     audio.disc = 1;
     audio.discs = 2;
-    audio.sample_rate = 44100;
+    audio.sample_bits = None;
     audio.samples = 66150;
     audio.size = 750;
     audio.track = 3;
@@ -593,20 +495,23 @@ mod tests {
         .build(),
     );
 
-    let mut audio = "foo.flac".parse::<Audio>().unwrap();
+    let mut audio = Audio::test("foo.flac");
+    audio.sample_bits = None;
+    audio.sample_rate = 0;
+    audio.samples = 0;
     audio.size = 750;
 
     assert_eq!(
       Content::info(&audio, InfoBuilder::new()).build(),
       InfoBuilder::new()
-        .value("artist", "")
-        .value("album", "")
-        .value("disc", "0 of 0")
-        .value("track", "0 of 0")
+        .value("artist", "bar")
+        .value("album", "foo")
+        .value("disc", "1 of 1")
+        .value("track", "1 of 1")
         .value("duration", "0:00")
         .value("type", "FLAC")
         .value("sample rate", "0 kHz")
-        .value("channels", "0")
+        .value("channels", "2")
         .value("compression mode", "lossless")
         .value("samples", "0")
         .build(),
@@ -614,7 +519,7 @@ mod tests {
   }
 
   #[test]
-  fn populate() {
+  fn load() {
     let (_tempdir, root) = tempdir();
 
     std::fs::write(
@@ -645,69 +550,80 @@ mod tests {
     )
     .unwrap();
 
-    let mut audio = "foo.flac".parse::<Audio>().unwrap();
     assert_eq!(
-      audio.populate(&root).unwrap(),
-      "bar".parse::<Text>().unwrap()
-    );
-
-    assert_eq!(
-      audio,
-      Audio {
-        album: "qux".parse().unwrap(),
-        artist: "baz".parse().unwrap(),
-        channels: 2,
-        disc: 1,
-        discs: 2,
-        path: "foo.flac".parse().unwrap(),
-        sample_bits: Some(16),
-        sample_rate: 44100,
-        samples: 66150,
-        size: 1024,
-        track: 3,
-        tracks: 4,
-        ty: AudioType::Flac,
+      Audio::load(&root, "foo.flac".parse().unwrap()).unwrap(),
+      Item {
+        content: Audio {
+          album: "qux".parse().unwrap(),
+          artist: "baz".parse().unwrap(),
+          channels: 2,
+          disc: 1,
+          discs: 2,
+          path: "foo.flac".parse().unwrap(),
+          sample_bits: Some(16),
+          sample_rate: 44100,
+          samples: 66150,
+          size: 1024,
+          track: 3,
+          tracks: 4,
+          ty: AudioType::Flac,
+        },
+        title: Some("bar".parse().unwrap()),
       },
     );
 
-    let mut audio = "foo.mp3".parse::<Audio>().unwrap();
     assert_eq!(
-      audio.populate(&root).unwrap(),
-      "bar".parse::<Text>().unwrap()
-    );
-
-    assert_eq!(
-      audio,
-      Audio {
-        album: "qux".parse().unwrap(),
-        artist: "baz".parse().unwrap(),
-        channels: 2,
-        disc: 1,
-        discs: 2,
-        path: "foo.mp3".parse().unwrap(),
-        sample_bits: None,
-        sample_rate: 44100,
-        samples: 2304,
-        size: 834,
-        track: 3,
-        tracks: 4,
-        ty: AudioType::Mp3,
+      Audio::load(&root, "foo.mp3".parse().unwrap()).unwrap(),
+      Item {
+        content: Audio {
+          album: "qux".parse().unwrap(),
+          artist: "baz".parse().unwrap(),
+          channels: 2,
+          disc: 1,
+          discs: 2,
+          path: "foo.mp3".parse().unwrap(),
+          sample_bits: None,
+          sample_rate: 44100,
+          samples: 2304,
+          size: 834,
+          track: 3,
+          tracks: 4,
+          ty: AudioType::Mp3,
+        },
+        title: Some("bar".parse().unwrap()),
       },
     );
   }
 
   #[test]
+  fn load_rejects_invalid_extension() {
+    #[track_caller]
+    fn case(path: &str, expected: &str) {
+      let (_tempdir, root) = tempdir();
+
+      assert_eq!(
+        Audio::load(&root, path.parse().unwrap())
+          .unwrap_err()
+          .iter_chain()
+          .map(ToString::to_string)
+          .collect::<Vec<String>>()
+          .join(": "),
+        expected,
+      );
+    }
+
+    case(
+      "foo.wav",
+      "invalid path `foo.wav`: path must end in `.flac` or `.mp3`",
+    );
+    case(
+      "foo",
+      "invalid path `foo`: path must end in `.flac` or `.mp3`",
+    );
+  }
+
+  #[test]
   fn serialize() {
-    assert_eq!(
-      serde_json::to_string(&"foo.flac".parse::<Audio>().unwrap()).unwrap(),
-      r#"{"album":"","artist":"","channels":0,"disc":0,"discs":0,"path":"foo.flac","sample_rate":0,"samples":0,"size":0,"track":0,"tracks":0,"type":"flac"}"#,
-    );
-
-    assert_eq!(
-      serde_json::to_string(&"foo.mp3".parse::<Audio>().unwrap()).unwrap(),
-      r#"{"album":"","artist":"","channels":0,"disc":0,"discs":0,"path":"foo.mp3","sample_rate":0,"samples":0,"size":0,"track":0,"tracks":0,"type":"mp3"}"#,
-    );
-
     assert_eq!(
       serde_json::to_string(&Audio {
         album: "qux".parse().unwrap(),

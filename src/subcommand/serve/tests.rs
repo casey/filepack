@@ -412,7 +412,7 @@ fn artwork_missing() {
   server.write_file(artwork);
 
   let metadata = Metadata {
-    artwork: Some("cover.png".parse().unwrap()),
+    artwork: Some(Image::test("cover.png")),
     ..Metadata::default()
   };
   let metadata_cbor = metadata.encode_to_vec();
@@ -483,7 +483,7 @@ fn artwork_response() {
     server.write_file(artwork);
 
     let metadata = Metadata {
-      artwork: Some(filename.parse().unwrap()),
+      artwork: Some(Image::test(filename)),
       ..Metadata::default()
     };
     let metadata_cbor = metadata.encode_to_vec();
@@ -535,11 +535,11 @@ fn artwork_thumbnail_response() {
 
   let with_thumbnail = PackageBuilder::new()
     .metadata(&Metadata {
-      artwork: Some("cover.png".parse().unwrap()),
+      artwork: Some(Image::test("cover.png")),
       thumbnails: Some(
         [(
           "cover.png".parse().unwrap(),
-          "thumbnails/cover.jpg".parse().unwrap(),
+          Image::test("thumbnails/cover.jpg"),
         )]
         .into(),
       ),
@@ -560,7 +560,7 @@ fn artwork_thumbnail_response() {
 
   let without_thumbnail = PackageBuilder::new()
     .metadata(&Metadata {
-      artwork: Some("cover.png".parse().unwrap()),
+      artwork: Some(Image::test("cover.png")),
       ..default()
     })
     .file("cover.png", artwork)
@@ -1330,7 +1330,7 @@ fn media_image_item_out_of_range() {
   let fingerprint = PackageBuilder::new()
     .metadata(&Metadata {
       media: Some(Media::Image {
-        items: vec!["foo.png".parse().unwrap()],
+        items: vec![Item::test("foo.png")],
       }),
       ..default()
     })
@@ -1356,7 +1356,7 @@ fn media_image_item_response() {
   let fingerprint = PackageBuilder::new()
     .metadata(&Metadata {
       media: Some(Media::Image {
-        items: vec!["foo.png".parse().unwrap(), "bar.jpg".parse().unwrap()],
+        items: vec![Item::test("foo.png"), Item::test("bar.jpg")],
       }),
       ..default()
     })
@@ -1395,12 +1395,12 @@ fn media_image_item_thumbnail_response() {
   let fingerprint = PackageBuilder::new()
     .metadata(&Metadata {
       media: Some(Media::Image {
-        items: vec!["foo.png".parse().unwrap(), "bar.jpg".parse().unwrap()],
+        items: vec![Item::test("foo.png"), Item::test("bar.jpg")],
       }),
       thumbnails: Some(
         [(
           "foo.png".parse().unwrap(),
-          "thumbnails/foo.jpg".parse().unwrap(),
+          Image::test("thumbnails/foo.jpg"),
         )]
         .into(),
       ),
@@ -1465,7 +1465,7 @@ fn media_type_mismatch() {
   let image = PackageBuilder::new()
     .metadata(&Metadata {
       media: Some(Media::Image {
-        items: vec!["foo.png".parse().unwrap()],
+        items: vec![Item::test("foo.png")],
       }),
       ..default()
     })
@@ -1498,7 +1498,7 @@ fn media_video_item_out_of_range() {
   let fingerprint = PackageBuilder::new()
     .metadata(&Metadata {
       media: Some(Media::Video {
-        items: vec!["foo.mp4".parse().unwrap()],
+        items: vec![Item::test("foo.mp4")],
       }),
       ..default()
     })
@@ -1521,7 +1521,7 @@ fn media_video_item_response() {
   let fingerprint = PackageBuilder::new()
     .metadata(&Metadata {
       media: Some(Media::Video {
-        items: vec!["foo.mp4".parse().unwrap(), "bar.mp4".parse().unwrap()],
+        items: vec![Item::test("foo.mp4"), Item::test("bar.mp4")],
       }),
       ..default()
     })
@@ -1555,7 +1555,7 @@ fn media_webm_item_response() {
   let fingerprint = PackageBuilder::new()
     .metadata(&Metadata {
       media: Some(Media::Video {
-        items: vec!["foo.webm".parse().unwrap()],
+        items: vec![Item::test("foo.webm")],
       }),
       ..default()
     })
@@ -1980,7 +1980,7 @@ fn package_item_video_out_of_range() {
   let fingerprint = PackageBuilder::new()
     .metadata(&Metadata {
       media: Some(Media::Video {
-        items: vec!["foo.mp4".parse().unwrap()],
+        items: vec![Item::test("foo.mp4")],
       }),
       ..default()
     })
@@ -2108,7 +2108,7 @@ fn package_page_og_image() {
   server.write_file(artwork);
 
   let metadata = Metadata {
-    artwork: Some("bar.png".parse().unwrap()),
+    artwork: Some(Image::test("bar.png")),
     ..Metadata::default()
   };
   let metadata_cbor = metadata.encode_to_vec();
@@ -2400,7 +2400,7 @@ fn packages_grid() {
   let server = TestServer::new();
 
   let metadata = Metadata {
-    artwork: Some("foo.png".parse().unwrap()),
+    artwork: Some(Image::test("foo.png")),
     ..default()
   };
 
@@ -2695,7 +2695,7 @@ fn tracks(filenames: &[&str]) -> Vec<Item<Audio>> {
     .iter()
     .enumerate()
     .map(|(i, filename)| {
-      let mut audio = filename.parse::<Item<Audio>>().unwrap();
+      let mut audio = Item::<Audio>::test(filename);
       audio.content.disc = 1;
       audio.content.discs = 1;
       audio.content.track = i.into_u64() + 1;
@@ -3031,7 +3031,7 @@ fn verify_package_metadata_references_missing_file() {
   let server = TestServer::new();
 
   let metadata = Metadata {
-    artwork: Some("cover.png".parse().unwrap()),
+    artwork: Some(Image::test("cover.png")),
     ..default()
   }
   .encode_to_vec();
@@ -3062,7 +3062,7 @@ fn verify_package_metadata_references_present_file() {
   server.write_file(artwork);
 
   let metadata = Metadata {
-    artwork: Some("cover.png".parse().unwrap()),
+    artwork: Some(Image::test("cover.png")),
     ..default()
   }
   .encode_to_vec();

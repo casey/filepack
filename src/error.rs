@@ -155,11 +155,6 @@ pub enum Error {
     path: DisplayPath,
     source: serde_yaml::Error,
   },
-  #[snafu(display("metadata at `{path}` includes thumbnails: thumbnails must be generated",))]
-  DeserializeMetadataThumbnails {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-  },
   #[snafu(display("directory `{hash}` totals error"))]
   DirectoryTotals {
     backtrace: Option<Backtrace>,

@@ -1,9 +1,7 @@
 use super::*;
 
-#[derive(
-  Clone, Debug, Decode, Deserialize, Encode, EnumDiscriminants, IntoStaticStr, PartialEq, Serialize,
-)]
-#[serde(deny_unknown_fields, rename_all = "snake_case", tag = "type")]
+#[derive(Clone, Debug, Decode, Encode, EnumDiscriminants, IntoStaticStr, PartialEq, Serialize)]
+#[serde(rename_all = "snake_case", tag = "type")]
 #[strum(serialize_all = "kebab-case")]
 #[strum_discriminants(
   derive(Display),
@@ -96,7 +94,7 @@ mod tests {
   #[test]
   fn item_url() {
     let media = Media::Image {
-      items: vec!["foo.png".parse().unwrap(), "bar.png".parse().unwrap()],
+      items: vec![Item::test("foo.png"), Item::test("bar.png")],
     };
 
     let fingerprint = test::FINGERPRINT.parse::<Fingerprint>().unwrap();

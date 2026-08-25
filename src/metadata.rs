@@ -2,8 +2,7 @@ use super::*;
 
 #[allow(private_interfaces)]
 #[skip_serializing_none]
-#[derive(Clone, Debug, Default, Deserialize, Encode, Decode, PartialEq, Serialize)]
-#[serde(deny_unknown_fields)]
+#[derive(Clone, Debug, Default, Encode, Decode, PartialEq, Serialize)]
 pub struct Metadata {
   #[n(0)]
   pub artwork: Option<Image>,
@@ -101,18 +100,6 @@ impl Metadata {
     }
 
     Ok(())
-  }
-
-  pub(crate) fn deserialize(path: &Utf8Path, yaml: &str) -> Result<Self> {
-    let metadata =
-      serde_yaml::from_str::<Self>(yaml).context(error::DeserializeMetadata { path })?;
-
-    ensure! {
-      metadata.thumbnails.is_none(),
-      error::DeserializeMetadataThumbnails { path },
-    }
-
-    Ok(metadata)
   }
 
   pub(crate) fn files(&self) -> Vec<RelativePath> {
@@ -225,75 +212,13 @@ impl Metadata {
         continue;
       };
 
-      let thumbnail =
-        Image::from_str(thumbnail.as_ref()).context(error::Path { path: thumbnail })?;
+      let thumbnail = Image::load(root, thumbnail)?.content;
 
       thumbnails.insert(image.path.clone(), thumbnail);
     }
 
     if !thumbnails.is_empty() {
       self.thumbnails = Some(thumbnails);
-    }
-
-    Ok(())
-  }
-
-  pub(crate) fn populate(&mut self, root: &Utf8Path, quiet: bool) -> Result {
-    let mut files = 0;
-
-    if let Some(media) = &self.media {
-      match media {
-        Media::Audio { items } => files += items.len().into_u64(),
-        Media::Image { items } => files += items.len().into_u64(),
-        Media::Video { items } => files += items.len().into_u64(),
-        Media::Web => {}
-      }
-    }
-
-    if self.artwork.is_some() {
-      files += 1;
-    }
-
-    if let Some(thumbnails) = &self.thumbnails {
-      files += thumbnails.len().into_u64();
-    }
-
-    let bar = progress_bar::count(quiet, files, "files");
-
-    if let Some(artwork) = &mut self.artwork {
-      artwork.populate(root)?;
-      bar.inc(1);
-    }
-
-    if let Some(media) = self.media.as_mut() {
-      match media {
-        Media::Audio { items } => {
-          for audio in items {
-            audio.populate(root)?;
-            bar.inc(1);
-          }
-        }
-        Media::Image { items } => {
-          for image in items {
-            image.populate(root)?;
-            bar.inc(1);
-          }
-        }
-        Media::Video { items } => {
-          for video in items {
-            video.populate(root)?;
-            bar.inc(1);
-          }
-        }
-        Media::Web => {}
-      }
-    }
-
-    if let Some(thumbnails) = &mut self.thumbnails {
-      for thumbnail in thumbnails.values_mut() {
-        thumbnail.populate(root)?;
-        bar.inc(1);
-      }
     }
 
     Ok(())
@@ -348,220 +273,6 @@ mod tests {
   }
 
   #[test]
-  fn deserialize_media_audio() {
-    let metadata = Metadata::deserialize(
-      Metadata::YAML_FILENAME.as_ref(),
-      &unindent(
-        "
-          media:
-            type: audio
-            items:
-              - foo.flac
-              - bar.flac
-        ",
-      ),
-    )
-    .unwrap();
-
-    assert_eq!(
-      metadata.media,
-      Some(Media::Audio {
-        items: vec!["foo.flac".parse().unwrap(), "bar.flac".parse().unwrap()],
-      }),
-    );
-  }
-
-  #[test]
-  fn deserialize_media_video() {
-    let metadata = Metadata::deserialize(
-      Metadata::YAML_FILENAME.as_ref(),
-      &unindent(
-        "
-          media:
-            type: video
-            items:
-              - foo.mp4
-              - bar.mp4
-        ",
-      ),
-    )
-    .unwrap();
-
-    assert_eq!(
-      metadata.media,
-      Some(Media::Video {
-        items: vec!["foo.mp4".parse().unwrap(), "bar.mp4".parse().unwrap()],
-      }),
-    );
-  }
-
-  #[test]
-  fn deserialize_media_web() {
-    let metadata = Metadata::deserialize(
-      Metadata::YAML_FILENAME.as_ref(),
-      &unindent(
-        "
-          media:
-            type: web
-        ",
-      ),
-    )
-    .unwrap();
-
-    assert_eq!(metadata.media, Some(Media::Web));
-  }
-
-  #[test]
-  fn deserialize_rejects_invalid_values() {
-    #[track_caller]
-    fn case(yaml: &str, expected: &str) {
-      let error =
-        Metadata::deserialize(Metadata::YAML_FILENAME.as_ref(), &unindent(yaml)).unwrap_err();
-
-      let chain = error
-        .iter_chain()
-        .map(ToString::to_string)
-        .collect::<Vec<String>>()
-        .join(": ");
-
-      assert_matches_regex!(chain, format!(".*{}.*", expected));
-    }
-
-    case(
-      "
-        title: Foo
-        time: 2024/06/15
-      ",
-      "time: invalid time `2024/06/15`",
-    );
-    case(
-      "
-        title: Foo
-        homepage: not-a-valid-url
-      ",
-      "homepage: relative URL without a base",
-    );
-    case(
-      "
-        title: Foo
-        homepage: ftp://example.com
-      ",
-      "homepage: URL scheme `ftp` not allowed, must be `http` or `https`",
-    );
-    case(
-      "
-        title: Foo
-        language: ac
-      ",
-      "unknown language code `ac`",
-    );
-    case(
-      "
-        title: Foo
-        package:
-          time: not-a-time
-      ",
-      r"package\.time: invalid time `not-a-time`",
-    );
-    case(
-      "
-        title: Foo
-        package:
-          homepage: :::invalid
-      ",
-      "package.homepage: relative URL without a base",
-    );
-    case(
-      "
-        title: Foo
-        artwork: cover.svg
-      ",
-      "artwork: path must end in `.jpg` or `.png`",
-    );
-    case(
-      "
-        title: Foo
-        media:
-          type: audio
-          items:
-          - foo.wav
-      ",
-      r"path must end in `\.flac` or `\.mp3`",
-    );
-    case(
-      "
-        title: Foo
-        description: \"foo\\tbar\"
-      ",
-      r"description: text may not contain control character `\\t`",
-    );
-    case(
-      "
-        title: \"foo\\nbar\"
-      ",
-      r"title: text may not contain control character `\\n`",
-    );
-    case(
-      "
-        title: Foo
-        package:
-          creator: \"foo\\nbar\"
-      ",
-      r"package\.creator: text may not contain control character `\\n`",
-    );
-    case(
-      "
-        title: Foo
-        package:
-          description: \"foo\\tbar\"
-      ",
-      r"package\.description: text may not contain control character `\\t`",
-    );
-  }
-
-  #[test]
-  fn deserialize_rejects_thumbnails() {
-    assert_eq!(
-      Metadata::deserialize(
-        Metadata::YAML_FILENAME.as_ref(),
-        &unindent(
-          "
-            thumbnails:
-              foo.png: thumbnails/foo.jpg
-          ",
-        ),
-      )
-      .unwrap_err()
-      .to_string(),
-      "metadata at `metadata.yaml` includes thumbnails: thumbnails must be generated",
-    );
-  }
-
-  #[test]
-  fn deserialize_rejects_unknown_fields() {
-    #[track_caller]
-    fn case(yaml: &str, expected: &str) {
-      let chain = Metadata::deserialize(Metadata::YAML_FILENAME.as_ref(), yaml)
-        .unwrap_err()
-        .iter_chain()
-        .map(ToString::to_string)
-        .collect::<Vec<String>>()
-        .join(": ");
-
-      assert_matches_regex!(chain, expected);
-    }
-
-    case(
-      "title: foo\nbar: 1",
-      ".*unknown field `bar`, expected one of .*",
-    );
-    case(
-      "package:\n  bar: 1",
-      ".*unknown field `bar`, expected one of .*",
-    );
-  }
-
-  #[test]
   fn encoding() {
     assert_encoding(Metadata {
       artwork: Some(Image {
@@ -613,7 +324,7 @@ mod tests {
       thumbnails: Some(
         [(
           "bar.png".parse().unwrap(),
-          "thumbnails/bar.jpg".parse().unwrap(),
+          Image::test("thumbnails/bar.jpg"),
         )]
         .into(),
       ),
@@ -623,19 +334,10 @@ mod tests {
   }
 
   #[test]
-  fn filepack_metadata_is_valid() {
-    Metadata::deserialize(
-      Metadata::YAML_FILENAME.as_ref(),
-      &filesystem::read_to_string(Metadata::YAML_FILENAME).unwrap(),
-    )
-    .unwrap();
-  }
-
-  #[test]
   fn files_include_audio_tracks() {
     let metadata = Metadata {
       media: Some(Media::Audio {
-        items: vec!["foo.flac".parse().unwrap(), "bar.flac".parse().unwrap()],
+        items: vec![Item::test("foo.flac"), Item::test("bar.flac")],
       }),
       ..default()
     };
@@ -653,7 +355,7 @@ mod tests {
   fn files_include_images() {
     let metadata = Metadata {
       media: Some(Media::Image {
-        items: vec!["foo.png".parse().unwrap(), "bar.jpg".parse().unwrap()],
+        items: vec![Item::test("foo.png"), Item::test("bar.jpg")],
       }),
       ..default()
     };
@@ -671,12 +373,12 @@ mod tests {
   fn files_include_thumbnails() {
     let metadata = Metadata {
       media: Some(Media::Image {
-        items: vec!["foo.png".parse().unwrap()],
+        items: vec![Item::test("foo.png")],
       }),
       thumbnails: Some(
         [(
           "foo.png".parse().unwrap(),
-          "thumbnails/foo.jpg".parse().unwrap(),
+          Image::test("thumbnails/foo.jpg"),
         )]
         .into(),
       ),
@@ -696,7 +398,7 @@ mod tests {
   fn files_include_videos() {
     let metadata = Metadata {
       media: Some(Media::Video {
-        items: vec!["foo.mp4".parse().unwrap(), "bar.mp4".parse().unwrap()],
+        items: vec![Item::test("foo.mp4"), Item::test("bar.mp4")],
       }),
       ..default()
     };
@@ -718,9 +420,9 @@ mod tests {
     std::fs::write(root.join("bar.png"), image(1280, 640, ImageFormat::Png)).unwrap();
 
     let mut metadata = Metadata {
-      artwork: Some("foo.png".parse().unwrap()),
+      artwork: Some(Image::test("foo.png")),
       media: Some(Media::Image {
-        items: vec!["bar.png".parse().unwrap()],
+        items: vec![Item::test("bar.png")],
       }),
       ..default()
     };
@@ -754,13 +456,48 @@ mod tests {
     std::fs::write(root.join("foo.png"), image(1, 1, ImageFormat::Png)).unwrap();
 
     let mut metadata = Metadata {
-      artwork: Some("foo.png".parse().unwrap()),
+      artwork: Some(Image::test("foo.png")),
       ..default()
     };
 
     metadata.generate(&root, false, true).unwrap();
 
     assert_eq!(metadata.thumbnails, None);
+  }
+
+  #[test]
+  fn generate_populates_thumbnails() {
+    let (_tempdir, root) = tempdir();
+
+    std::fs::write(root.join("foo.png"), image(1280, 640, ImageFormat::Png)).unwrap();
+
+    let mut metadata = Metadata {
+      artwork: Some(Image::test("foo.png")),
+      ..default()
+    };
+
+    metadata.generate(&root, false, true).unwrap();
+
+    assert_eq!(
+      metadata
+        .thumbnails
+        .unwrap()
+        .into_values()
+        .collect::<Vec<Image>>(),
+      vec![Image {
+        alpha: false,
+        bit_depth: 8,
+        chroma_subsampling: Some(ChromaSubsampling::Yuv444),
+        color_type: ColorType::Rgb,
+        dimensions: Dimensions {
+          height: 512,
+          width: 1024,
+        },
+        orientation: Orientation::new(),
+        path: "thumbnails/foo.jpg".parse().unwrap(),
+        ty: ImageType::Jpeg,
+      }],
+    );
   }
 
   #[test]
@@ -772,7 +509,7 @@ mod tests {
 
     let mut metadata = Metadata {
       media: Some(Media::Image {
-        items: vec!["foo.png".parse().unwrap()],
+        items: vec![Item::test("foo.png")],
       }),
       ..default()
     };
@@ -793,7 +530,7 @@ mod tests {
 
     let mut metadata = Metadata {
       media: Some(Media::Image {
-        items: vec!["foo.jpg".parse().unwrap(), "foo.png".parse().unwrap()],
+        items: vec![Item::test("foo.jpg"), Item::test("foo.png")],
       }),
       ..default()
     };
@@ -816,7 +553,7 @@ mod tests {
 
     let mut metadata = Metadata {
       media: Some(Media::Image {
-        items: vec!["foo.png".parse().unwrap(), "bar.png".parse().unwrap()],
+        items: vec![Item::test("foo.png"), Item::test("bar.png")],
       }),
       ..default()
     };
@@ -848,154 +585,6 @@ mod tests {
   }
 
   #[test]
-  fn invalid_artwork() {
-    #[track_caller]
-    fn case(filename: &str, bytes: Vec<u8>, expected: &str) {
-      let (_tempdir, root) = tempdir();
-
-      std::fs::write(root.join(filename), bytes).unwrap();
-
-      let mut metadata = Metadata {
-        artwork: Some(filename.parse().unwrap()),
-        ..default()
-      };
-
-      assert_matches_regex!(
-        metadata
-          .populate(&root, true)
-          .and_then(|()| metadata.validate(&root))
-          .unwrap_err()
-          .to_string(),
-        expected
-      );
-    }
-
-    case(
-      "cover.jpg",
-      b"bar".to_vec(),
-      "failed to decode JPEG image `.*cover\\.jpg`",
-    );
-    case(
-      "cover.png",
-      b"bar".to_vec(),
-      "failed to decode PNG image `.*cover\\.png`",
-    );
-    case(
-      "cover.jpg",
-      image(1, 1, ImageFormat::Png),
-      "failed to decode JPEG image `.*cover\\.jpg`",
-    );
-    case(
-      "cover.png",
-      image(1, 1, ImageFormat::Jpeg),
-      "failed to decode PNG image `.*cover\\.png`",
-    );
-    case(
-      "cover.jpg",
-      image(2, 1, ImageFormat::Jpeg),
-      "^artwork `.*cover\\.jpg` is 2×1 but must be square$",
-    );
-    case(
-      "cover.png",
-      image(2, 1, ImageFormat::Png),
-      "^artwork `.*cover\\.png` is 2×1 but must be square$",
-    );
-  }
-
-  #[test]
-  fn invalid_image() {
-    #[track_caller]
-    fn case(filename: &str, bytes: Vec<u8>, expected: &str) {
-      let (_tempdir, root) = tempdir();
-
-      std::fs::write(root.join(filename), bytes).unwrap();
-
-      let mut metadata = Metadata {
-        media: Some(Media::Image {
-          items: vec![filename.parse().unwrap()],
-        }),
-        ..default()
-      };
-
-      assert_matches_regex!(
-        metadata.populate(&root, true).unwrap_err().to_string(),
-        expected
-      );
-    }
-
-    case(
-      "foo.jpg",
-      b"bar".to_vec(),
-      "failed to decode JPEG image `.*foo\\.jpg`",
-    );
-    case(
-      "foo.png",
-      b"bar".to_vec(),
-      "failed to decode PNG image `.*foo\\.png`",
-    );
-  }
-
-  #[test]
-  fn metadata_in_readme_is_valid() {
-    let readme = filesystem::read_to_string("README.md").unwrap();
-
-    let re = Regex::new(r"(?s)```yaml(.*?)```").unwrap();
-
-    for capture in re.captures_iter(&readme) {
-      let metadata = Metadata::deserialize("README.md".as_ref(), &capture[1]).unwrap();
-
-      let Metadata {
-        artwork,
-        creator,
-        description,
-        homepage,
-        language,
-        media,
-        package,
-        readme,
-        thumbnails,
-        time,
-        title,
-      } = metadata;
-
-      if title
-        .as_ref()
-        .is_none_or(|title| title.as_str() != "Tobin's Spirit Guide")
-      {
-        continue;
-      }
-
-      assert!(artwork.is_some());
-      assert!(creator.is_some());
-      assert!(description.is_some());
-      assert!(homepage.is_some());
-      assert!(language.is_some());
-      assert!(readme.is_some());
-      assert!(time.is_some());
-      assert!(title.is_some());
-
-      assert!(media.is_none());
-      assert!(thumbnails.is_none());
-
-      let Package {
-        colophon,
-        creator,
-        description,
-        homepage,
-        time,
-        title,
-      } = package.unwrap();
-
-      assert!(colophon.is_some());
-      assert!(creator.is_some());
-      assert!(description.is_some());
-      assert!(homepage.is_some());
-      assert!(time.is_some());
-      assert!(title.is_some());
-    }
-  }
-
-  #[test]
   fn missing_files() {
     #[track_caller]
     fn case(metadata: Metadata, filename: &str) {
@@ -1010,7 +599,7 @@ mod tests {
 
     case(
       Metadata {
-        artwork: Some("cover.png".parse().unwrap()),
+        artwork: Some(Image::test("cover.png")),
         ..default()
       },
       "cover.png",
@@ -1031,59 +620,6 @@ mod tests {
       },
       "COLOPHON.md",
     );
-  }
-
-  #[test]
-  fn valid_artwork() {
-    #[track_caller]
-    fn case(artwork: &str, bytes: Vec<u8>) {
-      let (_tempdir, root) = tempdir();
-
-      std::fs::write(root.join(artwork), bytes).unwrap();
-
-      let mut metadata = Metadata {
-        artwork: Some(artwork.parse().unwrap()),
-        package: Some(colophon_package("COLOPHON.md")),
-        readme: Some("README.md".parse().unwrap()),
-        ..default()
-      };
-
-      let paths = [artwork, "README.md", "COLOPHON.md"]
-        .into_iter()
-        .map(|path| path.parse::<RelativePath>().unwrap())
-        .collect();
-
-      metadata.populate(&root, true).unwrap();
-      metadata.check_files(&paths).unwrap();
-      metadata.validate(&root).unwrap();
-    }
-
-    case("cover.jpg", image(10, 10, ImageFormat::Jpeg));
-    case("cover.png", image(20, 20, ImageFormat::Png));
-  }
-
-  #[test]
-  fn valid_images() {
-    let (_tempdir, root) = tempdir();
-
-    std::fs::write(root.join("foo.jpg"), image(2, 1, ImageFormat::Jpeg)).unwrap();
-    std::fs::write(root.join("bar.png"), image(1, 2, ImageFormat::Png)).unwrap();
-
-    let mut metadata = Metadata {
-      media: Some(Media::Image {
-        items: vec!["foo.jpg".parse().unwrap(), "bar.png".parse().unwrap()],
-      }),
-      ..default()
-    };
-
-    let paths = ["foo.jpg", "bar.png"]
-      .into_iter()
-      .map(|path| path.parse::<RelativePath>().unwrap())
-      .collect();
-
-    metadata.populate(&root, true).unwrap();
-    metadata.check_files(&paths).unwrap();
-    metadata.validate(&root).unwrap();
   }
 
   #[test]

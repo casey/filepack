@@ -1,9 +1,20 @@
 use super::*;
 
-pub(crate) trait Content {
+pub(crate) trait Content: Sized {
+  type Type: ContentType;
+
   fn info(&self, builder: InfoBuilder) -> InfoBuilder;
+
+  fn load(root: &Utf8Path, path: RelativePath) -> Result<Item<Self>>;
 
   fn path(&self) -> &RelativePath;
 
-  fn resource_type(&self) -> ResourceType;
+  fn resource_type(&self) -> ResourceType {
+    self.ty().resource_type()
+  }
+
+  #[cfg(test)]
+  fn test(path: &str) -> Self;
+
+  fn ty(&self) -> Self::Type;
 }

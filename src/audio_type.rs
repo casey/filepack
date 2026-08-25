@@ -11,10 +11,10 @@ pub(crate) enum AudioType {
   Mp3,
 }
 
-impl AudioType {
-  pub(crate) const EXTENSIONS: &[&str] = &["flac", "mp3"];
+impl ContentType for AudioType {
+  const EXTENSIONS: &[&str] = &["flac", "mp3"];
 
-  pub(crate) fn from_extension(extension: &str) -> Option<Self> {
+  fn from_extension(extension: &str) -> Option<Self> {
     match extension {
       "flac" => Some(Self::Flac),
       "mp3" => Some(Self::Mp3),
@@ -22,7 +22,7 @@ impl AudioType {
     }
   }
 
-  pub(crate) fn resource_type(self) -> ResourceType {
+  fn resource_type(self) -> ResourceType {
     match self {
       Self::Flac => ResourceType::Flac,
       Self::Mp3 => ResourceType::Mp3,
@@ -41,9 +41,25 @@ mod tests {
   }
 
   #[test]
-  fn from_extension() {
-    assert_eq!(AudioType::from_extension("flac"), Some(AudioType::Flac));
-    assert_eq!(AudioType::from_extension("mp3"), Some(AudioType::Mp3));
-    assert_eq!(AudioType::from_extension("wav"), None);
+  fn from_path() {
+    #[track_caller]
+    fn case(path: &str, expected: Result<AudioType, PathError>) {
+      assert_eq!(AudioType::from_path(&path.parse().unwrap()), expected);
+    }
+
+    case("foo.flac", Ok(AudioType::Flac));
+    case("foo.mp3", Ok(AudioType::Mp3));
+    case(
+      "foo.wav",
+      Err(PathError::Extension {
+        extensions: &["flac", "mp3"],
+      }),
+    );
+    case(
+      "foo",
+      Err(PathError::Extension {
+        extensions: &["flac", "mp3"],
+      }),
+    );
   }
 }

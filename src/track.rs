@@ -141,7 +141,7 @@ mod tests {
       size: 1500,
     };
 
-    let mut video = "foo.mp4".parse::<Video>().unwrap();
+    let mut video = Video::test("foo.mp4");
 
     video.duration = 10_000;
 

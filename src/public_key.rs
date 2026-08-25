@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Clone, Copy, Debug, DeserializeFromStr, Eq, PartialEq, SerializeDisplay)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, SerializeDisplay)]
 pub struct PublicKey(ed25519_dalek::VerifyingKey);
 
 impl PublicKey {

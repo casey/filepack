@@ -94,7 +94,7 @@
   <dd>{{ DisplayDuration(Audio::sum_durations(items)) }}</dd>
 %%         if !items.is_empty() {
   <dt>format</dt>
-%%           for format in Audio::formats(items) {
+%%           for format in Item::formats(items) {
   <dd>{{ format }}</dd>
 %%           }
 %%         }
@@ -104,7 +104,7 @@
   <dd>{{ items.len() }}</dd>
 %%         if !items.is_empty() {
   <dt>format</dt>
-%%           for format in Image::formats(items) {
+%%           for format in Item::formats(items) {
   <dd>{{ format }}</dd>
 %%           }
 %%         }
@@ -116,7 +116,7 @@
   <dd>{{ DisplayDuration(Video::sum_durations(items)) }}</dd>
 %%         if !items.is_empty() {
   <dt>format</dt>
-%%           for format in Video::formats(items) {
+%%           for format in Item::formats(items) {
   <dd>{{ format }}</dd>
 %%           }
 %%         }

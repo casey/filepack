@@ -40,7 +40,7 @@ mod tests {
     let html = VideoHtml {
       fingerprint: test::FINGERPRINT.parse().unwrap(),
       metadata: Metadata {
-        artwork: Some("foo.png".parse().unwrap()),
+        artwork: Some(Image::test("foo.png")),
         ..default()
       },
       video: 0,
@@ -49,7 +49,10 @@ mod tests {
     assert_eq!(
       html.open_graph_image(),
       Some(OpenGraphImage {
-        dimensions: Dimensions::default(),
+        dimensions: Dimensions {
+          height: 1,
+          width: 1
+        },
         path: format!("artwork/{}", test::FINGERPRINT),
       }),
     );
@@ -70,7 +73,7 @@ mod tests {
       metadata: Metadata {
         media: Some(Media::Video {
           items: vec![Item {
-            content: "foo.mp4".parse().unwrap(),
+            content: Video::test("foo.mp4"),
             title: Some("bar".parse().unwrap()),
           }],
         }),

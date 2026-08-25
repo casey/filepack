@@ -89,7 +89,7 @@ mod tests {
       audio: 0,
       fingerprint: test::FINGERPRINT.parse().unwrap(),
       metadata: Metadata {
-        artwork: Some("foo.png".parse().unwrap()),
+        artwork: Some(Image::test("foo.png")),
         ..default()
       },
     };
@@ -97,7 +97,10 @@ mod tests {
     assert_eq!(
       html.open_graph_image(),
       Some(OpenGraphImage {
-        dimensions: Dimensions::default(),
+        dimensions: Dimensions {
+          height: 1,
+          width: 1
+        },
         path: format!("artwork/{}", test::FINGERPRINT),
       }),
     );
