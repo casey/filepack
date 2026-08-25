@@ -1,8 +1,8 @@
 %% let audio = self.audio();
 <img src=/artwork/{{ self.fingerprint }}>
 <div class=info>
-  <div class=title>{{ audio.title }}</div>
-  <div class=artist>{{ audio.artist }}</div>
-  <div class=album>{{ audio.album }}</div>
+  <div class=title>{{ audio.display_title() }}</div>
+  <div class=artist>{{ audio.content.artist }}</div>
+  <div class=album>{{ audio.content.album }}</div>
 </div>
 <audio controls src=/media/audio/{{ self.fingerprint }}/item/{{ Ordinal(self.audio) }}></audio>

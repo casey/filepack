@@ -1830,18 +1830,21 @@ fn package_item_image() {
 
   let metadata = Metadata {
     media: Some(Media::Image {
-      items: vec![Image {
-        alpha: false,
-        bit_depth: 8,
-        chroma_subsampling: None,
-        color_type: ColorType::Rgb,
-        dimensions: Dimensions {
-          height: 1,
-          width: 2,
+      items: vec![Item {
+        content: Image {
+          alpha: false,
+          bit_depth: 8,
+          chroma_subsampling: None,
+          color_type: ColorType::Rgb,
+          dimensions: Dimensions {
+            height: 1,
+            width: 2,
+          },
+          orientation: Orientation::new(),
+          path: "foo.png".parse().unwrap(),
+          ty: ImageType::Png,
         },
-        orientation: Orientation::new(),
-        path: "foo.png".parse().unwrap(),
-        ty: ImageType::Png,
+        title: None,
       }],
     }),
     ..default()
@@ -1869,18 +1872,21 @@ fn package_item_image_out_of_range() {
   let fingerprint = PackageBuilder::new()
     .metadata(&Metadata {
       media: Some(Media::Image {
-        items: vec![Image {
-          alpha: false,
-          bit_depth: 8,
-          chroma_subsampling: None,
-          color_type: ColorType::Rgb,
-          dimensions: Dimensions {
-            height: 1,
-            width: 1,
+        items: vec![Item {
+          content: Image {
+            alpha: false,
+            bit_depth: 8,
+            chroma_subsampling: None,
+            color_type: ColorType::Rgb,
+            dimensions: Dimensions {
+              height: 1,
+              width: 1,
+            },
+            orientation: Orientation::new(),
+            path: "foo.png".parse().unwrap(),
+            ty: ImageType::Png,
           },
-          orientation: Orientation::new(),
-          path: "foo.png".parse().unwrap(),
-          ty: ImageType::Png,
+          title: None,
         }],
       }),
       ..default()
@@ -1916,34 +1922,37 @@ fn package_item_video() {
 
   let metadata = Metadata {
     media: Some(Media::Video {
-      items: vec![Video {
-        duration: 0,
-        path: "foo.mp4".parse().unwrap(),
-        tracks: vec![
-          Track {
-            codec: Codec::H264,
-            info: TrackInfo::Video {
-              bit_depth: 8,
-              chroma_subsampling: ChromaSubsampling::Yuv420,
-              dimensions: Dimensions {
-                height: 1,
-                width: 2,
+      items: vec![Item {
+        content: Video {
+          duration: 0,
+          path: "foo.mp4".parse().unwrap(),
+          tracks: vec![
+            Track {
+              codec: Codec::H264,
+              info: TrackInfo::Video {
+                bit_depth: 8,
+                chroma_subsampling: ChromaSubsampling::Yuv420,
+                dimensions: Dimensions {
+                  height: 1,
+                  width: 2,
+                },
+                frames: 0,
+                orientation: Orientation::new(),
               },
-              frames: 0,
-              orientation: Orientation::new(),
+              size: 0,
             },
-            size: 0,
-          },
-          Track {
-            codec: Codec::Aac,
-            info: TrackInfo::Audio {
-              channels: 2,
-              sample_rate: 44100,
+            Track {
+              codec: Codec::Aac,
+              info: TrackInfo::Audio {
+                channels: 2,
+                sample_rate: 44100,
+              },
+              size: 0,
             },
-            size: 0,
-          },
-        ],
-        ty: VideoType::Mp4,
+          ],
+          ty: VideoType::Mp4,
+        },
+        title: None,
       }],
     }),
     ..default()
@@ -2145,37 +2154,41 @@ fn package_page_renders_audio_media() {
   let metadata = Metadata {
     media: Some(Media::Audio {
       items: vec![
-        Audio {
-          album: "qux".parse().unwrap(),
-          artist: "baz".parse().unwrap(),
-          channels: 2,
-          disc: 1,
-          discs: 1,
-          path: "foo.flac".parse().unwrap(),
-          sample_bits: Some(16),
-          sample_rate: 44100,
-          samples: 9_922_500,
-          size: 0,
-          title: "foo".parse().unwrap(),
-          track: 1,
-          tracks: 2,
-          ty: AudioType::Flac,
+        Item {
+          content: Audio {
+            album: "qux".parse().unwrap(),
+            artist: "baz".parse().unwrap(),
+            channels: 2,
+            disc: 1,
+            discs: 1,
+            path: "foo.flac".parse().unwrap(),
+            sample_bits: Some(16),
+            sample_rate: 44100,
+            samples: 9_922_500,
+            size: 0,
+            track: 1,
+            tracks: 2,
+            ty: AudioType::Flac,
+          },
+          title: Some("foo".parse().unwrap()),
         },
-        Audio {
-          album: "qux".parse().unwrap(),
-          artist: "baz".parse().unwrap(),
-          channels: 2,
-          disc: 1,
-          discs: 1,
-          path: "bar.flac".parse().unwrap(),
-          sample_bits: Some(16),
-          sample_rate: 44100,
-          samples: 44100,
-          size: 0,
-          title: "bar".parse().unwrap(),
-          track: 2,
-          tracks: 2,
-          ty: AudioType::Flac,
+        Item {
+          content: Audio {
+            album: "qux".parse().unwrap(),
+            artist: "baz".parse().unwrap(),
+            channels: 2,
+            disc: 1,
+            discs: 1,
+            path: "bar.flac".parse().unwrap(),
+            sample_bits: Some(16),
+            sample_rate: 44100,
+            samples: 44100,
+            size: 0,
+            track: 2,
+            tracks: 2,
+            ty: AudioType::Flac,
+          },
+          title: Some("bar".parse().unwrap()),
         },
       ],
     }),
@@ -2215,18 +2228,21 @@ fn package_page_renders_image_media() {
 
   let metadata = Metadata {
     media: Some(Media::Image {
-      items: vec![Image {
-        alpha: false,
-        bit_depth: 8,
-        chroma_subsampling: None,
-        color_type: ColorType::Rgb,
-        dimensions: Dimensions {
-          height: 1,
-          width: 2,
+      items: vec![Item {
+        content: Image {
+          alpha: false,
+          bit_depth: 8,
+          chroma_subsampling: None,
+          color_type: ColorType::Rgb,
+          dimensions: Dimensions {
+            height: 1,
+            width: 2,
+          },
+          orientation: Orientation::new(),
+          path: "foo.png".parse().unwrap(),
+          ty: ImageType::Png,
         },
-        orientation: Orientation::new(),
-        path: "foo.png".parse().unwrap(),
-        ty: ImageType::Png,
+        title: None,
       }],
     }),
     ..default()
@@ -2264,34 +2280,37 @@ fn package_page_renders_video_media() {
 
   let metadata = Metadata {
     media: Some(Media::Video {
-      items: vec![Video {
-        duration: 0,
-        path: "foo.mp4".parse().unwrap(),
-        tracks: vec![
-          Track {
-            codec: Codec::H264,
-            info: TrackInfo::Video {
-              bit_depth: 8,
-              chroma_subsampling: ChromaSubsampling::Yuv420,
-              dimensions: Dimensions {
-                height: 1,
-                width: 2,
+      items: vec![Item {
+        content: Video {
+          duration: 0,
+          path: "foo.mp4".parse().unwrap(),
+          tracks: vec![
+            Track {
+              codec: Codec::H264,
+              info: TrackInfo::Video {
+                bit_depth: 8,
+                chroma_subsampling: ChromaSubsampling::Yuv420,
+                dimensions: Dimensions {
+                  height: 1,
+                  width: 2,
+                },
+                frames: 0,
+                orientation: Orientation::new(),
               },
-              frames: 0,
-              orientation: Orientation::new(),
+              size: 0,
             },
-            size: 0,
-          },
-          Track {
-            codec: Codec::Aac,
-            info: TrackInfo::Audio {
-              channels: 2,
-              sample_rate: 44100,
+            Track {
+              codec: Codec::Aac,
+              info: TrackInfo::Audio {
+                channels: 2,
+                sample_rate: 44100,
+              },
+              size: 0,
             },
-            size: 0,
-          },
-        ],
-        ty: VideoType::Mp4,
+          ],
+          ty: VideoType::Mp4,
+        },
+        title: None,
       }],
     }),
     ..default()
@@ -2671,16 +2690,16 @@ fn static_files() {
     .send();
 }
 
-fn tracks(filenames: &[&str]) -> Vec<Audio> {
+fn tracks(filenames: &[&str]) -> Vec<Item<Audio>> {
   filenames
     .iter()
     .enumerate()
     .map(|(i, filename)| {
-      let mut audio = filename.parse::<Audio>().unwrap();
-      audio.disc = 1;
-      audio.discs = 1;
-      audio.track = i.into_u64() + 1;
-      audio.tracks = filenames.len().into_u64();
+      let mut audio = filename.parse::<Item<Audio>>().unwrap();
+      audio.content.disc = 1;
+      audio.content.discs = 1;
+      audio.content.track = i.into_u64() + 1;
+      audio.content.tracks = filenames.len().into_u64();
       audio
     })
     .collect()

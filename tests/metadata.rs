@@ -134,19 +134,21 @@ fn create_extracts_image_dimensions() {
             "type": "image",
             "items": [
               {
-                "alpha": false,
-                "bit_depth": 8,
-                "color_type": "rgb",
-                "dimensions": {
-                  "height": 1,
-                  "width": 2
-                },
-                "orientation": {
-                  "mirrored": false,
-                  "rotation": 0
-                },
-                "path": "foo.png",
-                "type": "png"
+                "content": {
+                  "alpha": false,
+                  "bit_depth": 8,
+                  "color_type": "rgb",
+                  "dimensions": {
+                    "height": 1,
+                    "width": 2
+                  },
+                  "orientation": {
+                    "mirrored": false,
+                    "rotation": 0
+                  },
+                  "path": "foo.png",
+                  "type": "png"
+                }
               }
             ]
           }
@@ -193,20 +195,22 @@ fn create_extracts_track_tags() {
             "type": "audio",
             "items": [
               {
-                "album": "qux",
-                "artist": "baz",
-                "channels": 2,
-                "disc": 1,
-                "discs": 1,
-                "path": "foo.flac",
-                "sample_bits": 16,
-                "sample_rate": 44100,
-                "samples": 44100,
-                "size": 1024,
-                "title": "bar",
-                "track": 1,
-                "tracks": 1,
-                "type": "flac"
+                "content": {
+                  "album": "qux",
+                  "artist": "baz",
+                  "channels": 2,
+                  "disc": 1,
+                  "discs": 1,
+                  "path": "foo.flac",
+                  "sample_bits": 16,
+                  "sample_rate": 44100,
+                  "samples": 44100,
+                  "size": 1024,
+                  "track": 1,
+                  "tracks": 1,
+                  "type": "flac"
+                },
+                "title": "bar"
               }
             ]
           }
@@ -250,38 +254,40 @@ fn create_extracts_video_metadata() {
             "type": "video",
             "items": [
               {
-                "duration": 1500,
-                "path": "foo.mp4",
-                "tracks": [
-                  {
-                    "codec": "h264",
-                    "info": {
-                      "type": "video",
-                      "bit_depth": 8,
-                      "chroma_subsampling": "4:2:0",
-                      "dimensions": {
-                        "height": 1,
-                        "width": 2
+                "content": {
+                  "duration": 1500,
+                  "path": "foo.mp4",
+                  "tracks": [
+                    {
+                      "codec": "h264",
+                      "info": {
+                        "type": "video",
+                        "bit_depth": 8,
+                        "chroma_subsampling": "4:2:0",
+                        "dimensions": {
+                          "height": 1,
+                          "width": 2
+                        },
+                        "frames": 30,
+                        "orientation": {
+                          "mirrored": false,
+                          "rotation": 0
+                        }
                       },
-                      "frames": 30,
-                      "orientation": {
-                        "mirrored": false,
-                        "rotation": 0
-                      }
+                      "size": 30
                     },
-                    "size": 30
-                  },
-                  {
-                    "codec": "aac",
-                    "info": {
-                      "type": "audio",
-                      "channels": 2,
-                      "sample_rate": 44100
-                    },
-                    "size": 30
-                  }
-                ],
-                "type": "mp4"
+                    {
+                      "codec": "aac",
+                      "info": {
+                        "type": "audio",
+                        "channels": 2,
+                        "sample_rate": 44100
+                      },
+                      "size": 30
+                    }
+                  ],
+                  "type": "mp4"
+                }
               }
             ]
           }
@@ -359,35 +365,39 @@ fn create_generates_thumbnails() {
             "type": "image",
             "items": [
               {
-                "alpha": false,
-                "bit_depth": 8,
-                "chroma_subsampling": "4:4:4",
-                "color_type": "rgb",
-                "dimensions": {
-                  "height": 640,
-                  "width": 1280
-                },
-                "orientation": {
-                  "mirrored": false,
-                  "rotation": 0
-                },
-                "path": "foo.jpg",
-                "type": "jpeg"
+                "content": {
+                  "alpha": false,
+                  "bit_depth": 8,
+                  "chroma_subsampling": "4:4:4",
+                  "color_type": "rgb",
+                  "dimensions": {
+                    "height": 640,
+                    "width": 1280
+                  },
+                  "orientation": {
+                    "mirrored": false,
+                    "rotation": 0
+                  },
+                  "path": "foo.jpg",
+                  "type": "jpeg"
+                }
               },
               {
-                "alpha": true,
-                "bit_depth": 8,
-                "color_type": "rgb",
-                "dimensions": {
-                  "height": 640,
-                  "width": 1280
-                },
-                "orientation": {
-                  "mirrored": false,
-                  "rotation": 0
-                },
-                "path": "bar/baz.png",
-                "type": "png"
+                "content": {
+                  "alpha": true,
+                  "bit_depth": 8,
+                  "color_type": "rgb",
+                  "dimensions": {
+                    "height": 640,
+                    "width": 1280
+                  },
+                  "orientation": {
+                    "mirrored": false,
+                    "rotation": 0
+                  },
+                  "path": "bar/baz.png",
+                  "type": "png"
+                }
               }
             ]
           },

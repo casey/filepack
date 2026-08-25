@@ -175,7 +175,7 @@ impl Create {
         let mut missing = Vec::new();
 
         for audio in items {
-          if !audio.has_cover_art(&root)? {
+          if !audio.content.has_cover_art(&root)? {
             missing.push(audio);
           }
 

@@ -14,12 +14,12 @@ pub(crate) struct Video {
 }
 
 impl Video {
-  pub(crate) fn formats(videos: &[Video]) -> Vec<VideoType> {
+  pub(crate) fn formats(videos: &[Item<Video>]) -> Vec<VideoType> {
     let mut formats = Vec::new();
 
     for video in videos {
-      if !formats.contains(&video.ty) {
-        formats.push(video.ty);
+      if !formats.contains(&video.content.ty) {
+        formats.push(video.content.ty);
       }
     }
 
@@ -44,9 +44,9 @@ impl Video {
     self.ty.resource_type()
   }
 
-  pub(crate) fn sum_durations(videos: &[Video]) -> Duration {
+  pub(crate) fn sum_durations(videos: &[Item<Video>]) -> Duration {
     videos.iter().fold(Duration::ZERO, |sum, video| {
-      sum.saturating_add(Duration::from_millis(video.duration))
+      sum.saturating_add(Duration::from_millis(video.content.duration))
     })
   }
 }
@@ -72,17 +72,15 @@ impl FromStr for Video {
   }
 }
 
-impl Item for Video {
-  fn info(&self, url: String) -> Info {
-    InfoBuilder::new()
-      .link("path", &self.path, url)
+impl Content for Video {
+  fn info(&self, builder: InfoBuilder) -> InfoBuilder {
+    builder
       .value("type", self.ty)
       .value(
         "duration",
         DisplayDuration(Duration::from_millis(self.duration)),
       )
       .list("tracks", self.tracks.iter().map(|track| track.info(self)))
-      .build()
   }
 
   fn path(&self) -> &RelativePath {
@@ -100,9 +98,9 @@ mod tests {
 
   #[test]
   fn formats() {
-    let foo = "foo.mp4".parse::<Video>().unwrap();
-    let bar = "bar.mp4".parse::<Video>().unwrap();
-    let baz = "baz.webm".parse::<Video>().unwrap();
+    let foo = "foo.mp4".parse::<Item<Video>>().unwrap();
+    let bar = "bar.mp4".parse::<Item<Video>>().unwrap();
+    let baz = "baz.webm".parse::<Item<Video>>().unwrap();
 
     assert_eq!(
       Video::formats(&[foo, bar, baz]),
@@ -295,11 +293,11 @@ mod tests {
       let videos = durations
         .iter()
         .map(|duration| {
-          let mut video = "foo.mp4".parse::<Video>().unwrap();
-          video.duration = *duration;
+          let mut video = "foo.mp4".parse::<Item<Video>>().unwrap();
+          video.content.duration = *duration;
           video
         })
-        .collect::<Vec<Video>>();
+        .collect::<Vec<Item<Video>>>();
 
       assert_eq!(Video::sum_durations(&videos), expected);
     }

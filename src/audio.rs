@@ -24,29 +24,29 @@ pub(crate) struct Audio {
   #[n(9)]
   pub(crate) size: u64,
   #[n(10)]
-  pub(crate) title: Text,
-  #[n(11)]
   pub(crate) track: u64,
-  #[n(12)]
+  #[n(11)]
   pub(crate) tracks: u64,
-  #[n(13)]
+  #[n(12)]
   #[serde(rename = "type")]
   pub(crate) ty: AudioType,
 }
 
 impl Audio {
-  pub(crate) fn check_positions(tracks: &[Audio]) -> Result<(), AudioPositionError> {
+  pub(crate) fn check_positions(tracks: &[Item<Audio>]) -> Result<(), AudioPositionError> {
     let Some(first) = tracks.first() else {
       return Ok(());
     };
 
-    let discs = first.discs;
+    let discs = first.content.discs;
 
     let mut expected_disc = 1;
     let mut expected_track = 1;
     let mut disc_tracks = 0;
 
     for audio in tracks {
+      let audio = &audio.content;
+
       ensure! {
         audio.discs == discs,
         audio_position_error::DiscTotalMismatch {
@@ -131,12 +131,12 @@ impl Audio {
     )
   }
 
-  pub(crate) fn formats(tracks: &[Audio]) -> Vec<AudioType> {
+  pub(crate) fn formats(tracks: &[Item<Audio>]) -> Vec<AudioType> {
     let mut formats = Vec::new();
 
     for audio in tracks {
-      if !formats.contains(&audio.ty) {
-        formats.push(audio.ty);
+      if !formats.contains(&audio.content.ty) {
+        formats.push(audio.content.ty);
       }
     }
 
@@ -155,7 +155,7 @@ impl Audio {
     .context(error::Audio { path })
   }
 
-  pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result {
+  pub(crate) fn populate(&mut self, root: &Utf8Path) -> Result<Text> {
     let path = root.join(&self.path);
 
     let metadata = match self.ty {
@@ -187,20 +187,19 @@ impl Audio {
     self.sample_rate = sample_rate;
     self.samples = samples;
     self.size = size;
-    self.title = title;
     self.track = track;
     self.tracks = tracks;
 
-    Ok(())
+    Ok(title)
   }
 
   pub(crate) fn resource_type(&self) -> ResourceType {
     self.ty.resource_type()
   }
 
-  pub(crate) fn sum_durations(tracks: &[Audio]) -> Duration {
+  pub(crate) fn sum_durations(tracks: &[Item<Audio>]) -> Duration {
     tracks.iter().fold(Duration::ZERO, |sum, audio| {
-      sum.saturating_add(audio.duration())
+      sum.saturating_add(audio.content.duration())
     })
   }
 
@@ -247,7 +246,6 @@ impl FromStr for Audio {
       sample_rate: 0,
       samples: 0,
       size: 0,
-      title: Text::new(),
       track: 0,
       tracks: 0,
       ty,
@@ -255,11 +253,9 @@ impl FromStr for Audio {
   }
 }
 
-impl Item for Audio {
-  fn info(&self, url: String) -> Info {
-    InfoBuilder::new()
-      .link("path", &self.path, url)
-      .value("title", &self.title)
+impl Content for Audio {
+  fn info(&self, builder: InfoBuilder) -> InfoBuilder {
+    builder
       .value("artist", &self.artist)
       .value("album", &self.album)
       .value("disc", format!("{} of {}", self.disc, self.discs))
@@ -289,7 +285,6 @@ impl Item for Audio {
         },
       )
       .value("samples", self.samples)
-      .build()
   }
 
   fn path(&self) -> &RelativePath {
@@ -313,14 +308,14 @@ mod tests {
         .iter()
         .enumerate()
         .map(|(i, (disc, discs, track, tracks))| {
-          let mut t = format!("{i}.flac").parse::<Audio>().unwrap();
-          t.disc = *disc;
-          t.discs = *discs;
-          t.track = *track;
-          t.tracks = *tracks;
+          let mut t = format!("{i}.flac").parse::<Item<Audio>>().unwrap();
+          t.content.disc = *disc;
+          t.content.discs = *discs;
+          t.content.track = *track;
+          t.content.tracks = *tracks;
           t
         })
-        .collect::<Vec<Audio>>();
+        .collect::<Vec<Item<Audio>>>();
 
       assert_eq!(Audio::check_positions(&tracks), expected);
     }
@@ -461,9 +456,9 @@ mod tests {
 
   #[test]
   fn formats() {
-    let foo = "foo.flac".parse::<Audio>().unwrap();
-    let bar = "bar.flac".parse::<Audio>().unwrap();
-    let baz = "baz.mp3".parse::<Audio>().unwrap();
+    let foo = "foo.flac".parse::<Item<Audio>>().unwrap();
+    let bar = "bar.flac".parse::<Item<Audio>>().unwrap();
+    let baz = "baz.mp3".parse::<Item<Audio>>().unwrap();
 
     assert_eq!(
       Audio::formats(&[foo, bar, baz]),
@@ -491,7 +486,6 @@ mod tests {
         sample_rate: 0,
         samples: 0,
         size: 0,
-        title: Text::new(),
         track: 0,
         tracks: 0,
         ty: AudioType::Flac,
@@ -511,7 +505,6 @@ mod tests {
         sample_rate: 0,
         samples: 0,
         size: 0,
-        title: Text::new(),
         track: 0,
         tracks: 0,
         ty: AudioType::Mp3,
@@ -550,15 +543,12 @@ mod tests {
     audio.sample_rate = 44100;
     audio.samples = 66150;
     audio.size = 750;
-    audio.title = "bar".parse().unwrap();
     audio.track = 3;
     audio.tracks = 4;
 
     assert_eq!(
-      Item::info(&audio, "bob".into()),
+      Content::info(&audio, InfoBuilder::new()).build(),
       InfoBuilder::new()
-        .link("path", "foo.flac", "bob".into())
-        .value("title", "bar")
         .value("artist", "baz")
         .value("album", "qux")
         .value("disc", "1 of 2")
@@ -583,15 +573,12 @@ mod tests {
     audio.sample_rate = 44100;
     audio.samples = 66150;
     audio.size = 750;
-    audio.title = "bar".parse().unwrap();
     audio.track = 3;
     audio.tracks = 4;
 
     assert_eq!(
-      Item::info(&audio, "bob".into()),
+      Content::info(&audio, InfoBuilder::new()).build(),
       InfoBuilder::new()
-        .link("path", "foo.mp3", "bob".into())
-        .value("title", "bar")
         .value("artist", "baz")
         .value("album", "qux")
         .value("disc", "1 of 2")
@@ -610,10 +597,8 @@ mod tests {
     audio.size = 750;
 
     assert_eq!(
-      Item::info(&audio, "bob".into()),
+      Content::info(&audio, InfoBuilder::new()).build(),
       InfoBuilder::new()
-        .link("path", "foo.flac", "bob".into())
-        .value("title", "")
         .value("artist", "")
         .value("album", "")
         .value("disc", "0 of 0")
@@ -661,7 +646,10 @@ mod tests {
     .unwrap();
 
     let mut audio = "foo.flac".parse::<Audio>().unwrap();
-    audio.populate(&root).unwrap();
+    assert_eq!(
+      audio.populate(&root).unwrap(),
+      "bar".parse::<Text>().unwrap()
+    );
 
     assert_eq!(
       audio,
@@ -676,7 +664,6 @@ mod tests {
         sample_rate: 44100,
         samples: 66150,
         size: 1024,
-        title: "bar".parse().unwrap(),
         track: 3,
         tracks: 4,
         ty: AudioType::Flac,
@@ -684,7 +671,10 @@ mod tests {
     );
 
     let mut audio = "foo.mp3".parse::<Audio>().unwrap();
-    audio.populate(&root).unwrap();
+    assert_eq!(
+      audio.populate(&root).unwrap(),
+      "bar".parse::<Text>().unwrap()
+    );
 
     assert_eq!(
       audio,
@@ -699,7 +689,6 @@ mod tests {
         sample_rate: 44100,
         samples: 2304,
         size: 834,
-        title: "bar".parse().unwrap(),
         track: 3,
         tracks: 4,
         ty: AudioType::Mp3,
@@ -711,12 +700,12 @@ mod tests {
   fn serialize() {
     assert_eq!(
       serde_json::to_string(&"foo.flac".parse::<Audio>().unwrap()).unwrap(),
-      r#"{"album":"","artist":"","channels":0,"disc":0,"discs":0,"path":"foo.flac","sample_rate":0,"samples":0,"size":0,"title":"","track":0,"tracks":0,"type":"flac"}"#,
+      r#"{"album":"","artist":"","channels":0,"disc":0,"discs":0,"path":"foo.flac","sample_rate":0,"samples":0,"size":0,"track":0,"tracks":0,"type":"flac"}"#,
     );
 
     assert_eq!(
       serde_json::to_string(&"foo.mp3".parse::<Audio>().unwrap()).unwrap(),
-      r#"{"album":"","artist":"","channels":0,"disc":0,"discs":0,"path":"foo.mp3","sample_rate":0,"samples":0,"size":0,"title":"","track":0,"tracks":0,"type":"mp3"}"#,
+      r#"{"album":"","artist":"","channels":0,"disc":0,"discs":0,"path":"foo.mp3","sample_rate":0,"samples":0,"size":0,"track":0,"tracks":0,"type":"mp3"}"#,
     );
 
     assert_eq!(
@@ -731,13 +720,12 @@ mod tests {
         sample_rate: 1,
         samples: 2,
         size: 9,
-        title: "bar".parse().unwrap(),
         track: 5,
         tracks: 6,
         ty: AudioType::Flac,
       })
       .unwrap(),
-      r#"{"album":"qux","artist":"baz","channels":8,"disc":3,"discs":4,"path":"foo.flac","sample_bits":7,"sample_rate":1,"samples":2,"size":9,"title":"bar","track":5,"tracks":6,"type":"flac"}"#,
+      r#"{"album":"qux","artist":"baz","channels":8,"disc":3,"discs":4,"path":"foo.flac","sample_bits":7,"sample_rate":1,"samples":2,"size":9,"track":5,"tracks":6,"type":"flac"}"#,
     );
   }
 }

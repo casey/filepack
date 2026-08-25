@@ -47,6 +47,7 @@ use {
     color_type::ColorType,
     component::Component,
     component_error::ComponentError,
+    content::Content,
     context::Context,
     count::Count,
     dalek_signature_error::DalekSignatureError,
@@ -93,6 +94,7 @@ use {
     lint_group::LintGroup,
     map_decoder::MapDecoder,
     media::{Media, MediaType},
+    media_item::MediaItem,
     mode::Mode,
     mp3_decoder::Mp3Decoder,
     mp3_error::Mp3Error,
@@ -300,6 +302,7 @@ mod color_type;
 mod component;
 mod component_buf;
 mod component_error;
+mod content;
 mod context;
 mod count;
 mod dalek_signature_error;
@@ -360,6 +363,7 @@ mod manifest;
 mod map_decoder;
 mod map_encoder;
 mod media;
+mod media_item;
 mod metadata;
 mod mode;
 mod mp3_builder;

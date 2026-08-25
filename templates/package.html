@@ -132,15 +132,15 @@
 %%   match media {
 %%     Media::Audio { items } => {
 %%       let mut i = 0;
-%%       for disc in items.chunk_by(|a, b| a.disc == b.disc) {
-%%         if disc[0].discs > 1 {
-<h2>disc {{ disc[0].disc }}</h2>
+%%       for disc in items.chunk_by(|a, b| a.content.disc == b.content.disc) {
+%%         if disc[0].content.discs > 1 {
+<h2>disc {{ disc[0].content.disc }}</h2>
 %%         }
 <ol>
 %%         for audio in disc {
   <li>
-    <a href=/package/{{ self.fingerprint }}/item/{{ Ordinal(i) }}>{{ audio.title }}</a>
-    <time datetime={{ Iso8601Duration(audio.duration()) }}>{{ DisplayDuration(audio.duration()) }}</time>
+    <a href=/package/{{ self.fingerprint }}/item/{{ Ordinal(i) }}>{{ audio.display_title() }}</a>
+    <time datetime={{ Iso8601Duration(audio.content.duration()) }}>{{ DisplayDuration(audio.content.duration()) }}</time>
   </li>
 %%           i += 1;
 %%         }
@@ -161,9 +161,9 @@
 %%     Media::Video { items } => {
 <ol>
 %%       for (i, video) in items.iter().enumerate() {
-%%         let duration = Duration::from_millis(video.duration);
+%%         let duration = Duration::from_millis(video.content.duration);
   <li>
-    <a href=/package/{{ self.fingerprint }}/item/{{ Ordinal(i) }}>{{ video.path }}</a>
+    <a href=/package/{{ self.fingerprint }}/item/{{ Ordinal(i) }}>{{ video.content.path }}</a>
     <time datetime={{ Iso8601Duration(duration) }}>{{ DisplayDuration(duration) }}</time>
   </li>
 %%       }

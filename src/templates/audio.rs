@@ -8,7 +8,7 @@ pub(crate) struct AudioHtml {
 }
 
 impl AudioHtml {
-  fn audio(&self) -> &Audio {
+  fn audio(&self) -> &Item<Audio> {
     let Media::Audio { items } = self.metadata.media.as_ref().unwrap() else {
       unreachable!();
     };
@@ -27,7 +27,7 @@ impl Page for AudioHtml {
   }
 
   fn title(&self) -> String {
-    format!("{} · filepack", self.audio().title)
+    format!("{} · filepack", self.audio().display_title())
   }
 }
 
@@ -39,21 +39,23 @@ mod tests {
   fn audio() {
     let metadata = Metadata {
       media: Some(Media::Audio {
-        items: vec![Audio {
-          album: "qux".parse().unwrap(),
-          artist: "baz".parse().unwrap(),
-          channels: 2,
-          disc: 1,
-          discs: 1,
-          path: "foo.flac".parse().unwrap(),
-          sample_bits: Some(16),
-          sample_rate: 44100,
-          samples: 9_922_500,
-          size: 0,
-          title: "foo".parse().unwrap(),
-          track: 1,
-          tracks: 1,
-          ty: AudioType::Flac,
+        items: vec![Item {
+          content: Audio {
+            album: "qux".parse().unwrap(),
+            artist: "baz".parse().unwrap(),
+            channels: 2,
+            disc: 1,
+            discs: 1,
+            path: "foo.flac".parse().unwrap(),
+            sample_bits: Some(16),
+            sample_rate: 44100,
+            samples: 9_922_500,
+            size: 0,
+            track: 1,
+            tracks: 1,
+            ty: AudioType::Flac,
+          },
+          title: Some("foo".parse().unwrap()),
         }],
       }),
       ..default()
