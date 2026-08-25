@@ -89,8 +89,6 @@ impl Upload {
 
     client.put_file(hash, body)?;
 
-    bar.finish();
-
     Ok(())
   }
 
@@ -159,8 +157,6 @@ impl Upload {
     Self::upload_directory(&mut context, &root, fingerprint.into())?;
 
     context.client.verify_package(fingerprint)?;
-
-    context.progress_bar.finish();
 
     Ok(())
   }

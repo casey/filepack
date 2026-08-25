@@ -45,8 +45,6 @@ impl Download {
 
     Self::write_response(&client, response, hash, path, &bar)?;
 
-    bar.finish();
-
     Ok(())
   }
 
@@ -179,8 +177,6 @@ impl Download {
       &self.output.join(Manifest::FILENAME),
       archive.encode_to_vec(),
     )?;
-
-    context.progress_bar.finish();
 
     Ok(())
   }
