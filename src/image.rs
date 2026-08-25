@@ -256,8 +256,6 @@ impl Image {
       return Ok(None);
     };
 
-    ensure!(!title.is_empty(), error::ImageTitleEmpty { path });
-
     Ok(Some(
       title
         .parse::<Text>()
@@ -689,7 +687,7 @@ mod tests {
       title("foo.png", &PngBuilder::new().text("Title", "").build())
         .unwrap_err()
         .to_string(),
-      r"^empty title in image `.*foo\.png`$",
+      r"^invalid title in image `.*foo\.png`$",
     );
 
     assert_matches_regex!(

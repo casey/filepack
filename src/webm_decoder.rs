@@ -201,8 +201,6 @@ impl WebmDecoder {
       return Ok(None);
     };
 
-    ensure!(!title.is_empty(), video_error::TagEmpty { tag });
-
     Ok(Some(
       title
         .parse::<Text>()
@@ -628,7 +626,7 @@ mod tests {
         .video_track(2, 1)
         .frame(1, VP9_FRAME)
         .title(""),
-      "empty `Title` tag",
+      "invalid `Title` tag",
     );
 
     error(
