@@ -6,8 +6,7 @@
 <a href=/package/{{ self.fingerprint }}>package</a>
 %% let media = self.metadata.media.as_ref().unwrap();
 <ol>
-%% for i in 0..media.items() {
-%%   let item = media.item(i).unwrap();
+%% for (i, item) in media.items().enumerate() {
 %%   let info = item.info(format!("/package/{}/item/{}", self.fingerprint, Ordinal(i)));
   <li>
     {{ Trusted(InfoHtml(&info)) }}

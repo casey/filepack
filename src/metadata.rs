@@ -81,6 +81,19 @@ impl Metadata {
   }
 
   pub(crate) fn check_files(&self, paths: &HashSet<RelativePath>) -> Result {
+    if let Some(media) = &self.media
+      && media.ty().has_items()
+    {
+      let mut seen = HashSet::new();
+      for item in media.items() {
+        let path = item.path();
+        ensure! {
+          seen.insert(path),
+          error::DuplicateItem { path },
+        }
+      }
+    }
+
     for path in self.files() {
       ensure! {
         paths.contains(&path),
@@ -270,6 +283,22 @@ mod tests {
       time: None,
       title: None,
     }
+  }
+
+  #[test]
+  fn duplicate_items() {
+    assert_eq!(
+      Metadata {
+        media: Some(Media::Image {
+          items: vec![Item::test("foo.png"), Item::test("foo.png")],
+        }),
+        ..default()
+      }
+      .check_files(&["foo.png".parse().unwrap()].into())
+      .unwrap_err()
+      .to_string(),
+      "duplicate item in metadata: `foo.png`",
+    );
   }
 
   #[test]

@@ -296,9 +296,9 @@ pub(crate) async fn package_item(
     }
 
     ensure! {
-      media.items() > index,
+      media.item_count() > index,
       server_error::MediaItemDoesNotExist {
-        count: media.items(),
+        count: media.item_count(),
         fingerprint,
         index,
         ty,
