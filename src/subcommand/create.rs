@@ -179,6 +179,20 @@ impl Create {
       }
     }
 
+    if lints.contains(&Lint::MetadataMissing) && metadata.is_none() {
+      eprintln!("error: {}", LintError::MetadataMissing);
+      lint_errors += 1;
+    }
+
+    if lints.contains(&Lint::MediaMissing)
+      && metadata
+        .as_ref()
+        .is_none_or(|(metadata, _cbor)| metadata.media.is_none())
+    {
+      eprintln!("error: {}", LintError::MediaMissing);
+      lint_errors += 1;
+    }
+
     if lints.contains(&Lint::ArtworkMissing)
       && metadata
         .as_ref()

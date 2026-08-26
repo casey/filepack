@@ -38,7 +38,14 @@ impl LintGroup {
       .into(),
       Self::Distribution => &Self::Hygiene.lints() | &Self::Compatibility.lints(),
       Self::Hygiene => [Junk].into(),
-      Self::Metadata => [ArtworkMissing, AudioEmbeddedArtworkMissing, NotGenerated].into(),
+      Self::Metadata => [
+        ArtworkMissing,
+        AudioEmbeddedArtworkMissing,
+        MediaMissing,
+        MetadataMissing,
+        NotGenerated,
+      ]
+      .into(),
     }
   }
 

@@ -232,6 +232,33 @@ fn deny_junk_ignores_compatibility() {
 }
 
 #[test]
+fn deny_media_missing() {
+  Test::new()
+    .write("metadata.yaml", "title: foo")
+    .args(["create", "--deny", "media-missing"])
+    .stderr(
+      "
+        error: package missing media
+        error: 1 lint error
+      ",
+    )
+    .failure();
+}
+
+#[test]
+fn deny_metadata_missing() {
+  Test::new()
+    .args(["create", "--deny", "metadata-missing"])
+    .stderr(
+      "
+        error: package missing metadata
+        error: 1 lint error
+      ",
+    )
+    .failure();
+}
+
+#[test]
 fn deny_multiple() {
   if cfg!(windows) {
     return;
