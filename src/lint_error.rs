@@ -18,12 +18,16 @@ pub(crate) enum LintError {
   CreatorMissing,
   #[snafu(display("possible junk file"))]
   Junk,
+  #[snafu(display("metadata media missing items"))]
+  MediaItemsMissing,
   #[snafu(display("metadata missing media"))]
   MediaMissing,
   #[snafu(display("package missing metadata"))]
   MetadataMissing,
   #[snafu(display("derived assets not generated, pass `--generate`"))]
   NotGenerated,
+  #[snafu(display("metadata package missing creator"))]
+  PackageCreatorMissing,
   #[snafu(display("metadata missing package"))]
   PackageMissing,
   #[snafu(display("metadata missing time"))]

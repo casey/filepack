@@ -220,12 +220,36 @@ impl Create {
       lint_errors += 1;
     }
 
+    if lints.contains(&Lint::PackageCreatorMissing)
+      && metadata.as_ref().is_none_or(|(metadata, _cbor)| {
+        metadata
+          .package
+          .as_ref()
+          .is_none_or(|package| package.creator.is_none())
+      })
+    {
+      eprintln!("error: {}", LintError::PackageCreatorMissing);
+      lint_errors += 1;
+    }
+
     if lints.contains(&Lint::MediaMissing)
       && metadata
         .as_ref()
         .is_none_or(|(metadata, _cbor)| metadata.media.is_none())
     {
       eprintln!("error: {}", LintError::MediaMissing);
+      lint_errors += 1;
+    }
+
+    if lints.contains(&Lint::MediaItemsMissing)
+      && metadata.as_ref().is_none_or(|(metadata, _cbor)| {
+        metadata
+          .media
+          .as_ref()
+          .is_none_or(|media| media.ty().has_items() && media.item_count() == 0)
+      })
+    {
+      eprintln!("error: {}", LintError::MediaItemsMissing);
       lint_errors += 1;
     }
 
