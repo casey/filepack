@@ -1,12 +1,40 @@
 use super::*;
 
 #[test]
+fn allow_group() {
+  if cfg!(windows) {
+    return;
+  }
+
+  Test::new()
+    .touch(".DS_Store")
+    .touch("aux")
+    .args(["create", "--deny", "distribution", "--allow", "hygiene"])
+    .stderr(
+      "
+        error: path failed lint: `aux`
+               └─ Windows does not allow files named `aux`
+        error: 1 lint error
+      ",
+    )
+    .failure();
+}
+
+#[test]
 fn allow_lint() {
   if cfg!(windows) {
     return;
   }
 
   Test::new().touch("aux").args(["create"]).success();
+}
+
+#[test]
+fn allow_removes_denied_lint() {
+  Test::new()
+    .touch(".DS_Store")
+    .args(["create", "--deny", "distribution", "--allow", "junk"])
+    .success();
 }
 
 #[test]

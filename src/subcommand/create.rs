@@ -2,6 +2,8 @@ use super::*;
 
 #[derive(Parser)]
 pub(crate) struct Create {
+  #[arg(help = "Allow <LINT>", long, value_name = "LINT")]
+  allow: Vec<LintSelector>,
   #[arg(help = "Deny <LINT>", long, value_name = "LINT")]
   deny: Vec<LintSelector>,
   #[arg(
@@ -88,11 +90,19 @@ impl Create {
 
     let mut empty = Vec::new();
 
-    let lints = self
+    let denied = self
       .deny
       .into_iter()
       .flat_map(LintSelector::lints)
       .collect::<BTreeSet<Lint>>();
+
+    let allowed = self
+      .allow
+      .into_iter()
+      .flat_map(LintSelector::lints)
+      .collect::<BTreeSet<Lint>>();
+
+    let lints = &denied - &allowed;
 
     for entry in WalkDir::new(&root).sort_by_file_name() {
       let entry = entry?;
