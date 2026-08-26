@@ -1096,6 +1096,7 @@ dependencies = [
  "tracing",
  "tracing-journald",
  "tracing-subscriber",
+ "unicase",
  "unindent",
  "url",
  "usized",

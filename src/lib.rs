@@ -210,6 +210,7 @@ use {
   tempfile::NamedTempFile,
   tokio::io::{AsyncReadExt, AsyncWriteExt},
   tokio_util::io::ReaderStream,
+  unicase::UniCase,
   url::Url,
   usized::IntoU64,
   walkdir::WalkDir,
