@@ -39,15 +39,24 @@ impl Media {
     }
   }
 
-  fn item_url(&self, fingerprint: Fingerprint, item: usize) -> Option<String> {
-    (item < self.items()).then(|| format!("/package/{fingerprint}/item/{}", Ordinal(item)))
-  }
-
-  pub(crate) fn items(&self) -> usize {
+  pub(crate) fn item_count(&self) -> usize {
     match self {
       Self::Audio { items } => items.len(),
       Self::Image { items } => items.len(),
       Self::Video { items } => items.len(),
+      Self::Web => unreachable!(),
+    }
+  }
+
+  fn item_url(&self, fingerprint: Fingerprint, item: usize) -> Option<String> {
+    (item < self.item_count()).then(|| format!("/package/{fingerprint}/item/{}", Ordinal(item)))
+  }
+
+  pub(crate) fn items<'a>(&'a self) -> Box<dyn Iterator<Item = &dyn MediaItem> + 'a> {
+    match self {
+      Self::Audio { items } => Box::new(items.iter().map(|item| item as &dyn MediaItem)),
+      Self::Image { items } => Box::new(items.iter().map(|item| item as &dyn MediaItem)),
+      Self::Video { items } => Box::new(items.iter().map(|item| item as &dyn MediaItem)),
       Self::Web => unreachable!(),
     }
   }

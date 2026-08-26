@@ -167,6 +167,11 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     expected: Hash,
   },
+  #[snafu(display("duplicate item in metadata: `{path}`"))]
+  DuplicateItem {
+    backtrace: Option<Backtrace>,
+    path: RelativePath,
+  },
   #[snafu(display(
     "duplicate key: {}",
     if first == second {

@@ -209,7 +209,7 @@ impl Server {
     let item = media
       .item(item)
       .context(server_error::MediaItemDoesNotExist {
-        count: media.items(),
+        count: media.item_count(),
         fingerprint,
         index: item,
         ty,
