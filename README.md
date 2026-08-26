@@ -453,10 +453,16 @@ package is intended for distribution, such as non-portable paths that are
 illegal on Windows, paths which would conflict on case-insensitive file
 systems, and inclusion of junk files such as `.DS_Store`.
 
-Lint group names and the lints they cover can be printed with:
+Lint groups and the lints they contain may be printed with:
 
 ```shell
 filepack lints
+```
+
+Individual lints may be allowed with `--allow`:
+
+```shell
+filepack create --deny distribution --allow windows-reserved-filename
 ```
 
 Keys and Signatures
