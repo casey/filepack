@@ -73,9 +73,9 @@ impl RelativePath {
       }
 
       if lints.contains(&Lint::WindowsReservedFilename) {
-        for name in Self::WINDOWS_RESERVED_NAMES {
-          let uppercase = component.to_uppercase();
+        let uppercase = component.to_uppercase();
 
+        for name in Self::WINDOWS_RESERVED_NAMES {
           if uppercase == name {
             return Some(LintError::WindowsReservedFilename {
               name: component.into(),
