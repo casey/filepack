@@ -51,15 +51,55 @@ fn deny_compatibility_ignores_junk() {
 }
 
 #[test]
+fn deny_content_ignores_generate_without_metadata() {
+  Test::new()
+    .args(["create", "--deny", "content", "."])
+    .stderr(
+      "
+        error: package missing artwork
+        error: 1 lint error
+      ",
+    )
+    .failure();
+}
+
+#[test]
+fn deny_content_requires_artwork() {
+  #[track_caller]
+  fn case(metadata: Option<&str>) {
+    let mut test = Test::new();
+
+    if let Some(metadata) = metadata {
+      test = test.write("metadata.yaml", metadata);
+    }
+
+    test
+      .args(["create", "--deny", "content", "--generate", "."])
+      .stderr(
+        "
+          error: package missing artwork
+          error: 1 lint error
+        ",
+      )
+      .failure();
+  }
+
+  case(None);
+  case(Some("title: foo"));
+}
+
+#[test]
 fn deny_content_requires_embedded_cover_art() {
   #[track_caller]
   fn case(path: &str, data: Vec<u8>, cover: bool) {
     let test = Test::new()
       .write(path, data)
+      .write("bar.png", PngBuilder::new().build())
       .write(
         "metadata.yaml",
         format!(
           "
+            artwork: bar.png
             media:
               type: audio
               items:
@@ -67,7 +107,7 @@ fn deny_content_requires_embedded_cover_art() {
           "
         ),
       )
-      .args(["create", "--deny", "content", "."]);
+      .args(["create", "--deny", "content", "--generate", "."]);
 
     if cover {
       test.success();
@@ -114,6 +154,21 @@ fn deny_content_requires_embedded_cover_art() {
   case("foo.mp3", mp3().build(), false);
   case("foo.mp3", mp3().picture(3).build(), true);
   case("foo.mp3", mp3().picture(4).build(), false);
+}
+
+#[test]
+fn deny_content_requires_generate() {
+  Test::new()
+    .write("foo.png", PngBuilder::new().build())
+    .write("metadata.yaml", "artwork: foo.png")
+    .args(["create", "--deny", "content", "."])
+    .stderr(
+      "
+        error: derived assets not generated, pass `--generate`
+        error: 1 lint error
+      ",
+    )
+    .failure();
 }
 
 #[test]
