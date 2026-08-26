@@ -184,6 +184,42 @@ impl Create {
       lint_errors += 1;
     }
 
+    if lints.contains(&Lint::TitleMissing)
+      && metadata
+        .as_ref()
+        .is_none_or(|(metadata, _cbor)| metadata.title.is_none())
+    {
+      eprintln!("error: {}", LintError::TitleMissing);
+      lint_errors += 1;
+    }
+
+    if lints.contains(&Lint::CreatorMissing)
+      && metadata
+        .as_ref()
+        .is_none_or(|(metadata, _cbor)| metadata.creator.is_none())
+    {
+      eprintln!("error: {}", LintError::CreatorMissing);
+      lint_errors += 1;
+    }
+
+    if lints.contains(&Lint::TimeMissing)
+      && metadata
+        .as_ref()
+        .is_none_or(|(metadata, _cbor)| metadata.time.is_none())
+    {
+      eprintln!("error: {}", LintError::TimeMissing);
+      lint_errors += 1;
+    }
+
+    if lints.contains(&Lint::PackageMissing)
+      && metadata
+        .as_ref()
+        .is_none_or(|(metadata, _cbor)| metadata.package.is_none())
+    {
+      eprintln!("error: {}", LintError::PackageMissing);
+      lint_errors += 1;
+    }
+
     if lints.contains(&Lint::MediaMissing)
       && metadata
         .as_ref()

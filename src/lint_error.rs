@@ -8,20 +8,28 @@ use super::*;
   strum(serialize_all = "kebab-case")
 )]
 pub(crate) enum LintError {
-  #[snafu(display("package missing artwork"))]
+  #[snafu(display("metadata missing artwork"))]
   ArtworkMissing,
   #[snafu(display("audio file missing embedded front cover art"))]
   AudioEmbeddedArtworkMissing,
   #[snafu(display("paths would conflict on case-insensitive filesystem"))]
   CaseConflict,
+  #[snafu(display("metadata missing creator"))]
+  CreatorMissing,
   #[snafu(display("possible junk file"))]
   Junk,
-  #[snafu(display("package missing media"))]
+  #[snafu(display("metadata missing media"))]
   MediaMissing,
   #[snafu(display("package missing metadata"))]
   MetadataMissing,
   #[snafu(display("derived assets not generated, pass `--generate`"))]
   NotGenerated,
+  #[snafu(display("metadata missing package"))]
+  PackageMissing,
+  #[snafu(display("metadata missing time"))]
+  TimeMissing,
+  #[snafu(display("metadata missing title"))]
+  TitleMissing,
   #[snafu(display("Windows does not allow filenames that begin with spaces"))]
   WindowsLeadingSpace,
   #[snafu(display("Windows does not allow filenames that begin with `{character}`"))]

@@ -41,9 +41,13 @@ impl LintGroup {
       Self::Metadata => [
         ArtworkMissing,
         AudioEmbeddedArtworkMissing,
+        CreatorMissing,
         MediaMissing,
         MetadataMissing,
         NotGenerated,
+        PackageMissing,
+        TimeMissing,
+        TitleMissing,
       ]
       .into(),
     }
