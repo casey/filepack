@@ -2501,6 +2501,48 @@ fn packages_non_empty() {
 }
 
 #[test]
+fn packages_sorted_by_title_then_fingerprint() {
+  let server = TestServer::new();
+
+  let mut packages = Vec::new();
+
+  for title in [Some("baz"), None, Some("bar")] {
+    let metadata = Metadata {
+      title: title.map(|title| title.parse().unwrap()),
+      ..default()
+    };
+
+    let totals = Totals {
+      directories: 0,
+      directory_size: 0,
+      file_size: metadata.encode_to_vec().len().into_u64(),
+      files: 1,
+    };
+
+    let fingerprint = PackageBuilder::new().metadata(&metadata).upload(&server);
+
+    packages.push((fingerprint, Some(metadata), totals));
+  }
+
+  let (baz, untitled, bar) = (
+    packages[0].clone(),
+    packages[1].clone(),
+    packages[2].clone(),
+  );
+
+  assert!(baz.0 < bar.0);
+  assert!(untitled.0 < bar.0);
+
+  server
+    .get("/packages")
+    .assert_page(PackagesHtml {
+      packages: vec![bar, baz, untitled],
+      view: View::List,
+    })
+    .send();
+}
+
+#[test]
 fn ports() {
   #[track_caller]
   fn case(serve: Serve, http_port: Option<u16>, https_port: Option<u16>) {

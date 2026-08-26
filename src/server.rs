@@ -382,11 +382,21 @@ impl Server {
   }
 
   pub(crate) fn packages(&self) -> ServerResult<Vec<(Fingerprint, Option<Metadata>, Totals)>> {
+    fn sort_key(
+      (fingerprint, metadata, _totals): &(Fingerprint, Option<Metadata>, Totals),
+    ) -> (bool, Option<&str>, Fingerprint) {
+      let title = metadata
+        .as_ref()
+        .and_then(|metadata| metadata.title.as_deref());
+      (title.is_none(), title, *fingerprint)
+    }
+
     let tx = self.database.begin_read()?;
 
     let directories = tx.open_table(DIRECTORIES)?;
 
-    tx.open_table(PACKAGES)?
+    let mut packages = tx
+      .open_table(PACKAGES)?
       .iter()?
       .map(|entry| {
         let fingerprint = entry?.0.value();
@@ -398,7 +408,11 @@ impl Server {
 
         Ok((fingerprint, self.metadata(fingerprint)?, totals))
       })
-      .collect()
+      .collect::<ServerResult<Vec<(Fingerprint, Option<Metadata>, Totals)>>>()?;
+
+    packages.sort_by(|a, b| sort_key(a).cmp(&sort_key(b)));
+
+    Ok(packages)
   }
 
   fn read_directory(&self, hash: Hash) -> ServerResult<Directory> {
