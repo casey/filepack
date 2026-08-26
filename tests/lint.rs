@@ -35,6 +35,72 @@ fn deny_artwork_missing() {
 }
 
 #[test]
+fn deny_audio_embedded_artwork_missing() {
+  #[track_caller]
+  fn case(path: &str, data: Vec<u8>, cover: bool) {
+    let test = Test::new()
+      .write(path, data)
+      .write(
+        "metadata.yaml",
+        format!(
+          "
+            media:
+              type: audio
+              items:
+                - {path}
+          "
+        ),
+      )
+      .args(["create", "--deny", "audio-embedded-artwork-missing"]);
+
+    if cover {
+      test.success();
+    } else {
+      test
+        .stderr(
+          format!(
+            "
+              error: path failed lint: `{path}`
+                     └─ audio file missing embedded front cover art
+              error: 1 lint error
+            "
+          )
+          .as_str(),
+        )
+        .failure();
+    }
+  }
+
+  fn flac() -> FlacBuilder {
+    FlacBuilder::new()
+      .tag("ALBUM", "qux")
+      .tag("ARTIST", "baz")
+      .tag("DISCNUMBER", "1")
+      .tag("DISCTOTAL", "1")
+      .tag("TITLE", "bar")
+      .tag("TRACKNUMBER", "1")
+      .tag("TRACKTOTAL", "1")
+  }
+
+  fn mp3() -> Mp3Builder {
+    Mp3Builder::new()
+      .tag("TALB", "qux")
+      .tag("TIT2", "bar")
+      .tag("TPE1", "baz")
+      .tag("TPOS", "1/1")
+      .tag("TRCK", "1/1")
+      .frames(1)
+  }
+
+  case("foo.flac", flac().build(), false);
+  case("foo.flac", flac().picture(3).build(), true);
+  case("foo.flac", flac().picture(4).build(), false);
+  case("foo.mp3", mp3().build(), false);
+  case("foo.mp3", mp3().picture(3).build(), true);
+  case("foo.mp3", mp3().picture(4).build(), false);
+}
+
+#[test]
 fn deny_case_conflict() {
   if cfg!(windows) || cfg!(target_os = "macos") {
     return;
@@ -95,72 +161,6 @@ fn deny_distribution_catches_both() {
       ",
     )
     .failure();
-}
-
-#[test]
-fn deny_embedded_artwork_missing() {
-  #[track_caller]
-  fn case(path: &str, data: Vec<u8>, cover: bool) {
-    let test = Test::new()
-      .write(path, data)
-      .write(
-        "metadata.yaml",
-        format!(
-          "
-            media:
-              type: audio
-              items:
-                - {path}
-          "
-        ),
-      )
-      .args(["create", "--deny", "embedded-artwork-missing"]);
-
-    if cover {
-      test.success();
-    } else {
-      test
-        .stderr(
-          format!(
-            "
-              error: path failed lint: `{path}`
-                     └─ audio file missing embedded front cover art
-              error: 1 lint error
-            "
-          )
-          .as_str(),
-        )
-        .failure();
-    }
-  }
-
-  fn flac() -> FlacBuilder {
-    FlacBuilder::new()
-      .tag("ALBUM", "qux")
-      .tag("ARTIST", "baz")
-      .tag("DISCNUMBER", "1")
-      .tag("DISCTOTAL", "1")
-      .tag("TITLE", "bar")
-      .tag("TRACKNUMBER", "1")
-      .tag("TRACKTOTAL", "1")
-  }
-
-  fn mp3() -> Mp3Builder {
-    Mp3Builder::new()
-      .tag("TALB", "qux")
-      .tag("TIT2", "bar")
-      .tag("TPE1", "baz")
-      .tag("TPOS", "1/1")
-      .tag("TRCK", "1/1")
-      .frames(1)
-  }
-
-  case("foo.flac", flac().build(), false);
-  case("foo.flac", flac().picture(3).build(), true);
-  case("foo.flac", flac().picture(4).build(), false);
-  case("foo.mp3", mp3().build(), false);
-  case("foo.mp3", mp3().picture(3).build(), true);
-  case("foo.mp3", mp3().picture(4).build(), false);
 }
 
 #[test]

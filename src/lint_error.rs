@@ -10,10 +10,10 @@ use super::*;
 pub(crate) enum LintError {
   #[snafu(display("package missing artwork"))]
   ArtworkMissing,
+  #[snafu(display("audio file missing embedded front cover art"))]
+  AudioEmbeddedArtworkMissing,
   #[snafu(display("paths would conflict on case-insensitive filesystem"))]
   CaseConflict,
-  #[snafu(display("audio file missing embedded front cover art"))]
-  EmbeddedArtworkMissing,
   #[snafu(display("possible junk file"))]
   Junk,
   #[snafu(display("derived assets not generated, pass `--generate`"))]

@@ -103,6 +103,7 @@ needless-pass-by-value = "allow"
 new-without-default = "allow"
 pedantic = { level = "deny", priority = -1 }
 result-large-err = "allow"
+same-functions-in-if-condition = "allow"
 self-named-constructors = "allow"
 similar-names = "allow"
 struct-excessive-bools = "allow"

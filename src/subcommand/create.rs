@@ -183,7 +183,7 @@ impl Create {
       lint_errors += 1;
     }
 
-    if lints.contains(&Lint::EmbeddedArtworkMissing)
+    if lints.contains(&Lint::AudioEmbeddedArtworkMissing)
       && let Some((metadata, _cbor)) = &metadata
       && let Some(Media::Audio { items }) = &metadata.media
     {
@@ -205,7 +205,7 @@ impl Create {
 
       for audio in missing {
         eprintln!("error: path failed lint: `{}`", audio.path());
-        eprintln!("       └─ {}", LintError::EmbeddedArtworkMissing);
+        eprintln!("       └─ {}", LintError::AudioEmbeddedArtworkMissing);
         lint_errors += 1;
       }
     }
