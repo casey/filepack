@@ -82,7 +82,7 @@ mod tests {
               tracks: 2,
               ty: AudioType::Flac,
             },
-            title: Some("bar".parse().unwrap()),
+            title: None,
           },
         ],
       }),
@@ -130,7 +130,7 @@ mod tests {
               <time datetime=PT3M45S>3:45</time>
             </li>
             <li>
-              <a href=/package/{fingerprint}/item/2>bar</a>
+              <a href=/package/{fingerprint}/item/2>Track 2</a>
               <time datetime=PT0M1S>0:01</time>
             </li>
           </ol>
@@ -669,7 +669,7 @@ mod tests {
             ],
             ty: VideoType::Mp4,
           },
-          title: Some("bar".parse().unwrap()),
+          title: None,
         }],
       }),
       ..default()
@@ -712,7 +712,7 @@ mod tests {
           </dl>
           <ol>
             <li>
-              <a href=/package/{fingerprint}/item/1>bar</a>
+              <a href=/package/{fingerprint}/item/1>Video 1</a>
               <time datetime=PT3M45S>3:45</time>
             </li>
           </ol>

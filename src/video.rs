@@ -22,6 +22,8 @@ impl Video {
 }
 
 impl Content for Video {
+  const LABEL: &'static str = "Video";
+
   type Type = VideoType;
 
   fn info(&self, builder: InfoBuilder) -> InfoBuilder {

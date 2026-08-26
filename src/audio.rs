@@ -170,6 +170,8 @@ impl Audio {
 }
 
 impl Content for Audio {
+  const LABEL: &'static str = "Track";
+
   type Type = AudioType;
 
   fn info(&self, builder: InfoBuilder) -> InfoBuilder {

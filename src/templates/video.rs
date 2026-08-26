@@ -27,7 +27,7 @@ impl Page for VideoHtml {
   }
 
   fn title(&self) -> String {
-    format!("{} · filepack", self.video().display_title())
+    format!("{} · filepack", self.video().display_title(self.video))
   }
 }
 
@@ -68,19 +68,24 @@ mod tests {
 
   #[test]
   fn title() {
-    let html = VideoHtml {
+    let mut html = VideoHtml {
       fingerprint: test::FINGERPRINT.parse().unwrap(),
       metadata: Metadata {
         media: Some(Media::Video {
-          items: vec![Item {
-            content: Video::test("foo.mp4"),
-            title: Some("bar".parse().unwrap()),
-          }],
+          items: vec![Item::test("foo.mp4")],
         }),
         ..default()
       },
       video: 0,
     };
+
+    assert_eq!(Page::title(&html), "Video 1 · filepack");
+
+    let Some(Media::Video { items }) = html.metadata.media.as_mut() else {
+      unreachable!();
+    };
+
+    items[0].title = Some("bar".parse().unwrap());
 
     assert_eq!(Page::title(&html), "bar · filepack");
   }
