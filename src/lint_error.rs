@@ -3,7 +3,7 @@ use super::*;
 #[derive(Debug, EnumDiscriminants, PartialEq, Snafu)]
 #[strum_discriminants(
   name(Lint),
-  derive(EnumIter, IntoStaticStr, Ord, PartialOrd, Serialize),
+  derive(EnumIter, EnumString, IntoStaticStr, Ord, PartialOrd, Serialize),
   serde(rename_all = "kebab-case"),
   strum(serialize_all = "kebab-case")
 )]
@@ -31,7 +31,7 @@ pub(crate) enum LintError {
 }
 
 impl Lint {
-  fn name(self) -> &'static str {
+  pub(crate) fn name(self) -> &'static str {
     self.into()
   }
 }

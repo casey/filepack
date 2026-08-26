@@ -442,7 +442,7 @@ created in 1989, some years after Egon first packaged Tobin's Spirit Guide.
 Lints
 -----
 
-`filepack create` supports optional lints that can be enabled by group:
+`filepack create` supports optional lints to check your package for issues:
 
 ```shell
 filepack create --deny distribution
