@@ -16,6 +16,10 @@ pub(crate) enum LintError {
   CaseConflict,
   #[snafu(display("possible junk file"))]
   Junk,
+  #[snafu(display("package missing media"))]
+  MediaMissing,
+  #[snafu(display("package missing metadata"))]
+  MetadataMissing,
   #[snafu(display("derived assets not generated, pass `--generate`"))]
   NotGenerated,
   #[snafu(display("Windows does not allow filenames that begin with spaces"))]
