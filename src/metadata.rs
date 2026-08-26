@@ -89,7 +89,7 @@ impl Metadata {
         let path = item.path();
         ensure! {
           seen.insert(path),
-          error::DuplicateItem { path: path.clone() },
+          error::DuplicateItem { path },
         }
       }
     }
