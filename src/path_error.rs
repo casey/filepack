@@ -19,6 +19,8 @@ pub enum PathError {
   Extension { extensions: &'static [&'static str] },
   #[snafu(display("paths may not begin with slash character"))]
   LeadingSlash,
+  #[snafu(display("path exceeds 4096 byte limit"))]
+  Length,
   #[snafu(display("path may not contain non-normal component `{component}`"))]
   Normal { component: String },
   #[snafu(display("paths may not end with slash character"))]

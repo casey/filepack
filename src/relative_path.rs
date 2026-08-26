@@ -18,6 +18,8 @@ pub struct RelativePath(String);
 impl RelativePath {
   const JUNK_NAMES: [&'static str; 2] = [".DS_Store", ".localized"];
 
+  const MAX_LENGTH: usize = 4096;
+
   const WINDOWS_RESERVED_CHARACTERS: [char; 7] = ['"', '*', ':', '<', '>', '?', '|'];
 
   const WINDOWS_RESERVED_NAMES: [&'static str; 28] = [
@@ -159,6 +161,10 @@ impl FromStr for RelativePath {
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     if s.is_empty() {
       return Err(PathError::Empty);
+    }
+
+    if s.len() > Self::MAX_LENGTH {
+      return Err(PathError::Length);
     }
 
     if s.starts_with('/') {
@@ -309,6 +315,10 @@ mod tests {
 
     case("foo", "foo");
     case("foo/bar", "foo/bar");
+
+    let path = "a/".repeat(2047) + "aa";
+    assert_eq!(path.len(), RelativePath::MAX_LENGTH);
+    case(&path, &path);
   }
 
   #[test]
@@ -328,6 +338,10 @@ mod tests {
         source: ComponentError::Control { character: '\0' },
       },
     );
+
+    let path = "a/".repeat(2048) + "a";
+    assert_eq!(path.len(), RelativePath::MAX_LENGTH + 1);
+    case(&path, PathError::Length);
   }
 
   #[test]
