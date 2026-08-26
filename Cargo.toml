@@ -67,6 +67,7 @@ tokio-util = { version = "0.7.18", features = ["io"] }
 tower-http = { version = "0.6.11", features = ["set-header"] }
 tracing = "0.1.44"
 tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
+unicase = "2.9.0"
 url = "2.5.8"
 usized = "0.0.2"
 walkdir = "2.5.0"

@@ -2506,7 +2506,7 @@ fn packages_sorted_by_title_then_fingerprint() {
 
   let mut packages = Vec::new();
 
-  for title in [Some("baz"), None, Some("bar")] {
+  for title in [Some("Baz"), None, Some("bar")] {
     let metadata = Metadata {
       title: title.map(|title| title.parse().unwrap()),
       ..default()

@@ -384,11 +384,16 @@ impl Server {
   pub(crate) fn packages(&self) -> ServerResult<Vec<(Fingerprint, Option<Metadata>, Totals)>> {
     fn sort_key(
       (fingerprint, metadata, _totals): &(Fingerprint, Option<Metadata>, Totals),
-    ) -> (bool, Option<&str>, Fingerprint) {
+    ) -> (bool, Option<UniCase<&str>>, Option<&str>, Fingerprint) {
       let title = metadata
         .as_ref()
         .and_then(|metadata| metadata.title.as_deref());
-      (title.is_none(), title, *fingerprint)
+      (
+        title.is_none(),
+        title.map(UniCase::new),
+        title,
+        *fingerprint,
+      )
     }
 
     let tx = self.database.begin_read()?;
