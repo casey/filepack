@@ -246,6 +246,39 @@ fn deny_junk_ignores_compatibility() {
 }
 
 #[test]
+fn deny_media_items_missing() {
+  Test::new()
+    .write(
+      "metadata.yaml",
+      "
+        media:
+          type: audio
+          items: []
+      ",
+    )
+    .args(["create", "--deny", "media-items-missing"])
+    .stderr(
+      "
+        error: metadata media missing items
+        error: 1 lint error
+      ",
+    )
+    .failure();
+
+  Test::new()
+    .write(
+      "metadata.yaml",
+      "
+        media:
+          type: web
+      ",
+    )
+    .touch("static/index.html")
+    .args(["create", "--deny", "media-items-missing"])
+    .success();
+}
+
+#[test]
 fn deny_media_missing() {
   Test::new()
     .write("metadata.yaml", "title: foo")
@@ -320,6 +353,20 @@ fn deny_not_generated_ignores_missing_metadata() {
   Test::new()
     .args(["create", "--deny", "not-generated"])
     .success();
+}
+
+#[test]
+fn deny_package_creator_missing() {
+  Test::new()
+    .write("metadata.yaml", "package: {}")
+    .args(["create", "--deny", "package-creator-missing"])
+    .stderr(
+      "
+        error: metadata package missing creator
+        error: 1 lint error
+      ",
+    )
+    .failure();
 }
 
 #[test]
