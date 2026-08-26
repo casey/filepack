@@ -2,8 +2,8 @@ use super::*;
 
 #[derive(Parser)]
 pub(crate) struct Create {
-  #[arg(help = "Deny <LINT_GROUP>", long, value_name = "LINT_GROUP")]
-  deny: Option<LintGroup>,
+  #[arg(help = "Deny <LINT>", long, value_name = "LINT")]
+  deny: Vec<LintSelector>,
   #[arg(
     help = "Overwrite manifest and generated assets if they already exist",
     long
@@ -88,7 +88,11 @@ impl Create {
 
     let mut empty = Vec::new();
 
-    let lints = self.deny.map(LintGroup::lints).unwrap_or_default();
+    let lints = self
+      .deny
+      .into_iter()
+      .flat_map(LintSelector::lints)
+      .collect::<BTreeSet<Lint>>();
 
     for entry in WalkDir::new(&root).sort_by_file_name() {
       let entry = entry?;
@@ -179,7 +183,7 @@ impl Create {
       lint_errors += 1;
     }
 
-    if lints.contains(&Lint::AudioEmbeddedArtworkMissing)
+    if lints.contains(&Lint::EmbeddedArtworkMissing)
       && let Some((metadata, _cbor)) = &metadata
       && let Some(Media::Audio { items }) = &metadata.media
     {
@@ -201,7 +205,7 @@ impl Create {
 
       for audio in missing {
         eprintln!("error: path failed lint: `{}`", audio.path());
-        eprintln!("       └─ {}", LintError::AudioEmbeddedArtworkMissing);
+        eprintln!("       └─ {}", LintError::EmbeddedArtworkMissing);
         lint_errors += 1;
       }
     }

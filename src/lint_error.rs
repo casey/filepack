@@ -3,17 +3,17 @@ use super::*;
 #[derive(Debug, EnumDiscriminants, PartialEq, Snafu)]
 #[strum_discriminants(
   name(Lint),
-  derive(EnumIter, IntoStaticStr, Ord, PartialOrd, Serialize),
+  derive(EnumIter, EnumString, IntoStaticStr, Ord, PartialOrd, Serialize),
   serde(rename_all = "kebab-case"),
   strum(serialize_all = "kebab-case")
 )]
 pub(crate) enum LintError {
   #[snafu(display("package missing artwork"))]
   ArtworkMissing,
-  #[snafu(display("audio file missing embedded front cover art"))]
-  AudioEmbeddedArtworkMissing,
   #[snafu(display("paths would conflict on case-insensitive filesystem"))]
   CaseConflict,
+  #[snafu(display("audio file missing embedded front cover art"))]
+  EmbeddedArtworkMissing,
   #[snafu(display("possible junk file"))]
   Junk,
   #[snafu(display("derived assets not generated, pass `--generate`"))]
@@ -31,7 +31,7 @@ pub(crate) enum LintError {
 }
 
 impl Lint {
-  fn name(self) -> &'static str {
+  pub(crate) fn name(self) -> &'static str {
     self.into()
   }
 }

@@ -93,6 +93,7 @@ use {
     language::Language,
     lint_error::{Lint, LintError},
     lint_group::LintGroup,
+    lint_selector::LintSelector,
     map_decoder::MapDecoder,
     media::{Media, MediaType},
     media_item::MediaItem,
@@ -361,6 +362,7 @@ mod language;
 mod language_error;
 mod lint_error;
 mod lint_group;
+mod lint_selector;
 mod major_type;
 mod manifest;
 mod map_decoder;

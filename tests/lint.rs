@@ -6,11 +6,36 @@ fn allow_lint() {
     return;
   }
 
-  Test::new().touch("aux").args(["create", "."]).success();
+  Test::new().touch("aux").args(["create"]).success();
 }
 
 #[test]
-fn deny_case_insensitive_filesystem_path_conflict() {
+fn deny_artwork_missing() {
+  #[track_caller]
+  fn case(metadata: Option<&str>) {
+    let mut test = Test::new();
+
+    if let Some(metadata) = metadata {
+      test = test.write("metadata.yaml", metadata);
+    }
+
+    test
+      .args(["create", "--deny", "artwork-missing"])
+      .stderr(
+        "
+          error: package missing artwork
+          error: 1 lint error
+        ",
+      )
+      .failure();
+  }
+
+  case(None);
+  case(Some("title: foo"));
+}
+
+#[test]
+fn deny_case_conflict() {
   if cfg!(windows) || cfg!(target_os = "macos") {
     return;
   }
@@ -18,7 +43,7 @@ fn deny_case_insensitive_filesystem_path_conflict() {
   Test::new()
     .touch("foo")
     .touch("FOO")
-    .args(["create", "--deny", "distribution", "."])
+    .args(["create", "--deny", "case-conflict"])
     .stderr(
       "
         error: paths would conflict on case-insensitive filesystem
@@ -39,7 +64,7 @@ fn deny_compatibility_ignores_junk() {
   Test::new()
     .touch("aux")
     .touch(".DS_Store")
-    .args(["create", "--deny", "compatibility", "."])
+    .args(["create", "--deny", "compatibility"])
     .stderr(
       "
         error: path failed lint: `aux`
@@ -51,55 +76,37 @@ fn deny_compatibility_ignores_junk() {
 }
 
 #[test]
-fn deny_content_ignores_generate_without_metadata() {
+fn deny_distribution_catches_both() {
+  if cfg!(windows) {
+    return;
+  }
+
   Test::new()
-    .args(["create", "--deny", "content", "."])
+    .touch(".DS_Store")
+    .touch("aux")
+    .args(["create", "--deny", "distribution"])
     .stderr(
       "
-        error: package missing artwork
-        error: 1 lint error
+        error: path failed lint: `.DS_Store`
+               └─ possible junk file
+        error: path failed lint: `aux`
+               └─ Windows does not allow files named `aux`
+        error: 2 lint errors
       ",
     )
     .failure();
 }
 
 #[test]
-fn deny_content_requires_artwork() {
-  #[track_caller]
-  fn case(metadata: Option<&str>) {
-    let mut test = Test::new();
-
-    if let Some(metadata) = metadata {
-      test = test.write("metadata.yaml", metadata);
-    }
-
-    test
-      .args(["create", "--deny", "content", "--generate", "."])
-      .stderr(
-        "
-          error: package missing artwork
-          error: 1 lint error
-        ",
-      )
-      .failure();
-  }
-
-  case(None);
-  case(Some("title: foo"));
-}
-
-#[test]
-fn deny_content_requires_embedded_cover_art() {
+fn deny_embedded_artwork_missing() {
   #[track_caller]
   fn case(path: &str, data: Vec<u8>, cover: bool) {
     let test = Test::new()
       .write(path, data)
-      .write("bar.png", PngBuilder::new().build())
       .write(
         "metadata.yaml",
         format!(
           "
-            artwork: bar.png
             media:
               type: audio
               items:
@@ -107,7 +114,7 @@ fn deny_content_requires_embedded_cover_art() {
           "
         ),
       )
-      .args(["create", "--deny", "content", "--generate", "."]);
+      .args(["create", "--deny", "embedded-artwork-missing"]);
 
     if cover {
       test.success();
@@ -157,37 +164,20 @@ fn deny_content_requires_embedded_cover_art() {
 }
 
 #[test]
-fn deny_content_requires_generate() {
-  Test::new()
-    .write("foo.png", PngBuilder::new().build())
-    .write("metadata.yaml", "artwork: foo.png")
-    .args(["create", "--deny", "content", "."])
-    .stderr(
-      "
-        error: derived assets not generated, pass `--generate`
-        error: 1 lint error
-      ",
-    )
-    .failure();
-}
-
-#[test]
-fn deny_distribution_catches_both() {
+fn deny_hygiene_ignores_compatibility() {
   if cfg!(windows) {
     return;
   }
 
   Test::new()
-    .touch(".DS_Store")
     .touch("aux")
-    .args(["create", "--deny", "distribution", "."])
+    .touch(".DS_Store")
+    .args(["create", "--deny", "hygiene"])
     .stderr(
       "
         error: path failed lint: `.DS_Store`
                └─ possible junk file
-        error: path failed lint: `aux`
-               └─ Windows does not allow files named `aux`
-        error: 2 lint errors
+        error: 1 lint error
       ",
     )
     .failure();
@@ -202,7 +192,7 @@ fn deny_junk_ignores_compatibility() {
   Test::new()
     .touch("aux")
     .touch(".DS_Store")
-    .args(["create", "--deny", "junk", "."])
+    .args(["create", "--deny", "junk"])
     .stderr(
       "
         error: path failed lint: `.DS_Store`
@@ -214,14 +204,78 @@ fn deny_junk_ignores_compatibility() {
 }
 
 #[test]
-fn deny_lint() {
+fn deny_multiple() {
+  if cfg!(windows) {
+    return;
+  }
+
+  Test::new()
+    .touch(".DS_Store")
+    .touch("aux")
+    .args([
+      "create",
+      "--deny",
+      "junk",
+      "--deny",
+      "windows-reserved-filename",
+    ])
+    .stderr(
+      "
+        error: path failed lint: `.DS_Store`
+               └─ possible junk file
+        error: path failed lint: `aux`
+               └─ Windows does not allow files named `aux`
+        error: 2 lint errors
+      ",
+    )
+    .failure();
+}
+
+#[test]
+fn deny_not_generated() {
+  Test::new()
+    .write("foo.png", PngBuilder::new().build())
+    .write("metadata.yaml", "artwork: foo.png")
+    .args(["create", "--deny", "not-generated"])
+    .stderr(
+      "
+        error: derived assets not generated, pass `--generate`
+        error: 1 lint error
+      ",
+    )
+    .failure();
+}
+
+#[test]
+fn deny_not_generated_ignores_missing_metadata() {
+  Test::new()
+    .args(["create", "--deny", "not-generated"])
+    .success();
+}
+
+#[test]
+fn deny_unknown_lint() {
+  Test::new()
+    .args(["create", "--deny", "foo"])
+    .stderr(
+      "
+        error: invalid value 'foo' for '--deny <LINT>': unknown lint or lint group `foo`
+
+        For more information, try '--help'.
+      ",
+    )
+    .status(2);
+}
+
+#[test]
+fn deny_windows_reserved_filename() {
   if cfg!(windows) {
     return;
   }
 
   Test::new()
     .touch("aux")
-    .args(["create", "--deny", "distribution", "."])
+    .args(["create", "--deny", "windows-reserved-filename"])
     .stderr(
       "
         error: path failed lint: `aux`
