@@ -265,6 +265,8 @@ impl Image {
 }
 
 impl Content for Image {
+  const LABEL: &'static str = "Image";
+
   type Type = ImageType;
 
   fn info(&self, builder: InfoBuilder) -> InfoBuilder {

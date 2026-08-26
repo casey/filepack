@@ -1,7 +1,7 @@
 %% let audio = self.audio();
 <img src=/artwork/{{ self.fingerprint }}>
 <div class=info>
-  <div class=title>{{ audio.display_title() }}</div>
+  <div class=title>{{ audio.display_title(self.audio) }}</div>
   <div class=artist>{{ audio.content.artist }}</div>
   <div class=album>{{ audio.content.album }}</div>
 </div>

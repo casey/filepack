@@ -27,7 +27,7 @@ impl Page for AudioHtml {
   }
 
   fn title(&self) -> String {
-    format!("{} · filepack", self.audio().display_title())
+    format!("{} · filepack", self.audio().display_title(self.audio))
   }
 }
 
@@ -55,7 +55,7 @@ mod tests {
             tracks: 1,
             ty: AudioType::Flac,
           },
-          title: Some("foo".parse().unwrap()),
+          title: None,
         }],
       }),
       ..default()
@@ -72,7 +72,7 @@ mod tests {
         "
           <img src=/artwork/{fingerprint}>
           <div class=info>
-            <div class=title>foo</div>
+            <div class=title>Track 1</div>
             <div class=artist>baz</div>
             <div class=album>qux</div>
           </div>
@@ -112,5 +112,29 @@ mod tests {
     };
 
     assert_eq!(html.open_graph_image(), None);
+  }
+
+  #[test]
+  fn title() {
+    let mut html = AudioHtml {
+      audio: 0,
+      fingerprint: test::FINGERPRINT.parse().unwrap(),
+      metadata: Metadata {
+        media: Some(Media::Audio {
+          items: vec![Item::test("foo.flac")],
+        }),
+        ..default()
+      },
+    };
+
+    assert_eq!(Page::title(&html), "Track 1 · filepack");
+
+    let Some(Media::Audio { items }) = html.metadata.media.as_mut() else {
+      unreachable!();
+    };
+
+    items[0].title = Some("bar".parse().unwrap());
+
+    assert_eq!(Page::title(&html), "bar · filepack");
   }
 }

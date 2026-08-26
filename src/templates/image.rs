@@ -57,7 +57,7 @@ impl Page for ImageHtml {
   }
 
   fn title(&self) -> String {
-    format!("{} · filepack", self.image().display_title())
+    format!("{} · filepack", self.image().display_title(self.image))
   }
 }
 
@@ -213,7 +213,7 @@ mod tests {
       },
     };
 
-    assert_eq!(Page::title(&html), "foo.png · filepack");
+    assert_eq!(Page::title(&html), "Image 1 · filepack");
 
     let Some(Media::Image { items }) = html.metadata.media.as_mut() else {
       unreachable!();

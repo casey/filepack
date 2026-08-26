@@ -10,10 +10,10 @@ pub(crate) struct Item<T> {
 }
 
 impl<T: Content> Item<T> {
-  pub(crate) fn display_title(&self) -> &str {
+  pub(crate) fn display_title(&self, index: usize) -> String {
     match &self.title {
-      Some(title) => title,
-      None => self.content.path().as_ref(),
+      Some(title) => title.to_string(),
+      None => format!("{} {}", T::LABEL, Ordinal(index)),
     }
   }
 
@@ -66,9 +66,9 @@ mod tests {
   #[test]
   fn display_title() {
     let mut item = Item::<Image>::test("foo.png");
-    assert_eq!(item.display_title(), "foo.png");
+    assert_eq!(item.display_title(0), "Image 1");
     item.title = Some("bar".parse().unwrap());
-    assert_eq!(item.display_title(), "bar");
+    assert_eq!(item.display_title(0), "bar");
   }
 
   #[test]

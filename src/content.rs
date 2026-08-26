@@ -1,6 +1,8 @@
 use super::*;
 
 pub(crate) trait Content: Sized {
+  const LABEL: &'static str;
+
   type Type: ContentType;
 
   fn info(&self, builder: InfoBuilder) -> InfoBuilder;
