@@ -51,7 +51,7 @@ fn deny_artwork_missing() {
       .args(["create", "--deny", "artwork-missing"])
       .stderr(
         "
-          error: package missing artwork
+          error: metadata missing artwork
           error: 1 lint error
         ",
       )
@@ -170,6 +170,20 @@ fn deny_compatibility_ignores_junk() {
 }
 
 #[test]
+fn deny_creator_missing() {
+  Test::new()
+    .write("metadata.yaml", "title: foo")
+    .args(["create", "--deny", "creator-missing"])
+    .stderr(
+      "
+        error: metadata missing creator
+        error: 1 lint error
+      ",
+    )
+    .failure();
+}
+
+#[test]
 fn deny_distribution_catches_both() {
   if cfg!(windows) {
     return;
@@ -238,7 +252,7 @@ fn deny_media_missing() {
     .args(["create", "--deny", "media-missing"])
     .stderr(
       "
-        error: package missing media
+        error: metadata missing media
         error: 1 lint error
       ",
     )
@@ -306,6 +320,48 @@ fn deny_not_generated_ignores_missing_metadata() {
   Test::new()
     .args(["create", "--deny", "not-generated"])
     .success();
+}
+
+#[test]
+fn deny_package_missing() {
+  Test::new()
+    .write("metadata.yaml", "title: foo")
+    .args(["create", "--deny", "package-missing"])
+    .stderr(
+      "
+        error: metadata missing package
+        error: 1 lint error
+      ",
+    )
+    .failure();
+}
+
+#[test]
+fn deny_time_missing() {
+  Test::new()
+    .write("metadata.yaml", "title: foo")
+    .args(["create", "--deny", "time-missing"])
+    .stderr(
+      "
+        error: metadata missing time
+        error: 1 lint error
+      ",
+    )
+    .failure();
+}
+
+#[test]
+fn deny_title_missing() {
+  Test::new()
+    .write("metadata.yaml", "creator: foo")
+    .args(["create", "--deny", "title-missing"])
+    .stderr(
+      "
+        error: metadata missing title
+        error: 1 lint error
+      ",
+    )
+    .failure();
 }
 
 #[test]
