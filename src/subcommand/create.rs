@@ -165,7 +165,21 @@ impl Create {
       }
     }
 
-    if lints.contains(&Lint::CoverArtMissing)
+    if lints.contains(&Lint::ArtworkMissing)
+      && metadata
+        .as_ref()
+        .is_none_or(|(metadata, _cbor)| metadata.artwork.is_none())
+    {
+      eprintln!("error: {}", LintError::ArtworkMissing);
+      lint_errors += 1;
+    }
+
+    if lints.contains(&Lint::NotGenerated) && !self.generate && metadata.is_some() {
+      eprintln!("error: {}", LintError::NotGenerated);
+      lint_errors += 1;
+    }
+
+    if lints.contains(&Lint::AudioEmbeddedArtworkMissing)
       && let Some((metadata, _cbor)) = &metadata
       && let Some(Media::Audio { items }) = &metadata.media
     {
@@ -187,7 +201,7 @@ impl Create {
 
       for audio in missing {
         eprintln!("error: path failed lint: `{}`", audio.path());
-        eprintln!("       └─ {}", LintError::CoverArtMissing);
+        eprintln!("       └─ {}", LintError::AudioEmbeddedArtworkMissing);
         lint_errors += 1;
       }
     }

@@ -33,7 +33,7 @@ impl LintGroup {
         WindowsTrailingSpace,
       ]
       .into(),
-      Self::Content => [CoverArtMissing].into(),
+      Self::Content => [ArtworkMissing, AudioEmbeddedArtworkMissing, NotGenerated].into(),
       Self::Distribution => &Self::Junk.lints() | &Self::Compatibility.lints(),
       Self::Junk => [Junk].into(),
     }
