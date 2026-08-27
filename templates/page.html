@@ -26,6 +26,9 @@
 %% if let Some(prev) = self.content.prev() {
     <link href={{ prev }} rel=prev>
 %% }
+%% if let Some(up) = self.content.up() {
+    <link href={{ up }} rel=up>
+%% }
 %% if let Some(script) = self.content.script() {
     <script src={{ script }} type=module></script>
 %% }
