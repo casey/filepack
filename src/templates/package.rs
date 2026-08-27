@@ -262,6 +262,92 @@ mod tests {
   }
 
   #[test]
+  fn document() {
+    let metadata = Metadata {
+      media: Some(Media::Document {
+        items: vec![Item::test("foo.pdf")],
+      }),
+      ..default()
+    };
+
+    assert_eq!(
+      PackageHtml {
+        fingerprint: test::FINGERPRINT.parse().unwrap(),
+        identifier: PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
+        metadata: Some(metadata),
+        number: Some(1),
+        totals: Totals {
+          directories: 0,
+          directory_size: 0,
+          file_size: 9,
+          files: 1,
+        },
+        ..default()
+      }
+      .to_string(),
+      unindent(&format!(
+        "
+          <dl>
+            <div>
+              <dt>number</dt>
+              <dd>
+                <a href='/package/1'>1</a>
+              </dd>
+            </div>
+            <div>
+              <dt>fingerprint</dt>
+              <dd>
+                <a href='/package/{fingerprint}'><code>{fingerprint}</code></a>
+              </dd>
+            </div>
+            <div>
+              <dt>size</dt>
+              <dd>
+                9 B
+              </dd>
+            </div>
+            <div>
+              <dt>files</dt>
+              <dd>
+                <a href='/directory/{hash}'>1 file</a>
+              </dd>
+            </div>
+            <div>
+              <dt>media</dt>
+              <dd>
+                <a href='/package/{fingerprint}/media'>document</a>
+              </dd>
+            </div>
+            <div>
+              <dt>documents</dt>
+              <dd>
+                1
+              </dd>
+            </div>
+            <div>
+              <dt>format</dt>
+              <dd>
+                <ol role=list>
+                  <li>
+                    PDF
+                  </li>
+                </ol>
+              </dd>
+            </div>
+          </dl>
+          <ol>
+            <li>
+              <a href=/package/{fingerprint}/item/1>Document 1</a>
+            </li>
+          </ol>
+        ",
+        fingerprint = test::FINGERPRINT,
+        hash = test::HASH,
+      )),
+    );
+  }
+
+  #[test]
   fn duration_saturates() {
     let audio = Item {
       content: Audio {

@@ -4,6 +4,7 @@ use super::*;
 #[serde(deny_unknown_fields, rename_all = "snake_case", tag = "type")]
 pub(crate) enum Media {
   Audio { items: Vec<Audio> },
+  Document { items: Vec<Document> },
   Image { items: Vec<Image> },
   Video { items: Vec<Video> },
   Web,
@@ -13,6 +14,7 @@ impl Media {
   pub(crate) fn items_missing(&self) -> bool {
     match self {
       Self::Audio { items } => items.is_empty(),
+      Self::Document { items } => items.is_empty(),
       Self::Image { items } => items.is_empty(),
       Self::Video { items } => items.is_empty(),
       Self::Web => false,
@@ -49,6 +51,16 @@ impl Media {
             .collect(),
         }
       }
+      Self::Document { items } => crate::Media::Document {
+        items: items
+          .into_iter()
+          .map(|Document { path }| {
+            let item = crate::Document::load(root, path)?;
+            bar.inc(1);
+            Ok(item)
+          })
+          .collect::<Result<Vec<Item<crate::Document>>>>()?,
+      },
       Self::Image { items } => crate::Media::Image {
         items: items
           .into_iter()
@@ -90,6 +102,7 @@ mod tests {
     }
 
     case(Media::Audio { items: Vec::new() }, true);
+    case(Media::Document { items: Vec::new() }, true);
     case(Media::Image { items: Vec::new() }, true);
     case(Media::Video { items: Vec::new() }, true);
     case(
