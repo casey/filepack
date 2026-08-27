@@ -50,6 +50,7 @@ impl LintGroup {
         PackageMissing,
         TimeMissing,
         TitleMissing,
+        VideoPlaceholderMissing,
       ]
       .into(),
     }

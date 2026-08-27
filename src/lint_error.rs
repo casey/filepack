@@ -34,6 +34,8 @@ pub(crate) enum LintError {
   TimeMissing,
   #[snafu(display("metadata missing title"))]
   TitleMissing,
+  #[snafu(display("video missing placeholder image"))]
+  VideoPlaceholderMissing,
   #[snafu(display("Windows does not allow filenames that begin with spaces"))]
   WindowsLeadingSpace,
   #[snafu(display("Windows does not allow filenames that begin with `{character}`"))]
