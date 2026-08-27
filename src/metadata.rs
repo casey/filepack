@@ -141,7 +141,12 @@ impl Metadata {
           files.extend(items.iter().map(|image| image.path().into()));
         }
         Media::Video { items } => {
-          files.extend(items.iter().map(|video| video.path().into()));
+          for video in items {
+            files.push(video.path().into());
+            if let Some(placeholder) = &video.content.placeholder {
+              files.push(placeholder.path.clone());
+            }
+          }
         }
         Media::Web => files.push("static/index.html".parse().unwrap()),
       }
@@ -425,9 +430,12 @@ mod tests {
 
   #[test]
   fn files_include_videos() {
+    let mut bar = Item::<Video>::test("bar.mp4");
+    bar.content.placeholder = Some(Image::test("baz.png"));
+
     let metadata = Metadata {
       media: Some(Media::Video {
-        items: vec![Item::test("foo.mp4"), Item::test("bar.mp4")],
+        items: vec![Item::test("foo.mp4"), bar],
       }),
       ..default()
     };
@@ -437,6 +445,7 @@ mod tests {
       vec![
         "foo.mp4".parse::<RelativePath>().unwrap(),
         "bar.mp4".parse().unwrap(),
+        "baz.png".parse().unwrap(),
       ],
     );
   }

@@ -1,5 +1,6 @@
 use super::*;
 
+#[skip_serializing_none]
 #[derive(Clone, Debug, Decode, Encode, PartialEq, Serialize)]
 pub(crate) struct Video {
   #[n(0)]
@@ -7,8 +8,10 @@ pub(crate) struct Video {
   #[n(1)]
   pub(crate) path: RelativePath,
   #[n(2)]
-  pub(crate) tracks: Vec<Track>,
+  pub(crate) placeholder: Option<Image>,
   #[n(3)]
+  pub(crate) tracks: Vec<Track>,
+  #[n(4)]
   #[serde(rename = "type")]
   pub(crate) ty: VideoType,
 }
@@ -52,6 +55,7 @@ impl Content for Video {
       content: Self {
         duration,
         path,
+        placeholder: None,
         tracks,
         ty,
       },
@@ -63,6 +67,10 @@ impl Content for Video {
     &self.path
   }
 
+  fn placeholder(&self) -> Option<&Image> {
+    self.placeholder.as_ref()
+  }
+
   #[cfg(test)]
   fn test(path: &str) -> Self {
     let path = path.parse::<RelativePath>().unwrap();
@@ -70,6 +78,7 @@ impl Content for Video {
     Self {
       duration: 1000,
       path,
+      placeholder: None,
       tracks: Vec::new(),
       ty,
     }
@@ -83,6 +92,14 @@ impl Content for Video {
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn encoding() {
+    assert_encoding(Video {
+      placeholder: Some(Image::test("bar.png")),
+      ..Video::test("foo.mp4")
+    });
+  }
 
   #[test]
   fn load() {
@@ -107,6 +124,7 @@ mod tests {
       Video {
         duration: 2,
         path: "foo.mp4".parse().unwrap(),
+        placeholder: None,
         tracks: vec![
           Track {
             codec: Codec::H264,
@@ -182,6 +200,7 @@ mod tests {
       serde_json::to_string(&Video {
         duration: 0,
         path: "foo.mp4".parse().unwrap(),
+        placeholder: None,
         tracks: vec![
           Track {
             codec: Codec::H264,
@@ -210,6 +229,15 @@ mod tests {
       })
       .unwrap(),
       r#"{"duration":0,"path":"foo.mp4","tracks":[{"codec":"h264","info":{"type":"video","bit_depth":8,"chroma_subsampling":"4:2:0","dimensions":{"height":1,"width":2},"frames":0,"orientation":{"mirrored":false,"rotation":0}},"size":0},{"codec":"mp3","info":{"type":"audio","channels":2,"sample_rate":44100},"size":0}],"type":"mp4"}"#,
+    );
+
+    assert_eq!(
+      serde_json::to_string(&Video {
+        placeholder: Some(Image::test("bar.png")),
+        ..Video::test("foo.mp4")
+      })
+      .unwrap(),
+      r#"{"duration":1000,"path":"foo.mp4","placeholder":{"alpha":false,"bit_depth":8,"color_type":"rgb","dimensions":{"height":1,"width":1},"orientation":{"mirrored":false,"rotation":0},"path":"bar.png","type":"png"},"tracks":[],"type":"mp4"}"#,
     );
   }
 

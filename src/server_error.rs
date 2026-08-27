@@ -126,6 +126,11 @@ pub enum ServerError {
   PackageRootUnverified { fingerprint: Fingerprint },
   #[snafu(display("page not found"))]
   PageNotFound,
+  #[snafu(display("video {index} in package {fingerprint} does not have a placeholder image"))]
+  PlaceholderNotFound {
+    fingerprint: Fingerprint,
+    index: Ordinal,
+  },
   #[snafu(display("error reading body of upload with hash {hash}"))]
   UploadBodyRead { hash: Hash, source: axum::Error },
   #[snafu(display("expected upload with hash {expected} but got {actual}"))]
@@ -168,6 +173,7 @@ impl ServerError {
       | Self::PackageNotMounted { .. }
       | Self::PackageRootUnverified { .. }
       | Self::PageNotFound
+      | Self::PlaceholderNotFound { .. }
       | Self::UploadBodyRead { .. }
       | Self::UploadHashMismatch { .. }
       | Self::WriteForbidden => self.to_string(),
@@ -220,7 +226,8 @@ impl ServerError {
       | Self::PackageMetadataNotFound { .. }
       | Self::PackageNotFound { .. }
       | Self::PackageNotMounted { .. }
-      | Self::PageNotFound => StatusCode::NOT_FOUND,
+      | Self::PageNotFound
+      | Self::PlaceholderNotFound { .. } => StatusCode::NOT_FOUND,
       Self::WriteForbidden => StatusCode::FORBIDDEN,
     }
   }

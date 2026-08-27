@@ -1515,6 +1515,52 @@ fn media_video_item_out_of_range() {
 }
 
 #[test]
+fn media_video_item_placeholder_response() {
+  let server = TestServer::new();
+
+  let mut video = Item::<Video>::test("foo.mp4");
+  video.content.placeholder = Some(Image::test("bar.png"));
+
+  let fingerprint = PackageBuilder::new()
+    .metadata(&Metadata {
+      media: Some(Media::Video {
+        items: vec![video, Item::test("baz.mp4")],
+      }),
+      ..default()
+    })
+    .file("foo.mp4", b"foo")
+    .file("bar.png", b"bar")
+    .file("baz.mp4", b"baz")
+    .upload(&server);
+
+  server
+    .get(format!("/media/video/{fingerprint}/item/1/placeholder"))
+    .assert_header(header::ACCEPT_RANGES, "bytes")
+    .assert_header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
+    .assert_header(header::CONTENT_LENGTH, "3")
+    .assert_header(header::CONTENT_TYPE, "image/png")
+    .assert_header(header::ETAG, format!("\"{}\"", Hash::bytes(b"bar")))
+    .assert_body(b"bar")
+    .send();
+
+  server
+    .get(format!("/media/video/{fingerprint}/item/2/placeholder"))
+    .status(StatusCode::NOT_FOUND)
+    .assert_body(format!(
+      "video 2 in package {fingerprint} does not have a placeholder image"
+    ))
+    .send();
+
+  server
+    .get(format!("/media/video/{fingerprint}/item/3/placeholder"))
+    .status(StatusCode::NOT_FOUND)
+    .assert_body(format!(
+      "video 3 does not exist, package {fingerprint} has 2 videos"
+    ))
+    .send();
+}
+
+#[test]
 fn media_video_item_response() {
   let server = TestServer::new();
 
@@ -1924,6 +1970,7 @@ fn package_item_video() {
     media: Some(Media::Video {
       items: vec![Item {
         content: Video {
+          placeholder: None,
           duration: 0,
           path: "foo.mp4".parse().unwrap(),
           tracks: vec![
@@ -2282,6 +2329,7 @@ fn package_page_renders_video_media() {
     media: Some(Media::Video {
       items: vec![Item {
         content: Video {
+          placeholder: None,
           duration: 0,
           path: "foo.mp4".parse().unwrap(),
           tracks: vec![

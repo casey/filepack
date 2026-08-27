@@ -165,7 +165,12 @@ pub(crate) async fn media_audio_item(
   block_in_place(|| {
     Ok(
       server
-        .media_item(fingerprint, item, MediaType::Audio, false)?
+        .media_item(
+          fingerprint,
+          item,
+          MediaType::Audio,
+          MediaItemResource::Original,
+        )?
         .range(range),
     )
   })
@@ -179,7 +184,12 @@ pub(crate) async fn media_image_item(
   block_in_place(|| {
     Ok(
       server
-        .media_item(fingerprint, item, MediaType::Image, false)?
+        .media_item(
+          fingerprint,
+          item,
+          MediaType::Image,
+          MediaItemResource::Original,
+        )?
         .range(range),
     )
   })
@@ -193,7 +203,12 @@ pub(crate) async fn media_image_item_thumbnail(
   block_in_place(|| {
     Ok(
       server
-        .media_item(fingerprint, item, MediaType::Image, true)?
+        .media_item(
+          fingerprint,
+          item,
+          MediaType::Image,
+          MediaItemResource::Thumbnail,
+        )?
         .range(range),
     )
   })
@@ -207,7 +222,31 @@ pub(crate) async fn media_video_item(
   block_in_place(|| {
     Ok(
       server
-        .media_item(fingerprint, item, MediaType::Video, false)?
+        .media_item(
+          fingerprint,
+          item,
+          MediaType::Video,
+          MediaItemResource::Original,
+        )?
+        .range(range),
+    )
+  })
+}
+
+pub(crate) async fn media_video_item_placeholder(
+  server: ServerExtension,
+  Path((fingerprint, Ordinal(item))): Path<(Fingerprint, Ordinal)>,
+  range: Option<TypedHeader<headers::Range>>,
+) -> ServerResult<Resource> {
+  block_in_place(|| {
+    Ok(
+      server
+        .media_item(
+          fingerprint,
+          item,
+          MediaType::Video,
+          MediaItemResource::Placeholder,
+        )?
         .range(range),
     )
   })

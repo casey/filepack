@@ -5,5 +5,7 @@ pub(crate) trait MediaItem {
 
   fn path(&self) -> &RelativePath;
 
+  fn placeholder(&self) -> Option<&Image>;
+
   fn resource_type(&self) -> ResourceType;
 }

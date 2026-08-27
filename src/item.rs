@@ -54,6 +54,10 @@ impl<T: Content> MediaItem for Item<T> {
     self.content.path()
   }
 
+  fn placeholder(&self) -> Option<&Image> {
+    self.content.placeholder()
+  }
+
   fn resource_type(&self) -> ResourceType {
     self.content.resource_type()
   }

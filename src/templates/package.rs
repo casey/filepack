@@ -641,6 +641,7 @@ mod tests {
       media: Some(Media::Video {
         items: vec![Item {
           content: Video {
+            placeholder: None,
             duration: 225_000,
             path: "foo.mp4".parse().unwrap(),
             tracks: vec![

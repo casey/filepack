@@ -11,6 +11,10 @@ pub(crate) trait Content: Sized {
 
   fn path(&self) -> &RelativePath;
 
+  fn placeholder(&self) -> Option<&Image> {
+    None
+  }
+
   fn resource_type(&self) -> ResourceType {
     self.ty().resource_type()
   }
