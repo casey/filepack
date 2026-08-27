@@ -337,8 +337,8 @@ impl Serve {
         get(route::media_video_item),
       )
       .route(
-        "/media/video/{fingerprint}/item/{item}/cover",
-        get(route::media_video_item_cover),
+        "/media/video/{fingerprint}/item/{item}/placeholder",
+        get(route::media_video_item_placeholder),
       )
       .route("/mount/{fingerprint}", get(route::mount_redirect))
       .route("/mount/{fingerprint}/", get(route::mount))

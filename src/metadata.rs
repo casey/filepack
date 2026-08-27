@@ -143,8 +143,8 @@ impl Metadata {
         Media::Video { items } => {
           for video in items {
             files.push(video.path().into());
-            if let Some(cover) = &video.content.cover {
-              files.push(cover.path.clone());
+            if let Some(placeholder) = &video.content.placeholder {
+              files.push(placeholder.path.clone());
             }
           }
         }
@@ -431,7 +431,7 @@ mod tests {
   #[test]
   fn files_include_videos() {
     let mut bar = Item::<Video>::test("bar.mp4");
-    bar.content.cover = Some(Image::test("baz.png"));
+    bar.content.placeholder = Some(Image::test("baz.png"));
 
     let metadata = Metadata {
       media: Some(Media::Video {

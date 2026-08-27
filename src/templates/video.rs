@@ -69,14 +69,14 @@ mod tests {
   #[test]
   fn render() {
     #[track_caller]
-    fn case(cover: Option<Image>, expected: String) {
+    fn case(placeholder: Option<Image>, expected: String) {
       let html = VideoHtml {
         fingerprint: test::FINGERPRINT.parse().unwrap(),
         metadata: Metadata {
           media: Some(Media::Video {
             items: vec![Item {
               content: Video {
-                cover,
+                placeholder,
                 ..Video::test("foo.mp4")
               },
               title: None,
@@ -101,7 +101,7 @@ mod tests {
     case(
       Some(Image::test("bar.png")),
       format!(
-        "<video\n  controls\n  poster=/media/video/{0}/item/1/cover\n  src=/media/video/{0}/item/1></video>\n",
+        "<video\n  controls\n  poster=/media/video/{0}/item/1/placeholder\n  src=/media/video/{0}/item/1></video>\n",
         test::FINGERPRINT,
       ),
     );

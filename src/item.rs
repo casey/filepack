@@ -39,10 +39,6 @@ impl<T: Content> Item<T> {
 }
 
 impl<T: Content> MediaItem for Item<T> {
-  fn cover(&self) -> Option<&Image> {
-    self.content.cover()
-  }
-
   fn info(&self, url: String) -> Info {
     self
       .content
@@ -56,6 +52,10 @@ impl<T: Content> MediaItem for Item<T> {
 
   fn path(&self) -> &RelativePath {
     self.content.path()
+  }
+
+  fn placeholder(&self) -> Option<&Image> {
+    self.content.placeholder()
   }
 
   fn resource_type(&self) -> ResourceType {

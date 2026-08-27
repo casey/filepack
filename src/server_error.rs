@@ -15,11 +15,6 @@ pub enum ServerError {
   CborBody { source: axum::Error },
   #[snafu(display("failed to decode request body"))]
   CborDecode { source: DecodeError },
-  #[snafu(display("video {index} in package {fingerprint} does not have a cover"))]
-  CoverNotFound {
-    fingerprint: Fingerprint,
-    index: Ordinal,
-  },
   #[snafu(transparent)]
   Database { source: redb::DatabaseError },
   #[snafu(transparent)]
@@ -131,6 +126,11 @@ pub enum ServerError {
   PackageRootUnverified { fingerprint: Fingerprint },
   #[snafu(display("page not found"))]
   PageNotFound,
+  #[snafu(display("video {index} in package {fingerprint} does not have a placeholder image"))]
+  PlaceholderNotFound {
+    fingerprint: Fingerprint,
+    index: Ordinal,
+  },
   #[snafu(display("error reading body of upload with hash {hash}"))]
   UploadBodyRead { hash: Hash, source: axum::Error },
   #[snafu(display("expected upload with hash {expected} but got {actual}"))]
@@ -148,7 +148,6 @@ impl ServerError {
       | Self::AuthorizationMissing
       | Self::CborBody { .. }
       | Self::CborDecode { .. }
-      | Self::CoverNotFound { .. }
       | Self::DirectoryDecode { .. }
       | Self::DirectoryEntryMissing { .. }
       | Self::DirectoryEntrySizeMismatch { .. }
@@ -174,6 +173,7 @@ impl ServerError {
       | Self::PackageNotMounted { .. }
       | Self::PackageRootUnverified { .. }
       | Self::PageNotFound
+      | Self::PlaceholderNotFound { .. }
       | Self::UploadBodyRead { .. }
       | Self::UploadHashMismatch { .. }
       | Self::WriteForbidden => self.to_string(),
@@ -216,7 +216,6 @@ impl ServerError {
       | Self::UploadBodyRead { .. }
       | Self::UploadHashMismatch { .. } => StatusCode::BAD_REQUEST,
       Self::ArtworkNotFound { .. }
-      | Self::CoverNotFound { .. }
       | Self::DirectoryNotFound { .. }
       | Self::FileNotFound { .. }
       | Self::MediaItemDoesNotExist { .. }
@@ -227,7 +226,8 @@ impl ServerError {
       | Self::PackageMetadataNotFound { .. }
       | Self::PackageNotFound { .. }
       | Self::PackageNotMounted { .. }
-      | Self::PageNotFound => StatusCode::NOT_FOUND,
+      | Self::PageNotFound
+      | Self::PlaceholderNotFound { .. } => StatusCode::NOT_FOUND,
       Self::WriteForbidden => StatusCode::FORBIDDEN,
     }
   }

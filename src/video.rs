@@ -4,11 +4,11 @@ use super::*;
 #[derive(Clone, Debug, Decode, Encode, PartialEq, Serialize)]
 pub(crate) struct Video {
   #[n(0)]
-  pub(crate) cover: Option<Image>,
-  #[n(1)]
   pub(crate) duration: u64,
-  #[n(2)]
+  #[n(1)]
   pub(crate) path: RelativePath,
+  #[n(2)]
+  pub(crate) placeholder: Option<Image>,
   #[n(3)]
   pub(crate) tracks: Vec<Track>,
   #[n(4)]
@@ -28,10 +28,6 @@ impl Content for Video {
   const LABEL: &'static str = "Video";
 
   type Type = VideoType;
-
-  fn cover(&self) -> Option<&Image> {
-    self.cover.as_ref()
-  }
 
   fn info(&self, builder: InfoBuilder) -> InfoBuilder {
     builder
@@ -57,9 +53,9 @@ impl Content for Video {
 
     Ok(Item {
       content: Self {
-        cover: None,
         duration,
         path,
+        placeholder: None,
         tracks,
         ty,
       },
@@ -71,14 +67,18 @@ impl Content for Video {
     &self.path
   }
 
+  fn placeholder(&self) -> Option<&Image> {
+    self.placeholder.as_ref()
+  }
+
   #[cfg(test)]
   fn test(path: &str) -> Self {
     let path = path.parse::<RelativePath>().unwrap();
     let ty = VideoType::from_path(&path).unwrap();
     Self {
-      cover: None,
       duration: 1000,
       path,
+      placeholder: None,
       tracks: Vec::new(),
       ty,
     }
@@ -96,7 +96,7 @@ mod tests {
   #[test]
   fn encoding() {
     assert_encoding(Video {
-      cover: Some(Image::test("bar.png")),
+      placeholder: Some(Image::test("bar.png")),
       ..Video::test("foo.mp4")
     });
   }
@@ -122,9 +122,9 @@ mod tests {
       )
       .unwrap(),
       Video {
-        cover: None,
         duration: 2,
         path: "foo.mp4".parse().unwrap(),
+        placeholder: None,
         tracks: vec![
           Track {
             codec: Codec::H264,
@@ -198,9 +198,9 @@ mod tests {
   fn serialize() {
     assert_eq!(
       serde_json::to_string(&Video {
-        cover: None,
         duration: 0,
         path: "foo.mp4".parse().unwrap(),
+        placeholder: None,
         tracks: vec![
           Track {
             codec: Codec::H264,
@@ -233,11 +233,11 @@ mod tests {
 
     assert_eq!(
       serde_json::to_string(&Video {
-        cover: Some(Image::test("bar.png")),
+        placeholder: Some(Image::test("bar.png")),
         ..Video::test("foo.mp4")
       })
       .unwrap(),
-      r#"{"cover":{"alpha":false,"bit_depth":8,"color_type":"rgb","dimensions":{"height":1,"width":1},"orientation":{"mirrored":false,"rotation":0},"path":"bar.png","type":"png"},"duration":1000,"path":"foo.mp4","tracks":[],"type":"mp4"}"#,
+      r#"{"duration":1000,"path":"foo.mp4","placeholder":{"alpha":false,"bit_depth":8,"color_type":"rgb","dimensions":{"height":1,"width":1},"orientation":{"mirrored":false,"rotation":0},"path":"bar.png","type":"png"},"tracks":[],"type":"mp4"}"#,
     );
   }
 

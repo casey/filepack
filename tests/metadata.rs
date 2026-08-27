@@ -494,7 +494,7 @@ fn create_generates_thumbnails() {
 }
 
 #[test]
-fn create_loads_video_cover() {
+fn create_loads_video_placeholder() {
   Test::new()
     .write("foo.mp4", Mp4Builder::new().video_track(2, 1).build())
     .write("bar.png", image(2, 1, ImageFormat::Png))
@@ -505,7 +505,7 @@ fn create_loads_video_cover() {
           type: video
           items:
             - path: foo.mp4
-              cover: bar.png
+              placeholder: bar.png
       ",
     )
     .arg("create")
@@ -519,7 +519,9 @@ fn create_loads_video_cover() {
             "items": [
               {
                 "content": {
-                  "cover": {
+                  "duration": 0,
+                  "path": "foo.mp4",
+                  "placeholder": {
                     "alpha": false,
                     "bit_depth": 8,
                     "color_type": "rgb",
@@ -534,8 +536,6 @@ fn create_loads_video_cover() {
                     "path": "bar.png",
                     "type": "png"
                   },
-                  "duration": 0,
-                  "path": "foo.mp4",
                   "tracks": [
                     {
                       "codec": "h264",

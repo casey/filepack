@@ -35,11 +35,11 @@ impl Media {
       Self::Video { items } => crate::Media::Video {
         items: items
           .into_iter()
-          .map(|Video { cover, path }| {
+          .map(|Video { placeholder, path }| {
             let mut item = crate::Video::load(root, path)?;
             bar.inc(1);
-            if let Some(cover) = cover {
-              item.content.cover = Some(Image::load(root, cover)?.content);
+            if let Some(placeholder) = placeholder {
+              item.content.placeholder = Some(Image::load(root, placeholder)?.content);
               bar.inc(1);
             }
             Ok(item)

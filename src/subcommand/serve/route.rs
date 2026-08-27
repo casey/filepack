@@ -233,7 +233,7 @@ pub(crate) async fn media_video_item(
   })
 }
 
-pub(crate) async fn media_video_item_cover(
+pub(crate) async fn media_video_item_placeholder(
   server: ServerExtension,
   Path((fingerprint, Ordinal(item))): Path<(Fingerprint, Ordinal)>,
   range: Option<TypedHeader<headers::Range>>,
@@ -245,7 +245,7 @@ pub(crate) async fn media_video_item_cover(
           fingerprint,
           item,
           MediaType::Video,
-          MediaItemResource::Cover,
+          MediaItemResource::Placeholder,
         )?
         .range(range),
     )

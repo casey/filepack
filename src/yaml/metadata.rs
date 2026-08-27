@@ -41,7 +41,7 @@ impl Metadata {
         Media::Audio { items } | Media::Image { items } => files += items.len().into_u64(),
         Media::Video { items } => {
           for item in items {
-            files += 1 + u64::from(item.cover.is_some());
+            files += 1 + u64::from(item.placeholder.is_some());
           }
         }
         Media::Web => {}
@@ -119,7 +119,7 @@ mod tests {
             items:
               - path: foo.mp4
               - path: bar.mp4
-                cover: baz.png
+                placeholder: baz.png
         ",
       ),
     )
@@ -130,11 +130,11 @@ mod tests {
       Some(Media::Video {
         items: vec![
           Video {
-            cover: None,
+            placeholder: None,
             path: "foo.mp4".parse().unwrap(),
           },
           Video {
-            cover: Some("baz.png".parse().unwrap()),
+            placeholder: Some("baz.png".parse().unwrap()),
             path: "bar.mp4".parse().unwrap(),
           },
         ],
@@ -255,7 +255,7 @@ mod tests {
             - path: foo.mp4
               bar: baz
       ",
-      "unknown field `bar`, expected `cover` or `path`",
+      "unknown field `bar`, expected `path` or `placeholder`",
     );
   }
 
@@ -532,7 +532,7 @@ mod tests {
       Metadata {
         media: Some(Media::Video {
           items: vec![Video {
-            cover: None,
+            placeholder: None,
             path: "foo.avi".parse().unwrap(),
           }],
         }),
@@ -661,7 +661,7 @@ mod tests {
   }
 
   #[test]
-  fn valid_video_cover() {
+  fn valid_video_placeholder() {
     let (_tempdir, root) = tempdir();
 
     std::fs::write(
@@ -674,7 +674,7 @@ mod tests {
     let metadata = Metadata {
       media: Some(Media::Video {
         items: vec![Video {
-          cover: Some("bar.png".parse().unwrap()),
+          placeholder: Some("bar.png".parse().unwrap()),
           path: "foo.mp4".parse().unwrap(),
         }],
       }),
@@ -693,7 +693,7 @@ mod tests {
     };
 
     assert_eq!(
-      items[0].content.cover.as_ref().unwrap().path,
+      items[0].content.placeholder.as_ref().unwrap().path,
       "bar.png".parse::<RelativePath>().unwrap(),
     );
 
