@@ -49,6 +49,15 @@ jobs:
     runs-on: ${{matrix.os}}
 
     steps:
+    - name: Exclude Workspace from Windows Defender
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        Add-MpPreference -ExclusionPath "${{github.workspace}}"
+        Add-MpPreference -ExclusionPath "$env:USERPROFILE\.cargo"
+        Add-MpPreference -ExclusionPath "$env:USERPROFILE\.rustup"
+        Add-MpPreference -ExclusionProcess cargo.exe, rustc.exe, link.exe
+
     - uses: actions/checkout@v7
 
     - name: Install Rust Toolchain
