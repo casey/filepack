@@ -294,6 +294,19 @@ impl Create {
       }
     }
 
+    if lints.contains(&Lint::VideoPlaceholderMissing)
+      && let Some((metadata, _cbor)) = &metadata
+      && let Some(Media::Video { items }) = &metadata.media
+    {
+      for video in items {
+        if video.content.placeholder.is_none() {
+          eprintln!("error: path failed lint: `{}`", video.path());
+          eprintln!("       └─ {}", LintError::VideoPlaceholderMissing);
+          lint_errors += 1;
+        }
+      }
+    }
+
     if lint_errors > 0 {
       return Err(error::Lint { count: lint_errors }.build());
     }

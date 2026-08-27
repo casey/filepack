@@ -426,6 +426,30 @@ fn deny_unknown_lint() {
 }
 
 #[test]
+fn deny_video_placeholder_missing() {
+  Test::new()
+    .write("foo.mp4", Mp4Builder::new().video_track(2, 1).build())
+    .write(
+      "metadata.yaml",
+      "
+        media:
+          type: video
+          items:
+            - path: foo.mp4
+      ",
+    )
+    .args(["create", "--deny", "video-placeholder-missing"])
+    .stderr(
+      "
+        error: path failed lint: `foo.mp4`
+               └─ video missing placeholder image
+        error: 1 lint error
+      ",
+    )
+    .failure();
+}
+
+#[test]
 fn deny_windows_reserved_filename() {
   if cfg!(windows) {
     return;
