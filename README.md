@@ -353,19 +353,32 @@ If the media type is `audio`, `image`, or `video`, the media object contains a
 field named `items`, which is a list of objects containing metadata for
 individual items in the package.
 
-When authoring metadata YAML, each item is a string with the path of the
-package item. For example, for an `audio` package:
+When authoring metadata YAML, each item is an object with a `path` field
+containing the path to the item. For example, for an `audio` package:
 
 ```yaml
 media:
   type: audio
   items:
-  - foo.flac
-  - bar.flac
+  - path: foo.flac
+  - path: bar.flac
 ```
 
-`filepack create` will replace item paths with objects populated with metadata
-extracted from each item.
+Additionally, `video` items have an optional `placeholder` field with a path to
+an image that should be used as a stand-in before the video begins playing:
+
+```yaml
+media:
+  type: video
+  items:
+  - path: foo.webm
+    placeholder: foo.jpg
+  - path: bar.webm
+    placeholder: bar.jpg
+```
+
+`filepack create` populates binary filepack metadata with metadata extracted
+from each item.
 
 Fields of `package` describing the package itself, as opposed its content:
 

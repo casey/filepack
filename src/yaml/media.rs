@@ -3,8 +3,8 @@ use super::*;
 #[derive(Debug, Deserialize, PartialEq)]
 #[serde(deny_unknown_fields, rename_all = "snake_case", tag = "type")]
 pub(crate) enum Media {
-  Audio { items: Vec<RelativePath> },
-  Image { items: Vec<RelativePath> },
+  Audio { items: Vec<Audio> },
+  Image { items: Vec<Image> },
   Video { items: Vec<Video> },
   Web,
 }
@@ -15,22 +15,22 @@ impl Media {
       Self::Audio { items } => crate::Media::Audio {
         items: items
           .into_iter()
-          .map(|path| {
-            let item = Audio::load(root, path)?;
+          .map(|Audio { path }| {
+            let item = crate::Audio::load(root, path)?;
             bar.inc(1);
             Ok(item)
           })
-          .collect::<Result<Vec<Item<Audio>>>>()?,
+          .collect::<Result<Vec<Item<crate::Audio>>>>()?,
       },
       Self::Image { items } => crate::Media::Image {
         items: items
           .into_iter()
-          .map(|path| {
-            let item = Image::load(root, path)?;
+          .map(|Image { path }| {
+            let item = crate::Image::load(root, path)?;
             bar.inc(1);
             Ok(item)
           })
-          .collect::<Result<Vec<Item<Image>>>>()?,
+          .collect::<Result<Vec<Item<crate::Image>>>>()?,
       },
       Self::Video { items } => crate::Media::Video {
         items: items
@@ -39,7 +39,7 @@ impl Media {
             let mut item = crate::Video::load(root, path)?;
             bar.inc(1);
             if let Some(placeholder) = placeholder {
-              item.content.placeholder = Some(Image::load(root, placeholder)?.content);
+              item.content.placeholder = Some(crate::Image::load(root, placeholder)?.content);
               bar.inc(1);
             }
             Ok(item)

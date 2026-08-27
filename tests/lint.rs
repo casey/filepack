@@ -75,7 +75,7 @@ fn deny_audio_embedded_artwork_missing() {
             media:
               type: audio
               items:
-                - {path}
+                - path: {path}
           "
         ),
       )

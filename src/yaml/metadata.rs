@@ -38,7 +38,8 @@ impl Metadata {
 
     if let Some(media) = &media {
       match media {
-        Media::Audio { items } | Media::Image { items } => files += items.len().into_u64(),
+        Media::Audio { items } => files += items.len().into_u64(),
+        Media::Image { items } => files += items.len().into_u64(),
         Media::Video { items } => {
           for item in items {
             files += 1 + u64::from(item.placeholder.is_some());
@@ -51,7 +52,7 @@ impl Metadata {
     let bar = ProgressBar::count(quiet, files, "files");
 
     let artwork = if let Some(path) = artwork {
-      let image = Image::load(root, path)?.content;
+      let image = crate::Image::load(root, path)?.content;
       bar.inc(1);
       Some(image)
     } else {
@@ -93,8 +94,8 @@ mod tests {
           media:
             type: audio
             items:
-              - foo.flac
-              - bar.flac
+              - path: foo.flac
+              - path: bar.flac
         ",
       ),
     )
@@ -103,7 +104,14 @@ mod tests {
     assert_eq!(
       metadata.media,
       Some(Media::Audio {
-        items: vec!["foo.flac".parse().unwrap(), "bar.flac".parse().unwrap()],
+        items: vec![
+          Audio {
+            path: "foo.flac".parse().unwrap(),
+          },
+          Audio {
+            path: "bar.flac".parse().unwrap(),
+          },
+        ],
       }),
     );
   }
@@ -257,6 +265,16 @@ mod tests {
       ",
       "unknown field `bar`, expected `path` or `placeholder`",
     );
+    case(
+      "
+        media:
+          type: audio
+          items:
+            - path: foo.flac
+              bar: baz
+      ",
+      "unknown field `bar`, expected `path`",
+    );
   }
 
   #[test]
@@ -369,7 +387,9 @@ mod tests {
 
       let metadata = Metadata {
         media: Some(Media::Image {
-          items: vec![filename.parse().unwrap()],
+          items: vec![Image {
+            path: filename.parse().unwrap(),
+          }],
         }),
         ..default()
       };
@@ -416,7 +436,9 @@ mod tests {
     let metadata = Metadata {
       artwork: Some("cover.png".parse().unwrap()),
       media: Some(Media::Audio {
-        items: vec!["foo.flac".parse().unwrap()],
+        items: vec![Audio {
+          path: "foo.flac".parse().unwrap(),
+        }],
       }),
       package: Some(Package {
         colophon: Some("COLOPHON.md".parse().unwrap()),
@@ -435,7 +457,7 @@ mod tests {
     assert_eq!(
       metadata,
       crate::Metadata {
-        artwork: Some(Image {
+        artwork: Some(crate::Image {
           alpha: false,
           bit_depth: 8,
           chroma_subsampling: None,
@@ -450,7 +472,7 @@ mod tests {
         }),
         media: Some(crate::Media::Audio {
           items: vec![Item {
-            content: Audio {
+            content: crate::Audio {
               album: "qux".parse().unwrap(),
               artist: "baz".parse().unwrap(),
               channels: 2,
@@ -511,7 +533,9 @@ mod tests {
     case(
       Metadata {
         media: Some(Media::Audio {
-          items: vec!["foo.wav".parse().unwrap()],
+          items: vec![Audio {
+            path: "foo.wav".parse().unwrap(),
+          }],
         }),
         ..default()
       },
@@ -521,7 +545,9 @@ mod tests {
     case(
       Metadata {
         media: Some(Media::Image {
-          items: vec!["foo.svg".parse().unwrap()],
+          items: vec![Image {
+            path: "foo.svg".parse().unwrap(),
+          }],
         }),
         ..default()
       },
@@ -645,7 +671,14 @@ mod tests {
 
     let metadata = Metadata {
       media: Some(Media::Image {
-        items: vec!["foo.jpg".parse().unwrap(), "bar.png".parse().unwrap()],
+        items: vec![
+          Image {
+            path: "foo.jpg".parse().unwrap(),
+          },
+          Image {
+            path: "bar.png".parse().unwrap(),
+          },
+        ],
       }),
       ..default()
     };
