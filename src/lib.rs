@@ -97,6 +97,7 @@ use {
     map_decoder::MapDecoder,
     media::{Media, MediaType},
     media_item::MediaItem,
+    media_item_resource::MediaItemResource,
     mode::Mode,
     mp3_decoder::Mp3Decoder,
     mp3_error::Mp3Error,
@@ -370,6 +371,7 @@ mod map_decoder;
 mod map_encoder;
 mod media;
 mod media_item;
+mod media_item_resource;
 mod metadata;
 mod mode;
 mod mp3_builder;

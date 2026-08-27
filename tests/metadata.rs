@@ -290,7 +290,7 @@ fn create_extracts_video_metadata() {
         media:
           type: video
           items:
-            - foo.mp4
+            - path: foo.mp4
       ",
     )
     .arg("create")
@@ -494,6 +494,83 @@ fn create_generates_thumbnails() {
 }
 
 #[test]
+fn create_loads_video_cover() {
+  Test::new()
+    .write("foo.mp4", Mp4Builder::new().video_track(2, 1).build())
+    .write("bar.png", image(2, 1, ImageFormat::Png))
+    .write(
+      "metadata.yaml",
+      "
+        media:
+          type: video
+          items:
+            - path: foo.mp4
+              cover: bar.png
+      ",
+    )
+    .arg("create")
+    .success()
+    .arg("metadata")
+    .stdout(
+      r#"
+        {
+          "media": {
+            "type": "video",
+            "items": [
+              {
+                "content": {
+                  "cover": {
+                    "alpha": false,
+                    "bit_depth": 8,
+                    "color_type": "rgb",
+                    "dimensions": {
+                      "height": 1,
+                      "width": 2
+                    },
+                    "orientation": {
+                      "mirrored": false,
+                      "rotation": 0
+                    },
+                    "path": "bar.png",
+                    "type": "png"
+                  },
+                  "duration": 0,
+                  "path": "foo.mp4",
+                  "tracks": [
+                    {
+                      "codec": "h264",
+                      "info": {
+                        "type": "video",
+                        "bit_depth": 8,
+                        "chroma_subsampling": "4:2:0",
+                        "dimensions": {
+                          "height": 1,
+                          "width": 2
+                        },
+                        "frames": 0,
+                        "orientation": {
+                          "mirrored": false,
+                          "rotation": 0
+                        }
+                      },
+                      "size": 0
+                    }
+                  ],
+                  "type": "mp4"
+                }
+              }
+            ]
+          }
+        }
+      "#,
+    )
+    .success()
+    .arg("verify")
+    .stderr_regex("successfully verified .*")
+    .success();
+}
+
+#[test]
 fn create_rejects_extra_files_in_media_packages() {
   Test::new()
     .write(
@@ -620,7 +697,7 @@ fn create_rejects_invalid_videos() {
         media:
           type: video
           items:
-            - foo.mp4
+            - path: foo.mp4
       ",
     )
     .arg("create")

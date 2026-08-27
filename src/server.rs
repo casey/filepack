@@ -182,12 +182,14 @@ impl Server {
   pub(crate) fn media_item(
     &self,
     fingerprint: Fingerprint,
-    item: usize,
+    index: usize,
     ty: MediaType,
-    thumbnail: bool,
+    resource: MediaItemResource,
   ) -> ServerResult<Resource> {
-    if thumbnail {
-      assert_eq!(ty, MediaType::Image);
+    match resource {
+      MediaItemResource::Cover => assert_eq!(ty, MediaType::Video),
+      MediaItemResource::Original => {}
+      MediaItemResource::Thumbnail => assert_eq!(ty, MediaType::Image),
     }
 
     let metadata = self.package_metadata(fingerprint)?;
@@ -207,18 +209,26 @@ impl Server {
     }
 
     let item = media
-      .item(item)
+      .item(index)
       .context(server_error::MediaItemDoesNotExist {
         count: media.item_count(),
         fingerprint,
-        index: item,
+        index,
         ty,
       })?;
 
-    let (path, ty) = if thumbnail && let Some(thumbnail) = metadata.thumbnail(item.path()) {
-      (&thumbnail.path, thumbnail.ty.resource_type())
-    } else {
-      (item.path(), item.resource_type())
+    let (path, ty) = match resource {
+      MediaItemResource::Cover => {
+        let cover = item
+          .cover()
+          .context(server_error::CoverNotFound { fingerprint, index })?;
+        (&cover.path, cover.resource_type())
+      }
+      MediaItemResource::Original => (item.path(), item.resource_type()),
+      MediaItemResource::Thumbnail => match metadata.thumbnail(item.path()) {
+        Some(thumbnail) => (&thumbnail.path, thumbnail.resource_type()),
+        None => (item.path(), item.resource_type()),
+      },
     };
 
     let hash = self.verified_package_file(fingerprint, path)?;

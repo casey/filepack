@@ -1,1 +1,6 @@
-<video controls src=/media/video/{{ self.fingerprint }}/item/{{ Ordinal(self.video) }}></video>
+<video
+  controls
+%% if self.video().content.cover.is_some() {
+  poster=/media/video/{{ self.fingerprint }}/item/{{ Ordinal(self.video) }}/cover
+%% }
+  src=/media/video/{{ self.fingerprint }}/item/{{ Ordinal(self.video) }}></video>

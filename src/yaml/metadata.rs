@@ -34,8 +34,19 @@ impl Metadata {
       title,
     } = self;
 
-    let files =
-      u64::from(artwork.is_some()) + media.as_ref().map_or(0, |media| media.items().into_u64());
+    let mut files = u64::from(artwork.is_some());
+
+    if let Some(media) = &media {
+      match media {
+        Media::Audio { items } | Media::Image { items } => files += items.len().into_u64(),
+        Media::Video { items } => {
+          for item in items {
+            files += 1 + u64::from(item.cover.is_some());
+          }
+        }
+        Media::Web => {}
+      }
+    }
 
     let bar = ProgressBar::count(quiet, files, "files");
 
@@ -106,8 +117,9 @@ mod tests {
           media:
             type: video
             items:
-              - foo.mp4
-              - bar.mp4
+              - path: foo.mp4
+              - path: bar.mp4
+                cover: baz.png
         ",
       ),
     )
@@ -116,7 +128,16 @@ mod tests {
     assert_eq!(
       metadata.media,
       Some(Media::Video {
-        items: vec!["foo.mp4".parse().unwrap(), "bar.mp4".parse().unwrap()],
+        items: vec![
+          Video {
+            cover: None,
+            path: "foo.mp4".parse().unwrap(),
+          },
+          Video {
+            cover: Some("baz.png".parse().unwrap()),
+            path: "bar.mp4".parse().unwrap(),
+          },
+        ],
       }),
     );
   }
@@ -225,6 +246,16 @@ mod tests {
           description: \"foo\\tbar\"
       ",
       r"package\.description: text may not contain control character `\\t`",
+    );
+    case(
+      "
+        media:
+          type: video
+          items:
+            - path: foo.mp4
+              bar: baz
+      ",
+      "unknown field `bar`, expected `cover` or `path`",
     );
   }
 
@@ -500,7 +531,10 @@ mod tests {
     case(
       Metadata {
         media: Some(Media::Video {
-          items: vec!["foo.avi".parse().unwrap()],
+          items: vec![Video {
+            cover: None,
+            path: "foo.avi".parse().unwrap(),
+          }],
         }),
         ..default()
       },
@@ -622,6 +656,47 @@ mod tests {
       .collect();
 
     let metadata = metadata.load(&root, true).unwrap();
+    metadata.check_files(&paths).unwrap();
+    metadata.validate(&root).unwrap();
+  }
+
+  #[test]
+  fn valid_video_cover() {
+    let (_tempdir, root) = tempdir();
+
+    std::fs::write(
+      root.join("foo.mp4"),
+      Mp4Builder::new().video_track(2, 1).build(),
+    )
+    .unwrap();
+    std::fs::write(root.join("bar.png"), image(2, 1, ImageFormat::Png)).unwrap();
+
+    let metadata = Metadata {
+      media: Some(Media::Video {
+        items: vec![Video {
+          cover: Some("bar.png".parse().unwrap()),
+          path: "foo.mp4".parse().unwrap(),
+        }],
+      }),
+      ..default()
+    };
+
+    let paths = ["foo.mp4", "bar.png"]
+      .into_iter()
+      .map(|path| path.parse::<RelativePath>().unwrap())
+      .collect();
+
+    let metadata = metadata.load(&root, true).unwrap();
+
+    let Some(crate::Media::Video { items }) = &metadata.media else {
+      panic!();
+    };
+
+    assert_eq!(
+      items[0].content.cover.as_ref().unwrap().path,
+      "bar.png".parse::<RelativePath>().unwrap(),
+    );
+
     metadata.check_files(&paths).unwrap();
     metadata.validate(&root).unwrap();
   }

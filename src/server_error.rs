@@ -15,6 +15,11 @@ pub enum ServerError {
   CborBody { source: axum::Error },
   #[snafu(display("failed to decode request body"))]
   CborDecode { source: DecodeError },
+  #[snafu(display("video {index} in package {fingerprint} does not have a cover"))]
+  CoverNotFound {
+    fingerprint: Fingerprint,
+    index: Ordinal,
+  },
   #[snafu(transparent)]
   Database { source: redb::DatabaseError },
   #[snafu(transparent)]
@@ -143,6 +148,7 @@ impl ServerError {
       | Self::AuthorizationMissing
       | Self::CborBody { .. }
       | Self::CborDecode { .. }
+      | Self::CoverNotFound { .. }
       | Self::DirectoryDecode { .. }
       | Self::DirectoryEntryMissing { .. }
       | Self::DirectoryEntrySizeMismatch { .. }
@@ -210,6 +216,7 @@ impl ServerError {
       | Self::UploadBodyRead { .. }
       | Self::UploadHashMismatch { .. } => StatusCode::BAD_REQUEST,
       Self::ArtworkNotFound { .. }
+      | Self::CoverNotFound { .. }
       | Self::DirectoryNotFound { .. }
       | Self::FileNotFound { .. }
       | Self::MediaItemDoesNotExist { .. }

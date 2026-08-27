@@ -39,6 +39,10 @@ impl<T: Content> Item<T> {
 }
 
 impl<T: Content> MediaItem for Item<T> {
+  fn cover(&self) -> Option<&Image> {
+    self.content.cover()
+  }
+
   fn info(&self, url: String) -> Info {
     self
       .content
