@@ -58,6 +58,10 @@ mod tests {
     fn title(&self) -> String {
       "navigation".into()
     }
+
+    fn up(&self) -> Option<String> {
+      Some("/baz".into())
+    }
   }
 
   struct ScriptPage;
@@ -95,6 +99,7 @@ mod tests {
               <link href=/static/index.css rel=stylesheet>
               <link href=/foo rel=next>
               <link href=/bar rel=prev>
+              <link href=/baz rel=up>
             </head>
             <body>
               bar

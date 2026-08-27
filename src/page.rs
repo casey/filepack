@@ -33,4 +33,8 @@ pub trait Page: Display + Sized {
   }
 
   fn title(&self) -> String;
+
+  fn up(&self) -> Option<String> {
+    None
+  }
 }

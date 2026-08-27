@@ -59,6 +59,10 @@ impl Page for ImageHtml {
   fn title(&self) -> String {
     format!("{} · filepack", self.image().display_title(self.image))
   }
+
+  fn up(&self) -> Option<String> {
+    Some(format!("/package/{}", self.fingerprint))
+  }
 }
 
 #[cfg(test)]
@@ -83,6 +87,7 @@ mod tests {
       html.next(),
       Some(format!("/package/{}/item/2", test::FINGERPRINT)),
     );
+    assert_eq!(html.up(), Some(format!("/package/{}", test::FINGERPRINT)));
   }
 
   #[test]
