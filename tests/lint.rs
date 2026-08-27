@@ -426,6 +426,37 @@ fn deny_unknown_lint() {
 }
 
 #[test]
+fn deny_video_placeholder_dimensions() {
+  let mut placeholder = Cursor::new(Vec::new());
+  gradient(1, 1)
+    .write_to(&mut placeholder, ImageFormat::Png)
+    .unwrap();
+
+  Test::new()
+    .write("foo.mp4", Mp4Builder::new().video_track(2, 1).build())
+    .write("bar.png", placeholder.into_inner())
+    .write(
+      "metadata.yaml",
+      "
+        media:
+          type: video
+          items:
+            - path: foo.mp4
+              placeholder: bar.png
+      ",
+    )
+    .args(["create", "--deny", "video-placeholder-dimensions"])
+    .stderr(
+      "
+        error: path failed lint: `foo.mp4`
+               └─ placeholder image is 1×1 but video is 2×1
+        error: 1 lint error
+      ",
+    )
+    .failure();
+}
+
+#[test]
 fn deny_video_placeholder_missing() {
   Test::new()
     .write("foo.mp4", Mp4Builder::new().video_track(2, 1).build())

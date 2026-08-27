@@ -307,6 +307,26 @@ impl Create {
       }
     }
 
+    if lints.contains(&Lint::VideoPlaceholderDimensions)
+      && let Some((metadata, _cbor)) = &metadata
+      && let Some(Media::Video { items }) = &metadata.media
+    {
+      for item in items {
+        if let Some(placeholder) = &item.content.placeholder
+          && let Some(video) = item.content.oriented_dimensions()
+          && let placeholder = placeholder.oriented_dimensions()
+          && placeholder != video
+        {
+          eprintln!("error: path failed lint: `{}`", item.path());
+          eprintln!(
+            "       └─ {}",
+            LintError::VideoPlaceholderDimensions { placeholder, video },
+          );
+          lint_errors += 1;
+        }
+      }
+    }
+
     if lint_errors > 0 {
       return Err(error::Lint { count: lint_errors }.build());
     }
