@@ -11,27 +11,26 @@ pub(crate) enum Media {
 
 impl Media {
   pub(crate) fn load(self, root: &Utf8Path, bar: &ProgressBar) -> Result<crate::Media> {
-    fn load<T: Content>(
-      root: &Utf8Path,
-      items: Vec<RelativePath>,
-      bar: &ProgressBar,
-    ) -> Result<Vec<Item<T>>> {
-      items
-        .into_iter()
-        .map(|path| {
-          let item = T::load(root, path)?;
-          bar.inc(1);
-          Ok(item)
-        })
-        .collect()
-    }
-
     Ok(match self {
       Self::Audio { items } => crate::Media::Audio {
-        items: load(root, items, bar)?,
+        items: items
+          .into_iter()
+          .map(|path| {
+            let item = Audio::load(root, path)?;
+            bar.inc(1);
+            Ok(item)
+          })
+          .collect::<Result<Vec<Item<Audio>>>>()?,
       },
       Self::Image { items } => crate::Media::Image {
-        items: load(root, items, bar)?,
+        items: items
+          .into_iter()
+          .map(|path| {
+            let item = Image::load(root, path)?;
+            bar.inc(1);
+            Ok(item)
+          })
+          .collect::<Result<Vec<Item<Image>>>>()?,
       },
       Self::Video { items } => crate::Media::Video {
         items: items
