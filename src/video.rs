@@ -17,6 +17,17 @@ pub(crate) struct Video {
 }
 
 impl Video {
+  pub(crate) fn oriented_dimensions(&self) -> Option<Dimensions> {
+    self.tracks.iter().find_map(|track| match track.info {
+      TrackInfo::Video {
+        dimensions,
+        orientation,
+        ..
+      } => Some(orientation.dimensions(dimensions)),
+      TrackInfo::Audio { .. } => None,
+    })
+  }
+
   pub(crate) fn sum_durations(videos: &[Item<Video>]) -> Duration {
     videos.iter().fold(Duration::ZERO, |sum, video| {
       sum.saturating_add(Duration::from_millis(video.content.duration))
@@ -92,6 +103,55 @@ impl Content for Video {
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn oriented_dimensions() {
+    #[track_caller]
+    fn case(tracks: Vec<Track>, expected: Option<Dimensions>) {
+      let video = Video {
+        tracks,
+        ..Video::test("foo.mp4")
+      };
+
+      assert_eq!(video.oriented_dimensions(), expected);
+    }
+
+    fn track(rotation: Rotation) -> Track {
+      Track {
+        codec: Codec::H264,
+        info: TrackInfo::Video {
+          bit_depth: 8,
+          chroma_subsampling: ChromaSubsampling::Yuv420,
+          dimensions: Dimensions {
+            height: 1,
+            width: 2,
+          },
+          frames: 0,
+          orientation: Orientation {
+            mirrored: false,
+            rotation,
+          },
+        },
+        size: 0,
+      }
+    }
+
+    case(Vec::new(), None);
+    case(
+      vec![track(Rotation::R0)],
+      Some(Dimensions {
+        height: 1,
+        width: 2,
+      }),
+    );
+    case(
+      vec![track(Rotation::R90)],
+      Some(Dimensions {
+        height: 2,
+        width: 1,
+      }),
+    );
+  }
 
   #[test]
   fn encoding() {
