@@ -29,7 +29,7 @@ fn create_allows_nested_paths() {
         media:
           type: image
           items:
-            - foo/baz.png
+            - path: foo/baz.png
       ",
     )
     .arg("create")
@@ -121,7 +121,7 @@ fn create_extracts_image_dimensions() {
         media:
           type: image
           items:
-            - foo.png
+            - path: foo.png
       ",
     )
     .arg("create")
@@ -171,7 +171,7 @@ fn create_extracts_image_title() {
         media:
           type: image
           items:
-            - foo.png
+            - path: foo.png
       ",
     )
     .arg("create")
@@ -230,7 +230,7 @@ fn create_extracts_track_tags() {
         media:
           type: audio
           items:
-            - foo.flac
+            - path: foo.flac
       ",
     )
     .arg("create")
@@ -360,7 +360,7 @@ fn create_generate_force_overwrites_thumbnails() {
         media:
           type: image
           items:
-            - foo.jpg
+            - path: foo.jpg
       ",
     )
     .write("thumbnails/foo.jpg", "bar")
@@ -381,7 +381,7 @@ fn create_generate_rejects_existing_thumbnails() {
         media:
           type: image
           items:
-            - foo.jpg
+            - path: foo.jpg
       ",
     )
     .write("thumbnails/foo.jpg", "bar")
@@ -401,8 +401,8 @@ fn create_generates_thumbnails() {
         media:
           type: image
           items:
-            - foo.jpg
-            - bar/baz.png
+            - path: foo.jpg
+            - path: bar/baz.png
       ",
     )
     .args(["create", "--generate"])
@@ -591,7 +591,7 @@ fn create_rejects_extra_files_in_media_packages() {
         media:
           type: audio
           items:
-            - foo.flac
+            - path: foo.flac
       ",
     )
     .touch("bar.txt")
@@ -650,7 +650,7 @@ fn create_rejects_invalid_track_positions() {
         media:
           type: audio
           items:
-            - foo.flac
+            - path: foo.flac
       ",
     )
     .arg("create")
@@ -673,7 +673,7 @@ fn create_rejects_invalid_tracks() {
         media:
           type: audio
           items:
-            - foo.flac
+            - path: foo.flac
       ",
     )
     .arg("create")
