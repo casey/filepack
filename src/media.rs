@@ -16,16 +16,21 @@ pub(crate) enum Media {
     items: Vec<Item<Audio>>,
   },
   #[n(1)]
+  Document {
+    #[n(0)]
+    items: Vec<Item<Document>>,
+  },
+  #[n(2)]
   Image {
     #[n(0)]
     items: Vec<Item<Image>>,
   },
-  #[n(2)]
+  #[n(3)]
   Video {
     #[n(0)]
     items: Vec<Item<Video>>,
   },
-  #[n(3)]
+  #[n(4)]
   Web,
 }
 
@@ -33,6 +38,7 @@ impl Media {
   pub(crate) fn item(&self, i: usize) -> Option<&dyn MediaItem> {
     match self {
       Self::Audio { items } => items.get(i).map(|item| item as &dyn MediaItem),
+      Self::Document { items } => items.get(i).map(|item| item as &dyn MediaItem),
       Self::Image { items } => items.get(i).map(|item| item as &dyn MediaItem),
       Self::Video { items } => items.get(i).map(|item| item as &dyn MediaItem),
       Self::Web => unreachable!(),
@@ -42,6 +48,7 @@ impl Media {
   pub(crate) fn item_count(&self) -> usize {
     match self {
       Self::Audio { items } => items.len(),
+      Self::Document { items } => items.len(),
       Self::Image { items } => items.len(),
       Self::Video { items } => items.len(),
       Self::Web => unreachable!(),
@@ -55,6 +62,7 @@ impl Media {
   pub(crate) fn items<'a>(&'a self) -> Box<dyn Iterator<Item = &dyn MediaItem> + 'a> {
     match self {
       Self::Audio { items } => Box::new(items.iter().map(|item| item as &dyn MediaItem)),
+      Self::Document { items } => Box::new(items.iter().map(|item| item as &dyn MediaItem)),
       Self::Image { items } => Box::new(items.iter().map(|item| item as &dyn MediaItem)),
       Self::Video { items } => Box::new(items.iter().map(|item| item as &dyn MediaItem)),
       Self::Web => unreachable!(),
@@ -81,7 +89,7 @@ impl Media {
 impl MediaType {
   pub(crate) fn has_items(self) -> bool {
     match self {
-      Self::Audio | Self::Image | Self::Video => true,
+      Self::Audio | Self::Document | Self::Image | Self::Video => true,
       Self::Web => false,
     }
   }
@@ -89,6 +97,7 @@ impl MediaType {
   pub(crate) fn item_noun(self) -> &'static str {
     match self {
       Self::Audio => "track",
+      Self::Document => "document",
       Self::Image => "image",
       Self::Video => "video",
       Self::Web => unreachable!(),

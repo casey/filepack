@@ -347,11 +347,11 @@ Top-level fields:
 
 Fields of `media` containing media-specific metadata:
 
-- `type: {audio,image,video,web}`: The media type.
+- `type: {audio,document,image,video,web}`: The media type.
 
-If the media type is `audio`, `image`, or `video`, the media object contains a
-field named `items`, which is a list of objects containing metadata for
-individual items in the package.
+If the media type is `audio`, `document`, `image`, or `video`, the media object
+contains a field named `items`, which is a list of objects containing metadata
+for individual items in the package.
 
 When authoring metadata YAML, each item is an object with a `path` field
 containing the path to the item. For example, for an `audio` package:

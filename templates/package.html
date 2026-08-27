@@ -99,6 +99,16 @@
 %%           }
 %%         }
 %%       }
+%%       Media::Document { items } => {
+  <dt>documents</dt>
+  <dd>{{ items.len() }}</dd>
+%%         if !items.is_empty() {
+  <dt>format</dt>
+%%           for format in Item::formats(items) {
+  <dd>{{ format }}</dd>
+%%           }
+%%         }
+%%       }
 %%       Media::Image { items } => {
   <dt>images</dt>
   <dd>{{ items.len() }}</dd>
@@ -146,6 +156,15 @@
 %%         }
 </ol>
 %%       }
+%%     }
+%%     Media::Document { items } => {
+<ol>
+%%       for (i, document) in items.iter().enumerate() {
+  <li>
+    <a href=/package/{{ self.fingerprint }}/item/{{ Ordinal(i) }}>{{ document.display_title(i) }}</a>
+  </li>
+%%       }
+</ol>
 %%     }
 %%     Media::Image { items } => {
 <ul class=thumbnails>

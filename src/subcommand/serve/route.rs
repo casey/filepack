@@ -176,6 +176,25 @@ pub(crate) async fn media_audio_item(
   })
 }
 
+pub(crate) async fn media_document_item(
+  server: ServerExtension,
+  Path((fingerprint, Ordinal(item))): Path<(Fingerprint, Ordinal)>,
+  range: Option<TypedHeader<headers::Range>>,
+) -> ServerResult<Resource> {
+  block_in_place(|| {
+    Ok(
+      server
+        .media_item(
+          fingerprint,
+          item,
+          MediaType::Document,
+          MediaItemResource::Original,
+        )?
+        .range(range),
+    )
+  })
+}
+
 pub(crate) async fn media_image_item(
   server: ServerExtension,
   Path((fingerprint, Ordinal(item))): Path<(Fingerprint, Ordinal)>,
@@ -348,6 +367,15 @@ pub(crate) async fn package_item(
       Media::Audio { .. } => Ok(
         AudioHtml {
           audio: index,
+          fingerprint,
+          metadata,
+        }
+        .page(server_config.url.clone())
+        .into_response(),
+      ),
+      Media::Document { .. } => Ok(
+        DocumentHtml {
+          document: index,
           fingerprint,
           metadata,
         }

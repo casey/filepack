@@ -64,6 +64,8 @@ use {
     display_path::DisplayPath,
     display_sample_rate::DisplaySampleRate,
     display_secret::DisplaySecret,
+    document::Document,
+    document_type::DocumentType,
     entries::Entries,
     envelope::Envelope,
     exif_decoder::ExifDecoder,
@@ -329,6 +331,8 @@ mod display_millis;
 mod display_path;
 mod display_sample_rate;
 mod display_secret;
+mod document;
+mod document_type;
 mod encode;
 mod encoder;
 mod entries;

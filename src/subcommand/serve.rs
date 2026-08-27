@@ -16,7 +16,8 @@ use {
   },
   std::net::TcpStream,
   templates::{
-    AudioHtml, DirectoryHtml, FilesHtml, ImageHtml, MediaHtml, PackageHtml, PackagesHtml, VideoHtml,
+    AudioHtml, DirectoryHtml, DocumentHtml, FilesHtml, ImageHtml, MediaHtml, PackageHtml,
+    PackagesHtml, VideoHtml,
   },
   tokio::{net::TcpListener, runtime, task::block_in_place},
   tower_http::set_header::SetResponseHeaderLayer,
@@ -323,6 +324,10 @@ impl Serve {
       .route(
         "/media/audio/{fingerprint}/item/{item}",
         get(route::media_audio_item),
+      )
+      .route(
+        "/media/document/{fingerprint}/item/{item}",
+        get(route::media_document_item),
       )
       .route(
         "/media/image/{fingerprint}/item/{item}",

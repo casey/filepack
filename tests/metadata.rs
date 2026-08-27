@@ -112,6 +112,45 @@ fn create_extracts_artwork_dimensions() {
 }
 
 #[test]
+fn create_extracts_document_metadata() {
+  Test::new()
+    .write("foo.pdf", "%PDF-1.7\n")
+    .write(
+      "metadata.yaml",
+      "
+        media:
+          type: document
+          items:
+            - path: foo.pdf
+      ",
+    )
+    .arg("create")
+    .success()
+    .arg("metadata")
+    .stdout(
+      r#"
+        {
+          "media": {
+            "type": "document",
+            "items": [
+              {
+                "content": {
+                  "path": "foo.pdf",
+                  "type": "pdf"
+                }
+              }
+            ]
+          }
+        }
+      "#,
+    )
+    .success()
+    .arg("verify")
+    .stderr_regex("successfully verified .*")
+    .success();
+}
+
+#[test]
 fn create_extracts_image_dimensions() {
   Test::new()
     .write("foo.png", image(2, 1, ImageFormat::Png))

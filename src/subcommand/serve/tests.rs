@@ -1322,6 +1322,58 @@ fn media_audio_item_response() {
 }
 
 #[test]
+fn media_document_item_out_of_range() {
+  let server = TestServer::new();
+
+  let fingerprint = PackageBuilder::new()
+    .metadata(&Metadata {
+      media: Some(Media::Document {
+        items: vec![Item::test("foo.pdf")],
+      }),
+      ..default()
+    })
+    .file("foo.pdf", b"foo")
+    .upload(&server);
+
+  server
+    .get(format!("/media/document/{fingerprint}/item/2"))
+    .status(StatusCode::NOT_FOUND)
+    .assert_body(format!(
+      "document 2 does not exist, package {fingerprint} has 1 document"
+    ))
+    .send();
+}
+
+#[test]
+fn media_document_item_response() {
+  let server = TestServer::new();
+
+  let pdf: &[u8] = b"%PDF-1.7\n";
+
+  let fingerprint = PackageBuilder::new()
+    .metadata(&Metadata {
+      media: Some(Media::Document {
+        items: vec![Item::test("foo.pdf")],
+      }),
+      ..default()
+    })
+    .file("foo.pdf", pdf)
+    .upload(&server);
+
+  server
+    .get(format!("/media/document/{fingerprint}/item/1"))
+    .assert_header(header::ACCEPT_RANGES, "bytes")
+    .assert_header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
+    .assert_header(header::CONTENT_LENGTH, pdf.len().to_string())
+    .assert_header(header::CONTENT_SECURITY_POLICY, "sandbox")
+    .assert_header(header::CONTENT_TYPE, "application/pdf")
+    .assert_header(header::ETAG, format!("\"{}\"", Hash::bytes(pdf)))
+    .assert_header_absent(header::CONTENT_DISPOSITION)
+    .assert_body(pdf)
+    .send();
+}
+
+#[test]
 fn media_image_item_out_of_range() {
   let server = TestServer::new();
 
@@ -1867,6 +1919,32 @@ fn package_item_audio_out_of_range() {
     .assert_body(format!(
       "track 2 does not exist, package {fingerprint} has 1 track"
     ))
+    .send();
+}
+
+#[test]
+fn package_item_document() {
+  let server = TestServer::new();
+
+  let metadata = Metadata {
+    media: Some(Media::Document {
+      items: vec![Item::test("foo.pdf")],
+    }),
+    ..default()
+  };
+
+  let fingerprint = PackageBuilder::new()
+    .metadata(&metadata)
+    .file("foo.pdf", b"%PDF-1.7\n")
+    .upload(&server);
+
+  server
+    .get(format!("/package/{fingerprint}/item/1"))
+    .assert_page(DocumentHtml {
+      document: 0,
+      fingerprint,
+      metadata,
+    })
     .send();
 }
 

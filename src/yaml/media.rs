@@ -4,6 +4,7 @@ use super::*;
 #[serde(deny_unknown_fields, rename_all = "snake_case", tag = "type")]
 pub(crate) enum Media {
   Audio { items: Vec<Audio> },
+  Document { items: Vec<Document> },
   Image { items: Vec<Image> },
   Video { items: Vec<Video> },
   Web,
@@ -21,6 +22,16 @@ impl Media {
             Ok(item)
           })
           .collect::<Result<Vec<Item<crate::Audio>>>>()?,
+      },
+      Self::Document { items } => crate::Media::Document {
+        items: items
+          .into_iter()
+          .map(|Document { path }| {
+            let item = crate::Document::load(root, path)?;
+            bar.inc(1);
+            Ok(item)
+          })
+          .collect::<Result<Vec<Item<crate::Document>>>>()?,
       },
       Self::Image { items } => crate::Media::Image {
         items: items
