@@ -391,21 +391,11 @@ impl Server {
     self.metadata(fingerprint)
   }
 
-  pub(crate) fn packages(&self) -> ServerResult<Vec<(Fingerprint, Option<Metadata>, Totals)>> {
-    fn sort_key(
-      (fingerprint, metadata, _totals): &(Fingerprint, Option<Metadata>, Totals),
-    ) -> (bool, Option<UniCase<&str>>, Option<&str>, Fingerprint) {
-      let title = metadata
-        .as_ref()
-        .and_then(|metadata| metadata.title.as_deref());
-      (
-        title.is_none(),
-        title.map(UniCase::new),
-        title,
-        *fingerprint,
-      )
-    }
-
+  pub(crate) fn packages(
+    &self,
+    sort: Sort,
+    order: Order,
+  ) -> ServerResult<Vec<(Fingerprint, Option<Metadata>, Totals)>> {
     let tx = self.database.begin_read()?;
 
     let directories = tx.open_table(DIRECTORIES)?;
@@ -425,7 +415,7 @@ impl Server {
       })
       .collect::<ServerResult<Vec<(Fingerprint, Option<Metadata>, Totals)>>>()?;
 
-    packages.sort_by(|a, b| sort_key(a).cmp(&sort_key(b)));
+    packages.sort_by(|a, b| PackageKey::compare(a, b, sort, order));
 
     Ok(packages)
   }

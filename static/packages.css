@@ -60,4 +60,13 @@ td:not(:last-child), th:not(:last-child) {
 
 th {
   text-align: left;
+
+  a {
+    color: inherit;
+    text-decoration: none;
+
+    &:hover, &:focus-visible {
+      text-decoration: underline;
+    }
+  }
 }

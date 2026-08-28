@@ -106,10 +106,12 @@ use {
     number_error::NumberError,
     options::Options,
     or::Or,
+    order::Order,
     ordinal::Ordinal,
     orientation::Orientation,
     owo_colorize_ext::OwoColorizeExt,
     package::Package,
+    package_key::PackageKey,
     path_error::PathError,
     percent_encode::PercentEncode,
     private_key_error::PrivateKeyError,
@@ -123,6 +125,7 @@ use {
     server_error::ServerError,
     sign_options::SignOptions,
     signature_error::SignatureError,
+    sort::Sort,
     static_asset::StaticAsset,
     style::Style,
     subcommand::Subcommand,
@@ -385,10 +388,12 @@ mod number_error;
 mod open_graph_image;
 mod options;
 mod or;
+mod order;
 mod ordinal;
 mod orientation;
 mod owo_colorize_ext;
 mod package;
+mod package_key;
 mod page;
 mod path_error;
 mod percent_encode;
@@ -409,6 +414,7 @@ mod server_error;
 mod sign_options;
 mod signature;
 mod signature_error;
+mod sort;
 mod sorted_set;
 mod statement;
 mod static_asset;

@@ -2,7 +2,9 @@ use super::*;
 
 #[derive(Boilerplate)]
 pub(crate) struct PackagesHtml {
+  pub(crate) order: Order,
   pub(crate) packages: Vec<(Fingerprint, Option<Metadata>, Totals)>,
+  pub(crate) sort: Sort,
   pub(crate) view: View,
 }
 
@@ -18,6 +20,23 @@ struct Package<'a> {
 }
 
 impl PackagesHtml {
+  fn header(&self, sort: Sort) -> Trusted<String> {
+    let order = if sort == self.sort {
+      self.order.toggle()
+    } else {
+      Order::default()
+    };
+
+    let class = match sort {
+      Sort::Files | Sort::Size => " class=right",
+      Sort::Creator | Sort::Media | Sort::Title | Sort::Year => "",
+    };
+
+    let path = Self::path(self.view, sort, order);
+
+    Trusted(format!("<th{class}><a href={path}>{sort}</a></th>"))
+  }
+
   fn packages(&self) -> impl Iterator<Item = Package<'_>> {
     self
       .packages
@@ -44,6 +63,32 @@ impl PackagesHtml {
           .and_then(|metadata| metadata.time.as_ref())
           .map(Time::year),
       })
+  }
+
+  fn path(view: View, sort: Sort, order: Order) -> String {
+    let mut params = Vec::new();
+
+    if view != View::default() {
+      params.push(format!("view={view}"));
+    }
+
+    if sort != Sort::default() {
+      params.push(format!("sort={sort}"));
+    }
+
+    if order != Order::default() {
+      params.push(format!("order={order}"));
+    }
+
+    if params.is_empty() {
+      "/packages".into()
+    } else {
+      format!("/packages?{}", params.join("&"))
+    }
+  }
+
+  fn view(&self, view: View) -> String {
+    Self::path(view, self.sort, self.order)
   }
 }
 
@@ -74,10 +119,12 @@ mod tests {
 
     assert_eq!(
       PackagesHtml {
+        order: Order::default(),
         packages: vec![
           (fingerprint, Some(metadata), Totals::default()),
           (fingerprint, None, Totals::default()),
         ],
+        sort: Sort::default(),
         view: View::Grid,
       }
       .to_string(),
@@ -128,10 +175,12 @@ mod tests {
 
     assert_eq!(
       PackagesHtml {
+        order: Order::default(),
         packages: vec![
           (fingerprint, Some(metadata), totals),
           (fingerprint, None, Totals::default()),
         ],
+        sort: Sort::default(),
         view: View::List,
       }
       .to_string(),
@@ -146,12 +195,12 @@ mod tests {
           <table>
             <thead>
               <tr>
-                <th>title</th>
-                <th>creator</th>
-                <th>year</th>
-                <th>media</th>
-                <th class=right>files</th>
-                <th class=right>size</th>
+                <th><a href=/packages?order=descending>title</a></th>
+                <th><a href=/packages?sort=creator>creator</a></th>
+                <th><a href=/packages?sort=year>year</a></th>
+                <th><a href=/packages?sort=media>media</a></th>
+                <th class=right><a href=/packages?sort=files>files</a></th>
+                <th class=right><a href=/packages?sort=size>size</a></th>
               </tr>
             </thead>
             <tbody>
@@ -177,6 +226,43 @@ mod tests {
         fingerprint = test::FINGERPRINT,
         hash = Hash::from(fingerprint),
       )),
+    );
+  }
+
+  #[test]
+  fn sorted() {
+    assert_eq!(
+      PackagesHtml {
+        order: Order::Descending,
+        packages: Vec::new(),
+        sort: Sort::Size,
+        view: View::List,
+      }
+      .to_string(),
+      unindent(
+        "
+          <header>
+            <h1>Packages</h1>
+            <nav>
+              <a>List</a> | <a href=/packages?view=grid&amp;sort=size&amp;order=descending>Grid</a>
+            </nav>
+          </header>
+          <table>
+            <thead>
+              <tr>
+                <th><a href=/packages>title</a></th>
+                <th><a href=/packages?sort=creator>creator</a></th>
+                <th><a href=/packages?sort=year>year</a></th>
+                <th><a href=/packages?sort=media>media</a></th>
+                <th class=right><a href=/packages?sort=files>files</a></th>
+                <th class=right><a href=/packages?sort=size>size</a></th>
+              </tr>
+            </thead>
+            <tbody>
+            </tbody>
+          </table>
+        ",
+      ),
     );
   }
 }

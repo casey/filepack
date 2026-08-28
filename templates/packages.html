@@ -3,10 +3,10 @@
   <nav>
 %% match self.view {
 %%   View::List => {
-    <a>List</a> | <a href=/packages?view=grid>Grid</a>
+    <a>List</a> | <a href={{ self.view(View::Grid) }}>Grid</a>
 %%   }
 %%   View::Grid => {
-    <a href=/packages>List</a> | <a>Grid</a>
+    <a href={{ self.view(View::List) }}>List</a> | <a>Grid</a>
 %%   }
 %% }
   </nav>
@@ -37,12 +37,9 @@
 <table>
   <thead>
     <tr>
-      <th>title</th>
-      <th>creator</th>
-      <th>year</th>
-      <th>media</th>
-      <th class=right>files</th>
-      <th class=right>size</th>
+%%     for sort in Sort::iter() {
+      {{ self.header(sort) }}
+%%     }
     </tr>
   </thead>
   <tbody>
