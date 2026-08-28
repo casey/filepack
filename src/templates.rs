@@ -4,7 +4,8 @@ pub use self::{directory::DirectoryHtml, package::PackageHtml, page::PageHtml};
 
 pub(crate) use self::{
   audio::AudioHtml, directory_table::DirectoryTableHtml, files::FilesHtml, home::HomeHtml,
-  image::ImageHtml, info::InfoHtml, media::MediaHtml, packages::PackagesHtml, video::VideoHtml,
+  image::ImageHtml, info::InfoHtml, media::MediaHtml, not_found::NotFoundHtml,
+  packages::PackagesHtml, video::VideoHtml,
 };
 
 mod audio;
@@ -15,6 +16,7 @@ mod home;
 mod image;
 mod info;
 mod media;
+mod not_found;
 mod package;
 mod packages;
 mod page;

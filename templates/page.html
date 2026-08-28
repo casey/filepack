@@ -34,6 +34,18 @@
 %% }
   </head>
   <body>
-    {{ Trusted(&self.content) }}
+    <header>
+      <nav>
+%% if self.content.home() {
+        <a>filepack</a>
+%% } else {
+        <a href=/>filepack</a>
+%% }
+        <a href=https://github.com/casey/filepack>github</a>
+      </nav>
+    </header>
+    <main>
+      {{ Trusted(&self.content) }}
+    </main>
   </body>
 </html>

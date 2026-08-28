@@ -59,6 +59,10 @@ impl HomeHtml {
 }
 
 impl Page for HomeHtml {
+  fn home(&self) -> bool {
+    true
+  }
+
   fn stylesheet(&self) -> Option<&'static str> {
     Some("/static/home.css")
   }

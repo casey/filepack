@@ -36,7 +36,7 @@
   }
 }
 
-header {
+main > header {
   align-items: baseline;
   display: flex;
   justify-content: space-between;

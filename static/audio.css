@@ -1,8 +1,12 @@
 body {
+  height: 100dvh;
+}
+
+main {
   display: flex;
   flex-direction: column;
-  height: 100dvh;
-  margin: 0;
+  min-height: 0;
+  padding: 0;
 }
 
 img {
