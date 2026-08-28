@@ -16,21 +16,22 @@ time {
   padding-left: 0;
 
   a {
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    display: block;
-    overflow: hidden;
-    transition: border-color 150ms;
+    align-items: center;
+    aspect-ratio: 1 / 1;
+    display: flex;
+    justify-content: center;
 
-    &:hover, &:focus-visible {
+    &:hover img, &:focus-visible img {
       border-color: var(--border-hover);
     }
   }
 
   img {
-    aspect-ratio: 1 / 1;
+    border-radius: 8px;
+    border: 1px solid var(--border);
     display: block;
-    object-fit: contain;
-    width: 100%;
+    max-height: 100%;
+    max-width: 100%;
+    transition: border-color 150ms;
   }
 }
