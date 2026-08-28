@@ -1064,9 +1064,41 @@ fn get_package_without_metadata() {
 
 #[test]
 fn home() {
+  let server = TestServer::new();
+
+  let metadata = Metadata {
+    artwork: Some(Image::test("foo.png")),
+    media: Some(Media::Audio { items: Vec::new() }),
+    ..default()
+  };
+
+  let totals = Totals {
+    directories: 0,
+    directory_size: 0,
+    file_size: metadata.encode_to_vec().len().into_u64() + 3,
+    files: 2,
+  };
+
+  let fingerprint = PackageBuilder::new()
+    .metadata(&metadata)
+    .file("foo.png", b"bar")
+    .upload(&server);
+
+  server
+    .get("/")
+    .assert_page(HomeHtml {
+      packages: vec![(fingerprint, Some(metadata), totals)],
+    })
+    .send();
+}
+
+#[test]
+fn home_empty() {
   TestServer::new()
     .get("/")
-    .assert_static("index.html")
+    .assert_page(HomeHtml {
+      packages: Vec::new(),
+    })
     .send();
 }
 

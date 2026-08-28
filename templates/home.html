@@ -1,0 +1,22 @@
+%% for (section, packages) in self.sections() {
+<section>
+  <h2>{{ section }}</h2>
+  <ul class=grid>
+%%   for package in packages {
+    <li>
+      <a href=/package/{{ package.fingerprint }}>
+%%     if package.artwork {
+        <img loading=lazy src=/artwork/{{ package.fingerprint }}/thumbnail>
+%%     }
+      </a>
+%%     if let Some(title) = package.title {
+      <div class=title>{{ title }}</div>
+%%     }
+%%     if let Some(creator) = package.creator {
+      <div class=creator>{{ creator }}</div>
+%%     }
+    </li>
+%%   }
+  </ul>
+</section>
+%% }
