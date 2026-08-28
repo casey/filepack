@@ -40,6 +40,7 @@ impl LintGroup {
       Self::Hygiene => [Junk].into(),
       Self::Metadata => [
         ArtworkMissing,
+        AudioEmbeddedArtworkAspectRatio,
         AudioEmbeddedArtworkMissing,
         CreatorMissing,
         MediaItemsMissing,

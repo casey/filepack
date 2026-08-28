@@ -60,6 +60,23 @@ impl Version {
 }
 
 impl<'a> Mp3Decoder<'a> {
+  pub(crate) fn cover_art(data: &[u8]) -> Result<Vec<EmbeddedImage>, AudioError> {
+    Self::read_tag(data)?
+      .pictures()
+      .filter(|picture| picture.picture_type == id3::frame::PictureType::CoverFront)
+      .map(|picture| {
+        Ok(EmbeddedImage {
+          data: picture.data.clone(),
+          media_type: picture.mime_type.parse().context(
+            audio_error::EmbeddedImageMediaTypeParse {
+              media_type: &picture.mime_type,
+            },
+          )?,
+        })
+      })
+      .collect()
+  }
+
   fn frame(&self, offset: usize) -> Result<Frame, Mp3Error> {
     let header: [u8; 4] = self
       .data
@@ -127,14 +144,6 @@ impl<'a> Mp3Decoder<'a> {
       samples,
       size,
     })
-  }
-
-  pub(crate) fn has_cover_art(data: &[u8]) -> Result<bool, AudioError> {
-    Ok(
-      Self::read_tag(data)?
-        .pictures()
-        .any(|picture| picture.picture_type == id3::frame::PictureType::CoverFront),
-    )
   }
 
   fn metadata(data: &[u8]) -> Result<AudioMetadata, AudioError> {
@@ -293,24 +302,38 @@ mod tests {
   use super::*;
 
   #[test]
-  fn has_cover_art() {
+  fn cover_art() {
     #[track_caller]
-    fn case(builder: Mp3Builder, expected: bool) {
+    fn case(builder: Mp3Builder, expected: &[&[u8]]) {
       assert_eq!(
-        Mp3Decoder::has_cover_art(&builder.build()).unwrap(),
-        expected,
+        Mp3Decoder::cover_art(&builder.build()).unwrap(),
+        expected
+          .iter()
+          .map(|data| EmbeddedImage {
+            data: data.to_vec(),
+            media_type: mime::IMAGE_PNG,
+          })
+          .collect::<Vec<EmbeddedImage>>(),
       );
     }
 
-    case(Mp3Builder::new().id3v2(), false);
-    case(Mp3Builder::new().tag("TALB", "qux"), false);
-    case(Mp3Builder::new().picture(3), true);
-    case(Mp3Builder::new().picture(4), false);
-    case(Mp3Builder::new().picture(4).picture(3), true);
+    case(Mp3Builder::new().id3v2(), &[]);
+    case(Mp3Builder::new().tag("TALB", "qux"), &[]);
+    case(Mp3Builder::new().picture(3, b"foo"), &[b"foo"]);
+    case(Mp3Builder::new().picture(4, b"foo"), &[]);
+    case(
+      Mp3Builder::new().picture(4, b"foo").picture(3, b"bar"),
+      &[b"bar"],
+    );
 
     assert_matches!(
-      Mp3Decoder::has_cover_art(b"foo").unwrap_err(),
+      Mp3Decoder::cover_art(b"foo").unwrap_err(),
       AudioError::Mp3TagMissing,
+    );
+
+    assert_matches!(
+      Mp3Decoder::cover_art(&Mp3Builder::new().picture_media_type("foo", 3, b"bar").build()).unwrap_err(),
+      AudioError::EmbeddedImageMediaTypeParse { media_type, .. } if media_type == "foo",
     );
   }
 

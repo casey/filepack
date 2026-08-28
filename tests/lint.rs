@@ -63,6 +63,77 @@ fn deny_artwork_missing() {
 }
 
 #[test]
+fn deny_audio_embedded_artwork_aspect_ratio() {
+  #[track_caller]
+  fn case(path: &str, data: Vec<u8>, square: bool) {
+    let test = Test::new()
+      .write(path, data)
+      .write(
+        "metadata.yaml",
+        format!(
+          "
+            media:
+              type: audio
+              items:
+                - path: {path}
+          "
+        ),
+      )
+      .args(["create", "--deny", "audio-embedded-artwork-aspect-ratio"]);
+
+    if square {
+      test.success();
+    } else {
+      test
+        .stderr(
+          format!(
+            "
+              error: path failed lint: `{path}`
+                     └─ audio file embedded front cover art is 2×1 but must be square
+              error: 1 lint error
+            "
+          )
+          .as_str(),
+        )
+        .failure();
+    }
+  }
+
+  fn flac() -> FlacBuilder {
+    FlacBuilder::new()
+      .tag("ALBUM", "qux")
+      .tag("ARTIST", "baz")
+      .tag("DISCNUMBER", "1")
+      .tag("DISCTOTAL", "1")
+      .tag("TITLE", "bar")
+      .tag("TRACKNUMBER", "1")
+      .tag("TRACKTOTAL", "1")
+  }
+
+  fn mp3() -> Mp3Builder {
+    Mp3Builder::new()
+      .tag("TALB", "qux")
+      .tag("TIT2", "bar")
+      .tag("TPE1", "baz")
+      .tag("TPOS", "1/1")
+      .tag("TRCK", "1/1")
+      .frames(1)
+  }
+
+  let square = PngBuilder::new().build();
+  let wide = PngBuilder::new().width(2).build();
+
+  case("foo.flac", flac().build(), true);
+  case("foo.flac", flac().picture(3, &square).build(), true);
+  case("foo.flac", flac().picture(3, &wide).build(), false);
+  case("foo.flac", flac().picture(4, &wide).build(), true);
+  case("foo.mp3", mp3().build(), true);
+  case("foo.mp3", mp3().picture(3, &square).build(), true);
+  case("foo.mp3", mp3().picture(3, &wide).build(), false);
+  case("foo.mp3", mp3().picture(4, &wide).build(), true);
+}
+
+#[test]
 fn deny_audio_embedded_artwork_missing() {
   #[track_caller]
   fn case(path: &str, data: Vec<u8>, cover: bool) {
@@ -121,11 +192,11 @@ fn deny_audio_embedded_artwork_missing() {
   }
 
   case("foo.flac", flac().build(), false);
-  case("foo.flac", flac().picture(3).build(), true);
-  case("foo.flac", flac().picture(4).build(), false);
+  case("foo.flac", flac().picture(3, b"foo").build(), true);
+  case("foo.flac", flac().picture(4, b"foo").build(), false);
   case("foo.mp3", mp3().build(), false);
-  case("foo.mp3", mp3().picture(3).build(), true);
-  case("foo.mp3", mp3().picture(4).build(), false);
+  case("foo.mp3", mp3().picture(3, b"foo").build(), true);
+  case("foo.mp3", mp3().picture(4, b"foo").build(), false);
 }
 
 #[test]
