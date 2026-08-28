@@ -1,9 +1,14 @@
 body {
-  margin: 0;
+  height: 100dvh;
+}
+
+main {
+  min-height: 0;
+  padding: 0;
 }
 
 video {
   display: block;
-  height: 100vh;
-  width: 100vw;
+  height: 100%;
+  width: 100%;
 }

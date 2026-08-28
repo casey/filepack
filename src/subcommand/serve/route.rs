@@ -84,7 +84,10 @@ pub(crate) async fn directory(
   })
 }
 
-pub(crate) async fn fallback(uri: Uri) -> ServerResult<Response> {
+pub(crate) async fn fallback(
+  server_config: ServerConfigExtension,
+  uri: Uri,
+) -> ServerResult<Response> {
   if let Some(component) = uri.path().strip_prefix('/')
     && !component.contains('/')
     && component.to_ascii_lowercase().starts_with("package1")
@@ -97,8 +100,10 @@ pub(crate) async fn fallback(uri: Uri) -> ServerResult<Response> {
   }
 
   Ok(
-    StaticAsset::get("404.html")?
-      .status(StatusCode::NOT_FOUND)
+    (
+      StatusCode::NOT_FOUND,
+      NotFoundHtml.page(server_config.url.clone()),
+    )
       .into_response(),
   )
 }

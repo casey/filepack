@@ -10,6 +10,24 @@ pub struct PageHtml<T: Page> {
 mod tests {
   use {super::*, pretty_assertions::assert_eq};
 
+  struct HomePage;
+
+  impl Display for HomePage {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+      write!(f, "foo")
+    }
+  }
+
+  impl Page for HomePage {
+    fn home(&self) -> bool {
+      true
+    }
+
+    fn title(&self) -> String {
+      "home".into()
+    }
+  }
+
   struct ImagePage;
 
   impl Display for ImagePage {
@@ -83,6 +101,39 @@ mod tests {
   }
 
   #[test]
+  fn home() {
+    assert_eq!(
+      HomePage.page(None).to_string(),
+      unindent(
+        "
+          <!doctype html>
+          <html lang=en>
+            <head>
+              <meta charset=utf-8>
+              <meta name=viewport content='width=device-width,initial-scale=1.0'>
+              <title>home</title>
+              <meta name=description content='Filepack package server'>
+              <meta property=og:site_name content=filepack>
+              <link href=/static/index.css rel=stylesheet>
+            </head>
+            <body>
+              <header>
+                <nav>
+                  <a>filepack</a>
+                  <a href=https://github.com/casey/filepack>github</a>
+                </nav>
+              </header>
+              <main>
+                foo
+              </main>
+            </body>
+          </html>
+        "
+      ),
+    );
+  }
+
+  #[test]
   fn navigation() {
     assert_eq!(
       NavigationPage.page(None).to_string(),
@@ -102,7 +153,15 @@ mod tests {
               <link href=/baz rel=up>
             </head>
             <body>
-              bar
+              <header>
+                <nav>
+                  <a href=/>filepack</a>
+                  <a href=https://github.com/casey/filepack>github</a>
+                </nav>
+              </header>
+              <main>
+                bar
+              </main>
             </body>
           </html>
         "
@@ -133,7 +192,15 @@ mod tests {
               <link href=/static/index.css rel=stylesheet>
             </head>
             <body>
-              foo
+              <header>
+                <nav>
+                  <a href=/>filepack</a>
+                  <a href=https://github.com/casey/filepack>github</a>
+                </nav>
+              </header>
+              <main>
+                foo
+              </main>
             </body>
           </html>
         "
@@ -156,7 +223,15 @@ mod tests {
               <link href=/static/index.css rel=stylesheet>
             </head>
             <body>
-              foo
+              <header>
+                <nav>
+                  <a href=/>filepack</a>
+                  <a href=https://github.com/casey/filepack>github</a>
+                </nav>
+              </header>
+              <main>
+                foo
+              </main>
             </body>
           </html>
         "
@@ -182,7 +257,15 @@ mod tests {
               <script src=/foo.js type=module></script>
             </head>
             <body>
-              bar
+              <header>
+                <nav>
+                  <a href=/>filepack</a>
+                  <a href=https://github.com/casey/filepack>github</a>
+                </nav>
+              </header>
+              <main>
+                bar
+              </main>
             </body>
           </html>
         "

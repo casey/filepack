@@ -719,7 +719,7 @@ fn download_response() {
 fn fallback() {
   TestServer::new()
     .get("/nonexistent")
-    .assert_static("404.html")
+    .assert_page(NotFoundHtml)
     .status(StatusCode::NOT_FOUND)
     .send();
 }
@@ -1848,7 +1848,7 @@ fn mount_serves_index_html() {
 fn non_fingerprint_bech32_falls_through() {
   TestServer::new()
     .get(format!("/{}", test::PUBLIC_KEY))
-    .assert_static("404.html")
+    .assert_page(NotFoundHtml)
     .status(StatusCode::NOT_FOUND)
     .send();
 }

@@ -1,0 +1,19 @@
+body {
+  height: 100dvh;
+}
+
+main {
+  align-items: center;
+  display: flex;
+  font-size: 60vmin;
+  justify-content: center;
+  min-height: 0;
+
+  a {
+    color: white;
+
+    &:hover {
+      text-shadow: 0 0 100px;
+    }
+  }
+}
