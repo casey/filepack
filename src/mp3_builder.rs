@@ -82,12 +82,18 @@ impl Mp3Builder {
   }
 
   #[must_use]
-  pub fn picture(mut self, picture_type: u8) -> Self {
+  pub fn picture(self, picture_type: u8, data: &[u8]) -> Self {
+    self.picture_media_type("image/png", picture_type, data)
+  }
+
+  #[must_use]
+  pub fn picture_media_type(mut self, media_type: &str, picture_type: u8, data: &[u8]) -> Self {
     let mut frame = vec![0];
-    frame.extend_from_slice(b"image/png\0");
+    frame.extend_from_slice(media_type.as_bytes());
+    frame.push(0);
     frame.push(picture_type);
     frame.extend_from_slice(b"\0");
-    frame.extend_from_slice(b"foo");
+    frame.extend_from_slice(data);
     self
       .id3v2
       .get_or_insert_default()

@@ -10,6 +10,8 @@ use super::*;
 pub(crate) enum LintError {
   #[snafu(display("metadata missing artwork"))]
   ArtworkMissing,
+  #[snafu(display("audio file embedded front cover art is {dimensions} but must be square"))]
+  AudioEmbeddedArtworkAspectRatio { dimensions: Dimensions },
   #[snafu(display("audio file missing embedded front cover art"))]
   AudioEmbeddedArtworkMissing,
   #[snafu(display("paths would conflict on case-insensitive filesystem"))]

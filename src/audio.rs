@@ -118,6 +118,18 @@ impl Audio {
     Ok(())
   }
 
+  pub(crate) fn cover_art(&self, root: &Utf8Path) -> Result<Vec<EmbeddedImage>> {
+    let path = root.join(&self.path);
+
+    let data = filesystem::read(&path)?;
+
+    match self.ty {
+      AudioType::Flac => FlacDecoder::cover_art(&data),
+      AudioType::Mp3 => Mp3Decoder::cover_art(&data),
+    }
+    .context(error::Audio { path })
+  }
+
   pub(crate) fn duration(&self) -> Duration {
     if self.sample_rate == 0 {
       return Duration::ZERO;
@@ -129,18 +141,6 @@ impl Audio {
       self.samples / self.sample_rate,
       u32::try_from(subsecond * 1_000_000_000 / u128::from(self.sample_rate)).unwrap(),
     )
-  }
-
-  pub(crate) fn has_cover_art(&self, root: &Utf8Path) -> Result<bool> {
-    let path = root.join(&self.path);
-
-    let data = filesystem::read(&path)?;
-
-    match self.ty {
-      AudioType::Flac => FlacDecoder::has_cover_art(&data),
-      AudioType::Mp3 => Mp3Decoder::has_cover_art(&data),
-    }
-    .context(error::Audio { path })
   }
 
   pub(crate) fn sum_durations(tracks: &[Item<Audio>]) -> Duration {

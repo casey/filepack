@@ -64,20 +64,22 @@ pub(crate) struct FlacDecoder<'a> {
 }
 
 impl<'a> FlacDecoder<'a> {
-  fn frame_offset(data: &[u8]) -> Result<usize, AudioError> {
-    Ok(Blocks::new(data).last().transpose()?.unwrap().end)
-  }
+  pub(crate) fn cover_art(data: &[u8]) -> Result<Vec<EmbeddedImage>, AudioError> {
+    let mut covers = Vec::new();
 
-  pub(crate) fn has_cover_art(data: &[u8]) -> Result<bool, AudioError> {
     for block in Blocks::new(data) {
       let block = block?;
 
       if block.ty == 6 && block.body.get(..4) == Some(&3u32.to_be_bytes()) {
-        return Ok(true);
+        covers.push(Self::picture(&block.body[4..])?);
       }
     }
 
-    Ok(false)
+    Ok(covers)
+  }
+
+  fn frame_offset(data: &[u8]) -> Result<usize, AudioError> {
+    Ok(Blocks::new(data).last().transpose()?.unwrap().end)
   }
 
   fn metadata(data: &'a [u8]) -> Result<AudioMetadata, AudioError> {
@@ -112,6 +114,33 @@ impl<'a> FlacDecoder<'a> {
     parse_number(value).context(audio_error::TagInteger { tag })
   }
 
+  fn picture(body: &[u8]) -> Result<EmbeddedImage, AudioError> {
+    fn field(body: &[u8], offset: usize) -> Result<(usize, usize), AudioError> {
+      let length = body
+        .get(offset..offset + 4)
+        .map(|bytes| u32::from_be_bytes(bytes.try_into().unwrap()))
+        .context(audio_error::FlacTruncated)?;
+      let start = offset + 4;
+      let end = start + usize::try_from(length).unwrap();
+      ensure!(end <= body.len(), audio_error::FlacTruncated);
+      Ok((start, end))
+    }
+
+    let (mime_start, mime_end) = field(body, 0)?;
+    let (_, offset) = field(body, mime_end)?;
+    let (start, end) = field(body, offset + 16)?;
+
+    let media_type = str::from_utf8(&body[mime_start..mime_end])
+      .context(audio_error::EmbeddedImageMediaTypeUtf8)?;
+
+    Ok(EmbeddedImage {
+      data: body[start..end].into(),
+      media_type: media_type
+        .parse()
+        .context(audio_error::EmbeddedImageMediaTypeParse { media_type })?,
+    })
+  }
+
   pub(crate) fn read(path: &Utf8Path) -> Result<AudioMetadata> {
     let data = filesystem::read(path)?;
 
@@ -135,6 +164,52 @@ mod tests {
   use super::*;
 
   #[test]
+  fn cover_art() {
+    #[track_caller]
+    fn case(builder: FlacBuilder, expected: &[&[u8]]) {
+      assert_eq!(
+        FlacDecoder::cover_art(&builder.build()).unwrap(),
+        expected
+          .iter()
+          .map(|data| EmbeddedImage {
+            data: data.to_vec(),
+            media_type: mime::IMAGE_PNG,
+          })
+          .collect::<Vec<EmbeddedImage>>(),
+      );
+    }
+
+    case(FlacBuilder::new(), &[]);
+    case(FlacBuilder::new().tag("foo", "bar"), &[]);
+    case(FlacBuilder::new().picture(3, b"foo"), &[b"foo"]);
+    case(FlacBuilder::new().picture(4, b"foo"), &[]);
+    case(
+      FlacBuilder::new().picture(4, b"foo").picture(3, b"bar"),
+      &[b"bar"],
+    );
+
+    assert_matches!(
+      FlacDecoder::cover_art(&FlacBuilder::new().picture(3, b"foo").truncate(48).build()),
+      Err(AudioError::FlacTruncated),
+    );
+
+    assert_matches!(
+      FlacDecoder::picture(b"\0\0\0\x09image/png\0\0\0\0\0\0\0\0"),
+      Err(AudioError::FlacTruncated),
+    );
+
+    assert_matches!(
+      FlacDecoder::picture(b"\0\0\0\x03foo\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"),
+      Err(AudioError::EmbeddedImageMediaTypeParse { media_type, .. }) if media_type == "foo",
+    );
+
+    assert_matches!(
+      FlacDecoder::picture(b"\0\0\0\x01\xff\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"),
+      Err(AudioError::EmbeddedImageMediaTypeUtf8 { .. }),
+    );
+  }
+
+  #[test]
   fn frame_offset() {
     let bytes = FlacBuilder::new().build();
     assert_eq!(
@@ -155,28 +230,6 @@ mod tests {
 
     assert_matches!(
       FlacDecoder::frame_offset(&FlacBuilder::new().truncate(8).build()),
-      Err(AudioError::FlacTruncated),
-    );
-  }
-
-  #[test]
-  fn has_cover_art() {
-    #[track_caller]
-    fn case(builder: FlacBuilder, expected: bool) {
-      assert_eq!(
-        FlacDecoder::has_cover_art(&builder.build()).unwrap(),
-        expected,
-      );
-    }
-
-    case(FlacBuilder::new(), false);
-    case(FlacBuilder::new().tag("foo", "bar"), false);
-    case(FlacBuilder::new().picture(3), true);
-    case(FlacBuilder::new().picture(4), false);
-    case(FlacBuilder::new().picture(4).picture(3), true);
-
-    assert_matches!(
-      FlacDecoder::has_cover_art(&FlacBuilder::new().picture(3).truncate(48).build()),
       Err(AudioError::FlacTruncated),
     );
   }

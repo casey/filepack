@@ -1,6 +1,6 @@
 pub struct FlacBuilder {
   comments: Vec<(String, String)>,
-  pictures: Vec<u32>,
+  pictures: Vec<(u32, Vec<u8>)>,
   samples: u32,
   truncate: Option<usize>,
 }
@@ -31,14 +31,16 @@ impl FlacBuilder {
       blocks.push((4, body));
     }
 
-    for picture_type in self.pictures {
+    for (picture_type, data) in self.pictures {
       let mut body = Vec::new();
       body.extend_from_slice(&picture_type.to_be_bytes());
       body.extend_from_slice(&u32::try_from("image/png".len()).unwrap().to_be_bytes());
       body.extend_from_slice(b"image/png");
-      body.extend_from_slice(&0u32.to_be_bytes());
+      body.extend_from_slice(&u32::try_from("bar".len()).unwrap().to_be_bytes());
+      body.extend_from_slice(b"bar");
       body.extend_from_slice(&[0; 16]);
-      body.extend_from_slice(&0u32.to_be_bytes());
+      body.extend_from_slice(&u32::try_from(data.len()).unwrap().to_be_bytes());
+      body.extend_from_slice(&data);
       blocks.push((6, body));
     }
 
@@ -70,8 +72,8 @@ impl FlacBuilder {
   }
 
   #[must_use]
-  pub fn picture(mut self, picture_type: u32) -> Self {
-    self.pictures.push(picture_type);
+  pub fn picture(mut self, picture_type: u32, data: &[u8]) -> Self {
+    self.pictures.push((picture_type, data.into()));
     self
   }
 

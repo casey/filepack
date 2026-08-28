@@ -242,28 +242,46 @@ impl Create {
       linter.error(LintError::NotGenerated);
     }
 
-    if linter.is_active(Lint::AudioEmbeddedArtworkMissing)
+    if (linter.is_active(Lint::AudioEmbeddedArtworkMissing)
+      || linter.is_active(Lint::AudioEmbeddedArtworkAspectRatio))
       && let Some((metadata, _cbor)) = &metadata
       && let Some(Media::Audio { items }) = &metadata.media
     {
-      let missing = {
+      let failures = {
         let bar = ProgressBar::count(options.quiet, items.len().into_u64(), "files");
 
-        let mut missing = Vec::new();
+        let mut failures = Vec::new();
 
         for audio in items {
-          if !audio.content.has_cover_art(&root)? {
-            missing.push(audio);
+          let covers = audio.content.cover_art(&root)?;
+
+          if linter.is_active(Lint::AudioEmbeddedArtworkMissing) && covers.is_empty() {
+            failures.push((audio, LintError::AudioEmbeddedArtworkMissing));
+          }
+
+          if linter.is_active(Lint::AudioEmbeddedArtworkAspectRatio) {
+            for cover in covers {
+              let dimensions = cover.dimensions().context(error::Audio {
+                path: root.join(audio.path()),
+              })?;
+
+              if dimensions.width != dimensions.height {
+                failures.push((
+                  audio,
+                  LintError::AudioEmbeddedArtworkAspectRatio { dimensions },
+                ));
+              }
+            }
           }
 
           bar.inc(1);
         }
 
-        missing
+        failures
       };
 
-      for audio in missing {
-        linter.error_path(LintError::AudioEmbeddedArtworkMissing, audio.path());
+      for (audio, lint) in failures {
+        linter.error_path(lint, audio.path());
       }
     }
 
