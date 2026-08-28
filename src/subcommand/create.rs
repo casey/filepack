@@ -86,8 +86,6 @@ impl Create {
 
     let mut case_conflicts = HashMap::<RelativePath, Vec<RelativePath>>::new();
 
-    let mut lint_errors = 0u64;
-
     let mut empty = Vec::new();
 
     let denied = self
@@ -102,7 +100,7 @@ impl Create {
       .flat_map(LintSelector::lints)
       .collect::<BTreeSet<Lint>>();
 
-    let lints = &denied - &allowed;
+    let mut linter = Linter::new(&denied - &allowed);
 
     for entry in WalkDir::new(&root).sort_by_file_name() {
       let entry = entry?;
@@ -138,13 +136,11 @@ impl Create {
 
       let metadata = filesystem::metadata(path)?;
 
-      if let Some(lint) = relative.lint(&lints) {
-        eprintln!("error: path failed lint: `{relative}`");
-        eprintln!("       └─ {lint}");
-        lint_errors += 1;
+      if let Some(lint) = relative.lint(linter.active()) {
+        linter.error_path(lint, &relative);
       }
 
-      if lints.contains(&Lint::CaseConflict) {
+      if linter.is_active(Lint::CaseConflict) {
         case_conflicts
           .entry(relative.to_lowercase())
           .or_default()
@@ -164,63 +160,47 @@ impl Create {
     for mut originals in case_conflicts.into_values() {
       if originals.len() > 1 {
         originals.sort();
-        eprintln!("error: {}", LintError::CaseConflict);
-        for (i, original) in originals.iter().enumerate() {
-          eprintln!(
-            "       {}─ `{original}`",
-            if i < originals.len() - 1 {
-              '├'
-            } else {
-              '└'
-            }
-          );
-        }
-        lint_errors += 1;
+        linter.error_paths(LintError::CaseConflict, &originals);
       }
     }
 
-    if lints.contains(&Lint::MetadataMissing) && metadata.is_none() {
-      eprintln!("error: {}", LintError::MetadataMissing);
-      lint_errors += 1;
+    if linter.is_active(Lint::MetadataMissing) && metadata.is_none() {
+      linter.error(LintError::MetadataMissing);
     }
 
-    if lints.contains(&Lint::TitleMissing)
+    if linter.is_active(Lint::TitleMissing)
       && metadata
         .as_ref()
         .is_none_or(|(metadata, _cbor)| metadata.title.is_none())
     {
-      eprintln!("error: {}", LintError::TitleMissing);
-      lint_errors += 1;
+      linter.error(LintError::TitleMissing);
     }
 
-    if lints.contains(&Lint::CreatorMissing)
+    if linter.is_active(Lint::CreatorMissing)
       && metadata
         .as_ref()
         .is_none_or(|(metadata, _cbor)| metadata.creator.is_none())
     {
-      eprintln!("error: {}", LintError::CreatorMissing);
-      lint_errors += 1;
+      linter.error(LintError::CreatorMissing);
     }
 
-    if lints.contains(&Lint::TimeMissing)
+    if linter.is_active(Lint::TimeMissing)
       && metadata
         .as_ref()
         .is_none_or(|(metadata, _cbor)| metadata.time.is_none())
     {
-      eprintln!("error: {}", LintError::TimeMissing);
-      lint_errors += 1;
+      linter.error(LintError::TimeMissing);
     }
 
-    if lints.contains(&Lint::PackageMissing)
+    if linter.is_active(Lint::PackageMissing)
       && metadata
         .as_ref()
         .is_none_or(|(metadata, _cbor)| metadata.package.is_none())
     {
-      eprintln!("error: {}", LintError::PackageMissing);
-      lint_errors += 1;
+      linter.error(LintError::PackageMissing);
     }
 
-    if lints.contains(&Lint::PackageCreatorMissing)
+    if linter.is_active(Lint::PackageCreatorMissing)
       && metadata.as_ref().is_none_or(|(metadata, _cbor)| {
         metadata
           .package
@@ -228,20 +208,18 @@ impl Create {
           .is_none_or(|package| package.creator.is_none())
       })
     {
-      eprintln!("error: {}", LintError::PackageCreatorMissing);
-      lint_errors += 1;
+      linter.error(LintError::PackageCreatorMissing);
     }
 
-    if lints.contains(&Lint::MediaMissing)
+    if linter.is_active(Lint::MediaMissing)
       && metadata
         .as_ref()
         .is_none_or(|(metadata, _cbor)| metadata.media.is_none())
     {
-      eprintln!("error: {}", LintError::MediaMissing);
-      lint_errors += 1;
+      linter.error(LintError::MediaMissing);
     }
 
-    if lints.contains(&Lint::MediaItemsMissing)
+    if linter.is_active(Lint::MediaItemsMissing)
       && metadata.as_ref().is_none_or(|(metadata, _cbor)| {
         metadata
           .media
@@ -249,25 +227,22 @@ impl Create {
           .is_none_or(|media| media.ty().has_items() && media.item_count() == 0)
       })
     {
-      eprintln!("error: {}", LintError::MediaItemsMissing);
-      lint_errors += 1;
+      linter.error(LintError::MediaItemsMissing);
     }
 
-    if lints.contains(&Lint::ArtworkMissing)
+    if linter.is_active(Lint::ArtworkMissing)
       && metadata
         .as_ref()
         .is_none_or(|(metadata, _cbor)| metadata.artwork.is_none())
     {
-      eprintln!("error: {}", LintError::ArtworkMissing);
-      lint_errors += 1;
+      linter.error(LintError::ArtworkMissing);
     }
 
-    if lints.contains(&Lint::NotGenerated) && !self.generate && metadata.is_some() {
-      eprintln!("error: {}", LintError::NotGenerated);
-      lint_errors += 1;
+    if linter.is_active(Lint::NotGenerated) && !self.generate && metadata.is_some() {
+      linter.error(LintError::NotGenerated);
     }
 
-    if lints.contains(&Lint::AudioEmbeddedArtworkMissing)
+    if linter.is_active(Lint::AudioEmbeddedArtworkMissing)
       && let Some((metadata, _cbor)) = &metadata
       && let Some(Media::Audio { items }) = &metadata.media
     {
@@ -288,26 +263,22 @@ impl Create {
       };
 
       for audio in missing {
-        eprintln!("error: path failed lint: `{}`", audio.path());
-        eprintln!("       └─ {}", LintError::AudioEmbeddedArtworkMissing);
-        lint_errors += 1;
+        linter.error_path(LintError::AudioEmbeddedArtworkMissing, audio.path());
       }
     }
 
-    if lints.contains(&Lint::VideoPlaceholderMissing)
+    if linter.is_active(Lint::VideoPlaceholderMissing)
       && let Some((metadata, _cbor)) = &metadata
       && let Some(Media::Video { items }) = &metadata.media
     {
       for video in items {
         if video.content.placeholder.is_none() {
-          eprintln!("error: path failed lint: `{}`", video.path());
-          eprintln!("       └─ {}", LintError::VideoPlaceholderMissing);
-          lint_errors += 1;
+          linter.error_path(LintError::VideoPlaceholderMissing, video.path());
         }
       }
     }
 
-    if lints.contains(&Lint::VideoPlaceholderDimensions)
+    if linter.is_active(Lint::VideoPlaceholderDimensions)
       && let Some((metadata, _cbor)) = &metadata
       && let Some(Media::Video { items }) = &metadata.media
     {
@@ -317,19 +288,15 @@ impl Create {
           && let placeholder = placeholder.oriented_dimensions()
           && placeholder != video
         {
-          eprintln!("error: path failed lint: `{}`", item.path());
-          eprintln!(
-            "       └─ {}",
+          linter.error_path(
             LintError::VideoPlaceholderDimensions { placeholder, video },
+            item.path(),
           );
-          lint_errors += 1;
         }
       }
     }
 
-    if lint_errors > 0 {
-      return Err(error::Lint { count: lint_errors }.build());
-    }
+    linter.done()?;
 
     if let Some((metadata, _cbor)) = &metadata {
       let files = paths.keys().cloned().collect::<HashSet<RelativePath>>();
