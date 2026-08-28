@@ -96,15 +96,13 @@ test-release-workflow:
   git tag test-release
   git push origin test-release
 
-docs:
-  open docs/index.html
 
 shellcheck-install-script:
-  shellcheck docs/install.sh
+  shellcheck static/install.sh
 
 test-install-script:
-  rm -f tmp/filepack
-  ./docs/install.sh --to tmp
+  rm -rf tmp
+  static/install.sh --to tmp
 
 list-package:
   cargo package --list --allow-dirty
