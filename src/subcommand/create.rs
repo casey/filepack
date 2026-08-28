@@ -160,7 +160,7 @@ impl Create {
     for mut originals in case_conflicts.into_values() {
       if originals.len() > 1 {
         originals.sort();
-        linter.error_chain(LintError::CaseConflict, &originals);
+        linter.error_paths(LintError::CaseConflict, &originals);
       }
     }
 
