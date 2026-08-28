@@ -3,14 +3,15 @@ use super::*;
 pub use self::{directory::DirectoryHtml, package::PackageHtml, page::PageHtml};
 
 pub(crate) use self::{
-  audio::AudioHtml, directory_table::DirectoryTableHtml, files::FilesHtml, image::ImageHtml,
-  info::InfoHtml, media::MediaHtml, packages::PackagesHtml, video::VideoHtml,
+  audio::AudioHtml, directory_table::DirectoryTableHtml, files::FilesHtml, home::HomeHtml,
+  image::ImageHtml, info::InfoHtml, media::MediaHtml, packages::PackagesHtml, video::VideoHtml,
 };
 
 mod audio;
 mod directory;
 mod directory_table;
 mod files;
+mod home;
 mod image;
 mod info;
 mod media;

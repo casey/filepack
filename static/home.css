@@ -1,66 +1,31 @@
-:root {
-  --height-target: calc(100vh / 4);
-  --margin-horizontal: calc((100vw - var(--size) * 5) / 2);
-  --margin-vertical: calc((100vh - var(--size) * 2.5) / 2);
-  --size: min(var(--width-target), var(--height-target));
-  --width-target: calc(100vw / 6);
-}
-
-html {
-  color: white;
-}
-
-body {
+.grid {
   display: grid;
-  font-size: var(--size);
-  grid-template-columns: repeat(4, 1fr);
-  line-height: var(--size);
-  margin-bottom: var(--margin-vertical);
-  margin-left: var(--margin-horizontal);
-  margin-right: var(--margin-horizontal);
-  margin-top: var(--margin-vertical);
-  overflow: hidden;
-  text-align: center;
-}
+  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  list-style: none;
+  padding-left: 0;
 
-body > * {
-  height: var(--size);
-  width: var(--size);
-}
+  a {
+    aspect-ratio: 1 / 1;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    display: block;
+    overflow: hidden;
+    transition: border-color 150ms;
 
-a {
-  align-items: center;
-  color: white;
-  display: flex;
-  font-size: calc(var(--size) / 9);
-  height: calc(var(--size) / 2);
-  justify-content: center;
-  line-height: calc(var(--size) / 9);
-}
+    &:hover, &:focus-visible {
+      border-color: var(--border-hover);
+    }
+  }
 
-a:hover {
-  text-shadow: 0 0 5px;
-  text-decoration: none;
-}
+  img {
+    display: block;
+    height: 100%;
+    object-fit: contain;
+    width: 100%;
+  }
 
-div {
-  text-shadow: 0 0 5px;
+  .creator {
+    color: var(--secondary);
+  }
 }
-
-/* filepack is an isogram */
-.f:after { content: 'F'; }
-.i:after { content: 'I'; }
-.l:after { content: 'L'; }
-.e:after { content: 'E'; }
-.p:after { content: 'P'; }
-.a:after { content: 'A'; }
-.c:after { content: 'C'; }
-.k:after { content: 'K'; }
-.f:hover:after { content: '⠋'; }
-.i:hover:after { content: '⠊'; }
-.l:hover:after { content: '⠇'; }
-.e:hover:after { content: '⠑'; }
-.p:hover:after { content: '⠏'; }
-.a:hover:after { content: '⠁'; }
-.c:hover:after { content: '⠉'; }
-.k:hover:after { content: '⠅'; }

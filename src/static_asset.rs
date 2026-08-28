@@ -58,7 +58,6 @@ mod tests {
     case("favicon.png", "image/png");
     case("image.js", "text/javascript;charset=utf-8");
     case("index.css", "text/css;charset=utf-8");
-    case("index.html", "text/html;charset=utf-8");
     case("install.sh", "application/x-sh;charset=utf-8");
   }
 }

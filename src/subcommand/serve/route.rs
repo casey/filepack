@@ -149,8 +149,18 @@ pub(crate) async fn files(
   })
 }
 
-pub(crate) async fn home() -> ServerResult<StaticAsset> {
-  StaticAsset::get("index.html")
+pub(crate) async fn home(
+  server: ServerExtension,
+  server_config: ServerConfigExtension,
+) -> PageResult<HomeHtml> {
+  block_in_place(|| {
+    Ok(
+      HomeHtml {
+        packages: server.packages(Sort::Title, Order::Ascending)?,
+      }
+      .page(server_config.url.clone()),
+    )
+  })
 }
 
 pub(crate) async fn install_script() -> ServerResult<StaticAsset> {
