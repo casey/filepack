@@ -266,6 +266,60 @@ mod tests {
   }
 
   #[test]
+  fn document() {
+    let metadata = Metadata {
+      media: Some(Media::Document {
+        items: vec![Item::test("foo.pdf")],
+      }),
+      ..default()
+    };
+
+    assert_eq!(
+      PackageHtml {
+        colophon: None,
+        directory: Directory::new(),
+        fingerprint: test::FINGERPRINT.parse().unwrap(),
+        metadata: Some(metadata),
+        mounted: false,
+        readme: None,
+        totals: Totals {
+          directories: 0,
+          directory_size: 0,
+          file_size: 9,
+          files: 1,
+        },
+      }
+      .to_string(),
+      unindent(&format!(
+        "
+          <h1 class=code>{fingerprint}</h1>
+          <dl>
+            <dt>fingerprint</dt>
+            <dd class=code>{fingerprint}</dd>
+            <dt>size</dt>
+            <dd>9 B</dd>
+            <dt>files</dt>
+            <dd><a href=/directory/{hash}>1 files</a></dd>
+            <dt>media</dt>
+            <dd><a href=/package/{fingerprint}/media>document</a></dd>
+            <dt>documents</dt>
+            <dd>1</dd>
+            <dt>format</dt>
+            <dd>PDF</dd>
+          </dl>
+          <ol>
+            <li>
+              <a href=/package/{fingerprint}/item/1>Document 1</a>
+            </li>
+          </ol>
+        ",
+        fingerprint = test::FINGERPRINT,
+        hash = test::HASH,
+      )),
+    );
+  }
+
+  #[test]
   fn duration_saturates() {
     let audio = Item {
       content: Audio {

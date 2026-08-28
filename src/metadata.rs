@@ -137,6 +137,9 @@ impl Metadata {
         Media::Audio { items } => {
           files.extend(items.iter().map(|audio| audio.path().into()));
         }
+        Media::Document { items } => {
+          files.extend(items.iter().map(|document| document.path().into()));
+        }
         Media::Image { items } => {
           files.extend(items.iter().map(|image| image.path().into()));
         }
