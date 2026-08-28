@@ -25,7 +25,13 @@ impl Linter {
     self.errors += 1;
   }
 
-  pub(crate) fn error_chain(&mut self, lint: LintError, originals: &[RelativePath]) {
+  pub(crate) fn error_path(&mut self, lint: LintError, path: &RelativePath) {
+    eprintln!("error: path failed lint: `{path}`");
+    eprintln!("       └─ {lint}");
+    self.errors += 1;
+  }
+
+  pub(crate) fn error_paths(&mut self, lint: LintError, originals: &[RelativePath]) {
     eprintln!("error: {lint}");
     for (i, original) in originals.iter().enumerate() {
       eprintln!(
@@ -37,12 +43,6 @@ impl Linter {
         }
       );
     }
-    self.errors += 1;
-  }
-
-  pub(crate) fn error_path(&mut self, lint: LintError, path: &RelativePath) {
-    eprintln!("error: path failed lint: `{path}`");
-    eprintln!("       └─ {lint}");
     self.errors += 1;
   }
 
