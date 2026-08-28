@@ -63,10 +63,5 @@ th {
 
   a {
     color: inherit;
-    text-decoration: none;
-
-    &:hover, &:focus-visible {
-      text-decoration: underline;
-    }
   }
 }
