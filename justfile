@@ -176,4 +176,4 @@ download:
   ./target/release/filepack download --server https://filepack.com --package $fingerprint tmp/download
 
 clear-server:
-  rm -r ~/.filepack/{database.redb,files}
+  rm ~/.filepack/database.redb
