@@ -60,4 +60,8 @@ td:not(:last-child), th:not(:last-child) {
 
 th {
   text-align: left;
+
+  a {
+    color: inherit;
+  }
 }

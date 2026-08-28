@@ -4,7 +4,7 @@ use super::*;
 #[serde(rename_all = "snake_case", tag = "type")]
 #[strum(serialize_all = "kebab-case")]
 #[strum_discriminants(
-  derive(Display),
+  derive(Display, Ord, PartialOrd),
   name(MediaType),
   strum(serialize_all = "kebab-case"),
   vis(pub)

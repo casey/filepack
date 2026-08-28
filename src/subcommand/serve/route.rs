@@ -405,10 +405,15 @@ pub(crate) async fn packages(
   server_config: ServerConfigExtension,
   Query(query): Query<PackagesQuery>,
 ) -> PageResult<PackagesHtml> {
+  let order = query.order.unwrap_or_default();
+  let sort = query.sort.unwrap_or_default();
+
   block_in_place(|| {
     Ok(
       PackagesHtml {
-        packages: server.packages()?,
+        order,
+        packages: server.packages(sort, order)?,
+        sort,
         view: query.view.unwrap_or_default(),
       }
       .page(server_config.url.clone()),

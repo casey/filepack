@@ -2437,7 +2437,9 @@ fn packages_empty() {
   TestServer::new()
     .get("/packages")
     .assert_page(PackagesHtml {
+      order: Order::default(),
       packages: Vec::new(),
+      sort: Sort::default(),
       view: View::List,
     })
     .send();
@@ -2467,7 +2469,9 @@ fn packages_grid() {
   server
     .get("/packages?view=grid")
     .assert_page(PackagesHtml {
+      order: Order::default(),
       packages: vec![(fingerprint, Some(metadata), totals)],
+      sort: Sort::default(),
       view: View::Grid,
     })
     .send();
@@ -2495,7 +2499,9 @@ fn packages_include_creators_and_titles() {
   server
     .get("/packages")
     .assert_page(PackagesHtml {
+      order: Order::default(),
       packages: vec![(fingerprint, Some(metadata), totals)],
+      sort: Sort::default(),
       view: View::List,
     })
     .send();
@@ -2542,20 +2548,47 @@ fn packages_non_empty() {
   server
     .get("/packages")
     .assert_page(PackagesHtml {
+      order: Order::default(),
       packages,
+      sort: Sort::default(),
       view: View::List,
     })
     .send();
 }
 
 #[test]
-fn packages_sorted_by_title_then_fingerprint() {
+fn packages_sorted() {
+  #[track_caller]
+  fn case(
+    server: &TestServer,
+    path: &str,
+    sort: Sort,
+    order: Order,
+    packages: Vec<(Fingerprint, Option<Metadata>, Totals)>,
+  ) {
+    server
+      .get(path)
+      .assert_page(PackagesHtml {
+        order,
+        packages,
+        sort,
+        view: View::List,
+      })
+      .send();
+  }
+
   let server = TestServer::new();
 
   let mut packages = Vec::new();
 
-  for title in [Some("Baz"), None, Some("bar")] {
+  for (title, creator, year, file) in [
+    (Some("Baz"), Some("foo"), Some("2024"), None),
+    (Some("bar"), None, None, Some(vec![0; 100])),
+    (None, None, None, Some(vec![0; 200])),
+  ] {
     let metadata = Metadata {
+      creator: creator.map(|creator| creator.parse().unwrap()),
+      time: year.map(|year| year.parse().unwrap()),
       title: title.map(|title| title.parse().unwrap()),
       ..default()
     };
@@ -2563,31 +2596,79 @@ fn packages_sorted_by_title_then_fingerprint() {
     let totals = Totals {
       directories: 0,
       directory_size: 0,
-      file_size: metadata.encode_to_vec().len().into_u64(),
-      files: 1,
+      file_size: metadata.encode_to_vec().len().into_u64()
+        + file.as_ref().map_or(0, |file| file.len().into_u64()),
+      files: 1 + u64::from(file.is_some()),
     };
 
-    let fingerprint = PackageBuilder::new().metadata(&metadata).upload(&server);
+    let mut builder = PackageBuilder::new().metadata(&metadata);
 
-    packages.push((fingerprint, Some(metadata), totals));
+    if let Some(file) = &file {
+      builder = builder.file("foo", file);
+    }
+
+    packages.push((builder.upload(&server), Some(metadata), totals));
   }
 
-  let (baz, untitled, bar) = (
+  let (a, b, c) = (
     packages[0].clone(),
     packages[1].clone(),
     packages[2].clone(),
   );
 
-  assert!(baz.0 < bar.0);
-  assert!(untitled.0 < bar.0);
+  let (first, second) = if b.0 < c.0 {
+    (b.clone(), c.clone())
+  } else {
+    (c.clone(), b.clone())
+  };
 
-  server
-    .get("/packages")
-    .assert_page(PackagesHtml {
-      packages: vec![bar, baz, untitled],
-      view: View::List,
-    })
-    .send();
+  case(
+    &server,
+    "/packages",
+    Sort::Title,
+    Order::Ascending,
+    vec![b.clone(), a.clone(), c.clone()],
+  );
+
+  case(
+    &server,
+    "/packages?sort=title&order=descending",
+    Sort::Title,
+    Order::Descending,
+    vec![a.clone(), b.clone(), c.clone()],
+  );
+
+  case(
+    &server,
+    "/packages?sort=creator",
+    Sort::Creator,
+    Order::Ascending,
+    vec![a.clone(), first.clone(), second.clone()],
+  );
+
+  case(
+    &server,
+    "/packages?sort=year&order=descending",
+    Sort::Year,
+    Order::Descending,
+    vec![a.clone(), first.clone(), second.clone()],
+  );
+
+  case(
+    &server,
+    "/packages?sort=size&order=descending",
+    Sort::Size,
+    Order::Descending,
+    vec![c, b, a.clone()],
+  );
+
+  case(
+    &server,
+    "/packages?sort=files",
+    Sort::Files,
+    Order::Ascending,
+    vec![a, first, second],
+  );
 }
 
 #[test]
