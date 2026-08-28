@@ -112,7 +112,6 @@ use {
     orientation::Orientation,
     owo_colorize_ext::OwoColorizeExt,
     package::Package,
-    package_key::PackageKey,
     path_error::PathError,
     percent_encode::PercentEncode,
     private_key_error::PrivateKeyError,
@@ -127,6 +126,7 @@ use {
     sign_options::SignOptions,
     signature_error::SignatureError,
     sort::Sort,
+    sort_key::SortKey,
     static_asset::StaticAsset,
     style::Style,
     subcommand::Subcommand,
@@ -395,7 +395,6 @@ mod ordinal;
 mod orientation;
 mod owo_colorize_ext;
 mod package;
-mod package_key;
 mod page;
 mod path_error;
 mod percent_encode;
@@ -417,6 +416,7 @@ mod sign_options;
 mod signature;
 mod signature_error;
 mod sort;
+mod sort_key;
 mod sorted_set;
 mod statement;
 mod static_asset;

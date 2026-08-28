@@ -415,7 +415,7 @@ impl Server {
       })
       .collect::<ServerResult<Vec<(Fingerprint, Option<Metadata>, Totals)>>>()?;
 
-    packages.sort_by(|a, b| PackageKey::compare(a, b, sort, order));
+    packages.sort_by(|a, b| SortKey::compare(a, b, sort, order));
 
     Ok(packages)
   }

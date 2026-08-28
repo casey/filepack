@@ -1,14 +1,14 @@
 use super::*;
 
 #[derive(Eq, Ord, PartialEq, PartialOrd)]
-pub(crate) enum PackageKey<'a> {
+pub(crate) enum SortKey<'a> {
   Count(u64),
   Media(MediaType),
   Text(UniCase<&'a str>, &'a str),
   Year(i64),
 }
 
-impl<'a> PackageKey<'a> {
+impl<'a> SortKey<'a> {
   pub(crate) fn compare(
     a: &'a (Fingerprint, Option<Metadata>, Totals),
     b: &'a (Fingerprint, Option<Metadata>, Totals),
