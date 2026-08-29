@@ -12,9 +12,6 @@ time {
   --row-height: 180px;
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  list-style: none;
-  padding-left: 0;
 
   &::after {
     content: "";
@@ -26,22 +23,8 @@ time {
     width: calc(var(--aspect-ratio) * var(--row-height));
   }
 
-  a {
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    display: block;
-    overflow: hidden;
-    transition: border-color 150ms;
-
-    &:hover, &:focus-visible {
-      border-color: var(--border-hover);
-    }
-  }
-
   img {
     aspect-ratio: var(--aspect-ratio);
-    display: block;
     object-fit: cover;
-    width: 100%;
   }
 }
