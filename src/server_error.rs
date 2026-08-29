@@ -140,7 +140,7 @@ pub enum ServerError {
 }
 
 impl ServerError {
-  fn message(&self) -> String {
+  pub(crate) fn message(&self) -> String {
     match self {
       Self::ArtworkNotFound { .. }
       | Self::AuthorizationInvalid { .. }
@@ -186,7 +186,7 @@ impl ServerError {
     }
   }
 
-  fn status_code(&self) -> StatusCode {
+  pub(crate) fn status_code(&self) -> StatusCode {
     match self {
       Self::AuthorizationInvalid { .. }
       | Self::AuthorizationMalformed

@@ -112,6 +112,7 @@ use {
     orientation::Orientation,
     owo_colorize_ext::OwoColorizeExt,
     package::Package,
+    page_error::PageError,
     path_error::PathError,
     percent_encode::PercentEncode,
     private_key_error::PrivateKeyError,
@@ -130,7 +131,7 @@ use {
     static_asset::StaticAsset,
     style::Style,
     subcommand::Subcommand,
-    templates::PageHtml,
+    templates::{ErrorHtml, PageHtml},
     text_error::TextError,
     ticked::Ticked,
     time::Time,
@@ -396,6 +397,7 @@ mod orientation;
 mod owo_colorize_ext;
 mod package;
 mod page;
+mod page_error;
 mod path_error;
 mod percent_encode;
 mod png_builder;
@@ -461,7 +463,7 @@ const BECH32_VERSION: Fe32 = Fe32::A;
 const KIB: usize = 1 << 10;
 const MIB: usize = KIB << 10;
 
-type PageResult<T> = ServerResult<PageHtml<T>>;
+type PageResult<T> = Result<PageHtml<T>, PageError>;
 type Result<T = (), E = Error> = std::result::Result<T, E>;
 type ServerResult<T = (), E = ServerError> = std::result::Result<T, E>;
 

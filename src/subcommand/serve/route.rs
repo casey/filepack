@@ -84,10 +84,7 @@ pub(crate) async fn directory(
   })
 }
 
-pub(crate) async fn fallback(
-  server_config: ServerConfigExtension,
-  uri: Uri,
-) -> ServerResult<Response> {
+pub(crate) async fn fallback(uri: Uri) -> Result<Response, PageError> {
   if let Some(component) = uri.path().strip_prefix('/')
     && !component.contains('/')
     && component.to_ascii_lowercase().starts_with("package1")
@@ -99,13 +96,7 @@ pub(crate) async fn fallback(
     return Ok(Redirect::permanent(&format!("/package/{fingerprint}")).into_response());
   }
 
-  Ok(
-    (
-      StatusCode::NOT_FOUND,
-      NotFoundHtml.page(server_config.url.clone()),
-    )
-      .into_response(),
-  )
+  Err(server_error::PageNotFound.build().into())
 }
 
 pub(crate) async fn favicon() -> ServerResult<StaticAsset> {
@@ -331,7 +322,7 @@ pub(crate) async fn package_item(
   server: ServerExtension,
   server_config: ServerConfigExtension,
   Path((fingerprint, Ordinal(index))): Path<(Fingerprint, Ordinal)>,
-) -> ServerResult<Response> {
+) -> Result<Response, PageError> {
   block_in_place(|| {
     let metadata = server.package_metadata(fingerprint)?;
 
