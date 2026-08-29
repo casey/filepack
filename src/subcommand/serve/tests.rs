@@ -138,6 +138,17 @@ impl TestRequestBuilder {
     self
   }
 
+  fn assert_error(self, status: StatusCode, message: impl Into<String>) -> Self {
+    self.assert_response((
+      status,
+      ErrorHtml {
+        message: message.into(),
+        status,
+      }
+      .page(None),
+    ))
+  }
+
   fn assert_header(mut self, name: HeaderName, value: impl Into<String>) -> Self {
     assert!(
       self
@@ -719,8 +730,7 @@ fn download_response() {
 fn fallback() {
   TestServer::new()
     .get("/nonexistent")
-    .assert_page(NotFoundHtml)
-    .status(StatusCode::NOT_FOUND)
+    .assert_error(StatusCode::NOT_FOUND, "page not found")
     .send();
 }
 
@@ -938,8 +948,7 @@ fn get_directory_not_found() {
 
   server
     .get(format!("/directory/{hash}"))
-    .status(StatusCode::NOT_FOUND)
-    .assert_body(format!("directory {hash} not found"))
+    .assert_error(StatusCode::NOT_FOUND, format!("directory {hash} not found"))
     .send();
 }
 
@@ -967,8 +976,10 @@ fn get_package_not_found() {
 
   server
     .get(format!("/package/{fingerprint}"))
-    .status(StatusCode::NOT_FOUND)
-    .assert_body(format!("package {fingerprint} not found"))
+    .assert_error(
+      StatusCode::NOT_FOUND,
+      format!("package {fingerprint} not found"),
+    )
     .send();
 }
 
@@ -1114,8 +1125,10 @@ fn install_script() {
 fn malformed_fingerprint_returns_error() {
   TestServer::new()
     .get("/package1invalid")
-    .status(StatusCode::BAD_REQUEST)
-    .assert_body("failed to decode bech32 package fingerprint")
+    .assert_error(
+      StatusCode::BAD_REQUEST,
+      "failed to decode bech32 package fingerprint",
+    )
     .send();
 }
 
@@ -1848,8 +1861,7 @@ fn mount_serves_index_html() {
 fn non_fingerprint_bech32_falls_through() {
   TestServer::new()
     .get(format!("/{}", test::PUBLIC_KEY))
-    .assert_page(NotFoundHtml)
-    .status(StatusCode::NOT_FOUND)
+    .assert_error(StatusCode::NOT_FOUND, "page not found")
     .send();
 }
 
@@ -1895,10 +1907,10 @@ fn package_item_audio_out_of_range() {
 
   server
     .get(format!("/package/{fingerprint}/item/2"))
-    .status(StatusCode::NOT_FOUND)
-    .assert_body(format!(
-      "track 2 does not exist, package {fingerprint} has 1 track"
-    ))
+    .assert_error(
+      StatusCode::NOT_FOUND,
+      format!("track 2 does not exist, package {fingerprint} has 1 track"),
+    )
     .send();
 }
 
@@ -1974,10 +1986,10 @@ fn package_item_image_out_of_range() {
 
   server
     .get(format!("/package/{fingerprint}/item/2"))
-    .status(StatusCode::NOT_FOUND)
-    .assert_body(format!(
-      "image 2 does not exist, package {fingerprint} has 1 image"
-    ))
+    .assert_error(
+      StatusCode::NOT_FOUND,
+      format!("image 2 does not exist, package {fingerprint} has 1 image"),
+    )
     .send();
 }
 
@@ -1989,8 +2001,10 @@ fn package_item_package_not_found() {
 
   server
     .get(format!("/package/{fingerprint}/item/1"))
-    .status(StatusCode::NOT_FOUND)
-    .assert_body(format!("package {fingerprint} not found"))
+    .assert_error(
+      StatusCode::NOT_FOUND,
+      format!("package {fingerprint} not found"),
+    )
     .send();
 }
 
@@ -2068,10 +2082,10 @@ fn package_item_video_out_of_range() {
 
   server
     .get(format!("/package/{fingerprint}/item/2"))
-    .status(StatusCode::NOT_FOUND)
-    .assert_body(format!(
-      "video 2 does not exist, package {fingerprint} has 1 video"
-    ))
+    .assert_error(
+      StatusCode::NOT_FOUND,
+      format!("video 2 does not exist, package {fingerprint} has 1 video"),
+    )
     .send();
 }
 
@@ -2089,8 +2103,7 @@ fn package_item_web() {
 
   server
     .get(format!("/package/{fingerprint}/item/1"))
-    .status(StatusCode::NOT_FOUND)
-    .assert_body("media type web does not have items")
+    .assert_error(StatusCode::NOT_FOUND, "media type web does not have items")
     .send();
 }
 
@@ -2107,10 +2120,10 @@ fn package_item_without_media() {
 
   server
     .get(format!("/package/{fingerprint}/item/1"))
-    .status(StatusCode::NOT_FOUND)
-    .assert_body(format!(
-      "package {fingerprint} does not have media metadata"
-    ))
+    .assert_error(
+      StatusCode::NOT_FOUND,
+      format!("package {fingerprint} does not have media metadata"),
+    )
     .send();
 }
 
@@ -2127,8 +2140,10 @@ fn package_item_without_metadata() {
 
   server
     .get(format!("/package/{fingerprint}/item/1"))
-    .status(StatusCode::NOT_FOUND)
-    .assert_body(format!("package {fingerprint} does not have metadata"))
+    .assert_error(
+      StatusCode::NOT_FOUND,
+      format!("package {fingerprint} does not have metadata"),
+    )
     .send();
 }
 
@@ -2170,10 +2185,10 @@ fn package_media_without_media() {
 
   server
     .get(format!("/package/{fingerprint}/media"))
-    .status(StatusCode::NOT_FOUND)
-    .assert_body(format!(
-      "package {fingerprint} does not have media metadata"
-    ))
+    .assert_error(
+      StatusCode::NOT_FOUND,
+      format!("package {fingerprint} does not have media metadata"),
+    )
     .send();
 }
 

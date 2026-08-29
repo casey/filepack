@@ -1,0 +1,26 @@
+body {
+  height: 100dvh;
+}
+
+main {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 0;
+}
+
+.status {
+  font-size: 40vmin;
+  line-height: 1;
+
+  &:hover {
+    text-shadow: 0 0 100px;
+  }
+}
+
+.message {
+  color: var(--secondary);
+  overflow-wrap: anywhere;
+  text-align: center;
+}
