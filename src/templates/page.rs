@@ -114,7 +114,7 @@ mod tests {
               <title>home</title>
               <meta name=description content='Filepack package server'>
               <meta property=og:site_name content=filepack>
-              <link href=/static/index.css rel=stylesheet>
+              <link href=/static/page.css rel=stylesheet>
             </head>
             <body>
               <header>
@@ -147,7 +147,7 @@ mod tests {
               <title>navigation</title>
               <meta name=description content='Filepack package server'>
               <meta property=og:site_name content=filepack>
-              <link href=/static/index.css rel=stylesheet>
+              <link href=/static/page.css rel=stylesheet>
               <link href=/foo rel=next>
               <link href=/bar rel=prev>
               <link href=/baz rel=up>
@@ -189,7 +189,7 @@ mod tests {
               <meta property=og:image:height content=1>
               <meta property=og:image:width content=2>
               <meta property=og:site_name content=filepack>
-              <link href=/static/index.css rel=stylesheet>
+              <link href=/static/page.css rel=stylesheet>
             </head>
             <body>
               <header>
@@ -220,7 +220,7 @@ mod tests {
               <meta name=description content='Filepack package server'>
               <meta property=og:description content='qux'>
               <meta property=og:site_name content=filepack>
-              <link href=/static/index.css rel=stylesheet>
+              <link href=/static/page.css rel=stylesheet>
             </head>
             <body>
               <header>
@@ -253,7 +253,7 @@ mod tests {
               <title>script</title>
               <meta name=description content='Filepack package server'>
               <meta property=og:site_name content=filepack>
-              <link href=/static/index.css rel=stylesheet>
+              <link href=/static/page.css rel=stylesheet>
               <script src=/foo.js type=module></script>
             </head>
             <body>
