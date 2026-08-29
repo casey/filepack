@@ -67,6 +67,29 @@ main {
   padding-top: 0;
 }
 
+.thumbnails {
+  gap: 12px;
+  list-style: none;
+  padding-left: 0;
+
+  a {
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    display: block;
+    overflow: hidden;
+    transition: border-color 150ms;
+
+    &:hover, &:focus-visible {
+      border-color: var(--border-hover);
+    }
+  }
+
+  img {
+    display: block;
+    width: 100%;
+  }
+}
+
 body > header > nav {
   display: flex;
   font-size: 1.25em;
