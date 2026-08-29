@@ -2856,8 +2856,8 @@ fn server_config() {
 #[test]
 fn static_files() {
   TestServer::new()
-    .get("/static/index.css")
-    .assert_static("index.css")
+    .get("/static/page.css")
+    .assert_static("page.css")
     .send();
 }
 
