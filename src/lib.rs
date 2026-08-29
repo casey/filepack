@@ -149,7 +149,6 @@ use {
     video_error::VideoError,
     video_metadata::VideoMetadata,
     video_type::VideoType,
-    view::View,
     webm_decoder::WebmDecoder,
     xmp_error::XmpError,
   },
@@ -444,7 +443,6 @@ mod video;
 mod video_error;
 mod video_metadata;
 mod video_type;
-mod view;
 mod webm_decoder;
 mod xmp;
 mod xmp_error;
