@@ -2487,39 +2487,6 @@ fn packages_empty() {
       order: Order::default(),
       packages: Vec::new(),
       sort: Sort::default(),
-      view: View::List,
-    })
-    .send();
-}
-
-#[test]
-fn packages_grid() {
-  let server = TestServer::new();
-
-  let metadata = Metadata {
-    artwork: Some(Image::test("foo.png")),
-    ..default()
-  };
-
-  let totals = Totals {
-    directories: 0,
-    directory_size: 0,
-    file_size: metadata.encode_to_vec().len().into_u64() + 3,
-    files: 2,
-  };
-
-  let fingerprint = PackageBuilder::new()
-    .metadata(&metadata)
-    .file("foo.png", b"bar")
-    .upload(&server);
-
-  server
-    .get("/packages?view=grid")
-    .assert_page(PackagesHtml {
-      order: Order::default(),
-      packages: vec![(fingerprint, Some(metadata), totals)],
-      sort: Sort::default(),
-      view: View::Grid,
     })
     .send();
 }
@@ -2549,19 +2516,7 @@ fn packages_include_creators_and_titles() {
       order: Order::default(),
       packages: vec![(fingerprint, Some(metadata), totals)],
       sort: Sort::default(),
-      view: View::List,
     })
-    .send();
-}
-
-#[test]
-fn packages_invalid_view() {
-  TestServer::new()
-    .get("/packages?view=foo")
-    .status(StatusCode::BAD_REQUEST)
-    .assert_body(
-      "Failed to deserialize query string: view: unknown variant `foo`, expected `grid` or `list`",
-    )
     .send();
 }
 
@@ -2598,7 +2553,6 @@ fn packages_non_empty() {
       order: Order::default(),
       packages,
       sort: Sort::default(),
-      view: View::List,
     })
     .send();
 }
@@ -2619,7 +2573,6 @@ fn packages_sorted() {
         order,
         packages,
         sort,
-        view: View::List,
       })
       .send();
   }

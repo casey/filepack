@@ -42,7 +42,6 @@ pub(crate) struct AuthConfig {
 pub(crate) struct PackagesQuery {
   order: Option<Order>,
   sort: Option<Sort>,
-  view: Option<View>,
 }
 
 pub(crate) struct RedirectConfig {

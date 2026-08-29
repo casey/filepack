@@ -5,11 +5,9 @@ pub(crate) struct PackagesHtml {
   pub(crate) order: Order,
   pub(crate) packages: Vec<(Fingerprint, Option<Metadata>, Totals)>,
   pub(crate) sort: Sort,
-  pub(crate) view: View,
 }
 
 struct Package<'a> {
-  artwork: bool,
   creator: Option<&'a str>,
   file_size: u64,
   files: u64,
@@ -32,7 +30,7 @@ impl PackagesHtml {
       Sort::Creator | Sort::Media | Sort::Title | Sort::Year => "",
     };
 
-    let path = Self::path(self.view, sort, order);
+    let path = Self::path(sort, order);
 
     Trusted(format!("<th{class}><a href={path}>{sort}</a></th>"))
   }
@@ -42,9 +40,6 @@ impl PackagesHtml {
       .packages
       .iter()
       .map(|(fingerprint, metadata, totals)| Package {
-        artwork: metadata
-          .as_ref()
-          .is_some_and(|metadata| metadata.artwork.is_some()),
         creator: metadata
           .as_ref()
           .and_then(|metadata| metadata.creator.as_deref()),
@@ -65,12 +60,8 @@ impl PackagesHtml {
       })
   }
 
-  fn path(view: View, sort: Sort, order: Order) -> String {
+  fn path(sort: Sort, order: Order) -> String {
     let mut params = Vec::new();
-
-    if view != View::default() {
-      params.push(format!("view={view}"));
-    }
 
     if sort != Sort::default() {
       params.push(format!("sort={sort}"));
@@ -85,10 +76,6 @@ impl PackagesHtml {
     } else {
       format!("/packages?{}", params.join("&"))
     }
-  }
-
-  fn view(&self, view: View) -> String {
-    Self::path(view, self.sort, self.order)
   }
 }
 
@@ -105,54 +92,6 @@ impl Page for PackagesHtml {
 #[cfg(test)]
 mod tests {
   use {super::*, pretty_assertions::assert_eq};
-
-  #[test]
-  fn grid() {
-    let fingerprint = test::FINGERPRINT.parse::<Fingerprint>().unwrap();
-
-    let metadata = Metadata {
-      artwork: Some(Image::test("foo.png")),
-      creator: Some("foo".parse().unwrap()),
-      title: Some("bar".parse().unwrap()),
-      ..default()
-    };
-
-    assert_eq!(
-      PackagesHtml {
-        order: Order::default(),
-        packages: vec![
-          (fingerprint, Some(metadata), Totals::default()),
-          (fingerprint, None, Totals::default()),
-        ],
-        sort: Sort::default(),
-        view: View::Grid,
-      }
-      .to_string(),
-      unindent(&format!(
-        "
-          <header>
-            <h1>Packages</h1>
-            <nav>
-              <a href=/packages>List</a> | <a>Grid</a>
-            </nav>
-          </header>
-          <ul class=grid>
-            <li>
-              <a href=/package/{fingerprint}>
-                <img loading=lazy src=/artwork/{fingerprint}/thumbnail>
-              </a>
-              <span class=title>bar</span>
-              <span class=creator>foo</span>
-            </li>
-            <li>
-              <a href=/package/{fingerprint}></a>
-            </li>
-          </ul>
-        ",
-        fingerprint = test::FINGERPRINT,
-      )),
-    );
-  }
 
   #[test]
   fn list() {
@@ -181,16 +120,12 @@ mod tests {
           (fingerprint, None, Totals::default()),
         ],
         sort: Sort::default(),
-        view: View::List,
       }
       .to_string(),
       unindent(&format!(
         "
           <header>
             <h1>Packages</h1>
-            <nav>
-              <a>List</a> | <a href=/packages?view=grid>Grid</a>
-            </nav>
           </header>
           <table>
             <thead>
@@ -236,16 +171,12 @@ mod tests {
         order: Order::Descending,
         packages: Vec::new(),
         sort: Sort::Size,
-        view: View::List,
       }
       .to_string(),
       unindent(
         "
           <header>
             <h1>Packages</h1>
-            <nav>
-              <a>List</a> | <a href=/packages?view=grid&amp;sort=size&amp;order=descending>Grid</a>
-            </nav>
           </header>
           <table>
             <thead>

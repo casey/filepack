@@ -420,7 +420,6 @@ pub(crate) async fn packages(
         order,
         packages: server.packages(sort, order)?,
         sort,
-        view: query.view.unwrap_or_default(),
       }
       .page(server_config.url.clone()),
     )
