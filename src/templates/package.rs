@@ -417,7 +417,7 @@ mod tests {
       }
       .to_string(),
       unindent(&format!(
-        "
+        r#"
           <h1 class=code>{fingerprint}</h1>
           <dl>
             <dt>fingerprint</dt>
@@ -435,23 +435,23 @@ mod tests {
             <dd>JPEG</dd>
           </dl>
           <ul class=thumbnails>
-            <li>
+            <li style="--aspect-ratio: 2 / 1">
               <a href=/package/{fingerprint}/item/1>
                 <img loading=lazy src=/media/image/{fingerprint}/item/1/thumbnail>
               </a>
             </li>
-            <li>
+            <li style="--aspect-ratio: 1 / 1">
               <a href=/package/{fingerprint}/item/2>
                 <img loading=lazy src=/media/image/{fingerprint}/item/2/thumbnail>
               </a>
             </li>
-            <li>
+            <li style="--aspect-ratio: 2 / 1">
               <a href=/package/{fingerprint}/item/3>
                 <img loading=lazy src=/media/image/{fingerprint}/item/3/thumbnail>
               </a>
             </li>
           </ul>
-        ",
+        "#,
         fingerprint = test::FINGERPRINT,
         hash = test::HASH,
       )),

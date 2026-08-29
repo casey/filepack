@@ -9,29 +9,39 @@ time {
 }
 
 .thumbnails {
-  display: grid;
+  --row-height: 180px;
+  display: flex;
+  flex-wrap: wrap;
   gap: 12px;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   list-style: none;
   padding-left: 0;
 
-  a {
-    align-items: center;
-    aspect-ratio: 1 / 1;
-    display: flex;
-    justify-content: center;
+  &::after {
+    content: "";
+    flex-grow: 1000;
+  }
 
-    &:hover img, &:focus-visible img {
+  li {
+    flex-grow: calc(var(--aspect-ratio));
+    width: calc(var(--aspect-ratio) * var(--row-height));
+  }
+
+  a {
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    display: block;
+    overflow: hidden;
+    transition: border-color 150ms;
+
+    &:hover, &:focus-visible {
       border-color: var(--border-hover);
     }
   }
 
   img {
-    border-radius: 8px;
-    border: 1px solid var(--border);
+    aspect-ratio: var(--aspect-ratio);
     display: block;
-    max-height: 100%;
-    max-width: 100%;
-    transition: border-color 150ms;
+    object-fit: cover;
+    width: 100%;
   }
 }
