@@ -37,6 +37,12 @@ ufw allow ssh
 
 ufw --force enable
 
+cat > /etc/sysctl.d/90-network.conf <<EOF
+net.core.default_qdisc = fq
+net.ipv4.tcp_congestion_control = bbr
+EOF
+sysctl --system
+
 if [[ ! -e ~/.cargo/env ]]; then
   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 fi
