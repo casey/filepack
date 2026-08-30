@@ -19,12 +19,14 @@ pub struct Metadata {
   #[n(6)]
   pub package: Option<Package>,
   #[n(7)]
-  pub readme: Option<RelativePath>,
+  pub publisher: Option<Text>,
   #[n(8)]
-  pub thumbnails: Option<BTreeMap<RelativePath, Image>>,
+  pub readme: Option<RelativePath>,
   #[n(9)]
-  pub time: Option<Time>,
+  pub thumbnails: Option<BTreeMap<RelativePath, Image>>,
   #[n(10)]
+  pub time: Option<Time>,
+  #[n(11)]
   pub title: Option<Text>,
 }
 
@@ -354,6 +356,7 @@ mod tests {
         time: Some("2024-01-01".parse().unwrap()),
         title: Some("foo-bar".parse().unwrap()),
       }),
+      publisher: Some("qux".parse().unwrap()),
       readme: Some("README.md".parse().unwrap()),
       thumbnails: Some(
         [(

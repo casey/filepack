@@ -397,6 +397,7 @@ mod tests {
           },
         ],
       }),
+      publisher: Some("qux".parse().unwrap()),
       ..default()
     };
 
@@ -426,6 +427,8 @@ mod tests {
             <dd>9 B</dd>
             <dt>files</dt>
             <dd><a href=/directory/{hash}>3 files</a></dd>
+            <dt>publisher</dt>
+            <dd>qux</dd>
             <dt>media</dt>
             <dd><a href=/package/{fingerprint}/media>image</a></dd>
             <dt>images</dt>
