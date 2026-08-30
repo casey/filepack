@@ -38,7 +38,19 @@ code, .code {
 }
 
 dd {
+  grid-column: 2;
+  margin: 0;
   overflow-wrap: anywhere;
+}
+
+dl {
+  display: grid;
+  gap: 0 1em;
+  grid-template-columns: max-content auto;
+}
+
+dt {
+  font-style: italic;
 }
 
 h1 {
