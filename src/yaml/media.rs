@@ -10,6 +10,15 @@ pub(crate) enum Media {
 }
 
 impl Media {
+  pub(crate) fn items_missing(&self) -> bool {
+    match self {
+      Self::Audio { items } => items.is_empty(),
+      Self::Image { items } => items.is_empty(),
+      Self::Video { items } => items.is_empty(),
+      Self::Web => false,
+    }
+  }
+
   pub(crate) fn load(self, root: &Utf8Path, bar: &ProgressBar) -> Result<crate::Media> {
     Ok(match self {
       Self::Audio { items } => crate::Media::Audio {
@@ -48,5 +57,31 @@ impl Media {
       },
       Self::Web => crate::Media::Web,
     })
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn items_missing() {
+    #[track_caller]
+    fn case(media: Media, expected: bool) {
+      assert_eq!(media.items_missing(), expected);
+    }
+
+    case(Media::Audio { items: Vec::new() }, true);
+    case(Media::Image { items: Vec::new() }, true);
+    case(Media::Video { items: Vec::new() }, true);
+    case(
+      Media::Image {
+        items: vec![Image {
+          path: "foo.png".parse().unwrap(),
+        }],
+      },
+      false,
+    );
+    case(Media::Web, false);
   }
 }

@@ -569,3 +569,28 @@ fn deny_windows_reserved_filename() {
     )
     .failure();
 }
+
+#[test]
+fn yaml_lints_fail_before_load() {
+  let test = Test::new()
+    .touch(".DS_Store")
+    .write("foo.png", PngBuilder::new().build())
+    .write("metadata.yaml", "artwork: foo.png")
+    .args([
+      "create",
+      "--generate",
+      "--deny",
+      "title-missing",
+      "--deny",
+      "junk",
+    ])
+    .stderr(
+      "
+        error: metadata missing title
+        error: 1 lint error
+      ",
+    )
+    .failure();
+
+  assert!(!test.path().join("thumbnails").exists());
+}
