@@ -268,9 +268,13 @@ impl Metadata {
         builder.link("homepage", homepage, homepage.to_string())
       })
       .optional("language", self.language.as_ref())
-      .when_some(self.package.as_ref(), |builder, package| {
-        builder.info("package", package.info(colophon))
-      })
+      .when_some(
+        self
+          .package
+          .as_ref()
+          .filter(|package| **package != Package::default()),
+        |builder, package| builder.info("package", package.info(colophon)),
+      )
       .when_some(self.media.as_ref(), |builder, media| {
         media.info(builder, fingerprint)
       })
@@ -655,6 +659,26 @@ mod tests {
       .write_to(&mut buffer, image_format)
       .unwrap();
     buffer.into_inner()
+  }
+
+  #[test]
+  fn info_omits_empty_package() {
+    let metadata = Metadata {
+      package: Some(default()),
+      ..default()
+    };
+
+    assert_eq!(
+      metadata
+        .info(
+          InfoBuilder::new(),
+          test::FINGERPRINT.parse().unwrap(),
+          None,
+          None
+        )
+        .build(),
+      Info::Map(Vec::new()),
+    );
   }
 
   #[test]
