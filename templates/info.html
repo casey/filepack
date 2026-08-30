@@ -6,7 +6,7 @@
 <a href='{{ url }}'>{{ text }}</a>
 %%   }
 %%   Info::List(items) => {
-<ol>
+<ol role=list>
 %%     for item in items {
   <li>
     {{ Trusted(InfoHtml(item)) }}
