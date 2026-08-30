@@ -38,15 +38,26 @@ code, .code {
 }
 
 dd {
-  grid-column: 2;
   margin: 0;
   overflow-wrap: anywhere;
 }
 
 dl {
   display: grid;
-  gap: 0 1em;
   grid-template-columns: max-content auto;
+  width: fit-content;
+
+  > div {
+    column-gap: 1em;
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
+    padding: 0.25em 0;
+
+    + div {
+      border-top: 1px solid var(--border);
+    }
+  }
 }
 
 dt {

@@ -14,10 +14,12 @@
 %%   Info::Map(entries) => {
 <dl>
 %%     for (key, value) in entries {
-  <dt>{{ key }}</dt>
-  <dd>
-    {{ Trusted(InfoHtml(value)) }}
-  </dd>
+  <div>
+    <dt>{{ key }}</dt>
+    <dd>
+      {{ Trusted(InfoHtml(value)) }}
+    </dd>
+  </div>
 %%     }
 </dl>
 %%   }
