@@ -3,23 +3,4 @@
 %% } else {
 <h1 class=code>{{ self.fingerprint }}</h1>
 %% }
-%% let media = self.metadata.media.as_ref().unwrap();
-<dl>
-  <div>
-    <dt>package</dt>
-    <dd class=code><a href=/package/{{ self.fingerprint }}>{{ self.fingerprint }}</a></dd>
-  </div>
-  <div>
-    <dt>files</dt>
-    <dd>
-      <ol>
-%% for (i, item) in media.items().enumerate() {
-%%   let info = item.info(format!("/package/{}/item/{}", self.fingerprint, Ordinal(i)));
-        <li>
-          {{ Trusted(InfoHtml(&info)) }}
-        </li>
-%% }
-      </ol>
-    </dd>
-  </div>
-</dl>
+{{ Trusted(InfoHtml(&self.info())) }}
