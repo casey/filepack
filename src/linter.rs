@@ -2,15 +2,16 @@ use super::*;
 
 pub(crate) struct Linter {
   active: BTreeSet<Lint>,
+  case_conflicts: HashMap<RelativePath, Vec<RelativePath>>,
   errors: u64,
 }
 
 impl Linter {
-  pub(crate) fn active(&self) -> &BTreeSet<Lint> {
+  fn active(&self) -> &BTreeSet<Lint> {
     &self.active
   }
 
-  fn check(&self) -> Result {
+  pub(crate) fn check(&self) -> Result {
     ensure! {
       self.errors == 0,
       error::Lint {
@@ -54,11 +55,89 @@ impl Linter {
     self.active.contains(&lint)
   }
 
-  pub(crate) fn lint_metadata(
+  pub(crate) fn lint_case_conflicts(&mut self) {
+    let case_conflicts = mem::take(&mut self.case_conflicts);
+    for mut originals in case_conflicts.into_values() {
+      if originals.len() > 1 {
+        originals.sort();
+        self.error_paths(LintError::CaseConflict, &originals);
+      }
+    }
+  }
+
+  pub(crate) fn lint_content(
     &mut self,
-    metadata: Option<&yaml::Metadata>,
-    generate: bool,
+    root: &Utf8Path,
+    options: &Options,
+    metadata: Option<&Metadata>,
   ) -> Result {
+    let Some(metadata) = metadata else {
+      return Ok(());
+    };
+
+    if (self.is_active(Lint::AudioEmbeddedArtworkMissing)
+      || self.is_active(Lint::AudioEmbeddedArtworkAspectRatio))
+      && let Some(Media::Audio { items }) = &metadata.media
+    {
+      let failures = {
+        let bar = ProgressBar::count(options.quiet, items.len().into_u64(), "files");
+
+        let mut failures = Vec::new();
+
+        for audio in items {
+          let covers = audio.content.cover_art(root)?;
+
+          if self.is_active(Lint::AudioEmbeddedArtworkMissing) && covers.is_empty() {
+            failures.push((audio, LintError::AudioEmbeddedArtworkMissing));
+          }
+
+          if self.is_active(Lint::AudioEmbeddedArtworkAspectRatio) {
+            for cover in covers {
+              let dimensions = cover.dimensions().context(error::Audio {
+                path: root.join(audio.path()),
+              })?;
+
+              if dimensions.width != dimensions.height {
+                failures.push((
+                  audio,
+                  LintError::AudioEmbeddedArtworkAspectRatio { dimensions },
+                ));
+              }
+            }
+          }
+
+          bar.inc(1);
+        }
+
+        failures
+      };
+
+      for (audio, lint) in failures {
+        self.error_path(lint, audio.path());
+      }
+    }
+
+    if self.is_active(Lint::VideoPlaceholderDimensions)
+      && let Some(Media::Video { items }) = &metadata.media
+    {
+      for item in items {
+        if let Some(placeholder) = &item.content.placeholder
+          && let Some(video) = item.content.oriented_dimensions()
+          && let placeholder = placeholder.oriented_dimensions()
+          && placeholder != video
+        {
+          self.error_path(
+            LintError::VideoPlaceholderDimensions { placeholder, video },
+            item.path(),
+          );
+        }
+      }
+    }
+
+    Ok(())
+  }
+
+  pub(crate) fn lint_metadata(&mut self, metadata: Option<&yaml::Metadata>, generate: bool) {
     if self.is_active(Lint::MetadataMissing) && metadata.is_none() {
       self.error(LintError::MetadataMissing);
     }
@@ -134,11 +213,27 @@ impl Linter {
         }
       }
     }
+  }
 
-    self.check()
+  pub(crate) fn lint_path(&mut self, path: &RelativePath) {
+    if let Some(lint) = path.lint(self.active()) {
+      self.error_path(lint, path);
+    }
+
+    if self.is_active(Lint::CaseConflict) {
+      self
+        .case_conflicts
+        .entry(path.to_lowercase())
+        .or_default()
+        .push(path.clone());
+    }
   }
 
   pub(crate) fn new(active: BTreeSet<Lint>) -> Self {
-    Self { active, errors: 0 }
+    Self {
+      active,
+      case_conflicts: HashMap::new(),
+      errors: 0,
+    }
   }
 }
