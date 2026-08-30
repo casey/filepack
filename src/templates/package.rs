@@ -109,20 +109,36 @@ mod tests {
         "
           <h1 class=code>{fingerprint}</h1>
           <dl>
-            <dt>fingerprint</dt>
-            <dd class=code>{fingerprint}</dd>
-            <dt>size</dt>
-            <dd>6 B</dd>
-            <dt>files</dt>
-            <dd><a href=/directory/{hash}>2 files</a></dd>
-            <dt>media</dt>
-            <dd><a href=/package/{fingerprint}/media>audio</a></dd>
-            <dt>tracks</dt>
-            <dd>2</dd>
-            <dt>duration</dt>
-            <dd>3:46</dd>
-            <dt>format</dt>
-            <dd>FLAC</dd>
+            <div>
+              <dt>fingerprint</dt>
+              <dd class=code>{fingerprint}</dd>
+            </div>
+            <div>
+              <dt>size</dt>
+              <dd>6 B</dd>
+            </div>
+            <div>
+              <dt>files</dt>
+              <dd><a href=/directory/{hash}>2 files</a></dd>
+            </div>
+            <div>
+              <dt>media</dt>
+              <dd><a href=/package/{fingerprint}/media>audio</a></dd>
+            </div>
+            <div>
+              <dt>tracks</dt>
+              <dd>2</dd>
+            </div>
+            <div>
+              <dt>duration</dt>
+              <dd>3:46</dd>
+            </div>
+            <div>
+              <dt>format</dt>
+              <dd>
+                FLAC
+              </dd>
+            </div>
           </dl>
           <ol>
             <li>
@@ -225,20 +241,36 @@ mod tests {
         "
           <h1 class=code>{fingerprint}</h1>
           <dl>
-            <dt>fingerprint</dt>
-            <dd class=code>{fingerprint}</dd>
-            <dt>size</dt>
-            <dd>9 B</dd>
-            <dt>files</dt>
-            <dd><a href=/directory/{hash}>3 files</a></dd>
-            <dt>media</dt>
-            <dd><a href=/package/{fingerprint}/media>audio</a></dd>
-            <dt>tracks</dt>
-            <dd>3</dd>
-            <dt>duration</dt>
-            <dd>0:03</dd>
-            <dt>format</dt>
-            <dd>FLAC</dd>
+            <div>
+              <dt>fingerprint</dt>
+              <dd class=code>{fingerprint}</dd>
+            </div>
+            <div>
+              <dt>size</dt>
+              <dd>9 B</dd>
+            </div>
+            <div>
+              <dt>files</dt>
+              <dd><a href=/directory/{hash}>3 files</a></dd>
+            </div>
+            <div>
+              <dt>media</dt>
+              <dd><a href=/package/{fingerprint}/media>audio</a></dd>
+            </div>
+            <div>
+              <dt>tracks</dt>
+              <dd>3</dd>
+            </div>
+            <div>
+              <dt>duration</dt>
+              <dd>0:03</dd>
+            </div>
+            <div>
+              <dt>format</dt>
+              <dd>
+                FLAC
+              </dd>
+            </div>
           </dl>
           <h2>disc 1</h2>
           <ol>
@@ -313,20 +345,36 @@ mod tests {
         "
           <h1 class=code>{fingerprint}</h1>
           <dl>
-            <dt>fingerprint</dt>
-            <dd class=code>{fingerprint}</dd>
-            <dt>size</dt>
-            <dd>6 B</dd>
-            <dt>files</dt>
-            <dd><a href=/directory/{hash}>2 files</a></dd>
-            <dt>media</dt>
-            <dd><a href=/package/{fingerprint}/media>audio</a></dd>
-            <dt>tracks</dt>
-            <dd>2</dd>
-            <dt>duration</dt>
-            <dd>5124095576030431:00:15</dd>
-            <dt>format</dt>
-            <dd>FLAC</dd>
+            <div>
+              <dt>fingerprint</dt>
+              <dd class=code>{fingerprint}</dd>
+            </div>
+            <div>
+              <dt>size</dt>
+              <dd>6 B</dd>
+            </div>
+            <div>
+              <dt>files</dt>
+              <dd><a href=/directory/{hash}>2 files</a></dd>
+            </div>
+            <div>
+              <dt>media</dt>
+              <dd><a href=/package/{fingerprint}/media>audio</a></dd>
+            </div>
+            <div>
+              <dt>tracks</dt>
+              <dd>2</dd>
+            </div>
+            <div>
+              <dt>duration</dt>
+              <dd>5124095576030431:00:15</dd>
+            </div>
+            <div>
+              <dt>format</dt>
+              <dd>
+                FLAC
+              </dd>
+            </div>
           </dl>
           <ol>
             <li>
@@ -421,21 +469,37 @@ mod tests {
         r#"
           <h1 class=code>{fingerprint}</h1>
           <dl>
-            <dt>fingerprint</dt>
-            <dd class=code>{fingerprint}</dd>
-            <dt>size</dt>
-            <dd>9 B</dd>
-            <dt>files</dt>
-            <dd><a href=/directory/{hash}>3 files</a></dd>
-            <dt>publisher</dt>
-            <dd>qux</dd>
-            <dt>media</dt>
-            <dd><a href=/package/{fingerprint}/media>image</a></dd>
-            <dt>images</dt>
-            <dd>3</dd>
-            <dt>format</dt>
-            <dd>PNG</dd>
-            <dd>JPEG</dd>
+            <div>
+              <dt>fingerprint</dt>
+              <dd class=code>{fingerprint}</dd>
+            </div>
+            <div>
+              <dt>size</dt>
+              <dd>9 B</dd>
+            </div>
+            <div>
+              <dt>files</dt>
+              <dd><a href=/directory/{hash}>3 files</a></dd>
+            </div>
+            <div>
+              <dt>publisher</dt>
+              <dd>qux</dd>
+            </div>
+            <div>
+              <dt>media</dt>
+              <dd><a href=/package/{fingerprint}/media>image</a></dd>
+            </div>
+            <div>
+              <dt>images</dt>
+              <dd>3</dd>
+            </div>
+            <div>
+              <dt>format</dt>
+              <dd>
+                PNG
+                JPEG
+              </dd>
+            </div>
           </dl>
           <ul class=thumbnails>
             <li style="--aspect-ratio: 2 / 1">
@@ -590,31 +654,53 @@ mod tests {
         "
           <h1 class=code>{fingerprint}</h1>
           <dl>
-            <dt>fingerprint</dt>
-            <dd class=code>{fingerprint}</dd>
-            <dt>size</dt>
-            <dd>3 B</dd>
-            <dt>files</dt>
-            <dd><a href=/directory/{hash}>1 files</a></dd>
-            <dt>readme</dt>
-            <dd><a href='/file/{hash}/README.md'>view</a></dd>
-            <dt>package</dt>
-            <dd>
-              <dl>
-                <dt>title</dt>
-                <dd>baz</dd>
-                <dt>creator</dt>
-                <dd>foo</dd>
-                <dt>time</dt>
-                <dd>2024-01-01</dd>
-                <dt>description</dt>
-                <dd>bar</dd>
-                <dt>colophon</dt>
-                <dd><a href='/file/{hash}/COLOPHON.md'>view</a></dd>
-                <dt>homepage</dt>
-                <dd><a href='http://example.com'>http://example.com</a></dd>
-              </dl>
-            </dd>
+            <div>
+              <dt>fingerprint</dt>
+              <dd class=code>{fingerprint}</dd>
+            </div>
+            <div>
+              <dt>size</dt>
+              <dd>3 B</dd>
+            </div>
+            <div>
+              <dt>files</dt>
+              <dd><a href=/directory/{hash}>1 files</a></dd>
+            </div>
+            <div>
+              <dt>readme</dt>
+              <dd><a href='/file/{hash}/README.md'>view</a></dd>
+            </div>
+            <div>
+              <dt>package</dt>
+              <dd>
+                <dl>
+                  <div>
+                    <dt>title</dt>
+                    <dd>baz</dd>
+                  </div>
+                  <div>
+                    <dt>creator</dt>
+                    <dd>foo</dd>
+                  </div>
+                  <div>
+                    <dt>time</dt>
+                    <dd>2024-01-01</dd>
+                  </div>
+                  <div>
+                    <dt>description</dt>
+                    <dd>bar</dd>
+                  </div>
+                  <div>
+                    <dt>colophon</dt>
+                    <dd><a href='/file/{hash}/COLOPHON.md'>view</a></dd>
+                  </div>
+                  <div>
+                    <dt>homepage</dt>
+                    <dd><a href='http://example.com'>http://example.com</a></dd>
+                  </div>
+                </dl>
+              </dd>
+            </div>
           </dl>
           <table>
             <thead>
@@ -699,20 +785,36 @@ mod tests {
         "
           <h1 class=code>{fingerprint}</h1>
           <dl>
-            <dt>fingerprint</dt>
-            <dd class=code>{fingerprint}</dd>
-            <dt>size</dt>
-            <dd>3 B</dd>
-            <dt>files</dt>
-            <dd><a href=/directory/{hash}>1 files</a></dd>
-            <dt>media</dt>
-            <dd><a href=/package/{fingerprint}/media>video</a></dd>
-            <dt>videos</dt>
-            <dd>1</dd>
-            <dt>duration</dt>
-            <dd>3:45</dd>
-            <dt>format</dt>
-            <dd>MP4</dd>
+            <div>
+              <dt>fingerprint</dt>
+              <dd class=code>{fingerprint}</dd>
+            </div>
+            <div>
+              <dt>size</dt>
+              <dd>3 B</dd>
+            </div>
+            <div>
+              <dt>files</dt>
+              <dd><a href=/directory/{hash}>1 files</a></dd>
+            </div>
+            <div>
+              <dt>media</dt>
+              <dd><a href=/package/{fingerprint}/media>video</a></dd>
+            </div>
+            <div>
+              <dt>videos</dt>
+              <dd>1</dd>
+            </div>
+            <div>
+              <dt>duration</dt>
+              <dd>3:45</dd>
+            </div>
+            <div>
+              <dt>format</dt>
+              <dd>
+                MP4
+              </dd>
+            </div>
           </dl>
           <ol>
             <li>

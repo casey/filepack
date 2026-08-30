@@ -35,10 +35,12 @@ mod tests {
             </li>
             <li>
               <dl>
-                <dt>bar</dt>
-                <dd>
-                  baz
-                </dd>
+                <div>
+                  <dt>bar</dt>
+                  <dd>
+                    baz
+                  </dd>
+                </div>
               </dl>
             </li>
           </ol>
@@ -61,19 +63,25 @@ mod tests {
       unindent(
         "
           <dl>
-            <dt>foo</dt>
-            <dd>
-              bar
-            </dd>
-            <dt>baz</dt>
-            <dd>
-              <dl>
-                <dt>qux</dt>
-                <dd>
-                  quux
-                </dd>
-              </dl>
-            </dd>
+            <div>
+              <dt>foo</dt>
+              <dd>
+                bar
+              </dd>
+            </div>
+            <div>
+              <dt>baz</dt>
+              <dd>
+                <dl>
+                  <div>
+                    <dt>qux</dt>
+                    <dd>
+                      quux
+                    </dd>
+                  </div>
+                </dl>
+              </dd>
+            </div>
           </dl>
         "
       ),
