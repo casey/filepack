@@ -5,6 +5,7 @@
     <meta name=viewport content='width=device-width,initial-scale=1.0'>
     <title>{{ self.content.title() }}</title>
     <meta name=description content='Filepack package server'>
+    <meta name=google content=notranslate>
 %% if let Some(open_graph_description) = self.content.open_graph_description() {
     <meta property=og:description content='{{ open_graph_description }}'>
 %% }
