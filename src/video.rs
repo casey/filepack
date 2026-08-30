@@ -47,7 +47,14 @@ impl Content for Video {
         "duration",
         DisplayDuration(Duration::from_millis(self.duration)),
       )
-      .list("tracks", self.tracks.iter().map(|track| track.info(self)))
+      .list(
+        "tracks",
+        self
+          .tracks
+          .iter()
+          .enumerate()
+          .map(|(i, track)| track.info(self, i)),
+      )
   }
 
   fn load(root: &Utf8Path, path: RelativePath) -> Result<Item<Self>> {
