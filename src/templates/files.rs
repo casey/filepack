@@ -7,6 +7,6 @@ pub(crate) struct FilesHtml {
 
 impl Page for FilesHtml {
   fn title(&self) -> String {
-    "files · filepack".into()
+    "Files · Filepack".into()
   }
 }

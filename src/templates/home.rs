@@ -68,7 +68,7 @@ impl Page for HomeHtml {
   }
 
   fn title(&self) -> String {
-    "filepack".into()
+    "Filepack".into()
   }
 }
 

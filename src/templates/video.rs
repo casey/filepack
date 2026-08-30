@@ -27,7 +27,7 @@ impl Page for VideoHtml {
   }
 
   fn title(&self) -> String {
-    format!("{} · filepack", self.video().display_title(self.video))
+    format!("{} · Filepack", self.video().display_title(self.video))
   }
 }
 
@@ -120,7 +120,7 @@ mod tests {
       video: 0,
     };
 
-    assert_eq!(Page::title(&html), "Video 1 · filepack");
+    assert_eq!(Page::title(&html), "Video 1 · Filepack");
 
     let Some(Media::Video { items }) = html.metadata.media.as_mut() else {
       unreachable!();
@@ -128,6 +128,6 @@ mod tests {
 
     items[0].title = Some("bar".parse().unwrap());
 
-    assert_eq!(Page::title(&html), "bar · filepack");
+    assert_eq!(Page::title(&html), "bar · Filepack");
   }
 }

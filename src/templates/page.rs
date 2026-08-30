@@ -113,14 +113,14 @@ mod tests {
               <meta name=viewport content='width=device-width,initial-scale=1.0'>
               <title>home</title>
               <meta name=description content='Filepack package server'>
-              <meta property=og:site_name content=filepack>
+              <meta property=og:site_name content=Filepack>
               <link href=/static/page.css rel=stylesheet>
             </head>
             <body>
               <header>
                 <nav>
-                  <a>filepack</a>
-                  <a href=https://github.com/casey/filepack>github</a>
+                  <a>Filepack</a>
+                  <a href=https://github.com/casey/filepack>GitHub</a>
                 </nav>
               </header>
               <main>
@@ -146,7 +146,7 @@ mod tests {
               <meta name=viewport content='width=device-width,initial-scale=1.0'>
               <title>navigation</title>
               <meta name=description content='Filepack package server'>
-              <meta property=og:site_name content=filepack>
+              <meta property=og:site_name content=Filepack>
               <link href=/static/page.css rel=stylesheet>
               <link href=/foo rel=next>
               <link href=/bar rel=prev>
@@ -155,8 +155,8 @@ mod tests {
             <body>
               <header>
                 <nav>
-                  <a href=/>filepack</a>
-                  <a href=https://github.com/casey/filepack>github</a>
+                  <a href=/>Filepack</a>
+                  <a href=https://github.com/casey/filepack>GitHub</a>
                 </nav>
               </header>
               <main>
@@ -188,14 +188,14 @@ mod tests {
               <meta property=og:image content='https://example.com/bar'>
               <meta property=og:image:height content=1>
               <meta property=og:image:width content=2>
-              <meta property=og:site_name content=filepack>
+              <meta property=og:site_name content=Filepack>
               <link href=/static/page.css rel=stylesheet>
             </head>
             <body>
               <header>
                 <nav>
-                  <a href=/>filepack</a>
-                  <a href=https://github.com/casey/filepack>github</a>
+                  <a href=/>Filepack</a>
+                  <a href=https://github.com/casey/filepack>GitHub</a>
                 </nav>
               </header>
               <main>
@@ -219,14 +219,14 @@ mod tests {
               <title>image</title>
               <meta name=description content='Filepack package server'>
               <meta property=og:description content='qux'>
-              <meta property=og:site_name content=filepack>
+              <meta property=og:site_name content=Filepack>
               <link href=/static/page.css rel=stylesheet>
             </head>
             <body>
               <header>
                 <nav>
-                  <a href=/>filepack</a>
-                  <a href=https://github.com/casey/filepack>github</a>
+                  <a href=/>Filepack</a>
+                  <a href=https://github.com/casey/filepack>GitHub</a>
                 </nav>
               </header>
               <main>
@@ -252,15 +252,15 @@ mod tests {
               <meta name=viewport content='width=device-width,initial-scale=1.0'>
               <title>script</title>
               <meta name=description content='Filepack package server'>
-              <meta property=og:site_name content=filepack>
+              <meta property=og:site_name content=Filepack>
               <link href=/static/page.css rel=stylesheet>
               <script src=/foo.js type=module></script>
             </head>
             <body>
               <header>
                 <nav>
-                  <a href=/>filepack</a>
-                  <a href=https://github.com/casey/filepack>github</a>
+                  <a href=/>Filepack</a>
+                  <a href=https://github.com/casey/filepack>GitHub</a>
                 </nav>
               </header>
               <main>

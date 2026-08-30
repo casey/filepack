@@ -32,9 +32,9 @@ impl Page for PackageHtml {
 
   fn title(&self) -> String {
     if let Some(title) = self.title() {
-      format!("{title} · filepack")
+      format!("{title} · Filepack")
     } else {
-      format!("{} · filepack", self.fingerprint)
+      format!("{} · Filepack", self.fingerprint)
     }
   }
 }
@@ -272,7 +272,7 @@ mod tests {
               </dd>
             </div>
           </dl>
-          <h2>disc 1</h2>
+          <h2>Disc 1</h2>
           <ol>
             <li>
               <a href=/package/{fingerprint}/item/1>foo</a>
@@ -283,7 +283,7 @@ mod tests {
               <time datetime=PT0M1S>0:01</time>
             </li>
           </ol>
-          <h2>disc 2</h2>
+          <h2>Disc 2</h2>
           <ol>
             <li>
               <a href=/package/{fingerprint}/item/3>baz</a>
