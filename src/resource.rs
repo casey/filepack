@@ -12,6 +12,8 @@ pub(crate) struct Resource {
 }
 
 impl Resource {
+  const READER_STREAM_CAPACITY: usize = MIB;
+
   pub(crate) fn range(self, range: Option<TypedHeader<headers::Range>>) -> Self {
     Self {
       range: range.map(|TypedHeader(range)| range),
@@ -65,8 +67,9 @@ impl IntoResponse for Resource {
         builder
           .header(header::CACHE_CONTROL, MAX_CACHE)
           .header(header::CONTENT_LENGTH, self.content_length)
-          .body(Body::from_stream(ReaderStream::new(
+          .body(Body::from_stream(ReaderStream::with_capacity(
             tokio::fs::File::from_std(self.file),
+            Self::READER_STREAM_CAPACITY,
           ))),
       );
     };
@@ -121,8 +124,9 @@ impl IntoResponse for Resource {
           format!("bytes {start}-{end}/{}", self.content_length),
         )
         .header(header::CONTENT_LENGTH, length)
-        .body(Body::from_stream(ReaderStream::new(
+        .body(Body::from_stream(ReaderStream::with_capacity(
           tokio::fs::File::from_std(self.file).take(length),
+          Self::READER_STREAM_CAPACITY,
         ))),
     )
   }
