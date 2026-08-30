@@ -13,10 +13,6 @@ impl MediaHtml {
 }
 
 impl Page for MediaHtml {
-  fn stylesheet(&self) -> Option<&'static str> {
-    Some("/static/media.css")
-  }
-
   fn title(&self) -> String {
     if let Some(title) = self.title() {
       format!("{title} media · filepack")
