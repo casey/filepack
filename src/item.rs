@@ -44,7 +44,7 @@ impl<T: Content> MediaItem for Item<T> {
       .content
       .info(
         InfoBuilder::new()
-          .link("path", self.content.path(), url)
+          .link("file", self.content.path(), url)
           .optional("title", self.title.as_ref()),
       )
       .build()
@@ -101,7 +101,7 @@ mod tests {
     assert_eq!(
       MediaItem::info(&item, "bar".into()),
       InfoBuilder::new()
-        .link("path", "foo.png", "bar".into())
+        .link("file", "foo.png", "bar".into())
         .value("type", "PNG")
         .value("dimensions", "1×1")
         .value("orientation", "0°")
@@ -116,7 +116,7 @@ mod tests {
     assert_eq!(
       MediaItem::info(&item, "bar".into()),
       InfoBuilder::new()
-        .link("path", "foo.png", "bar".into())
+        .link("file", "foo.png", "bar".into())
         .value("title", "baz")
         .value("type", "PNG")
         .value("dimensions", "1×1")

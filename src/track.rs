@@ -11,8 +11,9 @@ pub(crate) struct Track {
 }
 
 impl Track {
-  pub(crate) fn info(&self, video: &Video) -> Info {
+  pub(crate) fn info(&self, video: &Video, index: usize) -> Info {
     let builder = InfoBuilder::new()
+      .value("track", Ordinal(index))
       .value(
         "type",
         match self.info {
@@ -146,8 +147,9 @@ mod tests {
     video.duration = 10_000;
 
     assert_eq!(
-      track.info(&video),
+      track.info(&video, 0),
       InfoBuilder::new()
+        .value("track", "1")
         .value("type", "video")
         .value("codec", "H.264")
         .value("dimensions", "2×1")
@@ -165,8 +167,9 @@ mod tests {
     video.duration = 0;
 
     assert_eq!(
-      track.info(&video),
+      track.info(&video, 0),
       InfoBuilder::new()
+        .value("track", "1")
         .value("type", "video")
         .value("codec", "H.264")
         .value("dimensions", "2×1")
@@ -191,8 +194,9 @@ mod tests {
     video.duration = 10_000;
 
     assert_eq!(
-      track.info(&video),
+      track.info(&video, 0),
       InfoBuilder::new()
+        .value("track", "1")
         .value("type", "audio")
         .value("codec", "AAC")
         .value("channels", "2")
@@ -205,8 +209,9 @@ mod tests {
     video.duration = 0;
 
     assert_eq!(
-      track.info(&video),
+      track.info(&video, 0),
       InfoBuilder::new()
+        .value("track", "1")
         .value("type", "audio")
         .value("codec", "AAC")
         .value("channels", "2")

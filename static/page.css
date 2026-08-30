@@ -42,9 +42,32 @@ dd {
   overflow-wrap: anywhere;
 }
 
-dl {
+dd > ol {
   display: grid;
   grid-template-columns: max-content auto;
+  margin-block: 0;
+  padding-left: 0;
+  width: fit-content;
+
+  > li {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
+
+    > dl {
+      grid-column: 1 / -1;
+      grid-template-columns: subgrid;
+      width: auto;
+    }
+  }
+}
+
+dl {
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: max-content auto;
+  margin-block: 0.5em;
   width: fit-content;
 
   > div {
@@ -52,7 +75,7 @@ dl {
     display: grid;
     grid-column: 1 / -1;
     grid-template-columns: subgrid;
-    padding: 0.25em 0;
+    padding: 0.25em;
 
     + div {
       border-top: 1px solid var(--border);
@@ -88,6 +111,10 @@ html {
 main {
   flex: 1;
   padding-top: 0;
+}
+
+ol, ul {
+  margin-block: 0.5em;
 }
 
 .thumbnails {
