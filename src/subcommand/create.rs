@@ -42,20 +42,6 @@ impl Create {
       root.join(Manifest::FILENAME)
     };
 
-    let denied = self
-      .deny
-      .into_iter()
-      .flat_map(LintSelector::lints)
-      .collect::<BTreeSet<Lint>>();
-
-    let allowed = self
-      .allow
-      .into_iter()
-      .flat_map(LintSelector::lints)
-      .collect::<BTreeSet<Lint>>();
-
-    let mut linter = Linter::new(&denied - &allowed);
-
     let path = root.join(Metadata::YAML_FILENAME);
 
     let metadata = if let Some(yaml) = filesystem::read_to_string_opt(&path)? {
@@ -83,6 +69,12 @@ impl Create {
 
       None
     };
+
+    let mut linter = Linter::new();
+
+    linter.deny(&self.deny);
+
+    linter.allow(&self.allow);
 
     linter.lint_metadata(metadata.as_ref(), self.generate);
 
