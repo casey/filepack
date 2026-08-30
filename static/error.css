@@ -10,17 +10,21 @@ main {
   min-height: 0;
 }
 
-.status {
+h1 {
   font-size: 40vmin;
+  font-weight: normal;
   line-height: 1;
+  margin: 0;
 
   &:hover {
     text-shadow: 0 0 100px;
   }
 }
 
-.message {
+p {
   color: var(--secondary);
+  font-size: max(1rem, 4vmin);
+  margin: 0;
   overflow-wrap: anywhere;
   text-align: center;
 }
