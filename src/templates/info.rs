@@ -16,9 +16,23 @@ mod tests {
   }
 
   #[test]
+  fn code_link() {
+    assert_eq!(
+      InfoHtml(&Info::Link {
+        code: true,
+        text: "foo".into(),
+        url: "/bar".into(),
+      })
+      .to_string(),
+      "<a href='/bar'><code>foo</code></a>\n",
+    );
+  }
+
+  #[test]
   fn link() {
     assert_eq!(
       InfoHtml(&Info::Link {
+        code: false,
         text: "foo".into(),
         url: "/bar".into(),
       })

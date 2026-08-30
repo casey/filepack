@@ -2,8 +2,12 @@
 %%   Info::Code(value) => {
 <code>{{ value }}</code>
 %%   }
-%%   Info::Link { text, url } => {
+%%   Info::Link { code, text, url } => {
+%%     if *code {
+<a href='{{ url }}'><code>{{ text }}</code></a>
+%%     } else {
 <a href='{{ url }}'>{{ text }}</a>
+%%     }
 %%   }
 %%   Info::List(items) => {
 <ol role=list>
