@@ -244,6 +244,38 @@ impl Metadata {
     Ok(())
   }
 
+  pub(crate) fn info(
+    &self,
+    builder: InfoBuilder,
+    fingerprint: Fingerprint,
+    readme: Option<Hash>,
+    colophon: Option<Hash>,
+  ) -> InfoBuilder {
+    builder
+      .optional("title", self.title.as_ref())
+      .optional("creator", self.creator.as_ref())
+      .optional("publisher", self.publisher.as_ref())
+      .optional("time", self.time.as_ref())
+      .optional("description", self.description.as_ref())
+      .when_some(self.readme.as_ref().zip(readme), |builder, (path, hash)| {
+        builder.link(
+          "readme",
+          "view",
+          format!("/file/{hash}/{}", path.percent_encode_path()),
+        )
+      })
+      .when_some(self.homepage.as_ref(), |builder, homepage| {
+        builder.link("homepage", homepage, homepage.to_string())
+      })
+      .optional("language", self.language.as_ref())
+      .when_some(self.package.as_ref(), |builder, package| {
+        builder.info("package", package.info(colophon))
+      })
+      .when_some(self.media.as_ref(), |builder, media| {
+        media.info(builder, fingerprint)
+      })
+  }
+
   pub(crate) fn thumbnail(&self, path: &RelativePath) -> Option<&Image> {
     self.thumbnails.as_ref()?.get(path)
   }

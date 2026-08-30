@@ -30,6 +30,42 @@ pub(crate) enum Media {
 }
 
 impl Media {
+  pub(crate) fn info(&self, builder: InfoBuilder, fingerprint: Fingerprint) -> InfoBuilder {
+    fn format<T: Content>(builder: InfoBuilder, items: &[Item<T>]) -> InfoBuilder {
+      builder.when(!items.is_empty(), |builder| {
+        builder.list(
+          "format",
+          Item::formats(items)
+            .into_iter()
+            .map(|format| Info::Value(format.to_string())),
+        )
+      })
+    }
+
+    builder
+      .link(
+        "media",
+        self.name(),
+        format!("/package/{fingerprint}/media"),
+      )
+      .with(|builder| match self {
+        Self::Audio { items } => format(
+          builder
+            .value("tracks", items.len())
+            .value("duration", DisplayDuration(Audio::sum_durations(items))),
+          items,
+        ),
+        Self::Image { items } => format(builder.value("images", items.len()), items),
+        Self::Video { items } => format(
+          builder
+            .value("videos", items.len())
+            .value("duration", DisplayDuration(Video::sum_durations(items))),
+          items,
+        ),
+        Self::Web => builder,
+      })
+  }
+
   pub(crate) fn item(&self, i: usize) -> Option<&dyn MediaItem> {
     match self {
       Self::Audio { items } => items.get(i).map(|item| item as &dyn MediaItem),

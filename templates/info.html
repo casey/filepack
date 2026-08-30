@@ -1,4 +1,7 @@
 %% match self.0 {
+%%   Info::Code(value) => {
+<code>{{ value }}</code>
+%%   }
 %%   Info::Link { text, url } => {
 <a href='{{ url }}'>{{ text }}</a>
 %%   }

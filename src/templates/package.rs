@@ -12,6 +12,24 @@ pub struct PackageHtml {
 }
 
 impl PackageHtml {
+  fn info(&self) -> Info {
+    InfoBuilder::new()
+      .code("fingerprint", self.fingerprint)
+      .value("size", format_size(self.totals.file_size))
+      .link(
+        "files",
+        format!("{} files", self.totals.files),
+        format!("/directory/{}", Hash::from(self.fingerprint)),
+      )
+      .when(self.mounted, |builder| {
+        builder.link("mount", "view", format!("/mount/{}/", self.fingerprint))
+      })
+      .when_some(self.metadata.as_ref(), |builder, metadata| {
+        metadata.info(builder, self.fingerprint, self.readme, self.colophon)
+      })
+      .build()
+  }
+
   fn title(&self) -> Option<&str> {
     self.metadata.as_ref()?.title.as_deref()
   }
@@ -111,32 +129,48 @@ mod tests {
           <dl>
             <div>
               <dt>fingerprint</dt>
-              <dd class=code>{fingerprint}</dd>
+              <dd>
+                <code>{fingerprint}</code>
+              </dd>
             </div>
             <div>
               <dt>size</dt>
-              <dd>6 B</dd>
+              <dd>
+                6 B
+              </dd>
             </div>
             <div>
               <dt>files</dt>
-              <dd><a href=/directory/{hash}>2 files</a></dd>
+              <dd>
+                <a href='/directory/{hash}'>2 files</a>
+              </dd>
             </div>
             <div>
               <dt>media</dt>
-              <dd><a href=/package/{fingerprint}/media>audio</a></dd>
+              <dd>
+                <a href='/package/{fingerprint}/media'>audio</a>
+              </dd>
             </div>
             <div>
               <dt>tracks</dt>
-              <dd>2</dd>
+              <dd>
+                2
+              </dd>
             </div>
             <div>
               <dt>duration</dt>
-              <dd>3:46</dd>
+              <dd>
+                3:46
+              </dd>
             </div>
             <div>
               <dt>format</dt>
               <dd>
-                FLAC
+                <ol>
+                  <li>
+                    FLAC
+                  </li>
+                </ol>
               </dd>
             </div>
           </dl>
@@ -243,32 +277,48 @@ mod tests {
           <dl>
             <div>
               <dt>fingerprint</dt>
-              <dd class=code>{fingerprint}</dd>
+              <dd>
+                <code>{fingerprint}</code>
+              </dd>
             </div>
             <div>
               <dt>size</dt>
-              <dd>9 B</dd>
+              <dd>
+                9 B
+              </dd>
             </div>
             <div>
               <dt>files</dt>
-              <dd><a href=/directory/{hash}>3 files</a></dd>
+              <dd>
+                <a href='/directory/{hash}'>3 files</a>
+              </dd>
             </div>
             <div>
               <dt>media</dt>
-              <dd><a href=/package/{fingerprint}/media>audio</a></dd>
+              <dd>
+                <a href='/package/{fingerprint}/media'>audio</a>
+              </dd>
             </div>
             <div>
               <dt>tracks</dt>
-              <dd>3</dd>
+              <dd>
+                3
+              </dd>
             </div>
             <div>
               <dt>duration</dt>
-              <dd>0:03</dd>
+              <dd>
+                0:03
+              </dd>
             </div>
             <div>
               <dt>format</dt>
               <dd>
-                FLAC
+                <ol>
+                  <li>
+                    FLAC
+                  </li>
+                </ol>
               </dd>
             </div>
           </dl>
@@ -347,32 +397,48 @@ mod tests {
           <dl>
             <div>
               <dt>fingerprint</dt>
-              <dd class=code>{fingerprint}</dd>
+              <dd>
+                <code>{fingerprint}</code>
+              </dd>
             </div>
             <div>
               <dt>size</dt>
-              <dd>6 B</dd>
+              <dd>
+                6 B
+              </dd>
             </div>
             <div>
               <dt>files</dt>
-              <dd><a href=/directory/{hash}>2 files</a></dd>
+              <dd>
+                <a href='/directory/{hash}'>2 files</a>
+              </dd>
             </div>
             <div>
               <dt>media</dt>
-              <dd><a href=/package/{fingerprint}/media>audio</a></dd>
+              <dd>
+                <a href='/package/{fingerprint}/media'>audio</a>
+              </dd>
             </div>
             <div>
               <dt>tracks</dt>
-              <dd>2</dd>
+              <dd>
+                2
+              </dd>
             </div>
             <div>
               <dt>duration</dt>
-              <dd>5124095576030431:00:15</dd>
+              <dd>
+                5124095576030431:00:15
+              </dd>
             </div>
             <div>
               <dt>format</dt>
               <dd>
-                FLAC
+                <ol>
+                  <li>
+                    FLAC
+                  </li>
+                </ol>
               </dd>
             </div>
           </dl>
@@ -471,33 +537,51 @@ mod tests {
           <dl>
             <div>
               <dt>fingerprint</dt>
-              <dd class=code>{fingerprint}</dd>
+              <dd>
+                <code>{fingerprint}</code>
+              </dd>
             </div>
             <div>
               <dt>size</dt>
-              <dd>9 B</dd>
+              <dd>
+                9 B
+              </dd>
             </div>
             <div>
               <dt>files</dt>
-              <dd><a href=/directory/{hash}>3 files</a></dd>
+              <dd>
+                <a href='/directory/{hash}'>3 files</a>
+              </dd>
             </div>
             <div>
               <dt>publisher</dt>
-              <dd>qux</dd>
+              <dd>
+                qux
+              </dd>
             </div>
             <div>
               <dt>media</dt>
-              <dd><a href=/package/{fingerprint}/media>image</a></dd>
+              <dd>
+                <a href='/package/{fingerprint}/media'>image</a>
+              </dd>
             </div>
             <div>
               <dt>images</dt>
-              <dd>3</dd>
+              <dd>
+                3
+              </dd>
             </div>
             <div>
               <dt>format</dt>
               <dd>
-                PNG
-                JPEG
+                <ol>
+                  <li>
+                    PNG
+                  </li>
+                  <li>
+                    JPEG
+                  </li>
+                </ol>
               </dd>
             </div>
           </dl>
@@ -656,19 +740,27 @@ mod tests {
           <dl>
             <div>
               <dt>fingerprint</dt>
-              <dd class=code>{fingerprint}</dd>
+              <dd>
+                <code>{fingerprint}</code>
+              </dd>
             </div>
             <div>
               <dt>size</dt>
-              <dd>3 B</dd>
+              <dd>
+                3 B
+              </dd>
             </div>
             <div>
               <dt>files</dt>
-              <dd><a href=/directory/{hash}>1 files</a></dd>
+              <dd>
+                <a href='/directory/{hash}'>1 files</a>
+              </dd>
             </div>
             <div>
               <dt>readme</dt>
-              <dd><a href='/file/{hash}/README.md'>view</a></dd>
+              <dd>
+                <a href='/file/{hash}/README.md'>view</a>
+              </dd>
             </div>
             <div>
               <dt>package</dt>
@@ -676,27 +768,39 @@ mod tests {
                 <dl>
                   <div>
                     <dt>title</dt>
-                    <dd>baz</dd>
+                    <dd>
+                      baz
+                    </dd>
                   </div>
                   <div>
                     <dt>creator</dt>
-                    <dd>foo</dd>
+                    <dd>
+                      foo
+                    </dd>
                   </div>
                   <div>
                     <dt>time</dt>
-                    <dd>2024-01-01</dd>
+                    <dd>
+                      2024-01-01
+                    </dd>
                   </div>
                   <div>
                     <dt>description</dt>
-                    <dd>bar</dd>
+                    <dd>
+                      bar
+                    </dd>
                   </div>
                   <div>
                     <dt>colophon</dt>
-                    <dd><a href='/file/{hash}/COLOPHON.md'>view</a></dd>
+                    <dd>
+                      <a href='/file/{hash}/COLOPHON.md'>view</a>
+                    </dd>
                   </div>
                   <div>
                     <dt>homepage</dt>
-                    <dd><a href='http://example.com'>http://example.com</a></dd>
+                    <dd>
+                      <a href='http://example.com'>http://example.com</a>
+                    </dd>
                   </div>
                 </dl>
               </dd>
@@ -787,32 +891,48 @@ mod tests {
           <dl>
             <div>
               <dt>fingerprint</dt>
-              <dd class=code>{fingerprint}</dd>
+              <dd>
+                <code>{fingerprint}</code>
+              </dd>
             </div>
             <div>
               <dt>size</dt>
-              <dd>3 B</dd>
+              <dd>
+                3 B
+              </dd>
             </div>
             <div>
               <dt>files</dt>
-              <dd><a href=/directory/{hash}>1 files</a></dd>
+              <dd>
+                <a href='/directory/{hash}'>1 files</a>
+              </dd>
             </div>
             <div>
               <dt>media</dt>
-              <dd><a href=/package/{fingerprint}/media>video</a></dd>
+              <dd>
+                <a href='/package/{fingerprint}/media'>video</a>
+              </dd>
             </div>
             <div>
               <dt>videos</dt>
-              <dd>1</dd>
+              <dd>
+                1
+              </dd>
             </div>
             <div>
               <dt>duration</dt>
-              <dd>3:45</dd>
+              <dd>
+                3:45
+              </dd>
             </div>
             <div>
               <dt>format</dt>
               <dd>
-                MP4
+                <ol>
+                  <li>
+                    MP4
+                  </li>
+                </ol>
               </dd>
             </div>
           </dl>
