@@ -13,8 +13,8 @@ impl Page for ErrorHtml {
 
   fn title(&self) -> String {
     match self.status.canonical_reason() {
-      Some(reason) => format!("{} · filepack", reason.to_lowercase()),
-      None => format!("{} · filepack", self.status.as_u16()),
+      Some(reason) => format!("{reason} · Filepack"),
+      None => format!("{} · Filepack", self.status.as_u16()),
     }
   }
 }
@@ -54,11 +54,11 @@ mod tests {
       );
     }
 
-    case(StatusCode::NOT_FOUND, "not found · filepack");
+    case(StatusCode::NOT_FOUND, "Not Found · Filepack");
     case(
       StatusCode::INTERNAL_SERVER_ERROR,
-      "internal server error · filepack",
+      "Internal Server Error · Filepack",
     );
-    case(StatusCode::from_u16(599).unwrap(), "599 · filepack");
+    case(StatusCode::from_u16(599).unwrap(), "599 · Filepack");
   }
 }
