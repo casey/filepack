@@ -45,23 +45,25 @@ impl Track {
           .value("dimensions", dimensions)
           .value("orientation", orientation)
           .value("frames", frames)
-          .when(
-            video.duration > 0,
-            "frame rate",
-            DisplayFrameRate {
-              duration: video.duration,
-              frames,
-            },
-          )
+          .when(video.duration > 0, |builder| {
+            builder.value(
+              "frame rate",
+              DisplayFrameRate {
+                duration: video.duration,
+                frames,
+              },
+            )
+          })
           .optional("bit rate", DisplayBitrate::new(video.duration, self.size))
-          .when(
-            pixels > 0,
-            "bits per pixel",
-            DisplayBitsPerPixel {
-              pixels,
-              size: self.size,
-            },
-          )
+          .when(pixels > 0, |builder| {
+            builder.value(
+              "bits per pixel",
+              DisplayBitsPerPixel {
+                pixels,
+                size: self.size,
+              },
+            )
+          })
           .value("bit depth", format!("{bit_depth}-bit"))
           .value("chroma subsampling", chroma_subsampling)
       }

@@ -9,6 +9,16 @@ impl InfoBuilder {
     Info::Map(self.map)
   }
 
+  pub(crate) fn code(mut self, key: &str, value: impl Display) -> Self {
+    self.map.push((key.into(), Info::Code(value.to_string())));
+    self
+  }
+
+  pub(crate) fn info(mut self, key: &str, info: Info) -> Self {
+    self.map.push((key.into(), info));
+    self
+  }
+
   pub(crate) fn link(mut self, key: &str, text: impl Display, url: String) -> Self {
     self.map.push((
       key.into(),
@@ -44,12 +54,19 @@ impl InfoBuilder {
     self
   }
 
-  pub(crate) fn when(self, condition: bool, key: &str, value: impl Display) -> Self {
-    if condition {
-      self.value(key, value)
-    } else {
-      self
+  pub(crate) fn when(self, condition: bool, f: impl FnOnce(Self) -> Self) -> Self {
+    if condition { f(self) } else { self }
+  }
+
+  pub(crate) fn when_some<T>(self, value: Option<T>, f: impl FnOnce(Self, T) -> Self) -> Self {
+    match value {
+      Some(value) => f(self, value),
+      None => self,
     }
+  }
+
+  pub(crate) fn with(self, f: impl FnOnce(Self) -> Self) -> Self {
+    f(self)
   }
 }
 
@@ -64,15 +81,23 @@ mod tests {
         .value("foo", "bar")
         .optional("baz", Some("qux"))
         .optional("quux", None::<&str>)
-        .when(true, "plugh", "xyzzy")
-        .when(false, "thud", "wibble")
         .link("corge", "grault", "garply".into())
         .list("waldo", [Info::Value("fred".into())])
+        .code("wubble", "flob")
+        .info(
+          "spam",
+          Info::Map(vec![("eggs".into(), Info::Value("ham".into()))])
+        )
+        .when_some(Some("bacon"), |builder, value| builder
+          .value("toast", value))
+        .when_some(None::<&str>, |builder, value| builder.value("jam", value))
+        .when(true, |builder| builder.value("tea", "milk"))
+        .when(false, |builder| builder.value("coffee", "sugar"))
+        .with(|builder| builder.value("scone", "cream"))
         .build(),
       Info::Map(vec![
         ("foo".into(), Info::Value("bar".into())),
         ("baz".into(), Info::Value("qux".into())),
-        ("plugh".into(), Info::Value("xyzzy".into())),
         (
           "corge".into(),
           Info::Link {
@@ -81,6 +106,14 @@ mod tests {
           },
         ),
         ("waldo".into(), Info::List(vec![Info::Value("fred".into())])),
+        ("wubble".into(), Info::Code("flob".into())),
+        (
+          "spam".into(),
+          Info::Map(vec![("eggs".into(), Info::Value("ham".into()))]),
+        ),
+        ("toast".into(), Info::Value("bacon".into())),
+        ("tea".into(), Info::Value("milk".into())),
+        ("scone".into(), Info::Value("cream".into())),
       ]),
     );
   }

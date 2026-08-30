@@ -17,6 +17,30 @@ pub(crate) struct Package {
   pub(crate) title: Option<Text>,
 }
 
+impl Package {
+  pub(crate) fn info(&self, colophon: Option<Hash>) -> Info {
+    InfoBuilder::new()
+      .optional("title", self.title.as_ref())
+      .optional("creator", self.creator.as_ref())
+      .optional("time", self.time.as_ref())
+      .optional("description", self.description.as_ref())
+      .when_some(
+        self.colophon.as_ref().zip(colophon),
+        |builder, (path, hash)| {
+          builder.link(
+            "colophon",
+            "view",
+            format!("/file/{hash}/{}", path.percent_encode_path()),
+          )
+        },
+      )
+      .when_some(self.homepage.as_ref(), |builder, homepage| {
+        builder.link("homepage", homepage, homepage.to_string())
+      })
+      .build()
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
