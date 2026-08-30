@@ -33,8 +33,10 @@ mod tests {
       .to_string(),
       unindent(
         "
-          <div class=status>404</div>
-          <div class=message>foo</div>
+          <hgroup>
+            <h1>404</h1>
+            <p>foo</p>
+          </hgroup>
         "
       ),
     );
