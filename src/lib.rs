@@ -194,7 +194,7 @@ use {
     fmt::{self, Debug, Display, Formatter},
     fs::{self, Permissions},
     io::{self, BufReader, IsTerminal, Read, Seek, SeekFrom, Write},
-    iter,
+    iter, mem,
     net::SocketAddr,
     num::{NonZeroUsize, ParseIntError, TryFromIntError},
     ops::{Bound, Deref},

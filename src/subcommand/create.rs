@@ -84,7 +84,9 @@ impl Create {
       None
     };
 
-    linter.lint_metadata(metadata.as_ref(), self.generate)?;
+    linter.lint_metadata(metadata.as_ref(), self.generate);
+
+    linter.check()?;
 
     let metadata = if let Some(metadata) = metadata {
       let mut metadata = metadata.load(&root, options.quiet)?;
@@ -105,8 +107,6 @@ impl Create {
     let cleaned_manifest = current_dir.join(&manifest_path).lexiclean();
 
     let mut paths = HashMap::new();
-
-    let mut case_conflicts = HashMap::<RelativePath, Vec<RelativePath>>::new();
 
     let mut empty = Vec::new();
 
@@ -144,16 +144,7 @@ impl Create {
 
       let metadata = filesystem::metadata(path)?;
 
-      if let Some(lint) = relative.lint(linter.active()) {
-        linter.error_path(lint, &relative);
-      }
-
-      if linter.is_active(Lint::CaseConflict) {
-        case_conflicts
-          .entry(relative.to_lowercase())
-          .or_default()
-          .push(relative.clone());
-      }
+      linter.lint_path(&relative);
 
       empty.pop_if(|dir| relative.starts_with(dir));
 
@@ -165,73 +156,15 @@ impl Create {
       paths.insert(relative, metadata.len());
     }
 
-    for mut originals in case_conflicts.into_values() {
-      if originals.len() > 1 {
-        originals.sort();
-        linter.error_paths(LintError::CaseConflict, &originals);
-      }
-    }
+    linter.lint_case_conflicts();
 
-    if (linter.is_active(Lint::AudioEmbeddedArtworkMissing)
-      || linter.is_active(Lint::AudioEmbeddedArtworkAspectRatio))
-      && let Some((metadata, _cbor)) = &metadata
-      && let Some(Media::Audio { items }) = &metadata.media
-    {
-      let failures = {
-        let bar = ProgressBar::count(options.quiet, items.len().into_u64(), "files");
+    linter.check()?;
 
-        let mut failures = Vec::new();
-
-        for audio in items {
-          let covers = audio.content.cover_art(&root)?;
-
-          if linter.is_active(Lint::AudioEmbeddedArtworkMissing) && covers.is_empty() {
-            failures.push((audio, LintError::AudioEmbeddedArtworkMissing));
-          }
-
-          if linter.is_active(Lint::AudioEmbeddedArtworkAspectRatio) {
-            for cover in covers {
-              let dimensions = cover.dimensions().context(error::Audio {
-                path: root.join(audio.path()),
-              })?;
-
-              if dimensions.width != dimensions.height {
-                failures.push((
-                  audio,
-                  LintError::AudioEmbeddedArtworkAspectRatio { dimensions },
-                ));
-              }
-            }
-          }
-
-          bar.inc(1);
-        }
-
-        failures
-      };
-
-      for (audio, lint) in failures {
-        linter.error_path(lint, audio.path());
-      }
-    }
-
-    if linter.is_active(Lint::VideoPlaceholderDimensions)
-      && let Some((metadata, _cbor)) = &metadata
-      && let Some(Media::Video { items }) = &metadata.media
-    {
-      for item in items {
-        if let Some(placeholder) = &item.content.placeholder
-          && let Some(video) = item.content.oriented_dimensions()
-          && let placeholder = placeholder.oriented_dimensions()
-          && placeholder != video
-        {
-          linter.error_path(
-            LintError::VideoPlaceholderDimensions { placeholder, video },
-            item.path(),
-          );
-        }
-      }
-    }
+    linter.lint_content(
+      &root,
+      &options,
+      metadata.as_ref().map(|(metadata, _cbor)| metadata),
+    )?;
 
     linter.done()?;
 
