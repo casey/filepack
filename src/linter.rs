@@ -1,5 +1,6 @@
 use super::*;
 
+#[derive(Default)]
 pub(crate) struct Linter {
   active: BTreeSet<Lint>,
   case_conflicts: HashMap<RelativePath, Vec<RelativePath>>,
@@ -11,6 +12,14 @@ impl Linter {
     &self.active
   }
 
+  pub(crate) fn allow(&mut self, selectors: &[LintSelector]) {
+    for selector in selectors {
+      for lint in selector.lints() {
+        self.active.remove(&lint);
+      }
+    }
+  }
+
   pub(crate) fn check(&self) -> Result {
     ensure! {
       self.errors == 0,
@@ -19,6 +28,12 @@ impl Linter {
       }
     }
     Ok(())
+  }
+
+  pub(crate) fn deny(&mut self, selectors: &[LintSelector]) {
+    for selector in selectors {
+      self.active.append(&mut selector.lints());
+    }
   }
 
   pub(crate) fn done(self) -> Result {
@@ -229,11 +244,7 @@ impl Linter {
     }
   }
 
-  pub(crate) fn new(active: BTreeSet<Lint>) -> Self {
-    Self {
-      active,
-      case_conflicts: HashMap::new(),
-      errors: 0,
-    }
+  pub(crate) fn new() -> Self {
+    Self::default()
   }
 }
