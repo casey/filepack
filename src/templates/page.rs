@@ -113,6 +113,7 @@ mod tests {
               <meta name=viewport content='width=device-width,initial-scale=1.0'>
               <title>home</title>
               <meta name=description content='Filepack package server'>
+              <meta name=google content=notranslate>
               <meta property=og:site_name content=Filepack>
               <link href=/static/page.css rel=stylesheet>
             </head>
@@ -146,6 +147,7 @@ mod tests {
               <meta name=viewport content='width=device-width,initial-scale=1.0'>
               <title>navigation</title>
               <meta name=description content='Filepack package server'>
+              <meta name=google content=notranslate>
               <meta property=og:site_name content=Filepack>
               <link href=/static/page.css rel=stylesheet>
               <link href=/foo rel=next>
@@ -184,6 +186,7 @@ mod tests {
               <meta name=viewport content='width=device-width,initial-scale=1.0'>
               <title>image</title>
               <meta name=description content='Filepack package server'>
+              <meta name=google content=notranslate>
               <meta property=og:description content='qux'>
               <meta property=og:image content='https://example.com/bar'>
               <meta property=og:image:height content=1>
@@ -218,6 +221,7 @@ mod tests {
               <meta name=viewport content='width=device-width,initial-scale=1.0'>
               <title>image</title>
               <meta name=description content='Filepack package server'>
+              <meta name=google content=notranslate>
               <meta property=og:description content='qux'>
               <meta property=og:site_name content=Filepack>
               <link href=/static/page.css rel=stylesheet>
@@ -252,6 +256,7 @@ mod tests {
               <meta name=viewport content='width=device-width,initial-scale=1.0'>
               <title>script</title>
               <meta name=description content='Filepack package server'>
+              <meta name=google content=notranslate>
               <meta property=og:site_name content=Filepack>
               <link href=/static/page.css rel=stylesheet>
               <script src=/foo.js type=module></script>
