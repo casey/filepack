@@ -166,7 +166,7 @@ mod tests {
             <div>
               <dt>format</dt>
               <dd>
-                <ol>
+                <ol role=list>
                   <li>
                     FLAC
                   </li>
@@ -314,7 +314,7 @@ mod tests {
             <div>
               <dt>format</dt>
               <dd>
-                <ol>
+                <ol role=list>
                   <li>
                     FLAC
                   </li>
@@ -434,7 +434,7 @@ mod tests {
             <div>
               <dt>format</dt>
               <dd>
-                <ol>
+                <ol role=list>
                   <li>
                     FLAC
                   </li>
@@ -574,7 +574,7 @@ mod tests {
             <div>
               <dt>format</dt>
               <dd>
-                <ol>
+                <ol role=list>
                   <li>
                     PNG
                   </li>
@@ -928,7 +928,7 @@ mod tests {
             <div>
               <dt>format</dt>
               <dd>
-                <ol>
+                <ol role=list>
                   <li>
                     MP4
                   </li>

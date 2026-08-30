@@ -37,7 +37,7 @@ mod tests {
       .to_string(),
       unindent(
         "
-          <ol>
+          <ol role=list>
             <li>
               foo
             </li>
