@@ -32,6 +32,10 @@
   <dt>creator</dt>
   <dd>{{ creator }}</dd>
 %%   }
+%%   if let Some(publisher) = &metadata.publisher {
+  <dt>publisher</dt>
+  <dd>{{ publisher }}</dd>
+%%   }
 %%   if let Some(time) = &metadata.time {
   <dt>time</dt>
   <dd>{{ time }}</dd>

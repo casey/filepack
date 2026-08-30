@@ -339,6 +339,8 @@ Top-level fields:
 
 - `package: object`: The package metadata.
 
+- `publisher: text`: The person or group who published the content.
+
 - `readme: path.md`: The path of the content readme.
 
 - `time: time`: The time the content was created or released.
@@ -432,6 +434,7 @@ Example times:
 ```yaml
 title: Tobin's Spirit Guide
 creator: John Horace Tobin
+publisher: Miskatonic University Press
 artwork: cover.png
 time: 1929
 description: A compilation of supernatural occurrences, entities, and facts.

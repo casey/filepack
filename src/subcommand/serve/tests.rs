@@ -1008,6 +1008,7 @@ fn get_package_with_metadata() {
       time: None,
       title: None,
     }),
+    publisher: None,
     readme: Some("README.md".parse().unwrap()),
     thumbnails: None,
     time: None,

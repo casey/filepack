@@ -10,6 +10,7 @@ pub(crate) struct Metadata {
   pub(crate) language: Option<Language>,
   pub(crate) media: Option<Media>,
   pub(crate) package: Option<Package>,
+  pub(crate) publisher: Option<Text>,
   pub(crate) readme: Option<RelativePath>,
   pub(crate) time: Option<Time>,
   pub(crate) title: Option<Text>,
@@ -29,6 +30,7 @@ impl Metadata {
       language,
       media,
       package,
+      publisher,
       readme,
       time,
       title,
@@ -73,6 +75,7 @@ impl Metadata {
       language,
       media,
       package: package.map(Into::into),
+      publisher,
       readme,
       thumbnails: None,
       time,
@@ -585,6 +588,7 @@ mod tests {
         language,
         media,
         package,
+        publisher,
         readme,
         time,
         title,
@@ -602,6 +606,7 @@ mod tests {
       assert!(description.is_some());
       assert!(homepage.is_some());
       assert!(language.is_some());
+      assert!(publisher.is_some());
       assert!(readme.is_some());
       assert!(time.is_some());
       assert!(title.is_some());
