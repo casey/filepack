@@ -42,6 +42,20 @@ impl Create {
       root.join(Manifest::FILENAME)
     };
 
+    let denied = self
+      .deny
+      .into_iter()
+      .flat_map(LintSelector::lints)
+      .collect::<BTreeSet<Lint>>();
+
+    let allowed = self
+      .allow
+      .into_iter()
+      .flat_map(LintSelector::lints)
+      .collect::<BTreeSet<Lint>>();
+
+    let mut linter = Linter::new(&denied - &allowed);
+
     let path = root.join(Metadata::YAML_FILENAME);
 
     let metadata = if let Some(yaml) = filesystem::read_to_string_opt(&path)? {
@@ -56,17 +70,7 @@ impl Create {
         },
       }
 
-      let mut metadata = metadata.load(&root, options.quiet)?;
-
-      if self.generate {
-        metadata.generate(&root, self.force, options.quiet)?;
-      }
-
-      metadata.validate(&root)?;
-
-      let cbor = metadata.encode_to_vec();
-
-      Some((metadata, cbor))
+      Some(metadata)
     } else {
       let path = root.join(Metadata::CBOR_FILENAME);
 
@@ -80,6 +84,24 @@ impl Create {
       None
     };
 
+    linter.lint_metadata(metadata.as_ref(), self.generate)?;
+
+    let metadata = if let Some(metadata) = metadata {
+      let mut metadata = metadata.load(&root, options.quiet)?;
+
+      if self.generate {
+        metadata.generate(&root, self.force, options.quiet)?;
+      }
+
+      metadata.validate(&root)?;
+
+      let cbor = metadata.encode_to_vec();
+
+      Some((metadata, cbor))
+    } else {
+      None
+    };
+
     let cleaned_manifest = current_dir.join(&manifest_path).lexiclean();
 
     let mut paths = HashMap::new();
@@ -87,20 +109,6 @@ impl Create {
     let mut case_conflicts = HashMap::<RelativePath, Vec<RelativePath>>::new();
 
     let mut empty = Vec::new();
-
-    let denied = self
-      .deny
-      .into_iter()
-      .flat_map(LintSelector::lints)
-      .collect::<BTreeSet<Lint>>();
-
-    let allowed = self
-      .allow
-      .into_iter()
-      .flat_map(LintSelector::lints)
-      .collect::<BTreeSet<Lint>>();
-
-    let mut linter = Linter::new(&denied - &allowed);
 
     for entry in WalkDir::new(&root).sort_by_file_name() {
       let entry = entry?;
@@ -164,84 +172,6 @@ impl Create {
       }
     }
 
-    if linter.is_active(Lint::MetadataMissing) && metadata.is_none() {
-      linter.error(LintError::MetadataMissing);
-    }
-
-    if linter.is_active(Lint::TitleMissing)
-      && metadata
-        .as_ref()
-        .is_none_or(|(metadata, _cbor)| metadata.title.is_none())
-    {
-      linter.error(LintError::TitleMissing);
-    }
-
-    if linter.is_active(Lint::CreatorMissing)
-      && metadata
-        .as_ref()
-        .is_none_or(|(metadata, _cbor)| metadata.creator.is_none())
-    {
-      linter.error(LintError::CreatorMissing);
-    }
-
-    if linter.is_active(Lint::TimeMissing)
-      && metadata
-        .as_ref()
-        .is_none_or(|(metadata, _cbor)| metadata.time.is_none())
-    {
-      linter.error(LintError::TimeMissing);
-    }
-
-    if linter.is_active(Lint::PackageMissing)
-      && metadata
-        .as_ref()
-        .is_none_or(|(metadata, _cbor)| metadata.package.is_none())
-    {
-      linter.error(LintError::PackageMissing);
-    }
-
-    if linter.is_active(Lint::PackageCreatorMissing)
-      && metadata.as_ref().is_none_or(|(metadata, _cbor)| {
-        metadata
-          .package
-          .as_ref()
-          .is_none_or(|package| package.creator.is_none())
-      })
-    {
-      linter.error(LintError::PackageCreatorMissing);
-    }
-
-    if linter.is_active(Lint::MediaMissing)
-      && metadata
-        .as_ref()
-        .is_none_or(|(metadata, _cbor)| metadata.media.is_none())
-    {
-      linter.error(LintError::MediaMissing);
-    }
-
-    if linter.is_active(Lint::MediaItemsMissing)
-      && metadata.as_ref().is_none_or(|(metadata, _cbor)| {
-        metadata
-          .media
-          .as_ref()
-          .is_none_or(|media| media.ty().has_items() && media.item_count() == 0)
-      })
-    {
-      linter.error(LintError::MediaItemsMissing);
-    }
-
-    if linter.is_active(Lint::ArtworkMissing)
-      && metadata
-        .as_ref()
-        .is_none_or(|(metadata, _cbor)| metadata.artwork.is_none())
-    {
-      linter.error(LintError::ArtworkMissing);
-    }
-
-    if linter.is_active(Lint::NotGenerated) && !self.generate && metadata.is_some() {
-      linter.error(LintError::NotGenerated);
-    }
-
     if (linter.is_active(Lint::AudioEmbeddedArtworkMissing)
       || linter.is_active(Lint::AudioEmbeddedArtworkAspectRatio))
       && let Some((metadata, _cbor)) = &metadata
@@ -282,17 +212,6 @@ impl Create {
 
       for (audio, lint) in failures {
         linter.error_path(lint, audio.path());
-      }
-    }
-
-    if linter.is_active(Lint::VideoPlaceholderMissing)
-      && let Some((metadata, _cbor)) = &metadata
-      && let Some(Media::Video { items }) = &metadata.media
-    {
-      for video in items {
-        if video.content.placeholder.is_none() {
-          linter.error_path(LintError::VideoPlaceholderMissing, video.path());
-        }
       }
     }
 
