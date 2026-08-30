@@ -37,10 +37,7 @@ ufw allow ssh
 
 ufw --force enable
 
-cat > /etc/sysctl.d/90-network.conf <<EOF
-net.core.default_qdisc = fq
-net.ipv4.tcp_congestion_control = bbr
-EOF
+cp deploy/90-network.conf /etc/sysctl.d
 sysctl --system
 
 if [[ ! -e ~/.cargo/env ]]; then
