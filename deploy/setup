@@ -37,6 +37,9 @@ ufw allow ssh
 
 ufw --force enable
 
+cp deploy/90-network.conf /etc/sysctl.d
+sysctl --system
+
 if [[ ! -e ~/.cargo/env ]]; then
   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 fi
