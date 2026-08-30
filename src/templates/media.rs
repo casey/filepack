@@ -15,9 +15,9 @@ impl MediaHtml {
 impl Page for MediaHtml {
   fn title(&self) -> String {
     if let Some(title) = self.title() {
-      format!("{title} media · filepack")
+      format!("{title} media · Filepack")
     } else {
-      format!("{} media · filepack", self.fingerprint)
+      format!("{} media · Filepack", self.fingerprint)
     }
   }
 }

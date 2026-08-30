@@ -8,7 +8,7 @@ pub struct DirectoryHtml {
 
 impl Page for DirectoryHtml {
   fn title(&self) -> String {
-    format!("directory {} · filepack", self.hash)
+    format!("Directory {} · Filepack", self.hash)
   }
 }
 

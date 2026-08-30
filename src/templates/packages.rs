@@ -85,7 +85,7 @@ impl Page for PackagesHtml {
   }
 
   fn title(&self) -> String {
-    "packages · filepack".into()
+    "Packages · Filepack".into()
   }
 }
 

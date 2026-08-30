@@ -27,7 +27,7 @@ impl Page for AudioHtml {
   }
 
   fn title(&self) -> String {
-    format!("{} · filepack", self.audio().display_title(self.audio))
+    format!("{} · Filepack", self.audio().display_title(self.audio))
   }
 }
 
@@ -127,7 +127,7 @@ mod tests {
       },
     };
 
-    assert_eq!(Page::title(&html), "Track 1 · filepack");
+    assert_eq!(Page::title(&html), "Track 1 · Filepack");
 
     let Some(Media::Audio { items }) = html.metadata.media.as_mut() else {
       unreachable!();
@@ -135,6 +135,6 @@ mod tests {
 
     items[0].title = Some("bar".parse().unwrap());
 
-    assert_eq!(Page::title(&html), "bar · filepack");
+    assert_eq!(Page::title(&html), "bar · Filepack");
   }
 }

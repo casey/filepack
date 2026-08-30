@@ -57,7 +57,7 @@ impl Page for ImageHtml {
   }
 
   fn title(&self) -> String {
-    format!("{} · filepack", self.image().display_title(self.image))
+    format!("{} · Filepack", self.image().display_title(self.image))
   }
 
   fn up(&self) -> Option<String> {
@@ -218,7 +218,7 @@ mod tests {
       },
     };
 
-    assert_eq!(Page::title(&html), "Image 1 · filepack");
+    assert_eq!(Page::title(&html), "Image 1 · Filepack");
 
     let Some(Media::Image { items }) = html.metadata.media.as_mut() else {
       unreachable!();
@@ -226,6 +226,6 @@ mod tests {
 
     items[0].title = Some("bar".parse().unwrap());
 
-    assert_eq!(Page::title(&html), "bar · filepack");
+    assert_eq!(Page::title(&html), "bar · Filepack");
   }
 }
