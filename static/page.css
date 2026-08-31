@@ -33,7 +33,7 @@ body {
   min-height: 100dvh;
 }
 
-code, .code {
+code {
   font-family: monospace, monospace;
 }
 

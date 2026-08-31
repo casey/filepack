@@ -1,6 +1,4 @@
 %% if let Some(title) = self.title() {
 <h1>{{ title }}</h1>
-%% } else {
-<h1 class=code>{{ self.fingerprint }}</h1>
 %% }
 {{ Trusted(InfoHtml(&self.info())) }}

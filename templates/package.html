@@ -1,8 +1,6 @@
 <header>
 %% if let Some(title) = self.title() {
   <h1>{{ title }}</h1>
-%% } else {
-  <h1 class=code>{{ self.fingerprint }}</h1>
 %% }
 %% if let Some(metadata) = &self.metadata {
 %%   if metadata.artwork.is_some() {
