@@ -4,5 +4,6 @@ use super::*;
 pub(crate) enum MediaItemResource {
   Original,
   Placeholder,
+  PlaceholderThumbnail,
   Thumbnail,
 }

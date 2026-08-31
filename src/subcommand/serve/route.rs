@@ -258,6 +258,25 @@ pub(crate) async fn media_video_item_placeholder(
   })
 }
 
+pub(crate) async fn media_video_item_placeholder_thumbnail(
+  server: ServerExtension,
+  Path((fingerprint, Ordinal(item))): Path<(Fingerprint, Ordinal)>,
+  range: Option<TypedHeader<headers::Range>>,
+) -> ServerResult<Resource> {
+  block_in_place(|| {
+    Ok(
+      server
+        .media_item(
+          fingerprint,
+          item,
+          MediaType::Video,
+          MediaItemResource::PlaceholderThumbnail,
+        )?
+        .range(range),
+    )
+  })
+}
+
 pub(crate) async fn mount(
   server: ServerExtension,
   server_config: ServerConfigExtension,

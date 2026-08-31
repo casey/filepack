@@ -1607,6 +1607,82 @@ fn media_video_item_placeholder_response() {
 }
 
 #[test]
+fn media_video_item_placeholder_thumbnail_response() {
+  let server = TestServer::new();
+
+  let mut foo = Item::<Video>::test("foo.mp4");
+  foo.content.placeholder = Some(Image::test("bar.png"));
+
+  let mut baz = Item::<Video>::test("baz.mp4");
+  baz.content.placeholder = Some(Image::test("qux.png"));
+
+  let thumbnail: &[u8] = b"thumbnail";
+
+  let fingerprint = PackageBuilder::new()
+    .metadata(&Metadata {
+      media: Some(Media::Video {
+        items: vec![foo, baz, Item::test("quux.mp4")],
+      }),
+      thumbnails: Some(
+        [(
+          "bar.png".parse().unwrap(),
+          Image::test("thumbnails/bar.jpg"),
+        )]
+        .into(),
+      ),
+      ..default()
+    })
+    .file("foo.mp4", b"foo")
+    .file("bar.png", b"bar")
+    .file("thumbnails/bar.jpg", thumbnail)
+    .file("baz.mp4", b"baz")
+    .file("qux.png", b"qux")
+    .file("quux.mp4", b"quux")
+    .upload(&server);
+
+  server
+    .get(format!(
+      "/media/video/{fingerprint}/item/1/placeholder/thumbnail"
+    ))
+    .assert_header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
+    .assert_header(header::CONTENT_LENGTH, "9")
+    .assert_header(header::CONTENT_TYPE, "image/jpeg")
+    .assert_header(header::ETAG, format!("\"{}\"", Hash::bytes(thumbnail)))
+    .assert_body(thumbnail)
+    .send();
+
+  server
+    .get(format!(
+      "/media/video/{fingerprint}/item/2/placeholder/thumbnail"
+    ))
+    .assert_header(header::CONTENT_LENGTH, "3")
+    .assert_header(header::CONTENT_TYPE, "image/png")
+    .assert_header(header::ETAG, format!("\"{}\"", Hash::bytes(b"qux")))
+    .assert_body(b"qux")
+    .send();
+
+  server
+    .get(format!(
+      "/media/video/{fingerprint}/item/3/placeholder/thumbnail"
+    ))
+    .status(StatusCode::NOT_FOUND)
+    .assert_body(format!(
+      "video 3 in package {fingerprint} does not have a placeholder image"
+    ))
+    .send();
+
+  server
+    .get(format!(
+      "/media/video/{fingerprint}/item/4/placeholder/thumbnail"
+    ))
+    .status(StatusCode::NOT_FOUND)
+    .assert_body(format!(
+      "video 4 does not exist, package {fingerprint} has 3 videos"
+    ))
+    .send();
+}
+
+#[test]
 fn media_video_item_response() {
   let server = TestServer::new();
 

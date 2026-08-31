@@ -342,6 +342,10 @@ impl Serve {
         "/media/video/{fingerprint}/item/{item}/placeholder",
         get(route::media_video_item_placeholder),
       )
+      .route(
+        "/media/video/{fingerprint}/item/{item}/placeholder/thumbnail",
+        get(route::media_video_item_placeholder_thumbnail),
+      )
       .route("/mount/{fingerprint}", get(route::mount_redirect))
       .route("/mount/{fingerprint}/", get(route::mount))
       .route("/mount/{fingerprint}/{*path}", get(route::mount_file))
