@@ -18,7 +18,7 @@ impl PackageHtml {
       .value("size", format_size(self.totals.file_size))
       .link(
         "files",
-        format!("{} files", self.totals.files),
+        Count::new(self.totals.files, "file").to_string(),
         format!("/directory/{}", Hash::from(self.fingerprint)),
       )
       .when(self.mounted, |builder| {
@@ -765,7 +765,7 @@ mod tests {
               <div>
                 <dt>files</dt>
                 <dd>
-                  <a href='/directory/{hash}'>1 files</a>
+                  <a href='/directory/{hash}'>1 file</a>
                 </dd>
               </div>
               <div>
@@ -923,7 +923,7 @@ mod tests {
               <div>
                 <dt>files</dt>
                 <dd>
-                  <a href='/directory/{hash}'>1 files</a>
+                  <a href='/directory/{hash}'>1 file</a>
                 </dd>
               </div>
               <div>
