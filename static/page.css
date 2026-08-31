@@ -1,6 +1,6 @@
 :root {
-  --border-hover: rgb(255 255 255 / 25%);
   --border: rgb(255 255 255 / 15%);
+  --outline: rgb(255 255 255 / 25%);
   --primary: rgb(255 255 255 / 87%);
   --secondary: rgb(255 255 255 / 60%);
   --surface: rgb(255 255 255 / 9%);
@@ -69,11 +69,12 @@ dl, .thumbnails a, .artwork {
 
 .thumbnails a, .artwork {
   display: block;
+  outline: 1px solid transparent;
   overflow: hidden;
-  transition: border-color 150ms;
+  transition: outline-color 150ms;
 
   &:hover, &:focus-visible {
-    border-color: var(--border-hover);
+    outline-color: var(--outline);
   }
 
   > img {
