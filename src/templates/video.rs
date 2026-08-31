@@ -19,7 +19,19 @@ impl VideoHtml {
 
 impl Page for VideoHtml {
   fn open_graph_image(&self) -> Option<OpenGraphImage> {
-    OpenGraphImage::artwork(&self.metadata, self.fingerprint)
+    if let Some(placeholder) = &self.video().content.placeholder {
+      Some(OpenGraphImage::thumbnail(
+        &self.metadata,
+        placeholder,
+        format!(
+          "media/video/{}/item/{}/placeholder",
+          self.fingerprint,
+          Ordinal(self.video)
+        ),
+      ))
+    } else {
+      OpenGraphImage::artwork(&self.metadata, self.fingerprint)
+    }
   }
 
   fn stylesheet(&self) -> Option<&'static str> {
@@ -36,11 +48,14 @@ mod tests {
   use super::*;
 
   #[test]
-  fn open_graph_image() {
+  fn open_graph_image_falls_back_to_artwork() {
     let html = VideoHtml {
       fingerprint: test::FINGERPRINT.parse().unwrap(),
       metadata: Metadata {
         artwork: Some(Image::test("foo.png")),
+        media: Some(Media::Video {
+          items: vec![Item::test("foo.mp4")],
+        }),
         ..default()
       },
       video: 0,
@@ -51,19 +66,112 @@ mod tests {
       Some(OpenGraphImage {
         dimensions: Dimensions {
           height: 1,
-          width: 1
+          width: 1,
         },
         path: format!("artwork/{}", test::FINGERPRINT),
       }),
     );
+  }
 
+  #[test]
+  fn open_graph_image_falls_back_to_placeholder() {
     let html = VideoHtml {
       fingerprint: test::FINGERPRINT.parse().unwrap(),
-      metadata: default(),
+      metadata: Metadata {
+        artwork: Some(Image::test("foo.png")),
+        media: Some(Media::Video {
+          items: vec![Item {
+            content: Video {
+              placeholder: Some(Image {
+                dimensions: Dimensions {
+                  height: 2,
+                  width: 4,
+                },
+                ..Image::test("bar.png")
+              }),
+              ..Video::test("foo.mp4")
+            },
+            title: None,
+          }],
+        }),
+        ..default()
+      },
+      video: 0,
+    };
+
+    assert_eq!(
+      html.open_graph_image(),
+      Some(OpenGraphImage {
+        dimensions: Dimensions {
+          height: 2,
+          width: 4,
+        },
+        path: format!("media/video/{}/item/1/placeholder", test::FINGERPRINT),
+      }),
+    );
+  }
+
+  #[test]
+  fn open_graph_image_missing() {
+    let html = VideoHtml {
+      fingerprint: test::FINGERPRINT.parse().unwrap(),
+      metadata: Metadata {
+        media: Some(Media::Video {
+          items: vec![Item::test("foo.mp4")],
+        }),
+        ..default()
+      },
       video: 0,
     };
 
     assert_eq!(html.open_graph_image(), None);
+  }
+
+  #[test]
+  fn open_graph_image_uses_placeholder_thumbnail() {
+    let html = VideoHtml {
+      fingerprint: test::FINGERPRINT.parse().unwrap(),
+      metadata: Metadata {
+        media: Some(Media::Video {
+          items: vec![Item {
+            content: Video {
+              placeholder: Some(Image::test("bar.png")),
+              ..Video::test("foo.mp4")
+            },
+            title: None,
+          }],
+        }),
+        thumbnails: Some(
+          [(
+            "bar.png".parse().unwrap(),
+            Image {
+              dimensions: Dimensions {
+                height: 1,
+                width: 2,
+              },
+              ..Image::test("thumbnails/bar.jpg")
+            },
+          )]
+          .into(),
+        ),
+        ..default()
+      },
+      video: 0,
+    };
+
+    assert_eq!(
+      html.open_graph_image(),
+      Some(OpenGraphImage {
+        dimensions: Dimensions {
+          height: 1,
+          width: 2,
+        },
+        path: format!(
+          "media/video/{}/item/1/placeholder/thumbnail",
+          test::FINGERPRINT
+        ),
+      }),
+    );
   }
 
   #[test]

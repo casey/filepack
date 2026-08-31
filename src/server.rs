@@ -188,7 +188,9 @@ impl Server {
   ) -> ServerResult<Resource> {
     match resource {
       MediaItemResource::Original => {}
-      MediaItemResource::Placeholder => assert_eq!(ty, MediaType::Video),
+      MediaItemResource::Placeholder | MediaItemResource::PlaceholderThumbnail => {
+        assert_eq!(ty, MediaType::Video);
+      }
       MediaItemResource::Thumbnail => assert_eq!(ty, MediaType::Image),
     }
 
@@ -219,11 +221,16 @@ impl Server {
 
     let (path, ty) = match resource {
       MediaItemResource::Original => (item.path(), item.resource_type()),
-      MediaItemResource::Placeholder => {
+      MediaItemResource::Placeholder | MediaItemResource::PlaceholderThumbnail => {
         let placeholder = item
           .placeholder()
           .context(server_error::PlaceholderNotFound { fingerprint, index })?;
-        (&placeholder.path, placeholder.resource_type())
+        let image = if resource == MediaItemResource::PlaceholderThumbnail {
+          metadata.thumbnail(&placeholder.path).unwrap_or(placeholder)
+        } else {
+          placeholder
+        };
+        (&image.path, image.resource_type())
       }
       MediaItemResource::Thumbnail => match metadata.thumbnail(item.path()) {
         Some(thumbnail) => (&thumbnail.path, thumbnail.resource_type()),
