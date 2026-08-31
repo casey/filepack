@@ -190,8 +190,14 @@ pub(crate) static CODES: LazyLock<BTreeMap<&'static str, &'static str>> = LazyLo
   .into()
 });
 
-#[derive(Clone, Debug, DeserializeFromStr, PartialEq)]
+#[derive(Clone, Copy, Debug, DeserializeFromStr, PartialEq)]
 pub(crate) struct Language(&'static str);
+
+impl Language {
+  pub(crate) fn name(self) -> &'static str {
+    CODES[self.0]
+  }
+}
 
 impl Display for Language {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
@@ -251,6 +257,11 @@ mod tests {
       "ac".parse::<Language>().unwrap_err(),
       LanguageError::Code { code: "ac".into() },
     );
+  }
+
+  #[test]
+  fn name() {
+    assert_eq!("en".parse::<Language>().unwrap().name(), "English");
   }
 
   #[test]

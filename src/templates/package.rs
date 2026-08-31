@@ -703,6 +703,7 @@ mod tests {
   #[test]
   fn package() {
     let metadata = Metadata {
+      language: Some("en".parse().unwrap()),
       package: Some(Package {
         colophon: Some("COLOPHON.md".parse().unwrap()),
         creator: Some("foo".parse().unwrap()),
@@ -760,6 +761,12 @@ mod tests {
               <dt>readme</dt>
               <dd>
                 <a href='/file/{hash}/README.md'>view</a>
+              </dd>
+            </div>
+            <div>
+              <dt>language</dt>
+              <dd>
+                English
               </dd>
             </div>
             <div>
