@@ -62,9 +62,26 @@ dd > ol {
   }
 }
 
-dl {
+dl, .thumbnails a, .artwork {
   border-radius: 8px;
   border: 1px solid var(--border);
+}
+
+.thumbnails a, .artwork {
+  display: block;
+  overflow: hidden;
+  transition: border-color 150ms;
+
+  &:hover, &:focus-visible {
+    border-color: var(--border-hover);
+  }
+
+  > img {
+    display: block;
+  }
+}
+
+dl {
   display: grid;
   grid-template-columns: max-content auto;
   margin-block: 0.5em;
@@ -122,20 +139,7 @@ ol, ul {
   list-style: none;
   padding-left: 0;
 
-  a {
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    display: block;
-    overflow: hidden;
-    transition: border-color 150ms;
-
-    &:hover, &:focus-visible {
-      border-color: var(--border-hover);
-    }
-  }
-
   img {
-    display: block;
     width: 100%;
   }
 }

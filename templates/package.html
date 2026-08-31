@@ -5,11 +5,9 @@
 %% }
 %% if let Some(metadata) = &self.metadata {
 %%   if metadata.artwork.is_some() {
-<div>
-  <a href=/artwork/{{ self.fingerprint }}>
-    <img class=artwork src=/artwork/{{ self.fingerprint }} width=500 height=500>
-  </a>
-</div>
+<a class=artwork href=/artwork/{{ self.fingerprint }}>
+  <img src=/artwork/{{ self.fingerprint }} width=500 height=500>
+</a>
 %%   }
 %% }
 {{ Trusted(InfoHtml(&self.info())) }}
