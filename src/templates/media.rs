@@ -62,7 +62,6 @@ mod tests {
       .to_string(),
       unindent(&format!(
         "
-          <h1 class=code>{fingerprint}</h1>
           <dl>
             <div>
               <dt>package</dt>

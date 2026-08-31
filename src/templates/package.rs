@@ -126,7 +126,6 @@ mod tests {
       unindent(&format!(
         "
           <header>
-            <h1 class=code>{fingerprint}</h1>
             <dl>
               <div>
                 <dt>fingerprint</dt>
@@ -276,7 +275,6 @@ mod tests {
       unindent(&format!(
         "
           <header>
-            <h1 class=code>{fingerprint}</h1>
             <dl>
               <div>
                 <dt>fingerprint</dt>
@@ -398,7 +396,6 @@ mod tests {
       unindent(&format!(
         "
           <header>
-            <h1 class=code>{fingerprint}</h1>
             <dl>
               <div>
                 <dt>fingerprint</dt>
@@ -540,7 +537,6 @@ mod tests {
       unindent(&format!(
         r#"
           <header>
-            <h1 class=code>{fingerprint}</h1>
             <dl>
               <div>
                 <dt>fingerprint</dt>
@@ -753,7 +749,6 @@ mod tests {
       unindent(&format!(
         "
           <header>
-            <h1 class=code>{fingerprint}</h1>
             <dl>
               <div>
                 <dt>fingerprint</dt>
@@ -912,7 +907,6 @@ mod tests {
       unindent(&format!(
         "
           <header>
-            <h1 class=code>{fingerprint}</h1>
             <dl>
               <div>
                 <dt>fingerprint</dt>
