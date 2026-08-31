@@ -111,11 +111,6 @@ impl Image {
     Ok(Some(destination))
   }
 
-  pub(crate) fn css_aspect_ratio(&self) -> String {
-    let Dimensions { width, height } = self.oriented_dimensions();
-    format!("{} / {}", width.max(1), height.max(1))
-  }
-
   fn decode_jpeg(path: &Utf8Path) -> Result<ImageMetadata> {
     let bytes = filesystem::read(path)?;
 
@@ -448,26 +443,6 @@ mod tests {
     );
 
     assert!(!root.join("thumbnails/foo.jpg").exists());
-  }
-
-  #[test]
-  fn css_aspect_ratio() {
-    let mut image = Image::test("foo.png");
-
-    image.dimensions = Dimensions {
-      height: 1,
-      width: 2,
-    };
-
-    assert_eq!(image.css_aspect_ratio(), "2 / 1");
-
-    image.orientation.rotation = Rotation::R90;
-
-    assert_eq!(image.css_aspect_ratio(), "1 / 2");
-
-    image.dimensions = Dimensions::default();
-
-    assert_eq!(image.css_aspect_ratio(), "1 / 1");
   }
 
   #[test]

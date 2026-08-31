@@ -35,7 +35,7 @@
 %%     Media::Image { items } => {
 <ul class=thumbnails>
 %%       for (i, image) in items.iter().enumerate() {
-  <li style="--aspect-ratio: {{ image.content.css_aspect_ratio() }}">
+  <li style="--aspect-ratio: {{ image.content.oriented_dimensions().css_aspect_ratio() }}">
     <a href=/package/{{ self.fingerprint }}/item/{{ Ordinal(i) }}>
       <figure>
         <img loading=lazy src=/media/image/{{ self.fingerprint }}/item/{{ Ordinal(i) }}/thumbnail>
@@ -48,13 +48,25 @@
 %%       }
 </ul>
 %%     }
-%%     Media::Video { items } => {
-<ol>
-%%       for (i, video) in items.iter().enumerate() {
-%%         let duration = Duration::from_millis(video.content.duration);
+%%     Media::Video { .. } => {
+<ol class=thumbnails>
+%%       for (i, (video, duration, image, dimensions)) in self.videos().enumerate() {
+%%         if let Some(dimensions) = dimensions {
+  <li style="--aspect-ratio: {{ dimensions.css_aspect_ratio() }}">
+%%         } else {
   <li>
-    <a href=/package/{{ self.fingerprint }}/item/{{ Ordinal(i) }}>{{ video.display_title(i) }}</a>
-    <time datetime={{ Iso8601Duration(duration) }}>{{ DisplayDuration(duration) }}</time>
+%%         }
+    <a href=/package/{{ self.fingerprint }}/item/{{ Ordinal(i) }}>
+%%         if image.is_some() {
+      <img loading=lazy src=/media/video/{{ self.fingerprint }}/item/{{ Ordinal(i) }}/placeholder/thumbnail>
+%%         }
+      <div class=caption>
+%%         if let Some(title) = &video.title {
+        <span class=title>{{ title }}</span>
+%%         }
+        <time datetime={{ Iso8601Duration(duration) }}>{{ DisplayDuration(duration) }}</time>
+      </div>
+    </a>
   </li>
 %%       }
 </ol>

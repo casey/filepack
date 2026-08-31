@@ -33,6 +33,32 @@ impl PackageHtml {
   fn title(&self) -> Option<&str> {
     self.metadata.as_ref()?.title.as_deref()
   }
+
+  fn videos(
+    &self,
+  ) -> impl Iterator<Item = (&Item<Video>, Duration, Option<&Image>, Option<Dimensions>)> {
+    let metadata = self.metadata.as_ref().unwrap();
+
+    let Media::Video { items } = metadata.media.as_ref().unwrap() else {
+      unreachable!();
+    };
+
+    items.iter().map(|video| {
+      let duration = Duration::from_millis(video.content.duration);
+
+      let image = video
+        .content
+        .placeholder
+        .as_ref()
+        .map(|placeholder| metadata.thumbnail(&placeholder.path).unwrap_or(placeholder));
+
+      let dimensions = image
+        .map(Image::oriented_dimensions)
+        .or_else(|| video.content.oriented_dimensions());
+
+      (video, duration, image, dimensions)
+    })
+  }
 }
 
 impl Page for PackageHtml {
@@ -851,40 +877,82 @@ mod tests {
   fn video() {
     let metadata = Metadata {
       media: Some(Media::Video {
-        items: vec![Item {
-          content: Video {
-            placeholder: None,
-            duration: 225_000,
-            path: "foo.mp4".parse().unwrap(),
-            tracks: vec![
-              Track {
-                codec: Codec::H264,
-                info: TrackInfo::Video {
-                  bit_depth: 8,
-                  chroma_subsampling: ChromaSubsampling::Yuv420,
-                  dimensions: Dimensions {
-                    height: 1,
-                    width: 2,
+        items: vec![
+          Item {
+            content: Video {
+              placeholder: None,
+              duration: 225_000,
+              path: "foo.mp4".parse().unwrap(),
+              tracks: vec![
+                Track {
+                  codec: Codec::H264,
+                  info: TrackInfo::Video {
+                    bit_depth: 8,
+                    chroma_subsampling: ChromaSubsampling::Yuv420,
+                    dimensions: Dimensions {
+                      height: 1,
+                      width: 2,
+                    },
+                    frames: 0,
+                    orientation: Orientation::new(),
                   },
-                  frames: 0,
-                  orientation: Orientation::new(),
+                  size: 0,
                 },
-                size: 0,
-              },
-              Track {
-                codec: Codec::Aac,
-                info: TrackInfo::Audio {
-                  channels: 2,
-                  sample_rate: 44100,
+                Track {
+                  codec: Codec::Aac,
+                  info: TrackInfo::Audio {
+                    channels: 2,
+                    sample_rate: 44100,
+                  },
+                  size: 0,
                 },
-                size: 0,
-              },
-            ],
-            ty: VideoType::Mp4,
+              ],
+              ty: VideoType::Mp4,
+            },
+            title: None,
           },
-          title: None,
-        }],
+          Item {
+            content: Video {
+              placeholder: Some(Image {
+                dimensions: Dimensions {
+                  height: 2,
+                  width: 4,
+                },
+                ..Image::test("bar.png")
+              }),
+              ..Video::test("bar.mp4")
+            },
+            title: Some("bar".parse().unwrap()),
+          },
+          Item {
+            content: Video {
+              placeholder: Some(Image {
+                dimensions: Dimensions {
+                  height: 2,
+                  width: 1,
+                },
+                ..Image::test("baz.png")
+              }),
+              ..Video::test("baz.mp4")
+            },
+            title: None,
+          },
+          Item::test("qux.mp4"),
+        ],
       }),
+      thumbnails: Some(
+        [(
+          "bar.png".parse().unwrap(),
+          Image {
+            dimensions: Dimensions {
+              height: 1,
+              width: 2,
+            },
+            ..Image::test("thumbnails/bar.jpg")
+          },
+        )]
+        .into(),
+      ),
       ..default()
     };
 
@@ -935,13 +1003,13 @@ mod tests {
               <div>
                 <dt>videos</dt>
                 <dd>
-                  1
+                  4
                 </dd>
               </div>
               <div>
                 <dt>duration</dt>
                 <dd>
-                  3:45
+                  3:48
                 </dd>
               </div>
               <div>
@@ -956,10 +1024,37 @@ mod tests {
               </div>
             </dl>
           </header>
-          <ol>
+          <ol class=thumbnails>
+            <li style=\"--aspect-ratio: 2 / 1\">
+              <a href=/package/{fingerprint}/item/1>
+                <div class=caption>
+                  <time datetime=PT3M45S>3:45</time>
+                </div>
+              </a>
+            </li>
+            <li style=\"--aspect-ratio: 2 / 1\">
+              <a href=/package/{fingerprint}/item/2>
+                <img loading=lazy src=/media/video/{fingerprint}/item/2/placeholder/thumbnail>
+                <div class=caption>
+                  <span class=title>bar</span>
+                  <time datetime=PT0M1S>0:01</time>
+                </div>
+              </a>
+            </li>
+            <li style=\"--aspect-ratio: 1 / 2\">
+              <a href=/package/{fingerprint}/item/3>
+                <img loading=lazy src=/media/video/{fingerprint}/item/3/placeholder/thumbnail>
+                <div class=caption>
+                  <time datetime=PT0M1S>0:01</time>
+                </div>
+              </a>
+            </li>
             <li>
-              <a href=/package/{fingerprint}/item/1>Video 1</a>
-              <time datetime=PT3M45S>3:45</time>
+              <a href=/package/{fingerprint}/item/4>
+                <div class=caption>
+                  <time datetime=PT0M1S>0:01</time>
+                </div>
+              </a>
             </li>
           </ol>
         ",
