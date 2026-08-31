@@ -37,7 +37,12 @@
 %%       for (i, image) in items.iter().enumerate() {
   <li style="--aspect-ratio: {{ image.content.css_aspect_ratio() }}">
     <a href=/package/{{ self.fingerprint }}/item/{{ Ordinal(i) }}>
-      <img loading=lazy src=/media/image/{{ self.fingerprint }}/item/{{ Ordinal(i) }}/thumbnail>
+      <figure>
+        <img loading=lazy src=/media/image/{{ self.fingerprint }}/item/{{ Ordinal(i) }}/thumbnail>
+%%         if let Some(title) = &image.title {
+        <figcaption>{{ title }}</figcaption>
+%%         }
+      </figure>
     </a>
   </li>
 %%       }
