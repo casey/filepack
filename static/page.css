@@ -120,10 +120,12 @@ body > * {
 }
 
 html {
+  -webkit-text-size-adjust: 100%;
   background-color: #121212;
   color-scheme: dark;
   color: var(--primary);
   font-family: sans-serif;
+  text-size-adjust: 100%;
 }
 
 main {
