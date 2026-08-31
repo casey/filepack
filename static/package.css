@@ -3,9 +3,12 @@ time {
 }
 
 .artwork {
-  border-radius: 2%;
-  height: auto;
-  max-width: 100%;
+  width: fit-content;
+
+  > img {
+    height: auto;
+    max-width: 100%;
+  }
 }
 
 .thumbnails {
