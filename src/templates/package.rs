@@ -491,7 +491,7 @@ mod tests {
               path: "bar.jpg".parse().unwrap(),
               ty: ImageType::Jpeg,
             },
-            title: None,
+            title: Some("quux".parse().unwrap()),
           },
           Item {
             content: Image {
@@ -588,17 +588,24 @@ mod tests {
           <ul class=thumbnails>
             <li style="--aspect-ratio: 2 / 1">
               <a href=/package/{fingerprint}/item/1>
-                <img loading=lazy src=/media/image/{fingerprint}/item/1/thumbnail>
+                <figure>
+                  <img loading=lazy src=/media/image/{fingerprint}/item/1/thumbnail>
+                </figure>
               </a>
             </li>
             <li style="--aspect-ratio: 1 / 1">
               <a href=/package/{fingerprint}/item/2>
-                <img loading=lazy src=/media/image/{fingerprint}/item/2/thumbnail>
+                <figure>
+                  <img loading=lazy src=/media/image/{fingerprint}/item/2/thumbnail>
+                  <figcaption>quux</figcaption>
+                </figure>
               </a>
             </li>
             <li style="--aspect-ratio: 2 / 1">
               <a href=/package/{fingerprint}/item/3>
-                <img loading=lazy src=/media/image/{fingerprint}/item/3/thumbnail>
+                <figure>
+                  <img loading=lazy src=/media/image/{fingerprint}/item/3/thumbnail>
+                </figure>
               </a>
             </li>
           </ul>

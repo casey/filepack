@@ -77,7 +77,7 @@ dl, .thumbnails a, .artwork {
     outline-color: var(--outline);
   }
 
-  > img {
+  img {
     display: block;
   }
 }
