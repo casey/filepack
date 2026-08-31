@@ -174,6 +174,14 @@ impl Metadata {
       images.extend(items.iter().map(|item| &item.content));
     }
 
+    if let Some(Media::Video { items }) = &self.media {
+      for item in items {
+        if let Some(placeholder) = &item.content.placeholder {
+          images.push(placeholder);
+        }
+      }
+    }
+
     if images.is_empty() {
       return Ok(());
     }
@@ -523,6 +531,44 @@ mod tests {
           "thumbnails/foo.jpg".parse().unwrap(),
         ),
       ],
+    );
+  }
+
+  #[test]
+  fn generate_includes_video_placeholders() {
+    let (_tempdir, root) = tempdir();
+
+    std::fs::write(root.join("bar.png"), image(1280, 640, ImageFormat::Png)).unwrap();
+
+    let mut metadata = Metadata {
+      media: Some(Media::Video {
+        items: vec![
+          Item {
+            content: Video {
+              placeholder: Some(Image::test("bar.png")),
+              ..Video::test("foo.mp4")
+            },
+            title: None,
+          },
+          Item::test("baz.mp4"),
+        ],
+      }),
+      ..default()
+    };
+
+    metadata.generate(&root, false, true).unwrap();
+
+    assert_eq!(
+      metadata
+        .thumbnails
+        .unwrap()
+        .into_iter()
+        .map(|(path, thumbnail)| (path, thumbnail.path))
+        .collect::<Vec<(RelativePath, RelativePath)>>(),
+      vec![(
+        "bar.png".parse().unwrap(),
+        "thumbnails/bar.jpg".parse().unwrap(),
+      )],
     );
   }
 
