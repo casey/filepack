@@ -267,7 +267,7 @@ impl Metadata {
       .when_some(self.homepage.as_ref(), |builder, homepage| {
         builder.link("homepage", homepage, homepage.to_string())
       })
-      .optional("language", self.language.as_ref())
+      .optional("language", self.language.map(Language::name))
       .when_some(
         self
           .package
