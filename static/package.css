@@ -6,8 +6,10 @@ time {
   width: fit-content;
 
   > img {
+    aspect-ratio: 1 / 1;
     height: auto;
     max-width: 100%;
+    object-fit: contain;
   }
 }
 
