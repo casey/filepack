@@ -1,16 +1,14 @@
-<header>
 %% if let Some(title) = self.title() {
-  <h1>{{ title }}</h1>
+<h1>{{ title }}</h1>
 %% }
 %% if let Some(metadata) = &self.metadata {
 %%   if metadata.artwork.is_some() {
-  <a class=artwork href=/artwork/{{ self.fingerprint }}>
-    <img src=/artwork/{{ self.fingerprint }} width=500 height=500>
-  </a>
+<a class=artwork href=/artwork/{{ self.fingerprint }}>
+  <img src=/artwork/{{ self.fingerprint }} width=500 height=500>
+</a>
 %%   }
 %% }
-  {{ Trusted(InfoHtml(&self.info())) }}
-</header>
+{{ Trusted(InfoHtml(&self.info())) }}
 %% if let Some(media) = self.metadata.as_ref().and_then(|metadata| metadata.media.as_ref())
 %%   && !matches!(media, Media::Web)
 %% {
