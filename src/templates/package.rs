@@ -151,56 +151,54 @@ mod tests {
       .to_string(),
       unindent(&format!(
         "
-          <header>
-            <dl>
-              <div>
-                <dt>fingerprint</dt>
-                <dd>
-                  <code>{fingerprint}</code>
-                </dd>
-              </div>
-              <div>
-                <dt>size</dt>
-                <dd>
-                  6 B
-                </dd>
-              </div>
-              <div>
-                <dt>files</dt>
-                <dd>
-                  <a href='/directory/{hash}'>2 files</a>
-                </dd>
-              </div>
-              <div>
-                <dt>media</dt>
-                <dd>
-                  <a href='/package/{fingerprint}/media'>audio</a>
-                </dd>
-              </div>
-              <div>
-                <dt>tracks</dt>
-                <dd>
-                  2
-                </dd>
-              </div>
-              <div>
-                <dt>duration</dt>
-                <dd>
-                  3:46
-                </dd>
-              </div>
-              <div>
-                <dt>format</dt>
-                <dd>
-                  <ol role=list>
-                    <li>
-                      FLAC
-                    </li>
-                  </ol>
-                </dd>
-              </div>
-            </dl>
-          </header>
+          <dl>
+            <div>
+              <dt>fingerprint</dt>
+              <dd>
+                <code>{fingerprint}</code>
+              </dd>
+            </div>
+            <div>
+              <dt>size</dt>
+              <dd>
+                6 B
+              </dd>
+            </div>
+            <div>
+              <dt>files</dt>
+              <dd>
+                <a href='/directory/{hash}'>2 files</a>
+              </dd>
+            </div>
+            <div>
+              <dt>media</dt>
+              <dd>
+                <a href='/package/{fingerprint}/media'>audio</a>
+              </dd>
+            </div>
+            <div>
+              <dt>tracks</dt>
+              <dd>
+                2
+              </dd>
+            </div>
+            <div>
+              <dt>duration</dt>
+              <dd>
+                3:46
+              </dd>
+            </div>
+            <div>
+              <dt>format</dt>
+              <dd>
+                <ol role=list>
+                  <li>
+                    FLAC
+                  </li>
+                </ol>
+              </dd>
+            </div>
+          </dl>
           <ol>
             <li>
               <a href=/package/{fingerprint}/item/1>foo</a>
@@ -300,56 +298,54 @@ mod tests {
       .to_string(),
       unindent(&format!(
         "
-          <header>
-            <dl>
-              <div>
-                <dt>fingerprint</dt>
-                <dd>
-                  <code>{fingerprint}</code>
-                </dd>
-              </div>
-              <div>
-                <dt>size</dt>
-                <dd>
-                  9 B
-                </dd>
-              </div>
-              <div>
-                <dt>files</dt>
-                <dd>
-                  <a href='/directory/{hash}'>3 files</a>
-                </dd>
-              </div>
-              <div>
-                <dt>media</dt>
-                <dd>
-                  <a href='/package/{fingerprint}/media'>audio</a>
-                </dd>
-              </div>
-              <div>
-                <dt>tracks</dt>
-                <dd>
-                  3
-                </dd>
-              </div>
-              <div>
-                <dt>duration</dt>
-                <dd>
-                  0:03
-                </dd>
-              </div>
-              <div>
-                <dt>format</dt>
-                <dd>
-                  <ol role=list>
-                    <li>
-                      FLAC
-                    </li>
-                  </ol>
-                </dd>
-              </div>
-            </dl>
-          </header>
+          <dl>
+            <div>
+              <dt>fingerprint</dt>
+              <dd>
+                <code>{fingerprint}</code>
+              </dd>
+            </div>
+            <div>
+              <dt>size</dt>
+              <dd>
+                9 B
+              </dd>
+            </div>
+            <div>
+              <dt>files</dt>
+              <dd>
+                <a href='/directory/{hash}'>3 files</a>
+              </dd>
+            </div>
+            <div>
+              <dt>media</dt>
+              <dd>
+                <a href='/package/{fingerprint}/media'>audio</a>
+              </dd>
+            </div>
+            <div>
+              <dt>tracks</dt>
+              <dd>
+                3
+              </dd>
+            </div>
+            <div>
+              <dt>duration</dt>
+              <dd>
+                0:03
+              </dd>
+            </div>
+            <div>
+              <dt>format</dt>
+              <dd>
+                <ol role=list>
+                  <li>
+                    FLAC
+                  </li>
+                </ol>
+              </dd>
+            </div>
+          </dl>
           <h2>Disc 1</h2>
           <ol>
             <li>
@@ -421,56 +417,54 @@ mod tests {
       .to_string(),
       unindent(&format!(
         "
-          <header>
-            <dl>
-              <div>
-                <dt>fingerprint</dt>
-                <dd>
-                  <code>{fingerprint}</code>
-                </dd>
-              </div>
-              <div>
-                <dt>size</dt>
-                <dd>
-                  6 B
-                </dd>
-              </div>
-              <div>
-                <dt>files</dt>
-                <dd>
-                  <a href='/directory/{hash}'>2 files</a>
-                </dd>
-              </div>
-              <div>
-                <dt>media</dt>
-                <dd>
-                  <a href='/package/{fingerprint}/media'>audio</a>
-                </dd>
-              </div>
-              <div>
-                <dt>tracks</dt>
-                <dd>
-                  2
-                </dd>
-              </div>
-              <div>
-                <dt>duration</dt>
-                <dd>
-                  5124095576030431:00:15
-                </dd>
-              </div>
-              <div>
-                <dt>format</dt>
-                <dd>
-                  <ol role=list>
-                    <li>
-                      FLAC
-                    </li>
-                  </ol>
-                </dd>
-              </div>
-            </dl>
-          </header>
+          <dl>
+            <div>
+              <dt>fingerprint</dt>
+              <dd>
+                <code>{fingerprint}</code>
+              </dd>
+            </div>
+            <div>
+              <dt>size</dt>
+              <dd>
+                6 B
+              </dd>
+            </div>
+            <div>
+              <dt>files</dt>
+              <dd>
+                <a href='/directory/{hash}'>2 files</a>
+              </dd>
+            </div>
+            <div>
+              <dt>media</dt>
+              <dd>
+                <a href='/package/{fingerprint}/media'>audio</a>
+              </dd>
+            </div>
+            <div>
+              <dt>tracks</dt>
+              <dd>
+                2
+              </dd>
+            </div>
+            <div>
+              <dt>duration</dt>
+              <dd>
+                5124095576030431:00:15
+              </dd>
+            </div>
+            <div>
+              <dt>format</dt>
+              <dd>
+                <ol role=list>
+                  <li>
+                    FLAC
+                  </li>
+                </ol>
+              </dd>
+            </div>
+          </dl>
           <ol>
             <li>
               <a href=/package/{fingerprint}/item/1>foo</a>
@@ -562,59 +556,57 @@ mod tests {
       .to_string(),
       unindent(&format!(
         r#"
-          <header>
-            <dl>
-              <div>
-                <dt>fingerprint</dt>
-                <dd>
-                  <code>{fingerprint}</code>
-                </dd>
-              </div>
-              <div>
-                <dt>size</dt>
-                <dd>
-                  9 B
-                </dd>
-              </div>
-              <div>
-                <dt>files</dt>
-                <dd>
-                  <a href='/directory/{hash}'>3 files</a>
-                </dd>
-              </div>
-              <div>
-                <dt>publisher</dt>
-                <dd>
-                  qux
-                </dd>
-              </div>
-              <div>
-                <dt>media</dt>
-                <dd>
-                  <a href='/package/{fingerprint}/media'>image</a>
-                </dd>
-              </div>
-              <div>
-                <dt>images</dt>
-                <dd>
-                  3
-                </dd>
-              </div>
-              <div>
-                <dt>format</dt>
-                <dd>
-                  <ol role=list>
-                    <li>
-                      PNG
-                    </li>
-                    <li>
-                      JPEG
-                    </li>
-                  </ol>
-                </dd>
-              </div>
-            </dl>
-          </header>
+          <dl>
+            <div>
+              <dt>fingerprint</dt>
+              <dd>
+                <code>{fingerprint}</code>
+              </dd>
+            </div>
+            <div>
+              <dt>size</dt>
+              <dd>
+                9 B
+              </dd>
+            </div>
+            <div>
+              <dt>files</dt>
+              <dd>
+                <a href='/directory/{hash}'>3 files</a>
+              </dd>
+            </div>
+            <div>
+              <dt>publisher</dt>
+              <dd>
+                qux
+              </dd>
+            </div>
+            <div>
+              <dt>media</dt>
+              <dd>
+                <a href='/package/{fingerprint}/media'>image</a>
+              </dd>
+            </div>
+            <div>
+              <dt>images</dt>
+              <dd>
+                3
+              </dd>
+            </div>
+            <div>
+              <dt>format</dt>
+              <dd>
+                <ol role=list>
+                  <li>
+                    PNG
+                  </li>
+                  <li>
+                    JPEG
+                  </li>
+                </ol>
+              </dd>
+            </div>
+          </dl>
           <ul class=thumbnails>
             <li style="--aspect-ratio: 2 / 1">
               <a href=/package/{fingerprint}/item/1>
@@ -774,83 +766,81 @@ mod tests {
       .to_string(),
       unindent(&format!(
         "
-          <header>
-            <dl>
-              <div>
-                <dt>fingerprint</dt>
-                <dd>
-                  <code>{fingerprint}</code>
-                </dd>
-              </div>
-              <div>
-                <dt>size</dt>
-                <dd>
-                  3 B
-                </dd>
-              </div>
-              <div>
-                <dt>files</dt>
-                <dd>
-                  <a href='/directory/{hash}'>1 file</a>
-                </dd>
-              </div>
-              <div>
-                <dt>readme</dt>
-                <dd>
-                  <a href='/file/{hash}/README.md'>view</a>
-                </dd>
-              </div>
-              <div>
-                <dt>language</dt>
-                <dd>
-                  English
-                </dd>
-              </div>
-              <div>
-                <dt>package</dt>
-                <dd>
-                  <dl>
-                    <div>
-                      <dt>title</dt>
-                      <dd>
-                        baz
-                      </dd>
-                    </div>
-                    <div>
-                      <dt>creator</dt>
-                      <dd>
-                        foo
-                      </dd>
-                    </div>
-                    <div>
-                      <dt>time</dt>
-                      <dd>
-                        2024-01-01
-                      </dd>
-                    </div>
-                    <div>
-                      <dt>description</dt>
-                      <dd>
-                        bar
-                      </dd>
-                    </div>
-                    <div>
-                      <dt>colophon</dt>
-                      <dd>
-                        <a href='/file/{hash}/COLOPHON.md'>view</a>
-                      </dd>
-                    </div>
-                    <div>
-                      <dt>homepage</dt>
-                      <dd>
-                        <a href='http://example.com'>http://example.com</a>
-                      </dd>
-                    </div>
-                  </dl>
-                </dd>
-              </div>
-            </dl>
-          </header>
+          <dl>
+            <div>
+              <dt>fingerprint</dt>
+              <dd>
+                <code>{fingerprint}</code>
+              </dd>
+            </div>
+            <div>
+              <dt>size</dt>
+              <dd>
+                3 B
+              </dd>
+            </div>
+            <div>
+              <dt>files</dt>
+              <dd>
+                <a href='/directory/{hash}'>1 file</a>
+              </dd>
+            </div>
+            <div>
+              <dt>readme</dt>
+              <dd>
+                <a href='/file/{hash}/README.md'>view</a>
+              </dd>
+            </div>
+            <div>
+              <dt>language</dt>
+              <dd>
+                English
+              </dd>
+            </div>
+            <div>
+              <dt>package</dt>
+              <dd>
+                <dl>
+                  <div>
+                    <dt>title</dt>
+                    <dd>
+                      baz
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>creator</dt>
+                    <dd>
+                      foo
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>time</dt>
+                    <dd>
+                      2024-01-01
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>description</dt>
+                    <dd>
+                      bar
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>colophon</dt>
+                    <dd>
+                      <a href='/file/{hash}/COLOPHON.md'>view</a>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>homepage</dt>
+                    <dd>
+                      <a href='http://example.com'>http://example.com</a>
+                    </dd>
+                  </div>
+                </dl>
+              </dd>
+            </div>
+          </dl>
           <table>
             <thead>
               <tr>
@@ -974,56 +964,54 @@ mod tests {
       .to_string(),
       unindent(&format!(
         "
-          <header>
-            <dl>
-              <div>
-                <dt>fingerprint</dt>
-                <dd>
-                  <code>{fingerprint}</code>
-                </dd>
-              </div>
-              <div>
-                <dt>size</dt>
-                <dd>
-                  3 B
-                </dd>
-              </div>
-              <div>
-                <dt>files</dt>
-                <dd>
-                  <a href='/directory/{hash}'>1 file</a>
-                </dd>
-              </div>
-              <div>
-                <dt>media</dt>
-                <dd>
-                  <a href='/package/{fingerprint}/media'>video</a>
-                </dd>
-              </div>
-              <div>
-                <dt>videos</dt>
-                <dd>
-                  4
-                </dd>
-              </div>
-              <div>
-                <dt>duration</dt>
-                <dd>
-                  3:48
-                </dd>
-              </div>
-              <div>
-                <dt>format</dt>
-                <dd>
-                  <ol role=list>
-                    <li>
-                      MP4
-                    </li>
-                  </ol>
-                </dd>
-              </div>
-            </dl>
-          </header>
+          <dl>
+            <div>
+              <dt>fingerprint</dt>
+              <dd>
+                <code>{fingerprint}</code>
+              </dd>
+            </div>
+            <div>
+              <dt>size</dt>
+              <dd>
+                3 B
+              </dd>
+            </div>
+            <div>
+              <dt>files</dt>
+              <dd>
+                <a href='/directory/{hash}'>1 file</a>
+              </dd>
+            </div>
+            <div>
+              <dt>media</dt>
+              <dd>
+                <a href='/package/{fingerprint}/media'>video</a>
+              </dd>
+            </div>
+            <div>
+              <dt>videos</dt>
+              <dd>
+                4
+              </dd>
+            </div>
+            <div>
+              <dt>duration</dt>
+              <dd>
+                3:48
+              </dd>
+            </div>
+            <div>
+              <dt>format</dt>
+              <dd>
+                <ol role=list>
+                  <li>
+                    MP4
+                  </li>
+                </ol>
+              </dd>
+            </div>
+          </dl>
           <ol class=thumbnails>
             <li style=\"--aspect-ratio: 2 / 1\">
               <a href=/package/{fingerprint}/item/1>

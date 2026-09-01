@@ -13,22 +13,6 @@ time {
   }
 }
 
-main > header {
-  align-items: flex-start;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1em;
-
-  > dl {
-    margin-block: 0;
-  }
-
-  > h1 {
-    margin-bottom: 0;
-    width: 100%;
-  }
-}
-
 .thumbnails {
   --aspect-ratio: 16 / 9;
   --row-height: 180px;
