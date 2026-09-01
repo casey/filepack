@@ -15,7 +15,7 @@ impl MediaHtml {
         format!("/package/{}", self.fingerprint),
       )
       .list(
-        "files",
+        "items",
         self
           .metadata
           .media
@@ -70,7 +70,7 @@ mod tests {
               </dd>
             </div>
             <div>
-              <dt>files</dt>
+              <dt>items</dt>
               <dd>
                 <ol role=list>
                   <li>
