@@ -44,7 +44,7 @@ body {
 }
 
 code {
-  font-family: monospace, monospace;
+  font-family: ui-monospace, Menlo, "Cascadia Mono", Consolas, "DejaVu Sans Mono", monospace;
 }
 
 dd {
@@ -142,7 +142,8 @@ html {
   background-color: oklch(18% 0 0);
   color-scheme: dark;
   color: var(--text);
-  font-family: sans-serif;
+  font-family: system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
   text-size-adjust: 100%;
 }
 
