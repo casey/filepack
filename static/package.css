@@ -37,7 +37,7 @@ time {
   a {
     aspect-ratio: var(--aspect-ratio);
     background-color: var(--surface);
-    color: var(--primary);
+    color: var(--text);
     position: relative;
     text-decoration: none;
   }

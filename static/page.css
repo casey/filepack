@@ -1,9 +1,9 @@
 :root {
-  --border: rgb(255 255 255 / 15%);
-  --outline: rgb(255 255 255 / 25%);
-  --primary: rgb(255 255 255 / 87%);
-  --secondary: rgb(255 255 255 / 60%);
-  --surface: rgb(255 255 255 / 9%);
+  --border: oklch(30% 0 0);
+  --muted: oklch(70% 0 0);
+  --outline: oklch(40% 0 0);
+  --surface: oklch(25% 0 0);
+  --text: oklch(90% 0 0);
 }
 
 *, *::before, *::after {
@@ -23,7 +23,7 @@ a:not(:hover) {
 }
 
 a:not([href]) {
-  color: var(--primary);
+  color: var(--text);
 }
 
 body {
@@ -121,9 +121,9 @@ body > * {
 
 html {
   -webkit-text-size-adjust: 100%;
-  background-color: #121212;
+  background-color: oklch(18% 0 0);
   color-scheme: dark;
-  color: var(--primary);
+  color: var(--text);
   font-family: sans-serif;
   text-size-adjust: 100%;
 }
@@ -153,7 +153,7 @@ body > header > nav {
   justify-content: space-between;
 
   a {
-    color: var(--primary);
+    color: var(--text);
     text-decoration: none;
   }
 }
