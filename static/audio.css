@@ -17,7 +17,7 @@ img {
 }
 
 .info {
-  padding: 0.75em 1em;
+  padding: var(--space-2);
 
   .album, .artist {
     color: var(--muted);
@@ -25,7 +25,7 @@ img {
   }
 
   .title {
-    font-size: 1.125em;
+    font-size: 1.25em;
     font-weight: bold;
   }
 }
