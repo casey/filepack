@@ -22,7 +22,7 @@ h1 {
 }
 
 p {
-  color: var(--secondary);
+  color: var(--muted);
   font-size: max(1rem, 4vmin);
   margin: 0;
   overflow-wrap: anywhere;

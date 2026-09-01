@@ -16,6 +16,6 @@
   }
 
   .creator {
-    color: var(--secondary);
+    color: var(--muted);
   }
 }
