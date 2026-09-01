@@ -1,9 +1,19 @@
 :root {
-  --border: oklch(30% 0 0);
-  --muted: oklch(70% 0 0);
-  --outline: oklch(40% 0 0);
   --surface: oklch(25% 0 0);
+  --border: oklch(30% 0 0);
+  --outline: oklch(40% 0 0);
+  --muted: oklch(70% 0 0);
   --text: oklch(90% 0 0);
+
+  --duration: 150ms;
+
+  --radius-small: 0.25rem;
+  --radius: 0.5rem;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --thumbnail: 10rem;
 }
 
 *, *::before, *::after {
@@ -63,7 +73,7 @@ dd > ol {
 }
 
 dl, .thumbnails a, .artwork {
-  border-radius: 8px;
+  border-radius: var(--radius);
   border: 1px solid var(--border);
 }
 
@@ -71,7 +81,7 @@ dl, .thumbnails a, .artwork {
   display: block;
   outline: 1px solid transparent;
   overflow: hidden;
-  transition: outline-color 150ms;
+  transition: outline-color var(--duration);
 
   &:hover, &:focus-visible {
     outline-color: var(--outline);
@@ -85,15 +95,14 @@ dl, .thumbnails a, .artwork {
 dl {
   display: grid;
   grid-template-columns: max-content auto;
-  margin-block: 0.5em;
   width: fit-content;
 
   > div {
-    column-gap: 1em;
+    column-gap: var(--space-3);
     display: grid;
     grid-column: 1 / -1;
     grid-template-columns: subgrid;
-    padding: 0.25em;
+    padding: var(--space-1);
 
     + div {
       border-top: 1px solid var(--border);
@@ -111,12 +120,16 @@ h1 {
   white-space: nowrap;
 }
 
+h1, h2 {
+  margin-block: var(--space-4) var(--space-2);
+}
+
 body > header {
   background-color: var(--surface);
 }
 
 body > * {
-  padding: 8px;
+  padding: var(--space-2);
 }
 
 html {
@@ -133,16 +146,45 @@ main {
   padding-top: 0;
 }
 
-ol, ul {
-  margin-block: 0.5em;
+dl, ol, ul, table {
+  margin-block: var(--space-2);
+}
+
+table {
+  border-collapse: collapse;
+}
+
+tbody tr + tr {
+  border-top: 1px solid var(--border);
+}
+
+td {
+  padding-block: var(--space-1);
+}
+
+td:not(:last-child), th:not(:last-child) {
+  padding-right: var(--space-3);
+}
+
+th {
+  text-align: left;
+
+  a {
+    color: inherit;
+  }
 }
 
 .thumbnails {
-  gap: 12px;
+  gap: var(--space-3);
   list-style: none;
   padding-left: 0;
 
+  a:not(:has(img)) {
+    background-color: var(--surface);
+  }
+
   img {
+    height: 100%;
     width: 100%;
   }
 }

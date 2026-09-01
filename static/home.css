@@ -1,17 +1,12 @@
 .thumbnails {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(var(--thumbnail), 1fr));
 
   a {
     aspect-ratio: 1 / 1;
   }
 
-  a:not(:has(img)) {
-    background-color: var(--surface);
-  }
-
   img {
-    height: 100%;
     object-fit: contain;
   }
 
