@@ -22,11 +22,11 @@ time {
 
   &::after {
     content: "";
-    flex-grow: 1000;
+    flex-grow: 1000000;
   }
 
   li {
-    flex-grow: calc(var(--aspect-ratio));
+    flex-grow: calc(var(--aspect-ratio) * 100);
     width: calc(var(--aspect-ratio) * var(--thumbnail));
   }
 
