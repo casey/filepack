@@ -10,5 +10,6 @@ main {
 video {
   display: block;
   height: 100%;
+  outline-offset: -2px;
   width: 100%;
 }
