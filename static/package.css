@@ -1,5 +1,5 @@
 time {
-  margin-left: var(--space-2);
+  font-size: 0.875em;
 }
 
 .artwork {
@@ -73,7 +73,6 @@ time {
     background-color: rgb(0 0 0 / 70%);
     border-radius: var(--radius-small);
     flex: none;
-    font-size: 0.875em;
     margin-left: auto;
     padding: 0.125em 0.375em;
     text-shadow: none;
