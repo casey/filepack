@@ -6,6 +6,10 @@
     aspect-ratio: 1 / 1;
   }
 
+  a:not(:has(img)) {
+    background-color: var(--surface);
+  }
+
   img {
     height: 100%;
     object-fit: contain;
