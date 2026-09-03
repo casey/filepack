@@ -1,0 +1,7 @@
+td:nth-child(-n+2) {
+  overflow-wrap: anywhere;
+}
+
+td:nth-child(n+3) {
+  white-space: nowrap;
+}
