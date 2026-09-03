@@ -1,10 +1,6 @@
 use super::*;
 
 pub trait Page: Display + Sized {
-  fn home(&self) -> bool {
-    false
-  }
-
   fn next(&self) -> Option<String> {
     None
   }
