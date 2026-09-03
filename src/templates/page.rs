@@ -101,6 +101,7 @@ mod tests {
               <link href=/foo rel=next>
               <link href=/bar rel=prev>
               <link href=/baz rel=up>
+              <script src=/static/page.js type=module></script>
             </head>
             <body>
               <header>
@@ -142,6 +143,7 @@ mod tests {
               <meta property=og:image:width content=2>
               <meta property=og:site_name content=Filepack>
               <link href=/static/page.css rel=stylesheet>
+              <script src=/static/page.js type=module></script>
             </head>
             <body>
               <header>
@@ -175,6 +177,7 @@ mod tests {
               <meta property=og:description content='qux'>
               <meta property=og:site_name content=Filepack>
               <link href=/static/page.css rel=stylesheet>
+              <script src=/static/page.js type=module></script>
             </head>
             <body>
               <header>
@@ -210,6 +213,7 @@ mod tests {
               <meta name=google content=notranslate>
               <meta property=og:site_name content=Filepack>
               <link href=/static/page.css rel=stylesheet>
+              <script src=/static/page.js type=module></script>
               <script src=/foo.js type=module></script>
             </head>
             <body>
