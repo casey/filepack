@@ -1,3 +1,10 @@
+main:has(> p) {
+  display: grid;
+  font-size: max(1rem, 4vmin);
+  place-items: center;
+  text-align: center;
+}
+
 .thumbnails {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(var(--thumbnail), 1fr));

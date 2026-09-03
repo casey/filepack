@@ -74,12 +74,12 @@ mod tests {
 
   #[test]
   fn empty() {
-    assert!(
+    assert_eq!(
       HomeHtml {
         packages: Vec::new()
       }
-      .to_string()
-      .is_empty()
+      .to_string(),
+      "<p>No packages yet. Upload one with <code>`filepack upload`</code>.</p>\n",
     );
   }
 

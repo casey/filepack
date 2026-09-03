@@ -1,3 +1,6 @@
+%% if self.packages.is_empty() {
+<p>No packages yet. Upload one with <code>`filepack upload`</code>.</p>
+%% }
 %% for (section, packages) in self.sections() {
 <section>
   <h2>{{ section }}</h2>
