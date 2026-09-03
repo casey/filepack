@@ -80,6 +80,10 @@ impl PackagesHtml {
 }
 
 impl Page for PackagesHtml {
+  fn stylesheet(&self) -> Option<&'static str> {
+    Some("/static/packages.css")
+  }
+
   fn title(&self) -> String {
     "Packages · Filepack".into()
   }
