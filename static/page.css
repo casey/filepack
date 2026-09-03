@@ -202,10 +202,18 @@ th {
 body > header > nav {
   display: flex;
   font-size: 1.25em;
-  justify-content: space-between;
+  gap: var(--space-4);
 
   a {
     color: var(--text);
     text-decoration: none;
+  }
+
+  a:hover {
+    color: white;
+  }
+
+  a:last-child {
+    margin-inline-start: auto;
   }
 }
