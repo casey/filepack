@@ -117,6 +117,12 @@ mod tests {
                           false
                         </dd>
                       </div>
+                      <div>
+                        <dt>compression</dt>
+                        <dd>
+                          lossless
+                        </dd>
+                      </div>
                     </dl>
                   </li>
                 </ol>

@@ -464,7 +464,7 @@ mod tests {
         .value("sample rate", "44.1 kHz")
         .value("bit rate", "4 kbit/s")
         .value("channels", "2")
-        .value("compression mode", "lossless")
+        .value("compression", "lossless")
         .value("samples", "66150")
         .build(),
     );
@@ -492,7 +492,7 @@ mod tests {
         .value("sample rate", "44.1 kHz")
         .value("bit rate", "4 kbit/s")
         .value("channels", "2")
-        .value("compression mode", "lossy")
+        .value("compression", "lossy")
         .value("samples", "66150")
         .build(),
     );
@@ -514,7 +514,7 @@ mod tests {
         .value("type", "FLAC")
         .value("sample rate", "0 kHz")
         .value("channels", "2")
-        .value("compression mode", "lossless")
+        .value("compression", "lossless")
         .value("samples", "0")
         .build(),
     );

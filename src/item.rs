@@ -108,6 +108,7 @@ mod tests {
         .value("color type", "RGB")
         .value("bit depth", "8-bit")
         .value("alpha", "false")
+        .value("compression", "lossless")
         .build(),
     );
 
@@ -124,6 +125,7 @@ mod tests {
         .value("color type", "RGB")
         .value("bit depth", "8-bit")
         .value("alpha", "false")
+        .value("compression", "lossless")
         .build(),
     );
   }
