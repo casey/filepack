@@ -47,6 +47,7 @@ impl Content for Video {
         "duration",
         DisplayDuration(Duration::from_millis(self.duration)),
       )
+      .value("compression", Compression::Lossy)
       .list(
         "tracks",
         self
@@ -117,6 +118,19 @@ mod tests {
       placeholder: Some(Image::test("bar.png")),
       ..Video::test("foo.mp4")
     });
+  }
+
+  #[test]
+  fn info() {
+    assert_eq!(
+      Content::info(&Video::test("foo.mp4"), InfoBuilder::new()).build(),
+      InfoBuilder::new()
+        .value("type", "MP4")
+        .value("duration", "0:01")
+        .value("compression", "lossy")
+        .list("tracks", Vec::new())
+        .build(),
+    );
   }
 
   #[test]

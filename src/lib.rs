@@ -47,6 +47,7 @@ use {
     color_type::ColorType,
     component::Component,
     component_error::ComponentError,
+    compression::Compression,
     content::Content,
     content_type::ContentType,
     context::Context,
@@ -312,6 +313,7 @@ mod color_type;
 mod component;
 mod component_buf;
 mod component_error;
+mod compression;
 mod content;
 mod content_type;
 mod context;

@@ -278,6 +278,13 @@ impl Content for Image {
       .value("bit depth", format!("{}-bit", self.bit_depth))
       .optional("chroma subsampling", self.chroma_subsampling)
       .value("alpha", self.alpha)
+      .value(
+        "compression",
+        match self.ty {
+          ImageType::Jpeg => Compression::Lossy,
+          ImageType::Png => Compression::Lossless,
+        },
+      )
   }
 
   fn load(root: &Utf8Path, path: RelativePath) -> Result<Item<Self>> {
@@ -443,6 +450,22 @@ mod tests {
     );
 
     assert!(!root.join("thumbnails/foo.jpg").exists());
+  }
+
+  #[test]
+  fn info() {
+    assert_eq!(
+      Content::info(&Image::test("foo.jpg"), InfoBuilder::new()).build(),
+      InfoBuilder::new()
+        .value("type", "JPEG")
+        .value("dimensions", "1×1")
+        .value("orientation", "0°")
+        .value("color type", "RGB")
+        .value("bit depth", "8-bit")
+        .value("alpha", "false")
+        .value("compression", "lossy")
+        .build(),
+    );
   }
 
   #[test]
