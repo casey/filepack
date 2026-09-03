@@ -79,7 +79,7 @@ mod tests {
         packages: Vec::new()
       }
       .to_string(),
-      "<p>No packages yet. Upload one with <code>`filepack upload`</code>.</p>\n",
+      "<p>No packages yet. Upload one with <code>filepack upload</code>.</p>\n",
     );
   }
 
