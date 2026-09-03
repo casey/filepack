@@ -7,8 +7,9 @@ main:has(> p) {
 
 main > p > code {
   background-color: var(--surface);
-  border-radius: var(--radius);
-  padding: var(--space-1);
+  border-radius: 0.25em;
+  padding: 0.125em;
+  white-space: nowrap;
 }
 
 .thumbnails {
