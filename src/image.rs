@@ -453,6 +453,22 @@ mod tests {
   }
 
   #[test]
+  fn info() {
+    assert_eq!(
+      Content::info(&Image::test("foo.jpg"), InfoBuilder::new()).build(),
+      InfoBuilder::new()
+        .value("type", "JPEG")
+        .value("dimensions", "1×1")
+        .value("orientation", "0°")
+        .value("color type", "RGB")
+        .value("bit depth", "8-bit")
+        .value("alpha", "false")
+        .value("compression", "lossy")
+        .build(),
+    );
+  }
+
+  #[test]
   fn load() {
     #[track_caller]
     fn case(filename: &str, bytes: &[u8]) -> Result<Image> {

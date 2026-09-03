@@ -121,6 +121,19 @@ mod tests {
   }
 
   #[test]
+  fn info() {
+    assert_eq!(
+      Content::info(&Video::test("foo.mp4"), InfoBuilder::new()).build(),
+      InfoBuilder::new()
+        .value("type", "MP4")
+        .value("duration", "0:01")
+        .value("compression", "lossy")
+        .list("tracks", Vec::new())
+        .build(),
+    );
+  }
+
+  #[test]
   fn load() {
     #[track_caller]
     fn case(bytes: &[u8]) -> Result<Video> {
