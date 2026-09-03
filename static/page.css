@@ -1,9 +1,10 @@
 :root {
-  --surface: oklch(25% 0 0);
-  --border: oklch(30% 0 0);
-  --outline: oklch(40% 0 0);
-  --muted: oklch(70% 0 0);
-  --text: oklch(90% 0 0);
+  --background: #111;
+  --surface: #222;
+  --border: #444;
+  --outline: #666;
+  --muted: #999;
+  --text: #ddd;
 
   --duration: 150ms;
 
@@ -143,7 +144,7 @@ body > * {
 
 html {
   -webkit-text-size-adjust: 100%;
-  background-color: oklch(18% 0 0);
+  background-color: var(--background);
   color-scheme: dark;
   color: var(--text);
   font-family: system-ui, sans-serif;
