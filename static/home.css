@@ -5,6 +5,12 @@ main:has(> p) {
   text-align: center;
 }
 
+main > p > code {
+  background-color: var(--surface);
+  border-radius: var(--radius);
+  padding: var(--space-1);
+}
+
 .thumbnails {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(var(--thumbnail), 1fr));
