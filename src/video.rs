@@ -47,6 +47,7 @@ impl Content for Video {
         "duration",
         DisplayDuration(Duration::from_millis(self.duration)),
       )
+      .value("compression", Compression::Lossy)
       .list(
         "tracks",
         self

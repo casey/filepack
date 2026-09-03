@@ -198,10 +198,10 @@ impl Content for Audio {
       )
       .value("channels", self.channels)
       .value(
-        "compression mode",
+        "compression",
         match self.ty {
-          AudioType::Flac => "lossless",
-          AudioType::Mp3 => "lossy",
+          AudioType::Flac => Compression::Lossless,
+          AudioType::Mp3 => Compression::Lossy,
         },
       )
       .value("samples", self.samples)

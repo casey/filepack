@@ -278,6 +278,13 @@ impl Content for Image {
       .value("bit depth", format!("{}-bit", self.bit_depth))
       .optional("chroma subsampling", self.chroma_subsampling)
       .value("alpha", self.alpha)
+      .value(
+        "compression",
+        match self.ty {
+          ImageType::Jpeg => Compression::Lossy,
+          ImageType::Png => Compression::Lossless,
+        },
+      )
   }
 
   fn load(root: &Utf8Path, path: RelativePath) -> Result<Item<Self>> {
