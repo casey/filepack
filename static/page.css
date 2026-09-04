@@ -208,6 +208,9 @@ body > header > nav {
   a {
     color: var(--muted);
     text-decoration: none;
+  }
+
+  a:not([aria-current=page]) {
     transition: color var(--duration);
   }
 
