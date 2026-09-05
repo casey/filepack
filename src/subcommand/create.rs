@@ -36,6 +36,11 @@ impl Create {
 
     let root = self.root.unwrap_or_else(|| current_dir.clone());
 
+    ensure! {
+      filesystem::metadata(&root)?.is_dir(),
+      error::PackageRootDirectory { path: root },
+    }
+
     let manifest_path = if let Some(path) = self.manifest {
       path
     } else {

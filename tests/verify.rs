@@ -529,6 +529,15 @@ fn print_includes_embedded_files() {
 }
 
 #[test]
+fn root_not_directory_error() {
+  Test::new()
+    .touch("foo")
+    .args(["verify", "foo"])
+    .stderr("error: package root `foo` is not a directory\n")
+    .failure();
+}
+
+#[test]
 fn signature_fingerprint_mismatch() {
   let test = Test::new()
     .arg("keygen")
