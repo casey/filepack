@@ -13,3 +13,7 @@ video {
   outline-offset: -2px;
   width: 100%;
 }
+
+video:focus {
+  outline: none;
+}
