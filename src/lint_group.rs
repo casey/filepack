@@ -43,6 +43,7 @@ impl LintGroup {
         AudioEmbeddedArtworkAspectRatio,
         AudioEmbeddedArtworkMissing,
         CreatorMissing,
+        ItemTitleMissing,
         MediaItemsMissing,
         MediaMissing,
         MetadataMissing,
