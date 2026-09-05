@@ -54,6 +54,11 @@ impl Verify {
 
     let root = self.root.clone().unwrap_or_else(|| current_dir.clone());
 
+    ensure! {
+      filesystem::metadata(&root)?.is_dir(),
+      error::PackageRootDirectory { path: root },
+    }
+
     let source = if let Some(manifest) = &self.manifest {
       ensure! {
         !filesystem::exists(&root.join(Manifest::FILENAME))?,

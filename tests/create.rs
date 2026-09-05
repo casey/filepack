@@ -371,6 +371,15 @@ fn private_key_load_error_message() {
 }
 
 #[test]
+fn root_not_directory_error() {
+  Test::new()
+    .touch("foo")
+    .args(["create", "foo"])
+    .stderr("error: package root `foo` is not a directory\n")
+    .failure();
+}
+
+#[test]
 fn sign_creates_valid_signature() {
   let test = Test::new()
     .arg("keygen")

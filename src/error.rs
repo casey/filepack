@@ -406,8 +406,14 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     fingerprint: Fingerprint,
   },
+  #[snafu(display("package root `{path}` is not a directory"))]
+  PackageRootDirectory {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+  },
   #[snafu(display("invalid path `{path}`"))]
   Path {
+    backtrace: Option<Backtrace>,
     path: DisplayPath,
     source: PathError,
   },
