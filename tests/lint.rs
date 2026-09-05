@@ -297,6 +297,32 @@ fn deny_hygiene_ignores_compatibility() {
 }
 
 #[test]
+fn deny_item_title_missing() {
+  Test::new()
+    .write("foo.png", PngBuilder::new().build())
+    .write("bar.png", PngBuilder::new().text("Title", "baz").build())
+    .write(
+      "metadata.yaml",
+      "
+        media:
+          type: image
+          items:
+            - path: foo.png
+            - path: bar.png
+      ",
+    )
+    .args(["create", "--deny", "item-title-missing"])
+    .stderr(
+      "
+        error: path failed lint: `foo.png`
+               └─ media item missing title
+        error: 1 lint error
+      ",
+    )
+    .failure();
+}
+
+#[test]
 fn deny_junk_ignores_compatibility() {
   if cfg!(windows) {
     return;

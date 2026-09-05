@@ -149,6 +149,17 @@ impl Linter {
       }
     }
 
+    if self.is_active(Lint::ItemTitleMissing)
+      && let Some(media) = &metadata.media
+      && media.ty().has_items()
+    {
+      for item in media.items() {
+        if item.title().is_none() {
+          self.error_path(LintError::ItemTitleMissing, item.path());
+        }
+      }
+    }
+
     Ok(())
   }
 

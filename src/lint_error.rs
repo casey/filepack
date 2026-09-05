@@ -18,6 +18,8 @@ pub(crate) enum LintError {
   CaseConflict,
   #[snafu(display("metadata missing creator"))]
   CreatorMissing,
+  #[snafu(display("media item missing title"))]
+  ItemTitleMissing,
   #[snafu(display("possible junk file"))]
   Junk,
   #[snafu(display("metadata media missing items"))]

@@ -61,6 +61,10 @@ impl<T: Content> MediaItem for Item<T> {
   fn resource_type(&self) -> ResourceType {
     self.content.resource_type()
   }
+
+  fn title(&self) -> Option<&Text> {
+    self.title.as_ref()
+  }
 }
 
 #[cfg(test)]

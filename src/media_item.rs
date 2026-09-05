@@ -8,4 +8,6 @@ pub(crate) trait MediaItem {
   fn placeholder(&self) -> Option<&Image>;
 
   fn resource_type(&self) -> ResourceType;
+
+  fn title(&self) -> Option<&Text>;
 }
