@@ -100,7 +100,7 @@ pub(crate) async fn fallback(uri: Uri) -> Result<Response, PageError> {
 }
 
 pub(crate) async fn favicon() -> ServerResult<StaticAsset> {
-  StaticAsset::get("favicon.png")
+  StaticAsset::get("favicon.svg")
 }
 
 pub(crate) async fn file(
