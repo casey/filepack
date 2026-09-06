@@ -1960,9 +1960,9 @@ fn package_item_audio() {
 
   server
     .get(format!("/package/{fingerprint}/item/1"))
-    .assert_page(AudioHtml {
-      audio: 0,
+    .assert_page(ItemHtml {
       fingerprint,
+      index: 0,
       metadata,
     })
     .send();
@@ -2024,9 +2024,9 @@ fn package_item_image() {
 
   server
     .get(format!("/package/{fingerprint}/item/1"))
-    .assert_page(ImageHtml {
+    .assert_page(ItemHtml {
       fingerprint,
-      image: 0,
+      index: 0,
       metadata,
     })
     .send();
@@ -2135,10 +2135,10 @@ fn package_item_video() {
 
   server
     .get(format!("/package/{fingerprint}/item/1"))
-    .assert_page(VideoHtml {
+    .assert_page(ItemHtml {
       fingerprint,
+      index: 0,
       metadata,
-      video: 0,
     })
     .send();
 }

@@ -15,10 +15,7 @@ use {
     caches::DirCache,
   },
   std::net::TcpStream,
-  templates::{
-    AudioHtml, DirectoryHtml, FilesHtml, HomeHtml, ImageHtml, MediaHtml, PackageHtml, PackagesHtml,
-    VideoHtml,
-  },
+  templates::{DirectoryHtml, FilesHtml, HomeHtml, ItemHtml, MediaHtml, PackageHtml, PackagesHtml},
   tokio::{net::TcpListener, runtime, task::block_in_place},
   tower_http::set_header::SetResponseHeaderLayer,
 };

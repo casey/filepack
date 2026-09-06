@@ -43,8 +43,8 @@ mod tests {
     }
 
     case("favicon.svg", "image/svg+xml");
-    case("image.js", "text/javascript;charset=utf-8");
     case("install.sh", "application/x-sh;charset=utf-8");
+    case("item.js", "text/javascript;charset=utf-8");
     case("page.css", "text/css;charset=utf-8");
   }
 }

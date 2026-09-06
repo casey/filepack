@@ -1,0 +1,36 @@
+%% match self.media() {
+%%   Media::Audio { .. } => {
+<img src=/artwork/{{ self.fingerprint }}>
+%%   }
+%%   Media::Image { items } => {
+%%     let dimensions = items[self.index].content.oriented_dimensions();
+<img src=/media/image/{{ self.fingerprint }}/item/{{ Ordinal(self.index) }} width={{ dimensions.width }} height={{ dimensions.height }}>
+%%   }
+%%   Media::Video { .. } => {
+<video
+  controls
+%%     if self.item().placeholder().is_some() {
+  poster=/media/video/{{ self.fingerprint }}/item/{{ Ordinal(self.index) }}/placeholder
+%%     }
+  src=/media/video/{{ self.fingerprint }}/item/{{ Ordinal(self.index) }}></video>
+%%   }
+%%   Media::Web => unreachable!(),
+%% }
+<hgroup>
+  <h1>{{ self.item().display_title(self.index) }}</h1>
+%% if let Some(creator) = &self.metadata.creator {
+  <p>{{ creator }}</p>
+%% }
+  <p>
+    <a href=/package/{{ self.fingerprint }}>
+%% if let Some(title) = &self.metadata.title {
+      {{ title }}
+%% } else {
+      <code>{{ self.fingerprint }}</code>
+%% }
+    </a>
+  </p>
+</hgroup>
+%% if matches!(self.media(), Media::Audio { .. }) {
+<audio controls src=/media/audio/{{ self.fingerprint }}/item/{{ Ordinal(self.index) }}></audio>
+%% }
