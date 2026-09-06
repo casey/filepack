@@ -18,12 +18,12 @@
 %% }
 <hgroup>
   <h1>{{ self.item().display_title(self.index) }}</h1>
-%% if let Some(creator) = &self.metadata.creator {
+%% if let Some(creator) = self.creator() {
   <p>{{ creator }}</p>
 %% }
   <p>
     <a href=/package/{{ self.fingerprint }}>
-%% if let Some(title) = &self.metadata.title {
+%% if let Some(title) = self.title() {
       {{ title }}
 %% } else {
       <code>{{ self.fingerprint }}</code>
