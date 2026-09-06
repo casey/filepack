@@ -372,8 +372,8 @@ mod tests {
           <footer>
             <hgroup>
               <h1>Track 1</h1>
-              <p>bar</p>
               <p>
+                <span>bar</span>
                 <a href=/package/{fingerprint}>
                   foo
                 </a>
@@ -501,8 +501,8 @@ mod tests {
           <footer>
             <hgroup>
               <h1>Image 1</h1>
-              <p>bar</p>
               <p>
+                <span>bar</span>
                 <a href=/package/{fingerprint}>
                   baz
                 </a>
