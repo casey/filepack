@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1.1547">
+  <g transform="scale(1 0.57735)">
+    <polygon id="top" points="0 0.5 0.5 0 1 0.5 0.5 1" fill="#dfa66c"/>
+    <polygon id="left" points="0 0.5 0.5 1 0.5 2 0 1.5" fill="#b38252"/>
+    <polygon id="right" points="0.5 1 1 0.5 1 1.5 0.5 2" fill="#976239"/>
+    <polygon id="tape-top" points="0.1875 0.3125 0.3125 0.1875 0.8125 0.6875 0.6875 0.8125" fill="#ffe0b3"/>
+    <polygon id="tape-right" points="0.6875 0.8125 0.8125 0.6875 0.8125 0.9375 0.6875 1.0625" fill="#bf9f85"/>
+  </g>
+</svg>

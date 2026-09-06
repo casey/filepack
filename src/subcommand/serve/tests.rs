@@ -738,7 +738,7 @@ fn fallback() {
 fn favicon() {
   TestServer::new()
     .get("/favicon.ico")
-    .assert_static("favicon.png")
+    .assert_static("favicon.svg")
     .send();
 }
 

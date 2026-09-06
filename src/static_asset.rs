@@ -42,7 +42,7 @@ mod tests {
       assert_eq!(StaticAsset::get(path).unwrap().content_type, content_type);
     }
 
-    case("favicon.png", "image/png");
+    case("favicon.svg", "image/svg+xml");
     case("image.js", "text/javascript;charset=utf-8");
     case("install.sh", "application/x-sh;charset=utf-8");
     case("page.css", "text/css;charset=utf-8");
