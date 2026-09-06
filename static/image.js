@@ -7,9 +7,9 @@ document.addEventListener('keydown', (event) => {
     return;
   }
 
-  let link = event.key === 'ArrowLeft' ? prev
-    : event.key === 'ArrowRight' ? next
-    : event.key === 'ArrowUp' ? up
+  let link = event.key === 'p' ? prev
+    : event.key === 'n' ? next
+    : event.key === 'u' ? up
     : null;
 
   if (link !== null) {
