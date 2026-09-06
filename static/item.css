@@ -19,7 +19,7 @@ img {
   object-fit: contain;
 }
 
-video:focus {
+audio:focus, video:focus {
   outline: none;
 }
 

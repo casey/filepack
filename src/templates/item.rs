@@ -362,7 +362,7 @@ mod tests {
             </a>
           </p>
         </hgroup>
-        <audio controls src=/media/audio/{fingerprint}/item/1></audio>
+        <audio autofocus controls src=/media/audio/{fingerprint}/item/1></audio>
       ",
     );
 
@@ -408,6 +408,7 @@ mod tests {
       },
       "
         <video
+          autofocus
           controls
           src=/media/video/{fingerprint}/item/1></video>
         <hgroup>
@@ -436,6 +437,7 @@ mod tests {
       },
       "
         <video
+          autofocus
           controls
           poster=/media/video/{fingerprint}/item/1/placeholder
           src=/media/video/{fingerprint}/item/1></video>
