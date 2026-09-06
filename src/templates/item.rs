@@ -8,12 +8,34 @@ pub(crate) struct ItemHtml {
 }
 
 impl ItemHtml {
+  fn audio(&self) -> Option<&Audio> {
+    if let Media::Audio { items } = self.media() {
+      Some(&items[self.index].content)
+    } else {
+      None
+    }
+  }
+
+  fn creator(&self) -> Option<&Text> {
+    self
+      .audio()
+      .map(|audio| &audio.artist)
+      .or(self.metadata.creator.as_ref())
+  }
+
   fn item(&self) -> &dyn MediaItem {
     self.media().item(self.index).unwrap()
   }
 
   fn media(&self) -> &Media {
     self.metadata.media.as_ref().unwrap()
+  }
+
+  fn title(&self) -> Option<&Text> {
+    self
+      .audio()
+      .map(|audio| &audio.album)
+      .or(self.metadata.title.as_ref())
   }
 }
 
@@ -322,18 +344,21 @@ mod tests {
 
     case(
       Metadata {
+        creator: Some("baz".parse().unwrap()),
         media: Some(Media::Audio {
           items: vec![Item::test("foo.flac")],
         }),
+        title: Some("qux".parse().unwrap()),
         ..default()
       },
       "
         <img src=/artwork/{fingerprint}>
         <hgroup>
           <h1>Track 1</h1>
+          <p>bar</p>
           <p>
             <a href=/package/{fingerprint}>
-              <code>{fingerprint}</code>
+              foo
             </a>
           </p>
         </hgroup>
