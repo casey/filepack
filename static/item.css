@@ -23,24 +23,63 @@ audio:focus, video:focus {
   outline: none;
 }
 
-hgroup {
+footer {
+  align-items: center;
   background-color: var(--surface);
+  display: flex;
+  gap: var(--space-2);
   overflow-wrap: anywhere;
   padding: var(--space-2);
 
-  h1 {
-    font-size: 1.25em;
-    margin: 0;
+  hgroup {
+    flex: 1;
+    min-width: 0;
+
+    h1 {
+      font-size: 1.25em;
+      margin: 0;
+    }
+
+    p {
+      color: var(--muted);
+      font-size: 0.875em;
+      margin: 0;
+
+      a {
+        color: inherit;
+      }
+    }
   }
 
-  p {
+  button {
+    background-color: transparent;
+    border: 1px solid var(--border);
+    border-radius: 50%;
     color: var(--muted);
-    font-size: 0.875em;
-    margin: 0;
+    cursor: pointer;
+    font: inherit;
+    height: 1.75em;
+    padding: 0;
+    width: 1.75em;
 
-    a {
-      color: inherit;
+    &:hover {
+      color: var(--text);
     }
+  }
+}
+
+[popover] {
+  background-color: var(--surface);
+  color: var(--text);
+  margin: auto;
+  padding: 0;
+
+  &:not(:popover-open) {
+    display: none;
+  }
+
+  dt {
+    font-style: normal;
   }
 }
 
