@@ -10,13 +10,6 @@ pub(crate) struct Item<T> {
 }
 
 impl<T: Content> Item<T> {
-  pub(crate) fn display_title(&self, index: usize) -> String {
-    match &self.title {
-      Some(title) => title.to_string(),
-      None => format!("{} {}", T::LABEL, Ordinal(index)),
-    }
-  }
-
   pub(crate) fn formats(items: &[Self]) -> Vec<T::Type> {
     let mut formats = Vec::new();
 
@@ -39,6 +32,13 @@ impl<T: Content> Item<T> {
 }
 
 impl<T: Content> MediaItem for Item<T> {
+  fn display_title(&self, index: usize) -> String {
+    match &self.title {
+      Some(title) => title.to_string(),
+      None => format!("{} {}", T::LABEL, Ordinal(index)),
+    }
+  }
+
   fn info(&self, url: String) -> Info {
     self
       .content

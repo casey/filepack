@@ -1,6 +1,8 @@
 use super::*;
 
 pub(crate) trait MediaItem {
+  fn display_title(&self, index: usize) -> String;
+
   fn info(&self, url: String) -> Info;
 
   fn path(&self) -> &RelativePath;

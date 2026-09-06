@@ -341,7 +341,7 @@ pub(crate) async fn package_item(
   server: ServerExtension,
   server_config: ServerConfigExtension,
   Path((fingerprint, Ordinal(index))): Path<(Fingerprint, Ordinal)>,
-) -> Result<Response, PageError> {
+) -> PageResult<ItemHtml> {
   block_in_place(|| {
     let metadata = server.package_metadata(fingerprint)?;
 
@@ -369,36 +369,14 @@ pub(crate) async fn package_item(
       },
     }
 
-    match media {
-      Media::Audio { .. } => Ok(
-        AudioHtml {
-          audio: index,
-          fingerprint,
-          metadata,
-        }
-        .page(server_config.url.clone())
-        .into_response(),
-      ),
-      Media::Image { .. } => Ok(
-        ImageHtml {
-          fingerprint,
-          image: index,
-          metadata,
-        }
-        .page(server_config.url.clone())
-        .into_response(),
-      ),
-      Media::Video { .. } => Ok(
-        VideoHtml {
-          fingerprint,
-          metadata,
-          video: index,
-        }
-        .page(server_config.url.clone())
-        .into_response(),
-      ),
-      Media::Web => unreachable!(),
-    }
+    Ok(
+      ItemHtml {
+        fingerprint,
+        index,
+        metadata,
+      }
+      .page(server_config.url.clone()),
+    )
   })
 }
 

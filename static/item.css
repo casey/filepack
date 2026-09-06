@@ -9,24 +9,37 @@ main {
   padding: 0;
 }
 
-img {
+img, video {
   flex: 1;
   min-height: 0;
-  object-fit: cover;
   width: 100%;
 }
 
-.info {
+img {
+  object-fit: contain;
+}
+
+video:focus {
+  outline: none;
+}
+
+hgroup {
+  overflow-wrap: anywhere;
   padding: var(--space-2);
 
-  .album, .artist {
-    color: var(--muted);
-    font-size: 0.875em;
+  h1 {
+    font-size: 1.25em;
+    margin: 0;
   }
 
-  .title {
-    font-size: 1.25em;
-    font-weight: bold;
+  p {
+    color: var(--muted);
+    font-size: 0.875em;
+    margin: 0;
+
+    a {
+      color: inherit;
+    }
   }
 }
 
