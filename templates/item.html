@@ -18,18 +18,26 @@
 %%   }
 %%   Media::Web => unreachable!(),
 %% }
-<hgroup>
-  <h1>{{ self.item().display_title(self.index) }}</h1>
+<footer>
+  <hgroup>
+    <h1>{{ self.item().display_title(self.index) }}</h1>
 %% if let Some(creator) = self.creator() {
-  <p>{{ creator }}</p>
+    <p>{{ creator }}</p>
 %% }
-  <p>
-    <a href=/package/{{ self.fingerprint }}>
+    <p>
+      <a href=/package/{{ self.fingerprint }}>
 %% if let Some(title) = self.title() {
-      {{ title }}
+        {{ title }}
 %% } else {
-      <code>{{ self.fingerprint }}</code>
+        <code>{{ self.fingerprint }}</code>
 %% }
-    </a>
-  </p>
-</hgroup>
+      </a>
+    </p>
+  </hgroup>
+  <button aria-label='Keyboard shortcuts' popovertarget=shortcuts title='Keyboard shortcuts'>?</button>
+  <dl id=shortcuts popover>
+    <div><dt><kbd>p</kbd></dt><dd>previous item</dd></div>
+    <div><dt><kbd>n</kbd></dt><dd>next item</dd></div>
+    <div><dt><kbd>u</kbd></dt><dd>package</dd></div>
+  </dl>
+</footer>

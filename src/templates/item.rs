@@ -330,7 +330,7 @@ mod tests {
   #[test]
   fn render() {
     #[track_caller]
-    fn case(metadata: Metadata, expected: &str) {
+    fn case(metadata: Metadata, expected: String) {
       assert_eq!(
         ItemHtml {
           fingerprint: test::FINGERPRINT.parse().unwrap(),
@@ -338,9 +338,21 @@ mod tests {
           metadata,
         }
         .to_string(),
-        unindent(&expected.replace("{fingerprint}", test::FINGERPRINT)),
+        unindent(&expected),
       );
     }
+
+    let fingerprint = test::FINGERPRINT;
+
+    let shortcuts = "
+            <button aria-label='Keyboard shortcuts' popovertarget=shortcuts title='Keyboard shortcuts'>?</button>
+            <dl id=shortcuts popover>
+              <div><dt><kbd>p</kbd></dt><dd>previous item</dd></div>
+              <div><dt><kbd>n</kbd></dt><dd>next item</dd></div>
+              <div><dt><kbd>u</kbd></dt><dd>package</dd></div>
+            </dl>
+    "
+    .trim();
 
     case(
       Metadata {
@@ -351,19 +363,24 @@ mod tests {
         title: Some("qux".parse().unwrap()),
         ..default()
       },
-      "
-        <img src=/artwork/{fingerprint}>
-        <audio autofocus controls src=/media/audio/{fingerprint}/item/1></audio>
-        <hgroup>
-          <h1>Track 1</h1>
-          <p>bar</p>
-          <p>
-            <a href=/package/{fingerprint}>
-              foo
-            </a>
-          </p>
-        </hgroup>
-      ",
+      format!(
+        "
+          <img src=/artwork/{fingerprint}>
+          <audio autofocus controls src=/media/audio/{fingerprint}/item/1></audio>
+          <footer>
+            <hgroup>
+              <h1>Track 1</h1>
+              <p>bar</p>
+              <p>
+                <a href=/package/{fingerprint}>
+                  foo
+                </a>
+              </p>
+            </hgroup>
+            {shortcuts}
+          </footer>
+        "
+      ),
     );
 
     case(
@@ -386,17 +403,22 @@ mod tests {
         }),
         ..default()
       },
-      "
-        <img src=/media/image/{fingerprint}/item/1 width=1 height=2>
-        <hgroup>
-          <h1>Image 1</h1>
-          <p>
-            <a href=/package/{fingerprint}>
-              <code>{fingerprint}</code>
-            </a>
-          </p>
-        </hgroup>
-      ",
+      format!(
+        "
+          <img src=/media/image/{fingerprint}/item/1 width=1 height=2>
+          <footer>
+            <hgroup>
+              <h1>Image 1</h1>
+              <p>
+                <a href=/package/{fingerprint}>
+                  <code>{fingerprint}</code>
+                </a>
+              </p>
+            </hgroup>
+            {shortcuts}
+          </footer>
+        "
+      ),
     );
 
     case(
@@ -406,20 +428,25 @@ mod tests {
         }),
         ..default()
       },
-      "
-        <video
-          autofocus
-          controls
-          src=/media/video/{fingerprint}/item/1></video>
-        <hgroup>
-          <h1>Video 1</h1>
-          <p>
-            <a href=/package/{fingerprint}>
-              <code>{fingerprint}</code>
-            </a>
-          </p>
-        </hgroup>
-      ",
+      format!(
+        "
+          <video
+            autofocus
+            controls
+            src=/media/video/{fingerprint}/item/1></video>
+          <footer>
+            <hgroup>
+              <h1>Video 1</h1>
+              <p>
+                <a href=/package/{fingerprint}>
+                  <code>{fingerprint}</code>
+                </a>
+              </p>
+            </hgroup>
+            {shortcuts}
+          </footer>
+        "
+      ),
     );
 
     case(
@@ -435,21 +462,26 @@ mod tests {
         }),
         ..default()
       },
-      "
-        <video
-          autofocus
-          controls
-          poster=/media/video/{fingerprint}/item/1/placeholder
-          src=/media/video/{fingerprint}/item/1></video>
-        <hgroup>
-          <h1>Video 1</h1>
-          <p>
-            <a href=/package/{fingerprint}>
-              <code>{fingerprint}</code>
-            </a>
-          </p>
-        </hgroup>
-      ",
+      format!(
+        "
+          <video
+            autofocus
+            controls
+            poster=/media/video/{fingerprint}/item/1/placeholder
+            src=/media/video/{fingerprint}/item/1></video>
+          <footer>
+            <hgroup>
+              <h1>Video 1</h1>
+              <p>
+                <a href=/package/{fingerprint}>
+                  <code>{fingerprint}</code>
+                </a>
+              </p>
+            </hgroup>
+            {shortcuts}
+          </footer>
+        "
+      ),
     );
 
     case(
@@ -461,18 +493,23 @@ mod tests {
         title: Some("baz".parse().unwrap()),
         ..default()
       },
-      "
-        <img src=/media/image/{fingerprint}/item/1 width=1 height=1>
-        <hgroup>
-          <h1>Image 1</h1>
-          <p>bar</p>
-          <p>
-            <a href=/package/{fingerprint}>
-              baz
-            </a>
-          </p>
-        </hgroup>
-      ",
+      format!(
+        "
+          <img src=/media/image/{fingerprint}/item/1 width=1 height=1>
+          <footer>
+            <hgroup>
+              <h1>Image 1</h1>
+              <p>bar</p>
+              <p>
+                <a href=/package/{fingerprint}>
+                  baz
+                </a>
+              </p>
+            </hgroup>
+            {shortcuts}
+          </footer>
+        "
+      ),
     );
   }
 
