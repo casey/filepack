@@ -347,9 +347,9 @@ mod tests {
     let shortcuts = "
             <button aria-label='Keyboard shortcuts' popovertarget=shortcuts title='Keyboard shortcuts'>?</button>
             <dl id=shortcuts popover>
-              <div><dt><kbd>p</kbd></dt><dd>previous item</dd></div>
-              <div><dt><kbd>n</kbd></dt><dd>next item</dd></div>
-              <div><dt><kbd>u</kbd></dt><dd>package</dd></div>
+              <div><dt><kbd>p</kbd></dt><dd>go to previous item</dd></div>
+              <div><dt><kbd>n</kbd></dt><dd>go to next item</dd></div>
+              <div><dt><kbd>u</kbd></dt><dd>go to package</dd></div>
             </dl>
     "
     .trim();
