@@ -1,6 +1,7 @@
 %% match self.media() {
 %%   Media::Audio { .. } => {
 <img src=/artwork/{{ self.fingerprint }}>
+<audio autofocus controls src=/media/audio/{{ self.fingerprint }}/item/{{ Ordinal(self.index) }}></audio>
 %%   }
 %%   Media::Image { items } => {
 %%     let dimensions = items[self.index].content.oriented_dimensions();
@@ -32,6 +33,3 @@
     </a>
   </p>
 </hgroup>
-%% if matches!(self.media(), Media::Audio { .. }) {
-<audio autofocus controls src=/media/audio/{{ self.fingerprint }}/item/{{ Ordinal(self.index) }}></audio>
-%% }

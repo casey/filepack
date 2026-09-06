@@ -24,6 +24,7 @@ audio:focus, video:focus {
 }
 
 hgroup {
+  background-color: var(--surface);
   overflow-wrap: anywhere;
   padding: var(--space-2);
 
