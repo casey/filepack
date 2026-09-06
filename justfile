@@ -24,6 +24,7 @@ open:
 install:
   cargo install --locked --path .
 
+[arg('branch', long)]
 deploy branch='master' remote='casey/filepack' domain='filepack.com':
   ssh root@{{domain}} '\
     export DEBIAN_FRONTEND=noninteractive \
