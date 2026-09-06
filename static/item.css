@@ -88,13 +88,14 @@ footer {
 }
 
 [popover] {
-  background-color: var(--surface);
+  background-color: transparent;
+  border: none;
   color: var(--text);
-  margin: auto;
   padding: 0;
 
-  &:not(:popover-open) {
-    display: none;
+  dl {
+    background-color: var(--surface);
+    margin: 0;
   }
 
   dt {
