@@ -353,6 +353,7 @@ mod tests {
       },
       "
         <img src=/artwork/{fingerprint}>
+        <audio autofocus controls src=/media/audio/{fingerprint}/item/1></audio>
         <hgroup>
           <h1>Track 1</h1>
           <p>bar</p>
@@ -362,7 +363,6 @@ mod tests {
             </a>
           </p>
         </hgroup>
-        <audio autofocus controls src=/media/audio/{fingerprint}/item/1></audio>
       ",
     );
 
