@@ -89,7 +89,7 @@ impl<'a> Bech32Decoder<'a> {
       bech32_error::Hrp { ty, actual },
     }
 
-    let mut fes = hrp_string.fe32_iter::<vec::IntoIter<u8>>();
+    let mut fes = hrp_string.fe32_iter();
 
     let version = fes.next().context(bech32_error::Truncated { ty })?;
 

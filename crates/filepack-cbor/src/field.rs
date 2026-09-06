@@ -1,5 +1,3 @@
-#![expect(clippy::needless_continue)]
-
 use super::*;
 
 #[derive(FromField)]
@@ -16,7 +14,12 @@ impl Field {
   }
 
   fn is_option(&self) -> bool {
-    if let Type::Path(TypePath { qself: None, path }) = &self.ty {
+    if let Type::Path(TypePath {
+      attrs: _,
+      path,
+      qself: None,
+    }) = &self.ty
+    {
       path.leading_colon.is_none() && path.segments.len() == 1 && path.segments[0].ident == "Option"
     } else {
       false
