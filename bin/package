@@ -13,9 +13,14 @@ echo "Installing rust toolchain for $TARGET..."
 rustup target add $TARGET
 
 echo "Building filepack..."
-if [[ $TARGET == aarch64-unknown-linux-musl ]]; then
-  export CC=aarch64-linux-gnu-gcc
-fi
+case $TARGET in
+  aarch64-unknown-linux-musl)
+    export CC=aarch64-linux-gnu-gcc
+    ;;
+  arm-unknown-linux-musleabihf | armv7-unknown-linux-musleabihf)
+    export CC=arm-linux-gnueabihf-gcc
+    ;;
+esac
 RUSTFLAGS="--deny warnings --codegen target-feature=+crt-static $TARGET_RUSTFLAGS" \
   cargo build --bin filepack --target $TARGET --release
 export -n CC

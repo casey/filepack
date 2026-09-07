@@ -85,6 +85,10 @@ jobs:
       if:   ${{ matrix.target == 'aarch64-unknown-linux-musl' }}
       run:  sudo apt-get install gcc-aarch64-linux-gnu libc6-dev-i386
 
+    - name: Install AArch64 Toolchain (Windows)
+      if:   ${{ matrix.target == 'aarch64-pc-windows-msvc' }}
+      run:  rustup target add aarch64-pc-windows-msvc
+
     - name: Install ARM Toolchain
       if:   >-
         ${{
@@ -94,9 +98,9 @@ jobs:
       run: |
         sudo apt-get install gcc-arm-linux-gnueabihf
 
-    - name: Install AArch64 Toolchain (Windows)
-      if:   ${{ matrix.target == 'aarch64-pc-windows-msvc' }}
-      run:  rustup target add aarch64-pc-windows-msvc
+    - name: Install musl Toolchain
+      if:   ${{ matrix.target == 'x86_64-unknown-linux-musl' }}
+      run:  sudo apt-get install musl-tools
 
     - name: Package
       id: package
