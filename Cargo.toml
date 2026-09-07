@@ -5,7 +5,7 @@ autotests = false
 categories = ["command-line-utilities", "cryptography", "multimedia"]
 description = "content-addressed packages"
 keywords = ["media", "packaging", "verification"]
-include = ["CHANGELOG.md", "CONTRIBUTING", "LICENSE", "README.md", "src", "tests"]
+include = ["CHANGELOG.md", "CONTRIBUTING", "LICENSE", "README.md", "src", "static", "templates", "tests"]
 
 authors.workspace = true
 edition.workspace = true
