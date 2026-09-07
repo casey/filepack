@@ -72,7 +72,7 @@ jobs:
     - prerelease
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Install Rust Toolchain
       run:  rustup toolchain install stable --profile minimal
@@ -113,7 +113,7 @@ jobs:
       shell: bash
 
     - name: Publish Archive
-      uses: softprops/action-gh-release@v2.0.8
+      uses: softprops/action-gh-release@v3.0.3
       if:   ${{ startsWith(github.ref, 'refs/tags/') }}
       with:
         draft: false
@@ -123,7 +123,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Publish Changelog
-      uses: softprops/action-gh-release@v2.0.8
+      uses: softprops/action-gh-release@v3.0.3
       if:   ${{ matrix.target == 'x86_64-unknown-linux-musl' }}
       with:
         draft: false
@@ -140,7 +140,7 @@ jobs:
     - prerelease
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Download Release Archives
       env:
@@ -159,7 +159,7 @@ jobs:
       run: cargo run create --deny distribution release
 
     - name: Publish Manifest
-      uses: softprops/action-gh-release@v2.0.8
+      uses: softprops/action-gh-release@v3.0.3
       with:
         draft: false
         files: release/filepack.json
