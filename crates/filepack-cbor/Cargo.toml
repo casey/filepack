@@ -3,7 +3,7 @@ name = "filepack-cbor"
 version = "0.0.0"
 description = "CBOR encode and decode derive macros for filepack"
 
-authors.workspace =true
+authors.workspace = true
 edition.workspace = true
 homepage.workspace = true
 license.workspace = true

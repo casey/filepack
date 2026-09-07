@@ -7,7 +7,7 @@ description = "content-addressed packages"
 keywords = ["media", "packaging", "verification"]
 include = ["CHANGELOG.md", "CONTRIBUTING", "LICENSE", "README.md", "src", "tests"]
 
-authors.workspace =true
+authors.workspace = true
 edition.workspace = true
 homepage.workspace = true
 license.workspace = true
