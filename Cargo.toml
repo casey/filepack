@@ -63,11 +63,8 @@ rand = "0.10.2"
 re_mp4 = "0.5.1"
 redb = "4.1.0"
 regex = "1.10.6"
-reqwest = { version = "0.13.3", default-features = false, features = ["blocking", "charset", "http2", "rustls-no-provider", "system-proxy"] }
 roxmltree = "0.21.1"
 rust-embed = { version = "8.11.0", features = ["mime-guess"] }
-rustls = { version = "0.23.40", default-features = false, features = ["logging", "ring", "std", "tls12"] }
-rustls-acme = { version = "0.15.2", default-features = false, features = ["axum", "ring", "tls12", "webpki-roots"] }
 serde = { version = "1.0.209", features = ["derive"] }
 serde_json = "1.0.127"
 serde_with = { version = "3.11.0", features = ["hex"] }
@@ -86,6 +83,21 @@ url = "2.5.8"
 usized.workspace = true
 walkdir = "2.5.0"
 zune-jpeg = "0.5.15"
+
+[dependencies.reqwest]
+version = "0.13.3"
+default-features = false
+features = ["blocking", "charset", "http2", "rustls-no-provider", "system-proxy"]
+
+[dependencies.rustls]
+version = "0.23.40"
+default-features = false
+features = ["logging", "ring", "std", "tls12"]
+
+[dependencies.rustls-acme]
+version = "0.15.2"
+default-features = false
+features = ["axum", "ring", "tls12", "webpki-roots"]
 
 [dev-dependencies]
 pretty_assertions = "1.4.1"
