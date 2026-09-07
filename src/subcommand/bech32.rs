@@ -42,9 +42,7 @@ impl Bech32 {
           bech32: bech32.clone(),
         })?;
 
-      let mut fes = hrp_string
-        .fe32_iter::<vec::IntoIter<u8>>()
-        .collect::<Vec<Fe32>>();
+      let mut fes = hrp_string.fe32_iter().collect::<Vec<Fe32>>();
 
       if let Some(prefix) = prefix {
         ensure! {

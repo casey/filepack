@@ -1,17 +1,23 @@
 [package]
 name = "filepack-cbor"
 version = "0.0.0"
-edition = "2024"
+description = "CBOR encode and decode derive macros for filepack"
+
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+repository.workspace = true
 
 [lib]
 proc-macro = true
 
 [dependencies]
-darling = "0.23.0"
+darling = "0.24.1"
 proc-macro2 = "1.0.0"
 quote = "1.0.0"
-syn = "2.0.0"
-usized = "0.0.2"
+syn = "3.0.0"
+usized.workspace = true
 
 [lints]
 workspace = true
