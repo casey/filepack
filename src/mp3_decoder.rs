@@ -122,7 +122,10 @@ impl<'a> Mp3Decoder<'a> {
 
     let size = usize::try_from(samples / 8 * bitrate / sample_rate + padding).unwrap();
 
-    ensure!(self.data.len() - offset >= size, mp3_error::Truncated);
+    let frame = self
+      .data
+      .get(offset..offset + size)
+      .context(mp3_error::Truncated)?;
 
     let side_info = match (version, channels == 1) {
       (Version::Mpeg1, false) => 32,
@@ -131,9 +134,7 @@ impl<'a> Mp3Decoder<'a> {
     };
 
     let metadata = matches!(
-      self
-        .data
-        .get(offset + 4 + side_info..offset + 8 + side_info),
+      frame.get(4 + side_info..8 + side_info),
       Some(b"Xing" | b"Info"),
     );
 
