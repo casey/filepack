@@ -268,7 +268,7 @@ mod tests {
   fn truncated() {
     assert_matches!(
       Decoder::new(&[]).bytes().unwrap_err(),
-      DecodeError::Truncated
+      DecodeError::Truncated,
     );
 
     assert_matches!(
