@@ -259,6 +259,33 @@ fn download_package_fails_on_hash_mismatch() {
 }
 
 #[test]
+fn download_package_fails_on_size_mismatch() {
+  let (root, hash) = Directory::new()
+    .insert_entry("foo", Entry::file(Hash::bytes(b"bar"), 4))
+    .cbor();
+
+  let server = Test::new()
+    .serve()
+    .write(&format!("files/{hash}"), root)
+    .write(&format!("files/{}", Hash::bytes(b"bar")), "bar")
+    .spawn();
+
+  Test::new()
+    .args([
+      "download",
+      "--server",
+      &server.address(),
+      "--package",
+      &Fingerprint::from(hash).to_string(),
+      "out",
+    ])
+    .stderr("error: downloaded file has size 4 in manifest but size 3 on disk\n")
+    .failure();
+
+  server.terminate().success();
+}
+
+#[test]
 fn download_retrieves_file() {
   let server = Test::new()
     .serve()

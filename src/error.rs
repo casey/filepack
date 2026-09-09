@@ -167,6 +167,12 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     expected: Hash,
   },
+  #[snafu(display("downloaded file has size {expected} in manifest but size {actual} on disk"))]
+  DownloadSizeMismatch {
+    actual: u64,
+    backtrace: Option<Backtrace>,
+    expected: u64,
+  },
   #[snafu(display("duplicate item in metadata: `{path}`"))]
   DuplicateItem {
     backtrace: Option<Backtrace>,
