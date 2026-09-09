@@ -67,11 +67,10 @@ impl<'a> Bech32Decoder<'a> {
   ) -> Result<impl Iterator<Item = Fe32> + Clone + use<'a>, Bech32Error> {
     let end = self.i + len;
 
-    if end > self.data.len() {
-      return Err(Bech32Error::Truncated { ty: self.ty });
-    }
-
-    let fes = &self.data[self.i..end];
+    let fes = self
+      .data
+      .get(self.i..end)
+      .context(bech32_error::Truncated { ty: self.ty })?;
 
     self.i = end;
 
