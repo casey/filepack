@@ -41,7 +41,7 @@ impl Download {
 
     let bar = ProgressBar::bytes(options, response.content_length().unwrap_or_default());
 
-    Self::write_response(&client, response, hash, path, &bar)?;
+    Self::write_response(&client, response, hash, path, &bar, None)?;
 
     Ok(())
   }
@@ -112,7 +112,7 @@ impl Download {
       for (component, entry) in directory.entries {
         let path = path.join(component);
         match entry {
-          Entry::File { hash, .. } => files.push((hash, path)),
+          Entry::File { hash, size } => files.push((hash, path, size)),
           Entry::Directory { hash, totals, .. } => stack.push((hash, path, Some(totals))),
         }
       }
@@ -125,15 +125,15 @@ impl Download {
       progress_bar,
     };
 
-    for (hash, path) in &files {
-      Self::download_package_file(&mut context, *hash, path)?;
+    for (hash, path, size) in &files {
+      Self::download_package_file(&mut context, *hash, path, *size)?;
     }
 
     let metadata_path = self.output.join(Metadata::CBOR_FILENAME);
     if let Some(cbor) = filesystem::read_opt(&metadata_path)? {
       let paths = files
         .iter()
-        .map(|(_hash, path)| {
+        .map(|(_hash, path, _size)| {
           let path = path.strip_prefix(&self.output).unwrap();
           path.try_into().context(error::Path { path })
         })
@@ -165,7 +165,12 @@ impl Download {
     Ok(())
   }
 
-  fn download_package_file(context: &mut Context, hash: Hash, path: &Utf8Path) -> Result {
+  fn download_package_file(
+    context: &mut Context,
+    hash: Hash,
+    path: &Utf8Path,
+    size: u64,
+  ) -> Result {
     ensure! {
       !filesystem::exists(path)?,
       error::FileAlreadyExists { path },
@@ -173,7 +178,14 @@ impl Download {
 
     let response = context.client.file(hash)?;
 
-    Self::write_response(&context.client, response, hash, path, &context.progress_bar)?;
+    Self::write_response(
+      &context.client,
+      response,
+      hash,
+      path,
+      &context.progress_bar,
+      Some(size),
+    )?;
 
     context.progress_bar.item_done();
 
@@ -194,6 +206,7 @@ impl Download {
     hash: Hash,
     path: &Utf8Path,
     bar: &ProgressBar,
+    expected_size: Option<u64>,
   ) -> Result {
     let output_directory = path
       .parent()
@@ -206,7 +219,7 @@ impl Download {
 
     let mut writer = HashingWriter::new(tempfile);
 
-    response
+    let size = response
       .copy_to(&mut bar.wrap_write(&mut writer))
       .with_context(|_| error::ResponseBody {
         url: client.file_url(hash),
@@ -217,6 +230,13 @@ impl Download {
     ensure! {
       actual == hash,
       error::DownloadHashMismatch { actual, expected: hash },
+    }
+
+    if let Some(expected) = expected_size {
+      ensure! {
+        size == expected,
+        error::DownloadSizeMismatch { actual: size, expected },
+      }
     }
 
     tempfile
