@@ -272,7 +272,7 @@ mod tests {
     );
 
     assert_matches!(
-      Decoder::new(&[0x42, 0x01]).bytes().unwrap_err()
+      Decoder::new(&[0x42, 0x01]).bytes().unwrap_err(),
       DecodeError::Truncated,
     );
 
