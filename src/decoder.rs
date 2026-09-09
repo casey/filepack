@@ -135,17 +135,16 @@ impl<'a> Decoder<'a> {
   }
 
   fn raw_slice(&mut self, n: usize) -> Result<&[u8], DecodeError> {
-    let start = self.position;
-    let end = start + n;
-
-    ensure! {
-      end <= self.buffer.len(),
-      decode_error::Truncated,
-    }
-
+    let end = self
+      .position
+      .checked_add(n)
+      .context(decode_error::Truncated)?;
+    let slice = self
+      .buffer
+      .get(self.position..end)
+      .context(decode_error::Truncated)?;
     self.position = end;
-
-    Ok(&self.buffer[start..end])
+    Ok(slice)
   }
 
   pub(crate) fn signed_integer(&mut self) -> Result<i128, DecodeError> {
@@ -267,7 +266,22 @@ mod tests {
 
   #[test]
   fn truncated() {
-    assert_matches!(Decoder::new(&[]).head(), Err(DecodeError::Truncated));
+    assert_matches!(
+      Decoder::new(&[]).bytes().unwrap_err(),
+      DecodeError::Truncated,
+    );
+
+    assert_matches!(
+      Decoder::new(&[0x42, 0x01]).bytes().unwrap_err(),
+      DecodeError::Truncated,
+    );
+
+    assert_matches!(
+      Decoder::new(&[0x5b, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff])
+        .bytes()
+        .unwrap_err(),
+      DecodeError::Truncated,
+    );
   }
 
   #[test]
