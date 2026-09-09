@@ -176,6 +176,11 @@ fingerprint mismatch: `{source}`
         continue;
       }
 
+      ensure! {
+        !entry.file_type().is_symlink(),
+        error::Symlink { path },
+      }
+
       empty.pop_if(|dir| path.starts_with(dir));
 
       if entry.file_type().is_dir() {
