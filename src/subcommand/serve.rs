@@ -97,6 +97,7 @@ pub(crate) struct Serve {
   #[arg(
     help = "Admin public key",
     long,
+    requires = "domain",
     requires = "restrict_writes",
     value_name = "KEY"
   )]
