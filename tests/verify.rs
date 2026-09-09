@@ -699,6 +699,33 @@ fn size_mismatch() {
 }
 
 #[test]
+fn symlink_error() {
+  Test::new()
+    .touch("foo")
+    .symlink("foo", "bar")
+    .write_manifest(
+      "manifest.filepack",
+      json! {
+        embedded: {},
+        package: {
+          bar: {
+            hash: EMPTY_HASH,
+            size: 0
+          },
+          foo: {
+            hash: EMPTY_HASH,
+            size: 0
+          }
+        },
+        signatures: [],
+      },
+    )
+    .args(["verify", "."])
+    .stderr("error: symlink at `bar`\n")
+    .failure();
+}
+
+#[test]
 fn unarchive_error() {
   let mut dir_encoder = Encoder::new();
   let mut dir_map = dir_encoder.map::<u64>(2);
