@@ -382,9 +382,34 @@ impl TestServerBuilder {
 }
 
 #[test]
+fn admin_key_requires_domain() {
+  assert_matches_regex!(
+    Serve::try_parse_from([
+      "filepack",
+      "--admin-key",
+      test::PUBLIC_KEY,
+      "--restrict-writes",
+    ])
+    .unwrap_err()
+    .to_string(),
+    "error: the following required arguments were not provided:\n  --domain.*"
+  );
+}
+
+#[test]
 fn admin_key_requires_restrict_writes() {
-  let err = Serve::try_parse_from(["filepack", "--admin-key", test::PUBLIC_KEY]).unwrap_err();
-  assert_eq!(err.kind(), clap::error::ErrorKind::MissingRequiredArgument);
+  assert_matches_regex!(
+    Serve::try_parse_from([
+      "filepack",
+      "--admin-key",
+      test::PUBLIC_KEY,
+      "--domain",
+      "foo",
+    ])
+    .unwrap_err()
+    .to_string(),
+    "error: the following required arguments were not provided:\n  --restrict-writes.*"
+  );
 }
 
 #[test]
