@@ -55,7 +55,7 @@ impl Manifest {
 
     let mut unexpected = BTreeSet::new();
     for (file_path, file) in manifest.files() {
-      if manifest.embedded.contains_key(&file.hash) && file_path != Metadata::CBOR_FILENAME {
+      if manifest.embedded.contains_key(&file.hash) && file_path != Metadata::DECO_FILENAME {
         unexpected.insert(file_path);
       }
     }
@@ -103,10 +103,10 @@ impl Manifest {
   }
 
   pub fn save(&self, path: &Utf8Path) -> Result {
-    let cbor = Archive::pack(self)
+    let deco = Archive::pack(self)
       .context(error::ManifestTotals { path })?
       .encode_to_vec();
-    filesystem::write(path, cbor)
+    filesystem::write(path, deco)
   }
 
   pub(crate) fn sign(

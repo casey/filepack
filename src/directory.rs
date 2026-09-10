@@ -73,7 +73,7 @@ mod tests {
     let mut subdirectory = Directory::new();
     subdirectory.insert_file("foo", b"xy");
 
-    let (cbor, _hash) = subdirectory.cbor();
+    let (deco, _hash) = subdirectory.deco();
 
     let mut directory = Directory::new();
     directory
@@ -84,7 +84,7 @@ mod tests {
       directory.totals(),
       Ok(Totals {
         directories: 1,
-        directory_size: cbor.len().into_u64(),
+        directory_size: deco.len().into_u64(),
         file_size: 3,
         files: 2,
       }),

@@ -5,7 +5,7 @@ pub(crate) struct Metadata {
   #[arg(long = "format", default_value_t)]
   format: Format,
   #[arg(
-    help = "Load CBOR metadata from <PATH>. May be path to metadata, to directory containing named \
+    help = "Load deco metadata from <PATH>. May be path to metadata, to directory containing named \
     `metadata.filemeta`, or omitted, in which case metadata named `metadata.filemeta` in the \
     current directory is loaded."
   )]
@@ -16,18 +16,18 @@ impl Metadata {
   pub(crate) fn run(self) -> Result {
     let path = if let Some(path) = self.path {
       if path.is_dir() {
-        path.join(crate::Metadata::CBOR_FILENAME)
+        path.join(crate::Metadata::DECO_FILENAME)
       } else {
         path
       }
     } else {
-      crate::Metadata::CBOR_FILENAME.into()
+      crate::Metadata::DECO_FILENAME.into()
     };
 
     let bytes = filesystem::read(&path)?;
 
     let metadata =
-      crate::Metadata::decode_from_slice(&bytes).context(error::DecodeMetadataCbor { path })?;
+      crate::Metadata::decode_from_slice(&bytes).context(error::DecodeMetadataDeco { path })?;
 
     match self.format {
       Format::Json => println!("{}", serde_json::to_string(&metadata).unwrap()),

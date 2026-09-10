@@ -3,7 +3,7 @@ use super::*;
 #[derive(
   Clone, Debug, Decode, DeserializeFromStr, Encode, Eq, Ord, PartialEq, PartialOrd, SerializeDisplay,
 )]
-#[cbor(transparent, validate)]
+#[deco(transparent, validate)]
 pub struct ComponentBuf(String);
 
 impl ComponentBuf {

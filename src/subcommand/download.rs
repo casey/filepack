@@ -69,11 +69,11 @@ impl Download {
 
       let response = client.file(hash)?;
 
-      let cbor = response
+      let deco = response
         .bytes()
         .with_context(|_| error::ResponseBody { url: url.clone() })?;
 
-      let actual = Hash::bytes(&cbor);
+      let actual = Hash::bytes(&deco);
 
       ensure! {
         actual == hash,
@@ -81,7 +81,7 @@ impl Download {
       }
 
       let directory =
-        Directory::decode_from_slice(&cbor).context(error::DecodeResponseDirectory { url })?;
+        Directory::decode_from_slice(&deco).context(error::DecodeResponseDirectory { url })?;
 
       let actual = directory
         .totals()
@@ -92,7 +92,7 @@ impl Download {
           .expect(expected)
           .context(error::DirectoryTotals { hash })?;
 
-        progress_bar.inc(cbor.len().into_u64());
+        progress_bar.inc(deco.len().into_u64());
       } else {
         assert!(totals.is_none());
         totals = Some(actual);
@@ -105,7 +105,7 @@ impl Download {
 
       progress_bar.item_done();
 
-      directories.insert(hash, cbor.to_vec());
+      directories.insert(hash, deco.to_vec());
 
       filesystem::create_dir_all(&path)?;
 
@@ -129,8 +129,8 @@ impl Download {
       Self::download_package_file(&mut context, *hash, path, *size)?;
     }
 
-    let metadata_path = self.output.join(Metadata::CBOR_FILENAME);
-    if let Some(cbor) = filesystem::read_opt(&metadata_path)? {
+    let metadata_path = self.output.join(Metadata::DECO_FILENAME);
+    if let Some(deco) = filesystem::read_opt(&metadata_path)? {
       let paths = files
         .iter()
         .map(|(_hash, path, _size)| {
@@ -139,8 +139,8 @@ impl Download {
         })
         .collect::<Result<HashSet<RelativePath>>>()?;
 
-      Metadata::decode_from_slice(&cbor)
-        .context(error::DecodeMetadataCbor {
+      Metadata::decode_from_slice(&deco)
+        .context(error::DecodeMetadataDeco {
           path: metadata_path,
         })?
         .check_files(&paths)?;

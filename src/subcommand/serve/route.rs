@@ -11,16 +11,16 @@ pub(crate) async fn api_delete_package(
 pub(crate) async fn api_gc(
   _: Authenticated,
   server: ServerExtension,
-) -> ServerResult<CborResponse<api::gc::Response>> {
-  block_in_place(|| Ok(CborResponse(server.gc()?)))
+) -> ServerResult<DecoResponse<api::gc::Response>> {
+  block_in_place(|| Ok(DecoResponse(server.gc()?)))
 }
 
 pub(crate) async fn api_missing(
   server: ServerExtension,
-  Cbor(request): Cbor<api::missing::Request, { MIB }>,
-) -> ServerResult<CborResponse<api::missing::Response>> {
+  Deco(request): Deco<api::missing::Request, { MIB }>,
+) -> ServerResult<DecoResponse<api::missing::Response>> {
   block_in_place(|| {
-    Ok(CborResponse(api::missing::Response {
+    Ok(DecoResponse(api::missing::Response {
       hashes: server.missing(&request.hashes)?.into(),
     }))
   })
@@ -28,9 +28,9 @@ pub(crate) async fn api_missing(
 
 pub(crate) async fn api_packages(
   server: ServerExtension,
-) -> ServerResult<CborResponse<api::packages::Response>> {
+) -> ServerResult<DecoResponse<api::packages::Response>> {
   block_in_place(|| {
-    Ok(CborResponse(api::packages::Response {
+    Ok(DecoResponse(api::packages::Response {
       packages: server.fingerprints()?.into(),
     }))
   })

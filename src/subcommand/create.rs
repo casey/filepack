@@ -52,7 +52,7 @@ impl Create {
     let metadata = if let Some(yaml) = filesystem::read_to_string_opt(&path)? {
       let metadata = yaml::Metadata::deserialize(&path, &yaml)?;
 
-      let path = root.join(Metadata::CBOR_FILENAME);
+      let path = root.join(Metadata::DECO_FILENAME);
 
       ensure! {
         self.force || !filesystem::exists(&path)?,
@@ -63,7 +63,7 @@ impl Create {
 
       Some(metadata)
     } else {
-      let path = root.join(Metadata::CBOR_FILENAME);
+      let path = root.join(Metadata::DECO_FILENAME);
 
       ensure! {
         !filesystem::exists(&path)?,
@@ -94,9 +94,9 @@ impl Create {
 
       metadata.validate(&root)?;
 
-      let cbor = metadata.encode_to_vec();
+      let deco = metadata.encode_to_vec();
 
-      Some((metadata, cbor))
+      Some((metadata, deco))
     } else {
       None
     };
@@ -160,12 +160,12 @@ impl Create {
     linter.lint_content(
       &root,
       &options,
-      metadata.as_ref().map(|(metadata, _cbor)| metadata),
+      metadata.as_ref().map(|(metadata, _deco)| metadata),
     )?;
 
     linter.done()?;
 
-    if let Some((metadata, _cbor)) = &metadata {
+    if let Some((metadata, _deco)) = &metadata {
       let files = paths.keys().cloned().collect::<HashSet<RelativePath>>();
 
       metadata.check_files(&files)?;
@@ -182,12 +182,12 @@ impl Create {
       },
     }
 
-    if let Some((_metadata, cbor)) = &metadata {
-      filesystem::write(&root.join(Metadata::CBOR_FILENAME), cbor)?;
+    if let Some((_metadata, deco)) = &metadata {
+      filesystem::write(&root.join(Metadata::DECO_FILENAME), deco)?;
 
       paths.insert(
-        Metadata::CBOR_FILENAME.parse().unwrap(),
-        cbor.len().into_u64(),
+        Metadata::DECO_FILENAME.parse().unwrap(),
+        deco.len().into_u64(),
       );
     }
 
@@ -214,8 +214,8 @@ impl Create {
       bar.inc(file.size);
     }
 
-    let embedded = if let Some((_metadata, cbor)) = metadata {
-      BTreeMap::from([(Hash::bytes(&cbor), cbor)])
+    let embedded = if let Some((_metadata, deco)) = metadata {
+      BTreeMap::from([(Hash::bytes(&deco), deco)])
     } else {
       BTreeMap::new()
     };

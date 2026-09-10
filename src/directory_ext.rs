@@ -1,7 +1,7 @@
 use super::*;
 
 pub trait DirectoryExt {
-  fn cbor(&self) -> (Vec<u8>, Hash);
+  fn deco(&self) -> (Vec<u8>, Hash);
 
   fn entry(&self) -> Entry;
 
@@ -13,18 +13,18 @@ pub trait DirectoryExt {
 }
 
 impl DirectoryExt for Directory {
-  fn cbor(&self) -> (Vec<u8>, Hash) {
-    let cbor = self.encode_to_vec();
-    let hash = Hash::bytes(&cbor);
-    (cbor, hash)
+  fn deco(&self) -> (Vec<u8>, Hash) {
+    let deco = self.encode_to_vec();
+    let hash = Hash::bytes(&deco);
+    (deco, hash)
   }
 
   fn entry(&self) -> Entry {
-    let cbor = self.encode_to_vec();
+    let deco = self.encode_to_vec();
 
     Entry::directory(
-      Hash::bytes(&cbor),
-      cbor.len().into_u64(),
+      Hash::bytes(&deco),
+      deco.len().into_u64(),
       self.totals().unwrap(),
     )
   }

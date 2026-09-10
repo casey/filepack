@@ -11,7 +11,7 @@ impl Attributes {
     let mut validate = false;
 
     for attribute in attributes {
-      if !attribute.path().is_ident("cbor") {
+      if !attribute.path().is_ident("deco") {
         continue;
       }
 
@@ -29,7 +29,7 @@ impl Attributes {
           validate = true;
           Ok(())
         } else {
-          Err(meta.error("unknown cbor attribute"))
+          Err(meta.error("unknown deco attribute"))
         }
       })?;
     }

@@ -20,7 +20,7 @@ fn download_checks_metadata() {
 
   let (directory, hash) = Directory::new()
     .insert_file("metadata.filemeta", &metadata)
-    .cbor();
+    .deco();
 
   let fingerprint = Fingerprint::from(Hash::bytes(&directory));
 
@@ -152,14 +152,14 @@ fn download_package_fails_on_directory_totals_mismatch() {
   let mut subdirectory = Directory::new();
   subdirectory.insert_file("foo", b"bar");
 
-  let (subdirectory_cbor, subdirectory_hash) = subdirectory.cbor();
+  let (subdirectory_deco, subdirectory_hash) = subdirectory.deco();
 
   let root = Directory::new()
     .insert_entry(
       "sub",
       Entry::Directory {
         hash: subdirectory_hash,
-        size: u64::try_from(subdirectory_cbor.len()).unwrap(),
+        size: u64::try_from(subdirectory_deco.len()).unwrap(),
         totals: Totals {
           directories: 0,
           directory_size: 0,
@@ -175,7 +175,7 @@ fn download_package_fails_on_directory_totals_mismatch() {
   let server = Test::new()
     .serve()
     .write(&format!("files/{}", Hash::bytes(&root)), root)
-    .write(&format!("files/{subdirectory_hash}"), subdirectory_cbor)
+    .write(&format!("files/{subdirectory_hash}"), subdirectory_deco)
     .spawn();
 
   Test::new()
@@ -204,7 +204,7 @@ fn download_package_fails_on_directory_totals_overflow() {
   let (root, hash) = Directory::new()
     .insert_entry("bar", Entry::file(Hash::bytes(b"bar"), u64::MAX))
     .insert_file("foo", b"f")
-    .cbor();
+    .deco();
 
   let server = Test::new()
     .serve()
@@ -262,7 +262,7 @@ fn download_package_fails_on_hash_mismatch() {
 fn download_package_fails_on_size_mismatch() {
   let (root, hash) = Directory::new()
     .insert_entry("foo", Entry::file(Hash::bytes(b"bar"), 4))
-    .cbor();
+    .deco();
 
   let server = Test::new()
     .serve()

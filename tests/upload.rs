@@ -278,7 +278,7 @@ fn upload_package_defaults_to_current_directory() {
 #[test]
 fn upload_package_fails_when_manifest_decode_fails() {
   Test::new()
-    .write("manifest.filepack", "not cbor")
+    .write("manifest.filepack", "not deco")
     .args([
       "upload",
       "--server",
@@ -309,10 +309,10 @@ fn upload_package_fails_when_manifest_missing() {
 
 #[test]
 fn upload_package_fails_when_package_is_not_directory() {
-  let (cbor, hash) = Directory::new().insert_file("package", b"foo").cbor();
+  let (deco, hash) = Directory::new().insert_file("package", b"foo").deco();
 
   let mut files = BTreeMap::new();
-  files.insert(hash, cbor);
+  files.insert(hash, deco);
 
   let mut encoder = Encoder::new();
   let mut archive = MapEncoder::<u64>::new();
@@ -405,7 +405,7 @@ fn upload_package_fails_when_root_file_missing() {
 }
 
 #[test]
-fn upload_package_fails_when_root_not_directory_cbor() {
+fn upload_package_fails_when_root_not_directory_deco() {
   let mut text_encoder = Encoder::new();
   text_encoder.text("not a directory");
   let junk = text_encoder.finish();
@@ -478,12 +478,12 @@ fn upload_package_serves_package_html() {
 
   let root = Hash::from(fingerprint);
 
-  let cbor = reqwest::blocking::get(format!("{}/file/{root}", server.address()))
+  let deco = reqwest::blocking::get(format!("{}/file/{root}", server.address()))
     .unwrap()
     .bytes()
     .unwrap();
 
-  let directory = Directory::decode(&mut Decoder::new(&cbor)).unwrap();
+  let directory = Directory::decode(&mut Decoder::new(&deco)).unwrap();
 
   server.assert_page(
     &format!("/package/{fingerprint}"),
@@ -555,12 +555,12 @@ fn upload_package_uploads_files() {
     .stderr("uploading 4 of 4 files\n")
     .success();
 
-  let cbor = reqwest::blocking::get(format!("{}/file/{root}", server.address()))
+  let deco = reqwest::blocking::get(format!("{}/file/{root}", server.address()))
     .unwrap()
     .bytes()
     .unwrap();
 
-  let directory = Directory::decode(&mut Decoder::new(&cbor)).unwrap();
+  let directory = Directory::decode(&mut Decoder::new(&deco)).unwrap();
 
   server.assert_page(
     &format!("/directory/{root}"),

@@ -1,24 +1,14 @@
 use super::*;
 
 pub(crate) trait ReqwestResponseExt: Sized {
-  fn cbor<T: Decode>(self) -> Result<T>;
-
   fn check_status(self) -> Result<Self>;
+
+  fn deco<T: Decode>(self) -> Result<T>;
 
   fn found(self) -> Result<bool>;
 }
 
 impl ReqwestResponseExt for reqwest::blocking::Response {
-  fn cbor<T: Decode>(self) -> Result<T> {
-    let url = self.url().clone();
-
-    let bytes = self
-      .bytes()
-      .with_context(|_| error::ResponseBody { url: url.clone() })?;
-
-    T::decode_from_slice(&bytes).context(error::DecodeResponse { url })
-  }
-
   fn check_status(self) -> Result<Self> {
     let status = self.status();
 
@@ -33,6 +23,16 @@ impl ReqwestResponseExt for reqwest::blocking::Response {
     }
 
     Ok(self)
+  }
+
+  fn deco<T: Decode>(self) -> Result<T> {
+    let url = self.url().clone();
+
+    let bytes = self
+      .bytes()
+      .with_context(|_| error::ResponseBody { url: url.clone() })?;
+
+    T::decode_from_slice(&bytes).context(error::DecodeResponse { url })
   }
 
   fn found(self) -> Result<bool> {

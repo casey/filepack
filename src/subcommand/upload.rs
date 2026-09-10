@@ -40,13 +40,13 @@ impl Upload {
       path: &context.path,
     };
 
-    let cbor = context.archive.file(hash).context(error_context)?;
+    let deco = context.archive.file(hash).context(error_context)?;
 
-    let directory = Directory::decode_from_slice(cbor)
+    let directory = Directory::decode_from_slice(deco)
       .context(archive_error::DirectoryDecode)
       .context(error_context)?;
 
-    context.client.put_file(hash, cbor.to_vec().into())?;
+    context.client.put_file(hash, deco.to_vec().into())?;
 
     for (component, entry) in &directory.entries {
       let file_path = file_path.join(component);

@@ -1,7 +1,7 @@
 use super::*;
 
 #[derive(Clone, Debug, Decode, DeserializeFromStr, Encode, PartialEq, SerializeDisplay)]
-#[cbor(transparent, validate)]
+#[deco(transparent, validate)]
 pub(crate) struct CheckedUrl(String);
 
 impl CheckedUrl {
@@ -83,7 +83,7 @@ mod tests {
 
   #[test]
   fn encoding() {
-    assert_cbor_eq(
+    assert_deco_eq(
       "http://example.com".parse::<CheckedUrl>().unwrap(),
       "http://example.com",
     );

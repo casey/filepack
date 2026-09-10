@@ -37,8 +37,6 @@ use {
     bech32_type::Bech32Type,
     bit_reader::BitReader,
     cause::Cause,
-    cbor::Cbor,
-    cbor_response::CborResponse,
     checked_url::CheckedUrl,
     chroma_subsampling::ChromaSubsampling,
     client::Client,
@@ -54,6 +52,8 @@ use {
     count::Count,
     dalek_signature_error::DalekSignatureError,
     database_metadata::DatabaseMetadata,
+    deco::Deco,
+    deco_response::DecoResponse,
     decode_error::DecodeError,
     dimensions::Dimensions,
     directory_tree_entry::DirectoryTreeEntry,
@@ -263,7 +263,7 @@ use {
   jpeg_builder::JpegBuilder,
   std::assert_matches,
   tempfile::TempDir,
-  test::{assert_cbor, assert_cbor_eq, assert_encoding, exif, tempdir},
+  test::{assert_deco, assert_deco_eq, assert_encoding, exif, tempdir},
   unindent::unindent,
   webm_builder::WebmBuilder,
 };
@@ -299,8 +299,6 @@ mod bech32_error;
 mod bech32_type;
 mod bit_reader;
 mod cause;
-mod cbor;
-mod cbor_response;
 mod checked_url;
 mod chroma_subsampling;
 mod client;
@@ -317,6 +315,8 @@ mod context;
 mod count;
 mod dalek_signature_error;
 mod database_metadata;
+mod deco;
+mod deco_response;
 mod decode;
 mod decode_error;
 mod decoder;

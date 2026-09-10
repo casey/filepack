@@ -10,7 +10,7 @@ pub struct Signature {
   #[n(1)]
   statement: Statement,
   #[n(2)]
-  #[cbor(decode_with = Signature::decode_signature, encode_with = Signature::encode_signature)]
+  #[deco(decode_with = Signature::decode_signature, encode_with = Signature::encode_signature)]
   signature: ed25519_dalek::Signature,
 }
 

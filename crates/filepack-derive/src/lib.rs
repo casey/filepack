@@ -22,7 +22,7 @@ mod parsed_variant;
 mod receiver;
 mod variant;
 
-#[proc_macro_derive(Decode, attributes(cbor, n))]
+#[proc_macro_derive(Decode, attributes(deco, n))]
 pub fn decode(input: TokenStream) -> TokenStream {
   let input = syn::parse_macro_input!(input as DeriveInput);
 
@@ -59,7 +59,7 @@ pub fn decode_from_str(input: TokenStream) -> TokenStream {
   .into()
 }
 
-#[proc_macro_derive(Encode, attributes(cbor, n))]
+#[proc_macro_derive(Encode, attributes(deco, n))]
 pub fn encode(input: TokenStream) -> TokenStream {
   let input = syn::parse_macro_input!(input as DeriveInput);
 
