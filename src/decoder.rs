@@ -1,5 +1,6 @@
 use super::*;
 
+#[derive(Clone)]
 pub struct Decoder<'a> {
   buffer: &'a [u8],
   position: usize,
@@ -76,14 +77,6 @@ impl<'a> Decoder<'a> {
       buffer,
       position: 0,
     }
-  }
-
-  pub(crate) fn position(&self) -> usize {
-    self.position
-  }
-
-  pub(crate) fn set_position(&mut self, position: usize) {
-    self.position = position;
   }
 
   pub(crate) fn signed_integer(&mut self) -> Result<i128, DecodeError> {
@@ -194,15 +187,6 @@ mod tests {
     case(&[0x82, 0x00, 0x00]);
     case(&[0x82, 0x01, 0x00]);
     case(&[0x83, 0xff, 0xff, 0x00]);
-  }
-
-  #[test]
-  fn position() {
-    let mut decoder = Decoder::new(&[0x01, 0x02]);
-    let position = decoder.position();
-    assert_eq!(decoder.integer().unwrap(), 1);
-    decoder.set_position(position);
-    assert_eq!(decoder.integer().unwrap(), 1);
   }
 
   #[test]
