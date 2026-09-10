@@ -71,39 +71,28 @@ impl Input {
         }
       });
 
-    let body = quote! {{
-      let mut array = decoder.array()?;
-      let discriminant = array.item::<u64>()?;
-      let value = match discriminant {
-        #(#unit_arms)*
-        #(#field_arms)*
-        _ => return Err(decode_error::InvalidDiscriminant {
-          discriminant,
-          name: stringify!(#name),
-        }.build()),
-      };
-      array.finish()?;
-      Ok(value)
-    }};
-
-    let body = if validate {
-      quote! {
-        let value = #body?;
-        Validate::validate(&value)?;
-        Ok(value)
-      }
-    } else {
-      body
-    };
-
     let generics = self.decode_generics(validate);
 
     let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
+    let validate = validate.then(|| quote! { Validate::validate(&value)?; });
+
     Ok(quote! {
       impl #impl_generics Decode for #name #ty_generics #where_clause {
         fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
-          #body
+          let mut array = decoder.array()?;
+          let discriminant = array.item::<u64>()?;
+          let value = match discriminant {
+            #(#unit_arms)*
+            #(#field_arms)*
+            _ => return Err(decode_error::InvalidDiscriminant {
+              discriminant,
+              name: stringify!(#name),
+            }.build()),
+          };
+          #validate
+          array.finish()?;
+          Ok(value)
         }
       }
     })
@@ -140,21 +129,11 @@ impl Input {
       }
     };
 
-    let body = if validate {
-      quote! {
-        let value = #constructor;
-        Validate::validate(&value)?;
-        Ok(value)
-      }
-    } else {
-      quote! {
-        Ok(#constructor)
-      }
-    };
-
     let generics = self.decode_generics(validate);
 
     let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+
+    let validate = validate.then(|| quote! { Validate::validate(&value)?; });
 
     Ok(quote! {
       impl #impl_generics Decode for #name #ty_generics #where_clause {
@@ -162,7 +141,9 @@ impl Input {
           let mut map = decoder.map::<u64>()?;
           #(#decode)*
           map.finish()?;
-          #body
+          let value = #constructor;
+          #validate
+          Ok(value)
         }
       }
     })
