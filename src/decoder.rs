@@ -3,19 +3,17 @@ use super::*;
 pub struct Decoder<'a> {
   buffer: &'a [u8],
   position: usize,
-  stack: Vec<usize>,
 }
 
 impl<'a> Decoder<'a> {
-  pub(crate) fn array<'b>(&'b mut self) -> Result<ArrayDecoder<'b, 'a>, DecodeError> {
-    let len = self.expect(MajorType::Array)?;
-    Ok(ArrayDecoder::new(self, len))
+  pub(crate) fn array(&mut self) -> Result<ArrayDecoder<'a>, DecodeError> {
+    Ok(ArrayDecoder::new(Self::new(self.bytes()?)))
   }
 
   pub(crate) fn boolean(&mut self) -> Result<bool, DecodeError> {
-    match self.expect(MajorType::Value)? {
-      20 => Ok(false),
-      21 => Ok(true),
+    match self.integer()? {
+      0 => Ok(false),
+      1 => Ok(true),
       value => Err(decode_error::Boolean { value }.build()),
     }
   }
@@ -29,141 +27,83 @@ impl<'a> Decoder<'a> {
     })
   }
 
-  pub(crate) fn bytes(&mut self) -> Result<&[u8], DecodeError> {
-    let len = self
-      .expect(MajorType::Bytes)?
-      .try_into()
-      .context(decode_error::SizeRange)?;
-
-    self.raw_slice(len)
-  }
-
-  fn expect(&mut self, expected: MajorType) -> Result<u64, DecodeError> {
-    let Head { major_type, value } = self.head()?;
-
-    ensure!(
-      major_type == expected,
-      decode_error::UnexpectedType {
-        actual: major_type,
-        expected,
-      }
+  pub(crate) fn bytes(&mut self) -> Result<&'a [u8], DecodeError> {
+    let head = Head::from(
+      *self
+        .buffer
+        .get(self.position)
+        .context(decode_error::Truncated)?,
     );
-
-    Ok(value)
+    let (start, len) = head.range(&self.buffer[self.position..])?;
+    let start = self.position + start;
+    let end = start.checked_add(len).context(decode_error::Truncated)?;
+    let bytes = self
+      .buffer
+      .get(start..end)
+      .context(decode_error::Truncated)?;
+    self.position = end;
+    Ok(bytes)
   }
 
   pub(crate) fn finish(self) -> Result<(), DecodeError> {
-    ensure!(
-      self.position == self.buffer.len(),
-      decode_error::TrailingBytes
-    );
+    ensure!(self.is_empty(), decode_error::TrailingBytes);
     Ok(())
   }
 
-  pub(crate) fn head(&mut self) -> Result<Head, DecodeError> {
-    let initial_byte = self.raw_array::<1>()?[0];
-
-    let major_type = MajorType::from_initial_byte(initial_byte);
-
-    let additional_information = initial_byte & 0b11111;
-
-    let value = match additional_information {
-      0..24 => additional_information.into(),
-      24 => u8::from_be_bytes(self.raw_array()?).into(),
-      25 => u16::from_be_bytes(self.raw_array()?).into(),
-      26 => u32::from_be_bytes(self.raw_array()?).into(),
-      27 => u64::from_be_bytes(self.raw_array()?),
-      value @ 28..31 => {
-        return Err(decode_error::ReservedAdditionalInformation { value }.build());
-      }
-      value @ 31 => {
-        return Err(decode_error::UnsupportedAdditionalInformation { value }.build());
-      }
-      32..=u8::MAX => unreachable!(),
-    };
-
-    let min = match additional_information {
-      0..24 => 0,
-      24 => 24,
-      25 => 0x100,
-      26 => 0x1_0000,
-      27 => 0x1_0000_0000,
-      _ => unreachable!(),
-    };
-
-    ensure!(value >= min, decode_error::OverlongInteger);
-
-    Ok(Head { major_type, value })
-  }
-
   pub(crate) fn integer(&mut self) -> Result<u64, DecodeError> {
-    self.expect(MajorType::UnsignedInteger)
+    let bytes = self.bytes()?;
+    ensure!(!bytes.is_empty(), decode_error::EmptyInteger);
+    ensure!(
+      bytes.len() == 1 || bytes.last() != Some(&0),
+      decode_error::OverlongInteger
+    );
+    ensure!(bytes.len() <= 8, decode_error::IntegerLength);
+    let mut value = [0; 8];
+    value[..bytes.len()].copy_from_slice(bytes);
+    Ok(u64::from_le_bytes(value))
   }
 
-  pub(crate) fn map<'b, K>(&'b mut self) -> Result<MapDecoder<'b, 'a, K>, DecodeError> {
-    let len = self.expect(MajorType::Map)?;
-    Ok(MapDecoder::new(self, len))
+  pub(crate) fn is_empty(&self) -> bool {
+    self.position == self.buffer.len()
+  }
+
+  pub(crate) fn map<K>(&mut self) -> Result<MapDecoder<'a, K>, DecodeError> {
+    Ok(MapDecoder::new(Self::new(self.bytes()?)))
   }
 
   pub fn new(buffer: &'a [u8]) -> Self {
     Self {
       buffer,
       position: 0,
-      stack: Vec::new(),
     }
   }
 
-  pub(crate) fn peek(&self) -> Result<MajorType, DecodeError> {
-    Ok(MajorType::from_initial_byte(
-      *self
-        .buffer
-        .get(self.position)
-        .context(decode_error::Truncated)?,
-    ))
+  pub(crate) fn position(&self) -> usize {
+    self.position
   }
 
-  pub(crate) fn pop_position(&mut self) {
-    self.position = self.stack.pop().unwrap();
-  }
-
-  pub(crate) fn push_position(&mut self) {
-    self.stack.push(self.position);
-  }
-
-  fn raw_array<const N: usize>(&mut self) -> Result<[u8; N], DecodeError> {
-    Ok(self.raw_slice(N)?.try_into().unwrap())
-  }
-
-  fn raw_slice(&mut self, n: usize) -> Result<&[u8], DecodeError> {
-    let end = self
-      .position
-      .checked_add(n)
-      .context(decode_error::Truncated)?;
-    let slice = self
-      .buffer
-      .get(self.position..end)
-      .context(decode_error::Truncated)?;
-    self.position = end;
-    Ok(slice)
+  pub(crate) fn set_position(&mut self, position: usize) {
+    self.position = position;
   }
 
   pub(crate) fn signed_integer(&mut self) -> Result<i128, DecodeError> {
-    let Head { major_type, value } = self.head()?;
-
-    match major_type {
-      MajorType::UnsignedInteger => Ok(value.into()),
-      MajorType::NegativeInteger => Ok(-1 - i128::from(value)),
-      actual => Err(decode_error::ExpectedInteger { actual }.build()),
+    let bytes = self.bytes()?;
+    let last = *bytes.last().context(decode_error::EmptyInteger)?;
+    if bytes.len() > 1 {
+      let previous = bytes[bytes.len() - 2];
+      ensure!(
+        !((last == 0 && previous < 0x80) || (last == 0xFF && previous >= 0x80)),
+        decode_error::OverlongInteger
+      );
     }
+    ensure!(bytes.len() <= 8, decode_error::IntegerLength);
+    let mut value = [if last < 0x80 { 0 } else { 0xFF }; 8];
+    value[..bytes.len()].copy_from_slice(bytes);
+    Ok(i64::from_le_bytes(value).into())
   }
 
   pub(crate) fn text(&mut self) -> Result<&str, DecodeError> {
-    let len = self
-      .expect(MajorType::Text)?
-      .try_into()
-      .context(decode_error::SizeRange)?;
-
-    str::from_utf8(self.raw_slice(len)?).context(decode_error::Unicode)
+    str::from_utf8(self.bytes()?).context(decode_error::Unicode)
   }
 }
 
@@ -174,14 +114,14 @@ mod tests {
   #[test]
   fn boolean() {
     assert_matches!(
-      Decoder::new(&[0xf6]).boolean(),
-      Err(DecodeError::Boolean { value: 22 }),
+      Decoder::new(&[0x02]).boolean(),
+      Err(DecodeError::Boolean { value: 2 }),
     );
   }
 
   #[test]
   fn byte_array() {
-    let mut decoder = Decoder::new(&[0x42, 0x01, 0x02]);
+    let mut decoder = Decoder::new(&[0x82, 0x01, 0x02]);
     assert_eq!(decoder.byte_array::<2>().unwrap(), [0x01, 0x02]);
     decoder.finish().unwrap();
   }
@@ -189,7 +129,7 @@ mod tests {
   #[test]
   fn byte_array_length_mismatch() {
     assert_matches!(
-      Decoder::new(&[0x42, 0x01, 0x02]).byte_array::<3>(),
+      Decoder::new(&[0x82, 0x01, 0x02]).byte_array::<3>(),
       Err(DecodeError::ArrayLength {
         actual: 2,
         expected: 3,
@@ -206,35 +146,78 @@ mod tests {
   }
 
   #[test]
+  fn integer_empty() {
+    assert_matches!(
+      Decoder::new(&[0x80]).integer(),
+      Err(DecodeError::EmptyInteger),
+    );
+  }
+
+  #[test]
+  fn invalid_integers() {
+    #[track_caller]
+    fn case(bytes: &[u8], signed: bool, expected: &str) {
+      let mut decoder = Decoder::new(bytes);
+      let error = if signed {
+        decoder.signed_integer().unwrap_err()
+      } else {
+        decoder.integer().unwrap_err()
+      };
+      assert_eq!(error.to_string(), expected);
+    }
+
+    for signed in [false, true] {
+      case(&[0x80], signed, "empty integer");
+      case(&[0x82, 0, 0], signed, "overlong integer");
+      case(
+        &[0x89, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        signed,
+        "integer exceeds eight bytes",
+      );
+    }
+    case(&[0x82, 0xff, 0xff], true, "overlong integer");
+    case(&[0x82, 0x80, 0xff], true, "overlong integer");
+    case(&[0x82, 0x7f, 0], true, "overlong integer");
+    case(&[0x82, 0x80, 0], false, "overlong integer");
+  }
+
+  #[test]
   fn overlong_integer() {
     #[track_caller]
     fn case(bytes: &[u8]) {
       assert_matches!(
-        Decoder::new(bytes).head(),
+        Decoder::new(bytes).integer(),
         Err(DecodeError::OverlongInteger),
       );
     }
 
-    case(&[0x18, 0x17]);
-    case(&[0x19, 0x00, 0xff]);
-    case(&[0x1a, 0x00, 0x00, 0xff, 0xff]);
-    case(&[0x1b, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff]);
+    case(&[0x82, 0x00, 0x00]);
+    case(&[0x82, 0x01, 0x00]);
+    case(&[0x83, 0xff, 0xff, 0x00]);
   }
 
   #[test]
-  fn position_stack() {
+  fn position() {
     let mut decoder = Decoder::new(&[0x01, 0x02]);
-    decoder.push_position();
+    let position = decoder.position();
     assert_eq!(decoder.integer().unwrap(), 1);
-    decoder.pop_position();
+    decoder.set_position(position);
     assert_eq!(decoder.integer().unwrap(), 1);
   }
 
   #[test]
-  fn reserved_additional_information() {
+  fn reserved() {
     assert_matches!(
-      Decoder::new(&[0x1c]).head(),
-      Err(DecodeError::ReservedAdditionalInformation { value }) if value == 28,
+      Decoder::new(&[0xf8]).bytes(),
+      Err(DecodeError::Reserved { value: 0xf8 }),
+    );
+  }
+
+  #[test]
+  fn signed_integer_empty() {
+    assert_matches!(
+      Decoder::new(&[0x80]).signed_integer(),
+      Err(DecodeError::EmptyInteger),
     );
   }
 
@@ -248,20 +231,8 @@ mod tests {
       );
     }
 
-    case::<i32>(&[0x1a, 0x80, 0x00, 0x00, 0x00]);
-    case::<i32>(&[0x3a, 0x80, 0x00, 0x00, 0x00]);
-    case::<i64>(&[0x1b, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
-    case::<i64>(&[0x3b, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
-  }
-
-  #[test]
-  fn signed_integer_type_mismatch() {
-    assert_matches!(
-      Decoder::new(&[0x60]).signed_integer(),
-      Err(DecodeError::ExpectedInteger {
-        actual: MajorType::Text,
-      }),
-    );
+    case::<i32>(&[0x85, 0x00, 0x00, 0x00, 0x80, 0x00]);
+    case::<i32>(&[0x85, 0xff, 0xff, 0xff, 0x7f, 0xff]);
   }
 
   #[test]
@@ -272,12 +243,12 @@ mod tests {
     );
 
     assert_matches!(
-      Decoder::new(&[0x42, 0x01]).bytes().unwrap_err(),
+      Decoder::new(&[0x82, 0x01]).bytes().unwrap_err(),
       DecodeError::Truncated,
     );
 
     assert_matches!(
-      Decoder::new(&[0x5b, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff])
+      Decoder::new(&[0xf7, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff])
         .bytes()
         .unwrap_err(),
       DecodeError::Truncated,
@@ -285,29 +256,10 @@ mod tests {
   }
 
   #[test]
-  fn type_mismatch() {
-    assert_matches!(
-      Decoder::new(&[0x60]).integer(),
-      Err(DecodeError::UnexpectedType {
-        expected: MajorType::UnsignedInteger,
-        actual: MajorType::Text
-      }),
-    );
-  }
-
-  #[test]
   fn unicode() {
     assert_matches!(
-      Decoder::new(&[0x62, 0xff, 0xfe]).text().map(drop),
+      Decoder::new(&[0x82, 0xff, 0xfe]).text().map(drop),
       Err(DecodeError::Unicode { .. }),
-    );
-  }
-
-  #[test]
-  fn unsupported_additional_information() {
-    assert_matches!(
-      Decoder::new(&[0x1f]).head(),
-      Err(DecodeError::UnsupportedAdditionalInformation { value }) if value == 31,
     );
   }
 }

@@ -49,7 +49,7 @@ impl Input {
       .iter()
       .filter(|variant| variant.fields.is_empty())
       .map(|ParsedVariant { ident, n, .. }| {
-        quote! { #n => Ok(Self::#ident), }
+        quote! { #n => Self::#ident, }
       });
 
     let field_arms = variants
@@ -64,40 +64,27 @@ impl Input {
             let mut map = decoder.map::<u64>()?;
             #(#decode)*
             map.finish()?;
-            array.finish()?;
-            Ok(Self::#ident {
+            Self::#ident {
               #(#idents,)*
-            })
+            }
           }
         }
       });
 
-    let body = quote! {
-      match decoder.peek()? {
-        MajorType::UnsignedInteger => {
-          let discriminant = decoder.integer()?;
-          match discriminant {
-            #(#unit_arms)*
-            _ => Err(decode_error::InvalidDiscriminant {
-              discriminant,
-              name: stringify!(#name),
-            }.build()),
-          }
-        }
-        MajorType::Array => {
-          let mut array = decoder.array()?;
-          let discriminant = array.item::<u64>()?;
-          match discriminant {
-            #(#field_arms)*
-            _ => Err(decode_error::InvalidDiscriminant {
-              discriminant,
-              name: stringify!(#name),
-            }.build()),
-          }
-        }
-        actual => Err(decode_error::UnexpectedVariantType { actual }.build()),
-      }
-    };
+    let body = quote! {{
+      let mut array = decoder.array()?;
+      let discriminant = array.item::<u64>()?;
+      let value = match discriminant {
+        #(#unit_arms)*
+        #(#field_arms)*
+        _ => return Err(decode_error::InvalidDiscriminant {
+          discriminant,
+          name: stringify!(#name),
+        }.build()),
+      };
+      array.finish()?;
+      Ok(value)
+    }};
 
     let body = if validate {
       quote! {
@@ -247,16 +234,16 @@ impl Input {
 
     let arms = variants.iter().map(|ParsedVariant { fields, ident, n }| {
       if fields.is_empty() {
-        quote! { Self::#ident => #n.encode(encoder), }
+        quote! { Self::#ident => #n.encode(&mut array), }
       } else {
         let idents = fields.iter().map(|field| field.ident);
-        let (length, items) = ParsedField::encode(fields, Receiver::Binding);
+        let items = ParsedField::encode(fields, Receiver::Binding);
         quote! {
           Self::#ident { #(#idents),* } => {
-            let mut array = encoder.array(2);
-            array.item(#n);
-            let mut map = array.element().map::<u64>(#length);
+            #n.encode(&mut array);
+            let mut map = MapEncoder::<u64>::new();
             #(#items)*
+            array.bytes(&map.finish());
           }
         }
       }
@@ -269,9 +256,11 @@ impl Input {
     Ok(quote! {
       impl #impl_generics Encode for #name #ty_generics #where_clause {
         fn encode(&self, encoder: &mut Encoder) {
+          let mut array = Encoder::new();
           match self {
             #(#arms)*
           }
+          encoder.bytes(&array.finish());
         }
       }
     })
@@ -286,7 +275,7 @@ impl Input {
 
     let fields = self.parse_fields()?;
 
-    let (length, items) = ParsedField::encode(&fields, Receiver::Field);
+    let items = ParsedField::encode(&fields, Receiver::Field);
 
     let generics = self.encode_generics();
 
@@ -295,8 +284,9 @@ impl Input {
     Ok(quote! {
       impl #impl_generics Encode for #name #ty_generics #where_clause {
         fn encode(&self, encoder: &mut Encoder) {
-          let mut map = encoder.map::<u64>(#length);
+          let mut map = MapEncoder::<u64>::new();
           #(#items)*
+          encoder.bytes(&map.finish());
         }
       }
     })

@@ -29,7 +29,7 @@ fn gc_removes_orphaned_package_data() {
 
   Test::new()
     .args(["gc", "--server", &server.address()])
-    .stdout("removed 1 directory and 2 files, freeing 52 B\n")
+    .stdout("removed 1 directory and 2 files, freeing 51 B\n")
     .success();
 
   Test::new()

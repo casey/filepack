@@ -25,10 +25,11 @@ where
   V: Encode,
 {
   fn encode(&self, encoder: &mut Encoder) {
-    let mut map = encoder.map::<&K>(self.len().into_u64());
+    let mut map = MapEncoder::<&K>::new();
     for (key, value) in self {
       map.item(key, value);
     }
+    encoder.bytes(&map.finish());
   }
 }
 
@@ -94,10 +95,11 @@ impl Encode for [u8] {
 
 impl<T: Encode> Encode for [T] {
   fn encode(&self, encoder: &mut Encoder) {
-    let mut array = encoder.array(self.len().into_u64());
+    let mut array = Encoder::new();
     for item in self {
-      array.item(item);
+      item.encode(&mut array);
     }
+    encoder.bytes(&array.finish());
   }
 }
 
@@ -113,55 +115,76 @@ mod tests {
 
   #[test]
   fn boolean() {
-    assert_cbor(false, "f4");
-    assert_cbor(true, "f5");
+    assert_cbor(false, "00");
+    assert_cbor(true, "01");
   }
 
   #[test]
   fn bytes() {
-    assert_cbor(Vec::<u8>::new(), "40");
-    assert_cbor(b"bar".to_vec(), "43626172");
+    assert_cbor(Vec::<u8>::new(), "80");
+    assert_cbor(b"bar".to_vec(), "83626172");
   }
 
   #[test]
   fn i32() {
     assert_cbor(0i32, "00");
-    assert_cbor(-1i32, "20");
-    assert_cbor(i32::MAX, "1a7fffffff");
-    assert_cbor(i32::MIN, "3a7fffffff");
+    assert_cbor(-1i32, "81ff");
+    assert_cbor(i32::MAX, "84ffffff7f");
+    assert_cbor(i32::MIN, "8400000080");
   }
 
   #[test]
   fn i64() {
     assert_cbor(0i64, "00");
-    assert_cbor(-1i64, "20");
-    assert_cbor(i64::MAX, "1b7fffffffffffffff");
-    assert_cbor(i64::MIN, "3b7fffffffffffffff");
+    assert_cbor(-1i64, "81ff");
+    assert_cbor(127i64, "7f");
+    assert_cbor(128i64, "828000");
+    assert_cbor(255i64, "82ff00");
+    assert_cbor(-128i64, "8180");
+    assert_cbor(-129i64, "827fff");
+    assert_cbor(i64::MAX, "88ffffffffffffff7f");
+    assert_cbor(i64::MIN, "880000000000000080");
   }
 
   #[test]
   fn map() {
     assert_cbor(
       BTreeMap::from([("bar".to_string(), 1u64), ("foo".to_string(), 2u64)]),
-      "a2636261720163666f6f02",
+      "8a836261720183666f6f02",
+    );
+  }
+
+  #[test]
+  fn nested_collections() {
+    assert_cbor(
+      vec![Vec::<String>::new(), vec![String::from("foo")]],
+      "86808483666f6f",
+    );
+    assert_cbor(
+      BTreeMap::from([(String::from("foo"), vec![0u64, 128])]),
+      "8883666f6f83008180",
     );
   }
 
   #[test]
   fn string() {
-    assert_cbor(String::new(), "60");
-    assert_cbor(String::from("foo"), "63666f6f");
+    assert_cbor(String::new(), "80");
+    assert_cbor(String::from("foo"), "83666f6f");
   }
 
   #[test]
   fn u64() {
     assert_cbor(0u64, "00");
-    assert_cbor(24u64, "1818");
-    assert_cbor(256u64, "190100");
+    assert_cbor(24u64, "18");
+    assert_cbor(127u64, "7f");
+    assert_cbor(128u64, "8180");
+    assert_cbor(255u64, "81ff");
+    assert_cbor(u64::MAX, "88ffffffffffffffff");
+    assert_cbor(256u64, "820001");
   }
 
   #[test]
   fn usize() {
-    assert_cbor(42usize, "182a");
+    assert_cbor(42usize, "2a");
   }
 }

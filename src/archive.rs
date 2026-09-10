@@ -300,10 +300,7 @@ mod tests {
     assert_matches!(
       archive.unpack(),
       Err(ArchiveError::DirectoryDecode {
-        source: DecodeError::UnexpectedType {
-          expected: MajorType::Map,
-          actual: MajorType::Text,
-        }
+        source: DecodeError::Truncated
       })
     );
   }
@@ -649,11 +646,11 @@ mod tests {
     };
 
     let mut encoder = Encoder::new();
-    let mut map = encoder.map::<u64>(3);
+    let mut map = MapEncoder::<u64>::new();
     map.item(0, public_key);
     map.item(1, &statement);
     map.item(2, &[0u8; 32][..]);
-    drop(map);
+    encoder.bytes(&map.finish());
     let signature_bytes = encoder.finish();
 
     let signature = builder.file(signature_bytes);

@@ -159,7 +159,7 @@ mod tests {
   fn hash() {
     assert_cbor(
       Hash::bytes(b"foo"),
-      "582004e0bb39f30b1a3feb89f536c93be15055482df748674b00d26e5a75777702e9",
+      "a004e0bb39f30b1a3feb89f536c93be15055482df748674b00d26e5a75777702e9",
     );
   }
 

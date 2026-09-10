@@ -146,7 +146,7 @@ mod tests {
     );
 
     assert_matches!(
-      Time::decode_from_slice(&hex::decode("8202a0").unwrap()),
+      Time::decode_from_slice(&hex::decode("820280").unwrap()),
       Err(DecodeError::InvalidDiscriminant {
         discriminant: 2,
         name: "Time",

@@ -1771,9 +1771,9 @@ fn missing_rejects_unsorted_hashes() {
   hashes.reverse();
 
   let mut encoder = Encoder::new();
-  let mut map = encoder.map::<u64>(1);
+  let mut map = MapEncoder::<u64>::new();
   map.item(0, hashes);
-  drop(map);
+  encoder.bytes(&map.finish());
 
   TestServer::new()
     .post("/api/missing")

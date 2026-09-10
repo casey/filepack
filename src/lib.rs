@@ -225,7 +225,6 @@ use {
 };
 
 pub use self::{
-  array_encoder::ArrayEncoder,
   component_buf::ComponentBuf,
   decode::Decode,
   decoder::Decoder,
@@ -241,7 +240,6 @@ pub use self::{
   functions::{gradient, gradient_alpha, install_default_crypto_provider},
   hash::Hash,
   language_error::LanguageError,
-  major_type::MajorType,
   manifest::Manifest,
   map_encoder::MapEncoder,
   metadata::Metadata,
@@ -289,7 +287,6 @@ mod archive_builder;
 mod archive_error;
 mod arguments;
 mod array_decoder;
-mod array_encoder;
 mod audio;
 mod audio_error;
 mod audio_metadata;
@@ -374,7 +371,6 @@ mod lint_error;
 mod lint_group;
 mod lint_selector;
 mod linter;
-mod major_type;
 mod manifest;
 mod map_decoder;
 mod map_encoder;

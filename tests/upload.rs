@@ -288,7 +288,7 @@ fn upload_package_fails_when_manifest_decode_fails() {
     .stderr(
       "
         error: failed to decode manifest at `manifest.filepack`
-               └─ expected map but found text
+               └─ truncated
       ",
     )
     .failure();
@@ -315,11 +315,11 @@ fn upload_package_fails_when_package_is_not_directory() {
   files.insert(hash, cbor);
 
   let mut encoder = Encoder::new();
-  let mut archive = encoder.map::<u64>(3);
+  let mut archive = MapEncoder::<u64>::new();
   archive.item(0, 0u64);
   archive.item(1, hash);
   archive.item(2, &files);
-  drop(archive);
+  encoder.bytes(&archive.finish());
 
   Test::new()
     .write("manifest.filepack", encoder.finish())
@@ -341,10 +341,10 @@ fn upload_package_fails_when_package_is_not_directory() {
 #[test]
 fn upload_package_fails_when_package_missing() {
   let mut dir_encoder = Encoder::new();
-  let mut dir_map = dir_encoder.map::<u64>(2);
+  let mut dir_map = MapEncoder::<u64>::new();
   dir_map.item(0, 0u64);
   dir_map.item(1, BTreeMap::<String, u64>::new());
-  drop(dir_map);
+  dir_encoder.bytes(&dir_map.finish());
   let dir_bytes = dir_encoder.finish();
 
   let root = Hash::bytes(&dir_bytes);
@@ -353,11 +353,11 @@ fn upload_package_fails_when_package_missing() {
   files.insert(root, dir_bytes);
 
   let mut encoder = Encoder::new();
-  let mut archive = encoder.map::<u64>(3);
+  let mut archive = MapEncoder::<u64>::new();
   archive.item(0, 0u64);
   archive.item(1, root);
   archive.item(2, &files);
-  drop(archive);
+  encoder.bytes(&archive.finish());
 
   Test::new()
     .write("manifest.filepack", encoder.finish())
@@ -381,11 +381,11 @@ fn upload_package_fails_when_root_file_missing() {
   let missing = Hash::bytes(b"missing");
 
   let mut encoder = Encoder::new();
-  let mut archive = encoder.map::<u64>(3);
+  let mut archive = MapEncoder::<u64>::new();
   archive.item(0, 0u64);
   archive.item(1, missing);
   archive.item(2, BTreeMap::<Hash, Vec<u8>>::new());
-  drop(archive);
+  encoder.bytes(&archive.finish());
 
   Test::new()
     .write("manifest.filepack", encoder.finish())
@@ -415,11 +415,11 @@ fn upload_package_fails_when_root_not_directory_cbor() {
   files.insert(root, junk);
 
   let mut encoder = Encoder::new();
-  let mut archive = encoder.map::<u64>(3);
+  let mut archive = MapEncoder::<u64>::new();
   archive.item(0, 0u64);
   archive.item(1, root);
   archive.item(2, &files);
-  drop(archive);
+  encoder.bytes(&archive.finish());
 
   Test::new()
     .write("manifest.filepack", encoder.finish())
@@ -433,7 +433,7 @@ fn upload_package_fails_when_root_not_directory_cbor() {
       "
         error: failed to unarchive manifest
                ├─ failed to decode directory
-               └─ expected map but found text
+               └─ invalid discriminant 111 for enum Version
       ",
     )
     .failure();

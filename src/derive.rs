@@ -15,7 +15,7 @@ fn all_optional_all_none() {
       bar: None,
       baz: None,
     },
-    "a0",
+    "80",
   );
 }
 
@@ -34,7 +34,7 @@ fn all_optional_all_some() {
       bar: Some(1),
       baz: Some("foo".into()),
     },
-    "a200010163666f6f",
+    "8700010183666f6f",
   );
 }
 
@@ -53,7 +53,7 @@ fn all_optional_mixed() {
       bar: Some(1),
       baz: None,
     },
-    "a10001",
+    "820001",
   );
 
   assert_cbor(
@@ -61,7 +61,7 @@ fn all_optional_mixed() {
       bar: None,
       baz: Some("foo".into()),
     },
-    "a10163666f6f",
+    "850183666f6f",
   );
 }
 
@@ -80,7 +80,7 @@ fn all_required() {
       bar: 42,
       baz: "foo".into(),
     },
-    "a200182a0163666f6f",
+    "87002a0183666f6f",
   );
 }
 
@@ -106,11 +106,11 @@ fn decode_from_str() {
   }
 
   assert_eq!(
-    Foo::decode_from_slice(&[0x63, 0x66, 0x6f, 0x6f]).unwrap(),
+    Foo::decode_from_slice(&[0x83, 0x66, 0x6f, 0x6f]).unwrap(),
     Foo("foo".to_string()),
   );
 
-  let err = Foo::decode_from_slice(&[0x63, 0x62, 0x61, 0x72]).unwrap_err();
+  let err = Foo::decode_from_slice(&[0x83, 0x62, 0x61, 0x72]).unwrap_err();
 
   assert_matches!(
     err,
@@ -135,11 +135,11 @@ fn decode_with_optional() {
   }
 
   assert_eq!(
-    Foo::decode_from_slice(&[0xa1, 0x00, 0x18, 0x63]).unwrap(),
+    Foo::decode_from_slice(&[0x82, 0x00, 0x63]).unwrap(),
     Foo { bar: Some(100) },
   );
 
-  assert_eq!(Foo::decode_from_slice(&[0xa0]).unwrap(), Foo { bar: None });
+  assert_eq!(Foo::decode_from_slice(&[0x80]).unwrap(), Foo { bar: None });
 }
 
 #[test]
@@ -156,7 +156,7 @@ fn decode_with_required() {
   }
 
   assert_eq!(
-    Foo::decode_from_slice(&[0xa1, 0x00, 0x18, 0x63]).unwrap(),
+    Foo::decode_from_slice(&[0x82, 0x00, 0x63]).unwrap(),
     Foo { bar: 100 },
   );
 }
@@ -172,7 +172,7 @@ fn encode_display() {
     }
   }
 
-  assert_eq!(Foo.encode_to_vec(), [0x63, 0x66, 0x6f, 0x6f]);
+  assert_eq!(Foo.encode_to_vec(), [0x83, 0x66, 0x6f, 0x6f]);
 }
 
 #[test]
@@ -195,10 +195,10 @@ fn encode_with_optional() {
       bar: Some(Foreign(99)),
     }
     .encode_to_vec(),
-    [0xa1, 0x00, 0x18, 0x64],
+    [0x82, 0x00, 0x64],
   );
 
-  assert_eq!(Foo { bar: None }.encode_to_vec(), [0xa0]);
+  assert_eq!(Foo { bar: None }.encode_to_vec(), [0x80]);
 }
 
 #[test]
@@ -216,10 +216,7 @@ fn encode_with_required() {
     bar: Foreign,
   }
 
-  assert_eq!(
-    Foo { bar: Foreign(99) }.encode_to_vec(),
-    [0xa1, 0x00, 0x18, 0x64],
-  );
+  assert_eq!(Foo { bar: Foreign(99) }.encode_to_vec(), [0x82, 0x00, 0x64],);
 }
 
 #[test]
@@ -236,7 +233,7 @@ fn enum_array_invalid_discriminant() {
   }
 
   assert_matches!(
-    Foo::decode_from_slice(&[0x82, 0x05, 0xa0]),
+    Foo::decode_from_slice(&[0x82, 0x05, 0x80]),
     Err(DecodeError::InvalidDiscriminant {
       discriminant: 5,
       name: "Foo",
@@ -256,7 +253,7 @@ fn enum_array_missing_element() {
   }
 
   assert_matches!(
-    Foo::decode_from_slice(&[0x81, 0x00]),
+    Foo::decode_from_slice(&[0x00]),
     Err(DecodeError::MissingElement),
   );
 }
@@ -273,7 +270,7 @@ fn enum_array_unconsumed_elements() {
   }
 
   assert_matches!(
-    Foo::decode_from_slice(&[0x83, 0x00, 0xa1, 0x00, 0x05, 0x00]),
+    Foo::decode_from_slice(&[0x85, 0x00, 0x82, 0x00, 0x05, 0x00]),
     Err(DecodeError::UnconsumedElements),
   );
 }
@@ -298,7 +295,7 @@ fn enum_invalid_discriminant() {
   }
 
   case(&[0x01], 1);
-  case(&256u64.encode_to_vec(), 256);
+  case(&vec![256u64].encode_to_vec(), 256);
 }
 
 #[test]
@@ -315,7 +312,7 @@ fn enum_mixed() {
   }
 
   assert_cbor(Foo::Bar, "00");
-  assert_cbor(Foo::Baz { baz: 99 }, "8201a1001863");
+  assert_cbor(Foo::Baz { baz: 99 }, "8401820063");
 }
 
 #[test]
@@ -336,7 +333,7 @@ fn enum_named_field() {
       bar: 42,
       baz: "foo".into(),
     },
-    "8200a200182a0163666f6f",
+    "890087002a0183666f6f",
   );
 }
 
@@ -358,10 +355,10 @@ fn enum_named_field_optional() {
       bar: Some(1),
       baz: 2,
     },
-    "8200a200010102",
+    "86008400010102",
   );
 
-  assert_cbor(Foo::Bar { bar: None, baz: 2 }, "8200a10102");
+  assert_cbor(Foo::Bar { bar: None, baz: 2 }, "8400820102");
 }
 
 #[test]
@@ -379,7 +376,7 @@ fn enum_round_trip() {
 }
 
 #[test]
-fn enum_unexpected_type() {
+fn enum_unconsumed_unit_payload() {
   #[derive(Debug, Decode)]
   enum Foo {
     #[n(0)]
@@ -387,10 +384,8 @@ fn enum_unexpected_type() {
   }
 
   assert_matches!(
-    Foo::decode_from_slice(&"foo".encode_to_vec()),
-    Err(DecodeError::UnexpectedVariantType {
-      actual: MajorType::Text,
-    }),
+    Foo::decode_from_slice(&[0x82, 0x00, 0x00]),
+    Err(DecodeError::UnconsumedElements),
   );
 }
 
@@ -414,7 +409,7 @@ fn enum_variant_encode_with() {
 
   assert_eq!(
     Foo::Bar { bar: Foreign(99) }.encode_to_vec(),
-    [0x82, 0x00, 0xa1, 0x00, 0x18, 0x64],
+    [0x84, 0x00, 0x82, 0x00, 0x64],
   );
 }
 
@@ -433,7 +428,7 @@ fn mixed_required_and_optional() {
       bar: Some(1),
       baz: "foo".into(),
     },
-    "a200010163666f6f",
+    "8700010183666f6f",
   );
 
   assert_cbor(
@@ -441,7 +436,7 @@ fn mixed_required_and_optional() {
       bar: None,
       baz: "foo".into(),
     },
-    "a10163666f6f",
+    "850183666f6f",
   );
 }
 
@@ -453,7 +448,7 @@ fn single_field() {
     bar: u64,
   }
 
-  assert_cbor(Foo { bar: 99 }, "a1001863");
+  assert_cbor(Foo { bar: 99 }, "820063");
 }
 
 #[test]
@@ -464,7 +459,7 @@ fn transparent_named() {
     bar: String,
   }
 
-  assert_cbor(Foo { bar: "foo".into() }, "63666f6f");
+  assert_cbor(Foo { bar: "foo".into() }, "83666f6f");
   assert_cbor_eq(Foo { bar: "foo".into() }, "foo");
 }
 
@@ -474,7 +469,7 @@ fn transparent_newtype() {
   #[cbor(transparent)]
   struct Foo(u64);
 
-  assert_cbor(Foo(99), "1863");
+  assert_cbor(Foo(99), "63");
   assert_cbor_eq(Foo(99), 99u64);
 }
 
@@ -497,7 +492,7 @@ fn validate() {
     }
   }
 
-  assert_cbor(Foo("foo".into()), "63666f6f");
+  assert_cbor(Foo("foo".into()), "83666f6f");
 
   assert_matches!(
     Foo::decode_from_slice(&"bar".encode_to_vec()),
@@ -534,7 +529,7 @@ fn validate_enum() {
     }
   }
 
-  assert_cbor(Foo::Bar { baz: "foo".into() }, "8200a10063666f6f");
+  assert_cbor(Foo::Bar { baz: "foo".into() }, "8700850083666f6f");
 
   assert_matches!(
     Foo::decode_from_slice(&Foo::Bar { baz: "bar".into() }.encode_to_vec()),
@@ -567,7 +562,7 @@ fn validate_struct() {
     }
   }
 
-  assert_cbor(Foo { bar: "foo".into() }, "a10063666f6f");
+  assert_cbor(Foo { bar: "foo".into() }, "850083666f6f");
 
   assert_matches!(
     Foo::decode_from_slice(&Foo { bar: "bar".into() }.encode_to_vec()),

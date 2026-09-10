@@ -1,71 +1,51 @@
 use super::*;
 
+#[derive(Default)]
 pub struct Encoder {
-  buffer: Vec<u8>,
+  pub(crate) buffer: Vec<u8>,
 }
 
 impl Encoder {
-  pub fn array(&mut self, length: u64) -> ArrayEncoder {
-    ArrayEncoder::new(self, length)
-  }
-
   pub fn boolean(&mut self, boolean: bool) {
-    self.head(MajorType::Value.head(if boolean { 21 } else { 20 }));
+    self.integer(u64::from(boolean));
   }
 
   pub fn bytes(&mut self, bytes: &[u8]) {
-    self.head(MajorType::Bytes.head(bytes.len().into_u64()));
-    self.buffer.extend(bytes);
+    Head::from(bytes).encode(bytes, self);
+    self.buffer.extend_from_slice(bytes);
   }
 
   pub fn finish(self) -> Vec<u8> {
     self.buffer
   }
 
-  pub(crate) fn head(&mut self, head: Head) {
-    let i = self.buffer.len();
-
-    if head.value < 24 {
-      self.buffer.push(head.value.try_into().unwrap());
-    } else if let Ok(n) = u8::try_from(head.value) {
-      self.buffer.push(24);
-      self.buffer.push(n);
-    } else if let Ok(n) = u16::try_from(head.value) {
-      self.buffer.push(25);
-      self.buffer.extend(n.to_be_bytes());
-    } else if let Ok(n) = u32::try_from(head.value) {
-      self.buffer.push(26);
-      self.buffer.extend(n.to_be_bytes());
-    } else {
-      self.buffer.push(27);
-      self.buffer.extend(head.value.to_be_bytes());
-    }
-
-    self.buffer[i] |= head.major_type.value() << 5;
-  }
-
   pub fn integer(&mut self, integer: u64) {
-    self.head(MajorType::UnsignedInteger.head(integer));
-  }
-
-  pub fn map<K: Encode + PartialOrd>(&mut self, length: u64) -> MapEncoder<K> {
-    MapEncoder::new(self, length)
+    let bytes = integer.to_le_bytes();
+    let len = bytes
+      .iter()
+      .rposition(|&byte| byte != 0)
+      .unwrap_or_default()
+      + 1;
+    self.bytes(&bytes[..len]);
   }
 
   pub fn new() -> Self {
-    Self { buffer: Vec::new() }
+    Self::default()
   }
 
   pub fn signed_integer(&mut self, integer: i64) {
-    if integer.is_negative() {
-      self.head(MajorType::NegativeInteger.head(integer.unsigned_abs() - 1));
-    } else {
-      self.integer(integer.unsigned_abs());
+    let bytes = integer.to_le_bytes();
+    let mut len = bytes.len();
+    while len > 1
+      && ((bytes[len - 1] == 0 && bytes[len - 2] < 0x80)
+        || (bytes[len - 1] == 0xFF && bytes[len - 2] >= 0x80))
+    {
+      len -= 1;
     }
+    self.bytes(&bytes[..len]);
   }
 
   pub fn text(&mut self, text: &str) {
-    self.head(MajorType::Text.head(text.len().into_u64()));
-    self.buffer.extend(text.as_bytes());
+    self.bytes(text.as_bytes());
   }
 }
