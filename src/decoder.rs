@@ -90,7 +90,8 @@ impl<'a> Decoder<'a> {
       );
     }
     ensure!(bytes.len() <= 8, decode_error::IntegerLength);
-    let mut value = [if last < 0x80 { 0 } else { 0xFF }; 8];
+    let sign = if last < 0x80 { 0x00 } else { 0xFF };
+    let mut value = [sign; 8];
     value[..bytes.len()].copy_from_slice(bytes);
     Ok(i64::from_le_bytes(value).into())
   }
