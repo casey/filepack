@@ -1,5 +1,25 @@
 use super::*;
 
+/// The first byte of a deco-encoded byte string.
+///
+/// The encoding of string depends its length and value:
+///
+/// - small: a single byte whose value is in [0, 127]
+/// - medium: a string of length [0, 111]
+/// - large: a string with length [0, 2^64-1]
+///
+/// Eight head values are reserved for future extensions.
+///
+/// Head byte ranges for the three string lengths and reserved values:
+///
+/// ```text
+/// - 00-7F: literal single byte (0-127)
+/// - 80-EF: `value - 0x80` bytes follow (0-111 bytes)
+/// - F0-F7: `value - 0xEF` length bytes (1-8 length bytes)
+/// - F8-FF: eight reserved values
+/// ```
+///
+/// Strings must be encoded with the smallest head byte possible.
 #[allow(clippy::arbitrary_source_item_ordering)]
 #[derive(Debug, PartialEq)]
 pub(crate) enum Head {
