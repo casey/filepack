@@ -3,7 +3,7 @@ use super::*;
 #[derive(
   Clone, Debug, Decode, DeserializeFromStr, Encode, Eq, Ord, PartialEq, PartialOrd, SerializeDisplay,
 )]
-#[cbor(transparent, validate)]
+#[deco(transparent, validate)]
 pub struct Text(String);
 
 impl Text {
@@ -136,6 +136,6 @@ mod tests {
 
   #[test]
   fn encoding() {
-    assert_cbor_eq("foo".parse::<Text>().unwrap(), "foo");
+    assert_deco_eq("foo".parse::<Text>().unwrap(), "foo");
   }
 }

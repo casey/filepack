@@ -55,7 +55,7 @@ fn create_checks_metadata() {
 }
 
 #[test]
-fn create_does_not_write_metadata_cbor_on_failure() {
+fn create_does_not_write_metadata_deco_on_failure() {
   Test::new()
     .write(
       "metadata.yaml",
@@ -713,7 +713,7 @@ fn create_rejects_invalid_videos() {
 }
 
 #[test]
-fn create_rejects_metadata_cbor_without_yaml() {
+fn create_rejects_metadata_deco_without_yaml() {
   Test::new()
     .touch("README.md")
     .write(
@@ -789,7 +789,7 @@ fn image_alpha(width: u32, height: u32, alpha: u8, image_format: ImageFormat) ->
 }
 
 #[test]
-fn metadata_cbor_already_exists() {
+fn metadata_deco_already_exists() {
   Test::new()
     .write("metadata.yaml", "title: Foo")
     .touch("metadata.filemeta")
@@ -799,7 +799,7 @@ fn metadata_cbor_already_exists() {
 }
 
 #[test]
-fn metadata_cbor_force() {
+fn metadata_deco_force() {
   Test::new()
     .write("metadata.yaml", "title: Foo")
     .touch("metadata.filemeta")

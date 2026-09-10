@@ -28,7 +28,7 @@ impl Client {
   }
 
   pub(crate) fn gc(&self) -> Result<api::gc::Response> {
-    self.post("api/gc")?.cbor()
+    self.post("api/gc")?.deco()
   }
 
   fn get(&self, path: &str) -> Result<reqwest::blocking::Response> {
@@ -54,7 +54,7 @@ impl Client {
     Ok(
       self
         .post_with_body("api/missing", body)?
-        .cbor::<api::missing::Response>()?
+        .deco::<api::missing::Response>()?
         .hashes
         .into_iter()
         .collect(),
@@ -106,7 +106,7 @@ impl Client {
     Ok(
       self
         .get("api/packages")?
-        .cbor::<api::packages::Response>()?
+        .deco::<api::packages::Response>()?
         .packages,
     )
   }

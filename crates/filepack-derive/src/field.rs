@@ -1,7 +1,7 @@
 use super::*;
 
 #[derive(FromField)]
-#[darling(forward_attrs(cbor, n))]
+#[darling(forward_attrs(deco, n))]
 pub(crate) struct Field {
   attrs: Vec<Attribute>,
   ident: Option<Ident>,
@@ -47,7 +47,7 @@ impl Field {
     let mut encode_with = None;
 
     for attribute in &self.attrs {
-      if !attribute.path().is_ident("cbor") {
+      if !attribute.path().is_ident("deco") {
         continue;
       }
 
@@ -65,7 +65,7 @@ impl Field {
           encode_with = Some(meta.value()?.parse::<Path>()?);
           Ok(())
         } else {
-          Err(meta.error("unknown cbor attribute"))
+          Err(meta.error("unknown deco attribute"))
         }
       })?;
     }

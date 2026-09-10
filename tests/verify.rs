@@ -794,9 +794,9 @@ fn verify_checks_metadata() {
     .arg("create")
     .success();
 
-  let cbor = fs::read(test.path().join("metadata.filemeta")).unwrap();
+  let deco = fs::read(test.path().join("metadata.filemeta")).unwrap();
 
-  let hash = blake3::hash(&cbor).to_string();
+  let hash = blake3::hash(&deco).to_string();
 
   test
     .remove_file("README.md")

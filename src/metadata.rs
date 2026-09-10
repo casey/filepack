@@ -31,7 +31,7 @@ pub struct Metadata {
 }
 
 impl Metadata {
-  pub(crate) const CBOR_FILENAME: &'static str = "metadata.filemeta";
+  pub(crate) const DECO_FILENAME: &'static str = "metadata.filemeta";
   pub(crate) const YAML_FILENAME: &'static str = "metadata.yaml";
 
   fn check_colophon(colophon: &RelativePath) -> Result {
@@ -60,7 +60,7 @@ impl Metadata {
       .files()
       .into_iter()
       .chain(iter::once(Self::YAML_FILENAME.parse().unwrap()))
-      .chain(iter::once(Self::CBOR_FILENAME.parse().unwrap()))
+      .chain(iter::once(Self::DECO_FILENAME.parse().unwrap()))
       .collect::<HashSet<RelativePath>>();
 
     let mut extra = present

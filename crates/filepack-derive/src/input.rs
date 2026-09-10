@@ -3,7 +3,7 @@ use super::*;
 #[derive(FromDeriveInput)]
 #[darling(
   supports(struct_named, struct_newtype, enum_named, enum_unit),
-  forward_attrs(cbor)
+  forward_attrs(deco)
 )]
 pub(crate) struct Input {
   attrs: Vec<Attribute>,
@@ -24,7 +24,7 @@ impl Input {
         if transparent {
           Err(Error::new_spanned(
             &self.ident,
-            "#[cbor(transparent)] cannot be used with enums",
+            "#[deco(transparent)] cannot be used with enums",
           ))
         } else {
           self.decode_enum(validate)
@@ -211,7 +211,7 @@ impl Input {
         if transparent {
           Err(Error::new_spanned(
             &self.ident,
-            "#[cbor(transparent)] cannot be used with enums",
+            "#[deco(transparent)] cannot be used with enums",
           ))
         } else {
           self.encode_enum()
@@ -326,7 +326,7 @@ impl Input {
     if data.is_tuple() {
       return Err(Error::new_spanned(
         &self.ident,
-        "tuple structs must use `#[cbor(transparent)]` attribute to derive `Decode` or `Encode`",
+        "tuple structs must use `#[deco(transparent)]` attribute to derive `Decode` or `Encode`",
       ));
     }
 
@@ -369,7 +369,7 @@ impl Input {
       if let Some(attr) = field.n_attribute() {
         return Err(Error::new_spanned(
           attr,
-          "#[n] attribute cannot be used with #[cbor(transparent)]",
+          "#[n] attribute cannot be used with #[deco(transparent)]",
         ));
       }
     }

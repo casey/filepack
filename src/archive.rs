@@ -73,10 +73,10 @@ impl Archive {
   }
 
   pub(crate) fn load(path: &Utf8Path) -> Result<Self> {
-    let cbor =
+    let deco =
       filesystem::read_opt(path)?.ok_or_else(|| error::ManifestNotFound { path }.build())?;
 
-    Self::decode_from_slice(&cbor).context(error::DecodeManifest { path })
+    Self::decode_from_slice(&deco).context(error::DecodeManifest { path })
   }
 
   pub(crate) fn load_with_opt_path(path: Option<&Utf8Path>) -> Result<(Utf8PathBuf, Self)> {
@@ -235,7 +235,7 @@ impl Archive {
     {
       let unexpected = embedded
         .keys()
-        .filter(|path| **path != Metadata::CBOR_FILENAME)
+        .filter(|path| **path != Metadata::DECO_FILENAME)
         .cloned()
         .collect::<BTreeSet<RelativePath>>();
 
@@ -266,12 +266,12 @@ mod tests {
   use super::*;
 
   #[test]
-  fn archive_packs_metadata_cbor() {
+  fn archive_packs_metadata_deco() {
     let content = b"foo";
     let mut package = DirectoryTree::new();
     package
       .create_file(
-        &Metadata::CBOR_FILENAME.parse().unwrap(),
+        &Metadata::DECO_FILENAME.parse().unwrap(),
         File::new(content),
       )
       .unwrap();
@@ -309,13 +309,13 @@ mod tests {
   fn directory_totals_overflow() {
     let mut builder = ArchiveBuilder::new();
 
-    let (cbor, hash) = Directory::new()
+    let (deco, hash) = Directory::new()
       .insert_entry("bar", Entry::file(Hash::bytes(b"bar"), u64::MAX))
       .insert_entry("foo", Entry::file(Hash::bytes(b"foo"), 1))
-      .cbor();
+      .deco();
 
-    let size = cbor.len().into_u64();
-    builder.files.insert(hash, cbor);
+    let size = deco.len().into_u64();
+    builder.files.insert(hash, deco);
     let package = Entry::Directory {
       hash,
       size,

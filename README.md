@@ -211,8 +211,8 @@ Manifest
 `filepack` manifests are conventionally named `manifest.filepack` and are
 placed alongside the files they reference.
 
-Manifests are [CBOR](https://www.rfc-editor.org/rfc/rfc8949.html) and may be
-converted to JSON for inspection or manipulation with `filepack manifest`.
+Manifests are encoded with deco, a compact binary serialization format, and may
+be converted to JSON for inspection or manipulation with `filepack manifest`.
 
 Manifests, when converted to JSON, are an object with three mandatory keys,
 `embedded`, `package`, and `signatures`.
@@ -245,7 +245,7 @@ fingerprint the signature is made over, an optional timestamp, and the
 signature itself.
 
 Public keys are Curve25519 points and signatures are Ed25519 signatures made
-over the hash of a serialized CBOR statement containing the package fingerprint
+over the hash of a serialized deco statement containing the package fingerprint
 which commits to the content of `package`.
 
 ### Example
@@ -295,7 +295,7 @@ the `manifest.filepack` archive.
 
 Metadata is authored by creating a file named `metadata.yaml` in the root of a
 new package. `filepack create` then loads `metadata.yaml` if present, checks
-for validity and unknown fields, and writes the CBOR serialization to
+for validity and unknown fields, and writes the deco serialization to
 `metadata.filemeta` in the package root.
 
 `metadata.yaml` is retained as a human-readable reference and for amending
@@ -316,7 +316,7 @@ Please feel free to open an issue with ideas for new metadata fields.
 ### Schema
 
 This schema is for the YAML authoring format and the JSON output of `filepack
-metadata`. The CBOR schema is currently undocumented.
+metadata`. The deco schema is currently undocumented.
 
 Fields are given as `NAME: TYPE`. All fields are optional.
 
@@ -536,7 +536,7 @@ Fingerprints
 ------------
 
 Filepack signatures are made over the package fingerprint, which is the hash of
-a CBOR object which commits to the files and directories contained in the
+a deco object which commits to the files and directories contained in the
 manifest.
 
 Fingerprints are BLAKE3 hashes, constructed such that it is impossible to
@@ -956,7 +956,7 @@ of file hashing and verification.
 Filepack allows for the creation of Ed25519 signatures over the contents of a
 manifest, which thus commit to the contents of the directory covered by the
 manifest. Signatures are made over a statement containing a "fingerprint" hash
-of a canonical CBOR serialization of the manifest. This keeps signatures
+of a canonical deco serialization of the manifest. This keeps signatures
 independent of the manifest format, avoids issues with canonicalization of the
 manifest JSON, avoids hash loops due to the inclusion of signatures in the
 manifest itself, and allows proving the inclusion of files covered by a
@@ -964,7 +964,7 @@ signature.
 
 ### Fingerprints
 
-Package fingerprints are the BLAKE3 hash of a canonical CBOR serialization of
+Package fingerprints are the BLAKE3 hash of a canonical deco serialization of
 the contents of the manifest. Fingerprints are constructed to be unique,
 meaning that it is impossible for two different packages with different
 contents to have the same fingerprint.
@@ -980,4 +980,4 @@ In particular, see:
 - [Files](src/file.rs)
 - [Statement](src/statement.rs)
 
-And the [cbor](src/cbor.rs) module for the encoding.
+And the [head](src/head.rs) module for the deco encoding.

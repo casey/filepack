@@ -1,7 +1,7 @@
 use super::*;
 
 #[derive(Debug, Decode, Encode, PartialEq)]
-#[cbor(transparent, validate)]
+#[deco(transparent, validate)]
 pub struct SortedSet<T>(Vec<T>);
 
 impl<T> SortedSet<T> {

@@ -11,10 +11,6 @@ pub enum ServerError {
   AuthorizationMalformed,
   #[snafu(display("missing authorization header"))]
   AuthorizationMissing,
-  #[snafu(display("failed to read request body"))]
-  CborBody { source: axum::Error },
-  #[snafu(display("failed to decode request body"))]
-  CborDecode { source: DecodeError },
   #[snafu(transparent)]
   Database { source: redb::DatabaseError },
   #[snafu(transparent)]
@@ -25,6 +21,10 @@ pub enum ServerError {
   DatabaseTable { source: redb::TableError },
   #[snafu(transparent)]
   DatabaseTransaction { source: redb::TransactionError },
+  #[snafu(display("failed to read request body"))]
+  DecoBody { source: axum::Error },
+  #[snafu(display("failed to decode request body"))]
+  DecoDecode { source: DecodeError },
   #[snafu(display("failed to decode directory {hash}"))]
   DirectoryDecode { hash: Hash, source: DecodeError },
   #[snafu(display(
@@ -146,8 +146,8 @@ impl ServerError {
       | Self::AuthorizationInvalid { .. }
       | Self::AuthorizationMalformed
       | Self::AuthorizationMissing
-      | Self::CborBody { .. }
-      | Self::CborDecode { .. }
+      | Self::DecoBody { .. }
+      | Self::DecoDecode { .. }
       | Self::DirectoryDecode { .. }
       | Self::DirectoryEntryMissing { .. }
       | Self::DirectoryEntrySizeMismatch { .. }
@@ -201,8 +201,8 @@ impl ServerError {
       | Self::InvalidResponse { .. }
       | Self::PackageFileMissing { .. }
       | Self::PackageMetadataCorrupt { .. } => StatusCode::INTERNAL_SERVER_ERROR,
-      Self::CborBody { .. }
-      | Self::CborDecode { .. }
+      Self::DecoBody { .. }
+      | Self::DecoDecode { .. }
       | Self::DirectoryDecode { .. }
       | Self::DirectoryEntryMissing { .. }
       | Self::DirectoryEntrySizeMismatch { .. }

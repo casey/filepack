@@ -209,11 +209,11 @@ fingerprint mismatch: `{source}`
     }
 
     {
-      let path = root.join(Metadata::CBOR_FILENAME);
+      let path = root.join(Metadata::DECO_FILENAME);
 
-      if let Some(cbor) = filesystem::read_opt(&path)? {
-        Metadata::decode_from_slice(&cbor)
-          .context(error::DecodeMetadataCbor { path })?
+      if let Some(deco) = filesystem::read_opt(&path)? {
+        Metadata::decode_from_slice(&deco)
+          .context(error::DecodeMetadataDeco { path })?
           .check_files(&files.keys().cloned().collect())?;
       }
     }

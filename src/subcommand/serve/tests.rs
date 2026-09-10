@@ -68,9 +68,9 @@ impl<'a> DirectoryBuilder<'a> {
       }
     }
 
-    let (cbor, hash) = self.build().cbor();
+    let (deco, hash) = self.build().deco();
 
-    server.write_file(&cbor);
+    server.write_file(&deco);
     server.post(format!("/api/directory/{hash}")).send();
 
     hash
@@ -99,11 +99,11 @@ impl<'a> PackageBuilder<'a> {
   }
 
   fn fingerprint(&self) -> Fingerprint {
-    Fingerprint(self.directory().cbor().1)
+    Fingerprint(self.directory().deco().1)
   }
 
   fn metadata(self, metadata: &Metadata) -> Self {
-    self.file(Metadata::CBOR_FILENAME, &metadata.encode_to_vec())
+    self.file(Metadata::DECO_FILENAME, &metadata.encode_to_vec())
   }
 
   fn new() -> Self {
@@ -451,18 +451,18 @@ fn artwork_missing() {
     artwork: Some(Image::test("cover.png")),
     ..Metadata::default()
   };
-  let metadata_cbor = metadata.encode_to_vec();
-  server.write_file(&metadata_cbor);
+  let metadata_deco = metadata.encode_to_vec();
+  server.write_file(&metadata_deco);
 
-  let (cbor, hash) = Directory::new().insert_file("cover.png,", artwork).cbor();
+  let (deco, hash) = Directory::new().insert_file("cover.png,", artwork).deco();
   let fingerprint = Fingerprint(hash);
-  server.write_file(&cbor);
+  server.write_file(&deco);
 
   server.post(format!("/api/directory/{hash}")).send();
   server.post(format!("/api/package/{fingerprint}")).send();
 
   let mut corrupt = Directory::new();
-  corrupt.insert_file(Metadata::CBOR_FILENAME, &metadata_cbor);
+  corrupt.insert_file(Metadata::DECO_FILENAME, &metadata_deco);
 
   let corrupt = corrupt.encode_to_vec();
   fs::write(
@@ -522,16 +522,16 @@ fn artwork_response() {
       artwork: Some(Image::test(filename)),
       ..Metadata::default()
     };
-    let metadata_cbor = metadata.encode_to_vec();
-    server.write_file(&metadata_cbor);
+    let metadata_deco = metadata.encode_to_vec();
+    server.write_file(&metadata_deco);
 
-    let (cbor, hash) = Directory::new()
+    let (deco, hash) = Directory::new()
       .insert_file(filename, artwork)
-      .insert_file(Metadata::CBOR_FILENAME, &metadata_cbor)
-      .cbor();
+      .insert_file(Metadata::DECO_FILENAME, &metadata_deco)
+      .deco();
 
     let fingerprint = Fingerprint(hash);
-    server.write_file(&cbor);
+    server.write_file(&deco);
 
     server.post(format!("/api/directory/{hash}")).send();
     server.post(format!("/api/package/{fingerprint}")).send();
@@ -924,20 +924,20 @@ fn gc_removes_unreachable_and_retains_reachable_data() {
 
   let retained = PackageBuilder::new().file("foo", b"foo");
 
-  let retained_hash = retained.directory().cbor().1;
+  let retained_hash = retained.directory().deco().1;
 
   retained.upload(&server);
 
   let mut subdirectory = Directory::new();
   subdirectory.insert_file("baz", b"baz");
 
-  let (subdirectory_cbor, subdirectory_hash) = subdirectory.cbor();
+  let (subdirectory_deco, subdirectory_hash) = subdirectory.deco();
 
   let package = PackageBuilder::new()
     .file("bar/baz", b"baz")
     .file("foo", b"foo");
 
-  let (root_cbor, root_hash) = package.directory().cbor();
+  let (root_deco, root_hash) = package.directory().deco();
 
   let fingerprint = package.upload(&server);
 
@@ -947,7 +947,7 @@ fn gc_removes_unreachable_and_retains_reachable_data() {
     .post("/api/gc")
     .assert_body(
       api::gc::Response {
-        bytes: root_cbor.len().into_u64() + subdirectory_cbor.len().into_u64() + 3,
+        bytes: root_deco.len().into_u64() + subdirectory_deco.len().into_u64() + 3,
         directories: BTreeSet::from([root_hash, subdirectory_hash]).into(),
         files: BTreeSet::from([root_hash, subdirectory_hash, Hash::bytes(b"baz")]).into(),
       }
@@ -968,8 +968,8 @@ fn gc_removes_unreachable_and_retains_reachable_data() {
 fn get_directory_not_found() {
   let server = TestServer::new();
 
-  let (cbor, hash) = Directory::new().cbor();
-  server.write_file(&cbor);
+  let (deco, hash) = Directory::new().deco();
+  server.write_file(&deco);
 
   server
     .get(format!("/directory/{hash}"))
@@ -982,8 +982,8 @@ fn get_directory_succeeds() {
   let server = TestServer::new();
 
   let directory = Directory::new();
-  let (cbor, hash) = directory.cbor();
-  server.write_file(&cbor);
+  let (deco, hash) = directory.deco();
+  server.write_file(&deco);
 
   server.post(format!("/api/directory/{hash}")).send();
 
@@ -1039,17 +1039,17 @@ fn get_package_with_metadata() {
     time: None,
     title: Some("foo".parse().unwrap()),
   };
-  let metadata_cbor = metadata.encode_to_vec();
-  server.write_file(&metadata_cbor);
+  let metadata_deco = metadata.encode_to_vec();
+  server.write_file(&metadata_deco);
 
   let mut directory = Directory::new();
   directory
     .insert_file("COLOPHON.md", colophon)
     .insert_file("README.md", readme)
-    .insert_file(Metadata::CBOR_FILENAME, &metadata_cbor);
-  let (cbor, hash) = directory.cbor();
+    .insert_file(Metadata::DECO_FILENAME, &metadata_deco);
+  let (deco, hash) = directory.deco();
   let fingerprint = Fingerprint(hash);
-  server.write_file(&cbor);
+  server.write_file(&deco);
 
   server.post(format!("/api/directory/{hash}")).send();
   server.post(format!("/api/package/{fingerprint}")).send();
@@ -1066,7 +1066,7 @@ fn get_package_with_metadata() {
       totals: Totals {
         directories: 0,
         directory_size: 0,
-        file_size: metadata_cbor.len().into_u64() + 6,
+        file_size: metadata_deco.len().into_u64() + 6,
         files: 3,
       },
     })
@@ -1078,9 +1078,9 @@ fn get_package_without_metadata() {
   let server = TestServer::new();
 
   let directory = Directory::new();
-  let (cbor, hash) = directory.cbor();
+  let (deco, hash) = directory.deco();
   let fingerprint = Fingerprint(hash);
-  server.write_file(&cbor);
+  server.write_file(&deco);
 
   server.post(format!("/api/directory/{hash}")).send();
   server.post(format!("/api/package/{fingerprint}")).send();
@@ -1174,14 +1174,14 @@ fn media_audio_item_file_missing() {
     .file("foo.flac", b"foo")
     .upload(&server);
 
-  let metadata_cbor = metadata.encode_to_vec();
+  let metadata_deco = metadata.encode_to_vec();
 
-  let (cbor, _hash) = Directory::new()
-    .insert_file(Metadata::CBOR_FILENAME, &metadata_cbor)
-    .cbor();
+  let (deco, _hash) = Directory::new()
+    .insert_file(Metadata::DECO_FILENAME, &metadata_deco)
+    .deco();
 
   let hash = Hash::from(fingerprint);
-  fs::write(server.data_dir.join("files").join(hash.to_string()), &cbor).unwrap();
+  fs::write(server.data_dir.join("files").join(hash.to_string()), &deco).unwrap();
 
   server
     .get(format!("/media/audio/{fingerprint}/item/1"))
@@ -1261,9 +1261,9 @@ fn media_audio_item_package_without_media() {
 fn media_audio_item_package_without_metadata() {
   let server = TestServer::new();
 
-  let (cbor, hash) = Directory::new().cbor();
+  let (deco, hash) = Directory::new().deco();
   let fingerprint = Fingerprint(hash);
-  server.write_file(&cbor);
+  server.write_file(&deco);
 
   server.post(format!("/api/directory/{hash}")).send();
   server.post(format!("/api/package/{fingerprint}")).send();
@@ -2233,9 +2233,9 @@ fn package_item_without_media() {
 fn package_item_without_metadata() {
   let server = TestServer::new();
 
-  let (cbor, hash) = Directory::new().cbor();
+  let (deco, hash) = Directory::new().deco();
   let fingerprint = Fingerprint(hash);
-  server.write_file(&cbor);
+  server.write_file(&deco);
 
   server.post(format!("/api/directory/{hash}")).send();
   server.post(format!("/api/package/{fingerprint}")).send();
@@ -2307,16 +2307,16 @@ fn package_page_og_image() {
     artwork: Some(Image::test("bar.png")),
     ..Metadata::default()
   };
-  let metadata_cbor = metadata.encode_to_vec();
-  server.write_file(&metadata_cbor);
+  let metadata_deco = metadata.encode_to_vec();
+  server.write_file(&metadata_deco);
 
   let mut directory = Directory::new();
   directory
     .insert_file("bar.png", artwork)
-    .insert_file(Metadata::CBOR_FILENAME, &metadata_cbor);
-  let (cbor, hash) = directory.cbor();
+    .insert_file(Metadata::DECO_FILENAME, &metadata_deco);
+  let (deco, hash) = directory.deco();
   let fingerprint = Fingerprint(hash);
-  server.write_file(&cbor);
+  server.write_file(&deco);
 
   server.post(format!("/api/directory/{hash}")).send();
   server.post(format!("/api/package/{fingerprint}")).send();
@@ -2334,7 +2334,7 @@ fn package_page_og_image() {
         totals: Totals {
           directories: 0,
           directory_size: 0,
-          file_size: metadata_cbor.len().into_u64() + 3,
+          file_size: metadata_deco.len().into_u64() + 3,
           files: 2,
         },
       }
@@ -2546,7 +2546,7 @@ fn package_page_web() {
     ..default()
   };
 
-  let metadata_cbor_len = metadata.encode_to_vec().len().into_u64();
+  let metadata_deco_len = metadata.encode_to_vec().len().into_u64();
 
   let package = PackageBuilder::new()
     .metadata(&metadata)
@@ -2556,7 +2556,7 @@ fn package_page_web() {
 
   let mut static_directory = Directory::new();
   static_directory.insert_file("index.html", b"foo");
-  let static_cbor_len = static_directory.cbor().0.len().into_u64();
+  let static_deco_len = static_directory.deco().0.len().into_u64();
 
   let server = TestServer::builder().mount(package.fingerprint()).build();
 
@@ -2573,8 +2573,8 @@ fn package_page_web() {
       readme: None,
       totals: Totals {
         directories: 1,
-        directory_size: static_cbor_len,
-        file_size: metadata_cbor_len + 3,
+        directory_size: static_deco_len,
+        file_size: metadata_deco_len + 3,
         files: 2,
       },
     })
@@ -2630,9 +2630,9 @@ fn packages_non_empty() {
 
   for content in [b"foo".as_slice(), b"bar", b"baz"] {
     server.write_file(content);
-    let (cbor, hash) = Directory::new().insert_file("file", content).cbor();
+    let (deco, hash) = Directory::new().insert_file("file", content).deco();
     let fingerprint = Fingerprint(hash);
-    server.write_file(&cbor);
+    server.write_file(&deco);
     server.post(format!("/api/directory/{hash}")).send();
     server.post(format!("/api/package/{fingerprint}")).send();
     packages.push((
@@ -3056,10 +3056,10 @@ fn verify_directory_entry_size_mismatch() {
   let contents = b"bar";
   server.write_file(contents);
 
-  let (cbor, hash) = Directory::new()
+  let (deco, hash) = Directory::new()
     .insert_entry("foo", Entry::file(Hash::bytes(contents), 4))
-    .cbor();
-  server.write_file(&cbor);
+    .deco();
+  server.write_file(&deco);
 
   server
     .post(format!("/api/directory/{hash}"))
@@ -3088,8 +3088,8 @@ fn verify_directory_idempotent() {
   let server = TestServer::new();
 
   let directory = Directory::new();
-  let (cbor, hash) = directory.cbor();
-  server.write_file(&cbor);
+  let (deco, hash) = directory.deco();
+  server.write_file(&deco);
 
   server.post(format!("/api/directory/{hash}")).send();
   server.post(format!("/api/directory/{hash}")).send();
@@ -3106,8 +3106,8 @@ fn verify_directory_missing_file() {
 
   let missing = b"foo";
 
-  let (cbor, hash) = Directory::new().insert_file("foo", missing).cbor();
-  server.write_file(&cbor);
+  let (deco, hash) = Directory::new().insert_file("foo", missing).deco();
+  server.write_file(&deco);
 
   server
     .post(format!("/api/directory/{hash}"))
@@ -3124,10 +3124,10 @@ fn verify_directory_missing_subdirectory() {
   let server = TestServer::new();
 
   let child = Directory::new();
-  let (_, child_hash) = child.cbor();
+  let (_, child_hash) = child.deco();
 
-  let (parent_cbor, parent_hash) = Directory::new().insert_directory("child", &child).cbor();
-  server.write_file(&parent_cbor);
+  let (parent_deco, parent_hash) = Directory::new().insert_directory("child", &child).deco();
+  server.write_file(&parent_deco);
 
   server
     .post(format!("/api/directory/{parent_hash}"))
@@ -3162,17 +3162,17 @@ fn verify_directory_subdirectory_totals_mismatch() {
   let server = TestServer::new();
 
   let child = Directory::new();
-  let (child_cbor, child_hash) = child.cbor();
-  server.write_file(&child_cbor);
+  let (child_deco, child_hash) = child.deco();
+  server.write_file(&child_deco);
 
   server.post(format!("/api/directory/{child_hash}")).send();
 
-  let (parent_cbor, parent_hash) = Directory::new()
+  let (parent_deco, parent_hash) = Directory::new()
     .insert_entry(
       "child",
       Entry::directory(
         child_hash,
-        child_cbor.len().into_u64(),
+        child_deco.len().into_u64(),
         Totals {
           directories: 0,
           directory_size: 0,
@@ -3181,8 +3181,8 @@ fn verify_directory_subdirectory_totals_mismatch() {
         },
       ),
     )
-    .cbor();
-  server.write_file(&parent_cbor);
+    .deco();
+  server.write_file(&parent_deco);
 
   server
     .post(format!("/api/directory/{parent_hash}"))
@@ -3203,9 +3203,9 @@ fn verify_directory_succeeds() {
   server.write_file(file);
 
   let mut child = Directory::new();
-  let (child_cbor, child_hash) = child.insert_file("foo", file).cbor();
+  let (child_deco, child_hash) = child.insert_file("foo", file).deco();
 
-  server.write_file(&child_cbor);
+  server.write_file(&child_deco);
 
   server.post(format!("/api/directory/{child_hash}")).send();
 
@@ -3220,8 +3220,8 @@ fn verify_directory_succeeds() {
   let mut parent = Directory::new();
   parent.insert_directory("child", &child);
 
-  let (parent_cbor, parent_hash) = parent.cbor();
-  server.write_file(&parent_cbor);
+  let (parent_deco, parent_hash) = parent.deco();
+  server.write_file(&parent_deco);
 
   server.post(format!("/api/directory/{parent_hash}")).send();
 
@@ -3245,8 +3245,8 @@ fn verify_directory_totals_overflow() {
     .insert_entry("bar", Entry::file(file, u64::MAX))
     .insert_entry("baz", Entry::file(file, 1));
 
-  let (cbor, hash) = directory.cbor();
-  server.write_file(&cbor);
+  let (deco, hash) = directory.deco();
+  server.write_file(&deco);
 
   server
     .post(format!("/api/directory/{hash}"))
@@ -3260,11 +3260,11 @@ fn verify_directory_unverified_subdirectory() {
   let server = TestServer::new();
 
   let child = Directory::new();
-  let (child_cbor, child_hash) = child.cbor();
-  server.write_file(&child_cbor);
+  let (child_deco, child_hash) = child.deco();
+  server.write_file(&child_deco);
 
-  let (parent_cbor, parent_hash) = Directory::new().insert_directory("child", &child).cbor();
-  server.write_file(&parent_cbor);
+  let (parent_deco, parent_hash) = Directory::new().insert_directory("child", &child).deco();
+  server.write_file(&parent_deco);
 
   server
     .post(format!("/api/directory/{parent_hash}"))
@@ -3282,11 +3282,11 @@ fn verify_package_metadata_decode_error() {
   let junk = b"foo";
   server.write_file(junk);
 
-  let (cbor, hash) = Directory::new()
-    .insert_file(Metadata::CBOR_FILENAME, junk)
-    .cbor();
+  let (deco, hash) = Directory::new()
+    .insert_file(Metadata::DECO_FILENAME, junk)
+    .deco();
   let fingerprint = Fingerprint(hash);
-  server.write_file(&cbor);
+  server.write_file(&deco);
 
   server.post(format!("/api/directory/{hash}")).send();
 
@@ -3310,11 +3310,11 @@ fn verify_package_metadata_references_missing_file() {
   .encode_to_vec();
   server.write_file(&metadata);
 
-  let (cbor, hash) = Directory::new()
-    .insert_file(Metadata::CBOR_FILENAME, &metadata)
-    .cbor();
+  let (deco, hash) = Directory::new()
+    .insert_file(Metadata::DECO_FILENAME, &metadata)
+    .deco();
   let fingerprint = Fingerprint(hash);
-  server.write_file(&cbor);
+  server.write_file(&deco);
 
   server.post(format!("/api/directory/{hash}")).send();
 
@@ -3341,12 +3341,12 @@ fn verify_package_metadata_references_present_file() {
   .encode_to_vec();
   server.write_file(&metadata);
 
-  let (cbor, hash) = Directory::new()
+  let (deco, hash) = Directory::new()
     .insert_file("cover.png", artwork)
-    .insert_file(Metadata::CBOR_FILENAME, &metadata)
-    .cbor();
+    .insert_file(Metadata::DECO_FILENAME, &metadata)
+    .deco();
   let fingerprint = Fingerprint(hash);
-  server.write_file(&cbor);
+  server.write_file(&deco);
 
   server.post(format!("/api/directory/{hash}")).send();
 
@@ -3357,9 +3357,9 @@ fn verify_package_metadata_references_present_file() {
 fn verify_package_unverified() {
   let server = TestServer::new();
 
-  let (cbor, hash) = Directory::new().cbor();
+  let (deco, hash) = Directory::new().deco();
   let fingerprint = Fingerprint(hash);
-  server.write_file(&cbor);
+  server.write_file(&deco);
 
   server
     .post(format!("/api/package/{fingerprint}"))

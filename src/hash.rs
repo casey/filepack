@@ -157,7 +157,7 @@ mod tests {
 
   #[test]
   fn hash() {
-    assert_cbor(
+    assert_deco(
       Hash::bytes(b"foo"),
       "a004e0bb39f30b1a3feb89f536c93be15055482df748674b00d26e5a75777702e9",
     );

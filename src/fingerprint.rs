@@ -14,7 +14,7 @@ use super::*;
   PartialOrd,
   SerializeDisplay,
 )]
-#[cbor(transparent)]
+#[deco(transparent)]
 pub struct Fingerprint(pub(crate) Hash);
 
 impl Fingerprint {

@@ -248,7 +248,7 @@ mod tests {
 
   #[test]
   fn encoding() {
-    assert_cbor_eq("en".parse::<Language>().unwrap(), "en");
+    assert_deco_eq("en".parse::<Language>().unwrap(), "en");
   }
 
   #[test]

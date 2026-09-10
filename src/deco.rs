@@ -3,18 +3,18 @@ use {
   axum::extract::{FromRequest, Request},
 };
 
-pub(crate) struct Cbor<T, const LIMIT: usize>(pub(crate) T);
+pub(crate) struct Deco<T, const LIMIT: usize>(pub(crate) T);
 
-impl<T: Decode, S: Send + Sync, const LIMIT: usize> FromRequest<S> for Cbor<T, LIMIT> {
+impl<T: Decode, S: Send + Sync, const LIMIT: usize> FromRequest<S> for Deco<T, LIMIT> {
   type Rejection = ServerError;
 
   async fn from_request(request: Request, _state: &S) -> ServerResult<Self> {
     let bytes = axum::body::to_bytes(request.into_body(), LIMIT)
       .await
-      .context(server_error::CborBody)?;
+      .context(server_error::DecoBody)?;
 
     Ok(Self(
-      T::decode_from_slice(&bytes).context(server_error::CborDecode)?,
+      T::decode_from_slice(&bytes).context(server_error::DecoDecode)?,
     ))
   }
 }
@@ -29,11 +29,11 @@ mod tests {
 
     let result = Runtime::new()
       .unwrap()
-      .block_on(Cbor::<Vec<u8>, 4>::from_request(request, &()));
+      .block_on(Deco::<Vec<u8>, 4>::from_request(request, &()));
 
     assert_matches!(
-      result.map(|Cbor(value)| value),
-      Err(ServerError::CborBody { .. }),
+      result.map(|Deco(value)| value),
+      Err(ServerError::DecoBody { .. }),
     );
   }
 }

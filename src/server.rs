@@ -245,16 +245,16 @@ impl Server {
 
   fn metadata(&self, fingerprint: Fingerprint) -> ServerResult<Option<Metadata>> {
     self
-      .metadata_cbor(fingerprint)?
+      .metadata_deco(fingerprint)?
       .map(|metadata| Metadata::decode_from_slice(&metadata))
       .transpose()
       .context(server_error::PackageMetadataCorrupt { fingerprint })
   }
 
-  fn metadata_cbor(&self, fingerprint: Fingerprint) -> ServerResult<Option<Vec<u8>>> {
+  fn metadata_deco(&self, fingerprint: Fingerprint) -> ServerResult<Option<Vec<u8>>> {
     let directory = self.read_directory(fingerprint.into())?;
 
-    let Some(entry) = directory.entries.get(Metadata::CBOR_FILENAME) else {
+    let Some(entry) = directory.entries.get(Metadata::DECO_FILENAME) else {
       return Ok(None);
     };
 
@@ -558,7 +558,7 @@ impl Server {
       server_error::PackageRootUnverified { fingerprint },
     );
 
-    if let Some(metadata) = self.metadata_cbor(fingerprint)? {
+    if let Some(metadata) = self.metadata_deco(fingerprint)? {
       let metadata = Metadata::decode_from_slice(&metadata)
         .context(server_error::PackageMetadataDecode { fingerprint })?;
 

@@ -126,7 +126,7 @@ pub enum Error {
     source: DecodeError,
   },
   #[snafu(display("failed to decode metadata at `{path}`"))]
-  DecodeMetadataCbor {
+  DecodeMetadataDeco {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
     source: DecodeError,
