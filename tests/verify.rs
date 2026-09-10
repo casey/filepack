@@ -728,10 +728,10 @@ fn symlink_error() {
 #[test]
 fn unarchive_error() {
   let mut dir_encoder = Encoder::new();
-  let mut dir_map = dir_encoder.map::<u64>(2);
+  let mut dir_map = MapEncoder::<u64>::new();
   dir_map.item(0, 0u64);
   dir_map.item(1, BTreeMap::<String, u64>::new());
-  drop(dir_map);
+  dir_encoder.bytes(&dir_map.finish());
   let dir_bytes = dir_encoder.finish();
 
   let root = Hash::bytes(&dir_bytes);
@@ -740,11 +740,11 @@ fn unarchive_error() {
   files.insert(root, dir_bytes);
 
   let mut encoder = Encoder::new();
-  let mut archive = encoder.map::<u64>(3);
+  let mut archive = MapEncoder::<u64>::new();
   archive.item(0, 0u64);
   archive.item(1, root);
   archive.item(2, &files);
-  drop(archive);
+  encoder.bytes(&archive.finish());
 
   Test::new()
     .write("manifest.filepack", encoder.finish())
@@ -828,7 +828,7 @@ fn verify_fingerprint() {
     .args([
       "verify",
       "--fingerprint",
-      "package1akzf8204dnnly606mjw376rx2xslf8m2tptptrmk2h7vtxaplqs9qpjvqax",
+      "package1a03cn7a4jc2dvdq62jdqpreqs9fl7y09yg0pnye08wdrt2gj93zrqume76y",
     ])
     .stderr("successfully verified 1 file totaling 0 bytes\n")
     .success()
@@ -841,7 +841,7 @@ fn verify_fingerprint() {
       "
         fingerprint mismatch: `manifest.filepack`
                     expected: package1a4uf5nw04lxs6dgzqfh4rdhxffxdukfwf4hq39d7vn2fu4eqlxf3ql7ykr3
-                      actual: package1akzf8204dnnly606mjw376rx2xslf8m2tptptrmk2h7vtxaplqs9qpjvqax
+                      actual: package1a03cn7a4jc2dvdq62jdqpreqs9fl7y09yg0pnye08wdrt2gj93zrqume76y
         error: fingerprint mismatch
       ",
     )

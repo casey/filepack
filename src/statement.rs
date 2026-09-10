@@ -29,10 +29,11 @@ mod tests {
     let mut encoder = Encoder::new();
 
     {
-      let mut encoder = encoder.map::<u64>(3);
-      encoder.item(0, "filepack");
-      encoder.item(1, 0);
-      encoder.item(2, &statement);
+      let mut map = MapEncoder::<u64>::new();
+      map.item(0, "filepack");
+      map.item(1, 0);
+      map.item(2, &statement);
+      encoder.bytes(&map.finish());
     }
 
     let bytes = encoder.finish();

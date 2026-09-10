@@ -13,17 +13,15 @@ pub enum DecodeError {
   Boolean { value: u64 },
   #[snafu(display("failed to parse component"))]
   Component { source: ComponentError },
-  #[snafu(display(
-    "expected {} or {} but found {actual}",
-    MajorType::UnsignedInteger,
-    MajorType::NegativeInteger,
-  ))]
-  ExpectedInteger { actual: MajorType },
+  #[snafu(display("empty integer"))]
+  EmptyInteger,
   #[snafu(display("failed to parse {name}"))]
   FromStr {
     name: &'static str,
     source: Box<dyn std::error::Error + Send + Sync>,
   },
+  #[snafu(display("integer exceeds eight bytes"))]
+  IntegerLength,
   #[snafu(display("integer out of range"))]
   IntegerRange { source: TryFromIntError },
   #[snafu(display("invalid discriminant {discriminant} for enum {name}"))]
@@ -39,14 +37,14 @@ pub enum DecodeError {
   MissingElement,
   #[snafu(display("missing required field: {key}"))]
   MissingField { key: String },
+  #[snafu(display("overlong encoding"))]
+  Overlong,
   #[snafu(display("overlong integer"))]
   OverlongInteger,
   #[snafu(display("invalid public key"))]
   PublicKey { source: PublicKeyError },
-  #[snafu(display("reserved additional information value: {value}"))]
-  ReservedAdditionalInformation { value: u8 },
-  #[snafu(display("size out of range"))]
-  SizeRange { source: TryFromIntError },
+  #[snafu(display("reserved byte {value}"))]
+  Reserved { value: u8 },
   #[snafu(display("failed to parse text"))]
   Text { source: TextError },
   #[snafu(display("invalid time"))]
@@ -61,28 +59,15 @@ pub enum DecodeError {
   UnconsumedEntries,
   #[snafu(display("unexpected key"))]
   UnexpectedKey,
-  #[snafu(display("expected {expected} but found {actual}"))]
-  UnexpectedType {
-    expected: MajorType,
-    actual: MajorType,
-  },
   #[snafu(display("unexpected value, expected {expected} but found {actual}"))]
   UnexpectedValue {
     actual: String,
     expected: &'static str,
   },
-  #[snafu(display(
-    "expected {} or {} but found {actual}",
-    MajorType::UnsignedInteger,
-    MajorType::Array,
-  ))]
-  UnexpectedVariantType { actual: MajorType },
   #[snafu(display("string not valid unicode"))]
   Unicode { source: Utf8Error },
   #[snafu(display("unsorted or duplicate array elements"))]
   Unsorted,
-  #[snafu(display("unsupported additional information value: {value}"))]
-  UnsupportedAdditionalInformation { value: u8 },
   #[snafu(display("failed to parse URL"))]
   Url { source: UrlError },
 }

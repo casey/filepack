@@ -25,24 +25,8 @@ impl ParsedField<'_> {
       .collect()
   }
 
-  pub(crate) fn encode(
-    fields: &[Self],
-    receiver: Receiver,
-  ) -> (proc_macro2::TokenStream, Vec<proc_macro2::TokenStream>) {
-    let required = fields
-      .iter()
-      .filter(|field| !field.optional)
-      .count()
-      .into_u64();
-
-    let optional = fields.iter().filter(|field| field.optional).map(|field| {
-      let base = receiver.base(field.ident);
-      quote! { + u64::from(#base.is_some()) }
-    });
-
-    let length = quote! { #required #(#optional)* };
-
-    let items = fields
+  pub(crate) fn encode(fields: &[Self], receiver: Receiver) -> Vec<proc_macro2::TokenStream> {
+    fields
       .iter()
       .map(|field| {
         let n = field.n;
@@ -55,8 +39,6 @@ impl ParsedField<'_> {
           (None, false) => quote! { map.item(#n, #reference); },
         }
       })
-      .collect();
-
-    (length, items)
+      .collect()
   }
 }

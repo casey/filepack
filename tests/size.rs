@@ -14,7 +14,7 @@ fn size() {
           "files": 2,
           "file_size": 12,
           "directories": 2,
-          "directory_size": 153
+          "directory_size": 149
         }
       "#,
     )

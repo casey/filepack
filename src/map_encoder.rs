@@ -1,36 +1,35 @@
 use super::*;
 
-pub struct MapEncoder<'a, K> {
-  encoder: &'a mut Encoder,
+#[derive(Default)]
+pub struct MapEncoder<K> {
+  encoder: Encoder,
   last: Option<K>,
-  remaining: u64,
 }
 
-impl<'a, K: Encode + PartialOrd> MapEncoder<'a, K> {
+impl<K: Encode + PartialOrd> MapEncoder<K> {
+  pub fn finish(self) -> Vec<u8> {
+    self.encoder.finish()
+  }
+
   pub fn item(&mut self, key: K, value: impl Encode) {
     self.item_with(key, &value, Encode::encode);
   }
 
   pub fn item_with<V>(&mut self, key: K, value: &V, encode: impl FnOnce(&V, &mut Encoder)) {
-    assert!(self.remaining > 0, "too many items");
-
     if let Some(last) = &self.last {
       assert!(key > *last, "out of order key");
     }
 
-    key.encode(self.encoder);
-    encode(value, self.encoder);
+    key.encode(&mut self.encoder);
+    encode(value, &mut self.encoder);
 
     self.last = Some(key);
-    self.remaining -= 1;
   }
 
-  pub(crate) fn new(encoder: &'a mut Encoder, length: u64) -> Self {
-    encoder.head(MajorType::Map.head(length));
+  pub fn new() -> Self {
     Self {
-      encoder,
+      encoder: Encoder::new(),
       last: None,
-      remaining: length,
     }
   }
 
@@ -48,14 +47,6 @@ impl<'a, K: Encode + PartialOrd> MapEncoder<'a, K> {
   ) {
     if let Some(value) = value {
       self.item_with(key, value, encode);
-    }
-  }
-}
-
-impl<K> Drop for MapEncoder<'_, K> {
-  fn drop(&mut self) {
-    if !std::thread::panicking() {
-      assert!(self.remaining == 0, "too few items");
     }
   }
 }
@@ -83,83 +74,57 @@ mod tests {
   #[test]
   fn item_with() {
     let mut encoder = Encoder::new();
-    let mut map = encoder.map::<u64>(1);
+    let mut map = MapEncoder::<u64>::new();
     map.item_with(0, &Foreign(42), encode_foreign);
-    drop(map);
-    assert_eq!(encoder.finish(), vec![0xa1, 0x00, 0x18, 0x2b]);
+    encoder.bytes(&map.finish());
+    assert_eq!(encoder.finish(), vec![0x82, 0x00, 0x2b]);
   }
 
   #[test]
   fn optional_item_none() {
     let mut encoder = Encoder::new();
-    let mut map = encoder.map::<u64>(0);
+    let mut map = MapEncoder::<u64>::new();
     map.optional_item(0, None::<u64>);
-    drop(map);
-    assert_eq!(encoder.finish(), vec![0xa0]);
+    encoder.bytes(&map.finish());
+    assert_eq!(encoder.finish(), vec![0x80]);
   }
 
   #[test]
   fn optional_item_some() {
     let mut encoder = Encoder::new();
-    let mut map = encoder.map::<u64>(1);
+    let mut map = MapEncoder::<u64>::new();
     map.optional_item(0, Some(42u64));
-    drop(map);
-    assert_eq!(encoder.finish(), vec![0xa1, 0x00, 0x18, 0x2a]);
+    encoder.bytes(&map.finish());
+    assert_eq!(encoder.finish(), vec![0x82, 0x00, 0x2a]);
   }
 
   #[test]
   fn optional_item_with_none() {
     let mut encoder = Encoder::new();
-    let mut map = encoder.map::<u64>(0);
+    let mut map = MapEncoder::<u64>::new();
     map.optional_item_with(0, None::<&Foreign>, encode_foreign);
-    drop(map);
-    assert_eq!(encoder.finish(), vec![0xa0]);
+    encoder.bytes(&map.finish());
+    assert_eq!(encoder.finish(), vec![0x80]);
   }
 
   #[test]
   fn optional_item_with_some() {
     let mut encoder = Encoder::new();
-    let mut map = encoder.map::<u64>(1);
+    let mut map = MapEncoder::<u64>::new();
     map.optional_item_with(0, Some(&Foreign(42)), encode_foreign);
-    drop(map);
-    assert_eq!(encoder.finish(), vec![0xa1, 0x00, 0x18, 0x2b]);
+    encoder.bytes(&map.finish());
+    assert_eq!(encoder.finish(), vec![0x82, 0x00, 0x2b]);
   }
 
   #[test]
   fn out_of_order() {
     case(
       || {
-        let mut encoder = Encoder::new();
-        let mut map = encoder.map::<u64>(2);
+        let mut map = MapEncoder::<u64>::new();
         map.item(2, 1u64);
         map.item(1, 2u64);
       },
       "out of order key",
-    );
-  }
-
-  #[test]
-  fn too_few_items() {
-    case(
-      || {
-        let mut encoder = Encoder::new();
-        let mut map = MapEncoder::<u64>::new(&mut encoder, 2);
-        map.item(0, 0u64);
-      },
-      "too few items",
-    );
-  }
-
-  #[test]
-  fn too_many_items() {
-    case(
-      || {
-        let mut encoder = Encoder::new();
-        let mut map = encoder.map::<u64>(1);
-        map.item(0, 0u64);
-        map.item(1, 1u64);
-      },
-      "too many items",
     );
   }
 }
