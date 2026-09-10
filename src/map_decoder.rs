@@ -82,13 +82,15 @@ impl<K: Clone + Decode + Debug + PartialOrd> MapDecoder<'_, K> {
       return Ok(None);
     }
 
-    let position = self.decoder.position();
-    let next = K::decode(&mut self.decoder)?;
+    let mut decoder = self.decoder.clone();
+
+    let next = K::decode(&mut decoder)?;
 
     if next != key {
-      self.decoder.set_position(position);
       return Ok(None);
     }
+
+    self.decoder = decoder;
 
     if let Some(last) = &self.last {
       ensure!(next > *last, decode_error::KeyOrder);
