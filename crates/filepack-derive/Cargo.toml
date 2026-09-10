@@ -1,7 +1,7 @@
 [package]
-name = "filepack-cbor"
+name = "filepack-derive"
 version = "0.0.0"
-description = "CBOR encode and decode derive macros for filepack"
+description = "encode and decode derive macros for filepack"
 
 authors.workspace = true
 edition.workspace = true

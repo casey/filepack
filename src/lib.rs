@@ -168,7 +168,7 @@ use {
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},
   clap::{ArgGroup, Parser, ValueEnum},
   claxon::FlacReader,
-  filepack_cbor::{Decode, DecodeFromStr, Encode, EncodeDisplay},
+  filepack_derive::{Decode, DecodeFromStr, Encode, EncodeDisplay},
   futures_util::StreamExt,
   humansize::{BINARY, BaseUnit, DECIMAL, FormatSizeOptions, SizeFormatter},
   id3::TagLike,
