@@ -28,13 +28,11 @@ mod tests {
   fn case(statement: Statement) {
     let mut encoder = Encoder::new();
 
-    {
-      let mut map = MapEncoder::<u64>::new();
-      map.item(0, "filepack");
-      map.item(1, 0);
-      map.item(2, &statement);
-      encoder.bytes(&map.finish());
-    }
+    let mut map = encoder.map::<u64>();
+    map.item(2, &statement);
+    map.item(1, 0);
+    map.item(0, "filepack");
+    map.finish();
 
     let bytes = encoder.finish();
 

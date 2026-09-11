@@ -5,18 +5,18 @@ pub(crate) struct ArrayDecoder<'a> {
 }
 
 impl<'a> ArrayDecoder<'a> {
-  pub(crate) fn element(&mut self) -> Result<&mut Decoder<'a>, DecodeError> {
+  pub(crate) fn decoder(&mut self) -> Result<&mut Decoder<'a>, DecodeError> {
     ensure!(!self.decoder.is_empty(), decode_error::MissingElement);
     Ok(&mut self.decoder)
+  }
+
+  pub(crate) fn element<T: Decode>(&mut self) -> Result<T, DecodeError> {
+    T::decode(self.decoder()?)
   }
 
   pub(crate) fn finish(&mut self) -> Result<(), DecodeError> {
     ensure!(self.decoder.is_empty(), decode_error::UnconsumedElements);
     Ok(())
-  }
-
-  pub(crate) fn item<T: Decode>(&mut self) -> Result<T, DecodeError> {
-    T::decode(self.element()?)
   }
 
   pub(crate) fn new(decoder: Decoder<'a>) -> Self {
@@ -28,7 +28,7 @@ impl<'a> ArrayDecoder<'a> {
       return Ok(None);
     }
 
-    Ok(Some(T::decode(&mut self.decoder)?))
+    Ok(Some(T::decode(self.decoder()?)?))
   }
 }
 
@@ -50,7 +50,7 @@ mod tests {
   fn element() {
     let mut decoder = Decoder::new(&[0x2a]);
     let mut array = decoder.array().unwrap();
-    assert_matches!(array.element().unwrap().integer(), Ok(42));
+    assert_matches!(array.decoder().unwrap().integer(), Ok(42));
     array.finish().unwrap();
   }
 
@@ -58,8 +58,8 @@ mod tests {
   fn item() {
     let mut decoder = Decoder::new(&[0x82, 0x00, 0x2a]);
     let mut array = decoder.array().unwrap();
-    assert_matches!(array.item::<u64>(), Ok(0));
-    assert_matches!(array.item::<u64>(), Ok(42));
+    assert_matches!(array.element::<u64>(), Ok(0));
+    assert_matches!(array.element::<u64>(), Ok(42));
     array.finish().unwrap();
   }
 
@@ -67,8 +67,8 @@ mod tests {
   fn missing_element() {
     let mut decoder = Decoder::new(&[0x00]);
     let mut array = decoder.array().unwrap();
-    array.item::<u64>().unwrap();
-    assert_matches!(array.item::<u64>(), Err(DecodeError::MissingElement));
+    array.element::<u64>().unwrap();
+    assert_matches!(array.element::<u64>(), Err(DecodeError::MissingElement));
   }
 
   #[test]
@@ -85,7 +85,7 @@ mod tests {
   fn unconsumed_elements() {
     let mut decoder = Decoder::new(&[0x82, 0x00, 0x01]);
     let mut array = decoder.array().unwrap();
-    array.item::<u64>().unwrap();
+    array.element::<u64>().unwrap();
     assert_matches!(array.finish(), Err(DecodeError::UnconsumedElements));
   }
 }

@@ -190,7 +190,7 @@ use {
     borrow::Borrow,
     borrow::Cow,
     cmp::Ordering,
-    collections::{BTreeMap, BTreeSet, HashMap, HashSet},
+    collections::{BTreeMap, BTreeSet, HashMap, HashSet, VecDeque},
     env,
     fmt::{self, Debug, Display, Formatter},
     fs::{self, Permissions},
@@ -225,6 +225,7 @@ use {
 };
 
 pub use self::{
+  array_encoder::ArrayEncoder,
   component_buf::ComponentBuf,
   decode::Decode,
   decoder::Decoder,
@@ -287,6 +288,7 @@ mod archive_builder;
 mod archive_error;
 mod arguments;
 mod array_decoder;
+mod array_encoder;
 mod audio;
 mod audio_error;
 mod audio_metadata;

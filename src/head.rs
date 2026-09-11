@@ -30,17 +30,21 @@ pub(crate) enum Head {
 }
 
 impl Head {
-  pub(crate) fn encode(self, bytes: &[u8], encoder: &mut Encoder) {
-    match self {
-      Self::Small => {}
-      Self::Medium(len) => encoder.buffer.push((0x80 + len).try_into().unwrap()),
-      Self::Large(count) => {
-        encoder.buffer.push((0xEF + count).try_into().unwrap());
-        encoder
-          .buffer
-          .extend_from_slice(&bytes.len().to_le_bytes()[..count]);
-      }
-      Self::Reserved(value) => encoder.buffer.push(value),
+  pub(crate) fn new(len: usize, first: Option<u8>) -> Self {
+    if len == 1 && first.is_some_and(|byte| byte < 0x80) {
+      Self::Small
+    } else if len < 0x70 {
+      Self::Medium(len)
+    } else {
+      Self::Large(
+        len
+          .into_u64()
+          .to_le_bytes()
+          .iter()
+          .rposition(|&byte| byte != 0)
+          .unwrap_or_default()
+          + 1,
+      )
     }
   }
 
@@ -91,27 +95,6 @@ impl From<u8> for Head {
       0x80..0xF0 => Self::Medium((head - 0x80).into()),
       0xF0..0xF8 => Self::Large((head - 0xEF).into()),
       0xF8..=0xFF => Self::Reserved(head),
-    }
-  }
-}
-
-impl From<&[u8]> for Head {
-  fn from(bytes: &[u8]) -> Self {
-    if bytes.len() == 1 && bytes[0] < 0x80 {
-      Head::Small
-    } else if bytes.len() < 0x70 {
-      Head::Medium(bytes.len())
-    } else {
-      Head::Large(
-        bytes
-          .len()
-          .into_u64()
-          .to_le_bytes()
-          .iter()
-          .rposition(|&byte| byte != 0)
-          .unwrap_or_default()
-          + 1,
-      )
     }
   }
 }

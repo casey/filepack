@@ -28,6 +28,7 @@ impl ParsedField<'_> {
   pub(crate) fn encode(fields: &[Self], receiver: Receiver) -> Vec<proc_macro2::TokenStream> {
     fields
       .iter()
+      .rev()
       .map(|field| {
         let n = field.n;
         let base = receiver.base(field.ident);
