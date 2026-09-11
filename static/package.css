@@ -78,3 +78,10 @@ time {
     text-shadow: none;
   }
 }
+
+@media (width < 25rem) {
+  dl, dd > ol {
+    grid-template-columns: 1fr;
+    width: auto;
+  }
+}
