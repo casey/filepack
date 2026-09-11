@@ -121,7 +121,7 @@ dl {
 }
 
 dt {
-  font-style: italic;
+  color: var(--muted);
 }
 
 h1 {
