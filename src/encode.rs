@@ -25,11 +25,11 @@ where
   V: Encode,
 {
   fn encode(&self, encoder: &mut Encoder) {
-    let mut map = MapEncoder::<&K>::new();
-    for (key, value) in self {
+    let mut map = encoder.map::<&K>();
+    for (key, value) in self.iter().rev() {
       map.item(key, value);
     }
-    encoder.bytes(&map.finish());
+    map.finish();
   }
 }
 
@@ -95,11 +95,11 @@ impl Encode for [u8] {
 
 impl<T: Encode> Encode for [T] {
   fn encode(&self, encoder: &mut Encoder) {
-    let mut array = Encoder::new();
-    for item in self {
-      item.encode(&mut array);
+    let mut array = encoder.array();
+    for element in self.iter().rev() {
+      array.element(element);
     }
-    encoder.bytes(&array.finish());
+    array.finish();
   }
 }
 

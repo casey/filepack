@@ -646,11 +646,11 @@ mod tests {
     };
 
     let mut encoder = Encoder::new();
-    let mut map = MapEncoder::<u64>::new();
-    map.item(0, public_key);
-    map.item(1, &statement);
+    let mut map = encoder.map::<u64>();
     map.item(2, &[0u8; 32][..]);
-    encoder.bytes(&map.finish());
+    map.item(1, &statement);
+    map.item(0, public_key);
+    map.finish();
     let signature_bytes = encoder.finish();
 
     let signature = builder.file(signature_bytes);

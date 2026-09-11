@@ -315,11 +315,11 @@ fn upload_package_fails_when_package_is_not_directory() {
   files.insert(hash, deco);
 
   let mut encoder = Encoder::new();
-  let mut archive = MapEncoder::<u64>::new();
-  archive.item(0, 0u64);
-  archive.item(1, hash);
+  let mut archive = encoder.map::<u64>();
   archive.item(2, &files);
-  encoder.bytes(&archive.finish());
+  archive.item(1, hash);
+  archive.item(0, 0u64);
+  archive.finish();
 
   Test::new()
     .write("manifest.filepack", encoder.finish())
@@ -341,10 +341,10 @@ fn upload_package_fails_when_package_is_not_directory() {
 #[test]
 fn upload_package_fails_when_package_missing() {
   let mut dir_encoder = Encoder::new();
-  let mut dir_map = MapEncoder::<u64>::new();
-  dir_map.item(0, 0u64);
-  dir_map.item(1, BTreeMap::<String, u64>::new());
-  dir_encoder.bytes(&dir_map.finish());
+  let mut map = dir_encoder.map::<u64>();
+  map.item(1, BTreeMap::<String, u64>::new());
+  map.item(0, 0u64);
+  map.finish();
   let dir_bytes = dir_encoder.finish();
 
   let root = Hash::bytes(&dir_bytes);
@@ -353,11 +353,11 @@ fn upload_package_fails_when_package_missing() {
   files.insert(root, dir_bytes);
 
   let mut encoder = Encoder::new();
-  let mut archive = MapEncoder::<u64>::new();
-  archive.item(0, 0u64);
-  archive.item(1, root);
+  let mut archive = encoder.map::<u64>();
   archive.item(2, &files);
-  encoder.bytes(&archive.finish());
+  archive.item(1, root);
+  archive.item(0, 0u64);
+  archive.finish();
 
   Test::new()
     .write("manifest.filepack", encoder.finish())
@@ -381,11 +381,11 @@ fn upload_package_fails_when_root_file_missing() {
   let missing = Hash::bytes(b"missing");
 
   let mut encoder = Encoder::new();
-  let mut archive = MapEncoder::<u64>::new();
-  archive.item(0, 0u64);
-  archive.item(1, missing);
+  let mut archive = encoder.map::<u64>();
   archive.item(2, BTreeMap::<Hash, Vec<u8>>::new());
-  encoder.bytes(&archive.finish());
+  archive.item(1, missing);
+  archive.item(0, 0u64);
+  archive.finish();
 
   Test::new()
     .write("manifest.filepack", encoder.finish())
@@ -415,11 +415,11 @@ fn upload_package_fails_when_root_not_directory_deco() {
   files.insert(root, junk);
 
   let mut encoder = Encoder::new();
-  let mut archive = MapEncoder::<u64>::new();
-  archive.item(0, 0u64);
-  archive.item(1, root);
+  let mut archive = encoder.map::<u64>();
   archive.item(2, &files);
-  encoder.bytes(&archive.finish());
+  archive.item(1, root);
+  archive.item(0, 0u64);
+  archive.finish();
 
   Test::new()
     .write("manifest.filepack", encoder.finish())

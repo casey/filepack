@@ -60,8 +60,7 @@ impl Input {
         let idents = fields.iter().map(|field| field.ident);
         quote! {
           #n => {
-            let decoder = array.element()?;
-            let mut map = decoder.map::<u64>()?;
+            let mut map = array.decoder()?.map::<u64>()?;
             #(#decode)*
             map.finish()?;
             Self::#ident {
@@ -81,7 +80,7 @@ impl Input {
       impl #impl_generics Decode for #name #ty_generics #where_clause {
         fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
           let mut array = decoder.array()?;
-          let discriminant = array.item::<u64>()?;
+          let discriminant = array.element::<u64>()?;
           let value = match discriminant {
             #(#unit_arms)*
             #(#field_arms)*
@@ -215,16 +214,16 @@ impl Input {
 
     let arms = variants.iter().map(|ParsedVariant { fields, ident, n }| {
       if fields.is_empty() {
-        quote! { Self::#ident => #n.encode(&mut array), }
+        quote! { Self::#ident => array.element(#n), }
       } else {
         let idents = fields.iter().map(|field| field.ident);
         let items = ParsedField::encode(fields, Receiver::Binding);
         quote! {
           Self::#ident { #(#idents),* } => {
-            #n.encode(&mut array);
-            let mut map = MapEncoder::<u64>::new();
+            let mut map = array.encoder().map::<u64>();
             #(#items)*
-            array.bytes(&map.finish());
+            map.finish();
+            array.element(#n);
           }
         }
       }
@@ -237,11 +236,11 @@ impl Input {
     Ok(quote! {
       impl #impl_generics Encode for #name #ty_generics #where_clause {
         fn encode(&self, encoder: &mut Encoder) {
-          let mut array = Encoder::new();
+          let mut array = encoder.array();
           match self {
             #(#arms)*
           }
-          encoder.bytes(&array.finish());
+          array.finish();
         }
       }
     })
@@ -265,9 +264,9 @@ impl Input {
     Ok(quote! {
       impl #impl_generics Encode for #name #ty_generics #where_clause {
         fn encode(&self, encoder: &mut Encoder) {
-          let mut map = MapEncoder::<u64>::new();
+          let mut map = encoder.map::<u64>();
           #(#items)*
-          encoder.bytes(&map.finish());
+          map.finish();
         }
       }
     })
