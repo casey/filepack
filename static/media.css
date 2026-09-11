@@ -1,0 +1,6 @@
+@media (width < 30rem) {
+  dl, dd > ol {
+    grid-template-columns: 1fr;
+    width: auto;
+  }
+}
