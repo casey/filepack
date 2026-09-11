@@ -42,10 +42,6 @@ impl Encoder {
     }
   }
 
-  pub(crate) fn len(&self) -> usize {
-    self.buffer.len()
-  }
-
   pub fn integer(&mut self, integer: u64) {
     let bytes = integer.to_le_bytes();
     let len = bytes
@@ -54,6 +50,10 @@ impl Encoder {
       .unwrap_or_default()
       + 1;
     self.bytes(&bytes[..len]);
+  }
+
+  pub(crate) fn len(&self) -> usize {
+    self.buffer.len()
   }
 
   pub fn map<K: Encode + PartialOrd>(&mut self) -> MapEncoder<'_, K> {
