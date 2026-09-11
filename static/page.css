@@ -222,3 +222,10 @@ body > header > nav {
     margin-inline-start: auto;
   }
 }
+
+@media (width < 25rem) {
+  dl, dd > ol {
+    grid-template-columns: 1fr;
+    width: auto;
+  }
+}
