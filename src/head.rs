@@ -2,7 +2,7 @@ use super::*;
 
 /// The first byte of a deco-encoded byte string.
 ///
-/// The encoding of string depends its length and value:
+/// The encoding of a string depends its length and value:
 ///
 /// - small: a single byte whose value is in [0, 127]
 /// - medium: a string of length [0, 111]
