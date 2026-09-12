@@ -74,10 +74,7 @@ impl Decode for i32 {
 
 impl Decode for i64 {
   fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
-    decoder
-      .signed_integer()?
-      .try_into()
-      .context(decode_error::IntegerRange)
+    decoder.signed_integer()
   }
 }
 

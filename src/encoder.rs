@@ -65,14 +65,7 @@ impl Encoder {
   }
 
   pub fn signed_integer(&mut self, integer: i64) {
-    let bytes = integer.to_le_bytes();
-    let mut len = bytes.len();
-    let negative = integer < 0;
-    let sign = if negative { 0xFF } else { 0x00 };
-    while len > 1 && bytes[len - 1] == sign && (bytes[len - 2] >= 0x80) == negative {
-      len -= 1;
-    }
-    self.bytes(&bytes[..len]);
+    self.integer(((integer << 1) ^ (integer >> 63)).cast_unsigned());
   }
 
   pub fn text(&mut self, text: &str) {

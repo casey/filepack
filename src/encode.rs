@@ -128,22 +128,26 @@ mod tests {
   #[test]
   fn i32() {
     assert_deco(0i32, "00");
-    assert_deco(-1i32, "81ff");
-    assert_deco(i32::MAX, "84ffffff7f");
-    assert_deco(i32::MIN, "8400000080");
+    assert_deco(-1i32, "01");
+    assert_deco(i32::MAX, "84feffffff");
+    assert_deco(i32::MIN, "84ffffffff");
   }
 
   #[test]
   fn i64() {
     assert_deco(0i64, "00");
-    assert_deco(-1i64, "81ff");
-    assert_deco(127i64, "7f");
-    assert_deco(128i64, "828000");
-    assert_deco(255i64, "82ff00");
-    assert_deco(-128i64, "8180");
-    assert_deco(-129i64, "827fff");
-    assert_deco(i64::MAX, "88ffffffffffffff7f");
-    assert_deco(i64::MIN, "880000000000000080");
+    assert_deco(-1i64, "01");
+    assert_deco(1i64, "02");
+    assert_deco(63i64, "7e");
+    assert_deco(-64i64, "7f");
+    assert_deco(64i64, "8180");
+    assert_deco(-65i64, "8181");
+    assert_deco(127i64, "81fe");
+    assert_deco(-128i64, "81ff");
+    assert_deco(128i64, "820001");
+    assert_deco(-129i64, "820101");
+    assert_deco(i64::MAX, "88feffffffffffffff");
+    assert_deco(i64::MIN, "88ffffffffffffffff");
   }
 
   #[test]
