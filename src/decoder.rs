@@ -79,21 +79,9 @@ impl<'a> Decoder<'a> {
     }
   }
 
-  pub(crate) fn signed_integer(&mut self) -> Result<i128, DecodeError> {
-    let bytes = self.bytes()?;
-    let last = *bytes.last().context(decode_error::EmptyInteger)?;
-    if bytes.len() > 1 {
-      let previous = bytes[bytes.len() - 2];
-      ensure!(
-        !((last == 0 && previous < 0x80) || (last == 0xFF && previous >= 0x80)),
-        decode_error::OverlongInteger
-      );
-    }
-    ensure!(bytes.len() <= 8, decode_error::IntegerLength);
-    let sign = if last < 0x80 { 0x00 } else { 0xFF };
-    let mut value = [sign; 8];
-    value[..bytes.len()].copy_from_slice(bytes);
-    Ok(i64::from_le_bytes(value).into())
+  pub(crate) fn signed_integer(&mut self) -> Result<i64, DecodeError> {
+    let integer = self.integer()?;
+    Ok((integer >> 1).cast_signed() ^ -(integer & 1).cast_signed())
   }
 
   pub(crate) fn text(&mut self) -> Result<&str, DecodeError> {
@@ -163,16 +151,13 @@ mod tests {
     for signed in [false, true] {
       case(&[0x80], signed, "empty integer");
       case(&[0x82, 0, 0], signed, "overlong integer");
+      case(&[0x82, 0x80, 0], signed, "overlong integer");
       case(
         &[0x89, 0, 0, 0, 0, 0, 0, 0, 0, 1],
         signed,
         "integer exceeds eight bytes",
       );
     }
-    case(&[0x82, 0xff, 0xff], true, "overlong integer");
-    case(&[0x82, 0x80, 0xff], true, "overlong integer");
-    case(&[0x82, 0x7f, 0], true, "overlong integer");
-    case(&[0x82, 0x80, 0], false, "overlong integer");
   }
 
   #[test]
@@ -216,8 +201,8 @@ mod tests {
       );
     }
 
-    case::<i32>(&[0x85, 0x00, 0x00, 0x00, 0x80, 0x00]);
-    case::<i32>(&[0x85, 0xff, 0xff, 0xff, 0x7f, 0xff]);
+    case::<i32>(&[0x85, 0x00, 0x00, 0x00, 0x00, 0x01]);
+    case::<i32>(&[0x85, 0x01, 0x00, 0x00, 0x00, 0x01]);
   }
 
   #[test]
