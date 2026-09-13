@@ -66,6 +66,35 @@ fn embedded_preserved() {
 }
 
 #[test]
+fn rejects_embedded_hash_mismatch() {
+  let expected = Hash::bytes(b"foo").to_string();
+  let actual = Hash::bytes(b"bar").to_string();
+  let content = hex::encode(b"bar");
+
+  Test::new()
+    .write(
+      "manifest.json",
+      json! {
+        embedded: {
+          *expected: content
+        },
+        package: {
+          foo: {
+            hash: expected,
+            size: 3
+          }
+        },
+        signatures: [],
+      },
+    )
+    .args(["archive", "manifest.json", "manifest.filepack"])
+    .stderr_regex_path(&format!(
+      "error: embedded file in manifest `.*manifest.json` should have hash `{expected}` but has hash `{actual}`\n",
+    ))
+    .failure();
+}
+
+#[test]
 fn rejects_totals_overflow() {
   Test::new()
     .write(
@@ -92,6 +121,29 @@ fn rejects_totals_overflow() {
                └─ totals overflowed
       ",
     )
+    .failure();
+}
+
+#[test]
+fn rejects_unreferenced_embedded_files() {
+  let hash = Hash::bytes(b"foo").to_string();
+  let content = hex::encode(b"foo");
+
+  Test::new()
+    .write(
+      "manifest.json",
+      json! {
+        embedded: {
+          *hash: content
+        },
+        package: {},
+        signatures: [],
+      },
+    )
+    .args(["archive", "manifest.json", "manifest.filepack"])
+    .stderr_regex_path(&format!(
+      "error: manifest `.*manifest.json` contains unreferenced embedded files: `{hash}`\n",
+    ))
     .failure();
 }
 

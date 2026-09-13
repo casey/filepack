@@ -191,6 +191,15 @@ pub enum Error {
     first: KeyIdentifier,
     second: KeyIdentifier,
   },
+  #[snafu(display(
+    "embedded file in manifest `{path}` should have hash `{expected}` but has hash `{actual}`"
+  ))]
+  EmbeddedFileHashMismatch {
+    actual: Hash,
+    backtrace: Option<Backtrace>,
+    expected: Hash,
+    path: DisplayPath,
+  },
   #[snafu(display("{count} mismatched file{}", if *count == 1 { "" } else { "s" }))]
   EntryMismatch {
     backtrace: Option<Backtrace>,
@@ -592,6 +601,12 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
     source: ArchiveError,
+  },
+  #[snafu(display("manifest `{path}` contains unreferenced embedded files: {hashes}"))]
+  UnreferencedEmbeddedFiles {
+    backtrace: Option<Backtrace>,
+    hashes: Ticked<Hash>,
+    path: DisplayPath,
   },
   #[snafu(display("invalid video `{path}`"))]
   Video {

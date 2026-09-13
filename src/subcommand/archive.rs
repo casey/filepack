@@ -12,8 +12,7 @@ impl Archive {
   pub(crate) fn run(self) -> Result {
     let json = filesystem::read_to_string(&self.input)?;
 
-    let manifest = serde_json::from_str::<Manifest>(&json)
-      .context(error::DeserializeManifest { path: &self.input })?;
+    let manifest = Manifest::from_json(&json, &self.input)?;
 
     manifest.save(&self.output)?;
 
