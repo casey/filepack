@@ -1,4 +1,8 @@
-use {super::*, reqwest::blocking::RequestBuilder, url::Host};
+use {
+  super::*,
+  reqwest::{blocking::RequestBuilder, redirect},
+  url::Host,
+};
 
 pub(crate) struct Client {
   client: reqwest::blocking::Client,
@@ -67,6 +71,7 @@ impl Client {
     let client = reqwest::blocking::Client::builder()
       .connect_timeout(Duration::from_secs(30))
       .http2_adaptive_window(true)
+      .redirect(redirect::Policy::none())
       .tcp_keepalive(Duration::from_secs(30))
       .timeout(None::<Duration>)
       .user_agent(concat!(
@@ -166,5 +171,44 @@ impl Client {
     self.post(&format!("api/package/{fingerprint}"))?;
 
     Ok(())
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use {super::*, std::io::BufRead, std::net::TcpListener, std::thread};
+
+  #[test]
+  fn redirects_are_not_followed() {
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    let port = listener.local_addr().unwrap().port();
+
+    thread::spawn(move || {
+      let (mut stream, _) = listener.accept().unwrap();
+      let mut lines = BufReader::new(&stream).lines();
+      while !lines.next().unwrap().unwrap().is_empty() {}
+      stream
+        .write_all(
+          b"HTTP/1.1 308 Permanent Redirect\r\n\
+            Location: http://127.0.0.1:1/api/packages\r\n\
+            Content-Length: 0\r\n\
+            \r\n",
+        )
+        .unwrap();
+    });
+
+    let client = Client::new(
+      &Options::parse_from(["filepack"]),
+      format!("http://127.0.0.1:{port}").parse().unwrap(),
+      None,
+    )
+    .unwrap();
+
+    assert_eq!(
+      client.packages().unwrap_err().to_string(),
+      format!(
+        "response from http://127.0.0.1:{port}/api/packages failed with status 308 Permanent Redirect: "
+      ),
+    );
   }
 }
