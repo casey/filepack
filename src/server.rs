@@ -480,13 +480,13 @@ impl Server {
   }
 
   pub(crate) fn verify_directory(&self, hash: Hash) -> ServerResult {
+    let tx = self.database.begin_write()?;
+
     let directory = self.read_directory(hash)?;
 
     directory
       .totals()
       .context(server_error::DirectoryTotals { hash })?;
-
-    let tx = self.database.begin_write()?;
 
     {
       let mut directories = tx.open_table(DIRECTORIES)?;
