@@ -127,7 +127,7 @@ mod tests {
       serde_json::from_str::<Hash>("\"foo\"")
         .unwrap_err()
         .to_string(),
-      r#"invalid value: string "foo", expected 64 hex digits"#,
+      "expected 64 hex bytes, received 3 at line 1 column 5",
     );
   }
 
