@@ -165,12 +165,12 @@ impl Server {
       files_removed.insert(hash);
     }
 
-    tx.commit()?;
-
     for &hash in &files_removed {
       let path = self.file_path(hash);
       fs::remove_file(&path).context(server_error::FilesystemIo { path })?;
     }
+
+    tx.commit()?;
 
     Ok(api::gc::Response {
       bytes,
@@ -480,13 +480,13 @@ impl Server {
   }
 
   pub(crate) fn verify_directory(&self, hash: Hash) -> ServerResult {
+    let tx = self.database.begin_write()?;
+
     let directory = self.read_directory(hash)?;
 
     directory
       .totals()
       .context(server_error::DirectoryTotals { hash })?;
-
-    let tx = self.database.begin_write()?;
 
     {
       let mut directories = tx.open_table(DIRECTORIES)?;
@@ -548,11 +548,10 @@ impl Server {
   }
 
   pub(crate) fn verify_package(&self, fingerprint: Fingerprint) -> ServerResult {
+    let tx = self.database.begin_write()?;
+
     ensure!(
-      self
-        .database
-        .begin_read()?
-        .open_table(DIRECTORIES)?
+      tx.open_table(DIRECTORIES)?
         .get(&fingerprint.into())?
         .is_some(),
       server_error::PackageRootUnverified { fingerprint },
@@ -569,8 +568,6 @@ impl Server {
         );
       }
     }
-
-    let tx = self.database.begin_write()?;
 
     tx.open_table(PACKAGES)?.insert(&fingerprint, &())?;
 
