@@ -165,12 +165,12 @@ impl Server {
       files_removed.insert(hash);
     }
 
-    tx.commit()?;
-
     for &hash in &files_removed {
       let path = self.file_path(hash);
       fs::remove_file(&path).context(server_error::FilesystemIo { path })?;
     }
+
+    tx.commit()?;
 
     Ok(api::gc::Response {
       bytes,
