@@ -114,9 +114,8 @@ impl Archive {
   fn unpack_directory(
     &self,
     loose: &mut BTreeSet<Hash>,
-    embedded: &mut BTreeMap<RelativePath, Hash>,
+    embedded: &mut BTreeMap<Hash, Vec<u8>>,
     hash: Hash,
-    prefix: Option<&RelativePath>,
     expected_totals: Totals,
   ) -> Result<DirectoryTree, ArchiveError> {
     let directory = self.decode_directory(Some(loose), hash)?;
@@ -127,9 +126,9 @@ impl Archive {
     for (name, entry) in &directory.entries {
       let crate_entry = match entry {
         Entry::File { hash, size } => {
-          if self.files.contains_key(hash) {
+          if let Some(content) = self.files.get(hash) {
             loose.remove(hash);
-            embedded.insert(RelativePath::join_opt(prefix, name), *hash);
+            embedded.insert(*hash, content.clone());
           }
           DirectoryTreeEntry::File(File {
             hash: *hash,
@@ -137,13 +136,7 @@ impl Archive {
           })
         }
         Entry::Directory { hash, totals, .. } => {
-          DirectoryTreeEntry::Directory(self.unpack_directory(
-            loose,
-            embedded,
-            *hash,
-            Some(&RelativePath::join_opt(prefix, name)),
-            *totals,
-          )?)
+          DirectoryTreeEntry::Directory(self.unpack_directory(loose, embedded, *hash, *totals)?)
         }
       };
       entries.insert(name.clone(), crate_entry);
@@ -195,7 +188,7 @@ impl Archive {
 
     let mut embedded = BTreeMap::new();
 
-    let package = self.unpack_directory(&mut loose, &mut embedded, *hash, None, *totals)?;
+    let package = self.unpack_directory(&mut loose, &mut embedded, *hash, *totals)?;
 
     let signatures = {
       let entry = root
@@ -231,24 +224,6 @@ impl Archive {
       loose.is_empty(),
       archive_error::LooseFiles { hashes: loose },
     }
-
-    {
-      let unexpected = embedded
-        .keys()
-        .filter(|path| **path != Metadata::DECO_FILENAME)
-        .cloned()
-        .collect::<BTreeSet<RelativePath>>();
-
-      ensure! {
-        unexpected.is_empty(),
-        archive_error::UnexpectedEmbeddedFiles { paths: unexpected },
-      }
-    }
-
-    let embedded = embedded
-      .into_values()
-      .map(|hash| (hash, self.files[&hash].clone()))
-      .collect();
 
     Ok((
       Manifest {
@@ -795,41 +770,6 @@ mod tests {
           },
         }
       }) if hash == entry.hash(),
-    );
-  }
-
-  #[test]
-  fn unexpected_embedded_files() {
-    let content = b"foo";
-
-    let mut package = DirectoryTree::new();
-    for path in &["bar/bob", "baz"] {
-      package
-        .create_file(&path.parse().unwrap(), File::new(content))
-        .unwrap();
-    }
-
-    let mut builder = ArchiveBuilder::new();
-
-    let package = builder.pack_directory(&package).unwrap();
-
-    builder.files.insert(Hash::bytes(content), content.to_vec());
-
-    let signatures = builder.directory(&Directory::default()).unwrap();
-
-    let mut root = Directory::new();
-    root
-      .insert_entry("package", package)
-      .insert_entry("signatures", signatures);
-
-    let root = builder.directory(&root).unwrap();
-
-    let archive = builder.build(root.hash());
-
-    assert_matches!(
-      archive.unpack(),
-      Err(ArchiveError::UnexpectedEmbeddedFiles { paths })
-        if paths.to_string() == "`bar/bob`, `baz`",
     );
   }
 
