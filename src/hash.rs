@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Copy, Debug, DeserializeFromStr, Eq, Hash, PartialEq, SerializeDisplay)]
 pub struct Hash(blake3::Hash);
 
 impl Hash {
@@ -62,30 +62,6 @@ impl Ord for Hash {
 impl PartialOrd for Hash {
   fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
     Some(self.cmp(other))
-  }
-}
-
-impl Serialize for Hash {
-  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-  where
-    S: Serializer,
-  {
-    self.0.to_string().serialize(serializer)
-  }
-}
-
-impl<'de> Deserialize<'de> for Hash {
-  fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-  where
-    D: Deserializer<'de>,
-  {
-    use serde::de::{Error, Unexpected};
-
-    let s = String::deserialize(deserializer)?;
-
-    Ok(Self(s.parse::<blake3::Hash>().map_err(|_| {
-      D::Error::invalid_value(Unexpected::Str(&s), &"64 hex digits")
-    })?))
   }
 }
 

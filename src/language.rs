@@ -190,7 +190,7 @@ pub(crate) static CODES: LazyLock<BTreeMap<&'static str, &'static str>> = LazyLo
   .into()
 });
 
-#[derive(Clone, Copy, Debug, DeserializeFromStr, PartialEq)]
+#[derive(Clone, Copy, Debug, DeserializeFromStr, PartialEq, SerializeDisplay)]
 pub(crate) struct Language(&'static str);
 
 impl Language {
@@ -213,12 +213,6 @@ impl FromStr for Language {
       .get_key_value(code)
       .map(|(key, _value)| Self(key))
       .context(language_error::Code { code })
-  }
-}
-
-impl Serialize for Language {
-  fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-    serializer.serialize_str(self.0)
   }
 }
 
