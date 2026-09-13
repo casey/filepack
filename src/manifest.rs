@@ -49,25 +49,6 @@ impl Manifest {
     Archive::pack(self).unwrap().fingerprint().unwrap()
   }
 
-  pub(crate) fn from_json(json: &str, path: &Utf8Path) -> Result<Self> {
-    let manifest =
-      serde_json::from_str::<Self>(json).context(error::DeserializeManifest { path: &path })?;
-
-    let mut unexpected = BTreeSet::new();
-    for (file_path, file) in manifest.files() {
-      if manifest.embedded.contains_key(&file.hash) && file_path != Metadata::DECO_FILENAME {
-        unexpected.insert(file_path);
-      }
-    }
-
-    ensure! {
-      unexpected.is_empty(),
-      error::UnexpectedEmbeddedFiles { path, unexpected },
-    }
-
-    Ok(manifest)
-  }
-
   pub fn load(path: Option<&Utf8Path>) -> Result<Self> {
     Ok(Self::load_with_opt_path(path)?.1)
   }

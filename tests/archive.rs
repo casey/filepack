@@ -96,35 +96,6 @@ fn rejects_totals_overflow() {
 }
 
 #[test]
-fn rejects_unexpected_embedded_files() {
-  let content = b"foo";
-  let hash = Hash::bytes(content).to_string();
-  let hex_content = hex::encode(content);
-
-  Test::new()
-    .write(
-      "manifest.json",
-      json! {
-        embedded: {
-          *hash: hex_content
-        },
-        package: {
-          bar: {
-            hash: hash,
-            size: 3
-          }
-        },
-        signatures: [],
-      },
-    )
-    .args(["archive", "manifest.json", "manifest.filepack"])
-    .stderr_regex_path(
-      "error: manifest `.*manifest.json` contains unexpected embedded files: `bar`\n",
-    )
-    .failure();
-}
-
-#[test]
 fn round_trip() {
   Test::new()
     .touch("foo")
