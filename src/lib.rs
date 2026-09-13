@@ -178,7 +178,7 @@ use {
   num_traits::One,
   owo_colors::Styled,
   regex::Regex,
-  serde::{Deserialize, Deserializer, Serialize, Serializer},
+  serde::{Deserialize, Serialize, Serializer},
   serde_with::{
     DeserializeFromStr, MapPreventDuplicates, SerializeDisplay, SetPreventDuplicates, serde_as,
     skip_serializing_none,
