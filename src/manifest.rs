@@ -49,6 +49,38 @@ impl Manifest {
     Archive::pack(self).unwrap().fingerprint().unwrap()
   }
 
+  pub(crate) fn from_json(json: &str, path: &Utf8Path) -> Result<Self> {
+    let manifest =
+      serde_json::from_str::<Self>(json).context(error::DeserializeManifest { path })?;
+
+    let hashes = manifest
+      .files()
+      .values()
+      .map(|file| file.hash)
+      .collect::<BTreeSet<Hash>>();
+
+    let mut unreferenced = BTreeSet::new();
+    for (&expected, content) in &manifest.embedded {
+      let actual = Hash::bytes(content);
+
+      ensure! {
+        actual == expected,
+        error::EmbeddedFileHashMismatch { actual, expected, path },
+      }
+
+      if !hashes.contains(&expected) {
+        unreferenced.insert(expected);
+      }
+    }
+
+    ensure! {
+      unreferenced.is_empty(),
+      error::UnreferencedEmbeddedFiles { hashes: unreferenced, path },
+    }
+
+    Ok(manifest)
+  }
+
   pub fn load(path: Option<&Utf8Path>) -> Result<Self> {
     Ok(Self::load_with_opt_path(path)?.1)
   }
