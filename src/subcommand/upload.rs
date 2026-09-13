@@ -35,12 +35,17 @@ impl Upload {
     }
   }
 
-  fn upload_directory(context: &mut Context, file_path: &Utf8Path, hash: Hash) -> Result {
+  fn upload_directory(
+    context: &mut Context,
+    file_path: &Utf8Path,
+    hash: Hash,
+    size: u64,
+  ) -> Result {
     let error_context = error::UnarchiveManifest {
       path: &context.path,
     };
 
-    let deco = context.archive.file(hash).context(error_context)?;
+    let deco = context.archive.file(hash, size).context(error_context)?;
 
     let directory = Directory::decode_from_slice(deco)
       .context(archive_error::DirectoryDecode)
@@ -51,7 +56,9 @@ impl Upload {
     for (component, entry) in &directory.entries {
       let file_path = file_path.join(component);
       match entry {
-        Entry::Directory { hash, .. } => Self::upload_directory(context, &file_path, *hash)?,
+        Entry::Directory { hash, size, .. } => {
+          Self::upload_directory(context, &file_path, *hash, *size)?;
+        }
         Entry::File { hash, .. } => {
           if context.missing.contains(hash) {
             Self::upload_package_file(context, entry, &file_path)?;
@@ -89,7 +96,9 @@ impl Upload {
 
     let error_context = error::UnarchiveManifest { path: &path };
 
-    let fingerprint = archive.fingerprint().context(error_context)?;
+    let package = archive.package().context(error_context)?;
+
+    let fingerprint = Fingerprint(package.hash());
 
     if client.has_package(fingerprint)? {
       if !options.quiet {
@@ -138,7 +147,7 @@ impl Upload {
 
     let root = context.path.parent().unwrap().to_owned();
 
-    Self::upload_directory(&mut context, &root, fingerprint.into())?;
+    Self::upload_directory(&mut context, &root, package.hash(), package.size())?;
 
     context.client.verify_package(fingerprint)?;
 

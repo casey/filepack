@@ -11,6 +11,12 @@ pub enum ArchiveError {
   FileHashMismatch { actual: Hash, expected: Hash },
   #[snafu(display("archive missing entry for hash {hash}"))]
   FileMissing { hash: Hash },
+  #[snafu(display("archive file {hash} size mismatch: expected {expected} but got {actual}"))]
+  FileSizeMismatch {
+    actual: u64,
+    expected: u64,
+    hash: Hash,
+  },
   #[snafu(display("archive contains loose files: {hashes}"))]
   LooseFiles { hashes: Ticked<Hash> },
   #[snafu(display("archive missing package directory"))]
