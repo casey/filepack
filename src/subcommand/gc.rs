@@ -4,8 +4,12 @@ use super::*;
 pub(crate) struct Gc {
   #[arg(help = "Authenticate with key <KEY>", long, value_name = "KEY")]
   auth: Option<KeyName>,
-  #[arg(help = "Delete unreferenced data on server at <URL>", long, value_name = "URL", value_parser = CheckedUrl::check)]
-  server: Url,
+  #[arg(
+    help = "Delete unreferenced data on server at <URL>",
+    long,
+    value_name = "URL"
+  )]
+  server: ServerUrl,
 }
 
 impl Gc {

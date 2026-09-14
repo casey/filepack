@@ -7,7 +7,7 @@ use {
 pub(crate) struct Client {
   client: reqwest::blocking::Client,
   key: Option<PrivateKey>,
-  server: Url,
+  server: ServerUrl,
 }
 
 impl Client {
@@ -65,7 +65,7 @@ impl Client {
     )
   }
 
-  pub(crate) fn new(options: &Options, server: Url, auth: Option<&KeyName>) -> Result<Self> {
+  pub(crate) fn new(options: &Options, server: ServerUrl, auth: Option<&KeyName>) -> Result<Self> {
     install_default_crypto_provider()?;
 
     let client = reqwest::blocking::Client::builder()
