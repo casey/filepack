@@ -10,6 +10,10 @@ main {
   min-height: 0;
 }
 
+hgroup {
+  text-align: center;
+}
+
 h1 {
   font-size: 40vmin;
   font-weight: normal;
@@ -27,5 +31,4 @@ p {
   font-size: max(1rem, 4vmin);
   margin: 0;
   overflow-wrap: anywhere;
-  text-align: center;
 }
