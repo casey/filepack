@@ -51,16 +51,6 @@ mod tests {
   }
 
   #[test]
-  fn scheme_error() {
-    assert_eq!(
-      "ftp://foo".parse::<ServerUrl>().unwrap_err(),
-      UrlError::Scheme {
-        scheme: "ftp".into()
-      },
-    );
-  }
-
-  #[test]
   fn parse() {
     case("1.1.1.1", "http://1.1.1.1/");
     case("[::1]", "http://[::1]/");
@@ -69,6 +59,16 @@ mod tests {
     case("föö", "https://xn--f-1gaa/");
     case("https://foo", "https://foo/");
     case("localhost", "http://localhost/");
+  }
+
+  #[test]
+  fn scheme_error() {
+    assert_eq!(
+      "ftp://foo".parse::<ServerUrl>().unwrap_err(),
+      UrlError::Scheme {
+        scheme: "ftp".into()
+      },
+    );
   }
 
   #[test]
