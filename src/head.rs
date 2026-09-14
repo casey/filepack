@@ -54,7 +54,7 @@ impl Head {
       Self::Medium(len) => {
         if len == 1 {
           ensure! {
-            *buffer.get(1).context(decode_error::Truncated)? > 0x7F,
+            *buffer.get(1).context(decode_error::Truncated)? > 0x7f,
             decode_error::Overlong,
           }
         }
@@ -76,7 +76,7 @@ impl Head {
 
         if count == 1 {
           ensure! {
-            len > 0x6F,
+            len > 0x6f,
             decode_error::Overlong,
           }
         }
@@ -92,9 +92,9 @@ impl From<u8> for Head {
   fn from(head: u8) -> Self {
     match head {
       0x00..0x80 => Self::Small,
-      0x80..0xF0 => Self::Medium((head - 0x80).into()),
-      0xF0..0xF8 => Self::Large((head - 0xEF).into()),
-      0xF8..=0xFF => Self::Reserved(head),
+      0x80..0xf0 => Self::Medium((head - 0x80).into()),
+      0xf0..0xf8 => Self::Large((head - 0xef).into()),
+      0xf8..=0xff => Self::Reserved(head),
     }
   }
 }
@@ -130,13 +130,13 @@ mod tests {
 
   #[test]
   fn head_parse() {
-    for i in 0..=0xFF {
+    for i in 0..=0xff {
       let head = Head::from(i);
       match i {
         0x00..0x80 => assert_eq!(head, Head::Small),
-        0x80..0xF0 => assert_eq!(head, Head::Medium((i - 0x80).into())),
-        0xF0..0xF8 => assert_eq!(head, Head::Large((i - 0xEF).into())),
-        0xF8..=0xFF => assert_eq!(head, Head::Reserved(i)),
+        0x80..0xf0 => assert_eq!(head, Head::Medium((i - 0x80).into())),
+        0xf0..0xf8 => assert_eq!(head, Head::Large((i - 0xef).into())),
+        0xf8..=0xff => assert_eq!(head, Head::Reserved(i)),
       }
     }
   }

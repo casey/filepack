@@ -102,7 +102,7 @@ impl Mp3Builder {
   }
 
   fn standard() -> Vec<u8> {
-    let mut bytes = vec![0xFF, 0xFB, 0x90, 0x00];
+    let mut bytes = vec![0xff, 0xfb, 0x90, 0x00];
     bytes.resize(417, 0);
     bytes
   }
@@ -110,10 +110,10 @@ impl Mp3Builder {
   fn syncsafe(n: usize) -> [u8; 4] {
     let n = u32::try_from(n).unwrap();
     [
-      u8::try_from((n >> 21) & 0x7F).unwrap(),
-      u8::try_from((n >> 14) & 0x7F).unwrap(),
-      u8::try_from((n >> 7) & 0x7F).unwrap(),
-      u8::try_from(n & 0x7F).unwrap(),
+      u8::try_from((n >> 21) & 0x7f).unwrap(),
+      u8::try_from((n >> 14) & 0x7f).unwrap(),
+      u8::try_from((n >> 7) & 0x7f).unwrap(),
+      u8::try_from(n & 0x7f).unwrap(),
     ]
   }
 

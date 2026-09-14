@@ -86,7 +86,7 @@ impl<'a> Mp3Decoder<'a> {
       .unwrap();
 
     ensure! {
-      header[0] == 0xFF && header[1] & 0xE0 == 0xE0,
+      header[0] == 0xff && header[1] & 0xe0 == 0xe0,
       mp3_error::Sync { offset },
     }
 
@@ -479,44 +479,44 @@ mod tests {
     );
 
     case(
-      Mp3Builder::new().frame([0xFF, 0xEB, 0x90, 0x00], 417),
+      Mp3Builder::new().frame([0xff, 0xeb, 0x90, 0x00], 417),
       Mp3Error::Version,
     );
 
     case(
-      Mp3Builder::new().frame([0xFF, 0xF9, 0x90, 0x00], 417),
+      Mp3Builder::new().frame([0xff, 0xf9, 0x90, 0x00], 417),
       Mp3Error::LayerInvalid,
     );
 
     case(
-      Mp3Builder::new().frame([0xFF, 0xFD, 0x90, 0x00], 417),
+      Mp3Builder::new().frame([0xff, 0xfd, 0x90, 0x00], 417),
       Mp3Error::LayerUnsupported { layer: 2 },
     );
 
     case(
-      Mp3Builder::new().frame([0xFF, 0xFF, 0x90, 0x00], 417),
+      Mp3Builder::new().frame([0xff, 0xff, 0x90, 0x00], 417),
       Mp3Error::LayerUnsupported { layer: 1 },
     );
 
     case(
-      Mp3Builder::new().frame([0xFF, 0xFB, 0x00, 0x00], 417),
+      Mp3Builder::new().frame([0xff, 0xfb, 0x00, 0x00], 417),
       Mp3Error::Bitrate { index: 0 },
     );
 
     case(
-      Mp3Builder::new().frame([0xFF, 0xFB, 0xF0, 0x00], 417),
+      Mp3Builder::new().frame([0xff, 0xfb, 0xf0, 0x00], 417),
       Mp3Error::Bitrate { index: 15 },
     );
 
     case(
-      Mp3Builder::new().frame([0xFF, 0xFB, 0x9C, 0x00], 417),
+      Mp3Builder::new().frame([0xff, 0xfb, 0x9c, 0x00], 417),
       Mp3Error::SampleRate,
     );
 
     case(
       Mp3Builder::new()
         .frames(1)
-        .frame([0xFF, 0xFB, 0x90, 0xC0], 417),
+        .frame([0xff, 0xfb, 0x90, 0xc0], 417),
       Mp3Error::ChannelsMismatch {
         actual: 1,
         expected: 2,
@@ -526,7 +526,7 @@ mod tests {
     case(
       Mp3Builder::new()
         .frames(1)
-        .frame([0xFF, 0xFB, 0x94, 0x00], 384),
+        .frame([0xff, 0xfb, 0x94, 0x00], 384),
       Mp3Error::SampleRateMismatch {
         actual: 48000,
         expected: 44100,
@@ -597,7 +597,7 @@ mod tests {
 
     case(
       Mp3Builder::new()
-        .frame([0xFF, 0xFB, 0x92, 0x00], 418)
+        .frame([0xff, 0xfb, 0x92, 0x00], 418)
         .frames(1),
       AudioProperties {
         channels: 2,
@@ -608,7 +608,7 @@ mod tests {
     );
 
     case(
-      Mp3Builder::new().frame([0xFF, 0xFB, 0x90, 0xC0], 417),
+      Mp3Builder::new().frame([0xff, 0xfb, 0x90, 0xc0], 417),
       AudioProperties {
         channels: 1,
         sample_rate: 44100,
@@ -618,7 +618,7 @@ mod tests {
     );
 
     case(
-      Mp3Builder::new().frame([0xFF, 0xF3, 0x90, 0x00], 261),
+      Mp3Builder::new().frame([0xff, 0xf3, 0x90, 0x00], 261),
       AudioProperties {
         channels: 2,
         sample_rate: 22050,
@@ -628,7 +628,7 @@ mod tests {
     );
 
     case(
-      Mp3Builder::new().frame([0xFF, 0xE3, 0x90, 0x00], 522),
+      Mp3Builder::new().frame([0xff, 0xe3, 0x90, 0x00], 522),
       AudioProperties {
         channels: 2,
         sample_rate: 11025,
