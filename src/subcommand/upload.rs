@@ -20,8 +20,8 @@ pub(crate) struct Upload {
     value_name = "PATH"
   )]
   input: Option<Utf8PathBuf>,
-  #[arg(help = "Upload to server at <URL>", long, value_name = "URL", value_parser = CheckedUrl::check)]
-  server: Url,
+  #[arg(help = "Upload to server at <URL>", long, value_name = "URL")]
+  server: ServerUrl,
 }
 
 impl Upload {

@@ -13,8 +13,8 @@ pub(crate) struct Delete {
     value_name = "FINGERPRINT"
   )]
   fingerprint: Option<Fingerprint>,
-  #[arg(help = "Delete from server at <URL>", long, value_name = "URL", value_parser = CheckedUrl::check)]
-  server: Url,
+  #[arg(help = "Delete from server at <URL>", long, value_name = "URL")]
+  server: ServerUrl,
 }
 
 impl Delete {

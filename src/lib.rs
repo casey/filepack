@@ -125,6 +125,7 @@ use {
     rotation::Rotation,
     server::Server,
     server_error::ServerError,
+    server_url::ServerUrl,
     sign_options::SignOptions,
     signature_error::SignatureError,
     sort::Sort,
@@ -413,6 +414,7 @@ mod resource_type;
 mod rotation;
 mod server;
 mod server_error;
+mod server_url;
 mod sign_options;
 mod signature;
 mod signature_error;
