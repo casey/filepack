@@ -219,7 +219,7 @@ use {
   tokio::io::{AsyncReadExt, AsyncWriteExt},
   tokio_util::io::ReaderStream,
   unicase::UniCase,
-  url::Url,
+  url::{Host, Url},
   usized::IntoU64,
   walkdir::WalkDir,
   zune_jpeg::{JpegDecoder, SampleRatios, zune_core::colorspace::ColorSpace},

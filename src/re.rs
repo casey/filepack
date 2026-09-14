@@ -7,6 +7,7 @@ macro_rules! re {
   }
 }
 
-re! { KEY_NAME,   r"[0-9a-z]+(-[0-9a-z]+)*"  }
-re! { NUMBER,     r"0|[1-9][0-9]*"           }
-re! { PUBLIC_KEY, r"public1.*"               }
+re! { KEY_NAME, r"[0-9a-z]+(-[0-9a-z]+)*" }
+re! { NUMBER, r"0|[1-9][0-9]*" }
+re! { PUBLIC_KEY, r"public1.*" }
+re! { SCHEME, "[A-Za-z][A-Za-z0-9+.-]*://.*" }
