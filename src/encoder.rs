@@ -15,19 +15,17 @@ impl Encoder {
   }
 
   pub fn bytes(&mut self, bytes: &[u8]) {
-    let end = self.buffer.len();
     for &byte in bytes.iter().rev() {
       self.buffer.push_front(byte);
     }
-    self.head(end);
+    self.head(bytes.len());
   }
 
   pub fn finish(self) -> Vec<u8> {
     Vec::from(self.buffer)
   }
 
-  pub(crate) fn head(&mut self, end: usize) {
-    let len = self.buffer.len() - end;
+  pub(crate) fn head(&mut self, len: usize) {
     let head = Head::new(len, self.buffer.front().copied());
     match head {
       Head::Small => {}
@@ -38,7 +36,7 @@ impl Encoder {
         }
         self.buffer.push_front((0xef + count).try_into().unwrap());
       }
-      Head::Reserved(value) => self.buffer.push_front(value),
+      Head::Reserved(_) => unreachable!(),
     }
   }
 

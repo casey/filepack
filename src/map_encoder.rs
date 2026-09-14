@@ -8,7 +8,7 @@ pub struct MapEncoder<'a, K> {
 
 impl<'a, K: Encode + PartialOrd> MapEncoder<'a, K> {
   pub fn finish(self) {
-    self.encoder.head(self.end);
+    self.encoder.head(self.encoder.len() - self.end);
   }
 
   pub fn item(&mut self, key: K, value: impl Encode) {

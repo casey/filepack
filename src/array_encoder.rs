@@ -15,7 +15,7 @@ impl<'a> ArrayEncoder<'a> {
   }
 
   pub fn finish(self) {
-    self.encoder.head(self.end);
+    self.encoder.head(self.encoder.len() - self.end);
   }
 
   pub(crate) fn new(encoder: &'a mut Encoder) -> Self {
