@@ -54,7 +54,7 @@ impl<'a> Iterator for Blocks<'a> {
     Some(Ok(Block {
       body,
       end,
-      ty: header[0] & 0x7F,
+      ty: header[0] & 0x7f,
     }))
   }
 }

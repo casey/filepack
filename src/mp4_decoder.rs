@@ -311,11 +311,11 @@ mod tests {
       Some(config(8, ChromaSubsampling::Yuv420)),
     );
     case(
-      &[0x67, 100, 0, 31, 0xA6],
+      &[0x67, 100, 0, 31, 0xa6],
       Some(config(10, ChromaSubsampling::Yuv420)),
     );
     case(
-      &[0x67, 100, 0, 31, 0xB8],
+      &[0x67, 100, 0, 31, 0xb8],
       Some(config(8, ChromaSubsampling::Yuv422)),
     );
     case(
@@ -323,11 +323,11 @@ mod tests {
       Some(config(8, ChromaSubsampling::Yuv444)),
     );
     case(
-      &[0x67, 100, 0, 31, 0xE0],
+      &[0x67, 100, 0, 31, 0xe0],
       Some(config(8, ChromaSubsampling::Yuv400)),
     );
     case(
-      &[0x67, 100, 0, 0, 0x03, 0xA6],
+      &[0x67, 100, 0, 0, 0x03, 0xa6],
       Some(config(10, ChromaSubsampling::Yuv420)),
     );
     case(&[0x67, 100, 0, 31], None);
@@ -475,7 +475,7 @@ mod tests {
     assert_eq!(
       case(
         Mp4Builder::new()
-          .sps(&[0x67, 100, 0, 31, 0xA6])
+          .sps(&[0x67, 100, 0, 31, 0xa6])
           .video_track(2, 1),
       )
       .unwrap()

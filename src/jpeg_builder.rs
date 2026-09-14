@@ -14,7 +14,7 @@ pub(crate) struct JpegBuilder {
 
 impl JpegBuilder {
   fn app1(header: &[u8], payload: &[u8]) -> Vec<u8> {
-    let mut segment = vec![0xFF, 0xE1];
+    let mut segment = vec![0xff, 0xe1];
     segment.extend_from_slice(
       &u16::try_from(header.len() + payload.len() + 2)
         .unwrap()
@@ -39,7 +39,7 @@ impl JpegBuilder {
     let mut bytes = buffer.into_inner();
 
     if let Some(sampling) = self.sampling {
-      let sof = bytes.windows(2).position(|w| w == [0xFF, 0xC0]).unwrap();
+      let sof = bytes.windows(2).position(|w| w == [0xff, 0xc0]).unwrap();
       bytes[sof + 11] = sampling;
     }
 

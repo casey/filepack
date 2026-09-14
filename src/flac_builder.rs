@@ -11,7 +11,7 @@ impl FlacBuilder {
     streaminfo.extend_from_slice(&4096u16.to_be_bytes());
     streaminfo.extend_from_slice(&4096u16.to_be_bytes());
     streaminfo.extend_from_slice(&[0; 6]);
-    streaminfo.extend_from_slice(&[0x0A, 0xC4, 0x42, 0xF0]);
+    streaminfo.extend_from_slice(&[0x0a, 0xc4, 0x42, 0xf0]);
     streaminfo.extend_from_slice(&self.samples.to_be_bytes());
     streaminfo.extend_from_slice(&[0; 16]);
 

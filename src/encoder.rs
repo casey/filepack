@@ -36,7 +36,7 @@ impl Encoder {
         for &byte in len.to_le_bytes()[..count].iter().rev() {
           self.buffer.push_front(byte);
         }
-        self.buffer.push_front((0xEF + count).try_into().unwrap());
+        self.buffer.push_front((0xef + count).try_into().unwrap());
       }
       Head::Reserved(value) => self.buffer.push_front(value),
     }

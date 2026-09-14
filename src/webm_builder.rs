@@ -10,10 +10,10 @@ pub(crate) struct WebmBuilder {
 impl WebmBuilder {
   pub(crate) fn audio_settings(channels: u64, sampling_frequency: f64) -> Vec<u8> {
     Self::element(
-      &[0xE1],
+      &[0xe1],
       &[
-        Self::unsigned(&[0x9F], channels),
-        Self::float(&[0xB5], sampling_frequency),
+        Self::unsigned(&[0x9f], channels),
+        Self::float(&[0xb5], sampling_frequency),
       ]
       .concat(),
     )
@@ -36,7 +36,7 @@ impl WebmBuilder {
     let info = [
       self
         .timestamp_scale
-        .map(|timestamp_scale| Self::unsigned(&[0x2A, 0xD7, 0xB1], timestamp_scale))
+        .map(|timestamp_scale| Self::unsigned(&[0x2a, 0xd7, 0xb1], timestamp_scale))
         .unwrap_or_default(),
       self
         .duration
@@ -45,22 +45,22 @@ impl WebmBuilder {
       self
         .title
         .as_deref()
-        .map(|title| Self::string(&[0x7B, 0xA9], title))
+        .map(|title| Self::string(&[0x7b, 0xa9], title))
         .unwrap_or_default(),
-      Self::string(&[0x4D, 0x80], "foo"),
+      Self::string(&[0x4d, 0x80], "foo"),
       Self::string(&[0x57, 0x41], "bar"),
     ]
     .concat();
 
     let segment = [
-      Self::element(&[0x15, 0x49, 0xA9, 0x66], &info),
-      Self::element(&[0x16, 0x54, 0xAE, 0x6B], &self.tracks.concat()),
-      Self::element(&[0x1F, 0x43, 0xB6, 0x75], &self.blocks.concat()),
+      Self::element(&[0x15, 0x49, 0xa9, 0x66], &info),
+      Self::element(&[0x16, 0x54, 0xae, 0x6b], &self.tracks.concat()),
+      Self::element(&[0x1f, 0x43, 0xb6, 0x75], &self.blocks.concat()),
     ]
     .concat();
 
     [
-      Self::element(&[0x1A, 0x45, 0xDF, 0xA3], &header),
+      Self::element(&[0x1a, 0x45, 0xdf, 0xa3], &header),
       Self::element(&[0x18, 0x53, 0x80, 0x67], &segment),
     ]
     .concat()
@@ -97,7 +97,7 @@ impl WebmBuilder {
     payload.push(0x80);
     payload.extend_from_slice(data);
 
-    self.blocks.push(Self::element(&[0xA3], &payload));
+    self.blocks.push(Self::element(&[0xa3], &payload));
 
     self
   }
@@ -140,15 +140,15 @@ impl WebmBuilder {
     let number = u64::try_from(self.tracks.len() + 1).unwrap();
 
     let entry = [
-      Self::unsigned(&[0xD7], number),
-      Self::unsigned(&[0x73, 0xC5], number),
+      Self::unsigned(&[0xd7], number),
+      Self::unsigned(&[0x73, 0xc5], number),
       Self::unsigned(&[0x83], ty),
       Self::string(&[0x86], codec_id),
       settings.to_vec(),
     ]
     .concat();
 
-    self.tracks.push(Self::element(&[0xAE], &entry));
+    self.tracks.push(Self::element(&[0xae], &entry));
 
     self
   }
@@ -159,10 +159,10 @@ impl WebmBuilder {
 
   pub(crate) fn video_settings(width: u64, height: u64) -> Vec<u8> {
     Self::element(
-      &[0xE0],
+      &[0xe0],
       &[
-        Self::unsigned(&[0xB0], width),
-        Self::unsigned(&[0xBA], height),
+        Self::unsigned(&[0xb0], width),
+        Self::unsigned(&[0xba], height),
       ]
       .concat(),
     )
