@@ -38,7 +38,7 @@ impl Encoder {
         }
         self.buffer.push_front((0xef + count).try_into().unwrap());
       }
-      Head::Reserved(value) => self.buffer.push_front(value),
+      Head::Reserved(_) => unreachable!(),
     }
   }
 

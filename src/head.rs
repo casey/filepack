@@ -163,4 +163,98 @@ mod tests {
       case(&[byte], &format!("reserved byte {byte}"));
     }
   }
+
+  #[test]
+  fn new() {
+    #[track_caller]
+    fn case(len: usize, first: Option<u8>, expected: Head) {
+      assert_eq!(Head::new(len, first), expected);
+    }
+
+    case(0, None, Head::Medium(0));
+    case(1, Some(0x00), Head::Small);
+    case(1, Some(0x7F), Head::Small);
+    case(1, Some(0x80), Head::Medium(1));
+    case(1, Some(0xFF), Head::Medium(1));
+    case(2, Some(0x00), Head::Medium(2));
+    case(0x6F, Some(0x00), Head::Medium(0x6F));
+    case(0x70, Some(0x00), Head::Large(1));
+    case(0xFF, Some(0x00), Head::Large(1));
+    case(0x100, Some(0x00), Head::Large(2));
+    case(0xFFFF, Some(0x00), Head::Large(2));
+    case(0x1_0000, Some(0x00), Head::Large(3));
+    case(0xFF_FFFF, Some(0x00), Head::Large(3));
+    case(0x100_0000, Some(0x00), Head::Large(4));
+    case(0xFFFF_FFFF, Some(0x00), Head::Large(4));
+    case(0x1_0000_0000, Some(0x00), Head::Large(5));
+    case(0xFF_FFFF_FFFF, Some(0x00), Head::Large(5));
+    case(0x100_0000_0000, Some(0x00), Head::Large(6));
+    case(0xFFFF_FFFF_FFFF, Some(0x00), Head::Large(6));
+    case(0x1_0000_0000_0000, Some(0x00), Head::Large(7));
+    case(0xFF_FFFF_FFFF_FFFF, Some(0x00), Head::Large(7));
+    case(0x100_0000_0000_0000, Some(0x00), Head::Large(8));
+    case(usize::MAX, Some(0x00), Head::Large(8));
+  }
+
+  #[test]
+  fn range() {
+    #[track_caller]
+    fn case(head: Head, buffer: &[u8], expected: Result<(usize, usize), &str>) {
+      assert_eq!(
+        head.range(buffer).map_err(|err| err.to_string()),
+        expected.map_err(str::to_string),
+      );
+    }
+
+    #[track_caller]
+    fn large(count: u8, len: u64, expected: Result<(usize, usize), &str>) {
+      let buffer = [
+        &[0xEF + count][..],
+        &len.to_le_bytes()[..usize::from(count)],
+      ]
+      .concat();
+      case(Head::Large(count.into()), &buffer, expected);
+    }
+
+    case(Head::Small, &[0x00], Ok((0, 1)));
+    case(Head::Medium(0), &[0x80], Ok((1, 0)));
+    case(Head::Medium(1), &[0x81], Err("truncated"));
+    case(Head::Medium(1), &[0x81, 0x7F], Err("overlong encoding"));
+    case(Head::Medium(1), &[0x81, 0x80], Ok((1, 1)));
+    case(Head::Medium(2), &[0x82], Ok((1, 2)));
+    case(Head::Medium(0x6F), &[0xEF], Ok((1, 0x6F)));
+    case(Head::Large(1), &[0xF0], Err("truncated"));
+    case(
+      Head::Large(8),
+      &[0xF7, 0, 0, 0, 0, 0, 0, 0],
+      Err("truncated"),
+    );
+    case(Head::Reserved(0xF8), &[0xF8], Err("reserved byte 248"));
+
+    large(1, 0x00, Err("overlong encoding"));
+    large(1, 0x6F, Err("overlong encoding"));
+    large(1, 0x70, Ok((2, 0x70)));
+    large(1, 0xFF, Ok((2, 0xFF)));
+    large(2, 0xFF, Err("overlong encoding"));
+    large(2, 0x100, Ok((3, 0x100)));
+    large(2, 0xFFFF, Ok((3, 0xFFFF)));
+    large(3, 0xFFFF, Err("overlong encoding"));
+    large(3, 0x1_0000, Ok((4, 0x1_0000)));
+    large(3, 0xFF_FFFF, Ok((4, 0xFF_FFFF)));
+    large(4, 0xFF_FFFF, Err("overlong encoding"));
+    large(4, 0x100_0000, Ok((5, 0x100_0000)));
+    large(4, 0xFFFF_FFFF, Ok((5, 0xFFFF_FFFF)));
+    large(5, 0xFFFF_FFFF, Err("overlong encoding"));
+    large(5, 0x1_0000_0000, Ok((6, 0x1_0000_0000)));
+    large(5, 0xFF_FFFF_FFFF, Ok((6, 0xFF_FFFF_FFFF)));
+    large(6, 0xFF_FFFF_FFFF, Err("overlong encoding"));
+    large(6, 0x100_0000_0000, Ok((7, 0x100_0000_0000)));
+    large(6, 0xFFFF_FFFF_FFFF, Ok((7, 0xFFFF_FFFF_FFFF)));
+    large(7, 0xFFFF_FFFF_FFFF, Err("overlong encoding"));
+    large(7, 0x1_0000_0000_0000, Ok((8, 0x1_0000_0000_0000)));
+    large(7, 0xFF_FFFF_FFFF_FFFF, Ok((8, 0xFF_FFFF_FFFF_FFFF)));
+    large(8, 0xFF_FFFF_FFFF_FFFF, Err("overlong encoding"));
+    large(8, 0x100_0000_0000_0000, Ok((9, 0x100_0000_0000_0000)));
+    large(8, u64::MAX, Ok((9, usize::MAX)));
+  }
 }
