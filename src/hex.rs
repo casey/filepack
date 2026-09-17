@@ -43,7 +43,7 @@ pub(crate) trait Hex: Decode + Encode {
       .map(|[high, low]| high << 4 | low)
       .collect::<Vec<u8>>();
 
-    Self::decode_from_slice(&buffer).context(hex_error::DecoDecode { tag })
+    Self::decode_from_slice(&buffer).context(hex_error::Decode { tag })
   }
 }
 
