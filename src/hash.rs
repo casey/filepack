@@ -139,6 +139,14 @@ mod tests {
   }
 
   #[test]
+  fn hex() {
+    assert_eq! {
+      Hash::from([0; Hash::LEN]).to_string(),
+      "0000000000000000000000000000000000000000000000000000000000000000",
+    }
+  }
+
+  #[test]
   fn redb() {
     test::assert_redb_impls(&[
       Hash::from([0; Hash::LEN]),
