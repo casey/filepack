@@ -250,9 +250,8 @@ which commits to the content of `package`.
 
 ### Example
 
-An manifest converted to JSON over a directory containing the files `README.md`
-and `src/main.c`, signed by the public key
-`public1d79b36defbee7c1d26099c9e28f849f1f0dceb6e0217b83c87f5cff6fd8c4fc8`:
+A manifest converted to JSON over a directory containing the files `README.md`
+and `src/main.c`, with a signature:
 
 ```json
 {
@@ -274,7 +273,7 @@ and `src/main.c`, signed by the public key
 ```
 
 The signature is elided for brevity. Signatures are tagged hex strings
-containing both a public key and an Ed25519 signature.
+containing a public key and signature.
 
 Keys, Signatures, Fingerprints, and Hashes
 ------------------------------------------
