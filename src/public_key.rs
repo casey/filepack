@@ -100,7 +100,7 @@ mod tests {
   fn weak_public_keys_are_forbidden() {
     assert_matches!(
       test::WEAK_PUBLIC_KEY.parse::<PublicKey>().unwrap_err(),
-      HexError::DecoDecode {
+      HexError::Decode {
         source: DecodeError::PublicKey {
           source: PublicKeyError::Weak { key },
         },

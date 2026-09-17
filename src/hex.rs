@@ -123,7 +123,7 @@ mod tests {
 
     assert_matches!(
       "package1".parse::<Fingerprint>(),
-      Err(HexError::DecoDecode {
+      Err(HexError::Decode {
         source: DecodeError::Truncated,
         tag: Tag::Fingerprint,
       }),
@@ -131,7 +131,7 @@ mod tests {
 
     assert_matches!(
       format!("package1a0{}", &zeros[2..]).parse::<Fingerprint>(),
-      Err(HexError::DecoDecode {
+      Err(HexError::Decode {
         source: DecodeError::Truncated,
         tag: Tag::Fingerprint,
       }),
@@ -139,7 +139,7 @@ mod tests {
 
     assert_matches!(
       format!("package1a0{zeros}00").parse::<Fingerprint>(),
-      Err(HexError::DecoDecode {
+      Err(HexError::Decode {
         source: DecodeError::TrailingBytes,
         tag: Tag::Fingerprint,
       }),

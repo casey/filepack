@@ -166,7 +166,7 @@ mod tests {
     );
     assert_matches!(
       s.parse::<Signature>().unwrap_err(),
-      HexError::DecoDecode {
+      HexError::Decode {
         source: DecodeError::UnconsumedEntries,
         tag: Tag::Signature,
       },
