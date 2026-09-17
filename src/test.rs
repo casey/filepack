@@ -23,7 +23,7 @@ pub(crate) const WEAK_PUBLIC_KEY: &str =
   "public10000000000000000000000000000000000000000000000000000000000000000";
 
 #[track_caller]
-pub(crate) fn assert_deco<T: Debug + Decode + Encode + PartialEq>(value: T, deco: &str) {
+pub(crate) fn assert_deco<T: Debug + DecodeOwned + Encode + PartialEq>(value: T, deco: &str) {
   let buffer = value.encode_to_vec();
   assert_eq!(hex::encode(&buffer), deco);
   let mut decoder = Decoder::new(&buffer);
@@ -33,7 +33,7 @@ pub(crate) fn assert_deco<T: Debug + Decode + Encode + PartialEq>(value: T, deco
 }
 
 #[track_caller]
-pub(crate) fn assert_deco_eq<T: Debug + Decode + Encode + PartialEq>(
+pub(crate) fn assert_deco_eq<T: Debug + DecodeOwned + Encode + PartialEq>(
   value: T,
   expected: impl Encode,
 ) {
@@ -41,7 +41,7 @@ pub(crate) fn assert_deco_eq<T: Debug + Decode + Encode + PartialEq>(
 }
 
 #[track_caller]
-pub(crate) fn assert_encoding<T: Debug + Decode + Encode + PartialEq>(value: T) {
+pub(crate) fn assert_encoding<T: Debug + DecodeOwned + Encode + PartialEq>(value: T) {
   let buffer = value.encode_to_vec();
   let mut decoder = Decoder::new(&buffer);
   let decoded = T::decode(&mut decoder).unwrap();

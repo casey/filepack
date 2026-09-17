@@ -15,7 +15,7 @@ impl Hash {
   }
 }
 
-impl Decode for Hash {
+impl Decode<'_> for Hash {
   fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
     Ok(Self::from(decoder.byte_array()?))
   }

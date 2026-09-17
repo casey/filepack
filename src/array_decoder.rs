@@ -10,7 +10,7 @@ impl<'a> ArrayDecoder<'a> {
     Ok(&mut self.decoder)
   }
 
-  pub(crate) fn element<T: Decode>(&mut self) -> Result<T, DecodeError> {
+  pub(crate) fn element<T: Decode<'a>>(&mut self) -> Result<T, DecodeError> {
     T::decode(self.decoder()?)
   }
 
@@ -23,7 +23,7 @@ impl<'a> ArrayDecoder<'a> {
     Self { decoder }
   }
 
-  pub(crate) fn next<T: Decode>(&mut self) -> Result<Option<T>, DecodeError> {
+  pub(crate) fn next<T: Decode<'a>>(&mut self) -> Result<Option<T>, DecodeError> {
     if self.decoder.is_empty() {
       return Ok(None);
     }

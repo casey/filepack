@@ -53,6 +53,7 @@ use {
     deco::Deco,
     deco_response::DecoResponse,
     decode_error::DecodeError,
+    decode_owned::DecodeOwned,
     dimensions::Dimensions,
     directory_tree::DirectoryTree,
     directory_tree_entry::DirectoryTreeEntry,
@@ -312,6 +313,7 @@ mod deco;
 mod deco_response;
 mod decode;
 mod decode_error;
+mod decode_owned;
 mod decoder;
 mod dimensions;
 mod directory;

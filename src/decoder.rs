@@ -84,7 +84,7 @@ impl<'a> Decoder<'a> {
     Ok((integer >> 1).cast_signed() ^ -(integer & 1).cast_signed())
   }
 
-  pub(crate) fn text(&mut self) -> Result<&str, DecodeError> {
+  pub(crate) fn text(&mut self) -> Result<&'a str, DecodeError> {
     str::from_utf8(self.bytes()?).context(decode_error::Unicode)
   }
 }
@@ -193,7 +193,7 @@ mod tests {
   #[test]
   fn signed_integer_range() {
     #[track_caller]
-    fn case<T: Debug + Decode>(bytes: &[u8]) {
+    fn case<'a, T: Debug + Decode<'a>>(bytes: &'a [u8]) {
       assert_matches!(
         T::decode_from_slice(bytes),
         Err(DecodeError::IntegerRange { .. }),

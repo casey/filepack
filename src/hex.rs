@@ -1,6 +1,6 @@
 use super::*;
 
-pub(crate) trait Hex: Decode + Encode {
+pub(crate) trait Hex: DecodeOwned + Encode {
   const TAG: Tag;
 
   const TAGGED: bool = true;
