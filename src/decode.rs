@@ -1,9 +1,9 @@
 use super::*;
 
-pub trait Decode: Sized {
-  fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError>;
+pub trait Decode<'a>: Sized {
+  fn decode(decoder: &mut Decoder<'a>) -> Result<Self, DecodeError>;
 
-  fn decode_from_slice(buffer: &[u8]) -> Result<Self, DecodeError> {
+  fn decode_from_slice(buffer: &'a [u8]) -> Result<Self, DecodeError> {
     let mut decoder = Decoder::new(buffer);
     let value = Self::decode(&mut decoder)?;
     decoder.finish()?;
@@ -11,12 +11,12 @@ pub trait Decode: Sized {
   }
 }
 
-impl<K, V> Decode for BTreeMap<K, V>
+impl<'a, K, V> Decode<'a> for BTreeMap<K, V>
 where
-  K: Clone + Decode + Debug + Ord + PartialOrd,
-  V: Decode,
+  K: Clone + Decode<'a> + Debug + Ord + PartialOrd,
+  V: Decode<'a>,
 {
-  fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
+  fn decode(decoder: &mut Decoder<'a>) -> Result<Self, DecodeError> {
     let mut decoder = decoder.map::<K>()?;
 
     let mut map = BTreeMap::new();
@@ -30,26 +30,26 @@ where
   }
 }
 
-impl Decode for bool {
+impl Decode<'_> for bool {
   fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
     decoder.boolean()
   }
 }
 
-impl Decode for String {
+impl Decode<'_> for String {
   fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
     Ok(decoder.text()?.to_owned())
   }
 }
 
-impl Decode for Vec<u8> {
+impl Decode<'_> for Vec<u8> {
   fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
     Ok(decoder.bytes()?.to_vec())
   }
 }
 
-impl<T: Decode> Decode for Vec<T> {
-  fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
+impl<'a, T: Decode<'a>> Decode<'a> for Vec<T> {
+  fn decode(decoder: &mut Decoder<'a>) -> Result<Self, DecodeError> {
     let mut array = decoder.array()?;
 
     let mut vec = Vec::new();
@@ -63,7 +63,7 @@ impl<T: Decode> Decode for Vec<T> {
   }
 }
 
-impl Decode for i32 {
+impl Decode<'_> for i32 {
   fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
     decoder
       .signed_integer()?
@@ -72,19 +72,19 @@ impl Decode for i32 {
   }
 }
 
-impl Decode for i64 {
+impl Decode<'_> for i64 {
   fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
     decoder.signed_integer()
   }
 }
 
-impl Decode for u64 {
+impl Decode<'_> for u64 {
   fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
     decoder.integer()
   }
 }
 
-impl Decode for usize {
+impl Decode<'_> for usize {
   fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
     decoder
       .integer()?
@@ -93,13 +93,25 @@ impl Decode for usize {
   }
 }
 
-impl<const N: usize> Decode for [u8; N] {
+impl<'a> Decode<'a> for &'a [u8] {
+  fn decode(decoder: &mut Decoder<'a>) -> Result<Self, DecodeError> {
+    decoder.bytes()
+  }
+}
+
+impl<'a> Decode<'a> for &'a str {
+  fn decode(decoder: &mut Decoder<'a>) -> Result<Self, DecodeError> {
+    decoder.text()
+  }
+}
+
+impl<const N: usize> Decode<'_> for [u8; N] {
   fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
     decoder.byte_array()
   }
 }
 
-impl<const N: usize, const M: usize> Decode for [[u8; N]; M] {
+impl<const N: usize, const M: usize> Decode<'_> for [[u8; N]; M] {
   fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
     let bytes = decoder.bytes()?;
 
@@ -121,6 +133,22 @@ impl<const N: usize, const M: usize> Decode for [[u8; N]; M] {
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn borrowed_bytes() {
+    assert_eq!(
+      <&[u8]>::decode_from_slice(&[0x82, 0x01, 0x02]).unwrap(),
+      [0x01, 0x02],
+    );
+  }
+
+  #[test]
+  fn borrowed_str() {
+    assert_eq!(
+      <&str>::decode_from_slice(&[0x83, 0x66, 0x6f, 0x6f]).unwrap(),
+      "foo",
+    );
+  }
 
   #[test]
   fn decode_from_slice_errors_on_trailing_bytes() {

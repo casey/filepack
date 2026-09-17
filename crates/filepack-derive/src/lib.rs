@@ -44,7 +44,7 @@ pub fn decode_from_str(input: TokenStream) -> TokenStream {
   let name = &input.ident;
 
   quote! {
-    impl Decode for #name {
+    impl Decode<'_> for #name {
       fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
         decoder
           .text()?

@@ -52,7 +52,7 @@ impl FromStr for PublicKey {
   }
 }
 
-impl Decode for PublicKey {
+impl Decode<'_> for PublicKey {
   fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
     Self::from_bytes(decoder.byte_array()?).context(decode_error::PublicKey)
   }

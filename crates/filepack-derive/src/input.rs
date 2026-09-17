@@ -70,15 +70,13 @@ impl Input {
         }
       });
 
-    let generics = self.decode_generics(validate);
-
-    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+    let header = self.decode_header(validate);
 
     let validate = validate.then(|| quote! { Validate::validate(&value)?; });
 
     Ok(quote! {
-      impl #impl_generics Decode for #name #ty_generics #where_clause {
-        fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
+      #header {
+        fn decode(decoder: &mut Decoder<'de>) -> Result<Self, DecodeError> {
           let mut array = decoder.array()?;
           let discriminant = array.element::<u64>()?;
           let value = match discriminant {
@@ -97,25 +95,34 @@ impl Input {
     })
   }
 
-  fn decode_generics(&self, validate: bool) -> Generics {
-    let mut generics = self.generics(syn::parse_quote!(Decode));
+  fn decode_header(&self, validate: bool) -> proc_macro2::TokenStream {
+    let mut header_generics = self.generics(syn::parse_quote!(Decode<'de>));
 
-    if validate {
-      let name = &self.ident;
-      let (_impl_generics, ty_generics, _where_clause) = self.generics.split_for_impl();
+    header_generics.params.insert(0, syn::parse_quote!('de));
 
-      generics
-        .make_where_clause()
-        .predicates
-        .push(syn::parse_quote!(#name #ty_generics: Validate));
+    let predicates = &mut header_generics.make_where_clause().predicates;
+
+    for param in self.generics.lifetimes() {
+      let lifetime = &param.lifetime;
+      predicates.push(syn::parse_quote!('de: #lifetime));
     }
 
-    generics
+    if validate {
+      predicates.push(syn::parse_quote!(Self: Validate));
+    }
+
+    let name = &self.ident;
+
+    let (impl_generics, _ty_generics, where_clause) = header_generics.split_for_impl();
+
+    let (_impl_generics, ty_generics, _where_clause) = self.generics.split_for_impl();
+
+    quote! {
+      impl #impl_generics Decode<'de> for #name #ty_generics #where_clause
+    }
   }
 
   pub(crate) fn decode_struct(&self, validate: bool) -> Result<proc_macro2::TokenStream> {
-    let name = &self.ident;
-
     let fields = self.parse_fields()?;
 
     let decode = ParsedField::decode(&fields);
@@ -128,15 +135,13 @@ impl Input {
       }
     };
 
-    let generics = self.decode_generics(validate);
-
-    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+    let header = self.decode_header(validate);
 
     let validate = validate.then(|| quote! { Validate::validate(&value)?; });
 
     Ok(quote! {
-      impl #impl_generics Decode for #name #ty_generics #where_clause {
-        fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
+      #header {
+        fn decode(decoder: &mut Decoder<'de>) -> Result<Self, DecodeError> {
           let mut map = decoder.map::<u64>()?;
           #(#decode)*
           map.finish()?;
@@ -149,8 +154,6 @@ impl Input {
   }
 
   pub(crate) fn decode_transparent(&self, validate: bool) -> Result<proc_macro2::TokenStream> {
-    let name = &self.ident;
-
     let member = self.transparent_member()?;
 
     let constructor = match &member {
@@ -170,13 +173,11 @@ impl Input {
       }
     };
 
-    let generics = self.decode_generics(validate);
-
-    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+    let header = self.decode_header(validate);
 
     Ok(quote! {
-      impl #impl_generics Decode for #name #ty_generics #where_clause {
-        fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
+      #header {
+        fn decode(decoder: &mut Decoder<'de>) -> Result<Self, DecodeError> {
           #body
         }
       }

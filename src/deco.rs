@@ -5,7 +5,7 @@ use {
 
 pub(crate) struct Deco<T, const LIMIT: usize>(pub(crate) T);
 
-impl<T: Decode, S: Send + Sync, const LIMIT: usize> FromRequest<S> for Deco<T, LIMIT> {
+impl<T: DecodeOwned, S: Send + Sync, const LIMIT: usize> FromRequest<S> for Deco<T, LIMIT> {
   type Rejection = ServerError;
 
   async fn from_request(request: Request, _state: &S) -> ServerResult<Self> {

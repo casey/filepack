@@ -3,7 +3,7 @@ use super::*;
 pub(crate) trait ReqwestResponseExt: Sized {
   fn check_status(self) -> Result<Self>;
 
-  fn deco<T: Decode>(self) -> Result<T>;
+  fn deco<T: DecodeOwned>(self) -> Result<T>;
 
   fn found(self) -> Result<bool>;
 }
@@ -25,7 +25,7 @@ impl ReqwestResponseExt for reqwest::blocking::Response {
     Ok(self)
   }
 
-  fn deco<T: Decode>(self) -> Result<T> {
+  fn deco<T: DecodeOwned>(self) -> Result<T> {
     let url = self.url().clone();
 
     let bytes = self

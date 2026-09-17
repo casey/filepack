@@ -85,6 +85,22 @@ fn all_required() {
 }
 
 #[test]
+fn borrowed_field() {
+  #[derive(Debug, Decode, Encode, PartialEq)]
+  struct Foo<'a> {
+    #[n(0)]
+    bar: &'a [u8],
+  }
+
+  let buffer = Foo { bar: b"bar" }.encode_to_vec();
+
+  assert_eq!(
+    Foo::decode_from_slice(&buffer).unwrap(),
+    Foo { bar: b"bar" },
+  );
+}
+
+#[test]
 fn decode_from_str() {
   #[derive(Debug, DecodeFromStr, PartialEq)]
   struct Foo(String);
