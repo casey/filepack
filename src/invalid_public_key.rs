@@ -22,7 +22,7 @@ mod tests {
   fn display() {
     assert_eq!(
       InvalidPublicKey([0; PublicKey::LEN]).to_string(),
-      "public1a00000000000000000000000000000000000000000000000000000000000000000",
+      "public10000000000000000000000000000000000000000000000000000000000000000",
     );
 
     let public_key = test::PUBLIC_KEY.parse::<PublicKey>().unwrap();

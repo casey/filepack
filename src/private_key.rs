@@ -84,7 +84,7 @@ mod tests {
 
   #[test]
   fn private_key_begins_with_public_key() {
-    let prefix = format!("private1c0{}", &test::PUBLIC_KEY["public1a0".len()..]);
+    let prefix = format!("private1{}", &test::PUBLIC_KEY["public1".len()..]);
     assert!(test::PRIVATE_KEY.starts_with(&prefix));
   }
 
@@ -92,9 +92,9 @@ mod tests {
   fn public_key_mismatch_error() {
     let other = PrivateKey::generate().public_key().to_string();
     let mismatched = format!(
-      "private1c0{}{}",
-      &other["public1a0".len()..],
-      &test::PRIVATE_KEY["private1c0".len() + 64..],
+      "private1{}{}",
+      &other["public1".len()..],
+      &test::PRIVATE_KEY["private1".len() + 64..],
     );
     assert_eq!(
       mismatched.parse::<PrivateKey>().unwrap_err().to_string(),

@@ -3,24 +3,33 @@ use super::*;
 pub(crate) trait Hex: Decode + Encode {
   const TAG: Tag;
 
+  const TAGGED: bool = true;
+
   fn format(&self, f: &mut Formatter) -> fmt::Result {
-    write!(
-      f,
-      "{}1{}",
-      Self::TAG.prefix(),
-      Payload(&self.encode_to_vec())
-    )
+    if Self::TAGGED {
+      write!(f, "{}1", Self::TAG.prefix())?;
+    }
+
+    let buffer = self.encode_to_vec();
+
+    write!(f, "{}", Payload(Decoder::new(&buffer).bytes().unwrap()))
   }
 
   fn parse(s: &str) -> Result<Self, HexError> {
     let tag = Self::TAG;
 
-    let (actual, payload) = s.split_once('1').context(hex_error::TagMissing { tag })?;
+    let payload = if Self::TAGGED {
+      let (actual, payload) = s.split_once('1').context(hex_error::TagMissing { tag })?;
 
-    ensure! {
-      actual == tag.prefix(),
-      hex_error::UnexpectedTag { actual, expected: tag }
-    }
+      ensure! {
+        actual == tag.prefix(),
+        hex_error::UnexpectedTag { actual, expected: tag }
+      }
+
+      payload
+    } else {
+      s
+    };
 
     let digits = payload
       .chars()
@@ -42,6 +51,8 @@ pub(crate) trait Hex: Decode + Encode {
       .iter()
       .map(|[high, low]| high << 4 | low)
       .collect::<Vec<u8>>();
+
+    let buffer = Encoder::frame(buffer);
 
     Self::decode_from_slice(&buffer).context(hex_error::Decode { tag })
   }
@@ -84,11 +95,11 @@ mod tests {
     case("", "package fingerprint missing tag `package1…`");
     case("package", "package fingerprint missing tag `package1…`");
     case(
-      &format!("public1a0{zeros}"),
+      &format!("public1{zeros}"),
       "expected package fingerprint with tag `package1…` but found `public1…`",
     );
     case(
-      &format!("PACKAGE1a0{zeros}"),
+      &format!("PACKAGE1{zeros}"),
       "expected package fingerprint with tag `package1…` but found `PACKAGE1…`",
     );
     case(
@@ -124,23 +135,32 @@ mod tests {
     assert_matches!(
       "package1".parse::<Fingerprint>(),
       Err(HexError::Decode {
-        source: DecodeError::Truncated,
+        source: DecodeError::ArrayLength {
+          actual: 0,
+          expected: 32,
+        },
         tag: Tag::Fingerprint,
       }),
     );
 
     assert_matches!(
-      format!("package1a0{}", &zeros[2..]).parse::<Fingerprint>(),
+      format!("package1{}", &zeros[2..]).parse::<Fingerprint>(),
       Err(HexError::Decode {
-        source: DecodeError::Truncated,
+        source: DecodeError::ArrayLength {
+          actual: 31,
+          expected: 32,
+        },
         tag: Tag::Fingerprint,
       }),
     );
 
     assert_matches!(
-      format!("package1a0{zeros}00").parse::<Fingerprint>(),
+      format!("package1{zeros}00").parse::<Fingerprint>(),
       Err(HexError::Decode {
-        source: DecodeError::TrailingBytes,
+        source: DecodeError::ArrayLength {
+          actual: 33,
+          expected: 32,
+        },
         tag: Tag::Fingerprint,
       }),
     );
@@ -158,6 +178,7 @@ mod tests {
 
     case::<DisplayPrivateKey>(test::PRIVATE_KEY);
     case::<Fingerprint>(test::FINGERPRINT);
+    case::<Hash>(test::HASH);
     case::<PublicKey>(test::PUBLIC_KEY);
     case::<Signature>(test::SIGNATURE);
   }

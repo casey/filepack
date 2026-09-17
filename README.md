@@ -252,7 +252,7 @@ which commits to the content of `package`.
 
 An manifest converted to JSON over a directory containing the files `README.md`
 and `src/main.c`, signed by the public key
-`public1a0d79b36defbee7c1d26099c9e28f849f1f0dceb6e0217b83c87f5cff6fd8c4fc8`:
+`public1d79b36defbee7c1d26099c9e28f849f1f0dceb6e0217b83c87f5cff6fd8c4fc8`:
 
 ```json
 {

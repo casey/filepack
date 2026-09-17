@@ -55,11 +55,6 @@ pub fn install_default_crypto_provider() -> Result {
   Ok(())
 }
 
-pub(crate) fn is_lowercase_hex(s: &str) -> bool {
-  s.chars()
-    .all(|c| c.is_ascii_hexdigit() && (c.is_numeric() || c.is_lowercase()))
-}
-
 pub(crate) fn now() -> Result<u64> {
   Ok(
     SystemTime::now()
@@ -83,16 +78,4 @@ pub(crate) fn transfer_tempfile(hash: Hash, path: &Utf8Path) -> io::Result<Named
     .prefix(&format!("{hash}-"))
     .suffix(".incomplete")
     .tempfile_in(path)
-}
-
-#[cfg(test)]
-mod tests {
-  use super::*;
-
-  #[test]
-  fn lowercase_hex() {
-    assert!(is_lowercase_hex("0123456789abcdef"));
-    assert!(!is_lowercase_hex("0123456789ABCDEF"));
-    assert!(!is_lowercase_hex("xyz"));
-  }
 }

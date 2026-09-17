@@ -3,6 +3,7 @@ use super::*;
 #[derive(Clone, Copy, Debug, EnumIter, PartialEq)]
 pub enum Tag {
   Fingerprint,
+  Hash,
   PrivateKey,
   PublicKey,
   Signature,
@@ -12,6 +13,7 @@ impl Tag {
   pub(crate) fn name(self) -> &'static str {
     match self {
       Self::Fingerprint => "package fingerprint",
+      Self::Hash => "hash",
       Self::PrivateKey => "private key",
       Self::PublicKey => "public key",
       Self::Signature => "signature",
@@ -21,6 +23,7 @@ impl Tag {
   pub(crate) fn prefix(self) -> &'static str {
     match self {
       Self::Fingerprint => "package",
+      Self::Hash => "hash",
       Self::PrivateKey => "private",
       Self::PublicKey => "public",
       Self::Signature => "signature",

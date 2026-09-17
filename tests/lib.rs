@@ -64,12 +64,11 @@ mod verify;
 const EMPTY_HASH: &str = "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262";
 
 const PRIVATE_KEY: &str = concat!(
-  "private1c0d79b36defbee7c1d26099c9e28f849f1f0dceb6e0217b83c87f5cff6fd8c4fc8",
-  "554351406a9ddf54d43642cc913284fe6be89ab2e67d0d7ece4156db5bd1050a",
+  "private1d79b36defbee7c1d26099c9e28f849f1f0dceb6e0217b83c87f5cff6fd8c4fc8554351406a9ddf54d43642",
+  "cc913284fe6be89ab2e67d0d7ece4156db5bd1050a",
 );
 
-const PUBLIC_KEY: &str =
-  "public1a0d79b36defbee7c1d26099c9e28f849f1f0dceb6e0217b83c87f5cff6fd8c4fc8";
+const PUBLIC_KEY: &str = "public1d79b36defbee7c1d26099c9e28f849f1f0dceb6e0217b83c87f5cff6fd8c4fc8";
 
 const USAGE_ERROR: i32 = 2;
 

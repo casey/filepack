@@ -104,7 +104,7 @@ fn mount_rejects_package_without_media_type() {
 
 #[test]
 fn mount_requires_existing_package() {
-  let fingerprint = "package1a0af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262";
+  let fingerprint = "package1af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262";
 
   Test::new()
     .args(["serve", "--mount", fingerprint])

@@ -1,27 +1,26 @@
 use super::*;
 
 pub(crate) const FINGERPRINT: &str =
-  "package1a0af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262";
+  "package1af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262";
 
 pub(crate) const HASH: &str = "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262";
 
 pub(crate) const PRIVATE_KEY: &str = concat!(
-  "private1c0d79b36defbee7c1d26099c9e28f849f1f0dceb6e0217b83c87f5cff6fd8c4fc8",
-  "554351406a9ddf54d43642cc913284fe6be89ab2e67d0d7ece4156db5bd1050a",
+  "private1d79b36defbee7c1d26099c9e28f849f1f0dceb6e0217b83c87f5cff6fd8c4fc8554351406a9ddf54d43642",
+  "cc913284fe6be89ab2e67d0d7ece4156db5bd1050a",
 );
 
 pub(crate) const PUBLIC_KEY: &str =
-  "public1a0d79b36defbee7c1d26099c9e28f849f1f0dceb6e0217b83c87f5cff6fd8c4fc8";
+  "public1d79b36defbee7c1d26099c9e28f849f1f0dceb6e0217b83c87f5cff6fd8c4fc8";
 
 pub(crate) const SIGNATURE: &str = concat!(
-  "signature1f08800a0d79b36defbee7c1d26099c9e28f849f1f0dceb6e0217b83c87f5cff6fd8c4fc8",
-  "01a200a0af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
-  "02c03fd90842958b5349abc421dffce4950da98669631ed6cff2ce9f66b05d119e94",
-  "9454b61ca79545e2b4899fc72cc531f874f47cc42db8c960df13f7db63e2ca0c",
+  "signature100a0d79b36defbee7c1d26099c9e28f849f1f0dceb6e0217b83c87f5cff6fd8c4fc801a200a0af1349b9",
+  "f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f326202c03fd90842958b5349abc421dffce4950da9",
+  "8669631ed6cff2ce9f66b05d119e949454b61ca79545e2b4899fc72cc531f874f47cc42db8c960df13f7db63e2ca0c"
 );
 
 pub(crate) const WEAK_PUBLIC_KEY: &str =
-  "public1a00000000000000000000000000000000000000000000000000000000000000000";
+  "public10000000000000000000000000000000000000000000000000000000000000000";
 
 #[track_caller]
 pub(crate) fn assert_deco<T: Debug + Decode + Encode + PartialEq>(value: T, deco: &str) {

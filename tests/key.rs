@@ -6,7 +6,7 @@ fn default() {
     .arg("keygen")
     .success()
     .arg("key")
-    .stdout_regex("public1a0[0-9a-f]{64}\n")
+    .stdout_regex("public1[0-9a-f]{64}\n")
     .success();
 
   let public_key = test.read_public_key("keychain/master.public");
@@ -20,7 +20,7 @@ fn master() {
     .arg("keygen")
     .success()
     .args(["key", "--key", "master"])
-    .stdout_regex("public1a0[0-9a-f]{64}\n")
+    .stdout_regex("public1[0-9a-f]{64}\n")
     .success();
 
   let public_key = test.read_public_key("keychain/master.public");
@@ -69,7 +69,7 @@ fn named() {
     .args(["keygen", "--name", "deploy"])
     .success()
     .args(["key", "--key", "deploy"])
-    .stdout_regex("public1a0[0-9a-f]{64}\n")
+    .stdout_regex("public1[0-9a-f]{64}\n")
     .success();
 
   let public_key = test.read_public_key("keychain/deploy.public");

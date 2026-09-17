@@ -40,17 +40,16 @@ impl From<[u8; Hash::LEN]> for Hash {
 }
 
 impl FromStr for Hash {
-  type Err = HashError;
+  type Err = HexError;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
-    let hash = s.parse()?;
-
-    if !is_lowercase_hex(s) {
-      return Err(hash_error::Case { hash: s }.build());
-    }
-
-    Ok(Self(hash))
+    Self::parse(s)
   }
+}
+
+impl Hex for Hash {
+  const TAG: Tag = Tag::Hash;
+  const TAGGED: bool = false;
 }
 
 impl Ord for Hash {
@@ -67,7 +66,7 @@ impl PartialOrd for Hash {
 
 impl Display for Hash {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    Display::fmt(&self.0, f)
+    self.format(f)
   }
 }
 
@@ -127,7 +126,7 @@ mod tests {
       serde_json::from_str::<Hash>("\"foo\"")
         .unwrap_err()
         .to_string(),
-      "expected 64 hex bytes, received 3 at line 1 column 5",
+      "hash contains invalid hex digit `o` at line 1 column 5",
     );
   }
 
