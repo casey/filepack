@@ -1,12 +1,13 @@
 use {
   self::{
-    attributes::Attributes, field::Field, input::Input, parsed_field::ParsedField,
-    parsed_variant::ParsedVariant, receiver::Receiver, variant::Variant,
+    attributes::Attributes, container_attribute::ContainerAttribute, field::Field, input::Input,
+    parsed_field::ParsedField, parsed_variant::ParsedVariant, receiver::Receiver, variant::Variant,
   },
   darling::{FromDeriveInput, FromField, FromVariant, ast::Data, ast::Fields},
   proc_macro::TokenStream,
   quote::quote,
   std::collections::HashSet,
+  strum::{Display, EnumString},
   syn::{
     Attribute, DeriveInput, Error, Generics, Ident, Index, LitInt, Member, Path, Result, Type,
     TypeParamBound, TypePath,
@@ -15,6 +16,7 @@ use {
 };
 
 mod attributes;
+mod container_attribute;
 mod field;
 mod input;
 mod parsed_field;

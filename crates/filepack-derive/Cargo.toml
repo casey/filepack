@@ -16,6 +16,7 @@ proc-macro = true
 darling = "0.24.1"
 proc-macro2 = "1.0.0"
 quote = "1.0.0"
+strum.workspace = true
 syn = "3.0.0"
 usized.workspace = true
 

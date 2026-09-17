@@ -135,6 +135,20 @@ mod tests {
   use super::*;
 
   #[test]
+  fn allow_unknown_keys() {
+    #[derive(Decode)]
+    #[deco(allow_unknown_keys)]
+    struct Foo {
+      #[n(0)]
+      foo: u64,
+    }
+
+    let foo = Foo::decode_from_slice(&[0x84, 0x00, 0x01, 0x01, 0x02]).unwrap();
+
+    assert_eq!(foo.foo, 1);
+  }
+
+  #[test]
   fn borrowed_bytes() {
     assert_eq!(
       <&[u8]>::decode_from_slice(&[0x82, 0x01, 0x02]).unwrap(),

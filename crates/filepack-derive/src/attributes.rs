@@ -1,42 +1,17 @@
 use super::*;
 
-pub(crate) struct Attributes {
-  pub(crate) transparent: bool,
-  pub(crate) validate: bool,
-}
+pub(crate) struct Attributes(pub(crate) HashSet<ContainerAttribute>);
 
 impl Attributes {
-  pub(crate) fn parse(attributes: &[Attribute]) -> Result<Self> {
-    let mut transparent = false;
-    let mut validate = false;
+  pub(crate) fn allow_unknown_keys(&self) -> bool {
+    self.0.contains(&ContainerAttribute::AllowUnknownKeys)
+  }
 
-    for attribute in attributes {
-      if !attribute.path().is_ident("deco") {
-        continue;
-      }
+  pub(crate) fn transparent(&self) -> bool {
+    self.0.contains(&ContainerAttribute::Transparent)
+  }
 
-      attribute.parse_nested_meta(|meta| {
-        if meta.path.is_ident("transparent") {
-          if transparent {
-            return Err(meta.error("duplicate `transparent` attribute"));
-          }
-          transparent = true;
-          Ok(())
-        } else if meta.path.is_ident("validate") {
-          if validate {
-            return Err(meta.error("duplicate `validate` attribute"));
-          }
-          validate = true;
-          Ok(())
-        } else {
-          Err(meta.error("unknown deco attribute"))
-        }
-      })?;
-    }
-
-    Ok(Self {
-      transparent,
-      validate,
-    })
+  pub(crate) fn validate(&self) -> bool {
+    self.0.contains(&ContainerAttribute::Validate)
   }
 }
