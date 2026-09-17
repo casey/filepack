@@ -67,7 +67,7 @@ pub enum ServerError {
     source: io::Error,
   },
   #[snafu(display("{source}"))]
-  FingerprintParse { source: Bech32Error },
+  FingerprintParse { source: HexError },
   #[snafu(display("response invalid"))]
   InvalidResponse { source: http::Error },
   #[snafu(display(

@@ -4,7 +4,7 @@ use {
   filepack::{
     Decode, Decoder, Directory, DirectoryExt, Encode, Encoder, Entry, Fingerprint, FlacBuilder,
     Hash, Manifest, Metadata, Mp3Builder, Mp4Builder, Page, PngBuilder, PrivateKey, PublicKey,
-    Totals, gradient, gradient_alpha,
+    Totals, gradient, gradient_alpha, hex,
     templates::{DirectoryHtml, PackageHtml},
   },
   image::{DynamicImage, ImageFormat},
@@ -29,7 +29,6 @@ use {
 };
 
 mod archive;
-mod bech32;
 mod child;
 mod contains;
 mod create;
@@ -65,11 +64,12 @@ mod verify;
 const EMPTY_HASH: &str = "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262";
 
 const PRIVATE_KEY: &str = concat!(
-  "private1a67dndhhmae7p6fsfnj0z37zf78cde6mwqgtms0y87h8ldlvvflyq24p4zsr2nh04f4pkgtxf",
-  "zv5yle473x4jue7s6lkwg9tdkk73q59qxqurh4",
+  "private1c0d79b36defbee7c1d26099c9e28f849f1f0dceb6e0217b83c87f5cff6fd8c4fc8",
+  "554351406a9ddf54d43642cc913284fe6be89ab2e67d0d7ece4156db5bd1050a",
 );
 
-const PUBLIC_KEY: &str = "public1a67dndhhmae7p6fsfnj0z37zf78cde6mwqgtms0y87h8ldlvvflyqcxnd63";
+const PUBLIC_KEY: &str =
+  "public1a0d79b36defbee7c1d26099c9e28f849f1f0dceb6e0217b83c87f5cff6fd8c4fc8";
 
 const USAGE_ERROR: i32 = 2;
 

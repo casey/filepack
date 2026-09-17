@@ -3,15 +3,11 @@ use super::*;
 #[derive(Debug, Snafu)]
 #[snafu(context(suffix(false)), visibility(pub(crate)))]
 pub enum PublicKeyError {
-  #[snafu(transparent)]
-  Bech32 { source: Bech32Error },
   #[snafu(display("invalid public key: `{key}`"))]
   Invalid {
-    key: String,
+    key: InvalidPublicKey,
     source: DalekSignatureError,
   },
-  #[snafu(display("invalid public key name `{name}`"))]
-  Name { name: String },
   #[snafu(display("weak public key: `{key}`"))]
-  Weak { key: String },
+  Weak { key: InvalidPublicKey },
 }

@@ -240,7 +240,7 @@ begin with a Windows drive prefix, such as `C:`.
 ### `signatures`
 
 The value of the mandatory `signatures` key is an array of signatures.
-Signatures are Bech32m strings that include an Ed25519 key, the package
+Signatures are tagged hex strings that include an Ed25519 key, the package
 fingerprint the signature is made over, an optional timestamp, and the
 signature itself.
 
@@ -252,7 +252,7 @@ which commits to the content of `package`.
 
 An manifest converted to JSON over a directory containing the files `README.md`
 and `src/main.c`, signed by the public key
-`public1a67dndhhmae7p6fsfnj0z37zf78cde6mwqgtms0y87h8ldlvvflyqcxnd63`:
+`public1a0d79b36defbee7c1d26099c9e28f849f1f0dceb6e0217b83c87f5cff6fd8c4fc8`:
 
 ```json
 {
@@ -273,16 +273,15 @@ and `src/main.c`, signed by the public key
 }
 ```
 
-The signature is elided for brevity. Signatures are Bech32m-encoded strings
+The signature is elided for brevity. Signatures are tagged hex strings
 containing both a public key and an Ed25519 signature.
 
 Keys, Signatures, Fingerprints, and Hashes
 ------------------------------------------
 
-Public keys, private keys, signatures, and package fingerprints are all
-[Bech32m](https://github.com/bitcoin/bips/blob/master/bip-0350.mediawiki)-encoded
-strings beginning with `public1…`, `private1…`, `signature1…`, and `package1…`
-respectively.
+Public keys, private keys, signatures, and package fingerprints are all tagged
+hex strings beginning with `public1…`, `private1…`, `signature1…`, and
+`package1…` respectively.
 
 BLAKE3 file hashes are 64-character lowercase hexadecimal.
 

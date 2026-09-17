@@ -6,22 +6,16 @@ pub struct PublicKey(ed25519_dalek::VerifyingKey);
 impl PublicKey {
   pub(crate) const LEN: usize = ed25519_dalek::PUBLIC_KEY_LENGTH;
 
-  fn encode_bytes(bytes: [u8; Self::LEN]) -> Bech32Encoder {
-    let mut encoder = Bech32Encoder::new(Bech32Type::PublicKey);
-    encoder.bytes(&bytes);
-    encoder
-  }
-
   pub fn from_bytes(bytes: [u8; Self::LEN]) -> Result<Self, PublicKeyError> {
-    let format = || Self::encode_bytes(bytes).to_string();
-
     let key = ed25519_dalek::VerifyingKey::from_bytes(&bytes)
       .map_err(DalekSignatureError)
-      .context(public_key_error::Invalid { key: format() })?;
+      .context(public_key_error::Invalid {
+        key: InvalidPublicKey(bytes),
+      })?;
 
     ensure! {
       !key.is_weak(),
-      public_key_error::Weak { key: format() },
+      public_key_error::Weak { key: InvalidPublicKey(bytes) },
     }
 
     Ok(Self(key))
@@ -51,11 +45,10 @@ impl From<PrivateKey> for PublicKey {
 }
 
 impl FromStr for PublicKey {
-  type Err = PublicKeyError;
+  type Err = HexError;
 
   fn from_str(key: &str) -> Result<Self, Self::Err> {
-    let inner = Bech32Decoder::decode_byte_array(Bech32Type::PublicKey, key)?;
-    Self::from_bytes(inner)
+    Self::parse(key)
   }
 }
 
@@ -67,7 +60,7 @@ impl Decode for PublicKey {
 
 impl Display for PublicKey {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    write!(f, "{}", Self::encode_bytes(*self.0.as_bytes()))
+    self.format(f)
   }
 }
 
@@ -75,6 +68,10 @@ impl Encode for PublicKey {
   fn encode(&self, encoder: &mut Encoder) {
     encoder.bytes(self.0.as_bytes());
   }
+}
+
+impl Hex for PublicKey {
+  const TAG: Tag = Tag::PublicKey;
 }
 
 impl Ord for PublicKey {
@@ -103,7 +100,12 @@ mod tests {
   fn weak_public_keys_are_forbidden() {
     assert_matches!(
       test::WEAK_PUBLIC_KEY.parse::<PublicKey>().unwrap_err(),
-      PublicKeyError::Weak { .. },
+      HexError::Decode {
+        source: DecodeError::PublicKey {
+          source: PublicKeyError::Weak { key },
+        },
+        tag: Tag::PublicKey,
+      } if key.to_string() == test::WEAK_PUBLIC_KEY,
     );
   }
 

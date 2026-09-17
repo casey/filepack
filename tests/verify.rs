@@ -30,7 +30,7 @@ fn duplicate_key_named_and_literal() {
 
   test
     .args(["verify", "--key", "master", "--key", &key])
-    .stderr_regex("error: duplicate key: `master` and `public1a.{58}`\n")
+    .stderr_regex("error: duplicate key: `master` and `public1a0[0-9a-f]{64}`\n")
     .failure();
 }
 
@@ -219,7 +219,10 @@ fn malformed_signature_error() {
     )
     .args(["archive", "manifest.json", "manifest.filepack"])
     .stderr_regex(
-      "error: failed to deserialize manifest at `manifest.json`\n.*failed to decode bech32.*",
+      "
+        error: failed to deserialize manifest at `manifest.json`
+               └─ signature contains invalid hex digit `i` at line \\d+ column \\d+
+      ",
     )
     .failure();
 }
@@ -569,7 +572,7 @@ fn signature_fingerprint_mismatch() {
     .touch("foo/bar")
     .args(["verify", "foo"])
     .stderr_regex(
-      "error: signature fingerprint `package1a.*` does not match package fingerprint `package1a.*`\n",
+      "error: signature fingerprint `package1a0[0-9a-f]{64}` does not match package fingerprint `package1a0[0-9a-f]{64}`\n",
     )
     .failure();
 }
@@ -828,20 +831,20 @@ fn verify_fingerprint() {
     .args([
       "verify",
       "--fingerprint",
-      "package1a03cn7a4jc2dvdq62jdqpreqs9fl7y09yg0pnye08wdrt2gj93zrqume76y",
+      "package1a07c713f76b2c29ac6834a934011e4102a7fe23ca443c33265e77346b522458886",
     ])
     .stderr("successfully verified 1 file totaling 0 bytes\n")
     .success()
     .args([
       "verify",
       "--fingerprint",
-      "package1a4uf5nw04lxs6dgzqfh4rdhxffxdukfwf4hq39d7vn2fu4eqlxf3ql7ykr3",
+      "package1a0af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
     ])
     .stderr(
       "
         fingerprint mismatch: `manifest.filepack`
-                    expected: package1a4uf5nw04lxs6dgzqfh4rdhxffxdukfwf4hq39d7vn2fu4eqlxf3ql7ykr3
-                      actual: package1a03cn7a4jc2dvdq62jdqpreqs9fl7y09yg0pnye08wdrt2gj93zrqume76y
+                    expected: package1a0af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262
+                      actual: package1a07c713f76b2c29ac6834a934011e4102a7fe23ca443c33265e77346b522458886
         error: fingerprint mismatch
       ",
     )
@@ -850,15 +853,9 @@ fn verify_fingerprint() {
 
 #[test]
 fn weak_signature_public_key() {
-  fn checksum(s: &str) -> String {
-    use ::bech32::{Bech32m, Fe32IterExt, NoChecksum, primitives::decode::CheckedHrpstring};
-    let checked_hrpstring = CheckedHrpstring::new::<NoChecksum>(s).unwrap();
-    checked_hrpstring
-      .fe32_iter()
-      .with_checksum::<Bech32m>(&checked_hrpstring.hrp())
-      .chars()
-      .collect()
-  }
+  let zeros = "00".repeat(32);
+
+  let signature = format!("signature1f08800a0{zeros}01a200a0{zeros}02c0{zeros}{zeros}");
 
   Test::new()
     .write(
@@ -872,13 +869,16 @@ fn weak_signature_public_key() {
           }
         },
         signatures: [
-          checksum(&format!("signature1a{}", "q".repeat(207)))
+          signature
         ]
       },
     )
     .args(["archive", "manifest.json", "manifest.filepack"])
     .stderr_regex(
-      "error: failed to deserialize manifest at `manifest.json`\n.*signature public key invalid.*",
+      "
+        error: failed to deserialize manifest at `manifest.json`
+               └─ failed to decode signature at line \\d+ column \\d+
+      ",
     )
     .failure();
 }

@@ -19,6 +19,18 @@ where
   }
 }
 
+impl<const N: usize> Encode for [u8; N] {
+  fn encode(&self, encoder: &mut Encoder) {
+    encoder.bytes(self);
+  }
+}
+
+impl<const N: usize, const M: usize> Encode for [[u8; N]; M] {
+  fn encode(&self, encoder: &mut Encoder) {
+    encoder.bytes(self.as_flattened());
+  }
+}
+
 impl<K, V> Encode for BTreeMap<K, V>
 where
   K: Encode + PartialOrd,
@@ -120,6 +132,13 @@ mod tests {
   }
 
   #[test]
+  fn byte_array() {
+    assert_deco([7u8], "07");
+    assert_deco([0x80u8], "8180");
+    assert_deco([1u8, 2], "820102");
+  }
+
+  #[test]
   fn bytes() {
     assert_deco(Vec::<u8>::new(), "80");
     assert_deco(b"bar".to_vec(), "83626172");
@@ -156,6 +175,12 @@ mod tests {
       BTreeMap::from([("bar".to_string(), 1u64), ("foo".to_string(), 2u64)]),
       "8a836261720183666f6f02",
     );
+  }
+
+  #[test]
+  fn nested_byte_array() {
+    assert_deco([[1u8], [2]], "820102");
+    assert_deco([[1u8, 2], [3, 4]], "8401020304");
   }
 
   #[test]

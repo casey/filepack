@@ -26,44 +26,6 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     source: AudioPositionError,
   },
-  #[snafu(display("failed to decode bech32 `{bech32}`"))]
-  Bech32Decode {
-    backtrace: Option<Backtrace>,
-    bech32: String,
-    source: CheckedHrpstringError,
-  },
-  #[snafu(display("failed to encode bech32"))]
-  Bech32Encode {
-    backtrace: Option<Backtrace>,
-    source: bech32::EncodeError,
-  },
-  #[snafu(display("failed to parse bech32 human-readable part"))]
-  Bech32Hrp {
-    backtrace: Option<Backtrace>,
-    source: bech32::primitives::hrp::Error,
-  },
-  #[snafu(display("invalid bech32 prefix character `{character}`"))]
-  Bech32Prefix {
-    backtrace: Option<Backtrace>,
-    character: char,
-    source: bech32::primitives::gf32::FromCharError,
-  },
-  #[snafu(display("bech32 prefix missing"))]
-  Bech32PrefixMissing { backtrace: Option<Backtrace> },
-  #[snafu(display("invalid bech32 version character `{version}`"))]
-  Bech32Version {
-    backtrace: Option<Backtrace>,
-    source: bech32::primitives::gf32::FromCharError,
-    version: char,
-  },
-  #[snafu(display("bech32 version `{actual}` does not match expected `{expected}`"))]
-  Bech32VersionMismatch {
-    actual: bech32::Fe32,
-    backtrace: Option<Backtrace>,
-    expected: bech32::Fe32,
-  },
-  #[snafu(display("bech32 version character missing"))]
-  Bech32VersionMissing { backtrace: Option<Backtrace> },
   #[snafu(display("failed to bind listener to {address}"))]
   BindListener {
     address: String,
@@ -243,12 +205,6 @@ pub enum Error {
   },
   #[snafu(display("fingerprint mismatch"))]
   FingerprintMismatch { backtrace: Option<Backtrace> },
-  #[snafu(display("failed to parse hexadecimal `{hex}`"))]
-  Hex {
-    backtrace: Option<Backtrace>,
-    hex: String,
-    source: hex::FromHexError,
-  },
   #[snafu(display("failed to get home directory"))]
   HomeDir { backtrace: Option<Backtrace> },
   #[snafu(display("ignored path `{path}` is included in package"))]
@@ -322,7 +278,7 @@ pub enum Error {
   KeyName {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
-    source: PublicKeyError,
+    source: KeyIdentifierError,
   },
   #[snafu(display("keychain directory `{path}` has insecure permissions {mode}"))]
   KeychainPermissions {
@@ -468,7 +424,7 @@ pub enum Error {
   PublicKeyLoad {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
-    source: PublicKeyError,
+    source: HexError,
   },
   #[snafu(display("public key not found: `{path}`"))]
   PublicKeyNotFound {

@@ -27,7 +27,7 @@ impl Keychain {
 
     filesystem::write_with_mode(
       &private_path,
-      format!("{}\n", private_key.display_secret()),
+      format!("{}\n", private_key.display_private_key()),
       0o600,
     )?;
 

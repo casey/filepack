@@ -12,7 +12,7 @@ Environment=RUST_BACKTRACE=1
 ExecStart=/usr/local/bin/filepack \
   serve \
   --acme-contact mailto:casey@rodarmor.com \
-  --admin-key public1agawgz7p373kz2yyepzsgrncfrwcj0c82gld68q568ksq8klvpvkqddsly5 \
+  --admin-key public1a0475c817831f46c25109908a081cf091bb127e0ea47dba3829a3da003dbec0b2c \
   --domain filepack.com \
   --http \
   --https \
