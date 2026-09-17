@@ -1301,6 +1301,7 @@ dependencies = [
  "darling 0.24.1",
  "proc-macro2",
  "quote",
+ "strum",
  "syn 3.0.5",
  "usized",
 ]

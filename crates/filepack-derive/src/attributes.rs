@@ -7,8 +7,7 @@ pub(crate) struct Attributes {
 
 impl Attributes {
   pub(crate) fn parse(attributes: &[Attribute]) -> Result<Self> {
-    let mut transparent = false;
-    let mut validate = false;
+    let mut container_attributes = HashSet::new();
 
     for attribute in attributes {
       if !attribute.path().is_ident("deco") {
@@ -16,27 +15,24 @@ impl Attributes {
       }
 
       attribute.parse_nested_meta(|meta| {
-        if meta.path.is_ident("transparent") {
-          if transparent {
-            return Err(meta.error("duplicate `transparent` attribute"));
-          }
-          transparent = true;
-          Ok(())
-        } else if meta.path.is_ident("validate") {
-          if validate {
-            return Err(meta.error("duplicate `validate` attribute"));
-          }
-          validate = true;
-          Ok(())
-        } else {
-          Err(meta.error("unknown deco attribute"))
+        let attribute = meta
+          .path
+          .require_ident()?
+          .to_string()
+          .parse::<ContainerAttribute>()
+          .map_err(|_| meta.error("unknown deco attribute"))?;
+
+        if !container_attributes.insert(attribute) {
+          return Err(meta.error("duplicate `{attribute}` attribute"));
         }
+
+        Ok(())
       })?;
     }
 
     Ok(Self {
-      transparent,
-      validate,
+      transparent: container_attributes.contains(&ContainerAttribute::Transparent),
+      validate: container_attributes.contains(&ContainerAttribute::Validate),
     })
   }
 }
