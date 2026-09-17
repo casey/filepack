@@ -1,7 +1,5 @@
 use super::*;
 
-const TIMESTAMP: Fe32 = Fe32::T;
-
 #[allow(clippy::arbitrary_source_item_ordering)]
 #[derive(Clone, Debug, Decode, Encode, DeserializeFromStr, Eq, PartialEq, SerializeDisplay)]
 pub struct Signature {
@@ -69,43 +67,20 @@ impl Signature {
 
 impl Display for Signature {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    let mut encoder = Bech32Encoder::new(Bech32Type::Signature);
-    encoder.bytes(&self.public_key.inner().to_bytes());
-    encoder.bytes(self.statement.fingerprint.as_bytes());
-    encoder.bytes(&self.signature.to_bytes());
-    if let Some(timestamp) = self.statement.timestamp {
-      encoder.fe(TIMESTAMP);
-      encoder.bytes(&timestamp.to_le_bytes());
-    }
-    write!(f, "{encoder}")
+    self.format(f)
   }
 }
 
 impl FromStr for Signature {
-  type Err = SignatureError;
+  type Err = HexError;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
-    let mut decoder = Bech32Decoder::new(Bech32Type::Signature, s)?;
-    let public_key = decoder.byte_array()?;
-    let fingerprint = decoder.byte_array()?;
-    let signature = decoder.byte_array()?;
-
-    let timestamp = match decoder.fe() {
-      None => None,
-      Some(TIMESTAMP) => Some(u64::from_le_bytes(decoder.byte_array()?)),
-      Some(tag) => return Err(signature_error::Field { tag }.build()),
-    };
-
-    decoder.done()?;
-    Ok(Self {
-      statement: Statement {
-        fingerprint: Fingerprint::from_bytes(fingerprint),
-        timestamp,
-      },
-      signature: ed25519_dalek::Signature::from_bytes(&signature),
-      public_key: PublicKey::from_bytes(public_key).context(signature_error::PublicKey)?,
-    })
+    Self::parse(s)
   }
+}
+
+impl Hex for Signature {
+  const TAG: Tag = Tag::Signature;
 }
 
 impl Ord for Signature {
@@ -175,23 +150,26 @@ mod tests {
   #[test]
   fn signature_begins_with_pubkey_and_fingerprint() {
     let prefix = format!(
-      "signature1a{}{}",
-      &test::PUBLIC_KEY["public1a".len()..test::PUBLIC_KEY.len() - 6],
-      &test::FINGERPRINT["package1a".len()..test::FINGERPRINT.len() - 6]
+      "signature1f08800{}01a200{}02c0",
+      &test::PUBLIC_KEY["public1".len()..],
+      &test::FINGERPRINT["package1".len()..],
     );
     assert!(test::SIGNATURE.starts_with(&prefix));
+    assert_eq!(test::SIGNATURE.len(), prefix.len() + 128);
   }
 
   #[test]
   fn unexpected_field_error() {
-    let mut s = test::SIGNATURE[..test::SIGNATURE.len() - 6].to_string();
-    s.push('z');
-    assert_eq!(
-      test::checksum(&s)
-        .parse::<Signature>()
-        .unwrap_err()
-        .to_string(),
-      "unexpected signature field `z`",
+    let s = format!(
+      "signature1f08a{}0300",
+      &test::SIGNATURE["signature1f088".len()..]
+    );
+    assert_matches!(
+      s.parse::<Signature>().unwrap_err(),
+      HexError::DecoDecode {
+        source: DecodeError::UnconsumedEntries,
+        tag: Tag::Signature,
+      },
     );
   }
 }

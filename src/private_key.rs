@@ -10,8 +10,8 @@ impl PrivateKey {
     self.0.to_bytes()
   }
 
-  pub fn display_secret(&self) -> DisplaySecret {
-    DisplaySecret(self.clone())
+  pub fn display_private_key(&self) -> DisplayPrivateKey {
+    DisplayPrivateKey::new(self)
   }
 
   pub fn from_bytes(bytes: [u8; Self::LEN]) -> Self {
@@ -60,21 +60,8 @@ impl PrivateKey {
 impl FromStr for PrivateKey {
   type Err = PrivateKeyError;
 
-  fn from_str(key: &str) -> Result<Self, Self::Err> {
-    let mut decoder = Bech32Decoder::new(Bech32Type::PrivateKey, key)?;
-    let public_key = decoder.byte_array()?;
-    let private_key = decoder.byte_array()?;
-    decoder.done()?;
-
-    let inner = ed25519_dalek::SigningKey::from_bytes(&private_key);
-    assert!(!inner.verifying_key().is_weak());
-
-    ensure!(
-      inner.verifying_key().to_bytes() == public_key,
-      private_key_error::PublicKeyMismatch,
-    );
-
-    Ok(Self(inner))
+  fn from_str(s: &str) -> Result<Self, Self::Err> {
+    Ok(Self(s.parse::<DisplayPrivateKey>()?.inner()))
   }
 }
 
@@ -87,7 +74,7 @@ mod tests {
     let key = PrivateKey::generate();
     assert_eq!(
       key
-        .display_secret()
+        .display_private_key()
         .to_string()
         .parse::<PrivateKey>()
         .unwrap(),
@@ -97,24 +84,18 @@ mod tests {
 
   #[test]
   fn private_key_begins_with_public_key() {
-    let prefix = format!(
-      "private1a{}",
-      &test::PUBLIC_KEY["public1a".len()..test::PUBLIC_KEY.len() - 6],
-    );
+    let prefix = format!("private1c0{}", &test::PUBLIC_KEY["public1a0".len()..]);
     assert!(test::PRIVATE_KEY.starts_with(&prefix));
   }
 
   #[test]
   fn public_key_mismatch_error() {
-    let other = PrivateKey::generate();
-    let other_public_key_data =
-      &other.public_key().to_string()["public1a".len()..test::PUBLIC_KEY.len() - 6];
-    let public_key_data_len = test::PUBLIC_KEY.len() - "public1a".len() - 6;
-    let private_key_data =
-      &test::PRIVATE_KEY["private1a".len() + public_key_data_len..test::PRIVATE_KEY.len() - 6];
-    let mismatched = test::checksum(&format!(
-      "private1a{other_public_key_data}{private_key_data}"
-    ));
+    let other = PrivateKey::generate().public_key().to_string();
+    let mismatched = format!(
+      "private1c0{}{}",
+      &other["public1a0".len()..],
+      &test::PRIVATE_KEY["private1c0".len() + 64..],
+    );
     assert_eq!(
       mismatched.parse::<PrivateKey>().unwrap_err().to_string(),
       "private key derived public key does not match embedded public key",
@@ -123,7 +104,13 @@ mod tests {
 
   #[test]
   fn serialized_private_key_is_not_valid_public_key() {
-    test::PRIVATE_KEY.parse::<PublicKey>().unwrap_err();
+    assert_eq!(
+      test::PRIVATE_KEY
+        .parse::<PublicKey>()
+        .unwrap_err()
+        .to_string(),
+      "expected public key with tag `public1…` but found `private1…`",
+    );
   }
 
   #[test]

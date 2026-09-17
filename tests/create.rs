@@ -366,7 +366,12 @@ fn private_key_load_error_message() {
     .write_keypair("master")
     .write("keychain/master.private", "")
     .args(["create", "--sign", "foo"])
-    .stderr_regex("error: invalid private key `.*master.private`.*failed to decode bech32.*")
+    .stderr_regex(
+      "
+        error: invalid private key `.*master.private`
+               └─ private key missing tag `private1…`
+      ",
+    )
     .failure();
 }
 

@@ -31,18 +31,19 @@ impl Fingerprint {
 
 impl Display for Fingerprint {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    let mut encoder = Bech32Encoder::new(Bech32Type::Fingerprint);
-    encoder.bytes(self.as_bytes());
-    write!(f, "{encoder}")
+    self.format(f)
   }
 }
 
+impl Hex for Fingerprint {
+  const TAG: Tag = Tag::Fingerprint;
+}
+
 impl FromStr for Fingerprint {
-  type Err = Bech32Error;
+  type Err = HexError;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
-    let inner = Bech32Decoder::decode_byte_array(Bech32Type::Fingerprint, s)?;
-    Ok(Self(inner.into()))
+    Self::parse(s)
   }
 }
 

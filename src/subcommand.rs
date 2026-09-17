@@ -7,7 +7,6 @@ use {
 };
 
 mod archive;
-mod bech32;
 mod contains;
 mod create;
 mod delete;
@@ -51,8 +50,6 @@ const TIMESTAMP_HELP: &str = "Include current time in signature";
 pub(crate) enum Subcommand {
   #[command(about = "Create archive from JSON manifest on stdin")]
   Archive(archive::Archive),
-  #[command(about = "Encode and decode bech32")]
-  Bech32(bech32::Bech32),
   #[command(about = "Check if manifest contains file")]
   Contains(contains::Contains),
   #[command(about = "Create manifest")]
@@ -103,7 +100,6 @@ impl Subcommand {
   pub(crate) fn run(self, options: Options) -> Result {
     match self {
       Self::Archive(archive) => archive.run(),
-      Self::Bech32(bech32) => bech32.run(),
       Self::Contains(contains) => contains.run(options),
       Self::Create(create) => create.run(options),
       Self::Delete(delete) => delete.run(options),

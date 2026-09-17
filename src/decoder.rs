@@ -22,7 +22,7 @@ impl<'a> Decoder<'a> {
   pub(crate) fn byte_array<const N: usize>(&mut self) -> Result<[u8; N], DecodeError> {
     let bytes = self.bytes()?;
 
-    bytes.try_into().context(decode_error::ArrayLength {
+    bytes.try_into().ok().context(decode_error::ArrayLength {
       actual: bytes.len(),
       expected: N,
     })
@@ -115,7 +115,6 @@ mod tests {
       Err(DecodeError::ArrayLength {
         actual: 2,
         expected: 3,
-        ..
       }),
     );
   }

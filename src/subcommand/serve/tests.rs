@@ -1153,7 +1153,7 @@ fn malformed_fingerprint_returns_error() {
     .get("/package1invalid")
     .assert_error(
       StatusCode::BAD_REQUEST,
-      "failed to decode bech32 package fingerprint",
+      "package fingerprint contains invalid hex digit `i`",
     )
     .send();
 }
@@ -1960,7 +1960,7 @@ fn mount_serves_index_html() {
 }
 
 #[test]
-fn non_fingerprint_bech32_falls_through() {
+fn non_fingerprint_tagged_hex_falls_through() {
   TestServer::new()
     .get(format!("/{}", test::PUBLIC_KEY))
     .assert_error(StatusCode::NOT_FOUND, "page not found")
@@ -3023,15 +3023,6 @@ fn upload_with_wrong_hash_fails() {
     .send();
 
   server.assert_incoming_empty();
-}
-
-#[test]
-fn uppercase_fingerprint_redirects_to_lowercase_package() {
-  TestServer::new()
-    .get(format!("/{}", test::FINGERPRINT.to_uppercase()))
-    .status(StatusCode::PERMANENT_REDIRECT)
-    .assert_header(header::LOCATION, format!("/package/{}", test::FINGERPRINT))
-    .send();
 }
 
 #[test]

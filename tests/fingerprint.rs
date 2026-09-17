@@ -20,7 +20,7 @@ fn fingerprint() {
     )
     .success();
 
-  let fingerprint = "package1a03cn7a4jc2dvdq62jdqpreqs9fl7y09yg0pnye08wdrt2gj93zrqume76y";
+  let fingerprint = "package1a07c713f76b2c29ac6834a934011e4102a7fe23ca443c33265e77346b522458886";
 
   let path = test.path();
 

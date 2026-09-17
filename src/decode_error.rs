@@ -4,11 +4,7 @@ use super::*;
 #[snafu(context(suffix(false)), visibility(pub(crate)))]
 pub enum DecodeError {
   #[snafu(display("expected {expected} bytes but found {actual}"))]
-  ArrayLength {
-    actual: usize,
-    expected: usize,
-    source: array::TryFromSliceError,
-  },
+  ArrayLength { actual: usize, expected: usize },
   #[snafu(display("invalid boolean value {value}"))]
   Boolean { value: u64 },
   #[snafu(display("failed to parse component"))]

@@ -353,12 +353,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2af50177e190e07a26ab74f8b1efbfe2ef87da2116221318cb1c2e82baf7de06"
 
 [[package]]
-name = "bech32"
-version = "0.12.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "efbd3e1070bbdf4cd88a75264e18e8a26f7cb5c6949eadf0ceb85fb159cf08f8"
-
-[[package]]
 name = "bitflags"
 version = "1.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1239,7 +1233,6 @@ dependencies = [
  "axum",
  "axum-extra",
  "axum-server",
- "bech32",
  "blake3",
  "boilerplate",
  "camino",
@@ -1251,7 +1244,6 @@ dependencies = [
  "ed25519-dalek 3.0.0",
  "filepack-derive",
  "futures-util",
- "hex",
  "humansize",
  "hyper-util",
  "id3",

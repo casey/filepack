@@ -22,19 +22,12 @@ use {
     application::Application,
     archive::Archive,
     archive_builder::ArchiveBuilder,
-    archive_error::ArchiveError,
     arguments::Arguments,
     array_decoder::ArrayDecoder,
     audio::Audio,
-    audio_error::AudioError,
     audio_metadata::AudioMetadata,
-    audio_position_error::AudioPositionError,
     audio_type::AudioType,
     authenticated::Authenticated,
-    bech32_decoder::Bech32Decoder,
-    bech32_encoder::Bech32Encoder,
-    bech32_error::Bech32Error,
-    bech32_type::Bech32Type,
     bit_reader::BitReader,
     cause::Cause,
     checked_url::CheckedUrl,
@@ -43,33 +36,25 @@ use {
     codec::Codec,
     color_info::ColorInfo,
     color_type::ColorType,
-    component::Component,
-    component_error::ComponentError,
     compression::Compression,
     content::Content,
     content_type::ContentType,
     context::Context,
     count::Count,
-    dalek_signature_error::DalekSignatureError,
     database_metadata::DatabaseMetadata,
     deco::Deco,
     deco_response::DecoResponse,
-    decode_error::DecodeError,
-    dimensions::Dimensions,
     directory_tree_entry::DirectoryTreeEntry,
     display_bitrate::DisplayBitrate,
     display_bits_per_pixel::DisplayBitsPerPixel,
     display_duration::DisplayDuration,
     display_frame_rate::DisplayFrameRate,
     display_millis::DisplayMillis,
-    display_path::DisplayPath,
     display_sample_rate::DisplaySampleRate,
-    display_secret::DisplaySecret,
     embedded_image::EmbeddedImage,
     entries::Entries,
     envelope::Envelope,
     exif_decoder::ExifDecoder,
-    exif_error::ExifError,
     file::File,
     flac_decoder::FlacDecoder,
     float_ext::FloatExt,
@@ -78,9 +63,9 @@ use {
       current_dir, decode_path, default, format_size, is_lowercase_hex, now, parse_number,
       transfer_tempfile,
     },
-    hash_error::HashError,
     hashing_writer::HashingWriter,
     head::Head,
+    hex::Hex,
     image::Image,
     image_metadata::ImageMetadata,
     image_type::ImageType,
@@ -88,8 +73,6 @@ use {
     info_builder::InfoBuilder,
     iso8601_duration::Iso8601Duration,
     item::Item,
-    key_identifier::KeyIdentifier,
-    key_name::KeyName,
     key_type::KeyType,
     keychain::Keychain,
     language::Language,
@@ -101,58 +84,42 @@ use {
     media::{Media, MediaType},
     media_item::MediaItem,
     media_item_resource::MediaItemResource,
-    mode::Mode,
     mp3_decoder::Mp3Decoder,
-    mp3_error::Mp3Error,
     mp4_decoder::Mp4Decoder,
-    number_error::NumberError,
     options::Options,
     or::Or,
     order::Order,
-    ordinal::Ordinal,
     orientation::Orientation,
     owo_colorize_ext::OwoColorizeExt,
     package::Package,
     page_error::PageError,
-    path_error::PathError,
     percent_encode::PercentEncode,
-    private_key_error::PrivateKeyError,
     progress_bar::ProgressBar,
-    public_key_error::PublicKeyError,
     reqwest_response_ext::ReqwestResponseExt,
     resource::Resource,
     resource_type::ResourceType,
     rotation::Rotation,
     server::Server,
-    server_error::ServerError,
     server_url::ServerUrl,
     sign_options::SignOptions,
-    signature_error::SignatureError,
     sort::Sort,
     sort_key::SortKey,
     static_asset::StaticAsset,
     style::Style,
     subcommand::Subcommand,
     templates::{ErrorHtml, PageHtml},
-    text_error::TextError,
-    ticked::Ticked,
     time::Time,
-    time_error::TimeError,
     token::Token,
-    totals_error::TotalsError,
     track::Track,
     track_info::TrackInfo,
     type_name::TypeName,
-    url_error::UrlError,
     utf8_path_ext::Utf8PathExt,
     validate::Validate,
     version::Version,
     video::Video,
-    video_error::VideoError,
     video_metadata::VideoMetadata,
     video_type::VideoType,
     webm_decoder::WebmDecoder,
-    xmp_error::XmpError,
   },
   axum::{
     body::Body,
@@ -160,10 +127,6 @@ use {
     response::{IntoResponse, Response},
   },
   axum_extra::{TypedHeader, headers},
-  bech32::{
-    ByteIterExt, Fe32, Fe32IterExt, Hrp,
-    primitives::decode::{CheckedHrpstring, CheckedHrpstringError},
-  },
   blake3::Hasher,
   boilerplate::{Boilerplate, Trusted},
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},
@@ -186,7 +149,6 @@ use {
   },
   snafu::{ErrorCompat, IntoError, OptionExt, ResultExt, Snafu, ensure},
   std::{
-    array,
     backtrace::{Backtrace, BacktraceStatus},
     borrow::Borrow,
     borrow::Cow,
@@ -226,38 +188,71 @@ use {
 };
 
 pub use self::{
+  archive_error::ArchiveError,
   array_encoder::ArrayEncoder,
+  audio_error::AudioError,
+  audio_position_error::AudioPositionError,
+  component::Component,
   component_buf::ComponentBuf,
+  component_error::ComponentError,
+  dalek_signature_error::DalekSignatureError,
   decode::Decode,
+  decode_error::DecodeError,
   decoder::Decoder,
+  dimensions::Dimensions,
   directory::Directory,
   directory_ext::DirectoryExt,
   directory_tree::DirectoryTree,
+  display_path::DisplayPath,
+  display_private_key::DisplayPrivateKey,
   encode::Encode,
   encoder::Encoder,
   entry::{Entry, EntryType},
   error::Error,
+  exif_error::ExifError,
   fingerprint::Fingerprint,
   flac_builder::FlacBuilder,
   functions::{gradient, gradient_alpha, install_default_crypto_provider},
   hash::Hash,
+  hash_error::HashError,
+  hex_error::HexError,
+  invalid_public_key::InvalidPublicKey,
+  key_identifier::KeyIdentifier,
+  key_identifier_error::KeyIdentifierError,
+  key_name::KeyName,
   language_error::LanguageError,
   manifest::Manifest,
   map_encoder::MapEncoder,
   metadata::Metadata,
+  mode::Mode,
   mp3_builder::Mp3Builder,
+  mp3_error::Mp3Error,
   mp4_builder::Mp4Builder,
+  number_error::NumberError,
   open_graph_image::OpenGraphImage,
+  ordinal::Ordinal,
   page::Page,
+  path_error::PathError,
   png_builder::PngBuilder,
   private_key::PrivateKey,
+  private_key_error::PrivateKeyError,
   public_key::PublicKey,
+  public_key_error::PublicKeyError,
   relative_path::RelativePath,
+  server_error::ServerError,
   signature::Signature,
   sorted_set::SortedSet,
   statement::Statement,
+  tag::Tag,
   text::Text,
+  text_error::TextError,
+  ticked::Ticked,
+  time_error::TimeError,
   totals::Totals,
+  totals_error::TotalsError,
+  url_error::UrlError,
+  video_error::VideoError,
+  xmp_error::XmpError,
 };
 
 #[cfg(test)]
@@ -296,10 +291,6 @@ mod audio_metadata;
 mod audio_position_error;
 mod audio_type;
 mod authenticated;
-mod bech32_decoder;
-mod bech32_encoder;
-mod bech32_error;
-mod bech32_type;
 mod bit_reader;
 mod cause;
 mod checked_url;
@@ -334,8 +325,8 @@ mod display_duration;
 mod display_frame_rate;
 mod display_millis;
 mod display_path;
+mod display_private_key;
 mod display_sample_rate;
-mod display_secret;
 mod embedded_image;
 mod encode;
 mod encoder;
@@ -357,14 +348,18 @@ mod hash;
 mod hash_error;
 mod hashing_writer;
 mod head;
+pub mod hex;
+mod hex_error;
 mod image;
 mod image_metadata;
 mod image_type;
 mod info;
 mod info_builder;
+mod invalid_public_key;
 mod iso8601_duration;
 mod item;
 mod key_identifier;
+mod key_identifier_error;
 mod key_name;
 mod key_type;
 mod keychain;
@@ -417,7 +412,6 @@ mod server_error;
 mod server_url;
 mod sign_options;
 mod signature;
-mod signature_error;
 mod sort;
 mod sort_key;
 mod sorted_set;
@@ -425,6 +419,7 @@ mod statement;
 mod static_asset;
 mod style;
 mod subcommand;
+mod tag;
 pub mod templates;
 mod text;
 mod text_error;
@@ -459,7 +454,6 @@ mod test;
 #[cfg(test)]
 mod webm_builder;
 
-const BECH32_VERSION: Fe32 = Fe32::A;
 const KIB: usize = 1 << 10;
 const MIB: usize = KIB << 10;
 

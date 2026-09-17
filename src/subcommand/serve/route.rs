@@ -87,7 +87,7 @@ pub(crate) async fn directory(
 pub(crate) async fn fallback(uri: Uri) -> Result<Response, PageError> {
   if let Some(component) = uri.path().strip_prefix('/')
     && !component.contains('/')
-    && component.to_ascii_lowercase().starts_with("package1")
+    && component.starts_with("package1")
   {
     let fingerprint = component
       .parse::<Fingerprint>()
