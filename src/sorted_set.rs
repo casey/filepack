@@ -2,13 +2,7 @@ use super::*;
 
 #[derive(Debug, Decode, Encode, PartialEq)]
 #[deco(transparent, validate)]
-pub struct SortedSet<T>(Vec<T>);
-
-impl<T> SortedSet<T> {
-  pub fn into_inner(self) -> Vec<T> {
-    self.0
-  }
-}
+pub(crate) struct SortedSet<T>(Vec<T>);
 
 impl<T: Ord> From<BTreeSet<T>> for SortedSet<T> {
   fn from(set: BTreeSet<T>) -> Self {
