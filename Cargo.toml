@@ -144,7 +144,6 @@ wildcard-imports = "allow"
 
 [workspace.lints.rust]
 mismatched-lifetime-syntaxes = "allow"
-unnameable_types = "deny"
 unreachable_pub = "deny"
 
 [[test]]
