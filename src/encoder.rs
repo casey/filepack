@@ -25,6 +25,14 @@ impl Encoder {
     Vec::from(self.buffer)
   }
 
+  pub(crate) fn frame(buffer: Vec<u8>) -> Vec<u8> {
+    let mut encoder = Self {
+      buffer: buffer.into(),
+    };
+    encoder.head(encoder.buffer.len());
+    encoder.finish()
+  }
+
   pub(crate) fn head(&mut self, len: usize) {
     let head = Head::new(len, self.buffer.front().copied());
     match head {

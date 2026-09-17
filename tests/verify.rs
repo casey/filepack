@@ -30,7 +30,7 @@ fn duplicate_key_named_and_literal() {
 
   test
     .args(["verify", "--key", "master", "--key", &key])
-    .stderr_regex("error: duplicate key: `master` and `public1a0[0-9a-f]{64}`\n")
+    .stderr_regex("error: duplicate key: `master` and `public1[0-9a-f]{64}`\n")
     .failure();
 }
 
@@ -572,7 +572,7 @@ fn signature_fingerprint_mismatch() {
     .touch("foo/bar")
     .args(["verify", "foo"])
     .stderr_regex(
-      "error: signature fingerprint `package1a0[0-9a-f]{64}` does not match package fingerprint `package1a0[0-9a-f]{64}`\n",
+      "error: signature fingerprint `package1[0-9a-f]{64}` does not match package fingerprint `package1[0-9a-f]{64}`\n",
     )
     .failure();
 }
@@ -831,20 +831,20 @@ fn verify_fingerprint() {
     .args([
       "verify",
       "--fingerprint",
-      "package1a07c713f76b2c29ac6834a934011e4102a7fe23ca443c33265e77346b522458886",
+      "package17c713f76b2c29ac6834a934011e4102a7fe23ca443c33265e77346b522458886",
     ])
     .stderr("successfully verified 1 file totaling 0 bytes\n")
     .success()
     .args([
       "verify",
       "--fingerprint",
-      "package1a0af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+      "package1af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
     ])
     .stderr(
       "
         fingerprint mismatch: `manifest.filepack`
-                    expected: package1a0af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262
-                      actual: package1a07c713f76b2c29ac6834a934011e4102a7fe23ca443c33265e77346b522458886
+                    expected: package1af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262
+                      actual: package17c713f76b2c29ac6834a934011e4102a7fe23ca443c33265e77346b522458886
         error: fingerprint mismatch
       ",
     )
@@ -855,7 +855,7 @@ fn verify_fingerprint() {
 fn weak_signature_public_key() {
   let zeros = "00".repeat(32);
 
-  let signature = format!("signature1f08800a0{zeros}01a200a0{zeros}02c0{zeros}{zeros}");
+  let signature = format!("signature100a0{zeros}01a200a0{zeros}02c0{zeros}{zeros}");
 
   Test::new()
     .write(

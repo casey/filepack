@@ -60,8 +60,7 @@ use {
     float_ext::FloatExt,
     format::Format,
     functions::{
-      current_dir, decode_path, default, format_size, is_lowercase_hex, now, parse_number,
-      transfer_tempfile,
+      current_dir, decode_path, default, format_size, now, parse_number, transfer_tempfile,
     },
     hashing_writer::HashingWriter,
     head::Head,
@@ -214,7 +213,6 @@ pub use self::{
   flac_builder::FlacBuilder,
   functions::{gradient, gradient_alpha, install_default_crypto_provider},
   hash::Hash,
-  hash_error::HashError,
   hex_error::HexError,
   invalid_public_key::InvalidPublicKey,
   key_identifier::KeyIdentifier,
@@ -345,7 +343,6 @@ mod float_ext;
 mod format;
 mod functions;
 mod hash;
-mod hash_error;
 mod hashing_writer;
 mod head;
 pub mod hex;

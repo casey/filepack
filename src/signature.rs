@@ -150,7 +150,7 @@ mod tests {
   #[test]
   fn signature_begins_with_pubkey_and_fingerprint() {
     let prefix = format!(
-      "signature1f08800{}01a200{}02c0",
+      "signature100a0{}01a200a0{}02c0",
       &test::PUBLIC_KEY["public1".len()..],
       &test::FINGERPRINT["package1".len()..],
     );
@@ -160,10 +160,7 @@ mod tests {
 
   #[test]
   fn unexpected_field_error() {
-    let s = format!(
-      "signature1f08a{}0300",
-      &test::SIGNATURE["signature1f088".len()..]
-    );
+    let s = format!("{}0300", test::SIGNATURE);
     assert_matches!(
       s.parse::<Signature>().unwrap_err(),
       HexError::Decode {
