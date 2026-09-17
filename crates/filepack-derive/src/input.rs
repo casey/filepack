@@ -14,33 +14,21 @@ pub(crate) struct Input {
 
 impl Input {
   pub(crate) fn decode(&self) -> Result<proc_macro2::TokenStream> {
-    let Attributes {
-      transparent,
-      validate,
-    } = Attributes::parse(&self.attrs)?;
+    let attributes = self.parse_attributes()?;
 
     match self.data {
-      Data::Enum(_) => {
-        if transparent {
-          Err(Error::new_spanned(
-            &self.ident,
-            "#[deco(transparent)] cannot be used with enums",
-          ))
-        } else {
-          self.decode_enum(validate)
-        }
-      }
+      Data::Enum(_) => self.decode_enum(&attributes),
       Data::Struct(_) => {
-        if transparent {
-          self.decode_transparent(validate)
+        if attributes.transparent() {
+          self.decode_transparent(&attributes)
         } else {
-          self.decode_struct(validate)
+          self.decode_struct(&attributes)
         }
       }
     }
   }
 
-  pub(crate) fn decode_enum(&self, validate: bool) -> Result<proc_macro2::TokenStream> {
+  pub(crate) fn decode_enum(&self, attributes: &Attributes) -> Result<proc_macro2::TokenStream> {
     let name = &self.ident;
 
     let variants = self.parse_variants()?;
@@ -70,9 +58,11 @@ impl Input {
         }
       });
 
-    let header = self.decode_header(validate);
+    let header = self.decode_header(attributes);
 
-    let validate = validate.then(|| quote! { Validate::validate(&value)?; });
+    let validate = attributes
+      .validate()
+      .then(|| quote! { Validate::validate(&value)?; });
 
     Ok(quote! {
       #header {
@@ -95,7 +85,7 @@ impl Input {
     })
   }
 
-  fn decode_header(&self, validate: bool) -> proc_macro2::TokenStream {
+  fn decode_header(&self, attributes: &Attributes) -> proc_macro2::TokenStream {
     let mut header_generics = self.generics(syn::parse_quote!(Decode<'de>));
 
     header_generics.params.insert(0, syn::parse_quote!('de));
@@ -107,7 +97,7 @@ impl Input {
       predicates.push(syn::parse_quote!('de: #lifetime));
     }
 
-    if validate {
+    if attributes.validate() {
       predicates.push(syn::parse_quote!(Self: Validate));
     }
 
@@ -122,7 +112,7 @@ impl Input {
     }
   }
 
-  pub(crate) fn decode_struct(&self, validate: bool) -> Result<proc_macro2::TokenStream> {
+  pub(crate) fn decode_struct(&self, attributes: &Attributes) -> Result<proc_macro2::TokenStream> {
     let fields = self.parse_fields()?;
 
     let decode = ParsedField::decode(&fields);
@@ -135,15 +125,22 @@ impl Input {
       }
     };
 
-    let header = self.decode_header(validate);
+    let header = self.decode_header(attributes);
 
-    let validate = validate.then(|| quote! { Validate::validate(&value)?; });
+    let allow_unknown_keys = attributes
+      .allow_unknown_keys()
+      .then(|| quote! { while let Some(_) = map.next::<&[u8]>()? {} });
+
+    let validate = attributes
+      .validate()
+      .then(|| quote! { Validate::validate(&value)?; });
 
     Ok(quote! {
       #header {
         fn decode(decoder: &mut Decoder<'de>) -> Result<Self, DecodeError> {
           let mut map = decoder.map::<u64>()?;
           #(#decode)*
+          #allow_unknown_keys
           map.finish()?;
           let value = #constructor;
           #validate
@@ -153,7 +150,10 @@ impl Input {
     })
   }
 
-  pub(crate) fn decode_transparent(&self, validate: bool) -> Result<proc_macro2::TokenStream> {
+  pub(crate) fn decode_transparent(
+    &self,
+    attributes: &Attributes,
+  ) -> Result<proc_macro2::TokenStream> {
     let member = self.transparent_member()?;
 
     let constructor = match &member {
@@ -161,7 +161,7 @@ impl Input {
       Member::Unnamed(_) => quote! { Self(Decode::decode(decoder)?) },
     };
 
-    let body = if validate {
+    let body = if attributes.validate() {
       quote! {
         let value = #constructor;
         Validate::validate(&value)?;
@@ -173,7 +173,7 @@ impl Input {
       }
     };
 
-    let header = self.decode_header(validate);
+    let header = self.decode_header(attributes);
 
     Ok(quote! {
       #header {
@@ -185,21 +185,12 @@ impl Input {
   }
 
   pub(crate) fn encode(&self) -> Result<proc_macro2::TokenStream> {
-    let Attributes { transparent, .. } = Attributes::parse(&self.attrs)?;
+    let attributes = self.parse_attributes()?;
 
     match self.data {
-      Data::Enum(_) => {
-        if transparent {
-          Err(Error::new_spanned(
-            &self.ident,
-            "#[deco(transparent)] cannot be used with enums",
-          ))
-        } else {
-          self.encode_enum()
-        }
-      }
+      Data::Enum(_) => self.encode_enum(),
       Data::Struct(_) => {
-        if transparent {
+        if attributes.transparent() {
           self.encode_transparent()
         } else {
           self.encode_struct()
@@ -301,6 +292,50 @@ impl Input {
     generics
   }
 
+  fn parse_attributes(&self) -> Result<Attributes> {
+    let mut attributes = HashSet::new();
+
+    for attribute in &self.attrs {
+      if !attribute.path().is_ident("deco") {
+        continue;
+      }
+
+      attribute.parse_nested_meta(|meta| {
+        let attribute = meta
+          .path
+          .require_ident()?
+          .to_string()
+          .parse::<ContainerAttribute>()
+          .map_err(|_| meta.error("unknown deco attribute"))?;
+
+        if self.data.is_enum() {
+          match attribute {
+            ContainerAttribute::AllowUnknownKeys | ContainerAttribute::Transparent => {
+              return Err(meta.error(format!("#[deco({attribute})] cannot be used with enums")));
+            }
+            ContainerAttribute::Validate => {}
+          }
+        }
+
+        if !attributes.insert(attribute) {
+          return Err(meta.error(format!("duplicate `{attribute}` attribute")));
+        }
+
+        if attributes.contains(&ContainerAttribute::AllowUnknownKeys)
+          && attributes.contains(&ContainerAttribute::Transparent)
+        {
+          return Err(
+            meta.error("#[deco(allow_unknown_keys)] cannot be used with #[deco(transparent)]"),
+          );
+        }
+
+        Ok(())
+      })?;
+    }
+
+    Ok(Attributes(attributes))
+  }
+
   fn parse_fields(&self) -> Result<Vec<ParsedField>> {
     let data = self.data.as_ref().take_struct().unwrap();
 
@@ -359,5 +394,50 @@ impl Input {
       Some(ident) => Member::Named(ident.clone()),
       None => Member::Unnamed(Index::from(0)),
     })
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn attribute_errors() {
+    #[track_caller]
+    fn case(input: &DeriveInput, expected: &str) {
+      assert_eq!(
+        Input::from_derive_input(input)
+          .unwrap()
+          .parse_attributes()
+          .err()
+          .unwrap()
+          .to_string(),
+        expected,
+      );
+    }
+
+    case(
+      &syn::parse_quote! {
+        #[deco(validate, validate)]
+        struct Foo {}
+      },
+      "duplicate `validate` attribute",
+    );
+
+    case(
+      &syn::parse_quote! {
+        #[deco(allow_unknown_keys)]
+        enum Foo {}
+      },
+      "#[deco(allow_unknown_keys)] cannot be used with enums",
+    );
+
+    case(
+      &syn::parse_quote! {
+        #[deco(allow_unknown_keys, transparent)]
+        struct Foo {}
+      },
+      "#[deco(allow_unknown_keys)] cannot be used with #[deco(transparent)]",
+    );
   }
 }

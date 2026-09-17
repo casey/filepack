@@ -7,7 +7,7 @@ use {
   proc_macro::TokenStream,
   quote::quote,
   std::collections::HashSet,
-  strum::EnumString,
+  strum::{Display, EnumString},
   syn::{
     Attribute, DeriveInput, Error, Generics, Ident, Index, LitInt, Member, Path, Result, Type,
     TypeParamBound, TypePath,
