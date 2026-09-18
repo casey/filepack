@@ -98,13 +98,13 @@ fn number(ident: &Ident, attributes: &[Attribute]) -> Result<u64> {
   for attribute in attributes {
     if attribute.path().is_ident("n") {
       if n.is_some() {
-        return Err(Error::new_spanned(attribute, "duplicate #[n] attribute"));
+        return Err(Error::new_spanned(attribute, "duplicate `#[n]` attribute"));
       }
       n = Some(attribute.parse_args::<LitInt>()?.base10_parse::<u64>()?);
     }
   }
 
-  n.ok_or_else(|| Error::new_spanned(ident, "missing #[n(N)] attribute"))
+  n.ok_or_else(|| Error::new_spanned(ident, "missing `#[n(N)]` attribute"))
 }
 
 fn validate_numbers<'a>(ns: impl IntoIterator<Item = (&'a Ident, u64)>) -> Result<()> {
@@ -114,14 +114,14 @@ fn validate_numbers<'a>(ns: impl IntoIterator<Item = (&'a Ident, u64)>) -> Resul
     if !seen.insert(n) {
       return Err(Error::new_spanned(
         ident,
-        format!("duplicate #[n] attribute {n}"),
+        format!("duplicate `#[n({n})]` attribute"),
       ));
     }
 
     if n != i.into_u64() {
       return Err(Error::new_spanned(
         ident,
-        format!("#[n] attributes must be contiguous starting from 0: expected {i}, found {n}"),
+        format!("`#[n]` attributes must be contiguous starting from 0: expected {i}, found {n}"),
       ));
     }
   }
