@@ -244,6 +244,7 @@ use {
 
 pub use self::{
   decode::Decode,
+  decode_options::DecodeOptions,
   decoder::Decoder,
   directory::Directory,
   directory_ext::DirectoryExt,
@@ -314,6 +315,7 @@ mod deco;
 mod deco_response;
 mod decode;
 mod decode_error;
+mod decode_options;
 mod decode_owned;
 mod decoder;
 mod dimensions;

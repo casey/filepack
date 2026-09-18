@@ -12,7 +12,7 @@ pub(crate) struct Sign {
 
 impl Sign {
   pub(crate) fn run(self, options: Options) -> Result {
-    let loader = Loader::load(self.path.as_deref())?;
+    let loader = Loader::load_with_options(DecodeOptions::strict(), self.path.as_deref())?;
 
     let mut manifest = loader.unpack()?;
 

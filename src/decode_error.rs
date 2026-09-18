@@ -62,6 +62,8 @@ pub enum DecodeError {
   },
   #[snafu(display("string not valid unicode"))]
   Unicode { source: Utf8Error },
+  #[snafu(display("unknown field with key {key}"))]
+  UnknownField { key: u64 },
   #[snafu(display("unsorted or duplicate array elements"))]
   Unsorted,
   #[snafu(display("failed to parse URL"))]
