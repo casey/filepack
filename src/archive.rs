@@ -34,6 +34,7 @@ impl Archive {
 
   fn decode_directory(
     &self,
+    options: DecodeOptions,
     loose: &mut BTreeSet<Hash>,
     hash: Hash,
     size: u64,
@@ -42,16 +43,16 @@ impl Archive {
 
     loose.remove(&hash);
 
-    Directory::decode_from_slice(file).context(archive_error::DirectoryDecode)
+    Directory::decode_from_slice_with_options(options, file).context(archive_error::DirectoryDecode)
   }
 
-  fn decode_root(&self) -> Result<Directory, ArchiveError> {
+  fn decode_root(&self, options: DecodeOptions) -> Result<Directory, ArchiveError> {
     let file = self
       .files
       .get(&self.root)
       .context(archive_error::FileMissing { hash: self.root })?;
 
-    Directory::decode_from_slice(file).context(archive_error::DirectoryDecode)
+    Directory::decode_from_slice_with_options(options, file).context(archive_error::DirectoryDecode)
   }
 
   pub(crate) fn file(&self, hash: Hash, size: u64) -> Result<&[u8], ArchiveError> {
@@ -76,7 +77,14 @@ impl Archive {
   }
 
   pub(crate) fn fingerprint(&self) -> Result<Fingerprint, ArchiveError> {
-    Ok(Fingerprint(self.package()?.hash()))
+    self.fingerprint_with_options(DecodeOptions::new())
+  }
+
+  pub(crate) fn fingerprint_with_options(
+    &self,
+    options: DecodeOptions,
+  ) -> Result<Fingerprint, ArchiveError> {
+    Ok(Fingerprint(self.package(options)?.hash()))
   }
 
   pub(crate) fn pack(manifest: &Manifest) -> Result<Self, TotalsError> {
@@ -91,8 +99,8 @@ impl Archive {
     builder.build_package(package, &manifest.signatures)
   }
 
-  pub(crate) fn package(&self) -> Result<Entry, ArchiveError> {
-    let root = self.decode_root()?;
+  pub(crate) fn package(&self, options: DecodeOptions) -> Result<Entry, ArchiveError> {
+    let root = self.decode_root(options)?;
 
     let package = root
       .entries
@@ -115,19 +123,21 @@ impl Archive {
     Component::new(Self::SIGNATURES).unwrap()
   }
 
+  #[cfg(test)]
   pub(crate) fn unpack(&self) -> Result<Manifest, ArchiveError> {
-    Ok(self.unpack_with_totals()?.0)
+    Ok(self.unpack_with_totals(DecodeOptions::new())?.0)
   }
 
   fn unpack_directory(
     &self,
+    options: DecodeOptions,
     loose: &mut BTreeSet<Hash>,
     embedded: &mut BTreeMap<Hash, Vec<u8>>,
     hash: Hash,
     size: u64,
     expected_totals: Totals,
   ) -> Result<DirectoryTree, ArchiveError> {
-    let directory = self.decode_directory(loose, hash, size)?;
+    let directory = self.decode_directory(options, loose, hash, size)?;
 
     Self::check_directory_totals(&directory, expected_totals, hash)?;
 
@@ -146,7 +156,7 @@ impl Archive {
           })
         }
         Entry::Directory { hash, size, totals } => DirectoryTreeEntry::Directory(
-          self.unpack_directory(loose, embedded, *hash, *size, *totals)?,
+          self.unpack_directory(options, loose, embedded, *hash, *size, *totals)?,
         ),
       };
       entries.insert(name.clone(), crate_entry);
@@ -155,7 +165,17 @@ impl Archive {
     Ok(DirectoryTree { entries })
   }
 
-  pub(crate) fn unpack_with_totals(&self) -> Result<(Manifest, Totals), ArchiveError> {
+  pub(crate) fn unpack_with_options(
+    &self,
+    options: DecodeOptions,
+  ) -> Result<Manifest, ArchiveError> {
+    Ok(self.unpack_with_totals(options)?.0)
+  }
+
+  pub(crate) fn unpack_with_totals(
+    &self,
+    options: DecodeOptions,
+  ) -> Result<(Manifest, Totals), ArchiveError> {
     let mut loose = self.files.keys().copied().collect::<BTreeSet<Hash>>();
 
     ensure! {
@@ -171,7 +191,7 @@ impl Archive {
       }
     }
 
-    let root = self.decode_root()?;
+    let root = self.decode_root(options)?;
 
     loose.remove(&self.root);
 
@@ -200,7 +220,8 @@ impl Archive {
 
     let mut embedded = BTreeMap::new();
 
-    let package = self.unpack_directory(&mut loose, &mut embedded, *hash, *size, *totals)?;
+    let package =
+      self.unpack_directory(options, &mut loose, &mut embedded, *hash, *size, *totals)?;
 
     let signatures = {
       let entry = root
@@ -212,7 +233,7 @@ impl Archive {
         return Err(ArchiveError::SignaturesType { ty: entry.ty() });
       };
 
-      let directory = self.decode_directory(&mut loose, *hash, *size)?;
+      let directory = self.decode_directory(options, &mut loose, *hash, *size)?;
 
       Self::check_directory_totals(&directory, *totals, *hash)?;
 
@@ -222,8 +243,8 @@ impl Archive {
           Entry::File { hash, size } => {
             let file = self.file(*hash, *size)?;
             loose.remove(hash);
-            let signature =
-              Signature::decode_from_slice(file).context(archive_error::SignatureDecode)?;
+            let signature = Signature::decode_from_slice_with_options(options, file)
+              .context(archive_error::SignatureDecode)?;
             signatures.insert(signature);
           }
           Entry::Directory { .. } => return Err(ArchiveError::SignaturesDirectory),

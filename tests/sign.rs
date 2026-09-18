@@ -143,6 +143,38 @@ fn re_signing_is_idempotent() {
 }
 
 #[test]
+fn unknown_fields_are_rejected() {
+  let test = Test::new()
+    .create_dir("foo")
+    .args(["create", "foo"])
+    .success();
+
+  let path = test.path().join("foo/manifest.filepack");
+  let bytes = fs::read(&path).unwrap();
+  let mut fields = BTreeMap::<u64, Vec<u8>>::decode_from_slice(&bytes).unwrap();
+  assert!(fields.insert(u64::MAX, b"foo".to_vec()).is_none());
+  let bytes = fields.encode_to_vec();
+  fs::write(&path, &bytes).unwrap();
+
+  Manifest::load(Some(&path)).unwrap();
+
+  let test = test
+    .args(["sign", "foo"])
+    .stderr(
+      "
+        error: failed to decode manifest at `foo/manifest.filepack`
+               └─ unknown field with key 18446744073709551615
+      ",
+    )
+    .failure();
+
+  assert_eq!(
+    fs::read(test.path().join("foo/manifest.filepack")).unwrap(),
+    bytes,
+  );
+}
+
+#[test]
 fn updates_manifest_with_signature() {
   let test = Test::new()
     .arg("keygen")

@@ -2,6 +2,7 @@ use super::*;
 
 #[allow(clippy::arbitrary_source_item_ordering)]
 #[derive(Clone, Debug, Default, Encode, Decode, PartialEq)]
+#[deco(allow_unknown_fields)]
 pub struct Directory {
   #[n(0)]
   pub(crate) version: Version,

@@ -3,12 +3,16 @@ use super::*;
 #[derive(Clone)]
 pub struct Decoder<'a> {
   buffer: &'a [u8],
+  options: DecodeOptions,
   position: usize,
 }
 
 impl<'a> Decoder<'a> {
   pub(crate) fn array(&mut self) -> Result<ArrayDecoder<'a>, DecodeError> {
-    Ok(ArrayDecoder::new(Self::new(self.bytes()?)))
+    Ok(ArrayDecoder::new(Self::with_options(
+      self.options,
+      self.bytes()?,
+    )))
   }
 
   pub(crate) fn boolean(&mut self) -> Result<bool, DecodeError> {
@@ -69,14 +73,18 @@ impl<'a> Decoder<'a> {
   }
 
   pub(crate) fn map<K>(&mut self) -> Result<MapDecoder<'a, K>, DecodeError> {
-    Ok(MapDecoder::new(Self::new(self.bytes()?)))
+    Ok(MapDecoder::new(Self::with_options(
+      self.options,
+      self.bytes()?,
+    )))
   }
 
   pub fn new(buffer: &'a [u8]) -> Self {
-    Self {
-      buffer,
-      position: 0,
-    }
+    Self::with_options(DecodeOptions::new(), buffer)
+  }
+
+  pub(crate) fn options(&self) -> DecodeOptions {
+    self.options
   }
 
   pub(crate) fn signed_integer(&mut self) -> Result<i64, DecodeError> {
@@ -86,6 +94,14 @@ impl<'a> Decoder<'a> {
 
   pub(crate) fn text(&mut self) -> Result<&'a str, DecodeError> {
     str::from_utf8(self.bytes()?).context(decode_error::Unicode)
+  }
+
+  pub(crate) fn with_options(options: DecodeOptions, buffer: &'a [u8]) -> Self {
+    Self {
+      buffer,
+      position: 0,
+      options,
+    }
   }
 }
 

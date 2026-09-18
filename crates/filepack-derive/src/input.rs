@@ -127,9 +127,15 @@ impl Input {
 
     let header = self.decode_header(attributes);
 
-    let allow_unknown_fields = attributes
-      .allow_unknown_fields()
-      .then(|| quote! { while let Some(_) = map.next::<&[u8]>()? {} });
+    let allow_unknown_fields = attributes.allow_unknown_fields().then(|| {
+      quote! {
+        while let Some((key, _value)) = map.next::<&[u8]>()? {
+          if decoder.options().strict {
+            return Err(DecodeError::UnknownField { key });
+          }
+        }
+      }
+    });
 
     let validate = attributes
       .validate()
