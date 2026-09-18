@@ -336,7 +336,8 @@ impl Input {
           && attributes.contains(&ContainerAttribute::Transparent)
         {
           return Err(
-            meta.error("`#[deco(allow_unknown_fields)]` cannot be used with `#[deco(transparent)]`"),
+            meta
+              .error("`#[deco(allow_unknown_fields)]` cannot be used with `#[deco(transparent)]`"),
           );
         }
 
