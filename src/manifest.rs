@@ -45,10 +45,6 @@ impl Manifest {
     files
   }
 
-  pub fn fingerprint(&self) -> Fingerprint {
-    Archive::pack(self).unwrap().fingerprint().unwrap()
-  }
-
   pub(crate) fn from_json(json: &str, path: &Utf8Path) -> Result<Self> {
     let manifest =
       serde_json::from_str::<Self>(json).context(error::DeserializeManifest { path })?;
@@ -124,24 +120,21 @@ impl Manifest {
 
   pub(crate) fn sign(
     &mut self,
+    fingerprint: Fingerprint,
     options: SignOptions,
     keychain: &Keychain,
     key: &KeyName,
   ) -> Result {
-    let statement = self.statement(options.timestamp)?;
+    let statement = Statement {
+      fingerprint,
+      timestamp: options.timestamp.then(now).transpose()?,
+    };
 
     let signature = keychain.sign(key, &statement)?;
 
     self.signatures.insert(signature);
 
     Ok(())
-  }
-
-  pub(crate) fn statement(&self, timestamp: bool) -> Result<Statement> {
-    Ok(Statement {
-      fingerprint: self.fingerprint(),
-      timestamp: timestamp.then(now).transpose()?,
-    })
   }
 }
 

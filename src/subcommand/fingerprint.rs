@@ -14,9 +14,7 @@ impl Fingerprint {
       .unpack()
       .context(error::UnarchiveManifest { path: &path })?;
 
-    let fingerprint = archive
-      .fingerprint()
-      .context(error::UnarchiveManifest { path: &path })?;
+    let fingerprint = archive.fingerprint().unwrap();
 
     println!("{fingerprint}");
 

@@ -169,10 +169,11 @@ fn signatures_are_not_uploaded() {
     .args(["sign", "manifest.filepack"])
     .success();
 
-  let manifest = Manifest::load(Some(&test.path().join("manifest.filepack"))).unwrap();
+  let path = test.path().join("manifest.filepack");
+  let manifest = Manifest::load(Some(&path)).unwrap();
   assert_eq!(manifest.signatures.len(), 1);
 
-  let fingerprint = manifest.fingerprint();
+  let fingerprint = fingerprint(&path);
 
   test
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
@@ -454,9 +455,7 @@ fn upload_package_serves_package_html() {
     .args(["create", "."])
     .success();
 
-  let fingerprint = Manifest::load(Some(&test.path().join("manifest.filepack")))
-    .unwrap()
-    .fingerprint();
+  let fingerprint = fingerprint(&test.path().join("manifest.filepack"));
 
   test
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
@@ -544,11 +543,7 @@ fn upload_package_uploads_files() {
     .args(["create", "."])
     .success();
 
-  let root = Hash::from(
-    Manifest::load(Some(&test.path().join("manifest.filepack")))
-      .unwrap()
-      .fingerprint(),
-  );
+  let root = Hash::from(fingerprint(&test.path().join("manifest.filepack")));
 
   test
     .args(["upload", "--server", &server.address(), "manifest.filepack"])

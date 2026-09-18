@@ -52,9 +52,7 @@ fn mount_rejects_non_web_package() {
     .args(["create", "."])
     .success();
 
-  let fingerprint = Manifest::load(Some(&test.path().join("manifest.filepack")))
-    .unwrap()
-    .fingerprint();
+  let fingerprint = fingerprint(&test.path().join("manifest.filepack"));
 
   test
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
@@ -83,9 +81,7 @@ fn mount_rejects_package_without_media_type() {
     .args(["create", "."])
     .success();
 
-  let fingerprint = Manifest::load(Some(&test.path().join("manifest.filepack")))
-    .unwrap()
-    .fingerprint();
+  let fingerprint = fingerprint(&test.path().join("manifest.filepack"));
 
   test
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
