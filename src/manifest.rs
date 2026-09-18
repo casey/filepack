@@ -143,16 +143,6 @@ impl Manifest {
       timestamp: timestamp.then(now).transpose()?,
     })
   }
-
-  pub(crate) fn verify_signatures(&self) -> Result {
-    let fingerprint = self.fingerprint();
-
-    for signature in &self.signatures {
-      signature.verify(fingerprint)?;
-    }
-
-    Ok(())
-  }
 }
 
 #[cfg(test)]
