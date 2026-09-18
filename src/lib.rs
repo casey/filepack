@@ -20,7 +20,6 @@
 use {
   self::{
     application::Application,
-    archive::Archive,
     archive_builder::ArchiveBuilder,
     archive_error::ArchiveError,
     arguments::Arguments,
@@ -243,6 +242,7 @@ use {
 };
 
 pub use self::{
+  archive::Archive,
   decode::Decode,
   decoder::Decoder,
   directory::Directory,

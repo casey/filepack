@@ -80,9 +80,7 @@ impl Verify {
       .unpack_with_totals()
       .context(error::UnarchiveManifest { path: &source })?;
 
-    let fingerprint = archive
-      .fingerprint()
-      .context(error::UnarchiveManifest { path: &source })?;
+    let fingerprint = archive.fingerprint().unwrap();
 
     for signature in &manifest.signatures {
       signature.verify(fingerprint)?;

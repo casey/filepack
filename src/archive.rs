@@ -3,7 +3,7 @@ use super::*;
 #[allow(clippy::arbitrary_source_item_ordering)]
 #[derive(Encode, Decode)]
 #[deco(allow_unknown_keys)]
-pub(crate) struct Archive {
+pub struct Archive {
   #[n(0)]
   pub(crate) version: Version,
   #[n(1)]
@@ -75,11 +75,11 @@ impl Archive {
     Ok(file)
   }
 
-  pub(crate) fn fingerprint(&self) -> Result<Fingerprint, ArchiveError> {
+  pub fn fingerprint(&self) -> Result<Fingerprint, ArchiveError> {
     Ok(Fingerprint(self.package()?.hash()))
   }
 
-  pub(crate) fn load(path: &Utf8Path) -> Result<Self> {
+  pub fn load(path: &Utf8Path) -> Result<Self> {
     let deco =
       filesystem::read_opt(path)?.ok_or_else(|| error::ManifestNotFound { path }.build())?;
 
@@ -647,9 +647,11 @@ mod tests {
       signatures: BTreeSet::new(),
     };
 
+    let fingerprint = Archive::pack(&manifest).unwrap().fingerprint().unwrap();
+
     let private_key = test::PRIVATE_KEY.parse::<PrivateKey>().unwrap();
     let statement = Statement {
-      fingerprint: manifest.fingerprint(),
+      fingerprint,
       timestamp: None,
     };
     let signature = private_key.sign(&statement);

@@ -227,8 +227,12 @@ impl Create {
     };
 
     if self.sign {
+      let fingerprint = Archive::pack(&manifest).unwrap().fingerprint().unwrap();
+
       let keychain = Keychain::load(&options)?;
+
       manifest.sign(
+        fingerprint,
         SignOptions {
           timestamp: self.timestamp,
         },

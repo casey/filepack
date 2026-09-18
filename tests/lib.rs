@@ -2,9 +2,9 @@ use {
   self::{child::Child, dedent::Dedent, expected::Expected, test::Test},
   camino::{Utf8Path, Utf8PathBuf},
   filepack::{
-    Decode, Decoder, Directory, DirectoryExt, Encode, Encoder, Entry, Fingerprint, FlacBuilder,
-    Hash, Manifest, Metadata, Mp3Builder, Mp4Builder, Page, PngBuilder, PrivateKey, PublicKey,
-    Totals, gradient, gradient_alpha, hex,
+    Archive, Decode, Decoder, Directory, DirectoryExt, Encode, Encoder, Entry, Fingerprint,
+    FlacBuilder, Hash, Manifest, Metadata, Mp3Builder, Mp4Builder, Page, PngBuilder, PrivateKey,
+    PublicKey, Totals, gradient, gradient_alpha, hex,
     templates::{DirectoryHtml, PackageHtml},
   },
   image::{DynamicImage, ImageFormat},
@@ -71,6 +71,10 @@ const PRIVATE_KEY: &str = concat!(
 const PUBLIC_KEY: &str = "public1d79b36defbee7c1d26099c9e28f849f1f0dceb6e0217b83c87f5cff6fd8c4fc8";
 
 const USAGE_ERROR: i32 = 2;
+
+fn fingerprint(path: &Utf8Path) -> Fingerprint {
+  Archive::load(path).unwrap().fingerprint().unwrap()
+}
 
 fn tempdir() -> TempDir {
   tempfile::Builder::new()

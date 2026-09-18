@@ -327,8 +327,9 @@ fn download_retrieves_package() {
     .args(["create", "."])
     .success();
 
-  let manifest = Manifest::load(Some(&test.path().join("manifest.filepack"))).unwrap();
-  let fingerprint = manifest.fingerprint();
+  let path = test.path().join("manifest.filepack");
+  let manifest = Manifest::load(Some(&path)).unwrap();
+  let fingerprint = fingerprint(&path);
 
   test
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
@@ -388,8 +389,7 @@ fn download_retrieves_package_with_metadata() {
     .args(["create", "."])
     .success();
 
-  let manifest = Manifest::load(Some(&test.path().join("manifest.filepack"))).unwrap();
-  let fingerprint = manifest.fingerprint();
+  let fingerprint = fingerprint(&test.path().join("manifest.filepack"));
 
   test
     .args(["upload", "--server", &server.address(), "manifest.filepack"])

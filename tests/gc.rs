@@ -9,9 +9,7 @@ fn gc_removes_orphaned_package_data() {
     .args(["create", "."])
     .success();
 
-  let fingerprint = Manifest::load(Some(&test.path().join("manifest.filepack")))
-    .unwrap()
-    .fingerprint();
+  let fingerprint = fingerprint(&test.path().join("manifest.filepack"));
 
   test
     .args(["upload", "--server", &server.address(), "manifest.filepack"])

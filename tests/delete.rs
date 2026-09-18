@@ -12,11 +12,8 @@ fn delete_all() {
     .args(["create", "bar"])
     .success();
 
-  let fingerprints = ["foo", "bar"].map(|package| {
-    Manifest::load(Some(&test.path().join(package).join("manifest.filepack")))
-      .unwrap()
-      .fingerprint()
-  });
+  let fingerprints =
+    ["foo", "bar"].map(|package| fingerprint(&test.path().join(package).join("manifest.filepack")));
 
   let test = test
     .args(["upload", "--server", &server.address(), "foo"])
@@ -62,9 +59,7 @@ fn delete_package_not_found() {
     .args(["create", "."])
     .success();
 
-  let fingerprint = Manifest::load(Some(&test.path().join("manifest.filepack")))
-    .unwrap()
-    .fingerprint();
+  let fingerprint = fingerprint(&test.path().join("manifest.filepack"));
 
   Test::new()
     .args([
@@ -91,9 +86,7 @@ fn delete_package_succeeds() {
     .args(["create", "."])
     .success();
 
-  let fingerprint = Manifest::load(Some(&test.path().join("manifest.filepack")))
-    .unwrap()
-    .fingerprint();
+  let fingerprint = fingerprint(&test.path().join("manifest.filepack"));
 
   test
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
@@ -149,9 +142,7 @@ fn restricted_delete_succeeds_with_auth() {
     .args(["create", "pkg"])
     .success();
 
-  let fingerprint = Manifest::load(Some(&test.path().join("pkg/manifest.filepack")))
-    .unwrap()
-    .fingerprint();
+  let fingerprint = fingerprint(&test.path().join("pkg/manifest.filepack"));
 
   test
     .args([
