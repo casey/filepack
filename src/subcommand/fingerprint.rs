@@ -8,9 +8,17 @@ pub(crate) struct Fingerprint {
 
 impl Fingerprint {
   pub(crate) fn run(self) -> Result {
-    let manifest = Manifest::load(self.path.as_deref())?;
+    let (path, archive) = Archive::load_with_opt_path(self.path.as_deref())?;
 
-    println!("{}", manifest.fingerprint());
+    archive
+      .unpack()
+      .context(error::UnarchiveManifest { path: &path })?;
+
+    let fingerprint = archive
+      .fingerprint()
+      .context(error::UnarchiveManifest { path: &path })?;
+
+    println!("{fingerprint}");
 
     Ok(())
   }

@@ -80,13 +80,17 @@ impl Verify {
       .unpack_with_totals()
       .context(error::UnarchiveManifest { path: &source })?;
 
-    manifest.verify_signatures()?;
+    let fingerprint = archive
+      .fingerprint()
+      .context(error::UnarchiveManifest { path: &source })?;
+
+    for signature in &manifest.signatures {
+      signature.verify(fingerprint)?;
+    }
 
     let mut verified = Verified::default();
 
     verified.signatures += manifest.signatures.len().into_u64();
-
-    let fingerprint = manifest.fingerprint();
 
     if let Some(expected) = self.fingerprint
       && fingerprint != expected
