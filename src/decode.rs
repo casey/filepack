@@ -135,9 +135,9 @@ mod tests {
   use super::*;
 
   #[test]
-  fn allow_unknown_keys() {
+  fn allow_unknown_fields() {
     #[derive(Decode)]
-    #[deco(allow_unknown_keys)]
+    #[deco(allow_unknown_fields)]
     struct Foo {
       #[n(0)]
       foo: u64,

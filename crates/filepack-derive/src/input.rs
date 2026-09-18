@@ -127,8 +127,8 @@ impl Input {
 
     let header = self.decode_header(attributes);
 
-    let allow_unknown_keys = attributes
-      .allow_unknown_keys()
+    let allow_unknown_fields = attributes
+      .allow_unknown_fields()
       .then(|| quote! { while let Some(_) = map.next::<&[u8]>()? {} });
 
     let validate = attributes
@@ -140,7 +140,7 @@ impl Input {
         fn decode(decoder: &mut Decoder<'de>) -> Result<Self, DecodeError> {
           let mut map = decoder.map::<u64>()?;
           #(#decode)*
-          #allow_unknown_keys
+          #allow_unknown_fields
           map.finish()?;
           let value = #constructor;
           #validate
@@ -321,7 +321,7 @@ impl Input {
 
         if self.data.is_enum() {
           match attribute {
-            ContainerAttribute::AllowUnknownKeys | ContainerAttribute::Transparent => {
+            ContainerAttribute::AllowUnknownFields | ContainerAttribute::Transparent => {
               return Err(meta.error(format!("`#[deco({attribute})]` cannot be used with enums")));
             }
             ContainerAttribute::Validate => {}
@@ -332,11 +332,11 @@ impl Input {
           return Err(meta.error(format!("duplicate `#[deco({attribute})]` attribute")));
         }
 
-        if attributes.contains(&ContainerAttribute::AllowUnknownKeys)
+        if attributes.contains(&ContainerAttribute::AllowUnknownFields)
           && attributes.contains(&ContainerAttribute::Transparent)
         {
           return Err(
-            meta.error("`#[deco(allow_unknown_keys)]` cannot be used with `#[deco(transparent)]`"),
+            meta.error("`#[deco(allow_unknown_fields)]` cannot be used with `#[deco(transparent)]`"),
           );
         }
 
@@ -444,18 +444,18 @@ mod tests {
 
     case(
       &syn::parse_quote! {
-        #[deco(allow_unknown_keys)]
+        #[deco(allow_unknown_fields)]
         enum Foo {}
       },
-      "`#[deco(allow_unknown_keys)]` cannot be used with enums",
+      "`#[deco(allow_unknown_fields)]` cannot be used with enums",
     );
 
     case(
       &syn::parse_quote! {
-        #[deco(allow_unknown_keys, transparent)]
+        #[deco(allow_unknown_fields, transparent)]
         struct Foo {}
       },
-      "`#[deco(allow_unknown_keys)]` cannot be used with `#[deco(transparent)]`",
+      "`#[deco(allow_unknown_fields)]` cannot be used with `#[deco(transparent)]`",
     );
 
     case(
