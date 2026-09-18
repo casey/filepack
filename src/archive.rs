@@ -3,7 +3,7 @@ use super::*;
 #[allow(clippy::arbitrary_source_item_ordering)]
 #[derive(Encode, Decode)]
 #[deco(allow_unknown_keys)]
-pub struct Archive {
+pub(crate) struct Archive {
   #[n(0)]
   pub(crate) version: Version,
   #[n(1)]
@@ -75,23 +75,8 @@ impl Archive {
     Ok(file)
   }
 
-  pub fn fingerprint(&self) -> Result<Fingerprint, ArchiveError> {
+  pub(crate) fn fingerprint(&self) -> Result<Fingerprint, ArchiveError> {
     Ok(Fingerprint(self.package()?.hash()))
-  }
-
-  pub fn load(path: &Utf8Path) -> Result<Self> {
-    let deco =
-      filesystem::read_opt(path)?.ok_or_else(|| error::ManifestNotFound { path }.build())?;
-
-    Self::decode_from_slice(&deco).context(error::DecodeManifest { path })
-  }
-
-  pub(crate) fn load_with_opt_path(path: Option<&Utf8Path>) -> Result<(Utf8PathBuf, Self)> {
-    let path = Manifest::opt_path(path);
-
-    let archive = Self::load(&path)?;
-
-    Ok((path, archive))
   }
 
   pub(crate) fn pack(manifest: &Manifest) -> Result<Self, TotalsError> {

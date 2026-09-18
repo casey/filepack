@@ -1,10 +1,9 @@
 use {super::*, reqwest::blocking::Body};
 
 struct Context {
-  archive: Archive,
   client: Client,
+  loader: Loader,
   missing: HashSet<Hash>,
-  path: Utf8PathBuf,
   progress_bar: ProgressBar,
 }
 
@@ -42,10 +41,14 @@ impl Upload {
     size: u64,
   ) -> Result {
     let error_context = error::UnarchiveManifest {
-      path: &context.path,
+      path: context.loader.path(),
     };
 
-    let deco = context.archive.file(hash, size).context(error_context)?;
+    let deco = context
+      .loader
+      .archive()
+      .file(hash, size)
+      .context(error_context)?;
 
     let directory = Directory::decode_from_slice(deco)
       .context(archive_error::DirectoryDecode)
@@ -92,11 +95,9 @@ impl Upload {
   }
 
   fn upload_package(&self, options: Options, client: Client) -> Result {
-    let (path, archive) = Archive::load_with_opt_path(self.input.as_deref())?;
+    let loader = Loader::load(self.input.as_deref())?;
 
-    let error_context = error::UnarchiveManifest { path: &path };
-
-    let package = archive.package().context(error_context)?;
+    let package = loader.package()?;
 
     let fingerprint = Fingerprint(package.hash());
 
@@ -108,7 +109,7 @@ impl Upload {
       return Ok(());
     }
 
-    let manifest = archive.unpack().context(error_context)?;
+    let manifest = loader.unpack()?;
 
     let manifest_files = manifest.files();
 
@@ -138,14 +139,13 @@ impl Upload {
     }
 
     let mut context = Context {
-      archive,
-      progress_bar: ProgressBar::items(&options, bytes, files, "files"),
       client,
+      loader,
       missing,
-      path,
+      progress_bar: ProgressBar::items(&options, bytes, files, "files"),
     };
 
-    let root = context.path.parent().unwrap().to_owned();
+    let root = context.loader.path().parent().unwrap().to_owned();
 
     Self::upload_directory(&mut context, &root, package.hash(), package.size())?;
 

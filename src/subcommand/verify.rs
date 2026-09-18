@@ -59,28 +59,20 @@ impl Verify {
       error::PackageRootDirectory { path: root },
     }
 
-    let source = if let Some(manifest) = &self.manifest {
+    if self.manifest.is_some() {
       ensure! {
         !filesystem::exists(&root.join(Manifest::FILENAME))?,
         error::ManifestInPackage {
           path: Manifest::FILENAME,
         },
       }
+    }
 
-      manifest.clone()
-    } else if let Some(root) = &self.root {
-      root.join(Manifest::FILENAME)
-    } else {
-      Manifest::FILENAME.into()
-    };
+    let loader = Loader::load(self.manifest.as_deref().or(self.root.as_deref()))?;
 
-    let archive = Archive::load(&source)?;
+    let (manifest, totals) = loader.unpack_with_totals()?;
 
-    let (manifest, totals) = archive
-      .unpack_with_totals()
-      .context(error::UnarchiveManifest { path: &source })?;
-
-    let fingerprint = archive.fingerprint().unwrap();
+    let fingerprint = loader.fingerprint()?;
 
     for signature in &manifest.signatures {
       signature.verify(fingerprint)?;
@@ -96,9 +88,10 @@ impl Verify {
       let style = Style::stderr();
       eprintln!(
         "\
-fingerprint mismatch: `{source}`
+fingerprint mismatch: `{}`
             expected: {}
               actual: {}",
+        loader.path(),
         expected.style(style.good()),
         fingerprint.style(style.bad()),
       );
@@ -166,7 +159,7 @@ fingerprint mismatch: `{source}`
 
       let path = decode_path(entry.path())?;
 
-      if current_dir.join(path) == current_dir.join(&source) {
+      if current_dir.join(path) == current_dir.join(loader.path()) {
         continue;
       }
 
