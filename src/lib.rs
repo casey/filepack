@@ -20,6 +20,7 @@
 use {
   self::{
     application::Application,
+    archive::Archive,
     archive_builder::ArchiveBuilder,
     archive_error::ArchiveError,
     arguments::Arguments,
@@ -242,7 +243,6 @@ use {
 };
 
 pub use self::{
-  archive::Archive,
   decode::Decode,
   decoder::Decoder,
   directory::Directory,
@@ -254,6 +254,7 @@ pub use self::{
   flac_builder::FlacBuilder,
   functions::{gradient, gradient_alpha, install_default_crypto_provider},
   hash::Hash,
+  loader::Loader,
   manifest::Manifest,
   metadata::Metadata,
   mp3_builder::Mp3Builder,
@@ -369,6 +370,7 @@ mod lint_error;
 mod lint_group;
 mod lint_selector;
 mod linter;
+mod loader;
 mod manifest;
 mod map_decoder;
 mod map_encoder;

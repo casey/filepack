@@ -78,37 +78,7 @@ impl Manifest {
   }
 
   pub fn load(path: Option<&Utf8Path>) -> Result<Self> {
-    Ok(Self::load_with_opt_path(path)?.1)
-  }
-
-  pub(crate) fn load_with_opt_path(path: Option<&Utf8Path>) -> Result<(Utf8PathBuf, Self)> {
-    let path = Self::opt_path(path);
-
-    let manifest = Self::load_with_path(&path)?;
-
-    Ok((path, manifest))
-  }
-
-  pub(crate) fn load_with_path(path: &Utf8Path) -> Result<Self> {
-    let archive = Archive::load(path)?;
-
-    let manifest = archive
-      .unpack()
-      .context(error::UnarchiveManifest { path })?;
-
-    Ok(manifest)
-  }
-
-  pub(crate) fn opt_path(path: Option<&Utf8Path>) -> Utf8PathBuf {
-    if let Some(path) = path {
-      if path.is_dir() {
-        path.join(Self::FILENAME)
-      } else {
-        path.into()
-      }
-    } else {
-      Self::FILENAME.into()
-    }
+    Loader::load(path)?.unpack()
   }
 
   pub fn save(&self, path: &Utf8Path) -> Result {

@@ -12,13 +12,11 @@ pub(crate) struct Sign {
 
 impl Sign {
   pub(crate) fn run(self, options: Options) -> Result {
-    let (path, archive) = Archive::load_with_opt_path(self.path.as_deref())?;
+    let loader = Loader::load(self.path.as_deref())?;
 
-    let mut manifest = archive
-      .unpack()
-      .context(error::UnarchiveManifest { path: &path })?;
+    let mut manifest = loader.unpack()?;
 
-    let fingerprint = archive.fingerprint().unwrap();
+    let fingerprint = loader.fingerprint()?;
 
     let keychain = Keychain::load(&options)?;
 
@@ -31,7 +29,7 @@ impl Sign {
       &self.key,
     )?;
 
-    manifest.save(&path)?;
+    manifest.save(loader.path())?;
 
     Ok(())
   }

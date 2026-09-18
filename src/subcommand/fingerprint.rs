@@ -8,15 +8,11 @@ pub(crate) struct Fingerprint {
 
 impl Fingerprint {
   pub(crate) fn run(self) -> Result {
-    let (path, archive) = Archive::load_with_opt_path(self.path.as_deref())?;
+    let loader = Loader::load(self.path.as_deref())?;
 
-    archive
-      .unpack()
-      .context(error::UnarchiveManifest { path: &path })?;
+    loader.unpack()?;
 
-    let fingerprint = archive.fingerprint().unwrap();
-
-    println!("{fingerprint}");
+    println!("{}", loader.fingerprint()?);
 
     Ok(())
   }
