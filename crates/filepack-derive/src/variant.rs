@@ -1,7 +1,7 @@
 use super::*;
 
 #[derive(FromVariant)]
-#[darling(forward_attrs(n))]
+#[darling(forward_attrs(deco, n))]
 pub(crate) struct Variant {
   attrs: Vec<Attribute>,
   fields: Fields<Field>,
@@ -10,6 +10,13 @@ pub(crate) struct Variant {
 
 impl Variant {
   pub(crate) fn parse(&self) -> Result<ParsedVariant> {
+    if let Some(attr) = self.attrs.iter().find(|attr| attr.path().is_ident("deco")) {
+      return Err(Error::new_spanned(
+        attr,
+        "`#[deco(...)]` attributes cannot be used on enum variants",
+      ));
+    }
+
     let fields = self
       .fields
       .iter()

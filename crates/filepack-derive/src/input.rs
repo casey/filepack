@@ -3,7 +3,7 @@ use super::*;
 #[derive(FromDeriveInput)]
 #[darling(
   supports(struct_named, struct_newtype, enum_named, enum_unit),
-  forward_attrs(deco)
+  forward_attrs(deco, n)
 )]
 pub(crate) struct Input {
   attrs: Vec<Attribute>,
@@ -296,6 +296,13 @@ impl Input {
     let mut attributes = HashSet::new();
 
     for attribute in &self.attrs {
+      if attribute.path().is_ident("n") {
+        return Err(Error::new_spanned(
+          attribute,
+          "`#[n]` attributes can only be used on struct fields and enum variants",
+        ));
+      }
+
       if !attribute.path().is_ident("deco") {
         continue;
       }
@@ -306,26 +313,30 @@ impl Input {
           .require_ident()?
           .to_string()
           .parse::<ContainerAttribute>()
-          .map_err(|_| meta.error("unknown deco attribute"))?;
+          .map_err(|_| meta.error("unknown `#[deco(...)]` attribute"))?;
+
+        if !meta.input.is_empty() && !meta.input.peek(syn::Token![,]) {
+          return Err(meta.error(format!("`#[deco({attribute})]` does not take a value")));
+        }
 
         if self.data.is_enum() {
           match attribute {
             ContainerAttribute::AllowUnknownKeys | ContainerAttribute::Transparent => {
-              return Err(meta.error(format!("#[deco({attribute})] cannot be used with enums")));
+              return Err(meta.error(format!("`#[deco({attribute})]` cannot be used with enums")));
             }
             ContainerAttribute::Validate => {}
           }
         }
 
         if !attributes.insert(attribute) {
-          return Err(meta.error(format!("duplicate `{attribute}` attribute")));
+          return Err(meta.error(format!("duplicate `#[deco({attribute})]` attribute")));
         }
 
         if attributes.contains(&ContainerAttribute::AllowUnknownKeys)
           && attributes.contains(&ContainerAttribute::Transparent)
         {
           return Err(
-            meta.error("#[deco(allow_unknown_keys)] cannot be used with #[deco(transparent)]"),
+            meta.error("`#[deco(allow_unknown_keys)]` cannot be used with `#[deco(transparent)]`"),
           );
         }
 
@@ -377,7 +388,7 @@ impl Input {
     if fields.fields.len() != 1 {
       return Err(Error::new_spanned(
         &self.ident,
-        "#[transparent] requires a struct with a single field",
+        "`#[deco(transparent)]` can only be used on single-field structs",
       ));
     }
 
@@ -385,7 +396,14 @@ impl Input {
       if let Some(attr) = field.n_attribute() {
         return Err(Error::new_spanned(
           attr,
-          "#[n] attribute cannot be used with #[deco(transparent)]",
+          "`#[n]` attributes cannot be used with `#[deco(transparent)]`",
+        ));
+      }
+
+      if let Some(attr) = field.deco_attribute() {
+        return Err(Error::new_spanned(
+          attr,
+          "`#[deco(...)]` field attributes cannot be used with `#[deco(transparent)]`",
         ));
       }
     }
@@ -408,7 +426,7 @@ mod tests {
       assert_eq!(
         Input::from_derive_input(input)
           .unwrap()
-          .parse_attributes()
+          .decode()
           .err()
           .unwrap()
           .to_string(),
@@ -421,7 +439,7 @@ mod tests {
         #[deco(validate, validate)]
         struct Foo {}
       },
-      "duplicate `validate` attribute",
+      "duplicate `#[deco(validate)]` attribute",
     );
 
     case(
@@ -429,7 +447,7 @@ mod tests {
         #[deco(allow_unknown_keys)]
         enum Foo {}
       },
-      "#[deco(allow_unknown_keys)] cannot be used with enums",
+      "`#[deco(allow_unknown_keys)]` cannot be used with enums",
     );
 
     case(
@@ -437,7 +455,52 @@ mod tests {
         #[deco(allow_unknown_keys, transparent)]
         struct Foo {}
       },
-      "#[deco(allow_unknown_keys)] cannot be used with #[deco(transparent)]",
+      "`#[deco(allow_unknown_keys)]` cannot be used with `#[deco(transparent)]`",
+    );
+
+    case(
+      &syn::parse_quote! {
+        #[n(0)]
+        struct Foo {}
+      },
+      "`#[n]` attributes can only be used on struct fields and enum variants",
+    );
+
+    case(
+      &syn::parse_quote! {
+        #[deco(transparent = true)]
+        struct Foo {}
+      },
+      "`#[deco(transparent)]` does not take a value",
+    );
+
+    case(
+      &syn::parse_quote! {
+        #[deco(transparent)]
+        struct Foo {
+          bar: u64,
+          baz: u64,
+        }
+      },
+      "`#[deco(transparent)]` can only be used on single-field structs",
+    );
+
+    case(
+      &syn::parse_quote! {
+        #[deco(transparent)]
+        struct Foo(#[deco(decode_with = bar)] u64);
+      },
+      "`#[deco(...)]` field attributes cannot be used with `#[deco(transparent)]`",
+    );
+
+    case(
+      &syn::parse_quote! {
+        enum Foo {
+          #[deco(transparent)]
+          Bar,
+        }
+      },
+      "`#[deco(...)]` attributes cannot be used on enum variants",
     );
   }
 }

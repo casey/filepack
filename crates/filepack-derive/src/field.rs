@@ -9,6 +9,10 @@ pub(crate) struct Field {
 }
 
 impl Field {
+  pub(crate) fn deco_attribute(&self) -> Option<&Attribute> {
+    self.attrs.iter().find(|attr| attr.path().is_ident("deco"))
+  }
+
   pub(crate) fn ident(&self) -> Option<&Ident> {
     self.ident.as_ref()
   }
@@ -54,18 +58,18 @@ impl Field {
       attribute.parse_nested_meta(|meta| {
         if meta.path.is_ident("decode_with") {
           if decode_with.is_some() {
-            return Err(meta.error("duplicate `decode_with` attribute"));
+            return Err(meta.error("duplicate `#[deco(decode_with)]` attribute"));
           }
           decode_with = Some(meta.value()?.parse::<Path>()?);
           Ok(())
         } else if meta.path.is_ident("encode_with") {
           if encode_with.is_some() {
-            return Err(meta.error("duplicate `encode_with` attribute"));
+            return Err(meta.error("duplicate `#[deco(encode_with)]` attribute"));
           }
           encode_with = Some(meta.value()?.parse::<Path>()?);
           Ok(())
         } else {
-          Err(meta.error("unknown deco attribute"))
+          Err(meta.error("unknown `#[deco(...)]` attribute"))
         }
       })?;
     }
