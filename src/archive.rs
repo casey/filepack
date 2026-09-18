@@ -2,7 +2,7 @@ use super::*;
 
 #[allow(clippy::arbitrary_source_item_ordering)]
 #[derive(Encode, Decode)]
-#[deco(allow_unknown_keys)]
+#[deco(allow_unknown_fields)]
 pub(crate) struct Archive {
   #[n(0)]
   pub(crate) version: Version,
@@ -846,7 +846,7 @@ mod tests {
   }
 
   #[test]
-  fn unknown_keys_ignored() {
+  fn unknown_fields_ignored() {
     let manifest = manifest();
     let archive = Archive::pack(&manifest).unwrap();
 
