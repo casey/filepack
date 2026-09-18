@@ -160,7 +160,7 @@ fn unknown_fields_are_rejected() {
 
   let test = test
     .args(["sign", "foo"])
-    .stderr(
+    .stderr_path(
       "
         error: failed to decode manifest at `foo/manifest.filepack`
                └─ unknown field with key 18446744073709551615
