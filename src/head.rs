@@ -48,7 +48,7 @@ impl Head {
     }
   }
 
-  pub(crate) fn range(self, buffer: &[u8]) -> Result<(usize, usize), DecodeError> {
+  pub(crate) fn range(self, buffer: &[u8]) -> DecodeResult<(usize, usize)> {
     match self {
       Self::Small => Ok((0, 1)),
       Self::Medium(len) => {

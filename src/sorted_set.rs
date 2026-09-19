@@ -19,7 +19,7 @@ impl<T> Deref for SortedSet<T> {
 }
 
 impl<T: PartialOrd> Validate for SortedSet<T> {
-  fn validate(&self) -> Result<(), DecodeError> {
+  fn validate(&self) -> DecodeResult {
     for window in self.0.windows(2) {
       ensure!(window[0] < window[1], decode_error::Unsorted);
     }

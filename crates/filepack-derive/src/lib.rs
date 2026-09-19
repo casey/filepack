@@ -47,7 +47,7 @@ pub fn decode_from_str(input: TokenStream) -> TokenStream {
 
   quote! {
     impl Decode<'_> for #name {
-      fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
+      fn decode(decoder: &mut Decoder) -> DecodeResult<Self> {
         decoder
           .text()?
           .parse::<Self>()

@@ -139,7 +139,7 @@ fn decode_from_str() {
 
 #[test]
 fn decode_with_optional() {
-  fn decode_offset(decoder: &mut Decoder) -> Result<u64, DecodeError> {
+  fn decode_offset(decoder: &mut Decoder) -> DecodeResult<u64> {
     Ok(decoder.integer()? + 1)
   }
 
@@ -160,7 +160,7 @@ fn decode_with_optional() {
 
 #[test]
 fn decode_with_required() {
-  fn decode_offset(decoder: &mut Decoder) -> Result<u64, DecodeError> {
+  fn decode_offset(decoder: &mut Decoder) -> DecodeResult<u64> {
     Ok(decoder.integer()? + 1)
   }
 
@@ -496,7 +496,7 @@ fn validate() {
   struct Foo(String);
 
   impl Validate for Foo {
-    fn validate(&self) -> Result<(), DecodeError> {
+    fn validate(&self) -> DecodeResult {
       ensure!(
         self.0 == "foo",
         decode_error::UnexpectedValue {
@@ -532,7 +532,7 @@ fn validate_enum() {
   }
 
   impl Validate for Foo {
-    fn validate(&self) -> Result<(), DecodeError> {
+    fn validate(&self) -> DecodeResult {
       let Self::Bar { baz } = self;
       ensure!(
         baz == "foo",
@@ -566,7 +566,7 @@ fn validate_struct() {
   }
 
   impl Validate for Foo {
-    fn validate(&self) -> Result<(), DecodeError> {
+    fn validate(&self) -> DecodeResult {
       ensure!(
         self.bar == "foo",
         decode_error::UnexpectedValue {

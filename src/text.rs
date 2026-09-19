@@ -58,7 +58,7 @@ impl Display for Text {
 }
 
 impl Validate for Text {
-  fn validate(&self) -> Result<(), DecodeError> {
+  fn validate(&self) -> DecodeResult {
     Self::check(self.as_str()).context(decode_error::Text)
   }
 }

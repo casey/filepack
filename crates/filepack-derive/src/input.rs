@@ -66,7 +66,7 @@ impl Input {
 
     Ok(quote! {
       #header {
-        fn decode(decoder: &mut Decoder<'de>) -> Result<Self, DecodeError> {
+        fn decode(decoder: &mut Decoder<'de>) -> DecodeResult<Self> {
           let mut array = decoder.array()?;
           let discriminant = array.element::<u64>()?;
           let value = match discriminant {
@@ -143,7 +143,7 @@ impl Input {
 
     Ok(quote! {
       #header {
-        fn decode(decoder: &mut Decoder<'de>) -> Result<Self, DecodeError> {
+        fn decode(decoder: &mut Decoder<'de>) -> DecodeResult<Self> {
           let mut map = decoder.map::<u64>()?;
           #(#decode)*
           #allow_unknown_fields
@@ -183,7 +183,7 @@ impl Input {
 
     Ok(quote! {
       #header {
-        fn decode(decoder: &mut Decoder<'de>) -> Result<Self, DecodeError> {
+        fn decode(decoder: &mut Decoder<'de>) -> DecodeResult<Self> {
           #body
         }
       }

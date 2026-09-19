@@ -75,7 +75,7 @@ impl PartialEq<&str> for ComponentBuf {
 }
 
 impl Validate for ComponentBuf {
-  fn validate(&self) -> Result<(), DecodeError> {
+  fn validate(&self) -> DecodeResult {
     Component::new(&self.0).context(decode_error::Component)?;
     Ok(())
   }

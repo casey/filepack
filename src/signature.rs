@@ -17,7 +17,7 @@ impl Signature {
     (self.public_key, &self.statement, self.signature.to_bytes())
   }
 
-  fn decode_signature(decoder: &mut Decoder) -> Result<ed25519_dalek::Signature, DecodeError> {
+  fn decode_signature(decoder: &mut Decoder) -> DecodeResult<ed25519_dalek::Signature> {
     Ok(ed25519_dalek::Signature::from_bytes(&decoder.byte_array()?))
   }
 
