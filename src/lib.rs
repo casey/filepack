@@ -48,7 +48,6 @@ use {
     content_type::ContentType,
     context::Context,
     count::Count,
-    dalek_signature_error::DalekSignatureError,
     database_metadata::DatabaseMetadata,
     deco::Deco,
     deco_response::DecoResponse,
@@ -309,7 +308,6 @@ mod content;
 mod content_type;
 mod context;
 mod count;
-mod dalek_signature_error;
 mod database_metadata;
 mod deco;
 mod deco_response;

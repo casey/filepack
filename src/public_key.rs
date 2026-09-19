@@ -7,9 +7,8 @@ impl PublicKey {
   pub(crate) const LEN: usize = ed25519_dalek::PUBLIC_KEY_LENGTH;
 
   pub fn from_bytes(bytes: [u8; Self::LEN]) -> Result<Self, PublicKeyError> {
-    let key = ed25519_dalek::VerifyingKey::from_bytes(&bytes)
-      .map_err(DalekSignatureError)
-      .context(public_key_error::Invalid {
+    let key =
+      ed25519_dalek::VerifyingKey::from_bytes(&bytes).context(public_key_error::Invalid {
         key: InvalidPublicKey(bytes),
       })?;
 
