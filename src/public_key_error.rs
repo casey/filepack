@@ -6,7 +6,7 @@ pub enum PublicKeyError {
   #[snafu(display("invalid public key: `{key}`"))]
   Invalid {
     key: InvalidPublicKey,
-    source: DalekSignatureError,
+    source: ed25519_dalek::SignatureError,
   },
   #[snafu(display("weak public key: `{key}`"))]
   Weak { key: InvalidPublicKey },

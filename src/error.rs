@@ -494,7 +494,7 @@ pub enum Error {
   SignatureInvalid {
     backtrace: Option<Backtrace>,
     public_key: PublicKey,
-    source: DalekSignatureError,
+    source: ed25519_dalek::SignatureError,
   },
   #[snafu(display("no signature found for key `{identifier}`"))]
   SignatureMissing {
