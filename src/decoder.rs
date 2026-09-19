@@ -9,10 +9,7 @@ pub struct Decoder<'a> {
 
 impl<'a> Decoder<'a> {
   pub(crate) fn array(&mut self) -> Result<ArrayDecoder<'a>, DecodeError> {
-    Ok(ArrayDecoder::new(Self::with_options(
-      self.options,
-      self.bytes()?,
-    )))
+    Ok(ArrayDecoder::new(self.child()?))
   }
 
   pub(crate) fn boolean(&mut self) -> Result<bool, DecodeError> {
@@ -50,6 +47,10 @@ impl<'a> Decoder<'a> {
     Ok(bytes)
   }
 
+  fn child(&mut self) -> Result<Self, DecodeError> {
+    Ok(Self::with_options(self.options, self.bytes()?))
+  }
+
   pub(crate) fn finish(self) -> Result<(), DecodeError> {
     ensure!(self.is_empty(), decode_error::TrailingBytes);
     Ok(())
@@ -73,10 +74,7 @@ impl<'a> Decoder<'a> {
   }
 
   pub(crate) fn map<K>(&mut self) -> Result<MapDecoder<'a, K>, DecodeError> {
-    Ok(MapDecoder::new(Self::with_options(
-      self.options,
-      self.bytes()?,
-    )))
+    Ok(MapDecoder::new(self.child()?))
   }
 
   pub fn new(buffer: &'a [u8]) -> Self {
