@@ -5,16 +5,16 @@ pub(crate) struct ArrayDecoder<'a> {
 }
 
 impl<'a> ArrayDecoder<'a> {
-  pub(crate) fn decoder(&mut self) -> Result<&mut Decoder<'a>, DecodeError> {
+  pub(crate) fn decoder(&mut self) -> DecodeResult<&mut Decoder<'a>> {
     ensure!(!self.decoder.is_empty(), decode_error::MissingElement);
     Ok(&mut self.decoder)
   }
 
-  pub(crate) fn element<T: Decode<'a>>(&mut self) -> Result<T, DecodeError> {
+  pub(crate) fn element<T: Decode<'a>>(&mut self) -> DecodeResult<T> {
     T::decode(self.decoder()?)
   }
 
-  pub(crate) fn finish(&mut self) -> Result<(), DecodeError> {
+  pub(crate) fn finish(&mut self) -> DecodeResult {
     ensure!(self.decoder.is_empty(), decode_error::UnconsumedElements);
     Ok(())
   }
@@ -23,7 +23,7 @@ impl<'a> ArrayDecoder<'a> {
     Self { decoder }
   }
 
-  pub(crate) fn next<T: Decode<'a>>(&mut self) -> Result<Option<T>, DecodeError> {
+  pub(crate) fn next<T: Decode<'a>>(&mut self) -> DecodeResult<Option<T>> {
     if self.decoder.is_empty() {
       return Ok(None);
     }

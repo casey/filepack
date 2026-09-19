@@ -15,20 +15,20 @@ impl<'a, K> MapDecoder<'a, K> {
 }
 
 impl<'a, K: Clone + Decode<'a> + Debug + PartialOrd> MapDecoder<'a, K> {
-  pub(crate) fn finish(&mut self) -> Result<(), DecodeError> {
+  pub(crate) fn finish(&mut self) -> DecodeResult {
     ensure!(self.decoder.is_empty(), decode_error::UnconsumedEntries);
     Ok(())
   }
 
-  pub(crate) fn key<V: Decode<'a>>(&mut self, key: K) -> Result<Option<V>, DecodeError> {
+  pub(crate) fn key<V: Decode<'a>>(&mut self, key: K) -> DecodeResult<Option<V>> {
     self.key_with(key, V::decode)
   }
 
   pub(crate) fn key_with<V>(
     &mut self,
     key: K,
-    decode: impl FnOnce(&mut Decoder<'a>) -> Result<V, DecodeError>,
-  ) -> Result<Option<V>, DecodeError> {
+    decode: impl FnOnce(&mut Decoder<'a>) -> DecodeResult<V>,
+  ) -> DecodeResult<Option<V>> {
     let Some((k, value)) = self.next_with(decode)? else {
       return Ok(None);
     };
@@ -38,14 +38,14 @@ impl<'a, K: Clone + Decode<'a> + Debug + PartialOrd> MapDecoder<'a, K> {
     Ok(Some(value))
   }
 
-  pub(crate) fn next<V: Decode<'a>>(&mut self) -> Result<Option<(K, V)>, DecodeError> {
+  pub(crate) fn next<V: Decode<'a>>(&mut self) -> DecodeResult<Option<(K, V)>> {
     self.next_with(V::decode)
   }
 
   pub(crate) fn next_with<V>(
     &mut self,
-    decode: impl FnOnce(&mut Decoder<'a>) -> Result<V, DecodeError>,
-  ) -> Result<Option<(K, V)>, DecodeError> {
+    decode: impl FnOnce(&mut Decoder<'a>) -> DecodeResult<V>,
+  ) -> DecodeResult<Option<(K, V)>> {
     if self.decoder.is_empty() {
       return Ok(None);
     }
@@ -63,7 +63,7 @@ impl<'a, K: Clone + Decode<'a> + Debug + PartialOrd> MapDecoder<'a, K> {
     Ok(Some((key, value)))
   }
 
-  pub(crate) fn optional_key<V: Decode<'a>>(&mut self, key: K) -> Result<Option<V>, DecodeError>
+  pub(crate) fn optional_key<V: Decode<'a>>(&mut self, key: K) -> DecodeResult<Option<V>>
   where
     K: Eq,
   {
@@ -73,8 +73,8 @@ impl<'a, K: Clone + Decode<'a> + Debug + PartialOrd> MapDecoder<'a, K> {
   pub(crate) fn optional_key_with<V>(
     &mut self,
     key: K,
-    decode: impl FnOnce(&mut Decoder<'a>) -> Result<V, DecodeError>,
-  ) -> Result<Option<V>, DecodeError>
+    decode: impl FnOnce(&mut Decoder<'a>) -> DecodeResult<V>,
+  ) -> DecodeResult<Option<V>>
   where
     K: Eq,
   {
@@ -101,7 +101,7 @@ impl<'a, K: Clone + Decode<'a> + Debug + PartialOrd> MapDecoder<'a, K> {
     Ok(Some(decode(&mut self.decoder)?))
   }
 
-  pub(crate) fn required_key<V: Decode<'a>>(&mut self, key: K) -> Result<V, DecodeError>
+  pub(crate) fn required_key<V: Decode<'a>>(&mut self, key: K) -> DecodeResult<V>
   where
     K: Clone + Display,
   {
@@ -115,8 +115,8 @@ impl<'a, K: Clone + Decode<'a> + Debug + PartialOrd> MapDecoder<'a, K> {
   pub(crate) fn required_key_with<V>(
     &mut self,
     key: K,
-    decode: impl FnOnce(&mut Decoder<'a>) -> Result<V, DecodeError>,
-  ) -> Result<V, DecodeError>
+    decode: impl FnOnce(&mut Decoder<'a>) -> DecodeResult<V>,
+  ) -> DecodeResult<V>
   where
     K: Clone + Display,
   {
@@ -132,7 +132,7 @@ impl<'a, K: Clone + Decode<'a> + Debug + PartialOrd> MapDecoder<'a, K> {
 mod tests {
   use super::*;
 
-  fn decode_offset(decoder: &mut Decoder) -> Result<u64, DecodeError> {
+  fn decode_offset(decoder: &mut Decoder) -> DecodeResult<u64> {
     Ok(decoder.integer()? + 1)
   }
 

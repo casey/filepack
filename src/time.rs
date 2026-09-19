@@ -89,7 +89,7 @@ impl FromStr for Time {
 }
 
 impl Validate for Time {
-  fn validate(&self) -> Result<(), DecodeError> {
+  fn validate(&self) -> DecodeResult {
     match self {
       Self::Day { days } => Self::date(*days).map(|_| ()),
       Self::Year { .. } => Ok(()),

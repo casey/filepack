@@ -459,9 +459,11 @@ mod webm_builder;
 const KIB: usize = 1 << 10;
 const MIB: usize = KIB << 10;
 
-type PageResult<T> = Result<PageHtml<T>, PageError>;
 type Result<T = (), E = Error> = std::result::Result<T, E>;
-type ServerResult<T = (), E = ServerError> = std::result::Result<T, E>;
+
+type DecodeResult<T = ()> = Result<T, DecodeError>;
+type PageResult<T> = Result<PageHtml<T>, PageError>;
+type ServerResult<T = ()> = Result<T, ServerError>;
 
 fn initialize_tracing() -> Result<(), Box<dyn std::error::Error>> {
   use {

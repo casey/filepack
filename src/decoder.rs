@@ -8,11 +8,11 @@ pub struct Decoder<'a> {
 }
 
 impl<'a> Decoder<'a> {
-  pub(crate) fn array(&mut self) -> Result<ArrayDecoder<'a>, DecodeError> {
+  pub(crate) fn array(&mut self) -> DecodeResult<ArrayDecoder<'a>> {
     Ok(ArrayDecoder::new(self.child()?))
   }
 
-  pub(crate) fn boolean(&mut self) -> Result<bool, DecodeError> {
+  pub(crate) fn boolean(&mut self) -> DecodeResult<bool> {
     match self.integer()? {
       0 => Ok(false),
       1 => Ok(true),
@@ -20,7 +20,7 @@ impl<'a> Decoder<'a> {
     }
   }
 
-  pub(crate) fn byte_array<const N: usize>(&mut self) -> Result<[u8; N], DecodeError> {
+  pub(crate) fn byte_array<const N: usize>(&mut self) -> DecodeResult<[u8; N]> {
     let bytes = self.bytes()?;
 
     bytes.try_into().ok().context(decode_error::ArrayLength {
@@ -29,7 +29,7 @@ impl<'a> Decoder<'a> {
     })
   }
 
-  pub(crate) fn bytes(&mut self) -> Result<&'a [u8], DecodeError> {
+  pub(crate) fn bytes(&mut self) -> DecodeResult<&'a [u8]> {
     let head = Head::from(
       *self
         .buffer
@@ -47,16 +47,16 @@ impl<'a> Decoder<'a> {
     Ok(bytes)
   }
 
-  fn child(&mut self) -> Result<Self, DecodeError> {
+  fn child(&mut self) -> DecodeResult<Self> {
     Ok(Self::with_options(self.options, self.bytes()?))
   }
 
-  pub(crate) fn finish(self) -> Result<(), DecodeError> {
+  pub(crate) fn finish(self) -> DecodeResult {
     ensure!(self.is_empty(), decode_error::TrailingBytes);
     Ok(())
   }
 
-  pub(crate) fn integer(&mut self) -> Result<u64, DecodeError> {
+  pub(crate) fn integer(&mut self) -> DecodeResult<u64> {
     let bytes = self.bytes()?;
     ensure!(!bytes.is_empty(), decode_error::EmptyInteger);
     ensure!(
@@ -73,7 +73,7 @@ impl<'a> Decoder<'a> {
     self.position == self.buffer.len()
   }
 
-  pub(crate) fn map<K>(&mut self) -> Result<MapDecoder<'a, K>, DecodeError> {
+  pub(crate) fn map<K>(&mut self) -> DecodeResult<MapDecoder<'a, K>> {
     Ok(MapDecoder::new(self.child()?))
   }
 
@@ -85,12 +85,12 @@ impl<'a> Decoder<'a> {
     self.options
   }
 
-  pub(crate) fn signed_integer(&mut self) -> Result<i64, DecodeError> {
+  pub(crate) fn signed_integer(&mut self) -> DecodeResult<i64> {
     let integer = self.integer()?;
     Ok((integer >> 1).cast_signed() ^ -(integer & 1).cast_signed())
   }
 
-  pub(crate) fn text(&mut self) -> Result<&'a str, DecodeError> {
+  pub(crate) fn text(&mut self) -> DecodeResult<&'a str> {
     str::from_utf8(self.bytes()?).context(decode_error::Unicode)
   }
 

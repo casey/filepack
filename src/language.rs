@@ -217,7 +217,7 @@ impl FromStr for Language {
 }
 
 impl Decode<'_> for Language {
-  fn decode(decoder: &mut Decoder) -> Result<Self, DecodeError> {
+  fn decode(decoder: &mut Decoder) -> DecodeResult<Self> {
     decoder.text()?.parse().context(decode_error::Language)
   }
 }
