@@ -4,6 +4,7 @@ use super::*;
 #[strum(serialize_all = "snake_case")]
 pub(crate) enum ContainerAttribute {
   AllowUnknownFields,
+  AllowUnknownVariants,
   Transparent,
   Validate,
 }
