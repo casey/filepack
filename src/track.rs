@@ -1,6 +1,7 @@
 use super::*;
 
 #[derive(Clone, Copy, Debug, Decode, Encode, PartialEq, Serialize)]
+#[deco(allow_unknown_fields)]
 pub(crate) struct Track {
   #[n(0)]
   pub(crate) codec: Codec,
