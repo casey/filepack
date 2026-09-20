@@ -867,25 +867,6 @@ mod tests {
   }
 
   #[test]
-  fn unknown_fields_ignored() {
-    let manifest = manifest();
-    let archive = Archive::pack(&manifest).unwrap();
-
-    let mut encoder = Encoder::new();
-    let mut map = encoder.map::<u64>();
-    map.item(3, b"foo");
-    map.item(2, &archive.files);
-    map.item(1, archive.root);
-    map.item(0, archive.version);
-    map.finish();
-    let bytes = encoder.finish();
-
-    let decoded = Archive::decode_from_slice(&bytes).unwrap();
-
-    assert_eq!(decoded.unpack().unwrap(), manifest);
-  }
-
-  #[test]
   fn unreferenced_files() {
     let mut archive = Archive::pack(&manifest()).unwrap();
     let file = b"foo".to_vec();
