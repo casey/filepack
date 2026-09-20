@@ -55,13 +55,8 @@ pub fn install_default_crypto_provider() -> Result {
   Ok(())
 }
 
-pub(crate) fn now() -> Result<u64> {
-  Ok(
-    SystemTime::now()
-      .duration_since(UNIX_EPOCH)
-      .context(error::Time)?
-      .as_secs(),
-  )
+pub(crate) fn now() -> Result<u64, SystemTimeError> {
+  Ok(SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs())
 }
 
 pub(crate) fn parse_number<T: FromStr<Err = ParseIntError>>(s: &str) -> Result<T, NumberError> {

@@ -16,16 +16,22 @@ struct Output {
 
 impl Signatures {
   pub(crate) fn run(self) -> Result {
-    let manifest = Manifest::load(self.path.as_deref())?;
+    let loader = Loader::load(self.path.as_deref())?;
+
+    let fingerprint = loader.fingerprint()?;
+
+    let manifest = loader.unpack()?;
 
     let signatures = manifest
       .signatures
       .iter()
-      .map(|signature| Output {
-        public_key: signature.public_key(),
-        timestamp: signature.statement().timestamp,
+      .map(|signature| {
+        Ok(Output {
+          public_key: signature.public_key(),
+          timestamp: signature.verify(fingerprint)?.timestamp,
+        })
       })
-      .collect::<Vec<Output>>();
+      .collect::<Result<Vec<Output>>>()?;
 
     match self.format {
       Format::Json => println!("{}", serde_json::to_string(&signatures).unwrap()),

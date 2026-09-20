@@ -8,15 +8,21 @@ pub struct Statement {
   pub timestamp: Option<u64>,
 }
 
-impl Statement {
-  pub(crate) fn digest(&self) -> Hash {
-    let envelope = Envelope {
-      application: Application::Filepack,
-      context: Context::Statement,
-      statement: self.clone(),
-    };
+impl Message for Statement {
+  const CONTEXT: Context = Context::Statement;
+  const TAG: Tag = Tag::Signature;
+  type Error = Error;
+  type Policy<'a> = Fingerprint;
 
-    Hash::bytes(&envelope.encode_to_vec())
+  fn check(&self, _signer: PublicKey, fingerprint: Fingerprint) -> Result {
+    ensure! {
+      self.fingerprint == fingerprint,
+      error::SignatureFingerprintMismatch {
+        package: fingerprint,
+        signature: self.fingerprint,
+      },
+    }
+    Ok(())
   }
 }
 
@@ -24,34 +30,21 @@ impl Statement {
 mod tests {
   use super::*;
 
-  #[track_caller]
-  fn case(statement: Statement) {
-    let mut encoder = Encoder::new();
-
-    let mut map = encoder.map::<u64>();
-    map.item(2, &statement);
-    map.item(1, 0);
-    map.item(0, "filepack");
-    map.finish();
-
-    let bytes = encoder.finish();
-
-    assert_eq!(statement.digest(), Hash::bytes(&bytes));
-  }
-
   #[test]
-  fn digest_with_timestamp() {
-    case(Statement {
-      fingerprint: Fingerprint::from_bytes([0; Fingerprint::LEN]),
-      timestamp: Some(1000),
-    });
-  }
-
-  #[test]
-  fn digest_without_timestamp() {
-    case(Statement {
-      fingerprint: Fingerprint::from_bytes([0; Fingerprint::LEN]),
-      timestamp: None,
-    });
+  fn fingerprint_mismatch() {
+    let fingerprint = test::FINGERPRINT.parse::<Fingerprint>().unwrap();
+    let other = Fingerprint::from_bytes(default());
+    assert_matches!(
+      test::SIGNATURE
+        .parse::<Attestation>()
+        .unwrap()
+        .verify(other)
+        .unwrap_err(),
+      Error::SignatureFingerprintMismatch {
+        package,
+        signature,
+        ..
+      } if package == other && signature == fingerprint,
+    );
   }
 }

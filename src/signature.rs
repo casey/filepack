@@ -2,38 +2,33 @@ use super::*;
 
 #[allow(clippy::arbitrary_source_item_ordering)]
 #[derive(Clone, Debug, Decode, Encode, DeserializeFromStr, Eq, PartialEq, SerializeDisplay)]
-pub struct Signature {
+pub struct Signature<T> {
   #[n(0)]
   public_key: PublicKey,
   #[n(1)]
-  statement: Statement,
+  message: T,
   #[n(2)]
-  #[deco(decode_with = Signature::decode_signature, encode_with = Signature::encode_signature)]
-  signature: ed25519_dalek::Signature,
+  signature: Ed25519Signature,
 }
 
-impl Signature {
-  fn comparison_key(&self) -> (PublicKey, &Statement, [u8; 64]) {
-    (self.public_key, &self.statement, self.signature.to_bytes())
-  }
-
-  fn decode_signature(decoder: &mut Decoder) -> DecodeResult<ed25519_dalek::Signature> {
-    Ok(ed25519_dalek::Signature::from_bytes(&decoder.byte_array()?))
-  }
-
-  fn encode_signature(signature: &ed25519_dalek::Signature, encoder: &mut Encoder) {
-    encoder.bytes(&signature.to_bytes());
+impl<T: Message> Signature<T> {
+  fn comparison_key(&self) -> (PublicKey, &T, [u8; 64]) {
+    (
+      self.public_key,
+      &self.message,
+      self.signature.inner().to_bytes(),
+    )
   }
 
   pub(crate) fn new(
     public_key: PublicKey,
-    statement: Statement,
+    message: T,
     signature: ed25519_dalek::Signature,
   ) -> Self {
     Self {
       public_key,
-      statement,
-      signature,
+      message,
+      signature: signature.into(),
     }
   }
 
@@ -41,36 +36,44 @@ impl Signature {
     self.public_key
   }
 
-  pub fn statement(&self) -> &Statement {
-    &self.statement
-  }
-
-  pub(crate) fn verify(&self, fingerprint: Fingerprint) -> Result {
-    ensure! {
-      fingerprint == self.statement.fingerprint,
-      error::SignatureFingerprintMismatch {
-        signature: self.statement.fingerprint,
-        package: fingerprint,
-      },
-    }
-
+  pub fn verify(&self, policy: T::Policy<'_>) -> Result<&T, T::Error> {
     self
       .public_key
       .inner()
-      .verify_strict(self.statement.digest().as_bytes(), &self.signature)
-      .context(error::SignatureInvalid {
+      .verify_strict(self.message.digest().as_bytes(), &self.signature.inner())
+      .context(signature_error::Invalid {
         public_key: self.public_key,
-      })
+      })?;
+
+    self.message.check(self.public_key, policy)?;
+
+    Ok(&self.message)
   }
 }
 
-impl Display for Signature {
+impl<T: Message> Ord for Signature<T> {
+  fn cmp(&self, other: &Self) -> Ordering {
+    self.comparison_key().cmp(&other.comparison_key())
+  }
+}
+
+impl<T: Message> PartialOrd for Signature<T> {
+  fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+    Some(self.cmp(other))
+  }
+}
+
+impl<T: Message> Hex for Signature<T> {
+  const TAG: Tag = T::TAG;
+}
+
+impl<T: Message> Display for Signature<T> {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     self.format(f)
   }
 }
 
-impl FromStr for Signature {
+impl<T: Message> FromStr for Signature<T> {
   type Err = HexError;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -78,73 +81,9 @@ impl FromStr for Signature {
   }
 }
 
-impl Hex for Signature {
-  const TAG: Tag = Tag::Signature;
-}
-
-impl Ord for Signature {
-  fn cmp(&self, other: &Self) -> Ordering {
-    self.comparison_key().cmp(&other.comparison_key())
-  }
-}
-
-impl PartialOrd for Signature {
-  fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-    Some(self.cmp(other))
-  }
-}
-
 #[cfg(test)]
 mod tests {
   use super::*;
-
-  #[test]
-  fn modifying_fingerprint_invalidates_signature() {
-    let private_key = test::PRIVATE_KEY.parse::<PrivateKey>().unwrap();
-    let fingerprint = test::FINGERPRINT.parse::<Fingerprint>().unwrap();
-    let statement = Statement {
-      fingerprint,
-      timestamp: Some(1000),
-    };
-    let mut signature = private_key.sign(&statement);
-    signature.statement.fingerprint = Fingerprint::from_bytes(default());
-    assert_matches!(
-      signature.verify(fingerprint).unwrap_err(),
-      Error::SignatureFingerprintMismatch { .. },
-    );
-  }
-
-  #[test]
-  fn modifying_time_invalidates_signature() {
-    let private_key = test::PRIVATE_KEY.parse::<PrivateKey>().unwrap();
-    let fingerprint = test::FINGERPRINT.parse::<Fingerprint>().unwrap();
-    let statement = Statement {
-      fingerprint,
-      timestamp: Some(1000),
-    };
-    let mut signature = private_key.sign(&statement);
-    signature.statement.timestamp = Some(2000);
-    assert_matches!(
-      signature.verify(fingerprint).unwrap_err(),
-      Error::SignatureInvalid { .. },
-    );
-  }
-
-  #[test]
-  fn removing_time_invalidates_signature() {
-    let private_key = test::PRIVATE_KEY.parse::<PrivateKey>().unwrap();
-    let fingerprint = test::FINGERPRINT.parse::<Fingerprint>().unwrap();
-    let statement = Statement {
-      fingerprint,
-      timestamp: Some(1000),
-    };
-    let mut signature = private_key.sign(&statement);
-    signature.statement.timestamp = None;
-    assert_matches!(
-      signature.verify(fingerprint).unwrap_err(),
-      Error::SignatureInvalid { .. },
-    );
-  }
 
   #[test]
   fn signature_begins_with_pubkey_and_fingerprint() {
@@ -161,7 +100,7 @@ mod tests {
   fn unexpected_field_error() {
     let s = format!("{}0300", test::SIGNATURE);
     assert_matches!(
-      s.parse::<Signature>().unwrap_err(),
+      s.parse::<Attestation>().unwrap_err(),
       HexError::Decode {
         source: DecodeError::UnconsumedEntries,
         tag: Tag::Signature,

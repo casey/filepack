@@ -47,13 +47,10 @@ impl PrivateKey {
     self.clone().into()
   }
 
-  pub(crate) fn sign(&self, statement: &Statement) -> Signature {
+  pub(crate) fn sign<T: Message>(&self, message: T) -> Signature<T> {
     use ed25519_dalek::Signer;
-    Signature::new(
-      self.public_key(),
-      statement.clone(),
-      self.0.sign(statement.digest().as_bytes()),
-    )
+    let signature = self.0.sign(message.digest().as_bytes());
+    Signature::new(self.public_key(), message, signature)
   }
 }
 

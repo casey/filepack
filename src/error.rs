@@ -490,11 +490,10 @@ pub enum Error {
     package: Fingerprint,
     signature: Fingerprint,
   },
-  #[snafu(display("invalid signature for key `{public_key}`"))]
+  #[snafu(transparent)]
   SignatureInvalid {
     backtrace: Option<Backtrace>,
-    public_key: PublicKey,
-    source: ed25519_dalek::SignatureError,
+    source: SignatureError,
   },
   #[snafu(display("no signature found for key `{identifier}`"))]
   SignatureMissing {

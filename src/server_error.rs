@@ -6,7 +6,7 @@ pub enum ServerError {
   #[snafu(display("package {fingerprint} artwork not found"))]
   ArtworkNotFound { fingerprint: Fingerprint },
   #[snafu(display("invalid authorization token"))]
-  AuthorizationInvalid { source: jsonwebtoken::errors::Error },
+  AuthorizationInvalid { source: AuthorizationError },
   #[snafu(display("malformed authorization header"))]
   AuthorizationMalformed,
   #[snafu(display("missing authorization header"))]
@@ -131,6 +131,8 @@ pub enum ServerError {
     fingerprint: Fingerprint,
     index: Ordinal,
   },
+  #[snafu(display("failed to get current time"))]
+  Time { source: SystemTimeError },
   #[snafu(display("error reading body of upload with hash {hash}"))]
   UploadBodyRead { hash: Hash, source: axum::Error },
   #[snafu(display("expected upload with hash {expected} but got {actual}"))]
@@ -174,6 +176,7 @@ impl ServerError {
       | Self::PackageRootUnverified { .. }
       | Self::PageNotFound
       | Self::PlaceholderNotFound { .. }
+      | Self::Time { .. }
       | Self::UploadBodyRead { .. }
       | Self::UploadHashMismatch { .. }
       | Self::WriteForbidden => self.to_string(),
@@ -200,7 +203,8 @@ impl ServerError {
       | Self::FilesystemIo { .. }
       | Self::InvalidResponse { .. }
       | Self::PackageFileMissing { .. }
-      | Self::PackageMetadataCorrupt { .. } => StatusCode::INTERNAL_SERVER_ERROR,
+      | Self::PackageMetadataCorrupt { .. }
+      | Self::Time { .. } => StatusCode::INTERNAL_SERVER_ERROR,
       Self::DecoBody { .. }
       | Self::DecoDecode { .. }
       | Self::DirectoryDecode { .. }

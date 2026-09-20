@@ -2854,7 +2854,7 @@ fn redirect_omits_default_ports() {
 fn restricted_write_accepts_admin_token() {
   let admin = PrivateKey::generate();
   let hash = Hash::bytes(b"bar");
-  let token = Token::encode(&admin, "filepack.example").unwrap();
+  let token = Claims::sign(&admin, "filepack.example").unwrap();
 
   let server = TestServer::builder()
     .auth_config(AuthConfig {
@@ -2904,7 +2904,29 @@ fn restricted_write_rejects_others() {
     .build();
 
   let hash = Hash::bytes(b"bar");
-  let token = Token::encode(&other, "filepack.example").unwrap();
+  let token = Claims::sign(&other, "filepack.example").unwrap();
+
+  server
+    .put(format!("/file/{hash}"))
+    .body("bar")
+    .token(token)
+    .status(StatusCode::UNAUTHORIZED)
+    .assert_body("invalid authorization token")
+    .send();
+}
+
+#[test]
+fn restricted_write_rejects_wrong_audience() {
+  let admin = PrivateKey::generate();
+  let server = TestServer::builder()
+    .auth_config(AuthConfig {
+      admin: Some(admin.public_key()),
+      audience: Some("filepack.example".into()),
+    })
+    .build();
+
+  let hash = Hash::bytes(b"bar");
+  let token = Claims::sign(&admin, "bar.example").unwrap();
 
   server
     .put(format!("/file/{hash}"))

@@ -15,8 +15,14 @@ pub(crate) const PUBLIC_KEY: &str =
 
 pub(crate) const SIGNATURE: &str = concat!(
   "signature100a0d79b36defbee7c1d26099c9e28f849f1f0dceb6e0217b83c87f5cff6fd8c4fc801a200a0af1349b9",
-  "f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f326202c03fd90842958b5349abc421dffce4950da9",
-  "8669631ed6cff2ce9f66b05d119e949454b61ca79545e2b4899fc72cc531f874f47cc42db8c960df13f7db63e2ca0c"
+  "f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f326202c0a78bf091fe20c61ce14a2e6e8af4a370b0",
+  "3069f0d4e1453254a885a3e8bbdb0e64d4181d536c34db509f5c2c4ff38964f7b256ac67eeee8919fe1aaeb72caf0e"
+);
+
+pub(crate) const TOKEN: &str = concat!(
+  "token100a0d79b36defbee7c1d26099c9e28f849f1f0dceb6e0217b83c87f5cff6fd8c4fc801870083666f6f010002",
+  "c091d83bddaf77a2ad445705e79014f168d4e0bbe75f004d8c024e62e1207afaa0c5f61928c5920841fe3a1e6d1074",
+  "46e4a01134cca0d7402566be22895c08a809",
 );
 
 pub(crate) const WEAK_PUBLIC_KEY: &str =
@@ -130,7 +136,18 @@ mod tests {
       fingerprint: FINGERPRINT.parse().unwrap(),
       timestamp: None,
     };
-    let signature = private_key.sign(&statement);
+    let signature = private_key.sign(statement);
     assert_eq!(signature.to_string(), SIGNATURE);
+  }
+
+  #[test]
+  fn token_matches() {
+    let private_key = PRIVATE_KEY.parse::<PrivateKey>().unwrap();
+    let claims = Claims {
+      audience: "foo".into(),
+      timestamp: 0,
+    };
+    let token = private_key.sign(claims);
+    assert_eq!(token.to_string(), TOKEN);
   }
 }

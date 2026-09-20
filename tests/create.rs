@@ -397,6 +397,10 @@ fn sign_creates_valid_signature() {
     .success();
 
   let manifest_path = test.path().join("foo/manifest.filepack");
+  let fingerprint = Loader::load(Some(&manifest_path))
+    .unwrap()
+    .fingerprint()
+    .unwrap();
   let manifest = Manifest::load(Some(&manifest_path)).unwrap();
 
   let public_key = test.read_public_key("keychain/master.public");
@@ -406,7 +410,7 @@ fn sign_creates_valid_signature() {
   let signature = manifest.signatures.first().unwrap();
 
   assert_eq!(signature.public_key(), public_key);
-  assert!(signature.statement().timestamp.is_none());
+  assert!(signature.verify(fingerprint).unwrap().timestamp.is_none());
 }
 
 #[test]
@@ -462,6 +466,10 @@ fn sign_with_timestamp() {
     .success();
 
   let manifest_path = test.path().join("foo/manifest.filepack");
+  let fingerprint = Loader::load(Some(&manifest_path))
+    .unwrap()
+    .fingerprint()
+    .unwrap();
   let manifest = Manifest::load(Some(&manifest_path)).unwrap();
 
   let public_key = test.read_public_key("keychain/master.public");
@@ -471,7 +479,7 @@ fn sign_with_timestamp() {
   let signature = manifest.signatures.first().unwrap();
   assert_eq!(signature.public_key(), public_key,);
 
-  let timestamp = signature.statement().timestamp.unwrap();
+  let timestamp = signature.verify(fingerprint).unwrap().timestamp.unwrap();
   let now = SystemTime::now()
     .duration_since(UNIX_EPOCH)
     .unwrap()

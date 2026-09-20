@@ -151,7 +151,7 @@ impl Client {
   fn request(&self, mut builder: RequestBuilder) -> Result<reqwest::blocking::Response> {
     if let Some(key) = &self.key {
       let host = self.server.host_str().unwrap().to_owned();
-      builder = builder.bearer_auth(Token::encode(key, &host)?);
+      builder = builder.bearer_auth(Claims::sign(key, &host)?);
     }
 
     builder.send().context(error::Request)
