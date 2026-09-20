@@ -108,6 +108,13 @@ pub(crate) fn tempdir() -> (TempDir, Utf8PathBuf) {
   (tempdir, path)
 }
 
+pub(crate) fn with_unknown_field(value: impl Encode) -> Vec<u8> {
+  let bytes = value.encode_to_vec();
+  let mut fields = BTreeMap::<u64, Vec<u8>>::decode_from_slice(&bytes).unwrap();
+  assert!(fields.insert(u64::MAX, b"foo".to_vec()).is_none());
+  fields.encode_to_vec()
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;

@@ -240,7 +240,7 @@ use {
   jpeg_builder::JpegBuilder,
   std::assert_matches,
   tempfile::TempDir,
-  test::{assert_deco, assert_deco_eq, assert_encoding, exif, tempdir},
+  test::{assert_deco, assert_deco_eq, assert_encoding, exif, tempdir, with_unknown_field},
   unindent::unindent,
   webm_builder::WebmBuilder,
 };
