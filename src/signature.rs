@@ -51,22 +51,6 @@ impl<T: Message> Signature<T> {
   }
 }
 
-impl<T: Message> Ord for Signature<T> {
-  fn cmp(&self, other: &Self) -> Ordering {
-    self.comparison_key().cmp(&other.comparison_key())
-  }
-}
-
-impl<T: Message> PartialOrd for Signature<T> {
-  fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-    Some(self.cmp(other))
-  }
-}
-
-impl<T: Message> Hex for Signature<T> {
-  const TAG: Tag = T::TAG;
-}
-
 impl<T: Message> Display for Signature<T> {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     self.format(f)
@@ -78,6 +62,22 @@ impl<T: Message> FromStr for Signature<T> {
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     Self::parse(s)
+  }
+}
+
+impl<T: Message> Hex for Signature<T> {
+  const TAG: Tag = T::TAG;
+}
+
+impl<T: Message> Ord for Signature<T> {
+  fn cmp(&self, other: &Self) -> Ordering {
+    self.comparison_key().cmp(&other.comparison_key())
+  }
+}
+
+impl<T: Message> PartialOrd for Signature<T> {
+  fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+    Some(self.cmp(other))
   }
 }
 
