@@ -9,7 +9,7 @@ pub(crate) struct ParsedField<'a> {
 }
 
 impl ParsedField<'_> {
-  pub(crate) fn decode(fields: &[Self]) -> Vec<proc_macro2::TokenStream> {
+  pub(crate) fn decode(fields: &[Self], attributes: &Attributes) -> Vec<proc_macro2::TokenStream> {
     fields
       .iter()
       .map(|field| {
@@ -18,7 +18,13 @@ impl ParsedField<'_> {
         match (&field.decode_with, field.optional) {
           (Some(path), true) => quote! { let #ident = map.optional_key_with(#n, #path)?; },
           (Some(path), false) => quote! { let #ident = map.required_key_with(#n, #path)?; },
-          (None, true) => quote! { let #ident = map.optional_key(#n)?; },
+          (None, true) => {
+            if attributes.allow_unknown_variants() {
+              quote! { let #ident = map.optional_key_with(#n, Decode::decode_optional)?.flatten(); }
+            } else {
+              quote! { let #ident = map.optional_key(#n)?; }
+            }
+          }
           (None, false) => quote! { let #ident = map.required_key(#n)?; },
         }
       })

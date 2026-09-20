@@ -16,6 +16,10 @@ pub trait Decode<'a>: Sized {
     decoder.finish()?;
     Ok(value)
   }
+
+  fn decode_optional(decoder: &mut Decoder<'a>) -> DecodeResult<Option<Self>> {
+    Self::decode(decoder).map(Some)
+  }
 }
 
 impl<'a, K, V> Decode<'a> for BTreeMap<K, V>

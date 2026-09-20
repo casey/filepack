@@ -33,32 +33,26 @@ impl Input {
 
     let variants = self.parse_variants()?;
 
-    let unit_arms = variants
-      .iter()
-      .filter(|variant| variant.fields.is_empty())
-      .map(|ParsedVariant { ident, n, .. }| {
+    let arms = variants.iter().map(|ParsedVariant { fields, ident, n }| {
+      if fields.is_empty() {
         quote! { #n => Self::#ident, }
-      });
-
-    let field_arms = variants
-      .iter()
-      .filter(|variant| !variant.fields.is_empty())
-      .map(|ParsedVariant { fields, ident, n }| {
-        let decode = ParsedField::decode(fields);
-        let idents = fields.iter().map(|field| field.ident);
+      } else {
+        let decode = ParsedField::decode(fields, &Attributes::new());
+        let fields = fields.iter().map(|field| field.ident);
         quote! {
           #n => {
             let mut map = array.decoder()?.map::<u64>()?;
             #(#decode)*
             map.finish()?;
-            Self::#ident {
-              #(#idents,)*
-            }
+            Self::#ident { #(#fields,)* }
           }
         }
-      });
+      }
+    });
 
     let header = self.decode_header(attributes);
+
+    let discriminants = variants.iter().map(|variant| variant.n);
 
     let validate = attributes
       .validate()
@@ -70,8 +64,7 @@ impl Input {
           let mut array = decoder.array()?;
           let discriminant = array.element::<u64>()?;
           let value = match discriminant {
-            #(#unit_arms)*
-            #(#field_arms)*
+            #(#arms)*
             _ => return Err(decode_error::InvalidDiscriminant {
               discriminant,
               name: stringify!(#name),
@@ -80,6 +73,21 @@ impl Input {
           #validate
           array.finish()?;
           Ok(value)
+        }
+
+        fn decode_optional(decoder: &mut Decoder<'de>) -> DecodeResult<Option<Self>> {
+          if decoder.options().strict {
+            return Self::decode(decoder).map(Some);
+          }
+
+          let discriminant = decoder.clone().array()?.element::<u64>()?;
+
+          if [#(#discriminants),*].contains(&discriminant) {
+            Self::decode(decoder).map(Some)
+          } else {
+            decoder.bytes()?;
+            Ok(None)
+          }
         }
       }
     })
@@ -115,7 +123,7 @@ impl Input {
   pub(crate) fn decode_struct(&self, attributes: &Attributes) -> Result<proc_macro2::TokenStream> {
     let fields = self.parse_fields()?;
 
-    let decode = ParsedField::decode(&fields);
+    let decode = ParsedField::decode(&fields, attributes);
 
     let fields = fields.iter().map(|field| field.ident);
 
@@ -327,7 +335,9 @@ impl Input {
 
         if self.data.is_enum() {
           match attribute {
-            ContainerAttribute::AllowUnknownFields | ContainerAttribute::Transparent => {
+            ContainerAttribute::AllowUnknownFields
+            | ContainerAttribute::AllowUnknownVariants
+            | ContainerAttribute::Transparent => {
               return Err(meta.error(format!("`#[deco({attribute})]` cannot be used with enums")));
             }
             ContainerAttribute::Validate => {}
@@ -338,13 +348,17 @@ impl Input {
           return Err(meta.error(format!("duplicate `#[deco({attribute})]` attribute")));
         }
 
-        if attributes.contains(&ContainerAttribute::AllowUnknownFields)
-          && attributes.contains(&ContainerAttribute::Transparent)
-        {
-          return Err(
-            meta
-              .error("`#[deco(allow_unknown_fields)]` cannot be used with `#[deco(transparent)]`"),
-          );
+        if attributes.contains(&ContainerAttribute::Transparent) {
+          for attribute in [
+            ContainerAttribute::AllowUnknownFields,
+            ContainerAttribute::AllowUnknownVariants,
+          ] {
+            if attributes.contains(&attribute) {
+              return Err(meta.error(format!(
+                "`#[deco({attribute})]` cannot be used with `#[deco(transparent)]`"
+              )));
+            }
+          }
         }
 
         Ok(())
@@ -463,6 +477,33 @@ mod tests {
         struct Foo {}
       },
       "`#[deco(allow_unknown_fields)]` cannot be used with `#[deco(transparent)]`",
+    );
+
+    case(
+      &syn::parse_quote! {
+        #[deco(allow_unknown_variants)]
+        enum Foo {}
+      },
+      "`#[deco(allow_unknown_variants)]` cannot be used with enums",
+    );
+
+    case(
+      &syn::parse_quote! {
+        #[deco(allow_unknown_variants, transparent)]
+        struct Foo(u64);
+      },
+      "`#[deco(allow_unknown_variants)]` cannot be used with `#[deco(transparent)]`",
+    );
+
+    case(
+      &syn::parse_quote! {
+        struct Foo {
+          #[deco(allow_unknown_variants)]
+          #[n(0)]
+          foo: Option<u64>,
+        }
+      },
+      "unknown `#[deco(...)]` attribute",
     );
 
     case(
