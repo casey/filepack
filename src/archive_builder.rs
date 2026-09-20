@@ -24,7 +24,7 @@ impl ArchiveBuilder {
   pub(crate) fn build_package(
     mut self,
     package: Entry,
-    signatures: &BTreeSet<Signature>,
+    signatures: &BTreeSet<Attestation>,
   ) -> Result<Archive, TotalsError> {
     let mut root = BTreeMap::new();
 

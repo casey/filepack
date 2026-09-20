@@ -13,6 +13,53 @@ fn defaults_to_current_directory() {
 }
 
 #[test]
+fn invalid_signature_error() {
+  let test = Test::new()
+    .arg("keygen")
+    .success()
+    .create_dir("foo")
+    .args(["create", "--sign", "foo"])
+    .success();
+
+  let manifest_path = test.path().join("foo/manifest.filepack");
+
+  let fingerprint = Loader::load(Some(&manifest_path))
+    .unwrap()
+    .fingerprint()
+    .unwrap()
+    .to_string();
+
+  let hex = &fingerprint["package1".len()..];
+
+  let tampered = format!(
+    "{}{}",
+    if hex.starts_with('0') { '1' } else { '0' },
+    &hex[1..],
+  );
+
+  let mut manifest = Manifest::load(Some(&manifest_path)).unwrap();
+
+  let signature = manifest.signatures.pop_first().unwrap().to_string();
+
+  manifest
+    .signatures
+    .insert(signature.replacen(hex, &tampered, 1).parse().unwrap());
+
+  manifest.save(&manifest_path).unwrap();
+
+  test
+    .args(["signatures", "foo"])
+    .stderr_regex(
+      "
+        error: invalid signature for key `public1[0-9a-f]{64}`
+               ├─ signature error
+               └─ Verification equation was not satisfied
+      ",
+    )
+    .failure();
+}
+
+#[test]
 fn no_signatures() {
   Test::new()
     .arg("create")

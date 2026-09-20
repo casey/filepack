@@ -112,6 +112,7 @@ impl<'a, K: Clone + Decode<'a> + Debug + PartialOrd> MapDecoder<'a, K> {
       })
   }
 
+  #[cfg(test)]
   pub(crate) fn required_key_with<V>(
     &mut self,
     key: K,

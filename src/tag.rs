@@ -7,6 +7,7 @@ pub enum Tag {
   PrivateKey,
   PublicKey,
   Signature,
+  Token,
 }
 
 impl Tag {
@@ -17,6 +18,7 @@ impl Tag {
       Self::PrivateKey => "private key",
       Self::PublicKey => "public key",
       Self::Signature => "signature",
+      Self::Token => "token",
     }
   }
 
@@ -27,6 +29,7 @@ impl Tag {
       Self::PrivateKey => "private",
       Self::PublicKey => "public",
       Self::Signature => "signature",
+      Self::Token => "token",
     }
   }
 }

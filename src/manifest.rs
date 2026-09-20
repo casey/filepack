@@ -8,7 +8,7 @@ pub struct Manifest {
   pub embedded: BTreeMap<Hash, Vec<u8>>,
   pub package: DirectoryTree,
   #[serde_as(as = "SetPreventDuplicates<serde_with::Same>")]
-  pub signatures: BTreeSet<Signature>,
+  pub signatures: BTreeSet<Attestation>,
 }
 
 impl Manifest {
@@ -97,10 +97,14 @@ impl Manifest {
   ) -> Result {
     let statement = Statement {
       fingerprint,
-      timestamp: options.timestamp.then(now).transpose()?,
+      timestamp: options
+        .timestamp
+        .then(now)
+        .transpose()
+        .context(error::Time)?,
     };
 
-    let signature = keychain.sign(key, &statement)?;
+    let signature = keychain.sign(key, statement)?;
 
     self.signatures.insert(signature);
 

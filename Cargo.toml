@@ -39,7 +39,7 @@ clap_mangen = "0.3.3"
 claxon = "0.4.3"
 ctrlc = { version = "3.5.2", features = ["termination"] }
 dirs = "7.0.0"
-ed25519-dalek = { version = "3.0.0", features = ["alloc", "pkcs8", "rand_core"] }
+ed25519-dalek = { version = "3.0.0", features = ["alloc", "rand_core"] }
 filepack-derive = { version = "0.0.0", path = "crates/filepack-derive" }
 futures-util = { version = "0.3.32", default-features = false, features = ["std"] }
 humansize = { version = "2.1.3", default-features = false }
@@ -48,7 +48,6 @@ id3 = "1.17.1"
 image = { version = "0.25.10", default-features = false, features = ["jpeg", "png"] }
 indicatif = "0.18.0"
 jiff = { version = "0.2.0", default-features = false, features = ["std"] }
-jsonwebtoken = { version = "11.0.0", features = ["rust_crypto"] }
 lexiclean = "0.0.2"
 libc = "0.2.186"
 matroska-demuxer = "0.8.0"

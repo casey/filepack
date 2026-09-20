@@ -198,13 +198,18 @@ fn updates_manifest_with_signature() {
     .success();
 
   let manifest_path = test.path().join("foo/manifest.filepack");
+  let fingerprint = Loader::load(Some(&manifest_path))
+    .unwrap()
+    .fingerprint()
+    .unwrap();
   let manifest = Manifest::load(Some(&manifest_path)).unwrap();
   assert!(
     manifest
       .signatures
       .first()
       .unwrap()
-      .statement()
+      .verify(fingerprint)
+      .unwrap()
       .timestamp
       .is_none()
   );
@@ -229,13 +234,18 @@ fn with_timestamp() {
     .success();
 
   let manifest_path = test.path().join("foo/manifest.filepack");
+  let fingerprint = Loader::load(Some(&manifest_path))
+    .unwrap()
+    .fingerprint()
+    .unwrap();
   let manifest = Manifest::load(Some(&manifest_path)).unwrap();
 
   let time = manifest
     .signatures
     .first()
     .unwrap()
-    .statement()
+    .verify(fingerprint)
+    .unwrap()
     .timestamp
     .unwrap();
   let now = SystemTime::now()

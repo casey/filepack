@@ -32,10 +32,12 @@ use {
     audio_position_error::AudioPositionError,
     audio_type::AudioType,
     authenticated::Authenticated,
+    authorization_error::AuthorizationError,
     bit_reader::BitReader,
     cause::Cause,
     checked_url::CheckedUrl,
     chroma_subsampling::ChromaSubsampling,
+    claims::Claims,
     client::Client,
     codec::Codec,
     color_info::ColorInfo,
@@ -64,6 +66,7 @@ use {
     display_path::DisplayPath,
     display_private_key::DisplayPrivateKey,
     display_sample_rate::DisplaySampleRate,
+    ed25519_signature::Ed25519Signature,
     embedded_image::EmbeddedImage,
     entries::Entries,
     entry::EntryType,
@@ -106,6 +109,7 @@ use {
     media::{Media, MediaType},
     media_item::MediaItem,
     media_item_resource::MediaItemResource,
+    message::Message,
     mode::Mode,
     mp3_decoder::Mp3Decoder,
     mp3_error::Mp3Error,
@@ -135,6 +139,7 @@ use {
     server_url::ServerUrl,
     sign_options::SignOptions,
     signature::Signature,
+    signature_error::SignatureError,
     sort::Sort,
     sort_key::SortKey,
     sorted_set::SortedSet,
@@ -149,7 +154,6 @@ use {
     ticked::Ticked,
     time::Time,
     time_error::TimeError,
-    token::Token,
     totals_error::TotalsError,
     track::Track,
     track_info::TrackInfo,
@@ -292,10 +296,12 @@ mod audio_metadata;
 mod audio_position_error;
 mod audio_type;
 mod authenticated;
+mod authorization_error;
 mod bit_reader;
 mod cause;
 mod checked_url;
 mod chroma_subsampling;
+mod claims;
 mod client;
 mod codec;
 mod color_info;
@@ -329,6 +335,7 @@ mod display_millis;
 mod display_path;
 mod display_private_key;
 mod display_sample_rate;
+mod ed25519_signature;
 mod embedded_image;
 mod encode;
 mod encoder;
@@ -377,6 +384,7 @@ mod map_encoder;
 mod media;
 mod media_item;
 mod media_item_resource;
+mod message;
 mod metadata;
 mod mode;
 mod mp3_builder;
@@ -414,6 +422,7 @@ mod server_error;
 mod server_url;
 mod sign_options;
 mod signature;
+mod signature_error;
 mod sort;
 mod sort_key;
 mod sorted_set;
@@ -428,7 +437,6 @@ mod text_error;
 mod ticked;
 mod time;
 mod time_error;
-mod token;
 mod totals;
 mod totals_error;
 mod track;
@@ -464,6 +472,9 @@ type Result<T = (), E = Error> = std::result::Result<T, E>;
 type DecodeResult<T = ()> = Result<T, DecodeError>;
 type PageResult<T> = Result<PageHtml<T>, PageError>;
 type ServerResult<T = ()> = Result<T, ServerError>;
+
+type Attestation = Signature<Statement>;
+type Token = Signature<Claims>;
 
 fn initialize_tracing() -> Result<(), Box<dyn std::error::Error>> {
   use {

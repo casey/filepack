@@ -543,7 +543,7 @@ mod tests {
     let manifest = Manifest {
       embedded: BTreeMap::new(),
       package,
-      signatures: BTreeSet::from([private_key.sign(&statement)]),
+      signatures: BTreeSet::from([private_key.sign(statement)]),
     };
 
     let archive = Archive::pack(&manifest).unwrap();
@@ -660,7 +660,7 @@ mod tests {
       fingerprint,
       timestamp: None,
     };
-    let signature = private_key.sign(&statement);
+    let signature = private_key.sign(statement);
 
     let manifest = Manifest {
       embedded: BTreeMap::new(),

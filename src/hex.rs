@@ -176,10 +176,11 @@ mod tests {
       assert_eq!(s.parse::<T>().unwrap().to_string(), s);
     }
 
+    case::<Attestation>(test::SIGNATURE);
     case::<DisplayPrivateKey>(test::PRIVATE_KEY);
     case::<Fingerprint>(test::FINGERPRINT);
     case::<Hash>(test::HASH);
     case::<PublicKey>(test::PUBLIC_KEY);
-    case::<Signature>(test::SIGNATURE);
+    case::<Token>(test::TOKEN);
   }
 }
