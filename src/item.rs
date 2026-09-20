@@ -2,6 +2,7 @@ use super::*;
 
 #[skip_serializing_none]
 #[derive(Clone, Debug, Decode, Encode, PartialEq, Serialize)]
+#[deco(allow_unknown_fields)]
 pub(crate) struct Item<T> {
   #[n(0)]
   pub(crate) content: T,

@@ -4,6 +4,7 @@ pub(crate) mod gc {
   use super::*;
 
   #[derive(Debug, Encode, Decode, PartialEq)]
+  #[deco(allow_unknown_fields)]
   pub(crate) struct Response {
     #[n(0)]
     pub bytes: u64,
@@ -24,6 +25,7 @@ pub(crate) mod missing {
   }
 
   #[derive(Debug, Encode, Decode, PartialEq)]
+  #[deco(allow_unknown_fields)]
   pub(crate) struct Response {
     #[n(0)]
     pub hashes: SortedSet<Hash>,
@@ -34,6 +36,7 @@ pub(crate) mod packages {
   use super::*;
 
   #[derive(Debug, Encode, Decode, PartialEq)]
+  #[deco(allow_unknown_fields)]
   pub(crate) struct Response {
     #[n(0)]
     pub packages: SortedSet<Fingerprint>,
