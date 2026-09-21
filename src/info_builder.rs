@@ -62,6 +62,14 @@ impl InfoBuilder {
     }
   }
 
+  pub(crate) fn optional_or_unknown(self, key: &str, value: Option<impl Display>) -> Self {
+    if let Some(value) = value {
+      self.value(key, value)
+    } else {
+      self.value(key, "unknown")
+    }
+  }
+
   pub(crate) fn value(mut self, key: &str, value: impl Display) -> Self {
     self.map.push((key.into(), Info::Value(value.to_string())));
     self

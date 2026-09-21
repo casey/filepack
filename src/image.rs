@@ -272,7 +272,7 @@ impl Content for Image {
 
   fn info(&self, builder: InfoBuilder) -> InfoBuilder {
     builder
-      .optional("type", self.ty)
+      .optional_or_unknown("type", self.ty)
       .value("dimensions", self.dimensions)
       .value("orientation", self.orientation)
       .optional("color type", self.color_type)

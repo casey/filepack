@@ -186,7 +186,7 @@ impl Content for Audio {
       .value("disc", format!("{} of {}", self.disc, self.discs))
       .value("track", format!("{} of {}", self.track, self.tracks))
       .value("duration", DisplayDuration(self.duration()))
-      .optional("type", self.ty)
+      .optional_or_unknown("type", self.ty)
       .optional(
         "sample bits",
         self
