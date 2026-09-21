@@ -103,7 +103,7 @@ mod tests {
     assert_matches!(
       s.parse::<Attestation>().unwrap_err(),
       HexError::Decode {
-        source: DecodeError::UnconsumedEntries,
+        source: DecodeError::UnknownField { key: 3 },
         tag: Tag::Signature,
       },
     );

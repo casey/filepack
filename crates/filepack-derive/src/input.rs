@@ -79,7 +79,7 @@ impl Input {
         }
 
         fn decode_optional(decoder: &mut Decoder<'de>) -> DecodeResult<Option<Self>> {
-          if decoder.options().strict {
+          if decoder.strict() {
             return Self::decode(decoder).map(Some);
           }
 
@@ -193,16 +193,15 @@ impl Input {
     })
   }
 
-  fn decode_unknown_fields(attributes: &Attributes) -> Option<proc_macro2::TokenStream> {
-    (!attributes.strict()).then(|| {
-      quote! {
-        while let Some((key, _value)) = map.next::<&[u8]>()? {
-          if decoder.options().strict {
-            return Err(DecodeError::UnknownField { key });
-          }
+  fn decode_unknown_fields(attributes: &Attributes) -> proc_macro2::TokenStream {
+    let strict = attributes.strict();
+    quote! {
+      while let Some((key, _value)) = map.next::<&[u8]>()? {
+        if #strict || decoder.strict() {
+          return Err(DecodeError::UnknownField { key });
         }
       }
-    })
+    }
   }
 
   pub(crate) fn encode(&self) -> Result<proc_macro2::TokenStream> {
