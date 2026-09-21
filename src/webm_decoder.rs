@@ -329,8 +329,8 @@ mod tests {
         title: None,
         tracks: vec![
           Track {
-            codec: Codec::Vp9,
-            info: TrackInfo::Video {
+            codec: Some(Codec::Vp9),
+            info: Some(TrackInfo::Video {
               bit_depth: 8,
               chroma_subsampling: ChromaSubsampling::Yuv420,
               dimensions: Dimensions {
@@ -339,15 +339,15 @@ mod tests {
               },
               frames: 1,
               orientation: Orientation::new(),
-            },
+            }),
             size: 5,
           },
           Track {
-            codec: Codec::Opus,
-            info: TrackInfo::Audio {
+            codec: Some(Codec::Opus),
+            info: Some(TrackInfo::Audio {
               channels: 2,
               sample_rate: 44100,
-            },
+            }),
             size: 0,
           },
         ],
@@ -366,8 +366,8 @@ mod tests {
         title: None,
         tracks: vec![
           Track {
-            codec: Codec::Vp8,
-            info: TrackInfo::Video {
+            codec: Some(Codec::Vp8),
+            info: Some(TrackInfo::Video {
               bit_depth: 8,
               chroma_subsampling: ChromaSubsampling::Yuv420,
               dimensions: Dimensions {
@@ -376,15 +376,15 @@ mod tests {
               },
               frames: 0,
               orientation: Orientation::new(),
-            },
+            }),
             size: 0,
           },
           Track {
-            codec: Codec::Vorbis,
-            info: TrackInfo::Audio {
+            codec: Some(Codec::Vorbis),
+            info: Some(TrackInfo::Audio {
               channels: 2,
               sample_rate: 44100,
-            },
+            }),
             size: 0,
           },
         ],
@@ -397,8 +397,8 @@ mod tests {
         duration: 0,
         title: None,
         tracks: vec![Track {
-          codec: Codec::Vp9,
-          info: TrackInfo::Video {
+          codec: Some(Codec::Vp9),
+          info: Some(TrackInfo::Video {
             bit_depth: 8,
             chroma_subsampling: ChromaSubsampling::Yuv420,
             dimensions: Dimensions {
@@ -407,7 +407,7 @@ mod tests {
             },
             frames: 1,
             orientation: Orientation::new(),
-          },
+          }),
           size: 5,
         }],
       },
@@ -448,7 +448,7 @@ mod tests {
       .unwrap()
       .tracks[0]
         .info,
-      TrackInfo::Video {
+      Some(TrackInfo::Video {
         bit_depth: 8,
         chroma_subsampling: ChromaSubsampling::Yuv420,
         dimensions: Dimensions {
@@ -457,7 +457,7 @@ mod tests {
         },
         frames: 2,
         orientation: Orientation::new(),
-      },
+      }),
     );
 
     assert_eq!(
@@ -472,8 +472,8 @@ mod tests {
       .tracks,
       vec![
         Track {
-          codec: Codec::Vp9,
-          info: TrackInfo::Video {
+          codec: Some(Codec::Vp9),
+          info: Some(TrackInfo::Video {
             bit_depth: 8,
             chroma_subsampling: ChromaSubsampling::Yuv420,
             dimensions: Dimensions {
@@ -482,15 +482,15 @@ mod tests {
             },
             frames: 1,
             orientation: Orientation::new(),
-          },
+          }),
           size: 5,
         },
         Track {
-          codec: Codec::Opus,
-          info: TrackInfo::Audio {
+          codec: Some(Codec::Opus),
+          info: Some(TrackInfo::Audio {
             channels: 2,
             sample_rate: 44100,
-          },
+          }),
           size: 2,
         },
       ],
@@ -505,7 +505,7 @@ mod tests {
       .unwrap()
       .tracks[0]
         .info,
-      TrackInfo::Video {
+      Some(TrackInfo::Video {
         bit_depth: 10,
         chroma_subsampling: ChromaSubsampling::Yuv420,
         dimensions: Dimensions {
@@ -514,7 +514,7 @@ mod tests {
         },
         frames: 1,
         orientation: Orientation::new(),
-      },
+      }),
     );
 
     error(

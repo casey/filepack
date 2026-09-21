@@ -274,7 +274,7 @@ impl Content for Audio {
       size: 1024,
       track: 1,
       tracks: 1,
-      ty,
+      ty: Some(ty),
     }
   }
 
@@ -573,7 +573,7 @@ mod tests {
           size: 1024,
           track: 3,
           tracks: 4,
-          ty: AudioType::Flac,
+          ty: Some(AudioType::Flac),
         },
         title: Some("bar".parse().unwrap()),
       },
@@ -595,7 +595,7 @@ mod tests {
           size: 834,
           track: 3,
           tracks: 4,
-          ty: AudioType::Mp3,
+          ty: Some(AudioType::Mp3),
         },
         title: Some("bar".parse().unwrap()),
       },
@@ -645,7 +645,7 @@ mod tests {
         size: 9,
         track: 5,
         tracks: 6,
-        ty: AudioType::Flac,
+        ty: Some(AudioType::Flac),
       })
       .unwrap(),
       r#"{"album":"qux","artist":"baz","channels":8,"disc":3,"discs":4,"path":"foo.flac","sample_bits":7,"sample_rate":1,"samples":2,"size":9,"track":5,"tracks":6,"type":"flac"}"#,

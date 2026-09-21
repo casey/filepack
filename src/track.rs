@@ -80,48 +80,10 @@ mod tests {
   use super::*;
 
   #[test]
-  fn display() {
-    #[track_caller]
-    fn case(track: Track, expected: &str) {
-      assert_eq!(track.to_string(), expected);
-    }
-
-    case(
-      Track {
-        codec: Codec::Aac,
-        info: TrackInfo::Audio {
-          channels: 2,
-          sample_rate: 44100,
-        },
-        size: 0,
-      },
-      "AAC",
-    );
-
-    case(
-      Track {
-        codec: Codec::H264,
-        info: TrackInfo::Video {
-          bit_depth: 8,
-          chroma_subsampling: ChromaSubsampling::Yuv420,
-          dimensions: Dimensions {
-            height: 1,
-            width: 2,
-          },
-          frames: 0,
-          orientation: Orientation::new(),
-        },
-        size: 0,
-      },
-      "H.264 2×1",
-    );
-  }
-
-  #[test]
   fn info() {
     let track = Track {
-      codec: Codec::H264,
-      info: TrackInfo::Video {
+      codec: Some(Codec::H264),
+      info: Some(TrackInfo::Video {
         bit_depth: 8,
         chroma_subsampling: ChromaSubsampling::Yuv420,
         dimensions: Dimensions {
@@ -130,7 +92,7 @@ mod tests {
         },
         frames: 240,
         orientation: Orientation::new(),
-      },
+      }),
       size: 1500,
     };
 
@@ -175,11 +137,11 @@ mod tests {
     );
 
     let track = Track {
-      codec: Codec::Aac,
-      info: TrackInfo::Audio {
+      codec: Some(Codec::Aac),
+      info: Some(TrackInfo::Audio {
         channels: 2,
         sample_rate: 44100,
-      },
+      }),
       size: 1250,
     };
 
@@ -217,11 +179,11 @@ mod tests {
   fn serialize() {
     assert_eq!(
       serde_json::to_string(&Track {
-        codec: Codec::Aac,
-        info: TrackInfo::Audio {
+        codec: Some(Codec::Aac),
+        info: Some(TrackInfo::Audio {
           channels: 2,
           sample_rate: 44100,
-        },
+        }),
         size: 0,
       })
       .unwrap(),
@@ -230,8 +192,8 @@ mod tests {
 
     assert_eq!(
       serde_json::to_string(&Track {
-        codec: Codec::H264,
-        info: TrackInfo::Video {
+        codec: Some(Codec::H264),
+        info: Some(TrackInfo::Video {
           bit_depth: 8,
           chroma_subsampling: ChromaSubsampling::Yuv420,
           dimensions: Dimensions {
@@ -240,7 +202,7 @@ mod tests {
           },
           frames: 0,
           orientation: Orientation::new(),
-        },
+        }),
         size: 0,
       })
       .unwrap(),

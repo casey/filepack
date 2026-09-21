@@ -356,8 +356,8 @@ mod tests {
         title: None,
         tracks: vec![
           Track {
-            codec: Codec::H264,
-            info: TrackInfo::Video {
+            codec: Some(Codec::H264),
+            info: Some(TrackInfo::Video {
               bit_depth: 8,
               chroma_subsampling: ChromaSubsampling::Yuv420,
               dimensions: Dimensions {
@@ -366,15 +366,15 @@ mod tests {
               },
               frames: 0,
               orientation: Orientation::new(),
-            },
+            }),
             size: 0,
           },
           Track {
-            codec: Codec::Aac,
-            info: TrackInfo::Audio {
+            codec: Some(Codec::Aac),
+            info: Some(TrackInfo::Audio {
               channels: 2,
               sample_rate: 44100,
-            },
+            }),
             size: 0,
           },
         ],
@@ -387,8 +387,8 @@ mod tests {
         duration: 0,
         title: None,
         tracks: vec![Track {
-          codec: Codec::H264,
-          info: TrackInfo::Video {
+          codec: Some(Codec::H264),
+          info: Some(TrackInfo::Video {
             bit_depth: 8,
             chroma_subsampling: ChromaSubsampling::Yuv420,
             dimensions: Dimensions {
@@ -397,7 +397,7 @@ mod tests {
             },
             frames: 0,
             orientation: Orientation::new(),
-          },
+          }),
           size: 0,
         }],
       },
@@ -427,7 +427,7 @@ mod tests {
         .unwrap()
         .tracks[0]
         .info,
-      TrackInfo::Video {
+      Some(TrackInfo::Video {
         bit_depth: 8,
         chroma_subsampling: ChromaSubsampling::Yuv420,
         dimensions: Dimensions {
@@ -436,7 +436,7 @@ mod tests {
         },
         frames: 3,
         orientation: Orientation::new(),
-      },
+      }),
     );
 
     assert_eq!(
@@ -457,8 +457,8 @@ mod tests {
         .unwrap()
         .tracks[0],
       Track {
-        codec: Codec::H264,
-        info: TrackInfo::Video {
+        codec: Some(Codec::H264),
+        info: Some(TrackInfo::Video {
           bit_depth: 8,
           chroma_subsampling: ChromaSubsampling::Yuv420,
           dimensions: Dimensions {
@@ -467,7 +467,7 @@ mod tests {
           },
           frames: 2,
           orientation: Orientation::new(),
-        },
+        }),
         size: 8,
       },
     );
@@ -481,7 +481,7 @@ mod tests {
       .unwrap()
       .tracks[0]
         .info,
-      TrackInfo::Video {
+      Some(TrackInfo::Video {
         bit_depth: 10,
         chroma_subsampling: ChromaSubsampling::Yuv420,
         dimensions: Dimensions {
@@ -490,7 +490,7 @@ mod tests {
         },
         frames: 0,
         orientation: Orientation::new(),
-      },
+      }),
     );
 
     assert_eq!(
@@ -502,7 +502,7 @@ mod tests {
       .unwrap()
       .tracks[0]
         .info,
-      TrackInfo::Video {
+      Some(TrackInfo::Video {
         bit_depth: 8,
         chroma_subsampling: ChromaSubsampling::Yuv420,
         dimensions: Dimensions {
@@ -514,7 +514,7 @@ mod tests {
           mirrored: false,
           rotation: Rotation::R90,
         },
-      },
+      }),
     );
 
     assert_eq!(
@@ -526,7 +526,7 @@ mod tests {
       .unwrap()
       .tracks[0]
         .info,
-      TrackInfo::Video {
+      Some(TrackInfo::Video {
         bit_depth: 8,
         chroma_subsampling: ChromaSubsampling::Yuv420,
         dimensions: Dimensions {
@@ -538,7 +538,7 @@ mod tests {
           mirrored: true,
           rotation: Rotation::R0,
         },
-      },
+      }),
     );
 
     error(

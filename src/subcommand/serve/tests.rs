@@ -2027,14 +2027,14 @@ fn package_item_image() {
           alpha: false,
           bit_depth: 8,
           chroma_subsampling: None,
-          color_type: ColorType::Rgb,
+          color_type: Some(ColorType::Rgb),
           dimensions: Dimensions {
             height: 1,
             width: 2,
           },
           orientation: Orientation::new(),
           path: "foo.png".parse().unwrap(),
-          ty: ImageType::Png,
+          ty: Some(ImageType::Png),
         },
         title: None,
       }],
@@ -2069,14 +2069,14 @@ fn package_item_image_out_of_range() {
             alpha: false,
             bit_depth: 8,
             chroma_subsampling: None,
-            color_type: ColorType::Rgb,
+            color_type: Some(ColorType::Rgb),
             dimensions: Dimensions {
               height: 1,
               width: 1,
             },
             orientation: Orientation::new(),
             path: "foo.png".parse().unwrap(),
-            ty: ImageType::Png,
+            ty: Some(ImageType::Png),
           },
           title: None,
         }],
@@ -2123,8 +2123,8 @@ fn package_item_video() {
           path: "foo.mp4".parse().unwrap(),
           tracks: vec![
             Track {
-              codec: Codec::H264,
-              info: TrackInfo::Video {
+              codec: Some(Codec::H264),
+              info: Some(TrackInfo::Video {
                 bit_depth: 8,
                 chroma_subsampling: ChromaSubsampling::Yuv420,
                 dimensions: Dimensions {
@@ -2133,19 +2133,19 @@ fn package_item_video() {
                 },
                 frames: 0,
                 orientation: Orientation::new(),
-              },
+              }),
               size: 0,
             },
             Track {
-              codec: Codec::Aac,
-              info: TrackInfo::Audio {
+              codec: Some(Codec::Aac),
+              info: Some(TrackInfo::Audio {
                 channels: 2,
                 sample_rate: 44100,
-              },
+              }),
               size: 0,
             },
           ],
-          ty: VideoType::Mp4,
+          ty: Some(VideoType::Mp4),
         },
         title: None,
       }],
@@ -2364,7 +2364,7 @@ fn package_page_renders_audio_media() {
             size: 0,
             track: 1,
             tracks: 2,
-            ty: AudioType::Flac,
+            ty: Some(AudioType::Flac),
           },
           title: Some("foo".parse().unwrap()),
         },
@@ -2382,7 +2382,7 @@ fn package_page_renders_audio_media() {
             size: 0,
             track: 2,
             tracks: 2,
-            ty: AudioType::Flac,
+            ty: Some(AudioType::Flac),
           },
           title: Some("bar".parse().unwrap()),
         },
@@ -2429,14 +2429,14 @@ fn package_page_renders_image_media() {
           alpha: false,
           bit_depth: 8,
           chroma_subsampling: None,
-          color_type: ColorType::Rgb,
+          color_type: Some(ColorType::Rgb),
           dimensions: Dimensions {
             height: 1,
             width: 2,
           },
           orientation: Orientation::new(),
           path: "foo.png".parse().unwrap(),
-          ty: ImageType::Png,
+          ty: Some(ImageType::Png),
         },
         title: None,
       }],
@@ -2483,8 +2483,8 @@ fn package_page_renders_video_media() {
           path: "foo.mp4".parse().unwrap(),
           tracks: vec![
             Track {
-              codec: Codec::H264,
-              info: TrackInfo::Video {
+              codec: Some(Codec::H264),
+              info: Some(TrackInfo::Video {
                 bit_depth: 8,
                 chroma_subsampling: ChromaSubsampling::Yuv420,
                 dimensions: Dimensions {
@@ -2493,19 +2493,19 @@ fn package_page_renders_video_media() {
                 },
                 frames: 0,
                 orientation: Orientation::new(),
-              },
+              }),
               size: 0,
             },
             Track {
-              codec: Codec::Aac,
-              info: TrackInfo::Audio {
+              codec: Some(Codec::Aac),
+              info: Some(TrackInfo::Audio {
                 channels: 2,
                 sample_rate: 44100,
-              },
+              }),
               size: 0,
             },
           ],
-          ty: VideoType::Mp4,
+          ty: Some(VideoType::Mp4),
         },
         title: None,
       }],

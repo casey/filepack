@@ -48,7 +48,7 @@ mod tests {
       alpha: false,
       bit_depth: 8,
       chroma_subsampling: None,
-      color_type: ColorType::Rgb,
+      color_type: Some(ColorType::Rgb),
       dimensions: Dimensions {
         height: 1,
         width: 2,
@@ -58,7 +58,7 @@ mod tests {
         rotation: Rotation::R90,
       },
       path: "foo.png".parse().unwrap(),
-      ty: ImageType::Png,
+      ty: Some(ImageType::Png),
     };
 
     case(
@@ -85,14 +85,14 @@ mod tests {
               alpha: false,
               bit_depth: 8,
               chroma_subsampling: None,
-              color_type: ColorType::Rgb,
+              color_type: Some(ColorType::Rgb),
               dimensions: Dimensions {
                 height: 3,
                 width: 4,
               },
               orientation: Orientation::default(),
               path: "thumbnails/foo.jpg".parse().unwrap(),
-              ty: ImageType::Jpeg,
+              ty: Some(ImageType::Jpeg),
             },
           )]
           .into(),

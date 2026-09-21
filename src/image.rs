@@ -331,14 +331,14 @@ impl Content for Image {
       alpha: false,
       bit_depth: 8,
       chroma_subsampling: None,
-      color_type: ColorType::Rgb,
+      color_type: Some(ColorType::Rgb),
       dimensions: Dimensions {
         height: 1,
         width: 1,
       },
       orientation: Orientation::new(),
       path,
-      ty,
+      ty: Some(ty),
     }
   }
 
@@ -525,7 +525,7 @@ mod tests {
         alpha: false,
         bit_depth: 8,
         chroma_subsampling: Some(ChromaSubsampling::Yuv444),
-        color_type: ColorType::Rgb,
+        color_type: Some(ColorType::Rgb),
         dimensions: Dimensions {
           height: 1,
           width: 2,
@@ -535,7 +535,7 @@ mod tests {
           rotation: Rotation::R90,
         },
         path: "foo.jpg".parse().unwrap(),
-        ty: ImageType::Jpeg,
+        ty: Some(ImageType::Jpeg),
       },
     );
 
@@ -549,7 +549,7 @@ mod tests {
         alpha: false,
         bit_depth: 8,
         chroma_subsampling: None,
-        color_type: ColorType::Rgb,
+        color_type: Some(ColorType::Rgb),
         dimensions: Dimensions {
           height: 1,
           width: 2,
@@ -559,7 +559,7 @@ mod tests {
           rotation: Rotation::R90,
         },
         path: "foo.png".parse().unwrap(),
-        ty: ImageType::Png,
+        ty: Some(ImageType::Png),
       },
     );
 
@@ -567,7 +567,7 @@ mod tests {
     assert!(!image.alpha);
     assert_eq!(image.bit_depth, 8);
     assert_eq!(image.chroma_subsampling, Some(ChromaSubsampling::Yuv400));
-    assert_eq!(image.color_type, ColorType::Grayscale);
+    assert_eq!(image.color_type, Some(ColorType::Grayscale));
 
     assert_eq!(
       case("foo.jpg", &JpegBuilder::new().sampling(0x22).build())
@@ -594,7 +594,7 @@ mod tests {
     assert!(image.alpha);
     assert_eq!(image.bit_depth, 16);
     assert_eq!(image.chroma_subsampling, None);
-    assert_eq!(image.color_type, ColorType::Rgb);
+    assert_eq!(image.color_type, Some(ColorType::Rgb));
 
     let image = case(
       "foo.png",
@@ -606,7 +606,7 @@ mod tests {
     .unwrap();
     assert!(!image.alpha);
     assert_eq!(image.bit_depth, 1);
-    assert_eq!(image.color_type, ColorType::Indexed);
+    assert_eq!(image.color_type, Some(ColorType::Indexed));
 
     assert!(
       case(
@@ -629,7 +629,7 @@ mod tests {
     )
     .unwrap();
     assert!(image.alpha);
-    assert_eq!(image.color_type, ColorType::Grayscale);
+    assert_eq!(image.color_type, Some(ColorType::Grayscale));
 
     let image = case(
       "foo.png",
@@ -641,7 +641,7 @@ mod tests {
     .unwrap();
     assert!(!image.alpha);
     assert_eq!(image.bit_depth, 2);
-    assert_eq!(image.color_type, ColorType::Grayscale);
+    assert_eq!(image.color_type, Some(ColorType::Grayscale));
 
     assert_matches_regex!(
       case("foo.png", b"bar").unwrap_err().to_string(),
@@ -779,7 +779,7 @@ mod tests {
         alpha: false,
         bit_depth: 8,
         chroma_subsampling: Some(ChromaSubsampling::Yuv420),
-        color_type: ColorType::Rgb,
+        color_type: Some(ColorType::Rgb),
         dimensions: Dimensions {
           height: 1,
           width: 2,
@@ -789,7 +789,7 @@ mod tests {
           rotation: Rotation::R90,
         },
         path: "foo.jpg".parse().unwrap(),
-        ty: ImageType::Jpeg,
+        ty: Some(ImageType::Jpeg),
       })
       .unwrap(),
       r#"{"alpha":false,"bit_depth":8,"chroma_subsampling":"4:2:0","color_type":"rgb","dimensions":{"height":1,"width":2},"orientation":{"mirrored":true,"rotation":90},"path":"foo.jpg","type":"jpeg"}"#,
@@ -800,14 +800,14 @@ mod tests {
         alpha: true,
         bit_depth: 16,
         chroma_subsampling: None,
-        color_type: ColorType::Rgb,
+        color_type: Some(ColorType::Rgb),
         dimensions: Dimensions {
           height: 1,
           width: 2,
         },
         orientation: Orientation::new(),
         path: "foo.png".parse().unwrap(),
-        ty: ImageType::Png,
+        ty: Some(ImageType::Png),
       })
       .unwrap(),
       r#"{"alpha":true,"bit_depth":16,"color_type":"rgb","dimensions":{"height":1,"width":2},"orientation":{"mirrored":false,"rotation":0},"path":"foo.png","type":"png"}"#,
