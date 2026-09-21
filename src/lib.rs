@@ -118,6 +118,7 @@ use {
     open_graph_image::OpenGraphImage,
     options::Options,
     or::Or,
+    or_unknown::OrUnknown,
     order::Order,
     ordinal::Ordinal,
     orientation::Orientation,
@@ -396,6 +397,7 @@ mod number_error;
 mod open_graph_image;
 mod options;
 mod or;
+mod or_unknown;
 mod order;
 mod ordinal;
 mod orientation;

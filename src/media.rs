@@ -38,7 +38,7 @@ impl Media {
           "format",
           formats
             .into_iter()
-            .map(|format| Info::Value(format.to_string())),
+            .map(|format| Info::Value(OrUnknown(format).to_string())),
         )
       })
     }

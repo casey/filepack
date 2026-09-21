@@ -11,10 +11,11 @@ pub(crate) struct Item<T> {
 }
 
 impl<T: Content> Item<T> {
-  pub(crate) fn formats(items: &[Self]) -> Vec<T::Type> {
+  pub(crate) fn formats(items: &[Self]) -> Vec<Option<T::Type>> {
     let mut formats = Vec::new();
 
-    for ty in items.iter().filter_map(|item| item.content.ty()) {
+    for item in items {
+      let ty = item.content.ty();
       if !formats.contains(&ty) {
         formats.push(ty);
       }
@@ -90,13 +91,23 @@ mod tests {
 
   #[test]
   fn formats() {
-    let items = [
+    let mut items = [
       Item::<Image>::test("foo.png"),
       Item::test("bar.jpg"),
       Item::test("baz.png"),
     ];
 
-    assert_eq!(Item::formats(&items), [ImageType::Png, ImageType::Jpeg]);
+    assert_eq!(
+      Item::formats(&items),
+      [Some(ImageType::Png), Some(ImageType::Jpeg)]
+    );
+
+    items[0].content.ty = None;
+
+    assert_eq!(
+      Item::formats(&items),
+      [None, Some(ImageType::Jpeg), Some(ImageType::Png)]
+    );
   }
 
   #[test]
