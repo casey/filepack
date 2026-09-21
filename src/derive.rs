@@ -549,12 +549,12 @@ fn strict() {
 
   assert_matches!(
     Foo::decode_from_slice(&fields),
-    Err(DecodeError::UnconsumedEntries),
+    Err(DecodeError::UnknownField { key: u64::MAX }),
   );
 
   assert_matches!(
     Bar::decode_from_slice(&Encoder::frame([vec![0], fields].concat())),
-    Err(DecodeError::UnconsumedEntries),
+    Err(DecodeError::UnknownField { key: u64::MAX }),
   );
 }
 

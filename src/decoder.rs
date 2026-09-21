@@ -81,13 +81,13 @@ impl<'a> Decoder<'a> {
     Self::with_options(DecodeOptions::new(), buffer)
   }
 
-  pub(crate) fn options(&self) -> DecodeOptions {
-    self.options
-  }
-
   pub(crate) fn signed_integer(&mut self) -> DecodeResult<i64> {
     let integer = self.integer()?;
     Ok((integer >> 1).cast_signed() ^ -(integer & 1).cast_signed())
+  }
+
+  pub(crate) fn strict(&self) -> bool {
+    self.options.strict
   }
 
   pub(crate) fn text(&mut self) -> DecodeResult<&'a str> {
