@@ -33,6 +33,8 @@ impl Input {
 
     let variants = self.parse_variants()?;
 
+    let decode_unknown_fields = Self::decode_unknown_fields(attributes);
+
     let arms = variants.iter().map(|ParsedVariant { fields, ident, n }| {
       if fields.is_empty() {
         quote! { #n => Self::#ident, }
@@ -43,6 +45,7 @@ impl Input {
           #n => {
             let mut map = array.decoder()?.map::<u64>()?;
             #(#decode)*
+            #decode_unknown_fields
             map.finish()?;
             Self::#ident { #(#fields,)* }
           }
@@ -135,15 +138,7 @@ impl Input {
 
     let header = self.decode_header(attributes);
 
-    let allow_unknown_fields = attributes.allow_unknown_fields().then(|| {
-      quote! {
-        while let Some((key, _value)) = map.next::<&[u8]>()? {
-          if decoder.options().strict {
-            return Err(DecodeError::UnknownField { key });
-          }
-        }
-      }
-    });
+    let decode_unknown_fields = Self::decode_unknown_fields(attributes);
 
     let validate = attributes
       .validate()
@@ -154,7 +149,7 @@ impl Input {
         fn decode(decoder: &mut Decoder<'de>) -> DecodeResult<Self> {
           let mut map = decoder.map::<u64>()?;
           #(#decode)*
-          #allow_unknown_fields
+          #decode_unknown_fields
           map.finish()?;
           let value = #constructor;
           #validate
@@ -193,6 +188,18 @@ impl Input {
       #header {
         fn decode(decoder: &mut Decoder<'de>) -> DecodeResult<Self> {
           #body
+        }
+      }
+    })
+  }
+
+  fn decode_unknown_fields(attributes: &Attributes) -> Option<proc_macro2::TokenStream> {
+    attributes.allow_unknown_fields().then(|| {
+      quote! {
+        while let Some((key, _value)) = map.next::<&[u8]>()? {
+          if decoder.options().strict {
+            return Err(DecodeError::UnknownField { key });
+          }
         }
       }
     })
@@ -335,12 +342,10 @@ impl Input {
 
         if self.data.is_enum() {
           match attribute {
-            ContainerAttribute::AllowUnknownFields
-            | ContainerAttribute::AllowUnknownVariants
-            | ContainerAttribute::Transparent => {
+            ContainerAttribute::AllowUnknownVariants | ContainerAttribute::Transparent => {
               return Err(meta.error(format!("`#[deco({attribute})]` cannot be used with enums")));
             }
-            ContainerAttribute::Validate => {}
+            ContainerAttribute::AllowUnknownFields | ContainerAttribute::Validate => {}
           }
         }
 
@@ -465,10 +470,10 @@ mod tests {
 
     case(
       &syn::parse_quote! {
-        #[deco(allow_unknown_fields)]
+        #[deco(transparent)]
         enum Foo {}
       },
-      "`#[deco(allow_unknown_fields)]` cannot be used with enums",
+      "`#[deco(transparent)]` cannot be used with enums",
     );
 
     case(

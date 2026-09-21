@@ -447,6 +447,32 @@ fn encode_with_required() {
 }
 
 #[test]
+fn enum_allow_unknown_fields() {
+  #[derive(Debug, Decode, PartialEq)]
+  #[deco(allow_unknown_fields)]
+  enum Foo {
+    #[n(0)]
+    Bar {
+      #[n(0)]
+      foo: u64,
+      #[n(1)]
+      bar: Option<u64>,
+    },
+  }
+
+  let bytes = [0x86, 0, 0x84, 0, 1, 2, 3];
+
+  assert_eq!(
+    Foo::decode_from_slice(&bytes).unwrap(),
+    Foo::Bar { foo: 1, bar: None },
+  );
+  assert_matches!(
+    Foo::decode_from_slice_with_options(DecodeOptions::strict(), &bytes),
+    Err(DecodeError::UnknownField { key: 2 }),
+  );
+}
+
+#[test]
 fn enum_array_invalid_discriminant() {
   #[derive(Debug, Decode, PartialEq)]
   enum Foo {
@@ -605,6 +631,7 @@ fn enum_round_trip() {
 #[test]
 fn enum_unconsumed_unit_payload() {
   #[derive(Debug, Decode)]
+  #[deco(allow_unknown_fields)]
   enum Foo {
     #[n(0)]
     Bar,
@@ -733,7 +760,7 @@ fn validate() {
 #[test]
 fn validate_enum() {
   #[derive(Debug, Encode, Decode, PartialEq)]
-  #[deco(validate)]
+  #[deco(allow_unknown_fields, validate)]
   enum Foo {
     #[n(0)]
     Bar {
@@ -758,8 +785,11 @@ fn validate_enum() {
 
   assert_deco(Foo::Bar { baz: "foo".into() }, "8700850083666f6f");
 
+  let fields = BTreeMap::from([(0u64, "bar"), (1, "baz")]).encode_to_vec();
+  let bytes = Encoder::frame([vec![0], fields].concat());
+
   assert_matches!(
-    Foo::decode_from_slice(&Foo::Bar { baz: "bar".into() }.encode_to_vec()),
+    Foo::decode_from_slice(&bytes),
     Err(DecodeError::UnexpectedValue {
       actual,
       expected: "foo",
