@@ -14,9 +14,9 @@ impl<T: Content> Item<T> {
   pub(crate) fn formats(items: &[Self]) -> Vec<T::Type> {
     let mut formats = Vec::new();
 
-    for item in items {
-      if !formats.contains(&item.content.ty()) {
-        formats.push(item.content.ty());
+    for ty in items.iter().filter_map(|item| item.content.ty()) {
+      if !formats.contains(&ty) {
+        formats.push(ty);
       }
     }
 

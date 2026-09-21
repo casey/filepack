@@ -89,11 +89,11 @@ impl WebmDecoder {
             .unwrap_or_default();
 
           audio_track = Some(Track {
-            codec,
-            info: TrackInfo::Audio {
+            codec: Some(codec),
+            info: Some(TrackInfo::Audio {
               channels: audio.channels().get(),
               sample_rate,
-            },
+            }),
             size,
           });
         }
@@ -135,8 +135,8 @@ impl WebmDecoder {
           };
 
           video_track = Some(Track {
-            codec,
-            info: TrackInfo::Video {
+            codec: Some(codec),
+            info: Some(TrackInfo::Video {
               bit_depth: color_info.bit_depth,
               chroma_subsampling: color_info.chroma_subsampling,
               dimensions: Dimensions {
@@ -145,7 +145,7 @@ impl WebmDecoder {
               },
               frames,
               orientation: Orientation::new(),
-            },
+            }),
             size,
           });
         }

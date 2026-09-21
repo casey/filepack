@@ -170,11 +170,11 @@ impl Mp4Decoder {
           };
 
           audio_track = Some(Track {
-            codec,
-            info: TrackInfo::Audio {
+            codec: Some(codec),
+            info: Some(TrackInfo::Audio {
               channels: mp4a.channelcount.into(),
               sample_rate: mp4a.samplerate.value().into(),
-            },
+            }),
             size,
           });
         }
@@ -209,8 +209,8 @@ impl Mp4Decoder {
             orientation(&trak.tkhd).context(video_error::MatrixUnsupported { track: index })?;
 
           video_track = Some(Track {
-            codec: Codec::H264,
-            info: TrackInfo::Video {
+            codec: Some(Codec::H264),
+            info: Some(TrackInfo::Video {
               bit_depth: color_info.bit_depth,
               chroma_subsampling: color_info.chroma_subsampling,
               dimensions: Dimensions {
@@ -219,7 +219,7 @@ impl Mp4Decoder {
               },
               frames: stsz.sample_count.into(),
               orientation,
-            },
+            }),
             size,
           });
         }

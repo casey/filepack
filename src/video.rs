@@ -2,7 +2,7 @@ use super::*;
 
 #[skip_serializing_none]
 #[derive(Clone, Debug, Decode, Encode, PartialEq, Serialize)]
-#[deco(allow_unknown_fields)]
+#[deco(allow_unknown_fields, allow_unknown_variants)]
 pub(crate) struct Video {
   #[n(0)]
   pub(crate) duration: u64,
@@ -14,12 +14,12 @@ pub(crate) struct Video {
   pub(crate) tracks: Vec<Track>,
   #[n(4)]
   #[serde(rename = "type")]
-  pub(crate) ty: VideoType,
+  pub(crate) ty: Option<VideoType>,
 }
 
 impl Video {
   pub(crate) fn oriented_dimensions(&self) -> Option<Dimensions> {
-    self.tracks.iter().find_map(|track| match track.info {
+    self.tracks.iter().find_map(|track| match track.info? {
       TrackInfo::Video {
         dimensions,
         orientation,
@@ -43,7 +43,7 @@ impl Content for Video {
 
   fn info(&self, builder: InfoBuilder) -> InfoBuilder {
     builder
-      .value("type", self.ty)
+      .optional("type", self.ty)
       .value(
         "duration",
         DisplayDuration(Duration::from_millis(self.duration)),
@@ -77,7 +77,7 @@ impl Content for Video {
         path,
         placeholder: None,
         tracks,
-        ty,
+        ty: Some(ty),
       },
       title,
     })
@@ -104,7 +104,7 @@ impl Content for Video {
     }
   }
 
-  fn ty(&self) -> Self::Type {
+  fn ty(&self) -> Option<Self::Type> {
     self.ty
   }
 }

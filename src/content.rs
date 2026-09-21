@@ -16,11 +16,13 @@ pub(crate) trait Content: Sized {
   }
 
   fn resource_type(&self) -> ResourceType {
-    self.ty().resource_type()
+    self
+      .ty()
+      .map_or(ResourceType::Binary, ContentType::resource_type)
   }
 
   #[cfg(test)]
   fn test(path: &str) -> Self;
 
-  fn ty(&self) -> Self::Type;
+  fn ty(&self) -> Option<Self::Type>;
 }

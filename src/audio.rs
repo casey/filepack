@@ -2,7 +2,7 @@ use super::*;
 
 #[skip_serializing_none]
 #[derive(Clone, Debug, Decode, Encode, PartialEq, Serialize)]
-#[deco(allow_unknown_fields)]
+#[deco(allow_unknown_fields, allow_unknown_variants)]
 pub(crate) struct Audio {
   #[n(0)]
   pub(crate) album: Text,
@@ -30,7 +30,7 @@ pub(crate) struct Audio {
   pub(crate) tracks: u64,
   #[n(12)]
   #[serde(rename = "type")]
-  pub(crate) ty: AudioType,
+  pub(crate) ty: Option<AudioType>,
 }
 
 impl Audio {
@@ -120,11 +120,15 @@ impl Audio {
   }
 
   pub(crate) fn cover_art(&self, root: &Utf8Path) -> Result<Vec<EmbeddedImage>> {
+    let Some(ty) = self.ty else {
+      return Ok(Vec::new());
+    };
+
     let path = root.join(&self.path);
 
     let data = filesystem::read(&path)?;
 
-    match self.ty {
+    match ty {
       AudioType::Flac => FlacDecoder::cover_art(&data),
       AudioType::Mp3 => Mp3Decoder::cover_art(&data),
     }
@@ -182,7 +186,7 @@ impl Content for Audio {
       .value("disc", format!("{} of {}", self.disc, self.discs))
       .value("track", format!("{} of {}", self.track, self.tracks))
       .value("duration", DisplayDuration(self.duration()))
-      .value("type", self.ty)
+      .optional("type", self.ty)
       .optional(
         "sample bits",
         self
@@ -198,12 +202,12 @@ impl Content for Audio {
         ),
       )
       .value("channels", self.channels)
-      .value(
+      .optional(
         "compression",
-        match self.ty {
+        self.ty.map(|ty| match ty {
           AudioType::Flac => Compression::Lossless,
           AudioType::Mp3 => Compression::Lossy,
-        },
+        }),
       )
       .value("samples", self.samples)
   }
@@ -243,7 +247,7 @@ impl Content for Audio {
         size,
         track,
         tracks,
-        ty,
+        ty: Some(ty),
       },
       title: Some(title),
     })
@@ -274,7 +278,7 @@ impl Content for Audio {
     }
   }
 
-  fn ty(&self) -> Self::Type {
+  fn ty(&self) -> Option<Self::Type> {
     self.ty
   }
 }

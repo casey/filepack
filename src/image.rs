@@ -2,7 +2,7 @@ use super::*;
 
 #[skip_serializing_none]
 #[derive(Clone, Debug, Decode, Encode, PartialEq, Serialize)]
-#[deco(allow_unknown_fields)]
+#[deco(allow_unknown_fields, allow_unknown_variants)]
 pub(crate) struct Image {
   #[n(0)]
   pub(crate) alpha: bool,
@@ -11,7 +11,7 @@ pub(crate) struct Image {
   #[n(2)]
   pub(crate) chroma_subsampling: Option<ChromaSubsampling>,
   #[n(3)]
-  pub(crate) color_type: ColorType,
+  pub(crate) color_type: Option<ColorType>,
   #[n(4)]
   pub(crate) dimensions: Dimensions,
   #[n(5)]
@@ -20,7 +20,7 @@ pub(crate) struct Image {
   pub(crate) path: RelativePath,
   #[n(7)]
   #[serde(rename = "type")]
-  pub(crate) ty: ImageType,
+  pub(crate) ty: Option<ImageType>,
 }
 
 impl Image {
@@ -40,7 +40,7 @@ impl Image {
 
     let path = &root.join(&self.path);
 
-    let format = match self.ty {
+    let format = match self.ty.unwrap() {
       ImageType::Jpeg => ImageFormat::Jpeg,
       ImageType::Png => ImageFormat::Png,
     };
@@ -272,19 +272,19 @@ impl Content for Image {
 
   fn info(&self, builder: InfoBuilder) -> InfoBuilder {
     builder
-      .value("type", self.ty)
+      .optional("type", self.ty)
       .value("dimensions", self.dimensions)
       .value("orientation", self.orientation)
-      .value("color type", self.color_type)
+      .optional("color type", self.color_type)
       .value("bit depth", format!("{}-bit", self.bit_depth))
       .optional("chroma subsampling", self.chroma_subsampling)
       .value("alpha", self.alpha)
-      .value(
+      .optional(
         "compression",
-        match self.ty {
+        self.ty.map(|ty| match ty {
           ImageType::Jpeg => Compression::Lossy,
           ImageType::Png => Compression::Lossless,
-        },
+        }),
       )
   }
 
@@ -309,11 +309,11 @@ impl Content for Image {
         alpha,
         bit_depth,
         chroma_subsampling,
-        color_type,
+        color_type: Some(color_type),
         dimensions,
         orientation,
         path,
-        ty,
+        ty: Some(ty),
       },
       title,
     })
@@ -342,7 +342,7 @@ impl Content for Image {
     }
   }
 
-  fn ty(&self) -> Self::Type {
+  fn ty(&self) -> Option<Self::Type> {
     self.ty
   }
 }
