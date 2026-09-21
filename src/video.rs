@@ -48,7 +48,12 @@ impl Content for Video {
         "duration",
         DisplayDuration(Duration::from_millis(self.duration)),
       )
-      .value("compression", Compression::Lossy)
+      .optional(
+        "compression",
+        self.ty.map(|ty| match ty {
+          VideoType::Mp4 | VideoType::Webm => Compression::Lossy,
+        }),
+      )
       .list(
         "tracks",
         self
