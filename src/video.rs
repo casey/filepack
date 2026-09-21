@@ -43,7 +43,7 @@ impl Content for Video {
 
   fn info(&self, builder: InfoBuilder) -> InfoBuilder {
     builder
-      .optional("type", self.ty)
+      .optional_or_unknown("type", self.ty)
       .value(
         "duration",
         DisplayDuration(Duration::from_millis(self.duration)),

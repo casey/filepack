@@ -16,14 +16,14 @@ impl Track {
   pub(crate) fn info(&self, video: &Video, index: usize) -> Info {
     let builder = InfoBuilder::new()
       .value("track", Ordinal(index))
-      .optional(
+      .optional_or_unknown(
         "type",
         self.info.map(|info| match info {
           TrackInfo::Audio { .. } => "audio",
           TrackInfo::Video { .. } => "video",
         }),
       )
-      .optional("codec", self.codec);
+      .optional_or_unknown("codec", self.codec);
 
     let builder = builder.when_some(self.info, |builder, info| match info {
       TrackInfo::Audio {
