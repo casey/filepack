@@ -39,7 +39,7 @@ impl Input {
       if fields.is_empty() {
         quote! { #n => Self::#ident, }
       } else {
-        let decode = ParsedField::decode(fields, &Attributes::new());
+        let decode = ParsedField::decode(fields, attributes);
         let fields = fields.iter().map(|field| field.ident);
         quote! {
           #n => {
@@ -342,10 +342,12 @@ impl Input {
 
         if self.data.is_enum() {
           match attribute {
-            ContainerAttribute::AllowUnknownVariants | ContainerAttribute::Transparent => {
+            ContainerAttribute::Transparent => {
               return Err(meta.error(format!("`#[deco({attribute})]` cannot be used with enums")));
             }
-            ContainerAttribute::AllowUnknownFields | ContainerAttribute::Validate => {}
+            ContainerAttribute::AllowUnknownFields
+            | ContainerAttribute::AllowUnknownVariants
+            | ContainerAttribute::Validate => {}
           }
         }
 
@@ -482,14 +484,6 @@ mod tests {
         struct Foo {}
       },
       "`#[deco(allow_unknown_fields)]` cannot be used with `#[deco(transparent)]`",
-    );
-
-    case(
-      &syn::parse_quote! {
-        #[deco(allow_unknown_variants)]
-        enum Foo {}
-      },
-      "`#[deco(allow_unknown_variants)]` cannot be used with enums",
     );
 
     case(

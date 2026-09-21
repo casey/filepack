@@ -473,6 +473,41 @@ fn enum_allow_unknown_fields() {
 }
 
 #[test]
+fn enum_allow_unknown_variants() {
+  #[derive(Debug, Decode, Encode, PartialEq)]
+  enum Foo {
+    #[n(0)]
+    Bar,
+  }
+
+  #[derive(Debug, Decode, Encode, PartialEq)]
+  #[deco(allow_unknown_variants)]
+  enum Bar {
+    #[n(0)]
+    Baz {
+      #[n(0)]
+      foo: Option<Foo>,
+      #[n(1)]
+      bar: u64,
+    },
+  }
+
+  let bytes = [0x86, 0, 0x84, 0, 1, 1, 2];
+
+  assert_eq!(
+    Bar::decode_from_slice(&bytes).unwrap(),
+    Bar::Baz { foo: None, bar: 2 },
+  );
+  assert_matches!(
+    Bar::decode_from_slice_with_options(DecodeOptions::strict(), &bytes),
+    Err(DecodeError::InvalidDiscriminant {
+      discriminant: 1,
+      name: "Foo",
+    }),
+  );
+}
+
+#[test]
 fn enum_array_invalid_discriminant() {
   #[derive(Debug, Decode, PartialEq)]
   enum Foo {
