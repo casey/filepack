@@ -25,6 +25,7 @@ mod tests {
   #[test]
   fn context_separates_domains() {
     #[derive(Clone, Debug, Decode, Encode, Eq, Ord, PartialEq, PartialOrd)]
+    #[deco(strict)]
     struct Impostor {
       #[n(0)]
       fingerprint: Fingerprint,
@@ -44,6 +45,7 @@ mod tests {
     }
 
     #[derive(Clone, Debug, Decode, Encode, Eq, Ord, PartialEq, PartialOrd)]
+    #[deco(strict)]
     struct Twin {
       #[n(0)]
       fingerprint: Fingerprint,

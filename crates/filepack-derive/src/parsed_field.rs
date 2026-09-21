@@ -19,10 +19,10 @@ impl ParsedField<'_> {
           (Some(path), true) => quote! { let #ident = map.optional_key_with(#n, #path)?; },
           (Some(path), false) => quote! { let #ident = map.required_key_with(#n, #path)?; },
           (None, true) => {
-            if attributes.allow_unknown_variants() {
-              quote! { let #ident = map.optional_key_with(#n, Decode::decode_optional)?.flatten(); }
-            } else {
+            if attributes.strict() {
               quote! { let #ident = map.optional_key(#n)?; }
+            } else {
+              quote! { let #ident = map.optional_key_with(#n, Decode::decode_optional)?.flatten(); }
             }
           }
           (None, false) => quote! { let #ident = map.required_key(#n)?; },

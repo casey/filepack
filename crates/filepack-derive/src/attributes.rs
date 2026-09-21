@@ -3,12 +3,8 @@ use super::*;
 pub(crate) struct Attributes(pub(crate) HashSet<ContainerAttribute>);
 
 impl Attributes {
-  pub(crate) fn allow_unknown_fields(&self) -> bool {
-    self.0.contains(&ContainerAttribute::AllowUnknownFields)
-  }
-
-  pub(crate) fn allow_unknown_variants(&self) -> bool {
-    self.0.contains(&ContainerAttribute::AllowUnknownVariants)
+  pub(crate) fn strict(&self) -> bool {
+    self.0.contains(&ContainerAttribute::Strict)
   }
 
   pub(crate) fn transparent(&self) -> bool {

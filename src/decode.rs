@@ -146,88 +146,6 @@ mod tests {
   use super::*;
 
   #[test]
-  fn allow_unknown_fields() {
-    #[derive(Debug, Decode, Encode, PartialEq)]
-    #[deco(allow_unknown_fields)]
-    struct Foo {
-      #[n(0)]
-      foo: u64,
-    }
-
-    let value = Foo { foo: 1 };
-
-    let bytes = with_unknown_field(&value);
-
-    assert_eq!(Foo::decode_from_slice(&bytes).unwrap(), value);
-
-    assert_matches!(
-      Foo::decode_from_slice_with_options(DecodeOptions::strict(), &bytes),
-      Err(DecodeError::UnknownField { key: u64::MAX }),
-    );
-  }
-
-  #[test]
-  fn allow_unknown_fields_array() {
-    #[derive(Debug, Decode, Encode, PartialEq)]
-    #[deco(allow_unknown_fields)]
-    struct Foo {
-      #[n(0)]
-      foo: u64,
-    }
-
-    let foo = vec![Foo { foo: 1 }];
-
-    assert_eq!(
-      Vec::<Foo>::decode_from_slice_with_options(DecodeOptions::strict(), &foo.encode_to_vec())
-        .unwrap(),
-      foo,
-    );
-
-    let bytes = vec![BTreeMap::from([(0u64, 1u64), (1, 2)])].encode_to_vec();
-
-    assert_eq!(Vec::<Foo>::decode_from_slice(&bytes).unwrap(), foo);
-
-    assert_matches!(
-      Vec::<Foo>::decode_from_slice_with_options(DecodeOptions::strict(), &bytes),
-      Err(DecodeError::UnknownField { key: 1 }),
-    );
-  }
-
-  #[test]
-  fn allow_unknown_fields_nested() {
-    #[derive(Debug, Decode, Encode, PartialEq)]
-    #[deco(allow_unknown_fields)]
-    struct Foo {
-      #[n(0)]
-      foo: u64,
-    }
-
-    #[derive(Debug, Decode, Encode, PartialEq)]
-    struct Bar {
-      #[n(0)]
-      bar: Foo,
-    }
-
-    let bar = Bar {
-      bar: Foo { foo: 1 },
-    };
-
-    assert_eq!(
-      Bar::decode_from_slice_with_options(DecodeOptions::strict(), &bar.encode_to_vec()).unwrap(),
-      bar,
-    );
-
-    let bytes = BTreeMap::from([(0u64, BTreeMap::from([(0u64, 1u64), (1, 2)]))]).encode_to_vec();
-
-    assert_eq!(Bar::decode_from_slice(&bytes).unwrap(), bar);
-
-    assert_matches!(
-      Bar::decode_from_slice_with_options(DecodeOptions::strict(), &bytes),
-      Err(DecodeError::UnknownField { key: 1 }),
-    );
-  }
-
-  #[test]
   fn borrowed_bytes() {
     assert_eq!(
       <&[u8]>::decode_from_slice(&[0x82, 0x01, 0x02]).unwrap(),
@@ -259,6 +177,85 @@ mod tests {
         actual: 3,
         expected: 4,
       }),
+    );
+  }
+
+  #[test]
+  fn unknown_fields() {
+    #[derive(Debug, Decode, Encode, PartialEq)]
+    struct Foo {
+      #[n(0)]
+      foo: u64,
+    }
+
+    let value = Foo { foo: 1 };
+
+    let bytes = with_unknown_field(&value);
+
+    assert_eq!(Foo::decode_from_slice(&bytes).unwrap(), value);
+
+    assert_matches!(
+      Foo::decode_from_slice_with_options(DecodeOptions::strict(), &bytes),
+      Err(DecodeError::UnknownField { key: u64::MAX }),
+    );
+  }
+
+  #[test]
+  fn unknown_fields_array() {
+    #[derive(Debug, Decode, Encode, PartialEq)]
+    struct Foo {
+      #[n(0)]
+      foo: u64,
+    }
+
+    let foo = vec![Foo { foo: 1 }];
+
+    assert_eq!(
+      Vec::<Foo>::decode_from_slice_with_options(DecodeOptions::strict(), &foo.encode_to_vec())
+        .unwrap(),
+      foo,
+    );
+
+    let bytes = vec![BTreeMap::from([(0u64, 1u64), (1, 2)])].encode_to_vec();
+
+    assert_eq!(Vec::<Foo>::decode_from_slice(&bytes).unwrap(), foo);
+
+    assert_matches!(
+      Vec::<Foo>::decode_from_slice_with_options(DecodeOptions::strict(), &bytes),
+      Err(DecodeError::UnknownField { key: 1 }),
+    );
+  }
+
+  #[test]
+  fn unknown_fields_nested() {
+    #[derive(Debug, Decode, Encode, PartialEq)]
+    struct Foo {
+      #[n(0)]
+      foo: u64,
+    }
+
+    #[derive(Debug, Decode, Encode, PartialEq)]
+    struct Bar {
+      #[n(0)]
+      bar: Foo,
+    }
+
+    let bar = Bar {
+      bar: Foo { foo: 1 },
+    };
+
+    assert_eq!(
+      Bar::decode_from_slice_with_options(DecodeOptions::strict(), &bar.encode_to_vec()).unwrap(),
+      bar,
+    );
+
+    let bytes = BTreeMap::from([(0u64, BTreeMap::from([(0u64, 1u64), (1, 2)]))]).encode_to_vec();
+
+    assert_eq!(Bar::decode_from_slice(&bytes).unwrap(), bar);
+
+    assert_matches!(
+      Bar::decode_from_slice_with_options(DecodeOptions::strict(), &bytes),
+      Err(DecodeError::UnknownField { key: 1 }),
     );
   }
 }

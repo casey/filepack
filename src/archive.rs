@@ -2,7 +2,6 @@ use super::*;
 
 #[allow(clippy::arbitrary_source_item_ordering)]
 #[derive(Encode, Decode)]
-#[deco(allow_unknown_fields)]
 pub(crate) struct Archive {
   #[n(0)]
   pub(crate) version: Version,

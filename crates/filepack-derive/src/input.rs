@@ -194,7 +194,7 @@ impl Input {
   }
 
   fn decode_unknown_fields(attributes: &Attributes) -> Option<proc_macro2::TokenStream> {
-    attributes.allow_unknown_fields().then(|| {
+    (!attributes.strict()).then(|| {
       quote! {
         while let Some((key, _value)) = map.next::<&[u8]>()? {
           if decoder.options().strict {
@@ -345,9 +345,7 @@ impl Input {
             ContainerAttribute::Transparent => {
               return Err(meta.error(format!("`#[deco({attribute})]` cannot be used with enums")));
             }
-            ContainerAttribute::AllowUnknownFields
-            | ContainerAttribute::AllowUnknownVariants
-            | ContainerAttribute::Validate => {}
+            ContainerAttribute::Strict | ContainerAttribute::Validate => {}
           }
         }
 
@@ -355,17 +353,10 @@ impl Input {
           return Err(meta.error(format!("duplicate `#[deco({attribute})]` attribute")));
         }
 
-        if attributes.contains(&ContainerAttribute::Transparent) {
-          for attribute in [
-            ContainerAttribute::AllowUnknownFields,
-            ContainerAttribute::AllowUnknownVariants,
-          ] {
-            if attributes.contains(&attribute) {
-              return Err(meta.error(format!(
-                "`#[deco({attribute})]` cannot be used with `#[deco(transparent)]`"
-              )));
-            }
-          }
+        if attributes.contains(&ContainerAttribute::Transparent)
+          && attributes.contains(&ContainerAttribute::Strict)
+        {
+          return Err(meta.error("`#[deco(strict)]` cannot be used with `#[deco(transparent)]`"));
         }
 
         Ok(())
@@ -480,24 +471,24 @@ mod tests {
 
     case(
       &syn::parse_quote! {
-        #[deco(allow_unknown_fields, transparent)]
+        #[deco(strict, transparent)]
         struct Foo {}
       },
-      "`#[deco(allow_unknown_fields)]` cannot be used with `#[deco(transparent)]`",
+      "`#[deco(strict)]` cannot be used with `#[deco(transparent)]`",
     );
 
     case(
       &syn::parse_quote! {
-        #[deco(allow_unknown_variants, transparent)]
+        #[deco(transparent, strict)]
         struct Foo(u64);
       },
-      "`#[deco(allow_unknown_variants)]` cannot be used with `#[deco(transparent)]`",
+      "`#[deco(strict)]` cannot be used with `#[deco(transparent)]`",
     );
 
     case(
       &syn::parse_quote! {
         struct Foo {
-          #[deco(allow_unknown_variants)]
+          #[deco(strict)]
           #[n(0)]
           foo: Option<u64>,
         }

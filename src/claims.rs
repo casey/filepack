@@ -10,6 +10,7 @@ pub(crate) struct Policy<'a> {
 }
 
 #[derive(Clone, Decode, Encode, Eq, Ord, PartialEq, PartialOrd)]
+#[deco(strict)]
 pub(crate) struct Claims {
   #[n(0)]
   pub(crate) audience: String,

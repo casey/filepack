@@ -1,7 +1,6 @@
 use super::*;
 
 #[derive(Clone, Copy, Debug, Decode, Default, Encode, PartialEq, Serialize)]
-#[deco(allow_unknown_fields)]
 pub(crate) struct Orientation {
   #[n(0)]
   pub(crate) mirrored: bool,
