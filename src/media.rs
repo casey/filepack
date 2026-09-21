@@ -1,6 +1,7 @@
 use super::*;
 
 #[derive(Clone, Debug, Decode, Encode, EnumDiscriminants, IntoStaticStr, PartialEq, Serialize)]
+#[deco(allow_unknown_fields, allow_unknown_variants)]
 #[serde(rename_all = "snake_case", tag = "type")]
 #[strum(serialize_all = "kebab-case")]
 #[strum_discriminants(

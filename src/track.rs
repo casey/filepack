@@ -67,7 +67,7 @@ impl Track {
             )
           })
           .value("bit depth", format!("{bit_depth}-bit"))
-          .value("chroma subsampling", chroma_subsampling)
+          .optional("chroma subsampling", chroma_subsampling)
       }
     });
 
@@ -85,7 +85,7 @@ mod tests {
       codec: Some(Codec::H264),
       info: Some(TrackInfo::Video {
         bit_depth: 8,
-        chroma_subsampling: ChromaSubsampling::Yuv420,
+        chroma_subsampling: Some(ChromaSubsampling::Yuv420),
         dimensions: Dimensions {
           height: 1,
           width: 2,
@@ -195,7 +195,7 @@ mod tests {
         codec: Some(Codec::H264),
         info: Some(TrackInfo::Video {
           bit_depth: 8,
-          chroma_subsampling: ChromaSubsampling::Yuv420,
+          chroma_subsampling: Some(ChromaSubsampling::Yuv420),
           dimensions: Dimensions {
             height: 1,
             width: 2,
