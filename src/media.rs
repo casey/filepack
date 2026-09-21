@@ -32,10 +32,11 @@ pub(crate) enum Media {
 impl Media {
   pub(crate) fn info(&self, builder: InfoBuilder, fingerprint: Fingerprint) -> InfoBuilder {
     fn format<T: Content>(builder: InfoBuilder, items: &[Item<T>]) -> InfoBuilder {
-      builder.when(!items.is_empty(), |builder| {
+      let formats = Item::formats(items);
+      builder.when(!formats.is_empty(), |builder| {
         builder.list(
           "format",
-          Item::formats(items)
+          formats
             .into_iter()
             .map(|format| Info::Value(format.to_string())),
         )

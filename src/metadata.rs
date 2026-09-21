@@ -3,7 +3,7 @@ use super::*;
 #[allow(private_interfaces)]
 #[skip_serializing_none]
 #[derive(Clone, Debug, Default, Encode, Decode, PartialEq, Serialize)]
-#[deco(allow_unknown_fields)]
+#[deco(allow_unknown_fields, allow_unknown_variants)]
 pub struct Metadata {
   #[n(0)]
   pub artwork: Option<Image>,
@@ -360,14 +360,14 @@ mod tests {
         alpha: true,
         bit_depth: 8,
         chroma_subsampling: Some(ChromaSubsampling::Yuv420),
-        color_type: ColorType::Rgb,
+        color_type: Some(ColorType::Rgb),
         dimensions: Dimensions {
           height: 1,
           width: 1,
         },
         orientation: Orientation::new(),
         path: "cover.png".parse().unwrap(),
-        ty: ImageType::Png,
+        ty: Some(ImageType::Png),
       }),
       creator: Some("foo".parse().unwrap()),
       description: Some("bar".parse().unwrap()),
@@ -388,7 +388,7 @@ mod tests {
             size: 9,
             track: 5,
             tracks: 6,
-            ty: AudioType::Flac,
+            ty: Some(AudioType::Flac),
           },
           title: Some("foo".parse().unwrap()),
         }],
@@ -612,14 +612,14 @@ mod tests {
         alpha: false,
         bit_depth: 8,
         chroma_subsampling: Some(ChromaSubsampling::Yuv444),
-        color_type: ColorType::Rgb,
+        color_type: Some(ColorType::Rgb),
         dimensions: Dimensions {
           height: 512,
           width: 1024,
         },
         orientation: Orientation::new(),
         path: "thumbnails/foo.jpg".parse().unwrap(),
-        ty: ImageType::Jpeg,
+        ty: Some(ImageType::Jpeg),
       }],
     );
   }

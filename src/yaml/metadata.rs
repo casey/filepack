@@ -464,14 +464,14 @@ mod tests {
           alpha: false,
           bit_depth: 8,
           chroma_subsampling: None,
-          color_type: ColorType::Rgb,
+          color_type: Some(ColorType::Rgb),
           dimensions: Dimensions {
             height: 1,
             width: 1,
           },
           orientation: Orientation::new(),
           path: "cover.png".parse().unwrap(),
-          ty: ImageType::Png,
+          ty: Some(ImageType::Png),
         }),
         media: Some(crate::Media::Audio {
           items: vec![Item {
@@ -488,7 +488,7 @@ mod tests {
               size: 1024,
               track: 1,
               tracks: 1,
-              ty: AudioType::Flac,
+              ty: Some(AudioType::Flac),
             },
             title: Some("bar".parse().unwrap()),
           }],

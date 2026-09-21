@@ -2,7 +2,7 @@ use super::*;
 
 #[skip_serializing_none]
 #[derive(Clone, Debug, Decode, Encode, PartialEq, Serialize)]
-#[deco(allow_unknown_fields)]
+#[deco(allow_unknown_fields, allow_unknown_variants)]
 pub(crate) struct Video {
   #[n(0)]
   pub(crate) duration: u64,
@@ -14,12 +14,12 @@ pub(crate) struct Video {
   pub(crate) tracks: Vec<Track>,
   #[n(4)]
   #[serde(rename = "type")]
-  pub(crate) ty: VideoType,
+  pub(crate) ty: Option<VideoType>,
 }
 
 impl Video {
   pub(crate) fn oriented_dimensions(&self) -> Option<Dimensions> {
-    self.tracks.iter().find_map(|track| match track.info {
+    self.tracks.iter().find_map(|track| match track.info? {
       TrackInfo::Video {
         dimensions,
         orientation,
@@ -43,12 +43,17 @@ impl Content for Video {
 
   fn info(&self, builder: InfoBuilder) -> InfoBuilder {
     builder
-      .value("type", self.ty)
+      .optional("type", self.ty)
       .value(
         "duration",
         DisplayDuration(Duration::from_millis(self.duration)),
       )
-      .value("compression", Compression::Lossy)
+      .optional(
+        "compression",
+        self.ty.map(|ty| match ty {
+          VideoType::Mp4 | VideoType::Webm => Compression::Lossy,
+        }),
+      )
       .list(
         "tracks",
         self
@@ -77,7 +82,7 @@ impl Content for Video {
         path,
         placeholder: None,
         tracks,
-        ty,
+        ty: Some(ty),
       },
       title,
     })
@@ -100,11 +105,11 @@ impl Content for Video {
       path,
       placeholder: None,
       tracks: Vec::new(),
-      ty,
+      ty: Some(ty),
     }
   }
 
-  fn ty(&self) -> Self::Type {
+  fn ty(&self) -> Option<Self::Type> {
     self.ty
   }
 }
@@ -160,8 +165,8 @@ mod tests {
         placeholder: None,
         tracks: vec![
           Track {
-            codec: Codec::H264,
-            info: TrackInfo::Video {
+            codec: Some(Codec::H264),
+            info: Some(TrackInfo::Video {
               bit_depth: 8,
               chroma_subsampling: ChromaSubsampling::Yuv420,
               dimensions: Dimensions {
@@ -170,19 +175,19 @@ mod tests {
               },
               frames: 0,
               orientation: Orientation::new(),
-            },
+            }),
             size: 0,
           },
           Track {
-            codec: Codec::Aac,
-            info: TrackInfo::Audio {
+            codec: Some(Codec::Aac),
+            info: Some(TrackInfo::Audio {
               channels: 2,
               sample_rate: 44100,
-            },
+            }),
             size: 0,
           },
         ],
-        ty: VideoType::Mp4,
+        ty: Some(VideoType::Mp4),
       },
     );
 
@@ -197,8 +202,8 @@ mod tests {
       .tracks,
       vec![
         Track {
-          codec: Codec::H264,
-          info: TrackInfo::Video {
+          codec: Some(Codec::H264),
+          info: Some(TrackInfo::Video {
             bit_depth: 8,
             chroma_subsampling: ChromaSubsampling::Yuv420,
             dimensions: Dimensions {
@@ -207,15 +212,15 @@ mod tests {
             },
             frames: 0,
             orientation: Orientation::new(),
-          },
+          }),
           size: 0,
         },
         Track {
-          codec: Codec::Mp3,
-          info: TrackInfo::Audio {
+          codec: Some(Codec::Mp3),
+          info: Some(TrackInfo::Audio {
             channels: 2,
             sample_rate: 44100,
-          },
+          }),
           size: 0,
         },
       ],
@@ -241,8 +246,8 @@ mod tests {
 
     fn track(rotation: Rotation) -> Track {
       Track {
-        codec: Codec::H264,
-        info: TrackInfo::Video {
+        codec: Some(Codec::H264),
+        info: Some(TrackInfo::Video {
           bit_depth: 8,
           chroma_subsampling: ChromaSubsampling::Yuv420,
           dimensions: Dimensions {
@@ -254,7 +259,7 @@ mod tests {
             mirrored: false,
             rotation,
           },
-        },
+        }),
         size: 0,
       }
     }
@@ -285,8 +290,8 @@ mod tests {
         placeholder: None,
         tracks: vec![
           Track {
-            codec: Codec::H264,
-            info: TrackInfo::Video {
+            codec: Some(Codec::H264),
+            info: Some(TrackInfo::Video {
               bit_depth: 8,
               chroma_subsampling: ChromaSubsampling::Yuv420,
               dimensions: Dimensions {
@@ -295,19 +300,19 @@ mod tests {
               },
               frames: 0,
               orientation: Orientation::new(),
-            },
+            }),
             size: 0,
           },
           Track {
-            codec: Codec::Mp3,
-            info: TrackInfo::Audio {
+            codec: Some(Codec::Mp3),
+            info: Some(TrackInfo::Audio {
               channels: 2,
               sample_rate: 44100,
-            },
+            }),
             size: 0,
           },
         ],
-        ty: VideoType::Mp4,
+        ty: Some(VideoType::Mp4),
       })
       .unwrap(),
       r#"{"duration":0,"path":"foo.mp4","tracks":[{"codec":"h264","info":{"type":"video","bit_depth":8,"chroma_subsampling":"4:2:0","dimensions":{"height":1,"width":2},"frames":0,"orientation":{"mirrored":false,"rotation":0}},"size":0},{"codec":"mp3","info":{"type":"audio","channels":2,"sample_rate":44100},"size":0}],"type":"mp4"}"#,
