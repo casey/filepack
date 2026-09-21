@@ -3,7 +3,6 @@ use super::*;
 #[allow(private_interfaces)]
 #[skip_serializing_none]
 #[derive(Clone, Debug, Default, Encode, Decode, PartialEq, Serialize)]
-#[deco(allow_unknown_fields, allow_unknown_variants)]
 pub struct Metadata {
   #[n(0)]
   pub artwork: Option<Image>,

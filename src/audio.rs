@@ -2,7 +2,6 @@ use super::*;
 
 #[skip_serializing_none]
 #[derive(Clone, Debug, Decode, Encode, PartialEq, Serialize)]
-#[deco(allow_unknown_fields, allow_unknown_variants)]
 pub(crate) struct Audio {
   #[n(0)]
   pub(crate) album: Text,

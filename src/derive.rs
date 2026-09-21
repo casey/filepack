@@ -85,217 +85,6 @@ fn all_required() {
 }
 
 #[test]
-fn allow_unknown_variants() {
-  #[derive(Debug, Decode, Encode, PartialEq)]
-  enum Foo {
-    #[n(0)]
-    Bar,
-  }
-
-  #[derive(Debug, Decode, Encode, PartialEq)]
-  #[deco(allow_unknown_variants)]
-  struct Bar {
-    #[n(0)]
-    bar: Option<Foo>,
-    #[n(1)]
-    foo: Option<u64>,
-  }
-
-  for bar in [None, Some(Foo::Bar)] {
-    let bar = Bar { bar, foo: Some(2) };
-    let bytes = bar.encode_to_vec();
-    assert_eq!(Bar::decode_from_slice(&bytes).unwrap(), bar);
-    assert_eq!(
-      Bar::decode_from_slice_with_options(DecodeOptions::strict(), &bytes).unwrap(),
-      bar,
-    );
-  }
-
-  let bytes = BTreeMap::<u64, Vec<u8>>::from([(0, vec![1, 0xf8]), (1, vec![2])]).encode_to_vec();
-  assert_eq!(
-    Bar::decode_from_slice(&bytes).unwrap(),
-    Bar {
-      bar: None,
-      foo: Some(2)
-    },
-  );
-  assert_matches!(
-    Bar::decode_from_slice_with_options(DecodeOptions::strict(), &bytes),
-    Err(DecodeError::InvalidDiscriminant {
-      discriminant: 1,
-      name: "Foo",
-    }),
-  );
-}
-
-#[test]
-fn allow_unknown_variants_custom_decoder() {
-  #[derive(Debug, Decode, PartialEq)]
-  enum Foo {
-    #[n(0)]
-    Bar,
-  }
-
-  #[derive(Debug, Decode, PartialEq)]
-  #[deco(allow_unknown_variants)]
-  struct Bar {
-    #[deco(decode_with = Foo::decode)]
-    #[n(0)]
-    foo: Option<Foo>,
-  }
-
-  let bytes = BTreeMap::from([(0u64, vec![1u64])]).encode_to_vec();
-  assert_matches!(
-    Bar::decode_from_slice(&bytes),
-    Err(DecodeError::InvalidDiscriminant {
-      discriminant: 1,
-      name: "Foo",
-    }),
-  );
-}
-
-#[test]
-fn allow_unknown_variants_errors() {
-  #[derive(Debug, Decode, PartialEq)]
-  enum Foo {
-    #[n(0)]
-    Bar {
-      #[n(0)]
-      foo: bool,
-    },
-  }
-
-  #[derive(Debug, Decode, PartialEq)]
-  #[deco(allow_unknown_variants)]
-  struct Bar {
-    #[n(0)]
-    foo: Option<Foo>,
-  }
-
-  for (payload, expected) in [
-    (vec![0x80], "empty integer"),
-    (vec![0, 0x82, 0, 2], "invalid boolean value 2"),
-  ] {
-    let bytes = BTreeMap::<u64, Vec<u8>>::from([(0, payload)]).encode_to_vec();
-    assert_eq!(
-      Bar::decode_from_slice(&bytes).unwrap_err().to_string(),
-      expected
-    );
-  }
-
-  assert_matches!(
-    Bar::decode_from_slice(&[0x83, 0, 0x82, 1]),
-    Err(DecodeError::Truncated),
-  );
-}
-
-#[test]
-fn allow_unknown_variants_scope() {
-  #[derive(Debug, Decode, PartialEq)]
-  enum Foo {
-    #[n(0)]
-    Bar,
-  }
-
-  #[derive(Debug, Decode, PartialEq)]
-  #[deco(allow_unknown_variants)]
-  struct Bar<T> {
-    #[n(0)]
-    foo: Option<T>,
-  }
-
-  #[derive(Debug, Decode, PartialEq)]
-  #[deco(allow_unknown_variants)]
-  struct Baz {
-    #[n(0)]
-    foo: Foo,
-  }
-
-  #[derive(Debug, Decode, PartialEq)]
-  struct Qux<T> {
-    #[n(0)]
-    foo: Option<T>,
-  }
-
-  #[derive(Debug, Decode, PartialEq)]
-  enum Quux {
-    #[n(0)]
-    Foo {
-      #[n(0)]
-      foo: Option<Foo>,
-    },
-  }
-
-  #[track_caller]
-  fn rejects<T: Debug + DecodeOwned>(value: impl Encode) {
-    assert_matches!(
-      T::decode_from_slice(&value.encode_to_vec()),
-      Err(DecodeError::InvalidDiscriminant {
-        discriminant: 1,
-        name: "Foo",
-      }),
-    );
-  }
-
-  let fields = BTreeMap::from([(0u64, vec![1u64])]);
-  rejects::<Baz>(&fields);
-  rejects::<Qux<Foo>>(&fields);
-  rejects::<Bar<Qux<Foo>>>(BTreeMap::from([(0u64, &fields)]));
-  rejects::<Bar<Vec<Foo>>>(BTreeMap::from([(0u64, vec![vec![1u64]])]));
-  rejects::<Bar<Quux>>(BTreeMap::from([(
-    0u64,
-    [vec![0], fields.encode_to_vec()].concat(),
-  )]));
-
-  let bytes = BTreeMap::from([(0u64, &fields)]).encode_to_vec();
-  assert_matches!(
-    Qux::<Bar<Foo>>::decode_from_slice(&bytes),
-    Ok(Qux {
-      foo: Some(Bar { foo: None })
-    }),
-  );
-}
-
-#[test]
-fn allow_unknown_variants_validate() {
-  #[derive(Debug, Decode, PartialEq)]
-  #[deco(validate)]
-  enum Foo {
-    #[n(0)]
-    Bar,
-  }
-
-  impl Validate for Foo {
-    fn validate(&self) -> DecodeResult {
-      Err(DecodeError::UnexpectedKey)
-    }
-  }
-
-  #[derive(Debug, Decode, PartialEq)]
-  #[deco(allow_unknown_fields, allow_unknown_variants, validate)]
-  struct Bar {
-    #[n(0)]
-    foo: Option<Foo>,
-  }
-
-  impl Validate for Bar {
-    fn validate(&self) -> DecodeResult {
-      ensure!(self.foo.is_some(), decode_error::MissingElement);
-      Ok(())
-    }
-  }
-
-  assert_matches!(
-    Bar::decode_from_slice(&with_unknown_field(BTreeMap::from([(0u64, vec![1u64])]))),
-    Err(DecodeError::MissingElement),
-  );
-  assert_matches!(
-    Bar::decode_from_slice(&BTreeMap::from([(0u64, vec![0u64])]).encode_to_vec()),
-    Err(DecodeError::UnexpectedKey),
-  );
-}
-
-#[test]
 fn borrowed_field() {
   #[derive(Debug, Decode, Encode, PartialEq)]
   struct Foo<'a> {
@@ -444,67 +233,6 @@ fn encode_with_required() {
   }
 
   assert_eq!(Foo { bar: Foreign(99) }.encode_to_vec(), [0x82, 0x00, 0x64],);
-}
-
-#[test]
-fn enum_allow_unknown_fields() {
-  #[derive(Debug, Decode, PartialEq)]
-  #[deco(allow_unknown_fields)]
-  enum Foo {
-    #[n(0)]
-    Bar {
-      #[n(0)]
-      foo: u64,
-      #[n(1)]
-      bar: Option<u64>,
-    },
-  }
-
-  let bytes = [0x86, 0, 0x84, 0, 1, 2, 3];
-
-  assert_eq!(
-    Foo::decode_from_slice(&bytes).unwrap(),
-    Foo::Bar { foo: 1, bar: None },
-  );
-  assert_matches!(
-    Foo::decode_from_slice_with_options(DecodeOptions::strict(), &bytes),
-    Err(DecodeError::UnknownField { key: 2 }),
-  );
-}
-
-#[test]
-fn enum_allow_unknown_variants() {
-  #[derive(Debug, Decode, Encode, PartialEq)]
-  enum Foo {
-    #[n(0)]
-    Bar,
-  }
-
-  #[derive(Debug, Decode, Encode, PartialEq)]
-  #[deco(allow_unknown_variants)]
-  enum Bar {
-    #[n(0)]
-    Baz {
-      #[n(0)]
-      foo: Option<Foo>,
-      #[n(1)]
-      bar: u64,
-    },
-  }
-
-  let bytes = [0x86, 0, 0x84, 0, 1, 1, 2];
-
-  assert_eq!(
-    Bar::decode_from_slice(&bytes).unwrap(),
-    Bar::Baz { foo: None, bar: 2 },
-  );
-  assert_matches!(
-    Bar::decode_from_slice_with_options(DecodeOptions::strict(), &bytes),
-    Err(DecodeError::InvalidDiscriminant {
-      discriminant: 1,
-      name: "Foo",
-    }),
-  );
 }
 
 #[test]
@@ -666,7 +394,6 @@ fn enum_round_trip() {
 #[test]
 fn enum_unconsumed_unit_payload() {
   #[derive(Debug, Decode)]
-  #[deco(allow_unknown_fields)]
   enum Foo {
     #[n(0)]
     Bar,
@@ -675,6 +402,65 @@ fn enum_unconsumed_unit_payload() {
   assert_matches!(
     Foo::decode_from_slice(&[0x82, 0x00, 0x00]),
     Err(DecodeError::UnconsumedElements),
+  );
+}
+
+#[test]
+fn enum_unknown_fields() {
+  #[derive(Debug, Decode, PartialEq)]
+  enum Foo {
+    #[n(0)]
+    Bar {
+      #[n(0)]
+      foo: u64,
+      #[n(1)]
+      bar: Option<u64>,
+    },
+  }
+
+  let bytes = [0x86, 0, 0x84, 0, 1, 2, 3];
+
+  assert_eq!(
+    Foo::decode_from_slice(&bytes).unwrap(),
+    Foo::Bar { foo: 1, bar: None },
+  );
+  assert_matches!(
+    Foo::decode_from_slice_with_options(DecodeOptions::strict(), &bytes),
+    Err(DecodeError::UnknownField { key: 2 }),
+  );
+}
+
+#[test]
+fn enum_unknown_variants() {
+  #[derive(Debug, Decode, Encode, PartialEq)]
+  enum Foo {
+    #[n(0)]
+    Bar,
+  }
+
+  #[derive(Debug, Decode, Encode, PartialEq)]
+  enum Bar {
+    #[n(0)]
+    Baz {
+      #[n(0)]
+      foo: Option<Foo>,
+      #[n(1)]
+      bar: u64,
+    },
+  }
+
+  let bytes = [0x86, 0, 0x84, 0, 1, 1, 2];
+
+  assert_eq!(
+    Bar::decode_from_slice(&bytes).unwrap(),
+    Bar::Baz { foo: None, bar: 2 },
+  );
+  assert_matches!(
+    Bar::decode_from_slice_with_options(DecodeOptions::strict(), &bytes),
+    Err(DecodeError::InvalidDiscriminant {
+      discriminant: 1,
+      name: "Foo",
+    }),
   );
 }
 
@@ -741,6 +527,38 @@ fn single_field() {
 }
 
 #[test]
+fn strict() {
+  #[derive(Debug, Decode, PartialEq)]
+  #[deco(strict)]
+  struct Foo {
+    #[n(0)]
+    foo: u64,
+  }
+
+  #[derive(Debug, Decode, PartialEq)]
+  #[deco(strict)]
+  enum Bar {
+    #[n(0)]
+    Baz {
+      #[n(0)]
+      foo: u64,
+    },
+  }
+
+  let fields = with_unknown_field(BTreeMap::from([(0u64, 1u64)]));
+
+  assert_matches!(
+    Foo::decode_from_slice(&fields),
+    Err(DecodeError::UnconsumedEntries),
+  );
+
+  assert_matches!(
+    Bar::decode_from_slice(&Encoder::frame([vec![0], fields].concat())),
+    Err(DecodeError::UnconsumedEntries),
+  );
+}
+
+#[test]
 fn transparent_named() {
   #[derive(Debug, Encode, Decode, PartialEq)]
   #[deco(transparent)]
@@ -760,6 +578,214 @@ fn transparent_newtype() {
 
   assert_deco(Foo(99), "63");
   assert_deco_eq(Foo(99), 99u64);
+}
+
+#[test]
+fn unknown_variants() {
+  #[derive(Debug, Decode, Encode, PartialEq)]
+  enum Foo {
+    #[n(0)]
+    Bar,
+  }
+
+  #[derive(Debug, Decode, Encode, PartialEq)]
+  struct Bar {
+    #[n(0)]
+    bar: Option<Foo>,
+    #[n(1)]
+    foo: Option<u64>,
+  }
+
+  for bar in [None, Some(Foo::Bar)] {
+    let bar = Bar { bar, foo: Some(2) };
+    let bytes = bar.encode_to_vec();
+    assert_eq!(Bar::decode_from_slice(&bytes).unwrap(), bar);
+    assert_eq!(
+      Bar::decode_from_slice_with_options(DecodeOptions::strict(), &bytes).unwrap(),
+      bar,
+    );
+  }
+
+  let bytes = BTreeMap::<u64, Vec<u8>>::from([(0, vec![1, 0xf8]), (1, vec![2])]).encode_to_vec();
+  assert_eq!(
+    Bar::decode_from_slice(&bytes).unwrap(),
+    Bar {
+      bar: None,
+      foo: Some(2)
+    },
+  );
+  assert_matches!(
+    Bar::decode_from_slice_with_options(DecodeOptions::strict(), &bytes),
+    Err(DecodeError::InvalidDiscriminant {
+      discriminant: 1,
+      name: "Foo",
+    }),
+  );
+}
+
+#[test]
+fn unknown_variants_custom_decoder() {
+  #[derive(Debug, Decode, PartialEq)]
+  enum Foo {
+    #[n(0)]
+    Bar,
+  }
+
+  #[derive(Debug, Decode, PartialEq)]
+  struct Bar {
+    #[deco(decode_with = Foo::decode)]
+    #[n(0)]
+    foo: Option<Foo>,
+  }
+
+  let bytes = BTreeMap::from([(0u64, vec![1u64])]).encode_to_vec();
+  assert_matches!(
+    Bar::decode_from_slice(&bytes),
+    Err(DecodeError::InvalidDiscriminant {
+      discriminant: 1,
+      name: "Foo",
+    }),
+  );
+}
+
+#[test]
+fn unknown_variants_errors() {
+  #[derive(Debug, Decode, PartialEq)]
+  enum Foo {
+    #[n(0)]
+    Bar {
+      #[n(0)]
+      foo: bool,
+    },
+  }
+
+  #[derive(Debug, Decode, PartialEq)]
+  struct Bar {
+    #[n(0)]
+    foo: Option<Foo>,
+  }
+
+  for (payload, expected) in [
+    (vec![0x80], "empty integer"),
+    (vec![0, 0x82, 0, 2], "invalid boolean value 2"),
+  ] {
+    let bytes = BTreeMap::<u64, Vec<u8>>::from([(0, payload)]).encode_to_vec();
+    assert_eq!(
+      Bar::decode_from_slice(&bytes).unwrap_err().to_string(),
+      expected
+    );
+  }
+
+  assert_matches!(
+    Bar::decode_from_slice(&[0x83, 0, 0x82, 1]),
+    Err(DecodeError::Truncated),
+  );
+}
+
+#[test]
+fn unknown_variants_scope() {
+  #[derive(Debug, Decode, PartialEq)]
+  enum Foo {
+    #[n(0)]
+    Bar,
+  }
+
+  #[derive(Debug, Decode, PartialEq)]
+  struct Bar<T> {
+    #[n(0)]
+    foo: Option<T>,
+  }
+
+  #[derive(Debug, Decode, PartialEq)]
+  struct Baz {
+    #[n(0)]
+    foo: Foo,
+  }
+
+  #[derive(Debug, Decode, PartialEq)]
+  #[deco(strict)]
+  struct Qux<T> {
+    #[n(0)]
+    foo: Option<T>,
+  }
+
+  #[derive(Debug, Decode, PartialEq)]
+  #[deco(strict)]
+  enum Quux {
+    #[n(0)]
+    Foo {
+      #[n(0)]
+      foo: Option<Foo>,
+    },
+  }
+
+  #[track_caller]
+  fn rejects<T: Debug + DecodeOwned>(value: impl Encode) {
+    assert_matches!(
+      T::decode_from_slice(&value.encode_to_vec()),
+      Err(DecodeError::InvalidDiscriminant {
+        discriminant: 1,
+        name: "Foo",
+      }),
+    );
+  }
+
+  let fields = BTreeMap::from([(0u64, vec![1u64])]);
+  rejects::<Baz>(&fields);
+  rejects::<Qux<Foo>>(&fields);
+  rejects::<Bar<Qux<Foo>>>(BTreeMap::from([(0u64, &fields)]));
+  rejects::<Bar<Vec<Foo>>>(BTreeMap::from([(0u64, vec![vec![1u64]])]));
+  rejects::<Bar<Quux>>(BTreeMap::from([(
+    0u64,
+    [vec![0], fields.encode_to_vec()].concat(),
+  )]));
+
+  let bytes = BTreeMap::from([(0u64, &fields)]).encode_to_vec();
+  assert_matches!(
+    Qux::<Bar<Foo>>::decode_from_slice(&bytes),
+    Ok(Qux {
+      foo: Some(Bar { foo: None })
+    }),
+  );
+}
+
+#[test]
+fn unknown_variants_validate() {
+  #[derive(Debug, Decode, PartialEq)]
+  #[deco(validate)]
+  enum Foo {
+    #[n(0)]
+    Bar,
+  }
+
+  impl Validate for Foo {
+    fn validate(&self) -> DecodeResult {
+      Err(DecodeError::UnexpectedKey)
+    }
+  }
+
+  #[derive(Debug, Decode, PartialEq)]
+  #[deco(validate)]
+  struct Bar {
+    #[n(0)]
+    foo: Option<Foo>,
+  }
+
+  impl Validate for Bar {
+    fn validate(&self) -> DecodeResult {
+      ensure!(self.foo.is_some(), decode_error::MissingElement);
+      Ok(())
+    }
+  }
+
+  assert_matches!(
+    Bar::decode_from_slice(&with_unknown_field(BTreeMap::from([(0u64, vec![1u64])]))),
+    Err(DecodeError::MissingElement),
+  );
+  assert_matches!(
+    Bar::decode_from_slice(&BTreeMap::from([(0u64, vec![0u64])]).encode_to_vec()),
+    Err(DecodeError::UnexpectedKey),
+  );
 }
 
 #[test]
@@ -795,7 +821,7 @@ fn validate() {
 #[test]
 fn validate_enum() {
   #[derive(Debug, Encode, Decode, PartialEq)]
-  #[deco(allow_unknown_fields, validate)]
+  #[deco(validate)]
   enum Foo {
     #[n(0)]
     Bar {

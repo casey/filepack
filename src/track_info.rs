@@ -2,7 +2,6 @@ use super::*;
 
 #[derive(Clone, Copy, Debug, Decode, Encode, PartialEq, Serialize)]
 #[serde(rename_all = "snake_case", tag = "type")]
-#[deco(allow_unknown_fields, allow_unknown_variants)]
 pub(crate) enum TrackInfo {
   #[n(0)]
   Audio {
