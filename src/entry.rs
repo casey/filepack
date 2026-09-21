@@ -2,6 +2,7 @@ use super::*;
 
 #[allow(clippy::arbitrary_source_item_ordering)]
 #[derive(Clone, Debug, Decode, Encode, EnumDiscriminants, PartialEq)]
+#[deco(allow_unknown_fields, allow_unknown_variants)]
 #[strum_discriminants(
   allow(clippy::arbitrary_source_item_ordering),
   derive(Display),

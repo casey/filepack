@@ -2126,7 +2126,7 @@ fn package_item_video() {
               codec: Some(Codec::H264),
               info: Some(TrackInfo::Video {
                 bit_depth: 8,
-                chroma_subsampling: ChromaSubsampling::Yuv420,
+                chroma_subsampling: Some(ChromaSubsampling::Yuv420),
                 dimensions: Dimensions {
                   height: 1,
                   width: 2,
@@ -2486,7 +2486,7 @@ fn package_page_renders_video_media() {
               codec: Some(Codec::H264),
               info: Some(TrackInfo::Video {
                 bit_depth: 8,
-                chroma_subsampling: ChromaSubsampling::Yuv420,
+                chroma_subsampling: Some(ChromaSubsampling::Yuv420),
                 dimensions: Dimensions {
                   height: 1,
                   width: 2,

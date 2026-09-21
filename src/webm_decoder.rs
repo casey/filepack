@@ -138,7 +138,7 @@ impl WebmDecoder {
             codec: Some(codec),
             info: Some(TrackInfo::Video {
               bit_depth: color_info.bit_depth,
-              chroma_subsampling: color_info.chroma_subsampling,
+              chroma_subsampling: Some(color_info.chroma_subsampling),
               dimensions: Dimensions {
                 height: video.pixel_height().get(),
                 width: video.pixel_width().get(),
@@ -332,7 +332,7 @@ mod tests {
             codec: Some(Codec::Vp9),
             info: Some(TrackInfo::Video {
               bit_depth: 8,
-              chroma_subsampling: ChromaSubsampling::Yuv420,
+              chroma_subsampling: Some(ChromaSubsampling::Yuv420),
               dimensions: Dimensions {
                 height: 1,
                 width: 2,
@@ -369,7 +369,7 @@ mod tests {
             codec: Some(Codec::Vp8),
             info: Some(TrackInfo::Video {
               bit_depth: 8,
-              chroma_subsampling: ChromaSubsampling::Yuv420,
+              chroma_subsampling: Some(ChromaSubsampling::Yuv420),
               dimensions: Dimensions {
                 height: 1,
                 width: 2,
@@ -400,7 +400,7 @@ mod tests {
           codec: Some(Codec::Vp9),
           info: Some(TrackInfo::Video {
             bit_depth: 8,
-            chroma_subsampling: ChromaSubsampling::Yuv420,
+            chroma_subsampling: Some(ChromaSubsampling::Yuv420),
             dimensions: Dimensions {
               height: 1,
               width: 2,
@@ -450,7 +450,7 @@ mod tests {
         .info,
       Some(TrackInfo::Video {
         bit_depth: 8,
-        chroma_subsampling: ChromaSubsampling::Yuv420,
+        chroma_subsampling: Some(ChromaSubsampling::Yuv420),
         dimensions: Dimensions {
           height: 1,
           width: 2,
@@ -475,7 +475,7 @@ mod tests {
           codec: Some(Codec::Vp9),
           info: Some(TrackInfo::Video {
             bit_depth: 8,
-            chroma_subsampling: ChromaSubsampling::Yuv420,
+            chroma_subsampling: Some(ChromaSubsampling::Yuv420),
             dimensions: Dimensions {
               height: 1,
               width: 2,
@@ -507,7 +507,7 @@ mod tests {
         .info,
       Some(TrackInfo::Video {
         bit_depth: 10,
-        chroma_subsampling: ChromaSubsampling::Yuv420,
+        chroma_subsampling: Some(ChromaSubsampling::Yuv420),
         dimensions: Dimensions {
           height: 1,
           width: 2,
