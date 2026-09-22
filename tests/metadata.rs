@@ -40,6 +40,76 @@ fn create_allows_nested_paths() {
 }
 
 #[test]
+fn create_checks_audio_discs() {
+  #[track_caller]
+  fn case(paths: [&str; 3], expected: Option<&str>) {
+    let mut test = Test::new();
+
+    for (path, track) in [("foo.flac", "1"), ("bar.flac", "2")] {
+      test = test.write(
+        path,
+        FlacBuilder::new()
+          .tag("ALBUM", "qux")
+          .tag("ARTIST", "baz")
+          .tag("DISCNUMBER", "1")
+          .tag("DISCTOTAL", "2")
+          .tag("TITLE", "foo")
+          .tag("TRACKNUMBER", track)
+          .tag("TRACKTOTAL", "2")
+          .build(),
+      );
+    }
+
+    let test = test
+      .write(
+        "baz.mp3",
+        Mp3Builder::new()
+          .tag("TALB", "qux")
+          .tag("TPE1", "baz")
+          .tag("TPOS", "2/2")
+          .tag("TIT2", "bar")
+          .tag("TRCK", "1/1")
+          .frames(1)
+          .build(),
+      )
+      .write(
+        "metadata.yaml",
+        format!(
+          "
+            creator: baz
+            title: qux
+            media:
+              type: audio
+              items:
+                - path: {}
+                - path: {}
+                - path: {}
+          ",
+          paths[0], paths[1], paths[2],
+        ),
+      )
+      .arg("create");
+
+    if let Some(expected) = expected {
+      test.stderr(expected).failure();
+    } else {
+      test.success();
+    }
+  }
+
+  case(["foo.flac", "bar.flac", "baz.mp3"], None);
+  case(
+    ["foo.flac", "baz.mp3", "bar.flac"],
+    Some(
+      "
+        error: invalid track position
+               └─ track `baz.mp3` is disc 2 track 1 but expected disc 1 track 2
+      ",
+    ),
+  );
+}
+
+#[test]
 fn create_checks_metadata() {
   Test::new()
     .write(
@@ -227,6 +297,11 @@ fn create_extracts_track_tags() {
     .write(
       "metadata.yaml",
       "
+        creator: baz
+        title: qux
+        package:
+          creator: foo
+          title: bar
         media:
           type: audio
           items:
@@ -239,13 +314,12 @@ fn create_extracts_track_tags() {
     .stdout(
       r#"
         {
+          "creator": "baz",
           "media": {
             "type": "audio",
             "items": [
               {
                 "content": {
-                  "album": "qux",
-                  "artist": "baz",
                   "channels": 2,
                   "disc": 1,
                   "discs": 1,
@@ -254,14 +328,17 @@ fn create_extracts_track_tags() {
                   "sample_rate": 44100,
                   "samples": 44100,
                   "size": 1024,
-                  "track": 1,
-                  "tracks": 1,
                   "type": "flac"
                 },
                 "title": "bar"
               }
             ]
-          }
+          },
+          "package": {
+            "creator": "foo",
+            "title": "bar"
+          },
+          "title": "qux"
         }
       "#,
     )
@@ -571,6 +648,56 @@ fn create_loads_video_placeholder() {
 }
 
 #[test]
+fn create_rejects_audio_metadata() {
+  #[track_caller]
+  fn case(metadata: &str, expected: &str) {
+    Test::new()
+      .write(
+        "foo.flac",
+        FlacBuilder::new()
+          .tag("ALBUM", "qux")
+          .tag("ARTIST", "baz")
+          .tag("DISCNUMBER", "1")
+          .tag("DISCTOTAL", "1")
+          .tag("TITLE", "bar")
+          .tag("TRACKNUMBER", "1")
+          .tag("TRACKTOTAL", "1")
+          .build(),
+      )
+      .write("cover.png", PngBuilder::new().build())
+      .write(
+        "metadata.yaml",
+        format!(
+          "{metadata}\nartwork: cover.png\nmedia:\n  type: audio\n  items:\n    - path: foo.flac\n"
+        ),
+      )
+      .args(["create", "--generate"])
+      .assert_file_count(".", 3)
+      .stderr(expected)
+      .failure();
+  }
+
+  case("title: qux", "error: metadata missing creator\n");
+  case("creator: baz", "error: metadata missing title\n");
+  case(
+    "creator: foo\ntitle: qux",
+    "error: track `foo.flac` artist tag `baz` does not match metadata creator `foo`\n",
+  );
+  case(
+    "creator: baz\ntitle: foo",
+    "error: track `foo.flac` album tag `qux` does not match metadata title `foo`\n",
+  );
+  case(
+    "creator: BAZ\ntitle: qux",
+    "error: track `foo.flac` artist tag `baz` does not match metadata creator `BAZ`\n",
+  );
+  case(
+    "creator: baz\ntitle: QUX",
+    "error: track `foo.flac` album tag `qux` does not match metadata title `QUX`\n",
+  );
+}
+
+#[test]
 fn create_rejects_extra_files_in_media_packages() {
   Test::new()
     .write(
@@ -588,6 +715,8 @@ fn create_rejects_extra_files_in_media_packages() {
     .write(
       "metadata.yaml",
       "
+        creator: baz
+        title: qux
         media:
           type: audio
           items:
@@ -647,6 +776,8 @@ fn create_rejects_invalid_track_positions() {
     .write(
       "metadata.yaml",
       "
+        creator: baz
+        title: qux
         media:
           type: audio
           items:
@@ -670,6 +801,8 @@ fn create_rejects_invalid_tracks() {
     .write(
       "metadata.yaml",
       "
+        creator: baz
+        title: qux
         media:
           type: audio
           items:

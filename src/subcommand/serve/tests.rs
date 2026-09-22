@@ -2352,8 +2352,6 @@ fn package_page_renders_audio_media() {
       items: vec![
         Item {
           content: Audio {
-            album: "qux".parse().unwrap(),
-            artist: "baz".parse().unwrap(),
             channels: 2,
             disc: 1,
             discs: 1,
@@ -2362,16 +2360,12 @@ fn package_page_renders_audio_media() {
             sample_rate: 44100,
             samples: 9_922_500,
             size: 0,
-            track: 1,
-            tracks: 2,
             ty: Some(AudioType::Flac),
           },
           title: Some("foo".parse().unwrap()),
         },
         Item {
           content: Audio {
-            album: "qux".parse().unwrap(),
-            artist: "baz".parse().unwrap(),
             channels: 2,
             disc: 1,
             discs: 1,
@@ -2380,8 +2374,6 @@ fn package_page_renders_audio_media() {
             sample_rate: 44100,
             samples: 44100,
             size: 0,
-            track: 2,
-            tracks: 2,
             ty: Some(AudioType::Flac),
           },
           title: Some("bar".parse().unwrap()),
@@ -2988,15 +2980,7 @@ fn static_files() {
 fn tracks(filenames: &[&str]) -> Vec<Item<Audio>> {
   filenames
     .iter()
-    .enumerate()
-    .map(|(i, filename)| {
-      let mut audio = Item::<Audio>::test(filename);
-      audio.content.disc = 1;
-      audio.content.discs = 1;
-      audio.content.track = i.into_u64() + 1;
-      audio.content.tracks = filenames.len().into_u64();
-      audio
-    })
+    .map(|filename| Item::test(filename))
     .collect()
 }
 

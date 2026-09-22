@@ -8,19 +8,8 @@ pub(crate) struct ItemHtml {
 }
 
 impl ItemHtml {
-  fn audio(&self) -> Option<&Audio> {
-    if let Media::Audio { items } = self.media() {
-      Some(&items[self.index].content)
-    } else {
-      None
-    }
-  }
-
   fn creator(&self) -> Option<&Text> {
-    self
-      .audio()
-      .map(|audio| &audio.artist)
-      .or(self.metadata.creator.as_ref())
+    self.metadata.creator.as_ref()
   }
 
   fn item(&self) -> &dyn MediaItem {
@@ -32,10 +21,7 @@ impl ItemHtml {
   }
 
   fn title(&self) -> Option<&Text> {
-    self
-      .audio()
-      .map(|audio| &audio.album)
-      .or(self.metadata.title.as_ref())
+    self.metadata.title.as_ref()
   }
 }
 
@@ -375,9 +361,9 @@ mod tests {
             <hgroup>
               <h1>Track 1</h1>
               <p>
-                <span>bar</span>
+                <span>baz</span>
                 <a href=/package/{fingerprint}>
-                  foo
+                  qux
                 </a>
               </p>
             </hgroup>

@@ -94,8 +94,6 @@ mod tests {
         items: vec![
           Item {
             content: Audio {
-              album: "qux".parse().unwrap(),
-              artist: "baz".parse().unwrap(),
               channels: 2,
               disc: 1,
               discs: 1,
@@ -104,16 +102,12 @@ mod tests {
               sample_rate: 44100,
               samples: 9_922_500,
               size: 0,
-              track: 1,
-              tracks: 2,
               ty: Some(AudioType::Flac),
             },
             title: Some("foo".parse().unwrap()),
           },
           Item {
             content: Audio {
-              album: "qux".parse().unwrap(),
-              artist: "baz".parse().unwrap(),
               channels: 2,
               disc: 1,
               discs: 1,
@@ -122,8 +116,6 @@ mod tests {
               sample_rate: 96000,
               samples: 96000,
               size: 0,
-              track: 2,
-              tracks: 2,
               ty: Some(AudioType::Flac),
             },
             title: None,
@@ -223,8 +215,6 @@ mod tests {
         items: vec![
           Item {
             content: Audio {
-              album: "qux".parse().unwrap(),
-              artist: "baz".parse().unwrap(),
               channels: 2,
               disc: 1,
               discs: 2,
@@ -233,16 +223,12 @@ mod tests {
               sample_rate: 44100,
               samples: 44100,
               size: 0,
-              track: 1,
-              tracks: 2,
               ty: Some(AudioType::Flac),
             },
             title: Some("foo".parse().unwrap()),
           },
           Item {
             content: Audio {
-              album: "qux".parse().unwrap(),
-              artist: "baz".parse().unwrap(),
               channels: 2,
               disc: 1,
               discs: 2,
@@ -251,16 +237,12 @@ mod tests {
               sample_rate: 44100,
               samples: 44100,
               size: 0,
-              track: 2,
-              tracks: 2,
               ty: Some(AudioType::Flac),
             },
             title: Some("bar".parse().unwrap()),
           },
           Item {
             content: Audio {
-              album: "qux".parse().unwrap(),
-              artist: "baz".parse().unwrap(),
               channels: 2,
               disc: 2,
               discs: 2,
@@ -269,8 +251,6 @@ mod tests {
               sample_rate: 44100,
               samples: 44100,
               size: 0,
-              track: 1,
-              tracks: 1,
               ty: Some(AudioType::Flac),
             },
             title: Some("baz".parse().unwrap()),
@@ -375,8 +355,6 @@ mod tests {
   fn duration_saturates() {
     let audio = Item {
       content: Audio {
-        album: "qux".parse().unwrap(),
-        artist: "baz".parse().unwrap(),
         channels: 2,
         disc: 1,
         discs: 1,
@@ -385,8 +363,6 @@ mod tests {
         sample_rate: 1,
         samples: u64::MAX,
         size: 0,
-        track: 1,
-        tracks: 2,
         ty: Some(AudioType::Flac),
       },
       title: Some("foo".parse().unwrap()),
