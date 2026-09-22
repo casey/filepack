@@ -16,7 +16,7 @@ impl<T: DecodeOwned + MagicBytes> Decode<'_> for WithMagicBytes<T> {
     ensure!(
       actual == T::MAGIC_BYTES,
       decode_error::MagicBytes {
-        actual,
+        actual: &actual[..actual.len().min(T::MAGIC_BYTES.len() + 1)],
         expected: T::MAGIC_BYTES,
       },
     );
@@ -36,6 +36,19 @@ mod tests {
 
   impl MagicBytes for Foo {
     const MAGIC_BYTES: MagicByteArray = *b"foo\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
+  }
+
+  #[test]
+  fn decode_error_after_magic_bytes() {
+    let mut encoder = Encoder::new();
+    BTreeMap::<u64, u64>::new().encode(&mut encoder);
+    encoder.bytes(&Foo::MAGIC_BYTES);
+    assert_eq!(
+      Foo::decode_magic_bytes(&encoder.finish())
+        .unwrap_err()
+        .to_string(),
+      "missing required field: 0",
+    );
   }
 
   #[test]
