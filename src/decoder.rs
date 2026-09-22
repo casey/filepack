@@ -51,6 +51,10 @@ impl<'a> Decoder<'a> {
     Ok(Self::with_options(self.options, self.bytes()?))
   }
 
+  pub(crate) fn empty_map<K>(&self) -> MapDecoder<'a, K> {
+    MapDecoder::new(Self::with_options(self.options, &[]))
+  }
+
   pub(crate) fn finish(self) -> DecodeResult {
     ensure!(self.is_empty(), decode_error::TrailingBytes);
     Ok(())

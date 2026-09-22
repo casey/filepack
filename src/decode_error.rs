@@ -11,6 +11,8 @@ pub enum DecodeError {
   Component { source: ComponentError },
   #[snafu(display("empty integer"))]
   EmptyInteger,
+  #[snafu(display("enum variant with empty map"))]
+  EmptyVariantMap,
   #[snafu(display("failed to parse {name}"))]
   FromStr {
     name: &'static str,

@@ -7,8 +7,18 @@ pub struct MapEncoder<'a, K> {
 }
 
 impl<'a, K: Encode + PartialOrd> MapEncoder<'a, K> {
+  fn len(&self) -> usize {
+    self.encoder.len() - self.end
+  }
+
   pub fn finish(self) {
-    self.encoder.head(self.encoder.len() - self.end);
+    self.encoder.head(self.len());
+  }
+
+  pub fn finish_if_nonempty(self) {
+    if self.len() > 0 {
+      self.finish();
+    }
   }
 
   pub fn item(&mut self, key: K, value: impl Encode) {

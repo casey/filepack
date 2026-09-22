@@ -6,6 +6,10 @@ pub(crate) struct MapDecoder<'a, K> {
 }
 
 impl<'a, K> MapDecoder<'a, K> {
+  pub(crate) fn is_empty(&self) -> bool {
+    self.decoder.is_empty()
+  }
+
   pub(crate) fn new(decoder: Decoder<'a>) -> Self {
     Self {
       decoder,

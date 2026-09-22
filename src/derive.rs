@@ -236,6 +236,40 @@ fn encode_with_required() {
 }
 
 #[test]
+fn enum_added_optional_field() {
+  #[derive(Debug, Decode, Encode, PartialEq)]
+  enum Foo {
+    #[n(0)]
+    Bar,
+  }
+
+  #[derive(Debug, Decode, Encode, PartialEq)]
+  enum Bar {
+    #[n(0)]
+    Bar {
+      #[n(0)]
+      foo: Option<u64>,
+    },
+  }
+
+  assert_deco(Foo::Bar, "00");
+  assert_deco(Bar::Bar { foo: None }, "00");
+  assert_deco(Bar::Bar { foo: Some(1) }, "8400820001");
+
+  let bytes = Bar::Bar { foo: Some(1) }.encode_to_vec();
+  assert_eq!(Foo::decode_from_slice(&bytes).unwrap(), Foo::Bar);
+  assert_matches!(
+    Foo::decode_from_slice_with_options(DecodeOptions::strict(), &bytes),
+    Err(DecodeError::UnknownField { key: 0 }),
+  );
+
+  assert_eq!(
+    Bar::decode_from_slice(&[0x84, 0, 0x82, 1, 2]).unwrap(),
+    Bar::Bar { foo: None },
+  );
+}
+
+#[test]
 fn enum_array_invalid_discriminant() {
   #[derive(Debug, Decode, PartialEq)]
   enum Foo {
@@ -258,7 +292,7 @@ fn enum_array_invalid_discriminant() {
 }
 
 #[test]
-fn enum_array_missing_element() {
+fn enum_array_missing_field() {
   #[derive(Debug, Decode, PartialEq)]
   enum Foo {
     #[n(0)]
@@ -268,9 +302,9 @@ fn enum_array_missing_element() {
     },
   }
 
-  assert_matches!(
-    Foo::decode_from_slice(&[0x00]),
-    Err(DecodeError::MissingElement),
+  assert_eq!(
+    Foo::decode_from_slice(&[0x00]).unwrap_err().to_string(),
+    "missing required field: 0",
   );
 }
 
@@ -289,6 +323,29 @@ fn enum_array_unconsumed_elements() {
     Foo::decode_from_slice(&[0x85, 0x00, 0x82, 0x00, 0x05, 0x00]),
     Err(DecodeError::UnconsumedElements),
   );
+}
+
+#[test]
+fn enum_empty_map() {
+  #[derive(Debug, Decode, PartialEq)]
+  enum Foo {
+    #[n(0)]
+    Bar,
+    #[n(1)]
+    Baz {
+      #[n(0)]
+      foo: Option<u64>,
+    },
+  }
+
+  for options in [DecodeOptions::new(), DecodeOptions::strict()] {
+    for tag in [0, 1] {
+      assert_matches!(
+        Foo::decode_from_slice_with_options(options, &[0x82, tag, 0x80]),
+        Err(DecodeError::EmptyVariantMap),
+      );
+    }
+  }
 }
 
 #[test]
@@ -400,7 +457,7 @@ fn enum_unconsumed_unit_payload() {
   }
 
   assert_matches!(
-    Foo::decode_from_slice(&[0x82, 0x00, 0x00]),
+    Foo::decode_from_slice(&[0x85, 0, 0x82, 0, 1, 0]),
     Err(DecodeError::UnconsumedElements),
   );
 }
