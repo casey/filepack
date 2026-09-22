@@ -17,12 +17,10 @@ pub(crate) struct AudioMetadata {
 }
 
 impl AudioMetadata {
-  pub(crate) fn check_positions<'a>(
-    tracks: &'a [(RelativePath, Self, AudioType)],
+  pub(crate) fn check_positions(
+    tracks: &[(RelativePath, Self, AudioType)],
   ) -> Result<(), AudioPositionError> {
-    let mut tracks = tracks.into_iter().peekable();
-
-    let Some((_, first, _ty)) = tracks.peek() else {
+    let Some((_, first, _ty)) = tracks.first() else {
       return Ok(());
     };
 
