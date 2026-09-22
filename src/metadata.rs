@@ -321,6 +321,10 @@ impl Metadata {
   }
 }
 
+impl MagicBytes for Metadata {
+  const MAGIC_BYTES: MagicByteArray = *b"filepack-metadata\0";
+}
+
 #[cfg(test)]
 mod tests {
   use {super::*, ::image::ImageFormat};

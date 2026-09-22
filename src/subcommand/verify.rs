@@ -207,7 +207,7 @@ fingerprint mismatch: `{}`
       let path = root.join(Metadata::DECO_FILENAME);
 
       if let Some(deco) = filesystem::read_opt(&path)? {
-        Metadata::decode_from_slice(&deco)
+        Metadata::decode_magic_bytes(&deco)
           .context(error::DecodeMetadataDeco { path })?
           .check_files(&files.keys().cloned().collect())?;
       }

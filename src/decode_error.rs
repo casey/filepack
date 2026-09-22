@@ -31,6 +31,16 @@ pub enum DecodeError {
   KeyOrder,
   #[snafu(display("failed to parse language code"))]
   Language { source: LanguageError },
+  #[snafu(display(
+    "unexpected magic bytes, expected `{}` but found `{}{}`",
+    expected.escape_ascii(),
+    actual[..actual.len().min(expected.len())].escape_ascii(),
+    if actual.len() > expected.len() { "…" } else { "" },
+  ))]
+  MagicBytes {
+    actual: Vec<u8>,
+    expected: MagicByteArray,
+  },
   #[snafu(display("missing array element"))]
   MissingElement,
   #[snafu(display("missing required field: {key}"))]

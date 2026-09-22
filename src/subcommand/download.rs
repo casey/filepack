@@ -139,7 +139,7 @@ impl Download {
         })
         .collect::<Result<HashSet<RelativePath>>>()?;
 
-      Metadata::decode_from_slice(&deco)
+      Metadata::decode_magic_bytes(&deco)
         .context(error::DecodeMetadataDeco {
           path: metadata_path,
         })?
@@ -159,7 +159,7 @@ impl Download {
 
     filesystem::write(
       &self.output.join(Manifest::FILENAME),
-      archive.encode_to_vec(),
+      archive.encode_magic_bytes(),
     )?;
 
     Ok(())

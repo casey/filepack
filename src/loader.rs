@@ -36,7 +36,7 @@ impl Loader {
     let deco = filesystem::read_opt(&path)?
       .ok_or_else(|| error::ManifestNotFound { path: &path }.build())?;
 
-    let archive = Archive::decode_from_slice_with_options(options, &deco)
+    let archive = Archive::decode_magic_bytes_with_options(options, &deco)
       .context(error::DecodeManifest { path: &path })?;
 
     Ok(Self {
@@ -131,7 +131,7 @@ mod tests {
       let archive = builder.build(root.hash());
       let (_tempdir, path) = tempdir();
       let path = path.join(Manifest::FILENAME);
-      fs::write(&path, archive.encode_to_vec()).unwrap();
+      fs::write(&path, archive.encode_magic_bytes()).unwrap();
 
       let mut tree = DirectoryTree::new();
       tree.create_directory(&"foo".parse().unwrap()).unwrap();

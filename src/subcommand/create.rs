@@ -94,7 +94,7 @@ impl Create {
 
       metadata.validate(&root)?;
 
-      let deco = metadata.encode_to_vec();
+      let deco = metadata.encode_magic_bytes();
 
       Some((metadata, deco))
     } else {

@@ -748,6 +748,7 @@ fn unarchive_error() {
   archive.item(1, root);
   archive.item(0, 0u64);
   archive.finish();
+  encoder.bytes(&Archive::MAGIC_BYTES);
 
   Test::new()
     .write("manifest.filepack", encoder.finish())
@@ -811,7 +812,7 @@ fn verify_checks_metadata() {
         package: {
           "metadata.filemeta": {
             hash: hash,
-            size: 17,
+            size: 36,
           }
         },
         signatures: [],

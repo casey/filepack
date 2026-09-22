@@ -2,9 +2,9 @@ use {
   self::{child::Child, dedent::Dedent, expected::Expected, test::Test},
   camino::{Utf8Path, Utf8PathBuf},
   filepack::{
-    Decode, Decoder, Directory, DirectoryExt, Encode, Encoder, Entry, Fingerprint, FlacBuilder,
-    Hash, Loader, Manifest, Metadata, Mp3Builder, Mp4Builder, Page, PngBuilder, PrivateKey,
-    PublicKey, Totals, gradient, gradient_alpha, hex,
+    Archive, Decode, Decoder, Directory, DirectoryExt, Encode, Encoder, Entry, Fingerprint,
+    FlacBuilder, Hash, Loader, MagicBytes, Manifest, Metadata, Mp3Builder, Mp4Builder, Page,
+    PngBuilder, PrivateKey, PublicKey, Totals, gradient, gradient_alpha, hex,
     templates::{DirectoryHtml, PackageHtml},
   },
   image::{DynamicImage, ImageFormat},
