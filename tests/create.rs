@@ -243,6 +243,23 @@ fn ignore_multiple() {
 }
 
 #[test]
+fn magic_bytes() {
+  let test = Test::new()
+    .write("metadata.yaml", "title: Foo")
+    .arg("create")
+    .success();
+
+  for (filename, magic_bytes) in [
+    ("manifest.filepack", Archive::MAGIC_BYTES),
+    ("metadata.filemeta", Metadata::MAGIC_BYTES),
+  ] {
+    let bytes = fs::read(test.path().join(filename)).unwrap();
+    let magic_bytes = magic_bytes.encode_to_vec();
+    assert_eq!(&bytes[..magic_bytes.len()], magic_bytes);
+  }
+}
+
+#[test]
 fn manifest_already_exists_error() {
   Test::new()
     .touch("manifest.filepack")
@@ -661,6 +678,6 @@ fn with_metadata() {
     .stdout_regex(r#".*"metadata\.filemeta".*"metadata\.yaml".*"#)
     .success()
     .arg("verify")
-    .stderr("successfully verified 3 files totaling 16 bytes\n")
+    .stderr("successfully verified 3 files totaling 35 bytes\n")
     .success();
 }

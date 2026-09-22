@@ -20,7 +20,6 @@
 use {
   self::{
     application::Application,
-    archive::Archive,
     archive_builder::ArchiveBuilder,
     archive_error::ArchiveError,
     arguments::Arguments,
@@ -168,6 +167,7 @@ use {
     video_metadata::VideoMetadata,
     video_type::VideoType,
     webm_decoder::WebmDecoder,
+    with_magic_bytes::WithMagicBytes,
     xmp_error::XmpError,
   },
   axum::{
@@ -247,6 +247,7 @@ use {
 };
 
 pub use self::{
+  archive::Archive,
   decode::Decode,
   decode_options::DecodeOptions,
   decoder::Decoder,
@@ -260,6 +261,7 @@ pub use self::{
   functions::{gradient, gradient_alpha, install_default_crypto_provider},
   hash::Hash,
   loader::Loader,
+  magic_bytes::MagicBytes,
   manifest::Manifest,
   metadata::Metadata,
   mp3_builder::Mp3Builder,
@@ -379,6 +381,7 @@ mod lint_group;
 mod lint_selector;
 mod linter;
 mod loader;
+mod magic_bytes;
 mod manifest;
 mod map_decoder;
 mod map_encoder;
@@ -453,6 +456,7 @@ mod video_error;
 mod video_metadata;
 mod video_type;
 mod webm_decoder;
+mod with_magic_bytes;
 mod xmp;
 mod xmp_error;
 mod yaml;
@@ -477,6 +481,8 @@ type ServerResult<T = ()> = Result<T, ServerError>;
 
 type Attestation = Signature<Statement>;
 type Token = Signature<Claims>;
+
+type MagicByteArray = [u8; 18];
 
 fn initialize_tracing() -> Result<(), Box<dyn std::error::Error>> {
   use {
