@@ -167,6 +167,7 @@ use {
     video_metadata::VideoMetadata,
     video_type::VideoType,
     webm_decoder::WebmDecoder,
+    with_magic_bytes::WithMagicBytes,
     xmp_error::XmpError,
   },
   axum::{
@@ -270,7 +271,6 @@ pub use self::{
   private_key::PrivateKey,
   public_key::PublicKey,
   totals::Totals,
-  with_magic_bytes::WithMagicBytes,
 };
 
 #[cfg(test)]

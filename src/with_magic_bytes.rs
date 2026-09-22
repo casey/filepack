@@ -1,7 +1,7 @@
 use super::*;
 
 #[derive(Debug, PartialEq)]
-pub struct WithMagicBytes<T>(pub T);
+pub(crate) struct WithMagicBytes<T>(pub T);
 
 impl<T: Encode + MagicBytes> Encode for WithMagicBytes<T> {
   fn encode(&self, encoder: &mut Encoder) {
