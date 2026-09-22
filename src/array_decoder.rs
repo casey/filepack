@@ -19,6 +19,10 @@ impl<'a> ArrayDecoder<'a> {
     Ok(())
   }
 
+  pub(crate) fn is_empty(&self) -> bool {
+    self.decoder.is_empty()
+  }
+
   pub(crate) fn new(decoder: Decoder<'a>) -> Self {
     Self { decoder }
   }

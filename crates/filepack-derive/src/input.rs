@@ -37,13 +37,29 @@ impl Input {
 
     let arms = variants.iter().map(|ParsedVariant { fields, ident, n }| {
       if fields.is_empty() {
-        quote! { #n => Self::#ident, }
+        quote! {
+          #n => {
+            if !array.is_empty() {
+              let mut map = array.decoder()?.map::<u64>()?;
+              ensure!(!map.is_empty(), decode_error::EmptyVariantMap);
+              #decode_unknown_fields
+              map.finish()?;
+            }
+            Self::#ident
+          }
+        }
       } else {
         let decode = ParsedField::decode(fields, attributes);
         let fields = fields.iter().map(|field| field.ident);
         quote! {
           #n => {
-            let mut map = array.decoder()?.map::<u64>()?;
+            let mut map = if array.is_empty() {
+              decoder.empty_map()
+            } else {
+              let map = array.decoder()?.map::<u64>()?;
+              ensure!(!map.is_empty(), decode_error::EmptyVariantMap);
+              map
+            };
             #(#decode)*
             #decode_unknown_fields
             map.finish()?;
@@ -234,7 +250,7 @@ impl Input {
           Self::#ident { #(#idents),* } => {
             let mut map = array.encoder().map::<u64>();
             #(#items)*
-            map.finish();
+            map.finish_if_nonempty();
             array.element(#n);
           }
         }
