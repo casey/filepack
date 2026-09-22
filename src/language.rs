@@ -220,6 +220,14 @@ impl Decode<'_> for Language {
   fn decode(decoder: &mut Decoder) -> DecodeResult<Self> {
     decoder.text()?.parse().context(decode_error::Language)
   }
+
+  fn decode_optional(decoder: &mut Decoder) -> DecodeResult<Option<Self>> {
+    if decoder.strict() {
+      Self::decode(decoder).map(Some)
+    } else {
+      Ok(decoder.text()?.parse().ok())
+    }
+  }
 }
 
 impl Encode for Language {
@@ -256,6 +264,38 @@ mod tests {
   #[test]
   fn name() {
     assert_eq!("en".parse::<Language>().unwrap().name(), "English");
+  }
+
+  #[test]
+  fn unknown_code() {
+    #[derive(Debug, Decode, PartialEq)]
+    struct Foo {
+      #[n(0)]
+      language: Option<Language>,
+    }
+
+    let bytes = BTreeMap::from([(0u64, "en")]).encode_to_vec();
+
+    for options in [DecodeOptions::new(), DecodeOptions::strict()] {
+      assert_eq!(
+        Foo::decode_from_slice_with_options(options, &bytes).unwrap(),
+        Foo {
+          language: Some(Language("en")),
+        },
+      );
+    }
+
+    let bytes = BTreeMap::from([(0u64, "xx")]).encode_to_vec();
+
+    assert_eq!(
+      Foo::decode_from_slice(&bytes).unwrap(),
+      Foo { language: None },
+    );
+
+    assert_matches!(
+      Foo::decode_from_slice_with_options(DecodeOptions::strict(), &bytes),
+      Err(DecodeError::Language { source: LanguageError::Code { code }, }) if code == "xx",
+    );
   }
 
   #[test]
