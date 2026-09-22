@@ -321,8 +321,6 @@ fn create_extracts_track_tags() {
               {
                 "content": {
                   "channels": 2,
-                  "disc": 1,
-                  "discs": 1,
                   "path": "foo.flac",
                   "sample_bits": 16,
                   "sample_rate": 44100,

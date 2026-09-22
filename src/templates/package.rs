@@ -95,8 +95,6 @@ mod tests {
           Item {
             content: Audio {
               channels: 2,
-              disc: 1,
-              discs: 1,
               path: "foo.flac".parse().unwrap(),
               sample_bits: Some(16),
               sample_rate: 44100,
@@ -109,8 +107,6 @@ mod tests {
           Item {
             content: Audio {
               channels: 2,
-              disc: 1,
-              discs: 1,
               path: "bar.flac".parse().unwrap(),
               sample_bits: Some(24),
               sample_rate: 96000,
@@ -209,155 +205,10 @@ mod tests {
   }
 
   #[test]
-  fn audio_multiple_discs() {
-    let metadata = Metadata {
-      media: Some(Media::Audio {
-        items: vec![
-          Item {
-            content: Audio {
-              channels: 2,
-              disc: 1,
-              discs: 2,
-              path: "foo.flac".parse().unwrap(),
-              sample_bits: Some(16),
-              sample_rate: 44100,
-              samples: 44100,
-              size: 0,
-              ty: Some(AudioType::Flac),
-            },
-            title: Some("foo".parse().unwrap()),
-          },
-          Item {
-            content: Audio {
-              channels: 2,
-              disc: 1,
-              discs: 2,
-              path: "bar.flac".parse().unwrap(),
-              sample_bits: Some(16),
-              sample_rate: 44100,
-              samples: 44100,
-              size: 0,
-              ty: Some(AudioType::Flac),
-            },
-            title: Some("bar".parse().unwrap()),
-          },
-          Item {
-            content: Audio {
-              channels: 2,
-              disc: 2,
-              discs: 2,
-              path: "baz.flac".parse().unwrap(),
-              sample_bits: Some(16),
-              sample_rate: 44100,
-              samples: 44100,
-              size: 0,
-              ty: Some(AudioType::Flac),
-            },
-            title: Some("baz".parse().unwrap()),
-          },
-        ],
-      }),
-      ..default()
-    };
-
-    assert_eq!(
-      PackageHtml {
-        colophon: None,
-        directory: Directory::new(),
-        fingerprint: test::FINGERPRINT.parse().unwrap(),
-        metadata: Some(metadata),
-        mounted: false,
-        readme: None,
-        totals: Totals {
-          directories: 0,
-          directory_size: 0,
-          file_size: 9,
-          files: 3,
-        },
-      }
-      .to_string(),
-      unindent(&format!(
-        "
-          <dl>
-            <div>
-              <dt>fingerprint</dt>
-              <dd>
-                <code>{fingerprint}</code>
-              </dd>
-            </div>
-            <div>
-              <dt>size</dt>
-              <dd>
-                9 B
-              </dd>
-            </div>
-            <div>
-              <dt>files</dt>
-              <dd>
-                <a href='/directory/{hash}'>3 files</a>
-              </dd>
-            </div>
-            <div>
-              <dt>media</dt>
-              <dd>
-                <a href='/package/{fingerprint}/media'>audio</a>
-              </dd>
-            </div>
-            <div>
-              <dt>tracks</dt>
-              <dd>
-                3
-              </dd>
-            </div>
-            <div>
-              <dt>duration</dt>
-              <dd>
-                0:03
-              </dd>
-            </div>
-            <div>
-              <dt>format</dt>
-              <dd>
-                <ol role=list>
-                  <li>
-                    FLAC
-                  </li>
-                </ol>
-              </dd>
-            </div>
-          </dl>
-          <h2>Disc 1</h2>
-          <ol>
-            <li>
-              <a href=/package/{fingerprint}/item/1>foo</a>
-              <time datetime=PT0M1S>0:01</time>
-            </li>
-            <li>
-              <a href=/package/{fingerprint}/item/2>bar</a>
-              <time datetime=PT0M1S>0:01</time>
-            </li>
-          </ol>
-          <h2>Disc 2</h2>
-          <ol>
-            <li>
-              <a href=/package/{fingerprint}/item/3>baz</a>
-              <time datetime=PT0M1S>0:01</time>
-            </li>
-          </ol>
-        ",
-        fingerprint = test::FINGERPRINT,
-        hash = test::HASH,
-      )),
-    );
-  }
-
-  #[test]
   fn duration_saturates() {
     let audio = Item {
       content: Audio {
         channels: 2,
-        disc: 1,
-        discs: 1,
         path: "foo.flac".parse().unwrap(),
         sample_bits: Some(16),
         sample_rate: 1,

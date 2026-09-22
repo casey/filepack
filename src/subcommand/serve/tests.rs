@@ -2353,8 +2353,6 @@ fn package_page_renders_audio_media() {
         Item {
           content: Audio {
             channels: 2,
-            disc: 1,
-            discs: 1,
             path: "foo.flac".parse().unwrap(),
             sample_bits: Some(16),
             sample_rate: 44100,
@@ -2367,8 +2365,6 @@ fn package_page_renders_audio_media() {
         Item {
           content: Audio {
             channels: 2,
-            disc: 1,
-            discs: 1,
             path: "bar.flac".parse().unwrap(),
             sample_bits: Some(16),
             sample_rate: 44100,
