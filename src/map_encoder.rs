@@ -7,10 +7,6 @@ pub struct MapEncoder<'a, K> {
 }
 
 impl<'a, K: Encode + PartialOrd> MapEncoder<'a, K> {
-  fn len(&self) -> usize {
-    self.encoder.len() - self.end
-  }
-
   pub fn finish(self) {
     self.encoder.head(self.len());
   }
@@ -34,6 +30,10 @@ impl<'a, K: Encode + PartialOrd> MapEncoder<'a, K> {
     key.encode(self.encoder);
 
     self.last = Some(key);
+  }
+
+  fn len(&self) -> usize {
+    self.encoder.len() - self.end
   }
 
   pub(crate) fn new(encoder: &'a mut Encoder) -> Self {
