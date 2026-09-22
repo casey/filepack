@@ -126,8 +126,6 @@ impl AudioMetadata {
     Item {
       content: Audio {
         channels: self.channels,
-        disc: self.disc,
-        discs: self.discs,
         path,
         sample_bits: self.sample_bits,
         sample_rate: self.sample_rate,

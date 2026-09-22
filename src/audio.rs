@@ -6,20 +6,16 @@ pub(crate) struct Audio {
   #[n(0)]
   pub(crate) channels: u64,
   #[n(1)]
-  pub(crate) disc: u64,
-  #[n(2)]
-  pub(crate) discs: u64,
-  #[n(3)]
   pub(crate) path: RelativePath,
-  #[n(4)]
+  #[n(2)]
   pub(crate) sample_bits: Option<u64>,
-  #[n(5)]
+  #[n(3)]
   pub(crate) sample_rate: u64,
-  #[n(6)]
+  #[n(4)]
   pub(crate) samples: u64,
-  #[n(7)]
+  #[n(5)]
   pub(crate) size: u64,
-  #[n(8)]
+  #[n(6)]
   #[serde(rename = "type")]
   pub(crate) ty: Option<AudioType>,
 }
@@ -87,7 +83,6 @@ impl Content for Audio {
 
   fn info(&self, builder: InfoBuilder) -> InfoBuilder {
     builder
-      .value("disc", format!("{} of {}", self.disc, self.discs))
       .value("duration", DisplayDuration(self.duration()))
       .optional_or_unknown("type", self.ty)
       .optional(
@@ -131,8 +126,6 @@ impl Content for Audio {
     let ty = AudioType::from_path(&path).unwrap();
     Self {
       channels: 2,
-      disc: 1,
-      discs: 1,
       path,
       sample_bits: Some(16),
       sample_rate: 44100,
@@ -170,15 +163,12 @@ mod tests {
   #[test]
   fn info() {
     let mut audio = Audio::test("foo.flac");
-    audio.disc = 1;
-    audio.discs = 2;
     audio.samples = 66150;
     audio.size = 750;
 
     assert_eq!(
       Content::info(&audio, InfoBuilder::new()).build(),
       InfoBuilder::new()
-        .value("disc", "1 of 2")
         .value("duration", "0:01")
         .value("type", "FLAC")
         .value("sample bits", "16-bit")
@@ -191,8 +181,6 @@ mod tests {
     );
 
     let mut audio = Audio::test("foo.mp3");
-    audio.disc = 1;
-    audio.discs = 2;
     audio.sample_bits = None;
     audio.samples = 66150;
     audio.size = 750;
@@ -200,7 +188,6 @@ mod tests {
     assert_eq!(
       Content::info(&audio, InfoBuilder::new()).build(),
       InfoBuilder::new()
-        .value("disc", "1 of 2")
         .value("duration", "0:01")
         .value("type", "MP3")
         .value("sample rate", "44.1 kHz")
@@ -220,7 +207,6 @@ mod tests {
     assert_eq!(
       Content::info(&audio, InfoBuilder::new()).build(),
       InfoBuilder::new()
-        .value("disc", "1 of 1")
         .value("duration", "0:00")
         .value("type", "FLAC")
         .value("sample rate", "0 kHz")
@@ -268,8 +254,6 @@ mod tests {
       Item {
         content: Audio {
           channels: 2,
-          disc: 1,
-          discs: 2,
           path: "foo.flac".parse().unwrap(),
           sample_bits: Some(16),
           sample_rate: 44100,
@@ -286,8 +270,6 @@ mod tests {
       Item {
         content: Audio {
           channels: 2,
-          disc: 1,
-          discs: 2,
           path: "foo.mp3".parse().unwrap(),
           sample_bits: None,
           sample_rate: 44100,
@@ -332,8 +314,6 @@ mod tests {
     assert_eq!(
       serde_json::to_string(&Audio {
         channels: 8,
-        disc: 3,
-        discs: 4,
         path: "foo.flac".parse().unwrap(),
         sample_bits: Some(7),
         sample_rate: 1,
@@ -342,7 +322,7 @@ mod tests {
         ty: Some(AudioType::Flac),
       })
       .unwrap(),
-      r#"{"channels":8,"disc":3,"discs":4,"path":"foo.flac","sample_bits":7,"sample_rate":1,"samples":2,"size":9,"type":"flac"}"#,
+      r#"{"channels":8,"path":"foo.flac","sample_bits":7,"sample_rate":1,"samples":2,"size":9,"type":"flac"}"#,
     );
   }
 }

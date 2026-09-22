@@ -479,8 +479,6 @@ mod tests {
           items: vec![Item {
             content: crate::Audio {
               channels: 2,
-              disc: 1,
-              discs: 1,
               path: "foo.flac".parse().unwrap(),
               sample_bits: Some(16),
               sample_rate: 44100,

@@ -14,21 +14,14 @@
 %% {
 %%   match media {
 %%     Media::Audio { items } => {
-%%       let mut i = 0;
-%%       for disc in items.chunk_by(|a, b| a.content.disc == b.content.disc) {
-%%         if disc[0].content.discs > 1 {
-<h2>Disc {{ disc[0].content.disc }}</h2>
-%%         }
 <ol>
-%%         for audio in disc {
+%%       for (i, audio) in items.iter().enumerate() {
   <li>
     <a href=/package/{{ self.fingerprint }}/item/{{ Ordinal(i) }}>{{ audio.display_title(i) }}</a>
     <time datetime={{ Iso8601Duration(audio.content.duration()) }}>{{ DisplayDuration(audio.content.duration()) }}</time>
   </li>
-%%           i += 1;
-%%         }
-</ol>
 %%       }
+</ol>
 %%     }
 %%     Media::Image { items } => {
 <ul class=thumbnails>
