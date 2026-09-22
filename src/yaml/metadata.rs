@@ -62,7 +62,7 @@ impl Metadata {
     };
 
     let media = if let Some(media) = media {
-      Some(media.load(root, &bar)?)
+      Some(media.load(root, &bar, creator.as_ref(), title.as_ref())?)
     } else {
       None
     };
@@ -438,6 +438,7 @@ mod tests {
 
     let metadata = Metadata {
       artwork: Some("cover.png".parse().unwrap()),
+      creator: Some("baz".parse().unwrap()),
       media: Some(Media::Audio {
         items: vec![Audio {
           path: "foo.flac".parse().unwrap(),
@@ -451,7 +452,7 @@ mod tests {
         time: None,
         title: Some("baz".parse().unwrap()),
       }),
-      title: Some("foo".parse().unwrap()),
+      title: Some("qux".parse().unwrap()),
       ..default()
     }
     .load(&root, true)
@@ -473,11 +474,10 @@ mod tests {
           path: "cover.png".parse().unwrap(),
           ty: Some(ImageType::Png),
         }),
+        creator: Some("baz".parse().unwrap()),
         media: Some(crate::Media::Audio {
           items: vec![Item {
             content: crate::Audio {
-              album: "qux".parse().unwrap(),
-              artist: "baz".parse().unwrap(),
               channels: 2,
               disc: 1,
               discs: 1,
@@ -486,8 +486,6 @@ mod tests {
               sample_rate: 44100,
               samples: 1,
               size: 1024,
-              track: 1,
-              tracks: 1,
               ty: Some(AudioType::Flac),
             },
             title: Some("bar".parse().unwrap()),
@@ -501,7 +499,7 @@ mod tests {
           time: None,
           title: Some("baz".parse().unwrap()),
         }),
-        title: Some("foo".parse().unwrap()),
+        title: Some("qux".parse().unwrap()),
         ..default()
       },
     );
@@ -535,11 +533,13 @@ mod tests {
 
     case(
       Metadata {
+        creator: Some("foo".parse().unwrap()),
         media: Some(Media::Audio {
           items: vec![Audio {
             path: "foo.wav".parse().unwrap(),
           }],
         }),
+        title: Some("bar".parse().unwrap()),
         ..default()
       },
       "invalid path `foo.wav`: path must end in `.flac` or `.mp3`",

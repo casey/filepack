@@ -19,18 +19,36 @@ impl Media {
     }
   }
 
-  pub(crate) fn load(self, root: &Utf8Path, bar: &ProgressBar) -> Result<crate::Media> {
+  pub(crate) fn load(
+    self,
+    root: &Utf8Path,
+    bar: &ProgressBar,
+    creator: Option<&Text>,
+    title: Option<&Text>,
+  ) -> Result<crate::Media> {
     Ok(match self {
-      Self::Audio { items } => crate::Media::Audio {
-        items: items
+      Self::Audio { items } => {
+        let items = items
           .into_iter()
           .map(|Audio { path }| {
-            let item = crate::Audio::load(root, path)?;
+            let creator = creator.context(error::MetadataFieldMissing { field: "creator" })?;
+            let title = title.context(error::MetadataFieldMissing { field: "title" })?;
+            let (metadata, ty) = AudioMetadata::load(root, &path)?;
+            metadata.check_tags(&path, creator, title)?;
             bar.inc(1);
-            Ok(item)
+            Ok((path, metadata, ty))
           })
-          .collect::<Result<Vec<Item<crate::Audio>>>>()?,
-      },
+          .collect::<Result<Vec<(RelativePath, AudioMetadata, AudioType)>>>()?;
+
+        AudioMetadata::check_positions(&items).context(error::AudioPosition)?;
+
+        crate::Media::Audio {
+          items: items
+            .into_iter()
+            .map(|(path, metadata, ty)| metadata.into_item(path, ty))
+            .collect(),
+        }
+      }
       Self::Image { items } => crate::Media::Image {
         items: items
           .into_iter()

@@ -72,6 +72,8 @@ fn deny_audio_embedded_artwork_aspect_ratio() {
         "metadata.yaml",
         format!(
           "
+            creator: baz
+            title: qux
             media:
               type: audio
               items:
@@ -143,6 +145,8 @@ fn deny_audio_embedded_artwork_missing() {
         "metadata.yaml",
         format!(
           "
+            creator: baz
+            title: qux
             media:
               type: audio
               items:

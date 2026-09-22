@@ -26,6 +26,17 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     source: AudioPositionError,
   },
+  #[snafu(display(
+    "track `{path}` {tag} tag `{actual}` does not match metadata {field} `{expected}`"
+  ))]
+  AudioTagMismatch {
+    actual: Text,
+    backtrace: Option<Backtrace>,
+    expected: Text,
+    field: &'static str,
+    path: RelativePath,
+    tag: &'static str,
+  },
   #[snafu(display("failed to bind listener to {address}"))]
   BindListener {
     address: String,
@@ -338,6 +349,11 @@ pub enum Error {
   MetadataAlreadyExists {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
+  },
+  #[snafu(display("metadata missing {field}"))]
+  MetadataFieldMissing {
+    backtrace: Option<Backtrace>,
+    field: &'static str,
   },
   #[snafu(display("metadata cannot be formatted as TSV"))]
   MetadataTsv { backtrace: Option<Backtrace> },

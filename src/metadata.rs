@@ -313,10 +313,6 @@ impl Metadata {
       }
     }
 
-    if let Some(Media::Audio { items }) = &self.media {
-      Audio::check_positions(items).context(error::AudioPosition)?;
-    }
-
     Ok(())
   }
 }
@@ -379,8 +375,6 @@ mod tests {
       media: Some(Media::Audio {
         items: vec![Item {
           content: Audio {
-            album: "bar".parse().unwrap(),
-            artist: "baz".parse().unwrap(),
             channels: 8,
             disc: 3,
             discs: 4,
@@ -389,8 +383,6 @@ mod tests {
             sample_rate: 1,
             samples: 2,
             size: 9,
-            track: 5,
-            tracks: 6,
             ty: Some(AudioType::Flac),
           },
           title: Some("foo".parse().unwrap()),

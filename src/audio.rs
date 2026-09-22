@@ -4,120 +4,27 @@ use super::*;
 #[derive(Clone, Debug, Decode, Encode, PartialEq, Serialize)]
 pub(crate) struct Audio {
   #[n(0)]
-  pub(crate) album: Text,
-  #[n(1)]
-  pub(crate) artist: Text,
-  #[n(2)]
   pub(crate) channels: u64,
-  #[n(3)]
+  #[n(1)]
   pub(crate) disc: u64,
-  #[n(4)]
+  #[n(2)]
   pub(crate) discs: u64,
-  #[n(5)]
+  #[n(3)]
   pub(crate) path: RelativePath,
-  #[n(6)]
+  #[n(4)]
   pub(crate) sample_bits: Option<u64>,
-  #[n(7)]
+  #[n(5)]
   pub(crate) sample_rate: u64,
-  #[n(8)]
+  #[n(6)]
   pub(crate) samples: u64,
-  #[n(9)]
+  #[n(7)]
   pub(crate) size: u64,
-  #[n(10)]
-  pub(crate) track: u64,
-  #[n(11)]
-  pub(crate) tracks: u64,
-  #[n(12)]
+  #[n(8)]
   #[serde(rename = "type")]
   pub(crate) ty: Option<AudioType>,
 }
 
 impl Audio {
-  pub(crate) fn check_positions(tracks: &[Item<Audio>]) -> Result<(), AudioPositionError> {
-    let Some(first) = tracks.first() else {
-      return Ok(());
-    };
-
-    let discs = first.content.discs;
-
-    let mut expected_disc = 1;
-    let mut expected_track = 1;
-    let mut disc_tracks = 0;
-
-    for audio in tracks {
-      let audio = &audio.content;
-
-      ensure! {
-        audio.discs == discs,
-        audio_position_error::DiscTotalMismatch {
-          actual: audio.discs,
-          expected: discs,
-          path: audio.path.clone(),
-        },
-      }
-
-      ensure! {
-        audio.disc == expected_disc && audio.track == expected_track,
-        audio_position_error::PositionMismatch {
-          disc: audio.disc,
-          expected_disc,
-          expected_track,
-          path: audio.path.clone(),
-          track: audio.track,
-        },
-      }
-
-      ensure! {
-        audio.disc <= discs,
-        audio_position_error::DiscNumberExceedsTotal {
-          path: audio.path.clone(),
-          number: audio.disc,
-          total: discs,
-        },
-      }
-
-      if expected_track == 1 {
-        disc_tracks = audio.tracks;
-      } else {
-        ensure! {
-          audio.tracks == disc_tracks,
-          audio_position_error::TotalMismatch {
-            actual: audio.tracks,
-            disc: expected_disc,
-            expected: disc_tracks,
-            path: audio.path.clone(),
-          },
-        }
-      }
-
-      ensure! {
-        audio.track <= disc_tracks,
-        audio_position_error::NumberExceedsTotal {
-          path: audio.path.clone(),
-          number: audio.track,
-          total: disc_tracks,
-        },
-      }
-
-      if expected_track == disc_tracks {
-        expected_disc += 1;
-        expected_track = 1;
-      } else {
-        expected_track += 1;
-      }
-    }
-
-    ensure! {
-      expected_disc == discs + 1,
-      audio_position_error::Missing {
-        disc: expected_disc,
-        track: expected_track,
-      },
-    }
-
-    Ok(())
-  }
-
   pub(crate) fn cover_art(&self, root: &Utf8Path) -> Result<Vec<EmbeddedImage>> {
     let Some(ty) = self.ty else {
       return Ok(Vec::new());
@@ -180,10 +87,7 @@ impl Content for Audio {
 
   fn info(&self, builder: InfoBuilder) -> InfoBuilder {
     builder
-      .value("artist", &self.artist)
-      .value("album", &self.album)
       .value("disc", format!("{} of {}", self.disc, self.discs))
-      .value("track", format!("{} of {}", self.track, self.tracks))
       .value("duration", DisplayDuration(self.duration()))
       .optional_or_unknown("type", self.ty)
       .optional(
@@ -212,44 +116,9 @@ impl Content for Audio {
   }
 
   fn load(root: &Utf8Path, path: RelativePath) -> Result<Item<Self>> {
-    let ty = AudioType::from_path(&path).context(error::Path { path: &path })?;
+    let (metadata, ty) = AudioMetadata::load(root, &path)?;
 
-    let AudioMetadata {
-      album,
-      artist,
-      channels,
-      disc,
-      discs,
-      sample_bits,
-      sample_rate,
-      samples,
-      size,
-      title,
-      track,
-      tracks,
-    } = match ty {
-      AudioType::Flac => FlacDecoder::read(&root.join(&path))?,
-      AudioType::Mp3 => Mp3Decoder::read(&root.join(&path))?,
-    };
-
-    Ok(Item {
-      content: Self {
-        album,
-        artist,
-        channels,
-        disc,
-        discs,
-        path,
-        sample_bits,
-        sample_rate,
-        samples,
-        size,
-        track,
-        tracks,
-        ty: Some(ty),
-      },
-      title: Some(title),
-    })
+    Ok(metadata.into_item(path, ty))
   }
 
   fn path(&self) -> &RelativePath {
@@ -261,8 +130,6 @@ impl Content for Audio {
     let path = path.parse::<RelativePath>().unwrap();
     let ty = AudioType::from_path(&path).unwrap();
     Self {
-      album: "foo".parse().unwrap(),
-      artist: "bar".parse().unwrap(),
       channels: 2,
       disc: 1,
       discs: 1,
@@ -271,8 +138,6 @@ impl Content for Audio {
       sample_rate: 44100,
       samples: 44100,
       size: 1024,
-      track: 1,
-      tracks: 1,
       ty: Some(ty),
     }
   }
@@ -285,147 +150,6 @@ impl Content for Audio {
 #[cfg(test)]
 mod tests {
   use super::*;
-
-  #[test]
-  fn check_positions() {
-    #[track_caller]
-    fn case(positions: &[(u64, u64, u64, u64)], expected: Result<(), AudioPositionError>) {
-      let tracks = positions
-        .iter()
-        .enumerate()
-        .map(|(i, (disc, discs, track, tracks))| {
-          let mut content = Audio::test(&format!("{i}.flac"));
-          content.disc = *disc;
-          content.discs = *discs;
-          content.track = *track;
-          content.tracks = *tracks;
-          Item {
-            content,
-            title: None,
-          }
-        })
-        .collect::<Vec<Item<Audio>>>();
-
-      assert_eq!(Audio::check_positions(&tracks), expected);
-    }
-
-    case(&[], Ok(()));
-
-    case(&[(1, 1, 1, 1)], Ok(()));
-
-    case(&[(1, 2, 1, 2), (1, 2, 2, 2), (2, 2, 1, 1)], Ok(()));
-
-    case(
-      &[(1, 1, 2, 2), (1, 1, 1, 2)],
-      Err(AudioPositionError::PositionMismatch {
-        disc: 1,
-        expected_disc: 1,
-        expected_track: 1,
-        path: "0.flac".parse().unwrap(),
-        track: 2,
-      }),
-    );
-
-    case(
-      &[(1, 1, 1, 2), (1, 1, 1, 2)],
-      Err(AudioPositionError::PositionMismatch {
-        disc: 1,
-        expected_disc: 1,
-        expected_track: 2,
-        path: "1.flac".parse().unwrap(),
-        track: 1,
-      }),
-    );
-
-    case(
-      &[(1, 1, 1, 3), (1, 1, 3, 3)],
-      Err(AudioPositionError::PositionMismatch {
-        disc: 1,
-        expected_disc: 1,
-        expected_track: 2,
-        path: "1.flac".parse().unwrap(),
-        track: 3,
-      }),
-    );
-
-    case(
-      &[(1, 1, 1, 2)],
-      Err(AudioPositionError::Missing { disc: 1, track: 2 }),
-    );
-
-    case(
-      &[(1, 2, 1, 1)],
-      Err(AudioPositionError::Missing { disc: 2, track: 1 }),
-    );
-
-    case(
-      &[(1, 2, 1, 1), (2, 1, 1, 1)],
-      Err(AudioPositionError::DiscTotalMismatch {
-        actual: 1,
-        expected: 2,
-        path: "1.flac".parse().unwrap(),
-      }),
-    );
-
-    case(
-      &[(1, 1, 1, 2), (1, 1, 2, 3)],
-      Err(AudioPositionError::TotalMismatch {
-        actual: 3,
-        disc: 1,
-        expected: 2,
-        path: "1.flac".parse().unwrap(),
-      }),
-    );
-
-    case(
-      &[(1, 1, 1, 1), (2, 1, 1, 1)],
-      Err(AudioPositionError::DiscNumberExceedsTotal {
-        path: "1.flac".parse().unwrap(),
-        number: 2,
-        total: 1,
-      }),
-    );
-
-    case(
-      &[(1, 0, 1, 1)],
-      Err(AudioPositionError::DiscNumberExceedsTotal {
-        path: "0.flac".parse().unwrap(),
-        number: 1,
-        total: 0,
-      }),
-    );
-
-    case(
-      &[(1, 1, 1, 0)],
-      Err(AudioPositionError::NumberExceedsTotal {
-        path: "0.flac".parse().unwrap(),
-        number: 1,
-        total: 0,
-      }),
-    );
-
-    case(
-      &[(0, 1, 1, 1)],
-      Err(AudioPositionError::PositionMismatch {
-        disc: 0,
-        expected_disc: 1,
-        expected_track: 1,
-        path: "0.flac".parse().unwrap(),
-        track: 1,
-      }),
-    );
-
-    case(
-      &[(1, 1, 0, 1)],
-      Err(AudioPositionError::PositionMismatch {
-        disc: 1,
-        expected_disc: 1,
-        expected_track: 1,
-        path: "0.flac".parse().unwrap(),
-        track: 0,
-      }),
-    );
-  }
 
   #[test]
   fn duration() {
@@ -446,22 +170,15 @@ mod tests {
   #[test]
   fn info() {
     let mut audio = Audio::test("foo.flac");
-    audio.album = "qux".parse().unwrap();
-    audio.artist = "baz".parse().unwrap();
     audio.disc = 1;
     audio.discs = 2;
     audio.samples = 66150;
     audio.size = 750;
-    audio.track = 3;
-    audio.tracks = 4;
 
     assert_eq!(
       Content::info(&audio, InfoBuilder::new()).build(),
       InfoBuilder::new()
-        .value("artist", "baz")
-        .value("album", "qux")
         .value("disc", "1 of 2")
-        .value("track", "3 of 4")
         .value("duration", "0:01")
         .value("type", "FLAC")
         .value("sample bits", "16-bit")
@@ -474,23 +191,16 @@ mod tests {
     );
 
     let mut audio = Audio::test("foo.mp3");
-    audio.album = "qux".parse().unwrap();
-    audio.artist = "baz".parse().unwrap();
     audio.disc = 1;
     audio.discs = 2;
     audio.sample_bits = None;
     audio.samples = 66150;
     audio.size = 750;
-    audio.track = 3;
-    audio.tracks = 4;
 
     assert_eq!(
       Content::info(&audio, InfoBuilder::new()).build(),
       InfoBuilder::new()
-        .value("artist", "baz")
-        .value("album", "qux")
         .value("disc", "1 of 2")
-        .value("track", "3 of 4")
         .value("duration", "0:01")
         .value("type", "MP3")
         .value("sample rate", "44.1 kHz")
@@ -510,10 +220,7 @@ mod tests {
     assert_eq!(
       Content::info(&audio, InfoBuilder::new()).build(),
       InfoBuilder::new()
-        .value("artist", "bar")
-        .value("album", "foo")
         .value("disc", "1 of 1")
-        .value("track", "1 of 1")
         .value("duration", "0:00")
         .value("type", "FLAC")
         .value("sample rate", "0 kHz")
@@ -560,8 +267,6 @@ mod tests {
       Audio::load(&root, "foo.flac".parse().unwrap()).unwrap(),
       Item {
         content: Audio {
-          album: "qux".parse().unwrap(),
-          artist: "baz".parse().unwrap(),
           channels: 2,
           disc: 1,
           discs: 2,
@@ -570,8 +275,6 @@ mod tests {
           sample_rate: 44100,
           samples: 66150,
           size: 1024,
-          track: 3,
-          tracks: 4,
           ty: Some(AudioType::Flac),
         },
         title: Some("bar".parse().unwrap()),
@@ -582,8 +285,6 @@ mod tests {
       Audio::load(&root, "foo.mp3".parse().unwrap()).unwrap(),
       Item {
         content: Audio {
-          album: "qux".parse().unwrap(),
-          artist: "baz".parse().unwrap(),
           channels: 2,
           disc: 1,
           discs: 2,
@@ -592,8 +293,6 @@ mod tests {
           sample_rate: 44100,
           samples: 2304,
           size: 834,
-          track: 3,
-          tracks: 4,
           ty: Some(AudioType::Mp3),
         },
         title: Some("bar".parse().unwrap()),
@@ -632,8 +331,6 @@ mod tests {
   fn serialize() {
     assert_eq!(
       serde_json::to_string(&Audio {
-        album: "qux".parse().unwrap(),
-        artist: "baz".parse().unwrap(),
         channels: 8,
         disc: 3,
         discs: 4,
@@ -642,12 +339,10 @@ mod tests {
         sample_rate: 1,
         samples: 2,
         size: 9,
-        track: 5,
-        tracks: 6,
         ty: Some(AudioType::Flac),
       })
       .unwrap(),
-      r#"{"album":"qux","artist":"baz","channels":8,"disc":3,"discs":4,"path":"foo.flac","sample_bits":7,"sample_rate":1,"samples":2,"size":9,"track":5,"tracks":6,"type":"flac"}"#,
+      r#"{"channels":8,"disc":3,"discs":4,"path":"foo.flac","sample_bits":7,"sample_rate":1,"samples":2,"size":9,"type":"flac"}"#,
     );
   }
 }
