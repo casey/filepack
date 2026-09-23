@@ -1019,6 +1019,7 @@ fn get_package_with_metadata() {
   server.write_file(colophon);
 
   let metadata = Metadata {
+    version: Version::Zero,
     artwork: None,
     creator: None,
     description: None,
