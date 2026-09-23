@@ -213,7 +213,7 @@ fn malformed_signature_error() {
         embedded: {},
         package: {},
         signatures: [
-          "signature1invalid"
+          "signature1INVALID"
         ]
       },
     )
@@ -221,7 +221,7 @@ fn malformed_signature_error() {
     .stderr_regex(
       "
         error: failed to deserialize manifest at `manifest.json`
-               └─ signature contains invalid hex digit `i` at line \\d+ column \\d+
+               └─ signature contains invalid hex digit `I` at line \\d+ column \\d+
       ",
     )
     .failure();

@@ -16,4 +16,6 @@ pub enum HexError {
     expected.name(), expected.prefix(),
   ))]
   UnexpectedTag { actual: String, expected: Tag },
+  #[snafu(display("{} has unsupported version `{version}`", tag.name()))]
+  UnsupportedVersion { tag: Tag, version: char },
 }
