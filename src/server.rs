@@ -7,8 +7,8 @@ use {
 const DIRECTORIES: TableDefinition<Hash, ()> = TableDefinition::new("directories");
 const METADATA: TableDefinition<DatabaseMetadata, u64> = TableDefinition::new("metadata");
 const NUMBERS: TableDefinition<u64, Fingerprint> = TableDefinition::new("numbers");
-const PACKAGES: TableDefinition<Fingerprint, ()> = TableDefinition::new("packages");
-const SCHEMA_VERSION: u64 = 2;
+const PACKAGES: TableDefinition<Fingerprint, u64> = TableDefinition::new("packages");
+const SCHEMA_VERSION: u64 = 3;
 
 pub(crate) struct Server {
   database: Database,
@@ -43,18 +43,13 @@ impl Server {
   pub(crate) fn delete_package(&self, fingerprint: Fingerprint) -> ServerResult {
     let tx = self.database.begin_write()?;
 
-    ensure!(
-      tx.open_table(PACKAGES)?.remove(&fingerprint)?.is_some(),
-      server_error::PackageFingerprintNotFound { fingerprint },
-    );
+    let number = tx
+      .open_table(PACKAGES)?
+      .remove(&fingerprint)?
+      .context(server_error::PackageFingerprintNotFound { fingerprint })?
+      .value();
 
-    {
-      let mut numbers = tx.open_table(NUMBERS)?;
-
-      for entry in numbers.extract_from_if::<u64, _>(.., |_, value| value == fingerprint)? {
-        entry?;
-      }
-    }
+    tx.open_table(NUMBERS)?.remove(&number)?;
 
     tx.commit()?;
 
@@ -298,21 +293,6 @@ impl Server {
     Ok(missing)
   }
 
-  fn number(
-    numbers: &impl ReadableTable<u64, Fingerprint>,
-    fingerprint: Fingerprint,
-  ) -> ServerResult<Option<u64>> {
-    for entry in numbers.iter()? {
-      let (number, value) = entry?;
-
-      if value.value() == fingerprint {
-        return Ok(Some(number.value()));
-      }
-    }
-
-    Ok(None)
-  }
-
   pub(crate) fn open_file(&self, hash: Hash) -> ServerResult<Resource> {
     let path = self.file_path(hash);
 
@@ -422,7 +402,7 @@ impl Server {
 
   pub(crate) fn package_metadata_opt_ext(
     &self,
-    packages: &ReadOnlyTable<Fingerprint, ()>,
+    packages: &ReadOnlyTable<Fingerprint, u64>,
     fingerprint: Fingerprint,
   ) -> ServerResult<Option<Metadata>> {
     ensure!(
@@ -627,33 +607,38 @@ impl Server {
       let mut packages = tx.open_table(PACKAGES)?;
       let mut numbers = tx.open_table(NUMBERS)?;
 
-      packages.insert(&fingerprint, &())?;
+      let existing = packages.get(&fingerprint)?.map(|number| number.value());
 
-      if let Some(number) = replace {
-        let old = numbers
-          .get(&number)?
-          .context(server_error::PackageNumberNotFound { number })?
-          .value();
-
-        numbers.insert(&number, &fingerprint)?;
-
-        if old != fingerprint && Self::number(&numbers, old)?.is_none() {
-          packages.remove(&old)?;
+      match (replace, existing) {
+        (Some(number), Some(existing)) => {
+          ensure!(
+            number == existing,
+            server_error::PackageNumberConflict {
+              fingerprint,
+              number: existing,
+            },
+          );
+          number
         }
-
-        number
-      } else if let Some(number) = Self::number(&numbers, fingerprint)? {
-        number
-      } else {
-        let mut metadata = tx.open_table(METADATA)?;
-
-        let number = metadata.get(DatabaseMetadata::Number)?.unwrap().value();
-
-        metadata.insert(DatabaseMetadata::Number, &(number + 1))?;
-
-        numbers.insert(&number, &fingerprint)?;
-
-        number
+        (Some(number), None) => {
+          let old = numbers
+            .get(&number)?
+            .context(server_error::PackageNumberNotFound { number })?
+            .value();
+          numbers.insert(&number, &fingerprint)?;
+          packages.remove(&old)?;
+          packages.insert(&fingerprint, &number)?;
+          number
+        }
+        (None, Some(number)) => number,
+        (None, None) => {
+          let mut metadata = tx.open_table(METADATA)?;
+          let number = metadata.get(DatabaseMetadata::Number)?.unwrap().value();
+          metadata.insert(DatabaseMetadata::Number, &(number + 1))?;
+          numbers.insert(&number, &fingerprint)?;
+          packages.insert(&fingerprint, &number)?;
+          number
+        }
       }
     };
 

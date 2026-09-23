@@ -3472,6 +3472,12 @@ fn verify_package_assigns_numbers() {
     .body(api::package::Request::default().encode_to_vec())
     .assert_body(api::package::Response { number: 1 }.encode_to_vec())
     .send();
+
+  server
+    .post(format!("/api/package/{foo}"))
+    .body(api::package::Request { replace: Some(1) }.encode_to_vec())
+    .assert_body(api::package::Response { number: 1 }.encode_to_vec())
+    .send();
 }
 
 #[test]
@@ -3616,6 +3622,31 @@ fn verify_package_replace() {
         bytes: foo_deco.len().into_u64() + 3,
         directories: BTreeSet::from([foo_hash]).into(),
         files: BTreeSet::from([foo_hash, Hash::bytes(b"foo")]).into(),
+      }
+      .encode_to_vec(),
+    )
+    .send();
+}
+
+#[test]
+fn verify_package_replace_conflict() {
+  let server = TestServer::new();
+
+  let foo = PackageBuilder::new().file("foo", b"foo").upload(&server);
+  let bar = PackageBuilder::new().file("bar", b"bar").upload(&server);
+
+  server
+    .post(format!("/api/package/{foo}"))
+    .body(api::package::Request { replace: Some(2) }.encode_to_vec())
+    .status(StatusCode::CONFLICT)
+    .assert_body(format!("package {foo} already has number 1"))
+    .send();
+
+  server
+    .get("/api/packages")
+    .assert_body(
+      api::packages::Response {
+        packages: BTreeSet::from([foo, bar]).into(),
       }
       .encode_to_vec(),
     )
