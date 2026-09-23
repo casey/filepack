@@ -109,6 +109,7 @@ mod tests {
         .parse::<PrivateKey>()
         .unwrap()
         .sign(Statement {
+          version: Version::Zero,
           fingerprint,
           timestamp: None,
         });

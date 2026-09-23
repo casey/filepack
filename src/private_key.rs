@@ -43,7 +43,7 @@ impl PrivateKey {
 
   pub(crate) fn sign<T: Message>(&self, message: T) -> Signature<T> {
     use ed25519_dalek::Signer;
-    let signature = self.0.sign(message.digest().as_bytes());
+    let signature = self.0.sign(message.digest(Version::Zero).as_bytes());
     Signature::new(self.public_key(), message, signature)
   }
 }

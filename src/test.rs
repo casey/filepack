@@ -14,15 +14,16 @@ pub(crate) const PUBLIC_KEY: &str =
   "public1d79b36defbee7c1d26099c9e28f849f1f0dceb6e0217b83c87f5cff6fd8c4fc8";
 
 pub(crate) const SIGNATURE: &str = concat!(
-  "signature100a0d79b36defbee7c1d26099c9e28f849f1f0dceb6e0217b83c87f5cff6fd8c4fc801a200a0af1349b9",
-  "f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f326202c0a78bf091fe20c61ce14a2e6e8af4a370b0",
-  "3069f0d4e1453254a885a3e8bbdb0e64d4181d536c34db509f5c2c4ff38964f7b256ac67eeee8919fe1aaeb72caf0e"
+  "signature1000001a0d79b36defbee7c1d26099c9e28f849f1f0dceb6e0217b83c87f5cff6fd8c4fc802a4000001a0",
+  "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f326203c0b94281b2638e52cfecb6c18485",
+  "6ab482080c21f451c816f3b3be4313b0ba7fbab6128bf8a9045de1d2b5e5a3a86dba2a562b7cfea6d66eb4273a0fc1",
+  "4c8a9e04",
 );
 
 pub(crate) const TOKEN: &str = concat!(
-  "token100a0d79b36defbee7c1d26099c9e28f849f1f0dceb6e0217b83c87f5cff6fd8c4fc801870083666f6f010002",
-  "c091d83bddaf77a2ad445705e79014f168d4e0bbe75f004d8c024e62e1207afaa0c5f61928c5920841fe3a1e6d1074",
-  "46e4a01134cca0d7402566be22895c08a809",
+  "token1000001a0d79b36defbee7c1d26099c9e28f849f1f0dceb6e0217b83c87f5cff6fd8c4fc8028900000183666f",
+  "6f020003c0290c82aa8dbed1c9f020c8be2f0320fc319412d590c7e9cf345bb9893c861ccd57e9b54eaa1b17c96f9f",
+  "8900443f37d2f250b3643fd632c44dabcebe078fd702",
 );
 
 pub(crate) const WEAK_PUBLIC_KEY: &str =
@@ -140,6 +141,7 @@ mod tests {
   fn signature_matches() {
     let private_key = PRIVATE_KEY.parse::<PrivateKey>().unwrap();
     let statement = Statement {
+      version: Version::Zero,
       fingerprint: FINGERPRINT.parse().unwrap(),
       timestamp: None,
     };
@@ -151,6 +153,7 @@ mod tests {
   fn token_matches() {
     let private_key = PRIVATE_KEY.parse::<PrivateKey>().unwrap();
     let claims = Claims {
+      version: Version::Zero,
       audience: "foo".into(),
       timestamp: 0,
     };

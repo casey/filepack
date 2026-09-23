@@ -9,12 +9,15 @@ pub(crate) struct Policy<'a> {
   now: u64,
 }
 
+#[allow(clippy::arbitrary_source_item_ordering)]
 #[derive(Decode, Encode, Eq, Ord, PartialEq, PartialOrd)]
 #[deco(strict)]
 pub(crate) struct Claims {
   #[n(0)]
-  pub(crate) audience: String,
+  pub(crate) version: Version,
   #[n(1)]
+  pub(crate) audience: String,
+  #[n(2)]
   pub(crate) timestamp: u64,
 }
 
@@ -23,6 +26,7 @@ impl Claims {
     Ok(
       private_key
         .sign(Claims {
+          version: Version::Zero,
           audience: audience.into(),
           timestamp: now().context(error::Time)?,
         })
@@ -109,6 +113,7 @@ mod tests {
   fn mint(private_key: &PrivateKey, timestamp: u64) -> String {
     private_key
       .sign(Claims {
+        version: Version::Zero,
         audience: AUDIENCE.into(),
         timestamp,
       })
@@ -153,13 +158,16 @@ mod tests {
 
   #[test]
   fn unknown_field_rejected() {
+    #[allow(clippy::arbitrary_source_item_ordering)]
     #[derive(Debug, Decode, Encode, Eq, Ord, PartialEq, PartialOrd)]
     struct Extra {
       #[n(0)]
-      audience: String,
+      version: Version,
       #[n(1)]
-      timestamp: u64,
+      audience: String,
       #[n(2)]
+      timestamp: u64,
+      #[n(3)]
       unknown: u64,
     }
 
@@ -178,6 +186,7 @@ mod tests {
 
     let token = admin
       .sign(Extra {
+        version: Version::Zero,
         audience: AUDIENCE.into(),
         timestamp: 0,
         unknown: 0,
@@ -188,7 +197,7 @@ mod tests {
       Claims::verify(admin.public_key(), Some(AUDIENCE), 0, &token).unwrap_err(),
       AuthorizationError::Token {
         source: HexError::Decode {
-          source: DecodeError::UnknownField { key: 2 },
+          source: DecodeError::UnknownField { key: 3 },
           tag: Tag::Token,
         },
       },

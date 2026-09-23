@@ -5,16 +5,19 @@ use super::*;
 #[deco(strict)]
 pub struct Signature<T> {
   #[n(0)]
-  public_key: PublicKey,
+  version: Version,
   #[n(1)]
-  message: T,
+  public_key: PublicKey,
   #[n(2)]
+  message: T,
+  #[n(3)]
   signature: Ed25519Signature,
 }
 
 impl<T: Message> Signature<T> {
-  fn comparison_key(&self) -> (PublicKey, &T, [u8; 64]) {
+  fn comparison_key(&self) -> (Version, PublicKey, &T, [u8; 64]) {
     (
+      self.version,
       self.public_key,
       &self.message,
       self.signature.inner().to_bytes(),
@@ -27,6 +30,7 @@ impl<T: Message> Signature<T> {
     signature: ed25519_dalek::Signature,
   ) -> Self {
     Self {
+      version: Version::Zero,
       public_key,
       message,
       signature: signature.into(),
@@ -41,7 +45,10 @@ impl<T: Message> Signature<T> {
     self
       .public_key
       .inner()
-      .verify_strict(self.message.digest().as_bytes(), &self.signature.inner())
+      .verify_strict(
+        self.message.digest(self.version).as_bytes(),
+        &self.signature.inner(),
+      )
       .context(signature_error::Invalid {
         public_key: self.public_key,
       })?;
@@ -89,7 +96,7 @@ mod tests {
   #[test]
   fn signature_begins_with_pubkey_and_fingerprint() {
     let prefix = format!(
-      "signature100a0{}01a200a0{}02c0",
+      "signature1000001a0{}02a4000001a0{}03c0",
       &test::PUBLIC_KEY["public1".len()..],
       &test::FINGERPRINT["package1".len()..],
     );
@@ -99,11 +106,11 @@ mod tests {
 
   #[test]
   fn unexpected_field_error() {
-    let s = format!("{}0300", test::SIGNATURE);
+    let s = format!("{}0400", test::SIGNATURE);
     assert_matches!(
       s.parse::<Attestation>().unwrap_err(),
       HexError::Decode {
-        source: DecodeError::UnknownField { key: 3 },
+        source: DecodeError::UnknownField { key: 4 },
         tag: Tag::Signature,
       },
     );
