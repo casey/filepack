@@ -53,6 +53,7 @@ use {
     deco::Deco,
     deco_response::DecoResponse,
     decode_error::DecodeError,
+    decode_options::DecodeOptions,
     decode_owned::DecodeOwned,
     dimensions::Dimensions,
     directory_tree::DirectoryTree,
@@ -249,7 +250,6 @@ use {
 pub use self::{
   archive::Archive,
   decode::Decode,
-  decode_options::DecodeOptions,
   decoder::Decoder,
   directory::Directory,
   directory_ext::DirectoryExt,

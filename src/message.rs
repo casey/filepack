@@ -24,7 +24,7 @@ mod tests {
 
   #[test]
   fn context_separates_domains() {
-    #[derive(Clone, Debug, Decode, Encode, Eq, Ord, PartialEq, PartialOrd)]
+    #[derive(Debug, Decode, Encode, Eq, Ord, PartialEq, PartialOrd)]
     #[deco(strict)]
     struct Impostor {
       #[n(0)]
@@ -44,7 +44,7 @@ mod tests {
       }
     }
 
-    #[derive(Clone, Debug, Decode, Encode, Eq, Ord, PartialEq, PartialOrd)]
+    #[derive(Debug, Decode, Encode, Eq, Ord, PartialEq, PartialOrd)]
     #[deco(strict)]
     struct Twin {
       #[n(0)]

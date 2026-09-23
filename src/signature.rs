@@ -1,7 +1,7 @@
 use super::*;
 
 #[allow(clippy::arbitrary_source_item_ordering)]
-#[derive(Clone, Debug, Decode, Encode, DeserializeFromStr, Eq, PartialEq, SerializeDisplay)]
+#[derive(Debug, Decode, Encode, DeserializeFromStr, Eq, PartialEq, SerializeDisplay)]
 #[deco(strict)]
 pub struct Signature<T> {
   #[n(0)]

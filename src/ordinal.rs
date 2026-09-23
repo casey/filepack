@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Clone, Copy, Debug, DeserializeFromStr, PartialEq)]
+#[derive(Clone, Debug, DeserializeFromStr, PartialEq)]
 pub struct Ordinal(pub(crate) usize);
 
 impl Display for Ordinal {
