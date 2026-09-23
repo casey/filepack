@@ -28,3 +28,15 @@ impl From<ed25519_dalek::Signature> for Ed25519Signature {
     Self(inner)
   }
 }
+
+impl Ord for Ed25519Signature {
+  fn cmp(&self, other: &Self) -> Ordering {
+    self.0.to_bytes().cmp(&other.0.to_bytes())
+  }
+}
+
+impl PartialOrd for Ed25519Signature {
+  fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+    Some(self.cmp(other))
+  }
+}

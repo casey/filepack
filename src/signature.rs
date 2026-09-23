@@ -1,7 +1,9 @@
 use super::*;
 
 #[allow(clippy::arbitrary_source_item_ordering)]
-#[derive(Debug, Decode, Encode, DeserializeFromStr, Eq, PartialEq, SerializeDisplay)]
+#[derive(
+  Debug, Decode, Encode, DeserializeFromStr, Eq, Ord, PartialEq, PartialOrd, SerializeDisplay,
+)]
 #[deco(strict)]
 pub struct Signature<T> {
   #[n(0)]
@@ -15,15 +17,6 @@ pub struct Signature<T> {
 }
 
 impl<T: Message> Signature<T> {
-  fn comparison_key(&self) -> (Version, PublicKey, &T, [u8; 64]) {
-    (
-      self.version,
-      self.public_key,
-      &self.message,
-      self.signature.inner().to_bytes(),
-    )
-  }
-
   pub(crate) fn new(
     public_key: PublicKey,
     message: T,
@@ -75,18 +68,6 @@ impl<T: Message> FromStr for Signature<T> {
 
 impl<T: Message> Hex for Signature<T> {
   const TAG: Tag = T::TAG;
-}
-
-impl<T: Message> Ord for Signature<T> {
-  fn cmp(&self, other: &Self) -> Ordering {
-    self.comparison_key().cmp(&other.comparison_key())
-  }
-}
-
-impl<T: Message> PartialOrd for Signature<T> {
-  fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-    Some(self.cmp(other))
-  }
 }
 
 #[cfg(test)]
