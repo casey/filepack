@@ -31,6 +31,10 @@ pub(crate) trait Hex: DecodeOwned + Encode {
       s
     };
 
+    if let Some(version @ 'g'..='z') = payload.chars().next() {
+      return Err(HexError::UnsupportedVersion { tag, version });
+    }
+
     let digits = payload
       .chars()
       .map(|digit| match digit {
@@ -123,6 +127,18 @@ mod tests {
       "package fingerprint has odd number of hex digits: 3",
     );
     case("package1", "failed to decode package fingerprint");
+    case(
+      &format!("package1g{zeros}"),
+      "package fingerprint has unsupported version `g`",
+    );
+
+    assert_matches!(
+      format!("z{zeros}").parse::<Hash>(),
+      Err(HexError::UnsupportedVersion {
+        tag: Tag::Hash,
+        version: 'z',
+      }),
+    );
 
     assert_matches!(
       "package1abc".parse::<Fingerprint>(),

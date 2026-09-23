@@ -1151,10 +1151,10 @@ fn install_script() {
 #[test]
 fn malformed_fingerprint_returns_error() {
   TestServer::new()
-    .get("/package1invalid")
+    .get("/package1INVALID")
     .assert_error(
       StatusCode::BAD_REQUEST,
-      "package fingerprint contains invalid hex digit `i`",
+      "package fingerprint contains invalid hex digit `I`",
     )
     .send();
 }

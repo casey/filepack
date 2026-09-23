@@ -33,13 +33,13 @@ mod tests {
 
   #[test]
   fn literal_invalid() {
-    let err = "public1zz".parse::<KeyIdentifier>().unwrap_err();
-    assert_eq!(err.to_string(), "public key contains invalid hex digit `z`");
+    let err = "public1ZZ".parse::<KeyIdentifier>().unwrap_err();
+    assert_eq!(err.to_string(), "public key contains invalid hex digit `Z`");
     assert_matches!(
       err,
       KeyIdentifierError::PublicKey {
         source: HexError::Digit {
-          digit: 'z',
+          digit: 'Z',
           tag: Tag::PublicKey,
         },
       },
