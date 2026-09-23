@@ -302,6 +302,10 @@ impl Serve {
     let router = Router::new()
       .route("/", get(route::home))
       .route("/api/directory/{hash}", post(route::api_verify_directory))
+      .route(
+        "/api/file/{hash}",
+        get(route::api_file).put(route::api_upload_file),
+      )
       .route("/api/gc", post(route::api_gc))
       .route("/api/missing", post(route::api_missing))
       .route(
@@ -318,7 +322,7 @@ impl Serve {
       )
       .route("/directory/{hash}", get(route::directory))
       .route("/favicon.ico", get(route::favicon))
-      .route("/file/{hash}", get(route::file).put(route::upload_file))
+      .route("/file/{hash}", get(route::api_file))
       .route("/file/{hash}/{*path}", get(route::file_with_path))
       .route("/files", get(route::files))
       .route("/install.sh", get(route::install_script))

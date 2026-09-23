@@ -417,6 +417,26 @@ fn admin_key_requires_restrict_writes() {
 }
 
 #[test]
+fn api_file() {
+  let server = TestServer::new();
+
+  let hash = Hash::bytes(b"bar");
+
+  server
+    .get(format!("/api/file/{hash}"))
+    .status(StatusCode::NOT_FOUND)
+    .assert_body(format!("file with hash {hash} not found"))
+    .send();
+
+  server.write_file(b"bar");
+
+  server
+    .get(format!("/api/file/{hash}"))
+    .assert_body("bar")
+    .send();
+}
+
+#[test]
 fn api_package() {
   let server = TestServer::new();
 
@@ -641,7 +661,7 @@ fn closed_server_forbids_writes() {
       audience: None,
     })
     .build()
-    .put(format!("/file/{}", Hash::bytes(b"bar")))
+    .put(format!("/api/file/{}", Hash::bytes(b"bar")))
     .body("bar")
     .status(StatusCode::FORBIDDEN)
     .assert_body("writes forbidden")
@@ -2875,7 +2895,7 @@ fn restricted_write_accepts_admin_token() {
     .build();
 
   server
-    .put(format!("/file/{hash}"))
+    .put(format!("/api/file/{hash}"))
     .body("bar")
     .token(token)
     .send();
@@ -2896,7 +2916,7 @@ fn restricted_write_rejects_missing_header() {
   let hash = Hash::bytes(b"bar");
 
   server
-    .put(format!("/file/{hash}"))
+    .put(format!("/api/file/{hash}"))
     .body("bar")
     .status(StatusCode::UNAUTHORIZED)
     .assert_body("missing authorization header")
@@ -2918,7 +2938,7 @@ fn restricted_write_rejects_others() {
   let token = Claims::sign(&other, "filepack.example").unwrap();
 
   server
-    .put(format!("/file/{hash}"))
+    .put(format!("/api/file/{hash}"))
     .body("bar")
     .token(token)
     .status(StatusCode::UNAUTHORIZED)
@@ -2940,7 +2960,7 @@ fn restricted_write_rejects_wrong_audience() {
   let token = Claims::sign(&admin, "bar.example").unwrap();
 
   server
-    .put(format!("/file/{hash}"))
+    .put(format!("/api/file/{hash}"))
     .body("bar")
     .token(token)
     .status(StatusCode::UNAUTHORIZED)
@@ -3009,7 +3029,7 @@ fn upload_creates_file() {
 
   let hash = Hash::bytes(b"bar");
 
-  server.put(format!("/file/{hash}")).body("bar").send();
+  server.put(format!("/api/file/{hash}")).body("bar").send();
 
   server.assert_file(hash);
 
@@ -3024,7 +3044,7 @@ fn upload_short_circuits_when_file_exists() {
 
   server.write_file(b"bar");
 
-  server.put(format!("/file/{hash}")).body("bar").send();
+  server.put(format!("/api/file/{hash}")).body("bar").send();
 
   server.assert_file(hash);
 
@@ -3039,7 +3059,7 @@ fn upload_with_wrong_hash_fails() {
   let expected = Hash::bytes(b"baz");
 
   server
-    .put(format!("/file/{expected}"))
+    .put(format!("/api/file/{expected}"))
     .body("bar")
     .status(StatusCode::BAD_REQUEST)
     .assert_body(format!(
