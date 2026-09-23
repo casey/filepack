@@ -27,7 +27,7 @@ mod tests {
   fn render() {
     assert_eq!(
       ErrorHtml {
-        message: "foo".into(),
+        error: ServerError::PageNotFound,
         status: StatusCode::NOT_FOUND,
       }
       .to_string(),
@@ -35,7 +35,7 @@ mod tests {
         "
           <hgroup>
             <h1>404</h1>
-            <p>foo</p>
+            <p>page not found</p>
           </hgroup>
         "
       ),
@@ -48,7 +48,7 @@ mod tests {
     fn case(status: StatusCode, expected: &str) {
       assert_eq!(
         ErrorHtml {
-          message: String::new(),
+          error: ServerError::PageNotFound,
           status,
         }
         .title(),
