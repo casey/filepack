@@ -2,6 +2,7 @@ use super::*;
 
 #[allow(clippy::arbitrary_source_item_ordering)]
 #[derive(Clone, Copy, Debug, Decode, Default, Encode, PartialEq, Serialize)]
+#[deco(validate)]
 pub struct Totals {
   #[n(0)]
   pub files: u64,
@@ -14,6 +15,24 @@ pub struct Totals {
 }
 
 impl Totals {
+  pub(crate) fn bytes(self) -> u64 {
+    self.file_size + self.directory_size
+  }
+
+  pub(crate) fn check(self) -> Result<(), TotalsError> {
+    self
+      .files
+      .checked_add(self.directories)
+      .context(totals_error::Overflow)?;
+
+    self
+      .file_size
+      .checked_add(self.directory_size)
+      .context(totals_error::Overflow)?;
+
+    Ok(())
+  }
+
   #[must_use]
   pub(crate) fn checked_add(self, other: Self) -> Option<Self> {
     Some(Self {
@@ -24,6 +43,10 @@ impl Totals {
     })
   }
 
+  pub(crate) fn entries(self) -> u64 {
+    self.files + self.directories
+  }
+
   pub(crate) fn expect(self, expected: Totals) -> Result<(), TotalsError> {
     ensure! {
       self == expected,
@@ -31,6 +54,12 @@ impl Totals {
     }
 
     Ok(())
+  }
+}
+
+impl Validate for Totals {
+  fn validate(&self) -> DecodeResult {
+    self.check().context(decode_error::Totals)
   }
 }
 
@@ -50,6 +79,40 @@ impl Display for Totals {
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn check() {
+    assert_eq!(
+      Totals {
+        directories: 1,
+        directory_size: 2,
+        file_size: 3,
+        files: 4,
+      }
+      .check(),
+      Ok(()),
+    );
+
+    assert_eq!(
+      Totals {
+        directories: 1,
+        files: u64::MAX,
+        ..Totals::default()
+      }
+      .check(),
+      Err(TotalsError::Overflow),
+    );
+
+    assert_eq!(
+      Totals {
+        directory_size: 1,
+        file_size: u64::MAX,
+        ..Totals::default()
+      }
+      .check(),
+      Err(TotalsError::Overflow),
+    );
+  }
 
   #[test]
   fn checked_add() {
@@ -129,6 +192,22 @@ mod tests {
   }
 
   #[test]
+  fn decode_error() {
+    let totals = Totals {
+      directories: 1,
+      files: u64::MAX,
+      ..Totals::default()
+    };
+
+    assert_matches!(
+      Totals::decode_from_slice(&totals.encode_to_vec()),
+      Err(DecodeError::Totals {
+        source: TotalsError::Overflow
+      }),
+    );
+  }
+
+  #[test]
   fn display() {
     #[track_caller]
     fn case(totals: Totals, expected: &str) {
@@ -183,5 +262,18 @@ mod tests {
       actual.expect(expected),
       Err(TotalsError::Mismatch { actual, expected }),
     );
+  }
+
+  #[test]
+  fn sums() {
+    let totals = Totals {
+      directories: 1,
+      directory_size: 2,
+      file_size: 3,
+      files: 4,
+    };
+
+    assert_eq!(totals.bytes(), 5);
+    assert_eq!(totals.entries(), 5);
   }
 }
