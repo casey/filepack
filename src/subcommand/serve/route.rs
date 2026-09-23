@@ -26,6 +26,19 @@ pub(crate) async fn api_missing(
   })
 }
 
+pub(crate) async fn api_package(
+  server: ServerExtension,
+  Path(fingerprint): Path<Fingerprint>,
+) -> ServerResult {
+  block_in_place(|| {
+    ensure!(
+      server.has_package(fingerprint)?,
+      server_error::PackageNotFound { fingerprint },
+    );
+    Ok(())
+  })
+}
+
 pub(crate) async fn api_packages(
   server: ServerExtension,
 ) -> ServerResult<DecoResponse<api::packages::Response>> {

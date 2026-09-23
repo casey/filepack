@@ -179,6 +179,17 @@ impl Server {
     })
   }
 
+  pub(crate) fn has_package(&self, fingerprint: Fingerprint) -> ServerResult<bool> {
+    Ok(
+      self
+        .database
+        .begin_read()?
+        .open_table(PACKAGES)?
+        .get(&fingerprint)?
+        .is_some(),
+    )
+  }
+
   pub(crate) fn media_item(
     &self,
     fingerprint: Fingerprint,
