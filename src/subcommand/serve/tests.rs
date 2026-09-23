@@ -113,7 +113,11 @@ impl<'a> PackageBuilder<'a> {
   fn upload(self, server: &TestServer) -> Fingerprint {
     let fingerprint = Fingerprint(self.root.upload(server));
 
-    server.post(format!("/api/package/{fingerprint}")).send();
+    server
+      .post(format!("/api/package/{fingerprint}"))
+      .body(api::package::Request::default().encode_to_vec())
+      .ignore_body()
+      .send();
 
     fingerprint
   }
@@ -125,7 +129,7 @@ struct TestRequestBuilder {
   method: Method,
   path: String,
   range: Option<&'static str>,
-  response_body: Body,
+  response_body: Option<Body>,
   response_headers: BTreeMap<String, String>,
   router: Router,
   status: StatusCode,
@@ -134,7 +138,7 @@ struct TestRequestBuilder {
 
 impl TestRequestBuilder {
   fn assert_body(mut self, body: impl AsRef<[u8]>) -> Self {
-    self.response_body = Body::from(body.as_ref().to_vec());
+    self.response_body = Some(Body::from(body.as_ref().to_vec()));
     self
   }
 
@@ -174,7 +178,7 @@ impl TestRequestBuilder {
     for (name, value) in parts.headers {
       self = self.assert_header(name.unwrap(), value.to_str().unwrap());
     }
-    self.response_body = body;
+    self.response_body = Some(body);
     self
   }
 
@@ -187,6 +191,11 @@ impl TestRequestBuilder {
     self
   }
 
+  fn ignore_body(mut self) -> Self {
+    self.response_body = None;
+    self
+  }
+
   fn new(method: Method, path: impl Into<String>, router: Router) -> Self {
     Self {
       absent_headers: BTreeSet::new(),
@@ -194,7 +203,7 @@ impl TestRequestBuilder {
       method,
       path: path.into(),
       range: None,
-      response_body: Body::empty(),
+      response_body: Some(Body::empty()),
       response_headers: BTreeMap::from([(
         header::X_CONTENT_TYPE_OPTIONS.to_string(),
         "nosniff".into(),
@@ -254,10 +263,11 @@ impl TestRequestBuilder {
       let body = body::to_bytes(response.into_body(), usize::MAX)
         .await
         .unwrap();
-      let expected = body::to_bytes(self.response_body, usize::MAX)
-        .await
-        .unwrap();
-      assert_eq!(body, expected);
+
+      if let Some(expected) = self.response_body {
+        let expected = body::to_bytes(expected, usize::MAX).await.unwrap();
+        assert_eq!(body, expected);
+      }
     });
   }
 
@@ -387,32 +397,17 @@ impl TestServerBuilder {
 
 #[test]
 fn admin_key_requires_domain() {
-  assert_matches_regex!(
-    Serve::try_parse_from([
-      "filepack",
-      "--admin-key",
-      test::PUBLIC_KEY,
-      "--restrict-writes",
-    ])
-    .unwrap_err()
-    .to_string(),
-    "error: the following required arguments were not provided:\n  --domain.*"
+  assert_missing_argument::<Serve>(
+    &["--admin-key", test::PUBLIC_KEY, "--restrict-writes"],
+    &["--domain <DOMAIN>"],
   );
 }
 
 #[test]
 fn admin_key_requires_restrict_writes() {
-  assert_matches_regex!(
-    Serve::try_parse_from([
-      "filepack",
-      "--admin-key",
-      test::PUBLIC_KEY,
-      "--domain",
-      "foo",
-    ])
-    .unwrap_err()
-    .to_string(),
-    "error: the following required arguments were not provided:\n  --restrict-writes.*"
+  assert_missing_argument::<Serve>(
+    &["--admin-key", test::PUBLIC_KEY, "--domain", "foo"],
+    &["--restrict-writes"],
   );
 }
 
@@ -501,7 +496,11 @@ fn artwork_missing() {
   server.write_file(&deco);
 
   server.post(format!("/api/directory/{hash}")).send();
-  server.post(format!("/api/package/{fingerprint}")).send();
+  server
+    .post(format!("/api/package/{fingerprint}"))
+    .body(api::package::Request::default().encode_to_vec())
+    .assert_body(api::package::Response { number: 1 }.encode_to_vec())
+    .send();
 
   let mut corrupt = Directory::new();
   corrupt.insert_file(Metadata::DECO_FILENAME, &metadata_deco);
@@ -576,7 +575,11 @@ fn artwork_response() {
     server.write_file(&deco);
 
     server.post(format!("/api/directory/{hash}")).send();
-    server.post(format!("/api/package/{fingerprint}")).send();
+    server
+      .post(format!("/api/package/{fingerprint}"))
+      .body(api::package::Request::default().encode_to_vec())
+      .assert_body(api::package::Response { number: 1 }.encode_to_vec())
+      .send();
 
     server
       .get(format!("/artwork/{fingerprint}"))
@@ -709,6 +712,20 @@ fn delete_package_rejects_missing_auth_header() {
 }
 
 #[test]
+fn delete_package_removes_number() {
+  let server = TestServer::new();
+
+  let fingerprint = PackageBuilder::new().file("foo", b"foo").upload(&server);
+
+  server.delete(format!("/api/package/{fingerprint}")).send();
+
+  server
+    .get("/package/1")
+    .assert_error(StatusCode::NOT_FOUND, "package number 1 not found")
+    .send();
+}
+
+#[test]
 fn delete_package_removes_package() {
   let server = TestServer::new();
 
@@ -731,8 +748,7 @@ fn delete_package_removes_package() {
 fn domain_required_for_canonical_domain_options() {
   #[track_caller]
   fn case(args: &[&str]) {
-    let err = Serve::try_parse_from(["filepack"].iter().chain(args)).unwrap_err();
-    assert_eq!(err.kind(), clap::error::ErrorKind::MissingRequiredArgument);
+    assert_missing_argument::<Serve>(args, &["--domain <DOMAIN>"]);
   }
 
   case(&["--https"]);
@@ -1036,6 +1052,34 @@ fn get_directory_succeeds() {
 }
 
 #[test]
+fn get_package_by_number() {
+  let server = TestServer::new();
+
+  let fingerprint = PackageBuilder::new().upload(&server);
+
+  server
+    .get("/package/1")
+    .assert_page(PackageHtml {
+      colophon: None,
+      directory: Directory::new(),
+      fingerprint,
+      metadata: None,
+      mounted: false,
+      readme: None,
+      totals: Totals::default(),
+    })
+    .send();
+}
+
+#[test]
+fn get_package_by_number_not_found() {
+  TestServer::new()
+    .get("/package/99")
+    .assert_error(StatusCode::NOT_FOUND, "package number 99 not found")
+    .send();
+}
+
+#[test]
 fn get_package_not_found() {
   let server = TestServer::new();
 
@@ -1095,7 +1139,11 @@ fn get_package_with_metadata() {
   server.write_file(&deco);
 
   server.post(format!("/api/directory/{hash}")).send();
-  server.post(format!("/api/package/{fingerprint}")).send();
+  server
+    .post(format!("/api/package/{fingerprint}"))
+    .body(api::package::Request::default().encode_to_vec())
+    .assert_body(api::package::Response { number: 1 }.encode_to_vec())
+    .send();
 
   server
     .get(format!("/package/{fingerprint}"))
@@ -1126,7 +1174,11 @@ fn get_package_without_metadata() {
   server.write_file(&deco);
 
   server.post(format!("/api/directory/{hash}")).send();
-  server.post(format!("/api/package/{fingerprint}")).send();
+  server
+    .post(format!("/api/package/{fingerprint}"))
+    .body(api::package::Request::default().encode_to_vec())
+    .assert_body(api::package::Response { number: 1 }.encode_to_vec())
+    .send();
 
   server
     .get(format!("/package/{fingerprint}"))
@@ -1197,6 +1249,18 @@ fn malformed_fingerprint_returns_error() {
     .assert_error(
       StatusCode::BAD_REQUEST,
       "package fingerprint contains invalid hex digit `I`",
+    )
+    .send();
+}
+
+#[test]
+fn malformed_package_identifier_returns_error() {
+  TestServer::new()
+    .get("/package/foo")
+    .status(StatusCode::BAD_REQUEST)
+    .assert_body(
+      "Invalid URL: Cannot parse `package` with value `foo`: package fingerprint missing tag \
+      `package1…`",
     )
     .send();
 }
@@ -1309,7 +1373,11 @@ fn media_audio_item_package_without_metadata() {
   server.write_file(&deco);
 
   server.post(format!("/api/directory/{hash}")).send();
-  server.post(format!("/api/package/{fingerprint}")).send();
+  server
+    .post(format!("/api/package/{fingerprint}"))
+    .body(api::package::Request::default().encode_to_vec())
+    .assert_body(api::package::Response { number: 1 }.encode_to_vec())
+    .send();
 
   server
     .get(format!("/media/audio/{fingerprint}/item/1"))
@@ -2060,6 +2128,32 @@ fn package_item_audio_out_of_range() {
 }
 
 #[test]
+fn package_item_by_number() {
+  let server = TestServer::new();
+
+  let metadata = Metadata {
+    media: Some(Media::Audio {
+      items: tracks(&["foo.flac"]),
+    }),
+    ..default()
+  };
+
+  let fingerprint = PackageBuilder::new()
+    .metadata(&metadata)
+    .file("foo.flac", b"foo")
+    .upload(&server);
+
+  server
+    .get("/package/1/item/1")
+    .assert_page(ItemHtml {
+      fingerprint,
+      index: 0,
+      metadata,
+    })
+    .send();
+}
+
+#[test]
 fn package_item_image() {
   let server = TestServer::new();
 
@@ -2281,7 +2375,11 @@ fn package_item_without_metadata() {
   server.write_file(&deco);
 
   server.post(format!("/api/directory/{hash}")).send();
-  server.post(format!("/api/package/{fingerprint}")).send();
+  server
+    .post(format!("/api/package/{fingerprint}"))
+    .body(api::package::Request::default().encode_to_vec())
+    .assert_body(api::package::Response { number: 1 }.encode_to_vec())
+    .send();
 
   server
     .get(format!("/package/{fingerprint}/item/1"))
@@ -2310,6 +2408,31 @@ fn package_media() {
 
   server
     .get(format!("/package/{fingerprint}/media"))
+    .assert_page(MediaHtml {
+      fingerprint,
+      metadata,
+    })
+    .send();
+}
+
+#[test]
+fn package_media_by_number() {
+  let server = TestServer::new();
+
+  let metadata = Metadata {
+    media: Some(Media::Audio {
+      items: tracks(&["foo.flac"]),
+    }),
+    ..default()
+  };
+
+  let fingerprint = PackageBuilder::new()
+    .metadata(&metadata)
+    .file("foo.flac", b"foo")
+    .upload(&server);
+
+  server
+    .get("/package/1/media")
     .assert_page(MediaHtml {
       fingerprint,
       metadata,
@@ -2362,7 +2485,11 @@ fn package_page_og_image() {
   server.write_file(&deco);
 
   server.post(format!("/api/directory/{hash}")).send();
-  server.post(format!("/api/package/{fingerprint}")).send();
+  server
+    .post(format!("/api/package/{fingerprint}"))
+    .body(api::package::Request::default().encode_to_vec())
+    .assert_body(api::package::Response { number: 1 }.encode_to_vec())
+    .send();
 
   server
     .get(format!("/package/{fingerprint}"))
@@ -2659,13 +2786,22 @@ fn packages_non_empty() {
 
   let mut packages = Vec::new();
 
-  for content in [b"foo".as_slice(), b"bar", b"baz"] {
+  for (i, content) in [b"foo".as_slice(), b"bar", b"baz"].into_iter().enumerate() {
     server.write_file(content);
     let (deco, hash) = Directory::new().insert_file("file", content).deco();
     let fingerprint = Fingerprint(hash);
     server.write_file(&deco);
     server.post(format!("/api/directory/{hash}")).send();
-    server.post(format!("/api/package/{fingerprint}")).send();
+    server
+      .post(format!("/api/package/{fingerprint}"))
+      .body(api::package::Request::default().encode_to_vec())
+      .assert_body(
+        api::package::Response {
+          number: i.into_u64() + 1,
+        }
+        .encode_to_vec(),
+      )
+      .send();
     packages.push((
       fingerprint,
       None,
@@ -3312,6 +3448,33 @@ fn verify_directory_unverified_subdirectory() {
 }
 
 #[test]
+fn verify_package_assigns_numbers() {
+  let server = TestServer::new();
+
+  let foo = PackageBuilder::new().file("foo", b"foo").upload(&server);
+
+  server
+    .post(format!("/api/package/{foo}"))
+    .body(api::package::Request::default().encode_to_vec())
+    .assert_body(api::package::Response { number: 1 }.encode_to_vec())
+    .send();
+
+  let bar = PackageBuilder::new().file("bar", b"bar").upload(&server);
+
+  server
+    .post(format!("/api/package/{bar}"))
+    .body(api::package::Request::default().encode_to_vec())
+    .assert_body(api::package::Response { number: 2 }.encode_to_vec())
+    .send();
+
+  server
+    .post(format!("/api/package/{foo}"))
+    .body(api::package::Request::default().encode_to_vec())
+    .assert_body(api::package::Response { number: 1 }.encode_to_vec())
+    .send();
+}
+
+#[test]
 fn verify_package_metadata_decode_error() {
   let server = TestServer::new();
 
@@ -3328,6 +3491,7 @@ fn verify_package_metadata_decode_error() {
 
   server
     .post(format!("/api/package/{fingerprint}"))
+    .body(api::package::Request::default().encode_to_vec())
     .status(StatusCode::BAD_REQUEST)
     .assert_body(format!(
       "failed to decode metadata for package {fingerprint}"
@@ -3356,6 +3520,7 @@ fn verify_package_metadata_references_missing_file() {
 
   server
     .post(format!("/api/package/{fingerprint}"))
+    .body(api::package::Request::default().encode_to_vec())
     .status(StatusCode::BAD_REQUEST)
     .assert_body(format!(
       "package {fingerprint} metadata references missing file `cover.png`"
@@ -3386,7 +3551,90 @@ fn verify_package_metadata_references_present_file() {
 
   server.post(format!("/api/directory/{hash}")).send();
 
-  server.post(format!("/api/package/{fingerprint}")).send();
+  server
+    .post(format!("/api/package/{fingerprint}"))
+    .body(api::package::Request::default().encode_to_vec())
+    .assert_body(api::package::Response { number: 1 }.encode_to_vec())
+    .send();
+}
+
+#[test]
+fn verify_package_replace() {
+  let server = TestServer::new();
+
+  let foo = PackageBuilder::new().file("foo", b"foo");
+  let (foo_deco, foo_hash) = foo.directory().deco();
+  let foo = foo.upload(&server);
+
+  let bar = PackageBuilder::new().file("bar", b"bar");
+  let directory = bar.directory();
+  let bar = Fingerprint(bar.root.upload(&server));
+
+  server
+    .post(format!("/api/package/{bar}"))
+    .body(api::package::Request { replace: Some(1) }.encode_to_vec())
+    .assert_body(api::package::Response { number: 1 }.encode_to_vec())
+    .send();
+
+  server
+    .get("/package/1")
+    .assert_page(PackageHtml {
+      colophon: None,
+      directory,
+      fingerprint: bar,
+      metadata: None,
+      mounted: false,
+      readme: None,
+      totals: Totals {
+        directories: 0,
+        directory_size: 0,
+        file_size: 3,
+        files: 1,
+      },
+    })
+    .send();
+
+  server
+    .get(format!("/package/{foo}"))
+    .assert_error(StatusCode::NOT_FOUND, format!("package {foo} not found"))
+    .send();
+
+  server
+    .get("/api/packages")
+    .assert_body(
+      api::packages::Response {
+        packages: BTreeSet::from([bar]).into(),
+      }
+      .encode_to_vec(),
+    )
+    .send();
+
+  server
+    .post("/api/gc")
+    .assert_body(
+      api::gc::Response {
+        bytes: foo_deco.len().into_u64() + 3,
+        directories: BTreeSet::from([foo_hash]).into(),
+        files: BTreeSet::from([foo_hash, Hash::bytes(b"foo")]).into(),
+      }
+      .encode_to_vec(),
+    )
+    .send();
+}
+
+#[test]
+fn verify_package_replace_not_found() {
+  let server = TestServer::new();
+
+  let package = PackageBuilder::new().file("foo", b"foo");
+  let fingerprint = Fingerprint(package.root.upload(&server));
+
+  server
+    .post(format!("/api/package/{fingerprint}"))
+    .body(api::package::Request { replace: Some(99) }.encode_to_vec())
+    .status(StatusCode::NOT_FOUND)
+    .assert_body("package number 99 not found")
+    .send();
 }
 
 #[test]
@@ -3399,6 +3647,7 @@ fn verify_package_unverified() {
 
   server
     .post(format!("/api/package/{fingerprint}"))
+    .body(api::package::Request::default().encode_to_vec())
     .status(StatusCode::BAD_REQUEST)
     .assert_body(format!(
       "package {fingerprint} root directory is unverified"

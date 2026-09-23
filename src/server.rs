@@ -6,8 +6,9 @@ use {
 
 const DIRECTORIES: TableDefinition<Hash, ()> = TableDefinition::new("directories");
 const METADATA: TableDefinition<DatabaseMetadata, u64> = TableDefinition::new("metadata");
+const NUMBERS: TableDefinition<u64, Fingerprint> = TableDefinition::new("numbers");
 const PACKAGES: TableDefinition<Fingerprint, ()> = TableDefinition::new("packages");
-const SCHEMA_VERSION: u64 = 1;
+const SCHEMA_VERSION: u64 = 2;
 
 pub(crate) struct Server {
   database: Database,
@@ -44,8 +45,16 @@ impl Server {
 
     ensure!(
       tx.open_table(PACKAGES)?.remove(&fingerprint)?.is_some(),
-      server_error::PackageNotFound { fingerprint },
+      server_error::PackageFingerprintNotFound { fingerprint },
     );
+
+    {
+      let mut numbers = tx.open_table(NUMBERS)?;
+
+      for entry in numbers.extract_from_if::<u64, _>(.., |_, value| value == fingerprint)? {
+        entry?;
+      }
+    }
 
     tx.commit()?;
 
@@ -289,6 +298,21 @@ impl Server {
     Ok(missing)
   }
 
+  fn number(
+    numbers: &impl ReadableTable<u64, Fingerprint>,
+    fingerprint: Fingerprint,
+  ) -> ServerResult<Option<u64>> {
+    for entry in numbers.iter()? {
+      let (number, value) = entry?;
+
+      if value.value() == fingerprint {
+        return Ok(Some(number.value()));
+      }
+    }
+
+    Ok(None)
+  }
+
   pub(crate) fn open_file(&self, hash: Hash) -> ServerResult<Resource> {
     let path = self.file_path(hash);
 
@@ -326,7 +350,7 @@ impl Server {
 
     ensure!(
       packages.get(&fingerprint)?.is_some(),
-      server_error::PackageNotFound { fingerprint },
+      server_error::PackageFingerprintNotFound { fingerprint },
     );
 
     self
@@ -403,7 +427,7 @@ impl Server {
   ) -> ServerResult<Option<Metadata>> {
     ensure!(
       packages.get(&fingerprint)?.is_some(),
-      server_error::PackageNotFound { fingerprint },
+      server_error::PackageFingerprintNotFound { fingerprint },
     );
 
     self.metadata(fingerprint)
@@ -455,6 +479,21 @@ impl Server {
         server_error::FilesystemIo { path }.into_error(err)
       }
     })
+  }
+
+  pub(crate) fn resolve(&self, identifier: PackageIdentifier) -> ServerResult<Fingerprint> {
+    match identifier {
+      PackageIdentifier::Fingerprint(fingerprint) => Ok(fingerprint),
+      PackageIdentifier::Number(number) => Ok(
+        self
+          .database
+          .begin_read()?
+          .open_table(NUMBERS)?
+          .get(&number)?
+          .context(server_error::PackageNumberNotFound { number })?
+          .value(),
+      ),
+    }
   }
 
   fn resolve_path(&self, root: Fingerprint, path: &RelativePath) -> ServerResult<Option<Hash>> {
@@ -558,7 +597,11 @@ impl Server {
     Ok(())
   }
 
-  pub(crate) fn verify_package(&self, fingerprint: Fingerprint) -> ServerResult {
+  pub(crate) fn verify_package(
+    &self,
+    fingerprint: Fingerprint,
+    replace: Option<u64>,
+  ) -> ServerResult<u64> {
     let tx = self.database.begin_write()?;
 
     ensure!(
@@ -580,11 +623,43 @@ impl Server {
       }
     }
 
-    tx.open_table(PACKAGES)?.insert(&fingerprint, &())?;
+    let number = {
+      let mut packages = tx.open_table(PACKAGES)?;
+      let mut numbers = tx.open_table(NUMBERS)?;
+
+      packages.insert(&fingerprint, &())?;
+
+      if let Some(number) = replace {
+        let old = numbers
+          .get(&number)?
+          .context(server_error::PackageNumberNotFound { number })?
+          .value();
+
+        numbers.insert(&number, &fingerprint)?;
+
+        if old != fingerprint && Self::number(&numbers, old)?.is_none() {
+          packages.remove(&old)?;
+        }
+
+        number
+      } else if let Some(number) = Self::number(&numbers, fingerprint)? {
+        number
+      } else {
+        let mut metadata = tx.open_table(METADATA)?;
+
+        let number = metadata.get(DatabaseMetadata::Number)?.unwrap().value();
+
+        metadata.insert(DatabaseMetadata::Number, &(number + 1))?;
+
+        numbers.insert(&number, &fingerprint)?;
+
+        number
+      }
+    };
 
     tx.commit()?;
 
-    Ok(())
+    Ok(number)
   }
 
   pub(crate) fn with_data_dir(data_dir: &Utf8Path) -> Result<Self> {
@@ -595,10 +670,12 @@ impl Server {
 
     if tx.list_tables()?.count() == 0 && tx.list_multimap_tables()?.count() == 0 {
       {
-        tx.open_table(METADATA)?
-          .insert(DatabaseMetadata::Schema, &SCHEMA_VERSION)?;
+        let mut metadata = tx.open_table(METADATA)?;
+        metadata.insert(DatabaseMetadata::Number, &1)?;
+        metadata.insert(DatabaseMetadata::Schema, &SCHEMA_VERSION)?;
 
         tx.open_table(DIRECTORIES)?;
+        tx.open_table(NUMBERS)?;
         tx.open_table(PACKAGES)?;
       }
 

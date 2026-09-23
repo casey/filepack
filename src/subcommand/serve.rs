@@ -353,12 +353,9 @@ impl Serve {
       .route("/mount/{fingerprint}", get(route::mount_redirect))
       .route("/mount/{fingerprint}/", get(route::mount))
       .route("/mount/{fingerprint}/{*path}", get(route::mount_file))
-      .route("/package/{fingerprint}", get(route::package))
-      .route(
-        "/package/{fingerprint}/item/{item}",
-        get(route::package_item),
-      )
-      .route("/package/{fingerprint}/media", get(route::package_media))
+      .route("/package/{package}", get(route::package))
+      .route("/package/{package}/item/{item}", get(route::package_item))
+      .route("/package/{package}/media", get(route::package_media))
       .route("/packages", get(route::packages))
       .route("/static/{*path}", get(route::static_asset))
       .fallback(route::fallback)

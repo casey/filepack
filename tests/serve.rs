@@ -56,7 +56,12 @@ fn mount_rejects_non_web_package() {
 
   test
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
-    .stderr("uploading 2 of 2 files\n")
+    .stderr(
+      "
+        uploading 2 of 2 files
+        uploaded package number 1
+      ",
+    )
     .success();
 
   server
@@ -85,7 +90,12 @@ fn mount_rejects_package_without_media_type() {
 
   test
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
-    .stderr("uploading 2 of 2 files\n")
+    .stderr(
+      "
+        uploading 2 of 2 files
+        uploaded package number 1
+      ",
+    )
     .success();
 
   server

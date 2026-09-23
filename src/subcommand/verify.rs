@@ -242,3 +242,18 @@ fingerprint mismatch: `{}`
     Ok(())
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn named_key_invalid() {
+    assert_invalid_argument_value::<Verify>(
+      &["--key", "@invalid"],
+      "--key <KEY>",
+      "@invalid",
+      "invalid public key name `@invalid`",
+    );
+  }
+}

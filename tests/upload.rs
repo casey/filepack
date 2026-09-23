@@ -56,7 +56,12 @@ fn reupload_package_succeeds() {
     .args(["create", "."])
     .success()
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
-    .stderr("uploading 4 of 4 files\n")
+    .stderr(
+      "
+        uploading 4 of 4 files
+        uploaded package number 1
+      ",
+    )
     .success()
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
     .stderr("server already has package\n")
@@ -150,21 +155,6 @@ fn serve_admin_key_by_public_key() {
 }
 
 #[test]
-fn server_url_must_be_http_or_https() {
-  Test::new()
-    .args(["upload", "--server", "ftp://example.com"])
-    .stderr(
-      "
-        error: invalid value 'ftp://example.com' for '--server <URL>': URL scheme `ftp` not \
-        allowed, must be `http` or `https`
-
-        For more information, try '--help'.
-      ",
-    )
-    .status(USAGE_ERROR);
-}
-
-#[test]
 fn signatures_are_not_uploaded() {
   let server = Test::new().serve().spawn();
 
@@ -185,7 +175,12 @@ fn signatures_are_not_uploaded() {
 
   test
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
-    .stderr("uploading 3 of 3 files\n")
+    .stderr(
+      "
+        uploading 3 of 3 files
+        uploaded package number 1
+      ",
+    )
     .success();
 
   let downloaded = Test::new()
@@ -241,14 +236,6 @@ fn upload_creates_file() {
 }
 
 #[test]
-fn upload_file_requires_path() {
-  Test::new()
-    .args(["upload", "--server", "http://127.0.0.1:1", "--file"])
-    .stderr_regex("error: the following required arguments were not provided:.*<PATH>.*")
-    .status(USAGE_ERROR);
-}
-
-#[test]
 fn upload_package_accepts_directory() {
   let server = Test::new()
     .serve()
@@ -260,7 +247,12 @@ fn upload_package_accepts_directory() {
     .args(["create", "foo"])
     .success()
     .args(["upload", "--server", &server.address(), "foo"])
-    .stderr("uploading 1 of 1 file\n")
+    .stderr(
+      "
+        uploading 1 of 1 file
+        uploaded package number 1
+      ",
+    )
     .success();
 
   server.terminate().success();
@@ -278,7 +270,12 @@ fn upload_package_defaults_to_current_directory() {
     .args(["create", "."])
     .success()
     .args(["upload", "--server", &server.address()])
-    .stderr("uploading 1 of 1 file\n")
+    .stderr(
+      "
+        uploading 1 of 1 file
+        uploaded package number 1
+      ",
+    )
     .success();
 
   server.terminate().success();
@@ -472,7 +469,12 @@ fn upload_package_serves_package_html() {
 
   test
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
-    .stderr("uploading 2 of 2 files\n")
+    .stderr(
+      "
+        uploading 2 of 2 files
+        uploaded package number 1
+      ",
+    )
     .success();
 
   let metadata = Metadata {
@@ -529,7 +531,12 @@ fn upload_package_skips_files_already_on_server() {
     .args(["create", "."])
     .success()
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
-    .stderr("uploading 1 of 2 files\n")
+    .stderr(
+      "
+        uploading 1 of 2 files
+        uploaded package number 1
+      ",
+    )
     .success();
 
   server.terminate().success();
@@ -560,7 +567,12 @@ fn upload_package_uploads_files() {
 
   test
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
-    .stderr("uploading 4 of 4 files\n")
+    .stderr(
+      "
+        uploading 4 of 4 files
+        uploaded package number 1
+      ",
+    )
     .success();
 
   let deco = reqwest::blocking::get(format!("{}/file/{root}", server.address()))
@@ -576,6 +588,75 @@ fn upload_package_uploads_files() {
       directory,
       hash: root,
     },
+  );
+
+  server.terminate().success();
+}
+
+#[test]
+fn upload_replaces_package() {
+  let server = Test::new().serve().spawn();
+
+  let test = Test::new()
+    .write("foo", "bar")
+    .args(["create", "."])
+    .success();
+
+  let old = fingerprint(&test.path().join("manifest.filepack"));
+
+  let test = test
+    .args(["upload", "--server", &server.address(), "manifest.filepack"])
+    .stderr(
+      "
+        uploading 1 of 1 file
+        uploaded package number 1
+      ",
+    )
+    .success()
+    .write("foo", "baz")
+    .args(["create", "--force", "."])
+    .success();
+
+  let new = fingerprint(&test.path().join("manifest.filepack"));
+
+  test
+    .args([
+      "upload",
+      "--server",
+      &server.address(),
+      "--replace",
+      "1",
+      "manifest.filepack",
+    ])
+    .stderr(
+      "
+        uploading 1 of 1 file
+        replaced package number 1
+      ",
+    )
+    .success();
+
+  let address = server.address();
+
+  assert_eq!(
+    reqwest::blocking::get(format!("{address}/package/{old}"))
+      .unwrap()
+      .status(),
+    StatusCode::NOT_FOUND,
+  );
+
+  assert_eq!(
+    reqwest::blocking::get(format!("{address}/package/{new}"))
+      .unwrap()
+      .status(),
+    StatusCode::OK,
+  );
+
+  assert_eq!(
+    reqwest::blocking::get(format!("{address}/package/1"))
+      .unwrap()
+      .status(),
+    StatusCode::OK,
   );
 
   server.terminate().success();

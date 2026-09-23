@@ -50,14 +50,14 @@ impl Client {
   }
 
   pub(crate) fn missing_files(&self, hashes: BTreeSet<Hash>) -> Result<HashSet<Hash>> {
-    let body = api::missing::Request {
-      hashes: hashes.into(),
-    }
-    .encode_to_vec();
-
     Ok(
       self
-        .post_with_body("api/missing", body)?
+        .post_with_body(
+          "api/missing",
+          api::missing::Request {
+            hashes: hashes.into(),
+          },
+        )?
         .deco::<api::missing::Response>()?
         .hashes
         .into_iter()
@@ -122,13 +122,9 @@ impl Client {
       .check_status()
   }
 
-  fn post_with_body(
-    &self,
-    path: &str,
-    body: impl Into<reqwest::blocking::Body>,
-  ) -> Result<reqwest::blocking::Response> {
+  fn post_with_body(&self, path: &str, body: impl Encode) -> Result<reqwest::blocking::Response> {
     self
-      .request(self.client.post(self.url(path)).body(body.into()))?
+      .request(self.client.post(self.url(path)).body(body.encode_to_vec()))?
       .check_status()
   }
 
@@ -167,10 +163,20 @@ impl Client {
     Ok(())
   }
 
-  pub(crate) fn verify_package(&self, fingerprint: Fingerprint) -> Result {
-    self.post(&format!("api/package/{fingerprint}"))?;
-
-    Ok(())
+  pub(crate) fn verify_package(
+    &self,
+    fingerprint: Fingerprint,
+    replace: Option<u64>,
+  ) -> Result<u64> {
+    Ok(
+      self
+        .post_with_body(
+          &format!("api/package/{fingerprint}"),
+          api::package::Request { replace },
+        )?
+        .deco::<api::package::Response>()?
+        .number,
+    )
   }
 }
 

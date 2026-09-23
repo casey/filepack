@@ -124,6 +124,8 @@ use {
     orientation::Orientation,
     owo_colorize_ext::OwoColorizeExt,
     package::Package,
+    package_identifier::PackageIdentifier,
+    package_identifier_error::PackageIdentifierError,
     page_error::PageError,
     path_error::PathError,
     percent_encode::PercentEncode,
@@ -225,7 +227,7 @@ use {
   },
   strum::{
     Display, EnumDiscriminants, EnumIter, EnumString, FromRepr, IntoDiscriminant, IntoEnumIterator,
-    IntoStaticStr,
+    IntoStaticStr, VariantArray,
   },
   tempfile::NamedTempFile,
   tokio::io::{AsyncReadExt, AsyncWriteExt},
@@ -242,7 +244,11 @@ use {
   jpeg_builder::JpegBuilder,
   std::assert_matches,
   tempfile::TempDir,
-  test::{assert_deco, assert_deco_eq, assert_encoding, exif, tempdir, with_unknown_field},
+  test::{
+    assert_argument_conflict, assert_deco, assert_deco_eq, assert_encoding,
+    assert_invalid_argument_value, assert_missing_argument, assert_redb_impls, exif, tempdir,
+    with_unknown_field,
+  },
   unindent::unindent,
   webm_builder::WebmBuilder,
 };
@@ -406,6 +412,8 @@ mod ordinal;
 mod orientation;
 mod owo_colorize_ext;
 mod package;
+mod package_identifier;
+mod package_identifier_error;
 mod page;
 mod page_error;
 mod path_error;

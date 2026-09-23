@@ -11,3 +11,18 @@ impl Keygen {
     Keychain::load(&options)?.generate_key(&self.name)
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn invalid_name() {
+    assert_invalid_argument_value::<Keygen>(
+      &["--name", "@invalid"],
+      "--name <NAME>",
+      "@invalid",
+      "invalid public key name `@invalid`",
+    );
+  }
+}

@@ -148,7 +148,7 @@ mod tests {
 
   #[test]
   fn redb() {
-    test::assert_redb_impls(&[
+    assert_redb_impls(&[
       Hash::from([0; Hash::LEN]),
       Hash::from([0xff; Hash::LEN]),
       Hash::bytes(b"foo"),

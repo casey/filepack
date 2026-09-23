@@ -99,6 +99,8 @@ pub enum ServerError {
     fingerprint: Fingerprint,
     path: RelativePath,
   },
+  #[snafu(display("package {fingerprint} not found"))]
+  PackageFingerprintNotFound { fingerprint: Fingerprint },
   #[snafu(display("package {fingerprint} does not have media metadata"))]
   PackageMediaMetadataNotFound { fingerprint: Fingerprint },
   #[snafu(display("stored metadata for package {fingerprint} failed to decode"))]
@@ -118,10 +120,10 @@ pub enum ServerError {
   },
   #[snafu(display("package {fingerprint} does not have metadata"))]
   PackageMetadataNotFound { fingerprint: Fingerprint },
-  #[snafu(display("package {fingerprint} not found"))]
-  PackageNotFound { fingerprint: Fingerprint },
   #[snafu(display("package {fingerprint} not mounted"))]
   PackageNotMounted { fingerprint: Fingerprint },
+  #[snafu(display("package number {number} not found"))]
+  PackageNumberNotFound { number: u64 },
   #[snafu(display("package {fingerprint} root directory is unverified"))]
   PackageRootUnverified { fingerprint: Fingerprint },
   #[snafu(display("page not found"))]
@@ -166,13 +168,14 @@ impl ServerError {
       | Self::MediaTypeDoesNotHaveItems { .. }
       | Self::PackageFileMissing { .. }
       | Self::PackageFileNotFound { .. }
+      | Self::PackageFingerprintNotFound { .. }
       | Self::PackageMediaMetadataNotFound { .. }
       | Self::PackageMetadataCorrupt { .. }
       | Self::PackageMetadataDecode { .. }
       | Self::PackageMetadataFileMissing { .. }
       | Self::PackageMetadataNotFound { .. }
-      | Self::PackageNotFound { .. }
       | Self::PackageNotMounted { .. }
+      | Self::PackageNumberNotFound { .. }
       | Self::PackageRootUnverified { .. }
       | Self::PageNotFound
       | Self::PlaceholderNotFound { .. }
@@ -226,10 +229,11 @@ impl ServerError {
       | Self::MediaType { .. }
       | Self::MediaTypeDoesNotHaveItems { .. }
       | Self::PackageFileNotFound { .. }
+      | Self::PackageFingerprintNotFound { .. }
       | Self::PackageMediaMetadataNotFound { .. }
       | Self::PackageMetadataNotFound { .. }
-      | Self::PackageNotFound { .. }
       | Self::PackageNotMounted { .. }
+      | Self::PackageNumberNotFound { .. }
       | Self::PageNotFound
       | Self::PlaceholderNotFound { .. } => StatusCode::NOT_FOUND,
       Self::WriteForbidden => StatusCode::FORBIDDEN,
