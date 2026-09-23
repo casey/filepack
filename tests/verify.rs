@@ -856,7 +856,7 @@ fn verify_fingerprint() {
 fn weak_signature_public_key() {
   let zeros = "00".repeat(32);
 
-  let signature = format!("signature100a0{zeros}01a200a0{zeros}02c0{zeros}{zeros}");
+  let signature = format!("signature1000001a0{zeros}02a4000001a0{zeros}03c0{zeros}{zeros}");
 
   Test::new()
     .write(

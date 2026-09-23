@@ -539,6 +539,7 @@ mod tests {
     let private_key = test::PRIVATE_KEY.parse::<PrivateKey>().unwrap();
 
     let statement = Statement {
+      version: Version::Zero,
       fingerprint: Fingerprint::from_bytes([0; Fingerprint::LEN]),
       timestamp: None,
     };
@@ -660,6 +661,7 @@ mod tests {
 
     let private_key = test::PRIVATE_KEY.parse::<PrivateKey>().unwrap();
     let statement = Statement {
+      version: Version::Zero,
       fingerprint,
       timestamp: None,
     };
@@ -688,15 +690,17 @@ mod tests {
     let public_key = test::PUBLIC_KEY.parse::<PublicKey>().unwrap();
 
     let statement = Statement {
+      version: Version::Zero,
       fingerprint: Fingerprint::from_bytes([0; Fingerprint::LEN]),
       timestamp: None,
     };
 
     let mut encoder = Encoder::new();
     let mut map = encoder.map::<u64>();
-    map.item(2, &[0u8; 32][..]);
-    map.item(1, &statement);
-    map.item(0, public_key);
+    map.item(3, &[0u8; 32][..]);
+    map.item(2, &statement);
+    map.item(1, public_key);
+    map.item(0, Version::Zero);
     map.finish();
     let signature_bytes = encoder.finish();
 
