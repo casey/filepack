@@ -59,14 +59,9 @@ impl LintGroup {
     }
   }
 
+  #[cfg(test)]
   fn name(self) -> &'static str {
     self.into()
-  }
-}
-
-impl Display for LintGroup {
-  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    write!(f, "{}", self.name())
   }
 }
 

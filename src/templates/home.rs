@@ -5,7 +5,7 @@ pub(crate) struct HomeHtml {
   pub(crate) packages: Vec<(Fingerprint, Option<Metadata>, Totals)>,
 }
 
-#[derive(Clone, Copy, Eq, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Eq, Ord, PartialEq, PartialOrd)]
 enum Section {
   Media(MediaType),
   None,

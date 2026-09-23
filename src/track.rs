@@ -1,7 +1,7 @@
 use super::*;
 
 #[skip_serializing_none]
-#[derive(Clone, Copy, Debug, Decode, Encode, PartialEq, Serialize)]
+#[derive(Clone, Debug, Decode, Encode, PartialEq, Serialize)]
 pub(crate) struct Track {
   #[n(0)]
   pub(crate) codec: Option<Codec>,

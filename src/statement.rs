@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Clone, Debug, Decode, Encode, Eq, Ord, PartialEq, PartialOrd)]
+#[derive(Debug, Decode, Encode, Eq, Ord, PartialEq, PartialOrd)]
 #[deco(strict)]
 pub struct Statement {
   #[n(0)]
