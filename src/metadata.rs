@@ -1,32 +1,35 @@
 use super::*;
 
-#[allow(private_interfaces)]
+#[allow(clippy::arbitrary_source_item_ordering, private_interfaces)]
 #[skip_serializing_none]
 #[derive(Clone, Debug, Default, Encode, Decode, PartialEq, Serialize)]
 pub struct Metadata {
   #[n(0)]
-  pub artwork: Option<Image>,
+  #[serde(skip)]
+  pub version: Version,
   #[n(1)]
-  pub creator: Option<Text>,
+  pub artwork: Option<Image>,
   #[n(2)]
-  pub description: Option<Text>,
+  pub creator: Option<Text>,
   #[n(3)]
-  pub homepage: Option<CheckedUrl>,
+  pub description: Option<Text>,
   #[n(4)]
-  pub language: Option<Language>,
+  pub homepage: Option<CheckedUrl>,
   #[n(5)]
-  pub media: Option<Media>,
+  pub language: Option<Language>,
   #[n(6)]
-  pub package: Option<Package>,
+  pub media: Option<Media>,
   #[n(7)]
-  pub publisher: Option<Text>,
+  pub package: Option<Package>,
   #[n(8)]
-  pub readme: Option<RelativePath>,
+  pub publisher: Option<Text>,
   #[n(9)]
-  pub thumbnails: Option<BTreeMap<RelativePath, Image>>,
+  pub readme: Option<RelativePath>,
   #[n(10)]
-  pub time: Option<Time>,
+  pub thumbnails: Option<BTreeMap<RelativePath, Image>>,
   #[n(11)]
+  pub time: Option<Time>,
+  #[n(12)]
   pub title: Option<Text>,
 }
 
@@ -355,6 +358,7 @@ mod tests {
   #[test]
   fn encoding() {
     assert_encoding(Metadata {
+      version: Version::Zero,
       artwork: Some(Image {
         alpha: true,
         bit_depth: 8,

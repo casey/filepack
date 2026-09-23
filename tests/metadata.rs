@@ -899,7 +899,7 @@ fn create_succeeds_with_valid_metadata() {
     .arg("create")
     .success()
     .arg("verify")
-    .stderr("successfully verified 6 files totaling 279 bytes\n")
+    .stderr("successfully verified 6 files totaling 281 bytes\n")
     .success();
 }
 

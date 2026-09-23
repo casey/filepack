@@ -812,7 +812,7 @@ fn verify_checks_metadata() {
         package: {
           "metadata.filemeta": {
             hash: hash,
-            size: 36,
+            size: 38,
           }
         },
         signatures: [],
