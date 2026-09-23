@@ -439,7 +439,7 @@ fn upload_package_fails_when_root_not_directory_deco() {
       "
         error: failed to unarchive manifest
                ├─ failed to decode directory
-               └─ invalid discriminant 111 for enum Version
+               └─ unsupported version 111
       ",
     )
     .failure();
