@@ -24,11 +24,11 @@ impl Client {
   }
 
   pub(crate) fn file(&self, hash: Hash) -> Result<reqwest::blocking::Response> {
-    self.get(&format!("file/{hash}"))
+    self.get(&format!("api/file/{hash}"))
   }
 
   pub(crate) fn file_url(&self, hash: Hash) -> Url {
-    self.url(&format!("file/{hash}"))
+    self.url(&format!("api/file/{hash}"))
   }
 
   pub(crate) fn gc(&self) -> Result<api::gc::Response> {
@@ -143,7 +143,7 @@ impl Client {
   }
 
   pub(crate) fn put_file(&self, hash: Hash, body: reqwest::blocking::Body) -> Result {
-    self.put(&format!("file/{hash}"), body)?;
+    self.put(&format!("api/file/{hash}"), body)?;
 
     Ok(())
   }

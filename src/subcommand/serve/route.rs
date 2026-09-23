@@ -8,6 +8,14 @@ pub(crate) async fn api_delete_package(
   block_in_place(|| server.delete_package(fingerprint))
 }
 
+pub(crate) async fn api_file(
+  server: ServerExtension,
+  hash: Path<Hash>,
+  range: Option<TypedHeader<headers::Range>>,
+) -> ServerResult<Resource> {
+  block_in_place(|| Ok(server.open_file(*hash)?.range(range)))
+}
+
 pub(crate) async fn api_gc(
   _: Authenticated,
   server: ServerExtension,
@@ -47,6 +55,15 @@ pub(crate) async fn api_packages(
       packages: server.fingerprints()?.into(),
     }))
   })
+}
+
+pub(crate) async fn api_upload_file(
+  _: Authenticated,
+  server: ServerExtension,
+  hash: Path<Hash>,
+  body: Body,
+) -> ServerResult {
+  server.write_file(*hash, body).await
 }
 
 pub(crate) async fn api_verify_directory(
@@ -114,14 +131,6 @@ pub(crate) async fn fallback(uri: Uri) -> Result<Response, PageError> {
 
 pub(crate) async fn favicon() -> ServerResult<StaticAsset> {
   StaticAsset::get("favicon.svg")
-}
-
-pub(crate) async fn file(
-  server: ServerExtension,
-  hash: Path<Hash>,
-  range: Option<TypedHeader<headers::Range>>,
-) -> ServerResult<Resource> {
-  block_in_place(|| Ok(server.open_file(*hash)?.range(range)))
 }
 
 pub(crate) async fn file_with_path(
@@ -438,13 +447,4 @@ pub(crate) async fn packages(
 
 pub(crate) async fn static_asset(path: Path<String>) -> ServerResult<StaticAsset> {
   StaticAsset::get(&path)
-}
-
-pub(crate) async fn upload_file(
-  _: Authenticated,
-  server: ServerExtension,
-  hash: Path<Hash>,
-  body: Body,
-) -> ServerResult {
-  server.write_file(*hash, body).await
 }

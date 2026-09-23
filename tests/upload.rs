@@ -102,7 +102,11 @@ fn serve_admin_key_by_name() {
     .spawn();
 
   let response = reqwest::blocking::Client::new()
-    .put(format!("{}/file/{}", server.address(), Hash::bytes(b"bar")))
+    .put(format!(
+      "{}/api/file/{}",
+      server.address(),
+      Hash::bytes(b"bar")
+    ))
     .body("bar")
     .send()
     .unwrap();
@@ -131,7 +135,11 @@ fn serve_admin_key_by_public_key() {
     .spawn();
 
   let response = reqwest::blocking::Client::new()
-    .put(format!("{}/file/{}", server.address(), Hash::bytes(b"bar")))
+    .put(format!(
+      "{}/api/file/{}",
+      server.address(),
+      Hash::bytes(b"bar")
+    ))
     .body("bar")
     .send()
     .unwrap();
