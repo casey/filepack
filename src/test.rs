@@ -1,4 +1,7 @@
-use super::*;
+use {
+  super::*,
+  clap::error::{ContextKind, ContextValue, ErrorKind},
+};
 
 pub(crate) const FINGERPRINT: &str =
   "package1af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262";
@@ -30,6 +33,22 @@ pub(crate) const WEAK_PUBLIC_KEY: &str =
   "public10000000000000000000000000000000000000000000000000000000000000000";
 
 #[track_caller]
+pub(crate) fn assert_argument_conflict<T: Parser>(args: &[&str], argument: &str, conflict: &str) {
+  let error = T::try_parse_from(["filepack"].iter().chain(args))
+    .map(drop)
+    .unwrap_err();
+  assert_eq!(error.kind(), ErrorKind::ArgumentConflict);
+  assert_eq!(
+    error.get(ContextKind::InvalidArg),
+    Some(&ContextValue::String(argument.into())),
+  );
+  assert_eq!(
+    error.get(ContextKind::PriorArg),
+    Some(&ContextValue::String(conflict.into())),
+  );
+}
+
+#[track_caller]
 pub(crate) fn assert_deco<T: Debug + DecodeOwned + Encode + PartialEq>(value: T, deco: &str) {
   let buffer = value.encode_to_vec();
   assert_eq!(hex::encode(&buffer), deco);
@@ -54,6 +73,45 @@ pub(crate) fn assert_encoding<T: Debug + DecodeOwned + Encode + PartialEq>(value
   let decoded = T::decode(&mut decoder).unwrap();
   decoder.finish().unwrap();
   assert_eq!(decoded, value);
+}
+
+#[track_caller]
+pub(crate) fn assert_invalid_argument_value<T: Parser>(
+  args: &[&str],
+  argument: &str,
+  value: &str,
+  message: &str,
+) {
+  let error = T::try_parse_from(["filepack"].iter().chain(args))
+    .map(drop)
+    .unwrap_err();
+  assert_eq!(error.kind(), ErrorKind::ValueValidation);
+  assert_eq!(
+    error.get(ContextKind::InvalidArg),
+    Some(&ContextValue::String(argument.into())),
+  );
+  assert_eq!(
+    error.get(ContextKind::InvalidValue),
+    Some(&ContextValue::String(value.into())),
+  );
+  assert_eq!(
+    std::error::Error::source(&error).unwrap().to_string(),
+    message,
+  );
+}
+
+#[track_caller]
+pub(crate) fn assert_missing_argument<T: Parser>(args: &[&str], missing: &[&str]) {
+  let error = T::try_parse_from(["filepack"].iter().chain(args))
+    .map(drop)
+    .unwrap_err();
+  assert_eq!(error.kind(), ErrorKind::MissingRequiredArgument);
+  assert_eq!(
+    error.get(ContextKind::InvalidArg),
+    Some(&ContextValue::Strings(
+      missing.iter().map(ToString::to_string).collect()
+    )),
+  );
 }
 
 #[track_caller]

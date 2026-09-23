@@ -35,20 +35,6 @@ fn default_name() {
 }
 
 #[test]
-fn invalid_name() {
-  Test::new()
-    .args(["keygen", "--name", "@invalid"])
-    .stderr(
-      "
-        error: invalid value '@invalid' for '--name <NAME>': invalid public key name `@invalid`
-
-        For more information, try '--help'.
-      ",
-    )
-    .status(USAGE_ERROR);
-}
-
-#[test]
 fn key_already_exists() {
   Test::new()
     .write_keypair("master")

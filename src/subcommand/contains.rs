@@ -46,3 +46,14 @@ impl Contains {
     Ok(())
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn target_is_required() {
+    assert_missing_argument::<Contains>(&[], &["<--file <FILE>|--hash <HASH>>"]);
+    assert_missing_argument::<Contains>(&["manifest.filepack"], &["<--file <FILE>|--hash <HASH>>"]);
+  }
+}

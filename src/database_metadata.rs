@@ -1,9 +1,11 @@
 use super::*;
 
-#[derive(Copy, Clone, Debug, Eq, FromRepr, Ord, PartialEq, PartialOrd)]
+#[allow(clippy::arbitrary_source_item_ordering)]
+#[derive(Copy, Clone, Debug, Eq, FromRepr, Ord, PartialEq, PartialOrd, VariantArray)]
 #[repr(u64)]
 pub(crate) enum DatabaseMetadata {
   Schema = 0,
+  Number = 1,
 }
 
 impl redb::Key for DatabaseMetadata {
@@ -52,6 +54,6 @@ mod tests {
 
   #[test]
   fn redb() {
-    test::assert_redb_impls(&[DatabaseMetadata::Schema]);
+    assert_redb_impls(DatabaseMetadata::VARIANTS);
   }
 }

@@ -105,7 +105,7 @@ mod tests {
 
   #[test]
   fn redb() {
-    test::assert_redb_impls(&[
+    assert_redb_impls(&[
       Fingerprint::from(Hash::from([0; Hash::LEN])),
       Fingerprint::from(Hash::from([0xff; Hash::LEN])),
       Fingerprint::from(Hash::bytes(b"foo")),

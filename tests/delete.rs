@@ -17,12 +17,22 @@ fn delete_all() {
 
   let test = test
     .args(["upload", "--server", &server.address(), "foo"])
-    .stderr("uploading 1 of 1 file\n")
+    .stderr(
+      "
+        uploading 1 of 1 file
+        uploaded package number 1
+      ",
+    )
     .success();
 
   test
     .args(["upload", "--server", &server.address(), "bar"])
-    .stderr("uploading 1 of 1 file\n")
+    .stderr(
+      "
+        uploading 1 of 1 file
+        uploaded package number 2
+      ",
+    )
     .success();
 
   for fingerprint in fingerprints {
@@ -90,7 +100,12 @@ fn delete_package_succeeds() {
 
   test
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
-    .stderr("uploading 1 of 1 file\n")
+    .stderr(
+      "
+        uploading 1 of 1 file
+        uploaded package number 1
+      ",
+    )
     .success();
 
   let url = format!("{}/package/{fingerprint}", server.address());
@@ -153,7 +168,12 @@ fn restricted_delete_succeeds_with_auth() {
       "master",
       "pkg",
     ])
-    .stderr("uploading 1 of 1 file\n")
+    .stderr(
+      "
+        uploading 1 of 1 file
+        uploaded package number 1
+      ",
+    )
     .success()
     .args([
       "delete",

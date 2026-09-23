@@ -244,3 +244,18 @@ impl Download {
     Ok(())
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn server_url_must_be_http_or_https() {
+    assert_invalid_argument_value::<Download>(
+      &["--server", "ftp://example.com"],
+      "--server <URL>",
+      "ftp://example.com",
+      "URL scheme `ftp` not allowed, must be `http` or `https`",
+    );
+  }
+}

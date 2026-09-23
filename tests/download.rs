@@ -333,7 +333,12 @@ fn download_retrieves_package() {
 
   test
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
-    .stderr("uploading 4 of 4 files\n")
+    .stderr(
+      "
+        uploading 4 of 4 files
+        uploaded package number 1
+      ",
+    )
     .success();
 
   let downloaded = Test::new()
@@ -393,7 +398,12 @@ fn download_retrieves_package_with_metadata() {
 
   test
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
-    .stderr("uploading 5 of 5 files\n")
+    .stderr(
+      "
+        uploading 5 of 5 files
+        uploaded package number 1
+      ",
+    )
     .success();
 
   Test::new()
@@ -413,19 +423,4 @@ fn download_retrieves_package_with_metadata() {
     .success();
 
   server.terminate().success();
-}
-
-#[test]
-fn server_url_must_be_http_or_https() {
-  Test::new()
-    .args(["download", "--server", "ftp://example.com"])
-    .stderr(
-      "
-        error: invalid value 'ftp://example.com' for '--server <URL>': URL scheme `ftp` not \
-        allowed, must be `http` or `https`
-
-        For more information, try '--help'.
-      ",
-    )
-    .status(USAGE_ERROR);
 }

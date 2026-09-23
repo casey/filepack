@@ -41,7 +41,7 @@ pub(crate) async fn api_package(
   block_in_place(|| {
     ensure!(
       server.has_package(fingerprint)?,
-      server_error::PackageNotFound { fingerprint },
+      server_error::PackageFingerprintNotFound { fingerprint },
     );
     Ok(())
   })
@@ -78,8 +78,13 @@ pub(crate) async fn api_verify_package(
   _: Authenticated,
   server: ServerExtension,
   Path(fingerprint): Path<Fingerprint>,
-) -> ServerResult {
-  block_in_place(|| server.verify_package(fingerprint))
+  Deco(request): Deco<api::package::Request, { MIB }>,
+) -> ServerResult<DecoResponse<api::package::Response>> {
+  block_in_place(|| {
+    Ok(DecoResponse(api::package::Response {
+      number: server.verify_package(fingerprint, request.replace)?,
+    }))
+  })
 }
 
 pub(crate) async fn artwork(
@@ -348,9 +353,11 @@ pub(crate) async fn mount_redirect(Path(fingerprint): Path<Fingerprint>) -> Redi
 pub(crate) async fn package(
   server: ServerExtension,
   server_config: ServerConfigExtension,
-  Path(fingerprint): Path<Fingerprint>,
+  Path(identifier): Path<PackageIdentifier>,
 ) -> PageResult<PackageHtml> {
   block_in_place(|| {
+    let fingerprint = server.resolve(identifier)?;
+
     Ok(
       server
         .package_html(fingerprint, server_config.mounts.contains(&fingerprint))?
@@ -362,9 +369,11 @@ pub(crate) async fn package(
 pub(crate) async fn package_item(
   server: ServerExtension,
   server_config: ServerConfigExtension,
-  Path((fingerprint, Ordinal(index))): Path<(Fingerprint, Ordinal)>,
+  Path((identifier, Ordinal(index))): Path<(PackageIdentifier, Ordinal)>,
 ) -> PageResult<ItemHtml> {
   block_in_place(|| {
+    let fingerprint = server.resolve(identifier)?;
+
     let metadata = server.package_metadata(fingerprint)?;
 
     let media = metadata
@@ -405,9 +414,11 @@ pub(crate) async fn package_item(
 pub(crate) async fn package_media(
   server: ServerExtension,
   server_config: ServerConfigExtension,
-  Path(fingerprint): Path<Fingerprint>,
+  Path(identifier): Path<PackageIdentifier>,
 ) -> PageResult<MediaHtml> {
   block_in_place(|| {
+    let fingerprint = server.resolve(identifier)?;
+
     let metadata = server.package_metadata(fingerprint)?;
 
     ensure! {

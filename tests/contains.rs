@@ -67,23 +67,3 @@ fn size_mismatch() {
     ))
     .failure();
 }
-
-#[test]
-fn target_is_required() {
-  Test::new()
-    .arg("create")
-    .success()
-    .arg("contains")
-    .stderr_regex("error: the following required arguments were not provided:.*--hash.*--file.*")
-    .status(USAGE_ERROR);
-}
-
-#[test]
-fn target_is_required_with_manifest_path() {
-  Test::new()
-    .arg("create")
-    .success()
-    .args(["contains", "manifest.filepack"])
-    .stderr_regex("error: the following required arguments were not provided:.*--file.*--hash.*")
-    .status(USAGE_ERROR);
-}

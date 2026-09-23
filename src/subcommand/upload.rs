@@ -19,6 +19,13 @@ pub(crate) struct Upload {
     value_name = "PATH"
   )]
   input: Option<Utf8PathBuf>,
+  #[arg(
+    conflicts_with = "file",
+    help = "Replace package number <NUMBER>",
+    long,
+    value_name = "NUMBER"
+  )]
+  replace: Option<u64>,
   #[arg(help = "Upload to server at <URL>", long, value_name = "URL")]
   server: ServerUrl,
 }
@@ -101,11 +108,10 @@ impl Upload {
 
     let fingerprint = Fingerprint(package.hash());
 
-    if client.has_package(fingerprint)? {
+    if self.replace.is_none() && client.has_package(fingerprint)? {
       if !options.quiet {
         eprintln!("server already has package");
       }
-
       return Ok(());
     }
 
@@ -149,7 +155,16 @@ impl Upload {
 
     Self::upload_directory(&mut context, &root, package.hash(), package.size())?;
 
-    context.client.verify_package(fingerprint)?;
+    let number = context.client.verify_package(fingerprint, self.replace)?;
+
+    if !options.quiet {
+      let verb = if self.replace.is_some() {
+        "replaced"
+      } else {
+        "uploaded"
+      };
+      eprintln!("{verb} package number {number}");
+    }
 
     Ok(())
   }
@@ -162,5 +177,41 @@ impl Upload {
     context.client.put_file(expected.hash(), body)?;
 
     Ok(())
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn file_requires_path() {
+    assert_missing_argument::<Upload>(&["--server", "http://127.0.0.1:1", "--file"], &["<PATH>"]);
+  }
+
+  #[test]
+  fn replace_conflicts_with_file() {
+    assert_argument_conflict::<Upload>(
+      &[
+        "--server",
+        "http://127.0.0.1:1",
+        "--file",
+        "--replace",
+        "1",
+        "foo",
+      ],
+      "--file",
+      "--replace <NUMBER>",
+    );
+  }
+
+  #[test]
+  fn server_url_must_be_http_or_https() {
+    assert_invalid_argument_value::<Upload>(
+      &["--server", "ftp://example.com"],
+      "--server <URL>",
+      "ftp://example.com",
+      "URL scheme `ftp` not allowed, must be `http` or `https`",
+    );
   }
 }

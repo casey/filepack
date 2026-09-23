@@ -408,22 +408,6 @@ fn named_key() {
 }
 
 #[test]
-fn named_key_invalid() {
-  Test::new()
-    .arg("create")
-    .success()
-    .args(["verify", "--key", "@invalid"])
-    .stderr(
-      "
-        error: invalid value '@invalid' for '--key <KEY>': invalid public key name `@invalid`
-
-        For more information, try '--help'.
-      ",
-    )
-    .status(USAGE_ERROR);
-}
-
-#[test]
 fn named_key_not_found() {
   Test::new()
     .arg("create")

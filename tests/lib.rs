@@ -70,8 +70,6 @@ const PRIVATE_KEY: &str = concat!(
 
 const PUBLIC_KEY: &str = "public1d79b36defbee7c1d26099c9e28f849f1f0dceb6e0217b83c87f5cff6fd8c4fc8";
 
-const USAGE_ERROR: i32 = 2;
-
 fn fingerprint(path: &Utf8Path) -> Fingerprint {
   Loader::load(Some(path)).unwrap().fingerprint().unwrap()
 }
