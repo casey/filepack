@@ -68,32 +68,37 @@ impl PngBuilder {
     buffer
   }
 
+  #[cfg(test)]
   #[must_use]
-  pub fn color(mut self, color: png::ColorType) -> Self {
+  pub(crate) fn color(mut self, color: png::ColorType) -> Self {
     self.color = color;
     self
   }
 
+  #[cfg(test)]
   #[must_use]
-  pub fn depth(mut self, depth: BitDepth) -> Self {
+  pub(crate) fn depth(mut self, depth: BitDepth) -> Self {
     self.depth = depth;
     self
   }
 
+  #[cfg(test)]
   #[must_use]
-  pub fn exif(mut self, exif: &[u8]) -> Self {
+  pub(crate) fn exif(mut self, exif: &[u8]) -> Self {
     self.exif = Some(exif.into());
     self
   }
 
+  #[cfg(test)]
   #[must_use]
-  pub fn height(mut self, height: u32) -> Self {
+  pub(crate) fn height(mut self, height: u32) -> Self {
     self.height = height;
     self
   }
 
+  #[cfg(test)]
   #[must_use]
-  pub fn itxt(mut self, keyword: &str, text: &str) -> Self {
+  pub(crate) fn itxt(mut self, keyword: &str, text: &str) -> Self {
     self.itxt.push((keyword.into(), text.into()));
     self
   }
@@ -119,14 +124,16 @@ impl PngBuilder {
     self
   }
 
+  #[cfg(test)]
   #[must_use]
-  pub fn trailing_text(mut self, keyword: &str, text: &str) -> Self {
+  pub(crate) fn trailing_text(mut self, keyword: &str, text: &str) -> Self {
     self.trailing_text.push((keyword.into(), text.into()));
     self
   }
 
+  #[cfg(test)]
   #[must_use]
-  pub fn trns(mut self, trns: &[u8]) -> Self {
+  pub(crate) fn trns(mut self, trns: &[u8]) -> Self {
     self.trns = Some(trns.into());
     self
   }
@@ -137,8 +144,9 @@ impl PngBuilder {
     self
   }
 
+  #[cfg(test)]
   #[must_use]
-  pub fn ztxt(mut self, keyword: &str, text: &str) -> Self {
+  pub(crate) fn ztxt(mut self, keyword: &str, text: &str) -> Self {
     self.ztxt.push((keyword.into(), text.into()));
     self
   }

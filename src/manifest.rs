@@ -1,7 +1,7 @@
 use super::*;
 
 #[serde_as]
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Manifest {
   #[serde_as(as = "BTreeMap<serde_with::Same, serde_with::hex::Hex>")]

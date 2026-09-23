@@ -22,7 +22,7 @@ impl Loader {
     Self::load_with_options(DecodeOptions::new(), path)
   }
 
-  pub fn load_with_options(options: DecodeOptions, path: Option<&Utf8Path>) -> Result<Self> {
+  pub(crate) fn load_with_options(options: DecodeOptions, path: Option<&Utf8Path>) -> Result<Self> {
     let path = if let Some(path) = path {
       if path.is_dir() {
         path.join(Manifest::FILENAME)

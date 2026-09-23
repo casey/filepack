@@ -11,7 +11,7 @@ impl<'a, K: Encode + PartialOrd> MapEncoder<'a, K> {
     self.encoder.head(self.len());
   }
 
-  pub fn finish_if_nonempty(self) {
+  pub(crate) fn finish_if_nonempty(self) {
     if self.len() > 0 {
       self.finish();
     }
@@ -21,7 +21,7 @@ impl<'a, K: Encode + PartialOrd> MapEncoder<'a, K> {
     self.item_with(key, &value, Encode::encode);
   }
 
-  pub fn item_with<V>(&mut self, key: K, value: &V, encode: impl FnOnce(&V, &mut Encoder)) {
+  pub(crate) fn item_with<V>(&mut self, key: K, value: &V, encode: impl FnOnce(&V, &mut Encoder)) {
     if let Some(last) = &self.last {
       assert!(key < *last, "out of order key");
     }
@@ -45,13 +45,14 @@ impl<'a, K: Encode + PartialOrd> MapEncoder<'a, K> {
     }
   }
 
-  pub fn optional_item(&mut self, key: K, value: Option<impl Encode>) {
+  pub(crate) fn optional_item(&mut self, key: K, value: Option<impl Encode>) {
     if let Some(value) = value {
       self.item(key, value);
     }
   }
 
-  pub fn optional_item_with<V>(
+  #[cfg(test)]
+  pub(crate) fn optional_item_with<V>(
     &mut self,
     key: K,
     value: Option<&V>,

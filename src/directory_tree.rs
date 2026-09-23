@@ -1,7 +1,7 @@
 use super::*;
 
 #[serde_as]
-#[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
+#[derive(Debug, Default, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields, transparent)]
 pub struct DirectoryTree {
   #[serde_as(as = "MapPreventDuplicates<_, _>")]
@@ -55,7 +55,7 @@ impl DirectoryTree {
     Ok(())
   }
 
-  pub fn new() -> Self {
+  pub(crate) fn new() -> Self {
     Self::default()
   }
 }

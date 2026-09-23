@@ -28,7 +28,7 @@ pub enum Entry {
 }
 
 impl Entry {
-  pub fn directory(hash: Hash, size: u64, totals: Totals) -> Self {
+  pub(crate) fn directory(hash: Hash, size: u64, totals: Totals) -> Self {
     Self::Directory { hash, size, totals }
   }
 
@@ -36,19 +36,19 @@ impl Entry {
     Self::File { hash, size }
   }
 
-  pub fn hash(&self) -> Hash {
+  pub(crate) fn hash(&self) -> Hash {
     match self {
       Self::File { hash, .. } | Self::Directory { hash, .. } => *hash,
     }
   }
 
-  pub fn size(&self) -> u64 {
+  pub(crate) fn size(&self) -> u64 {
     match self {
       Self::File { size, .. } | Self::Directory { size, .. } => *size,
     }
   }
 
-  pub fn ty(&self) -> EntryType {
+  pub(crate) fn ty(&self) -> EntryType {
     self.discriminant()
   }
 }

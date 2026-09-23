@@ -1,6 +1,5 @@
 use super::*;
 
-#[derive(Debug, PartialEq)]
 pub(crate) struct ImageMetadata {
   pub(crate) alpha: bool,
   pub(crate) bit_depth: u64,

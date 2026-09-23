@@ -6,11 +6,11 @@ pub struct Encoder {
 }
 
 impl Encoder {
-  pub fn array(&mut self) -> ArrayEncoder<'_> {
+  pub(crate) fn array(&mut self) -> ArrayEncoder<'_> {
     ArrayEncoder::new(self)
   }
 
-  pub fn boolean(&mut self, boolean: bool) {
+  pub(crate) fn boolean(&mut self, boolean: bool) {
     self.integer(u64::from(boolean));
   }
 
@@ -48,7 +48,7 @@ impl Encoder {
     }
   }
 
-  pub fn integer(&mut self, integer: u64) {
+  pub(crate) fn integer(&mut self, integer: u64) {
     let bytes = integer.to_le_bytes();
     let len = bytes
       .iter()
@@ -70,7 +70,7 @@ impl Encoder {
     Self::default()
   }
 
-  pub fn signed_integer(&mut self, integer: i64) {
+  pub(crate) fn signed_integer(&mut self, integer: i64) {
     self.integer(((integer << 1) ^ (integer >> 63)).cast_unsigned());
   }
 

@@ -77,8 +77,9 @@ impl FlacBuilder {
     self
   }
 
+  #[cfg(test)]
   #[must_use]
-  pub fn samples(mut self, samples: u32) -> Self {
+  pub(crate) fn samples(mut self, samples: u32) -> Self {
     self.samples = samples;
     self
   }
@@ -89,8 +90,9 @@ impl FlacBuilder {
     self
   }
 
+  #[cfg(test)]
   #[must_use]
-  pub fn truncate(mut self, len: usize) -> Self {
+  pub(crate) fn truncate(mut self, len: usize) -> Self {
     self.truncate = Some(len);
     self
   }

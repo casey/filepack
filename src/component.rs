@@ -64,36 +64,6 @@ impl Component {
   }
 }
 
-impl Borrow<str> for Component {
-  fn borrow(&self) -> &str {
-    &self.0
-  }
-}
-
-impl Display for Component {
-  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    write!(f, "{}", &self.0)
-  }
-}
-
-impl Encode for Component {
-  fn encode(&self, encoder: &mut Encoder) {
-    self.as_str().encode(encoder);
-  }
-}
-
-impl From<&Component> for String {
-  fn from(component: &Component) -> Self {
-    component.as_str().into()
-  }
-}
-
-impl PartialEq<&str> for Component {
-  fn eq(&self, s: &&str) -> bool {
-    self.as_str().eq(*s)
-  }
-}
-
 impl ToOwned for Component {
   type Owned = ComponentBuf;
 
