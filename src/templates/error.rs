@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(Boilerplate)]
 pub(crate) struct ErrorHtml {
-  pub(crate) message: String,
+  pub(crate) error: ServerError,
   pub(crate) status: StatusCode,
 }
 
