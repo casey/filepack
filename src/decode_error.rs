@@ -57,6 +57,8 @@ pub enum DecodeError {
   Text { source: TextError },
   #[snafu(display("invalid time"))]
   Time { source: TimeError },
+  #[snafu(display("invalid totals"))]
+  Totals { source: TotalsError },
   #[snafu(display("trailing bytes"))]
   TrailingBytes,
   #[snafu(display("truncated"))]

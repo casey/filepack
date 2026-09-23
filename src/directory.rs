@@ -40,6 +40,8 @@ impl Directory {
         .context(totals_error::Overflow)?;
     }
 
+    totals.check()?;
+
     Ok(totals)
   }
 
@@ -161,6 +163,39 @@ mod tests {
         },
       },
     );
+
+    assert_eq!(directory.totals(), Err(TotalsError::Overflow));
+
+    let mut directory = Directory::new();
+    directory
+      .insert_entry(
+        "bar",
+        Entry::Directory {
+          hash,
+          size: 0,
+          totals: Totals {
+            directories: 0,
+            directory_size: 0,
+            file_size: 0,
+            files: u64::MAX - 1,
+          },
+        },
+      )
+      .insert_entry("baz", Entry::file(hash, 0));
+
+    assert_eq!(directory.totals(), Err(TotalsError::Overflow));
+
+    let mut directory = Directory::new();
+    directory
+      .insert_entry("bar", Entry::file(hash, u64::MAX))
+      .insert_entry(
+        "baz",
+        Entry::Directory {
+          hash,
+          size: 1,
+          totals: Totals::default(),
+        },
+      );
 
     assert_eq!(directory.totals(), Err(TotalsError::Overflow));
   }

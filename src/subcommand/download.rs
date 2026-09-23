@@ -97,10 +97,7 @@ impl Download {
         assert!(totals.is_none());
         totals = Some(actual);
 
-        progress_bar.set_totals(
-          actual.file_size.saturating_add(actual.directory_size),
-          actual.files.saturating_add(actual.directories),
-        );
+        progress_bar.set_totals(actual.bytes(), actual.entries());
       }
 
       progress_bar.item_done();
