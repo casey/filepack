@@ -1,20 +1,20 @@
 use super::*;
 
-pub struct ArrayEncoder<'a> {
+pub(crate) struct ArrayEncoder<'a> {
   encoder: &'a mut Encoder,
   end: usize,
 }
 
 impl<'a> ArrayEncoder<'a> {
-  pub fn element(&mut self, value: impl Encode) {
+  pub(crate) fn element(&mut self, value: impl Encode) {
     value.encode(self.encoder);
   }
 
-  pub fn encoder(&mut self) -> &mut Encoder {
+  pub(crate) fn encoder(&mut self) -> &mut Encoder {
     self.encoder
   }
 
-  pub fn finish(self) {
+  pub(crate) fn finish(self) {
     self.encoder.head(self.encoder.len() - self.end);
   }
 

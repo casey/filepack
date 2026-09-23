@@ -9,7 +9,7 @@ pub(crate) struct Policy<'a> {
   now: u64,
 }
 
-#[derive(Clone, Decode, Encode, Eq, Ord, PartialEq, PartialOrd)]
+#[derive(Decode, Encode, Eq, Ord, PartialEq, PartialOrd)]
 #[deco(strict)]
 pub(crate) struct Claims {
   #[n(0)]

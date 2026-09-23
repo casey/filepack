@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(Decode, Encode)]
 #[deco(transparent)]
-pub struct DisplayPrivateKey([[u8; 32]; 2]);
+pub(crate) struct DisplayPrivateKey([[u8; 32]; 2]);
 
 impl DisplayPrivateKey {
   pub(crate) fn inner(&self) -> ed25519_dalek::SigningKey {

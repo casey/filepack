@@ -43,8 +43,9 @@ impl Mp3Builder {
     bytes
   }
 
+  #[cfg(test)]
   #[must_use]
-  pub fn frame(mut self, header: [u8; 4], size: usize) -> Self {
+  pub(crate) fn frame(mut self, header: [u8; 4], size: usize) -> Self {
     let mut bytes = header.to_vec();
     bytes.resize(size, 0);
     self.frames.push(bytes);
@@ -59,14 +60,16 @@ impl Mp3Builder {
     self
   }
 
+  #[cfg(test)]
   #[must_use]
-  pub fn id3v1(mut self) -> Self {
+  pub(crate) fn id3v1(mut self) -> Self {
     self.id3v1 = true;
     self
   }
 
+  #[cfg(test)]
   #[must_use]
-  pub fn id3v2(mut self) -> Self {
+  pub(crate) fn id3v2(mut self) -> Self {
     self.id3v2.get_or_insert_default();
     self
   }
@@ -87,7 +90,12 @@ impl Mp3Builder {
   }
 
   #[must_use]
-  pub fn picture_media_type(mut self, media_type: &str, picture_type: u8, data: &[u8]) -> Self {
+  pub(crate) fn picture_media_type(
+    mut self,
+    media_type: &str,
+    picture_type: u8,
+    data: &[u8],
+  ) -> Self {
     let mut frame = vec![0];
     frame.extend_from_slice(media_type.as_bytes());
     frame.push(0);
@@ -125,20 +133,23 @@ impl Mp3Builder {
     self
   }
 
+  #[cfg(test)]
   #[must_use]
-  pub fn trailing(mut self, trailing: &[u8]) -> Self {
+  pub(crate) fn trailing(mut self, trailing: &[u8]) -> Self {
     self.trailing.extend_from_slice(trailing);
     self
   }
 
+  #[cfg(test)]
   #[must_use]
-  pub fn truncate(mut self, len: usize) -> Self {
+  pub(crate) fn truncate(mut self, len: usize) -> Self {
     self.truncate = Some(len);
     self
   }
 
+  #[cfg(test)]
   #[must_use]
-  pub fn xing(mut self) -> Self {
+  pub(crate) fn xing(mut self) -> Self {
     let mut bytes = Self::standard();
     bytes[36..40].copy_from_slice(b"Xing");
     self.frames.push(bytes);

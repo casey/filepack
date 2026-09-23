@@ -208,12 +208,6 @@ impl TryFrom<&Utf8Path> for RelativePath {
   }
 }
 
-impl From<&Component> for RelativePath {
-  fn from(component: &Component) -> Self {
-    Self(component.into())
-  }
-}
-
 impl TryFrom<&[&Component]> for RelativePath {
   type Error = PathError;
 

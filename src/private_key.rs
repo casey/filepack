@@ -10,14 +10,8 @@ impl PrivateKey {
     self.0.to_bytes()
   }
 
-  pub fn display_private_key(&self) -> DisplayPrivateKey {
+  pub(crate) fn display_private_key(&self) -> DisplayPrivateKey {
     DisplayPrivateKey::new(self)
-  }
-
-  pub fn from_bytes(bytes: [u8; Self::LEN]) -> Self {
-    let inner = ed25519_dalek::SigningKey::from_bytes(&bytes);
-    assert!(!inner.verifying_key().is_weak());
-    Self(inner)
   }
 
   pub(crate) fn generate() -> Self {

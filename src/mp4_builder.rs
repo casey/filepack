@@ -20,7 +20,7 @@ impl Mp4Builder {
     atom
   }
 
-  pub fn audio_entry(object_type: u8) -> Vec<u8> {
+  fn audio_entry(object_type: u8) -> Vec<u8> {
     let mut descriptor = vec![0x04, 13, object_type];
     descriptor.extend_from_slice(&[0; 12]);
 
@@ -49,8 +49,9 @@ impl Mp4Builder {
     self.track(*b"soun", &[entry])
   }
 
+  #[cfg(test)]
   #[must_use]
-  pub fn avcc_profile(mut self, avcc_profile: u8) -> Self {
+  pub(crate) fn avcc_profile(mut self, avcc_profile: u8) -> Self {
     self.avcc_profile = avcc_profile;
     self
   }
@@ -108,8 +109,9 @@ impl Mp4Builder {
     self
   }
 
+  #[cfg(test)]
   #[must_use]
-  pub fn matrix(mut self, matrix: [i32; 9]) -> Self {
+  pub(crate) fn matrix(mut self, matrix: [i32; 9]) -> Self {
     self.matrix = matrix;
     self
   }
@@ -135,33 +137,37 @@ impl Mp4Builder {
     }
   }
 
+  #[cfg(test)]
   #[must_use]
-  pub fn sample_size(mut self, sample_size: u32) -> Self {
+  pub(crate) fn sample_size(mut self, sample_size: u32) -> Self {
     self.sample_size = sample_size;
     self
   }
 
+  #[cfg(test)]
   #[must_use]
-  pub fn sample_sizes(mut self, sample_sizes: &[u32]) -> Self {
+  pub(crate) fn sample_sizes(mut self, sample_sizes: &[u32]) -> Self {
     self.frame_count = sample_sizes.len().try_into().unwrap();
     self.sample_sizes = sample_sizes.into();
     self
   }
 
+  #[cfg(test)]
   #[must_use]
-  pub fn sps(mut self, sps: &[u8]) -> Self {
+  pub(crate) fn sps(mut self, sps: &[u8]) -> Self {
     self.sps = sps.into();
     self
   }
 
+  #[cfg(test)]
   #[must_use]
-  pub fn timescale(mut self, timescale: u32) -> Self {
+  pub(crate) fn timescale(mut self, timescale: u32) -> Self {
     self.timescale = timescale;
     self
   }
 
   #[must_use]
-  pub fn track(mut self, handler: [u8; 4], descriptions: &[Vec<u8>]) -> Self {
+  pub(crate) fn track(mut self, handler: [u8; 4], descriptions: &[Vec<u8>]) -> Self {
     let mut tkhd = vec![0; 12];
     tkhd.extend_from_slice(&u32::try_from(self.tracks.len() + 1).unwrap().to_be_bytes());
     tkhd.extend_from_slice(&[0; 24]);
@@ -250,7 +256,7 @@ impl Mp4Builder {
     self
   }
 
-  pub fn video_entry(
+  pub(crate) fn video_entry(
     entry: [u8; 4],
     config: [u8; 4],
     config_payload: &[u8],
