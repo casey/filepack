@@ -306,7 +306,9 @@ impl Serve {
       .route("/api/missing", post(route::api_missing))
       .route(
         "/api/package/{fingerprint}",
-        delete(route::api_delete_package).post(route::api_verify_package),
+        delete(route::api_delete_package)
+          .head(route::api_package)
+          .post(route::api_verify_package),
       )
       .route("/api/packages", get(route::api_packages))
       .route("/artwork/{fingerprint}", get(route::artwork))

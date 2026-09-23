@@ -312,6 +312,10 @@ impl TestServer {
     TestRequestBuilder::new(Method::GET, path, self.router.clone())
   }
 
+  fn head(&self, path: impl Into<String>) -> TestRequestBuilder {
+    TestRequestBuilder::new(Method::HEAD, path, self.router.clone())
+  }
+
   fn new() -> Self {
     Self::builder().build()
   }
@@ -410,6 +414,24 @@ fn admin_key_requires_restrict_writes() {
     .to_string(),
     "error: the following required arguments were not provided:\n  --restrict-writes.*"
   );
+}
+
+#[test]
+fn api_package() {
+  let server = TestServer::new();
+
+  let package = PackageBuilder::new();
+
+  let fingerprint = package.fingerprint();
+
+  server
+    .head(format!("/api/package/{fingerprint}"))
+    .status(StatusCode::NOT_FOUND)
+    .send();
+
+  package.upload(&server);
+
+  server.head(format!("/api/package/{fingerprint}")).send();
 }
 
 #[test]

@@ -42,7 +42,7 @@ impl Client {
   }
 
   pub(crate) fn has_package(&self, fingerprint: Fingerprint) -> Result<bool> {
-    self.head(&format!("package/{fingerprint}"))
+    self.head(&format!("api/package/{fingerprint}"))
   }
 
   fn head(&self, path: &str) -> Result<bool> {
