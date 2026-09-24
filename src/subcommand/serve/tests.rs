@@ -103,7 +103,7 @@ impl<'a> PackageBuilder<'a> {
   }
 
   fn metadata(self, metadata: &Metadata) -> Self {
-    self.file(Metadata::DECO_FILENAME, &metadata.encode_magic_bytes())
+    self.file(Metadata::DECO_FILENAME, &metadata.encode_to_vec())
   }
 
   fn new() -> Self {
@@ -481,7 +481,7 @@ fn artwork_missing() {
     artwork: Some(Image::test("cover.png")),
     ..Metadata::default()
   };
-  let metadata_deco = metadata.encode_magic_bytes();
+  let metadata_deco = metadata.encode_to_vec();
   server.write_file(&metadata_deco);
 
   let (deco, hash) = Directory::new().insert_file("cover.png,", artwork).deco();
@@ -556,7 +556,7 @@ fn artwork_response() {
       artwork: Some(Image::test(filename)),
       ..Metadata::default()
     };
-    let metadata_deco = metadata.encode_magic_bytes();
+    let metadata_deco = metadata.encode_to_vec();
     server.write_file(&metadata_deco);
 
     let (deco, hash) = Directory::new()
@@ -1190,7 +1190,7 @@ fn get_package_with_metadata() {
     time: None,
     title: Some("foo".parse().unwrap()),
   };
-  let metadata_deco = metadata.encode_magic_bytes();
+  let metadata_deco = metadata.encode_to_vec();
   server.write_file(&metadata_deco);
 
   let mut directory = Directory::new();
@@ -1279,7 +1279,7 @@ fn home() {
   let totals = Totals {
     directories: 0,
     directory_size: 0,
-    file_size: metadata.encode_magic_bytes().len().into_u64() + 3,
+    file_size: metadata.encode_to_vec().len().into_u64() + 3,
     files: 2,
   };
 
@@ -1363,7 +1363,7 @@ fn media_audio_item_file_missing() {
     .file("foo.flac", b"foo")
     .upload(&server);
 
-  let metadata_deco = metadata.encode_magic_bytes();
+  let metadata_deco = metadata.encode_to_vec();
 
   let (deco, _hash) = Directory::new()
     .insert_file(Metadata::DECO_FILENAME, &metadata_deco)
@@ -2581,7 +2581,7 @@ fn package_page_og_image() {
     artwork: Some(Image::test("bar.png")),
     ..Metadata::default()
   };
-  let metadata_deco = metadata.encode_magic_bytes();
+  let metadata_deco = metadata.encode_to_vec();
   server.write_file(&metadata_deco);
 
   let mut directory = Directory::new();
@@ -2664,7 +2664,7 @@ fn package_page_renders_audio_media() {
   let totals = Totals {
     directories: 0,
     directory_size: 0,
-    file_size: metadata.encode_magic_bytes().len().into_u64() + 6,
+    file_size: metadata.encode_to_vec().len().into_u64() + 6,
     files: 3,
   };
 
@@ -2721,7 +2721,7 @@ fn package_page_renders_image_media() {
   let totals = Totals {
     directories: 0,
     directory_size: 0,
-    file_size: metadata.encode_magic_bytes().len().into_u64() + 3,
+    file_size: metadata.encode_to_vec().len().into_u64() + 3,
     files: 2,
   };
 
@@ -2794,7 +2794,7 @@ fn package_page_renders_video_media() {
   let totals = Totals {
     directories: 0,
     directory_size: 0,
-    file_size: metadata.encode_magic_bytes().len().into_u64() + 3,
+    file_size: metadata.encode_to_vec().len().into_u64() + 3,
     files: 2,
   };
 
@@ -2828,7 +2828,7 @@ fn package_page_web() {
     ..default()
   };
 
-  let metadata_deco_len = metadata.encode_magic_bytes().len().into_u64();
+  let metadata_deco_len = metadata.encode_to_vec().len().into_u64();
 
   let package = PackageBuilder::new()
     .metadata(&metadata)
@@ -2892,7 +2892,7 @@ fn packages_include_creators_and_titles() {
   let totals = Totals {
     directories: 0,
     directory_size: 0,
-    file_size: metadata.encode_magic_bytes().len().into_u64(),
+    file_size: metadata.encode_to_vec().len().into_u64(),
     files: 1,
   };
 
@@ -2999,7 +2999,7 @@ fn packages_sorted() {
     let totals = Totals {
       directories: 0,
       directory_size: 0,
-      file_size: metadata.encode_magic_bytes().len().into_u64()
+      file_size: metadata.encode_to_vec().len().into_u64()
         + file.as_ref().map_or(0, |file| file.len().into_u64()),
       files: 1 + u64::from(file.is_some()),
     };
@@ -3652,7 +3652,7 @@ fn verify_package_metadata_references_missing_file() {
     artwork: Some(Image::test("cover.png")),
     ..default()
   }
-  .encode_magic_bytes();
+  .encode_to_vec();
   server.write_file(&metadata);
 
   let (deco, hash) = Directory::new()
@@ -3684,7 +3684,7 @@ fn verify_package_metadata_references_present_file() {
     artwork: Some(Image::test("cover.png")),
     ..default()
   }
-  .encode_magic_bytes();
+  .encode_to_vec();
   server.write_file(&metadata);
 
   let (deco, hash) = Directory::new()

@@ -296,7 +296,7 @@ fn upload_package_fails_when_manifest_decode_fails() {
         error: failed to decode manifest at `manifest.filepack`
                └─ unexpected magic bytes, expected `{}` but found `n`
       ",
-      Archive::MAGIC_BYTES.escape_ascii(),
+      Archive::BYTES.escape_ascii(),
     ))
     .failure();
 }
@@ -327,7 +327,7 @@ fn upload_package_fails_when_package_is_not_directory() {
   archive.item(1, hash);
   archive.item(0, 0u64);
   archive.finish();
-  encoder.bytes(&Archive::MAGIC_BYTES);
+  encoder.bytes(&Archive::BYTES);
 
   Test::new()
     .write("manifest.filepack", encoder.finish())
@@ -366,7 +366,7 @@ fn upload_package_fails_when_package_missing() {
   archive.item(1, root);
   archive.item(0, 0u64);
   archive.finish();
-  encoder.bytes(&Archive::MAGIC_BYTES);
+  encoder.bytes(&Archive::BYTES);
 
   Test::new()
     .write("manifest.filepack", encoder.finish())
@@ -395,7 +395,7 @@ fn upload_package_fails_when_root_file_missing() {
   archive.item(1, missing);
   archive.item(0, 0u64);
   archive.finish();
-  encoder.bytes(&Archive::MAGIC_BYTES);
+  encoder.bytes(&Archive::BYTES);
 
   Test::new()
     .write("manifest.filepack", encoder.finish())
@@ -430,7 +430,7 @@ fn upload_package_fails_when_root_not_directory_deco() {
   archive.item(1, root);
   archive.item(0, 0u64);
   archive.finish();
-  encoder.bytes(&Archive::MAGIC_BYTES);
+  encoder.bytes(&Archive::BYTES);
 
   Test::new()
     .write("manifest.filepack", encoder.finish())
@@ -486,7 +486,7 @@ fn upload_package_serves_package_html() {
   let totals = Totals {
     directories: 0,
     directory_size: 0,
-    file_size: metadata.encode_magic_bytes().len().into_u64() + 28,
+    file_size: metadata.encode_to_vec().len().into_u64() + 28,
     files: 2,
   };
 

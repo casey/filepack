@@ -261,7 +261,7 @@ impl Server {
   fn metadata(&self, fingerprint: Fingerprint) -> ServerResult<Option<Metadata>> {
     self
       .metadata_deco(fingerprint)?
-      .map(|metadata| Metadata::decode_magic_bytes(&metadata))
+      .map(|metadata| Metadata::decode_from_slice(&metadata))
       .transpose()
       .context(server_error::PackageMetadataCorrupt { fingerprint })
   }
@@ -623,7 +623,7 @@ impl Server {
     );
 
     if let Some(metadata) = self.metadata_deco(fingerprint)? {
-      let metadata = Metadata::decode_magic_bytes(&metadata)
+      let metadata = Metadata::decode_from_slice(&metadata)
         .context(server_error::PackageMetadataDecode { fingerprint })?;
 
       for path in metadata.files() {

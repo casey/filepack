@@ -546,6 +546,55 @@ fn enum_variant_encode_with() {
 }
 
 #[test]
+fn magic() {
+  #[derive(Debug, Decode, Encode, PartialEq)]
+  #[deco(magic)]
+  struct Foo {
+    #[n(0)]
+    bar: u64,
+  }
+
+  impl Magic for Foo {
+    const BYTES: MagicBytes = *b"foo\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
+  }
+
+  #[track_caller]
+  fn mismatch(magic: &[u8], found: &str) {
+    let mut encoder = Encoder::new();
+    Foo { bar: 1 }.encode(&mut encoder);
+    encoder.bytes(magic);
+    assert_eq!(
+      Foo::decode_from_slice(&encoder.finish())
+        .unwrap_err()
+        .to_string(),
+      format!(
+        "unexpected magic bytes, expected \
+        `foo\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00` \
+        but found `{found}`"
+      ),
+    );
+  }
+
+  assert_deco(
+    Foo { bar: 1 },
+    "92666f6f000000000000000000000000000000820001",
+  );
+
+  let mut encoder = Encoder::new();
+  BTreeMap::<u64, u64>::new().encode(&mut encoder);
+  encoder.bytes(&Foo::BYTES);
+  assert_eq!(
+    Foo::decode_from_slice(&encoder.finish())
+      .unwrap_err()
+      .to_string(),
+    "missing required field: 0",
+  );
+
+  mismatch(b"bar", "bar");
+  mismatch(b"barbarbarbarbarbarbar", "barbarbarbarbarbar…");
+}
+
+#[test]
 fn mixed_required_and_optional() {
   #[derive(Debug, Encode, Decode, PartialEq)]
   struct Foo {

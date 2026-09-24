@@ -250,8 +250,8 @@ fn magic_bytes() {
     .success();
 
   for (filename, magic_bytes) in [
-    ("manifest.filepack", Archive::MAGIC_BYTES),
-    ("metadata.filemeta", Metadata::MAGIC_BYTES),
+    ("manifest.filepack", Archive::BYTES),
+    ("metadata.filemeta", Metadata::BYTES),
   ] {
     let bytes = fs::read(test.path().join(filename)).unwrap();
     let magic_bytes = magic_bytes.encode_to_vec();

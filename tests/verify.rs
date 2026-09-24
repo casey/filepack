@@ -732,7 +732,7 @@ fn unarchive_error() {
   archive.item(1, root);
   archive.item(0, 0u64);
   archive.finish();
-  encoder.bytes(&Archive::MAGIC_BYTES);
+  encoder.bytes(&Archive::BYTES);
 
   Test::new()
     .write("manifest.filepack", encoder.finish())
