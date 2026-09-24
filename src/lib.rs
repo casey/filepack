@@ -268,6 +268,7 @@ pub use self::{
   hash::Hash,
   loader::Loader,
   magic::Magic,
+  magic_type::MagicType,
   manifest::Manifest,
   metadata::Metadata,
   mp3_builder::Mp3Builder,
@@ -390,6 +391,7 @@ mod lint_selector;
 mod linter;
 mod loader;
 mod magic;
+mod magic_type;
 mod manifest;
 mod map_decoder;
 mod map_encoder;
@@ -491,8 +493,6 @@ type ServerResult<T = ()> = Result<T, ServerError>;
 
 type Attestation = Signature<Statement>;
 type Token = Signature<Claims>;
-
-type MagicBytes = [u8; 18];
 
 fn initialize_tracing() -> Result<(), Box<dyn std::error::Error>> {
   use {

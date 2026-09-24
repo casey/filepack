@@ -1,7 +1,9 @@
 use super::*;
 
+pub(crate) const BYTES: &[u8] = b"filepack\0";
+
 pub trait Magic {
-  const BYTES: MagicBytes;
+  const TYPE: MagicType;
 }
 
 #[cfg(test)]
@@ -9,16 +11,17 @@ mod tests {
   use super::*;
 
   #[test]
-  fn magic_bytes() {
+  fn magic() {
     #[track_caller]
-    fn case<T: Magic>() {
-      let magic_bytes = T::BYTES.encode_to_vec();
-      assert!(str::from_utf8(&magic_bytes).is_err());
-      assert!(magic_bytes.starts_with(&[0x92]));
-      assert!(magic_bytes.ends_with(&[0]));
-      assert!(magic_bytes[1..].starts_with(b"filepack-"));
+    fn case<T: Magic>(expected: &[u8]) {
+      let mut encoder = Encoder::new();
+      encoder.magic(T::TYPE);
+      let magic = encoder.finish();
+      assert_eq!(magic, expected);
+      assert!(str::from_utf8(&magic).is_err());
+      assert!(magic.contains(&0));
     }
-    case::<Archive>();
-    case::<Metadata>();
+    case::<Archive>(b"\x89filepack\0\x87archive");
+    case::<Metadata>(b"\x89filepack\0\x88metadata");
   }
 }

@@ -62,6 +62,11 @@ impl Encoder {
     self.buffer.len()
   }
 
+  pub fn magic(&mut self, magic_type: MagicType) {
+    magic_type.encode(self);
+    self.bytes(magic::BYTES);
+  }
+
   pub fn map<K: Encode + PartialOrd>(&mut self) -> MapEncoder<'_, K> {
     MapEncoder::new(self)
   }

@@ -3,7 +3,7 @@ use super::*;
 #[allow(clippy::arbitrary_source_item_ordering, private_interfaces)]
 #[skip_serializing_none]
 #[derive(Clone, Debug, Default, Encode, Decode, Magic, PartialEq, Serialize)]
-#[deco(magic = b"filepack-metadata\0")]
+#[deco(magic = MagicType::Metadata)]
 pub struct Metadata {
   #[n(0)]
   #[serde(skip)]

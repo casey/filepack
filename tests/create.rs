@@ -249,14 +249,17 @@ fn magic_bytes() {
     .arg("create")
     .success();
 
-  for (filename, magic_bytes) in [
-    ("manifest.filepack", Archive::BYTES),
-    ("metadata.filemeta", Metadata::BYTES),
-  ] {
-    let bytes = fs::read(test.path().join(filename)).unwrap();
-    let magic_bytes = magic_bytes.encode_to_vec();
-    assert_eq!(&bytes[..magic_bytes.len()], magic_bytes);
-  }
+  assert!(
+    fs::read(test.path().join("manifest.filepack"))
+      .unwrap()
+      .starts_with(b"\x89filepack\0\x87archive"),
+  );
+
+  assert!(
+    fs::read(test.path().join("metadata.filemeta"))
+      .unwrap()
+      .starts_with(b"\x89filepack\0\x88metadata"),
+  );
 }
 
 #[test]

@@ -32,18 +32,24 @@ pub enum DecodeError {
   #[snafu(display("failed to parse language code"))]
   Language { source: LanguageError },
   #[snafu(display(
-    "unexpected magic bytes, expected `{}` but found `{}{}`",
+    "expected magic bytes `{}` but found `{}{}`",
     expected.escape_ascii(),
-    actual[..actual.len().min(expected.len())].escape_ascii(),
-    if actual.len() > expected.len() { "…" } else { "" },
+    actual.escape_ascii(),
+    if *truncated { "…" } else { "" },
   ))]
   MagicBytes {
     actual: Vec<u8>,
-    expected: super::MagicBytes,
+    expected: &'static [u8],
+    truncated: bool,
+  },
+  #[snafu(display("expected magic type `{expected}` but found `{actual}`"))]
+  MagicType {
+    actual: super::MagicType,
+    expected: super::MagicType,
   },
   #[snafu(display("missing array element"))]
   MissingElement,
-  #[snafu(display("missing required field: {key}"))]
+  #[snafu(display("missing field with key {key}"))]
   MissingField { key: String },
   #[snafu(display("overlong encoding"))]
   Overlong,
@@ -69,12 +75,12 @@ pub enum DecodeError {
   UnconsumedEntries,
   #[snafu(display("unexpected key"))]
   UnexpectedKey,
-  #[snafu(display("unexpected value, expected {expected} but found {actual}"))]
+  #[snafu(display("expected `{expected}` but found `{actual}`"))]
   UnexpectedValue {
     actual: String,
     expected: &'static str,
   },
-  #[snafu(display("string not valid unicode"))]
+  #[snafu(display("string is not valid UTF-8"))]
   Unicode { source: Utf8Error },
   #[snafu(display("unknown field with key {key}"))]
   UnknownField { key: u64 },

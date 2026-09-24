@@ -291,13 +291,12 @@ fn upload_package_fails_when_manifest_decode_fails() {
       "http://127.0.0.1:1",
       "manifest.filepack",
     ])
-    .stderr(&format!(
+    .stderr(
       "
         error: failed to decode manifest at `manifest.filepack`
-               └─ unexpected magic bytes, expected `{}` but found `n`
+               └─ expected magic bytes `filepack\\x00` but found `n`
       ",
-      Archive::BYTES.escape_ascii(),
-    ))
+    )
     .failure();
 }
 
@@ -327,7 +326,7 @@ fn upload_package_fails_when_package_is_not_directory() {
   archive.item(1, hash);
   archive.item(0, 0u64);
   archive.finish();
-  encoder.bytes(&Archive::BYTES);
+  encoder.magic(MagicType::Archive);
 
   Test::new()
     .write("manifest.filepack", encoder.finish())
@@ -366,7 +365,7 @@ fn upload_package_fails_when_package_missing() {
   archive.item(1, root);
   archive.item(0, 0u64);
   archive.finish();
-  encoder.bytes(&Archive::BYTES);
+  encoder.magic(MagicType::Archive);
 
   Test::new()
     .write("manifest.filepack", encoder.finish())
@@ -395,7 +394,7 @@ fn upload_package_fails_when_root_file_missing() {
   archive.item(1, missing);
   archive.item(0, 0u64);
   archive.finish();
-  encoder.bytes(&Archive::BYTES);
+  encoder.magic(MagicType::Archive);
 
   Test::new()
     .write("manifest.filepack", encoder.finish())
@@ -430,7 +429,7 @@ fn upload_package_fails_when_root_not_directory_deco() {
   archive.item(1, root);
   archive.item(0, 0u64);
   archive.finish();
-  encoder.bytes(&Archive::BYTES);
+  encoder.magic(MagicType::Archive);
 
   Test::new()
     .write("manifest.filepack", encoder.finish())
