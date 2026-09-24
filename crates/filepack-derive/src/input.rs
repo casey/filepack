@@ -158,6 +158,7 @@ impl Input {
 
     let magic = attributes
       .magic()
+      .is_some()
       .then(|| quote! { decoder.magic_bytes(&<Self as Magic>::BYTES)?; });
 
     let validate = attributes
@@ -292,6 +293,7 @@ impl Input {
 
     let magic = attributes
       .magic()
+      .is_some()
       .then(|| quote! { encoder.bytes(&<Self as Magic>::BYTES); });
 
     let generics = self.encode_generics();
@@ -338,8 +340,30 @@ impl Input {
     generics
   }
 
+  pub(crate) fn magic(&self) -> Result<proc_macro2::TokenStream> {
+    let attributes = self.parse_attributes()?;
+
+    let name = &self.ident;
+
+    let Some(magic) = attributes.magic() else {
+      return Err(Error::new_spanned(
+        name,
+        "missing `#[deco(magic = b\"...\")]` attribute",
+      ));
+    };
+
+    let (impl_generics, ty_generics, where_clause) = self.generics.split_for_impl();
+
+    Ok(quote! {
+      impl #impl_generics Magic for #name #ty_generics #where_clause {
+        const BYTES: MagicBytes = *#magic;
+      }
+    })
+  }
+
   fn parse_attributes(&self) -> Result<Attributes> {
-    let mut attributes = HashSet::new();
+    let mut flags = HashSet::new();
+    let mut magic = None;
 
     for attribute in &self.attrs {
       if attribute.path().is_ident("n") {
@@ -354,39 +378,51 @@ impl Input {
       }
 
       attribute.parse_nested_meta(|meta| {
-        let attribute = meta
-          .path
-          .require_ident()?
-          .to_string()
-          .parse::<ContainerAttribute>()
-          .map_err(|_| meta.error("unknown `#[deco(...)]` attribute"))?;
+        if meta.path.is_ident("magic") {
+          if self.data.is_enum() {
+            return Err(meta.error("`#[deco(magic)]` cannot be used with enums"));
+          }
 
-        if !meta.input.is_empty() && !meta.input.peek(syn::Token![,]) {
-          return Err(meta.error(format!("`#[deco({attribute})]` does not take a value")));
-        }
+          if magic.is_some() {
+            return Err(meta.error("duplicate `#[deco(magic)]` attribute"));
+          }
 
-        if self.data.is_enum() {
-          match attribute {
-            ContainerAttribute::Magic | ContainerAttribute::Transparent => {
-              return Err(meta.error(format!("`#[deco({attribute})]` cannot be used with enums")));
+          magic = Some(meta.value()?.parse::<LitByteStr>()?);
+        } else {
+          let attribute = meta
+            .path
+            .require_ident()?
+            .to_string()
+            .parse::<ContainerAttribute>()
+            .map_err(|_| meta.error("unknown `#[deco(...)]` attribute"))?;
+
+          if !meta.input.is_empty() && !meta.input.peek(syn::Token![,]) {
+            return Err(meta.error(format!("`#[deco({attribute})]` does not take a value")));
+          }
+
+          if self.data.is_enum() {
+            match attribute {
+              ContainerAttribute::Transparent => {
+                return Err(
+                  meta.error(format!("`#[deco({attribute})]` cannot be used with enums")),
+                );
+              }
+              ContainerAttribute::Strict | ContainerAttribute::Validate => {}
             }
-            ContainerAttribute::Strict | ContainerAttribute::Validate => {}
+          }
+
+          if !flags.insert(attribute) {
+            return Err(meta.error(format!("duplicate `#[deco({attribute})]` attribute")));
+          }
+
+          if flags.contains(&ContainerAttribute::Transparent)
+            && flags.contains(&ContainerAttribute::Strict)
+          {
+            return Err(meta.error("`#[deco(strict)]` cannot be used with `#[deco(transparent)]`"));
           }
         }
 
-        if !attributes.insert(attribute) {
-          return Err(meta.error(format!("duplicate `#[deco({attribute})]` attribute")));
-        }
-
-        if attributes.contains(&ContainerAttribute::Transparent)
-          && attributes.contains(&ContainerAttribute::Strict)
-        {
-          return Err(meta.error("`#[deco(strict)]` cannot be used with `#[deco(transparent)]`"));
-        }
-
-        if attributes.contains(&ContainerAttribute::Transparent)
-          && attributes.contains(&ContainerAttribute::Magic)
-        {
+        if magic.is_some() && flags.contains(&ContainerAttribute::Transparent) {
           return Err(meta.error("`#[deco(magic)]` cannot be used with `#[deco(transparent)]`"));
         }
 
@@ -394,7 +430,7 @@ impl Input {
       })?;
     }
 
-    Ok(Attributes(attributes))
+    Ok(Attributes { flags, magic })
   }
 
   fn parse_fields(&self) -> Result<Vec<ParsedField>> {
@@ -518,7 +554,7 @@ mod tests {
 
     case(
       &syn::parse_quote! {
-        #[deco(magic)]
+        #[deco(magic = b"foo")]
         enum Foo {}
       },
       "`#[deco(magic)]` cannot be used with enums",
@@ -526,7 +562,23 @@ mod tests {
 
     case(
       &syn::parse_quote! {
-        #[deco(magic, transparent)]
+        #[deco(magic = b"foo", magic = b"bar")]
+        struct Foo {}
+      },
+      "duplicate `#[deco(magic)]` attribute",
+    );
+
+    case(
+      &syn::parse_quote! {
+        #[deco(magic = b"foo", transparent)]
+        struct Foo(u64);
+      },
+      "`#[deco(magic)]` cannot be used with `#[deco(transparent)]`",
+    );
+
+    case(
+      &syn::parse_quote! {
+        #[deco(transparent, magic = b"foo")]
         struct Foo(u64);
       },
       "`#[deco(magic)]` cannot be used with `#[deco(transparent)]`",
@@ -586,6 +638,21 @@ mod tests {
         }
       },
       "`#[deco(...)]` attributes cannot be used on enum variants",
+    );
+  }
+
+  #[test]
+  fn magic_errors() {
+    assert_eq!(
+      Input::from_derive_input(&syn::parse_quote! {
+        struct Foo {}
+      })
+      .unwrap()
+      .magic()
+      .err()
+      .unwrap()
+      .to_string(),
+      "missing `#[deco(magic = b\"...\")]` attribute",
     );
   }
 }

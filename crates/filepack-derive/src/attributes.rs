@@ -1,21 +1,24 @@
 use super::*;
 
-pub(crate) struct Attributes(pub(crate) HashSet<ContainerAttribute>);
+pub(crate) struct Attributes {
+  pub(crate) flags: HashSet<ContainerAttribute>,
+  pub(crate) magic: Option<LitByteStr>,
+}
 
 impl Attributes {
-  pub(crate) fn magic(&self) -> bool {
-    self.0.contains(&ContainerAttribute::Magic)
+  pub(crate) fn magic(&self) -> Option<&LitByteStr> {
+    self.magic.as_ref()
   }
 
   pub(crate) fn strict(&self) -> bool {
-    self.0.contains(&ContainerAttribute::Strict)
+    self.flags.contains(&ContainerAttribute::Strict)
   }
 
   pub(crate) fn transparent(&self) -> bool {
-    self.0.contains(&ContainerAttribute::Transparent)
+    self.flags.contains(&ContainerAttribute::Transparent)
   }
 
   pub(crate) fn validate(&self) -> bool {
-    self.0.contains(&ContainerAttribute::Validate)
+    self.flags.contains(&ContainerAttribute::Validate)
   }
 }

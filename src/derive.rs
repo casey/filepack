@@ -547,15 +547,11 @@ fn enum_variant_encode_with() {
 
 #[test]
 fn magic() {
-  #[derive(Debug, Decode, Encode, PartialEq)]
-  #[deco(magic)]
+  #[derive(Debug, Decode, Encode, Magic, PartialEq)]
+  #[deco(magic = b"foo\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0")]
   struct Foo {
     #[n(0)]
     bar: u64,
-  }
-
-  impl Magic for Foo {
-    const BYTES: MagicBytes = *b"foo\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
   }
 
   #[track_caller]
