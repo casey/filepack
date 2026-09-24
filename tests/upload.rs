@@ -553,7 +553,7 @@ fn upload_package_uploads_files() {
     .assert_file(&format!("files/{}", Hash::bytes(b"bbb")), "bbb")
     .assert_file(&format!("files/{}", Hash::bytes(b"ccc")), "ccc")
     .assert_file(&format!("files/{}", Hash::bytes(b"ddd")), "ddd")
-    .assert_file_count("files", 7)
+    .assert_file_count("files", 8)
     .spawn();
 
   let test = Test::new()

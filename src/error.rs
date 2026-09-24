@@ -599,6 +599,14 @@ impl Error {
   }
 }
 
+impl From<FilesystemError> for Error {
+  fn from(error: FilesystemError) -> Self {
+    match error {
+      FilesystemError::Io { path, source } => FilesystemIo { path }.into_error(source),
+    }
+  }
+}
+
 impl From<redb::CommitError> for Error {
   fn from(source: redb::CommitError) -> Self {
     DatabaseCommit {}.into_error(source)

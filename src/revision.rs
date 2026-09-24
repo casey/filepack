@@ -1,8 +1,20 @@
 use super::*;
 
-#[derive(Debug, Decode, Encode, PartialEq)]
+#[derive(Clone, Copy, Debug, Decode, Encode, Eq, Ord, PartialEq, PartialOrd)]
 #[deco(transparent)]
 pub struct Revision(pub(crate) Hash);
+
+impl Revision {
+  pub(crate) const LEN: usize = Hash::LEN;
+
+  pub(crate) fn as_bytes(&self) -> &[u8; Self::LEN] {
+    self.0.as_bytes()
+  }
+
+  pub(crate) fn from_bytes(bytes: [u8; Self::LEN]) -> Self {
+    Self(bytes.into())
+  }
+}
 
 impl Display for Revision {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
@@ -22,8 +34,69 @@ impl FromStr for Revision {
   }
 }
 
+impl From<[u8; Self::LEN]> for Revision {
+  fn from(bytes: [u8; Self::LEN]) -> Self {
+    Self::from_bytes(bytes)
+  }
+}
+
 impl From<Hash> for Revision {
   fn from(hash: Hash) -> Self {
     Self(hash)
+  }
+}
+
+impl redb::Key for Revision {
+  fn compare(a: &[u8], b: &[u8]) -> Ordering {
+    a.cmp(b)
+  }
+}
+
+impl redb::Value for Revision {
+  type AsBytes<'a>
+    = &'a [u8; Self::LEN]
+  where
+    Self: 'a;
+
+  type SelfType<'a>
+    = Revision
+  where
+    Self: 'a;
+
+  fn as_bytes<'a, 'b: 'a>(value: &'a Self::SelfType<'b>) -> Self::AsBytes<'a>
+  where
+    Self: 'b,
+  {
+    value.as_bytes()
+  }
+
+  fn fixed_width() -> Option<usize> {
+    Some(Self::LEN)
+  }
+
+  fn from_bytes<'a>(data: &'a [u8]) -> Self::SelfType<'a>
+  where
+    Self: 'a,
+  {
+    <[u8; Self::LEN]>::try_from(data).unwrap().into()
+  }
+
+  fn type_name() -> redb::TypeName {
+    TypeName::Revision.into()
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn redb() {
+    assert_redb_impls(&[
+      Revision::from(Hash::from([0; Hash::LEN])),
+      Revision::from(Hash::from([0xff; Hash::LEN])),
+      Revision::from(Hash::bytes(b"foo")),
+      Revision::from(Hash::bytes(b"bar")),
+    ]);
   }
 }

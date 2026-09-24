@@ -68,9 +68,13 @@ pub(crate) fn parse_number<T: FromStr<Err = ParseIntError>>(s: &str) -> Result<T
   Ok(s.parse()?)
 }
 
-pub(crate) fn transfer_tempfile(hash: Hash, path: &Utf8Path) -> io::Result<NamedTempFile> {
+pub(crate) fn transfer_tempfile(
+  hash: Hash,
+  path: &Utf8Path,
+) -> Result<NamedTempFile, FilesystemError> {
   tempfile::Builder::new()
     .prefix(&format!("{hash}-"))
     .suffix(".incomplete")
     .tempfile_in(path)
+    .context(filesystem_error::Io { path })
 }

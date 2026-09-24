@@ -210,9 +210,7 @@ impl Download {
       .filter(|parent| !parent.as_str().is_empty())
       .unwrap_or(Utf8Path::new("."));
 
-    let tempfile = transfer_tempfile(hash, output_directory).context(error::FilesystemIo {
-      path: output_directory,
-    })?;
+    let tempfile = transfer_tempfile(hash, output_directory)?;
 
     let mut writer = HashingWriter::new(tempfile);
 
