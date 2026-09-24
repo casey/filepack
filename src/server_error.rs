@@ -11,15 +11,15 @@ pub enum ServerError {
   AuthorizationMalformed,
   #[snafu(display("missing authorization header"))]
   AuthorizationMissing,
-  #[snafu(transparent)]
+  #[snafu(context(false), display("failed to open database"))]
   Database { source: redb::DatabaseError },
-  #[snafu(transparent)]
+  #[snafu(context(false), display("failed to commit database transaction"))]
   DatabaseCommit { source: redb::CommitError },
-  #[snafu(transparent)]
+  #[snafu(context(false), display("database storage error"))]
   DatabaseStorage { source: redb::StorageError },
-  #[snafu(transparent)]
+  #[snafu(context(false), display("failed to open database table"))]
   DatabaseTable { source: redb::TableError },
-  #[snafu(transparent)]
+  #[snafu(context(false), display("failed to begin database transaction"))]
   DatabaseTransaction { source: redb::TransactionError },
   #[snafu(display("failed to read request body"))]
   DecoBody { source: axum::Error },
@@ -61,11 +61,8 @@ pub enum ServerError {
   FileIo { hash: Hash, source: io::Error },
   #[snafu(display("file with hash {hash} not found"))]
   FileNotFound { hash: Hash, source: io::Error },
-  #[snafu(display("I/O error at {path}"))]
-  FilesystemIo {
-    path: Utf8PathBuf,
-    source: io::Error,
-  },
+  #[snafu(context(false), display("filesystem I/O error"))]
+  Filesystem { source: FilesystemError },
   #[snafu(display("{source}"))]
   FingerprintParse { source: HexError },
   #[snafu(display("response invalid"))]
@@ -149,55 +146,6 @@ pub enum ServerError {
 }
 
 impl ServerError {
-  pub(crate) fn message(&self) -> String {
-    match self {
-      Self::ArtworkNotFound { .. }
-      | Self::AuthorizationInvalid { .. }
-      | Self::AuthorizationMalformed
-      | Self::AuthorizationMissing
-      | Self::DecoBody { .. }
-      | Self::DecoDecode { .. }
-      | Self::DirectoryDecode { .. }
-      | Self::DirectoryEntryMissing { .. }
-      | Self::DirectoryEntrySizeMismatch { .. }
-      | Self::DirectoryEntryTotals { .. }
-      | Self::DirectoryNotFound { .. }
-      | Self::DirectoryTotals { .. }
-      | Self::DirectoryUnverified { .. }
-      | Self::FileIo { .. }
-      | Self::FileNotFound { .. }
-      | Self::FingerprintParse { .. }
-      | Self::InvalidResponse { .. }
-      | Self::MediaItemDoesNotExist { .. }
-      | Self::MediaType { .. }
-      | Self::MediaTypeDoesNotHaveItems { .. }
-      | Self::PackageFileMissing { .. }
-      | Self::PackageFileNotFound { .. }
-      | Self::PackageFingerprintNotFound { .. }
-      | Self::PackageMediaMetadataNotFound { .. }
-      | Self::PackageMetadataCorrupt { .. }
-      | Self::PackageMetadataDecode { .. }
-      | Self::PackageMetadataFileMissing { .. }
-      | Self::PackageMetadataNotFound { .. }
-      | Self::PackageNotMounted { .. }
-      | Self::PackageNumberConflict { .. }
-      | Self::PackageNumberNotFound { .. }
-      | Self::PackageRootUnverified { .. }
-      | Self::PageNotFound
-      | Self::PlaceholderNotFound { .. }
-      | Self::Time { .. }
-      | Self::UploadBodyRead { .. }
-      | Self::UploadHashMismatch { .. }
-      | Self::WriteForbidden => self.to_string(),
-      Self::Database { .. }
-      | Self::DatabaseCommit { .. }
-      | Self::DatabaseStorage { .. }
-      | Self::DatabaseTable { .. }
-      | Self::DatabaseTransaction { .. } => "database error".into(),
-      Self::FilesystemIo { .. } => "filesystem I/O error".into(),
-    }
-  }
-
   pub(crate) fn status_code(&self) -> StatusCode {
     match self {
       Self::AuthorizationInvalid { .. }
@@ -209,7 +157,7 @@ impl ServerError {
       | Self::DatabaseTable { .. }
       | Self::DatabaseTransaction { .. }
       | Self::FileIo { .. }
-      | Self::FilesystemIo { .. }
+      | Self::Filesystem { .. }
       | Self::InvalidResponse { .. }
       | Self::PackageFileMissing { .. }
       | Self::PackageMetadataCorrupt { .. }
@@ -250,6 +198,6 @@ impl ServerError {
 
 impl IntoResponse for ServerError {
   fn into_response(self) -> Response {
-    (self.status_code(), self.message()).into_response()
+    (self.status_code(), self.to_string()).into_response()
   }
 }

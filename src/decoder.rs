@@ -16,7 +16,7 @@ impl<'a> Decoder<'a> {
     match self.integer()? {
       0 => Ok(false),
       1 => Ok(true),
-      value => Err(decode_error::Boolean { value }.build()),
+      value => Err(DecodeError::Boolean { value }),
     }
   }
 

@@ -82,7 +82,7 @@ impl Server {
   }
 
   pub(crate) fn files(&self) -> ServerResult<Vec<Hash>> {
-    let context = server_error::FilesystemIo { path: &self.files };
+    let context = filesystem_error::Io { path: &self.files };
 
     let mut files = Vec::new();
 
@@ -163,7 +163,7 @@ impl Server {
 
       bytes += path
         .metadata()
-        .context(server_error::FilesystemIo { path: &path })?
+        .context(filesystem_error::Io { path: &path })?
         .len();
 
       files_removed.insert(hash);
@@ -171,7 +171,7 @@ impl Server {
 
     for &hash in &files_removed {
       let path = self.file_path(hash);
-      fs::remove_file(&path).context(server_error::FilesystemIo { path })?;
+      fs::remove_file(&path).context(filesystem_error::Io { path })?;
     }
 
     tx.commit()?;
@@ -284,7 +284,7 @@ impl Server {
 
       if !path
         .try_exists()
-        .context(server_error::FilesystemIo { path: &path })?
+        .context(filesystem_error::Io { path: &path })?
       {
         missing.insert(hash);
       }
@@ -300,13 +300,13 @@ impl Server {
       if err.kind() == io::ErrorKind::NotFound {
         server_error::FileNotFound { hash }.into_error(err)
       } else {
-        server_error::FilesystemIo { path: &path }.into_error(err)
+        filesystem_error::Io { path: &path }.into_error(err).into()
       }
     })?;
 
     let content_length = file
       .metadata()
-      .context(server_error::FilesystemIo { path })?
+      .context(filesystem_error::Io { path })?
       .len();
 
     Ok(Resource {
@@ -456,7 +456,7 @@ impl Server {
       if err.kind() == io::ErrorKind::NotFound {
         server_error::FileNotFound { hash }.into_error(err)
       } else {
-        server_error::FilesystemIo { path }.into_error(err)
+        filesystem_error::Io { path }.into_error(err).into()
       }
     })
   }
@@ -534,7 +534,9 @@ impl Server {
             }
             .build()
           } else {
-            server_error::FilesystemIo { path: &path }.into_error(error)
+            filesystem_error::Io { path: &path }
+              .into_error(error)
+              .into()
           }
         })?;
 
@@ -698,7 +700,7 @@ impl Server {
 
   pub(crate) async fn write_file(&self, hash: Hash, body: Body) -> ServerResult {
     let (file, temp_path) = transfer_tempfile(hash, &self.incoming)
-      .context(server_error::FilesystemIo {
+      .context(filesystem_error::Io {
         path: &self.incoming,
       })?
       .into_parts();
@@ -719,12 +721,12 @@ impl Server {
       writer
         .write_all(&chunk)
         .await
-        .context(server_error::FilesystemIo {
+        .context(filesystem_error::Io {
           path: &temp_path_utf8,
         })?;
     }
 
-    writer.flush().await.context(server_error::FilesystemIo {
+    writer.flush().await.context(filesystem_error::Io {
       path: &temp_path_utf8,
     })?;
 
@@ -742,7 +744,7 @@ impl Server {
 
     if tokio::fs::try_exists(&path)
       .await
-      .context(server_error::FilesystemIo { path: &path })?
+      .context(filesystem_error::Io { path: &path })?
     {
       return Ok(());
     }
@@ -750,7 +752,7 @@ impl Server {
     temp_path
       .persist(&path)
       .map_err(|error| error.error)
-      .context(server_error::FilesystemIo { path: &path })?;
+      .context(filesystem_error::Io { path: &path })?;
 
     Ok(())
   }

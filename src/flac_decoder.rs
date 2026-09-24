@@ -34,7 +34,7 @@ impl<'a> Iterator for Blocks<'a> {
 
     let Some(header) = self.data.get(self.offset..header_end) else {
       self.done = true;
-      return Some(Err(audio_error::FlacTruncated.build()));
+      return Some(Err(AudioError::FlacTruncated));
     };
 
     let length =
@@ -44,7 +44,7 @@ impl<'a> Iterator for Blocks<'a> {
 
     let Some(body) = self.data.get(header_end..end) else {
       self.done = true;
-      return Some(Err(audio_error::FlacTruncated.build()));
+      return Some(Err(AudioError::FlacTruncated));
     };
 
     self.done = header[0] & 0x80 != 0;

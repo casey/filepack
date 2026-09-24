@@ -15,7 +15,7 @@ impl IntoResponse for PageError {
     (
       status,
       ErrorHtml {
-        message: self.0.message(),
+        error: self.0,
         status,
       }
       .page(None),

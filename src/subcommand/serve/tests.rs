@@ -142,15 +142,8 @@ impl TestRequestBuilder {
     self
   }
 
-  fn assert_error(self, status: StatusCode, message: impl Into<String>) -> Self {
-    self.assert_response((
-      status,
-      ErrorHtml {
-        message: message.into(),
-        status,
-      }
-      .page(None),
-    ))
+  fn assert_error(self, status: StatusCode, error: ServerError) -> Self {
+    self.assert_response((status, ErrorHtml { error, status }.page(None)))
   }
 
   fn assert_header(mut self, name: HeaderName, value: impl Into<String>) -> Self {
@@ -721,7 +714,10 @@ fn delete_package_removes_number() {
 
   server
     .get("/package/1")
-    .assert_error(StatusCode::NOT_FOUND, "package number 1 not found")
+    .assert_error(
+      StatusCode::NOT_FOUND,
+      ServerError::PackageNumberNotFound { number: 1 },
+    )
     .send();
 }
 
@@ -813,7 +809,7 @@ fn download_response() {
 fn fallback() {
   TestServer::new()
     .get("/nonexistent")
-    .assert_error(StatusCode::NOT_FOUND, "page not found")
+    .assert_error(StatusCode::NOT_FOUND, ServerError::PageNotFound)
     .send();
 }
 
@@ -1031,7 +1027,10 @@ fn get_directory_not_found() {
 
   server
     .get(format!("/directory/{hash}"))
-    .assert_error(StatusCode::NOT_FOUND, format!("directory {hash} not found"))
+    .assert_error(
+      StatusCode::NOT_FOUND,
+      ServerError::DirectoryNotFound { hash },
+    )
     .send();
 }
 
@@ -1075,7 +1074,10 @@ fn get_package_by_number() {
 fn get_package_by_number_not_found() {
   TestServer::new()
     .get("/package/99")
-    .assert_error(StatusCode::NOT_FOUND, "package number 99 not found")
+    .assert_error(
+      StatusCode::NOT_FOUND,
+      ServerError::PackageNumberNotFound { number: 99 },
+    )
     .send();
 }
 
@@ -1089,7 +1091,7 @@ fn get_package_not_found() {
     .get(format!("/package/{fingerprint}"))
     .assert_error(
       StatusCode::NOT_FOUND,
-      format!("package {fingerprint} not found"),
+      ServerError::PackageFingerprintNotFound { fingerprint },
     )
     .send();
 }
@@ -1248,7 +1250,12 @@ fn malformed_fingerprint_returns_error() {
     .get("/package1INVALID")
     .assert_error(
       StatusCode::BAD_REQUEST,
-      "package fingerprint contains invalid hex digit `I`",
+      ServerError::FingerprintParse {
+        source: HexError::Digit {
+          digit: 'I',
+          tag: Tag::Fingerprint,
+        },
+      },
     )
     .send();
 }
@@ -2074,7 +2081,7 @@ fn mount_serves_index_html() {
 fn non_fingerprint_tagged_hex_falls_through() {
   TestServer::new()
     .get(format!("/{}", test::PUBLIC_KEY))
-    .assert_error(StatusCode::NOT_FOUND, "page not found")
+    .assert_error(StatusCode::NOT_FOUND, ServerError::PageNotFound)
     .send();
 }
 
@@ -2122,7 +2129,12 @@ fn package_item_audio_out_of_range() {
     .get(format!("/package/{fingerprint}/item/2"))
     .assert_error(
       StatusCode::NOT_FOUND,
-      format!("track 2 does not exist, package {fingerprint} has 1 track"),
+      ServerError::MediaItemDoesNotExist {
+        count: 1,
+        fingerprint,
+        index: Ordinal(1),
+        ty: MediaType::Audio,
+      },
     )
     .send();
 }
@@ -2227,7 +2239,12 @@ fn package_item_image_out_of_range() {
     .get(format!("/package/{fingerprint}/item/2"))
     .assert_error(
       StatusCode::NOT_FOUND,
-      format!("image 2 does not exist, package {fingerprint} has 1 image"),
+      ServerError::MediaItemDoesNotExist {
+        count: 1,
+        fingerprint,
+        index: Ordinal(1),
+        ty: MediaType::Image,
+      },
     )
     .send();
 }
@@ -2242,7 +2259,7 @@ fn package_item_package_not_found() {
     .get(format!("/package/{fingerprint}/item/1"))
     .assert_error(
       StatusCode::NOT_FOUND,
-      format!("package {fingerprint} not found"),
+      ServerError::PackageFingerprintNotFound { fingerprint },
     )
     .send();
 }
@@ -2323,7 +2340,12 @@ fn package_item_video_out_of_range() {
     .get(format!("/package/{fingerprint}/item/2"))
     .assert_error(
       StatusCode::NOT_FOUND,
-      format!("video 2 does not exist, package {fingerprint} has 1 video"),
+      ServerError::MediaItemDoesNotExist {
+        count: 1,
+        fingerprint,
+        index: Ordinal(1),
+        ty: MediaType::Video,
+      },
     )
     .send();
 }
@@ -2342,7 +2364,10 @@ fn package_item_web() {
 
   server
     .get(format!("/package/{fingerprint}/item/1"))
-    .assert_error(StatusCode::NOT_FOUND, "media type web does not have items")
+    .assert_error(
+      StatusCode::NOT_FOUND,
+      ServerError::MediaTypeDoesNotHaveItems { ty: MediaType::Web },
+    )
     .send();
 }
 
@@ -2361,7 +2386,7 @@ fn package_item_without_media() {
     .get(format!("/package/{fingerprint}/item/1"))
     .assert_error(
       StatusCode::NOT_FOUND,
-      format!("package {fingerprint} does not have media metadata"),
+      ServerError::PackageMediaMetadataNotFound { fingerprint },
     )
     .send();
 }
@@ -2385,7 +2410,7 @@ fn package_item_without_metadata() {
     .get(format!("/package/{fingerprint}/item/1"))
     .assert_error(
       StatusCode::NOT_FOUND,
-      format!("package {fingerprint} does not have metadata"),
+      ServerError::PackageMetadataNotFound { fingerprint },
     )
     .send();
 }
@@ -2455,7 +2480,7 @@ fn package_media_without_media() {
     .get(format!("/package/{fingerprint}/media"))
     .assert_error(
       StatusCode::NOT_FOUND,
-      format!("package {fingerprint} does not have media metadata"),
+      ServerError::PackageMediaMetadataNotFound { fingerprint },
     )
     .send();
 }
@@ -3602,7 +3627,10 @@ fn verify_package_replace() {
 
   server
     .get(format!("/package/{foo}"))
-    .assert_error(StatusCode::NOT_FOUND, format!("package {foo} not found"))
+    .assert_error(
+      StatusCode::NOT_FOUND,
+      ServerError::PackageFingerprintNotFound { fingerprint: foo },
+    )
     .send();
 
   server

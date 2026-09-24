@@ -25,9 +25,9 @@ impl<S: Send + Sync> FromRequestParts<S> for Authenticated {
       .await
       .map_err(|err| {
         if err.is_missing() {
-          server_error::AuthorizationMissing.build()
+          ServerError::AuthorizationMissing
         } else {
-          server_error::AuthorizationMalformed.build()
+          ServerError::AuthorizationMalformed
         }
       })?;
 

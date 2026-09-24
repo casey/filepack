@@ -131,7 +131,7 @@ pub(crate) async fn fallback(uri: Uri) -> Result<Response, PageError> {
     return Ok(Redirect::permanent(&format!("/package/{fingerprint}")).into_response());
   }
 
-  Err(server_error::PageNotFound.build().into())
+  Err(ServerError::PageNotFound.into())
 }
 
 pub(crate) async fn favicon() -> ServerResult<StaticAsset> {

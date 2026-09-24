@@ -75,6 +75,7 @@ use {
     exif_decoder::ExifDecoder,
     exif_error::ExifError,
     file::File,
+    filesystem_error::FilesystemError,
     flac_decoder::FlacDecoder,
     float_ext::FloatExt,
     format::Format,
@@ -356,6 +357,7 @@ mod exif_decoder;
 mod exif_error;
 mod file;
 mod filesystem;
+mod filesystem_error;
 mod fingerprint;
 mod flac_builder;
 mod flac_decoder;

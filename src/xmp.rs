@@ -41,7 +41,7 @@ fn expect(
   if node.has_tag_name((namespace, local)) {
     Ok(())
   } else if node.tag_name().name() == local {
-    Err(xmp_error::MissingElement { name }.build())
+    Err(XmpError::MissingElement { name })
   } else {
     Err(unexpected(node))
   }
@@ -128,7 +128,7 @@ fn unexpected(node: Node) -> XmpError {
     _ => tag.name().into(),
   };
 
-  xmp_error::UnexpectedElement { name }.build()
+  XmpError::UnexpectedElement { name }
 }
 
 #[cfg(test)]
