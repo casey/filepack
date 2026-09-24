@@ -50,7 +50,7 @@ use {
     context::Context,
     count::Count,
     database_metadata::DatabaseMetadata,
-    deco::Deco,
+    deco_request::DecoRequest,
     deco_response::DecoResponse,
     decode_error::DecodeError,
     decode_options::DecodeOptions,
@@ -325,7 +325,7 @@ mod content_type;
 mod context;
 mod count;
 mod database_metadata;
-mod deco;
+mod deco_request;
 mod deco_response;
 mod decode;
 mod decode_error;

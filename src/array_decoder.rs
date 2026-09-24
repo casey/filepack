@@ -14,7 +14,7 @@ impl<'a> ArrayDecoder<'a> {
     T::decode(self.decoder()?)
   }
 
-  pub(crate) fn finish(&mut self) -> DecodeResult {
+  pub(crate) fn finish(self) -> DecodeResult {
     ensure!(self.decoder.is_empty(), decode_error::UnconsumedElements);
     Ok(())
   }

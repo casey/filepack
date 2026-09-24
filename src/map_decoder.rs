@@ -19,7 +19,7 @@ impl<'a, K> MapDecoder<'a, K> {
 }
 
 impl<'a, K: Clone + Decode<'a> + Debug + PartialOrd> MapDecoder<'a, K> {
-  pub(crate) fn finish(&mut self) -> DecodeResult {
+  pub(crate) fn finish(self) -> DecodeResult {
     ensure!(self.decoder.is_empty(), decode_error::UnconsumedEntries);
     Ok(())
   }
@@ -67,6 +67,7 @@ impl<'a, K: Clone + Decode<'a> + Debug + PartialOrd> MapDecoder<'a, K> {
     Ok(Some((key, value)))
   }
 
+  #[cfg(test)]
   pub(crate) fn optional_key<V: Decode<'a>>(&mut self, key: K) -> DecodeResult<Option<V>>
   where
     K: Eq,
@@ -133,12 +134,33 @@ impl<'a, K: Clone + Decode<'a> + Debug + PartialOrd> MapDecoder<'a, K> {
   }
 }
 
+impl MapDecoder<'_, u64> {
+  pub(crate) fn decode_unknown(mut self) -> DecodeResult {
+    while let Some((key, _value)) = self.next::<&[u8]>()? {
+      ensure!(!self.decoder.strict(), decode_error::UnknownField { key });
+    }
+    Ok(())
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
 
   fn decode_offset(decoder: &mut Decoder) -> DecodeResult<u64> {
     Ok(decoder.integer()? + 1)
+  }
+
+  #[test]
+  fn decode_unknown() {
+    let mut decoder = Decoder::new(&[0x82, 0x01, 0x2a]);
+    decoder.map::<u64>().unwrap().decode_unknown().unwrap();
+
+    let mut decoder = Decoder::new(&[0x82, 0x01, 0x2a]);
+    assert_matches!(
+      decoder.strict_map::<u64>().unwrap().decode_unknown(),
+      Err(DecodeError::UnknownField { key: 1 }),
+    );
   }
 
   #[test]

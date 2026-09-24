@@ -2,7 +2,6 @@ use super::*;
 
 #[allow(clippy::arbitrary_source_item_ordering)]
 #[derive(Debug, Decode, Encode, Eq, Ord, PartialEq, PartialOrd)]
-#[deco(strict)]
 pub struct Statement {
   #[n(0)]
   pub version: Version,
