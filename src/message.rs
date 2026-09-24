@@ -27,7 +27,6 @@ mod tests {
   fn context_separates_domains() {
     #[allow(clippy::arbitrary_source_item_ordering)]
     #[derive(Debug, Decode, Encode, Eq, Ord, PartialEq, PartialOrd)]
-    #[deco(strict)]
     struct Impostor {
       #[n(0)]
       version: Version,
@@ -50,7 +49,6 @@ mod tests {
 
     #[allow(clippy::arbitrary_source_item_ordering)]
     #[derive(Debug, Decode, Encode, Eq, Ord, PartialEq, PartialOrd)]
-    #[deco(strict)]
     struct Twin {
       #[n(0)]
       version: Version,

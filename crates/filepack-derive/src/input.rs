@@ -33,23 +33,20 @@ impl Input {
 
     let variants = self.parse_variants()?;
 
-    let decode_unknown_fields = Self::decode_unknown_fields(attributes);
-
     let arms = variants.iter().map(|ParsedVariant { fields, ident, n }| {
       if fields.is_empty() {
         quote! {
           #n => {
             if !array.is_empty() {
-              let mut map = array.decoder()?.map::<u64>()?;
+              let map = array.decoder()?.map::<u64>()?;
               ensure!(!map.is_empty(), decode_error::EmptyVariantMap);
-              #decode_unknown_fields
-              map.finish()?;
+              map.decode_unknown()?;
             }
             Self::#ident
           }
         }
       } else {
-        let decode = ParsedField::decode(fields, attributes);
+        let decode = ParsedField::decode(fields);
         let fields = fields.iter().map(|field| field.ident);
         quote! {
           #n => {
@@ -61,8 +58,7 @@ impl Input {
               map
             };
             #(#decode)*
-            #decode_unknown_fields
-            map.finish()?;
+            map.decode_unknown()?;
             Self::#ident { #(#fields,)* }
           }
         }
@@ -77,10 +73,16 @@ impl Input {
       .validate()
       .then(|| quote! { Validate::validate(&value)?; });
 
+    let array = if attributes.strict() {
+      quote!(strict_array)
+    } else {
+      quote!(array)
+    };
+
     Ok(quote! {
       #header {
         fn decode(decoder: &mut Decoder<'de>) -> DecodeResult<Self> {
-          let mut array = decoder.array()?;
+          let mut array = decoder.#array()?;
           let discriminant = array.element::<u64>()?;
           let value = match discriminant {
             #(#arms)*
@@ -142,7 +144,7 @@ impl Input {
   pub(crate) fn decode_struct(&self, attributes: &Attributes) -> Result<proc_macro2::TokenStream> {
     let fields = self.parse_fields()?;
 
-    let decode = ParsedField::decode(&fields, attributes);
+    let decode = ParsedField::decode(&fields);
 
     let fields = fields.iter().map(|field| field.ident);
 
@@ -154,12 +156,16 @@ impl Input {
 
     let header = self.decode_header(attributes);
 
-    let decode_unknown_fields = Self::decode_unknown_fields(attributes);
-
     let magic = attributes
       .magic()
       .is_some()
       .then(|| quote! { decoder.magic_bytes(&<Self as Magic>::BYTES)?; });
+
+    let map = if attributes.strict() {
+      quote!(strict_map)
+    } else {
+      quote!(map)
+    };
 
     let validate = attributes
       .validate()
@@ -169,10 +175,9 @@ impl Input {
       #header {
         fn decode(decoder: &mut Decoder<'de>) -> DecodeResult<Self> {
           #magic
-          let mut map = decoder.map::<u64>()?;
+          let mut map = decoder.#map::<u64>()?;
           #(#decode)*
-          #decode_unknown_fields
-          map.finish()?;
+          map.decode_unknown()?;
           let value = #constructor;
           #validate
           Ok(value)
@@ -213,17 +218,6 @@ impl Input {
         }
       }
     })
-  }
-
-  fn decode_unknown_fields(attributes: &Attributes) -> proc_macro2::TokenStream {
-    let strict = attributes.strict();
-    quote! {
-      while let Some((key, _value)) = map.next::<&[u8]>()? {
-        if #strict || decoder.strict() {
-          return Err(DecodeError::UnknownField { key });
-        }
-      }
-    }
   }
 
   pub(crate) fn encode(&self) -> Result<proc_macro2::TokenStream> {

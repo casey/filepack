@@ -106,6 +106,21 @@ impl<'a> Decoder<'a> {
     self.options.strict
   }
 
+  #[cfg(test)]
+  pub(crate) fn strict_array(&mut self) -> DecodeResult<ArrayDecoder<'a>> {
+    Ok(ArrayDecoder::new(self.strict_child()?))
+  }
+
+  fn strict_child(&mut self) -> DecodeResult<Self> {
+    let mut child = self.child()?;
+    child.options.strict = true;
+    Ok(child)
+  }
+
+  pub(crate) fn strict_map<K>(&mut self) -> DecodeResult<MapDecoder<'a, K>> {
+    Ok(MapDecoder::new(self.strict_child()?))
+  }
+
   pub(crate) fn text(&mut self) -> DecodeResult<&'a str> {
     str::from_utf8(self.bytes()?).context(decode_error::Unicode)
   }

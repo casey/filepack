@@ -841,14 +841,7 @@ fn unknown_variants_scope() {
     0u64,
     [vec![0], fields.encode_to_vec()].concat(),
   )]));
-
-  let bytes = BTreeMap::from([(0u64, &fields)]).encode_to_vec();
-  assert_matches!(
-    Qux::<Bar<Foo>>::decode_from_slice(&bytes),
-    Ok(Qux {
-      foo: Some(Bar { foo: None })
-    }),
-  );
+  rejects::<Qux<Bar<Foo>>>(BTreeMap::from([(0u64, &fields)]));
 }
 
 #[test]

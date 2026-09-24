@@ -25,7 +25,7 @@ pub(crate) async fn api_gc(
 
 pub(crate) async fn api_missing(
   server: ServerExtension,
-  Deco(request): Deco<api::missing::Request, { MIB }>,
+  DecoRequest(request): DecoRequest<api::missing::Request, { MIB }>,
 ) -> ServerResult<DecoResponse<api::missing::Response>> {
   block_in_place(|| {
     Ok(DecoResponse(api::missing::Response {
@@ -78,7 +78,7 @@ pub(crate) async fn api_verify_package(
   _: Authenticated,
   server: ServerExtension,
   Path(fingerprint): Path<Fingerprint>,
-  Deco(request): Deco<api::package::Request, { MIB }>,
+  DecoRequest(request): DecoRequest<api::package::Request, { MIB }>,
 ) -> ServerResult<DecoResponse<api::package::Response>> {
   block_in_place(|| {
     Ok(DecoResponse(api::package::Response {

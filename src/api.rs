@@ -18,7 +18,6 @@ pub(crate) mod missing {
   use super::*;
 
   #[derive(Debug, Encode, Decode, PartialEq)]
-  #[deco(strict)]
   pub(crate) struct Request {
     #[n(0)]
     pub(crate) hashes: SortedSet<Hash>,
@@ -35,7 +34,6 @@ pub(crate) mod package {
   use super::*;
 
   #[derive(Debug, Default, Encode, Decode, PartialEq)]
-  #[deco(strict)]
   pub(crate) struct Request {
     #[n(0)]
     pub(crate) replace: Option<u64>,

@@ -11,7 +11,6 @@ pub(crate) struct Policy<'a> {
 
 #[allow(clippy::arbitrary_source_item_ordering)]
 #[derive(Decode, Encode, Eq, Ord, PartialEq, PartialOrd)]
-#[deco(strict)]
 pub(crate) struct Claims {
   #[n(0)]
   pub(crate) version: Version,
