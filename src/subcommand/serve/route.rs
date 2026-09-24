@@ -356,11 +356,9 @@ pub(crate) async fn package(
   Path(identifier): Path<PackageIdentifier>,
 ) -> PageResult<PackageHtml> {
   block_in_place(|| {
-    let fingerprint = server.resolve(identifier)?;
-
     Ok(
       server
-        .package_html(fingerprint, server_config.mounts.contains(&fingerprint))?
+        .package_html(identifier, &server_config.mounts)?
         .page(server_config.url.clone()),
     )
   })
@@ -372,7 +370,7 @@ pub(crate) async fn package_item(
   Path((identifier, Ordinal(index))): Path<(PackageIdentifier, Ordinal)>,
 ) -> PageResult<ItemHtml> {
   block_in_place(|| {
-    let fingerprint = server.resolve(identifier)?;
+    let (_, fingerprint) = server.resolve(identifier)?;
 
     let metadata = server.package_metadata(fingerprint)?;
 
@@ -403,6 +401,7 @@ pub(crate) async fn package_item(
     Ok(
       ItemHtml {
         fingerprint,
+        identifier,
         index,
         metadata,
       }
@@ -417,7 +416,7 @@ pub(crate) async fn package_media(
   Path(identifier): Path<PackageIdentifier>,
 ) -> PageResult<MediaHtml> {
   block_in_place(|| {
-    let fingerprint = server.resolve(identifier)?;
+    let (_, fingerprint) = server.resolve(identifier)?;
 
     let metadata = server.package_metadata(fingerprint)?;
 
@@ -429,6 +428,7 @@ pub(crate) async fn package_media(
     Ok(
       MediaHtml {
         fingerprint,
+        identifier,
         metadata,
       }
       .page(server_config.url.clone()),

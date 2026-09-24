@@ -1,9 +1,18 @@
 use super::*;
 
 #[derive(Clone, Copy, Debug, DeserializeFromStr, Eq, PartialEq)]
-pub(crate) enum PackageIdentifier {
+pub enum PackageIdentifier {
   Fingerprint(Fingerprint),
   Number(u64),
+}
+
+impl Display for PackageIdentifier {
+  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    match self {
+      Self::Fingerprint(fingerprint) => write!(f, "{fingerprint}"),
+      Self::Number(number) => write!(f, "{number}"),
+    }
+  }
 }
 
 impl FromStr for PackageIdentifier {
@@ -21,6 +30,15 @@ impl FromStr for PackageIdentifier {
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn display() {
+    assert_eq!(PackageIdentifier::Number(1).to_string(), "1");
+    assert_eq!(
+      PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()).to_string(),
+      test::FINGERPRINT,
+    );
+  }
 
   #[test]
   fn from_str() {

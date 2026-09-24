@@ -3,7 +3,7 @@ use super::*;
 #[derive(Boilerplate)]
 pub(crate) struct PackagesHtml {
   pub(crate) order: Order,
-  pub(crate) packages: Vec<(Fingerprint, Option<Metadata>, Totals)>,
+  pub(crate) packages: Vec<PackageSummary>,
   pub(crate) sort: Sort,
 }
 
@@ -13,6 +13,7 @@ struct Package<'a> {
   files: u64,
   fingerprint: Fingerprint,
   media: Option<MediaType>,
+  number: u64,
   title: Option<&'a str>,
   year: Option<i64>,
 }
@@ -36,28 +37,30 @@ impl PackagesHtml {
   }
 
   fn packages(&self) -> impl Iterator<Item = Package<'_>> {
-    self
-      .packages
-      .iter()
-      .map(|(fingerprint, metadata, totals)| Package {
-        creator: metadata
-          .as_ref()
-          .and_then(|metadata| metadata.creator.as_deref()),
-        file_size: totals.file_size,
-        files: totals.files,
-        fingerprint: *fingerprint,
-        media: metadata
-          .as_ref()
-          .and_then(|metadata| metadata.media.as_ref())
-          .map(Media::ty),
-        title: metadata
-          .as_ref()
-          .and_then(|metadata| metadata.title.as_deref()),
-        year: metadata
-          .as_ref()
-          .and_then(|metadata| metadata.time.as_ref())
-          .map(Time::year),
-      })
+    self.packages.iter().map(|summary| Package {
+      creator: summary
+        .metadata
+        .as_ref()
+        .and_then(|metadata| metadata.creator.as_deref()),
+      file_size: summary.totals.file_size,
+      files: summary.totals.files,
+      fingerprint: summary.fingerprint,
+      media: summary
+        .metadata
+        .as_ref()
+        .and_then(|metadata| metadata.media.as_ref())
+        .map(Media::ty),
+      number: summary.number,
+      title: summary
+        .metadata
+        .as_ref()
+        .and_then(|metadata| metadata.title.as_deref()),
+      year: summary
+        .metadata
+        .as_ref()
+        .and_then(|metadata| metadata.time.as_ref())
+        .map(Time::year),
+    })
   }
 
   fn path(sort: Sort, order: Order) -> String {
@@ -116,8 +119,18 @@ mod tests {
       PackagesHtml {
         order: Order::default(),
         packages: vec![
-          (fingerprint, Some(metadata), totals),
-          (fingerprint, None, Totals::default()),
+          PackageSummary {
+            fingerprint,
+            metadata: Some(metadata),
+            number: 1,
+            totals,
+          },
+          PackageSummary {
+            fingerprint,
+            metadata: None,
+            number: 2,
+            totals: Totals::default(),
+          },
         ],
         sort: Sort::default(),
       }
@@ -140,7 +153,7 @@ mod tests {
             </thead>
             <tbody>
               <tr>
-                <td><a href=/package/{fingerprint}>bar</a></td>
+                <td><a href=/package/1>bar</a></td>
                 <td>foo</td>
                 <td>2024</td>
                 <td>audio</td>
@@ -148,7 +161,7 @@ mod tests {
                 <td class=right>1.5 KiB</td>
               </tr>
               <tr>
-                <td><a href=/package/{fingerprint}><code>{fingerprint}</code></a></td>
+                <td><a href=/package/2><code>{fingerprint}</code></a></td>
                 <td></td>
                 <td></td>
                 <td></td>

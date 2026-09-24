@@ -340,9 +340,11 @@ impl Server {
 
   pub(crate) fn package_html(
     &self,
-    fingerprint: Fingerprint,
-    mounted: bool,
+    package: PackageIdentifier,
+    mounts: &HashSet<Fingerprint>,
   ) -> ServerResult<PackageHtml> {
+    let (number, fingerprint) = self.resolve(package)?;
+
     let tx = self.database.begin_read()?;
 
     let packages = tx.open_table(PACKAGES)?;
@@ -376,8 +378,10 @@ impl Server {
       colophon,
       directory,
       fingerprint,
+      identifier: package,
       metadata,
-      mounted,
+      mounted: mounts.contains(&fingerprint),
+      number,
       readme,
       totals,
     })
@@ -413,11 +417,7 @@ impl Server {
     self.metadata(fingerprint)
   }
 
-  pub(crate) fn packages(
-    &self,
-    sort: Sort,
-    order: Order,
-  ) -> ServerResult<Vec<(Fingerprint, Option<Metadata>, Totals)>> {
+  pub(crate) fn packages(&self, sort: Sort, order: Order) -> ServerResult<Vec<PackageSummary>> {
     let tx = self.database.begin_read()?;
 
     let directories = tx.open_table(DIRECTORIES)?;
@@ -426,16 +426,23 @@ impl Server {
       .open_table(PACKAGES)?
       .iter()?
       .map(|entry| {
-        let fingerprint = entry?.0.value();
+        let (fingerprint, number) = entry?;
+        let fingerprint = fingerprint.value();
+        let number = number.value();
 
         let totals = self
           .directory_ext(&directories, fingerprint.into())?
           .totals()
           .unwrap();
 
-        Ok((fingerprint, self.metadata(fingerprint)?, totals))
+        Ok(PackageSummary {
+          fingerprint,
+          metadata: self.metadata(fingerprint)?,
+          number,
+          totals,
+        })
       })
-      .collect::<ServerResult<Vec<(Fingerprint, Option<Metadata>, Totals)>>>()?;
+      .collect::<ServerResult<Vec<PackageSummary>>>()?;
 
     packages.sort_by(|a, b| SortKey::compare(a, b, sort, order));
 
@@ -461,18 +468,24 @@ impl Server {
     })
   }
 
-  pub(crate) fn resolve(&self, identifier: PackageIdentifier) -> ServerResult<Fingerprint> {
+  pub(crate) fn resolve(&self, identifier: PackageIdentifier) -> ServerResult<(u64, Fingerprint)> {
+    let tx = self.database.begin_read()?;
+
     match identifier {
-      PackageIdentifier::Fingerprint(fingerprint) => Ok(fingerprint),
-      PackageIdentifier::Number(number) => Ok(
-        self
-          .database
-          .begin_read()?
-          .open_table(NUMBERS)?
+      PackageIdentifier::Fingerprint(fingerprint) => Ok((
+        tx.open_table(PACKAGES)?
+          .get(&fingerprint)?
+          .context(server_error::PackageFingerprintNotFound { fingerprint })?
+          .value(),
+        fingerprint,
+      )),
+      PackageIdentifier::Number(number) => Ok((
+        number,
+        tx.open_table(NUMBERS)?
           .get(&number)?
           .context(server_error::PackageNumberNotFound { number })?
           .value(),
-      ),
+      )),
     }
   }
 

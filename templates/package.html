@@ -17,7 +17,7 @@
 <ol>
 %%       for (i, audio) in items.iter().enumerate() {
   <li>
-    <a href=/package/{{ self.fingerprint }}/item/{{ Ordinal(i) }}>{{ audio.display_title(i) }}</a>
+    <a href=/package/{{ self.identifier }}/item/{{ Ordinal(i) }}>{{ audio.display_title(i) }}</a>
     <time datetime={{ Iso8601Duration(audio.content.duration()) }}>{{ DisplayDuration(audio.content.duration()) }}</time>
   </li>
 %%       }
@@ -27,7 +27,7 @@
 <ul class=thumbnails>
 %%       for (i, image) in items.iter().enumerate() {
   <li style="--aspect-ratio: {{ image.content.oriented_dimensions().css_aspect_ratio() }}">
-    <a href=/package/{{ self.fingerprint }}/item/{{ Ordinal(i) }}>
+    <a href=/package/{{ self.identifier }}/item/{{ Ordinal(i) }}>
       <figure>
         <img loading=lazy src=/media/image/{{ self.fingerprint }}/item/{{ Ordinal(i) }}/thumbnail>
 %%         if let Some(title) = &image.title {
@@ -47,7 +47,7 @@
 %%         } else {
   <li>
 %%         }
-    <a href=/package/{{ self.fingerprint }}/item/{{ Ordinal(i) }}>
+    <a href=/package/{{ self.identifier }}/item/{{ Ordinal(i) }}>
 %%         if image.is_some() {
       <img loading=lazy src=/media/video/{{ self.fingerprint }}/item/{{ Ordinal(i) }}/placeholder/thumbnail>
 %%         }

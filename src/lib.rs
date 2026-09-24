@@ -125,8 +125,8 @@ use {
     orientation::Orientation,
     owo_colorize_ext::OwoColorizeExt,
     package::Package,
-    package_identifier::PackageIdentifier,
     package_identifier_error::PackageIdentifierError,
+    package_summary::PackageSummary,
     page_error::PageError,
     path_error::PathError,
     percent_encode::PercentEncode,
@@ -273,6 +273,7 @@ pub use self::{
   metadata::Metadata,
   mp3_builder::Mp3Builder,
   mp4_builder::Mp4Builder,
+  package_identifier::PackageIdentifier,
   page::Page,
   png_builder::PngBuilder,
   private_key::PrivateKey,
@@ -416,6 +417,7 @@ mod owo_colorize_ext;
 mod package;
 mod package_identifier;
 mod package_identifier_error;
+mod package_summary;
 mod page;
 mod page_error;
 mod path_error;

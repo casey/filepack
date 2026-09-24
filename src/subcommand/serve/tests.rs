@@ -1062,8 +1062,10 @@ fn get_package_by_number() {
       colophon: None,
       directory: Directory::new(),
       fingerprint,
+      identifier: PackageIdentifier::Number(1),
       metadata: None,
       mounted: false,
+      number: 1,
       readme: None,
       totals: Totals::default(),
     })
@@ -1153,8 +1155,10 @@ fn get_package_with_metadata() {
       colophon: Some(Hash::bytes(colophon)),
       directory,
       fingerprint,
+      identifier: PackageIdentifier::Fingerprint(fingerprint),
       metadata: Some(metadata),
       mounted: false,
+      number: 1,
       readme: Some(Hash::bytes(readme)),
       totals: Totals {
         directories: 0,
@@ -1188,8 +1192,10 @@ fn get_package_without_metadata() {
       colophon: None,
       directory,
       fingerprint,
+      identifier: PackageIdentifier::Fingerprint(fingerprint),
       metadata: None,
       mounted: false,
+      number: 1,
       readme: None,
       totals: Totals::default(),
     })
@@ -1221,7 +1227,12 @@ fn home() {
   server
     .get("/")
     .assert_page(HomeHtml {
-      packages: vec![(fingerprint, Some(metadata), totals)],
+      packages: vec![PackageSummary {
+        fingerprint,
+        metadata: Some(metadata),
+        number: 1,
+        totals,
+      }],
     })
     .send();
 }
@@ -2105,6 +2116,7 @@ fn package_item_audio() {
     .get(format!("/package/{fingerprint}/item/1"))
     .assert_page(ItemHtml {
       fingerprint,
+      identifier: PackageIdentifier::Fingerprint(fingerprint),
       index: 0,
       metadata,
     })
@@ -2159,6 +2171,7 @@ fn package_item_by_number() {
     .get("/package/1/item/1")
     .assert_page(ItemHtml {
       fingerprint,
+      identifier: PackageIdentifier::Number(1),
       index: 0,
       metadata,
     })
@@ -2200,6 +2213,7 @@ fn package_item_image() {
     .get(format!("/package/{fingerprint}/item/1"))
     .assert_page(ItemHtml {
       fingerprint,
+      identifier: PackageIdentifier::Fingerprint(fingerprint),
       index: 0,
       metadata,
     })
@@ -2316,6 +2330,7 @@ fn package_item_video() {
     .get(format!("/package/{fingerprint}/item/1"))
     .assert_page(ItemHtml {
       fingerprint,
+      identifier: PackageIdentifier::Fingerprint(fingerprint),
       index: 0,
       metadata,
     })
@@ -2435,6 +2450,7 @@ fn package_media() {
     .get(format!("/package/{fingerprint}/media"))
     .assert_page(MediaHtml {
       fingerprint,
+      identifier: PackageIdentifier::Fingerprint(fingerprint),
       metadata,
     })
     .send();
@@ -2460,6 +2476,7 @@ fn package_media_by_number() {
     .get("/package/1/media")
     .assert_page(MediaHtml {
       fingerprint,
+      identifier: PackageIdentifier::Number(1),
       metadata,
     })
     .send();
@@ -2523,8 +2540,10 @@ fn package_page_og_image() {
         colophon: None,
         directory,
         fingerprint,
+        identifier: PackageIdentifier::Fingerprint(fingerprint),
         metadata: Some(metadata),
         mounted: false,
+        number: 1,
         readme: None,
         totals: Totals {
           directories: 0,
@@ -2593,8 +2612,10 @@ fn package_page_renders_audio_media() {
       colophon: None,
       directory: Directory::new(),
       fingerprint,
+      identifier: PackageIdentifier::Fingerprint(fingerprint),
       metadata: Some(metadata),
       mounted: false,
+      number: 1,
       readme: None,
       totals,
     })
@@ -2645,8 +2666,10 @@ fn package_page_renders_image_media() {
       colophon: None,
       directory: Directory::new(),
       fingerprint,
+      identifier: PackageIdentifier::Fingerprint(fingerprint),
       metadata: Some(metadata),
       mounted: false,
+      number: 1,
       readme: None,
       totals,
     })
@@ -2714,8 +2737,10 @@ fn package_page_renders_video_media() {
       colophon: None,
       directory: Directory::new(),
       fingerprint,
+      identifier: PackageIdentifier::Fingerprint(fingerprint),
       metadata: Some(metadata),
       mounted: false,
+      number: 1,
       readme: None,
       totals,
     })
@@ -2751,8 +2776,10 @@ fn package_page_web() {
       colophon: None,
       directory,
       fingerprint,
+      identifier: PackageIdentifier::Fingerprint(fingerprint),
       metadata: Some(metadata),
       mounted: true,
+      number: 1,
       readme: None,
       totals: Totals {
         directories: 1,
@@ -2799,7 +2826,12 @@ fn packages_include_creators_and_titles() {
     .get("/packages")
     .assert_page(PackagesHtml {
       order: Order::default(),
-      packages: vec![(fingerprint, Some(metadata), totals)],
+      packages: vec![PackageSummary {
+        fingerprint,
+        metadata: Some(metadata),
+        number: 1,
+        totals,
+      }],
       sort: Sort::default(),
     })
     .send();
@@ -2827,19 +2859,20 @@ fn packages_non_empty() {
         .encode_to_vec(),
       )
       .send();
-    packages.push((
+    packages.push(PackageSummary {
       fingerprint,
-      None,
-      Totals {
+      metadata: None,
+      number: i.into_u64() + 1,
+      totals: Totals {
         directories: 0,
         directory_size: 0,
         file_size: 3,
         files: 1,
       },
-    ));
+    });
   }
 
-  packages.sort_by_key(|&(fingerprint, ..)| fingerprint);
+  packages.sort_by_key(|package| package.fingerprint);
 
   server
     .get("/packages")
@@ -2859,7 +2892,7 @@ fn packages_sorted() {
     path: &str,
     sort: Sort,
     order: Order,
-    packages: Vec<(Fingerprint, Option<Metadata>, Totals)>,
+    packages: Vec<PackageSummary>,
   ) {
     server
       .get(path)
@@ -2901,7 +2934,12 @@ fn packages_sorted() {
       builder = builder.file("foo", file);
     }
 
-    packages.push((builder.upload(&server), Some(metadata), totals));
+    packages.push(PackageSummary {
+      fingerprint: builder.upload(&server),
+      metadata: Some(metadata),
+      number: packages.len().into_u64() + 1,
+      totals,
+    });
   }
 
   let (a, b, c) = (
@@ -2910,7 +2948,7 @@ fn packages_sorted() {
     packages[2].clone(),
   );
 
-  let (first, second) = if b.0 < c.0 {
+  let (first, second) = if b.fingerprint < c.fingerprint {
     (b.clone(), c.clone())
   } else {
     (c.clone(), b.clone())
@@ -3613,8 +3651,10 @@ fn verify_package_replace() {
       colophon: None,
       directory,
       fingerprint: bar,
+      identifier: PackageIdentifier::Number(1),
       metadata: None,
       mounted: false,
+      number: 1,
       readme: None,
       totals: Totals {
         directories: 0,

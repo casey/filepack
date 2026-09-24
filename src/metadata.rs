@@ -258,7 +258,7 @@ impl Metadata {
   pub(crate) fn info(
     &self,
     builder: InfoBuilder,
-    fingerprint: Fingerprint,
+    identifier: PackageIdentifier,
     readme: Option<Hash>,
     colophon: Option<Hash>,
   ) -> InfoBuilder {
@@ -287,7 +287,7 @@ impl Metadata {
         |builder, package| builder.info("package", package.info(colophon)),
       )
       .when_some(self.media.as_ref(), |builder, media| {
-        media.info(builder, fingerprint)
+        media.info(builder, identifier)
       })
   }
 
@@ -714,12 +714,7 @@ mod tests {
 
     assert_eq!(
       metadata
-        .info(
-          InfoBuilder::new(),
-          test::FINGERPRINT.parse().unwrap(),
-          None,
-          None
-        )
+        .info(InfoBuilder::new(), PackageIdentifier::Number(1), None, None)
         .build(),
       Info::Map(Vec::new()),
     );

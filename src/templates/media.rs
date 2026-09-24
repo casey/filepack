@@ -3,6 +3,7 @@ use super::*;
 #[derive(Boilerplate)]
 pub(crate) struct MediaHtml {
   pub(crate) fingerprint: Fingerprint,
+  pub(crate) identifier: PackageIdentifier,
   pub(crate) metadata: Metadata,
 }
 
@@ -12,7 +13,7 @@ impl MediaHtml {
       .code_link(
         "package",
         self.fingerprint,
-        format!("/package/{}", self.fingerprint),
+        format!("/package/{}", self.identifier),
       )
       .list(
         "items",
@@ -23,7 +24,7 @@ impl MediaHtml {
           .unwrap()
           .items()
           .enumerate()
-          .map(|(i, item)| item.info(format!("/package/{}/item/{}", self.fingerprint, Ordinal(i)))),
+          .map(|(i, item)| item.info(format!("/package/{}/item/{}", self.identifier, Ordinal(i)))),
       )
       .build()
   }
@@ -53,24 +54,29 @@ mod tests {
 
   #[test]
   fn media() {
-    assert_eq!(
-      MediaHtml {
-        fingerprint: test::FINGERPRINT.parse().unwrap(),
-        metadata: Metadata {
-          media: Some(Media::Image {
-            items: vec![Item::test("foo.png")],
-          }),
-          ..default()
-        },
-      }
-      .to_string(),
-      unindent(&format!(
-        "
+    for identifier in [
+      PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
+      PackageIdentifier::Number(1),
+    ] {
+      assert_eq!(
+        MediaHtml {
+          fingerprint: test::FINGERPRINT.parse().unwrap(),
+          identifier,
+          metadata: Metadata {
+            media: Some(Media::Image {
+              items: vec![Item::test("foo.png")],
+            }),
+            ..default()
+          },
+        }
+        .to_string(),
+        unindent(&format!(
+          "
           <dl>
             <div>
               <dt>package</dt>
               <dd>
-                <a href='/package/{fingerprint}'><code>{fingerprint}</code></a>
+                <a href='/package/{identifier}'><code>{fingerprint}</code></a>
               </dd>
             </div>
             <div>
@@ -82,7 +88,7 @@ mod tests {
                       <div>
                         <dt>file</dt>
                         <dd>
-                          <a href='/package/{fingerprint}/item/1'>foo.png</a>
+                          <a href='/package/{identifier}/item/1'>foo.png</a>
                         </dd>
                       </div>
                       <div>
@@ -134,8 +140,9 @@ mod tests {
             </div>
           </dl>
         ",
-        fingerprint = test::FINGERPRINT,
-      )),
-    );
+          fingerprint = test::FINGERPRINT,
+        )),
+      );
+    }
   }
 }

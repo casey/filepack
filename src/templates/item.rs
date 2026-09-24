@@ -3,6 +3,7 @@ use super::*;
 #[derive(Boilerplate)]
 pub(crate) struct ItemHtml {
   pub(crate) fingerprint: Fingerprint,
+  pub(crate) identifier: PackageIdentifier,
   pub(crate) index: usize,
   pub(crate) metadata: Metadata,
 }
@@ -27,7 +28,7 @@ impl ItemHtml {
 
 impl Page for ItemHtml {
   fn next(&self) -> Option<String> {
-    self.media().next_item_url(self.fingerprint, self.index)
+    self.media().next_item_url(self.identifier, self.index)
   }
 
   fn open_graph_image(&self) -> Option<OpenGraphImage> {
@@ -62,7 +63,7 @@ impl Page for ItemHtml {
   }
 
   fn prev(&self) -> Option<String> {
-    self.media().prev_item_url(self.fingerprint, self.index)
+    self.media().prev_item_url(self.identifier, self.index)
   }
 
   fn script(&self) -> Option<&'static str> {
@@ -78,7 +79,7 @@ impl Page for ItemHtml {
   }
 
   fn up(&self) -> Option<String> {
-    Some(format!("/package/{}", self.fingerprint))
+    Some(format!("/package/{}", self.identifier))
   }
 }
 
@@ -88,31 +89,31 @@ mod tests {
 
   #[test]
   fn navigation() {
-    let mut html = ItemHtml {
-      fingerprint: test::FINGERPRINT.parse().unwrap(),
-      index: 0,
-      metadata: Metadata {
-        media: Some(Media::Image {
-          items: vec![Item::test("foo.png"), Item::test("bar.png")],
-        }),
-        ..default()
-      },
-    };
+    for identifier in [
+      PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
+      PackageIdentifier::Number(1),
+    ] {
+      let mut html = ItemHtml {
+        fingerprint: test::FINGERPRINT.parse().unwrap(),
+        identifier,
+        index: 0,
+        metadata: Metadata {
+          media: Some(Media::Image {
+            items: vec![Item::test("foo.png"), Item::test("bar.png")],
+          }),
+          ..default()
+        },
+      };
 
-    assert_eq!(html.prev(), None);
-    assert_eq!(
-      html.next(),
-      Some(format!("/package/{}/item/2", test::FINGERPRINT)),
-    );
-    assert_eq!(html.up(), Some(format!("/package/{}", test::FINGERPRINT)));
+      assert_eq!(html.prev(), None);
+      assert_eq!(html.next(), Some(format!("/package/{identifier}/item/2")));
+      assert_eq!(html.up(), Some(format!("/package/{identifier}")));
 
-    html.index = 1;
+      html.index = 1;
 
-    assert_eq!(
-      html.prev(),
-      Some(format!("/package/{}/item/1", test::FINGERPRINT)),
-    );
-    assert_eq!(html.next(), None);
+      assert_eq!(html.prev(), Some(format!("/package/{identifier}/item/1")));
+      assert_eq!(html.next(), None);
+    }
   }
 
   #[test]
@@ -122,6 +123,7 @@ mod tests {
       assert_eq!(
         ItemHtml {
           fingerprint: test::FINGERPRINT.parse().unwrap(),
+          identifier: PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
           index: 0,
           metadata,
         }
@@ -320,6 +322,7 @@ mod tests {
       assert_eq!(
         ItemHtml {
           fingerprint: test::FINGERPRINT.parse().unwrap(),
+          identifier: PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
           index: 0,
           metadata,
         }
@@ -510,6 +513,7 @@ mod tests {
       assert_eq!(
         Page::title(&ItemHtml {
           fingerprint: test::FINGERPRINT.parse().unwrap(),
+          identifier: PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
           index: 0,
           metadata: Metadata {
             media: Some(media),

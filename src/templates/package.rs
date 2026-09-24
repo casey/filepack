@@ -5,8 +5,10 @@ pub struct PackageHtml {
   pub colophon: Option<Hash>,
   pub directory: Directory,
   pub fingerprint: Fingerprint,
+  pub identifier: PackageIdentifier,
   pub metadata: Option<Metadata>,
   pub mounted: bool,
+  pub number: u64,
   pub readme: Option<Hash>,
   pub totals: Totals,
 }
@@ -14,6 +16,7 @@ pub struct PackageHtml {
 impl PackageHtml {
   fn info(&self) -> Info {
     InfoBuilder::new()
+      .value("number", self.number)
       .code("fingerprint", self.fingerprint)
       .value("size", format_size(self.totals.file_size))
       .link(
@@ -25,7 +28,7 @@ impl PackageHtml {
         builder.link("mount", "view", format!("/mount/{}/", self.fingerprint))
       })
       .when_some(self.metadata.as_ref(), |builder, metadata| {
-        metadata.info(builder, self.fingerprint, self.readme, self.colophon)
+        metadata.info(builder, self.identifier, self.readme, self.colophon)
       })
       .build()
   }
@@ -126,8 +129,10 @@ mod tests {
         colophon: None,
         directory: Directory::new(),
         fingerprint: test::FINGERPRINT.parse().unwrap(),
+        identifier: PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
         metadata: Some(metadata),
         mounted: false,
+        number: 1,
         readme: None,
         totals: Totals {
           directories: 0,
@@ -140,6 +145,12 @@ mod tests {
       unindent(&format!(
         "
           <dl>
+            <div>
+              <dt>number</dt>
+              <dd>
+                1
+              </dd>
+            </div>
             <div>
               <dt>fingerprint</dt>
               <dd>
@@ -231,8 +242,10 @@ mod tests {
         colophon: None,
         directory: Directory::new(),
         fingerprint: test::FINGERPRINT.parse().unwrap(),
+        identifier: PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
         metadata: Some(metadata),
         mounted: false,
+        number: 1,
         readme: None,
         totals: Totals {
           directories: 0,
@@ -245,6 +258,12 @@ mod tests {
       unindent(&format!(
         "
           <dl>
+            <div>
+              <dt>number</dt>
+              <dd>
+                1
+              </dd>
+            </div>
             <div>
               <dt>fingerprint</dt>
               <dd>
@@ -370,8 +389,10 @@ mod tests {
         colophon: None,
         directory: Directory::new(),
         fingerprint: test::FINGERPRINT.parse().unwrap(),
+        identifier: PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
         metadata: Some(metadata),
         mounted: false,
+        number: 1,
         readme: None,
         totals: Totals {
           directories: 0,
@@ -384,6 +405,12 @@ mod tests {
       unindent(&format!(
         r#"
           <dl>
+            <div>
+              <dt>number</dt>
+              <dd>
+                1
+              </dd>
+            </div>
             <div>
               <dt>fingerprint</dt>
               <dd>
@@ -466,11 +493,119 @@ mod tests {
   }
 
   #[test]
+  fn links_by_number() {
+    let metadata = Metadata {
+      media: Some(Media::Audio {
+        items: vec![Item {
+          content: Audio {
+            channels: 2,
+            path: "foo.flac".parse().unwrap(),
+            sample_bits: Some(16),
+            sample_rate: 44100,
+            samples: 9_922_500,
+            size: 0,
+            ty: Some(AudioType::Flac),
+          },
+          title: Some("foo".parse().unwrap()),
+        }],
+      }),
+      ..default()
+    };
+
+    assert_eq!(
+      PackageHtml {
+        colophon: None,
+        directory: Directory::new(),
+        fingerprint: test::FINGERPRINT.parse().unwrap(),
+        identifier: PackageIdentifier::Number(1),
+        metadata: Some(metadata),
+        mounted: false,
+        number: 1,
+        readme: None,
+        totals: Totals {
+          directories: 0,
+          directory_size: 0,
+          file_size: 3,
+          files: 1,
+        },
+      }
+      .to_string(),
+      unindent(&format!(
+        "
+          <dl>
+            <div>
+              <dt>number</dt>
+              <dd>
+                1
+              </dd>
+            </div>
+            <div>
+              <dt>fingerprint</dt>
+              <dd>
+                <code>{fingerprint}</code>
+              </dd>
+            </div>
+            <div>
+              <dt>size</dt>
+              <dd>
+                3 B
+              </dd>
+            </div>
+            <div>
+              <dt>files</dt>
+              <dd>
+                <a href='/directory/{hash}'>1 file</a>
+              </dd>
+            </div>
+            <div>
+              <dt>media</dt>
+              <dd>
+                <a href='/package/1/media'>audio</a>
+              </dd>
+            </div>
+            <div>
+              <dt>tracks</dt>
+              <dd>
+                1
+              </dd>
+            </div>
+            <div>
+              <dt>duration</dt>
+              <dd>
+                3:45
+              </dd>
+            </div>
+            <div>
+              <dt>format</dt>
+              <dd>
+                <ol role=list>
+                  <li>
+                    FLAC
+                  </li>
+                </ol>
+              </dd>
+            </div>
+          </dl>
+          <ol>
+            <li>
+              <a href=/package/1/item/1>foo</a>
+              <time datetime=PT3M45S>3:45</time>
+            </li>
+          </ol>
+        ",
+        fingerprint = test::FINGERPRINT,
+        hash = test::HASH,
+      )),
+    );
+  }
+
+  #[test]
   fn open_graph_metadata() {
     let html = PackageHtml {
       colophon: None,
       directory: Directory::new(),
       fingerprint: test::FINGERPRINT.parse().unwrap(),
+      identifier: PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
       metadata: Some(Metadata {
         artwork: Some(Image {
           alpha: false,
@@ -492,6 +627,7 @@ mod tests {
         ..default()
       }),
       mounted: false,
+      number: 1,
       readme: None,
       totals: Totals::default(),
     };
@@ -546,8 +682,10 @@ mod tests {
       colophon: None,
       directory: Directory::new(),
       fingerprint: test::FINGERPRINT.parse().unwrap(),
+      identifier: PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
       metadata: None,
       mounted: false,
+      number: 1,
       readme: None,
       totals: Totals::default(),
     };
@@ -580,8 +718,10 @@ mod tests {
         colophon: Some(test::HASH.parse().unwrap()),
         directory,
         fingerprint: test::FINGERPRINT.parse().unwrap(),
+        identifier: PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
         metadata: Some(metadata),
         mounted: false,
+        number: 1,
         readme: Some(test::HASH.parse().unwrap()),
         totals: Totals {
           directories: 0,
@@ -594,6 +734,12 @@ mod tests {
       unindent(&format!(
         "
           <dl>
+            <div>
+              <dt>number</dt>
+              <dd>
+                1
+              </dd>
+            </div>
             <div>
               <dt>fingerprint</dt>
               <dd>
@@ -778,8 +924,10 @@ mod tests {
         colophon: None,
         directory: Directory::new(),
         fingerprint: test::FINGERPRINT.parse().unwrap(),
+        identifier: PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
         metadata: Some(metadata),
         mounted: false,
+        number: 1,
         readme: None,
         totals: Totals {
           directories: 0,
@@ -792,6 +940,12 @@ mod tests {
       unindent(&format!(
         "
           <dl>
+            <div>
+              <dt>number</dt>
+              <dd>
+                1
+              </dd>
+            </div>
             <div>
               <dt>fingerprint</dt>
               <dd>
