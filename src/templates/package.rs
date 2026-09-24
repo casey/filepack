@@ -8,7 +8,9 @@ pub struct PackageHtml {
   pub identifier: PackageIdentifier,
   pub metadata: Option<Metadata>,
   pub mounted: bool,
+  pub next: Option<u64>,
   pub number: u64,
+  pub prev: Option<u64>,
   pub readme: Option<Hash>,
   pub totals: Totals,
 }
@@ -65,12 +67,20 @@ impl PackageHtml {
 }
 
 impl Page for PackageHtml {
+  fn next(&self) -> Option<String> {
+    self.next.map(|number| format!("/package/{number}"))
+  }
+
   fn open_graph_description(&self) -> Option<String> {
     Some(self.metadata.as_ref()?.description.as_ref()?.to_string())
   }
 
   fn open_graph_image(&self) -> Option<OpenGraphImage> {
     OpenGraphImage::artwork(self.metadata.as_ref()?, self.fingerprint)
+  }
+
+  fn prev(&self) -> Option<String> {
+    self.prev.map(|number| format!("/package/{number}"))
   }
 
   fn stylesheet(&self) -> Option<&'static str> {
@@ -83,6 +93,10 @@ impl Page for PackageHtml {
     } else {
       format!("{} · Filepack", self.fingerprint)
     }
+  }
+
+  fn up(&self) -> Option<String> {
+    Some("/".into())
   }
 }
 
@@ -132,7 +146,9 @@ mod tests {
         identifier: PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
         metadata: Some(metadata),
         mounted: false,
+        next: None,
         number: 1,
+        prev: None,
         readme: None,
         totals: Totals {
           directories: 0,
@@ -245,7 +261,9 @@ mod tests {
         identifier: PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
         metadata: Some(metadata),
         mounted: false,
+        next: None,
         number: 1,
+        prev: None,
         readme: None,
         totals: Totals {
           directories: 0,
@@ -392,7 +410,9 @@ mod tests {
         identifier: PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
         metadata: Some(metadata),
         mounted: false,
+        next: None,
         number: 1,
+        prev: None,
         readme: None,
         totals: Totals {
           directories: 0,
@@ -520,7 +540,9 @@ mod tests {
         identifier: PackageIdentifier::Number(1),
         metadata: Some(metadata),
         mounted: false,
+        next: None,
         number: 1,
+        prev: None,
         readme: None,
         totals: Totals {
           directories: 0,
@@ -600,6 +622,33 @@ mod tests {
   }
 
   #[test]
+  fn navigation() {
+    let mut html = PackageHtml {
+      colophon: None,
+      directory: Directory::new(),
+      fingerprint: test::FINGERPRINT.parse().unwrap(),
+      identifier: PackageIdentifier::Number(2),
+      metadata: None,
+      mounted: false,
+      next: Some(3),
+      number: 2,
+      prev: Some(1),
+      readme: None,
+      totals: Totals::default(),
+    };
+
+    assert_eq!(html.next(), Some("/package/3".into()));
+    assert_eq!(html.prev(), Some("/package/1".into()));
+    assert_eq!(html.up(), Some("/".into()));
+
+    html.next = None;
+    html.prev = None;
+
+    assert_eq!(html.next(), None);
+    assert_eq!(html.prev(), None);
+  }
+
+  #[test]
   fn open_graph_metadata() {
     let html = PackageHtml {
       colophon: None,
@@ -627,7 +676,9 @@ mod tests {
         ..default()
       }),
       mounted: false,
+      next: None,
       number: 1,
+      prev: None,
       readme: None,
       totals: Totals::default(),
     };
@@ -685,7 +736,9 @@ mod tests {
       identifier: PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
       metadata: None,
       mounted: false,
+      next: None,
       number: 1,
+      prev: None,
       readme: None,
       totals: Totals::default(),
     };
@@ -721,7 +774,9 @@ mod tests {
         identifier: PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
         metadata: Some(metadata),
         mounted: false,
+        next: None,
         number: 1,
+        prev: None,
         readme: Some(test::HASH.parse().unwrap()),
         totals: Totals {
           directories: 0,
@@ -927,7 +982,9 @@ mod tests {
         identifier: PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
         metadata: Some(metadata),
         mounted: false,
+        next: None,
         number: 1,
+        prev: None,
         readme: None,
         totals: Totals {
           directories: 0,

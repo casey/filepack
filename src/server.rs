@@ -347,6 +347,20 @@ impl Server {
 
     let tx = self.database.begin_read()?;
 
+    let numbers = tx.open_table(NUMBERS)?;
+
+    let next = numbers
+      .range((Bound::Excluded(number), Bound::Unbounded))?
+      .next()
+      .transpose()?
+      .map(|(number, _fingerprint)| number.value());
+
+    let prev = numbers
+      .range(..number)?
+      .next_back()
+      .transpose()?
+      .map(|(number, _fingerprint)| number.value());
+
     let packages = tx.open_table(PACKAGES)?;
 
     let metadata = self.package_metadata_opt_ext(&packages, fingerprint)?;
@@ -381,7 +395,9 @@ impl Server {
       identifier: package,
       metadata,
       mounted: mounts.contains(&fingerprint),
+      next,
       number,
+      prev,
       readme,
       totals,
     })
