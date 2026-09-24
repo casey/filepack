@@ -1065,7 +1065,9 @@ fn get_package_by_number() {
       identifier: PackageIdentifier::Number(1),
       metadata: None,
       mounted: false,
+      next: None,
       number: 1,
+      prev: None,
       readme: None,
       totals: Totals::default(),
     })
@@ -1080,6 +1082,64 @@ fn get_package_by_number_not_found() {
       StatusCode::NOT_FOUND,
       ServerError::PackageNumberNotFound { number: 99 },
     )
+    .send();
+}
+
+#[test]
+fn get_package_navigation() {
+  let server = TestServer::new();
+
+  let foo = PackageBuilder::new().file("foo", b"foo");
+  let foo_directory = foo.directory();
+  let foo = foo.upload(&server);
+
+  let bar = PackageBuilder::new().file("bar", b"bar").upload(&server);
+
+  let baz = PackageBuilder::new().file("baz", b"baz");
+  let baz_directory = baz.directory();
+  let baz = baz.upload(&server);
+
+  server.delete(format!("/api/package/{bar}")).send();
+
+  let totals = Totals {
+    directories: 0,
+    directory_size: 0,
+    file_size: 3,
+    files: 1,
+  };
+
+  server
+    .get("/package/1")
+    .assert_page(PackageHtml {
+      colophon: None,
+      directory: foo_directory,
+      fingerprint: foo,
+      identifier: PackageIdentifier::Number(1),
+      metadata: None,
+      mounted: false,
+      next: Some(3),
+      number: 1,
+      prev: None,
+      readme: None,
+      totals,
+    })
+    .send();
+
+  server
+    .get(format!("/package/{baz}"))
+    .assert_page(PackageHtml {
+      colophon: None,
+      directory: baz_directory,
+      fingerprint: baz,
+      identifier: PackageIdentifier::Fingerprint(baz),
+      metadata: None,
+      mounted: false,
+      next: None,
+      number: 3,
+      prev: Some(1),
+      readme: None,
+      totals,
+    })
     .send();
 }
 
@@ -1158,7 +1218,9 @@ fn get_package_with_metadata() {
       identifier: PackageIdentifier::Fingerprint(fingerprint),
       metadata: Some(metadata),
       mounted: false,
+      next: None,
       number: 1,
+      prev: None,
       readme: Some(Hash::bytes(readme)),
       totals: Totals {
         directories: 0,
@@ -1195,7 +1257,9 @@ fn get_package_without_metadata() {
       identifier: PackageIdentifier::Fingerprint(fingerprint),
       metadata: None,
       mounted: false,
+      next: None,
       number: 1,
+      prev: None,
       readme: None,
       totals: Totals::default(),
     })
@@ -2543,7 +2607,9 @@ fn package_page_og_image() {
         identifier: PackageIdentifier::Fingerprint(fingerprint),
         metadata: Some(metadata),
         mounted: false,
+        next: None,
         number: 1,
+        prev: None,
         readme: None,
         totals: Totals {
           directories: 0,
@@ -2615,7 +2681,9 @@ fn package_page_renders_audio_media() {
       identifier: PackageIdentifier::Fingerprint(fingerprint),
       metadata: Some(metadata),
       mounted: false,
+      next: None,
       number: 1,
+      prev: None,
       readme: None,
       totals,
     })
@@ -2669,7 +2737,9 @@ fn package_page_renders_image_media() {
       identifier: PackageIdentifier::Fingerprint(fingerprint),
       metadata: Some(metadata),
       mounted: false,
+      next: None,
       number: 1,
+      prev: None,
       readme: None,
       totals,
     })
@@ -2740,7 +2810,9 @@ fn package_page_renders_video_media() {
       identifier: PackageIdentifier::Fingerprint(fingerprint),
       metadata: Some(metadata),
       mounted: false,
+      next: None,
       number: 1,
+      prev: None,
       readme: None,
       totals,
     })
@@ -2779,7 +2851,9 @@ fn package_page_web() {
       identifier: PackageIdentifier::Fingerprint(fingerprint),
       metadata: Some(metadata),
       mounted: true,
+      next: None,
       number: 1,
+      prev: None,
       readme: None,
       totals: Totals {
         directories: 1,
@@ -3654,7 +3728,9 @@ fn verify_package_replace() {
       identifier: PackageIdentifier::Number(1),
       metadata: None,
       mounted: false,
+      next: None,
       number: 1,
+      prev: None,
       readme: None,
       totals: Totals {
         directories: 0,
