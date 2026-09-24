@@ -25,12 +25,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v7
+    - uses: actions/checkout@v7.0.1
 
     - name: Install Rust Toolchain
       run: rustup toolchain install stable --profile minimal --component rustfmt,clippy
 
-    - uses: Swatinem/rust-cache@v2
+    - uses: Swatinem/rust-cache@v2.9.2
 
     - name: Clippy
       run: cargo clippy --workspace --all-targets
@@ -54,12 +54,12 @@ jobs:
     runs-on: ${{matrix.os}}
 
     steps:
-    - uses: actions/checkout@v7
+    - uses: actions/checkout@v7.0.1
 
     - name: Install Rust Toolchain
       run: rustup toolchain install stable --profile minimal
 
-    - uses: Swatinem/rust-cache@v2
+    - uses: Swatinem/rust-cache@v2.9.2
 
     - name: Test
       run: cargo test --workspace

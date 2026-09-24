@@ -72,7 +72,7 @@ jobs:
     - prerelease
 
     steps:
-    - uses: actions/checkout@v7
+    - uses: actions/checkout@v7.0.1
 
     - name: Install Rust Toolchain
       run:  rustup toolchain install stable --profile minimal
