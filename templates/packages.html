@@ -13,9 +13,9 @@
 %% for package in self.packages() {
     <tr>
 %%   if let Some(title) = package.title {
-      <td><a href=/package/{{ package.fingerprint }}>{{ title }}</a></td>
+      <td><a href=/package/{{ package.number }}>{{ title }}</a></td>
 %%   } else {
-      <td><a href=/package/{{ package.fingerprint }}><code>{{ package.fingerprint }}</code></a></td>
+      <td><a href=/package/{{ package.number }}><code>{{ package.fingerprint }}</code></a></td>
 %%   }
 %%   if let Some(creator) = package.creator {
       <td>{{ creator }}</td>

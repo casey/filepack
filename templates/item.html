@@ -25,7 +25,7 @@
 %% if let Some(creator) = self.creator() {
       <span>{{ creator }}</span>
 %% }
-      <a href=/package/{{ self.fingerprint }}>
+      <a href=/package/{{ self.identifier }}>
 %% if let Some(title) = self.title() {
         {{ title }}
 %% } else {

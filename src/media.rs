@@ -30,7 +30,7 @@ pub(crate) enum Media {
 }
 
 impl Media {
-  pub(crate) fn info(&self, builder: InfoBuilder, fingerprint: Fingerprint) -> InfoBuilder {
+  pub(crate) fn info(&self, builder: InfoBuilder, identifier: PackageIdentifier) -> InfoBuilder {
     fn format<T: Content>(builder: InfoBuilder, items: &[Item<T>]) -> InfoBuilder {
       let formats = Item::formats(items);
       builder.when(!formats.is_empty(), |builder| {
@@ -44,11 +44,7 @@ impl Media {
     }
 
     builder
-      .link(
-        "media",
-        self.name(),
-        format!("/package/{fingerprint}/media"),
-      )
+      .link("media", self.name(), format!("/package/{identifier}/media"))
       .with(|builder| match self {
         Self::Audio { items } => format(
           builder
@@ -85,8 +81,8 @@ impl Media {
     }
   }
 
-  fn item_url(&self, fingerprint: Fingerprint, item: usize) -> Option<String> {
-    (item < self.item_count()).then(|| format!("/package/{fingerprint}/item/{}", Ordinal(item)))
+  fn item_url(&self, identifier: PackageIdentifier, item: usize) -> Option<String> {
+    (item < self.item_count()).then(|| format!("/package/{identifier}/item/{}", Ordinal(item)))
   }
 
   pub(crate) fn items<'a>(&'a self) -> Box<dyn Iterator<Item = &dyn MediaItem> + 'a> {
@@ -102,12 +98,12 @@ impl Media {
     self.into()
   }
 
-  pub(crate) fn next_item_url(&self, fingerprint: Fingerprint, item: usize) -> Option<String> {
-    self.item_url(fingerprint, item.checked_add(1)?)
+  pub(crate) fn next_item_url(&self, identifier: PackageIdentifier, item: usize) -> Option<String> {
+    self.item_url(identifier, item.checked_add(1)?)
   }
 
-  pub(crate) fn prev_item_url(&self, fingerprint: Fingerprint, item: usize) -> Option<String> {
-    self.item_url(fingerprint, item.checked_sub(1)?)
+  pub(crate) fn prev_item_url(&self, identifier: PackageIdentifier, item: usize) -> Option<String> {
+    self.item_url(identifier, item.checked_sub(1)?)
   }
 
   pub(crate) fn ty(&self) -> MediaType {
@@ -143,17 +139,20 @@ mod tests {
       items: vec![Item::test("foo.png"), Item::test("bar.png")],
     };
 
-    let fingerprint = test::FINGERPRINT.parse::<Fingerprint>().unwrap();
-
-    assert_eq!(
-      media.next_item_url(fingerprint, 0),
-      Some(format!("/package/{fingerprint}/item/2")),
-    );
-    assert_eq!(media.next_item_url(fingerprint, 1), None);
-    assert_eq!(media.prev_item_url(fingerprint, 0), None);
-    assert_eq!(
-      media.prev_item_url(fingerprint, 1),
-      Some(format!("/package/{fingerprint}/item/1")),
-    );
+    for identifier in [
+      PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
+      PackageIdentifier::Number(1),
+    ] {
+      assert_eq!(
+        media.next_item_url(identifier, 0),
+        Some(format!("/package/{identifier}/item/2")),
+      );
+      assert_eq!(media.next_item_url(identifier, 1), None);
+      assert_eq!(media.prev_item_url(identifier, 0), None);
+      assert_eq!(
+        media.prev_item_url(identifier, 1),
+        Some(format!("/package/{identifier}/item/1")),
+      );
+    }
   }
 }

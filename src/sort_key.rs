@@ -10,8 +10,8 @@ pub(crate) enum SortKey<'a> {
 
 impl<'a> SortKey<'a> {
   pub(crate) fn compare(
-    a: &'a (Fingerprint, Option<Metadata>, Totals),
-    b: &'a (Fingerprint, Option<Metadata>, Totals),
+    a: &'a PackageSummary,
+    b: &'a PackageSummary,
     sort: Sort,
     order: Order,
   ) -> Ordering {
@@ -25,20 +25,17 @@ impl<'a> SortKey<'a> {
       (None, None) => Ordering::Equal,
     };
 
-    ordering.then_with(|| a.0.cmp(&b.0))
+    ordering.then_with(|| a.fingerprint.cmp(&b.fingerprint))
   }
 
-  fn new(
-    (_fingerprint, metadata, totals): &'a (Fingerprint, Option<Metadata>, Totals),
-    sort: Sort,
-  ) -> Option<Self> {
+  fn new(summary: &'a PackageSummary, sort: Sort) -> Option<Self> {
     let key = match sort {
-      Sort::Creator => Self::text(metadata.as_ref()?.creator.as_ref()?),
-      Sort::Files => Self::Count(totals.files),
-      Sort::Media => Self::Media(metadata.as_ref()?.media.as_ref()?.ty()),
-      Sort::Size => Self::Count(totals.file_size),
-      Sort::Title => Self::text(metadata.as_ref()?.title.as_ref()?),
-      Sort::Year => Self::Year(metadata.as_ref()?.time?.year()),
+      Sort::Creator => Self::text(summary.metadata.as_ref()?.creator.as_ref()?),
+      Sort::Files => Self::Count(summary.totals.files),
+      Sort::Media => Self::Media(summary.metadata.as_ref()?.media.as_ref()?.ty()),
+      Sort::Size => Self::Count(summary.totals.file_size),
+      Sort::Title => Self::text(summary.metadata.as_ref()?.title.as_ref()?),
+      Sort::Year => Self::Year(summary.metadata.as_ref()?.time?.year()),
     };
 
     Some(key)
