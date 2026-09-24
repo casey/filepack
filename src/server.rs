@@ -6,9 +6,10 @@ use {
 
 const DIRECTORIES: TableDefinition<Hash, ()> = TableDefinition::new("directories");
 const METADATA: TableDefinition<DatabaseMetadata, u64> = TableDefinition::new("metadata");
-const NUMBERS: TableDefinition<u64, Fingerprint> = TableDefinition::new("numbers");
+const NUMBERS: TableDefinition<u64, Revision> = TableDefinition::new("numbers");
 const PACKAGES: TableDefinition<Fingerprint, u64> = TableDefinition::new("packages");
-const SCHEMA_VERSION: u64 = 3;
+const REVISIONS: TableDefinition<Revision, ()> = TableDefinition::new("revisions");
+const SCHEMA_VERSION: u64 = 4;
 
 pub(crate) struct Server {
   database: Database,
@@ -119,14 +120,26 @@ impl Server {
 
     let mut directories_removed = BTreeSet::new();
 
+    let mut revisions_removed = BTreeSet::new();
+
     {
       let mut directories = tx.open_table(DIRECTORIES)?;
 
-      let mut stack = tx
-        .open_table(PACKAGES)?
-        .iter()?
-        .map(|entry| Ok(Hash::from(entry?.0.value())))
-        .collect::<ServerResult<Vec<Hash>>>()?;
+      let mut revisions = tx.open_table(REVISIONS)?;
+
+      let mut stack = Vec::new();
+
+      for entry in tx.open_table(NUMBERS)?.iter()? {
+        let revision = entry?.1.value();
+        marked.insert(revision.into());
+        stack.push(self.read_revision(revision)?.package.into());
+      }
+
+      for entry in revisions
+        .extract_from_if::<Revision, _>(.., |revision, ()| !marked.contains(&revision.into()))?
+      {
+        revisions_removed.insert(entry?.0.value());
+      }
 
       while let Some(hash) = stack.pop() {
         if !marked.insert(hash) {
@@ -180,6 +193,7 @@ impl Server {
       bytes,
       directories: directories_removed.into(),
       files: files_removed.into(),
+      revisions: revisions_removed.into(),
     })
   }
 
@@ -466,10 +480,8 @@ impl Server {
   }
 
   fn read_directory(&self, hash: Hash) -> ServerResult<Directory> {
-    let directory = Directory::decode_from_slice(&self.read_file(hash)?)
-      .context(server_error::DirectoryDecode { hash })?;
-
-    Ok(directory)
+    Directory::decode_from_slice(&self.read_file(hash)?)
+      .context(server_error::DirectoryCorrupt { hash })
   }
 
   fn read_file(&self, hash: Hash) -> ServerResult<Vec<u8>> {
@@ -482,6 +494,11 @@ impl Server {
         filesystem_error::Io { path }.into_error(err).into()
       }
     })
+  }
+
+  fn read_revision(&self, revision: Revision) -> ServerResult<RevisionObject> {
+    RevisionObject::decode_from_slice(&self.read_file(revision.into())?)
+      .context(server_error::RevisionCorrupt { revision })
   }
 
   pub(crate) fn resolve(&self, identifier: PackageIdentifier) -> ServerResult<(u64, Fingerprint)> {
@@ -497,10 +514,14 @@ impl Server {
       )),
       PackageIdentifier::Number(number) => Ok((
         number,
-        tx.open_table(NUMBERS)?
-          .get(&number)?
-          .context(server_error::PackageNumberNotFound { number })?
-          .value(),
+        self
+          .read_revision(
+            tx.open_table(NUMBERS)?
+              .get(&number)?
+              .context(server_error::PackageNumberNotFound { number })?
+              .value(),
+          )?
+          .package,
       )),
     }
   }
@@ -541,7 +562,8 @@ impl Server {
   pub(crate) fn verify_directory(&self, hash: Hash) -> ServerResult {
     let tx = self.database.begin_write()?;
 
-    let directory = self.read_directory(hash)?;
+    let directory = Directory::decode_from_slice(&self.read_file(hash)?)
+      .context(server_error::DirectoryDecode { hash })?;
 
     directory
       .totals()
@@ -637,8 +659,17 @@ impl Server {
     let number = {
       let mut packages = tx.open_table(PACKAGES)?;
       let mut numbers = tx.open_table(NUMBERS)?;
+      let mut revisions = tx.open_table(REVISIONS)?;
 
       let existing = packages.get(&fingerprint)?.map(|number| number.value());
+
+      let revision_object = RevisionObject {
+        version: Version::Zero,
+        package: fingerprint,
+        previous: None,
+      };
+
+      let revision = revision_object.hash();
 
       match (replace, existing) {
         (Some(number), Some(existing)) => {
@@ -656,7 +687,10 @@ impl Server {
             .get(&number)?
             .context(server_error::PackageNumberNotFound { number })?
             .value();
-          numbers.insert(&number, &fingerprint)?;
+          let old = self.read_revision(old)?.package;
+          self.write_revision(&revision_object)?;
+          revisions.insert(&revision, &())?;
+          numbers.insert(&number, &revision)?;
           packages.remove(&old)?;
           packages.insert(&fingerprint, &number)?;
           number
@@ -666,7 +700,9 @@ impl Server {
           let mut metadata = tx.open_table(METADATA)?;
           let number = metadata.get(DatabaseMetadata::Number)?.unwrap().value();
           metadata.insert(DatabaseMetadata::Number, &(number + 1))?;
-          numbers.insert(&number, &fingerprint)?;
+          self.write_revision(&revision_object)?;
+          revisions.insert(&revision, &())?;
+          numbers.insert(&number, &revision)?;
           packages.insert(&fingerprint, &number)?;
           number
         }
@@ -693,6 +729,7 @@ impl Server {
         tx.open_table(DIRECTORIES)?;
         tx.open_table(NUMBERS)?;
         tx.open_table(PACKAGES)?;
+        tx.open_table(REVISIONS)?;
       }
 
       tx.commit()?;
@@ -728,11 +765,7 @@ impl Server {
   }
 
   pub(crate) async fn write_file(&self, hash: Hash, body: Body) -> ServerResult {
-    let (file, temp_path) = transfer_tempfile(hash, &self.incoming)
-      .context(filesystem_error::Io {
-        path: &self.incoming,
-      })?
-      .into_parts();
+    let (file, temp_path) = transfer_tempfile(hash, &self.incoming)?.into_parts();
 
     let temp_path_utf8 = Utf8Path::from_path(&temp_path).unwrap().to_owned();
 
@@ -779,6 +812,34 @@ impl Server {
     }
 
     temp_path
+      .persist(&path)
+      .map_err(|error| error.error)
+      .context(filesystem_error::Io { path: &path })?;
+
+    Ok(())
+  }
+
+  fn write_revision(&self, revision_object: &RevisionObject) -> ServerResult {
+    let revision = revision_object.hash();
+
+    let path = self.file_path(revision.into());
+
+    if path
+      .try_exists()
+      .context(filesystem_error::Io { path: &path })?
+    {
+      return Ok(());
+    }
+
+    let mut tempfile = transfer_tempfile(revision.into(), &self.incoming)?;
+
+    tempfile
+      .write_all(&revision_object.encode_to_vec())
+      .context(filesystem_error::Io {
+        path: &self.incoming,
+      })?;
+
+    tempfile
       .persist(&path)
       .map_err(|error| error.error)
       .context(filesystem_error::Io { path: &path })?;

@@ -5,6 +5,7 @@ pub(crate) enum TypeName {
   DatabaseMetadata,
   Fingerprint,
   Hash,
+  Revision,
 }
 
 impl From<TypeName> for redb::TypeName {

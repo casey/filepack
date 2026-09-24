@@ -3,7 +3,7 @@ use super::*;
 pub(crate) mod gc {
   use super::*;
 
-  #[derive(Debug, Encode, Decode, PartialEq)]
+  #[derive(Debug, Default, Encode, Decode, PartialEq)]
   pub(crate) struct Response {
     #[n(0)]
     pub(crate) bytes: u64,
@@ -11,6 +11,8 @@ pub(crate) mod gc {
     pub(crate) directories: SortedSet<Hash>,
     #[n(2)]
     pub(crate) files: SortedSet<Hash>,
+    #[n(3)]
+    pub(crate) revisions: SortedSet<Revision>,
   }
 }
 
@@ -49,7 +51,7 @@ pub(crate) mod package {
 pub(crate) mod packages {
   use super::*;
 
-  #[derive(Debug, Encode, Decode, PartialEq)]
+  #[derive(Debug, Default, Encode, Decode, PartialEq)]
   pub(crate) struct Response {
     #[n(0)]
     pub(crate) packages: SortedSet<Fingerprint>,

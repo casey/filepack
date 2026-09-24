@@ -9,6 +9,11 @@ impl<T: Ord> From<BTreeSet<T>> for SortedSet<T> {
     Self(set.into_iter().collect())
   }
 }
+impl<T> Default for SortedSet<T> {
+  fn default() -> Self {
+    Self(Default::default())
+  }
+}
 
 impl<T> Deref for SortedSet<T> {
   type Target = [T];

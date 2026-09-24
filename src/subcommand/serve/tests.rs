@@ -448,12 +448,7 @@ fn api_packages_returns_package_fingerprints() {
 
   server
     .get("/api/packages")
-    .assert_body(
-      api::packages::Response {
-        packages: BTreeSet::new().into(),
-      }
-      .encode_to_vec(),
-    )
+    .assert_body(api::packages::Response::default().encode_to_vec())
     .send();
 
   let foo = PackageBuilder::new().file("foo", b"foo").upload(&server);
@@ -665,6 +660,92 @@ fn closed_server_forbids_writes() {
 }
 
 #[test]
+fn corrupt_directory() {
+  let server = TestServer::new();
+
+  let (deco, hash) = Directory::new().deco();
+  server.write_file(&deco);
+
+  server.post(format!("/api/directory/{hash}")).send();
+
+  fs::write(server.data_dir.join("files").join(hash.to_string()), "foo").unwrap();
+
+  server
+    .get(format!("/directory/{hash}"))
+    .assert_error(
+      StatusCode::INTERNAL_SERVER_ERROR,
+      ServerError::DirectoryCorrupt {
+        hash,
+        source: DecodeError::Truncated,
+      },
+    )
+    .send();
+}
+
+#[test]
+fn corrupt_package_metadata() {
+  let server = TestServer::new();
+
+  let metadata = Metadata::default();
+
+  let fingerprint = PackageBuilder::new().metadata(&metadata).upload(&server);
+
+  fs::write(
+    server
+      .data_dir
+      .join("files")
+      .join(Hash::bytes(&metadata.encode_to_vec()).to_string()),
+    "foo",
+  )
+  .unwrap();
+
+  server
+    .get("/package/1")
+    .assert_error(
+      StatusCode::INTERNAL_SERVER_ERROR,
+      ServerError::PackageMetadataCorrupt {
+        fingerprint,
+        source: DecodeError::Truncated,
+      },
+    )
+    .send();
+}
+
+#[test]
+fn corrupt_revision() {
+  let server = TestServer::new();
+
+  let fingerprint = PackageBuilder::new().file("foo", b"foo").upload(&server);
+
+  let revision = RevisionObject {
+    version: Version::Zero,
+    package: fingerprint,
+    previous: None,
+  }
+  .hash();
+
+  fs::write(
+    server
+      .data_dir
+      .join("files")
+      .join(Hash::from(revision).to_string()),
+    "foo",
+  )
+  .unwrap();
+
+  server
+    .get("/package/1")
+    .assert_error(
+      StatusCode::INTERNAL_SERVER_ERROR,
+      ServerError::RevisionCorrupt {
+        revision,
+        source: DecodeError::Truncated,
+      },
+    )
+    .send();
+}
+
+#[test]
 fn default_serve_matches_parsed() {
   assert_eq!(
     Serve::default(),
@@ -731,12 +812,7 @@ fn delete_package_removes_package() {
 
   server
     .get("/api/packages")
-    .assert_body(
-      api::packages::Response {
-        packages: BTreeSet::new().into(),
-      }
-      .encode_to_vec(),
-    )
+    .assert_body(api::packages::Response::default().encode_to_vec())
     .send();
 }
 
@@ -916,14 +992,7 @@ fn fingerprint_redirects_to_package() {
 fn gc_empty_server_removes_nothing() {
   TestServer::new()
     .post("/api/gc")
-    .assert_body(
-      api::gc::Response {
-        bytes: 0,
-        directories: BTreeSet::new().into(),
-        files: BTreeSet::new().into(),
-      }
-      .encode_to_vec(),
-    )
+    .assert_body(api::gc::Response::default().encode_to_vec())
     .send();
 }
 
@@ -935,14 +1004,7 @@ fn gc_ignores_non_hash_filenames() {
 
   server
     .post("/api/gc")
-    .assert_body(
-      api::gc::Response {
-        bytes: 0,
-        directories: BTreeSet::new().into(),
-        files: BTreeSet::new().into(),
-      }
-      .encode_to_vec(),
-    )
+    .assert_body(api::gc::Response::default().encode_to_vec())
     .send();
 
   assert!(
@@ -995,15 +1057,33 @@ fn gc_removes_unreachable_and_retains_reachable_data() {
 
   let fingerprint = package.upload(&server);
 
+  let revision_object = RevisionObject {
+    version: Version::Zero,
+    package: fingerprint,
+    previous: None,
+  };
+
+  let revision = revision_object.hash();
+
   server.delete(format!("/api/package/{fingerprint}")).send();
 
   server
     .post("/api/gc")
     .assert_body(
       api::gc::Response {
-        bytes: root_deco.len().into_u64() + subdirectory_deco.len().into_u64() + 3,
+        bytes: root_deco.len().into_u64()
+          + subdirectory_deco.len().into_u64()
+          + 3
+          + revision_object.encode_to_vec().len().into_u64(),
         directories: BTreeSet::from([root_hash, subdirectory_hash]).into(),
-        files: BTreeSet::from([root_hash, subdirectory_hash, Hash::bytes(b"baz")]).into(),
+        files: BTreeSet::from([
+          root_hash,
+          subdirectory_hash,
+          Hash::bytes(b"baz"),
+          revision.into(),
+        ])
+        .into(),
+        revisions: BTreeSet::from([revision]).into(),
       }
       .encode_to_vec(),
     )
@@ -1014,7 +1094,7 @@ fn gc_removes_unreachable_and_retains_reachable_data() {
 
   assert_eq!(
     fs::read_dir(server.data_dir.join("files")).unwrap().count(),
-    2,
+    3,
   );
 }
 
@@ -3761,13 +3841,22 @@ fn verify_package_replace() {
     )
     .send();
 
+  let revision_object = RevisionObject {
+    version: Version::Zero,
+    package: foo,
+    previous: None,
+  };
+
+  let revision = revision_object.hash();
+
   server
     .post("/api/gc")
     .assert_body(
       api::gc::Response {
-        bytes: foo_deco.len().into_u64() + 3,
+        bytes: foo_deco.len().into_u64() + 3 + revision_object.encode_to_vec().len().into_u64(),
         directories: BTreeSet::from([foo_hash]).into(),
-        files: BTreeSet::from([foo_hash, Hash::bytes(b"foo")]).into(),
+        files: BTreeSet::from([foo_hash, Hash::bytes(b"foo"), revision.into()]).into(),
+        revisions: BTreeSet::from([revision]).into(),
       }
       .encode_to_vec(),
     )
@@ -3829,5 +3918,23 @@ fn verify_package_unverified() {
     .assert_body(format!(
       "package {fingerprint} root directory is unverified"
     ))
+    .send();
+}
+
+#[test]
+fn verify_package_writes_revision() {
+  let server = TestServer::new();
+
+  let fingerprint = PackageBuilder::new().file("foo", b"foo").upload(&server);
+
+  let revision_object = RevisionObject {
+    version: Version::Zero,
+    package: fingerprint,
+    previous: None,
+  };
+
+  server
+    .get(format!("/api/file/{}", Hash::from(revision_object.hash())))
+    .assert_body(revision_object.encode_to_vec())
     .send();
 }

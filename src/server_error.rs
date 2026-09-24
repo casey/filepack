@@ -25,6 +25,8 @@ pub enum ServerError {
   DecoBody { source: axum::Error },
   #[snafu(display("failed to decode request body"))]
   DecoDecode { source: DecodeError },
+  #[snafu(display("stored directory {hash} failed to decode"))]
+  DirectoryCorrupt { hash: Hash, source: DecodeError },
   #[snafu(display("failed to decode directory {hash}"))]
   DirectoryDecode { hash: Hash, source: DecodeError },
   #[snafu(display(
@@ -135,6 +137,11 @@ pub enum ServerError {
     fingerprint: Fingerprint,
     index: Ordinal,
   },
+  #[snafu(display("stored revision {revision} failed to decode"))]
+  RevisionCorrupt {
+    revision: Revision,
+    source: DecodeError,
+  },
   #[snafu(display("failed to get current time"))]
   Time { source: SystemTimeError },
   #[snafu(display("error reading body of upload with hash {hash}"))]
@@ -160,7 +167,9 @@ impl ServerError {
       | Self::Filesystem { .. }
       | Self::InvalidResponse { .. }
       | Self::PackageFileMissing { .. }
+      | Self::DirectoryCorrupt { .. }
       | Self::PackageMetadataCorrupt { .. }
+      | Self::RevisionCorrupt { .. }
       | Self::Time { .. } => StatusCode::INTERNAL_SERVER_ERROR,
       Self::DecoBody { .. }
       | Self::DecoDecode { .. }

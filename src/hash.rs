@@ -33,6 +33,12 @@ impl From<Fingerprint> for Hash {
   }
 }
 
+impl From<Revision> for Hash {
+  fn from(revision: Revision) -> Self {
+    revision.0
+  }
+}
+
 impl From<[u8; Hash::LEN]> for Hash {
   fn from(bytes: [u8; Hash::LEN]) -> Self {
     Self(bytes.into())
