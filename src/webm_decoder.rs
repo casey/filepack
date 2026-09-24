@@ -127,7 +127,7 @@ impl WebmDecoder {
             (Codec::Vp9, Some(first)) => {
               Self::vp9_color_info(&first).context(video_error::Vp9FrameHeaderInvalid)?
             }
-            (Codec::Vp9, None) => return Err(video_error::Vp9TrackEmpty.build()),
+            (Codec::Vp9, None) => return Err(VideoError::Vp9TrackEmpty),
             _ => ColorInfo {
               bit_depth: 8,
               chroma_subsampling: ChromaSubsampling::Yuv420,

@@ -21,7 +21,7 @@ impl<'a> ExifDecoder<'a> {
     let big_endian = match data.get(0..2).context(exif_error::Truncated)? {
       b"II" => false,
       b"MM" => true,
-      _ => return Err(exif_error::ByteOrder.build()),
+      _ => return Err(ExifError::ByteOrder),
     };
 
     Ok(Self { big_endian, data })

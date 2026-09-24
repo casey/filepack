@@ -33,12 +33,9 @@ impl EmbeddedImage {
         width: info.width.into(),
       })
     } else {
-      Err(
-        audio_error::EmbeddedImageMediaType {
-          media_type: self.media_type.clone(),
-        }
-        .build(),
-      )
+      Err(AudioError::EmbeddedImageMediaType {
+        media_type: self.media_type.clone(),
+      })
     }
   }
 }

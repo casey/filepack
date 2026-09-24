@@ -83,7 +83,7 @@ impl Head {
 
         Ok((end, len))
       }
-      Self::Reserved(value) => Err(decode_error::Reserved { value }.build()),
+      Self::Reserved(value) => Err(DecodeError::Reserved { value }),
     }
   }
 }

@@ -94,13 +94,13 @@ impl<'a> Mp3Decoder<'a> {
       0 => Version::Mpeg25,
       2 => Version::Mpeg2,
       3 => Version::Mpeg1,
-      _ => return Err(mp3_error::Version.build()),
+      _ => return Err(Mp3Error::Version),
     };
 
     match (header[1] >> 1) & 0b11 {
-      0 => return Err(mp3_error::LayerInvalid.build()),
+      0 => return Err(Mp3Error::LayerInvalid),
       1 => {}
-      bits => return Err(mp3_error::LayerUnsupported { layer: 4 - bits }.build()),
+      bits => return Err(Mp3Error::LayerUnsupported { layer: 4 - bits }),
     }
 
     let index = header[2] >> 4;
@@ -110,7 +110,7 @@ impl<'a> Mp3Decoder<'a> {
     let bitrate = version.bitrates()[usize::from(index) - 1] * 1000;
 
     let sample_rate = match (header[2] >> 2) & 0b11 {
-      3 => return Err(mp3_error::SampleRate.build()),
+      3 => return Err(Mp3Error::SampleRate),
       index => SAMPLE_RATES[usize::from(index)] / version.divisor(),
     };
 
@@ -271,7 +271,7 @@ impl<'a> Mp3Decoder<'a> {
     match id3::Tag::read_from2(io::Cursor::new(data)) {
       Err(err) => {
         if let id3::ErrorKind::NoTag = err.kind {
-          Err(audio_error::Mp3TagMissing.build())
+          Err(AudioError::Mp3TagMissing)
         } else {
           Err(audio_error::Mp3Tag.into_error(err))
         }

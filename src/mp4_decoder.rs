@@ -150,23 +150,17 @@ impl Mp4Decoder {
           ensure!(audio_track.is_none(), video_error::AudioTrackMultiple);
 
           let StsdBoxContent::Mp4a(mp4a) = contents else {
-            return Err(
-              video_error::AudioCodecUnsupported {
-                codec: codec_name(contents),
-                track: index,
-              }
-              .build(),
-            );
+            return Err(VideoError::AudioCodecUnsupported {
+              codec: codec_name(contents),
+              track: index,
+            });
           };
 
           let Some(codec) = mp4a_codec(mp4a) else {
-            return Err(
-              video_error::AudioCodecUnsupported {
-                codec: codec_name(contents),
-                track: index,
-              }
-              .build(),
-            );
+            return Err(VideoError::AudioCodecUnsupported {
+              codec: codec_name(contents),
+              track: index,
+            });
           };
 
           audio_track = Some(Track {
@@ -182,13 +176,10 @@ impl Mp4Decoder {
           ensure!(video_track.is_none(), video_error::VideoTrackMultiple);
 
           let StsdBoxContent::Avc1(avc1) = contents else {
-            return Err(
-              video_error::VideoCodecUnsupported {
-                codec: codec_name(contents),
-                track: index,
-              }
-              .build(),
-            );
+            return Err(VideoError::VideoCodecUnsupported {
+              codec: codec_name(contents),
+              track: index,
+            });
           };
 
           let color_info = if let Some(sps) = avc1.avcc.sequence_parameter_sets.first() {

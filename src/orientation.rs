@@ -54,7 +54,7 @@ impl Orientation {
         6 => (false, Rotation::R90),
         7 => (true, Rotation::R270),
         8 => (false, Rotation::R270),
-        value => return Err(exif_error::OrientationValue { value }.build()),
+        value => return Err(ExifError::OrientationValue { value }),
       };
 
       return Ok(Self { mirrored, rotation });

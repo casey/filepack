@@ -84,10 +84,10 @@ impl Input {
           let discriminant = array.element::<u64>()?;
           let value = match discriminant {
             #(#arms)*
-            _ => return Err(decode_error::InvalidDiscriminant {
+            _ => return Err(DecodeError::InvalidDiscriminant {
               discriminant,
               name: stringify!(#name),
-            }.build()),
+            }),
           };
           #validate
           array.finish()?;
