@@ -1038,9 +1038,14 @@ fn gc_rejects_missing_auth_header() {
 fn gc_removes_unreachable_and_retains_reachable_data() {
   let server = TestServer::new();
 
-  let retained = PackageBuilder::new().file("foo", b"foo");
+  let retained = PackageBuilder::new()
+    .file("bar/qux", b"qux")
+    .file("baz/qux", b"qux")
+    .file("foo", b"foo");
 
   let retained_hash = retained.directory().deco().1;
+
+  let retained_subdirectory_hash = Directory::new().insert_file("qux", b"qux").deco().1;
 
   retained.upload(&server);
 
@@ -1090,11 +1095,13 @@ fn gc_removes_unreachable_and_retains_reachable_data() {
     .send();
 
   server.assert_file(retained_hash);
+  server.assert_file(retained_subdirectory_hash);
   server.assert_file(Hash::bytes(b"foo"));
+  server.assert_file(Hash::bytes(b"qux"));
 
   assert_eq!(
     fs::read_dir(server.data_dir.join("files")).unwrap().count(),
-    3,
+    5,
   );
 }
 
@@ -3901,6 +3908,37 @@ fn verify_package_replace_not_found() {
     .status(StatusCode::NOT_FOUND)
     .assert_body("package number 99 not found")
     .send();
+}
+
+#[test]
+fn verify_package_reuses_revision() {
+  let server = TestServer::new();
+
+  let fingerprint = PackageBuilder::new().file("foo", b"foo").upload(&server);
+
+  let revision = RevisionObject {
+    version: Version::Zero,
+    package: fingerprint,
+    previous: None,
+  }
+  .hash();
+
+  server.delete(format!("/api/package/{fingerprint}")).send();
+
+  server
+    .post(format!("/api/package/{fingerprint}"))
+    .body(api::package::Request::default().encode_to_vec())
+    .assert_body(api::package::Response { number: 2 }.encode_to_vec())
+    .send();
+
+  server.assert_file(revision.into());
+
+  server.assert_incoming_empty();
+
+  assert_eq!(
+    fs::read_dir(server.data_dir.join("files")).unwrap().count(),
+    3,
+  );
 }
 
 #[test]
