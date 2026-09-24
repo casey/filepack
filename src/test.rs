@@ -16,6 +16,9 @@ pub(crate) const PRIVATE_KEY: &str = concat!(
 pub(crate) const PUBLIC_KEY: &str =
   "public1d79b36defbee7c1d26099c9e28f849f1f0dceb6e0217b83c87f5cff6fd8c4fc8";
 
+pub(crate) const REVISION: &str =
+  "revision14d6e1438411c7f6947bcb9bcfd5e74cf7077d2b3ccf24085cc2016afc7f0306c";
+
 pub(crate) const SIGNATURE: &str = concat!(
   "signature1000001a0d79b36defbee7c1d26099c9e28f849f1f0dceb6e0217b83c87f5cff6fd8c4fc802a4000001a0",
   "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f326203c0b94281b2638e52cfecb6c18485",
@@ -192,6 +195,14 @@ mod tests {
         .display_private_key()
         .to_string(),
       test::PRIVATE_KEY,
+    );
+  }
+
+  #[test]
+  fn revision_is_valid() {
+    assert_eq!(
+      test::REVISION.parse::<Revision>().unwrap().to_string(),
+      test::REVISION,
     );
   }
 
