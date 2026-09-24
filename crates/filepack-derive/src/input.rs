@@ -156,6 +156,10 @@ impl Input {
 
     let decode_unknown_fields = Self::decode_unknown_fields(attributes);
 
+    let magic = attributes
+      .magic()
+      .then(|| quote! { decoder.magic_bytes(&<Self as Magic>::BYTES)?; });
+
     let validate = attributes
       .validate()
       .then(|| quote! { Validate::validate(&value)?; });
@@ -163,6 +167,7 @@ impl Input {
     Ok(quote! {
       #header {
         fn decode(decoder: &mut Decoder<'de>) -> DecodeResult<Self> {
+          #magic
           let mut map = decoder.map::<u64>()?;
           #(#decode)*
           #decode_unknown_fields
@@ -229,7 +234,7 @@ impl Input {
         if attributes.transparent() {
           self.encode_transparent()
         } else {
-          self.encode_struct()
+          self.encode_struct(&attributes)
         }
       }
     }
@@ -278,12 +283,16 @@ impl Input {
     self.generics(syn::parse_quote!(Encode))
   }
 
-  pub(crate) fn encode_struct(&self) -> Result<proc_macro2::TokenStream> {
+  pub(crate) fn encode_struct(&self, attributes: &Attributes) -> Result<proc_macro2::TokenStream> {
     let name = &self.ident;
 
     let fields = self.parse_fields()?;
 
     let items = ParsedField::encode(&fields, Receiver::Field);
+
+    let magic = attributes
+      .magic()
+      .then(|| quote! { encoder.bytes(&<Self as Magic>::BYTES); });
 
     let generics = self.encode_generics();
 
@@ -295,6 +304,7 @@ impl Input {
           let mut map = encoder.map::<u64>();
           #(#items)*
           map.finish();
+          #magic
         }
       }
     })
@@ -357,7 +367,7 @@ impl Input {
 
         if self.data.is_enum() {
           match attribute {
-            ContainerAttribute::Transparent => {
+            ContainerAttribute::Magic | ContainerAttribute::Transparent => {
               return Err(meta.error(format!("`#[deco({attribute})]` cannot be used with enums")));
             }
             ContainerAttribute::Strict | ContainerAttribute::Validate => {}
@@ -372,6 +382,12 @@ impl Input {
           && attributes.contains(&ContainerAttribute::Strict)
         {
           return Err(meta.error("`#[deco(strict)]` cannot be used with `#[deco(transparent)]`"));
+        }
+
+        if attributes.contains(&ContainerAttribute::Transparent)
+          && attributes.contains(&ContainerAttribute::Magic)
+        {
+          return Err(meta.error("`#[deco(magic)]` cannot be used with `#[deco(transparent)]`"));
         }
 
         Ok(())
@@ -498,6 +514,22 @@ mod tests {
         struct Foo(u64);
       },
       "`#[deco(strict)]` cannot be used with `#[deco(transparent)]`",
+    );
+
+    case(
+      &syn::parse_quote! {
+        #[deco(magic)]
+        enum Foo {}
+      },
+      "`#[deco(magic)]` cannot be used with enums",
+    );
+
+    case(
+      &syn::parse_quote! {
+        #[deco(magic, transparent)]
+        struct Foo(u64);
+      },
+      "`#[deco(magic)]` cannot be used with `#[deco(transparent)]`",
     );
 
     case(

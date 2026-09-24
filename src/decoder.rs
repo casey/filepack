@@ -77,6 +77,18 @@ impl<'a> Decoder<'a> {
     self.position == self.buffer.len()
   }
 
+  pub(crate) fn magic_bytes(&mut self, expected: &MagicBytes) -> DecodeResult {
+    let actual = self.bytes()?;
+    ensure!(
+      actual == expected,
+      decode_error::MagicBytes {
+        actual: &actual[..actual.len().min(expected.len() + 1)],
+        expected: *expected,
+      },
+    );
+    Ok(())
+  }
+
   pub(crate) fn map<K>(&mut self) -> DecodeResult<MapDecoder<'a, K>> {
     Ok(MapDecoder::new(self.child()?))
   }

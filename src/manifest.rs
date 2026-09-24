@@ -84,7 +84,7 @@ impl Manifest {
   pub fn save(&self, path: &Utf8Path) -> Result {
     let deco = Archive::pack(self)
       .context(error::ManifestTotals { path })?
-      .encode_magic_bytes();
+      .encode_to_vec();
     filesystem::write(path, deco)
   }
 

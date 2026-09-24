@@ -39,7 +39,7 @@ pub enum DecodeError {
   ))]
   MagicBytes {
     actual: Vec<u8>,
-    expected: MagicByteArray,
+    expected: super::MagicBytes,
   },
   #[snafu(display("missing array element"))]
   MissingElement,

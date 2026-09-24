@@ -3,6 +3,10 @@ use super::*;
 pub(crate) struct Attributes(pub(crate) HashSet<ContainerAttribute>);
 
 impl Attributes {
+  pub(crate) fn magic(&self) -> bool {
+    self.0.contains(&ContainerAttribute::Magic)
+  }
+
   pub(crate) fn strict(&self) -> bool {
     self.0.contains(&ContainerAttribute::Strict)
   }

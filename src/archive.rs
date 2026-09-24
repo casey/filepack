@@ -2,6 +2,7 @@ use super::*;
 
 #[allow(clippy::arbitrary_source_item_ordering)]
 #[derive(Encode, Decode)]
+#[deco(magic)]
 pub struct Archive {
   #[n(0)]
   pub(crate) version: Version,
@@ -269,8 +270,8 @@ impl Archive {
   }
 }
 
-impl MagicBytes for Archive {
-  const MAGIC_BYTES: MagicByteArray = *b"filepack-archive\0\0";
+impl Magic for Archive {
+  const BYTES: MagicBytes = *b"filepack-archive\0\0";
 }
 
 #[cfg(test)]

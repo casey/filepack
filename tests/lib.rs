@@ -3,7 +3,7 @@ use {
   camino::{Utf8Path, Utf8PathBuf},
   filepack::{
     Archive, Decode, Decoder, Directory, DirectoryExt, Encode, Encoder, Entry, Fingerprint,
-    FlacBuilder, Hash, Loader, MagicBytes, Manifest, Metadata, Mp3Builder, Mp4Builder,
+    FlacBuilder, Hash, Loader, Magic, Manifest, Metadata, Mp3Builder, Mp4Builder,
     PackageIdentifier, Page, PngBuilder, PrivateKey, PublicKey, Totals, gradient, gradient_alpha,
     hex,
     templates::{DirectoryHtml, PackageHtml},
