@@ -18,8 +18,12 @@ pub struct PackageHtml {
 impl PackageHtml {
   fn info(&self) -> Info {
     InfoBuilder::new()
-      .value("number", self.number)
-      .code("fingerprint", self.fingerprint)
+      .link("number", self.number, format!("/package/{}", self.number))
+      .code_link(
+        "fingerprint",
+        self.fingerprint,
+        format!("/package/{}", self.fingerprint),
+      )
       .value("size", format_size(self.totals.file_size))
       .link(
         "files",
@@ -164,13 +168,13 @@ mod tests {
             <div>
               <dt>number</dt>
               <dd>
-                1
+                <a href='/package/1'>1</a>
               </dd>
             </div>
             <div>
               <dt>fingerprint</dt>
               <dd>
-                <code>{fingerprint}</code>
+                <a href='/package/{fingerprint}'><code>{fingerprint}</code></a>
               </dd>
             </div>
             <div>
@@ -279,13 +283,13 @@ mod tests {
             <div>
               <dt>number</dt>
               <dd>
-                1
+                <a href='/package/1'>1</a>
               </dd>
             </div>
             <div>
               <dt>fingerprint</dt>
               <dd>
-                <code>{fingerprint}</code>
+                <a href='/package/{fingerprint}'><code>{fingerprint}</code></a>
               </dd>
             </div>
             <div>
@@ -428,13 +432,13 @@ mod tests {
             <div>
               <dt>number</dt>
               <dd>
-                1
+                <a href='/package/1'>1</a>
               </dd>
             </div>
             <div>
               <dt>fingerprint</dt>
               <dd>
-                <code>{fingerprint}</code>
+                <a href='/package/{fingerprint}'><code>{fingerprint}</code></a>
               </dd>
             </div>
             <div>
@@ -558,13 +562,13 @@ mod tests {
             <div>
               <dt>number</dt>
               <dd>
-                1
+                <a href='/package/1'>1</a>
               </dd>
             </div>
             <div>
               <dt>fingerprint</dt>
               <dd>
-                <code>{fingerprint}</code>
+                <a href='/package/{fingerprint}'><code>{fingerprint}</code></a>
               </dd>
             </div>
             <div>
@@ -792,13 +796,13 @@ mod tests {
             <div>
               <dt>number</dt>
               <dd>
-                1
+                <a href='/package/1'>1</a>
               </dd>
             </div>
             <div>
               <dt>fingerprint</dt>
               <dd>
-                <code>{fingerprint}</code>
+                <a href='/package/{fingerprint}'><code>{fingerprint}</code></a>
               </dd>
             </div>
             <div>
@@ -1000,13 +1004,13 @@ mod tests {
             <div>
               <dt>number</dt>
               <dd>
-                1
+                <a href='/package/1'>1</a>
               </dd>
             </div>
             <div>
               <dt>fingerprint</dt>
               <dd>
-                <code>{fingerprint}</code>
+                <a href='/package/{fingerprint}'><code>{fingerprint}</code></a>
               </dd>
             </div>
             <div>

@@ -1,6 +1,5 @@
 #[derive(Debug, PartialEq)]
 pub(crate) enum Info {
-  Code(String),
   Link {
     code: bool,
     text: String,

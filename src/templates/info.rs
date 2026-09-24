@@ -8,14 +8,6 @@ mod tests {
   use {super::*, pretty_assertions::assert_eq};
 
   #[test]
-  fn code() {
-    assert_eq!(
-      InfoHtml(&Info::Code("foo".into())).to_string(),
-      "<code>foo</code>\n",
-    );
-  }
-
-  #[test]
   fn code_link() {
     assert_eq!(
       InfoHtml(&Info::Link {
