@@ -9,11 +9,6 @@ impl InfoBuilder {
     Info::Map(self.map)
   }
 
-  pub(crate) fn code(mut self, key: &str, value: impl Display) -> Self {
-    self.map.push((key.into(), Info::Code(value.to_string())));
-    self
-  }
-
   pub(crate) fn code_link(mut self, key: &str, text: impl Display, url: String) -> Self {
     self.map.push((
       key.into(),
@@ -101,7 +96,6 @@ mod tests {
         .link("corge", "grault", "garply".into())
         .code_link("plugh", "xyzzy", "thud".into())
         .list("waldo", [Info::Value("fred".into())])
-        .code("wubble", "flob")
         .info(
           "spam",
           Info::Map(vec![("eggs".into(), Info::Value("ham".into()))])
@@ -133,7 +127,6 @@ mod tests {
           },
         ),
         ("waldo".into(), Info::List(vec![Info::Value("fred".into())])),
-        ("wubble".into(), Info::Code("flob".into())),
         (
           "spam".into(),
           Info::Map(vec![("eggs".into(), Info::Value("ham".into()))]),

@@ -2516,6 +2516,7 @@ fn package_media() {
       fingerprint,
       identifier: PackageIdentifier::Fingerprint(fingerprint),
       metadata,
+      number: 1,
     })
     .send();
 }
@@ -2542,6 +2543,7 @@ fn package_media_by_number() {
       fingerprint,
       identifier: PackageIdentifier::Number(1),
       metadata,
+      number: 1,
     })
     .send();
 }

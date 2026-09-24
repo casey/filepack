@@ -28,8 +28,10 @@
       <a href=/package/{{ self.identifier }}>
 %% if let Some(title) = self.title() {
         {{ title }}
+%% } else if let PackageIdentifier::Fingerprint(fingerprint) = self.identifier {
+        <code>{{ fingerprint }}</code>
 %% } else {
-        <code>{{ self.fingerprint }}</code>
+        {{ self.identifier }}
 %% }
       </a>
     </p>
