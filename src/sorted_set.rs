@@ -11,7 +11,7 @@ impl<T: Ord> From<BTreeSet<T>> for SortedSet<T> {
 }
 impl<T> Default for SortedSet<T> {
   fn default() -> Self {
-    Self(Default::default())
+    Self(Vec::default())
   }
 }
 
