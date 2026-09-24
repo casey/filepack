@@ -9,8 +9,8 @@ use {
   std::collections::HashSet,
   strum::{Display, EnumString},
   syn::{
-    Attribute, DeriveInput, Error, Generics, Ident, Index, LitInt, Member, Path, Result, Type,
-    TypeParamBound, TypePath,
+    Attribute, DeriveInput, Error, Generics, Ident, Index, LitByteStr, LitInt, Member, Path,
+    Result, Type, TypeParamBound, TypePath,
   },
   usized::IntoU64,
 };
@@ -90,6 +90,21 @@ pub fn encode_display(input: TokenStream) -> TokenStream {
     }
   }
   .into()
+}
+
+#[proc_macro_derive(Magic, attributes(deco, n))]
+pub fn magic(input: TokenStream) -> TokenStream {
+  let input = syn::parse_macro_input!(input as DeriveInput);
+
+  let input = match Input::from_derive_input(&input) {
+    Ok(input) => input,
+    Err(err) => return err.write_errors().into(),
+  };
+
+  match input.magic() {
+    Ok(tokens) => tokens.into(),
+    Err(err) => err.to_compile_error().into(),
+  }
 }
 
 fn number(ident: &Ident, attributes: &[Attribute]) -> Result<u64> {

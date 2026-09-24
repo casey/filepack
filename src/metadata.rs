@@ -2,8 +2,8 @@ use super::*;
 
 #[allow(clippy::arbitrary_source_item_ordering, private_interfaces)]
 #[skip_serializing_none]
-#[derive(Clone, Debug, Default, Encode, Decode, PartialEq, Serialize)]
-#[deco(magic)]
+#[derive(Clone, Debug, Default, Encode, Decode, Magic, PartialEq, Serialize)]
+#[deco(magic = b"filepack-metadata\0")]
 pub struct Metadata {
   #[n(0)]
   #[serde(skip)]
@@ -319,10 +319,6 @@ impl Metadata {
 
     Ok(())
   }
-}
-
-impl Magic for Metadata {
-  const BYTES: MagicBytes = *b"filepack-metadata\0";
 }
 
 #[cfg(test)]
