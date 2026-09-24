@@ -416,7 +416,7 @@ pub(crate) async fn package_media(
   Path(identifier): Path<PackageIdentifier>,
 ) -> PageResult<MediaHtml> {
   block_in_place(|| {
-    let (_, fingerprint) = server.resolve(identifier)?;
+    let (number, fingerprint) = server.resolve(identifier)?;
 
     let metadata = server.package_metadata(fingerprint)?;
 
@@ -430,6 +430,7 @@ pub(crate) async fn package_media(
         fingerprint,
         identifier,
         metadata,
+        number,
       }
       .page(server_config.url.clone()),
     )

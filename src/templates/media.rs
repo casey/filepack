@@ -5,15 +5,17 @@ pub(crate) struct MediaHtml {
   pub(crate) fingerprint: Fingerprint,
   pub(crate) identifier: PackageIdentifier,
   pub(crate) metadata: Metadata,
+  pub(crate) number: u64,
 }
 
 impl MediaHtml {
   fn info(&self) -> Info {
     InfoBuilder::new()
+      .link("number", self.number, format!("/package/{}", self.number))
       .code_link(
-        "package",
+        "fingerprint",
         self.fingerprint,
-        format!("/package/{}", self.identifier),
+        format!("/package/{}", self.fingerprint),
       )
       .list(
         "items",
@@ -46,6 +48,10 @@ impl Page for MediaHtml {
       format!("{} media · Filepack", self.fingerprint)
     }
   }
+
+  fn up(&self) -> Option<String> {
+    Some(format!("/package/{}", self.identifier))
+  }
 }
 
 #[cfg(test)]
@@ -68,15 +74,22 @@ mod tests {
             }),
             ..default()
           },
+          number: 1,
         }
         .to_string(),
         unindent(&format!(
           "
           <dl>
             <div>
-              <dt>package</dt>
+              <dt>number</dt>
               <dd>
-                <a href='/package/{identifier}'><code>{fingerprint}</code></a>
+                <a href='/package/1'>1</a>
+              </dd>
+            </div>
+            <div>
+              <dt>fingerprint</dt>
+              <dd>
+                <a href='/package/{fingerprint}'><code>{fingerprint}</code></a>
               </dd>
             </div>
             <div>
@@ -142,6 +155,25 @@ mod tests {
         ",
           fingerprint = test::FINGERPRINT,
         )),
+      );
+    }
+  }
+
+  #[test]
+  fn up() {
+    for identifier in [
+      PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
+      PackageIdentifier::Number(1),
+    ] {
+      assert_eq!(
+        MediaHtml {
+          fingerprint: test::FINGERPRINT.parse().unwrap(),
+          identifier,
+          metadata: default(),
+          number: 1,
+        }
+        .up(),
+        Some(format!("/package/{identifier}")),
       );
     }
   }

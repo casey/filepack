@@ -504,6 +504,37 @@ mod tests {
         "
       ),
     );
+
+    assert_eq!(
+      ItemHtml {
+        fingerprint: test::FINGERPRINT.parse().unwrap(),
+        identifier: PackageIdentifier::Number(1),
+        index: 0,
+        metadata: Metadata {
+          media: Some(Media::Image {
+            items: vec![Item::test("foo.png")],
+          }),
+          ..default()
+        },
+      }
+      .to_string(),
+      unindent(&format!(
+        "
+          <img src=/media/image/{fingerprint}/item/1 width=1 height=1>
+          <footer>
+            <hgroup>
+              <h1>Image 1</h1>
+              <p>
+                <a href=/package/1>
+                  1
+                </a>
+              </p>
+            </hgroup>
+            {shortcuts}
+          </footer>
+        "
+      )),
+    );
   }
 
   #[test]
