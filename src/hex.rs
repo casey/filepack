@@ -197,6 +197,7 @@ mod tests {
     case::<Fingerprint>(test::FINGERPRINT);
     case::<Hash>(test::HASH);
     case::<PublicKey>(test::PUBLIC_KEY);
+    case::<Revision>(test::REVISION);
     case::<Token>(test::TOKEN);
   }
 }

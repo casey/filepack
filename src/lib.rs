@@ -278,6 +278,8 @@ pub use self::{
   png_builder::PngBuilder,
   private_key::PrivateKey,
   public_key::PublicKey,
+  revision::Revision,
+  revision_object::RevisionObject,
   totals::Totals,
 };
 
@@ -434,6 +436,8 @@ mod relative_path;
 mod reqwest_response_ext;
 mod resource;
 mod resource_type;
+mod revision;
+mod revision_object;
 mod rotation;
 mod server;
 mod server_error;

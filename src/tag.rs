@@ -6,6 +6,7 @@ pub enum Tag {
   Hash,
   PrivateKey,
   PublicKey,
+  Revision,
   Signature,
   Token,
 }
@@ -17,6 +18,7 @@ impl Tag {
       Self::Hash => "hash",
       Self::PrivateKey => "private key",
       Self::PublicKey => "public key",
+      Self::Revision => "revision",
       Self::Signature => "signature",
       Self::Token => "token",
     }
@@ -28,6 +30,7 @@ impl Tag {
       Self::Hash => "hash",
       Self::PrivateKey => "private",
       Self::PublicKey => "public",
+      Self::Revision => "revision",
       Self::Signature => "signature",
       Self::Token => "token",
     }
