@@ -159,7 +159,7 @@ impl Input {
     let magic = attributes
       .magic()
       .is_some()
-      .then(|| quote! { decoder.magic_bytes(&<Self as Magic>::BYTES)?; });
+      .then(|| quote! { decoder.magic(<Self as Magic>::TYPE)?; });
 
     let map = if attributes.strict() {
       quote!(strict_map)
@@ -288,7 +288,7 @@ impl Input {
     let magic = attributes
       .magic()
       .is_some()
-      .then(|| quote! { encoder.bytes(&<Self as Magic>::BYTES); });
+      .then(|| quote! { encoder.magic(<Self as Magic>::TYPE); });
 
     let generics = self.encode_generics();
 
@@ -342,7 +342,7 @@ impl Input {
     let Some(magic) = attributes.magic() else {
       return Err(Error::new_spanned(
         name,
-        "missing `#[deco(magic = b\"...\")]` attribute",
+        "missing `#[deco(magic = MagicType::Variant)]` attribute",
       ));
     };
 
@@ -350,7 +350,7 @@ impl Input {
 
     Ok(quote! {
       impl #impl_generics Magic for #name #ty_generics #where_clause {
-        const BYTES: MagicBytes = *#magic;
+        const TYPE: MagicType = #magic;
       }
     })
   }
@@ -381,14 +381,14 @@ impl Input {
             return Err(meta.error("duplicate `#[deco(magic)]` attribute"));
           }
 
-          magic = Some(meta.value()?.parse::<LitByteStr>()?);
+          magic = Some(path_value(&meta, "MagicType::Variant")?);
         } else {
-          let attribute = meta
-            .path
-            .require_ident()?
+          let ident = meta.path.require_ident()?;
+
+          let attribute = ident
             .to_string()
             .parse::<ContainerAttribute>()
-            .map_err(|_| meta.error("unknown `#[deco(...)]` attribute"))?;
+            .map_err(|_| meta.error(format!("unknown container attribute `#[deco({ident})]`")))?;
 
           if !meta.input.is_empty() && !meta.input.peek(syn::Token![,]) {
             return Err(meta.error(format!("`#[deco({attribute})]` does not take a value")));
@@ -548,7 +548,7 @@ mod tests {
 
     case(
       &syn::parse_quote! {
-        #[deco(magic = b"foo")]
+        #[deco(magic = Foo)]
         enum Foo {}
       },
       "`#[deco(magic)]` cannot be used with enums",
@@ -556,7 +556,7 @@ mod tests {
 
     case(
       &syn::parse_quote! {
-        #[deco(magic = b"foo", magic = b"bar")]
+        #[deco(magic = Foo, magic = Bar)]
         struct Foo {}
       },
       "duplicate `#[deco(magic)]` attribute",
@@ -564,7 +564,7 @@ mod tests {
 
     case(
       &syn::parse_quote! {
-        #[deco(magic = b"foo", transparent)]
+        #[deco(magic = Foo, transparent)]
         struct Foo(u64);
       },
       "`#[deco(magic)]` cannot be used with `#[deco(transparent)]`",
@@ -572,10 +572,26 @@ mod tests {
 
     case(
       &syn::parse_quote! {
-        #[deco(transparent, magic = b"foo")]
+        #[deco(transparent, magic = Foo)]
         struct Foo(u64);
       },
       "`#[deco(magic)]` cannot be used with `#[deco(transparent)]`",
+    );
+
+    case(
+      &syn::parse_quote! {
+        #[deco(magic)]
+        struct Foo {}
+      },
+      "`#[deco(magic)]` must be of the form `#[deco(magic = MagicType::Variant)]`",
+    );
+
+    case(
+      &syn::parse_quote! {
+        #[deco(magic = "foo")]
+        struct Foo {}
+      },
+      "`#[deco(magic)]` must be of the form `#[deco(magic = MagicType::Variant)]`",
     );
 
     case(
@@ -586,7 +602,26 @@ mod tests {
           foo: Option<u64>,
         }
       },
-      "unknown `#[deco(...)]` attribute",
+      "unknown field attribute `#[deco(strict)]`",
+    );
+
+    case(
+      &syn::parse_quote! {
+        #[deco(decode_with = foo)]
+        struct Foo {}
+      },
+      "unknown container attribute `#[deco(decode_with)]`",
+    );
+
+    case(
+      &syn::parse_quote! {
+        struct Foo {
+          #[deco(decode_with)]
+          #[n(0)]
+          foo: u64,
+        }
+      },
+      "`#[deco(decode_with)]` must be of the form `#[deco(decode_with = path)]`",
     );
 
     case(
@@ -646,7 +681,7 @@ mod tests {
       .err()
       .unwrap()
       .to_string(),
-      "missing `#[deco(magic = b\"...\")]` attribute",
+      "missing `#[deco(magic = MagicType::Variant)]` attribute",
     );
   }
 }

@@ -2,11 +2,11 @@ use super::*;
 
 pub(crate) struct Attributes {
   pub(crate) flags: HashSet<ContainerAttribute>,
-  pub(crate) magic: Option<LitByteStr>,
+  pub(crate) magic: Option<Path>,
 }
 
 impl Attributes {
-  pub(crate) fn magic(&self) -> Option<&LitByteStr> {
+  pub(crate) fn magic(&self) -> Option<&Path> {
     self.magic.as_ref()
   }
 

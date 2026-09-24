@@ -60,16 +60,17 @@ impl Field {
           if decode_with.is_some() {
             return Err(meta.error("duplicate `#[deco(decode_with)]` attribute"));
           }
-          decode_with = Some(meta.value()?.parse::<Path>()?);
+          decode_with = Some(path_value(&meta, "path")?);
           Ok(())
         } else if meta.path.is_ident("encode_with") {
           if encode_with.is_some() {
             return Err(meta.error("duplicate `#[deco(encode_with)]` attribute"));
           }
-          encode_with = Some(meta.value()?.parse::<Path>()?);
+          encode_with = Some(path_value(&meta, "path")?);
           Ok(())
         } else {
-          Err(meta.error("unknown `#[deco(...)]` attribute"))
+          let ident = meta.path.require_ident()?;
+          Err(meta.error(format!("unknown field attribute `#[deco({ident})]`")))
         }
       })?;
     }

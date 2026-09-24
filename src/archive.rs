@@ -2,7 +2,7 @@ use super::*;
 
 #[allow(clippy::arbitrary_source_item_ordering)]
 #[derive(Encode, Decode, Magic)]
-#[deco(magic = b"filepack-archive\0\0")]
+#[deco(magic = MagicType::Archive)]
 pub struct Archive {
   #[n(0)]
   pub(crate) version: Version,

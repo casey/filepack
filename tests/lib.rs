@@ -2,10 +2,9 @@ use {
   self::{child::Child, dedent::Dedent, expected::Expected, test::Test},
   camino::{Utf8Path, Utf8PathBuf},
   filepack::{
-    Archive, Decode, Decoder, Directory, DirectoryExt, Encode, Encoder, Entry, Fingerprint,
-    FlacBuilder, Hash, Loader, Magic, Manifest, Metadata, Mp3Builder, Mp4Builder,
-    PackageIdentifier, Page, PngBuilder, PrivateKey, PublicKey, Totals, gradient, gradient_alpha,
-    hex,
+    Decode, Decoder, Directory, DirectoryExt, Encode, Encoder, Entry, Fingerprint, FlacBuilder,
+    Hash, Loader, MagicType, Manifest, Metadata, Mp3Builder, Mp4Builder, PackageIdentifier, Page,
+    PngBuilder, PrivateKey, PublicKey, Totals, gradient, gradient_alpha, hex,
     templates::{DirectoryHtml, PackageHtml},
   },
   image::{DynamicImage, ImageFormat},
@@ -50,6 +49,7 @@ mod keygen;
 mod languages;
 mod lint;
 mod lints;
+mod magic;
 mod man;
 mod manifest;
 mod metadata;

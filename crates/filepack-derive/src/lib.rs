@@ -9,8 +9,8 @@ use {
   std::collections::HashSet,
   strum::{Display, EnumString},
   syn::{
-    Attribute, DeriveInput, Error, Generics, Ident, Index, LitByteStr, LitInt, Member, Path,
-    Result, Type, TypeParamBound, TypePath,
+    Attribute, DeriveInput, Error, Generics, Ident, Index, LitInt, Member, Path, Result, Type,
+    TypeParamBound, TypePath, meta::ParseNestedMeta, parse::ParseBuffer,
   },
   usized::IntoU64,
 };
@@ -120,6 +120,15 @@ fn number(ident: &Ident, attributes: &[Attribute]) -> Result<u64> {
   }
 
   n.ok_or_else(|| Error::new_spanned(ident, "missing `#[n(N)]` attribute"))
+}
+
+fn path_value(meta: &ParseNestedMeta, placeholder: &str) -> Result<Path> {
+  let name = meta.path.require_ident()?;
+  meta.value().and_then(ParseBuffer::parse).map_err(|_| {
+    meta.error(format!(
+      "`#[deco({name})]` must be of the form `#[deco({name} = {placeholder})]`"
+    ))
+  })
 }
 
 fn validate_numbers<'a>(ns: impl IntoIterator<Item = (&'a Ident, u64)>) -> Result<()> {

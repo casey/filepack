@@ -77,15 +77,26 @@ impl<'a> Decoder<'a> {
     self.position == self.buffer.len()
   }
 
-  pub(crate) fn magic_bytes(&mut self, expected: &MagicBytes) -> DecodeResult {
+  pub(crate) fn magic(&mut self, expected: MagicType) -> DecodeResult {
     let actual = self.bytes()?;
+    if actual != magic::BYTES {
+      let len = actual.len().min(16);
+      return Err(
+        decode_error::MagicBytes {
+          actual: &actual[..len],
+          expected: magic::BYTES,
+          truncated: actual.len() > len,
+        }
+        .build(),
+      );
+    }
+
+    let actual = MagicType::decode(self)?;
     ensure!(
       actual == expected,
-      decode_error::MagicBytes {
-        actual: &actual[..actual.len().min(expected.len() + 1)],
-        expected: *expected,
-      },
+      decode_error::MagicType { actual, expected },
     );
+
     Ok(())
   }
 

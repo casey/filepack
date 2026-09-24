@@ -304,7 +304,7 @@ fn enum_array_missing_field() {
 
   assert_eq!(
     Foo::decode_from_slice(&[0x00]).unwrap_err().to_string(),
-    "missing required field: 0",
+    "missing field with key 0",
   );
 }
 
@@ -548,46 +548,40 @@ fn enum_variant_encode_with() {
 #[test]
 fn magic() {
   #[derive(Debug, Decode, Encode, Magic, PartialEq)]
-  #[deco(magic = b"foo\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0")]
+  #[deco(magic = MagicType::Archive)]
   struct Foo {
     #[n(0)]
     bar: u64,
   }
 
   #[track_caller]
-  fn mismatch(magic: &[u8], found: &str) {
-    let mut encoder = Encoder::new();
-    Foo { bar: 1 }.encode(&mut encoder);
-    encoder.bytes(magic);
+  fn case(bytes: &[u8], expected: &str) {
     assert_eq!(
-      Foo::decode_from_slice(&encoder.finish())
-        .unwrap_err()
-        .to_string(),
-      format!(
-        "unexpected magic bytes, expected \
-        `foo\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00` \
-        but found `{found}`"
-      ),
+      Foo::decode_from_slice(bytes).unwrap_err().to_string(),
+      expected,
     );
   }
 
-  assert_deco(
-    Foo { bar: 1 },
-    "92666f6f000000000000000000000000000000820001",
+  assert_deco(Foo { bar: 1 }, "8966696c657061636b008761726368697665820001");
+
+  case(
+    b"\x83bar\x80",
+    "expected magic bytes `filepack\\x00` but found `bar`",
   );
 
-  let mut encoder = Encoder::new();
-  BTreeMap::<u64, u64>::new().encode(&mut encoder);
-  encoder.bytes(&Foo::BYTES);
-  assert_eq!(
-    Foo::decode_from_slice(&encoder.finish())
-      .unwrap_err()
-      .to_string(),
-    "missing required field: 0",
+  case(
+    b"\x910123456789abcdefg\x80",
+    "expected magic bytes `filepack\\x00` but found `0123456789abcdef…`",
   );
 
-  mismatch(b"bar", "bar");
-  mismatch(b"barbarbarbarbarbarbar", "barbarbarbarbarbar…");
+  case(b"\x89filepack\0\x83foo\x80", "failed to parse MagicType");
+
+  case(
+    b"\x89filepack\0\x88metadata\x80",
+    "expected magic type `archive` but found `metadata`",
+  );
+
+  case(b"\x89filepack\0\x87archive\x80", "missing field with key 0");
 }
 
 #[test]
