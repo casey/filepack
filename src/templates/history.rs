@@ -30,7 +30,7 @@ mod tests {
       unindent(&format!(
         "
           <h1>Package 1 history</h1>
-          <ol>
+          <ol reversed>
             <li>
               <a href=/package/{revision}><code>{revision}</code></a>
               <a href=/package/{fingerprint}><code>{fingerprint}</code></a>
