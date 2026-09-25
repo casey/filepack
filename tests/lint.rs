@@ -335,12 +335,17 @@ fn deny_junk_ignores_compatibility() {
   Test::new()
     .touch("aux")
     .touch(".DS_Store")
+    .touch("foo/.filepack/bar")
     .args(["create", "--deny", "junk"])
     .stderr(
       "
         error: path failed lint: `.DS_Store`
                └─ possible junk file
-        error: 1 lint error
+        error: path failed lint: `foo/.filepack`
+               └─ possible junk file
+        error: path failed lint: `foo/.filepack/bar`
+               └─ possible junk file
+        error: 3 lint errors
       ",
     )
     .failure();

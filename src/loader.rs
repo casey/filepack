@@ -57,6 +57,10 @@ impl Loader {
     &self.path
   }
 
+  pub(crate) fn root(&self) -> &Utf8Path {
+    self.path.parent().unwrap()
+  }
+
   pub(crate) fn unpack(&self) -> Result<Manifest> {
     self
       .archive

@@ -128,6 +128,12 @@ pub enum Error {
     path: DisplayPath,
     source: serde_yaml::Error,
   },
+  #[snafu(display("failed to deserialize state at `{path}`"))]
+  DeserializeState {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+    source: serde_json::Error,
+  },
   #[snafu(display("directory `{hash}` totals error"))]
   DirectoryTotals {
     backtrace: Option<Backtrace>,
@@ -475,6 +481,16 @@ pub enum Error {
     body: String,
     status: StatusCode,
     url: Url,
+  },
+  #[snafu(display(
+    "package number {number} is at revision {server} on the server, but the last uploaded revision \
+     is {local}"
+  ))]
+  RevisionStale {
+    backtrace: Option<Backtrace>,
+    local: Revision,
+    number: u64,
+    server: Revision,
   },
   #[snafu(display("failed to install rustls ring crypto provider"))]
   RustlsProvider { backtrace: Option<Backtrace> },

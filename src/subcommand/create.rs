@@ -126,11 +126,7 @@ impl Create {
 
       let relative = RelativePath::try_from(relative).context(error::Path { path: relative })?;
 
-      if self
-        .ignore
-        .iter()
-        .any(|ignore| relative.starts_with(ignore))
-      {
+      if ignore(&relative, &self.ignore) {
         continue;
       }
 

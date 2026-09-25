@@ -111,17 +111,58 @@ impl Upload {
   fn upload_package(&self, options: Options, client: Client) -> Result {
     let loader = Loader::load(self.input.as_deref())?;
 
+    let root = loader.root().to_owned();
+
+    let mut state = State::load(&root)?;
+
+    let server = self.server.to_string();
+
     let package = loader.package()?;
 
     let fingerprint = Fingerprint(package.hash());
 
-    let previous = if let Some(number) = self.update {
+    let update = match (self.replace, self.update) {
+      (Some(_), Some(_)) => unreachable!(),
+      (Some(_), None) => None,
+      (None, Some(number)) => Some(number),
+      (None, None) => state
+        .servers
+        .get(&server)
+        .map(|server_state| server_state.number),
+    };
+
+    let previous = if let Some(number) = update {
       let head = client.number(number)?;
 
+      if let Some(server_state) = state.servers.get(&server)
+        && server_state.number == number
+        && server_state.revision != head.revision
+      {
+        return Err(
+          error::RevisionStale {
+            local: server_state.revision,
+            number,
+            server: head.revision,
+          }
+          .build(),
+        );
+      }
+
       if head.package == fingerprint {
+        state.servers.insert(
+          server,
+          ServerState {
+            number,
+            revision: head.revision,
+          },
+        );
+
+        state.save(&root)?;
+
         if !options.quiet {
           eprintln!("package number {number} is up to date");
         }
+
         return Ok(());
       }
 
@@ -138,10 +179,24 @@ impl Upload {
 
     let revision = revision_object.hash();
 
-    if self.replace.is_none() && self.update.is_none() && client.is_head(revision)? {
+    if self.replace.is_none() && update.is_none() && client.is_head(revision)? {
+      let number = client.verify_revision(
+        revision,
+        api::revision::Request {
+          mode: api::revision::Mode::New,
+        },
+      )?;
+
+      state
+        .servers
+        .insert(server, ServerState { number, revision });
+
+      state.save(&root)?;
+
       if !options.quiet {
-        eprintln!("server already has package");
+        eprintln!("server already has package number {number}");
       }
+
       return Ok(());
     }
 
@@ -181,8 +236,6 @@ impl Upload {
       progress_bar: ProgressBar::items(&options, bytes, files, "files"),
     };
 
-    let root = context.loader.path().parent().unwrap().to_owned();
-
     Self::upload_directory(&mut context, &root, package.hash(), package.size())?;
 
     context.client.verify_package(fingerprint)?;
@@ -191,7 +244,7 @@ impl Upload {
       .client
       .put_file(revision.into(), revision_object.encode_to_vec().into())?;
 
-    let (mode, verb) = match (self.replace, self.update) {
+    let (mode, verb) = match (self.replace, update) {
       (Some(number), None) => (api::revision::Mode::Replace { number }, "replaced"),
       (None, Some(number)) => (api::revision::Mode::Update { number }, "updated"),
       (None, None) => (api::revision::Mode::New, "created"),
@@ -201,6 +254,12 @@ impl Upload {
     let number = context
       .client
       .verify_revision(revision, api::revision::Request { mode })?;
+
+    state
+      .servers
+      .insert(server, ServerState { number, revision });
+
+    state.save(&root)?;
 
     if !options.quiet {
       eprintln!("{verb} package number {number}");

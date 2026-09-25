@@ -167,7 +167,7 @@ fingerprint mismatch: `{}`
 
       let path = RelativePath::try_from(path).context(error::Path { path })?;
 
-      if self.ignore.iter().any(|ignore| path.starts_with(ignore)) {
+      if ignore(&path, &self.ignore) {
         continue;
       }
 
