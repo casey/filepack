@@ -5,13 +5,15 @@ pub(crate) struct MediaHtml {
   pub(crate) fingerprint: Fingerprint,
   pub(crate) identifier: PackageIdentifier,
   pub(crate) metadata: Metadata,
-  pub(crate) number: u64,
+  pub(crate) number: Option<u64>,
 }
 
 impl MediaHtml {
   fn info(&self) -> Info {
     InfoBuilder::new()
-      .link("number", self.number, format!("/package/{}", self.number))
+      .when_some(self.number, |builder, number| {
+        builder.link("number", number, format!("/package/{number}"))
+      })
       .code_link(
         "fingerprint",
         self.fingerprint,
@@ -74,7 +76,7 @@ mod tests {
             }),
             ..default()
           },
-          number: 1,
+          number: Some(1),
         }
         .to_string(),
         unindent(&format!(
@@ -170,7 +172,7 @@ mod tests {
           fingerprint: test::FINGERPRINT.parse().unwrap(),
           identifier,
           metadata: default(),
-          number: 1,
+          number: Some(1),
         }
         .up(),
         Some(format!("/package/{identifier}")),

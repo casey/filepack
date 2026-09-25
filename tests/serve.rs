@@ -59,7 +59,7 @@ fn mount_rejects_non_web_package() {
     .stderr(
       "
         uploading 2 of 2 files
-        uploaded package number 1
+        created package number 1
       ",
     )
     .success();
@@ -93,7 +93,7 @@ fn mount_rejects_package_without_media_type() {
     .stderr(
       "
         uploading 2 of 2 files
-        uploaded package number 1
+        created package number 1
       ",
     )
     .success();

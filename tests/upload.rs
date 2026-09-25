@@ -59,7 +59,7 @@ fn reupload_package_succeeds() {
     .stderr(
       "
         uploading 4 of 4 files
-        uploaded package number 1
+        created package number 1
       ",
     )
     .success()
@@ -178,7 +178,7 @@ fn signatures_are_not_uploaded() {
     .stderr(
       "
         uploading 3 of 3 files
-        uploaded package number 1
+        created package number 1
       ",
     )
     .success();
@@ -250,7 +250,7 @@ fn upload_package_accepts_directory() {
     .stderr(
       "
         uploading 1 of 1 file
-        uploaded package number 1
+        created package number 1
       ",
     )
     .success();
@@ -273,7 +273,7 @@ fn upload_package_defaults_to_current_directory() {
     .stderr(
       "
         uploading 1 of 1 file
-        uploaded package number 1
+        created package number 1
       ",
     )
     .success();
@@ -471,7 +471,7 @@ fn upload_package_serves_package_html() {
     .stderr(
       "
         uploading 2 of 2 files
-        uploaded package number 1
+        created package number 1
       ",
     )
     .success();
@@ -508,7 +508,7 @@ fn upload_package_serves_package_html() {
       metadata: Some(metadata),
       mounted: false,
       next: None,
-      number: 1,
+      number: None,
       prev: None,
       readme: None,
       totals,
@@ -537,7 +537,7 @@ fn upload_package_skips_files_already_on_server() {
     .stderr(
       "
         uploading 1 of 2 files
-        uploaded package number 1
+        created package number 1
       ",
     )
     .success();
@@ -573,7 +573,7 @@ fn upload_package_uploads_files() {
     .stderr(
       "
         uploading 4 of 4 files
-        uploaded package number 1
+        created package number 1
       ",
     )
     .success();
@@ -612,7 +612,7 @@ fn upload_replaces_package() {
     .stderr(
       "
         uploading 1 of 1 file
-        uploaded package number 1
+        created package number 1
       ",
     )
     .success()
@@ -642,13 +642,6 @@ fn upload_replaces_package() {
   let address = server.address();
 
   assert_eq!(
-    reqwest::blocking::get(format!("{address}/package/{old}"))
-      .unwrap()
-      .status(),
-    StatusCode::NOT_FOUND,
-  );
-
-  assert_eq!(
     reqwest::blocking::get(format!("{address}/package/{new}"))
       .unwrap()
       .status(),
@@ -661,6 +654,90 @@ fn upload_replaces_package() {
       .status(),
     StatusCode::OK,
   );
+
+  Test::new()
+    .args(["gc", "--server", &address])
+    .stderr("removed 1 revision, 1 directory, and 3 files, freeing 88 B\n")
+    .success();
+
+  assert_eq!(
+    reqwest::blocking::get(format!("{address}/package/{old}"))
+      .unwrap()
+      .status(),
+    StatusCode::NOT_FOUND,
+  );
+
+  server.terminate().success();
+}
+
+#[test]
+fn upload_updates_package() {
+  let server = Test::new().serve().spawn();
+
+  let test = Test::new()
+    .write("foo", "bar")
+    .args(["create", "."])
+    .success();
+
+  let old = fingerprint(&test.path().join("manifest.filepack"));
+
+  let test = test
+    .args(["upload", "--server", &server.address(), "manifest.filepack"])
+    .stderr(
+      "
+        uploading 1 of 1 file
+        created package number 1
+      ",
+    )
+    .success()
+    .args([
+      "upload",
+      "--server",
+      &server.address(),
+      "--update",
+      "1",
+      "manifest.filepack",
+    ])
+    .stderr("package number 1 is up to date\n")
+    .success()
+    .write("foo", "baz")
+    .args(["create", "--force", "."])
+    .success();
+
+  let new = fingerprint(&test.path().join("manifest.filepack"));
+
+  test
+    .args([
+      "upload",
+      "--server",
+      &server.address(),
+      "--update",
+      "1",
+      "manifest.filepack",
+    ])
+    .stderr(
+      "
+        uploading 1 of 1 file
+        updated package number 1
+      ",
+    )
+    .success();
+
+  let address = server.address();
+
+  Test::new()
+    .args(["gc", "--server", &address])
+    .stderr("removed 0 revisions, 0 directories, and 0 files, freeing 0 B\n")
+    .success();
+
+  for identifier in [old.to_string(), new.to_string(), "1".into()] {
+    assert_eq!(
+      reqwest::blocking::get(format!("{address}/package/{identifier}"))
+        .unwrap()
+        .status(),
+      StatusCode::OK,
+    );
+  }
 
   server.terminate().success();
 }

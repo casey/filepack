@@ -130,6 +130,8 @@ pub enum ServerError {
   PackageNumberNotFound { number: u64 },
   #[snafu(display("package {fingerprint} root directory is unverified"))]
   PackageRootUnverified { fingerprint: Fingerprint },
+  #[snafu(display("package {fingerprint} is unverified"))]
+  PackageUnverified { fingerprint: Fingerprint },
   #[snafu(display("page not found"))]
   PageNotFound,
   #[snafu(display("video {index} in package {fingerprint} does not have a placeholder image"))]
@@ -137,10 +139,43 @@ pub enum ServerError {
     fingerprint: Fingerprint,
     index: Ordinal,
   },
+  #[snafu(display(
+    "package number {number} is at revision {head} but revision's previous is {previous}"
+  ))]
+  RevisionConflict {
+    head: Revision,
+    number: u64,
+    previous: Revision,
+  },
   #[snafu(display("stored revision {revision} failed to decode"))]
   RevisionCorrupt {
     revision: Revision,
     source: DecodeError,
+  },
+  #[snafu(display("failed to decode revision {revision}"))]
+  RevisionDecode {
+    revision: Revision,
+    source: DecodeError,
+  },
+  #[snafu(display("revision {revision} is not the head of a package number"))]
+  RevisionNotHead { revision: Revision },
+  #[snafu(display(
+    "revision {revision} has no previous revision but package number {number} is at revision {head}"
+  ))]
+  RevisionPreviousMissing {
+    head: Revision,
+    number: u64,
+    revision: Revision,
+  },
+  #[snafu(display("revision {revision} references unknown previous revision {previous}"))]
+  RevisionPreviousNotFound {
+    previous: Revision,
+    revision: Revision,
+  },
+  #[snafu(display("revision {revision} has previous revision {previous}"))]
+  RevisionPreviousUnexpected {
+    previous: Revision,
+    revision: Revision,
   },
   #[snafu(display("failed to get current time"))]
   Time { source: SystemTimeError },
@@ -183,6 +218,11 @@ impl ServerError {
       | Self::PackageMetadataDecode { .. }
       | Self::PackageMetadataFileMissing { .. }
       | Self::PackageRootUnverified { .. }
+      | Self::PackageUnverified { .. }
+      | Self::RevisionDecode { .. }
+      | Self::RevisionPreviousMissing { .. }
+      | Self::RevisionPreviousNotFound { .. }
+      | Self::RevisionPreviousUnexpected { .. }
       | Self::UploadBodyRead { .. }
       | Self::UploadHashMismatch { .. } => StatusCode::BAD_REQUEST,
       Self::ArtworkNotFound { .. }
@@ -198,8 +238,9 @@ impl ServerError {
       | Self::PackageNotMounted { .. }
       | Self::PackageNumberNotFound { .. }
       | Self::PageNotFound
-      | Self::PlaceholderNotFound { .. } => StatusCode::NOT_FOUND,
-      Self::PackageNumberConflict { .. } => StatusCode::CONFLICT,
+      | Self::PlaceholderNotFound { .. }
+      | Self::RevisionNotHead { .. } => StatusCode::NOT_FOUND,
+      Self::PackageNumberConflict { .. } | Self::RevisionConflict { .. } => StatusCode::CONFLICT,
       Self::WriteForbidden => StatusCode::FORBIDDEN,
     }
   }

@@ -309,12 +309,19 @@ impl Serve {
       .route("/api/gc", post(route::api_gc))
       .route("/api/missing", post(route::api_missing))
       .route(
+        "/api/number/{number}",
+        delete(route::api_delete_number).get(route::api_number),
+      )
+      .route("/api/numbers", get(route::api_numbers))
+      .route(
         "/api/package/{fingerprint}",
-        delete(route::api_delete_package)
-          .head(route::api_package)
-          .post(route::api_verify_package),
+        post(route::api_verify_package).head(route::api_package),
       )
       .route("/api/packages", get(route::api_packages))
+      .route(
+        "/api/revision/{revision}",
+        post(route::api_verify_revision).head(route::api_revision),
+      )
       .route("/artwork/{fingerprint}", get(route::artwork))
       .route(
         "/artwork/{fingerprint}/thumbnail",

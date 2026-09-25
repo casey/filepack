@@ -113,9 +113,18 @@ impl<'a> PackageBuilder<'a> {
   fn upload(self, server: &TestServer) -> Fingerprint {
     let fingerprint = Fingerprint(self.root.upload(server));
 
+    server.post(format!("/api/package/{fingerprint}")).send();
+
+    let revision = server.write_revision(fingerprint, None);
+
     server
-      .post(format!("/api/package/{fingerprint}"))
-      .body(api::package::Request::default().encode_to_vec())
+      .post(format!("/api/revision/{revision}"))
+      .body(
+        api::revision::Request {
+          mode: api::revision::Mode::New,
+        }
+        .encode_to_vec(),
+      )
       .ignore_body()
       .send();
 
@@ -327,6 +336,25 @@ impl TestServer {
     TestRequestBuilder::new(Method::POST, path, self.router.clone())
   }
 
+  fn publish(&self, fingerprint: Fingerprint, number: u64) -> Revision {
+    self.post(format!("/api/package/{fingerprint}")).send();
+
+    let revision = self.write_revision(fingerprint, None);
+
+    self
+      .post(format!("/api/revision/{revision}"))
+      .body(
+        api::revision::Request {
+          mode: api::revision::Mode::New,
+        }
+        .encode_to_vec(),
+      )
+      .assert_body(api::revision::Response { number }.encode_to_vec())
+      .send();
+
+    revision
+  }
+
   fn put(&self, path: impl Into<String>) -> TestRequestBuilder {
     TestRequestBuilder::new(Method::PUT, path, self.router.clone())
   }
@@ -340,6 +368,18 @@ impl TestServer {
       content,
     )
     .unwrap();
+  }
+
+  fn write_revision(&self, package: Fingerprint, previous: Option<Revision>) -> Revision {
+    let revision_object = RevisionObject {
+      version: Version::Zero,
+      package,
+      previous,
+    };
+
+    self.write_file(&revision_object.encode_to_vec());
+
+    revision_object.hash()
   }
 }
 
@@ -425,6 +465,54 @@ fn api_file() {
 }
 
 #[test]
+fn api_number_not_found() {
+  TestServer::new()
+    .get("/api/number/1")
+    .status(StatusCode::NOT_FOUND)
+    .assert_body("package number 1 not found")
+    .send();
+}
+
+#[test]
+fn api_number_returns_head() {
+  let server = TestServer::new();
+
+  let package = PackageBuilder::new().file("foo", b"foo").upload(&server);
+
+  let revision = server.write_revision(package, None);
+
+  server
+    .get("/api/number/1")
+    .assert_body(api::number::Response { package, revision }.encode_to_vec())
+    .send();
+}
+
+#[test]
+fn api_numbers_returns_numbers() {
+  let server = TestServer::new();
+
+  server
+    .get("/api/numbers")
+    .assert_body(api::numbers::Response::default().encode_to_vec())
+    .send();
+
+  PackageBuilder::new().file("foo", b"foo").upload(&server);
+  PackageBuilder::new().file("bar", b"bar").upload(&server);
+
+  server.delete("/api/number/1").send();
+
+  server
+    .get("/api/numbers")
+    .assert_body(
+      api::numbers::Response {
+        numbers: BTreeSet::from([2]).into(),
+      }
+      .encode_to_vec(),
+    )
+    .send();
+}
+
+#[test]
 fn api_package() {
   let server = TestServer::new();
 
@@ -466,6 +554,24 @@ fn api_packages_returns_package_fingerprints() {
 }
 
 #[test]
+fn api_revision_head() {
+  let server = TestServer::new();
+
+  let fingerprint = PackageBuilder::new().file("foo", b"foo").upload(&server);
+
+  let revision = server.write_revision(fingerprint, None);
+
+  server.head(format!("/api/revision/{revision}")).send();
+
+  server.delete("/api/number/1").send();
+
+  server
+    .head(format!("/api/revision/{revision}"))
+    .status(StatusCode::NOT_FOUND)
+    .send();
+}
+
+#[test]
 fn artwork_missing() {
   let server = TestServer::new();
 
@@ -484,11 +590,7 @@ fn artwork_missing() {
   server.write_file(&deco);
 
   server.post(format!("/api/directory/{hash}")).send();
-  server
-    .post(format!("/api/package/{fingerprint}"))
-    .body(api::package::Request::default().encode_to_vec())
-    .assert_body(api::package::Response { number: 1 }.encode_to_vec())
-    .send();
+  server.publish(fingerprint, 1);
 
   let mut corrupt = Directory::new();
   corrupt.insert_file(Metadata::DECO_FILENAME, &metadata_deco);
@@ -563,11 +665,7 @@ fn artwork_response() {
     server.write_file(&deco);
 
     server.post(format!("/api/directory/{hash}")).send();
-    server
-      .post(format!("/api/package/{fingerprint}"))
-      .body(api::package::Request::default().encode_to_vec())
-      .assert_body(api::package::Response { number: 1 }.encode_to_vec())
-      .send();
+    server.publish(fingerprint, 1);
 
     server
       .get(format!("/artwork/{fingerprint}"))
@@ -755,14 +853,10 @@ fn default_serve_matches_parsed() {
 
 #[test]
 fn delete_package_not_found() {
-  let server = TestServer::new();
-
-  let fingerprint = PackageBuilder::new().fingerprint();
-
-  server
-    .delete(format!("/api/package/{fingerprint}"))
+  TestServer::new()
+    .delete("/api/number/1")
     .status(StatusCode::NOT_FOUND)
-    .assert_body(format!("package {fingerprint} not found"))
+    .assert_body("package number 1 not found")
     .send();
 }
 
@@ -776,10 +870,8 @@ fn delete_package_rejects_missing_auth_header() {
     })
     .build();
 
-  let fingerprint = PackageBuilder::new().fingerprint();
-
   server
-    .delete(format!("/api/package/{fingerprint}"))
+    .delete("/api/number/1")
     .status(StatusCode::UNAUTHORIZED)
     .assert_body("missing authorization header")
     .send();
@@ -789,9 +881,9 @@ fn delete_package_rejects_missing_auth_header() {
 fn delete_package_removes_number() {
   let server = TestServer::new();
 
-  let fingerprint = PackageBuilder::new().file("foo", b"foo").upload(&server);
+  PackageBuilder::new().file("foo", b"foo").upload(&server);
 
-  server.delete(format!("/api/package/{fingerprint}")).send();
+  server.delete("/api/number/1").send();
 
   server
     .get("/package/1")
@@ -808,7 +900,24 @@ fn delete_package_removes_package() {
 
   let fingerprint = PackageBuilder::new().file("foo", b"foo").upload(&server);
 
-  server.delete(format!("/api/package/{fingerprint}")).send();
+  server.delete("/api/number/1").send();
+
+  server
+    .get("/api/numbers")
+    .assert_body(api::numbers::Response::default().encode_to_vec())
+    .send();
+
+  server
+    .get("/api/packages")
+    .assert_body(
+      api::packages::Response {
+        packages: BTreeSet::from([fingerprint]).into(),
+      }
+      .encode_to_vec(),
+    )
+    .send();
+
+  server.post("/api/gc").ignore_body().send();
 
   server
     .get("/api/packages")
@@ -1070,7 +1179,7 @@ fn gc_removes_unreachable_and_retains_reachable_data() {
 
   let revision = revision_object.hash();
 
-  server.delete(format!("/api/package/{fingerprint}")).send();
+  server.delete("/api/number/2").send();
 
   server
     .post("/api/gc")
@@ -1153,7 +1262,7 @@ fn get_package_by_number() {
       metadata: None,
       mounted: false,
       next: None,
-      number: 1,
+      number: Some(1),
       prev: None,
       readme: None,
       totals: Totals::default(),
@@ -1180,13 +1289,13 @@ fn get_package_navigation() {
   let foo_directory = foo.directory();
   let foo = foo.upload(&server);
 
-  let bar = PackageBuilder::new().file("bar", b"bar").upload(&server);
+  PackageBuilder::new().file("bar", b"bar").upload(&server);
 
   let baz = PackageBuilder::new().file("baz", b"baz");
   let baz_directory = baz.directory();
   let baz = baz.upload(&server);
 
-  server.delete(format!("/api/package/{bar}")).send();
+  server.delete("/api/number/2").send();
 
   let totals = Totals {
     directories: 0,
@@ -1205,7 +1314,7 @@ fn get_package_navigation() {
       metadata: None,
       mounted: false,
       next: Some(3),
-      number: 1,
+      number: Some(1),
       prev: None,
       readme: None,
       totals,
@@ -1222,8 +1331,8 @@ fn get_package_navigation() {
       metadata: None,
       mounted: false,
       next: None,
-      number: 3,
-      prev: Some(1),
+      number: None,
+      prev: None,
       readme: None,
       totals,
     })
@@ -1290,11 +1399,7 @@ fn get_package_with_metadata() {
   server.write_file(&deco);
 
   server.post(format!("/api/directory/{hash}")).send();
-  server
-    .post(format!("/api/package/{fingerprint}"))
-    .body(api::package::Request::default().encode_to_vec())
-    .assert_body(api::package::Response { number: 1 }.encode_to_vec())
-    .send();
+  server.publish(fingerprint, 1);
 
   server
     .get(format!("/package/{fingerprint}"))
@@ -1306,7 +1411,7 @@ fn get_package_with_metadata() {
       metadata: Some(metadata),
       mounted: false,
       next: None,
-      number: 1,
+      number: None,
       prev: None,
       readme: Some(Hash::bytes(readme)),
       totals: Totals {
@@ -1329,11 +1434,7 @@ fn get_package_without_metadata() {
   server.write_file(&deco);
 
   server.post(format!("/api/directory/{hash}")).send();
-  server
-    .post(format!("/api/package/{fingerprint}"))
-    .body(api::package::Request::default().encode_to_vec())
-    .assert_body(api::package::Response { number: 1 }.encode_to_vec())
-    .send();
+  server.publish(fingerprint, 1);
 
   server
     .get(format!("/package/{fingerprint}"))
@@ -1345,7 +1446,7 @@ fn get_package_without_metadata() {
       metadata: None,
       mounted: false,
       next: None,
-      number: 1,
+      number: None,
       prev: None,
       readme: None,
       totals: Totals::default(),
@@ -1542,11 +1643,7 @@ fn media_audio_item_package_without_metadata() {
   server.write_file(&deco);
 
   server.post(format!("/api/directory/{hash}")).send();
-  server
-    .post(format!("/api/package/{fingerprint}"))
-    .body(api::package::Request::default().encode_to_vec())
-    .assert_body(api::package::Response { number: 1 }.encode_to_vec())
-    .send();
+  server.publish(fingerprint, 1);
 
   server
     .get(format!("/media/audio/{fingerprint}/item/1"))
@@ -2566,11 +2663,7 @@ fn package_item_without_metadata() {
   server.write_file(&deco);
 
   server.post(format!("/api/directory/{hash}")).send();
-  server
-    .post(format!("/api/package/{fingerprint}"))
-    .body(api::package::Request::default().encode_to_vec())
-    .assert_body(api::package::Response { number: 1 }.encode_to_vec())
-    .send();
+  server.publish(fingerprint, 1);
 
   server
     .get(format!("/package/{fingerprint}/item/1"))
@@ -2603,7 +2696,7 @@ fn package_media() {
       fingerprint,
       identifier: PackageIdentifier::Fingerprint(fingerprint),
       metadata,
-      number: 1,
+      number: None,
     })
     .send();
 }
@@ -2630,7 +2723,7 @@ fn package_media_by_number() {
       fingerprint,
       identifier: PackageIdentifier::Number(1),
       metadata,
-      number: 1,
+      number: Some(1),
     })
     .send();
 }
@@ -2680,11 +2773,7 @@ fn package_page_og_image() {
   server.write_file(&deco);
 
   server.post(format!("/api/directory/{hash}")).send();
-  server
-    .post(format!("/api/package/{fingerprint}"))
-    .body(api::package::Request::default().encode_to_vec())
-    .assert_body(api::package::Response { number: 1 }.encode_to_vec())
-    .send();
+  server.publish(fingerprint, 1);
 
   server
     .get(format!("/package/{fingerprint}"))
@@ -2697,7 +2786,7 @@ fn package_page_og_image() {
         metadata: Some(metadata),
         mounted: false,
         next: None,
-        number: 1,
+        number: None,
         prev: None,
         readme: None,
         totals: Totals {
@@ -2771,7 +2860,7 @@ fn package_page_renders_audio_media() {
       metadata: Some(metadata),
       mounted: false,
       next: None,
-      number: 1,
+      number: None,
       prev: None,
       readme: None,
       totals,
@@ -2827,7 +2916,7 @@ fn package_page_renders_image_media() {
       metadata: Some(metadata),
       mounted: false,
       next: None,
-      number: 1,
+      number: None,
       prev: None,
       readme: None,
       totals,
@@ -2900,7 +2989,7 @@ fn package_page_renders_video_media() {
       metadata: Some(metadata),
       mounted: false,
       next: None,
-      number: 1,
+      number: None,
       prev: None,
       readme: None,
       totals,
@@ -2941,7 +3030,7 @@ fn package_page_web() {
       metadata: Some(metadata),
       mounted: true,
       next: None,
-      number: 1,
+      number: None,
       prev: None,
       readme: None,
       totals: Totals {
@@ -3012,16 +3101,7 @@ fn packages_non_empty() {
     let fingerprint = Fingerprint(hash);
     server.write_file(&deco);
     server.post(format!("/api/directory/{hash}")).send();
-    server
-      .post(format!("/api/package/{fingerprint}"))
-      .body(api::package::Request::default().encode_to_vec())
-      .assert_body(
-        api::package::Response {
-          number: i.into_u64() + 1,
-        }
-        .encode_to_vec(),
-      )
-      .send();
+    server.publish(fingerprint, i.into_u64() + 1);
     packages.push(PackageSummary {
       fingerprint,
       metadata: None,
@@ -3679,30 +3759,23 @@ fn verify_package_assigns_numbers() {
 
   let foo = PackageBuilder::new().file("foo", b"foo").upload(&server);
 
-  server
-    .post(format!("/api/package/{foo}"))
-    .body(api::package::Request::default().encode_to_vec())
-    .assert_body(api::package::Response { number: 1 }.encode_to_vec())
-    .send();
+  server.publish(foo, 1);
 
   let bar = PackageBuilder::new().file("bar", b"bar").upload(&server);
 
-  server
-    .post(format!("/api/package/{bar}"))
-    .body(api::package::Request::default().encode_to_vec())
-    .assert_body(api::package::Response { number: 2 }.encode_to_vec())
-    .send();
+  server.publish(bar, 2);
+
+  let revision = server.publish(foo, 1);
 
   server
-    .post(format!("/api/package/{foo}"))
-    .body(api::package::Request::default().encode_to_vec())
-    .assert_body(api::package::Response { number: 1 }.encode_to_vec())
-    .send();
-
-  server
-    .post(format!("/api/package/{foo}"))
-    .body(api::package::Request { replace: Some(1) }.encode_to_vec())
-    .assert_body(api::package::Response { number: 1 }.encode_to_vec())
+    .post(format!("/api/revision/{revision}"))
+    .body(
+      api::revision::Request {
+        mode: api::revision::Mode::Replace { number: 1 },
+      }
+      .encode_to_vec(),
+    )
+    .assert_body(api::revision::Response { number: 1 }.encode_to_vec())
     .send();
 }
 
@@ -3723,7 +3796,6 @@ fn verify_package_metadata_decode_error() {
 
   server
     .post(format!("/api/package/{fingerprint}"))
-    .body(api::package::Request::default().encode_to_vec())
     .status(StatusCode::BAD_REQUEST)
     .assert_body(format!(
       "failed to decode metadata for package {fingerprint}"
@@ -3752,7 +3824,6 @@ fn verify_package_metadata_references_missing_file() {
 
   server
     .post(format!("/api/package/{fingerprint}"))
-    .body(api::package::Request::default().encode_to_vec())
     .status(StatusCode::BAD_REQUEST)
     .assert_body(format!(
       "package {fingerprint} metadata references missing file `cover.png`"
@@ -3783,11 +3854,7 @@ fn verify_package_metadata_references_present_file() {
 
   server.post(format!("/api/directory/{hash}")).send();
 
-  server
-    .post(format!("/api/package/{fingerprint}"))
-    .body(api::package::Request::default().encode_to_vec())
-    .assert_body(api::package::Response { number: 1 }.encode_to_vec())
-    .send();
+  server.publish(fingerprint, 1);
 }
 
 #[test]
@@ -3802,10 +3869,19 @@ fn verify_package_replace() {
   let directory = bar.directory();
   let bar = Fingerprint(bar.root.upload(&server));
 
+  server.post(format!("/api/package/{bar}")).send();
+
+  let revision = server.write_revision(bar, None);
+
   server
-    .post(format!("/api/package/{bar}"))
-    .body(api::package::Request { replace: Some(1) }.encode_to_vec())
-    .assert_body(api::package::Response { number: 1 }.encode_to_vec())
+    .post(format!("/api/revision/{revision}"))
+    .body(
+      api::revision::Request {
+        mode: api::revision::Mode::Replace { number: 1 },
+      }
+      .encode_to_vec(),
+    )
+    .assert_body(api::revision::Response { number: 1 }.encode_to_vec())
     .send();
 
   server
@@ -3818,7 +3894,7 @@ fn verify_package_replace() {
       metadata: None,
       mounted: false,
       next: None,
-      number: 1,
+      number: Some(1),
       prev: None,
       readme: None,
       totals: Totals {
@@ -3831,18 +3907,10 @@ fn verify_package_replace() {
     .send();
 
   server
-    .get(format!("/package/{foo}"))
-    .assert_error(
-      StatusCode::NOT_FOUND,
-      ServerError::PackageFingerprintNotFound { fingerprint: foo },
-    )
-    .send();
-
-  server
     .get("/api/packages")
     .assert_body(
       api::packages::Response {
-        packages: BTreeSet::from([bar]).into(),
+        packages: BTreeSet::from([foo, bar]).into(),
       }
       .encode_to_vec(),
     )
@@ -3868,6 +3936,24 @@ fn verify_package_replace() {
       .encode_to_vec(),
     )
     .send();
+
+  server
+    .get(format!("/package/{foo}"))
+    .assert_error(
+      StatusCode::NOT_FOUND,
+      ServerError::PackageFingerprintNotFound { fingerprint: foo },
+    )
+    .send();
+
+  server
+    .get("/api/packages")
+    .assert_body(
+      api::packages::Response {
+        packages: BTreeSet::from([bar]).into(),
+      }
+      .encode_to_vec(),
+    )
+    .send();
 }
 
 #[test]
@@ -3877,9 +3963,16 @@ fn verify_package_replace_conflict() {
   let foo = PackageBuilder::new().file("foo", b"foo").upload(&server);
   let bar = PackageBuilder::new().file("bar", b"bar").upload(&server);
 
+  let revision = server.write_revision(foo, None);
+
   server
-    .post(format!("/api/package/{foo}"))
-    .body(api::package::Request { replace: Some(2) }.encode_to_vec())
+    .post(format!("/api/revision/{revision}"))
+    .body(
+      api::revision::Request {
+        mode: api::revision::Mode::Replace { number: 2 },
+      }
+      .encode_to_vec(),
+    )
     .status(StatusCode::CONFLICT)
     .assert_body(format!("package {foo} already has number 1"))
     .send();
@@ -3902,9 +3995,18 @@ fn verify_package_replace_not_found() {
   let package = PackageBuilder::new().file("foo", b"foo");
   let fingerprint = Fingerprint(package.root.upload(&server));
 
+  server.post(format!("/api/package/{fingerprint}")).send();
+
+  let revision = server.write_revision(fingerprint, None);
+
   server
-    .post(format!("/api/package/{fingerprint}"))
-    .body(api::package::Request { replace: Some(99) }.encode_to_vec())
+    .post(format!("/api/revision/{revision}"))
+    .body(
+      api::revision::Request {
+        mode: api::revision::Mode::Replace { number: 99 },
+      }
+      .encode_to_vec(),
+    )
     .status(StatusCode::NOT_FOUND)
     .assert_body("package number 99 not found")
     .send();
@@ -3923,13 +4025,9 @@ fn verify_package_reuses_revision() {
   }
   .hash();
 
-  server.delete(format!("/api/package/{fingerprint}")).send();
+  server.delete("/api/number/1").send();
 
-  server
-    .post(format!("/api/package/{fingerprint}"))
-    .body(api::package::Request::default().encode_to_vec())
-    .assert_body(api::package::Response { number: 2 }.encode_to_vec())
-    .send();
+  server.publish(fingerprint, 2);
 
   server.assert_file(revision.into());
 
@@ -3951,7 +4049,6 @@ fn verify_package_unverified() {
 
   server
     .post(format!("/api/package/{fingerprint}"))
-    .body(api::package::Request::default().encode_to_vec())
     .status(StatusCode::BAD_REQUEST)
     .assert_body(format!(
       "package {fingerprint} root directory is unverified"
@@ -3960,19 +4057,252 @@ fn verify_package_unverified() {
 }
 
 #[test]
-fn verify_package_writes_revision() {
+fn verify_revision_decode_error() {
+  let server = TestServer::new();
+
+  let junk = b"foo";
+  server.write_file(junk);
+
+  let revision = Revision::from(Hash::bytes(junk));
+
+  server
+    .post(format!("/api/revision/{revision}"))
+    .body(
+      api::revision::Request {
+        mode: api::revision::Mode::New,
+      }
+      .encode_to_vec(),
+    )
+    .status(StatusCode::BAD_REQUEST)
+    .assert_body(format!("failed to decode revision {revision}"))
+    .send();
+}
+
+#[test]
+fn verify_revision_not_found() {
+  let server = TestServer::new();
+
+  let revision = Revision::from(Hash::bytes(b"foo"));
+
+  server
+    .post(format!("/api/revision/{revision}"))
+    .body(
+      api::revision::Request {
+        mode: api::revision::Mode::New,
+      }
+      .encode_to_vec(),
+    )
+    .status(StatusCode::NOT_FOUND)
+    .assert_body(format!("file with hash {} not found", Hash::from(revision)))
+    .send();
+}
+
+#[test]
+fn verify_revision_package_unverified() {
+  let server = TestServer::new();
+
+  let fingerprint = PackageBuilder::new().fingerprint();
+
+  let revision = server.write_revision(fingerprint, None);
+
+  server
+    .post(format!("/api/revision/{revision}"))
+    .body(
+      api::revision::Request {
+        mode: api::revision::Mode::New,
+      }
+      .encode_to_vec(),
+    )
+    .status(StatusCode::BAD_REQUEST)
+    .assert_body(format!("package {fingerprint} is unverified"))
+    .send();
+}
+
+#[test]
+fn verify_revision_previous_not_found() {
+  let server = TestServer::new();
+
+  let package = PackageBuilder::new().file("foo", b"foo");
+  let fingerprint = Fingerprint(package.root.upload(&server));
+  server.post(format!("/api/package/{fingerprint}")).send();
+
+  let previous = Revision::from(Hash::bytes(b"bar"));
+
+  let revision = server.write_revision(fingerprint, Some(previous));
+
+  server
+    .post(format!("/api/revision/{revision}"))
+    .body(
+      api::revision::Request {
+        mode: api::revision::Mode::New,
+      }
+      .encode_to_vec(),
+    )
+    .status(StatusCode::BAD_REQUEST)
+    .assert_body(format!(
+      "revision {revision} references unknown previous revision {previous}"
+    ))
+    .send();
+}
+
+#[test]
+fn verify_revision_previous_unexpected() {
+  let server = TestServer::new();
+
+  let foo = PackageBuilder::new().file("foo", b"foo").upload(&server);
+  let previous = server.write_revision(foo, None);
+
+  let bar = PackageBuilder::new().file("bar", b"bar");
+  let bar = Fingerprint(bar.root.upload(&server));
+  server.post(format!("/api/package/{bar}")).send();
+
+  let revision = server.write_revision(bar, Some(previous));
+
+  for request in [
+    api::revision::Request {
+      mode: api::revision::Mode::New,
+    },
+    api::revision::Request {
+      mode: api::revision::Mode::Replace { number: 1 },
+    },
+  ] {
+    server
+      .post(format!("/api/revision/{revision}"))
+      .body(request.encode_to_vec())
+      .status(StatusCode::BAD_REQUEST)
+      .assert_body(format!(
+        "revision {revision} has previous revision {previous}"
+      ))
+      .send();
+  }
+}
+
+#[test]
+fn verify_revision_update() {
+  let server = TestServer::new();
+
+  let foo = PackageBuilder::new().file("foo", b"foo").upload(&server);
+  let head = server.write_revision(foo, None);
+
+  let bar = PackageBuilder::new().file("bar", b"bar");
+  let bar = Fingerprint(bar.root.upload(&server));
+  server.post(format!("/api/package/{bar}")).send();
+
+  let revision = server.write_revision(bar, Some(head));
+
+  for _ in 0..2 {
+    server
+      .post(format!("/api/revision/{revision}"))
+      .body(
+        api::revision::Request {
+          mode: api::revision::Mode::Update { number: 1 },
+        }
+        .encode_to_vec(),
+      )
+      .assert_body(api::revision::Response { number: 1 }.encode_to_vec())
+      .send();
+  }
+
+  server
+    .get("/api/number/1")
+    .assert_body(
+      api::number::Response {
+        package: bar,
+        revision,
+      }
+      .encode_to_vec(),
+    )
+    .send();
+
+  server
+    .head(format!("/api/revision/{head}"))
+    .status(StatusCode::NOT_FOUND)
+    .send();
+
+  server
+    .post("/api/gc")
+    .assert_body(api::gc::Response::default().encode_to_vec())
+    .send();
+
+  server.get(format!("/package/{foo}")).ignore_body().send();
+}
+
+#[test]
+fn verify_revision_update_conflict() {
+  let server = TestServer::new();
+
+  let foo = PackageBuilder::new().file("foo", b"foo").upload(&server);
+  let head = server.write_revision(foo, None);
+
+  let bar = PackageBuilder::new().file("bar", b"bar").upload(&server);
+  let previous = server.write_revision(bar, None);
+
+  let baz = PackageBuilder::new().file("baz", b"baz");
+  let baz = Fingerprint(baz.root.upload(&server));
+  server.post(format!("/api/package/{baz}")).send();
+
+  let revision = server.write_revision(baz, Some(previous));
+
+  server
+    .post(format!("/api/revision/{revision}"))
+    .body(
+      api::revision::Request {
+        mode: api::revision::Mode::Update { number: 1 },
+      }
+      .encode_to_vec(),
+    )
+    .status(StatusCode::CONFLICT)
+    .assert_body(format!(
+      "package number 1 is at revision {head} but revision's previous is {previous}"
+    ))
+    .send();
+}
+
+#[test]
+fn verify_revision_update_not_found() {
   let server = TestServer::new();
 
   let fingerprint = PackageBuilder::new().file("foo", b"foo").upload(&server);
 
-  let revision_object = RevisionObject {
-    version: Version::Zero,
-    package: fingerprint,
-    previous: None,
-  };
+  let revision = server.write_revision(fingerprint, None);
 
   server
-    .get(format!("/api/file/{}", Hash::from(revision_object.hash())))
-    .assert_body(revision_object.encode_to_vec())
+    .post(format!("/api/revision/{revision}"))
+    .body(
+      api::revision::Request {
+        mode: api::revision::Mode::Update { number: 99 },
+      }
+      .encode_to_vec(),
+    )
+    .status(StatusCode::NOT_FOUND)
+    .assert_body("package number 99 not found")
+    .send();
+}
+
+#[test]
+fn verify_revision_update_previous_missing() {
+  let server = TestServer::new();
+
+  let foo = PackageBuilder::new().file("foo", b"foo").upload(&server);
+  let head = server.write_revision(foo, None);
+
+  let bar = PackageBuilder::new().file("bar", b"bar");
+  let bar = Fingerprint(bar.root.upload(&server));
+  server.post(format!("/api/package/{bar}")).send();
+
+  let revision = server.write_revision(bar, None);
+
+  server
+    .post(format!("/api/revision/{revision}"))
+    .body(
+      api::revision::Request {
+        mode: api::revision::Mode::Update { number: 1 },
+      }
+      .encode_to_vec(),
+    )
+    .status(StatusCode::BAD_REQUEST)
+    .assert_body(format!(
+      "revision {revision} has no previous revision but package number 1 is at revision {head}"
+    ))
     .send();
 }

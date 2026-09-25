@@ -9,10 +9,10 @@ pub(crate) struct Delete {
   auth: Option<KeyName>,
   #[arg(
     group = "target",
-    help = "Delete package with <FINGERPRINT>",
-    value_name = "FINGERPRINT"
+    help = "Delete package number <NUMBER>",
+    value_name = "NUMBER"
   )]
-  fingerprint: Option<Fingerprint>,
+  number: Option<u64>,
   #[arg(help = "Delete from server at <URL>", long, value_name = "URL")]
   server: ServerUrl,
 }
@@ -22,13 +22,13 @@ impl Delete {
     let client = Client::new(&options, self.server.clone(), self.auth.as_ref())?;
 
     if self.all {
-      for fingerprint in client.packages()? {
-        client.delete_package(fingerprint)?;
+      for number in client.numbers()? {
+        client.delete_number(number)?;
       }
 
       Ok(())
     } else {
-      client.delete_package(self.fingerprint.unwrap())
+      client.delete_number(self.number.unwrap())
     }
   }
 }

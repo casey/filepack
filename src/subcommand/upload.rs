@@ -28,6 +28,13 @@ pub(crate) struct Upload {
   replace: Option<u64>,
   #[arg(help = "Upload to server at <URL>", long, value_name = "URL")]
   server: ServerUrl,
+  #[arg(
+    conflicts_with_all = ["file", "replace"],
+    help = "Update package number <NUMBER>",
+    long,
+    value_name = "NUMBER"
+  )]
+  update: Option<u64>,
 }
 
 impl Upload {
@@ -108,7 +115,30 @@ impl Upload {
 
     let fingerprint = Fingerprint(package.hash());
 
-    if self.replace.is_none() && client.has_package(fingerprint)? {
+    let previous = if let Some(number) = self.update {
+      let head = client.number(number)?;
+
+      if head.package == fingerprint {
+        if !options.quiet {
+          eprintln!("package number {number} is up to date");
+        }
+        return Ok(());
+      }
+
+      Some(head.revision)
+    } else {
+      None
+    };
+
+    let revision_object = RevisionObject {
+      version: Version::Zero,
+      package: fingerprint,
+      previous,
+    };
+
+    let revision = revision_object.hash();
+
+    if self.replace.is_none() && self.update.is_none() && client.is_head(revision)? {
       if !options.quiet {
         eprintln!("server already has package");
       }
@@ -155,14 +185,24 @@ impl Upload {
 
     Self::upload_directory(&mut context, &root, package.hash(), package.size())?;
 
-    let number = context.client.verify_package(fingerprint, self.replace)?;
+    context.client.verify_package(fingerprint)?;
+
+    context
+      .client
+      .put_file(revision.into(), revision_object.encode_to_vec().into())?;
+
+    let (mode, verb) = match (self.replace, self.update) {
+      (Some(number), None) => (api::revision::Mode::Replace { number }, "replaced"),
+      (None, Some(number)) => (api::revision::Mode::Update { number }, "updated"),
+      (None, None) => (api::revision::Mode::New, "created"),
+      (Some(_), Some(_)) => unreachable!(),
+    };
+
+    let number = context
+      .client
+      .verify_revision(revision, api::revision::Request { mode })?;
 
     if !options.quiet {
-      let verb = if self.replace.is_some() {
-        "replaced"
-      } else {
-        "uploaded"
-      };
       eprintln!("{verb} package number {number}");
     }
 
@@ -212,6 +252,22 @@ mod tests {
       "--server <URL>",
       "ftp://example.com",
       "URL scheme `ftp` not allowed, must be `http` or `https`",
+    );
+  }
+
+  #[test]
+  fn update_conflicts_with_replace() {
+    assert_argument_conflict::<Upload>(
+      &[
+        "--server",
+        "http://127.0.0.1:1",
+        "--replace",
+        "1",
+        "--update",
+        "1",
+      ],
+      "--replace <NUMBER>",
+      "--update <NUMBER>",
     );
   }
 }

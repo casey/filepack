@@ -5,11 +5,12 @@ use {
 };
 
 const DIRECTORIES: TableDefinition<Hash, ()> = TableDefinition::new("directories");
+const HEADS: TableDefinition<Revision, u64> = TableDefinition::new("heads");
 const METADATA: TableDefinition<DatabaseMetadata, u64> = TableDefinition::new("metadata");
 const NUMBERS: TableDefinition<u64, Revision> = TableDefinition::new("numbers");
-const PACKAGES: TableDefinition<Fingerprint, u64> = TableDefinition::new("packages");
+const PACKAGES: TableDefinition<Fingerprint, ()> = TableDefinition::new("packages");
 const REVISIONS: TableDefinition<Revision, ()> = TableDefinition::new("revisions");
-const SCHEMA_VERSION: u64 = 4;
+const SCHEMA_VERSION: u64 = 5;
 
 pub(crate) struct Server {
   database: Database,
@@ -41,16 +42,16 @@ impl Server {
     Ok(self.open_file(hash)?.ty(image.resource_type()))
   }
 
-  pub(crate) fn delete_package(&self, fingerprint: Fingerprint) -> ServerResult {
+  pub(crate) fn delete_number(&self, number: u64) -> ServerResult {
     let tx = self.database.begin_write()?;
 
-    let number = tx
-      .open_table(PACKAGES)?
-      .remove(&fingerprint)?
-      .context(server_error::PackageFingerprintNotFound { fingerprint })?
+    let revision = tx
+      .open_table(NUMBERS)?
+      .remove(&number)?
+      .context(server_error::PackageNumberNotFound { number })?
       .value();
 
-    tx.open_table(NUMBERS)?.remove(&number)?;
+    tx.open_table(HEADS)?.remove(&revision)?;
 
     tx.commit()?;
 
@@ -125,14 +126,28 @@ impl Server {
     {
       let mut directories = tx.open_table(DIRECTORIES)?;
 
+      let mut packages = tx.open_table(PACKAGES)?;
+
       let mut revisions = tx.open_table(REVISIONS)?;
 
       let mut stack = Vec::new();
 
       for entry in tx.open_table(NUMBERS)?.iter()? {
-        let revision = entry?.1.value();
-        marked.insert(revision.into());
-        stack.push(self.read_revision(revision)?.package.into());
+        let (_number, revision) = entry?;
+
+        let mut revision = Some(revision.value());
+
+        while let Some(current) = revision {
+          if !marked.insert(current.into()) {
+            break;
+          }
+
+          let revision_object = self.read_revision(current)?;
+
+          stack.push(revision_object.package.into());
+
+          revision = revision_object.previous;
+        }
       }
 
       for entry in revisions
@@ -160,6 +175,12 @@ impl Server {
 
       for entry in directories.extract_from_if::<Hash, _>(.., |hash, ()| !marked.contains(&hash))? {
         directories_removed.insert(entry?.0.value());
+      }
+
+      for entry in packages.extract_from_if::<Fingerprint, _>(.., |fingerprint, ()| {
+        !marked.contains(&fingerprint.into())
+      })? {
+        entry?;
       }
     }
 
@@ -204,6 +225,32 @@ impl Server {
         .begin_read()?
         .open_table(PACKAGES)?
         .get(&fingerprint)?
+        .is_some(),
+    )
+  }
+
+  pub(crate) fn head(&self, number: u64) -> ServerResult<api::number::Response> {
+    let revision = self
+      .database
+      .begin_read()?
+      .open_table(NUMBERS)?
+      .get(&number)?
+      .context(server_error::PackageNumberNotFound { number })?
+      .value();
+
+    Ok(api::number::Response {
+      package: self.read_revision(revision)?.package,
+      revision,
+    })
+  }
+
+  pub(crate) fn is_head(&self, revision: Revision) -> ServerResult<bool> {
+    Ok(
+      self
+        .database
+        .begin_read()?
+        .open_table(HEADS)?
+        .get(&revision)?
         .is_some(),
     )
   }
@@ -307,6 +354,14 @@ impl Server {
     Ok(missing)
   }
 
+  pub(crate) fn numbers(&self) -> ServerResult<BTreeSet<u64>> {
+    let tx = self.database.begin_read()?;
+    tx.open_table(NUMBERS)?
+      .iter()?
+      .map(|entry| Ok(entry?.0.value()))
+      .collect()
+  }
+
   pub(crate) fn open_file(&self, hash: Hash) -> ServerResult<Resource> {
     let path = self.file_path(hash);
 
@@ -363,17 +418,23 @@ impl Server {
 
     let numbers = tx.open_table(NUMBERS)?;
 
-    let next = numbers
-      .range((Bound::Excluded(number), Bound::Unbounded))?
-      .next()
+    let (next, prev) = number
+      .map(|number| -> ServerResult<(Option<u64>, Option<u64>)> {
+        Ok((
+          numbers
+            .range((Bound::Excluded(number), Bound::Unbounded))?
+            .next()
+            .transpose()?
+            .map(|(number, _revision)| number.value()),
+          numbers
+            .range(..number)?
+            .next_back()
+            .transpose()?
+            .map(|(number, _revision)| number.value()),
+        ))
+      })
       .transpose()?
-      .map(|(number, _fingerprint)| number.value());
-
-    let prev = numbers
-      .range(..number)?
-      .next_back()
-      .transpose()?
-      .map(|(number, _fingerprint)| number.value());
+      .unwrap_or_default();
 
     let packages = tx.open_table(PACKAGES)?;
 
@@ -436,7 +497,7 @@ impl Server {
 
   pub(crate) fn package_metadata_opt_ext(
     &self,
-    packages: &ReadOnlyTable<Fingerprint, u64>,
+    packages: &ReadOnlyTable<Fingerprint, ()>,
     fingerprint: Fingerprint,
   ) -> ServerResult<Option<Metadata>> {
     ensure!(
@@ -453,12 +514,12 @@ impl Server {
     let directories = tx.open_table(DIRECTORIES)?;
 
     let mut packages = tx
-      .open_table(PACKAGES)?
+      .open_table(NUMBERS)?
       .iter()?
       .map(|entry| {
-        let (fingerprint, number) = entry?;
-        let fingerprint = fingerprint.value();
+        let (number, revision) = entry?;
         let number = number.value();
+        let fingerprint = self.read_revision(revision.value())?.package;
 
         let totals = self
           .directory_ext(&directories, fingerprint.into())?
@@ -501,19 +562,23 @@ impl Server {
       .context(server_error::RevisionCorrupt { revision })
   }
 
-  pub(crate) fn resolve(&self, identifier: PackageIdentifier) -> ServerResult<(u64, Fingerprint)> {
+  pub(crate) fn resolve(
+    &self,
+    identifier: PackageIdentifier,
+  ) -> ServerResult<(Option<u64>, Fingerprint)> {
     let tx = self.database.begin_read()?;
 
     match identifier {
-      PackageIdentifier::Fingerprint(fingerprint) => Ok((
-        tx.open_table(PACKAGES)?
-          .get(&fingerprint)?
-          .context(server_error::PackageFingerprintNotFound { fingerprint })?
-          .value(),
-        fingerprint,
-      )),
+      PackageIdentifier::Fingerprint(fingerprint) => {
+        ensure!(
+          tx.open_table(PACKAGES)?.get(&fingerprint)?.is_some(),
+          server_error::PackageFingerprintNotFound { fingerprint },
+        );
+
+        Ok((None, fingerprint))
+      }
       PackageIdentifier::Number(number) => Ok((
-        number,
+        Some(number),
         self
           .read_revision(
             tx.open_table(NUMBERS)?
@@ -630,11 +695,7 @@ impl Server {
     Ok(())
   }
 
-  pub(crate) fn verify_package(
-    &self,
-    fingerprint: Fingerprint,
-    replace: Option<u64>,
-  ) -> ServerResult<u64> {
+  pub(crate) fn verify_package(&self, fingerprint: Fingerprint) -> ServerResult {
     let tx = self.database.begin_write()?;
 
     ensure!(
@@ -656,54 +717,118 @@ impl Server {
       }
     }
 
+    tx.open_table(PACKAGES)?.insert(&fingerprint, &())?;
+
+    tx.commit()?;
+
+    Ok(())
+  }
+
+  pub(crate) fn verify_revision(
+    &self,
+    revision: Revision,
+    request: api::revision::Request,
+  ) -> ServerResult<u64> {
+    let tx = self.database.begin_write()?;
+
+    let revision_object = RevisionObject::decode_from_slice(&self.read_file(revision.into())?)
+      .context(server_error::RevisionDecode { revision })?;
+
+    let fingerprint = revision_object.package;
+
+    let previous = revision_object.previous;
+
+    ensure!(
+      tx.open_table(PACKAGES)?.get(&fingerprint)?.is_some(),
+      server_error::PackageUnverified { fingerprint },
+    );
+
     let number = {
-      let mut packages = tx.open_table(PACKAGES)?;
+      let mut heads = tx.open_table(HEADS)?;
       let mut numbers = tx.open_table(NUMBERS)?;
       let mut revisions = tx.open_table(REVISIONS)?;
 
-      let existing = packages.get(&fingerprint)?.map(|number| number.value());
+      if let Some(previous) = previous {
+        ensure!(
+          revisions.get(&previous)?.is_some(),
+          server_error::RevisionPreviousNotFound { previous, revision },
+        );
+      }
 
-      let revision_object = RevisionObject {
-        version: Version::Zero,
-        package: fingerprint,
-        previous: None,
-      };
+      match request.mode {
+        api::revision::Mode::New => {
+          if let Some(previous) = previous {
+            return Err(ServerError::RevisionPreviousUnexpected { previous, revision });
+          }
 
-      let revision = revision_object.hash();
-
-      match (replace, existing) {
-        (Some(number), Some(existing)) => {
-          ensure!(
-            number == existing,
-            server_error::PackageNumberConflict {
-              fingerprint,
-              number: existing,
-            },
-          );
-          number
+          if let Some(number) = heads.get(&revision)?.map(|number| number.value()) {
+            number
+          } else {
+            let mut metadata = tx.open_table(METADATA)?;
+            let number = metadata.get(DatabaseMetadata::Number)?.unwrap().value();
+            metadata.insert(DatabaseMetadata::Number, &(number + 1))?;
+            revisions.insert(&revision, &())?;
+            heads.insert(&revision, &number)?;
+            numbers.insert(&number, &revision)?;
+            number
+          }
         }
-        (Some(number), None) => {
-          let old = numbers
+        api::revision::Mode::Replace { number } => {
+          if let Some(previous) = previous {
+            return Err(ServerError::RevisionPreviousUnexpected { previous, revision });
+          }
+
+          let head = numbers
             .get(&number)?
             .context(server_error::PackageNumberNotFound { number })?
             .value();
-          let old = self.read_revision(old)?.package;
-          self.write_revision(&revision_object)?;
-          revisions.insert(&revision, &())?;
-          numbers.insert(&number, &revision)?;
-          packages.remove(&old)?;
-          packages.insert(&fingerprint, &number)?;
+
+          if head != revision {
+            if let Some(existing) = heads.get(&revision)?.map(|number| number.value()) {
+              return Err(ServerError::PackageNumberConflict {
+                fingerprint,
+                number: existing,
+              });
+            }
+
+            revisions.insert(&revision, &())?;
+            heads.remove(&head)?;
+            heads.insert(&revision, &number)?;
+            numbers.insert(&number, &revision)?;
+          }
+
           number
         }
-        (None, Some(number)) => number,
-        (None, None) => {
-          let mut metadata = tx.open_table(METADATA)?;
-          let number = metadata.get(DatabaseMetadata::Number)?.unwrap().value();
-          metadata.insert(DatabaseMetadata::Number, &(number + 1))?;
-          self.write_revision(&revision_object)?;
-          revisions.insert(&revision, &())?;
-          numbers.insert(&number, &revision)?;
-          packages.insert(&fingerprint, &number)?;
+        api::revision::Mode::Update { number } => {
+          let head = numbers
+            .get(&number)?
+            .context(server_error::PackageNumberNotFound { number })?
+            .value();
+
+          if head != revision {
+            let Some(previous) = previous else {
+              return Err(ServerError::RevisionPreviousMissing {
+                head,
+                number,
+                revision,
+              });
+            };
+
+            ensure!(
+              previous == head,
+              server_error::RevisionConflict {
+                head,
+                number,
+                previous,
+              },
+            );
+
+            revisions.insert(&revision, &())?;
+            heads.remove(&head)?;
+            heads.insert(&revision, &number)?;
+            numbers.insert(&number, &revision)?;
+          }
+
           number
         }
       }
@@ -727,6 +852,7 @@ impl Server {
         metadata.insert(DatabaseMetadata::Schema, &SCHEMA_VERSION)?;
 
         tx.open_table(DIRECTORIES)?;
+        tx.open_table(HEADS)?;
         tx.open_table(NUMBERS)?;
         tx.open_table(PACKAGES)?;
         tx.open_table(REVISIONS)?;
@@ -812,34 +938,6 @@ impl Server {
     }
 
     temp_path
-      .persist(&path)
-      .map_err(|error| error.error)
-      .context(filesystem_error::Io { path: &path })?;
-
-    Ok(())
-  }
-
-  fn write_revision(&self, revision_object: &RevisionObject) -> ServerResult {
-    let revision = revision_object.hash();
-
-    let path = self.file_path(revision.into());
-
-    if path
-      .try_exists()
-      .context(filesystem_error::Io { path: &path })?
-    {
-      return Ok(());
-    }
-
-    let mut tempfile = transfer_tempfile(revision.into(), &self.incoming)?;
-
-    tempfile
-      .write_all(&revision_object.encode_to_vec())
-      .context(filesystem_error::Io {
-        path: &self.incoming,
-      })?;
-
-    tempfile
       .persist(&path)
       .map_err(|error| error.error)
       .context(filesystem_error::Io { path: &path })?;
