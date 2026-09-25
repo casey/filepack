@@ -9,7 +9,7 @@ pub struct PackageHtml {
   pub metadata: Option<Metadata>,
   pub mounted: bool,
   pub next: Option<u64>,
-  pub number: u64,
+  pub number: Option<u64>,
   pub prev: Option<u64>,
   pub readme: Option<Hash>,
   pub totals: Totals,
@@ -18,7 +18,9 @@ pub struct PackageHtml {
 impl PackageHtml {
   fn info(&self) -> Info {
     InfoBuilder::new()
-      .link("number", self.number, format!("/package/{}", self.number))
+      .when_some(self.number, |builder, number| {
+        builder.link("number", number, format!("/package/{number}"))
+      })
       .code_link(
         "fingerprint",
         self.fingerprint,
@@ -151,7 +153,7 @@ mod tests {
         metadata: Some(metadata),
         mounted: false,
         next: None,
-        number: 1,
+        number: Some(1),
         prev: None,
         readme: None,
         totals: Totals {
@@ -266,7 +268,7 @@ mod tests {
         metadata: Some(metadata),
         mounted: false,
         next: None,
-        number: 1,
+        number: Some(1),
         prev: None,
         readme: None,
         totals: Totals {
@@ -415,7 +417,7 @@ mod tests {
         metadata: Some(metadata),
         mounted: false,
         next: None,
-        number: 1,
+        number: Some(1),
         prev: None,
         readme: None,
         totals: Totals {
@@ -545,7 +547,7 @@ mod tests {
         metadata: Some(metadata),
         mounted: false,
         next: None,
-        number: 1,
+        number: Some(1),
         prev: None,
         readme: None,
         totals: Totals {
@@ -635,7 +637,7 @@ mod tests {
       metadata: None,
       mounted: false,
       next: Some(3),
-      number: 2,
+      number: Some(2),
       prev: Some(1),
       readme: None,
       totals: Totals::default(),
@@ -681,7 +683,7 @@ mod tests {
       }),
       mounted: false,
       next: None,
-      number: 1,
+      number: Some(1),
       prev: None,
       readme: None,
       totals: Totals::default(),
@@ -741,7 +743,7 @@ mod tests {
       metadata: None,
       mounted: false,
       next: None,
-      number: 1,
+      number: Some(1),
       prev: None,
       readme: None,
       totals: Totals::default(),
@@ -779,7 +781,7 @@ mod tests {
         metadata: Some(metadata),
         mounted: false,
         next: None,
-        number: 1,
+        number: Some(1),
         prev: None,
         readme: Some(test::HASH.parse().unwrap()),
         totals: Totals {
@@ -987,7 +989,7 @@ mod tests {
         metadata: Some(metadata),
         mounted: false,
         next: None,
-        number: 1,
+        number: Some(1),
         prev: None,
         readme: None,
         totals: Totals {

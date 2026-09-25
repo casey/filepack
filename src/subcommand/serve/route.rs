@@ -1,11 +1,11 @@
 use super::*;
 
-pub(crate) async fn api_delete_package(
+pub(crate) async fn api_delete_number(
   _: Authenticated,
   server: ServerExtension,
-  Path(fingerprint): Path<Fingerprint>,
+  Path(number): Path<u64>,
 ) -> ServerResult {
-  block_in_place(|| server.delete_package(fingerprint))
+  block_in_place(|| server.delete_number(number))
 }
 
 pub(crate) async fn api_file(
@@ -34,6 +34,23 @@ pub(crate) async fn api_missing(
   })
 }
 
+pub(crate) async fn api_number(
+  server: ServerExtension,
+  Path(number): Path<u64>,
+) -> ServerResult<DecoResponse<api::number::Response>> {
+  block_in_place(|| Ok(DecoResponse(server.head(number)?)))
+}
+
+pub(crate) async fn api_numbers(
+  server: ServerExtension,
+) -> ServerResult<DecoResponse<api::numbers::Response>> {
+  block_in_place(|| {
+    Ok(DecoResponse(api::numbers::Response {
+      numbers: server.numbers()?.into(),
+    }))
+  })
+}
+
 pub(crate) async fn api_package(
   server: ServerExtension,
   Path(fingerprint): Path<Fingerprint>,
@@ -54,6 +71,19 @@ pub(crate) async fn api_packages(
     Ok(DecoResponse(api::packages::Response {
       packages: server.fingerprints()?.into(),
     }))
+  })
+}
+
+pub(crate) async fn api_revision(
+  server: ServerExtension,
+  Path(revision): Path<Revision>,
+) -> ServerResult {
+  block_in_place(|| {
+    ensure!(
+      server.is_head(revision)?,
+      server_error::RevisionNotHead { revision },
+    );
+    Ok(())
   })
 }
 
@@ -78,11 +108,19 @@ pub(crate) async fn api_verify_package(
   _: Authenticated,
   server: ServerExtension,
   Path(fingerprint): Path<Fingerprint>,
-  DecoRequest(request): DecoRequest<api::package::Request, { MIB }>,
-) -> ServerResult<DecoResponse<api::package::Response>> {
+) -> ServerResult {
+  block_in_place(|| server.verify_package(fingerprint))
+}
+
+pub(crate) async fn api_verify_revision(
+  _: Authenticated,
+  server: ServerExtension,
+  Path(revision): Path<Revision>,
+  DecoRequest(request): DecoRequest<api::revision::Request, { MIB }>,
+) -> ServerResult<DecoResponse<api::revision::Response>> {
   block_in_place(|| {
-    Ok(DecoResponse(api::package::Response {
-      number: server.verify_package(fingerprint, request.replace)?,
+    Ok(DecoResponse(api::revision::Response {
+      number: server.verify_revision(revision, request)?,
     }))
   })
 }

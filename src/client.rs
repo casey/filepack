@@ -17,8 +17,8 @@ impl Client {
       .check_status()
   }
 
-  pub(crate) fn delete_package(&self, fingerprint: Fingerprint) -> Result {
-    self.delete(&format!("api/package/{fingerprint}"))?;
+  pub(crate) fn delete_number(&self, number: u64) -> Result {
+    self.delete(&format!("api/number/{number}"))?;
 
     Ok(())
   }
@@ -41,12 +41,12 @@ impl Client {
       .check_status()
   }
 
-  pub(crate) fn has_package(&self, fingerprint: Fingerprint) -> Result<bool> {
-    self.head(&format!("api/package/{fingerprint}"))
-  }
-
   fn head(&self, path: &str) -> Result<bool> {
     self.request(self.client.head(self.url(path)))?.found()
+  }
+
+  pub(crate) fn is_head(&self, revision: Revision) -> Result<bool> {
+    self.head(&format!("api/revision/{revision}"))
   }
 
   pub(crate) fn missing_files(&self, hashes: BTreeSet<Hash>) -> Result<HashSet<Hash>> {
@@ -107,12 +107,16 @@ impl Client {
     })
   }
 
-  pub(crate) fn packages(&self) -> Result<SortedSet<Fingerprint>> {
+  pub(crate) fn number(&self, number: u64) -> Result<api::number::Response> {
+    self.get(&format!("api/number/{number}"))?.deco()
+  }
+
+  pub(crate) fn numbers(&self) -> Result<SortedSet<u64>> {
     Ok(
       self
-        .get("api/packages")?
-        .deco::<api::packages::Response>()?
-        .packages,
+        .get("api/numbers")?
+        .deco::<api::numbers::Response>()?
+        .numbers,
     )
   }
 
@@ -140,7 +144,6 @@ impl Client {
 
   pub(crate) fn put_file(&self, hash: Hash, body: reqwest::blocking::Body) -> Result {
     self.put(&format!("api/file/{hash}"), body)?;
-
     Ok(())
   }
 
@@ -149,7 +152,6 @@ impl Client {
       let host = self.server.host_str().unwrap().to_owned();
       builder = builder.bearer_auth(Claims::sign(key, &host)?);
     }
-
     builder.send().context(error::Request)
   }
 
@@ -159,22 +161,23 @@ impl Client {
 
   pub(crate) fn verify_directory(&self, hash: Hash) -> Result {
     self.post(&format!("api/directory/{hash}"))?;
-
     Ok(())
   }
 
-  pub(crate) fn verify_package(
+  pub(crate) fn verify_package(&self, fingerprint: Fingerprint) -> Result {
+    self.post(&format!("api/package/{fingerprint}"))?;
+    Ok(())
+  }
+
+  pub(crate) fn verify_revision(
     &self,
-    fingerprint: Fingerprint,
-    replace: Option<u64>,
+    revision: Revision,
+    request: api::revision::Request,
   ) -> Result<u64> {
     Ok(
       self
-        .post_with_body(
-          &format!("api/package/{fingerprint}"),
-          api::package::Request { replace },
-        )?
-        .deco::<api::package::Response>()?
+        .post_with_body(&format!("api/revision/{revision}"), request)?
+        .deco::<api::revision::Response>()?
         .number,
     )
   }
@@ -196,7 +199,7 @@ mod tests {
       stream
         .write_all(
           b"HTTP/1.1 308 Permanent Redirect\r\n\
-            Location: http://127.0.0.1:1/api/packages\r\n\
+            Location: http://127.0.0.1:1/api/numbers\r\n\
             Content-Length: 0\r\n\
             \r\n",
         )
@@ -211,9 +214,9 @@ mod tests {
     .unwrap();
 
     assert_eq!(
-      client.packages().unwrap_err().to_string(),
+      client.numbers().unwrap_err().to_string(),
       format!(
-        "response from http://127.0.0.1:{port}/api/packages failed with status 308 Permanent Redirect: "
+        "response from http://127.0.0.1:{port}/api/numbers failed with status 308 Permanent Redirect: "
       ),
     );
   }

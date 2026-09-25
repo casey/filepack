@@ -20,7 +20,7 @@ fn delete_all() {
     .stderr(
       "
         uploading 1 of 1 file
-        uploaded package number 1
+        created package number 1
       ",
     )
     .success();
@@ -30,7 +30,7 @@ fn delete_all() {
     .stderr(
       "
         uploading 1 of 1 file
-        uploaded package number 2
+        created package number 2
       ",
     )
     .success();
@@ -48,9 +48,9 @@ fn delete_all() {
     .args(["delete", "--server", &server.address(), "--all"])
     .success();
 
-  for fingerprint in fingerprints {
+  for number in 1..=2 {
     assert_eq!(
-      reqwest::blocking::get(format!("{}/package/{fingerprint}", server.address()))
+      reqwest::blocking::get(format!("{}/package/{number}", server.address()))
         .unwrap()
         .status(),
       StatusCode::NOT_FOUND,
@@ -64,24 +64,12 @@ fn delete_all() {
 fn delete_package_not_found() {
   let server = Test::new().serve().spawn();
 
-  let test = Test::new()
-    .write("foo", "bar")
-    .args(["create", "."])
-    .success();
-
-  let fingerprint = fingerprint(&test.path().join("manifest.filepack"));
-
   Test::new()
-    .args([
-      "delete",
-      "--server",
-      &server.address(),
-      &fingerprint.to_string(),
-    ])
-    .stderr_regex(&format!(
-      "error: response from http://.* failed with status 404 Not Found: package {fingerprint} \
-      not found\n"
-    ))
+    .args(["delete", "--server", &server.address(), "1"])
+    .stderr_regex(
+      "error: response from http://.* failed with status 404 Not Found: package number 1 not \
+      found\n",
+    )
     .failure();
 
   server.terminate().success();
@@ -91,24 +79,20 @@ fn delete_package_not_found() {
 fn delete_package_succeeds() {
   let server = Test::new().serve().spawn();
 
-  let test = Test::new()
+  Test::new()
     .write("foo", "bar")
     .args(["create", "."])
-    .success();
-
-  let fingerprint = fingerprint(&test.path().join("manifest.filepack"));
-
-  test
+    .success()
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
     .stderr(
       "
         uploading 1 of 1 file
-        uploaded package number 1
+        created package number 1
       ",
     )
     .success();
 
-  let url = format!("{}/package/{fingerprint}", server.address());
+  let url = format!("{}/package/1", server.address());
 
   assert_eq!(
     reqwest::blocking::get(&url).unwrap().status(),
@@ -116,12 +100,7 @@ fn delete_package_succeeds() {
   );
 
   Test::new()
-    .args([
-      "delete",
-      "--server",
-      &server.address(),
-      &fingerprint.to_string(),
-    ])
+    .args(["delete", "--server", &server.address(), "1"])
     .success();
 
   assert_eq!(
@@ -151,15 +130,11 @@ fn restricted_delete_succeeds_with_auth() {
     ])
     .spawn();
 
-  let test = Test::new()
+  Test::new()
     .write_keypair("master")
     .write("pkg/foo", "bar")
     .args(["create", "pkg"])
-    .success();
-
-  let fingerprint = fingerprint(&test.path().join("pkg/manifest.filepack"));
-
-  test
+    .success()
     .args([
       "upload",
       "--server",
@@ -171,7 +146,7 @@ fn restricted_delete_succeeds_with_auth() {
     .stderr(
       "
         uploading 1 of 1 file
-        uploaded package number 1
+        created package number 1
       ",
     )
     .success()
@@ -181,7 +156,7 @@ fn restricted_delete_succeeds_with_auth() {
       &server.address(),
       "--auth",
       "master",
-      &fingerprint.to_string(),
+      "1",
     ])
     .success();
 

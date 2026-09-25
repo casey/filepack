@@ -4,30 +4,21 @@ use super::*;
 fn gc_removes_orphaned_package_data() {
   let server = Test::new().serve().spawn();
 
-  let test = Test::new()
+  Test::new()
     .write("foo", "bar")
     .args(["create", "."])
-    .success();
-
-  let fingerprint = fingerprint(&test.path().join("manifest.filepack"));
-
-  test
+    .success()
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
     .stderr(
       "
         uploading 1 of 1 file
-        uploaded package number 1
+        created package number 1
       ",
     )
     .success();
 
   Test::new()
-    .args([
-      "delete",
-      "--server",
-      &server.address(),
-      &fingerprint.to_string(),
-    ])
+    .args(["delete", "--server", &server.address(), "1"])
     .success();
 
   Test::new()
