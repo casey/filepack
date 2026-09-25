@@ -16,13 +16,13 @@ use super::*;
 pub struct RelativePath(String);
 
 impl RelativePath {
-  const JUNK_NAMES: [&'static str; 2] = [".DS_Store", ".localized"];
+  const JUNK_NAMES: &'static [&'static str] = &[".DS_Store", ".filepack", ".localized"];
 
   const MAX_LENGTH: usize = 4096;
 
-  const WINDOWS_RESERVED_CHARACTERS: [char; 7] = ['"', '*', ':', '<', '>', '?', '|'];
+  const WINDOWS_RESERVED_CHARACTERS: &'static [char] = &['"', '*', ':', '<', '>', '?', '|'];
 
-  const WINDOWS_RESERVED_NAMES: [&'static str; 28] = [
+  const WINDOWS_RESERVED_NAMES: &'static [&'static str] = &[
     "AUX", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "COM¹", "COM²",
     "COM³", "CON", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9", "LPT¹",
     "LPT²", "LPT³", "NUL", "PRN",
@@ -62,7 +62,7 @@ impl RelativePath {
       if lints.contains(&Lint::WindowsReservedFilename) {
         let uppercase = component.to_uppercase();
 
-        for name in Self::WINDOWS_RESERVED_NAMES {
+        for &name in Self::WINDOWS_RESERVED_NAMES {
           if uppercase == name {
             return Some(LintError::WindowsReservedFilename {
               name: component.into(),

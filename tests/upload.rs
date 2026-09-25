@@ -64,7 +64,7 @@ fn reupload_package_succeeds() {
     )
     .success()
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
-    .stderr("server already has package\n")
+    .stderr("package number 1 is up to date\n")
     .success();
 
   server.terminate().success();
@@ -597,6 +597,114 @@ fn upload_package_uploads_files() {
 }
 
 #[test]
+fn upload_records_state() {
+  let server = Test::new().serve().spawn();
+
+  let test = Test::new()
+    .write("foo", "bar")
+    .args(["create", "."])
+    .success();
+
+  let revision = RevisionObject {
+    version: Version::Zero,
+    package: fingerprint(&test.path().join("manifest.filepack")),
+    previous: None,
+  }
+  .hash();
+
+  let test = test
+    .args(["upload", "--server", &server.address(), "manifest.filepack"])
+    .stderr(
+      "
+        uploading 1 of 1 file
+        created package number 1
+      ",
+    )
+    .success()
+    .args(["verify", "."])
+    .stderr("successfully verified 1 file totaling 3 bytes\n")
+    .success();
+
+  assert_eq!(
+    State::load(&test.path()).unwrap(),
+    State {
+      servers: BTreeMap::from([(
+        format!("{}/", server.address()),
+        ServerState {
+          number: 1,
+          revision,
+        },
+      )]),
+    },
+  );
+
+  server.terminate().success();
+}
+
+#[test]
+fn upload_rejects_stale_state() {
+  let server = Test::new().serve().spawn();
+
+  let a = Test::new()
+    .write("foo", "bar")
+    .args(["create", "."])
+    .success()
+    .args(["upload", "--server", &server.address(), "manifest.filepack"])
+    .stderr(
+      "
+        uploading 1 of 1 file
+        created package number 1
+      ",
+    )
+    .success();
+
+  let root = RevisionObject {
+    version: Version::Zero,
+    package: fingerprint(&a.path().join("manifest.filepack")),
+    previous: None,
+  }
+  .hash();
+
+  let b = Test::new()
+    .write("foo", "bar")
+    .args(["create", "."])
+    .success()
+    .args(["upload", "--server", &server.address(), "manifest.filepack"])
+    .stderr("server already has package number 1\n")
+    .success()
+    .write("foo", "baz")
+    .args(["create", "--force", "."])
+    .success()
+    .args(["upload", "--server", &server.address(), "manifest.filepack"])
+    .stderr(
+      "
+        uploading 1 of 1 file
+        updated package number 1
+      ",
+    )
+    .success();
+
+  let head = RevisionObject {
+    version: Version::Zero,
+    package: fingerprint(&b.path().join("manifest.filepack")),
+    previous: Some(root),
+  }
+  .hash();
+
+  a.write("foo", "qux")
+    .args(["create", "--force", "."])
+    .success()
+    .args(["upload", "--server", &server.address(), "manifest.filepack"])
+    .stderr(&format!(
+      "error: package number 1 is at revision {head} on the server, but the last uploaded \
+      revision is {root}\n"
+    ))
+    .failure();
+
+  server.terminate().success();
+}
+
+#[test]
 fn upload_replaces_package() {
   let server = Test::new().serve().spawn();
 
@@ -665,6 +773,69 @@ fn upload_replaces_package() {
       .unwrap()
       .status(),
     StatusCode::NOT_FOUND,
+  );
+
+  server.terminate().success();
+}
+
+#[test]
+fn upload_updates_implicitly() {
+  let server = Test::new().serve().spawn();
+
+  let test = Test::new()
+    .write("foo", "bar")
+    .args(["create", "."])
+    .success();
+
+  let root = RevisionObject {
+    version: Version::Zero,
+    package: fingerprint(&test.path().join("manifest.filepack")),
+    previous: None,
+  }
+  .hash();
+
+  let test = test
+    .args(["upload", "--server", &server.address(), "manifest.filepack"])
+    .stderr(
+      "
+        uploading 1 of 1 file
+        created package number 1
+      ",
+    )
+    .success()
+    .write("foo", "baz")
+    .args(["create", "--force", "."])
+    .success()
+    .args(["upload", "--server", &server.address(), "manifest.filepack"])
+    .stderr(
+      "
+        uploading 1 of 1 file
+        updated package number 1
+      ",
+    )
+    .success()
+    .args(["upload", "--server", &server.address(), "manifest.filepack"])
+    .stderr("package number 1 is up to date\n")
+    .success();
+
+  let head = RevisionObject {
+    version: Version::Zero,
+    package: fingerprint(&test.path().join("manifest.filepack")),
+    previous: Some(root),
+  }
+  .hash();
+
+  assert_eq!(
+    State::load(&test.path()).unwrap(),
+    State {
+      servers: BTreeMap::from([(
+        format!("{}/", server.address()),
+        ServerState {
+          number: 1,
+          revision: head,
+        },
+      )]),
+    },
   );
 
   server.terminate().success();

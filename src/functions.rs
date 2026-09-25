@@ -43,6 +43,10 @@ pub fn gradient_alpha(width: u32, height: u32, alpha: u8) -> DynamicImage {
   .into()
 }
 
+pub(crate) fn ignore(path: &RelativePath, ignore: &[RelativePath]) -> bool {
+  path.starts_with(State::DIR) || ignore.iter().any(|ignore| path.starts_with(ignore))
+}
+
 pub fn install_default_crypto_provider() -> Result {
   static INSTALLED: LazyLock<bool> = LazyLock::new(|| {
     rustls::crypto::ring::default_provider()
