@@ -8,7 +8,7 @@ pub(crate) struct HistoryHtml {
 
 impl Page for HistoryHtml {
   fn title(&self) -> String {
-    format!("{} history · Filepack", self.identifier)
+    format!("Package {} history · Filepack", self.identifier)
   }
 }
 
