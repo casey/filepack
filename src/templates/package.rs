@@ -27,6 +27,11 @@ impl PackageHtml {
       .when_some(self.revision, |builder, revision| {
         builder.code_link("revision", revision, format!("/package/{revision}"))
       })
+      .code_link(
+        "fingerprint",
+        self.fingerprint,
+        format!("/package/{}", self.fingerprint),
+      )
       .when_some(self.previous, |builder, previous| {
         builder.code_link(
           "previous revision",
@@ -41,11 +46,6 @@ impl PackageHtml {
           format!("/package/{}/history", self.identifier),
         )
       })
-      .code_link(
-        "fingerprint",
-        self.fingerprint,
-        format!("/package/{}", self.fingerprint),
-      )
       .value("size", format_size(self.totals.file_size))
       .link(
         "files",
@@ -606,6 +606,12 @@ mod tests {
               </dd>
             </div>
             <div>
+              <dt>fingerprint</dt>
+              <dd>
+                <a href='/package/{fingerprint}'><code>{fingerprint}</code></a>
+              </dd>
+            </div>
+            <div>
               <dt>previous revision</dt>
               <dd>
                 <a href='/package/{revision}'><code>{revision}</code></a>
@@ -615,12 +621,6 @@ mod tests {
               <dt>history</dt>
               <dd>
                 <a href='/package/1/history'>2 revisions</a>
-              </dd>
-            </div>
-            <div>
-              <dt>fingerprint</dt>
-              <dd>
-                <a href='/package/{fingerprint}'><code>{fingerprint}</code></a>
               </dd>
             </div>
             <div>
