@@ -1,16 +1,19 @@
 use {
   super::*,
-  redb::{Database, ReadOnlyTable, ReadableDatabase, ReadableTable, TableDefinition},
+  redb::{
+    Database, MultimapTableDefinition, ReadOnlyTable, ReadableDatabase, ReadableMultimapTable,
+    ReadableTable, TableDefinition,
+  },
   templates::PackageHtml,
 };
 
 const DIRECTORIES: TableDefinition<Hash, ()> = TableDefinition::new("directories");
-const HEADS: TableDefinition<Revision, u64> = TableDefinition::new("heads");
+const HEADS: MultimapTableDefinition<Revision, u64> = MultimapTableDefinition::new("heads");
 const METADATA: TableDefinition<DatabaseMetadata, u64> = TableDefinition::new("metadata");
 const NUMBERS: TableDefinition<u64, Revision> = TableDefinition::new("numbers");
 const PACKAGES: TableDefinition<Fingerprint, ()> = TableDefinition::new("packages");
 const REVISIONS: TableDefinition<Revision, ()> = TableDefinition::new("revisions");
-const SCHEMA_VERSION: u64 = 5;
+const SCHEMA_VERSION: u64 = 6;
 
 pub(crate) struct Server {
   database: Database,
@@ -51,7 +54,7 @@ impl Server {
       .context(server_error::PackageNumberNotFound { number })?
       .value();
 
-    tx.open_table(HEADS)?.remove(&revision)?;
+    tx.open_multimap_table(HEADS)?.remove(&revision, &number)?;
 
     tx.commit()?;
 
@@ -246,12 +249,12 @@ impl Server {
 
   pub(crate) fn is_head(&self, revision: Revision) -> ServerResult<bool> {
     Ok(
-      self
+      !self
         .database
         .begin_read()?
-        .open_table(HEADS)?
+        .open_multimap_table(HEADS)?
         .get(&revision)?
-        .is_some(),
+        .is_empty(),
     )
   }
 
@@ -744,7 +747,7 @@ impl Server {
     );
 
     let number = {
-      let mut heads = tx.open_table(HEADS)?;
+      let mut heads = tx.open_multimap_table(HEADS)?;
       let mut numbers = tx.open_table(NUMBERS)?;
       let mut revisions = tx.open_table(REVISIONS)?;
 
@@ -761,7 +764,13 @@ impl Server {
             return Err(ServerError::RevisionPreviousUnexpected { previous, revision });
           }
 
-          if let Some(number) = heads.get(&revision)?.map(|number| number.value()) {
+          let existing = heads
+            .get(&revision)?
+            .next()
+            .transpose()?
+            .map(|number| number.value());
+
+          if let Some(number) = existing {
             number
           } else {
             let mut metadata = tx.open_table(METADATA)?;
@@ -774,25 +783,14 @@ impl Server {
           }
         }
         api::revision::Mode::Replace { number } => {
-          if let Some(previous) = previous {
-            return Err(ServerError::RevisionPreviousUnexpected { previous, revision });
-          }
-
           let head = numbers
             .get(&number)?
             .context(server_error::PackageNumberNotFound { number })?
             .value();
 
           if head != revision {
-            if let Some(existing) = heads.get(&revision)?.map(|number| number.value()) {
-              return Err(ServerError::PackageNumberConflict {
-                fingerprint,
-                number: existing,
-              });
-            }
-
             revisions.insert(&revision, &())?;
-            heads.remove(&head)?;
+            heads.remove(&head, &number)?;
             heads.insert(&revision, &number)?;
             numbers.insert(&number, &revision)?;
           }
@@ -824,7 +822,7 @@ impl Server {
             );
 
             revisions.insert(&revision, &())?;
-            heads.remove(&head)?;
+            heads.remove(&head, &number)?;
             heads.insert(&revision, &number)?;
             numbers.insert(&number, &revision)?;
           }
@@ -852,7 +850,7 @@ impl Server {
         metadata.insert(DatabaseMetadata::Schema, &SCHEMA_VERSION)?;
 
         tx.open_table(DIRECTORIES)?;
-        tx.open_table(HEADS)?;
+        tx.open_multimap_table(HEADS)?;
         tx.open_table(NUMBERS)?;
         tx.open_table(PACKAGES)?;
         tx.open_table(REVISIONS)?;
