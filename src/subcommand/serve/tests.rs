@@ -1362,8 +1362,10 @@ fn get_package_by_number() {
       next: None,
       number: Some(1),
       prev: None,
+      previous: None,
       readme: None,
       revision: Some(server.write_revision(fingerprint, None)),
+      revisions: Some(1),
       totals: Totals::default(),
     })
     .send();
@@ -1390,6 +1392,7 @@ fn get_package_by_revision() {
   let root = server.write_revision(foo, None);
 
   let bar = PackageBuilder::new().file("bar", b"bar");
+  let bar_directory = bar.directory();
   let bar = Fingerprint(bar.root.upload(&server));
   server.post(format!("/api/package/{bar}")).send();
 
@@ -1418,8 +1421,35 @@ fn get_package_by_revision() {
       next: None,
       number: None,
       prev: None,
+      previous: None,
       readme: None,
       revision: Some(root),
+      revisions: Some(1),
+      totals: Totals {
+        directories: 0,
+        directory_size: 0,
+        file_size: 3,
+        files: 1,
+      },
+    })
+    .send();
+
+  server
+    .get("/package/1")
+    .assert_page(PackageHtml {
+      colophon: None,
+      directory: bar_directory,
+      fingerprint: bar,
+      identifier: PackageIdentifier::Number(1),
+      metadata: None,
+      mounted: false,
+      next: None,
+      number: Some(1),
+      prev: None,
+      previous: Some(root),
+      readme: None,
+      revision: Some(head),
+      revisions: Some(2),
       totals: Totals {
         directories: 0,
         directory_size: 0,
@@ -1439,6 +1469,55 @@ fn get_package_by_revision_not_found() {
     .assert_error(
       StatusCode::NOT_FOUND,
       ServerError::RevisionNotFound { revision },
+    )
+    .send();
+}
+
+#[test]
+fn get_package_history() {
+  let server = TestServer::new();
+
+  let foo = PackageBuilder::new().file("foo", b"foo").upload(&server);
+  let root = server.write_revision(foo, None);
+
+  let bar = PackageBuilder::new().file("bar", b"bar");
+  let bar = Fingerprint(bar.root.upload(&server));
+  server.post(format!("/api/package/{bar}")).send();
+
+  let head = server.write_revision(bar, Some(root));
+
+  server
+    .post(format!("/api/revision/{head}"))
+    .body(
+      api::revision::Request {
+        mode: api::revision::Mode::Update { number: 1 },
+      }
+      .encode_to_vec(),
+    )
+    .assert_body(api::revision::Response { number: 1 }.encode_to_vec())
+    .send();
+
+  server
+    .get("/package/1/history")
+    .assert_page(HistoryHtml {
+      entries: vec![(head, bar), (root, foo)],
+      identifier: PackageIdentifier::Number(1),
+    })
+    .send();
+
+  server
+    .get(format!("/package/{root}/history"))
+    .assert_page(HistoryHtml {
+      entries: vec![(root, foo)],
+      identifier: PackageIdentifier::Revision(root),
+    })
+    .send();
+
+  server
+    .get(format!("/package/{foo}/history"))
+    .assert_error(
+      StatusCode::BAD_REQUEST,
+      ServerError::HistoryByFingerprint { fingerprint: foo },
     )
     .send();
 }
@@ -1478,8 +1557,10 @@ fn get_package_navigation() {
       next: Some(3),
       number: Some(1),
       prev: None,
+      previous: None,
       readme: None,
       revision: Some(server.write_revision(foo, None)),
+      revisions: Some(1),
       totals,
     })
     .send();
@@ -1496,8 +1577,10 @@ fn get_package_navigation() {
       next: None,
       number: None,
       prev: None,
+      previous: None,
       readme: None,
       revision: None,
+      revisions: None,
       totals,
     })
     .send();
@@ -1577,8 +1660,10 @@ fn get_package_with_metadata() {
       next: None,
       number: None,
       prev: None,
+      previous: None,
       readme: Some(Hash::bytes(readme)),
       revision: None,
+      revisions: None,
       totals: Totals {
         directories: 0,
         directory_size: 0,
@@ -1613,8 +1698,10 @@ fn get_package_without_metadata() {
       next: None,
       number: None,
       prev: None,
+      previous: None,
       readme: None,
       revision: None,
+      revisions: None,
       totals: Totals::default(),
     })
     .send();
@@ -2955,8 +3042,10 @@ fn package_page_og_image() {
         next: None,
         number: None,
         prev: None,
+        previous: None,
         readme: None,
         revision: None,
+        revisions: None,
         totals: Totals {
           directories: 0,
           directory_size: 0,
@@ -3030,8 +3119,10 @@ fn package_page_renders_audio_media() {
       next: None,
       number: None,
       prev: None,
+      previous: None,
       readme: None,
       revision: None,
+      revisions: None,
       totals,
     })
     .send();
@@ -3087,8 +3178,10 @@ fn package_page_renders_image_media() {
       next: None,
       number: None,
       prev: None,
+      previous: None,
       readme: None,
       revision: None,
+      revisions: None,
       totals,
     })
     .send();
@@ -3161,8 +3254,10 @@ fn package_page_renders_video_media() {
       next: None,
       number: None,
       prev: None,
+      previous: None,
       readme: None,
       revision: None,
+      revisions: None,
       totals,
     })
     .send();
@@ -3203,8 +3298,10 @@ fn package_page_web() {
       next: None,
       number: None,
       prev: None,
+      previous: None,
       readme: None,
       revision: None,
+      revisions: None,
       totals: Totals {
         directories: 1,
         directory_size: static_deco_len,
@@ -4068,8 +4165,10 @@ fn verify_package_replace() {
       next: None,
       number: Some(1),
       prev: None,
+      previous: None,
       readme: None,
       revision: Some(revision),
+      revisions: Some(1),
       totals: Totals {
         directories: 0,
         directory_size: 0,

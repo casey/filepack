@@ -4,7 +4,7 @@ use {
     Database, MultimapTableDefinition, ReadOnlyTable, ReadableDatabase, ReadableMultimapTable,
     ReadableTable, TableDefinition,
   },
-  templates::PackageHtml,
+  templates::{HistoryHtml, PackageHtml},
 };
 
 const DIRECTORIES: TableDefinition<Hash, ()> = TableDefinition::new("directories");
@@ -247,6 +247,37 @@ impl Server {
     })
   }
 
+  fn history(&self, revision: Revision) -> ServerResult<Vec<(Revision, Fingerprint)>> {
+    let mut entries = Vec::new();
+
+    let mut revision = Some(revision);
+
+    while let Some(current) = revision {
+      let revision_object = self.read_revision(current)?;
+
+      entries.push((current, revision_object.package));
+
+      revision = revision_object.previous;
+    }
+
+    Ok(entries)
+  }
+
+  pub(crate) fn history_html(&self, identifier: PackageIdentifier) -> ServerResult<HistoryHtml> {
+    let Resolved {
+      fingerprint,
+      revision,
+      ..
+    } = self.resolve(identifier)?;
+
+    let revision = revision.context(server_error::HistoryByFingerprint { fingerprint })?;
+
+    Ok(HistoryHtml {
+      entries: self.history(revision)?,
+      identifier,
+    })
+  }
+
   pub(crate) fn is_head(&self, revision: Revision) -> ServerResult<bool> {
     Ok(
       !self
@@ -421,6 +452,17 @@ impl Server {
       revision,
     } = self.resolve(package)?;
 
+    let history = revision
+      .map(|revision| self.history(revision))
+      .transpose()?;
+
+    let previous = history
+      .as_ref()
+      .and_then(|history| history.get(1))
+      .map(|(revision, _package)| *revision);
+
+    let revisions = history.as_ref().map(|history| history.len().into_u64());
+
     let tx = self.database.begin_read()?;
 
     let numbers = tx.open_table(NUMBERS)?;
@@ -480,8 +522,10 @@ impl Server {
       next,
       number,
       prev,
+      previous,
       readme,
       revision,
+      revisions,
       totals,
     })
   }

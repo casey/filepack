@@ -510,8 +510,10 @@ fn upload_package_serves_package_html() {
       next: None,
       number: None,
       prev: None,
+      previous: None,
       readme: None,
       revision: None,
+      revisions: None,
       totals,
     },
   );

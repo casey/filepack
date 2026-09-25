@@ -3,14 +3,15 @@ use super::*;
 pub use self::{directory::DirectoryHtml, package::PackageHtml, page::PageHtml};
 
 pub(crate) use self::{
-  directory_table::DirectoryTableHtml, error::ErrorHtml, files::FilesHtml, home::HomeHtml,
-  info::InfoHtml, item::ItemHtml, media::MediaHtml, packages::PackagesHtml,
+  directory_table::DirectoryTableHtml, error::ErrorHtml, files::FilesHtml, history::HistoryHtml,
+  home::HomeHtml, info::InfoHtml, item::ItemHtml, media::MediaHtml, packages::PackagesHtml,
 };
 
 mod directory;
 mod directory_table;
 mod error;
 mod files;
+mod history;
 mod home;
 mod info;
 mod item;

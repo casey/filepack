@@ -67,6 +67,10 @@ pub enum ServerError {
   Filesystem { source: FilesystemError },
   #[snafu(display("{source}"))]
   FingerprintParse { source: HexError },
+  #[snafu(display(
+    "history cannot be accessed by fingerprint, browse package {fingerprint} by number or revision"
+  ))]
+  HistoryByFingerprint { fingerprint: Fingerprint },
   #[snafu(display("response invalid"))]
   InvalidResponse { source: http::Error },
   #[snafu(display(
@@ -214,6 +218,7 @@ impl ServerError {
       | Self::DirectoryTotals { .. }
       | Self::DirectoryUnverified { .. }
       | Self::FingerprintParse { .. }
+      | Self::HistoryByFingerprint { .. }
       | Self::RevisionParse { .. }
       | Self::PackageMetadataDecode { .. }
       | Self::PackageMetadataFileMissing { .. }

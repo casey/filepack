@@ -15,7 +15,9 @@ use {
     caches::DirCache,
   },
   std::net::TcpStream,
-  templates::{DirectoryHtml, FilesHtml, HomeHtml, ItemHtml, MediaHtml, PackageHtml, PackagesHtml},
+  templates::{
+    DirectoryHtml, FilesHtml, HistoryHtml, HomeHtml, ItemHtml, MediaHtml, PackageHtml, PackagesHtml,
+  },
   tokio::{net::TcpListener, runtime, task::block_in_place},
   tower_http::set_header::SetResponseHeaderLayer,
 };
@@ -361,6 +363,7 @@ impl Serve {
       .route("/mount/{fingerprint}/", get(route::mount))
       .route("/mount/{fingerprint}/{*path}", get(route::mount_file))
       .route("/package/{package}", get(route::package))
+      .route("/package/{package}/history", get(route::package_history))
       .route("/package/{package}/item/{item}", get(route::package_item))
       .route("/package/{package}/media", get(route::package_media))
       .route("/packages", get(route::packages))

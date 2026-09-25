@@ -1,0 +1,9 @@
+<h1>Package {{ self.identifier }} history</h1>
+<ol>
+%% for (revision, package) in &self.entries {
+  <li>
+    <a href=/package/{{ revision }}><code>{{ revision }}</code></a>
+    <a href=/package/{{ package }}><code>{{ package }}</code></a>
+  </li>
+%% }
+</ol>

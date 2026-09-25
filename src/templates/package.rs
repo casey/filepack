@@ -11,8 +11,10 @@ pub struct PackageHtml {
   pub next: Option<u64>,
   pub number: Option<u64>,
   pub prev: Option<u64>,
+  pub previous: Option<Revision>,
   pub readme: Option<Hash>,
   pub revision: Option<Revision>,
+  pub revisions: Option<u64>,
   pub totals: Totals,
 }
 
@@ -24,6 +26,20 @@ impl PackageHtml {
       })
       .when_some(self.revision, |builder, revision| {
         builder.code_link("revision", revision, format!("/package/{revision}"))
+      })
+      .when_some(self.previous, |builder, previous| {
+        builder.code_link(
+          "previous revision",
+          previous,
+          format!("/package/{previous}"),
+        )
+      })
+      .when_some(self.revisions, |builder, revisions| {
+        builder.link(
+          "history",
+          Count::new(revisions, "revision").to_string(),
+          format!("/package/{}/history", self.identifier),
+        )
       })
       .code_link(
         "fingerprint",
@@ -159,8 +175,10 @@ mod tests {
         next: None,
         number: Some(1),
         prev: None,
+        previous: None,
         readme: None,
         revision: None,
+        revisions: None,
         totals: Totals {
           directories: 0,
           directory_size: 0,
@@ -275,8 +293,10 @@ mod tests {
         next: None,
         number: Some(1),
         prev: None,
+        previous: None,
         readme: None,
         revision: None,
+        revisions: None,
         totals: Totals {
           directories: 0,
           directory_size: 0,
@@ -425,8 +445,10 @@ mod tests {
         next: None,
         number: Some(1),
         prev: None,
+        previous: None,
         readme: None,
         revision: None,
+        revisions: None,
         totals: Totals {
           directories: 0,
           directory_size: 0,
@@ -556,8 +578,10 @@ mod tests {
         next: None,
         number: Some(1),
         prev: None,
+        previous: Some(test::REVISION.parse().unwrap()),
         readme: None,
         revision: Some(test::REVISION.parse().unwrap()),
+        revisions: Some(2),
         totals: Totals {
           directories: 0,
           directory_size: 0,
@@ -579,6 +603,18 @@ mod tests {
               <dt>revision</dt>
               <dd>
                 <a href='/package/{revision}'><code>{revision}</code></a>
+              </dd>
+            </div>
+            <div>
+              <dt>previous revision</dt>
+              <dd>
+                <a href='/package/{revision}'><code>{revision}</code></a>
+              </dd>
+            </div>
+            <div>
+              <dt>history</dt>
+              <dd>
+                <a href='/package/1/history'>2 revisions</a>
               </dd>
             </div>
             <div>
@@ -654,8 +690,10 @@ mod tests {
       next: Some(3),
       number: Some(2),
       prev: Some(1),
+      previous: None,
       readme: None,
       revision: None,
+      revisions: None,
       totals: Totals::default(),
     };
 
@@ -701,8 +739,10 @@ mod tests {
       next: None,
       number: Some(1),
       prev: None,
+      previous: None,
       readme: None,
       revision: None,
+      revisions: None,
       totals: Totals::default(),
     };
 
@@ -762,8 +802,10 @@ mod tests {
       next: None,
       number: Some(1),
       prev: None,
+      previous: None,
       readme: None,
       revision: None,
+      revisions: None,
       totals: Totals::default(),
     };
 
@@ -801,8 +843,10 @@ mod tests {
         next: None,
         number: Some(1),
         prev: None,
+        previous: None,
         readme: Some(test::HASH.parse().unwrap()),
         revision: None,
+        revisions: None,
         totals: Totals {
           directories: 0,
           directory_size: 0,
@@ -1010,8 +1054,10 @@ mod tests {
         next: None,
         number: Some(1),
         prev: None,
+        previous: None,
         readme: None,
         revision: None,
+        revisions: None,
         totals: Totals {
           directories: 0,
           directory_size: 0,

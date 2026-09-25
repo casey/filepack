@@ -406,6 +406,20 @@ pub(crate) async fn package(
   })
 }
 
+pub(crate) async fn package_history(
+  server: ServerExtension,
+  server_config: ServerConfigExtension,
+  Path(identifier): Path<PackageIdentifier>,
+) -> PageResult<HistoryHtml> {
+  block_in_place(|| {
+    Ok(
+      server
+        .history_html(identifier)?
+        .page(server_config.url.clone()),
+    )
+  })
+}
+
 pub(crate) async fn package_item(
   server: ServerExtension,
   server_config: ServerConfigExtension,
