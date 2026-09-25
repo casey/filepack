@@ -121,11 +121,6 @@ pub enum ServerError {
   PackageMetadataNotFound { fingerprint: Fingerprint },
   #[snafu(display("package {fingerprint} not mounted"))]
   PackageNotMounted { fingerprint: Fingerprint },
-  #[snafu(display("package {fingerprint} already has number {number}"))]
-  PackageNumberConflict {
-    fingerprint: Fingerprint,
-    number: u64,
-  },
   #[snafu(display("package number {number} not found"))]
   PackageNumberNotFound { number: u64 },
   #[snafu(display("package {fingerprint} root directory is unverified"))]
@@ -240,7 +235,7 @@ impl ServerError {
       | Self::PageNotFound
       | Self::PlaceholderNotFound { .. }
       | Self::RevisionNotHead { .. } => StatusCode::NOT_FOUND,
-      Self::PackageNumberConflict { .. } | Self::RevisionConflict { .. } => StatusCode::CONFLICT,
+      Self::RevisionConflict { .. } => StatusCode::CONFLICT,
       Self::WriteForbidden => StatusCode::FORBIDDEN,
     }
   }

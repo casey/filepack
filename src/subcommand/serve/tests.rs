@@ -852,6 +852,31 @@ fn default_serve_matches_parsed() {
 }
 
 #[test]
+fn delete_number_keeps_shared_head() {
+  let server = TestServer::new();
+
+  let foo = PackageBuilder::new().file("foo", b"foo").upload(&server);
+  let revision = server.write_revision(foo, None);
+
+  PackageBuilder::new().file("bar", b"bar").upload(&server);
+
+  server
+    .post(format!("/api/revision/{revision}"))
+    .body(
+      api::revision::Request {
+        mode: api::revision::Mode::Replace { number: 2 },
+      }
+      .encode_to_vec(),
+    )
+    .assert_body(api::revision::Response { number: 2 }.encode_to_vec())
+    .send();
+
+  server.delete("/api/number/1").send();
+
+  server.head(format!("/api/revision/{revision}")).send();
+}
+
+#[test]
 fn delete_package_not_found() {
   TestServer::new()
     .delete("/api/number/1")
@@ -1212,6 +1237,73 @@ fn gc_removes_unreachable_and_retains_reachable_data() {
     fs::read_dir(server.data_dir.join("files")).unwrap().count(),
     5,
   );
+}
+
+#[test]
+fn gc_shares_ancestors() {
+  let server = TestServer::new();
+
+  let foo = PackageBuilder::new().file("foo", b"foo").upload(&server);
+  let foo_hash = Hash::from(foo);
+  let root = server.write_revision(foo, None);
+
+  let bar = PackageBuilder::new().file("bar", b"bar");
+  let (bar_deco, bar_hash) = bar.directory().deco();
+  let bar = Fingerprint(bar.root.upload(&server));
+  server.post(format!("/api/package/{bar}")).send();
+
+  let head_object = RevisionObject {
+    version: Version::Zero,
+    package: bar,
+    previous: Some(root),
+  };
+
+  let head = server.write_revision(bar, Some(root));
+
+  server
+    .post(format!("/api/revision/{head}"))
+    .body(
+      api::revision::Request {
+        mode: api::revision::Mode::Update { number: 1 },
+      }
+      .encode_to_vec(),
+    )
+    .assert_body(api::revision::Response { number: 1 }.encode_to_vec())
+    .send();
+
+  server
+    .post(format!("/api/revision/{root}"))
+    .body(
+      api::revision::Request {
+        mode: api::revision::Mode::New,
+      }
+      .encode_to_vec(),
+    )
+    .assert_body(api::revision::Response { number: 2 }.encode_to_vec())
+    .send();
+
+  server
+    .post("/api/gc")
+    .assert_body(api::gc::Response::default().encode_to_vec())
+    .send();
+
+  server.delete("/api/number/1").send();
+
+  server
+    .post("/api/gc")
+    .assert_body(
+      api::gc::Response {
+        bytes: bar_deco.len().into_u64() + 3 + head_object.encode_to_vec().len().into_u64(),
+        directories: BTreeSet::from([bar_hash]).into(),
+        files: BTreeSet::from([bar_hash, Hash::bytes(b"bar"), head.into()]).into(),
+        revisions: BTreeSet::from([head]).into(),
+      }
+      .encode_to_vec(),
+    )
+    .send();
+
+  server.assert_file(foo_hash);
+  server.assert_file(root.into());
 }
 
 #[test]
@@ -3957,38 +4049,6 @@ fn verify_package_replace() {
 }
 
 #[test]
-fn verify_package_replace_conflict() {
-  let server = TestServer::new();
-
-  let foo = PackageBuilder::new().file("foo", b"foo").upload(&server);
-  let bar = PackageBuilder::new().file("bar", b"bar").upload(&server);
-
-  let revision = server.write_revision(foo, None);
-
-  server
-    .post(format!("/api/revision/{revision}"))
-    .body(
-      api::revision::Request {
-        mode: api::revision::Mode::Replace { number: 2 },
-      }
-      .encode_to_vec(),
-    )
-    .status(StatusCode::CONFLICT)
-    .assert_body(format!("package {foo} already has number 1"))
-    .send();
-
-  server
-    .get("/api/packages")
-    .assert_body(
-      api::packages::Response {
-        packages: BTreeSet::from([foo, bar]).into(),
-      }
-      .encode_to_vec(),
-    )
-    .send();
-}
-
-#[test]
 fn verify_package_replace_not_found() {
   let server = TestServer::new();
 
@@ -4009,6 +4069,100 @@ fn verify_package_replace_not_found() {
     )
     .status(StatusCode::NOT_FOUND)
     .assert_body("package number 99 not found")
+    .send();
+}
+
+#[test]
+fn verify_package_replace_shares_head() {
+  let server = TestServer::new();
+
+  let foo = PackageBuilder::new().upload(&server);
+  let revision = server.write_revision(foo, None);
+
+  PackageBuilder::new().file("bar", b"bar").upload(&server);
+
+  server
+    .post(format!("/api/revision/{revision}"))
+    .body(
+      api::revision::Request {
+        mode: api::revision::Mode::Replace { number: 2 },
+      }
+      .encode_to_vec(),
+    )
+    .assert_body(api::revision::Response { number: 2 }.encode_to_vec())
+    .send();
+
+  for number in 1..=2 {
+    server
+      .get(format!("/api/number/{number}"))
+      .assert_body(
+        api::number::Response {
+          package: foo,
+          revision,
+        }
+        .encode_to_vec(),
+      )
+      .send();
+  }
+
+  server
+    .post(format!("/api/revision/{revision}"))
+    .body(
+      api::revision::Request {
+        mode: api::revision::Mode::New,
+      }
+      .encode_to_vec(),
+    )
+    .assert_body(api::revision::Response { number: 1 }.encode_to_vec())
+    .send();
+}
+
+#[test]
+fn verify_package_replace_with_history() {
+  let server = TestServer::new();
+
+  let foo = PackageBuilder::new().file("foo", b"foo").upload(&server);
+  let root = server.write_revision(foo, None);
+
+  let bar = PackageBuilder::new().file("bar", b"bar");
+  let bar = Fingerprint(bar.root.upload(&server));
+  server.post(format!("/api/package/{bar}")).send();
+
+  let head = server.write_revision(bar, Some(root));
+
+  server
+    .post(format!("/api/revision/{head}"))
+    .body(
+      api::revision::Request {
+        mode: api::revision::Mode::Update { number: 1 },
+      }
+      .encode_to_vec(),
+    )
+    .assert_body(api::revision::Response { number: 1 }.encode_to_vec())
+    .send();
+
+  PackageBuilder::new().file("baz", b"baz").upload(&server);
+
+  server
+    .post(format!("/api/revision/{head}"))
+    .body(
+      api::revision::Request {
+        mode: api::revision::Mode::Replace { number: 2 },
+      }
+      .encode_to_vec(),
+    )
+    .assert_body(api::revision::Response { number: 2 }.encode_to_vec())
+    .send();
+
+  server
+    .get("/api/number/2")
+    .assert_body(
+      api::number::Response {
+        package: bar,
+        revision: head,
+      }
+      .encode_to_vec(),
+    )
     .send();
 }
 
@@ -4158,23 +4312,19 @@ fn verify_revision_previous_unexpected() {
 
   let revision = server.write_revision(bar, Some(previous));
 
-  for request in [
-    api::revision::Request {
-      mode: api::revision::Mode::New,
-    },
-    api::revision::Request {
-      mode: api::revision::Mode::Replace { number: 1 },
-    },
-  ] {
-    server
-      .post(format!("/api/revision/{revision}"))
-      .body(request.encode_to_vec())
-      .status(StatusCode::BAD_REQUEST)
-      .assert_body(format!(
-        "revision {revision} has previous revision {previous}"
-      ))
-      .send();
-  }
+  server
+    .post(format!("/api/revision/{revision}"))
+    .body(
+      api::revision::Request {
+        mode: api::revision::Mode::New,
+      }
+      .encode_to_vec(),
+    )
+    .status(StatusCode::BAD_REQUEST)
+    .assert_body(format!(
+      "revision {revision} has previous revision {previous}"
+    ))
+    .send();
 }
 
 #[test]
