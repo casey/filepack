@@ -415,7 +415,11 @@ impl Server {
     package: PackageIdentifier,
     mounts: &HashSet<Fingerprint>,
   ) -> ServerResult<PackageHtml> {
-    let (number, fingerprint) = self.resolve(package)?;
+    let Resolved {
+      fingerprint,
+      number,
+      revision,
+    } = self.resolve(package)?;
 
     let tx = self.database.begin_read()?;
 
@@ -477,6 +481,7 @@ impl Server {
       number,
       prev,
       readme,
+      revision,
       totals,
     })
   }
@@ -565,10 +570,7 @@ impl Server {
       .context(server_error::RevisionCorrupt { revision })
   }
 
-  pub(crate) fn resolve(
-    &self,
-    identifier: PackageIdentifier,
-  ) -> ServerResult<(Option<u64>, Fingerprint)> {
+  pub(crate) fn resolve(&self, identifier: PackageIdentifier) -> ServerResult<Resolved> {
     let tx = self.database.begin_read()?;
 
     match identifier {
@@ -578,19 +580,37 @@ impl Server {
           server_error::PackageFingerprintNotFound { fingerprint },
         );
 
-        Ok((None, fingerprint))
+        Ok(Resolved {
+          fingerprint,
+          number: None,
+          revision: None,
+        })
       }
-      PackageIdentifier::Number(number) => Ok((
-        Some(number),
-        self
-          .read_revision(
-            tx.open_table(NUMBERS)?
-              .get(&number)?
-              .context(server_error::PackageNumberNotFound { number })?
-              .value(),
-          )?
-          .package,
-      )),
+      PackageIdentifier::Number(number) => {
+        let revision = tx
+          .open_table(NUMBERS)?
+          .get(&number)?
+          .context(server_error::PackageNumberNotFound { number })?
+          .value();
+
+        Ok(Resolved {
+          fingerprint: self.read_revision(revision)?.package,
+          number: Some(number),
+          revision: Some(revision),
+        })
+      }
+      PackageIdentifier::Revision(revision) => {
+        ensure!(
+          tx.open_table(REVISIONS)?.get(&revision)?.is_some(),
+          server_error::RevisionNotFound { revision },
+        );
+
+        Ok(Resolved {
+          fingerprint: self.read_revision(revision)?.package,
+          number: None,
+          revision: Some(revision),
+        })
+      }
     }
   }
 

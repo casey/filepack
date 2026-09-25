@@ -160,15 +160,19 @@ pub(crate) async fn directory(
 pub(crate) async fn fallback(uri: Uri) -> Result<Response, PageError> {
   if let Some(component) = uri.path().strip_prefix('/')
     && !component.contains('/')
-    && component.starts_with("package1")
   {
-    let fingerprint = component
-      .parse::<Fingerprint>()
-      .context(server_error::FingerprintParse)?;
-
-    return Ok(Redirect::permanent(&format!("/package/{fingerprint}")).into_response());
+    if component.starts_with(Tag::Fingerprint.prefix()) {
+      let fingerprint = component
+        .parse::<Fingerprint>()
+        .context(server_error::FingerprintParse)?;
+      return Ok(Redirect::permanent(&format!("/package/{fingerprint}")).into_response());
+    } else if component.starts_with(Tag::Revision.prefix()) {
+      let revision = component
+        .parse::<Revision>()
+        .context(server_error::RevisionParse)?;
+      return Ok(Redirect::permanent(&format!("/package/{revision}")).into_response());
+    }
   }
-
   Err(ServerError::PageNotFound.into())
 }
 
@@ -408,7 +412,7 @@ pub(crate) async fn package_item(
   Path((identifier, Ordinal(index))): Path<(PackageIdentifier, Ordinal)>,
 ) -> PageResult<ItemHtml> {
   block_in_place(|| {
-    let (_, fingerprint) = server.resolve(identifier)?;
+    let Resolved { fingerprint, .. } = server.resolve(identifier)?;
 
     let metadata = server.package_metadata(fingerprint)?;
 
@@ -454,7 +458,11 @@ pub(crate) async fn package_media(
   Path(identifier): Path<PackageIdentifier>,
 ) -> PageResult<MediaHtml> {
   block_in_place(|| {
-    let (number, fingerprint) = server.resolve(identifier)?;
+    let Resolved {
+      fingerprint,
+      number,
+      revision,
+    } = server.resolve(identifier)?;
 
     let metadata = server.package_metadata(fingerprint)?;
 
@@ -469,6 +477,7 @@ pub(crate) async fn package_media(
         identifier,
         metadata,
         number,
+        revision,
       }
       .page(server_config.url.clone()),
     )

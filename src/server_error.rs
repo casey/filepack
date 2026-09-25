@@ -152,8 +152,12 @@ pub enum ServerError {
     revision: Revision,
     source: DecodeError,
   },
+  #[snafu(display("revision {revision} not found"))]
+  RevisionNotFound { revision: Revision },
   #[snafu(display("revision {revision} is not the head of a package number"))]
   RevisionNotHead { revision: Revision },
+  #[snafu(display("failed to parse revision"))]
+  RevisionParse { source: HexError },
   #[snafu(display(
     "revision {revision} has no previous revision but package number {number} is at revision {head}"
   ))]
@@ -210,6 +214,7 @@ impl ServerError {
       | Self::DirectoryTotals { .. }
       | Self::DirectoryUnverified { .. }
       | Self::FingerprintParse { .. }
+      | Self::RevisionParse { .. }
       | Self::PackageMetadataDecode { .. }
       | Self::PackageMetadataFileMissing { .. }
       | Self::PackageRootUnverified { .. }
@@ -234,6 +239,7 @@ impl ServerError {
       | Self::PackageNumberNotFound { .. }
       | Self::PageNotFound
       | Self::PlaceholderNotFound { .. }
+      | Self::RevisionNotFound { .. }
       | Self::RevisionNotHead { .. } => StatusCode::NOT_FOUND,
       Self::RevisionConflict { .. } => StatusCode::CONFLICT,
       Self::WriteForbidden => StatusCode::FORBIDDEN,

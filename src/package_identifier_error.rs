@@ -7,4 +7,6 @@ pub enum PackageIdentifierError {
   Fingerprint { source: HexError },
   #[snafu(transparent)]
   Number { source: NumberError },
+  #[snafu(display("unrecognized package identifier `{identifier}`"))]
+  Unrecognized { identifier: String },
 }

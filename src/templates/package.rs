@@ -12,6 +12,7 @@ pub struct PackageHtml {
   pub number: Option<u64>,
   pub prev: Option<u64>,
   pub readme: Option<Hash>,
+  pub revision: Option<Revision>,
   pub totals: Totals,
 }
 
@@ -20,6 +21,9 @@ impl PackageHtml {
     InfoBuilder::new()
       .when_some(self.number, |builder, number| {
         builder.link("number", number, format!("/package/{number}"))
+      })
+      .when_some(self.revision, |builder, revision| {
+        builder.code_link("revision", revision, format!("/package/{revision}"))
       })
       .code_link(
         "fingerprint",
@@ -156,6 +160,7 @@ mod tests {
         number: Some(1),
         prev: None,
         readme: None,
+        revision: None,
         totals: Totals {
           directories: 0,
           directory_size: 0,
@@ -271,6 +276,7 @@ mod tests {
         number: Some(1),
         prev: None,
         readme: None,
+        revision: None,
         totals: Totals {
           directories: 0,
           directory_size: 0,
@@ -420,6 +426,7 @@ mod tests {
         number: Some(1),
         prev: None,
         readme: None,
+        revision: None,
         totals: Totals {
           directories: 0,
           directory_size: 0,
@@ -550,6 +557,7 @@ mod tests {
         number: Some(1),
         prev: None,
         readme: None,
+        revision: Some(test::REVISION.parse().unwrap()),
         totals: Totals {
           directories: 0,
           directory_size: 0,
@@ -565,6 +573,12 @@ mod tests {
               <dt>number</dt>
               <dd>
                 <a href='/package/1'>1</a>
+              </dd>
+            </div>
+            <div>
+              <dt>revision</dt>
+              <dd>
+                <a href='/package/{revision}'><code>{revision}</code></a>
               </dd>
             </div>
             <div>
@@ -622,6 +636,7 @@ mod tests {
           </ol>
         ",
         fingerprint = test::FINGERPRINT,
+        revision = test::REVISION,
         hash = test::HASH,
       )),
     );
@@ -640,6 +655,7 @@ mod tests {
       number: Some(2),
       prev: Some(1),
       readme: None,
+      revision: None,
       totals: Totals::default(),
     };
 
@@ -686,6 +702,7 @@ mod tests {
       number: Some(1),
       prev: None,
       readme: None,
+      revision: None,
       totals: Totals::default(),
     };
 
@@ -746,6 +763,7 @@ mod tests {
       number: Some(1),
       prev: None,
       readme: None,
+      revision: None,
       totals: Totals::default(),
     };
 
@@ -784,6 +802,7 @@ mod tests {
         number: Some(1),
         prev: None,
         readme: Some(test::HASH.parse().unwrap()),
+        revision: None,
         totals: Totals {
           directories: 0,
           directory_size: 0,
@@ -992,6 +1011,7 @@ mod tests {
         number: Some(1),
         prev: None,
         readme: None,
+        revision: None,
         totals: Totals {
           directories: 0,
           directory_size: 0,

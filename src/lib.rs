@@ -135,6 +135,7 @@ use {
     public_key_error::PublicKeyError,
     relative_path::RelativePath,
     reqwest_response_ext::ReqwestResponseExt,
+    resolved::Resolved,
     resource::Resource,
     resource_type::ResourceType,
     rotation::Rotation,
@@ -436,6 +437,7 @@ mod public_key_error;
 mod re;
 mod relative_path;
 mod reqwest_response_ext;
+mod resolved;
 mod resource;
 mod resource_type;
 mod revision;
