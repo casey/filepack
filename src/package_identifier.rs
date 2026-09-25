@@ -4,6 +4,7 @@ use super::*;
 pub enum PackageIdentifier {
   Fingerprint(Fingerprint),
   Number(u64),
+  Revision(Revision),
 }
 
 impl Display for PackageIdentifier {
@@ -11,6 +12,7 @@ impl Display for PackageIdentifier {
     match self {
       Self::Fingerprint(fingerprint) => write!(f, "{fingerprint}"),
       Self::Number(number) => write!(f, "{number}"),
+      Self::Revision(revision) => write!(f, "{revision}"),
     }
   }
 }
@@ -21,8 +23,14 @@ impl FromStr for PackageIdentifier {
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     if s.starts_with(|c: char| c.is_ascii_digit()) {
       Ok(Self::Number(parse_number(s)?))
-    } else {
+    } else if s.starts_with(Tag::Fingerprint.prefix()) {
       Ok(Self::Fingerprint(s.parse()?))
+    } else if s.starts_with(Tag::Revision.prefix()) {
+      Ok(Self::Revision(s.parse()?))
+    } else {
+      Err(PackageIdentifierError::Unrecognized {
+        identifier: s.into(),
+      })
     }
   }
 }
@@ -54,6 +62,10 @@ mod tests {
       test::FINGERPRINT,
       PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
     );
+    case(
+      test::REVISION,
+      PackageIdentifier::Revision(test::REVISION.parse().unwrap()),
+    );
   }
 
   #[test]
@@ -68,10 +80,11 @@ mod tests {
 
     case("01", "invalid number `01`");
     case("1a", "invalid number `1a`");
-    case("foo", "package fingerprint missing tag `package1…`");
+    case("foo", "unrecognized package identifier `foo`");
     case(
       "package1ZZ",
       "package fingerprint contains invalid hex digit `Z`",
     );
+    case("revision1ZZ", "revision contains invalid hex digit `Z`");
   }
 }

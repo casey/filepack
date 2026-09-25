@@ -511,6 +511,7 @@ fn upload_package_serves_package_html() {
       number: None,
       prev: None,
       readme: None,
+      revision: None,
       totals,
     },
   );

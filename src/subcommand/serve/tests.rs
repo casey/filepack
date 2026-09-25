@@ -1120,6 +1120,12 @@ fn fingerprint_redirects_to_package() {
     .status(StatusCode::PERMANENT_REDIRECT)
     .assert_header(header::LOCATION, format!("/package/{}", test::FINGERPRINT))
     .send();
+
+  TestServer::new()
+    .get(format!("/{}", test::REVISION))
+    .status(StatusCode::PERMANENT_REDIRECT)
+    .assert_header(header::LOCATION, format!("/package/{}", test::REVISION))
+    .send();
 }
 
 #[test]
@@ -1357,6 +1363,7 @@ fn get_package_by_number() {
       number: Some(1),
       prev: None,
       readme: None,
+      revision: Some(server.write_revision(fingerprint, None)),
       totals: Totals::default(),
     })
     .send();
@@ -1369,6 +1376,69 @@ fn get_package_by_number_not_found() {
     .assert_error(
       StatusCode::NOT_FOUND,
       ServerError::PackageNumberNotFound { number: 99 },
+    )
+    .send();
+}
+
+#[test]
+fn get_package_by_revision() {
+  let server = TestServer::new();
+
+  let foo = PackageBuilder::new().file("foo", b"foo");
+  let foo_directory = foo.directory();
+  let foo = foo.upload(&server);
+  let root = server.write_revision(foo, None);
+
+  let bar = PackageBuilder::new().file("bar", b"bar");
+  let bar = Fingerprint(bar.root.upload(&server));
+  server.post(format!("/api/package/{bar}")).send();
+
+  let head = server.write_revision(bar, Some(root));
+
+  server
+    .post(format!("/api/revision/{head}"))
+    .body(
+      api::revision::Request {
+        mode: api::revision::Mode::Update { number: 1 },
+      }
+      .encode_to_vec(),
+    )
+    .assert_body(api::revision::Response { number: 1 }.encode_to_vec())
+    .send();
+
+  server
+    .get(format!("/package/{root}"))
+    .assert_page(PackageHtml {
+      colophon: None,
+      directory: foo_directory,
+      fingerprint: foo,
+      identifier: PackageIdentifier::Revision(root),
+      metadata: None,
+      mounted: false,
+      next: None,
+      number: None,
+      prev: None,
+      readme: None,
+      revision: Some(root),
+      totals: Totals {
+        directories: 0,
+        directory_size: 0,
+        file_size: 3,
+        files: 1,
+      },
+    })
+    .send();
+}
+
+#[test]
+fn get_package_by_revision_not_found() {
+  let revision = Revision::from(Hash::bytes(b"foo"));
+
+  TestServer::new()
+    .get(format!("/package/{revision}"))
+    .assert_error(
+      StatusCode::NOT_FOUND,
+      ServerError::RevisionNotFound { revision },
     )
     .send();
 }
@@ -1409,6 +1479,7 @@ fn get_package_navigation() {
       number: Some(1),
       prev: None,
       readme: None,
+      revision: Some(server.write_revision(foo, None)),
       totals,
     })
     .send();
@@ -1426,6 +1497,7 @@ fn get_package_navigation() {
       number: None,
       prev: None,
       readme: None,
+      revision: None,
       totals,
     })
     .send();
@@ -1506,6 +1578,7 @@ fn get_package_with_metadata() {
       number: None,
       prev: None,
       readme: Some(Hash::bytes(readme)),
+      revision: None,
       totals: Totals {
         directories: 0,
         directory_size: 0,
@@ -1541,6 +1614,7 @@ fn get_package_without_metadata() {
       number: None,
       prev: None,
       readme: None,
+      revision: None,
       totals: Totals::default(),
     })
     .send();
@@ -1621,8 +1695,7 @@ fn malformed_package_identifier_returns_error() {
     .get("/package/foo")
     .status(StatusCode::BAD_REQUEST)
     .assert_body(
-      "Invalid URL: Cannot parse `package` with value `foo`: package fingerprint missing tag \
-      `package1…`",
+      "Invalid URL: Cannot parse `package` with value `foo`: unrecognized package identifier `foo`",
     )
     .send();
 }
@@ -2789,6 +2862,7 @@ fn package_media() {
       identifier: PackageIdentifier::Fingerprint(fingerprint),
       metadata,
       number: None,
+      revision: None,
     })
     .send();
 }
@@ -2816,6 +2890,7 @@ fn package_media_by_number() {
       identifier: PackageIdentifier::Number(1),
       metadata,
       number: Some(1),
+      revision: Some(server.write_revision(fingerprint, None)),
     })
     .send();
 }
@@ -2881,6 +2956,7 @@ fn package_page_og_image() {
         number: None,
         prev: None,
         readme: None,
+        revision: None,
         totals: Totals {
           directories: 0,
           directory_size: 0,
@@ -2955,6 +3031,7 @@ fn package_page_renders_audio_media() {
       number: None,
       prev: None,
       readme: None,
+      revision: None,
       totals,
     })
     .send();
@@ -3011,6 +3088,7 @@ fn package_page_renders_image_media() {
       number: None,
       prev: None,
       readme: None,
+      revision: None,
       totals,
     })
     .send();
@@ -3084,6 +3162,7 @@ fn package_page_renders_video_media() {
       number: None,
       prev: None,
       readme: None,
+      revision: None,
       totals,
     })
     .send();
@@ -3125,6 +3204,7 @@ fn package_page_web() {
       number: None,
       prev: None,
       readme: None,
+      revision: None,
       totals: Totals {
         directories: 1,
         directory_size: static_deco_len,
@@ -3989,6 +4069,7 @@ fn verify_package_replace() {
       number: Some(1),
       prev: None,
       readme: None,
+      revision: Some(revision),
       totals: Totals {
         directories: 0,
         directory_size: 0,

@@ -6,6 +6,7 @@ pub(crate) struct MediaHtml {
   pub(crate) identifier: PackageIdentifier,
   pub(crate) metadata: Metadata,
   pub(crate) number: Option<u64>,
+  pub(crate) revision: Option<Revision>,
 }
 
 impl MediaHtml {
@@ -13,6 +14,9 @@ impl MediaHtml {
     InfoBuilder::new()
       .when_some(self.number, |builder, number| {
         builder.link("number", number, format!("/package/{number}"))
+      })
+      .when_some(self.revision, |builder, revision| {
+        builder.code_link("revision", revision, format!("/package/{revision}"))
       })
       .code_link(
         "fingerprint",
@@ -77,6 +81,7 @@ mod tests {
             ..default()
           },
           number: Some(1),
+          revision: None,
         }
         .to_string(),
         unindent(&format!(
@@ -173,6 +178,7 @@ mod tests {
           identifier,
           metadata: default(),
           number: Some(1),
+          revision: None,
         }
         .up(),
         Some(format!("/package/{identifier}")),
