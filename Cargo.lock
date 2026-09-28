@@ -1169,6 +1169,7 @@ name = "filepack-derive"
 version = "0.0.0"
 dependencies = [
  "darling 0.24.1",
+ "heck",
  "proc-macro2",
  "quote",
  "strum",

@@ -4,6 +4,7 @@ use {
     parsed_field::ParsedField, parsed_variant::ParsedVariant, receiver::Receiver, variant::Variant,
   },
   darling::{FromDeriveInput, FromField, FromVariant, ast::Data, ast::Fields},
+  heck::ToSnakeCase,
   proc_macro::TokenStream,
   quote::quote,
   std::collections::HashSet,
@@ -45,6 +46,8 @@ pub fn decode_from_str(input: TokenStream) -> TokenStream {
 
   let name = &input.ident;
 
+  let display_name = display_name(name);
+
   quote! {
     impl Decode<'_> for #name {
       fn decode(decoder: &mut Decoder) -> DecodeResult<Self> {
@@ -52,13 +55,17 @@ pub fn decode_from_str(input: TokenStream) -> TokenStream {
           .text()?
           .parse::<Self>()
           .map_err(|source| DecodeError::FromStr {
-            name: stringify!(#name),
+            name: #display_name,
             source: Box::new(source),
           })
       }
     }
   }
   .into()
+}
+
+fn display_name(ident: &Ident) -> String {
+  ident.to_string().to_snake_case().replace('_', " ")
 }
 
 #[proc_macro_derive(Encode, attributes(deco, n))]

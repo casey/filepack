@@ -31,10 +31,12 @@ impl Input {
   pub(crate) fn decode_enum(&self, attributes: &Attributes) -> Result<proc_macro2::TokenStream> {
     let name = &self.ident;
 
+    let type_name = display_name(name);
+
     let variants = self.parse_variants()?;
 
     let arms = variants.iter().map(|ParsedVariant { fields, ident, n }| {
-      let variant = format!("{name}::{ident}");
+      let variant = format!("{type_name} {}", display_name(ident));
       if fields.is_empty() {
         quote! {
           #n => {
@@ -91,7 +93,7 @@ impl Input {
             #(#arms)*
             _ => return Err(DecodeError::InvalidDiscriminant {
               discriminant,
-              name: stringify!(#name),
+              name: #type_name,
             }),
           };
           #validate
@@ -147,6 +149,8 @@ impl Input {
   pub(crate) fn decode_struct(&self, attributes: &Attributes) -> Result<proc_macro2::TokenStream> {
     let name = &self.ident;
 
+    let display_name = display_name(name);
+
     let fields = self.parse_fields()?;
 
     let decode = ParsedField::decode(&fields);
@@ -181,7 +185,7 @@ impl Input {
         fn decode(decoder: &mut Decoder<'de>) -> DecodeResult<Self> {
           #magic
           let mut map = decoder.#map::<u64>()?;
-          map.version(stringify!(#name))?;
+          map.version(#display_name)?;
           #(#decode)*
           map.decode_unknown()?;
           let value = #constructor;

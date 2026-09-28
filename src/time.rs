@@ -149,7 +149,7 @@ mod tests {
       Time::decode_from_slice(&[0x82, 0x02, 0x80]),
       Err(DecodeError::InvalidDiscriminant {
         discriminant: 2,
-        name: "Time",
+        name: "time",
       }),
     );
   }
