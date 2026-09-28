@@ -87,22 +87,6 @@ footer {
   }
 }
 
-[popover] {
-  background-color: transparent;
-  border: none;
-  color: var(--text);
-  padding: 0;
-
-  dl {
-    background-color: var(--surface);
-    margin: 0;
-  }
-
-  dt {
-    font-style: normal;
-  }
-}
-
 audio {
   width: 100%;
 

@@ -1,13 +1,7 @@
 let media = document.querySelector('img, video');
-let shortcuts = document.querySelector('#shortcuts');
 
 document.addEventListener('keydown', (event) => {
   if (event.altKey || event.ctrlKey || event.metaKey) {
-    return;
-  }
-
-  if (event.key === '?') {
-    shortcuts.togglePopover();
     return;
   }
 

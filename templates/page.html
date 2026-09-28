@@ -46,5 +46,15 @@
     <main>
       {{ Trusted(&self.content) }}
     </main>
+%% let shortcuts = self.shortcuts();
+%% if !shortcuts.is_empty() {
+    <div id=shortcuts popover>
+      <dl>
+%%   for shortcut in shortcuts {
+        <div><dt><kbd>{{ shortcut.key }}</kbd></dt><dd>{{ shortcut.description }}</dd></div>
+%%   }
+      </dl>
+    </div>
+%% }
   </body>
 </html>

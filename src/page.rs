@@ -28,6 +28,10 @@ pub trait Page: Display + Sized {
     None
   }
 
+  fn shortcuts(&self) -> Vec<Shortcut> {
+    Vec::new()
+  }
+
   fn stylesheet(&self) -> Option<&'static str> {
     None
   }

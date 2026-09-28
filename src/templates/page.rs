@@ -6,6 +6,44 @@ pub struct PageHtml<T: Page> {
   pub(crate) content: T,
 }
 
+impl<T: Page> PageHtml<T> {
+  fn shortcuts(&self) -> Vec<Shortcut> {
+    let mut shortcuts = Vec::new();
+
+    if self.content.prev().is_some() {
+      shortcuts.push(Shortcut {
+        description: "go to previous",
+        key: 'p',
+      });
+    }
+
+    if self.content.next().is_some() {
+      shortcuts.push(Shortcut {
+        description: "go to next",
+        key: 'n',
+      });
+    }
+
+    if self.content.up().is_some() {
+      shortcuts.push(Shortcut {
+        description: "go up",
+        key: 'u',
+      });
+    }
+
+    shortcuts.extend(self.content.shortcuts());
+
+    if !shortcuts.is_empty() {
+      shortcuts.push(Shortcut {
+        description: "toggle shortcuts",
+        key: '?',
+      });
+    }
+
+    shortcuts
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use {super::*, pretty_assertions::assert_eq};
@@ -53,6 +91,13 @@ mod tests {
 
     fn prev(&self) -> Option<String> {
       Some("/bar".into())
+    }
+
+    fn shortcuts(&self) -> Vec<Shortcut> {
+      vec![Shortcut {
+        description: "foo",
+        key: 'f',
+      }]
     }
 
     fn title(&self) -> String {
@@ -114,6 +159,15 @@ mod tests {
               <main>
                 bar
               </main>
+              <div id=shortcuts popover>
+                <dl>
+                  <div><dt><kbd>p</kbd></dt><dd>go to previous</dd></div>
+                  <div><dt><kbd>n</kbd></dt><dd>go to next</dd></div>
+                  <div><dt><kbd>u</kbd></dt><dd>go up</dd></div>
+                  <div><dt><kbd>f</kbd></dt><dd>foo</dd></div>
+                  <div><dt><kbd>?</kbd></dt><dd>toggle shortcuts</dd></div>
+                </dl>
+              </div>
             </body>
           </html>
         "
