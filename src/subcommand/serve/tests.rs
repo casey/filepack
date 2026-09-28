@@ -1684,7 +1684,7 @@ fn get_package_with_metadata() {
     homepage: None,
     language: None,
     media: None,
-    package: Some(Package {
+    package: Some(PackageMetadata {
       colophon: Some("COLOPHON.md".parse().unwrap()),
       creator: None,
       description: None,

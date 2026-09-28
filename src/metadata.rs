@@ -18,7 +18,7 @@ pub struct Metadata {
   #[n(6)]
   pub media: Option<Media>,
   #[n(7)]
-  pub package: Option<Package>,
+  pub package: Option<PackageMetadata>,
   #[n(8)]
   pub publisher: Option<Text>,
   #[n(9)]
@@ -284,7 +284,7 @@ impl Metadata {
         self
           .package
           .as_ref()
-          .filter(|package| **package != Package::default()),
+          .filter(|package| **package != PackageMetadata::default()),
         |builder, package| builder.info("package", package.info(colophon)),
       )
       .when_some(self.media.as_ref(), |builder, media| {
@@ -325,8 +325,8 @@ impl Metadata {
 mod tests {
   use {super::*, ::image::ImageFormat};
 
-  fn colophon_package(colophon: &str) -> Package {
-    Package {
+  fn colophon_package(colophon: &str) -> PackageMetadata {
+    PackageMetadata {
       colophon: Some(colophon.parse().unwrap()),
       creator: None,
       description: None,
@@ -386,7 +386,7 @@ mod tests {
           title: Some("foo".parse().unwrap()),
         }],
       }),
-      package: Some(Package {
+      package: Some(PackageMetadata {
         colophon: Some("COLOPHON.md".parse().unwrap()),
         creator: Some("baz".parse().unwrap()),
         description: Some("qux".parse().unwrap()),
