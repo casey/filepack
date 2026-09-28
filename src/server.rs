@@ -135,24 +135,24 @@ impl Server {
 
       let mut revisions = tx.open_table(REVISIONS)?;
 
-      let mut stack = Vec::new();
+      let mut directory_stack = Vec::new();
 
-      for entry in tx.open_table(NUMBERS)?.iter()? {
-        let (_number, revision) = entry?;
+      let mut revision_stack = tx
+        .open_table(NUMBERS)?
+        .iter()?
+        .map(|entry| Ok(entry?.1.value()))
+        .collect::<ServerResult<Vec<Revision>>>()?;
 
-        let mut revision = Some(revision.value());
-
-        while let Some(current) = revision {
-          if !marked.insert(current.into()) {
-            break;
-          }
-
-          let revision_object = self.read_revision(current)?;
-
-          stack.push(revision_object.package.into());
-
-          revision = revision_object.parent;
+      while let Some(current) = revision_stack.pop() {
+        if !marked.insert(current.into()) {
+          continue;
         }
+
+        let revision_object = self.read_revision(current)?;
+
+        directory_stack.push(revision_object.package.into());
+
+        revision_stack.extend(revision_object.parents);
       }
 
       for entry in revisions
@@ -161,7 +161,7 @@ impl Server {
         revisions_removed.insert(entry?.0.value());
       }
 
-      while let Some(hash) = stack.pop() {
+      while let Some(hash) = directory_stack.pop() {
         if !marked.insert(hash) {
           continue;
         }
@@ -170,7 +170,7 @@ impl Server {
 
         for entry in directory.entries.values() {
           match entry {
-            Entry::Directory { hash, .. } => stack.push(*hash),
+            Entry::Directory { hash, .. } => directory_stack.push(*hash),
             Entry::File { hash, .. } => {
               marked.insert(*hash);
             }
@@ -258,7 +258,7 @@ impl Server {
     while let Some(current) = revision {
       revisions.push(current);
 
-      revision = self.read_revision(current)?.parent;
+      revision = self.read_revision(current)?.parents.first().copied();
     }
 
     Ok(revisions)
@@ -457,7 +457,11 @@ impl Server {
       .map(|revision| self.history(revision))
       .transpose()?;
 
-    let parent = history.as_ref().and_then(|history| history.get(1)).copied();
+    let parents = revision
+      .map(|revision| self.read_revision(revision))
+      .transpose()?
+      .map(|revision_object| revision_object.parents.into_iter().collect())
+      .unwrap_or_default();
 
     let revisions = history.as_ref().map(|history| history.len().into_u64());
 
@@ -519,7 +523,7 @@ impl Server {
       mounted: mounts.contains(&fingerprint),
       next,
       number,
-      parent,
+      parents,
       prev,
       readme,
       revision,
@@ -801,7 +805,7 @@ impl Server {
 
     let fingerprint = revision_object.package;
 
-    let parent = revision_object.parent;
+    let parents = revision_object.parents;
 
     ensure!(
       tx.open_table(PACKAGES)?.get(&fingerprint)?.is_some(),
@@ -813,7 +817,7 @@ impl Server {
       let mut numbers = tx.open_table(NUMBERS)?;
       let mut revisions = tx.open_table(REVISIONS)?;
 
-      if let Some(parent) = parent {
+      for &parent in &parents {
         ensure!(
           revisions.get(&parent)?.is_some(),
           server_error::RevisionParentNotFound { parent, revision },
@@ -822,7 +826,7 @@ impl Server {
 
       match request.mode {
         api::revision::Mode::New => {
-          if let Some(parent) = parent {
+          if let Some(&parent) = parents.first() {
             return Err(ServerError::RevisionParentUnexpected { parent, revision });
           }
 
@@ -866,7 +870,7 @@ impl Server {
             .value();
 
           if head != revision {
-            let Some(parent) = parent else {
+            let Some(&parent) = parents.first() else {
               return Err(ServerError::RevisionParentMissing {
                 head,
                 number,

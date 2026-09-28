@@ -3,9 +3,9 @@ use {
   camino::{Utf8Path, Utf8PathBuf},
   filepack::{
     Decode, Decoder, Directory, DirectoryExt, Encode, Encoder, Entry, Fingerprint, FlacBuilder,
-    Hash, Loader, MagicType, Manifest, Metadata, Mp3Builder, Mp4Builder, PackageIdentifier, Page,
-    PngBuilder, PrivateKey, PublicKey, RevisionObject, ServerState, State, Totals, gradient,
-    gradient_alpha, hex,
+    Hash, Loader, MagicType, Manifest, Metadata, Mp3Builder, Mp4Builder, OrderedSet,
+    PackageIdentifier, Page, PngBuilder, PrivateKey, PublicKey, RevisionObject, ServerState, State,
+    Totals, gradient, gradient_alpha, hex,
     templates::{DirectoryHtml, PackageHtml},
   },
   image::{DynamicImage, ImageFormat},

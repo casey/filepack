@@ -9,6 +9,8 @@ pub enum DecodeError {
   Boolean { value: u64 },
   #[snafu(display("failed to parse component"))]
   Component { source: ComponentError },
+  #[snafu(display("duplicate array elements"))]
+  Duplicate,
   #[snafu(display("empty integer"))]
   EmptyInteger,
   #[snafu(display("enum variant with empty map"))]
