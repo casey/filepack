@@ -142,6 +142,7 @@ use {
     server::Server,
     server_error::ServerError,
     server_url::ServerUrl,
+    shortcut::Shortcut,
     sign_options::SignOptions,
     signature::Signature,
     signature_error::SignatureError,
@@ -449,6 +450,7 @@ mod server;
 mod server_error;
 mod server_state;
 mod server_url;
+mod shortcut;
 mod sign_options;
 mod signature;
 mod signature_error;

@@ -71,6 +71,13 @@ impl Page for ItemHtml {
     Some("/static/item.js")
   }
 
+  fn shortcuts(&self) -> Vec<Shortcut> {
+    vec![Shortcut {
+      description: "toggle full screen",
+      key: 'f',
+    }]
+  }
+
   fn stylesheet(&self) -> Option<&'static str> {
     Some("/static/item.css")
   }
@@ -334,20 +341,6 @@ mod tests {
 
     let fingerprint = test::FINGERPRINT;
 
-    let shortcuts = "
-            <button aria-label='Keyboard shortcuts' popovertarget=shortcuts title='Keyboard shortcuts'>?</button>
-            <div id=shortcuts popover>
-              <dl>
-                <div><dt><kbd>p</kbd></dt><dd>go to previous item</dd></div>
-                <div><dt><kbd>n</kbd></dt><dd>go to next item</dd></div>
-                <div><dt><kbd>u</kbd></dt><dd>go to package</dd></div>
-                <div><dt><kbd>f</kbd></dt><dd>toggle full screen</dd></div>
-                <div><dt><kbd>?</kbd></dt><dd>toggle shortcuts</dd></div>
-              </dl>
-            </div>
-    "
-    .trim();
-
     case(
       Metadata {
         creator: Some("baz".parse().unwrap()),
@@ -371,7 +364,7 @@ mod tests {
                 </a>
               </p>
             </hgroup>
-            {shortcuts}
+            <button aria-label='Keyboard shortcuts' popovertarget=shortcuts title='Keyboard shortcuts'>?</button>
           </footer>
         "
       ),
@@ -409,7 +402,7 @@ mod tests {
                 </a>
               </p>
             </hgroup>
-            {shortcuts}
+            <button aria-label='Keyboard shortcuts' popovertarget=shortcuts title='Keyboard shortcuts'>?</button>
           </footer>
         "
       ),
@@ -437,7 +430,7 @@ mod tests {
                 </a>
               </p>
             </hgroup>
-            {shortcuts}
+            <button aria-label='Keyboard shortcuts' popovertarget=shortcuts title='Keyboard shortcuts'>?</button>
           </footer>
         "
       ),
@@ -472,7 +465,7 @@ mod tests {
                 </a>
               </p>
             </hgroup>
-            {shortcuts}
+            <button aria-label='Keyboard shortcuts' popovertarget=shortcuts title='Keyboard shortcuts'>?</button>
           </footer>
         "
       ),
@@ -500,7 +493,7 @@ mod tests {
                 </a>
               </p>
             </hgroup>
-            {shortcuts}
+            <button aria-label='Keyboard shortcuts' popovertarget=shortcuts title='Keyboard shortcuts'>?</button>
           </footer>
         "
       ),
@@ -531,10 +524,21 @@ mod tests {
                 </a>
               </p>
             </hgroup>
-            {shortcuts}
+            <button aria-label='Keyboard shortcuts' popovertarget=shortcuts title='Keyboard shortcuts'>?</button>
           </footer>
         "
       )),
+    );
+  }
+
+  #[test]
+  fn shortcuts() {
+    assert_eq!(
+      ItemHtml::default().shortcuts(),
+      vec![Shortcut {
+        description: "toggle full screen",
+        key: 'f',
+      }],
     );
   }
 

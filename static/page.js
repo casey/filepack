@@ -4,10 +4,16 @@ document
 
 let next = document.querySelector('link[rel=next]');
 let prev = document.querySelector('link[rel=prev]');
+let shortcuts = document.querySelector('#shortcuts');
 let up = document.querySelector('link[rel=up]');
 
 document.addEventListener('keydown', (event) => {
   if (event.altKey || event.ctrlKey || event.metaKey) {
+    return;
+  }
+
+  if (event.key === '?' && shortcuts !== null) {
+    shortcuts.togglePopover();
     return;
   }
 
