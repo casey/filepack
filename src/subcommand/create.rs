@@ -172,7 +172,7 @@ impl Create {
     }
 
     ensure! {
-      self.force || !manifest_path.try_exists().context(error::FilesystemIo { path: &manifest_path })?,
+      self.force || !manifest_path.try_exists().context(filesystem_error::Io { path: &manifest_path })?,
       error::ManifestAlreadyExists {
         path: manifest_path,
       },
@@ -205,7 +205,7 @@ impl Create {
     for (path, _size) in paths {
       let file = options
         .hash_file(&root.join(&path))
-        .context(error::FilesystemIo { path: &path })?;
+        .context(filesystem_error::Io { path: &path })?;
       package.create_file(&path, file)?;
       bar.inc(file.size);
     }

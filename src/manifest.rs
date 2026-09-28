@@ -85,7 +85,8 @@ impl Manifest {
     let deco = Archive::pack(self)
       .context(error::ManifestTotals { path })?
       .encode_to_vec();
-    filesystem::write(path, deco)
+    filesystem::write(path, deco)?;
+    Ok(())
   }
 
   pub(crate) fn sign(

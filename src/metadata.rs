@@ -192,9 +192,12 @@ impl Metadata {
     {
       let path = &root.join(Image::THUMBNAIL_DIR);
       if !force && filesystem::exists(path)? {
-        for entry in path.read_dir_utf8().context(error::FilesystemIo { path })? {
+        for entry in path
+          .read_dir_utf8()
+          .context(filesystem_error::Io { path })?
+        {
           let entry = entry
-            .context(error::FilesystemIo { path })?
+            .context(filesystem_error::Io { path })?
             .path()
             .strip_prefix(root)
             .unwrap()

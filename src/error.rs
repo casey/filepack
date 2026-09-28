@@ -209,11 +209,10 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     hash: Hash,
   },
-  #[snafu(display("I/O error at `{path}`"))]
-  FilesystemIo {
+  #[snafu(transparent)]
+  Filesystem {
     backtrace: Option<Backtrace>,
-    path: DisplayPath,
-    source: io::Error,
+    source: FilesystemError,
   },
   #[snafu(display("fingerprint mismatch"))]
   FingerprintMismatch { backtrace: Option<Backtrace> },
@@ -611,14 +610,6 @@ impl Error {
         paths,
       } => paths.iter().map(Cause::Path).collect(),
       _ => self.iter_chain().skip(1).map(Cause::Error).collect(),
-    }
-  }
-}
-
-impl From<FilesystemError> for Error {
-  fn from(error: FilesystemError) -> Self {
-    match error {
-      FilesystemError::Io { path, source } => FilesystemIo { path }.into_error(source),
     }
   }
 }

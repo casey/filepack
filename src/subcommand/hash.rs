@@ -13,7 +13,7 @@ impl Hash {
     let hash = if let Some(path) = self.file {
       options
         .hash_file(&path)
-        .context(error::FilesystemIo { path })?
+        .context(filesystem_error::Io { path })?
         .hash
     } else {
       let mut hasher = Hasher::new();

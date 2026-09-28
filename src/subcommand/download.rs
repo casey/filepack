@@ -237,7 +237,7 @@ impl Download {
     tempfile
       .persist_noclobber(path)
       .map_err(|error| error.error)
-      .context(error::FilesystemIo { path })?;
+      .context(filesystem_error::Io { path })?;
 
     Ok(())
   }
