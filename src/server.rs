@@ -247,20 +247,18 @@ impl Server {
     })
   }
 
-  fn history(&self, revision: Revision) -> ServerResult<Vec<(Revision, Fingerprint)>> {
-    let mut entries = Vec::new();
+  fn history(&self, revision: Revision) -> ServerResult<Vec<Revision>> {
+    let mut revisions = Vec::new();
 
     let mut revision = Some(revision);
 
     while let Some(current) = revision {
-      let revision_object = self.read_revision(current)?;
+      revisions.push(current);
 
-      entries.push((current, revision_object.package));
-
-      revision = revision_object.previous;
+      revision = self.read_revision(current)?.previous;
     }
 
-    Ok(entries)
+    Ok(revisions)
   }
 
   pub(crate) fn history_html(&self, identifier: PackageIdentifier) -> ServerResult<HistoryHtml> {
@@ -273,8 +271,8 @@ impl Server {
     let revision = revision.context(server_error::HistoryByFingerprint { fingerprint })?;
 
     Ok(HistoryHtml {
-      entries: self.history(revision)?,
       identifier,
+      revisions: self.history(revision)?,
     })
   }
 
@@ -459,7 +457,7 @@ impl Server {
     let previous = history
       .as_ref()
       .and_then(|history| history.get(1))
-      .map(|(revision, _package)| *revision);
+      .copied();
 
     let revisions = history.as_ref().map(|history| history.len().into_u64());
 
