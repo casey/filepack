@@ -10,7 +10,7 @@ pub struct PackageHtml {
   pub mounted: bool,
   pub next: Option<u64>,
   pub number: Option<u64>,
-  pub parent: Option<Revision>,
+  pub parents: Vec<Revision>,
   pub prev: Option<u64>,
   pub readme: Option<Hash>,
   pub revision: Option<Revision>,
@@ -32,8 +32,18 @@ impl PackageHtml {
         self.fingerprint,
         format!("/package/{}", self.fingerprint),
       )
-      .when_some(self.parent, |builder, parent| {
+      .when_some(self.parents.first(), |builder, parent| {
         builder.code_link("parent", parent, format!("/package/{parent}"))
+      })
+      .when(self.parents.len() > 1, |builder| {
+        builder.list(
+          "merge parents",
+          self.parents[1..].iter().map(|parent| Info::Link {
+            code: true,
+            text: parent.to_string(),
+            url: format!("/package/{parent}"),
+          }),
+        )
       })
       .when_some(self.revisions, |builder, revisions| {
         builder.link(
@@ -170,7 +180,7 @@ mod tests {
         mounted: false,
         next: None,
         number: Some(1),
-        parent: None,
+        parents: Vec::new(),
         prev: None,
         readme: None,
         revision: None,
@@ -288,7 +298,7 @@ mod tests {
         mounted: false,
         next: None,
         number: Some(1),
-        parent: None,
+        parents: Vec::new(),
         prev: None,
         readme: None,
         revision: None,
@@ -440,7 +450,7 @@ mod tests {
         mounted: false,
         next: None,
         number: Some(1),
-        parent: None,
+        parents: Vec::new(),
         prev: None,
         readme: None,
         revision: None,
@@ -573,7 +583,10 @@ mod tests {
         mounted: false,
         next: None,
         number: Some(1),
-        parent: Some(test::REVISION.parse().unwrap()),
+        parents: vec![
+          test::REVISION.parse().unwrap(),
+          Revision::from(Hash::bytes(b"foo")),
+        ],
         prev: None,
         readme: None,
         revision: Some(test::REVISION.parse().unwrap()),
@@ -611,6 +624,16 @@ mod tests {
               <dt>parent</dt>
               <dd>
                 <a href='/package/{revision}'><code>{revision}</code></a>
+              </dd>
+            </div>
+            <div>
+              <dt>merge parents</dt>
+              <dd>
+                <ol role=list>
+                  <li>
+                    <a href='/package/{merge}'><code>{merge}</code></a>
+                  </li>
+                </ol>
               </dd>
             </div>
             <div>
@@ -668,8 +691,9 @@ mod tests {
           </ol>
         ",
         fingerprint = test::FINGERPRINT,
-        revision = test::REVISION,
         hash = test::HASH,
+        merge = Revision::from(Hash::bytes(b"foo")),
+        revision = test::REVISION,
       )),
     );
   }
@@ -685,7 +709,7 @@ mod tests {
       mounted: false,
       next: Some(3),
       number: Some(2),
-      parent: None,
+      parents: Vec::new(),
       prev: Some(1),
       readme: None,
       revision: None,
@@ -734,7 +758,7 @@ mod tests {
       mounted: false,
       next: None,
       number: Some(1),
-      parent: None,
+      parents: Vec::new(),
       prev: None,
       readme: None,
       revision: None,
@@ -797,7 +821,7 @@ mod tests {
       mounted: false,
       next: None,
       number: Some(1),
-      parent: None,
+      parents: Vec::new(),
       prev: None,
       readme: None,
       revision: None,
@@ -838,7 +862,7 @@ mod tests {
         mounted: false,
         next: None,
         number: Some(1),
-        parent: None,
+        parents: Vec::new(),
         prev: None,
         readme: Some(test::HASH.parse().unwrap()),
         revision: None,
@@ -1049,7 +1073,7 @@ mod tests {
         mounted: false,
         next: None,
         number: Some(1),
-        parent: None,
+        parents: Vec::new(),
         prev: None,
         readme: None,
         revision: None,

@@ -370,8 +370,19 @@ impl TestServer {
     .unwrap();
   }
 
-  fn write_revision(&self, package: Fingerprint, parent: Option<Revision>) -> Revision {
-    let revision_object = RevisionObject { package, parent };
+  fn write_revision(
+    &self,
+    package: Fingerprint,
+    parents: impl IntoIterator<Item = Revision>,
+  ) -> Revision {
+    let revision_object = RevisionObject {
+      package,
+      parents: parents
+        .into_iter()
+        .collect::<Vec<Revision>>()
+        .try_into()
+        .unwrap(),
+    };
 
     self.write_file(&revision_object.encode_to_vec());
 
@@ -813,7 +824,7 @@ fn corrupt_revision() {
 
   let revision = RevisionObject {
     package: fingerprint,
-    parent: None,
+    parents: OrderedSet::default(),
   }
   .hash();
 
@@ -1199,7 +1210,7 @@ fn gc_removes_unreachable_and_retains_reachable_data() {
 
   let revision_object = RevisionObject {
     package: fingerprint,
-    parent: None,
+    parents: OrderedSet::default(),
   };
 
   let revision = revision_object.hash();
@@ -1241,6 +1252,41 @@ fn gc_removes_unreachable_and_retains_reachable_data() {
 }
 
 #[test]
+fn gc_retains_merge_parents() {
+  let server = TestServer::new();
+
+  let foo = PackageBuilder::new().file("foo", b"foo").upload(&server);
+  let a = server.write_revision(foo, None);
+
+  let bar = PackageBuilder::new().file("bar", b"bar").upload(&server);
+  let b = server.write_revision(bar, None);
+
+  let baz = PackageBuilder::new().file("baz", b"baz");
+  let baz = Fingerprint(baz.root.upload(&server));
+  server.post(format!("/api/package/{baz}")).send();
+
+  let merge = server.write_revision(baz, [a, b]);
+
+  server
+    .post(format!("/api/revision/{merge}"))
+    .body(
+      api::revision::Request {
+        mode: api::revision::Mode::Update { number: 1 },
+      }
+      .encode_to_vec(),
+    )
+    .assert_body(api::revision::Response { number: 1 }.encode_to_vec())
+    .send();
+
+  server.delete("/api/number/2").send();
+
+  server
+    .post("/api/gc")
+    .assert_body(api::gc::Response::default().encode_to_vec())
+    .send();
+}
+
+#[test]
 fn gc_shares_ancestors() {
   let server = TestServer::new();
 
@@ -1255,7 +1301,7 @@ fn gc_shares_ancestors() {
 
   let head_object = RevisionObject {
     package: bar,
-    parent: Some(root),
+    parents: OrderedSet::singleton(root),
   };
 
   let head = server.write_revision(bar, Some(root));
@@ -1357,7 +1403,7 @@ fn get_package_by_number() {
       next: None,
       number: Some(1),
       prev: None,
-      parent: None,
+      parents: Vec::new(),
       readme: None,
       revision: Some(server.write_revision(fingerprint, None)),
       revisions: Some(1),
@@ -1416,7 +1462,7 @@ fn get_package_by_revision() {
       next: None,
       number: None,
       prev: None,
-      parent: None,
+      parents: Vec::new(),
       readme: None,
       revision: Some(root),
       revisions: Some(1),
@@ -1441,7 +1487,7 @@ fn get_package_by_revision() {
       next: None,
       number: Some(1),
       prev: None,
-      parent: Some(root),
+      parents: vec![root],
       readme: None,
       revision: Some(head),
       revisions: Some(2),
@@ -1552,7 +1598,7 @@ fn get_package_navigation() {
       next: Some(3),
       number: Some(1),
       prev: None,
-      parent: None,
+      parents: Vec::new(),
       readme: None,
       revision: Some(server.write_revision(foo, None)),
       revisions: Some(1),
@@ -1572,7 +1618,7 @@ fn get_package_navigation() {
       next: None,
       number: None,
       prev: None,
-      parent: None,
+      parents: Vec::new(),
       readme: None,
       revision: None,
       revisions: None,
@@ -1654,7 +1700,7 @@ fn get_package_with_metadata() {
       next: None,
       number: None,
       prev: None,
-      parent: None,
+      parents: Vec::new(),
       readme: Some(Hash::bytes(readme)),
       revision: None,
       revisions: None,
@@ -1692,7 +1738,7 @@ fn get_package_without_metadata() {
       next: None,
       number: None,
       prev: None,
-      parent: None,
+      parents: Vec::new(),
       readme: None,
       revision: None,
       revisions: None,
@@ -3060,7 +3106,7 @@ fn package_page_og_image() {
         next: None,
         number: None,
         prev: None,
-        parent: None,
+        parents: Vec::new(),
         readme: None,
         revision: None,
         revisions: None,
@@ -3137,7 +3183,7 @@ fn package_page_renders_audio_media() {
       next: None,
       number: None,
       prev: None,
-      parent: None,
+      parents: Vec::new(),
       readme: None,
       revision: None,
       revisions: None,
@@ -3196,7 +3242,7 @@ fn package_page_renders_image_media() {
       next: None,
       number: None,
       prev: None,
-      parent: None,
+      parents: Vec::new(),
       readme: None,
       revision: None,
       revisions: None,
@@ -3272,7 +3318,7 @@ fn package_page_renders_video_media() {
       next: None,
       number: None,
       prev: None,
-      parent: None,
+      parents: Vec::new(),
       readme: None,
       revision: None,
       revisions: None,
@@ -3316,7 +3362,7 @@ fn package_page_web() {
       next: None,
       number: None,
       prev: None,
-      parent: None,
+      parents: Vec::new(),
       readme: None,
       revision: None,
       revisions: None,
@@ -4183,7 +4229,7 @@ fn verify_package_replace() {
       next: None,
       number: Some(1),
       prev: None,
-      parent: None,
+      parents: Vec::new(),
       readme: None,
       revision: Some(revision),
       revisions: Some(1),
@@ -4208,7 +4254,7 @@ fn verify_package_replace() {
 
   let revision_object = RevisionObject {
     package: foo,
-    parent: None,
+    parents: OrderedSet::default(),
   };
 
   let revision = revision_object.hash();
@@ -4372,7 +4418,7 @@ fn verify_package_reuses_revision() {
 
   let revision = RevisionObject {
     package: fingerprint,
-    parent: None,
+    parents: OrderedSet::default(),
   }
   .hash();
 
@@ -4599,6 +4645,73 @@ fn verify_revision_update_conflict() {
     .status(StatusCode::CONFLICT)
     .assert_body(format!(
       "package number 1 is at revision {head} but revision's parent is {parent}"
+    ))
+    .send();
+}
+
+#[test]
+fn verify_revision_update_merge() {
+  let server = TestServer::new();
+
+  let foo = PackageBuilder::new().file("foo", b"foo").upload(&server);
+  let a = server.write_revision(foo, None);
+
+  let bar = PackageBuilder::new().file("bar", b"bar").upload(&server);
+  let b = server.write_revision(bar, None);
+
+  let baz = PackageBuilder::new().file("baz", b"baz");
+  let baz = Fingerprint(baz.root.upload(&server));
+  server.post(format!("/api/package/{baz}")).send();
+
+  let merge = server.write_revision(baz, [a, b]);
+
+  server
+    .post(format!("/api/revision/{merge}"))
+    .body(
+      api::revision::Request {
+        mode: api::revision::Mode::Update { number: 1 },
+      }
+      .encode_to_vec(),
+    )
+    .assert_body(api::revision::Response { number: 1 }.encode_to_vec())
+    .send();
+
+  server
+    .get("/package/1/history")
+    .assert_page(HistoryHtml {
+      identifier: PackageIdentifier::Number(1),
+      revisions: vec![merge, a],
+    })
+    .send();
+}
+
+#[test]
+fn verify_revision_update_merge_conflict() {
+  let server = TestServer::new();
+
+  let foo = PackageBuilder::new().file("foo", b"foo").upload(&server);
+  let a = server.write_revision(foo, None);
+
+  let bar = PackageBuilder::new().file("bar", b"bar").upload(&server);
+  let b = server.write_revision(bar, None);
+
+  let baz = PackageBuilder::new().file("baz", b"baz");
+  let baz = Fingerprint(baz.root.upload(&server));
+  server.post(format!("/api/package/{baz}")).send();
+
+  let merge = server.write_revision(baz, [b, a]);
+
+  server
+    .post(format!("/api/revision/{merge}"))
+    .body(
+      api::revision::Request {
+        mode: api::revision::Mode::Update { number: 1 },
+      }
+      .encode_to_vec(),
+    )
+    .status(StatusCode::CONFLICT)
+    .assert_body(format!(
+      "package number 1 is at revision {a} but revision's parent is {b}"
     ))
     .send();
 }
