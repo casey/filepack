@@ -131,7 +131,7 @@ fn decode_from_str() {
   assert_matches!(
     err,
     DecodeError::FromStr {
-      name: "Foo",
+      name: "foo",
       ref source,
     } if source.to_string() == "bar error",
   );
@@ -286,7 +286,7 @@ fn enum_array_invalid_discriminant() {
     Foo::decode_from_slice(&[0x82, 0x05, 0x80]),
     Err(DecodeError::InvalidDiscriminant {
       discriminant: 5,
-      name: "Foo",
+      name: "foo",
     }),
   );
 }
@@ -362,7 +362,7 @@ fn enum_invalid_discriminant() {
       Foo::decode_from_slice(bytes),
       Err(DecodeError::InvalidDiscriminant {
         discriminant,
-        name: "Foo",
+        name: "foo",
       }) if discriminant == expected,
     );
   }
@@ -516,7 +516,7 @@ fn enum_unknown_variants() {
     Bar::decode_from_slice_with_options(DecodeOptions::strict(), &bytes),
     Err(DecodeError::InvalidDiscriminant {
       discriminant: 1,
-      name: "Foo",
+      name: "foo",
     }),
   );
 }
@@ -574,7 +574,7 @@ fn magic() {
     "expected magic bytes `filepack\\x00` but found `0123456789abcdef…`",
   );
 
-  case(b"\x89filepack\0\x83foo\x80", "failed to parse MagicType");
+  case(b"\x89filepack\0\x83foo\x80", "failed to parse magic type");
 
   case(
     b"\x89filepack\0\x88metadata\x80",
@@ -714,7 +714,7 @@ fn unknown_variants() {
     Bar::decode_from_slice_with_options(DecodeOptions::strict(), &bytes),
     Err(DecodeError::InvalidDiscriminant {
       discriminant: 1,
-      name: "Foo",
+      name: "foo",
     }),
   );
 }
@@ -739,7 +739,7 @@ fn unknown_variants_custom_decoder() {
     Bar::decode_from_slice(&bytes),
     Err(DecodeError::InvalidDiscriminant {
       discriminant: 1,
-      name: "Foo",
+      name: "foo",
     }),
   );
 }
@@ -821,7 +821,7 @@ fn unknown_variants_scope() {
       T::decode_from_slice(&value.encode_to_vec()),
       Err(DecodeError::InvalidDiscriminant {
         discriminant: 1,
-        name: "Foo",
+        name: "foo",
       }),
     );
   }
@@ -911,15 +911,15 @@ fn unsupported_version() {
   assert_matches!(
     Foo::decode_from_slice(&[0x84, 0, 1, 1, 1]),
     Err(DecodeError::UnsupportedVersion {
-      name: "Foo",
+      name: "foo",
       version: 1,
     }),
   );
 
-  case::<Foo>(&[0x84, 0, 1, 1, 1], "unsupported version 1 for Foo");
-  case::<Foo>(&[0x84, 0, 0, 1, 1], "unsupported version 0 for Foo");
-  case::<Bar>(&[0x84, 1, 0x82, 0, 1], "unsupported version 1 for Bar::Qux");
-  case::<Bar>(&[0x84, 0, 0x82, 0, 1], "unsupported version 1 for Bar::Baz");
+  case::<Foo>(&[0x84, 0, 1, 1, 1], "unsupported version 1 for foo");
+  case::<Foo>(&[0x84, 0, 0, 1, 1], "unsupported version 0 for foo");
+  case::<Bar>(&[0x84, 1, 0x82, 0, 1], "unsupported version 1 for bar qux");
+  case::<Bar>(&[0x84, 0, 0x82, 0, 1], "unsupported version 1 for bar baz");
 }
 
 #[test]
