@@ -2,9 +2,9 @@ use super::*;
 
 #[derive(Clone, Copy, Debug, Decode, Default, Encode, PartialEq, Serialize)]
 pub(crate) struct Orientation {
-  #[n(0)]
-  pub(crate) mirrored: bool,
   #[n(1)]
+  pub(crate) mirrored: bool,
+  #[n(2)]
   pub(crate) rotation: Rotation,
 }
 

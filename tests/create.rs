@@ -681,6 +681,6 @@ fn with_metadata() {
     .stdout_regex(r#".*"metadata\.filemeta".*"metadata\.yaml".*"#)
     .success()
     .arg("verify")
-    .stderr("successfully verified 3 files totaling 37 bytes\n")
+    .stderr("successfully verified 3 files totaling 35 bytes\n")
     .success();
 }

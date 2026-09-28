@@ -1,10 +1,7 @@
 use super::*;
 
-#[allow(clippy::arbitrary_source_item_ordering)]
 #[derive(Clone, Debug, Default, Encode, Decode, PartialEq)]
 pub struct Directory {
-  #[n(0)]
-  pub(crate) version: Version,
   #[n(1)]
   pub(crate) entries: BTreeMap<ComponentBuf, Entry>,
 }
@@ -46,10 +43,7 @@ impl Directory {
   }
 
   pub(crate) fn with_entries(entries: BTreeMap<ComponentBuf, Entry>) -> Self {
-    Self {
-      version: Version::Zero,
-      entries,
-    }
+    Self { entries }
   }
 }
 
@@ -60,7 +54,6 @@ mod tests {
   #[test]
   fn encoding() {
     assert_encoding(Directory {
-      version: Version::Zero,
       entries: BTreeMap::from([(
         "foo".parse::<ComponentBuf>().unwrap(),
         Entry::file(Hash::bytes(b"bar"), 0),

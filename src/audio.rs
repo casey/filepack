@@ -3,19 +3,19 @@ use super::*;
 #[skip_serializing_none]
 #[derive(Clone, Debug, Decode, Encode, PartialEq, Serialize)]
 pub(crate) struct Audio {
-  #[n(0)]
-  pub(crate) channels: u64,
   #[n(1)]
-  pub(crate) path: RelativePath,
+  pub(crate) channels: u64,
   #[n(2)]
-  pub(crate) sample_bits: Option<u64>,
+  pub(crate) path: RelativePath,
   #[n(3)]
-  pub(crate) sample_rate: u64,
+  pub(crate) sample_bits: Option<u64>,
   #[n(4)]
-  pub(crate) samples: u64,
+  pub(crate) sample_rate: u64,
   #[n(5)]
-  pub(crate) size: u64,
+  pub(crate) samples: u64,
   #[n(6)]
+  pub(crate) size: u64,
+  #[n(7)]
   #[serde(rename = "type")]
   pub(crate) ty: Option<AudioType>,
 }

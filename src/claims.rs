@@ -9,11 +9,8 @@ pub(crate) struct Policy<'a> {
   now: u64,
 }
 
-#[allow(clippy::arbitrary_source_item_ordering)]
 #[derive(Decode, Encode, Eq, Ord, PartialEq, PartialOrd)]
 pub(crate) struct Claims {
-  #[n(0)]
-  pub(crate) version: Version,
   #[n(1)]
   pub(crate) audience: String,
   #[n(2)]
@@ -25,7 +22,6 @@ impl Claims {
     Ok(
       private_key
         .sign(Claims {
-          version: Version::Zero,
           audience: audience.into(),
           timestamp: now().context(error::Time)?,
         })
@@ -112,7 +108,6 @@ mod tests {
   fn mint(private_key: &PrivateKey, timestamp: u64) -> String {
     private_key
       .sign(Claims {
-        version: Version::Zero,
         audience: AUDIENCE.into(),
         timestamp,
       })
@@ -157,11 +152,8 @@ mod tests {
 
   #[test]
   fn unknown_field_rejected() {
-    #[allow(clippy::arbitrary_source_item_ordering)]
     #[derive(Debug, Decode, Encode, Eq, Ord, PartialEq, PartialOrd)]
     struct Extra {
-      #[n(0)]
-      version: Version,
       #[n(1)]
       audience: String,
       #[n(2)]
@@ -185,7 +177,6 @@ mod tests {
 
     let token = admin
       .sign(Extra {
-        version: Version::Zero,
         audience: AUDIENCE.into(),
         timestamp: 0,
         unknown: 0,

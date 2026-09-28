@@ -2,9 +2,9 @@ use super::*;
 
 #[derive(Clone, Copy, Debug, Default, Decode, Encode, PartialEq, Serialize)]
 pub struct Dimensions {
-  #[n(0)]
-  pub(crate) height: u64,
   #[n(1)]
+  pub(crate) height: u64,
+  #[n(2)]
   pub(crate) width: u64,
 }
 

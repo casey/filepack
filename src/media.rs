@@ -12,17 +12,17 @@ use super::*;
 pub(crate) enum Media {
   #[n(0)]
   Audio {
-    #[n(0)]
+    #[n(1)]
     items: Vec<Item<Audio>>,
   },
   #[n(1)]
   Image {
-    #[n(0)]
+    #[n(1)]
     items: Vec<Item<Image>>,
   },
   #[n(2)]
   Video {
-    #[n(0)]
+    #[n(1)]
     items: Vec<Item<Video>>,
   },
   #[n(3)]

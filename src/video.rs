@@ -3,15 +3,15 @@ use super::*;
 #[skip_serializing_none]
 #[derive(Clone, Debug, Decode, Encode, PartialEq, Serialize)]
 pub(crate) struct Video {
-  #[n(0)]
-  pub(crate) duration: u64,
   #[n(1)]
-  pub(crate) path: RelativePath,
+  pub(crate) duration: u64,
   #[n(2)]
-  pub(crate) placeholder: Option<Image>,
+  pub(crate) path: RelativePath,
   #[n(3)]
-  pub(crate) tracks: Vec<Track>,
+  pub(crate) placeholder: Option<Image>,
   #[n(4)]
+  pub(crate) tracks: Vec<Track>,
+  #[n(5)]
   #[serde(rename = "type")]
   pub(crate) ty: Option<VideoType>,
 }

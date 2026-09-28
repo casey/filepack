@@ -141,6 +141,15 @@ impl MapDecoder<'_, u64> {
     }
     Ok(())
   }
+
+  pub(crate) fn version(&mut self, name: &'static str) -> DecodeResult {
+    if self.decoder.peek() != Some(0) {
+      return Ok(());
+    }
+    self.decoder.integer()?;
+    let version = self.decoder.integer()?;
+    Err(DecodeError::UnsupportedVersion { name, version })
+  }
 }
 
 #[cfg(test)]
@@ -279,5 +288,27 @@ mod tests {
     let mut map = decoder.map::<u64>().unwrap();
     map.next::<u64>().unwrap();
     assert_matches!(map.finish(), Err(DecodeError::UnconsumedEntries));
+  }
+
+  #[test]
+  fn version() {
+    let mut decoder = Decoder::new(&[0x82, 0x01, 0x2a]);
+    let mut map = decoder.map::<u64>().unwrap();
+    map.version("foo").unwrap();
+    assert_matches!(map.next::<u64>(), Ok(Some((1, 42))));
+    map.finish().unwrap();
+
+    let mut decoder = Decoder::new(&[0x80]);
+    decoder.map::<u64>().unwrap().version("foo").unwrap();
+
+    let mut decoder = Decoder::new(&[0x82, 0x00, 0x2a]);
+    let mut map = decoder.map::<u64>().unwrap();
+    assert_matches!(
+      map.version("foo"),
+      Err(DecodeError::UnsupportedVersion {
+        name: "foo",
+        version: 42,
+      }),
+    );
   }
 }

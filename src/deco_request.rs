@@ -42,11 +42,11 @@ mod tests {
   fn unknown_field_is_rejected() {
     #[derive(Debug, Decode, PartialEq)]
     struct Foo {
-      #[n(0)]
+      #[n(1)]
       foo: u64,
     }
 
-    let body = with_unknown_field(BTreeMap::from([(0u64, 1u64)]));
+    let body = with_unknown_field(BTreeMap::from([(1u64, 1u64)]));
 
     let request = Request::builder().body(Body::from(body)).unwrap();
 

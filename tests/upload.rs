@@ -324,7 +324,6 @@ fn upload_package_fails_when_package_is_not_directory() {
   let mut archive = encoder.map::<u64>();
   archive.item(2, &files);
   archive.item(1, hash);
-  archive.item(0, 0u64);
   archive.finish();
   encoder.magic(MagicType::Archive);
 
@@ -350,7 +349,6 @@ fn upload_package_fails_when_package_missing() {
   let mut dir_encoder = Encoder::new();
   let mut map = dir_encoder.map::<u64>();
   map.item(1, BTreeMap::<String, u64>::new());
-  map.item(0, 0u64);
   map.finish();
   let dir_bytes = dir_encoder.finish();
 
@@ -363,7 +361,6 @@ fn upload_package_fails_when_package_missing() {
   let mut archive = encoder.map::<u64>();
   archive.item(2, &files);
   archive.item(1, root);
-  archive.item(0, 0u64);
   archive.finish();
   encoder.magic(MagicType::Archive);
 
@@ -392,7 +389,6 @@ fn upload_package_fails_when_root_file_missing() {
   let mut archive = encoder.map::<u64>();
   archive.item(2, BTreeMap::<Hash, Vec<u8>>::new());
   archive.item(1, missing);
-  archive.item(0, 0u64);
   archive.finish();
   encoder.magic(MagicType::Archive);
 
@@ -427,7 +423,6 @@ fn upload_package_fails_when_root_not_directory_deco() {
   let mut archive = encoder.map::<u64>();
   archive.item(2, &files);
   archive.item(1, root);
-  archive.item(0, 0u64);
   archive.finish();
   encoder.magic(MagicType::Archive);
 
@@ -443,7 +438,7 @@ fn upload_package_fails_when_root_not_directory_deco() {
       "
         error: failed to unarchive manifest
                ├─ failed to decode directory
-               └─ unsupported version 111
+               └─ truncated
       ",
     )
     .failure();
@@ -609,7 +604,6 @@ fn upload_records_state() {
     .success();
 
   let revision = RevisionObject {
-    version: Version::Zero,
     package: fingerprint(&test.path().join("manifest.filepack")),
     previous: None,
   }
@@ -662,7 +656,6 @@ fn upload_rejects_stale_state() {
     .success();
 
   let root = RevisionObject {
-    version: Version::Zero,
     package: fingerprint(&a.path().join("manifest.filepack")),
     previous: None,
   }
@@ -688,7 +681,6 @@ fn upload_rejects_stale_state() {
     .success();
 
   let head = RevisionObject {
-    version: Version::Zero,
     package: fingerprint(&b.path().join("manifest.filepack")),
     previous: Some(root),
   }
@@ -768,7 +760,7 @@ fn upload_replaces_package() {
 
   Test::new()
     .args(["gc", "--server", &address])
-    .stderr("removed 1 revision, 1 directory, and 3 files, freeing 88 B\n")
+    .stderr("removed 1 revision, 1 directory, and 3 files, freeing 84 B\n")
     .success();
 
   assert_eq!(
@@ -791,7 +783,6 @@ fn upload_updates_implicitly() {
     .success();
 
   let root = RevisionObject {
-    version: Version::Zero,
     package: fingerprint(&test.path().join("manifest.filepack")),
     previous: None,
   }
@@ -822,7 +813,6 @@ fn upload_updates_implicitly() {
     .success();
 
   let head = RevisionObject {
-    version: Version::Zero,
     package: fingerprint(&test.path().join("manifest.filepack")),
     previous: Some(root),
   }

@@ -4,8 +4,6 @@ use super::*;
 #[derive(Encode, Decode, Magic)]
 #[deco(magic = MagicType::Archive)]
 pub struct Archive {
-  #[n(0)]
-  pub(crate) version: Version,
   #[n(1)]
   pub(crate) root: Hash,
   #[n(2)]
@@ -322,11 +320,7 @@ mod tests {
     let hash = Hash::bytes(&junk);
     let mut files = BTreeMap::new();
     files.insert(hash, junk);
-    let archive = Archive {
-      version: Version::Zero,
-      root: hash,
-      files,
-    };
+    let archive = Archive { root: hash, files };
     assert_matches!(
       archive.unpack(),
       Err(ArchiveError::DirectoryDecode {
@@ -479,11 +473,7 @@ mod tests {
     let root = Hash::bytes(&directory);
     let mut files = BTreeMap::new();
     files.insert(root, directory);
-    let archive = Archive {
-      version: Version::Zero,
-      root,
-      files,
-    };
+    let archive = Archive { root, files };
     assert_matches!(archive.unpack(), Err(ArchiveError::PackageMissing));
   }
 
@@ -557,7 +547,6 @@ mod tests {
     let private_key = test::PRIVATE_KEY.parse::<PrivateKey>().unwrap();
 
     let statement = Statement {
-      version: Version::Zero,
       fingerprint: Fingerprint::from_bytes([0; Fingerprint::LEN]),
       timestamp: None,
     };
@@ -679,7 +668,6 @@ mod tests {
 
     let private_key = test::PRIVATE_KEY.parse::<PrivateKey>().unwrap();
     let statement = Statement {
-      version: Version::Zero,
       fingerprint,
       timestamp: None,
     };
@@ -708,7 +696,6 @@ mod tests {
     let public_key = test::PUBLIC_KEY.parse::<PublicKey>().unwrap();
 
     let statement = Statement {
-      version: Version::Zero,
       fingerprint: Fingerprint::from_bytes([0; Fingerprint::LEN]),
       timestamp: None,
     };
@@ -718,7 +705,6 @@ mod tests {
     map.item(3, &[0u8; 32][..]);
     map.item(2, &statement);
     map.item(1, public_key);
-    map.item(0, Version::Zero);
     map.finish();
     let signature_bytes = encoder.finish();
 

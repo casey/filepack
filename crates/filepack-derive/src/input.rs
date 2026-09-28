@@ -34,12 +34,14 @@ impl Input {
     let variants = self.parse_variants()?;
 
     let arms = variants.iter().map(|ParsedVariant { fields, ident, n }| {
+      let variant = format!("{name}::{ident}");
       if fields.is_empty() {
         quote! {
           #n => {
             if !array.is_empty() {
-              let map = array.decoder()?.map::<u64>()?;
+              let mut map = array.decoder()?.map::<u64>()?;
               ensure!(!map.is_empty(), decode_error::EmptyVariantMap);
+              map.version(#variant)?;
               map.decode_unknown()?;
             }
             Self::#ident
@@ -57,6 +59,7 @@ impl Input {
               ensure!(!map.is_empty(), decode_error::EmptyVariantMap);
               map
             };
+            map.version(#variant)?;
             #(#decode)*
             map.decode_unknown()?;
             Self::#ident { #(#fields,)* }
@@ -142,6 +145,8 @@ impl Input {
   }
 
   pub(crate) fn decode_struct(&self, attributes: &Attributes) -> Result<proc_macro2::TokenStream> {
+    let name = &self.ident;
+
     let fields = self.parse_fields()?;
 
     let decode = ParsedField::decode(&fields);
@@ -176,6 +181,7 @@ impl Input {
         fn decode(decoder: &mut Decoder<'de>) -> DecodeResult<Self> {
           #magic
           let mut map = decoder.#map::<u64>()?;
+          map.version(stringify!(#name))?;
           #(#decode)*
           map.decode_unknown()?;
           let value = #constructor;
@@ -442,7 +448,7 @@ impl Input {
       .map(Field::parse)
       .collect::<Result<Vec<ParsedField>>>()?;
 
-    validate_numbers(fields.iter().map(|field| (field.ident, field.n)))?;
+    validate_numbers(1, fields.iter().map(|field| (field.ident, field.n)))?;
 
     Ok(fields)
   }
@@ -457,7 +463,7 @@ impl Input {
       .map(Variant::parse)
       .collect::<Result<Vec<ParsedVariant>>>()?;
 
-    validate_numbers(variants.iter().map(|variant| (variant.ident, variant.n)))?;
+    validate_numbers(0, variants.iter().map(|variant| (variant.ident, variant.n)))?;
 
     Ok(variants)
   }
@@ -598,7 +604,7 @@ mod tests {
       &syn::parse_quote! {
         struct Foo {
           #[deco(strict)]
-          #[n(0)]
+          #[n(1)]
           foo: Option<u64>,
         }
       },
@@ -617,7 +623,7 @@ mod tests {
       &syn::parse_quote! {
         struct Foo {
           #[deco(decode_with)]
-          #[n(0)]
+          #[n(1)]
           foo: u64,
         }
       },
@@ -682,6 +688,65 @@ mod tests {
       .unwrap()
       .to_string(),
       "missing `#[deco(magic = MagicType::Variant)]` attribute",
+    );
+  }
+
+  #[test]
+  fn number_errors() {
+    #[track_caller]
+    fn case(input: &DeriveInput, expected: &str) {
+      assert_eq!(
+        Input::from_derive_input(input)
+          .unwrap()
+          .decode()
+          .err()
+          .unwrap()
+          .to_string(),
+        expected,
+      );
+    }
+
+    case(
+      &syn::parse_quote! {
+        struct Foo {
+          #[n(0)]
+          foo: u64,
+        }
+      },
+      "`#[n(0)]` is reserved for the version key",
+    );
+
+    case(
+      &syn::parse_quote! {
+        enum Foo {
+          #[n(0)]
+          Bar {
+            #[n(0)]
+            foo: u64,
+          },
+        }
+      },
+      "`#[n(0)]` is reserved for the version key",
+    );
+
+    case(
+      &syn::parse_quote! {
+        struct Foo {
+          #[n(2)]
+          foo: u64,
+        }
+      },
+      "`#[n]` attributes must be contiguous starting from 1: expected 1, found 2",
+    );
+
+    case(
+      &syn::parse_quote! {
+        enum Foo {
+          #[n(1)]
+          Bar,
+        }
+      },
+      "`#[n]` attributes must be contiguous starting from 0: expected 0, found 1",
     );
   }
 }

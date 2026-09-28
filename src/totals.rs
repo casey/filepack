@@ -4,13 +4,13 @@ use super::*;
 #[derive(Clone, Copy, Debug, Decode, Default, Encode, PartialEq, Serialize)]
 #[deco(validate)]
 pub struct Totals {
-  #[n(0)]
-  pub files: u64,
   #[n(1)]
-  pub file_size: u64,
+  pub files: u64,
   #[n(2)]
-  pub directories: u64,
+  pub file_size: u64,
   #[n(3)]
+  pub directories: u64,
+  #[n(4)]
   pub directory_size: u64,
 }
 

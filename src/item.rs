@@ -3,9 +3,9 @@ use super::*;
 #[skip_serializing_none]
 #[derive(Clone, Debug, Decode, Encode, PartialEq, Serialize)]
 pub(crate) struct Item<T> {
-  #[n(0)]
-  pub(crate) content: T,
   #[n(1)]
+  pub(crate) content: T,
+  #[n(2)]
   pub(crate) title: Option<Text>,
 }
 

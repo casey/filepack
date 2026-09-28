@@ -8,9 +8,8 @@ pub trait Message: DecodeOwned + Encode + Eq + Ord {
 
   fn check(&self, signer: PublicKey, policy: Self::Policy<'_>) -> Result<(), Self::Error>;
 
-  fn digest(&self, version: Version) -> Hash {
+  fn digest(&self) -> Hash {
     let envelope = Envelope {
-      version,
       application: Application::Filepack,
       context: Self::CONTEXT,
       message: self,
@@ -25,11 +24,8 @@ mod tests {
 
   #[test]
   fn context_separates_domains() {
-    #[allow(clippy::arbitrary_source_item_ordering)]
     #[derive(Debug, Decode, Encode, Eq, Ord, PartialEq, PartialOrd)]
     struct Impostor {
-      #[n(0)]
-      version: Version,
       #[n(1)]
       fingerprint: Fingerprint,
       #[n(2)]
@@ -47,11 +43,8 @@ mod tests {
       }
     }
 
-    #[allow(clippy::arbitrary_source_item_ordering)]
     #[derive(Debug, Decode, Encode, Eq, Ord, PartialEq, PartialOrd)]
     struct Twin {
-      #[n(0)]
-      version: Version,
       #[n(1)]
       fingerprint: Fingerprint,
       #[n(2)]
@@ -76,7 +69,6 @@ mod tests {
     assert_eq!(
       private_key
         .sign(Twin {
-          version: Version::Zero,
           fingerprint,
           timestamp: None,
         })
@@ -114,13 +106,9 @@ mod tests {
         map.item(3, &message);
         map.item(2, context);
         map.item(1, "filepack");
-        map.item(0, Version::Zero);
         map.finish();
 
-        assert_eq!(
-          message.digest(Version::Zero),
-          Hash::bytes(&encoder.finish())
-        );
+        assert_eq!(message.digest(), Hash::bytes(&encoder.finish()));
 
         self.contexts.insert(T::CONTEXT);
         self.types.insert(TypeId::of::<T>());
@@ -131,7 +119,6 @@ mod tests {
 
     cases.case(
       Claims {
-        version: Version::Zero,
         audience: "foo".into(),
         timestamp: 1000,
       },
@@ -140,7 +127,6 @@ mod tests {
 
     cases.case(
       Statement {
-        version: Version::Zero,
         fingerprint: Fingerprint::from_bytes([0; Fingerprint::LEN]),
         timestamp: Some(1000),
       },

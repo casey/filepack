@@ -1,10 +1,7 @@
 use super::*;
 
-#[allow(clippy::arbitrary_source_item_ordering)]
 #[derive(Debug, Decode, Encode, PartialEq)]
 pub struct RevisionObject {
-  #[n(0)]
-  pub version: Version,
   #[n(1)]
   pub package: Fingerprint,
   #[n(2)]
@@ -24,7 +21,6 @@ mod tests {
   #[test]
   fn encoding() {
     assert_encoding(RevisionObject {
-      version: Version::Zero,
       package: test::FINGERPRINT.parse().unwrap(),
       previous: Some(test::REVISION.parse().unwrap()),
     });
@@ -34,7 +30,6 @@ mod tests {
   fn hash() {
     assert_eq!(
       RevisionObject {
-        version: Version::Zero,
         package: test::FINGERPRINT.parse().unwrap(),
         previous: None,
       }

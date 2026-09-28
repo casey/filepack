@@ -419,7 +419,7 @@ fn download_retrieves_package_with_metadata() {
     .assert_file("out/README.md", "baz")
     .success()
     .args(["verify", "out"])
-    .stderr("successfully verified 5 files totaling 284 bytes\n")
+    .stderr("successfully verified 5 files totaling 282 bytes\n")
     .success();
 
   server.terminate().success();

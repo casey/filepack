@@ -37,11 +37,22 @@ impl Field {
   pub(crate) fn parse(&self) -> Result<ParsedField> {
     let (decode_with, encode_with) = self.parse_attributes()?;
 
+    let ident = self.ident.as_ref().unwrap();
+
+    let n = number(ident, &self.attrs)?;
+
+    if n == 0 {
+      return Err(Error::new_spanned(
+        self.n_attribute().unwrap(),
+        "`#[n(0)]` is reserved for the version key",
+      ));
+    }
+
     Ok(ParsedField {
       decode_with,
       encode_with,
-      ident: self.ident.as_ref().unwrap(),
-      n: number(self.ident.as_ref().unwrap(), &self.attrs)?,
+      ident,
+      n,
       optional: self.is_option(),
     })
   }

@@ -14,12 +14,12 @@ static TIME: LazyLock<Regex> = LazyLock::new(|| {
 pub(crate) enum Time {
   #[n(0)]
   Year {
-    #[n(0)]
+    #[n(1)]
     year: i64,
   },
   #[n(1)]
   Day {
-    #[n(0)]
+    #[n(1)]
     days: i32,
   },
 }

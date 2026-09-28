@@ -283,7 +283,6 @@ pub use self::{
   server_state::ServerState,
   state::State,
   totals::Totals,
-  version::Version,
 };
 
 #[cfg(test)]
@@ -473,7 +472,6 @@ mod type_name;
 mod url_error;
 mod utf8_path_ext;
 mod validate;
-mod version;
 mod video;
 mod video_error;
 mod video_metadata;
