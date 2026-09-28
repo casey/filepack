@@ -135,6 +135,7 @@ impl<'a> PackageBuilder<'a> {
 struct TestRequestBuilder {
   absent_headers: BTreeSet<String>,
   body: Option<Vec<u8>>,
+  headers: Vec<(HeaderName, String)>,
   method: Method,
   path: String,
   range: Option<&'static str>,
@@ -193,6 +194,11 @@ impl TestRequestBuilder {
     self
   }
 
+  fn header(mut self, name: HeaderName, value: impl Into<String>) -> Self {
+    self.headers.push((name, value.into()));
+    self
+  }
+
   fn ignore_body(mut self) -> Self {
     self.response_body = None;
     self
@@ -202,6 +208,7 @@ impl TestRequestBuilder {
     Self {
       absent_headers: BTreeSet::new(),
       body: None,
+      headers: Vec::new(),
       method,
       path: path.into(),
       range: None,
@@ -231,6 +238,10 @@ impl TestRequestBuilder {
 
       if let Some(range) = self.range {
         request = request.header(header::RANGE, range);
+      }
+
+      for (name, value) in self.headers {
+        request = request.header(name, value);
       }
 
       let response = self
@@ -575,6 +586,53 @@ fn api_revision_head() {
   server
     .head(format!("/api/revision/{revision}"))
     .status(StatusCode::NOT_FOUND)
+    .send();
+}
+
+#[test]
+fn api_version_accepted() {
+  TestServer::new()
+    .get("/api/numbers")
+    .header(API_VERSION_HEADER, "0")
+    .assert_body(api::numbers::Response::default().encode_to_vec())
+    .send();
+}
+
+#[test]
+fn api_version_malformed() {
+  TestServer::new()
+    .get("/api/numbers")
+    .header(API_VERSION_HEADER, "foo")
+    .status(StatusCode::BAD_REQUEST)
+    .assert_body("malformed API version header `foo`")
+    .send();
+}
+
+#[test]
+fn api_version_response_header() {
+  TestServer::new()
+    .get("/")
+    .assert_header(API_VERSION_HEADER, "0")
+    .ignore_body()
+    .send();
+}
+
+#[test]
+fn api_version_unsupported() {
+  let server = TestServer::new();
+
+  server
+    .get("/api/numbers")
+    .header(API_VERSION_HEADER, "1")
+    .status(StatusCode::BAD_REQUEST)
+    .assert_body("unsupported API version 1, this server supports API version 0")
+    .send();
+
+  server
+    .get("/nonexistent")
+    .header(API_VERSION_HEADER, "1")
+    .status(StatusCode::BAD_REQUEST)
+    .assert_body("unsupported API version 1, this server supports API version 0")
     .send();
 }
 

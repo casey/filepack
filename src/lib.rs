@@ -175,7 +175,7 @@ use {
   },
   axum::{
     body::Body,
-    http::{self, HeaderValue, StatusCode, header},
+    http::{self, HeaderName, HeaderValue, StatusCode, header},
     response::{IntoResponse, Response},
   },
   axum_extra::{TypedHeader, headers},
@@ -491,6 +491,9 @@ mod jpeg_builder;
 mod test;
 #[cfg(test)]
 mod webm_builder;
+
+const API_VERSION: u64 = 0;
+const API_VERSION_HEADER: HeaderName = HeaderName::from_static("filepack-api-version");
 
 const KIB: usize = 1 << 10;
 const MIB: usize = KIB << 10;
