@@ -18,8 +18,9 @@ impl Gc {
 
     if !options.quiet {
       eprintln!(
-        "removed {}, {}, and {}, freeing {}",
+        "removed {}, {}, {}, and {}, freeing {}",
         Count::new(response.revisions.len(), "revision"),
+        Count::new(response.packages.len(), "package"),
         Count::irregular(response.directories.len(), "directory", "directories"),
         Count::new(response.files.len(), "file"),
         format_size(response.bytes),

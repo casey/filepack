@@ -1222,6 +1222,7 @@ fn gc_removes_unreachable_and_retains_reachable_data() {
           revision.into(),
         ])
         .into(),
+        packages: BTreeSet::from([fingerprint]).into(),
         revisions: BTreeSet::from([revision]).into(),
       }
       .encode_to_vec(),
@@ -1295,6 +1296,7 @@ fn gc_shares_ancestors() {
         bytes: bar_deco.len().into_u64() + 3 + head_object.encode_to_vec().len().into_u64(),
         directories: BTreeSet::from([bar_hash]).into(),
         files: BTreeSet::from([bar_hash, Hash::bytes(b"bar"), head.into()]).into(),
+        packages: BTreeSet::from([bar]).into(),
         revisions: BTreeSet::from([head]).into(),
       }
       .encode_to_vec(),
@@ -4194,6 +4196,7 @@ fn verify_package_replace() {
         bytes: foo_deco.len().into_u64() + 3 + revision_object.encode_to_vec().len().into_u64(),
         directories: BTreeSet::from([foo_hash]).into(),
         files: BTreeSet::from([foo_hash, Hash::bytes(b"foo"), revision.into()]).into(),
+        packages: BTreeSet::from([foo]).into(),
         revisions: BTreeSet::from([revision]).into(),
       }
       .encode_to_vec(),
