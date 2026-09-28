@@ -454,10 +454,7 @@ impl Server {
       .map(|revision| self.history(revision))
       .transpose()?;
 
-    let previous = history
-      .as_ref()
-      .and_then(|history| history.get(1))
-      .copied();
+    let previous = history.as_ref().and_then(|history| history.get(1)).copied();
 
     let revisions = history.as_ref().map(|history| history.len().into_u64());
 
