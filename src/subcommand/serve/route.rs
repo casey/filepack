@@ -23,6 +23,19 @@ pub(crate) async fn api_gc(
   block_in_place(|| Ok(DecoResponse(server.gc()?)))
 }
 
+pub(crate) async fn api_head(
+  server: ServerExtension,
+  Path(revision): Path<Revision>,
+) -> ServerResult {
+  block_in_place(|| {
+    ensure!(
+      server.is_head(revision)?,
+      server_error::HeadNotFound { revision },
+    );
+    Ok(())
+  })
+}
+
 pub(crate) async fn api_missing(
   server: ServerExtension,
   DecoRequest(request): DecoRequest<api::missing::Request, { MIB }>,
@@ -71,19 +84,6 @@ pub(crate) async fn api_packages(
     Ok(DecoResponse(api::packages::Response {
       packages: server.fingerprints()?.into(),
     }))
-  })
-}
-
-pub(crate) async fn api_revision(
-  server: ServerExtension,
-  Path(revision): Path<Revision>,
-) -> ServerResult {
-  block_in_place(|| {
-    ensure!(
-      server.is_head(revision)?,
-      server_error::RevisionNotHead { revision },
-    );
-    Ok(())
   })
 }
 

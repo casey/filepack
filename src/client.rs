@@ -46,7 +46,7 @@ impl Client {
   }
 
   pub(crate) fn is_head(&self, revision: Revision) -> Result<bool> {
-    self.head(&format!("api/revision/{revision}"))
+    self.head(&format!("api/head/{revision}"))
   }
 
   pub(crate) fn missing_files(&self, hashes: BTreeSet<Hash>) -> Result<HashSet<Hash>> {
