@@ -139,12 +139,12 @@ pub enum ServerError {
     index: Ordinal,
   },
   #[snafu(display(
-    "package number {number} is at revision {head} but revision's previous is {previous}"
+    "package number {number} is at revision {head} but revision's parent is {parent}"
   ))]
   RevisionConflict {
     head: Revision,
     number: u64,
-    previous: Revision,
+    parent: Revision,
   },
   #[snafu(display("stored revision {revision} failed to decode"))]
   RevisionCorrupt {
@@ -160,26 +160,26 @@ pub enum ServerError {
   RevisionNotFound { revision: Revision },
   #[snafu(display("revision {revision} is not the head of a package number"))]
   RevisionNotHead { revision: Revision },
-  #[snafu(display("failed to parse revision"))]
-  RevisionParse { source: HexError },
   #[snafu(display(
-    "revision {revision} has no previous revision but package number {number} is at revision {head}"
+    "revision {revision} has no parent but package number {number} is at revision {head}"
   ))]
-  RevisionPreviousMissing {
+  RevisionParentMissing {
     head: Revision,
     number: u64,
     revision: Revision,
   },
-  #[snafu(display("revision {revision} references unknown previous revision {previous}"))]
-  RevisionPreviousNotFound {
-    previous: Revision,
+  #[snafu(display("revision {revision} references unknown parent revision {parent}"))]
+  RevisionParentNotFound {
+    parent: Revision,
     revision: Revision,
   },
-  #[snafu(display("revision {revision} has previous revision {previous}"))]
-  RevisionPreviousUnexpected {
-    previous: Revision,
+  #[snafu(display("revision {revision} has parent revision {parent}"))]
+  RevisionParentUnexpected {
+    parent: Revision,
     revision: Revision,
   },
+  #[snafu(display("failed to parse revision"))]
+  RevisionParse { source: HexError },
   #[snafu(display("failed to get current time"))]
   Time { source: SystemTimeError },
   #[snafu(display("error reading body of upload with hash {hash}"))]
@@ -225,9 +225,9 @@ impl ServerError {
       | Self::PackageRootUnverified { .. }
       | Self::PackageUnverified { .. }
       | Self::RevisionDecode { .. }
-      | Self::RevisionPreviousMissing { .. }
-      | Self::RevisionPreviousNotFound { .. }
-      | Self::RevisionPreviousUnexpected { .. }
+      | Self::RevisionParentMissing { .. }
+      | Self::RevisionParentNotFound { .. }
+      | Self::RevisionParentUnexpected { .. }
       | Self::UploadBodyRead { .. }
       | Self::UploadHashMismatch { .. } => StatusCode::BAD_REQUEST,
       Self::ArtworkNotFound { .. }

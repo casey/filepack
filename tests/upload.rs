@@ -505,7 +505,7 @@ fn upload_package_serves_package_html() {
       next: None,
       number: None,
       prev: None,
-      previous: None,
+      parent: None,
       readme: None,
       revision: None,
       revisions: None,
@@ -605,7 +605,7 @@ fn upload_records_state() {
 
   let revision = RevisionObject {
     package: fingerprint(&test.path().join("manifest.filepack")),
-    previous: None,
+    parent: None,
   }
   .hash();
 
@@ -657,7 +657,7 @@ fn upload_rejects_stale_state() {
 
   let root = RevisionObject {
     package: fingerprint(&a.path().join("manifest.filepack")),
-    previous: None,
+    parent: None,
   }
   .hash();
 
@@ -682,7 +682,7 @@ fn upload_rejects_stale_state() {
 
   let head = RevisionObject {
     package: fingerprint(&b.path().join("manifest.filepack")),
-    previous: Some(root),
+    parent: Some(root),
   }
   .hash();
 
@@ -784,7 +784,7 @@ fn upload_updates_implicitly() {
 
   let root = RevisionObject {
     package: fingerprint(&test.path().join("manifest.filepack")),
-    previous: None,
+    parent: None,
   }
   .hash();
 
@@ -814,7 +814,7 @@ fn upload_updates_implicitly() {
 
   let head = RevisionObject {
     package: fingerprint(&test.path().join("manifest.filepack")),
-    previous: Some(root),
+    parent: Some(root),
   }
   .hash();
 

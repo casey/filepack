@@ -5,7 +5,7 @@ pub struct RevisionObject {
   #[n(1)]
   pub package: Fingerprint,
   #[n(2)]
-  pub previous: Option<Revision>,
+  pub parent: Option<Revision>,
 }
 
 impl RevisionObject {
@@ -22,7 +22,7 @@ mod tests {
   fn encoding() {
     assert_encoding(RevisionObject {
       package: test::FINGERPRINT.parse().unwrap(),
-      previous: Some(test::REVISION.parse().unwrap()),
+      parent: Some(test::REVISION.parse().unwrap()),
     });
   }
 
@@ -31,7 +31,7 @@ mod tests {
     assert_eq!(
       RevisionObject {
         package: test::FINGERPRINT.parse().unwrap(),
-        previous: None,
+        parent: None,
       }
       .hash()
       .to_string(),

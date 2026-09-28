@@ -149,7 +149,7 @@ impl Server {
 
           stack.push(revision_object.package.into());
 
-          revision = revision_object.previous;
+          revision = revision_object.parent;
         }
       }
 
@@ -255,7 +255,7 @@ impl Server {
     while let Some(current) = revision {
       revisions.push(current);
 
-      revision = self.read_revision(current)?.previous;
+      revision = self.read_revision(current)?.parent;
     }
 
     Ok(revisions)
@@ -454,7 +454,7 @@ impl Server {
       .map(|revision| self.history(revision))
       .transpose()?;
 
-    let previous = history.as_ref().and_then(|history| history.get(1)).copied();
+    let parent = history.as_ref().and_then(|history| history.get(1)).copied();
 
     let revisions = history.as_ref().map(|history| history.len().into_u64());
 
@@ -516,8 +516,8 @@ impl Server {
       mounted: mounts.contains(&fingerprint),
       next,
       number,
+      parent,
       prev,
-      previous,
       readme,
       revision,
       revisions,
@@ -798,7 +798,7 @@ impl Server {
 
     let fingerprint = revision_object.package;
 
-    let previous = revision_object.previous;
+    let parent = revision_object.parent;
 
     ensure!(
       tx.open_table(PACKAGES)?.get(&fingerprint)?.is_some(),
@@ -810,17 +810,17 @@ impl Server {
       let mut numbers = tx.open_table(NUMBERS)?;
       let mut revisions = tx.open_table(REVISIONS)?;
 
-      if let Some(previous) = previous {
+      if let Some(parent) = parent {
         ensure!(
-          revisions.get(&previous)?.is_some(),
-          server_error::RevisionPreviousNotFound { previous, revision },
+          revisions.get(&parent)?.is_some(),
+          server_error::RevisionParentNotFound { parent, revision },
         );
       }
 
       match request.mode {
         api::revision::Mode::New => {
-          if let Some(previous) = previous {
-            return Err(ServerError::RevisionPreviousUnexpected { previous, revision });
+          if let Some(parent) = parent {
+            return Err(ServerError::RevisionParentUnexpected { parent, revision });
           }
 
           let existing = heads
@@ -863,8 +863,8 @@ impl Server {
             .value();
 
           if head != revision {
-            let Some(previous) = previous else {
-              return Err(ServerError::RevisionPreviousMissing {
+            let Some(parent) = parent else {
+              return Err(ServerError::RevisionParentMissing {
                 head,
                 number,
                 revision,
@@ -872,11 +872,11 @@ impl Server {
             };
 
             ensure!(
-              previous == head,
+              parent == head,
               server_error::RevisionConflict {
                 head,
                 number,
-                previous,
+                parent,
               },
             );
 

@@ -10,8 +10,8 @@ pub struct PackageHtml {
   pub mounted: bool,
   pub next: Option<u64>,
   pub number: Option<u64>,
+  pub parent: Option<Revision>,
   pub prev: Option<u64>,
-  pub previous: Option<Revision>,
   pub readme: Option<Hash>,
   pub revision: Option<Revision>,
   pub revisions: Option<u64>,
@@ -32,12 +32,8 @@ impl PackageHtml {
         self.fingerprint,
         format!("/package/{}", self.fingerprint),
       )
-      .when_some(self.previous, |builder, previous| {
-        builder.code_link(
-          "previous revision",
-          previous,
-          format!("/package/{previous}"),
-        )
+      .when_some(self.parent, |builder, parent| {
+        builder.code_link("parent", parent, format!("/package/{parent}"))
       })
       .when_some(self.revisions, |builder, revisions| {
         builder.link(
@@ -174,8 +170,8 @@ mod tests {
         mounted: false,
         next: None,
         number: Some(1),
+        parent: None,
         prev: None,
-        previous: None,
         readme: None,
         revision: None,
         revisions: None,
@@ -292,8 +288,8 @@ mod tests {
         mounted: false,
         next: None,
         number: Some(1),
+        parent: None,
         prev: None,
-        previous: None,
         readme: None,
         revision: None,
         revisions: None,
@@ -444,8 +440,8 @@ mod tests {
         mounted: false,
         next: None,
         number: Some(1),
+        parent: None,
         prev: None,
-        previous: None,
         readme: None,
         revision: None,
         revisions: None,
@@ -577,8 +573,8 @@ mod tests {
         mounted: false,
         next: None,
         number: Some(1),
+        parent: Some(test::REVISION.parse().unwrap()),
         prev: None,
-        previous: Some(test::REVISION.parse().unwrap()),
         readme: None,
         revision: Some(test::REVISION.parse().unwrap()),
         revisions: Some(2),
@@ -612,7 +608,7 @@ mod tests {
               </dd>
             </div>
             <div>
-              <dt>previous revision</dt>
+              <dt>parent</dt>
               <dd>
                 <a href='/package/{revision}'><code>{revision}</code></a>
               </dd>
@@ -689,8 +685,8 @@ mod tests {
       mounted: false,
       next: Some(3),
       number: Some(2),
+      parent: None,
       prev: Some(1),
-      previous: None,
       readme: None,
       revision: None,
       revisions: None,
@@ -738,8 +734,8 @@ mod tests {
       mounted: false,
       next: None,
       number: Some(1),
+      parent: None,
       prev: None,
-      previous: None,
       readme: None,
       revision: None,
       revisions: None,
@@ -801,8 +797,8 @@ mod tests {
       mounted: false,
       next: None,
       number: Some(1),
+      parent: None,
       prev: None,
-      previous: None,
       readme: None,
       revision: None,
       revisions: None,
@@ -842,8 +838,8 @@ mod tests {
         mounted: false,
         next: None,
         number: Some(1),
+        parent: None,
         prev: None,
-        previous: None,
         readme: Some(test::HASH.parse().unwrap()),
         revision: None,
         revisions: None,
@@ -1053,8 +1049,8 @@ mod tests {
         mounted: false,
         next: None,
         number: Some(1),
+        parent: None,
         prev: None,
-        previous: None,
         readme: None,
         revision: None,
         revisions: None,
