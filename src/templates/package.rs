@@ -782,7 +782,7 @@ mod tests {
   fn package() {
     let metadata = Metadata {
       language: Some("en".parse().unwrap()),
-      package: Some(Package {
+      package: Some(PackageMetadata {
         colophon: Some("COLOPHON.md".parse().unwrap()),
         creator: Some("foo".parse().unwrap()),
         description: Some("bar".parse().unwrap()),

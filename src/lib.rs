@@ -124,8 +124,8 @@ use {
     ordinal::Ordinal,
     orientation::Orientation,
     owo_colorize_ext::OwoColorizeExt,
-    package::Package,
     package_identifier_error::PackageIdentifierError,
+    package_metadata::PackageMetadata,
     package_summary::PackageSummary,
     page_error::PageError,
     path_error::PathError,
@@ -423,9 +423,9 @@ mod ordered_set;
 mod ordinal;
 mod orientation;
 mod owo_colorize_ext;
-mod package;
 mod package_identifier;
 mod package_identifier_error;
+mod package_metadata;
 mod package_summary;
 mod page;
 mod page_error;

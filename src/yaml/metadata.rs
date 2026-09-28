@@ -9,7 +9,7 @@ pub(crate) struct Metadata {
   pub(crate) homepage: Option<CheckedUrl>,
   pub(crate) language: Option<Language>,
   pub(crate) media: Option<Media>,
-  pub(crate) package: Option<Package>,
+  pub(crate) package: Option<PackageMetadata>,
   pub(crate) publisher: Option<Text>,
   pub(crate) readme: Option<RelativePath>,
   pub(crate) time: Option<Time>,
@@ -444,7 +444,7 @@ mod tests {
           path: "foo.flac".parse().unwrap(),
         }],
       }),
-      package: Some(Package {
+      package: Some(PackageMetadata {
         colophon: Some("COLOPHON.md".parse().unwrap()),
         creator: None,
         description: None,
@@ -489,7 +489,7 @@ mod tests {
             title: Some("bar".parse().unwrap()),
           }],
         }),
-        package: Some(crate::Package {
+        package: Some(crate::PackageMetadata {
           colophon: Some("COLOPHON.md".parse().unwrap()),
           creator: None,
           description: None,
@@ -611,7 +611,7 @@ mod tests {
 
       assert!(media.is_none());
 
-      let Package {
+      let PackageMetadata {
         colophon,
         creator,
         description,
@@ -639,7 +639,7 @@ mod tests {
 
       let metadata = Metadata {
         artwork: Some(artwork.parse().unwrap()),
-        package: Some(Package {
+        package: Some(PackageMetadata {
           colophon: Some("COLOPHON.md".parse().unwrap()),
           creator: None,
           description: None,

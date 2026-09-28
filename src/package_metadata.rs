@@ -2,7 +2,7 @@ use super::*;
 
 #[skip_serializing_none]
 #[derive(Clone, Debug, Default, Encode, Decode, PartialEq, Serialize)]
-pub(crate) struct Package {
+pub(crate) struct PackageMetadata {
   #[n(1)]
   pub(crate) colophon: Option<RelativePath>,
   #[n(2)]
@@ -17,7 +17,7 @@ pub(crate) struct Package {
   pub(crate) title: Option<Text>,
 }
 
-impl Package {
+impl PackageMetadata {
   pub(crate) fn info(&self, colophon: Option<Hash>) -> Info {
     InfoBuilder::new()
       .optional("title", self.title.as_ref())
@@ -47,7 +47,7 @@ mod tests {
 
   #[test]
   fn encoding() {
-    assert_encoding(Package {
+    assert_encoding(PackageMetadata {
       colophon: Some("COLOPHON.md".parse().unwrap()),
       creator: Some("foo".parse().unwrap()),
       description: Some("bar".parse().unwrap()),
