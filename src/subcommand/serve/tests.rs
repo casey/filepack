@@ -1493,16 +1493,16 @@ fn get_package_history() {
   server
     .get("/package/1/history")
     .assert_page(HistoryHtml {
-      entries: vec![(head, bar), (root, foo)],
       identifier: PackageIdentifier::Number(1),
+      revisions: vec![head, root],
     })
     .send();
 
   server
     .get(format!("/package/{root}/history"))
     .assert_page(HistoryHtml {
-      entries: vec![(root, foo)],
       identifier: PackageIdentifier::Revision(root),
+      revisions: vec![root],
     })
     .send();
 

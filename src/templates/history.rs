@@ -2,8 +2,8 @@ use super::*;
 
 #[derive(Boilerplate)]
 pub(crate) struct HistoryHtml {
-  pub(crate) entries: Vec<(Revision, Fingerprint)>,
   pub(crate) identifier: PackageIdentifier,
+  pub(crate) revisions: Vec<Revision>,
 }
 
 impl Page for HistoryHtml {
@@ -20,24 +20,17 @@ mod tests {
   fn history() {
     assert_eq!(
       HistoryHtml {
-        entries: vec![(
-          test::REVISION.parse().unwrap(),
-          test::FINGERPRINT.parse().unwrap(),
-        )],
         identifier: PackageIdentifier::Number(1),
+        revisions: vec![test::REVISION.parse().unwrap()],
       }
       .to_string(),
       unindent(&format!(
         "
           <h1>Package 1 history</h1>
           <ol reversed>
-            <li>
-              <a href=/package/{revision}><code>{revision}</code></a>
-              <a href=/package/{fingerprint}><code>{fingerprint}</code></a>
-            </li>
+            <li><a href=/package/{revision}><code>{revision}</code></a></li>
           </ol>
         ",
-        fingerprint = test::FINGERPRINT,
         revision = test::REVISION,
       )),
     );
