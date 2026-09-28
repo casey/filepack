@@ -496,6 +496,7 @@ const MIB: usize = KIB << 10;
 type Result<T = (), E = Error> = std::result::Result<T, E>;
 
 type DecodeResult<T = ()> = Result<T, DecodeError>;
+type FilesystemResult<T = ()> = Result<T, FilesystemError>;
 type PageResult<T> = Result<PageHtml<T>, PageError>;
 type ServerResult<T = ()> = Result<T, ServerError>;
 

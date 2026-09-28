@@ -249,7 +249,10 @@ impl Mp4Decoder {
   pub(crate) fn read(path: &Utf8Path) -> Result<VideoMetadata> {
     let file = filesystem::open(path)?;
 
-    let size = file.metadata().context(error::FilesystemIo { path })?.len();
+    let size = file
+      .metadata()
+      .context(filesystem_error::Io { path })?
+      .len();
 
     Self::metadata(file, size).context(error::Video { path })
   }

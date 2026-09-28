@@ -122,7 +122,7 @@ fingerprint mismatch: `{}`
           }
           continue;
         }
-        result => result.context(error::FilesystemIo { path: &path })?,
+        result => result.context(filesystem_error::Io { path: &path })?,
       };
 
       if actual == *expected {

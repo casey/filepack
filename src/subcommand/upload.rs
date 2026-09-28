@@ -95,7 +95,7 @@ impl Upload {
 
     let File { hash, size } = options
       .hash_file(input)
-      .context(error::FilesystemIo { path: input })?;
+      .context(filesystem_error::Io { path: input })?;
 
     let bar = ProgressBar::bytes(options, size);
 

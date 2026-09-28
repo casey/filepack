@@ -18,7 +18,7 @@ impl Contains {
     let (hash, size) = if let Some(path) = self.file {
       let file = options
         .hash_file(&path)
-        .context(error::FilesystemIo { path })?;
+        .context(filesystem_error::Io { path })?;
 
       (file.hash, Some(file.size))
     } else {
