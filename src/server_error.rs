@@ -92,6 +92,8 @@ pub enum ServerError {
   },
   #[snafu(display("media type {ty} does not have items"))]
   MediaTypeDoesNotHaveItems { ty: crate::MediaType },
+  #[snafu(display("{source}"))]
+  NumberParse { source: NumberError },
   #[snafu(display("file `{path}` missing from package {fingerprint}"))]
   PackageFileMissing {
     fingerprint: Fingerprint,
@@ -219,6 +221,7 @@ impl ServerError {
       | Self::DirectoryUnverified { .. }
       | Self::FingerprintParse { .. }
       | Self::HistoryByFingerprint { .. }
+      | Self::NumberParse { .. }
       | Self::RevisionParse { .. }
       | Self::PackageMetadataDecode { .. }
       | Self::PackageMetadataFileMissing { .. }
