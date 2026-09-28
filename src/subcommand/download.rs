@@ -108,9 +108,9 @@ impl Download {
 
       for (component, entry) in directory.entries {
         let path = path.join(component);
-        match entry {
-          Entry::File { hash, size } => files.push((hash, path, size)),
-          Entry::Directory { hash, totals, .. } => stack.push((hash, path, Some(totals))),
+        match entry.info {
+          EntryInfo::File => files.push((entry.hash, path, entry.size)),
+          EntryInfo::Directory { totals } => stack.push((entry.hash, path, Some(totals))),
         }
       }
     }

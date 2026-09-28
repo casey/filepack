@@ -169,10 +169,10 @@ impl Server {
         let directory = self.read_directory(hash)?;
 
         for entry in directory.entries.values() {
-          match entry {
-            Entry::Directory { hash, .. } => directory_stack.push(*hash),
-            Entry::File { hash, .. } => {
-              marked.insert(*hash);
+          match entry.ty() {
+            EntryType::Directory => directory_stack.push(entry.hash),
+            EntryType::File => {
+              marked.insert(entry.hash);
             }
           }
         }
@@ -369,7 +369,7 @@ impl Server {
       return Ok(None);
     };
 
-    Ok(Some(self.read_file(entry.hash())?))
+    Ok(Some(self.read_file(entry.hash)?))
   }
 
   pub(crate) fn missing(&self, hashes: &[Hash]) -> ServerResult<BTreeSet<Hash>> {
@@ -670,14 +670,14 @@ impl Server {
       };
 
       if components.peek().is_none() {
-        return Ok((entry.ty() == EntryType::File).then_some(entry.hash()));
+        return Ok((entry.ty() == EntryType::File).then_some(entry.hash));
       }
 
       if entry.ty() != EntryType::Directory {
         return Ok(None);
       }
 
-      directory = self.read_directory(entry.hash())?;
+      directory = self.read_directory(entry.hash)?;
     }
 
     Ok(None)
@@ -707,13 +707,13 @@ impl Server {
       let mut directories = tx.open_table(DIRECTORIES)?;
 
       for (name, entry) in &directory.entries {
-        let path = self.file_path(entry.hash());
+        let path = self.file_path(entry.hash);
 
         let metadata = path.metadata().map_err(|error| {
           if error.kind() == io::ErrorKind::NotFound {
             server_error::DirectoryEntryMissing {
               directory: hash,
-              hash: entry.hash(),
+              hash: entry.hash,
               name,
               ty: entry.ty(),
             }
@@ -726,29 +726,29 @@ impl Server {
         })?;
 
         ensure! {
-          metadata.len() == entry.size(),
+          metadata.len() == entry.size,
           server_error::DirectoryEntrySizeMismatch {
             actual: metadata.len(),
             directory: hash,
             entry: name,
-            expected: entry.size(),
+            expected: entry.size,
           },
         }
 
-        if let Entry::Directory { totals, .. } = entry {
+        if let EntryInfo::Directory { totals } = entry.info {
           ensure!(
-            directories.get(&entry.hash())?.is_some(),
+            directories.get(&entry.hash)?.is_some(),
             server_error::DirectoryUnverified {
               directory: hash,
-              subdirectory: entry.hash(),
+              subdirectory: entry.hash,
             },
           );
 
           self
-            .read_directory(entry.hash())?
+            .read_directory(entry.hash)?
             .totals()
             .unwrap()
-            .expect(*totals)
+            .expect(totals)
             .context(server_error::DirectoryEntryTotals {
               directory: hash,
               entry: name,

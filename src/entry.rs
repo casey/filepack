@@ -1,55 +1,35 @@
 use super::*;
 
 #[allow(clippy::arbitrary_source_item_ordering)]
-#[derive(Clone, Debug, Decode, Encode, EnumDiscriminants, PartialEq)]
-#[strum_discriminants(
-  allow(clippy::arbitrary_source_item_ordering),
-  derive(Display),
-  name(EntryType),
-  strum(serialize_all = "kebab-case")
-)]
-pub enum Entry {
-  #[n(0)]
-  File {
-    #[n(1)]
-    hash: Hash,
-    #[n(2)]
-    size: u64,
-  },
+#[derive(Clone, Copy, Debug, Decode, Encode, PartialEq)]
+pub struct Entry {
   #[n(1)]
-  Directory {
-    #[n(1)]
-    hash: Hash,
-    #[n(2)]
-    size: u64,
-    #[n(3)]
-    totals: Totals,
-  },
+  pub(crate) hash: Hash,
+  #[n(2)]
+  pub(crate) size: u64,
+  #[n(3)]
+  pub(crate) info: EntryInfo,
 }
 
 impl Entry {
-  pub(crate) fn directory(hash: Hash, size: u64, totals: Totals) -> Self {
-    Self::Directory { hash, size, totals }
-  }
-
-  pub fn file(hash: Hash, size: u64) -> Self {
-    Self::File { hash, size }
-  }
-
-  pub(crate) fn hash(&self) -> Hash {
-    match self {
-      Self::File { hash, .. } | Self::Directory { hash, .. } => *hash,
+  pub fn directory(hash: Hash, size: u64, totals: Totals) -> Self {
+    Self {
+      hash,
+      size,
+      info: EntryInfo::Directory { totals },
     }
   }
 
-  pub(crate) fn size(&self) -> u64 {
-    match self {
-      Self::File { size, .. } | Self::Directory { size, .. } => *size,
+  pub fn file(hash: Hash, size: u64) -> Self {
+    Self {
+      hash,
+      size,
+      info: EntryInfo::File,
     }
   }
 
   pub(crate) fn ty(&self) -> EntryType {
-    self.discriminant()
+    self.info.discriminant()
   }
 }
 
@@ -58,21 +38,21 @@ mod tests {
   use super::*;
 
   #[test]
-  fn encoding() {
-    assert_encoding(Entry::File {
-      size: 100,
-      hash: Hash::bytes(b"foo"),
-    });
-
-    assert_encoding(Entry::Directory {
-      hash: Hash::bytes(b"foo"),
-      size: 100,
-      totals: Totals {
-        directories: 1,
-        directory_size: 50,
-        file_size: 200,
-        files: 3,
+  fn directory_encoding() {
+    assert_encoding(Entry::directory(
+      Hash::bytes(b"foo"),
+      1,
+      Totals {
+        directories: 2,
+        directory_size: 3,
+        file_size: 4,
+        files: 5,
       },
-    });
+    ));
+  }
+
+  #[test]
+  fn file_encoding() {
+    assert_encoding(Entry::file(Hash::bytes(b"foo"), 1));
   }
 }

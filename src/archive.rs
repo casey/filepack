@@ -76,7 +76,7 @@ impl Archive {
     &self,
     options: DecodeOptions,
   ) -> Result<Fingerprint, ArchiveError> {
-    Ok(Fingerprint(self.package(options)?.hash()))
+    Ok(Fingerprint(self.package(options)?.hash))
   }
 
   pub(crate) fn pack(manifest: &Manifest) -> Result<Self, TotalsError> {
@@ -104,7 +104,7 @@ impl Archive {
       archive_error::PackageType { ty: package.ty() },
     }
 
-    Ok(package.clone())
+    Ok(*package)
   }
 
   pub(crate) fn package_component() -> &'static Component {
@@ -133,20 +133,20 @@ impl Archive {
 
     let mut entries = BTreeMap::new();
     for (name, entry) in &directory.entries {
-      let crate_entry = match entry {
-        Entry::File { hash, size } => {
-          if self.files.contains_key(hash) {
-            let content = self.file(*hash, *size)?;
-            loose.remove(hash);
-            embedded.insert(*hash, content.to_vec());
+      let crate_entry = match entry.info {
+        EntryInfo::File => {
+          if self.files.contains_key(&entry.hash) {
+            let content = self.file(entry.hash, entry.size)?;
+            loose.remove(&entry.hash);
+            embedded.insert(entry.hash, content.to_vec());
           }
           DirectoryTreeEntry::File(File {
-            hash: *hash,
-            size: *size,
+            hash: entry.hash,
+            size: entry.size,
           })
         }
-        Entry::Directory { hash, size, totals } => DirectoryTreeEntry::Directory(
-          self.unpack_directory(options, loose, embedded, *hash, *size, *totals)?,
+        EntryInfo::Directory { totals } => DirectoryTreeEntry::Directory(
+          self.unpack_directory(options, loose, embedded, entry.hash, entry.size, totals)?,
         ),
       };
       entries.insert(name.clone(), crate_entry);
@@ -212,14 +212,20 @@ impl Archive {
       .get(Self::PACKAGE)
       .context(archive_error::PackageMissing)?;
 
-    let Entry::Directory { hash, size, totals } = package else {
+    let EntryInfo::Directory { totals } = package.info else {
       return Err(ArchiveError::PackageType { ty: package.ty() });
     };
 
     let mut embedded = BTreeMap::new();
 
-    let package =
-      self.unpack_directory(options, &mut loose, &mut embedded, *hash, *size, *totals)?;
+    let package = self.unpack_directory(
+      options,
+      &mut loose,
+      &mut embedded,
+      package.hash,
+      package.size,
+      totals,
+    )?;
 
     let signatures = {
       let entry = root
@@ -227,23 +233,23 @@ impl Archive {
         .get(Self::SIGNATURES)
         .context(archive_error::SignaturesMissing)?;
 
-      let Entry::Directory { hash, size, totals } = entry else {
+      let EntryInfo::Directory { totals } = entry.info else {
         return Err(ArchiveError::SignaturesType { ty: entry.ty() });
       };
 
-      let directory = self.decode_directory(options, &mut loose, *hash, *size, *totals)?;
+      let directory = self.decode_directory(options, &mut loose, entry.hash, entry.size, totals)?;
 
       let mut signatures = BTreeSet::new();
       for entry in directory.entries.values() {
-        match entry {
-          Entry::File { hash, size } => {
-            let file = self.file(*hash, *size)?;
-            loose.remove(hash);
+        match entry.ty() {
+          EntryType::File => {
+            let file = self.file(entry.hash, entry.size)?;
+            loose.remove(&entry.hash);
             let signature = Signature::decode_from_slice_with_options(options, file)
               .context(archive_error::SignatureDecode)?;
             signatures.insert(signature);
           }
-          Entry::Directory { .. } => return Err(ArchiveError::SignaturesDirectory),
+          EntryType::Directory => return Err(ArchiveError::SignaturesDirectory),
         }
       }
 
@@ -261,7 +267,7 @@ impl Archive {
         package,
         signatures,
       },
-      *totals,
+      totals,
     ))
   }
 
@@ -271,15 +277,15 @@ impl Archive {
     loose: &mut BTreeSet<Hash>,
     entry: &Entry,
   ) -> Result<(), ArchiveError> {
-    match entry {
-      Entry::File { hash, size } => {
-        if self.files.contains_key(hash) {
-          self.file(*hash, *size)?;
-          loose.remove(hash);
+    match entry.info {
+      EntryInfo::File => {
+        if self.files.contains_key(&entry.hash) {
+          self.file(entry.hash, entry.size)?;
+          loose.remove(&entry.hash);
         }
       }
-      Entry::Directory { hash, size, totals } => {
-        let directory = self.decode_directory(options, loose, *hash, *size, *totals)?;
+      EntryInfo::Directory { totals } => {
+        let directory = self.decode_directory(options, loose, entry.hash, entry.size, totals)?;
         for entry in directory.entries.values() {
           self.visit(options, loose, entry)?;
         }
@@ -340,11 +346,7 @@ mod tests {
 
     let size = deco.len().into_u64();
     builder.files.insert(hash, deco);
-    let package = Entry::Directory {
-      hash,
-      size,
-      totals: Totals::default(),
-    };
+    let package = Entry::directory(hash, size, Totals::default());
 
     let signatures = builder.directory(&Directory::new()).unwrap();
 
@@ -355,7 +357,7 @@ mod tests {
 
     let root = builder.directory(&root).unwrap();
 
-    let archive = builder.build(root.hash());
+    let archive = builder.build(root.hash);
 
     assert_matches!(
       archive.unpack(),
@@ -384,7 +386,7 @@ mod tests {
 
     let root = builder.directory(&root).unwrap();
 
-    let archive = builder.build(root.hash());
+    let archive = builder.build(root.hash);
 
     assert_matches!(
       archive.unpack(),
@@ -486,16 +488,16 @@ mod tests {
 
     let entry = builder.directory(&package).unwrap();
 
-    let package = Entry::Directory {
-      hash: entry.hash(),
-      size: entry.size(),
-      totals: Totals {
+    let package = Entry::directory(
+      entry.hash,
+      entry.size,
+      Totals {
         directories: 0,
         directory_size: 0,
         file_size: 100,
         files: 1,
       },
-    };
+    );
 
     let signatures = builder.directory(&Directory::default()).unwrap();
 
@@ -506,7 +508,7 @@ mod tests {
 
     let root = builder.directory(&root).unwrap();
 
-    let archive = builder.build(root.hash());
+    let archive = builder.build(root.hash);
 
     assert_matches!(
       archive.unpack(),
@@ -526,7 +528,7 @@ mod tests {
             files: 1,
           },
         },
-      }) if hash == entry.hash(),
+      }) if hash == entry.hash,
     );
   }
 
@@ -722,7 +724,7 @@ mod tests {
 
     let root = builder.directory(&root).unwrap();
 
-    let archive = builder.build(root.hash());
+    let archive = builder.build(root.hash);
 
     assert_matches!(
       archive.unpack(),
@@ -756,7 +758,7 @@ mod tests {
 
     let root = builder.directory(&root).unwrap();
 
-    let archive = builder.build(root.hash());
+    let archive = builder.build(root.hash);
 
     assert_matches!(
       archive.unpack(),
@@ -782,7 +784,7 @@ mod tests {
 
     let root = builder.directory(&root).unwrap();
 
-    let archive = builder.build(root.hash());
+    let archive = builder.build(root.hash);
 
     assert_matches!(archive.unpack(), Err(ArchiveError::SignaturesDirectory));
   }
@@ -798,7 +800,7 @@ mod tests {
 
     let root = builder.directory(&root).unwrap();
 
-    let archive = builder.build(root.hash());
+    let archive = builder.build(root.hash);
 
     assert_matches!(archive.unpack(), Err(ArchiveError::SignaturesMissing));
   }
@@ -811,16 +813,16 @@ mod tests {
 
     let entry = builder.directory(&Directory::new()).unwrap();
 
-    let signatures = Entry::Directory {
-      hash: entry.hash(),
-      size: entry.size(),
-      totals: Totals {
+    let signatures = Entry::directory(
+      entry.hash,
+      entry.size,
+      Totals {
         directories: 0,
         directory_size: 0,
         file_size: 1,
         files: 1,
       },
-    };
+    );
 
     let mut root = Directory::new();
     root
@@ -829,7 +831,7 @@ mod tests {
 
     let root = builder.directory(&root).unwrap();
 
-    let archive = builder.build(root.hash());
+    let archive = builder.build(root.hash);
 
     assert_matches!(
       archive.unpack(),
@@ -849,7 +851,7 @@ mod tests {
             files: 1,
           },
         }
-      }) if hash == entry.hash(),
+      }) if hash == entry.hash,
     );
   }
 
@@ -875,7 +877,7 @@ mod tests {
 
     let root = builder.directory(&root).unwrap();
 
-    let archive = builder.build(root.hash());
+    let archive = builder.build(root.hash);
 
     assert_eq!(
       archive.unpack().unwrap(),

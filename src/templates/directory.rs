@@ -24,16 +24,16 @@ mod tests {
       .insert_entry("baz.png", Entry::file(Hash::bytes(b"baz"), 1500))
       .insert_entry(
         "foo",
-        Entry::Directory {
-          hash: Hash::bytes(b"foo"),
-          size: 2_500_000,
-          totals: Totals {
+        Entry::directory(
+          Hash::bytes(b"foo"),
+          2_500_000,
+          Totals {
             directories: 1,
             directory_size: 1_000,
             file_size: 10_000_000,
             files: 3,
           },
-        },
+        ),
       )
       .insert_entry("qux quux.png", Entry::file(Hash::bytes(b"qux"), 1500));
 

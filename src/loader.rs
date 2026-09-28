@@ -87,7 +87,7 @@ mod tests {
       directory.encode_to_vec()
     };
     let file = builder.file(bytes);
-    Entry::directory(file.hash(), file.size(), directory.totals().unwrap())
+    Entry::directory(file.hash, file.size, directory.totals().unwrap())
   }
 
   #[test]
@@ -107,7 +107,7 @@ mod tests {
       package.insert_entry("foo", foo);
       let totals = package.totals().unwrap();
       let package = directory(&mut builder, &package, unknown == Some("package"));
-      let fingerprint = Fingerprint(package.hash());
+      let fingerprint = Fingerprint(package.hash);
 
       let signature = test::PRIVATE_KEY
         .parse::<PrivateKey>()
@@ -127,12 +127,12 @@ mod tests {
       let root = directory(
         &mut builder,
         Directory::new()
-          .insert_entry("package", package.clone())
+          .insert_entry("package", package)
           .insert_entry("signatures", signatures),
         unknown == Some("root"),
       );
 
-      let archive = builder.build(root.hash());
+      let archive = builder.build(root.hash);
       let (_tempdir, path) = tempdir();
       let path = path.join(Manifest::FILENAME);
       fs::write(&path, archive.encode_to_vec()).unwrap();
