@@ -12,6 +12,8 @@ pub(crate) mod gc {
     #[n(3)]
     pub(crate) files: SortedSet<Hash>,
     #[n(4)]
+    pub(crate) packages: SortedSet<Fingerprint>,
+    #[n(5)]
     pub(crate) revisions: SortedSet<Revision>,
   }
 }

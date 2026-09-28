@@ -124,6 +124,8 @@ impl Server {
 
     let mut directories_removed = BTreeSet::new();
 
+    let mut packages_removed = BTreeSet::new();
+
     let mut revisions_removed = BTreeSet::new();
 
     {
@@ -183,7 +185,7 @@ impl Server {
       for entry in packages.extract_from_if::<Fingerprint, _>(.., |fingerprint, ()| {
         !marked.contains(&fingerprint.into())
       })? {
-        entry?;
+        packages_removed.insert(entry?.0.value());
       }
     }
 
@@ -217,6 +219,7 @@ impl Server {
       bytes,
       directories: directories_removed.into(),
       files: files_removed.into(),
+      packages: packages_removed.into(),
       revisions: revisions_removed.into(),
     })
   }

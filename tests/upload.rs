@@ -760,7 +760,7 @@ fn upload_replaces_package() {
 
   Test::new()
     .args(["gc", "--server", &address])
-    .stderr("removed 1 revision, 1 directory, and 3 files, freeing 84 B\n")
+    .stderr("removed 1 revision, 1 package, 1 directory, and 3 files, freeing 84 B\n")
     .success();
 
   assert_eq!(
@@ -891,7 +891,7 @@ fn upload_updates_package() {
 
   Test::new()
     .args(["gc", "--server", &address])
-    .stderr("removed 0 revisions, 0 directories, and 0 files, freeing 0 B\n")
+    .stderr("removed 0 revisions, 0 packages, 0 directories, and 0 files, freeing 0 B\n")
     .success();
 
   for identifier in [old.to_string(), new.to_string(), "1".into()] {
