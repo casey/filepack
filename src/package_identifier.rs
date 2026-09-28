@@ -7,6 +7,13 @@ pub enum PackageIdentifier {
   Revision(Revision),
 }
 
+#[cfg(test)]
+impl Default for PackageIdentifier {
+  fn default() -> Self {
+    Self::Number(0)
+  }
+}
+
 impl Display for PackageIdentifier {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     match self {

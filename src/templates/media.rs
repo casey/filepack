@@ -1,6 +1,7 @@
 use super::*;
 
 #[derive(Boilerplate)]
+#[cfg_attr(test, derive(Default))]
 pub(crate) struct MediaHtml {
   pub(crate) fingerprint: Fingerprint,
   pub(crate) identifier: PackageIdentifier,
@@ -81,7 +82,7 @@ mod tests {
             ..default()
           },
           number: Some(1),
-          revision: None,
+          ..default()
         }
         .to_string(),
         unindent(&format!(
@@ -176,9 +177,8 @@ mod tests {
         MediaHtml {
           fingerprint: test::FINGERPRINT.parse().unwrap(),
           identifier,
-          metadata: default(),
           number: Some(1),
-          revision: None,
+          ..default()
         }
         .up(),
         Some(format!("/package/{identifier}")),
