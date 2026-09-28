@@ -14,8 +14,7 @@ impl<T: DecodeOwned, S: Send + Sync, const LIMIT: usize> FromRequest<S> for Deco
       .context(server_error::DecoBody)?;
 
     Ok(Self(
-      T::decode_from_slice_with_options(DecodeOptions::strict(), &bytes)
-        .context(server_error::DecoDecode)?,
+      T::decode_from_slice(&bytes).context(server_error::DecoDecode)?,
     ))
   }
 }
@@ -35,30 +34,6 @@ mod tests {
     assert_matches!(
       result.map(|DecoRequest(value)| value),
       Err(ServerError::DecoBody { .. }),
-    );
-  }
-
-  #[test]
-  fn unknown_field_is_rejected() {
-    #[derive(Debug, Decode, PartialEq)]
-    struct Foo {
-      #[n(1)]
-      foo: u64,
-    }
-
-    let body = with_unknown_field(BTreeMap::from([(1u64, 1u64)]));
-
-    let request = Request::builder().body(Body::from(body)).unwrap();
-
-    let result = Runtime::new()
-      .unwrap()
-      .block_on(DecoRequest::<Foo, 1024>::from_request(request, &()));
-
-    assert_matches!(
-      result.map(|DecoRequest(value)| value),
-      Err(ServerError::DecoDecode {
-        source: DecodeError::UnknownField { key: u64::MAX },
-      }),
     );
   }
 }
