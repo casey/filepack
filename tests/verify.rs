@@ -113,8 +113,8 @@ fn hash_mismatch() {
     .stderr(
       "
         mismatched file: `foo`
-               manifest: 04e0bb39f30b1a3feb89f536c93be15055482df748674b00d26e5a75777702e9 (3 bytes)
-                   file: f2e897eed7d206cd855d441598fa521abc75aa96953e97c030c9612c30c1293d (3 bytes)
+               manifest: hash104e0bb39f30b1a3feb89f536c93be15055482df748674b00d26e5a75777702e9 (3 bytes)
+                   file: hash1f2e897eed7d206cd855d441598fa521abc75aa96953e97c030c9612c30c1293d (3 bytes)
         error: 1 mismatched file
       ",
     )
@@ -383,11 +383,11 @@ fn multiple_mismatches() {
     .stderr(
       "
         mismatched file: `bar`
-               manifest: af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262 (0 bytes)
-                   file: e476f1b379438de7a1acfd567a94a8c53f08b9714042f7f17e5791645afc3176 (3 bytes)
+               manifest: hash1af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262 (0 bytes)
+                   file: hash1e476f1b379438de7a1acfd567a94a8c53f08b9714042f7f17e5791645afc3176 (3 bytes)
         mismatched file: `foo`
-               manifest: af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262 (0 bytes)
-                   file: 9624faa79d245cea9c345474fdb1a863b75921a8dd7aff3d84b22c65d1fc0847 (3 bytes)
+               manifest: hash1af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262 (0 bytes)
+                   file: hash19624faa79d245cea9c345474fdb1a863b75921a8dd7aff3d84b22c65d1fc0847 (3 bytes)
         error: 2 mismatched files
       ",
     )
@@ -677,8 +677,8 @@ fn size_mismatch() {
     .stderr(
       "
         mismatched file: `foo`
-               manifest: af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262 (0 bytes)
-                   file: f2e897eed7d206cd855d441598fa521abc75aa96953e97c030c9612c30c1293d (3 bytes)
+               manifest: hash1af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262 (0 bytes)
+                   file: hash1f2e897eed7d206cd855d441598fa521abc75aa96953e97c030c9612c30c1293d (3 bytes)
         error: 1 mismatched file
       ",
     )
@@ -782,7 +782,7 @@ fn verify_checks_metadata() {
 
   let deco = fs::read(test.path().join("metadata.filemeta")).unwrap();
 
-  let hash = blake3::hash(&deco).to_string();
+  let hash = Hash::bytes(&deco).to_string();
 
   test
     .remove_file("README.md")

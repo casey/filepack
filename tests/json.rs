@@ -155,7 +155,7 @@ fn json() {
         }
       }
     },
-    r#"{"files":{"foo":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}}}"#,
+    r#"{"files":{"foo":{"hash":"hash1af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}}}"#,
   );
 
   case(
@@ -193,6 +193,6 @@ fn json() {
         }
       ]
     },
-    r#"{"files":{"bar":{"hash":"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}},"notes":[{"signatures":{"0":"0"}}]}"#,
+    r#"{"files":{"bar":{"hash":"hash1af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262","size":0}},"notes":[{"signatures":{"0":"0"}}]}"#,
   );
 }

@@ -230,8 +230,8 @@ This is currently only used to embed `metadata.filemeta`.
 
 The value of the mandatory `package` key is an object mapping path components
 to directory entries. Directory entries may be subdirectories or files. Files
-are objects with keys `hash`, the hex-encoded BLAKE3 hash of the file, and
-`size`, the length of the file in bytes.
+are objects with two fields: `hash`, the tagged hex BLAKE3 hash of the file,
+and `size`, the length of the file in bytes.
 
 Path components are UTF-8 and may not be `.` or `..`, contain the path
 separators `/` or `\`, contain control characters, be longer than 255 bytes, or
@@ -258,12 +258,12 @@ and `src/main.c`, with a signature:
   "embedded": {},
   "package": {
     "README.md": {
-      "hash": "fc253b84551ce6b00e820a826ac18054dc7f63a318ce62f3175315f5c467a62a",
+      "hash": "hash1fc253b84551ce6b00e820a826ac18054dc7f63a318ce62f3175315f5c467a62a",
       "size": 11883
     },
     "src": {
       "main.rs": {
-        "hash": "1fa48b95ed335369d45b91af8138bdccd1413364bcdbfa6e9034e8a2cfd6e17f",
+        "hash": "hash11fa48b95ed335369d45b91af8138bdccd1413364bcdbfa6e9034e8a2cfd6e17f",
         "size": 33
       }
     }
@@ -275,14 +275,23 @@ and `src/main.c`, with a signature:
 The signature is elided for brevity. Signatures are tagged hex strings
 containing a public key and signature.
 
-Keys, Signatures, Fingerprints, and Hashes
-------------------------------------------
+Tagged Hex Strings
+------------------
 
-Public keys, private keys, signatures, and package fingerprints are all tagged
-hex strings beginning with `public1…`, `private1…`, `signature1…`, and
-`package1…` respectively.
+Tagged hex strings begin with a tag identifying the type, followed by a `1`,
+followed by the the encoded hex payload.
 
-BLAKE3 file hashes are 64-character lowercase hexadecimal.
+The tags are:
+
+| tag | type |
+|---|---|
+| `hash1…` | hash |
+| `package1…` | package fingerprint |
+| `private1…` | private key |
+| `public1…` | public key |
+| `revision1…` | revision hash |
+| `signature1…` | signature |
+| `token1…` | authentication token |
 
 Metadata
 --------

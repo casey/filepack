@@ -13,7 +13,7 @@ const METADATA: TableDefinition<DatabaseMetadata, u64> = TableDefinition::new("m
 const NUMBERS: TableDefinition<u64, Revision> = TableDefinition::new("numbers");
 const PACKAGES: TableDefinition<Fingerprint, ()> = TableDefinition::new("packages");
 const REVISIONS: TableDefinition<Revision, ()> = TableDefinition::new("revisions");
-const SCHEMA_VERSION: u64 = 7;
+const SCHEMA_VERSION: u64 = 8;
 
 pub(crate) struct Server {
   database: Database,

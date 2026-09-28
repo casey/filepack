@@ -3,12 +3,8 @@ use super::*;
 pub(crate) trait Hex: DecodeOwned + Encode {
   const TAG: Tag;
 
-  const TAGGED: bool = true;
-
   fn format(&self, f: &mut Formatter) -> fmt::Result {
-    if Self::TAGGED {
-      write!(f, "{}1", Self::TAG.prefix())?;
-    }
+    write!(f, "{}1", Self::TAG.prefix())?;
 
     let buffer = self.encode_to_vec();
 
@@ -18,18 +14,12 @@ pub(crate) trait Hex: DecodeOwned + Encode {
   fn parse(s: &str) -> Result<Self, HexError> {
     let tag = Self::TAG;
 
-    let payload = if Self::TAGGED {
-      let (actual, payload) = s.split_once('1').context(hex_error::TagMissing { tag })?;
+    let (actual, payload) = s.split_once('1').context(hex_error::TagMissing { tag })?;
 
-      ensure! {
-        actual == tag.prefix(),
-        hex_error::UnexpectedTag { actual, expected: tag }
-      }
-
-      payload
-    } else {
-      s
-    };
+    ensure! {
+      actual == tag.prefix(),
+      hex_error::UnexpectedTag { actual, expected: tag }
+    }
 
     if let Some(version @ 'g'..='z') = payload.chars().next() {
       return Err(HexError::UnsupportedVersion { tag, version });
@@ -133,7 +123,7 @@ mod tests {
     );
 
     assert_matches!(
-      format!("z{zeros}").parse::<Hash>(),
+      format!("hash1z{zeros}").parse::<Hash>(),
       Err(HexError::UnsupportedVersion {
         tag: Tag::Hash,
         version: 'z',

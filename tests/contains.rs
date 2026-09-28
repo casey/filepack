@@ -17,7 +17,7 @@ fn file_missing() {
   test
     .write("baz", "qux")
     .args(["contains", "--file", "baz"])
-    .stderr_regex("error: manifest does not contain file with hash `[0-9a-f]{64}`\n")
+    .stderr_regex("error: manifest does not contain file with hash `hash1[0-9a-f]{64}`\n")
     .failure();
 }
 
