@@ -105,7 +105,7 @@ impl<'a> Decoder<'a> {
   }
 
   pub fn new(buffer: &'a [u8]) -> Self {
-    Self::with_options(DecodeOptions::new(), buffer)
+    Self::with_options(DecodeOptions::default(), buffer)
   }
 
   pub(crate) fn peek(&self) -> Option<u8> {

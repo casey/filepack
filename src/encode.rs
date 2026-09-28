@@ -93,12 +93,6 @@ impl Encode for u64 {
   }
 }
 
-impl Encode for usize {
-  fn encode(&self, encoder: &mut Encoder) {
-    encoder.integer(self.into_u64());
-  }
-}
-
 impl Encode for [u8] {
   fn encode(&self, encoder: &mut Encoder) {
     encoder.bytes(self);
@@ -210,10 +204,5 @@ mod tests {
     assert_deco(255u64, "81ff");
     assert_deco(u64::MAX, "88ffffffffffffffff");
     assert_deco(256u64, "820001");
-  }
-
-  #[test]
-  fn usize() {
-    assert_deco(42usize, "2a");
   }
 }

@@ -276,7 +276,7 @@ mod tests {
 
     let bytes = BTreeMap::from([(1u64, "en")]).encode_to_vec();
 
-    for options in [DecodeOptions::new(), DecodeOptions::strict()] {
+    for options in [DecodeOptions::default(), DecodeOptions::strict()] {
       assert_eq!(
         Foo::decode_from_slice_with_options(options, &bytes).unwrap(),
         Foo {

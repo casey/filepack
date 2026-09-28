@@ -69,7 +69,7 @@ impl Archive {
   }
 
   pub(crate) fn fingerprint(&self) -> Result<Fingerprint, ArchiveError> {
-    self.fingerprint_with_options(DecodeOptions::new())
+    self.fingerprint_with_options(DecodeOptions::default())
   }
 
   pub(crate) fn fingerprint_with_options(
@@ -117,7 +117,7 @@ impl Archive {
 
   #[cfg(test)]
   pub(crate) fn unpack(&self) -> Result<Manifest, ArchiveError> {
-    Ok(self.unpack_with_totals(DecodeOptions::new())?.0)
+    Ok(self.unpack_with_totals(DecodeOptions::default())?.0)
   }
 
   fn unpack_directory(

@@ -24,16 +24,6 @@ impl<'a, K: Clone + Decode<'a> + Debug + PartialOrd> MapDecoder<'a, K> {
     Ok(())
   }
 
-  pub(crate) fn key<V: Decode<'a>>(&mut self, key: K) -> DecodeResult<Option<V>> {
-    let Some((k, value)) = self.next()? else {
-      return Ok(None);
-    };
-
-    ensure!(k == key, decode_error::UnexpectedKey);
-
-    Ok(Some(value))
-  }
-
   pub(crate) fn next<V: Decode<'a>>(&mut self) -> DecodeResult<Option<(K, V)>> {
     if self.decoder.is_empty() {
       return Ok(None);
@@ -95,11 +85,15 @@ impl<'a, K: Clone + Decode<'a> + Debug + PartialOrd> MapDecoder<'a, K> {
   where
     K: Clone + Display,
   {
-    self
-      .key(key.clone())?
-      .with_context(|| decode_error::MissingField {
+    let Some((k, value)) = self.next()? else {
+      return Err(DecodeError::MissingField {
         key: key.to_string(),
-      })
+      });
+    };
+
+    ensure!(k == key, decode_error::UnexpectedKey);
+
+    Ok(value)
   }
 }
 
@@ -145,7 +139,7 @@ mod tests {
   fn key_mismatch() {
     let mut decoder = Decoder::new(&[0x82, 0x01, 0x00]);
     let mut map = decoder.map::<u64>().unwrap();
-    assert_matches!(map.key::<u64>(0), Err(DecodeError::UnexpectedKey));
+    assert_matches!(map.required_key::<u64>(0), Err(DecodeError::UnexpectedKey));
   }
 
   #[test]
