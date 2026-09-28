@@ -3,21 +3,21 @@ use super::*;
 #[skip_serializing_none]
 #[derive(Clone, Debug, Decode, Encode, PartialEq, Serialize)]
 pub(crate) struct Image {
-  #[n(0)]
-  pub(crate) alpha: bool,
   #[n(1)]
-  pub(crate) bit_depth: u64,
+  pub(crate) alpha: bool,
   #[n(2)]
-  pub(crate) chroma_subsampling: Option<ChromaSubsampling>,
+  pub(crate) bit_depth: u64,
   #[n(3)]
-  pub(crate) color_type: Option<ColorType>,
+  pub(crate) chroma_subsampling: Option<ChromaSubsampling>,
   #[n(4)]
-  pub(crate) dimensions: Dimensions,
+  pub(crate) color_type: Option<ColorType>,
   #[n(5)]
-  pub(crate) orientation: Orientation,
+  pub(crate) dimensions: Dimensions,
   #[n(6)]
-  pub(crate) path: RelativePath,
+  pub(crate) orientation: Orientation,
   #[n(7)]
+  pub(crate) path: RelativePath,
+  #[n(8)]
   #[serde(rename = "type")]
   pub(crate) ty: Option<ImageType>,
 }

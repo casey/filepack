@@ -131,10 +131,13 @@ fn path_value(meta: &ParseNestedMeta, placeholder: &str) -> Result<Path> {
   })
 }
 
-fn validate_numbers<'a>(ns: impl IntoIterator<Item = (&'a Ident, u64)>) -> Result<()> {
+fn validate_numbers<'a>(
+  start: u64,
+  numbers: impl IntoIterator<Item = (&'a Ident, u64)>,
+) -> Result<()> {
   let mut seen = HashSet::new();
 
-  for (i, (ident, n)) in ns.into_iter().enumerate() {
+  for (i, (ident, n)) in numbers.into_iter().enumerate() {
     if !seen.insert(n) {
       return Err(Error::new_spanned(
         ident,
@@ -142,10 +145,14 @@ fn validate_numbers<'a>(ns: impl IntoIterator<Item = (&'a Ident, u64)>) -> Resul
       ));
     }
 
-    if n != i.into_u64() {
+    let expected = start + i.into_u64();
+
+    if n != expected {
       return Err(Error::new_spanned(
         ident,
-        format!("`#[n]` attributes must be contiguous starting from 0: expected {i}, found {n}"),
+        format!(
+          "`#[n]` attributes must be contiguous starting from {start}: expected {expected}, found {n}"
+        ),
       ));
     }
   }

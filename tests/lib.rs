@@ -4,8 +4,8 @@ use {
   filepack::{
     Decode, Decoder, Directory, DirectoryExt, Encode, Encoder, Entry, Fingerprint, FlacBuilder,
     Hash, Loader, MagicType, Manifest, Metadata, Mp3Builder, Mp4Builder, PackageIdentifier, Page,
-    PngBuilder, PrivateKey, PublicKey, RevisionObject, ServerState, State, Totals, Version,
-    gradient, gradient_alpha, hex,
+    PngBuilder, PrivateKey, PublicKey, RevisionObject, ServerState, State, Totals, gradient,
+    gradient_alpha, hex,
     templates::{DirectoryHtml, PackageHtml},
   },
   image::{DynamicImage, ImageFormat},

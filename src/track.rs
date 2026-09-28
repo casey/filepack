@@ -3,11 +3,11 @@ use super::*;
 #[skip_serializing_none]
 #[derive(Clone, Debug, Decode, Encode, PartialEq, Serialize)]
 pub(crate) struct Track {
-  #[n(0)]
-  pub(crate) codec: Option<Codec>,
   #[n(1)]
-  pub(crate) info: Option<TrackInfo>,
+  pub(crate) codec: Option<Codec>,
   #[n(2)]
+  pub(crate) info: Option<TrackInfo>,
+  #[n(3)]
   pub(crate) size: u64,
 }
 

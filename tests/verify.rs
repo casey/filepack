@@ -717,7 +717,6 @@ fn unarchive_error() {
   let mut dir_encoder = Encoder::new();
   let mut map = dir_encoder.map::<u64>();
   map.item(1, BTreeMap::<String, u64>::new());
-  map.item(0, 0u64);
   map.finish();
   let dir_bytes = dir_encoder.finish();
 
@@ -730,7 +729,6 @@ fn unarchive_error() {
   let mut archive = encoder.map::<u64>();
   archive.item(2, &files);
   archive.item(1, root);
-  archive.item(0, 0u64);
   archive.finish();
   encoder.magic(MagicType::Archive);
 
@@ -796,7 +794,7 @@ fn verify_checks_metadata() {
         package: {
           "metadata.filemeta": {
             hash: hash,
-            size: 38,
+            size: 36,
           }
         },
         signatures: [],
@@ -816,7 +814,7 @@ fn verify_fingerprint() {
     .args([
       "verify",
       "--fingerprint",
-      "package17c713f76b2c29ac6834a934011e4102a7fe23ca443c33265e77346b522458886",
+      "package1dc801b91185c3bddf3007eb3f015905022359a229455b93aa8b5281dd89dca2e",
     ])
     .stderr("successfully verified 1 file totaling 0 bytes\n")
     .success()
@@ -829,7 +827,7 @@ fn verify_fingerprint() {
       "
         fingerprint mismatch: `manifest.filepack`
                     expected: package1af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262
-                      actual: package17c713f76b2c29ac6834a934011e4102a7fe23ca443c33265e77346b522458886
+                      actual: package1dc801b91185c3bddf3007eb3f015905022359a229455b93aa8b5281dd89dca2e
         error: fingerprint mismatch
       ",
     )
@@ -840,7 +838,7 @@ fn verify_fingerprint() {
 fn weak_signature_public_key() {
   let zeros = "00".repeat(32);
 
-  let signature = format!("signature1000001a0{zeros}02a4000001a0{zeros}03c0{zeros}{zeros}");
+  let signature = format!("signature101a0{zeros}02a201a0{zeros}03c0{zeros}{zeros}");
 
   Test::new()
     .write(

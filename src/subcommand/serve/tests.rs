@@ -371,11 +371,7 @@ impl TestServer {
   }
 
   fn write_revision(&self, package: Fingerprint, previous: Option<Revision>) -> Revision {
-    let revision_object = RevisionObject {
-      version: Version::Zero,
-      package,
-      previous,
-    };
+    let revision_object = RevisionObject { package, previous };
 
     self.write_file(&revision_object.encode_to_vec());
 
@@ -816,7 +812,6 @@ fn corrupt_revision() {
   let fingerprint = PackageBuilder::new().file("foo", b"foo").upload(&server);
 
   let revision = RevisionObject {
-    version: Version::Zero,
     package: fingerprint,
     previous: None,
   }
@@ -1203,7 +1198,6 @@ fn gc_removes_unreachable_and_retains_reachable_data() {
   let fingerprint = package.upload(&server);
 
   let revision_object = RevisionObject {
-    version: Version::Zero,
     package: fingerprint,
     previous: None,
   };
@@ -1259,7 +1253,6 @@ fn gc_shares_ancestors() {
   server.post(format!("/api/package/{bar}")).send();
 
   let head_object = RevisionObject {
-    version: Version::Zero,
     package: bar,
     previous: Some(root),
   };
@@ -1612,7 +1605,6 @@ fn get_package_with_metadata() {
   server.write_file(colophon);
 
   let metadata = Metadata {
-    version: Version::Zero,
     artwork: None,
     creator: None,
     description: None,
@@ -2401,7 +2393,7 @@ fn missing_rejects_unsorted_hashes() {
 
   let mut encoder = Encoder::new();
   let mut map = encoder.map::<u64>();
-  map.item(0, hashes);
+  map.item(1, hashes);
   map.finish();
 
   TestServer::new()
@@ -4189,7 +4181,6 @@ fn verify_package_replace() {
     .send();
 
   let revision_object = RevisionObject {
-    version: Version::Zero,
     package: foo,
     previous: None,
   };
@@ -4353,7 +4344,6 @@ fn verify_package_reuses_revision() {
   let fingerprint = PackageBuilder::new().file("foo", b"foo").upload(&server);
 
   let revision = RevisionObject {
-    version: Version::Zero,
     package: fingerprint,
     previous: None,
   }

@@ -172,7 +172,6 @@ impl Upload {
     };
 
     let revision_object = RevisionObject {
-      version: Version::Zero,
       package: fingerprint,
       previous,
     };

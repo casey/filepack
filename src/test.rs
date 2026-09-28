@@ -17,19 +17,18 @@ pub(crate) const PUBLIC_KEY: &str =
   "public1d79b36defbee7c1d26099c9e28f849f1f0dceb6e0217b83c87f5cff6fd8c4fc8";
 
 pub(crate) const REVISION: &str =
-  "revision14d6e1438411c7f6947bcb9bcfd5e74cf7077d2b3ccf24085cc2016afc7f0306c";
+  "revision1a895f0cd0338254bc76650e829441165eb127ae1e51b92e87189ed1580195617";
 
 pub(crate) const SIGNATURE: &str = concat!(
-  "signature1000001a0d79b36defbee7c1d26099c9e28f849f1f0dceb6e0217b83c87f5cff6fd8c4fc802a4000001a0",
-  "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f326203c0b94281b2638e52cfecb6c18485",
-  "6ab482080c21f451c816f3b3be4313b0ba7fbab6128bf8a9045de1d2b5e5a3a86dba2a562b7cfea6d66eb4273a0fc1",
-  "4c8a9e04",
+  "signature101a0d79b36defbee7c1d26099c9e28f849f1f0dceb6e0217b83c87f5cff6fd8c4fc802a201a0af1349b9",
+  "f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f326203c067bf3fe66d78dc9d75200161c0880b4d23",
+  "e0f14bb2b535bf3274b1a5b267a0ea42008cf0ce9a46ed1bf9e4f91b1e4437687d0b7937c0d1f67b445a91f5b48a07",
 );
 
 pub(crate) const TOKEN: &str = concat!(
-  "token1000001a0d79b36defbee7c1d26099c9e28f849f1f0dceb6e0217b83c87f5cff6fd8c4fc8028900000183666f",
-  "6f020003c0290c82aa8dbed1c9f020c8be2f0320fc319412d590c7e9cf345bb9893c861ccd57e9b54eaa1b17c96f9f",
-  "8900443f37d2f250b3643fd632c44dabcebe078fd702",
+  "token101a0d79b36defbee7c1d26099c9e28f849f1f0dceb6e0217b83c87f5cff6fd8c4fc802870183666f6f020003",
+  "c06d3cf670eeaaa03ff933fca86543edf4f715ff49a27febf887b31442069b3af422b6fc651271d310ed2fd8a9eb0d",
+  "89dcaebc41598affe8d3d5f7572b06294a08",
 );
 
 pub(crate) const WEAK_PUBLIC_KEY: &str =
@@ -210,7 +209,6 @@ mod tests {
   fn signature_matches() {
     let private_key = PRIVATE_KEY.parse::<PrivateKey>().unwrap();
     let statement = Statement {
-      version: Version::Zero,
       fingerprint: FINGERPRINT.parse().unwrap(),
       timestamp: None,
     };
@@ -222,7 +220,6 @@ mod tests {
   fn token_matches() {
     let private_key = PRIVATE_KEY.parse::<PrivateKey>().unwrap();
     let claims = Claims {
-      version: Version::Zero,
       audience: "foo".into(),
       timestamp: 0,
     };

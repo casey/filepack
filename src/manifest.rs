@@ -96,7 +96,6 @@ impl Manifest {
     key: &KeyName,
   ) -> Result {
     let statement = Statement {
-      version: Version::Zero,
       fingerprint,
       timestamp: options
         .timestamp

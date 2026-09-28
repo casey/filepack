@@ -11,18 +11,18 @@ use super::*;
 pub enum Entry {
   #[n(0)]
   File {
-    #[n(0)]
-    hash: Hash,
     #[n(1)]
+    hash: Hash,
+    #[n(2)]
     size: u64,
   },
   #[n(1)]
   Directory {
-    #[n(0)]
-    hash: Hash,
     #[n(1)]
-    size: u64,
+    hash: Hash,
     #[n(2)]
+    size: u64,
+    #[n(3)]
     totals: Totals,
   },
 }

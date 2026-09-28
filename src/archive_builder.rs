@@ -17,7 +17,6 @@ impl ArchiveBuilder {
     Archive {
       files: self.files,
       root,
-      version: Version::Zero,
     }
   }
 

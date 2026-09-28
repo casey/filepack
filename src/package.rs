@@ -3,17 +3,17 @@ use super::*;
 #[skip_serializing_none]
 #[derive(Clone, Debug, Default, Encode, Decode, PartialEq, Serialize)]
 pub(crate) struct Package {
-  #[n(0)]
-  pub(crate) colophon: Option<RelativePath>,
   #[n(1)]
-  pub(crate) creator: Option<Text>,
+  pub(crate) colophon: Option<RelativePath>,
   #[n(2)]
-  pub(crate) description: Option<Text>,
+  pub(crate) creator: Option<Text>,
   #[n(3)]
-  pub(crate) homepage: Option<CheckedUrl>,
+  pub(crate) description: Option<Text>,
   #[n(4)]
-  pub(crate) time: Option<Time>,
+  pub(crate) homepage: Option<CheckedUrl>,
   #[n(5)]
+  pub(crate) time: Option<Time>,
+  #[n(6)]
   pub(crate) title: Option<Text>,
 }
 

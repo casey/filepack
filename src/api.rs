@@ -5,13 +5,13 @@ pub(crate) mod gc {
 
   #[derive(Debug, Default, Encode, Decode, PartialEq)]
   pub(crate) struct Response {
-    #[n(0)]
-    pub(crate) bytes: u64,
     #[n(1)]
-    pub(crate) directories: SortedSet<Hash>,
+    pub(crate) bytes: u64,
     #[n(2)]
-    pub(crate) files: SortedSet<Hash>,
+    pub(crate) directories: SortedSet<Hash>,
     #[n(3)]
+    pub(crate) files: SortedSet<Hash>,
+    #[n(4)]
     pub(crate) revisions: SortedSet<Revision>,
   }
 }
@@ -21,13 +21,13 @@ pub(crate) mod missing {
 
   #[derive(Debug, Encode, Decode, PartialEq)]
   pub(crate) struct Request {
-    #[n(0)]
+    #[n(1)]
     pub(crate) hashes: SortedSet<Hash>,
   }
 
   #[derive(Debug, Encode, Decode, PartialEq)]
   pub(crate) struct Response {
-    #[n(0)]
+    #[n(1)]
     pub(crate) hashes: SortedSet<Hash>,
   }
 }
@@ -37,9 +37,9 @@ pub(crate) mod number {
 
   #[derive(Debug, Encode, Decode, PartialEq)]
   pub(crate) struct Response {
-    #[n(0)]
-    pub(crate) package: Fingerprint,
     #[n(1)]
+    pub(crate) package: Fingerprint,
+    #[n(2)]
     pub(crate) revision: Revision,
   }
 }
@@ -49,7 +49,7 @@ pub(crate) mod numbers {
 
   #[derive(Debug, Default, Encode, Decode, PartialEq)]
   pub(crate) struct Response {
-    #[n(0)]
+    #[n(1)]
     pub(crate) numbers: SortedSet<u64>,
   }
 }
@@ -59,7 +59,7 @@ pub(crate) mod packages {
 
   #[derive(Debug, Default, Encode, Decode, PartialEq)]
   pub(crate) struct Response {
-    #[n(0)]
+    #[n(1)]
     pub(crate) packages: SortedSet<Fingerprint>,
   }
 }
@@ -74,25 +74,25 @@ pub(crate) mod revision {
     New,
     #[n(1)]
     Replace {
-      #[n(0)]
+      #[n(1)]
       number: u64,
     },
     #[n(2)]
     Update {
-      #[n(0)]
+      #[n(1)]
       number: u64,
     },
   }
 
   #[derive(Debug, Default, Encode, Decode, PartialEq)]
   pub(crate) struct Request {
-    #[n(0)]
+    #[n(1)]
     pub(crate) mode: Mode,
   }
 
   #[derive(Debug, Encode, Decode, PartialEq)]
   pub(crate) struct Response {
-    #[n(0)]
+    #[n(1)]
     pub(crate) number: u64,
   }
 }

@@ -184,7 +184,7 @@ mod tests {
   fn unknown_fields() {
     #[derive(Debug, Decode, Encode, PartialEq)]
     struct Foo {
-      #[n(0)]
+      #[n(1)]
       foo: u64,
     }
 
@@ -204,7 +204,7 @@ mod tests {
   fn unknown_fields_array() {
     #[derive(Debug, Decode, Encode, PartialEq)]
     struct Foo {
-      #[n(0)]
+      #[n(1)]
       foo: u64,
     }
 
@@ -216,13 +216,13 @@ mod tests {
       foo,
     );
 
-    let bytes = vec![BTreeMap::from([(0u64, 1u64), (1, 2)])].encode_to_vec();
+    let bytes = vec![BTreeMap::from([(1u64, 1u64), (2, 2)])].encode_to_vec();
 
     assert_eq!(Vec::<Foo>::decode_from_slice(&bytes).unwrap(), foo);
 
     assert_matches!(
       Vec::<Foo>::decode_from_slice_with_options(DecodeOptions::strict(), &bytes),
-      Err(DecodeError::UnknownField { key: 1 }),
+      Err(DecodeError::UnknownField { key: 2 }),
     );
   }
 
@@ -230,13 +230,13 @@ mod tests {
   fn unknown_fields_nested() {
     #[derive(Debug, Decode, Encode, PartialEq)]
     struct Foo {
-      #[n(0)]
+      #[n(1)]
       foo: u64,
     }
 
     #[derive(Debug, Decode, Encode, PartialEq)]
     struct Bar {
-      #[n(0)]
+      #[n(1)]
       bar: Foo,
     }
 
@@ -249,13 +249,13 @@ mod tests {
       bar,
     );
 
-    let bytes = BTreeMap::from([(0u64, BTreeMap::from([(0u64, 1u64), (1, 2)]))]).encode_to_vec();
+    let bytes = BTreeMap::from([(1u64, BTreeMap::from([(1u64, 1u64), (2, 2)]))]).encode_to_vec();
 
     assert_eq!(Bar::decode_from_slice(&bytes).unwrap(), bar);
 
     assert_matches!(
       Bar::decode_from_slice_with_options(DecodeOptions::strict(), &bytes),
-      Err(DecodeError::UnknownField { key: 1 }),
+      Err(DecodeError::UnknownField { key: 2 }),
     );
   }
 }

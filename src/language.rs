@@ -270,11 +270,11 @@ mod tests {
   fn unknown_code() {
     #[derive(Debug, Decode, PartialEq)]
     struct Foo {
-      #[n(0)]
+      #[n(1)]
       language: Option<Language>,
     }
 
-    let bytes = BTreeMap::from([(0u64, "en")]).encode_to_vec();
+    let bytes = BTreeMap::from([(1u64, "en")]).encode_to_vec();
 
     for options in [DecodeOptions::new(), DecodeOptions::strict()] {
       assert_eq!(
@@ -285,7 +285,7 @@ mod tests {
       );
     }
 
-    let bytes = BTreeMap::from([(0u64, "xx")]).encode_to_vec();
+    let bytes = BTreeMap::from([(1u64, "xx")]).encode_to_vec();
 
     assert_eq!(
       Foo::decode_from_slice(&bytes).unwrap(),

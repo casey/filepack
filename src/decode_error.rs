@@ -86,8 +86,8 @@ pub enum DecodeError {
   UnknownField { key: u64 },
   #[snafu(display("unsorted or duplicate array elements"))]
   Unsorted,
-  #[snafu(display("unsupported version {version}"))]
-  UnsupportedVersion { version: u64 },
+  #[snafu(display("unsupported version {version} for {name}"))]
+  UnsupportedVersion { name: &'static str, version: u64 },
   #[snafu(display("failed to parse URL"))]
   Url { source: UrlError },
 }

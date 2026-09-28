@@ -108,6 +108,10 @@ impl<'a> Decoder<'a> {
     Self::with_options(DecodeOptions::new(), buffer)
   }
 
+  pub(crate) fn peek(&self) -> Option<u8> {
+    self.buffer.get(self.position).copied()
+  }
+
   pub(crate) fn signed_integer(&mut self) -> DecodeResult<i64> {
     let integer = self.integer()?;
     Ok((integer >> 1).cast_signed() ^ -(integer & 1).cast_signed())

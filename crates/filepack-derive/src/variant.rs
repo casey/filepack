@@ -23,7 +23,7 @@ impl Variant {
       .map(Field::parse)
       .collect::<Result<Vec<ParsedField>>>()?;
 
-    validate_numbers(fields.iter().map(|field| (field.ident, field.n)))?;
+    validate_numbers(1, fields.iter().map(|field| (field.ident, field.n)))?;
 
     Ok(ParsedVariant {
       fields,

@@ -68,7 +68,6 @@ impl Metadata {
     };
 
     Ok(crate::Metadata {
-      version: Version::Zero,
       artwork,
       creator,
       description,

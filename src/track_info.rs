@@ -5,22 +5,22 @@ use super::*;
 pub(crate) enum TrackInfo {
   #[n(0)]
   Audio {
-    #[n(0)]
-    channels: u64,
     #[n(1)]
+    channels: u64,
+    #[n(2)]
     sample_rate: u64,
   },
   #[n(1)]
   Video {
-    #[n(0)]
-    bit_depth: u64,
     #[n(1)]
-    chroma_subsampling: Option<ChromaSubsampling>,
+    bit_depth: u64,
     #[n(2)]
-    dimensions: Dimensions,
+    chroma_subsampling: Option<ChromaSubsampling>,
     #[n(3)]
-    frames: u64,
+    dimensions: Dimensions,
     #[n(4)]
+    frames: u64,
+    #[n(5)]
     orientation: Orientation,
   },
 }
