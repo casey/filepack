@@ -19,7 +19,7 @@ impl Loader {
   }
 
   pub fn load(path: Option<&Utf8Path>) -> Result<Self> {
-    Self::load_with_options(DecodeOptions::new(), path)
+    Self::load_with_options(DecodeOptions::default(), path)
   }
 
   pub(crate) fn load_with_options(options: DecodeOptions, path: Option<&Utf8Path>) -> Result<Self> {

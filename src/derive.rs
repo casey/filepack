@@ -254,7 +254,7 @@ fn enum_empty_map() {
     },
   }
 
-  for options in [DecodeOptions::new(), DecodeOptions::strict()] {
+  for options in [DecodeOptions::default(), DecodeOptions::strict()] {
     for tag in [0, 1] {
       assert_matches!(
         Foo::decode_from_slice_with_options(options, &[0x82, tag, 0x80]),
@@ -765,7 +765,7 @@ fn unsupported_version() {
 
   #[track_caller]
   fn case<T: Debug + DecodeOwned>(bytes: &[u8], expected: &str) {
-    for options in [DecodeOptions::new(), DecodeOptions::strict()] {
+    for options in [DecodeOptions::default(), DecodeOptions::strict()] {
       assert_eq!(
         T::decode_from_slice_with_options(options, bytes)
           .unwrap_err()

@@ -4,7 +4,7 @@ pub trait Decode<'a>: Sized {
   fn decode(decoder: &mut Decoder<'a>) -> DecodeResult<Self>;
 
   fn decode_from_slice(buffer: &'a [u8]) -> DecodeResult<Self> {
-    Self::decode_from_slice_with_options(DecodeOptions::new(), buffer)
+    Self::decode_from_slice_with_options(DecodeOptions::default(), buffer)
   }
 
   fn decode_from_slice_with_options(
@@ -92,15 +92,6 @@ impl Decode<'_> for i64 {
 impl Decode<'_> for u64 {
   fn decode(decoder: &mut Decoder) -> DecodeResult<Self> {
     decoder.integer()
-  }
-}
-
-impl Decode<'_> for usize {
-  fn decode(decoder: &mut Decoder) -> DecodeResult<Self> {
-    decoder
-      .integer()?
-      .try_into()
-      .context(decode_error::IntegerRange)
   }
 }
 
