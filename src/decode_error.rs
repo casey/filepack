@@ -13,6 +13,8 @@ pub enum DecodeError {
   Duplicate,
   #[snafu(display("empty integer"))]
   EmptyInteger,
+  #[snafu(display("empty set"))]
+  EmptySet,
   #[snafu(display("enum variant with empty map"))]
   EmptyVariantMap,
   #[snafu(display("failed to parse {name}"))]

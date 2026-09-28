@@ -5,14 +5,12 @@ use super::*;
 pub struct OrderedSet<T>(Vec<T>);
 
 impl<T> OrderedSet<T> {
+  pub fn as_slice(&self) -> &[T] {
+    &self.0
+  }
+
   pub fn singleton(element: T) -> Self {
     Self(vec![element])
-  }
-}
-
-impl<T> Default for OrderedSet<T> {
-  fn default() -> Self {
-    Self(Vec::default())
   }
 }
 
@@ -54,6 +52,8 @@ impl<T: Ord> TryFrom<Vec<T>> for OrderedSet<T> {
 
 impl<T: Ord> Validate for OrderedSet<T> {
   fn validate(&self) -> DecodeResult {
+    ensure!(!self.0.is_empty(), decode_error::EmptySet);
+
     let mut seen = BTreeSet::new();
 
     for element in &self.0 {
@@ -78,6 +78,19 @@ mod tests {
     assert_matches!(
       OrderedSet::try_from(vec![1u64, 1u64]),
       Err(DecodeError::Duplicate),
+    );
+  }
+
+  #[test]
+  fn rejects_empty() {
+    assert_matches!(
+      OrderedSet::<u64>::decode_from_slice(&Vec::<u64>::new().encode_to_vec()),
+      Err(DecodeError::EmptySet),
+    );
+
+    assert_matches!(
+      OrderedSet::try_from(Vec::<u64>::new()),
+      Err(DecodeError::EmptySet),
     );
   }
 
