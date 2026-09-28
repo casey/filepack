@@ -1818,7 +1818,7 @@ fn malformed_fingerprint_returns_error() {
       ServerError::FingerprintParse {
         source: HexError::Digit {
           digit: 'I',
-          tag: Tag::Fingerprint,
+          tag: Tag::Package,
         },
       },
     )

@@ -18,7 +18,7 @@ impl DisplayPrivateKey {
 }
 
 impl Hex for DisplayPrivateKey {
-  const TAG: Tag = Tag::PrivateKey;
+  const TAG: Tag = Tag::Private;
 }
 
 impl Display for DisplayPrivateKey {

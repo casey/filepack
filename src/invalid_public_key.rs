@@ -5,7 +5,7 @@ use super::*;
 pub struct InvalidPublicKey(pub(crate) [u8; PublicKey::LEN]);
 
 impl Hex for InvalidPublicKey {
-  const TAG: Tag = Tag::PublicKey;
+  const TAG: Tag = Tag::Public;
 }
 
 impl Display for InvalidPublicKey {
