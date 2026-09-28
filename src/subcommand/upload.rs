@@ -131,7 +131,7 @@ impl Upload {
         .map(|server_state| server_state.number),
     };
 
-    let previous = if let Some(number) = update {
+    let parent = if let Some(number) = update {
       let head = client.number(number)?;
 
       if let Some(server_state) = state.servers.get(&server)
@@ -173,7 +173,7 @@ impl Upload {
 
     let revision_object = RevisionObject {
       package: fingerprint,
-      previous,
+      parent,
     };
 
     let revision = revision_object.hash();
