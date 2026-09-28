@@ -35,7 +35,12 @@ impl Field {
   }
 
   pub(crate) fn parse(&self) -> Result<ParsedField> {
-    let (decode_with, encode_with) = self.parse_attributes()?;
+    if let Some(attribute) = self.deco_attribute() {
+      return Err(Error::new_spanned(
+        attribute,
+        "`#[deco(...)]` attributes cannot be used on fields",
+      ));
+    }
 
     let ident = self.ident.as_ref().unwrap();
 
@@ -49,43 +54,9 @@ impl Field {
     }
 
     Ok(ParsedField {
-      decode_with,
-      encode_with,
       ident,
       n,
       optional: self.is_option(),
     })
-  }
-
-  fn parse_attributes(&self) -> Result<(Option<Path>, Option<Path>)> {
-    let mut decode_with = None;
-    let mut encode_with = None;
-
-    for attribute in &self.attrs {
-      if !attribute.path().is_ident("deco") {
-        continue;
-      }
-
-      attribute.parse_nested_meta(|meta| {
-        if meta.path.is_ident("decode_with") {
-          if decode_with.is_some() {
-            return Err(meta.error("duplicate `#[deco(decode_with)]` attribute"));
-          }
-          decode_with = Some(path_value(&meta, "path")?);
-          Ok(())
-        } else if meta.path.is_ident("encode_with") {
-          if encode_with.is_some() {
-            return Err(meta.error("duplicate `#[deco(encode_with)]` attribute"));
-          }
-          encode_with = Some(path_value(&meta, "path")?);
-          Ok(())
-        } else {
-          let ident = meta.path.require_ident()?;
-          Err(meta.error(format!("unknown field attribute `#[deco({ident})]`")))
-        }
-      })?;
-    }
-
-    Ok((decode_with, encode_with))
   }
 }
