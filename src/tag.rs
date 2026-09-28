@@ -1,11 +1,12 @@
 use super::*;
 
-#[derive(Clone, Copy, Debug, EnumIter, PartialEq)]
+#[derive(Clone, Copy, Debug, EnumIter, IntoStaticStr, PartialEq)]
+#[strum(serialize_all = "kebab-case")]
 pub enum Tag {
-  Fingerprint,
   Hash,
-  PrivateKey,
-  PublicKey,
+  Package,
+  Private,
+  Public,
   Revision,
   Signature,
   Token,
@@ -14,10 +15,10 @@ pub enum Tag {
 impl Tag {
   pub(crate) fn name(self) -> &'static str {
     match self {
-      Self::Fingerprint => "package fingerprint",
       Self::Hash => "hash",
-      Self::PrivateKey => "private key",
-      Self::PublicKey => "public key",
+      Self::Package => "package fingerprint",
+      Self::Private => "private key",
+      Self::Public => "public key",
       Self::Revision => "revision",
       Self::Signature => "signature",
       Self::Token => "token",
@@ -25,15 +26,7 @@ impl Tag {
   }
 
   pub(crate) fn prefix(self) -> &'static str {
-    match self {
-      Self::Fingerprint => "package",
-      Self::Hash => "hash",
-      Self::PrivateKey => "private",
-      Self::PublicKey => "public",
-      Self::Revision => "revision",
-      Self::Signature => "signature",
-      Self::Token => "token",
-    }
+    self.into()
   }
 }
 

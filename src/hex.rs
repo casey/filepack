@@ -134,7 +134,7 @@ mod tests {
       "package1abc".parse::<Fingerprint>(),
       Err(HexError::OddLength {
         len: 3,
-        tag: Tag::Fingerprint,
+        tag: Tag::Package,
       }),
     );
 
@@ -145,7 +145,7 @@ mod tests {
           actual: 0,
           expected: 32,
         },
-        tag: Tag::Fingerprint,
+        tag: Tag::Package,
       }),
     );
 
@@ -156,7 +156,7 @@ mod tests {
           actual: 31,
           expected: 32,
         },
-        tag: Tag::Fingerprint,
+        tag: Tag::Package,
       }),
     );
 
@@ -167,7 +167,7 @@ mod tests {
           actual: 33,
           expected: 32,
         },
-        tag: Tag::Fingerprint,
+        tag: Tag::Package,
       }),
     );
   }

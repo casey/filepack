@@ -40,7 +40,7 @@ mod tests {
       KeyIdentifierError::PublicKey {
         source: HexError::Digit {
           digit: 'Z',
-          tag: Tag::PublicKey,
+          tag: Tag::Public,
         },
       },
     );

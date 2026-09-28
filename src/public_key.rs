@@ -70,7 +70,7 @@ impl Encode for PublicKey {
 }
 
 impl Hex for PublicKey {
-  const TAG: Tag = Tag::PublicKey;
+  const TAG: Tag = Tag::Public;
 }
 
 impl Ord for PublicKey {
@@ -103,7 +103,7 @@ mod tests {
         source: DecodeError::PublicKey {
           source: PublicKeyError::Weak { key },
         },
-        tag: Tag::PublicKey,
+        tag: Tag::Public,
       } if key.to_string() == test::WEAK_PUBLIC_KEY,
     );
   }

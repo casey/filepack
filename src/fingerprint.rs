@@ -43,7 +43,7 @@ impl Display for Fingerprint {
 }
 
 impl Hex for Fingerprint {
-  const TAG: Tag = Tag::Fingerprint;
+  const TAG: Tag = Tag::Package;
 }
 
 impl FromStr for Fingerprint {

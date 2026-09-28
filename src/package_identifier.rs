@@ -30,7 +30,7 @@ impl FromStr for PackageIdentifier {
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     if s.starts_with(|c: char| c.is_ascii_digit()) {
       Ok(Self::Number(parse_number(s)?))
-    } else if s.starts_with(Tag::Fingerprint.prefix()) {
+    } else if s.starts_with(Tag::Package.prefix()) {
       Ok(Self::Fingerprint(s.parse()?))
     } else if s.starts_with(Tag::Revision.prefix()) {
       Ok(Self::Revision(s.parse()?))
