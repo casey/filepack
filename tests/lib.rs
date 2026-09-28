@@ -63,7 +63,7 @@ mod test;
 mod upload;
 mod verify;
 
-const EMPTY_HASH: &str = "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262";
+const EMPTY_HASH: &str = "hash1af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262";
 
 const PRIVATE_KEY: &str = concat!(
   "private1d79b36defbee7c1d26099c9e28f849f1f0dceb6e0217b83c87f5cff6fd8c4fc8554351406a9ddf54d43642",

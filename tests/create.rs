@@ -624,7 +624,7 @@ fn single_non_empty_file() {
         embedded: {},
         package: {
           foo: {
-            hash: "f2e897eed7d206cd855d441598fa521abc75aa96953e97c030c9612c30c1293d",
+            hash: "hash1f2e897eed7d206cd855d441598fa521abc75aa96953e97c030c9612c30c1293d",
             size: 3
           }
         },

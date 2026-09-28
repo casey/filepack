@@ -45,7 +45,7 @@ mod tests {
       .to_string(),
       unindent(
         r#"
-          <h1>Directory <code>[[:xdigit:]]{64}</code></h1>
+          <h1>Directory <code>hash1[[:xdigit:]]{64}</code></h1>
           <table>
             <thead>
               <tr>
@@ -56,19 +56,19 @@ mod tests {
             <tbody>
               <tr>
                 <td><a>bar</a></td>
-                <td class=right><a href=/file/[[:xdigit:]]{64} download="bar">1\.5 KiB</a></td>
+                <td class=right><a href=/file/hash1[[:xdigit:]]{64} download="bar">1\.5 KiB</a></td>
               </tr>
               <tr>
-                <td><a href='/file/[[:xdigit:]]{64}/baz\.png'>baz\.png</a></td>
-                <td class=right><a href=/file/[[:xdigit:]]{64} download="baz\.png">1\.5 KiB</a></td>
+                <td><a href='/file/hash1[[:xdigit:]]{64}/baz\.png'>baz\.png</a></td>
+                <td class=right><a href=/file/hash1[[:xdigit:]]{64} download="baz\.png">1\.5 KiB</a></td>
               </tr>
               <tr>
-                <td><a href=/directory/[[:xdigit:]]{64}>foo/</a></td>
-                <td class=right><a href=/file/[[:xdigit:]]{64} download="foo">2\.4 MiB</a></td>
+                <td><a href=/directory/hash1[[:xdigit:]]{64}>foo/</a></td>
+                <td class=right><a href=/file/hash1[[:xdigit:]]{64} download="foo">2\.4 MiB</a></td>
               </tr>
               <tr>
-                <td><a href='/file/[[:xdigit:]]{64}/qux%20quux\.png'>qux quux\.png</a></td>
-                <td class=right><a href=/file/[[:xdigit:]]{64} download="qux quux\.png">1\.5 KiB</a></td>
+                <td><a href='/file/hash1[[:xdigit:]]{64}/qux%20quux\.png'>qux quux\.png</a></td>
+                <td class=right><a href=/file/hash1[[:xdigit:]]{64} download="qux quux\.png">1\.5 KiB</a></td>
               </tr>
             </tbody>
           </table>

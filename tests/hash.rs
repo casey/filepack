@@ -2,13 +2,13 @@ use super::*;
 
 #[test]
 fn assert_failure() {
+  let zeros = format!("hash1{}", "0".repeat(64));
+
   Test::new()
     .touch("foo")
-    .args(["hash", "foo", "--assert", &"0".repeat(64)])
+    .args(["hash", "foo", "--assert", &zeros])
     .stderr(&format!(
-      "error: file hash {} not equal to expected {}\n",
-      EMPTY_HASH,
-      "0".repeat(64)
+      "error: file hash {EMPTY_HASH} not equal to expected {zeros}\n"
     ))
     .failure();
 }
@@ -27,7 +27,7 @@ fn file() {
   Test::new()
     .write("foo", "foo")
     .args(["hash", "foo"])
-    .stdout("04e0bb39f30b1a3feb89f536c93be15055482df748674b00d26e5a75777702e9\n")
+    .stdout("hash104e0bb39f30b1a3feb89f536c93be15055482df748674b00d26e5a75777702e9\n")
     .success();
 }
 
@@ -36,6 +36,6 @@ fn stdin() {
   Test::new()
     .arg("hash")
     .stdin("foo")
-    .stdout("04e0bb39f30b1a3feb89f536c93be15055482df748674b00d26e5a75777702e9\n")
+    .stdout("hash104e0bb39f30b1a3feb89f536c93be15055482df748674b00d26e5a75777702e9\n")
     .success();
 }

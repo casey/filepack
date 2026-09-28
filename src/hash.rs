@@ -55,7 +55,6 @@ impl FromStr for Hash {
 
 impl Hex for Hash {
   const TAG: Tag = Tag::Hash;
-  const TAGGED: bool = false;
 }
 
 impl Ord for Hash {
@@ -129,10 +128,10 @@ mod tests {
   #[test]
   fn deserialize_error_format() {
     assert_eq!(
-      serde_json::from_str::<Hash>("\"foo\"")
+      serde_json::from_str::<Hash>("\"hash1foo\"")
         .unwrap_err()
         .to_string(),
-      "hash contains invalid hex digit `o` at line 1 column 5",
+      "hash contains invalid hex digit `o` at line 1 column 10",
     );
   }
 
@@ -148,7 +147,7 @@ mod tests {
   fn hex() {
     assert_eq! {
       Hash::from([0; Hash::LEN]).to_string(),
-      "0000000000000000000000000000000000000000000000000000000000000000",
+      "hash10000000000000000000000000000000000000000000000000000000000000000",
     }
   }
 
@@ -168,13 +167,15 @@ mod tests {
     let json = serde_json::to_string(&input).unwrap();
     assert_eq!(
       json,
-      "\"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262\""
+      "\"hash1af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262\""
     );
     assert_eq!(serde_json::from_str::<Hash>(&json).unwrap(), input);
   }
 
   #[test]
   fn uppercase_is_forbidden() {
-    test::HASH.to_uppercase().parse::<Hash>().unwrap_err();
+    format!("hash1{}", test::HASH["hash1".len()..].to_uppercase())
+      .parse::<Hash>()
+      .unwrap_err();
   }
 }
