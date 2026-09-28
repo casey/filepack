@@ -386,14 +386,15 @@ impl TestServer {
     package: Fingerprint,
     parents: impl IntoIterator<Item = Revision>,
   ) -> Revision {
-    let revision_object = RevisionObject {
-      package,
-      parents: parents
-        .into_iter()
-        .collect::<Vec<Revision>>()
-        .try_into()
-        .unwrap(),
+    let parents = parents.into_iter().collect::<Vec<Revision>>();
+
+    let parents = if parents.is_empty() {
+      None
+    } else {
+      Some(parents.try_into().unwrap())
     };
+
+    let revision_object = RevisionObject { package, parents };
 
     self.write_file(&revision_object.encode_to_vec());
 
@@ -882,7 +883,7 @@ fn corrupt_revision() {
 
   let revision = RevisionObject {
     package: fingerprint,
-    parents: OrderedSet::default(),
+    parents: None,
   }
   .hash();
 
@@ -1268,7 +1269,7 @@ fn gc_removes_unreachable_and_retains_reachable_data() {
 
   let revision_object = RevisionObject {
     package: fingerprint,
-    parents: OrderedSet::default(),
+    parents: None,
   };
 
   let revision = revision_object.hash();
@@ -1359,7 +1360,7 @@ fn gc_shares_ancestors() {
 
   let head_object = RevisionObject {
     package: bar,
-    parents: OrderedSet::singleton(root),
+    parents: Some(OrderedSet::singleton(root)),
   };
 
   let head = server.write_revision(bar, Some(root));
@@ -4207,7 +4208,7 @@ fn verify_package_replace() {
 
   let revision_object = RevisionObject {
     package: foo,
-    parents: OrderedSet::default(),
+    parents: None,
   };
 
   let revision = revision_object.hash();
@@ -4371,7 +4372,7 @@ fn verify_package_reuses_revision() {
 
   let revision = RevisionObject {
     package: fingerprint,
-    parents: OrderedSet::default(),
+    parents: None,
   }
   .hash();
 

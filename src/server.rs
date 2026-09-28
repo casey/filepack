@@ -152,7 +152,7 @@ impl Server {
 
         directory_stack.push(revision_object.package.into());
 
-        revision_stack.extend(revision_object.parents);
+        revision_stack.extend(revision_object.parents());
       }
 
       for entry in revisions
@@ -258,7 +258,7 @@ impl Server {
     while let Some(current) = revision {
       revisions.push(current);
 
-      revision = self.read_revision(current)?.parents.first().copied();
+      revision = self.read_revision(current)?.parents().first().copied();
     }
 
     Ok(revisions)
@@ -460,7 +460,7 @@ impl Server {
     let parents = revision
       .map(|revision| self.read_revision(revision))
       .transpose()?
-      .map(|revision_object| revision_object.parents.into_iter().collect())
+      .map(|revision_object| revision_object.parents().to_vec())
       .unwrap_or_default();
 
     let revisions = history.as_ref().map(|history| history.len().into_u64());
@@ -805,7 +805,7 @@ impl Server {
 
     let fingerprint = revision_object.package;
 
-    let parents = revision_object.parents;
+    let parents = revision_object.parents();
 
     ensure!(
       tx.open_table(PACKAGES)?.get(&fingerprint)?.is_some(),
@@ -817,7 +817,7 @@ impl Server {
       let mut numbers = tx.open_table(NUMBERS)?;
       let mut revisions = tx.open_table(REVISIONS)?;
 
-      for &parent in &parents {
+      for &parent in parents {
         ensure!(
           revisions.get(&parent)?.is_some(),
           server_error::RevisionParentNotFound { parent, revision },

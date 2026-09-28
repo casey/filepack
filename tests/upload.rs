@@ -605,7 +605,7 @@ fn upload_records_state() {
 
   let revision = RevisionObject {
     package: fingerprint(&test.path().join("manifest.filepack")),
-    parents: OrderedSet::default(),
+    parents: None,
   }
   .hash();
 
@@ -657,7 +657,7 @@ fn upload_rejects_stale_state() {
 
   let root = RevisionObject {
     package: fingerprint(&a.path().join("manifest.filepack")),
-    parents: OrderedSet::default(),
+    parents: None,
   }
   .hash();
 
@@ -682,7 +682,7 @@ fn upload_rejects_stale_state() {
 
   let head = RevisionObject {
     package: fingerprint(&b.path().join("manifest.filepack")),
-    parents: OrderedSet::singleton(root),
+    parents: Some(OrderedSet::singleton(root)),
   }
   .hash();
 
@@ -760,7 +760,7 @@ fn upload_replaces_package() {
 
   Test::new()
     .args(["gc", "--server", &address])
-    .stderr("removed 1 revision, 1 package, 1 directory, and 3 files, freeing 86 B\n")
+    .stderr("removed 1 revision, 1 package, 1 directory, and 3 files, freeing 84 B\n")
     .success();
 
   assert_eq!(
@@ -784,7 +784,7 @@ fn upload_updates_implicitly() {
 
   let root = RevisionObject {
     package: fingerprint(&test.path().join("manifest.filepack")),
-    parents: OrderedSet::default(),
+    parents: None,
   }
   .hash();
 
@@ -814,7 +814,7 @@ fn upload_updates_implicitly() {
 
   let head = RevisionObject {
     package: fingerprint(&test.path().join("manifest.filepack")),
-    parents: OrderedSet::singleton(root),
+    parents: Some(OrderedSet::singleton(root)),
   }
   .hash();
 

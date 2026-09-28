@@ -17,7 +17,7 @@ pub(crate) const PUBLIC_KEY: &str =
   "public1d79b36defbee7c1d26099c9e28f849f1f0dceb6e0217b83c87f5cff6fd8c4fc8";
 
 pub(crate) const REVISION: &str =
-  "revision14777efb8592effd962f62c8fd898867a8a03af77e5509d7ceccec78113313dcd";
+  "revision1a895f0cd0338254bc76650e829441165eb127ae1e51b92e87189ed1580195617";
 
 pub(crate) const SIGNATURE: &str = concat!(
   "signature101a0d79b36defbee7c1d26099c9e28f849f1f0dceb6e0217b83c87f5cff6fd8c4fc802a201a0af1349b9",
