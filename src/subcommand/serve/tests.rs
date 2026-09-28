@@ -1771,6 +1771,21 @@ fn malformed_fingerprint_returns_error() {
 }
 
 #[test]
+fn malformed_number_returns_error() {
+  TestServer::new()
+    .get("/01")
+    .assert_error(
+      StatusCode::BAD_REQUEST,
+      ServerError::NumberParse {
+        source: NumberError::Invalid {
+          number: "01".into(),
+        },
+      },
+    )
+    .send();
+}
+
+#[test]
 fn malformed_package_identifier_returns_error() {
   TestServer::new()
     .get("/package/foo")
@@ -2587,6 +2602,15 @@ fn non_fingerprint_tagged_hex_falls_through() {
   TestServer::new()
     .get(format!("/{}", test::PUBLIC_KEY))
     .assert_error(StatusCode::NOT_FOUND, ServerError::PageNotFound)
+    .send();
+}
+
+#[test]
+fn number_redirects_to_package() {
+  TestServer::new()
+    .get("/1")
+    .status(StatusCode::PERMANENT_REDIRECT)
+    .assert_header(header::LOCATION, "/package/1")
     .send();
 }
 

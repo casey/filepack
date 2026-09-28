@@ -161,7 +161,10 @@ pub(crate) async fn fallback(uri: Uri) -> Result<Response, PageError> {
   if let Some(component) = uri.path().strip_prefix('/')
     && !component.contains('/')
   {
-    if component.starts_with(Tag::Fingerprint.prefix()) {
+    if component.starts_with(|c: char| c.is_ascii_digit()) {
+      let number = parse_number::<u64>(component).context(server_error::NumberParse)?;
+      return Ok(Redirect::permanent(&format!("/package/{number}")).into_response());
+    } else if component.starts_with(Tag::Fingerprint.prefix()) {
       let fingerprint = component
         .parse::<Fingerprint>()
         .context(server_error::FingerprintParse)?;
