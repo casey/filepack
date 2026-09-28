@@ -157,16 +157,16 @@ fn download_package_fails_on_directory_totals_mismatch() {
   let root = Directory::new()
     .insert_entry(
       "sub",
-      Entry::Directory {
-        hash: subdirectory_hash,
-        size: u64::try_from(subdirectory_deco.len()).unwrap(),
-        totals: Totals {
+      Entry::directory(
+        subdirectory_hash,
+        u64::try_from(subdirectory_deco.len()).unwrap(),
+        Totals {
           directories: 0,
           directory_size: 0,
           file_size: 100,
           files: 1,
         },
-      },
+      ),
     )
     .encode_to_vec();
 

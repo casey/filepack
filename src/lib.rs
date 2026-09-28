@@ -69,7 +69,7 @@ use {
     ed25519_signature::Ed25519Signature,
     embedded_image::EmbeddedImage,
     entries::Entries,
-    entry::EntryType,
+    entry_info::{EntryInfo, EntryType},
     envelope::Envelope,
     error::Error,
     exif_decoder::ExifDecoder,
@@ -357,6 +357,7 @@ mod encode;
 mod encoder;
 mod entries;
 mod entry;
+mod entry_info;
 mod envelope;
 mod error;
 mod exif_decoder;

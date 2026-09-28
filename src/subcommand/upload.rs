@@ -72,12 +72,12 @@ impl Upload {
 
     for (component, entry) in &directory.entries {
       let file_path = file_path.join(component);
-      match entry {
-        Entry::Directory { hash, size, .. } => {
-          Self::upload_directory(context, &file_path, *hash, *size)?;
+      match entry.ty() {
+        EntryType::Directory => {
+          Self::upload_directory(context, &file_path, entry.hash, entry.size)?;
         }
-        Entry::File { hash, .. } => {
-          if context.missing.contains(hash) {
+        EntryType::File => {
+          if context.missing.contains(&entry.hash) {
             Self::upload_package_file(context, entry, &file_path)?;
             context.progress_bar.item_done();
           }
@@ -119,7 +119,7 @@ impl Upload {
 
     let package = loader.package()?;
 
-    let fingerprint = Fingerprint(package.hash());
+    let fingerprint = Fingerprint(package.hash);
 
     let update = match (self.replace, self.update) {
       (Some(_), Some(_)) => unreachable!(),
@@ -235,7 +235,7 @@ impl Upload {
       progress_bar: ProgressBar::items(&options, bytes, files, "files"),
     };
 
-    Self::upload_directory(&mut context, &root, package.hash(), package.size())?;
+    Self::upload_directory(&mut context, &root, package.hash, package.size)?;
 
     context.client.verify_package(fingerprint)?;
 
@@ -270,9 +270,9 @@ impl Upload {
   fn upload_package_file(context: &Context, expected: &Entry, path: &Utf8Path) -> Result {
     let file = filesystem::open(path)?;
 
-    let body = Body::sized(context.progress_bar.wrap_read(file), expected.size());
+    let body = Body::sized(context.progress_bar.wrap_read(file), expected.size);
 
-    context.client.put_file(expected.hash(), body)?;
+    context.client.put_file(expected.hash, body)?;
 
     Ok(())
   }

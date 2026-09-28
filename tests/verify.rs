@@ -814,7 +814,7 @@ fn verify_fingerprint() {
     .args([
       "verify",
       "--fingerprint",
-      "package1dc801b91185c3bddf3007eb3f015905022359a229455b93aa8b5281dd89dca2e",
+      "package1b91ba0d9c4b30ce661cd4434991e5938023110bf17a2649799ccbbb3048a15f0",
     ])
     .stderr("successfully verified 1 file totaling 0 bytes\n")
     .success()
@@ -827,7 +827,7 @@ fn verify_fingerprint() {
       "
         fingerprint mismatch: `manifest.filepack`
                     expected: package1af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262
-                      actual: package1dc801b91185c3bddf3007eb3f015905022359a229455b93aa8b5281dd89dca2e
+                      actual: package1b91ba0d9c4b30ce661cd4434991e5938023110bf17a2649799ccbbb3048a15f0
         error: fingerprint mismatch
       ",
     )
