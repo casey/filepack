@@ -17,6 +17,13 @@ use super::*;
 #[deco(transparent)]
 pub struct Fingerprint(pub(crate) Hash);
 
+#[cfg(test)]
+impl Default for Fingerprint {
+  fn default() -> Self {
+    Self(Hash::from([0; Hash::LEN]))
+  }
+}
+
 impl Fingerprint {
   pub(crate) const LEN: usize = Hash::LEN;
 

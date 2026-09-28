@@ -1,6 +1,7 @@
 use super::*;
 
 #[derive(Boilerplate)]
+#[cfg_attr(test, derive(Default))]
 pub(crate) struct ItemHtml {
   pub(crate) fingerprint: Fingerprint,
   pub(crate) identifier: PackageIdentifier,
@@ -96,13 +97,13 @@ mod tests {
       let mut html = ItemHtml {
         fingerprint: test::FINGERPRINT.parse().unwrap(),
         identifier,
-        index: 0,
         metadata: Metadata {
           media: Some(Media::Image {
             items: vec![Item::test("foo.png"), Item::test("bar.png")],
           }),
           ..default()
         },
+        ..default()
       };
 
       assert_eq!(html.prev(), None);
@@ -124,8 +125,8 @@ mod tests {
         ItemHtml {
           fingerprint: test::FINGERPRINT.parse().unwrap(),
           identifier: PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
-          index: 0,
           metadata,
+          ..default()
         }
         .open_graph_image(),
         expected,
@@ -323,8 +324,8 @@ mod tests {
         ItemHtml {
           fingerprint: test::FINGERPRINT.parse().unwrap(),
           identifier: PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
-          index: 0,
           metadata,
+          ..default()
         }
         .to_string(),
         unindent(&expected),
@@ -509,13 +510,13 @@ mod tests {
       ItemHtml {
         fingerprint: test::FINGERPRINT.parse().unwrap(),
         identifier: PackageIdentifier::Number(1),
-        index: 0,
         metadata: Metadata {
           media: Some(Media::Image {
             items: vec![Item::test("foo.png")],
           }),
           ..default()
         },
+        ..default()
       }
       .to_string(),
       unindent(&format!(
@@ -545,11 +546,11 @@ mod tests {
         Page::title(&ItemHtml {
           fingerprint: test::FINGERPRINT.parse().unwrap(),
           identifier: PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
-          index: 0,
           metadata: Metadata {
             media: Some(media),
             ..default()
           },
+          ..default()
         }),
         expected,
       );

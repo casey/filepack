@@ -1394,20 +1394,12 @@ fn get_package_by_number() {
   server
     .get("/package/1")
     .assert_page(PackageHtml {
-      colophon: None,
-      directory: Directory::new(),
       fingerprint,
       identifier: PackageIdentifier::Number(1),
-      metadata: None,
-      mounted: false,
-      next: None,
       number: Some(1),
-      prev: None,
-      parents: Vec::new(),
-      readme: None,
       revision: Some(server.write_revision(fingerprint, None)),
       revisions: Some(1),
-      totals: Totals::default(),
+      ..default()
     })
     .send();
 }
@@ -1453,17 +1445,9 @@ fn get_package_by_revision() {
   server
     .get(format!("/package/{root}"))
     .assert_page(PackageHtml {
-      colophon: None,
       directory: foo_directory,
       fingerprint: foo,
       identifier: PackageIdentifier::Revision(root),
-      metadata: None,
-      mounted: false,
-      next: None,
-      number: None,
-      prev: None,
-      parents: Vec::new(),
-      readme: None,
       revision: Some(root),
       revisions: Some(1),
       totals: Totals {
@@ -1472,23 +1456,18 @@ fn get_package_by_revision() {
         file_size: 3,
         files: 1,
       },
+      ..default()
     })
     .send();
 
   server
     .get("/package/1")
     .assert_page(PackageHtml {
-      colophon: None,
       directory: bar_directory,
       fingerprint: bar,
       identifier: PackageIdentifier::Number(1),
-      metadata: None,
-      mounted: false,
-      next: None,
       number: Some(1),
-      prev: None,
       parents: vec![root],
-      readme: None,
       revision: Some(head),
       revisions: Some(2),
       totals: Totals {
@@ -1497,6 +1476,7 @@ fn get_package_by_revision() {
         file_size: 3,
         files: 1,
       },
+      ..default()
     })
     .send();
 }
@@ -1589,40 +1569,26 @@ fn get_package_navigation() {
   server
     .get("/package/1")
     .assert_page(PackageHtml {
-      colophon: None,
       directory: foo_directory,
       fingerprint: foo,
       identifier: PackageIdentifier::Number(1),
-      metadata: None,
-      mounted: false,
       next: Some(3),
       number: Some(1),
-      prev: None,
-      parents: Vec::new(),
-      readme: None,
       revision: Some(server.write_revision(foo, None)),
       revisions: Some(1),
       totals,
+      ..default()
     })
     .send();
 
   server
     .get(format!("/package/{baz}"))
     .assert_page(PackageHtml {
-      colophon: None,
       directory: baz_directory,
       fingerprint: baz,
       identifier: PackageIdentifier::Fingerprint(baz),
-      metadata: None,
-      mounted: false,
-      next: None,
-      number: None,
-      prev: None,
-      parents: Vec::new(),
-      readme: None,
-      revision: None,
-      revisions: None,
       totals,
+      ..default()
     })
     .send();
 }
@@ -1696,20 +1662,14 @@ fn get_package_with_metadata() {
       fingerprint,
       identifier: PackageIdentifier::Fingerprint(fingerprint),
       metadata: Some(metadata),
-      mounted: false,
-      next: None,
-      number: None,
-      prev: None,
-      parents: Vec::new(),
       readme: Some(Hash::bytes(readme)),
-      revision: None,
-      revisions: None,
       totals: Totals {
         directories: 0,
         directory_size: 0,
         file_size: metadata_deco.len().into_u64() + 6,
         files: 3,
       },
+      ..default()
     })
     .send();
 }
@@ -1729,20 +1689,10 @@ fn get_package_without_metadata() {
   server
     .get(format!("/package/{fingerprint}"))
     .assert_page(PackageHtml {
-      colophon: None,
       directory,
       fingerprint,
       identifier: PackageIdentifier::Fingerprint(fingerprint),
-      metadata: None,
-      mounted: false,
-      next: None,
-      number: None,
-      prev: None,
-      parents: Vec::new(),
-      readme: None,
-      revision: None,
-      revisions: None,
-      totals: Totals::default(),
+      ..default()
     })
     .send();
 }
@@ -2681,8 +2631,8 @@ fn package_item_audio() {
     .assert_page(ItemHtml {
       fingerprint,
       identifier: PackageIdentifier::Fingerprint(fingerprint),
-      index: 0,
       metadata,
+      ..default()
     })
     .send();
 }
@@ -2736,8 +2686,8 @@ fn package_item_by_number() {
     .assert_page(ItemHtml {
       fingerprint,
       identifier: PackageIdentifier::Number(1),
-      index: 0,
       metadata,
+      ..default()
     })
     .send();
 }
@@ -2778,8 +2728,8 @@ fn package_item_image() {
     .assert_page(ItemHtml {
       fingerprint,
       identifier: PackageIdentifier::Fingerprint(fingerprint),
-      index: 0,
       metadata,
+      ..default()
     })
     .send();
 }
@@ -2895,8 +2845,8 @@ fn package_item_video() {
     .assert_page(ItemHtml {
       fingerprint,
       identifier: PackageIdentifier::Fingerprint(fingerprint),
-      index: 0,
       metadata,
+      ..default()
     })
     .send();
 }
@@ -3012,8 +2962,7 @@ fn package_media() {
       fingerprint,
       identifier: PackageIdentifier::Fingerprint(fingerprint),
       metadata,
-      number: None,
-      revision: None,
+      ..default()
     })
     .send();
 }
@@ -3097,25 +3046,17 @@ fn package_page_og_image() {
     .get(format!("/package/{fingerprint}"))
     .assert_response(
       PackageHtml {
-        colophon: None,
         directory,
         fingerprint,
         identifier: PackageIdentifier::Fingerprint(fingerprint),
         metadata: Some(metadata),
-        mounted: false,
-        next: None,
-        number: None,
-        prev: None,
-        parents: Vec::new(),
-        readme: None,
-        revision: None,
-        revisions: None,
         totals: Totals {
           directories: 0,
           directory_size: 0,
           file_size: metadata_deco.len().into_u64() + 3,
           files: 2,
         },
+        ..default()
       }
       .page(Some(url)),
     )
@@ -3174,20 +3115,11 @@ fn package_page_renders_audio_media() {
   server
     .get(format!("/package/{fingerprint}"))
     .assert_page(PackageHtml {
-      colophon: None,
-      directory: Directory::new(),
       fingerprint,
       identifier: PackageIdentifier::Fingerprint(fingerprint),
       metadata: Some(metadata),
-      mounted: false,
-      next: None,
-      number: None,
-      prev: None,
-      parents: Vec::new(),
-      readme: None,
-      revision: None,
-      revisions: None,
       totals,
+      ..default()
     })
     .send();
 }
@@ -3233,20 +3165,11 @@ fn package_page_renders_image_media() {
   server
     .get(format!("/package/{fingerprint}"))
     .assert_page(PackageHtml {
-      colophon: None,
-      directory: Directory::new(),
       fingerprint,
       identifier: PackageIdentifier::Fingerprint(fingerprint),
       metadata: Some(metadata),
-      mounted: false,
-      next: None,
-      number: None,
-      prev: None,
-      parents: Vec::new(),
-      readme: None,
-      revision: None,
-      revisions: None,
       totals,
+      ..default()
     })
     .send();
 }
@@ -3309,20 +3232,11 @@ fn package_page_renders_video_media() {
   server
     .get(format!("/package/{fingerprint}"))
     .assert_page(PackageHtml {
-      colophon: None,
-      directory: Directory::new(),
       fingerprint,
       identifier: PackageIdentifier::Fingerprint(fingerprint),
       metadata: Some(metadata),
-      mounted: false,
-      next: None,
-      number: None,
-      prev: None,
-      parents: Vec::new(),
-      readme: None,
-      revision: None,
-      revisions: None,
       totals,
+      ..default()
     })
     .send();
 }
@@ -3353,25 +3267,18 @@ fn package_page_web() {
   server
     .get(format!("/package/{fingerprint}"))
     .assert_page(PackageHtml {
-      colophon: None,
       directory,
       fingerprint,
       identifier: PackageIdentifier::Fingerprint(fingerprint),
       metadata: Some(metadata),
       mounted: true,
-      next: None,
-      number: None,
-      prev: None,
-      parents: Vec::new(),
-      readme: None,
-      revision: None,
-      revisions: None,
       totals: Totals {
         directories: 1,
         directory_size: static_deco_len,
         file_size: metadata_deco_len + 3,
         files: 2,
       },
+      ..default()
     })
     .send();
 }
@@ -3380,11 +3287,7 @@ fn package_page_web() {
 fn packages_empty() {
   TestServer::new()
     .get("/packages")
-    .assert_page(PackagesHtml {
-      order: Order::default(),
-      packages: Vec::new(),
-      sort: Sort::default(),
-    })
+    .assert_page(PackagesHtml::default())
     .send();
 }
 
@@ -3410,14 +3313,13 @@ fn packages_include_creators_and_titles() {
   server
     .get("/packages")
     .assert_page(PackagesHtml {
-      order: Order::default(),
       packages: vec![PackageSummary {
         fingerprint,
         metadata: Some(metadata),
         number: 1,
         totals,
       }],
-      sort: Sort::default(),
+      ..default()
     })
     .send();
 }
@@ -3453,9 +3355,8 @@ fn packages_non_empty() {
   server
     .get("/packages")
     .assert_page(PackagesHtml {
-      order: Order::default(),
       packages,
-      sort: Sort::default(),
+      ..default()
     })
     .send();
 }
@@ -4220,17 +4121,10 @@ fn verify_package_replace() {
   server
     .get("/package/1")
     .assert_page(PackageHtml {
-      colophon: None,
       directory,
       fingerprint: bar,
       identifier: PackageIdentifier::Number(1),
-      metadata: None,
-      mounted: false,
-      next: None,
       number: Some(1),
-      prev: None,
-      parents: Vec::new(),
-      readme: None,
       revision: Some(revision),
       revisions: Some(1),
       totals: Totals {
@@ -4239,6 +4133,7 @@ fn verify_package_replace() {
         file_size: 3,
         files: 1,
       },
+      ..default()
     })
     .send();
 

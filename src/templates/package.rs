@@ -1,6 +1,7 @@
 use super::*;
 
 #[derive(Boilerplate)]
+#[cfg_attr(test, derive(Default))]
 pub struct PackageHtml {
   pub colophon: Option<Hash>,
   pub directory: Directory,
@@ -172,25 +173,17 @@ mod tests {
 
     assert_eq!(
       PackageHtml {
-        colophon: None,
-        directory: Directory::new(),
         fingerprint: test::FINGERPRINT.parse().unwrap(),
         identifier: PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
         metadata: Some(metadata),
-        mounted: false,
-        next: None,
         number: Some(1),
-        parents: Vec::new(),
-        prev: None,
-        readme: None,
-        revision: None,
-        revisions: None,
         totals: Totals {
           directories: 0,
           directory_size: 0,
           file_size: 6,
           files: 2,
         },
+        ..default()
       }
       .to_string(),
       unindent(&format!(
@@ -290,25 +283,17 @@ mod tests {
 
     assert_eq!(
       PackageHtml {
-        colophon: None,
-        directory: Directory::new(),
         fingerprint: test::FINGERPRINT.parse().unwrap(),
         identifier: PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
         metadata: Some(metadata),
-        mounted: false,
-        next: None,
         number: Some(1),
-        parents: Vec::new(),
-        prev: None,
-        readme: None,
-        revision: None,
-        revisions: None,
         totals: Totals {
           directories: 0,
           directory_size: 0,
           file_size: 6,
           files: 2,
         },
+        ..default()
       }
       .to_string(),
       unindent(&format!(
@@ -442,25 +427,17 @@ mod tests {
 
     assert_eq!(
       PackageHtml {
-        colophon: None,
-        directory: Directory::new(),
         fingerprint: test::FINGERPRINT.parse().unwrap(),
         identifier: PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
         metadata: Some(metadata),
-        mounted: false,
-        next: None,
         number: Some(1),
-        parents: Vec::new(),
-        prev: None,
-        readme: None,
-        revision: None,
-        revisions: None,
         totals: Totals {
           directories: 0,
           directory_size: 0,
           file_size: 9,
           files: 3,
         },
+        ..default()
       }
       .to_string(),
       unindent(&format!(
@@ -575,20 +552,14 @@ mod tests {
 
     assert_eq!(
       PackageHtml {
-        colophon: None,
-        directory: Directory::new(),
         fingerprint: test::FINGERPRINT.parse().unwrap(),
         identifier: PackageIdentifier::Number(1),
         metadata: Some(metadata),
-        mounted: false,
-        next: None,
         number: Some(1),
         parents: vec![
           test::REVISION.parse().unwrap(),
           Revision::from(Hash::bytes(b"foo")),
         ],
-        prev: None,
-        readme: None,
         revision: Some(test::REVISION.parse().unwrap()),
         revisions: Some(2),
         totals: Totals {
@@ -597,6 +568,7 @@ mod tests {
           file_size: 3,
           files: 1,
         },
+        ..default()
       }
       .to_string(),
       unindent(&format!(
@@ -701,20 +673,12 @@ mod tests {
   #[test]
   fn navigation() {
     let mut html = PackageHtml {
-      colophon: None,
-      directory: Directory::new(),
       fingerprint: test::FINGERPRINT.parse().unwrap(),
       identifier: PackageIdentifier::Number(2),
-      metadata: None,
-      mounted: false,
       next: Some(3),
       number: Some(2),
-      parents: Vec::new(),
       prev: Some(1),
-      readme: None,
-      revision: None,
-      revisions: None,
-      totals: Totals::default(),
+      ..default()
     };
 
     assert_eq!(html.next(), Some("/package/3".into()));
@@ -731,8 +695,6 @@ mod tests {
   #[test]
   fn open_graph_metadata() {
     let html = PackageHtml {
-      colophon: None,
-      directory: Directory::new(),
       fingerprint: test::FINGERPRINT.parse().unwrap(),
       identifier: PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
       metadata: Some(Metadata {
@@ -755,15 +717,8 @@ mod tests {
         description: Some("bar".parse().unwrap()),
         ..default()
       }),
-      mounted: false,
-      next: None,
       number: Some(1),
-      parents: Vec::new(),
-      prev: None,
-      readme: None,
-      revision: None,
-      revisions: None,
-      totals: Totals::default(),
+      ..default()
     };
 
     assert_eq!(
@@ -813,20 +768,10 @@ mod tests {
     );
 
     let html = PackageHtml {
-      colophon: None,
-      directory: Directory::new(),
       fingerprint: test::FINGERPRINT.parse().unwrap(),
       identifier: PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
-      metadata: None,
-      mounted: false,
-      next: None,
       number: Some(1),
-      parents: Vec::new(),
-      prev: None,
-      readme: None,
-      revision: None,
-      revisions: None,
-      totals: Totals::default(),
+      ..default()
     };
 
     assert_eq!(html.open_graph_image(), None);
@@ -859,20 +804,15 @@ mod tests {
         fingerprint: test::FINGERPRINT.parse().unwrap(),
         identifier: PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
         metadata: Some(metadata),
-        mounted: false,
-        next: None,
         number: Some(1),
-        parents: Vec::new(),
-        prev: None,
         readme: Some(test::HASH.parse().unwrap()),
-        revision: None,
-        revisions: None,
         totals: Totals {
           directories: 0,
           directory_size: 0,
           file_size: 3,
           files: 1,
         },
+        ..default()
       }
       .to_string(),
       unindent(&format!(
@@ -1065,25 +1005,17 @@ mod tests {
 
     assert_eq!(
       PackageHtml {
-        colophon: None,
-        directory: Directory::new(),
         fingerprint: test::FINGERPRINT.parse().unwrap(),
         identifier: PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
         metadata: Some(metadata),
-        mounted: false,
-        next: None,
         number: Some(1),
-        parents: Vec::new(),
-        prev: None,
-        readme: None,
-        revision: None,
-        revisions: None,
         totals: Totals {
           directories: 0,
           directory_size: 0,
           file_size: 3,
           files: 1,
         },
+        ..default()
       }
       .to_string(),
       unindent(&format!(

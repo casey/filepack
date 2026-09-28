@@ -1,6 +1,7 @@
 use super::*;
 
 #[derive(Boilerplate)]
+#[cfg_attr(test, derive(Default))]
 pub(crate) struct PackagesHtml {
   pub(crate) order: Order,
   pub(crate) packages: Vec<PackageSummary>,
@@ -117,7 +118,6 @@ mod tests {
 
     assert_eq!(
       PackagesHtml {
-        order: Order::default(),
         packages: vec![
           PackageSummary {
             fingerprint,
@@ -132,7 +132,7 @@ mod tests {
             totals: Totals::default(),
           },
         ],
-        sort: Sort::default(),
+        ..default()
       }
       .to_string(),
       unindent(&format!(
@@ -182,8 +182,8 @@ mod tests {
     assert_eq!(
       PackagesHtml {
         order: Order::Descending,
-        packages: Vec::new(),
         sort: Sort::Size,
+        ..default()
       }
       .to_string(),
       unindent(
