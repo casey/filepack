@@ -3,6 +3,12 @@ use super::*;
 #[derive(Debug, Snafu)]
 #[snafu(context(suffix(false)), visibility(pub(crate)))]
 pub enum ServerError {
+  #[snafu(display("malformed API version header `{value}`"))]
+  ApiVersionMalformed { value: String },
+  #[snafu(display(
+    "unsupported API version {version}, this server supports API version {API_VERSION}"
+  ))]
+  ApiVersionUnsupported { version: u64 },
   #[snafu(display("package {fingerprint} artwork not found"))]
   ArtworkNotFound { fingerprint: Fingerprint },
   #[snafu(display("invalid authorization token"))]
@@ -211,7 +217,9 @@ impl ServerError {
       | Self::PackageMetadataCorrupt { .. }
       | Self::RevisionCorrupt { .. }
       | Self::Time { .. } => StatusCode::INTERNAL_SERVER_ERROR,
-      Self::DecoBody { .. }
+      Self::ApiVersionMalformed { .. }
+      | Self::ApiVersionUnsupported { .. }
+      | Self::DecoBody { .. }
       | Self::DecoDecode { .. }
       | Self::DirectoryDecode { .. }
       | Self::DirectoryEntryMissing { .. }

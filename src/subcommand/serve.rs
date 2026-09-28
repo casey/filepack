@@ -195,6 +195,29 @@ impl Serve {
     Ok(acceptor)
   }
 
+  async fn api_version_layer(request: Request, next: Next) -> Response {
+    let Some(value) = request.headers().get(API_VERSION_HEADER) else {
+      return next.run(request).await;
+    };
+
+    let Some(version) = value
+      .to_str()
+      .ok()
+      .and_then(|value| parse_number::<u64>(value).ok())
+    else {
+      return ServerError::ApiVersionMalformed {
+        value: value.as_bytes().escape_ascii().to_string(),
+      }
+      .into_response();
+    };
+
+    if version != API_VERSION {
+      return ServerError::ApiVersionUnsupported { version }.into_response();
+    }
+
+    next.run(request).await
+  }
+
   fn canonical(&self) -> &str {
     self.domain.as_deref().unwrap()
   }
@@ -371,6 +394,11 @@ impl Serve {
       .fallback(route::fallback)
       .layer(Extension(server))
       .layer(Extension(server_config))
+      .layer(middleware::from_fn(Self::api_version_layer))
+      .layer(SetResponseHeaderLayer::overriding(
+        API_VERSION_HEADER,
+        HeaderValue::from(API_VERSION),
+      ))
       .layer(SetResponseHeaderLayer::overriding(
         header::X_CONTENT_TYPE_OPTIONS,
         HeaderValue::from_static("nosniff"),
