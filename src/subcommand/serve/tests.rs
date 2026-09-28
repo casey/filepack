@@ -484,6 +484,24 @@ fn api_file() {
 }
 
 #[test]
+fn api_head() {
+  let server = TestServer::new();
+
+  let fingerprint = PackageBuilder::new().file("foo", b"foo").upload(&server);
+
+  let revision = server.write_revision(fingerprint, None);
+
+  server.head(format!("/api/head/{revision}")).send();
+
+  server.delete("/api/number/1").send();
+
+  server
+    .head(format!("/api/head/{revision}"))
+    .status(StatusCode::NOT_FOUND)
+    .send();
+}
+
+#[test]
 fn api_number_not_found() {
   TestServer::new()
     .get("/api/number/1")
@@ -569,24 +587,6 @@ fn api_packages_returns_package_fingerprints() {
       }
       .encode_to_vec(),
     )
-    .send();
-}
-
-#[test]
-fn api_revision_head() {
-  let server = TestServer::new();
-
-  let fingerprint = PackageBuilder::new().file("foo", b"foo").upload(&server);
-
-  let revision = server.write_revision(fingerprint, None);
-
-  server.head(format!("/api/revision/{revision}")).send();
-
-  server.delete("/api/number/1").send();
-
-  server
-    .head(format!("/api/revision/{revision}"))
-    .status(StatusCode::NOT_FOUND)
     .send();
 }
 
@@ -938,7 +938,7 @@ fn delete_number_keeps_shared_head() {
 
   server.delete("/api/number/1").send();
 
-  server.head(format!("/api/revision/{revision}")).send();
+  server.head(format!("/api/head/{revision}")).send();
 }
 
 #[test]
@@ -4560,7 +4560,7 @@ fn verify_revision_update() {
     .send();
 
   server
-    .head(format!("/api/revision/{head}"))
+    .head(format!("/api/head/{head}"))
     .status(StatusCode::NOT_FOUND)
     .send();
 

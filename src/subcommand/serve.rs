@@ -6,7 +6,7 @@ use {
     http::{HeaderValue, Uri},
     middleware::{self, Next},
     response::{IntoResponse, Redirect, Response},
-    routing::{delete, get, post},
+    routing::{delete, get, head, post},
   },
   axum_server::Handle,
   hyper_util::rt::TokioTimer,
@@ -332,6 +332,7 @@ impl Serve {
         get(route::api_file).put(route::api_upload_file),
       )
       .route("/api/gc", post(route::api_gc))
+      .route("/api/head/{revision}", head(route::api_head))
       .route("/api/missing", post(route::api_missing))
       .route(
         "/api/number/{number}",
@@ -343,10 +344,7 @@ impl Serve {
         post(route::api_verify_package).head(route::api_package),
       )
       .route("/api/packages", get(route::api_packages))
-      .route(
-        "/api/revision/{revision}",
-        post(route::api_verify_revision).head(route::api_revision),
-      )
+      .route("/api/revision/{revision}", post(route::api_verify_revision))
       .route("/artwork/{fingerprint}", get(route::artwork))
       .route(
         "/artwork/{fingerprint}/thumbnail",

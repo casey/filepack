@@ -73,6 +73,8 @@ pub enum ServerError {
   Filesystem { source: FilesystemError },
   #[snafu(display("{source}"))]
   FingerprintParse { source: HexError },
+  #[snafu(display("head {revision} not found"))]
+  HeadNotFound { revision: Revision },
   #[snafu(display(
     "history cannot be accessed by fingerprint, browse package {fingerprint} by number or revision"
   ))]
@@ -166,8 +168,6 @@ pub enum ServerError {
   },
   #[snafu(display("revision {revision} not found"))]
   RevisionNotFound { revision: Revision },
-  #[snafu(display("revision {revision} is not the head of a package number"))]
-  RevisionNotHead { revision: Revision },
   #[snafu(display(
     "revision {revision} has no parent but package number {number} is at revision {head}"
   ))]
@@ -244,6 +244,7 @@ impl ServerError {
       Self::ArtworkNotFound { .. }
       | Self::DirectoryNotFound { .. }
       | Self::FileNotFound { .. }
+      | Self::HeadNotFound { .. }
       | Self::MediaItemDoesNotExist { .. }
       | Self::MediaType { .. }
       | Self::MediaTypeDoesNotHaveItems { .. }
@@ -255,8 +256,7 @@ impl ServerError {
       | Self::PackageNumberNotFound { .. }
       | Self::PageNotFound
       | Self::PlaceholderNotFound { .. }
-      | Self::RevisionNotFound { .. }
-      | Self::RevisionNotHead { .. } => StatusCode::NOT_FOUND,
+      | Self::RevisionNotFound { .. } => StatusCode::NOT_FOUND,
       Self::RevisionConflict { .. } => StatusCode::CONFLICT,
       Self::WriteForbidden => StatusCode::FORBIDDEN,
     }
