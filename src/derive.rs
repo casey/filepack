@@ -138,46 +138,6 @@ fn decode_from_str() {
 }
 
 #[test]
-fn decode_with_optional() {
-  fn decode_offset(decoder: &mut Decoder) -> DecodeResult<u64> {
-    Ok(decoder.integer()? + 1)
-  }
-
-  #[derive(Debug, Decode, PartialEq)]
-  struct Foo {
-    #[deco(decode_with = decode_offset)]
-    #[n(1)]
-    bar: Option<u64>,
-  }
-
-  assert_eq!(
-    Foo::decode_from_slice(&[0x82, 0x01, 0x63]).unwrap(),
-    Foo { bar: Some(100) },
-  );
-
-  assert_eq!(Foo::decode_from_slice(&[0x80]).unwrap(), Foo { bar: None });
-}
-
-#[test]
-fn decode_with_required() {
-  fn decode_offset(decoder: &mut Decoder) -> DecodeResult<u64> {
-    Ok(decoder.integer()? + 1)
-  }
-
-  #[derive(Debug, Decode, PartialEq)]
-  struct Foo {
-    #[deco(decode_with = decode_offset)]
-    #[n(1)]
-    bar: u64,
-  }
-
-  assert_eq!(
-    Foo::decode_from_slice(&[0x82, 0x01, 0x63]).unwrap(),
-    Foo { bar: 100 },
-  );
-}
-
-#[test]
 fn encode_display() {
   #[derive(EncodeDisplay)]
   struct Foo;
@@ -189,50 +149,6 @@ fn encode_display() {
   }
 
   assert_eq!(Foo.encode_to_vec(), [0x83, 0x66, 0x6f, 0x6f]);
-}
-
-#[test]
-fn encode_with_optional() {
-  struct Foreign(u64);
-
-  fn encode_foreign(value: &Foreign, encoder: &mut Encoder) {
-    (value.0 + 1).encode(encoder);
-  }
-
-  #[derive(Encode)]
-  struct Foo {
-    #[deco(encode_with = encode_foreign)]
-    #[n(1)]
-    bar: Option<Foreign>,
-  }
-
-  assert_eq!(
-    Foo {
-      bar: Some(Foreign(99)),
-    }
-    .encode_to_vec(),
-    [0x82, 0x01, 0x64],
-  );
-
-  assert_eq!(Foo { bar: None }.encode_to_vec(), [0x80]);
-}
-
-#[test]
-fn encode_with_required() {
-  struct Foreign(u64);
-
-  fn encode_foreign(value: &Foreign, encoder: &mut Encoder) {
-    (value.0 + 1).encode(encoder);
-  }
-
-  #[derive(Encode)]
-  struct Foo {
-    #[deco(encode_with = encode_foreign)]
-    #[n(1)]
-    bar: Foreign,
-  }
-
-  assert_eq!(Foo { bar: Foreign(99) }.encode_to_vec(), [0x82, 0x01, 0x64],);
 }
 
 #[test]
@@ -522,30 +438,6 @@ fn enum_unknown_variants() {
 }
 
 #[test]
-fn enum_variant_encode_with() {
-  struct Foreign(u64);
-
-  fn encode_foreign(value: &Foreign, encoder: &mut Encoder) {
-    (value.0 + 1).encode(encoder);
-  }
-
-  #[derive(Encode)]
-  enum Foo {
-    #[n(0)]
-    Bar {
-      #[deco(encode_with = encode_foreign)]
-      #[n(1)]
-      bar: Foreign,
-    },
-  }
-
-  assert_eq!(
-    Foo::Bar { bar: Foreign(99) }.encode_to_vec(),
-    [0x84, 0x00, 0x82, 0x01, 0x64],
-  );
-}
-
-#[test]
 fn magic() {
   #[derive(Debug, Decode, Encode, Magic, PartialEq)]
   #[deco(magic = MagicType::Archive)]
@@ -712,31 +604,6 @@ fn unknown_variants() {
   );
   assert_matches!(
     Bar::decode_from_slice_with_options(DecodeOptions::strict(), &bytes),
-    Err(DecodeError::InvalidDiscriminant {
-      discriminant: 1,
-      name: "foo",
-    }),
-  );
-}
-
-#[test]
-fn unknown_variants_custom_decoder() {
-  #[derive(Debug, Decode, PartialEq)]
-  enum Foo {
-    #[n(0)]
-    Bar,
-  }
-
-  #[derive(Debug, Decode, PartialEq)]
-  struct Bar {
-    #[deco(decode_with = Foo::decode)]
-    #[n(1)]
-    foo: Option<Foo>,
-  }
-
-  let bytes = BTreeMap::from([(1u64, vec![1u64])]).encode_to_vec();
-  assert_matches!(
-    Bar::decode_from_slice(&bytes),
     Err(DecodeError::InvalidDiscriminant {
       discriminant: 1,
       name: "foo",

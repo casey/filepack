@@ -612,26 +612,15 @@ mod tests {
           foo: Option<u64>,
         }
       },
-      "unknown field attribute `#[deco(strict)]`",
+      "`#[deco(...)]` attributes cannot be used on fields",
     );
 
     case(
       &syn::parse_quote! {
-        #[deco(decode_with = foo)]
+        #[deco(foo = bar)]
         struct Foo {}
       },
-      "unknown container attribute `#[deco(decode_with)]`",
-    );
-
-    case(
-      &syn::parse_quote! {
-        struct Foo {
-          #[deco(decode_with)]
-          #[n(1)]
-          foo: u64,
-        }
-      },
-      "`#[deco(decode_with)]` must be of the form `#[deco(decode_with = path)]`",
+      "unknown container attribute `#[deco(foo)]`",
     );
 
     case(
@@ -664,7 +653,7 @@ mod tests {
     case(
       &syn::parse_quote! {
         #[deco(transparent)]
-        struct Foo(#[deco(decode_with = bar)] u64);
+        struct Foo(#[deco(foo = bar)] u64);
       },
       "`#[deco(...)]` field attributes cannot be used with `#[deco(transparent)]`",
     );

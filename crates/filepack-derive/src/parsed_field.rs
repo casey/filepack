@@ -1,8 +1,6 @@
 use super::*;
 
 pub(crate) struct ParsedField<'a> {
-  pub(crate) decode_with: Option<Path>,
-  pub(crate) encode_with: Option<Path>,
   pub(crate) ident: &'a Ident,
   pub(crate) n: u64,
   pub(crate) optional: bool,
@@ -15,13 +13,10 @@ impl ParsedField<'_> {
       .map(|field| {
         let ident = field.ident;
         let n = field.n;
-        match (&field.decode_with, field.optional) {
-          (Some(path), true) => quote! { let #ident = map.optional_key_with(#n, #path)?; },
-          (Some(path), false) => quote! { let #ident = map.required_key_with(#n, #path)?; },
-          (None, true) => {
-            quote! { let #ident = map.optional_key_with(#n, Decode::decode_optional)?.flatten(); }
-          }
-          (None, false) => quote! { let #ident = map.required_key(#n)?; },
+        if field.optional {
+          quote! { let #ident = map.optional_key_with(#n, Decode::decode_optional)?.flatten(); }
+        } else {
+          quote! { let #ident = map.required_key(#n)?; }
         }
       })
       .collect()
@@ -33,13 +28,12 @@ impl ParsedField<'_> {
       .rev()
       .map(|field| {
         let n = field.n;
-        let base = receiver.base(field.ident);
-        let reference = receiver.reference(field.ident);
-        match (&field.encode_with, field.optional) {
-          (Some(path), true) => quote! { map.optional_item_with(#n, #base.as_ref(), #path); },
-          (Some(path), false) => quote! { map.item_with(#n, #reference, #path); },
-          (None, true) => quote! { map.optional_item(#n, #base.as_ref()); },
-          (None, false) => quote! { map.item(#n, #reference); },
+        if field.optional {
+          let base = receiver.base(field.ident);
+          quote! { map.optional_item(#n, #base.as_ref()); }
+        } else {
+          let reference = receiver.reference(field.ident);
+          quote! { map.item(#n, #reference); }
         }
       })
       .collect()

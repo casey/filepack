@@ -25,15 +25,7 @@ impl<'a, K: Clone + Decode<'a> + Debug + PartialOrd> MapDecoder<'a, K> {
   }
 
   pub(crate) fn key<V: Decode<'a>>(&mut self, key: K) -> DecodeResult<Option<V>> {
-    self.key_with(key, V::decode)
-  }
-
-  pub(crate) fn key_with<V>(
-    &mut self,
-    key: K,
-    decode: impl FnOnce(&mut Decoder<'a>) -> DecodeResult<V>,
-  ) -> DecodeResult<Option<V>> {
-    let Some((k, value)) = self.next_with(decode)? else {
+    let Some((k, value)) = self.next()? else {
       return Ok(None);
     };
 
@@ -43,13 +35,6 @@ impl<'a, K: Clone + Decode<'a> + Debug + PartialOrd> MapDecoder<'a, K> {
   }
 
   pub(crate) fn next<V: Decode<'a>>(&mut self) -> DecodeResult<Option<(K, V)>> {
-    self.next_with(V::decode)
-  }
-
-  pub(crate) fn next_with<V>(
-    &mut self,
-    decode: impl FnOnce(&mut Decoder<'a>) -> DecodeResult<V>,
-  ) -> DecodeResult<Option<(K, V)>> {
     if self.decoder.is_empty() {
       return Ok(None);
     }
@@ -62,7 +47,7 @@ impl<'a, K: Clone + Decode<'a> + Debug + PartialOrd> MapDecoder<'a, K> {
 
     self.last = Some(key.clone());
 
-    let value = decode(&mut self.decoder)?;
+    let value = V::decode(&mut self.decoder)?;
 
     Ok(Some((key, value)))
   }
@@ -116,22 +101,6 @@ impl<'a, K: Clone + Decode<'a> + Debug + PartialOrd> MapDecoder<'a, K> {
         key: key.to_string(),
       })
   }
-
-  #[cfg(test)]
-  pub(crate) fn required_key_with<V>(
-    &mut self,
-    key: K,
-    decode: impl FnOnce(&mut Decoder<'a>) -> DecodeResult<V>,
-  ) -> DecodeResult<V>
-  where
-    K: Clone + Display,
-  {
-    self
-      .key_with(key.clone(), decode)?
-      .with_context(|| decode_error::MissingField {
-        key: key.to_string(),
-      })
-  }
 }
 
 impl MapDecoder<'_, u64> {
@@ -180,14 +149,6 @@ mod tests {
   }
 
   #[test]
-  fn key_with() {
-    let mut decoder = Decoder::new(&[0x82, 0x00, 0x2a]);
-    let mut map = decoder.map::<u64>().unwrap();
-    assert_matches!(map.key_with(0, decode_offset), Ok(Some(43)));
-    map.finish().unwrap();
-  }
-
-  #[test]
   fn malformed_entries() {
     #[track_caller]
     fn case(bytes: &[u8], expected: &str) {
@@ -209,14 +170,6 @@ mod tests {
     let mut decoder = Decoder::new(&[0x80]);
     let mut map = decoder.map::<u64>().unwrap();
     assert_matches!(map.required_key::<u64>(0), Err(DecodeError::MissingField { key }) if key == "0");
-  }
-
-  #[test]
-  fn next_with() {
-    let mut decoder = Decoder::new(&[0x82, 0x00, 0x2a]);
-    let mut map = decoder.map::<u64>().unwrap();
-    assert_matches!(map.next_with(decode_offset), Ok(Some((0, 43))));
-    map.finish().unwrap();
   }
 
   #[test]
@@ -272,14 +225,6 @@ mod tests {
     let mut map = decoder.map::<u64>().unwrap();
     map.next::<u64>().unwrap();
     assert_matches!(map.next::<u64>(), Err(DecodeError::KeyOrder));
-  }
-
-  #[test]
-  fn required_key_with() {
-    let mut decoder = Decoder::new(&[0x82, 0x00, 0x2a]);
-    let mut map = decoder.map::<u64>().unwrap();
-    assert_matches!(map.required_key_with(0, decode_offset), Ok(43));
-    map.finish().unwrap();
   }
 
   #[test]
