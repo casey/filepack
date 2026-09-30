@@ -404,6 +404,11 @@ pub enum Error {
     path: DisplayPath,
     source: PathError,
   },
+  #[snafu(display("path not in Unicode NFC: `{}`", path.as_str().escape_default()))]
+  PathNormalization {
+    backtrace: Option<Backtrace>,
+    path: RelativePath,
+  },
   #[snafu(display("path not valid unicode: `{}`", path.display()))]
   PathUnicode {
     backtrace: Option<Backtrace>,

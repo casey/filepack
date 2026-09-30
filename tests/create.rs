@@ -367,6 +367,15 @@ fn no_files() {
 }
 
 #[test]
+fn non_nfc_path_error() {
+  Test::new()
+    .touch("foo/e\u{301}")
+    .args(["create"])
+    .stderr("error: path not in Unicode NFC: `foo/e\\u{301}`\n")
+    .failure();
+}
+
+#[test]
 fn non_unicode_path_error() {
   if cfg!(target_os = "macos") {
     return;
