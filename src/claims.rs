@@ -187,7 +187,10 @@ mod tests {
       Claims::verify(admin.public_key(), Some(AUDIENCE), 0, &token).unwrap_err(),
       AuthorizationError::Token {
         source: HexError::Decode {
-          source: DecodeError::Malformed(MalformedError::UnknownField { key: 3 }),
+          source: DecodeError::Unknown {
+            source: UnknownError::Field { key: 3 },
+            strict: true
+          },
           tag: Tag::Token,
         },
       },

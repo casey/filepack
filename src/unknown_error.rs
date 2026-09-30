@@ -8,6 +8,8 @@ pub enum UnknownError {
     discriminant: u64,
     name: &'static str,
   },
+  #[snafu(display("unknown field with key {key}"))]
+  Field { key: u64 },
   #[snafu(display("failed to parse language code"))]
   Language { source: LanguageError },
   #[snafu(display("unsupported version {version} for {name}"))]

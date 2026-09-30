@@ -176,9 +176,10 @@ fn enum_added_optional_field() {
   assert_eq!(Foo::decode_from_slice(&bytes).unwrap(), Foo::Bar);
   assert_matches!(
     Foo::decode_from_slice_with_options(DecodeOptions::strict(), &bytes),
-    Err(DecodeError::Malformed(MalformedError::UnknownField {
-      key: 1
-    })),
+    Err(DecodeError::Unknown {
+      source: UnknownError::Field { key: 1 },
+      strict: true
+    }),
   );
 
   assert_eq!(
@@ -429,9 +430,10 @@ fn enum_unknown_fields() {
   );
   assert_matches!(
     Foo::decode_from_slice_with_options(DecodeOptions::strict(), &bytes),
-    Err(DecodeError::Malformed(MalformedError::UnknownField {
-      key: 3
-    })),
+    Err(DecodeError::Unknown {
+      source: UnknownError::Field { key: 3 },
+      strict: true
+    }),
   );
 }
 
@@ -572,16 +574,18 @@ fn strict() {
 
   assert_matches!(
     Foo::decode_from_slice(&fields),
-    Err(DecodeError::Malformed(MalformedError::UnknownField {
-      key: u64::MAX
-    })),
+    Err(DecodeError::Unknown {
+      source: UnknownError::Field { key: u64::MAX },
+      strict: true
+    }),
   );
 
   assert_matches!(
     Bar::decode_from_slice(&Encoder::frame([vec![0], fields].concat())),
-    Err(DecodeError::Malformed(MalformedError::UnknownField {
-      key: u64::MAX
-    })),
+    Err(DecodeError::Unknown {
+      source: UnknownError::Field { key: u64::MAX },
+      strict: true
+    }),
   );
 }
 

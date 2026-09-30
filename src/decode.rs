@@ -185,9 +185,10 @@ mod tests {
 
     assert_matches!(
       Foo::decode_from_slice_with_options(DecodeOptions::strict(), &bytes),
-      Err(DecodeError::Malformed(MalformedError::UnknownField {
-        key: u64::MAX
-      })),
+      Err(DecodeError::Unknown {
+        source: UnknownError::Field { key: u64::MAX },
+        strict: true
+      }),
     );
   }
 
@@ -213,9 +214,10 @@ mod tests {
 
     assert_matches!(
       Vec::<Foo>::decode_from_slice_with_options(DecodeOptions::strict(), &bytes),
-      Err(DecodeError::Malformed(MalformedError::UnknownField {
-        key: 2
-      })),
+      Err(DecodeError::Unknown {
+        source: UnknownError::Field { key: 2 },
+        strict: true
+      }),
     );
   }
 
@@ -248,9 +250,10 @@ mod tests {
 
     assert_matches!(
       Bar::decode_from_slice_with_options(DecodeOptions::strict(), &bytes),
-      Err(DecodeError::Malformed(MalformedError::UnknownField {
-        key: 2
-      })),
+      Err(DecodeError::Unknown {
+        source: UnknownError::Field { key: 2 },
+        strict: true
+      }),
     );
   }
 }
