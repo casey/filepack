@@ -79,10 +79,9 @@ impl<'a, K: Clone + Decode<'a> + Debug + PartialOrd> MapDecoder<'a, K> {
   {
     let Some((k, value)) = self.next()? else {
       return Err(
-        malformed_error::MissingField {
+        MalformedError::MissingField {
           key: key.to_string(),
         }
-        .build()
         .into(),
       );
     };
@@ -96,10 +95,9 @@ impl<'a, K: Clone + Decode<'a> + Debug + PartialOrd> MapDecoder<'a, K> {
 impl MapDecoder<'_, u64> {
   pub(crate) fn decode_unknown(mut self) -> DecodeResult {
     while let Some((key, _value)) = self.next::<&[u8]>()? {
-      ensure!(
-        !self.decoder.strict(),
-        malformed_error::UnknownField { key }
-      );
+      if self.decoder.strict() {
+        return Err(self.decoder.unknown(UnknownError::Field { key }));
+      }
     }
     Ok(())
   }
@@ -113,7 +111,7 @@ impl MapDecoder<'_, u64> {
     Err(
       self
         .decoder
-        .unknown(unknown_error::Version { name, version }.build()),
+        .unknown(UnknownError::Version { name, version }),
     )
   }
 }
@@ -130,9 +128,10 @@ mod tests {
     let mut decoder = Decoder::new(&[0x82, 0x01, 0x2a]);
     assert_matches!(
       decoder.strict_map::<u64>().unwrap().decode_unknown(),
-      Err(DecodeError::Malformed(MalformedError::UnknownField {
-        key: 1
-      })),
+      Err(DecodeError::Unknown {
+        source: UnknownError::Field { key: 1 },
+        strict: true
+      }),
     );
   }
 

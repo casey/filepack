@@ -83,7 +83,7 @@ impl Head {
 
         Ok((end, len))
       }
-      Self::Reserved(value) => Err(malformed_error::Reserved { value }.build().into()),
+      Self::Reserved(value) => Err(MalformedError::Reserved { value }.into()),
     }
   }
 }

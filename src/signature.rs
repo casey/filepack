@@ -85,7 +85,10 @@ mod tests {
     assert_matches!(
       s.parse::<Attestation>().unwrap_err(),
       HexError::Decode {
-        source: DecodeError::Malformed(MalformedError::UnknownField { key: 4 }),
+        source: DecodeError::Unknown {
+          source: UnknownError::Field { key: 4 },
+          strict: true
+        },
         tag: Tag::Signature,
       },
     );

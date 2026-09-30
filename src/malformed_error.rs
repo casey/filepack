@@ -79,8 +79,6 @@ pub enum MalformedError {
   },
   #[snafu(display("string is not valid UTF-8"))]
   Unicode { source: Utf8Error },
-  #[snafu(display("unknown field with key {key}"))]
-  UnknownField { key: u64 },
   #[snafu(display("unsorted or duplicate array elements"))]
   Unsorted,
   #[snafu(display("failed to parse URL"))]
