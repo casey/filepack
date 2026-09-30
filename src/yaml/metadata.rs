@@ -197,7 +197,7 @@ mod tests {
         title: Foo
         homepage: not-a-valid-url
       ",
-      "homepage: relative URL without a base",
+      "homepage: URL is missing a scheme",
     );
     case(
       "
@@ -227,7 +227,7 @@ mod tests {
         package:
           homepage: :::invalid
       ",
-      "package.homepage: relative URL without a base",
+      "package.homepage: invalid URL scheme ``",
     );
     case(
       "

@@ -11,19 +11,34 @@ impl Deref for ServerUrl {
   }
 }
 
+impl ServerUrl {
+  fn check(s: &str) -> Result<Url, ServerUrlError> {
+    let url = s.parse::<Url>()?;
+
+    let scheme = url.scheme();
+
+    ensure! {
+      matches!(scheme, "http" | "https"),
+      server_url_error::Scheme { scheme },
+    }
+
+    Ok(url)
+  }
+}
+
 impl FromStr for ServerUrl {
-  type Err = UrlError;
+  type Err = ServerUrlError;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     let mut url = if re::SCHEME.is_match(s) {
-      CheckedUrl::check(s)?
+      Self::check(s)?
     } else {
-      let url = CheckedUrl::check(&format!("http://{s}"))?;
+      let url = Self::check(&format!("http://{s}"))?;
 
       if let Host::Domain(domain) = url.host().unwrap()
         && domain != "localhost"
       {
-        CheckedUrl::check(&format!("https://{s}"))?
+        Self::check(&format!("https://{s}"))?
       } else {
         url
       }
@@ -65,7 +80,7 @@ mod tests {
   fn scheme_error() {
     assert_eq!(
       "ftp://foo".parse::<ServerUrl>().unwrap_err(),
-      UrlError::Scheme {
+      ServerUrlError::Scheme {
         scheme: "ftp".into()
       },
     );
