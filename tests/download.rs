@@ -328,7 +328,7 @@ fn download_retrieves_package() {
     .success();
 
   let path = test.path().join("manifest.filepack");
-  let manifest = Manifest::load(Some(&path)).unwrap();
+  let expected = manifest(&path);
   let fingerprint = fingerprint(&path);
 
   test
@@ -358,8 +358,8 @@ fn download_retrieves_package() {
     .success();
 
   assert_eq!(
-    Manifest::load(Some(&downloaded.path().join("out/manifest.filepack"))).unwrap(),
-    manifest,
+    manifest(&downloaded.path().join("out/manifest.filepack")),
+    expected,
   );
 
   downloaded

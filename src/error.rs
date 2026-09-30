@@ -48,7 +48,7 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     source: reqwest::Error,
   },
-  #[snafu(display("colophon `{colophon}` must end in `.md`",))]
+  #[snafu(display("colophon `{colophon}` must end in `.md`"))]
   ColophonExtension {
     backtrace: Option<Backtrace>,
     colophon: RelativePath,
@@ -452,7 +452,7 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
-  #[snafu(display("readme `{readme}` must end in `.md`",))]
+  #[snafu(display("readme `{readme}` must end in `.md`"))]
   ReadmeExtension {
     backtrace: Option<Backtrace>,
     readme: RelativePath,

@@ -222,7 +222,7 @@ mod tests {
     let mut data = exif(6);
     data[10] = 0;
     data[11] = 1;
-    assert_eq!(Orientation::from_exif(&data).unwrap(), Orientation::new(),);
+    assert_eq!(Orientation::from_exif(&data).unwrap(), Orientation::new());
 
     assert_eq!(
       Orientation::from_exif(&[

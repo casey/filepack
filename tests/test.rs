@@ -333,7 +333,7 @@ impl Test {
     }
 
     for (path, expected) in &self.manifests {
-      let manifest = Manifest::load(Some(&self.join(path))).unwrap();
+      let manifest = manifest(&self.join(path));
       let actual = format!("{}\n", serde_json::to_string_pretty(&manifest).unwrap());
       expected.check(&actual, &format!("manifest `{path}`"));
     }

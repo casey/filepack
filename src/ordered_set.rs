@@ -71,7 +71,7 @@ mod tests {
   #[test]
   fn rejects_duplicate() {
     assert_matches!(
-      OrderedSet::<u64>::decode_from_slice(&vec![1u64, 1u64].encode_to_vec()),
+      OrderedSet::<u64>::decode_strict(&vec![1u64, 1u64].encode_to_vec()),
       Err(DecodeError::Malformed(MalformedError::DuplicateElement)),
     );
 
@@ -84,7 +84,7 @@ mod tests {
   #[test]
   fn rejects_empty() {
     assert_matches!(
-      OrderedSet::<u64>::decode_from_slice(&Vec::<u64>::new().encode_to_vec()),
+      OrderedSet::<u64>::decode_strict(&Vec::<u64>::new().encode_to_vec()),
       Err(DecodeError::Malformed(MalformedError::EmptySet)),
     );
 

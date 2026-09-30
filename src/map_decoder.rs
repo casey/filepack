@@ -95,7 +95,7 @@ impl<'a, K: Clone + Decode<'a> + Debug + PartialOrd> MapDecoder<'a, K> {
 impl MapDecoder<'_, u64> {
   pub(crate) fn decode_unknown(mut self) -> DecodeResult {
     while let Some((key, _value)) = self.next::<&[u8]>()? {
-      if self.decoder.strict() {
+      if self.decoder.is_strict() {
         return Err(self.decoder.unknown(UnknownError::Field { key }));
       }
     }
@@ -183,7 +183,7 @@ mod tests {
 
   #[test]
   fn optional_key_missing() {
-    let mut decoder = Decoder::new(&[0x82, 0x01, 0x2a]);
+    let mut decoder = Decoder::strict(&[0x82, 0x01, 0x2a]);
     let mut map = decoder.map::<u64>().unwrap();
     assert_matches!(map.optional_key::<u64>(0), Ok(None));
     map.next::<u64>().unwrap();
@@ -192,7 +192,7 @@ mod tests {
 
   #[test]
   fn optional_key_present() {
-    let mut decoder = Decoder::new(&[0x82, 0x00, 0x2a]);
+    let mut decoder = Decoder::strict(&[0x82, 0x00, 0x2a]);
     let mut map = decoder.map::<u64>().unwrap();
     assert_matches!(map.optional_key::<u64>(0), Ok(Some(42)));
     map.finish().unwrap();
@@ -201,7 +201,7 @@ mod tests {
   #[test]
   fn optional_key_strict() {
     let bytes = BTreeMap::from([(1u64, "xx")]).encode_to_vec();
-    let mut decoder = Decoder::with_options(DecodeOptions::strict(), &bytes);
+    let mut decoder = Decoder::strict(&bytes);
     let mut map = decoder.map::<u64>().unwrap();
     assert_matches!(
       map.optional_key::<Language>(1),
@@ -229,7 +229,7 @@ mod tests {
 
   #[test]
   fn optional_keys_preserve_position() {
-    let mut decoder = Decoder::new(&[0x84, 1, 2, 3, 4]);
+    let mut decoder = Decoder::strict(&[0x84, 1, 2, 3, 4]);
     let mut map = decoder.map::<u64>().unwrap();
     assert_eq!(map.optional_key::<u64>(0).unwrap(), None);
     assert_eq!(map.optional_key::<u64>(1).unwrap(), Some(2));
@@ -286,7 +286,7 @@ mod tests {
       }),
     );
 
-    let mut decoder = Decoder::with_options(DecodeOptions::strict(), &[0x82, 0x00, 0x2a]);
+    let mut decoder = Decoder::strict(&[0x82, 0x00, 0x2a]);
     let mut map = decoder.map::<u64>().unwrap();
     assert_matches!(
       map.version("foo"),

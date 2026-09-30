@@ -82,6 +82,10 @@ impl<'a> Decoder<'a> {
     self.position == self.buffer.len()
   }
 
+  pub(crate) fn is_strict(&self) -> bool {
+    self.options.strict
+  }
+
   pub(crate) fn magic(&mut self, expected: MagicType) -> DecodeResult {
     let actual = self.bytes()?;
     if actual != magic::BYTES {
@@ -123,8 +127,9 @@ impl<'a> Decoder<'a> {
     Ok((integer >> 1).cast_signed() ^ -(integer & 1).cast_signed())
   }
 
-  pub(crate) fn strict(&self) -> bool {
-    self.options.strict
+  #[cfg(test)]
+  pub(crate) fn strict(buffer: &'a [u8]) -> Self {
+    Self::with_options(DecodeOptions::strict(), buffer)
   }
 
   #[cfg(test)]
@@ -149,7 +154,7 @@ impl<'a> Decoder<'a> {
   pub(crate) fn unknown(&self, source: UnknownError) -> DecodeError {
     DecodeError::Unknown {
       source,
-      strict: self.strict(),
+      strict: self.is_strict(),
     }
   }
 
@@ -273,7 +278,7 @@ mod tests {
     #[track_caller]
     fn case<'a, T: Debug + Decode<'a>>(bytes: &'a [u8]) {
       assert_matches!(
-        T::decode_from_slice(bytes),
+        T::decode_strict(bytes),
         Err(DecodeError::Malformed(MalformedError::IntegerRange { .. })),
       );
     }

@@ -4,7 +4,7 @@ pub struct DecodeOptions {
 }
 
 impl DecodeOptions {
-  pub(crate) fn strict() -> Self {
+  pub fn strict() -> Self {
     Self { strict: true }
   }
 }
