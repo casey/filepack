@@ -55,10 +55,7 @@ pub(crate) fn assert_argument_conflict<T: Parser>(args: &[&str], argument: &str,
 pub(crate) fn assert_deco<T: Debug + DecodeOwned + Encode + PartialEq>(value: T, deco: &str) {
   let buffer = value.encode_to_vec();
   assert_eq!(hex::encode(&buffer), deco);
-  let mut decoder = Decoder::new(&buffer);
-  let decoded = T::decode(&mut decoder).unwrap();
-  decoder.finish().unwrap();
-  assert_eq!(decoded, value);
+  assert_eq!(T::decode_strict(&buffer).unwrap(), value);
 }
 
 #[track_caller]
@@ -71,11 +68,7 @@ pub(crate) fn assert_deco_eq<T: Debug + DecodeOwned + Encode + PartialEq>(
 
 #[track_caller]
 pub(crate) fn assert_encoding<T: Debug + DecodeOwned + Encode + PartialEq>(value: T) {
-  let buffer = value.encode_to_vec();
-  let mut decoder = Decoder::new(&buffer);
-  let decoded = T::decode(&mut decoder).unwrap();
-  decoder.finish().unwrap();
-  assert_eq!(decoded, value);
+  assert_eq!(T::decode_strict(&value.encode_to_vec()).unwrap(), value);
 }
 
 #[track_caller]

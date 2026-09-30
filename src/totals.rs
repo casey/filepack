@@ -200,7 +200,7 @@ mod tests {
     };
 
     assert_matches!(
-      Totals::decode_from_slice(&totals.encode_to_vec()),
+      Totals::decode_strict(&totals.encode_to_vec()),
       Err(DecodeError::Malformed(MalformedError::Totals {
         source: TotalsError::Overflow
       })),

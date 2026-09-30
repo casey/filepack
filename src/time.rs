@@ -123,7 +123,7 @@ mod tests {
     #[track_caller]
     fn case(value: Time, expected: TimeError) {
       assert_matches!(
-        Time::decode_from_slice(&value.encode_to_vec()),
+        Time::decode_strict(&value.encode_to_vec()),
         Err(DecodeError::Malformed(MalformedError::Time { source })) if source == expected,
       );
     }

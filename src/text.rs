@@ -104,28 +104,28 @@ mod tests {
   #[test]
   fn decode_error() {
     assert_matches!(
-      Text::decode(&mut Decoder::new(&"foo\tbar".encode_to_vec())),
+      Text::decode(&mut Decoder::strict(&"foo\tbar".encode_to_vec())),
       Err(DecodeError::Malformed(MalformedError::Text {
         source: TextError::Control { character: '\t' }
       })),
     );
 
     assert_matches!(
-      Text::decode(&mut Decoder::new(&"".encode_to_vec())),
+      Text::decode(&mut Decoder::strict(&"".encode_to_vec())),
       Err(DecodeError::Malformed(MalformedError::Text {
         source: TextError::Empty,
       })),
     );
 
     assert_matches!(
-      Text::decode(&mut Decoder::new(&" foo".encode_to_vec())),
+      Text::decode(&mut Decoder::strict(&" foo".encode_to_vec())),
       Err(DecodeError::Malformed(MalformedError::Text {
         source: TextError::Whitespace,
       })),
     );
 
     assert_matches!(
-      Text::decode(&mut Decoder::new(&"foo ".encode_to_vec())),
+      Text::decode(&mut Decoder::strict(&"foo ".encode_to_vec())),
       Err(DecodeError::Malformed(MalformedError::Text {
         source: TextError::Whitespace,
       })),

@@ -89,7 +89,7 @@ mod tests {
   fn encoding() {
     assert_encoding("foo".parse::<ComponentBuf>().unwrap());
     let empty = "".encode_to_vec();
-    let mut decoder = Decoder::new(&empty);
+    let mut decoder = Decoder::strict(&empty);
     assert_matches!(
       ComponentBuf::decode(&mut decoder),
       Err(DecodeError::Malformed(MalformedError::Component {

@@ -72,7 +72,7 @@ mod tests {
   #[test]
   fn decode_error() {
     assert_matches!(
-      CheckedUrl::decode(&mut Decoder::new(&"foo".encode_to_vec())),
+      CheckedUrl::decode(&mut Decoder::strict(&"foo".encode_to_vec())),
       Err(DecodeError::Malformed(MalformedError::Url {
         source: UrlError::MissingScheme,
       })),
@@ -89,7 +89,7 @@ mod tests {
     );
 
     assert_matches!(
-      CheckedUrl::decode(&mut Decoder::with_options(DecodeOptions::strict(), &bytes)),
+      CheckedUrl::decode(&mut Decoder::strict(&bytes)),
       Err(DecodeError::Unknown {
         source: UnknownError::Scheme { scheme },
         strict: true,

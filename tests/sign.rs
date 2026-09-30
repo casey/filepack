@@ -118,7 +118,7 @@ fn preserves_embedded_files() {
     .args(["sign", "pkg"])
     .success();
 
-  let manifest = Manifest::load(Some(&test.path().join("pkg/manifest.filepack"))).unwrap();
+  let manifest = manifest(&test.path().join("pkg/manifest.filepack"));
   assert!(!manifest.embedded.is_empty());
 }
 
@@ -204,11 +204,8 @@ fn updates_manifest_with_signature() {
     .success();
 
   let manifest_path = test.path().join("foo/manifest.filepack");
-  let fingerprint = Loader::load(Some(&manifest_path))
-    .unwrap()
-    .fingerprint()
-    .unwrap();
-  let manifest = Manifest::load(Some(&manifest_path)).unwrap();
+  let fingerprint = fingerprint(&manifest_path);
+  let manifest = manifest(&manifest_path);
   assert!(
     manifest
       .signatures
@@ -240,11 +237,8 @@ fn with_timestamp() {
     .success();
 
   let manifest_path = test.path().join("foo/manifest.filepack");
-  let fingerprint = Loader::load(Some(&manifest_path))
-    .unwrap()
-    .fingerprint()
-    .unwrap();
-  let manifest = Manifest::load(Some(&manifest_path)).unwrap();
+  let fingerprint = fingerprint(&manifest_path);
+  let manifest = manifest(&manifest_path);
 
   let time = manifest
     .signatures

@@ -78,7 +78,11 @@ impl Manifest {
   }
 
   pub fn load(path: Option<&Utf8Path>) -> Result<Self> {
-    Loader::load(path)?.unpack()
+    Self::load_with_options(DecodeOptions::default(), path)
+  }
+
+  pub fn load_with_options(options: DecodeOptions, path: Option<&Utf8Path>) -> Result<Self> {
+    Loader::load_with_options(options, path)?.unpack()
   }
 
   pub fn save(&self, path: &Utf8Path) -> Result {

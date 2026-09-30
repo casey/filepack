@@ -23,11 +23,7 @@ fn invalid_signature_error() {
 
   let manifest_path = test.path().join("foo/manifest.filepack");
 
-  let fingerprint = Loader::load(Some(&manifest_path))
-    .unwrap()
-    .fingerprint()
-    .unwrap()
-    .to_string();
+  let fingerprint = fingerprint(&manifest_path).to_string();
 
   let hex = &fingerprint["package1".len()..];
 
@@ -37,7 +33,7 @@ fn invalid_signature_error() {
     &hex[1..],
   );
 
-  let mut manifest = Manifest::load(Some(&manifest_path)).unwrap();
+  let mut manifest = manifest(&manifest_path);
 
   let signature = manifest.signatures.pop_first().unwrap().to_string();
 

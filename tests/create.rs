@@ -280,7 +280,7 @@ fn metadata_deco_is_embedded_in_manifest_archive() {
 
   let deco = fs::read(test.path().join("metadata.filemeta")).unwrap();
 
-  let manifest = Manifest::load(Some(&test.path().join("manifest.filepack"))).unwrap();
+  let manifest = manifest(&test.path().join("manifest.filepack"));
 
   assert_eq!(
     manifest.embedded,
@@ -426,11 +426,8 @@ fn sign_creates_valid_signature() {
     .success();
 
   let manifest_path = test.path().join("foo/manifest.filepack");
-  let fingerprint = Loader::load(Some(&manifest_path))
-    .unwrap()
-    .fingerprint()
-    .unwrap();
-  let manifest = Manifest::load(Some(&manifest_path)).unwrap();
+  let fingerprint = fingerprint(&manifest_path);
+  let manifest = manifest(&manifest_path);
 
   let public_key = test.read_public_key("keychain/master.public");
 
@@ -464,7 +461,7 @@ fn sign_with_named_key() {
     .success();
 
   let manifest_path = test.path().join("foo/manifest.filepack");
-  let manifest = Manifest::load(Some(&manifest_path)).unwrap();
+  let manifest = manifest(&manifest_path);
 
   let public_key = test.read_public_key("keychain/deploy.public");
 
@@ -495,18 +492,15 @@ fn sign_with_timestamp() {
     .success();
 
   let manifest_path = test.path().join("foo/manifest.filepack");
-  let fingerprint = Loader::load(Some(&manifest_path))
-    .unwrap()
-    .fingerprint()
-    .unwrap();
-  let manifest = Manifest::load(Some(&manifest_path)).unwrap();
+  let fingerprint = fingerprint(&manifest_path);
+  let manifest = manifest(&manifest_path);
 
   let public_key = test.read_public_key("keychain/master.public");
 
   assert_eq!(manifest.signatures.len(), 1);
 
   let signature = manifest.signatures.first().unwrap();
-  assert_eq!(signature.public_key(), public_key,);
+  assert_eq!(signature.public_key(), public_key);
 
   let timestamp = signature.verify(fingerprint).unwrap().timestamp.unwrap();
   let now = SystemTime::now()

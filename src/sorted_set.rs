@@ -49,7 +49,7 @@ mod tests {
   #[test]
   fn rejects_duplicate() {
     assert_matches!(
-      SortedSet::<u64>::decode_from_slice(&vec![1u64, 1u64].encode_to_vec()),
+      SortedSet::<u64>::decode_strict(&vec![1u64, 1u64].encode_to_vec()),
       Err(DecodeError::Malformed(MalformedError::Unsorted)),
     );
   }
@@ -57,7 +57,7 @@ mod tests {
   #[test]
   fn rejects_unsorted() {
     assert_matches!(
-      SortedSet::<u64>::decode_from_slice(&vec![2u64, 1u64].encode_to_vec()),
+      SortedSet::<u64>::decode_strict(&vec![2u64, 1u64].encode_to_vec()),
       Err(DecodeError::Malformed(MalformedError::Unsorted)),
     );
   }

@@ -168,8 +168,7 @@ fn signatures_are_not_uploaded() {
     .success();
 
   let path = test.path().join("manifest.filepack");
-  let manifest = Manifest::load(Some(&path)).unwrap();
-  assert_eq!(manifest.signatures.len(), 1);
+  assert_eq!(manifest(&path).signatures.len(), 1);
 
   let fingerprint = fingerprint(&path);
 
@@ -195,8 +194,7 @@ fn signatures_are_not_uploaded() {
     .success();
 
   assert!(
-    Manifest::load(Some(&downloaded.path().join("out/manifest.filepack")))
-      .unwrap()
+    manifest(&downloaded.path().join("out/manifest.filepack"))
       .signatures
       .is_empty(),
   );
@@ -491,7 +489,7 @@ fn upload_package_serves_package_html() {
     .bytes()
     .unwrap();
 
-  let directory = Directory::decode(&mut Decoder::new(&deco)).unwrap();
+  let directory = Directory::decode_strict(&deco).unwrap();
 
   server.assert_page(
     &format!("/package/{fingerprint}"),
@@ -581,7 +579,7 @@ fn upload_package_uploads_files() {
     .bytes()
     .unwrap();
 
-  let directory = Directory::decode(&mut Decoder::new(&deco)).unwrap();
+  let directory = Directory::decode_strict(&deco).unwrap();
 
   server.assert_page(
     &format!("/directory/{root}"),

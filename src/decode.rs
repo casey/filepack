@@ -16,6 +16,10 @@ pub trait Decode<'a>: Sized {
     decoder.finish()?;
     Ok(value)
   }
+
+  fn decode_strict(buffer: &'a [u8]) -> DecodeResult<Self> {
+    Self::decode_from_slice_with_options(DecodeOptions::strict(), buffer)
+  }
 }
 
 impl<'a, K, V> Decode<'a> for BTreeMap<K, V>
@@ -137,7 +141,7 @@ mod tests {
   #[test]
   fn borrowed_bytes() {
     assert_eq!(
-      <&[u8]>::decode_from_slice(&[0x82, 0x01, 0x02]).unwrap(),
+      <&[u8]>::decode_strict(&[0x82, 0x01, 0x02]).unwrap(),
       [0x01, 0x02],
     );
   }
@@ -145,7 +149,7 @@ mod tests {
   #[test]
   fn borrowed_str() {
     assert_eq!(
-      <&str>::decode_from_slice(&[0x83, 0x66, 0x6f, 0x6f]).unwrap(),
+      <&str>::decode_strict(&[0x83, 0x66, 0x6f, 0x6f]).unwrap(),
       "foo",
     );
   }
@@ -184,7 +188,7 @@ mod tests {
     assert_eq!(Foo::decode_from_slice(&bytes).unwrap(), value);
 
     assert_matches!(
-      Foo::decode_from_slice_with_options(DecodeOptions::strict(), &bytes),
+      Foo::decode_strict(&bytes),
       Err(DecodeError::Unknown {
         source: UnknownError::Field { key: u64::MAX },
         strict: true
@@ -203,8 +207,7 @@ mod tests {
     let foo = vec![Foo { foo: 1 }];
 
     assert_eq!(
-      Vec::<Foo>::decode_from_slice_with_options(DecodeOptions::strict(), &foo.encode_to_vec())
-        .unwrap(),
+      Vec::<Foo>::decode_strict(&foo.encode_to_vec()).unwrap(),
       foo,
     );
 
@@ -213,7 +216,7 @@ mod tests {
     assert_eq!(Vec::<Foo>::decode_from_slice(&bytes).unwrap(), foo);
 
     assert_matches!(
-      Vec::<Foo>::decode_from_slice_with_options(DecodeOptions::strict(), &bytes),
+      Vec::<Foo>::decode_strict(&bytes),
       Err(DecodeError::Unknown {
         source: UnknownError::Field { key: 2 },
         strict: true
@@ -239,17 +242,14 @@ mod tests {
       bar: Foo { foo: 1 },
     };
 
-    assert_eq!(
-      Bar::decode_from_slice_with_options(DecodeOptions::strict(), &bar.encode_to_vec()).unwrap(),
-      bar,
-    );
+    assert_eq!(Bar::decode_strict(&bar.encode_to_vec()).unwrap(), bar);
 
     let bytes = BTreeMap::from([(1u64, BTreeMap::from([(1u64, 1u64), (2, 2)]))]).encode_to_vec();
 
     assert_eq!(Bar::decode_from_slice(&bytes).unwrap(), bar);
 
     assert_matches!(
-      Bar::decode_from_slice_with_options(DecodeOptions::strict(), &bytes),
+      Bar::decode_strict(&bytes),
       Err(DecodeError::Unknown {
         source: UnknownError::Field { key: 2 },
         strict: true

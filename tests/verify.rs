@@ -534,7 +534,7 @@ fn signature_fingerprint_mismatch() {
     .success();
 
   let manifest_path = test.path().join("foo/manifest.filepack");
-  let manifest = Manifest::load(Some(&manifest_path)).unwrap();
+  let manifest = manifest(&manifest_path);
 
   let signature = manifest.signatures.iter().next().unwrap().to_string();
 

@@ -351,7 +351,7 @@ mod tests {
       let lint = expected.discriminant();
       let path = path.parse::<RelativePath>().unwrap();
 
-      assert_eq!(path.lint(&[lint].into()).unwrap(), expected,);
+      assert_eq!(path.lint(&[lint].into()).unwrap(), expected);
 
       assert_eq!(path.lint(&[].into()), None);
     }

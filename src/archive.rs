@@ -117,7 +117,7 @@ impl Archive {
 
   #[cfg(test)]
   pub(crate) fn unpack(&self) -> Result<Manifest, ArchiveError> {
-    Ok(self.unpack_with_totals(DecodeOptions::default())?.0)
+    self.unpack_with_options(DecodeOptions::strict())
   }
 
   fn unpack_directory(
@@ -316,8 +316,7 @@ mod tests {
       signatures: BTreeSet::new(),
     };
 
-    let archive = Archive::pack(&manifest).unwrap();
-    assert_eq!(archive.unpack().unwrap(), manifest);
+    round_trip(&manifest);
   }
 
   #[test]
@@ -559,9 +558,14 @@ mod tests {
       signatures: BTreeSet::from([private_key.sign(statement)]),
     };
 
-    let archive = Archive::pack(&manifest).unwrap();
+    round_trip(&manifest);
+  }
 
-    assert_eq!(archive.unpack().unwrap(), manifest);
+  #[track_caller]
+  fn round_trip(manifest: &Manifest) {
+    let bytes = Archive::pack(manifest).unwrap().encode_to_vec();
+    let archive = Archive::decode_strict(&bytes).unwrap();
+    assert_eq!(archive.unpack().unwrap(), *manifest);
   }
 
   #[test]
@@ -571,10 +575,7 @@ mod tests {
       package: DirectoryTree::new(),
       signatures: BTreeSet::new(),
     };
-    let archive = Archive::pack(&manifest).unwrap();
-    let bytes = archive.encode_to_vec();
-    let decoded = Archive::decode_from_slice(&bytes).unwrap();
-    assert_eq!(decoded.unpack().unwrap(), manifest);
+    round_trip(&manifest);
   }
 
   #[test]
@@ -590,19 +591,13 @@ mod tests {
       signatures: BTreeSet::new(),
     };
 
-    let archive = Archive::pack(&manifest).unwrap();
-    let bytes = archive.encode_to_vec();
-    let decoded = Archive::decode_from_slice(&bytes).unwrap();
-    assert_eq!(decoded.unpack().unwrap(), manifest);
+    round_trip(&manifest);
   }
 
   #[test]
   fn round_trip_encode_decode() {
     let manifest = manifest();
-    let archive = Archive::pack(&manifest).unwrap();
-    let bytes = archive.encode_to_vec();
-    let decoded = Archive::decode_from_slice(&bytes).unwrap();
-    assert_eq!(decoded.unpack().unwrap(), manifest);
+    round_trip(&manifest);
   }
 
   #[test]
@@ -621,10 +616,7 @@ mod tests {
       signatures: BTreeSet::new(),
     };
 
-    let archive = Archive::pack(&manifest).unwrap();
-    let bytes = archive.encode_to_vec();
-    let decoded = Archive::decode_from_slice(&bytes).unwrap();
-    assert_eq!(decoded.unpack().unwrap(), manifest);
+    round_trip(&manifest);
   }
 
   #[test]
@@ -645,17 +637,13 @@ mod tests {
       signatures: BTreeSet::new(),
     };
 
-    let archive = Archive::pack(&manifest).unwrap();
-    let bytes = archive.encode_to_vec();
-    let decoded = Archive::decode_from_slice(&bytes).unwrap();
-    assert_eq!(decoded.unpack().unwrap(), manifest);
+    round_trip(&manifest);
   }
 
   #[test]
   fn round_trip_pack_unpack() {
     let manifest = manifest();
-    let archive = Archive::pack(&manifest).unwrap();
-    assert_eq!(archive.unpack().unwrap(), manifest);
+    round_trip(&manifest);
   }
 
   #[test]
@@ -681,10 +669,7 @@ mod tests {
       signatures: BTreeSet::from([signature]),
     };
 
-    let archive = Archive::pack(&manifest).unwrap();
-    let bytes = archive.encode_to_vec();
-    let decoded = Archive::decode_from_slice(&bytes).unwrap();
-    assert_eq!(decoded.unpack().unwrap(), manifest);
+    round_trip(&manifest);
   }
 
   #[test]
@@ -880,7 +865,9 @@ mod tests {
     let archive = builder.build(root.hash);
 
     assert_eq!(
-      archive.unpack().unwrap(),
+      archive
+        .unpack_with_options(DecodeOptions::default())
+        .unwrap(),
       Manifest {
         embedded: BTreeMap::new(),
         package: DirectoryTree::new(),
@@ -889,7 +876,7 @@ mod tests {
     );
 
     assert_matches!(
-      archive.unpack_with_options(DecodeOptions::strict()),
+      archive.unpack(),
       Err(ArchiveError::UnexpectedEntries { names }) if names.to_string() == "`bar`, `foo`",
     );
   }

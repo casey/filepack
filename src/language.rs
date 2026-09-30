@@ -251,7 +251,7 @@ mod tests {
     );
 
     assert_matches!(
-      Language::decode(&mut Decoder::with_options(DecodeOptions::strict(), &bytes)),
+      Language::decode(&mut Decoder::strict(&bytes)),
       Err(DecodeError::Unknown {
         source: UnknownError::Language {
           source: LanguageError::Code { code },
@@ -306,7 +306,7 @@ mod tests {
     );
 
     assert_matches!(
-      Foo::decode_from_slice_with_options(DecodeOptions::strict(), &bytes),
+      Foo::decode_strict(&bytes),
       Err(DecodeError::Unknown {
         source: UnknownError::Language {
           source: LanguageError::Code { code },

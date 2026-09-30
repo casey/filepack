@@ -733,7 +733,7 @@ mod tests {
       Some("bar".parse().unwrap()),
     );
 
-    assert_eq!(title("foo.jpg", &JpegBuilder::new().build()).unwrap(), None,);
+    assert_eq!(title("foo.jpg", &JpegBuilder::new().build()).unwrap(), None);
 
     assert_matches_regex!(
       title("foo.jpg", &JpegBuilder::new().xmp(b"<foo").build())
