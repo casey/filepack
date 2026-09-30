@@ -16,10 +16,6 @@ pub trait Decode<'a>: Sized {
     decoder.finish()?;
     Ok(value)
   }
-
-  fn decode_optional(decoder: &mut Decoder<'a>) -> DecodeResult<Option<Self>> {
-    Self::decode(decoder).map(Some)
-  }
 }
 
 impl<'a, K, V> Decode<'a> for BTreeMap<K, V>
@@ -76,10 +72,12 @@ impl<'a, T: Decode<'a>> Decode<'a> for Vec<T> {
 
 impl Decode<'_> for i32 {
   fn decode(decoder: &mut Decoder) -> DecodeResult<Self> {
-    decoder
-      .signed_integer()?
-      .try_into()
-      .context(decode_error::IntegerRange)
+    Ok(
+      decoder
+        .signed_integer()?
+        .try_into()
+        .context(malformed_error::IntegerRange)?,
+    )
   }
 }
 
@@ -119,7 +117,7 @@ impl<const N: usize, const M: usize> Decode<'_> for [[u8; N]; M] {
 
     ensure! {
       bytes.len() == M * N,
-      decode_error::ArrayLength {
+      malformed_error::ArrayLength {
         actual: bytes.len(),
         expected: M * N,
       }
@@ -156,7 +154,7 @@ mod tests {
   fn decode_from_slice_errors_on_trailing_bytes() {
     assert_matches!(
       u64::decode_from_slice(&[0x00, 0x00]),
-      Err(DecodeError::TrailingBytes),
+      Err(DecodeError::Malformed(MalformedError::TrailingBytes)),
     );
   }
 
@@ -164,10 +162,10 @@ mod tests {
   fn nested_byte_array_length_mismatch() {
     assert_matches!(
       <[[u8; 2]; 2]>::decode_from_slice(&[0x83, 1, 2, 3]),
-      Err(DecodeError::ArrayLength {
+      Err(DecodeError::Malformed(MalformedError::ArrayLength {
         actual: 3,
         expected: 4,
-      }),
+      })),
     );
   }
 
@@ -187,7 +185,9 @@ mod tests {
 
     assert_matches!(
       Foo::decode_from_slice_with_options(DecodeOptions::strict(), &bytes),
-      Err(DecodeError::UnknownField { key: u64::MAX }),
+      Err(DecodeError::Malformed(MalformedError::UnknownField {
+        key: u64::MAX
+      })),
     );
   }
 
@@ -213,7 +213,9 @@ mod tests {
 
     assert_matches!(
       Vec::<Foo>::decode_from_slice_with_options(DecodeOptions::strict(), &bytes),
-      Err(DecodeError::UnknownField { key: 2 }),
+      Err(DecodeError::Malformed(MalformedError::UnknownField {
+        key: 2
+      })),
     );
   }
 
@@ -246,7 +248,9 @@ mod tests {
 
     assert_matches!(
       Bar::decode_from_slice_with_options(DecodeOptions::strict(), &bytes),
-      Err(DecodeError::UnknownField { key: 2 }),
+      Err(DecodeError::Malformed(MalformedError::UnknownField {
+        key: 2
+      })),
     );
   }
 }

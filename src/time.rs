@@ -89,12 +89,12 @@ impl FromStr for Time {
 }
 
 impl Validate for Time {
-  fn validate(&self) -> DecodeResult {
+  fn validate(&self) -> Result<(), MalformedError> {
     match self {
       Self::Day { days } => Self::date(*days).map(|_| ()),
       Self::Year { .. } => Ok(()),
     }
-    .context(decode_error::Time)
+    .context(malformed_error::Time)
   }
 }
 
@@ -124,7 +124,7 @@ mod tests {
     fn case(value: Time, expected: TimeError) {
       assert_matches!(
         Time::decode_from_slice(&value.encode_to_vec()),
-        Err(DecodeError::Time { source }) if source == expected,
+        Err(DecodeError::Malformed(MalformedError::Time { source })) if source == expected,
       );
     }
 
@@ -147,9 +147,12 @@ mod tests {
 
     assert_matches!(
       Time::decode_from_slice(&[0x82, 0x02, 0x80]),
-      Err(DecodeError::InvalidDiscriminant {
-        discriminant: 2,
-        name: "time",
+      Err(DecodeError::Unknown {
+        source: UnknownError::Discriminant {
+          discriminant: 2,
+          name: "time",
+        },
+        strict: false
       }),
     );
   }

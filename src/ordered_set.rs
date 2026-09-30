@@ -41,7 +41,7 @@ impl<'a, T> IntoIterator for &'a OrderedSet<T> {
 }
 
 impl<T: Ord> TryFrom<Vec<T>> for OrderedSet<T> {
-  type Error = DecodeError;
+  type Error = MalformedError;
 
   fn try_from(elements: Vec<T>) -> Result<Self, Self::Error> {
     let set = Self(elements);
@@ -51,13 +51,13 @@ impl<T: Ord> TryFrom<Vec<T>> for OrderedSet<T> {
 }
 
 impl<T: Ord> Validate for OrderedSet<T> {
-  fn validate(&self) -> DecodeResult {
-    ensure!(!self.0.is_empty(), decode_error::EmptySet);
+  fn validate(&self) -> Result<(), MalformedError> {
+    ensure!(!self.0.is_empty(), malformed_error::EmptySet);
 
     let mut seen = BTreeSet::new();
 
     for element in &self.0 {
-      ensure!(seen.insert(element), decode_error::Duplicate);
+      ensure!(seen.insert(element), malformed_error::Duplicate);
     }
 
     Ok(())
@@ -72,12 +72,12 @@ mod tests {
   fn rejects_duplicate() {
     assert_matches!(
       OrderedSet::<u64>::decode_from_slice(&vec![1u64, 1u64].encode_to_vec()),
-      Err(DecodeError::Duplicate),
+      Err(DecodeError::Malformed(MalformedError::Duplicate)),
     );
 
     assert_matches!(
       OrderedSet::try_from(vec![1u64, 1u64]),
-      Err(DecodeError::Duplicate),
+      Err(MalformedError::Duplicate),
     );
   }
 
@@ -85,12 +85,12 @@ mod tests {
   fn rejects_empty() {
     assert_matches!(
       OrderedSet::<u64>::decode_from_slice(&Vec::<u64>::new().encode_to_vec()),
-      Err(DecodeError::EmptySet),
+      Err(DecodeError::Malformed(MalformedError::EmptySet)),
     );
 
     assert_matches!(
       OrderedSet::try_from(Vec::<u64>::new()),
-      Err(DecodeError::EmptySet),
+      Err(MalformedError::EmptySet),
     );
   }
 

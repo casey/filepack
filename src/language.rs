@@ -218,15 +218,11 @@ impl FromStr for Language {
 
 impl Decode<'_> for Language {
   fn decode(decoder: &mut Decoder) -> DecodeResult<Self> {
-    decoder.text()?.parse().context(decode_error::Language)
-  }
-
-  fn decode_optional(decoder: &mut Decoder) -> DecodeResult<Option<Self>> {
-    if decoder.strict() {
-      Self::decode(decoder).map(Some)
-    } else {
-      Ok(decoder.text()?.parse().ok())
-    }
+    decoder
+      .text()?
+      .parse()
+      .context(unknown_error::Language)
+      .map_err(|source| decoder.unknown(source))
   }
 }
 
@@ -242,9 +238,26 @@ mod tests {
 
   #[test]
   fn decode_error() {
+    let bytes = "xx".encode_to_vec();
+
     assert_matches!(
-      Language::decode(&mut Decoder::new(&"xx".encode_to_vec())),
-      Err(DecodeError::Language { source: LanguageError::Code { code }, }) if code == "xx",
+      Language::decode(&mut Decoder::new(&bytes)),
+      Err(DecodeError::Unknown {
+        source: UnknownError::Language {
+          source: LanguageError::Code { code },
+        },
+        strict: false,
+      }) if code == "xx",
+    );
+
+    assert_matches!(
+      Language::decode(&mut Decoder::with_options(DecodeOptions::strict(), &bytes)),
+      Err(DecodeError::Unknown {
+        source: UnknownError::Language {
+          source: LanguageError::Code { code },
+        },
+        strict: true,
+      }) if code == "xx",
     );
   }
 
@@ -294,7 +307,12 @@ mod tests {
 
     assert_matches!(
       Foo::decode_from_slice_with_options(DecodeOptions::strict(), &bytes),
-      Err(DecodeError::Language { source: LanguageError::Code { code }, }) if code == "xx",
+      Err(DecodeError::Unknown {
+        source: UnknownError::Language {
+          source: LanguageError::Code { code },
+        },
+        strict: true,
+      }) if code == "xx",
     );
   }
 

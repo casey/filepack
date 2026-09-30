@@ -75,8 +75,8 @@ impl PartialEq<&str> for ComponentBuf {
 }
 
 impl Validate for ComponentBuf {
-  fn validate(&self) -> DecodeResult {
-    Component::new(&self.0).context(decode_error::Component)?;
+  fn validate(&self) -> Result<(), MalformedError> {
+    Component::new(&self.0).context(malformed_error::Component)?;
     Ok(())
   }
 }
@@ -92,9 +92,9 @@ mod tests {
     let mut decoder = Decoder::new(&empty);
     assert_matches!(
       ComponentBuf::decode(&mut decoder),
-      Err(DecodeError::Component {
+      Err(DecodeError::Malformed(MalformedError::Component {
         source: ComponentError::Empty
-      }),
+      })),
     );
   }
 }

@@ -16,17 +16,22 @@ impl<'a> Decoder<'a> {
     match self.integer()? {
       0 => Ok(false),
       1 => Ok(true),
-      value => Err(DecodeError::Boolean { value }),
+      value => Err(malformed_error::Boolean { value }.build().into()),
     }
   }
 
   pub(crate) fn byte_array<const N: usize>(&mut self) -> DecodeResult<[u8; N]> {
     let bytes = self.bytes()?;
 
-    bytes.try_into().ok().context(decode_error::ArrayLength {
-      actual: bytes.len(),
-      expected: N,
-    })
+    Ok(
+      bytes
+        .try_into()
+        .ok()
+        .context(malformed_error::ArrayLength {
+          actual: bytes.len(),
+          expected: N,
+        })?,
+    )
   }
 
   pub(crate) fn bytes(&mut self) -> DecodeResult<&'a [u8]> {
@@ -34,15 +39,15 @@ impl<'a> Decoder<'a> {
       *self
         .buffer
         .get(self.position)
-        .context(decode_error::Truncated)?,
+        .context(malformed_error::Truncated)?,
     );
     let (start, len) = head.range(&self.buffer[self.position..])?;
     let start = self.position + start;
-    let end = start.checked_add(len).context(decode_error::Truncated)?;
+    let end = start.checked_add(len).context(malformed_error::Truncated)?;
     let bytes = self
       .buffer
       .get(start..end)
-      .context(decode_error::Truncated)?;
+      .context(malformed_error::Truncated)?;
     self.position = end;
     Ok(bytes)
   }
@@ -56,18 +61,18 @@ impl<'a> Decoder<'a> {
   }
 
   pub(crate) fn finish(self) -> DecodeResult {
-    ensure!(self.is_empty(), decode_error::TrailingBytes);
+    ensure!(self.is_empty(), malformed_error::TrailingBytes);
     Ok(())
   }
 
   pub(crate) fn integer(&mut self) -> DecodeResult<u64> {
     let bytes = self.bytes()?;
-    ensure!(!bytes.is_empty(), decode_error::EmptyInteger);
+    ensure!(!bytes.is_empty(), malformed_error::EmptyInteger);
     ensure!(
       bytes.len() == 1 || bytes.last() != Some(&0),
-      decode_error::OverlongInteger
+      malformed_error::OverlongInteger
     );
-    ensure!(bytes.len() <= 8, decode_error::IntegerLength);
+    ensure!(bytes.len() <= 8, malformed_error::IntegerLength);
     let mut value = [0; 8];
     value[..bytes.len()].copy_from_slice(bytes);
     Ok(u64::from_le_bytes(value))
@@ -82,19 +87,20 @@ impl<'a> Decoder<'a> {
     if actual != magic::BYTES {
       let len = actual.len().min(16);
       return Err(
-        decode_error::MagicBytes {
+        malformed_error::MagicBytes {
           actual: &actual[..len],
           expected: magic::BYTES,
           truncated: actual.len() > len,
         }
-        .build(),
+        .build()
+        .into(),
       );
     }
 
     let actual = MagicType::decode(self)?;
     ensure!(
       actual == expected,
-      decode_error::MagicType { actual, expected },
+      malformed_error::MagicType { actual, expected },
     );
 
     Ok(())
@@ -137,7 +143,14 @@ impl<'a> Decoder<'a> {
   }
 
   pub(crate) fn text(&mut self) -> DecodeResult<&'a str> {
-    str::from_utf8(self.bytes()?).context(decode_error::Unicode)
+    Ok(str::from_utf8(self.bytes()?).context(malformed_error::Unicode)?)
+  }
+
+  pub(crate) fn unknown(&self, source: UnknownError) -> DecodeError {
+    DecodeError::Unknown {
+      source,
+      strict: self.strict(),
+    }
   }
 
   pub(crate) fn with_options(options: DecodeOptions, buffer: &'a [u8]) -> Self {
@@ -157,7 +170,7 @@ mod tests {
   fn boolean() {
     assert_matches!(
       Decoder::new(&[0x02]).boolean(),
-      Err(DecodeError::Boolean { value: 2 }),
+      Err(DecodeError::Malformed(MalformedError::Boolean { value: 2 })),
     );
   }
 
@@ -172,10 +185,10 @@ mod tests {
   fn byte_array_length_mismatch() {
     assert_matches!(
       Decoder::new(&[0x82, 0x01, 0x02]).byte_array::<3>(),
-      Err(DecodeError::ArrayLength {
+      Err(DecodeError::Malformed(MalformedError::ArrayLength {
         actual: 2,
         expected: 3,
-      }),
+      })),
     );
   }
 
@@ -183,14 +196,17 @@ mod tests {
   fn finish_errors_on_trailing_bytes() {
     let mut decoder = Decoder::new(&[0x00, 0x00]);
     u64::decode(&mut decoder).unwrap();
-    assert_matches!(decoder.finish(), Err(DecodeError::TrailingBytes));
+    assert_matches!(
+      decoder.finish(),
+      Err(DecodeError::Malformed(MalformedError::TrailingBytes))
+    );
   }
 
   #[test]
   fn integer_empty() {
     assert_matches!(
       Decoder::new(&[0x80]).integer(),
-      Err(DecodeError::EmptyInteger),
+      Err(DecodeError::Malformed(MalformedError::EmptyInteger)),
     );
   }
 
@@ -225,7 +241,7 @@ mod tests {
     fn case(bytes: &[u8]) {
       assert_matches!(
         Decoder::new(bytes).integer(),
-        Err(DecodeError::OverlongInteger),
+        Err(DecodeError::Malformed(MalformedError::OverlongInteger)),
       );
     }
 
@@ -238,7 +254,9 @@ mod tests {
   fn reserved() {
     assert_matches!(
       Decoder::new(&[0xf8]).bytes(),
-      Err(DecodeError::Reserved { value: 0xf8 }),
+      Err(DecodeError::Malformed(MalformedError::Reserved {
+        value: 0xf8
+      })),
     );
   }
 
@@ -246,7 +264,7 @@ mod tests {
   fn signed_integer_empty() {
     assert_matches!(
       Decoder::new(&[0x80]).signed_integer(),
-      Err(DecodeError::EmptyInteger),
+      Err(DecodeError::Malformed(MalformedError::EmptyInteger)),
     );
   }
 
@@ -256,7 +274,7 @@ mod tests {
     fn case<'a, T: Debug + Decode<'a>>(bytes: &'a [u8]) {
       assert_matches!(
         T::decode_from_slice(bytes),
-        Err(DecodeError::IntegerRange { .. }),
+        Err(DecodeError::Malformed(MalformedError::IntegerRange { .. })),
       );
     }
 
@@ -268,19 +286,19 @@ mod tests {
   fn truncated() {
     assert_matches!(
       Decoder::new(&[]).bytes().unwrap_err(),
-      DecodeError::Truncated,
+      DecodeError::Malformed(MalformedError::Truncated),
     );
 
     assert_matches!(
       Decoder::new(&[0x82, 0x01]).bytes().unwrap_err(),
-      DecodeError::Truncated,
+      DecodeError::Malformed(MalformedError::Truncated),
     );
 
     assert_matches!(
       Decoder::new(&[0xf7, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff])
         .bytes()
         .unwrap_err(),
-      DecodeError::Truncated,
+      DecodeError::Malformed(MalformedError::Truncated),
     );
   }
 
@@ -288,7 +306,7 @@ mod tests {
   fn unicode() {
     assert_matches!(
       Decoder::new(&[0x82, 0xff, 0xfe]).text().map(drop),
-      Err(DecodeError::Unicode { .. }),
+      Err(DecodeError::Malformed(MalformedError::Unicode { .. })),
     );
   }
 }

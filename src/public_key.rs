@@ -53,7 +53,7 @@ impl FromStr for PublicKey {
 
 impl Decode<'_> for PublicKey {
   fn decode(decoder: &mut Decoder) -> DecodeResult<Self> {
-    Self::from_bytes(decoder.byte_array()?).context(decode_error::PublicKey)
+    Ok(Self::from_bytes(decoder.byte_array()?).context(malformed_error::PublicKey)?)
   }
 }
 
@@ -100,9 +100,9 @@ mod tests {
     assert_matches!(
       test::WEAK_PUBLIC_KEY.parse::<PublicKey>().unwrap_err(),
       HexError::Decode {
-        source: DecodeError::PublicKey {
+        source: DecodeError::Malformed(MalformedError::PublicKey {
           source: PublicKeyError::Weak { key },
-        },
+        }),
         tag: Tag::Public,
       } if key.to_string() == test::WEAK_PUBLIC_KEY,
     );

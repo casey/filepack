@@ -130,10 +130,10 @@ fn decode_from_str() {
 
   assert_matches!(
     err,
-    DecodeError::FromStr {
+    DecodeError::Malformed(MalformedError::FromStr {
       name: "foo",
       ref source,
-    } if source.to_string() == "bar error",
+    }) if source.to_string() == "bar error",
   );
 }
 
@@ -176,7 +176,9 @@ fn enum_added_optional_field() {
   assert_eq!(Foo::decode_from_slice(&bytes).unwrap(), Foo::Bar);
   assert_matches!(
     Foo::decode_from_slice_with_options(DecodeOptions::strict(), &bytes),
-    Err(DecodeError::UnknownField { key: 1 }),
+    Err(DecodeError::Malformed(MalformedError::UnknownField {
+      key: 1
+    })),
   );
 
   assert_eq!(
@@ -200,9 +202,12 @@ fn enum_array_invalid_discriminant() {
 
   assert_matches!(
     Foo::decode_from_slice(&[0x82, 0x05, 0x80]),
-    Err(DecodeError::InvalidDiscriminant {
-      discriminant: 5,
-      name: "foo",
+    Err(DecodeError::Unknown {
+      source: UnknownError::Discriminant {
+        discriminant: 5,
+        name: "foo",
+      },
+      strict: false
     }),
   );
 }
@@ -237,7 +242,7 @@ fn enum_array_unconsumed_elements() {
 
   assert_matches!(
     Foo::decode_from_slice(&[0x85, 0x00, 0x82, 0x01, 0x05, 0x00]),
-    Err(DecodeError::UnconsumedElements),
+    Err(DecodeError::Malformed(MalformedError::UnconsumedElements)),
   );
 }
 
@@ -258,7 +263,7 @@ fn enum_empty_map() {
     for tag in [0, 1] {
       assert_matches!(
         Foo::decode_from_slice_with_options(options, &[0x82, tag, 0x80]),
-        Err(DecodeError::EmptyVariantMap),
+        Err(DecodeError::Malformed(MalformedError::EmptyVariantMap)),
       );
     }
   }
@@ -276,15 +281,40 @@ fn enum_invalid_discriminant() {
   fn case(bytes: &[u8], expected: u64) {
     assert_matches!(
       Foo::decode_from_slice(bytes),
-      Err(DecodeError::InvalidDiscriminant {
-        discriminant,
-        name: "foo",
+      Err(DecodeError::Unknown {
+        source: UnknownError::Discriminant {
+          discriminant,
+          name: "foo",
+        },
+        strict: false,
       }) if discriminant == expected,
     );
   }
 
   case(&[0x01], 1);
   case(&vec![256u64].encode_to_vec(), 256);
+
+  assert_matches!(
+    Foo::decode(&mut Decoder::new(&[0x01])),
+    Err(DecodeError::Unknown {
+      source: UnknownError::Discriminant {
+        discriminant: 1,
+        name: "foo",
+      },
+      strict: false
+    }),
+  );
+
+  assert_matches!(
+    Foo::decode(&mut Decoder::with_options(DecodeOptions::strict(), &[0x01])),
+    Err(DecodeError::Unknown {
+      source: UnknownError::Discriminant {
+        discriminant: 1,
+        name: "foo",
+      },
+      strict: true
+    }),
+  );
 }
 
 #[test]
@@ -374,7 +404,7 @@ fn enum_unconsumed_unit_payload() {
 
   assert_matches!(
     Foo::decode_from_slice(&[0x85, 0, 0x82, 1, 1, 0]),
-    Err(DecodeError::UnconsumedElements),
+    Err(DecodeError::Malformed(MalformedError::UnconsumedElements)),
   );
 }
 
@@ -399,7 +429,9 @@ fn enum_unknown_fields() {
   );
   assert_matches!(
     Foo::decode_from_slice_with_options(DecodeOptions::strict(), &bytes),
-    Err(DecodeError::UnknownField { key: 3 }),
+    Err(DecodeError::Malformed(MalformedError::UnknownField {
+      key: 3
+    })),
   );
 }
 
@@ -430,9 +462,12 @@ fn enum_unknown_variants() {
   );
   assert_matches!(
     Bar::decode_from_slice_with_options(DecodeOptions::strict(), &bytes),
-    Err(DecodeError::InvalidDiscriminant {
-      discriminant: 1,
-      name: "foo",
+    Err(DecodeError::Unknown {
+      source: UnknownError::Discriminant {
+        discriminant: 1,
+        name: "foo",
+      },
+      strict: true
     }),
   );
 }
@@ -537,12 +572,16 @@ fn strict() {
 
   assert_matches!(
     Foo::decode_from_slice(&fields),
-    Err(DecodeError::UnknownField { key: u64::MAX }),
+    Err(DecodeError::Malformed(MalformedError::UnknownField {
+      key: u64::MAX
+    })),
   );
 
   assert_matches!(
     Bar::decode_from_slice(&Encoder::frame([vec![0], fields].concat())),
-    Err(DecodeError::UnknownField { key: u64::MAX }),
+    Err(DecodeError::Malformed(MalformedError::UnknownField {
+      key: u64::MAX
+    })),
   );
 }
 
@@ -604,9 +643,12 @@ fn unknown_variants() {
   );
   assert_matches!(
     Bar::decode_from_slice_with_options(DecodeOptions::strict(), &bytes),
-    Err(DecodeError::InvalidDiscriminant {
-      discriminant: 1,
-      name: "foo",
+    Err(DecodeError::Unknown {
+      source: UnknownError::Discriminant {
+        discriminant: 1,
+        name: "foo",
+      },
+      strict: true
     }),
   );
 }
@@ -641,7 +683,7 @@ fn unknown_variants_errors() {
 
   assert_matches!(
     Bar::decode_from_slice(&[0x83, 1, 0x82, 1]),
-    Err(DecodeError::Truncated),
+    Err(DecodeError::Malformed(MalformedError::Truncated)),
   );
 }
 
@@ -683,26 +725,38 @@ fn unknown_variants_scope() {
   }
 
   #[track_caller]
-  fn rejects<T: Debug + DecodeOwned>(value: impl Encode) {
+  fn unknown<T: Debug + DecodeOwned>(options: DecodeOptions, expected: bool, value: impl Encode) {
     assert_matches!(
-      T::decode_from_slice(&value.encode_to_vec()),
-      Err(DecodeError::InvalidDiscriminant {
-        discriminant: 1,
-        name: "foo",
-      }),
+      T::decode_from_slice_with_options(options, &value.encode_to_vec()),
+      Err(DecodeError::Unknown {
+        source: UnknownError::Discriminant {
+          discriminant: 1,
+          name: "foo",
+        },
+        strict,
+      }) if strict == expected,
     );
   }
 
   let fields = BTreeMap::from([(1u64, vec![1u64])]);
-  rejects::<Baz>(&fields);
-  rejects::<Qux<Foo>>(&fields);
-  rejects::<Bar<Qux<Foo>>>(BTreeMap::from([(1u64, &fields)]));
-  rejects::<Bar<Vec<Foo>>>(BTreeMap::from([(1u64, vec![vec![1u64]])]));
-  rejects::<Bar<Quux>>(BTreeMap::from([(
-    1u64,
-    [vec![0], fields.encode_to_vec()].concat(),
-  )]));
-  rejects::<Qux<Bar<Foo>>>(BTreeMap::from([(1u64, &fields)]));
+  let lenient = DecodeOptions::default();
+  let strict = DecodeOptions::strict();
+  unknown::<Baz>(lenient, false, &fields);
+  unknown::<Qux<Foo>>(lenient, true, &fields);
+  unknown::<Bar<Qux<Foo>>>(lenient, true, BTreeMap::from([(1u64, &fields)]));
+  unknown::<Bar<Quux>>(
+    lenient,
+    true,
+    BTreeMap::from([(1u64, [vec![0], fields.encode_to_vec()].concat())]),
+  );
+  unknown::<Qux<Bar<Foo>>>(lenient, true, BTreeMap::from([(1u64, &fields)]));
+
+  let nested = BTreeMap::from([(1u64, vec![vec![1u64]])]);
+  assert_eq!(
+    Bar::<Vec<Foo>>::decode_from_slice(&nested.encode_to_vec()).unwrap(),
+    Bar { foo: None },
+  );
+  unknown::<Bar<Vec<Foo>>>(strict, true, nested);
 }
 
 #[test]
@@ -715,8 +769,8 @@ fn unknown_variants_validate() {
   }
 
   impl Validate for Foo {
-    fn validate(&self) -> DecodeResult {
-      Err(DecodeError::UnexpectedKey)
+    fn validate(&self) -> Result<(), MalformedError> {
+      Err(MalformedError::UnexpectedKey)
     }
   }
 
@@ -728,19 +782,19 @@ fn unknown_variants_validate() {
   }
 
   impl Validate for Bar {
-    fn validate(&self) -> DecodeResult {
-      ensure!(self.foo.is_some(), decode_error::MissingElement);
+    fn validate(&self) -> Result<(), MalformedError> {
+      ensure!(self.foo.is_some(), malformed_error::MissingElement);
       Ok(())
     }
   }
 
   assert_matches!(
     Bar::decode_from_slice(&with_unknown_field(BTreeMap::from([(1u64, vec![1u64])]))),
-    Err(DecodeError::MissingElement),
+    Err(DecodeError::Malformed(MalformedError::MissingElement)),
   );
   assert_matches!(
     Bar::decode_from_slice(&BTreeMap::from([(1u64, vec![0u64])]).encode_to_vec()),
-    Err(DecodeError::UnexpectedKey),
+    Err(DecodeError::Malformed(MalformedError::UnexpectedKey)),
   );
 }
 
@@ -777,9 +831,12 @@ fn unsupported_version() {
 
   assert_matches!(
     Foo::decode_from_slice(&[0x84, 0, 1, 1, 1]),
-    Err(DecodeError::UnsupportedVersion {
-      name: "foo",
-      version: 1,
+    Err(DecodeError::Unknown {
+      source: UnknownError::Version {
+        name: "foo",
+        version: 1,
+      },
+      strict: false
     }),
   );
 
@@ -796,10 +853,10 @@ fn validate() {
   struct Foo(String);
 
   impl Validate for Foo {
-    fn validate(&self) -> DecodeResult {
+    fn validate(&self) -> Result<(), MalformedError> {
       ensure!(
         self.0 == "foo",
-        decode_error::UnexpectedValue {
+        malformed_error::UnexpectedValue {
           actual: self.0.clone(),
           expected: "foo",
         }
@@ -812,10 +869,10 @@ fn validate() {
 
   assert_matches!(
     Foo::decode_from_slice(&"bar".encode_to_vec()),
-    Err(DecodeError::UnexpectedValue {
+    Err(DecodeError::Malformed(MalformedError::UnexpectedValue {
       actual,
       expected: "foo",
-    }) if actual == "bar",
+    })) if actual == "bar",
   );
 }
 
@@ -832,11 +889,11 @@ fn validate_enum() {
   }
 
   impl Validate for Foo {
-    fn validate(&self) -> DecodeResult {
+    fn validate(&self) -> Result<(), MalformedError> {
       let Self::Bar { baz } = self;
       ensure!(
         baz == "foo",
-        decode_error::UnexpectedValue {
+        malformed_error::UnexpectedValue {
           actual: baz.clone(),
           expected: "foo",
         }
@@ -852,10 +909,10 @@ fn validate_enum() {
 
   assert_matches!(
     Foo::decode_from_slice(&bytes),
-    Err(DecodeError::UnexpectedValue {
+    Err(DecodeError::Malformed(MalformedError::UnexpectedValue {
       actual,
       expected: "foo",
-    }) if actual == "bar",
+    })) if actual == "bar",
   );
 }
 
@@ -869,10 +926,10 @@ fn validate_struct() {
   }
 
   impl Validate for Foo {
-    fn validate(&self) -> DecodeResult {
+    fn validate(&self) -> Result<(), MalformedError> {
       ensure!(
         self.bar == "foo",
-        decode_error::UnexpectedValue {
+        malformed_error::UnexpectedValue {
           actual: self.bar.clone(),
           expected: "foo",
         }
@@ -883,11 +940,21 @@ fn validate_struct() {
 
   assert_deco(Foo { bar: "foo".into() }, "850183666f6f");
 
+  let bytes = Foo { bar: "bar".into() }.encode_to_vec();
+
   assert_matches!(
-    Foo::decode_from_slice(&Foo { bar: "bar".into() }.encode_to_vec()),
-    Err(DecodeError::UnexpectedValue {
+    Foo::decode_from_slice(&bytes),
+    Err(DecodeError::Malformed(MalformedError::UnexpectedValue {
       actual,
       expected: "foo",
-    }) if actual == "bar",
+    })) if actual == "bar",
+  );
+
+  assert_matches!(
+    Foo::decode(&mut Decoder::new(&bytes)),
+    Err(DecodeError::Malformed(MalformedError::UnexpectedValue {
+      actual,
+      expected: "foo",
+    })) if actual == "bar",
   );
 }

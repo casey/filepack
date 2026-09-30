@@ -42,7 +42,7 @@ impl Input {
           #n => {
             if !array.is_empty() {
               let mut map = array.decoder()?.map::<u64>()?;
-              ensure!(!map.is_empty(), decode_error::EmptyVariantMap);
+              ensure!(!map.is_empty(), malformed_error::EmptyVariantMap);
               map.version(#variant)?;
               map.decode_unknown()?;
             }
@@ -58,7 +58,7 @@ impl Input {
               decoder.empty_map()
             } else {
               let map = array.decoder()?.map::<u64>()?;
-              ensure!(!map.is_empty(), decode_error::EmptyVariantMap);
+              ensure!(!map.is_empty(), malformed_error::EmptyVariantMap);
               map
             };
             map.version(#variant)?;
@@ -71,8 +71,6 @@ impl Input {
     });
 
     let header = self.decode_header(attributes);
-
-    let discriminants = variants.iter().map(|variant| variant.n);
 
     let validate = attributes
       .validate()
@@ -91,29 +89,14 @@ impl Input {
           let discriminant = array.element::<u64>()?;
           let value = match discriminant {
             #(#arms)*
-            _ => return Err(DecodeError::InvalidDiscriminant {
+            _ => return Err(decoder.unknown(UnknownError::Discriminant {
               discriminant,
               name: #type_name,
-            }),
+            })),
           };
           #validate
           array.finish()?;
           Ok(value)
-        }
-
-        fn decode_optional(decoder: &mut Decoder<'de>) -> DecodeResult<Option<Self>> {
-          if decoder.strict() {
-            return Self::decode(decoder).map(Some);
-          }
-
-          let discriminant = decoder.clone().array()?.element::<u64>()?;
-
-          if [#(#discriminants),*].contains(&discriminant) {
-            Self::decode(decoder).map(Some)
-          } else {
-            decoder.bytes()?;
-            Ok(None)
-          }
         }
       }
     })

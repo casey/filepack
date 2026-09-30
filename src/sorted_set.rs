@@ -24,9 +24,9 @@ impl<T> Deref for SortedSet<T> {
 }
 
 impl<T: PartialOrd> Validate for SortedSet<T> {
-  fn validate(&self) -> DecodeResult {
+  fn validate(&self) -> Result<(), MalformedError> {
     for window in self.0.windows(2) {
-      ensure!(window[0] < window[1], decode_error::Unsorted);
+      ensure!(window[0] < window[1], malformed_error::Unsorted);
     }
 
     Ok(())
@@ -50,7 +50,7 @@ mod tests {
   fn rejects_duplicate() {
     assert_matches!(
       SortedSet::<u64>::decode_from_slice(&vec![1u64, 1u64].encode_to_vec()),
-      Err(DecodeError::Unsorted),
+      Err(DecodeError::Malformed(MalformedError::Unsorted)),
     );
   }
 
@@ -58,7 +58,7 @@ mod tests {
   fn rejects_unsorted() {
     assert_matches!(
       SortedSet::<u64>::decode_from_slice(&vec![2u64, 1u64].encode_to_vec()),
-      Err(DecodeError::Unsorted),
+      Err(DecodeError::Malformed(MalformedError::Unsorted)),
     );
   }
 

@@ -58,8 +58,8 @@ impl Totals {
 }
 
 impl Validate for Totals {
-  fn validate(&self) -> DecodeResult {
-    self.check().context(decode_error::Totals)
+  fn validate(&self) -> Result<(), MalformedError> {
+    self.check().context(malformed_error::Totals)
   }
 }
 
@@ -201,9 +201,9 @@ mod tests {
 
     assert_matches!(
       Totals::decode_from_slice(&totals.encode_to_vec()),
-      Err(DecodeError::Totals {
+      Err(DecodeError::Malformed(MalformedError::Totals {
         source: TotalsError::Overflow
-      }),
+      })),
     );
   }
 

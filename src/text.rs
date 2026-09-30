@@ -56,8 +56,8 @@ impl Display for Text {
 }
 
 impl Validate for Text {
-  fn validate(&self) -> DecodeResult {
-    Self::check(self.as_str()).context(decode_error::Text)
+  fn validate(&self) -> Result<(), MalformedError> {
+    Self::check(self.as_str()).context(malformed_error::Text)
   }
 }
 
@@ -105,30 +105,30 @@ mod tests {
   fn decode_error() {
     assert_matches!(
       Text::decode(&mut Decoder::new(&"foo\tbar".encode_to_vec())),
-      Err(DecodeError::Text {
+      Err(DecodeError::Malformed(MalformedError::Text {
         source: TextError::Control { character: '\t' }
-      }),
+      })),
     );
 
     assert_matches!(
       Text::decode(&mut Decoder::new(&"".encode_to_vec())),
-      Err(DecodeError::Text {
+      Err(DecodeError::Malformed(MalformedError::Text {
         source: TextError::Empty,
-      }),
+      })),
     );
 
     assert_matches!(
       Text::decode(&mut Decoder::new(&" foo".encode_to_vec())),
-      Err(DecodeError::Text {
+      Err(DecodeError::Malformed(MalformedError::Text {
         source: TextError::Whitespace,
-      }),
+      })),
     );
 
     assert_matches!(
       Text::decode(&mut Decoder::new(&"foo ".encode_to_vec())),
-      Err(DecodeError::Text {
+      Err(DecodeError::Malformed(MalformedError::Text {
         source: TextError::Whitespace,
-      }),
+      })),
     );
   }
 
