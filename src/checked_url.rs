@@ -1,33 +1,47 @@
 use super::*;
 
-#[derive(Clone, Debug, Decode, DeserializeFromStr, Encode, PartialEq, SerializeDisplay)]
-#[deco(transparent, validate)]
+#[derive(Clone, Debug, DeserializeFromStr, Encode, PartialEq, SerializeDisplay)]
+#[deco(transparent)]
 pub(crate) struct CheckedUrl(String);
-
-impl CheckedUrl {
-  pub(crate) fn as_str(&self) -> &str {
-    &self.0
-  }
-
-  pub(crate) fn check(s: &str) -> Result<Url, UrlError> {
-    let url = s.parse::<Url>()?;
-
-    let scheme = url.scheme();
-
-    ensure! {
-      matches!(scheme, "http" | "https"),
-      url_error::Scheme { scheme },
-    }
-
-    Ok(url)
-  }
-}
 
 impl FromStr for CheckedUrl {
   type Err = UrlError;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
-    Self::check(s)?;
+    ensure!(!s.is_empty(), url_error::Empty);
+
+    ensure! {
+      !s.chars().any(|c| c.is_ascii_whitespace()),
+      url_error::Whitespace,
+    }
+
+    if let Some(character) = s.chars().find(|c| c.is_control()) {
+      return Err(UrlError::Control { character });
+    }
+
+    let (scheme, rest) = s.split_once(':').context(url_error::MissingScheme)?;
+
+    ensure! {
+      scheme.starts_with(|c: char| c.is_ascii_lowercase())
+        && scheme
+          .chars()
+          .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || matches!(c, '+' | '.' | '-')),
+      url_error::Scheme { scheme },
+    }
+
+    ensure!(
+      matches!(scheme, "http" | "https"),
+      url_error::UnknownScheme { scheme }
+    );
+
+    let authority = rest
+      .strip_prefix("//")
+      .context(url_error::MissingAuthority { scheme })?;
+
+    ensure!(
+      authority.find(['/', '?', '#']).unwrap_or(authority.len()) > 0,
+      url_error::MissingAuthority { scheme },
+    );
 
     Ok(Self(s.into()))
   }
@@ -39,10 +53,15 @@ impl Display for CheckedUrl {
   }
 }
 
-impl Validate for CheckedUrl {
-  fn validate(&self) -> Result<(), MalformedError> {
-    Self::check(self.as_str()).context(malformed_error::Url)?;
-    Ok(())
+impl Decode<'_> for CheckedUrl {
+  fn decode(decoder: &mut Decoder) -> DecodeResult<Self> {
+    match decoder.text()?.parse() {
+      Ok(url) => Ok(url),
+      Err(UrlError::UnknownScheme { scheme }) => {
+        Err(decoder.unknown(UnknownError::Scheme { scheme }))
+      }
+      Err(source) => Err(MalformedError::Url { source }.into()),
+    }
   }
 }
 
@@ -51,33 +70,30 @@ mod tests {
   use super::*;
 
   #[test]
-  fn checked_url_is_not_normalized() {
-    assert_eq!(
-      "http://example.com".parse::<CheckedUrl>().unwrap().as_str(),
-      "http://example.com",
-    );
-
-    // an example of url::Url normalization
-    assert_eq!(
-      "http://example.com".parse::<Url>().unwrap().as_str(),
-      "http://example.com/",
-    );
-  }
-
-  #[test]
   fn decode_error() {
     assert_matches!(
       CheckedUrl::decode(&mut Decoder::new(&"foo".encode_to_vec())),
       Err(DecodeError::Malformed(MalformedError::Url {
-        source: UrlError::Parse { .. }
+        source: UrlError::MissingScheme,
       })),
     );
 
+    let bytes = "ftp://example.com".encode_to_vec();
+
     assert_matches!(
-      CheckedUrl::decode(&mut Decoder::new(&"ftp://example.com".encode_to_vec())),
-      Err(DecodeError::Malformed(MalformedError::Url {
-        source: UrlError::Scheme { .. }
-      })),
+      CheckedUrl::decode(&mut Decoder::new(&bytes)),
+      Err(DecodeError::Unknown {
+        source: UnknownError::Scheme { scheme },
+        strict: false,
+      }) if scheme == "ftp",
+    );
+
+    assert_matches!(
+      CheckedUrl::decode(&mut Decoder::with_options(DecodeOptions::strict(), &bytes)),
+      Err(DecodeError::Unknown {
+        source: UnknownError::Scheme { scheme },
+        strict: true,
+      }) if scheme == "ftp",
     );
   }
 
@@ -90,29 +106,58 @@ mod tests {
   }
 
   #[test]
-  fn scheme() {
+  fn parse() {
     #[track_caller]
-    fn accepted(s: &str) {
-      assert_eq!(s.parse::<CheckedUrl>().unwrap().as_str(), s);
+    fn err(s: &str, expected: UrlError) {
+      assert_eq!(s.parse::<CheckedUrl>().unwrap_err(), expected);
     }
 
     #[track_caller]
-    fn rejected(s: &str, scheme: &str) {
-      assert_eq!(
-        s.parse::<CheckedUrl>().unwrap_err(),
-        UrlError::Scheme {
-          scheme: scheme.into()
-        },
-      );
+    fn ok(s: &str) {
+      assert_eq!(s.parse::<CheckedUrl>().unwrap().to_string(), s);
     }
 
-    accepted("http://example.com");
-    accepted("https://example.com");
-    accepted("HTTPS://example.com");
+    ok("http://example.com");
+    ok("https://föö.example/道");
 
-    rejected("ftp://example.com", "ftp");
-    rejected("javascript:alert(1)", "javascript");
-    rejected("mailto:foo@example.com", "mailto");
-    rejected("file:///foo", "file");
+    err("", UrlError::Empty);
+    err("http://example.com/ foo", UrlError::Whitespace);
+    err(
+      "http://example.com/\u{85}foo",
+      UrlError::Control {
+        character: '\u{85}',
+      },
+    );
+    err("foo", UrlError::MissingScheme);
+    err(
+      "HTTPS://example.com",
+      UrlError::Scheme {
+        scheme: "HTTPS".into(),
+      },
+    );
+    err(
+      "ht_tp://example.com",
+      UrlError::Scheme {
+        scheme: "ht_tp".into(),
+      },
+    );
+    err(
+      "ftp://example.com",
+      UrlError::UnknownScheme {
+        scheme: "ftp".into(),
+      },
+    );
+    err(
+      "http:foo",
+      UrlError::MissingAuthority {
+        scheme: "http".into(),
+      },
+    );
+    err(
+      "https://",
+      UrlError::MissingAuthority {
+        scheme: "https".into(),
+      },
+    );
   }
 }
