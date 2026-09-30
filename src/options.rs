@@ -14,6 +14,8 @@ pub(crate) struct Options {
   pub(crate) parallel: bool,
   #[arg(long, help = "Suppress output")]
   pub(crate) quiet: bool,
+  #[arg(long, help = "Enable unstable features", env = "FILEPACK_UNSTABLE")]
+  pub(crate) unstable: bool,
 }
 
 impl Options {
@@ -45,5 +47,13 @@ impl Options {
       hash: hasher.finalize().into(),
       size: hasher.count(),
     })
+  }
+
+  pub(crate) fn unstable(&self, feature: UnstableFeature) -> Result {
+    ensure! {
+      self.unstable,
+      error::UnstableFeature { feature },
+    }
+    Ok(())
   }
 }

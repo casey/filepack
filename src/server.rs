@@ -19,6 +19,7 @@ pub(crate) struct Server {
   database: Database,
   files: Utf8PathBuf,
   incoming: Utf8PathBuf,
+  unstable: bool,
 }
 
 impl Server {
@@ -778,6 +779,16 @@ impl Server {
       let metadata = Metadata::decode_from_slice(&metadata)
         .context(server_error::PackageMetadataDecode { fingerprint })?;
 
+      if let Some(Media::Web) = metadata.media {
+        ensure!(
+          self.unstable,
+          server_error::UnstableFeature {
+            feature: UnstableFeature::WebPackages,
+            fingerprint,
+          },
+        );
+      }
+
       for path in metadata.files() {
         ensure!(
           self.resolve_path(fingerprint, &path)?.is_some(),
@@ -903,7 +914,7 @@ impl Server {
     Ok(number)
   }
 
-  pub(crate) fn with_data_dir(data_dir: &Utf8Path) -> Result<Self> {
+  pub(crate) fn with_data_dir(data_dir: &Utf8Path, unstable: bool) -> Result<Self> {
     let path = data_dir.join("database.redb");
     let database = Database::create(&path).context(error::DatabaseOpen { path })?;
 
@@ -951,6 +962,7 @@ impl Server {
       database,
       files,
       incoming,
+      unstable,
     })
   }
 
@@ -1029,7 +1041,7 @@ mod tests {
     }
 
     assert_matches!(
-      Server::with_data_dir(&data_dir).map(drop),
+      Server::with_data_dir(&data_dir, false).map(drop),
       Err(Error::DatabaseSchemaVersionMismatch {
         actual,
         backtrace: _,
@@ -1050,7 +1062,7 @@ mod tests {
     }
 
     assert_matches!(
-      Server::with_data_dir(&data_dir).map(drop),
+      Server::with_data_dir(&data_dir, false).map(drop),
       Err(Error::DatabaseSchemaVersionMissing { backtrace: _ }),
     );
   }

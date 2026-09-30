@@ -323,6 +323,7 @@ impl TestServer {
     TestServerBuilder {
       auth_config: None,
       mounts: HashSet::new(),
+      unstable: false,
       url: None,
     }
   }
@@ -405,6 +406,7 @@ impl TestServer {
 struct TestServerBuilder {
   auth_config: Option<Arc<AuthConfig>>,
   mounts: HashSet<Fingerprint>,
+  unstable: bool,
   url: Option<Url>,
 }
 
@@ -417,7 +419,7 @@ impl TestServerBuilder {
   fn build(self) -> TestServer {
     let (tempdir, data_dir) = tempdir();
 
-    let server = Arc::new(Server::with_data_dir(&data_dir).unwrap());
+    let server = Arc::new(Server::with_data_dir(&data_dir, self.unstable).unwrap());
 
     let router = Serve::router(
       server,
@@ -438,6 +440,11 @@ impl TestServerBuilder {
 
   fn mount(mut self, fingerprint: Fingerprint) -> Self {
     self.mounts.insert(fingerprint);
+    self
+  }
+
+  fn unstable(mut self) -> Self {
+    self.unstable = true;
     self
   }
 
@@ -2514,7 +2521,10 @@ fn mount_file() {
     .file("static/foo.css", b"bar")
     .file("static/index.html", b"foo");
 
-  let server = TestServer::builder().mount(package.fingerprint()).build();
+  let server = TestServer::builder()
+    .mount(package.fingerprint())
+    .unstable()
+    .build();
 
   let fingerprint = package.upload(&server);
 
@@ -2539,7 +2549,10 @@ fn mount_file_invalid_path() {
     .metadata(&metadata)
     .file("static/index.html", b"foo");
 
-  let server = TestServer::builder().mount(package.fingerprint()).build();
+  let server = TestServer::builder()
+    .mount(package.fingerprint())
+    .unstable()
+    .build();
 
   let fingerprint = package.upload(&server);
 
@@ -2564,7 +2577,10 @@ fn mount_file_nested() {
     .file("static/index.html", b"foo")
     .file("static/foo/bar.txt", b"baz");
 
-  let server = TestServer::builder().mount(package.fingerprint()).build();
+  let server = TestServer::builder()
+    .mount(package.fingerprint())
+    .unstable()
+    .build();
 
   let fingerprint = package.upload(&server);
 
@@ -2586,7 +2602,10 @@ fn mount_file_not_found() {
     .metadata(&metadata)
     .file("static/index.html", b"foo");
 
-  let server = TestServer::builder().mount(package.fingerprint()).build();
+  let server = TestServer::builder()
+    .mount(package.fingerprint())
+    .unstable()
+    .build();
 
   let fingerprint = package.upload(&server);
 
@@ -2601,7 +2620,7 @@ fn mount_file_not_found() {
 
 #[test]
 fn mount_file_not_mounted() {
-  let server = TestServer::new();
+  let server = TestServer::builder().unstable().build();
 
   let fingerprint = PackageBuilder::new()
     .metadata(&Metadata {
@@ -2638,7 +2657,10 @@ fn mount_serves_index_html() {
     .metadata(&metadata)
     .file("static/index.html", b"foo");
 
-  let server = TestServer::builder().mount(package.fingerprint()).build();
+  let server = TestServer::builder()
+    .mount(package.fingerprint())
+    .unstable()
+    .build();
 
   let fingerprint = package.upload(&server);
 
@@ -2940,7 +2962,7 @@ fn package_item_video_out_of_range() {
 
 #[test]
 fn package_item_web() {
-  let server = TestServer::new();
+  let server = TestServer::builder().unstable().build();
 
   let fingerprint = PackageBuilder::new()
     .metadata(&Metadata {
@@ -3319,7 +3341,10 @@ fn package_page_web() {
   static_directory.insert_file("index.html", b"foo");
   let static_deco_len = static_directory.deco().0.len().into_u64();
 
-  let server = TestServer::builder().mount(package.fingerprint()).build();
+  let server = TestServer::builder()
+    .mount(package.fingerprint())
+    .unstable()
+    .build();
 
   let fingerprint = package.upload(&server);
 
@@ -4148,6 +4173,34 @@ fn verify_package_metadata_references_present_file() {
   server.post(format!("/api/directory/{hash}")).send();
 
   server.publish(fingerprint, 1);
+}
+
+#[test]
+fn verify_package_rejects_web_packages_unless_unstable() {
+  let server = TestServer::new();
+
+  let metadata = Metadata {
+    media: Some(Media::Web),
+    ..default()
+  }
+  .encode_to_vec();
+  server.write_file(&metadata);
+
+  let (deco, hash) = Directory::new()
+    .insert_file(Metadata::DECO_FILENAME, &metadata)
+    .deco();
+  let fingerprint = Fingerprint(hash);
+  server.write_file(&deco);
+
+  server.post(format!("/api/directory/{hash}")).send();
+
+  server
+    .post(format!("/api/package/{fingerprint}"))
+    .status(StatusCode::BAD_REQUEST)
+    .assert_body(format!(
+      "package {fingerprint} uses unstable feature `web-packages`"
+    ))
+    .send();
 }
 
 #[test]

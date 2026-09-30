@@ -594,6 +594,11 @@ pub enum Error {
     hashes: Ticked<Hash>,
     path: DisplayPath,
   },
+  #[snafu(display("unstable feature `{feature}` requires `--unstable`"))]
+  UnstableFeature {
+    backtrace: Option<Backtrace>,
+    feature: crate::UnstableFeature,
+  },
   #[snafu(display("invalid video `{path}`"))]
   Video {
     backtrace: Option<Backtrace>,
