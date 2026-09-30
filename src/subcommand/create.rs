@@ -131,6 +131,11 @@ impl Create {
       }
 
       ensure! {
+        relative.is_nfc(),
+        error::PathNormalization { path: relative },
+      }
+
+      ensure! {
         !entry.file_type().is_symlink(),
         error::Symlink { path },
       }

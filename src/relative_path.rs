@@ -28,6 +28,10 @@ impl RelativePath {
     "LPT²", "LPT³", "NUL", "PRN",
   ];
 
+  pub(crate) fn as_str(&self) -> &str {
+    self.as_ref()
+  }
+
   pub(crate) fn components(&self) -> impl Iterator<Item = &Component> {
     self
       .0
@@ -41,6 +45,10 @@ impl RelativePath {
 
   pub(crate) fn filename(&self) -> &Component {
     Component::new(self.0.rsplit('/').next().unwrap()).unwrap()
+  }
+
+  pub(crate) fn is_nfc(&self) -> bool {
+    ComposingNormalizerBorrowed::new_nfc().is_normalized(&self.0)
   }
 
   pub(crate) fn lint(&self, lints: &BTreeSet<Lint>) -> Option<LintError> {
@@ -321,6 +329,19 @@ mod tests {
     let path = "a/".repeat(2048) + "a";
     assert_eq!(path.len(), RelativePath::MAX_LENGTH + 1);
     case(&path, PathError::Length);
+  }
+
+  #[test]
+  fn is_nfc() {
+    #[track_caller]
+    fn case(path: &str, expected: bool) {
+      assert_eq!(path.parse::<RelativePath>().unwrap().is_nfc(), expected);
+    }
+
+    case("foo", true);
+    case("foo/\u{e9}", true);
+    case("foo/e\u{301}", false);
+    case("\u{1100}\u{1161}", false);
   }
 
   #[test]

@@ -1118,6 +1118,7 @@ dependencies = [
  "futures-util",
  "humansize",
  "hyper-util",
+ "icu_normalizer",
  "id3",
  "image",
  "indicatif",

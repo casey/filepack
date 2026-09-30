@@ -190,6 +190,7 @@ use {
   filepack_derive::{Decode, DecodeFromStr, Encode, EncodeDisplay, Magic},
   futures_util::StreamExt,
   humansize::{BINARY, BaseUnit, DECIMAL, FormatSizeOptions, SizeFormatter},
+  icu_normalizer::ComposingNormalizerBorrowed,
   id3::TagLike,
   jiff::{self, civil},
   lexiclean::Lexiclean,
