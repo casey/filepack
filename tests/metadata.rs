@@ -3,6 +3,7 @@ use super::*;
 #[test]
 fn create_allows_extra_files_in_web_packages() {
   Test::new()
+    .unstable()
     .write(
       "metadata.yaml",
       "
@@ -127,6 +128,7 @@ fn create_checks_metadata() {
 #[test]
 fn create_does_not_write_metadata_deco_on_failure() {
   Test::new()
+    .unstable()
     .write(
       "metadata.yaml",
       "
@@ -144,6 +146,7 @@ fn create_does_not_write_metadata_deco_on_failure() {
       ",
     )
     .failure()
+    .unstable()
     .remove_file("bar.txt")
     .arg("create")
     .success();
@@ -737,6 +740,7 @@ fn create_rejects_extra_files_in_media_packages() {
 #[test]
 fn create_rejects_extra_files_in_web_packages() {
   Test::new()
+    .unstable()
     .write(
       "metadata.yaml",
       "
@@ -863,8 +867,25 @@ fn create_rejects_metadata_deco_without_yaml() {
 }
 
 #[test]
+fn create_rejects_web_packages_unless_unstable() {
+  Test::new()
+    .write(
+      "metadata.yaml",
+      "
+        media:
+          type: web
+      ",
+    )
+    .touch("static/index.html")
+    .arg("create")
+    .stderr("error: unstable feature `web-packages` requires `--unstable`\n")
+    .failure();
+}
+
+#[test]
 fn create_requires_index_html_in_web_packages() {
   Test::new()
+    .unstable()
     .write(
       "metadata.yaml",
       "

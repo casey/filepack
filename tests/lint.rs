@@ -372,6 +372,7 @@ fn deny_media_items_missing() {
     .failure();
 
   Test::new()
+    .unstable()
     .write(
       "metadata.yaml",
       "

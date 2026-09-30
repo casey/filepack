@@ -190,6 +190,11 @@ pub enum ServerError {
   RevisionParse { source: HexError },
   #[snafu(display("failed to get current time"))]
   Time { source: SystemTimeError },
+  #[snafu(display("package {fingerprint} uses unstable feature `{feature}`"))]
+  UnstableFeature {
+    feature: crate::UnstableFeature,
+    fingerprint: Fingerprint,
+  },
   #[snafu(display("error reading body of upload with hash {hash}"))]
   UploadBodyRead { hash: Hash, source: axum::Error },
   #[snafu(display("expected upload with hash {expected} but got {actual}"))]
@@ -239,6 +244,7 @@ impl ServerError {
       | Self::RevisionParentMissing { .. }
       | Self::RevisionParentNotFound { .. }
       | Self::RevisionParentUnexpected { .. }
+      | Self::UnstableFeature { .. }
       | Self::UploadBodyRead { .. }
       | Self::UploadHashMismatch { .. } => StatusCode::BAD_REQUEST,
       Self::ArtworkNotFound { .. }

@@ -438,6 +438,10 @@ impl Test {
     self
   }
 
+  pub(crate) fn unstable(self) -> Self {
+    self.env("FILEPACK_UNSTABLE", "true")
+  }
+
   fn with_tempdir(tempdir: TempDir) -> Self {
     Self {
       args: Vec::new(),

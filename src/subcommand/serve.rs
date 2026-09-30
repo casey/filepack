@@ -453,7 +453,10 @@ impl Serve {
       .unwrap();
     }
 
-    let server = Arc::new(Server::with_data_dir(&options.data_dir()?)?);
+    let server = Arc::new(Server::with_data_dir(
+      &options.data_dir()?,
+      options.unstable,
+    )?);
 
     for &fingerprint in &self.mounts {
       let metadata = server

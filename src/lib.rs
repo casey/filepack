@@ -166,6 +166,7 @@ use {
     track_info::TrackInfo,
     type_name::TypeName,
     unknown_error::UnknownError,
+    unstable_feature::UnstableFeature,
     url_error::UrlError,
     utf8_path_ext::Utf8PathExt,
     validate::Validate,
@@ -481,6 +482,7 @@ mod track;
 mod track_info;
 mod type_name;
 mod unknown_error;
+mod unstable_feature;
 mod url_error;
 mod utf8_path_ext;
 mod validate;

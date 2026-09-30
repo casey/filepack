@@ -52,6 +52,10 @@ impl Create {
     let metadata = if let Some(yaml) = filesystem::read_to_string_opt(&path)? {
       let metadata = yaml::Metadata::deserialize(&path, &yaml)?;
 
+      if let Some(yaml::Media::Web) = metadata.media {
+        options.unstable(UnstableFeature::WebPackages)?;
+      }
+
       let path = root.join(Metadata::DECO_FILENAME);
 
       ensure! {
