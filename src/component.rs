@@ -55,6 +55,7 @@ impl Component {
     let first = chars.next();
     let second = chars.next();
     if let Some((first, second)) = first.zip(second)
+      && first.is_ascii_alphabetic()
       && second == ':'
     {
       return Err(ComponentError::WindowsDriveLetter { letter: first });
@@ -103,6 +104,14 @@ mod tests {
       Component::new("C:").unwrap_err(),
       ComponentError::WindowsDriveLetter { letter: 'C' },
     );
+
+    assert_eq!(
+      Component::new("c:foo").unwrap_err(),
+      ComponentError::WindowsDriveLetter { letter: 'c' },
+    );
+
+    Component::new("3:45").unwrap();
+    Component::new("é:").unwrap();
   }
 
   #[test]
