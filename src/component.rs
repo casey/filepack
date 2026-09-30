@@ -34,11 +34,11 @@ impl Component {
     }
 
     if s == "." {
-      return Err(ComponentError::Normal { component: "." });
+      return Err(ComponentError::Current);
     }
 
     if s == ".." {
-      return Err(ComponentError::Normal { component: ".." });
+      return Err(ComponentError::Parent);
     }
 
     for character in s.chars() {
@@ -94,10 +94,7 @@ mod tests {
 
   #[test]
   fn current() {
-    assert_eq!(
-      Component::new(".").unwrap_err(),
-      ComponentError::Normal { component: "." },
-    );
+    assert_eq!(Component::new(".").unwrap_err(), ComponentError::Current);
   }
 
   #[test]
@@ -141,10 +138,7 @@ mod tests {
 
   #[test]
   fn parent() {
-    assert_eq!(
-      Component::new("..").unwrap_err(),
-      ComponentError::Normal { component: ".." },
-    );
+    assert_eq!(Component::new("..").unwrap_err(), ComponentError::Parent);
   }
 
   #[test]
