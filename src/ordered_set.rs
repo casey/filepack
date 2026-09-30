@@ -57,7 +57,7 @@ impl<T: Ord> Validate for OrderedSet<T> {
     let mut seen = BTreeSet::new();
 
     for element in &self.0 {
-      ensure!(seen.insert(element), malformed_error::Duplicate);
+      ensure!(seen.insert(element), malformed_error::DuplicateElement);
     }
 
     Ok(())
@@ -72,12 +72,12 @@ mod tests {
   fn rejects_duplicate() {
     assert_matches!(
       OrderedSet::<u64>::decode_from_slice(&vec![1u64, 1u64].encode_to_vec()),
-      Err(DecodeError::Malformed(MalformedError::Duplicate)),
+      Err(DecodeError::Malformed(MalformedError::DuplicateElement)),
     );
 
     assert_matches!(
       OrderedSet::try_from(vec![1u64, 1u64]),
-      Err(MalformedError::Duplicate),
+      Err(MalformedError::DuplicateElement),
     );
   }
 
