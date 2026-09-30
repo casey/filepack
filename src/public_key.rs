@@ -13,6 +13,11 @@ impl PublicKey {
       })?;
 
     ensure! {
+      key.to_edwards().compress().to_bytes() == bytes,
+      public_key_error::NonCanonical { key: InvalidPublicKey(bytes) },
+    }
+
+    ensure! {
       !key.is_weak(),
       public_key_error::Weak { key: InvalidPublicKey(bytes) },
     }
@@ -88,6 +93,26 @@ impl PartialOrd for PublicKey {
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn non_canonical_public_keys_are_forbidden() {
+    const NON_CANONICAL_PUBLIC_KEY: &str =
+      "public1f0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f";
+
+    assert_matches!(
+      NON_CANONICAL_PUBLIC_KEY.parse::<PublicKey>().unwrap_err(),
+      HexError::Decode {
+        source: DecodeError::Malformed(MalformedError::PublicKey {
+          source: PublicKeyError::NonCanonical { key },
+        }),
+        tag: Tag::Public,
+      } if key.to_string() == NON_CANONICAL_PUBLIC_KEY,
+    );
+
+    format!("public103{}", "0".repeat(62))
+      .parse::<PublicKey>()
+      .unwrap();
+  }
 
   #[test]
   fn parse() {
