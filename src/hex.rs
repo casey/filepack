@@ -141,10 +141,10 @@ mod tests {
     assert_matches!(
       "package1".parse::<Fingerprint>(),
       Err(HexError::Decode {
-        source: DecodeError::ArrayLength {
+        source: DecodeError::Malformed(MalformedError::ArrayLength {
           actual: 0,
           expected: 32,
-        },
+        }),
         tag: Tag::Package,
       }),
     );
@@ -152,10 +152,10 @@ mod tests {
     assert_matches!(
       format!("package1{}", &zeros[2..]).parse::<Fingerprint>(),
       Err(HexError::Decode {
-        source: DecodeError::ArrayLength {
+        source: DecodeError::Malformed(MalformedError::ArrayLength {
           actual: 31,
           expected: 32,
-        },
+        }),
         tag: Tag::Package,
       }),
     );
@@ -163,10 +163,10 @@ mod tests {
     assert_matches!(
       format!("package1{zeros}00").parse::<Fingerprint>(),
       Err(HexError::Decode {
-        source: DecodeError::ArrayLength {
+        source: DecodeError::Malformed(MalformedError::ArrayLength {
           actual: 33,
           expected: 32,
-        },
+        }),
         tag: Tag::Package,
       }),
     );

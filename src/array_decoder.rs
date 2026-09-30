@@ -6,7 +6,7 @@ pub(crate) struct ArrayDecoder<'a> {
 
 impl<'a> ArrayDecoder<'a> {
   pub(crate) fn decoder(&mut self) -> DecodeResult<&mut Decoder<'a>> {
-    ensure!(!self.decoder.is_empty(), decode_error::MissingElement);
+    ensure!(!self.decoder.is_empty(), malformed_error::MissingElement);
     Ok(&mut self.decoder)
   }
 
@@ -15,7 +15,7 @@ impl<'a> ArrayDecoder<'a> {
   }
 
   pub(crate) fn finish(self) -> DecodeResult {
-    ensure!(self.decoder.is_empty(), decode_error::UnconsumedElements);
+    ensure!(self.decoder.is_empty(), malformed_error::UnconsumedElements);
     Ok(())
   }
 
@@ -44,7 +44,10 @@ mod tests {
   fn bounded_payload() {
     let mut decoder = Decoder::new(&[0x81, 0x82, 0, 0]);
     let mut array = decoder.array().unwrap();
-    assert_matches!(array.next::<Vec<u8>>(), Err(DecodeError::Truncated));
+    assert_matches!(
+      array.next::<Vec<u8>>(),
+      Err(DecodeError::Malformed(MalformedError::Truncated))
+    );
     assert_eq!(decoder.integer().unwrap(), 0);
     assert_eq!(decoder.integer().unwrap(), 0);
     decoder.finish().unwrap();
@@ -72,7 +75,10 @@ mod tests {
     let mut decoder = Decoder::new(&[0x00]);
     let mut array = decoder.array().unwrap();
     array.element::<u64>().unwrap();
-    assert_matches!(array.element::<u64>(), Err(DecodeError::MissingElement));
+    assert_matches!(
+      array.element::<u64>(),
+      Err(DecodeError::Malformed(MalformedError::MissingElement))
+    );
   }
 
   #[test]
@@ -90,6 +96,9 @@ mod tests {
     let mut decoder = Decoder::new(&[0x82, 0x00, 0x01]);
     let mut array = decoder.array().unwrap();
     array.element::<u64>().unwrap();
-    assert_matches!(array.finish(), Err(DecodeError::UnconsumedElements));
+    assert_matches!(
+      array.finish(),
+      Err(DecodeError::Malformed(MalformedError::UnconsumedElements))
+    );
   }
 }

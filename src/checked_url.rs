@@ -40,8 +40,8 @@ impl Display for CheckedUrl {
 }
 
 impl Validate for CheckedUrl {
-  fn validate(&self) -> DecodeResult {
-    Self::check(self.as_str()).context(decode_error::Url)?;
+  fn validate(&self) -> Result<(), MalformedError> {
+    Self::check(self.as_str()).context(malformed_error::Url)?;
     Ok(())
   }
 }
@@ -68,16 +68,16 @@ mod tests {
   fn decode_error() {
     assert_matches!(
       CheckedUrl::decode(&mut Decoder::new(&"foo".encode_to_vec())),
-      Err(DecodeError::Url {
+      Err(DecodeError::Malformed(MalformedError::Url {
         source: UrlError::Parse { .. }
-      }),
+      })),
     );
 
     assert_matches!(
       CheckedUrl::decode(&mut Decoder::new(&"ftp://example.com".encode_to_vec())),
-      Err(DecodeError::Url {
+      Err(DecodeError::Malformed(MalformedError::Url {
         source: UrlError::Scheme { .. }
-      }),
+      })),
     );
   }
 

@@ -20,7 +20,7 @@ impl<'a, K> MapDecoder<'a, K> {
 
 impl<'a, K: Clone + Decode<'a> + Debug + PartialOrd> MapDecoder<'a, K> {
   pub(crate) fn finish(self) -> DecodeResult {
-    ensure!(self.decoder.is_empty(), decode_error::UnconsumedEntries);
+    ensure!(self.decoder.is_empty(), malformed_error::UnconsumedEntries);
     Ok(())
   }
 
@@ -32,7 +32,7 @@ impl<'a, K: Clone + Decode<'a> + Debug + PartialOrd> MapDecoder<'a, K> {
     let key = K::decode(&mut self.decoder)?;
 
     if let Some(last) = &self.last {
-      ensure!(key > *last, decode_error::KeyOrder);
+      ensure!(key > *last, malformed_error::KeyOrder);
     }
 
     self.last = Some(key.clone());
@@ -42,19 +42,7 @@ impl<'a, K: Clone + Decode<'a> + Debug + PartialOrd> MapDecoder<'a, K> {
     Ok(Some((key, value)))
   }
 
-  #[cfg(test)]
   pub(crate) fn optional_key<V: Decode<'a>>(&mut self, key: K) -> DecodeResult<Option<V>>
-  where
-    K: Eq,
-  {
-    self.optional_key_with(key, V::decode)
-  }
-
-  pub(crate) fn optional_key_with<V>(
-    &mut self,
-    key: K,
-    decode: impl FnOnce(&mut Decoder<'a>) -> DecodeResult<V>,
-  ) -> DecodeResult<Option<V>>
   where
     K: Eq,
   {
@@ -73,12 +61,16 @@ impl<'a, K: Clone + Decode<'a> + Debug + PartialOrd> MapDecoder<'a, K> {
     self.decoder = decoder;
 
     if let Some(last) = &self.last {
-      ensure!(next > *last, decode_error::KeyOrder);
+      ensure!(next > *last, malformed_error::KeyOrder);
     }
 
     self.last = Some(next);
 
-    Ok(Some(decode(&mut self.decoder)?))
+    match V::decode(&mut self.decoder) {
+      Ok(value) => Ok(Some(value)),
+      Err(DecodeError::Unknown { strict: false, .. }) => Ok(None),
+      Err(error) => Err(error),
+    }
   }
 
   pub(crate) fn required_key<V: Decode<'a>>(&mut self, key: K) -> DecodeResult<V>
@@ -86,12 +78,16 @@ impl<'a, K: Clone + Decode<'a> + Debug + PartialOrd> MapDecoder<'a, K> {
     K: Clone + Display,
   {
     let Some((k, value)) = self.next()? else {
-      return Err(DecodeError::MissingField {
-        key: key.to_string(),
-      });
+      return Err(
+        malformed_error::MissingField {
+          key: key.to_string(),
+        }
+        .build()
+        .into(),
+      );
     };
 
-    ensure!(k == key, decode_error::UnexpectedKey);
+    ensure!(k == key, malformed_error::UnexpectedKey);
 
     Ok(value)
   }
@@ -100,7 +96,10 @@ impl<'a, K: Clone + Decode<'a> + Debug + PartialOrd> MapDecoder<'a, K> {
 impl MapDecoder<'_, u64> {
   pub(crate) fn decode_unknown(mut self) -> DecodeResult {
     while let Some((key, _value)) = self.next::<&[u8]>()? {
-      ensure!(!self.decoder.strict(), decode_error::UnknownField { key });
+      ensure!(
+        !self.decoder.strict(),
+        malformed_error::UnknownField { key }
+      );
     }
     Ok(())
   }
@@ -111,17 +110,17 @@ impl MapDecoder<'_, u64> {
     }
     self.decoder.integer()?;
     let version = self.decoder.integer()?;
-    Err(DecodeError::UnsupportedVersion { name, version })
+    Err(
+      self
+        .decoder
+        .unknown(unknown_error::Version { name, version }.build()),
+    )
   }
 }
 
 #[cfg(test)]
 mod tests {
   use super::*;
-
-  fn decode_offset(decoder: &mut Decoder) -> DecodeResult<u64> {
-    Ok(decoder.integer()? + 1)
-  }
 
   #[test]
   fn decode_unknown() {
@@ -131,7 +130,9 @@ mod tests {
     let mut decoder = Decoder::new(&[0x82, 0x01, 0x2a]);
     assert_matches!(
       decoder.strict_map::<u64>().unwrap().decode_unknown(),
-      Err(DecodeError::UnknownField { key: 1 }),
+      Err(DecodeError::Malformed(MalformedError::UnknownField {
+        key: 1
+      })),
     );
   }
 
@@ -139,7 +140,10 @@ mod tests {
   fn key_mismatch() {
     let mut decoder = Decoder::new(&[0x82, 0x01, 0x00]);
     let mut map = decoder.map::<u64>().unwrap();
-    assert_matches!(map.required_key::<u64>(0), Err(DecodeError::UnexpectedKey));
+    assert_matches!(
+      map.required_key::<u64>(0),
+      Err(DecodeError::Malformed(MalformedError::UnexpectedKey))
+    );
   }
 
   #[test]
@@ -163,7 +167,19 @@ mod tests {
   fn missing_field() {
     let mut decoder = Decoder::new(&[0x80]);
     let mut map = decoder.map::<u64>().unwrap();
-    assert_matches!(map.required_key::<u64>(0), Err(DecodeError::MissingField { key }) if key == "0");
+    assert_matches!(map.required_key::<u64>(0), Err(DecodeError::Malformed(MalformedError::MissingField { key })) if key == "0");
+  }
+
+  #[test]
+  fn optional_key_malformed() {
+    let mut decoder = Decoder::new(&[0x82, 0x01, 0xf8]);
+    let mut map = decoder.map::<u64>().unwrap();
+    assert_matches!(
+      map.optional_key::<Language>(1),
+      Err(DecodeError::Malformed(MalformedError::Reserved {
+        value: 0xf8
+      })),
+    );
   }
 
   #[test]
@@ -184,19 +200,31 @@ mod tests {
   }
 
   #[test]
-  fn optional_key_with_missing() {
-    let mut decoder = Decoder::new(&[0x82, 0x01, 0x2a]);
+  fn optional_key_strict() {
+    let bytes = BTreeMap::from([(1u64, "xx")]).encode_to_vec();
+    let mut decoder = Decoder::with_options(DecodeOptions::strict(), &bytes);
     let mut map = decoder.map::<u64>().unwrap();
-    assert_matches!(map.optional_key_with(0, decode_offset), Ok(None));
-    map.next::<u64>().unwrap();
-    map.finish().unwrap();
+    assert_matches!(
+      map.optional_key::<Language>(1),
+      Err(DecodeError::Unknown {
+        source: UnknownError::Language {
+          source: LanguageError::Code { code },
+        },
+        strict: true,
+      }) if code == "xx",
+    );
   }
 
   #[test]
-  fn optional_key_with_present() {
-    let mut decoder = Decoder::new(&[0x82, 0x00, 0x2a]);
+  fn optional_key_unknown() {
+    let bytes = BTreeMap::from([(1u64, "xx"), (2, "en")]).encode_to_vec();
+    let mut decoder = Decoder::new(&bytes);
     let mut map = decoder.map::<u64>().unwrap();
-    assert_matches!(map.optional_key_with(0, decode_offset), Ok(Some(43)));
+    assert_matches!(map.optional_key::<Language>(1), Ok(None));
+    assert_eq!(
+      map.optional_key::<Language>(2).unwrap(),
+      Some("en".parse().unwrap()),
+    );
     map.finish().unwrap();
   }
 
@@ -218,7 +246,10 @@ mod tests {
     let mut decoder = Decoder::new(&[0x84, 0x02, 0x00, 0x01, 0x00]);
     let mut map = decoder.map::<u64>().unwrap();
     map.next::<u64>().unwrap();
-    assert_matches!(map.next::<u64>(), Err(DecodeError::KeyOrder));
+    assert_matches!(
+      map.next::<u64>(),
+      Err(DecodeError::Malformed(MalformedError::KeyOrder))
+    );
   }
 
   #[test]
@@ -226,7 +257,10 @@ mod tests {
     let mut decoder = Decoder::new(&[0x84, 0x00, 0x00, 0x01, 0x01]);
     let mut map = decoder.map::<u64>().unwrap();
     map.next::<u64>().unwrap();
-    assert_matches!(map.finish(), Err(DecodeError::UnconsumedEntries));
+    assert_matches!(
+      map.finish(),
+      Err(DecodeError::Malformed(MalformedError::UnconsumedEntries))
+    );
   }
 
   #[test]
@@ -244,9 +278,25 @@ mod tests {
     let mut map = decoder.map::<u64>().unwrap();
     assert_matches!(
       map.version("foo"),
-      Err(DecodeError::UnsupportedVersion {
-        name: "foo",
-        version: 42,
+      Err(DecodeError::Unknown {
+        source: UnknownError::Version {
+          name: "foo",
+          version: 42,
+        },
+        strict: false
+      }),
+    );
+
+    let mut decoder = Decoder::with_options(DecodeOptions::strict(), &[0x82, 0x00, 0x2a]);
+    let mut map = decoder.map::<u64>().unwrap();
+    assert_matches!(
+      map.version("foo"),
+      Err(DecodeError::Unknown {
+        source: UnknownError::Version {
+          name: "foo",
+          version: 42,
+        },
+        strict: true
       }),
     );
   }

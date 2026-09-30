@@ -54,8 +54,8 @@ impl Head {
       Self::Medium(len) => {
         if len == 1 {
           ensure! {
-            *buffer.get(1).context(decode_error::Truncated)? > 0x7f,
-            decode_error::Overlong,
+            *buffer.get(1).context(malformed_error::Truncated)? > 0x7f,
+            malformed_error::Overlong,
           }
         }
         Ok((1, len))
@@ -63,27 +63,27 @@ impl Head {
       Self::Large(count) => {
         let end = count + 1;
         let mut len = [0; 8];
-        len[..count].copy_from_slice(buffer.get(1..end).context(decode_error::Truncated)?);
+        len[..count].copy_from_slice(buffer.get(1..end).context(malformed_error::Truncated)?);
 
         ensure! {
           len[count - 1] != 0,
-          decode_error::Overlong,
+          malformed_error::Overlong,
         }
 
         let len = usize::try_from(u64::from_le_bytes(len))
           .ok()
-          .context(decode_error::Truncated)?;
+          .context(malformed_error::Truncated)?;
 
         if count == 1 {
           ensure! {
             len > 0x6f,
-            decode_error::Overlong,
+            malformed_error::Overlong,
           }
         }
 
         Ok((end, len))
       }
-      Self::Reserved(value) => Err(DecodeError::Reserved { value }),
+      Self::Reserved(value) => Err(malformed_error::Reserved { value }.build().into()),
     }
   }
 }

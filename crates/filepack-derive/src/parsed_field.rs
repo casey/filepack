@@ -14,7 +14,7 @@ impl ParsedField<'_> {
         let ident = field.ident;
         let n = field.n;
         if field.optional {
-          quote! { let #ident = map.optional_key_with(#n, Decode::decode_optional)?.flatten(); }
+          quote! { let #ident = map.optional_key(#n)?; }
         } else {
           quote! { let #ident = map.required_key(#n)?; }
         }

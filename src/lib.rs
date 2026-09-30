@@ -105,6 +105,7 @@ use {
     lint_group::LintGroup,
     lint_selector::LintSelector,
     linter::Linter,
+    malformed_error::MalformedError,
     map_decoder::MapDecoder,
     map_encoder::MapEncoder,
     media::{Media, MediaType},
@@ -164,6 +165,7 @@ use {
     track::Track,
     track_info::TrackInfo,
     type_name::TypeName,
+    unknown_error::UnknownError,
     url_error::UrlError,
     utf8_path_ext::Utf8PathExt,
     validate::Validate,
@@ -399,6 +401,7 @@ mod linter;
 mod loader;
 mod magic;
 mod magic_type;
+mod malformed_error;
 mod manifest;
 mod map_decoder;
 mod map_encoder;
@@ -474,6 +477,7 @@ mod totals_error;
 mod track;
 mod track_info;
 mod type_name;
+mod unknown_error;
 mod url_error;
 mod utf8_path_ext;
 mod validate;

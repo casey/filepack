@@ -330,7 +330,7 @@ mod tests {
     assert_matches!(
       archive.unpack(),
       Err(ArchiveError::DirectoryDecode {
-        source: DecodeError::Truncated
+        source: DecodeError::Malformed(MalformedError::Truncated)
       })
     );
   }
@@ -729,11 +729,11 @@ mod tests {
     assert_matches!(
       archive.unpack(),
       Err(ArchiveError::SignatureDecode {
-        source: DecodeError::ArrayLength {
+        source: DecodeError::Malformed(MalformedError::ArrayLength {
           actual: 32,
           expected: 64,
           ..
-        },
+        }),
       })
     );
   }

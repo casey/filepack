@@ -1,97 +1,31 @@
 use super::*;
 
-#[derive(Debug, Snafu)]
-#[snafu(context(suffix(false)), visibility(pub(crate)))]
+#[derive(Debug)]
 pub enum DecodeError {
-  #[snafu(display("expected {expected} bytes but found {actual}"))]
-  ArrayLength { actual: usize, expected: usize },
-  #[snafu(display("invalid boolean value {value}"))]
-  Boolean { value: u64 },
-  #[snafu(display("failed to parse component"))]
-  Component { source: ComponentError },
-  #[snafu(display("duplicate array elements"))]
-  Duplicate,
-  #[snafu(display("empty integer"))]
-  EmptyInteger,
-  #[snafu(display("empty set"))]
-  EmptySet,
-  #[snafu(display("enum variant with empty map"))]
-  EmptyVariantMap,
-  #[snafu(display("failed to parse {name}"))]
-  FromStr {
-    name: &'static str,
-    source: Box<dyn std::error::Error + Send + Sync>,
-  },
-  #[snafu(display("integer exceeds eight bytes"))]
-  IntegerLength,
-  #[snafu(display("integer out of range"))]
-  IntegerRange { source: TryFromIntError },
-  #[snafu(display("invalid discriminant {discriminant} for enum {name}"))]
-  InvalidDiscriminant {
-    discriminant: u64,
-    name: &'static str,
-  },
-  #[snafu(display("map keys out of order"))]
-  KeyOrder,
-  #[snafu(display("failed to parse language code"))]
-  Language { source: LanguageError },
-  #[snafu(display(
-    "expected magic bytes `{}` but found `{}{}`",
-    expected.escape_ascii(),
-    actual.escape_ascii(),
-    if *truncated { "…" } else { "" },
-  ))]
-  MagicBytes {
-    actual: Vec<u8>,
-    expected: &'static [u8],
-    truncated: bool,
-  },
-  #[snafu(display("expected magic type `{expected}` but found `{actual}`"))]
-  MagicType {
-    actual: super::MagicType,
-    expected: super::MagicType,
-  },
-  #[snafu(display("missing array element"))]
-  MissingElement,
-  #[snafu(display("missing field with key {key}"))]
-  MissingField { key: String },
-  #[snafu(display("overlong encoding"))]
-  Overlong,
-  #[snafu(display("overlong integer"))]
-  OverlongInteger,
-  #[snafu(display("invalid public key"))]
-  PublicKey { source: PublicKeyError },
-  #[snafu(display("reserved byte {value}"))]
-  Reserved { value: u8 },
-  #[snafu(display("failed to parse text"))]
-  Text { source: TextError },
-  #[snafu(display("invalid time"))]
-  Time { source: TimeError },
-  #[snafu(display("invalid totals"))]
-  Totals { source: TotalsError },
-  #[snafu(display("trailing bytes"))]
-  TrailingBytes,
-  #[snafu(display("truncated"))]
-  Truncated,
-  #[snafu(display("unconsumed array elements"))]
-  UnconsumedElements,
-  #[snafu(display("unconsumed map entries"))]
-  UnconsumedEntries,
-  #[snafu(display("unexpected key"))]
-  UnexpectedKey,
-  #[snafu(display("expected `{expected}` but found `{actual}`"))]
-  UnexpectedValue {
-    actual: String,
-    expected: &'static str,
-  },
-  #[snafu(display("string is not valid UTF-8"))]
-  Unicode { source: Utf8Error },
-  #[snafu(display("unknown field with key {key}"))]
-  UnknownField { key: u64 },
-  #[snafu(display("unsorted or duplicate array elements"))]
-  Unsorted,
-  #[snafu(display("unsupported version {version} for {name}"))]
-  UnsupportedVersion { name: &'static str, version: u64 },
-  #[snafu(display("failed to parse URL"))]
-  Url { source: UrlError },
+  Malformed(MalformedError),
+  Unknown { source: UnknownError, strict: bool },
+}
+
+impl Display for DecodeError {
+  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    match self {
+      Self::Malformed(source) => Display::fmt(source, f),
+      Self::Unknown { source, .. } => Display::fmt(source, f),
+    }
+  }
+}
+
+impl std::error::Error for DecodeError {
+  fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+    match self {
+      Self::Malformed(source) => source.source(),
+      Self::Unknown { source, .. } => source.source(),
+    }
+  }
+}
+
+impl From<MalformedError> for DecodeError {
+  fn from(source: MalformedError) -> Self {
+    Self::Malformed(source)
+  }
 }

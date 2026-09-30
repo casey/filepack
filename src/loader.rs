@@ -159,7 +159,7 @@ mod tests {
             backtrace: _,
             path: actual,
             source: ArchiveError::DirectoryDecode {
-              source: DecodeError::UnknownField { key: u64::MAX },
+              source: DecodeError::Malformed(MalformedError::UnknownField { key: u64::MAX }),
             },
           } if actual.to_string() == path.as_str(),
           "{unknown:?}",

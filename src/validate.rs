@@ -1,5 +1,5 @@
 use super::*;
 
 pub(crate) trait Validate {
-  fn validate(&self) -> DecodeResult;
+  fn validate(&self) -> Result<(), MalformedError>;
 }

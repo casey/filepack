@@ -54,10 +54,10 @@ pub fn decode_from_str(input: TokenStream) -> TokenStream {
         decoder
           .text()?
           .parse::<Self>()
-          .map_err(|source| DecodeError::FromStr {
+          .map_err(|source| MalformedError::FromStr {
             name: #display_name,
             source: Box::new(source),
-          })
+          }.into())
       }
     }
   }

@@ -840,7 +840,7 @@ fn corrupt_directory() {
       StatusCode::INTERNAL_SERVER_ERROR,
       ServerError::DirectoryCorrupt {
         hash,
-        source: DecodeError::Truncated,
+        source: DecodeError::Malformed(MalformedError::Truncated),
       },
     )
     .send();
@@ -869,7 +869,7 @@ fn corrupt_package_metadata() {
       StatusCode::INTERNAL_SERVER_ERROR,
       ServerError::PackageMetadataCorrupt {
         fingerprint,
-        source: DecodeError::Truncated,
+        source: DecodeError::Malformed(MalformedError::Truncated),
       },
     )
     .send();
@@ -902,7 +902,7 @@ fn corrupt_revision() {
       StatusCode::INTERNAL_SERVER_ERROR,
       ServerError::RevisionCorrupt {
         revision,
-        source: DecodeError::Truncated,
+        source: DecodeError::Malformed(MalformedError::Truncated),
       },
     )
     .send();
