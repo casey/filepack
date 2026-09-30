@@ -9,8 +9,8 @@ pub enum MalformedError {
   Boolean { value: u64 },
   #[snafu(display("failed to parse component"))]
   Component { source: ComponentError },
-  #[snafu(display("duplicate array elements"))]
-  Duplicate,
+  #[snafu(display("duplicate set element"))]
+  DuplicateElement,
   #[snafu(display("empty integer"))]
   EmptyInteger,
   #[snafu(display("empty set"))]
