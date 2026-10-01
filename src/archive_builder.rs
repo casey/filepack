@@ -24,10 +24,15 @@ impl ArchiveBuilder {
     mut self,
     package: Entry,
     signatures: &BTreeSet<Decoded<Attestation>>,
+    unknown: BTreeMap<ComponentBuf, Entry>,
   ) -> Result<Archive, TotalsError> {
-    let mut root = BTreeMap::new();
+    let mut root = unknown;
 
-    root.insert(Archive::package_component().to_owned(), package);
+    assert!(
+      root
+        .insert(Archive::package_component().to_owned(), package)
+        .is_none()
+    );
 
     let mut entries = BTreeMap::new();
     for (i, signature) in signatures.iter().enumerate() {
@@ -41,7 +46,11 @@ impl ArchiveBuilder {
 
     let signatures = self.directory(&signatures)?;
 
-    root.insert(Archive::signatures_component().to_owned(), signatures);
+    assert!(
+      root
+        .insert(Archive::signatures_component().to_owned(), signatures)
+        .is_none()
+    );
 
     let root = Directory::with_entries(root);
 
@@ -67,21 +76,25 @@ impl ArchiveBuilder {
   }
 
   pub(crate) fn pack_directory(&mut self, directory: &DirectoryTree) -> Result<Entry, TotalsError> {
-    let directory = Directory::with_entries(
-      directory
-        .entries
-        .iter()
-        .map(|(name, entry)| {
-          let entry = match entry {
-            DirectoryTreeEntry::File(file) => Ok(Entry::file(file.hash, file.size)),
-            DirectoryTreeEntry::Directory(directory) => self.pack_directory(directory),
-          };
-
-          Ok((name.clone(), entry?))
-        })
-        .collect::<Result<BTreeMap<ComponentBuf, Entry>, TotalsError>>()?,
-    );
-
+    let directory = Directory::with_entries(self.pack_entries(directory)?);
     self.directory(&directory)
+  }
+
+  pub(crate) fn pack_entries(
+    &mut self,
+    directory: &DirectoryTree,
+  ) -> Result<BTreeMap<ComponentBuf, Entry>, TotalsError> {
+    directory
+      .entries
+      .iter()
+      .map(|(name, entry)| {
+        let entry = match entry {
+          DirectoryTreeEntry::File(file) => Ok(Entry::file(file.hash, file.size)),
+          DirectoryTreeEntry::Directory(directory) => self.pack_directory(directory),
+        };
+
+        Ok((name.clone(), entry?))
+      })
+      .collect()
   }
 }

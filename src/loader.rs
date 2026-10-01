@@ -143,6 +143,7 @@ mod tests {
         embedded: BTreeMap::new(),
         package: tree,
         signatures: BTreeSet::from([Decoded::Known(signature)]),
+        unknown: DirectoryTree::new(),
       };
 
       assert_eq!(

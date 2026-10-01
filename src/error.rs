@@ -588,6 +588,12 @@ pub enum Error {
     path: DisplayPath,
     source: ArchiveError,
   },
+  #[snafu(display("manifest `{path}` unknown entry `{name}` conflicts with known entry"))]
+  UnknownEntryConflict {
+    backtrace: Option<Backtrace>,
+    name: ComponentBuf,
+    path: DisplayPath,
+  },
   #[snafu(display(
     "manifest contains {}",
     Count::new(*count, "unrecognized signature"),
