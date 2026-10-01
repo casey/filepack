@@ -77,6 +77,13 @@ impl Manifest {
       }
     }
 
+    for name in manifest.package.entries.keys() {
+      ensure! {
+        !name.is_reserved(),
+        error::ReservedPath { name },
+      }
+    }
+
     let hashes = manifest.file_hashes();
 
     let mut unreferenced = BTreeSet::new();

@@ -233,6 +233,13 @@ impl Archive {
       totals,
     )?;
 
+    for name in package.entries.keys() {
+      ensure! {
+        !name.is_reserved(),
+        archive_error::ReservedPath { name },
+      }
+    }
+
     let signatures = {
       let entry = root
         .entries
@@ -515,6 +522,32 @@ mod tests {
           },
         },
       }) if hash == entry.hash,
+    );
+  }
+
+  #[test]
+  fn reserved_path() {
+    let mut builder = ArchiveBuilder::new();
+
+    let mut package = Directory::new();
+    package.insert_file("manifest.filepack", b"foo");
+
+    let package = builder.directory(&package).unwrap();
+
+    let signatures = builder.directory(&Directory::new()).unwrap();
+
+    let mut root = Directory::new();
+    root
+      .insert_entry("package", package)
+      .insert_entry("signatures", signatures);
+
+    let root = builder.directory(&root).unwrap();
+
+    let archive = builder.build(root.hash);
+
+    assert_matches!(
+      archive.unpack(),
+      Err(ArchiveError::ReservedPath { name }) if name == "manifest.filepack",
     );
   }
 

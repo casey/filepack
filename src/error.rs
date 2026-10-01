@@ -473,6 +473,11 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     source: reqwest::Error,
   },
+  #[snafu(display("package contains reserved path `{name}`"))]
+  ReservedPath {
+    backtrace: Option<Backtrace>,
+    name: ComponentBuf,
+  },
   #[snafu(display("failed to read body from response from {url}"))]
   ResponseBody {
     backtrace: Option<Backtrace>,

@@ -60,6 +60,12 @@ impl From<&Self> for ComponentBuf {
   }
 }
 
+impl From<&Component> for ComponentBuf {
+  fn from(component: &Component) -> Self {
+    Self::from_component(component)
+  }
+}
+
 impl FromStr for ComponentBuf {
   type Err = ComponentError;
 

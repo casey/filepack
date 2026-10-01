@@ -286,6 +286,34 @@ fn download_package_fails_on_size_mismatch() {
 }
 
 #[test]
+fn download_package_rejects_reserved_path() {
+  let (root, hash) = Directory::new()
+    .insert_file("manifest.filepack", b"foo")
+    .deco();
+
+  let server = Test::new()
+    .serve()
+    .write(&format!("files/{hash}"), root)
+    .spawn();
+
+  let test = Test::new()
+    .args([
+      "download",
+      "--server",
+      &server.address(),
+      "--package",
+      &Fingerprint::from(hash).to_string(),
+      "out",
+    ])
+    .stderr("error: package contains reserved path `manifest.filepack`\n")
+    .failure();
+
+  assert!(!test.path().join("out").exists());
+
+  server.terminate().success();
+}
+
+#[test]
 fn download_retrieves_file() {
   let server = Test::new()
     .serve()
