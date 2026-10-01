@@ -35,11 +35,17 @@ fn invalid_signature_error() {
 
   let mut manifest = manifest(&manifest_path);
 
-  let signature = manifest.signatures.pop_first().unwrap().to_string();
-
-  manifest
+  let signature = manifest
     .signatures
-    .insert(signature.replacen(hex, &tampered, 1).parse().unwrap());
+    .pop_first()
+    .unwrap()
+    .known()
+    .unwrap()
+    .to_string();
+
+  manifest.signatures.insert(Decoded::Known(
+    signature.replacen(hex, &tampered, 1).parse().unwrap(),
+  ));
 
   manifest.save(&manifest_path).unwrap();
 
@@ -142,5 +148,27 @@ fn tsv_format_with_time() {
   test
     .args(["signatures", "--format", "tsv", "foo"])
     .stdout_regex(&format!("{public_key}\t\\d+\n"))
+    .success();
+}
+
+#[test]
+fn unknown_signatures_are_ignored() {
+  let test = Test::new()
+    .arg("keygen")
+    .success()
+    .touch("foo/bar")
+    .args(["create", "--sign", "foo"])
+    .success();
+
+  add_unknown_signature(&test.path().join("foo/manifest.filepack"));
+
+  let public_key = test.read("keychain/master.public");
+
+  test
+    .args(["signatures", "--format", "json", "foo"])
+    .stderr("ignored 1 unrecognized signature\n")
+    .stdout(format!(
+      "[{{\"public_key\":\"{public_key}\",\"timestamp\":null}}]\n"
+    ))
     .success();
 }

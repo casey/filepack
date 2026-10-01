@@ -12,6 +12,13 @@ impl Manifest {
   pub(crate) fn run(self) -> Result {
     let manifest = crate::Manifest::load(self.path.as_deref())?;
 
+    let count = manifest.unknown_signatures();
+
+    ensure! {
+      count == 0,
+      error::UnknownSignatures { count },
+    }
+
     match self.format {
       Format::Json => println!("{}", serde_json::to_string(&manifest).unwrap()),
       Format::JsonPretty => println!("{}", serde_json::to_string_pretty(&manifest).unwrap()),

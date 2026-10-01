@@ -262,6 +262,7 @@ pub use self::{
   archive::Archive,
   decode::Decode,
   decode_options::DecodeOptions,
+  decoded::Decoded,
   decoder::Decoder,
   directory::Directory,
   directory_ext::DirectoryExt,
@@ -343,6 +344,7 @@ mod decode;
 mod decode_error;
 mod decode_options;
 mod decode_owned;
+mod decoded;
 mod decoder;
 mod dimensions;
 mod directory;

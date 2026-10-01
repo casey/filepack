@@ -142,7 +142,7 @@ mod tests {
       let manifest = Manifest {
         embedded: BTreeMap::new(),
         package: tree,
-        signatures: BTreeSet::from([signature]),
+        signatures: BTreeSet::from([Decoded::Known(signature)]),
       };
 
       assert_eq!(

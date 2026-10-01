@@ -74,13 +74,28 @@ impl Verify {
 
     let fingerprint = loader.fingerprint()?;
 
-    for signature in &manifest.signatures {
-      signature.verify(fingerprint)?;
+    let unknown = manifest.unknown_signatures();
+
+    if self.print {
+      ensure! {
+        unknown == 0,
+        error::UnknownSignatures { count: unknown },
+      }
     }
 
     let mut verified = Verified::default();
 
-    verified.signatures += manifest.signatures.len().into_u64();
+    let mut verified_signatures = Vec::new();
+
+    for signature in manifest.signatures() {
+      signature.verify(fingerprint)?;
+      verified_signatures.push(signature);
+      verified.signatures += 1;
+    }
+
+    if unknown > 0 {
+      eprintln!("ignored {}", Count::new(unknown, "unrecognized signature"));
+    }
 
     if let Some(expected) = self.fingerprint
       && fingerprint != expected
@@ -215,7 +230,7 @@ fingerprint mismatch: `{}`
 
     for (key, identifier) in keys {
       ensure! {
-        manifest.signatures.iter().any(|signature| signature.public_key() == key),
+        verified_signatures.iter().any(|signature| signature.public_key() == key),
         error::SignatureMissing { identifier: identifier.clone() },
       }
     }

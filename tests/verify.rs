@@ -536,7 +536,13 @@ fn signature_fingerprint_mismatch() {
   let manifest_path = test.path().join("foo/manifest.filepack");
   let manifest = manifest(&manifest_path);
 
-  let signature = manifest.signatures.iter().next().unwrap().to_string();
+  let signature = manifest
+    .signatures
+    .first()
+    .unwrap()
+    .known()
+    .unwrap()
+    .to_string();
 
   let json = json! {
     embedded: {},
@@ -741,6 +747,31 @@ fn unarchive_error() {
                └─ archive missing package directory
       ",
     )
+    .failure();
+}
+
+#[test]
+fn unknown_signatures_are_ignored() {
+  let test = Test::new()
+    .arg("keygen")
+    .success()
+    .touch("foo/bar")
+    .args(["create", "--sign", "foo"])
+    .success();
+
+  add_unknown_signature(&test.path().join("foo/manifest.filepack"));
+
+  test
+    .args(["verify", "foo"])
+    .stderr(
+      "
+        ignored 1 unrecognized signature
+        successfully verified 1 file totaling 0 bytes with 1 signature
+      ",
+    )
+    .success()
+    .args(["verify", "--print", "foo"])
+    .stderr("error: manifest contains 1 unrecognized signature\n")
     .failure();
 }
 

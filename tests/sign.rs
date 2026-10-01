@@ -181,6 +181,26 @@ fn unknown_fields_are_rejected() {
 }
 
 #[test]
+fn unknown_signatures_are_preserved() {
+  let test = Test::new()
+    .arg("keygen")
+    .success()
+    .touch("foo/bar")
+    .args(["create", "--sign", "foo"])
+    .success();
+
+  let payload = add_unknown_signature(&test.path().join("foo/manifest.filepack"));
+
+  let test = test.args(["sign", "--timestamp", "foo"]).success();
+
+  let manifest = manifest(&test.path().join("foo/manifest.filepack"));
+
+  assert_eq!(manifest.signatures.len(), 3);
+
+  assert!(manifest.signatures.contains(&Decoded::Unknown(payload)));
+}
+
+#[test]
 fn updates_manifest_with_signature() {
   let test = Test::new()
     .arg("keygen")
@@ -210,6 +230,8 @@ fn updates_manifest_with_signature() {
     manifest
       .signatures
       .first()
+      .unwrap()
+      .known()
       .unwrap()
       .verify(fingerprint)
       .unwrap()
@@ -243,6 +265,8 @@ fn with_timestamp() {
   let time = manifest
     .signatures
     .first()
+    .unwrap()
+    .known()
     .unwrap()
     .verify(fingerprint)
     .unwrap()

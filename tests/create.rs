@@ -433,7 +433,7 @@ fn sign_creates_valid_signature() {
 
   assert_eq!(manifest.signatures.len(), 1);
 
-  let signature = manifest.signatures.first().unwrap();
+  let signature = manifest.signatures.first().unwrap().known().unwrap();
 
   assert_eq!(signature.public_key(), public_key);
   assert!(signature.verify(fingerprint).unwrap().timestamp.is_none());
@@ -467,7 +467,13 @@ fn sign_with_named_key() {
 
   assert_eq!(manifest.signatures.len(), 1);
   assert_eq!(
-    manifest.signatures.first().unwrap().public_key(),
+    manifest
+      .signatures
+      .first()
+      .unwrap()
+      .known()
+      .unwrap()
+      .public_key(),
     public_key,
   );
 
@@ -499,7 +505,7 @@ fn sign_with_timestamp() {
 
   assert_eq!(manifest.signatures.len(), 1);
 
-  let signature = manifest.signatures.first().unwrap();
+  let signature = manifest.signatures.first().unwrap().known().unwrap();
   assert_eq!(signature.public_key(), public_key);
 
   let timestamp = signature.verify(fingerprint).unwrap().timestamp.unwrap();

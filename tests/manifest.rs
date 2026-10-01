@@ -83,6 +83,23 @@ fn tsv_error() {
 }
 
 #[test]
+fn unknown_signatures_error() {
+  let test = Test::new()
+    .arg("keygen")
+    .success()
+    .touch("foo")
+    .args(["create", "--sign"])
+    .success();
+
+  add_unknown_signature(&test.path().join("manifest.filepack"));
+
+  test
+    .arg("manifest")
+    .stderr("error: manifest contains 1 unrecognized signature\n")
+    .failure();
+}
+
+#[test]
 fn with_path() {
   Test::new()
     .touch("pkg/bar")

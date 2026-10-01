@@ -245,7 +245,7 @@ impl Archive {
           EntryType::File => {
             let file = self.file(entry.hash, entry.size)?;
             loose.remove(&entry.hash);
-            let signature = Signature::decode_from_slice_with_options(options, file)
+            let signature = Decoded::<Attestation>::decode_from_slice_with_options(options, file)
               .context(archive_error::SignatureDecode)?;
             signatures.insert(signature);
           }
@@ -555,7 +555,7 @@ mod tests {
     let manifest = Manifest {
       embedded: BTreeMap::new(),
       package,
-      signatures: BTreeSet::from([private_key.sign(statement)]),
+      signatures: BTreeSet::from([Decoded::Known(private_key.sign(statement))]),
     };
 
     round_trip(&manifest);
@@ -666,7 +666,7 @@ mod tests {
     let manifest = Manifest {
       embedded: BTreeMap::new(),
       package: manifest.package,
-      signatures: BTreeSet::from([signature]),
+      signatures: BTreeSet::from([Decoded::Known(signature)]),
     };
 
     round_trip(&manifest);

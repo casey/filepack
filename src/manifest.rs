@@ -8,7 +8,7 @@ pub struct Manifest {
   pub embedded: BTreeMap<Hash, Vec<u8>>,
   pub package: DirectoryTree,
   #[serde_as(as = "SetPreventDuplicates<serde_with::Same>")]
-  pub signatures: BTreeSet<Attestation>,
+  pub signatures: BTreeSet<Decoded<Attestation>>,
 }
 
 impl Manifest {
@@ -111,9 +111,21 @@ impl Manifest {
 
     let signature = keychain.sign(key, statement)?;
 
-    self.signatures.insert(signature);
+    self.signatures.insert(Decoded::Known(signature));
 
     Ok(())
+  }
+
+  pub(crate) fn signatures(&self) -> impl Iterator<Item = &Attestation> {
+    self.signatures.iter().filter_map(Decoded::known)
+  }
+
+  pub(crate) fn unknown_signatures(&self) -> usize {
+    self
+      .signatures
+      .iter()
+      .filter(|signature| signature.known().is_none())
+      .count()
   }
 }
 
