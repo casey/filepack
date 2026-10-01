@@ -23,6 +23,8 @@ pub enum ArchiveError {
   PackageMissing,
   #[snafu(display("expected archive `package` entry to be directory but found {ty}"))]
   PackageType { ty: EntryType },
+  #[snafu(display("package contains reserved path `{name}`"))]
+  ReservedPath { name: ComponentBuf },
   #[snafu(display("failed to decode signature"))]
   SignatureDecode { source: DecodeError },
   #[snafu(display("found subdirectory in `signatures` directory"))]

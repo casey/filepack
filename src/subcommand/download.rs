@@ -95,6 +95,14 @@ impl Download {
         progress_bar.inc(deco.len().into_u64());
       } else {
         assert!(totals.is_none());
+
+        for name in directory.entries.keys() {
+          ensure! {
+            !name.is_reserved(),
+            error::ReservedPath { name },
+          }
+        }
+
         totals = Some(actual);
 
         progress_bar.set_totals(actual.bytes(), actual.entries());

@@ -134,6 +134,12 @@ impl Create {
         continue;
       }
 
+      let name = relative.first_component();
+      ensure! {
+        !name.is_reserved(),
+        error::ReservedPath { name },
+      }
+
       ensure! {
         relative.is_nfc(),
         error::PathNormalization { path: relative },

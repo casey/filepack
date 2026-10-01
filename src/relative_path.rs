@@ -47,6 +47,10 @@ impl RelativePath {
     Component::new(self.0.rsplit('/').next().unwrap()).unwrap()
   }
 
+  pub(crate) fn first_component(&self) -> &Component {
+    self.components().next().unwrap()
+  }
+
   pub(crate) fn is_nfc(&self) -> bool {
     ComposingNormalizerBorrowed::new_nfc().is_normalized(&self.0)
   }
@@ -263,6 +267,24 @@ mod tests {
 
     case("foo", "foo");
     case("foo/bar.png", "bar.png");
+  }
+
+  #[test]
+  fn first_component() {
+    #[track_caller]
+    fn case(path: &str, expected: &str) {
+      assert_eq!(
+        path
+          .parse::<RelativePath>()
+          .unwrap()
+          .first_component()
+          .as_str(),
+        expected,
+      );
+    }
+
+    case("foo", "foo");
+    case("foo/bar.png", "foo");
   }
 
   #[test]

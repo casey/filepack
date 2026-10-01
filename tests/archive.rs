@@ -95,6 +95,24 @@ fn rejects_embedded_hash_mismatch() {
 }
 
 #[test]
+fn rejects_reserved_path() {
+  Test::new()
+    .write(
+      "manifest.json",
+      json! {
+        embedded: {},
+        package: {
+          "manifest.filepack": {}
+        },
+        signatures: [],
+      },
+    )
+    .args(["archive", "manifest.json", "manifest.filepack"])
+    .stderr("error: package contains reserved path `manifest.filepack`\n")
+    .failure();
+}
+
+#[test]
 fn rejects_totals_overflow() {
   Test::new()
     .write(

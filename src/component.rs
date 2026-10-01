@@ -5,6 +5,8 @@ use super::*;
 pub struct Component(str);
 
 impl Component {
+  const RESERVED: &'static [&'static str] = &[Manifest::FILENAME, State::DIR];
+
   pub(crate) fn as_str(&self) -> &str {
     &self.0
   }
@@ -22,6 +24,12 @@ impl Component {
 
   pub(crate) fn from_component_buf(c: &ComponentBuf) -> &Self {
     Self::cast(c.borrow())
+  }
+
+  pub(crate) fn is_reserved(&self) -> bool {
+    Self::RESERVED
+      .iter()
+      .any(|name| self.0.eq_ignore_ascii_case(name))
   }
 
   pub(crate) fn new(s: &str) -> Result<&Component, ComponentError> {
@@ -132,6 +140,19 @@ mod tests {
     case("file", None);
     case("file.tar.gz", Some("gz"));
     case("file.txt", Some("txt"));
+  }
+
+  #[test]
+  fn is_reserved() {
+    #[track_caller]
+    fn case(input: &str, expected: bool) {
+      assert_eq!(Component::new(input).unwrap().is_reserved(), expected);
+    }
+
+    case("manifest.filepack", true);
+    case(".filepack", true);
+    case("MANIFEST.FILEPACK", true);
+    case("foo", false);
   }
 
   #[test]

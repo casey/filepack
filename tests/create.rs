@@ -272,6 +272,15 @@ fn manifest_already_exists_error() {
 }
 
 #[test]
+fn manifest_in_package_is_reserved() {
+  Test::new()
+    .touch("manifest.filepack")
+    .args(["create", "--manifest", "foo"])
+    .stderr("error: package contains reserved path `manifest.filepack`\n")
+    .failure();
+}
+
+#[test]
 fn metadata_deco_is_embedded_in_manifest_archive() {
   let test = Test::new()
     .write("metadata.yaml", "title: Foo")
