@@ -588,6 +588,14 @@ pub enum Error {
     path: DisplayPath,
     source: ArchiveError,
   },
+  #[snafu(display(
+    "manifest contains {}",
+    Count::new(*count, "unrecognized signature"),
+  ))]
+  UnknownSignatures {
+    backtrace: Option<Backtrace>,
+    count: usize,
+  },
   #[snafu(display("manifest `{path}` contains unreferenced embedded files: {hashes}"))]
   UnreferencedEmbeddedFiles {
     backtrace: Option<Backtrace>,

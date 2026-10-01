@@ -2,10 +2,10 @@ use {
   self::{child::Child, dedent::Dedent, expected::Expected, test::Test},
   camino::{Utf8Path, Utf8PathBuf},
   filepack::{
-    Decode, DecodeOptions, Decoder, Directory, DirectoryExt, Encode, Encoder, Entry, Fingerprint,
-    FlacBuilder, Hash, Loader, MagicType, Manifest, Metadata, Mp3Builder, Mp4Builder, OrderedSet,
-    PackageIdentifier, Page, PngBuilder, PrivateKey, PublicKey, RevisionObject, ServerState, State,
-    Totals, gradient, gradient_alpha, hex,
+    Decode, DecodeOptions, Decoded, Decoder, Directory, DirectoryExt, Encode, Encoder, Entry,
+    Fingerprint, FlacBuilder, Hash, Loader, MagicType, Manifest, Metadata, Mp3Builder, Mp4Builder,
+    OrderedSet, PackageIdentifier, Page, PngBuilder, PrivateKey, PublicKey, RevisionObject,
+    ServerState, State, Totals, gradient, gradient_alpha, hex,
     templates::{DirectoryHtml, PackageHtml},
   },
   image::{DynamicImage, ImageFormat},
@@ -71,6 +71,26 @@ const PRIVATE_KEY: &str = concat!(
 );
 
 const PUBLIC_KEY: &str = "public1d79b36defbee7c1d26099c9e28f849f1f0dceb6e0217b83c87f5cff6fd8c4fc8";
+
+fn add_unknown_signature(path: &Utf8Path) -> Vec<u8> {
+  let mut manifest = manifest(path);
+  let signature = manifest
+    .signatures
+    .iter()
+    .find_map(Decoded::known)
+    .unwrap()
+    .encode_to_vec();
+  let mut fields = BTreeMap::<u64, Vec<u8>>::decode_from_slice(&signature).unwrap();
+  assert!(fields.insert(4, b"foo".to_vec()).is_none());
+  let payload = Vec::<u8>::decode_from_slice(&fields.encode_to_vec()).unwrap();
+  assert!(
+    manifest
+      .signatures
+      .insert(Decoded::Unknown(payload.clone()))
+  );
+  manifest.save(path).unwrap();
+  payload
+}
 
 fn fingerprint(path: &Utf8Path) -> Fingerprint {
   Loader::load_with_options(DecodeOptions::strict(), Some(path))

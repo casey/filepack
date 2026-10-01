@@ -245,7 +245,7 @@ impl Archive {
           EntryType::File => {
             let file = self.file(entry.hash, entry.size)?;
             loose.remove(&entry.hash);
-            let signature = Signature::decode_from_slice_with_options(options, file)
+            let signature = Decoded::<Attestation>::decode_from_slice_with_options(options, file)
               .context(archive_error::SignatureDecode)?;
             signatures.insert(signature);
           }
@@ -555,7 +555,7 @@ mod tests {
     let manifest = Manifest {
       embedded: BTreeMap::new(),
       package,
-      signatures: BTreeSet::from([private_key.sign(statement)]),
+      signatures: BTreeSet::from([Decoded::Known(private_key.sign(statement))]),
     };
 
     round_trip(&manifest);
@@ -666,10 +666,80 @@ mod tests {
     let manifest = Manifest {
       embedded: BTreeMap::new(),
       package: manifest.package,
-      signatures: BTreeSet::from([signature]),
+      signatures: BTreeSet::from([Decoded::Known(signature)]),
     };
 
     round_trip(&manifest);
+  }
+
+  #[test]
+  fn round_trip_with_unknown_signature() {
+    #[derive(Debug, Decode, Encode, Eq, Ord, PartialEq, PartialOrd)]
+    struct Extended {
+      #[n(1)]
+      fingerprint: Fingerprint,
+      #[n(2)]
+      timestamp: Option<u64>,
+      #[n(3)]
+      unknown: u64,
+    }
+
+    impl Message for Extended {
+      const CONTEXT: Context = Context::Statement;
+      const TAG: Tag = Tag::Signature;
+      type Error = Error;
+      type Policy<'a> = ();
+
+      fn check(&self, _signer: PublicKey, _policy: ()) -> Result {
+        Ok(())
+      }
+    }
+
+    let private_key = test::PRIVATE_KEY.parse::<PrivateKey>().unwrap();
+
+    let fingerprint = Fingerprint::from_bytes([0; Fingerprint::LEN]);
+
+    let signature = private_key.sign(Statement {
+      fingerprint,
+      timestamp: None,
+    });
+
+    let extended = private_key.sign(Extended {
+      fingerprint,
+      timestamp: None,
+      unknown: 0,
+    });
+
+    for bytes in [with_unknown_field(&signature), extended.encode_to_vec()] {
+      let mut builder = ArchiveBuilder::new();
+      let package = builder.directory(&Directory::new()).unwrap();
+      let file = builder.file(bytes.clone());
+      let signatures = builder
+        .directory(Directory::new().insert_entry("0", file))
+        .unwrap();
+      let root = builder
+        .directory(
+          Directory::new()
+            .insert_entry("package", package)
+            .insert_entry("signatures", signatures),
+        )
+        .unwrap();
+      let archive = builder.build(root.hash);
+
+      let manifest = archive.unpack().unwrap();
+
+      assert_eq!(
+        manifest.signatures,
+        BTreeSet::from([Decoded::Unknown(
+          Vec::<u8>::decode_from_slice(&bytes).unwrap()
+        )]),
+      );
+
+      assert_eq!(
+        Archive::pack(&manifest).unwrap().encode_to_vec(),
+        archive.encode_to_vec(),
+      );
+    }
   }
 
   #[test]

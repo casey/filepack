@@ -23,8 +23,7 @@ impl Signatures {
     let manifest = loader.unpack()?;
 
     let signatures = manifest
-      .signatures
-      .iter()
+      .signatures()
       .map(|signature| {
         Ok(Output {
           public_key: signature.public_key(),
@@ -32,6 +31,12 @@ impl Signatures {
         })
       })
       .collect::<Result<Vec<Output>>>()?;
+
+    let unknown = manifest.unknown_signatures();
+
+    if unknown > 0 {
+      eprintln!("ignored {}", Count::new(unknown, "unrecognized signature"));
+    }
 
     match self.format {
       Format::Json => println!("{}", serde_json::to_string(&signatures).unwrap()),
