@@ -196,19 +196,20 @@ impl Serve {
   }
 
   async fn api_version_layer(request: Request, next: Next) -> Response {
-    let Some(value) = request.headers().get(API_VERSION_HEADER) else {
-      return next.run(request).await;
-    };
-
-    let Some(version) = value
-      .to_str()
-      .ok()
-      .and_then(|value| parse_number::<u64>(value).ok())
-    else {
-      return ServerError::ApiVersionMalformed {
-        value: value.as_bytes().escape_ascii().to_string(),
-      }
-      .into_response();
+    let version = if let Some(value) = request.headers().get(API_VERSION_HEADER) {
+      let Some(version) = value
+        .to_str()
+        .ok()
+        .and_then(|value| parse_number::<u64>(value).ok())
+      else {
+        return ServerError::ApiVersionMalformed {
+          value: value.as_bytes().escape_ascii().to_string(),
+        }
+        .into_response();
+      };
+      version
+    } else {
+      0
     };
 
     if version != API_VERSION {
