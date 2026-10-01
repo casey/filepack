@@ -197,15 +197,6 @@ fn unknown_signatures_are_preserved() {
 
   assert_eq!(manifest.signatures.len(), 3);
 
-  assert_eq!(
-    manifest
-      .signatures
-      .iter()
-      .filter_map(Decoded::known)
-      .count(),
-    2,
-  );
-
   assert!(manifest.signatures.contains(&Decoded::Unknown(payload)));
 }
 

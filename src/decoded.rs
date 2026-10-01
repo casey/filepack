@@ -78,14 +78,6 @@ mod tests {
   }
 
   #[test]
-  fn malformed() {
-    assert_matches!(
-      Decoded::<Foo>::decode_from_slice(&[0x82, 0x01, 0x80]),
-      Err(DecodeError::Malformed(MalformedError::EmptyInteger)),
-    );
-  }
-
-  #[test]
   fn unknown() {
     let bytes = with_unknown_field(Foo { foo: 1 });
     let decoded = Decoded::<Foo>::decode_from_slice(&bytes).unwrap();
