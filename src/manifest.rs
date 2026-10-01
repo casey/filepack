@@ -9,6 +9,8 @@ pub struct Manifest {
   pub package: DirectoryTree,
   #[serde_as(as = "SetPreventDuplicates<serde_with::Same>")]
   pub signatures: BTreeSet<Decoded<Attestation>>,
+  #[serde(default, skip_serializing_if = "DirectoryTree::is_empty")]
+  pub unknown: DirectoryTree,
 }
 
 impl Manifest {
@@ -32,6 +34,25 @@ impl Manifest {
     self.into()
   }
 
+  fn file_hashes(&self) -> BTreeSet<Hash> {
+    let mut hashes = BTreeSet::new();
+    let mut stack = self
+      .package
+      .entries
+      .values()
+      .chain(self.unknown.entries.values())
+      .collect::<Vec<&DirectoryTreeEntry>>();
+    while let Some(entry) = stack.pop() {
+      match entry {
+        DirectoryTreeEntry::Directory(directory) => stack.extend(directory.entries.values()),
+        DirectoryTreeEntry::File(file) => {
+          hashes.insert(file.hash);
+        }
+      }
+    }
+    hashes
+  }
+
   pub(crate) fn files(&self) -> BTreeMap<RelativePath, File> {
     let mut files = BTreeMap::new();
 
@@ -49,11 +70,14 @@ impl Manifest {
     let manifest =
       serde_json::from_str::<Self>(json).context(error::DeserializeManifest { path })?;
 
-    let hashes = manifest
-      .files()
-      .values()
-      .map(|file| file.hash)
-      .collect::<BTreeSet<Hash>>();
+    for name in Archive::root_entries() {
+      ensure! {
+        !manifest.unknown.entries.contains_key(name),
+        error::UnknownEntryConflict { name: name.to_owned(), path },
+      }
+    }
+
+    let hashes = manifest.file_hashes();
 
     let mut unreferenced = BTreeSet::new();
     for (&expected, content) in &manifest.embedded {
@@ -153,6 +177,7 @@ mod tests {
       embedded: BTreeMap::from([(Hash::bytes(b"foo"), b"foo".to_vec())]),
       package: DirectoryTree::new(),
       signatures: BTreeSet::new(),
+      unknown: DirectoryTree::new(),
     };
 
     let json = serde_json::to_string(&manifest).unwrap();
@@ -174,6 +199,7 @@ mod tests {
       embedded: BTreeMap::new(),
       package: DirectoryTree::new(),
       signatures: BTreeSet::new(),
+      unknown: DirectoryTree::new(),
     };
     let json = serde_json::to_string(&manifest).unwrap();
     assert_eq!(json, r#"{"embedded":{},"package":{},"signatures":[]}"#);

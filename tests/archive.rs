@@ -125,6 +125,29 @@ fn rejects_totals_overflow() {
 }
 
 #[test]
+fn rejects_unknown_entry_conflict() {
+  for name in ["package", "signatures"] {
+    Test::new()
+      .write(
+        "manifest.json",
+        json! {
+          embedded: {},
+          package: {},
+          signatures: [],
+          unknown: {
+            *name: {}
+          }
+        },
+      )
+      .args(["archive", "manifest.json", "manifest.filepack"])
+      .stderr_regex_path(&format!(
+        "error: manifest `.*manifest.json` unknown entry `{name}` conflicts with known entry\n",
+      ))
+      .failure();
+  }
+}
+
+#[test]
 fn rejects_unreferenced_embedded_files() {
   let hash = Hash::bytes(b"foo").to_string();
   let content = hex::encode(b"foo");
@@ -176,6 +199,59 @@ fn round_trip() {
         }
       },
       signatures: [],
+    })
+    .success();
+}
+
+#[test]
+fn round_trip_unknown_entries() {
+  let hash = Hash::bytes(b"qux").to_string();
+  let content = hex::encode(b"qux");
+
+  Test::new()
+    .write(
+      "manifest.json",
+      json! {
+        embedded: {
+          *hash: content
+        },
+        package: {},
+        signatures: [],
+        unknown: {
+          baz: {
+            qux: {
+              hash: hash,
+              size: 3
+            }
+          },
+          foo: {
+            hash: EMPTY_HASH,
+            size: 0
+          }
+        }
+      },
+    )
+    .args(["archive", "manifest.json", "manifest.filepack"])
+    .success()
+    .arg("manifest")
+    .stdout(json_pretty! {
+      embedded: {
+        *hash: content
+      },
+      package: {},
+      signatures: [],
+      unknown: {
+        baz: {
+          qux: {
+            hash: hash,
+            size: 3
+          }
+        },
+        foo: {
+          hash: EMPTY_HASH,
+          size: 0
+        }
+      }
     })
     .success();
 }

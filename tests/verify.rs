@@ -51,7 +51,7 @@ fn extra_fields_are_not_allowed() {
       "
         error: failed to deserialize manifest at `manifest.json`
                └─ unknown field `foo`, expected one of `embedded`, `package`, \
-        `signatures` at line 1 column 49
+        `signatures`, `unknown` at line 1 column 49
       ",
     )
     .failure();

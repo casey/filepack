@@ -84,11 +84,13 @@ impl Archive {
 
     let package = builder.pack_directory(&manifest.package)?;
 
+    let unknown = builder.pack_entries(&manifest.unknown)?;
+
     for (hash, content) in &manifest.embedded {
       builder.files.insert(*hash, content.clone());
     }
 
-    builder.build_package(package, &manifest.signatures)
+    builder.build_package(package, &manifest.signatures, unknown)
   }
 
   pub(crate) fn package(&self, options: DecodeOptions) -> Result<Entry, ArchiveError> {
@@ -109,6 +111,10 @@ impl Archive {
 
   pub(crate) fn package_component() -> &'static Component {
     Component::new(Self::PACKAGE).unwrap()
+  }
+
+  pub(crate) fn root_entries() -> [&'static Component; 2] {
+    [Self::package_component(), Self::signatures_component()]
   }
 
   pub(crate) fn signatures_component() -> &'static Component {
@@ -133,26 +139,38 @@ impl Archive {
 
     let mut entries = BTreeMap::new();
     for (name, entry) in &directory.entries {
-      let crate_entry = match entry.info {
-        EntryInfo::File => {
-          if self.files.contains_key(&entry.hash) {
-            let content = self.file(entry.hash, entry.size)?;
-            loose.remove(&entry.hash);
-            embedded.insert(entry.hash, content.to_vec());
-          }
-          DirectoryTreeEntry::File(File {
-            hash: entry.hash,
-            size: entry.size,
-          })
-        }
-        EntryInfo::Directory { totals } => DirectoryTreeEntry::Directory(
-          self.unpack_directory(options, loose, embedded, entry.hash, entry.size, totals)?,
-        ),
-      };
-      entries.insert(name.clone(), crate_entry);
+      entries.insert(
+        name.clone(),
+        self.unpack_entry(options, loose, embedded, entry)?,
+      );
     }
 
     Ok(DirectoryTree { entries })
+  }
+
+  fn unpack_entry(
+    &self,
+    options: DecodeOptions,
+    loose: &mut BTreeSet<Hash>,
+    embedded: &mut BTreeMap<Hash, Vec<u8>>,
+    entry: &Entry,
+  ) -> Result<DirectoryTreeEntry, ArchiveError> {
+    match entry.info {
+      EntryInfo::File => {
+        if self.files.contains_key(&entry.hash) {
+          let content = self.file(entry.hash, entry.size)?;
+          loose.remove(&entry.hash);
+          embedded.insert(entry.hash, content.to_vec());
+        }
+        Ok(DirectoryTreeEntry::File(File {
+          hash: entry.hash,
+          size: entry.size,
+        }))
+      }
+      EntryInfo::Directory { totals } => Ok(DirectoryTreeEntry::Directory(
+        self.unpack_directory(options, loose, embedded, entry.hash, entry.size, totals)?,
+      )),
+    }
   }
 
   pub(crate) fn unpack_with_options(
@@ -185,25 +203,15 @@ impl Archive {
 
     loose.remove(&self.root);
 
-    {
-      let unknown = root
-        .entries
-        .iter()
-        .filter(|(name, _entry)| **name != Self::PACKAGE && **name != Self::SIGNATURES)
-        .collect::<Vec<(&ComponentBuf, &Entry)>>();
+    let mut embedded = BTreeMap::new();
 
-      ensure! {
-        !options.strict || unknown.is_empty(),
-        archive_error::UnexpectedEntries {
-          names: unknown
-            .iter()
-            .map(|(name, _entry)| (*name).clone())
-            .collect::<BTreeSet<ComponentBuf>>(),
-        },
-      }
-
-      for (_name, entry) in unknown {
-        self.visit(options, &mut loose, entry)?;
+    let mut unknown = DirectoryTree::new();
+    for (name, entry) in &root.entries {
+      if !Self::root_entries().contains(&&**name) {
+        unknown.entries.insert(
+          name.clone(),
+          self.unpack_entry(options, &mut loose, &mut embedded, entry)?,
+        );
       }
     }
 
@@ -215,8 +223,6 @@ impl Archive {
     let EntryInfo::Directory { totals } = package.info else {
       return Err(ArchiveError::PackageType { ty: package.ty() });
     };
-
-    let mut embedded = BTreeMap::new();
 
     let package = self.unpack_directory(
       options,
@@ -266,32 +272,10 @@ impl Archive {
         embedded,
         package,
         signatures,
+        unknown,
       },
       totals,
     ))
-  }
-
-  fn visit(
-    &self,
-    options: DecodeOptions,
-    loose: &mut BTreeSet<Hash>,
-    entry: &Entry,
-  ) -> Result<(), ArchiveError> {
-    match entry.info {
-      EntryInfo::File => {
-        if self.files.contains_key(&entry.hash) {
-          self.file(entry.hash, entry.size)?;
-          loose.remove(&entry.hash);
-        }
-      }
-      EntryInfo::Directory { totals } => {
-        let directory = self.decode_directory(options, loose, entry.hash, entry.size, totals)?;
-        for entry in directory.entries.values() {
-          self.visit(options, loose, entry)?;
-        }
-      }
-    }
-    Ok(())
   }
 }
 
@@ -314,6 +298,7 @@ mod tests {
       embedded: BTreeMap::from([(Hash::bytes(content), content.to_vec())]),
       package,
       signatures: BTreeSet::new(),
+      unknown: DirectoryTree::new(),
     };
 
     round_trip(&manifest);
@@ -421,6 +406,7 @@ mod tests {
       embedded: BTreeMap::new(),
       package,
       signatures: BTreeSet::new(),
+      unknown: DirectoryTree::new(),
     }
   }
 
@@ -463,6 +449,7 @@ mod tests {
       embedded: BTreeMap::new(),
       package,
       signatures: BTreeSet::new(),
+      unknown: DirectoryTree::new(),
     };
 
     assert_eq!(Archive::pack(&manifest).err(), Some(TotalsError::Overflow));
@@ -556,6 +543,7 @@ mod tests {
       embedded: BTreeMap::new(),
       package,
       signatures: BTreeSet::from([Decoded::Known(private_key.sign(statement))]),
+      unknown: DirectoryTree::new(),
     };
 
     round_trip(&manifest);
@@ -574,6 +562,7 @@ mod tests {
       embedded: BTreeMap::new(),
       package: DirectoryTree::new(),
       signatures: BTreeSet::new(),
+      unknown: DirectoryTree::new(),
     };
     round_trip(&manifest);
   }
@@ -589,6 +578,7 @@ mod tests {
       embedded: BTreeMap::new(),
       package,
       signatures: BTreeSet::new(),
+      unknown: DirectoryTree::new(),
     };
 
     round_trip(&manifest);
@@ -614,6 +604,7 @@ mod tests {
       embedded: BTreeMap::new(),
       package,
       signatures: BTreeSet::new(),
+      unknown: DirectoryTree::new(),
     };
 
     round_trip(&manifest);
@@ -635,6 +626,7 @@ mod tests {
       embedded: BTreeMap::new(),
       package,
       signatures: BTreeSet::new(),
+      unknown: DirectoryTree::new(),
     };
 
     round_trip(&manifest);
@@ -652,6 +644,7 @@ mod tests {
       embedded: BTreeMap::new(),
       package: DirectoryTree::new(),
       signatures: BTreeSet::new(),
+      unknown: DirectoryTree::new(),
     };
 
     let fingerprint = Archive::pack(&manifest).unwrap().fingerprint().unwrap();
@@ -667,6 +660,7 @@ mod tests {
       embedded: BTreeMap::new(),
       package: manifest.package,
       signatures: BTreeSet::from([Decoded::Known(signature)]),
+      unknown: DirectoryTree::new(),
     };
 
     round_trip(&manifest);
@@ -841,7 +835,7 @@ mod tests {
   }
 
   #[test]
-  fn unexpected_entries() {
+  fn unknown_entries() {
     let mut builder = ArchiveBuilder::new();
 
     let package = builder.directory(&Directory::new()).unwrap();
@@ -864,20 +858,35 @@ mod tests {
 
     let archive = builder.build(root.hash);
 
+    let mut unknown = DirectoryTree::new();
+
+    unknown
+      .create_file(&"bar/baz".parse().unwrap(), File::new(b"qux"))
+      .unwrap();
+
+    unknown
+      .create_file(&"foo".parse().unwrap(), File::new(b"bar"))
+      .unwrap();
+
+    let manifest = Manifest {
+      embedded: BTreeMap::from([(Hash::bytes(b"qux"), b"qux".to_vec())]),
+      package: DirectoryTree::new(),
+      signatures: BTreeSet::new(),
+      unknown,
+    };
+
     assert_eq!(
       archive
         .unpack_with_options(DecodeOptions::default())
         .unwrap(),
-      Manifest {
-        embedded: BTreeMap::new(),
-        package: DirectoryTree::new(),
-        signatures: BTreeSet::new(),
-      },
+      manifest,
     );
 
-    assert_matches!(
-      archive.unpack(),
-      Err(ArchiveError::UnexpectedEntries { names }) if names.to_string() == "`bar`, `foo`",
+    assert_eq!(archive.unpack().unwrap(), manifest);
+
+    assert_eq!(
+      Archive::pack(&manifest).unwrap().encode_to_vec(),
+      archive.encode_to_vec(),
     );
   }
 

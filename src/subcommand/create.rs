@@ -229,6 +229,7 @@ impl Create {
       embedded,
       package,
       signatures: BTreeSet::new(),
+      unknown: DirectoryTree::new(),
     };
 
     if self.sign {

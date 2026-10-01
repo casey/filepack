@@ -181,6 +181,76 @@ fn unknown_fields_are_rejected() {
 }
 
 #[test]
+fn unknown_root_entries_are_preserved() {
+  let hash = Hash::bytes(b"qux");
+  let hash_string = hash.to_string();
+  let content = hex::encode(b"qux");
+
+  let test = Test::new()
+    .arg("keygen")
+    .success()
+    .touch("foo/bar")
+    .write_manifest(
+      "foo/manifest.filepack",
+      json! {
+        embedded: {
+          *hash_string: content
+        },
+        package: {
+          bar: {
+            hash: EMPTY_HASH,
+            size: 0
+          }
+        },
+        signatures: [],
+        unknown: {
+          baz: {
+            qux: {
+              hash: hash_string,
+              size: 3
+            }
+          },
+          foo: {
+            hash: EMPTY_HASH,
+            size: 0
+          }
+        }
+      },
+    );
+
+  let public_key = test.read("keychain/master.public");
+
+  let test = test
+    .args(["sign", "foo"])
+    .success()
+    .args(["verify", "foo", "--key", &public_key])
+    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
+    .success();
+
+  let manifest = manifest(&test.path().join("foo/manifest.filepack"));
+
+  assert_eq!(manifest.signatures.len(), 1);
+
+  assert_eq!(manifest.embedded, BTreeMap::from([(hash, b"qux".to_vec())]));
+
+  assert_eq!(
+    serde_json::to_string(&manifest.unknown).unwrap() + "\n",
+    json! {
+      baz: {
+        qux: {
+          hash: hash_string,
+          size: 3
+        }
+      },
+      foo: {
+        hash: EMPTY_HASH,
+        size: 0
+      }
+    },
+  );
+}
+
+#[test]
 fn unknown_signatures_are_preserved() {
   let test = Test::new()
     .arg("keygen")
