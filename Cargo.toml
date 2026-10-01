@@ -121,28 +121,29 @@ lto = true
 
 [workspace.lints.clippy]
 all = { level = "deny", priority = -1 }
-arbitrary-source-item-ordering = "deny"
-enum-glob-use = "allow"
-float-cmp = "allow"
+arbitrary_source_item_ordering = "deny"
+assert_is_empty = "allow"
+enum_glob_use = "allow"
+float_cmp = "allow"
 large_enum_variant = "allow"
-missing-errors-doc = "allow"
-missing-panics-doc = "allow"
-must-use-candidate = "allow"
-needless-pass-by-value = "allow"
-new-without-default = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+must_use_candidate = "allow"
+needless_pass_by_value = "allow"
+new_without_default = "allow"
 pedantic = { level = "deny", priority = -1 }
-result-large-err = "allow"
-same-functions-in-if-condition = "allow"
-self-named-constructors = "allow"
-similar-names = "allow"
-struct-excessive-bools = "allow"
-struct-field-names = "allow"
-too-many-lines = "allow"
-unused-async = "allow"
-wildcard-imports = "allow"
+result_large_err = "allow"
+same_functions_in_if_condition = "allow"
+self_named_constructors = "allow"
+similar_names = "allow"
+struct_excessive_bools = "allow"
+struct_field_names = "allow"
+too_many_lines = "allow"
+unused_async = "allow"
+wildcard_imports = "allow"
 
 [workspace.lints.rust]
-mismatched-lifetime-syntaxes = "allow"
+mismatched_lifetime_syntaxes = "allow"
 unreachable_pub = "deny"
 
 [[test]]
