@@ -779,6 +779,70 @@ mod tests {
   }
 
   #[test]
+  fn signatures_are_sorted_by_encoded_bytes() {
+    let private_key = test::PRIVATE_KEY.parse::<PrivateKey>().unwrap();
+
+    let fingerprint = Fingerprint::from_bytes([0; Fingerprint::LEN]);
+
+    let known = Decoded::Known(private_key.sign(Statement {
+      fingerprint,
+      timestamp: Some(u64::MAX),
+    }));
+
+    let unknown = {
+      let signature = private_key
+        .sign(Statement {
+          fingerprint,
+          timestamp: None,
+        })
+        .encode_to_vec();
+      let mut fields = BTreeMap::<u64, Vec<u8>>::decode_from_slice(&signature).unwrap();
+      assert!(fields.insert(4, vec![0]).is_none());
+      Decoded::<Attestation>::Unknown(
+        Vec::<u8>::decode_from_slice(&fields.encode_to_vec()).unwrap(),
+      )
+    };
+
+    let known_bytes = known.encode_to_vec();
+    let unknown_bytes = unknown.encode_to_vec();
+
+    assert!(unknown_bytes < known_bytes);
+
+    let manifest = Manifest {
+      embedded: BTreeMap::new(),
+      package: DirectoryTree::new(),
+      signatures: BTreeSet::from([known, unknown]),
+      unknown: DirectoryTree::new(),
+    };
+
+    round_trip(&manifest);
+
+    let archive = Archive::pack(&manifest).unwrap();
+
+    let root = archive.decode_root(DecodeOptions::strict()).unwrap();
+
+    let signatures = root.entries.get(Archive::SIGNATURES).unwrap();
+
+    let signatures =
+      Directory::decode_from_slice(archive.file(signatures.hash, signatures.size).unwrap())
+        .unwrap();
+
+    assert_eq!(
+      signatures.entries,
+      BTreeMap::from([
+        (
+          "0".parse().unwrap(),
+          Entry::file(Hash::bytes(&unknown_bytes), unknown_bytes.len().into_u64()),
+        ),
+        (
+          "1".parse().unwrap(),
+          Entry::file(Hash::bytes(&known_bytes), known_bytes.len().into_u64()),
+        ),
+      ]),
+    );
+  }
+
+  #[test]
   fn signatures_directory() {
     let mut builder = ArchiveBuilder::new();
 

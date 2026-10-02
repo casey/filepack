@@ -34,15 +34,20 @@ impl ArchiveBuilder {
         .is_none()
     );
 
-    let mut entries = BTreeMap::new();
-    for (i, signature) in signatures.iter().enumerate() {
-      entries.insert(
-        ComponentBuf::from_integer(i),
-        self.file(signature.encode_to_vec()),
-      );
-    }
+    let mut signatures = signatures
+      .iter()
+      .map(Encode::encode_to_vec)
+      .collect::<Vec<Vec<u8>>>();
 
-    let signatures = Directory::with_entries(entries);
+    signatures.sort();
+
+    let signatures = signatures
+      .into_iter()
+      .enumerate()
+      .map(|(i, signature)| (ComponentBuf::from_integer(i), self.file(signature)))
+      .collect();
+
+    let signatures = Directory::with_entries(signatures);
 
     let signatures = self.directory(&signatures)?;
 
