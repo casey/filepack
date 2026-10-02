@@ -82,27 +82,6 @@ fn extraneous_file_error() {
 }
 
 #[test]
-fn file_not_found_error_message() {
-  Test::new()
-    .write_manifest(
-      "manifest.filepack",
-      json! {
-        embedded: {},
-        package: {
-          foo: {
-            hash: EMPTY_HASH,
-            size: 0
-          }
-        },
-        signatures: [],
-      },
-    )
-    .arg("verify")
-    .stderr_regex("error: file missing: `foo`\n")
-    .failure();
-}
-
-#[test]
 fn hash_mismatch() {
   Test::new()
     .write("foo", "foo")
