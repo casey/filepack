@@ -88,8 +88,7 @@ pub(crate) fn write_with_mode(
 
   OpenOptions::new()
     .write(true)
-    .create(true)
-    .truncate(true)
+    .create_new(true)
     .mode(mode)
     .open(path)
     .and_then(|mut file| file.write_all(contents.as_ref()))
