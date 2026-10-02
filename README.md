@@ -245,13 +245,14 @@ fingerprint the signature is made over, an optional timestamp, and the
 signature itself.
 
 Public keys are Curve25519 points and signatures are Ed25519 signatures made
-over the hash of a serialized deco statement containing the package fingerprint
-which commits to the content of `package`.
+over the hash of a serialized deco byte string containing the package
+fingerprint, which commits to the content of `package`, and an optional
+timestamp.
 
 ### Example
 
 A manifest converted to JSON over a directory containing the files `README.md`
-and `src/main.c`, with a signature:
+and `src/main.rs`, with a signature:
 
 ```json
 {
@@ -329,7 +330,7 @@ Fields are given as `NAME: TYPE`. All fields are optional.
 
 Top-level fields:
 
-- `artwork: path.{jpeg,png}`: The path of a JPEG or PNG file containing artwork
+- `artwork: path.{jpg,png}`: The path of a JPEG or PNG file containing artwork
   for the content, for example, cover art for an album or key art for a movie.
 
 - `creator: text`: The person or group who created the content.
@@ -963,16 +964,16 @@ of file hashing and verification.
 Filepack allows for the creation of Ed25519 signatures over the contents of a
 manifest, which thus commit to the contents of the directory covered by the
 manifest. Signatures are made over a statement containing a "fingerprint" hash
-of a canonical deco serialization of the manifest. This keeps signatures
-independent of the manifest format, avoids issues with canonicalization of the
-manifest JSON, avoids hash loops due to the inclusion of signatures in the
-manifest itself, and allows proving the inclusion of files covered by a
-signature.
+of a canonical deco serialization of the manifest's `package` directory. This
+keeps signatures independent of the manifest format, avoids the need for a
+canonical serialization of the manifest as a whole, avoids hash loops due to
+the inclusion of signatures in the manifest itself, and allows proving the
+inclusion of files covered by a signature.
 
 ### Fingerprints
 
 Package fingerprints are the BLAKE3 hash of a canonical deco serialization of
-the contents of the manifest. Fingerprints are constructed to be unique,
+the manifest's `package` directory. Fingerprints are constructed to be unique,
 meaning that it is impossible for two different packages with different
 contents to have the same fingerprint.
 

@@ -7,7 +7,7 @@ Changelog
 ### Added
 - Add `item-title-missing` lint ([#670](https://github.com/casey/filepack/pull/670) by [casey](https://github.com/casey))
 - Add lint for non-square embedded audio cover art ([#604](https://github.com/casey/filepack/pull/604) by [casey](https://github.com/casey))
-- Add lint for mismatch between video and placeholder dimensions([#600](https://github.com/casey/filepack/pull/600) by [casey](https://github.com/casey))
+- Add lint for mismatch between video and placeholder dimensions ([#600](https://github.com/casey/filepack/pull/600) by [casey](https://github.com/casey))
 - Add lint for missing video placeholder images ([#594](https://github.com/casey/filepack/pull/594) by [casey](https://github.com/casey))
 - Add video placeholder images ([#590](https://github.com/casey/filepack/pull/590) by [casey](https://github.com/casey))
 - Add lints for missing media items and package creator ([#586](https://github.com/casey/filepack/pull/586) by [casey](https://github.com/casey))
@@ -19,7 +19,7 @@ Changelog
 - Extract titles from images ([#571](https://github.com/casey/filepack/pull/571) by [casey](https://github.com/casey))
 - Extract titles from videos ([#570](https://github.com/casey/filepack/pull/570) by [casey](https://github.com/casey))
 - Add `all` lint group ([#560](https://github.com/casey/filepack/pull/560) by [casey](https://github.com/casey))
-- Overwrite thumbnails with `--force ([#558](https://github.com/casey/filepack/pull/558) by [casey](https://github.com/casey))
+- Overwrite thumbnails with `--force` ([#558](https://github.com/casey/filepack/pull/558) by [casey](https://github.com/casey))
 - Generate thumbnails with `filepack create --generate` ([#555](https://github.com/casey/filepack/pull/555) by [casey](https://github.com/casey))
 - Add lint for missing embedded cover art in audio files ([#552](https://github.com/casey/filepack/pull/552) by [casey](https://github.com/casey))
 - Add `filepack delete` subcommand ([#533](https://github.com/casey/filepack/pull/533) by [casey](https://github.com/casey))
