@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Clone, Debug, Decode, DeserializeFromStr, Encode, Eq, PartialEq, SerializeDisplay)]
+#[derive(Clone, Debug, Decode, DeserializeFromStr, Encode, PartialEq, SerializeDisplay)]
 #[deco(transparent, validate)]
 pub struct Text(String);
 

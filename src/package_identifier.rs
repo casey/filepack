@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Clone, Copy, Debug, DeserializeFromStr, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, DeserializeFromStr, PartialEq)]
 pub enum PackageIdentifier {
   Fingerprint(Fingerprint),
   Number(u64),
