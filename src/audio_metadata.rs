@@ -93,7 +93,7 @@ impl AudioMetadata {
     }
 
     ensure! {
-      expected_disc == discs + 1,
+      expected_disc - 1 == discs,
       audio_position_error::Missing {
         disc: expected_disc,
         track: expected_track,
@@ -235,6 +235,11 @@ mod tests {
 
     case(
       &[(1, 2, 1, 1)],
+      Err(AudioPositionError::Missing { disc: 2, track: 1 }),
+    );
+
+    case(
+      &[(1, u64::MAX, 1, 1)],
       Err(AudioPositionError::Missing { disc: 2, track: 1 }),
     );
 
