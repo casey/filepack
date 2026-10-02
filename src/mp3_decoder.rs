@@ -153,8 +153,10 @@ impl<'a> Mp3Decoder<'a> {
     let album = Self::text_tag(&tag, "TALB")?;
     let artist = Self::text_tag(&tag, "TPE1")?;
     let (disc, discs) = Self::pair_tag(&tag, "TPOS")?;
+    let discs = discs.context(audio_error::DiscTotalMissing { tag: "TPOS" })?;
     let title = Self::text_tag(&tag, "TIT2")?;
     let (track, tracks) = Self::pair_tag(&tag, "TRCK")?;
+    let tracks = tracks.context(audio_error::TrackTotalMissing { tag: "TRCK" })?;
 
     let mut cursor = io::Cursor::new(data);
 
@@ -194,16 +196,19 @@ impl<'a> Mp3Decoder<'a> {
     })
   }
 
-  fn pair_tag(tag: &id3::Tag, id: &'static str) -> Result<(u64, u64), AudioError> {
+  fn pair_tag(tag: &id3::Tag, id: &'static str) -> Result<(u64, Option<u64>), AudioError> {
     let value = Self::tag(tag, id)?;
 
-    let (number, total) = value
-      .split_once('/')
-      .context(audio_error::TagPair { tag: id })?;
+    let (number, total) = match value.split_once('/') {
+      Some((number, total)) => (number, Some(total)),
+      None => (value, None),
+    };
 
     Ok((
       parse_number(number).context(audio_error::TagInteger { tag: id })?,
-      parse_number(total).context(audio_error::TagInteger { tag: id })?,
+      total
+        .map(|total| parse_number(total).context(audio_error::TagInteger { tag: id }))
+        .transpose()?,
     ))
   }
 
@@ -417,7 +422,7 @@ mod tests {
           .tag("TPOS", "1")
           .frames(1)
       ),
-      AudioError::TagPair { tag: "TPOS" },
+      AudioError::DiscTotalMissing { tag: "TPOS" },
     );
 
     assert_matches!(

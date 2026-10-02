@@ -822,6 +822,41 @@ fn create_rejects_extra_files_in_web_packages() {
 }
 
 #[test]
+fn create_rejects_flac_missing_track_total() {
+  Test::new()
+    .write(
+      "foo.flac",
+      FlacBuilder::new()
+        .tag("ALBUM", "qux")
+        .tag("ARTIST", "baz")
+        .tag("DISCNUMBER", "1")
+        .tag("DISCTOTAL", "1")
+        .tag("TITLE", "bar")
+        .tag("TRACKNUMBER", "1")
+        .build(),
+    )
+    .write(
+      "metadata.yaml",
+      "
+        creator: baz
+        title: qux
+        media:
+          type: audio
+          items:
+            - path: foo.flac
+      ",
+    )
+    .arg("create")
+    .stderr_regex(
+      "
+        error: invalid audio track `.*foo.flac`
+               └─ missing `tracktotal` tag
+      ",
+    )
+    .failure();
+}
+
+#[test]
 fn create_rejects_invalid_track_positions() {
   Test::new()
     .write(
@@ -909,6 +944,42 @@ fn create_rejects_invalid_videos() {
 }
 
 #[test]
+fn create_rejects_m4a_missing_disc_total() {
+  Test::new()
+    .write(
+      "foo.m4a",
+      Mp4Builder::new()
+        .tag(*b"\xa9alb", "qux")
+        .tag(*b"\xa9ART", "baz")
+        .tag(*b"\xa9nam", "bar")
+        .pair_tag(*b"disk", 1, 0)
+        .pair_tag(*b"trkn", 1, 1)
+        .frame_count(2)
+        .audio_track(0x40)
+        .build(),
+    )
+    .write(
+      "metadata.yaml",
+      "
+        creator: baz
+        title: qux
+        media:
+          type: audio
+          items:
+            - path: foo.m4a
+      ",
+    )
+    .arg("create")
+    .stderr_regex(
+      "
+        error: invalid audio track `.*foo.m4a`
+               └─ `disk` tag is missing disc total
+      ",
+    )
+    .failure();
+}
+
+#[test]
 fn create_rejects_m4a_with_unsupported_codec() {
   Test::new()
     .write(
@@ -961,6 +1032,41 @@ fn create_rejects_metadata_deco_without_yaml() {
     .remove_file("metadata.yaml")
     .args(["create", "--force"])
     .stderr_regex("error: metadata `.*metadata.filemeta` already exists\n")
+    .failure();
+}
+
+#[test]
+fn create_rejects_mp3_missing_track_total() {
+  Test::new()
+    .write(
+      "foo.mp3",
+      Mp3Builder::new()
+        .tag("TALB", "qux")
+        .tag("TIT2", "bar")
+        .tag("TPE1", "baz")
+        .tag("TPOS", "1/1")
+        .tag("TRCK", "1")
+        .frames(1)
+        .build(),
+    )
+    .write(
+      "metadata.yaml",
+      "
+        creator: baz
+        title: qux
+        media:
+          type: audio
+          items:
+            - path: foo.mp3
+      ",
+    )
+    .arg("create")
+    .stderr_regex(
+      "
+        error: invalid audio track `.*foo.mp3`
+               └─ `TRCK` tag is missing track total
+      ",
+    )
     .failure();
 }
 
