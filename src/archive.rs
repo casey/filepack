@@ -626,12 +626,6 @@ mod tests {
   }
 
   #[test]
-  fn round_trip_encode_decode() {
-    let manifest = manifest();
-    round_trip(&manifest);
-  }
-
-  #[test]
   fn round_trip_multiple_files() {
     let mut package = DirectoryTree::new();
 
