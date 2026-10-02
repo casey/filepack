@@ -43,7 +43,7 @@ mod tests {
       }
     }
 
-    #[derive(Debug, Decode, Encode, Eq, Ord, PartialEq, PartialOrd)]
+    #[derive(Decode, Encode, Eq, Ord, PartialEq, PartialOrd)]
     struct Twin {
       #[n(1)]
       fingerprint: Fingerprint,

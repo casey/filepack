@@ -1,6 +1,4 @@
-use super::*;
-
-#[derive(Clone, Debug, PartialEq)]
+#[derive(PartialEq)]
 pub(crate) enum MediaItemResource {
   Original,
   Placeholder,
