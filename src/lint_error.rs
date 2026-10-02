@@ -28,6 +28,8 @@ pub(crate) enum LintError {
   MediaMissing,
   #[snafu(display("package missing metadata"))]
   MetadataMissing,
+  #[snafu(display("media items have mixed formats: {}", formats.join(", ")))]
+  MixedFormats { formats: Vec<String> },
   #[snafu(display("derived assets not generated, pass `--generate`"))]
   NotGenerated,
   #[snafu(display("metadata package missing creator"))]

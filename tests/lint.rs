@@ -450,6 +450,36 @@ fn deny_metadata_missing() {
 }
 
 #[test]
+fn deny_mixed_formats() {
+  let mut jpeg = Cursor::new(Vec::new());
+  gradient(1, 1)
+    .write_to(&mut jpeg, ImageFormat::Jpeg)
+    .unwrap();
+
+  Test::new()
+    .write("foo.png", PngBuilder::new().build())
+    .write("bar.jpg", jpeg.into_inner())
+    .write(
+      "metadata.yaml",
+      "
+        media:
+          type: image
+          items:
+            - path: foo.png
+            - path: bar.jpg
+      ",
+    )
+    .args(["create", "--deny", "mixed-formats"])
+    .stderr(
+      "
+        error: media items have mixed formats: PNG, JPEG
+        error: 1 lint error
+      ",
+    )
+    .failure();
+}
+
+#[test]
 fn deny_multiple() {
   if cfg!(windows) {
     return;
