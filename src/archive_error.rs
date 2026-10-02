@@ -27,6 +27,8 @@ pub enum ArchiveError {
   ReservedPath { name: ComponentBuf },
   #[snafu(display("failed to decode signature"))]
   SignatureDecode { source: DecodeError },
+  #[snafu(display("signature entry `{name}` does not match hash {hash}"))]
+  SignatureName { hash: Hash, name: ComponentBuf },
   #[snafu(display("found subdirectory in `signatures` directory"))]
   SignaturesDirectory,
   #[snafu(display("archive missing signatures directory"))]

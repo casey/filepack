@@ -11,8 +11,8 @@ impl ComponentBuf {
     Self(component.as_str().to_owned())
   }
 
-  pub(crate) fn from_integer(i: usize) -> Self {
-    i.to_string().parse().unwrap()
+  pub(crate) fn from_hash(hash: Hash) -> Self {
+    hash.to_string().parse().unwrap()
   }
 }
 

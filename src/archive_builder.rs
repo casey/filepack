@@ -34,17 +34,12 @@ impl ArchiveBuilder {
         .is_none()
     );
 
-    let mut signatures = signatures
-      .iter()
-      .map(Encode::encode_to_vec)
-      .collect::<Vec<Vec<u8>>>();
-
-    signatures.sort();
-
     let signatures = signatures
-      .into_iter()
-      .enumerate()
-      .map(|(i, signature)| (ComponentBuf::from_integer(i), self.file(signature)))
+      .iter()
+      .map(|signature| {
+        let entry = self.file(signature.encode_to_vec());
+        (ComponentBuf::from_hash(entry.hash), entry)
+      })
       .collect();
 
     let signatures = Directory::with_entries(signatures);
