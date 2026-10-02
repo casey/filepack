@@ -148,6 +148,38 @@ fn download_package_fails_if_output_file_already_exists() {
 }
 
 #[test]
+fn download_package_fails_on_directory_size_mismatch() {
+  let (directory, hash) = Directory::new().deco();
+  let size = directory.len().into_u64();
+  let (root, root_hash) = Directory::new()
+    .insert_entry("foo", Entry::directory(hash, size + 1, Totals::default()))
+    .deco();
+
+  let server = Test::new()
+    .serve()
+    .write(&format!("files/{root_hash}"), root)
+    .write(&format!("files/{hash}"), directory)
+    .spawn();
+
+  Test::new()
+    .args([
+      "download",
+      "--server",
+      &server.address(),
+      "--package",
+      &Fingerprint::from(root_hash).to_string(),
+      "out",
+    ])
+    .stderr(&format!(
+      "error: downloaded file has size {} in manifest but size {size} on disk\n",
+      size + 1,
+    ))
+    .failure();
+
+  server.terminate().success();
+}
+
+#[test]
 fn download_package_fails_on_directory_totals_mismatch() {
   let mut subdirectory = Directory::new();
   subdirectory.insert_file("foo", b"bar");

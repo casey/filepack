@@ -86,8 +86,13 @@ impl Mp4 {
       ensure!(end <= len, mp4_error::Truncated);
 
       if header.ty == Ftyp::TYPE || header.ty == Moov::TYPE {
-        let mut body = vec![0; usize::try_from(end - start).unwrap()];
-        reader.read_exact(&mut body).context(mp4_error::Io)?;
+        let mut body = Vec::new();
+        reader
+          .by_ref()
+          .take(end - start)
+          .read_to_end(&mut body)
+          .context(mp4_error::Io)?;
+        ensure!(body.len().into_u64() == end - start, mp4_error::Truncated);
         bodies.push((header.ty, body));
       } else {
         reader.seek(SeekFrom::Start(end)).context(mp4_error::Io)?;
@@ -113,6 +118,20 @@ impl Mp4 {
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn oversized_box() {
+    let bytes = [
+      &[0, 0, 0, 1, b'm', b'o', b'o', b'v'][..],
+      &u64::MAX.to_be_bytes(),
+    ]
+    .concat();
+
+    assert_matches!(
+      Mp4::read(io::Cursor::new(bytes), u64::MAX),
+      Err(Mp4Error::Truncated),
+    );
+  }
 
   #[test]
   fn parse() {

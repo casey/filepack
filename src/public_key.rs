@@ -42,8 +42,8 @@ impl PublicKey {
   }
 }
 
-impl From<PrivateKey> for PublicKey {
-  fn from(private_key: PrivateKey) -> Self {
+impl From<&PrivateKey> for PublicKey {
+  fn from(private_key: &PrivateKey) -> Self {
     Self(private_key.inner_secret().verifying_key())
   }
 }

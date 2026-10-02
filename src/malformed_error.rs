@@ -24,8 +24,6 @@ pub enum MalformedError {
   },
   #[snafu(display("integer exceeds eight bytes"))]
   IntegerLength,
-  #[snafu(display("integer out of range"))]
-  IntegerRange { source: TryFromIntError },
   #[snafu(display("map keys out of order"))]
   KeyOrder,
   #[snafu(display(

@@ -64,7 +64,7 @@ impl Download {
 
     let mut progress_bar = ProgressBar::items(options, 0, 0, "entries");
 
-    while let Some((hash, path, expected_totals)) = stack.pop() {
+    while let Some((hash, path, expected)) = stack.pop() {
       let url = client.file_url(hash);
 
       let response = client.file(hash)?;
@@ -87,9 +87,18 @@ impl Download {
         .totals()
         .context(error::DirectoryTotals { hash })?;
 
-      if let Some(expected) = expected_totals {
+      if let Some((size, totals)) = expected {
+        let actual_size = deco.len().into_u64();
+        ensure! {
+          actual_size == size,
+          error::DownloadSizeMismatch {
+            actual: actual_size,
+            expected: size,
+          },
+        }
+
         actual
-          .expect(expected)
+          .expect(totals)
           .context(error::DirectoryTotals { hash })?;
 
         progress_bar.inc(deco.len().into_u64());
@@ -118,7 +127,9 @@ impl Download {
         let path = path.join(component);
         match entry.info {
           EntryInfo::File => files.push((entry.hash, path, entry.size)),
-          EntryInfo::Directory { totals } => stack.push((entry.hash, path, Some(totals))),
+          EntryInfo::Directory { totals } => {
+            stack.push((entry.hash, path, Some((entry.size, totals))));
+          }
         }
       }
     }

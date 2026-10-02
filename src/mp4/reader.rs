@@ -11,12 +11,14 @@ impl<'a> Reader<'a> {
   }
 
   pub(crate) fn bytes(&mut self, len: usize) -> Result<&'a [u8], Mp4Error> {
+    let end = self.offset.checked_add(len).context(mp4_error::Truncated)?;
+
     let bytes = self
       .bytes
-      .get(self.offset..self.offset + len)
+      .get(self.offset..end)
       .context(mp4_error::Truncated)?;
 
-    self.offset += len;
+    self.offset = end;
 
     Ok(bytes)
   }
@@ -84,6 +86,14 @@ mod tests {
     assert_eq!(reader.i32().unwrap(), -1);
     assert_eq!(reader.fourcc().unwrap(), Fourcc(*b"abcd"));
     assert_eq!(reader.rest(), &[9]);
+  }
+
+  #[test]
+  fn length_overflow() {
+    let mut reader = Reader::new(&[0, 1]);
+    reader.u8().unwrap();
+    assert_matches!(reader.bytes(usize::MAX), Err(Mp4Error::Truncated));
+    assert_eq!(reader.rest(), &[1]);
   }
 
   #[test]

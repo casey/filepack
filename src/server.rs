@@ -138,6 +138,8 @@ impl Server {
 
       let mut directory_stack = Vec::new();
 
+      let mut visited_directories = HashSet::new();
+
       let mut revision_stack = tx
         .open_table(NUMBERS)?
         .iter()?
@@ -163,9 +165,11 @@ impl Server {
       }
 
       while let Some(hash) = directory_stack.pop() {
-        if !marked.insert(hash) {
+        if !visited_directories.insert(hash) {
           continue;
         }
+
+        marked.insert(hash);
 
         let directory = self.read_directory(hash)?;
 
@@ -712,13 +716,12 @@ impl Server {
 
         let metadata = path.metadata().map_err(|error| {
           if error.kind() == io::ErrorKind::NotFound {
-            server_error::DirectoryEntryMissing {
+            ServerError::DirectoryEntryMissing {
               directory: hash,
               hash: entry.hash,
-              name,
+              name: name.clone(),
               ty: entry.ty(),
             }
-            .build()
           } else {
             filesystem_error::Io { path: &path }
               .into_error(error)

@@ -14,7 +14,7 @@ impl Encoder {
     self.integer(u64::from(boolean));
   }
 
-  pub fn bytes(&mut self, bytes: &[u8]) {
+  pub(crate) fn bytes(&mut self, bytes: &[u8]) {
     for &byte in bytes.iter().rev() {
       self.buffer.push_front(byte);
     }

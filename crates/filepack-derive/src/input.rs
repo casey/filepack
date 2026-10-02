@@ -28,7 +28,7 @@ impl Input {
     }
   }
 
-  pub(crate) fn decode_enum(&self, attributes: &Attributes) -> Result<proc_macro2::TokenStream> {
+  fn decode_enum(&self, attributes: &Attributes) -> Result<proc_macro2::TokenStream> {
     let name = &self.ident;
 
     let type_name = display_name(name);
@@ -129,7 +129,7 @@ impl Input {
     }
   }
 
-  pub(crate) fn decode_struct(&self, attributes: &Attributes) -> Result<proc_macro2::TokenStream> {
+  fn decode_struct(&self, attributes: &Attributes) -> Result<proc_macro2::TokenStream> {
     let name = &self.ident;
 
     let display_name = display_name(name);
@@ -179,10 +179,7 @@ impl Input {
     })
   }
 
-  pub(crate) fn decode_transparent(
-    &self,
-    attributes: &Attributes,
-  ) -> Result<proc_macro2::TokenStream> {
+  fn decode_transparent(&self, attributes: &Attributes) -> Result<proc_macro2::TokenStream> {
     let member = self.transparent_member()?;
 
     let constructor = match &member {
@@ -228,7 +225,7 @@ impl Input {
     }
   }
 
-  pub(crate) fn encode_enum(&self) -> Result<proc_macro2::TokenStream> {
+  fn encode_enum(&self) -> Result<proc_macro2::TokenStream> {
     let name = &self.ident;
 
     let variants = self.parse_variants()?;
@@ -271,7 +268,7 @@ impl Input {
     self.generics(syn::parse_quote!(Encode))
   }
 
-  pub(crate) fn encode_struct(&self, attributes: &Attributes) -> Result<proc_macro2::TokenStream> {
+  fn encode_struct(&self, attributes: &Attributes) -> Result<proc_macro2::TokenStream> {
     let name = &self.ident;
 
     let fields = self.parse_fields()?;
@@ -299,7 +296,7 @@ impl Input {
     })
   }
 
-  pub(crate) fn encode_transparent(&self) -> Result<proc_macro2::TokenStream> {
+  fn encode_transparent(&self) -> Result<proc_macro2::TokenStream> {
     let name = &self.ident;
 
     let member = self.transparent_member()?;

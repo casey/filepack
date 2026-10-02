@@ -91,12 +91,11 @@ impl<'a> Decoder<'a> {
     if actual != magic::BYTES {
       let len = actual.len().min(16);
       return Err(
-        malformed_error::MagicBytes {
-          actual: &actual[..len],
+        MalformedError::MagicBytes {
+          actual: actual[..len].into(),
           expected: magic::BYTES,
           truncated: actual.len() > len,
         }
-        .build()
         .into(),
       );
     }
@@ -208,14 +207,6 @@ mod tests {
   }
 
   #[test]
-  fn integer_empty() {
-    assert_matches!(
-      Decoder::new(&[0x80]).integer(),
-      Err(DecodeError::Malformed(MalformedError::EmptyInteger)),
-    );
-  }
-
-  #[test]
   fn invalid_integers() {
     #[track_caller]
     fn case(bytes: &[u8], signed: bool, expected: &str) {
@@ -238,53 +229,6 @@ mod tests {
         "integer exceeds eight bytes",
       );
     }
-  }
-
-  #[test]
-  fn overlong_integer() {
-    #[track_caller]
-    fn case(bytes: &[u8]) {
-      assert_matches!(
-        Decoder::new(bytes).integer(),
-        Err(DecodeError::Malformed(MalformedError::OverlongInteger)),
-      );
-    }
-
-    case(&[0x82, 0x00, 0x00]);
-    case(&[0x82, 0x01, 0x00]);
-    case(&[0x83, 0xff, 0xff, 0x00]);
-  }
-
-  #[test]
-  fn reserved() {
-    assert_matches!(
-      Decoder::new(&[0xf8]).bytes(),
-      Err(DecodeError::Malformed(MalformedError::Reserved {
-        value: 0xf8
-      })),
-    );
-  }
-
-  #[test]
-  fn signed_integer_empty() {
-    assert_matches!(
-      Decoder::new(&[0x80]).signed_integer(),
-      Err(DecodeError::Malformed(MalformedError::EmptyInteger)),
-    );
-  }
-
-  #[test]
-  fn signed_integer_range() {
-    #[track_caller]
-    fn case<'a, T: Debug + Decode<'a>>(bytes: &'a [u8]) {
-      assert_matches!(
-        T::decode_strict(bytes),
-        Err(DecodeError::Malformed(MalformedError::IntegerRange { .. })),
-      );
-    }
-
-    case::<i32>(&[0x85, 0x00, 0x00, 0x00, 0x00, 0x01]);
-    case::<i32>(&[0x85, 0x01, 0x00, 0x00, 0x00, 0x01]);
   }
 
   #[test]

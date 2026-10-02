@@ -60,13 +60,10 @@ impl WebmDecoder {
             "A_OPUS" => TrackCodec::Opus,
             "A_VORBIS" => TrackCodec::Vorbis,
             codec => {
-              return Err(
-                video_error::AudioCodecUnsupported {
-                  codec,
-                  track: index,
-                }
-                .build(),
-              );
+              return Err(VideoError::AudioCodecUnsupported {
+                codec: codec.into(),
+                track: index,
+              });
             }
           };
 
@@ -104,13 +101,10 @@ impl WebmDecoder {
             "V_VP8" => TrackCodec::Vp8,
             "V_VP9" => TrackCodec::Vp9,
             codec => {
-              return Err(
-                video_error::VideoCodecUnsupported {
-                  codec,
-                  track: index,
-                }
-                .build(),
-              );
+              return Err(VideoError::VideoCodecUnsupported {
+                codec: codec.into(),
+                track: index,
+              });
             }
           };
 
@@ -150,23 +144,20 @@ impl WebmDecoder {
           });
         }
         ty => {
-          return Err(
-            video_error::TrackUnsupported {
-              track: index,
-              ty: match ty {
-                TrackType::Audio => "audio",
-                TrackType::Buttons => "buttons",
-                TrackType::Complex => "complex",
-                TrackType::Control => "control",
-                TrackType::Logo => "logo",
-                TrackType::Metadata => "metadata",
-                TrackType::Subtitle => "subtitle",
-                TrackType::Unknown => "unknown",
-                TrackType::Video => "video",
-              },
-            }
-            .build(),
-          );
+          return Err(VideoError::TrackUnsupported {
+            track: index,
+            ty: match ty {
+              TrackType::Audio => "audio",
+              TrackType::Buttons => "buttons",
+              TrackType::Complex => "complex",
+              TrackType::Control => "control",
+              TrackType::Logo => "logo",
+              TrackType::Metadata => "metadata",
+              TrackType::Subtitle => "subtitle",
+              TrackType::Unknown => "unknown",
+              TrackType::Video => "video",
+            },
+          });
         }
       }
     }

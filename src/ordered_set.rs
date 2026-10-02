@@ -5,38 +5,12 @@ use super::*;
 pub struct OrderedSet<T>(Vec<T>);
 
 impl<T> OrderedSet<T> {
-  pub fn as_slice(&self) -> &[T] {
+  pub(crate) fn as_slice(&self) -> &[T] {
     &self.0
   }
 
   pub fn singleton(element: T) -> Self {
     Self(vec![element])
-  }
-}
-
-impl<T> Deref for OrderedSet<T> {
-  type Target = [T];
-
-  fn deref(&self) -> &Self::Target {
-    &self.0
-  }
-}
-
-impl<T> IntoIterator for OrderedSet<T> {
-  type IntoIter = vec::IntoIter<T>;
-  type Item = T;
-
-  fn into_iter(self) -> Self::IntoIter {
-    self.0.into_iter()
-  }
-}
-
-impl<'a, T> IntoIterator for &'a OrderedSet<T> {
-  type IntoIter = slice::Iter<'a, T>;
-  type Item = &'a T;
-
-  fn into_iter(self) -> Self::IntoIter {
-    self.0.iter()
   }
 }
 

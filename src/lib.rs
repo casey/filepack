@@ -20,6 +20,7 @@
 use {
   self::{
     application::Application,
+    archive::Archive,
     archive_builder::ArchiveBuilder,
     archive_error::ArchiveError,
     arguments::Arguments,
@@ -107,6 +108,7 @@ use {
     linter::Linter,
     m4a_decoder::M4aDecoder,
     m4a_error::M4aError,
+    magic::Magic,
     malformed_error::MalformedError,
     map_decoder::MapDecoder,
     map_encoder::MapEncoder,
@@ -142,6 +144,7 @@ use {
     resolved::Resolved,
     resource::Resource,
     resource_type::ResourceType,
+    revision::Revision,
     rotation::Rotation,
     server::Server,
     server_error::ServerError,
@@ -221,11 +224,11 @@ use {
     io::{self, BufReader, IsTerminal, Read, Seek, SeekFrom, Write},
     iter, mem,
     net::SocketAddr,
-    num::{NonZeroUsize, ParseIntError, TryFromIntError},
+    num::{NonZeroUsize, ParseIntError},
     ops::{Bound, Deref},
     path::{Path, PathBuf},
     process::{self, ExitCode},
-    ptr, slice,
+    ptr,
     str::{self, FromStr, Utf8Error},
     sync::{
       Arc, LazyLock,
@@ -263,7 +266,6 @@ use {
 };
 
 pub use self::{
-  archive::Archive,
   decode::Decode,
   decode_options::DecodeOptions,
   decoded::Decoded,
@@ -278,7 +280,6 @@ pub use self::{
   functions::{gradient, gradient_alpha, install_default_crypto_provider},
   hash::Hash,
   loader::Loader,
-  magic::Magic,
   magic_type::MagicType,
   manifest::Manifest,
   metadata::Metadata,
@@ -290,7 +291,6 @@ pub use self::{
   png_builder::PngBuilder,
   private_key::PrivateKey,
   public_key::PublicKey,
-  revision::Revision,
   revision_object::RevisionObject,
   server_state::ServerState,
   state::State,

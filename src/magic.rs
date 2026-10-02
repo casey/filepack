@@ -2,7 +2,7 @@ use super::*;
 
 pub(crate) const BYTES: &[u8] = b"filepack\0";
 
-pub trait Magic {
+pub(crate) trait Magic {
   const TYPE: MagicType;
 }
 

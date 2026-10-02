@@ -13,7 +13,7 @@ impl RevisionObject {
     Hash::bytes(&self.encode_to_vec()).into()
   }
 
-  pub fn parents(&self) -> &[Revision] {
+  pub(crate) fn parents(&self) -> &[Revision] {
     self
       .parents
       .as_ref()

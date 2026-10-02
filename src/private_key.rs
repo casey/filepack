@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct PrivateKey(ed25519_dalek::SigningKey);
 
 impl PrivateKey {
@@ -38,7 +38,7 @@ impl PrivateKey {
   }
 
   pub fn public_key(&self) -> PublicKey {
-    self.clone().into()
+    self.into()
   }
 
   pub(crate) fn sign<T: Message>(&self, message: T) -> Signature<T> {

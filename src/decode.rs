@@ -74,17 +74,6 @@ impl<'a, T: Decode<'a>> Decode<'a> for Vec<T> {
   }
 }
 
-impl Decode<'_> for i32 {
-  fn decode(decoder: &mut Decoder) -> DecodeResult<Self> {
-    Ok(
-      decoder
-        .signed_integer()?
-        .try_into()
-        .context(malformed_error::IntegerRange)?,
-    )
-  }
-}
-
 impl Decode<'_> for i64 {
   fn decode(decoder: &mut Decoder) -> DecodeResult<Self> {
     decoder.signed_integer()
