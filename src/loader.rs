@@ -18,7 +18,7 @@ impl Loader {
       .context(error::UnarchiveManifest { path: &self.path })
   }
 
-  pub fn load(path: Option<&Utf8Path>) -> Result<Self> {
+  pub(crate) fn load(path: Option<&Utf8Path>) -> Result<Self> {
     Self::load_with_options(DecodeOptions::default(), path)
   }
 

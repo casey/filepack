@@ -1318,6 +1318,25 @@ fn gc_removes_unreachable_and_retains_reachable_data() {
 }
 
 #[test]
+fn gc_retains_directory_referenced_as_file() {
+  let server = TestServer::new();
+  let (directory, hash) = Directory::new().insert_file("foo", b"bar").deco();
+
+  PackageBuilder::new()
+    .file("foo/foo", b"bar")
+    .file("bar", &directory)
+    .upload(&server);
+
+  server
+    .post("/api/gc")
+    .assert_body(api::gc::Response::default().encode_to_vec())
+    .send();
+
+  server.assert_file(hash);
+  server.assert_file(Hash::bytes(b"bar"));
+}
+
+#[test]
 fn gc_retains_merge_parents() {
   let server = TestServer::new();
 

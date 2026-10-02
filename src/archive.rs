@@ -3,7 +3,7 @@ use super::*;
 #[allow(clippy::arbitrary_source_item_ordering)]
 #[derive(Encode, Decode, Magic)]
 #[deco(magic = MagicType::Archive)]
-pub struct Archive {
+pub(crate) struct Archive {
   #[n(1)]
   pub(crate) root: Hash,
   #[n(2)]

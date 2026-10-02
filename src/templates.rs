@@ -1,10 +1,11 @@
 use super::*;
 
-pub use self::{directory::DirectoryHtml, package::PackageHtml, page::PageHtml};
+pub use self::{directory::DirectoryHtml, package::PackageHtml};
 
 pub(crate) use self::{
   directory_table::DirectoryTableHtml, error::ErrorHtml, files::FilesHtml, history::HistoryHtml,
   home::HomeHtml, info::InfoHtml, item::ItemHtml, media::MediaHtml, packages::PackagesHtml,
+  page::PageHtml,
 };
 
 mod directory;

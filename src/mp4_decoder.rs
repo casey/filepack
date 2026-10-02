@@ -208,13 +208,10 @@ impl Mp4Decoder {
           });
         }
         _ => {
-          return Err(
-            video_error::TrackUnsupported {
-              track: index,
-              ty: trak.mdia.hdlr.name(),
-            }
-            .build(),
-          );
+          return Err(VideoError::TrackUnsupported {
+            track: index,
+            ty: trak.mdia.hdlr.name(),
+          });
         }
       }
     }

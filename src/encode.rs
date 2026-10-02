@@ -69,12 +69,6 @@ impl<T: Encode> Encode for Vec<T> {
   }
 }
 
-impl Encode for i32 {
-  fn encode(&self, encoder: &mut Encoder) {
-    encoder.signed_integer((*self).into());
-  }
-}
-
 impl Encode for i64 {
   fn encode(&self, encoder: &mut Encoder) {
     encoder.signed_integer(*self);
@@ -136,14 +130,6 @@ mod tests {
   fn bytes() {
     assert_deco(Vec::<u8>::new(), "80");
     assert_deco(b"bar".to_vec(), "83626172");
-  }
-
-  #[test]
-  fn i32() {
-    assert_deco(0i32, "00");
-    assert_deco(-1i32, "01");
-    assert_deco(i32::MAX, "84feffffff");
-    assert_deco(i32::MIN, "84ffffffff");
   }
 
   #[test]
