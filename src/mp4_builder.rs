@@ -1,7 +1,6 @@
 pub struct Mp4Builder {
   avcc_profile: u8,
   duration: u32,
-  esds_long_lengths: bool,
   frame_count: u32,
   matrix: [i32; 9],
   media_timescale: Option<u32>,
@@ -16,7 +15,7 @@ pub struct Mp4Builder {
 }
 
 impl Mp4Builder {
-  fn atom(fourcc: [u8; 4], payload: &[u8]) -> Vec<u8> {
+  pub(crate) fn atom(fourcc: [u8; 4], payload: &[u8]) -> Vec<u8> {
     let mut atom = Vec::new();
     atom.extend_from_slice(&u32::try_from(payload.len() + 8).unwrap().to_be_bytes());
     atom.extend_from_slice(&fourcc);
@@ -24,15 +23,8 @@ impl Mp4Builder {
     atom
   }
 
-  fn audio_entry(&self, object_type: u8) -> Vec<u8> {
-    let length = |length: usize| -> Vec<u8> {
-      let length = u8::try_from(length).unwrap();
-      if self.esds_long_lengths {
-        vec![0x80, 0x80, 0x80, length]
-      } else {
-        vec![length]
-      }
-    };
+  pub(crate) fn audio_entry(&self, object_type: u8) -> Vec<u8> {
+    let length = |length: usize| -> Vec<u8> { vec![u8::try_from(length).unwrap()] };
 
     let mut descriptor = vec![0x04];
     descriptor.extend_from_slice(&length(13));
@@ -56,9 +48,6 @@ impl Mp4Builder {
     payload.extend_from_slice(&16u16.to_be_bytes());
     payload.extend_from_slice(&[0; 4]);
     payload.extend_from_slice(&(44100u32 << 16).to_be_bytes());
-    if self.mp4a_version == 1 {
-      payload.extend_from_slice(&[0; 16]);
-    }
     payload.extend_from_slice(&Self::atom(*b"esds", &esds));
 
     Self::atom(*b"mp4a", &payload)
@@ -132,17 +121,15 @@ impl Mp4Builder {
     self
   }
 
-  #[cfg(test)]
-  #[must_use]
-  pub(crate) fn esds_long_lengths(mut self) -> Self {
-    self.esds_long_lengths = true;
-    self
-  }
-
   #[must_use]
   pub fn frame_count(mut self, frame_count: u32) -> Self {
     self.frame_count = frame_count;
     self
+  }
+
+  #[cfg(test)]
+  pub(crate) fn ilst(self) -> Vec<u8> {
+    self.tags.concat()
   }
 
   #[cfg(test)]
@@ -182,7 +169,6 @@ impl Mp4Builder {
     Self {
       avcc_profile: 0,
       duration: 0,
-      esds_long_lengths: false,
       frame_count: 0,
       matrix: [0x0001_0000, 0, 0, 0, 0x0001_0000, 0, 0, 0, 0x4000_0000],
       media_timescale: None,

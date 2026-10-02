@@ -10,7 +10,7 @@ pub enum VideoError {
   #[snafu(display("multiple audio tracks"))]
   AudioTrackMultiple,
   #[snafu(display("failed to decode MP4"))]
-  DecodeMp4 { source: re_mp4::Error },
+  DecodeMp4 { source: Mp4Error },
   #[snafu(display("failed to decode WebM"))]
   DecodeWebm {
     source: matroska_demuxer::DemuxError,
@@ -36,17 +36,14 @@ pub enum VideoError {
     source: TextError,
     tag: &'static str,
   },
-  #[snafu(display("`{tag}` tag is not valid UTF-8"))]
-  TagUtf8 {
-    source: Utf8Error,
-    tag: &'static str,
-  },
+  #[snafu(display("multiple `{tag}` tags"))]
+  TagMultiple { tag: &'static str },
   #[snafu(display("zero timescale"))]
   TimescaleZero,
   #[snafu(display("unsupported timestamp scale {timestamp_scale}"))]
   TimestampScale { timestamp_scale: u64 },
   #[snafu(display("track {track} has unsupported track type `{ty}`"))]
-  TrackUnsupported { track: usize, ty: String },
+  TrackUnsupported { track: usize, ty: &'static str },
   #[snafu(display("track {track} has unsupported video codec `{codec}`"))]
   VideoCodecUnsupported { codec: String, track: usize },
   #[snafu(display("track {track} has missing video settings"))]

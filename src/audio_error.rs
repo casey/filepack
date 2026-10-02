@@ -50,11 +50,6 @@ pub enum AudioError {
   TagMissing { tag: &'static str },
   #[snafu(display("multiple `{tag}` tags"))]
   TagMultiple { tag: &'static str },
-  #[snafu(display("`{tag}` tag is not valid UTF-8"))]
-  TagUtf8 {
-    source: Utf8Error,
-    tag: &'static str,
-  },
   #[snafu(display("`{tag}` tag is missing track total"))]
   TrackTotalMissing { tag: &'static str },
 }

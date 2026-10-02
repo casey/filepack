@@ -936,8 +936,7 @@ fn create_rejects_invalid_videos() {
       "
         error: invalid video `.*foo.mp4`
                ├─ failed to decode MP4
-               ├─ failed to fill whole buffer
-               └─ failed to fill whole buffer
+               └─ truncated
       ",
     )
     .failure();
