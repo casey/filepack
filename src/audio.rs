@@ -6,16 +6,18 @@ pub(crate) struct Audio {
   #[n(1)]
   pub(crate) channels: u64,
   #[n(2)]
-  pub(crate) path: RelativePath,
+  pub(crate) codec: Option<AudioCodec>,
   #[n(3)]
-  pub(crate) sample_bits: Option<u64>,
+  pub(crate) path: RelativePath,
   #[n(4)]
-  pub(crate) sample_rate: u64,
+  pub(crate) sample_bits: Option<u64>,
   #[n(5)]
-  pub(crate) samples: u64,
+  pub(crate) sample_rate: u64,
   #[n(6)]
-  pub(crate) size: u64,
+  pub(crate) samples: u64,
   #[n(7)]
+  pub(crate) size: u64,
+  #[n(8)]
   #[serde(rename = "type")]
   pub(crate) ty: Option<AudioType>,
 }
@@ -33,6 +35,7 @@ impl Audio {
     match ty {
       AudioType::Flac => FlacDecoder::cover_art(&data),
       AudioType::Mp3 => Mp3Decoder::cover_art(&data),
+      AudioType::Mp4 => M4aDecoder::cover_art(&data),
     }
     .context(error::Audio { path })
   }
@@ -85,6 +88,7 @@ impl Content for Audio {
     builder
       .value("duration", DisplayDuration(self.duration()))
       .optional_or_unknown("type", self.ty)
+      .optional_or_unknown("codec", self.codec)
       .optional(
         "sample bits",
         self
@@ -100,13 +104,7 @@ impl Content for Audio {
         ),
       )
       .value("channels", self.channels)
-      .optional(
-        "compression",
-        self.ty.map(|ty| match ty {
-          AudioType::Flac => Compression::Lossless,
-          AudioType::Mp3 => Compression::Lossy,
-        }),
-      )
+      .optional("compression", self.codec.map(AudioCodec::compression))
       .value("samples", self.samples)
   }
 
@@ -126,6 +124,11 @@ impl Content for Audio {
     let ty = AudioType::from_path(&path).unwrap();
     Self {
       channels: 2,
+      codec: Some(match ty {
+        AudioType::Flac => AudioCodec::Flac,
+        AudioType::Mp3 => AudioCodec::Mp3,
+        AudioType::Mp4 => AudioCodec::Aac,
+      }),
       path,
       sample_bits: Some(16),
       sample_rate: 44100,
@@ -171,6 +174,7 @@ mod tests {
       InfoBuilder::new()
         .value("duration", "0:01")
         .value("type", "FLAC")
+        .value("codec", "FLAC")
         .value("sample bits", "16-bit")
         .value("sample rate", "44.1 kHz")
         .value("bit rate", "4 kbit/s")
@@ -190,6 +194,26 @@ mod tests {
       InfoBuilder::new()
         .value("duration", "0:01")
         .value("type", "MP3")
+        .value("codec", "MP3")
+        .value("sample rate", "44.1 kHz")
+        .value("bit rate", "4 kbit/s")
+        .value("channels", "2")
+        .value("compression", "lossy")
+        .value("samples", "66150")
+        .build(),
+    );
+
+    let mut audio = Audio::test("foo.m4a");
+    audio.sample_bits = None;
+    audio.samples = 66150;
+    audio.size = 750;
+
+    assert_eq!(
+      Content::info(&audio, InfoBuilder::new()).build(),
+      InfoBuilder::new()
+        .value("duration", "0:01")
+        .value("type", "MP4")
+        .value("codec", "AAC")
         .value("sample rate", "44.1 kHz")
         .value("bit rate", "4 kbit/s")
         .value("channels", "2")
@@ -199,19 +223,21 @@ mod tests {
     );
 
     let mut audio = Audio::test("foo.flac");
+    audio.codec = None;
     audio.sample_bits = None;
     audio.sample_rate = 0;
     audio.samples = 0;
     audio.size = 750;
+    audio.ty = None;
 
     assert_eq!(
       Content::info(&audio, InfoBuilder::new()).build(),
       InfoBuilder::new()
         .value("duration", "0:00")
-        .value("type", "FLAC")
+        .value("type", "unknown")
+        .value("codec", "unknown")
         .value("sample rate", "0 kHz")
         .value("channels", "2")
-        .value("compression", "lossless")
         .value("samples", "0")
         .build(),
     );
@@ -249,11 +275,26 @@ mod tests {
     )
     .unwrap();
 
+    std::fs::write(
+      root.join("foo.m4a"),
+      Mp4Builder::new()
+        .tag(*b"\xa9alb", "qux")
+        .tag(*b"\xa9ART", "baz")
+        .tag(*b"\xa9nam", "bar")
+        .pair_tag(*b"disk", 1, 2)
+        .pair_tag(*b"trkn", 3, 4)
+        .frame_count(2)
+        .audio_track(0x40)
+        .build(),
+    )
+    .unwrap();
+
     assert_eq!(
       Audio::load(&root, "foo.flac".parse().unwrap()).unwrap(),
       Item {
         content: Audio {
           channels: 2,
+          codec: Some(AudioCodec::Flac),
           path: "foo.flac".parse().unwrap(),
           sample_bits: Some(16),
           sample_rate: 44100,
@@ -270,12 +311,30 @@ mod tests {
       Item {
         content: Audio {
           channels: 2,
+          codec: Some(AudioCodec::Mp3),
           path: "foo.mp3".parse().unwrap(),
           sample_bits: None,
           sample_rate: 44100,
           samples: 2304,
           size: 834,
           ty: Some(AudioType::Mp3),
+        },
+        title: Some("bar".parse().unwrap()),
+      },
+    );
+
+    assert_eq!(
+      Audio::load(&root, "foo.m4a".parse().unwrap()).unwrap(),
+      Item {
+        content: Audio {
+          channels: 2,
+          codec: Some(AudioCodec::Aac),
+          path: "foo.m4a".parse().unwrap(),
+          sample_bits: None,
+          sample_rate: 44100,
+          samples: 2,
+          size: 2,
+          ty: Some(AudioType::Mp4),
         },
         title: Some("bar".parse().unwrap()),
       },
@@ -301,11 +360,11 @@ mod tests {
 
     case(
       "foo.wav",
-      "invalid path `foo.wav`: path must end in `.flac` or `.mp3`",
+      "invalid path `foo.wav`: path must end in `.flac`, `.m4a`, or `.mp3`",
     );
     case(
       "foo",
-      "invalid path `foo`: path must end in `.flac` or `.mp3`",
+      "invalid path `foo`: path must end in `.flac`, `.m4a`, or `.mp3`",
     );
   }
 
@@ -314,6 +373,7 @@ mod tests {
     assert_eq!(
       serde_json::to_string(&Audio {
         channels: 8,
+        codec: Some(AudioCodec::Flac),
         path: "foo.flac".parse().unwrap(),
         sample_bits: Some(7),
         sample_rate: 1,
@@ -322,7 +382,7 @@ mod tests {
         ty: Some(AudioType::Flac),
       })
       .unwrap(),
-      r#"{"channels":8,"path":"foo.flac","sample_bits":7,"sample_rate":1,"samples":2,"size":9,"type":"flac"}"#,
+      r#"{"channels":8,"codec":"flac","path":"foo.flac","sample_bits":7,"sample_rate":1,"samples":2,"size":9,"type":"flac"}"#,
     );
   }
 }

@@ -479,6 +479,7 @@ mod tests {
           items: vec![Item {
             content: crate::Audio {
               channels: 2,
+              codec: Some(AudioCodec::Flac),
               path: "foo.flac".parse().unwrap(),
               sample_bits: Some(16),
               sample_rate: 44100,
@@ -540,7 +541,7 @@ mod tests {
         title: Some("bar".parse().unwrap()),
         ..default()
       },
-      "invalid path `foo.wav`: path must end in `.flac` or `.mp3`",
+      "invalid path `foo.wav`: path must end in `.flac`, `.m4a`, or `.mp3`",
     );
 
     case(

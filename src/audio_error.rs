@@ -24,6 +24,8 @@ pub enum AudioError {
   FlacSampleCountUnknown,
   #[snafu(display("truncated FLAC metadata block"))]
   FlacTruncated,
+  #[snafu(display("failed to decode MP4"))]
+  M4aDecode { source: M4aError },
   #[snafu(display("failed to decode MP3"))]
   Mp3Decode { source: Mp3Error },
   #[snafu(display("failed to read ID3 tag"))]
@@ -48,4 +50,9 @@ pub enum AudioError {
   TagMultiple { tag: &'static str },
   #[snafu(display("`{tag}` tag not in format `NUMBER/TOTAL`"))]
   TagPair { tag: &'static str },
+  #[snafu(display("`{tag}` tag is not valid UTF-8"))]
+  TagUtf8 {
+    source: Utf8Error,
+    tag: &'static str,
+  },
 }

@@ -164,7 +164,7 @@ mod tests {
         placeholder: None,
         tracks: vec![
           Track {
-            codec: Some(Codec::H264),
+            codec: Some(TrackCodec::H264),
             info: Some(TrackInfo::Video {
               bit_depth: 8,
               chroma_subsampling: Some(ChromaSubsampling::Yuv420),
@@ -178,7 +178,7 @@ mod tests {
             size: 0,
           },
           Track {
-            codec: Some(Codec::Aac),
+            codec: Some(TrackCodec::Aac),
             info: Some(TrackInfo::Audio {
               channels: 2,
               sample_rate: 44100,
@@ -201,7 +201,7 @@ mod tests {
       .tracks,
       vec![
         Track {
-          codec: Some(Codec::H264),
+          codec: Some(TrackCodec::H264),
           info: Some(TrackInfo::Video {
             bit_depth: 8,
             chroma_subsampling: Some(ChromaSubsampling::Yuv420),
@@ -215,7 +215,7 @@ mod tests {
           size: 0,
         },
         Track {
-          codec: Some(Codec::Mp3),
+          codec: Some(TrackCodec::Mp3),
           info: Some(TrackInfo::Audio {
             channels: 2,
             sample_rate: 44100,
@@ -245,7 +245,7 @@ mod tests {
 
     fn track(rotation: Rotation) -> Track {
       Track {
-        codec: Some(Codec::H264),
+        codec: Some(TrackCodec::H264),
         info: Some(TrackInfo::Video {
           bit_depth: 8,
           chroma_subsampling: Some(ChromaSubsampling::Yuv420),
@@ -289,7 +289,7 @@ mod tests {
         placeholder: None,
         tracks: vec![
           Track {
-            codec: Some(Codec::H264),
+            codec: Some(TrackCodec::H264),
             info: Some(TrackInfo::Video {
               bit_depth: 8,
               chroma_subsampling: Some(ChromaSubsampling::Yuv420),
@@ -303,7 +303,7 @@ mod tests {
             size: 0,
           },
           Track {
-            codec: Some(Codec::Mp3),
+            codec: Some(TrackCodec::Mp3),
             info: Some(TrackInfo::Audio {
               channels: 2,
               sample_rate: 44100,

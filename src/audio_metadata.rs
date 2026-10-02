@@ -5,6 +5,7 @@ pub(crate) struct AudioMetadata {
   pub(crate) album: Text,
   pub(crate) artist: Text,
   pub(crate) channels: u64,
+  pub(crate) codec: AudioCodec,
   pub(crate) disc: u64,
   pub(crate) discs: u64,
   pub(crate) sample_bits: Option<u64>,
@@ -126,6 +127,7 @@ impl AudioMetadata {
     Item {
       content: Audio {
         channels: self.channels,
+        codec: Some(self.codec),
         path,
         sample_bits: self.sample_bits,
         sample_rate: self.sample_rate,
@@ -143,6 +145,7 @@ impl AudioMetadata {
     let metadata = match ty {
       AudioType::Flac => FlacDecoder::read(&root.join(path))?,
       AudioType::Mp3 => Mp3Decoder::read(&root.join(path))?,
+      AudioType::Mp4 => M4aDecoder::read(&root.join(path))?,
     };
 
     Ok((metadata, ty))
@@ -167,6 +170,7 @@ mod tests {
               album: "foo".parse().unwrap(),
               artist: "bar".parse().unwrap(),
               channels: 2,
+              codec: AudioCodec::Flac,
               disc: *disc,
               discs: *discs,
               sample_bits: Some(16),

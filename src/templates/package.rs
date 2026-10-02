@@ -145,6 +145,7 @@ mod tests {
           Item {
             content: Audio {
               channels: 2,
+              codec: Some(AudioCodec::Flac),
               path: "foo.flac".parse().unwrap(),
               sample_bits: Some(16),
               sample_rate: 44100,
@@ -157,6 +158,7 @@ mod tests {
           Item {
             content: Audio {
               channels: 2,
+              codec: Some(AudioCodec::Flac),
               path: "bar.flac".parse().unwrap(),
               sample_bits: Some(24),
               sample_rate: 96000,
@@ -264,6 +266,7 @@ mod tests {
     let audio = Item {
       content: Audio {
         channels: 2,
+        codec: Some(AudioCodec::Flac),
         path: "foo.flac".parse().unwrap(),
         sample_bits: Some(16),
         sample_rate: 1,
@@ -537,6 +540,7 @@ mod tests {
         items: vec![Item {
           content: Audio {
             channels: 2,
+            codec: Some(AudioCodec::Flac),
             path: "foo.flac".parse().unwrap(),
             sample_bits: Some(16),
             sample_rate: 44100,
@@ -932,7 +936,7 @@ mod tests {
               path: "foo.mp4".parse().unwrap(),
               tracks: vec![
                 Track {
-                  codec: Some(Codec::H264),
+                  codec: Some(TrackCodec::H264),
                   info: Some(TrackInfo::Video {
                     bit_depth: 8,
                     chroma_subsampling: Some(ChromaSubsampling::Yuv420),
@@ -946,7 +950,7 @@ mod tests {
                   size: 0,
                 },
                 Track {
-                  codec: Some(Codec::Aac),
+                  codec: Some(TrackCodec::Aac),
                   info: Some(TrackInfo::Audio {
                     channels: 2,
                     sample_rate: 44100,

@@ -57,8 +57,8 @@ impl WebmDecoder {
           ensure!(audio_track.is_none(), video_error::AudioTrackMultiple);
 
           let codec = match track.codec_id() {
-            "A_OPUS" => Codec::Opus,
-            "A_VORBIS" => Codec::Vorbis,
+            "A_OPUS" => TrackCodec::Opus,
+            "A_VORBIS" => TrackCodec::Vorbis,
             codec => {
               return Err(
                 video_error::AudioCodecUnsupported {
@@ -101,8 +101,8 @@ impl WebmDecoder {
           ensure!(video_track.is_none(), video_error::VideoTrackMultiple);
 
           let codec = match track.codec_id() {
-            "V_VP8" => Codec::Vp8,
-            "V_VP9" => Codec::Vp9,
+            "V_VP8" => TrackCodec::Vp8,
+            "V_VP9" => TrackCodec::Vp9,
             codec => {
               return Err(
                 video_error::VideoCodecUnsupported {
@@ -124,10 +124,10 @@ impl WebmDecoder {
             .unwrap_or_default();
 
           let color_info = match (codec, first) {
-            (Codec::Vp9, Some(first)) => {
+            (TrackCodec::Vp9, Some(first)) => {
               Self::vp9_color_info(&first).context(video_error::Vp9FrameHeaderInvalid)?
             }
-            (Codec::Vp9, None) => return Err(VideoError::Vp9TrackEmpty),
+            (TrackCodec::Vp9, None) => return Err(VideoError::Vp9TrackEmpty),
             _ => ColorInfo {
               bit_depth: 8,
               chroma_subsampling: ChromaSubsampling::Yuv420,
@@ -329,7 +329,7 @@ mod tests {
         title: None,
         tracks: vec![
           Track {
-            codec: Some(Codec::Vp9),
+            codec: Some(TrackCodec::Vp9),
             info: Some(TrackInfo::Video {
               bit_depth: 8,
               chroma_subsampling: Some(ChromaSubsampling::Yuv420),
@@ -343,7 +343,7 @@ mod tests {
             size: 5,
           },
           Track {
-            codec: Some(Codec::Opus),
+            codec: Some(TrackCodec::Opus),
             info: Some(TrackInfo::Audio {
               channels: 2,
               sample_rate: 44100,
@@ -366,7 +366,7 @@ mod tests {
         title: None,
         tracks: vec![
           Track {
-            codec: Some(Codec::Vp8),
+            codec: Some(TrackCodec::Vp8),
             info: Some(TrackInfo::Video {
               bit_depth: 8,
               chroma_subsampling: Some(ChromaSubsampling::Yuv420),
@@ -380,7 +380,7 @@ mod tests {
             size: 0,
           },
           Track {
-            codec: Some(Codec::Vorbis),
+            codec: Some(TrackCodec::Vorbis),
             info: Some(TrackInfo::Audio {
               channels: 2,
               sample_rate: 44100,
@@ -397,7 +397,7 @@ mod tests {
         duration: 0,
         title: None,
         tracks: vec![Track {
-          codec: Some(Codec::Vp9),
+          codec: Some(TrackCodec::Vp9),
           info: Some(TrackInfo::Video {
             bit_depth: 8,
             chroma_subsampling: Some(ChromaSubsampling::Yuv420),
@@ -472,7 +472,7 @@ mod tests {
       .tracks,
       vec![
         Track {
-          codec: Some(Codec::Vp9),
+          codec: Some(TrackCodec::Vp9),
           info: Some(TrackInfo::Video {
             bit_depth: 8,
             chroma_subsampling: Some(ChromaSubsampling::Yuv420),
@@ -486,7 +486,7 @@ mod tests {
           size: 5,
         },
         Track {
-          codec: Some(Codec::Opus),
+          codec: Some(TrackCodec::Opus),
           info: Some(TrackInfo::Audio {
             channels: 2,
             sample_rate: 44100,

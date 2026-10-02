@@ -26,6 +26,7 @@ use {
     array_decoder::ArrayDecoder,
     array_encoder::ArrayEncoder,
     audio::Audio,
+    audio_codec::AudioCodec,
     audio_error::AudioError,
     audio_metadata::AudioMetadata,
     audio_position_error::AudioPositionError,
@@ -38,7 +39,6 @@ use {
     chroma_subsampling::ChromaSubsampling,
     claims::Claims,
     client::Client,
-    codec::Codec,
     color_info::ColorInfo,
     color_type::ColorType,
     component::Component,
@@ -105,6 +105,8 @@ use {
     lint_group::LintGroup,
     lint_selector::LintSelector,
     linter::Linter,
+    m4a_decoder::M4aDecoder,
+    m4a_error::M4aError,
     malformed_error::MalformedError,
     map_decoder::MapDecoder,
     map_encoder::MapEncoder,
@@ -164,6 +166,7 @@ use {
     time_error::TimeError,
     totals_error::TotalsError,
     track::Track,
+    track_codec::TrackCodec,
     track_info::TrackInfo,
     type_name::TypeName,
     unknown_error::UnknownError,
@@ -314,6 +317,7 @@ mod arguments;
 mod array_decoder;
 mod array_encoder;
 mod audio;
+mod audio_codec;
 mod audio_error;
 mod audio_metadata;
 mod audio_position_error;
@@ -326,7 +330,6 @@ mod checked_url;
 mod chroma_subsampling;
 mod claims;
 mod client;
-mod codec;
 mod color_info;
 mod color_type;
 mod component;
@@ -405,6 +408,8 @@ mod lint_group;
 mod lint_selector;
 mod linter;
 mod loader;
+mod m4a_decoder;
+mod m4a_error;
 mod magic;
 mod magic_type;
 mod malformed_error;
@@ -482,6 +487,7 @@ mod time_error;
 mod totals;
 mod totals_error;
 mod track;
+mod track_codec;
 mod track_info;
 mod type_name;
 mod unknown_error;

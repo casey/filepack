@@ -3,7 +3,7 @@ use super::*;
 #[derive(Clone, Copy, Debug, Decode, Display, Encode, PartialEq, Serialize)]
 #[serde(rename_all = "kebab-case")]
 #[strum(serialize_all = "UPPERCASE")]
-pub(crate) enum Codec {
+pub(crate) enum TrackCodec {
   #[n(0)]
   Aac,
   #[n(1)]

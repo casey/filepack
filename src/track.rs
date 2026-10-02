@@ -4,7 +4,7 @@ use super::*;
 #[derive(Clone, Debug, Decode, Encode, PartialEq, Serialize)]
 pub(crate) struct Track {
   #[n(1)]
-  pub(crate) codec: Option<Codec>,
+  pub(crate) codec: Option<TrackCodec>,
   #[n(2)]
   pub(crate) info: Option<TrackInfo>,
   #[n(3)]
@@ -81,7 +81,7 @@ mod tests {
   #[test]
   fn info() {
     let track = Track {
-      codec: Some(Codec::H264),
+      codec: Some(TrackCodec::H264),
       info: Some(TrackInfo::Video {
         bit_depth: 8,
         chroma_subsampling: Some(ChromaSubsampling::Yuv420),
@@ -136,7 +136,7 @@ mod tests {
     );
 
     let track = Track {
-      codec: Some(Codec::Aac),
+      codec: Some(TrackCodec::Aac),
       info: Some(TrackInfo::Audio {
         channels: 2,
         sample_rate: 44100,
@@ -178,7 +178,7 @@ mod tests {
   fn serialize() {
     assert_eq!(
       serde_json::to_string(&Track {
-        codec: Some(Codec::Aac),
+        codec: Some(TrackCodec::Aac),
         info: Some(TrackInfo::Audio {
           channels: 2,
           sample_rate: 44100,
@@ -191,7 +191,7 @@ mod tests {
 
     assert_eq!(
       serde_json::to_string(&Track {
-        codec: Some(Codec::H264),
+        codec: Some(TrackCodec::H264),
         info: Some(TrackInfo::Video {
           bit_depth: 8,
           chroma_subsampling: Some(ChromaSubsampling::Yuv420),

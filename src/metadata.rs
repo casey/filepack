@@ -376,6 +376,7 @@ mod tests {
         items: vec![Item {
           content: Audio {
             channels: 8,
+            codec: Some(AudioCodec::Flac),
             path: "track.flac".parse().unwrap(),
             sample_bits: Some(7),
             sample_rate: 1,
