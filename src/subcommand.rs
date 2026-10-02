@@ -48,7 +48,7 @@ const TIMESTAMP_HELP: &str = "Include current time in signature";
     .placeholder(AnsiColor::Cyan.on_default()))
 ]
 pub(crate) enum Subcommand {
-  #[command(about = "Create archive from JSON manifest on stdin")]
+  #[command(about = "Create archive from JSON manifest")]
   Archive(archive::Archive),
   #[command(about = "Check if manifest contains file")]
   Contains(contains::Contains),
@@ -88,7 +88,7 @@ pub(crate) enum Subcommand {
   Sign(sign::Sign),
   #[command(about = "List manifest signatures")]
   Signatures(signatures::Signatures),
-  #[command(about = "Print manifest total file size")]
+  #[command(about = "Print manifest totals")]
   Size(size::Size),
   #[command(about = "Upload package or file to a filepack server")]
   Upload(upload::Upload),

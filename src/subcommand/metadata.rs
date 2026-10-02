@@ -5,9 +5,9 @@ pub(crate) struct Metadata {
   #[arg(long = "format", default_value_t)]
   format: Format,
   #[arg(
-    help = "Load deco metadata from <PATH>. May be path to metadata, to directory containing named \
-    `metadata.filemeta`, or omitted, in which case metadata named `metadata.filemeta` in the \
-    current directory is loaded."
+    help = "Load deco metadata from <PATH>. May be path to metadata, to directory containing \
+            metadata named `metadata.filemeta`, or omitted, in which case metadata named \
+            `metadata.filemeta` in the current directory is loaded."
   )]
   path: Option<Utf8PathBuf>,
 }

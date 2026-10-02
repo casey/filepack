@@ -4,7 +4,7 @@
 //! current directory and its children.
 //!
 //! `filepack verify` verifies a manifest against the content of the current
-//! directory of its children.
+//! directory and its children.
 //!
 //! This can be used to detect accidental corruption or modification. If
 //! `filepack verify` succeeds, the contents of the directory have not changed.
