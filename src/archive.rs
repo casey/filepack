@@ -253,7 +253,15 @@ impl Archive {
       let directory = self.decode_directory(options, &mut loose, entry.hash, entry.size, totals)?;
 
       let mut signatures = BTreeSet::new();
-      for entry in directory.entries.values() {
+      for (name, entry) in &directory.entries {
+        ensure! {
+          *name == ComponentBuf::from_hash(entry.hash),
+          archive_error::SignatureName {
+            hash: entry.hash,
+            name,
+          },
+        }
+
         match entry.ty() {
           EntryType::File => {
             let file = self.file(entry.hash, entry.size)?;
@@ -725,7 +733,7 @@ mod tests {
     let signature = builder.file(signature_bytes);
 
     let mut signatures = Directory::new();
-    signatures.insert_entry("0", signature);
+    signatures.insert_entry(&signature.hash.to_string(), signature);
 
     let signatures = builder.directory(&signatures).unwrap();
 
@@ -759,7 +767,7 @@ mod tests {
     let missing_file = Hash::bytes(b"foo");
 
     let mut signatures = Directory::new();
-    signatures.insert_entry("0", Entry::file(missing_file, 0));
+    signatures.insert_entry(&missing_file.to_string(), Entry::file(missing_file, 0));
 
     let signatures = builder.directory(&signatures).unwrap();
 
@@ -779,25 +787,55 @@ mod tests {
   }
 
   #[test]
-  fn signatures_are_sorted_by_encoded_bytes() {
+  fn signature_name_mismatch() {
+    let mut builder = ArchiveBuilder::new();
+
+    let package = builder.directory(&Directory::new()).unwrap();
+
     let private_key = test::PRIVATE_KEY.parse::<PrivateKey>().unwrap();
 
-    let fingerprint = Fingerprint::from_bytes([0; Fingerprint::LEN]);
+    let signature = builder.file(
+      private_key
+        .sign(Statement {
+          fingerprint: Fingerprint::from_bytes([0; Fingerprint::LEN]),
+          timestamp: None,
+        })
+        .encode_to_vec(),
+    );
+
+    let mut signatures = Directory::new();
+    signatures.insert_entry("foo", signature);
+
+    let signatures = builder.directory(&signatures).unwrap();
+
+    let mut root = Directory::new();
+    root
+      .insert_entry("package", package)
+      .insert_entry("signatures", signatures);
+
+    let root = builder.directory(&root).unwrap();
+
+    let archive = builder.build(root.hash);
+
+    assert_matches!(
+      archive.unpack(),
+      Err(ArchiveError::SignatureName { hash, name })
+        if hash == signature.hash && name == "foo",
+    );
+  }
+
+  #[test]
+  fn signatures_are_named_by_hash() {
+    let private_key = test::PRIVATE_KEY.parse::<PrivateKey>().unwrap();
 
     let known = Decoded::Known(private_key.sign(Statement {
-      fingerprint,
-      timestamp: Some(u64::MAX),
+      fingerprint: Fingerprint::from_bytes([0; Fingerprint::LEN]),
+      timestamp: None,
     }));
 
     let unknown = {
-      let signature = private_key
-        .sign(Statement {
-          fingerprint,
-          timestamp: None,
-        })
-        .encode_to_vec();
-      let mut fields = BTreeMap::<u64, Vec<u8>>::decode_from_slice(&signature).unwrap();
-      assert!(fields.insert(4, vec![0]).is_none());
+      let mut fields = BTreeMap::<u64, Vec<u8>>::decode_from_slice(&known.encode_to_vec()).unwrap();
+      assert!(fields.insert(4, b"foo".to_vec()).is_none());
       Decoded::<Attestation>::Unknown(
         Vec::<u8>::decode_from_slice(&fields.encode_to_vec()).unwrap(),
       )
@@ -805,8 +843,6 @@ mod tests {
 
     let known_bytes = known.encode_to_vec();
     let unknown_bytes = unknown.encode_to_vec();
-
-    assert!(unknown_bytes < known_bytes);
 
     let manifest = Manifest {
       embedded: BTreeMap::new(),
@@ -831,12 +867,12 @@ mod tests {
       signatures.entries,
       BTreeMap::from([
         (
-          "0".parse().unwrap(),
-          Entry::file(Hash::bytes(&unknown_bytes), unknown_bytes.len().into_u64()),
+          ComponentBuf::from_hash(Hash::bytes(&known_bytes)),
+          Entry::file(Hash::bytes(&known_bytes), known_bytes.len().into_u64()),
         ),
         (
-          "1".parse().unwrap(),
-          Entry::file(Hash::bytes(&known_bytes), known_bytes.len().into_u64()),
+          ComponentBuf::from_hash(Hash::bytes(&unknown_bytes)),
+          Entry::file(Hash::bytes(&unknown_bytes), unknown_bytes.len().into_u64()),
         ),
       ]),
     );
@@ -848,8 +884,10 @@ mod tests {
 
     let package = builder.directory(&Directory::new()).unwrap();
 
+    let subdirectory = builder.directory(&Directory::new()).unwrap();
+
     let mut signatures = Directory::new();
-    signatures.insert_directory("0", &Directory::new());
+    signatures.insert_entry(&subdirectory.hash.to_string(), subdirectory);
 
     let signatures = builder.directory(&signatures).unwrap();
 

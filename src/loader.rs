@@ -120,7 +120,7 @@ mod tests {
       let signature_file = builder.file(signature.encode_to_vec());
       let signatures = directory(
         &mut builder,
-        Directory::new().insert_entry("0", signature_file),
+        Directory::new().insert_entry(&signature_file.hash.to_string(), signature_file),
         unknown == Some("signatures"),
       );
 
