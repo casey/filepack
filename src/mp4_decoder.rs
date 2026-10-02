@@ -1,6 +1,6 @@
 use {
   super::*,
-  re_mp4::{MetaBox, MetadataKey, Mp4, Mp4aBox, StsdBoxContent, TkhdBox},
+  mp4::{Fourcc, Moov, Mp4, Mp4a, SampleEntry, Tkhd},
 };
 
 pub(crate) struct Mp4Decoder;
@@ -70,27 +70,40 @@ impl Mp4Decoder {
   }
 
   fn metadata<T: Read + Seek>(reader: T, size: u64) -> Result<VideoMetadata, VideoError> {
-    fn mp4a_codec(mp4a: &Mp4aBox) -> Option<TrackCodec> {
-      match mp4a
-        .esds
-        .as_ref()?
-        .es_desc
-        .dec_config
-        .object_type_indication
-      {
+    fn codec(mp4a: &Mp4a) -> Option<TrackCodec> {
+      match mp4a.esds.object_type {
         0x40 | 0x66 | 0x67 => Some(TrackCodec::Aac),
         0x69 | 0x6b => Some(TrackCodec::Mp3),
         _ => None,
       }
     }
 
-    fn orientation(tkhd: &TkhdBox) -> Option<Orientation> {
+    fn codec_name(entry: Option<&SampleEntry>) -> String {
+      match entry {
+        Some(SampleEntry::Avc1(_)) => "H.264".into(),
+        Some(SampleEntry::Mp4a(mp4a)) => match codec(mp4a) {
+          Some(codec) => codec.to_string(),
+          None => "unknown".into(),
+        },
+        Some(SampleEntry::Unknown(ty)) => match &ty.0 {
+          b"av01" => "AV1".into(),
+          b"hev1" | b"hvc1" => "H.265".into(),
+          b"tx3g" => "TTXT".into(),
+          b"vp08" => "VP8".into(),
+          b"vp09" => "VP9".into(),
+          _ => ty.to_string(),
+        },
+        None => "unknown".into(),
+      }
+    }
+
+    fn orientation(tkhd: &Tkhd) -> Option<Orientation> {
       const U: i32 = 0x0001_0000;
       const N: i32 = -0x0001_0000;
 
-      let matrix = &tkhd.matrix;
+      let [a, b, _, c, d, ..] = tkhd.matrix;
 
-      let (mirrored, rotation) = match (matrix.a, matrix.b, matrix.c, matrix.d) {
+      let (mirrored, rotation) = match (a, b, c, d) {
         (U, 0, 0, U) => (false, Rotation::R0),
         (N, 0, 0, U) => (true, Rotation::R0),
         (0, U, N, 0) => (false, Rotation::R90),
@@ -103,22 +116,6 @@ impl Mp4Decoder {
       };
 
       Some(Orientation { mirrored, rotation })
-    }
-
-    fn codec_name(contents: &StsdBoxContent) -> String {
-      match contents {
-        StsdBoxContent::Av01(_) => "AV1".into(),
-        StsdBoxContent::Avc1(_) => "H.264".into(),
-        StsdBoxContent::Hev1(_) | StsdBoxContent::Hvc1(_) => "H.265".into(),
-        StsdBoxContent::Mp4a(mp4a) => match mp4a_codec(mp4a) {
-          Some(codec) => codec.to_string(),
-          None => "unknown".into(),
-        },
-        StsdBoxContent::Tx3g(_) => "TTXT".into(),
-        StsdBoxContent::Unknown(fourcc) => fourcc.to_string(),
-        StsdBoxContent::Vp08(_) => "VP8".into(),
-        StsdBoxContent::Vp09(_) => "VP9".into(),
-      }
     }
 
     let mp4 = Mp4::read(BufReader::new(reader), size).context(video_error::DecodeMp4)?;
@@ -135,30 +132,26 @@ impl Mp4Decoder {
     let mut audio_track = None;
 
     for (index, trak) in mp4.moov.traks.iter().enumerate() {
-      let contents = &trak.mdia.minf.stbl.stsd.contents;
+      let stbl = &trak.mdia.minf.stbl;
 
-      let stsz = &trak.mdia.minf.stbl.stsz;
+      let entry = stbl.stsd.entries.first();
 
-      let size = if stsz.sample_size == 0 {
-        stsz.sample_sizes.iter().copied().map(u64::from).sum()
-      } else {
-        u64::from(stsz.sample_size) * u64::from(stsz.sample_count)
-      };
+      let size = stbl.stsz.size();
 
-      match &trak.mdia.hdlr.handler_type.value[..] {
+      match &trak.mdia.hdlr.handler_type.0 {
         b"soun" => {
           ensure!(audio_track.is_none(), video_error::AudioTrackMultiple);
 
-          let StsdBoxContent::Mp4a(mp4a) = contents else {
+          let Some(SampleEntry::Mp4a(mp4a)) = entry else {
             return Err(VideoError::AudioCodecUnsupported {
-              codec: codec_name(contents),
+              codec: codec_name(entry),
               track: index,
             });
           };
 
-          let Some(codec) = mp4a_codec(mp4a) else {
+          let Some(codec) = codec(mp4a) else {
             return Err(VideoError::AudioCodecUnsupported {
-              codec: codec_name(contents),
+              codec: codec_name(entry),
               track: index,
             });
           };
@@ -166,8 +159,8 @@ impl Mp4Decoder {
           audio_track = Some(Track {
             codec: Some(codec),
             info: Some(TrackInfo::Audio {
-              channels: mp4a.channelcount.into(),
-              sample_rate: mp4a.samplerate.value().into(),
+              channels: mp4a.channels.into(),
+              sample_rate: mp4a.sample_rate.into(),
             }),
             size,
           });
@@ -175,18 +168,18 @@ impl Mp4Decoder {
         b"vide" => {
           ensure!(video_track.is_none(), video_error::VideoTrackMultiple);
 
-          let StsdBoxContent::Avc1(avc1) = contents else {
+          let Some(SampleEntry::Avc1(avc1)) = entry else {
             return Err(VideoError::VideoCodecUnsupported {
-              codec: codec_name(contents),
+              codec: codec_name(entry),
               track: index,
             });
           };
 
           let color_info = if let Some(sps) = avc1.avcc.sequence_parameter_sets.first() {
-            Self::h264_color_info(&sps.bytes).context(video_error::SpsInvalid)?
+            Self::h264_color_info(sps).context(video_error::SpsInvalid)?
           } else {
             ensure!(
-              !Self::h264_high_profile(avc1.avcc.avc_profile_indication.into()),
+              !Self::h264_high_profile(avc1.avcc.profile.into()),
               video_error::SpsMissing,
             );
 
@@ -208,22 +201,17 @@ impl Mp4Decoder {
                 height: avc1.height.into(),
                 width: avc1.width.into(),
               },
-              frames: stsz.sample_count.into(),
+              frames: stbl.stsz.sample_count.into(),
               orientation,
             }),
             size,
           });
         }
-        ty => {
+        _ => {
           return Err(
             video_error::TrackUnsupported {
               track: index,
-              ty: match ty {
-                b"auxv" => "auxiliary video",
-                b"meta" => "metadata",
-                b"pict" => "picture",
-                _ => "unknown",
-              },
+              ty: trak.mdia.hdlr.name(),
             }
             .build(),
           );
@@ -237,7 +225,7 @@ impl Mp4Decoder {
       tracks.push(track);
     }
 
-    let title = Self::title(&mp4)?;
+    let title = Self::title(&mp4.moov)?;
 
     Ok(VideoMetadata {
       duration,
@@ -257,22 +245,22 @@ impl Mp4Decoder {
     Self::metadata(file, size).context(error::Video { path })
   }
 
-  fn title(mp4: &Mp4) -> Result<Option<Text>, VideoError> {
-    let Some(udta) = &mp4.moov.udta else {
-      return Ok(None);
-    };
-
-    let Some(MetaBox::Mdir { ilst: Some(ilst) }) = &udta.meta else {
-      return Ok(None);
-    };
-
-    let Some(item) = ilst.items.get(&MetadataKey::Title) else {
+  fn title(moov: &Moov) -> Result<Option<Text>, VideoError> {
+    let Some(ilst) = moov.ilst() else {
       return Ok(None);
     };
 
     let tag = "©nam";
 
-    let title = str::from_utf8(&item.data.data).context(video_error::TagUtf8 { tag })?;
+    let titles = ilst
+      .text(Fourcc(*b"\xa9nam"))
+      .context(video_error::DecodeMp4)?;
+
+    ensure!(titles.len() <= 1, video_error::TagMultiple { tag });
+
+    let Some(title) = titles.first() else {
+      return Ok(None);
+    };
 
     Ok(Some(
       title
@@ -324,6 +312,7 @@ mod tests {
       &[0x67, 100, 0, 0, 0x03, 0xa6],
       Some(config(10, ChromaSubsampling::Yuv420)),
     );
+    case(&[0x67, 100, 0, 31, 0x94], None);
     case(&[0x67, 100, 0, 31], None);
     case(&[0x67], None);
     case(&[], None);
@@ -331,6 +320,9 @@ mod tests {
 
   #[test]
   fn metadata() {
+    const U: i32 = 0x0001_0000;
+    const N: i32 = -0x0001_0000;
+
     #[track_caller]
     fn case(builder: Mp4Builder) -> Result<VideoMetadata, VideoError> {
       let bytes = builder.build();
@@ -340,7 +332,15 @@ mod tests {
 
     #[track_caller]
     fn error(builder: Mp4Builder, expected: &str) {
-      assert_eq!(case(builder).unwrap_err().to_string(), expected);
+      assert_eq!(
+        case(builder)
+          .unwrap_err()
+          .iter_chain()
+          .map(ToString::to_string)
+          .collect::<Vec<String>>()
+          .join(": "),
+        expected,
+      );
     }
 
     assert_eq!(
@@ -487,53 +487,39 @@ mod tests {
       }),
     );
 
-    assert_eq!(
-      case(
-        Mp4Builder::new()
-          .matrix([0, 0x0001_0000, 0, -0x0001_0000, 0, 0, 0, 0, 0x4000_0000])
-          .video_track(2, 1),
-      )
-      .unwrap()
-      .tracks[0]
-        .info,
-      Some(TrackInfo::Video {
-        bit_depth: 8,
-        chroma_subsampling: Some(ChromaSubsampling::Yuv420),
-        dimensions: Dimensions {
-          height: 1,
-          width: 2,
-        },
-        frames: 0,
-        orientation: Orientation {
-          mirrored: false,
-          rotation: Rotation::R90,
-        },
-      }),
-    );
+    for (matrix, mirrored, rotation) in [
+      ([U, 0, 0, U], false, Rotation::R0),
+      ([N, 0, 0, U], true, Rotation::R0),
+      ([0, U, N, 0], false, Rotation::R90),
+      ([0, U, U, 0], true, Rotation::R90),
+      ([N, 0, 0, N], false, Rotation::R180),
+      ([U, 0, 0, N], true, Rotation::R180),
+      ([0, N, U, 0], false, Rotation::R270),
+      ([0, N, N, 0], true, Rotation::R270),
+    ] {
+      let [a, b, c, d] = matrix;
 
-    assert_eq!(
-      case(
-        Mp4Builder::new()
-          .matrix([-0x0001_0000, 0, 0, 0, 0x0001_0000, 0, 0, 0, 0x4000_0000])
-          .video_track(2, 1),
-      )
-      .unwrap()
-      .tracks[0]
-        .info,
-      Some(TrackInfo::Video {
-        bit_depth: 8,
-        chroma_subsampling: Some(ChromaSubsampling::Yuv420),
-        dimensions: Dimensions {
-          height: 1,
-          width: 2,
-        },
-        frames: 0,
-        orientation: Orientation {
-          mirrored: true,
-          rotation: Rotation::R0,
-        },
-      }),
-    );
+      assert_eq!(
+        case(
+          Mp4Builder::new()
+            .matrix([a, b, 0, c, d, 0, 0, 0, 0x4000_0000])
+            .video_track(2, 1),
+        )
+        .unwrap()
+        .tracks[0]
+          .info,
+        Some(TrackInfo::Video {
+          bit_depth: 8,
+          chroma_subsampling: Some(ChromaSubsampling::Yuv420),
+          dimensions: Dimensions {
+            height: 1,
+            width: 2,
+          },
+          frames: 0,
+          orientation: Orientation { mirrored, rotation },
+        }),
+      );
+    }
 
     error(
       Mp4Builder::new().matrix([0; 9]).video_track(2, 1),
@@ -593,6 +579,52 @@ mod tests {
         .audio_track(0x40),
       "track 0 has unsupported video codec `s263`",
     );
+
+    for (fourcc, name) in [
+      (*b"av01", "AV1"),
+      (*b"hev1", "H.265"),
+      (*b"hvc1", "H.265"),
+      (*b"tx3g", "TTXT"),
+      (*b"vp08", "VP8"),
+      (*b"vp09", "VP9"),
+    ] {
+      error(
+        Mp4Builder::new().track(
+          *b"vide",
+          1000,
+          &[Mp4Builder::video_entry(fourcc, *b"dfLa", &[], 2, 1)],
+        ),
+        &format!("track 0 has unsupported video codec `{name}`"),
+      );
+    }
+
+    let builder = Mp4Builder::new();
+    let entry = builder.audio_entry(0x40);
+
+    error(
+      builder.track(*b"vide", 1000, &[entry]),
+      "track 0 has unsupported video codec `AAC`",
+    );
+
+    error(
+      Mp4Builder::new().track(*b"vide", 1000, &[]),
+      "track 0 has unsupported video codec `unknown`",
+    );
+
+    error(
+      Mp4Builder::new().video_track(2, 1).track(
+        *b"soun",
+        44100,
+        &[Mp4Builder::video_entry(
+          *b"avc1",
+          *b"avcC",
+          &[1, 0, 0, 0, 0xff, 0xe0, 0],
+          2,
+          1,
+        )],
+      ),
+      "track 1 has unsupported audio codec `H.264`",
+    );
     error(
       Mp4Builder::new().video_track(2, 1).audio_track(0x11),
       "track 1 has unsupported audio codec `unknown`",
@@ -605,26 +637,41 @@ mod tests {
       Some("foo".parse().unwrap()),
     );
 
+    assert_eq!(
+      case(Mp4Builder::new().video_track(2, 1).tag(*b"\xa9ART", "foo"))
+        .unwrap()
+        .title,
+      None,
+    );
+
+    error(
+      Mp4Builder::new().video_track(2, 1).name("foo").name("bar"),
+      "multiple `©nam` tags",
+    );
+
     error(
       Mp4Builder::new().video_track(2, 1).name(b""),
-      "invalid `©nam` tag",
+      "invalid `©nam` tag: text may not be empty",
     );
 
     error(
       Mp4Builder::new().video_track(2, 1).name(b"\xff"),
-      "`©nam` tag is not valid UTF-8",
+      "failed to decode MP4: `©nam` tag is not valid UTF-8: invalid utf-8 sequence of 1 bytes from index 0",
     );
 
     error(
       Mp4Builder::new().video_track(2, 1).name("\0"),
-      "invalid `©nam` tag",
+      "invalid `©nam` tag: text may not contain control character `\\u{0}`",
     );
 
     assert_eq!(
       Mp4Decoder::metadata(io::Cursor::new(b"foo"), 3)
         .unwrap_err()
-        .to_string(),
-      "failed to decode MP4",
+        .iter_chain()
+        .map(ToString::to_string)
+        .collect::<Vec<String>>()
+        .join(": "),
+      "failed to decode MP4: truncated",
     );
   }
 }
