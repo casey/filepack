@@ -2061,16 +2061,18 @@ fn media_audio_item_response() {
 
   let foo: &[u8] = b"foo";
   let bar: &[u8] = b"barbar";
+  let baz: &[u8] = b"baz";
 
   let fingerprint = PackageBuilder::new()
     .metadata(&Metadata {
       media: Some(Media::Audio {
-        items: tracks(&["foo.flac", "bar.mp3"]),
+        items: tracks(&["foo.flac", "bar.mp3", "baz.m4a"]),
       }),
       ..default()
     })
     .file("foo.flac", foo)
     .file("bar.mp3", bar)
+    .file("baz.m4a", baz)
     .upload(&server);
 
   server
@@ -2089,6 +2091,14 @@ fn media_audio_item_response() {
     .assert_header(header::CONTENT_TYPE, "audio/mpeg")
     .assert_header(header::ETAG, format!("\"{}\"", Hash::bytes(bar)))
     .assert_body(bar)
+    .send();
+
+  server
+    .get(format!("/media/audio/{fingerprint}/item/3"))
+    .assert_header(header::CONTENT_LENGTH, "3")
+    .assert_header(header::CONTENT_TYPE, "audio/mp4")
+    .assert_header(header::ETAG, format!("\"{}\"", Hash::bytes(baz)))
+    .assert_body(baz)
     .send();
 }
 
@@ -2886,7 +2896,7 @@ fn package_item_video() {
           path: "foo.mp4".parse().unwrap(),
           tracks: vec![
             Track {
-              codec: Some(Codec::H264),
+              codec: Some(TrackCodec::H264),
               info: Some(TrackInfo::Video {
                 bit_depth: 8,
                 chroma_subsampling: Some(ChromaSubsampling::Yuv420),
@@ -2900,7 +2910,7 @@ fn package_item_video() {
               size: 0,
             },
             Track {
-              codec: Some(Codec::Aac),
+              codec: Some(TrackCodec::Aac),
               info: Some(TrackInfo::Audio {
                 channels: 2,
                 sample_rate: 44100,
@@ -3154,6 +3164,7 @@ fn package_page_renders_audio_media() {
         Item {
           content: Audio {
             channels: 2,
+            codec: Some(AudioCodec::Flac),
             path: "foo.flac".parse().unwrap(),
             sample_bits: Some(16),
             sample_rate: 44100,
@@ -3166,6 +3177,7 @@ fn package_page_renders_audio_media() {
         Item {
           content: Audio {
             channels: 2,
+            codec: Some(AudioCodec::Flac),
             path: "bar.flac".parse().unwrap(),
             sample_bits: Some(16),
             sample_rate: 44100,
@@ -3268,7 +3280,7 @@ fn package_page_renders_video_media() {
           path: "foo.mp4".parse().unwrap(),
           tracks: vec![
             Track {
-              codec: Some(Codec::H264),
+              codec: Some(TrackCodec::H264),
               info: Some(TrackInfo::Video {
                 bit_depth: 8,
                 chroma_subsampling: Some(ChromaSubsampling::Yuv420),
@@ -3282,7 +3294,7 @@ fn package_page_renders_video_media() {
               size: 0,
             },
             Track {
-              codec: Some(Codec::Aac),
+              codec: Some(TrackCodec::Aac),
               info: Some(TrackInfo::Audio {
                 channels: 2,
                 sample_rate: 44100,

@@ -112,6 +112,16 @@ fn deny_audio_embedded_artwork_aspect_ratio() {
       .tag("TRACKTOTAL", "1")
   }
 
+  fn m4a() -> Mp4Builder {
+    Mp4Builder::new()
+      .tag(*b"\xa9alb", "qux")
+      .tag(*b"\xa9ART", "baz")
+      .tag(*b"\xa9nam", "bar")
+      .pair_tag(*b"disk", 1, 1)
+      .pair_tag(*b"trkn", 1, 1)
+      .frame_count(1)
+  }
+
   fn mp3() -> Mp3Builder {
     Mp3Builder::new()
       .tag("TALB", "qux")
@@ -133,6 +143,17 @@ fn deny_audio_embedded_artwork_aspect_ratio() {
   case("foo.mp3", mp3().picture(3, &square).build(), true);
   case("foo.mp3", mp3().picture(3, &wide).build(), false);
   case("foo.mp3", mp3().picture(4, &wide).build(), true);
+  case("foo.m4a", m4a().audio_track(0x40).build(), true);
+  case(
+    "foo.m4a",
+    m4a().picture(14, &square).audio_track(0x40).build(),
+    true,
+  );
+  case(
+    "foo.m4a",
+    m4a().picture(14, &wide).audio_track(0x40).build(),
+    false,
+  );
 }
 
 #[test]
@@ -185,6 +206,16 @@ fn deny_audio_embedded_artwork_missing() {
       .tag("TRACKTOTAL", "1")
   }
 
+  fn m4a() -> Mp4Builder {
+    Mp4Builder::new()
+      .tag(*b"\xa9alb", "qux")
+      .tag(*b"\xa9ART", "baz")
+      .tag(*b"\xa9nam", "bar")
+      .pair_tag(*b"disk", 1, 1)
+      .pair_tag(*b"trkn", 1, 1)
+      .frame_count(1)
+  }
+
   fn mp3() -> Mp3Builder {
     Mp3Builder::new()
       .tag("TALB", "qux")
@@ -201,6 +232,12 @@ fn deny_audio_embedded_artwork_missing() {
   case("foo.mp3", mp3().build(), false);
   case("foo.mp3", mp3().picture(3, b"foo").build(), true);
   case("foo.mp3", mp3().picture(4, b"foo").build(), false);
+  case("foo.m4a", m4a().audio_track(0x40).build(), false);
+  case(
+    "foo.m4a",
+    m4a().picture(13, b"foo").audio_track(0x40).build(),
+    true,
+  );
 }
 
 #[test]

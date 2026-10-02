@@ -1,12 +1,16 @@
 pub struct Mp4Builder {
   avcc_profile: u8,
   duration: u32,
+  esds_long_lengths: bool,
   frame_count: u32,
   matrix: [i32; 9],
-  name: Option<Vec<u8>>,
+  media_timescale: Option<u32>,
+  meta_in_moov: bool,
+  mp4a_version: u16,
   sample_size: u32,
   sample_sizes: Vec<u32>,
   sps: Vec<u8>,
+  tags: Vec<Vec<u8>>,
   timescale: u32,
   tracks: Vec<Vec<u8>>,
 }
@@ -20,11 +24,24 @@ impl Mp4Builder {
     atom
   }
 
-  fn audio_entry(object_type: u8) -> Vec<u8> {
-    let mut descriptor = vec![0x04, 13, object_type];
+  fn audio_entry(&self, object_type: u8) -> Vec<u8> {
+    let length = |length: usize| -> Vec<u8> {
+      let length = u8::try_from(length).unwrap();
+      if self.esds_long_lengths {
+        vec![0x80, 0x80, 0x80, length]
+      } else {
+        vec![length]
+      }
+    };
+
+    let mut descriptor = vec![0x04];
+    descriptor.extend_from_slice(&length(13));
+    descriptor.push(object_type);
     descriptor.extend_from_slice(&[0; 12]);
 
-    let mut es = vec![0x03, u8::try_from(descriptor.len() + 3).unwrap(), 0, 1, 0];
+    let mut es = vec![0x03];
+    es.extend_from_slice(&length(descriptor.len() + 3));
+    es.extend_from_slice(&[0, 1, 0]);
     es.extend_from_slice(&descriptor);
 
     let mut esds = vec![0, 0, 0, 0];
@@ -33,11 +50,15 @@ impl Mp4Builder {
     let mut payload = Vec::new();
     payload.extend_from_slice(&[0; 6]);
     payload.extend_from_slice(&[0, 1]);
-    payload.extend_from_slice(&[0; 8]);
+    payload.extend_from_slice(&self.mp4a_version.to_be_bytes());
+    payload.extend_from_slice(&[0; 6]);
     payload.extend_from_slice(&2u16.to_be_bytes());
     payload.extend_from_slice(&16u16.to_be_bytes());
     payload.extend_from_slice(&[0; 4]);
     payload.extend_from_slice(&(44100u32 << 16).to_be_bytes());
+    if self.mp4a_version == 1 {
+      payload.extend_from_slice(&[0; 16]);
+    }
     payload.extend_from_slice(&Self::atom(*b"esds", &esds));
 
     Self::atom(*b"mp4a", &payload)
@@ -45,8 +66,9 @@ impl Mp4Builder {
 
   #[must_use]
   pub fn audio_track(self, object_type: u8) -> Self {
-    let entry = Self::audio_entry(object_type);
-    self.track(*b"soun", &[entry])
+    let entry = self.audio_entry(object_type);
+    let timescale = self.media_timescale.unwrap_or(44100);
+    self.track(*b"soun", timescale, &[entry])
   }
 
   #[cfg(test)]
@@ -68,38 +90,52 @@ impl Mp4Builder {
     mvhd.extend_from_slice(&0x0001_0000u32.to_be_bytes());
     mvhd.extend_from_slice(&[0; 76]);
 
-    let udta = self
-      .name
-      .as_ref()
-      .map(|name| {
-        let mut hdlr = vec![0; 8];
-        hdlr.extend_from_slice(b"mdir");
-        hdlr.extend_from_slice(&[0; 12]);
-        hdlr.push(0);
+    let udta = if self.tags.is_empty() {
+      Vec::new()
+    } else {
+      let mut hdlr = vec![0; 8];
+      hdlr.extend_from_slice(b"mdir");
+      hdlr.extend_from_slice(&[0; 12]);
+      hdlr.push(0);
 
-        let mut data = 1u32.to_be_bytes().to_vec();
-        data.extend_from_slice(&[0; 4]);
-        data.extend_from_slice(name);
+      let ilst = Self::atom(*b"ilst", &self.tags.concat());
 
-        let ilst = Self::atom(
-          *b"ilst",
-          &Self::atom(*b"\xa9nam", &Self::atom(*b"data", &data)),
-        );
+      let meta = [vec![0; 4], Self::atom(*b"hdlr", &hdlr), ilst].concat();
 
-        let meta = [vec![0; 4], Self::atom(*b"hdlr", &hdlr), ilst].concat();
-
+      if self.meta_in_moov {
+        Self::atom(*b"meta", &meta)
+      } else {
         Self::atom(*b"udta", &Self::atom(*b"meta", &meta))
-      })
-      .unwrap_or_default();
+      }
+    };
 
     let moov = [Self::atom(*b"mvhd", &mvhd), self.tracks.concat(), udta].concat();
 
     [Self::atom(*b"ftyp", &ftyp), Self::atom(*b"moov", &moov)].concat()
   }
 
+  #[cfg(test)]
+  #[must_use]
+  pub(crate) fn data(mut self, fourcc: [u8; 4], data_type: u32, payload: &[u8]) -> Self {
+    let mut data = data_type.to_be_bytes().to_vec();
+    data.extend_from_slice(&[0; 4]);
+    data.extend_from_slice(payload);
+    self
+      .tags
+      .push(Self::atom(fourcc, &Self::atom(*b"data", &data)));
+    self
+  }
+
   #[must_use]
   pub fn duration(mut self, duration: u32) -> Self {
     self.duration = duration;
+    self
+  }
+
+  #[cfg(test)]
+  #[must_use]
+  pub(crate) fn esds_long_lengths(mut self) -> Self {
+    self.esds_long_lengths = true;
     self
   }
 
@@ -116,25 +152,74 @@ impl Mp4Builder {
     self
   }
 
+  #[cfg(test)]
   #[must_use]
-  pub fn name(mut self, name: impl AsRef<[u8]>) -> Self {
-    self.name = Some(name.as_ref().into());
+  pub(crate) fn media_timescale(mut self, media_timescale: u32) -> Self {
+    self.media_timescale = Some(media_timescale);
     self
+  }
+
+  #[cfg(test)]
+  #[must_use]
+  pub(crate) fn meta_in_moov(mut self) -> Self {
+    self.meta_in_moov = true;
+    self
+  }
+
+  #[cfg(test)]
+  #[must_use]
+  pub(crate) fn mp4a_version(mut self, mp4a_version: u16) -> Self {
+    self.mp4a_version = mp4a_version;
+    self
+  }
+
+  #[must_use]
+  pub fn name(self, name: impl AsRef<[u8]>) -> Self {
+    self.tag(*b"\xa9nam", name)
   }
 
   pub fn new() -> Self {
     Self {
       avcc_profile: 0,
       duration: 0,
+      esds_long_lengths: false,
       frame_count: 0,
       matrix: [0x0001_0000, 0, 0, 0, 0x0001_0000, 0, 0, 0, 0x4000_0000],
-      name: None,
+      media_timescale: None,
+      meta_in_moov: false,
+      mp4a_version: 0,
       sample_size: 1,
       sample_sizes: Vec::new(),
       sps: Vec::new(),
+      tags: Vec::new(),
       timescale: 1000,
       tracks: Vec::new(),
     }
+  }
+
+  #[must_use]
+  pub fn pair_tag(mut self, fourcc: [u8; 4], number: u16, total: u16) -> Self {
+    let mut data = 0u32.to_be_bytes().to_vec();
+    data.extend_from_slice(&[0; 4]);
+    data.extend_from_slice(&[0; 2]);
+    data.extend_from_slice(&number.to_be_bytes());
+    data.extend_from_slice(&total.to_be_bytes());
+    data.extend_from_slice(&[0; 2]);
+    self
+      .tags
+      .push(Self::atom(fourcc, &Self::atom(*b"data", &data)));
+    self
+  }
+
+  #[must_use]
+  pub fn picture(mut self, data_type: u32, picture: &[u8]) -> Self {
+    let mut data = data_type.to_be_bytes().to_vec();
+    data.extend_from_slice(&[0; 4]);
+    data.extend_from_slice(picture);
+    self
+      .tags
+      .push(Self::atom(*b"covr", &Self::atom(*b"data", &data)));
+    self
   }
 
   #[cfg(test)]
@@ -159,6 +244,17 @@ impl Mp4Builder {
     self
   }
 
+  #[must_use]
+  pub fn tag(mut self, fourcc: [u8; 4], value: impl AsRef<[u8]>) -> Self {
+    let mut data = 1u32.to_be_bytes().to_vec();
+    data.extend_from_slice(&[0; 4]);
+    data.extend_from_slice(value.as_ref());
+    self
+      .tags
+      .push(Self::atom(fourcc, &Self::atom(*b"data", &data)));
+    self
+  }
+
   #[cfg(test)]
   #[must_use]
   pub(crate) fn timescale(mut self, timescale: u32) -> Self {
@@ -167,7 +263,12 @@ impl Mp4Builder {
   }
 
   #[must_use]
-  pub(crate) fn track(mut self, handler: [u8; 4], descriptions: &[Vec<u8>]) -> Self {
+  pub(crate) fn track(
+    mut self,
+    handler: [u8; 4],
+    timescale: u32,
+    descriptions: &[Vec<u8>],
+  ) -> Self {
     let mut tkhd = vec![0; 12];
     tkhd.extend_from_slice(&u32::try_from(self.tracks.len() + 1).unwrap().to_be_bytes());
     tkhd.extend_from_slice(&[0; 24]);
@@ -177,7 +278,7 @@ impl Mp4Builder {
     tkhd.extend_from_slice(&[0; 8]);
 
     let mut mdhd = vec![0; 12];
-    mdhd.extend_from_slice(&1000u32.to_be_bytes());
+    mdhd.extend_from_slice(&timescale.to_be_bytes());
     mdhd.extend_from_slice(&self.frame_count.to_be_bytes());
     mdhd.extend_from_slice(&[0; 4]);
 
@@ -288,6 +389,6 @@ impl Mp4Builder {
     };
 
     let entry = Self::video_entry(*b"avc1", *b"avcC", &avcc, width, height);
-    self.track(*b"vide", &[entry])
+    self.track(*b"vide", 1000, &[entry])
   }
 }

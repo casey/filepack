@@ -283,6 +283,66 @@ fn create_extracts_image_title() {
 }
 
 #[test]
+fn create_extracts_m4a_track_tags() {
+  Test::new()
+    .write(
+      "foo.m4a",
+      Mp4Builder::new()
+        .tag(*b"\xa9alb", "qux")
+        .tag(*b"\xa9ART", "baz")
+        .tag(*b"\xa9nam", "bar")
+        .pair_tag(*b"disk", 1, 1)
+        .pair_tag(*b"trkn", 1, 1)
+        .frame_count(2)
+        .audio_track(0x40)
+        .build(),
+    )
+    .write(
+      "metadata.yaml",
+      "
+        creator: baz
+        title: qux
+        media:
+          type: audio
+          items:
+            - path: foo.m4a
+      ",
+    )
+    .arg("create")
+    .success()
+    .arg("metadata")
+    .stdout(
+      r#"
+        {
+          "creator": "baz",
+          "media": {
+            "type": "audio",
+            "items": [
+              {
+                "content": {
+                  "channels": 2,
+                  "codec": "aac",
+                  "path": "foo.m4a",
+                  "sample_rate": 44100,
+                  "samples": 2,
+                  "size": 2,
+                  "type": "mp4"
+                },
+                "title": "bar"
+              }
+            ]
+          },
+          "title": "qux"
+        }
+      "#,
+    )
+    .success()
+    .arg("verify")
+    .stderr_regex("successfully verified .*")
+    .success();
+}
+
+#[test]
 fn create_extracts_track_tags() {
   Test::new()
     .write(
@@ -324,6 +384,7 @@ fn create_extracts_track_tags() {
               {
                 "content": {
                   "channels": 2,
+                  "codec": "flac",
                   "path": "foo.flac",
                   "sample_bits": 16,
                   "sample_rate": 44100,
@@ -842,6 +903,43 @@ fn create_rejects_invalid_videos() {
                ├─ failed to decode MP4
                ├─ failed to fill whole buffer
                └─ failed to fill whole buffer
+      ",
+    )
+    .failure();
+}
+
+#[test]
+fn create_rejects_m4a_with_unsupported_codec() {
+  Test::new()
+    .write(
+      "foo.m4a",
+      Mp4Builder::new()
+        .tag(*b"\xa9alb", "qux")
+        .tag(*b"\xa9ART", "baz")
+        .tag(*b"\xa9nam", "bar")
+        .pair_tag(*b"disk", 1, 1)
+        .pair_tag(*b"trkn", 1, 1)
+        .frame_count(2)
+        .audio_track(0x6b)
+        .build(),
+    )
+    .write(
+      "metadata.yaml",
+      "
+        creator: baz
+        title: qux
+        media:
+          type: audio
+          items:
+            - path: foo.m4a
+      ",
+    )
+    .arg("create")
+    .stderr_regex(
+      "
+        error: invalid audio track `.*foo.m4a`
+               ├─ failed to decode MP4
+               └─ unsupported audio codec `MP3`
       ",
     )
     .failure();

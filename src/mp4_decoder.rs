@@ -70,7 +70,7 @@ impl Mp4Decoder {
   }
 
   fn metadata<T: Read + Seek>(reader: T, size: u64) -> Result<VideoMetadata, VideoError> {
-    fn mp4a_codec(mp4a: &Mp4aBox) -> Option<Codec> {
+    fn mp4a_codec(mp4a: &Mp4aBox) -> Option<TrackCodec> {
       match mp4a
         .esds
         .as_ref()?
@@ -78,8 +78,8 @@ impl Mp4Decoder {
         .dec_config
         .object_type_indication
       {
-        0x40 | 0x66 | 0x67 => Some(Codec::Aac),
-        0x69 | 0x6b => Some(Codec::Mp3),
+        0x40 | 0x66 | 0x67 => Some(TrackCodec::Aac),
+        0x69 | 0x6b => Some(TrackCodec::Mp3),
         _ => None,
       }
     }
@@ -200,7 +200,7 @@ impl Mp4Decoder {
             orientation(&trak.tkhd).context(video_error::MatrixUnsupported { track: index })?;
 
           video_track = Some(Track {
-            codec: Some(Codec::H264),
+            codec: Some(TrackCodec::H264),
             info: Some(TrackInfo::Video {
               bit_depth: color_info.bit_depth,
               chroma_subsampling: Some(color_info.chroma_subsampling),
@@ -350,7 +350,7 @@ mod tests {
         title: None,
         tracks: vec![
           Track {
-            codec: Some(Codec::H264),
+            codec: Some(TrackCodec::H264),
             info: Some(TrackInfo::Video {
               bit_depth: 8,
               chroma_subsampling: Some(ChromaSubsampling::Yuv420),
@@ -364,7 +364,7 @@ mod tests {
             size: 0,
           },
           Track {
-            codec: Some(Codec::Aac),
+            codec: Some(TrackCodec::Aac),
             info: Some(TrackInfo::Audio {
               channels: 2,
               sample_rate: 44100,
@@ -381,7 +381,7 @@ mod tests {
         duration: 0,
         title: None,
         tracks: vec![Track {
-          codec: Some(Codec::H264),
+          codec: Some(TrackCodec::H264),
           info: Some(TrackInfo::Video {
             bit_depth: 8,
             chroma_subsampling: Some(ChromaSubsampling::Yuv420),
@@ -451,7 +451,7 @@ mod tests {
         .unwrap()
         .tracks[0],
       Track {
-        codec: Some(Codec::H264),
+        codec: Some(TrackCodec::H264),
         info: Some(TrackInfo::Video {
           bit_depth: 8,
           chroma_subsampling: Some(ChromaSubsampling::Yuv420),
@@ -574,13 +574,14 @@ mod tests {
       Mp4Builder::new()
         .video_track(2, 1)
         .audio_track(0x40)
-        .track(*b"meta", &[]),
+        .track(*b"meta", 1000, &[]),
       "track 2 has unsupported track type `metadata`",
     );
     error(
       Mp4Builder::new()
         .track(
           *b"vide",
+          1000,
           &[Mp4Builder::video_entry(
             *b"s263",
             *b"d263",
