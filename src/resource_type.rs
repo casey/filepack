@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub(crate) enum ResourceType {
   Binary,
   Flac,

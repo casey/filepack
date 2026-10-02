@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Clone, Copy, Debug, EnumIter, IntoStaticStr, PartialEq)]
+#[derive(Clone, Copy, Debug, EnumIter, IntoStaticStr)]
 #[strum(serialize_all = "kebab-case")]
 pub enum Tag {
   Hash,
