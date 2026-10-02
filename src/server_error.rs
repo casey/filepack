@@ -137,6 +137,11 @@ pub enum ServerError {
   PackageNotMounted { fingerprint: Fingerprint },
   #[snafu(display("package number {number} not found"))]
   PackageNumberNotFound { number: u64 },
+  #[snafu(display("package {fingerprint} contains reserved path `{name}`"))]
+  PackageReservedPath {
+    fingerprint: Fingerprint,
+    name: ComponentBuf,
+  },
   #[snafu(display("package {fingerprint} root directory is unverified"))]
   PackageRootUnverified { fingerprint: Fingerprint },
   #[snafu(display("package {fingerprint} is unverified"))]
@@ -238,6 +243,7 @@ impl ServerError {
       | Self::RevisionParse { .. }
       | Self::PackageMetadataDecode { .. }
       | Self::PackageMetadataFileMissing { .. }
+      | Self::PackageReservedPath { .. }
       | Self::PackageRootUnverified { .. }
       | Self::PackageUnverified { .. }
       | Self::RevisionDecode { .. }
