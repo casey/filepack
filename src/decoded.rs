@@ -60,7 +60,7 @@ impl<T: Serialize> Serialize for Decoded<T> {
 mod tests {
   use super::*;
 
-  #[derive(Debug, Decode, Encode, Eq, PartialEq, Serialize)]
+  #[derive(Debug, Decode, Encode, PartialEq, Serialize)]
   #[deco(strict)]
   struct Foo {
     #[n(1)]

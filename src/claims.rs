@@ -152,7 +152,7 @@ mod tests {
 
   #[test]
   fn unknown_field_rejected() {
-    #[derive(Debug, Decode, Encode, Eq, Ord, PartialEq, PartialOrd)]
+    #[derive(Decode, Encode, Eq, Ord, PartialEq, PartialOrd)]
     struct Extra {
       #[n(1)]
       audience: String,

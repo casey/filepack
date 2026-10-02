@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Clone, Copy, Debug, Display, PartialEq)]
+#[derive(Debug, Display)]
 #[strum(serialize_all = "kebab-case")]
 pub enum UnstableFeature {
   WebPackages,
