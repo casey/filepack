@@ -30,6 +30,21 @@ pub(crate) enum Media {
 }
 
 impl Media {
+  pub(crate) fn formats(&self) -> Vec<String> {
+    fn formats<T: Content>(items: &[Item<T>]) -> Vec<String> {
+      Item::formats(items)
+        .into_iter()
+        .map(|format| OrUnknown(format).to_string())
+        .collect()
+    }
+    match self {
+      Self::Audio { items } => formats(items),
+      Self::Image { items } => formats(items),
+      Self::Video { items } => formats(items),
+      Self::Web => unreachable!(),
+    }
+  }
+
   pub(crate) fn info(&self, builder: InfoBuilder, identifier: PackageIdentifier) -> InfoBuilder {
     fn format<T: Content>(builder: InfoBuilder, items: &[Item<T>]) -> InfoBuilder {
       let formats = Item::formats(items);
@@ -132,6 +147,21 @@ impl MediaType {
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn formats() {
+    assert_eq!(
+      Media::Image {
+        items: vec![
+          Item::test("foo.png"),
+          Item::test("bar.jpg"),
+          Item::test("baz.png"),
+        ],
+      }
+      .formats(),
+      ["PNG", "JPEG"],
+    );
+  }
 
   #[test]
   fn item_url() {

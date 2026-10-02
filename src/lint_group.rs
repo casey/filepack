@@ -47,6 +47,7 @@ impl LintGroup {
         MediaItemsMissing,
         MediaMissing,
         MetadataMissing,
+        MixedFormats,
         NotGenerated,
         PackageCreatorMissing,
         PackageMissing,

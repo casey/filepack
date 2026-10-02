@@ -160,6 +160,15 @@ impl Linter {
       }
     }
 
+    if self.is_active(Lint::MixedFormats)
+      && let Some(media) = &metadata.media
+      && media.ty().has_items()
+      && let formats = media.formats()
+      && formats.len() > 1
+    {
+      self.error(LintError::MixedFormats { formats });
+    }
+
     Ok(())
   }
 
