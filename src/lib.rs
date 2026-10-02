@@ -50,6 +50,7 @@ use {
     context::Context,
     count::Count,
     database_metadata::DatabaseMetadata,
+    date::Date,
     deco_request::DecoRequest,
     deco_response::DecoResponse,
     decode_error::DecodeError,
@@ -193,7 +194,6 @@ use {
   humansize::{BINARY, BaseUnit, DECIMAL, FormatSizeOptions, SizeFormatter},
   icu_normalizer::ComposingNormalizerBorrowed,
   id3::TagLike,
-  jiff::{self, civil},
   lexiclean::Lexiclean,
   mime::Mime,
   num_traits::One,
@@ -338,6 +338,7 @@ mod content_type;
 mod context;
 mod count;
 mod database_metadata;
+mod date;
 mod deco_request;
 mod deco_response;
 mod decode;
