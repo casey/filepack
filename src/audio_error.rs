@@ -3,6 +3,8 @@ use super::*;
 #[derive(Debug, Snafu)]
 #[snafu(context(suffix(false)), visibility(pub(crate)))]
 pub enum AudioError {
+  #[snafu(display("`{tag}` tag is missing disc total"))]
+  DiscTotalMissing { tag: &'static str },
   #[snafu(display("failed to decode embedded JPEG image"))]
   EmbeddedImageDecodeJpeg {
     source: zune_jpeg::errors::DecodeErrors,
@@ -48,11 +50,11 @@ pub enum AudioError {
   TagMissing { tag: &'static str },
   #[snafu(display("multiple `{tag}` tags"))]
   TagMultiple { tag: &'static str },
-  #[snafu(display("`{tag}` tag not in format `NUMBER/TOTAL`"))]
-  TagPair { tag: &'static str },
   #[snafu(display("`{tag}` tag is not valid UTF-8"))]
   TagUtf8 {
     source: Utf8Error,
     tag: &'static str,
   },
+  #[snafu(display("`{tag}` tag is missing track total"))]
+  TrackTotalMissing { tag: &'static str },
 }

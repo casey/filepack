@@ -209,8 +209,10 @@ impl M4aDecoder {
     let album = Self::text_tag(ilst, *b"\xa9alb", "©alb")?;
     let artist = Self::text_tag(ilst, *b"\xa9ART", "©ART")?;
     let (disc, discs) = Self::pair_tag(ilst, *b"disk", "disk")?;
+    let discs = discs.context(audio_error::DiscTotalMissing { tag: "disk" })?;
     let title = Self::text_tag(ilst, *b"\xa9nam", "©nam")?;
     let (track, tracks) = Self::pair_tag(ilst, *b"trkn", "trkn")?;
+    let tracks = tracks.context(audio_error::TrackTotalMissing { tag: "trkn" })?;
 
     Ok(AudioMetadata {
       album,
@@ -265,13 +267,12 @@ impl M4aDecoder {
     ilst: Option<&[u8]>,
     fourcc: [u8; 4],
     tag: &'static str,
-  ) -> Result<(u64, u64), AudioError> {
-    fn pair(value: &[u8], tag: &'static str) -> Result<(u64, u64), M4aError> {
+  ) -> Result<(u64, Option<u64>), AudioError> {
+    fn pair(value: &[u8], tag: &'static str) -> Result<(u64, Option<u64>), M4aError> {
       let bytes = value.get(2..6).context(m4a_error::PairTag { tag })?;
-      Ok((
-        u16::from_be_bytes(bytes[..2].try_into().unwrap()).into(),
-        u16::from_be_bytes(bytes[2..].try_into().unwrap()).into(),
-      ))
+      let number = u16::from_be_bytes(bytes[..2].try_into().unwrap());
+      let total = u16::from_be_bytes(bytes[2..].try_into().unwrap());
+      Ok((number.into(), (total != 0).then_some(total.into())))
     }
 
     let mut values = Self::values(ilst, fourcc)
@@ -737,6 +738,20 @@ mod tests {
     assert_matches!(
       err(m4a().pair_tag(*b"trkn", 3, 4).audio_track(0x40)),
       AudioError::TagMultiple { tag: "trkn" },
+    );
+
+    assert_matches!(
+      err(
+        Mp4Builder::new()
+          .tag(*b"\xa9alb", "qux")
+          .tag(*b"\xa9ART", "baz")
+          .tag(*b"\xa9nam", "bar")
+          .pair_tag(*b"disk", 1, 1)
+          .pair_tag(*b"trkn", 1, 0)
+          .frame_count(2)
+          .audio_track(0x40)
+      ),
+      AudioError::TrackTotalMissing { tag: "trkn" },
     );
   }
 
