@@ -58,8 +58,6 @@ pub enum MalformedError {
   Reserved { value: u8 },
   #[snafu(display("failed to parse text"))]
   Text { source: TextError },
-  #[snafu(display("invalid time"))]
-  Time { source: TimeError },
   #[snafu(display("invalid totals"))]
   Totals { source: TotalsError },
   #[snafu(display("trailing bytes"))]

@@ -1122,7 +1122,6 @@ dependencies = [
  "id3",
  "image",
  "indicatif",
- "jiff",
  "lexiclean",
  "libc",
  "matroska-demuxer",

@@ -48,7 +48,6 @@ icu_normalizer = { version = "2.3.0", default-features = false, features = ["com
 id3 = "1.17.1"
 image = { version = "0.25.10", default-features = false, features = ["jpeg", "png"] }
 indicatif = "0.18.0"
-jiff = { version = "0.2.0", default-features = false, features = ["std"] }
 lexiclean = "0.0.2"
 matroska-demuxer = "0.8.0"
 mime = "0.3.17"
