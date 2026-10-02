@@ -5,7 +5,7 @@ pub(crate) struct HomeHtml {
   pub(crate) packages: Vec<PackageSummary>,
 }
 
-#[derive(Clone, Eq, Ord, PartialEq, PartialOrd)]
+#[derive(Eq, Ord, PartialEq, PartialOrd)]
 enum Section {
   Media(MediaType),
   None,

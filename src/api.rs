@@ -3,7 +3,7 @@ use super::*;
 pub(crate) mod gc {
   use super::*;
 
-  #[derive(Debug, Default, Encode, Decode, PartialEq)]
+  #[derive(Default, Encode, Decode)]
   pub(crate) struct Response {
     #[n(1)]
     pub(crate) bytes: u64,
@@ -21,13 +21,13 @@ pub(crate) mod gc {
 pub(crate) mod missing {
   use super::*;
 
-  #[derive(Debug, Encode, Decode, PartialEq)]
+  #[derive(Debug, Encode, Decode)]
   pub(crate) struct Request {
     #[n(1)]
     pub(crate) hashes: SortedSet<Hash>,
   }
 
-  #[derive(Debug, Encode, Decode, PartialEq)]
+  #[derive(Encode, Decode)]
   pub(crate) struct Response {
     #[n(1)]
     pub(crate) hashes: SortedSet<Hash>,
@@ -37,7 +37,7 @@ pub(crate) mod missing {
 pub(crate) mod number {
   use super::*;
 
-  #[derive(Debug, Encode, Decode, PartialEq)]
+  #[derive(Encode, Decode)]
   pub(crate) struct Response {
     #[n(1)]
     pub(crate) package: Fingerprint,
@@ -49,7 +49,7 @@ pub(crate) mod number {
 pub(crate) mod numbers {
   use super::*;
 
-  #[derive(Debug, Default, Encode, Decode, PartialEq)]
+  #[derive(Default, Encode, Decode)]
   pub(crate) struct Response {
     #[n(1)]
     pub(crate) numbers: SortedSet<u64>,
@@ -59,7 +59,7 @@ pub(crate) mod numbers {
 pub(crate) mod packages {
   use super::*;
 
-  #[derive(Debug, Default, Encode, Decode, PartialEq)]
+  #[derive(Default, Encode, Decode)]
   pub(crate) struct Response {
     #[n(1)]
     pub(crate) packages: SortedSet<Fingerprint>,
@@ -69,7 +69,7 @@ pub(crate) mod packages {
 pub(crate) mod revision {
   use super::*;
 
-  #[derive(Debug, Default, Encode, Decode, PartialEq)]
+  #[derive(Debug, Default, Encode, Decode)]
   pub(crate) enum Mode {
     #[default]
     #[n(0)]
@@ -86,13 +86,13 @@ pub(crate) mod revision {
     },
   }
 
-  #[derive(Debug, Default, Encode, Decode, PartialEq)]
+  #[derive(Debug, Encode, Decode)]
   pub(crate) struct Request {
     #[n(1)]
     pub(crate) mode: Mode,
   }
 
-  #[derive(Debug, Encode, Decode, PartialEq)]
+  #[derive(Encode, Decode)]
   pub(crate) struct Response {
     #[n(1)]
     pub(crate) number: u64,

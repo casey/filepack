@@ -1,7 +1,7 @@
 use super::*;
 
 #[allow(clippy::arbitrary_source_item_ordering)]
-#[derive(Clone, Copy, Default, Deserialize, Display, EnumIter, Eq, PartialEq)]
+#[derive(Clone, Copy, Default, Deserialize, Display, EnumIter, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 #[strum(serialize_all = "kebab-case")]
 pub(crate) enum Sort {
