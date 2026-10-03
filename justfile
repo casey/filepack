@@ -89,7 +89,7 @@ publish: tmp
   VERSION=`bin/version`
   git tag -a $VERSION -m "Release $VERSION"
   git push origin $VERSION
-  cargo publish
+  cargo publish --workspace
 
 test-release-workflow:
   -git tag -d test-release
