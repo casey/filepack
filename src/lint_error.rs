@@ -36,6 +36,8 @@ pub(crate) enum LintError {
   PackageCreatorMissing,
   #[snafu(display("metadata missing package"))]
   PackageMissing,
+  #[snafu(display("path component longer than 255 bytes"))]
+  PathComponentLength,
   #[snafu(display("metadata missing time"))]
   TimeMissing,
   #[snafu(display("metadata missing title"))]
