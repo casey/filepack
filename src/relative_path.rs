@@ -61,6 +61,10 @@ impl RelativePath {
         );
       };
 
+      if lints.contains(&Lint::PathComponentLength) && component.len() > 255 {
+        return Some(LintError::PathComponentLength);
+      }
+
       if lints.contains(&Lint::WindowsReservedCharacter) {
         for character in component.chars() {
           if Self::WINDOWS_RESERVED_CHARACTERS.contains(&character) {
@@ -374,6 +378,8 @@ mod tests {
 
     case("foo/ bar", LintError::WindowsLeadingSpace);
 
+    case(&"a".repeat(256), LintError::PathComponentLength);
+
     case(
       "CON",
       LintError::WindowsReservedFilename { name: "CON".into() },
@@ -423,13 +429,19 @@ mod tests {
 
   #[test]
   fn lint_pass() {
-    assert!(
-      "foo"
-        .parse::<RelativePath>()
-        .unwrap()
-        .lint(&LintGroup::Distribution.lints())
-        .is_none()
-    );
+    #[track_caller]
+    fn case(path: &str) {
+      assert!(
+        path
+          .parse::<RelativePath>()
+          .unwrap()
+          .lint(&LintGroup::Distribution.lints())
+          .is_none()
+      );
+    }
+
+    case("foo");
+    case(&"a".repeat(255));
   }
 
   #[test]

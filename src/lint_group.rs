@@ -29,6 +29,7 @@ impl LintGroup {
       Self::All => Lint::iter().collect(),
       Self::Compatibility => [
         CaseConflict,
+        PathComponentLength,
         WindowsLeadingSpace,
         WindowsReservedCharacter,
         WindowsReservedFilename,
