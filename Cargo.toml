@@ -1,6 +1,6 @@
 [package]
 name = "filepack"
-version = "0.0.10"
+version = "0.0.11"
 autotests = false
 categories = ["command-line-utilities", "cryptography", "multimedia"]
 description = "content-addressed packages"
