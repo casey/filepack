@@ -29,7 +29,22 @@ impl Sign {
       &self.key,
     )?;
 
-    manifest.save(loader.path())?;
+    let archive = manifest.pack(loader.path())?;
+
+    let actual = archive
+      .fingerprint_with_options(DecodeOptions::strict())
+      .context(error::UnarchiveManifest {
+        path: loader.path(),
+      })?;
+
+    ensure! {
+      actual == fingerprint,
+      error::Internal {
+        message: format!("signing changed fingerprint from {fingerprint} to {actual}"),
+      },
+    }
+
+    filesystem::write(loader.path(), archive.encode_to_vec())?;
 
     Ok(())
   }

@@ -116,11 +116,12 @@ impl Manifest {
     Loader::load_with_options(options, path)?.unpack()
   }
 
+  pub(crate) fn pack(&self, path: &Utf8Path) -> Result<Archive> {
+    Archive::pack(self).context(error::ManifestTotals { path })
+  }
+
   pub fn save(&self, path: &Utf8Path) -> Result {
-    let deco = Archive::pack(self)
-      .context(error::ManifestTotals { path })?
-      .encode_to_vec();
-    filesystem::write(path, deco)?;
+    filesystem::write(path, self.pack(path)?.encode_to_vec())?;
     Ok(())
   }
 
