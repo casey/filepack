@@ -51,7 +51,7 @@ pub(crate) enum LintError {
   VideoPlaceholderMissing,
   #[snafu(display("Windows does not allow filenames that begin with spaces"))]
   WindowsLeadingSpace,
-  #[snafu(display("Windows does not allow filenames that begin with `{character}`"))]
+  #[snafu(display("Windows does not allow filenames that contain `{character}`"))]
   WindowsReservedCharacter { character: char },
   #[snafu(display("Windows does not allow files named `{name}`"))]
   WindowsReservedFilename { name: String },
