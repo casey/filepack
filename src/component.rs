@@ -37,10 +37,6 @@ impl Component {
       return Err(ComponentError::Empty);
     }
 
-    if s.len() > 255 {
-      return Err(ComponentError::Length);
-    }
-
     if s == "." {
       return Err(ComponentError::Current);
     }
@@ -153,17 +149,6 @@ mod tests {
     case(".filepack", true);
     case("MANIFEST.FILEPACK", true);
     case("foo", false);
-  }
-
-  #[test]
-  fn length() {
-    let long = "a".repeat(255);
-    Component::new(&long).unwrap();
-
-    assert_eq!(
-      Component::new(&"a".repeat(256)).unwrap_err(),
-      ComponentError::Length,
-    );
   }
 
   #[test]

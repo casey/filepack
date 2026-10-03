@@ -8,8 +8,6 @@ pub enum ComponentError {
   Current,
   #[snafu(display("component may not be empty"))]
   Empty,
-  #[snafu(display("component exceeds 255 byte limit"))]
-  Length,
   #[snafu(display("component may not be `..`"))]
   Parent,
   #[snafu(display("component may not contain path separator `{character}`"))]

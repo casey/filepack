@@ -234,8 +234,8 @@ are objects with two fields: `hash`, the tagged hex BLAKE3 hash of the file,
 and `size`, the length of the file in bytes.
 
 Path components are UTF-8 and may not be `.` or `..`, contain the path
-separators `/` or `\`, contain control characters, be longer than 255 bytes, or
-begin with a Windows drive prefix, such as `C:`.
+separators `/` or `\`, contain control characters, or begin with a Windows
+drive prefix, such as `C:`.
 
 ### `signatures`
 
