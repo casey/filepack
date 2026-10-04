@@ -3,7 +3,7 @@ use super::*;
 #[derive(Parser)]
 pub(crate) struct Files {
   #[arg(long = "format", default_value_t)]
-  format: Format,
+  format: OutputFormat,
   #[arg(help = MANIFEST_PATH_HELP)]
   path: Option<Utf8PathBuf>,
 }
@@ -15,9 +15,9 @@ impl Files {
     let files = manifest.files();
 
     match self.format {
-      Format::Json => println!("{}", serde_json::to_string(&files).unwrap()),
-      Format::JsonPretty => println!("{}", serde_json::to_string_pretty(&files).unwrap()),
-      Format::Tsv => {
+      OutputFormat::Json => println!("{}", serde_json::to_string(&files).unwrap()),
+      OutputFormat::JsonPretty => println!("{}", serde_json::to_string_pretty(&files).unwrap()),
+      OutputFormat::Tsv => {
         for (path, file) in files {
           println!("{path}\t{}\t{}", file.hash, file.size);
         }

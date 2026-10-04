@@ -29,9 +29,9 @@ use {
     audio::Audio,
     audio_codec::AudioCodec,
     audio_error::AudioError,
+    audio_format::AudioFormat,
     audio_metadata::AudioMetadata,
     audio_position_error::AudioPositionError,
-    audio_type::AudioType,
     authenticated::Authenticated,
     authorization_error::AuthorizationError,
     bit_reader::BitReader,
@@ -47,7 +47,7 @@ use {
     component_error::ComponentError,
     compression::Compression,
     content::Content,
-    content_type::ContentType,
+    content_format::ContentFormat,
     context::Context,
     count::Count,
     database_metadata::DatabaseMetadata,
@@ -79,7 +79,6 @@ use {
     filesystem_error::FilesystemError,
     flac_decoder::FlacDecoder,
     float_ext::FloatExt,
-    format::Format,
     functions::{
       current_dir, decode_path, default, format_size, ignore, now, parse_number, transfer_tempfile,
     },
@@ -88,8 +87,8 @@ use {
     hex::Hex,
     hex_error::HexError,
     image::Image,
+    image_format::ImageFormat,
     image_metadata::ImageMetadata,
-    image_type::ImageType,
     info::Info,
     info_builder::InfoBuilder,
     invalid_public_key::InvalidPublicKey,
@@ -129,6 +128,7 @@ use {
     order::Order,
     ordinal::Ordinal,
     orientation::Orientation,
+    output_format::OutputFormat,
     owo_colorize_ext::OwoColorizeExt,
     package_identifier_error::PackageIdentifierError,
     package_metadata::PackageMetadata,
@@ -180,8 +180,8 @@ use {
     validate::Validate,
     video::Video,
     video_error::VideoError,
+    video_format::VideoFormat,
     video_metadata::VideoMetadata,
-    video_type::VideoType,
     webm_decoder::WebmDecoder,
     xmp_error::XmpError,
   },
@@ -320,9 +320,9 @@ mod array_encoder;
 mod audio;
 mod audio_codec;
 mod audio_error;
+mod audio_format;
 mod audio_metadata;
 mod audio_position_error;
-mod audio_type;
 mod authenticated;
 mod authorization_error;
 mod bit_reader;
@@ -338,7 +338,7 @@ mod component_buf;
 mod component_error;
 mod compression;
 mod content;
-mod content_type;
+mod content_format;
 mod context;
 mod count;
 mod database_metadata;
@@ -382,7 +382,6 @@ mod fingerprint;
 mod flac_builder;
 mod flac_decoder;
 mod float_ext;
-mod format;
 mod functions;
 mod hash;
 mod hashing_writer;
@@ -390,8 +389,8 @@ mod head;
 pub mod hex;
 mod hex_error;
 mod image;
+mod image_format;
 mod image_metadata;
-mod image_type;
 mod info;
 mod info_builder;
 mod invalid_public_key;
@@ -439,6 +438,7 @@ mod order;
 mod ordered_set;
 mod ordinal;
 mod orientation;
+mod output_format;
 mod owo_colorize_ext;
 mod package_identifier;
 mod package_identifier_error;
@@ -500,8 +500,8 @@ mod utf8_path_ext;
 mod validate;
 mod video;
 mod video_error;
+mod video_format;
 mod video_metadata;
-mod video_type;
 mod webm_decoder;
 mod xmp;
 mod xmp_error;

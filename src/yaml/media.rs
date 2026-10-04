@@ -33,19 +33,19 @@ impl Media {
           .map(|Audio { path }| {
             let creator = creator.context(error::MetadataFieldMissing { field: "creator" })?;
             let title = title.context(error::MetadataFieldMissing { field: "title" })?;
-            let (metadata, ty) = AudioMetadata::load(root, &path)?;
+            let (metadata, format) = AudioMetadata::load(root, &path)?;
             metadata.check_tags(&path, creator, title)?;
             bar.inc(1);
-            Ok((path, metadata, ty))
+            Ok((path, metadata, format))
           })
-          .collect::<Result<Vec<(RelativePath, AudioMetadata, AudioType)>>>()?;
+          .collect::<Result<Vec<(RelativePath, AudioMetadata, AudioFormat)>>>()?;
 
         AudioMetadata::check_positions(&items).context(error::AudioPosition)?;
 
         crate::Media::Audio {
           items: items
             .into_iter()
-            .map(|(path, metadata, ty)| metadata.into_item(path, ty))
+            .map(|(path, metadata, format)| metadata.into_item(path, format))
             .collect(),
         }
       }

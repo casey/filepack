@@ -6,14 +6,13 @@ pub(crate) struct Video {
   #[n(1)]
   pub(crate) duration: u64,
   #[n(2)]
-  pub(crate) path: RelativePath,
+  pub(crate) format: Option<VideoFormat>,
   #[n(3)]
-  pub(crate) placeholder: Option<Image>,
+  pub(crate) path: RelativePath,
   #[n(4)]
-  pub(crate) tracks: Vec<Track>,
+  pub(crate) placeholder: Option<Image>,
   #[n(5)]
-  #[serde(rename = "type")]
-  pub(crate) ty: Option<VideoType>,
+  pub(crate) tracks: Vec<Track>,
 }
 
 impl Video {
@@ -38,19 +37,23 @@ impl Video {
 impl Content for Video {
   const LABEL: &'static str = "Video";
 
-  type Type = VideoType;
+  type Format = VideoFormat;
+
+  fn format(&self) -> Option<Self::Format> {
+    self.format
+  }
 
   fn info(&self, builder: InfoBuilder) -> InfoBuilder {
     builder
-      .optional_or_unknown("type", self.ty)
+      .optional_or_unknown("format", self.format)
       .value(
         "duration",
         DisplayDuration(Duration::from_millis(self.duration)),
       )
       .optional(
         "compression",
-        self.ty.map(|ty| match ty {
-          VideoType::Mp4 | VideoType::Webm => Compression::Lossy,
+        self.format.map(|format| match format {
+          VideoFormat::Mp4 | VideoFormat::Webm => Compression::Lossy,
         }),
       )
       .list(
@@ -64,24 +67,24 @@ impl Content for Video {
   }
 
   fn load(root: &Utf8Path, path: RelativePath) -> Result<Item<Self>> {
-    let ty = VideoType::from_path(&path).context(error::Path { path: &path })?;
+    let format = VideoFormat::from_path(&path).context(error::Path { path: &path })?;
 
     let VideoMetadata {
       duration,
       title,
       tracks,
-    } = match ty {
-      VideoType::Mp4 => Mp4Decoder::read(&root.join(&path))?,
-      VideoType::Webm => WebmDecoder::read(&root.join(&path))?,
+    } = match format {
+      VideoFormat::Mp4 => Mp4Decoder::read(&root.join(&path))?,
+      VideoFormat::Webm => WebmDecoder::read(&root.join(&path))?,
     };
 
     Ok(Item {
       content: Self {
         duration,
+        format: Some(format),
         path,
         placeholder: None,
         tracks,
-        ty: Some(ty),
       },
       title,
     })
@@ -98,18 +101,14 @@ impl Content for Video {
   #[cfg(test)]
   fn test(path: &str) -> Self {
     let path = path.parse::<RelativePath>().unwrap();
-    let ty = VideoType::from_path(&path).unwrap();
+    let format = VideoFormat::from_path(&path).unwrap();
     Self {
       duration: 1000,
+      format: Some(format),
       path,
       placeholder: None,
       tracks: Vec::new(),
-      ty: Some(ty),
     }
-  }
-
-  fn ty(&self) -> Option<Self::Type> {
-    self.ty
   }
 }
 
@@ -130,7 +129,7 @@ mod tests {
     assert_eq!(
       Content::info(&Video::test("foo.mp4"), InfoBuilder::new()).build(),
       InfoBuilder::new()
-        .value("type", "MP4")
+        .value("format", "MP4")
         .value("duration", "0:01")
         .value("compression", "lossy")
         .list("tracks", Vec::new())
@@ -160,6 +159,7 @@ mod tests {
       .unwrap(),
       Video {
         duration: 2,
+        format: Some(VideoFormat::Mp4),
         path: "foo.mp4".parse().unwrap(),
         placeholder: None,
         tracks: vec![
@@ -186,7 +186,6 @@ mod tests {
             size: 0,
           },
         ],
-        ty: Some(VideoType::Mp4),
       },
     );
 
@@ -285,6 +284,7 @@ mod tests {
     assert_eq!(
       serde_json::to_string(&Video {
         duration: 0,
+        format: Some(VideoFormat::Mp4),
         path: "foo.mp4".parse().unwrap(),
         placeholder: None,
         tracks: vec![
@@ -311,10 +311,9 @@ mod tests {
             size: 0,
           },
         ],
-        ty: Some(VideoType::Mp4),
       })
       .unwrap(),
-      r#"{"duration":0,"path":"foo.mp4","tracks":[{"codec":"h264","info":{"type":"video","bit_depth":8,"chroma_subsampling":"4:2:0","dimensions":{"height":1,"width":2},"frames":0,"orientation":{"mirrored":false,"rotation":0}},"size":0},{"codec":"mp3","info":{"type":"audio","channels":2,"sample_rate":44100},"size":0}],"type":"mp4"}"#,
+      r#"{"duration":0,"format":"mp4","path":"foo.mp4","tracks":[{"codec":"h264","info":{"type":"video","bit_depth":8,"chroma_subsampling":"4:2:0","dimensions":{"height":1,"width":2},"frames":0,"orientation":{"mirrored":false,"rotation":0}},"size":0},{"codec":"mp3","info":{"type":"audio","channels":2,"sample_rate":44100},"size":0}]}"#,
     );
 
     assert_eq!(
@@ -323,7 +322,7 @@ mod tests {
         ..Video::test("foo.mp4")
       })
       .unwrap(),
-      r#"{"duration":1000,"path":"foo.mp4","placeholder":{"alpha":false,"bit_depth":8,"color_type":"rgb","dimensions":{"height":1,"width":1},"orientation":{"mirrored":false,"rotation":0},"path":"bar.png","type":"png"},"tracks":[],"type":"mp4"}"#,
+      r#"{"duration":1000,"format":"mp4","path":"foo.mp4","placeholder":{"alpha":false,"bit_depth":8,"color_type":"rgb","dimensions":{"height":1,"width":1},"format":"png","orientation":{"mirrored":false,"rotation":0},"path":"bar.png"},"tracks":[]}"#,
     );
   }
 

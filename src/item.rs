@@ -10,13 +10,13 @@ pub(crate) struct Item<T> {
 }
 
 impl<T: Content> Item<T> {
-  pub(crate) fn formats(items: &[Self]) -> Vec<Option<T::Type>> {
+  pub(crate) fn formats(items: &[Self]) -> Vec<Option<T::Format>> {
     let mut formats = Vec::new();
 
     for item in items {
-      let ty = item.content.ty();
-      if !formats.contains(&ty) {
-        formats.push(ty);
+      let format = item.content.format();
+      if !formats.contains(&format) {
+        formats.push(format);
       }
     }
 
@@ -98,14 +98,14 @@ mod tests {
 
     assert_eq!(
       Item::formats(&items),
-      [Some(ImageType::Png), Some(ImageType::Jpeg)]
+      [Some(ImageFormat::Png), Some(ImageFormat::Jpeg)]
     );
 
-    items[0].content.ty = None;
+    items[0].content.format = None;
 
     assert_eq!(
       Item::formats(&items),
-      [None, Some(ImageType::Jpeg), Some(ImageType::Png)]
+      [None, Some(ImageFormat::Jpeg), Some(ImageFormat::Png)]
     );
   }
 
@@ -117,7 +117,7 @@ mod tests {
       MediaItem::info(&item, "bar".into()),
       InfoBuilder::new()
         .link("file", "foo.png", "bar".into())
-        .value("type", "PNG")
+        .value("format", "PNG")
         .value("dimensions", "1×1")
         .value("orientation", "0°")
         .value("color type", "RGB")
@@ -134,7 +134,7 @@ mod tests {
       InfoBuilder::new()
         .link("file", "foo.png", "bar".into())
         .value("title", "baz")
-        .value("type", "PNG")
+        .value("format", "PNG")
         .value("dimensions", "1×1")
         .value("orientation", "0°")
         .value("color type", "RGB")

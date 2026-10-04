@@ -2818,9 +2818,9 @@ fn package_item_image() {
             height: 1,
             width: 2,
           },
+          format: Some(ImageFormat::Png),
           orientation: Orientation::new(),
           path: "foo.png".parse().unwrap(),
-          ty: Some(ImageType::Png),
         },
         title: None,
       }],
@@ -2861,9 +2861,9 @@ fn package_item_image_out_of_range() {
               height: 1,
               width: 1,
             },
+            format: Some(ImageFormat::Png),
             orientation: Orientation::new(),
             path: "foo.png".parse().unwrap(),
-            ty: Some(ImageType::Png),
           },
           title: None,
         }],
@@ -2910,9 +2910,10 @@ fn package_item_video() {
     media: Some(Media::Video {
       items: vec![Item {
         content: Video {
-          placeholder: None,
           duration: 0,
+          format: Some(VideoFormat::Mp4),
           path: "foo.mp4".parse().unwrap(),
+          placeholder: None,
           tracks: vec![
             Track {
               codec: Some(TrackCodec::H264),
@@ -2937,7 +2938,6 @@ fn package_item_video() {
               size: 0,
             },
           ],
-          ty: Some(VideoType::Mp4),
         },
         title: None,
       }],
@@ -3184,12 +3184,12 @@ fn package_page_renders_audio_media() {
           content: Audio {
             channels: 2,
             codec: Some(AudioCodec::Flac),
+            format: Some(AudioFormat::Flac),
             path: "foo.flac".parse().unwrap(),
             sample_bits: Some(16),
             sample_rate: 44100,
             samples: 9_922_500,
             size: 0,
-            ty: Some(AudioType::Flac),
           },
           title: Some("foo".parse().unwrap()),
         },
@@ -3197,12 +3197,12 @@ fn package_page_renders_audio_media() {
           content: Audio {
             channels: 2,
             codec: Some(AudioCodec::Flac),
+            format: Some(AudioFormat::Flac),
             path: "bar.flac".parse().unwrap(),
             sample_bits: Some(16),
             sample_rate: 44100,
             samples: 44100,
             size: 0,
-            ty: Some(AudioType::Flac),
           },
           title: Some("bar".parse().unwrap()),
         },
@@ -3252,9 +3252,9 @@ fn package_page_renders_image_media() {
             height: 1,
             width: 2,
           },
+          format: Some(ImageFormat::Png),
           orientation: Orientation::new(),
           path: "foo.png".parse().unwrap(),
-          ty: Some(ImageType::Png),
         },
         title: None,
       }],
@@ -3294,9 +3294,10 @@ fn package_page_renders_video_media() {
     media: Some(Media::Video {
       items: vec![Item {
         content: Video {
-          placeholder: None,
           duration: 0,
+          format: Some(VideoFormat::Mp4),
           path: "foo.mp4".parse().unwrap(),
+          placeholder: None,
           tracks: vec![
             Track {
               codec: Some(TrackCodec::H264),
@@ -3321,7 +3322,6 @@ fn package_page_renders_video_media() {
               size: 0,
             },
           ],
-          ty: Some(VideoType::Mp4),
         },
         title: None,
       }],

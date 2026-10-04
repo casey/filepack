@@ -3,7 +3,7 @@ use super::*;
 #[derive(Parser)]
 pub(crate) struct Signatures {
   #[arg(long = "format", default_value_t)]
-  format: Format,
+  format: OutputFormat,
   #[arg(help = MANIFEST_PATH_HELP)]
   path: Option<Utf8PathBuf>,
 }
@@ -39,9 +39,11 @@ impl Signatures {
     }
 
     match self.format {
-      Format::Json => println!("{}", serde_json::to_string(&signatures).unwrap()),
-      Format::JsonPretty => println!("{}", serde_json::to_string_pretty(&signatures).unwrap()),
-      Format::Tsv => {
+      OutputFormat::Json => println!("{}", serde_json::to_string(&signatures).unwrap()),
+      OutputFormat::JsonPretty => {
+        println!("{}", serde_json::to_string_pretty(&signatures).unwrap());
+      }
+      OutputFormat::Tsv => {
         for signature in &signatures {
           let timestamp = signature
             .timestamp
