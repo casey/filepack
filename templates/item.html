@@ -16,6 +16,9 @@
 %%     }
   src=/media/video/{{ self.fingerprint }}/item/{{ Ordinal(self.index) }}></video>
 %%   }
+%%   Media::Document { .. } => {
+<iframe src=/media/document/{{ self.fingerprint }}/item/{{ Ordinal(self.index) }} title='{{ self.item().display_title(self.index) }}'></iframe>
+%%   }
 %%   Media::Web => unreachable!(),
 %% }
 <footer>

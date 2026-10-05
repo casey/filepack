@@ -9,6 +9,7 @@ pub(crate) enum ResourceType {
   Markdown,
   Mp3,
   Mp4,
+  Pdf,
   Png,
   Webm,
 }
@@ -23,6 +24,7 @@ impl ResourceType {
       | Self::Markdown
       | Self::Mp3
       | Self::Mp4
+      | Self::Pdf
       | Self::Png
       | Self::Webm => None,
     }
@@ -37,6 +39,7 @@ impl ResourceType {
       Self::Markdown => mime::TEXT_PLAIN_UTF_8,
       Self::Mp3 => "audio/mpeg".parse().unwrap(),
       Self::Mp4 => "video/mp4".parse().unwrap(),
+      Self::Pdf => mime::APPLICATION_PDF,
       Self::Png => mime::IMAGE_PNG,
       Self::Webm => "video/webm".parse().unwrap(),
     }
@@ -50,6 +53,7 @@ impl ResourceType {
       "md" => Some(Self::Markdown),
       "mp3" => Some(Self::Mp3),
       "mp4" => Some(Self::Mp4),
+      "pdf" => Some(Self::Pdf),
       "png" => Some(Self::Png),
       "webm" => Some(Self::Webm),
       _ => None,
@@ -58,7 +62,7 @@ impl ResourceType {
 
   pub(crate) fn sandbox(self) -> bool {
     match self {
-      Self::Binary | Self::Jpeg | Self::Markdown | Self::Png => true,
+      Self::Binary | Self::Jpeg | Self::Markdown | Self::Pdf | Self::Png => true,
       Self::Flac | Self::M4a | Self::Mp3 | Self::Mp4 | Self::Webm => false,
     }
   }
@@ -86,6 +90,7 @@ mod tests {
     case("foo.md", Some(ResourceType::Markdown));
     case("foo.mp3", Some(ResourceType::Mp3));
     case("foo.mp4", Some(ResourceType::Mp4));
+    case("foo.pdf", Some(ResourceType::Pdf));
     case("foo.png", Some(ResourceType::Png));
     case("foo.webm", Some(ResourceType::Webm));
 

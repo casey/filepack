@@ -362,6 +362,10 @@ impl Serve {
         get(route::media_audio_item),
       )
       .route(
+        "/media/document/{fingerprint}/item/{item}",
+        get(route::media_document_item),
+      )
+      .route(
         "/media/image/{fingerprint}/item/{item}",
         get(route::media_image_item),
       )

@@ -15,6 +15,7 @@ impl Display for Section {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     match self {
       Self::Media(MediaType::Audio) => write!(f, "Audio"),
+      Self::Media(MediaType::Document) => write!(f, "Document"),
       Self::Media(MediaType::Image) => write!(f, "Image"),
       Self::Media(MediaType::Video) => write!(f, "Video"),
       Self::Media(MediaType::Web) => write!(f, "Web"),
