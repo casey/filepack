@@ -14,7 +14,7 @@ pub(crate) enum AudioFormat {
   Mp4,
 }
 
-impl ContentFormat for AudioFormat {
+impl Format for AudioFormat {
   const EXTENSIONS: &[&str] = &["flac", "m4a", "mp3"];
 
   fn from_extension(extension: &str) -> Option<Self> {

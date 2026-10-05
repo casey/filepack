@@ -11,7 +11,7 @@ pub(crate) enum VideoFormat {
   Webm,
 }
 
-impl ContentFormat for VideoFormat {
+impl Format for VideoFormat {
   const EXTENSIONS: &[&str] = &["mp4", "webm"];
 
   fn from_extension(extension: &str) -> Option<Self> {

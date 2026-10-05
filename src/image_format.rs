@@ -19,7 +19,7 @@ impl ImageFormat {
   }
 }
 
-impl ContentFormat for ImageFormat {
+impl Format for ImageFormat {
   const EXTENSIONS: &[&str] = &["jpg", "png"];
 
   fn from_extension(extension: &str) -> Option<Self> {

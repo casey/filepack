@@ -47,7 +47,6 @@ use {
     component_error::ComponentError,
     compression::Compression,
     content::Content,
-    content_format::ContentFormat,
     context::Context,
     count::Count,
     database_metadata::DatabaseMetadata,
@@ -79,6 +78,7 @@ use {
     filesystem_error::FilesystemError,
     flac_decoder::FlacDecoder,
     float_ext::FloatExt,
+    format::Format,
     functions::{
       current_dir, decode_path, default, format_size, ignore, now, parse_number, transfer_tempfile,
     },
@@ -338,7 +338,6 @@ mod component_buf;
 mod component_error;
 mod compression;
 mod content;
-mod content_format;
 mod context;
 mod count;
 mod database_metadata;
@@ -382,6 +381,7 @@ mod fingerprint;
 mod flac_builder;
 mod flac_decoder;
 mod float_ext;
+mod format;
 mod functions;
 mod hash;
 mod hashing_writer;

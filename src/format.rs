@@ -1,6 +1,6 @@
 use super::*;
 
-pub(crate) trait ContentFormat: Copy + Display + PartialEq {
+pub(crate) trait Format: Copy + Display + PartialEq {
   const EXTENSIONS: &'static [&'static str];
 
   fn from_extension(extension: &str) -> Option<Self>;
