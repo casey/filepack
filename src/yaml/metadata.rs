@@ -86,7 +86,7 @@ impl Metadata {
 
 #[cfg(test)]
 mod tests {
-  use {super::*, ::image::ImageFormat};
+  use super::*;
 
   #[test]
   fn deserialize_media_audio() {
@@ -317,7 +317,7 @@ mod tests {
     .unwrap();
   }
 
-  fn image(width: u32, height: u32, image_format: ImageFormat) -> Vec<u8> {
+  fn image(width: u32, height: u32, image_format: ::image::ImageFormat) -> Vec<u8> {
     let mut buffer = io::Cursor::new(Vec::new());
     gradient(width, height)
       .write_to(&mut buffer, image_format)
@@ -360,22 +360,22 @@ mod tests {
     );
     case(
       "cover.jpg",
-      image(1, 1, ImageFormat::Png),
+      image(1, 1, ::image::ImageFormat::Png),
       "failed to decode JPEG image `.*cover\\.jpg`",
     );
     case(
       "cover.png",
-      image(1, 1, ImageFormat::Jpeg),
+      image(1, 1, ::image::ImageFormat::Jpeg),
       "failed to decode PNG image `.*cover\\.png`",
     );
     case(
       "cover.jpg",
-      image(2, 1, ImageFormat::Jpeg),
+      image(2, 1, ::image::ImageFormat::Jpeg),
       "^artwork `.*cover\\.jpg` is 2×1 but must be square$",
     );
     case(
       "cover.png",
-      image(2, 1, ImageFormat::Png),
+      image(2, 1, ::image::ImageFormat::Png),
       "^artwork `.*cover\\.png` is 2×1 but must be square$",
     );
   }
@@ -419,7 +419,11 @@ mod tests {
   fn load() {
     let (_tempdir, root) = tempdir();
 
-    std::fs::write(root.join("cover.png"), image(1, 1, ImageFormat::Png)).unwrap();
+    std::fs::write(
+      root.join("cover.png"),
+      image(1, 1, ::image::ImageFormat::Png),
+    )
+    .unwrap();
 
     std::fs::write(
       root.join("foo.flac"),
@@ -470,9 +474,9 @@ mod tests {
             height: 1,
             width: 1,
           },
+          format: Some(ImageFormat::Png),
           orientation: Orientation::new(),
           path: "cover.png".parse().unwrap(),
-          ty: Some(ImageType::Png),
         }),
         creator: Some("baz".parse().unwrap()),
         media: Some(crate::Media::Audio {
@@ -480,12 +484,12 @@ mod tests {
             content: crate::Audio {
               channels: 2,
               codec: Some(AudioCodec::Flac),
+              format: Some(AudioFormat::Flac),
               path: "foo.flac".parse().unwrap(),
               sample_bits: Some(16),
               sample_rate: 44100,
               samples: 1,
               size: 1024,
-              ty: Some(AudioType::Flac),
             },
             title: Some("bar".parse().unwrap()),
           }],
@@ -662,16 +666,20 @@ mod tests {
       metadata.validate(&root).unwrap();
     }
 
-    case("cover.jpg", image(10, 10, ImageFormat::Jpeg));
-    case("cover.png", image(20, 20, ImageFormat::Png));
+    case("cover.jpg", image(10, 10, ::image::ImageFormat::Jpeg));
+    case("cover.png", image(20, 20, ::image::ImageFormat::Png));
   }
 
   #[test]
   fn valid_images() {
     let (_tempdir, root) = tempdir();
 
-    std::fs::write(root.join("foo.jpg"), image(2, 1, ImageFormat::Jpeg)).unwrap();
-    std::fs::write(root.join("bar.png"), image(1, 2, ImageFormat::Png)).unwrap();
+    std::fs::write(
+      root.join("foo.jpg"),
+      image(2, 1, ::image::ImageFormat::Jpeg),
+    )
+    .unwrap();
+    std::fs::write(root.join("bar.png"), image(1, 2, ::image::ImageFormat::Png)).unwrap();
 
     let metadata = Metadata {
       media: Some(Media::Image {
@@ -706,7 +714,7 @@ mod tests {
       Mp4Builder::new().video_track(2, 1).build(),
     )
     .unwrap();
-    std::fs::write(root.join("bar.png"), image(2, 1, ImageFormat::Png)).unwrap();
+    std::fs::write(root.join("bar.png"), image(2, 1, ::image::ImageFormat::Png)).unwrap();
 
     let metadata = Metadata {
       media: Some(Media::Video {

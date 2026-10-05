@@ -8,23 +8,22 @@ pub(crate) struct Audio {
   #[n(2)]
   pub(crate) codec: Option<AudioCodec>,
   #[n(3)]
-  pub(crate) path: RelativePath,
+  pub(crate) format: Option<AudioFormat>,
   #[n(4)]
-  pub(crate) sample_bits: Option<u64>,
+  pub(crate) path: RelativePath,
   #[n(5)]
-  pub(crate) sample_rate: u64,
+  pub(crate) sample_bits: Option<u64>,
   #[n(6)]
-  pub(crate) samples: u64,
+  pub(crate) sample_rate: u64,
   #[n(7)]
-  pub(crate) size: u64,
+  pub(crate) samples: u64,
   #[n(8)]
-  #[serde(rename = "type")]
-  pub(crate) ty: Option<AudioType>,
+  pub(crate) size: u64,
 }
 
 impl Audio {
   pub(crate) fn cover_art(&self, root: &Utf8Path) -> Result<Vec<EmbeddedImage>> {
-    let Some(ty) = self.ty else {
+    let Some(format) = self.format else {
       return Ok(Vec::new());
     };
 
@@ -32,10 +31,10 @@ impl Audio {
 
     let data = filesystem::read(&path)?;
 
-    match ty {
-      AudioType::Flac => FlacDecoder::cover_art(&data),
-      AudioType::Mp3 => Mp3Decoder::cover_art(&data),
-      AudioType::Mp4 => M4aDecoder::cover_art(&data),
+    match format {
+      AudioFormat::Flac => FlacDecoder::cover_art(&data),
+      AudioFormat::Mp3 => Mp3Decoder::cover_art(&data),
+      AudioFormat::Mp4 => M4aDecoder::cover_art(&data),
     }
     .context(error::Audio { path })
   }
@@ -82,12 +81,16 @@ impl Audio {
 impl Content for Audio {
   const LABEL: &'static str = "Track";
 
-  type Type = AudioType;
+  type Format = AudioFormat;
+
+  fn format(&self) -> Option<Self::Format> {
+    self.format
+  }
 
   fn info(&self, builder: InfoBuilder) -> InfoBuilder {
     builder
       .value("duration", DisplayDuration(self.duration()))
-      .optional_or_unknown("type", self.ty)
+      .optional_or_unknown("format", self.format)
       .optional_or_unknown("codec", self.codec)
       .optional(
         "sample bits",
@@ -109,9 +112,9 @@ impl Content for Audio {
   }
 
   fn load(root: &Utf8Path, path: RelativePath) -> Result<Item<Self>> {
-    let (metadata, ty) = AudioMetadata::load(root, &path)?;
+    let (metadata, format) = AudioMetadata::load(root, &path)?;
 
-    Ok(metadata.into_item(path, ty))
+    Ok(metadata.into_item(path, format))
   }
 
   fn path(&self) -> &RelativePath {
@@ -121,25 +124,21 @@ impl Content for Audio {
   #[cfg(test)]
   fn test(path: &str) -> Self {
     let path = path.parse::<RelativePath>().unwrap();
-    let ty = AudioType::from_path(&path).unwrap();
+    let format = AudioFormat::from_path(&path).unwrap();
     Self {
       channels: 2,
-      codec: Some(match ty {
-        AudioType::Flac => AudioCodec::Flac,
-        AudioType::Mp3 => AudioCodec::Mp3,
-        AudioType::Mp4 => AudioCodec::Aac,
+      codec: Some(match format {
+        AudioFormat::Flac => AudioCodec::Flac,
+        AudioFormat::Mp3 => AudioCodec::Mp3,
+        AudioFormat::Mp4 => AudioCodec::Aac,
       }),
+      format: Some(format),
       path,
       sample_bits: Some(16),
       sample_rate: 44100,
       samples: 44100,
       size: 1024,
-      ty: Some(ty),
     }
-  }
-
-  fn ty(&self) -> Option<Self::Type> {
-    self.ty
   }
 }
 
@@ -173,7 +172,7 @@ mod tests {
       Content::info(&audio, InfoBuilder::new()).build(),
       InfoBuilder::new()
         .value("duration", "0:01")
-        .value("type", "FLAC")
+        .value("format", "FLAC")
         .value("codec", "FLAC")
         .value("sample bits", "16-bit")
         .value("sample rate", "44.1 kHz")
@@ -193,7 +192,7 @@ mod tests {
       Content::info(&audio, InfoBuilder::new()).build(),
       InfoBuilder::new()
         .value("duration", "0:01")
-        .value("type", "MP3")
+        .value("format", "MP3")
         .value("codec", "MP3")
         .value("sample rate", "44.1 kHz")
         .value("bit rate", "4 kbit/s")
@@ -212,7 +211,7 @@ mod tests {
       Content::info(&audio, InfoBuilder::new()).build(),
       InfoBuilder::new()
         .value("duration", "0:01")
-        .value("type", "MP4")
+        .value("format", "MP4")
         .value("codec", "AAC")
         .value("sample rate", "44.1 kHz")
         .value("bit rate", "4 kbit/s")
@@ -228,13 +227,13 @@ mod tests {
     audio.sample_rate = 0;
     audio.samples = 0;
     audio.size = 750;
-    audio.ty = None;
+    audio.format = None;
 
     assert_eq!(
       Content::info(&audio, InfoBuilder::new()).build(),
       InfoBuilder::new()
         .value("duration", "0:00")
-        .value("type", "unknown")
+        .value("format", "unknown")
         .value("codec", "unknown")
         .value("sample rate", "0 kHz")
         .value("channels", "2")
@@ -295,12 +294,12 @@ mod tests {
         content: Audio {
           channels: 2,
           codec: Some(AudioCodec::Flac),
+          format: Some(AudioFormat::Flac),
           path: "foo.flac".parse().unwrap(),
           sample_bits: Some(16),
           sample_rate: 44100,
           samples: 66150,
           size: 1024,
-          ty: Some(AudioType::Flac),
         },
         title: Some("bar".parse().unwrap()),
       },
@@ -312,12 +311,12 @@ mod tests {
         content: Audio {
           channels: 2,
           codec: Some(AudioCodec::Mp3),
+          format: Some(AudioFormat::Mp3),
           path: "foo.mp3".parse().unwrap(),
           sample_bits: None,
           sample_rate: 44100,
           samples: 2304,
           size: 834,
-          ty: Some(AudioType::Mp3),
         },
         title: Some("bar".parse().unwrap()),
       },
@@ -329,12 +328,12 @@ mod tests {
         content: Audio {
           channels: 2,
           codec: Some(AudioCodec::Aac),
+          format: Some(AudioFormat::Mp4),
           path: "foo.m4a".parse().unwrap(),
           sample_bits: None,
           sample_rate: 44100,
           samples: 2,
           size: 2,
-          ty: Some(AudioType::Mp4),
         },
         title: Some("bar".parse().unwrap()),
       },
@@ -374,15 +373,15 @@ mod tests {
       serde_json::to_string(&Audio {
         channels: 8,
         codec: Some(AudioCodec::Flac),
+        format: Some(AudioFormat::Flac),
         path: "foo.flac".parse().unwrap(),
         sample_bits: Some(7),
         sample_rate: 1,
         samples: 2,
         size: 9,
-        ty: Some(AudioType::Flac),
       })
       .unwrap(),
-      r#"{"channels":8,"codec":"flac","path":"foo.flac","sample_bits":7,"sample_rate":1,"samples":2,"size":9,"type":"flac"}"#,
+      r#"{"channels":8,"codec":"flac","format":"flac","path":"foo.flac","sample_bits":7,"sample_rate":1,"samples":2,"size":9}"#,
     );
   }
 }

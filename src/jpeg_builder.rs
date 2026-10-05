@@ -1,7 +1,4 @@
-use {
-  super::*,
-  ::image::{DynamicImage, ImageFormat},
-};
+use {super::*, ::image::DynamicImage};
 
 pub(crate) struct JpegBuilder {
   exif: Option<Vec<u8>>,
@@ -34,7 +31,9 @@ impl JpegBuilder {
 
     let mut buffer = io::Cursor::new(Vec::new());
 
-    image.write_to(&mut buffer, ImageFormat::Jpeg).unwrap();
+    image
+      .write_to(&mut buffer, ::image::ImageFormat::Jpeg)
+      .unwrap();
 
     let mut bytes = buffer.into_inner();
 

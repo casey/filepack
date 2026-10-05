@@ -113,7 +113,7 @@ mod tests {
                         </dd>
                       </div>
                       <div>
-                        <dt>type</dt>
+                        <dt>format</dt>
                         <dd>
                           PNG
                         </dd>

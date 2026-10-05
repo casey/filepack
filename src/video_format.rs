@@ -3,7 +3,7 @@ use super::*;
 #[derive(Clone, Copy, Debug, Decode, Display, Encode, PartialEq, Serialize)]
 #[serde(rename_all = "kebab-case")]
 #[strum(serialize_all = "UPPERCASE")]
-pub(crate) enum VideoType {
+pub(crate) enum VideoFormat {
   #[n(0)]
   Mp4,
   #[n(1)]
@@ -11,7 +11,7 @@ pub(crate) enum VideoType {
   Webm,
 }
 
-impl ContentType for VideoType {
+impl ContentFormat for VideoFormat {
   const EXTENSIONS: &[&str] = &["mp4", "webm"];
 
   fn from_extension(extension: &str) -> Option<Self> {
@@ -37,12 +37,12 @@ mod tests {
   #[test]
   fn from_path() {
     #[track_caller]
-    fn case(path: &str, expected: Result<VideoType, PathError>) {
-      assert_eq!(VideoType::from_path(&path.parse().unwrap()), expected);
+    fn case(path: &str, expected: Result<VideoFormat, PathError>) {
+      assert_eq!(VideoFormat::from_path(&path.parse().unwrap()), expected);
     }
 
-    case("foo.mp4", Ok(VideoType::Mp4));
-    case("foo.webm", Ok(VideoType::Webm));
+    case("foo.mp4", Ok(VideoFormat::Mp4));
+    case("foo.webm", Ok(VideoFormat::Webm));
     case(
       "foo.avi",
       Err(PathError::Extension {

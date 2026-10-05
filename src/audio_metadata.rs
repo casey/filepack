@@ -19,7 +19,7 @@ pub(crate) struct AudioMetadata {
 
 impl AudioMetadata {
   pub(crate) fn check_positions(
-    tracks: &[(RelativePath, Self, AudioType)],
+    tracks: &[(RelativePath, Self, AudioFormat)],
   ) -> Result<(), AudioPositionError> {
     let Some((_, first, _ty)) = tracks.first() else {
       return Ok(());
@@ -123,32 +123,32 @@ impl AudioMetadata {
     Ok(())
   }
 
-  pub(crate) fn into_item(self, path: RelativePath, ty: AudioType) -> Item<Audio> {
+  pub(crate) fn into_item(self, path: RelativePath, format: AudioFormat) -> Item<Audio> {
     Item {
       content: Audio {
         channels: self.channels,
         codec: Some(self.codec),
+        format: Some(format),
         path,
         sample_bits: self.sample_bits,
         sample_rate: self.sample_rate,
         samples: self.samples,
         size: self.size,
-        ty: Some(ty),
       },
       title: Some(self.title),
     }
   }
 
-  pub(crate) fn load(root: &Utf8Path, path: &RelativePath) -> Result<(Self, AudioType)> {
-    let ty = AudioType::from_path(path).context(error::Path { path })?;
+  pub(crate) fn load(root: &Utf8Path, path: &RelativePath) -> Result<(Self, AudioFormat)> {
+    let format = AudioFormat::from_path(path).context(error::Path { path })?;
 
-    let metadata = match ty {
-      AudioType::Flac => FlacDecoder::read(&root.join(path))?,
-      AudioType::Mp3 => Mp3Decoder::read(&root.join(path))?,
-      AudioType::Mp4 => M4aDecoder::read(&root.join(path))?,
+    let metadata = match format {
+      AudioFormat::Flac => FlacDecoder::read(&root.join(path))?,
+      AudioFormat::Mp3 => Mp3Decoder::read(&root.join(path))?,
+      AudioFormat::Mp4 => M4aDecoder::read(&root.join(path))?,
     };
 
-    Ok((metadata, ty))
+    Ok((metadata, format))
   }
 }
 
@@ -181,10 +181,10 @@ mod tests {
               track: *track,
               tracks: *tracks,
             },
-            AudioType::Flac,
+            AudioFormat::Flac,
           )
         })
-        .collect::<Vec<(RelativePath, AudioMetadata, AudioType)>>();
+        .collect::<Vec<(RelativePath, AudioMetadata, AudioFormat)>>();
 
       assert_eq!(AudioMetadata::check_positions(&tracks), expected);
     }

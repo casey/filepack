@@ -92,7 +92,7 @@ mod tests {
 
   #[test]
   fn lint_and_lint_group_names_are_disjoint() {
-    let lints = Lint::iter().map(Lint::name).collect::<BTreeSet<&str>>();
+    let lints = Lint::iter().map(<&str>::from).collect::<BTreeSet<&str>>();
     let groups = LintGroup::iter()
       .map(LintGroup::name)
       .collect::<BTreeSet<&str>>();

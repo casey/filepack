@@ -53,12 +53,12 @@ mod tests {
         height: 1,
         width: 2,
       },
+      format: Some(ImageFormat::Png),
       orientation: Orientation {
         mirrored: false,
         rotation: Rotation::R90,
       },
       path: "foo.png".parse().unwrap(),
-      ty: Some(ImageType::Png),
     };
 
     case(
@@ -90,9 +90,9 @@ mod tests {
                 height: 3,
                 width: 4,
               },
+              format: Some(ImageFormat::Jpeg),
               orientation: Orientation::default(),
               path: "thumbnails/foo.jpg".parse().unwrap(),
-              ty: Some(ImageType::Jpeg),
             },
           )]
           .into(),

@@ -3,7 +3,15 @@ use super::*;
 #[derive(Debug, EnumDiscriminants, PartialEq, Snafu)]
 #[strum_discriminants(
   name(Lint),
-  derive(EnumIter, EnumString, IntoStaticStr, Ord, PartialOrd, Serialize),
+  derive(
+    Display,
+    EnumIter,
+    EnumString,
+    IntoStaticStr,
+    Ord,
+    PartialOrd,
+    Serialize
+  ),
   serde(rename_all = "kebab-case"),
   strum(serialize_all = "kebab-case")
 )]
@@ -59,16 +67,4 @@ pub(crate) enum LintError {
   WindowsTrailingPeriod,
   #[snafu(display("Windows does not allow filenames that end with a space"))]
   WindowsTrailingSpace,
-}
-
-impl Lint {
-  pub(crate) fn name(self) -> &'static str {
-    self.into()
-  }
-}
-
-impl Display for Lint {
-  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    write!(f, "{}", self.name())
-  }
 }

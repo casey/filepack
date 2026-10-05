@@ -14,12 +14,11 @@ pub(crate) struct Image {
   #[n(5)]
   pub(crate) dimensions: Dimensions,
   #[n(6)]
-  pub(crate) orientation: Orientation,
+  pub(crate) format: Option<ImageFormat>,
   #[n(7)]
-  pub(crate) path: RelativePath,
+  pub(crate) orientation: Orientation,
   #[n(8)]
-  #[serde(rename = "type")]
-  pub(crate) ty: Option<ImageType>,
+  pub(crate) path: RelativePath,
 }
 
 impl Image {
@@ -29,7 +28,7 @@ impl Image {
 
   pub(crate) fn create_thumbnail(&self, root: &Utf8Path) -> Result<Option<RelativePath>> {
     use ::image::{
-      DynamicImage, GenericImageView, ImageDecoder, ImageFormat, ImageReader,
+      DynamicImage, GenericImageView, ImageDecoder, ImageReader,
       codecs::{
         jpeg::JpegEncoder,
         png::{self, CompressionType, PngEncoder},
@@ -39,9 +38,9 @@ impl Image {
 
     let path = &root.join(&self.path);
 
-    let format = match self.ty.unwrap() {
-      ImageType::Jpeg => ImageFormat::Jpeg,
-      ImageType::Png => ImageFormat::Png,
+    let format = match self.format.unwrap() {
+      ImageFormat::Jpeg => ::image::ImageFormat::Jpeg,
+      ImageFormat::Png => ::image::ImageFormat::Png,
     };
 
     let original = filesystem::read(path)?;
@@ -75,7 +74,7 @@ impl Image {
 
     let mut encoded = Vec::new();
 
-    let ty = if uses_alpha {
+    let format = if uses_alpha {
       thumbnail
         .into_rgba8()
         .write_with_encoder(PngEncoder::new_with_quality(
@@ -85,20 +84,20 @@ impl Image {
         ))
         .context(error::ThumbnailGeneration { path })?;
 
-      ImageType::Png
+      ImageFormat::Png
     } else {
       JpegEncoder::new_with_quality(&mut encoded, Self::THUMBNAIL_QUALITY)
         .encode_image(&thumbnail.into_rgb8())
         .context(error::ThumbnailGeneration { path })?;
 
-      ImageType::Jpeg
+      ImageFormat::Jpeg
     };
 
     if encoded.len() >= original.len() {
       return Ok(None);
     }
 
-    let destination = self.thumbnail_path(ty)?;
+    let destination = self.thumbnail_path(format)?;
 
     {
       let destination = root.join(&destination);
@@ -242,8 +241,8 @@ impl Image {
     self.orientation.dimensions(self.dimensions)
   }
 
-  pub(crate) fn thumbnail_path(&self, ty: ImageType) -> Result<RelativePath> {
-    let path = format!("{}.{}", self.thumbnail_stem(), ty.extension());
+  pub(crate) fn thumbnail_path(&self, format: ImageFormat) -> Result<RelativePath> {
+    let path = format!("{}.{}", self.thumbnail_stem(), format.extension());
     path.parse().context(error::Path { path: &path })
   }
 
@@ -267,11 +266,15 @@ impl Image {
 impl Content for Image {
   const LABEL: &'static str = "Image";
 
-  type Type = ImageType;
+  type Format = ImageFormat;
+
+  fn format(&self) -> Option<Self::Format> {
+    self.format
+  }
 
   fn info(&self, builder: InfoBuilder) -> InfoBuilder {
     builder
-      .optional_or_unknown("type", self.ty)
+      .optional_or_unknown("format", self.format)
       .value("dimensions", self.dimensions)
       .value("orientation", self.orientation)
       .optional("color type", self.color_type)
@@ -280,15 +283,15 @@ impl Content for Image {
       .value("alpha", self.alpha)
       .optional(
         "compression",
-        self.ty.map(|ty| match ty {
-          ImageType::Jpeg => Compression::Lossy,
-          ImageType::Png => Compression::Lossless,
+        self.format.map(|format| match format {
+          ImageFormat::Jpeg => Compression::Lossy,
+          ImageFormat::Png => Compression::Lossless,
         }),
       )
   }
 
   fn load(root: &Utf8Path, path: RelativePath) -> Result<Item<Self>> {
-    let ty = ImageType::from_path(&path).context(error::Path { path: &path })?;
+    let format = ImageFormat::from_path(&path).context(error::Path { path: &path })?;
 
     let ImageMetadata {
       alpha,
@@ -298,9 +301,9 @@ impl Content for Image {
       dimensions,
       orientation,
       title,
-    } = match ty {
-      ImageType::Jpeg => Self::decode_jpeg(&root.join(&path))?,
-      ImageType::Png => Self::decode_png(&root.join(&path))?,
+    } = match format {
+      ImageFormat::Jpeg => Self::decode_jpeg(&root.join(&path))?,
+      ImageFormat::Png => Self::decode_png(&root.join(&path))?,
     };
 
     Ok(Item {
@@ -310,9 +313,9 @@ impl Content for Image {
         chroma_subsampling,
         color_type: Some(color_type),
         dimensions,
+        format: Some(format),
         orientation,
         path,
-        ty: Some(ty),
       },
       title,
     })
@@ -325,7 +328,7 @@ impl Content for Image {
   #[cfg(test)]
   fn test(path: &str) -> Self {
     let path = path.parse::<RelativePath>().unwrap();
-    let ty = ImageType::from_path(&path).unwrap();
+    let format = ImageFormat::from_path(&path).unwrap();
     Self {
       alpha: false,
       bit_depth: 8,
@@ -335,14 +338,10 @@ impl Content for Image {
         height: 1,
         width: 1,
       },
+      format: Some(format),
       orientation: Orientation::new(),
       path,
-      ty: Some(ty),
     }
-  }
-
-  fn ty(&self) -> Option<Self::Type> {
-    self.ty
   }
 }
 
@@ -350,7 +349,7 @@ impl Content for Image {
 mod tests {
   use {
     super::*,
-    ::image::{ImageEncoder, ImageFormat, codecs::jpeg::JpegEncoder},
+    ::image::{ImageEncoder, codecs::jpeg::JpegEncoder},
   };
 
   #[test]
@@ -360,7 +359,7 @@ mod tests {
       let (_tempdir, root) = tempdir();
 
       gradient(source.0, source.1)
-        .save_with_format(root.join("foo.png"), ImageFormat::Png)
+        .save_with_format(root.join("foo.png"), ::image::ImageFormat::Png)
         .unwrap();
 
       let destination = Image::test("foo.png")
@@ -387,7 +386,7 @@ mod tests {
       let (_tempdir, root) = tempdir();
 
       gradient_alpha(1280, 640, alpha)
-        .save_with_format(root.join("foo.png"), ImageFormat::Png)
+        .save_with_format(root.join("foo.png"), ::image::ImageFormat::Png)
         .unwrap();
 
       let destination = Image::test("foo.png")
@@ -441,7 +440,7 @@ mod tests {
     let (_tempdir, root) = tempdir();
 
     gradient(1, 1)
-      .save_with_format(root.join("foo.png"), ImageFormat::Png)
+      .save_with_format(root.join("foo.png"), ::image::ImageFormat::Png)
       .unwrap();
 
     assert_eq!(
@@ -457,7 +456,7 @@ mod tests {
     assert_eq!(
       Content::info(&Image::test("foo.jpg"), InfoBuilder::new()).build(),
       InfoBuilder::new()
-        .value("type", "JPEG")
+        .value("format", "JPEG")
         .value("dimensions", "1×1")
         .value("orientation", "0°")
         .value("color type", "RGB")
@@ -529,12 +528,12 @@ mod tests {
           height: 1,
           width: 2,
         },
+        format: Some(ImageFormat::Jpeg),
         orientation: Orientation {
           mirrored: false,
           rotation: Rotation::R90,
         },
         path: "foo.jpg".parse().unwrap(),
-        ty: Some(ImageType::Jpeg),
       },
     );
 
@@ -553,12 +552,12 @@ mod tests {
           height: 1,
           width: 2,
         },
+        format: Some(ImageFormat::Png),
         orientation: Orientation {
           mirrored: true,
           rotation: Rotation::R90,
         },
         path: "foo.png".parse().unwrap(),
-        ty: Some(ImageType::Png),
       },
     );
 
@@ -783,15 +782,15 @@ mod tests {
           height: 1,
           width: 2,
         },
+        format: Some(ImageFormat::Jpeg),
         orientation: Orientation {
           mirrored: true,
           rotation: Rotation::R90,
         },
         path: "foo.jpg".parse().unwrap(),
-        ty: Some(ImageType::Jpeg),
       })
       .unwrap(),
-      r#"{"alpha":false,"bit_depth":8,"chroma_subsampling":"4:2:0","color_type":"rgb","dimensions":{"height":1,"width":2},"orientation":{"mirrored":true,"rotation":90},"path":"foo.jpg","type":"jpeg"}"#,
+      r#"{"alpha":false,"bit_depth":8,"chroma_subsampling":"4:2:0","color_type":"rgb","dimensions":{"height":1,"width":2},"format":"jpeg","orientation":{"mirrored":true,"rotation":90},"path":"foo.jpg"}"#,
     );
 
     assert_eq!(
@@ -804,27 +803,29 @@ mod tests {
           height: 1,
           width: 2,
         },
+        format: Some(ImageFormat::Png),
         orientation: Orientation::new(),
         path: "foo.png".parse().unwrap(),
-        ty: Some(ImageType::Png),
       })
       .unwrap(),
-      r#"{"alpha":true,"bit_depth":16,"color_type":"rgb","dimensions":{"height":1,"width":2},"orientation":{"mirrored":false,"rotation":0},"path":"foo.png","type":"png"}"#,
+      r#"{"alpha":true,"bit_depth":16,"color_type":"rgb","dimensions":{"height":1,"width":2},"format":"png","orientation":{"mirrored":false,"rotation":0},"path":"foo.png"}"#,
     );
   }
 
   #[test]
   fn thumbnail_path() {
     #[track_caller]
-    fn case(ty: ImageType, expected: &str) {
+    fn case(format: ImageFormat, expected: &str) {
       assert_eq!(
-        Image::test("foo/bar baz.png").thumbnail_path(ty).unwrap(),
+        Image::test("foo/bar baz.png")
+          .thumbnail_path(format)
+          .unwrap(),
         expected,
       );
     }
 
-    case(ImageType::Jpeg, "thumbnails/bar baz.jpg");
-    case(ImageType::Png, "thumbnails/bar baz.png");
+    case(ImageFormat::Jpeg, "thumbnails/bar baz.jpg");
+    case(ImageFormat::Png, "thumbnails/bar baz.png");
   }
 
   #[test]

@@ -171,12 +171,12 @@ fn create_extracts_artwork_dimensions() {
               "height": 2,
               "width": 2
             },
+            "format": "png",
             "orientation": {
               "mirrored": false,
               "rotation": 0
             },
-            "path": "cover.png",
-            "type": "png"
+            "path": "cover.png"
           }
         }
       "#,
@@ -215,12 +215,12 @@ fn create_extracts_image_dimensions() {
                     "height": 1,
                     "width": 2
                   },
+                  "format": "png",
                   "orientation": {
                     "mirrored": false,
                     "rotation": 0
                   },
-                  "path": "foo.png",
-                  "type": "png"
+                  "path": "foo.png"
                 }
               }
             ]
@@ -265,12 +265,12 @@ fn create_extracts_image_title() {
                     "height": 1,
                     "width": 1
                   },
+                  "format": "png",
                   "orientation": {
                     "mirrored": false,
                     "rotation": 0
                   },
-                  "path": "foo.png",
-                  "type": "png"
+                  "path": "foo.png"
                 },
                 "title": "bar"
               }
@@ -322,11 +322,11 @@ fn create_extracts_m4a_track_tags() {
                 "content": {
                   "channels": 2,
                   "codec": "aac",
+                  "format": "mp4",
                   "path": "foo.m4a",
                   "sample_rate": 44100,
                   "samples": 2,
-                  "size": 2,
-                  "type": "mp4"
+                  "size": 2
                 },
                 "title": "bar"
               }
@@ -385,12 +385,12 @@ fn create_extracts_track_tags() {
                 "content": {
                   "channels": 2,
                   "codec": "flac",
+                  "format": "flac",
                   "path": "foo.flac",
                   "sample_bits": 16,
                   "sample_rate": 44100,
                   "samples": 44100,
-                  "size": 1024,
-                  "type": "flac"
+                  "size": 1024
                 },
                 "title": "bar"
               }
@@ -444,6 +444,7 @@ fn create_extracts_video_metadata() {
               {
                 "content": {
                   "duration": 1500,
+                  "format": "mp4",
                   "path": "foo.mp4",
                   "tracks": [
                     {
@@ -473,8 +474,7 @@ fn create_extracts_video_metadata() {
                       },
                       "size": 30
                     }
-                  ],
-                  "type": "mp4"
+                  ]
                 },
                 "title": "bar"
               }
@@ -563,12 +563,12 @@ fn create_generates_thumbnails() {
                     "height": 640,
                     "width": 1280
                   },
+                  "format": "jpeg",
                   "orientation": {
                     "mirrored": false,
                     "rotation": 0
                   },
-                  "path": "foo.jpg",
-                  "type": "jpeg"
+                  "path": "foo.jpg"
                 }
               },
               {
@@ -580,12 +580,12 @@ fn create_generates_thumbnails() {
                     "height": 640,
                     "width": 1280
                   },
+                  "format": "png",
                   "orientation": {
                     "mirrored": false,
                     "rotation": 0
                   },
-                  "path": "bar/baz.png",
-                  "type": "png"
+                  "path": "bar/baz.png"
                 }
               }
             ]
@@ -599,12 +599,12 @@ fn create_generates_thumbnails() {
                 "height": 512,
                 "width": 1024
               },
+              "format": "png",
               "orientation": {
                 "mirrored": false,
                 "rotation": 0
               },
-              "path": "thumbnails/baz.png",
-              "type": "png"
+              "path": "thumbnails/baz.png"
             },
             "foo.jpg": {
               "alpha": false,
@@ -615,12 +615,12 @@ fn create_generates_thumbnails() {
                 "height": 512,
                 "width": 1024
               },
+              "format": "jpeg",
               "orientation": {
                 "mirrored": false,
                 "rotation": 0
               },
-              "path": "thumbnails/foo.jpg",
-              "type": "jpeg"
+              "path": "thumbnails/foo.jpg"
             }
           }
         }
@@ -659,6 +659,7 @@ fn create_loads_video_placeholder() {
               {
                 "content": {
                   "duration": 0,
+                  "format": "mp4",
                   "path": "foo.mp4",
                   "placeholder": {
                     "alpha": false,
@@ -668,12 +669,12 @@ fn create_loads_video_placeholder() {
                       "height": 1,
                       "width": 2
                     },
+                    "format": "png",
                     "orientation": {
                       "mirrored": false,
                       "rotation": 0
                     },
-                    "path": "bar.png",
-                    "type": "png"
+                    "path": "bar.png"
                   },
                   "tracks": [
                     {
@@ -694,8 +695,7 @@ fn create_loads_video_placeholder() {
                       },
                       "size": 0
                     }
-                  ],
-                  "type": "mp4"
+                  ]
                 }
               }
             ]

@@ -323,7 +323,7 @@ impl Metadata {
 
 #[cfg(test)]
 mod tests {
-  use {super::*, ::image::ImageFormat};
+  use super::*;
 
   fn colophon_package(colophon: &str) -> PackageMetadata {
     PackageMetadata {
@@ -364,9 +364,9 @@ mod tests {
           height: 1,
           width: 1,
         },
+        format: Some(ImageFormat::Png),
         orientation: Orientation::new(),
         path: "cover.png".parse().unwrap(),
-        ty: Some(ImageType::Png),
       }),
       creator: Some("foo".parse().unwrap()),
       description: Some("bar".parse().unwrap()),
@@ -377,12 +377,12 @@ mod tests {
           content: Audio {
             channels: 8,
             codec: Some(AudioCodec::Flac),
+            format: Some(AudioFormat::Flac),
             path: "track.flac".parse().unwrap(),
             sample_bits: Some(7),
             sample_rate: 1,
             samples: 2,
             size: 9,
-            ty: Some(AudioType::Flac),
           },
           title: Some("foo".parse().unwrap()),
         }],
@@ -496,8 +496,16 @@ mod tests {
   fn generate_includes_artwork() {
     let (_tempdir, root) = tempdir();
 
-    std::fs::write(root.join("foo.png"), image(1280, 640, ImageFormat::Png)).unwrap();
-    std::fs::write(root.join("bar.png"), image(1280, 640, ImageFormat::Png)).unwrap();
+    std::fs::write(
+      root.join("foo.png"),
+      image(1280, 640, ::image::ImageFormat::Png),
+    )
+    .unwrap();
+    std::fs::write(
+      root.join("bar.png"),
+      image(1280, 640, ::image::ImageFormat::Png),
+    )
+    .unwrap();
 
     let mut metadata = Metadata {
       artwork: Some(Image::test("foo.png")),
@@ -533,7 +541,11 @@ mod tests {
   fn generate_includes_video_placeholders() {
     let (_tempdir, root) = tempdir();
 
-    std::fs::write(root.join("bar.png"), image(1280, 640, ImageFormat::Png)).unwrap();
+    std::fs::write(
+      root.join("bar.png"),
+      image(1280, 640, ::image::ImageFormat::Png),
+    )
+    .unwrap();
 
     let mut metadata = Metadata {
       media: Some(Media::Video {
@@ -571,7 +583,7 @@ mod tests {
   fn generate_omits_thumbnails_when_all_skipped() {
     let (_tempdir, root) = tempdir();
 
-    std::fs::write(root.join("foo.png"), image(1, 1, ImageFormat::Png)).unwrap();
+    std::fs::write(root.join("foo.png"), image(1, 1, ::image::ImageFormat::Png)).unwrap();
 
     let mut metadata = Metadata {
       artwork: Some(Image::test("foo.png")),
@@ -587,7 +599,11 @@ mod tests {
   fn generate_populates_thumbnails() {
     let (_tempdir, root) = tempdir();
 
-    std::fs::write(root.join("foo.png"), image(1280, 640, ImageFormat::Png)).unwrap();
+    std::fs::write(
+      root.join("foo.png"),
+      image(1280, 640, ::image::ImageFormat::Png),
+    )
+    .unwrap();
 
     let mut metadata = Metadata {
       artwork: Some(Image::test("foo.png")),
@@ -611,9 +627,9 @@ mod tests {
           height: 512,
           width: 1024,
         },
+        format: Some(ImageFormat::Jpeg),
         orientation: Orientation::new(),
         path: "thumbnails/foo.jpg".parse().unwrap(),
-        ty: Some(ImageType::Jpeg),
       }],
     );
   }
@@ -666,8 +682,12 @@ mod tests {
   fn generate_skips_larger_thumbnails() {
     let (_tempdir, root) = tempdir();
 
-    std::fs::write(root.join("foo.png"), image(1280, 640, ImageFormat::Png)).unwrap();
-    std::fs::write(root.join("bar.png"), image(1, 1, ImageFormat::Png)).unwrap();
+    std::fs::write(
+      root.join("foo.png"),
+      image(1280, 640, ::image::ImageFormat::Png),
+    )
+    .unwrap();
+    std::fs::write(root.join("bar.png"), image(1, 1, ::image::ImageFormat::Png)).unwrap();
 
     let mut metadata = Metadata {
       media: Some(Media::Image {
@@ -694,7 +714,7 @@ mod tests {
     assert!(!root.join("thumbnails/bar.jpg").exists());
   }
 
-  fn image(width: u32, height: u32, image_format: ImageFormat) -> Vec<u8> {
+  fn image(width: u32, height: u32, image_format: ::image::ImageFormat) -> Vec<u8> {
     let mut buffer = io::Cursor::new(Vec::new());
     gradient(width, height)
       .write_to(&mut buffer, image_format)
