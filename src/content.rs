@@ -3,7 +3,7 @@ use super::*;
 pub(crate) trait Content: Sized {
   const LABEL: &'static str;
 
-  type Format: ContentFormat;
+  type Format: Format;
 
   fn format(&self) -> Option<Self::Format>;
 
@@ -20,7 +20,7 @@ pub(crate) trait Content: Sized {
   fn resource_type(&self) -> ResourceType {
     self
       .format()
-      .map_or(ResourceType::Binary, ContentFormat::resource_type)
+      .map_or(ResourceType::Binary, Format::resource_type)
   }
 
   #[cfg(test)]
