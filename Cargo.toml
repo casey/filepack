@@ -24,16 +24,19 @@ license = "CC0-1.0"
 repository = "https://github.com/casey/filepack"
 
 [workspace.dependencies]
+axum = "0.8.9"
+boilerplate = { version = "1.2.0", features = ["axum"] }
+camino = { version = "1.1.9", features = ["serde1"] }
 strum = { version = "0.28.0", features = ["derive"] }
 usized = "0.0.2"
 
 [dependencies]
-axum = "0.8.9"
 axum-extra = { version = "0.12.6", features = ["typed-header"] }
 axum-server = "0.8.0"
+axum.workspace = true
 blake3 = { version = "1.5.4", features = ["mmap", "rayon", "serde"] }
-boilerplate = { version = "1.2.0", features = ["axum"] }
-camino = { version = "1.1.9", features = ["serde1"] }
+boilerplate.workspace = true
+camino.workspace = true
 clap = { version = "4.5.16", features = ["derive", "env"] }
 clap_mangen = "0.3.3"
 claxon = "0.4.3"

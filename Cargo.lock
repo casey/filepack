@@ -1348,6 +1348,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "generate"
+version = "0.0.0"
+dependencies = [
+ "axum",
+ "boilerplate",
+ "camino",
+ "filepack",
+]
+
+[[package]]
 name = "generic-array"
 version = "0.14.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"

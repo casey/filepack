@@ -4,7 +4,7 @@ use {
   filepack::{
     Decode, DecodeOptions, Decoded, Decoder, Directory, DirectoryExt, Encode, Encoder, Entry,
     Fingerprint, FlacBuilder, Hash, Loader, MagicType, Manifest, Metadata, Mp3Builder, Mp4Builder,
-    OrderedSet, PackageIdentifier, Page, PngBuilder, PrivateKey, PublicKey, RevisionObject,
+    OrderedSet, PackageIdentifier, Page, PngBuilder, PrivateKey, PublicKey, RevisionObject, Schema,
     ServerState, State, Totals, gradient, gradient_alpha, hex,
     templates::{DirectoryHtml, PackageHtml},
   },
@@ -55,6 +55,7 @@ mod man;
 mod manifest;
 mod metadata;
 mod misc;
+mod schema;
 mod serve;
 mod sign;
 mod signatures;

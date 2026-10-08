@@ -1,0 +1,7 @@
+[book]
+title = "Filepack"
+authors = ["Casey Rodarmor"]
+language = "en"
+
+[build]
+create-missing = false

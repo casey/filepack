@@ -380,6 +380,12 @@ impl Test {
     self
   }
 
+  pub(crate) fn stdout_check(mut self, check: fn(&str)) -> Self {
+    assert_matches!(self.stdout, Expected::Empty);
+    self.stdout = Expected::Check(check);
+    self
+  }
+
   pub(crate) fn stdout_regex(mut self, pattern: &str) -> Self {
     assert_matches!(self.stdout, Expected::Empty);
     self.stdout = Expected::regex(&unindent(pattern));
