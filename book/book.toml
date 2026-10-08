@@ -10,3 +10,8 @@ create-missing = false
 
 [output.html]
 git-repository-url = "https://github.com/casey/filepack"
+
+[output.linkcheck2]
+follow-web-links = false
+require-md-extension = true
+warning-policy = "error"
