@@ -292,6 +292,7 @@ pub use self::{
   private_key::PrivateKey,
   public_key::PublicKey,
   revision_object::RevisionObject,
+  schema::Schema,
   server_state::ServerState,
   state::State,
   totals::Totals,
@@ -463,6 +464,7 @@ mod resource_type;
 mod revision;
 mod revision_object;
 mod rotation;
+mod schema;
 mod server;
 mod server_error;
 mod server_state;

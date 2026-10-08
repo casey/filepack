@@ -1,0 +1,12 @@
+[book]
+title = "Filepack"
+authors = ["Casey Rodarmor"]
+description = "content-addressed packages"
+language = "en"
+
+[build]
+build-dir = "build"
+create-missing = false
+
+[output.html]
+git-repository-url = "https://github.com/casey/filepack"

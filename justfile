@@ -176,3 +176,15 @@ download:
 
 clear-server:
   rm ~/.filepack/database.redb
+
+build-book:
+  mdbook build book
+
+open-book:
+  open http://localhost:3000
+
+serve-book:
+  mdbook serve book
+
+watch-book:
+  cargo watch --clear --exec 'run --package generate' --shell 'mdbook build book'
