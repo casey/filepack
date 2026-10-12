@@ -1,24 +1,24 @@
 use {
-  self::templates::{CommandMd, HexMd, RouteMd, RoutesMd, SchemaMd, SummaryMd},
+  self::{
+    functions::{escape, link, write},
+    templates::{CommandMd, HexMd, RouteMd, RoutesMd, SchemaMd, SummaryMd},
+  },
   boilerplate::Boilerplate,
   camino::{Utf8Path, Utf8PathBuf},
   filepack::{Count, Endpoint, Reference, Schema, schema},
   heck::ToKebabCase,
-  std::{collections::BTreeMap, env, fs, iter},
+  std::{
+    collections::BTreeMap,
+    env,
+    fmt::Display,
+    fs::{self, File},
+    io::{BufWriter, Write},
+    iter,
+  },
 };
 
+mod functions;
 mod templates;
-
-pub(crate) fn escape(name: &str) -> String {
-  name
-    .replace('<', "\\<")
-    .replace('>', "\\>")
-    .replace('*', "\\*")
-}
-
-pub(crate) fn link(name: &str) -> String {
-  format!("[{}]({}.md)", escape(name), name.to_kebab_case())
-}
 
 fn main() {
   for (key, _) in env::vars() {
@@ -40,15 +40,15 @@ fn main() {
   while let Some((path, command)) = stack.pop() {
     let name = path.join(" ");
 
-    let markdown = CommandMd {
-      help: &command.help,
-      name: &name,
-    }
-    .to_string();
-
     let relative = Utf8PathBuf::from(format!("commands/{}.md", path.join("-")));
 
-    write(&src.join(&relative), &markdown);
+    write(
+      src.join(&relative),
+      CommandMd {
+        help: &command.help,
+        name: &name,
+      },
+    );
 
     commands.insert(name, relative);
 
@@ -73,17 +73,16 @@ fn main() {
   for (name, schema) in &reference.schemas {
     let relative = Utf8PathBuf::from(format!("schemas/{}.md", name.to_kebab_case()));
 
-    write(&src.join(&relative), &SchemaMd { name, schema }.to_string());
+    write(src.join(&relative), SchemaMd { name, schema });
 
     schemas.insert(name.clone(), relative);
   }
 
   write(
-    &src.join("hex.md"),
-    &HexMd {
+    src.join("hex.md"),
+    HexMd {
       tags: &reference.tags,
-    }
-    .to_string(),
+    },
   );
 
   let mut routes = BTreeMap::new();
@@ -97,32 +96,25 @@ fn main() {
 
     let relative = Utf8PathBuf::from(format!("routes/{slug}.md"));
 
-    write(&src.join(&relative), &RouteMd { methods, path }.to_string());
+    write(src.join(&relative), RouteMd { methods, path });
 
     routes.insert(path.clone(), relative);
   }
 
   write(
-    &src.join("routes.md"),
-    &RoutesMd {
+    src.join("routes.md"),
+    RoutesMd {
       pages: &routes,
       routes: &reference.routes,
-    }
-    .to_string(),
+    },
   );
 
   write(
-    &src.join("SUMMARY.md"),
-    &SummaryMd {
+    src.join("SUMMARY.md"),
+    SummaryMd {
       commands,
       routes,
       schemas,
-    }
-    .to_string(),
+    },
   );
-}
-
-fn write(path: &Utf8PathBuf, contents: &str) {
-  fs::create_dir_all(path.parent().unwrap()).unwrap();
-  fs::write(path, contents).unwrap();
 }

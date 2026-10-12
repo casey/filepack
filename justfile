@@ -187,4 +187,4 @@ serve-book:
   mdbook serve book
 
 watch-book:
-  cargo watch --clear --exec 'run --package generate' --shell 'mdbook build book'
+  cargo watch --clear --exec 'lrun --package generate' --shell 'mdbook build book'
