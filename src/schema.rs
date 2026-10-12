@@ -11,9 +11,11 @@ pub struct Field {
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum Schema {
+  Array { element: String },
   Boolean,
   Bytes { length: Option<u64> },
   Enum { variants: Vec<Variant> },
+  Map { key: String, value: String },
   SignedInteger,
   String,
   Struct { fields: Vec<Field> },

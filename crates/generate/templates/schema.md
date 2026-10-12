@@ -1,6 +1,9 @@
-# {{ self.name }}
+# {{ escape(self.name) }}
 
 %% match self.schema {
+%%   Schema::Array { element } => {
+An array of {{ link(element) }}.
+%%   }
 %%   Schema::Boolean => {
 A boolean. Encoded as the byte string `0x00` for false and `0x01` for true.
 %%   }
@@ -31,6 +34,9 @@ An enum with {{ Count::new(variants.len(), "variant") }}:
 {{ FieldsMd { fields: &variant.fields } }}
 %%       }
 %%     }
+%%   }
+%%   Schema::Map { key, value } => {
+A map from {{ link(key) }} to {{ link(value) }}.
 %%   }
 %%   Schema::SignedInteger => {
 A signed 64-bit integer. First zig-zag encoded, then encoded as an

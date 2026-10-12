@@ -35,6 +35,7 @@ impl Reference {
     let mut schemas = BTreeMap::new();
 
     Application::schema(&mut schemas);
+    Archive::schema(&mut schemas);
     Audio::schema(&mut schemas);
     AudioCodec::schema(&mut schemas);
     AudioFormat::schema(&mut schemas);
@@ -45,6 +46,7 @@ impl Reference {
     ComponentBuf::schema(&mut schemas);
     Context::schema(&mut schemas);
     Dimensions::schema(&mut schemas);
+    Directory::schema(&mut schemas);
     Ed25519Signature::schema(&mut schemas);
     Entry::schema(&mut schemas);
     EntryInfo::schema(&mut schemas);
@@ -68,6 +70,7 @@ impl Reference {
     TrackCodec::schema(&mut schemas);
     TrackInfo::schema(&mut schemas);
     Vec::<u8>::schema(&mut schemas);
+    Video::schema(&mut schemas);
     VideoFormat::schema(&mut schemas);
     bool::schema(&mut schemas);
     i64::schema(&mut schemas);
