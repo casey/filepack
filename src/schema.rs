@@ -1,38 +1,24 @@
-use {super::*, clap::CommandFactory};
+use super::*;
 
-#[derive(Debug, Deserialize, Serialize)]
-pub struct Command {
-  pub help: String,
-  pub name: String,
-  pub subcommands: BTreeMap<String, Command>,
-}
-
-impl Command {
-  fn new(command: &mut clap::Command) -> Self {
-    Self {
-      help: command.render_long_help().to_string(),
-      name: command.get_name().into(),
-      subcommands: command
-        .get_subcommands_mut()
-        .map(|command| (command.get_name().to_string(), Command::new(command)))
-        .collect(),
-    }
-  }
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct Schema {
-  pub commands: Command,
+#[derive(Clone, Copy, Debug, Deserialize, IntoStaticStr, PartialEq, Serialize)]
+#[serde(rename_all = "kebab-case")]
+#[strum(serialize_all = "kebab-case")]
+pub enum Schema {
+  Boolean,
+  Bytes,
+  I64,
+  String,
+  U64,
 }
 
 impl Schema {
-  pub fn new() -> Self {
-    let mut command = Arguments::command();
+  pub fn name(self) -> &'static str {
+    self.into()
+  }
 
-    command.build();
-
-    Self {
-      commands: Command::new(&mut command),
-    }
+  #[must_use]
+  pub fn register(self, schemas: &mut BTreeMap<String, Schema>) -> Self {
+    schemas.insert(self.name().into(), self);
+    self
   }
 }

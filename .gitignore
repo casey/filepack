@@ -1,5 +1,6 @@
 /book/build
 /book/src/commands
+/book/src/schemas
 /book/src/SUMMARY.md
 /flamegraph.svg
 /target

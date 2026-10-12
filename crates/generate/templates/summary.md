@@ -2,3 +2,7 @@
 %% for (name, path) in &self.commands {
   - [{{ name }}]({{ path }})
 %% }
+- [Schemas](schemas.md)
+%% for (name, path) in &self.schemas {
+  - [{{ name }}]({{ path }})
+%% }
