@@ -37,6 +37,10 @@ impl<T: Encode> Encode for Decoded<T> {
       Self::Unknown(bytes) => encoder.bytes(bytes),
     }
   }
+
+  fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
+    T::schema(schemas)
+  }
 }
 
 impl<'de, T: Deserialize<'de>> Deserialize<'de> for Decoded<T> {
@@ -75,6 +79,18 @@ mod tests {
     assert_eq!(decoded, Decoded::Known(Foo { foo: 1 }));
     assert_eq!(decoded.encode_to_vec(), bytes);
     assert_eq!(serde_json::to_string(&decoded).unwrap(), r#"{"foo":1}"#);
+  }
+
+  #[test]
+  fn schema() {
+    let mut schemas = BTreeMap::new();
+
+    assert_eq!(Decoded::<u64>::schema(&mut schemas), "UnsignedInteger");
+
+    assert_eq!(
+      schemas,
+      BTreeMap::from([("UnsignedInteger".into(), Schema::UnsignedInteger)]),
+    );
   }
 
   #[test]

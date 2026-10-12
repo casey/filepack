@@ -9,9 +9,7 @@ pub trait Encode {
     encoder.finish()
   }
 
-  fn schema(_schemas: &mut BTreeMap<String, Schema>) -> String {
-    unimplemented!()
-  }
+  fn schema(schemas: &mut BTreeMap<String, Schema>) -> String;
 }
 
 impl<T: ?Sized> Encode for &T
@@ -21,17 +19,35 @@ where
   fn encode(&self, encoder: &mut Encoder) {
     T::encode(self, encoder);
   }
+
+  fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
+    T::schema(schemas)
+  }
 }
 
 impl<const N: usize> Encode for [u8; N] {
   fn encode(&self, encoder: &mut Encoder) {
     encoder.bytes(self);
   }
+
+  fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
+    Schema::Bytes {
+      length: Some(N.into_u64()),
+    }
+    .register(&format!("Bytes<{N}>"), schemas)
+  }
 }
 
 impl<const N: usize, const M: usize> Encode for [[u8; N]; M] {
   fn encode(&self, encoder: &mut Encoder) {
     encoder.bytes(self.as_flattened());
+  }
+
+  fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
+    Schema::Bytes {
+      length: Some((N * M).into_u64()),
+    }
+    .register(&format!("Bytes<{}>", N * M), schemas)
   }
 }
 
@@ -72,7 +88,7 @@ impl Encode for String {
   }
 
   fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
-    Schema::String.register("String", schemas)
+    str::schema(schemas)
   }
 }
 
@@ -82,7 +98,7 @@ impl Encode for Vec<u8> {
   }
 
   fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
-    Schema::Bytes { length: None }.register("Bytes", schemas)
+    <[u8]>::schema(schemas)
   }
 }
 
@@ -92,9 +108,7 @@ impl<T: Encode> Encode for Vec<T> {
   }
 
   fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
-    let element = T::schema(schemas);
-    let name = format!("Array<{element}>");
-    Schema::Array { element }.register(&name, schemas)
+    <[T]>::schema(schemas)
   }
 }
 
@@ -112,6 +126,10 @@ impl Encode for str {
   fn encode(&self, encoder: &mut Encoder) {
     encoder.text(self);
   }
+
+  fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
+    Schema::String.register("String", schemas)
+  }
 }
 
 impl Encode for u64 {
@@ -128,6 +146,10 @@ impl Encode for [u8] {
   fn encode(&self, encoder: &mut Encoder) {
     encoder.bytes(self);
   }
+
+  fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
+    Schema::Bytes { length: None }.register("Bytes", schemas)
+  }
 }
 
 impl<T: Encode> Encode for [T] {
@@ -137,6 +159,12 @@ impl<T: Encode> Encode for [T] {
       array.element(element);
     }
     array.finish();
+  }
+
+  fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
+    let element = T::schema(schemas);
+    let name = format!("Array<{element}>");
+    Schema::Array { element }.register(&name, schemas)
   }
 }
 
@@ -181,6 +209,22 @@ mod tests {
     assert_deco([7u8], "07");
     assert_deco([0x80u8], "8180");
     assert_deco([1u8, 2], "820102");
+  }
+
+  #[test]
+  fn byte_array_schema() {
+    let mut schemas = BTreeMap::new();
+
+    assert_eq!(<[u8; 32]>::schema(&mut schemas), "Bytes<32>");
+    assert_eq!(<[[u8; 32]; 2]>::schema(&mut schemas), "Bytes<64>");
+
+    assert_eq!(
+      schemas,
+      BTreeMap::from([
+        ("Bytes<32>".into(), Schema::Bytes { length: Some(32) }),
+        ("Bytes<64>".into(), Schema::Bytes { length: Some(64) }),
+      ]),
+    );
   }
 
   #[test]
