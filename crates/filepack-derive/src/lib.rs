@@ -1,17 +1,20 @@
 use {
   self::{
     attributes::Attributes, container_attribute::ContainerAttribute, field::Field, input::Input,
-    parsed_field::ParsedField, parsed_variant::ParsedVariant, receiver::Receiver, variant::Variant,
+    parsed_field::ParsedField, parsed_variant::ParsedVariant, receiver::Receiver,
+    route_attribute::RouteAttribute, variant::Variant,
   },
   darling::{FromDeriveInput, FromField, FromVariant, ast::Data, ast::Fields},
   heck::ToSnakeCase,
   proc_macro::TokenStream,
-  quote::quote,
+  quote::{format_ident, quote},
   std::collections::HashSet,
   strum::{Display, EnumString},
   syn::{
-    Attribute, DeriveInput, Error, GenericArgument, Generics, Ident, LitInt, Path, PathArguments,
-    Result, Type, TypeParamBound, TypePath, meta::ParseNestedMeta, parse::ParseBuffer,
+    Attribute, DeriveInput, Error, GenericArgument, Generics, Ident, ItemFn, LitInt, LitStr, Path,
+    PathArguments, Result, Token, Type, TypeParamBound, TypePath,
+    meta::ParseNestedMeta,
+    parse::{Parse, ParseBuffer, ParseStream},
   },
   usized::IntoU64,
 };
@@ -23,6 +26,7 @@ mod input;
 mod parsed_field;
 mod parsed_variant;
 mod receiver;
+mod route_attribute;
 mod variant;
 
 #[proc_macro_derive(Decode, attributes(deco, n))]
@@ -145,6 +149,30 @@ fn path_value(meta: &ParseNestedMeta, placeholder: &str) -> Result<Path> {
       "`#[deco({name})]` must be of the form `#[deco({name} = {placeholder})]`"
     ))
   })
+}
+
+#[proc_macro_attribute]
+pub fn route(attribute: TokenStream, item: TokenStream) -> TokenStream {
+  let RouteAttribute { method, path } = syn::parse_macro_input!(attribute as RouteAttribute);
+
+  let item = syn::parse_macro_input!(item as ItemFn);
+
+  let name = &item.sig.ident;
+
+  let route = format_ident!("{name}_route");
+
+  quote! {
+    #item
+
+    pub(crate) fn #route() -> Route {
+      Route {
+        method: axum::http::Method::#method,
+        path: #path,
+        router: axum::routing::on(axum::routing::MethodFilter::#method, #name),
+      }
+    }
+  }
+  .into()
 }
 
 fn validate_numbers<'a>(

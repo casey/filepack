@@ -9,6 +9,7 @@ build-dir = "build"
 create-missing = false
 
 [output.html]
+additional-css = ["custom.css"]
 git-repository-url = "https://github.com/casey/filepack"
 
 [output.linkcheck2]
