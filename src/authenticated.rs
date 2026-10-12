@@ -43,7 +43,7 @@ impl<S: Send + Sync> FromRequestParts<S> for Authenticated {
   }
 }
 
-impl Extractor for Authenticated {
+impl Describe for Authenticated {
   fn describe(endpoint: &mut reference::Endpoint, _schemas: &mut BTreeMap<String, Schema>) {
     endpoint.authenticated = true;
   }

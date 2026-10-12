@@ -149,6 +149,7 @@ pub struct Endpoint {
   pub parameters: Vec<Parameter>,
   pub range: bool,
   pub request: Option<Request>,
+  pub response: Option<Response>,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, PartialEq, Serialize)]
@@ -169,6 +170,17 @@ pub enum Parameter {
 pub enum Request {
   Bytes,
   Deco { limit: u64, schema: Schema },
+}
+
+#[derive(Debug, Deserialize, PartialEq, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum Response {
+  Deco { schema: Schema },
+  Dynamic,
+  File,
+  Html,
+  Redirect,
+  Static,
 }
 
 #[derive(Debug, Deserialize, Serialize)]

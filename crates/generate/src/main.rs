@@ -7,7 +7,7 @@ use {
   camino::{Utf8Path, Utf8PathBuf},
   filepack::{
     Count, Reference, Schema,
-    reference::{Parameter, Request, Route, Tag},
+    reference::{Parameter, Request, Response, Route, Tag},
     schema::Field,
   },
   heck::ToKebabCase,

@@ -54,6 +54,7 @@ use {
     deco_response::DecoResponse,
     decode_error::DecodeError,
     decode_owned::DecodeOwned,
+    describe::Describe,
     dimensions::Dimensions,
     directory_tree::DirectoryTree,
     directory_tree_entry::DirectoryTreeEntry,
@@ -73,7 +74,6 @@ use {
     error::Error,
     exif_decoder::ExifDecoder,
     exif_error::ExifError,
-    extractor::Extractor,
     file::File,
     filesystem_error::FilesystemError,
     flac_decoder::FlacDecoder,
@@ -355,6 +355,7 @@ mod decode_options;
 mod decode_owned;
 mod decoded;
 mod decoder;
+mod describe;
 mod dimensions;
 mod directory;
 mod directory_ext;
@@ -379,7 +380,6 @@ mod envelope;
 mod error;
 mod exif_decoder;
 mod exif_error;
-mod extractor;
 mod file;
 mod filesystem;
 mod filesystem_error;
