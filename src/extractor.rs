@@ -32,6 +32,8 @@ impl<T> Extractor for Query<T> {
   fn describe(_endpoint: &mut reference::Endpoint) {}
 }
 
-impl<T> Extractor for TypedHeader<T> {
-  fn describe(_endpoint: &mut reference::Endpoint) {}
+impl Extractor for TypedHeader<headers::Range> {
+  fn describe(endpoint: &mut reference::Endpoint) {
+    endpoint.range = true;
+  }
 }

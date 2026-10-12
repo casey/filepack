@@ -147,6 +147,7 @@ impl Reference {
 pub struct Endpoint {
   pub authenticated: bool,
   pub parameters: Vec<Parameter>,
+  pub range: bool,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, PartialEq, Serialize)]

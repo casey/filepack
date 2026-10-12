@@ -611,6 +611,9 @@ mod tests {
     assert!(api_gc_route().endpoint.authenticated);
     assert!(!api_file_route().endpoint.authenticated);
 
+    assert!(api_file_route().endpoint.range);
+    assert!(!api_gc_route().endpoint.range);
+
     assert_eq!(
       api_file_route().endpoint.parameters,
       [crate::reference::Parameter::Hash]
