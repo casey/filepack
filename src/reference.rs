@@ -24,6 +24,7 @@ impl Command {
 pub struct Reference {
   pub commands: Command,
   pub schemas: BTreeMap<String, Schema>,
+  pub tags: BTreeMap<String, String>,
 }
 
 impl Reference {
@@ -36,7 +37,6 @@ impl Reference {
 
     Application::schema(&mut schemas);
     Archive::schema(&mut schemas);
-    Attestation::schema(&mut schemas);
     Audio::schema(&mut schemas);
     AudioCodec::schema(&mut schemas);
     AudioFormat::schema(&mut schemas);
@@ -53,8 +53,6 @@ impl Reference {
     EntryInfo::schema(&mut schemas);
     Envelope::<Claims>::schema(&mut schemas);
     Envelope::<Statement>::schema(&mut schemas);
-    Fingerprint::schema(&mut schemas);
-    Hash::schema(&mut schemas);
     Image::schema(&mut schemas);
     ImageFormat::schema(&mut schemas);
     Language::schema(&mut schemas);
@@ -62,16 +60,13 @@ impl Reference {
     Metadata::schema(&mut schemas);
     Orientation::schema(&mut schemas);
     PackageMetadata::schema(&mut schemas);
-    PublicKey::schema(&mut schemas);
     RelativePath::schema(&mut schemas);
-    Revision::schema(&mut schemas);
     RevisionObject::schema(&mut schemas);
     Rotation::schema(&mut schemas);
     Statement::schema(&mut schemas);
     String::schema(&mut schemas);
     Text::schema(&mut schemas);
     Time::schema(&mut schemas);
-    Token::schema(&mut schemas);
     Totals::schema(&mut schemas);
     Track::schema(&mut schemas);
     TrackCodec::schema(&mut schemas);
@@ -83,9 +78,42 @@ impl Reference {
     i64::schema(&mut schemas);
     u64::schema(&mut schemas);
 
+    let mut tags = BTreeMap::new();
+
+    for (tag, schema) in [
+      (Attestation::TAG, Attestation::schema(&mut schemas)),
+      (
+        DisplayPrivateKey::TAG,
+        DisplayPrivateKey::schema(&mut schemas),
+      ),
+      (Fingerprint::TAG, Fingerprint::schema(&mut schemas)),
+      (Hash::TAG, Hash::schema(&mut schemas)),
+      (PublicKey::TAG, PublicKey::schema(&mut schemas)),
+      (Revision::TAG, Revision::schema(&mut schemas)),
+      (Token::TAG, Token::schema(&mut schemas)),
+    ] {
+      tags.insert(tag.prefix().into(), schema);
+    }
+
     Self {
       commands: Command::new(&mut command),
       schemas,
+      tags,
     }
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn tags() {
+    assert_eq!(
+      Reference::new().tags.into_keys().collect::<Vec<String>>(),
+      Tag::iter()
+        .map(|tag| tag.prefix().into())
+        .collect::<Vec<String>>(),
+    );
   }
 }

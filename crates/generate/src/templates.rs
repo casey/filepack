@@ -12,6 +12,11 @@ pub(crate) struct FieldsMd<'a> {
 }
 
 #[derive(Boilerplate)]
+pub(crate) struct HexMd<'a> {
+  pub(crate) tags: &'a BTreeMap<String, String>,
+}
+
+#[derive(Boilerplate)]
 pub(crate) struct SummaryMd {
   pub(crate) commands: BTreeMap<String, Utf8PathBuf>,
   pub(crate) schemas: BTreeMap<String, Utf8PathBuf>,

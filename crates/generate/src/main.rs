@@ -1,5 +1,5 @@
 use {
-  self::templates::{CommandMd, SchemaMd, SummaryMd},
+  self::templates::{CommandMd, HexMd, SchemaMd, SummaryMd},
   boilerplate::Boilerplate,
   camino::{Utf8Path, Utf8PathBuf},
   filepack::{Count, Reference, Schema, schema},
@@ -74,6 +74,14 @@ fn main() {
 
     schemas.insert(name.clone(), relative);
   }
+
+  write(
+    &src.join("hex.md"),
+    &HexMd {
+      tags: &reference.tags,
+    }
+    .to_string(),
+  );
 
   write(
     &src.join("SUMMARY.md"),
