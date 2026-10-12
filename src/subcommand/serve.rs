@@ -42,6 +42,23 @@ pub(crate) struct PackagesQuery {
   sort: Option<Sort>,
 }
 
+impl Describe for Query<PackagesQuery> {
+  fn describe(endpoint: &mut crate::reference::Endpoint, _schemas: &mut BTreeMap<String, Schema>) {
+    endpoint.query.extend([
+      crate::reference::QueryParameter {
+        default: Order::default().to_string(),
+        name: "order".into(),
+        values: Order::iter().map(|order| order.to_string()).collect(),
+      },
+      crate::reference::QueryParameter {
+        default: Sort::default().to_string(),
+        name: "sort".into(),
+        values: Sort::iter().map(|sort| sort.to_string()).collect(),
+      },
+    ]);
+  }
+}
+
 pub(crate) struct RedirectConfig {
   destination: Url,
   domains: HashSet<String>,

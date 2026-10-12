@@ -11,16 +11,31 @@ pub struct Field {
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum Schema {
-  Array { element: String },
+  Array {
+    element: String,
+  },
   Boolean,
-  Bytes { length: Option<u64> },
-  Enum { variants: Vec<Variant> },
-  Map { key: String, value: String },
+  Bytes {
+    length: Option<u64>,
+  },
+  Enum {
+    variants: Vec<Variant>,
+  },
+  Map {
+    key: String,
+    value: String,
+  },
   SignedInteger,
   String,
-  Struct { fields: Vec<Field> },
+  Struct {
+    fields: Vec<Field>,
+    magic: Option<String>,
+    strict: bool,
+  },
   UnsignedInteger,
-  Wrapper { inner: String },
+  Wrapper {
+    inner: String,
+  },
 }
 
 impl Schema {

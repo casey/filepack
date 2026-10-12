@@ -626,6 +626,31 @@ mod tests {
       ],
     );
 
+    assert_eq!(api_gc_route(&mut schemas).endpoint.query, []);
+
+    assert_eq!(
+      packages_route(&mut schemas).endpoint.query,
+      [
+        crate::reference::QueryParameter {
+          default: "ascending".into(),
+          name: "order".into(),
+          values: vec!["ascending".into(), "descending".into()],
+        },
+        crate::reference::QueryParameter {
+          default: "title".into(),
+          name: "sort".into(),
+          values: vec![
+            "title".into(),
+            "creator".into(),
+            "year".into(),
+            "media".into(),
+            "files".into(),
+            "size".into(),
+          ],
+        },
+      ],
+    );
+
     assert_eq!(api_gc_route(&mut schemas).endpoint.request, None);
 
     assert_eq!(
@@ -644,6 +669,8 @@ mod tests {
             optional: false,
             schema: "SortedSet<Hash>".into(),
           }],
+          magic: None,
+          strict: false,
         },
       }),
     );
@@ -661,6 +688,8 @@ mod tests {
             optional: false,
             schema: "SortedSet<UnsignedInteger>".into(),
           }],
+          magic: None,
+          strict: false,
         },
       }),
     );

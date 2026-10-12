@@ -20,6 +20,20 @@ remainder of the path, including any slashes, and must not be empty.
 
 %%     }
 %%   }
+%%   if !endpoint.query.is_empty() {
+| query parameter | values | default |
+|-----------------|--------|---------|
+%%     for parameter in &endpoint.query {
+%%       let values = parameter
+%%         .values
+%%         .iter()
+%%         .map(|value| format!("`{value}`"))
+%%         .collect::<Vec<String>>()
+%%         .join(", ");
+| `{{ parameter.name }}` | {{ values }} | `{{ parameter.default }}` |
+%%     }
+
+%%   }
 %%   if endpoint.authenticated {
 Requires authorization.
 %%   } else {

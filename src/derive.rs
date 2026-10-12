@@ -617,6 +617,8 @@ fn generic_schema() {
             optional: false,
             schema: "UnsignedInteger".into(),
           }],
+          magic: None,
+          strict: false,
         },
       ),
       ("UnsignedInteger".into(), Schema::UnsignedInteger),
@@ -707,28 +709,10 @@ fn strict() {
     foo: u64,
   }
 
-  #[derive(Debug, Decode, PartialEq)]
-  #[deco(strict)]
-  enum Bar {
-    #[n(0)]
-    Baz {
-      #[n(1)]
-      foo: u64,
-    },
-  }
-
   let fields = with_unknown_field(BTreeMap::from([(1u64, 1u64)]));
 
   assert_matches!(
     Foo::decode_from_slice(&fields),
-    Err(DecodeError::Unknown {
-      source: UnknownError::Field { key: u64::MAX },
-      strict: true
-    }),
-  );
-
-  assert_matches!(
-    Bar::decode_from_slice(&Encoder::frame([vec![0], fields].concat())),
     Err(DecodeError::Unknown {
       source: UnknownError::Field { key: u64::MAX },
       strict: true
@@ -771,10 +755,35 @@ fn struct_schema() {
               schema: "Boolean".into(),
             },
           ],
+          magic: None,
+          strict: false,
         },
       ),
       ("UnsignedInteger".into(), Schema::UnsignedInteger),
     ]),
+  );
+}
+
+#[test]
+fn struct_schema_attributes() {
+  #[derive(Encode, Magic)]
+  #[deco(magic = MagicType::Archive, strict)]
+  struct Foo {}
+
+  let mut schemas = BTreeMap::new();
+
+  assert_eq!(Foo::schema(&mut schemas), "Foo");
+
+  assert_eq!(
+    schemas,
+    BTreeMap::from([(
+      "Foo".into(),
+      Schema::Struct {
+        fields: vec![],
+        magic: Some("archive".into()),
+        strict: true,
+      },
+    )]),
   );
 }
 
@@ -916,16 +925,6 @@ fn unknown_variants_scope() {
     foo: Option<T>,
   }
 
-  #[derive(Debug, Decode, PartialEq)]
-  #[deco(strict)]
-  enum Quux {
-    #[n(0)]
-    Foo {
-      #[n(1)]
-      foo: Option<Foo>,
-    },
-  }
-
   #[track_caller]
   fn unknown<T: Debug + DecodeOwned>(options: DecodeOptions, expected: bool, value: impl Encode) {
     assert_matches!(
@@ -946,11 +945,6 @@ fn unknown_variants_scope() {
   unknown::<Baz>(lenient, false, &fields);
   unknown::<Qux<Foo>>(lenient, true, &fields);
   unknown::<Bar<Qux<Foo>>>(lenient, true, BTreeMap::from([(1u64, &fields)]));
-  unknown::<Bar<Quux>>(
-    lenient,
-    true,
-    BTreeMap::from([(1u64, [vec![0], fields.encode_to_vec()].concat())]),
-  );
   unknown::<Qux<Bar<Foo>>>(lenient, true, BTreeMap::from([(1u64, &fields)]));
 
   let nested = BTreeMap::from([(1u64, vec![vec![1u64]])]);

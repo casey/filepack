@@ -180,6 +180,7 @@ clear-server:
 book:
   #!/usr/bin/env bash
   set -euo pipefail
+  cargo lrun --package generate
   mdbook serve book --open &
   trap 'kill $!' EXIT
   cargo watch --clear --exec 'lrun --package generate'

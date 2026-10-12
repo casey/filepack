@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Clone, Copy, Default, Deserialize, Display, Eq, PartialEq)]
+#[derive(Clone, Copy, Default, Deserialize, Display, EnumIter, Eq, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 #[strum(serialize_all = "kebab-case")]
 pub(crate) enum Order {

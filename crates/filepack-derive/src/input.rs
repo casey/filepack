@@ -76,16 +76,10 @@ impl Input {
       .validate()
       .then(|| quote! { Validate::validate(&value)?; });
 
-    let array = if attributes.strict() {
-      quote!(strict_array)
-    } else {
-      quote!(array)
-    };
-
     Ok(quote! {
       #header {
         fn decode(decoder: &mut Decoder<'de>) -> DecodeResult<Self> {
-          let mut array = decoder.#array()?;
+          let mut array = decoder.array()?;
           let discriminant = array.element::<u64>()?;
           let value = match discriminant {
             #(#arms)*
@@ -298,9 +292,17 @@ impl Input {
       .is_some()
       .then(|| quote! { encoder.magic(<Self as Magic>::TYPE); });
 
+    let schema_magic = if attributes.magic().is_some() {
+      quote! { Some(<Self as Magic>::TYPE.to_string()) }
+    } else {
+      quote! { None }
+    };
+
     let schema_name = self.schema_name();
 
     let schema_fields = ParsedField::schema(&fields);
+
+    let strict = attributes.strict();
 
     let generics = self.encode_generics();
 
@@ -318,6 +320,8 @@ impl Input {
         fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
           Schema::Struct {
             fields: vec![#(#schema_fields),*],
+            magic: #schema_magic,
+            strict: #strict,
           }
           .register(&#schema_name, schemas)
         }
@@ -424,12 +428,12 @@ impl Input {
 
           if self.data.is_enum() {
             match attribute {
-              ContainerAttribute::Transparent => {
+              ContainerAttribute::Strict | ContainerAttribute::Transparent => {
                 return Err(
                   meta.error(format!("`#[deco({attribute})]` cannot be used with enums")),
                 );
               }
-              ContainerAttribute::Strict | ContainerAttribute::Validate => {}
+              ContainerAttribute::Validate => {}
             }
           }
 
@@ -562,6 +566,14 @@ mod tests {
         struct Foo {}
       },
       "duplicate `#[deco(validate)]` attribute",
+    );
+
+    case(
+      &syn::parse_quote! {
+        #[deco(strict)]
+        enum Foo {}
+      },
+      "`#[deco(strict)]` cannot be used with enums",
     );
 
     case(
