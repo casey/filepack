@@ -11,8 +11,8 @@ use {
   std::collections::HashSet,
   strum::{Display, EnumString},
   syn::{
-    Attribute, DeriveInput, Error, GenericArgument, Generics, Ident, ItemFn, LitInt, LitStr, Path,
-    PathArguments, Result, Token, Type, TypeParamBound, TypePath,
+    Attribute, DeriveInput, Error, FnArg, GenericArgument, Generics, Ident, ItemFn, LitInt, LitStr,
+    Path, PathArguments, Result, Token, Type, TypeParamBound, TypePath,
     meta::ParseNestedMeta,
     parse::{Parse, ParseBuffer, ParseStream},
   },
@@ -161,11 +161,27 @@ pub fn route(attribute: TokenStream, item: TokenStream) -> TokenStream {
 
   let route = format_ident!("{name}_route");
 
+  let mut types = Vec::new();
+
+  for input in &item.sig.inputs {
+    match input {
+      FnArg::Receiver(receiver) => {
+        return Error::new_spanned(receiver, "`#[route]` handlers cannot take `self`")
+          .to_compile_error()
+          .into();
+      }
+      FnArg::Typed(input) => types.push((*input.ty).clone()),
+    }
+  }
+
   quote! {
     #item
 
     pub(crate) fn #route() -> Route {
+      let mut endpoint = Endpoint::default();
+      #(<#types as Extractor>::annotate(&mut endpoint);)*
       Route {
+        endpoint,
         method: axum::http::Method::#method,
         path: #path,
         router: axum::routing::on(axum::routing::MethodFilter::#method, #name),

@@ -42,3 +42,9 @@ impl<S: Send + Sync> FromRequestParts<S> for Authenticated {
     Ok(Self)
   }
 }
+
+impl Extractor for Authenticated {
+  fn annotate(endpoint: &mut Endpoint) {
+    endpoint.authenticated = true;
+  }
+}

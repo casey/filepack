@@ -73,6 +73,7 @@ use {
     error::Error,
     exif_decoder::ExifDecoder,
     exif_error::ExifError,
+    extractor::Extractor,
     file::File,
     filesystem_error::FilesystemError,
     flac_decoder::FlacDecoder,
@@ -292,6 +293,7 @@ pub use self::{
   png_builder::PngBuilder,
   private_key::PrivateKey,
   public_key::PublicKey,
+  reference::Endpoint,
   reference::Reference,
   revision_object::RevisionObject,
   schema::Schema,
@@ -377,6 +379,7 @@ mod envelope;
 mod error;
 mod exif_decoder;
 mod exif_error;
+mod extractor;
 mod file;
 mod filesystem;
 mod filesystem_error;

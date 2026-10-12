@@ -1,19 +1,19 @@
 use {
-  self::templates::{CommandMd, HexMd, RoutesMd, SchemaMd, SummaryMd},
+  self::templates::{CommandMd, HexMd, RouteMd, RoutesMd, SchemaMd, SummaryMd},
   boilerplate::Boilerplate,
   camino::{Utf8Path, Utf8PathBuf},
-  filepack::{Count, Reference, Schema, schema},
+  filepack::{Count, Endpoint, Reference, Schema, schema},
   heck::ToKebabCase,
-  std::{
-    collections::{BTreeMap, BTreeSet},
-    env, fs, iter,
-  },
+  std::{collections::BTreeMap, env, fs, iter},
 };
 
 mod templates;
 
 pub(crate) fn escape(name: &str) -> String {
-  name.replace('<', "\\<").replace('>', "\\>")
+  name
+    .replace('<', "\\<")
+    .replace('>', "\\>")
+    .replace('*', "\\*")
 }
 
 pub(crate) fn link(name: &str) -> String {
@@ -86,9 +86,26 @@ fn main() {
     .to_string(),
   );
 
+  let mut routes = BTreeMap::new();
+
+  for (path, methods) in &reference.routes {
+    let slug = if path.ends_with('/') {
+      format!("{path}index").to_kebab_case()
+    } else {
+      path.to_kebab_case()
+    };
+
+    let relative = Utf8PathBuf::from(format!("routes/{slug}.md"));
+
+    write(&src.join(&relative), &RouteMd { methods, path }.to_string());
+
+    routes.insert(path.clone(), relative);
+  }
+
   write(
     &src.join("routes.md"),
     &RoutesMd {
+      pages: &routes,
       routes: &reference.routes,
     }
     .to_string(),
@@ -96,7 +113,12 @@ fn main() {
 
   write(
     &src.join("SUMMARY.md"),
-    &SummaryMd { commands, schemas }.to_string(),
+    &SummaryMd {
+      commands,
+      routes,
+      schemas,
+    }
+    .to_string(),
   );
 }
 

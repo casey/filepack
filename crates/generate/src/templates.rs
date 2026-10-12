@@ -17,14 +17,22 @@ pub(crate) struct HexMd<'a> {
 }
 
 #[derive(Boilerplate)]
-pub(crate) struct SummaryMd {
-  pub(crate) commands: BTreeMap<String, Utf8PathBuf>,
-  pub(crate) schemas: BTreeMap<String, Utf8PathBuf>,
+pub(crate) struct RouteMd<'a> {
+  pub(crate) methods: &'a BTreeMap<String, Endpoint>,
+  pub(crate) path: &'a str,
 }
 
 #[derive(Boilerplate)]
 pub(crate) struct RoutesMd<'a> {
-  pub(crate) routes: &'a BTreeMap<String, BTreeSet<String>>,
+  pub(crate) pages: &'a BTreeMap<String, Utf8PathBuf>,
+  pub(crate) routes: &'a BTreeMap<String, BTreeMap<String, Endpoint>>,
+}
+
+#[derive(Boilerplate)]
+pub(crate) struct SummaryMd {
+  pub(crate) commands: BTreeMap<String, Utf8PathBuf>,
+  pub(crate) routes: BTreeMap<String, Utf8PathBuf>,
+  pub(crate) schemas: BTreeMap<String, Utf8PathBuf>,
 }
 
 #[derive(Boilerplate)]

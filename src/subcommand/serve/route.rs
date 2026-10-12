@@ -4,6 +4,7 @@ use {
 };
 
 pub(crate) struct Route {
+  pub(crate) endpoint: Endpoint,
   pub(crate) method: Method,
   pub(crate) path: &'static str,
   pub(crate) router: MethodRouter,
@@ -599,4 +600,15 @@ pub(crate) async fn packages(
 #[route(GET, "/static/{*path}")]
 pub(crate) async fn static_asset(path: Path<String>) -> ServerResult<StaticAsset> {
   StaticAsset::get(&path)
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn endpoint() {
+    assert!(api_gc_route().endpoint.authenticated);
+    assert!(!api_file_route().endpoint.authenticated);
+  }
 }
