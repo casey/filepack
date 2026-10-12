@@ -184,7 +184,7 @@ open-book:
   open http://localhost:3000
 
 serve-book:
-  mdbook serve book
+  mdbook serve book --open
 
 watch-book:
   cargo watch --clear --exec 'lrun --package generate' --shell 'mdbook build book'
