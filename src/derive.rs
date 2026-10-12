@@ -594,6 +594,37 @@ fn enum_unknown_variants() {
 }
 
 #[test]
+fn generic_schema() {
+  #[derive(Decode, Encode)]
+  struct Foo<T> {
+    #[n(1)]
+    bar: T,
+  }
+
+  let mut schemas = BTreeMap::new();
+
+  assert_eq!(Foo::<u64>::schema(&mut schemas), "Foo<UnsignedInteger>");
+
+  assert_eq!(
+    schemas,
+    BTreeMap::from([
+      (
+        "Foo<UnsignedInteger>".into(),
+        Schema::Struct {
+          fields: vec![schema::Field {
+            n: 1,
+            name: "bar".into(),
+            optional: false,
+            schema: "UnsignedInteger".into(),
+          }],
+        },
+      ),
+      ("UnsignedInteger".into(), Schema::UnsignedInteger),
+    ]),
+  );
+}
+
+#[test]
 fn magic() {
   #[derive(Debug, Decode, Encode, Magic, PartialEq)]
   #[deco(magic = MagicType::Archive)]
