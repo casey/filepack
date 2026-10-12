@@ -7,6 +7,11 @@ pub(crate) struct CommandMd<'a> {
 }
 
 #[derive(Boilerplate)]
+pub(crate) struct CommandsMd<'a> {
+  pub(crate) pages: &'a BTreeMap<String, (&'a Command, Utf8PathBuf)>,
+}
+
+#[derive(Boilerplate)]
 pub(crate) struct DefinitionMd<'a> {
   pub(crate) schema: &'a Schema,
 }
@@ -34,8 +39,13 @@ pub(crate) struct RoutesMd<'a> {
 }
 
 #[derive(Boilerplate)]
+pub(crate) struct SchemasMd<'a> {
+  pub(crate) schemas: &'a BTreeMap<String, Schema>,
+}
+
+#[derive(Boilerplate)]
 pub(crate) struct SummaryMd<'a> {
-  pub(crate) commands: BTreeMap<String, Utf8PathBuf>,
+  pub(crate) commands: BTreeMap<String, (&'a Command, Utf8PathBuf)>,
   pub(crate) routes: BTreeMap<&'a str, Utf8PathBuf>,
   pub(crate) schemas: BTreeMap<&'a str, Utf8PathBuf>,
   pub(crate) tags: BTreeMap<&'a str, Utf8PathBuf>,

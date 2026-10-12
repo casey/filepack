@@ -1,13 +1,15 @@
 use {
   self::{
     functions::{escape, parameter, schema, write},
-    templates::{CommandMd, HexMd, RouteMd, RoutesMd, SchemaMd, SummaryMd, TagMd},
+    templates::{
+      CommandMd, CommandsMd, HexMd, RouteMd, RoutesMd, SchemaMd, SchemasMd, SummaryMd, TagMd,
+    },
   },
   boilerplate::Boilerplate,
   camino::{Utf8Path, Utf8PathBuf},
   filepack::{
     Count, Reference, Schema,
-    reference::{Parameter, Request, Response, Route, Tag},
+    reference::{Command, Parameter, Request, Response, Route, Tag},
     schema::Field,
   },
   heck::ToKebabCase,
@@ -55,7 +57,7 @@ fn main() {
         },
       );
 
-      commands.insert(name, relative);
+      commands.insert(name, (command, relative));
 
       for (name, command) in &command.subcommands {
         if name == "help" {
@@ -124,6 +126,8 @@ fn main() {
     routes
   };
 
+  write(src.join("commands.md"), CommandsMd { pages: &commands });
+
   write(
     src.join("hex.md"),
     HexMd {
@@ -136,6 +140,13 @@ fn main() {
     RoutesMd {
       pages: &routes,
       routes: &reference.routes,
+    },
+  );
+
+  write(
+    src.join("schemas.md"),
+    SchemasMd {
+      schemas: &reference.schemas,
     },
   );
 
