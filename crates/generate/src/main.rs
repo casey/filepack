@@ -1,20 +1,12 @@
 use {
+  self::templates::{CommandMd, SchemaMd, SummaryMd},
   boilerplate::Boilerplate,
-  camino::Utf8PathBuf,
-  filepack::Schema,
+  camino::{Utf8Path, Utf8PathBuf},
+  filepack::{Reference, Schema},
   std::{collections::BTreeMap, env, fs, iter},
 };
 
-#[derive(Boilerplate)]
-struct SummaryMd {
-  commands: BTreeMap<String, Utf8PathBuf>,
-}
-
-#[derive(Boilerplate)]
-struct CommandMd<'a> {
-  help: &'a str,
-  name: &'a str,
-}
+mod templates;
 
 fn main() {
   for (key, _) in env::vars() {
@@ -25,9 +17,11 @@ fn main() {
     }
   }
 
-  let schema = Schema::new();
+  let reference = Reference::new();
 
-  let mut stack = vec![(vec![schema.commands.name.as_str()], &schema.commands)];
+  let src = Utf8Path::new("book/src");
+
+  let mut stack = vec![(vec![reference.commands.name.as_str()], &reference.commands)];
 
   let mut commands = BTreeMap::new();
 
@@ -42,11 +36,7 @@ fn main() {
 
     let relative = Utf8PathBuf::from(format!("commands/{}.md", path.join("-")));
 
-    let absolute = Utf8PathBuf::from("book/src").join(&relative);
-
-    fs::create_dir_all(absolute.parent().unwrap()).unwrap();
-
-    fs::write(&absolute, markdown).unwrap();
+    write(&src.join(&relative), &markdown);
 
     commands.insert(name, relative);
 
@@ -66,5 +56,23 @@ fn main() {
     }
   }
 
-  fs::write("book/src/SUMMARY.md", SummaryMd { commands }.to_string()).unwrap();
+  let mut schemas = BTreeMap::new();
+
+  for (name, &schema) in &reference.schemas {
+    let relative = Utf8PathBuf::from(format!("schemas/{name}.md"));
+
+    write(&src.join(&relative), &SchemaMd { schema }.to_string());
+
+    schemas.insert(name.clone(), relative);
+  }
+
+  write(
+    &src.join("SUMMARY.md"),
+    &SummaryMd { commands, schemas }.to_string(),
+  );
+}
+
+fn write(path: &Utf8PathBuf, contents: &str) {
+  fs::create_dir_all(path.parent().unwrap()).unwrap();
+  fs::write(path, contents).unwrap();
 }

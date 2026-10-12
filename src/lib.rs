@@ -291,6 +291,7 @@ pub use self::{
   png_builder::PngBuilder,
   private_key::PrivateKey,
   public_key::PublicKey,
+  reference::Reference,
   revision_object::RevisionObject,
   schema::Schema,
   server_state::ServerState,
@@ -456,6 +457,7 @@ mod progress_bar;
 mod public_key;
 mod public_key_error;
 mod re;
+mod reference;
 mod relative_path;
 mod reqwest_response_ext;
 mod resolved;

@@ -23,7 +23,7 @@ mod lints;
 mod man;
 mod manifest;
 mod metadata;
-mod schema;
+mod reference;
 pub(crate) mod serve;
 mod sign;
 mod signatures;
@@ -83,8 +83,8 @@ pub(crate) enum Subcommand {
   Manifest(manifest::Manifest),
   #[command(about = "Print metadata")]
   Metadata(metadata::Metadata),
-  #[command(about = "Print schema")]
-  Schema,
+  #[command(about = "Print reference")]
+  Reference,
   #[command(about = "Start a filepack server")]
   Serve(serve::Serve),
   #[command(about = "Sign manifest")]
@@ -119,7 +119,7 @@ impl Subcommand {
       Self::Man => man::run(),
       Self::Manifest(manifest) => manifest.run(),
       Self::Metadata(metadata) => metadata.run(),
-      Self::Schema => schema::run(),
+      Self::Reference => reference::run(),
       Self::Serve(serve) => serve.run(options),
       Self::Sign(sign) => sign.run(options),
       Self::Signatures(signatures) => signatures.run(),
