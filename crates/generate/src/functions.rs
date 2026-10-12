@@ -9,10 +9,6 @@ pub(crate) fn escape(name: &str) -> String {
     .replace('}', "\\}")
 }
 
-pub(crate) fn link(name: &str) -> String {
-  format!("[{}]({}.md)", escape(name), name.to_kebab_case())
-}
-
 pub(crate) fn parameter(parameter: Parameter) -> &'static str {
   match parameter {
     Parameter::Fingerprint => "[package fingerprint](../hex/package.md)",
@@ -26,6 +22,10 @@ pub(crate) fn parameter(parameter: Parameter) -> &'static str {
     Parameter::Revision => "[revision](../hex/revision.md)",
     Parameter::String => "string",
   }
+}
+
+pub(crate) fn schema(name: &str) -> String {
+  format!("[{}](../schemas/{}.md)", escape(name), name.to_kebab_case())
 }
 
 pub(crate) fn write(path: impl AsRef<Utf8Path>, contents: impl Display) {

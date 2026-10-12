@@ -19,8 +19,17 @@ impl<T: DecodeOwned, S: Send + Sync, const LIMIT: usize> FromRequest<S> for Deco
   }
 }
 
-impl<T, const LIMIT: usize> Extractor for DecoRequest<T, LIMIT> {
-  fn describe(_endpoint: &mut reference::Endpoint) {}
+impl<T: Encode, const LIMIT: usize> Extractor for DecoRequest<T, LIMIT> {
+  fn describe(endpoint: &mut reference::Endpoint, schemas: &mut BTreeMap<String, Schema>) {
+    let name = T::schema(schemas);
+
+    let schema = schemas.remove(&name).unwrap();
+
+    endpoint.request = Some(reference::Request::Deco {
+      limit: LIMIT.into_u64(),
+      schema,
+    });
+  }
 }
 
 #[cfg(test)]

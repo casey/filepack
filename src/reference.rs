@@ -44,41 +44,6 @@ impl Reference {
 
     command.build();
 
-    let mut routes = BTreeMap::<String, Route>::new();
-
-    for route in subcommand::serve::route::Route::all() {
-      routes
-        .entry(route.path.into())
-        .or_insert_with(|| {
-          let mut parameters = Vec::new();
-          let mut wildcard = false;
-
-          for segment in route.path.split('/') {
-            let Some(name) = segment.strip_prefix('{') else {
-              continue;
-            };
-
-            let name = if let Some(name) = name.strip_prefix('*') {
-              wildcard = true;
-              name
-            } else {
-              name
-            };
-
-            parameters.push(name.strip_suffix('}').unwrap().into());
-          }
-
-          Route {
-            api: route.path.starts_with("/api/"),
-            methods: BTreeMap::new(),
-            parameters,
-            wildcard,
-          }
-        })
-        .methods
-        .insert(route.method.to_string(), route.endpoint);
-    }
-
     let mut schemas = BTreeMap::new();
 
     Application::schema(&mut schemas);
@@ -134,6 +99,41 @@ impl Reference {
     tag::<Revision>(&mut schemas, &mut tags);
     tag::<Token>(&mut schemas, &mut tags);
 
+    let mut routes = BTreeMap::<String, Route>::new();
+
+    for route in subcommand::serve::route::Route::all(&mut schemas) {
+      routes
+        .entry(route.path.into())
+        .or_insert_with(|| {
+          let mut parameters = Vec::new();
+          let mut wildcard = false;
+
+          for segment in route.path.split('/') {
+            let Some(name) = segment.strip_prefix('{') else {
+              continue;
+            };
+
+            let name = if let Some(name) = name.strip_prefix('*') {
+              wildcard = true;
+              name
+            } else {
+              name
+            };
+
+            parameters.push(name.strip_suffix('}').unwrap().into());
+          }
+
+          Route {
+            api: route.path.starts_with("/api/"),
+            methods: BTreeMap::new(),
+            parameters,
+            wildcard,
+          }
+        })
+        .methods
+        .insert(route.method.to_string(), route.endpoint);
+    }
+
     Self {
       commands: Command::new(&mut command),
       routes,
@@ -143,11 +143,12 @@ impl Reference {
   }
 }
 
-#[derive(Debug, Default, Deserialize, Serialize)]
+#[derive(Debug, Default, Deserialize, PartialEq, Serialize)]
 pub struct Endpoint {
   pub authenticated: bool,
   pub parameters: Vec<Parameter>,
   pub range: bool,
+  pub request: Option<Request>,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, PartialEq, Serialize)]
@@ -161,6 +162,13 @@ pub enum Parameter {
   RelativePath,
   Revision,
   String,
+}
+
+#[derive(Debug, Deserialize, PartialEq, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum Request {
+  Bytes,
+  Deco { limit: u64, schema: Schema },
 }
 
 #[derive(Debug, Deserialize, Serialize)]
