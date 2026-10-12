@@ -259,11 +259,11 @@ impl Input {
         });
 
         quote! {
-          fn schema(schemas: &mut BTreeMap<String, Schema>) {
+          fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
             Schema::Enum {
               variants: vec![#(#variants),*],
             }
-            .register(#schema_name, schemas);
+            .register(#schema_name, schemas)
           }
         }
       });
@@ -303,6 +303,27 @@ impl Input {
       .is_some()
       .then(|| quote! { encoder.magic(<Self as Magic>::TYPE); });
 
+    let schema_name = name.to_string();
+
+    let schema_fields = fields.iter().map(
+      |ParsedField {
+         ident,
+         n,
+         optional,
+         ty,
+       }| {
+        let name = ident.to_string();
+        quote! {
+          schema::Field {
+            n: #n,
+            name: #name.into(),
+            optional: #optional,
+            schema: <#ty as Encode>::schema(schemas),
+          }
+        }
+      },
+    );
+
     let generics = self.encode_generics();
 
     let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
@@ -314,6 +335,13 @@ impl Input {
           #(#items)*
           map.finish();
           #magic
+        }
+
+        fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
+          Schema::Struct {
+            fields: vec![#(#schema_fields),*],
+          }
+          .register(#schema_name, schemas)
         }
       }
     })

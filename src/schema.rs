@@ -1,6 +1,14 @@
 use super::*;
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+pub struct Field {
+  pub n: u64,
+  pub name: String,
+  pub optional: bool,
+  pub schema: String,
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum Schema {
   Boolean,
@@ -8,11 +16,12 @@ pub enum Schema {
   Enum { variants: Vec<Variant> },
   SignedInteger,
   String,
+  Struct { fields: Vec<Field> },
   UnsignedInteger,
 }
 
 impl Schema {
-  pub fn register(self, name: &str, schemas: &mut BTreeMap<String, Schema>) {
+  pub fn register(self, name: &str, schemas: &mut BTreeMap<String, Schema>) -> String {
     if let Some(existing) = schemas.get(name) {
       assert!(
         *existing == self,
@@ -21,6 +30,8 @@ impl Schema {
     } else {
       schemas.insert(name.into(), self);
     }
+
+    name.into()
   }
 }
 
@@ -38,8 +49,8 @@ mod tests {
   fn register() {
     let mut schemas = BTreeMap::new();
 
-    Schema::Boolean.register("Foo", &mut schemas);
-    Schema::Boolean.register("Foo", &mut schemas);
+    assert_eq!(Schema::Boolean.register("Foo", &mut schemas), "Foo");
+    assert_eq!(Schema::Boolean.register("Foo", &mut schemas), "Foo");
 
     assert_eq!(schemas, BTreeMap::from([("Foo".into(), Schema::Boolean)]));
   }

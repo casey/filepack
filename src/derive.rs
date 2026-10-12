@@ -404,7 +404,7 @@ fn enum_schema() {
 
   let mut schemas = BTreeMap::new();
 
-  Foo::schema(&mut schemas);
+  assert_eq!(Foo::schema(&mut schemas), "Foo");
 
   assert_eq!(
     schemas,
@@ -624,6 +624,48 @@ fn strict() {
       source: UnknownError::Field { key: u64::MAX },
       strict: true
     }),
+  );
+}
+
+#[test]
+fn struct_schema() {
+  #[derive(Decode, Encode)]
+  struct Foo {
+    #[n(1)]
+    bar: u64,
+    #[n(2)]
+    baz: Option<bool>,
+  }
+
+  let mut schemas = BTreeMap::new();
+
+  assert_eq!(Foo::schema(&mut schemas), "Foo");
+
+  assert_eq!(
+    schemas,
+    BTreeMap::from([
+      ("Boolean".into(), Schema::Boolean),
+      (
+        "Foo".into(),
+        Schema::Struct {
+          fields: vec![
+            schema::Field {
+              n: 1,
+              name: "bar".into(),
+              optional: false,
+              schema: "UnsignedInteger".into(),
+            },
+            schema::Field {
+              n: 2,
+              name: "baz".into(),
+              optional: true,
+              schema: "Boolean".into(),
+            },
+          ],
+        },
+      ),
+      ("UnsignedInteger".into(), Schema::UnsignedInteger),
+    ]),
   );
 }
 
