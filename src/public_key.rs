@@ -72,6 +72,13 @@ impl Encode for PublicKey {
   fn encode(&self, encoder: &mut Encoder) {
     encoder.bytes(self.0.as_bytes());
   }
+
+  fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
+    Schema::Bytes {
+      length: Some(Self::LEN.into_u64()),
+    }
+    .register("PublicKey", schemas)
+  }
 }
 
 impl Hex for PublicKey {

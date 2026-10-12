@@ -79,6 +79,13 @@ impl Encode for Hash {
   fn encode(&self, encoder: &mut Encoder) {
     self.as_bytes().encode(encoder);
   }
+
+  fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
+    Schema::Bytes {
+      length: Some(Self::LEN.into_u64()),
+    }
+    .register("Hash", schemas)
+  }
 }
 
 impl redb::Key for Hash {

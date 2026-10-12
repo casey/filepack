@@ -21,6 +21,13 @@ impl Encode for Ed25519Signature {
   fn encode(&self, encoder: &mut Encoder) {
     encoder.bytes(&self.0.to_bytes());
   }
+
+  fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
+    Schema::Bytes {
+      length: Some(ed25519_dalek::SIGNATURE_LENGTH.into_u64()),
+    }
+    .register("Ed25519Signature", schemas)
+  }
 }
 
 impl From<ed25519_dalek::Signature> for Ed25519Signature {

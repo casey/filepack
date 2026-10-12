@@ -13,8 +13,11 @@ impl Field {
     self.attrs.iter().find(|attr| attr.path().is_ident("deco"))
   }
 
-  pub(crate) fn ident(&self) -> Option<&Ident> {
-    self.ident.as_ref()
+  pub(crate) fn member(&self) -> Member {
+    match &self.ident {
+      Some(ident) => Member::Named(ident.clone()),
+      None => Member::Unnamed(Index::from(0)),
+    }
   }
 
   pub(crate) fn n_attribute(&self) -> Option<&Attribute> {
@@ -67,5 +70,9 @@ impl Field {
       optional: ty.is_some(),
       ty: ty.unwrap_or(&self.ty),
     })
+  }
+
+  pub(crate) fn ty(&self) -> &Type {
+    &self.ty
   }
 }

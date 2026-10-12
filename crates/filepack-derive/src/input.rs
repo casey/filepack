@@ -180,7 +180,7 @@ impl Input {
   }
 
   fn decode_transparent(&self, attributes: &Attributes) -> Result<proc_macro2::TokenStream> {
-    let member = self.transparent_member()?;
+    let member = self.transparent_field()?.member();
 
     let constructor = match &member {
       Member::Named(ident) => quote! { Self { #ident: Decode::decode(decoder)? } },
@@ -331,7 +331,13 @@ impl Input {
   fn encode_transparent(&self) -> Result<proc_macro2::TokenStream> {
     let name = &self.ident;
 
-    let member = self.transparent_member()?;
+    let field = self.transparent_field()?;
+
+    let member = field.member();
+
+    let ty = field.ty();
+
+    let schema_name = name.to_string();
 
     let generics = self.encode_generics();
 
@@ -341,6 +347,13 @@ impl Input {
       impl #impl_generics Encode for #name #ty_generics #where_clause {
         fn encode(&self, encoder: &mut Encoder) {
           self.#member.encode(encoder);
+        }
+
+        fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
+          Schema::Wrapper {
+            inner: <#ty as Encode>::schema(schemas),
+          }
+          .register(#schema_name, schemas)
         }
       }
     })
@@ -484,7 +497,7 @@ impl Input {
     Ok(variants)
   }
 
-  fn transparent_member(&self) -> Result<Member> {
+  fn transparent_field(&self) -> Result<&Field> {
     let fields = self.data.as_ref().take_struct().unwrap();
 
     if fields.fields.len() != 1 {
@@ -510,10 +523,7 @@ impl Input {
       }
     }
 
-    Ok(match fields.fields[0].ident() {
-      Some(ident) => Member::Named(ident.clone()),
-      None => Member::Unnamed(Index::from(0)),
-    })
+    Ok(fields.fields[0])
   }
 }
 
