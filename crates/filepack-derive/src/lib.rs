@@ -179,7 +179,7 @@ pub fn route(attribute: TokenStream, item: TokenStream) -> TokenStream {
 
     pub(crate) fn #route() -> Route {
       let mut endpoint = Endpoint::default();
-      #(<#types as Extractor>::annotate(&mut endpoint);)*
+      #(<#types as Extractor>::describe(&mut endpoint);)*
       Route {
         endpoint,
         method: axum::http::Method::#method,
