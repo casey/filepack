@@ -177,14 +177,9 @@ download:
 clear-server:
   rm ~/.filepack/database.redb
 
-build-book:
-  mdbook build book
-
-open-book:
-  open http://localhost:3000
-
-serve-book:
-  mdbook serve book --open
-
 watch-book:
-  cargo watch --clear --exec 'lrun --package generate' --shell 'mdbook build book'
+  #!/usr/bin/env bash
+  set -euo pipefail
+  mdbook serve book --open &
+  trap 'kill $!' EXIT
+  cargo watch --clear --exec 'lrun --package generate'
