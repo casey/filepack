@@ -180,12 +180,9 @@ impl Input {
   }
 
   fn decode_transparent(&self, attributes: &Attributes) -> Result<proc_macro2::TokenStream> {
-    let member = self.transparent_field()?.member();
+    self.transparent_field()?;
 
-    let constructor = match &member {
-      Member::Named(ident) => quote! { Self { #ident: Decode::decode(decoder)? } },
-      Member::Unnamed(_) => quote! { Self(Decode::decode(decoder)?) },
-    };
+    let constructor = quote! { Self(Decode::decode(decoder)?) };
 
     let body = if attributes.validate() {
       quote! {
@@ -331,11 +328,7 @@ impl Input {
   fn encode_transparent(&self) -> Result<proc_macro2::TokenStream> {
     let name = &self.ident;
 
-    let field = self.transparent_field()?;
-
-    let member = field.member();
-
-    let ty = field.ty();
+    let ty = self.transparent_field()?.ty();
 
     let schema_name = name.to_string();
 
@@ -346,7 +339,7 @@ impl Input {
     Ok(quote! {
       impl #impl_generics Encode for #name #ty_generics #where_clause {
         fn encode(&self, encoder: &mut Encoder) {
-          self.#member.encode(encoder);
+          self.0.encode(encoder);
         }
 
         fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
@@ -500,10 +493,10 @@ impl Input {
   fn transparent_field(&self) -> Result<&Field> {
     let fields = self.data.as_ref().take_struct().unwrap();
 
-    if fields.fields.len() != 1 {
+    if !fields.is_tuple() || fields.fields.len() != 1 {
       return Err(Error::new_spanned(
         &self.ident,
-        "`#[deco(transparent)]` can only be used on single-field structs",
+        "`#[deco(transparent)]` can only be used on newtype structs",
       ));
     }
 
@@ -669,7 +662,17 @@ mod tests {
           baz: u64,
         }
       },
-      "`#[deco(transparent)]` can only be used on single-field structs",
+      "`#[deco(transparent)]` can only be used on newtype structs",
+    );
+
+    case(
+      &syn::parse_quote! {
+        #[deco(transparent)]
+        struct Foo {
+          bar: u64,
+        }
+      },
+      "`#[deco(transparent)]` can only be used on newtype structs",
     );
 
     case(
