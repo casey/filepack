@@ -1,10 +1,12 @@
 /book/build
 /book/src/commands
+/book/src/commands.md
 /book/src/hex
 /book/src/hex.md
 /book/src/routes
 /book/src/routes.md
 /book/src/schemas
+/book/src/schemas.md
 /book/src/SUMMARY.md
 /flamegraph.svg
 /target

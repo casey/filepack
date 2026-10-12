@@ -138,3 +138,12 @@ A variant with discriminant 0 and two fields, field 1 with the value 1 and
 field 2 with the value 2, is encoded as `0x86008401010202`. If field 1 is
 optional and absent, the same variant is encoded as `0x8400820202`. If field 2
 were also optional and absent, the variant would be encoded as `0x00`.
+
+Schemas
+-------
+
+| schema |
+|--------|
+%% for name in self.schemas.keys() {
+| [{{ escape(name) }}](schemas/{{ name.to_kebab_case() }}.md) |
+%% }

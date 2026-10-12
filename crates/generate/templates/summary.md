@@ -1,5 +1,5 @@
 - [Commands](commands.md)
-%% for (name, path) in &self.commands {
+%% for (name, (_command, path)) in &self.commands {
   - [{{ name }}]({{ path }})
 %% }
 - [Routes](routes.md)

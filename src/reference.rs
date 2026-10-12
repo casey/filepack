@@ -2,6 +2,7 @@ use {super::*, clap::CommandFactory};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Command {
+  pub about: String,
   pub help: String,
   pub name: String,
   pub subcommands: BTreeMap<String, Command>,
@@ -10,6 +11,7 @@ pub struct Command {
 impl Command {
   fn new(command: &mut clap::Command) -> Self {
     Self {
+      about: command.get_about().unwrap().to_string(),
       help: command.render_long_help().to_string(),
       name: command.get_name().into(),
       subcommands: command
