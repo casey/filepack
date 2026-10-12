@@ -25,11 +25,21 @@ pub struct Reference {
   pub commands: Command,
   pub routes: BTreeMap<String, Route>,
   pub schemas: BTreeMap<String, Schema>,
-  pub tags: BTreeMap<String, String>,
+  pub tags: BTreeMap<String, Tag>,
 }
 
 impl Reference {
   pub fn new() -> Self {
+    fn tag<T: Hex>(schemas: &mut BTreeMap<String, Schema>, tags: &mut BTreeMap<String, Tag>) {
+      tags.insert(
+        T::TAG.prefix().into(),
+        Tag {
+          example: T::EXAMPLE.into(),
+          schema: T::schema(schemas),
+        },
+      );
+    }
+
     let mut command = Arguments::command();
 
     command.build();
@@ -100,20 +110,13 @@ impl Reference {
 
     let mut tags = BTreeMap::new();
 
-    for (tag, schema) in [
-      (Attestation::TAG, Attestation::schema(&mut schemas)),
-      (
-        DisplayPrivateKey::TAG,
-        DisplayPrivateKey::schema(&mut schemas),
-      ),
-      (Fingerprint::TAG, Fingerprint::schema(&mut schemas)),
-      (Hash::TAG, Hash::schema(&mut schemas)),
-      (PublicKey::TAG, PublicKey::schema(&mut schemas)),
-      (Revision::TAG, Revision::schema(&mut schemas)),
-      (Token::TAG, Token::schema(&mut schemas)),
-    ] {
-      tags.insert(tag.prefix().into(), schema);
-    }
+    tag::<Attestation>(&mut schemas, &mut tags);
+    tag::<DisplayPrivateKey>(&mut schemas, &mut tags);
+    tag::<Fingerprint>(&mut schemas, &mut tags);
+    tag::<Hash>(&mut schemas, &mut tags);
+    tag::<PublicKey>(&mut schemas, &mut tags);
+    tag::<Revision>(&mut schemas, &mut tags);
+    tag::<Token>(&mut schemas, &mut tags);
 
     Self {
       commands: Command::new(&mut command),
@@ -150,6 +153,12 @@ pub struct Route {
   pub parameters: Vec<String>,
 }
 
+#[derive(Debug, Deserialize, Serialize)]
+pub struct Tag {
+  pub example: String,
+  pub schema: String,
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
@@ -171,11 +180,17 @@ mod tests {
 
   #[test]
   fn tags() {
+    let tags = Reference::new().tags;
+
     assert_eq!(
-      Reference::new().tags.into_keys().collect::<Vec<String>>(),
-      Tag::iter()
+      tags.keys().cloned().collect::<Vec<String>>(),
+      tag::Tag::iter()
         .map(|tag| tag.prefix().into())
         .collect::<Vec<String>>(),
     );
+
+    for (prefix, tag) in tags {
+      assert!(tag.example.starts_with(&format!("{prefix}1")), "{prefix}");
+    }
   }
 }

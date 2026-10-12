@@ -67,7 +67,7 @@ mod tests {
         "http://example.com/".into(),
         ServerState {
           number: 1,
-          revision: test::REVISION.parse().unwrap(),
+          revision: Revision::EXAMPLE.parse().unwrap(),
         },
       )]),
     };
@@ -86,7 +86,7 @@ mod tests {
   }}
 }}
 "#,
-        test::REVISION,
+        Revision::EXAMPLE,
       ),
     );
 

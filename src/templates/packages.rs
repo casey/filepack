@@ -99,7 +99,7 @@ mod tests {
 
   #[test]
   fn list() {
-    let fingerprint = test::FINGERPRINT.parse::<Fingerprint>().unwrap();
+    let fingerprint = Fingerprint::EXAMPLE.parse::<Fingerprint>().unwrap();
 
     let metadata = Metadata {
       creator: Some("foo".parse().unwrap()),
@@ -171,7 +171,7 @@ mod tests {
             </tbody>
           </table>
         ",
-        fingerprint = test::FINGERPRINT,
+        fingerprint = Fingerprint::EXAMPLE,
         hash = Hash::from(fingerprint),
       )),
     );

@@ -573,7 +573,7 @@ mod tests {
       )
       .unwrap();
 
-    let private_key = test::PRIVATE_KEY.parse::<PrivateKey>().unwrap();
+    let private_key = DisplayPrivateKey::EXAMPLE.parse::<PrivateKey>().unwrap();
 
     let statement = Statement {
       fingerprint: Fingerprint::from_bytes([0; Fingerprint::LEN]),
@@ -684,7 +684,7 @@ mod tests {
 
     let fingerprint = Archive::pack(&manifest).unwrap().fingerprint().unwrap();
 
-    let private_key = test::PRIVATE_KEY.parse::<PrivateKey>().unwrap();
+    let private_key = DisplayPrivateKey::EXAMPLE.parse::<PrivateKey>().unwrap();
     let statement = Statement {
       fingerprint,
       timestamp: None,
@@ -709,7 +709,7 @@ mod tests {
 
     let package = builder.directory(&package).unwrap();
 
-    let public_key = test::PUBLIC_KEY.parse::<PublicKey>().unwrap();
+    let public_key = PublicKey::EXAMPLE.parse::<PublicKey>().unwrap();
 
     let statement = Statement {
       fingerprint: Fingerprint::from_bytes([0; Fingerprint::LEN]),
@@ -786,7 +786,7 @@ mod tests {
 
     let package = builder.directory(&Directory::new()).unwrap();
 
-    let private_key = test::PRIVATE_KEY.parse::<PrivateKey>().unwrap();
+    let private_key = DisplayPrivateKey::EXAMPLE.parse::<PrivateKey>().unwrap();
 
     let signature = builder.file(
       private_key
@@ -820,7 +820,7 @@ mod tests {
 
   #[test]
   fn signatures_are_named_by_hash() {
-    let private_key = test::PRIVATE_KEY.parse::<PrivateKey>().unwrap();
+    let private_key = DisplayPrivateKey::EXAMPLE.parse::<PrivateKey>().unwrap();
 
     let known = Decoded::Known(private_key.sign(Statement {
       fingerprint: Fingerprint::from_bytes([0; Fingerprint::LEN]),

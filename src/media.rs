@@ -170,7 +170,7 @@ mod tests {
     };
 
     for identifier in [
-      PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
+      PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
       PackageIdentifier::Number(1),
     ] {
       assert_eq!(

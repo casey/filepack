@@ -29,6 +29,6 @@ Tags
 
 | tag | type |
 |--------|------|
-%% for (tag, schema) in self.tags {
-| `{{ tag }}` | [{{ escape(schema) }}](schemas/{{ schema.to_kebab_case() }}.md) |
+%% for (prefix, tag) in self.tags {
+| [`{{ prefix }}`](hex/{{ prefix }}.md) | [{{ escape(&tag.schema) }}](schemas/{{ tag.schema.to_kebab_case() }}.md) |
 %% }

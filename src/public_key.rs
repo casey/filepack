@@ -82,6 +82,8 @@ impl Encode for PublicKey {
 }
 
 impl Hex for PublicKey {
+  const EXAMPLE: &'static str =
+    "public13b6a27bcceb6a42d62a3a8d02a6f0d73653215771de243a63ac048a18b59da29";
   const TAG: Tag = Tag::Public;
 }
 
@@ -100,6 +102,16 @@ impl PartialOrd for PublicKey {
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn example() {
+    assert_eq!(
+      PrivateKey::from([0; PrivateKey::LEN])
+        .public_key()
+        .to_string(),
+      PublicKey::EXAMPLE,
+    );
+  }
 
   #[test]
   fn non_canonical_public_keys_are_forbidden() {
@@ -142,7 +154,7 @@ mod tests {
 
   #[test]
   fn whitespace_is_not_trimmed_when_parsing_from_string() {
-    format!(" {}", test::PUBLIC_KEY)
+    format!(" {}", PublicKey::EXAMPLE)
       .parse::<PublicKey>()
       .unwrap_err();
   }
@@ -153,11 +165,11 @@ mod tests {
 
     let path = path.join("key");
 
-    filesystem::write(&path, format!(" \t{}\n", test::PUBLIC_KEY)).unwrap();
+    filesystem::write(&path, format!(" \t{}\n", PublicKey::EXAMPLE)).unwrap();
 
     assert_eq!(
       PublicKey::load(&path).unwrap().to_string(),
-      test::PUBLIC_KEY,
+      PublicKey::EXAMPLE,
     );
   }
 }

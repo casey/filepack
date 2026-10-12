@@ -48,6 +48,13 @@ impl PrivateKey {
   }
 }
 
+#[cfg(test)]
+impl From<[u8; PrivateKey::LEN]> for PrivateKey {
+  fn from(secret: [u8; PrivateKey::LEN]) -> Self {
+    Self(ed25519_dalek::SigningKey::from_bytes(&secret))
+  }
+}
+
 impl FromStr for PrivateKey {
   type Err = PrivateKeyError;
 
@@ -75,8 +82,8 @@ mod tests {
 
   #[test]
   fn private_key_begins_with_public_key() {
-    let prefix = format!("private1{}", &test::PUBLIC_KEY["public1".len()..]);
-    assert!(test::PRIVATE_KEY.starts_with(&prefix));
+    let prefix = format!("private1{}", &PublicKey::EXAMPLE["public1".len()..]);
+    assert!(DisplayPrivateKey::EXAMPLE.starts_with(&prefix));
   }
 
   #[test]
@@ -85,7 +92,7 @@ mod tests {
     let mismatched = format!(
       "private1{}{}",
       &other["public1".len()..],
-      &test::PRIVATE_KEY["private1".len() + 64..],
+      &DisplayPrivateKey::EXAMPLE["private1".len() + 64..],
     );
     assert_eq!(
       mismatched.parse::<PrivateKey>().unwrap_err().to_string(),
@@ -96,7 +103,7 @@ mod tests {
   #[test]
   fn serialized_private_key_is_not_valid_public_key() {
     assert_eq!(
-      test::PRIVATE_KEY
+      DisplayPrivateKey::EXAMPLE
         .parse::<PublicKey>()
         .unwrap_err()
         .to_string(),
@@ -106,7 +113,7 @@ mod tests {
 
   #[test]
   fn whitespace_is_not_trimmed_when_parsing_from_string() {
-    format!(" {}", test::PRIVATE_KEY)
+    format!(" {}", DisplayPrivateKey::EXAMPLE)
       .parse::<PrivateKey>()
       .unwrap_err();
   }
@@ -119,13 +126,13 @@ mod tests {
 
     let path = path.join("key");
 
-    filesystem::write(&path, format!(" \t{}\n", test::PRIVATE_KEY)).unwrap();
+    filesystem::write(&path, format!(" \t{}\n", DisplayPrivateKey::EXAMPLE)).unwrap();
 
     filesystem::chmod(&path, 0o600).unwrap();
 
     assert_eq!(
       PrivateKey::load(&path).unwrap(),
-      test::PRIVATE_KEY.parse().unwrap(),
+      DisplayPrivateKey::EXAMPLE.parse().unwrap(),
     );
   }
 }

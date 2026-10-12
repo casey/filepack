@@ -29,8 +29,8 @@ mod tests {
   #[test]
   fn encoding() {
     assert_encoding(RevisionObject {
-      package: test::FINGERPRINT.parse().unwrap(),
-      parents: Some(OrderedSet::singleton(test::REVISION.parse().unwrap())),
+      package: Fingerprint::EXAMPLE.parse().unwrap(),
+      parents: Some(OrderedSet::singleton(Revision::EXAMPLE.parse().unwrap())),
     });
   }
 
@@ -38,12 +38,12 @@ mod tests {
   fn hash() {
     assert_eq!(
       RevisionObject {
-        package: test::FINGERPRINT.parse().unwrap(),
+        package: Fingerprint::EXAMPLE.parse().unwrap(),
         parents: None,
       }
       .hash()
       .to_string(),
-      test::REVISION,
+      Revision::EXAMPLE,
     );
   }
 }

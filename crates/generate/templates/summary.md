@@ -11,3 +11,6 @@
   - [{{ escape(name) }}]({{ path }})
 %% }
 - [Tagged Hex](hex.md)
+%% for (prefix, path) in &self.tags {
+  - [{{ prefix }}]({{ path }})
+%% }

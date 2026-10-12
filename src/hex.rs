@@ -1,6 +1,7 @@
 use super::*;
 
 pub(crate) trait Hex: DecodeOwned + Encode {
+  const EXAMPLE: &'static str;
   const TAG: Tag;
 
   fn format(&self, f: &mut Formatter) -> fmt::Result {
@@ -175,19 +176,19 @@ mod tests {
   #[test]
   fn round_trip() {
     #[track_caller]
-    fn case<T: Display + FromStr>(s: &str)
+    fn case<T: Display + Hex + FromStr>()
     where
       T::Err: Debug,
     {
-      assert_eq!(s.parse::<T>().unwrap().to_string(), s);
+      assert_eq!(T::EXAMPLE.parse::<T>().unwrap().to_string(), T::EXAMPLE);
     }
 
-    case::<Attestation>(test::SIGNATURE);
-    case::<DisplayPrivateKey>(test::PRIVATE_KEY);
-    case::<Fingerprint>(test::FINGERPRINT);
-    case::<Hash>(test::HASH);
-    case::<PublicKey>(test::PUBLIC_KEY);
-    case::<Revision>(test::REVISION);
-    case::<Token>(test::TOKEN);
+    case::<Attestation>();
+    case::<DisplayPrivateKey>();
+    case::<Fingerprint>();
+    case::<Hash>();
+    case::<PublicKey>();
+    case::<Revision>();
+    case::<Token>();
   }
 }

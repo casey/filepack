@@ -7,7 +7,7 @@ The filepack server responds to the following API routes:
 |--------|------|
 %% for (path, route) in self.routes.iter().filter(|(_, route)| route.api) {
 %%   for method in route.methods.keys() {
-| {{ method }} | [`{{ path }}`]({{ self.pages[path] }}) |
+| {{ method }} | [`{{ path }}`]({{ self.pages[path.as_str()] }}) |
 %%   }
 %% }
 
@@ -17,6 +17,6 @@ And the following web routes:
 |--------|------|
 %% for (path, route) in self.routes.iter().filter(|(_, route)| !route.api) {
 %%   for method in route.methods.keys() {
-| {{ method }} | [`{{ path }}`]({{ self.pages[path] }}) |
+| {{ method }} | [`{{ path }}`]({{ self.pages[path.as_str()] }}) |
 %%   }
 %% }
