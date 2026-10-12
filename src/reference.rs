@@ -176,7 +176,6 @@ pub enum Request {
 #[serde(rename_all = "kebab-case")]
 pub enum Response {
   Deco { schema: Schema },
-  Dynamic,
   File,
   Html,
   Redirect,

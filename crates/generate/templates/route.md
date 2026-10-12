@@ -54,12 +54,6 @@ A deco-encoded value.
 
 {{ DefinitionMd { schema } }}
 %%       }
-%%       Response::Dynamic => {
-
-### Response Body
-
-Varies.
-%%       }
 %%       Response::File => {
 
 ### Response Body
