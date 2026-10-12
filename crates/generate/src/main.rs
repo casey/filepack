@@ -3,6 +3,7 @@ use {
   boilerplate::Boilerplate,
   camino::{Utf8Path, Utf8PathBuf},
   filepack::{Reference, Schema},
+  heck::ToKebabCase,
   std::{collections::BTreeMap, env, fs, iter},
 };
 
@@ -58,10 +59,10 @@ fn main() {
 
   let mut schemas = BTreeMap::new();
 
-  for (name, &schema) in &reference.schemas {
-    let relative = Utf8PathBuf::from(format!("schemas/{name}.md"));
+  for (name, schema) in &reference.schemas {
+    let relative = Utf8PathBuf::from(format!("schemas/{}.md", name.to_kebab_case()));
 
-    write(&src.join(&relative), &SchemaMd { schema }.to_string());
+    write(&src.join(&relative), &SchemaMd { name, schema }.to_string());
 
     schemas.insert(name.clone(), relative);
   }

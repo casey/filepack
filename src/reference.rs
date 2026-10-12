@@ -34,8 +34,17 @@ impl Reference {
 
     let mut schemas = BTreeMap::new();
 
+    AudioCodec::schema(&mut schemas);
+    AudioFormat::schema(&mut schemas);
+    ChromaSubsampling::schema(&mut schemas);
+    ColorType::schema(&mut schemas);
+    Context::schema(&mut schemas);
+    ImageFormat::schema(&mut schemas);
+    Rotation::schema(&mut schemas);
     String::schema(&mut schemas);
+    TrackCodec::schema(&mut schemas);
     Vec::<u8>::schema(&mut schemas);
+    VideoFormat::schema(&mut schemas);
     bool::schema(&mut schemas);
     i64::schema(&mut schemas);
     u64::schema(&mut schemas);
