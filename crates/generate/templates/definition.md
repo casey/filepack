@@ -12,7 +12,7 @@ A byte string of exactly {{ Count::new(*length, "byte") }}.
 An arbitrary byte string.
 %%     }
 %%   }
-%%   Schema::Enum { strict, variants } => {
+%%   Schema::Enum { variants } => {
 An enum with {{ Count::new(variants.len(), "variant") }}:
 
 | discriminant | variant |
@@ -23,10 +23,6 @@ An enum with {{ Count::new(variants.len(), "variant") }}:
 %%       } else {
 | {{ variant.n }} | [{{ variant.name }}](#{{ variant.name.to_lowercase() }}) |
 %%       }
-%%     }
-%%     if *strict {
-
-Unknown discriminants and fields are rejected.
 %%     }
 %%     for variant in variants {
 %%       if !variant.fields.is_empty() {

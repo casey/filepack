@@ -76,16 +76,10 @@ impl Input {
       .validate()
       .then(|| quote! { Validate::validate(&value)?; });
 
-    let array = if attributes.strict() {
-      quote!(strict_array)
-    } else {
-      quote!(array)
-    };
-
     Ok(quote! {
       #header {
         fn decode(decoder: &mut Decoder<'de>) -> DecodeResult<Self> {
-          let mut array = decoder.#array()?;
+          let mut array = decoder.array()?;
           let discriminant = array.element::<u64>()?;
           let value = match discriminant {
             #(#arms)*
@@ -211,7 +205,7 @@ impl Input {
     let attributes = self.parse_attributes()?;
 
     match self.data {
-      Data::Enum(_) => self.encode_enum(&attributes),
+      Data::Enum(_) => self.encode_enum(),
       Data::Struct(_) => {
         if attributes.transparent() {
           self.encode_transparent()
@@ -222,7 +216,7 @@ impl Input {
     }
   }
 
-  fn encode_enum(&self, attributes: &Attributes) -> Result<proc_macro2::TokenStream> {
+  fn encode_enum(&self) -> Result<proc_macro2::TokenStream> {
     let name = &self.ident;
 
     let variants = self.parse_variants()?;
@@ -258,8 +252,6 @@ impl Input {
       }
     });
 
-    let strict = attributes.strict();
-
     let generics = self.encode_generics();
 
     let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
@@ -276,7 +268,6 @@ impl Input {
 
         fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
           Schema::Enum {
-            strict: #strict,
             variants: vec![#(#schema_variants),*],
           }
           .register(&#schema_name, schemas)
@@ -437,12 +428,12 @@ impl Input {
 
           if self.data.is_enum() {
             match attribute {
-              ContainerAttribute::Transparent => {
+              ContainerAttribute::Strict | ContainerAttribute::Transparent => {
                 return Err(
                   meta.error(format!("`#[deco({attribute})]` cannot be used with enums")),
                 );
               }
-              ContainerAttribute::Strict | ContainerAttribute::Validate => {}
+              ContainerAttribute::Validate => {}
             }
           }
 
@@ -575,6 +566,14 @@ mod tests {
         struct Foo {}
       },
       "duplicate `#[deco(validate)]` attribute",
+    );
+
+    case(
+      &syn::parse_quote! {
+        #[deco(strict)]
+        enum Foo {}
+      },
+      "`#[deco(strict)]` cannot be used with enums",
     );
 
     case(

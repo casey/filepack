@@ -440,7 +440,6 @@ fn enum_schema() {
     BTreeMap::from([(
       "Foo".into(),
       Schema::Enum {
-        strict: false,
         variants: vec![
           schema::Variant {
             fields: vec![],
@@ -481,7 +480,6 @@ fn enum_schema_fields() {
       (
         "Foo".into(),
         Schema::Enum {
-          strict: false,
           variants: vec![
             schema::Variant {
               fields: vec![],
@@ -711,28 +709,10 @@ fn strict() {
     foo: u64,
   }
 
-  #[derive(Debug, Decode, PartialEq)]
-  #[deco(strict)]
-  enum Bar {
-    #[n(0)]
-    Baz {
-      #[n(1)]
-      foo: u64,
-    },
-  }
-
   let fields = with_unknown_field(BTreeMap::from([(1u64, 1u64)]));
 
   assert_matches!(
     Foo::decode_from_slice(&fields),
-    Err(DecodeError::Unknown {
-      source: UnknownError::Field { key: u64::MAX },
-      strict: true
-    }),
-  );
-
-  assert_matches!(
-    Bar::decode_from_slice(&Encoder::frame([vec![0], fields].concat())),
     Err(DecodeError::Unknown {
       source: UnknownError::Field { key: u64::MAX },
       strict: true
@@ -790,41 +770,20 @@ fn struct_schema_attributes() {
   #[deco(magic = MagicType::Archive, strict)]
   struct Foo {}
 
-  #[derive(Decode, Encode)]
-  #[deco(strict)]
-  enum Bar {
-    #[n(0)]
-    Baz,
-  }
-
   let mut schemas = BTreeMap::new();
 
-  Foo::schema(&mut schemas);
-  Bar::schema(&mut schemas);
+  assert_eq!(Foo::schema(&mut schemas), "Foo");
 
   assert_eq!(
     schemas,
-    BTreeMap::from([
-      (
-        "Bar".into(),
-        Schema::Enum {
-          strict: true,
-          variants: vec![schema::Variant {
-            fields: vec![],
-            n: 0,
-            name: "Baz".into(),
-          }],
-        },
-      ),
-      (
-        "Foo".into(),
-        Schema::Struct {
-          fields: vec![],
-          magic: Some("archive".into()),
-          strict: true,
-        },
-      ),
-    ]),
+    BTreeMap::from([(
+      "Foo".into(),
+      Schema::Struct {
+        fields: vec![],
+        magic: Some("archive".into()),
+        strict: true,
+      },
+    )]),
   );
 }
 
@@ -966,16 +925,6 @@ fn unknown_variants_scope() {
     foo: Option<T>,
   }
 
-  #[derive(Debug, Decode, PartialEq)]
-  #[deco(strict)]
-  enum Quux {
-    #[n(0)]
-    Foo {
-      #[n(1)]
-      foo: Option<Foo>,
-    },
-  }
-
   #[track_caller]
   fn unknown<T: Debug + DecodeOwned>(options: DecodeOptions, expected: bool, value: impl Encode) {
     assert_matches!(
@@ -996,11 +945,6 @@ fn unknown_variants_scope() {
   unknown::<Baz>(lenient, false, &fields);
   unknown::<Qux<Foo>>(lenient, true, &fields);
   unknown::<Bar<Qux<Foo>>>(lenient, true, BTreeMap::from([(1u64, &fields)]));
-  unknown::<Bar<Quux>>(
-    lenient,
-    true,
-    BTreeMap::from([(1u64, [vec![0], fields.encode_to_vec()].concat())]),
-  );
   unknown::<Qux<Bar<Foo>>>(lenient, true, BTreeMap::from([(1u64, &fields)]));
 
   let nested = BTreeMap::from([(1u64, vec![vec![1u64]])]);

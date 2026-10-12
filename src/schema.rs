@@ -19,7 +19,6 @@ pub enum Schema {
     length: Option<u64>,
   },
   Enum {
-    strict: bool,
     variants: Vec<Variant>,
   },
   Map {

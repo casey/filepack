@@ -99,6 +99,9 @@ field number to field value. Absent optional fields are omitted.
 Structs with `#[deco(strict)]` attribute reject unknown fields. Structs without
 the attribute ignore unknown fields.
 
+Non strict struct fields with type `Option<T>`, where `T` is an enum, are
+treated as absent if the encoded value is an unrecognized variant.
+
 Field 0 is reserved for versioning. If field 0 is present, decoding fails with
 an unsupported version error.
 
@@ -124,6 +127,8 @@ element, if present, is a struct containing the enum variant's fields.
 
 If all of a variant's fields are optional and absent, the second element is
 omitted entirely, rather than being encoded as an empty struct.
+
+Unknown enum fields are ignored.
 
 ### Examples
 
