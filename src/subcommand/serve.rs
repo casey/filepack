@@ -229,19 +229,19 @@ impl Serve {
   }
 
   async fn fallback(uri: Uri) -> Result<Response, PageError> {
-    if let Some(component) = uri.path().strip_prefix('/')
-      && !component.contains('/')
+    if let Some(segment) = uri.path().strip_prefix('/')
+      && !segment.contains('/')
     {
-      if component.starts_with(|c: char| c.is_ascii_digit()) {
-        let number = parse_number::<u64>(component).context(server_error::NumberParse)?;
+      if segment.starts_with(|c: char| c.is_ascii_digit()) {
+        let number = parse_number::<u64>(segment).context(server_error::NumberParse)?;
         return Ok(Redirect::permanent(&format!("/package/{number}")).into_response());
-      } else if component.starts_with(Tag::Package.prefix()) {
-        let fingerprint = component
+      } else if segment.starts_with(Tag::Package.prefix()) {
+        let fingerprint = segment
           .parse::<Fingerprint>()
           .context(server_error::FingerprintParse)?;
         return Ok(Redirect::permanent(&format!("/package/{fingerprint}")).into_response());
-      } else if component.starts_with(Tag::Revision.prefix()) {
-        let revision = component
+      } else if segment.starts_with(Tag::Revision.prefix()) {
+        let revision = segment
           .parse::<Revision>()
           .context(server_error::RevisionParse)?;
         return Ok(Redirect::permanent(&format!("/package/{revision}")).into_response());
