@@ -23,6 +23,11 @@ pub(crate) struct SummaryMd {
 }
 
 #[derive(Boilerplate)]
+pub(crate) struct RoutesMd<'a> {
+  pub(crate) routes: &'a BTreeMap<String, BTreeSet<String>>,
+}
+
+#[derive(Boilerplate)]
 pub(crate) struct SchemaMd<'a> {
   pub(crate) name: &'a str,
   pub(crate) schema: &'a Schema,

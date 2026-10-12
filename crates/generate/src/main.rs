@@ -1,10 +1,13 @@
 use {
-  self::templates::{CommandMd, HexMd, SchemaMd, SummaryMd},
+  self::templates::{CommandMd, HexMd, RoutesMd, SchemaMd, SummaryMd},
   boilerplate::Boilerplate,
   camino::{Utf8Path, Utf8PathBuf},
   filepack::{Count, Reference, Schema, schema},
   heck::ToKebabCase,
-  std::{collections::BTreeMap, env, fs, iter},
+  std::{
+    collections::{BTreeMap, BTreeSet},
+    env, fs, iter,
+  },
 };
 
 mod templates;
@@ -79,6 +82,14 @@ fn main() {
     &src.join("hex.md"),
     &HexMd {
       tags: &reference.tags,
+    }
+    .to_string(),
+  );
+
+  write(
+    &src.join("routes.md"),
+    &RoutesMd {
+      routes: &reference.routes,
     }
     .to_string(),
   );

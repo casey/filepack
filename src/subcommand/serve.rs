@@ -6,7 +6,6 @@ use {
     http::{HeaderValue, Uri},
     middleware::{self, Next},
     response::{IntoResponse, Redirect, Response},
-    routing::{delete, get, head, post},
   },
   axum_server::Handle,
   hyper_util::rt::TokioTimer,
@@ -22,7 +21,7 @@ use {
   tower_http::set_header::SetResponseHeaderLayer,
 };
 
-mod route;
+pub(crate) mod route;
 #[cfg(test)]
 mod tests;
 
@@ -229,6 +228,28 @@ impl Serve {
     domains
   }
 
+  async fn fallback(uri: Uri) -> Result<Response, PageError> {
+    if let Some(component) = uri.path().strip_prefix('/')
+      && !component.contains('/')
+    {
+      if component.starts_with(|c: char| c.is_ascii_digit()) {
+        let number = parse_number::<u64>(component).context(server_error::NumberParse)?;
+        return Ok(Redirect::permanent(&format!("/package/{number}")).into_response());
+      } else if component.starts_with(Tag::Package.prefix()) {
+        let fingerprint = component
+          .parse::<Fingerprint>()
+          .context(server_error::FingerprintParse)?;
+        return Ok(Redirect::permanent(&format!("/package/{fingerprint}")).into_response());
+      } else if component.starts_with(Tag::Revision.prefix()) {
+        let revision = component
+          .parse::<Revision>()
+          .context(server_error::RevisionParse)?;
+        return Ok(Redirect::permanent(&format!("/package/{revision}")).into_response());
+      }
+    }
+    Err(ServerError::PageNotFound.into())
+  }
+
   fn http_port(&self) -> Option<u16> {
     if self.redirect_http_to_https
       || self.http
@@ -271,7 +292,6 @@ impl Serve {
     })))
   }
 
-  #[allow(clippy::unused_async_trait_impl)]
   async fn redirect_http_to_https(redirect_config: RedirectConfigExtension, uri: Uri) -> Redirect {
     Redirect::permanent(redirect_config.with_path_and_query(&uri).as_str())
   }
@@ -325,72 +345,12 @@ impl Serve {
     redirect_config: Option<Arc<RedirectConfig>>,
     server_config: Arc<ServerConfig>,
   ) -> Router {
-    let router = Router::new()
-      .route("/", get(route::home))
-      .route("/api/directory/{hash}", post(route::api_verify_directory))
-      .route(
-        "/api/file/{hash}",
-        get(route::api_file).put(route::api_upload_file),
-      )
-      .route("/api/gc", post(route::api_gc))
-      .route("/api/head/{revision}", head(route::api_head))
-      .route("/api/missing", post(route::api_missing))
-      .route(
-        "/api/number/{number}",
-        delete(route::api_delete_number).get(route::api_number),
-      )
-      .route("/api/numbers", get(route::api_numbers))
-      .route(
-        "/api/package/{fingerprint}",
-        post(route::api_verify_package).head(route::api_package),
-      )
-      .route("/api/packages", get(route::api_packages))
-      .route("/api/revision/{revision}", post(route::api_verify_revision))
-      .route("/artwork/{fingerprint}", get(route::artwork))
-      .route(
-        "/artwork/{fingerprint}/thumbnail",
-        get(route::artwork_thumbnail),
-      )
-      .route("/directory/{hash}", get(route::directory))
-      .route("/favicon.ico", get(route::favicon))
-      .route("/file/{hash}", get(route::api_file))
-      .route("/file/{hash}/{*path}", get(route::file_with_path))
-      .route("/files", get(route::files))
-      .route("/install.sh", get(route::install_script))
-      .route(
-        "/media/audio/{fingerprint}/item/{item}",
-        get(route::media_audio_item),
-      )
-      .route(
-        "/media/image/{fingerprint}/item/{item}",
-        get(route::media_image_item),
-      )
-      .route(
-        "/media/image/{fingerprint}/item/{item}/thumbnail",
-        get(route::media_image_item_thumbnail),
-      )
-      .route(
-        "/media/video/{fingerprint}/item/{item}",
-        get(route::media_video_item),
-      )
-      .route(
-        "/media/video/{fingerprint}/item/{item}/placeholder",
-        get(route::media_video_item_placeholder),
-      )
-      .route(
-        "/media/video/{fingerprint}/item/{item}/placeholder/thumbnail",
-        get(route::media_video_item_placeholder_thumbnail),
-      )
-      .route("/mount/{fingerprint}", get(route::mount_redirect))
-      .route("/mount/{fingerprint}/", get(route::mount))
-      .route("/mount/{fingerprint}/{*path}", get(route::mount_file))
-      .route("/package/{package}", get(route::package))
-      .route("/package/{package}/history", get(route::package_history))
-      .route("/package/{package}/item/{item}", get(route::package_item))
-      .route("/package/{package}/media", get(route::package_media))
-      .route("/packages", get(route::packages))
-      .route("/static/{*path}", get(route::static_asset))
-      .fallback(route::fallback)
+    let router = Route::all()
+      .into_iter()
+      .fold(Router::new(), |router, entry| {
+        router.route(entry.path, entry.router)
+      })
+      .fallback(Self::fallback)
       .layer(Extension(server))
       .layer(Extension(server_config))
       .layer(middleware::from_fn(Self::api_version_layer))

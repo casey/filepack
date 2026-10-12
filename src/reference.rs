@@ -23,6 +23,7 @@ impl Command {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Reference {
   pub commands: Command,
+  pub routes: BTreeMap<String, BTreeSet<String>>,
   pub schemas: BTreeMap<String, Schema>,
   pub tags: BTreeMap<String, String>,
 }
@@ -32,6 +33,15 @@ impl Reference {
     let mut command = Arguments::command();
 
     command.build();
+
+    let mut routes = BTreeMap::<String, BTreeSet<String>>::new();
+
+    for route in Route::all() {
+      routes
+        .entry(route.path.into())
+        .or_default()
+        .insert(route.method.to_string());
+    }
 
     let mut schemas = BTreeMap::new();
 
@@ -97,6 +107,7 @@ impl Reference {
 
     Self {
       commands: Command::new(&mut command),
+      routes,
       schemas,
       tags,
     }
