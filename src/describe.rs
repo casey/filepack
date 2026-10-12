@@ -1,0 +1,66 @@
+use {
+  super::*,
+  axum::{
+    extract::{Extension, Path, Query},
+    response::Redirect,
+  },
+  axum_extra::TypedHeader,
+};
+
+pub(crate) trait Describe {
+  fn describe(endpoint: &mut reference::Endpoint, schemas: &mut BTreeMap<String, Schema>);
+}
+
+impl Describe for () {
+  fn describe(_endpoint: &mut reference::Endpoint, _schemas: &mut BTreeMap<String, Schema>) {}
+}
+
+impl Describe for Body {
+  fn describe(endpoint: &mut reference::Endpoint, _schemas: &mut BTreeMap<String, Schema>) {
+    endpoint.request = Some(reference::Request::Bytes);
+  }
+}
+
+impl<T> Describe for Extension<T> {
+  fn describe(_endpoint: &mut reference::Endpoint, _schemas: &mut BTreeMap<String, Schema>) {}
+}
+
+impl<T: Describe> Describe for Option<T> {
+  fn describe(endpoint: &mut reference::Endpoint, schemas: &mut BTreeMap<String, Schema>) {
+    T::describe(endpoint, schemas);
+  }
+}
+
+impl<T: PathExtractor> Describe for Path<T> {
+  fn describe(endpoint: &mut reference::Endpoint, _schemas: &mut BTreeMap<String, Schema>) {
+    endpoint.parameters.extend(T::parameters());
+  }
+}
+
+impl<T> Describe for Query<T> {
+  fn describe(_endpoint: &mut reference::Endpoint, _schemas: &mut BTreeMap<String, Schema>) {}
+}
+
+impl Describe for Redirect {
+  fn describe(endpoint: &mut reference::Endpoint, _schemas: &mut BTreeMap<String, Schema>) {
+    endpoint.response = Some(reference::Response::Redirect);
+  }
+}
+
+impl Describe for Response {
+  fn describe(endpoint: &mut reference::Endpoint, _schemas: &mut BTreeMap<String, Schema>) {
+    endpoint.response = Some(reference::Response::Dynamic);
+  }
+}
+
+impl<T: Describe, E> Describe for Result<T, E> {
+  fn describe(endpoint: &mut reference::Endpoint, schemas: &mut BTreeMap<String, Schema>) {
+    T::describe(endpoint, schemas);
+  }
+}
+
+impl Describe for TypedHeader<headers::Range> {
+  fn describe(endpoint: &mut reference::Endpoint, _schemas: &mut BTreeMap<String, Schema>) {
+    endpoint.range = true;
+  }
+}

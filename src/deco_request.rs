@@ -19,7 +19,7 @@ impl<T: DecodeOwned, S: Send + Sync, const LIMIT: usize> FromRequest<S> for Deco
   }
 }
 
-impl<T: Encode, const LIMIT: usize> Extractor for DecoRequest<T, LIMIT> {
+impl<T: Encode, const LIMIT: usize> Describe for DecoRequest<T, LIMIT> {
   fn describe(endpoint: &mut reference::Endpoint, schemas: &mut BTreeMap<String, Schema>) {
     let name = T::schema(schemas);
 

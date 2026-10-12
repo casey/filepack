@@ -131,3 +131,9 @@ impl IntoResponse for Resource {
     )
   }
 }
+
+impl Describe for Resource {
+  fn describe(endpoint: &mut reference::Endpoint, _schemas: &mut BTreeMap<String, Schema>) {
+    endpoint.response = Some(reference::Response::File);
+  }
+}

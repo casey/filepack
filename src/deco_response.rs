@@ -7,3 +7,13 @@ impl<T: Encode> IntoResponse for DecoResponse<T> {
     self.0.encode_to_vec().into_response()
   }
 }
+
+impl<T: Encode> Describe for DecoResponse<T> {
+  fn describe(endpoint: &mut reference::Endpoint, schemas: &mut BTreeMap<String, Schema>) {
+    let name = T::schema(schemas);
+
+    let schema = schemas.remove(&name).unwrap();
+
+    endpoint.response = Some(reference::Response::Deco { schema });
+  }
+}

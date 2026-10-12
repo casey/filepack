@@ -12,7 +12,7 @@ use {
   strum::{Display, EnumString},
   syn::{
     Attribute, DeriveInput, Error, FnArg, GenericArgument, Generics, Ident, ItemFn, LitInt, LitStr,
-    Path, PathArguments, Result, Token, Type, TypeParamBound, TypePath,
+    Path, PathArguments, Result, ReturnType, Token, Type, TypeParamBound, TypePath,
     meta::ParseNestedMeta,
     parse::{Parse, ParseBuffer, ParseStream},
   },
@@ -174,12 +174,18 @@ pub fn route(attribute: TokenStream, item: TokenStream) -> TokenStream {
     }
   }
 
+  let output = match &item.sig.output {
+    ReturnType::Default => syn::parse_quote!(()),
+    ReturnType::Type(_, ty) => (**ty).clone(),
+  };
+
   quote! {
     #item
 
     pub(crate) fn #route(schemas: &mut BTreeMap<String, Schema>) -> Route {
       let mut endpoint = crate::reference::Endpoint::default();
-      #(<#types as Extractor>::describe(&mut endpoint, schemas);)*
+      #(<#types as Describe>::describe(&mut endpoint, schemas);)*
+      <#output as Describe>::describe(&mut endpoint, schemas);
       Route {
         endpoint,
         method: axum::http::Method::#method,

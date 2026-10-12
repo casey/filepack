@@ -44,6 +44,12 @@ impl<T: Page> PageHtml<T> {
   }
 }
 
+impl<T: Page> Describe for PageHtml<T> {
+  fn describe(endpoint: &mut reference::Endpoint, _schemas: &mut BTreeMap<String, Schema>) {
+    endpoint.response = Some(reference::Response::Html);
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use {super::*, pretty_assertions::assert_eq};

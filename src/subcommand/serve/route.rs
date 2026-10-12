@@ -653,5 +653,52 @@ mod tests {
 
     assert!(!schemas.contains_key("Request"));
     assert!(schemas.contains_key("SortedSet<Hash>"));
+
+    assert_eq!(
+      api_numbers_route(&mut schemas).endpoint.response,
+      Some(crate::reference::Response::Deco {
+        schema: Schema::Struct {
+          fields: vec![schema::Field {
+            n: 1,
+            name: "numbers".into(),
+            optional: false,
+            schema: "SortedSet<UnsignedInteger>".into(),
+          }],
+        },
+      }),
+    );
+
+    assert_eq!(
+      api_delete_number_route(&mut schemas).endpoint.response,
+      None,
+    );
+
+    assert_eq!(
+      api_file_route(&mut schemas).endpoint.response,
+      Some(crate::reference::Response::File),
+    );
+
+    assert_eq!(
+      home_route(&mut schemas).endpoint.response,
+      Some(crate::reference::Response::Html),
+    );
+
+    assert_eq!(
+      favicon_route(&mut schemas).endpoint.response,
+      Some(crate::reference::Response::Static),
+    );
+
+    assert_eq!(
+      mount_redirect_route(&mut schemas).endpoint.response,
+      Some(crate::reference::Response::Redirect),
+    );
+
+    assert_eq!(
+      file_with_path_route(&mut schemas).endpoint.response,
+      Some(crate::reference::Response::Dynamic),
+    );
+
+    assert!(!schemas.contains_key("Response"));
+    assert!(schemas.contains_key("SortedSet<UnsignedInteger>"));
   }
 }

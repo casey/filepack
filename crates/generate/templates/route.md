@@ -44,5 +44,47 @@ An arbitrary byte string.
 %%       }
 %%     }
 %%   }
+%%   if let Some(response) = &endpoint.response {
+%%     match response {
+%%       Response::Deco { schema } => {
+
+### Response Body
+
+A deco-encoded value.
+
+{{ DefinitionMd { schema } }}
+%%       }
+%%       Response::Dynamic => {
+
+### Response Body
+
+Varies.
+%%       }
+%%       Response::File => {
+
+### Response Body
+
+The contents of a file.
+%%       }
+%%       Response::Html => {
+
+### Response Body
+
+An HTML page.
+%%       }
+%%       Response::Redirect => {
+
+### Response Body
+
+A redirect.
+%%       }
+%%       Response::Static => {
+
+### Response Body
+
+A static asset.
+%%       }
+%%     }
+%%   }
 
 %% }
