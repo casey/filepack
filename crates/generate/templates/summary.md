@@ -3,6 +3,9 @@
   - [{{ name }}]({{ path }})
 %% }
 - [Routes](routes.md)
+%% for (path, relative) in &self.routes {
+  - [{{ escape(path) }}]({{ relative }})
+%% }
 - [Schemas](schemas.md)
 %% for (name, path) in &self.schemas {
   - [{{ escape(name) }}]({{ path }})

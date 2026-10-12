@@ -19,6 +19,10 @@ impl<T: DecodeOwned, S: Send + Sync, const LIMIT: usize> FromRequest<S> for Deco
   }
 }
 
+impl<T, const LIMIT: usize> Extractor for DecoRequest<T, LIMIT> {
+  fn annotate(_endpoint: &mut Endpoint) {}
+}
+
 #[cfg(test)]
 mod tests {
   use {super::*, tokio::runtime::Runtime};
