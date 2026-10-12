@@ -47,6 +47,13 @@ where
     }
     map.finish();
   }
+
+  fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
+    let key = K::schema(schemas);
+    let value = V::schema(schemas);
+    let name = format!("Map<{key}, {value}>");
+    Schema::Map { key, value }.register(&name, schemas)
+  }
 }
 
 impl Encode for bool {
@@ -82,6 +89,12 @@ impl Encode for Vec<u8> {
 impl<T: Encode> Encode for Vec<T> {
   fn encode(&self, encoder: &mut Encoder) {
     self.as_slice().encode(encoder);
+  }
+
+  fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
+    let element = T::schema(schemas);
+    let name = format!("Array<{element}>");
+    Schema::Array { element }.register(&name, schemas)
   }
 }
 
@@ -138,6 +151,26 @@ mod tests {
   }
 
   #[test]
+  fn array_schema() {
+    let mut schemas = BTreeMap::new();
+
+    assert_eq!(Vec::<u64>::schema(&mut schemas), "Array<UnsignedInteger>");
+
+    assert_eq!(
+      schemas,
+      BTreeMap::from([
+        (
+          "Array<UnsignedInteger>".into(),
+          Schema::Array {
+            element: "UnsignedInteger".into(),
+          },
+        ),
+        ("UnsignedInteger".into(), Schema::UnsignedInteger),
+      ]),
+    );
+  }
+
+  #[test]
   fn boolean() {
     assert_deco(false, "00");
     assert_deco(true, "01");
@@ -178,6 +211,31 @@ mod tests {
     assert_deco(
       BTreeMap::from([("bar".to_string(), 1u64), ("foo".to_string(), 2u64)]),
       "8a836261720183666f6f02",
+    );
+  }
+
+  #[test]
+  fn map_schema() {
+    let mut schemas = BTreeMap::new();
+
+    assert_eq!(
+      BTreeMap::<String, u64>::schema(&mut schemas),
+      "Map<String, UnsignedInteger>"
+    );
+
+    assert_eq!(
+      schemas,
+      BTreeMap::from([
+        (
+          "Map<String, UnsignedInteger>".into(),
+          Schema::Map {
+            key: "String".into(),
+            value: "UnsignedInteger".into(),
+          },
+        ),
+        ("String".into(), Schema::String),
+        ("UnsignedInteger".into(), Schema::UnsignedInteger),
+      ]),
     );
   }
 

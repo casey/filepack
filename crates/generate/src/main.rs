@@ -9,8 +9,12 @@ use {
 
 mod templates;
 
+pub(crate) fn escape(name: &str) -> String {
+  name.replace('<', "\\<").replace('>', "\\>")
+}
+
 pub(crate) fn link(name: &str) -> String {
-  format!("[{name}]({}.md)", name.to_kebab_case())
+  format!("[{}]({}.md)", escape(name), name.to_kebab_case())
 }
 
 fn main() {

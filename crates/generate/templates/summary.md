@@ -4,5 +4,5 @@
 %% }
 - [Schemas](schemas.md)
 %% for (name, path) in &self.schemas {
-  - [{{ name }}]({{ path }})
+  - [{{ escape(name) }}]({{ path }})
 %% }
