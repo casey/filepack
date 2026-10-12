@@ -17,7 +17,7 @@ impl Input {
     let attributes = self.parse_attributes()?;
 
     match self.data {
-      Data::Enum(_) => self.decode_enum(&attributes),
+      Data::Enum(_) => self.decode_enum(),
       Data::Struct(_) => {
         if attributes.transparent() {
           self.decode_transparent(&attributes)
@@ -28,7 +28,7 @@ impl Input {
     }
   }
 
-  fn decode_enum(&self, attributes: &Attributes) -> Result<proc_macro2::TokenStream> {
+  fn decode_enum(&self) -> Result<proc_macro2::TokenStream> {
     let name = &self.ident;
 
     let type_name = display_name(name);
@@ -70,11 +70,7 @@ impl Input {
       }
     });
 
-    let header = self.decode_header(attributes);
-
-    let validate = attributes
-      .validate()
-      .then(|| quote! { Validate::validate(&value)?; });
+    let header = self.decode_header(false);
 
     Ok(quote! {
       #header {
@@ -88,7 +84,6 @@ impl Input {
               name: #type_name,
             })),
           };
-          #validate
           array.finish()?;
           Ok(value)
         }
@@ -96,7 +91,7 @@ impl Input {
     })
   }
 
-  fn decode_header(&self, attributes: &Attributes) -> proc_macro2::TokenStream {
+  fn decode_header(&self, validate: bool) -> proc_macro2::TokenStream {
     let mut header_generics = self.generics(syn::parse_quote!(Decode<'de>));
 
     header_generics.params.insert(0, syn::parse_quote!('de));
@@ -108,7 +103,7 @@ impl Input {
       predicates.push(syn::parse_quote!('de: #lifetime));
     }
 
-    if attributes.validate() {
+    if validate {
       predicates.push(syn::parse_quote!(Self: Validate));
     }
 
@@ -140,7 +135,7 @@ impl Input {
       }
     };
 
-    let header = self.decode_header(attributes);
+    let header = self.decode_header(attributes.validate());
 
     let magic = attributes
       .magic()
@@ -190,7 +185,7 @@ impl Input {
       }
     };
 
-    let header = self.decode_header(attributes);
+    let header = self.decode_header(attributes.validate());
 
     Ok(quote! {
       #header {
@@ -427,14 +422,7 @@ impl Input {
           }
 
           if self.data.is_enum() {
-            match attribute {
-              ContainerAttribute::Strict | ContainerAttribute::Transparent => {
-                return Err(
-                  meta.error(format!("`#[deco({attribute})]` cannot be used with enums")),
-                );
-              }
-              ContainerAttribute::Validate => {}
-            }
+            return Err(meta.error(format!("`#[deco({attribute})]` cannot be used with enums")));
           }
 
           if !flags.insert(attribute) {
@@ -582,6 +570,14 @@ mod tests {
         enum Foo {}
       },
       "`#[deco(transparent)]` cannot be used with enums",
+    );
+
+    case(
+      &syn::parse_quote! {
+        #[deco(validate)]
+        enum Foo {}
+      },
+      "`#[deco(validate)]` cannot be used with enums",
     );
 
     case(

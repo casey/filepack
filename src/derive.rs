@@ -958,16 +958,9 @@ fn unknown_variants_scope() {
 #[test]
 fn unknown_variants_validate() {
   #[derive(Debug, Decode, PartialEq)]
-  #[deco(validate)]
   enum Foo {
     #[n(0)]
     Bar,
-  }
-
-  impl Validate for Foo {
-    fn validate(&self) -> Result<(), MalformedError> {
-      Err(MalformedError::UnexpectedKey)
-    }
   }
 
   #[derive(Debug, Decode, PartialEq)]
@@ -987,10 +980,6 @@ fn unknown_variants_validate() {
   assert_matches!(
     Bar::decode_from_slice(&with_unknown_field(BTreeMap::from([(1u64, vec![1u64])]))),
     Err(DecodeError::Malformed(MalformedError::MissingElement)),
-  );
-  assert_matches!(
-    Bar::decode_strict(&BTreeMap::from([(1u64, vec![0u64])]).encode_to_vec()),
-    Err(DecodeError::Malformed(MalformedError::UnexpectedKey)),
   );
 }
 
@@ -1065,46 +1054,6 @@ fn validate() {
 
   assert_matches!(
     Foo::decode_strict(&"bar".encode_to_vec()),
-    Err(DecodeError::Malformed(MalformedError::UnexpectedValue {
-      actual,
-      expected: "foo",
-    })) if actual == "bar",
-  );
-}
-
-#[test]
-fn validate_enum() {
-  #[derive(Debug, Encode, Decode, PartialEq)]
-  #[deco(validate)]
-  enum Foo {
-    #[n(0)]
-    Bar {
-      #[n(1)]
-      baz: String,
-    },
-  }
-
-  impl Validate for Foo {
-    fn validate(&self) -> Result<(), MalformedError> {
-      let Self::Bar { baz } = self;
-      ensure!(
-        baz == "foo",
-        malformed_error::UnexpectedValue {
-          actual: baz.clone(),
-          expected: "foo",
-        }
-      );
-      Ok(())
-    }
-  }
-
-  assert_deco(Foo::Bar { baz: "foo".into() }, "8700850183666f6f");
-
-  let fields = BTreeMap::from([(1u64, "bar")]).encode_to_vec();
-  let bytes = Encoder::frame([vec![0], fields].concat());
-
-  assert_matches!(
-    Foo::decode_strict(&bytes),
     Err(DecodeError::Malformed(MalformedError::UnexpectedValue {
       actual,
       expected: "foo",

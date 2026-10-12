@@ -92,12 +92,6 @@ impl<'a> Decode<'a> for &'a [u8] {
   }
 }
 
-impl<'a> Decode<'a> for &'a str {
-  fn decode(decoder: &mut Decoder<'a>) -> DecodeResult<Self> {
-    decoder.text()
-  }
-}
-
 impl<const N: usize> Decode<'_> for [u8; N] {
   fn decode(decoder: &mut Decoder) -> DecodeResult<Self> {
     decoder.byte_array()
@@ -132,14 +126,6 @@ mod tests {
     assert_eq!(
       <&[u8]>::decode_strict(&[0x82, 0x01, 0x02]).unwrap(),
       [0x01, 0x02],
-    );
-  }
-
-  #[test]
-  fn borrowed_str() {
-    assert_eq!(
-      <&str>::decode_strict(&[0x83, 0x66, 0x6f, 0x6f]).unwrap(),
-      "foo",
     );
   }
 
