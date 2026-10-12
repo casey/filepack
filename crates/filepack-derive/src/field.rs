@@ -13,13 +13,6 @@ impl Field {
     self.attrs.iter().find(|attr| attr.path().is_ident("deco"))
   }
 
-  pub(crate) fn member(&self) -> Member {
-    match &self.ident {
-      Some(ident) => Member::Named(ident.clone()),
-      None => Member::Unnamed(Index::from(0)),
-    }
-  }
-
   pub(crate) fn n_attribute(&self) -> Option<&Attribute> {
     self.attrs.iter().find(|attr| attr.path().is_ident("n"))
   }

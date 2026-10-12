@@ -748,18 +748,6 @@ fn struct_schema() {
 }
 
 #[test]
-fn transparent_named() {
-  #[derive(Debug, Encode, Decode, PartialEq)]
-  #[deco(transparent)]
-  struct Foo {
-    bar: String,
-  }
-
-  assert_deco(Foo { bar: "foo".into() }, "83666f6f");
-  assert_deco_eq(Foo { bar: "foo".into() }, "foo");
-}
-
-#[test]
 fn transparent_newtype() {
   #[derive(Debug, Encode, Decode, PartialEq)]
   #[deco(transparent)]
