@@ -1,6 +1,7 @@
 use {
   super::*,
   axum::{http::Method, routing::MethodRouter},
+  axum_extra::either::Either,
 };
 
 pub(crate) struct Route {
@@ -246,19 +247,15 @@ pub(crate) async fn file_with_path(
   server: ServerExtension,
   Path((hash, path)): Path<(Hash, RelativePath)>,
   range: Option<TypedHeader<headers::Range>>,
-) -> ServerResult<Response> {
+) -> ServerResult<Either<Resource, Redirect>> {
   block_in_place(|| {
     let Some(resource_type) = ResourceType::from_filename(path.filename()) else {
-      return Ok(Redirect::temporary(&format!("/file/{hash}")).into_response());
+      return Ok(Either::E2(Redirect::temporary(&format!("/file/{hash}"))));
     };
 
-    Ok(
-      server
-        .open_file(hash)?
-        .ty(resource_type)
-        .range(range)
-        .into_response(),
-    )
+    Ok(Either::E1(
+      server.open_file(hash)?.ty(resource_type).range(range),
+    ))
   })
 }
 
@@ -695,7 +692,7 @@ mod tests {
 
     assert_eq!(
       file_with_path_route(&mut schemas).endpoint.response,
-      Some(crate::reference::Response::Dynamic),
+      Some(crate::reference::Response::File),
     );
 
     assert!(!schemas.contains_key("Response"));

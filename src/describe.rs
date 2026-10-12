@@ -4,7 +4,7 @@ use {
     extract::{Extension, Path, Query},
     response::Redirect,
   },
-  axum_extra::TypedHeader,
+  axum_extra::{TypedHeader, either::Either},
 };
 
 pub(crate) trait Describe {
@@ -47,9 +47,9 @@ impl Describe for Redirect {
   }
 }
 
-impl Describe for Response {
-  fn describe(endpoint: &mut reference::Endpoint, _schemas: &mut BTreeMap<String, Schema>) {
-    endpoint.response = Some(reference::Response::Dynamic);
+impl<E1: Describe, E2> Describe for Either<E1, E2> {
+  fn describe(endpoint: &mut reference::Endpoint, schemas: &mut BTreeMap<String, Schema>) {
+    E1::describe(endpoint, schemas);
   }
 }
 
