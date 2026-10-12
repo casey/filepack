@@ -44,7 +44,7 @@ impl<S: Send + Sync> FromRequestParts<S> for Authenticated {
 }
 
 impl Extractor for Authenticated {
-  fn describe(endpoint: &mut Endpoint) {
+  fn describe(endpoint: &mut reference::Endpoint) {
     endpoint.authenticated = true;
   }
 }

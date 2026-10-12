@@ -135,6 +135,7 @@ use {
     package_summary::PackageSummary,
     page_error::PageError,
     path_error::PathError,
+    path_extractor::PathExtractor,
     percent_encode::PercentEncode,
     private_key_error::PrivateKeyError,
     progress_bar::ProgressBar,
@@ -293,7 +294,6 @@ pub use self::{
   png_builder::PngBuilder,
   private_key::PrivateKey,
   public_key::PublicKey,
-  reference::Endpoint,
   reference::Reference,
   revision_object::RevisionObject,
   schema::Schema,
@@ -453,6 +453,7 @@ mod package_summary;
 mod page;
 mod page_error;
 mod path_error;
+mod path_extractor;
 mod percent_encode;
 mod png_builder;
 mod private_key;
@@ -461,7 +462,7 @@ mod progress_bar;
 mod public_key;
 mod public_key_error;
 mod re;
-mod reference;
+pub mod reference;
 mod relative_path;
 mod reqwest_response_ext;
 mod resolved;

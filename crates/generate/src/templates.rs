@@ -8,7 +8,7 @@ pub(crate) struct CommandMd<'a> {
 
 #[derive(Boilerplate)]
 pub(crate) struct FieldsMd<'a> {
-  pub(crate) fields: &'a [schema::Field],
+  pub(crate) fields: &'a [Field],
 }
 
 #[derive(Boilerplate)]
@@ -18,14 +18,14 @@ pub(crate) struct HexMd<'a> {
 
 #[derive(Boilerplate)]
 pub(crate) struct RouteMd<'a> {
-  pub(crate) methods: &'a BTreeMap<String, Endpoint>,
   pub(crate) path: &'a str,
+  pub(crate) route: &'a Route,
 }
 
 #[derive(Boilerplate)]
 pub(crate) struct RoutesMd<'a> {
   pub(crate) pages: &'a BTreeMap<String, Utf8PathBuf>,
-  pub(crate) routes: &'a BTreeMap<String, BTreeMap<String, Endpoint>>,
+  pub(crate) routes: &'a BTreeMap<String, Route>,
 }
 
 #[derive(Boilerplate)]

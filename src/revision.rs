@@ -99,6 +99,12 @@ impl redb::Value for Revision {
   }
 }
 
+impl PathExtractor for Revision {
+  fn parameters() -> Vec<reference::Parameter> {
+    vec![reference::Parameter::Revision]
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;

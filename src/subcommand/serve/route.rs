@@ -4,7 +4,7 @@ use {
 };
 
 pub(crate) struct Route {
-  pub(crate) endpoint: Endpoint,
+  pub(crate) endpoint: crate::reference::Endpoint,
   pub(crate) method: Method,
   pub(crate) path: &'static str,
   pub(crate) router: MethodRouter,
@@ -610,5 +610,18 @@ mod tests {
   fn endpoint() {
     assert!(api_gc_route().endpoint.authenticated);
     assert!(!api_file_route().endpoint.authenticated);
+
+    assert_eq!(
+      api_file_route().endpoint.parameters,
+      [crate::reference::Parameter::Hash]
+    );
+
+    assert_eq!(
+      media_audio_item_route().endpoint.parameters,
+      [
+        crate::reference::Parameter::Fingerprint,
+        crate::reference::Parameter::Ordinal
+      ],
+    );
   }
 }

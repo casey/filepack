@@ -23,7 +23,7 @@ impl Command {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Reference {
   pub commands: Command,
-  pub routes: BTreeMap<String, BTreeMap<String, Endpoint>>,
+  pub routes: BTreeMap<String, Route>,
   pub schemas: BTreeMap<String, Schema>,
   pub tags: BTreeMap<String, String>,
 }
@@ -34,12 +34,22 @@ impl Reference {
 
     command.build();
 
-    let mut routes = BTreeMap::<String, BTreeMap<String, Endpoint>>::new();
+    let mut routes = BTreeMap::<String, Route>::new();
 
-    for route in Route::all() {
+    for route in subcommand::serve::route::Route::all() {
       routes
         .entry(route.path.into())
-        .or_default()
+        .or_insert_with(|| Route {
+          api: route.path.starts_with("/api/"),
+          methods: BTreeMap::new(),
+          parameters: route
+            .path
+            .split('/')
+            .filter_map(|segment| segment.strip_prefix('{'))
+            .map(|name| name.trim_start_matches('*').trim_end_matches('}').into())
+            .collect(),
+        })
+        .methods
         .insert(route.method.to_string(), route.endpoint);
     }
 
@@ -117,11 +127,47 @@ impl Reference {
 #[derive(Debug, Default, Deserialize, Serialize)]
 pub struct Endpoint {
   pub authenticated: bool,
+  pub parameters: Vec<Parameter>,
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum Parameter {
+  Fingerprint,
+  Hash,
+  Integer,
+  Ordinal,
+  PackageIdentifier,
+  RelativePath,
+  Revision,
+  String,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct Route {
+  pub api: bool,
+  pub methods: BTreeMap<String, Endpoint>,
+  pub parameters: Vec<String>,
 }
 
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn parameters() {
+    for (path, route) in Reference::new().routes {
+      for endpoint in route.methods.values() {
+        assert_eq!(endpoint.parameters.len(), route.parameters.len(), "{path}");
+      }
+
+      let mut parameters = route.methods.values().map(|endpoint| &endpoint.parameters);
+
+      let first = parameters.next().unwrap();
+
+      assert!(parameters.all(|parameters| parameters == first), "{path}");
+    }
+  }
 
   #[test]
   fn tags() {
