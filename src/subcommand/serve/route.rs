@@ -669,6 +669,8 @@ mod tests {
             optional: false,
             schema: "SortedSet<Hash>".into(),
           }],
+          magic: None,
+          strict: false,
         },
       }),
     );
@@ -686,6 +688,8 @@ mod tests {
             optional: false,
             schema: "SortedSet<UnsignedInteger>".into(),
           }],
+          magic: None,
+          strict: false,
         },
       }),
     );

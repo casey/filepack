@@ -440,6 +440,7 @@ fn enum_schema() {
     BTreeMap::from([(
       "Foo".into(),
       Schema::Enum {
+        strict: false,
         variants: vec![
           schema::Variant {
             fields: vec![],
@@ -480,6 +481,7 @@ fn enum_schema_fields() {
       (
         "Foo".into(),
         Schema::Enum {
+          strict: false,
           variants: vec![
             schema::Variant {
               fields: vec![],
@@ -617,6 +619,8 @@ fn generic_schema() {
             optional: false,
             schema: "UnsignedInteger".into(),
           }],
+          magic: None,
+          strict: false,
         },
       ),
       ("UnsignedInteger".into(), Schema::UnsignedInteger),
@@ -771,9 +775,55 @@ fn struct_schema() {
               schema: "Boolean".into(),
             },
           ],
+          magic: None,
+          strict: false,
         },
       ),
       ("UnsignedInteger".into(), Schema::UnsignedInteger),
+    ]),
+  );
+}
+
+#[test]
+fn struct_schema_attributes() {
+  #[derive(Encode, Magic)]
+  #[deco(magic = MagicType::Archive, strict)]
+  struct Foo {}
+
+  #[derive(Decode, Encode)]
+  #[deco(strict)]
+  enum Bar {
+    #[n(0)]
+    Baz,
+  }
+
+  let mut schemas = BTreeMap::new();
+
+  Foo::schema(&mut schemas);
+  Bar::schema(&mut schemas);
+
+  assert_eq!(
+    schemas,
+    BTreeMap::from([
+      (
+        "Bar".into(),
+        Schema::Enum {
+          strict: true,
+          variants: vec![schema::Variant {
+            fields: vec![],
+            n: 0,
+            name: "Baz".into(),
+          }],
+        },
+      ),
+      (
+        "Foo".into(),
+        Schema::Struct {
+          fields: vec![],
+          magic: Some("archive".into()),
+          strict: true,
+        },
+      ),
     ]),
   );
 }

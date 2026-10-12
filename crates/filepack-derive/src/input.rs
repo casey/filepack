@@ -211,7 +211,7 @@ impl Input {
     let attributes = self.parse_attributes()?;
 
     match self.data {
-      Data::Enum(_) => self.encode_enum(),
+      Data::Enum(_) => self.encode_enum(&attributes),
       Data::Struct(_) => {
         if attributes.transparent() {
           self.encode_transparent()
@@ -222,7 +222,7 @@ impl Input {
     }
   }
 
-  fn encode_enum(&self) -> Result<proc_macro2::TokenStream> {
+  fn encode_enum(&self, attributes: &Attributes) -> Result<proc_macro2::TokenStream> {
     let name = &self.ident;
 
     let variants = self.parse_variants()?;
@@ -258,6 +258,8 @@ impl Input {
       }
     });
 
+    let strict = attributes.strict();
+
     let generics = self.encode_generics();
 
     let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
@@ -274,6 +276,7 @@ impl Input {
 
         fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
           Schema::Enum {
+            strict: #strict,
             variants: vec![#(#schema_variants),*],
           }
           .register(&#schema_name, schemas)
@@ -298,9 +301,17 @@ impl Input {
       .is_some()
       .then(|| quote! { encoder.magic(<Self as Magic>::TYPE); });
 
+    let schema_magic = if attributes.magic().is_some() {
+      quote! { Some(<Self as Magic>::TYPE.to_string()) }
+    } else {
+      quote! { None }
+    };
+
     let schema_name = self.schema_name();
 
     let schema_fields = ParsedField::schema(&fields);
+
+    let strict = attributes.strict();
 
     let generics = self.encode_generics();
 
@@ -318,6 +329,8 @@ impl Input {
         fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
           Schema::Struct {
             fields: vec![#(#schema_fields),*],
+            magic: #schema_magic,
+            strict: #strict,
           }
           .register(&#schema_name, schemas)
         }

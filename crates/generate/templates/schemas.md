@@ -96,9 +96,11 @@ Structs
 Structs are encoded as maps from [UnsignedInteger](schemas/unsigned-integer.md)
 field number to field value. Absent optional fields are omitted.
 
-Field 0 is reserved for versioning, and a non-absent field 0 is treated as an
-error, with an error message suggesting that the encoded data may have been
-produced by a newer version of filepack.
+Structs with `#[deco(strict)]` attribute reject unknown fields. Structs without
+the attribute ignore unknown fields.
+
+Field 0 is reserved for versioning. If field 0 is present, decoding fails with
+an unsupported version error.
 
 ### Examples
 

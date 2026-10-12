@@ -12,7 +12,7 @@ A byte string of exactly {{ Count::new(*length, "byte") }}.
 An arbitrary byte string.
 %%     }
 %%   }
-%%   Schema::Enum { variants } => {
+%%   Schema::Enum { strict, variants } => {
 An enum with {{ Count::new(variants.len(), "variant") }}:
 
 | discriminant | variant |
@@ -23,6 +23,10 @@ An enum with {{ Count::new(variants.len(), "variant") }}:
 %%       } else {
 | {{ variant.n }} | [{{ variant.name }}](#{{ variant.name.to_lowercase() }}) |
 %%       }
+%%     }
+%%     if *strict {
+
+Unknown discriminants and fields are rejected.
 %%     }
 %%     for variant in variants {
 %%       if !variant.fields.is_empty() {
@@ -43,10 +47,20 @@ A signed 64-bit integer. First zig-zag encoded, then encoded as an
 %%   Schema::String => {
 A string. Encoded as a byte string containing the UTF-8 encoding of the string.
 %%   }
-%%   Schema::Struct { fields } => {
+%%   Schema::Struct { fields, magic, strict } => {
 A struct with {{ Count::new(fields.len(), "field") }}:
 
 {{ FieldsMd { fields } }}
+%%     if let Some(magic) = magic {
+
+The value is encoded with magic bytes consisting of the deco encoded byte
+string `filepack\0`, followed by the deco encoded byte string `{{ magic }}`,
+followed by the encoded value.
+%%     }
+%%     if *strict {
+
+Unknown fields are rejected.
+%%     }
 %%   }
 %%   Schema::UnsignedInteger => {
 An unsigned 64-bit integer. Encoded as little endian with trailing zero bytes
