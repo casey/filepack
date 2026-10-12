@@ -244,7 +244,7 @@ impl Input {
       }
     });
 
-    let schema_name = name.to_string();
+    let schema_name = self.schema_name();
 
     let schema_variants = variants.iter().map(|ParsedVariant { fields, ident, n }| {
       let fields = ParsedField::schema(fields);
@@ -276,7 +276,7 @@ impl Input {
           Schema::Enum {
             variants: vec![#(#schema_variants),*],
           }
-          .register(#schema_name, schemas)
+          .register(&#schema_name, schemas)
         }
       }
     })
@@ -298,7 +298,7 @@ impl Input {
       .is_some()
       .then(|| quote! { encoder.magic(<Self as Magic>::TYPE); });
 
-    let schema_name = name.to_string();
+    let schema_name = self.schema_name();
 
     let schema_fields = ParsedField::schema(&fields);
 
@@ -319,7 +319,7 @@ impl Input {
           Schema::Struct {
             fields: vec![#(#schema_fields),*],
           }
-          .register(#schema_name, schemas)
+          .register(&#schema_name, schemas)
         }
       }
     })
@@ -330,7 +330,7 @@ impl Input {
 
     let ty = self.transparent_field()?.ty();
 
-    let schema_name = name.to_string();
+    let schema_name = self.schema_name();
 
     let generics = self.encode_generics();
 
@@ -346,7 +346,7 @@ impl Input {
           Schema::Wrapper {
             inner: <#ty as Encode>::schema(schemas),
           }
-          .register(#schema_name, schemas)
+          .register(&#schema_name, schemas)
         }
       }
     })
@@ -488,6 +488,23 @@ impl Input {
     validate_numbers(0, variants.iter().map(|variant| (variant.ident, variant.n)))?;
 
     Ok(variants)
+  }
+
+  fn schema_name(&self) -> proc_macro2::TokenStream {
+    let name = self.ident.to_string();
+
+    let params = self
+      .generics
+      .type_params()
+      .map(|param| &param.ident)
+      .collect::<Vec<&Ident>>();
+
+    if params.is_empty() {
+      quote! { String::from(#name) }
+    } else {
+      let pattern = format!("{name}<{}>", vec!["{}"; params.len()].join(", "));
+      quote! { format!(#pattern, #(<#params as Encode>::schema(schemas)),*) }
+    }
   }
 
   fn transparent_field(&self) -> Result<&Field> {
