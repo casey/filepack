@@ -49,15 +49,31 @@ impl Reference {
     for route in subcommand::serve::route::Route::all() {
       routes
         .entry(route.path.into())
-        .or_insert_with(|| Route {
-          api: route.path.starts_with("/api/"),
-          methods: BTreeMap::new(),
-          parameters: route
-            .path
-            .split('/')
-            .filter_map(|segment| segment.strip_prefix('{'))
-            .map(|name| name.trim_start_matches('*').trim_end_matches('}').into())
-            .collect(),
+        .or_insert_with(|| {
+          let mut parameters = Vec::new();
+          let mut wildcard = false;
+
+          for segment in route.path.split('/') {
+            let Some(name) = segment.strip_prefix('{') else {
+              continue;
+            };
+
+            let name = if let Some(name) = name.strip_prefix('*') {
+              wildcard = true;
+              name
+            } else {
+              name
+            };
+
+            parameters.push(name.strip_suffix('}').unwrap().into());
+          }
+
+          Route {
+            api: route.path.starts_with("/api/"),
+            methods: BTreeMap::new(),
+            parameters,
+            wildcard,
+          }
         })
         .methods
         .insert(route.method.to_string(), route.endpoint);
@@ -151,6 +167,7 @@ pub struct Route {
   pub api: bool,
   pub methods: BTreeMap<String, Endpoint>,
   pub parameters: Vec<String>,
+  pub wildcard: bool,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -166,6 +183,8 @@ mod tests {
   #[test]
   fn parameters() {
     for (path, route) in Reference::new().routes {
+      assert_eq!(route.wildcard, path.contains("{*"), "{path}");
+
       for endpoint in route.methods.values() {
         assert_eq!(endpoint.parameters.len(), route.parameters.len(), "{path}");
       }
