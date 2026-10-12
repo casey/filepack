@@ -230,6 +230,13 @@ impl Encode for Language {
   fn encode(&self, encoder: &mut Encoder) {
     self.0.encode(encoder);
   }
+
+  fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
+    Schema::Wrapper {
+      inner: String::schema(schemas),
+    }
+    .register("Language", schemas)
+  }
 }
 
 #[cfg(test)]

@@ -149,6 +149,35 @@ fn encode_display() {
 }
 
 #[test]
+fn encode_display_schema() {
+  #[derive(EncodeDisplay)]
+  struct Foo;
+
+  impl Display for Foo {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+      write!(f, "foo")
+    }
+  }
+
+  let mut schemas = BTreeMap::new();
+
+  assert_eq!(Foo::schema(&mut schemas), "Foo");
+
+  assert_eq!(
+    schemas,
+    BTreeMap::from([
+      (
+        "Foo".into(),
+        Schema::Wrapper {
+          inner: "String".into(),
+        },
+      ),
+      ("String".into(), Schema::String),
+    ]),
+  );
+}
+
+#[test]
 fn enum_added_optional_field() {
   #[derive(Debug, Decode, Encode, PartialEq)]
   enum Foo {
@@ -738,6 +767,30 @@ fn transparent_newtype() {
 
   assert_deco(Foo(99), "63");
   assert_deco_eq(Foo(99), 99u64);
+}
+
+#[test]
+fn transparent_schema() {
+  #[derive(Decode, Encode)]
+  #[deco(transparent)]
+  struct Foo(u64);
+
+  let mut schemas = BTreeMap::new();
+
+  assert_eq!(Foo::schema(&mut schemas), "Foo");
+
+  assert_eq!(
+    schemas,
+    BTreeMap::from([
+      (
+        "Foo".into(),
+        Schema::Wrapper {
+          inner: "UnsignedInteger".into(),
+        },
+      ),
+      ("UnsignedInteger".into(), Schema::UnsignedInteger),
+    ]),
+  );
 }
 
 #[test]

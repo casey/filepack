@@ -34,17 +34,34 @@ impl Reference {
 
     let mut schemas = BTreeMap::new();
 
+    Application::schema(&mut schemas);
+    Audio::schema(&mut schemas);
     AudioCodec::schema(&mut schemas);
     AudioFormat::schema(&mut schemas);
+    CheckedUrl::schema(&mut schemas);
     ChromaSubsampling::schema(&mut schemas);
     Claims::schema(&mut schemas);
     ColorType::schema(&mut schemas);
+    ComponentBuf::schema(&mut schemas);
     Context::schema(&mut schemas);
     Dimensions::schema(&mut schemas);
+    Ed25519Signature::schema(&mut schemas);
+    Entry::schema(&mut schemas);
+    EntryInfo::schema(&mut schemas);
+    Fingerprint::schema(&mut schemas);
+    Hash::schema(&mut schemas);
+    Image::schema(&mut schemas);
     ImageFormat::schema(&mut schemas);
+    Language::schema(&mut schemas);
     Orientation::schema(&mut schemas);
+    PackageMetadata::schema(&mut schemas);
+    PublicKey::schema(&mut schemas);
+    RelativePath::schema(&mut schemas);
+    Revision::schema(&mut schemas);
     Rotation::schema(&mut schemas);
+    Statement::schema(&mut schemas);
     String::schema(&mut schemas);
+    Text::schema(&mut schemas);
     Time::schema(&mut schemas);
     Totals::schema(&mut schemas);
     Track::schema(&mut schemas);

@@ -90,10 +90,19 @@ pub fn encode_display(input: TokenStream) -> TokenStream {
 
   let name = &input.ident;
 
+  let schema_name = name.to_string();
+
   quote! {
     impl Encode for #name {
       fn encode(&self, encoder: &mut Encoder) {
         self.to_string().encode(encoder);
+      }
+
+      fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
+        Schema::Wrapper {
+          inner: <String as Encode>::schema(schemas),
+        }
+        .register(#schema_name, schemas)
       }
     }
   }

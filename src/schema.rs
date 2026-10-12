@@ -12,12 +12,13 @@ pub struct Field {
 #[serde(rename_all = "kebab-case")]
 pub enum Schema {
   Boolean,
-  Bytes,
+  Bytes { length: Option<u64> },
   Enum { variants: Vec<Variant> },
   SignedInteger,
   String,
   Struct { fields: Vec<Field> },
   UnsignedInteger,
+  Wrapper { inner: String },
 }
 
 impl Schema {
@@ -62,6 +63,6 @@ mod tests {
     let mut schemas = BTreeMap::new();
 
     Schema::Boolean.register("Foo", &mut schemas);
-    Schema::Bytes.register("Foo", &mut schemas);
+    Schema::Bytes { length: None }.register("Foo", &mut schemas);
   }
 }

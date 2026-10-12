@@ -75,7 +75,7 @@ impl Encode for Vec<u8> {
   }
 
   fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
-    Schema::Bytes.register("Bytes", schemas)
+    Schema::Bytes { length: None }.register("Bytes", schemas)
   }
 }
 
