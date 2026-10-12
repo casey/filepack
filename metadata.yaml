@@ -1,6 +1,6 @@
 title: filepack
 creator: Casey Rodarmor
-description: A file verification utility.
+description: Content-addressed packages.
 homepage: https://filepack.com
 language: en
 readme: README.md

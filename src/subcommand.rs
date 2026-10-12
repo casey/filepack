@@ -41,7 +41,8 @@ const TIMESTAMP_HELP: &str = "Include current time in signature";
 #[derive(Parser)]
 #[command(
   version,
-  about = "🗄️ file verification utility - https://github.com/casey/filepack",
+  about = "Content-addressed packages",
+  long_about = "Content-addressed packages - https://github.com/casey/filepack",
   styles = Styles::styled()
     .header(AnsiColor::Green.on_default() | Effects::BOLD)
     .usage(AnsiColor::Green.on_default() | Effects::BOLD)
