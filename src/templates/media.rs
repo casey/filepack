@@ -68,12 +68,12 @@ mod tests {
   #[test]
   fn media() {
     for identifier in [
-      PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
+      PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
       PackageIdentifier::Number(1),
     ] {
       assert_eq!(
         MediaHtml {
-          fingerprint: test::FINGERPRINT.parse().unwrap(),
+          fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
           identifier,
           metadata: Metadata {
             media: Some(Media::Image {
@@ -161,7 +161,7 @@ mod tests {
             </div>
           </dl>
         ",
-          fingerprint = test::FINGERPRINT,
+          fingerprint = Fingerprint::EXAMPLE,
         )),
       );
     }
@@ -170,12 +170,12 @@ mod tests {
   #[test]
   fn up() {
     for identifier in [
-      PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
+      PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
       PackageIdentifier::Number(1),
     ] {
       assert_eq!(
         MediaHtml {
-          fingerprint: test::FINGERPRINT.parse().unwrap(),
+          fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
           identifier,
           number: Some(1),
           ..default()

@@ -51,6 +51,11 @@ impl Claims {
 
 impl Message for Claims {
   const CONTEXT: Context = Context::Claims;
+  const EXAMPLE: &'static str = concat!(
+    "token101a03b6a27bcceb6a42d62a3a8d02a6f0d73653215771de243a63ac048a18b59da290290018c66696c6570",
+    "61636b2e636f6d020003c086fe820f47ef0c349617059f30b3adf4a13ffd6a3217782dfeabbe99fc905742dfc12b",
+    "ea0ab7dca5dfc05580041ce942c3417dd1a28d5640a9de8cf9daca640f",
+  );
   const TAG: Tag = Tag::Token;
   type Error = AuthorizationError;
   type Policy<'a> = Policy<'a>;
@@ -89,6 +94,18 @@ mod tests {
   use super::*;
 
   const AUDIENCE: &str = "foo";
+
+  #[test]
+  fn example() {
+    let private_key = PrivateKey::from([0; PrivateKey::LEN]);
+
+    let claims = Claims {
+      audience: "filepack.com".into(),
+      timestamp: 0,
+    };
+
+    assert_eq!(private_key.sign(claims).to_string(), Token::EXAMPLE);
+  }
 
   #[test]
   fn expired() {
@@ -139,11 +156,11 @@ mod tests {
 
   #[test]
   fn tampered_claims() {
-    let public_key = test::PUBLIC_KEY.parse::<PublicKey>().unwrap();
-    Claims::verify(public_key, Some(AUDIENCE), 0, test::TOKEN).unwrap();
-    let token = test::TOKEN.replacen("666f6f", "666f70", 1);
+    let public_key = PublicKey::EXAMPLE.parse::<PublicKey>().unwrap();
+    Claims::verify(public_key, Some("filepack.com"), 0, Token::EXAMPLE).unwrap();
+    let token = Token::EXAMPLE.replacen("66696c657061636b2e636f6d", "66696c657061636b2e636f6e", 1);
     assert_matches!(
-      Claims::verify(public_key, Some("fop"), 0, &token).unwrap_err(),
+      Claims::verify(public_key, Some("filepack.con"), 0, &token).unwrap_err(),
       AuthorizationError::Signature {
         source: SignatureError::Invalid { public_key: signer, .. },
       } if signer == public_key,
@@ -164,6 +181,7 @@ mod tests {
 
     impl Message for Extra {
       const CONTEXT: Context = Context::Claims;
+      const EXAMPLE: &'static str = "";
       const TAG: Tag = Tag::Token;
       type Error = AuthorizationError;
       type Policy<'a> = ();

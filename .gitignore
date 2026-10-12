@@ -1,5 +1,6 @@
 /book/build
 /book/src/commands
+/book/src/hex
 /book/src/hex.md
 /book/src/routes
 /book/src/routes.md

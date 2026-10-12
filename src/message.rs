@@ -2,6 +2,7 @@ use super::*;
 
 pub trait Message: DecodeOwned + Encode + Eq + Ord {
   const CONTEXT: Context;
+  const EXAMPLE: &'static str;
   const TAG: Tag;
   type Error: From<SignatureError>;
   type Policy<'a>;
@@ -34,6 +35,7 @@ mod tests {
 
     impl Message for Impostor {
       const CONTEXT: Context = Context::Claims;
+      const EXAMPLE: &'static str = "";
       const TAG: Tag = Tag::Token;
       type Error = AuthorizationError;
       type Policy<'a> = ();
@@ -53,6 +55,7 @@ mod tests {
 
     impl Message for Twin {
       const CONTEXT: Context = Context::Statement;
+      const EXAMPLE: &'static str = "";
       const TAG: Tag = Tag::Signature;
       type Error = Error;
       type Policy<'a> = ();
@@ -62,22 +65,22 @@ mod tests {
       }
     }
 
-    let private_key = test::PRIVATE_KEY.parse::<PrivateKey>().unwrap();
-    let public_key = test::PUBLIC_KEY.parse::<PublicKey>().unwrap();
-    let fingerprint = test::FINGERPRINT.parse::<Fingerprint>().unwrap();
+    let private_key = DisplayPrivateKey::EXAMPLE.parse::<PrivateKey>().unwrap();
+    let public_key = PublicKey::EXAMPLE.parse::<PublicKey>().unwrap();
+    let fingerprint = Fingerprint::EXAMPLE.parse::<Fingerprint>().unwrap();
 
     assert_eq!(
       private_key
         .sign(Twin {
           fingerprint,
-          timestamp: None,
+          timestamp: Some(0),
         })
         .to_string(),
-      test::SIGNATURE,
+      Attestation::EXAMPLE,
     );
 
     assert_matches!(
-      test::SIGNATURE
+      Attestation::EXAMPLE
         .replacen("signature1", "token1", 1)
         .parse::<Signature<Impostor>>()
         .unwrap()

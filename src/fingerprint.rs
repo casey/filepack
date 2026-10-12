@@ -43,6 +43,9 @@ impl Display for Fingerprint {
 }
 
 impl Hex for Fingerprint {
+  const EXAMPLE: &'static str =
+    "package1af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262";
+
   const TAG: Tag = Tag::Package;
 }
 
@@ -115,6 +118,14 @@ impl PathExtractor for Fingerprint {
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn example() {
+    assert_eq!(
+      Fingerprint(Hash::bytes(b"")).to_string(),
+      Fingerprint::EXAMPLE
+    );
+  }
 
   #[test]
   fn redb() {

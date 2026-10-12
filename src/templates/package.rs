@@ -175,8 +175,8 @@ mod tests {
 
     assert_eq!(
       PackageHtml {
-        fingerprint: test::FINGERPRINT.parse().unwrap(),
-        identifier: PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
+        fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
+        identifier: PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
         metadata: Some(metadata),
         number: Some(1),
         totals: Totals {
@@ -255,8 +255,8 @@ mod tests {
             </li>
           </ol>
         ",
-        fingerprint = test::FINGERPRINT,
-        hash = test::HASH,
+        fingerprint = Fingerprint::EXAMPLE,
+        hash = Hash::EXAMPLE,
       )),
     );
   }
@@ -286,8 +286,8 @@ mod tests {
 
     assert_eq!(
       PackageHtml {
-        fingerprint: test::FINGERPRINT.parse().unwrap(),
-        identifier: PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
+        fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
+        identifier: PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
         metadata: Some(metadata),
         number: Some(1),
         totals: Totals {
@@ -366,8 +366,8 @@ mod tests {
             </li>
           </ol>
         ",
-        fingerprint = test::FINGERPRINT,
-        hash = test::HASH,
+        fingerprint = Fingerprint::EXAMPLE,
+        hash = Hash::EXAMPLE,
       )),
     );
   }
@@ -430,8 +430,8 @@ mod tests {
 
     assert_eq!(
       PackageHtml {
-        fingerprint: test::FINGERPRINT.parse().unwrap(),
-        identifier: PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
+        fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
+        identifier: PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
         metadata: Some(metadata),
         number: Some(1),
         totals: Totals {
@@ -527,8 +527,8 @@ mod tests {
             </li>
           </ul>
         "#,
-        fingerprint = test::FINGERPRINT,
-        hash = test::HASH,
+        fingerprint = Fingerprint::EXAMPLE,
+        hash = Hash::EXAMPLE,
       )),
     );
   }
@@ -556,15 +556,15 @@ mod tests {
 
     assert_eq!(
       PackageHtml {
-        fingerprint: test::FINGERPRINT.parse().unwrap(),
+        fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
         identifier: PackageIdentifier::Number(1),
         metadata: Some(metadata),
         number: Some(1),
         parents: vec![
-          test::REVISION.parse().unwrap(),
+          Revision::EXAMPLE.parse().unwrap(),
           Revision::from(Hash::bytes(b"foo")),
         ],
-        revision: Some(test::REVISION.parse().unwrap()),
+        revision: Some(Revision::EXAMPLE.parse().unwrap()),
         revisions: Some(2),
         totals: Totals {
           directories: 0,
@@ -666,10 +666,10 @@ mod tests {
             </li>
           </ol>
         ",
-        fingerprint = test::FINGERPRINT,
-        hash = test::HASH,
+        fingerprint = Fingerprint::EXAMPLE,
+        hash = Hash::EXAMPLE,
         merge = Revision::from(Hash::bytes(b"foo")),
-        revision = test::REVISION,
+        revision = Revision::EXAMPLE,
       )),
     );
   }
@@ -677,7 +677,7 @@ mod tests {
   #[test]
   fn navigation() {
     let mut html = PackageHtml {
-      fingerprint: test::FINGERPRINT.parse().unwrap(),
+      fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
       identifier: PackageIdentifier::Number(2),
       next: Some(3),
       number: Some(2),
@@ -699,8 +699,8 @@ mod tests {
   #[test]
   fn open_graph_metadata() {
     let html = PackageHtml {
-      fingerprint: test::FINGERPRINT.parse().unwrap(),
-      identifier: PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
+      fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
+      identifier: PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
       metadata: Some(Metadata {
         artwork: Some(Image {
           alpha: false,
@@ -732,7 +732,7 @@ mod tests {
           height: 2,
           width: 1,
         },
-        path: format!("artwork/{}", test::FINGERPRINT),
+        path: format!("artwork/{}", Fingerprint::EXAMPLE),
       }),
     );
 
@@ -767,13 +767,13 @@ mod tests {
           height: 3,
           width: 4,
         },
-        path: format!("artwork/{}/thumbnail", test::FINGERPRINT),
+        path: format!("artwork/{}/thumbnail", Fingerprint::EXAMPLE),
       }),
     );
 
     let html = PackageHtml {
-      fingerprint: test::FINGERPRINT.parse().unwrap(),
-      identifier: PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
+      fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
+      identifier: PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
       number: Some(1),
       ..default()
     };
@@ -803,13 +803,13 @@ mod tests {
 
     assert_eq!(
       PackageHtml {
-        colophon: Some(test::HASH.parse().unwrap()),
+        colophon: Some(Hash::EXAMPLE.parse().unwrap()),
         directory,
-        fingerprint: test::FINGERPRINT.parse().unwrap(),
-        identifier: PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
+        fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
+        identifier: PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
         metadata: Some(metadata),
         number: Some(1),
-        readme: Some(test::HASH.parse().unwrap()),
+        readme: Some(Hash::EXAMPLE.parse().unwrap()),
         totals: Totals {
           directories: 0,
           directory_size: 0,
@@ -917,9 +917,9 @@ mod tests {
             </tbody>
           </table>
         ",
-        fingerprint = test::FINGERPRINT,
+        fingerprint = Fingerprint::EXAMPLE,
         foo = Hash::bytes(b"foo"),
-        hash = test::HASH,
+        hash = Hash::EXAMPLE,
       )),
     );
   }
@@ -1009,8 +1009,8 @@ mod tests {
 
     assert_eq!(
       PackageHtml {
-        fingerprint: test::FINGERPRINT.parse().unwrap(),
-        identifier: PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
+        fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
+        identifier: PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
         metadata: Some(metadata),
         number: Some(1),
         totals: Totals {
@@ -1112,8 +1112,8 @@ mod tests {
             </li>
           </ol>
         ",
-        fingerprint = test::FINGERPRINT,
-        hash = test::HASH,
+        fingerprint = Fingerprint::EXAMPLE,
+        hash = Hash::EXAMPLE,
       )),
     );
   }

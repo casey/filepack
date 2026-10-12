@@ -109,7 +109,7 @@ mod tests {
       let package = directory(&mut builder, &package, unknown == Some("package"));
       let fingerprint = Fingerprint(package.hash);
 
-      let signature = test::PRIVATE_KEY
+      let signature = DisplayPrivateKey::EXAMPLE
         .parse::<PrivateKey>()
         .unwrap()
         .sign(Statement {

@@ -53,7 +53,7 @@ mod tests {
     assert!(
       serde_json::from_str::<File>(&format!(
         r#"{{"hash": "{}", "size": 0, "foo": null}}"#,
-        test::HASH,
+        Hash::EXAMPLE,
       ))
       .unwrap_err()
       .to_string()

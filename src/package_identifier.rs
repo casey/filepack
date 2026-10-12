@@ -56,8 +56,8 @@ mod tests {
   fn display() {
     assert_eq!(PackageIdentifier::Number(1).to_string(), "1");
     assert_eq!(
-      PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()).to_string(),
-      test::FINGERPRINT,
+      PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()).to_string(),
+      Fingerprint::EXAMPLE,
     );
   }
 
@@ -72,12 +72,12 @@ mod tests {
     case("1", PackageIdentifier::Number(1));
     case("10", PackageIdentifier::Number(10));
     case(
-      test::FINGERPRINT,
-      PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
+      Fingerprint::EXAMPLE,
+      PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
     );
     case(
-      test::REVISION,
-      PackageIdentifier::Revision(test::REVISION.parse().unwrap()),
+      Revision::EXAMPLE,
+      PackageIdentifier::Revision(Revision::EXAMPLE.parse().unwrap()),
     );
   }
 

@@ -13,7 +13,7 @@ pub(crate) struct FieldsMd<'a> {
 
 #[derive(Boilerplate)]
 pub(crate) struct HexMd<'a> {
-  pub(crate) tags: &'a BTreeMap<String, String>,
+  pub(crate) tags: &'a BTreeMap<String, Tag>,
 }
 
 #[derive(Boilerplate)]
@@ -24,19 +24,26 @@ pub(crate) struct RouteMd<'a> {
 
 #[derive(Boilerplate)]
 pub(crate) struct RoutesMd<'a> {
-  pub(crate) pages: &'a BTreeMap<String, Utf8PathBuf>,
+  pub(crate) pages: &'a BTreeMap<&'a str, Utf8PathBuf>,
   pub(crate) routes: &'a BTreeMap<String, Route>,
 }
 
 #[derive(Boilerplate)]
-pub(crate) struct SummaryMd {
+pub(crate) struct SummaryMd<'a> {
   pub(crate) commands: BTreeMap<String, Utf8PathBuf>,
-  pub(crate) routes: BTreeMap<String, Utf8PathBuf>,
-  pub(crate) schemas: BTreeMap<String, Utf8PathBuf>,
+  pub(crate) routes: BTreeMap<&'a str, Utf8PathBuf>,
+  pub(crate) schemas: BTreeMap<&'a str, Utf8PathBuf>,
+  pub(crate) tags: BTreeMap<&'a str, Utf8PathBuf>,
 }
 
 #[derive(Boilerplate)]
 pub(crate) struct SchemaMd<'a> {
   pub(crate) name: &'a str,
   pub(crate) schema: &'a Schema,
+}
+
+#[derive(Boilerplate)]
+pub(crate) struct TagMd<'a> {
+  pub(crate) prefix: &'a str,
+  pub(crate) tag: &'a Tag,
 }

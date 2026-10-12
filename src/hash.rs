@@ -54,6 +54,8 @@ impl FromStr for Hash {
 }
 
 impl Hex for Hash {
+  const EXAMPLE: &'static str =
+    "hash1af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262";
   const TAG: Tag = Tag::Hash;
 }
 
@@ -149,6 +151,11 @@ mod tests {
   }
 
   #[test]
+  fn example() {
+    assert_eq!(Hash::bytes(b"").to_string(), Hash::EXAMPLE);
+  }
+
+  #[test]
   fn hash() {
     assert_deco(
       Hash::bytes(b"foo"),
@@ -187,7 +194,7 @@ mod tests {
 
   #[test]
   fn uppercase_is_forbidden() {
-    format!("hash1{}", test::HASH["hash1".len()..].to_uppercase())
+    format!("hash1{}", Hash::EXAMPLE["hash1".len()..].to_uppercase())
       .parse::<Hash>()
       .unwrap_err();
   }

@@ -170,8 +170,8 @@ mod tests {
     assert_matches_regex!(
       serde_json::from_str::<Manifest>(&format!(
         r#"{{"package":{{}},"signatures":["{}","{}"]}}"#,
-        test::SIGNATURE,
-        test::SIGNATURE,
+        Attestation::EXAMPLE,
+        Attestation::EXAMPLE,
       ))
       .unwrap_err()
       .to_string(),
@@ -221,7 +221,7 @@ mod tests {
     let re = Regex::new(r"(?s)```json(.*?)```").unwrap();
 
     for capture in re.captures_iter(&readme) {
-      let manifest = capture[1].replace("…", test::SIGNATURE);
+      let manifest = capture[1].replace("…", Attestation::EXAMPLE);
       serde_json::from_str::<Manifest>(&manifest).unwrap();
     }
   }

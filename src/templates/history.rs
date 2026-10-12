@@ -21,7 +21,7 @@ mod tests {
     assert_eq!(
       HistoryHtml {
         identifier: PackageIdentifier::Number(1),
-        revisions: vec![test::REVISION.parse().unwrap()],
+        revisions: vec![Revision::EXAMPLE.parse().unwrap()],
       }
       .to_string(),
       unindent(&format!(
@@ -31,7 +31,7 @@ mod tests {
             <li><a href=/package/{revision}><code>{revision}</code></a></li>
           </ol>
         ",
-        revision = test::REVISION,
+        revision = Revision::EXAMPLE,
       )),
     );
   }

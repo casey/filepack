@@ -457,7 +457,7 @@ impl TestServerBuilder {
 #[test]
 fn admin_key_requires_domain() {
   assert_missing_argument::<Serve>(
-    &["--admin-key", test::PUBLIC_KEY, "--restrict-writes"],
+    &["--admin-key", PublicKey::EXAMPLE, "--restrict-writes"],
     &["--domain <DOMAIN>"],
   );
 }
@@ -465,7 +465,7 @@ fn admin_key_requires_domain() {
 #[test]
 fn admin_key_requires_restrict_writes() {
   assert_missing_argument::<Serve>(
-    &["--admin-key", test::PUBLIC_KEY, "--domain", "foo"],
+    &["--admin-key", PublicKey::EXAMPLE, "--domain", "foo"],
     &["--restrict-writes"],
   );
 }
@@ -1188,15 +1188,18 @@ fn files_non_empty() {
 #[test]
 fn fingerprint_redirects_to_package() {
   TestServer::new()
-    .get(format!("/{}", test::FINGERPRINT))
+    .get(format!("/{}", Fingerprint::EXAMPLE))
     .status(StatusCode::PERMANENT_REDIRECT)
-    .assert_header(header::LOCATION, format!("/package/{}", test::FINGERPRINT))
+    .assert_header(
+      header::LOCATION,
+      format!("/package/{}", Fingerprint::EXAMPLE),
+    )
     .send();
 
   TestServer::new()
-    .get(format!("/{}", test::REVISION))
+    .get(format!("/{}", Revision::EXAMPLE))
     .status(StatusCode::PERMANENT_REDIRECT)
-    .assert_header(header::LOCATION, format!("/package/{}", test::REVISION))
+    .assert_header(header::LOCATION, format!("/package/{}", Revision::EXAMPLE))
     .send();
 }
 
@@ -2669,9 +2672,12 @@ fn mount_file_not_mounted() {
 #[test]
 fn mount_redirect() {
   TestServer::new()
-    .get(format!("/mount/{}", test::FINGERPRINT))
+    .get(format!("/mount/{}", Fingerprint::EXAMPLE))
     .status(StatusCode::PERMANENT_REDIRECT)
-    .assert_header(header::LOCATION, format!("/mount/{}/", test::FINGERPRINT))
+    .assert_header(
+      header::LOCATION,
+      format!("/mount/{}/", Fingerprint::EXAMPLE),
+    )
     .send();
 }
 
@@ -2706,7 +2712,7 @@ fn mount_serves_index_html() {
 #[test]
 fn non_fingerprint_tagged_hex_falls_through() {
   TestServer::new()
-    .get(format!("/{}", test::PUBLIC_KEY))
+    .get(format!("/{}", PublicKey::EXAMPLE))
     .assert_error(StatusCode::NOT_FOUND, ServerError::PageNotFound)
     .send();
 }

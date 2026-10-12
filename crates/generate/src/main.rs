@@ -1,13 +1,13 @@
 use {
   self::{
     functions::{escape, link, parameter, write},
-    templates::{CommandMd, HexMd, RouteMd, RoutesMd, SchemaMd, SummaryMd},
+    templates::{CommandMd, HexMd, RouteMd, RoutesMd, SchemaMd, SummaryMd, TagMd},
   },
   boilerplate::Boilerplate,
   camino::{Utf8Path, Utf8PathBuf},
   filepack::{
     Count, Reference, Schema,
-    reference::{Parameter, Route},
+    reference::{Parameter, Route, Tag},
     schema::Field,
   },
   heck::ToKebabCase,
@@ -37,50 +37,92 @@ fn main() {
 
   let src = Utf8Path::new("book/src");
 
-  let mut stack = vec![(vec![reference.commands.name.as_str()], &reference.commands)];
+  let commands = {
+    let mut commands = BTreeMap::new();
 
-  let mut commands = BTreeMap::new();
+    let mut stack = vec![(vec![reference.commands.name.as_str()], &reference.commands)];
 
-  while let Some((path, command)) = stack.pop() {
-    let name = path.join(" ");
+    while let Some((path, command)) = stack.pop() {
+      let name = path.join(" ");
 
-    let relative = Utf8PathBuf::from(format!("commands/{}.md", path.join("-")));
+      let relative = Utf8PathBuf::from(format!("commands/{}.md", path.join("-")));
 
-    write(
-      src.join(&relative),
-      CommandMd {
-        help: &command.help,
-        name: &name,
-      },
-    );
+      write(
+        src.join(&relative),
+        CommandMd {
+          help: &command.help,
+          name: &name,
+        },
+      );
 
-    commands.insert(name, relative);
+      commands.insert(name, relative);
 
-    for (name, command) in &command.subcommands {
-      if name == "help" {
-        continue;
+      for (name, command) in &command.subcommands {
+        if name == "help" {
+          continue;
+        }
+
+        stack.push((
+          path
+            .iter()
+            .copied()
+            .chain(iter::once(name.as_str()))
+            .collect(),
+          command,
+        ));
       }
-
-      stack.push((
-        path
-          .iter()
-          .copied()
-          .chain(iter::once(name.as_str()))
-          .collect(),
-        command,
-      ));
     }
-  }
 
-  let mut schemas = BTreeMap::new();
+    commands
+  };
 
-  for (name, schema) in &reference.schemas {
-    let relative = Utf8PathBuf::from(format!("schemas/{}.md", name.to_kebab_case()));
+  let schemas = {
+    let mut schemas = BTreeMap::new();
 
-    write(src.join(&relative), SchemaMd { name, schema });
+    for (name, schema) in &reference.schemas {
+      let relative = Utf8PathBuf::from(format!("schemas/{}.md", name.to_kebab_case()));
 
-    schemas.insert(name.clone(), relative);
-  }
+      write(src.join(&relative), SchemaMd { name, schema });
+
+      schemas.insert(name.as_str(), relative);
+    }
+
+    schemas
+  };
+
+  let tags = {
+    let mut tags = BTreeMap::new();
+
+    for (prefix, tag) in &reference.tags {
+      let relative = Utf8PathBuf::from(format!("hex/{prefix}.md"));
+
+      write(src.join(&relative), TagMd { prefix, tag });
+
+      tags.insert(prefix.as_str(), relative);
+    }
+
+    tags
+  };
+
+  let routes = {
+    let mut routes = BTreeMap::new();
+
+    for (path, route) in &reference.routes {
+      let slug = if path.ends_with('/') {
+        format!("{path}index").to_kebab_case()
+      } else {
+        path.to_kebab_case()
+      };
+
+      let relative = Utf8PathBuf::from(format!("routes/{slug}.md"));
+
+      write(src.join(&relative), RouteMd { path, route });
+
+      routes.insert(path.as_str(), relative);
+    }
+
+    routes
+  };
 
   write(
     src.join("hex.md"),
@@ -88,22 +130,6 @@ fn main() {
       tags: &reference.tags,
     },
   );
-
-  let mut routes = BTreeMap::new();
-
-  for (path, route) in &reference.routes {
-    let slug = if path.ends_with('/') {
-      format!("{path}index").to_kebab_case()
-    } else {
-      path.to_kebab_case()
-    };
-
-    let relative = Utf8PathBuf::from(format!("routes/{slug}.md"));
-
-    write(src.join(&relative), RouteMd { path, route });
-
-    routes.insert(path.clone(), relative);
-  }
 
   write(
     src.join("routes.md"),
@@ -119,6 +145,7 @@ fn main() {
       commands,
       routes,
       schemas,
+      tags,
     },
   );
 }

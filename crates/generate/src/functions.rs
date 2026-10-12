@@ -15,15 +15,15 @@ pub(crate) fn link(name: &str) -> String {
 
 pub(crate) fn parameter(parameter: Parameter) -> &'static str {
   match parameter {
-    Parameter::Fingerprint => "[package fingerprint](../hex.md)",
-    Parameter::Hash => "[hash](../hex.md)",
+    Parameter::Fingerprint => "[package fingerprint](../hex/package.md)",
+    Parameter::Hash => "[hash](../hex/hash.md)",
     Parameter::Integer => "unsigned integer",
     Parameter::Ordinal => "one-based index",
     Parameter::PackageIdentifier => {
-      "package [fingerprint](../hex.md), [revision](../hex.md), or number"
+      "package [fingerprint](../hex/package.md), [revision](../hex/revision.md), or number"
     }
     Parameter::RelativePath => "relative path",
-    Parameter::Revision => "[revision](../hex.md)",
+    Parameter::Revision => "[revision](../hex/revision.md)",
     Parameter::String => "string",
   }
 }

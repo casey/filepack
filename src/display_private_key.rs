@@ -18,6 +18,11 @@ impl DisplayPrivateKey {
 }
 
 impl Hex for DisplayPrivateKey {
+  const EXAMPLE: &'static str = concat!(
+    "private13b6a27bcceb6a42d62a3a8d02a6f0d73653215771de243a63ac048a18b59da2900000000000000000000",
+    "00000000000000000000000000000000000000000000",
+  );
+
   const TAG: Tag = Tag::Private;
 }
 
@@ -43,5 +48,20 @@ impl FromStr for DisplayPrivateKey {
     );
 
     Ok(display_private_key)
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn example() {
+    assert_eq!(
+      PrivateKey::from([0; PrivateKey::LEN])
+        .display_private_key()
+        .to_string(),
+      DisplayPrivateKey::EXAMPLE,
+    );
   }
 }

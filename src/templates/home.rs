@@ -91,7 +91,7 @@ mod tests {
 
   #[test]
   fn sections() {
-    let fingerprint = test::FINGERPRINT.parse::<Fingerprint>().unwrap();
+    let fingerprint = Fingerprint::EXAMPLE.parse::<Fingerprint>().unwrap();
 
     let audio = Metadata {
       artwork: Some(Image::test("foo.png")),
@@ -165,7 +165,7 @@ mod tests {
             </ul>
           </section>
         ",
-        fingerprint = test::FINGERPRINT,
+        fingerprint = Fingerprint::EXAMPLE,
       )),
     );
   }

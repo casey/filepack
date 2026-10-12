@@ -5,6 +5,8 @@ use super::*;
 pub struct InvalidPublicKey(pub(crate) [u8; PublicKey::LEN]);
 
 impl Hex for InvalidPublicKey {
+  const EXAMPLE: &'static str =
+    "public10000000000000000000000000000000000000000000000000000000000000000";
   const TAG: Tag = Tag::Public;
 }
 
@@ -22,10 +24,10 @@ mod tests {
   fn display() {
     assert_eq!(
       InvalidPublicKey([0; PublicKey::LEN]).to_string(),
-      "public10000000000000000000000000000000000000000000000000000000000000000",
+      InvalidPublicKey::EXAMPLE,
     );
 
-    let public_key = test::PUBLIC_KEY.parse::<PublicKey>().unwrap();
+    let public_key = PublicKey::EXAMPLE.parse::<PublicKey>().unwrap();
 
     assert_eq!(
       InvalidPublicKey(public_key.inner().to_bytes()).to_string(),

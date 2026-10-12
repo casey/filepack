@@ -61,6 +61,7 @@ impl<T: Message> FromStr for Signature<T> {
 }
 
 impl<T: Message> Hex for Signature<T> {
+  const EXAMPLE: &'static str = T::EXAMPLE;
   const TAG: Tag = T::TAG;
 }
 
@@ -71,17 +72,17 @@ mod tests {
   #[test]
   fn signature_begins_with_pubkey_and_fingerprint() {
     let prefix = format!(
-      "signature101a0{}02a201a0{}03c0",
-      &test::PUBLIC_KEY["public1".len()..],
-      &test::FINGERPRINT["package1".len()..],
+      "signature101a0{}02a401a0{}020003c0",
+      &PublicKey::EXAMPLE["public1".len()..],
+      &Fingerprint::EXAMPLE["package1".len()..],
     );
-    assert!(test::SIGNATURE.starts_with(&prefix));
-    assert_eq!(test::SIGNATURE.len(), prefix.len() + 128);
+    assert!(Attestation::EXAMPLE.starts_with(&prefix));
+    assert_eq!(Attestation::EXAMPLE.len(), prefix.len() + 128);
   }
 
   #[test]
   fn unexpected_field_error() {
-    let s = format!("{}0400", test::SIGNATURE);
+    let s = format!("{}0400", Attestation::EXAMPLE);
     assert_matches!(
       s.parse::<Attestation>().unwrap_err(),
       HexError::Decode {

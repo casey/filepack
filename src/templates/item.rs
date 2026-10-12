@@ -98,11 +98,11 @@ mod tests {
   #[test]
   fn navigation() {
     for identifier in [
-      PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
+      PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
       PackageIdentifier::Number(1),
     ] {
       let mut html = ItemHtml {
-        fingerprint: test::FINGERPRINT.parse().unwrap(),
+        fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
         identifier,
         metadata: Metadata {
           media: Some(Media::Image {
@@ -130,8 +130,8 @@ mod tests {
     fn case(metadata: Metadata, expected: Option<OpenGraphImage>) {
       assert_eq!(
         ItemHtml {
-          fingerprint: test::FINGERPRINT.parse().unwrap(),
-          identifier: PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
+          fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
+          identifier: PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
           metadata,
           ..default()
         }
@@ -146,7 +146,7 @@ mod tests {
           height: 1,
           width: 1,
         },
-        path: format!("artwork/{}", test::FINGERPRINT),
+        path: format!("artwork/{}", Fingerprint::EXAMPLE),
       }
     }
 
@@ -198,7 +198,7 @@ mod tests {
           height: 2,
           width: 1,
         },
-        path: format!("media/image/{}/item/1", test::FINGERPRINT),
+        path: format!("media/image/{}/item/1", Fingerprint::EXAMPLE),
       }),
     );
 
@@ -230,7 +230,7 @@ mod tests {
           height: 3,
           width: 4,
         },
-        path: format!("media/image/{}/item/1/thumbnail", test::FINGERPRINT),
+        path: format!("media/image/{}/item/1/thumbnail", Fingerprint::EXAMPLE),
       }),
     );
 
@@ -259,7 +259,7 @@ mod tests {
           height: 2,
           width: 4,
         },
-        path: format!("media/video/{}/item/1/placeholder", test::FINGERPRINT),
+        path: format!("media/video/{}/item/1/placeholder", Fingerprint::EXAMPLE),
       }),
     );
 
@@ -296,7 +296,7 @@ mod tests {
         },
         path: format!(
           "media/video/{}/item/1/placeholder/thumbnail",
-          test::FINGERPRINT
+          Fingerprint::EXAMPLE
         ),
       }),
     );
@@ -329,8 +329,8 @@ mod tests {
     fn case(metadata: Metadata, expected: String) {
       assert_eq!(
         ItemHtml {
-          fingerprint: test::FINGERPRINT.parse().unwrap(),
-          identifier: PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
+          fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
+          identifier: PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
           metadata,
           ..default()
         }
@@ -339,7 +339,7 @@ mod tests {
       );
     }
 
-    let fingerprint = test::FINGERPRINT;
+    let fingerprint = Fingerprint::EXAMPLE;
 
     case(
       Metadata {
@@ -501,7 +501,7 @@ mod tests {
 
     assert_eq!(
       ItemHtml {
-        fingerprint: test::FINGERPRINT.parse().unwrap(),
+        fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
         identifier: PackageIdentifier::Number(1),
         metadata: Metadata {
           media: Some(Media::Image {
@@ -548,8 +548,8 @@ mod tests {
     fn case(media: Media, expected: &str) {
       assert_eq!(
         Page::title(&ItemHtml {
-          fingerprint: test::FINGERPRINT.parse().unwrap(),
-          identifier: PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
+          fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
+          identifier: PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
           metadata: Metadata {
             media: Some(media),
             ..default()
