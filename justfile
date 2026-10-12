@@ -177,7 +177,7 @@ download:
 clear-server:
   rm ~/.filepack/database.redb
 
-watch-book:
+book:
   #!/usr/bin/env bash
   set -euo pipefail
   mdbook serve book --open &
