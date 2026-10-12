@@ -7,6 +7,11 @@ pub(crate) struct CommandMd<'a> {
 }
 
 #[derive(Boilerplate)]
+pub(crate) struct FieldsMd<'a> {
+  pub(crate) fields: &'a [schema::Field],
+}
+
+#[derive(Boilerplate)]
 pub(crate) struct SummaryMd {
   pub(crate) commands: BTreeMap<String, Utf8PathBuf>,
   pub(crate) schemas: BTreeMap<String, Utf8PathBuf>,

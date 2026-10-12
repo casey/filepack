@@ -39,4 +39,28 @@ impl ParsedField<'_> {
       })
       .collect()
   }
+
+  pub(crate) fn schema(fields: &[Self]) -> Vec<proc_macro2::TokenStream> {
+    fields
+      .iter()
+      .map(
+        |ParsedField {
+           ident,
+           n,
+           optional,
+           ty,
+         }| {
+          let name = ident.to_string();
+          quote! {
+            schema::Field {
+              n: #n,
+              name: #name.into(),
+              optional: #optional,
+              schema: <#ty as Encode>::schema(schemas),
+            }
+          }
+        },
+      )
+      .collect()
+  }
 }
