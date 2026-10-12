@@ -6,3 +6,4 @@
 %% for (name, path) in &self.schemas {
   - [{{ escape(name) }}]({{ path }})
 %% }
+- [Tagged Hex](hex.md)
