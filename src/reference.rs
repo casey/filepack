@@ -183,6 +183,8 @@ mod tests {
   #[test]
   fn parameters() {
     for (path, route) in Reference::new().routes {
+      assert_eq!(route.wildcard, path.contains("{*"), "{path}");
+
       for endpoint in route.methods.values() {
         assert_eq!(endpoint.parameters.len(), route.parameters.len(), "{path}");
       }
