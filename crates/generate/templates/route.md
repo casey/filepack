@@ -29,5 +29,20 @@ Does not require authorization.
 
 Supports range requests.
 %%   }
+%%   if let Some(request) = &endpoint.request {
+
+### Request Body
+
+%%     match request {
+%%       Request::Deco { limit, schema } => {
+A deco-encoded value of at most {{ Count::new(*limit, "byte") }}.
+
+{{ DefinitionMd { schema } }}
+%%       }
+%%       Request::Bytes => {
+An arbitrary byte string.
+%%       }
+%%     }
+%%   }
 
 %% }

@@ -177,9 +177,9 @@ pub fn route(attribute: TokenStream, item: TokenStream) -> TokenStream {
   quote! {
     #item
 
-    pub(crate) fn #route() -> Route {
+    pub(crate) fn #route(schemas: &mut BTreeMap<String, Schema>) -> Route {
       let mut endpoint = crate::reference::Endpoint::default();
-      #(<#types as Extractor>::describe(&mut endpoint);)*
+      #(<#types as Extractor>::describe(&mut endpoint, schemas);)*
       Route {
         endpoint,
         method: axum::http::Method::#method,

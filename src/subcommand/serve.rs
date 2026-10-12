@@ -345,7 +345,7 @@ impl Serve {
     redirect_config: Option<Arc<RedirectConfig>>,
     server_config: Arc<ServerConfig>,
   ) -> Router {
-    let router = Route::all()
+    let router = Route::all(&mut BTreeMap::new())
       .into_iter()
       .fold(Router::new(), |router, entry| {
         router.route(entry.path, entry.router)

@@ -1,13 +1,13 @@
 use {
   self::{
-    functions::{escape, link, parameter, write},
+    functions::{escape, parameter, schema, write},
     templates::{CommandMd, HexMd, RouteMd, RoutesMd, SchemaMd, SummaryMd, TagMd},
   },
   boilerplate::Boilerplate,
   camino::{Utf8Path, Utf8PathBuf},
   filepack::{
     Count, Reference, Schema,
-    reference::{Parameter, Route, Tag},
+    reference::{Parameter, Request, Route, Tag},
     schema::Field,
   },
   heck::ToKebabCase,

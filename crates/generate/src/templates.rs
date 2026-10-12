@@ -7,6 +7,11 @@ pub(crate) struct CommandMd<'a> {
 }
 
 #[derive(Boilerplate)]
+pub(crate) struct DefinitionMd<'a> {
+  pub(crate) schema: &'a Schema,
+}
+
+#[derive(Boilerplate)]
 pub(crate) struct FieldsMd<'a> {
   pub(crate) fields: &'a [Field],
 }

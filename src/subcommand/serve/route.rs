@@ -11,45 +11,45 @@ pub(crate) struct Route {
 }
 
 impl Route {
-  pub(crate) fn all() -> Vec<Self> {
+  pub(crate) fn all(schemas: &mut BTreeMap<String, Schema>) -> Vec<Self> {
     vec![
-      api_delete_number_route(),
-      api_file_route(),
-      api_gc_route(),
-      api_head_route(),
-      api_missing_route(),
-      api_number_route(),
-      api_numbers_route(),
-      api_package_route(),
-      api_packages_route(),
-      api_upload_file_route(),
-      api_verify_directory_route(),
-      api_verify_package_route(),
-      api_verify_revision_route(),
-      artwork_route(),
-      artwork_thumbnail_route(),
-      directory_route(),
-      favicon_route(),
-      file_route(),
-      file_with_path_route(),
-      files_route(),
-      home_route(),
-      install_script_route(),
-      media_audio_item_route(),
-      media_image_item_route(),
-      media_image_item_thumbnail_route(),
-      media_video_item_route(),
-      media_video_item_placeholder_route(),
-      media_video_item_placeholder_thumbnail_route(),
-      mount_route(),
-      mount_file_route(),
-      mount_redirect_route(),
-      package_route(),
-      package_history_route(),
-      package_item_route(),
-      package_media_route(),
-      packages_route(),
-      static_asset_route(),
+      api_delete_number_route(schemas),
+      api_file_route(schemas),
+      api_gc_route(schemas),
+      api_head_route(schemas),
+      api_missing_route(schemas),
+      api_number_route(schemas),
+      api_numbers_route(schemas),
+      api_package_route(schemas),
+      api_packages_route(schemas),
+      api_upload_file_route(schemas),
+      api_verify_directory_route(schemas),
+      api_verify_package_route(schemas),
+      api_verify_revision_route(schemas),
+      artwork_route(schemas),
+      artwork_thumbnail_route(schemas),
+      directory_route(schemas),
+      favicon_route(schemas),
+      file_route(schemas),
+      file_with_path_route(schemas),
+      files_route(schemas),
+      home_route(schemas),
+      install_script_route(schemas),
+      media_audio_item_route(schemas),
+      media_image_item_route(schemas),
+      media_image_item_thumbnail_route(schemas),
+      media_video_item_route(schemas),
+      media_video_item_placeholder_route(schemas),
+      media_video_item_placeholder_thumbnail_route(schemas),
+      mount_route(schemas),
+      mount_file_route(schemas),
+      mount_redirect_route(schemas),
+      package_route(schemas),
+      package_history_route(schemas),
+      package_item_route(schemas),
+      package_media_route(schemas),
+      packages_route(schemas),
+      static_asset_route(schemas),
     ]
   }
 }
@@ -608,23 +608,50 @@ mod tests {
 
   #[test]
   fn endpoint() {
-    assert!(api_gc_route().endpoint.authenticated);
-    assert!(!api_file_route().endpoint.authenticated);
+    let mut schemas = BTreeMap::new();
 
-    assert!(api_file_route().endpoint.range);
-    assert!(!api_gc_route().endpoint.range);
+    assert!(api_gc_route(&mut schemas).endpoint.authenticated);
+    assert!(!api_file_route(&mut schemas).endpoint.authenticated);
+
+    assert!(api_file_route(&mut schemas).endpoint.range);
+    assert!(!api_gc_route(&mut schemas).endpoint.range);
 
     assert_eq!(
-      api_file_route().endpoint.parameters,
+      api_file_route(&mut schemas).endpoint.parameters,
       [crate::reference::Parameter::Hash]
     );
 
     assert_eq!(
-      media_audio_item_route().endpoint.parameters,
+      media_audio_item_route(&mut schemas).endpoint.parameters,
       [
         crate::reference::Parameter::Fingerprint,
         crate::reference::Parameter::Ordinal
       ],
     );
+
+    assert_eq!(api_gc_route(&mut schemas).endpoint.request, None);
+
+    assert_eq!(
+      api_upload_file_route(&mut schemas).endpoint.request,
+      Some(crate::reference::Request::Bytes),
+    );
+
+    assert_eq!(
+      api_missing_route(&mut schemas).endpoint.request,
+      Some(crate::reference::Request::Deco {
+        limit: 1_048_576,
+        schema: Schema::Struct {
+          fields: vec![schema::Field {
+            n: 1,
+            name: "hashes".into(),
+            optional: false,
+            schema: "SortedSet<Hash>".into(),
+          }],
+        },
+      }),
+    );
+
+    assert!(!schemas.contains_key("Request"));
+    assert!(schemas.contains_key("SortedSet<Hash>"));
   }
 }
