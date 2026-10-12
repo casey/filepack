@@ -113,6 +113,7 @@ impl Reference {
 pub struct Endpoint {
   pub authenticated: bool,
   pub parameters: Vec<Parameter>,
+  pub query: Vec<QueryParameter>,
   pub range: bool,
   pub request: Option<Request>,
   pub response: Option<Response>,
@@ -129,6 +130,13 @@ pub enum Parameter {
   RelativePath,
   Revision,
   String,
+}
+
+#[derive(Debug, Deserialize, PartialEq, Serialize)]
+pub struct QueryParameter {
+  pub default: String,
+  pub name: String,
+  pub values: Vec<String>,
 }
 
 #[derive(Debug, Deserialize, PartialEq, Serialize)]

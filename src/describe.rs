@@ -1,7 +1,7 @@
 use {
   super::*,
   axum::{
-    extract::{Extension, Path, Query},
+    extract::{Extension, Path},
     response::Redirect,
   },
   axum_extra::{TypedHeader, either::Either},
@@ -35,10 +35,6 @@ impl<T: PathExtractor> Describe for Path<T> {
   fn describe(endpoint: &mut reference::Endpoint, _schemas: &mut BTreeMap<String, Schema>) {
     endpoint.parameters.extend(T::parameters());
   }
-}
-
-impl<T> Describe for Query<T> {
-  fn describe(_endpoint: &mut reference::Endpoint, _schemas: &mut BTreeMap<String, Schema>) {}
 }
 
 impl Describe for Redirect {
