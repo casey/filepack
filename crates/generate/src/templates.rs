@@ -13,6 +13,7 @@ pub(crate) struct SummaryMd {
 }
 
 #[derive(Boilerplate)]
-pub(crate) struct SchemaMd {
-  pub(crate) schema: Schema,
+pub(crate) struct SchemaMd<'a> {
+  pub(crate) name: &'a str,
+  pub(crate) schema: &'a Schema,
 }

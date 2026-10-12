@@ -393,6 +393,40 @@ fn enum_round_trip() {
 }
 
 #[test]
+fn enum_schema() {
+  #[derive(Decode, Encode)]
+  enum Foo {
+    #[n(0)]
+    Bar,
+    #[n(1)]
+    Baz,
+  }
+
+  let mut schemas = BTreeMap::new();
+
+  Foo::schema(&mut schemas);
+
+  assert_eq!(
+    schemas,
+    BTreeMap::from([(
+      "foo".into(),
+      Schema::Enum {
+        variants: vec![
+          schema::Variant {
+            n: 0,
+            name: "bar".into()
+          },
+          schema::Variant {
+            n: 1,
+            name: "baz".into()
+          },
+        ],
+      },
+    )]),
+  );
+}
+
+#[test]
 fn enum_unconsumed_unit_payload() {
   #[derive(Debug, Decode)]
   enum Foo {

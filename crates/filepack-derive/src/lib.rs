@@ -4,7 +4,7 @@ use {
     parsed_field::ParsedField, parsed_variant::ParsedVariant, receiver::Receiver, variant::Variant,
   },
   darling::{FromDeriveInput, FromField, FromVariant, ast::Data, ast::Fields},
-  heck::ToSnakeCase,
+  heck::{ToKebabCase, ToSnakeCase},
   proc_macro::TokenStream,
   quote::quote,
   std::collections::HashSet,

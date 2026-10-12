@@ -58,10 +58,10 @@ fn main() {
 
   let mut schemas = BTreeMap::new();
 
-  for (name, &schema) in &reference.schemas {
+  for (name, schema) in &reference.schemas {
     let relative = Utf8PathBuf::from(format!("schemas/{name}.md"));
 
-    write(&src.join(&relative), &SchemaMd { schema }.to_string());
+    write(&src.join(&relative), &SchemaMd { name, schema }.to_string());
 
     schemas.insert(name.clone(), relative);
   }

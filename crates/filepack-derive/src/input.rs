@@ -247,6 +247,27 @@ impl Input {
       }
     });
 
+    let schema = variants
+      .iter()
+      .all(|variant| variant.fields.is_empty())
+      .then(|| {
+        let schema_name = name.to_string().to_kebab_case();
+
+        let variants = variants.iter().map(|ParsedVariant { ident, n, .. }| {
+          let variant_name = ident.to_string().to_kebab_case();
+          quote! { schema::Variant { n: #n, name: #variant_name.into() } }
+        });
+
+        quote! {
+          fn schema(schemas: &mut BTreeMap<String, Schema>) {
+            Schema::Enum {
+              variants: vec![#(#variants),*],
+            }
+            .register(#schema_name, schemas);
+          }
+        }
+      });
+
     let generics = self.encode_generics();
 
     let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
@@ -260,6 +281,8 @@ impl Input {
           }
           array.finish();
         }
+
+        #schema
       }
     })
   }
