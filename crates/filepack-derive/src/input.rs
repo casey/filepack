@@ -251,10 +251,10 @@ impl Input {
       .iter()
       .all(|variant| variant.fields.is_empty())
       .then(|| {
-        let schema_name = name.to_string().to_kebab_case();
+        let schema_name = name.to_string();
 
         let variants = variants.iter().map(|ParsedVariant { ident, n, .. }| {
-          let variant_name = ident.to_string().to_kebab_case();
+          let variant_name = ident.to_string();
           quote! { schema::Variant { n: #n, name: #variant_name.into() } }
         });
 

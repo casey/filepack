@@ -409,16 +409,16 @@ fn enum_schema() {
   assert_eq!(
     schemas,
     BTreeMap::from([(
-      "foo".into(),
+      "Foo".into(),
       Schema::Enum {
         variants: vec![
           schema::Variant {
             n: 0,
-            name: "bar".into()
+            name: "Bar".into()
           },
           schema::Variant {
             n: 1,
-            name: "baz".into()
+            name: "Baz".into()
           },
         ],
       },

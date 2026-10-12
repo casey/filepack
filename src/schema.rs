@@ -6,9 +6,9 @@ pub enum Schema {
   Boolean,
   Bytes,
   Enum { variants: Vec<Variant> },
-  I64,
+  SignedInteger,
   String,
-  U64,
+  UnsignedInteger,
 }
 
 impl Schema {
@@ -38,18 +38,18 @@ mod tests {
   fn register() {
     let mut schemas = BTreeMap::new();
 
-    Schema::U64.register("foo", &mut schemas);
-    Schema::U64.register("foo", &mut schemas);
+    Schema::Boolean.register("Foo", &mut schemas);
+    Schema::Boolean.register("Foo", &mut schemas);
 
-    assert_eq!(schemas, BTreeMap::from([("foo".into(), Schema::U64)]));
+    assert_eq!(schemas, BTreeMap::from([("Foo".into(), Schema::Boolean)]));
   }
 
   #[test]
-  #[should_panic(expected = "conflicting definitions for schema `foo`")]
+  #[should_panic(expected = "conflicting definitions for schema `Foo`")]
   fn register_conflict() {
     let mut schemas = BTreeMap::new();
 
-    Schema::U64.register("foo", &mut schemas);
-    Schema::I64.register("foo", &mut schemas);
+    Schema::Boolean.register("Foo", &mut schemas);
+    Schema::Bytes.register("Foo", &mut schemas);
   }
 }
