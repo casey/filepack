@@ -25,5 +25,9 @@ Requires authorization.
 %%   } else {
 Does not require authorization.
 %%   }
+%%   if endpoint.range {
+
+Supports range requests.
+%%   }
 
 %% }
