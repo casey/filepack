@@ -2,12 +2,16 @@ use {
   self::templates::{CommandMd, SchemaMd, SummaryMd},
   boilerplate::Boilerplate,
   camino::{Utf8Path, Utf8PathBuf},
-  filepack::{Reference, Schema},
+  filepack::{Count, Reference, Schema},
   heck::ToKebabCase,
   std::{collections::BTreeMap, env, fs, iter},
 };
 
 mod templates;
+
+pub(crate) fn link(name: &str) -> String {
+  format!("[{name}]({}.md)", name.to_kebab_case())
+}
 
 fn main() {
   for (key, _) in env::vars() {

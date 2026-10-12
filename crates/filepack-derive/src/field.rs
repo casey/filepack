@@ -17,21 +17,27 @@ impl Field {
     self.ident.as_ref()
   }
 
-  fn is_option(&self) -> bool {
+  pub(crate) fn n_attribute(&self) -> Option<&Attribute> {
+    self.attrs.iter().find(|attr| attr.path().is_ident("n"))
+  }
+
+  fn option_inner(&self) -> Option<&Type> {
     if let Type::Path(TypePath {
       attrs: _,
       path,
       qself: None,
     }) = &self.ty
+      && path.leading_colon.is_none()
+      && path.segments.len() == 1
+      && path.segments[0].ident == "Option"
+      && let PathArguments::AngleBracketed(arguments) = &path.segments[0].arguments
+      && arguments.args.len() == 1
+      && let GenericArgument::Type(ty) = &arguments.args[0]
     {
-      path.leading_colon.is_none() && path.segments.len() == 1 && path.segments[0].ident == "Option"
+      Some(ty)
     } else {
-      false
+      None
     }
-  }
-
-  pub(crate) fn n_attribute(&self) -> Option<&Attribute> {
-    self.attrs.iter().find(|attr| attr.path().is_ident("n"))
   }
 
   pub(crate) fn parse(&self) -> Result<ParsedField> {
@@ -53,10 +59,13 @@ impl Field {
       ));
     }
 
+    let ty = self.option_inner();
+
     Ok(ParsedField {
       ident,
       n,
-      optional: self.is_option(),
+      optional: ty.is_some(),
+      ty: ty.unwrap_or(&self.ty),
     })
   }
 }

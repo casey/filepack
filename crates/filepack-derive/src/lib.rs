@@ -10,8 +10,9 @@ use {
   std::collections::HashSet,
   strum::{Display, EnumString},
   syn::{
-    Attribute, DeriveInput, Error, Generics, Ident, Index, LitInt, Member, Path, Result, Type,
-    TypeParamBound, TypePath, meta::ParseNestedMeta, parse::ParseBuffer,
+    Attribute, DeriveInput, Error, GenericArgument, Generics, Ident, Index, LitInt, Member, Path,
+    PathArguments, Result, Type, TypeParamBound, TypePath, meta::ParseNestedMeta,
+    parse::ParseBuffer,
   },
   usized::IntoU64,
 };

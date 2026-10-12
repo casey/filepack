@@ -9,7 +9,7 @@ pub trait Encode {
     encoder.finish()
   }
 
-  fn schema(_schemas: &mut BTreeMap<String, Schema>) {
+  fn schema(_schemas: &mut BTreeMap<String, Schema>) -> String {
     unimplemented!()
   }
 }
@@ -54,8 +54,8 @@ impl Encode for bool {
     encoder.boolean(*self);
   }
 
-  fn schema(schemas: &mut BTreeMap<String, Schema>) {
-    Schema::Boolean.register("Boolean", schemas);
+  fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
+    Schema::Boolean.register("Boolean", schemas)
   }
 }
 
@@ -64,8 +64,8 @@ impl Encode for String {
     self.as_str().encode(encoder);
   }
 
-  fn schema(schemas: &mut BTreeMap<String, Schema>) {
-    Schema::String.register("String", schemas);
+  fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
+    Schema::String.register("String", schemas)
   }
 }
 
@@ -74,8 +74,8 @@ impl Encode for Vec<u8> {
     self.as_slice().encode(encoder);
   }
 
-  fn schema(schemas: &mut BTreeMap<String, Schema>) {
-    Schema::Bytes.register("Bytes", schemas);
+  fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
+    Schema::Bytes.register("Bytes", schemas)
   }
 }
 
@@ -90,8 +90,8 @@ impl Encode for i64 {
     encoder.signed_integer(*self);
   }
 
-  fn schema(schemas: &mut BTreeMap<String, Schema>) {
-    Schema::SignedInteger.register("SignedInteger", schemas);
+  fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
+    Schema::SignedInteger.register("SignedInteger", schemas)
   }
 }
 
@@ -106,8 +106,8 @@ impl Encode for u64 {
     encoder.integer(*self);
   }
 
-  fn schema(schemas: &mut BTreeMap<String, Schema>) {
-    Schema::UnsignedInteger.register("UnsignedInteger", schemas);
+  fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
+    Schema::UnsignedInteger.register("UnsignedInteger", schemas)
   }
 }
 

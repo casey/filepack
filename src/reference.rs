@@ -37,11 +37,15 @@ impl Reference {
     AudioCodec::schema(&mut schemas);
     AudioFormat::schema(&mut schemas);
     ChromaSubsampling::schema(&mut schemas);
+    Claims::schema(&mut schemas);
     ColorType::schema(&mut schemas);
     Context::schema(&mut schemas);
+    Dimensions::schema(&mut schemas);
     ImageFormat::schema(&mut schemas);
+    Orientation::schema(&mut schemas);
     Rotation::schema(&mut schemas);
     String::schema(&mut schemas);
+    Totals::schema(&mut schemas);
     TrackCodec::schema(&mut schemas);
     Vec::<u8>::schema(&mut schemas);
     VideoFormat::schema(&mut schemas);

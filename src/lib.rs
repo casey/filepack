@@ -48,7 +48,6 @@ use {
     compression::Compression,
     content::Content,
     context::Context,
-    count::Count,
     database_metadata::DatabaseMetadata,
     date::Date,
     deco_request::DecoRequest,
@@ -266,6 +265,7 @@ use {
 };
 
 pub use self::{
+  count::Count,
   decode::Decode,
   decode_options::DecodeOptions,
   decoded::Decoded,
