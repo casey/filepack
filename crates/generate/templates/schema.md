@@ -13,7 +13,19 @@ An enum with {{ Count::new(variants.len(), "variant") }}:
 | discriminant | variant |
 |--------------|---------|
 %%     for variant in variants {
+%%       if variant.fields.is_empty() {
 | {{ variant.n }} | {{ variant.name }} |
+%%       } else {
+| {{ variant.n }} | [{{ variant.name }}](#{{ variant.name.to_lowercase() }}) |
+%%       }
+%%     }
+%%     for variant in variants {
+%%       if !variant.fields.is_empty() {
+
+## {{ variant.name }}
+
+{{ FieldsMd { fields: &variant.fields } }}
+%%       }
 %%     }
 %%   }
 %%   Schema::SignedInteger => {
@@ -26,11 +38,7 @@ A string. Encoded as a byte string containing the UTF-8 encoding of the string.
 %%   Schema::Struct { fields } => {
 A struct with {{ Count::new(fields.len(), "field") }}:
 
-| n | field | type | optional |
-|---|-------|------|----------|
-%%     for field in fields {
-| {{ field.n }} | {{ field.name }} | {{ link(&field.schema) }} | {{ if field.optional { "yes" } else { "no" } }} |
-%%     }
+{{ FieldsMd { fields } }}
 %%   }
 %%   Schema::UnsignedInteger => {
 An unsigned 64-bit integer. Encoded as little endian with trailing zero bytes

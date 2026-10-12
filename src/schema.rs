@@ -37,6 +37,7 @@ impl Schema {
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct Variant {
+  pub fields: Vec<Field>,
   pub n: u64,
   pub name: String,
 }

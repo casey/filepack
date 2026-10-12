@@ -45,8 +45,11 @@ impl Reference {
     Orientation::schema(&mut schemas);
     Rotation::schema(&mut schemas);
     String::schema(&mut schemas);
+    Time::schema(&mut schemas);
     Totals::schema(&mut schemas);
+    Track::schema(&mut schemas);
     TrackCodec::schema(&mut schemas);
+    TrackInfo::schema(&mut schemas);
     Vec::<u8>::schema(&mut schemas);
     VideoFormat::schema(&mut schemas);
     bool::schema(&mut schemas);

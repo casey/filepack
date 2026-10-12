@@ -247,26 +247,19 @@ impl Input {
       }
     });
 
-    let schema = variants
-      .iter()
-      .all(|variant| variant.fields.is_empty())
-      .then(|| {
-        let schema_name = name.to_string();
+    let schema_name = name.to_string();
 
-        let variants = variants.iter().map(|ParsedVariant { ident, n, .. }| {
-          let variant_name = ident.to_string();
-          quote! { schema::Variant { n: #n, name: #variant_name.into() } }
-        });
-
-        quote! {
-          fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
-            Schema::Enum {
-              variants: vec![#(#variants),*],
-            }
-            .register(#schema_name, schemas)
-          }
+    let schema_variants = variants.iter().map(|ParsedVariant { fields, ident, n }| {
+      let fields = ParsedField::schema(fields);
+      let variant_name = ident.to_string();
+      quote! {
+        schema::Variant {
+          fields: vec![#(#fields),*],
+          n: #n,
+          name: #variant_name.into(),
         }
-      });
+      }
+    });
 
     let generics = self.encode_generics();
 
@@ -282,7 +275,12 @@ impl Input {
           array.finish();
         }
 
-        #schema
+        fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
+          Schema::Enum {
+            variants: vec![#(#schema_variants),*],
+          }
+          .register(#schema_name, schemas)
+        }
       }
     })
   }
@@ -305,24 +303,7 @@ impl Input {
 
     let schema_name = name.to_string();
 
-    let schema_fields = fields.iter().map(
-      |ParsedField {
-         ident,
-         n,
-         optional,
-         ty,
-       }| {
-        let name = ident.to_string();
-        quote! {
-          schema::Field {
-            n: #n,
-            name: #name.into(),
-            optional: #optional,
-            schema: <#ty as Encode>::schema(schemas),
-          }
-        }
-      },
-    );
+    let schema_fields = ParsedField::schema(&fields);
 
     let generics = self.encode_generics();
 

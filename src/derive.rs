@@ -413,16 +413,65 @@ fn enum_schema() {
       Schema::Enum {
         variants: vec![
           schema::Variant {
+            fields: vec![],
             n: 0,
             name: "Bar".into()
           },
           schema::Variant {
+            fields: vec![],
             n: 1,
             name: "Baz".into()
           },
         ],
       },
     )]),
+  );
+}
+
+#[test]
+fn enum_schema_fields() {
+  #[derive(Decode, Encode)]
+  enum Foo {
+    #[n(0)]
+    Bar,
+    #[n(1)]
+    Baz {
+      #[n(1)]
+      qux: Option<u64>,
+    },
+  }
+
+  let mut schemas = BTreeMap::new();
+
+  assert_eq!(Foo::schema(&mut schemas), "Foo");
+
+  assert_eq!(
+    schemas,
+    BTreeMap::from([
+      (
+        "Foo".into(),
+        Schema::Enum {
+          variants: vec![
+            schema::Variant {
+              fields: vec![],
+              n: 0,
+              name: "Bar".into(),
+            },
+            schema::Variant {
+              fields: vec![schema::Field {
+                n: 1,
+                name: "qux".into(),
+                optional: true,
+                schema: "UnsignedInteger".into(),
+              }],
+              n: 1,
+              name: "Baz".into(),
+            },
+          ],
+        },
+      ),
+      ("UnsignedInteger".into(), Schema::UnsignedInteger),
+    ]),
   );
 }
 

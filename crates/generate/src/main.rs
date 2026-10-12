@@ -2,7 +2,7 @@ use {
   self::templates::{CommandMd, SchemaMd, SummaryMd},
   boilerplate::Boilerplate,
   camino::{Utf8Path, Utf8PathBuf},
-  filepack::{Count, Reference, Schema},
+  filepack::{Count, Reference, Schema, schema},
   heck::ToKebabCase,
   std::{collections::BTreeMap, env, fs, iter},
 };

@@ -466,7 +466,7 @@ mod resource_type;
 mod revision;
 mod revision_object;
 mod rotation;
-mod schema;
+pub mod schema;
 mod server;
 mod server_error;
 mod server_state;
