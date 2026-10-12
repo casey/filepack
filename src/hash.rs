@@ -128,6 +128,12 @@ impl redb::Value for Hash {
   }
 }
 
+impl PathExtractor for Hash {
+  fn parameters() -> Vec<reference::Parameter> {
+    vec![reference::Parameter::Hash]
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;

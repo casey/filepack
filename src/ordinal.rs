@@ -23,6 +23,12 @@ impl From<usize> for Ordinal {
   }
 }
 
+impl PathExtractor for Ordinal {
+  fn parameters() -> Vec<reference::Parameter> {
+    vec![reference::Parameter::Ordinal]
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;

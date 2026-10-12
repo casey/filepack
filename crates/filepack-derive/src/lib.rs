@@ -178,7 +178,7 @@ pub fn route(attribute: TokenStream, item: TokenStream) -> TokenStream {
     #item
 
     pub(crate) fn #route() -> Route {
-      let mut endpoint = Endpoint::default();
+      let mut endpoint = crate::reference::Endpoint::default();
       #(<#types as Extractor>::describe(&mut endpoint);)*
       Route {
         endpoint,

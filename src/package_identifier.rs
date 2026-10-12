@@ -42,6 +42,12 @@ impl FromStr for PackageIdentifier {
   }
 }
 
+impl PathExtractor for PackageIdentifier {
+  fn parameters() -> Vec<reference::Parameter> {
+    vec![reference::Parameter::PackageIdentifier]
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;

@@ -20,7 +20,7 @@ impl<T: DecodeOwned, S: Send + Sync, const LIMIT: usize> FromRequest<S> for Deco
 }
 
 impl<T, const LIMIT: usize> Extractor for DecoRequest<T, LIMIT> {
-  fn describe(_endpoint: &mut Endpoint) {}
+  fn describe(_endpoint: &mut reference::Endpoint) {}
 }
 
 #[cfg(test)]

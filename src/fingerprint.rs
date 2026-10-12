@@ -106,6 +106,12 @@ impl redb::Value for Fingerprint {
   }
 }
 
+impl PathExtractor for Fingerprint {
+  fn parameters() -> Vec<reference::Parameter> {
+    vec![reference::Parameter::Fingerprint]
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;

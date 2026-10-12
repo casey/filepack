@@ -1,11 +1,15 @@
 use {
   self::{
-    functions::{escape, link, write},
+    functions::{escape, link, parameter, write},
     templates::{CommandMd, HexMd, RouteMd, RoutesMd, SchemaMd, SummaryMd},
   },
   boilerplate::Boilerplate,
   camino::{Utf8Path, Utf8PathBuf},
-  filepack::{Count, Endpoint, Reference, Schema, schema},
+  filepack::{
+    Count, Reference, Schema,
+    reference::{Parameter, Route},
+    schema::Field,
+  },
   heck::ToKebabCase,
   std::{
     collections::BTreeMap,
@@ -87,7 +91,7 @@ fn main() {
 
   let mut routes = BTreeMap::new();
 
-  for (path, methods) in &reference.routes {
+  for (path, route) in &reference.routes {
     let slug = if path.ends_with('/') {
       format!("{path}index").to_kebab_case()
     } else {
@@ -96,7 +100,7 @@ fn main() {
 
     let relative = Utf8PathBuf::from(format!("routes/{slug}.md"));
 
-    write(src.join(&relative), RouteMd { methods, path });
+    write(src.join(&relative), RouteMd { path, route });
 
     routes.insert(path.clone(), relative);
   }

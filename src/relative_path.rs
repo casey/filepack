@@ -235,6 +235,12 @@ impl TryFrom<&[&Component]> for RelativePath {
   }
 }
 
+impl PathExtractor for RelativePath {
+  fn parameters() -> Vec<reference::Parameter> {
+    vec![reference::Parameter::RelativePath]
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;

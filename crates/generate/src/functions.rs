@@ -2,13 +2,30 @@ use super::*;
 
 pub(crate) fn escape(name: &str) -> String {
   name
+    .replace('*', "\\*")
     .replace('<', "\\<")
     .replace('>', "\\>")
-    .replace('*', "\\*")
+    .replace('{', "\\{")
+    .replace('}', "\\}")
 }
 
 pub(crate) fn link(name: &str) -> String {
   format!("[{}]({}.md)", escape(name), name.to_kebab_case())
+}
+
+pub(crate) fn parameter(parameter: Parameter) -> &'static str {
+  match parameter {
+    Parameter::Fingerprint => "[package fingerprint](../hex.md)",
+    Parameter::Hash => "[hash](../hex.md)",
+    Parameter::Integer => "unsigned integer",
+    Parameter::Ordinal => "one-based index",
+    Parameter::PackageIdentifier => {
+      "package [fingerprint](../hex.md), [revision](../hex.md), or number"
+    }
+    Parameter::RelativePath => "relative path",
+    Parameter::Revision => "[revision](../hex.md)",
+    Parameter::String => "string",
+  }
 }
 
 pub(crate) fn write(path: impl AsRef<Utf8Path>, contents: impl Display) {
