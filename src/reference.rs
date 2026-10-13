@@ -25,9 +25,10 @@ impl Command {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Reference {
   pub commands: Command,
-  pub languages: BTreeSet<Language>,
+  pub languages: BTreeMap<Language, String>,
   pub lint_groups: BTreeMap<LintGroup, BTreeSet<Lint>>,
   pub lints: BTreeSet<Lint>,
+  pub media_formats: BTreeMap<MediaType, Vec<MediaFormat>>,
   pub routes: BTreeMap<String, Route>,
   pub schemas: BTreeMap<String, Schema>,
   pub tags: BTreeMap<Tag, Hex>,
@@ -36,11 +37,32 @@ pub struct Reference {
 
 impl Reference {
   pub fn new() -> Self {
+    fn media_formats<F: Format>() -> Vec<MediaFormat> {
+      let mut formats = BTreeMap::new();
+
+      for extension in F::EXTENSIONS {
+        let name = F::from_extension(extension).unwrap().to_string();
+
+        assert!(
+          formats
+            .insert(name.clone(), (*extension).to_string())
+            .is_none(),
+          "format `{name}` has multiple extensions",
+        );
+      }
+
+      formats
+        .into_iter()
+        .map(|(name, extension)| MediaFormat { extension, name })
+        .collect()
+    }
+
     fn tag<T: crate::Hex>(schemas: &mut BTreeMap<String, Schema>, tags: &mut BTreeMap<Tag, Hex>) {
       tags.insert(
         T::TAG,
         Hex {
           example: T::EXAMPLE.into(),
+          name: T::TAG.name().into(),
           schema: T::schema(schemas),
         },
       );
@@ -106,11 +128,20 @@ impl Reference {
 
     Self {
       commands: Command::new(&mut command),
-      languages: language::ALL.clone(),
+      languages: language::ALL
+        .iter()
+        .map(|language| (*language, language.name().into()))
+        .collect(),
       lint_groups: LintGroup::iter()
         .map(|group| (group, group.lints()))
         .collect(),
       lints: Lint::iter().collect(),
+      media_formats: [
+        (MediaType::Audio, media_formats::<AudioFormat>()),
+        (MediaType::Image, media_formats::<ImageFormat>()),
+        (MediaType::Video, media_formats::<VideoFormat>()),
+      ]
+      .into(),
       routes,
       schemas,
       tags,
@@ -132,7 +163,14 @@ pub struct Endpoint {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Hex {
   pub example: String,
+  pub name: String,
   pub schema: String,
+}
+
+#[derive(Debug, Deserialize, PartialEq, Serialize)]
+pub struct MediaFormat {
+  pub extension: String,
+  pub name: String,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, PartialEq, Serialize)]
@@ -190,7 +228,7 @@ mod tests {
 
     assert_eq!(languages.len(), language::CODES.len());
 
-    assert!(languages.contains(&"en".parse::<Language>().unwrap()));
+    assert_eq!(languages[&"en".parse::<Language>().unwrap()], "English");
   }
 
   #[test]
@@ -202,6 +240,27 @@ mod tests {
     assert_eq!(
       reference.lint_groups[&LintGroup::Hygiene],
       BTreeSet::from([Lint::Junk]),
+    );
+  }
+
+  #[test]
+  fn media_formats() {
+    assert_eq!(
+      Reference::new().media_formats[&MediaType::Audio],
+      [
+        MediaFormat {
+          extension: "flac".into(),
+          name: "FLAC".into(),
+        },
+        MediaFormat {
+          extension: "mp3".into(),
+          name: "MP3".into(),
+        },
+        MediaFormat {
+          extension: "m4a".into(),
+          name: "MP4".into(),
+        },
+      ],
     );
   }
 
@@ -236,6 +295,8 @@ mod tests {
         hex.example.starts_with(&format!("{}1", tag.prefix())),
         "{tag:?}",
       );
+
+      assert_eq!(hex.name, tag.name());
     }
   }
 

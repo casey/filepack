@@ -198,7 +198,7 @@ pub(crate) static CODES: LazyLock<BTreeMap<&'static str, &'static str>> = LazyLo
 pub struct Language(&'static str);
 
 impl Language {
-  pub fn name(self) -> &'static str {
+  pub(crate) fn name(self) -> &'static str {
     CODES[self.0]
   }
 }

@@ -4,6 +4,7 @@
 %% }
 - [Languages](languages.md)
 - [Lints](lints.md)
+- [Media Formats](media-formats.md)
 - [Routes](routes.md)
 %% for (path, relative) in &self.routes {
   - [{{ escape(path) }}]({{ relative }})
