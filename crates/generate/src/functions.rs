@@ -9,6 +9,14 @@ pub(crate) fn escape(name: &str) -> String {
     .replace('}', "\\}")
 }
 
+pub(crate) fn list(items: impl IntoIterator<Item = impl Display>) -> String {
+  items
+    .into_iter()
+    .map(|item| format!("`{item}`"))
+    .collect::<Vec<String>>()
+    .join(", ")
+}
+
 pub(crate) fn parameter(parameter: Parameter) -> &'static str {
   match parameter {
     Parameter::Fingerprint => "[package fingerprint](../hex/package.md)",

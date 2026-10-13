@@ -4,6 +4,7 @@ use super::*;
 #[strum_discriminants(
   name(Lint),
   derive(
+    Deserialize,
     Display,
     EnumIter,
     EnumString,
@@ -12,6 +13,7 @@ use super::*;
     PartialOrd,
     Serialize
   ),
+  vis(pub),
   serde(rename_all = "kebab-case"),
   strum(serialize_all = "kebab-case")
 )]

@@ -33,13 +33,7 @@ remainder of the path, including any slashes, and must not be empty.
 | parameter | values | default |
 |-----------|--------|---------|
 %%     for parameter in &endpoint.query {
-%%       let values = parameter
-%%         .values
-%%         .iter()
-%%         .map(|value| format!("`{value}`"))
-%%         .collect::<Vec<String>>()
-%%         .join(", ");
-| `{{ parameter.name }}` | {{ values }} | `{{ parameter.default }}` |
+| `{{ parameter.name }}` | {{ list(&parameter.values) }} | `{{ parameter.default }}` |
 %%     }
 %%   }
 %%   if let Some(request) = &endpoint.request {

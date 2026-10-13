@@ -1,11 +1,23 @@
 use super::*;
 
 #[derive(
-  Clone, Copy, Debug, EnumIter, EnumString, Eq, IntoStaticStr, Ord, PartialEq, PartialOrd, Serialize,
+  Clone,
+  Copy,
+  Debug,
+  Deserialize,
+  Display,
+  EnumIter,
+  EnumString,
+  Eq,
+  IntoStaticStr,
+  Ord,
+  PartialEq,
+  PartialOrd,
+  Serialize,
 )]
 #[serde(rename_all = "kebab-case")]
 #[strum(serialize_all = "kebab-case")]
-pub(crate) enum LintGroup {
+pub enum LintGroup {
   All,
   Compatibility,
   Distribution,
