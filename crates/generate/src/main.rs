@@ -9,8 +9,8 @@ use {
   boilerplate::Boilerplate,
   camino::{Utf8Path, Utf8PathBuf},
   filepack::{
-    Count, Lint, LintGroup, Reference, Schema,
-    reference::{Command, Parameter, Request, Response, Route, Tag},
+    Count, Language, Lint, LintGroup, Reference, Schema, Tag,
+    reference::{Command, Hex, Parameter, Request, Response, Route},
     schema::Field,
   },
   heck::ToKebabCase,
@@ -96,12 +96,12 @@ fn main() {
   let tags = {
     let mut tags = BTreeMap::new();
 
-    for (prefix, tag) in &reference.tags {
-      let relative = Utf8PathBuf::from(format!("hex/{prefix}.md"));
+    for (tag, hex) in &reference.tags {
+      let relative = Utf8PathBuf::from(format!("hex/{}.md", tag.prefix()));
 
-      write(src.join(&relative), TagMd { prefix, tag });
+      write(src.join(&relative), TagMd { hex, tag: *tag });
 
-      tags.insert(prefix.as_str(), relative);
+      tags.insert(tag.prefix(), relative);
     }
 
     tags

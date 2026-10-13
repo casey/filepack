@@ -375,7 +375,7 @@ pub enum Error {
   #[snafu(display("failed to retrieve mounted package from server"))]
   MountedPackage {
     backtrace: Option<Backtrace>,
-    source: error::ServerError,
+    source: ServerError,
   },
   #[snafu(display(
     "mounted package `{fingerprint}` has unexpected media type {media_type}, only web packages may \

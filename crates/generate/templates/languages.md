@@ -7,6 +7,6 @@ A [Language](schemas/language.md) is an [ISO
 
 | code | language |
 |------|----------|
-%% for (code, name) in self.languages {
-| `{{ code }}` | {{ name }} |
+%% for language in self.languages {
+| `{{ language }}` | {{ language.name() }} |
 %% }

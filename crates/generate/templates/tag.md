@@ -1,9 +1,9 @@
-# {{ self.prefix }}
+# {{ self.tag.prefix() }}
 
-A tagged hex [{{ escape(&self.tag.schema) }}](../schemas/{{ self.tag.schema.to_kebab_case() }}.md).
+A tagged hex [{{ escape(&self.hex.schema) }}](../schemas/{{ self.hex.schema.to_kebab_case() }}.md).
 
 Example:
 
 ```
-{{ self.tag.example }}
+{{ self.hex.example }}
 ```

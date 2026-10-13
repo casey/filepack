@@ -27,8 +27,8 @@ version. All format versions are reserved for future use.
 Tags
 ----
 
-| tag | type |
-|--------|------|
-%% for (prefix, tag) in self.tags {
-| [`{{ prefix }}`](hex/{{ prefix }}.md) | [{{ escape(&tag.schema) }}](schemas/{{ tag.schema.to_kebab_case() }}.md) |
+| tag | name | type |
+|-----|------|------|
+%% for (tag, hex) in self.tags {
+| [`{{ tag.prefix() }}`](hex/{{ tag.prefix() }}.md) | {{ tag.name() }} | [{{ escape(&hex.schema) }}](schemas/{{ hex.schema.to_kebab_case() }}.md) |
 %% }
