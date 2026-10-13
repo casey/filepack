@@ -28,13 +28,18 @@ pub(crate) struct HexMd<'a> {
 
 #[derive(Boilerplate)]
 pub(crate) struct LanguagesMd<'a> {
-  pub(crate) languages: &'a BTreeSet<Language>,
+  pub(crate) languages: &'a BTreeMap<Language, String>,
 }
 
 #[derive(Boilerplate)]
 pub(crate) struct LintsMd<'a> {
   pub(crate) groups: &'a BTreeMap<LintGroup, BTreeSet<Lint>>,
   pub(crate) lints: &'a BTreeSet<Lint>,
+}
+
+#[derive(Boilerplate)]
+pub(crate) struct MediaFormatsMd<'a> {
+  pub(crate) media_formats: &'a BTreeMap<MediaType, Vec<MediaFormat>>,
 }
 
 #[derive(Boilerplate)]

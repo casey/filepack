@@ -26,7 +26,7 @@ pub enum Tag {
 }
 
 impl Tag {
-  pub fn name(self) -> &'static str {
+  pub(crate) fn name(self) -> &'static str {
     match self {
       Self::Hash => "hash",
       Self::Package => "package fingerprint",

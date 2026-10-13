@@ -2,15 +2,15 @@ use {
   self::{
     functions::{escape, list, parameter, schema, write},
     templates::{
-      CommandMd, CommandsMd, HexMd, LanguagesMd, LintsMd, RouteMd, RoutesMd, SchemaMd, SchemasMd,
-      SummaryMd, TagMd, UnstableFeaturesMd,
+      CommandMd, CommandsMd, HexMd, LanguagesMd, LintsMd, MediaFormatsMd, RouteMd, RoutesMd,
+      SchemaMd, SchemasMd, SummaryMd, TagMd, UnstableFeaturesMd,
     },
   },
   boilerplate::Boilerplate,
   camino::{Utf8Path, Utf8PathBuf},
   filepack::{
-    Count, Language, Lint, LintGroup, Reference, Schema, Tag, UnstableFeature,
-    reference::{Command, Hex, Parameter, Request, Response, Route},
+    Count, Language, Lint, LintGroup, MediaType, Reference, Schema, Tag, UnstableFeature,
+    reference::{Command, Hex, MediaFormat, Parameter, Request, Response, Route},
     schema::Field,
   },
   heck::ToKebabCase,
@@ -148,6 +148,13 @@ fn main() {
     LintsMd {
       groups: &reference.lint_groups,
       lints: &reference.lints,
+    },
+  );
+
+  write(
+    src.join("media-formats.md"),
+    MediaFormatsMd {
+      media_formats: &reference.media_formats,
     },
   );
 
