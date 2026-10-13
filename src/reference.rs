@@ -25,6 +25,7 @@ impl Command {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Reference {
   pub commands: Command,
+  pub languages: BTreeMap<String, String>,
   pub routes: BTreeMap<String, Route>,
   pub schemas: BTreeMap<String, Schema>,
   pub tags: BTreeMap<String, Tag>,
@@ -102,6 +103,10 @@ impl Reference {
 
     Self {
       commands: Command::new(&mut command),
+      languages: language::CODES
+        .iter()
+        .map(|(code, name)| (code.to_string(), name.to_string()))
+        .collect(),
       routes,
       schemas,
       tags,
@@ -173,6 +178,11 @@ pub struct Tag {
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn languages() {
+    assert_eq!(Reference::new().languages["en"], "English");
+  }
 
   #[test]
   fn parameters() {

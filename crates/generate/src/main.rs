@@ -2,7 +2,8 @@ use {
   self::{
     functions::{escape, parameter, schema, write},
     templates::{
-      CommandMd, CommandsMd, HexMd, RouteMd, RoutesMd, SchemaMd, SchemasMd, SummaryMd, TagMd,
+      CommandMd, CommandsMd, HexMd, LanguagesMd, RouteMd, RoutesMd, SchemaMd, SchemasMd, SummaryMd,
+      TagMd,
     },
   },
   boilerplate::Boilerplate,
@@ -132,6 +133,13 @@ fn main() {
     src.join("hex.md"),
     HexMd {
       tags: &reference.tags,
+    },
+  );
+
+  write(
+    src.join("languages.md"),
+    LanguagesMd {
+      languages: &reference.languages,
     },
   );
 
