@@ -1,5 +1,8 @@
 use super::*;
 
+pub(crate) static ALL: LazyLock<BTreeSet<Language>> =
+  LazyLock::new(|| CODES.keys().map(|code| code.parse().unwrap()).collect());
+
 pub(crate) static CODES: LazyLock<BTreeMap<&'static str, &'static str>> = LazyLock::new(|| {
   [
     ("aa", "Afar"),
@@ -189,11 +192,13 @@ pub(crate) static CODES: LazyLock<BTreeMap<&'static str, &'static str>> = LazyLo
   .into()
 });
 
-#[derive(Clone, Copy, Debug, DeserializeFromStr, PartialEq, SerializeDisplay)]
-pub(crate) struct Language(&'static str);
+#[derive(
+  Clone, Copy, Debug, DeserializeFromStr, Eq, Ord, PartialEq, PartialOrd, SerializeDisplay,
+)]
+pub struct Language(&'static str);
 
 impl Language {
-  pub(crate) fn name(self) -> &'static str {
+  pub fn name(self) -> &'static str {
     CODES[self.0]
   }
 }

@@ -1,6 +1,19 @@
 use super::*;
 
-#[derive(Clone, Copy, Debug, EnumIter, IntoStaticStr)]
+#[derive(
+  Clone,
+  Copy,
+  Debug,
+  Deserialize,
+  EnumIter,
+  Eq,
+  IntoStaticStr,
+  Ord,
+  PartialEq,
+  PartialOrd,
+  Serialize,
+)]
+#[serde(rename_all = "kebab-case")]
 #[strum(serialize_all = "kebab-case")]
 pub enum Tag {
   Hash,
@@ -13,7 +26,7 @@ pub enum Tag {
 }
 
 impl Tag {
-  pub(crate) fn name(self) -> &'static str {
+  pub fn name(self) -> &'static str {
     match self {
       Self::Hash => "hash",
       Self::Package => "package fingerprint",
@@ -25,7 +38,7 @@ impl Tag {
     }
   }
 
-  pub(crate) fn prefix(self) -> &'static str {
+  pub fn prefix(self) -> &'static str {
     self.into()
   }
 }

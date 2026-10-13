@@ -23,12 +23,12 @@ pub(crate) struct FieldsMd<'a> {
 
 #[derive(Boilerplate)]
 pub(crate) struct HexMd<'a> {
-  pub(crate) tags: &'a BTreeMap<String, Tag>,
+  pub(crate) tags: &'a BTreeMap<Tag, Hex>,
 }
 
 #[derive(Boilerplate)]
 pub(crate) struct LanguagesMd<'a> {
-  pub(crate) languages: &'a BTreeMap<String, String>,
+  pub(crate) languages: &'a BTreeSet<Language>,
 }
 
 #[derive(Boilerplate)]
@@ -70,6 +70,6 @@ pub(crate) struct SchemaMd<'a> {
 
 #[derive(Boilerplate)]
 pub(crate) struct TagMd<'a> {
-  pub(crate) prefix: &'a str,
-  pub(crate) tag: &'a Tag,
+  pub(crate) hex: &'a Hex,
+  pub(crate) tag: Tag,
 }

@@ -99,7 +99,6 @@ use {
     key_name::KeyName,
     key_type::KeyType,
     keychain::Keychain,
-    language::Language,
     language_error::LanguageError,
     lint_error::LintError,
     lint_selector::LintSelector,
@@ -162,7 +161,6 @@ use {
     style::Style,
     subcommand::Subcommand,
     subcommand::serve::route::Route,
-    tag::Tag,
     templates::{ErrorHtml, PageHtml},
     text::Text,
     text_error::TextError,
@@ -281,6 +279,7 @@ pub use self::{
   flac_builder::FlacBuilder,
   functions::{gradient, gradient_alpha, install_default_crypto_provider},
   hash::Hash,
+  language::Language,
   lint_error::Lint,
   lint_group::LintGroup,
   loader::Loader,
@@ -300,6 +299,7 @@ pub use self::{
   schema::Schema,
   server_state::ServerState,
   state::State,
+  tag::Tag,
   totals::Totals,
 };
 

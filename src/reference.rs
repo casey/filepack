@@ -25,20 +25,20 @@ impl Command {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Reference {
   pub commands: Command,
-  pub languages: BTreeMap<String, String>,
+  pub languages: BTreeSet<Language>,
   pub lint_groups: BTreeMap<LintGroup, BTreeSet<Lint>>,
   pub lints: BTreeSet<Lint>,
   pub routes: BTreeMap<String, Route>,
   pub schemas: BTreeMap<String, Schema>,
-  pub tags: BTreeMap<String, Tag>,
+  pub tags: BTreeMap<Tag, Hex>,
 }
 
 impl Reference {
   pub fn new() -> Self {
-    fn tag<T: Hex>(schemas: &mut BTreeMap<String, Schema>, tags: &mut BTreeMap<String, Tag>) {
+    fn tag<T: crate::Hex>(schemas: &mut BTreeMap<String, Schema>, tags: &mut BTreeMap<Tag, Hex>) {
       tags.insert(
-        T::TAG.prefix().into(),
-        Tag {
+        T::TAG,
+        Hex {
           example: T::EXAMPLE.into(),
           schema: T::schema(schemas),
         },
@@ -105,10 +105,7 @@ impl Reference {
 
     Self {
       commands: Command::new(&mut command),
-      languages: language::CODES
-        .iter()
-        .map(|(code, name)| (code.to_string(), name.to_string()))
-        .collect(),
+      languages: language::ALL.clone(),
       lint_groups: LintGroup::iter()
         .map(|group| (group, group.lints()))
         .collect(),
@@ -128,6 +125,12 @@ pub struct Endpoint {
   pub range: bool,
   pub request: Option<Request>,
   pub response: Option<Response>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct Hex {
+  pub example: String,
+  pub schema: String,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, PartialEq, Serialize)]
@@ -175,19 +178,17 @@ pub struct Route {
   pub wildcard: bool,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
-pub struct Tag {
-  pub example: String,
-  pub schema: String,
-}
-
 #[cfg(test)]
 mod tests {
   use super::*;
 
   #[test]
   fn languages() {
-    assert_eq!(Reference::new().languages["en"], "English");
+    let languages = Reference::new().languages;
+
+    assert_eq!(languages.len(), language::CODES.len());
+
+    assert!(languages.contains(&"en".parse::<Language>().unwrap()));
   }
 
   #[test]
@@ -224,14 +225,15 @@ mod tests {
     let tags = Reference::new().tags;
 
     assert_eq!(
-      tags.keys().cloned().collect::<Vec<String>>(),
-      tag::Tag::iter()
-        .map(|tag| tag.prefix().into())
-        .collect::<Vec<String>>(),
+      tags.keys().copied().collect::<Vec<Tag>>(),
+      Tag::iter().collect::<Vec<Tag>>(),
     );
 
-    for (prefix, tag) in tags {
-      assert!(tag.example.starts_with(&format!("{prefix}1")), "{prefix}");
+    for (tag, hex) in tags {
+      assert!(
+        hex.example.starts_with(&format!("{}1", tag.prefix())),
+        "{tag:?}",
+      );
     }
   }
 }
