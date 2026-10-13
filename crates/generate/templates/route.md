@@ -3,7 +3,14 @@
 %% for (method, endpoint) in &self.route.methods {
 ## {{ method }}
 
+| property | value |
+|----------|-------|
+| authorization | {{ if endpoint.authenticated { "required" } else { "not required" } }} |
+| range requests | {{ if endpoint.range { "supported" } else { "not supported" } }} |
 %%   if !endpoint.parameters.is_empty() {
+
+### Parameters
+
 | parameter | type |
 |-----------|------|
 %%     for (index, (name, kind)) in self.route.parameters.iter().zip(&endpoint.parameters).enumerate() {
@@ -13,16 +20,18 @@
 | `{{ name }}` | {{ parameter(*kind) }} |
 %%       }
 %%     }
-
 %%     if self.route.wildcard {
+
 A parameter beginning with `*` is a wildcard. Wildcard parameters match the
 remainder of the path, including any slashes, and must not be empty.
-
 %%     }
 %%   }
 %%   if !endpoint.query.is_empty() {
-| query parameter | values | default |
-|-----------------|--------|---------|
+
+### Query Parameters
+
+| parameter | values | default |
+|-----------|--------|---------|
 %%     for parameter in &endpoint.query {
 %%       let values = parameter
 %%         .values
@@ -32,16 +41,6 @@ remainder of the path, including any slashes, and must not be empty.
 %%         .join(", ");
 | `{{ parameter.name }}` | {{ values }} | `{{ parameter.default }}` |
 %%     }
-
-%%   }
-%%   if endpoint.authenticated {
-Requires authorization.
-%%   } else {
-Does not require authorization.
-%%   }
-%%   if endpoint.range {
-
-Supports range requests.
 %%   }
 %%   if let Some(request) = &endpoint.request {
 
