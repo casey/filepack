@@ -27,6 +27,11 @@ pub(crate) struct HexMd<'a> {
 }
 
 #[derive(Boilerplate)]
+pub(crate) struct LanguagesMd<'a> {
+  pub(crate) languages: &'a BTreeMap<String, String>,
+}
+
+#[derive(Boilerplate)]
 pub(crate) struct RouteMd<'a> {
   pub(crate) path: &'a str,
   pub(crate) route: &'a Route,

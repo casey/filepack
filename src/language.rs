@@ -58,7 +58,6 @@ pub(crate) static CODES: LazyLock<BTreeMap<&'static str, &'static str>> = LazyLo
     ("gu", "Gujarati"),
     ("ht", "Haitian"),
     ("ha", "Hausa"),
-    ("sh", "Serbo-Croatian"),
     ("he", "Hebrew"),
     ("hz", "Herero"),
     ("hi", "Hindi"),

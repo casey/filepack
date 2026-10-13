@@ -2,6 +2,7 @@
 %% for (name, (_command, path)) in &self.commands {
   - [{{ name }}]({{ path }})
 %% }
+- [Languages](languages.md)
 - [Routes](routes.md)
 %% for (path, relative) in &self.routes {
   - [{{ escape(path) }}]({{ relative }})
