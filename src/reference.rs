@@ -31,6 +31,7 @@ pub struct Reference {
   pub routes: BTreeMap<String, Route>,
   pub schemas: BTreeMap<String, Schema>,
   pub tags: BTreeMap<Tag, Hex>,
+  pub unstable_features: BTreeSet<UnstableFeature>,
 }
 
 impl Reference {
@@ -113,6 +114,7 @@ impl Reference {
       routes,
       schemas,
       tags,
+      unstable_features: UnstableFeature::iter().collect(),
     }
   }
 }
@@ -235,5 +237,14 @@ mod tests {
         "{tag:?}",
       );
     }
+  }
+
+  #[test]
+  fn unstable_features() {
+    assert!(
+      Reference::new()
+        .unstable_features
+        .contains(&UnstableFeature::WebPackages)
+    );
   }
 }

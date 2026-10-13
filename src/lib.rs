@@ -173,7 +173,6 @@ use {
     track_info::TrackInfo,
     type_name::TypeName,
     unknown_error::UnknownError,
-    unstable_feature::UnstableFeature,
     url_error::UrlError,
     utf8_path_ext::Utf8PathExt,
     validate::Validate,
@@ -301,6 +300,7 @@ pub use self::{
   state::State,
   tag::Tag,
   totals::Totals,
+  unstable_feature::UnstableFeature,
 };
 
 #[cfg(test)]

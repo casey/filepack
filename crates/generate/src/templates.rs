@@ -73,3 +73,8 @@ pub(crate) struct TagMd<'a> {
   pub(crate) hex: &'a Hex,
   pub(crate) tag: Tag,
 }
+
+#[derive(Boilerplate)]
+pub(crate) struct UnstableFeaturesMd<'a> {
+  pub(crate) features: &'a BTreeSet<UnstableFeature>,
+}

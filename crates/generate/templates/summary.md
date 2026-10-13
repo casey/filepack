@@ -16,3 +16,4 @@
 %% for (prefix, path) in &self.tags {
   - [{{ prefix }}]({{ path }})
 %% }
+- [Unstable Features](unstable-features.md)

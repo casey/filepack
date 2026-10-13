@@ -3,13 +3,13 @@ use {
     functions::{escape, list, parameter, schema, write},
     templates::{
       CommandMd, CommandsMd, HexMd, LanguagesMd, LintsMd, RouteMd, RoutesMd, SchemaMd, SchemasMd,
-      SummaryMd, TagMd,
+      SummaryMd, TagMd, UnstableFeaturesMd,
     },
   },
   boilerplate::Boilerplate,
   camino::{Utf8Path, Utf8PathBuf},
   filepack::{
-    Count, Language, Lint, LintGroup, Reference, Schema, Tag,
+    Count, Language, Lint, LintGroup, Reference, Schema, Tag, UnstableFeature,
     reference::{Command, Hex, Parameter, Request, Response, Route},
     schema::Field,
   },
@@ -163,6 +163,13 @@ fn main() {
     src.join("schemas.md"),
     SchemasMd {
       schemas: &reference.schemas,
+    },
+  );
+
+  write(
+    src.join("unstable-features.md"),
+    UnstableFeaturesMd {
+      features: &reference.unstable_features,
     },
   );
 
