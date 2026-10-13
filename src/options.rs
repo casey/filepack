@@ -1,4 +1,4 @@
-use super::*;
+use {super::*, clap::builder::BoolishValueParser};
 
 #[derive(Parser)]
 pub(crate) struct Options {
@@ -14,7 +14,12 @@ pub(crate) struct Options {
   pub(crate) parallel: bool,
   #[arg(long, help = "Suppress output")]
   pub(crate) quiet: bool,
-  #[arg(long, help = "Enable unstable features", env = "FILEPACK_UNSTABLE")]
+  #[arg(
+    env = "FILEPACK_UNSTABLE",
+    help = "Enable unstable features",
+    long,
+    value_parser = BoolishValueParser::new()
+  )]
   pub(crate) unstable: bool,
 }
 
