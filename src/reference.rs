@@ -26,6 +26,8 @@ impl Command {
 pub struct Reference {
   pub commands: Command,
   pub languages: BTreeMap<String, String>,
+  pub lint_groups: BTreeMap<LintGroup, BTreeSet<Lint>>,
+  pub lints: BTreeSet<Lint>,
   pub routes: BTreeMap<String, Route>,
   pub schemas: BTreeMap<String, Schema>,
   pub tags: BTreeMap<String, Tag>,
@@ -107,6 +109,10 @@ impl Reference {
         .iter()
         .map(|(code, name)| (code.to_string(), name.to_string()))
         .collect(),
+      lint_groups: LintGroup::iter()
+        .map(|group| (group, group.lints()))
+        .collect(),
+      lints: Lint::iter().collect(),
       routes,
       schemas,
       tags,
@@ -182,6 +188,18 @@ mod tests {
   #[test]
   fn languages() {
     assert_eq!(Reference::new().languages["en"], "English");
+  }
+
+  #[test]
+  fn lints() {
+    let reference = Reference::new();
+
+    assert!(reference.lints.contains(&Lint::Junk));
+
+    assert_eq!(
+      reference.lint_groups[&LintGroup::Hygiene],
+      BTreeSet::from([Lint::Junk]),
+    );
   }
 
   #[test]

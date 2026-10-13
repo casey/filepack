@@ -1,21 +1,21 @@
 use {
   self::{
-    functions::{escape, parameter, schema, write},
+    functions::{escape, list, parameter, schema, write},
     templates::{
-      CommandMd, CommandsMd, HexMd, LanguagesMd, RouteMd, RoutesMd, SchemaMd, SchemasMd, SummaryMd,
-      TagMd,
+      CommandMd, CommandsMd, HexMd, LanguagesMd, LintsMd, RouteMd, RoutesMd, SchemaMd, SchemasMd,
+      SummaryMd, TagMd,
     },
   },
   boilerplate::Boilerplate,
   camino::{Utf8Path, Utf8PathBuf},
   filepack::{
-    Count, Reference, Schema,
+    Count, Lint, LintGroup, Reference, Schema,
     reference::{Command, Parameter, Request, Response, Route, Tag},
     schema::Field,
   },
   heck::ToKebabCase,
   std::{
-    collections::BTreeMap,
+    collections::{BTreeMap, BTreeSet},
     env,
     fmt::Display,
     fs::{self, File},
@@ -140,6 +140,14 @@ fn main() {
     src.join("languages.md"),
     LanguagesMd {
       languages: &reference.languages,
+    },
+  );
+
+  write(
+    src.join("lints.md"),
+    LintsMd {
+      groups: &reference.lint_groups,
+      lints: &reference.lints,
     },
   );
 

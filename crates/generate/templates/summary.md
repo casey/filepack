@@ -3,6 +3,7 @@
   - [{{ name }}]({{ path }})
 %% }
 - [Languages](languages.md)
+- [Lints](lints.md)
 - [Routes](routes.md)
 %% for (path, relative) in &self.routes {
   - [{{ escape(path) }}]({{ relative }})

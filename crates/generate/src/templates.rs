@@ -32,6 +32,12 @@ pub(crate) struct LanguagesMd<'a> {
 }
 
 #[derive(Boilerplate)]
+pub(crate) struct LintsMd<'a> {
+  pub(crate) groups: &'a BTreeMap<LintGroup, BTreeSet<Lint>>,
+  pub(crate) lints: &'a BTreeSet<Lint>,
+}
+
+#[derive(Boilerplate)]
 pub(crate) struct RouteMd<'a> {
   pub(crate) path: &'a str,
   pub(crate) route: &'a Route,
