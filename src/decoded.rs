@@ -31,15 +31,15 @@ impl<'a, T: Decode<'a>> Decode<'a> for Decoded<T> {
 }
 
 impl<T: Encode> Encode for Decoded<T> {
+  fn deco_schema(registry: &mut deco::Registry) -> String {
+    T::deco_schema(registry)
+  }
+
   fn encode(&self, encoder: &mut Encoder) {
     match self {
       Self::Known(value) => value.encode(encoder),
       Self::Unknown(bytes) => encoder.bytes(bytes),
     }
-  }
-
-  fn schema(schemas: &mut deco::Registry) -> String {
-    T::schema(schemas)
   }
 }
 
@@ -85,7 +85,7 @@ mod tests {
   fn schema() {
     let mut schemas = BTreeMap::new();
 
-    assert_eq!(Decoded::<u64>::schema(&mut schemas), "UnsignedInteger");
+    assert_eq!(Decoded::<u64>::deco_schema(&mut schemas), "UnsignedInteger");
 
     assert_eq!(
       schemas,

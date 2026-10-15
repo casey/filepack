@@ -18,3 +18,7 @@
   - [{{ prefix }}]({{ path }})
 %% }
 - [Unstable Features](unstable-features.md)
+- [YAML](yaml.md)
+%% for (name, path) in &self.yaml {
+  - [{{ escape(name) }}]({{ path }})
+%% }

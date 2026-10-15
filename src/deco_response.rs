@@ -9,10 +9,10 @@ impl<T: Encode> IntoResponse for DecoResponse<T> {
 }
 
 impl<T: Encode> Describe for DecoResponse<T> {
-  fn describe(endpoint: &mut reference::Endpoint, schemas: &mut deco::Registry) {
-    let name = T::schema(schemas);
+  fn describe(endpoint: &mut reference::Endpoint, registry: &mut deco::Registry) {
+    let name = T::deco_schema(registry);
 
-    let schema = schemas.remove(&name).unwrap();
+    let schema = registry.remove(&name).unwrap();
 
     endpoint.response = Some(reference::Response::Deco { schema });
   }

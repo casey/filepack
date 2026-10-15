@@ -69,15 +69,15 @@ impl Display for PublicKey {
 }
 
 impl Encode for PublicKey {
-  fn encode(&self, encoder: &mut Encoder) {
-    encoder.bytes(self.0.as_bytes());
-  }
-
-  fn schema(schemas: &mut deco::Registry) -> String {
+  fn deco_schema(registry: &mut deco::Registry) -> String {
     deco::Schema::Bytes {
       length: Some(Self::LEN.into_u64()),
     }
-    .register("PublicKey", schemas)
+    .register("PublicKey", registry)
+  }
+
+  fn encode(&self, encoder: &mut Encoder) {
+    encoder.bytes(self.0.as_bytes());
   }
 }
 

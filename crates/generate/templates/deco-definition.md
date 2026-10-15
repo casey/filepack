@@ -29,7 +29,7 @@ An enum with {{ Count::new(variants.len(), "variant") }}:
 
 ## {{ variant.name }}
 
-{{ FieldsMd { fields: &variant.fields } }}
+{{ DecoFieldsMd { fields: &variant.fields } }}
 %%       }
 %%     }
 %%   }
@@ -46,7 +46,7 @@ A string. Encoded as a byte string containing the UTF-8 encoding of the string.
 %%   deco::Schema::Struct { fields, magic, strict } => {
 A struct with {{ Count::new(fields.len(), "field") }}:
 
-{{ FieldsMd { fields } }}
+{{ DecoFieldsMd { fields } }}
 %%     if let Some(magic) = magic {
 
 The value is encoded with magic bytes consisting of the deco encoded byte

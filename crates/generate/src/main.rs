@@ -1,9 +1,9 @@
 use {
   self::{
-    functions::{deco, escape, list, parameter, write},
+    functions::{deco, escape, list, parameter, write, yaml},
     templates::{
       CommandMd, CommandsMd, DecoMd, DecoSchemaMd, HexMd, LanguagesMd, LintsMd, MediaFormatsMd,
-      RouteMd, RoutesMd, SummaryMd, TagMd, UnstableFeaturesMd,
+      RouteMd, RoutesMd, SummaryMd, TagMd, UnstableFeaturesMd, YamlMd, YamlSchemaMd,
     },
   },
   boilerplate::Boilerplate,
@@ -11,6 +11,7 @@ use {
   filepack::{
     Count, Language, Lint, LintGroup, MediaType, Reference, Tag, UnstableFeature, deco,
     reference::{Command, Hex, MediaFormat, Parameter, Request, Response, Route},
+    yaml,
   },
   heck::ToKebabCase,
   std::{
@@ -126,6 +127,20 @@ fn main() {
     routes
   };
 
+  let yaml = {
+    let mut pages = BTreeMap::new();
+
+    for (name, schema) in &reference.yaml {
+      let relative = Utf8PathBuf::from(format!("yaml/{}.md", name.to_kebab_case()));
+
+      write(src.join(&relative), YamlSchemaMd { name, schema });
+
+      pages.insert(name.as_str(), relative);
+    }
+
+    pages
+  };
+
   write(src.join("commands.md"), CommandsMd { pages: &commands });
 
   write(
@@ -180,12 +195,20 @@ fn main() {
   );
 
   write(
+    src.join("yaml.md"),
+    YamlMd {
+      yaml: &reference.yaml,
+    },
+  );
+
+  write(
     src.join("SUMMARY.md"),
     SummaryMd {
       commands,
       deco,
       hex,
       routes,
+      yaml,
     },
   );
 }

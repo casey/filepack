@@ -253,19 +253,19 @@ impl Input {
 
     Ok(quote! {
       impl #impl_generics Encode for #name #ty_generics #where_clause {
+        fn deco_schema(registry: &mut deco::Registry) -> String {
+          deco::Schema::Enum {
+            variants: vec![#(#schema_variants),*],
+          }
+          .register(&#schema_name, registry)
+        }
+
         fn encode(&self, encoder: &mut Encoder) {
           let mut array = encoder.array();
           match self {
             #(#arms)*
           }
           array.finish();
-        }
-
-        fn schema(schemas: &mut deco::Registry) -> String {
-          deco::Schema::Enum {
-            variants: vec![#(#schema_variants),*],
-          }
-          .register(&#schema_name, schemas)
         }
       }
     })
@@ -305,20 +305,20 @@ impl Input {
 
     Ok(quote! {
       impl #impl_generics Encode for #name #ty_generics #where_clause {
-        fn encode(&self, encoder: &mut Encoder) {
-          let mut map = encoder.map::<u64>();
-          #(#items)*
-          map.finish();
-          #magic
-        }
-
-        fn schema(schemas: &mut deco::Registry) -> String {
+        fn deco_schema(registry: &mut deco::Registry) -> String {
           deco::Schema::Struct {
             fields: vec![#(#schema_fields),*],
             magic: #schema_magic,
             strict: #strict,
           }
-          .register(&#schema_name, schemas)
+          .register(&#schema_name, registry)
+        }
+
+        fn encode(&self, encoder: &mut Encoder) {
+          let mut map = encoder.map::<u64>();
+          #(#items)*
+          map.finish();
+          #magic
         }
       }
     })
@@ -337,15 +337,15 @@ impl Input {
 
     Ok(quote! {
       impl #impl_generics Encode for #name #ty_generics #where_clause {
-        fn encode(&self, encoder: &mut Encoder) {
-          self.0.encode(encoder);
+        fn deco_schema(registry: &mut deco::Registry) -> String {
+          deco::Schema::Wrapper {
+            inner: <#ty>::deco_schema(registry),
+          }
+          .register(&#schema_name, registry)
         }
 
-        fn schema(schemas: &mut deco::Registry) -> String {
-          deco::Schema::Wrapper {
-            inner: <#ty as Encode>::schema(schemas),
-          }
-          .register(&#schema_name, schemas)
+        fn encode(&self, encoder: &mut Encoder) {
+          self.0.encode(encoder);
         }
       }
     })
@@ -495,7 +495,7 @@ impl Input {
       quote! { String::from(#name) }
     } else {
       let pattern = format!("{name}<{}>", vec!["{}"; params.len()].join(", "));
-      quote! { format!(#pattern, #(<#params as Encode>::schema(schemas)),*) }
+      quote! { format!(#pattern, #(<#params>::deco_schema(registry)),*) }
     }
   }
 

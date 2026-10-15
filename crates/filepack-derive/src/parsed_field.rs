@@ -56,7 +56,7 @@ impl ParsedField<'_> {
               n: #n,
               name: #name.into(),
               optional: #optional,
-              schema: <#ty as Encode>::schema(schemas),
+              schema: <#ty>::deco_schema(registry),
             }
           }
         },

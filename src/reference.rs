@@ -33,6 +33,7 @@ pub struct Reference {
   pub media_formats: BTreeMap<MediaType, Vec<MediaFormat>>,
   pub routes: BTreeMap<String, Route>,
   pub unstable_features: BTreeSet<UnstableFeature>,
+  pub yaml: yaml::Registry,
 }
 
 impl Reference {
@@ -63,7 +64,7 @@ impl Reference {
         Hex {
           example: T::EXAMPLE.into(),
           name: T::TAG.name().into(),
-          schema: T::schema(deco),
+          schema: T::deco_schema(deco),
         },
       );
     }
@@ -74,12 +75,12 @@ impl Reference {
 
     let mut deco = BTreeMap::new();
 
-    Archive::schema(&mut deco);
-    Directory::schema(&mut deco);
-    Envelope::<Claims>::schema(&mut deco);
-    Envelope::<Statement>::schema(&mut deco);
-    Metadata::schema(&mut deco);
-    RevisionObject::schema(&mut deco);
+    Archive::deco_schema(&mut deco);
+    Directory::deco_schema(&mut deco);
+    Envelope::<Claims>::deco_schema(&mut deco);
+    Envelope::<Statement>::deco_schema(&mut deco);
+    Metadata::deco_schema(&mut deco);
+    RevisionObject::deco_schema(&mut deco);
 
     let mut hex = BTreeMap::new();
 
@@ -90,6 +91,10 @@ impl Reference {
     tag::<PublicKey>(&mut deco, &mut hex);
     tag::<Revision>(&mut deco, &mut hex);
     tag::<Token>(&mut deco, &mut hex);
+
+    let mut yaml = BTreeMap::new();
+
+    yaml::Metadata::yaml_schema(&mut yaml);
 
     let mut routes = BTreeMap::<String, Route>::new();
 
@@ -146,6 +151,7 @@ impl Reference {
       .into(),
       routes,
       unstable_features: UnstableFeature::iter().collect(),
+      yaml,
     }
   }
 }

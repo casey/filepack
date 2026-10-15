@@ -20,10 +20,10 @@ impl<T: DecodeOwned, S: Send + Sync, const LIMIT: usize> FromRequest<S> for Deco
 }
 
 impl<T: Encode, const LIMIT: usize> Describe for DecoRequest<T, LIMIT> {
-  fn describe(endpoint: &mut reference::Endpoint, schemas: &mut deco::Registry) {
-    let name = T::schema(schemas);
+  fn describe(endpoint: &mut reference::Endpoint, registry: &mut deco::Registry) {
+    let name = T::deco_schema(registry);
 
-    let schema = schemas.remove(&name).unwrap();
+    let schema = registry.remove(&name).unwrap();
 
     endpoint.request = Some(reference::Request::Deco {
       limit: LIMIT.into_u64(),

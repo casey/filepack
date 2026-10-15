@@ -66,6 +66,15 @@ impl FromStr for Time {
   }
 }
 
+impl yaml::Yaml for Time {
+  fn yaml_schema(registry: &mut yaml::Registry) -> String {
+    yaml::Schema::Wrapper {
+      inner: String::yaml_schema(registry),
+    }
+    .register("Time", registry)
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;

@@ -133,7 +133,7 @@ impl IntoResponse for Resource {
 }
 
 impl Describe for Resource {
-  fn describe(endpoint: &mut reference::Endpoint, _schemas: &mut deco::Registry) {
+  fn describe(endpoint: &mut reference::Endpoint, _registry: &mut deco::Registry) {
     endpoint.response = Some(reference::Response::File);
   }
 }

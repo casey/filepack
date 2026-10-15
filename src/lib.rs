@@ -182,6 +182,7 @@ use {
     video_metadata::VideoMetadata,
     webm_decoder::WebmDecoder,
     xmp_error::XmpError,
+    yaml::Yaml,
   },
   axum::{
     body::Body,
@@ -194,7 +195,7 @@ use {
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},
   clap::{ArgGroup, Parser, ValueEnum},
   claxon::FlacReader,
-  filepack_derive::{Decode, DecodeFromStr, Encode, EncodeDisplay, Magic, route},
+  filepack_derive::{Decode, DecodeFromStr, Encode, EncodeDisplay, Magic, Yaml, route},
   futures_util::StreamExt,
   humansize::{BINARY, BaseUnit, DECIMAL, FormatSizeOptions, SizeFormatter},
   icu_normalizer::ComposingNormalizerBorrowed,
@@ -515,7 +516,7 @@ mod video_metadata;
 mod webm_decoder;
 mod xmp;
 mod xmp_error;
-mod yaml;
+pub mod yaml;
 
 #[cfg(test)]
 mod derive;

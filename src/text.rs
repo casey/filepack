@@ -61,6 +61,15 @@ impl Validate for Text {
   }
 }
 
+impl yaml::Yaml for Text {
+  fn yaml_schema(registry: &mut yaml::Registry) -> String {
+    yaml::Schema::Wrapper {
+      inner: String::yaml_schema(registry),
+    }
+    .register("Text", registry)
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
