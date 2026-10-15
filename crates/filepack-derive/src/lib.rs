@@ -102,7 +102,7 @@ pub fn encode_display(input: TokenStream) -> TokenStream {
     impl Encode for #name {
       fn deco_schema(registry: &mut deco::Registry) -> String {
         deco::Schema::Wrapper {
-          inner: <String as Encode>::deco_schema(registry),
+          inner: String::deco_schema(registry),
         }
         .register(#schema_name, registry)
       }

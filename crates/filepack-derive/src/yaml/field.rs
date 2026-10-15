@@ -31,7 +31,7 @@ impl Field {
       yaml::Field {
         name: #name.into(),
         optional: #optional,
-        schema: <#ty as yaml::Yaml>::yaml_schema(registry),
+        schema: <#ty>::yaml_schema(registry),
       }
     })
   }

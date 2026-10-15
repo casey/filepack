@@ -339,7 +339,7 @@ impl Input {
       impl #impl_generics Encode for #name #ty_generics #where_clause {
         fn deco_schema(registry: &mut deco::Registry) -> String {
           deco::Schema::Wrapper {
-            inner: <#ty as Encode>::deco_schema(registry),
+            inner: <#ty>::deco_schema(registry),
           }
           .register(&#schema_name, registry)
         }
@@ -495,7 +495,7 @@ impl Input {
       quote! { String::from(#name) }
     } else {
       let pattern = format!("{name}<{}>", vec!["{}"; params.len()].join(", "));
-      quote! { format!(#pattern, #(<#params as Encode>::deco_schema(registry)),*) }
+      quote! { format!(#pattern, #(<#params>::deco_schema(registry)),*) }
     }
   }
 
