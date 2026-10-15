@@ -12,18 +12,29 @@ pub(crate) struct CommandsMd<'a> {
 }
 
 #[derive(Boilerplate)]
+pub(crate) struct DecoMd<'a> {
+  pub(crate) deco: &'a deco::Registry,
+}
+
+#[derive(Boilerplate)]
+pub(crate) struct DecoSchemaMd<'a> {
+  pub(crate) name: &'a str,
+  pub(crate) schema: &'a deco::Schema,
+}
+
+#[derive(Boilerplate)]
 pub(crate) struct DefinitionMd<'a> {
-  pub(crate) schema: &'a Schema,
+  pub(crate) schema: &'a deco::Schema,
 }
 
 #[derive(Boilerplate)]
 pub(crate) struct FieldsMd<'a> {
-  pub(crate) fields: &'a [Field],
+  pub(crate) fields: &'a [deco::Field],
 }
 
 #[derive(Boilerplate)]
 pub(crate) struct HexMd<'a> {
-  pub(crate) tags: &'a BTreeMap<Tag, Hex>,
+  pub(crate) hex: &'a BTreeMap<Tag, Hex>,
 }
 
 #[derive(Boilerplate)]
@@ -55,22 +66,11 @@ pub(crate) struct RoutesMd<'a> {
 }
 
 #[derive(Boilerplate)]
-pub(crate) struct SchemasMd<'a> {
-  pub(crate) schemas: &'a BTreeMap<String, Schema>,
-}
-
-#[derive(Boilerplate)]
 pub(crate) struct SummaryMd<'a> {
   pub(crate) commands: BTreeMap<String, (&'a Command, Utf8PathBuf)>,
+  pub(crate) deco: BTreeMap<&'a str, Utf8PathBuf>,
+  pub(crate) hex: BTreeMap<&'a str, Utf8PathBuf>,
   pub(crate) routes: BTreeMap<&'a str, Utf8PathBuf>,
-  pub(crate) schemas: BTreeMap<&'a str, Utf8PathBuf>,
-  pub(crate) tags: BTreeMap<&'a str, Utf8PathBuf>,
-}
-
-#[derive(Boilerplate)]
-pub(crate) struct SchemaMd<'a> {
-  pub(crate) name: &'a str,
-  pub(crate) schema: &'a Schema,
 }
 
 #[derive(Boilerplate)]

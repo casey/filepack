@@ -8,6 +8,8 @@ pub struct Field {
   pub schema: String,
 }
 
+pub type Registry = BTreeMap<String, Schema>;
+
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum Schema {
@@ -39,7 +41,7 @@ pub enum Schema {
 }
 
 impl Schema {
-  pub fn register(self, name: &str, schemas: &mut BTreeMap<String, Schema>) -> String {
+  pub fn register(self, name: &str, schemas: &mut Registry) -> String {
     if let Some(existing) = schemas.get(name) {
       assert!(
         *existing == self,

@@ -235,8 +235,8 @@ impl Encode for Language {
     self.0.encode(encoder);
   }
 
-  fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
-    Schema::Wrapper {
+  fn schema(schemas: &mut deco::Registry) -> String {
+    deco::Schema::Wrapper {
       inner: String::schema(schemas),
     }
     .register("Language", schemas)

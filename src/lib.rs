@@ -296,7 +296,6 @@ pub use self::{
   public_key::PublicKey,
   reference::Reference,
   revision_object::RevisionObject,
-  schema::Schema,
   server_state::ServerState,
   state::State,
   tag::Tag,
@@ -349,6 +348,7 @@ mod context;
 mod count;
 mod database_metadata;
 mod date;
+pub mod deco;
 mod deco_request;
 mod deco_response;
 mod decode;
@@ -473,7 +473,6 @@ mod resource_type;
 mod revision;
 mod revision_object;
 mod rotation;
-pub mod schema;
 mod server;
 mod server_error;
 mod server_state;

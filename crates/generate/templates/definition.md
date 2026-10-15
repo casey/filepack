@@ -1,18 +1,18 @@
 %% match self.schema {
-%%   Schema::Array { element } => {
-An array of {{ schema(element) }}.
+%%   deco::Schema::Array { element } => {
+An array of {{ deco(element) }}.
 %%   }
-%%   Schema::Boolean => {
+%%   deco::Schema::Boolean => {
 A boolean. Encoded as the byte string `0x00` for false and `0x01` for true.
 %%   }
-%%   Schema::Bytes { length } => {
+%%   deco::Schema::Bytes { length } => {
 %%     if let Some(length) = length {
 A byte string of exactly {{ Count::new(*length, "byte") }}.
 %%     } else {
 An arbitrary byte string.
 %%     }
 %%   }
-%%   Schema::Enum { variants } => {
+%%   deco::Schema::Enum { variants } => {
 An enum with {{ Count::new(variants.len(), "variant") }}:
 
 | discriminant | variant |
@@ -33,17 +33,17 @@ An enum with {{ Count::new(variants.len(), "variant") }}:
 %%       }
 %%     }
 %%   }
-%%   Schema::Map { key, value } => {
-A map from {{ schema(key) }} to {{ schema(value) }}.
+%%   deco::Schema::Map { key, value } => {
+A map from {{ deco(key) }} to {{ deco(value) }}.
 %%   }
-%%   Schema::SignedInteger => {
+%%   deco::Schema::SignedInteger => {
 A signed 64-bit integer. First zig-zag encoded, then encoded as an
-[UnsignedInteger](../schemas/unsigned-integer.md).
+[UnsignedInteger](../deco/unsigned-integer.md).
 %%   }
-%%   Schema::String => {
+%%   deco::Schema::String => {
 A string. Encoded as a byte string containing the UTF-8 encoding of the string.
 %%   }
-%%   Schema::Struct { fields, magic, strict } => {
+%%   deco::Schema::Struct { fields, magic, strict } => {
 A struct with {{ Count::new(fields.len(), "field") }}:
 
 {{ FieldsMd { fields } }}
@@ -58,11 +58,11 @@ followed by the encoded value.
 Unknown fields are rejected.
 %%     }
 %%   }
-%%   Schema::UnsignedInteger => {
+%%   deco::Schema::UnsignedInteger => {
 An unsigned 64-bit integer. Encoded as little endian with trailing zero bytes
 removed, with a minimum length of one byte.
 %%   }
-%%   Schema::Wrapper { inner } => {
-A wrapper around {{ schema(inner) }}.
+%%   deco::Schema::Wrapper { inner } => {
+A wrapper around {{ deco(inner) }}.
 %%   }
 %% }

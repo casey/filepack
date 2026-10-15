@@ -32,7 +32,7 @@ impl IntoResponse for StaticAsset {
 }
 
 impl Describe for StaticAsset {
-  fn describe(endpoint: &mut reference::Endpoint, _schemas: &mut BTreeMap<String, Schema>) {
+  fn describe(endpoint: &mut reference::Endpoint, _schemas: &mut deco::Registry) {
     endpoint.response = Some(reference::Response::Static);
   }
 }

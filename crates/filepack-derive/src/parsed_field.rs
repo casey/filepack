@@ -52,7 +52,7 @@ impl ParsedField<'_> {
          }| {
           let name = ident.to_string();
           quote! {
-            schema::Field {
+            deco::Field {
               n: #n,
               name: #name.into(),
               optional: #optional,

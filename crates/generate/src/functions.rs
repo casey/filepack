@@ -1,5 +1,9 @@
 use super::*;
 
+pub(crate) fn deco(name: &str) -> String {
+  format!("[{}](../deco/{}.md)", escape(name), name.to_kebab_case())
+}
+
 pub(crate) fn escape(name: &str) -> String {
   name
     .replace('*', "\\*")
@@ -30,10 +34,6 @@ pub(crate) fn parameter(parameter: Parameter) -> &'static str {
     Parameter::Revision => "[revision](../hex/revision.md)",
     Parameter::String => "string",
   }
-}
-
-pub(crate) fn schema(name: &str) -> String {
-  format!("[{}](../schemas/{}.md)", escape(name), name.to_kebab_case())
 }
 
 pub(crate) fn write(path: impl AsRef<Utf8Path>, contents: impl Display) {

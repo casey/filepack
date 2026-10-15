@@ -43,7 +43,7 @@ pub(crate) struct PackagesQuery {
 }
 
 impl Describe for Query<PackagesQuery> {
-  fn describe(endpoint: &mut crate::reference::Endpoint, _schemas: &mut BTreeMap<String, Schema>) {
+  fn describe(endpoint: &mut crate::reference::Endpoint, _schemas: &mut deco::Registry) {
     endpoint.query.extend([
       crate::reference::QueryParameter {
         default: Order::default().to_string(),

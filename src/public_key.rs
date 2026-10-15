@@ -73,8 +73,8 @@ impl Encode for PublicKey {
     encoder.bytes(self.0.as_bytes());
   }
 
-  fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
-    Schema::Bytes {
+  fn schema(schemas: &mut deco::Registry) -> String {
+    deco::Schema::Bytes {
       length: Some(Self::LEN.into_u64()),
     }
     .register("PublicKey", schemas)

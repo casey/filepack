@@ -82,8 +82,8 @@ impl Encode for Hash {
     self.as_bytes().encode(encoder);
   }
 
-  fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
-    Schema::Bytes {
+  fn schema(schemas: &mut deco::Registry) -> String {
+    deco::Schema::Bytes {
       length: Some(Self::LEN.into_u64()),
     }
     .register("Hash", schemas)

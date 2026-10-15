@@ -9,7 +9,7 @@ impl<T: Encode> IntoResponse for DecoResponse<T> {
 }
 
 impl<T: Encode> Describe for DecoResponse<T> {
-  fn describe(endpoint: &mut reference::Endpoint, schemas: &mut BTreeMap<String, Schema>) {
+  fn describe(endpoint: &mut reference::Endpoint, schemas: &mut deco::Registry) {
     let name = T::schema(schemas);
 
     let schema = schemas.remove(&name).unwrap();

@@ -1,17 +1,16 @@
 use {
   self::{
-    functions::{escape, list, parameter, schema, write},
+    functions::{deco, escape, list, parameter, write},
     templates::{
-      CommandMd, CommandsMd, HexMd, LanguagesMd, LintsMd, MediaFormatsMd, RouteMd, RoutesMd,
-      SchemaMd, SchemasMd, SummaryMd, TagMd, UnstableFeaturesMd,
+      CommandMd, CommandsMd, DecoMd, DecoSchemaMd, HexMd, LanguagesMd, LintsMd, MediaFormatsMd,
+      RouteMd, RoutesMd, SummaryMd, TagMd, UnstableFeaturesMd,
     },
   },
   boilerplate::Boilerplate,
   camino::{Utf8Path, Utf8PathBuf},
   filepack::{
-    Count, Language, Lint, LintGroup, MediaType, Reference, Schema, Tag, UnstableFeature,
+    Count, Language, Lint, LintGroup, MediaType, Reference, Tag, UnstableFeature, deco,
     reference::{Command, Hex, MediaFormat, Parameter, Request, Response, Route},
-    schema::Field,
   },
   heck::ToKebabCase,
   std::{
@@ -79,32 +78,32 @@ fn main() {
     commands
   };
 
-  let schemas = {
-    let mut schemas = BTreeMap::new();
+  let deco = {
+    let mut deco = BTreeMap::new();
 
-    for (name, schema) in &reference.schemas {
-      let relative = Utf8PathBuf::from(format!("schemas/{}.md", name.to_kebab_case()));
+    for (name, schema) in &reference.deco {
+      let relative = Utf8PathBuf::from(format!("deco/{}.md", name.to_kebab_case()));
 
-      write(src.join(&relative), SchemaMd { name, schema });
+      write(src.join(&relative), DecoSchemaMd { name, schema });
 
-      schemas.insert(name.as_str(), relative);
+      deco.insert(name.as_str(), relative);
     }
 
-    schemas
+    deco
   };
 
-  let tags = {
-    let mut tags = BTreeMap::new();
+  let hex = {
+    let mut pages = BTreeMap::new();
 
-    for (tag, hex) in &reference.tags {
+    for (tag, hex) in &reference.hex {
       let relative = Utf8PathBuf::from(format!("hex/{}.md", tag.prefix()));
 
       write(src.join(&relative), TagMd { hex, tag: *tag });
 
-      tags.insert(tag.prefix(), relative);
+      pages.insert(tag.prefix(), relative);
     }
 
-    tags
+    pages
   };
 
   let routes = {
@@ -132,7 +131,7 @@ fn main() {
   write(
     src.join("hex.md"),
     HexMd {
-      tags: &reference.tags,
+      hex: &reference.hex,
     },
   );
 
@@ -167,9 +166,9 @@ fn main() {
   );
 
   write(
-    src.join("schemas.md"),
-    SchemasMd {
-      schemas: &reference.schemas,
+    src.join("deco.md"),
+    DecoMd {
+      deco: &reference.deco,
     },
   );
 
@@ -184,9 +183,9 @@ fn main() {
     src.join("SUMMARY.md"),
     SummaryMd {
       commands,
+      deco,
+      hex,
       routes,
-      schemas,
-      tags,
     },
   );
 }

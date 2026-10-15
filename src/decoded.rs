@@ -38,7 +38,7 @@ impl<T: Encode> Encode for Decoded<T> {
     }
   }
 
-  fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
+  fn schema(schemas: &mut deco::Registry) -> String {
     T::schema(schemas)
   }
 }
@@ -89,7 +89,7 @@ mod tests {
 
     assert_eq!(
       schemas,
-      BTreeMap::from([("UnsignedInteger".into(), Schema::UnsignedInteger)]),
+      BTreeMap::from([("UnsignedInteger".into(), deco::Schema::UnsignedInteger)]),
     );
   }
 

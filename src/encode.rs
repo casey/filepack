@@ -9,7 +9,7 @@ pub trait Encode {
     encoder.finish()
   }
 
-  fn schema(schemas: &mut BTreeMap<String, Schema>) -> String;
+  fn schema(schemas: &mut deco::Registry) -> String;
 }
 
 impl<T: ?Sized> Encode for &T
@@ -20,7 +20,7 @@ where
     T::encode(self, encoder);
   }
 
-  fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
+  fn schema(schemas: &mut deco::Registry) -> String {
     T::schema(schemas)
   }
 }
@@ -30,8 +30,8 @@ impl<const N: usize> Encode for [u8; N] {
     encoder.bytes(self);
   }
 
-  fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
-    Schema::Bytes {
+  fn schema(schemas: &mut deco::Registry) -> String {
+    deco::Schema::Bytes {
       length: Some(N.into_u64()),
     }
     .register(&format!("Bytes<{N}>"), schemas)
@@ -43,8 +43,8 @@ impl<const N: usize, const M: usize> Encode for [[u8; N]; M] {
     encoder.bytes(self.as_flattened());
   }
 
-  fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
-    Schema::Bytes {
+  fn schema(schemas: &mut deco::Registry) -> String {
+    deco::Schema::Bytes {
       length: Some((N * M).into_u64()),
     }
     .register(&format!("Bytes<{}>", N * M), schemas)
@@ -64,11 +64,11 @@ where
     map.finish();
   }
 
-  fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
+  fn schema(schemas: &mut deco::Registry) -> String {
     let key = K::schema(schemas);
     let value = V::schema(schemas);
     let name = format!("Map<{key}, {value}>");
-    Schema::Map { key, value }.register(&name, schemas)
+    deco::Schema::Map { key, value }.register(&name, schemas)
   }
 }
 
@@ -77,8 +77,8 @@ impl Encode for bool {
     encoder.boolean(*self);
   }
 
-  fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
-    Schema::Boolean.register("Boolean", schemas)
+  fn schema(schemas: &mut deco::Registry) -> String {
+    deco::Schema::Boolean.register("Boolean", schemas)
   }
 }
 
@@ -87,7 +87,7 @@ impl Encode for String {
     self.as_str().encode(encoder);
   }
 
-  fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
+  fn schema(schemas: &mut deco::Registry) -> String {
     str::schema(schemas)
   }
 }
@@ -97,7 +97,7 @@ impl Encode for Vec<u8> {
     self.as_slice().encode(encoder);
   }
 
-  fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
+  fn schema(schemas: &mut deco::Registry) -> String {
     <[u8]>::schema(schemas)
   }
 }
@@ -107,7 +107,7 @@ impl<T: Encode> Encode for Vec<T> {
     self.as_slice().encode(encoder);
   }
 
-  fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
+  fn schema(schemas: &mut deco::Registry) -> String {
     <[T]>::schema(schemas)
   }
 }
@@ -117,8 +117,8 @@ impl Encode for i64 {
     encoder.signed_integer(*self);
   }
 
-  fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
-    Schema::SignedInteger.register("SignedInteger", schemas)
+  fn schema(schemas: &mut deco::Registry) -> String {
+    deco::Schema::SignedInteger.register("SignedInteger", schemas)
   }
 }
 
@@ -127,8 +127,8 @@ impl Encode for str {
     encoder.text(self);
   }
 
-  fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
-    Schema::String.register("String", schemas)
+  fn schema(schemas: &mut deco::Registry) -> String {
+    deco::Schema::String.register("String", schemas)
   }
 }
 
@@ -137,8 +137,8 @@ impl Encode for u64 {
     encoder.integer(*self);
   }
 
-  fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
-    Schema::UnsignedInteger.register("UnsignedInteger", schemas)
+  fn schema(schemas: &mut deco::Registry) -> String {
+    deco::Schema::UnsignedInteger.register("UnsignedInteger", schemas)
   }
 }
 
@@ -147,8 +147,8 @@ impl Encode for [u8] {
     encoder.bytes(self);
   }
 
-  fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
-    Schema::Bytes { length: None }.register("Bytes", schemas)
+  fn schema(schemas: &mut deco::Registry) -> String {
+    deco::Schema::Bytes { length: None }.register("Bytes", schemas)
   }
 }
 
@@ -161,10 +161,10 @@ impl<T: Encode> Encode for [T] {
     array.finish();
   }
 
-  fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
+  fn schema(schemas: &mut deco::Registry) -> String {
     let element = T::schema(schemas);
     let name = format!("Array<{element}>");
-    Schema::Array { element }.register(&name, schemas)
+    deco::Schema::Array { element }.register(&name, schemas)
   }
 }
 
@@ -189,11 +189,11 @@ mod tests {
       BTreeMap::from([
         (
           "Array<UnsignedInteger>".into(),
-          Schema::Array {
+          deco::Schema::Array {
             element: "UnsignedInteger".into(),
           },
         ),
-        ("UnsignedInteger".into(), Schema::UnsignedInteger),
+        ("UnsignedInteger".into(), deco::Schema::UnsignedInteger),
       ]),
     );
   }
@@ -221,8 +221,8 @@ mod tests {
     assert_eq!(
       schemas,
       BTreeMap::from([
-        ("Bytes<32>".into(), Schema::Bytes { length: Some(32) }),
-        ("Bytes<64>".into(), Schema::Bytes { length: Some(64) }),
+        ("Bytes<32>".into(), deco::Schema::Bytes { length: Some(32) }),
+        ("Bytes<64>".into(), deco::Schema::Bytes { length: Some(64) }),
       ]),
     );
   }
@@ -272,13 +272,13 @@ mod tests {
       BTreeMap::from([
         (
           "Map<String, UnsignedInteger>".into(),
-          Schema::Map {
+          deco::Schema::Map {
             key: "String".into(),
             value: "UnsignedInteger".into(),
           },
         ),
-        ("String".into(), Schema::String),
-        ("UnsignedInteger".into(), Schema::UnsignedInteger),
+        ("String".into(), deco::Schema::String),
+        ("UnsignedInteger".into(), deco::Schema::UnsignedInteger),
       ]),
     );
   }

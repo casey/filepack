@@ -1,5 +1,5 @@
-Schemas
-=======
+Deco
+====
 
 Filepack defines a variety of data formats, including `manifest.filepack`
 manifests, `metadata.filemeta` metadata, and tagged hex strings.
@@ -93,7 +93,7 @@ key `0x02` with the value `0x123456`, is encoded as `0x8a0183abcdef0283123456`.
 Structs
 -------
 
-Structs are encoded as maps from [UnsignedInteger](schemas/unsigned-integer.md)
+Structs are encoded as maps from [UnsignedInteger](deco/unsigned-integer.md)
 field number to field value. Absent optional fields are omitted.
 
 Structs with `#[deco(strict)]` attribute reject unknown fields. Structs without
@@ -122,7 +122,7 @@ Enums
 -----
 
 Enums are encoded as arrays whose first value is the
-[UnsignedInteger](schemas/unsigned-integer.md) enum discriminant. The second
+[UnsignedInteger](deco/unsigned-integer.md) enum discriminant. The second
 element, if present, is a struct containing the enum variant's fields.
 
 If all of a variant's fields are optional and absent, the second element is
@@ -151,6 +151,6 @@ Schemas
 
 | schema |
 |--------|
-%% for name in self.schemas.keys() {
-| [{{ escape(name) }}](schemas/{{ name.to_kebab_case() }}.md) |
+%% for name in self.deco.keys() {
+| [{{ escape(name) }}](deco/{{ name.to_kebab_case() }}.md) |
 %% }
