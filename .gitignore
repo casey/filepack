@@ -1,6 +1,8 @@
 /book/build
 /book/src/commands
 /book/src/commands.md
+/book/src/deco
+/book/src/deco.md
 /book/src/hex
 /book/src/hex.md
 /book/src/languages.md
@@ -8,8 +10,6 @@
 /book/src/media-formats.md
 /book/src/routes
 /book/src/routes.md
-/book/src/schemas
-/book/src/schemas.md
 /book/src/SUMMARY.md
 /book/src/unstable-features.md
 /flamegraph.svg

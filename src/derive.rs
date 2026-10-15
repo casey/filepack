@@ -168,11 +168,11 @@ fn encode_display_schema() {
     BTreeMap::from([
       (
         "Foo".into(),
-        Schema::Wrapper {
+        deco::Schema::Wrapper {
           inner: "String".into(),
         },
       ),
-      ("String".into(), Schema::String),
+      ("String".into(), deco::Schema::String),
     ]),
   );
 }
@@ -439,14 +439,14 @@ fn enum_schema() {
     schemas,
     BTreeMap::from([(
       "Foo".into(),
-      Schema::Enum {
+      deco::Schema::Enum {
         variants: vec![
-          schema::Variant {
+          deco::Variant {
             fields: vec![],
             n: 0,
             name: "Bar".into()
           },
-          schema::Variant {
+          deco::Variant {
             fields: vec![],
             n: 1,
             name: "Baz".into()
@@ -479,15 +479,15 @@ fn enum_schema_fields() {
     BTreeMap::from([
       (
         "Foo".into(),
-        Schema::Enum {
+        deco::Schema::Enum {
           variants: vec![
-            schema::Variant {
+            deco::Variant {
               fields: vec![],
               n: 0,
               name: "Bar".into(),
             },
-            schema::Variant {
-              fields: vec![schema::Field {
+            deco::Variant {
+              fields: vec![deco::Field {
                 n: 1,
                 name: "qux".into(),
                 optional: true,
@@ -499,7 +499,7 @@ fn enum_schema_fields() {
           ],
         },
       ),
-      ("UnsignedInteger".into(), Schema::UnsignedInteger),
+      ("UnsignedInteger".into(), deco::Schema::UnsignedInteger),
     ]),
   );
 }
@@ -610,8 +610,8 @@ fn generic_schema() {
     BTreeMap::from([
       (
         "Foo<UnsignedInteger>".into(),
-        Schema::Struct {
-          fields: vec![schema::Field {
+        deco::Schema::Struct {
+          fields: vec![deco::Field {
             n: 1,
             name: "bar".into(),
             optional: false,
@@ -621,7 +621,7 @@ fn generic_schema() {
           strict: false,
         },
       ),
-      ("UnsignedInteger".into(), Schema::UnsignedInteger),
+      ("UnsignedInteger".into(), deco::Schema::UnsignedInteger),
     ]),
   );
 }
@@ -737,18 +737,18 @@ fn struct_schema() {
   assert_eq!(
     schemas,
     BTreeMap::from([
-      ("Boolean".into(), Schema::Boolean),
+      ("Boolean".into(), deco::Schema::Boolean),
       (
         "Foo".into(),
-        Schema::Struct {
+        deco::Schema::Struct {
           fields: vec![
-            schema::Field {
+            deco::Field {
               n: 1,
               name: "bar".into(),
               optional: false,
               schema: "UnsignedInteger".into(),
             },
-            schema::Field {
+            deco::Field {
               n: 2,
               name: "baz".into(),
               optional: true,
@@ -759,7 +759,7 @@ fn struct_schema() {
           strict: false,
         },
       ),
-      ("UnsignedInteger".into(), Schema::UnsignedInteger),
+      ("UnsignedInteger".into(), deco::Schema::UnsignedInteger),
     ]),
   );
 }
@@ -778,7 +778,7 @@ fn struct_schema_attributes() {
     schemas,
     BTreeMap::from([(
       "Foo".into(),
-      Schema::Struct {
+      deco::Schema::Struct {
         fields: vec![],
         magic: Some("archive".into()),
         strict: true,
@@ -812,11 +812,11 @@ fn transparent_schema() {
     BTreeMap::from([
       (
         "Foo".into(),
-        Schema::Wrapper {
+        deco::Schema::Wrapper {
           inner: "UnsignedInteger".into(),
         },
       ),
-      ("UnsignedInteger".into(), Schema::UnsignedInteger),
+      ("UnsignedInteger".into(), deco::Schema::UnsignedInteger),
     ]),
   );
 }

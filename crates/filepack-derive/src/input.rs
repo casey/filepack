@@ -239,7 +239,7 @@ impl Input {
       let fields = ParsedField::schema(fields);
       let variant_name = ident.to_string();
       quote! {
-        schema::Variant {
+        deco::Variant {
           fields: vec![#(#fields),*],
           n: #n,
           name: #variant_name.into(),
@@ -261,8 +261,8 @@ impl Input {
           array.finish();
         }
 
-        fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
-          Schema::Enum {
+        fn schema(schemas: &mut deco::Registry) -> String {
+          deco::Schema::Enum {
             variants: vec![#(#schema_variants),*],
           }
           .register(&#schema_name, schemas)
@@ -312,8 +312,8 @@ impl Input {
           #magic
         }
 
-        fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
-          Schema::Struct {
+        fn schema(schemas: &mut deco::Registry) -> String {
+          deco::Schema::Struct {
             fields: vec![#(#schema_fields),*],
             magic: #schema_magic,
             strict: #strict,
@@ -341,8 +341,8 @@ impl Input {
           self.0.encode(encoder);
         }
 
-        fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
-          Schema::Wrapper {
+        fn schema(schemas: &mut deco::Registry) -> String {
+          deco::Schema::Wrapper {
             inner: <#ty as Encode>::schema(schemas),
           }
           .register(&#schema_name, schemas)

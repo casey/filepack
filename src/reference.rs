@@ -25,13 +25,13 @@ impl Command {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Reference {
   pub commands: Command,
+  pub deco: deco::Registry,
+  pub hex: BTreeMap<Tag, Hex>,
   pub languages: BTreeMap<Language, String>,
   pub lint_groups: BTreeMap<LintGroup, BTreeSet<Lint>>,
   pub lints: BTreeSet<Lint>,
   pub media_formats: BTreeMap<MediaType, Vec<MediaFormat>>,
   pub routes: BTreeMap<String, Route>,
-  pub schemas: BTreeMap<String, Schema>,
-  pub tags: BTreeMap<Tag, Hex>,
   pub unstable_features: BTreeSet<UnstableFeature>,
 }
 
@@ -57,13 +57,13 @@ impl Reference {
         .collect()
     }
 
-    fn tag<T: crate::Hex>(schemas: &mut BTreeMap<String, Schema>, tags: &mut BTreeMap<Tag, Hex>) {
-      tags.insert(
+    fn tag<T: crate::Hex>(deco: &mut deco::Registry, hex: &mut BTreeMap<Tag, Hex>) {
+      hex.insert(
         T::TAG,
         Hex {
           example: T::EXAMPLE.into(),
           name: T::TAG.name().into(),
-          schema: T::schema(schemas),
+          schema: T::schema(deco),
         },
       );
     }
@@ -72,28 +72,28 @@ impl Reference {
 
     command.build();
 
-    let mut schemas = BTreeMap::new();
+    let mut deco = BTreeMap::new();
 
-    Archive::schema(&mut schemas);
-    Directory::schema(&mut schemas);
-    Envelope::<Claims>::schema(&mut schemas);
-    Envelope::<Statement>::schema(&mut schemas);
-    Metadata::schema(&mut schemas);
-    RevisionObject::schema(&mut schemas);
+    Archive::schema(&mut deco);
+    Directory::schema(&mut deco);
+    Envelope::<Claims>::schema(&mut deco);
+    Envelope::<Statement>::schema(&mut deco);
+    Metadata::schema(&mut deco);
+    RevisionObject::schema(&mut deco);
 
-    let mut tags = BTreeMap::new();
+    let mut hex = BTreeMap::new();
 
-    tag::<Attestation>(&mut schemas, &mut tags);
-    tag::<DisplayPrivateKey>(&mut schemas, &mut tags);
-    tag::<Fingerprint>(&mut schemas, &mut tags);
-    tag::<Hash>(&mut schemas, &mut tags);
-    tag::<PublicKey>(&mut schemas, &mut tags);
-    tag::<Revision>(&mut schemas, &mut tags);
-    tag::<Token>(&mut schemas, &mut tags);
+    tag::<Attestation>(&mut deco, &mut hex);
+    tag::<DisplayPrivateKey>(&mut deco, &mut hex);
+    tag::<Fingerprint>(&mut deco, &mut hex);
+    tag::<Hash>(&mut deco, &mut hex);
+    tag::<PublicKey>(&mut deco, &mut hex);
+    tag::<Revision>(&mut deco, &mut hex);
+    tag::<Token>(&mut deco, &mut hex);
 
     let mut routes = BTreeMap::<String, Route>::new();
 
-    for route in subcommand::serve::route::Route::all(&mut schemas) {
+    for route in subcommand::serve::route::Route::all(&mut deco) {
       routes
         .entry(route.path.into())
         .or_insert_with(|| {
@@ -128,6 +128,8 @@ impl Reference {
 
     Self {
       commands: Command::new(&mut command),
+      deco,
+      hex,
       languages: language::ALL
         .iter()
         .map(|language| (*language, language.name().into()))
@@ -143,8 +145,6 @@ impl Reference {
       ]
       .into(),
       routes,
-      schemas,
-      tags,
       unstable_features: UnstableFeature::iter().collect(),
     }
   }
@@ -197,13 +197,13 @@ pub struct QueryParameter {
 #[serde(rename_all = "kebab-case")]
 pub enum Request {
   Bytes,
-  Deco { limit: u64, schema: Schema },
+  Deco { limit: u64, schema: deco::Schema },
 }
 
 #[derive(Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum Response {
-  Deco { schema: Schema },
+  Deco { schema: deco::Schema },
   File,
   Html,
   Redirect,
@@ -221,6 +221,25 @@ pub struct Route {
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn hex() {
+    let hex = Reference::new().hex;
+
+    assert_eq!(
+      hex.keys().copied().collect::<Vec<Tag>>(),
+      Tag::iter().collect::<Vec<Tag>>(),
+    );
+
+    for (tag, value) in hex {
+      assert!(
+        value.example.starts_with(&format!("{}1", tag.prefix())),
+        "{tag:?}",
+      );
+
+      assert_eq!(value.name, tag.name());
+    }
+  }
 
   #[test]
   fn languages() {
@@ -278,25 +297,6 @@ mod tests {
       let first = parameters.next().unwrap();
 
       assert!(parameters.all(|parameters| parameters == first), "{path}");
-    }
-  }
-
-  #[test]
-  fn tags() {
-    let tags = Reference::new().tags;
-
-    assert_eq!(
-      tags.keys().copied().collect::<Vec<Tag>>(),
-      Tag::iter().collect::<Vec<Tag>>(),
-    );
-
-    for (tag, hex) in tags {
-      assert!(
-        hex.example.starts_with(&format!("{}1", tag.prefix())),
-        "{tag:?}",
-      );
-
-      assert_eq!(hex.name, tag.name());
     }
   }
 

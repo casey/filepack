@@ -101,8 +101,8 @@ pub fn encode_display(input: TokenStream) -> TokenStream {
         self.to_string().encode(encoder);
       }
 
-      fn schema(schemas: &mut BTreeMap<String, Schema>) -> String {
-        Schema::Wrapper {
+      fn schema(schemas: &mut deco::Registry) -> String {
+        deco::Schema::Wrapper {
           inner: <String as Encode>::schema(schemas),
         }
         .register(#schema_name, schemas)
@@ -182,7 +182,7 @@ pub fn route(attribute: TokenStream, item: TokenStream) -> TokenStream {
   quote! {
     #item
 
-    pub(crate) fn #route(schemas: &mut BTreeMap<String, Schema>) -> Route {
+    pub(crate) fn #route(schemas: &mut deco::Registry) -> Route {
       let mut endpoint = crate::reference::Endpoint::default();
       #(<#types as Describe>::describe(&mut endpoint, schemas);)*
       <#output as Describe>::describe(&mut endpoint, schemas);

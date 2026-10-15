@@ -12,7 +12,7 @@ pub(crate) struct Route {
 }
 
 impl Route {
-  pub(crate) fn all(schemas: &mut BTreeMap<String, Schema>) -> Vec<Self> {
+  pub(crate) fn all(schemas: &mut deco::Registry) -> Vec<Self> {
     vec![
       api_delete_number_route(schemas),
       api_file_route(schemas),
@@ -662,8 +662,8 @@ mod tests {
       api_missing_route(&mut schemas).endpoint.request,
       Some(crate::reference::Request::Deco {
         limit: 1_048_576,
-        schema: Schema::Struct {
-          fields: vec![schema::Field {
+        schema: deco::Schema::Struct {
+          fields: vec![deco::Field {
             n: 1,
             name: "hashes".into(),
             optional: false,
@@ -681,8 +681,8 @@ mod tests {
     assert_eq!(
       api_numbers_route(&mut schemas).endpoint.response,
       Some(crate::reference::Response::Deco {
-        schema: Schema::Struct {
-          fields: vec![schema::Field {
+        schema: deco::Schema::Struct {
+          fields: vec![deco::Field {
             n: 1,
             name: "numbers".into(),
             optional: false,
