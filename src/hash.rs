@@ -78,15 +78,15 @@ impl Display for Hash {
 }
 
 impl Encode for Hash {
-  fn encode(&self, encoder: &mut Encoder) {
-    self.as_bytes().encode(encoder);
-  }
-
-  fn schema(schemas: &mut deco::Registry) -> String {
+  fn deco_schema(registry: &mut deco::Registry) -> String {
     deco::Schema::Bytes {
       length: Some(Self::LEN.into_u64()),
     }
-    .register("Hash", schemas)
+    .register("Hash", registry)
+  }
+
+  fn encode(&self, encoder: &mut Encoder) {
+    self.as_bytes().encode(encoder);
   }
 }
 

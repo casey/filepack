@@ -42,3 +42,7 @@ pub(crate) fn write(path: impl AsRef<Utf8Path>, contents: impl Display) {
   let mut file = BufWriter::new(File::create(path).unwrap());
   write!(file, "{contents}").unwrap();
 }
+
+pub(crate) fn yaml(name: &str) -> String {
+  format!("[{}](../yaml/{}.md)", escape(name), name.to_kebab_case())
+}

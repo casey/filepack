@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Debug, Deserialize, PartialEq)]
+#[derive(Debug, Deserialize, PartialEq, Yaml)]
 #[serde(deny_unknown_fields, rename_all = "snake_case", tag = "type")]
 pub(crate) enum Media {
   Audio { items: Vec<Audio> },

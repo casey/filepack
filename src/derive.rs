@@ -161,7 +161,7 @@ fn encode_display_schema() {
 
   let mut schemas = BTreeMap::new();
 
-  assert_eq!(Foo::schema(&mut schemas), "Foo");
+  assert_eq!(Foo::deco_schema(&mut schemas), "Foo");
 
   assert_eq!(
     schemas,
@@ -433,7 +433,7 @@ fn enum_schema() {
 
   let mut schemas = BTreeMap::new();
 
-  assert_eq!(Foo::schema(&mut schemas), "Foo");
+  assert_eq!(Foo::deco_schema(&mut schemas), "Foo");
 
   assert_eq!(
     schemas,
@@ -472,7 +472,7 @@ fn enum_schema_fields() {
 
   let mut schemas = BTreeMap::new();
 
-  assert_eq!(Foo::schema(&mut schemas), "Foo");
+  assert_eq!(Foo::deco_schema(&mut schemas), "Foo");
 
   assert_eq!(
     schemas,
@@ -603,7 +603,10 @@ fn generic_schema() {
 
   let mut schemas = BTreeMap::new();
 
-  assert_eq!(Foo::<u64>::schema(&mut schemas), "Foo<UnsignedInteger>");
+  assert_eq!(
+    Foo::<u64>::deco_schema(&mut schemas),
+    "Foo<UnsignedInteger>"
+  );
 
   assert_eq!(
     schemas,
@@ -732,7 +735,7 @@ fn struct_schema() {
 
   let mut schemas = BTreeMap::new();
 
-  assert_eq!(Foo::schema(&mut schemas), "Foo");
+  assert_eq!(Foo::deco_schema(&mut schemas), "Foo");
 
   assert_eq!(
     schemas,
@@ -772,7 +775,7 @@ fn struct_schema_attributes() {
 
   let mut schemas = BTreeMap::new();
 
-  assert_eq!(Foo::schema(&mut schemas), "Foo");
+  assert_eq!(Foo::deco_schema(&mut schemas), "Foo");
 
   assert_eq!(
     schemas,
@@ -805,7 +808,7 @@ fn transparent_schema() {
 
   let mut schemas = BTreeMap::new();
 
-  assert_eq!(Foo::schema(&mut schemas), "Foo");
+  assert_eq!(Foo::deco_schema(&mut schemas), "Foo");
 
   assert_eq!(
     schemas,
@@ -1101,5 +1104,100 @@ fn validate_struct() {
       actual,
       expected: "foo",
     })) if actual == "bar",
+  );
+}
+
+#[test]
+fn yaml_enum() {
+  #[allow(dead_code)]
+  #[derive(Deserialize, Yaml)]
+  #[serde(deny_unknown_fields, rename_all = "snake_case", tag = "type")]
+  enum Foo {
+    Bar,
+    Baz { qux: Option<String> },
+  }
+
+  let mut schemas = BTreeMap::new();
+
+  assert_eq!(Foo::yaml_schema(&mut schemas), "Foo");
+
+  assert_eq!(
+    schemas,
+    BTreeMap::from([
+      (
+        "Foo".into(),
+        yaml::Schema::Enum {
+          strict: true,
+          tag: "type".into(),
+          variants: vec![
+            yaml::Variant {
+              fields: vec![],
+              name: "bar".into(),
+            },
+            yaml::Variant {
+              fields: vec![yaml::Field {
+                name: "qux".into(),
+                optional: true,
+                schema: "String".into(),
+              }],
+              name: "baz".into(),
+            },
+          ],
+        },
+      ),
+      ("String".into(), yaml::Schema::String),
+    ]),
+  );
+}
+
+#[test]
+fn yaml_struct() {
+  #[allow(dead_code)]
+  #[derive(Deserialize, Yaml)]
+  #[serde(deny_unknown_fields)]
+  struct Foo {
+    bar: String,
+    baz: Option<String>,
+    qux: Vec<String>,
+  }
+
+  let mut schemas = BTreeMap::new();
+
+  assert_eq!(Foo::yaml_schema(&mut schemas), "Foo");
+
+  assert_eq!(
+    schemas,
+    BTreeMap::from([
+      (
+        "Array<String>".into(),
+        yaml::Schema::Array {
+          element: "String".into(),
+        },
+      ),
+      (
+        "Foo".into(),
+        yaml::Schema::Struct {
+          fields: vec![
+            yaml::Field {
+              name: "bar".into(),
+              optional: false,
+              schema: "String".into(),
+            },
+            yaml::Field {
+              name: "baz".into(),
+              optional: true,
+              schema: "String".into(),
+            },
+            yaml::Field {
+              name: "qux".into(),
+              optional: false,
+              schema: "Array<String>".into(),
+            },
+          ],
+          strict: true,
+        },
+      ),
+      ("String".into(), yaml::Schema::String),
+    ]),
   );
 }

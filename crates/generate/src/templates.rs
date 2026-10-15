@@ -12,6 +12,16 @@ pub(crate) struct CommandsMd<'a> {
 }
 
 #[derive(Boilerplate)]
+pub(crate) struct DecoDefinitionMd<'a> {
+  pub(crate) schema: &'a deco::Schema,
+}
+
+#[derive(Boilerplate)]
+pub(crate) struct DecoFieldsMd<'a> {
+  pub(crate) fields: &'a [deco::Field],
+}
+
+#[derive(Boilerplate)]
 pub(crate) struct DecoMd<'a> {
   pub(crate) deco: &'a deco::Registry,
 }
@@ -20,16 +30,6 @@ pub(crate) struct DecoMd<'a> {
 pub(crate) struct DecoSchemaMd<'a> {
   pub(crate) name: &'a str,
   pub(crate) schema: &'a deco::Schema,
-}
-
-#[derive(Boilerplate)]
-pub(crate) struct DefinitionMd<'a> {
-  pub(crate) schema: &'a deco::Schema,
-}
-
-#[derive(Boilerplate)]
-pub(crate) struct FieldsMd<'a> {
-  pub(crate) fields: &'a [deco::Field],
 }
 
 #[derive(Boilerplate)]
@@ -71,6 +71,7 @@ pub(crate) struct SummaryMd<'a> {
   pub(crate) deco: BTreeMap<&'a str, Utf8PathBuf>,
   pub(crate) hex: BTreeMap<&'a str, Utf8PathBuf>,
   pub(crate) routes: BTreeMap<&'a str, Utf8PathBuf>,
+  pub(crate) yaml: BTreeMap<&'a str, Utf8PathBuf>,
 }
 
 #[derive(Boilerplate)]
@@ -82,4 +83,20 @@ pub(crate) struct TagMd<'a> {
 #[derive(Boilerplate)]
 pub(crate) struct UnstableFeaturesMd<'a> {
   pub(crate) features: &'a BTreeSet<UnstableFeature>,
+}
+
+#[derive(Boilerplate)]
+pub(crate) struct YamlFieldsMd<'a> {
+  pub(crate) fields: &'a [yaml::Field],
+}
+
+#[derive(Boilerplate)]
+pub(crate) struct YamlMd<'a> {
+  pub(crate) yaml: &'a yaml::Registry,
+}
+
+#[derive(Boilerplate)]
+pub(crate) struct YamlSchemaMd<'a> {
+  pub(crate) name: &'a str,
+  pub(crate) schema: &'a yaml::Schema,
 }

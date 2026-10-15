@@ -5,14 +5,14 @@ use {
     route_attribute::RouteAttribute, variant::Variant,
   },
   darling::{FromDeriveInput, FromField, FromVariant, ast::Data, ast::Fields},
-  heck::ToSnakeCase,
+  heck::{ToKebabCase, ToSnakeCase},
   proc_macro::TokenStream,
   quote::{format_ident, quote},
   std::collections::HashSet,
-  strum::{Display, EnumString},
+  strum::{Display, EnumString, IntoStaticStr},
   syn::{
     Attribute, DeriveInput, Error, FnArg, GenericArgument, Generics, Ident, ItemFn, LitInt, LitStr,
-    Path, PathArguments, Result, ReturnType, Token, Type, TypeParamBound, TypePath,
+    Path, PathArguments, ReturnType, Token, Type, TypeParamBound, TypePath,
     meta::ParseNestedMeta,
     parse::{Parse, ParseBuffer, ParseStream},
   },
@@ -28,6 +28,9 @@ mod parsed_variant;
 mod receiver;
 mod route_attribute;
 mod variant;
+mod yaml;
+
+type Result<T = (), E = Error> = std::result::Result<T, E>;
 
 #[proc_macro_derive(Decode, attributes(deco, n))]
 pub fn decode(input: TokenStream) -> TokenStream {
@@ -97,15 +100,15 @@ pub fn encode_display(input: TokenStream) -> TokenStream {
 
   quote! {
     impl Encode for #name {
-      fn encode(&self, encoder: &mut Encoder) {
-        self.to_string().encode(encoder);
+      fn deco_schema(registry: &mut deco::Registry) -> String {
+        deco::Schema::Wrapper {
+          inner: <String as Encode>::deco_schema(registry),
+        }
+        .register(#schema_name, registry)
       }
 
-      fn schema(schemas: &mut deco::Registry) -> String {
-        deco::Schema::Wrapper {
-          inner: <String as Encode>::schema(schemas),
-        }
-        .register(#schema_name, schemas)
+      fn encode(&self, encoder: &mut Encoder) {
+        self.to_string().encode(encoder);
       }
     }
   }
@@ -140,6 +143,25 @@ fn number(ident: &Ident, attributes: &[Attribute]) -> Result<u64> {
   }
 
   n.ok_or_else(|| Error::new_spanned(ident, "missing `#[n(N)]` attribute"))
+}
+
+fn option_inner(ty: &Type) -> Option<&Type> {
+  if let Type::Path(TypePath {
+    attrs: _,
+    path,
+    qself: None,
+  }) = ty
+    && path.leading_colon.is_none()
+    && path.segments.len() == 1
+    && path.segments[0].ident == "Option"
+    && let PathArguments::AngleBracketed(arguments) = &path.segments[0].arguments
+    && arguments.args.len() == 1
+    && let GenericArgument::Type(ty) = &arguments.args[0]
+  {
+    Some(ty)
+  } else {
+    None
+  }
 }
 
 fn path_value(meta: &ParseNestedMeta, placeholder: &str) -> Result<Path> {
@@ -182,10 +204,10 @@ pub fn route(attribute: TokenStream, item: TokenStream) -> TokenStream {
   quote! {
     #item
 
-    pub(crate) fn #route(schemas: &mut deco::Registry) -> Route {
+    pub(crate) fn #route(registry: &mut deco::Registry) -> Route {
       let mut endpoint = crate::reference::Endpoint::default();
-      #(<#types as Describe>::describe(&mut endpoint, schemas);)*
-      <#output as Describe>::describe(&mut endpoint, schemas);
+      #(<#types as Describe>::describe(&mut endpoint, registry);)*
+      <#output as Describe>::describe(&mut endpoint, registry);
       Route {
         endpoint,
         method: axum::http::Method::#method,
@@ -197,10 +219,7 @@ pub fn route(attribute: TokenStream, item: TokenStream) -> TokenStream {
   .into()
 }
 
-fn validate_numbers<'a>(
-  start: u64,
-  numbers: impl IntoIterator<Item = (&'a Ident, u64)>,
-) -> Result<()> {
+fn validate_numbers<'a>(start: u64, numbers: impl IntoIterator<Item = (&'a Ident, u64)>) -> Result {
   let mut seen = HashSet::new();
 
   for (i, (ident, n)) in numbers.into_iter().enumerate() {
@@ -224,4 +243,19 @@ fn validate_numbers<'a>(
   }
 
   Ok(())
+}
+
+#[proc_macro_derive(Yaml)]
+pub fn yaml(input: TokenStream) -> TokenStream {
+  let input = syn::parse_macro_input!(input as DeriveInput);
+
+  let input = match yaml::Input::from_derive_input(&input) {
+    Ok(input) => input,
+    Err(err) => return err.write_errors().into(),
+  };
+
+  match input.schema() {
+    Ok(tokens) => tokens.into(),
+    Err(err) => err.to_compile_error().into(),
+  }
 }

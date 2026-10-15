@@ -41,14 +41,14 @@ pub enum Schema {
 }
 
 impl Schema {
-  pub fn register(self, name: &str, schemas: &mut Registry) -> String {
-    if let Some(existing) = schemas.get(name) {
+  pub fn register(self, name: &str, registry: &mut Registry) -> String {
+    if let Some(existing) = registry.get(name) {
       assert!(
         *existing == self,
         "conflicting definitions for schema `{name}`"
       );
     } else {
-      schemas.insert(name.into(), self);
+      registry.insert(name.into(), self);
     }
 
     name.into()

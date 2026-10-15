@@ -1,6 +1,8 @@
 use super::*;
 
 pub trait Encode {
+  fn deco_schema(registry: &mut deco::Registry) -> String;
+
   fn encode(&self, encoder: &mut Encoder);
 
   fn encode_to_vec(&self) -> Vec<u8> {
@@ -8,46 +10,44 @@ pub trait Encode {
     self.encode(&mut encoder);
     encoder.finish()
   }
-
-  fn schema(schemas: &mut deco::Registry) -> String;
 }
 
 impl<T: ?Sized> Encode for &T
 where
   T: Encode,
 {
-  fn encode(&self, encoder: &mut Encoder) {
-    T::encode(self, encoder);
+  fn deco_schema(registry: &mut deco::Registry) -> String {
+    T::deco_schema(registry)
   }
 
-  fn schema(schemas: &mut deco::Registry) -> String {
-    T::schema(schemas)
+  fn encode(&self, encoder: &mut Encoder) {
+    T::encode(self, encoder);
   }
 }
 
 impl<const N: usize> Encode for [u8; N] {
-  fn encode(&self, encoder: &mut Encoder) {
-    encoder.bytes(self);
-  }
-
-  fn schema(schemas: &mut deco::Registry) -> String {
+  fn deco_schema(registry: &mut deco::Registry) -> String {
     deco::Schema::Bytes {
       length: Some(N.into_u64()),
     }
-    .register(&format!("Bytes<{N}>"), schemas)
+    .register(&format!("Bytes<{N}>"), registry)
+  }
+
+  fn encode(&self, encoder: &mut Encoder) {
+    encoder.bytes(self);
   }
 }
 
 impl<const N: usize, const M: usize> Encode for [[u8; N]; M] {
-  fn encode(&self, encoder: &mut Encoder) {
-    encoder.bytes(self.as_flattened());
-  }
-
-  fn schema(schemas: &mut deco::Registry) -> String {
+  fn deco_schema(registry: &mut deco::Registry) -> String {
     deco::Schema::Bytes {
       length: Some((N * M).into_u64()),
     }
-    .register(&format!("Bytes<{}>", N * M), schemas)
+    .register(&format!("Bytes<{}>", N * M), registry)
+  }
+
+  fn encode(&self, encoder: &mut Encoder) {
+    encoder.bytes(self.as_flattened());
   }
 }
 
@@ -56,6 +56,13 @@ where
   K: Encode + PartialOrd,
   V: Encode,
 {
+  fn deco_schema(registry: &mut deco::Registry) -> String {
+    let key = K::deco_schema(registry);
+    let value = V::deco_schema(registry);
+    let name = format!("Map<{key}, {value}>");
+    deco::Schema::Map { key, value }.register(&name, registry)
+  }
+
   fn encode(&self, encoder: &mut Encoder) {
     let mut map = encoder.map::<&K>();
     for (key, value) in self.iter().rev() {
@@ -63,108 +70,101 @@ where
     }
     map.finish();
   }
-
-  fn schema(schemas: &mut deco::Registry) -> String {
-    let key = K::schema(schemas);
-    let value = V::schema(schemas);
-    let name = format!("Map<{key}, {value}>");
-    deco::Schema::Map { key, value }.register(&name, schemas)
-  }
 }
 
 impl Encode for bool {
-  fn encode(&self, encoder: &mut Encoder) {
-    encoder.boolean(*self);
+  fn deco_schema(registry: &mut deco::Registry) -> String {
+    deco::Schema::Boolean.register("Boolean", registry)
   }
 
-  fn schema(schemas: &mut deco::Registry) -> String {
-    deco::Schema::Boolean.register("Boolean", schemas)
+  fn encode(&self, encoder: &mut Encoder) {
+    encoder.boolean(*self);
   }
 }
 
 impl Encode for String {
-  fn encode(&self, encoder: &mut Encoder) {
-    self.as_str().encode(encoder);
+  fn deco_schema(registry: &mut deco::Registry) -> String {
+    str::deco_schema(registry)
   }
 
-  fn schema(schemas: &mut deco::Registry) -> String {
-    str::schema(schemas)
+  fn encode(&self, encoder: &mut Encoder) {
+    self.as_str().encode(encoder);
   }
 }
 
 impl Encode for Vec<u8> {
-  fn encode(&self, encoder: &mut Encoder) {
-    self.as_slice().encode(encoder);
+  fn deco_schema(registry: &mut deco::Registry) -> String {
+    <[u8]>::deco_schema(registry)
   }
 
-  fn schema(schemas: &mut deco::Registry) -> String {
-    <[u8]>::schema(schemas)
+  fn encode(&self, encoder: &mut Encoder) {
+    self.as_slice().encode(encoder);
   }
 }
 
 impl<T: Encode> Encode for Vec<T> {
-  fn encode(&self, encoder: &mut Encoder) {
-    self.as_slice().encode(encoder);
+  fn deco_schema(registry: &mut deco::Registry) -> String {
+    <[T]>::deco_schema(registry)
   }
 
-  fn schema(schemas: &mut deco::Registry) -> String {
-    <[T]>::schema(schemas)
+  fn encode(&self, encoder: &mut Encoder) {
+    self.as_slice().encode(encoder);
   }
 }
 
 impl Encode for i64 {
-  fn encode(&self, encoder: &mut Encoder) {
-    encoder.signed_integer(*self);
+  fn deco_schema(registry: &mut deco::Registry) -> String {
+    deco::Schema::SignedInteger.register("SignedInteger", registry)
   }
 
-  fn schema(schemas: &mut deco::Registry) -> String {
-    deco::Schema::SignedInteger.register("SignedInteger", schemas)
+  fn encode(&self, encoder: &mut Encoder) {
+    encoder.signed_integer(*self);
   }
 }
 
 impl Encode for str {
-  fn encode(&self, encoder: &mut Encoder) {
-    encoder.text(self);
+  fn deco_schema(registry: &mut deco::Registry) -> String {
+    deco::Schema::String.register("String", registry)
   }
 
-  fn schema(schemas: &mut deco::Registry) -> String {
-    deco::Schema::String.register("String", schemas)
+  fn encode(&self, encoder: &mut Encoder) {
+    encoder.text(self);
   }
 }
 
 impl Encode for u64 {
-  fn encode(&self, encoder: &mut Encoder) {
-    encoder.integer(*self);
+  fn deco_schema(registry: &mut deco::Registry) -> String {
+    deco::Schema::UnsignedInteger.register("UnsignedInteger", registry)
   }
 
-  fn schema(schemas: &mut deco::Registry) -> String {
-    deco::Schema::UnsignedInteger.register("UnsignedInteger", schemas)
+  fn encode(&self, encoder: &mut Encoder) {
+    encoder.integer(*self);
   }
 }
 
 impl Encode for [u8] {
-  fn encode(&self, encoder: &mut Encoder) {
-    encoder.bytes(self);
+  fn deco_schema(registry: &mut deco::Registry) -> String {
+    deco::Schema::Bytes { length: None }.register("Bytes", registry)
   }
 
-  fn schema(schemas: &mut deco::Registry) -> String {
-    deco::Schema::Bytes { length: None }.register("Bytes", schemas)
+  fn encode(&self, encoder: &mut Encoder) {
+    encoder.bytes(self);
   }
 }
 
 impl<T: Encode> Encode for [T] {
+  fn deco_schema(registry: &mut deco::Registry) -> String {
+    let element = T::deco_schema(registry);
+    let name = format!("Array<{element}>");
+    deco::Schema::Array { element }.register(&name, registry)
+  }
+
   fn encode(&self, encoder: &mut Encoder) {
     let mut array = encoder.array();
     for element in self.iter().rev() {
       array.element(element);
     }
     array.finish();
-  }
-
-  fn schema(schemas: &mut deco::Registry) -> String {
-    let element = T::schema(schemas);
-    let name = format!("Array<{element}>");
-    deco::Schema::Array { element }.register(&name, schemas)
   }
 }
 
@@ -182,7 +182,10 @@ mod tests {
   fn array_schema() {
     let mut schemas = BTreeMap::new();
 
-    assert_eq!(Vec::<u64>::schema(&mut schemas), "Array<UnsignedInteger>");
+    assert_eq!(
+      Vec::<u64>::deco_schema(&mut schemas),
+      "Array<UnsignedInteger>"
+    );
 
     assert_eq!(
       schemas,
@@ -215,8 +218,8 @@ mod tests {
   fn byte_array_schema() {
     let mut schemas = BTreeMap::new();
 
-    assert_eq!(<[u8; 32]>::schema(&mut schemas), "Bytes<32>");
-    assert_eq!(<[[u8; 32]; 2]>::schema(&mut schemas), "Bytes<64>");
+    assert_eq!(<[u8; 32]>::deco_schema(&mut schemas), "Bytes<32>");
+    assert_eq!(<[[u8; 32]; 2]>::deco_schema(&mut schemas), "Bytes<64>");
 
     assert_eq!(
       schemas,
@@ -263,7 +266,7 @@ mod tests {
     let mut schemas = BTreeMap::new();
 
     assert_eq!(
-      BTreeMap::<String, u64>::schema(&mut schemas),
+      BTreeMap::<String, u64>::deco_schema(&mut schemas),
       "Map<String, UnsignedInteger>"
     );
 

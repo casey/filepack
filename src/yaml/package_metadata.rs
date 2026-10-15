@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Debug, Deserialize, PartialEq)]
+#[derive(Debug, Deserialize, PartialEq, Yaml)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct PackageMetadata {
   pub(crate) colophon: Option<RelativePath>,

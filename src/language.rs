@@ -231,15 +231,24 @@ impl Decode<'_> for Language {
 }
 
 impl Encode for Language {
+  fn deco_schema(registry: &mut deco::Registry) -> String {
+    deco::Schema::Wrapper {
+      inner: String::deco_schema(registry),
+    }
+    .register("Language", registry)
+  }
+
   fn encode(&self, encoder: &mut Encoder) {
     self.0.encode(encoder);
   }
+}
 
-  fn schema(schemas: &mut deco::Registry) -> String {
-    deco::Schema::Wrapper {
-      inner: String::schema(schemas),
+impl yaml::Yaml for Language {
+  fn yaml_schema(registry: &mut yaml::Registry) -> String {
+    yaml::Schema::Wrapper {
+      inner: String::yaml_schema(registry),
     }
-    .register("Language", schemas)
+    .register("Language", registry)
   }
 }
 

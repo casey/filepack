@@ -44,7 +44,7 @@ remainder of the path, including any slashes, and must not be empty.
 %%       Request::Deco { limit, schema } => {
 A deco-encoded value of at most {{ Count::new(*limit, "byte") }}.
 
-{{ DefinitionMd { schema } }}
+{{ DecoDefinitionMd { schema } }}
 %%       }
 %%       Request::Bytes => {
 An arbitrary byte string.
@@ -59,7 +59,7 @@ An arbitrary byte string.
 
 A deco-encoded value.
 
-{{ DefinitionMd { schema } }}
+{{ DecoDefinitionMd { schema } }}
 %%       }
 %%       Response::File => {
 

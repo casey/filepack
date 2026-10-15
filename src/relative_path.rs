@@ -241,6 +241,15 @@ impl PathExtractor for RelativePath {
   }
 }
 
+impl yaml::Yaml for RelativePath {
+  fn yaml_schema(registry: &mut yaml::Registry) -> String {
+    yaml::Schema::Wrapper {
+      inner: String::yaml_schema(registry),
+    }
+    .register("RelativePath", registry)
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;

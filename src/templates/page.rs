@@ -45,7 +45,7 @@ impl<T: Page> PageHtml<T> {
 }
 
 impl<T: Page> Describe for PageHtml<T> {
-  fn describe(endpoint: &mut reference::Endpoint, _schemas: &mut deco::Registry) {
+  fn describe(endpoint: &mut reference::Endpoint, _registry: &mut deco::Registry) {
     endpoint.response = Some(reference::Response::Html);
   }
 }
