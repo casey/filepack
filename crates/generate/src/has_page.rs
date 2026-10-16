@@ -8,7 +8,11 @@ impl HasPage for deco::Schema {
   fn has_page(&self) -> bool {
     !matches!(
       self,
-      Self::Array { .. } | Self::Map { .. } | Self::OrderedSet { .. } | Self::SortedSet { .. }
+      Self::Array { .. }
+        | Self::Bytes { .. }
+        | Self::Map { .. }
+        | Self::OrderedSet { .. }
+        | Self::SortedSet { .. }
     )
   }
 }

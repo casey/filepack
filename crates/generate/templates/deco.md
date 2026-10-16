@@ -16,8 +16,8 @@ serialize a given value. Types which are designed to be extended are not
 guaranteed to have a canonical serialization, since they must accept and ignore
 data produced by newer versions of filepack.
 
-Strings
--------
+Byte Strings
+------------
 
 The first byte, or *head*, of an encoded byte string determines how to decode
 it:

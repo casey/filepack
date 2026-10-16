@@ -1,5 +1,6 @@
 %% match self.schema {
 %%   deco::Schema::Array { .. }
+%%   | deco::Schema::Bytes { .. }
 %%   | deco::Schema::Map { .. }
 %%   | deco::Schema::OrderedSet { .. }
 %%   | deco::Schema::SortedSet { .. } => {
@@ -7,13 +8,6 @@
 %%   }
 %%   deco::Schema::Boolean => {
 A boolean. Encoded as the byte string `0x00` for false and `0x01` for true.
-%%   }
-%%   deco::Schema::Bytes { length } => {
-%%     if let Some(length) = length {
-A byte string of exactly {{ Count::new(*length, "byte") }}.
-%%     } else {
-An arbitrary byte string.
-%%     }
 %%   }
 %%   deco::Schema::Enum { variants } => {
 An enum with {{ Count::new(variants.len(), "variant") }}:
