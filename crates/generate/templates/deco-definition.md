@@ -1,5 +1,8 @@
 %% match self.schema {
-%%   deco::Schema::Array { .. } | deco::Schema::Map { .. } => {
+%%   deco::Schema::Array { .. }
+%%   | deco::Schema::Map { .. }
+%%   | deco::Schema::OrderedSet { .. }
+%%   | deco::Schema::SortedSet { .. } => {
 %%     unreachable!()
 %%   }
 %%   deco::Schema::Boolean => {

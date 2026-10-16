@@ -27,7 +27,13 @@ pub enum Schema {
     key: String,
     value: String,
   },
+  OrderedSet {
+    element: String,
+  },
   SignedInteger,
+  SortedSet {
+    element: String,
+  },
   String,
   Struct {
     fields: Vec<Field>,

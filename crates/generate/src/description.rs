@@ -15,6 +15,12 @@ impl Description for deco::Registry {
         self.description(chapter, key),
         self.description(chapter, value)
       ),
+      deco::Schema::OrderedSet { element } => {
+        format!("ordered set of {}", self.description(chapter, element))
+      }
+      deco::Schema::SortedSet { element } => {
+        format!("sorted set of {}", self.description(chapter, element))
+      }
       _ => chapter.link(name),
     }
   }

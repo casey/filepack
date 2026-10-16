@@ -36,7 +36,7 @@ impl Field {
       ));
     }
 
-    let ty = option_inner(&self.ty);
+    let ty = type_argument(&self.ty, "Option");
 
     Ok(ParsedField {
       ident,

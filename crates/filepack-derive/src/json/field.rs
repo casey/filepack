@@ -15,12 +15,12 @@ pub(crate) struct Field {
 
 impl Field {
   fn json_schema(&self) -> TokenStream {
-    let ty = option_inner(&self.ty).unwrap_or(&self.ty);
+    let ty = type_argument(&self.ty, "Option").unwrap_or(&self.ty);
     quote! { <#ty>::json_schema(registry) }
   }
 
   fn parse(&self) -> Result<bool> {
-    let option = option_inner(&self.ty).is_some();
+    let option = type_argument(&self.ty, "Option").is_some();
 
     let mut default = false;
 
@@ -83,7 +83,7 @@ impl Field {
   }
 
   pub(crate) fn ty(&self) -> Result<TokenStream> {
-    if option_inner(&self.ty).is_some() || self.parse()? {
+    if type_argument(&self.ty, "Option").is_some() || self.parse()? {
       return Err(Error::new_spanned(
         &self.ty,
         "transparent struct fields and untagged enum variants cannot be optional",

@@ -6,7 +6,10 @@ pub(crate) trait HasPage {
 
 impl HasPage for deco::Schema {
   fn has_page(&self) -> bool {
-    !matches!(self, Self::Array { .. } | Self::Map { .. })
+    !matches!(
+      self,
+      Self::Array { .. } | Self::Map { .. } | Self::OrderedSet { .. } | Self::SortedSet { .. }
+    )
   }
 }
 

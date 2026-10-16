@@ -4,6 +4,8 @@ use super::*;
 #[strum(serialize_all = "snake_case")]
 pub(crate) enum ContainerAttribute {
   Magic(Path),
+  OrderedSet,
+  SortedSet,
   Strict,
   Transparent,
   Validate,
@@ -19,6 +21,8 @@ impl ContainerAttribute {
 
     let attribute = match ident.to_string().as_str() {
       "magic" => return Ok(Self::Magic(path_value(meta, "MagicType::Variant")?)),
+      "ordered_set" => Self::OrderedSet,
+      "sorted_set" => Self::SortedSet,
       "strict" => Self::Strict,
       "transparent" => Self::Transparent,
       "validate" => Self::Validate,
