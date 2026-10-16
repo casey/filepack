@@ -11,6 +11,10 @@ pub(crate) struct Contains {
   manifest: Option<Utf8PathBuf>,
 }
 
+pub(crate) type Input = ();
+
+pub(crate) type Output = ();
+
 impl Contains {
   pub(crate) fn run(self, options: Options) -> Result {
     let manifest = Manifest::load(self.manifest.as_deref())?;

@@ -6,6 +6,10 @@ pub(crate) struct Fingerprint {
   path: Option<Utf8PathBuf>,
 }
 
+pub(crate) type Input = ();
+
+pub(crate) type Output = ();
+
 impl Fingerprint {
   pub(crate) fn run(self) -> Result {
     let loader = Loader::load(self.path.as_deref())?;

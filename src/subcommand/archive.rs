@@ -8,6 +8,10 @@ pub(crate) struct Archive {
   output: Utf8PathBuf,
 }
 
+pub(crate) type Input = Manifest;
+
+pub(crate) type Output = ();
+
 impl Archive {
   pub(crate) fn run(self) -> Result {
     let json = filesystem::read_to_string(&self.input)?;

@@ -10,6 +10,10 @@ pub(crate) struct Sign {
   timestamp: bool,
 }
 
+pub(crate) type Input = ();
+
+pub(crate) type Output = ();
+
 impl Sign {
   pub(crate) fn run(self, options: Options) -> Result {
     let loader = Loader::load_with_options(DecodeOptions::strict(), self.path.as_deref())?;

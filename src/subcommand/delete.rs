@@ -17,6 +17,10 @@ pub(crate) struct Delete {
   server: ServerUrl,
 }
 
+pub(crate) type Input = ();
+
+pub(crate) type Output = ();
+
 impl Delete {
   pub(crate) fn run(self, options: Options) -> Result {
     let client = Client::new(&options, self.server.clone(), self.auth.as_ref())?;

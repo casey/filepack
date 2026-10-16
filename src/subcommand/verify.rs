@@ -25,6 +25,10 @@ pub(crate) struct Verify {
   root: Option<Utf8PathBuf>,
 }
 
+pub(crate) type Input = ();
+
+pub(crate) type Output = ();
+
 impl Verify {
   pub(crate) fn run(self, options: Options) -> Result {
     #[derive(Default)]

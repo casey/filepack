@@ -64,10 +64,6 @@ fn main() {
       commands.insert(name, (command, relative));
 
       for (name, command) in &command.subcommands {
-        if name == "help" {
-          continue;
-        }
-
         stack.push((
           path
             .iter()

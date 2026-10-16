@@ -103,6 +103,22 @@ pub struct Variant {
   pub name: String,
 }
 
+pub trait Io {
+  fn io_schema(registry: &mut Registry) -> Option<String>;
+}
+
+impl<T: Json> Io for T {
+  fn io_schema(registry: &mut Registry) -> Option<String> {
+    Some(T::json_schema(registry))
+  }
+}
+
+impl Io for () {
+  fn io_schema(_registry: &mut Registry) -> Option<String> {
+    None
+  }
+}
+
 pub trait Json {
   fn json_schema(registry: &mut Registry) -> String;
 }
@@ -141,6 +157,15 @@ impl<T: Json> Json for Vec<T> {
 impl Json for u64 {
   fn json_schema(registry: &mut Registry) -> String {
     Schema::UnsignedInteger.register("UnsignedInteger", registry)
+  }
+}
+
+impl Json for Utf8PathBuf {
+  fn json_schema(registry: &mut Registry) -> String {
+    Schema::Wrapper {
+      inner: String::json_schema(registry),
+    }
+    .register("Utf8PathBuf", registry)
   }
 }
 

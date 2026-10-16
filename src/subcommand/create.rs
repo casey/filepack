@@ -30,6 +30,10 @@ pub(crate) struct Create {
   timestamp: bool,
 }
 
+pub(crate) type Input = ();
+
+pub(crate) type Output = ();
+
 impl Create {
   pub(crate) fn run(self, options: Options) -> Result {
     let current_dir = current_dir()?;
