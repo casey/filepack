@@ -151,6 +151,8 @@ Schemas
 
 | schema |
 |--------|
-%% for name in self.deco.keys() {
+%% for (name, schema) in self.deco {
+%%   if schema.has_page() {
 | [{{ escape(name) }}](deco/{{ name.to_kebab_case() }}.md) |
+%%   }
 %% }

@@ -1356,6 +1356,7 @@ dependencies = [
  "camino",
  "filepack",
  "heck",
+ "strum",
 ]
 
 [[package]]

@@ -69,11 +69,11 @@ An untagged enum with {{ Count::new(variants.len(), "variant") }}:
 | schema |
 |--------|
 %%     for variant in variants {
-| {{ description(self.chapter, self.registry, variant) }} |
+| {{ self.registry.description(self.chapter, variant) }} |
 %%     }
 %%   }
 %%   json::Schema::Wrapper { inner } => {
-A wrapper around {{ description(self.chapter, self.registry, inner) }}.
+A wrapper around {{ self.registry.description(self.chapter, inner) }}.
 %%   }
 %% }
 %% if self.name == "Language" {
