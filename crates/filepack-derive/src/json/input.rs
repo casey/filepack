@@ -327,5 +327,14 @@ mod tests {
       },
       "transparent struct fields and untagged enum variants cannot be optional",
     );
+
+    case(
+      &syn::parse_quote! {
+        struct Foo {
+          bar: Option<String>,
+        }
+      },
+      "`Option` fields must have `#[serde(skip_serializing_if)]` or the type must have `#[skip_serializing_none]`",
+    );
   }
 }

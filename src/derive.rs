@@ -632,6 +632,7 @@ fn generic_schema() {
 #[test]
 fn json_enum() {
   #[allow(dead_code)]
+  #[skip_serializing_none]
   #[derive(Deserialize, Json)]
   #[serde(deny_unknown_fields, rename_all = "snake_case", tag = "type")]
   enum Foo {
@@ -733,6 +734,7 @@ fn json_string_enum() {
 #[test]
 fn json_struct() {
   #[allow(dead_code)]
+  #[skip_serializing_none]
   #[derive(Deserialize, Json)]
   #[serde(deny_unknown_fields)]
   struct Foo {
