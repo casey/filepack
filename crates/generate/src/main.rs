@@ -82,7 +82,7 @@ fn main() {
   let deco = {
     let mut deco = BTreeMap::new();
 
-    for (name, schema) in &reference.deco {
+    for (name, schema) in reference.deco.iter() {
       let relative = Utf8PathBuf::from(format!("deco/{}.md", name.to_kebab_case()));
 
       write(src.join(&relative), DecoSchemaMd { name, schema });
@@ -130,7 +130,7 @@ fn main() {
   let yaml = {
     let mut pages = BTreeMap::new();
 
-    for (name, schema) in &reference.yaml {
+    for (name, schema) in reference.yaml.iter() {
       let relative = Utf8PathBuf::from(format!("yaml/{}.md", name.to_kebab_case()));
 
       write(src.join(&relative), YamlSchemaMd { name, schema });

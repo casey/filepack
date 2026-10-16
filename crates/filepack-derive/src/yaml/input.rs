@@ -37,7 +37,7 @@ impl Input {
 
     let strict = attributes.strict;
 
-    let schema = match &self.data {
+    let body = match &self.data {
       Data::Enum(variants) => {
         let Some(tag) = attributes.tag else {
           return Err(Error::new_spanned(
@@ -52,11 +52,12 @@ impl Input {
           .collect::<Result<Vec<proc_macro2::TokenStream>>>()?;
 
         quote! {
-          yaml::Schema::Enum {
+          let variants = vec![#(#variants),*];
+          registry.register(#schema_name, yaml::Schema::Enum {
             strict: #strict,
             tag: #tag.into(),
-            variants: vec![#(#variants),*],
-          }
+            variants,
+          })
         }
       }
       Data::Struct(fields) => {
@@ -73,10 +74,8 @@ impl Input {
           .collect::<Result<Vec<proc_macro2::TokenStream>>>()?;
 
         quote! {
-          yaml::Schema::Struct {
-            fields: vec![#(#fields),*],
-            strict: #strict,
-          }
+          let fields = vec![#(#fields),*];
+          registry.register(#schema_name, yaml::Schema::Struct { fields, strict: #strict })
         }
       }
     };
@@ -84,7 +83,7 @@ impl Input {
     Ok(quote! {
       impl yaml::Yaml for #name {
         fn yaml_schema(registry: &mut yaml::Registry) -> String {
-          #schema.register(#schema_name, registry)
+          #body
         }
       }
     })

@@ -159,12 +159,12 @@ fn encode_display_schema() {
     }
   }
 
-  let mut schemas = BTreeMap::new();
+  let mut schemas = deco::Registry::new();
 
   assert_eq!(Foo::deco_schema(&mut schemas), "Foo");
 
   assert_eq!(
-    schemas,
+    *schemas,
     BTreeMap::from([
       (
         "Foo".into(),
@@ -431,12 +431,12 @@ fn enum_schema() {
     Baz,
   }
 
-  let mut schemas = BTreeMap::new();
+  let mut schemas = deco::Registry::new();
 
   assert_eq!(Foo::deco_schema(&mut schemas), "Foo");
 
   assert_eq!(
-    schemas,
+    *schemas,
     BTreeMap::from([(
       "Foo".into(),
       deco::Schema::Enum {
@@ -470,12 +470,12 @@ fn enum_schema_fields() {
     },
   }
 
-  let mut schemas = BTreeMap::new();
+  let mut schemas = deco::Registry::new();
 
   assert_eq!(Foo::deco_schema(&mut schemas), "Foo");
 
   assert_eq!(
-    schemas,
+    *schemas,
     BTreeMap::from([
       (
         "Foo".into(),
@@ -601,7 +601,7 @@ fn generic_schema() {
     bar: T,
   }
 
-  let mut schemas = BTreeMap::new();
+  let mut schemas = deco::Registry::new();
 
   assert_eq!(
     Foo::<u64>::deco_schema(&mut schemas),
@@ -609,7 +609,7 @@ fn generic_schema() {
   );
 
   assert_eq!(
-    schemas,
+    *schemas,
     BTreeMap::from([
       (
         "Foo<UnsignedInteger>".into(),
@@ -733,12 +733,12 @@ fn struct_schema() {
     baz: Option<bool>,
   }
 
-  let mut schemas = BTreeMap::new();
+  let mut schemas = deco::Registry::new();
 
   assert_eq!(Foo::deco_schema(&mut schemas), "Foo");
 
   assert_eq!(
-    schemas,
+    *schemas,
     BTreeMap::from([
       ("Boolean".into(), deco::Schema::Boolean),
       (
@@ -773,12 +773,12 @@ fn struct_schema_attributes() {
   #[deco(magic = MagicType::Archive, strict)]
   struct Foo {}
 
-  let mut schemas = BTreeMap::new();
+  let mut schemas = deco::Registry::new();
 
   assert_eq!(Foo::deco_schema(&mut schemas), "Foo");
 
   assert_eq!(
-    schemas,
+    *schemas,
     BTreeMap::from([(
       "Foo".into(),
       deco::Schema::Struct {
@@ -806,12 +806,12 @@ fn transparent_schema() {
   #[deco(transparent)]
   struct Foo(u64);
 
-  let mut schemas = BTreeMap::new();
+  let mut schemas = deco::Registry::new();
 
   assert_eq!(Foo::deco_schema(&mut schemas), "Foo");
 
   assert_eq!(
-    schemas,
+    *schemas,
     BTreeMap::from([
       (
         "Foo".into(),
@@ -1117,12 +1117,12 @@ fn yaml_enum() {
     Baz { qux: Option<String> },
   }
 
-  let mut schemas = BTreeMap::new();
+  let mut schemas = yaml::Registry::new();
 
   assert_eq!(Foo::yaml_schema(&mut schemas), "Foo");
 
   assert_eq!(
-    schemas,
+    *schemas,
     BTreeMap::from([
       (
         "Foo".into(),
@@ -1161,12 +1161,12 @@ fn yaml_struct() {
     qux: Vec<String>,
   }
 
-  let mut schemas = BTreeMap::new();
+  let mut schemas = yaml::Registry::new();
 
   assert_eq!(Foo::yaml_schema(&mut schemas), "Foo");
 
   assert_eq!(
-    schemas,
+    *schemas,
     BTreeMap::from([
       (
         "Array<String>".into(),

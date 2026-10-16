@@ -79,10 +79,12 @@ impl Display for Hash {
 
 impl Encode for Hash {
   fn deco_schema(registry: &mut deco::Registry) -> String {
-    deco::Schema::Bytes {
-      length: Some(Self::LEN.into_u64()),
-    }
-    .register("Hash", registry)
+    registry.register(
+      "Hash",
+      deco::Schema::Bytes {
+        length: Some(Self::LEN.into_u64()),
+      },
+    )
   }
 
   fn encode(&self, encoder: &mut Encoder) {

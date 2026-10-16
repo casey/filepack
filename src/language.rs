@@ -232,10 +232,8 @@ impl Decode<'_> for Language {
 
 impl Encode for Language {
   fn deco_schema(registry: &mut deco::Registry) -> String {
-    deco::Schema::Wrapper {
-      inner: String::deco_schema(registry),
-    }
-    .register("Language", registry)
+    let inner = String::deco_schema(registry);
+    registry.register("Language", deco::Schema::Wrapper { inner })
   }
 
   fn encode(&self, encoder: &mut Encoder) {
@@ -245,10 +243,8 @@ impl Encode for Language {
 
 impl yaml::Yaml for Language {
   fn yaml_schema(registry: &mut yaml::Registry) -> String {
-    yaml::Schema::Wrapper {
-      inner: String::yaml_schema(registry),
-    }
-    .register("Language", registry)
+    let inner = String::yaml_schema(registry);
+    registry.register("Language", yaml::Schema::Wrapper { inner })
   }
 }
 

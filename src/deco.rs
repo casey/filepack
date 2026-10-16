@@ -8,7 +8,40 @@ pub struct Field {
   pub schema: String,
 }
 
-pub type Registry = BTreeMap<String, Schema>;
+#[derive(Debug, Default, Deserialize, Serialize)]
+#[serde(transparent)]
+pub struct Registry(BTreeMap<String, Schema>);
+
+impl Registry {
+  pub fn new() -> Self {
+    Self::default()
+  }
+
+  pub fn register(&mut self, name: &str, schema: Schema) -> String {
+    if let Some(existing) = self.0.get(name) {
+      assert!(
+        *existing == schema,
+        "conflicting definitions for schema `{name}`"
+      );
+    } else {
+      self.0.insert(name.into(), schema);
+    }
+
+    name.into()
+  }
+
+  pub(crate) fn remove(&mut self, name: &str) -> Option<Schema> {
+    self.0.remove(name)
+  }
+}
+
+impl Deref for Registry {
+  type Target = BTreeMap<String, Schema>;
+
+  fn deref(&self) -> &Self::Target {
+    &self.0
+  }
+}
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "kebab-case")]
@@ -40,21 +73,6 @@ pub enum Schema {
   },
 }
 
-impl Schema {
-  pub fn register(self, name: &str, registry: &mut Registry) -> String {
-    if let Some(existing) = registry.get(name) {
-      assert!(
-        *existing == self,
-        "conflicting definitions for schema `{name}`"
-      );
-    } else {
-      registry.insert(name.into(), self);
-    }
-
-    name.into()
-  }
-}
-
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct Variant {
   pub fields: Vec<Field>,
@@ -68,20 +86,20 @@ mod tests {
 
   #[test]
   fn register() {
-    let mut schemas = BTreeMap::new();
+    let mut schemas = Registry::new();
 
-    assert_eq!(Schema::Boolean.register("Foo", &mut schemas), "Foo");
-    assert_eq!(Schema::Boolean.register("Foo", &mut schemas), "Foo");
+    assert_eq!(schemas.register("Foo", Schema::Boolean), "Foo");
+    assert_eq!(schemas.register("Foo", Schema::Boolean), "Foo");
 
-    assert_eq!(schemas, BTreeMap::from([("Foo".into(), Schema::Boolean)]));
+    assert_eq!(*schemas, BTreeMap::from([("Foo".into(), Schema::Boolean)]));
   }
 
   #[test]
   #[should_panic(expected = "conflicting definitions for schema `Foo`")]
   fn register_conflict() {
-    let mut schemas = BTreeMap::new();
+    let mut schemas = Registry::new();
 
-    Schema::Boolean.register("Foo", &mut schemas);
-    Schema::Bytes { length: None }.register("Foo", &mut schemas);
+    schemas.register("Foo", Schema::Boolean);
+    schemas.register("Foo", Schema::Bytes { length: None });
   }
 }

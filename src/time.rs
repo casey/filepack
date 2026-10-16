@@ -68,10 +68,8 @@ impl FromStr for Time {
 
 impl yaml::Yaml for Time {
   fn yaml_schema(registry: &mut yaml::Registry) -> String {
-    yaml::Schema::Wrapper {
-      inner: String::yaml_schema(registry),
-    }
-    .register("Time", registry)
+    let inner = String::yaml_schema(registry);
+    registry.register("Time", yaml::Schema::Wrapper { inner })
   }
 }
 

@@ -19,10 +19,12 @@ impl Decode<'_> for Ed25519Signature {
 
 impl Encode for Ed25519Signature {
   fn deco_schema(registry: &mut deco::Registry) -> String {
-    deco::Schema::Bytes {
-      length: Some(ed25519_dalek::SIGNATURE_LENGTH.into_u64()),
-    }
-    .register("Ed25519Signature", registry)
+    registry.register(
+      "Ed25519Signature",
+      deco::Schema::Bytes {
+        length: Some(ed25519_dalek::SIGNATURE_LENGTH.into_u64()),
+      },
+    )
   }
 
   fn encode(&self, encoder: &mut Encoder) {

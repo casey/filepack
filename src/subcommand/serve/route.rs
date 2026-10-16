@@ -605,7 +605,7 @@ mod tests {
 
   #[test]
   fn endpoint() {
-    let mut schemas = BTreeMap::new();
+    let mut schemas = deco::Registry::new();
 
     assert!(api_gc_route(&mut schemas).endpoint.authenticated);
     assert!(!api_file_route(&mut schemas).endpoint.authenticated);

@@ -83,12 +83,12 @@ mod tests {
 
   #[test]
   fn schema() {
-    let mut schemas = BTreeMap::new();
+    let mut schemas = deco::Registry::new();
 
     assert_eq!(Decoded::<u64>::deco_schema(&mut schemas), "UnsignedInteger");
 
     assert_eq!(
-      schemas,
+      *schemas,
       BTreeMap::from([("UnsignedInteger".into(), deco::Schema::UnsignedInteger)]),
     );
   }

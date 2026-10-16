@@ -70,10 +70,12 @@ impl Display for PublicKey {
 
 impl Encode for PublicKey {
   fn deco_schema(registry: &mut deco::Registry) -> String {
-    deco::Schema::Bytes {
-      length: Some(Self::LEN.into_u64()),
-    }
-    .register("PublicKey", registry)
+    registry.register(
+      "PublicKey",
+      deco::Schema::Bytes {
+        length: Some(Self::LEN.into_u64()),
+      },
+    )
   }
 
   fn encode(&self, encoder: &mut Encoder) {

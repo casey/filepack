@@ -19,7 +19,36 @@ pub struct Field {
   pub schema: String,
 }
 
-pub type Registry = BTreeMap<String, Schema>;
+#[derive(Debug, Default, Deserialize, Serialize)]
+#[serde(transparent)]
+pub struct Registry(BTreeMap<String, Schema>);
+
+impl Registry {
+  pub fn new() -> Self {
+    Self::default()
+  }
+
+  pub fn register(&mut self, name: &str, schema: Schema) -> String {
+    if let Some(existing) = self.0.get(name) {
+      assert!(
+        *existing == schema,
+        "conflicting definitions for schema `{name}`"
+      );
+    } else {
+      self.0.insert(name.into(), schema);
+    }
+
+    name.into()
+  }
+}
+
+impl Deref for Registry {
+  type Target = BTreeMap<String, Schema>;
+
+  fn deref(&self) -> &Self::Target {
+    &self.0
+  }
+}
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "kebab-case")]
@@ -42,21 +71,6 @@ pub enum Schema {
   },
 }
 
-impl Schema {
-  pub fn register(self, name: &str, registry: &mut Registry) -> String {
-    if let Some(existing) = registry.get(name) {
-      assert!(
-        *existing == self,
-        "conflicting definitions for schema `{name}`"
-      );
-    } else {
-      registry.insert(name.into(), self);
-    }
-
-    name.into()
-  }
-}
-
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct Variant {
   pub fields: Vec<Field>,
@@ -69,7 +83,7 @@ pub trait Yaml {
 
 impl Yaml for String {
   fn yaml_schema(registry: &mut Registry) -> String {
-    Schema::String.register("String", registry)
+    registry.register("String", Schema::String)
   }
 }
 
@@ -77,7 +91,7 @@ impl<T: Yaml> Yaml for Vec<T> {
   fn yaml_schema(registry: &mut Registry) -> String {
     let element = T::yaml_schema(registry);
     let name = format!("Array<{element}>");
-    Schema::Array { element }.register(&name, registry)
+    registry.register(&name, Schema::Array { element })
   }
 }
 
@@ -87,23 +101,25 @@ mod tests {
 
   #[test]
   fn register() {
-    let mut schemas = BTreeMap::new();
+    let mut schemas = Registry::new();
 
-    assert_eq!(Schema::String.register("Foo", &mut schemas), "Foo");
-    assert_eq!(Schema::String.register("Foo", &mut schemas), "Foo");
+    assert_eq!(schemas.register("Foo", Schema::String), "Foo");
+    assert_eq!(schemas.register("Foo", Schema::String), "Foo");
 
-    assert_eq!(schemas, BTreeMap::from([("Foo".into(), Schema::String)]));
+    assert_eq!(*schemas, BTreeMap::from([("Foo".into(), Schema::String)]));
   }
 
   #[test]
   #[should_panic(expected = "conflicting definitions for schema `Foo`")]
   fn register_conflict() {
-    let mut schemas = BTreeMap::new();
+    let mut schemas = Registry::new();
 
-    Schema::String.register("Foo", &mut schemas);
-    Schema::Array {
-      element: "Foo".into(),
-    }
-    .register("Foo", &mut schemas);
+    schemas.register("Foo", Schema::String);
+    schemas.register(
+      "Foo",
+      Schema::Array {
+        element: "Foo".into(),
+      },
+    );
   }
 }

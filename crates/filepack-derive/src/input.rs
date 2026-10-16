@@ -254,10 +254,9 @@ impl Input {
     Ok(quote! {
       impl #impl_generics Encode for #name #ty_generics #where_clause {
         fn deco_schema(registry: &mut deco::Registry) -> String {
-          deco::Schema::Enum {
-            variants: vec![#(#schema_variants),*],
-          }
-          .register(&#schema_name, registry)
+          let name = #schema_name;
+          let variants = vec![#(#schema_variants),*];
+          registry.register(&name, deco::Schema::Enum { variants })
         }
 
         fn encode(&self, encoder: &mut Encoder) {
@@ -306,12 +305,13 @@ impl Input {
     Ok(quote! {
       impl #impl_generics Encode for #name #ty_generics #where_clause {
         fn deco_schema(registry: &mut deco::Registry) -> String {
-          deco::Schema::Struct {
-            fields: vec![#(#schema_fields),*],
+          let name = #schema_name;
+          let fields = vec![#(#schema_fields),*];
+          registry.register(&name, deco::Schema::Struct {
+            fields,
             magic: #schema_magic,
             strict: #strict,
-          }
-          .register(&#schema_name, registry)
+          })
         }
 
         fn encode(&self, encoder: &mut Encoder) {
@@ -338,10 +338,9 @@ impl Input {
     Ok(quote! {
       impl #impl_generics Encode for #name #ty_generics #where_clause {
         fn deco_schema(registry: &mut deco::Registry) -> String {
-          deco::Schema::Wrapper {
-            inner: <#ty>::deco_schema(registry),
-          }
-          .register(&#schema_name, registry)
+          let name = #schema_name;
+          let inner = <#ty>::deco_schema(registry);
+          registry.register(&name, deco::Schema::Wrapper { inner })
         }
 
         fn encode(&self, encoder: &mut Encoder) {

@@ -27,10 +27,12 @@ where
 
 impl<const N: usize> Encode for [u8; N] {
   fn deco_schema(registry: &mut deco::Registry) -> String {
-    deco::Schema::Bytes {
-      length: Some(N.into_u64()),
-    }
-    .register(&format!("Bytes<{N}>"), registry)
+    registry.register(
+      &format!("Bytes<{N}>"),
+      deco::Schema::Bytes {
+        length: Some(N.into_u64()),
+      },
+    )
   }
 
   fn encode(&self, encoder: &mut Encoder) {
@@ -40,10 +42,12 @@ impl<const N: usize> Encode for [u8; N] {
 
 impl<const N: usize, const M: usize> Encode for [[u8; N]; M] {
   fn deco_schema(registry: &mut deco::Registry) -> String {
-    deco::Schema::Bytes {
-      length: Some((N * M).into_u64()),
-    }
-    .register(&format!("Bytes<{}>", N * M), registry)
+    registry.register(
+      &format!("Bytes<{}>", N * M),
+      deco::Schema::Bytes {
+        length: Some((N * M).into_u64()),
+      },
+    )
   }
 
   fn encode(&self, encoder: &mut Encoder) {
@@ -60,7 +64,7 @@ where
     let key = K::deco_schema(registry);
     let value = V::deco_schema(registry);
     let name = format!("Map<{key}, {value}>");
-    deco::Schema::Map { key, value }.register(&name, registry)
+    registry.register(&name, deco::Schema::Map { key, value })
   }
 
   fn encode(&self, encoder: &mut Encoder) {
@@ -74,7 +78,7 @@ where
 
 impl Encode for bool {
   fn deco_schema(registry: &mut deco::Registry) -> String {
-    deco::Schema::Boolean.register("Boolean", registry)
+    registry.register("Boolean", deco::Schema::Boolean)
   }
 
   fn encode(&self, encoder: &mut Encoder) {
@@ -114,7 +118,7 @@ impl<T: Encode> Encode for Vec<T> {
 
 impl Encode for i64 {
   fn deco_schema(registry: &mut deco::Registry) -> String {
-    deco::Schema::SignedInteger.register("SignedInteger", registry)
+    registry.register("SignedInteger", deco::Schema::SignedInteger)
   }
 
   fn encode(&self, encoder: &mut Encoder) {
@@ -124,7 +128,7 @@ impl Encode for i64 {
 
 impl Encode for str {
   fn deco_schema(registry: &mut deco::Registry) -> String {
-    deco::Schema::String.register("String", registry)
+    registry.register("String", deco::Schema::String)
   }
 
   fn encode(&self, encoder: &mut Encoder) {
@@ -134,7 +138,7 @@ impl Encode for str {
 
 impl Encode for u64 {
   fn deco_schema(registry: &mut deco::Registry) -> String {
-    deco::Schema::UnsignedInteger.register("UnsignedInteger", registry)
+    registry.register("UnsignedInteger", deco::Schema::UnsignedInteger)
   }
 
   fn encode(&self, encoder: &mut Encoder) {
@@ -144,7 +148,7 @@ impl Encode for u64 {
 
 impl Encode for [u8] {
   fn deco_schema(registry: &mut deco::Registry) -> String {
-    deco::Schema::Bytes { length: None }.register("Bytes", registry)
+    registry.register("Bytes", deco::Schema::Bytes { length: None })
   }
 
   fn encode(&self, encoder: &mut Encoder) {
@@ -156,7 +160,7 @@ impl<T: Encode> Encode for [T] {
   fn deco_schema(registry: &mut deco::Registry) -> String {
     let element = T::deco_schema(registry);
     let name = format!("Array<{element}>");
-    deco::Schema::Array { element }.register(&name, registry)
+    registry.register(&name, deco::Schema::Array { element })
   }
 
   fn encode(&self, encoder: &mut Encoder) {
@@ -180,7 +184,7 @@ mod tests {
 
   #[test]
   fn array_schema() {
-    let mut schemas = BTreeMap::new();
+    let mut schemas = deco::Registry::new();
 
     assert_eq!(
       Vec::<u64>::deco_schema(&mut schemas),
@@ -188,7 +192,7 @@ mod tests {
     );
 
     assert_eq!(
-      schemas,
+      *schemas,
       BTreeMap::from([
         (
           "Array<UnsignedInteger>".into(),
@@ -216,13 +220,13 @@ mod tests {
 
   #[test]
   fn byte_array_schema() {
-    let mut schemas = BTreeMap::new();
+    let mut schemas = deco::Registry::new();
 
     assert_eq!(<[u8; 32]>::deco_schema(&mut schemas), "Bytes<32>");
     assert_eq!(<[[u8; 32]; 2]>::deco_schema(&mut schemas), "Bytes<64>");
 
     assert_eq!(
-      schemas,
+      *schemas,
       BTreeMap::from([
         ("Bytes<32>".into(), deco::Schema::Bytes { length: Some(32) }),
         ("Bytes<64>".into(), deco::Schema::Bytes { length: Some(64) }),
@@ -263,7 +267,7 @@ mod tests {
 
   #[test]
   fn map_schema() {
-    let mut schemas = BTreeMap::new();
+    let mut schemas = deco::Registry::new();
 
     assert_eq!(
       BTreeMap::<String, u64>::deco_schema(&mut schemas),
@@ -271,7 +275,7 @@ mod tests {
     );
 
     assert_eq!(
-      schemas,
+      *schemas,
       BTreeMap::from([
         (
           "Map<String, UnsignedInteger>".into(),

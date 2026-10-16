@@ -67,10 +67,8 @@ impl Decode<'_> for CheckedUrl {
 
 impl yaml::Yaml for CheckedUrl {
   fn yaml_schema(registry: &mut yaml::Registry) -> String {
-    yaml::Schema::Wrapper {
-      inner: String::yaml_schema(registry),
-    }
-    .register("CheckedUrl", registry)
+    let inner = String::yaml_schema(registry);
+    registry.register("CheckedUrl", yaml::Schema::Wrapper { inner })
   }
 }
 

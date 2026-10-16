@@ -101,10 +101,8 @@ pub fn encode_display(input: TokenStream) -> TokenStream {
   quote! {
     impl Encode for #name {
       fn deco_schema(registry: &mut deco::Registry) -> String {
-        deco::Schema::Wrapper {
-          inner: String::deco_schema(registry),
-        }
-        .register(#schema_name, registry)
+        let inner = String::deco_schema(registry);
+        registry.register(#schema_name, deco::Schema::Wrapper { inner })
       }
 
       fn encode(&self, encoder: &mut Encoder) {

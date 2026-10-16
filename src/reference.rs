@@ -73,7 +73,7 @@ impl Reference {
 
     command.build();
 
-    let mut deco = BTreeMap::new();
+    let mut deco = deco::Registry::new();
 
     Archive::deco_schema(&mut deco);
     Directory::deco_schema(&mut deco);
@@ -92,7 +92,7 @@ impl Reference {
     tag::<Revision>(&mut deco, &mut hex);
     tag::<Token>(&mut deco, &mut hex);
 
-    let mut yaml = BTreeMap::new();
+    let mut yaml = yaml::Registry::new();
 
     yaml::Metadata::yaml_schema(&mut yaml);
 
