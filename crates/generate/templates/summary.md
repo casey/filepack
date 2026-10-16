@@ -1,3 +1,7 @@
+Summary
+=======
+
+# Reference
 - [Commands](commands.md)
 %% for (name, (_command, path)) in &self.commands {
   - [{{ name }}]({{ path }})
