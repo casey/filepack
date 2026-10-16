@@ -34,6 +34,15 @@ impl Serialize for Rotation {
   }
 }
 
+impl json::Json for Rotation {
+  fn json_schema(registry: &mut json::Registry) -> String {
+    json::Schema::Wrapper {
+      inner: u64::json_schema(registry),
+    }
+    .register("Rotation", registry)
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;

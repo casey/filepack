@@ -1,7 +1,7 @@
 use super::*;
 
 #[skip_serializing_none]
-#[derive(Clone, Debug, Decode, Encode, PartialEq, Serialize)]
+#[derive(Clone, Debug, Decode, Encode, Json, PartialEq, Serialize)]
 pub(crate) struct Image {
   #[n(1)]
   pub(crate) alpha: bool,

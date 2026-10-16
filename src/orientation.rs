@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Clone, Copy, Debug, Decode, Default, Encode, PartialEq, Serialize)]
+#[derive(Clone, Copy, Debug, Decode, Default, Encode, Json, PartialEq, Serialize)]
 pub(crate) struct Orientation {
   #[n(1)]
   pub(crate) mirrored: bool,

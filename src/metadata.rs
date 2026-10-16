@@ -2,7 +2,7 @@ use super::*;
 
 #[allow(private_interfaces)]
 #[skip_serializing_none]
-#[derive(Clone, Debug, Default, Encode, Decode, Magic, PartialEq, Serialize)]
+#[derive(Clone, Debug, Default, Encode, Decode, Json, Magic, PartialEq, Serialize)]
 #[deco(magic = MagicType::Metadata)]
 pub struct Metadata {
   #[n(1)]

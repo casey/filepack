@@ -14,7 +14,7 @@ pub(crate) struct Metadata {
 
 pub(crate) type Input = ();
 
-pub(crate) type Output = ();
+pub(crate) type Output = crate::Metadata;
 
 impl Metadata {
   pub(crate) fn run(self) -> Result {
@@ -30,8 +30,7 @@ impl Metadata {
 
     let bytes = filesystem::read(&path)?;
 
-    let metadata =
-      crate::Metadata::decode_from_slice(&bytes).context(error::DecodeMetadataDeco { path })?;
+    let metadata = Output::decode_from_slice(&bytes).context(error::DecodeMetadataDeco { path })?;
 
     match self.format {
       OutputFormat::Json => println!("{}", serde_json::to_string(&metadata).unwrap()),

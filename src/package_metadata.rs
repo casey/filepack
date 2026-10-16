@@ -1,7 +1,7 @@
 use super::*;
 
 #[skip_serializing_none]
-#[derive(Clone, Debug, Default, Encode, Decode, PartialEq, Serialize)]
+#[derive(Clone, Debug, Default, Encode, Decode, Json, PartialEq, Serialize)]
 pub(crate) struct PackageMetadata {
   #[n(1)]
   pub(crate) colophon: Option<RelativePath>,

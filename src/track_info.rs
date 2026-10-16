@@ -1,6 +1,7 @@
 use super::*;
 
-#[derive(Clone, Copy, Debug, Decode, Encode, PartialEq, Serialize)]
+#[skip_serializing_none]
+#[derive(Clone, Copy, Debug, Decode, Encode, Json, PartialEq, Serialize)]
 #[serde(rename_all = "snake_case", tag = "type")]
 pub(crate) enum TrackInfo {
   #[n(0)]

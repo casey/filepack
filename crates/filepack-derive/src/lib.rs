@@ -7,8 +7,8 @@ use {
   std::{collections::HashSet, mem},
   strum::{EnumString, IntoStaticStr},
   syn::{
-    Attribute, DeriveInput, Error, FnArg, GenericArgument, Generics, Ident, ItemFn, LitInt, LitStr,
-    Path, PathArguments, ReturnType, Token, Type, TypeParamBound, TypePath,
+    Attribute, DeriveInput, Error, FnArg, GenericArgument, GenericParam, Generics, Ident, ItemFn,
+    LitInt, LitStr, Path, PathArguments, ReturnType, Token, Type, TypeParamBound, TypePath,
     meta::ParseNestedMeta,
     parse::{Parse, ParseBuffer, ParseStream},
   },
