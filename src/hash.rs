@@ -136,6 +136,12 @@ impl PathExtractor for Hash {
   }
 }
 
+impl json::Json for Hash {
+  fn json_schema(registry: &mut json::Registry) -> String {
+    json::Schema::Hex { tag: Tag::Hash }.register("Hash", registry)
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;

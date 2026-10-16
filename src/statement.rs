@@ -16,6 +16,7 @@ impl Message for Statement {
     "62098750af27dee51d4381da7f55007464a56db26eb0f6e4af961aa91c4c58be51ae250e938f0b405c1f4fa679e0",
     "dd4009870d",
   );
+  const NAME: &'static str = "Statement";
   const TAG: Tag = Tag::Signature;
   type Error = Error;
   type Policy<'a> = Fingerprint;

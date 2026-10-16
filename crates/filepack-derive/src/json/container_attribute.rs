@@ -6,6 +6,8 @@ pub(crate) enum ContainerAttribute {
   DenyUnknownFields,
   RenameAll(RenameAll),
   Tag(String),
+  Transparent,
+  Untagged,
 }
 
 impl ContainerAttribute {
@@ -23,6 +25,8 @@ impl ContainerAttribute {
           .map_err(|_| meta.error(format!("unsupported `rename_all` value `{value}`")))
       }
       "tag" => Ok(Self::Tag(meta.value()?.parse::<LitStr>()?.value())),
+      "transparent" => Ok(Self::Transparent),
+      "untagged" => Ok(Self::Untagged),
       _ => Err(meta.error(format!("unsupported `#[serde({ident})]` attribute"))),
     }
   }

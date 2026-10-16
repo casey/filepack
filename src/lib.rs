@@ -35,6 +35,7 @@ use {
     authenticated::Authenticated,
     authorization_error::AuthorizationError,
     bit_reader::BitReader,
+    bytes_error::BytesError,
     cause::Cause,
     checked_url::CheckedUrl,
     chroma_subsampling::ChromaSubsampling,
@@ -265,6 +266,7 @@ use {
 };
 
 pub use self::{
+  bytes::Bytes,
   count::Count,
   decode::Decode,
   decode_options::DecodeOptions,
@@ -333,6 +335,8 @@ mod audio_position_error;
 mod authenticated;
 mod authorization_error;
 mod bit_reader;
+mod bytes;
+mod bytes_error;
 mod cause;
 mod checked_url;
 mod chroma_subsampling;

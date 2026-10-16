@@ -8,7 +8,7 @@ pub(crate) struct ParsedField<'a> {
 }
 
 impl ParsedField<'_> {
-  pub(crate) fn decode(fields: &[Self]) -> Vec<proc_macro2::TokenStream> {
+  pub(crate) fn decode(fields: &[Self]) -> Vec<TokenStream> {
     fields
       .iter()
       .map(|field| {
@@ -23,7 +23,7 @@ impl ParsedField<'_> {
       .collect()
   }
 
-  pub(crate) fn encode(fields: &[Self], receiver: Receiver) -> Vec<proc_macro2::TokenStream> {
+  pub(crate) fn encode(fields: &[Self], receiver: Receiver) -> Vec<TokenStream> {
     fields
       .iter()
       .rev()
@@ -40,7 +40,7 @@ impl ParsedField<'_> {
       .collect()
   }
 
-  pub(crate) fn schema(fields: &[Self]) -> Vec<proc_macro2::TokenStream> {
+  pub(crate) fn schema(fields: &[Self]) -> Vec<TokenStream> {
     fields
       .iter()
       .map(

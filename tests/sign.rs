@@ -231,7 +231,10 @@ fn unknown_root_entries_are_preserved() {
 
   assert_eq!(manifest.signatures.len(), 1);
 
-  assert_eq!(manifest.embedded, BTreeMap::from([(hash, b"qux".to_vec())]));
+  assert_eq!(
+    manifest.embedded,
+    BTreeMap::from([(hash, b"qux".to_vec().into())])
+  );
 
   assert_eq!(
     serde_json::to_string(&manifest.unknown).unwrap() + "\n",

@@ -65,6 +65,12 @@ impl<T: Message> Hex for Signature<T> {
   const TAG: Tag = T::TAG;
 }
 
+impl<T: Message> json::Json for Signature<T> {
+  fn json_schema(registry: &mut json::Registry) -> String {
+    json::Schema::Hex { tag: T::TAG }.register(&format!("Signature<{}>", T::NAME), registry)
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;

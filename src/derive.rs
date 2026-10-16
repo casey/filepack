@@ -639,16 +639,16 @@ fn json_enum() {
     Baz { qux: Option<String> },
   }
 
-  let mut schemas = BTreeMap::new();
+  let mut schemas = json::Registry::new();
 
   assert_eq!(Foo::json_schema(&mut schemas), "Foo");
 
   assert_eq!(
-    schemas,
+    *schemas,
     BTreeMap::from([
       (
         "Foo".into(),
-        json::Schema::Enum {
+        json::Schema::TaggedEnum {
           strict: true,
           tag: "type".into(),
           variants: vec![
@@ -680,15 +680,16 @@ fn json_struct() {
   struct Foo {
     bar: String,
     baz: Option<String>,
+    #[serde(default)]
     qux: Vec<String>,
   }
 
-  let mut schemas = BTreeMap::new();
+  let mut schemas = json::Registry::new();
 
   assert_eq!(Foo::json_schema(&mut schemas), "Foo");
 
   assert_eq!(
-    schemas,
+    *schemas,
     BTreeMap::from([
       (
         "Array<String>".into(),
@@ -712,11 +713,80 @@ fn json_struct() {
             },
             json::Field {
               name: "qux".into(),
-              optional: false,
+              optional: true,
               schema: "Array<String>".into(),
             },
           ],
           strict: true,
+        },
+      ),
+      ("String".into(), json::Schema::String),
+    ]),
+  );
+}
+
+#[test]
+fn json_transparent() {
+  #[allow(dead_code)]
+  #[serde_as]
+  #[derive(Deserialize, Json)]
+  #[serde(transparent)]
+  struct Foo {
+    #[serde_as(as = "SetPreventDuplicates<serde_with::Same>")]
+    bar: BTreeSet<String>,
+  }
+
+  let mut schemas = json::Registry::new();
+
+  assert_eq!(Foo::json_schema(&mut schemas), "Foo");
+
+  assert_eq!(
+    *schemas,
+    BTreeMap::from([
+      (
+        "Foo".into(),
+        json::Schema::Wrapper {
+          inner: "Set<String>".into(),
+        },
+      ),
+      (
+        "Set<String>".into(),
+        json::Schema::Set {
+          element: "String".into(),
+        },
+      ),
+      ("String".into(), json::Schema::String),
+    ]),
+  );
+}
+
+#[test]
+fn json_untagged() {
+  #[allow(dead_code)]
+  #[derive(Deserialize, Json)]
+  #[serde(untagged)]
+  enum Foo {
+    Bar(String),
+    Baz(Vec<Foo>),
+  }
+
+  let mut schemas = json::Registry::new();
+
+  assert_eq!(Foo::json_schema(&mut schemas), "Foo");
+
+  assert_eq!(
+    *schemas,
+    BTreeMap::from([
+      (
+        "Array<Foo>".into(),
+        json::Schema::Array {
+          element: "Foo".into(),
+        },
+      ),
+      (
+        "Foo".into(),
+        json::Schema::UntaggedEnum {
+          variants: vec!["String".into(), "Array<Foo>".into()],
         },
       ),
       ("String".into(), json::Schema::String),

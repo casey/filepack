@@ -43,6 +43,12 @@ impl<T: Encode> Encode for Decoded<T> {
   }
 }
 
+impl<T: json::Json> json::Json for Decoded<T> {
+  fn json_schema(registry: &mut json::Registry) -> String {
+    T::json_schema(registry)
+  }
+}
+
 impl<'de, T: Deserialize<'de>> Deserialize<'de> for Decoded<T> {
   fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
     T::deserialize(deserializer).map(Self::Known)

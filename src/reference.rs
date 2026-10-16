@@ -27,6 +27,7 @@ pub struct Reference {
   pub commands: Command,
   pub deco: deco::Registry,
   pub hex: BTreeMap<Tag, Hex>,
+  pub json: json::Registry,
   pub languages: BTreeMap<Language, String>,
   pub lint_groups: BTreeMap<LintGroup, BTreeSet<Lint>>,
   pub lints: BTreeSet<Lint>,
@@ -92,7 +93,11 @@ impl Reference {
     tag::<Revision>(&mut deco, &mut hex);
     tag::<Token>(&mut deco, &mut hex);
 
-    let mut yaml = BTreeMap::new();
+    let mut json = json::Registry::new();
+
+    Manifest::json_schema(&mut json);
+
+    let mut yaml = json::Registry::new();
 
     yaml::Metadata::json_schema(&mut yaml);
 
@@ -135,6 +140,7 @@ impl Reference {
       commands: Command::new(&mut command),
       deco,
       hex,
+      json,
       languages: language::ALL
         .iter()
         .map(|language| (*language, language.name().into()))

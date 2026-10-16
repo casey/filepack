@@ -293,7 +293,7 @@ fn metadata_deco_is_embedded_in_manifest_archive() {
 
   assert_eq!(
     manifest.embedded,
-    BTreeMap::from([(Hash::bytes(&deco), deco)]),
+    BTreeMap::from([(Hash::bytes(&deco), deco.into())]),
   );
 }
 

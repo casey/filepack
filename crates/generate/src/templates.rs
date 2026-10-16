@@ -44,6 +44,11 @@ pub(crate) struct JsonFieldsMd<'a> {
 }
 
 #[derive(Boilerplate)]
+pub(crate) struct JsonMd<'a> {
+  pub(crate) json: &'a json::Registry,
+}
+
+#[derive(Boilerplate)]
 pub(crate) struct JsonSchemaMd<'a> {
   pub(crate) chapter: Chapter,
   pub(crate) name: &'a str,
@@ -83,6 +88,7 @@ pub(crate) struct SummaryMd<'a> {
   pub(crate) commands: BTreeMap<String, (&'a Command, Utf8PathBuf)>,
   pub(crate) deco: BTreeMap<&'a str, Utf8PathBuf>,
   pub(crate) hex: BTreeMap<&'a str, Utf8PathBuf>,
+  pub(crate) json: BTreeMap<&'a str, Utf8PathBuf>,
   pub(crate) routes: BTreeMap<&'a str, Utf8PathBuf>,
   pub(crate) yaml: BTreeMap<&'a str, Utf8PathBuf>,
 }
