@@ -3,8 +3,8 @@ use {
     chapter::Chapter,
     functions::{deco, escape, link, list, parameter, write},
     templates::{
-      CommandMd, CommandsMd, DecoMd, DecoSchemaMd, HexMd, JsonSchemaMd, LanguagesMd, LintsMd,
-      MediaFormatsMd, RouteMd, RoutesMd, SummaryMd, TagMd, UnstableFeaturesMd, YamlMd,
+      CommandMd, CommandsMd, DecoMd, DecoSchemaMd, HexMd, JsonMd, JsonSchemaMd, LanguagesMd,
+      LintsMd, MediaFormatsMd, RouteMd, RoutesMd, SummaryMd, TagMd, UnstableFeaturesMd, YamlMd,
     },
   },
   boilerplate::Boilerplate,
@@ -128,6 +128,27 @@ fn main() {
     routes
   };
 
+  let json = {
+    let mut pages = BTreeMap::new();
+
+    for (name, schema) in &reference.json {
+      let relative = Utf8PathBuf::from(format!("json/{}.md", name.to_kebab_case()));
+
+      write(
+        src.join(&relative),
+        JsonSchemaMd {
+          chapter: Chapter::Json,
+          name,
+          schema,
+        },
+      );
+
+      pages.insert(name.as_str(), relative);
+    }
+
+    pages
+  };
+
   let yaml = {
     let mut pages = BTreeMap::new();
 
@@ -155,6 +176,13 @@ fn main() {
     src.join("hex.md"),
     HexMd {
       hex: &reference.hex,
+    },
+  );
+
+  write(
+    src.join("json.md"),
+    JsonMd {
+      json: &reference.json,
     },
   );
 
@@ -215,6 +243,7 @@ fn main() {
       commands,
       deco,
       hex,
+      json,
       routes,
       yaml,
     },

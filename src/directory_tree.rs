@@ -1,8 +1,8 @@
 use super::*;
 
 #[serde_as]
-#[derive(Debug, Default, Deserialize, PartialEq, Serialize)]
-#[serde(deny_unknown_fields, transparent)]
+#[derive(Debug, Default, Deserialize, Json, PartialEq, Serialize)]
+#[serde(transparent)]
 pub struct DirectoryTree {
   #[serde_as(as = "MapPreventDuplicates<_, _>")]
   pub(crate) entries: BTreeMap<ComponentBuf, DirectoryTreeEntry>,

@@ -7,14 +7,14 @@ pub(crate) enum Receiver {
 }
 
 impl Receiver {
-  pub(crate) fn base(self, ident: &Ident) -> proc_macro2::TokenStream {
+  pub(crate) fn base(self, ident: &Ident) -> TokenStream {
     match self {
       Self::Binding => quote! { #ident },
       Self::Field => quote! { self.#ident },
     }
   }
 
-  pub(crate) fn reference(self, ident: &Ident) -> proc_macro2::TokenStream {
+  pub(crate) fn reference(self, ident: &Ident) -> TokenStream {
     match self {
       Self::Binding => quote! { #ident },
       Self::Field => quote! { &self.#ident },

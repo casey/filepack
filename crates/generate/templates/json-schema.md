@@ -4,7 +4,31 @@
 %%   json::Schema::Array { element } => {
 An array of {{ link(self.chapter, element) }}.
 %%   }
-%%   json::Schema::Enum { strict, tag, variants } => {
+%%   json::Schema::Bytes => {
+A byte string, encoded as hexadecimal.
+%%   }
+%%   json::Schema::Hex { tag } => {
+A tagged hex string with tag [`{{ tag.prefix() }}`](../hex/{{ tag.prefix() }}.md).
+%%   }
+%%   json::Schema::Map { key, value } => {
+A map from {{ link(self.chapter, key) }} to {{ link(self.chapter, value) }}.
+%%   }
+%%   json::Schema::Set { element } => {
+An array of {{ link(self.chapter, element) }}. Elements are unique and sorted.
+%%   }
+%%   json::Schema::String => {
+A string.
+%%   }
+%%   json::Schema::Struct { fields, strict } => {
+A struct with {{ Count::new(fields.len(), "field") }}:
+
+{{ JsonFieldsMd { chapter: self.chapter, fields } }}
+%%     if *strict {
+
+Unknown fields are rejected.
+%%     }
+%%   }
+%%   json::Schema::TaggedEnum { strict, tag, variants } => {
 An enum with {{ Count::new(variants.len(), "variant") }}, distinguished by the
 `{{ tag }}` field:
 
@@ -30,16 +54,16 @@ Unknown fields are rejected.
 %%       }
 %%     }
 %%   }
-%%   json::Schema::String => {
-A string.
+%%   json::Schema::UnsignedInteger => {
+An unsigned 64-bit integer.
 %%   }
-%%   json::Schema::Struct { fields, strict } => {
-A struct with {{ Count::new(fields.len(), "field") }}:
+%%   json::Schema::UntaggedEnum { variants } => {
+An untagged enum with {{ Count::new(variants.len(), "variant") }}:
 
-{{ JsonFieldsMd { chapter: self.chapter, fields } }}
-%%     if *strict {
-
-Unknown fields are rejected.
+| schema |
+|--------|
+%%     for variant in variants {
+| {{ link(self.chapter, variant) }} |
 %%     }
 %%   }
 %%   json::Schema::Wrapper { inner } => {

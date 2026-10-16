@@ -1,7 +1,7 @@
 use super::*;
 
-#[derive(Debug, Deserialize, PartialEq, Serialize)]
-#[serde(deny_unknown_fields, rename_all = "snake_case", untagged)]
+#[derive(Debug, Deserialize, Json, PartialEq, Serialize)]
+#[serde(untagged)]
 pub(crate) enum DirectoryTreeEntry {
   Directory(DirectoryTree),
   File(File),

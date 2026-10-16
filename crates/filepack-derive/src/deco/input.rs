@@ -13,13 +13,13 @@ pub(crate) struct Input {
 }
 
 impl Input {
-  pub(crate) fn decode(&self) -> Result<proc_macro2::TokenStream> {
+  pub(crate) fn decode(&self) -> Result<TokenStream> {
     let attributes = self.parse_attributes()?;
 
     match self.data {
       Data::Enum(_) => self.decode_enum(),
       Data::Struct(_) => {
-        if attributes.transparent() {
+        if attributes.transparent {
           self.decode_transparent(&attributes)
         } else {
           self.decode_struct(&attributes)
@@ -28,7 +28,7 @@ impl Input {
     }
   }
 
-  fn decode_enum(&self) -> Result<proc_macro2::TokenStream> {
+  fn decode_enum(&self) -> Result<TokenStream> {
     let name = &self.ident;
 
     let type_name = display_name(name);
@@ -91,7 +91,7 @@ impl Input {
     })
   }
 
-  fn decode_header(&self, validate: bool) -> proc_macro2::TokenStream {
+  fn decode_header(&self, validate: bool) -> TokenStream {
     let mut header_generics = self.generics(syn::parse_quote!(Decode<'de>));
 
     header_generics.params.insert(0, syn::parse_quote!('de));
@@ -118,7 +118,7 @@ impl Input {
     }
   }
 
-  fn decode_struct(&self, attributes: &Attributes) -> Result<proc_macro2::TokenStream> {
+  fn decode_struct(&self, attributes: &Attributes) -> Result<TokenStream> {
     let name = &self.ident;
 
     let display_name = display_name(name);
@@ -135,21 +135,21 @@ impl Input {
       }
     };
 
-    let header = self.decode_header(attributes.validate());
+    let header = self.decode_header(attributes.validate);
 
     let magic = attributes
-      .magic()
+      .magic
       .is_some()
       .then(|| quote! { decoder.magic(<Self as Magic>::TYPE)?; });
 
-    let map = if attributes.strict() {
+    let map = if attributes.strict {
       quote!(strict_map)
     } else {
       quote!(map)
     };
 
     let validate = attributes
-      .validate()
+      .validate
       .then(|| quote! { Validate::validate(&value)?; });
 
     Ok(quote! {
@@ -168,12 +168,12 @@ impl Input {
     })
   }
 
-  fn decode_transparent(&self, attributes: &Attributes) -> Result<proc_macro2::TokenStream> {
+  fn decode_transparent(&self, attributes: &Attributes) -> Result<TokenStream> {
     self.transparent_field()?;
 
     let constructor = quote! { Self(Decode::decode(decoder)?) };
 
-    let body = if attributes.validate() {
+    let body = if attributes.validate {
       quote! {
         let value = #constructor;
         Validate::validate(&value)?;
@@ -185,7 +185,7 @@ impl Input {
       }
     };
 
-    let header = self.decode_header(attributes.validate());
+    let header = self.decode_header(attributes.validate);
 
     Ok(quote! {
       #header {
@@ -196,13 +196,13 @@ impl Input {
     })
   }
 
-  pub(crate) fn encode(&self) -> Result<proc_macro2::TokenStream> {
+  pub(crate) fn encode(&self) -> Result<TokenStream> {
     let attributes = self.parse_attributes()?;
 
     match self.data {
       Data::Enum(_) => self.encode_enum(),
       Data::Struct(_) => {
-        if attributes.transparent() {
+        if attributes.transparent {
           self.encode_transparent()
         } else {
           self.encode_struct(&attributes)
@@ -211,7 +211,7 @@ impl Input {
     }
   }
 
-  fn encode_enum(&self) -> Result<proc_macro2::TokenStream> {
+  fn encode_enum(&self) -> Result<TokenStream> {
     let name = &self.ident;
 
     let variants = self.parse_variants()?;
@@ -275,7 +275,7 @@ impl Input {
     self.generics(syn::parse_quote!(Encode))
   }
 
-  fn encode_struct(&self, attributes: &Attributes) -> Result<proc_macro2::TokenStream> {
+  fn encode_struct(&self, attributes: &Attributes) -> Result<TokenStream> {
     let name = &self.ident;
 
     let fields = self.parse_fields()?;
@@ -283,11 +283,11 @@ impl Input {
     let items = ParsedField::encode(&fields, Receiver::Field);
 
     let magic = attributes
-      .magic()
+      .magic
       .is_some()
       .then(|| quote! { encoder.magic(<Self as Magic>::TYPE); });
 
-    let schema_magic = if attributes.magic().is_some() {
+    let schema_magic = if attributes.magic.is_some() {
       quote! { Some(<Self as Magic>::TYPE.to_string()) }
     } else {
       quote! { None }
@@ -297,7 +297,7 @@ impl Input {
 
     let schema_fields = ParsedField::schema(&fields);
 
-    let strict = attributes.strict();
+    let strict = attributes.strict;
 
     let generics = self.encode_generics();
 
@@ -324,7 +324,7 @@ impl Input {
     })
   }
 
-  fn encode_transparent(&self) -> Result<proc_macro2::TokenStream> {
+  fn encode_transparent(&self) -> Result<TokenStream> {
     let name = &self.ident;
 
     let ty = self.transparent_field()?.ty();
@@ -361,12 +361,12 @@ impl Input {
     generics
   }
 
-  pub(crate) fn magic(&self) -> Result<proc_macro2::TokenStream> {
+  pub(crate) fn magic(&self) -> Result<TokenStream> {
     let attributes = self.parse_attributes()?;
 
     let name = &self.ident;
 
-    let Some(magic) = attributes.magic() else {
+    let Some(magic) = &attributes.magic else {
       return Err(Error::new_spanned(
         name,
         "missing `#[deco(magic = MagicType::Variant)]` attribute",
@@ -383,8 +383,7 @@ impl Input {
   }
 
   fn parse_attributes(&self) -> Result<Attributes> {
-    let mut flags = HashSet::new();
-    let mut magic = None;
+    let mut attributes = Attributes::default();
 
     for attribute in &self.attrs {
       if attribute.path().is_ident("n") {
@@ -399,44 +398,20 @@ impl Input {
       }
 
       attribute.parse_nested_meta(|meta| {
-        if meta.path.is_ident("magic") {
-          if self.data.is_enum() {
-            return Err(meta.error("`#[deco(magic)]` cannot be used with enums"));
-          }
+        let attribute = ContainerAttribute::parse(&meta)?;
 
-          if magic.is_some() {
-            return Err(meta.error("duplicate `#[deco(magic)]` attribute"));
-          }
-
-          magic = Some(path_value(&meta, "MagicType::Variant")?);
-        } else {
-          let ident = meta.path.require_ident()?;
-
-          let attribute = ident
-            .to_string()
-            .parse::<ContainerAttribute>()
-            .map_err(|_| meta.error(format!("unknown container attribute `#[deco({ident})]`")))?;
-
-          if !meta.input.is_empty() && !meta.input.peek(syn::Token![,]) {
-            return Err(meta.error(format!("`#[deco({attribute})]` does not take a value")));
-          }
-
-          if self.data.is_enum() {
-            return Err(meta.error(format!("`#[deco({attribute})]` cannot be used with enums")));
-          }
-
-          if !flags.insert(attribute) {
-            return Err(meta.error(format!("duplicate `#[deco({attribute})]` attribute")));
-          }
-
-          if flags.contains(&ContainerAttribute::Transparent)
-            && flags.contains(&ContainerAttribute::Strict)
-          {
-            return Err(meta.error("`#[deco(strict)]` cannot be used with `#[deco(transparent)]`"));
-          }
+        if self.data.is_enum() {
+          let name = <&str>::from(&attribute);
+          return Err(meta.error(format!("`#[deco({name})]` cannot be used with enums")));
         }
 
-        if magic.is_some() && flags.contains(&ContainerAttribute::Transparent) {
+        attributes.insert(&meta, attribute)?;
+
+        if attributes.strict && attributes.transparent {
+          return Err(meta.error("`#[deco(strict)]` cannot be used with `#[deco(transparent)]`"));
+        }
+
+        if attributes.magic.is_some() && attributes.transparent {
           return Err(meta.error("`#[deco(magic)]` cannot be used with `#[deco(transparent)]`"));
         }
 
@@ -444,7 +419,7 @@ impl Input {
       })?;
     }
 
-    Ok(Attributes { flags, magic })
+    Ok(attributes)
   }
 
   fn parse_fields(&self) -> Result<Vec<ParsedField>> {
@@ -482,7 +457,7 @@ impl Input {
     Ok(variants)
   }
 
-  fn schema_name(&self) -> proc_macro2::TokenStream {
+  fn schema_name(&self) -> TokenStream {
     let name = self.ident.to_string();
 
     let params = self

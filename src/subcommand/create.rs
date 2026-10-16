@@ -226,7 +226,7 @@ impl Create {
     }
 
     let embedded = if let Some((_metadata, deco)) = metadata {
-      BTreeMap::from([(Hash::bytes(&deco), deco)])
+      BTreeMap::from([(Hash::bytes(&deco), deco.into())])
     } else {
       BTreeMap::new()
     };

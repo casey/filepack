@@ -87,6 +87,15 @@ impl Validate for ComponentBuf {
   }
 }
 
+impl json::Json for ComponentBuf {
+  fn json_schema(registry: &mut json::Registry) -> String {
+    json::Schema::Wrapper {
+      inner: String::json_schema(registry),
+    }
+    .register("ComponentBuf", registry)
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;

@@ -1,11 +1,11 @@
 use {
   self::route_attribute::RouteAttribute,
   darling::{FromDeriveInput, FromField, FromVariant, ast::Data, ast::Fields},
-  heck::{ToKebabCase, ToSnakeCase},
-  proc_macro::TokenStream,
+  heck::ToSnakeCase,
+  proc_macro2::TokenStream,
   quote::{format_ident, quote},
-  std::collections::HashSet,
-  strum::{Display, EnumString, IntoStaticStr},
+  std::{collections::HashSet, mem},
+  strum::{EnumString, IntoStaticStr},
   syn::{
     Attribute, DeriveInput, Error, FnArg, GenericArgument, Generics, Ident, ItemFn, LitInt, LitStr,
     Path, PathArguments, ReturnType, Token, Type, TypeParamBound, TypePath,
@@ -22,7 +22,7 @@ mod route_attribute;
 type Result<T = (), E = Error> = std::result::Result<T, E>;
 
 #[proc_macro_derive(Decode, attributes(deco, n))]
-pub fn decode(input: TokenStream) -> TokenStream {
+pub fn decode(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
   let input = syn::parse_macro_input!(input as DeriveInput);
 
   let input = match deco::Input::from_derive_input(&input) {
@@ -37,7 +37,7 @@ pub fn decode(input: TokenStream) -> TokenStream {
 }
 
 #[proc_macro_derive(DecodeFromStr)]
-pub fn decode_from_str(input: TokenStream) -> TokenStream {
+pub fn decode_from_str(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
   let input = syn::parse_macro_input!(input as DeriveInput);
 
   let name = &input.ident;
@@ -65,7 +65,7 @@ fn display_name(ident: &Ident) -> String {
 }
 
 #[proc_macro_derive(Encode, attributes(deco, n))]
-pub fn encode(input: TokenStream) -> TokenStream {
+pub fn encode(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
   let input = syn::parse_macro_input!(input as DeriveInput);
 
   let input = match deco::Input::from_derive_input(&input) {
@@ -80,7 +80,7 @@ pub fn encode(input: TokenStream) -> TokenStream {
 }
 
 #[proc_macro_derive(EncodeDisplay)]
-pub fn encode_display(input: TokenStream) -> TokenStream {
+pub fn encode_display(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
   let input = syn::parse_macro_input!(input as DeriveInput);
 
   let name = &input.ident;
@@ -105,7 +105,7 @@ pub fn encode_display(input: TokenStream) -> TokenStream {
 }
 
 #[proc_macro_derive(Json)]
-pub fn json(input: TokenStream) -> TokenStream {
+pub fn json(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
   let input = syn::parse_macro_input!(input as DeriveInput);
 
   let input = match json::Input::from_derive_input(&input) {
@@ -120,7 +120,7 @@ pub fn json(input: TokenStream) -> TokenStream {
 }
 
 #[proc_macro_derive(Magic, attributes(deco, n))]
-pub fn magic(input: TokenStream) -> TokenStream {
+pub fn magic(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
   let input = syn::parse_macro_input!(input as DeriveInput);
 
   let input = match deco::Input::from_derive_input(&input) {
@@ -178,7 +178,10 @@ fn path_value(meta: &ParseNestedMeta, placeholder: &str) -> Result<Path> {
 }
 
 #[proc_macro_attribute]
-pub fn route(attribute: TokenStream, item: TokenStream) -> TokenStream {
+pub fn route(
+  attribute: proc_macro::TokenStream,
+  item: proc_macro::TokenStream,
+) -> proc_macro::TokenStream {
   let RouteAttribute { method, path } = syn::parse_macro_input!(attribute as RouteAttribute);
 
   let item = syn::parse_macro_input!(item as ItemFn);

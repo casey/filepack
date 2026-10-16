@@ -9,13 +9,19 @@ pub(crate) struct Variant {
 }
 
 impl Variant {
-  pub(crate) fn schema(&self, rename_all: Option<RenameAll>) -> Result<proc_macro2::TokenStream> {
+  fn check_attributes(&self) -> Result {
     if let Some(attribute) = self.attrs.first() {
       return Err(Error::new_spanned(
         attribute,
         "`#[serde]` attributes are not supported on variants",
       ));
     }
+
+    Ok(())
+  }
+
+  pub(crate) fn schema(&self, rename_all: Option<RenameAll>) -> Result<TokenStream> {
+    self.check_attributes()?;
 
     let ident = self.ident.to_string();
 
@@ -25,7 +31,7 @@ impl Variant {
       .fields
       .iter()
       .map(|field| field.schema(None))
-      .collect::<Result<Vec<proc_macro2::TokenStream>>>()?;
+      .collect::<Result<Vec<TokenStream>>>()?;
 
     Ok(quote! {
       json::Variant {
@@ -33,5 +39,18 @@ impl Variant {
         name: #name.into(),
       }
     })
+  }
+
+  pub(crate) fn ty(&self) -> Result<TokenStream> {
+    self.check_attributes()?;
+
+    if !(self.fields.is_tuple() && self.fields.len() == 1) {
+      return Err(Error::new_spanned(
+        &self.ident,
+        "untagged enum variants must be newtypes",
+      ));
+    }
+
+    self.fields.iter().next().unwrap().ty()
   }
 }

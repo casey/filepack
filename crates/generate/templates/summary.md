@@ -6,6 +6,10 @@
 %% for (name, path) in &self.deco {
   - [{{ escape(name) }}]({{ path }})
 %% }
+- [JSON](json.md)
+%% for (name, path) in &self.json {
+  - [{{ escape(name) }}]({{ path }})
+%% }
 - [Languages](languages.md)
 - [Lints](lints.md)
 - [Media Formats](media-formats.md)

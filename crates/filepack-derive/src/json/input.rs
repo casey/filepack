@@ -1,7 +1,10 @@
 use super::*;
 
 #[derive(FromDeriveInput)]
-#[darling(supports(struct_named, enum_named, enum_unit), forward_attrs(serde))]
+#[darling(
+  supports(struct_named, enum_named, enum_newtype, enum_unit),
+  forward_attrs(serde)
+)]
 pub(crate) struct Input {
   attrs: Vec<Attribute>,
   data: Data<Variant, Field>,
@@ -21,7 +24,7 @@ impl Input {
     Ok(attributes)
   }
 
-  pub(crate) fn schema(&self) -> Result<proc_macro2::TokenStream> {
+  pub(crate) fn schema(&self) -> Result<TokenStream> {
     if !self.generics.params.is_empty() {
       return Err(Error::new_spanned(
         &self.generics,
@@ -39,23 +42,50 @@ impl Input {
 
     let schema = match &self.data {
       Data::Enum(variants) => {
-        let Some(tag) = attributes.tag else {
+        if attributes.transparent {
           return Err(Error::new_spanned(
             name,
-            "enums must be internally tagged with `#[serde(tag = \"...\")]`",
+            "`#[serde(transparent)]` is only supported on structs",
           ));
-        };
+        }
 
-        let variants = variants
-          .iter()
-          .map(|variant| variant.schema(attributes.rename_all))
-          .collect::<Result<Vec<proc_macro2::TokenStream>>>()?;
+        if attributes.untagged {
+          if attributes.tag.is_some() {
+            return Err(Error::new_spanned(
+              name,
+              "`#[serde(tag)]` cannot be used with `#[serde(untagged)]`",
+            ));
+          }
 
-        quote! {
-          json::Schema::Enum {
-            strict: #strict,
-            tag: #tag.into(),
-            variants: vec![#(#variants),*],
+          let variants = variants
+            .iter()
+            .map(Variant::ty)
+            .collect::<Result<Vec<TokenStream>>>()?;
+
+          quote! {
+            json::Schema::UntaggedEnum {
+              variants: vec![#(#variants),*],
+            }
+          }
+        } else {
+          let Some(tag) = attributes.tag else {
+            return Err(Error::new_spanned(
+              name,
+              "enums must be tagged with `#[serde(tag = \"...\")]` or `#[serde(untagged)]`",
+            ));
+          };
+
+          let variants = variants
+            .iter()
+            .map(|variant| variant.schema(attributes.rename_all))
+            .collect::<Result<Vec<TokenStream>>>()?;
+
+          quote! {
+            json::Schema::TaggedEnum {
+              strict: #strict,
+              tag: #tag.into(),
+              variants: vec![#(#variants),*],
+            }
           }
         }
       }
@@ -67,15 +97,41 @@ impl Input {
           ));
         }
 
-        let fields = fields
-          .iter()
-          .map(|field| field.schema(attributes.rename_all))
-          .collect::<Result<Vec<proc_macro2::TokenStream>>>()?;
+        if attributes.untagged {
+          return Err(Error::new_spanned(
+            name,
+            "`#[serde(untagged)]` is only supported on enums",
+          ));
+        }
 
-        quote! {
-          json::Schema::Struct {
-            fields: vec![#(#fields),*],
-            strict: #strict,
+        if attributes.transparent {
+          let fields = fields.iter().collect::<Vec<&Field>>();
+
+          let [field] = fields[..] else {
+            return Err(Error::new_spanned(
+              name,
+              "transparent structs must have exactly one field",
+            ));
+          };
+
+          let inner = field.ty()?;
+
+          quote! {
+            json::Schema::Wrapper {
+              inner: #inner,
+            }
+          }
+        } else {
+          let fields = fields
+            .iter()
+            .map(|field| field.schema(attributes.rename_all))
+            .collect::<Result<Vec<TokenStream>>>()?;
+
+          quote! {
+            json::Schema::Struct {
+              fields: vec![#(#fields),*],
+              strict: #strict,
+            }
           }
         }
       }
@@ -84,7 +140,11 @@ impl Input {
     Ok(quote! {
       impl json::Json for #name {
         fn json_schema(registry: &mut json::Registry) -> String {
-          #schema.register(#schema_name, registry)
+          let name = String::from(#schema_name);
+          if registry.reserve(&name) {
+            return name;
+          }
+          #schema.register(&name, registry)
         }
       }
     })
@@ -121,11 +181,21 @@ mod tests {
     case(
       &syn::parse_quote! {
         struct Foo {
-          #[serde(default)]
+          #[serde(rename = "baz")]
           bar: String,
         }
       },
-      "`#[serde]` attributes are not supported on fields",
+      "unsupported `#[serde(rename)]` attribute",
+    );
+
+    case(
+      &syn::parse_quote! {
+        struct Foo {
+          #[serde(with = "bar")]
+          baz: String,
+        }
+      },
+      "unsupported `#[serde(with = \"bar\")]` attribute",
     );
 
     case(
@@ -134,7 +204,7 @@ mod tests {
           Bar,
         }
       },
-      "enums must be internally tagged with `#[serde(tag = \"...\")]`",
+      "enums must be tagged with `#[serde(tag = \"...\")]` or `#[serde(untagged)]`",
     );
 
     case(
@@ -151,6 +221,45 @@ mod tests {
         struct Foo {}
       },
       "duplicate `#[serde(deny_unknown_fields)]` attribute",
+    );
+
+    case(
+      &syn::parse_quote! {
+        #[serde(transparent)]
+        struct Foo {
+          bar: String,
+          baz: String,
+        }
+      },
+      "transparent structs must have exactly one field",
+    );
+
+    case(
+      &syn::parse_quote! {
+        #[serde(untagged)]
+        enum Foo {
+          Bar { baz: String },
+        }
+      },
+      "untagged enum variants must be newtypes",
+    );
+
+    case(
+      &syn::parse_quote! {
+        #[serde(untagged)]
+        struct Foo {}
+      },
+      "`#[serde(untagged)]` is only supported on enums",
+    );
+
+    case(
+      &syn::parse_quote! {
+        #[serde(transparent)]
+        struct Foo {
+          bar: Option<String>,
+        }
+      },
+      "transparent struct fields and untagged enum variants cannot be optional",
     );
   }
 }

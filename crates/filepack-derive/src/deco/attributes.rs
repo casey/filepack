@@ -1,24 +1,28 @@
 use super::*;
 
+#[derive(Default)]
 pub(crate) struct Attributes {
-  pub(crate) flags: HashSet<ContainerAttribute>,
   pub(crate) magic: Option<Path>,
+  pub(crate) strict: bool,
+  pub(crate) transparent: bool,
+  pub(crate) validate: bool,
 }
 
 impl Attributes {
-  pub(crate) fn magic(&self) -> Option<&Path> {
-    self.magic.as_ref()
-  }
+  pub(crate) fn insert(&mut self, meta: &ParseNestedMeta, attribute: ContainerAttribute) -> Result {
+    let name = attribute.name();
 
-  pub(crate) fn strict(&self) -> bool {
-    self.flags.contains(&ContainerAttribute::Strict)
-  }
+    let duplicate = match attribute {
+      ContainerAttribute::Magic(magic) => self.magic.replace(magic).is_some(),
+      ContainerAttribute::Strict => mem::replace(&mut self.strict, true),
+      ContainerAttribute::Transparent => mem::replace(&mut self.transparent, true),
+      ContainerAttribute::Validate => mem::replace(&mut self.validate, true),
+    };
 
-  pub(crate) fn transparent(&self) -> bool {
-    self.flags.contains(&ContainerAttribute::Transparent)
-  }
+    if duplicate {
+      return Err(meta.error(format!("duplicate `#[deco({name})]` attribute")));
+    }
 
-  pub(crate) fn validate(&self) -> bool {
-    self.flags.contains(&ContainerAttribute::Validate)
+    Ok(())
   }
 }

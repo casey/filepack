@@ -87,7 +87,7 @@ impl Archive {
     let unknown = builder.pack_entries(&manifest.unknown)?;
 
     for (hash, content) in &manifest.embedded {
-      builder.files.insert(*hash, content.clone());
+      builder.files.insert(*hash, content.into());
     }
 
     builder.build_package(package, &manifest.signatures, unknown)
@@ -130,7 +130,7 @@ impl Archive {
     &self,
     options: DecodeOptions,
     loose: &mut BTreeSet<Hash>,
-    embedded: &mut BTreeMap<Hash, Vec<u8>>,
+    embedded: &mut BTreeMap<Hash, Bytes>,
     hash: Hash,
     size: u64,
     expected_totals: Totals,
@@ -152,7 +152,7 @@ impl Archive {
     &self,
     options: DecodeOptions,
     loose: &mut BTreeSet<Hash>,
-    embedded: &mut BTreeMap<Hash, Vec<u8>>,
+    embedded: &mut BTreeMap<Hash, Bytes>,
     entry: &Entry,
   ) -> Result<DirectoryTreeEntry, ArchiveError> {
     match entry.info {
@@ -160,7 +160,7 @@ impl Archive {
         if self.files.contains_key(&entry.hash) {
           let content = self.file(entry.hash, entry.size)?;
           loose.remove(&entry.hash);
-          embedded.insert(entry.hash, content.to_vec());
+          embedded.insert(entry.hash, content.into());
         }
         Ok(DirectoryTreeEntry::File(File {
           hash: entry.hash,
@@ -310,7 +310,7 @@ mod tests {
       .unwrap();
 
     let manifest = Manifest {
-      embedded: BTreeMap::from([(Hash::bytes(content), content.to_vec())]),
+      embedded: BTreeMap::from([(Hash::bytes(content), content.to_vec().into())]),
       package,
       signatures: BTreeSet::new(),
       unknown: DirectoryTree::new(),
@@ -998,7 +998,7 @@ mod tests {
       .unwrap();
 
     let manifest = Manifest {
-      embedded: BTreeMap::from([(Hash::bytes(b"qux"), b"qux".to_vec())]),
+      embedded: BTreeMap::from([(Hash::bytes(b"qux"), b"qux".to_vec().into())]),
       package: DirectoryTree::new(),
       signatures: BTreeSet::new(),
       unknown,

@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Copy, Debug, Deserialize, Json, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct File {
   pub(crate) hash: Hash,
