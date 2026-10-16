@@ -61,10 +61,10 @@ impl Validate for Text {
   }
 }
 
-impl yaml::Yaml for Text {
-  fn yaml_schema(registry: &mut yaml::Registry) -> String {
-    yaml::Schema::Wrapper {
-      inner: String::yaml_schema(registry),
+impl json::Json for Text {
+  fn json_schema(registry: &mut json::Registry) -> String {
+    json::Schema::Wrapper {
+      inner: String::json_schema(registry),
     }
     .register("Text", registry)
   }

@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Debug, Default, Deserialize, PartialEq, Yaml)]
+#[derive(Debug, Default, Deserialize, PartialEq, Json)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct Metadata {
   pub(crate) artwork: Option<RelativePath>,

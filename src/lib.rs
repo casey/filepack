@@ -94,6 +94,7 @@ use {
     invalid_public_key::InvalidPublicKey,
     iso8601_duration::Iso8601Duration,
     item::Item,
+    json::Json,
     key_identifier::KeyIdentifier,
     key_identifier_error::KeyIdentifierError,
     key_name::KeyName,
@@ -182,7 +183,6 @@ use {
     video_metadata::VideoMetadata,
     webm_decoder::WebmDecoder,
     xmp_error::XmpError,
-    yaml::Yaml,
   },
   axum::{
     body::Body,
@@ -195,7 +195,7 @@ use {
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},
   clap::{ArgGroup, Parser, ValueEnum},
   claxon::FlacReader,
-  filepack_derive::{Decode, DecodeFromStr, Encode, EncodeDisplay, Magic, Yaml, route},
+  filepack_derive::{Decode, DecodeFromStr, Encode, EncodeDisplay, Json, Magic, route},
   futures_util::StreamExt,
   humansize::{BINARY, BaseUnit, DECIMAL, FormatSizeOptions, SizeFormatter},
   icu_normalizer::ComposingNormalizerBorrowed,
@@ -405,6 +405,7 @@ mod info_builder;
 mod invalid_public_key;
 mod iso8601_duration;
 mod item;
+pub mod json;
 mod key_identifier;
 mod key_identifier_error;
 mod key_name;

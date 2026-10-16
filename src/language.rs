@@ -243,10 +243,10 @@ impl Encode for Language {
   }
 }
 
-impl yaml::Yaml for Language {
-  fn yaml_schema(registry: &mut yaml::Registry) -> String {
-    yaml::Schema::Wrapper {
-      inner: String::yaml_schema(registry),
+impl json::Json for Language {
+  fn json_schema(registry: &mut json::Registry) -> String {
+    json::Schema::Wrapper {
+      inner: String::json_schema(registry),
     }
     .register("Language", registry)
   }

@@ -52,7 +52,7 @@ impl Input {
           .collect::<Result<Vec<proc_macro2::TokenStream>>>()?;
 
         quote! {
-          yaml::Schema::Enum {
+          json::Schema::Enum {
             strict: #strict,
             tag: #tag.into(),
             variants: vec![#(#variants),*],
@@ -73,7 +73,7 @@ impl Input {
           .collect::<Result<Vec<proc_macro2::TokenStream>>>()?;
 
         quote! {
-          yaml::Schema::Struct {
+          json::Schema::Struct {
             fields: vec![#(#fields),*],
             strict: #strict,
           }
@@ -82,8 +82,8 @@ impl Input {
     };
 
     Ok(quote! {
-      impl yaml::Yaml for #name {
-        fn yaml_schema(registry: &mut yaml::Registry) -> String {
+      impl json::Json for #name {
+        fn json_schema(registry: &mut json::Registry) -> String {
           #schema.register(#schema_name, registry)
         }
       }

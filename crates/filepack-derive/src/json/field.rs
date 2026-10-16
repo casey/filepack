@@ -28,10 +28,10 @@ impl Field {
     let ty = inner.unwrap_or(&self.ty);
 
     Ok(quote! {
-      yaml::Field {
+      json::Field {
         name: #name.into(),
         optional: #optional,
-        schema: <#ty>::yaml_schema(registry),
+        schema: <#ty>::json_schema(registry),
       }
     })
   }
