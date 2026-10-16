@@ -1,29 +1,30 @@
 use {
   self::{
-    functions::{deco, escape, list, parameter, write, yaml},
+    chapter::Chapter,
+    functions::{deco, escape, link, list, parameter, write},
     templates::{
-      CommandMd, CommandsMd, DecoMd, DecoSchemaMd, HexMd, LanguagesMd, LintsMd, MediaFormatsMd,
-      RouteMd, RoutesMd, SummaryMd, TagMd, UnstableFeaturesMd, YamlMd, YamlSchemaMd,
+      CommandMd, CommandsMd, DecoMd, DecoSchemaMd, HexMd, JsonSchemaMd, LanguagesMd, LintsMd,
+      MediaFormatsMd, RouteMd, RoutesMd, SummaryMd, TagMd, UnstableFeaturesMd, YamlMd,
     },
   },
   boilerplate::Boilerplate,
   camino::{Utf8Path, Utf8PathBuf},
   filepack::{
-    Count, Language, Lint, LintGroup, MediaType, Reference, Tag, UnstableFeature, deco,
+    Count, Language, Lint, LintGroup, MediaType, Reference, Tag, UnstableFeature, deco, json,
     reference::{Command, Hex, MediaFormat, Parameter, Request, Response, Route},
-    yaml,
   },
   heck::ToKebabCase,
   std::{
     collections::{BTreeMap, BTreeSet},
     env,
-    fmt::Display,
+    fmt::{self, Display, Formatter},
     fs::{self, File},
     io::{BufWriter, Write},
     iter,
   },
 };
 
+mod chapter;
 mod functions;
 mod templates;
 
@@ -133,7 +134,14 @@ fn main() {
     for (name, schema) in &reference.yaml {
       let relative = Utf8PathBuf::from(format!("yaml/{}.md", name.to_kebab_case()));
 
-      write(src.join(&relative), YamlSchemaMd { name, schema });
+      write(
+        src.join(&relative),
+        JsonSchemaMd {
+          chapter: Chapter::Yaml,
+          name,
+          schema,
+        },
+      );
 
       pages.insert(name.as_str(), relative);
     }

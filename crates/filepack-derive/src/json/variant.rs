@@ -28,7 +28,7 @@ impl Variant {
       .collect::<Result<Vec<proc_macro2::TokenStream>>>()?;
 
     Ok(quote! {
-      yaml::Variant {
+      json::Variant {
         fields: vec![#(#fields),*],
         name: #name.into(),
       }

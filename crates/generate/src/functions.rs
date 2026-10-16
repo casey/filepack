@@ -13,6 +13,14 @@ pub(crate) fn escape(name: &str) -> String {
     .replace('}', "\\}")
 }
 
+pub(crate) fn link(chapter: Chapter, name: &str) -> String {
+  format!(
+    "[{}](../{chapter}/{}.md)",
+    escape(name),
+    name.to_kebab_case()
+  )
+}
+
 pub(crate) fn list(items: impl IntoIterator<Item = impl Display>) -> String {
   items
     .into_iter()
@@ -41,8 +49,4 @@ pub(crate) fn write(path: impl AsRef<Utf8Path>, contents: impl Display) {
   fs::create_dir_all(path.parent().unwrap()).unwrap();
   let mut file = BufWriter::new(File::create(path).unwrap());
   write!(file, "{contents}").unwrap();
-}
-
-pub(crate) fn yaml(name: &str) -> String {
-  format!("[{}](../yaml/{}.md)", escape(name), name.to_kebab_case())
 }

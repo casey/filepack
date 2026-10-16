@@ -1,10 +1,10 @@
 # {{ escape(self.name) }}
 
 %% match self.schema {
-%%   yaml::Schema::Array { element } => {
-An array of {{ yaml(element) }}.
+%%   json::Schema::Array { element } => {
+An array of {{ link(self.chapter, element) }}.
 %%   }
-%%   yaml::Schema::Enum { strict, tag, variants } => {
+%%   json::Schema::Enum { strict, tag, variants } => {
 An enum with {{ Count::new(variants.len(), "variant") }}, distinguished by the
 `{{ tag }}` field:
 
@@ -26,24 +26,24 @@ Unknown fields are rejected.
 
 ## {{ variant.name }}
 
-{{ YamlFieldsMd { fields: &variant.fields } }}
+{{ JsonFieldsMd { chapter: self.chapter, fields: &variant.fields } }}
 %%       }
 %%     }
 %%   }
-%%   yaml::Schema::String => {
+%%   json::Schema::String => {
 A string.
 %%   }
-%%   yaml::Schema::Struct { fields, strict } => {
+%%   json::Schema::Struct { fields, strict } => {
 A struct with {{ Count::new(fields.len(), "field") }}:
 
-{{ YamlFieldsMd { fields } }}
+{{ JsonFieldsMd { chapter: self.chapter, fields } }}
 %%     if *strict {
 
 Unknown fields are rejected.
 %%     }
 %%   }
-%%   yaml::Schema::Wrapper { inner } => {
-A wrapper around {{ yaml(inner) }}.
+%%   json::Schema::Wrapper { inner } => {
+A wrapper around {{ link(self.chapter, inner) }}.
 %%   }
 %% }
 %% if self.name == "Language" {

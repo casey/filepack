@@ -16,8 +16,8 @@ use {
 };
 
 mod deco;
+mod json;
 mod route_attribute;
-mod yaml;
 
 type Result<T = (), E = Error> = std::result::Result<T, E>;
 
@@ -102,6 +102,21 @@ pub fn encode_display(input: TokenStream) -> TokenStream {
     }
   }
   .into()
+}
+
+#[proc_macro_derive(Json)]
+pub fn json(input: TokenStream) -> TokenStream {
+  let input = syn::parse_macro_input!(input as DeriveInput);
+
+  let input = match json::Input::from_derive_input(&input) {
+    Ok(input) => input,
+    Err(err) => return err.write_errors().into(),
+  };
+
+  match input.schema() {
+    Ok(tokens) => tokens.into(),
+    Err(err) => err.to_compile_error().into(),
+  }
 }
 
 #[proc_macro_derive(Magic, attributes(deco, n))]
@@ -232,19 +247,4 @@ fn validate_numbers<'a>(start: u64, numbers: impl IntoIterator<Item = (&'a Ident
   }
 
   Ok(())
-}
-
-#[proc_macro_derive(Yaml)]
-pub fn yaml(input: TokenStream) -> TokenStream {
-  let input = syn::parse_macro_input!(input as DeriveInput);
-
-  let input = match yaml::Input::from_derive_input(&input) {
-    Ok(input) => input,
-    Err(err) => return err.write_errors().into(),
-  };
-
-  match input.schema() {
-    Ok(tokens) => tokens.into(),
-    Err(err) => err.to_compile_error().into(),
-  }
 }

@@ -630,6 +630,101 @@ fn generic_schema() {
 }
 
 #[test]
+fn json_enum() {
+  #[allow(dead_code)]
+  #[derive(Deserialize, Json)]
+  #[serde(deny_unknown_fields, rename_all = "snake_case", tag = "type")]
+  enum Foo {
+    Bar,
+    Baz { qux: Option<String> },
+  }
+
+  let mut schemas = BTreeMap::new();
+
+  assert_eq!(Foo::json_schema(&mut schemas), "Foo");
+
+  assert_eq!(
+    schemas,
+    BTreeMap::from([
+      (
+        "Foo".into(),
+        json::Schema::Enum {
+          strict: true,
+          tag: "type".into(),
+          variants: vec![
+            json::Variant {
+              fields: vec![],
+              name: "bar".into(),
+            },
+            json::Variant {
+              fields: vec![json::Field {
+                name: "qux".into(),
+                optional: true,
+                schema: "String".into(),
+              }],
+              name: "baz".into(),
+            },
+          ],
+        },
+      ),
+      ("String".into(), json::Schema::String),
+    ]),
+  );
+}
+
+#[test]
+fn json_struct() {
+  #[allow(dead_code)]
+  #[derive(Deserialize, Json)]
+  #[serde(deny_unknown_fields)]
+  struct Foo {
+    bar: String,
+    baz: Option<String>,
+    qux: Vec<String>,
+  }
+
+  let mut schemas = BTreeMap::new();
+
+  assert_eq!(Foo::json_schema(&mut schemas), "Foo");
+
+  assert_eq!(
+    schemas,
+    BTreeMap::from([
+      (
+        "Array<String>".into(),
+        json::Schema::Array {
+          element: "String".into(),
+        },
+      ),
+      (
+        "Foo".into(),
+        json::Schema::Struct {
+          fields: vec![
+            json::Field {
+              name: "bar".into(),
+              optional: false,
+              schema: "String".into(),
+            },
+            json::Field {
+              name: "baz".into(),
+              optional: true,
+              schema: "String".into(),
+            },
+            json::Field {
+              name: "qux".into(),
+              optional: false,
+              schema: "Array<String>".into(),
+            },
+          ],
+          strict: true,
+        },
+      ),
+      ("String".into(), json::Schema::String),
+    ]),
+  );
+}
+
+#[test]
 fn magic() {
   #[derive(Debug, Decode, Encode, Magic, PartialEq)]
   #[deco(magic = MagicType::Archive)]
@@ -1104,100 +1199,5 @@ fn validate_struct() {
       actual,
       expected: "foo",
     })) if actual == "bar",
-  );
-}
-
-#[test]
-fn yaml_enum() {
-  #[allow(dead_code)]
-  #[derive(Deserialize, Yaml)]
-  #[serde(deny_unknown_fields, rename_all = "snake_case", tag = "type")]
-  enum Foo {
-    Bar,
-    Baz { qux: Option<String> },
-  }
-
-  let mut schemas = BTreeMap::new();
-
-  assert_eq!(Foo::yaml_schema(&mut schemas), "Foo");
-
-  assert_eq!(
-    schemas,
-    BTreeMap::from([
-      (
-        "Foo".into(),
-        yaml::Schema::Enum {
-          strict: true,
-          tag: "type".into(),
-          variants: vec![
-            yaml::Variant {
-              fields: vec![],
-              name: "bar".into(),
-            },
-            yaml::Variant {
-              fields: vec![yaml::Field {
-                name: "qux".into(),
-                optional: true,
-                schema: "String".into(),
-              }],
-              name: "baz".into(),
-            },
-          ],
-        },
-      ),
-      ("String".into(), yaml::Schema::String),
-    ]),
-  );
-}
-
-#[test]
-fn yaml_struct() {
-  #[allow(dead_code)]
-  #[derive(Deserialize, Yaml)]
-  #[serde(deny_unknown_fields)]
-  struct Foo {
-    bar: String,
-    baz: Option<String>,
-    qux: Vec<String>,
-  }
-
-  let mut schemas = BTreeMap::new();
-
-  assert_eq!(Foo::yaml_schema(&mut schemas), "Foo");
-
-  assert_eq!(
-    schemas,
-    BTreeMap::from([
-      (
-        "Array<String>".into(),
-        yaml::Schema::Array {
-          element: "String".into(),
-        },
-      ),
-      (
-        "Foo".into(),
-        yaml::Schema::Struct {
-          fields: vec![
-            yaml::Field {
-              name: "bar".into(),
-              optional: false,
-              schema: "String".into(),
-            },
-            yaml::Field {
-              name: "baz".into(),
-              optional: true,
-              schema: "String".into(),
-            },
-            yaml::Field {
-              name: "qux".into(),
-              optional: false,
-              schema: "Array<String>".into(),
-            },
-          ],
-          strict: true,
-        },
-      ),
-      ("String".into(), yaml::Schema::String),
-    ]),
   );
 }

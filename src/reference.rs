@@ -33,7 +33,7 @@ pub struct Reference {
   pub media_formats: BTreeMap<MediaType, Vec<MediaFormat>>,
   pub routes: BTreeMap<String, Route>,
   pub unstable_features: BTreeSet<UnstableFeature>,
-  pub yaml: yaml::Registry,
+  pub yaml: json::Registry,
 }
 
 impl Reference {
@@ -94,7 +94,7 @@ impl Reference {
 
     let mut yaml = BTreeMap::new();
 
-    yaml::Metadata::yaml_schema(&mut yaml);
+    yaml::Metadata::json_schema(&mut yaml);
 
     let mut routes = BTreeMap::<String, Route>::new();
 

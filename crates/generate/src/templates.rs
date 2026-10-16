@@ -38,6 +38,19 @@ pub(crate) struct HexMd<'a> {
 }
 
 #[derive(Boilerplate)]
+pub(crate) struct JsonFieldsMd<'a> {
+  pub(crate) chapter: Chapter,
+  pub(crate) fields: &'a [json::Field],
+}
+
+#[derive(Boilerplate)]
+pub(crate) struct JsonSchemaMd<'a> {
+  pub(crate) chapter: Chapter,
+  pub(crate) name: &'a str,
+  pub(crate) schema: &'a json::Schema,
+}
+
+#[derive(Boilerplate)]
 pub(crate) struct LanguagesMd<'a> {
   pub(crate) languages: &'a BTreeMap<Language, String>,
 }
@@ -86,17 +99,6 @@ pub(crate) struct UnstableFeaturesMd<'a> {
 }
 
 #[derive(Boilerplate)]
-pub(crate) struct YamlFieldsMd<'a> {
-  pub(crate) fields: &'a [yaml::Field],
-}
-
-#[derive(Boilerplate)]
 pub(crate) struct YamlMd<'a> {
-  pub(crate) yaml: &'a yaml::Registry,
-}
-
-#[derive(Boilerplate)]
-pub(crate) struct YamlSchemaMd<'a> {
-  pub(crate) name: &'a str,
-  pub(crate) schema: &'a yaml::Schema,
+  pub(crate) yaml: &'a json::Registry,
 }
