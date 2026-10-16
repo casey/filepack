@@ -67,6 +67,17 @@ impl Input {
               variants: vec![#(#variants),*],
             }
           }
+        } else if variants.iter().all(Variant::is_unit) {
+          let values = variants
+            .iter()
+            .map(|variant| variant.name(attributes.rename_all))
+            .collect::<Result<Vec<String>>>()?;
+
+          quote! {
+            json::Schema::StringEnum {
+              values: vec![#(#values.into()),*],
+            }
+          }
         } else {
           let Some(tag) = attributes.tag else {
             return Err(Error::new_spanned(
@@ -201,7 +212,7 @@ mod tests {
     case(
       &syn::parse_quote! {
         enum Foo {
-          Bar,
+          Bar { baz: String },
         }
       },
       "enums must be tagged with `#[serde(tag = \"...\")]` or `#[serde(untagged)]`",

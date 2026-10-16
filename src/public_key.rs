@@ -99,6 +99,12 @@ impl PartialOrd for PublicKey {
   }
 }
 
+impl json::Json for PublicKey {
+  fn json_schema(registry: &mut json::Registry) -> String {
+    json::Schema::Hex { tag: Tag::Public }.register("PublicKey", registry)
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;

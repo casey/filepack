@@ -8,12 +8,6 @@ pub(crate) struct Signatures {
   path: Option<Utf8PathBuf>,
 }
 
-#[derive(Serialize)]
-struct Output {
-  public_key: PublicKey,
-  timestamp: Option<u64>,
-}
-
 impl Signatures {
   pub(crate) fn run(self) -> Result {
     let loader = Loader::load(self.path.as_deref())?;
@@ -25,12 +19,12 @@ impl Signatures {
     let signatures = manifest
       .signatures()
       .map(|signature| {
-        Ok(Output {
+        Ok(SignatureEntry {
           public_key: signature.public_key(),
           timestamp: signature.verify(fingerprint)?.timestamp,
         })
       })
-      .collect::<Result<Vec<Output>>>()?;
+      .collect::<Result<Vec<SignatureEntry>>>()?;
 
     let unknown = manifest.unknown_signatures();
 

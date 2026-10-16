@@ -56,6 +56,7 @@ fn main() {
         CommandMd {
           help: &command.help,
           name: &name,
+          output: command.output.as_deref(),
         },
       );
 

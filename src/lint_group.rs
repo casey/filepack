@@ -10,6 +10,7 @@ use super::*;
   EnumString,
   Eq,
   IntoStaticStr,
+  Json,
   Ord,
   PartialEq,
   PartialOrd,

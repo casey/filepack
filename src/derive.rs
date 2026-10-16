@@ -673,6 +673,31 @@ fn json_enum() {
 }
 
 #[test]
+fn json_string_enum() {
+  #[allow(dead_code)]
+  #[derive(Deserialize, Json)]
+  #[serde(rename_all = "kebab-case")]
+  enum Foo {
+    BarBaz,
+    Qux,
+  }
+
+  let mut schemas = json::Registry::new();
+
+  assert_eq!(Foo::json_schema(&mut schemas), "Foo");
+
+  assert_eq!(
+    *schemas,
+    BTreeMap::from([(
+      "Foo".into(),
+      json::Schema::StringEnum {
+        values: vec!["bar-baz".into(), "qux".into()],
+      },
+    )]),
+  );
+}
+
+#[test]
 fn json_struct() {
   #[allow(dead_code)]
   #[derive(Deserialize, Json)]

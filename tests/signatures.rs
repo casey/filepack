@@ -107,9 +107,7 @@ fn signature_without_time() {
 
   test
     .args(["signatures", "--format", "json", "foo"])
-    .stdout(format!(
-      "[{{\"public_key\":\"{public_key}\",\"timestamp\":null}}]\n"
-    ))
+    .stdout(format!("[{{\"public_key\":\"{public_key}\"}}]\n"))
     .success();
 }
 
@@ -167,8 +165,6 @@ fn unknown_signatures_are_ignored() {
   test
     .args(["signatures", "--format", "json", "foo"])
     .stderr("ignored 1 unrecognized signature\n")
-    .stdout(format!(
-      "[{{\"public_key\":\"{public_key}\",\"timestamp\":null}}]\n"
-    ))
+    .stdout(format!("[{{\"public_key\":\"{public_key}\"}}]\n"))
     .success();
 }

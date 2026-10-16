@@ -5,19 +5,38 @@ pub struct Command {
   pub about: String,
   pub help: String,
   pub name: String,
+  pub output: Option<String>,
   pub subcommands: BTreeMap<String, Command>,
 }
 
 impl Command {
-  fn new(command: &mut clap::Command) -> Self {
+  fn new(command: &mut clap::Command, registry: &mut json::Registry) -> Self {
     Self {
       about: command.get_about().unwrap().to_string(),
       help: command.render_long_help().to_string(),
       name: command.get_name().into(),
+      output: Self::output(command, registry),
       subcommands: command
         .get_subcommands_mut()
-        .map(|command| (command.get_name().to_string(), Command::new(command)))
+        .map(|command| {
+          (
+            command.get_name().to_string(),
+            Command::new(command, registry),
+          )
+        })
         .collect(),
+    }
+  }
+
+  fn output(command: &clap::Command, registry: &mut json::Registry) -> Option<String> {
+    match command.get_name() {
+      "files" => Some(BTreeMap::<RelativePath, File>::json_schema(registry)),
+      "languages" => Some(BTreeMap::<Language, String>::json_schema(registry)),
+      "lints" => Some(BTreeMap::<LintGroup, BTreeSet<Lint>>::json_schema(registry)),
+      "manifest" => Some(Manifest::json_schema(registry)),
+      "signatures" => Some(Vec::<SignatureEntry>::json_schema(registry)),
+      "size" => Some(Totals::json_schema(registry)),
+      _ => None,
     }
   }
 }
@@ -59,13 +78,13 @@ impl Reference {
         .collect()
     }
 
-    fn tag<T: crate::Hex>(deco: &mut deco::Registry, hex: &mut BTreeMap<Tag, Hex>) {
+    fn tag<T: crate::Hex>(registry: &mut deco::Registry, hex: &mut BTreeMap<Tag, Hex>) {
       hex.insert(
         T::TAG,
         Hex {
           example: T::EXAMPLE.into(),
           name: T::TAG.name().into(),
-          schema: T::deco_schema(deco),
+          schema: T::deco_schema(registry),
         },
       );
     }
@@ -95,7 +114,7 @@ impl Reference {
 
     let mut json = json::Registry::new();
 
-    Manifest::json_schema(&mut json);
+    let commands = Command::new(&mut command, &mut json);
 
     let mut yaml = json::Registry::new();
 
@@ -137,7 +156,7 @@ impl Reference {
     }
 
     Self {
-      commands: Command::new(&mut command),
+      commands,
       deco,
       hex,
       json,
@@ -292,6 +311,22 @@ mod tests {
           name: "MP4".into(),
         },
       ],
+    );
+  }
+
+  #[test]
+  fn outputs() {
+    let reference = Reference::new();
+
+    for command in reference.commands.subcommands.values() {
+      if let Some(output) = &command.output {
+        assert!(reference.json.contains_key(output), "{}", command.name);
+      }
+    }
+
+    assert_eq!(
+      reference.commands.subcommands["size"].output.as_deref(),
+      Some("Totals"),
     );
   }
 
