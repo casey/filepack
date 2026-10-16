@@ -27,7 +27,7 @@ pub(crate) struct Verify {
 
 pub(crate) type Input = ();
 
-pub(crate) type Output = ();
+pub(crate) type Output = Manifest;
 
 impl Verify {
   pub(crate) fn run(self, options: Options) -> Result {
@@ -74,7 +74,7 @@ impl Verify {
 
     let loader = Loader::load(self.manifest.as_deref().or(self.root.as_deref()))?;
 
-    let (manifest, totals) = loader.unpack_with_totals()?;
+    let (manifest, totals): (Output, Totals) = loader.unpack_with_totals()?;
 
     let fingerprint = loader.fingerprint()?;
 
