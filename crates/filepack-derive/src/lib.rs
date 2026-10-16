@@ -1,9 +1,5 @@
 use {
-  self::{
-    attributes::Attributes, container_attribute::ContainerAttribute, field::Field, input::Input,
-    parsed_field::ParsedField, parsed_variant::ParsedVariant, receiver::Receiver,
-    route_attribute::RouteAttribute, variant::Variant,
-  },
+  self::route_attribute::RouteAttribute,
   darling::{FromDeriveInput, FromField, FromVariant, ast::Data, ast::Fields},
   heck::{ToKebabCase, ToSnakeCase},
   proc_macro::TokenStream,
@@ -19,15 +15,8 @@ use {
   usized::IntoU64,
 };
 
-mod attributes;
-mod container_attribute;
-mod field;
-mod input;
-mod parsed_field;
-mod parsed_variant;
-mod receiver;
+mod deco;
 mod route_attribute;
-mod variant;
 mod yaml;
 
 type Result<T = (), E = Error> = std::result::Result<T, E>;
@@ -36,7 +25,7 @@ type Result<T = (), E = Error> = std::result::Result<T, E>;
 pub fn decode(input: TokenStream) -> TokenStream {
   let input = syn::parse_macro_input!(input as DeriveInput);
 
-  let input = match Input::from_derive_input(&input) {
+  let input = match deco::Input::from_derive_input(&input) {
     Ok(input) => input,
     Err(err) => return err.write_errors().into(),
   };
@@ -79,7 +68,7 @@ fn display_name(ident: &Ident) -> String {
 pub fn encode(input: TokenStream) -> TokenStream {
   let input = syn::parse_macro_input!(input as DeriveInput);
 
-  let input = match Input::from_derive_input(&input) {
+  let input = match deco::Input::from_derive_input(&input) {
     Ok(input) => input,
     Err(err) => return err.write_errors().into(),
   };
@@ -119,7 +108,7 @@ pub fn encode_display(input: TokenStream) -> TokenStream {
 pub fn magic(input: TokenStream) -> TokenStream {
   let input = syn::parse_macro_input!(input as DeriveInput);
 
-  let input = match Input::from_derive_input(&input) {
+  let input = match deco::Input::from_derive_input(&input) {
     Ok(input) => input,
     Err(err) => return err.write_errors().into(),
   };
