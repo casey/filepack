@@ -1,7 +1,7 @@
 use {
   self::route_attribute::RouteAttribute,
   darling::{FromDeriveInput, FromField, FromVariant, ast::Data, ast::Fields},
-  heck::ToSnakeCase,
+  heck::{ToKebabCase, ToSnakeCase},
   proc_macro2::TokenStream,
   quote::{format_ident, quote},
   std::{collections::HashSet, mem},

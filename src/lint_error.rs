@@ -9,6 +9,7 @@ use super::*;
     EnumIter,
     EnumString,
     IntoStaticStr,
+    Json,
     Ord,
     PartialOrd,
     Serialize

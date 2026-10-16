@@ -60,6 +60,9 @@ pub enum Schema {
     element: String,
   },
   String,
+  StringEnum {
+    values: Vec<String>,
+  },
   Struct {
     fields: Vec<Field>,
     strict: bool,

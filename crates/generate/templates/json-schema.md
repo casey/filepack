@@ -19,6 +19,15 @@ An array of {{ link(self.chapter, element) }}. Elements are unique and sorted.
 %%   json::Schema::String => {
 A string.
 %%   }
+%%   json::Schema::StringEnum { values } => {
+A string with {{ Count::new(values.len(), "possible value") }}:
+
+| value |
+|-------|
+%%     for value in values {
+| `{{ value }}` |
+%%     }
+%%   }
 %%   json::Schema::Struct { fields, strict } => {
 A struct with {{ Count::new(fields.len(), "field") }}:
 

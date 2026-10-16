@@ -1,7 +1,7 @@
 use super::*;
 
 #[allow(clippy::arbitrary_source_item_ordering)]
-#[derive(Clone, Copy, Debug, Decode, Default, Encode, PartialEq, Serialize)]
+#[derive(Clone, Copy, Debug, Decode, Default, Encode, Json, PartialEq, Serialize)]
 #[deco(validate)]
 pub struct Totals {
   #[n(1)]

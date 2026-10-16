@@ -20,12 +20,20 @@ impl Variant {
     Ok(())
   }
 
-  pub(crate) fn schema(&self, rename_all: Option<RenameAll>) -> Result<TokenStream> {
+  pub(crate) fn is_unit(&self) -> bool {
+    self.fields.is_unit()
+  }
+
+  pub(crate) fn name(&self, rename_all: Option<RenameAll>) -> Result<String> {
     self.check_attributes()?;
 
     let ident = self.ident.to_string();
 
-    let name = rename_all.map_or_else(|| ident.clone(), |rename_all| rename_all.apply(&ident));
+    Ok(rename_all.map_or(ident.clone(), |rename_all| rename_all.apply(&ident)))
+  }
+
+  pub(crate) fn schema(&self, rename_all: Option<RenameAll>) -> Result<TokenStream> {
+    let name = self.name(rename_all)?;
 
     let fields = self
       .fields
