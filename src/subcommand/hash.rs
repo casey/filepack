@@ -8,6 +8,10 @@ pub(crate) struct Hash {
   file: Option<Utf8PathBuf>,
 }
 
+pub(crate) type Input = ();
+
+pub(crate) type Output = ();
+
 impl Hash {
   pub(crate) fn run(self, options: Options) -> Result {
     let hash = if let Some(path) = self.file {

@@ -1,11 +1,15 @@
 use super::*;
 
-#[derive(Serialize)]
-struct Output {
+#[derive(Json, Serialize)]
+pub(crate) struct Info {
   data: Utf8PathBuf,
   keychain: Utf8PathBuf,
   keys: BTreeMap<KeyName, PublicKey>,
 }
+
+pub(crate) type Input = ();
+
+pub(crate) type Output = Info;
 
 pub(crate) fn run(options: Options) -> Result {
   let keychain = Keychain::load(&options)?;

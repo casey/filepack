@@ -28,6 +28,10 @@ pub(crate) struct Download {
   server: ServerUrl,
 }
 
+pub(crate) type Input = ();
+
+pub(crate) type Output = ();
+
 impl Download {
   fn download_file(&self, options: &Options, hash: Hash, path: &Utf8Path) -> Result {
     ensure! {

@@ -6,11 +6,16 @@ pub(crate) struct Size {
   path: Option<Utf8PathBuf>,
 }
 
+pub(crate) type Input = ();
+
+pub(crate) type Output = Totals;
+
 impl Size {
   pub(crate) fn run(self) -> Result {
     let (_manifest, totals) = Loader::load(self.path.as_deref())?.unpack_with_totals()?;
 
-    serde_json::to_writer_pretty(io::stdout(), &totals).context(error::SerializeStdout)?;
+    serde_json::to_writer_pretty::<io::Stdout, Output>(io::stdout(), &totals)
+      .context(error::SerializeStdout)?;
 
     println!();
 

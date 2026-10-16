@@ -8,6 +8,10 @@ pub(crate) struct Manifest {
   path: Option<Utf8PathBuf>,
 }
 
+pub(crate) type Input = ();
+
+pub(crate) type Output = crate::Manifest;
+
 impl Manifest {
   pub(crate) fn run(self) -> Result {
     let manifest = crate::Manifest::load(self.path.as_deref())?;

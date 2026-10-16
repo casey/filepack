@@ -8,6 +8,10 @@ pub(crate) struct Signatures {
   path: Option<Utf8PathBuf>,
 }
 
+pub(crate) type Input = ();
+
+pub(crate) type Output = Vec<SignatureEntry>;
+
 impl Signatures {
   pub(crate) fn run(self) -> Result {
     let loader = Loader::load(self.path.as_deref())?;
@@ -24,7 +28,7 @@ impl Signatures {
           timestamp: signature.verify(fingerprint)?.timestamp,
         })
       })
-      .collect::<Result<Vec<SignatureEntry>>>()?;
+      .collect::<Result<Output>>()?;
 
     let unknown = manifest.unknown_signatures();
 

@@ -1,5 +1,9 @@
 use super::*;
 
+pub(crate) type Input = ();
+
+pub(crate) type Output = ();
+
 pub(crate) fn run() -> Result {
   let reference = Reference::new();
 

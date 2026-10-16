@@ -12,6 +12,10 @@ pub(crate) struct Metadata {
   path: Option<Utf8PathBuf>,
 }
 
+pub(crate) type Input = ();
+
+pub(crate) type Output = ();
+
 impl Metadata {
   pub(crate) fn run(self) -> Result {
     let path = if let Some(path) = self.path {

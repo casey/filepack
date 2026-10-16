@@ -37,6 +37,15 @@ impl Display for KeyName {
   }
 }
 
+impl json::Json for KeyName {
+  fn json_schema(registry: &mut json::Registry) -> String {
+    json::Schema::Wrapper {
+      inner: String::json_schema(registry),
+    }
+    .register("KeyName", registry)
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;

@@ -37,6 +37,10 @@ pub(crate) struct Upload {
   update: Option<u64>,
 }
 
+pub(crate) type Input = ();
+
+pub(crate) type Output = ();
+
 impl Upload {
   pub(crate) fn run(self, options: Options) -> Result {
     let client = Client::new(&options, self.server.clone(), self.auth.as_ref())?;

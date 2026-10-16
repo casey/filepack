@@ -4,6 +4,7 @@ use {
     Styles,
     styling::{AnsiColor, Effects},
   },
+  json::Io,
 };
 
 mod archive;
@@ -38,7 +39,13 @@ const MANIFEST_PATH_HELP: &str = "\
 
 const TIMESTAMP_HELP: &str = "Include current time in signature";
 
-#[derive(Parser)]
+#[derive(EnumDiscriminants, Parser)]
+#[strum_discriminants(
+  name(Name),
+  derive(EnumString),
+  vis(pub(crate)),
+  strum(serialize_all = "kebab-case")
+)]
 #[command(
   version,
   about = "Content-addressed packages",
@@ -98,6 +105,66 @@ pub(crate) enum Subcommand {
   Upload(upload::Upload),
   #[command(about = "Verify manifest")]
   Verify(verify::Verify),
+}
+
+impl Name {
+  pub(crate) fn input(self, registry: &mut json::Registry) -> Option<String> {
+    match self {
+      Self::Archive => archive::Input::io_schema(registry),
+      Self::Contains => contains::Input::io_schema(registry),
+      Self::Create => create::Input::io_schema(registry),
+      Self::Delete => delete::Input::io_schema(registry),
+      Self::Download => download::Input::io_schema(registry),
+      Self::Files => files::Input::io_schema(registry),
+      Self::Fingerprint => fingerprint::Input::io_schema(registry),
+      Self::Gc => gc::Input::io_schema(registry),
+      Self::Hash => hash::Input::io_schema(registry),
+      Self::Info => info::Input::io_schema(registry),
+      Self::Key => key::Input::io_schema(registry),
+      Self::Keygen => keygen::Input::io_schema(registry),
+      Self::Languages => languages::Input::io_schema(registry),
+      Self::Lints => lints::Input::io_schema(registry),
+      Self::Man => man::Input::io_schema(registry),
+      Self::Manifest => manifest::Input::io_schema(registry),
+      Self::Metadata => metadata::Input::io_schema(registry),
+      Self::Reference => reference::Input::io_schema(registry),
+      Self::Serve => serve::Input::io_schema(registry),
+      Self::Sign => sign::Input::io_schema(registry),
+      Self::Signatures => signatures::Input::io_schema(registry),
+      Self::Size => size::Input::io_schema(registry),
+      Self::Upload => upload::Input::io_schema(registry),
+      Self::Verify => verify::Input::io_schema(registry),
+    }
+  }
+
+  pub(crate) fn output(self, registry: &mut json::Registry) -> Option<String> {
+    match self {
+      Self::Archive => archive::Output::io_schema(registry),
+      Self::Contains => contains::Output::io_schema(registry),
+      Self::Create => create::Output::io_schema(registry),
+      Self::Delete => delete::Output::io_schema(registry),
+      Self::Download => download::Output::io_schema(registry),
+      Self::Files => files::Output::io_schema(registry),
+      Self::Fingerprint => fingerprint::Output::io_schema(registry),
+      Self::Gc => gc::Output::io_schema(registry),
+      Self::Hash => hash::Output::io_schema(registry),
+      Self::Info => info::Output::io_schema(registry),
+      Self::Key => key::Output::io_schema(registry),
+      Self::Keygen => keygen::Output::io_schema(registry),
+      Self::Languages => languages::Output::io_schema(registry),
+      Self::Lints => lints::Output::io_schema(registry),
+      Self::Man => man::Output::io_schema(registry),
+      Self::Manifest => manifest::Output::io_schema(registry),
+      Self::Metadata => metadata::Output::io_schema(registry),
+      Self::Reference => reference::Output::io_schema(registry),
+      Self::Serve => serve::Output::io_schema(registry),
+      Self::Sign => sign::Output::io_schema(registry),
+      Self::Signatures => signatures::Output::io_schema(registry),
+      Self::Size => size::Output::io_schema(registry),
+      Self::Upload => upload::Output::io_schema(registry),
+      Self::Verify => verify::Output::io_schema(registry),
+    }
+  }
 }
 
 impl Subcommand {

@@ -172,6 +172,10 @@ pub(crate) struct Serve {
   restrict_writes: bool,
 }
 
+pub(crate) type Input = ();
+
+pub(crate) type Output = ();
+
 impl Serve {
   fn acceptor(&self, acme_cache: Utf8PathBuf) -> Result<AxumAcceptor> {
     install_default_crypto_provider()?;

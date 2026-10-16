@@ -11,41 +11,28 @@ pub struct Command {
 }
 
 impl Command {
-  fn input(command: &clap::Command, registry: &mut json::Registry) -> Option<String> {
-    match command.get_name() {
-      "archive" => Some(Manifest::json_schema(registry)),
-      _ => None,
-    }
-  }
-
-  fn new(command: &mut clap::Command, registry: &mut json::Registry) -> Self {
+  fn new(
+    command: &mut clap::Command,
+    name: Option<subcommand::Name>,
+    registry: &mut json::Registry,
+  ) -> Self {
     Self {
       about: command.get_about().unwrap().to_string(),
       help: command.render_long_help().to_string(),
-      input: Self::input(command, registry),
+      input: name.and_then(|name| name.input(registry)),
       name: command.get_name().into(),
-      output: Self::output(command, registry),
+      output: name.and_then(|name| name.output(registry)),
       subcommands: command
         .get_subcommands_mut()
+        .filter(|command| command.get_name() != "help")
         .map(|command| {
+          let name = command.get_name().parse::<subcommand::Name>().unwrap();
           (
             command.get_name().to_string(),
-            Command::new(command, registry),
+            Command::new(command, Some(name), registry),
           )
         })
         .collect(),
-    }
-  }
-
-  fn output(command: &clap::Command, registry: &mut json::Registry) -> Option<String> {
-    match command.get_name() {
-      "files" => Some(BTreeMap::<RelativePath, File>::json_schema(registry)),
-      "languages" => Some(BTreeMap::<Language, String>::json_schema(registry)),
-      "lints" => Some(BTreeMap::<LintGroup, BTreeSet<Lint>>::json_schema(registry)),
-      "manifest" => Some(Manifest::json_schema(registry)),
-      "signatures" => Some(Vec::<SignatureEntry>::json_schema(registry)),
-      "size" => Some(Totals::json_schema(registry)),
-      _ => None,
     }
   }
 }
@@ -123,7 +110,7 @@ impl Reference {
 
     let mut json = json::Registry::new();
 
-    let commands = Command::new(&mut command, &mut json);
+    let commands = Command::new(&mut command, None, &mut json);
 
     let mut yaml = json::Registry::new();
 
