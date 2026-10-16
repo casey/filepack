@@ -8,18 +8,25 @@ impl Description for deco::Registry {
   fn description(&self, chapter: Chapter, name: &str) -> String {
     match &self[name] {
       deco::Schema::Array { element } => {
-        format!("array of {}", self.description(chapter, element))
+        format!("an array of {}", self.description(chapter, element))
+      }
+      deco::Schema::Bytes { length } => {
+        if let Some(length) = length {
+          format!("a byte string of exactly {}", Count::new(*length, "byte"))
+        } else {
+          "a byte string".into()
+        }
       }
       deco::Schema::Map { key, value } => format!(
-        "map from {} to {}",
+        "a map from {} to {}",
         self.description(chapter, key),
         self.description(chapter, value)
       ),
       deco::Schema::OrderedSet { element } => {
-        format!("ordered set of {}", self.description(chapter, element))
+        format!("an ordered set of {}", self.description(chapter, element))
       }
       deco::Schema::SortedSet { element } => {
-        format!("sorted set of {}", self.description(chapter, element))
+        format!("a sorted set of {}", self.description(chapter, element))
       }
       _ => chapter.link(name),
     }
@@ -30,15 +37,15 @@ impl Description for json::Registry {
   fn description(&self, chapter: Chapter, name: &str) -> String {
     match &self[name] {
       json::Schema::Array { element } => {
-        format!("array of {}", self.description(chapter, element))
+        format!("an array of {}", self.description(chapter, element))
       }
       json::Schema::Map { key, value } => format!(
-        "map from {} to {}",
+        "a map from {} to {}",
         self.description(chapter, key),
         self.description(chapter, value)
       ),
       json::Schema::Set { element } => {
-        format!("sorted set of {}", self.description(chapter, element))
+        format!("a sorted set of {}", self.description(chapter, element))
       }
       _ => chapter.link(name),
     }
