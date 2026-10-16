@@ -4,16 +4,25 @@ use {super::*, clap::CommandFactory};
 pub struct Command {
   pub about: String,
   pub help: String,
+  pub input: Option<String>,
   pub name: String,
   pub output: Option<String>,
   pub subcommands: BTreeMap<String, Command>,
 }
 
 impl Command {
+  fn input(command: &clap::Command, registry: &mut json::Registry) -> Option<String> {
+    match command.get_name() {
+      "archive" => Some(Manifest::json_schema(registry)),
+      _ => None,
+    }
+  }
+
   fn new(command: &mut clap::Command, registry: &mut json::Registry) -> Self {
     Self {
       about: command.get_about().unwrap().to_string(),
       help: command.render_long_help().to_string(),
+      input: Self::input(command, registry),
       name: command.get_name().into(),
       output: Self::output(command, registry),
       subcommands: command
@@ -270,6 +279,22 @@ mod tests {
 
       assert_eq!(value.name, tag.name());
     }
+  }
+
+  #[test]
+  fn inputs() {
+    let reference = Reference::new();
+
+    for command in reference.commands.subcommands.values() {
+      if let Some(input) = &command.input {
+        assert!(reference.json.contains_key(input), "{}", command.name);
+      }
+    }
+
+    assert_eq!(
+      reference.commands.subcommands["archive"].input.as_deref(),
+      Some("Manifest"),
+    );
   }
 
   #[test]

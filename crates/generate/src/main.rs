@@ -55,6 +55,7 @@ fn main() {
         src.join(&relative),
         CommandMd {
           help: &command.help,
+          input: command.input.as_deref(),
           name: &name,
           output: command.output.as_deref(),
         },

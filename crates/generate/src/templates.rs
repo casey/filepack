@@ -3,6 +3,7 @@ use super::*;
 #[derive(Boilerplate)]
 pub(crate) struct CommandMd<'a> {
   pub(crate) help: &'a str,
+  pub(crate) input: Option<&'a str>,
   pub(crate) name: &'a str,
   pub(crate) output: Option<&'a str>,
 }
