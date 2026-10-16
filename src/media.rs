@@ -1,6 +1,8 @@
 use super::*;
 
-#[derive(Clone, Debug, Decode, Encode, EnumDiscriminants, IntoStaticStr, PartialEq, Serialize)]
+#[derive(
+  Clone, Debug, Decode, Encode, EnumDiscriminants, IntoStaticStr, Json, PartialEq, Serialize,
+)]
 #[serde(rename_all = "snake_case", tag = "type")]
 #[strum(serialize_all = "kebab-case")]
 #[strum_discriminants(

@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Clone, Copy, Debug, Decode, Display, Encode, PartialEq, Serialize)]
+#[derive(Clone, Copy, Debug, Decode, Display, Encode, Json, PartialEq, Serialize)]
 #[serde(rename_all = "kebab-case")]
 #[strum(serialize_all = "UPPERCASE")]
 pub(crate) enum ImageFormat {

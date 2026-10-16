@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Clone, Copy, Debug, Default, Decode, Encode, PartialEq, Serialize)]
+#[derive(Clone, Copy, Debug, Default, Decode, Encode, Json, PartialEq, Serialize)]
 pub struct Dimensions {
   #[n(1)]
   pub(crate) height: u64,

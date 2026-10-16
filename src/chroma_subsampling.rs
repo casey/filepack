@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Clone, Copy, Debug, Decode, Display, Encode, PartialEq, Serialize)]
+#[derive(Clone, Copy, Debug, Decode, Display, Encode, Json, PartialEq, Serialize)]
 pub(crate) enum ChromaSubsampling {
   #[n(0)]
   #[serde(rename = "4:0:0")]

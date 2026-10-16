@@ -9,15 +9,23 @@ pub(crate) struct Variant {
 }
 
 impl Variant {
-  fn check_attributes(&self) -> Result {
-    if let Some(attribute) = self.attrs.first() {
-      return Err(Error::new_spanned(
-        attribute,
-        "`#[serde]` attributes are not supported on variants",
-      ));
+  fn check_attributes(&self) -> Result<Option<String>> {
+    let mut rename = None;
+
+    for attribute in &self.attrs {
+      attribute.parse_nested_meta(|meta| {
+        if meta.path.is_ident("rename") {
+          rename = Some(meta.value()?.parse::<LitStr>()?.value());
+        } else {
+          let ident = meta.path.require_ident()?;
+          return Err(meta.error(format!("unsupported `#[serde({ident})]` attribute")));
+        }
+
+        Ok(())
+      })?;
     }
 
-    Ok(())
+    Ok(rename)
   }
 
   pub(crate) fn is_unit(&self) -> bool {
@@ -25,7 +33,9 @@ impl Variant {
   }
 
   pub(crate) fn name(&self, rename_all: Option<RenameAll>) -> Result<String> {
-    self.check_attributes()?;
+    if let Some(rename) = self.check_attributes()? {
+      return Ok(rename);
+    }
 
     let ident = self.ident.to_string();
 

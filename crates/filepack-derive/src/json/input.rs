@@ -25,18 +25,45 @@ impl Input {
   }
 
   pub(crate) fn schema(&self) -> Result<TokenStream> {
-    if !self.generics.params.is_empty() {
-      return Err(Error::new_spanned(
-        &self.generics,
-        "generics are not supported",
-      ));
+    let mut generics = self.generics.clone();
+
+    let mut parameters = Vec::new();
+
+    for param in &mut generics.params {
+      match param {
+        GenericParam::Type(param) => {
+          param.bounds.push(syn::parse_quote!(json::Json));
+          let ident = &param.ident;
+          parameters.push(quote! { <#ident>::json_schema(registry) });
+        }
+        GenericParam::Const(..) => {
+          return Err(Error::new_spanned(
+            param,
+            "const parameters are not supported",
+          ));
+        }
+        GenericParam::Lifetime(..) => {
+          return Err(Error::new_spanned(
+            param,
+            "lifetime parameters are not supported",
+          ));
+        }
+      }
     }
+
+    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
     let attributes = self.parse_attributes()?;
 
     let name = &self.ident;
 
-    let schema_name = name.to_string();
+    let schema_name = if parameters.is_empty() {
+      let name = name.to_string();
+      quote! { String::from(#name) }
+    } else {
+      let format = format!("{name}<{}>", vec!["{}"; parameters.len()].join(", "));
+      quote! { format!(#format, #(#parameters),*) }
+    };
 
     let strict = attributes.strict;
 
@@ -149,9 +176,9 @@ impl Input {
     };
 
     Ok(quote! {
-      impl json::Json for #name {
+      impl #impl_generics json::Json for #name #ty_generics #where_clause {
         fn json_schema(registry: &mut json::Registry) -> String {
-          let name = String::from(#schema_name);
+          let name = #schema_name;
           if registry.reserve(&name) {
             return name;
           }
@@ -224,6 +251,34 @@ mod tests {
         struct Foo {}
       },
       "`#[serde(tag)]` is only supported on enums",
+    );
+
+    case(
+      &syn::parse_quote! {
+        struct Foo<const N: usize> {
+          bar: [String; N],
+        }
+      },
+      "const parameters are not supported",
+    );
+
+    case(
+      &syn::parse_quote! {
+        struct Foo<'a> {
+          bar: &'a str,
+        }
+      },
+      "lifetime parameters are not supported",
+    );
+
+    case(
+      &syn::parse_quote! {
+        enum Foo {
+          #[serde(skip)]
+          Bar,
+        }
+      },
+      "unsupported `#[serde(skip)]` attribute",
     );
 
     case(

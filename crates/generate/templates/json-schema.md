@@ -4,6 +4,9 @@
 %%   json::Schema::Array { element } => {
 An array of {{ link(self.chapter, element) }}.
 %%   }
+%%   json::Schema::Boolean => {
+A boolean.
+%%   }
 %%   json::Schema::Bytes => {
 A byte string, encoded as hexadecimal.
 %%   }

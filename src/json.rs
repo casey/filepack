@@ -48,6 +48,7 @@ pub enum Schema {
   Array {
     element: String,
   },
+  Boolean,
   Bytes,
   Hex {
     tag: Tag,
@@ -121,6 +122,12 @@ impl Io for () {
 
 pub trait Json {
   fn json_schema(registry: &mut Registry) -> String;
+}
+
+impl Json for bool {
+  fn json_schema(registry: &mut Registry) -> String {
+    Schema::Boolean.register("Boolean", registry)
+  }
 }
 
 impl<K: Json, V: Json> Json for BTreeMap<K, V> {
