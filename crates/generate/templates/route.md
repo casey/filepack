@@ -5,8 +5,8 @@
 
 | property | value |
 |----------|-------|
-| authorization | {{ if endpoint.authenticated { "required" } else { "not required" } }} |
-| range requests | {{ if endpoint.range { "supported" } else { "not supported" } }} |
+| authorization required | {{ endpoint.authenticated }} |
+| range requests supported | {{ endpoint.range }} |
 %%   if !endpoint.parameters.is_empty() {
 
 ### Parameters
