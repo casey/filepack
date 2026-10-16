@@ -16,12 +16,14 @@ pub(crate) struct CommandsMd<'a> {
 
 #[derive(Boilerplate)]
 pub(crate) struct DecoDefinitionMd<'a> {
+  pub(crate) registry: &'a deco::Registry,
   pub(crate) schema: &'a deco::Schema,
 }
 
 #[derive(Boilerplate)]
 pub(crate) struct DecoFieldsMd<'a> {
   pub(crate) fields: &'a [deco::Field],
+  pub(crate) registry: &'a deco::Registry,
 }
 
 #[derive(Boilerplate)]
@@ -32,6 +34,7 @@ pub(crate) struct DecoMd<'a> {
 #[derive(Boilerplate)]
 pub(crate) struct DecoSchemaMd<'a> {
   pub(crate) name: &'a str,
+  pub(crate) registry: &'a deco::Registry,
   pub(crate) schema: &'a deco::Schema,
 }
 
@@ -79,6 +82,7 @@ pub(crate) struct MediaFormatsMd<'a> {
 #[derive(Boilerplate)]
 pub(crate) struct RouteMd<'a> {
   pub(crate) path: &'a str,
+  pub(crate) registry: &'a deco::Registry,
   pub(crate) route: &'a Route,
 }
 

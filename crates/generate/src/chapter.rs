@@ -1,17 +1,15 @@
 use super::*;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Display)]
+#[strum(serialize_all = "kebab-case")]
 pub(crate) enum Chapter {
+  Deco,
   Json,
   Yaml,
 }
 
-impl Display for Chapter {
-  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    match self {
-      Self::Json => "json",
-      Self::Yaml => "yaml",
-    }
-    .fmt(f)
+impl Chapter {
+  pub(crate) fn link(self, name: &str) -> String {
+    format!("[{}](../{self}/{}.md)", escape(name), name.to_kebab_case())
   }
 }

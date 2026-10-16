@@ -1,6 +1,6 @@
 %% match self.schema {
-%%   deco::Schema::Array { element } => {
-An array of {{ deco(element) }}.
+%%   deco::Schema::Array { .. } | deco::Schema::Map { .. } => {
+%%     unreachable!()
 %%   }
 %%   deco::Schema::Boolean => {
 A boolean. Encoded as the byte string `0x00` for false and `0x01` for true.
@@ -29,12 +29,9 @@ An enum with {{ Count::new(variants.len(), "variant") }}:
 
 ## {{ variant.name }}
 
-{{ DecoFieldsMd { fields: &variant.fields } }}
+{{ DecoFieldsMd { fields: &variant.fields, registry: self.registry } }}
 %%       }
 %%     }
-%%   }
-%%   deco::Schema::Map { key, value } => {
-A map from {{ deco(key) }} to {{ deco(value) }}.
 %%   }
 %%   deco::Schema::SignedInteger => {
 A signed 64-bit integer. First zig-zag encoded, then encoded as an
@@ -46,7 +43,7 @@ A string. Encoded as a byte string containing the UTF-8 encoding of the string.
 %%   deco::Schema::Struct { fields, magic, strict } => {
 A struct with {{ Count::new(fields.len(), "field") }}:
 
-{{ DecoFieldsMd { fields } }}
+{{ DecoFieldsMd { fields, registry: self.registry } }}
 %%     if let Some(magic) = magic {
 
 The value is encoded with magic bytes consisting of the deco encoded byte
@@ -63,6 +60,6 @@ An unsigned 64-bit integer. Encoded as little endian with trailing zero bytes
 removed, with a minimum length of one byte.
 %%   }
 %%   deco::Schema::Wrapper { inner } => {
-A wrapper around {{ deco(inner) }}.
+A wrapper around {{ self.registry.description(Chapter::Deco, inner) }}.
 %%   }
 %% }

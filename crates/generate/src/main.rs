@@ -1,7 +1,9 @@
 use {
   self::{
     chapter::Chapter,
-    functions::{deco, description, escape, has_page, list, parameter, write},
+    description::Description,
+    functions::{escape, list, parameter, write},
+    has_page::HasPage,
     templates::{
       CommandMd, CommandsMd, DecoMd, DecoSchemaMd, HexMd, JsonMd, JsonSchemaMd, LanguagesMd,
       LintsMd, MediaFormatsMd, RouteMd, RoutesMd, SummaryMd, TagMd, UnstableFeaturesMd, YamlMd,
@@ -17,15 +19,18 @@ use {
   std::{
     collections::{BTreeMap, BTreeSet},
     env,
-    fmt::{self, Display, Formatter},
+    fmt::Display,
     fs::{self, File},
     io::{BufWriter, Write},
     iter,
   },
+  strum::Display,
 };
 
 mod chapter;
+mod description;
 mod functions;
+mod has_page;
 mod templates;
 
 fn main() {
@@ -83,9 +88,20 @@ fn main() {
     let mut deco = BTreeMap::new();
 
     for (name, schema) in &reference.deco {
+      if !schema.has_page() {
+        continue;
+      }
+
       let relative = Utf8PathBuf::from(format!("deco/{}.md", name.to_kebab_case()));
 
-      write(src.join(&relative), DecoSchemaMd { name, schema });
+      write(
+        src.join(&relative),
+        DecoSchemaMd {
+          name,
+          registry: &reference.deco,
+          schema,
+        },
+      );
 
       deco.insert(name.as_str(), relative);
     }
@@ -119,7 +135,14 @@ fn main() {
 
       let relative = Utf8PathBuf::from(format!("routes/{slug}.md"));
 
-      write(src.join(&relative), RouteMd { path, route });
+      write(
+        src.join(&relative),
+        RouteMd {
+          path,
+          registry: &reference.deco,
+          route,
+        },
+      );
 
       routes.insert(path.as_str(), relative);
     }
@@ -131,7 +154,7 @@ fn main() {
     let mut pages = BTreeMap::new();
 
     for (name, schema) in &reference.json {
-      if !has_page(schema) {
+      if !schema.has_page() {
         continue;
       }
 
@@ -157,7 +180,7 @@ fn main() {
     let mut pages = BTreeMap::new();
 
     for (name, schema) in &reference.yaml {
-      if !has_page(schema) {
+      if !schema.has_page() {
         continue;
       }
 
