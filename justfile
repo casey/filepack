@@ -11,6 +11,8 @@ lib *args: (watch f'ltest --lib {{args}}')
 
 ci: lint
   cargo ltest --workspace
+  cargo lrun --package generate
+  mdbook build book
 
 build:
   cargo lbuild

@@ -33,7 +33,7 @@ pub(crate) fn parameter(parameter: Parameter) -> &'static str {
 }
 
 pub(crate) fn write(path: impl AsRef<Utf8Path>, contents: impl Display) {
-  let path = path.as_ref();
+  let path = Utf8Path::new("book/src").join(path);
   fs::create_dir_all(path.parent().unwrap()).unwrap();
   let mut file = BufWriter::new(File::create(path).unwrap());
   write!(file, "{contents}").unwrap();
