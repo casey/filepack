@@ -1,5 +1,6 @@
 use super::*;
 
+#[skip_serializing_none]
 #[derive(Debug, Default, Deserialize, PartialEq, Json)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct Metadata {

@@ -20,15 +20,19 @@ impl Field {
   }
 
   fn parse(&self) -> Result<bool> {
-    let mut optional = option_inner(&self.ty).is_some();
+    let option = option_inner(&self.ty).is_some();
+
+    let mut default = false;
+
+    let mut skip = false;
 
     for attribute in &self.attrs {
       attribute.parse_nested_meta(|meta| {
         if meta.path.is_ident("default") {
-          optional = true;
+          default = true;
         } else if meta.path.is_ident("skip_serializing_if") {
           meta.value()?.parse::<LitStr>()?;
-          optional = true;
+          skip = true;
         } else if meta.path.is_ident("with") {
           let with = meta
             .value()?
@@ -50,7 +54,14 @@ impl Field {
       })?;
     }
 
-    Ok(optional)
+    if option && !skip {
+      return Err(Error::new_spanned(
+        &self.ty,
+        "`Option` fields must have `#[serde(skip_serializing_if)]` or the type must have `#[skip_serializing_none]`",
+      ));
+    }
+
+    Ok(option || default || skip)
   }
 
   pub(crate) fn schema(&self, rename_all: Option<RenameAll>) -> Result<TokenStream> {
@@ -72,7 +83,7 @@ impl Field {
   }
 
   pub(crate) fn ty(&self) -> Result<TokenStream> {
-    if self.parse()? {
+    if option_inner(&self.ty).is_some() || self.parse()? {
       return Err(Error::new_spanned(
         &self.ty,
         "transparent struct fields and untagged enum variants cannot be optional",
