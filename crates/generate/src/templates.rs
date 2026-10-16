@@ -6,6 +6,7 @@ pub(crate) struct CommandMd<'a> {
   pub(crate) input: Option<&'a str>,
   pub(crate) name: &'a str,
   pub(crate) output: Option<&'a str>,
+  pub(crate) registry: &'a json::Registry,
 }
 
 #[derive(Boilerplate)]
@@ -43,6 +44,7 @@ pub(crate) struct HexMd<'a> {
 pub(crate) struct JsonFieldsMd<'a> {
   pub(crate) chapter: Chapter,
   pub(crate) fields: &'a [json::Field],
+  pub(crate) registry: &'a json::Registry,
 }
 
 #[derive(Boilerplate)]
@@ -54,6 +56,7 @@ pub(crate) struct JsonMd<'a> {
 pub(crate) struct JsonSchemaMd<'a> {
   pub(crate) chapter: Chapter,
   pub(crate) name: &'a str,
+  pub(crate) registry: &'a json::Registry,
   pub(crate) schema: &'a json::Schema,
 }
 

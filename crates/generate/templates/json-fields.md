@@ -1,5 +1,5 @@
 | field | type | optional |
 |-------|------|----------|
 %% for field in self.fields {
-| {{ field.name }} | {{ link(self.chapter, &field.schema) }} | {{ field.optional }} |
+| {{ field.name }} | {{ description(self.chapter, self.registry, &field.schema) }} | {{ field.optional }} |
 %% }
