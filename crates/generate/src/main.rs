@@ -1,7 +1,7 @@
 use {
   self::{
     chapter::Chapter,
-    functions::{deco, escape, link, list, parameter, write},
+    functions::{deco, description, escape, has_page, list, parameter, write},
     templates::{
       CommandMd, CommandsMd, DecoMd, DecoSchemaMd, HexMd, JsonMd, JsonSchemaMd, LanguagesMd,
       LintsMd, MediaFormatsMd, RouteMd, RoutesMd, SummaryMd, TagMd, UnstableFeaturesMd, YamlMd,
@@ -58,6 +58,7 @@ fn main() {
           input: command.input.as_deref(),
           name: &name,
           output: command.output.as_deref(),
+          registry: &reference.json,
         },
       );
 
@@ -130,6 +131,10 @@ fn main() {
     let mut pages = BTreeMap::new();
 
     for (name, schema) in &reference.json {
+      if !has_page(schema) {
+        continue;
+      }
+
       let relative = Utf8PathBuf::from(format!("json/{}.md", name.to_kebab_case()));
 
       write(
@@ -137,6 +142,7 @@ fn main() {
         JsonSchemaMd {
           chapter: Chapter::Json,
           name,
+          registry: &reference.json,
           schema,
         },
       );
@@ -151,6 +157,10 @@ fn main() {
     let mut pages = BTreeMap::new();
 
     for (name, schema) in &reference.yaml {
+      if !has_page(schema) {
+        continue;
+      }
+
       let relative = Utf8PathBuf::from(format!("yaml/{}.md", name.to_kebab_case()));
 
       write(
@@ -158,6 +168,7 @@ fn main() {
         JsonSchemaMd {
           chapter: Chapter::Yaml,
           name,
+          registry: &reference.yaml,
           schema,
         },
       );

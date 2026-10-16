@@ -1,8 +1,8 @@
 # {{ escape(self.name) }}
 
 %% match self.schema {
-%%   json::Schema::Array { element } => {
-An array of {{ link(self.chapter, element) }}.
+%%   json::Schema::Array { .. } | json::Schema::Map { .. } | json::Schema::Set { .. } => {
+%%     unreachable!()
 %%   }
 %%   json::Schema::Boolean => {
 A boolean.
@@ -12,12 +12,6 @@ A byte string, encoded as hexadecimal.
 %%   }
 %%   json::Schema::Hex { tag } => {
 A tagged hex string with tag [`{{ tag.prefix() }}`](../hex/{{ tag.prefix() }}.md).
-%%   }
-%%   json::Schema::Map { key, value } => {
-A map from {{ link(self.chapter, key) }} to {{ link(self.chapter, value) }}.
-%%   }
-%%   json::Schema::Set { element } => {
-An array of {{ link(self.chapter, element) }}. Elements are unique and sorted.
 %%   }
 %%   json::Schema::String => {
 A string.
@@ -34,7 +28,7 @@ A string with {{ Count::new(values.len(), "possible value") }}:
 %%   json::Schema::Struct { fields, strict } => {
 A struct with {{ Count::new(fields.len(), "field") }}:
 
-{{ JsonFieldsMd { chapter: self.chapter, fields } }}
+{{ JsonFieldsMd { chapter: self.chapter, fields, registry: self.registry } }}
 %%     if *strict {
 
 Unknown fields are rejected.
@@ -62,7 +56,7 @@ Unknown fields are rejected.
 
 ## {{ variant.name }}
 
-{{ JsonFieldsMd { chapter: self.chapter, fields: &variant.fields } }}
+{{ JsonFieldsMd { chapter: self.chapter, fields: &variant.fields, registry: self.registry } }}
 %%       }
 %%     }
 %%   }
@@ -75,11 +69,11 @@ An untagged enum with {{ Count::new(variants.len(), "variant") }}:
 | schema |
 |--------|
 %%     for variant in variants {
-| {{ link(self.chapter, variant) }} |
+| {{ description(self.chapter, self.registry, variant) }} |
 %%     }
 %%   }
 %%   json::Schema::Wrapper { inner } => {
-A wrapper around {{ link(self.chapter, inner) }}.
+A wrapper around {{ description(self.chapter, self.registry, inner) }}.
 %%   }
 %% }
 %% if self.name == "Language" {

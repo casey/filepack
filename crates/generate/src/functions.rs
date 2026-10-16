@@ -4,6 +4,23 @@ pub(crate) fn deco(name: &str) -> String {
   format!("[{}](../deco/{}.md)", escape(name), name.to_kebab_case())
 }
 
+pub(crate) fn description(chapter: Chapter, registry: &json::Registry, name: &str) -> String {
+  match &registry[name] {
+    json::Schema::Array { element } => {
+      format!("array of {}", description(chapter, registry, element))
+    }
+    json::Schema::Map { key, value } => format!(
+      "map from {} to {}",
+      description(chapter, registry, key),
+      description(chapter, registry, value)
+    ),
+    json::Schema::Set { element } => {
+      format!("sorted set of {}", description(chapter, registry, element))
+    }
+    _ => link(chapter, name),
+  }
+}
+
 pub(crate) fn escape(name: &str) -> String {
   name
     .replace('*', "\\*")
@@ -11,6 +28,13 @@ pub(crate) fn escape(name: &str) -> String {
     .replace('>', "\\>")
     .replace('{', "\\{")
     .replace('}', "\\}")
+}
+
+pub(crate) fn has_page(schema: &json::Schema) -> bool {
+  !matches!(
+    schema,
+    json::Schema::Array { .. } | json::Schema::Map { .. } | json::Schema::Set { .. }
+  )
 }
 
 pub(crate) fn link(chapter: Chapter, name: &str) -> String {

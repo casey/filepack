@@ -6,7 +6,7 @@
 %% if let Some(input) = self.input {
 %%   if self.name == "filepack archive" {
 
-Reads {{ link(Chapter::Json, input) }} as JSON from `<INPUT>`.
+Reads {{ description(Chapter::Json, self.registry, input) }} as JSON from `<INPUT>`.
 %%   } else {
 %%     unreachable!()
 %%   }
@@ -14,9 +14,9 @@ Reads {{ link(Chapter::Json, input) }} as JSON from `<INPUT>`.
 %% if let Some(output) = self.output {
 %%   if self.name == "filepack verify" {
 
-Prints {{ link(Chapter::Json, output) }} as JSON to standard output if `--print` is passed.
+Prints {{ description(Chapter::Json, self.registry, output) }} as JSON to standard output if `--print` is passed.
 %%   } else {
 
-Prints {{ link(Chapter::Json, output) }} as JSON to standard output.
+Prints {{ description(Chapter::Json, self.registry, output) }} as JSON to standard output.
 %%   }
 %% }

@@ -11,6 +11,8 @@ Schemas
 
 | schema |
 |--------|
-%% for name in self.json.keys() {
+%% for (name, schema) in self.json {
+%%   if has_page(schema) {
 | [{{ escape(name) }}](json/{{ name.to_kebab_case() }}.md) |
+%%   }
 %% }
