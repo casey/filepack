@@ -193,7 +193,16 @@ pub(crate) static CODES: LazyLock<BTreeMap<&'static str, &'static str>> = LazyLo
 });
 
 #[derive(
-  Clone, Copy, Debug, DeserializeFromStr, Eq, Ord, PartialEq, PartialOrd, SerializeDisplay,
+  Clone,
+  Copy,
+  Debug,
+  DeserializeFromStr,
+  EncodeDisplay,
+  Eq,
+  Ord,
+  PartialEq,
+  PartialOrd,
+  SerializeDisplay,
 )]
 pub struct Language(&'static str);
 
@@ -227,19 +236,6 @@ impl Decode<'_> for Language {
       .parse()
       .context(unknown_error::Language)
       .map_err(|source| decoder.unknown(source))
-  }
-}
-
-impl Encode for Language {
-  fn deco_schema(registry: &mut deco::Registry) -> String {
-    deco::Schema::Wrapper {
-      inner: String::deco_schema(registry),
-    }
-    .register("Language", registry)
-  }
-
-  fn encode(&self, encoder: &mut Encoder) {
-    self.0.encode(encoder);
   }
 }
 

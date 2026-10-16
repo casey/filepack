@@ -929,6 +929,34 @@ fn single_field() {
 }
 
 #[test]
+fn sorted_set() {
+  #[derive(Debug, Decode, Encode, PartialEq)]
+  #[deco(sorted_set, transparent)]
+  struct Foo(Vec<u64>);
+
+  let mut schemas = BTreeMap::new();
+
+  assert_eq!(Foo::deco_schema(&mut schemas), "Foo");
+
+  assert_eq!(
+    schemas,
+    BTreeMap::from([
+      (
+        "Foo".into(),
+        deco::Schema::SortedSet {
+          element: "UnsignedInteger".into(),
+        },
+      ),
+      ("UnsignedInteger".into(), deco::Schema::UnsignedInteger),
+    ]),
+  );
+
+  let foo = Foo(vec![1, 2]);
+
+  assert_eq!(Foo::decode_strict(&foo.encode_to_vec()).unwrap(), foo);
+}
+
+#[test]
 fn strict() {
   #[derive(Debug, Decode, PartialEq)]
   #[deco(strict)]

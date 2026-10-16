@@ -1,7 +1,7 @@
 use super::*;
 
 #[derive(Debug, Decode, Encode, PartialEq)]
-#[deco(transparent, validate)]
+#[deco(ordered_set, transparent, validate)]
 pub struct OrderedSet<T>(Vec<T>);
 
 impl<T> OrderedSet<T> {

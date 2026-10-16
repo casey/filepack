@@ -1,7 +1,7 @@
 use super::*;
 
 #[derive(Debug, Decode, Encode, PartialEq)]
-#[deco(transparent, validate)]
+#[deco(sorted_set, transparent, validate)]
 pub(crate) struct SortedSet<T>(Vec<T>);
 
 impl<T: Ord> From<BTreeSet<T>> for SortedSet<T> {

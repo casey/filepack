@@ -203,7 +203,7 @@ impl Input {
       Data::Enum(_) => self.encode_enum(),
       Data::Struct(_) => {
         if attributes.transparent {
-          self.encode_transparent()
+          self.encode_transparent(&attributes)
         } else {
           self.encode_struct(&attributes)
         }
@@ -324,10 +324,37 @@ impl Input {
     })
   }
 
-  fn encode_transparent(&self) -> Result<TokenStream> {
+  fn encode_transparent(&self, attributes: &Attributes) -> Result<TokenStream> {
     let name = &self.ident;
 
     let ty = self.transparent_field()?.ty();
+
+    let schema = if attributes.ordered_set || attributes.sorted_set {
+      let Some(element) = type_argument(ty, "Vec") else {
+        return Err(Error::new_spanned(
+          ty,
+          "set attributes require a `Vec<T>` field",
+        ));
+      };
+
+      let variant = if attributes.ordered_set {
+        quote! { OrderedSet }
+      } else {
+        quote! { SortedSet }
+      };
+
+      quote! {
+        deco::Schema::#variant {
+          element: <#element>::deco_schema(registry),
+        }
+      }
+    } else {
+      quote! {
+        deco::Schema::Wrapper {
+          inner: <#ty>::deco_schema(registry),
+        }
+      }
+    };
 
     let schema_name = self.schema_name();
 
@@ -338,10 +365,7 @@ impl Input {
     Ok(quote! {
       impl #impl_generics Encode for #name #ty_generics #where_clause {
         fn deco_schema(registry: &mut deco::Registry) -> String {
-          deco::Schema::Wrapper {
-            inner: <#ty>::deco_schema(registry),
-          }
-          .register(&#schema_name, registry)
+          #schema.register(&#schema_name, registry)
         }
 
         fn encode(&self, encoder: &mut Encoder) {
@@ -417,6 +441,20 @@ impl Input {
 
         Ok(())
       })?;
+    }
+
+    if !attributes.transparent {
+      for (flag, present) in [
+        ("ordered_set", attributes.ordered_set),
+        ("sorted_set", attributes.sorted_set),
+      ] {
+        if present {
+          return Err(Error::new_spanned(
+            &self.ident,
+            format!("`#[deco({flag})]` requires `#[deco(transparent)]`"),
+          ));
+        }
+      }
     }
 
     Ok(attributes)
@@ -692,6 +730,14 @@ mod tests {
       },
       "`#[deco(...)]` attributes cannot be used on enum variants",
     );
+
+    case(
+      &syn::parse_quote! {
+        #[deco(ordered_set)]
+        struct Foo {}
+      },
+      "`#[deco(ordered_set)]` requires `#[deco(transparent)]`",
+    );
   }
 
   #[test]
@@ -765,6 +811,22 @@ mod tests {
         }
       },
       "`#[n]` attributes must be contiguous starting from 0: expected 0, found 1",
+    );
+  }
+
+  #[test]
+  fn set_errors() {
+    assert_eq!(
+      Input::from_derive_input(&syn::parse_quote! {
+        #[deco(sorted_set, transparent)]
+        struct Foo(u64);
+      })
+      .unwrap()
+      .encode()
+      .err()
+      .unwrap()
+      .to_string(),
+      "set attributes require a `Vec<T>` field",
     );
   }
 }

@@ -149,25 +149,6 @@ fn number(ident: &Ident, attributes: &[Attribute]) -> Result<u64> {
   n.ok_or_else(|| Error::new_spanned(ident, "missing `#[n(N)]` attribute"))
 }
 
-fn option_inner(ty: &Type) -> Option<&Type> {
-  if let Type::Path(TypePath {
-    attrs: _,
-    path,
-    qself: None,
-  }) = ty
-    && path.leading_colon.is_none()
-    && path.segments.len() == 1
-    && path.segments[0].ident == "Option"
-    && let PathArguments::AngleBracketed(arguments) = &path.segments[0].arguments
-    && arguments.args.len() == 1
-    && let GenericArgument::Type(ty) = &arguments.args[0]
-  {
-    Some(ty)
-  } else {
-    None
-  }
-}
-
 fn path_value(meta: &ParseNestedMeta, placeholder: &str) -> Result<Path> {
   let name = meta.path.require_ident()?;
   meta.value().and_then(ParseBuffer::parse).map_err(|_| {
@@ -224,6 +205,25 @@ pub fn route(
     }
   }
   .into()
+}
+
+fn type_argument<'a>(ty: &'a Type, name: &str) -> Option<&'a Type> {
+  if let Type::Path(TypePath {
+    attrs: _,
+    path,
+    qself: None,
+  }) = ty
+    && path.leading_colon.is_none()
+    && path.segments.len() == 1
+    && path.segments[0].ident == name
+    && let PathArguments::AngleBracketed(arguments) = &path.segments[0].arguments
+    && arguments.args.len() == 1
+    && let GenericArgument::Type(ty) = &arguments.args[0]
+  {
+    Some(ty)
+  } else {
+    None
+  }
 }
 
 fn validate_numbers<'a>(start: u64, numbers: impl IntoIterator<Item = (&'a Ident, u64)>) -> Result {
