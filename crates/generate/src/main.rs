@@ -44,20 +44,18 @@ fn main() {
 
   let reference = Reference::new();
 
-  let src = Utf8Path::new("book/src");
-
   let commands = {
     let mut commands = BTreeMap::new();
 
     let mut stack = vec![(vec![reference.commands.name.as_str()], &reference.commands)];
 
-    while let Some((path, command)) = stack.pop() {
-      let name = path.join(" ");
+    while let Some((components, command)) = stack.pop() {
+      let name = components.join(" ");
 
-      let relative = Utf8PathBuf::from(format!("commands/{}.md", path.join("-")));
+      let path = Utf8PathBuf::from(format!("commands/{}.md", components.join("-")));
 
       write(
-        src.join(&relative),
+        &path,
         CommandMd {
           help: &command.help,
           input: command.input.as_deref(),
@@ -67,11 +65,11 @@ fn main() {
         },
       );
 
-      commands.insert(name, (command, relative));
+      commands.insert(name, (command, path));
 
       for (name, command) in &command.subcommands {
         stack.push((
-          path
+          components
             .iter()
             .copied()
             .chain(iter::once(name.as_str()))
@@ -92,10 +90,10 @@ fn main() {
         continue;
       }
 
-      let relative = Utf8PathBuf::from(format!("deco/{}.md", name.to_kebab_case()));
+      let path = Utf8PathBuf::from(format!("deco/{}.md", name.to_kebab_case()));
 
       write(
-        src.join(&relative),
+        &path,
         DecoSchemaMd {
           name,
           registry: &reference.deco,
@@ -103,7 +101,7 @@ fn main() {
         },
       );
 
-      deco.insert(name.as_str(), relative);
+      deco.insert(name.as_str(), path);
     }
 
     deco
@@ -113,11 +111,11 @@ fn main() {
     let mut pages = BTreeMap::new();
 
     for (tag, hex) in &reference.hex {
-      let relative = Utf8PathBuf::from(format!("hex/{}.md", tag.prefix()));
+      let path = Utf8PathBuf::from(format!("hex/{}.md", tag.prefix()));
 
-      write(src.join(&relative), TagMd { hex, tag: *tag });
+      write(&path, TagMd { hex, tag: *tag });
 
-      pages.insert(tag.prefix(), relative);
+      pages.insert(tag.prefix(), path);
     }
 
     pages
@@ -126,25 +124,25 @@ fn main() {
   let routes = {
     let mut routes = BTreeMap::new();
 
-    for (path, route) in &reference.routes {
-      let slug = if path.ends_with('/') {
-        format!("{path}index").to_kebab_case()
+    for (route_path, route) in &reference.routes {
+      let slug = if route_path.ends_with('/') {
+        format!("{route_path}index").to_kebab_case()
       } else {
-        path.to_kebab_case()
+        route_path.to_kebab_case()
       };
 
-      let relative = Utf8PathBuf::from(format!("routes/{slug}.md"));
+      let path = Utf8PathBuf::from(format!("routes/{slug}.md"));
 
       write(
-        src.join(&relative),
+        &path,
         RouteMd {
-          path,
+          path: route_path,
           registry: &reference.deco,
           route,
         },
       );
 
-      routes.insert(path.as_str(), relative);
+      routes.insert(route_path.as_str(), path);
     }
 
     routes
@@ -158,10 +156,10 @@ fn main() {
         continue;
       }
 
-      let relative = Utf8PathBuf::from(format!("json/{}.md", name.to_kebab_case()));
+      let path = Utf8PathBuf::from(format!("json/{}.md", name.to_kebab_case()));
 
       write(
-        src.join(&relative),
+        &path,
         JsonSchemaMd {
           chapter: Chapter::Json,
           name,
@@ -170,7 +168,7 @@ fn main() {
         },
       );
 
-      pages.insert(name.as_str(), relative);
+      pages.insert(name.as_str(), path);
     }
 
     pages
@@ -184,10 +182,10 @@ fn main() {
         continue;
       }
 
-      let relative = Utf8PathBuf::from(format!("yaml/{}.md", name.to_kebab_case()));
+      let path = Utf8PathBuf::from(format!("yaml/{}.md", name.to_kebab_case()));
 
       write(
-        src.join(&relative),
+        &path,
         JsonSchemaMd {
           chapter: Chapter::Yaml,
           name,
@@ -196,37 +194,37 @@ fn main() {
         },
       );
 
-      pages.insert(name.as_str(), relative);
+      pages.insert(name.as_str(), path);
     }
 
     pages
   };
 
-  write(src.join("commands.md"), CommandsMd { pages: &commands });
+  write("commands.md", CommandsMd { pages: &commands });
 
   write(
-    src.join("hex.md"),
+    "hex.md",
     HexMd {
       hex: &reference.hex,
     },
   );
 
   write(
-    src.join("json.md"),
+    "json.md",
     JsonMd {
       json: &reference.json,
     },
   );
 
   write(
-    src.join("languages.md"),
+    "languages.md",
     LanguagesMd {
       languages: &reference.languages,
     },
   );
 
   write(
-    src.join("lints.md"),
+    "lints.md",
     LintsMd {
       groups: &reference.lint_groups,
       lints: &reference.lints,
@@ -234,14 +232,14 @@ fn main() {
   );
 
   write(
-    src.join("media-formats.md"),
+    "media-formats.md",
     MediaFormatsMd {
       media_formats: &reference.media_formats,
     },
   );
 
   write(
-    src.join("routes.md"),
+    "routes.md",
     RoutesMd {
       pages: &routes,
       routes: &reference.routes,
@@ -249,28 +247,28 @@ fn main() {
   );
 
   write(
-    src.join("deco.md"),
+    "deco.md",
     DecoMd {
       deco: &reference.deco,
     },
   );
 
   write(
-    src.join("unstable-features.md"),
+    "unstable-features.md",
     UnstableFeaturesMd {
       features: &reference.unstable_features,
     },
   );
 
   write(
-    src.join("yaml.md"),
+    "yaml.md",
     YamlMd {
       yaml: &reference.yaml,
     },
   );
 
   write(
-    src.join("SUMMARY.md"),
+    "SUMMARY.md",
     SummaryMd {
       commands,
       deco,
