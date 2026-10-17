@@ -185,4 +185,4 @@ book:
   cargo lrun --package generate
   mdbook serve book --open &
   trap 'kill $!' EXIT
-  cargo watch --clear --exec 'lrun --package generate'
+  cargo watch --clear --ignore book --exec 'lrun --package generate'
