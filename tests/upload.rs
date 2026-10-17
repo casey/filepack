@@ -680,7 +680,7 @@ fn upload_rejects_stale_state() {
 
   let head = RevisionObject {
     package: fingerprint(&b.path().join("manifest.filepack")),
-    parents: Some(OrderedSet::singleton(root)),
+    parents: Some(NonEmptyOrderedSet::singleton(root)),
   }
   .hash();
 
@@ -812,7 +812,7 @@ fn upload_updates_implicitly() {
 
   let head = RevisionObject {
     package: fingerprint(&test.path().join("manifest.filepack")),
-    parents: Some(OrderedSet::singleton(root)),
+    parents: Some(NonEmptyOrderedSet::singleton(root)),
   }
   .hash();
 

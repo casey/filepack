@@ -22,8 +22,11 @@ impl Description for deco::Registry {
         self.description(chapter, key),
         self.description(chapter, value)
       ),
-      deco::Schema::OrderedSet { element } => {
-        format!("an ordered set of {}", self.description(chapter, element))
+      deco::Schema::NonEmptyOrderedSet { element } => {
+        format!(
+          "a non-empty ordered set of {}",
+          self.description(chapter, element)
+        )
       }
       deco::Schema::SortedSet { element } => {
         format!("a sorted set of {}", self.description(chapter, element))

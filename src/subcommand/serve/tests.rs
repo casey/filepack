@@ -1389,7 +1389,7 @@ fn gc_shares_ancestors() {
 
   let head_object = RevisionObject {
     package: bar,
-    parents: Some(OrderedSet::singleton(root)),
+    parents: Some(NonEmptyOrderedSet::singleton(root)),
   };
 
   let head = server.write_revision(bar, Some(root));

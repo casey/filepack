@@ -11,7 +11,7 @@ impl HasPage for deco::Schema {
       Self::Array { .. }
         | Self::Bytes { .. }
         | Self::Map { .. }
-        | Self::OrderedSet { .. }
+        | Self::NonEmptyOrderedSet { .. }
         | Self::SortedSet { .. }
     )
   }

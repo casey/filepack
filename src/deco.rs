@@ -27,7 +27,7 @@ pub enum Schema {
     key: String,
     value: String,
   },
-  OrderedSet {
+  NonEmptyOrderedSet {
     element: String,
   },
   SignedInteger,

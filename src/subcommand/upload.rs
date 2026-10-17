@@ -177,7 +177,7 @@ impl Upload {
 
     let revision_object = RevisionObject {
       package: fingerprint,
-      parents: parent.map(OrderedSet::singleton),
+      parents: parent.map(NonEmptyOrderedSet::singleton),
     };
 
     let revision = revision_object.hash();
