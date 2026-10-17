@@ -90,6 +90,16 @@ three bytes in total, so the head byte of the map is `0x83`.
 A map containing two entries, the key `0x01` with the value `0xabcdef` and the
 key `0x02` with the value `0x123456`, is encoded as `0x8a0183abcdef0283123456`.
 
+Non-empty ordered sets
+----------------------
+
+Encoded as an array of at least one element. Elements must be unique.
+
+Sorted sets
+-----------
+
+Encoded as an array of elements. Elements must be unique and in ascending order.
+
 Structs
 -------
 
