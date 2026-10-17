@@ -292,7 +292,7 @@ pub use self::{
   metadata::Metadata,
   mp3_builder::Mp3Builder,
   mp4_builder::Mp4Builder,
-  ordered_set::OrderedSet,
+  non_empty_ordered_set::NonEmptyOrderedSet,
   package_identifier::PackageIdentifier,
   page::Page,
   png_builder::PngBuilder,
@@ -444,13 +444,13 @@ mod mp4;
 mod mp4_builder;
 mod mp4_decoder;
 mod mp4_error;
+mod non_empty_ordered_set;
 mod number_error;
 mod open_graph_image;
 mod options;
 mod or;
 mod or_unknown;
 mod order;
-mod ordered_set;
 mod ordinal;
 mod orientation;
 mod output_format;

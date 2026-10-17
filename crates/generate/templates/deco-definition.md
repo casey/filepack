@@ -2,7 +2,7 @@
 %%   deco::Schema::Array { .. }
 %%   | deco::Schema::Bytes { .. }
 %%   | deco::Schema::Map { .. }
-%%   | deco::Schema::OrderedSet { .. }
+%%   | deco::Schema::NonEmptyOrderedSet { .. }
 %%   | deco::Schema::SortedSet { .. } => {
 %%     unreachable!()
 %%   }

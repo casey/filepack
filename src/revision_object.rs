@@ -5,7 +5,7 @@ pub struct RevisionObject {
   #[n(1)]
   pub package: Fingerprint,
   #[n(2)]
-  pub parents: Option<OrderedSet<Revision>>,
+  pub parents: Option<NonEmptyOrderedSet<Revision>>,
 }
 
 impl RevisionObject {
@@ -17,7 +17,7 @@ impl RevisionObject {
     self
       .parents
       .as_ref()
-      .map(OrderedSet::as_slice)
+      .map(NonEmptyOrderedSet::as_slice)
       .unwrap_or_default()
   }
 }
@@ -30,7 +30,9 @@ mod tests {
   fn encoding() {
     assert_encoding(RevisionObject {
       package: Fingerprint::EXAMPLE.parse().unwrap(),
-      parents: Some(OrderedSet::singleton(Revision::EXAMPLE.parse().unwrap())),
+      parents: Some(NonEmptyOrderedSet::singleton(
+        Revision::EXAMPLE.parse().unwrap(),
+      )),
     });
   }
 

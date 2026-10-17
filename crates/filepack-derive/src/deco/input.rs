@@ -329,7 +329,7 @@ impl Input {
 
     let ty = self.transparent_field()?.ty();
 
-    let schema = if attributes.ordered_set || attributes.sorted_set {
+    let schema = if attributes.non_empty_ordered_set || attributes.sorted_set {
       let Some(element) = type_argument(ty, "Vec") else {
         return Err(Error::new_spanned(
           ty,
@@ -337,8 +337,8 @@ impl Input {
         ));
       };
 
-      let variant = if attributes.ordered_set {
-        quote! { OrderedSet }
+      let variant = if attributes.non_empty_ordered_set {
+        quote! { NonEmptyOrderedSet }
       } else {
         quote! { SortedSet }
       };
@@ -445,7 +445,7 @@ impl Input {
 
     if !attributes.transparent {
       for (flag, present) in [
-        ("ordered_set", attributes.ordered_set),
+        ("non_empty_ordered_set", attributes.non_empty_ordered_set),
         ("sorted_set", attributes.sorted_set),
       ] {
         if present {
@@ -733,10 +733,10 @@ mod tests {
 
     case(
       &syn::parse_quote! {
-        #[deco(ordered_set)]
+        #[deco(non_empty_ordered_set)]
         struct Foo {}
       },
-      "`#[deco(ordered_set)]` requires `#[deco(transparent)]`",
+      "`#[deco(non_empty_ordered_set)]` requires `#[deco(transparent)]`",
     );
   }
 

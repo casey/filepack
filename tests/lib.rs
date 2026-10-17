@@ -4,7 +4,7 @@ use {
   filepack::{
     Decode, DecodeOptions, Decoded, Decoder, Directory, DirectoryExt, Encode, Encoder, Entry,
     Fingerprint, FlacBuilder, Hash, Loader, MagicType, Manifest, Metadata, Mp3Builder, Mp4Builder,
-    OrderedSet, PackageIdentifier, Page, PngBuilder, PrivateKey, PublicKey, Reference,
+    NonEmptyOrderedSet, PackageIdentifier, Page, PngBuilder, PrivateKey, PublicKey, Reference,
     RevisionObject, ServerState, State, Totals, gradient, gradient_alpha, hex,
     templates::{DirectoryHtml, PackageHtml},
   },
