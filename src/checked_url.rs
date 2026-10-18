@@ -69,7 +69,7 @@ impl Decode<'_> for CheckedUrl {
 impl json::Json for CheckedUrl {
   fn json_schema(registry: &mut json::Registry) -> String {
     json::Schema::Wrapper {
-      description: "`http://` or `https://` URL".into(),
+      description: "`http://` or `https://` URL.".into(),
       inner: String::json_schema(registry),
     }
     .register("CheckedUrl", registry)
