@@ -289,6 +289,77 @@ mod tests {
   use super::*;
 
   #[test]
+  fn descriptions() {
+    fn collect(value: &serde_json::Value, variant: bool, descriptions: &mut Vec<(String, bool)>) {
+      match value {
+        serde_json::Value::Array(array) => {
+          for value in array {
+            collect(value, variant, descriptions);
+          }
+        }
+        serde_json::Value::Object(object) => {
+          for (key, value) in object {
+            if key == "description"
+              && let serde_json::Value::String(description) = value
+            {
+              descriptions.push((description.clone(), variant));
+            } else {
+              collect(value, key == "values" || key == "variants", descriptions);
+            }
+          }
+        }
+        serde_json::Value::Bool(_)
+        | serde_json::Value::Null
+        | serde_json::Value::Number(_)
+        | serde_json::Value::String(_) => {}
+      }
+    }
+
+    let reference = serde_json::to_value(Reference::new()).unwrap();
+
+    let mut descriptions = Vec::new();
+
+    collect(&reference, false, &mut descriptions);
+
+    for lint in reference["lints"].as_object().unwrap().values() {
+      descriptions.push((lint.as_str().unwrap().into(), false));
+    }
+
+    assert!(descriptions.len() > 100);
+
+    let mut errors = Vec::new();
+
+    for (description, variant) in descriptions {
+      if !description.ends_with('.') {
+        errors.push(format!("`{description}` does not end with a period"));
+      }
+
+      if !description.starts_with(|c: char| c.is_ascii_uppercase() || c == '`' || c == '[') {
+        errors.push(format!(
+          "`{description}` does not start with an uppercase letter, backtick, or link"
+        ));
+      }
+
+      if !variant
+        && ["A ", "An ", "The "]
+          .iter()
+          .any(|article| description.starts_with(article))
+      {
+        errors.push(format!("`{description}` starts with an article"));
+      }
+
+      for line in description.lines() {
+        if line.is_empty() || line != line.trim() || line.contains("  ") {
+          errors.push(format!("`{description}` has irregular whitespace"));
+          break;
+        }
+      }
+    }
+
+    assert_eq!(errors, Vec::<String>::new());
+  }
+
+  #[test]
   fn examples() {
     fn fields(registry: &json::Registry) -> Vec<(&str, &json::Field)> {
       let mut fields = Vec::new();
