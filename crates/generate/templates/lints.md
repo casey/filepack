@@ -4,7 +4,7 @@ Lints
 | lint | description |
 |------|-------------|
 %% for (lint, description) in self.lints {
-| `{{ lint }}` | {{ description }} |
+{{ Row((format!("`{lint}`"), description)) }}
 %% }
 
 Groups
@@ -13,5 +13,5 @@ Groups
 | group | description | lints |
 |-------|-------------|-------|
 %% for (name, group) in self.groups {
-| `{{ name }}` | {{ group.description }} | {{ list(&group.lints) }} |
+{{ Row((format!("`{name}`"), &group.description, list(&group.lints))) }}
 %% }

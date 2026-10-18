@@ -9,12 +9,6 @@ pub struct Field {
   pub schema: String,
 }
 
-impl Field {
-  pub fn description(&self) -> String {
-    self.description.replace('\n', " ")
-  }
-}
-
 #[derive(Debug, Default, Deserialize, Serialize)]
 #[serde(transparent)]
 pub struct Registry {

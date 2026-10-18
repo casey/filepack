@@ -23,7 +23,7 @@ A string with {{ Count::new(values.len(), "possible value") }}:
 | value | description |
 |-------|-------------|
 %%     for value in values {
-| `{{ value.value }}` | {{ value.description }} |
+{{ Row((format!("`{}`", value.value), &value.description)) }}
 %%     }
 %%   }
 %%   json::Schema::Struct { description, fields, strict } => {
@@ -47,9 +47,12 @@ An enum with {{ Count::new(variants.len(), "variant") }}, distinguished by the
 |------|-------------|
 %%     for variant in variants {
 %%       if variant.fields.is_empty() {
-| `{{ variant.name }}` | {{ variant.description }} |
+{{ Row((format!("`{}`", variant.name), &variant.description)) }}
 %%       } else {
-| [`{{ variant.name }}`](#{{ variant.name }}) | {{ variant.description }} |
+{{ Row((
+  format!("[`{}`](#{})", variant.name, variant.name),
+  &variant.description,
+)) }}
 %%       }
 %%     }
 %%     if *strict {
