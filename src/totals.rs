@@ -4,12 +4,16 @@ use super::*;
 #[derive(Clone, Copy, Debug, Decode, Default, Encode, Json, PartialEq, Serialize)]
 #[deco(validate)]
 pub struct Totals {
+  /// Number of files in the directory and its children.
   #[n(1)]
   pub files: u64,
+  /// Total size in bytes of all files in the directory and its children.
   #[n(2)]
   pub file_size: u64,
+  /// Number of subdirectories of the directory and its children.
   #[n(3)]
   pub directories: u64,
+  /// Total size in bytes of the encoded directory entries of the directory and its children.
   #[n(4)]
   pub directory_size: u64,
 }

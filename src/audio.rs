@@ -3,20 +3,28 @@ use super::*;
 #[skip_serializing_none]
 #[derive(Clone, Debug, Decode, Encode, Json, PartialEq, Serialize)]
 pub(crate) struct Audio {
+  /// Number of audio channels.
   #[n(1)]
   pub(crate) channels: u64,
+  /// Codec of the audio data, if recognized.
   #[n(2)]
   pub(crate) codec: Option<AudioCodec>,
+  /// Container format of the audio file, if recognized.
   #[n(3)]
   pub(crate) format: Option<AudioFormat>,
+  /// Path to the audio file.
   #[n(4)]
   pub(crate) path: RelativePath,
+  /// Bits per sample.
   #[n(5)]
   pub(crate) sample_bits: Option<u64>,
+  /// Sample rate in Hertz.
   #[n(6)]
   pub(crate) sample_rate: u64,
+  /// Number of samples per channel.
   #[n(7)]
   pub(crate) samples: u64,
+  /// Size of the audio file in bytes.
   #[n(8)]
   pub(crate) size: u64,
 }

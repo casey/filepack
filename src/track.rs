@@ -3,10 +3,13 @@ use super::*;
 #[skip_serializing_none]
 #[derive(Clone, Debug, Decode, Encode, Json, PartialEq, Serialize)]
 pub(crate) struct Track {
+  /// Codec of the track, if recognized.
   #[n(1)]
   pub(crate) codec: Option<TrackCodec>,
+  /// Codec-specific track information.
   #[n(2)]
   pub(crate) info: Option<TrackInfo>,
+  /// Size of the track in bytes.
   #[n(3)]
   pub(crate) size: u64,
 }

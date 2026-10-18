@@ -2,9 +2,17 @@ use super::*;
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct Field {
+  pub description: String,
+  pub example: Option<String>,
   pub name: String,
   pub optional: bool,
   pub schema: String,
+}
+
+impl Field {
+  pub fn description(&self) -> String {
+    self.description.replace('\n', " ")
+  }
 }
 
 #[derive(Debug, Default, Deserialize, Serialize)]
@@ -100,6 +108,7 @@ impl Schema {
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct Variant {
+  pub description: String,
   pub fields: Vec<Field>,
   pub name: String,
 }

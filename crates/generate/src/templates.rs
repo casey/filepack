@@ -80,6 +80,11 @@ pub(crate) struct MediaFormatsMd<'a> {
 }
 
 #[derive(Boilerplate)]
+pub(crate) struct MetadataMd<'a> {
+  pub(crate) example: &'a yaml::Example,
+}
+
+#[derive(Boilerplate)]
 pub(crate) struct RouteMd<'a> {
   pub(crate) path: &'a str,
   pub(crate) registry: &'a deco::Registry,

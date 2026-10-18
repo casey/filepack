@@ -3,9 +3,22 @@ use super::*;
 #[derive(Debug, Deserialize, PartialEq, Json)]
 #[serde(deny_unknown_fields, rename_all = "snake_case", tag = "type")]
 pub(crate) enum Media {
-  Audio { items: Vec<Audio> },
-  Image { items: Vec<Image> },
-  Video { items: Vec<Video> },
+  /// Collection ofaudio items.
+  Audio {
+    /// Metadata describing the audio items.
+    items: Vec<Audio>,
+  },
+  /// Collection ofimage items.
+  Image {
+    /// Metadata describing the image items.
+    items: Vec<Image>,
+  },
+  /// Collection ofvideo items.
+  Video {
+    /// Metadata describing the video items.
+    items: Vec<Video>,
+  },
+  /// A web site, with `static/index.html` as its entry point.
   Web,
 }
 

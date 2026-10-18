@@ -1,9 +1,9 @@
 YAML
 ====
 
-Filepack uses YAML for human-authored files. This chapter includes the schemas
-of all filepack types which have YAML representations, including
-[Metadata](yaml/metadata.md), used in `metadata.yaml`.
+Filepack uses YAML for hand-authored files, namely [metadata](metadata.md).
+
+This chapter includes the schemas of all types with YAML representations.
 
 Schemas
 -------

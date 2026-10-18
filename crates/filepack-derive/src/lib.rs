@@ -1,5 +1,11 @@
 use {
-  self::route_attribute::RouteAttribute,
+  self::{
+    functions::{
+      description, display_name, doc_line, number, option, path_value, type_argument,
+      validate_numbers,
+    },
+    route_attribute::RouteAttribute,
+  },
   darling::{FromDeriveInput, FromField, FromVariant, ast::Data, ast::Fields},
   heck::{ToKebabCase, ToSnakeCase},
   proc_macro2::TokenStream,
@@ -7,8 +13,9 @@ use {
   std::{collections::HashSet, mem},
   strum::{EnumString, IntoStaticStr},
   syn::{
-    Attribute, DeriveInput, Error, FnArg, GenericArgument, GenericParam, Generics, Ident, ItemFn,
-    LitInt, LitStr, Path, PathArguments, ReturnType, Token, Type, TypeParamBound, TypePath,
+    Attribute, DeriveInput, Error, Expr, ExprLit, FnArg, GenericArgument, GenericParam, Generics,
+    Ident, ItemFn, Lit, LitInt, LitStr, Path, PathArguments, ReturnType, Token, Type,
+    TypeParamBound, TypePath,
     meta::ParseNestedMeta,
     parse::{Parse, ParseBuffer, ParseStream},
   },
@@ -16,6 +23,7 @@ use {
 };
 
 mod deco;
+mod functions;
 mod json;
 mod route_attribute;
 
@@ -60,10 +68,6 @@ pub fn decode_from_str(input: proc_macro::TokenStream) -> proc_macro::TokenStrea
   .into()
 }
 
-fn display_name(ident: &Ident) -> String {
-  ident.to_string().to_snake_case().replace('_', " ")
-}
-
 #[proc_macro_derive(Encode, attributes(deco, n))]
 pub fn encode(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
   let input = syn::parse_macro_input!(input as DeriveInput);
@@ -104,7 +108,7 @@ pub fn encode_display(input: proc_macro::TokenStream) -> proc_macro::TokenStream
   .into()
 }
 
-#[proc_macro_derive(Json)]
+#[proc_macro_derive(Json, attributes(json))]
 pub fn json(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
   let input = syn::parse_macro_input!(input as DeriveInput);
 
@@ -132,30 +136,6 @@ pub fn magic(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     Ok(tokens) => tokens.into(),
     Err(err) => err.to_compile_error().into(),
   }
-}
-
-fn number(ident: &Ident, attributes: &[Attribute]) -> Result<u64> {
-  let mut n = None;
-
-  for attribute in attributes {
-    if attribute.path().is_ident("n") {
-      if n.is_some() {
-        return Err(Error::new_spanned(attribute, "duplicate `#[n]` attribute"));
-      }
-      n = Some(attribute.parse_args::<LitInt>()?.base10_parse::<u64>()?);
-    }
-  }
-
-  n.ok_or_else(|| Error::new_spanned(ident, "missing `#[n(N)]` attribute"))
-}
-
-fn path_value(meta: &ParseNestedMeta, placeholder: &str) -> Result<Path> {
-  let name = meta.path.require_ident()?;
-  meta.value().and_then(ParseBuffer::parse).map_err(|_| {
-    meta.error(format!(
-      "`#[deco({name})]` must be of the form `#[deco({name} = {placeholder})]`"
-    ))
-  })
 }
 
 #[proc_macro_attribute]
@@ -205,49 +185,4 @@ pub fn route(
     }
   }
   .into()
-}
-
-fn type_argument<'a>(ty: &'a Type, name: &str) -> Option<&'a Type> {
-  if let Type::Path(TypePath {
-    attrs: _,
-    path,
-    qself: None,
-  }) = ty
-    && path.leading_colon.is_none()
-    && path.segments.len() == 1
-    && path.segments[0].ident == name
-    && let PathArguments::AngleBracketed(arguments) = &path.segments[0].arguments
-    && arguments.args.len() == 1
-    && let GenericArgument::Type(ty) = &arguments.args[0]
-  {
-    Some(ty)
-  } else {
-    None
-  }
-}
-
-fn validate_numbers<'a>(start: u64, numbers: impl IntoIterator<Item = (&'a Ident, u64)>) -> Result {
-  let mut seen = HashSet::new();
-
-  for (i, (ident, n)) in numbers.into_iter().enumerate() {
-    if !seen.insert(n) {
-      return Err(Error::new_spanned(
-        ident,
-        format!("duplicate `#[n({n})]` attribute"),
-      ));
-    }
-
-    let expected = start + i.into_u64();
-
-    if n != expected {
-      return Err(Error::new_spanned(
-        ident,
-        format!(
-          "`#[n]` attributes must be contiguous starting from {start}: expected {expected}, found {n}"
-        ),
-      ));
-    }
-  }
-
-  Ok(())
 }

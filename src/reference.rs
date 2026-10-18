@@ -47,6 +47,7 @@ pub struct Reference {
   pub lint_groups: BTreeMap<LintGroup, BTreeSet<Lint>>,
   pub lints: BTreeSet<Lint>,
   pub media_formats: BTreeMap<MediaType, Vec<MediaFormat>>,
+  pub metadata: yaml::Example,
   pub routes: BTreeMap<String, Route>,
   pub unstable_features: BTreeSet<UnstableFeature>,
   pub yaml: json::Registry,
@@ -116,6 +117,8 @@ impl Reference {
 
     yaml::Metadata::json_schema(&mut yaml);
 
+    let metadata = yaml::Example::new(&yaml, "Metadata");
+
     let mut routes = BTreeMap::<String, Route>::new();
 
     for route in subcommand::serve::route::Route::all(&mut deco) {
@@ -170,6 +173,7 @@ impl Reference {
         (MediaType::Video, media_formats::<VideoFormat>()),
       ]
       .into(),
+      metadata,
       routes,
       unstable_features: UnstableFeature::iter().collect(),
       yaml,

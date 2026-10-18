@@ -1,6 +1,9 @@
 Summary
 =======
 
+# Guide
+- [Metadata](metadata.md)
+
 # Reference
 - [Commands](commands.md)
 %% for (name, (_command, path)) in &self.commands {

@@ -13,21 +13,28 @@ use super::*;
   vis(pub)
 )]
 pub(crate) enum Media {
+  /// Collection ofaudio items.
   #[n(0)]
   Audio {
+    /// Metadata describing the audio items.
     #[n(1)]
     items: Vec<Item<Audio>>,
   },
+  /// Collection ofimage items.
   #[n(1)]
   Image {
+    /// Metadata describing the image items.
     #[n(1)]
     items: Vec<Item<Image>>,
   },
+  /// Collection ofvideo items.
   #[n(2)]
   Video {
+    /// Metadata describing the video items.
     #[n(1)]
     items: Vec<Item<Video>>,
   },
+  /// A web site, with `static/index.html` as its entry point.
   #[n(3)]
   Web,
 }

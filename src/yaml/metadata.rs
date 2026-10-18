@@ -4,16 +4,36 @@ use super::*;
 #[derive(Debug, Default, Deserialize, PartialEq, Json)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct Metadata {
+  /// Path to cover art. Must be square.
+  #[json(example = "cover.png")]
   pub(crate) artwork: Option<RelativePath>,
+  /// Primary person or group who created the content.
+  #[json(example = "John Horace Tobin")]
   pub(crate) creator: Option<Text>,
+  /// Single-line description of the content.
+  #[json(example = "A compilation of supernatural occurrences, entities, and facts.")]
   pub(crate) description: Option<Text>,
+  /// Official homepage of the content.
+  #[json(example = "https://tobin-society.org/spirit-guide")]
   pub(crate) homepage: Option<CheckedUrl>,
+  /// Two-letter ISO 639-1 code of the content's primary language.
+  #[json(example = "en")]
   pub(crate) language: Option<Language>,
+  /// Metadata describing the media content of the package.
   pub(crate) media: Option<Media>,
+  /// Metadata describing the package itself, as opposed to its content.
   pub(crate) package: Option<PackageMetadata>,
+  /// Primary publisher of the content.
+  #[json(example = "Miskatonic University Press")]
   pub(crate) publisher: Option<Text>,
+  /// Path to a markdown file containing a readme describing the content.
+  #[json(example = "README.md")]
   pub(crate) readme: Option<RelativePath>,
+  /// Time the content was created.
+  #[json(example = "1929")]
   pub(crate) time: Option<Time>,
+  /// Title of the content.
+  #[json(example = "Tobin's Spirit Guide")]
   pub(crate) title: Option<Text>,
 }
 

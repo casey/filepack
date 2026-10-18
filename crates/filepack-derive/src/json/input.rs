@@ -238,6 +238,45 @@ mod tests {
 
     case(
       &syn::parse_quote! {
+        struct Foo {
+          #[json(bar)]
+          baz: String,
+        }
+      },
+      "unsupported `#[json(bar)]` attribute",
+    );
+
+    case(
+      &syn::parse_quote! {
+        struct Foo {
+          bar: String,
+        }
+      },
+      "fields must have doc comments",
+    );
+
+    case(
+      &syn::parse_quote! {
+        #[serde(tag = "type")]
+        enum Foo {
+          Bar {},
+        }
+      },
+      "variants must have doc comments",
+    );
+
+    case(
+      &syn::parse_quote! {
+        struct Foo {
+          #[doc = include_str!("bar")]
+          baz: String,
+        }
+      },
+      "`#[doc]` attribute value must be a string literal",
+    );
+
+    case(
+      &syn::parse_quote! {
         enum Foo {
           Bar { baz: String },
         }
