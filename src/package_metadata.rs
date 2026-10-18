@@ -1,5 +1,6 @@
 use super::*;
 
+/// Metadata describing a package itself as opposed to its content.
 #[skip_serializing_none]
 #[derive(Clone, Debug, Default, Encode, Decode, Json, PartialEq, Serialize)]
 pub(crate) struct PackageMetadata {

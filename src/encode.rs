@@ -74,7 +74,10 @@ where
 
 impl Encode for bool {
   fn deco_schema(registry: &mut deco::Registry) -> String {
-    deco::Schema::Boolean.register("Boolean", registry)
+    deco::Schema::Boolean {
+      description: "True or false.".into(),
+    }
+    .register("Boolean", registry)
   }
 
   fn encode(&self, encoder: &mut Encoder) {
@@ -114,7 +117,10 @@ impl<T: Encode> Encode for Vec<T> {
 
 impl Encode for i64 {
   fn deco_schema(registry: &mut deco::Registry) -> String {
-    deco::Schema::SignedInteger.register("SignedInteger", registry)
+    deco::Schema::SignedInteger {
+      description: "Signed 64-bit integer.".into(),
+    }
+    .register("SignedInteger", registry)
   }
 
   fn encode(&self, encoder: &mut Encoder) {
@@ -124,7 +130,10 @@ impl Encode for i64 {
 
 impl Encode for str {
   fn deco_schema(registry: &mut deco::Registry) -> String {
-    deco::Schema::String.register("String", registry)
+    deco::Schema::String {
+      description: "UTF-8 string.".into(),
+    }
+    .register("String", registry)
   }
 
   fn encode(&self, encoder: &mut Encoder) {
@@ -134,7 +143,10 @@ impl Encode for str {
 
 impl Encode for u64 {
   fn deco_schema(registry: &mut deco::Registry) -> String {
-    deco::Schema::UnsignedInteger.register("UnsignedInteger", registry)
+    deco::Schema::UnsignedInteger {
+      description: "Unsigned 64-bit integer.".into(),
+    }
+    .register("UnsignedInteger", registry)
   }
 
   fn encode(&self, encoder: &mut Encoder) {
@@ -196,7 +208,12 @@ mod tests {
             element: "UnsignedInteger".into(),
           },
         ),
-        ("UnsignedInteger".into(), deco::Schema::UnsignedInteger),
+        (
+          "UnsignedInteger".into(),
+          deco::Schema::UnsignedInteger {
+            description: "Unsigned 64-bit integer.".into()
+          }
+        ),
       ]),
     );
   }
@@ -280,8 +297,18 @@ mod tests {
             value: "UnsignedInteger".into(),
           },
         ),
-        ("String".into(), deco::Schema::String),
-        ("UnsignedInteger".into(), deco::Schema::UnsignedInteger),
+        (
+          "String".into(),
+          deco::Schema::String {
+            description: "UTF-8 string.".into()
+          }
+        ),
+        (
+          "UnsignedInteger".into(),
+          deco::Schema::UnsignedInteger {
+            description: "Unsigned 64-bit integer.".into()
+          }
+        ),
       ]),
     );
   }

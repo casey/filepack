@@ -1,5 +1,8 @@
 use super::*;
 
+/// Domain-separating message wrapper that commits to the application and
+/// context, so signatures of one kind over a serialized envelope cannot be
+/// confused for another.
 #[derive(Encode)]
 pub(crate) struct Envelope<T> {
   /// Application the message belongs to.

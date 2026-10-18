@@ -4,11 +4,12 @@ pub(crate) mod gc {
   use super::*;
 
   #[derive(Default, Encode, Decode)]
+  #[deco(undocumented)]
   pub(crate) struct Response {
     /// Bytes freed.
     #[n(1)]
     pub(crate) bytes: u64,
-    /// Hashes of the deleted directory objects.
+    /// Hashes of the deleted directories.
     #[n(2)]
     pub(crate) directories: SortedSet<Hash>,
     /// Hashes of the deleted files.
@@ -27,6 +28,7 @@ pub(crate) mod missing {
   use super::*;
 
   #[derive(Debug, Encode, Decode)]
+  #[deco(undocumented)]
   pub(crate) struct Request {
     /// Hashes to check for.
     #[n(1)]
@@ -34,6 +36,7 @@ pub(crate) mod missing {
   }
 
   #[derive(Encode, Decode)]
+  #[deco(undocumented)]
   pub(crate) struct Response {
     /// Hashes not present on the server.
     #[n(1)]
@@ -45,6 +48,7 @@ pub(crate) mod number {
   use super::*;
 
   #[derive(Encode, Decode)]
+  #[deco(undocumented)]
   pub(crate) struct Response {
     /// Fingerprint of the package.
     #[n(1)]
@@ -59,6 +63,7 @@ pub(crate) mod numbers {
   use super::*;
 
   #[derive(Default, Encode, Decode)]
+  #[deco(undocumented)]
   pub(crate) struct Response {
     /// Package numbers present on the server.
     #[n(1)]
@@ -70,6 +75,7 @@ pub(crate) mod packages {
   use super::*;
 
   #[derive(Default, Encode, Decode)]
+  #[deco(undocumented)]
   pub(crate) struct Response {
     /// Fingerprints of packages on the server.
     #[n(1)]
@@ -80,6 +86,7 @@ pub(crate) mod packages {
 pub(crate) mod revision {
   use super::*;
 
+  /// How an uploaded package relates to existing packages.
   #[derive(Debug, Default, Encode, Decode)]
   pub(crate) enum Mode {
     /// Upload as a new package.
@@ -103,6 +110,7 @@ pub(crate) mod revision {
   }
 
   #[derive(Debug, Encode, Decode)]
+  #[deco(undocumented)]
   pub(crate) struct Request {
     /// How the uploaded package relates to existing packages.
     #[n(1)]
@@ -110,6 +118,7 @@ pub(crate) mod revision {
   }
 
   #[derive(Encode, Decode)]
+  #[deco(undocumented)]
   pub(crate) struct Response {
     /// Number assigned to the uploaded package.
     #[n(1)]

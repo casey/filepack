@@ -1,5 +1,6 @@
 use super::*;
 
+/// Codec of a video file track.
 #[derive(Clone, Copy, Debug, Decode, Display, Encode, Json, PartialEq, Serialize)]
 #[serde(rename_all = "kebab-case")]
 #[strum(serialize_all = "UPPERCASE")]

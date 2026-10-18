@@ -1,5 +1,6 @@
 use super::*;
 
+/// Hashed file.
 #[derive(Clone, Copy, Debug, Deserialize, Json, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct File {

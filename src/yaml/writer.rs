@@ -60,12 +60,12 @@ impl<'a> Writer<'a> {
 
         self.tagged(field, tag, &variants[0]);
       }
-      Schema::Boolean
-      | Schema::Bytes
+      Schema::Boolean { .. }
+      | Schema::Bytes { .. }
       | Schema::Hex { .. }
-      | Schema::String
+      | Schema::String { .. }
       | Schema::StringEnum { .. }
-      | Schema::UnsignedInteger
+      | Schema::UnsignedInteger { .. }
       | Schema::Wrapper { .. } => {
         let example = field
           .example

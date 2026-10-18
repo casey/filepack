@@ -1,5 +1,6 @@
 use super::*;
 
+/// Properties of an audio file.
 #[skip_serializing_none]
 #[derive(Clone, Debug, Decode, Encode, Json, PartialEq, Serialize)]
 pub(crate) struct Audio {

@@ -70,6 +70,7 @@ impl<T: Serialize> Serialize for Decoded<T> {
 mod tests {
   use super::*;
 
+  /// Foo.
   #[derive(Debug, Decode, Encode, PartialEq, Serialize)]
   #[deco(strict)]
   struct Foo {
@@ -96,7 +97,12 @@ mod tests {
 
     assert_eq!(
       schemas,
-      BTreeMap::from([("UnsignedInteger".into(), deco::Schema::UnsignedInteger)]),
+      BTreeMap::from([(
+        "UnsignedInteger".into(),
+        deco::Schema::UnsignedInteger {
+          description: "Unsigned 64-bit integer.".into()
+        }
+      )]),
     );
   }
 

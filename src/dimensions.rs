@@ -1,5 +1,6 @@
 use super::*;
 
+/// Image dimensions in pixels.
 #[derive(Clone, Copy, Debug, Default, Decode, Encode, Json, PartialEq, Serialize)]
 pub struct Dimensions {
   /// Height in pixels.

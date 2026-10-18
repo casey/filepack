@@ -1,5 +1,6 @@
 use super::*;
 
+/// Local configuration.
 #[derive(Json, Serialize)]
 pub(crate) struct Info {
   /// Path to the data directory.

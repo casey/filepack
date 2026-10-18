@@ -1,5 +1,6 @@
 use super::*;
 
+/// Directory tree of subdirectories and file content.
 #[serde_as]
 #[derive(Debug, Default, Deserialize, Json, PartialEq, Serialize)]
 #[serde(transparent)]

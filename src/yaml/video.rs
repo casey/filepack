@@ -1,5 +1,6 @@
 use super::*;
 
+/// Video file media item.
 #[skip_serializing_none]
 #[derive(Debug, Deserialize, PartialEq, Json)]
 #[serde(deny_unknown_fields)]

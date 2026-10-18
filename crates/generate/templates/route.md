@@ -1,7 +1,9 @@
-# {{ escape(self.path) }}
+# {{ route_path(self.path) }}
 
 %% for (method, endpoint) in &self.route.methods {
 ## {{ method }}
+
+{{ endpoint.description }}
 
 | property | value |
 |----------|-------|
@@ -41,10 +43,10 @@ remainder of the path, including any slashes, and must not be empty.
 ### Request Body
 
 %%     match request {
-%%       Request::Deco { limit, schema } => {
-A deco-encoded value of at most {{ Count::new(*limit, "byte") }}.
+%%       Request::Deco { fields, limit } => {
+A deco-encoded struct of at most {{ Count::new(*limit, "byte") }}:
 
-{{ DecoDefinitionMd { registry: self.registry, schema } }}
+{{ DecoFieldsMd { fields, registry: self.registry } }}
 %%       }
 %%       Request::Bytes => {
 An arbitrary byte string.
@@ -53,13 +55,13 @@ An arbitrary byte string.
 %%   }
 %%   if let Some(response) = &endpoint.response {
 %%     match response {
-%%       Response::Deco { schema } => {
+%%       Response::Deco { fields } => {
 
 ### Response Body
 
-A deco-encoded value.
+A deco-encoded struct:
 
-{{ DecoDefinitionMd { registry: self.registry, schema } }}
+{{ DecoFieldsMd { fields, registry: self.registry } }}
 %%       }
 %%       Response::File => {
 

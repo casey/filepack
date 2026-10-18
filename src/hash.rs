@@ -80,6 +80,7 @@ impl Display for Hash {
 impl Encode for Hash {
   fn deco_schema(registry: &mut deco::Registry) -> String {
     deco::Schema::Wrapper {
+      description: "BLAKE3 hash.".into(),
       inner: <[u8; Self::LEN]>::deco_schema(registry),
     }
     .register("Hash", registry)
@@ -138,7 +139,11 @@ impl PathExtractor for Hash {
 
 impl json::Json for Hash {
   fn json_schema(registry: &mut json::Registry) -> String {
-    json::Schema::Hex { tag: Tag::Hash }.register("Hash", registry)
+    json::Schema::Hex {
+      description: "BLAKE3 hash.".into(),
+      tag: Tag::Hash,
+    }
+    .register("Hash", registry)
   }
 }
 

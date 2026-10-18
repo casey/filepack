@@ -1,5 +1,6 @@
 use super::*;
 
+/// Package media content metadata.
 #[derive(
   Clone, Debug, Decode, Encode, EnumDiscriminants, IntoStaticStr, Json, PartialEq, Serialize,
 )]
@@ -13,21 +14,21 @@ use super::*;
   vis(pub)
 )]
 pub(crate) enum Media {
-  /// Collection ofaudio items.
+  /// Collection of audio items.
   #[n(0)]
   Audio {
     /// Metadata describing the audio items.
     #[n(1)]
     items: Vec<Item<Audio>>,
   },
-  /// Collection ofimage items.
+  /// Collection of image items.
   #[n(1)]
   Image {
     /// Metadata describing the image items.
     #[n(1)]
     items: Vec<Item<Image>>,
   },
-  /// Collection ofvideo items.
+  /// Collection of video items.
   #[n(2)]
   Video {
     /// Metadata describing the video items.

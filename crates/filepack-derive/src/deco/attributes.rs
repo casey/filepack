@@ -7,6 +7,7 @@ pub(crate) struct Attributes {
   pub(crate) sorted_set: bool,
   pub(crate) strict: bool,
   pub(crate) transparent: bool,
+  pub(crate) undocumented: bool,
   pub(crate) validate: bool,
 }
 
@@ -20,6 +21,7 @@ impl Attributes {
       ContainerAttribute::SortedSet => mem::replace(&mut self.sorted_set, true),
       ContainerAttribute::Strict => mem::replace(&mut self.strict, true),
       ContainerAttribute::Transparent => mem::replace(&mut self.transparent, true),
+      ContainerAttribute::Undocumented => mem::replace(&mut self.undocumented, true),
       ContainerAttribute::Validate => mem::replace(&mut self.validate, true),
     };
 

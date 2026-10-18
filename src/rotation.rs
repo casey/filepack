@@ -1,5 +1,6 @@
 use super::*;
 
+/// Rotation to apply when displaying an image.
 #[allow(clippy::arbitrary_source_item_ordering)]
 #[derive(Clone, Copy, Debug, Decode, Default, Encode, PartialEq)]
 pub(crate) enum Rotation {
@@ -41,6 +42,7 @@ impl Serialize for Rotation {
 impl json::Json for Rotation {
   fn json_schema(registry: &mut json::Registry) -> String {
     json::Schema::Wrapper {
+      description: "Rotation in degrees, one of 0, 90, 180, or 270.".into(),
       inner: u64::json_schema(registry),
     }
     .register("Rotation", registry)

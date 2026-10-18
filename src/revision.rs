@@ -1,5 +1,6 @@
 use super::*;
 
+/// BLAKE3 hash of a revision.
 #[derive(
   Clone,
   Copy,

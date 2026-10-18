@@ -1,19 +1,20 @@
 use super::*;
 
+/// Package media content.
 #[derive(Debug, Deserialize, PartialEq, Json)]
 #[serde(deny_unknown_fields, rename_all = "snake_case", tag = "type")]
 pub(crate) enum Media {
-  /// Collection ofaudio items.
+  /// Collection of audio items.
   Audio {
     /// Metadata describing the audio items.
     items: Vec<Audio>,
   },
-  /// Collection ofimage items.
+  /// Collection of image items.
   Image {
     /// Metadata describing the image items.
     items: Vec<Image>,
   },
-  /// Collection ofvideo items.
+  /// Collection of video items.
   Video {
     /// Metadata describing the video items.
     items: Vec<Video>,

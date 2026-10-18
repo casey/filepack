@@ -2,6 +2,7 @@ use super::*;
 
 #[test]
 fn all_optional_all_none() {
+  /// Foo.
   #[derive(Debug, Encode, Decode, PartialEq)]
   struct Foo {
     /// Bar.
@@ -23,6 +24,7 @@ fn all_optional_all_none() {
 
 #[test]
 fn all_optional_all_some() {
+  /// Foo.
   #[derive(Debug, Encode, Decode, PartialEq)]
   struct Foo {
     /// Bar.
@@ -44,6 +46,7 @@ fn all_optional_all_some() {
 
 #[test]
 fn all_optional_mixed() {
+  /// Foo.
   #[derive(Debug, Encode, Decode, PartialEq)]
   struct Foo {
     /// Bar.
@@ -73,6 +76,7 @@ fn all_optional_mixed() {
 
 #[test]
 fn all_required() {
+  /// Foo.
   #[derive(Debug, Encode, Decode, PartialEq)]
   struct Foo {
     /// Bar.
@@ -94,6 +98,7 @@ fn all_required() {
 
 #[test]
 fn borrowed_field() {
+  /// Foo.
   #[derive(Debug, Decode, Encode, PartialEq)]
   struct Foo<'a> {
     /// Bar.
@@ -145,6 +150,7 @@ fn decode_from_str() {
 
 #[test]
 fn encode_display() {
+  /// Foo.
   #[derive(EncodeDisplay)]
   struct Foo;
 
@@ -159,6 +165,7 @@ fn encode_display() {
 
 #[test]
 fn encode_display_schema() {
+  /// Foo.
   #[derive(EncodeDisplay)]
   struct Foo;
 
@@ -178,16 +185,23 @@ fn encode_display_schema() {
       (
         "Foo".into(),
         deco::Schema::Wrapper {
+          description: "Foo.".into(),
           inner: "String".into(),
         },
       ),
-      ("String".into(), deco::Schema::String),
+      (
+        "String".into(),
+        deco::Schema::String {
+          description: "UTF-8 string.".into()
+        }
+      ),
     ]),
   );
 }
 
 #[test]
 fn enum_added_optional_field() {
+  /// Foo.
   #[derive(Debug, Decode, Encode, PartialEq)]
   enum Foo {
     /// Bar.
@@ -195,6 +209,7 @@ fn enum_added_optional_field() {
     Bar,
   }
 
+  /// Bar.
   #[derive(Debug, Decode, Encode, PartialEq)]
   enum Bar {
     /// Bar.
@@ -369,6 +384,7 @@ fn enum_invalid_discriminant() {
 
 #[test]
 fn enum_mixed() {
+  /// Foo.
   #[derive(Debug, Decode, Encode, PartialEq)]
   enum Foo {
     /// Bar.
@@ -389,6 +405,7 @@ fn enum_mixed() {
 
 #[test]
 fn enum_named_field() {
+  /// Foo.
   #[derive(Debug, Decode, Encode, PartialEq)]
   enum Foo {
     /// Bar.
@@ -414,6 +431,7 @@ fn enum_named_field() {
 
 #[test]
 fn enum_named_field_optional() {
+  /// Foo.
   #[derive(Debug, Decode, Encode, PartialEq)]
   enum Foo {
     /// Bar.
@@ -441,6 +459,7 @@ fn enum_named_field_optional() {
 
 #[test]
 fn enum_round_trip() {
+  /// Foo.
   #[derive(Debug, Decode, Encode, PartialEq)]
   enum Foo {
     /// Bar.
@@ -457,6 +476,7 @@ fn enum_round_trip() {
 
 #[test]
 fn enum_schema() {
+  /// Foo.
   #[derive(Decode, Encode)]
   enum Foo {
     /// Bar.
@@ -476,6 +496,7 @@ fn enum_schema() {
     BTreeMap::from([(
       "Foo".into(),
       deco::Schema::Enum {
+        description: "Foo.".into(),
         variants: vec![
           deco::Variant {
             description: "Bar.".into(),
@@ -497,6 +518,7 @@ fn enum_schema() {
 
 #[test]
 fn enum_schema_fields() {
+  /// Foo.
   #[derive(Decode, Encode)]
   enum Foo {
     /// Bar.
@@ -521,6 +543,7 @@ fn enum_schema_fields() {
       (
         "Foo".into(),
         deco::Schema::Enum {
+          description: "Foo.".into(),
           variants: vec![
             deco::Variant {
               description: "Bar.".into(),
@@ -543,7 +566,12 @@ fn enum_schema_fields() {
           ],
         },
       ),
-      ("UnsignedInteger".into(), deco::Schema::UnsignedInteger),
+      (
+        "UnsignedInteger".into(),
+        deco::Schema::UnsignedInteger {
+          description: "Unsigned 64-bit integer.".into()
+        }
+      ),
     ]),
   );
 }
@@ -606,6 +634,7 @@ fn enum_unknown_fields() {
 
 #[test]
 fn enum_unknown_variants() {
+  /// Foo.
   #[derive(Debug, Decode, Encode, PartialEq)]
   enum Foo {
     /// Bar.
@@ -613,6 +642,7 @@ fn enum_unknown_variants() {
     Bar,
   }
 
+  /// Bar.
   #[derive(Debug, Decode, Encode, PartialEq)]
   enum Bar {
     /// Baz.
@@ -647,6 +677,7 @@ fn enum_unknown_variants() {
 
 #[test]
 fn generic_schema() {
+  /// Foo.
   #[derive(Decode, Encode)]
   struct Foo<T> {
     /// Bar.
@@ -667,6 +698,7 @@ fn generic_schema() {
       (
         "Foo<UnsignedInteger>".into(),
         deco::Schema::Struct {
+          description: "Foo.".into(),
           fields: vec![deco::Field {
             description: "Bar.".into(),
             n: 1,
@@ -678,13 +710,19 @@ fn generic_schema() {
           strict: false,
         },
       ),
-      ("UnsignedInteger".into(), deco::Schema::UnsignedInteger),
+      (
+        "UnsignedInteger".into(),
+        deco::Schema::UnsignedInteger {
+          description: "Unsigned 64-bit integer.".into()
+        }
+      ),
     ]),
   );
 }
 
 #[test]
 fn json_enum() {
+  /// Foo.
   #[allow(dead_code)]
   #[skip_serializing_none]
   #[derive(Deserialize, Json)]
@@ -709,6 +747,7 @@ fn json_enum() {
       (
         "Foo".into(),
         json::Schema::TaggedEnum {
+          description: "Foo.".into(),
           strict: true,
           tag: "type".into(),
           variants: vec![
@@ -731,13 +770,19 @@ fn json_enum() {
           ],
         },
       ),
-      ("String".into(), json::Schema::String),
+      (
+        "String".into(),
+        json::Schema::String {
+          description: "String.".into()
+        }
+      ),
     ]),
   );
 }
 
 #[test]
 fn json_generic() {
+  /// Foo.
   #[allow(dead_code)]
   #[derive(Deserialize, Json)]
   struct Foo<T> {
@@ -755,6 +800,7 @@ fn json_generic() {
       (
         "Foo<String>".into(),
         json::Schema::Struct {
+          description: "Foo.".into(),
           fields: vec![json::Field {
             description: "Bar.".into(),
             example: None,
@@ -765,13 +811,19 @@ fn json_generic() {
           strict: false,
         },
       ),
-      ("String".into(), json::Schema::String),
+      (
+        "String".into(),
+        json::Schema::String {
+          description: "String.".into()
+        }
+      ),
     ]),
   );
 }
 
 #[test]
 fn json_string_enum() {
+  /// Foo.
   #[allow(dead_code)]
   #[derive(Deserialize, Json)]
   #[serde(rename_all = "kebab-case")]
@@ -794,6 +846,7 @@ fn json_string_enum() {
     BTreeMap::from([(
       "Foo".into(),
       json::Schema::StringEnum {
+        description: "Foo.".into(),
         values: vec![
           json::Value {
             description: "Bar.".into(),
@@ -815,6 +868,7 @@ fn json_string_enum() {
 
 #[test]
 fn json_struct() {
+  /// Foo.
   #[allow(dead_code)]
   #[skip_serializing_none]
   #[derive(Deserialize, Json)]
@@ -846,6 +900,7 @@ fn json_struct() {
       (
         "Foo".into(),
         json::Schema::Struct {
+          description: "Foo.".into(),
           fields: vec![
             json::Field {
               description: "Bar.".into(),
@@ -872,13 +927,19 @@ fn json_struct() {
           strict: true,
         },
       ),
-      ("String".into(), json::Schema::String),
+      (
+        "String".into(),
+        json::Schema::String {
+          description: "String.".into()
+        }
+      ),
     ]),
   );
 }
 
 #[test]
 fn json_transparent() {
+  /// Foo.
   #[allow(dead_code)]
   #[serde_as]
   #[derive(Deserialize, Json)]
@@ -898,6 +959,7 @@ fn json_transparent() {
       (
         "Foo".into(),
         json::Schema::Wrapper {
+          description: "Foo.".into(),
           inner: "Set<String>".into(),
         },
       ),
@@ -907,13 +969,19 @@ fn json_transparent() {
           element: "String".into(),
         },
       ),
-      ("String".into(), json::Schema::String),
+      (
+        "String".into(),
+        json::Schema::String {
+          description: "String.".into()
+        }
+      ),
     ]),
   );
 }
 
 #[test]
 fn json_untagged() {
+  /// Foo.
   #[allow(dead_code)]
   #[derive(Deserialize, Json)]
   #[serde(untagged)]
@@ -938,16 +1006,23 @@ fn json_untagged() {
       (
         "Foo".into(),
         json::Schema::UntaggedEnum {
+          description: "Foo.".into(),
           variants: vec!["String".into(), "Array<Foo>".into()],
         },
       ),
-      ("String".into(), json::Schema::String),
+      (
+        "String".into(),
+        json::Schema::String {
+          description: "String.".into()
+        }
+      ),
     ]),
   );
 }
 
 #[test]
 fn magic() {
+  /// Foo.
   #[derive(Debug, Decode, Encode, Magic, PartialEq)]
   #[deco(magic = MagicType::Archive)]
   struct Foo {
@@ -985,6 +1060,7 @@ fn magic() {
 
 #[test]
 fn mixed_required_and_optional() {
+  /// Foo.
   #[derive(Debug, Encode, Decode, PartialEq)]
   struct Foo {
     /// Bar.
@@ -1014,6 +1090,7 @@ fn mixed_required_and_optional() {
 
 #[test]
 fn single_field() {
+  /// Foo.
   #[derive(Debug, Encode, Decode, PartialEq)]
   struct Foo {
     /// Bar.
@@ -1026,6 +1103,7 @@ fn single_field() {
 
 #[test]
 fn sorted_set() {
+  /// Foo.
   #[derive(Debug, Decode, Encode, PartialEq)]
   #[deco(sorted_set, transparent)]
   struct Foo(Vec<u64>);
@@ -1043,7 +1121,12 @@ fn sorted_set() {
           element: "UnsignedInteger".into(),
         },
       ),
-      ("UnsignedInteger".into(), deco::Schema::UnsignedInteger),
+      (
+        "UnsignedInteger".into(),
+        deco::Schema::UnsignedInteger {
+          description: "Unsigned 64-bit integer.".into()
+        }
+      ),
     ]),
   );
 
@@ -1075,6 +1158,7 @@ fn strict() {
 
 #[test]
 fn struct_schema() {
+  /// Foo.
   #[derive(Decode, Encode)]
   struct Foo {
     /// Bar.
@@ -1092,10 +1176,16 @@ fn struct_schema() {
   assert_eq!(
     schemas,
     BTreeMap::from([
-      ("Boolean".into(), deco::Schema::Boolean),
+      (
+        "Boolean".into(),
+        deco::Schema::Boolean {
+          description: "True or false.".into()
+        }
+      ),
       (
         "Foo".into(),
         deco::Schema::Struct {
+          description: "Foo.".into(),
           fields: vec![
             deco::Field {
               description: "Bar.".into(),
@@ -1116,13 +1206,19 @@ fn struct_schema() {
           strict: false,
         },
       ),
-      ("UnsignedInteger".into(), deco::Schema::UnsignedInteger),
+      (
+        "UnsignedInteger".into(),
+        deco::Schema::UnsignedInteger {
+          description: "Unsigned 64-bit integer.".into()
+        }
+      ),
     ]),
   );
 }
 
 #[test]
 fn struct_schema_attributes() {
+  /// Foo.
   #[derive(Encode, Magic)]
   #[deco(magic = MagicType::Archive, strict)]
   struct Foo {}
@@ -1136,6 +1232,7 @@ fn struct_schema_attributes() {
     BTreeMap::from([(
       "Foo".into(),
       deco::Schema::Struct {
+        description: "Foo.".into(),
         fields: vec![],
         magic: Some("archive".into()),
         strict: true,
@@ -1146,6 +1243,7 @@ fn struct_schema_attributes() {
 
 #[test]
 fn transparent_newtype() {
+  /// Foo.
   #[derive(Debug, Encode, Decode, PartialEq)]
   #[deco(transparent)]
   struct Foo(u64);
@@ -1156,6 +1254,7 @@ fn transparent_newtype() {
 
 #[test]
 fn transparent_schema() {
+  /// Foo.
   #[derive(Decode, Encode)]
   #[deco(transparent)]
   struct Foo(u64);
@@ -1170,16 +1269,47 @@ fn transparent_schema() {
       (
         "Foo".into(),
         deco::Schema::Wrapper {
+          description: "Foo.".into(),
           inner: "UnsignedInteger".into(),
         },
       ),
-      ("UnsignedInteger".into(), deco::Schema::UnsignedInteger),
+      (
+        "UnsignedInteger".into(),
+        deco::Schema::UnsignedInteger {
+          description: "Unsigned 64-bit integer.".into()
+        }
+      ),
     ]),
   );
 }
 
 #[test]
+fn undocumented_schema() {
+  #[derive(Encode)]
+  #[deco(undocumented)]
+  struct Foo {}
+
+  let mut schemas = BTreeMap::new();
+
+  assert_eq!(Foo::deco_schema(&mut schemas), "Foo");
+
+  assert_eq!(
+    schemas,
+    BTreeMap::from([(
+      "Foo".into(),
+      deco::Schema::Struct {
+        description: String::new(),
+        fields: vec![],
+        magic: None,
+        strict: false,
+      },
+    )]),
+  );
+}
+
+#[test]
 fn unknown_variants() {
+  /// Foo.
   #[derive(Debug, Decode, Encode, PartialEq)]
   enum Foo {
     /// Bar.
@@ -1187,6 +1317,7 @@ fn unknown_variants() {
     Bar,
   }
 
+  /// Bar.
   #[derive(Debug, Decode, Encode, PartialEq)]
   struct Bar {
     /// Bar.
@@ -1406,6 +1537,7 @@ fn unsupported_version() {
 
 #[test]
 fn validate() {
+  /// Foo.
   #[derive(Debug, Encode, Decode, PartialEq)]
   #[deco(transparent, validate)]
   struct Foo(String);
@@ -1436,6 +1568,7 @@ fn validate() {
 
 #[test]
 fn validate_struct() {
+  /// Foo.
   #[derive(Debug, Encode, Decode, PartialEq)]
   #[deco(validate)]
   struct Foo {

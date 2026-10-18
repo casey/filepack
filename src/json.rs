@@ -56,9 +56,14 @@ pub enum Schema {
   Array {
     element: String,
   },
-  Boolean,
-  Bytes,
+  Boolean {
+    description: String,
+  },
+  Bytes {
+    description: String,
+  },
   Hex {
+    description: String,
     tag: Tag,
   },
   Map {
@@ -68,29 +73,54 @@ pub enum Schema {
   Set {
     element: String,
   },
-  String,
+  String {
+    description: String,
+  },
   StringEnum {
+    description: String,
     values: Vec<Value>,
   },
   Struct {
+    description: String,
     fields: Vec<Field>,
     strict: bool,
   },
   TaggedEnum {
+    description: String,
     strict: bool,
     tag: String,
     variants: Vec<Variant>,
   },
-  UnsignedInteger,
+  UnsignedInteger {
+    description: String,
+  },
   UntaggedEnum {
+    description: String,
     variants: Vec<String>,
   },
   Wrapper {
+    description: String,
     inner: String,
   },
 }
 
 impl Schema {
+  pub fn description(&self) -> Option<&str> {
+    match self {
+      Self::Array { .. } | Self::Map { .. } | Self::Set { .. } => None,
+      Self::Boolean { description }
+      | Self::Bytes { description }
+      | Self::Hex { description, .. }
+      | Self::String { description }
+      | Self::StringEnum { description, .. }
+      | Self::Struct { description, .. }
+      | Self::TaggedEnum { description, .. }
+      | Self::UnsignedInteger { description }
+      | Self::UntaggedEnum { description, .. }
+      | Self::Wrapper { description, .. } => Some(description),
+    }
+  }
+
   pub fn register(self, name: &str, registry: &mut Registry) -> String {
     if let Some(existing) = registry.schemas.get(name) {
       assert!(
@@ -141,7 +171,10 @@ pub trait Json {
 
 impl Json for bool {
   fn json_schema(registry: &mut Registry) -> String {
-    Schema::Boolean.register("Boolean", registry)
+    Schema::Boolean {
+      description: "True or false.".into(),
+    }
+    .register("Boolean", registry)
   }
 }
 
@@ -164,7 +197,10 @@ impl<T: Json> Json for BTreeSet<T> {
 
 impl Json for String {
   fn json_schema(registry: &mut Registry) -> String {
-    Schema::String.register("String", registry)
+    Schema::String {
+      description: "String.".into(),
+    }
+    .register("String", registry)
   }
 }
 
@@ -178,13 +214,17 @@ impl<T: Json> Json for Vec<T> {
 
 impl Json for u64 {
   fn json_schema(registry: &mut Registry) -> String {
-    Schema::UnsignedInteger.register("UnsignedInteger", registry)
+    Schema::UnsignedInteger {
+      description: "Unsigned 64-bit integer.".into(),
+    }
+    .register("UnsignedInteger", registry)
   }
 }
 
 impl Json for Utf8PathBuf {
   fn json_schema(registry: &mut Registry) -> String {
     Schema::Wrapper {
+      description: "UTF-8 filesystem path.".into(),
       inner: String::json_schema(registry),
     }
     .register("Utf8PathBuf", registry)
@@ -196,13 +236,36 @@ mod tests {
   use super::*;
 
   #[test]
+  fn description() {
+    assert_eq!(
+      Schema::String {
+        description: "Foo.".into()
+      }
+      .description(),
+      Some("Foo."),
+    );
+
+    assert_eq!(
+      Schema::Array {
+        element: "Foo".into()
+      }
+      .description(),
+      None,
+    );
+  }
+
+  #[test]
   fn register() {
     let mut schemas = Registry::new();
 
-    assert_eq!(Schema::String.register("Foo", &mut schemas), "Foo");
-    assert_eq!(Schema::String.register("Foo", &mut schemas), "Foo");
+    let schema = Schema::String {
+      description: "Foo.".into(),
+    };
 
-    assert_eq!(*schemas, BTreeMap::from([("Foo".into(), Schema::String)]));
+    assert_eq!(schema.clone().register("Foo", &mut schemas), "Foo");
+    assert_eq!(schema.clone().register("Foo", &mut schemas), "Foo");
+
+    assert_eq!(*schemas, BTreeMap::from([("Foo".into(), schema)]));
   }
 
   #[test]
@@ -210,7 +273,10 @@ mod tests {
   fn register_conflict() {
     let mut schemas = Registry::new();
 
-    Schema::String.register("Foo", &mut schemas);
+    Schema::String {
+      description: "Foo.".into(),
+    }
+    .register("Foo", &mut schemas);
     Schema::Array {
       element: "Foo".into(),
     }

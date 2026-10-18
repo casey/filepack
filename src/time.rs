@@ -6,6 +6,7 @@ static TIME: LazyLock<Regex> = LazyLock::new(|| {
     .unwrap()
 });
 
+/// Point in time with varying precision.
 #[allow(clippy::arbitrary_source_item_ordering)]
 #[derive(Clone, Copy, Debug, Decode, DeserializeFromStr, Encode, PartialEq, SerializeDisplay)]
 pub(crate) enum Time {
@@ -73,6 +74,7 @@ impl FromStr for Time {
 impl json::Json for Time {
   fn json_schema(registry: &mut json::Registry) -> String {
     json::Schema::Wrapper {
+      description: "Year or calendar day, as `YYYY` or `YYYY-MM-DD`.".into(),
       inner: String::json_schema(registry),
     }
     .register("Time", registry)

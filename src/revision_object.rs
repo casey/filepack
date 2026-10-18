@@ -1,8 +1,9 @@
 use super::*;
 
+/// Revision of a package.
 #[derive(Debug, Decode, Encode, PartialEq)]
 pub struct RevisionObject {
-  /// Fingerprint of the package at this revision.
+  /// Fingerprint at this revision.
   #[n(1)]
   pub package: Fingerprint,
   /// Revisions this revision was derived from.

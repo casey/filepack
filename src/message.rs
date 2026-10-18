@@ -26,6 +26,7 @@ mod tests {
 
   #[test]
   fn context_separates_domains() {
+    /// Impostor.
     #[derive(Debug, Decode, Encode, Eq, Ord, PartialEq, PartialOrd)]
     struct Impostor {
       /// Fingerprint.
@@ -49,6 +50,7 @@ mod tests {
       }
     }
 
+    /// Twin.
     #[derive(Decode, Encode, Eq, Ord, PartialEq, PartialOrd)]
     struct Twin {
       /// Fingerprint.

@@ -1,5 +1,7 @@
 use super::*;
 
+/// Directory totals. `files + directories` and `file_size + directory_size`
+/// are guaranteed to fit in a unsigned 64-bit integer.
 #[allow(clippy::arbitrary_source_item_ordering)]
 #[derive(Clone, Copy, Debug, Decode, Default, Encode, Json, PartialEq, Serialize)]
 #[deco(validate)]

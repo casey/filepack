@@ -6,10 +6,14 @@
 %%   | deco::Schema::SortedSet { .. } => {
 %%     unreachable!()
 %%   }
-%%   deco::Schema::Boolean => {
-A boolean. Encoded as the byte string `0x00` for false and `0x01` for true.
+%%   deco::Schema::Boolean { description } => {
+{{ description }}
+
+Encoded as the byte string `0x00` for false and `0x01` for true.
 %%   }
-%%   deco::Schema::Enum { variants } => {
+%%   deco::Schema::Enum { description, variants } => {
+{{ description }}
+
 An enum with {{ Count::new(variants.len(), "variant") }}:
 
 | discriminant | variant | description |
@@ -30,14 +34,20 @@ An enum with {{ Count::new(variants.len(), "variant") }}:
 %%       }
 %%     }
 %%   }
-%%   deco::Schema::SignedInteger => {
-A signed 64-bit integer. First zig-zag encoded, then encoded as an
+%%   deco::Schema::SignedInteger { description } => {
+{{ description }}
+
+First zig-zag encoded, then encoded as an
 [UnsignedInteger](../deco/unsigned-integer.md).
 %%   }
-%%   deco::Schema::String => {
-A string. Encoded as a byte string containing the UTF-8 encoding of the string.
+%%   deco::Schema::String { description } => {
+{{ description }}
+
+Encoded as a byte string containing the UTF-8 encoding of the string.
 %%   }
-%%   deco::Schema::Struct { fields, magic, strict } => {
+%%   deco::Schema::Struct { description, fields, magic, strict } => {
+{{ description }}
+
 A struct with {{ Count::new(fields.len(), "field") }}:
 
 {{ DecoFieldsMd { fields, registry: self.registry } }}
@@ -52,11 +62,15 @@ followed by the encoded value.
 Unknown fields are rejected.
 %%     }
 %%   }
-%%   deco::Schema::UnsignedInteger => {
-An unsigned 64-bit integer. Encoded as little endian with trailing zero bytes
-removed, with a minimum length of one byte.
+%%   deco::Schema::UnsignedInteger { description } => {
+{{ description }}
+
+Encoded as little endian with trailing zero bytes removed, with a minimum
+length of one byte.
 %%   }
-%%   deco::Schema::Wrapper { inner } => {
+%%   deco::Schema::Wrapper { description, inner } => {
+{{ description }}
+
 A wrapper around {{ self.registry.description(Chapter::Deco, inner) }}.
 %%   }
 %% }

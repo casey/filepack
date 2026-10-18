@@ -4,19 +4,20 @@
 %%   json::Schema::Array { .. } | json::Schema::Map { .. } | json::Schema::Set { .. } => {
 %%     unreachable!()
 %%   }
-%%   json::Schema::Boolean => {
-A boolean.
+%%   json::Schema::Boolean { description }
+%%   | json::Schema::Bytes { description }
+%%   | json::Schema::String { description }
+%%   | json::Schema::UnsignedInteger { description } => {
+{{ description }}
 %%   }
-%%   json::Schema::Bytes => {
-A byte string, encoded as hexadecimal.
-%%   }
-%%   json::Schema::Hex { tag } => {
+%%   json::Schema::Hex { description, tag } => {
+{{ description }}
+
 A tagged hex string with tag [`{{ tag.prefix() }}`](../hex/{{ tag.prefix() }}.md).
 %%   }
-%%   json::Schema::String => {
-A string.
-%%   }
-%%   json::Schema::StringEnum { values } => {
+%%   json::Schema::StringEnum { description, values } => {
+{{ description }}
+
 A string with {{ Count::new(values.len(), "possible value") }}:
 
 | value | description |
@@ -25,7 +26,9 @@ A string with {{ Count::new(values.len(), "possible value") }}:
 | `{{ value.value }}` | {{ value.description }} |
 %%     }
 %%   }
-%%   json::Schema::Struct { fields, strict } => {
+%%   json::Schema::Struct { description, fields, strict } => {
+{{ description }}
+
 A struct with {{ Count::new(fields.len(), "field") }}:
 
 {{ JsonFieldsMd { chapter: self.chapter, fields, registry: self.registry } }}
@@ -34,7 +37,9 @@ A struct with {{ Count::new(fields.len(), "field") }}:
 Unknown fields are rejected.
 %%     }
 %%   }
-%%   json::Schema::TaggedEnum { strict, tag, variants } => {
+%%   json::Schema::TaggedEnum { description, strict, tag, variants } => {
+{{ description }}
+
 An enum with {{ Count::new(variants.len(), "variant") }}, distinguished by the
 `{{ tag }}` field:
 
@@ -60,10 +65,9 @@ Unknown fields are rejected.
 %%       }
 %%     }
 %%   }
-%%   json::Schema::UnsignedInteger => {
-An unsigned 64-bit integer.
-%%   }
-%%   json::Schema::UntaggedEnum { variants } => {
+%%   json::Schema::UntaggedEnum { description, variants } => {
+{{ description }}
+
 An untagged enum with {{ Count::new(variants.len(), "variant") }}:
 
 | schema |
@@ -72,7 +76,9 @@ An untagged enum with {{ Count::new(variants.len(), "variant") }}:
 | {{ self.registry.description(self.chapter, variant) }} |
 %%     }
 %%   }
-%%   json::Schema::Wrapper { inner } => {
+%%   json::Schema::Wrapper { description, inner } => {
+{{ description }}
+
 A wrapper around {{ self.registry.description(self.chapter, inner) }}.
 %%   }
 %% }
