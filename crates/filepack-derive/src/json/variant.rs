@@ -38,6 +38,13 @@ impl Variant {
     })
   }
 
+  fn description(&self) -> Result<String> {
+    self
+      .check_attributes()?
+      .description
+      .ok_or_else(|| Error::new_spanned(&self.ident, "variants must have doc comments"))
+  }
+
   pub(crate) fn is_unit(&self) -> bool {
     self.fields.is_unit()
   }
@@ -55,12 +62,7 @@ impl Variant {
   pub(crate) fn schema(&self, rename_all: Option<RenameAll>) -> Result<TokenStream> {
     let name = self.name(rename_all)?;
 
-    let Some(description) = self.check_attributes()?.description else {
-      return Err(Error::new_spanned(
-        &self.ident,
-        "variants must have doc comments",
-      ));
-    };
+    let description = self.description()?;
 
     let fields = self
       .fields
@@ -88,5 +90,18 @@ impl Variant {
     }
 
     self.fields.iter().next().unwrap().ty()
+  }
+
+  pub(crate) fn value(&self, rename_all: Option<RenameAll>) -> Result<TokenStream> {
+    let value = self.name(rename_all)?;
+
+    let description = self.description()?;
+
+    Ok(quote! {
+      json::Value {
+        description: #description.into(),
+        value: #value.into(),
+      }
+    })
   }
 }

@@ -73,6 +73,7 @@ mod tests {
   #[derive(Debug, Decode, Encode, PartialEq, Serialize)]
   #[deco(strict)]
   struct Foo {
+    /// Foo.
     #[n(1)]
     foo: u64,
   }

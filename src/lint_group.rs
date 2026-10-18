@@ -19,10 +19,15 @@ use super::*;
 #[serde(rename_all = "kebab-case")]
 #[strum(serialize_all = "kebab-case")]
 pub enum LintGroup {
+  /// All lints.
   All,
+  /// Paths that may not work on all platforms.
   Compatibility,
+  /// Lints in the `compatibility` and `hygiene` groups.
   Distribution,
+  /// Files that shouldn't be in a package.
   Hygiene,
+  /// Missing or inconsistent metadata.
   Metadata,
 }
 

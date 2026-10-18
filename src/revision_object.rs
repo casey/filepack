@@ -2,8 +2,10 @@ use super::*;
 
 #[derive(Debug, Decode, Encode, PartialEq)]
 pub struct RevisionObject {
+  /// Fingerprint of the package at this revision.
   #[n(1)]
   pub package: Fingerprint,
+  /// Revisions this revision was derived from.
   #[n(2)]
   pub parents: Option<NonEmptyOrderedSet<Revision>>,
 }

@@ -299,6 +299,7 @@ mod tests {
   fn unknown_code() {
     #[derive(Debug, Decode, PartialEq)]
     struct Foo {
+      /// Language.
       #[n(1)]
       language: Option<Language>,
     }

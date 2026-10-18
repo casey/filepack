@@ -70,8 +70,8 @@ pub(crate) struct LanguagesMd<'a> {
 
 #[derive(Boilerplate)]
 pub(crate) struct LintsMd<'a> {
-  pub(crate) groups: &'a BTreeMap<LintGroup, BTreeSet<Lint>>,
-  pub(crate) lints: &'a BTreeSet<Lint>,
+  pub(crate) groups: &'a BTreeMap<LintGroup, reference::LintGroup>,
+  pub(crate) lints: &'a BTreeMap<Lint, String>,
 }
 
 #[derive(Boilerplate)]

@@ -97,12 +97,12 @@ impl Input {
         } else if variants.iter().all(Variant::is_unit) {
           let values = variants
             .iter()
-            .map(|variant| variant.name(attributes.rename_all))
-            .collect::<Result<Vec<String>>>()?;
+            .map(|variant| variant.value(attributes.rename_all))
+            .collect::<Result<Vec<TokenStream>>>()?;
 
           quote! {
             json::Schema::StringEnum {
-              values: vec![#(#values.into()),*],
+              values: vec![#(#values),*],
             }
           }
         } else {
@@ -260,6 +260,15 @@ mod tests {
         #[serde(tag = "type")]
         enum Foo {
           Bar {},
+        }
+      },
+      "variants must have doc comments",
+    );
+
+    case(
+      &syn::parse_quote! {
+        enum Foo {
+          Bar,
         }
       },
       "variants must have doc comments",

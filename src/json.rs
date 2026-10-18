@@ -70,7 +70,7 @@ pub enum Schema {
   },
   String,
   StringEnum {
-    values: Vec<String>,
+    values: Vec<Value>,
   },
   Struct {
     fields: Vec<Field>,
@@ -104,6 +104,12 @@ impl Schema {
 
     name.into()
   }
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+pub struct Value {
+  pub description: String,
+  pub value: String,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]

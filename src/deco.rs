@@ -2,6 +2,7 @@ use super::*;
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct Field {
+  pub description: String,
   pub n: u64,
   pub name: String,
   pub optional: bool,
@@ -63,6 +64,7 @@ impl Schema {
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct Variant {
+  pub description: String,
   pub fields: Vec<Field>,
   pub n: u64,
   pub name: String,

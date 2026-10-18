@@ -19,10 +19,10 @@ A string.
 %%   json::Schema::StringEnum { values } => {
 A string with {{ Count::new(values.len(), "possible value") }}:
 
-| value |
-|-------|
+| value | description |
+|-------|-------------|
 %%     for value in values {
-| `{{ value }}` |
+| `{{ value.value }}` | {{ value.description }} |
 %%     }
 %%   }
 %%   json::Schema::Struct { fields, strict } => {

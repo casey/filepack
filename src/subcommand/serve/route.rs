@@ -664,6 +664,7 @@ mod tests {
         limit: 1_048_576,
         schema: deco::Schema::Struct {
           fields: vec![deco::Field {
+            description: "Hashes to check for.".into(),
             n: 1,
             name: "hashes".into(),
             optional: false,
@@ -683,6 +684,7 @@ mod tests {
       Some(crate::reference::Response::Deco {
         schema: deco::Schema::Struct {
           fields: vec![deco::Field {
+            description: "Package numbers present on the server.".into(),
             n: 1,
             name: "numbers".into(),
             optional: false,

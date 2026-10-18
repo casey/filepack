@@ -9,13 +9,17 @@ static TIME: LazyLock<Regex> = LazyLock::new(|| {
 #[allow(clippy::arbitrary_source_item_ordering)]
 #[derive(Clone, Copy, Debug, Decode, DeserializeFromStr, Encode, PartialEq, SerializeDisplay)]
 pub(crate) enum Time {
+  /// A year.
   #[n(0)]
   Year {
+    /// Year, which may be negative.
     #[n(1)]
     year: i64,
   },
+  /// A calendar day.
   #[n(1)]
   Day {
+    /// Days since the Unix epoch, which may be negative.
     #[n(1)]
     days: i64,
   },

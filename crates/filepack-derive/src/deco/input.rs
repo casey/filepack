@@ -35,7 +35,10 @@ impl Input {
 
     let variants = self.parse_variants()?;
 
-    let arms = variants.iter().map(|ParsedVariant { fields, ident, n }| {
+    let arms = variants.iter().map(|variant| {
+      let ParsedVariant {
+        fields, ident, n, ..
+      } = variant;
       let variant = format!("{type_name} {}", display_name(ident));
       if fields.is_empty() {
         quote! {
@@ -216,7 +219,10 @@ impl Input {
 
     let variants = self.parse_variants()?;
 
-    let arms = variants.iter().map(|ParsedVariant { fields, ident, n }| {
+    let arms = variants.iter().map(|variant| {
+      let ParsedVariant {
+        fields, ident, n, ..
+      } = variant;
       if fields.is_empty() {
         quote! { Self::#ident => array.element(#n), }
       } else {
@@ -235,11 +241,18 @@ impl Input {
 
     let schema_name = self.schema_name();
 
-    let schema_variants = variants.iter().map(|ParsedVariant { fields, ident, n }| {
+    let schema_variants = variants.iter().map(|variant| {
+      let ParsedVariant {
+        description,
+        fields,
+        ident,
+        n,
+      } = variant;
       let fields = ParsedField::schema(fields);
       let variant_name = ident.to_string();
       quote! {
         deco::Variant {
+          description: #description.into(),
           fields: vec![#(#fields),*],
           n: #n,
           name: #variant_name.into(),
@@ -733,6 +746,26 @@ mod tests {
 
     case(
       &syn::parse_quote! {
+        struct Foo {
+          #[n(1)]
+          bar: u64,
+        }
+      },
+      "fields must have doc comments",
+    );
+
+    case(
+      &syn::parse_quote! {
+        enum Foo {
+          #[n(0)]
+          Bar,
+        }
+      },
+      "variants must have doc comments",
+    );
+
+    case(
+      &syn::parse_quote! {
         #[deco(non_empty_ordered_set)]
         struct Foo {}
       },
@@ -796,6 +829,7 @@ mod tests {
     case(
       &syn::parse_quote! {
         struct Foo {
+          /// Foo.
           #[n(2)]
           foo: u64,
         }
@@ -806,6 +840,7 @@ mod tests {
     case(
       &syn::parse_quote! {
         enum Foo {
+          /// Bar.
           #[n(1)]
           Bar,
         }
