@@ -1,5 +1,6 @@
 use super::*;
 
+/// Ratio of image chroma to luma samples.
 #[derive(Clone, Copy, Debug, Decode, Display, Encode, Json, PartialEq, Serialize)]
 pub(crate) enum ChromaSubsampling {
   /// Luma only, no chroma.

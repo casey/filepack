@@ -23,11 +23,13 @@ impl<T: Encode, const LIMIT: usize> Describe for DecoRequest<T, LIMIT> {
   fn describe(endpoint: &mut reference::Endpoint, registry: &mut deco::Registry) {
     let name = T::deco_schema(registry);
 
-    let schema = registry.remove(&name).unwrap();
+    let deco::Schema::Struct { fields, .. } = registry.remove(&name).unwrap() else {
+      unreachable!()
+    };
 
     endpoint.request = Some(reference::Request::Deco {
+      fields,
       limit: LIMIT.into_u64(),
-      schema,
     });
   }
 }

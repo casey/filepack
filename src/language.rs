@@ -192,6 +192,7 @@ pub(crate) static CODES: LazyLock<BTreeMap<&'static str, &'static str>> = LazyLo
   .into()
 });
 
+/// ISO 639-1 language code.
 #[derive(
   Clone,
   Copy,
@@ -242,6 +243,7 @@ impl Decode<'_> for Language {
 impl json::Json for Language {
   fn json_schema(registry: &mut json::Registry) -> String {
     json::Schema::Wrapper {
+      description: "ISO 639-1 language code.".into(),
       inner: String::json_schema(registry),
     }
     .register("Language", registry)

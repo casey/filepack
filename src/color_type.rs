@@ -1,5 +1,6 @@
 use super::*;
 
+/// Image color model.
 #[derive(Clone, Copy, Debug, Decode, Default, Display, Encode, Json, PartialEq, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub(crate) enum ColorType {

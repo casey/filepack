@@ -1,5 +1,6 @@
 use super::*;
 
+/// BLAKE3 hash of a package's serialized root directory.
 #[derive(
   Clone,
   Copy,

@@ -1,5 +1,6 @@
 use super::*;
 
+/// Package manifest unpacked from a package archive.
 #[serde_as]
 #[derive(Debug, Deserialize, Json, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]

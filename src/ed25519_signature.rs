@@ -20,6 +20,7 @@ impl Decode<'_> for Ed25519Signature {
 impl Encode for Ed25519Signature {
   fn deco_schema(registry: &mut deco::Registry) -> String {
     deco::Schema::Wrapper {
+      description: "Ed25519 signature.".into(),
       inner: <[u8; ed25519_dalek::SIGNATURE_LENGTH]>::deco_schema(registry),
     }
     .register("Ed25519Signature", registry)

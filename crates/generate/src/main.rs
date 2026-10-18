@@ -2,8 +2,8 @@ use {
   self::{
     chapter::Chapter,
     description::Description,
-    functions::{escape, list, parameter, write},
-    has_page::HasPage,
+    functions::{escape, list, parameter, route_link, route_path, write},
+    row::Row,
     templates::{
       CommandMd, CommandsMd, DecoMd, DecoSchemaMd, HexMd, JsonMd, JsonSchemaMd, LanguagesMd,
       LintsMd, MediaFormatsMd, MetadataMd, RouteMd, RoutesMd, SummaryMd, TagMd, UnstableFeaturesMd,
@@ -21,7 +21,7 @@ use {
   std::{
     collections::{BTreeMap, BTreeSet},
     env,
-    fmt::Display,
+    fmt::{self, Display, Formatter},
     fs, iter,
   },
   strum::Display,
@@ -30,7 +30,7 @@ use {
 mod chapter;
 mod description;
 mod functions;
-mod has_page;
+mod row;
 mod templates;
 
 fn main() {
@@ -86,7 +86,7 @@ fn main() {
     let mut deco = BTreeMap::new();
 
     for (name, schema) in &reference.deco {
-      if !schema.has_page() {
+      if schema.description().is_none() {
         continue;
       }
 
@@ -152,7 +152,7 @@ fn main() {
     let mut pages = BTreeMap::new();
 
     for (name, schema) in &reference.json {
-      if !schema.has_page() {
+      if schema.description().is_none() {
         continue;
       }
 
@@ -178,7 +178,7 @@ fn main() {
     let mut pages = BTreeMap::new();
 
     for (name, schema) in &reference.yaml {
-      if !schema.has_page() {
+      if schema.description().is_none() {
         continue;
       }
 

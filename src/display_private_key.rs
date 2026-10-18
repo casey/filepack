@@ -1,5 +1,6 @@
 use super::*;
 
+/// Ed25519 private key, paired with its public key.
 #[derive(Decode, Encode)]
 #[deco(transparent)]
 pub(crate) struct DisplayPrivateKey([[u8; 32]; 2]);

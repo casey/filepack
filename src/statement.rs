@@ -1,5 +1,6 @@
 use super::*;
 
+/// Statement attesting to a package.
 #[derive(Debug, Decode, Encode, Eq, Ord, PartialEq, PartialOrd)]
 pub struct Statement {
   /// Fingerprint of the signed package.

@@ -1,5 +1,6 @@
 use super::*;
 
+/// Signature details.
 #[derive(Json, Serialize)]
 pub(crate) struct SignatureEntry {
   /// Public key derived from the private key that created the signature.

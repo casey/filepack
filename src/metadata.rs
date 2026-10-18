@@ -1,5 +1,6 @@
 use super::*;
 
+/// Metadata describing a package's content.
 #[allow(private_interfaces)]
 #[skip_serializing_none]
 #[derive(Clone, Debug, Default, Encode, Decode, Json, Magic, PartialEq, Serialize)]

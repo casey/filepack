@@ -1,5 +1,6 @@
 use super::*;
 
+/// Non-empty text without control characters or line breaks.
 #[derive(Clone, Debug, Decode, DeserializeFromStr, Encode, PartialEq, SerializeDisplay)]
 #[deco(transparent, validate)]
 pub struct Text(String);
@@ -64,6 +65,7 @@ impl Validate for Text {
 impl json::Json for Text {
   fn json_schema(registry: &mut json::Registry) -> String {
     json::Schema::Wrapper {
+      description: "Non-empty text without control characters or line breaks.".into(),
       inner: String::json_schema(registry),
     }
     .register("Text", registry)

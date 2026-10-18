@@ -150,6 +150,7 @@ mod tests {
 
   #[test]
   fn unknown_fields() {
+    /// Foo.
     #[derive(Debug, Decode, Encode, PartialEq)]
     struct Foo {
       /// Foo.
@@ -174,6 +175,7 @@ mod tests {
 
   #[test]
   fn unknown_fields_array() {
+    /// Foo.
     #[derive(Debug, Decode, Encode, PartialEq)]
     struct Foo {
       /// Foo.
@@ -203,6 +205,7 @@ mod tests {
 
   #[test]
   fn unknown_fields_nested() {
+    /// Foo.
     #[derive(Debug, Decode, Encode, PartialEq)]
     struct Foo {
       /// Foo.
@@ -210,6 +213,7 @@ mod tests {
       foo: u64,
     }
 
+    /// Bar.
     #[derive(Debug, Decode, Encode, PartialEq)]
     struct Bar {
       /// Bar.

@@ -1,5 +1,6 @@
 use super::*;
 
+/// Audio file container format.
 #[derive(Clone, Copy, Debug, Decode, Display, Encode, Json, PartialEq, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub(crate) enum AudioFormat {

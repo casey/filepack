@@ -8,10 +8,13 @@ This chapter includes the schemas of all types with YAML representations.
 Schemas
 -------
 
-| schema |
-|--------|
+| schema | description |
+|--------|-------------|
 %% for (name, schema) in self.yaml {
-%%   if schema.has_page() {
-| [{{ escape(name) }}](yaml/{{ name.to_kebab_case() }}.md) |
+%%   if let Some(description) = schema.description() {
+{{ Row((
+  format!("[{}](yaml/{}.md)", escape(name), name.to_kebab_case()),
+  description,
+)) }}
 %%   }
 %% }

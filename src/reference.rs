@@ -56,7 +56,7 @@ pub struct Reference {
 impl Reference {
   pub fn new() -> Self {
     fn descriptions(registry: &json::Registry, name: &str) -> BTreeMap<String, String> {
-      let json::Schema::StringEnum { values } = &registry[name] else {
+      let json::Schema::StringEnum { values, .. } = &registry[name] else {
         unreachable!()
       };
 
@@ -209,6 +209,7 @@ impl Reference {
 #[derive(Debug, Default, Deserialize, PartialEq, Serialize)]
 pub struct Endpoint {
   pub authenticated: bool,
+  pub description: String,
   pub parameters: Vec<Parameter>,
   pub query: Vec<QueryParameter>,
   pub range: bool,
@@ -259,13 +260,16 @@ pub struct QueryParameter {
 #[serde(rename_all = "kebab-case")]
 pub enum Request {
   Bytes,
-  Deco { limit: u64, schema: deco::Schema },
+  Deco {
+    fields: Vec<deco::Field>,
+    limit: u64,
+  },
 }
 
 #[derive(Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum Response {
-  Deco { schema: deco::Schema },
+  Deco { fields: Vec<deco::Field> },
   File,
   Html,
   Redirect,

@@ -1,8 +1,8 @@
 use {
   self::{
     functions::{
-      description, display_name, doc_line, number, option, path_value, type_argument,
-      validate_numbers,
+      description, display_name, doc_line, number, option, path_value, required_description,
+      type_argument, validate_numbers,
     },
     route_attribute::RouteAttribute,
   },
@@ -89,12 +89,18 @@ pub fn encode_display(input: proc_macro::TokenStream) -> proc_macro::TokenStream
 
   let name = &input.ident;
 
+  let description = match required_description(name, &input.attrs, "types") {
+    Ok(description) => description,
+    Err(err) => return err.to_compile_error().into(),
+  };
+
   let schema_name = name.to_string();
 
   quote! {
     impl Encode for #name {
       fn deco_schema(registry: &mut deco::Registry) -> String {
         deco::Schema::Wrapper {
+          description: #description.into(),
           inner: String::deco_schema(registry),
         }
         .register(#schema_name, registry)
@@ -149,6 +155,11 @@ pub fn route(
 
   let name = &item.sig.ident;
 
+  let description = match required_description(name, &item.attrs, "routes") {
+    Ok(description) => description,
+    Err(err) => return err.to_compile_error().into(),
+  };
+
   let route = format_ident!("{name}_route");
 
   let mut types = Vec::new();
@@ -174,6 +185,7 @@ pub fn route(
 
     pub(crate) fn #route(registry: &mut deco::Registry) -> Route {
       let mut endpoint = crate::reference::Endpoint::default();
+      endpoint.description = #description.into();
       #(<#types as Describe>::describe(&mut endpoint, registry);)*
       <#output as Describe>::describe(&mut endpoint, registry);
       Route {

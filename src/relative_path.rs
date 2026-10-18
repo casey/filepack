@@ -1,5 +1,6 @@
 use super::*;
 
+/// Relative forward-slash-separated path.
 #[derive(
   Clone,
   Debug,
@@ -244,6 +245,7 @@ impl PathExtractor for RelativePath {
 impl json::Json for RelativePath {
   fn json_schema(registry: &mut json::Registry) -> String {
     json::Schema::Wrapper {
+      description: "Relative forward-slash-separated path.".into(),
       inner: String::json_schema(registry),
     }
     .register("RelativePath", registry)

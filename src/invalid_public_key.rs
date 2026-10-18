@@ -1,5 +1,6 @@
 use super::*;
 
+/// An invalid Ed25519 public key.
 #[derive(Debug, Decode, Encode)]
 #[deco(transparent)]
 pub struct InvalidPublicKey(pub(crate) [u8; PublicKey::LEN]);

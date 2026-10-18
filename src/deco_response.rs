@@ -12,8 +12,10 @@ impl<T: Encode> Describe for DecoResponse<T> {
   fn describe(endpoint: &mut reference::Endpoint, registry: &mut deco::Registry) {
     let name = T::deco_schema(registry);
 
-    let schema = registry.remove(&name).unwrap();
+    let deco::Schema::Struct { fields, .. } = registry.remove(&name).unwrap() else {
+      unreachable!()
+    };
 
-    endpoint.response = Some(reference::Response::Deco { schema });
+    endpoint.response = Some(reference::Response::Deco { fields });
   }
 }

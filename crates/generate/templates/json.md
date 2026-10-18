@@ -9,10 +9,13 @@ by `filepack manifest`.
 Schemas
 -------
 
-| schema |
-|--------|
+| schema | description |
+|--------|-------------|
 %% for (name, schema) in self.json {
-%%   if schema.has_page() {
-| [{{ escape(name) }}](json/{{ name.to_kebab_case() }}.md) |
+%%   if let Some(description) = schema.description() {
+{{ Row((
+  format!("[{}](json/{}.md)", escape(name), name.to_kebab_case()),
+  description,
+)) }}
 %%   }
 %% }

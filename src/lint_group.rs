@@ -1,5 +1,6 @@
 use super::*;
 
+/// Named group of lints.
 #[derive(
   Clone,
   Copy,

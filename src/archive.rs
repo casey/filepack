@@ -1,13 +1,14 @@
 use super::*;
 
+/// Filepack archive.
 #[allow(clippy::arbitrary_source_item_ordering)]
 #[derive(Encode, Decode, Magic)]
 #[deco(magic = MagicType::Archive)]
 pub(crate) struct Archive {
-  /// Hash of the root directory object.
+  /// Hash of the root directory.
   #[n(1)]
   pub(crate) root: Hash,
-  /// Contents of the objects in the archive, keyed by hash.
+  /// Contents of the files and directories in the archive, keyed by hash.
   #[n(2)]
   pub(crate) files: BTreeMap<Hash, Vec<u8>>,
 }

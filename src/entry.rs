@@ -1,5 +1,6 @@
 use super::*;
 
+/// Entry in a directory.
 #[allow(clippy::arbitrary_source_item_ordering)]
 #[derive(Clone, Copy, Debug, Decode, Encode, PartialEq)]
 pub struct Entry {

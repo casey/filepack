@@ -1,5 +1,6 @@
 use super::*;
 
+/// Track-type specific information.
 #[skip_serializing_none]
 #[derive(Clone, Copy, Debug, Decode, Encode, Json, PartialEq, Serialize)]
 #[serde(rename_all = "snake_case", tag = "type")]

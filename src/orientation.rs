@@ -1,5 +1,6 @@
 use super::*;
 
+/// Transformation to apply when displaying an image.
 #[derive(Clone, Copy, Debug, Decode, Default, Encode, Json, PartialEq, Serialize)]
 pub(crate) struct Orientation {
   /// Whether to mirror horizontally when displaying.

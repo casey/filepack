@@ -3,7 +3,7 @@ use super::*;
 #[derive(FromDeriveInput)]
 #[darling(
   supports(struct_named, struct_newtype, enum_named, enum_unit),
-  forward_attrs(deco, n)
+  forward_attrs(deco, doc, n)
 )]
 pub(crate) struct Input {
   attrs: Vec<Attribute>,
@@ -199,11 +199,19 @@ impl Input {
     })
   }
 
+  fn description(&self, attributes: &Attributes) -> Result<String> {
+    if attributes.undocumented {
+      Ok(String::new())
+    } else {
+      required_description(&self.ident, &self.attrs, "types")
+    }
+  }
+
   pub(crate) fn encode(&self) -> Result<TokenStream> {
     let attributes = self.parse_attributes()?;
 
     match self.data {
-      Data::Enum(_) => self.encode_enum(),
+      Data::Enum(_) => self.encode_enum(&attributes),
       Data::Struct(_) => {
         if attributes.transparent {
           self.encode_transparent(&attributes)
@@ -214,10 +222,12 @@ impl Input {
     }
   }
 
-  fn encode_enum(&self) -> Result<TokenStream> {
+  fn encode_enum(&self, attributes: &Attributes) -> Result<TokenStream> {
     let name = &self.ident;
 
     let variants = self.parse_variants()?;
+
+    let description = self.description(attributes)?;
 
     let arms = variants.iter().map(|variant| {
       let ParsedVariant {
@@ -268,6 +278,7 @@ impl Input {
       impl #impl_generics Encode for #name #ty_generics #where_clause {
         fn deco_schema(registry: &mut deco::Registry) -> String {
           deco::Schema::Enum {
+            description: #description.into(),
             variants: vec![#(#schema_variants),*],
           }
           .register(&#schema_name, registry)
@@ -292,6 +303,8 @@ impl Input {
     let name = &self.ident;
 
     let fields = self.parse_fields()?;
+
+    let description = self.description(attributes)?;
 
     let items = ParsedField::encode(&fields, Receiver::Field);
 
@@ -320,6 +333,7 @@ impl Input {
       impl #impl_generics Encode for #name #ty_generics #where_clause {
         fn deco_schema(registry: &mut deco::Registry) -> String {
           deco::Schema::Struct {
+            description: #description.into(),
             fields: vec![#(#schema_fields),*],
             magic: #schema_magic,
             strict: #strict,
@@ -362,8 +376,11 @@ impl Input {
         }
       }
     } else {
+      let description = self.description(attributes)?;
+
       quote! {
         deco::Schema::Wrapper {
+          description: #description.into(),
           inner: <#ty>::deco_schema(registry),
         }
       }
@@ -770,6 +787,39 @@ mod tests {
         struct Foo {}
       },
       "`#[deco(non_empty_ordered_set)]` requires `#[deco(transparent)]`",
+    );
+  }
+
+  #[test]
+  fn doc_errors() {
+    assert_eq!(
+      Input::from_derive_input(&syn::parse_quote! {
+        struct Foo {
+          /// Bar.
+          #[n(1)]
+          bar: u64,
+        }
+      })
+      .unwrap()
+      .encode()
+      .err()
+      .unwrap()
+      .to_string(),
+      "types must have doc comments",
+    );
+
+    assert!(
+      Input::from_derive_input(&syn::parse_quote! {
+        #[deco(undocumented)]
+        struct Foo {
+          /// Bar.
+          #[n(1)]
+          bar: u64,
+        }
+      })
+      .unwrap()
+      .encode()
+      .is_ok()
     );
   }
 

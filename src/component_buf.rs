@@ -1,5 +1,6 @@
 use super::*;
 
+/// Path component.
 #[derive(
   Clone, Debug, Decode, DeserializeFromStr, Encode, Eq, Ord, PartialEq, PartialOrd, SerializeDisplay,
 )]
@@ -90,6 +91,7 @@ impl Validate for ComponentBuf {
 impl json::Json for ComponentBuf {
   fn json_schema(registry: &mut json::Registry) -> String {
     json::Schema::Wrapper {
+      description: "Path component.".into(),
       inner: String::json_schema(registry),
     }
     .register("ComponentBuf", registry)

@@ -1,5 +1,6 @@
 use super::*;
 
+/// Container format of a video file.
 #[derive(Clone, Copy, Debug, Decode, Display, Encode, Json, PartialEq, Serialize)]
 #[serde(rename_all = "kebab-case")]
 #[strum(serialize_all = "UPPERCASE")]

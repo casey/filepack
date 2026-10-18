@@ -9,6 +9,7 @@ pub(crate) struct Policy<'a> {
   now: u64,
 }
 
+/// Claims made by an authorization token.
 #[derive(Decode, Encode, Eq, Ord, PartialEq, PartialOrd)]
 pub(crate) struct Claims {
   /// Domain the token is valid for.
@@ -172,6 +173,7 @@ mod tests {
 
   #[test]
   fn unknown_field_rejected() {
+    /// Extra.
     #[derive(Decode, Encode, Eq, Ord, PartialEq, PartialOrd)]
     struct Extra {
       /// Audience.

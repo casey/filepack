@@ -159,10 +159,13 @@ were also optional and absent, the variant would be encoded as `0x00`.
 Schemas
 -------
 
-| schema |
-|--------|
+| schema | description |
+|--------|-------------|
 %% for (name, schema) in self.deco {
-%%   if schema.has_page() {
-| [{{ escape(name) }}](deco/{{ name.to_kebab_case() }}.md) |
+%%   if let Some(description) = schema.description() {
+{{ Row((
+  format!("[{}](deco/{}.md)", escape(name), name.to_kebab_case()),
+  description,
+)) }}
 %%   }
 %% }

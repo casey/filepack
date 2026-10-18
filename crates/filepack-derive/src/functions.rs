@@ -65,6 +65,23 @@ pub(crate) fn path_value(meta: &ParseNestedMeta, placeholder: &str) -> Result<Pa
   })
 }
 
+pub(crate) fn required_description(
+  ident: &Ident,
+  attributes: &[Attribute],
+  noun: &str,
+) -> Result<String> {
+  let mut doc = Vec::new();
+
+  for attribute in attributes {
+    if let Some(line) = doc_line(attribute)? {
+      doc.push(line);
+    }
+  }
+
+  description(doc)
+    .ok_or_else(|| Error::new_spanned(ident, format!("{noun} must have doc comments")))
+}
+
 pub(crate) fn type_argument<'a>(ty: &'a Type, name: &str) -> Option<&'a Type> {
   if let Type::Path(TypePath {
     attrs: _,

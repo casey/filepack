@@ -3,7 +3,7 @@ use super::*;
 #[derive(FromDeriveInput)]
 #[darling(
   supports(struct_named, enum_named, enum_newtype, enum_unit),
-  forward_attrs(serde)
+  forward_attrs(doc, serde)
 )]
 pub(crate) struct Input {
   attrs: Vec<Attribute>,
@@ -13,10 +13,18 @@ pub(crate) struct Input {
 }
 
 impl Input {
+  fn description(&self) -> Result<String> {
+    required_description(&self.ident, &self.attrs, "types")
+  }
+
   fn parse_attributes(&self) -> Result<Attributes> {
     let mut attributes = Attributes::default();
 
     for attribute in &self.attrs {
+      if !attribute.path().is_ident("serde") {
+        continue;
+      }
+
       attribute
         .parse_nested_meta(|meta| attributes.insert(&meta, ContainerAttribute::parse(&meta)?))?;
     }
@@ -89,8 +97,11 @@ impl Input {
             .map(Variant::ty)
             .collect::<Result<Vec<TokenStream>>>()?;
 
+          let description = self.description()?;
+
           quote! {
             json::Schema::UntaggedEnum {
+              description: #description.into(),
               variants: vec![#(#variants),*],
             }
           }
@@ -100,8 +111,11 @@ impl Input {
             .map(|variant| variant.value(attributes.rename_all))
             .collect::<Result<Vec<TokenStream>>>()?;
 
+          let description = self.description()?;
+
           quote! {
             json::Schema::StringEnum {
+              description: #description.into(),
               values: vec![#(#values),*],
             }
           }
@@ -118,8 +132,11 @@ impl Input {
             .map(|variant| variant.schema(attributes.rename_all))
             .collect::<Result<Vec<TokenStream>>>()?;
 
+          let description = self.description()?;
+
           quote! {
             json::Schema::TaggedEnum {
+              description: #description.into(),
               strict: #strict,
               tag: #tag.into(),
               variants: vec![#(#variants),*],
@@ -154,8 +171,11 @@ impl Input {
 
           let inner = field.ty()?;
 
+          let description = self.description()?;
+
           quote! {
             json::Schema::Wrapper {
+              description: #description.into(),
               inner: #inner,
             }
           }
@@ -165,8 +185,11 @@ impl Input {
             .map(|field| field.schema(attributes.rename_all))
             .collect::<Result<Vec<TokenStream>>>()?;
 
+          let description = self.description()?;
+
           quote! {
             json::Schema::Struct {
+              description: #description.into(),
               fields: vec![#(#fields),*],
               strict: #strict,
             }
@@ -272,6 +295,16 @@ mod tests {
         }
       },
       "variants must have doc comments",
+    );
+
+    case(
+      &syn::parse_quote! {
+        enum Foo {
+          /// Bar.
+          Bar,
+        }
+      },
+      "types must have doc comments",
     );
 
     case(

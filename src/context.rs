@@ -1,5 +1,6 @@
 use super::*;
 
+/// Message type enclosed by an envelope.
 #[derive(Debug, Encode, EnumIter, Eq, Ord, PartialEq, PartialOrd)]
 pub enum Context {
   /// Claims in an authorization token.

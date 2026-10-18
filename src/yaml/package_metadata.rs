@@ -1,5 +1,6 @@
 use super::*;
 
+/// Metadata describing the package itself, as opposed to its content.
 #[skip_serializing_none]
 #[derive(Debug, Deserialize, PartialEq, Json)]
 #[serde(deny_unknown_fields)]

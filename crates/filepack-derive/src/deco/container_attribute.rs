@@ -8,6 +8,7 @@ pub(crate) enum ContainerAttribute {
   SortedSet,
   Strict,
   Transparent,
+  Undocumented,
   Validate,
 }
 
@@ -25,6 +26,7 @@ impl ContainerAttribute {
       "sorted_set" => Self::SortedSet,
       "strict" => Self::Strict,
       "transparent" => Self::Transparent,
+      "undocumented" => Self::Undocumented,
       "validate" => Self::Validate,
       _ => {
         return Err(meta.error(format!("unknown container attribute `#[deco({ident})]`")));

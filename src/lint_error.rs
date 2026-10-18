@@ -14,6 +14,7 @@ use super::*;
     PartialOrd,
     Serialize
   ),
+  doc = "Check applied to a package by `filepack lint`.",
   vis(pub),
   serde(rename_all = "kebab-case"),
   strum(serialize_all = "kebab-case")
