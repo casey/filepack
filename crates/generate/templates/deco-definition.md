@@ -12,13 +12,13 @@ A boolean. Encoded as the byte string `0x00` for false and `0x01` for true.
 %%   deco::Schema::Enum { variants } => {
 An enum with {{ Count::new(variants.len(), "variant") }}:
 
-| discriminant | variant |
-|--------------|---------|
+| discriminant | variant | description |
+|--------------|---------|-------------|
 %%     for variant in variants {
 %%       if variant.fields.is_empty() {
-| {{ variant.n }} | {{ variant.name }} |
+| {{ variant.n }} | {{ variant.name }} | {{ variant.description.replace('\n', " ") }} |
 %%       } else {
-| {{ variant.n }} | [{{ variant.name }}](#{{ variant.name.to_lowercase() }}) |
+| {{ variant.n }} | [{{ variant.name }}](#{{ variant.name.to_lowercase() }}) | {{ variant.description.replace('\n', " ") }} |
 %%       }
 %%     }
 %%     for variant in variants {

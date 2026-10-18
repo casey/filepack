@@ -3,12 +3,15 @@ use super::*;
 #[derive(Clone, Copy, Debug, Decode, Display, Encode, Json, PartialEq, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub(crate) enum AudioFormat {
+  /// [Free Lossless Audio Codec](https://en.wikipedia.org/wiki/FLAC).
   #[n(0)]
   #[strum(serialize = "FLAC")]
   Flac,
+  /// [MPEG-1 Audio Layer III](https://en.wikipedia.org/wiki/MP3).
   #[n(1)]
   #[strum(serialize = "MP3")]
   Mp3,
+  /// [MPEG-4 Part 14](https://en.wikipedia.org/wiki/MP4_file_format).
   #[n(2)]
   #[strum(serialize = "MP4")]
   Mp4,

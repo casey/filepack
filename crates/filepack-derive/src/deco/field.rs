@@ -1,7 +1,7 @@
 use super::*;
 
 #[derive(FromField)]
-#[darling(forward_attrs(deco, n))]
+#[darling(forward_attrs(deco, doc, n))]
 pub(crate) struct Field {
   attrs: Vec<Attribute>,
   ident: Option<Ident>,
@@ -36,9 +36,22 @@ impl Field {
       ));
     }
 
+    let mut doc = Vec::new();
+
+    for attribute in &self.attrs {
+      if let Some(line) = doc_line(attribute)? {
+        doc.push(line);
+      }
+    }
+
+    let Some(description) = description(doc) else {
+      return Err(Error::new_spanned(ident, "fields must have doc comments"));
+    };
+
     let ty = type_argument(&self.ty, "Option");
 
     Ok(ParsedField {
+      description,
       ident,
       n,
       optional: ty.is_some(),

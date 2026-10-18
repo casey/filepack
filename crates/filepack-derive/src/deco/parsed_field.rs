@@ -1,6 +1,7 @@
 use super::*;
 
 pub(crate) struct ParsedField<'a> {
+  pub(crate) description: String,
   pub(crate) ident: &'a Ident,
   pub(crate) n: u64,
   pub(crate) optional: bool,
@@ -45,6 +46,7 @@ impl ParsedField<'_> {
       .iter()
       .map(
         |ParsedField {
+           description,
            ident,
            n,
            optional,
@@ -53,6 +55,7 @@ impl ParsedField<'_> {
           let name = ident.to_string();
           quote! {
             deco::Field {
+              description: #description.into(),
               n: #n,
               name: #name.into(),
               optional: #optional,

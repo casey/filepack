@@ -6,10 +6,13 @@ use super::*;
 )]
 #[deco(strict)]
 pub struct Signature<T> {
+  /// Public key that produced the signature.
   #[n(1)]
   public_key: PublicKey,
+  /// Signed message.
   #[n(2)]
   message: T,
+  /// Ed25519 signature over the enveloped message.
   #[n(3)]
   signature: Ed25519Signature,
 }

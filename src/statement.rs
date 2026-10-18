@@ -2,8 +2,10 @@ use super::*;
 
 #[derive(Debug, Decode, Encode, Eq, Ord, PartialEq, PartialOrd)]
 pub struct Statement {
+  /// Fingerprint of the signed package.
   #[n(1)]
   pub fingerprint: Fingerprint,
+  /// Unix timestamp of signing in seconds.
   #[n(2)]
   pub timestamp: Option<u64>,
 }

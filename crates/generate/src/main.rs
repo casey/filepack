@@ -14,7 +14,7 @@ use {
   camino::{Utf8Path, Utf8PathBuf},
   filepack::{
     Count, Language, Lint, LintGroup, MediaType, Reference, Tag, UnstableFeature, deco, json,
-    reference::{Command, Hex, MediaFormat, Parameter, Request, Response, Route},
+    reference::{self, Command, Hex, MediaFormat, Parameter, Request, Response, Route},
     yaml,
   },
   heck::ToKebabCase,

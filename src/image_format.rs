@@ -4,8 +4,10 @@ use super::*;
 #[serde(rename_all = "kebab-case")]
 #[strum(serialize_all = "UPPERCASE")]
 pub(crate) enum ImageFormat {
+  /// [Joint Photographic Experts Group](https://en.wikipedia.org/wiki/JPEG).
   #[n(0)]
   Jpeg,
+  /// [Portable Network Graphics](https://en.wikipedia.org/wiki/PNG).
   #[n(1)]
   Png,
 }

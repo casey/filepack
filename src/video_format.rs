@@ -4,8 +4,10 @@ use super::*;
 #[serde(rename_all = "kebab-case")]
 #[strum(serialize_all = "UPPERCASE")]
 pub(crate) enum VideoFormat {
+  /// [MPEG-4 Part 14](https://en.wikipedia.org/wiki/MP4_file_format).
   #[n(0)]
   Mp4,
+  /// [WebM](https://en.wikipedia.org/wiki/WebM).
   #[n(1)]
   #[strum(serialize = "WebM")]
   Webm,

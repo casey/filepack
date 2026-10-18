@@ -11,8 +11,10 @@ pub(crate) struct Policy<'a> {
 
 #[derive(Decode, Encode, Eq, Ord, PartialEq, PartialOrd)]
 pub(crate) struct Claims {
+  /// Domain the token is valid for.
   #[n(1)]
   pub(crate) audience: String,
+  /// Unix timestamp of signing in seconds.
   #[n(2)]
   pub(crate) timestamp: u64,
 }
@@ -172,10 +174,13 @@ mod tests {
   fn unknown_field_rejected() {
     #[derive(Decode, Encode, Eq, Ord, PartialEq, PartialOrd)]
     struct Extra {
+      /// Audience.
       #[n(1)]
       audience: String,
+      /// Timestamp.
       #[n(2)]
       timestamp: u64,
+      /// Unknown.
       #[n(3)]
       unknown: u64,
     }

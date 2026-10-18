@@ -2,6 +2,7 @@ use super::*;
 
 #[derive(Clone, Debug, Default, Encode, Decode, PartialEq)]
 pub struct Directory {
+  /// Entries in the directory, keyed by name.
   #[n(1)]
   pub(crate) entries: BTreeMap<ComponentBuf, Entry>,
 }

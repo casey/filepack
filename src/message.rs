@@ -28,8 +28,10 @@ mod tests {
   fn context_separates_domains() {
     #[derive(Debug, Decode, Encode, Eq, Ord, PartialEq, PartialOrd)]
     struct Impostor {
+      /// Fingerprint.
       #[n(1)]
       fingerprint: Fingerprint,
+      /// Timestamp.
       #[n(2)]
       timestamp: Option<u64>,
     }
@@ -49,8 +51,10 @@ mod tests {
 
     #[derive(Decode, Encode, Eq, Ord, PartialEq, PartialOrd)]
     struct Twin {
+      /// Fingerprint.
       #[n(1)]
       fingerprint: Fingerprint,
+      /// Timestamp.
       #[n(2)]
       timestamp: Option<u64>,
     }

@@ -3,13 +3,17 @@ use super::*;
 #[allow(clippy::arbitrary_source_item_ordering)]
 #[derive(Clone, Copy, Debug, Decode, Default, Encode, PartialEq)]
 pub(crate) enum Rotation {
+  /// No rotation.
   #[default]
   #[n(0)]
   R0,
+  /// Rotate 90 degrees.
   #[n(1)]
   R90,
+  /// Rotate 180 degrees.
   #[n(2)]
   R180,
+  /// Rotate 270 degrees.
   #[n(3)]
   R270,
 }

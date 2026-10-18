@@ -3,10 +3,13 @@ use super::*;
 #[allow(clippy::arbitrary_source_item_ordering)]
 #[derive(Clone, Copy, Debug, Decode, Encode, PartialEq)]
 pub struct Entry {
+  /// BLAKE3 hash of the entry's contents.
   #[n(1)]
   pub(crate) hash: Hash,
+  /// Size of the entry's contents in bytes.
   #[n(2)]
   pub(crate) size: u64,
+  /// Whether the entry is a file or a directory.
   #[n(3)]
   pub(crate) info: EntryInfo,
 }

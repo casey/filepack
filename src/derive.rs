@@ -4,8 +4,10 @@ use super::*;
 fn all_optional_all_none() {
   #[derive(Debug, Encode, Decode, PartialEq)]
   struct Foo {
+    /// Bar.
     #[n(1)]
     bar: Option<u64>,
+    /// Baz.
     #[n(2)]
     baz: Option<String>,
   }
@@ -23,8 +25,10 @@ fn all_optional_all_none() {
 fn all_optional_all_some() {
   #[derive(Debug, Encode, Decode, PartialEq)]
   struct Foo {
+    /// Bar.
     #[n(1)]
     bar: Option<u64>,
+    /// Baz.
     #[n(2)]
     baz: Option<String>,
   }
@@ -42,8 +46,10 @@ fn all_optional_all_some() {
 fn all_optional_mixed() {
   #[derive(Debug, Encode, Decode, PartialEq)]
   struct Foo {
+    /// Bar.
     #[n(1)]
     bar: Option<u64>,
+    /// Baz.
     #[n(2)]
     baz: Option<String>,
   }
@@ -69,8 +75,10 @@ fn all_optional_mixed() {
 fn all_required() {
   #[derive(Debug, Encode, Decode, PartialEq)]
   struct Foo {
+    /// Bar.
     #[n(1)]
     bar: u64,
+    /// Baz.
     #[n(2)]
     baz: String,
   }
@@ -88,6 +96,7 @@ fn all_required() {
 fn borrowed_field() {
   #[derive(Debug, Decode, Encode, PartialEq)]
   struct Foo<'a> {
+    /// Bar.
     #[n(1)]
     bar: &'a [u8],
   }
@@ -181,14 +190,17 @@ fn encode_display_schema() {
 fn enum_added_optional_field() {
   #[derive(Debug, Decode, Encode, PartialEq)]
   enum Foo {
+    /// Bar.
     #[n(0)]
     Bar,
   }
 
   #[derive(Debug, Decode, Encode, PartialEq)]
   enum Bar {
+    /// Bar.
     #[n(0)]
     Bar {
+      /// Foo.
       #[n(1)]
       foo: Option<u64>,
     },
@@ -218,10 +230,13 @@ fn enum_added_optional_field() {
 fn enum_array_invalid_discriminant() {
   #[derive(Debug, Decode, PartialEq)]
   enum Foo {
+    /// Bar.
     #[n(0)]
     Bar,
+    /// Baz.
     #[n(1)]
     Baz {
+      /// Baz.
       #[n(1)]
       baz: u64,
     },
@@ -243,8 +258,10 @@ fn enum_array_invalid_discriminant() {
 fn enum_array_missing_field() {
   #[derive(Debug, Decode, PartialEq)]
   enum Foo {
+    /// Bar.
     #[n(0)]
     Bar {
+      /// Bar.
       #[n(1)]
       bar: u64,
     },
@@ -260,8 +277,10 @@ fn enum_array_missing_field() {
 fn enum_array_unconsumed_elements() {
   #[derive(Debug, Decode, PartialEq)]
   enum Foo {
+    /// Bar.
     #[n(0)]
     Bar {
+      /// Bar.
       #[n(1)]
       bar: u64,
     },
@@ -277,10 +296,13 @@ fn enum_array_unconsumed_elements() {
 fn enum_empty_map() {
   #[derive(Debug, Decode, PartialEq)]
   enum Foo {
+    /// Bar.
     #[n(0)]
     Bar,
+    /// Baz.
     #[n(1)]
     Baz {
+      /// Foo.
       #[n(1)]
       foo: Option<u64>,
     },
@@ -300,6 +322,7 @@ fn enum_empty_map() {
 fn enum_invalid_discriminant() {
   #[derive(Debug, Decode)]
   enum Foo {
+    /// Bar.
     #[n(0)]
     Bar,
   }
@@ -348,10 +371,13 @@ fn enum_invalid_discriminant() {
 fn enum_mixed() {
   #[derive(Debug, Decode, Encode, PartialEq)]
   enum Foo {
+    /// Bar.
     #[n(0)]
     Bar,
+    /// Baz.
     #[n(1)]
     Baz {
+      /// Baz.
       #[n(1)]
       baz: u64,
     },
@@ -365,10 +391,13 @@ fn enum_mixed() {
 fn enum_named_field() {
   #[derive(Debug, Decode, Encode, PartialEq)]
   enum Foo {
+    /// Bar.
     #[n(0)]
     Bar {
+      /// Bar.
       #[n(1)]
       bar: u64,
+      /// Baz.
       #[n(2)]
       baz: String,
     },
@@ -387,10 +416,13 @@ fn enum_named_field() {
 fn enum_named_field_optional() {
   #[derive(Debug, Decode, Encode, PartialEq)]
   enum Foo {
+    /// Bar.
     #[n(0)]
     Bar {
+      /// Bar.
       #[n(1)]
       bar: Option<u64>,
+      /// Baz.
       #[n(2)]
       baz: u64,
     },
@@ -411,8 +443,10 @@ fn enum_named_field_optional() {
 fn enum_round_trip() {
   #[derive(Debug, Decode, Encode, PartialEq)]
   enum Foo {
+    /// Bar.
     #[n(0)]
     Bar,
+    /// Baz.
     #[n(1)]
     Baz,
   }
@@ -425,8 +459,10 @@ fn enum_round_trip() {
 fn enum_schema() {
   #[derive(Decode, Encode)]
   enum Foo {
+    /// Bar.
     #[n(0)]
     Bar,
+    /// Baz.
     #[n(1)]
     Baz,
   }
@@ -442,11 +478,13 @@ fn enum_schema() {
       deco::Schema::Enum {
         variants: vec![
           deco::Variant {
+            description: "Bar.".into(),
             fields: vec![],
             n: 0,
             name: "Bar".into()
           },
           deco::Variant {
+            description: "Baz.".into(),
             fields: vec![],
             n: 1,
             name: "Baz".into()
@@ -461,10 +499,13 @@ fn enum_schema() {
 fn enum_schema_fields() {
   #[derive(Decode, Encode)]
   enum Foo {
+    /// Bar.
     #[n(0)]
     Bar,
+    /// Baz.
     #[n(1)]
     Baz {
+      /// Qux.
       #[n(1)]
       qux: Option<u64>,
     },
@@ -482,12 +523,15 @@ fn enum_schema_fields() {
         deco::Schema::Enum {
           variants: vec![
             deco::Variant {
+              description: "Bar.".into(),
               fields: vec![],
               n: 0,
               name: "Bar".into(),
             },
             deco::Variant {
+              description: "Baz.".into(),
               fields: vec![deco::Field {
+                description: "Qux.".into(),
                 n: 1,
                 name: "qux".into(),
                 optional: true,
@@ -508,6 +552,7 @@ fn enum_schema_fields() {
 fn enum_unconsumed_unit_payload() {
   #[derive(Debug, Decode)]
   enum Foo {
+    /// Bar.
     #[n(0)]
     Bar,
   }
@@ -532,10 +577,13 @@ fn enum_unconsumed_unit_payload() {
 fn enum_unknown_fields() {
   #[derive(Debug, Decode, PartialEq)]
   enum Foo {
+    /// Bar.
     #[n(0)]
     Bar {
+      /// Foo.
       #[n(1)]
       foo: u64,
+      /// Bar.
       #[n(2)]
       bar: Option<u64>,
     },
@@ -560,16 +608,20 @@ fn enum_unknown_fields() {
 fn enum_unknown_variants() {
   #[derive(Debug, Decode, Encode, PartialEq)]
   enum Foo {
+    /// Bar.
     #[n(0)]
     Bar,
   }
 
   #[derive(Debug, Decode, Encode, PartialEq)]
   enum Bar {
+    /// Baz.
     #[n(0)]
     Baz {
+      /// Foo.
       #[n(1)]
       foo: Option<Foo>,
+      /// Bar.
       #[n(2)]
       bar: u64,
     },
@@ -597,6 +649,7 @@ fn enum_unknown_variants() {
 fn generic_schema() {
   #[derive(Decode, Encode)]
   struct Foo<T> {
+    /// Bar.
     #[n(1)]
     bar: T,
   }
@@ -615,6 +668,7 @@ fn generic_schema() {
         "Foo<UnsignedInteger>".into(),
         deco::Schema::Struct {
           fields: vec![deco::Field {
+            description: "Bar.".into(),
             n: 1,
             name: "bar".into(),
             optional: false,
@@ -722,9 +776,12 @@ fn json_string_enum() {
   #[derive(Deserialize, Json)]
   #[serde(rename_all = "kebab-case")]
   enum Foo {
+    /// Bar.
     BarBaz,
+    /// Baz.
     #[serde(rename = "4:2:0")]
     Baz,
+    /// Qux.
     Qux,
   }
 
@@ -737,7 +794,20 @@ fn json_string_enum() {
     BTreeMap::from([(
       "Foo".into(),
       json::Schema::StringEnum {
-        values: vec!["bar-baz".into(), "4:2:0".into(), "qux".into()],
+        values: vec![
+          json::Value {
+            description: "Bar.".into(),
+            value: "bar-baz".into(),
+          },
+          json::Value {
+            description: "Baz.".into(),
+            value: "4:2:0".into(),
+          },
+          json::Value {
+            description: "Qux.".into(),
+            value: "qux".into(),
+          },
+        ],
       },
     )]),
   );
@@ -881,6 +951,7 @@ fn magic() {
   #[derive(Debug, Decode, Encode, Magic, PartialEq)]
   #[deco(magic = MagicType::Archive)]
   struct Foo {
+    /// Bar.
     #[n(1)]
     bar: u64,
   }
@@ -916,8 +987,10 @@ fn magic() {
 fn mixed_required_and_optional() {
   #[derive(Debug, Encode, Decode, PartialEq)]
   struct Foo {
+    /// Bar.
     #[n(1)]
     bar: Option<u64>,
+    /// Baz.
     #[n(2)]
     baz: String,
   }
@@ -943,6 +1016,7 @@ fn mixed_required_and_optional() {
 fn single_field() {
   #[derive(Debug, Encode, Decode, PartialEq)]
   struct Foo {
+    /// Bar.
     #[n(1)]
     bar: u64,
   }
@@ -983,6 +1057,7 @@ fn strict() {
   #[derive(Debug, Decode, PartialEq)]
   #[deco(strict)]
   struct Foo {
+    /// Foo.
     #[n(1)]
     foo: u64,
   }
@@ -1002,8 +1077,10 @@ fn strict() {
 fn struct_schema() {
   #[derive(Decode, Encode)]
   struct Foo {
+    /// Bar.
     #[n(1)]
     bar: u64,
+    /// Baz.
     #[n(2)]
     baz: Option<bool>,
   }
@@ -1021,12 +1098,14 @@ fn struct_schema() {
         deco::Schema::Struct {
           fields: vec![
             deco::Field {
+              description: "Bar.".into(),
               n: 1,
               name: "bar".into(),
               optional: false,
               schema: "UnsignedInteger".into(),
             },
             deco::Field {
+              description: "Baz.".into(),
               n: 2,
               name: "baz".into(),
               optional: true,
@@ -1103,14 +1182,17 @@ fn transparent_schema() {
 fn unknown_variants() {
   #[derive(Debug, Decode, Encode, PartialEq)]
   enum Foo {
+    /// Bar.
     #[n(0)]
     Bar,
   }
 
   #[derive(Debug, Decode, Encode, PartialEq)]
   struct Bar {
+    /// Bar.
     #[n(1)]
     bar: Option<Foo>,
+    /// Foo.
     #[n(2)]
     foo: Option<u64>,
   }
@@ -1146,8 +1228,10 @@ fn unknown_variants() {
 fn unknown_variants_errors() {
   #[derive(Debug, Decode, PartialEq)]
   enum Foo {
+    /// Bar.
     #[n(0)]
     Bar {
+      /// Foo.
       #[n(1)]
       foo: bool,
     },
@@ -1155,6 +1239,7 @@ fn unknown_variants_errors() {
 
   #[derive(Debug, Decode, PartialEq)]
   struct Bar {
+    /// Foo.
     #[n(1)]
     foo: Option<Foo>,
   }
@@ -1180,18 +1265,21 @@ fn unknown_variants_errors() {
 fn unknown_variants_scope() {
   #[derive(Debug, Decode, PartialEq)]
   enum Foo {
+    /// Bar.
     #[n(0)]
     Bar,
   }
 
   #[derive(Debug, Decode, PartialEq)]
   struct Bar<T> {
+    /// Foo.
     #[n(1)]
     foo: Option<T>,
   }
 
   #[derive(Debug, Decode, PartialEq)]
   struct Baz {
+    /// Foo.
     #[n(1)]
     foo: Foo,
   }
@@ -1199,6 +1287,7 @@ fn unknown_variants_scope() {
   #[derive(Debug, Decode, PartialEq)]
   #[deco(strict)]
   struct Qux<T> {
+    /// Foo.
     #[n(1)]
     foo: Option<T>,
   }
@@ -1237,6 +1326,7 @@ fn unknown_variants_scope() {
 fn unknown_variants_validate() {
   #[derive(Debug, Decode, PartialEq)]
   enum Foo {
+    /// Bar.
     #[n(0)]
     Bar,
   }
@@ -1244,6 +1334,7 @@ fn unknown_variants_validate() {
   #[derive(Debug, Decode, PartialEq)]
   #[deco(validate)]
   struct Bar {
+    /// Foo.
     #[n(1)]
     foo: Option<Foo>,
   }
@@ -1265,16 +1356,20 @@ fn unknown_variants_validate() {
 fn unsupported_version() {
   #[derive(Debug, Decode, PartialEq)]
   struct Foo {
+    /// Foo.
     #[n(1)]
     foo: u64,
   }
 
   #[derive(Debug, Decode, PartialEq)]
   enum Bar {
+    /// Baz.
     #[n(0)]
     Baz,
+    /// Qux.
     #[n(1)]
     Qux {
+      /// Foo.
       #[n(1)]
       foo: u64,
     },
@@ -1344,6 +1439,7 @@ fn validate_struct() {
   #[derive(Debug, Encode, Decode, PartialEq)]
   #[deco(validate)]
   struct Foo {
+    /// Bar.
     #[n(1)]
     bar: String,
   }

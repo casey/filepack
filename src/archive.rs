@@ -4,8 +4,10 @@ use super::*;
 #[derive(Encode, Decode, Magic)]
 #[deco(magic = MagicType::Archive)]
 pub(crate) struct Archive {
+  /// Hash of the root directory object.
   #[n(1)]
   pub(crate) root: Hash,
+  /// Contents of the objects in the archive, keyed by hash.
   #[n(2)]
   pub(crate) files: BTreeMap<Hash, Vec<u8>>,
 }

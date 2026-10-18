@@ -9,10 +9,13 @@ use super::*;
   strum(serialize_all = "kebab-case")
 )]
 pub enum EntryInfo {
+  /// A file.
   #[n(0)]
   File,
+  /// A directory.
   #[n(1)]
   Directory {
+    /// Totals of the directory's contents.
     #[n(1)]
     totals: Totals,
   },

@@ -1,17 +1,17 @@
 Lints
 =====
 
-| lint |
-|------|
-%% for lint in self.lints {
-| `{{ lint }}` |
+| lint | description |
+|------|-------------|
+%% for (lint, description) in self.lints {
+| `{{ lint }}` | {{ description }} |
 %% }
 
 Groups
 ------
 
-| group | lints |
-|-------|-------|
-%% for (group, lints) in self.groups {
-| `{{ group }}` | {{ list(lints) }} |
+| group | description | lints |
+|-------|-------------|-------|
+%% for (name, group) in self.groups {
+| `{{ name }}` | {{ group.description }} | {{ list(&group.lints) }} |
 %% }

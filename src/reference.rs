@@ -44,8 +44,8 @@ pub struct Reference {
   pub hex: BTreeMap<Tag, Hex>,
   pub json: json::Registry,
   pub languages: BTreeMap<Language, String>,
-  pub lint_groups: BTreeMap<LintGroup, BTreeSet<Lint>>,
-  pub lints: BTreeSet<Lint>,
+  pub lint_groups: BTreeMap<crate::LintGroup, LintGroup>,
+  pub lints: BTreeMap<Lint, String>,
   pub media_formats: BTreeMap<MediaType, Vec<MediaFormat>>,
   pub metadata: yaml::Example,
   pub routes: BTreeMap<String, Route>,
@@ -55,6 +55,17 @@ pub struct Reference {
 
 impl Reference {
   pub fn new() -> Self {
+    fn descriptions(registry: &json::Registry, name: &str) -> BTreeMap<String, String> {
+      let json::Schema::StringEnum { values } = &registry[name] else {
+        unreachable!()
+      };
+
+      values
+        .iter()
+        .map(|value| (value.value.clone(), value.description.clone()))
+        .collect()
+    }
+
     fn media_formats<F: Format>() -> Vec<MediaFormat> {
       let mut formats = BTreeMap::new();
 
@@ -113,6 +124,10 @@ impl Reference {
 
     let commands = Command::new(&mut command, None, &mut json);
 
+    let lint_groups = descriptions(&json, "LintGroup");
+
+    let lints = descriptions(&json, "Lint");
+
     let mut yaml = json::Registry::new();
 
     yaml::Metadata::json_schema(&mut yaml);
@@ -163,10 +178,20 @@ impl Reference {
         .iter()
         .map(|language| (*language, language.name().into()))
         .collect(),
-      lint_groups: LintGroup::iter()
-        .map(|group| (group, group.lints()))
+      lint_groups: crate::LintGroup::iter()
+        .map(|group| {
+          (
+            group,
+            LintGroup {
+              description: lint_groups[&group.to_string()].clone(),
+              lints: group.lints(),
+            },
+          )
+        })
         .collect(),
-      lints: Lint::iter().collect(),
+      lints: Lint::iter()
+        .map(|lint| (lint, lints[&lint.to_string()].clone()))
+        .collect(),
       media_formats: [
         (MediaType::Audio, media_formats::<AudioFormat>()),
         (MediaType::Image, media_formats::<ImageFormat>()),
@@ -196,6 +221,12 @@ pub struct Hex {
   pub example: String,
   pub name: String,
   pub schema: String,
+}
+
+#[derive(Debug, Deserialize, PartialEq, Serialize)]
+pub struct LintGroup {
+  pub description: String,
+  pub lints: BTreeSet<Lint>,
 }
 
 #[derive(Debug, Deserialize, PartialEq, Serialize)]
@@ -301,11 +332,17 @@ mod tests {
   fn lints() {
     let reference = Reference::new();
 
-    assert!(reference.lints.contains(&Lint::Junk));
+    assert_eq!(
+      reference.lints[&Lint::Junk],
+      "Package contains no junk files."
+    );
 
     assert_eq!(
-      reference.lint_groups[&LintGroup::Hygiene],
-      BTreeSet::from([Lint::Junk]),
+      reference.lint_groups[&crate::LintGroup::Hygiene],
+      LintGroup {
+        description: "Files that shouldn't be in a package.".into(),
+        lints: BTreeSet::from([Lint::Junk]),
+      },
     );
   }
 
