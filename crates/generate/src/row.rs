@@ -28,6 +28,20 @@ impl<A: Display, B: Display, C: Display> Display for Row<(A, B, C)> {
   }
 }
 
+impl<A: Display, B: Display, C: Display, D: Display> Display for Row<(A, B, C, D)> {
+  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    let (a, b, c, d) = &self.0;
+    Self::write(f, &[a, b, c, d])
+  }
+}
+
+impl<A: Display, B: Display, C: Display, D: Display, E: Display> Display for Row<(A, B, C, D, E)> {
+  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    let (a, b, c, d, e) = &self.0;
+    Self::write(f, &[a, b, c, d, e])
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;

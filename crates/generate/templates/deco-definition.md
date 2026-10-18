@@ -20,9 +20,13 @@ An enum with {{ Count::new(variants.len(), "variant") }}:
 |--------------|---------|-------------|
 %%     for variant in variants {
 %%       if variant.fields.is_empty() {
-| {{ variant.n }} | {{ variant.name }} | {{ variant.description.replace('\n', " ") }} |
+{{ Row((variant.n, &variant.name, &variant.description)) }}
 %%       } else {
-| {{ variant.n }} | [{{ variant.name }}](#{{ variant.name.to_lowercase() }}) | {{ variant.description.replace('\n', " ") }} |
+{{ Row((
+  variant.n,
+  format!("[{}](#{})", variant.name, variant.name.to_lowercase()),
+  &variant.description,
+)) }}
 %%       }
 %%     }
 %%     for variant in variants {
