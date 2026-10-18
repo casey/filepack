@@ -1,6 +1,6 @@
 use super::*;
 
-/// Image color model.
+/// How an image's pixels encode color.
 #[derive(Clone, Copy, Debug, Decode, Default, Display, Encode, Json, PartialEq, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub(crate) enum ColorType {
