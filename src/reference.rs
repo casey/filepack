@@ -289,6 +289,71 @@ mod tests {
   use super::*;
 
   #[test]
+  fn examples() {
+    fn fields(registry: &json::Registry) -> Vec<(&str, &json::Field)> {
+      let mut fields = Vec::new();
+
+      for (name, schema) in registry {
+        match schema {
+          json::Schema::Struct { fields: inner, .. } => {
+            fields.extend(inner.iter().map(|field| (name.as_str(), field)));
+          }
+          json::Schema::TaggedEnum { variants, .. } => {
+            for variant in variants {
+              fields.extend(variant.fields.iter().map(|field| (name.as_str(), field)));
+            }
+          }
+          json::Schema::Array { .. }
+          | json::Schema::Boolean { .. }
+          | json::Schema::Bytes { .. }
+          | json::Schema::Hex { .. }
+          | json::Schema::Map { .. }
+          | json::Schema::Set { .. }
+          | json::Schema::String { .. }
+          | json::Schema::StringEnum { .. }
+          | json::Schema::UnsignedInteger { .. }
+          | json::Schema::UntaggedEnum { .. }
+          | json::Schema::Wrapper { .. } => {}
+        }
+      }
+
+      fields
+    }
+
+    let reference = Reference::new();
+
+    let mut errors = Vec::new();
+
+    for (name, field) in fields(&reference.json) {
+      if field.example.is_some() {
+        errors.push(format!("json field `{name}.{}` has an example", field.name));
+      }
+    }
+
+    for (name, field) in fields(&reference.yaml) {
+      let scalar = !matches!(
+        reference.yaml[&field.schema],
+        json::Schema::Array { .. }
+          | json::Schema::Map { .. }
+          | json::Schema::Set { .. }
+          | json::Schema::Struct { .. }
+          | json::Schema::TaggedEnum { .. }
+          | json::Schema::UntaggedEnum { .. }
+      );
+
+      if scalar && field.example.is_none() {
+        errors.push(format!("yaml field `{name}.{}` has no example", field.name));
+      }
+
+      if !scalar && field.example.is_some() {
+        errors.push(format!("yaml field `{name}.{}` has an example", field.name));
+      }
+    }
+
+    assert_eq!(errors, Vec::<String>::new());
+  }
+
+  #[test]
   fn hex() {
     let hex = Reference::new().hex;
 
