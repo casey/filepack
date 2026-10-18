@@ -3,16 +3,22 @@ use super::*;
 #[skip_serializing_none]
 #[derive(Clone, Debug, Default, Encode, Decode, Json, PartialEq, Serialize)]
 pub(crate) struct PackageMetadata {
+  /// Path to a markdown file containing a colophon describing the package.
   #[n(1)]
   pub(crate) colophon: Option<RelativePath>,
+  /// Primary person or group who created the package.
   #[n(2)]
   pub(crate) creator: Option<Text>,
+  /// Single-line description of the package.
   #[n(3)]
   pub(crate) description: Option<Text>,
+  /// Official homepage of the package.
   #[n(4)]
   pub(crate) homepage: Option<CheckedUrl>,
+  /// Time the package was created.
   #[n(5)]
   pub(crate) time: Option<Time>,
+  /// Title of the package.
   #[n(6)]
   pub(crate) title: Option<Text>,
 }

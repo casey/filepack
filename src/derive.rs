@@ -636,8 +636,13 @@ fn json_enum() {
   #[derive(Deserialize, Json)]
   #[serde(deny_unknown_fields, rename_all = "snake_case", tag = "type")]
   enum Foo {
+    /// Bar.
     Bar,
-    Baz { qux: Option<String> },
+    /// Baz.
+    Baz {
+      /// Qux.
+      qux: Option<String>,
+    },
   }
 
   let mut schemas = json::Registry::new();
@@ -654,11 +659,15 @@ fn json_enum() {
           tag: "type".into(),
           variants: vec![
             json::Variant {
+              description: "Bar.".into(),
               fields: vec![],
               name: "bar".into(),
             },
             json::Variant {
+              description: "Baz.".into(),
               fields: vec![json::Field {
+                description: "Qux.".into(),
+                example: None,
                 name: "qux".into(),
                 optional: true,
                 schema: "String".into(),
@@ -678,6 +687,7 @@ fn json_generic() {
   #[allow(dead_code)]
   #[derive(Deserialize, Json)]
   struct Foo<T> {
+    /// Bar.
     bar: T,
   }
 
@@ -692,6 +702,8 @@ fn json_generic() {
         "Foo<String>".into(),
         json::Schema::Struct {
           fields: vec![json::Field {
+            description: "Bar.".into(),
+            example: None,
             name: "bar".into(),
             optional: false,
             schema: "String".into(),
@@ -738,8 +750,12 @@ fn json_struct() {
   #[derive(Deserialize, Json)]
   #[serde(deny_unknown_fields)]
   struct Foo {
+    /// Bar.
+    #[json(example = "foo")]
     bar: String,
+    /// Baz.
     baz: Option<String>,
+    /// Qux.
     #[serde(default)]
     qux: Vec<String>,
   }
@@ -762,16 +778,22 @@ fn json_struct() {
         json::Schema::Struct {
           fields: vec![
             json::Field {
+              description: "Bar.".into(),
+              example: Some("foo".into()),
               name: "bar".into(),
               optional: false,
               schema: "String".into(),
             },
             json::Field {
+              description: "Baz.".into(),
+              example: None,
               name: "baz".into(),
               optional: true,
               schema: "String".into(),
             },
             json::Field {
+              description: "Qux.".into(),
+              example: None,
               name: "qux".into(),
               optional: true,
               schema: "Array<String>".into(),

@@ -3,8 +3,10 @@ use super::*;
 #[skip_serializing_none]
 #[derive(Clone, Debug, Decode, Encode, Json, PartialEq, Serialize)]
 pub(crate) struct Item<T> {
+  /// Metadata describing the item's media file.
   #[n(1)]
   pub(crate) content: T,
+  /// Title of the item.
   #[n(2)]
   pub(crate) title: Option<Text>,
 }

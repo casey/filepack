@@ -3,20 +3,28 @@ use super::*;
 #[skip_serializing_none]
 #[derive(Clone, Debug, Decode, Encode, Json, PartialEq, Serialize)]
 pub(crate) struct Image {
+  /// Whether the image has an alpha channel.
   #[n(1)]
   pub(crate) alpha: bool,
+  /// Bits per color channel.
   #[n(2)]
   pub(crate) bit_depth: u64,
+  /// Chroma subsampling, for formats that support it.
   #[n(3)]
   pub(crate) chroma_subsampling: Option<ChromaSubsampling>,
+  /// Color model of the image.
   #[n(4)]
   pub(crate) color_type: Option<ColorType>,
+  /// Dimensions in pixels.
   #[n(5)]
   pub(crate) dimensions: Dimensions,
+  /// Image file format, if recognized.
   #[n(6)]
   pub(crate) format: Option<ImageFormat>,
+  /// Orientation to apply when displaying.
   #[n(7)]
   pub(crate) orientation: Orientation,
+  /// Path to the image file.
   #[n(8)]
   pub(crate) path: RelativePath,
 }

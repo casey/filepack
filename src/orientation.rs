@@ -2,8 +2,10 @@ use super::*;
 
 #[derive(Clone, Copy, Debug, Decode, Default, Encode, Json, PartialEq, Serialize)]
 pub(crate) struct Orientation {
+  /// Whether to mirror horizontally when displaying.
   #[n(1)]
   pub(crate) mirrored: bool,
+  /// Rotation in degrees to apply when displaying.
   #[n(2)]
   pub(crate) rotation: Rotation,
 }

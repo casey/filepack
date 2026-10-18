@@ -6,7 +6,8 @@ use {
     has_page::HasPage,
     templates::{
       CommandMd, CommandsMd, DecoMd, DecoSchemaMd, HexMd, JsonMd, JsonSchemaMd, LanguagesMd,
-      LintsMd, MediaFormatsMd, RouteMd, RoutesMd, SummaryMd, TagMd, UnstableFeaturesMd, YamlMd,
+      LintsMd, MediaFormatsMd, MetadataMd, RouteMd, RoutesMd, SummaryMd, TagMd, UnstableFeaturesMd,
+      YamlMd,
     },
   },
   boilerplate::Boilerplate,
@@ -14,15 +15,14 @@ use {
   filepack::{
     Count, Language, Lint, LintGroup, MediaType, Reference, Tag, UnstableFeature, deco, json,
     reference::{Command, Hex, MediaFormat, Parameter, Request, Response, Route},
+    yaml,
   },
   heck::ToKebabCase,
   std::{
     collections::{BTreeMap, BTreeSet},
     env,
     fmt::Display,
-    fs::{self, File},
-    io::{BufWriter, Write},
-    iter,
+    fs, iter,
   },
   strum::Display,
 };
@@ -228,6 +228,13 @@ fn main() {
     LintsMd {
       groups: &reference.lint_groups,
       lints: &reference.lints,
+    },
+  );
+
+  write(
+    "metadata.md",
+    MetadataMd {
+      example: &reference.metadata,
     },
   );
 

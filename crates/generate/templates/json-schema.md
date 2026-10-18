@@ -38,13 +38,13 @@ Unknown fields are rejected.
 An enum with {{ Count::new(variants.len(), "variant") }}, distinguished by the
 `{{ tag }}` field:
 
-| {{ tag }} |
-|------|
+| {{ tag }} | description |
+|------|-------------|
 %%     for variant in variants {
 %%       if variant.fields.is_empty() {
-| `{{ variant.name }}` |
+| `{{ variant.name }}` | {{ variant.description }} |
 %%       } else {
-| [`{{ variant.name }}`](#{{ variant.name }}) |
+| [`{{ variant.name }}`](#{{ variant.name }}) | {{ variant.description }} |
 %%       }
 %%     }
 %%     if *strict {

@@ -1,7 +1,7 @@
 use super::*;
 
 #[derive(FromVariant)]
-#[darling(forward_attrs(serde))]
+#[darling(forward_attrs(doc, serde))]
 pub(crate) struct Variant {
   attrs: Vec<Attribute>,
   fields: Fields<Field>,
@@ -9,10 +9,17 @@ pub(crate) struct Variant {
 }
 
 impl Variant {
-  fn check_attributes(&self) -> Result<Option<String>> {
+  fn check_attributes(&self) -> Result<ParsedVariant> {
+    let mut doc = Vec::new();
+
     let mut rename = None;
 
     for attribute in &self.attrs {
+      if let Some(line) = doc_line(attribute)? {
+        doc.push(line);
+        continue;
+      }
+
       attribute.parse_nested_meta(|meta| {
         if meta.path.is_ident("rename") {
           rename = Some(meta.value()?.parse::<LitStr>()?.value());
@@ -25,7 +32,10 @@ impl Variant {
       })?;
     }
 
-    Ok(rename)
+    Ok(ParsedVariant {
+      description: description(doc),
+      rename,
+    })
   }
 
   pub(crate) fn is_unit(&self) -> bool {
@@ -33,7 +43,7 @@ impl Variant {
   }
 
   pub(crate) fn name(&self, rename_all: Option<RenameAll>) -> Result<String> {
-    if let Some(rename) = self.check_attributes()? {
+    if let Some(rename) = self.check_attributes()?.rename {
       return Ok(rename);
     }
 
@@ -45,6 +55,13 @@ impl Variant {
   pub(crate) fn schema(&self, rename_all: Option<RenameAll>) -> Result<TokenStream> {
     let name = self.name(rename_all)?;
 
+    let Some(description) = self.check_attributes()?.description else {
+      return Err(Error::new_spanned(
+        &self.ident,
+        "variants must have doc comments",
+      ));
+    };
+
     let fields = self
       .fields
       .iter()
@@ -53,6 +70,7 @@ impl Variant {
 
     Ok(quote! {
       json::Variant {
+        description: #description.into(),
         fields: vec![#(#fields),*],
         name: #name.into(),
       }

@@ -3,14 +3,19 @@ use super::*;
 #[skip_serializing_none]
 #[derive(Clone, Debug, Decode, Encode, Json, PartialEq, Serialize)]
 pub(crate) struct Video {
+  /// Duration in milliseconds.
   #[n(1)]
   pub(crate) duration: u64,
+  /// Container format of the video file, if recognized.
   #[n(2)]
   pub(crate) format: Option<VideoFormat>,
+  /// Path to the video file.
   #[n(3)]
   pub(crate) path: RelativePath,
+  /// Placeholder image. Must have the same resolution as the video file.
   #[n(4)]
   pub(crate) placeholder: Option<Image>,
+  /// Metadata describing the tracks of the video.
   #[n(5)]
   pub(crate) tracks: Vec<Track>,
 }

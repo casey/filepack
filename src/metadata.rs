@@ -5,28 +5,40 @@ use super::*;
 #[derive(Clone, Debug, Default, Encode, Decode, Json, Magic, PartialEq, Serialize)]
 #[deco(magic = MagicType::Metadata)]
 pub struct Metadata {
+  /// Cover art image. Must be square.
   #[n(1)]
   pub artwork: Option<Image>,
+  /// Primary person or group who created the content.
   #[n(2)]
   pub creator: Option<Text>,
+  /// Single-line description of the content.
   #[n(3)]
   pub description: Option<Text>,
+  /// Official homepage of the content.
   #[n(4)]
   pub homepage: Option<CheckedUrl>,
+  /// Two-letter ISO 639-1 code of the content's primary language.
   #[n(5)]
   pub language: Option<Language>,
+  /// Metadata describing the media content of the package.
   #[n(6)]
   pub media: Option<Media>,
+  /// Metadata describing the package itself, as opposed to its content.
   #[n(7)]
   pub package: Option<PackageMetadata>,
+  /// Primary publisher of the content.
   #[n(8)]
   pub publisher: Option<Text>,
+  /// Path to a markdown file containing a readme describing the content.
   #[n(9)]
   pub readme: Option<RelativePath>,
+  /// Thumbnails generated for images in the package, keyed by the path of the original image.
   #[n(10)]
   pub thumbnails: Option<BTreeMap<RelativePath, Image>>,
+  /// Time the content was created.
   #[n(11)]
   pub time: Option<Time>,
+  /// Title of the content.
   #[n(12)]
   pub title: Option<Text>,
 }

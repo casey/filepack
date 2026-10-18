@@ -4,10 +4,14 @@ use super::*;
 #[derive(Debug, Deserialize, Json, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Manifest {
+  /// File contents embedded in the manifest, keyed by hash.
   pub embedded: BTreeMap<Hash, Bytes>,
+  /// Files and directories in the package, as a tree of path components.
   pub package: DirectoryTree,
+  /// Signatures over the package fingerprint.
   #[serde_as(as = "SetPreventDuplicates<serde_with::Same>")]
   pub signatures: BTreeSet<Decoded<Attestation>>,
+  /// Entries in the manifest archive not recognized by this version of filepack.
   #[serde(default, skip_serializing_if = "DirectoryTree::is_empty")]
   pub unknown: DirectoryTree,
 }

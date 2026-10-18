@@ -3,7 +3,9 @@ use super::*;
 #[derive(Clone, Copy, Debug, Deserialize, Json, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct File {
+  /// BLAKE3 hash of the file contents.
   pub(crate) hash: Hash,
+  /// Size of the file in bytes.
   pub(crate) size: u64,
 }
 

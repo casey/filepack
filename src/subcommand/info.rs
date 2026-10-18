@@ -2,8 +2,11 @@ use super::*;
 
 #[derive(Json, Serialize)]
 pub(crate) struct Info {
+  /// Path to the data directory.
   data: Utf8PathBuf,
+  /// Path to the keychain directory.
   keychain: Utf8PathBuf,
+  /// Public keys in the keychain, by name.
   keys: BTreeMap<KeyName, PublicKey>,
 }
 
