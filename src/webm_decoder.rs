@@ -86,8 +86,8 @@ impl WebmDecoder {
             .unwrap_or_default();
 
           audio_track = Some(Track {
-            codec: Some(codec),
-            info: Some(TrackInfo::Audio {
+            codec: Decoded::Known(codec),
+            info: Decoded::Known(TrackInfo::Audio {
               channels: audio.channels().get(),
               sample_rate,
             }),
@@ -129,8 +129,8 @@ impl WebmDecoder {
           };
 
           video_track = Some(Track {
-            codec: Some(codec),
-            info: Some(TrackInfo::Video {
+            codec: Decoded::Known(codec),
+            info: Decoded::Known(TrackInfo::Video {
               bit_depth: color_info.bit_depth,
               chroma_subsampling: Some(color_info.chroma_subsampling),
               dimensions: Dimensions {
@@ -320,8 +320,8 @@ mod tests {
         title: None,
         tracks: vec![
           Track {
-            codec: Some(TrackCodec::Vp9),
-            info: Some(TrackInfo::Video {
+            codec: Decoded::Known(TrackCodec::Vp9),
+            info: Decoded::Known(TrackInfo::Video {
               bit_depth: 8,
               chroma_subsampling: Some(ChromaSubsampling::Yuv420),
               dimensions: Dimensions {
@@ -334,8 +334,8 @@ mod tests {
             size: 5,
           },
           Track {
-            codec: Some(TrackCodec::Opus),
-            info: Some(TrackInfo::Audio {
+            codec: Decoded::Known(TrackCodec::Opus),
+            info: Decoded::Known(TrackInfo::Audio {
               channels: 2,
               sample_rate: 44100,
             }),
@@ -357,8 +357,8 @@ mod tests {
         title: None,
         tracks: vec![
           Track {
-            codec: Some(TrackCodec::Vp8),
-            info: Some(TrackInfo::Video {
+            codec: Decoded::Known(TrackCodec::Vp8),
+            info: Decoded::Known(TrackInfo::Video {
               bit_depth: 8,
               chroma_subsampling: Some(ChromaSubsampling::Yuv420),
               dimensions: Dimensions {
@@ -371,8 +371,8 @@ mod tests {
             size: 0,
           },
           Track {
-            codec: Some(TrackCodec::Vorbis),
-            info: Some(TrackInfo::Audio {
+            codec: Decoded::Known(TrackCodec::Vorbis),
+            info: Decoded::Known(TrackInfo::Audio {
               channels: 2,
               sample_rate: 44100,
             }),
@@ -388,8 +388,8 @@ mod tests {
         duration: 0,
         title: None,
         tracks: vec![Track {
-          codec: Some(TrackCodec::Vp9),
-          info: Some(TrackInfo::Video {
+          codec: Decoded::Known(TrackCodec::Vp9),
+          info: Decoded::Known(TrackInfo::Video {
             bit_depth: 8,
             chroma_subsampling: Some(ChromaSubsampling::Yuv420),
             dimensions: Dimensions {
@@ -439,7 +439,7 @@ mod tests {
       .unwrap()
       .tracks[0]
         .info,
-      Some(TrackInfo::Video {
+      Decoded::Known(TrackInfo::Video {
         bit_depth: 8,
         chroma_subsampling: Some(ChromaSubsampling::Yuv420),
         dimensions: Dimensions {
@@ -463,8 +463,8 @@ mod tests {
       .tracks,
       vec![
         Track {
-          codec: Some(TrackCodec::Vp9),
-          info: Some(TrackInfo::Video {
+          codec: Decoded::Known(TrackCodec::Vp9),
+          info: Decoded::Known(TrackInfo::Video {
             bit_depth: 8,
             chroma_subsampling: Some(ChromaSubsampling::Yuv420),
             dimensions: Dimensions {
@@ -477,8 +477,8 @@ mod tests {
           size: 5,
         },
         Track {
-          codec: Some(TrackCodec::Opus),
-          info: Some(TrackInfo::Audio {
+          codec: Decoded::Known(TrackCodec::Opus),
+          info: Decoded::Known(TrackInfo::Audio {
             channels: 2,
             sample_rate: 44100,
           }),
@@ -496,7 +496,7 @@ mod tests {
       .unwrap()
       .tracks[0]
         .info,
-      Some(TrackInfo::Video {
+      Decoded::Known(TrackInfo::Video {
         bit_depth: 10,
         chroma_subsampling: Some(ChromaSubsampling::Yuv420),
         dimensions: Dimensions {

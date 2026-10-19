@@ -491,12 +491,12 @@ mod tests {
           alpha: false,
           bit_depth: 8,
           chroma_subsampling: None,
-          color_type: Some(ColorType::Rgb),
+          color_type: Decoded::Known(ColorType::Rgb),
           dimensions: Dimensions {
             height: 1,
             width: 1,
           },
-          format: Some(ImageFormat::Png),
+          format: Decoded::Known(ImageFormat::Png),
           orientation: Orientation::new(),
           path: "cover.png".parse().unwrap(),
         }),
@@ -505,8 +505,8 @@ mod tests {
           items: vec![Item {
             content: crate::Audio {
               channels: 2,
-              codec: Some(AudioCodec::Flac),
-              format: Some(AudioFormat::Flac),
+              codec: Decoded::Known(AudioCodec::Flac),
+              format: Decoded::Known(AudioFormat::Flac),
               path: "foo.flac".parse().unwrap(),
               sample_bits: Some(16),
               sample_rate: 44100,

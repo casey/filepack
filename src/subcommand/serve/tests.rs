@@ -2819,12 +2819,12 @@ fn package_item_image() {
           alpha: false,
           bit_depth: 8,
           chroma_subsampling: None,
-          color_type: Some(ColorType::Rgb),
+          color_type: Decoded::Known(ColorType::Rgb),
           dimensions: Dimensions {
             height: 1,
             width: 2,
           },
-          format: Some(ImageFormat::Png),
+          format: Decoded::Known(ImageFormat::Png),
           orientation: Orientation::new(),
           path: "foo.png".parse().unwrap(),
         },
@@ -2862,12 +2862,12 @@ fn package_item_image_out_of_range() {
             alpha: false,
             bit_depth: 8,
             chroma_subsampling: None,
-            color_type: Some(ColorType::Rgb),
+            color_type: Decoded::Known(ColorType::Rgb),
             dimensions: Dimensions {
               height: 1,
               width: 1,
             },
-            format: Some(ImageFormat::Png),
+            format: Decoded::Known(ImageFormat::Png),
             orientation: Orientation::new(),
             path: "foo.png".parse().unwrap(),
           },
@@ -2917,13 +2917,13 @@ fn package_item_video() {
       items: vec![Item {
         content: Video {
           duration: 0,
-          format: Some(VideoFormat::Mp4),
+          format: Decoded::Known(VideoFormat::Mp4),
           path: "foo.mp4".parse().unwrap(),
           placeholder: None,
           tracks: vec![
             Track {
-              codec: Some(TrackCodec::H264),
-              info: Some(TrackInfo::Video {
+              codec: Decoded::Known(TrackCodec::H264),
+              info: Decoded::Known(TrackInfo::Video {
                 bit_depth: 8,
                 chroma_subsampling: Some(ChromaSubsampling::Yuv420),
                 dimensions: Dimensions {
@@ -2936,8 +2936,8 @@ fn package_item_video() {
               size: 0,
             },
             Track {
-              codec: Some(TrackCodec::Aac),
-              info: Some(TrackInfo::Audio {
+              codec: Decoded::Known(TrackCodec::Aac),
+              info: Decoded::Known(TrackInfo::Audio {
                 channels: 2,
                 sample_rate: 44100,
               }),
@@ -3189,8 +3189,8 @@ fn package_page_renders_audio_media() {
         Item {
           content: Audio {
             channels: 2,
-            codec: Some(AudioCodec::Flac),
-            format: Some(AudioFormat::Flac),
+            codec: Decoded::Known(AudioCodec::Flac),
+            format: Decoded::Known(AudioFormat::Flac),
             path: "foo.flac".parse().unwrap(),
             sample_bits: Some(16),
             sample_rate: 44100,
@@ -3202,8 +3202,8 @@ fn package_page_renders_audio_media() {
         Item {
           content: Audio {
             channels: 2,
-            codec: Some(AudioCodec::Flac),
-            format: Some(AudioFormat::Flac),
+            codec: Decoded::Known(AudioCodec::Flac),
+            format: Decoded::Known(AudioFormat::Flac),
             path: "bar.flac".parse().unwrap(),
             sample_bits: Some(16),
             sample_rate: 44100,
@@ -3253,12 +3253,12 @@ fn package_page_renders_image_media() {
           alpha: false,
           bit_depth: 8,
           chroma_subsampling: None,
-          color_type: Some(ColorType::Rgb),
+          color_type: Decoded::Known(ColorType::Rgb),
           dimensions: Dimensions {
             height: 1,
             width: 2,
           },
-          format: Some(ImageFormat::Png),
+          format: Decoded::Known(ImageFormat::Png),
           orientation: Orientation::new(),
           path: "foo.png".parse().unwrap(),
         },
@@ -3301,13 +3301,13 @@ fn package_page_renders_video_media() {
       items: vec![Item {
         content: Video {
           duration: 0,
-          format: Some(VideoFormat::Mp4),
+          format: Decoded::Known(VideoFormat::Mp4),
           path: "foo.mp4".parse().unwrap(),
           placeholder: None,
           tracks: vec![
             Track {
-              codec: Some(TrackCodec::H264),
-              info: Some(TrackInfo::Video {
+              codec: Decoded::Known(TrackCodec::H264),
+              info: Decoded::Known(TrackInfo::Video {
                 bit_depth: 8,
                 chroma_subsampling: Some(ChromaSubsampling::Yuv420),
                 dimensions: Dimensions {
@@ -3320,8 +3320,8 @@ fn package_page_renders_video_media() {
               size: 0,
             },
             Track {
-              codec: Some(TrackCodec::Aac),
-              info: Some(TrackInfo::Audio {
+              codec: Decoded::Known(TrackCodec::Aac),
+              info: Decoded::Known(TrackInfo::Audio {
                 channels: 2,
                 sample_rate: 44100,
               }),

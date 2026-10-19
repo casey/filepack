@@ -1,16 +1,29 @@
 use super::*;
 
-#[derive(Debug, Eq, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub enum Decoded<T> {
   Known(T),
   Unknown(Vec<u8>),
 }
 
 impl<T> Decoded<T> {
+  pub fn is_unknown(&self) -> bool {
+    self.known().is_none()
+  }
+
   pub fn known(&self) -> Option<&T> {
     match self {
       Self::Known(value) => Some(value),
       Self::Unknown(_) => None,
+    }
+  }
+}
+
+impl<T: Display> Display for Decoded<T> {
+  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    match self {
+      Self::Known(value) => write!(f, "{value}"),
+      Self::Unknown(_) => write!(f, "unknown"),
     }
   }
 }
@@ -77,6 +90,12 @@ mod tests {
     /// Foo.
     #[n(1)]
     foo: u64,
+  }
+
+  #[test]
+  fn display() {
+    assert_eq!(Decoded::Known(1).to_string(), "1");
+    assert_eq!(Decoded::<u64>::Unknown(vec![99]).to_string(), "unknown");
   }
 
   #[test]

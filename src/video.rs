@@ -7,9 +7,10 @@ pub(crate) struct Video {
   /// Duration in milliseconds.
   #[n(1)]
   pub(crate) duration: u64,
-  /// Container format of the video file, if recognized.
+  /// Container format of the video file.
   #[n(2)]
-  pub(crate) format: Option<VideoFormat>,
+  #[serde(skip_serializing_if = "Decoded::is_unknown")]
+  pub(crate) format: Decoded<VideoFormat>,
   /// Path to the video file.
   #[n(3)]
   pub(crate) path: RelativePath,
@@ -23,14 +24,17 @@ pub(crate) struct Video {
 
 impl Video {
   pub(crate) fn oriented_dimensions(&self) -> Option<Dimensions> {
-    self.tracks.iter().find_map(|track| match track.info? {
-      TrackInfo::Video {
-        dimensions,
-        orientation,
-        ..
-      } => Some(orientation.dimensions(dimensions)),
-      TrackInfo::Audio { .. } => None,
-    })
+    self
+      .tracks
+      .iter()
+      .find_map(|track| match track.info.known().copied()? {
+        TrackInfo::Video {
+          dimensions,
+          orientation,
+          ..
+        } => Some(orientation.dimensions(dimensions)),
+        TrackInfo::Audio { .. } => None,
+      })
   }
 
   pub(crate) fn sum_durations(videos: &[Item<Video>]) -> Duration {
@@ -45,20 +49,20 @@ impl Content for Video {
 
   type Format = VideoFormat;
 
-  fn format(&self) -> Option<Self::Format> {
-    self.format
+  fn format(&self) -> &Decoded<Self::Format> {
+    &self.format
   }
 
   fn info(&self, builder: InfoBuilder) -> InfoBuilder {
     builder
-      .optional_or_unknown("format", self.format)
+      .value("format", &self.format)
       .value(
         "duration",
         DisplayDuration(Duration::from_millis(self.duration)),
       )
       .optional(
         "compression",
-        self.format.map(|format| match format {
+        self.format.known().map(|format| match format {
           VideoFormat::Mp4 | VideoFormat::Webm => Compression::Lossy,
         }),
       )
@@ -87,7 +91,7 @@ impl Content for Video {
     Ok(Item {
       content: Self {
         duration,
-        format: Some(format),
+        format: Decoded::Known(format),
         path,
         placeholder: None,
         tracks,
@@ -110,7 +114,7 @@ impl Content for Video {
     let format = VideoFormat::from_path(&path).unwrap();
     Self {
       duration: 1000,
-      format: Some(format),
+      format: Decoded::Known(format),
       path,
       placeholder: None,
       tracks: Vec::new(),
@@ -165,13 +169,13 @@ mod tests {
       .unwrap(),
       Video {
         duration: 2,
-        format: Some(VideoFormat::Mp4),
+        format: Decoded::Known(VideoFormat::Mp4),
         path: "foo.mp4".parse().unwrap(),
         placeholder: None,
         tracks: vec![
           Track {
-            codec: Some(TrackCodec::H264),
-            info: Some(TrackInfo::Video {
+            codec: Decoded::Known(TrackCodec::H264),
+            info: Decoded::Known(TrackInfo::Video {
               bit_depth: 8,
               chroma_subsampling: Some(ChromaSubsampling::Yuv420),
               dimensions: Dimensions {
@@ -184,8 +188,8 @@ mod tests {
             size: 0,
           },
           Track {
-            codec: Some(TrackCodec::Aac),
-            info: Some(TrackInfo::Audio {
+            codec: Decoded::Known(TrackCodec::Aac),
+            info: Decoded::Known(TrackInfo::Audio {
               channels: 2,
               sample_rate: 44100,
             }),
@@ -206,8 +210,8 @@ mod tests {
       .tracks,
       vec![
         Track {
-          codec: Some(TrackCodec::H264),
-          info: Some(TrackInfo::Video {
+          codec: Decoded::Known(TrackCodec::H264),
+          info: Decoded::Known(TrackInfo::Video {
             bit_depth: 8,
             chroma_subsampling: Some(ChromaSubsampling::Yuv420),
             dimensions: Dimensions {
@@ -220,8 +224,8 @@ mod tests {
           size: 0,
         },
         Track {
-          codec: Some(TrackCodec::Mp3),
-          info: Some(TrackInfo::Audio {
+          codec: Decoded::Known(TrackCodec::Mp3),
+          info: Decoded::Known(TrackInfo::Audio {
             channels: 2,
             sample_rate: 44100,
           }),
@@ -250,8 +254,8 @@ mod tests {
 
     fn track(rotation: Rotation) -> Track {
       Track {
-        codec: Some(TrackCodec::H264),
-        info: Some(TrackInfo::Video {
+        codec: Decoded::Known(TrackCodec::H264),
+        info: Decoded::Known(TrackInfo::Video {
           bit_depth: 8,
           chroma_subsampling: Some(ChromaSubsampling::Yuv420),
           dimensions: Dimensions {
@@ -290,13 +294,13 @@ mod tests {
     assert_eq!(
       serde_json::to_string(&Video {
         duration: 0,
-        format: Some(VideoFormat::Mp4),
+        format: Decoded::Known(VideoFormat::Mp4),
         path: "foo.mp4".parse().unwrap(),
         placeholder: None,
         tracks: vec![
           Track {
-            codec: Some(TrackCodec::H264),
-            info: Some(TrackInfo::Video {
+            codec: Decoded::Known(TrackCodec::H264),
+            info: Decoded::Known(TrackInfo::Video {
               bit_depth: 8,
               chroma_subsampling: Some(ChromaSubsampling::Yuv420),
               dimensions: Dimensions {
@@ -309,8 +313,8 @@ mod tests {
             size: 0,
           },
           Track {
-            codec: Some(TrackCodec::Mp3),
-            info: Some(TrackInfo::Audio {
+            codec: Decoded::Known(TrackCodec::Mp3),
+            info: Decoded::Known(TrackInfo::Audio {
               channels: 2,
               sample_rate: 44100,
             }),

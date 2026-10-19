@@ -145,8 +145,8 @@ mod tests {
           Item {
             content: Audio {
               channels: 2,
-              codec: Some(AudioCodec::Flac),
-              format: Some(AudioFormat::Flac),
+              codec: Decoded::Known(AudioCodec::Flac),
+              format: Decoded::Known(AudioFormat::Flac),
               path: "foo.flac".parse().unwrap(),
               sample_bits: Some(16),
               sample_rate: 44100,
@@ -158,8 +158,8 @@ mod tests {
           Item {
             content: Audio {
               channels: 2,
-              codec: Some(AudioCodec::Flac),
-              format: Some(AudioFormat::Flac),
+              codec: Decoded::Known(AudioCodec::Flac),
+              format: Decoded::Known(AudioFormat::Flac),
               path: "bar.flac".parse().unwrap(),
               sample_bits: Some(24),
               sample_rate: 96000,
@@ -266,8 +266,8 @@ mod tests {
     let audio = Item {
       content: Audio {
         channels: 2,
-        codec: Some(AudioCodec::Flac),
-        format: Some(AudioFormat::Flac),
+        codec: Decoded::Known(AudioCodec::Flac),
+        format: Decoded::Known(AudioFormat::Flac),
         path: "foo.flac".parse().unwrap(),
         sample_bits: Some(16),
         sample_rate: 1,
@@ -382,12 +382,12 @@ mod tests {
               alpha: false,
               bit_depth: 8,
               chroma_subsampling: None,
-              color_type: Some(ColorType::Rgb),
+              color_type: Decoded::Known(ColorType::Rgb),
               dimensions: Dimensions {
                 height: 1,
                 width: 2,
               },
-              format: Some(ImageFormat::Png),
+              format: Decoded::Known(ImageFormat::Png),
               orientation: Orientation::new(),
               path: "foo.png".parse().unwrap(),
             },
@@ -398,9 +398,9 @@ mod tests {
               alpha: false,
               bit_depth: 8,
               chroma_subsampling: None,
-              color_type: Some(ColorType::Rgb),
+              color_type: Decoded::Known(ColorType::Rgb),
               dimensions: Dimensions::default(),
-              format: Some(ImageFormat::Jpeg),
+              format: Decoded::Known(ImageFormat::Jpeg),
               orientation: Orientation::new(),
               path: "bar.jpg".parse().unwrap(),
             },
@@ -411,12 +411,12 @@ mod tests {
               alpha: false,
               bit_depth: 8,
               chroma_subsampling: None,
-              color_type: Some(ColorType::Rgb),
+              color_type: Decoded::Known(ColorType::Rgb),
               dimensions: Dimensions {
                 height: 1,
                 width: 2,
               },
-              format: Some(ImageFormat::Png),
+              format: Decoded::Known(ImageFormat::Png),
               orientation: Orientation::new(),
               path: "baz.png".parse().unwrap(),
             },
@@ -540,8 +540,8 @@ mod tests {
         items: vec![Item {
           content: Audio {
             channels: 2,
-            codec: Some(AudioCodec::Flac),
-            format: Some(AudioFormat::Flac),
+            codec: Decoded::Known(AudioCodec::Flac),
+            format: Decoded::Known(AudioFormat::Flac),
             path: "foo.flac".parse().unwrap(),
             sample_bits: Some(16),
             sample_rate: 44100,
@@ -706,12 +706,12 @@ mod tests {
           alpha: false,
           bit_depth: 8,
           chroma_subsampling: None,
-          color_type: Some(ColorType::Rgb),
+          color_type: Decoded::Known(ColorType::Rgb),
           dimensions: Dimensions {
             height: 1,
             width: 2,
           },
-          format: Some(ImageFormat::Png),
+          format: Decoded::Known(ImageFormat::Png),
           orientation: Orientation {
             mirrored: false,
             rotation: Rotation::R90,
@@ -747,12 +747,12 @@ mod tests {
           alpha: false,
           bit_depth: 8,
           chroma_subsampling: None,
-          color_type: Some(ColorType::Rgb),
+          color_type: Decoded::Known(ColorType::Rgb),
           dimensions: Dimensions {
             height: 3,
             width: 4,
           },
-          format: Some(ImageFormat::Jpeg),
+          format: Decoded::Known(ImageFormat::Jpeg),
           orientation: Orientation::default(),
           path: "thumbnails/foo.jpg".parse().unwrap(),
         },
@@ -932,13 +932,13 @@ mod tests {
           Item {
             content: Video {
               duration: 225_000,
-              format: Some(VideoFormat::Mp4),
+              format: Decoded::Known(VideoFormat::Mp4),
               path: "foo.mp4".parse().unwrap(),
               placeholder: None,
               tracks: vec![
                 Track {
-                  codec: Some(TrackCodec::H264),
-                  info: Some(TrackInfo::Video {
+                  codec: Decoded::Known(TrackCodec::H264),
+                  info: Decoded::Known(TrackInfo::Video {
                     bit_depth: 8,
                     chroma_subsampling: Some(ChromaSubsampling::Yuv420),
                     dimensions: Dimensions {
@@ -951,8 +951,8 @@ mod tests {
                   size: 0,
                 },
                 Track {
-                  codec: Some(TrackCodec::Aac),
-                  info: Some(TrackInfo::Audio {
+                  codec: Decoded::Known(TrackCodec::Aac),
+                  info: Decoded::Known(TrackInfo::Audio {
                     channels: 2,
                     sample_rate: 44100,
                   }),

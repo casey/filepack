@@ -45,7 +45,7 @@ impl Media {
     fn formats<T: Content>(items: &[Item<T>]) -> Vec<String> {
       Item::formats(items)
         .into_iter()
-        .map(|format| OrUnknown(format).to_string())
+        .map(ToString::to_string)
         .collect()
     }
     match self {
@@ -64,7 +64,7 @@ impl Media {
           "format",
           formats
             .into_iter()
-            .map(|format| Info::Value(OrUnknown(format).to_string())),
+            .map(|format| Info::Value(format.to_string())),
         )
       })
     }
