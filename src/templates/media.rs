@@ -69,7 +69,7 @@ mod tests {
   fn media() {
     for identifier in [
       PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
-      PackageIdentifier::Number(1),
+      PackageIdentifier::Number(0),
     ] {
       assert_eq!(
         MediaHtml {
@@ -81,7 +81,7 @@ mod tests {
             }),
             ..default()
           },
-          number: Some(1),
+          number: Some(0),
           ..default()
         }
         .to_string(),
@@ -91,7 +91,7 @@ mod tests {
             <div>
               <dt>number</dt>
               <dd>
-                <a href='/package/1'>1</a>
+                <a href='/package/0'>0</a>
               </dd>
             </div>
             <div>
@@ -171,13 +171,13 @@ mod tests {
   fn up() {
     for identifier in [
       PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
-      PackageIdentifier::Number(1),
+      PackageIdentifier::Number(0),
     ] {
       assert_eq!(
         MediaHtml {
           fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
           identifier,
-          number: Some(1),
+          number: Some(0),
           ..default()
         }
         .up(),

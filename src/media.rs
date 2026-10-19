@@ -182,7 +182,7 @@ mod tests {
 
     for identifier in [
       PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
-      PackageIdentifier::Number(1),
+      PackageIdentifier::Number(0),
     ] {
       assert_eq!(
         media.next_item_url(identifier, 0),

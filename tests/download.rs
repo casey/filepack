@@ -396,7 +396,7 @@ fn download_retrieves_package() {
     .stderr(
       "
         uploading 4 of 4 files
-        created package number 1
+        created package number 0
       ",
     )
     .success();
@@ -461,7 +461,7 @@ fn download_retrieves_package_with_metadata() {
     .stderr(
       "
         uploading 5 of 5 files
-        created package number 1
+        created package number 0
       ",
     )
     .success();

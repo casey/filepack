@@ -113,19 +113,19 @@ mod tests {
           PackageSummary {
             fingerprint,
             metadata: None,
-            number: 1,
+            number: 0,
             totals: Totals::default(),
           },
           PackageSummary {
             fingerprint,
             metadata: Some(web),
-            number: 2,
+            number: 1,
             totals: Totals::default(),
           },
           PackageSummary {
             fingerprint,
             metadata: Some(audio),
-            number: 3,
+            number: 2,
             totals: Totals::default(),
           },
         ],
@@ -137,7 +137,7 @@ mod tests {
             <h2>Audio</h2>
             <ul class=thumbnails>
               <li>
-                <a href=/package/3>
+                <a href=/package/2>
                   <img loading=lazy src=/artwork/{fingerprint}/thumbnail>
                 </a>
                 <div class=title>bar</div>
@@ -149,7 +149,7 @@ mod tests {
             <h2>Web</h2>
             <ul class=thumbnails>
               <li>
-                <a href=/package/2>
+                <a href=/package/1>
                 </a>
                 <div class=title>baz</div>
               </li>
@@ -159,7 +159,7 @@ mod tests {
             <h2>None</h2>
             <ul class=thumbnails>
               <li>
-                <a href=/package/1>
+                <a href=/package/0>
                 </a>
               </li>
             </ul>
