@@ -1,8 +1,7 @@
 use super::*;
 
-const MAX_CACHE: &str = "public, max-age=31536000, immutable";
-
 pub(crate) struct Resource {
+  pub(crate) cache: bool,
   pub(crate) content_length: u64,
   pub(crate) file: fs::File,
   pub(crate) hash: Hash,
@@ -13,6 +12,10 @@ pub(crate) struct Resource {
 
 impl Resource {
   const READER_STREAM_CAPACITY: usize = MIB;
+
+  pub(crate) fn cache(self, cache: bool) -> Self {
+    Self { cache, ..self }
+  }
 
   pub(crate) fn range(self, range: Option<TypedHeader<headers::Range>>) -> Self {
     Self {
@@ -44,6 +47,12 @@ impl IntoResponse for Resource {
       }
     }
 
+    let cache_control = if self.cache {
+      "public, max-age=31536000, immutable"
+    } else {
+      "no-cache"
+    };
+
     let mut builder = Response::builder()
       .header(header::ACCEPT_RANGES, "bytes")
       .header(header::ETAG, format!("\"{}\"", self.hash));
@@ -65,7 +74,7 @@ impl IntoResponse for Resource {
     let Some(range) = self.range else {
       return response(
         builder
-          .header(header::CACHE_CONTROL, MAX_CACHE)
+          .header(header::CACHE_CONTROL, cache_control)
           .header(header::CONTENT_LENGTH, self.content_length)
           .body(Body::from_stream(ReaderStream::with_capacity(
             tokio::fs::File::from_std(self.file),
@@ -118,7 +127,7 @@ impl IntoResponse for Resource {
     response(
       builder
         .status(StatusCode::PARTIAL_CONTENT)
-        .header(header::CACHE_CONTROL, MAX_CACHE)
+        .header(header::CACHE_CONTROL, cache_control)
         .header(
           header::CONTENT_RANGE,
           format!("bytes {start}-{end}/{}", self.content_length),

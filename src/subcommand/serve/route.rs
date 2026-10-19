@@ -444,35 +444,53 @@ pub(crate) async fn media_video_item_placeholder_thumbnail(
   })
 }
 
-/// Serve `index.html` from `static` directory of mounted package with `fingerprint`.
-#[route(GET, "/mount/{fingerprint}/")]
+/// Serve `index.html` from `static` directory of mounted `package`.
+#[route(GET, "/mount/{package}/")]
 pub(crate) async fn mount(
   server: ServerExtension,
   server_config: ServerConfigExtension,
-  Path(fingerprint): Path<Fingerprint>,
+  Path(package): Path<PackageIdentifier>,
   range: Option<TypedHeader<headers::Range>>,
 ) -> ServerResult<Resource> {
   mount_file(
     server,
     server_config,
-    Path((fingerprint, "index.html".parse().unwrap())),
+    Path((package, "index.html".parse().unwrap())),
     range,
   )
   .await
 }
 
-/// Serve `path` from `static` directory of mounted package with `fingerprint`.
-#[route(GET, "/mount/{fingerprint}/{*path}")]
+/// Serve `path` from `static` directory of mounted `package`.
+#[route(GET, "/mount/{package}/{*path}")]
 pub(crate) async fn mount_file(
   server: ServerExtension,
   server_config: ServerConfigExtension,
-  Path((fingerprint, path)): Path<(Fingerprint, RelativePath)>,
+  Path((package, path)): Path<(PackageIdentifier, RelativePath)>,
   range: Option<TypedHeader<headers::Range>>,
 ) -> ServerResult<Resource> {
   block_in_place(|| {
+    let Resolved {
+      fingerprint,
+      number,
+      ..
+    } = server.resolve(package)?;
+
     ensure! {
-      server_config.mounts.contains(&fingerprint),
+      server.mounted(&server_config.mounts, fingerprint)?,
       server_error::PackageNotMounted { fingerprint },
+    }
+
+    let Some(media) = server
+      .package_metadata_opt(fingerprint)?
+      .and_then(|metadata| metadata.media)
+    else {
+      return Err(server_error::MountedPackageNoMediaType { fingerprint }.build());
+    };
+
+    ensure! {
+      media.ty() == MediaType::Web,
+      server_error::MountedPackageMediaType { fingerprint, media_type: media.ty() },
     }
 
     let path = format!("static/{path}").parse::<RelativePath>().unwrap();
@@ -484,16 +502,17 @@ pub(crate) async fn mount_file(
     Ok(
       server
         .open_file(hash)?
+        .cache(number.is_none())
         .range(range)
         .unsandboxed_content_type(content_type),
     )
   })
 }
 
-/// Redirect to root of mounted package with `fingerprint`, with trailing slash.
-#[route(GET, "/mount/{fingerprint}")]
-pub(crate) async fn mount_redirect(Path(fingerprint): Path<Fingerprint>) -> Redirect {
-  Redirect::permanent(&format!("/mount/{fingerprint}/"))
+/// Redirect to root of mounted `package`, with trailing slash.
+#[route(GET, "/mount/{package}")]
+pub(crate) async fn mount_redirect(Path(package): Path<PackageIdentifier>) -> Redirect {
+  Redirect::permanent(&format!("/mount/{package}/"))
 }
 
 /// Display `package`.

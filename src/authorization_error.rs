@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(Debug, Snafu)]
 #[snafu(context(suffix(false)), visibility(pub(crate)))]
-pub enum AuthorizationError {
+pub(crate) enum AuthorizationError {
   #[snafu(display("token has incorrect audience `{audience}`"))]
   Audience { audience: String },
   #[snafu(display(
