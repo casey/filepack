@@ -36,12 +36,7 @@ fn delete_all() {
     .success();
 
   for fingerprint in fingerprints {
-    assert_eq!(
-      reqwest::blocking::get(format!("{}/package/{fingerprint}", server.address()))
-        .unwrap()
-        .status(),
-      StatusCode::OK,
-    );
+    server.get(format!("/package/{fingerprint}")).send();
   }
 
   Test::new()
@@ -49,12 +44,10 @@ fn delete_all() {
     .success();
 
   for number in 1..=2 {
-    assert_eq!(
-      reqwest::blocking::get(format!("{}/package/{number}", server.address()))
-        .unwrap()
-        .status(),
-      StatusCode::NOT_FOUND,
-    );
+    server
+      .get(format!("/package/{number}"))
+      .status(StatusCode::NOT_FOUND)
+      .send();
   }
 
   server.terminate().success();
@@ -92,21 +85,16 @@ fn delete_package_succeeds() {
     )
     .success();
 
-  let url = format!("{}/package/1", server.address());
-
-  assert_eq!(
-    reqwest::blocking::get(&url).unwrap().status(),
-    StatusCode::OK,
-  );
+  server.get("/package/1").send();
 
   Test::new()
     .args(["delete", "--server", &server.address(), "1"])
     .success();
 
-  assert_eq!(
-    reqwest::blocking::get(&url).unwrap().status(),
-    StatusCode::NOT_FOUND,
-  );
+  server
+    .get("/package/1")
+    .status(StatusCode::NOT_FOUND)
+    .send();
 
   server.terminate().success();
 }

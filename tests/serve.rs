@@ -1,19 +1,14 @@
-use {super::*, reqwest::Version};
+use super::*;
 
 #[test]
 fn http1_is_supported() {
   let server = Test::new().serve().spawn();
 
-  let response = reqwest::blocking::Client::builder()
-    .http1_only()
-    .build()
-    .unwrap()
-    .get(format!("{}/file/{}", server.address(), Hash::bytes(b"")))
-    .send()
-    .unwrap();
-
-  assert_eq!(response.version(), Version::HTTP_11);
-  assert_eq!(response.status(), StatusCode::NOT_FOUND);
+  server
+    .get(format!("/file/{}", Hash::bytes(b"")))
+    .version(Version::HTTP_11)
+    .status(StatusCode::NOT_FOUND)
+    .send();
 
   server.terminate().success();
 }
@@ -22,16 +17,11 @@ fn http1_is_supported() {
 fn http2_is_supported() {
   let server = Test::new().serve().spawn();
 
-  let response = reqwest::blocking::Client::builder()
-    .http2_prior_knowledge()
-    .build()
-    .unwrap()
-    .get(format!("{}/file/{}", server.address(), Hash::bytes(b"")))
-    .send()
-    .unwrap();
-
-  assert_eq!(response.version(), Version::HTTP_2);
-  assert_eq!(response.status(), StatusCode::NOT_FOUND);
+  server
+    .get(format!("/file/{}", Hash::bytes(b"")))
+    .version(Version::HTTP_2)
+    .status(StatusCode::NOT_FOUND)
+    .send();
 
   server.terminate().success();
 }
@@ -53,51 +43,22 @@ fn redirect_alias() {
     ])
     .spawn();
 
-  let client = reqwest::blocking::Client::builder()
-    .redirect(reqwest::redirect::Policy::none())
-    .build()
-    .unwrap();
+  server
+    .get("/baz?qux=quux")
+    .header(header::HOST, "bar")
+    .status(StatusCode::PERMANENT_REDIRECT)
+    .assert_header(header::LOCATION, "http://foo:0/baz?qux=quux")
+    .send();
 
-  let address = server.address();
+  server
+    .get("/baz?qux=quux")
+    .host("bar")
+    .version(Version::HTTP_2)
+    .status(StatusCode::PERMANENT_REDIRECT)
+    .assert_header(header::LOCATION, "http://foo:0/baz?qux=quux")
+    .send();
 
-  let response = client
-    .get(format!("{address}/baz?qux=quux"))
-    .header(reqwest::header::HOST, "bar")
-    .send()
-    .unwrap();
-
-  assert_eq!(response.status(), StatusCode::PERMANENT_REDIRECT);
-  assert_eq!(
-    response.headers()[reqwest::header::LOCATION],
-    "http://foo:0/baz?qux=quux",
-  );
-
-  let client = reqwest::blocking::Client::builder()
-    .http2_prior_knowledge()
-    .redirect(reqwest::redirect::Policy::none())
-    .resolve(
-      "bar",
-      format!("127.0.0.1:{}", server.port()).parse().unwrap(),
-    )
-    .build()
-    .unwrap();
-
-  let response = client.get("http://bar/baz?qux=quux").send().unwrap();
-
-  assert_eq!(response.version(), Version::HTTP_2);
-  assert_eq!(response.status(), StatusCode::PERMANENT_REDIRECT);
-  assert_eq!(
-    response.headers()[reqwest::header::LOCATION],
-    "http://foo:0/baz?qux=quux",
-  );
-
-  let response = client
-    .get(format!("{address}/"))
-    .header(reqwest::header::HOST, "foo")
-    .send()
-    .unwrap();
-
-  assert_eq!(response.status(), StatusCode::OK);
+  server.get("/").header(header::HOST, "foo").send();
 
   server.terminate().success();
 }
@@ -105,15 +66,13 @@ fn redirect_alias() {
 #[test]
 fn redirect_http_to_https() {
   #[track_caller]
-  fn case(client: &reqwest::blocking::Client, address: &str, path: &str, location: &str) {
-    let response = client.get(format!("{address}{path}")).send().unwrap();
-
-    assert_eq!(response.status(), StatusCode::PERMANENT_REDIRECT);
-    assert_eq!(response.headers()[reqwest::header::LOCATION], location);
-    assert_eq!(
-      response.headers()[reqwest::header::X_CONTENT_TYPE_OPTIONS],
-      "nosniff",
-    );
+  fn case(server: &Child, path: &str, location: &str) {
+    server
+      .get(path)
+      .status(StatusCode::PERMANENT_REDIRECT)
+      .assert_header(header::LOCATION, location)
+      .assert_header(header::X_CONTENT_TYPE_OPTIONS, "nosniff")
+      .send();
   }
 
   let server = Test::new()
@@ -132,21 +91,9 @@ fn redirect_http_to_https() {
     ])
     .spawn();
 
-  let client = reqwest::blocking::Client::builder()
-    .redirect(reqwest::redirect::Policy::none())
-    .build()
-    .unwrap();
-
-  let address = server.address();
-
-  case(&client, &address, "/", "https://foo.com:0/");
-  case(&client, &address, "/bar", "https://foo.com:0/bar");
-  case(
-    &client,
-    &address,
-    "/bar?baz=qux",
-    "https://foo.com:0/bar?baz=qux",
-  );
+  case(&server, "/", "https://foo.com:0/");
+  case(&server, "/bar", "https://foo.com:0/bar");
+  case(&server, "/bar?baz=qux", "https://foo.com:0/bar?baz=qux");
 
   server.terminate().success();
 }
