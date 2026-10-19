@@ -10,7 +10,7 @@ use {
 
 static RUNTIME: LazyLock<Runtime> = LazyLock::new(|| Runtime::new().unwrap());
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 struct DirectoryBuilder<'a> {
   entries: BTreeMap<&'a str, DirectoryBuilderEntry<'a>>,
 }
@@ -77,12 +77,13 @@ impl<'a> DirectoryBuilder<'a> {
   }
 }
 
+#[derive(Clone)]
 enum DirectoryBuilderEntry<'a> {
   Directory(DirectoryBuilder<'a>),
   File(Vec<u8>),
 }
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 struct PackageBuilder<'a> {
   root: DirectoryBuilder<'a>,
 }
@@ -322,7 +323,7 @@ impl TestServer {
   fn builder() -> TestServerBuilder {
     TestServerBuilder {
       auth_config: None,
-      mounts: HashSet::new(),
+      mounts: Vec::new(),
       unstable: false,
       url: None,
     }
@@ -405,7 +406,7 @@ impl TestServer {
 
 struct TestServerBuilder {
   auth_config: Option<Arc<AuthConfig>>,
-  mounts: HashSet<Fingerprint>,
+  mounts: Vec<PackageIdentifier>,
   unstable: bool,
   url: Option<Url>,
 }
@@ -438,8 +439,8 @@ impl TestServerBuilder {
     }
   }
 
-  fn mount(mut self, fingerprint: Fingerprint) -> Self {
-    self.mounts.insert(fingerprint);
+  fn mount(mut self, package: PackageIdentifier) -> Self {
+    self.mounts.push(package);
     self
   }
 
@@ -2542,6 +2543,17 @@ fn missing_returns_missing_hashes() {
 }
 
 #[test]
+fn mount_before_upload() {
+  TestServer::builder()
+    .mount(PackageIdentifier::Number(1))
+    .build()
+    .get("/mount/1/")
+    .status(StatusCode::NOT_FOUND)
+    .assert_body("package number 1 not found")
+    .send();
+}
+
+#[test]
 fn mount_file() {
   let metadata = Metadata {
     media: Some(Media::Web),
@@ -2553,21 +2565,42 @@ fn mount_file() {
     .file("static/foo.css", b"bar")
     .file("static/index.html", b"foo");
 
-  let server = TestServer::builder()
-    .mount(package.fingerprint())
-    .unstable()
-    .build();
+  let fingerprint = package.fingerprint();
 
-  let fingerprint = package.upload(&server);
+  let revision = RevisionObject {
+    package: fingerprint,
+    parents: None,
+  }
+  .hash();
 
-  server
-    .get(format!("/mount/{fingerprint}/foo.css"))
-    .assert_header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
-    .assert_header(header::CONTENT_TYPE, "text/css")
-    .assert_header_absent(header::CONTENT_SECURITY_POLICY)
-    .assert_header_absent(header::CONTENT_DISPOSITION)
-    .assert_body("bar")
-    .send();
+  let identifiers = [
+    (
+      PackageIdentifier::Fingerprint(fingerprint),
+      "public, max-age=31536000, immutable",
+    ),
+    (PackageIdentifier::Number(1), "no-cache"),
+    (
+      PackageIdentifier::Revision(revision),
+      "public, max-age=31536000, immutable",
+    ),
+  ];
+
+  for (mount, _cache_control) in identifiers {
+    let server = TestServer::builder().mount(mount).unstable().build();
+
+    package.clone().upload(&server);
+
+    for (identifier, cache_control) in identifiers {
+      server
+        .get(format!("/mount/{identifier}/foo.css"))
+        .assert_header(header::CACHE_CONTROL, cache_control)
+        .assert_header(header::CONTENT_TYPE, "text/css")
+        .assert_header_absent(header::CONTENT_SECURITY_POLICY)
+        .assert_header_absent(header::CONTENT_DISPOSITION)
+        .assert_body("bar")
+        .send();
+    }
+  }
 }
 
 #[test]
@@ -2582,7 +2615,7 @@ fn mount_file_invalid_path() {
     .file("static/index.html", b"foo");
 
   let server = TestServer::builder()
-    .mount(package.fingerprint())
+    .mount(PackageIdentifier::Fingerprint(package.fingerprint()))
     .unstable()
     .build();
 
@@ -2610,7 +2643,7 @@ fn mount_file_nested() {
     .file("static/foo/bar.txt", b"baz");
 
   let server = TestServer::builder()
-    .mount(package.fingerprint())
+    .mount(PackageIdentifier::Fingerprint(package.fingerprint()))
     .unstable()
     .build();
 
@@ -2635,7 +2668,7 @@ fn mount_file_not_found() {
     .file("static/index.html", b"foo");
 
   let server = TestServer::builder()
-    .mount(package.fingerprint())
+    .mount(PackageIdentifier::Fingerprint(package.fingerprint()))
     .unstable()
     .build();
 
@@ -2670,6 +2703,52 @@ fn mount_file_not_mounted() {
 }
 
 #[test]
+fn mount_number_follows_head() {
+  let metadata = Metadata {
+    media: Some(Media::Web),
+    ..default()
+  };
+
+  let server = TestServer::builder()
+    .mount(PackageIdentifier::Number(1))
+    .unstable()
+    .build();
+
+  let foo = PackageBuilder::new()
+    .metadata(&metadata)
+    .file("static/index.html", b"foo")
+    .upload(&server);
+
+  server.get("/mount/1/").assert_body("foo").send();
+
+  let bar = PackageBuilder::new()
+    .metadata(&metadata)
+    .file("static/index.html", b"bar")
+    .upload(&server);
+
+  let revision = server.write_revision(bar, None);
+
+  server
+    .post(format!("/api/revision/{revision}"))
+    .body(
+      api::revision::Request {
+        mode: api::revision::Mode::Replace { number: 1 },
+      }
+      .encode_to_vec(),
+    )
+    .assert_body(api::revision::Response { number: 1 }.encode_to_vec())
+    .send();
+
+  server.get("/mount/1/").assert_body("bar").send();
+
+  server
+    .get(format!("/mount/{foo}/"))
+    .status(StatusCode::NOT_FOUND)
+    .assert_body(format!("package {foo} not mounted"))
+    .send();
+}
+
+#[test]
 fn mount_redirect() {
   TestServer::new()
     .get(format!("/mount/{}", Fingerprint::EXAMPLE))
@@ -2678,6 +2757,80 @@ fn mount_redirect() {
       header::LOCATION,
       format!("/mount/{}/", Fingerprint::EXAMPLE),
     )
+    .send();
+}
+
+#[test]
+fn mount_requires_media_type() {
+  let server = TestServer::builder()
+    .mount(PackageIdentifier::Number(1))
+    .unstable()
+    .build();
+
+  let fingerprint = PackageBuilder::new()
+    .file("static/index.html", b"foo")
+    .upload(&server);
+
+  server
+    .get("/mount/1/")
+    .status(StatusCode::INTERNAL_SERVER_ERROR)
+    .assert_body(format!(
+      "mounted package {fingerprint} has no media type, only web packages may be mounted"
+    ))
+    .send();
+}
+
+#[test]
+fn mount_requires_web_package() {
+  let metadata = Metadata {
+    media: Some(Media::Audio { items: Vec::new() }),
+    ..default()
+  };
+
+  let metadata_deco_len = metadata.encode_to_vec().len().into_u64();
+
+  let package = PackageBuilder::new()
+    .metadata(&metadata)
+    .file("static/index.html", b"foo");
+
+  let directory = package.directory();
+
+  let mut static_directory = Directory::new();
+  static_directory.insert_file("index.html", b"foo");
+  let static_deco_len = static_directory.deco().0.len().into_u64();
+
+  let server = TestServer::builder()
+    .mount(PackageIdentifier::Number(1))
+    .unstable()
+    .build();
+
+  let fingerprint = package.upload(&server);
+
+  server
+    .get("/mount/1/")
+    .status(StatusCode::INTERNAL_SERVER_ERROR)
+    .assert_body(format!(
+      "mounted package {fingerprint} has unexpected media type audio, only web packages may be \
+       mounted"
+    ))
+    .send();
+
+  server
+    .get(format!("/package/{fingerprint}"))
+    .assert_page(PackageHtml {
+      directory,
+      fingerprint,
+      identifier: PackageIdentifier::Fingerprint(fingerprint),
+      metadata: Some(metadata),
+      mounted: true,
+      totals: Totals {
+        directories: 1,
+        directory_size: static_deco_len,
+        file_size: metadata_deco_len + 3,
+        files: 2,
+      },
+      ..default()
+    })
     .send();
 }
 
@@ -2693,7 +2846,7 @@ fn mount_serves_index_html() {
     .file("static/index.html", b"foo");
 
   let server = TestServer::builder()
-    .mount(package.fingerprint())
+    .mount(PackageIdentifier::Fingerprint(package.fingerprint()))
     .unstable()
     .build();
 
@@ -3379,7 +3532,7 @@ fn package_page_web() {
   let static_deco_len = static_directory.deco().0.len().into_u64();
 
   let server = TestServer::builder()
-    .mount(package.fingerprint())
+    .mount(PackageIdentifier::Fingerprint(package.fingerprint()))
     .unstable()
     .build();
 
@@ -3796,12 +3949,12 @@ fn server_config() {
 
   assert_eq!(
     Serve {
-      mounts: vec![fingerprint],
+      mounts: vec![PackageIdentifier::Fingerprint(fingerprint)],
       ..Serve::default()
     }
     .server_config()
     .mounts,
-    HashSet::from([fingerprint]),
+    vec![PackageIdentifier::Fingerprint(fingerprint)],
   );
 }
 

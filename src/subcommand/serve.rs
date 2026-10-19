@@ -74,7 +74,7 @@ impl RedirectConfig {
 }
 
 pub(crate) struct ServerConfig {
-  pub(crate) mounts: HashSet<Fingerprint>,
+  pub(crate) mounts: Vec<PackageIdentifier>,
   pub(crate) url: Option<Url>,
 }
 
@@ -145,13 +145,14 @@ pub(crate) struct Serve {
   )]
   https_port: Option<u16>,
   #[arg(
-    help = "Mount web package with <FINGERPRINT> at `/mount/<FINGERPRINT>`, mounted packages are \
-            unsandboxed and served with the server origin, make sure you understand the \
-            consequences of this and only mount packages you trust",
+    help = "Mount web package <PACKAGE>. <PACKAGE> may be a fingerprint, revision, or number. \
+            Mounted packages are served under `/mount` by fingerprint, revision, and number. \
+            Mounted packages are unsandboxed and served with the server origin, make sure you \
+            understand the consequences of this and only mount packages you trust",
     long = "mount",
-    value_name = "FINGERPRINT"
+    value_name = "PACKAGE"
   )]
-  mounts: Vec<Fingerprint>,
+  mounts: Vec<PackageIdentifier>,
   #[arg(
     help = "Write listening port to <ADDRESS>",
     long,
@@ -440,21 +441,6 @@ impl Serve {
       options.unstable,
     )?);
 
-    for &fingerprint in &self.mounts {
-      let metadata = server
-        .package_metadata(fingerprint)
-        .context(error::MountedPackage)?;
-
-      let Some(media) = metadata.media else {
-        return Err(error::MountedPackageNoMediaType { fingerprint }.build());
-      };
-
-      ensure! {
-        media.ty() == MediaType::Web,
-        error::MountedPackageMediaType { fingerprint, media_type: media.ty() },
-      }
-    }
-
     let auth_config = if self.restrict_writes {
       let admin = if let Some(identifier) = &self.admin_key {
         Some(Keychain::load(&options)?.identifier_public_key(identifier)?)
@@ -542,7 +528,7 @@ impl Serve {
 
   fn server_config(&self) -> Arc<ServerConfig> {
     Arc::new(ServerConfig {
-      mounts: self.mounts.iter().copied().collect(),
+      mounts: self.mounts.clone(),
       url: self.domain.as_ref().map(|_| self.redirect_url()),
     })
   }

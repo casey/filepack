@@ -394,6 +394,40 @@ impl Server {
     Ok(missing)
   }
 
+  pub(crate) fn mounted(
+    &self,
+    mounts: &[PackageIdentifier],
+    fingerprint: Fingerprint,
+  ) -> ServerResult<bool> {
+    let tx = self.database.begin_read()?;
+
+    let numbers = tx.open_table(NUMBERS)?;
+
+    let revisions = tx.open_table(REVISIONS)?;
+
+    for &mount in mounts {
+      let mounted = match mount {
+        PackageIdentifier::Fingerprint(mount) => mount == fingerprint,
+        PackageIdentifier::Number(mount) => {
+          if let Some(revision) = numbers.get(&mount)? {
+            self.read_revision(revision.value())?.package == fingerprint
+          } else {
+            false
+          }
+        }
+        PackageIdentifier::Revision(mount) => {
+          revisions.get(&mount)?.is_some() && self.read_revision(mount)?.package == fingerprint
+        }
+      };
+
+      if mounted {
+        return Ok(true);
+      }
+    }
+
+    Ok(false)
+  }
+
   pub(crate) fn numbers(&self) -> ServerResult<BTreeSet<u64>> {
     let tx = self.database.begin_read()?;
     tx.open_table(NUMBERS)?
@@ -419,6 +453,7 @@ impl Server {
       .len();
 
     Ok(Resource {
+      cache: true,
       content_length,
       file,
       hash,
@@ -450,7 +485,7 @@ impl Server {
   pub(crate) fn package_html(
     &self,
     package: PackageIdentifier,
-    mounts: &HashSet<Fingerprint>,
+    mounts: &[PackageIdentifier],
   ) -> ServerResult<PackageHtml> {
     let Resolved {
       fingerprint,
@@ -525,7 +560,7 @@ impl Server {
       fingerprint,
       identifier: package,
       metadata,
-      mounted: mounts.contains(&fingerprint),
+      mounted: self.mounted(mounts, fingerprint)?,
       next,
       number,
       parents,

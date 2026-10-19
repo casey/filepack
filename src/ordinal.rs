@@ -1,7 +1,7 @@
 use super::*;
 
 #[derive(Debug, DeserializeFromStr, PartialEq)]
-pub struct Ordinal(pub(crate) usize);
+pub(crate) struct Ordinal(pub(crate) usize);
 
 impl Display for Ordinal {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {

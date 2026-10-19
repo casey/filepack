@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(Debug, Snafu)]
 #[snafu(context(suffix(false)), visibility(pub(crate)))]
-pub enum ServerError {
+pub(crate) enum ServerError {
   #[snafu(display("malformed API version header `{value}`"))]
   ApiVersionMalformed { value: String },
   #[snafu(display(
@@ -100,6 +100,18 @@ pub enum ServerError {
   },
   #[snafu(display("media type {ty} does not have items"))]
   MediaTypeDoesNotHaveItems { ty: crate::MediaType },
+  #[snafu(display(
+    "mounted package {fingerprint} has unexpected media type {media_type}, only web packages may \
+     be mounted"
+  ))]
+  MountedPackageMediaType {
+    fingerprint: Fingerprint,
+    media_type: crate::MediaType,
+  },
+  #[snafu(display(
+    "mounted package {fingerprint} has no media type, only web packages may be mounted"
+  ))]
+  MountedPackageNoMediaType { fingerprint: Fingerprint },
   #[snafu(display("{source}"))]
   NumberParse { source: NumberError },
   #[snafu(display("file `{path}` missing from package {fingerprint}"))]
@@ -222,6 +234,8 @@ impl ServerError {
       | Self::FileIo { .. }
       | Self::Filesystem { .. }
       | Self::InvalidResponse { .. }
+      | Self::MountedPackageMediaType { .. }
+      | Self::MountedPackageNoMediaType { .. }
       | Self::PackageFileMissing { .. }
       | Self::DirectoryCorrupt { .. }
       | Self::PackageMetadataCorrupt { .. }
