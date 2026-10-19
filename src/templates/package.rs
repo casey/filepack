@@ -60,7 +60,7 @@ impl PackageHtml {
         format!("/directory/{}", Hash::from(self.fingerprint)),
       )
       .when(self.mounted, |builder| {
-        builder.link("mount", "view", format!("/mount/{}/", self.fingerprint))
+        builder.link("mount", "view", format!("/mount/{}/", self.identifier))
       })
       .when_some(self.metadata.as_ref(), |builder, metadata| {
         metadata.info(builder, self.identifier, self.readme, self.colophon)
@@ -559,6 +559,7 @@ mod tests {
         fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
         identifier: PackageIdentifier::Number(1),
         metadata: Some(metadata),
+        mounted: true,
         number: Some(1),
         parents: vec![
           Revision::EXAMPLE.parse().unwrap(),
@@ -628,6 +629,12 @@ mod tests {
               <dt>files</dt>
               <dd>
                 <a href='/directory/{hash}'>1 file</a>
+              </dd>
+            </div>
+            <div>
+              <dt>mount</dt>
+              <dd>
+                <a href='/mount/1/'>view</a>
               </dd>
             </div>
             <div>
