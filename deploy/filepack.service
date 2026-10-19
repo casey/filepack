@@ -6,16 +6,18 @@ StartLimitIntervalSec=10m
 
 [Service]
 AmbientCapabilities=CAP_NET_BIND_SERVICE
-Environment=FILEPACK_DATA_DIR=/var/lib/filepack
 Environment=FILEPACK_LOG=info
 Environment=RUST_BACKTRACE=1
 ExecStart=/usr/local/bin/filepack \
+  --data-dir /var/lib/filepack \
+  --unstable \
   serve \
   --acme-contact mailto:casey@rodarmor.com \
   --admin-key public1475c817831f46c25109908a081cf091bb127e0ea47dba3829a3da003dbec0b2c \
   --domain filepack.com \
   --http \
   --https \
+  --mount 1 \
   --redirect www.filepack.com \
   --redirect-http-to-https \
   --restrict-writes
