@@ -106,17 +106,11 @@ fn serve_admin_key_by_name() {
     ])
     .spawn();
 
-  let response = reqwest::blocking::Client::new()
-    .put(format!(
-      "{}/api/file/{}",
-      server.address(),
-      Hash::bytes(b"bar")
-    ))
+  server
+    .put(format!("/api/file/{}", Hash::bytes(b"bar")))
     .body("bar")
-    .send()
-    .unwrap();
-
-  assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+    .status(StatusCode::UNAUTHORIZED)
+    .send();
 
   server.terminate().success();
 }
@@ -139,17 +133,11 @@ fn serve_admin_key_by_public_key() {
     ])
     .spawn();
 
-  let response = reqwest::blocking::Client::new()
-    .put(format!(
-      "{}/api/file/{}",
-      server.address(),
-      Hash::bytes(b"bar")
-    ))
+  server
+    .put(format!("/api/file/{}", Hash::bytes(b"bar")))
     .body("bar")
-    .send()
-    .unwrap();
-
-  assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+    .status(StatusCode::UNAUTHORIZED)
+    .send();
 
   server.terminate().success();
 }
@@ -484,16 +472,13 @@ fn upload_package_serves_package_html() {
 
   let root = Hash::from(fingerprint);
 
-  let deco = reqwest::blocking::get(format!("{}/file/{root}", server.address()))
-    .unwrap()
-    .bytes()
-    .unwrap();
+  let deco = server.get(format!("/file/{root}")).send();
 
   let directory = Directory::decode_strict(&deco).unwrap();
 
-  server.assert_page(
-    &format!("/package/{fingerprint}"),
-    PackageHtml {
+  server
+    .get(format!("/package/{fingerprint}"))
+    .assert_page(PackageHtml {
       colophon: None,
       directory,
       fingerprint,
@@ -508,8 +493,8 @@ fn upload_package_serves_package_html() {
       revision: None,
       revisions: None,
       totals,
-    },
-  );
+    })
+    .send();
 
   server.terminate().success();
 }
@@ -574,20 +559,17 @@ fn upload_package_uploads_files() {
     )
     .success();
 
-  let deco = reqwest::blocking::get(format!("{}/file/{root}", server.address()))
-    .unwrap()
-    .bytes()
-    .unwrap();
+  let deco = server.get(format!("/file/{root}")).send();
 
   let directory = Directory::decode_strict(&deco).unwrap();
 
-  server.assert_page(
-    &format!("/directory/{root}"),
-    DirectoryHtml {
+  server
+    .get(format!("/directory/{root}"))
+    .assert_page(DirectoryHtml {
       directory,
       hash: root,
-    },
-  );
+    })
+    .send();
 
   server.terminate().success();
 }
@@ -740,33 +722,19 @@ fn upload_replaces_package() {
     )
     .success();
 
-  let address = server.address();
+  server.get(format!("/package/{new}")).send();
 
-  assert_eq!(
-    reqwest::blocking::get(format!("{address}/package/{new}"))
-      .unwrap()
-      .status(),
-    StatusCode::OK,
-  );
-
-  assert_eq!(
-    reqwest::blocking::get(format!("{address}/package/1"))
-      .unwrap()
-      .status(),
-    StatusCode::OK,
-  );
+  server.get("/package/1").send();
 
   Test::new()
-    .args(["gc", "--server", &address])
+    .args(["gc", "--server", &server.address()])
     .stderr("removed 1 revision, 1 package, 1 directory, and 3 files, freeing 84 B\n")
     .success();
 
-  assert_eq!(
-    reqwest::blocking::get(format!("{address}/package/{old}"))
-      .unwrap()
-      .status(),
-    StatusCode::NOT_FOUND,
-  );
+  server
+    .get(format!("/package/{old}"))
+    .status(StatusCode::NOT_FOUND)
+    .send();
 
   server.terminate().success();
 }
@@ -885,20 +853,13 @@ fn upload_updates_package() {
     )
     .success();
 
-  let address = server.address();
-
   Test::new()
-    .args(["gc", "--server", &address])
+    .args(["gc", "--server", &server.address()])
     .stderr("removed 0 revisions, 0 packages, 0 directories, and 0 files, freeing 0 B\n")
     .success();
 
   for identifier in [old.to_string(), new.to_string(), "1".into()] {
-    assert_eq!(
-      reqwest::blocking::get(format!("{address}/package/{identifier}"))
-        .unwrap()
-        .status(),
-      StatusCode::OK,
-    );
+    server.get(format!("/package/{identifier}")).send();
   }
 
   server.terminate().success();

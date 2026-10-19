@@ -1,12 +1,4 @@
-use {
-  super::*,
-  axum::{body, response::IntoResponse},
-  pretty_assertions::assert_eq,
-  std::sync::LazyLock,
-  tokio::runtime::Runtime,
-};
-
-static RUNTIME: LazyLock<Runtime> = LazyLock::new(|| Runtime::new().unwrap());
+use super::*;
 
 pub(crate) struct Child {
   child: Option<std::process::Child>,
@@ -19,35 +11,8 @@ impl Child {
     format!("http://127.0.0.1:{}", self.port.unwrap())
   }
 
-  #[track_caller]
-  pub(crate) fn assert_page(&self, path: &str, expected: impl Page) {
-    let response = reqwest::blocking::get(format!("{}{path}", self.address())).unwrap();
-    let actual_status = response.status();
-    let actual_headers = response.headers().clone();
-    let actual_body = response.text().unwrap();
-
-    let (parts, body) = expected
-      .page(None)
-      .into_response()
-      .into_response()
-      .into_parts();
-
-    let expected_body = String::from_utf8(Vec::from(
-      RUNTIME.block_on(body::to_bytes(body, usize::MAX)).unwrap(),
-    ))
-    .unwrap();
-
-    assert_eq!(actual_status, parts.status);
-
-    for (name, value) in &parts.headers {
-      assert_eq!(
-        actual_headers.get(name),
-        Some(value),
-        "header `{name}` mismatch",
-      );
-    }
-
-    assert_eq!(actual_body, expected_body);
+  pub(crate) fn get(&self, path: impl Into<String>) -> Request<'_> {
+    Request::new(self, Method::GET, path)
   }
 
   pub(crate) fn new(child: std::process::Child, port: Option<u16>, test: Test) -> Self {
@@ -60,6 +25,10 @@ impl Child {
 
   pub(crate) fn port(&self) -> u16 {
     self.port.unwrap()
+  }
+
+  pub(crate) fn put(&self, path: impl Into<String>) -> Request<'_> {
+    Request::new(self, Method::PUT, path)
   }
 
   #[track_caller]
