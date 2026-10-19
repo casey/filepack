@@ -12,13 +12,13 @@ fn gc_removes_orphaned_package_data() {
     .stderr(
       "
         uploading 1 of 1 file
-        created package number 1
+        created package number 0
       ",
     )
     .success();
 
   Test::new()
-    .args(["delete", "--server", &server.address(), "1"])
+    .args(["delete", "--server", &server.address(), "0"])
     .success();
 
   Test::new()

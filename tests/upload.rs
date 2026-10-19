@@ -59,12 +59,12 @@ fn reupload_package_succeeds() {
     .stderr(
       "
         uploading 4 of 4 files
-        created package number 1
+        created package number 0
       ",
     )
     .success()
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
-    .stderr("package number 1 is up to date\n")
+    .stderr("package number 0 is up to date\n")
     .success();
 
   server.terminate().success();
@@ -165,7 +165,7 @@ fn signatures_are_not_uploaded() {
     .stderr(
       "
         uploading 3 of 3 files
-        created package number 1
+        created package number 0
       ",
     )
     .success();
@@ -236,7 +236,7 @@ fn upload_package_accepts_directory() {
     .stderr(
       "
         uploading 1 of 1 file
-        created package number 1
+        created package number 0
       ",
     )
     .success();
@@ -259,7 +259,7 @@ fn upload_package_defaults_to_current_directory() {
     .stderr(
       "
         uploading 1 of 1 file
-        created package number 1
+        created package number 0
       ",
     )
     .success();
@@ -452,7 +452,7 @@ fn upload_package_serves_package_html() {
     .stderr(
       "
         uploading 2 of 2 files
-        created package number 1
+        created package number 0
       ",
     )
     .success();
@@ -518,7 +518,7 @@ fn upload_package_skips_files_already_on_server() {
     .stderr(
       "
         uploading 1 of 2 files
-        created package number 1
+        created package number 0
       ",
     )
     .success();
@@ -554,7 +554,7 @@ fn upload_package_uploads_files() {
     .stderr(
       "
         uploading 4 of 4 files
-        created package number 1
+        created package number 0
       ",
     )
     .success();
@@ -594,7 +594,7 @@ fn upload_records_state() {
     .stderr(
       "
         uploading 1 of 1 file
-        created package number 1
+        created package number 0
       ",
     )
     .success()
@@ -608,7 +608,7 @@ fn upload_records_state() {
       servers: BTreeMap::from([(
         format!("{}/", server.address()),
         ServerState {
-          number: 1,
+          number: 0,
           revision,
         },
       )]),
@@ -630,7 +630,7 @@ fn upload_rejects_stale_state() {
     .stderr(
       "
         uploading 1 of 1 file
-        created package number 1
+        created package number 0
       ",
     )
     .success();
@@ -646,7 +646,7 @@ fn upload_rejects_stale_state() {
     .args(["create", "."])
     .success()
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
-    .stderr("server already has package number 1\n")
+    .stderr("server already has package number 0\n")
     .success()
     .write("foo", "baz")
     .args(["create", "--force", "."])
@@ -655,7 +655,7 @@ fn upload_rejects_stale_state() {
     .stderr(
       "
         uploading 1 of 1 file
-        updated package number 1
+        updated package number 0
       ",
     )
     .success();
@@ -671,7 +671,7 @@ fn upload_rejects_stale_state() {
     .success()
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
     .stderr(&format!(
-      "error: package number 1 is at revision {head} on the server, but the last uploaded \
+      "error: package number 0 is at revision {head} on the server, but the last uploaded \
       revision is {root}\n"
     ))
     .failure();
@@ -695,7 +695,7 @@ fn upload_replaces_package() {
     .stderr(
       "
         uploading 1 of 1 file
-        created package number 1
+        created package number 0
       ",
     )
     .success()
@@ -711,20 +711,20 @@ fn upload_replaces_package() {
       "--server",
       &server.address(),
       "--replace",
-      "1",
+      "0",
       "manifest.filepack",
     ])
     .stderr(
       "
         uploading 1 of 1 file
-        replaced package number 1
+        replaced package number 0
       ",
     )
     .success();
 
   server.get(format!("/package/{new}")).send();
 
-  server.get("/package/1").send();
+  server.get("/package/0").send();
 
   Test::new()
     .args(["gc", "--server", &server.address()])
@@ -759,7 +759,7 @@ fn upload_updates_implicitly() {
     .stderr(
       "
         uploading 1 of 1 file
-        created package number 1
+        created package number 0
       ",
     )
     .success()
@@ -770,12 +770,12 @@ fn upload_updates_implicitly() {
     .stderr(
       "
         uploading 1 of 1 file
-        updated package number 1
+        updated package number 0
       ",
     )
     .success()
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
-    .stderr("package number 1 is up to date\n")
+    .stderr("package number 0 is up to date\n")
     .success();
 
   let head = RevisionObject {
@@ -790,7 +790,7 @@ fn upload_updates_implicitly() {
       servers: BTreeMap::from([(
         format!("{}/", server.address()),
         ServerState {
-          number: 1,
+          number: 0,
           revision: head,
         },
       )]),
@@ -816,7 +816,7 @@ fn upload_updates_package() {
     .stderr(
       "
         uploading 1 of 1 file
-        created package number 1
+        created package number 0
       ",
     )
     .success()
@@ -825,10 +825,10 @@ fn upload_updates_package() {
       "--server",
       &server.address(),
       "--update",
-      "1",
+      "0",
       "manifest.filepack",
     ])
-    .stderr("package number 1 is up to date\n")
+    .stderr("package number 0 is up to date\n")
     .success()
     .write("foo", "baz")
     .args(["create", "--force", "."])
@@ -842,13 +842,13 @@ fn upload_updates_package() {
       "--server",
       &server.address(),
       "--update",
-      "1",
+      "0",
       "manifest.filepack",
     ])
     .stderr(
       "
         uploading 1 of 1 file
-        updated package number 1
+        updated package number 0
       ",
     )
     .success();
@@ -858,7 +858,7 @@ fn upload_updates_package() {
     .stderr("removed 0 revisions, 0 packages, 0 directories, and 0 files, freeing 0 B\n")
     .success();
 
-  for identifier in [old.to_string(), new.to_string(), "1".into()] {
+  for identifier in [old.to_string(), new.to_string(), "0".into()] {
     server.get(format!("/package/{identifier}")).send();
   }
 

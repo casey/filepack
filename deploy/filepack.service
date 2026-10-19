@@ -17,7 +17,7 @@ ExecStart=/usr/local/bin/filepack \
   --domain filepack.com \
   --http \
   --https \
-  --mount 1 \
+  --mount 0 \
   --redirect www.filepack.com \
   --redirect-http-to-https \
   --restrict-writes

@@ -122,13 +122,13 @@ mod tests {
           PackageSummary {
             fingerprint,
             metadata: Some(metadata),
-            number: 1,
+            number: 0,
             totals,
           },
           PackageSummary {
             fingerprint,
             metadata: None,
-            number: 2,
+            number: 1,
             totals: Totals::default(),
           },
         ],
@@ -153,7 +153,7 @@ mod tests {
             </thead>
             <tbody>
               <tr>
-                <td><a href=/package/1>bar</a></td>
+                <td><a href=/package/0>bar</a></td>
                 <td>foo</td>
                 <td>2024</td>
                 <td>audio</td>
@@ -161,7 +161,7 @@ mod tests {
                 <td class=right>1.5 KiB</td>
               </tr>
               <tr>
-                <td><a href=/package/2><code>{fingerprint}</code></a></td>
+                <td><a href=/package/1><code>{fingerprint}</code></a></td>
                 <td></td>
                 <td></td>
                 <td></td>

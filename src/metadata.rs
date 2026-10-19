@@ -744,7 +744,7 @@ mod tests {
 
     assert_eq!(
       metadata
-        .info(InfoBuilder::new(), PackageIdentifier::Number(1), None, None)
+        .info(InfoBuilder::new(), PackageIdentifier::Number(0), None, None)
         .build(),
       Info::Map(Vec::new()),
     );

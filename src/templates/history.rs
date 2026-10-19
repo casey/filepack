@@ -20,13 +20,13 @@ mod tests {
   fn history() {
     assert_eq!(
       HistoryHtml {
-        identifier: PackageIdentifier::Number(1),
+        identifier: PackageIdentifier::Number(0),
         revisions: vec![Revision::EXAMPLE.parse().unwrap()],
       }
       .to_string(),
       unindent(&format!(
         "
-          <h1>Package 1 history</h1>
+          <h1>Package 0 history</h1>
           <ol reversed>
             <li><a href=/package/{revision}><code>{revision}</code></a></li>
           </ol>

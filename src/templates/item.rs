@@ -99,7 +99,7 @@ mod tests {
   fn navigation() {
     for identifier in [
       PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
-      PackageIdentifier::Number(1),
+      PackageIdentifier::Number(0),
     ] {
       let mut html = ItemHtml {
         fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
@@ -502,7 +502,7 @@ mod tests {
     assert_eq!(
       ItemHtml {
         fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
-        identifier: PackageIdentifier::Number(1),
+        identifier: PackageIdentifier::Number(0),
         metadata: Metadata {
           media: Some(Media::Image {
             items: vec![Item::test("foo.png")],
@@ -519,8 +519,8 @@ mod tests {
             <hgroup>
               <h1>Image 1</h1>
               <p>
-                <a href=/package/1>
-                  1
+                <a href=/package/0>
+                  0
                 </a>
               </p>
             </hgroup>

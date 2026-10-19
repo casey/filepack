@@ -178,7 +178,7 @@ mod tests {
         fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
         identifier: PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
         metadata: Some(metadata),
-        number: Some(1),
+        number: Some(0),
         totals: Totals {
           directories: 0,
           directory_size: 0,
@@ -194,7 +194,7 @@ mod tests {
             <div>
               <dt>number</dt>
               <dd>
-                <a href='/package/1'>1</a>
+                <a href='/package/0'>0</a>
               </dd>
             </div>
             <div>
@@ -289,7 +289,7 @@ mod tests {
         fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
         identifier: PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
         metadata: Some(metadata),
-        number: Some(1),
+        number: Some(0),
         totals: Totals {
           directories: 0,
           directory_size: 0,
@@ -305,7 +305,7 @@ mod tests {
             <div>
               <dt>number</dt>
               <dd>
-                <a href='/package/1'>1</a>
+                <a href='/package/0'>0</a>
               </dd>
             </div>
             <div>
@@ -433,7 +433,7 @@ mod tests {
         fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
         identifier: PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
         metadata: Some(metadata),
-        number: Some(1),
+        number: Some(0),
         totals: Totals {
           directories: 0,
           directory_size: 0,
@@ -449,7 +449,7 @@ mod tests {
             <div>
               <dt>number</dt>
               <dd>
-                <a href='/package/1'>1</a>
+                <a href='/package/0'>0</a>
               </dd>
             </div>
             <div>
@@ -557,10 +557,10 @@ mod tests {
     assert_eq!(
       PackageHtml {
         fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
-        identifier: PackageIdentifier::Number(1),
+        identifier: PackageIdentifier::Number(0),
         metadata: Some(metadata),
         mounted: true,
-        number: Some(1),
+        number: Some(0),
         parents: vec![
           Revision::EXAMPLE.parse().unwrap(),
           Revision::from(Hash::bytes(b"foo")),
@@ -582,7 +582,7 @@ mod tests {
             <div>
               <dt>number</dt>
               <dd>
-                <a href='/package/1'>1</a>
+                <a href='/package/0'>0</a>
               </dd>
             </div>
             <div>
@@ -616,7 +616,7 @@ mod tests {
             <div>
               <dt>history</dt>
               <dd>
-                <a href='/package/1/history'>2 revisions</a>
+                <a href='/package/0/history'>2 revisions</a>
               </dd>
             </div>
             <div>
@@ -634,13 +634,13 @@ mod tests {
             <div>
               <dt>mount</dt>
               <dd>
-                <a href='/mount/1/'>view</a>
+                <a href='/mount/0/'>view</a>
               </dd>
             </div>
             <div>
               <dt>media</dt>
               <dd>
-                <a href='/package/1/media'>audio</a>
+                <a href='/package/0/media'>audio</a>
               </dd>
             </div>
             <div>
@@ -668,7 +668,7 @@ mod tests {
           </dl>
           <ol>
             <li>
-              <a href=/package/1/item/1>foo</a>
+              <a href=/package/0/item/1>foo</a>
               <time datetime=PT3M45S>3:45</time>
             </li>
           </ol>
@@ -685,15 +685,15 @@ mod tests {
   fn navigation() {
     let mut html = PackageHtml {
       fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
-      identifier: PackageIdentifier::Number(2),
-      next: Some(3),
-      number: Some(2),
-      prev: Some(1),
+      identifier: PackageIdentifier::Number(1),
+      next: Some(2),
+      number: Some(1),
+      prev: Some(0),
       ..default()
     };
 
-    assert_eq!(html.next(), Some("/package/3".into()));
-    assert_eq!(html.prev(), Some("/package/1".into()));
+    assert_eq!(html.next(), Some("/package/2".into()));
+    assert_eq!(html.prev(), Some("/package/0".into()));
     assert_eq!(html.up(), Some("/".into()));
 
     html.next = None;
@@ -728,7 +728,7 @@ mod tests {
         description: Some("bar".parse().unwrap()),
         ..default()
       }),
-      number: Some(1),
+      number: Some(0),
       ..default()
     };
 
@@ -781,7 +781,7 @@ mod tests {
     let html = PackageHtml {
       fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
       identifier: PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
-      number: Some(1),
+      number: Some(0),
       ..default()
     };
 
@@ -815,7 +815,7 @@ mod tests {
         fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
         identifier: PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
         metadata: Some(metadata),
-        number: Some(1),
+        number: Some(0),
         readme: Some(Hash::EXAMPLE.parse().unwrap()),
         totals: Totals {
           directories: 0,
@@ -832,7 +832,7 @@ mod tests {
             <div>
               <dt>number</dt>
               <dd>
-                <a href='/package/1'>1</a>
+                <a href='/package/0'>0</a>
               </dd>
             </div>
             <div>
@@ -1019,7 +1019,7 @@ mod tests {
         fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
         identifier: PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
         metadata: Some(metadata),
-        number: Some(1),
+        number: Some(0),
         totals: Totals {
           directories: 0,
           directory_size: 0,
@@ -1035,7 +1035,7 @@ mod tests {
             <div>
               <dt>number</dt>
               <dd>
-                <a href='/package/1'>1</a>
+                <a href='/package/0'>0</a>
               </dd>
             </div>
             <div>
