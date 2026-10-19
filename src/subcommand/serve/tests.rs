@@ -1832,6 +1832,42 @@ fn home_empty() {
 }
 
 #[test]
+fn if_none_match() {
+  let server = TestServer::new();
+
+  server.write_file(b"foo");
+
+  let hash = Hash::bytes(b"foo");
+
+  server
+    .get(format!("/file/{hash}"))
+    .header(header::IF_NONE_MATCH, format!("\"{hash}\""))
+    .status(StatusCode::NOT_MODIFIED)
+    .assert_header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
+    .assert_header(header::ETAG, format!("\"{hash}\""))
+    .assert_header_absent(header::CONTENT_LENGTH)
+    .assert_header_absent(header::CONTENT_TYPE)
+    .assert_body("")
+    .send();
+
+  server
+    .get(format!("/file/{hash}"))
+    .header(header::IF_NONE_MATCH, format!("\"{hash}\""))
+    .range("bytes=0-0")
+    .status(StatusCode::NOT_MODIFIED)
+    .assert_header_absent(header::CONTENT_RANGE)
+    .assert_body("")
+    .send();
+
+  server
+    .get(format!("/file/{hash}"))
+    .header(header::IF_NONE_MATCH, "\"bar\"")
+    .assert_header(header::ETAG, format!("\"{hash}\""))
+    .assert_body("foo")
+    .send();
+}
+
+#[test]
 fn install_script() {
   TestServer::new()
     .get("/install.sh")

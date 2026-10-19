@@ -1,19 +1,20 @@
 use {
   super::*,
   axum::{
-    Router,
+    Router, body,
     extract::{Extension, Path, Query, Request},
-    http::{HeaderValue, Uri},
+    http::{HeaderValue, Method, Uri},
     middleware::{self, Next},
     response::{IntoResponse, Redirect, Response},
   },
+  axum_extra::headers::HeaderMapExt,
   axum_server::Handle,
+  futures_util::stream,
   hyper_util::rt::TokioTimer,
   rustls_acme::{
     AcmeConfig, EventOk, acme::LETS_ENCRYPT_PRODUCTION_DIRECTORY, axum::AxumAcceptor,
     caches::DirCache,
   },
-  std::net::TcpStream,
   templates::{
     DirectoryHtml, FilesHtml, HistoryHtml, HomeHtml, ItemHtml, MediaHtml, PackageHtml, PackagesHtml,
   },
@@ -292,6 +293,35 @@ impl Serve {
     }
   }
 
+  async fn if_none_match_layer(request: Request, next: Next) -> Response {
+    let if_none_match = matches!(*request.method(), Method::GET | Method::HEAD)
+      .then(|| request.headers().typed_get::<headers::IfNoneMatch>())
+      .flatten();
+
+    let mut response = next.run(request).await;
+
+    if matches!(
+      response.status(),
+      StatusCode::OK | StatusCode::PARTIAL_CONTENT
+    ) && let Some(if_none_match) = if_none_match
+      && let Some(etag) = response.headers().typed_get::<headers::ETag>()
+      && !if_none_match.precondition_passes(&etag)
+    {
+      *response.status_mut() = StatusCode::NOT_MODIFIED;
+      *response.body_mut() = Body::from_stream(stream::empty::<Result<body::Bytes, Infallible>>());
+
+      for name in [
+        header::CONTENT_LENGTH,
+        header::CONTENT_RANGE,
+        header::CONTENT_TYPE,
+      ] {
+        response.headers_mut().remove(name);
+      }
+    }
+
+    response
+  }
+
   fn redirect_config(&self) -> Result<Option<Arc<RedirectConfig>>> {
     if self.redirects.is_empty() {
       return Ok(None);
@@ -376,6 +406,7 @@ impl Serve {
       .layer(Extension(server))
       .layer(Extension(server_config))
       .layer(middleware::from_fn(Self::api_version_layer))
+      .layer(middleware::from_fn(Self::if_none_match_layer))
       .layer(SetResponseHeaderLayer::overriding(
         API_VERSION_HEADER,
         HeaderValue::from(API_VERSION),
