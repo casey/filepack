@@ -15,13 +15,15 @@ pub(crate) struct Image {
   pub(crate) chroma_subsampling: Option<ChromaSubsampling>,
   /// Color model of the image.
   #[n(4)]
-  pub(crate) color_type: Option<ColorType>,
+  #[serde(skip_serializing_if = "Decoded::is_unknown")]
+  pub(crate) color_type: Decoded<ColorType>,
   /// Dimensions in pixels.
   #[n(5)]
   pub(crate) dimensions: Dimensions,
-  /// Image file format, if recognized.
+  /// Image file format.
   #[n(6)]
-  pub(crate) format: Option<ImageFormat>,
+  #[serde(skip_serializing_if = "Decoded::is_unknown")]
+  pub(crate) format: Decoded<ImageFormat>,
   /// Orientation to apply when displaying.
   #[n(7)]
   pub(crate) orientation: Orientation,
@@ -47,7 +49,7 @@ impl Image {
 
     let path = &root.join(&self.path);
 
-    let format = match self.format.unwrap() {
+    let format = match self.format.known().unwrap() {
       ImageFormat::Jpeg => ::image::ImageFormat::Jpeg,
       ImageFormat::Png => ::image::ImageFormat::Png,
     };
@@ -277,22 +279,22 @@ impl Content for Image {
 
   type Format = ImageFormat;
 
-  fn format(&self) -> Option<Self::Format> {
-    self.format
+  fn format(&self) -> &Decoded<Self::Format> {
+    &self.format
   }
 
   fn info(&self, builder: InfoBuilder) -> InfoBuilder {
     builder
-      .optional_or_unknown("format", self.format)
+      .value("format", &self.format)
       .value("dimensions", self.dimensions)
       .value("orientation", self.orientation)
-      .optional("color type", self.color_type)
+      .value("color type", &self.color_type)
       .value("bit depth", format!("{}-bit", self.bit_depth))
       .optional("chroma subsampling", self.chroma_subsampling)
       .value("alpha", self.alpha)
       .optional(
         "compression",
-        self.format.map(|format| match format {
+        self.format.known().map(|format| match format {
           ImageFormat::Jpeg => Compression::Lossy,
           ImageFormat::Png => Compression::Lossless,
         }),
@@ -320,9 +322,9 @@ impl Content for Image {
         alpha,
         bit_depth,
         chroma_subsampling,
-        color_type: Some(color_type),
+        color_type: Decoded::Known(color_type),
         dimensions,
-        format: Some(format),
+        format: Decoded::Known(format),
         orientation,
         path,
       },
@@ -342,12 +344,12 @@ impl Content for Image {
       alpha: false,
       bit_depth: 8,
       chroma_subsampling: None,
-      color_type: Some(ColorType::Rgb),
+      color_type: Decoded::Known(ColorType::Rgb),
       dimensions: Dimensions {
         height: 1,
         width: 1,
       },
-      format: Some(format),
+      format: Decoded::Known(format),
       orientation: Orientation::new(),
       path,
     }
@@ -532,12 +534,12 @@ mod tests {
         alpha: false,
         bit_depth: 8,
         chroma_subsampling: Some(ChromaSubsampling::Yuv444),
-        color_type: Some(ColorType::Rgb),
+        color_type: Decoded::Known(ColorType::Rgb),
         dimensions: Dimensions {
           height: 1,
           width: 2,
         },
-        format: Some(ImageFormat::Jpeg),
+        format: Decoded::Known(ImageFormat::Jpeg),
         orientation: Orientation {
           mirrored: false,
           rotation: Rotation::R90,
@@ -556,12 +558,12 @@ mod tests {
         alpha: false,
         bit_depth: 8,
         chroma_subsampling: None,
-        color_type: Some(ColorType::Rgb),
+        color_type: Decoded::Known(ColorType::Rgb),
         dimensions: Dimensions {
           height: 1,
           width: 2,
         },
-        format: Some(ImageFormat::Png),
+        format: Decoded::Known(ImageFormat::Png),
         orientation: Orientation {
           mirrored: true,
           rotation: Rotation::R90,
@@ -574,7 +576,7 @@ mod tests {
     assert!(!image.alpha);
     assert_eq!(image.bit_depth, 8);
     assert_eq!(image.chroma_subsampling, Some(ChromaSubsampling::Yuv400));
-    assert_eq!(image.color_type, Some(ColorType::Grayscale));
+    assert_eq!(image.color_type, Decoded::Known(ColorType::Grayscale));
 
     assert_eq!(
       case("foo.jpg", &JpegBuilder::new().sampling(0x22).build())
@@ -601,7 +603,7 @@ mod tests {
     assert!(image.alpha);
     assert_eq!(image.bit_depth, 16);
     assert_eq!(image.chroma_subsampling, None);
-    assert_eq!(image.color_type, Some(ColorType::Rgb));
+    assert_eq!(image.color_type, Decoded::Known(ColorType::Rgb));
 
     let image = case(
       "foo.png",
@@ -613,7 +615,7 @@ mod tests {
     .unwrap();
     assert!(!image.alpha);
     assert_eq!(image.bit_depth, 1);
-    assert_eq!(image.color_type, Some(ColorType::Indexed));
+    assert_eq!(image.color_type, Decoded::Known(ColorType::Indexed));
 
     assert!(
       case(
@@ -636,7 +638,7 @@ mod tests {
     )
     .unwrap();
     assert!(image.alpha);
-    assert_eq!(image.color_type, Some(ColorType::Grayscale));
+    assert_eq!(image.color_type, Decoded::Known(ColorType::Grayscale));
 
     let image = case(
       "foo.png",
@@ -648,7 +650,7 @@ mod tests {
     .unwrap();
     assert!(!image.alpha);
     assert_eq!(image.bit_depth, 2);
-    assert_eq!(image.color_type, Some(ColorType::Grayscale));
+    assert_eq!(image.color_type, Decoded::Known(ColorType::Grayscale));
 
     assert_matches_regex!(
       case("foo.png", b"bar").unwrap_err().to_string(),
@@ -786,12 +788,12 @@ mod tests {
         alpha: false,
         bit_depth: 8,
         chroma_subsampling: Some(ChromaSubsampling::Yuv420),
-        color_type: Some(ColorType::Rgb),
+        color_type: Decoded::Known(ColorType::Rgb),
         dimensions: Dimensions {
           height: 1,
           width: 2,
         },
-        format: Some(ImageFormat::Jpeg),
+        format: Decoded::Known(ImageFormat::Jpeg),
         orientation: Orientation {
           mirrored: true,
           rotation: Rotation::R90,
@@ -807,12 +809,12 @@ mod tests {
         alpha: true,
         bit_depth: 16,
         chroma_subsampling: None,
-        color_type: Some(ColorType::Rgb),
+        color_type: Decoded::Known(ColorType::Rgb),
         dimensions: Dimensions {
           height: 1,
           width: 2,
         },
-        format: Some(ImageFormat::Png),
+        format: Decoded::Known(ImageFormat::Png),
         orientation: Orientation::new(),
         path: "foo.png".parse().unwrap(),
       })

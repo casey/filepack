@@ -13,7 +13,7 @@ pub(crate) struct Item<T> {
 }
 
 impl<T: Content> Item<T> {
-  pub(crate) fn formats(items: &[Self]) -> Vec<Option<T::Format>> {
+  pub(crate) fn formats(items: &[Self]) -> Vec<&Decoded<T::Format>> {
     let mut formats = Vec::new();
 
     for item in items {
@@ -101,14 +101,21 @@ mod tests {
 
     assert_eq!(
       Item::formats(&items),
-      [Some(ImageFormat::Png), Some(ImageFormat::Jpeg)]
+      [
+        &Decoded::Known(ImageFormat::Png),
+        &Decoded::Known(ImageFormat::Jpeg)
+      ]
     );
 
-    items[0].content.format = None;
+    items[0].content.format = Decoded::Unknown(vec![99]);
 
     assert_eq!(
       Item::formats(&items),
-      [None, Some(ImageFormat::Jpeg), Some(ImageFormat::Png)]
+      [
+        &Decoded::Unknown(vec![99]),
+        &Decoded::Known(ImageFormat::Jpeg),
+        &Decoded::Known(ImageFormat::Png)
+      ]
     );
   }
 

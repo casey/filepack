@@ -7,12 +7,14 @@ pub(crate) struct Audio {
   /// Number of audio channels.
   #[n(1)]
   pub(crate) channels: u64,
-  /// Codec of the audio data, if recognized.
+  /// Codec of the audio data.
   #[n(2)]
-  pub(crate) codec: Option<AudioCodec>,
-  /// Container format of the audio file, if recognized.
+  #[serde(skip_serializing_if = "Decoded::is_unknown")]
+  pub(crate) codec: Decoded<AudioCodec>,
+  /// Container format of the audio file.
   #[n(3)]
-  pub(crate) format: Option<AudioFormat>,
+  #[serde(skip_serializing_if = "Decoded::is_unknown")]
+  pub(crate) format: Decoded<AudioFormat>,
   /// Path to the audio file.
   #[n(4)]
   pub(crate) path: RelativePath,
@@ -32,7 +34,7 @@ pub(crate) struct Audio {
 
 impl Audio {
   pub(crate) fn cover_art(&self, root: &Utf8Path) -> Result<Vec<EmbeddedImage>> {
-    let Some(format) = self.format else {
+    let Some(format) = self.format.known() else {
       return Ok(Vec::new());
     };
 
@@ -92,15 +94,15 @@ impl Content for Audio {
 
   type Format = AudioFormat;
 
-  fn format(&self) -> Option<Self::Format> {
-    self.format
+  fn format(&self) -> &Decoded<Self::Format> {
+    &self.format
   }
 
   fn info(&self, builder: InfoBuilder) -> InfoBuilder {
     builder
       .value("duration", DisplayDuration(self.duration()))
-      .optional_or_unknown("format", self.format)
-      .optional_or_unknown("codec", self.codec)
+      .value("format", &self.format)
+      .value("codec", &self.codec)
       .optional(
         "sample bits",
         self
@@ -116,7 +118,10 @@ impl Content for Audio {
         ),
       )
       .value("channels", self.channels)
-      .optional("compression", self.codec.map(AudioCodec::compression))
+      .optional(
+        "compression",
+        self.codec.known().copied().map(AudioCodec::compression),
+      )
       .value("samples", self.samples)
   }
 
@@ -136,12 +141,12 @@ impl Content for Audio {
     let format = AudioFormat::from_path(&path).unwrap();
     Self {
       channels: 2,
-      codec: Some(match format {
+      codec: Decoded::Known(match format {
         AudioFormat::Flac => AudioCodec::Flac,
         AudioFormat::Mp3 => AudioCodec::Mp3,
         AudioFormat::Mp4 => AudioCodec::Aac,
       }),
-      format: Some(format),
+      format: Decoded::Known(format),
       path,
       sample_bits: Some(16),
       sample_rate: 44100,
@@ -231,12 +236,12 @@ mod tests {
     );
 
     let mut audio = Audio::test("foo.flac");
-    audio.codec = None;
+    audio.codec = Decoded::Unknown(vec![99]);
     audio.sample_bits = None;
     audio.sample_rate = 0;
     audio.samples = 0;
     audio.size = 750;
-    audio.format = None;
+    audio.format = Decoded::Unknown(vec![99]);
 
     assert_eq!(
       Content::info(&audio, InfoBuilder::new()).build(),
@@ -302,8 +307,8 @@ mod tests {
       Item {
         content: Audio {
           channels: 2,
-          codec: Some(AudioCodec::Flac),
-          format: Some(AudioFormat::Flac),
+          codec: Decoded::Known(AudioCodec::Flac),
+          format: Decoded::Known(AudioFormat::Flac),
           path: "foo.flac".parse().unwrap(),
           sample_bits: Some(16),
           sample_rate: 44100,
@@ -319,8 +324,8 @@ mod tests {
       Item {
         content: Audio {
           channels: 2,
-          codec: Some(AudioCodec::Mp3),
-          format: Some(AudioFormat::Mp3),
+          codec: Decoded::Known(AudioCodec::Mp3),
+          format: Decoded::Known(AudioFormat::Mp3),
           path: "foo.mp3".parse().unwrap(),
           sample_bits: None,
           sample_rate: 44100,
@@ -336,8 +341,8 @@ mod tests {
       Item {
         content: Audio {
           channels: 2,
-          codec: Some(AudioCodec::Aac),
-          format: Some(AudioFormat::Mp4),
+          codec: Decoded::Known(AudioCodec::Aac),
+          format: Decoded::Known(AudioFormat::Mp4),
           path: "foo.m4a".parse().unwrap(),
           sample_bits: None,
           sample_rate: 44100,
@@ -381,8 +386,8 @@ mod tests {
     assert_eq!(
       serde_json::to_string(&Audio {
         channels: 8,
-        codec: Some(AudioCodec::Flac),
-        format: Some(AudioFormat::Flac),
+        codec: Decoded::Known(AudioCodec::Flac),
+        format: Decoded::Known(AudioFormat::Flac),
         path: "foo.flac".parse().unwrap(),
         sample_bits: Some(7),
         sample_rate: 1,

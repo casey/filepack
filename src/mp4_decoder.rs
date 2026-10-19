@@ -157,8 +157,8 @@ impl Mp4Decoder {
           };
 
           audio_track = Some(Track {
-            codec: Some(codec),
-            info: Some(TrackInfo::Audio {
+            codec: Decoded::Known(codec),
+            info: Decoded::Known(TrackInfo::Audio {
               channels: mp4a.channels.into(),
               sample_rate: mp4a.sample_rate.into(),
             }),
@@ -193,8 +193,8 @@ impl Mp4Decoder {
             orientation(&trak.tkhd).context(video_error::MatrixUnsupported { track: index })?;
 
           video_track = Some(Track {
-            codec: Some(TrackCodec::H264),
-            info: Some(TrackInfo::Video {
+            codec: Decoded::Known(TrackCodec::H264),
+            info: Decoded::Known(TrackInfo::Video {
               bit_depth: color_info.bit_depth,
               chroma_subsampling: Some(color_info.chroma_subsampling),
               dimensions: Dimensions {
@@ -347,8 +347,8 @@ mod tests {
         title: None,
         tracks: vec![
           Track {
-            codec: Some(TrackCodec::H264),
-            info: Some(TrackInfo::Video {
+            codec: Decoded::Known(TrackCodec::H264),
+            info: Decoded::Known(TrackInfo::Video {
               bit_depth: 8,
               chroma_subsampling: Some(ChromaSubsampling::Yuv420),
               dimensions: Dimensions {
@@ -361,8 +361,8 @@ mod tests {
             size: 0,
           },
           Track {
-            codec: Some(TrackCodec::Aac),
-            info: Some(TrackInfo::Audio {
+            codec: Decoded::Known(TrackCodec::Aac),
+            info: Decoded::Known(TrackInfo::Audio {
               channels: 2,
               sample_rate: 44100,
             }),
@@ -378,8 +378,8 @@ mod tests {
         duration: 0,
         title: None,
         tracks: vec![Track {
-          codec: Some(TrackCodec::H264),
-          info: Some(TrackInfo::Video {
+          codec: Decoded::Known(TrackCodec::H264),
+          info: Decoded::Known(TrackInfo::Video {
             bit_depth: 8,
             chroma_subsampling: Some(ChromaSubsampling::Yuv420),
             dimensions: Dimensions {
@@ -418,7 +418,7 @@ mod tests {
         .unwrap()
         .tracks[0]
         .info,
-      Some(TrackInfo::Video {
+      Decoded::Known(TrackInfo::Video {
         bit_depth: 8,
         chroma_subsampling: Some(ChromaSubsampling::Yuv420),
         dimensions: Dimensions {
@@ -448,8 +448,8 @@ mod tests {
         .unwrap()
         .tracks[0],
       Track {
-        codec: Some(TrackCodec::H264),
-        info: Some(TrackInfo::Video {
+        codec: Decoded::Known(TrackCodec::H264),
+        info: Decoded::Known(TrackInfo::Video {
           bit_depth: 8,
           chroma_subsampling: Some(ChromaSubsampling::Yuv420),
           dimensions: Dimensions {
@@ -472,7 +472,7 @@ mod tests {
       .unwrap()
       .tracks[0]
         .info,
-      Some(TrackInfo::Video {
+      Decoded::Known(TrackInfo::Video {
         bit_depth: 10,
         chroma_subsampling: Some(ChromaSubsampling::Yuv420),
         dimensions: Dimensions {
@@ -505,7 +505,7 @@ mod tests {
         .unwrap()
         .tracks[0]
           .info,
-        Some(TrackInfo::Video {
+        Decoded::Known(TrackInfo::Video {
           bit_depth: 8,
           chroma_subsampling: Some(ChromaSubsampling::Yuv420),
           dimensions: Dimensions {
