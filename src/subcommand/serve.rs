@@ -6,6 +6,7 @@ use {
     http::{HeaderValue, Method, Uri},
     middleware::{self, Next},
     response::{IntoResponse, Redirect, Response},
+    routing::get,
   },
   axum_extra::headers::HeaderMapExt,
   axum_server::Handle,
@@ -75,8 +76,17 @@ impl RedirectConfig {
 }
 
 pub(crate) struct ServerConfig {
-  pub(crate) mounts: Vec<PackageIdentifier>,
+  pub(crate) mounts: Vec<Mount>,
   pub(crate) url: Option<Url>,
+}
+
+impl ServerConfig {
+  fn mount(&self, name: &str) -> Option<&Mount> {
+    self
+      .mounts
+      .iter()
+      .find(|mount| mount.name.as_deref() == Some(name))
+  }
 }
 
 enum SpawnConfig {
@@ -147,13 +157,14 @@ pub(crate) struct Serve {
   https_port: Option<u16>,
   #[arg(
     help = "Mount web package <PACKAGE>. <PACKAGE> may be a fingerprint, revision, or number. \
-            Mounted packages are served under `/mount` by fingerprint, revision, and number. \
-            Mounted packages are unsandboxed and served with the server origin, make sure you \
-            understand the consequences of this and only mount packages you trust",
+            Mounted packages are served under `/mount` by fingerprint, revision, and number, as \
+            well directly under `/<NAME>` if `<NAME>` is supplied. Mounted packages are \
+            unsandboxed and served with the server origin, make sure you understand the \
+            consequences of this and only mount packages you trust",
     long = "mount",
     value_name = "PACKAGE"
   )]
-  mounts: Vec<PackageIdentifier>,
+  mounts: Vec<Mount>,
   #[arg(
     help = "Write listening port to <ADDRESS>",
     long,
@@ -251,25 +262,28 @@ impl Serve {
     domains
   }
 
-  async fn fallback(uri: Uri) -> Result<Response, PageError> {
+  async fn fallback(server_config: ServerConfigExtension, uri: Uri) -> Result<Redirect, PageError> {
     if let Some(segment) = uri.path().strip_prefix('/')
       && !segment.contains('/')
     {
       if segment.starts_with(|c: char| c.is_ascii_digit()) {
         let number = parse_number::<u64>(segment).context(server_error::NumberParse)?;
-        return Ok(Redirect::permanent(&format!("/package/{number}")).into_response());
+        return Ok(Redirect::permanent(&format!("/package/{number}")));
       } else if segment.starts_with(Tag::Package.prefix()) {
         let fingerprint = segment
           .parse::<Fingerprint>()
           .context(server_error::FingerprintParse)?;
-        return Ok(Redirect::permanent(&format!("/package/{fingerprint}")).into_response());
+        return Ok(Redirect::permanent(&format!("/package/{fingerprint}")));
       } else if segment.starts_with(Tag::Revision.prefix()) {
         let revision = segment
           .parse::<Revision>()
           .context(server_error::RevisionParse)?;
-        return Ok(Redirect::permanent(&format!("/package/{revision}")).into_response());
+        return Ok(Redirect::permanent(&format!("/package/{revision}")));
+      } else if server_config.mount(segment).is_some() {
+        return Ok(Redirect::temporary(&format!("/{segment}/")));
       }
     }
+
     Err(ServerError::PageNotFound.into())
   }
 
@@ -320,6 +334,37 @@ impl Serve {
     }
 
     response
+  }
+
+  async fn named_mount(
+    server: ServerExtension,
+    server_config: ServerConfigExtension,
+    Path(name): Path<String>,
+    range: Option<TypedHeader<headers::Range>>,
+  ) -> Result<Resource, PageError> {
+    Self::named_mount_with_path(
+      server,
+      server_config,
+      Path((name, "index.html".parse().unwrap())),
+      range,
+    )
+    .await
+  }
+
+  async fn named_mount_with_path(
+    server: ServerExtension,
+    server_config: ServerConfigExtension,
+    Path((name, path)): Path<(String, RelativePath)>,
+    range: Option<TypedHeader<headers::Range>>,
+  ) -> Result<Resource, PageError> {
+    let Some(mount) = server_config.mount(&name) else {
+      return Err(ServerError::PageNotFound.into());
+    };
+
+    Ok(
+      block_in_place(|| server.mount_file(&server_config.mounts, mount.package, &path))?
+        .range(range),
+    )
   }
 
   fn redirect_config(&self) -> Result<Option<Arc<RedirectConfig>>> {
@@ -402,7 +447,12 @@ impl Serve {
       .fold(Router::new(), |router, entry| {
         router.route(entry.path, entry.router)
       })
-      .fallback(Self::fallback)
+      .fallback_service(
+        Router::new()
+          .route("/{name}/", get(Self::named_mount))
+          .route("/{name}/{*path}", get(Self::named_mount_with_path))
+          .fallback(Self::fallback),
+      )
       .layer(Extension(server))
       .layer(Extension(server_config))
       .layer(middleware::from_fn(Self::api_version_layer))
@@ -485,6 +535,12 @@ impl Serve {
     } else {
       None
     };
+
+    let mut names = HashSet::new();
+
+    for name in self.mounts.iter().filter_map(|mount| mount.name.as_deref()) {
+      ensure!(names.insert(name), error::MountNameDuplicate { name });
+    }
 
     let redirect_config = self.redirect_config()?;
 

@@ -372,6 +372,11 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: RelativePath,
   },
+  #[snafu(display("duplicate mount name `{name}`"))]
+  MountNameDuplicate {
+    backtrace: Option<Backtrace>,
+    name: String,
+  },
   #[snafu(display("package root `{path}` is not a directory"))]
   PackageRootDirectory {
     backtrace: Option<Backtrace>,

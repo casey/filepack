@@ -394,19 +394,58 @@ impl Server {
     Ok(missing)
   }
 
-  pub(crate) fn mounted(
+  pub(crate) fn mount_file(
     &self,
-    mounts: &[PackageIdentifier],
-    fingerprint: Fingerprint,
-  ) -> ServerResult<bool> {
+    mounts: &[Mount],
+    package: PackageIdentifier,
+    path: &RelativePath,
+  ) -> ServerResult<Resource> {
+    let Resolved {
+      fingerprint,
+      number,
+      ..
+    } = self.resolve(package)?;
+
+    ensure! {
+      self.mounted(mounts, fingerprint)?,
+      server_error::PackageNotMounted { fingerprint },
+    }
+
+    let Some(media) = self
+      .package_metadata_opt(fingerprint)?
+      .and_then(|metadata| metadata.media)
+    else {
+      return Err(server_error::MountedPackageNoMediaType { fingerprint }.build());
+    };
+
+    ensure! {
+      media.ty() == MediaType::Web,
+      server_error::MountedPackageMediaType { fingerprint, media_type: media.ty() },
+    }
+
+    let path = format!("static/{path}").parse::<RelativePath>().unwrap();
+
+    let hash = self.package_file(fingerprint, &path)?;
+
+    let content_type = mime_guess::from_path(&path).first_or_octet_stream();
+
+    Ok(
+      self
+        .open_file(hash)?
+        .cache(number.is_none())
+        .unsandboxed_content_type(content_type),
+    )
+  }
+
+  pub(crate) fn mounted(&self, mounts: &[Mount], fingerprint: Fingerprint) -> ServerResult<bool> {
     let tx = self.database.begin_read()?;
 
     let numbers = tx.open_table(NUMBERS)?;
 
     let revisions = tx.open_table(REVISIONS)?;
 
-    for &mount in mounts {
-      let mounted = match mount {
+    for mount in mounts {
+      let mounted = match mount.package {
         PackageIdentifier::Fingerprint(mount) => mount == fingerprint,
         PackageIdentifier::Number(mount) => {
           if let Some(revision) = numbers.get(&mount)? {
@@ -485,7 +524,7 @@ impl Server {
   pub(crate) fn package_html(
     &self,
     package: PackageIdentifier,
-    mounts: &[PackageIdentifier],
+    mounts: &[Mount],
   ) -> ServerResult<PackageHtml> {
     let Resolved {
       fingerprint,

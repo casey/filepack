@@ -470,41 +470,10 @@ pub(crate) async fn mount_file(
   range: Option<TypedHeader<headers::Range>>,
 ) -> ServerResult<Resource> {
   block_in_place(|| {
-    let Resolved {
-      fingerprint,
-      number,
-      ..
-    } = server.resolve(package)?;
-
-    ensure! {
-      server.mounted(&server_config.mounts, fingerprint)?,
-      server_error::PackageNotMounted { fingerprint },
-    }
-
-    let Some(media) = server
-      .package_metadata_opt(fingerprint)?
-      .and_then(|metadata| metadata.media)
-    else {
-      return Err(server_error::MountedPackageNoMediaType { fingerprint }.build());
-    };
-
-    ensure! {
-      media.ty() == MediaType::Web,
-      server_error::MountedPackageMediaType { fingerprint, media_type: media.ty() },
-    }
-
-    let path = format!("static/{path}").parse::<RelativePath>().unwrap();
-
-    let hash = server.package_file(fingerprint, &path)?;
-
-    let content_type = mime_guess::from_path(&path).first_or_octet_stream();
-
     Ok(
       server
-        .open_file(hash)?
-        .cache(number.is_none())
-        .range(range)
-        .unsandboxed_content_type(content_type),
+        .mount_file(&server_config.mounts, package, &path)?
+        .range(range),
     )
   })
 }
