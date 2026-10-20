@@ -36,6 +36,7 @@ use {
 
 mod archive;
 mod child;
+mod completions;
 mod contains;
 mod create;
 mod data_dir;
