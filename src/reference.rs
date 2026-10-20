@@ -1,12 +1,13 @@
 use {super::*, clap::CommandFactory};
 
 pub use self::{
-  command::Command, endpoint::Endpoint, hex::Hex, lint_group::LintGroup, media_format::MediaFormat,
-  parameter::Parameter, path_parameter::PathParameter, query_parameter::QueryParameter,
-  request::Request, response::Response, route::Route,
+  command::Command, content_type::ContentType, endpoint::Endpoint, hex::Hex, lint_group::LintGroup,
+  media_format::MediaFormat, parameter::Parameter, path_parameter::PathParameter,
+  query_parameter::QueryParameter, request::Request, response::Response, route::Route,
 };
 
 mod command;
+mod content_type;
 mod endpoint;
 mod hex;
 mod lint_group;
@@ -21,6 +22,7 @@ mod route;
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Reference {
   pub commands: Command,
+  pub content_types: Vec<ContentType>,
   pub deco: deco::Registry,
   pub hex: BTreeMap<Tag, Hex>,
   pub json: json::Registry,
@@ -151,6 +153,18 @@ impl Reference {
 
     Self {
       commands,
+      content_types: ResourceType::iter()
+        .filter(|ty| !ty.extensions().is_empty())
+        .map(|ty| ContentType {
+          content_type: ty.content_type().to_string(),
+          extensions: ty
+            .extensions()
+            .iter()
+            .map(|extension| (*extension).into())
+            .collect(),
+          sandbox: ty.sandbox(),
+        })
+        .collect(),
       deco,
       hex,
       json,
@@ -191,6 +205,25 @@ impl Reference {
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn content_types() {
+    assert_eq!(
+      Reference::new().content_types[..2],
+      [
+        ContentType {
+          content_type: "audio/flac".into(),
+          extensions: vec!["flac".into()],
+          sandbox: false,
+        },
+        ContentType {
+          content_type: "image/jpeg".into(),
+          extensions: vec!["jpeg".into(), "jpg".into()],
+          sandbox: true,
+        },
+      ],
+    );
+  }
 
   #[test]
   fn descriptions() {

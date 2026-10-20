@@ -15,6 +15,11 @@ pub(crate) struct CommandsMd<'a> {
 }
 
 #[derive(Boilerplate)]
+pub(crate) struct ContentTypesMd<'a> {
+  pub(crate) content_types: &'a [ContentType],
+}
+
+#[derive(Boilerplate)]
 pub(crate) struct DecoDefinitionMd<'a> {
   pub(crate) registry: &'a deco::Registry,
   pub(crate) schema: &'a deco::Schema,
