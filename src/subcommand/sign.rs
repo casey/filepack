@@ -4,7 +4,7 @@ use super::*;
 pub(crate) struct Sign {
   #[arg(default_value_t = KeyName::DEFAULT, help = "Sign with <KEY>", long)]
   key: KeyName,
-  #[arg(help = MANIFEST_PATH_HELP)]
+  #[arg(help = MANIFEST_PATH_HELP, value_hint = ValueHint::AnyPath)]
   path: Option<Utf8PathBuf>,
   #[arg(help = TIMESTAMP_HELP, long)]
   timestamp: bool,

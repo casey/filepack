@@ -19,10 +19,14 @@ pub(crate) struct Create {
   key: KeyName,
   #[arg(
     help = "Write manifest to <MANIFEST>, defaults to `<ROOT>/manifest.filepack`",
-    long
+    long,
+    value_hint = ValueHint::FilePath
   )]
   manifest: Option<Utf8PathBuf>,
-  #[arg(help = "Create manifest for files in <ROOT> directory, defaults to current directory")]
+  #[arg(
+    help = "Create manifest for files in <ROOT> directory, defaults to current directory",
+    value_hint = ValueHint::DirPath
+  )]
   root: Option<Utf8PathBuf>,
   #[arg(help = "Sign manifest", long)]
   sign: bool,

@@ -16,6 +16,7 @@ pub(crate) struct Upload {
   #[arg(
     help = "Upload <PATH>, defaults to current directory for packages",
     required_if_eq("file", "true"),
+    value_hint = ValueHint::AnyPath,
     value_name = "PATH"
   )]
   input: Option<Utf8PathBuf>,

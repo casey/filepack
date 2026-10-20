@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(Parser)]
 pub(crate) struct Fingerprint {
-  #[arg(help = MANIFEST_PATH_HELP)]
+  #[arg(help = MANIFEST_PATH_HELP, value_hint = ValueHint::AnyPath)]
   path: Option<Utf8PathBuf>,
 }
 

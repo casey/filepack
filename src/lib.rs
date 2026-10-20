@@ -197,7 +197,7 @@ use {
   blake3::Hasher,
   boilerplate::{Boilerplate, Trusted},
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},
-  clap::{ArgGroup, CommandFactory, Parser, ValueEnum},
+  clap::{ArgGroup, CommandFactory, Parser, ValueEnum, ValueHint},
   clap_complete::CompleteEnv,
   claxon::FlacReader,
   filepack_derive::{Decode, DecodeFromStr, Encode, EncodeDisplay, Json, Magic, route},

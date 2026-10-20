@@ -16,12 +16,16 @@ pub(crate) struct Verify {
   keys: Vec<KeyIdentifier>,
   #[arg(
     help = "Read manifest from <MANIFEST>, defaults to `<ROOT>/manifest.filepack`",
-    long
+    long,
+    value_hint = ValueHint::FilePath
   )]
   manifest: Option<Utf8PathBuf>,
   #[arg(help = "Print manifest if verification is successful", long)]
   print: bool,
-  #[arg(help = "Verify files in <ROOT> directory against manifest, defaults to current directory")]
+  #[arg(
+    help = "Verify files in <ROOT> directory against manifest, defaults to current directory",
+    value_hint = ValueHint::DirPath
+  )]
   root: Option<Utf8PathBuf>,
 }
 

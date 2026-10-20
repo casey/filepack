@@ -15,7 +15,11 @@ pub(crate) struct Download {
     value_name = "HASH"
   )]
   file: Option<Hash>,
-  #[arg(help = "Download to <PATH>", value_name = "PATH")]
+  #[arg(
+    help = "Download to <PATH>",
+    value_hint = ValueHint::AnyPath,
+    value_name = "PATH"
+  )]
   output: Utf8PathBuf,
   #[arg(
     group = "target",
