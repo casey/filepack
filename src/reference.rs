@@ -30,7 +30,7 @@ pub struct Reference {
   pub media_formats: BTreeMap<MediaType, Vec<MediaFormat>>,
   pub metadata: yaml::Example,
   pub routes: BTreeMap<String, Route>,
-  pub unstable_features: BTreeSet<UnstableFeature>,
+  pub unstable_features: BTreeMap<UnstableFeature, String>,
   pub yaml: json::Registry,
 }
 
@@ -125,6 +125,14 @@ impl Reference {
 
     let lints = descriptions(&json, "Lint");
 
+    let unstable_features = {
+      let mut registry = json::Registry::new();
+
+      let schema = UnstableFeature::json_schema(&mut registry);
+
+      descriptions(&registry, &schema)
+    };
+
     let media_formats = [
       (MediaType::Audio, media_formats::<AudioFormat>(&mut json)),
       (MediaType::Image, media_formats::<ImageFormat>(&mut json)),
@@ -179,7 +187,9 @@ impl Reference {
       media_formats,
       metadata,
       routes,
-      unstable_features: UnstableFeature::iter().collect(),
+      unstable_features: UnstableFeature::iter()
+        .map(|feature| (feature, unstable_features[feature.name()].clone()))
+        .collect(),
       yaml,
     }
   }
@@ -224,6 +234,10 @@ mod tests {
 
     for lint in reference["lints"].as_object().unwrap().values() {
       descriptions.push((lint.as_str().unwrap().into(), false));
+    }
+
+    for feature in reference["unstable_features"].as_object().unwrap().values() {
+      descriptions.push((feature.as_str().unwrap().into(), false));
     }
 
     assert!(descriptions.len() > 100);
@@ -452,10 +466,9 @@ mod tests {
 
   #[test]
   fn unstable_features() {
-    assert!(
-      Reference::new()
-        .unstable_features
-        .contains(&UnstableFeature::WebPackages)
+    assert_eq!(
+      Reference::new().unstable_features[&UnstableFeature::WebPackages],
+      "Packages with `media: web` metadata.",
     );
   }
 }

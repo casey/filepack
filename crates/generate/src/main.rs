@@ -19,7 +19,7 @@ use {
   },
   heck::ToKebabCase,
   std::{
-    collections::{BTreeMap, BTreeSet},
+    collections::BTreeMap,
     env,
     fmt::{self, Display, Formatter},
     fs, iter,
