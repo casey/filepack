@@ -60,7 +60,7 @@ impl IntoResponse for Resource {
     if let Some(content_type) = &self.unsandboxed_content_type {
       builder = builder.header(header::CONTENT_TYPE, content_type.to_string());
     } else {
-      builder = builder.header(header::CONTENT_TYPE, self.ty.content_type().as_ref());
+      builder = builder.header(header::CONTENT_TYPE, self.ty.content_type());
 
       if self.ty.sandbox() {
         builder = builder.header(header::CONTENT_SECURITY_POLICY, "sandbox");

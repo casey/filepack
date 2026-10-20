@@ -1145,7 +1145,7 @@ fn file_with_path_markdown() {
   server
     .get(format!("/file/{}/bar.md", Hash::bytes(b"foo")))
     .assert_header(header::CONTENT_SECURITY_POLICY, "sandbox")
-    .assert_header(header::CONTENT_TYPE, "text/plain; charset=utf-8")
+    .assert_header(header::CONTENT_TYPE, "text/plain;charset=utf-8")
     .assert_header_absent(header::CONTENT_DISPOSITION)
     .assert_body("foo")
     .send();
@@ -1169,7 +1169,7 @@ fn file_with_path_redirect() {
   let hash = Hash::bytes(b"foo");
 
   TestServer::new()
-    .get(format!("/file/{hash}/bar.txt"))
+    .get(format!("/file/{hash}/bar.rtf"))
     .status(StatusCode::TEMPORARY_REDIRECT)
     .assert_header(header::LOCATION, format!("/file/{hash}"))
     .send();
