@@ -162,10 +162,10 @@ Schemas
 | schema | description |
 |--------|-------------|
 %% for (name, schema) in self.deco {
-%%   if let Some(description) = schema.description() {
+%%   if let Some(summary) = schema.summary() {
 {{ Row((
   format!("[{}](deco/{}.md)", escape(name), name.to_kebab_case()),
-  description,
+  summary,
 )) }}
 %%   }
 %% }

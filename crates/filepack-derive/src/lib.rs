@@ -1,16 +1,14 @@
 use {
   self::{
-    functions::{
-      description, display_name, doc_line, number, option, path_value, required_description,
-      type_argument, validate_numbers,
-    },
+    description::Description,
+    functions::{display_name, number, option, path_value, type_argument, validate_numbers},
     route::Route,
     route_attribute::RouteAttribute,
   },
   darling::{FromDeriveInput, FromField, FromVariant, ast::Data, ast::Fields},
   heck::{ToKebabCase, ToSnakeCase},
   proc_macro2::TokenStream,
-  quote::{format_ident, quote},
+  quote::{ToTokens, format_ident, quote},
   std::{collections::HashSet, mem},
   strum::{EnumString, IntoStaticStr},
   syn::{
@@ -24,6 +22,7 @@ use {
 };
 
 mod deco;
+mod description;
 mod functions;
 mod json;
 mod route;
@@ -91,7 +90,7 @@ pub fn encode_display(input: proc_macro::TokenStream) -> proc_macro::TokenStream
 
   let name = &input.ident;
 
-  let description = match required_description(name, &input.attrs, "types") {
+  let description = match Description::new(name, &input.attrs, "type", false, false) {
     Ok(description) => description,
     Err(err) => return err.to_compile_error().into(),
   };

@@ -199,19 +199,15 @@ impl Input {
     })
   }
 
-  fn description(&self, attributes: &Attributes) -> Result<String> {
-    if attributes.undocumented {
-      Ok(String::new())
-    } else {
-      required_description(&self.ident, &self.attrs, "types")
-    }
+  fn description(&self) -> Result<Description> {
+    Description::new(&self.ident, &self.attrs, "type", false, false)
   }
 
   pub(crate) fn encode(&self) -> Result<TokenStream> {
     let attributes = self.parse_attributes()?;
 
     match self.data {
-      Data::Enum(_) => self.encode_enum(&attributes),
+      Data::Enum(_) => self.encode_enum(),
       Data::Struct(_) => {
         if attributes.transparent {
           self.encode_transparent(&attributes)
@@ -222,12 +218,12 @@ impl Input {
     }
   }
 
-  fn encode_enum(&self, attributes: &Attributes) -> Result<TokenStream> {
+  fn encode_enum(&self) -> Result<TokenStream> {
     let name = &self.ident;
 
     let variants = self.parse_variants()?;
 
-    let description = self.description(attributes)?;
+    let description = self.description()?;
 
     let arms = variants.iter().map(|variant| {
       let ParsedVariant {
@@ -304,7 +300,7 @@ impl Input {
 
     let fields = self.parse_fields()?;
 
-    let description = self.description(attributes)?;
+    let description = self.description()?;
 
     let items = ParsedField::encode(&fields, Receiver::Field);
 
@@ -376,7 +372,7 @@ impl Input {
         }
       }
     } else {
-      let description = self.description(attributes)?;
+      let description = self.description()?;
 
       quote! {
         deco::Schema::Wrapper {
@@ -808,9 +804,9 @@ mod tests {
       "types must have doc comments",
     );
 
-    assert!(
+    assert_eq!(
       Input::from_derive_input(&syn::parse_quote! {
-        #[deco(undocumented)]
+        /// Foo
         struct Foo {
           /// Bar.
           #[n(1)]
@@ -819,7 +815,10 @@ mod tests {
       })
       .unwrap()
       .encode()
-      .is_ok()
+      .err()
+      .unwrap()
+      .to_string(),
+      "description `Foo` does not end with a period",
     );
   }
 

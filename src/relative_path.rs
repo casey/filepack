@@ -1,6 +1,9 @@
 use super::*;
 
 /// Relative forward-slash-separated path.
+///
+/// May not be empty or have leading, trailing, or double slashes. Each
+/// component must be a valid [`ComponentBuf`](../deco/component-buf.md).
 #[derive(
   Clone,
   Debug,
@@ -246,7 +249,14 @@ impl PathExtractor for RelativePath {
 impl json::Json for RelativePath {
   fn json_schema(registry: &mut json::Registry) -> String {
     json::Schema::Wrapper {
-      description: "Relative forward-slash-separated path.".into(),
+      description: unindent(
+        "
+          Relative forward-slash-separated path.
+
+          May not be empty or have leading, trailing, or double slashes. Each
+          component must be a valid [`ComponentBuf`](../json/component-buf.md).
+        ",
+      ),
       inner: String::json_schema(registry),
     }
     .register("RelativePath", registry)

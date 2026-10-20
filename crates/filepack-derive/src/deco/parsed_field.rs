@@ -1,7 +1,7 @@
 use super::*;
 
 pub(crate) struct ParsedField<'a> {
-  pub(crate) description: String,
+  pub(crate) description: Description,
   pub(crate) ident: &'a Ident,
   pub(crate) n: u64,
   pub(crate) optional: bool,

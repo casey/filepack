@@ -24,15 +24,12 @@ impl Field {
 
     let mut default = false;
 
-    let mut doc = Vec::new();
-
     let mut example = None;
 
     let mut skip = false;
 
     for attribute in &self.attrs {
-      if let Some(line) = doc_line(attribute)? {
-        doc.push(line);
+      if attribute.path().is_ident("doc") {
         continue;
       }
 
@@ -86,24 +83,17 @@ impl Field {
     }
 
     Ok(ParsedField {
-      description: description(doc),
       example,
       optional: option || default || skip,
     })
   }
 
   pub(crate) fn schema(&self, rename_all: Option<RenameAll>) -> Result<TokenStream> {
-    let ParsedField {
-      description,
-      example,
-      optional,
-    } = self.parse()?;
+    let ParsedField { example, optional } = self.parse()?;
 
     let ident = self.ident.as_ref().unwrap();
 
-    let Some(description) = description else {
-      return Err(Error::new_spanned(ident, "fields must have doc comments"));
-    };
+    let description = Description::new(ident, &self.attrs, "field", false, true)?;
 
     let example = option(example);
 

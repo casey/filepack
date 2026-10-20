@@ -10,13 +10,10 @@ pub(crate) struct Variant {
 
 impl Variant {
   fn check_attributes(&self) -> Result<ParsedVariant> {
-    let mut doc = Vec::new();
-
     let mut rename = None;
 
     for attribute in &self.attrs {
-      if let Some(line) = doc_line(attribute)? {
-        doc.push(line);
+      if attribute.path().is_ident("doc") {
         continue;
       }
 
@@ -32,17 +29,11 @@ impl Variant {
       })?;
     }
 
-    Ok(ParsedVariant {
-      description: description(doc),
-      rename,
-    })
+    Ok(ParsedVariant { rename })
   }
 
-  fn description(&self) -> Result<String> {
-    self
-      .check_attributes()?
-      .description
-      .ok_or_else(|| Error::new_spanned(&self.ident, "variants must have doc comments"))
+  fn description(&self) -> Result<Description> {
+    Description::new(&self.ident, &self.attrs, "variant", true, true)
   }
 
   pub(crate) fn is_unit(&self) -> bool {

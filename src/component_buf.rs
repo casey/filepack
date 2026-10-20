@@ -1,6 +1,9 @@
 use super::*;
 
 /// Path component.
+///
+/// May not be `.`, `..`, or empty. May not contain `/`, `\`, or control
+/// characters. May not begin with an ASCII letter followed by `:`.
 #[derive(
   Clone, Debug, Decode, DeserializeFromStr, Encode, Eq, Ord, PartialEq, PartialOrd, SerializeDisplay,
 )]
@@ -91,7 +94,14 @@ impl Validate for ComponentBuf {
 impl json::Json for ComponentBuf {
   fn json_schema(registry: &mut json::Registry) -> String {
     json::Schema::Wrapper {
-      description: "Path component.".into(),
+      description: unindent(
+        "
+          Path component.
+
+          May not be `.`, `..`, or empty. May not contain `/`, `\\`, or control
+          characters. May not begin with an ASCII letter followed by `:`.
+        ",
+      ),
       inner: String::json_schema(registry),
     }
     .register("ComponentBuf", registry)

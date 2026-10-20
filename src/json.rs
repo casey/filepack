@@ -102,14 +102,14 @@ impl Schema {
   pub fn description(&self) -> Option<&str> {
     match self {
       Self::Array { .. } | Self::Map { .. } | Self::Set { .. } => None,
-      Self::Boolean { description }
-      | Self::Bytes { description }
+      Self::Boolean { description, .. }
+      | Self::Bytes { description, .. }
       | Self::Hex { description, .. }
-      | Self::String { description }
+      | Self::String { description, .. }
       | Self::StringEnum { description, .. }
       | Self::Struct { description, .. }
       | Self::TaggedEnum { description, .. }
-      | Self::UnsignedInteger { description }
+      | Self::UnsignedInteger { description, .. }
       | Self::UntaggedEnum { description, .. }
       | Self::Wrapper { description, .. } => Some(description),
     }
@@ -127,6 +127,12 @@ impl Schema {
     }
 
     name.into()
+  }
+
+  pub fn summary(&self) -> Option<&str> {
+    self
+      .description()
+      .map(|description| description.split("\n\n").next().unwrap())
   }
 
   pub fn values(&self) -> &[Value] {

@@ -66,14 +66,21 @@ impl Schema {
       | Self::Map { .. }
       | Self::NonEmptyOrderedSet { .. }
       | Self::SortedSet { .. } => None,
-      Self::Boolean { description }
+      Self::Boolean { description, .. }
       | Self::Enum { description, .. }
-      | Self::SignedInteger { description }
-      | Self::String { description }
+      | Self::SignedInteger { description, .. }
+      | Self::String { description, .. }
       | Self::Struct { description, .. }
-      | Self::UnsignedInteger { description }
+      | Self::UnsignedInteger { description, .. }
       | Self::Wrapper { description, .. } => Some(description),
     }
+  }
+
+  #[cfg(test)]
+  pub(crate) fn of<T: Encode>() -> deco::Schema {
+    let mut registry = BTreeMap::new();
+    let name = T::deco_schema(&mut registry);
+    registry.remove(&name).unwrap()
   }
 
   pub fn register(self, name: &str, registry: &mut Registry) -> String {
@@ -87,6 +94,12 @@ impl Schema {
     }
 
     name.into()
+  }
+
+  pub fn summary(&self) -> Option<&str> {
+    self
+      .description()
+      .map(|description| description.split("\n\n").next().unwrap())
   }
 }
 

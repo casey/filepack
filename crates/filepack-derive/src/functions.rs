@@ -1,36 +1,7 @@
 use super::*;
 
-pub(crate) fn description(lines: Vec<String>) -> Option<String> {
-  if lines.is_empty() {
-    None
-  } else {
-    Some(lines.join("\n"))
-  }
-}
-
 pub(crate) fn display_name(ident: &Ident) -> String {
   ident.to_string().to_snake_case().replace('_', " ")
-}
-
-pub(crate) fn doc_line(attribute: &Attribute) -> Result<Option<String>> {
-  if !attribute.path().is_ident("doc") {
-    return Ok(None);
-  }
-
-  let Expr::Lit(ExprLit {
-    lit: Lit::Str(line),
-    ..
-  }) = &attribute.meta.require_name_value()?.value
-  else {
-    return Err(Error::new_spanned(
-      attribute,
-      "`#[doc]` attribute value must be a string literal",
-    ));
-  };
-
-  let line = line.value();
-
-  Ok(Some(line.strip_prefix(' ').unwrap_or(&line).to_string()))
 }
 
 pub(crate) fn number(ident: &Ident, attributes: &[Attribute]) -> Result<u64> {
@@ -63,23 +34,6 @@ pub(crate) fn path_value(meta: &ParseNestedMeta, placeholder: &str) -> Result<Pa
       "`#[deco({name})]` must be of the form `#[deco({name} = {placeholder})]`"
     ))
   })
-}
-
-pub(crate) fn required_description(
-  ident: &Ident,
-  attributes: &[Attribute],
-  noun: &str,
-) -> Result<String> {
-  let mut doc = Vec::new();
-
-  for attribute in attributes {
-    if let Some(line) = doc_line(attribute)? {
-      doc.push(line);
-    }
-  }
-
-  description(doc)
-    .ok_or_else(|| Error::new_spanned(ident, format!("{noun} must have doc comments")))
 }
 
 pub(crate) fn type_argument<'a>(ty: &'a Type, name: &str) -> Option<&'a Type> {

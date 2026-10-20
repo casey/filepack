@@ -1,7 +1,7 @@
 use super::*;
 
 pub(crate) struct Route {
-  description: String,
+  description: Description,
   item: ItemFn,
   method: Ident,
   output: Type,
@@ -16,27 +16,11 @@ impl Route {
 
     let ident = &item.sig.ident;
 
-    let mut doc = Vec::new();
-
-    for attribute in &item.attrs {
-      if let Some(line) = doc_line(attribute)? {
-        doc.push(line);
-      }
-    }
-
-    let (head, parameter_descriptions) = if let Some(index) = doc.iter().position(String::is_empty)
-    {
-      (doc[..index].to_vec(), &doc[index + 1..])
-    } else {
-      (doc, &[][..])
-    };
-
-    let description = description(head)
-      .ok_or_else(|| Error::new_spanned(ident, "routes must have doc comments"))?;
+    let description = Description::new(ident, &item.attrs, "route", false, false)?;
 
     let mut parameters = Vec::<(String, String)>::new();
 
-    for line in parameter_descriptions {
+    for line in description.rest().unwrap_or_default().lines() {
       let Some((name, description)) = line
         .strip_prefix('`')
         .and_then(|rest| rest.split_once("`: "))
@@ -48,6 +32,8 @@ impl Route {
           ),
         ));
       };
+
+      Description::check_summary(ident, description, false)?;
 
       parameters.push((name.into(), description.into()));
     }
@@ -120,6 +106,8 @@ impl Route {
       path,
       types,
     } = self;
+
+    let description = description.summary();
 
     let name = &item.sig.ident;
 

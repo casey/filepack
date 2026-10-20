@@ -12,10 +12,10 @@ Schemas
 | schema | description |
 |--------|-------------|
 %% for (name, schema) in self.json {
-%%   if let Some(description) = schema.description() {
+%%   if let Some(summary) = schema.summary() {
 {{ Row((
   format!("[{}](json/{}.md)", escape(name), name.to_kebab_case()),
-  description,
+  summary,
 )) }}
 %%   }
 %% }
