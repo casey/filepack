@@ -198,7 +198,7 @@ use {
   boilerplate::{Boilerplate, Trusted},
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},
   clap::{ArgGroup, CommandFactory, Parser, ValueEnum, ValueHint},
-  clap_complete::CompleteEnv,
+  clap_complete::{ArgValueCandidates, CompleteEnv, CompletionCandidate},
   claxon::FlacReader,
   filepack_derive::{Decode, DecodeFromStr, Encode, EncodeDisplay, Json, Magic, route},
   futures_util::StreamExt,
