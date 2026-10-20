@@ -3,6 +3,7 @@ use super::*;
 pub trait Message: DecodeOwned + Encode + Eq + Ord {
   const CONTEXT: Context;
   const EXAMPLE: &'static str;
+  const EXAMPLE_DESCRIPTION: &'static str;
   const NAME: &'static str;
   const TAG: Tag;
   type Error: From<SignatureError>;
@@ -40,6 +41,7 @@ mod tests {
     impl Message for Impostor {
       const CONTEXT: Context = Context::Claims;
       const EXAMPLE: &'static str = "";
+      const EXAMPLE_DESCRIPTION: &'static str = "";
       const NAME: &'static str = "Impostor";
       const TAG: Tag = Tag::Token;
       type Error = AuthorizationError;
@@ -64,6 +66,7 @@ mod tests {
     impl Message for Twin {
       const CONTEXT: Context = Context::Statement;
       const EXAMPLE: &'static str = "";
+      const EXAMPLE_DESCRIPTION: &'static str = "";
       const NAME: &'static str = "Twin";
       const TAG: Tag = Tag::Signature;
       type Error = Error;

@@ -8,6 +8,7 @@ pub struct InvalidPublicKey(pub(crate) [u8; PublicKey::LEN]);
 impl Hex for InvalidPublicKey {
   const EXAMPLE: &'static str =
     "public10000000000000000000000000000000000000000000000000000000000000000";
+  const EXAMPLE_DESCRIPTION: &'static str = "Invalid all-zero public key.";
   const TAG: Tag = Tag::Public;
 }
 

@@ -85,6 +85,7 @@ impl Encode for PublicKey {
 impl Hex for PublicKey {
   const EXAMPLE: &'static str =
     "public13b6a27bcceb6a42d62a3a8d02a6f0d73653215771de243a63ac048a18b59da29";
+  const EXAMPLE_DESCRIPTION: &'static str = "Public key derived from the all-zero private key.";
   const TAG: Tag = Tag::Public;
 }
 

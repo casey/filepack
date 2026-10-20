@@ -27,8 +27,13 @@ version. All format versions are reserved for future use.
 Tags
 ----
 
-| tag | name | type |
-|-----|------|------|
+| tag | name | type | description |
+|-----|------|------|-------------|
 %% for (tag, hex) in self.hex {
-| [`{{ tag.prefix() }}`](hex/{{ tag.prefix() }}.md) | {{ hex.name }} | [{{ escape(&hex.schema) }}](deco/{{ hex.schema.to_kebab_case() }}.md) |
+{{ Row((
+  format!("[`{}`](hex/{}.md)", tag.prefix(), tag.prefix()),
+  &hex.name,
+  format!("[{}](deco/{}.md)", escape(&hex.schema), hex.schema.to_kebab_case()),
+  &hex.description,
+)) }}
 %% }
