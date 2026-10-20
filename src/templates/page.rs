@@ -159,6 +159,7 @@ mod tests {
                 <nav>
                   <a href=/>Filepack</a>
                   <a href=/packages>Packages</a>
+                  <a href=https://filepack.com/book>Book</a>
                   <a href=https://github.com/casey/filepack>GitHub</a>
                 </nav>
               </header>
@@ -210,6 +211,7 @@ mod tests {
                 <nav>
                   <a href=/>Filepack</a>
                   <a href=/packages>Packages</a>
+                  <a href=https://filepack.com/book>Book</a>
                   <a href=https://github.com/casey/filepack>GitHub</a>
                 </nav>
               </header>
@@ -244,6 +246,7 @@ mod tests {
                 <nav>
                   <a href=/>Filepack</a>
                   <a href=/packages>Packages</a>
+                  <a href=https://filepack.com/book>Book</a>
                   <a href=https://github.com/casey/filepack>GitHub</a>
                 </nav>
               </header>
@@ -281,6 +284,7 @@ mod tests {
                 <nav>
                   <a href=/>Filepack</a>
                   <a href=/packages>Packages</a>
+                  <a href=https://filepack.com/book>Book</a>
                   <a href=https://github.com/casey/filepack>GitHub</a>
                 </nav>
               </header>
