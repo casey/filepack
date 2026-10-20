@@ -236,7 +236,10 @@ fn main() {
     "lints.md",
     LintsMd {
       groups: &reference.lint_groups,
+      junk_names: &reference.junk_names,
       lints: &reference.lints,
+      windows_reserved_characters: &reference.windows_reserved_characters,
+      windows_reserved_names: &reference.windows_reserved_names,
     },
   );
 

@@ -26,6 +26,7 @@ pub struct Reference {
   pub deco: deco::Registry,
   pub hex: BTreeMap<Tag, Hex>,
   pub json: json::Registry,
+  pub junk_names: Vec<String>,
   pub languages: BTreeMap<Language, String>,
   pub lint_groups: BTreeMap<crate::LintGroup, LintGroup>,
   pub lints: BTreeMap<Lint, String>,
@@ -33,6 +34,8 @@ pub struct Reference {
   pub metadata: yaml::Example,
   pub routes: BTreeMap<String, Route>,
   pub unstable_features: BTreeMap<UnstableFeature, String>,
+  pub windows_reserved_characters: Vec<char>,
+  pub windows_reserved_names: Vec<String>,
   pub yaml: json::Registry,
 }
 
@@ -168,6 +171,10 @@ impl Reference {
       deco,
       hex,
       json,
+      junk_names: RelativePath::JUNK_NAMES
+        .iter()
+        .map(|name| (*name).into())
+        .collect(),
       languages: language::ALL
         .iter()
         .map(|language| (*language, language.name().into()))
@@ -196,6 +203,11 @@ impl Reference {
       routes,
       unstable_features: UnstableFeature::iter()
         .map(|feature| (feature, unstable_features[feature.name()].clone()))
+        .collect(),
+      windows_reserved_characters: RelativePath::WINDOWS_RESERVED_CHARACTERS.into(),
+      windows_reserved_names: RelativePath::WINDOWS_RESERVED_NAMES
+        .iter()
+        .map(|name| (*name).into())
         .collect(),
       yaml,
     }

@@ -17,11 +17,12 @@ use super::*;
 pub struct RelativePath(String);
 
 impl RelativePath {
-  const JUNK_NAMES: &'static [&'static str] = &[".DS_Store", ".filepack", ".localized"];
+  pub(crate) const JUNK_NAMES: &'static [&'static str] = &[".DS_Store", ".filepack", ".localized"];
 
-  const WINDOWS_RESERVED_CHARACTERS: &'static [char] = &['"', '*', ':', '<', '>', '?', '|'];
+  pub(crate) const WINDOWS_RESERVED_CHARACTERS: &'static [char] =
+    &['"', '*', ':', '<', '>', '?', '|'];
 
-  const WINDOWS_RESERVED_NAMES: &'static [&'static str] = &[
+  pub(crate) const WINDOWS_RESERVED_NAMES: &'static [&'static str] = &[
     "AUX", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "COM¹", "COM²",
     "COM³", "CON", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9", "LPT¹",
     "LPT²", "LPT³", "NUL", "PRN",

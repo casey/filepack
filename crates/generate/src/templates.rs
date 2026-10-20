@@ -76,7 +76,10 @@ pub(crate) struct LanguagesMd<'a> {
 #[derive(Boilerplate)]
 pub(crate) struct LintsMd<'a> {
   pub(crate) groups: &'a BTreeMap<LintGroup, reference::LintGroup>,
+  pub(crate) junk_names: &'a [String],
   pub(crate) lints: &'a BTreeMap<Lint, String>,
+  pub(crate) windows_reserved_characters: &'a [char],
+  pub(crate) windows_reserved_names: &'a [String],
 }
 
 #[derive(Boilerplate)]
