@@ -6,10 +6,10 @@ pub(crate) enum ResourceType {
   Flac,
   Jpeg,
   M4a,
-  Markdown,
   Mp3,
   Mp4,
   Png,
+  Text,
   Webm,
 }
 
@@ -20,25 +20,25 @@ impl ResourceType {
       Self::Flac
       | Self::Jpeg
       | Self::M4a
-      | Self::Markdown
       | Self::Mp3
       | Self::Mp4
       | Self::Png
+      | Self::Text
       | Self::Webm => None,
     }
   }
 
-  pub(crate) fn content_type(self) -> Mime {
+  pub(crate) fn content_type(self) -> &'static str {
     match self {
-      Self::Binary => mime::APPLICATION_OCTET_STREAM,
-      Self::Flac => "audio/flac".parse().unwrap(),
-      Self::Jpeg => mime::IMAGE_JPEG,
-      Self::M4a => "audio/mp4".parse().unwrap(),
-      Self::Markdown => mime::TEXT_PLAIN_UTF_8,
-      Self::Mp3 => "audio/mpeg".parse().unwrap(),
-      Self::Mp4 => "video/mp4".parse().unwrap(),
-      Self::Png => mime::IMAGE_PNG,
-      Self::Webm => "video/webm".parse().unwrap(),
+      Self::Binary => "application/octet-stream",
+      Self::Flac => "audio/flac",
+      Self::Jpeg => "image/jpeg",
+      Self::M4a => "audio/mp4",
+      Self::Mp3 => "audio/mpeg",
+      Self::Mp4 => "video/mp4",
+      Self::Png => "image/png",
+      Self::Text => "text/plain;charset=utf-8",
+      Self::Webm => "video/webm",
     }
   }
 
@@ -48,10 +48,12 @@ impl ResourceType {
       Self::Flac => &["flac"],
       Self::Jpeg => &["jpeg", "jpg"],
       Self::M4a => &["m4a"],
-      Self::Markdown => &["md"],
       Self::Mp3 => &["mp3"],
       Self::Mp4 => &["mp4"],
       Self::Png => &["png"],
+      Self::Text => &[
+        "css", "csv", "html", "js", "json", "md", "svg", "toml", "tsv", "txt", "xml", "yaml",
+      ],
       Self::Webm => &["webm"],
     }
   }
@@ -63,7 +65,7 @@ impl ResourceType {
 
   pub(crate) fn sandbox(self) -> bool {
     match self {
-      Self::Binary | Self::Jpeg | Self::Markdown | Self::Png => true,
+      Self::Binary | Self::Jpeg | Self::Png | Self::Text => true,
       Self::Flac | Self::M4a | Self::Mp3 | Self::Mp4 | Self::Webm => false,
     }
   }
@@ -84,19 +86,30 @@ mod tests {
     }
 
     // supported extensions
+    case("foo.css", Some(ResourceType::Text));
+    case("foo.csv", Some(ResourceType::Text));
     case("foo.flac", Some(ResourceType::Flac));
+    case("foo.html", Some(ResourceType::Text));
     case("foo.jpeg", Some(ResourceType::Jpeg));
     case("foo.jpg", Some(ResourceType::Jpeg));
+    case("foo.js", Some(ResourceType::Text));
+    case("foo.json", Some(ResourceType::Text));
     case("foo.m4a", Some(ResourceType::M4a));
-    case("foo.md", Some(ResourceType::Markdown));
+    case("foo.md", Some(ResourceType::Text));
     case("foo.mp3", Some(ResourceType::Mp3));
     case("foo.mp4", Some(ResourceType::Mp4));
     case("foo.png", Some(ResourceType::Png));
+    case("foo.svg", Some(ResourceType::Text));
+    case("foo.toml", Some(ResourceType::Text));
+    case("foo.tsv", Some(ResourceType::Text));
+    case("foo.txt", Some(ResourceType::Text));
     case("foo.webm", Some(ResourceType::Webm));
+    case("foo.xml", Some(ResourceType::Text));
+    case("foo.yaml", Some(ResourceType::Text));
 
     // unsupported extensions
     case("foo.PNG", None);
-    case("foo.txt", None);
+    case("foo.rtf", None);
 
     // no extension
     case("foo", None);
@@ -104,11 +117,8 @@ mod tests {
 
     // scriptable extensions
     case("foo.htm", None);
-    case("foo.html", None);
-    case("foo.svg", None);
     case("foo.svgz", None);
     case("foo.xhtml", None);
-    case("foo.xml", None);
     case("foo.xsl", None);
     case("foo.xslt", None);
   }
