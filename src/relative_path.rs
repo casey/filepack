@@ -3,7 +3,7 @@ use super::*;
 /// Relative forward-slash-separated path.
 ///
 /// May not be empty or have leading, trailing, or double slashes. Each
-/// component must be a valid [`ComponentBuf`](../deco/component-buf.md).
+/// component must be a valid `ComponentBuf`.
 #[derive(
   Clone,
   Debug,
@@ -12,11 +12,13 @@ use super::*;
   EncodeDisplay,
   Eq,
   Hash,
+  Json,
   Ord,
   PartialEq,
   PartialOrd,
   SerializeDisplay,
 )]
+#[json(string)]
 pub struct RelativePath(String);
 
 impl RelativePath {
@@ -243,23 +245,6 @@ impl TryFrom<&[&Component]> for RelativePath {
 impl PathExtractor for RelativePath {
   fn parameters() -> Vec<reference::Parameter> {
     vec![reference::Parameter::RelativePath]
-  }
-}
-
-impl json::Json for RelativePath {
-  fn json_schema(registry: &mut json::Registry) -> String {
-    json::Schema::Wrapper {
-      description: unindent(
-        "
-          Relative forward-slash-separated path.
-
-          May not be empty or have leading, trailing, or double slashes. Each
-          component must be a valid [`ComponentBuf`](../json/component-buf.md).
-        ",
-      ),
-      inner: String::json_schema(registry),
-    }
-    .register("RelativePath", registry)
   }
 }
 

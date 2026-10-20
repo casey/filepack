@@ -20,7 +20,7 @@ impl Route {
 
     let mut parameters = Vec::<(String, String)>::new();
 
-    for line in description.rest().unwrap_or_default().lines() {
+    for line in description.body().unwrap_or_default().lines() {
       let Some((name, description)) = line
         .strip_prefix('`')
         .and_then(|rest| rest.split_once("`: "))
@@ -107,7 +107,7 @@ impl Route {
       types,
     } = self;
 
-    let description = description.summary();
+    let summary = description.summary();
 
     let name = &item.sig.ident;
 
@@ -122,7 +122,7 @@ impl Route {
 
       pub(crate) fn #route(registry: &mut deco::Registry) -> Route {
         let mut endpoint = crate::reference::Endpoint::default();
-        endpoint.description = #description.into();
+        endpoint.description = #summary.into();
         #(<#types as Describe>::describe(&mut endpoint, registry);)*
         <#output as Describe>::describe(&mut endpoint, registry);
         Route {

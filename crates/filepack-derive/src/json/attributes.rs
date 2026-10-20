@@ -4,6 +4,7 @@ use super::*;
 pub(crate) struct Attributes {
   pub(crate) rename_all: Option<RenameAll>,
   pub(crate) strict: bool,
+  pub(crate) string: bool,
   pub(crate) tag: Option<String>,
   pub(crate) transparent: bool,
   pub(crate) untagged: bool,
