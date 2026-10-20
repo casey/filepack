@@ -9,6 +9,7 @@ Summary
 %% for (name, (_command, path)) in &self.commands {
   - [{{ name }}]({{ path }})
 %% }
+- [Content Types](content-types.md)
 - [Deco](deco.md)
 %% for (name, path) in &self.deco {
   - [{{ escape(name) }}]({{ path }})

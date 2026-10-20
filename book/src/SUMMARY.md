@@ -32,6 +32,7 @@ Summary
   - [filepack size](commands/filepack-size.md)
   - [filepack upload](commands/filepack-upload.md)
   - [filepack verify](commands/filepack-verify.md)
+- [Content Types](content-types.md)
 - [Deco](deco.md)
   - [Application](deco/application.md)
   - [Archive](deco/archive.md)

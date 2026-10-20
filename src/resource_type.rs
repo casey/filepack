@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, EnumIter, PartialEq)]
 pub(crate) enum ResourceType {
   Binary,
   Flac,
@@ -42,18 +42,23 @@ impl ResourceType {
     }
   }
 
-  pub(crate) fn from_filename(component: &Component) -> Option<Self> {
-    match component.extension()? {
-      "flac" => Some(Self::Flac),
-      "jpeg" | "jpg" => Some(Self::Jpeg),
-      "m4a" => Some(Self::M4a),
-      "md" => Some(Self::Markdown),
-      "mp3" => Some(Self::Mp3),
-      "mp4" => Some(Self::Mp4),
-      "png" => Some(Self::Png),
-      "webm" => Some(Self::Webm),
-      _ => None,
+  pub(crate) fn extensions(self) -> &'static [&'static str] {
+    match self {
+      Self::Binary => &[],
+      Self::Flac => &["flac"],
+      Self::Jpeg => &["jpeg", "jpg"],
+      Self::M4a => &["m4a"],
+      Self::Markdown => &["md"],
+      Self::Mp3 => &["mp3"],
+      Self::Mp4 => &["mp4"],
+      Self::Png => &["png"],
+      Self::Webm => &["webm"],
     }
+  }
+
+  pub(crate) fn from_filename(component: &Component) -> Option<Self> {
+    let extension = component.extension()?;
+    Self::iter().find(|ty| ty.extensions().contains(&extension))
   }
 
   pub(crate) fn sandbox(self) -> bool {

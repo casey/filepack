@@ -5,16 +5,18 @@ use {
     functions::{escape, list, path_parameter_type, route_link, route_path, write},
     row::Row,
     templates::{
-      CommandMd, CommandsMd, DecoMd, DecoSchemaMd, HexMd, JsonMd, JsonSchemaMd, LanguagesMd,
-      LintsMd, MediaFormatsMd, MetadataMd, RouteMd, RoutesMd, SummaryMd, TagMd, UnstableFeaturesMd,
-      YamlMd,
+      CommandMd, CommandsMd, ContentTypesMd, DecoMd, DecoSchemaMd, HexMd, JsonMd, JsonSchemaMd,
+      LanguagesMd, LintsMd, MediaFormatsMd, MetadataMd, RouteMd, RoutesMd, SummaryMd, TagMd,
+      UnstableFeaturesMd, YamlMd,
     },
   },
   boilerplate::Boilerplate,
   camino::{Utf8Path, Utf8PathBuf},
   filepack::{
     Count, Language, Lint, LintGroup, MediaType, Reference, Tag, UnstableFeature, deco, json,
-    reference::{self, Command, Hex, MediaFormat, Parameter, Request, Response, Route},
+    reference::{
+      self, Command, ContentType, Hex, MediaFormat, Parameter, Request, Response, Route,
+    },
     yaml,
   },
   heck::ToKebabCase,
@@ -201,6 +203,13 @@ fn main() {
   };
 
   write("commands.md", CommandsMd { pages: &commands });
+
+  write(
+    "content-types.md",
+    ContentTypesMd {
+      content_types: &reference.content_types,
+    },
+  );
 
   write(
     "hex.md",
