@@ -128,6 +128,14 @@ impl Schema {
 
     name.into()
   }
+
+  pub fn values(&self) -> &[Value] {
+    let Self::StringEnum { values, .. } = self else {
+      unreachable!()
+    };
+
+    values
+  }
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
@@ -161,6 +169,17 @@ impl Io for () {
 
 pub trait Json {
   fn json_schema(registry: &mut Registry) -> String;
+
+  fn schema() -> Schema
+  where
+    Self: Sized,
+  {
+    let mut registry = Registry::new();
+
+    let name = Self::json_schema(&mut registry);
+
+    registry.schemas.remove(&name).unwrap()
+  }
 }
 
 impl Json for bool {

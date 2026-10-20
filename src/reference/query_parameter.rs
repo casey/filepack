@@ -10,23 +10,13 @@ pub struct QueryParameter {
 
 impl QueryParameter {
   pub(crate) fn new<T: Default + Display + Json>(name: &str) -> Self {
-    let mut registry = json::Registry::new();
-
-    let schema = T::json_schema(&mut registry);
-
-    let json::Schema::StringEnum {
-      description,
-      values,
-    } = &registry[&schema]
-    else {
-      unreachable!()
-    };
+    let schema = T::schema();
 
     Self {
       default: T::default().to_string(),
-      description: description.clone(),
+      description: schema.description().unwrap().into(),
       name: name.into(),
-      values: values.clone(),
+      values: schema.values().to_vec(),
     }
   }
 }
