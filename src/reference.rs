@@ -1,41 +1,22 @@
 use {super::*, clap::CommandFactory};
 
-#[derive(Debug, Deserialize, Serialize)]
-pub struct Command {
-  pub about: String,
-  pub help: String,
-  pub input: Option<String>,
-  pub name: String,
-  pub output: Option<String>,
-  pub subcommands: BTreeMap<String, Command>,
-}
+pub use self::{
+  command::Command, endpoint::Endpoint, hex::Hex, lint_group::LintGroup, media_format::MediaFormat,
+  parameter::Parameter, path_parameter::PathParameter, query_parameter::QueryParameter,
+  request::Request, response::Response, route::Route,
+};
 
-impl Command {
-  fn new(
-    command: &mut clap::Command,
-    name: Option<subcommand::Name>,
-    registry: &mut json::Registry,
-  ) -> Self {
-    Self {
-      about: command.get_about().unwrap().to_string(),
-      help: command.render_long_help().to_string(),
-      input: name.and_then(|name| name.input(registry)),
-      name: command.get_name().into(),
-      output: name.and_then(|name| name.output(registry)),
-      subcommands: command
-        .get_subcommands_mut()
-        .filter(|command| command.get_name() != "help")
-        .map(|command| {
-          let name = command.get_name().parse::<subcommand::Name>().unwrap();
-          (
-            command.get_name().to_string(),
-            Command::new(command, Some(name), registry),
-          )
-        })
-        .collect(),
-    }
-  }
-}
+mod command;
+mod endpoint;
+mod hex;
+mod lint_group;
+mod media_format;
+mod parameter;
+mod path_parameter;
+mod query_parameter;
+mod request;
+mod response;
+mod route;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Reference {
@@ -139,31 +120,11 @@ impl Reference {
     for route in subcommand::serve::route::Route::all(&mut deco) {
       routes
         .entry(route.path.into())
-        .or_insert_with(|| {
-          let mut parameters = Vec::new();
-          let mut wildcard = false;
-
-          for segment in route.path.split('/') {
-            let Some(name) = segment.strip_prefix('{') else {
-              continue;
-            };
-
-            let name = if let Some(name) = name.strip_prefix('*') {
-              wildcard = true;
-              name
-            } else {
-              name
-            };
-
-            parameters.push(name.strip_suffix('}').unwrap().into());
-          }
-
-          Route {
-            api: route.path.starts_with("/api/"),
-            methods: BTreeMap::new(),
-            parameters,
-            wildcard,
-          }
+        .or_insert_with(|| Route {
+          api: route.path.starts_with("/api/"),
+          methods: BTreeMap::new(),
+          parameters: route.parameters.clone(),
+          wildcard: route.path.contains("{*"),
         })
         .methods
         .insert(route.method.to_string(), route.endpoint);
@@ -204,84 +165,6 @@ impl Reference {
       yaml,
     }
   }
-}
-
-#[derive(Debug, Default, Deserialize, PartialEq, Serialize)]
-pub struct Endpoint {
-  pub authenticated: bool,
-  pub description: String,
-  pub parameters: Vec<Parameter>,
-  pub query: Vec<QueryParameter>,
-  pub range: bool,
-  pub request: Option<Request>,
-  pub response: Option<Response>,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct Hex {
-  pub example: String,
-  pub name: String,
-  pub schema: String,
-}
-
-#[derive(Debug, Deserialize, PartialEq, Serialize)]
-pub struct LintGroup {
-  pub description: String,
-  pub lints: BTreeSet<Lint>,
-}
-
-#[derive(Debug, Deserialize, PartialEq, Serialize)]
-pub struct MediaFormat {
-  pub extension: String,
-  pub name: String,
-}
-
-#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Serialize)]
-#[serde(rename_all = "kebab-case")]
-pub enum Parameter {
-  Fingerprint,
-  Hash,
-  Integer,
-  Ordinal,
-  PackageIdentifier,
-  RelativePath,
-  Revision,
-  String,
-}
-
-#[derive(Debug, Deserialize, PartialEq, Serialize)]
-pub struct QueryParameter {
-  pub default: String,
-  pub name: String,
-  pub values: Vec<String>,
-}
-
-#[derive(Debug, Deserialize, PartialEq, Serialize)]
-#[serde(rename_all = "kebab-case")]
-pub enum Request {
-  Bytes,
-  Deco {
-    fields: Vec<deco::Field>,
-    limit: u64,
-  },
-}
-
-#[derive(Debug, Deserialize, PartialEq, Serialize)]
-#[serde(rename_all = "kebab-case")]
-pub enum Response {
-  Deco { fields: Vec<deco::Field> },
-  File,
-  Html,
-  Redirect,
-  Static,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct Route {
-  pub api: bool,
-  pub methods: BTreeMap<String, Endpoint>,
-  pub parameters: Vec<String>,
-  pub wildcard: bool,
 }
 
 #[cfg(test)]
@@ -526,8 +409,6 @@ mod tests {
   #[test]
   fn parameters() {
     for (path, route) in Reference::new().routes {
-      assert_eq!(route.wildcard, path.contains("{*"), "{path}");
-
       for endpoint in route.methods.values() {
         assert_eq!(endpoint.parameters.len(), route.parameters.len(), "{path}");
       }
@@ -537,6 +418,14 @@ mod tests {
       let first = parameters.next().unwrap();
 
       assert!(parameters.all(|parameters| parameters == first), "{path}");
+    }
+
+    let mut parameters = BTreeMap::<&str, Vec<PathParameter>>::new();
+
+    for route in subcommand::serve::route::Route::all(&mut deco::Registry::new()) {
+      if let Some(existing) = parameters.insert(route.path, route.parameters.clone()) {
+        assert_eq!(existing, route.parameters, "{}", route.path);
+      }
     }
   }
 

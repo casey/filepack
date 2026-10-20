@@ -47,16 +47,8 @@ pub(crate) struct PackagesQuery {
 impl Describe for Query<PackagesQuery> {
   fn describe(endpoint: &mut crate::reference::Endpoint, _registry: &mut deco::Registry) {
     endpoint.query.extend([
-      crate::reference::QueryParameter {
-        default: Order::default().to_string(),
-        name: "order".into(),
-        values: Order::iter().map(|order| order.to_string()).collect(),
-      },
-      crate::reference::QueryParameter {
-        default: Sort::default().to_string(),
-        name: "sort".into(),
-        values: Sort::iter().map(|sort| sort.to_string()).collect(),
-      },
+      crate::reference::QueryParameter::new::<Order>("order"),
+      crate::reference::QueryParameter::new::<Sort>("sort"),
     ]);
   }
 }

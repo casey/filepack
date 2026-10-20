@@ -17,7 +17,7 @@ pub(crate) fn list(items: impl IntoIterator<Item = impl Display>) -> String {
     .join(", ")
 }
 
-pub(crate) fn parameter(parameter: Parameter) -> &'static str {
+pub(crate) fn path_parameter_type(parameter: Parameter) -> &'static str {
   match parameter {
     Parameter::Fingerprint => "[package fingerprint](../hex/package.md)",
     Parameter::Hash => "[hash](../hex/hash.md)",

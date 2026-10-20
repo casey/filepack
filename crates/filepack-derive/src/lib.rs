@@ -4,6 +4,7 @@ use {
       description, display_name, doc_line, number, option, path_value, required_description,
       type_argument, validate_numbers,
     },
+    route::Route,
     route_attribute::RouteAttribute,
   },
   darling::{FromDeriveInput, FromField, FromVariant, ast::Data, ast::Fields},
@@ -25,6 +26,7 @@ use {
 mod deco;
 mod functions;
 mod json;
+mod route;
 mod route_attribute;
 
 type Result<T = (), E = Error> = std::result::Result<T, E>;
@@ -149,52 +151,12 @@ pub fn route(
   attribute: proc_macro::TokenStream,
   item: proc_macro::TokenStream,
 ) -> proc_macro::TokenStream {
-  let RouteAttribute { method, path } = syn::parse_macro_input!(attribute as RouteAttribute);
+  let attribute = syn::parse_macro_input!(attribute as RouteAttribute);
 
   let item = syn::parse_macro_input!(item as ItemFn);
 
-  let name = &item.sig.ident;
-
-  let description = match required_description(name, &item.attrs, "routes") {
-    Ok(description) => description,
-    Err(err) => return err.to_compile_error().into(),
-  };
-
-  let route = format_ident!("{name}_route");
-
-  let mut types = Vec::new();
-
-  for input in &item.sig.inputs {
-    match input {
-      FnArg::Receiver(receiver) => {
-        return Error::new_spanned(receiver, "`#[route]` handlers cannot take `self`")
-          .to_compile_error()
-          .into();
-      }
-      FnArg::Typed(input) => types.push((*input.ty).clone()),
-    }
+  match Route::new(attribute, item) {
+    Ok(route) => route.tokens().into(),
+    Err(err) => err.to_compile_error().into(),
   }
-
-  let output = match &item.sig.output {
-    ReturnType::Default => syn::parse_quote!(()),
-    ReturnType::Type(_, ty) => (**ty).clone(),
-  };
-
-  quote! {
-    #item
-
-    pub(crate) fn #route(registry: &mut deco::Registry) -> Route {
-      let mut endpoint = crate::reference::Endpoint::default();
-      endpoint.description = #description.into();
-      #(<#types as Describe>::describe(&mut endpoint, registry);)*
-      <#output as Describe>::describe(&mut endpoint, registry);
-      Route {
-        endpoint,
-        method: axum::http::Method::#method,
-        path: #path,
-        router: axum::routing::on(axum::routing::MethodFilter::#method, #name),
-      }
-    }
-  }
-  .into()
 }
