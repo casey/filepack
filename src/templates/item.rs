@@ -74,7 +74,7 @@ impl Page for ItemHtml {
   fn shortcuts(&self) -> Vec<Shortcut> {
     vec![Shortcut {
       description: "toggle full screen",
-      key: 'f',
+      keys: &['f'],
     }]
   }
 
@@ -531,7 +531,7 @@ mod tests {
       ItemHtml::default().shortcuts(),
       vec![Shortcut {
         description: "toggle full screen",
-        key: 'f',
+        keys: &['f'],
       }],
     );
   }

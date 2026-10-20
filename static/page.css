@@ -254,6 +254,8 @@ body > header > nav {
   }
 
   dt {
+    display: flex;
     font-style: normal;
+    gap: var(--space-1);
   }
 }

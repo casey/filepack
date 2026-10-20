@@ -13,21 +13,21 @@ impl<T: Page> PageHtml<T> {
     if self.content.prev().is_some() {
       shortcuts.push(Shortcut {
         description: "go to previous",
-        key: 'p',
+        keys: &['←', 'p'],
       });
     }
 
     if self.content.next().is_some() {
       shortcuts.push(Shortcut {
         description: "go to next",
-        key: 'n',
+        keys: &['→', 'n'],
       });
     }
 
     if self.content.up().is_some() {
       shortcuts.push(Shortcut {
         description: "go up",
-        key: 'u',
+        keys: &['u'],
       });
     }
 
@@ -35,7 +35,7 @@ impl<T: Page> PageHtml<T> {
 
     shortcuts.push(Shortcut {
       description: "toggle shortcuts",
-      key: '?',
+      keys: &['?'],
     });
 
     shortcuts
@@ -100,7 +100,7 @@ mod tests {
     fn shortcuts(&self) -> Vec<Shortcut> {
       vec![Shortcut {
         description: "foo",
-        key: 'f',
+        keys: &['f'],
       }]
     }
 
@@ -167,8 +167,8 @@ mod tests {
               </main>
               <div id=shortcuts popover>
                 <dl>
-                  <div><dt><kbd>p</kbd></dt><dd>go to previous</dd></div>
-                  <div><dt><kbd>n</kbd></dt><dd>go to next</dd></div>
+                  <div><dt><kbd>←</kbd><kbd>p</kbd></dt><dd>go to previous</dd></div>
+                  <div><dt><kbd>→</kbd><kbd>n</kbd></dt><dd>go to next</dd></div>
                   <div><dt><kbd>u</kbd></dt><dd>go up</dd></div>
                   <div><dt><kbd>f</kbd></dt><dd>foo</dd></div>
                   <div><dt><kbd>?</kbd></dt><dd>toggle shortcuts</dd></div>
