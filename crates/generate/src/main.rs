@@ -2,7 +2,7 @@ use {
   self::{
     chapter::Chapter,
     description::Description,
-    functions::{escape, list, parameter, route_link, route_path, write},
+    functions::{escape, list, path_parameter_type, route_link, route_path, write},
     row::Row,
     templates::{
       CommandMd, CommandsMd, DecoMd, DecoSchemaMd, HexMd, JsonMd, JsonSchemaMd, LanguagesMd,

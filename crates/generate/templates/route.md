@@ -13,13 +13,13 @@
 
 ### Parameters
 
-| parameter | type |
-|-----------|------|
-%%     for (index, (name, kind)) in self.route.parameters.iter().zip(&endpoint.parameters).enumerate() {
+| parameter | type | description |
+|-----------|------|-------------|
+%%     for (index, (parameter, kind)) in self.route.parameters.iter().zip(&endpoint.parameters).enumerate() {
 %%       if self.route.wildcard && index + 1 == self.route.parameters.len() {
-| `*{{ name }}` | {{ parameter(*kind) }} |
+{{ Row((format!("`*{}`", parameter.name), path_parameter_type(*kind), &parameter.description)) }}
 %%       } else {
-| `{{ name }}` | {{ parameter(*kind) }} |
+{{ Row((format!("`{}`", parameter.name), path_parameter_type(*kind), &parameter.description)) }}
 %%       }
 %%     }
 %%     if self.route.wildcard {
@@ -32,10 +32,20 @@ remainder of the path, including any slashes, and must not be empty.
 
 ### Query Parameters
 
-| parameter | values | default |
-|-----------|--------|---------|
+| parameter | default | description |
+|-----------|---------|-------------|
 %%     for parameter in &endpoint.query {
-| `{{ parameter.name }}` | {{ list(&parameter.values) }} | `{{ parameter.default }}` |
+{{ Row((format!("`{}`", parameter.name), format!("`{}`", parameter.default), &parameter.description)) }}
+%%     }
+%%     for parameter in &endpoint.query {
+
+#### `{{ parameter.name }}`
+
+| value | description |
+|-------|-------------|
+%%       for value in &parameter.values {
+{{ Row((format!("`{}`", value.value), &value.description)) }}
+%%       }
 %%     }
 %%   }
 %%   if let Some(request) = &endpoint.request {
