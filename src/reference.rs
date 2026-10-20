@@ -47,15 +47,27 @@ impl Reference {
         .collect()
     }
 
-    fn media_formats<F: Format>() -> Vec<MediaFormat> {
+    fn media_formats<F: Format + Json + Serialize>(
+      registry: &mut json::Registry,
+    ) -> Vec<MediaFormat> {
+      let schema = F::json_schema(registry);
+
+      let descriptions = descriptions(registry, &schema);
+
       let mut formats = BTreeMap::new();
 
       for extension in F::EXTENSIONS {
-        let name = F::from_extension(extension).unwrap().to_string();
+        let format = F::from_extension(extension).unwrap();
+
+        let name = format.to_string();
+
+        let value = serde_json::to_value(format).unwrap();
+
+        let description = descriptions[value.as_str().unwrap()].clone();
 
         assert!(
           formats
-            .insert(name.clone(), (*extension).to_string())
+            .insert(name.clone(), (description, (*extension).to_string()))
             .is_none(),
           "format `{name}` has multiple extensions",
         );
@@ -63,7 +75,11 @@ impl Reference {
 
       formats
         .into_iter()
-        .map(|(name, extension)| MediaFormat { extension, name })
+        .map(|(name, (description, extension))| MediaFormat {
+          description,
+          extension,
+          name,
+        })
         .collect()
     }
 
@@ -109,6 +125,13 @@ impl Reference {
 
     let lints = descriptions(&json, "Lint");
 
+    let media_formats = [
+      (MediaType::Audio, media_formats::<AudioFormat>(&mut json)),
+      (MediaType::Image, media_formats::<ImageFormat>(&mut json)),
+      (MediaType::Video, media_formats::<VideoFormat>(&mut json)),
+    ]
+    .into();
+
     let mut yaml = json::Registry::new();
 
     yaml::Metadata::json_schema(&mut yaml);
@@ -153,12 +176,7 @@ impl Reference {
       lints: Lint::iter()
         .map(|lint| (lint, lints[&lint.to_string()].clone()))
         .collect(),
-      media_formats: [
-        (MediaType::Audio, media_formats::<AudioFormat>()),
-        (MediaType::Image, media_formats::<ImageFormat>()),
-        (MediaType::Video, media_formats::<VideoFormat>()),
-      ]
-      .into(),
+      media_formats,
       metadata,
       routes,
       unstable_features: UnstableFeature::iter().collect(),
@@ -375,14 +393,17 @@ mod tests {
       Reference::new().media_formats[&MediaType::Audio],
       [
         MediaFormat {
+          description: "[Free Lossless Audio Codec](https://en.wikipedia.org/wiki/FLAC).".into(),
           extension: "flac".into(),
           name: "FLAC".into(),
         },
         MediaFormat {
+          description: "[MPEG-1 Audio Layer III](https://en.wikipedia.org/wiki/MP3).".into(),
           extension: "mp3".into(),
           name: "MP3".into(),
         },
         MediaFormat {
+          description: "[MPEG-4 Part 14](https://en.wikipedia.org/wiki/MP4_file_format).".into(),
           extension: "m4a".into(),
           name: "MP4".into(),
         },
