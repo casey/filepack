@@ -127,7 +127,7 @@ circumstances, pass a specific tag to install with `--tag`.
 ### Shell Completion Scripts
 
 Shell completion scripts for Bash, Elvish, Fish, PowerShell, and Zsh are
-available in [`completions`](completions).
+available in [release archives](https://github.com/casey/just/releases).
 
 The `filepack` binary can also generate the same completion scripts at runtime
 using `filepack completions SHELL`:
