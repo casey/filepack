@@ -48,7 +48,7 @@ body {
   min-height: 100dvh;
 }
 
-code {
+code, kbd {
   font-family: ui-monospace, Menlo, "Cascadia Mono", Consolas, "DejaVu Sans Mono", monospace;
 }
 
@@ -254,8 +254,6 @@ body > header > nav {
   }
 
   dt {
-    display: flex;
     font-style: normal;
-    gap: var(--space-1);
   }
 }

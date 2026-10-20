@@ -167,8 +167,8 @@ mod tests {
               </main>
               <div id=shortcuts popover>
                 <dl>
-                  <div><dt><kbd>←</kbd><kbd>p</kbd></dt><dd>go to previous</dd></div>
-                  <div><dt><kbd>→</kbd><kbd>n</kbd></dt><dd>go to next</dd></div>
+                  <div><dt><kbd>←</kbd> or <kbd>p</kbd></dt><dd>go to previous</dd></div>
+                  <div><dt><kbd>→</kbd> or <kbd>n</kbd></dt><dd>go to next</dd></div>
                   <div><dt><kbd>u</kbd></dt><dd>go up</dd></div>
                   <div><dt><kbd>f</kbd></dt><dd>foo</dd></div>
                   <div><dt><kbd>?</kbd></dt><dd>toggle shortcuts</dd></div>
