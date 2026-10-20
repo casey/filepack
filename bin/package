@@ -40,6 +40,7 @@ cp -r \
   Cargo.toml \
   LICENSE \
   README.md \
+  completions \
   filepack.1 \
   metadata.yaml \
   dist
