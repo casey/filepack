@@ -152,6 +152,7 @@ use {
     server_error::ServerError,
     server_url::ServerUrl,
     server_url_error::ServerUrlError,
+    shell::Shell,
     shortcut::Shortcut,
     sign_options::SignOptions,
     signature::Signature,
@@ -196,7 +197,8 @@ use {
   blake3::Hasher,
   boilerplate::{Boilerplate, Trusted},
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},
-  clap::{ArgGroup, Parser, ValueEnum},
+  clap::{ArgGroup, CommandFactory, Parser, ValueEnum},
+  clap_complete::CompleteEnv,
   claxon::FlacReader,
   filepack_derive::{Decode, DecodeFromStr, Encode, EncodeDisplay, Json, Magic, route},
   futures_util::StreamExt,
@@ -488,6 +490,7 @@ mod server_error;
 mod server_state;
 mod server_url;
 mod server_url_error;
+mod shell;
 mod shortcut;
 mod sign_options;
 mod signature;
@@ -598,6 +601,10 @@ fn initialize_tracing() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 pub fn run() -> ExitCode {
+  CompleteEnv::with_factory(Arguments::command)
+    .var("FILEPACK_COMPLETE")
+    .complete();
+
   if let Err(err) = initialize_tracing() {
     eprintln!("failed to initialize tracing: {err}");
     return ExitCode::FAILURE;

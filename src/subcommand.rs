@@ -8,6 +8,7 @@ use {
 };
 
 mod archive;
+mod completions;
 mod contains;
 mod create;
 mod delete;
@@ -59,6 +60,8 @@ const TIMESTAMP_HELP: &str = "Include current time in signature";
 pub(crate) enum Subcommand {
   #[command(about = "Create archive from JSON manifest")]
   Archive(archive::Archive),
+  #[command(about = "Print shell completion script")]
+  Completions(completions::Completions),
   #[command(about = "Check if manifest contains file")]
   Contains(contains::Contains),
   #[command(about = "Create manifest")]
@@ -111,6 +114,7 @@ impl Name {
   pub(crate) fn input(self, registry: &mut json::Registry) -> Option<String> {
     match self {
       Self::Archive => archive::Input::io_schema(registry),
+      Self::Completions => completions::Input::io_schema(registry),
       Self::Contains => contains::Input::io_schema(registry),
       Self::Create => create::Input::io_schema(registry),
       Self::Delete => delete::Input::io_schema(registry),
@@ -140,6 +144,7 @@ impl Name {
   pub(crate) fn output(self, registry: &mut json::Registry) -> Option<String> {
     match self {
       Self::Archive => archive::Output::io_schema(registry),
+      Self::Completions => completions::Output::io_schema(registry),
       Self::Contains => contains::Output::io_schema(registry),
       Self::Create => create::Output::io_schema(registry),
       Self::Delete => delete::Output::io_schema(registry),
@@ -171,6 +176,7 @@ impl Subcommand {
   pub(crate) fn run(self, options: Options) -> Result {
     match self {
       Self::Archive(archive) => archive.run(),
+      Self::Completions(completions) => completions.run(),
       Self::Contains(contains) => contains.run(options),
       Self::Create(create) => create.run(options),
       Self::Delete(delete) => delete.run(options),

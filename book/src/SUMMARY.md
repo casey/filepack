@@ -8,6 +8,7 @@ Summary
 - [Commands](commands.md)
   - [filepack](commands/filepack.md)
   - [filepack archive](commands/filepack-archive.md)
+  - [filepack completions](commands/filepack-completions.md)
   - [filepack contains](commands/filepack-contains.md)
   - [filepack create](commands/filepack-create.md)
   - [filepack delete](commands/filepack-delete.md)

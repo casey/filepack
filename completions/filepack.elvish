@@ -1,0 +1,1 @@
+eval (E:FILEPACK_COMPLETE=elvish filepack | slurp)
