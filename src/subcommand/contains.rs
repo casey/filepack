@@ -3,11 +3,16 @@ use super::*;
 #[derive(Parser)]
 #[command(group = ArgGroup::new("target").required(true))]
 pub(crate) struct Contains {
-  #[arg(group = "target", help = "Search manifest for <FILE>.", long)]
+  #[arg(
+    group = "target",
+    help = "Search manifest for <FILE>.",
+    long,
+    value_hint = ValueHint::FilePath
+  )]
   file: Option<Utf8PathBuf>,
   #[arg(group = "target", help = "Search manifest for <HASH>.", long)]
   hash: Option<Hash>,
-  #[arg(help = MANIFEST_PATH_HELP)]
+  #[arg(help = MANIFEST_PATH_HELP, value_hint = ValueHint::AnyPath)]
   manifest: Option<Utf8PathBuf>,
 }
 

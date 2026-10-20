@@ -7,7 +7,8 @@ pub(crate) struct Metadata {
   #[arg(
     help = "Load deco metadata from <PATH>. May be path to metadata, to directory containing \
             metadata named `metadata.filemeta`, or omitted, in which case metadata named \
-            `metadata.filemeta` in the current directory is loaded."
+            `metadata.filemeta` in the current directory is loaded.",
+    value_hint = ValueHint::AnyPath
   )]
   path: Option<Utf8PathBuf>,
 }

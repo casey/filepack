@@ -11,6 +11,16 @@ fn completion_scripts() {
 }
 
 #[test]
+fn paths() {
+  Test::new()
+    .write("foo", "")
+    .env("FILEPACK_COMPLETE", "fish")
+    .args(["--", "filepack", "hash", "f"])
+    .stdout("foo\n")
+    .success();
+}
+
+#[test]
 fn subcommands() {
   Test::new()
     .env("FILEPACK_COMPLETE", "fish")

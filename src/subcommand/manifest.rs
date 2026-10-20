@@ -4,7 +4,7 @@ use super::*;
 pub(crate) struct Manifest {
   #[arg(long = "format", default_value_t)]
   format: OutputFormat,
-  #[arg(help = MANIFEST_PATH_HELP)]
+  #[arg(help = MANIFEST_PATH_HELP, value_hint = ValueHint::AnyPath)]
   path: Option<Utf8PathBuf>,
 }
 

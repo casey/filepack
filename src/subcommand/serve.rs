@@ -100,6 +100,7 @@ pub(crate) struct Serve {
   #[arg(
     help = "Store ACME TLS certificates in <PATH>",
     long,
+    value_hint = ValueHint::DirPath,
     value_name = "PATH"
   )]
   acme_cache: Option<Utf8PathBuf>,
