@@ -116,12 +116,7 @@ mod tests {
 
     assert_eq!(
       schemas,
-      BTreeMap::from([(
-        "UnsignedInteger".into(),
-        deco::Schema::UnsignedInteger {
-          description: "Unsigned 64-bit integer.".into()
-        }
-      )]),
+      BTreeMap::from([("UnsignedInteger".into(), deco::Schema::of::<u64>())]),
     );
   }
 

@@ -14,7 +14,7 @@ impl QueryParameter {
 
     Self {
       default: T::default().to_string(),
-      description: schema.description().unwrap().into(),
+      description: schema.summary().unwrap().into(),
       name: name.into(),
       values: schema.values().to_vec(),
     }

@@ -74,7 +74,17 @@ impl FromStr for Time {
 impl json::Json for Time {
   fn json_schema(registry: &mut json::Registry) -> String {
     json::Schema::Wrapper {
-      description: "Year or calendar day, as `YYYY` or `YYYY-MM-DD`.".into(),
+      description: unindent(
+        "
+          Point in time with varying precision.
+
+          May be an integer year, or a calendar day, written as Y-MM-DD.
+
+          - Year has no leading zeros and may be negative.
+          - Month is two digits.
+          - Day is two digits and must be valid for the month and year.
+        ",
+      ),
       inner: String::json_schema(registry),
     }
     .register("Time", registry)

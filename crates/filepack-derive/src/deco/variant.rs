@@ -27,20 +27,7 @@ impl Variant {
 
     let n = number(&self.ident, &self.attrs)?;
 
-    let mut doc = Vec::new();
-
-    for attribute in &self.attrs {
-      if let Some(line) = doc_line(attribute)? {
-        doc.push(line);
-      }
-    }
-
-    let Some(description) = description(doc) else {
-      return Err(Error::new_spanned(
-        &self.ident,
-        "variants must have doc comments",
-      ));
-    };
+    let description = Description::new(&self.ident, &self.attrs, "variant", true, true)?;
 
     Ok(ParsedVariant {
       description,

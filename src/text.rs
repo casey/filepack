@@ -1,6 +1,9 @@
 use super::*;
 
-/// Non-empty text without control characters or line breaks.
+/// Non-empty single line of text.
+///
+/// May not contain control characters, including tabs and line breaks, or
+/// leading or trailing whitespace.
 #[derive(Clone, Debug, Decode, DeserializeFromStr, Encode, PartialEq, SerializeDisplay)]
 #[deco(transparent, validate)]
 pub struct Text(String);
@@ -65,7 +68,14 @@ impl Validate for Text {
 impl json::Json for Text {
   fn json_schema(registry: &mut json::Registry) -> String {
     json::Schema::Wrapper {
-      description: "Non-empty text without control characters or line breaks.".into(),
+      description: unindent(
+        "
+          Non-empty single line of text.
+
+          May not contain control characters, including tabs and line breaks, or leading or
+          trailing whitespace.
+        ",
+      ),
       inner: String::json_schema(registry),
     }
     .register("Text", registry)

@@ -6,10 +6,11 @@
 %%   | deco::Schema::SortedSet { .. } => {
 %%     unreachable!()
 %%   }
-%%   deco::Schema::Boolean { description } => {
+%%   deco::Schema::Boolean { description }
+%%   | deco::Schema::SignedInteger { description }
+%%   | deco::Schema::String { description }
+%%   | deco::Schema::UnsignedInteger { description } => {
 {{ description }}
-
-Encoded as the byte string `0x00` for false and `0x01` for true.
 %%   }
 %%   deco::Schema::Enum { description, variants } => {
 {{ description }}
@@ -38,17 +39,6 @@ An enum with {{ Count::new(variants.len(), "variant") }}:
 %%       }
 %%     }
 %%   }
-%%   deco::Schema::SignedInteger { description } => {
-{{ description }}
-
-First zig-zag encoded, then encoded as an
-[UnsignedInteger](../deco/unsigned-integer.md).
-%%   }
-%%   deco::Schema::String { description } => {
-{{ description }}
-
-Encoded as a byte string containing the UTF-8 encoding of the string.
-%%   }
 %%   deco::Schema::Struct { description, fields, magic, strict } => {
 {{ description }}
 
@@ -65,12 +55,6 @@ followed by the encoded value.
 
 Unknown fields are rejected.
 %%     }
-%%   }
-%%   deco::Schema::UnsignedInteger { description } => {
-{{ description }}
-
-Encoded as little endian with trailing zero bytes removed, with a minimum
-length of one byte.
 %%   }
 %%   deco::Schema::Wrapper { description, inner } => {
 {{ description }}

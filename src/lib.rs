@@ -250,6 +250,7 @@ use {
   tokio::io::{AsyncReadExt, AsyncWriteExt},
   tokio_util::io::ReaderStream,
   unicase::UniCase,
+  unindent::unindent,
   url::{Host, Url},
   usized::IntoU64,
   walkdir::WalkDir,
@@ -266,7 +267,6 @@ use {
     assert_invalid_argument_value, assert_missing_argument, assert_redb_impls, exif, tempdir,
     with_unknown_field,
   },
-  unindent::unindent,
   webm_builder::WebmBuilder,
 };
 

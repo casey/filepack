@@ -13,8 +13,8 @@ pub(crate) struct Input {
 }
 
 impl Input {
-  fn description(&self) -> Result<String> {
-    required_description(&self.ident, &self.attrs, "types")
+  fn description(&self) -> Result<Description> {
+    Description::new(&self.ident, &self.attrs, "type", false, false)
   }
 
   fn parse_attributes(&self) -> Result<Attributes> {
@@ -305,6 +305,17 @@ mod tests {
         }
       },
       "types must have doc comments",
+    );
+
+    case(
+      &syn::parse_quote! {
+        /// Foo
+        enum Foo {
+          /// Bar.
+          Bar,
+        }
+      },
+      "description `Foo` does not end with a period",
     );
 
     case(

@@ -3,8 +3,8 @@ use super::*;
 pub(crate) mod gc {
   use super::*;
 
+  /// Response body of `POST /api/gc`.
   #[derive(Default, Encode, Decode)]
-  #[deco(undocumented)]
   pub(crate) struct Response {
     /// Bytes freed.
     #[n(1)]
@@ -27,16 +27,16 @@ pub(crate) mod gc {
 pub(crate) mod missing {
   use super::*;
 
+  /// Request body of `POST /api/missing`.
   #[derive(Debug, Encode, Decode)]
-  #[deco(undocumented)]
   pub(crate) struct Request {
     /// Hashes to check for.
     #[n(1)]
     pub(crate) hashes: SortedSet<Hash>,
   }
 
+  /// Response body of `POST /api/missing`.
   #[derive(Encode, Decode)]
-  #[deco(undocumented)]
   pub(crate) struct Response {
     /// Hashes not present on the server.
     #[n(1)]
@@ -47,8 +47,8 @@ pub(crate) mod missing {
 pub(crate) mod number {
   use super::*;
 
+  /// Response body of `GET /api/number/{number}`.
   #[derive(Encode, Decode)]
-  #[deco(undocumented)]
   pub(crate) struct Response {
     /// Fingerprint of the package.
     #[n(1)]
@@ -62,8 +62,8 @@ pub(crate) mod number {
 pub(crate) mod numbers {
   use super::*;
 
+  /// Response body of `GET /api/numbers`.
   #[derive(Default, Encode, Decode)]
-  #[deco(undocumented)]
   pub(crate) struct Response {
     /// Package numbers present on the server.
     #[n(1)]
@@ -74,8 +74,8 @@ pub(crate) mod numbers {
 pub(crate) mod packages {
   use super::*;
 
+  /// Response body of `GET /api/packages`.
   #[derive(Default, Encode, Decode)]
-  #[deco(undocumented)]
   pub(crate) struct Response {
     /// Fingerprints of packages on the server.
     #[n(1)]
@@ -109,16 +109,16 @@ pub(crate) mod revision {
     },
   }
 
+  /// Request body of `POST /api/revision/{revision}`.
   #[derive(Debug, Encode, Decode)]
-  #[deco(undocumented)]
   pub(crate) struct Request {
     /// How the uploaded package relates to existing packages.
     #[n(1)]
     pub(crate) mode: Mode,
   }
 
+  /// Response body of `POST /api/revision/{revision}`.
   #[derive(Encode, Decode)]
-  #[deco(undocumented)]
   pub(crate) struct Response {
     /// Number assigned to the uploaded package.
     #[n(1)]

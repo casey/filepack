@@ -189,12 +189,7 @@ fn encode_display_schema() {
           inner: "String".into(),
         },
       ),
-      (
-        "String".into(),
-        deco::Schema::String {
-          description: "UTF-8 string.".into()
-        }
-      ),
+      ("String".into(), deco::Schema::of::<String>()),
     ]),
   );
 }
@@ -566,12 +561,7 @@ fn enum_schema_fields() {
           ],
         },
       ),
-      (
-        "UnsignedInteger".into(),
-        deco::Schema::UnsignedInteger {
-          description: "Unsigned 64-bit integer.".into()
-        }
-      ),
+      ("UnsignedInteger".into(), deco::Schema::of::<u64>()),
     ]),
   );
 }
@@ -678,6 +668,9 @@ fn enum_unknown_variants() {
 #[test]
 fn generic_schema() {
   /// Foo.
+  ///
+  /// - Bar is non-empty.
+  /// - Bar is full of love.
   #[derive(Decode, Encode)]
   struct Foo<T> {
     /// Bar.
@@ -698,7 +691,7 @@ fn generic_schema() {
       (
         "Foo<UnsignedInteger>".into(),
         deco::Schema::Struct {
-          description: "Foo.".into(),
+          description: "Foo.\n\n- Bar is non-empty.\n- Bar is full of love.".into(),
           fields: vec![deco::Field {
             description: "Bar.".into(),
             n: 1,
@@ -710,12 +703,7 @@ fn generic_schema() {
           strict: false,
         },
       ),
-      (
-        "UnsignedInteger".into(),
-        deco::Schema::UnsignedInteger {
-          description: "Unsigned 64-bit integer.".into()
-        }
-      ),
+      ("UnsignedInteger".into(), deco::Schema::of::<u64>()),
     ]),
   );
 }
@@ -783,6 +771,9 @@ fn json_enum() {
 #[test]
 fn json_generic() {
   /// Foo.
+  ///
+  /// - Bar is non-empty.
+  /// - Bar is full of love.
   #[allow(dead_code)]
   #[derive(Deserialize, Json)]
   struct Foo<T> {
@@ -800,7 +791,7 @@ fn json_generic() {
       (
         "Foo<String>".into(),
         json::Schema::Struct {
-          description: "Foo.".into(),
+          description: "Foo.\n\n- Bar is non-empty.\n- Bar is full of love.".into(),
           fields: vec![json::Field {
             description: "Bar.".into(),
             example: None,
@@ -1121,12 +1112,7 @@ fn sorted_set() {
           element: "UnsignedInteger".into(),
         },
       ),
-      (
-        "UnsignedInteger".into(),
-        deco::Schema::UnsignedInteger {
-          description: "Unsigned 64-bit integer.".into()
-        }
-      ),
+      ("UnsignedInteger".into(), deco::Schema::of::<u64>()),
     ]),
   );
 
@@ -1176,12 +1162,7 @@ fn struct_schema() {
   assert_eq!(
     schemas,
     BTreeMap::from([
-      (
-        "Boolean".into(),
-        deco::Schema::Boolean {
-          description: "True or false.".into()
-        }
-      ),
+      ("Boolean".into(), deco::Schema::of::<bool>()),
       (
         "Foo".into(),
         deco::Schema::Struct {
@@ -1206,12 +1187,7 @@ fn struct_schema() {
           strict: false,
         },
       ),
-      (
-        "UnsignedInteger".into(),
-        deco::Schema::UnsignedInteger {
-          description: "Unsigned 64-bit integer.".into()
-        }
-      ),
+      ("UnsignedInteger".into(), deco::Schema::of::<u64>()),
     ]),
   );
 }
@@ -1273,37 +1249,8 @@ fn transparent_schema() {
           inner: "UnsignedInteger".into(),
         },
       ),
-      (
-        "UnsignedInteger".into(),
-        deco::Schema::UnsignedInteger {
-          description: "Unsigned 64-bit integer.".into()
-        }
-      ),
+      ("UnsignedInteger".into(), deco::Schema::of::<u64>()),
     ]),
-  );
-}
-
-#[test]
-fn undocumented_schema() {
-  #[derive(Encode)]
-  #[deco(undocumented)]
-  struct Foo {}
-
-  let mut schemas = BTreeMap::new();
-
-  assert_eq!(Foo::deco_schema(&mut schemas), "Foo");
-
-  assert_eq!(
-    schemas,
-    BTreeMap::from([(
-      "Foo".into(),
-      deco::Schema::Struct {
-        description: String::new(),
-        fields: vec![],
-        magic: None,
-        strict: false,
-      },
-    )]),
   );
 }
 

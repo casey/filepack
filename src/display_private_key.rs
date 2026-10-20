@@ -1,7 +1,7 @@
 use super::*;
 
 /// Ed25519 private key. The first 32 bytes are the public key, and the second
-/// 32 bytes are the public key.
+/// 32 bytes are the secret key.
 #[derive(Decode, Encode)]
 #[deco(transparent)]
 pub(crate) struct DisplayPrivateKey([[u8; 32]; 2]);

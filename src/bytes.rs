@@ -64,7 +64,7 @@ impl FromStr for Bytes {
 impl json::Json for Bytes {
   fn json_schema(registry: &mut json::Registry) -> String {
     json::Schema::Bytes {
-      description: "Byte string, encoded as hexadecimal.".into(),
+      description: "Byte string, encoded as lowercase hexadecimal.".into(),
     }
     .register("Bytes", registry)
   }

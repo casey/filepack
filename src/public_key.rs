@@ -71,7 +71,13 @@ impl Display for PublicKey {
 impl Encode for PublicKey {
   fn deco_schema(registry: &mut deco::Registry) -> String {
     deco::Schema::Wrapper {
-      description: "Ed25519 public key.".into(),
+      description: unindent(
+        "
+          Ed25519 public key.
+
+          Must use the canonical encoding and not be a small-order point.
+        ",
+      ),
       inner: <[u8; Self::LEN]>::deco_schema(registry),
     }
     .register("PublicKey", registry)
@@ -104,7 +110,13 @@ impl PartialOrd for PublicKey {
 impl json::Json for PublicKey {
   fn json_schema(registry: &mut json::Registry) -> String {
     json::Schema::Hex {
-      description: "Ed25519 public key.".into(),
+      description: unindent(
+        "
+          Ed25519 public key.
+
+          Must use the canonical encoding and not be a small-order point.
+        ",
+      ),
       tag: Tag::Public,
     }
     .register("PublicKey", registry)

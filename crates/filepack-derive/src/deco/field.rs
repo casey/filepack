@@ -36,17 +36,7 @@ impl Field {
       ));
     }
 
-    let mut doc = Vec::new();
-
-    for attribute in &self.attrs {
-      if let Some(line) = doc_line(attribute)? {
-        doc.push(line);
-      }
-    }
-
-    let Some(description) = description(doc) else {
-      return Err(Error::new_spanned(ident, "fields must have doc comments"));
-    };
+    let description = Description::new(ident, &self.attrs, "field", false, true)?;
 
     let ty = type_argument(&self.ty, "Option");
 
