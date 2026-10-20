@@ -2,9 +2,19 @@ use super::*;
 
 #[derive(Parser)]
 pub(crate) struct Create {
-  #[arg(help = "Allow <LINT>", long, value_name = "LINT")]
+  #[arg(
+    add = ArgValueCandidates::new(LintSelector::candidates),
+    help = "Allow <LINT>",
+    long,
+    value_name = "LINT"
+  )]
   allow: Vec<LintSelector>,
-  #[arg(help = "Deny <LINT>", long, value_name = "LINT")]
+  #[arg(
+    add = ArgValueCandidates::new(LintSelector::candidates),
+    help = "Deny <LINT>",
+    long,
+    value_name = "LINT"
+  )]
   deny: Vec<LintSelector>,
   #[arg(
     help = "Overwrite manifest and generated assets if they already exist",

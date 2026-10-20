@@ -11,6 +11,15 @@ fn completion_scripts() {
 }
 
 #[test]
+fn lints() {
+  Test::new()
+    .env("FILEPACK_COMPLETE", "fish")
+    .args(["--", "filepack", "create", "--allow", "t"])
+    .stdout("time-missing\tMetadata has a time.\ntitle-missing\tMetadata has a title.\n")
+    .success();
+}
+
+#[test]
 fn paths() {
   Test::new()
     .write("foo", "")
