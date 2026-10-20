@@ -51,7 +51,7 @@
     <div id=shortcuts popover>
       <dl>
 %% for shortcut in self.shortcuts() {
-        <div><dt><kbd>{{ shortcut.key }}</kbd></dt><dd>{{ shortcut.description }}</dd></div>
+        <div><dt>{% for (i, key) in shortcut.keys.iter().enumerate() { %}{% if i > 0 { %} or {% } %}<kbd>{{ key }}</kbd>{% } %}</dt><dd>{{ shortcut.description }}</dd></div>
 %% }
       </dl>
     </div>

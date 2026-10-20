@@ -17,8 +17,13 @@ document.addEventListener('keydown', (event) => {
     return;
   }
 
-  let link = event.key === 'p' ? prev
-    : event.key === 'n' ? next
+  let arrow = event.key === 'ArrowLeft' || event.key === 'ArrowRight';
+  if (arrow && event.target.matches('audio, video, input, textarea, select')) {
+    return;
+  }
+
+  let link = event.key === 'ArrowLeft' || event.key === 'p' ? prev
+    : event.key === 'ArrowRight' || event.key === 'n' ? next
     : event.key === 'u' ? up
     : null;
 
