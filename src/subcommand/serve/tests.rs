@@ -406,7 +406,7 @@ impl TestServer {
 
 struct TestServerBuilder {
   auth_config: Option<Arc<AuthConfig>>,
-  mounts: Vec<PackageIdentifier>,
+  mounts: Vec<Mount>,
   unstable: bool,
   url: Option<Url>,
 }
@@ -439,8 +439,11 @@ impl TestServerBuilder {
     }
   }
 
-  fn mount(mut self, package: PackageIdentifier) -> Self {
-    self.mounts.push(package);
+  fn mount(mut self, package: PackageIdentifier, name: Option<&str>) -> Self {
+    self.mounts.push(Mount {
+      name: name.map(str::to_owned),
+      package,
+    });
     self
   }
 
@@ -1093,6 +1096,20 @@ fn fallback() {
   TestServer::new()
     .get("/nonexistent")
     .assert_error(StatusCode::NOT_FOUND, ServerError::PageNotFound)
+    .send();
+}
+
+#[test]
+fn fallback_shadows_named_mount() {
+  TestServer::builder()
+    .mount(PackageIdentifier::Number(0), Some(Fingerprint::EXAMPLE))
+    .build()
+    .get(format!("/{}", Fingerprint::EXAMPLE))
+    .status(StatusCode::PERMANENT_REDIRECT)
+    .assert_header(
+      header::LOCATION,
+      format!("/package/{}", Fingerprint::EXAMPLE),
+    )
     .send();
 }
 
@@ -2581,7 +2598,7 @@ fn missing_returns_missing_hashes() {
 #[test]
 fn mount_before_upload() {
   TestServer::builder()
-    .mount(PackageIdentifier::Number(0))
+    .mount(PackageIdentifier::Number(0), None)
     .build()
     .get("/mount/0/")
     .status(StatusCode::NOT_FOUND)
@@ -2622,7 +2639,7 @@ fn mount_file() {
   ];
 
   for (mount, _cache_control) in identifiers {
-    let server = TestServer::builder().mount(mount).unstable().build();
+    let server = TestServer::builder().mount(mount, None).unstable().build();
 
     package.clone().upload(&server);
 
@@ -2651,7 +2668,7 @@ fn mount_file_invalid_path() {
     .file("static/index.html", b"foo");
 
   let server = TestServer::builder()
-    .mount(PackageIdentifier::Fingerprint(package.fingerprint()))
+    .mount(PackageIdentifier::Fingerprint(package.fingerprint()), None)
     .unstable()
     .build();
 
@@ -2679,7 +2696,7 @@ fn mount_file_nested() {
     .file("static/foo/bar.txt", b"baz");
 
   let server = TestServer::builder()
-    .mount(PackageIdentifier::Fingerprint(package.fingerprint()))
+    .mount(PackageIdentifier::Fingerprint(package.fingerprint()), None)
     .unstable()
     .build();
 
@@ -2704,7 +2721,7 @@ fn mount_file_not_found() {
     .file("static/index.html", b"foo");
 
   let server = TestServer::builder()
-    .mount(PackageIdentifier::Fingerprint(package.fingerprint()))
+    .mount(PackageIdentifier::Fingerprint(package.fingerprint()), None)
     .unstable()
     .build();
 
@@ -2746,7 +2763,7 @@ fn mount_number_follows_head() {
   };
 
   let server = TestServer::builder()
-    .mount(PackageIdentifier::Number(0))
+    .mount(PackageIdentifier::Number(0), None)
     .unstable()
     .build();
 
@@ -2799,7 +2816,7 @@ fn mount_redirect() {
 #[test]
 fn mount_requires_media_type() {
   let server = TestServer::builder()
-    .mount(PackageIdentifier::Number(0))
+    .mount(PackageIdentifier::Number(0), None)
     .unstable()
     .build();
 
@@ -2836,7 +2853,7 @@ fn mount_requires_web_package() {
   let static_deco_len = static_directory.deco().0.len().into_u64();
 
   let server = TestServer::builder()
-    .mount(PackageIdentifier::Number(0))
+    .mount(PackageIdentifier::Number(0), None)
     .unstable()
     .build();
 
@@ -2882,7 +2899,7 @@ fn mount_serves_index_html() {
     .file("static/index.html", b"foo");
 
   let server = TestServer::builder()
-    .mount(PackageIdentifier::Fingerprint(package.fingerprint()))
+    .mount(PackageIdentifier::Fingerprint(package.fingerprint()), None)
     .unstable()
     .build();
 
@@ -2895,6 +2912,57 @@ fn mount_serves_index_html() {
     .assert_header_absent(header::CONTENT_SECURITY_POLICY)
     .assert_header_absent(header::CONTENT_DISPOSITION)
     .assert_body("foo")
+    .send();
+}
+
+#[test]
+fn named_mount() {
+  let server = TestServer::builder()
+    .mount(PackageIdentifier::Number(0), Some("foo"))
+    .unstable()
+    .build();
+
+  PackageBuilder::new()
+    .metadata(&Metadata {
+      media: Some(Media::Web),
+      ..default()
+    })
+    .file("static/bar.css", b"bar")
+    .file("static/index.html", b"foo")
+    .upload(&server);
+
+  server
+    .get("/foo/")
+    .assert_header(header::CACHE_CONTROL, "no-cache")
+    .assert_header(header::CONTENT_TYPE, "text/html")
+    .assert_body("foo")
+    .send();
+
+  server
+    .get("/foo/bar.css")
+    .assert_header(header::CONTENT_TYPE, "text/css")
+    .assert_body("bar")
+    .send();
+
+  server
+    .get("/foo")
+    .status(StatusCode::TEMPORARY_REDIRECT)
+    .assert_header(header::LOCATION, "/foo/")
+    .send();
+
+  server
+    .get("/foo/%2e%2e/bar")
+    .status(StatusCode::BAD_REQUEST)
+    .assert_body(
+      "Invalid URL: Cannot parse `path` with value `../bar`: path contains invalid component `..`",
+    )
+    .send();
+
+  server.get("/mount/0/").assert_body("foo").send();
+
+  server
+    .get("/other/")
+    .assert_error(StatusCode::NOT_FOUND, ServerError::PageNotFound)
     .send();
 }
 
@@ -3568,7 +3636,7 @@ fn package_page_web() {
   let static_deco_len = static_directory.deco().0.len().into_u64();
 
   let server = TestServer::builder()
-    .mount(PackageIdentifier::Fingerprint(package.fingerprint()))
+    .mount(PackageIdentifier::Fingerprint(package.fingerprint()), None)
     .unstable()
     .build();
 
@@ -3983,14 +4051,19 @@ fn server_config() {
 
   let fingerprint = Fingerprint(Hash::bytes(b"foo"));
 
+  let mount = Mount {
+    name: Some("foo".into()),
+    package: PackageIdentifier::Fingerprint(fingerprint),
+  };
+
   assert_eq!(
     Serve {
-      mounts: vec![PackageIdentifier::Fingerprint(fingerprint)],
+      mounts: vec![mount.clone()],
       ..Serve::default()
     }
     .server_config()
     .mounts,
-    vec![PackageIdentifier::Fingerprint(fingerprint)],
+    vec![mount],
   );
 }
 

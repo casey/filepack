@@ -116,6 +116,8 @@ use {
     media_item_resource::MediaItemResource,
     message::Message,
     mode::Mode,
+    mount::Mount,
+    mount_error::MountError,
     mp3_decoder::Mp3Decoder,
     mp3_error::Mp3Error,
     mp4_decoder::Mp4Decoder,
@@ -437,6 +439,8 @@ mod media_item_resource;
 mod message;
 mod metadata;
 mod mode;
+mod mount;
+mod mount_error;
 mod mp3_builder;
 mod mp3_decoder;
 mod mp3_error;
