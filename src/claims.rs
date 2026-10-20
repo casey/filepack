@@ -59,6 +59,8 @@ impl Message for Claims {
     "61636b2e636f6d020003c086fe820f47ef0c349617059f30b3adf4a13ffd6a3217782dfeabbe99fc905742dfc12b",
     "ea0ab7dca5dfc05580041ce942c3417dd1a28d5640a9de8cf9daca640f",
   );
+  const EXAMPLE_DESCRIPTION: &'static str =
+    "Token with audience `filepack.com` and timestamp 0, signed by the all-zero private key.";
   const NAME: &'static str = "Claims";
   const TAG: Tag = Tag::Token;
   type Error = AuthorizationError;
@@ -190,6 +192,7 @@ mod tests {
     impl Message for Extra {
       const CONTEXT: Context = Context::Claims;
       const EXAMPLE: &'static str = "";
+      const EXAMPLE_DESCRIPTION: &'static str = "";
       const NAME: &'static str = "Extra";
       const TAG: Tag = Tag::Token;
       type Error = AuthorizationError;

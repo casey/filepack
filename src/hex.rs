@@ -2,6 +2,7 @@ use super::*;
 
 pub(crate) trait Hex: DecodeOwned + Encode {
   const EXAMPLE: &'static str;
+  const EXAMPLE_DESCRIPTION: &'static str;
   const TAG: Tag;
 
   fn format(&self, f: &mut Formatter) -> fmt::Result {

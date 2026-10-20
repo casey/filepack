@@ -66,6 +66,7 @@ impl<T: Message> FromStr for Signature<T> {
 
 impl<T: Message> Hex for Signature<T> {
   const EXAMPLE: &'static str = T::EXAMPLE;
+  const EXAMPLE_DESCRIPTION: &'static str = T::EXAMPLE_DESCRIPTION;
   const TAG: Tag = T::TAG;
 }
 

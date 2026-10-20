@@ -1,5 +1,6 @@
 use super::*;
 
+/// Prefix identifying the type of a tagged hex string.
 #[derive(
   Clone,
   Copy,
@@ -8,6 +9,7 @@ use super::*;
   EnumIter,
   Eq,
   IntoStaticStr,
+  Json,
   Ord,
   PartialEq,
   PartialOrd,
@@ -16,12 +18,19 @@ use super::*;
 #[serde(rename_all = "kebab-case")]
 #[strum(serialize_all = "kebab-case")]
 pub enum Tag {
+  /// BLAKE3 hash of a file or directory.
   Hash,
+  /// Fingerprint identifying a package by its content.
   Package,
+  /// Private key.
   Private,
+  /// Public key.
   Public,
+  /// Hash of a revision object.
   Revision,
+  /// Signature over a package.
   Signature,
+  /// Signed bearer token for server authentication.
   Token,
 }
 

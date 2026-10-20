@@ -76,11 +76,17 @@ impl Reference {
         .collect()
     }
 
-    fn tag<T: crate::Hex>(registry: &mut deco::Registry, hex: &mut BTreeMap<Tag, Hex>) {
+    fn tag<T: crate::Hex>(
+      registry: &mut deco::Registry,
+      hex: &mut BTreeMap<Tag, Hex>,
+      tags: &BTreeMap<String, String>,
+    ) {
       hex.insert(
         T::TAG,
         Hex {
+          description: tags[T::TAG.prefix()].clone(),
           example: T::EXAMPLE.into(),
+          example_description: T::EXAMPLE_DESCRIPTION.into(),
           name: T::TAG.name().into(),
           schema: T::deco_schema(registry),
         },
@@ -100,15 +106,17 @@ impl Reference {
     Metadata::deco_schema(&mut deco);
     RevisionObject::deco_schema(&mut deco);
 
+    let tags = descriptions::<Tag>();
+
     let mut hex = BTreeMap::new();
 
-    tag::<Attestation>(&mut deco, &mut hex);
-    tag::<DisplayPrivateKey>(&mut deco, &mut hex);
-    tag::<Fingerprint>(&mut deco, &mut hex);
-    tag::<Hash>(&mut deco, &mut hex);
-    tag::<PublicKey>(&mut deco, &mut hex);
-    tag::<Revision>(&mut deco, &mut hex);
-    tag::<Token>(&mut deco, &mut hex);
+    tag::<Attestation>(&mut deco, &mut hex, &tags);
+    tag::<DisplayPrivateKey>(&mut deco, &mut hex, &tags);
+    tag::<Fingerprint>(&mut deco, &mut hex, &tags);
+    tag::<Hash>(&mut deco, &mut hex, &tags);
+    tag::<PublicKey>(&mut deco, &mut hex, &tags);
+    tag::<Revision>(&mut deco, &mut hex, &tags);
+    tag::<Token>(&mut deco, &mut hex, &tags);
 
     let mut json = json::Registry::new();
 
@@ -225,6 +233,10 @@ mod tests {
       descriptions.push((feature.as_str().unwrap().into(), false));
     }
 
+    for hex in reference["hex"].as_object().unwrap().values() {
+      descriptions.push((hex["example_description"].as_str().unwrap().into(), false));
+    }
+
     assert!(descriptions.len() > 100);
 
     let mut errors = Vec::new();
@@ -331,6 +343,16 @@ mod tests {
     assert_eq!(
       hex.keys().copied().collect::<Vec<Tag>>(),
       Tag::iter().collect::<Vec<Tag>>(),
+    );
+
+    assert_eq!(
+      hex[&Tag::Token].description,
+      "Signed bearer token for server authentication.",
+    );
+
+    assert_eq!(
+      hex[&Tag::Hash].example_description,
+      "Hash of the empty string.",
     );
 
     for (tag, value) in hex {

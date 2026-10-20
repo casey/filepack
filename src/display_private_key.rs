@@ -1,6 +1,7 @@
 use super::*;
 
-/// Ed25519 private key, paired with its public key.
+/// Ed25519 private key. The first 32 bytes are the public key, and the second
+/// 32 bytes are the public key.
 #[derive(Decode, Encode)]
 #[deco(transparent)]
 pub(crate) struct DisplayPrivateKey([[u8; 32]; 2]);
@@ -23,6 +24,8 @@ impl Hex for DisplayPrivateKey {
     "private13b6a27bcceb6a42d62a3a8d02a6f0d73653215771de243a63ac048a18b59da2900000000000000000000",
     "00000000000000000000000000000000000000000000",
   );
+
+  const EXAMPLE_DESCRIPTION: &'static str = "All-zero private key.";
 
   const TAG: Tag = Tag::Private;
 }
