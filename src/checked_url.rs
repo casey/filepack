@@ -1,7 +1,8 @@
 use super::*;
 
 /// `http://` or `https://` URL.
-#[derive(Clone, Debug, DeserializeFromStr, Encode, PartialEq, SerializeDisplay)]
+#[derive(Clone, Debug, DeserializeFromStr, Encode, Json, PartialEq, SerializeDisplay)]
+#[json(string)]
 #[deco(transparent)]
 pub(crate) struct CheckedUrl(String);
 
@@ -63,16 +64,6 @@ impl Decode<'_> for CheckedUrl {
       }
       Err(source) => Err(MalformedError::Url { source }.into()),
     }
-  }
-}
-
-impl json::Json for CheckedUrl {
-  fn json_schema(registry: &mut json::Registry) -> String {
-    json::Schema::Wrapper {
-      description: "`http://` or `https://` URL.".into(),
-      inner: String::json_schema(registry),
-    }
-    .register("CheckedUrl", registry)
   }
 }
 

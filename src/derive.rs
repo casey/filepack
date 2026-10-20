@@ -813,6 +813,38 @@ fn json_generic() {
 }
 
 #[test]
+fn json_string() {
+  /// Foo.
+  #[allow(dead_code)]
+  #[derive(Json)]
+  #[json(string)]
+  struct Foo(u64);
+
+  let mut schemas = json::Registry::new();
+
+  assert_eq!(Foo::json_schema(&mut schemas), "Foo");
+
+  assert_eq!(
+    *schemas,
+    BTreeMap::from([
+      (
+        "Foo".into(),
+        json::Schema::Wrapper {
+          description: "Foo.".into(),
+          inner: "String".into(),
+        },
+      ),
+      (
+        "String".into(),
+        json::Schema::String {
+          description: "String.".into()
+        }
+      ),
+    ]),
+  );
+}
+
+#[test]
 fn json_string_enum() {
   /// Foo.
   #[allow(dead_code)]

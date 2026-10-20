@@ -5,8 +5,19 @@ use super::*;
 /// May not be `.`, `..`, or empty. May not contain `/`, `\`, or control
 /// characters. May not begin with an ASCII letter followed by `:`.
 #[derive(
-  Clone, Debug, Decode, DeserializeFromStr, Encode, Eq, Ord, PartialEq, PartialOrd, SerializeDisplay,
+  Clone,
+  Debug,
+  Decode,
+  DeserializeFromStr,
+  Encode,
+  Eq,
+  Json,
+  Ord,
+  PartialEq,
+  PartialOrd,
+  SerializeDisplay,
 )]
+#[json(string)]
 #[deco(transparent, validate)]
 pub struct ComponentBuf(String);
 
@@ -88,23 +99,6 @@ impl Validate for ComponentBuf {
   fn validate(&self) -> Result<(), MalformedError> {
     Component::new(&self.0).context(malformed_error::Component)?;
     Ok(())
-  }
-}
-
-impl json::Json for ComponentBuf {
-  fn json_schema(registry: &mut json::Registry) -> String {
-    json::Schema::Wrapper {
-      description: unindent(
-        "
-          Path component.
-
-          May not be `.`, `..`, or empty. May not contain `/`, `\\`, or control
-          characters. May not begin with an ASCII letter followed by `:`.
-        ",
-      ),
-      inner: String::json_schema(registry),
-    }
-    .register("ComponentBuf", registry)
   }
 }
 

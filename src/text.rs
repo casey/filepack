@@ -4,7 +4,8 @@ use super::*;
 ///
 /// May not contain control characters, including tabs and line breaks, or
 /// leading or trailing whitespace.
-#[derive(Clone, Debug, Decode, DeserializeFromStr, Encode, PartialEq, SerializeDisplay)]
+#[derive(Clone, Debug, Decode, DeserializeFromStr, Encode, Json, PartialEq, SerializeDisplay)]
+#[json(string)]
 #[deco(transparent, validate)]
 pub struct Text(String);
 
@@ -62,23 +63,6 @@ impl Display for Text {
 impl Validate for Text {
   fn validate(&self) -> Result<(), MalformedError> {
     Self::check(self.as_str()).context(malformed_error::Text)
-  }
-}
-
-impl json::Json for Text {
-  fn json_schema(registry: &mut json::Registry) -> String {
-    json::Schema::Wrapper {
-      description: unindent(
-        "
-          Non-empty single line of text.
-
-          May not contain control characters, including tabs and line breaks, or leading or
-          trailing whitespace.
-        ",
-      ),
-      inner: String::json_schema(registry),
-    }
-    .register("Text", registry)
   }
 }
 

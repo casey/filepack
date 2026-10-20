@@ -2,8 +2,8 @@ use super::*;
 
 #[derive(FromDeriveInput)]
 #[darling(
-  supports(struct_named, enum_named, enum_newtype, enum_unit),
-  forward_attrs(doc, serde)
+  supports(struct_named, struct_newtype, enum_named, enum_newtype, enum_unit),
+  forward_attrs(doc, json, serde)
 )]
 pub(crate) struct Input {
   attrs: Vec<Attribute>,
@@ -21,6 +21,21 @@ impl Input {
     let mut attributes = Attributes::default();
 
     for attribute in &self.attrs {
+      if attribute.path().is_ident("json") {
+        attribute.parse_nested_meta(|meta| {
+          if !meta.path.is_ident("string") {
+            let ident = meta.path.require_ident()?;
+            return Err(meta.error(format!("unsupported `#[json({ident})]` attribute")));
+          }
+
+          if mem::replace(&mut attributes.string, true) {
+            return Err(meta.error("duplicate `#[json(string)]` attribute"));
+          }
+
+          Ok(())
+        })?;
+      }
+
       if !attribute.path().is_ident("serde") {
         continue;
       }
@@ -75,123 +90,141 @@ impl Input {
 
     let strict = attributes.strict;
 
-    let schema = match &self.data {
-      Data::Enum(variants) => {
-        if attributes.transparent {
-          return Err(Error::new_spanned(
-            name,
-            "`#[serde(transparent)]` is only supported on structs",
-          ));
-        }
+    let schema = if attributes.string {
+      let description = self.description()?;
 
-        if attributes.untagged {
+      quote! {
+        json::Schema::Wrapper {
+          description: #description.into(),
+          inner: String::json_schema(registry),
+        }
+      }
+    } else {
+      match &self.data {
+        Data::Enum(variants) => {
+          if attributes.transparent {
+            return Err(Error::new_spanned(
+              name,
+              "`#[serde(transparent)]` is only supported on structs",
+            ));
+          }
+
+          if attributes.untagged {
+            if attributes.tag.is_some() {
+              return Err(Error::new_spanned(
+                name,
+                "`#[serde(tag)]` cannot be used with `#[serde(untagged)]`",
+              ));
+            }
+
+            let variants = variants
+              .iter()
+              .map(Variant::ty)
+              .collect::<Result<Vec<TokenStream>>>()?;
+
+            let description = self.description()?;
+
+            quote! {
+              json::Schema::UntaggedEnum {
+                description: #description.into(),
+                variants: vec![#(#variants),*],
+              }
+            }
+          } else if variants.iter().all(Variant::is_unit) {
+            let values = variants
+              .iter()
+              .map(|variant| variant.value(attributes.rename_all))
+              .collect::<Result<Vec<TokenStream>>>()?;
+
+            let description = self.description()?;
+
+            quote! {
+              json::Schema::StringEnum {
+                description: #description.into(),
+                values: vec![#(#values),*],
+              }
+            }
+          } else {
+            let Some(tag) = &attributes.tag else {
+              return Err(Error::new_spanned(
+                name,
+                "enums must be tagged with `#[serde(tag = \"...\")]` or `#[serde(untagged)]`",
+              ));
+            };
+
+            let variants = variants
+              .iter()
+              .map(|variant| variant.schema(attributes.rename_all))
+              .collect::<Result<Vec<TokenStream>>>()?;
+
+            let description = self.description()?;
+
+            quote! {
+              json::Schema::TaggedEnum {
+                description: #description.into(),
+                strict: #strict,
+                tag: #tag.into(),
+                variants: vec![#(#variants),*],
+              }
+            }
+          }
+        }
+        Data::Struct(fields) => {
+          if fields.is_tuple() {
+            return Err(Error::new_spanned(
+              name,
+              "tuple structs must have `#[json(string)]`",
+            ));
+          }
+
           if attributes.tag.is_some() {
             return Err(Error::new_spanned(
               name,
-              "`#[serde(tag)]` cannot be used with `#[serde(untagged)]`",
+              "`#[serde(tag)]` is only supported on enums",
             ));
           }
 
-          let variants = variants
-            .iter()
-            .map(Variant::ty)
-            .collect::<Result<Vec<TokenStream>>>()?;
-
-          let description = self.description()?;
-
-          quote! {
-            json::Schema::UntaggedEnum {
-              description: #description.into(),
-              variants: vec![#(#variants),*],
-            }
-          }
-        } else if variants.iter().all(Variant::is_unit) {
-          let values = variants
-            .iter()
-            .map(|variant| variant.value(attributes.rename_all))
-            .collect::<Result<Vec<TokenStream>>>()?;
-
-          let description = self.description()?;
-
-          quote! {
-            json::Schema::StringEnum {
-              description: #description.into(),
-              values: vec![#(#values),*],
-            }
-          }
-        } else {
-          let Some(tag) = attributes.tag else {
+          if attributes.untagged {
             return Err(Error::new_spanned(
               name,
-              "enums must be tagged with `#[serde(tag = \"...\")]` or `#[serde(untagged)]`",
+              "`#[serde(untagged)]` is only supported on enums",
             ));
-          };
-
-          let variants = variants
-            .iter()
-            .map(|variant| variant.schema(attributes.rename_all))
-            .collect::<Result<Vec<TokenStream>>>()?;
-
-          let description = self.description()?;
-
-          quote! {
-            json::Schema::TaggedEnum {
-              description: #description.into(),
-              strict: #strict,
-              tag: #tag.into(),
-              variants: vec![#(#variants),*],
-            }
           }
-        }
-      }
-      Data::Struct(fields) => {
-        if attributes.tag.is_some() {
-          return Err(Error::new_spanned(
-            name,
-            "`#[serde(tag)]` is only supported on enums",
-          ));
-        }
 
-        if attributes.untagged {
-          return Err(Error::new_spanned(
-            name,
-            "`#[serde(untagged)]` is only supported on enums",
-          ));
-        }
+          if attributes.transparent {
+            let fields = fields.iter().collect::<Vec<&Field>>();
 
-        if attributes.transparent {
-          let fields = fields.iter().collect::<Vec<&Field>>();
+            let [field] = fields[..] else {
+              return Err(Error::new_spanned(
+                name,
+                "transparent structs must have exactly one field",
+              ));
+            };
 
-          let [field] = fields[..] else {
-            return Err(Error::new_spanned(
-              name,
-              "transparent structs must have exactly one field",
-            ));
-          };
+            let inner = field.ty()?;
 
-          let inner = field.ty()?;
+            let description = self.description()?;
 
-          let description = self.description()?;
-
-          quote! {
-            json::Schema::Wrapper {
-              description: #description.into(),
-              inner: #inner,
+            quote! {
+              json::Schema::Wrapper {
+                description: #description.into(),
+                inner: #inner,
+              }
             }
-          }
-        } else {
-          let fields = fields
-            .iter()
-            .map(|field| field.schema(attributes.rename_all))
-            .collect::<Result<Vec<TokenStream>>>()?;
+          } else {
+            let fields = fields
+              .iter()
+              .map(|field| field.schema(attributes.rename_all))
+              .collect::<Result<Vec<TokenStream>>>()?;
 
-          let description = self.description()?;
+            let description = self.description()?;
 
-          quote! {
-            json::Schema::Struct {
-              description: #description.into(),
-              fields: vec![#(#fields),*],
-              strict: #strict,
+            quote! {
+              json::Schema::Struct {
+                description: #description.into(),
+                fields: vec![#(#fields),*],
+                strict: #strict,
+              }
             }
           }
         }
@@ -316,6 +349,14 @@ mod tests {
         }
       },
       "description `Foo` does not end with a period",
+    );
+
+    case(
+      &syn::parse_quote! {
+        /// Foo.
+        struct Foo(String);
+      },
+      "tuple structs must have `#[json(string)]`",
     );
 
     case(

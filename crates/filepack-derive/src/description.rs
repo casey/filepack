@@ -1,11 +1,15 @@
 use super::*;
 
 pub(crate) struct Description {
-  rest: Option<String>,
+  body: Option<String>,
   summary: String,
 }
 
 impl Description {
+  pub(crate) fn body(&self) -> Option<&str> {
+    self.body.as_deref()
+  }
+
   pub(crate) fn check_summary(ident: &Ident, summary: &str, variant: bool) -> Result {
     if !summary.ends_with('.') {
       return Err(Error::new_spanned(
@@ -82,7 +86,7 @@ impl Description {
       ));
     }
 
-    let (summary, rest) = if let Some(index) = lines.iter().position(String::is_empty) {
+    let (summary, body) = if let Some(index) = lines.iter().position(String::is_empty) {
       (&lines[..index], Some(&lines[index + 1..]))
     } else {
       (&lines[..], None)
@@ -92,21 +96,21 @@ impl Description {
 
     Self::check_summary(ident, &summary, variant)?;
 
-    if single && rest.is_some() {
+    if single && body.is_some() {
       return Err(Error::new_spanned(
         ident,
         format!("{noun} descriptions must be a single paragraph"),
       ));
     }
 
-    let rest = rest.map(|rest| rest.join("\n"));
+    let body = body.map(|body| body.join("\n"));
 
-    let irregular = rest.as_deref().is_some_and(|rest| {
-      rest.is_empty()
-        || rest.starts_with('\n')
-        || rest.ends_with('\n')
-        || rest.contains("\n\n\n")
-        || rest
+    let irregular = body.as_deref().is_some_and(|body| {
+      body.is_empty()
+        || body.starts_with('\n')
+        || body.ends_with('\n')
+        || body.contains("\n\n\n")
+        || body
           .lines()
           .any(|line| line.trim_end() != line || line.trim_start().contains("  "))
     });
@@ -121,11 +125,7 @@ impl Description {
       ));
     }
 
-    Ok(Self { rest, summary })
-  }
-
-  pub(crate) fn rest(&self) -> Option<&str> {
-    self.rest.as_deref()
+    Ok(Self { body, summary })
   }
 
   pub(crate) fn summary(&self) -> &str {
@@ -135,8 +135,8 @@ impl Description {
 
 impl ToTokens for Description {
   fn to_tokens(&self, tokens: &mut TokenStream) {
-    if let Some(rest) = &self.rest {
-      format!("{}\n\n{rest}", self.summary).to_tokens(tokens);
+    if let Some(body) = &self.body {
+      format!("{}\n\n{body}", self.summary).to_tokens(tokens);
     } else {
       self.summary.to_tokens(tokens);
     }
