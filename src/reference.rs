@@ -97,7 +97,7 @@ impl Reference {
       );
     }
 
-    let mut command = Arguments::command();
+    let mut command = Arguments::command().term_width(80);
 
     command.build();
 

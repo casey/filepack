@@ -37,7 +37,7 @@ axum.workspace = true
 blake3 = { version = "1.5.4", features = ["mmap", "rayon", "serde"] }
 boilerplate.workspace = true
 camino.workspace = true
-clap = { version = "4.5.16", features = ["derive", "env"] }
+clap = { version = "4.5.16", features = ["derive", "env", "wrap_help"] }
 clap_mangen = "0.3.3"
 claxon = "0.4.3"
 ctrlc = { version = "3.5.2", features = ["termination"] }
