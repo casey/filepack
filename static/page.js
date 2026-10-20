@@ -12,7 +12,7 @@ document.addEventListener('keydown', (event) => {
     return;
   }
 
-  if (event.key === '?' && shortcuts !== null) {
+  if (event.key === '?') {
     shortcuts.togglePopover();
     return;
   }

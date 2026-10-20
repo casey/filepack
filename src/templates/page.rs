@@ -33,12 +33,10 @@ impl<T: Page> PageHtml<T> {
 
     shortcuts.extend(self.content.shortcuts());
 
-    if !shortcuts.is_empty() {
-      shortcuts.push(Shortcut {
-        description: "toggle shortcuts",
-        key: '?',
-      });
-    }
+    shortcuts.push(Shortcut {
+      description: "toggle shortcuts",
+      key: '?',
+    });
 
     shortcuts
   }
@@ -161,6 +159,7 @@ mod tests {
                   <a href=/packages>Packages</a>
                   <a href=https://filepack.com/book>Book</a>
                   <a href=https://github.com/casey/filepack>GitHub</a>
+                  <button aria-label='Keyboard shortcuts' popovertarget=shortcuts title='Keyboard shortcuts'>?</button>
                 </nav>
               </header>
               <main>
@@ -213,11 +212,17 @@ mod tests {
                   <a href=/packages>Packages</a>
                   <a href=https://filepack.com/book>Book</a>
                   <a href=https://github.com/casey/filepack>GitHub</a>
+                  <button aria-label='Keyboard shortcuts' popovertarget=shortcuts title='Keyboard shortcuts'>?</button>
                 </nav>
               </header>
               <main>
                 foo
               </main>
+              <div id=shortcuts popover>
+                <dl>
+                  <div><dt><kbd>?</kbd></dt><dd>toggle shortcuts</dd></div>
+                </dl>
+              </div>
             </body>
           </html>
         "
@@ -248,11 +253,17 @@ mod tests {
                   <a href=/packages>Packages</a>
                   <a href=https://filepack.com/book>Book</a>
                   <a href=https://github.com/casey/filepack>GitHub</a>
+                  <button aria-label='Keyboard shortcuts' popovertarget=shortcuts title='Keyboard shortcuts'>?</button>
                 </nav>
               </header>
               <main>
                 foo
               </main>
+              <div id=shortcuts popover>
+                <dl>
+                  <div><dt><kbd>?</kbd></dt><dd>toggle shortcuts</dd></div>
+                </dl>
+              </div>
             </body>
           </html>
         "
@@ -286,11 +297,17 @@ mod tests {
                   <a href=/packages>Packages</a>
                   <a href=https://filepack.com/book>Book</a>
                   <a href=https://github.com/casey/filepack>GitHub</a>
+                  <button aria-label='Keyboard shortcuts' popovertarget=shortcuts title='Keyboard shortcuts'>?</button>
                 </nav>
               </header>
               <main>
                 bar
               </main>
+              <div id=shortcuts popover>
+                <dl>
+                  <div><dt><kbd>?</kbd></dt><dd>toggle shortcuts</dd></div>
+                </dl>
+              </div>
             </body>
           </html>
         "
