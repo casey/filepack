@@ -36,23 +36,16 @@ pub struct Reference {
 
 impl Reference {
   pub fn new() -> Self {
-    fn descriptions(registry: &json::Registry, name: &str) -> BTreeMap<String, String> {
-      let json::Schema::StringEnum { values, .. } = &registry[name] else {
-        unreachable!()
-      };
-
-      values
+    fn descriptions<T: Json>() -> BTreeMap<String, String> {
+      T::schema()
+        .values()
         .iter()
         .map(|value| (value.value.clone(), value.description.clone()))
         .collect()
     }
 
-    fn media_formats<F: Format + Json + Serialize>(
-      registry: &mut json::Registry,
-    ) -> Vec<MediaFormat> {
-      let schema = F::json_schema(registry);
-
-      let descriptions = descriptions(registry, &schema);
+    fn media_formats<F: Format + Json + Serialize>() -> Vec<MediaFormat> {
+      let descriptions = descriptions::<F>();
 
       let mut formats = BTreeMap::new();
 
@@ -121,24 +114,11 @@ impl Reference {
 
     let commands = Command::new(&mut command, None, &mut json);
 
-    let lint_groups = descriptions(&json, "LintGroup");
+    let lint_groups = descriptions::<crate::LintGroup>();
 
-    let lints = descriptions(&json, "Lint");
+    let lints = descriptions::<Lint>();
 
-    let unstable_features = {
-      let mut registry = json::Registry::new();
-
-      let schema = UnstableFeature::json_schema(&mut registry);
-
-      descriptions(&registry, &schema)
-    };
-
-    let media_formats = [
-      (MediaType::Audio, media_formats::<AudioFormat>(&mut json)),
-      (MediaType::Image, media_formats::<ImageFormat>(&mut json)),
-      (MediaType::Video, media_formats::<VideoFormat>(&mut json)),
-    ]
-    .into();
+    let unstable_features = descriptions::<UnstableFeature>();
 
     let mut yaml = json::Registry::new();
 
@@ -184,7 +164,12 @@ impl Reference {
       lints: Lint::iter()
         .map(|lint| (lint, lints[&lint.to_string()].clone()))
         .collect(),
-      media_formats,
+      media_formats: [
+        (MediaType::Audio, media_formats::<AudioFormat>()),
+        (MediaType::Image, media_formats::<ImageFormat>()),
+        (MediaType::Video, media_formats::<VideoFormat>()),
+      ]
+      .into(),
       metadata,
       routes,
       unstable_features: UnstableFeature::iter()

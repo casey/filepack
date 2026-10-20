@@ -8,22 +8,11 @@ pub(crate) enum LintSelector {
 
 impl LintSelector {
   pub(crate) fn candidates() -> Vec<CompletionCandidate> {
-    let mut registry = json::Registry::new();
-
-    Lint::json_schema(&mut registry);
-    LintGroup::json_schema(&mut registry);
-
-    registry
+    Lint::schema()
       .values()
-      .flat_map(|schema| {
-        let json::Schema::StringEnum { values, .. } = schema else {
-          unreachable!()
-        };
-
-        values
-          .iter()
-          .map(|value| (value.value.clone(), value.description.clone()))
-      })
+      .iter()
+      .chain(LintGroup::schema().values())
+      .map(|value| (value.value.clone(), value.description.clone()))
       .collect::<BTreeMap<String, String>>()
       .into_iter()
       .map(|(name, description)| CompletionCandidate::new(name).help(Some(description.into())))
