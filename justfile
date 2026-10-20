@@ -18,7 +18,7 @@ build:
   cargo lbuild
 
 serve: build
-  ./target/debug/filepack serve --address localhost --http-port 8000
+  ./target/debug/filepack --unstable serve --address localhost --http-port 8000
 
 open:
   open http://localhost:8000

@@ -218,8 +218,27 @@ body > header > nav {
     color: var(--text);
   }
 
-  a:last-child {
+  a:last-of-type {
     margin-inline-start: auto;
+  }
+
+  button {
+    align-self: center;
+    background-color: transparent;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    color: var(--muted);
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.7em;
+    height: 1.5em;
+    padding: 0;
+    transition: color var(--duration);
+    width: 1.5em;
+
+    &:hover {
+      color: var(--text);
+    }
   }
 }
 

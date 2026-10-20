@@ -69,22 +69,6 @@ footer {
       }
     }
   }
-
-  button {
-    background-color: transparent;
-    border: 1px solid var(--border);
-    border-radius: 50%;
-    color: var(--muted);
-    cursor: pointer;
-    font: inherit;
-    height: 1.75em;
-    padding: 0;
-    width: 1.75em;
-
-    &:hover {
-      color: var(--text);
-    }
-  }
 }
 
 audio {

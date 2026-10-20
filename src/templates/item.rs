@@ -364,7 +364,6 @@ mod tests {
                 </a>
               </p>
             </hgroup>
-            <button aria-label='Keyboard shortcuts' popovertarget=shortcuts title='Keyboard shortcuts'>?</button>
           </footer>
         "
       ),
@@ -402,7 +401,6 @@ mod tests {
                 </a>
               </p>
             </hgroup>
-            <button aria-label='Keyboard shortcuts' popovertarget=shortcuts title='Keyboard shortcuts'>?</button>
           </footer>
         "
       ),
@@ -430,7 +428,6 @@ mod tests {
                 </a>
               </p>
             </hgroup>
-            <button aria-label='Keyboard shortcuts' popovertarget=shortcuts title='Keyboard shortcuts'>?</button>
           </footer>
         "
       ),
@@ -465,7 +462,6 @@ mod tests {
                 </a>
               </p>
             </hgroup>
-            <button aria-label='Keyboard shortcuts' popovertarget=shortcuts title='Keyboard shortcuts'>?</button>
           </footer>
         "
       ),
@@ -493,7 +489,6 @@ mod tests {
                 </a>
               </p>
             </hgroup>
-            <button aria-label='Keyboard shortcuts' popovertarget=shortcuts title='Keyboard shortcuts'>?</button>
           </footer>
         "
       ),
@@ -524,7 +519,6 @@ mod tests {
                 </a>
               </p>
             </hgroup>
-            <button aria-label='Keyboard shortcuts' popovertarget=shortcuts title='Keyboard shortcuts'>?</button>
           </footer>
         "
       )),
