@@ -115,7 +115,7 @@ pub(crate) struct TagMd<'a> {
 
 #[derive(Boilerplate)]
 pub(crate) struct UnstableFeaturesMd<'a> {
-  pub(crate) features: &'a BTreeSet<UnstableFeature>,
+  pub(crate) features: &'a BTreeMap<UnstableFeature, String>,
 }
 
 #[derive(Boilerplate)]

@@ -11,9 +11,9 @@ Unstable features are enabled with the `--unstable` flag or by setting the
 %% if self.features.is_empty() {
 No unstable features.
 %% } else {
-| feature |
-|---------|
-%%   for feature in self.features {
-| `{{ feature }}` |
+| feature | description |
+|---------|-------------|
+%%   for (feature, description) in self.features {
+{{ Row((format!("`{feature}`"), description)) }}
 %%   }
 %% }
