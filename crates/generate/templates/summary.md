@@ -1,6 +1,10 @@
 Summary
 =======
 
+# Getting Started
+- [Installation](installation.md)
+- [Shell Completion Scripts](shell-completions.md)
+
 # Guide
 - [Authoring Metadata](authoring-metadata.md)
 
