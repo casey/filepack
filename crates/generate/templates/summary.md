@@ -5,6 +5,7 @@ Summary
 - [Installation](installation.md)
 - [Shell Completion Scripts](shell-completions.md)
 - [Quickstart](quickstart.md)
+- [Configuration](configuration.md)
 
 # Guide
 - [Authoring Metadata](authoring-metadata.md)
