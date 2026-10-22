@@ -1,5 +1,5 @@
-Shell Completion Scripts
-========================
+Shell Completion
+================
 
 Shell completion scripts for Bash, Elvish, Fish, PowerShell, and Zsh are
 available in [release archives](https://github.com/casey/filepack/releases).

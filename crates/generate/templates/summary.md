@@ -5,7 +5,7 @@ Summary
 
 # Getting Started
 - [Installation](installation.md)
-- [Shell Completion Scripts](shell-completions.md)
+- [Shell Completion](shell-completion.md)
 - [Quickstart](quickstart.md)
 - [Configuration](configuration.md)
 
