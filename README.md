@@ -113,8 +113,8 @@ Packages can be deleted with `filepack delete`.
 Manifest
 --------
 
-`filepack` manifests are conventionally named `manifest.filepack` and are
-placed alongside the files they reference.
+`filepack` manifests are named `manifest.filepack` and are placed alongside the
+files they reference.
 
 Manifests are encoded with deco, a compact binary serialization format, and may
 be converted to JSON for inspection or manipulation with `filepack manifest`.
