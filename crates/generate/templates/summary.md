@@ -1,6 +1,8 @@
 Summary
 =======
 
+[Introduction](introduction.md)
+
 # Getting Started
 - [Installation](installation.md)
 - [Shell Completion Scripts](shell-completions.md)
