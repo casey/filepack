@@ -2,7 +2,8 @@ Installation
 ============
 
 `filepack` is written in [Rust](https://www.rust-lang.org/) and can be built
-from source and installed from a checked-out copy of this repo with:
+from source and installed from a checked-out copy of [the
+repo](https://github.com/casey/filepack) with:
 
 ```sh
 cargo install --locked --path .
