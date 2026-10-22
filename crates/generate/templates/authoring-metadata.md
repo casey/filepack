@@ -25,6 +25,11 @@ package, with the required entry point `static/index.html`.
 ```yaml
 {{ self.example.yaml }}
 ```
+
+The `homepage` URLs are of course anachronistic, as the World Wide Web was
+created in 1989, some years after Egon first packaged Tobin's Spirit Guide for
+filepack.
+
 %% for variant in &self.example.variants {
 
 ## `{{ variant.field }}: {{ variant.name }}`
