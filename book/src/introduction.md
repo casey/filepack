@@ -7,8 +7,8 @@ See [installation](installation.md) to get started and [Why is metadata
 important?](why-metadata.md) for some of the higher-level ideas behind
 filepack.
 
-Benefits
---------
+Why Filepack?
+-------------
 
 If you package content for distribution, Filepack offers a number of benefits:
 
