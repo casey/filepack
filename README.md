@@ -89,8 +89,8 @@ See [rustup.rs](https://rustup.rs/) for installation instructions for Rust.
 
 ### Pre-Built Binaries
 
-Pre-built binaries for Linux, MacOS, and Windows can be found on
-[the releases page](https://github.com/casey/filepack/releases).
+Pre-built binaries for Linux, MacOS, and Windows can be found on [the releases
+page](https://github.com/casey/filepack/releases).
 
 You can use the following command on Linux, MacOS, or Windows to download the
 latest release, just replace `DEST` with the directory where you'd like to put
@@ -127,7 +127,7 @@ circumstances, pass a specific tag to install with `--tag`.
 ### Shell Completion Scripts
 
 Shell completion scripts for Bash, Elvish, Fish, PowerShell, and Zsh are
-available in [release archives](https://github.com/casey/just/releases).
+available in [release archives](https://github.com/casey/filepack/releases).
 
 The `filepack` binary can also generate the same completion scripts at runtime
 using `filepack completions SHELL`:
@@ -237,7 +237,7 @@ filepack verify
 
 `filepack verify` takes an optional `--print` flag, which prints the manifest
 to standard output if verification succeeds. This can be used in a pipeline to
-ensure that you the manifest has been verified before proceeding:
+ensure that the manifest has been verified before proceeding:
 
 ```shell
 filepack verify --print | jq
@@ -355,7 +355,7 @@ Tagged Hex Strings
 ------------------
 
 Tagged hex strings begin with a tag identifying the type, followed by a `1`,
-followed by the the encoded hex payload.
+followed by the encoded hex payload.
 
 The tags are:
 
@@ -465,7 +465,7 @@ media:
 `filepack create` populates binary filepack metadata with metadata extracted
 from each item.
 
-Fields of `package` describing the package itself, as opposed its content:
+Fields of `package` describing the package itself, as opposed to its content:
 
 - `colophon: path.md`: The path of the package colophon.
 
@@ -919,7 +919,7 @@ verification utilities include:
 | [`gpg`](https://gnupg.org/) | general-purpose, [OpenPGP](https://www.openpgp.org/) implementation |
 | [`ssh-keygen`](https://man.openbsd.org/ssh-keygen.1) | general-purpose, shipped with [OpenSSH](https://www.openssh.com/) |
 | [`minisign`](https://github.com/jedisct1/minisign) | general-purpose |
-| [`signifiy`]( https://github.com/aperezdc/signify) | general-purpose |
+| [`signify`](https://github.com/aperezdc/signify) | general-purpose |
 | [`SignTool`](https://learn.microsoft.com/en-us/windows/win32/seccrypto/signtool) | Windows code signing |
 | [`codesign`](https://developer.apple.com/library/archive/documentation/Security/Conceptual/CodeSigningGuide/Procedures/Procedures.html) | macOS code signing |
 | [`jarsigner`](https://docs.oracle.com/javase/8/docs/technotes/tools/windows/jarsigner.html) | JDK code signing |
@@ -999,7 +999,7 @@ content.
 Filepack seeks to rectify this by standardizing machine-readable metadata that
 can be included with folder-of-files content.
 
-Filepack metadata is stored a file, `metadata.filemeta`, in the root of a
+Filepack metadata is stored in a file, `metadata.filemeta`, in the root of a
 filepack package as well as in the `manifest.filepack` archive, and contains
 information related to what the package contains, which files in the package
 contain the package content and their file formats, and who created the

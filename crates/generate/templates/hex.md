@@ -2,7 +2,7 @@ Tagged Hex
 ==========
 
 Tagged hex strings begin with a tag identifying the type, followed by a `1`,
-followed by the deco-encoded payload formatted as lowercase hexidecimal.
+followed by the deco-encoded payload formatted as lowercase hexadecimal.
 
 For example, the tagged hex string of the BLAKE3 hash of the empty string is:
 
@@ -10,7 +10,7 @@ For example, the tagged hex string of the BLAKE3 hash of the empty string is:
 hash1af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262
 ```
 
-Note that the encoded payload does not enclude the outer deco length framing.
+Note that the encoded payload does not include the outer deco length framing.
 
 The deco encoding of the above hash is:
 
