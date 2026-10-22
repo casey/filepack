@@ -3,6 +3,10 @@ Introduction
 
 {{#include ../../README.md:introduction}}
 
+See [installation](installation.md) to get started and [Why is metadata
+important?](why-metadata.md) for some of the higher-level ideas behind
+filepack.
+
 Benefits
 --------
 
