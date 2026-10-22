@@ -36,6 +36,12 @@ A demo server with a selection of example packages is available at
 Filepack is currently experimental. The `filepack` interface and package format
 may change at any time.
 
+Documentation is available at [filepack.com/book/](https://filepack.com/book/).
+
+See [installation](https://filepack.com/book/installation.html) to get started
+and [Why is metadata important?](https://filepack.com/book/why-metadata.html)
+for why you should care.
+
 Quickstart
 ----------
 
