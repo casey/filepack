@@ -3,9 +3,13 @@ Introduction
 
 {{#include ../../README.md:introduction}}
 
+Benefits
+--------
+
 If you package content for distribution, Filepack offers a number of benefits:
 
 - Filepack can detect both accidental corruption and intentional modification,
+  whereas `.sfv` files can only detect accidental corruption.
 
 - Because `manifest.filepack` manifests contain file sizes, Filepack can tell
   the user not just whether a file has been modified, but also whether it is
