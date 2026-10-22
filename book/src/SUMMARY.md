@@ -4,6 +4,9 @@ Summary
 # Guide
 - [Metadata](metadata.md)
 
+# Background
+- [Design](design.md)
+
 # Reference
 - [Commands](commands.md)
   - [filepack](commands/filepack.md)
