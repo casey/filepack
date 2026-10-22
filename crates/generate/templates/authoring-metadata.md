@@ -1,5 +1,5 @@
-Metadata
-========
+Authoring Metadata
+==================
 
 Filepack packages may contain metadata describing the package in
 `metadata.filemeta`. This metadata is stored as [deco](deco.md), which is not

@@ -2,9 +2,10 @@ Summary
 =======
 
 # Guide
-- [Metadata](metadata.md)
+- [Authoring Metadata](authoring-metadata.md)
 
 # Background
+- [Why is metadata important?](why-metadata.md)
 - [Design](design.md)
 
 # Reference
