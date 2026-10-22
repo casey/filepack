@@ -351,24 +351,6 @@ and `src/main.rs`, with a signature:
 The signature is elided for brevity. Signatures are tagged hex strings
 containing a public key and signature.
 
-Tagged Hex Strings
-------------------
-
-Tagged hex strings begin with a tag identifying the type, followed by a `1`,
-followed by the encoded hex payload.
-
-The tags are:
-
-| tag | type |
-|---|---|
-| `hash1…` | hash |
-| `package1…` | package fingerprint |
-| `private1…` | private key |
-| `public1…` | public key |
-| `revision1…` | revision hash |
-| `signature1…` | signature |
-| `token1…` | authentication token |
-
 Metadata
 --------
 
