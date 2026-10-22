@@ -19,7 +19,7 @@ ability to browse and play the audio, image, or video items that they contain.
 See [Media Formats](media-formats.md) for supported media item file formats.
 
 The [unstable](unstable-features.md) `web` media type may be used for packages
-containing web content, with is served from the `static/` directory of the
+containing web content, which is served from the `static/` directory of the
 package, with the required entry point `static/index.html`.
 
 ```yaml
