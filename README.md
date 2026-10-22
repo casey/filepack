@@ -40,7 +40,7 @@ Documentation is available at [filepack.com/book/](https://filepack.com/book/).
 
 See [installation](https://filepack.com/book/installation.html) to get started
 and [Why is metadata important?](https://filepack.com/book/why-metadata.html)
-for why you should care.
+for some of the higher-level ideas behind filepack.
 
 Usage
 -----
