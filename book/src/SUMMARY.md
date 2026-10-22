@@ -6,6 +6,7 @@ Summary
 
 # Background
 - [Why is metadata important?](why-metadata.md)
+- [Alternatives and Prior Art](alternatives.md)
 - [Design](design.md)
 
 # Reference
