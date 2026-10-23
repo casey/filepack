@@ -3,47 +3,47 @@ Summary
 
 [Introduction](introduction.md)
 
-# Getting Started
-- [Installation](installation.md)
-- [Shell Completion](shell-completion.md)
-- [Quickstart](quickstart.md)
-- [Configuration](configuration.md)
+- [Getting Started]()
+  - [Installation](installation.md)
+  - [Shell Completion](shell-completion.md)
+  - [Quickstart](quickstart.md)
+  - [Configuration](configuration.md)
 
-# Guide
-- [Authoring Metadata](authoring-metadata.md)
+- [Guide]()
+  - [Authoring Metadata](authoring-metadata.md)
 
-# Background
-- [Why is metadata important?](why-metadata.md)
-- [Alternatives and Prior Art](alternatives.md)
-- [Design](design.md)
+- [Background]()
+  - [Why is metadata important?](why-metadata.md)
+  - [Alternatives and Prior Art](alternatives.md)
+  - [Design](design.md)
 
-# Reference
-- [Commands](commands.md)
+- [Reference]()
+  - [Commands](commands.md)
 %% for (name, (_command, path)) in &self.commands {
-  - [{{ name }}]({{ path }})
+    - [{{ name }}]({{ path }})
 %% }
-- [Content Types](content-types.md)
-- [Deco](deco.md)
+  - [Content Types](content-types.md)
+  - [Deco](deco.md)
 %% for (name, path) in &self.deco {
-  - [{{ escape(name) }}]({{ path }})
+    - [{{ escape(name) }}]({{ path }})
 %% }
-- [JSON](json.md)
+  - [JSON](json.md)
 %% for (name, path) in &self.json {
-  - [{{ escape(name) }}]({{ path }})
+    - [{{ escape(name) }}]({{ path }})
 %% }
-- [Languages](languages.md)
-- [Lints](lints.md)
-- [Media Formats](media-formats.md)
-- [Routes](routes.md)
+  - [Languages](languages.md)
+  - [Lints](lints.md)
+  - [Media Formats](media-formats.md)
+  - [Routes](routes.md)
 %% for (path, relative) in &self.routes {
-  - [{{ escape(path) }}]({{ relative }})
+    - [{{ escape(path) }}]({{ relative }})
 %% }
-- [Tagged Hex](hex.md)
+  - [Tagged Hex](hex.md)
 %% for (prefix, path) in &self.hex {
-  - [{{ prefix }}]({{ path }})
+    - [{{ prefix }}]({{ path }})
 %% }
-- [Unstable Features](unstable-features.md)
-- [YAML](yaml.md)
+  - [Unstable Features](unstable-features.md)
+  - [YAML](yaml.md)
 %% for (name, path) in &self.yaml {
-  - [{{ escape(name) }}]({{ path }})
+    - [{{ escape(name) }}]({{ path }})
 %% }
