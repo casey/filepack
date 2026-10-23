@@ -1,8 +1,21 @@
 Summary
 =======
 
+[Introduction](introduction.md)
+
+# Getting Started
+- [Installation](installation.md)
+- [Shell Completion](shell-completion.md)
+- [Quickstart](quickstart.md)
+- [Configuration](configuration.md)
+
 # Guide
-- [Metadata](metadata.md)
+- [Authoring Metadata](authoring-metadata.md)
+
+# Background
+- [Why is metadata important?](why-metadata.md)
+- [Alternatives and Prior Art](alternatives.md)
+- [Design](design.md)
 
 # Reference
 - [Commands](commands.md)

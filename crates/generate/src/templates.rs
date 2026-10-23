@@ -1,6 +1,11 @@
 use super::*;
 
 #[derive(Boilerplate)]
+pub(crate) struct AuthoringMetadataMd<'a> {
+  pub(crate) example: &'a yaml::Example,
+}
+
+#[derive(Boilerplate)]
 pub(crate) struct CommandMd<'a> {
   pub(crate) help: &'a str,
   pub(crate) input: Option<&'a str>,
@@ -85,11 +90,6 @@ pub(crate) struct LintsMd<'a> {
 #[derive(Boilerplate)]
 pub(crate) struct MediaFormatsMd<'a> {
   pub(crate) media_formats: &'a BTreeMap<MediaType, Vec<MediaFormat>>,
-}
-
-#[derive(Boilerplate)]
-pub(crate) struct MetadataMd<'a> {
-  pub(crate) example: &'a yaml::Example,
 }
 
 #[derive(Boilerplate)]

@@ -5,9 +5,9 @@ use {
     functions::{escape, list, path_parameter_type, route_link, route_path, write},
     row::Row,
     templates::{
-      CommandMd, CommandsMd, ContentTypesMd, DecoMd, DecoSchemaMd, HexMd, JsonMd, JsonSchemaMd,
-      LanguagesMd, LintsMd, MediaFormatsMd, MetadataMd, RouteMd, RoutesMd, SummaryMd, TagMd,
-      UnstableFeaturesMd, YamlMd,
+      AuthoringMetadataMd, CommandMd, CommandsMd, ContentTypesMd, DecoMd, DecoSchemaMd, HexMd,
+      JsonMd, JsonSchemaMd, LanguagesMd, LintsMd, MediaFormatsMd, RouteMd, RoutesMd, SummaryMd,
+      TagMd, UnstableFeaturesMd, YamlMd,
     },
   },
   boilerplate::Boilerplate,
@@ -244,8 +244,8 @@ fn main() {
   );
 
   write(
-    "metadata.md",
-    MetadataMd {
+    "authoring-metadata.md",
+    AuthoringMetadataMd {
       example: &reference.metadata,
     },
   );

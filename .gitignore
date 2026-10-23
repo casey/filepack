@@ -1,4 +1,5 @@
 /book/build
+/book/src/authoring-metadata.md
 /book/src/commands
 /book/src/commands.md
 /book/src/content-types.md
@@ -11,7 +12,6 @@
 /book/src/languages.md
 /book/src/lints.md
 /book/src/media-formats.md
-/book/src/metadata.md
 /book/src/routes
 /book/src/routes.md
 /book/src/unstable-features.md
