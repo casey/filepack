@@ -3041,6 +3041,22 @@ fn named_mount() {
 }
 
 #[test]
+fn named_mount_with_tag_prefix_redirects() {
+  let server = TestServer::builder()
+    .mount(PackageIdentifier::Number(0), Some("package-foo"))
+    .mount(PackageIdentifier::Number(0), Some("revision-foo"))
+    .build();
+
+  for name in ["package-foo", "revision-foo"] {
+    server
+      .get(format!("/{name}"))
+      .status(StatusCode::TEMPORARY_REDIRECT)
+      .assert_header(header::LOCATION, format!("/{name}/"))
+      .send();
+  }
+}
+
+#[test]
 fn non_fingerprint_tagged_hex_falls_through() {
   TestServer::new()
     .get(format!("/{}", PublicKey::EXAMPLE))
