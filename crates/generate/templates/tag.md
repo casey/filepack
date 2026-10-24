@@ -1,4 +1,4 @@
-# {{ self.tag.prefix() }}
+# {{ self.tag.tag() }}
 
 {{ self.hex.description }}
 

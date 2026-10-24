@@ -113,11 +113,11 @@ fn main() {
     let mut pages = BTreeMap::new();
 
     for (tag, hex) in &reference.hex {
-      let path = Utf8PathBuf::from(format!("hex/{}.md", tag.prefix()));
+      let path = Utf8PathBuf::from(format!("hex/{}.md", tag.tag()));
 
       write(&path, TagMd { hex, tag: *tag });
 
-      pages.insert(tag.prefix(), path);
+      pages.insert(tag.tag(), path);
     }
 
     pages

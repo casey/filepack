@@ -1,6 +1,6 @@
 use super::*;
 
-/// Prefix identifying the type of a tagged hex string.
+/// Tag identifying the type of a tagged hex string.
 #[derive(
   Clone,
   Copy,
@@ -47,7 +47,11 @@ impl Tag {
     }
   }
 
-  pub fn prefix(self) -> &'static str {
+  pub fn prefix(self) -> String {
+    format!("{}1", self.tag())
+  }
+
+  pub fn tag(self) -> &'static str {
     self.into()
   }
 }
@@ -59,20 +63,23 @@ mod tests {
   #[test]
   fn check() {
     for (i, tag) in Tag::iter().enumerate() {
-      let prefix = tag.prefix();
+      let tag = tag.tag();
 
       // lowercase
-      assert!(prefix.chars().all(|c| c.is_ascii_lowercase()));
+      assert!(tag.chars().all(|c| c.is_ascii_lowercase()));
 
       // cannot be confused with hex
-      assert!(prefix.chars().any(|c| !c.is_ascii_hexdigit()));
+      assert!(tag.chars().any(|c| !c.is_ascii_hexdigit()));
 
       // cannot be confused with reverse hex
-      assert!(prefix.chars().any(|c| !matches!(c, 'k'..='z')));
+      assert!(tag.chars().any(|c| !matches!(c, 'k'..='z')));
 
       // not a prefix or suffix of another type
-      assert!(Tag::iter().enumerate().all(|(j, other)| j == i
-        || (!other.prefix().starts_with(prefix) && !other.prefix().ends_with(prefix))));
+      for (j, other) in Tag::iter().enumerate() {
+        if i != j {
+          assert!(!other.tag().starts_with(tag) && !other.tag().ends_with(tag));
+        }
+      }
     }
   }
 }

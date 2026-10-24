@@ -262,12 +262,12 @@ impl Serve {
       if segment.starts_with(|c: char| c.is_ascii_digit()) {
         let number = parse_number::<u64>(segment).context(server_error::NumberParse)?;
         return Ok(Redirect::permanent(&format!("/package/{number}")));
-      } else if segment.starts_with(Tag::Package.prefix()) {
+      } else if segment.starts_with(Tag::Package.tag()) {
         let fingerprint = segment
           .parse::<Fingerprint>()
           .context(server_error::FingerprintParse)?;
         return Ok(Redirect::permanent(&format!("/package/{fingerprint}")));
-      } else if segment.starts_with(Tag::Revision.prefix()) {
+      } else if segment.starts_with(Tag::Revision.tag()) {
         let revision = segment
           .parse::<Revision>()
           .context(server_error::RevisionParse)?;

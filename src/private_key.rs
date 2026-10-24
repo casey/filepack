@@ -107,7 +107,7 @@ mod tests {
         .parse::<PublicKey>()
         .unwrap_err()
         .to_string(),
-      "expected public key with tag `public1…` but found `private1…`",
+      "expected public key with prefix `public1…` but found `private1…`",
     );
   }
 

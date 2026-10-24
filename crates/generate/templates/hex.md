@@ -31,7 +31,7 @@ Tags
 |-----|------|------|-------------|
 %% for (tag, hex) in self.hex {
 {{ Row((
-  format!("[`{}`](hex/{}.md)", tag.prefix(), tag.prefix()),
+  format!("[`{}`](hex/{}.md)", tag.tag(), tag.tag()),
   &hex.name,
   format!("[{}](deco/{}.md)", escape(&hex.schema), hex.schema.to_kebab_case()),
   &hex.description,
