@@ -148,7 +148,7 @@ replacement, and update.
 
 After successfully creating, replacing, or updating a package on the server,
 the new package head for that server is recorded to `.filepack/state.json` in
-the package root directory.
+the package root.
 
 ### Package Creation
 

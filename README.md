@@ -267,7 +267,7 @@ Please feel free to open issues requesting new lints.
 ### Creating a Package with Metadata
 
 To create a package with metadata describing the package, create a file named
-`metadata.yaml` in the package directory, for example:
+`metadata.yaml` in the package root, for example:
 
 ```yaml
 title: The Necronomicon
