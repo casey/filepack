@@ -147,7 +147,8 @@ To serve packages locally on port 8000:
 filepack serve --address localhost --http-port 8000
 ```
 
-Upload the package in the current directory with:
+Upload the package in the current directory and print its server-assigned
+package number with:
 
 ```sh
 filepack upload --server localhost:8000
@@ -160,6 +161,18 @@ Download the uploaded package to a new directory with:
 
 ```sh
 filepack download --server localhost:8000 --package <FINGERPRINT> <DIRECTORY>
+```
+
+Delete the package from the server with:
+
+```sh
+filepack delete --server localhost:8000 <PACKAGE_NUMBER>
+```
+
+Run garbage collection to clean up files no longer referenced by any package:
+
+```sh
+filepack gc --server localhost:8000
 ```
 
 See [Server](server.md) for more information.
