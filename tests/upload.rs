@@ -3,7 +3,7 @@ use super::*;
 #[test]
 fn restricted_upload_succeeds_with_auth() {
   let server = Test::new()
-    .write_keypair("master")
+    .write_key_pair("master")
     .assert_file(&format!("files/{}", Hash::bytes(b"bar")), "bar")
     .ready_address()
     .args([
@@ -21,7 +21,7 @@ fn restricted_upload_succeeds_with_auth() {
     .spawn();
 
   Test::new()
-    .write_keypair("master")
+    .write_key_pair("master")
     .write("foo", "bar")
     .args([
       "upload",
@@ -90,7 +90,7 @@ fn reupload_succeeds() {
 #[test]
 fn serve_admin_key_by_name() {
   let server = Test::new()
-    .write_keypair("master")
+    .write_key_pair("master")
     .ready_address()
     .args([
       "serve",

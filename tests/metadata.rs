@@ -1149,7 +1149,9 @@ fn metadata_deco_already_exists() {
     .write("metadata.yaml", "title: Foo")
     .touch("metadata.filemeta")
     .arg("create")
-    .stderr_regex("error: metadata `.*metadata.filemeta` already exists\n")
+    .stderr_regex(
+      "error: metadata `.*metadata.filemeta` already exists, use `--force` to overwrite it\n",
+    )
     .failure();
 }
 

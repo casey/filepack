@@ -267,7 +267,7 @@ fn manifest_already_exists_error() {
   Test::new()
     .touch("manifest.filepack")
     .args(["create", "."])
-    .stderr("error: manifest `manifest.filepack` already exists\n")
+    .stderr("error: manifest `manifest.filepack` already exists, use `--force` to overwrite it\n")
     .failure();
 }
 
@@ -401,7 +401,7 @@ fn non_unicode_path_error() {
 fn private_key_load_error_message() {
   Test::new()
     .touch("foo/bar")
-    .write_keypair("master")
+    .write_key_pair("master")
     .write("keychain/master.private", "")
     .args(["create", "--sign", "foo"])
     .stderr_regex(

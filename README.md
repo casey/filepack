@@ -31,8 +31,8 @@ allowing programmatic search, preview, playback, and conversion.
 packages, and includes an HTTP server for package upload, download, and
 display.
 
-A demo server with a selection of example packages is available at
-[filepack.com](https://filepack.com).
+The demo server at [filepack.com](https://filepack.com) hosts a selection of
+example packages.
 
 Filepack is currently experimental. The `filepack` interface and package format
 may change at any time.
@@ -40,77 +40,10 @@ may change at any time.
 
 Documentation is available at [filepack.com/book/](https://filepack.com/book/).
 
-See [installation](https://filepack.com/book/installation.html) to get started
-and [Why is metadata important?](https://filepack.com/book/why-metadata.html)
-for some of the higher-level ideas behind filepack.
-
-Usage
------
-
-Filepack supports a number of subcommands, including `filepack create` to
-create a manifest, `filepack verify` to verify a manifest, and `filepack serve`
-to start an HTTP package server.
-
-See `filepack help` for supported subcommands and `filepack help SUBCOMMAND`
-for information about a particular subcommand.
-
-### `filepack create`
-
-Create a manifest.
-
-Recommended lints can be enabled with:
-
-```shell
-filepack create --deny distribution
-```
-
-### `filepack verify`
-
-Verify the contents of a directory against a manifest.
-
-To verify the contents of `DIR` against `DIR/manifest.filepack`:
-
-```shell
-filepack verify DIR
-```
-
-If the current directory contains `manifest.filepack`, `DIR` can be omitted:
-
-```shell
-filepack verify
-```
-
-`filepack verify` takes an optional `--print` flag, which prints the manifest
-to standard output if verification succeeds. This can be used in a pipeline to
-ensure that the manifest has been verified before proceeding:
-
-```shell
-filepack verify --print | jq
-```
-
-### `filepack serve`
-
-Start HTTP server. The filepack server has limited authentication and no disk
-usage quota and should be considered experimental.
-
-To serve HTTP on `0.0.0.0:80`:
-
-```shell
-filepack serve
-```
-
-To serve HTTPS on `0.0.0.0:443` with an ACME TLS certificate:
-
-```shell
-filepack serve --https --domain filepack.example
-```
-
-See `filepack serve --help` for more details.
-
-Files and packages can be uploaded with `filepack upload` and downloaded with
-`filepack download`.
-
-Packages can be deleted with `filepack delete`.
+See [installation](https://filepack.com/book/installation.html) and
+[quickstart](https://filepack.com/book/quickstart.html) to get started, and
+[Why is metadata important?](https://filepack.com/book/why-metadata.html) for
+some of the higher-level ideas behind filepack.
 
 Manifest
 --------
@@ -240,13 +173,13 @@ Keys and Signatures
 -------------------
 
 `filepack` supports the generation of
-[Curve25519](https://en.wikipedia.org/wiki/Curve25519) public/private keypairs,
+[Curve25519](https://en.wikipedia.org/wiki/Curve25519) public/private key pairs,
 and the creation and verification of
 [EdDSA](https://en.wikipedia.org/wiki/EdDSA) signatures over manifests.
 
-### Keypair Generation
+### Key Pair Generation
 
-Keypairs are generated with:
+Key pairs are generated with:
 
 ```shell
 filepack keygen

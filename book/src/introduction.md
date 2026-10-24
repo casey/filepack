@@ -10,10 +10,12 @@ filepack.
 Why Filepack?
 -------------
 
-If you package content for distribution, Filepack offers a number of benefits:
+If you package content for distribution, Filepack offers a number of benefits,
+even if you already use [SFV
+files](https://en.wikipedia.org/wiki/Simple_file_verification):
 
 - Filepack can detect both accidental corruption and intentional modification,
-  whereas `.sfv` files can only detect accidental corruption.
+  whereas SFV files can only detect accidental corruption.
 
 - Because `manifest.filepack` manifests contain file sizes, Filepack can tell
   the user not just whether a file has been modified, but also whether it is

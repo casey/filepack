@@ -102,7 +102,7 @@ fn delete_package_succeeds() {
 #[test]
 fn restricted_delete_succeeds_with_auth() {
   let server = Test::new()
-    .write_keypair("master")
+    .write_key_pair("master")
     .ready_address()
     .args([
       "serve",
@@ -119,7 +119,7 @@ fn restricted_delete_succeeds_with_auth() {
     .spawn();
 
   Test::new()
-    .write_keypair("master")
+    .write_key_pair("master")
     .write("pkg/foo", "bar")
     .args(["create", "pkg"])
     .success()

@@ -322,7 +322,7 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     source: io::Error,
   },
-  #[snafu(display("manifest `{path}` already exists"))]
+  #[snafu(display("manifest `{path}` already exists, use `--force` to overwrite it"))]
   ManifestAlreadyExists {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
@@ -345,7 +345,7 @@ pub enum Error {
   },
   #[snafu(display("manifest cannot be formatted as TSV"))]
   ManifestTsv { backtrace: Option<Backtrace> },
-  #[snafu(display("metadata `{path}` already exists"))]
+  #[snafu(display("metadata `{path}` already exists, use `--force` to overwrite it"))]
   MetadataAlreadyExists {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
