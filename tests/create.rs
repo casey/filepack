@@ -401,7 +401,7 @@ fn non_unicode_path_error() {
 fn private_key_load_error_message() {
   Test::new()
     .touch("foo/bar")
-    .write_keypair("master")
+    .write_key_pair("master")
     .write("keychain/master.private", "")
     .args(["create", "--sign", "foo"])
     .stderr_regex(

@@ -473,7 +473,7 @@ impl Test {
     self
   }
 
-  pub(crate) fn write_keypair(self, name: &str) -> Self {
+  pub(crate) fn write_key_pair(self, name: &str) -> Self {
     self
       .write(&format!("keychain/{name}.public"), PUBLIC_KEY)
       .write(&format!("keychain/{name}.private"), PRIVATE_KEY)
