@@ -233,13 +233,17 @@ Web packages contain web content with a `static/index.html` entry point. They
 are [currently unstable](unstable-features.md) and will be rejected for upload
 unless the server is started with unstable features enabled.
 
-By default, web packages are not mounted. Uploaded web packages may be viewed
+By default, web packages are not mounted. Uploaded web packages can be viewed
 and browsed at `/package/{package}`, but all active content, including HTML and
 JavaScript, is served with `Content-Security-Policy: sandbox`, a non-active
 `Content-Type` such as `text/plain;charset=utf-8` or
 `application/octet-stream`, and `X-Content-Type-Options: nosniff`.
 
-Web packages may be mounted with `filepack serve --mount PACKAGE`.
+Web packages can be mounted with:
+
+```sh
+filepack serve --mount PACKAGE
+```
 
 When mounted, `/mount/{package}/`, where `package` is a mounted package
 fingerprint, revision, or number, returns `static/index.html` of the mounted
