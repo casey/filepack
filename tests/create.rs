@@ -267,7 +267,7 @@ fn manifest_already_exists_error() {
   Test::new()
     .touch("manifest.filepack")
     .args(["create", "."])
-    .stderr("error: manifest `manifest.filepack` already exists\n")
+    .stderr("error: manifest `manifest.filepack` already exists, use `--force` to overwrite it\n")
     .failure();
 }
 

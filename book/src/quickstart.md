@@ -21,7 +21,7 @@ filepack create
 The manifest, containing the hashes and sizes of all files in the current
 directory and its subdirectories, will be written to `manifest.filepack`.
 
-To re-create a package in the current directory:
+To recreate a package in the current directory:
 
 ```sh
 filepack create --force
@@ -58,10 +58,10 @@ The metadata schema is extensive, with many fields and media types. See
 Linting Packages
 ----------------
 
-To recreate a package with all lints enabled:
+To create a package with all lints enabled:
 
 ```sh
-filepack create ----deny all
+filepack create --deny all
 ```
 
 Filepack supports a variety of [lints](lints.md). These include checks for
