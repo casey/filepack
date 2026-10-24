@@ -1,5 +1,5 @@
-Design
-======
+Packages
+========
 
 Manifest Format
 ---------------
