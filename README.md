@@ -31,8 +31,8 @@ allowing programmatic search, preview, playback, and conversion.
 packages, and includes an HTTP server for package upload, download, and
 display.
 
-A demo server with a selection of example packages is available at
-[filepack.com](https://filepack.com).
+The demo server at [filepack.com](https://filepack.com) hosts a selection of
+example packages.
 
 Filepack is currently experimental. The `filepack` interface and package format
 may change at any time.
