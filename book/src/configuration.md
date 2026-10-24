@@ -19,7 +19,7 @@ Logging
 
 Logging can be enabled by setting the `FILEPACK_LOG` environment variable:
 
-```
+```sh
 FILEPACK_LOG=info filepack serve
 ```
 
