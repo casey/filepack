@@ -8,8 +8,8 @@ to start an HTTP package server.
 See `filepack help` for supported subcommands and `filepack help SUBCOMMAND`
 for information about a particular subcommand.
 
-Create a Package
-----------------
+Creating Packages
+-----------------
 
 To create a package in the current directory:
 
@@ -20,8 +20,8 @@ filepack create
 The manifest, containing the hashes and sizes of all files in the current
 directory, and its children, will be written to `manifest.filepack`.
 
-Add Metadata to a Package
--------------------------
+Adding Package Metadata
+-----------------------
 
 Packages may optionally contain metadata in `metadata.filemeta`. This metadata
 describes the contents of the package, for example its title, the package
@@ -52,8 +52,8 @@ filepack metadata
 The metadata schema is extensive, with many fields and media types. See
 [Authoring Metadata](authoring-metadata.md) for more information.
 
-Linting a Package
------------------
+Linting Packages
+----------------
 
 To enable lints when creating a package:
 
@@ -70,8 +70,8 @@ Creating a package with all lints enabled and fixing them is a great way to
 learn more about filepack and package metadata. An existing package can be
 checked by adding `--force`, which will re-recreate the package.
 
-Verifying a Package
--------------------
+Verifying Packages
+------------------
 
 A package can be verified by manifest, fingerprint, or public key. The three
 verification methods differ by what is trusted: the manifest, fingerprint, or
@@ -135,7 +135,7 @@ Any change to the package will cause `filepack` to exit with non-zero exit
 code, and as long as your private key is secure, nobody can create a signature
 which verifies against your public key.
 
-Serving Packages
+Sharing Packages
 ----------------
 
 To serve packages locally on port 8000:
