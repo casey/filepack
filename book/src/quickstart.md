@@ -8,6 +8,8 @@ to start an HTTP package server.
 See `filepack help` for supported subcommands and `filepack help SUBCOMMAND`
 for information about a particular subcommand.
 
+See [Commands](commands.md) for all commands and their `--help` strings.
+
 Creating Packages
 -----------------
 
@@ -18,16 +20,14 @@ filepack create
 ```
 
 The manifest, containing the hashes and sizes of all files in the current
-directory, and its children, will be written to `manifest.filepack`.
+directory and its children, will be written to `manifest.filepack`.
 
 Adding Package Metadata
 -----------------------
 
 Packages may optionally contain metadata in `metadata.filemeta`. This metadata
-describes the contents of the package, for example its title, the package
-itself, for example the name of the packager, and the media content of the
-package, for example, a list of image files with titles, for a package
-containing images.
+describes the contents of the package, the package itself, and the media
+content of the package.
 
 Metadata may be added by creating a metadata template in `metadata.yaml`:
 
@@ -35,13 +35,11 @@ Metadata may be added by creating a metadata template in `metadata.yaml`:
 echo "title: Fifty-three More Things to do in Zero Gravity" > metadata.yaml
 ```
 
-Then run:
+Recreate the package and write the metadata to `metadata.filemeta`.
 
 ```sh
-filepack create
+filepack create --force
 ```
-
-To write the metadata to `metadata.filemeta`.
 
 Package metadata can be printed with:
 
@@ -55,27 +53,28 @@ The metadata schema is extensive, with many fields and media types. See
 Linting Packages
 ----------------
 
-To enable lints when creating a package:
+To recreate the package with all lints enabled:
 
 ```sh
-filpack create --deny all
+filepack create --force --deny all
 ```
 
-Filepack supports a variety of [lints](lints.md). The include checks for
+Filepack supports a variety of [lints](lints.md). These include checks for
 cross-platform compatibility issues, like case-conflicts on case-insensitive
 filesystems; quality issues, like inclusion of junk files; and metadata issues,
 like missing or incomplete metadata.
 
 Creating a package with all lints enabled and fixing them is a great way to
-learn more about filepack and package metadata. An existing package can be
-checked by adding `--force`, which will re-recreate the package.
+learn more about filepack and package metadata.
 
 Verifying Packages
 ------------------
 
-A package can be verified by manifest, fingerprint, or public key. The three
-verification methods differ by what is trusted: the manifest, fingerprint, or
-private key corresponding to the public key.
+A package can be verified by manifest, fingerprint, or public key. Verification
+will fail if files have been added, removed, or modified.
+
+The three verification methods differ by what is trusted: the manifest,
+fingerprint, or private key corresponding to the public key.
 
 The package in the current directory can be verified against the hashes and
 sizes in the manifest:
@@ -107,7 +106,7 @@ will cause `filepack` to exit with a non-zero exit code.
 
 Finally, packages can be verified by signature.
 
-Generate a new keypair:
+Generate a new keypair with the default name `master`:
 
 ```sh
 filepack keygen
@@ -131,7 +130,7 @@ And finally, verify that the package was signed by your private key:
 filepack verify --key <PUBLIC_KEY>
 ```
 
-Any change to the package will cause `filepack` to exit with non-zero exit
+Any change to the package will cause `filepack` to exit a with non-zero exit
 code, and as long as your private key is secure, nobody can create a signature
 which verifies against your public key.
 
@@ -141,7 +140,7 @@ Sharing Packages
 To serve packages locally on port 8000:
 
 ```sh
-filepack serve --address localhost:8000
+filepack serve --address localhost --http-port 8000
 ```
 
 Upload the package in the current directory with:
@@ -150,10 +149,10 @@ Upload the package in the current directory with:
 filepack upload --server localhost:8000
 ```
 
-Open `http://localhost` in your web browser to view packages. Media items in
-packages with media metadata can be viewed and played.
+Open `http://localhost:8000` in your web browser to view packages. Media items
+in packages with media metadata can be viewed and played.
 
-Download the uploaded package to with:
+Download the uploaded package with:
 
 ```sh
 filepack download --server localhost:8000 --package <FINGERPRINT> <DIRECTORY>
