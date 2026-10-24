@@ -172,13 +172,13 @@ Keys and Signatures
 -------------------
 
 `filepack` supports the generation of
-[Curve25519](https://en.wikipedia.org/wiki/Curve25519) public/private keypairs,
+[Curve25519](https://en.wikipedia.org/wiki/Curve25519) public/private key pairs,
 and the creation and verification of
 [EdDSA](https://en.wikipedia.org/wiki/EdDSA) signatures over manifests.
 
-### Keypair Generation
+### Key Pair Generation
 
-Keypairs are generated with:
+Key pairs are generated with:
 
 ```shell
 filepack keygen
