@@ -17,6 +17,8 @@ Summary
   - [Alternatives and Prior Art](alternatives.md)
   - [Design](design.md)
 
+- [Server](server.md)
+
 - [Reference]()
   - [Commands](commands.md)
     - [filepack](commands/filepack.md)

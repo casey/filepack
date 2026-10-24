@@ -151,8 +151,8 @@ pub(crate) struct Serve {
   #[arg(
     help = "Mount web package <PACKAGE>. <PACKAGE> may be a fingerprint, revision, or number. \
             Mounted packages are served under `/mount` by fingerprint, revision, and number, as \
-            well directly under `/<NAME>` if `<NAME>` is supplied. Mounted packages are \
-            unsandboxed and served with the server origin, make sure you understand the \
+            well as directly under `/<NAME>/` if `<NAME>` is supplied. Mounted packages are \
+            unsandboxed and served with the server origin. Make sure you understand the \
             consequences of this and only mount packages you trust",
     long = "mount",
     value_name = "PACKAGE"

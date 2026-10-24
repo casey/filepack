@@ -28,3 +28,13 @@ And the following web routes:
 )) }}
 %%   }
 %% }
+
+And the following fallback routes, if no other route matches:
+
+| method | path | description |
+|--------|------|-------------|
+| GET | `/{fingerprint}` | Redirect to [`/package/{fingerprint}`](routes/package-package.md) |
+| GET | `/{number}` | Redirect to [`/package/{number}`](routes/package-package.md) |
+| GET | `/{revision}` | Redirect to [`/package/{revision}`](routes/package-package.md) |
+| GET | `/{name}/` | Serve `static/index.html` of mounted web package with `name` |
+| GET | `/{name}/{*path}` | Serve file at `static/{path}` of mounted web package with `name` |

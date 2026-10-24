@@ -9,42 +9,42 @@ echo "title: Packaging Guide" > metadata.yaml
 
 Create `manifest.filepack`:
 
-```shell
+```sh
 filepack create
 ```
 
 Verify current directory against hashes in `manifest.filepack`:
 
-```shell
+```sh
 filepack verify
 ```
 
 Print package fingerprint:
 
-```shell
+```sh
 filepack fingerprint
 ```
 
 Print package metadata:
 
-```shell
+```sh
 filepack metadata
 ```
 
 Start a server:
 
-```shell
+```sh
 filepack serve --http-port 8000
 ```
 
 Upload the package to the server:
 
-```shell
+```sh
 filepack upload --server localhost:8000
 ```
 
 Download the package from the server:
 
-```shell
+```sh
 filepack download --server localhost:8000 --package <FINGERPRINT> <DIRECTORY>
 ```
