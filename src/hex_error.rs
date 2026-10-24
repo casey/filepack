@@ -9,10 +9,10 @@ pub enum HexError {
   Digit { digit: char, tag: Tag },
   #[snafu(display("{} has odd number of hex digits: {len}", tag.name()))]
   OddLength { len: usize, tag: Tag },
-  #[snafu(display("{} missing tag `{}1…`", tag.name(), tag.prefix()))]
+  #[snafu(display("{} missing prefix `{}…`", tag.name(), tag.prefix()))]
   TagMissing { tag: Tag },
   #[snafu(display(
-    "expected {} with tag `{}1…` but found `{actual}1…`",
+    "expected {} with prefix `{}…` but found `{actual}1…`",
     expected.name(), expected.prefix(),
   ))]
   UnexpectedTag { actual: String, expected: Tag },

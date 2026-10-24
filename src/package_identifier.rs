@@ -30,9 +30,9 @@ impl FromStr for PackageIdentifier {
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     if s.starts_with(|c: char| c.is_ascii_digit()) {
       Ok(Self::Number(parse_number(s)?))
-    } else if s.starts_with(Tag::Package.prefix()) {
+    } else if s.starts_with(Tag::Package.tag()) {
       Ok(Self::Fingerprint(s.parse()?))
-    } else if s.starts_with(Tag::Revision.prefix()) {
+    } else if s.starts_with(Tag::Revision.tag()) {
       Ok(Self::Revision(s.parse()?))
     } else {
       Err(PackageIdentifierError::Unrecognized {

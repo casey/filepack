@@ -41,8 +41,8 @@ Summary
     - [{{ escape(path) }}]({{ relative }})
 %% }
   - [Tagged Hex](hex.md)
-%% for (prefix, path) in &self.hex {
-    - [{{ prefix }}]({{ path }})
+%% for (tag, path) in &self.hex {
+    - [{{ tag }}]({{ path }})
 %% }
   - [Unstable Features](unstable-features.md)
   - [YAML](yaml.md)

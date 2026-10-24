@@ -13,7 +13,7 @@
 %%   json::Schema::Hex { description, tag } => {
 {{ description }}
 
-A tagged hex string with tag [`{{ tag.prefix() }}`](../hex/{{ tag.prefix() }}.md).
+A tagged hex string with tag [`{{ tag.tag() }}`](../hex/{{ tag.tag() }}.md).
 %%   }
 %%   json::Schema::StringEnum { description, values } => {
 {{ description }}

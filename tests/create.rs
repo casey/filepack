@@ -407,7 +407,7 @@ fn private_key_load_error_message() {
     .stderr_regex(
       "
         error: invalid private key `.*master.private`
-               └─ private key missing tag `private1…`
+               └─ private key missing prefix `private1…`
       ",
     )
     .failure();

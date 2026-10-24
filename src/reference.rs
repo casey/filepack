@@ -89,7 +89,7 @@ impl Reference {
       hex.insert(
         T::TAG,
         Hex {
-          description: tags[T::TAG.prefix()].clone(),
+          description: tags[T::TAG.tag()].clone(),
           example: T::EXAMPLE.into(),
           example_description: T::EXAMPLE_DESCRIPTION.into(),
           name: T::TAG.name().into(),
@@ -322,10 +322,7 @@ mod tests {
     );
 
     for (tag, value) in hex {
-      assert!(
-        value.example.starts_with(&format!("{}1", tag.prefix())),
-        "{tag:?}",
-      );
+      assert!(value.example.starts_with(&tag.prefix()), "{tag:?}");
 
       assert_eq!(value.name, tag.name());
     }
