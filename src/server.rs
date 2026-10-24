@@ -118,7 +118,7 @@ impl Server {
       .collect()
   }
 
-  pub(crate) fn gc(&self) -> ServerResult<api::gc::Response> {
+  pub(crate) fn gc(&self, mounts: &[Mount]) -> ServerResult<api::gc::Response> {
     let tx = self.database.begin_write()?;
 
     let mut marked = HashSet::new();
@@ -145,6 +145,22 @@ impl Server {
         .iter()?
         .map(|entry| Ok(entry?.1.value()))
         .collect::<ServerResult<Vec<Revision>>>()?;
+
+      for mount in mounts {
+        match mount.package {
+          PackageIdentifier::Fingerprint(fingerprint) => {
+            if packages.get(&fingerprint)?.is_some() {
+              directory_stack.push(fingerprint.into());
+            }
+          }
+          PackageIdentifier::Number(_) => {}
+          PackageIdentifier::Revision(revision) => {
+            if revisions.get(&revision)?.is_some() {
+              revision_stack.push(revision);
+            }
+          }
+        }
+      }
 
       while let Some(current) = revision_stack.pop() {
         if !marked.insert(current.into()) {

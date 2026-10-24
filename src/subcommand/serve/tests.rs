@@ -1230,6 +1230,23 @@ fn gc_empty_server_removes_nothing() {
 }
 
 #[test]
+fn gc_ignores_missing_mounts() {
+  TestServer::builder()
+    .mount(
+      PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
+      None,
+    )
+    .mount(
+      PackageIdentifier::Revision(Revision::EXAMPLE.parse().unwrap()),
+      None,
+    )
+    .build()
+    .post("/api/gc")
+    .assert_body(api::gc::Response::default().encode_to_vec())
+    .send();
+}
+
+#[test]
 fn gc_ignores_non_hash_filenames() {
   let server = TestServer::new();
 
@@ -1385,6 +1402,63 @@ fn gc_retains_merge_parents() {
     .send();
 
   server.delete("/api/number/1").send();
+
+  server
+    .post("/api/gc")
+    .assert_body(api::gc::Response::default().encode_to_vec())
+    .send();
+}
+
+#[test]
+fn gc_retains_package_mounted_by_fingerprint() {
+  let package = PackageBuilder::new().file("foo", b"bar");
+
+  let fingerprint = package.fingerprint();
+
+  let server = TestServer::builder()
+    .mount(PackageIdentifier::Fingerprint(fingerprint), None)
+    .build();
+
+  package.upload(&server);
+
+  server.delete("/api/number/0").send();
+
+  let revision = RevisionObject {
+    package: fingerprint,
+    parents: None,
+  };
+
+  server
+    .post("/api/gc")
+    .assert_body(
+      api::gc::Response {
+        bytes: revision.encode_to_vec().len().into_u64(),
+        files: BTreeSet::from([revision.hash().into()]).into(),
+        revisions: BTreeSet::from([revision.hash()]).into(),
+        ..api::gc::Response::default()
+      }
+      .encode_to_vec(),
+    )
+    .send();
+}
+
+#[test]
+fn gc_retains_package_mounted_by_revision() {
+  let package = PackageBuilder::new().file("foo", b"bar");
+
+  let revision = RevisionObject {
+    package: package.fingerprint(),
+    parents: None,
+  }
+  .hash();
+
+  let server = TestServer::builder()
+    .mount(PackageIdentifier::Revision(revision), None)
+    .build();
+
+  package.upload(&server);
+
+  server.delete("/api/number/0").send();
 
   server
     .post("/api/gc")
