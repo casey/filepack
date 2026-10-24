@@ -216,7 +216,8 @@ These packages are still served by fingerprint and revision, and their files
 are not immediately removed from the server.
 
 After a package is deleted or replaced, running `filepack gc` will remove all
-packages and package files which are not reachable from the current heads.
+packages and package files which are not reachable from the current heads or
+mounted packages.
 
 Previous versions of updated packages are still reachable from the parent
 revisions of the new head revisions, and will continue to be served by

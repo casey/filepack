@@ -81,13 +81,14 @@ pub(crate) async fn api_file(
 }
 
 /// Delete files, directories, packages, and revisions not reachable by package
-/// number.
+/// number or mount.
 #[route(POST, "/api/gc")]
 pub(crate) async fn api_gc(
   _: Authenticated,
   server: ServerExtension,
+  server_config: ServerConfigExtension,
 ) -> ServerResult<DecoResponse<api::gc::Response>> {
-  block_in_place(|| Ok(DecoResponse(server.gc()?)))
+  block_in_place(|| Ok(DecoResponse(server.gc(&server_config.mounts)?)))
 }
 
 /// Check whether `revision` is the head of a package.
