@@ -66,7 +66,7 @@ The [deco](deco.md) chapter includes a description of deco itself, as well as
 the schemas of all types serialized as deco.
 
 A package fingerprint is the BLAKE3 hash of the deco-encoded package root
-[directory](deco.md/directory.md), containing [entries](deco/entry.md) for each
+[directory](deco/directory.md), containing [entries](deco/entry.md) for each
 child. Each entry contains the hash, name, and size of the child, along with
 its [type and additional info](deco/entry-info.md). For directories, this
 additional info includes [totals](deco/totals.md), the total number of files
@@ -190,7 +190,7 @@ including package artwork, video placeholders, thumbnail images, and media
 information, is sourced from package metadata.
 
 See [Metadata](deco/metadata.md) for the deco schema, [Authoring
-Metadata](authoring-metadata) for a description of `metadata.yaml`, the
+Metadata](authoring-metadata.md) for a description of `metadata.yaml`, the
 template file used to generate package metadata.
 
 Please feel free to [open an issue](https://github.com/casey/filepack/issues)
