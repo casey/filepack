@@ -1,12 +1,12 @@
 Packages
 ========
 
-A filepack package is a directory containing a manifest named
+A Filepack package is a directory containing a manifest named
 `manifest.filepack`, which records the names, sizes, and [BLAKE3
 hashes](https://en.wikipedia.org/wiki/BLAKE_(hash_function)#BLAKE3) of all
 files in the directory and its subdirectories.
 
-A filepack manifest contains all the information needed to verify the contents
+A Filepack manifest contains all the information needed to verify the contents
 of a package. Additionally, packages may be signed using
 [Ed25519](https://en.wikipedia.org/wiki/EdDSA#Ed25519), allowing verification
 by checking that a package was signed by a trusted public key.
@@ -14,7 +14,7 @@ by checking that a package was signed by a trusted public key.
 Filepack packages may include machine-readable metadata in a file named
 `metadata.filemeta` in the package root.
 
-A filepack package is a [Merkle
+A Filepack package is a [Merkle
 tree](https://en.wikipedia.org/wiki/Merkle_tree). The root hash of the tree is
 the hash of the serialized root directory of the package, called the package
 root. Serialized directories contain the names, sizes, hashes, and types of
@@ -44,14 +44,14 @@ Because file hashes are Merkle tree roots, files can be streamed and verified
 incrementally, with the server providing the client with a compact proof that
 downloaded file chunks are included in the BLAKE3 Merkle tree.
 
-Because filepack packages are trees of directories, they are composable. A
-filepack package may contain other packages, with the directory entry of each
+Because Filepack packages are trees of directories, they are composable. A
+Filepack package may contain other packages, with the directory entry of each
 subpackage containing the subpackage fingerprint.
 
 A package may be stored in forms other than as a directory tree and manifest.
 For example, the Filepack server stores files and serialized directories by
 hash in a flat directory, alongside a database recording package fingerprints.
-This allows the filepack server to deduplicate files that appear in multiple
+This allows the Filepack server to deduplicate files that appear in multiple
 packages, and allows clients to skip uploading files that are already present
 on the server, regardless of which package contains them.
 

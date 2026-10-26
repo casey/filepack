@@ -5,7 +5,7 @@ Introduction
 
 See [installation](installation.md) to get started and [Why is metadata
 important?](why-metadata.md) for some of the higher-level ideas behind
-filepack.
+Filepack.
 
 Why Filepack?
 -------------
@@ -41,6 +41,6 @@ files](https://en.wikipedia.org/wiki/Simple_file_verification):
   Additionally, errors can be detected and recovered from by transmitting
   only those parts of the file which are corrupted.
 
-- Packages may contain machine readable metadata following a filepack-defined
+- Packages may contain machine readable metadata following a Filepack-defined
   schema, allowing packages to be searched, indexed, and exposed through rich,
   featureful interfaces.

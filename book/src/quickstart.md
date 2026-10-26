@@ -70,7 +70,7 @@ filesystems; quality issues, like inclusion of junk files; and metadata issues,
 like missing or incomplete metadata.
 
 Creating a package with all lints enabled and fixing them is a great way to
-learn more about filepack and package metadata.
+learn more about Filepack and package metadata.
 
 Verifying Packages
 ------------------

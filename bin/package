@@ -45,7 +45,7 @@ cp -r \
   metadata.yaml \
   dist
 
-echo "Creating filepack manifest..."
+echo "Creating Filepack manifest..."
 cargo run create --deny distribution dist
 
 echo "Creating release archive..."

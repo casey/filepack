@@ -43,7 +43,7 @@ Documentation is available at [filepack.com/book/](https://filepack.com/book/).
 See [installation](https://filepack.com/book/installation.html) and
 [quickstart](https://filepack.com/book/quickstart.html) to get started, and
 [Why is metadata important?](https://filepack.com/book/why-metadata.html) for
-some of the higher-level ideas behind filepack.
+some of the higher-level ideas behind Filepack.
 
 Lints
 -----
@@ -88,7 +88,7 @@ filepack keygen
 ```
 
 Which creates `master.public` and `master.private` files in the `keychain`
-subdirectory of the filepack data directory.
+subdirectory of the Filepack data directory.
 
 ### Public Key Printing
 
@@ -130,7 +130,7 @@ defaults to the current directory.
 
 ### Creating a Package
 
-To create a filepack manifest:
+To create a Filepack manifest:
 
 ```shell
 filepack create [DIRECTORY]
@@ -188,9 +188,9 @@ filepack keygen
 ```
 
 This creates a new public key, `master.public`, with corresponding private key,
-`master.private`, in the filepack keychain directory.
+`master.private`, in the Filepack keychain directory.
 
-The `filepack info` command will print the path to the filepack data directory,
+The `filepack info` command will print the path to the Filepack data directory,
 keychain directory, and any public keys in the keychain directory.
 
 Your public key can be printed with:
@@ -273,7 +273,7 @@ keys.
 
 ### Detecting Accidental Corruption
 
-Create a filepack manifest with:
+Create a Filepack manifest with:
 
 ```shell
 filepack create <PACKAGE>

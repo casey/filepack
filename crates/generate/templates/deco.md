@@ -14,7 +14,7 @@ type.
 Deco is mostly canonical. With some exceptions, there is only one way to
 serialize a given value. Types which are designed to be extended are not
 guaranteed to have a canonical serialization, since they must accept and ignore
-data produced by newer versions of filepack.
+data produced by newer versions of Filepack.
 
 Byte Strings
 ------------

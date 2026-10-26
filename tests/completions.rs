@@ -34,6 +34,6 @@ fn subcommands() {
   Test::new()
     .env("FILEPACK_COMPLETE", "fish")
     .args(["--", "filepack", "ser"])
-    .stdout("serve\tStart a filepack server\n")
+    .stdout("serve\tStart a Filepack server\n")
     .success();
 }

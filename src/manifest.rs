@@ -12,7 +12,7 @@ pub struct Manifest {
   /// Signatures over the package fingerprint.
   #[serde_as(as = "SetPreventDuplicates<serde_with::Same>")]
   pub signatures: BTreeSet<Decoded<Attestation>>,
-  /// Entries in the manifest archive not recognized by this version of filepack.
+  /// Entries in the manifest archive not recognized by this version of Filepack.
   #[serde(default, skip_serializing_if = "DirectoryTree::is_empty")]
   pub unknown: DirectoryTree,
 }

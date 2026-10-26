@@ -17,7 +17,7 @@ convenient shortcuts.
 Authorization
 -------------
 
-By default, the filepack server does not require authorization. Anyone can
+By default, the Filepack server does not require authorization. Anyone can
 upload, download, and browse packages. Running `filepack serve` without any
 flags listens on port 80 on all interfaces, not just localhost.
 

@@ -271,7 +271,7 @@ pub enum Error {
     path: DisplayPath,
     source: XmpError,
   },
-  #[snafu(display("internal error, this may indicate a bug in filepack: {message}"))]
+  #[snafu(display("internal error, this may indicate a bug in Filepack: {message}"))]
   Internal {
     backtrace: Option<Backtrace>,
     message: String,
