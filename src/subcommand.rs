@@ -66,15 +66,15 @@ pub(crate) enum Subcommand {
   Contains(contains::Contains),
   #[command(about = "Create manifest")]
   Create(create::Create),
-  #[command(about = "Delete package from a filepack server")]
+  #[command(about = "Delete package from a Filepack server")]
   Delete(delete::Delete),
-  #[command(about = "Download package or file from a filepack server")]
+  #[command(about = "Download package or file from a Filepack server")]
   Download(download::Download),
   #[command(about = "List manifest files")]
   Files(files::Files),
   #[command(about = "Print package fingerprint")]
   Fingerprint(fingerprint::Fingerprint),
-  #[command(about = "Delete unreferenced data on a filepack server")]
+  #[command(about = "Delete unreferenced data on a Filepack server")]
   Gc(gc::Gc),
   #[command(about = "Print file hash")]
   Hash(hash::Hash),
@@ -96,7 +96,7 @@ pub(crate) enum Subcommand {
   Metadata(metadata::Metadata),
   #[command(about = "Print reference")]
   Reference,
-  #[command(about = "Start a filepack server")]
+  #[command(about = "Start a Filepack server")]
   Serve(serve::Serve),
   #[command(about = "Sign manifest")]
   Sign(sign::Sign),
@@ -104,7 +104,7 @@ pub(crate) enum Subcommand {
   Signatures(signatures::Signatures),
   #[command(about = "Print manifest totals")]
   Size(size::Size),
-  #[command(about = "Upload package or file to a filepack server")]
+  #[command(about = "Upload package or file to a Filepack server")]
   Upload(upload::Upload),
   #[command(about = "Verify manifest")]
   Verify(verify::Verify),

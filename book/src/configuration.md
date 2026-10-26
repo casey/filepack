@@ -4,14 +4,14 @@ Configuration
 Data Directory
 --------------
 
-Filepack stores local data, including private keys, in the filepack data
+Filepack stores local data, including private keys, in the Filepack data
 directory, located in `~/.filepack`, or `$XDG_DATA_HOME/filepack` if
 `$XDG_DATA_HOME` is set and non-empty.
 
-Filepack stores private keys in the `keychain` subdirectory of the filepack
+Filepack stores private keys in the `keychain` subdirectory of the Filepack
 data directory, by default in `~/.filepack/keychain`.
 
-The location of the filepack data directory used by a command can be overridden
+The location of the Filepack data directory used by a command can be overridden
 with the `--data-dir` option or the `FILEPACK_DATA_DIR` environment variable.
 
 Logging

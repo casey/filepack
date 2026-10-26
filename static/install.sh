@@ -12,7 +12,7 @@ fi
 
 help() {
   cat <<'EOF'
-Install a binary release of a filepack hosted on GitHub
+Install a binary release of filepack hosted on GitHub
 
 USAGE:
     install.sh [options]

@@ -9,6 +9,7 @@ Summary
 - [Quickstart](quickstart.md)
 
 # Guide
+- [Packages](packages.md)
 - [Configuration](configuration.md)
 - [Authoring Metadata](authoring-metadata.md)
 - [Server](server.md)
@@ -16,7 +17,6 @@ Summary
 # Background
 - [Why is metadata important?](why-metadata.md)
 - [Alternatives and Prior Art](alternatives.md)
-- [Design](design.md)
 
 # Reference
 - [Commands](commands.md)

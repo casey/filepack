@@ -17,7 +17,7 @@ convenient shortcuts.
 Authorization
 -------------
 
-By default, the filepack server does not require authorization. Anyone can
+By default, the Filepack server does not require authorization. Anyone can
 upload, download, and browse packages. Running `filepack serve` without any
 flags listens on port 80 on all interfaces, not just localhost.
 
@@ -148,7 +148,7 @@ replacement, and update.
 
 After successfully creating, replacing, or updating a package on the server,
 the new package head for that server is recorded to `.filepack/state.json` in
-the package root directory.
+the package root.
 
 ### Package Creation
 

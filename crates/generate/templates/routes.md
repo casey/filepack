@@ -1,7 +1,7 @@
 Routes
 ======
 
-The filepack server responds to the following API routes:
+The Filepack server responds to the following API routes:
 
 | method | path | description |
 |--------|------|-------------|
