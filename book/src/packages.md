@@ -16,9 +16,9 @@ Filepack packages may include machine-readable metadata in a file named
 
 A Filepack package is a [Merkle
 tree](https://en.wikipedia.org/wiki/Merkle_tree). The root hash of the tree is
-the hash of the serialized root directory of the package, called the package
-root. Serialized directories contain the names, sizes, hashes, and types of
-their children, which may be files or subdirectories.
+the hash of the serialized root directory of the package. Serialized
+directories contain the names, sizes, hashes, and types of their children,
+which may be files or subdirectories.
 
 The root hash of a package Merkle tree is called the package fingerprint, and
 is represented as [tagged hex](hex.md):
@@ -32,21 +32,15 @@ to the content of a package results in a completely different fingerprint, and
 it is computationally infeasible, assuming that BLAKE3 is collision-resistant,
 to create two packages with different content, but with the same fingerprint.
 
-BLAKE3 is itself a Merkle tree hash, whose leaves are the contents of the file
-being hashed, broken into 1 KiB chunks.
-
 Filepack's use of Merkle trees allows for efficient sharing and verification of
 packages over the internet, for example using the [Filepack server](server.md).
 A client, starting with a package fingerprint, first requests and verifies the
-serialized package root directory, followed by each subdirectory, and file.
+serialized package root directory, followed by each subdirectory and file.
 
-Because file hashes are Merkle tree roots, files can be streamed and verified
-incrementally, with the server providing the client with a compact proof that
-downloaded file chunks are included in the BLAKE3 Merkle tree.
-
-Because Filepack packages are trees of directories, they are composable. A
-Filepack package may contain other packages, with the directory entry of each
-subpackage containing the subpackage fingerprint.
+BLAKE3 is itself a Merkle tree hash, whose leaves are the contents of the file
+being hashed, broken into 1 KiB chunks. This allows files to be streamed and
+verified incrementally using compact proofs that downloaded file chunks are
+included in the BLAKE3 Merkle tree.
 
 A package may be stored in forms other than as a directory tree and manifest.
 For example, the Filepack server stores files and serialized directories by
@@ -67,10 +61,10 @@ the schemas of all types serialized as deco.
 
 A package fingerprint is the BLAKE3 hash of the deco-encoded package root
 [directory](deco/directory.md), containing [entries](deco/entry.md) for each
-child. Each entry contains the hash, name, and size of the child, along with
-its [type and additional info](deco/entry-info.md). For directories, this
-additional info includes [totals](deco/totals.md), the total number of files
-and subdirectories, as well as their aggregate sizes.
+child. Directories map child names to entries containing the hash and size of
+the child, along with its [type and additional info](deco/entry-info.md). For
+directories, this additional info includes [totals](deco/totals.md), the total
+number of files and subdirectories, as well as their aggregate sizes.
 
 Filepack uses three other serialization formats, aside from deco:
 
@@ -87,9 +81,8 @@ Filepack uses three other serialization formats, aside from deco:
 Manifests
 ---------
 
-Manifests are serialized with [deco](deco.md), a compact, binary serialization
-format, and stored in a file named `manifest.filepack` in the package root
-directory.
+Manifests are serialized with [deco](deco.md) and stored in a file named
+`manifest.filepack` in the package root directory.
 
 A `manifest.filepack` file is called a manifest archive, and is a
 content-addressed format, containing a root hash, which is not the package
@@ -105,17 +98,17 @@ The manifest archive root directory contains two subdirectories, `package` and
 `signatures`.
 
 The `package` directory is the package root, and the `signatures` directory
-contains signatures over the package root. Each signature is stored as a file
-whose name is the hash of the serialized signature.
+contains signatures over the package fingerprint. Each signature is stored as a
+file whose name is the hash of the serialized signature.
 
 All other entry names are reserved for use by future versions of Filepack.
 Unrecognized entries in the manifest archive root are ignored but preserved.
 
-Manifest archives do not contain package files, only serialized directories.
-The only exception to this is `metadata.filemeta`, which is included in the
-archive if present. This allows the manifest archive to serve as a convenient,
-single-file reference for a package, including both file hashes and sizes, as
-well as metadata.
+Manifest archives do not contain package files, only serialized directories and
+signatures. The only exception to this is `metadata.filemeta`, which is
+included in the archive if present. This allows the manifest archive to serve
+as a convenient, single-file reference for a package, including both file
+hashes and sizes, as well as signatures and metadata.
 
 Manifests can be converted to JSON with `filepack manifest` for inspection and
 manipulation. A JSON manifest can be converted to a deco manifest archive with
@@ -185,7 +178,7 @@ consumption by scripts and tools, `filepack metadata` prints the contents of
 
 Metadata follows a fixed schema and is not user-extensible, with fields
 describing the package contents, the package itself, and the media content of
-the package. Future versions of `filepack` may define new metadata fields,
+the package. Future versions of Filepack may define new metadata fields,
 causing verification errors if those fields are present and invalid according
 to the new schema.
 
