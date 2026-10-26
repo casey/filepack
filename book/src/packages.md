@@ -53,8 +53,8 @@ Serialization
 -------------
 
 Package directories, `manifest.filepack` manifests, and `metadata.filemeta`
-metadata are serialized as deco, a compact, canonical, schema-driven binary
-serialization format.
+metadata are serialized as deco, a compact, mostly canonical, schema-driven
+binary serialization format.
 
 The [deco](deco.md) chapter includes a description of deco itself, as well as
 the schemas of all types serialized as deco.
@@ -69,7 +69,7 @@ number of files and subdirectories, as well as their aggregate sizes.
 Filepack uses three other serialization formats, aside from deco:
 
 - [Tagged hex](hex.md), a text format wrapping a hex-encoded deco payload. Used
-  for fingerprints, hashes, public keys, private keys, and signatures.
+  for display of things like hashes, keys, and signatures.
 
 - [YAML](yaml.md), a human-readable and writable text format, used for
   hand-authored files, namely `metadata.yaml`, the template from which a
@@ -81,14 +81,12 @@ Filepack uses three other serialization formats, aside from deco:
 Manifests
 ---------
 
-Manifests are serialized with [deco](deco.md) and stored in a file named
-`manifest.filepack` in the package root directory.
+Manifests are serialized with [deco](deco.md) as a manifest
+[archive](deco/archive.md) named named `manifest.filepack` in the package root.
 
-A `manifest.filepack` file is called a manifest archive, and is a
-content-addressed format, containing a root hash, which is not the package
-fingerprint, but instead the hash of an intermediate directory, and a map of
-hashes to file contents. See [Archive](deco/archive.md) for the manifest
-archive schema.
+Archives are a content-addressed storage format, containing the hash of of an
+intermediate directory containing the package root directory and a map of
+hashes to file contents.
 
 The manifest can be traversed by reading the root hash, reading the entry for
 the root hash in the files map, deserializing the contents as a [deco
@@ -144,16 +142,19 @@ The signature is made over the BLAKE3 hash of a deco-encoded
 domain separation by committing to the [application](deco/application.md) and
 [context](deco/context.md).
 
+To verify a signature, the statement is wrapped in an envelope, serialized,
+hashed, and the raw Ed25519 signature over the hash is verified against the
+public key.
+
+The fingerprint from the verified signature object can then be used to verify
+the package itself.
+
 For transport, the raw Ed25519 signature, statement, and public key are stored
 in a [signature object](deco/signature-statement.md).
 
 Signatures are serialized as deco and stored as files named after their hash in
 the manifest archive `signatures` directory, and are represented in text as
 [tagged hex](hex/signature.md).
-
-To verify a signature, the statement is wrapped in an envelope, serialized,
-hashed, and the raw Ed25519 signature over the hash is verified against the
-public key.
 
 The same signature scheme, with a different context and inner
 [Claims](deco/claims.md) object, is used for server authorization bearer

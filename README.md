@@ -40,10 +40,12 @@ may change at any time.
 
 Documentation is available at [filepack.com/book/](https://filepack.com/book/).
 
-See [installation](https://filepack.com/book/installation.html) and
-[quickstart](https://filepack.com/book/quickstart.html) to get started, and
-[Why is metadata important?](https://filepack.com/book/why-metadata.html) for
-some of the higher-level ideas behind Filepack.
+See [Installation](https://filepack.com/book/installation.html) and
+[Quickstart](https://filepack.com/book/quickstart.html) to get started,
+[Packages](https://filepack.com/book/packages.html) for an overview of Filepack
+packages, and [Why is metadata
+important?](https://filepack.com/book/why-metadata.html) for some of the
+higher-level ideas behind Filepack.
 
 Lints
 -----
