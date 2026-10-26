@@ -45,9 +45,9 @@ impl Display for Fingerprint {
 
 impl Hex for Fingerprint {
   const EXAMPLE: &'static str =
-    "package1af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262";
+    "package12186aa6cefc1ae2f427b90e61a3ab91c88573f6f6719ca0188098d681b6c80ca";
 
-  const EXAMPLE_DESCRIPTION: &'static str = "Hash of the empty string.";
+  const EXAMPLE_DESCRIPTION: &'static str = "Fingerprint of the empty package.";
 
   const TAG: Tag = Tag::Package;
 }
@@ -125,7 +125,7 @@ mod tests {
   #[test]
   fn example() {
     assert_eq!(
-      Fingerprint(Hash::bytes(b"")).to_string(),
+      Fingerprint(Directory::new().entry().hash).to_string(),
       Fingerprint::EXAMPLE
     );
   }

@@ -212,7 +212,7 @@ mod tests {
             <div>
               <dt>files</dt>
               <dd>
-                <a href='/directory/{hash}'>2 files</a>
+                <a href='/directory/{directory}'>2 files</a>
               </dd>
             </div>
             <div>
@@ -255,8 +255,8 @@ mod tests {
             </li>
           </ol>
         ",
+        directory = Hash::from(Fingerprint::EXAMPLE.parse::<Fingerprint>().unwrap()),
         fingerprint = Fingerprint::EXAMPLE,
-        hash = Hash::EXAMPLE,
       )),
     );
   }
@@ -323,7 +323,7 @@ mod tests {
             <div>
               <dt>files</dt>
               <dd>
-                <a href='/directory/{hash}'>2 files</a>
+                <a href='/directory/{directory}'>2 files</a>
               </dd>
             </div>
             <div>
@@ -366,8 +366,8 @@ mod tests {
             </li>
           </ol>
         ",
+        directory = Hash::from(Fingerprint::EXAMPLE.parse::<Fingerprint>().unwrap()),
         fingerprint = Fingerprint::EXAMPLE,
-        hash = Hash::EXAMPLE,
       )),
     );
   }
@@ -467,7 +467,7 @@ mod tests {
             <div>
               <dt>files</dt>
               <dd>
-                <a href='/directory/{hash}'>3 files</a>
+                <a href='/directory/{directory}'>3 files</a>
               </dd>
             </div>
             <div>
@@ -527,8 +527,8 @@ mod tests {
             </li>
           </ul>
         "#,
+        directory = Hash::from(Fingerprint::EXAMPLE.parse::<Fingerprint>().unwrap()),
         fingerprint = Fingerprint::EXAMPLE,
-        hash = Hash::EXAMPLE,
       )),
     );
   }
@@ -628,7 +628,7 @@ mod tests {
             <div>
               <dt>files</dt>
               <dd>
-                <a href='/directory/{hash}'>1 file</a>
+                <a href='/directory/{directory}'>1 file</a>
               </dd>
             </div>
             <div>
@@ -673,8 +673,8 @@ mod tests {
             </li>
           </ol>
         ",
+        directory = Hash::from(Fingerprint::EXAMPLE.parse::<Fingerprint>().unwrap()),
         fingerprint = Fingerprint::EXAMPLE,
-        hash = Hash::EXAMPLE,
         merge = Revision::from(Hash::bytes(b"foo")),
         revision = Revision::EXAMPLE,
       )),
@@ -850,7 +850,7 @@ mod tests {
             <div>
               <dt>files</dt>
               <dd>
-                <a href='/directory/{hash}'>1 file</a>
+                <a href='/directory/{directory}'>1 file</a>
               </dd>
             </div>
             <div>
@@ -924,6 +924,7 @@ mod tests {
             </tbody>
           </table>
         ",
+        directory = Hash::from(Fingerprint::EXAMPLE.parse::<Fingerprint>().unwrap()),
         fingerprint = Fingerprint::EXAMPLE,
         foo = Hash::bytes(b"foo"),
         hash = Hash::EXAMPLE,
@@ -1053,7 +1054,7 @@ mod tests {
             <div>
               <dt>files</dt>
               <dd>
-                <a href='/directory/{hash}'>1 file</a>
+                <a href='/directory/{directory}'>1 file</a>
               </dd>
             </div>
             <div>
@@ -1119,8 +1120,8 @@ mod tests {
             </li>
           </ol>
         ",
+        directory = Hash::from(Fingerprint::EXAMPLE.parse::<Fingerprint>().unwrap()),
         fingerprint = Fingerprint::EXAMPLE,
-        hash = Hash::EXAMPLE,
       )),
     );
   }

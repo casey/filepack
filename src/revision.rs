@@ -38,9 +38,9 @@ impl Display for Revision {
 
 impl Hex for Revision {
   const EXAMPLE: &'static str =
-    "revision1a895f0cd0338254bc76650e829441165eb127ae1e51b92e87189ed1580195617";
+    "revision12c7922354e5c2496ffc5e87ee0b29cc8767dc35a7c0e31e9d239014df5b44583";
   const EXAMPLE_DESCRIPTION: &'static str = "Hash of the revision with no parents whose package \
-    fingerprint is the hash of the empty string.";
+    is the empty package.";
   const TAG: Tag = Tag::Revision;
 }
 
