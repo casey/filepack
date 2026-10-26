@@ -21,7 +21,7 @@ root. Serialized directories contain the names, sizes, hashes, and types of
 their children, which may be files or subdirectories.
 
 The root hash of a package Merkle tree is called the package fingerprint, and
-is represented in using [tagged hex](hex.md):
+is represented as [tagged hex](hex.md):
 
 ```
 package1af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262
@@ -41,8 +41,8 @@ A client, starting with a package fingerprint, first requests and verifies the
 serialized package root directory, followed by each subdirectory, and file.
 
 Because file hashes are Merkle tree roots, files can be streamed and verified
-incrementally, with the server providing the client of a compact proof that
-downloaded file chunks are included in the BLAKE3 Merkle tree>
+incrementally, with the server providing the client with a compact proof that
+downloaded file chunks are included in the BLAKE3 Merkle tree.
 
 Because filepack packages are trees of directories, they are composable. A
 filepack package may contain other packages, with the directory entry of each
@@ -70,7 +70,7 @@ A package fingerprint is the BLAKE3 hash of the deco-encoded package root
 child. Each entry contains the hash, name, and size of the child, along with
 its [type and additional info](deco/entry-info.md). For directories, this
 additional info includes [totals](deco/totals.md), the total number of files
-and subdirectories, as well as their aggregate file size.
+and subdirectories, as well as their aggregate sizes.
 
 Filepack uses three other serialization formats, aside from deco:
 
@@ -93,7 +93,7 @@ directory.
 
 A `manifest.filepack` file is called a manifest archive, and is a
 content-addressed format, containing a root hash, which is not the package
-fingerprint, but instead to hash of an intermediate directory, and a map of
+fingerprint, but instead the hash of an intermediate directory, and a map of
 hashes to file contents. See [Archive](deco/archive.md) for the manifest
 archive schema.
 
@@ -108,9 +108,8 @@ The `package` directory is the package root, and the `signatures` directory
 contains signatures over the package root. Each signature is stored as a file
 whose name is the hash of the serialized signature.
 
-All other subdirectory names are reserved for use by future versions of
-Filepack. Unrecognized subdirectories of the manifest archive root are ignored
-but preserved.
+All other entry names are reserved for use by future versions of Filepack.
+Unrecognized entries in the manifest archive root are ignored but preserved.
 
 Manifest archives do not contain package files, only serialized directories.
 The only exception to this is `metadata.filemeta`, which is included in the
@@ -125,35 +124,44 @@ manipulation. A JSON manifest can be converted to a deco manifest archive with
 Filenames
 ---------
 
-Path components in manifest directories are UTF-8 and may not be `.` or `..`,
-contain the path separators `/` or `\`, contain control characters, or begin
-with a Windows drive prefix, such as `C:`.
+Filenames in manifest directories are non-empty UTF-8 strings and may not
+contain control characters.
+
+Furthermore, they may not be `.` or `..`, contain `/` or `\`, or begin with a
+Windows drive prefix, such as `C:`.
 
 This ensures that file paths assembled from path components work on Windows and
-Unix, and cannot escape the package root. Symbolic links are not supported.
+Unix and cannot escape the package root. Symbolic links are not supported.
+
+The filenames `manifest.filepack` and `.filepack`, with any case, are reserved
+in the package root.
 
 Signatures
 ----------
 
-Filepack allows for the creation of
-[Ed25519](https://en.wikipedia.org/wiki/EdDSA#Ed25519) signatures over
-a package fingerprint, which commits to the content of a package.
+Packages may be signed with
+[Ed25519](https://en.wikipedia.org/wiki/EdDSA#Ed25519).
 
-Signatures are made over a deco-encoded [Statement](deco/statement.md)
+To sign a package, the signer constructs a [statement](deco/statement.md),
 containing the package fingerprint, as well as an optional integer timestamp of
 seconds since the Unix epoch.
 
-Signatures are stored as files named after their hash in the the manifest
-archive `signatures` directory.
-
-Signatures are encoded as [tagged-hex](hex/signature.md), whose payload is a
-deco-encoded [Signature object containing the signed
-Statement](deco/signature-statement.md).
-
-Before signing, and when verifying, the serialized statement is wrapped in an
-[Envelope](deco/envelope-statement.md), which performs domain separation by
-committing to the [application](deco/application.md) and
+The signature is made over the BLAKE3 hash of a deco-encoded
+[envelope](deco/envelope-statement.md) containing the statement, which performs
+domain separation by committing to the [application](deco/application.md) and
 [context](deco/context.md).
+
+For transport, the raw Ed25519 signature, statement, and public key are stored
+in a [signature object](deco/signature-statement.md).
+
+Signatures are serialized as deco and stored as files named after their hash in
+the manifest archive `signatures` directory, and are represented in text as
+[tagged-hex](hex/signature.md).
+
+To verify a package, first the package is verified against the statement
+fingerprint, then the statement is wrapped in an envelope, serialized, hashed,
+and the raw Ed25519 signature over the heash is verified against the public
+key.
 
 The same signature scheme, with a different context and inner
 [Claims](deco/claims.md) object, is used for server authorization bearer
@@ -189,7 +197,7 @@ covering a variety of media types. All metadata served by the demo server,
 including package artwork, video placeholders, thumbnail images, and media
 information, is sourced from package metadata.
 
-See [Metadata](deco/metadata.md) for the deco schema, [Authoring
+See [Metadata](deco/metadata.md) for the deco schema and [Authoring
 Metadata](authoring-metadata.md) for a description of `metadata.yaml`, the
 template file used to generate package metadata.
 
