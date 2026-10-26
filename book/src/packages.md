@@ -82,14 +82,13 @@ Manifests
 ---------
 
 Manifests are serialized with [deco](deco.md) as a manifest
-[archive](deco/archive.md) named named `manifest.filepack` in the package root.
+[archive](deco/archive.md) named `manifest.filepack` in the package root.
 
-Archives are a content-addressed storage format, containing the hash of of an
-intermediate directory containing the package root directory and a map of
-hashes to file contents.
+Archives are a content-addressed storage format. They contain the hash of a
+root directory and a map of hashes to file contents.
 
-The manifest can be traversed by reading the root hash, reading the entry for
-the root hash in the files map, deserializing the contents as a [deco
+An archive can be traversed by reading the root hash, reading the entry for the
+root hash in the files map, deserializing the contents as a [deco
 directory](deco/directory.md), and repeating the process for subdirectories.
 
 The manifest archive root directory contains two subdirectories, `package` and
@@ -97,7 +96,8 @@ The manifest archive root directory contains two subdirectories, `package` and
 
 The `package` directory is the package root, and the `signatures` directory
 contains signatures over the package fingerprint. Each signature is stored as a
-file whose name is the hash of the serialized signature.
+file whose name is the [tagged hex hash](hex/hash.md) of the serialized
+signature.
 
 All other entry names are reserved for use by future versions of Filepack.
 Unrecognized entries in the manifest archive root are ignored but preserved.
@@ -144,7 +144,8 @@ domain separation by committing to the [application](deco/application.md) and
 
 To verify a signature, the statement is wrapped in an envelope, serialized,
 hashed, and the raw Ed25519 signature over the hash is verified against the
-public key.
+public key. Public keys which are non-canonical or small order points are
+rejected.
 
 The fingerprint from the verified signature object can then be used to verify
 the package itself.
