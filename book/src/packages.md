@@ -24,7 +24,7 @@ The root hash of a package Merkle tree is called the package fingerprint, and
 is represented as [tagged hex](hex.md):
 
 ```
-package1af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262
+package12186aa6cefc1ae2f427b90e61a3ab91c88573f6f6719ca0188098d681b6c80ca
 ```
 
 A package fingerprint uniquely identifies the content of a package. Any change
@@ -156,12 +156,11 @@ in a [signature object](deco/signature-statement.md).
 
 Signatures are serialized as deco and stored as files named after their hash in
 the manifest archive `signatures` directory, and are represented in text as
-[tagged-hex](hex/signature.md).
+[tagged hex](hex/signature.md).
 
-To verify a package, first the package is verified against the statement
-fingerprint, then the statement is wrapped in an envelope, serialized, hashed,
-and the raw Ed25519 signature over the heash is verified against the public
-key.
+To verify a signature, the statement is wrapped in an envelope, serialized,
+hashed, and the raw Ed25519 signature over the hash is verified against the
+public key.
 
 The same signature scheme, with a different context and inner
 [Claims](deco/claims.md) object, is used for server authorization bearer
