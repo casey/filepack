@@ -46,32 +46,6 @@ See [Installation](https://filepack.com/book/installation.html) and
 packages, and [Why?](https://filepack.com/book/why.html) for some of the
 higher-level ideas behind Filepack.
 
-Lints
------
-
-`filepack create` supports optional lints to check your package for issues:
-
-```shell
-filepack create --deny distribution
-```
-
-The `distribution` lint group checks for issues which can cause problems if the
-package is intended for distribution, such as non-portable paths that are
-illegal on Windows, paths which would conflict on case-insensitive file
-systems, and inclusion of junk files such as `.DS_Store`.
-
-Lint groups and the lints they contain may be printed with:
-
-```shell
-filepack lints
-```
-
-Individual lints may be allowed with `--allow`:
-
-```shell
-filepack create --deny distribution --allow windows-reserved-filename
-```
-
 Keys and Signatures
 -------------------
 

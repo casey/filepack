@@ -64,10 +64,17 @@ To create a package with all lints enabled:
 filepack create --deny all
 ```
 
+Individual lints may be disabled with `--allow`:
+
+```shell
+filepack create --deny all --allow windows-reserved-filename
+```
+
 Filepack supports a variety of [lints](lints.md). These include checks for
 cross-platform compatibility issues, like case-conflicts on case-insensitive
 filesystems; quality issues, like inclusion of junk files; and metadata issues,
-like missing or incomplete metadata.
+like missing or incomplete metadata. Lint groups, such as `all`, allow enabling
+or disabling multiple related lints.
 
 Creating a package with all lints enabled and fixing them is a great way to
 learn more about Filepack and package metadata.
