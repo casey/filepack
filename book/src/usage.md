@@ -66,7 +66,7 @@ filepack create --deny all
 
 Individual lints may be disabled with `--allow`:
 
-```shell
+```sh
 filepack create --deny all --allow windows-reserved-filename
 ```
 
