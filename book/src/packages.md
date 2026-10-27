@@ -14,6 +14,16 @@ by checking that a package was signed by a trusted public key.
 Filepack packages may include machine-readable metadata in a file named
 `metadata.filemeta` in the package root.
 
+A package may be stored in forms other than as a directory tree and manifest.
+For example, the Filepack server stores files and serialized directories by
+hash in a flat directory, alongside a database recording package fingerprints.
+This allows the Filepack server to deduplicate files that appear in multiple
+packages, and allows clients to skip uploading files that are already present
+on the server, regardless of which package contains them.
+
+Hashing
+-------
+
 A Filepack package is a [Merkle
 tree](https://en.wikipedia.org/wiki/Merkle_tree). The root hash of the tree is
 the hash of the serialized root directory of the package. Serialized
@@ -41,13 +51,6 @@ BLAKE3 is itself a Merkle tree hash, whose leaves are the contents of the file
 being hashed, broken into 1 KiB chunks. This allows files to be streamed and
 verified incrementally using compact proofs that downloaded file chunks are
 included in the BLAKE3 Merkle tree.
-
-A package may be stored in forms other than as a directory tree and manifest.
-For example, the Filepack server stores files and serialized directories by
-hash in a flat directory, alongside a database recording package fingerprints.
-This allows the Filepack server to deduplicate files that appear in multiple
-packages, and allows clients to skip uploading files that are already present
-on the server, regardless of which package contains them.
 
 Serialization
 -------------
