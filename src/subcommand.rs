@@ -78,7 +78,7 @@ pub(crate) enum Subcommand {
   Gc(gc::Gc),
   #[command(about = "Print file hash")]
   Hash(hash::Hash),
-  #[command(about = "Print info")]
+  #[command(about = "Print configuration and state")]
   Info,
   #[command(about = "Print public key")]
   Key(key::Key),
@@ -96,7 +96,7 @@ pub(crate) enum Subcommand {
   Metadata(metadata::Metadata),
   #[command(about = "Print reference")]
   Reference,
-  #[command(about = "Start a Filepack server")]
+  #[command(about = "Start Filepack server")]
   Serve(serve::Serve),
   #[command(about = "Sign manifest")]
   Sign(sign::Sign),
