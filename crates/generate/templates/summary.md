@@ -11,7 +11,6 @@ Summary
 # Guide
 - [Packages](packages.md)
 - [Configuration](configuration.md)
-- [Authoring Metadata](authoring-metadata.md)
 - [Server](server.md)
 
 # Background
@@ -39,6 +38,7 @@ Summary
 - [Languages](languages.md)
 - [Lints](lints.md)
 - [Media Formats](media-formats.md)
+- [Metadata](metadata.md)
 - [Tagged Hex](hex.md)
 %% for (tag, path) in &self.hex {
   - [{{ tag }}]({{ path }})

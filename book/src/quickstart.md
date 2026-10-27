@@ -53,7 +53,7 @@ filepack metadata
 ```
 
 The metadata schema is extensive, with many fields and media types. See
-[Authoring Metadata](authoring-metadata.md) for more information.
+[Metadata](metadata.md) for more information.
 
 Linting Packages
 ----------------

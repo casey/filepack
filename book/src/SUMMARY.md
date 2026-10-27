@@ -11,7 +11,6 @@ Summary
 # Guide
 - [Packages](packages.md)
 - [Configuration](configuration.md)
-- [Authoring Metadata](authoring-metadata.md)
 - [Server](server.md)
 
 # Background
@@ -160,6 +159,7 @@ Summary
 - [Languages](languages.md)
 - [Lints](lints.md)
 - [Media Formats](media-formats.md)
+- [Metadata](metadata.md)
 - [Tagged Hex](hex.md)
   - [hash](hex/hash.md)
   - [package](hex/package.md)
