@@ -1,4 +1,6 @@
 /book/build
+/book/src/api
+/book/src/api.md
 /book/src/authoring-metadata.md
 /book/src/commands
 /book/src/commands.md
@@ -12,9 +14,9 @@
 /book/src/languages.md
 /book/src/lints.md
 /book/src/media-formats.md
-/book/src/routes
-/book/src/routes.md
 /book/src/unstable-features.md
+/book/src/web
+/book/src/web.md
 /book/src/yaml
 /book/src/yaml.md
 /flamegraph.svg

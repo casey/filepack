@@ -5,9 +5,9 @@ use {
     functions::{escape, list, path_parameter_type, route_link, route_path, write},
     row::Row,
     templates::{
-      AuthoringMetadataMd, CommandMd, CommandsMd, ContentTypesMd, DecoMd, DecoSchemaMd, HexMd,
-      JsonMd, JsonSchemaMd, LanguagesMd, LintsMd, MediaFormatsMd, RouteMd, RoutesMd, SummaryMd,
-      TagMd, UnstableFeaturesMd, YamlMd,
+      ApiMd, AuthoringMetadataMd, CommandMd, CommandsMd, ContentTypesMd, DecoMd, DecoSchemaMd,
+      HexMd, JsonMd, JsonSchemaMd, LanguagesMd, LintsMd, MediaFormatsMd, RouteMd, SummaryMd, TagMd,
+      UnstableFeaturesMd, WebMd, YamlMd,
     },
   },
   boilerplate::Boilerplate,
@@ -123,17 +123,26 @@ fn main() {
     pages
   };
 
-  let routes = {
-    let mut routes = BTreeMap::new();
-
+  let mut api = BTreeMap::new();
+  let mut web = BTreeMap::new();
+  {
     for (route_path, route) in &reference.routes {
-      let slug = if route_path.ends_with('/') {
-        format!("{route_path}index").to_kebab_case()
+      let relative = if route.api {
+        route_path.strip_prefix("/api").unwrap()
       } else {
-        route_path.to_kebab_case()
+        route_path.as_str()
       };
 
-      let path = Utf8PathBuf::from(format!("routes/{slug}.md"));
+      let slug = if relative.ends_with('/') {
+        format!("{relative}index").to_kebab_case()
+      } else {
+        relative.to_kebab_case()
+      };
+
+      let path = Utf8PathBuf::from(format!(
+        "{}/{slug}.md",
+        if route.api { "api" } else { "web" },
+      ));
 
       write(
         &path,
@@ -144,11 +153,13 @@ fn main() {
         },
       );
 
-      routes.insert(route_path.as_str(), path);
+      if route.api {
+        api.insert(route_path.as_str(), path);
+      } else {
+        web.insert(route_path.as_str(), path);
+      }
     }
-
-    routes
-  };
+  }
 
   let json = {
     let mut pages = BTreeMap::new();
@@ -201,6 +212,14 @@ fn main() {
 
     pages
   };
+
+  write(
+    "api.md",
+    ApiMd {
+      pages: &api,
+      routes: &reference.routes,
+    },
+  );
 
   write("commands.md", CommandsMd { pages: &commands });
 
@@ -258,9 +277,9 @@ fn main() {
   );
 
   write(
-    "routes.md",
-    RoutesMd {
-      pages: &routes,
+    "web.md",
+    WebMd {
+      pages: &web,
       routes: &reference.routes,
     },
   );
@@ -289,11 +308,12 @@ fn main() {
   write(
     "SUMMARY.md",
     SummaryMd {
+      api,
       commands,
       deco,
       hex,
       json,
-      routes,
+      web,
       yaml,
     },
   );

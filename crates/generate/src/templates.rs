@@ -1,6 +1,12 @@
 use super::*;
 
 #[derive(Boilerplate)]
+pub(crate) struct ApiMd<'a> {
+  pub(crate) pages: &'a BTreeMap<&'a str, Utf8PathBuf>,
+  pub(crate) routes: &'a BTreeMap<String, Route>,
+}
+
+#[derive(Boilerplate)]
 pub(crate) struct AuthoringMetadataMd<'a> {
   pub(crate) example: &'a yaml::Example,
 }
@@ -100,18 +106,13 @@ pub(crate) struct RouteMd<'a> {
 }
 
 #[derive(Boilerplate)]
-pub(crate) struct RoutesMd<'a> {
-  pub(crate) pages: &'a BTreeMap<&'a str, Utf8PathBuf>,
-  pub(crate) routes: &'a BTreeMap<String, Route>,
-}
-
-#[derive(Boilerplate)]
 pub(crate) struct SummaryMd<'a> {
+  pub(crate) api: BTreeMap<&'a str, Utf8PathBuf>,
   pub(crate) commands: BTreeMap<String, (&'a Command, Utf8PathBuf)>,
   pub(crate) deco: BTreeMap<&'a str, Utf8PathBuf>,
   pub(crate) hex: BTreeMap<&'a str, Utf8PathBuf>,
   pub(crate) json: BTreeMap<&'a str, Utf8PathBuf>,
-  pub(crate) routes: BTreeMap<&'a str, Utf8PathBuf>,
+  pub(crate) web: BTreeMap<&'a str, Utf8PathBuf>,
   pub(crate) yaml: BTreeMap<&'a str, Utf8PathBuf>,
 }
 
@@ -124,6 +125,12 @@ pub(crate) struct TagMd<'a> {
 #[derive(Boilerplate)]
 pub(crate) struct UnstableFeaturesMd<'a> {
   pub(crate) features: &'a BTreeMap<UnstableFeature, String>,
+}
+
+#[derive(Boilerplate)]
+pub(crate) struct WebMd<'a> {
+  pub(crate) pages: &'a BTreeMap<&'a str, Utf8PathBuf>,
+  pub(crate) routes: &'a BTreeMap<String, Route>,
 }
 
 #[derive(Boilerplate)]
