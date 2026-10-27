@@ -197,8 +197,8 @@ covering a variety of media types. All metadata served by the demo server,
 including package artwork, video placeholders, thumbnail images, and media
 information, is sourced from package metadata.
 
-See [Metadata](metadata.md) for a description of `metadata.yaml`, the template
-file used to generate package metadata, as well as links to the deco and YAML
+See [Metadata](metadata.md) for an example `metadata.yaml` file, the template
+used to generate package metadata, as well as links to the deco and YAML
 metadata schemas.
 
 Please feel free to [open an issue](https://github.com/casey/filepack/issues)
