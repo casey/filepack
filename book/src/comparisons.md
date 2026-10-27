@@ -58,18 +58,18 @@ Filepack packages are similar to
 [BitTorrent](https://en.wikipedia.org/wiki/BitTorrent) torrents.
 
 [Version 1 torrents](https://www.bittorrent.org/beps/bep_0003.html) use the
-[SHA-1](https://en.wikipedia.org/wiki/SHA-1) hash function, now known to be
-cryptographically broken. Files do not have consistent hashes between torrents.
+[SHA-1](https://en.wikipedia.org/wiki/SHA-1) hash function, which is vulnerable
+to collisions. Files do not have consistent hashes between torrents.
 
 [Version 2 torrents](https://www.bittorrent.org/beps/bep_0052.html) use the
-[SHA-2](https://en.wikipedia.org/wiki/SHA-2) hash function with a Merkle tree
+[SHA-256](https://en.wikipedia.org/wiki/SHA-2) hash function with a Merkle tree
 construction that does give files consistent hashes between torrents.
 
 Version 1 torrents are currently far more widely adopted than version 2
 torrents.
 
-Torrents are not naively composable. A torrent may contain `.torrrent` files,
-but may not naively contain other torrents.
+Torrents are not composable. A torrent may contain `.torrent` files, but may
+not natively contain other torrents.
 
 Compared to BitTorrent, Filepack uses BLAKE3, a fast, modern cryptographic hash
 function with built-in Merkle tree construction. Files are consistently hashed
@@ -91,10 +91,10 @@ hashing or manifests.
 
 ### IPFS
 
-Filepack and IPFS use a similar data model, where directories files and files
-are both identified by hash.
+Filepack and IPFS use a similar data model, where directories and files are
+both identified by hash.
 
-IPFS is notoriously complex, and supports a wide variety of hash functions,
+IPFS is notoriously complex, supports a wide variety of hash functions,
 public-key cryptography algorithms, and peer to peer transport and addressing
 schemes.
 
