@@ -111,4 +111,4 @@ Iroh is a peer-to-peer networking stack that uses BLAKE3 for content
 addressing.
 
 Filepack and Iroh are largely orthogonal. Iroh is used for transport of flat
-blobs, and does not define a directory encoding.
+blobs and does not define a directory encoding.
