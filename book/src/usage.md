@@ -1,5 +1,5 @@
-Quickstart
-==========
+Usage
+=====
 
 Filepack supports a number of subcommands, including `filepack create` to
 create a package, `filepack verify` to verify a package, and `filepack serve`
@@ -64,13 +64,26 @@ To create a package with all lints enabled:
 filepack create --deny all
 ```
 
+Individual lints may be disabled with `--allow`:
+
+```sh
+filepack create --deny all --allow windows-reserved-filename
+```
+
 Filepack supports a variety of [lints](lints.md). These include checks for
 cross-platform compatibility issues, like case-conflicts on case-insensitive
 filesystems; quality issues, like inclusion of junk files; and metadata issues,
-like missing or incomplete metadata.
+like missing or incomplete metadata. Lint groups, such as `all`, allow enabling
+or disabling multiple related lints.
 
 Creating a package with all lints enabled and fixing them is a great way to
 learn more about Filepack and package metadata.
+
+Lint and lint group can be printed with:
+
+```sh
+filepack lints
+```
 
 Verifying Packages
 ------------------
@@ -117,6 +130,8 @@ Generate a new key pair with the default name `master`:
 filepack keygen
 ```
 
+Keys are stored in the `keychain` subdirectory of the Filepack data directory.
+
 Sign the package with the newly generated private key:
 
 ```sh
@@ -138,6 +153,12 @@ filepack verify --key <PUBLIC_KEY>
 Any change to the package will cause `filepack` to exit with a non-zero exit
 code. As long as your private key is secure, nobody can create a signature
 which verifies against your public key.
+
+Packages may also be signed at creation:
+
+```sh
+filepack create --sign
+```
 
 Sharing Packages
 ----------------

@@ -6,7 +6,7 @@ Summary
 # Getting Started
 - [Installation](installation.md)
 - [Shell Completion](shell-completion.md)
-- [Quickstart](quickstart.md)
+- [Usage](usage.md)
 
 # Guide
 - [Why?](why.md)
