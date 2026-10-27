@@ -250,7 +250,7 @@ package head, it will be deleted by the next run of `filepack gc`.
 Web Packages
 ------------
 
-Arbitrary web content can be hosted by the Filepack server using mounted web
+Arbitrary web content can be hosted on a Filepack server using mounted web
 packages.
 
 Web packages contain web content with a `static/index.html` entry point. They
