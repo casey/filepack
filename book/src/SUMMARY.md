@@ -9,12 +9,10 @@ Summary
 - [Quickstart](quickstart.md)
 
 # Guide
+- [Why?](why.md)
 - [Packages](packages.md)
 - [Configuration](configuration.md)
 - [Server](server.md)
-
-# Background
-- [Why?](why.md)
 - [Alternatives and Prior Art](alternatives.md)
 
 # Reference
