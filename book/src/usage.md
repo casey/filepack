@@ -1,5 +1,5 @@
-Quickstart
-==========
+Usage
+=====
 
 Filepack supports a number of subcommands, including `filepack create` to
 create a package, `filepack verify` to verify a package, and `filepack serve`
