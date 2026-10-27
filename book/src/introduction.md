@@ -4,9 +4,8 @@ Introduction
 {{#include ../../README.md:introduction}}
 
 See [Installation](installation.md) and [Quickstart](quickstart.md) to get
-started, [Packages](packages.md) for an overview of Filepack packages, and [Why
-is metadata important?](why-metadata.md) for some of the higher-level ideas
-behind Filepack.
+started, [Packages](packages.md) for an overview of Filepack packages, and
+[Why?](why.md) for some of the higher-level ideas behind Filepack.
 
 Features
 --------

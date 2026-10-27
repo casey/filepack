@@ -14,7 +14,7 @@ Summary
 - [Server](server.md)
 
 # Background
-- [Why is metadata important?](why-metadata.md)
+- [Why?](why.md)
 - [Alternatives and Prior Art](alternatives.md)
 
 # Reference
