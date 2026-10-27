@@ -4,15 +4,24 @@ Packages
 A Filepack package is a directory containing a manifest named
 `manifest.filepack`, which records the names, sizes, and [BLAKE3
 hashes](https://en.wikipedia.org/wiki/BLAKE_(hash_function)#BLAKE3) of all
-files in the directory and its subdirectories.
+files in the directory and its subdirectories, and which may be signed using
+[Ed25519](https://en.wikipedia.org/wiki/EdDSA#Ed25519).
 
-A Filepack manifest contains all the information needed to verify the contents
-of a package. Additionally, packages may be signed using
-[Ed25519](https://en.wikipedia.org/wiki/EdDSA#Ed25519), allowing verification
-by checking that a package was signed by a trusted public key.
+Packages can be identified by fingerprint, a hash that uniquely identifies the
+content of the package:
+
+```
+package12186aa6cefc1ae2f427b90e61a3ab91c88573f6f6719ca0188098d681b6c80ca
+```
+
+The authenticity of a package can be verified by manifest, fingerprint, or
+signature, guaranteeing that the contents of the package have not been
+accidentally modified or intentionally tampered with.
 
 Filepack packages may include machine-readable metadata in a file named
-`metadata.filemeta` in the package root.
+`metadata.filemeta` in the package root, which includes information about the
+package, the packager, its media content, and assets such as package artwork
+and image thumbnails.
 
 A package may be stored in forms other than as a directory tree and manifest.
 For example, the Filepack server stores files and serialized directories by
@@ -31,16 +40,10 @@ directories contain the names, sizes, hashes, and types of their children,
 which may be files or subdirectories.
 
 The root hash of a package Merkle tree is called the package fingerprint, and
-is represented as [tagged hex](hex.md):
-
-```
-package12186aa6cefc1ae2f427b90e61a3ab91c88573f6f6719ca0188098d681b6c80ca
-```
-
-A package fingerprint uniquely identifies the content of a package. Any change
-to the content of a package results in a completely different fingerprint, and
-it is computationally infeasible, assuming that BLAKE3 is collision-resistant,
-to create two packages with different content, but with the same fingerprint.
+uniquely identifies the content of a package. Any change to the content of a
+package results in a completely different fingerprint, and it is
+computationally infeasible, assuming that BLAKE3 is collision-resistant, to
+create two packages with different content but the same fingerprint.
 
 Filepack's use of Merkle trees allows for efficient sharing and verification of
 packages over the internet, for example using the [Filepack server](server.md).
