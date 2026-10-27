@@ -108,7 +108,8 @@ filepack verify --fingerprint <FINGERPRINT>
 As long as the fingerprint has not been modified, any change to the package
 will cause `filepack` to exit with a non-zero exit code.
 
-Finally, packages can be verified by signature.
+Signing Packages
+----------------
 
 Generate a new key pair with the default name `master`:
 
@@ -135,7 +136,7 @@ filepack verify --key <PUBLIC_KEY>
 ```
 
 Any change to the package will cause `filepack` to exit with a non-zero exit
-code, and as long as your private key is secure, nobody can create a signature
+code. As long as your private key is secure, nobody can create a signature
 which verifies against your public key.
 
 Sharing Packages
