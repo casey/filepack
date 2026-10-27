@@ -79,6 +79,12 @@ or disabling multiple related lints.
 Creating a package with all lints enabled and fixing them is a great way to
 learn more about Filepack and package metadata.
 
+Lint and lint group can be printed with:
+
+```sh
+filepack lints
+```
+
 Verifying Packages
 ------------------
 
@@ -124,6 +130,8 @@ Generate a new key pair with the default name `master`:
 filepack keygen
 ```
 
+Keys are stored in the `keychain` subdirectory of the Filepack data directory.
+
 Sign the package with the newly generated private key:
 
 ```sh
@@ -145,6 +153,12 @@ filepack verify --key <PUBLIC_KEY>
 Any change to the package will cause `filepack` to exit with a non-zero exit
 code. As long as your private key is secure, nobody can create a signature
 which verifies against your public key.
+
+Packages may also be signed at creation:
+
+```sh
+filepack create --sign
+```
 
 Sharing Packages
 ----------------
