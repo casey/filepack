@@ -7,12 +7,12 @@ available at [filepack.com](https://filepack.com).
 The server has a web frontend that can be used to browse packages, as well as
 an API for uploading and downloading packages.
 
-See [Routes](routes.md) for documentation of both the web and API routes.
+See [API](api.md) and [Web](web.md) for documentation of the API and web
+routes.
 
 The server responds to requests for `/{fingerprint}`, `/{number}`, and
-`/{revision}` which redirect to
-[`/package/{package}`](routes/package-package.md), and can be used as
-convenient shortcuts.
+`/{revision}` which redirect to [`/package/{package}`](web/package-package.md),
+and can be used as convenient shortcuts.
 
 Authorization
 -------------
@@ -85,7 +85,7 @@ access.
 API
 ---
 
-API routes begin with `/api`. See [Routes](routes.md) for details.
+API routes begin with `/api`. See [API](api.md) for details.
 
 Typed request and response bodies are encoded with [deco](deco.md).
 
@@ -196,21 +196,20 @@ the server will accept the first and reject the second with `409 Conflict`.
 Package uploads are content-addressed and bottom up.
 
 Files, directories, and revisions are uploaded using [`PUT
-/api/file/{hash}`](routes/api-file-hash.md#put).
+/api/file/{hash}`](api/file-hash.md#put).
 
 Directories are verified using [`POST
-/api/directory/{hash}`](routes/api-directory-hash.md#post), which requires that
-all files have been uploaded and all subdirectories have been verified.
+/api/directory/{hash}`](api/directory-hash.md#post), which requires that all
+files have been uploaded and all subdirectories have been verified.
 
 The package is verified using [`POST
-/api/package/{fingerprint}`](routes/api-package-fingerprint.md#post), which
-requires that the package root directory has already been verified and package
-metadata is valid.
+/api/package/{fingerprint}`](api/package-fingerprint.md#post), which requires
+that the package root directory has already been verified and package metadata
+is valid.
 
 Finally, the revision is verified and the package number obtained using [`POST
-/api/revision/{revision}`](routes/api-revision-revision.md#post), which
-requires that the package has been verified and the revision has been uploaded
-and is valid.
+/api/revision/{revision}`](api/revision-revision.md#post), which requires that
+the package has been verified and the revision has been uploaded and is valid.
 
 Downloading Packages
 --------------------

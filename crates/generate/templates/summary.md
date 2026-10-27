@@ -19,6 +19,10 @@ Summary
 - [Alternatives and Prior Art](alternatives.md)
 
 # Reference
+- [API](api.md)
+%% for (path, page) in &self.api {
+  - [{{ escape(path) }}]({{ page }})
+%% }
 - [Commands](commands.md)
 %% for (name, (_command, path)) in &self.commands {
   - [{{ name }}]({{ path }})
@@ -35,15 +39,15 @@ Summary
 - [Languages](languages.md)
 - [Lints](lints.md)
 - [Media Formats](media-formats.md)
-- [Routes](routes.md)
-%% for (path, relative) in &self.routes {
-  - [{{ escape(path) }}]({{ relative }})
-%% }
 - [Tagged Hex](hex.md)
 %% for (tag, path) in &self.hex {
   - [{{ tag }}]({{ path }})
 %% }
 - [Unstable Features](unstable-features.md)
+- [Web](web.md)
+%% for (path, page) in &self.web {
+  - [{{ escape(path) }}]({{ page }})
+%% }
 - [YAML](yaml.md)
 %% for (name, path) in &self.yaml {
   - [{{ escape(name) }}]({{ path }})
