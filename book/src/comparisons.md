@@ -50,7 +50,9 @@ Content-addressed Distribution
 ------------------------------
 
 `filepack` packages are Merkle trees over their contents, which allows them to
-be used for content-addressed storage and distribution.
+be used for content-addressed storage and distribution. Compared to BitTorrent
+and IPFS, Filepack does not yet have a peer-to-peer distribution network,
+although the data model is compatible with one.
 
 ### BitTorrent
 
