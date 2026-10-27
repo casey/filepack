@@ -1,5 +1,5 @@
-Alternatives and Prior Art
-==========================
+Comparisons
+===========
 
 `filepack` serves the same purpose as programs like `shasum`, which hash files
 and output a text file containing file hashes and paths, which can later be

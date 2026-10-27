@@ -13,7 +13,7 @@ Summary
 - [Packages](packages.md)
 - [Configuration](configuration.md)
 - [Server](server.md)
-- [Alternatives and Prior Art](alternatives.md)
+- [Comparisons](comparisons.md)
 
 # Reference
 - [API](api.md)
