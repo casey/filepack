@@ -5,8 +5,8 @@ use {
     functions::{escape, list, path_parameter_type, route_link, route_path, write},
     row::Row,
     templates::{
-      ApiMd, AuthoringMetadataMd, CommandMd, CommandsMd, ContentTypesMd, DecoMd, DecoSchemaMd,
-      HexMd, JsonMd, JsonSchemaMd, LanguagesMd, LintsMd, MediaFormatsMd, RouteMd, SummaryMd, TagMd,
+      ApiMd, CommandMd, CommandsMd, ContentTypesMd, DecoMd, DecoSchemaMd, HexMd, JsonMd,
+      JsonSchemaMd, LanguagesMd, LintsMd, MediaFormatsMd, MetadataMd, RouteMd, SummaryMd, TagMd,
       UnstableFeaturesMd, WebMd, YamlMd,
     },
   },
@@ -263,16 +263,16 @@ fn main() {
   );
 
   write(
-    "authoring-metadata.md",
-    AuthoringMetadataMd {
-      example: &reference.metadata,
+    "media-formats.md",
+    MediaFormatsMd {
+      media_formats: &reference.media_formats,
     },
   );
 
   write(
-    "media-formats.md",
-    MediaFormatsMd {
-      media_formats: &reference.media_formats,
+    "metadata.md",
+    MetadataMd {
+      example: &reference.metadata,
     },
   );
 

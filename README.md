@@ -177,8 +177,7 @@ filepack create [DIRECTORY]
 Which will validate metadata if present and write it to `metadata.filemeta`, as
 well as include it in `manifest.filepack`.
 
-See [the book](https://filepack.com/book/authoring-metadata.html) for more
-information.
+See [the book](https://filepack.com/book/metadata.html) for more information.
 
 ### Signing a Package
 
