@@ -1,7 +1,7 @@
 use super::*;
 
 /// Package sort key.
-#[allow(clippy::arbitrary_source_item_ordering)]
+#[expect(clippy::arbitrary_source_item_ordering)]
 #[derive(Clone, Copy, Default, Deserialize, Display, EnumIter, Json, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 #[strum(serialize_all = "kebab-case")]

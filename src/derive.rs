@@ -711,7 +711,7 @@ fn generic_schema() {
 #[test]
 fn json_enum() {
   /// Foo.
-  #[allow(dead_code)]
+  #[expect(dead_code)]
   #[skip_serializing_none]
   #[derive(Deserialize, Json)]
   #[serde(deny_unknown_fields, rename_all = "snake_case", tag = "type")]
@@ -774,7 +774,7 @@ fn json_generic() {
   ///
   /// - Bar is non-empty.
   /// - Bar is full of love.
-  #[allow(dead_code)]
+  #[expect(dead_code)]
   #[derive(Deserialize, Json)]
   struct Foo<T> {
     /// Bar.
@@ -815,7 +815,7 @@ fn json_generic() {
 #[test]
 fn json_string() {
   /// Foo.
-  #[allow(dead_code)]
+  #[expect(dead_code)]
   #[derive(Json)]
   #[json(string)]
   struct Foo(u64);
@@ -847,7 +847,6 @@ fn json_string() {
 #[test]
 fn json_string_enum() {
   /// Foo.
-  #[allow(dead_code)]
   #[derive(Deserialize, Json)]
   #[serde(rename_all = "kebab-case")]
   enum Foo {
@@ -892,7 +891,7 @@ fn json_string_enum() {
 #[test]
 fn json_struct() {
   /// Foo.
-  #[allow(dead_code)]
+  #[expect(dead_code)]
   #[skip_serializing_none]
   #[derive(Deserialize, Json)]
   #[serde(deny_unknown_fields)]
@@ -963,7 +962,7 @@ fn json_struct() {
 #[test]
 fn json_transparent() {
   /// Foo.
-  #[allow(dead_code)]
+  #[expect(dead_code)]
   #[serde_as]
   #[derive(Deserialize, Json)]
   #[serde(transparent)]
@@ -1005,7 +1004,7 @@ fn json_transparent() {
 #[test]
 fn json_untagged() {
   /// Foo.
-  #[allow(dead_code)]
+  #[expect(dead_code)]
   #[derive(Deserialize, Json)]
   #[serde(untagged)]
   enum Foo {

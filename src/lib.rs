@@ -575,7 +575,7 @@ fn initialize_tracing() -> Result<(), Box<dyn std::error::Error>> {
   }
 
   #[cfg(not(target_os = "linux"))]
-  #[allow(clippy::unnecessary_wraps)]
+  #[expect(clippy::unnecessary_wraps)]
   fn journal_layer() -> Result<Option<Identity>, Box<dyn std::error::Error>> {
     Ok(None)
   }

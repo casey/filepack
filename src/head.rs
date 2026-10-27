@@ -1,7 +1,7 @@
 use super::*;
 
 /// The first byte of a deco-encoded byte string.
-#[allow(clippy::arbitrary_source_item_ordering)]
+#[expect(clippy::arbitrary_source_item_ordering)]
 #[derive(Debug, PartialEq)]
 pub(crate) enum Head {
   Small,

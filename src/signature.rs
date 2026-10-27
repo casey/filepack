@@ -1,7 +1,7 @@
 use super::*;
 
 /// Ed25519 signature over an enveloped message.
-#[allow(clippy::arbitrary_source_item_ordering)]
+#[expect(clippy::arbitrary_source_item_ordering)]
 #[derive(
   Debug, Decode, Encode, DeserializeFromStr, Eq, Ord, PartialEq, PartialOrd, SerializeDisplay,
 )]

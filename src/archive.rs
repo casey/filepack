@@ -1,7 +1,7 @@
 use super::*;
 
 /// Filepack archive.
-#[allow(clippy::arbitrary_source_item_ordering)]
+#[expect(clippy::arbitrary_source_item_ordering)]
 #[derive(Encode, Decode, Magic)]
 #[deco(magic = MagicType::Archive)]
 pub(crate) struct Archive {

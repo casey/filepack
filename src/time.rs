@@ -7,7 +7,7 @@ static TIME: LazyLock<Regex> = LazyLock::new(|| {
 });
 
 /// Point in time with varying precision.
-#[allow(clippy::arbitrary_source_item_ordering)]
+#[expect(clippy::arbitrary_source_item_ordering)]
 #[derive(Clone, Copy, Debug, Decode, DeserializeFromStr, Encode, PartialEq, SerializeDisplay)]
 pub(crate) enum Time {
   /// A year.

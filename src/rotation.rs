@@ -1,7 +1,7 @@
 use super::*;
 
 /// Rotation to apply when displaying an image.
-#[allow(clippy::arbitrary_source_item_ordering)]
+#[expect(clippy::arbitrary_source_item_ordering)]
 #[derive(Clone, Copy, Debug, Decode, Default, Encode, PartialEq)]
 pub(crate) enum Rotation {
   /// No rotation.
