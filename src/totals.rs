@@ -4,7 +4,7 @@ use super::*;
 ///
 /// `files + directories` and `file_size + directory_size` must be less than
 /// 2<sup>64</sup>.
-#[allow(clippy::arbitrary_source_item_ordering)]
+#[expect(clippy::arbitrary_source_item_ordering)]
 #[derive(Clone, Copy, Debug, Decode, Default, Encode, Json, PartialEq, Serialize)]
 #[deco(validate)]
 pub struct Totals {

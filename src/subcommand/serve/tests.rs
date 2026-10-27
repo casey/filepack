@@ -299,7 +299,7 @@ impl TestRequestBuilder {
 struct TestServer {
   data_dir: Utf8PathBuf,
   router: Router,
-  #[allow(unused)]
+  #[expect(unused)]
   tempdir: TempDir,
 }
 

@@ -1,10 +1,10 @@
 use super::*;
 
 /// Type-specific directory entry information.
-#[allow(clippy::arbitrary_source_item_ordering)]
+#[expect(clippy::arbitrary_source_item_ordering)]
 #[derive(Clone, Copy, Debug, Decode, Encode, EnumDiscriminants, PartialEq)]
 #[strum_discriminants(
-  allow(clippy::arbitrary_source_item_ordering),
+  expect(clippy::arbitrary_source_item_ordering),
   derive(Display),
   name(EntryType),
   strum(serialize_all = "kebab-case")
