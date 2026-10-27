@@ -226,8 +226,11 @@ fingerprint and revision.
 If a file uploaded with `filepack upload --file` is not reachable from any
 package head, it will be deleted by the next run of `filepack gc`.
 
-Mounts
-------
+Web Packages
+------------
+
+Arbitrary web content can be hosted by the Filepack server using mounted web
+packages.
 
 Web packages contain web content with a `static/index.html` entry point. They
 are [currently unstable](unstable-features.md) and will be rejected for upload
