@@ -1,5 +1,8 @@
+Why?
+====
+
 Why is metadata important?
-==========================
+--------------------------
 
 Metadata is the difference between a good user experience and a bad user
 experience.

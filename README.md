@@ -43,8 +43,7 @@ Documentation is available at [filepack.com/book/](https://filepack.com/book/).
 See [Installation](https://filepack.com/book/installation.html) and
 [Quickstart](https://filepack.com/book/quickstart.html) to get started,
 [Packages](https://filepack.com/book/packages.html) for an overview of Filepack
-packages, and [Why is metadata
-important?](https://filepack.com/book/why-metadata.html) for some of the
+packages, and [Why?](https://filepack.com/book/why.html) for some of the
 higher-level ideas behind Filepack.
 
 Lints
