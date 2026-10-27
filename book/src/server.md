@@ -191,6 +191,27 @@ If the current package head differs from the recorded head in
 `filepack upload` will abort. If two clients race to update the same package,
 the server will accept the first and reject the second with `409 Conflict`.
 
+### Upload API
+
+Package uploads are content-addressed and bottom up.
+
+Files, directories, and revisions are uploaded using [`PUT
+/api/file/{hash}`](routes/api-file-hash.md#put).
+
+Directories are verified using [`POST
+/api/directory/{hash}`](routes/api-directory-hash.md#post), which requires that
+all files have been uploaded and all subdirectories have been verified.
+
+The package is verified using [`POST
+/api/package/{fingerprint}`](routes/api-package-fingerprint.md#post), which
+requires that the package root directory has already been verified and package
+metadata is valid.
+
+Finally, the revision is verified and the package number obtained using [`POST
+/api/revision/{revision}`](routes/api-revision-revision.md#post), which
+requires that the package has been verified and the revision has been uploaded
+and is valid.
+
 Downloading Packages
 --------------------
 
@@ -226,8 +247,11 @@ fingerprint and revision.
 If a file uploaded with `filepack upload --file` is not reachable from any
 package head, it will be deleted by the next run of `filepack gc`.
 
-Mounts
-------
+Web Packages
+------------
+
+Arbitrary web content can be hosted on a Filepack server using mounted web
+packages.
 
 Web packages contain web content with a `static/index.html` entry point. They
 are [currently unstable](unstable-features.md) and will be rejected for upload

@@ -64,37 +64,25 @@ An arbitrary byte string.
 %%     }
 %%   }
 %%   if let Some(response) = &endpoint.response {
-%%     match response {
-%%       Response::Deco { fields } => {
 
 ### Response Body
 
+%%     match response {
+%%       Response::Deco { fields } => {
 A deco-encoded struct:
 
 {{ DecoFieldsMd { fields, registry: self.registry } }}
 %%       }
 %%       Response::File => {
-
-### Response Body
-
 The contents of a file.
 %%       }
 %%       Response::Html => {
-
-### Response Body
-
 An HTML page.
 %%       }
 %%       Response::Redirect => {
-
-### Response Body
-
 A redirect.
 %%       }
 %%       Response::Static => {
-
-### Response Body
-
 A static asset.
 %%       }
 %%     }
