@@ -25,11 +25,12 @@ impl Loader {
   pub fn load_with_options(options: DecodeOptions, path: Option<&Utf8Path>) -> Result<Self> {
     let path = if let Some(path) = path {
       if path.is_dir() {
-        path.join(Manifest::FILENAME)
+        path.join_case_sensitive(Manifest::FILENAME)?
       } else {
         path.into()
       }
     } else {
+      Utf8Path::new(".").join_case_sensitive(Manifest::FILENAME)?;
       Manifest::FILENAME.into()
     };
 
@@ -58,7 +59,13 @@ impl Loader {
   }
 
   pub(crate) fn root(&self) -> &Utf8Path {
-    self.path.parent().unwrap()
+    let parent = self.path.parent().unwrap();
+
+    if parent.is_empty() {
+      ".".into()
+    } else {
+      parent
+    }
   }
 
   pub(crate) fn unpack(&self) -> Result<Manifest> {

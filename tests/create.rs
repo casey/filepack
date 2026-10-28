@@ -20,6 +20,24 @@ fn backslash_error() {
 }
 
 #[test]
+fn case_variant_error() {
+  for (actual, expected) in [
+    ("MANIFEST.FILEPACK", "manifest.filepack"),
+    ("METADATA.FILEMETA", "metadata.filemeta"),
+    ("METADATA.YAML", "metadata.yaml"),
+    (".FILEPACK", ".filepack"),
+  ] {
+    Test::new()
+      .touch(actual)
+      .arg("create")
+      .stderr(&format!(
+        "error: expected `{expected}` but found case mismatch `{actual}`\n"
+      ))
+      .failure();
+  }
+}
+
+#[test]
 fn create_rejects_invalid_artwork() {
   Test::new()
     .write("cover.png", "foo")
