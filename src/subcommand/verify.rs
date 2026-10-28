@@ -67,6 +67,11 @@ impl Verify {
       error::PackageRootDirectory { path: root },
     }
 
+    check_case(
+      &root,
+      &[Manifest::FILENAME, Metadata::DECO_FILENAME, State::DIR],
+    )?;
+
     if self.manifest.is_some() {
       ensure! {
         !filesystem::exists(&root.join(Manifest::FILENAME))?,

@@ -1,6 +1,23 @@
 use super::*;
 
 #[test]
+fn case_variant_error() {
+  for (actual, expected) in [
+    ("MANIFEST.FILEPACK", "manifest.filepack"),
+    ("METADATA.FILEMETA", "metadata.filemeta"),
+    (".FILEPACK", ".filepack"),
+  ] {
+    Test::new()
+      .touch(actual)
+      .arg("verify")
+      .stderr(&format!(
+        "error: expected `{expected}` but found case mismatch `{actual}`\n"
+      ))
+      .failure();
+  }
+}
+
+#[test]
 fn duplicate_key_literal() {
   Test::new()
     .arg("create")

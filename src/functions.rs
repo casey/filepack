@@ -3,6 +3,26 @@ use {
   ::image::{DynamicImage, ImageBuffer, Rgb, Rgba},
 };
 
+pub(crate) fn check_case(dir: &Utf8Path, names: &[&'static str]) -> Result {
+  for entry in fs::read_dir(dir).context(filesystem_error::Io { path: dir })? {
+    let actual = entry
+      .context(filesystem_error::Io { path: dir })?
+      .file_name();
+
+    for &expected in names {
+      ensure! {
+        !actual.as_encoded_bytes().eq_ignore_ascii_case(expected.as_bytes()) || actual == expected,
+        error::FilenameCase {
+          actual: actual.to_str().unwrap(),
+          expected,
+        }
+      }
+    }
+  }
+
+  Ok(())
+}
+
 pub(crate) fn current_dir() -> Result<Utf8PathBuf> {
   Utf8PathBuf::from_path_buf(env::current_dir().context(error::CurrentDir)?)
     .map_err(|path| error::PathUnicode { path }.build())

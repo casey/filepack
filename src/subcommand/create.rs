@@ -59,6 +59,16 @@ impl Create {
       error::PackageRootDirectory { path: root },
     }
 
+    check_case(
+      &root,
+      &[
+        Manifest::FILENAME,
+        Metadata::DECO_FILENAME,
+        Metadata::YAML_FILENAME,
+        State::DIR,
+      ],
+    )?;
+
     let manifest_path = if let Some(path) = self.manifest {
       path
     } else {

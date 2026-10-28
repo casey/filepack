@@ -1168,6 +1168,18 @@ fn metadata_deco_force() {
 }
 
 #[test]
+fn metadata_subcommand_case_variant_error() {
+  Test::new()
+    .touch("METADATA.FILEMETA")
+    .arg("metadata")
+    .stderr("error: expected `metadata.filemeta` but found case mismatch `METADATA.FILEMETA`\n")
+    .failure()
+    .args(["metadata", "."])
+    .stderr("error: expected `metadata.filemeta` but found case mismatch `METADATA.FILEMETA`\n")
+    .failure();
+}
+
+#[test]
 fn metadata_subcommand_default() {
   Test::new()
     .write("metadata.yaml", "title: Foo")

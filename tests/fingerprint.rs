@@ -1,6 +1,18 @@
 use super::*;
 
 #[test]
+fn case_variant_error() {
+  Test::new()
+    .touch("MANIFEST.FILEPACK")
+    .arg("fingerprint")
+    .stderr("error: expected `manifest.filepack` but found case mismatch `MANIFEST.FILEPACK`\n")
+    .failure()
+    .args(["fingerprint", "."])
+    .stderr("error: expected `manifest.filepack` but found case mismatch `MANIFEST.FILEPACK`\n")
+    .failure();
+}
+
+#[test]
 fn fingerprint() {
   let test = Test::new()
     .touch("foo")

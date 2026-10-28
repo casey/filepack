@@ -81,7 +81,8 @@ use {
     float_ext::FloatExt,
     format::Format,
     functions::{
-      current_dir, decode_path, default, format_size, ignore, now, parse_number, transfer_tempfile,
+      check_case, current_dir, decode_path, default, format_size, ignore, now, parse_number,
+      transfer_tempfile,
     },
     hashing_writer::HashingWriter,
     head::Head,

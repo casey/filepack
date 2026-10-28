@@ -11,7 +11,7 @@ impl State {
   const FILENAME: &'static str = "state.json";
 
   pub fn load(root: &Utf8Path) -> Result<Self> {
-    let path = Self::path(root);
+    let path = root.join_case_sensitive(Self::DIR)?.join(Self::FILENAME);
 
     let Some(json) = filesystem::read_to_string_opt(&path)? else {
       return Ok(Self::default());
@@ -20,16 +20,12 @@ impl State {
     serde_json::from_str(&json).context(error::DeserializeState { path })
   }
 
-  fn path(root: &Utf8Path) -> Utf8PathBuf {
-    root.join(Self::DIR).join(Self::FILENAME)
-  }
-
   pub(crate) fn save(&self, root: &Utf8Path) -> Result {
-    let dir = root.join(Self::DIR);
+    let dir = root.join_case_sensitive(Self::DIR)?;
 
     filesystem::create_dir_all(&dir)?;
 
-    let path = Self::path(root);
+    let path = dir.join(Self::FILENAME);
 
     let mut json = serde_json::to_string_pretty(self).unwrap();
 

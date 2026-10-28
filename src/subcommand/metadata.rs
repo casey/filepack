@@ -21,11 +21,12 @@ impl Metadata {
   pub(crate) fn run(self) -> Result {
     let path = if let Some(path) = self.path {
       if path.is_dir() {
-        path.join(crate::Metadata::DECO_FILENAME)
+        path.join_case_sensitive(crate::Metadata::DECO_FILENAME)?
       } else {
         path
       }
     } else {
+      Utf8Path::new(".").join_case_sensitive(crate::Metadata::DECO_FILENAME)?;
       crate::Metadata::DECO_FILENAME.into()
     };
 

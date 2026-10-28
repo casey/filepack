@@ -209,6 +209,12 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     hash: Hash,
   },
+  #[snafu(display("expected `{expected}` but found case mismatch `{actual}`"))]
+  FilenameCase {
+    actual: String,
+    backtrace: Option<Backtrace>,
+    expected: &'static str,
+  },
   #[snafu(transparent)]
   Filesystem {
     backtrace: Option<Backtrace>,

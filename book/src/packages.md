@@ -131,7 +131,8 @@ This ensures that file paths assembled from path components work on Windows and
 Unix and cannot escape the package root. Symbolic links are not supported.
 
 The filenames `manifest.filepack` and `.filepack`, with any case, are reserved
-in the package root.
+in the package root. Case variations of `metadata.filemeta`, other than
+lowercase, are reserved in the package root.
 
 Signatures
 ----------

@@ -527,6 +527,17 @@ fn upload_package_skips_files_already_on_server() {
 }
 
 #[test]
+fn upload_package_state_case_variant_error() {
+  Test::new()
+    .arg("create")
+    .success()
+    .create_dir(".FILEPACK")
+    .args(["upload", "--server", "http://127.0.0.1:1"])
+    .stderr("error: expected `.filepack` but found case mismatch `.FILEPACK`\n")
+    .failure();
+}
+
+#[test]
 fn upload_package_uploads_files() {
   let server = Test::new()
     .serve()
