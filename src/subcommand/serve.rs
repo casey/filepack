@@ -369,7 +369,7 @@ impl Serve {
 
     for redirect in &self.redirects {
       ensure!(
-        redirect.as_str() != canonical,
+        redirect != canonical,
         error::RedirectDomainCanonical {
           domain: redirect.clone()
         },

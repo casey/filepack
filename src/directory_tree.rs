@@ -63,6 +63,17 @@ impl DirectoryTree {
   pub(crate) fn new() -> Self {
     Self::default()
   }
+
+  pub(crate) fn subdirectory(&self, path: &RelativePath) -> Option<&DirectoryTree> {
+    let mut current = self;
+    for component in path.components() {
+      let DirectoryTreeEntry::Directory(directory) = current.entries.get(component)? else {
+        return None;
+      };
+      current = directory;
+    }
+    Some(current)
+  }
 }
 
 #[cfg(test)]

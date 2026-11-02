@@ -318,7 +318,39 @@ fn download_package_fails_on_size_mismatch() {
 }
 
 #[test]
-fn download_package_rejects_reserved_path() {
+fn download_package_rejects_nested_reserved_filename() {
+  let mut child = Directory::new();
+  child.insert_file("manifest.filepack", b"foo");
+
+  let (child_deco, child_hash) = child.deco();
+
+  let (root, hash) = Directory::new().insert_directory("bar", &child).deco();
+
+  let server = Test::new()
+    .serve()
+    .write(&format!("files/{child_hash}"), child_deco)
+    .write(&format!("files/{hash}"), root)
+    .spawn();
+
+  Test::new()
+    .args([
+      "download",
+      "--server",
+      &server.address(),
+      "--package",
+      &Fingerprint::from(hash).to_string(),
+      "out",
+    ])
+    .stderr(
+      "error: package contains reserved filename `manifest.filepack` at `bar/manifest.filepack`\n",
+    )
+    .failure();
+
+  server.terminate().success();
+}
+
+#[test]
+fn download_package_rejects_reserved_filename() {
   let (root, hash) = Directory::new()
     .insert_file("manifest.filepack", b"foo")
     .deco();
@@ -337,7 +369,9 @@ fn download_package_rejects_reserved_path() {
       &Fingerprint::from(hash).to_string(),
       "out",
     ])
-    .stderr("error: package contains reserved path `manifest.filepack`\n")
+    .stderr(
+      "error: package contains reserved filename `manifest.filepack` at `manifest.filepack`\n",
+    )
     .failure();
 
   assert!(!test.path().join("out").exists());

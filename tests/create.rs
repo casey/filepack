@@ -21,12 +21,8 @@ fn backslash_error() {
 
 #[test]
 fn case_variant_error() {
-  for (actual, expected) in [
-    ("MANIFEST.FILEPACK", "manifest.filepack"),
-    ("METADATA.FILEMETA", "metadata.filemeta"),
-    ("METADATA.YAML", "metadata.yaml"),
-    (".FILEPACK", ".filepack"),
-  ] {
+  #[track_caller]
+  fn case(actual: &str, expected: &str) {
     Test::new()
       .touch(actual)
       .arg("create")
@@ -35,6 +31,11 @@ fn case_variant_error() {
       ))
       .failure();
   }
+
+  case("MANIFEST.FILEPACK", "manifest.filepack");
+  case("METADATA.FILEMETA", "metadata.filemeta");
+  case("METADATA.YAML", "metadata.yaml");
+  case(".FILEPACK", ".filepack");
 }
 
 #[test]
@@ -65,6 +66,30 @@ fn empty_directories_are_included() {
     )
     .success()
     .args(["verify", "."])
+    .stderr("successfully verified 0 files\n")
+    .success();
+}
+
+#[test]
+fn empty_subpackage() {
+  Test::new()
+    .create_dir("foo/bar")
+    .args(["create", "foo/bar"])
+    .success()
+    .args(["create", "foo"])
+    .assert_manifest(
+      "foo/manifest.filepack",
+      json_pretty! {
+        embedded: {},
+        package: {
+          bar: {
+          },
+        },
+        signatures: [],
+      },
+    )
+    .success()
+    .args(["verify", "foo"])
     .stderr("successfully verified 0 files\n")
     .success();
 }
@@ -294,7 +319,9 @@ fn manifest_in_package_is_reserved() {
   Test::new()
     .touch("manifest.filepack")
     .args(["create", "--manifest", "foo"])
-    .stderr("error: package contains reserved path `manifest.filepack`\n")
+    .stderr(
+      "error: package contains reserved filename `manifest.filepack` at `manifest.filepack`\n",
+    )
     .failure();
 }
 
@@ -376,6 +403,47 @@ fn nested_empty_directories_are_included() {
     .success()
     .args(["verify", "."])
     .stderr("successfully verified 0 files\n")
+    .success();
+}
+
+#[test]
+fn nested_reserved_directory_error() {
+  Test::new()
+    .create_dir("foo/bar/manifest.filepack")
+    .args(["create", "foo"])
+    .stderr(
+      "error: package contains reserved filename `manifest.filepack` at `bar/manifest.filepack`\n",
+    )
+    .failure();
+}
+
+#[test]
+fn nested_reserved_filename_error() {
+  Test::new()
+    .touch("foo/bar/MANIFEST.FILEPACK")
+    .args(["create", "foo"])
+    .stderr(
+      "error: package contains reserved filename `MANIFEST.FILEPACK` at `bar/MANIFEST.FILEPACK`\n",
+    )
+    .failure();
+}
+
+#[test]
+fn nested_state_directory_is_ignored() {
+  Test::new()
+    .touch("foo/bar/.filepack/baz")
+    .args(["create", "foo"])
+    .assert_manifest(
+      "foo/manifest.filepack",
+      json_pretty! {
+        embedded: {},
+        package: {
+          bar: {
+          },
+        },
+        signatures: [],
+      },
+    )
     .success();
 }
 
@@ -671,6 +739,130 @@ fn single_non_empty_file() {
     .args(["verify", "."])
     .stderr("successfully verified 1 file totaling 3 bytes\n")
     .success();
+}
+
+#[test]
+fn subpackage_manifest_is_excluded() {
+  Test::new()
+    .touch("foo/bar/baz")
+    .args(["create", "foo/bar"])
+    .success()
+    .args(["create", "foo"])
+    .assert_manifest(
+      "foo/manifest.filepack",
+      json_pretty! {
+        embedded: {},
+        package: {
+          bar: {
+            baz: {
+              hash: EMPTY_HASH,
+              size: 0
+            }
+          }
+        },
+        signatures: [],
+      },
+    )
+    .success();
+}
+
+#[test]
+fn subpackage_metadata_error() {
+  let test = Test::new()
+    .touch("foo/README.md")
+    .write(
+      "foo/metadata.yaml",
+      "
+        title: Foo
+        readme: README.md
+      ",
+    )
+    .args(["create", "foo"])
+    .success();
+
+  let metadata = fs::read(test.path().join("foo/metadata.filemeta")).unwrap();
+
+  let hash = Hash::bytes(&metadata);
+
+  let size = metadata.len();
+
+  test
+    .write("bar/baz/metadata.filemeta", metadata)
+    .write_manifest(
+      "bar/baz/manifest.filepack",
+      json! {
+        embedded: {},
+        package: {
+          "metadata.filemeta": {
+            hash: hash,
+            size: size
+          }
+        },
+        signatures: [],
+      },
+    )
+    .args(["create", "bar"])
+    .stderr("error: file referenced in metadata missing: `README.md`\n")
+    .failure();
+}
+
+#[test]
+fn subpackage_mismatch_error() {
+  Test::new()
+    .touch("foo/bar/baz")
+    .args(["create", "foo/bar"])
+    .success()
+    .touch("foo/bar/qux")
+    .args(["create", "foo"])
+    .stderr(
+      "error: subpackage `bar` fingerprint \
+      `package199f41a3e9d3f6c344ae9c3df04aaca43b73d40a06617ba8c4c1e9ec5b45cf9f2` \
+      does not match `bar/manifest.filepack` fingerprint \
+      `package1081491cb5479be8a7dbb3911f7c8b54f4f62ca0ca70992b9fc8fb8c76e511a7a`\n",
+    )
+    .failure();
+}
+
+#[test]
+fn subpackage_signature_mismatch_error() {
+  let test = Test::new()
+    .arg("keygen")
+    .success()
+    .create_dir("foo/bar")
+    .args(["create", "--sign", "foo/bar"])
+    .success();
+
+  let path = test.path().join("foo/bar/manifest.filepack");
+
+  let signature = manifest(&path)
+    .signatures
+    .first()
+    .unwrap()
+    .known()
+    .unwrap()
+    .to_string();
+
+  serde_json::from_str::<Manifest>(&json! {
+    embedded: {},
+    package: {
+      baz: {
+        hash: EMPTY_HASH,
+        size: 0
+      }
+    },
+    signatures: [signature]
+  })
+  .unwrap()
+  .save(&path)
+  .unwrap();
+
+  test
+    .touch("foo/bar/baz")
+    .args(["create", "foo"])
+    .stderr_regex(
+      "error: signature fingerprint `package1[0-9a-f]{64}` does not match package fingerprint `package1[0-9a-f]{64}`\n",
+    )
+    .failure();
 }
 
 #[test]

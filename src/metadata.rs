@@ -305,6 +305,18 @@ impl Metadata {
       })
   }
 
+  pub(crate) fn load(root: &Utf8Path) -> Result<Option<Self>> {
+    let path = root.join(Self::DECO_FILENAME);
+
+    let Some(deco) = filesystem::read_opt(&path)? else {
+      return Ok(None);
+    };
+
+    let metadata = Self::decode_from_slice(&deco).context(error::DecodeMetadataDeco { path })?;
+
+    Ok(Some(metadata))
+  }
+
   pub(crate) fn thumbnail(&self, path: &RelativePath) -> Option<&Image> {
     self.thumbnails.as_ref()?.get(path)
   }

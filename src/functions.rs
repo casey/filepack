@@ -64,7 +64,8 @@ pub fn gradient_alpha(width: u32, height: u32, alpha: u8) -> DynamicImage {
 }
 
 pub(crate) fn ignore(path: &RelativePath, ignore: &[RelativePath]) -> bool {
-  path.starts_with(State::DIR) || ignore.iter().any(|ignore| path.starts_with(ignore))
+  path.components().any(|component| component == State::DIR)
+    || ignore.iter().any(|ignore| path.starts_with(ignore))
 }
 
 pub fn install_default_crypto_provider() -> Result {
@@ -77,6 +78,10 @@ pub fn install_default_crypto_provider() -> Result {
   ensure!(*INSTALLED, error::RustlsProvider);
 
   Ok(())
+}
+
+pub(crate) fn is_subpackage_manifest(entry: &DirEntry, path: &RelativePath) -> bool {
+  entry.depth() > 1 && entry.file_type().is_file() && path.filename() == Manifest::FILENAME
 }
 
 pub(crate) fn now() -> Result<u64, SystemTimeError> {
@@ -98,4 +103,72 @@ pub(crate) fn transfer_tempfile(hash: Hash, path: &Utf8Path) -> FilesystemResult
     .suffix(".incomplete")
     .tempfile_in(path)
     .context(filesystem_error::Io { path })
+}
+
+pub(crate) fn verify_subpackage(
+  root: &Utf8Path,
+  path: &RelativePath,
+  package: &DirectoryTree,
+) -> Result {
+  let root = root.join(path);
+
+  let loader = Loader::load(Some(&root.join(Manifest::FILENAME)))?;
+
+  let manifest = loader.unpack()?;
+
+  let expected = loader.fingerprint()?;
+
+  let actual = Fingerprint(
+    ArchiveBuilder::new()
+      .pack_directory(package)
+      .context(error::SubpackageTotals { path: path.clone() })?
+      .hash,
+  );
+
+  ensure! {
+    actual == expected,
+    error::SubpackageMismatch {
+      actual,
+      expected,
+      path: path.clone(),
+    },
+  }
+
+  for signature in manifest.signatures() {
+    signature.verify(expected)?;
+  }
+
+  if let Some(metadata) = Metadata::load(&root)? {
+    metadata.check_files(&manifest.files().into_keys().collect())?;
+  }
+
+  Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn check_case() {
+    #[track_caller]
+    fn case(name: &str, expected: Option<&str>) {
+      let (_tempdir, root) = tempdir();
+
+      filesystem::write(&root.join(name), "").unwrap();
+
+      assert_eq!(
+        super::check_case(&root, &["foo", "bar"])
+          .err()
+          .map(|err| err.to_string())
+          .as_deref(),
+        expected,
+      );
+    }
+
+    case("foo", None);
+    case("baz", None);
+    case("FOO", Some("expected `foo` but found case mismatch `FOO`"));
+    case("Bar", Some("expected `bar` but found case mismatch `Bar`"));
+  }
 }

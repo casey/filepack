@@ -35,6 +35,16 @@ impl Component {
       }
     }
 
+    false
+  }
+
+  pub(crate) fn is_reserved_in_root(&self) -> bool {
+    let component = self.as_str();
+
+    if self.is_reserved() {
+      return true;
+    }
+
     if component.eq_ignore_ascii_case(Metadata::DECO_FILENAME)
       && component != Metadata::DECO_FILENAME
     {
@@ -78,6 +88,18 @@ impl Component {
     }
 
     Ok(Self::cast(s))
+  }
+}
+
+impl Display for Component {
+  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    write!(f, "{}", &self.0)
+  }
+}
+
+impl PartialEq<str> for Component {
+  fn eq(&self, s: &str) -> bool {
+    self.as_str().eq(s)
   }
 }
 
@@ -158,8 +180,24 @@ mod tests {
     }
 
     case("manifest.filepack", true);
-    case(".filepack", true);
     case("MANIFEST.FILEPACK", true);
+    case(".filepack", true);
+    case(".FILEPACK", true);
+    case("METADATA.FILEMETA", false);
+    case("manifest.filepack.foo", false);
+  }
+
+  #[test]
+  fn is_reserved_in_root() {
+    #[track_caller]
+    fn case(input: &str, expected: bool) {
+      assert_eq!(
+        Component::new(input).unwrap().is_reserved_in_root(),
+        expected
+      );
+    }
+
+    case("manifest.filepack", true);
     case("METADATA.FILEMETA", true);
     case("metadata.filemeta", false);
     case("foo", false);

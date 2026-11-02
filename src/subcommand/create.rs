@@ -139,6 +139,8 @@ impl Create {
 
     let mut empty = Vec::new();
 
+    let mut subpackages = Vec::new();
+
     for entry in WalkDir::new(&root).sort_by_file_name() {
       let entry = entry?;
 
@@ -162,10 +164,14 @@ impl Create {
         continue;
       }
 
-      let name = relative.first_component();
+      if is_subpackage_manifest(&entry, &relative) {
+        subpackages.push(relative.parent().unwrap());
+        continue;
+      }
+
       ensure! {
-        !name.is_reserved(),
-        error::ReservedPath { name },
+        !relative.filename().is_reserved(),
+        error::ReservedFilename { path: relative },
       }
 
       ensure! {
@@ -251,6 +257,10 @@ impl Create {
         .context(filesystem_error::Io { path: &path })?;
       package.create_file(&path, file)?;
       bar.inc(file.size);
+    }
+
+    for path in &subpackages {
+      verify_subpackage(&root, path, package.subdirectory(path).unwrap())?;
     }
 
     let embedded = if let Some((_metadata, deco)) = metadata {

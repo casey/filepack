@@ -621,7 +621,7 @@ mod tests {
 
       if title
         .as_ref()
-        .is_none_or(|title| title.as_str() != "Tobin's Spirit Guide")
+        .is_none_or(|title| title != "Tobin's Spirit Guide")
       {
         continue;
       }
