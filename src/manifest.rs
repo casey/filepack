@@ -81,11 +81,8 @@ impl Manifest {
       }
     }
 
-    for name in manifest.package.entries.keys() {
-      ensure! {
-        !name.is_reserved(),
-        error::ReservedPath { name },
-      }
+    if let Some(path) = manifest.reserved_filename() {
+      return Err(error::ReservedFilename { path }.build());
     }
 
     let hashes = manifest.file_hashes();
@@ -122,6 +119,24 @@ impl Manifest {
 
   pub(crate) fn pack(&self, path: &Utf8Path) -> Result<Archive> {
     Archive::pack(self).context(error::ManifestTotals { path })
+  }
+
+  pub(crate) fn reserved_filename(&self) -> Option<RelativePath> {
+    for (path, _entry) in self.entries() {
+      let name = path.filename();
+
+      let reserved = if path.parent().is_some() {
+        name.is_reserved()
+      } else {
+        name.is_reserved_in_root()
+      };
+
+      if reserved {
+        return Some(path);
+      }
+    }
+
+    None
   }
 
   pub fn save(&self, path: &Utf8Path) -> Result {
@@ -162,6 +177,16 @@ impl Manifest {
       .iter()
       .filter(|signature| signature.known().is_none())
       .count()
+  }
+
+  #[cfg(test)]
+  pub(crate) fn with_package(package: DirectoryTree) -> Self {
+    Self {
+      embedded: BTreeMap::new(),
+      package,
+      signatures: BTreeSet::new(),
+      unknown: DirectoryTree::new(),
+    }
   }
 }
 
@@ -207,12 +232,7 @@ mod tests {
 
   #[test]
   fn empty_manifest_serialization() {
-    let manifest = Manifest {
-      embedded: BTreeMap::new(),
-      package: DirectoryTree::new(),
-      signatures: BTreeSet::new(),
-      unknown: DirectoryTree::new(),
-    };
+    let manifest = Manifest::with_package(DirectoryTree::new());
     let json = serde_json::to_string(&manifest).unwrap();
     assert_eq!(json, r#"{"embedded":{},"package":{},"signatures":[]}"#);
     assert_eq!(serde_json::from_str::<Manifest>(&json).unwrap(), manifest);
@@ -228,6 +248,30 @@ mod tests {
       let manifest = capture[1].replace("…", Attestation::EXAMPLE);
       serde_json::from_str::<Manifest>(&manifest).unwrap();
     }
+  }
+
+  #[test]
+  fn reserved_filename() {
+    #[track_caller]
+    fn case(path: &str, expected: Option<&str>) {
+      let mut package = DirectoryTree::new();
+
+      package
+        .create_file(&path.parse().unwrap(), File::new(b"foo"))
+        .unwrap();
+
+      let manifest = Manifest::with_package(package);
+
+      assert_eq!(
+        manifest.reserved_filename(),
+        expected.map(|expected| expected.parse().unwrap()),
+      );
+    }
+
+    case("METADATA.FILEMETA", Some("METADATA.FILEMETA"));
+    case("foo/METADATA.FILEMETA", None);
+    case("foo/.FILEPACK", Some("foo/.FILEPACK"));
+    case("manifest.filepack/foo", Some("manifest.filepack"));
   }
 
   #[test]

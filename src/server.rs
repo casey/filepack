@@ -802,6 +802,14 @@ impl Server {
       let mut directories = tx.open_table(DIRECTORIES)?;
 
       for (name, entry) in &directory.entries {
+        ensure! {
+          !name.is_reserved(),
+          server_error::DirectoryReservedFilename {
+            directory: hash,
+            name,
+          },
+        }
+
         let path = self.file_path(entry.hash);
 
         let metadata = path.metadata().map_err(|error| {
@@ -870,8 +878,8 @@ impl Server {
 
     for name in self.read_directory(fingerprint.into())?.entries.keys() {
       ensure!(
-        !name.is_reserved(),
-        server_error::PackageReservedPath { fingerprint, name },
+        !name.is_reserved_in_root(),
+        server_error::PackageReservedFilename { fingerprint, name },
       );
     }
 

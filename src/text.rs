@@ -54,6 +54,12 @@ impl FromStr for Text {
   }
 }
 
+impl PartialEq<str> for Text {
+  fn eq(&self, s: &str) -> bool {
+    self.as_str().eq(s)
+  }
+}
+
 impl Display for Text {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     write!(f, "{}", self.0)

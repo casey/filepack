@@ -236,13 +236,6 @@ impl Archive {
       totals,
     )?;
 
-    for name in package.entries.keys() {
-      ensure! {
-        !name.is_reserved(),
-        archive_error::ReservedPath { name },
-      }
-    }
-
     let signatures = {
       let entry = root
         .entries
@@ -285,15 +278,18 @@ impl Archive {
       archive_error::LooseFiles { hashes: loose },
     }
 
-    Ok((
-      Manifest {
-        embedded,
-        package,
-        signatures,
-        unknown,
-      },
-      totals,
-    ))
+    let manifest = Manifest {
+      embedded,
+      package,
+      signatures,
+      unknown,
+    };
+
+    if let Some(path) = manifest.reserved_filename() {
+      return Err(ArchiveError::ReservedFilename { path });
+    }
+
+    Ok((manifest, totals))
   }
 }
 
@@ -420,12 +416,7 @@ mod tests {
       .create_file(&"foo".parse().unwrap(), File::new(b"bar"))
       .unwrap();
 
-    Manifest {
-      embedded: BTreeMap::new(),
-      package,
-      signatures: BTreeSet::new(),
-      unknown: DirectoryTree::new(),
-    }
+    Manifest::with_package(package)
   }
 
   #[test]
@@ -463,12 +454,7 @@ mod tests {
       )
       .unwrap();
 
-    let manifest = Manifest {
-      embedded: BTreeMap::new(),
-      package,
-      signatures: BTreeSet::new(),
-      unknown: DirectoryTree::new(),
-    };
+    let manifest = Manifest::with_package(package);
 
     assert_eq!(Archive::pack(&manifest).err(), Some(TotalsError::Overflow));
   }
@@ -537,28 +523,18 @@ mod tests {
   }
 
   #[test]
-  fn reserved_path() {
-    let mut builder = ArchiveBuilder::new();
+  fn reserved_filename() {
+    let mut package = DirectoryTree::new();
 
-    let mut package = Directory::new();
-    package.insert_file("manifest.filepack", b"foo");
+    package
+      .create_file(&"foo/manifest.filepack".parse().unwrap(), File::new(b"foo"))
+      .unwrap();
 
-    let package = builder.directory(&package).unwrap();
-
-    let signatures = builder.directory(&Directory::new()).unwrap();
-
-    let mut root = Directory::new();
-    root
-      .insert_entry("package", package)
-      .insert_entry("signatures", signatures);
-
-    let root = builder.directory(&root).unwrap();
-
-    let archive = builder.build(root.hash);
+    let archive = Archive::pack(&Manifest::with_package(package)).unwrap();
 
     assert_matches!(
       archive.unpack(),
-      Err(ArchiveError::ReservedPath { name }) if name == "manifest.filepack",
+      Err(ArchiveError::ReservedFilename { path }) if path == "foo/manifest.filepack",
     );
   }
 
@@ -602,12 +578,7 @@ mod tests {
 
   #[test]
   fn round_trip_empty() {
-    let manifest = Manifest {
-      embedded: BTreeMap::new(),
-      package: DirectoryTree::new(),
-      signatures: BTreeSet::new(),
-      unknown: DirectoryTree::new(),
-    };
+    let manifest = Manifest::with_package(DirectoryTree::new());
     round_trip(&manifest);
   }
 
@@ -618,12 +589,7 @@ mod tests {
       .create_directory(&"foo/bar".parse().unwrap())
       .unwrap();
 
-    let manifest = Manifest {
-      embedded: BTreeMap::new(),
-      package,
-      signatures: BTreeSet::new(),
-      unknown: DirectoryTree::new(),
-    };
+    let manifest = Manifest::with_package(package);
 
     round_trip(&manifest);
   }
@@ -638,12 +604,7 @@ mod tests {
         .unwrap();
     }
 
-    let manifest = Manifest {
-      embedded: BTreeMap::new(),
-      package,
-      signatures: BTreeSet::new(),
-      unknown: DirectoryTree::new(),
-    };
+    let manifest = Manifest::with_package(package);
 
     round_trip(&manifest);
   }
@@ -660,12 +621,7 @@ mod tests {
       .create_file(&"a/d".parse().unwrap(), File::new(b"bar"))
       .unwrap();
 
-    let manifest = Manifest {
-      embedded: BTreeMap::new(),
-      package,
-      signatures: BTreeSet::new(),
-      unknown: DirectoryTree::new(),
-    };
+    let manifest = Manifest::with_package(package);
 
     round_trip(&manifest);
   }
@@ -678,12 +634,7 @@ mod tests {
 
   #[test]
   fn round_trip_with_signature() {
-    let manifest = Manifest {
-      embedded: BTreeMap::new(),
-      package: DirectoryTree::new(),
-      signatures: BTreeSet::new(),
-      unknown: DirectoryTree::new(),
-    };
+    let manifest = Manifest::with_package(DirectoryTree::new());
 
     let fingerprint = Archive::pack(&manifest).unwrap().fingerprint().unwrap();
 

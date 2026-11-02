@@ -130,9 +130,22 @@ Windows drive prefix, such as `C:`.
 This ensures that file paths assembled from path components work on Windows and
 Unix and cannot escape the package root. Symbolic links are not supported.
 
-The filenames `manifest.filepack` and `.filepack`, with any case, are reserved
-in the package root. Case variations of `metadata.filemeta`, other than
-lowercase, are reserved in the package root.
+The filenames `manifest.filepack` and `.filepack`, with any case, are reserved.
+Case variations of `metadata.filemeta`, other than lowercase, are reserved in
+the package root.
+
+Composition
+-----------
+
+Packages are composable, meaning that packages may contain other packages.
+
+A directory that contains the file `manifest.filepack` is a package. If it is a
+subdirectory of another package, it is a subpackage.
+
+During verification, subpackage manifests are verified, and the subpackage root
+directory entry hash in the superpackage must be equal to the subpackage
+fingerprint. Subpackage signatures are also verified, but do not satisfy key
+constraints for the superpackage.
 
 Signatures
 ----------

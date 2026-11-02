@@ -22,7 +22,7 @@ use super::*;
 pub struct RelativePath(String);
 
 impl RelativePath {
-  pub(crate) const JUNK_NAMES: &'static [&'static str] = &[".DS_Store", ".filepack", ".localized"];
+  pub(crate) const JUNK_NAMES: &'static [&'static str] = &[".DS_Store", ".localized"];
 
   pub(crate) const WINDOWS_RESERVED_CHARACTERS: &'static [char] =
     &['"', '*', ':', '<', '>', '?', '|'];
@@ -50,10 +50,6 @@ impl RelativePath {
 
   pub(crate) fn filename(&self) -> &Component {
     Component::new(self.0.rsplit('/').next().unwrap()).unwrap()
-  }
-
-  pub(crate) fn first_component(&self) -> &Component {
-    self.components().next().unwrap()
   }
 
   pub(crate) fn is_nfc(&self) -> bool {
@@ -119,6 +115,13 @@ impl RelativePath {
     None
   }
 
+  pub(crate) fn parent(&self) -> Option<Self> {
+    self
+      .0
+      .rsplit_once('/')
+      .map(|(parent, _filename)| parent.parse().unwrap())
+  }
+
   pub(crate) fn starts_with(&self, prefix: impl AsRef<str>) -> bool {
     Utf8Path::new(self).starts_with(Utf8Path::new(&prefix))
   }
@@ -130,10 +133,6 @@ impl RelativePath {
       None | Some(0) => filename,
       Some(i) => &filename[..i],
     }
-  }
-
-  pub(crate) fn to_lowercase(&self) -> Self {
-    Self(self.0.to_lowercase())
   }
 }
 
@@ -270,32 +269,11 @@ mod tests {
   fn filename() {
     #[track_caller]
     fn case(path: &str, expected: &str) {
-      assert_eq!(
-        path.parse::<RelativePath>().unwrap().filename().as_str(),
-        expected,
-      );
+      assert_eq!(path.parse::<RelativePath>().unwrap().filename(), expected);
     }
 
     case("foo", "foo");
     case("foo/bar.png", "bar.png");
-  }
-
-  #[test]
-  fn first_component() {
-    #[track_caller]
-    fn case(path: &str, expected: &str) {
-      assert_eq!(
-        path
-          .parse::<RelativePath>()
-          .unwrap()
-          .first_component()
-          .as_str(),
-        expected,
-      );
-    }
-
-    case("foo", "foo");
-    case("foo/bar.png", "foo");
   }
 
   #[test]
@@ -455,6 +433,21 @@ mod tests {
 
     case("foo");
     case(&"a".repeat(255));
+  }
+
+  #[test]
+  fn parent() {
+    #[track_caller]
+    fn case(path: &str, expected: Option<&str>) {
+      assert_eq!(
+        path.parse::<RelativePath>().unwrap().parent(),
+        expected.map(|expected| expected.parse().unwrap()),
+      );
+    }
+
+    case("foo", None);
+    case("foo/bar", Some("foo"));
+    case("foo/bar/baz", Some("foo/bar"));
   }
 
   #[test]

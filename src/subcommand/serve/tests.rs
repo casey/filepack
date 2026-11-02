@@ -4343,6 +4343,24 @@ fn verify_directory_rejects_missing_auth_header() {
 }
 
 #[test]
+fn verify_directory_rejects_reserved_filename() {
+  let server = TestServer::new();
+
+  let (deco, hash) = Directory::new()
+    .insert_file("manifest.filepack", b"foo")
+    .deco();
+  server.write_file(&deco);
+
+  server
+    .post(format!("/api/directory/{hash}"))
+    .status(StatusCode::BAD_REQUEST)
+    .assert_body(format!(
+      "directory {hash} contains reserved filename `manifest.filepack`"
+    ))
+    .send();
+}
+
+#[test]
 fn verify_directory_subdirectory_totals_mismatch() {
   let server = TestServer::new();
 
@@ -4565,12 +4583,14 @@ fn verify_package_metadata_references_present_file() {
 }
 
 #[test]
-fn verify_package_rejects_reserved_paths() {
+fn verify_package_rejects_reserved_filename() {
   let server = TestServer::new();
 
   server.write_file(b"foo");
 
-  let (deco, hash) = Directory::new().insert_file(".filepack", b"foo").deco();
+  let (deco, hash) = Directory::new()
+    .insert_file("METADATA.FILEMETA", b"foo")
+    .deco();
   let fingerprint = Fingerprint(hash);
   server.write_file(&deco);
 
@@ -4580,7 +4600,7 @@ fn verify_package_rejects_reserved_paths() {
     .post(format!("/api/package/{fingerprint}"))
     .status(StatusCode::BAD_REQUEST)
     .assert_body(format!(
-      "package {fingerprint} contains reserved path `.filepack`"
+      "package {fingerprint} contains reserved filename `METADATA.FILEMETA`"
     ))
     .send();
 }

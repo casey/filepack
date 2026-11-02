@@ -463,10 +463,10 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     source: reqwest::Error,
   },
-  #[snafu(display("package contains reserved path `{name}`"))]
-  ReservedPath {
+  #[snafu(display("package contains reserved filename `{}` at `{path}`", path.filename()))]
+  ReservedFilename {
     backtrace: Option<Backtrace>,
-    name: ComponentBuf,
+    path: RelativePath,
   },
   #[snafu(display("failed to read body from response from {url}"))]
   ResponseBody {
@@ -544,6 +544,22 @@ pub enum Error {
   StandardInputIo {
     backtrace: Option<Backtrace>,
     source: io::Error,
+  },
+  #[snafu(display(
+    "subpackage `{path}` fingerprint `{actual}` does not match `{path}/{}` fingerprint `{expected}`",
+    Manifest::FILENAME,
+  ))]
+  SubpackageMismatch {
+    actual: Fingerprint,
+    backtrace: Option<Backtrace>,
+    expected: Fingerprint,
+    path: RelativePath,
+  },
+  #[snafu(display("subpackage `{path}` totals error"))]
+  SubpackageTotals {
+    backtrace: Option<Backtrace>,
+    path: RelativePath,
+    source: TotalsError,
   },
   #[snafu(display("symlink at `{path}`"))]
   Symlink {

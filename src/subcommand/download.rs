@@ -113,13 +113,6 @@ impl Download {
       } else {
         assert!(totals.is_none());
 
-        for name in directory.entries.keys() {
-          ensure! {
-            !name.is_reserved(),
-            error::ReservedPath { name },
-          }
-        }
-
         totals = Some(actual);
 
         progress_bar.set_totals(actual.bytes(), actual.entries());
@@ -128,6 +121,20 @@ impl Download {
       progress_bar.item_done();
 
       directories.insert(hash, deco.to_vec());
+
+      for component in directory.entries.keys() {
+        let reserved = if expected.is_some() {
+          component.is_reserved()
+        } else {
+          component.is_reserved_in_root()
+        };
+
+        if reserved {
+          let path = path.join(component);
+          let path = RelativePath::try_from(path.strip_prefix(&self.output).unwrap()).unwrap();
+          return Err(error::ReservedFilename { path }.build());
+        }
+      }
 
       filesystem::create_dir_all(&path)?;
 
@@ -153,21 +160,15 @@ impl Download {
       Self::download_package_file(&mut context, *hash, path, *size)?;
     }
 
-    let metadata_path = self.output.join(Metadata::DECO_FILENAME);
-    if let Some(deco) = filesystem::read_opt(&metadata_path)? {
+    if let Some(metadata) = Metadata::load(&self.output)? {
       let paths = files
         .iter()
         .map(|(_hash, path, _size)| {
-          let path = path.strip_prefix(&self.output).unwrap();
-          path.try_into().context(error::Path { path })
+          RelativePath::try_from(path.strip_prefix(&self.output).unwrap()).unwrap()
         })
-        .collect::<Result<HashSet<RelativePath>>>()?;
+        .collect();
 
-      Metadata::decode_from_slice(&deco)
-        .context(error::DecodeMetadataDeco {
-          path: metadata_path,
-        })?
-        .check_files(&paths)?;
+      metadata.check_files(&paths)?;
     }
 
     let mut builder = ArchiveBuilder::new();

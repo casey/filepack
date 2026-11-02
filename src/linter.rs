@@ -3,7 +3,7 @@ use super::*;
 #[derive(Default)]
 pub(crate) struct Linter {
   active: BTreeSet<Lint>,
-  case_conflicts: HashMap<RelativePath, Vec<RelativePath>>,
+  case_conflicts: HashMap<String, Vec<RelativePath>>,
   errors: u64,
 }
 
@@ -258,7 +258,7 @@ impl Linter {
     if self.is_active(Lint::CaseConflict) {
       self
         .case_conflicts
-        .entry(path.to_lowercase())
+        .entry(path.as_str().to_lowercase())
         .or_default()
         .push(path.clone());
     }

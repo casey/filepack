@@ -183,7 +183,6 @@ fn unknown_fields_are_rejected() {
 #[test]
 fn unknown_root_entries_are_preserved() {
   let hash = Hash::bytes(b"qux");
-  let hash_string = hash.to_string();
   let content = hex::encode(b"qux");
 
   let test = Test::new()
@@ -194,7 +193,7 @@ fn unknown_root_entries_are_preserved() {
       "foo/manifest.filepack",
       json! {
         embedded: {
-          *hash_string: content
+          *hash: content
         },
         package: {
           bar: {
@@ -206,7 +205,7 @@ fn unknown_root_entries_are_preserved() {
         unknown: {
           baz: {
             qux: {
-              hash: hash_string,
+              hash: hash,
               size: 3
             }
           },
@@ -241,7 +240,7 @@ fn unknown_root_entries_are_preserved() {
     json! {
       baz: {
         qux: {
-          hash: hash_string,
+          hash: hash,
           size: 3
         }
       },

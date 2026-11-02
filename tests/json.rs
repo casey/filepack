@@ -63,7 +63,7 @@ macro_rules! parts {
 
     ($s:ident, *$key:tt : $value:tt $(, $($rest:tt)*)? ) => {{
         $s.push('"');
-        $s.push_str(($key).as_ref());
+        $s.push_str(&($key).to_string());
         $s.push('"');
         $s.push(':');
         parts!($s, $value);
@@ -83,9 +83,7 @@ macro_rules! parts {
     }};
 
     ($s:ident, $value:expr) => {{
-        $s.push('"');
-        $s.push_str(($value).as_ref());
-        $s.push('"');
+        $s.push_str(&$crate::json::JsonValue::json_value(&$value));
     }};
 
     ($s:ident,) => {};
@@ -102,6 +100,40 @@ macro_rules! quote {
   ($s:ident, $value:literal) => {
     $s.push_str(stringify!($value));
   };
+}
+
+pub(crate) trait JsonValue {
+  fn json_value(&self) -> String;
+}
+
+impl JsonValue for str {
+  fn json_value(&self) -> String {
+    format!("\"{self}\"")
+  }
+}
+
+impl JsonValue for String {
+  fn json_value(&self) -> String {
+    self.as_str().json_value()
+  }
+}
+
+impl JsonValue for Hash {
+  fn json_value(&self) -> String {
+    format!("\"{self}\"")
+  }
+}
+
+impl JsonValue for usize {
+  fn json_value(&self) -> String {
+    self.to_string()
+  }
+}
+
+impl<T: JsonValue + ?Sized> JsonValue for &T {
+  fn json_value(&self) -> String {
+    (**self).json_value()
+  }
 }
 
 #[test]
@@ -133,6 +165,16 @@ fn json() {
       bar: "b"
     },
     r#"{"foo":"a","bar":"b"}"#,
+  );
+
+  let size = 1;
+
+  case(
+    json! {
+      foo: size,
+      bar: "b"
+    },
+    r#"{"foo":1,"bar":"b"}"#,
   );
 
   case(

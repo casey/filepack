@@ -61,6 +61,8 @@ pub(crate) enum ServerError {
   },
   #[snafu(display("directory {hash} not found"))]
   DirectoryNotFound { hash: Hash },
+  #[snafu(display("directory {directory} contains reserved filename `{name}`"))]
+  DirectoryReservedFilename { directory: Hash, name: ComponentBuf },
   #[snafu(display("directory {hash} totals error"))]
   DirectoryTotals { hash: Hash, source: TotalsError },
   #[snafu(display("directory {directory} references unverified subdirectory {subdirectory}"))]
@@ -149,8 +151,8 @@ pub(crate) enum ServerError {
   PackageNotMounted { fingerprint: Fingerprint },
   #[snafu(display("package number {number} not found"))]
   PackageNumberNotFound { number: u64 },
-  #[snafu(display("package {fingerprint} contains reserved path `{name}`"))]
-  PackageReservedPath {
+  #[snafu(display("package {fingerprint} contains reserved filename `{name}`"))]
+  PackageReservedFilename {
     fingerprint: Fingerprint,
     name: ComponentBuf,
   },
@@ -249,6 +251,7 @@ impl ServerError {
       | Self::DirectoryEntryMissing { .. }
       | Self::DirectoryEntrySizeMismatch { .. }
       | Self::DirectoryEntryTotals { .. }
+      | Self::DirectoryReservedFilename { .. }
       | Self::DirectoryTotals { .. }
       | Self::DirectoryUnverified { .. }
       | Self::FingerprintParse { .. }
@@ -257,7 +260,7 @@ impl ServerError {
       | Self::RevisionParse { .. }
       | Self::PackageMetadataDecode { .. }
       | Self::PackageMetadataFileMissing { .. }
-      | Self::PackageReservedPath { .. }
+      | Self::PackageReservedFilename { .. }
       | Self::PackageRootUnverified { .. }
       | Self::PackageUnverified { .. }
       | Self::RevisionDecode { .. }

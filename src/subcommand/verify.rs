@@ -178,6 +178,8 @@ fingerprint mismatch: `{}`
 
     let mut empty = Vec::new();
 
+    let mut subpackages = Vec::new();
+
     for entry in WalkDir::new(&root).sort_by_file_name() {
       let entry = entry?;
 
@@ -197,6 +199,16 @@ fingerprint mismatch: `{}`
 
       if ignore(&path, &self.ignore) {
         continue;
+      }
+
+      if is_subpackage_manifest(&entry, &path) {
+        subpackages.push(path.parent().unwrap());
+        continue;
+      }
+
+      ensure! {
+        !path.filename().is_reserved(),
+        error::ReservedFilename { path },
       }
 
       ensure! {
@@ -231,14 +243,13 @@ fingerprint mismatch: `{}`
       }
     }
 
-    {
-      let path = root.join(Metadata::DECO_FILENAME);
+    if let Some(metadata) = Metadata::load(&root)? {
+      metadata.check_files(&files.keys().cloned().collect())?;
+    }
 
-      if let Some(deco) = filesystem::read_opt(&path)? {
-        Metadata::decode_from_slice(&deco)
-          .context(error::DecodeMetadataDeco { path })?
-          .check_files(&files.keys().cloned().collect())?;
-      }
+    for path in &subpackages {
+      let subpackage = manifest.package.subdirectory(path).unwrap();
+      verify_subpackage(&root, path, subpackage)?;
     }
 
     for (key, identifier) in keys {
