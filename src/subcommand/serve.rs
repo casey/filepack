@@ -1,4 +1,8 @@
 use {
+  self::{
+    host_port::HostPort, packages_query::PackagesQuery, redirect_config::RedirectConfig,
+    server_config::ServerConfig, spawn_config::SpawnConfig,
+  },
   super::*,
   axum::{
     Router, body,
@@ -23,71 +27,26 @@ use {
   tower_http::set_header::SetResponseHeaderLayer,
 };
 
+pub(crate) use self::write_config::WriteConfig;
+
+mod host_port;
+mod packages_query;
+mod redirect_config;
 pub(crate) mod route;
+mod server_config;
+mod spawn_config;
 #[cfg(test)]
 mod tests;
+mod write_config;
+
+const SEC_FETCH_SITE: HeaderName = HeaderName::from_static("sec-fetch-site");
 
 static THREAD_COUNTER: AtomicU64 = AtomicU64::new(0);
 
+type HostPortExtension = Extension<HostPort>;
 type RedirectConfigExtension = Extension<Arc<RedirectConfig>>;
 type ServerConfigExtension = Extension<Arc<ServerConfig>>;
 type ServerExtension = Extension<Arc<Server>>;
-
-#[derive(Deserialize)]
-pub(crate) struct PackagesQuery {
-  order: Option<Order>,
-  sort: Option<Sort>,
-}
-
-impl Describe for Query<PackagesQuery> {
-  fn describe(endpoint: &mut crate::reference::Endpoint, _registry: &mut deco::Registry) {
-    endpoint.query.extend([
-      crate::reference::QueryParameter::new::<Order>("order"),
-      crate::reference::QueryParameter::new::<Sort>("sort"),
-    ]);
-  }
-}
-
-pub(crate) struct RedirectConfig {
-  destination: Url,
-  domains: HashSet<Host>,
-}
-
-impl RedirectConfig {
-  fn with_path_and_query(&self, uri: &Uri) -> Url {
-    let mut destination = self.destination.clone();
-    destination.set_path(uri.path());
-    destination.set_query(uri.query());
-    destination
-  }
-}
-
-pub(crate) struct ServerConfig {
-  pub(crate) hosts: HashSet<Host>,
-  pub(crate) mounts: Vec<Mount>,
-  pub(crate) url: Option<Url>,
-}
-
-impl ServerConfig {
-  fn mount(&self, name: &str) -> Option<&Mount> {
-    self
-      .mounts
-      .iter()
-      .find(|mount| mount.name.as_deref() == Some(name))
-  }
-}
-
-enum SpawnConfig {
-  Http,
-  Https,
-  Redirect(Url),
-}
-
-pub(crate) enum WriteConfig {
-  Admin { domain: Host, key: PublicKey },
-  Forbidden,
-  Unrestricted,
-}
 
 #[derive(Debug, Parser, PartialEq)]
 pub(crate) struct Serve {
@@ -258,6 +217,52 @@ impl Serve {
     self.domain.as_ref().unwrap()
   }
 
+  async fn cross_origin_layer(
+    host_port: HostPortExtension,
+    request: Request,
+    next: Next,
+  ) -> Response {
+    if matches!(
+      *request.method(),
+      Method::GET | Method::HEAD | Method::OPTIONS
+    ) {
+      return next.run(request).await;
+    }
+
+    let headers = request.headers();
+
+    if let Some(site) = headers.get(SEC_FETCH_SITE) {
+      return if site == "same-origin" || site == "none" {
+        next.run(request).await
+      } else {
+        ServerError::CrossOriginRequest.into_response()
+      };
+    }
+
+    let Ok(origin) = headers.typed_try_get::<headers::Origin>() else {
+      return ServerError::CrossOriginRequest.into_response();
+    };
+
+    let Some(origin) = origin else {
+      return next.run(request).await;
+    };
+
+    let Ok(host) = origin.hostname().parse::<Host>() else {
+      return ServerError::CrossOriginRequest.into_response();
+    };
+
+    let origin = HostPort {
+      host,
+      port: origin.port(),
+    };
+
+    if origin != *host_port {
+      return ServerError::CrossOriginRequest.into_response();
+    }
+
+    next.run(request).await
+  }
+
   fn domains(&self) -> Vec<Host> {
     self.domain.iter().chain(&self.redirects).cloned().collect()
   }
@@ -289,21 +294,26 @@ impl Serve {
 
   async fn host_layer(
     server_config: ServerConfigExtension,
-    host: Option<TypedHeader<headers::Host>>,
-    request: Request,
+    header: Option<TypedHeader<headers::Host>>,
+    mut request: Request,
     next: Next,
   ) -> Response {
-    let Some(header) = request
+    let Some((hostname, port)) = request
       .uri()
       .host()
-      .or(host.as_ref().map(|TypedHeader(host)| host.hostname()))
+      .map(|host| (host, request.uri().port_u16()))
+      .or(
+        header
+          .as_ref()
+          .map(|header| (header.hostname(), header.port())),
+      )
     else {
       return ServerError::HostMissing.into_response();
     };
 
-    let Ok(host) = header.parse::<Host>() else {
+    let Ok(host) = hostname.parse::<Host>() else {
       return ServerError::HostNotAllowed {
-        host: header.into(),
+        host: hostname.into(),
       }
       .into_response();
     };
@@ -313,10 +323,12 @@ impl Serve {
       && !server_config.hosts.contains(&host)
     {
       return ServerError::HostNotAllowed {
-        host: header.into(),
+        host: hostname.into(),
       }
       .into_response();
     }
+
+    request.extensions_mut().insert(HostPort { host, port });
 
     next.run(request).await
   }
@@ -429,18 +441,11 @@ impl Serve {
 
   async fn redirect_layer(
     redirect_config: RedirectConfigExtension,
-    host: Option<TypedHeader<headers::Host>>,
+    host_port: HostPortExtension,
     request: Request,
     next: Next,
   ) -> Response {
-    if let Some(host) = request
-      .uri()
-      .host()
-      .or(host.as_ref().map(|TypedHeader(host)| host.hostname()))
-      && host
-        .parse::<Host>()
-        .is_ok_and(|host| redirect_config.domains.contains(&host))
-    {
+    if redirect_config.domains.contains(&host_port.host) {
       Redirect::permanent(redirect_config.with_path_and_query(request.uri()).as_str())
         .into_response()
     } else {
@@ -516,6 +521,7 @@ impl Serve {
     };
 
     router
+      .layer(middleware::from_fn(Self::cross_origin_layer))
       .layer(middleware::from_fn(Self::host_layer))
       .layer(Extension(server_config))
       .layer(SetResponseHeaderLayer::overriding(

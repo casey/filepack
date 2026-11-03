@@ -64,9 +64,9 @@ impl Route {
 pub(crate) async fn api_delete_number(
   _: Authenticated,
   server: ServerExtension,
-  Path(number): Path<u64>,
+  number: Path<u64>,
 ) -> ServerResult {
-  block_in_place(|| server.delete_number(number))
+  block_in_place(|| server.delete_number(*number))
 }
 
 /// Serve file with `hash`.
@@ -128,9 +128,9 @@ pub(crate) async fn api_missing(
 #[route(GET, "/api/number/{number}")]
 pub(crate) async fn api_number(
   server: ServerExtension,
-  Path(number): Path<u64>,
+  number: Path<u64>,
 ) -> ServerResult<DecoResponse<api::number::Response>> {
-  block_in_place(|| Ok(DecoResponse(server.head(number)?)))
+  block_in_place(|| Ok(DecoResponse(server.head(*number)?)))
 }
 
 /// List all package numbers.
@@ -206,9 +206,9 @@ pub(crate) async fn api_verify_directory(
 pub(crate) async fn api_verify_package(
   _: Authenticated,
   server: ServerExtension,
-  Path(fingerprint): Path<Fingerprint>,
+  fingerprint: Path<Fingerprint>,
 ) -> ServerResult {
-  block_in_place(|| server.verify_package(fingerprint))
+  block_in_place(|| server.verify_package(*fingerprint))
 }
 
 /// Verify uploaded `revision` and assign it a package number.
@@ -218,12 +218,12 @@ pub(crate) async fn api_verify_package(
 pub(crate) async fn api_verify_revision(
   _: Authenticated,
   server: ServerExtension,
-  Path(revision): Path<Revision>,
+  revision: Path<Revision>,
   DecoRequest(request): DecoRequest<api::revision::Request, { MIB }>,
 ) -> ServerResult<DecoResponse<api::revision::Response>> {
   block_in_place(|| {
     Ok(DecoResponse(api::revision::Response {
-      number: server.verify_revision(revision, request)?,
+      number: server.verify_revision(*revision, request)?,
     }))
   })
 }
@@ -501,13 +501,13 @@ pub(crate) async fn media_video_item_placeholder_thumbnail(
 pub(crate) async fn mount(
   server: ServerExtension,
   server_config: ServerConfigExtension,
-  Path(package): Path<PackageIdentifier>,
+  package: Path<PackageIdentifier>,
   range: Option<TypedHeader<headers::Range>>,
 ) -> ServerResult<Resource> {
   mount_file(
     server,
     server_config,
-    Path((package, "index.html".parse().unwrap())),
+    Path((*package, "index.html".parse().unwrap())),
     range,
   )
   .await
@@ -548,12 +548,12 @@ pub(crate) async fn mount_redirect(Path(package): Path<PackageIdentifier>) -> Re
 pub(crate) async fn package(
   server: ServerExtension,
   server_config: ServerConfigExtension,
-  Path(identifier): Path<PackageIdentifier>,
+  identifier: Path<PackageIdentifier>,
 ) -> PageResult<PackageHtml> {
   block_in_place(|| {
     Ok(
       server
-        .package_html(identifier, &server_config.mounts)?
+        .package_html(*identifier, &server_config.mounts)?
         .page(server_config.url.clone()),
     )
   })
@@ -566,12 +566,12 @@ pub(crate) async fn package(
 pub(crate) async fn package_history(
   server: ServerExtension,
   server_config: ServerConfigExtension,
-  Path(identifier): Path<PackageIdentifier>,
+  identifier: Path<PackageIdentifier>,
 ) -> PageResult<HistoryHtml> {
   block_in_place(|| {
     Ok(
       server
-        .history_html(identifier)?
+        .history_html(*identifier)?
         .page(server_config.url.clone()),
     )
   })
@@ -669,7 +669,7 @@ pub(crate) async fn package_media(
 pub(crate) async fn packages(
   server: ServerExtension,
   server_config: ServerConfigExtension,
-  Query(query): Query<PackagesQuery>,
+  query: Query<PackagesQuery>,
 ) -> PageResult<PackagesHtml> {
   let order = query.order.unwrap_or_default();
   let sort = query.sort.unwrap_or_default();

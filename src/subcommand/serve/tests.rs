@@ -961,6 +961,51 @@ fn corrupt_revision() {
 }
 
 #[test]
+fn cross_origin_request_allowed() {
+  #[track_caller]
+  fn case(method: Method, name: HeaderName, value: &str) {
+    TestRequestBuilder::new(method, "/api/foo", TestServer::new().router)
+      .header(name, value)
+      .status(StatusCode::NOT_FOUND)
+      .assert_body("API endpoint not found")
+      .send();
+  }
+
+  case(Method::POST, SEC_FETCH_SITE, "same-origin");
+  case(Method::POST, SEC_FETCH_SITE, "none");
+  case(Method::POST, header::ORIGIN, "http://localhost");
+  case(Method::GET, SEC_FETCH_SITE, "cross-site");
+
+  TestServer::new()
+    .post("/api/foo")
+    .host(Some("[0:0::1]:8000"))
+    .header(header::ORIGIN, "http://[::1]:8000")
+    .status(StatusCode::NOT_FOUND)
+    .assert_body("API endpoint not found")
+    .send();
+}
+
+#[test]
+fn cross_origin_request_rejected() {
+  #[track_caller]
+  fn case(name: HeaderName, value: &str) {
+    TestServer::new()
+      .post("/api/foo")
+      .header(name, value)
+      .status(StatusCode::FORBIDDEN)
+      .assert_body("cross-origin request forbidden")
+      .send();
+  }
+
+  case(SEC_FETCH_SITE, "cross-site");
+  case(SEC_FETCH_SITE, "same-site");
+  case(header::ORIGIN, "http://foo");
+  case(header::ORIGIN, "http://localhost:8000");
+  case(header::ORIGIN, "null");
+  case(header::ORIGIN, "foo");
+}
+
+#[test]
 fn default_serve_matches_parsed() {
   assert_eq!(
     Serve::default(),
