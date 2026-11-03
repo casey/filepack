@@ -36,7 +36,7 @@ request, only by domain and time. They can be used for any purpose while valid.
 As such, `filepack` commands with `--auth` will refuse to run unless the
 connection to the server is over loopback or HTTPS.
 
-Cross-origin Requests
+Cross-Origin Requests
 ---------------------
 
 The Filepack server rejects cross-origin browser requests with methods other

@@ -5,6 +5,8 @@ use super::*;
 pub enum HostError {
   #[snafu(display("invalid bracketed IPv6 address `{host}`"))]
   BracketedIpv6 { host: String },
+  #[snafu(display("bracketed IPv6 address `{host}` missing closing `]`"))]
+  BracketedIpv6Unterminated { host: String },
   #[snafu(display("domain `{host}` contains invalid character `{character}`"))]
   DomainCharacter { character: char, host: String },
   #[snafu(display("domain is empty"))]
