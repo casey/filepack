@@ -81,8 +81,8 @@ use {
     float_ext::FloatExt,
     format::Format,
     functions::{
-      check_case, check_metadata, current_dir, decode_path, default, format_size, ignore,
-      is_subpackage_manifest, now, parse_number, transfer_tempfile, verify_subpackage,
+      check_case, check_metadata, current_dir, decode_path, default, format_size, now,
+      parse_number, transfer_tempfile, verify_subpackage,
     },
     hashing_writer::HashingWriter,
     head::Head,
@@ -186,6 +186,7 @@ use {
     video_error::VideoError,
     video_format::VideoFormat,
     video_metadata::VideoMetadata,
+    walk::Walk,
     webm_decoder::WebmDecoder,
     xmp_error::XmpError,
   },
@@ -254,7 +255,7 @@ use {
   unindent::unindent,
   url::{Host, Url},
   usized::IntoU64,
-  walkdir::{DirEntry, WalkDir},
+  walkdir::WalkDir,
   zune_jpeg::{JpegDecoder, SampleRatios, zune_core::colorspace::ColorSpace},
 };
 
@@ -527,6 +528,7 @@ mod video;
 mod video_error;
 mod video_format;
 mod video_metadata;
+mod walk;
 mod webm_decoder;
 mod xmp;
 mod xmp_error;

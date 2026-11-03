@@ -82,11 +82,6 @@ pub fn gradient_alpha(width: u32, height: u32, alpha: u8) -> DynamicImage {
   .into()
 }
 
-pub(crate) fn ignore(path: &RelativePath, ignore: &[RelativePath]) -> bool {
-  path.components().any(|component| component == State::DIR)
-    || ignore.iter().any(|ignore| path.starts_with(ignore))
-}
-
 pub fn install_default_crypto_provider() -> Result {
   static INSTALLED: LazyLock<bool> = LazyLock::new(|| {
     rustls::crypto::ring::default_provider()
@@ -97,10 +92,6 @@ pub fn install_default_crypto_provider() -> Result {
   ensure!(*INSTALLED, error::RustlsProvider);
 
   Ok(())
-}
-
-pub(crate) fn is_subpackage_manifest(entry: &DirEntry, path: &RelativePath) -> bool {
-  entry.depth() > 1 && entry.file_type().is_file() && path.filename() == Manifest::FILENAME
 }
 
 pub(crate) fn now() -> Result<u64, SystemTimeError> {

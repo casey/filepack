@@ -133,69 +133,26 @@ impl Create {
       None
     };
 
-    let cleaned_manifest = current_dir.join(&manifest_path).lexiclean();
-
     let mut paths = HashMap::new();
 
-    let mut empty = Vec::new();
+    let Walk {
+      empty,
+      entries,
+      subpackages,
+    } = Walk::new(&root, &manifest_path, &self.ignore)?;
 
-    let mut subpackages = Vec::new();
-
-    for entry in WalkDir::new(&root).sort_by_file_name() {
-      let entry = entry?;
-
-      if entry.depth() == 0 {
-        continue;
-      }
-
-      let path = decode_path(entry.path())?;
-
-      let cleaned_path = current_dir.join(path).lexiclean();
-
-      if cleaned_path == cleaned_manifest {
-        continue;
-      }
-
-      let relative = path.strip_prefix(&root).unwrap();
-
-      let relative = RelativePath::try_from(relative).context(error::Path { path: relative })?;
-
-      if ignore(&relative, &self.ignore) {
-        continue;
-      }
-
-      if is_subpackage_manifest(&entry, &relative) {
-        subpackages.push(relative.parent().unwrap());
-        continue;
-      }
-
+    for (path, ty) in entries {
       ensure! {
-        !relative.filename().is_reserved(),
-        error::ReservedFilename { path: relative },
+        path.is_nfc(),
+        error::PathNormalization { path },
       }
 
-      ensure! {
-        relative.is_nfc(),
-        error::PathNormalization { path: relative },
+      linter.lint_path(&path);
+
+      if ty == EntryType::File {
+        let size = filesystem::metadata(&root.join(&path))?.len();
+        paths.insert(path, size);
       }
-
-      ensure! {
-        !entry.file_type().is_symlink(),
-        error::Symlink { path },
-      }
-
-      let metadata = filesystem::metadata(path)?;
-
-      linter.lint_path(&relative);
-
-      empty.pop_if(|dir| relative.starts_with(dir));
-
-      if entry.file_type().is_dir() {
-        empty.push(relative);
-        continue;
-      }
-
-      paths.insert(relative, metadata.len());
     }
 
     linter.lint_case_conflicts();
