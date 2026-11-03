@@ -16,21 +16,20 @@ and can be used as convenient shortcuts.
 Authorization
 -------------
 
-By default, the Filepack server does not require authorization. Anyone can
-upload, download, and browse packages. Running `filepack serve` without any
+By default, the Filepack server does not allow writes, but does allow reads.
+Anyone can browse and download packages. Running `filepack serve` without any
 flags listens on port 80 on all interfaces, not just localhost.
 
-Writes can be restricted with `--restrict-writes`, which forbids unauthorized
-write access to the API, including the ability to upload and delete packages.
+Writes, including uploading and deleting packages, can be allowed with
+`--unrestricted-writes` or `--admin-key`.
+
+The `--unrestricted-writes` flag allows write access without authorization.
 
 The `--admin-key` option, along with `--domain`, can be used to authorize write
 access by public key. The holder of the admin private key may authorize requests
 by including a tagged-hex [bearer token](hex/token.md) with their requests in
 the `Authorization` header. The token's domain must match the value of
 `--domain`, and the timestamp must be current.
-
-If `--restrict-writes` is used with no `--admin-key`, the server will be
-read-only.
 
 Note that authorization tokens are not scoped to a particular endpoint or
 request, only by domain and time. They can be used for any purpose while valid.
@@ -283,7 +282,7 @@ extensions. Furthermore, packages mounted by number serve the latest version of
 the package. On a world-writable server, anyone may update the package, causing
 arbitrary HTML and JavaScript to be served from the server origin. Make sure you
 understand the consequences of this and only mount packages you trust, and only
-mount packages by number on servers with `--restrict-writes`.
+mount packages by number on servers with restricted write access.
 
 Mounts may optionally be given a name with `--mount PACKAGE:NAME`, in which case
 they are also served under `/{NAME}/`. Built-in routes take precedence over

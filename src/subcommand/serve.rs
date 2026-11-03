@@ -33,11 +33,6 @@ type RedirectConfigExtension = Extension<Arc<RedirectConfig>>;
 type ServerConfigExtension = Extension<Arc<ServerConfig>>;
 type ServerExtension = Extension<Arc<Server>>;
 
-pub(crate) struct AuthConfig {
-  pub(crate) admin: Option<PublicKey>,
-  pub(crate) domain: Option<String>,
-}
-
 #[derive(Deserialize)]
 pub(crate) struct PackagesQuery {
   order: Option<Order>,
@@ -87,6 +82,12 @@ enum SpawnConfig {
   Redirect(Url),
 }
 
+pub(crate) enum WriteConfig {
+  Admin { domain: String, key: PublicKey },
+  Forbidden,
+  Unrestricted,
+}
+
 #[derive(Debug, Parser, PartialEq)]
 pub(crate) struct Serve {
   #[arg(
@@ -120,7 +121,6 @@ pub(crate) struct Serve {
     help = "Admin public key or key name",
     long,
     requires = "domain",
-    requires = "restrict_writes",
     value_name = "KEY"
   )]
   admin_key: Option<KeyIdentifier>,
@@ -174,8 +174,12 @@ pub(crate) struct Serve {
     value_name = "DOMAIN"
   )]
   redirects: Vec<String>,
-  #[arg(help = "Restrict writes to admin", long)]
-  restrict_writes: bool,
+  #[arg(
+    conflicts_with = "admin_key",
+    help = "Allow unauthenticated writes",
+    long
+  )]
+  unrestricted_writes: bool,
 }
 
 pub(crate) type Input = ();
@@ -435,9 +439,9 @@ impl Serve {
 
   pub(crate) fn router(
     server: Arc<Server>,
-    auth_config: Option<Arc<AuthConfig>>,
     redirect_config: Option<Arc<RedirectConfig>>,
     server_config: Arc<ServerConfig>,
+    write_config: Arc<WriteConfig>,
   ) -> Router {
     let mut api = Router::new();
     let mut web = Router::new();
@@ -469,17 +473,12 @@ impl Serve {
       )
       .layer(Extension(server))
       .layer(Extension(server_config))
+      .layer(Extension(write_config))
       .layer(middleware::from_fn(Self::if_none_match_layer))
       .layer(SetResponseHeaderLayer::overriding(
         header::X_CONTENT_TYPE_OPTIONS,
         HeaderValue::from_static("nosniff"),
       ));
-
-    let router = if let Some(auth_config) = auth_config {
-      router.layer(Extension(auth_config))
-    } else {
-      router
-    };
 
     if let Some(redirect_config) = redirect_config {
       router
@@ -531,18 +530,15 @@ impl Serve {
       options.unstable,
     )?);
 
-    let auth_config = if self.restrict_writes {
-      let admin = if let Some(identifier) = &self.admin_key {
-        Some(Keychain::load(&options)?.identifier_public_key(identifier)?)
-      } else {
-        None
-      };
-      Some(Arc::new(AuthConfig {
-        admin,
-        domain: self.domain.clone(),
-      }))
+    let write_config = if let Some(identifier) = &self.admin_key {
+      WriteConfig::Admin {
+        domain: self.canonical().into(),
+        key: Keychain::load(&options)?.identifier_public_key(identifier)?,
+      }
+    } else if self.unrestricted_writes {
+      WriteConfig::Unrestricted
     } else {
-      None
+      WriteConfig::Forbidden
     };
 
     let mut names = HashSet::new();
@@ -553,7 +549,12 @@ impl Serve {
 
     let redirect_config = self.redirect_config()?;
 
-    let router = Self::router(server, auth_config, redirect_config, self.server_config());
+    let router = Self::router(
+      server,
+      redirect_config,
+      self.server_config(),
+      Arc::new(write_config),
+    );
 
     match (self.http_port(), self.https_port()) {
       (Some(http_port), None) => {
@@ -726,7 +727,7 @@ impl Default for Serve {
       ready_address: None,
       redirect_http_to_https: false,
       redirects: Vec::new(),
-      restrict_writes: false,
+      unrestricted_writes: false,
     }
   }
 }

@@ -105,3 +105,19 @@ fn redirect_rejects_canonical_domain() {
     .stderr("error: redirect domain `foo` is the canonical domain\n")
     .failure();
 }
+
+#[test]
+fn writes_are_forbidden_by_default() {
+  let server = Test::new()
+    .ready_address()
+    .args(["serve", "--address", "127.0.0.1", "--http-port", "0"])
+    .spawn();
+
+  server
+    .put(format!("/api/file/{}", Hash::bytes(b"foo")))
+    .body("foo")
+    .status(StatusCode::FORBIDDEN)
+    .send();
+
+  server.terminate().success();
+}

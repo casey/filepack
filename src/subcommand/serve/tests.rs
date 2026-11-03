@@ -322,10 +322,10 @@ impl TestServer {
 
   fn builder() -> TestServerBuilder {
     TestServerBuilder {
-      auth_config: None,
       mounts: Vec::new(),
       unstable: false,
       url: None,
+      write_config: WriteConfig::Unrestricted,
     }
   }
 
@@ -405,18 +405,13 @@ impl TestServer {
 }
 
 struct TestServerBuilder {
-  auth_config: Option<Arc<AuthConfig>>,
   mounts: Vec<Mount>,
   unstable: bool,
   url: Option<Url>,
+  write_config: WriteConfig,
 }
 
 impl TestServerBuilder {
-  fn auth_config(mut self, auth_config: AuthConfig) -> Self {
-    self.auth_config = Some(Arc::new(auth_config));
-    self
-  }
-
   fn build(self) -> TestServer {
     let (tempdir, data_dir) = tempdir();
 
@@ -424,12 +419,12 @@ impl TestServerBuilder {
 
     let router = Serve::router(
       server,
-      self.auth_config,
       None,
       Arc::new(ServerConfig {
         mounts: self.mounts,
         url: self.url,
       }),
+      Arc::new(self.write_config),
     );
 
     TestServer {
@@ -456,22 +451,31 @@ impl TestServerBuilder {
     self.url = Some(url);
     self
   }
+
+  fn write_config(mut self, write_config: WriteConfig) -> Self {
+    self.write_config = write_config;
+    self
+  }
+}
+
+#[test]
+fn admin_key_conflicts_with_unrestricted_writes() {
+  assert_argument_conflict::<Serve>(
+    &[
+      "--admin-key",
+      PublicKey::EXAMPLE,
+      "--domain",
+      "foo",
+      "--unrestricted-writes",
+    ],
+    "--admin-key <KEY>",
+    "--unrestricted-writes",
+  );
 }
 
 #[test]
 fn admin_key_requires_domain() {
-  assert_missing_argument::<Serve>(
-    &["--admin-key", PublicKey::EXAMPLE, "--restrict-writes"],
-    &["--domain <DOMAIN>"],
-  );
-}
-
-#[test]
-fn admin_key_requires_restrict_writes() {
-  assert_missing_argument::<Serve>(
-    &["--admin-key", PublicKey::EXAMPLE, "--domain", "foo"],
-    &["--restrict-writes"],
-  );
+  assert_missing_argument::<Serve>(&["--admin-key", PublicKey::EXAMPLE], &["--domain <DOMAIN>"]);
 }
 
 #[test]
@@ -841,15 +845,14 @@ fn artwork_thumbnail_response() {
 #[test]
 fn closed_server_forbids_writes() {
   TestServer::builder()
-    .auth_config(AuthConfig {
-      admin: None,
-      domain: None,
-    })
+    .write_config(WriteConfig::Forbidden)
     .build()
     .put(format!("/api/file/{}", Hash::bytes(b"bar")))
     .body("bar")
     .status(StatusCode::FORBIDDEN)
-    .assert_body("writes forbidden")
+    .assert_body(
+      "writes forbidden, server must be started with `--admin-key` or `--unrestricted-writes`",
+    )
     .send();
 }
 
@@ -984,9 +987,9 @@ fn delete_package_not_found() {
 fn delete_package_rejects_missing_auth_header() {
   let admin = PrivateKey::generate();
   let server = TestServer::builder()
-    .auth_config(AuthConfig {
-      admin: Some(admin.public_key()),
-      domain: Some("filepack.example".into()),
+    .write_config(WriteConfig::Admin {
+      domain: "filepack.example".into(),
+      key: admin.public_key(),
     })
     .build();
 
@@ -1290,9 +1293,9 @@ fn gc_ignores_non_hash_filenames() {
 fn gc_rejects_missing_auth_header() {
   let admin = PrivateKey::generate();
   let server = TestServer::builder()
-    .auth_config(AuthConfig {
-      admin: Some(admin.public_key()),
-      domain: Some("filepack.example".into()),
+    .write_config(WriteConfig::Admin {
+      domain: "filepack.example".into(),
+      key: admin.public_key(),
     })
     .build();
 
@@ -4051,9 +4054,9 @@ fn restricted_write_accepts_admin_token() {
   let token = Claims::sign(&admin, "filepack.example").unwrap();
 
   let server = TestServer::builder()
-    .auth_config(AuthConfig {
-      admin: Some(admin.public_key()),
-      domain: Some("filepack.example".into()),
+    .write_config(WriteConfig::Admin {
+      domain: "filepack.example".into(),
+      key: admin.public_key(),
     })
     .build();
 
@@ -4070,9 +4073,9 @@ fn restricted_write_accepts_admin_token() {
 fn restricted_write_rejects_missing_header() {
   let admin = PrivateKey::generate();
   let server = TestServer::builder()
-    .auth_config(AuthConfig {
-      admin: Some(admin.public_key()),
-      domain: Some("filepack.example".into()),
+    .write_config(WriteConfig::Admin {
+      domain: "filepack.example".into(),
+      key: admin.public_key(),
     })
     .build();
 
@@ -4091,9 +4094,9 @@ fn restricted_write_rejects_others() {
   let admin = PrivateKey::generate();
   let other = PrivateKey::generate();
   let server = TestServer::builder()
-    .auth_config(AuthConfig {
-      admin: Some(admin.public_key()),
-      domain: Some("filepack.example".into()),
+    .write_config(WriteConfig::Admin {
+      domain: "filepack.example".into(),
+      key: admin.public_key(),
     })
     .build();
 
@@ -4113,9 +4116,9 @@ fn restricted_write_rejects_others() {
 fn restricted_write_rejects_wrong_domain() {
   let admin = PrivateKey::generate();
   let server = TestServer::builder()
-    .auth_config(AuthConfig {
-      admin: Some(admin.public_key()),
-      domain: Some("filepack.example".into()),
+    .write_config(WriteConfig::Admin {
+      domain: "filepack.example".into(),
+      key: admin.public_key(),
     })
     .build();
 
@@ -4417,9 +4420,9 @@ fn verify_directory_missing_subdirectory() {
 fn verify_directory_rejects_missing_auth_header() {
   let admin = PrivateKey::generate();
   let server = TestServer::builder()
-    .auth_config(AuthConfig {
-      admin: Some(admin.public_key()),
-      domain: Some("filepack.example".into()),
+    .write_config(WriteConfig::Admin {
+      domain: "filepack.example".into(),
+      key: admin.public_key(),
     })
     .build();
 
