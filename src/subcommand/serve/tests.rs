@@ -632,9 +632,9 @@ fn api_version_malformed() {
 #[test]
 fn api_version_response_header() {
   TestServer::new()
-    .get("/")
+    .get("/api/numbers")
     .assert_header(API_VERSION_HEADER, "0")
-    .ignore_body()
+    .assert_body(api::numbers::Response::default().encode_to_vec())
     .send();
 }
 
@@ -650,10 +650,20 @@ fn api_version_unsupported() {
     .send();
 
   server
-    .get("/nonexistent")
+    .get("/api/foo")
     .header(API_VERSION_HEADER, "1")
     .status(StatusCode::BAD_REQUEST)
     .assert_body("unsupported API version 1, this server supports API version 0")
+    .send();
+}
+
+#[test]
+fn api_version_web_route() {
+  TestServer::new()
+    .get("/")
+    .header(API_VERSION_HEADER, "1")
+    .assert_header_absent(API_VERSION_HEADER)
+    .ignore_body()
     .send();
 }
 
