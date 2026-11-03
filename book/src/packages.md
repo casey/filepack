@@ -2,9 +2,10 @@ Packages
 ========
 
 A Filepack package is a directory containing a manifest named
-`manifest.filepack`, which records the names, sizes, and [BLAKE3
-hashes](https://en.wikipedia.org/wiki/BLAKE_(hash_function)#BLAKE3) of all
-files in the directory and its subdirectories, and which may be signed using
+`manifest.filepack`, which records the names, sizes, and
+[BLAKE3 hashes](https://en.wikipedia.org/wiki/BLAKE_(hash_function)#BLAKE3) of
+all files in the directory and its subdirectories, and which may be signed
+using
 [Ed25519](https://en.wikipedia.org/wiki/EdDSA#Ed25519).
 
 Packages can be identified by fingerprint, a hash that uniquely identifies the
@@ -33,9 +34,9 @@ on the server, regardless of which package contains them.
 Hashing
 -------
 
-A Filepack package is a [Merkle
-tree](https://en.wikipedia.org/wiki/Merkle_tree). The root hash of the tree is
-the hash of the serialized root directory of the package. Serialized
+A Filepack package is a
+[Merkle tree](https://en.wikipedia.org/wiki/Merkle_tree). The root hash of the
+tree is the hash of the serialized root directory of the package. Serialized
 directories contain the names, sizes, hashes, and types of their children,
 which may be files or subdirectories.
 
@@ -94,8 +95,9 @@ Archives are a content-addressed storage format. They contain the hash of a
 root directory and a map of hashes to file contents.
 
 An archive can be traversed by reading the root hash, reading the entry for the
-root hash in the files map, deserializing the contents as a [deco
-directory](deco/directory.md), and repeating the process for subdirectories.
+root hash in the files map, deserializing the contents as a
+[deco directory](deco/directory.md), and repeating the process for
+subdirectories.
 
 The manifest archive root directory contains two subdirectories, `package` and
 `signatures`.

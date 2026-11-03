@@ -41,8 +41,8 @@ connection to the server is over loopback or HTTPS.
 HTTPS
 -----
 
-The Filepack server can request a [TLS
-certificate](https://en.wikipedia.org/wiki/Transport_Layer_Security) from
+The Filepack server can request a
+[TLS certificate](https://en.wikipedia.org/wiki/Transport_Layer_Security) from
 [Let's Encrypt](https://letsencrypt.org/) using the
 [ACME](https://en.wikipedia.org/wiki/Automatic_Certificate_Management_Environment)
 protocol.
@@ -54,12 +54,13 @@ redirect requests on port 80 to port 443:
 filepack serve --domain example.com --https --redirect-http-to-https
 ```
 
-ACME TLS certificates are stored in `acme-cache/` in the [Data
-Directory](configuration.md#data-directory).
+ACME TLS certificates are stored in `acme-cache/` in the
+[Data Directory](configuration.md#data-directory).
 
-Responses served over HTTPS include `Strict-Transport-Security:
-max-age=31536000`. If you serve a domain over HTTPS and then later switch to
-HTTP, browsers that have previously visited using HTTPS will refuse to connect.
+Responses served over HTTPS include
+`Strict-Transport-Security: max-age=31536000`. If you serve a domain over HTTPS
+and then later switch to HTTP, browsers that have previously visited using
+HTTPS will refuse to connect.
 
 Storage
 -------
@@ -73,8 +74,8 @@ The database is stored in `database.redb` and uses
 
 ACME TLS certificates are cached in `acme-cache/`.
 
-Uploaded files are stored in `files/{hash}`, where hash is the [tagged-hex
-BLAKE3 hash of the file contents](hex/hash.md).
+Uploaded files are stored in `files/{hash}`, where hash is the
+[tagged-hex BLAKE3 hash of the file contents](hex/hash.md).
 
 Uploads are written to temporary files in `incoming/` and atomically moved to
 `files/{hash}` upon completion.
@@ -140,8 +141,8 @@ domains use `https://`.
 Uploading Packages
 ------------------
 
-Packages can be uploaded to the server with [`filepack
-upload`](commands/filepack-upload.md).
+Packages can be uploaded to the server with
+[`filepack upload`](commands/filepack-upload.md).
 
 `filepack upload` actually performs three distinct operations: creation,
 replacement, and update.
@@ -195,27 +196,28 @@ the server will accept the first and reject the second with `409 Conflict`.
 
 Package uploads are content-addressed and bottom up.
 
-Files, directories, and revisions are uploaded using [`PUT
-/api/file/{hash}`](api/file-hash.md#put).
+Files, directories, and revisions are uploaded using
+[`PUT /api/file/{hash}`](api/file-hash.md#put).
 
-Directories are verified using [`POST
-/api/directory/{hash}`](api/directory-hash.md#post), which requires that all
-files have been uploaded and all subdirectories have been verified.
+Directories are verified using
+[`POST /api/directory/{hash}`](api/directory-hash.md#post), which requires that
+all files have been uploaded and all subdirectories have been verified.
 
-The package is verified using [`POST
-/api/package/{fingerprint}`](api/package-fingerprint.md#post), which requires
-that the package root directory has already been verified and package metadata
-is valid.
+The package is verified using
+[`POST /api/package/{fingerprint}`](api/package-fingerprint.md#post), which
+requires that the package root directory has already been verified and package
+metadata is valid.
 
-Finally, the revision is verified and the package number obtained using [`POST
-/api/revision/{revision}`](api/revision-revision.md#post), which requires that
-the package has been verified and the revision has been uploaded and is valid.
+Finally, the revision is verified and the package number obtained using
+[`POST /api/revision/{revision}`](api/revision-revision.md#post), which
+requires that the package has been verified and the revision has been uploaded
+and is valid.
 
 Downloading Packages
 --------------------
 
-Packages and files may be downloaded from the server with [`filepack
-download`](commands/filepack-download.md).
+Packages and files may be downloaded from the server with
+[`filepack download`](commands/filepack-download.md).
 
 `filepack download` verifies the hash of all files it downloads, so servers do
 not need to be trusted, as long as the client has a known-good package
@@ -224,8 +226,8 @@ fingerprint or file hash.
 Deleting Packages
 -----------------
 
-Packages may be deleted from the server with [`filepack
-delete`](commands/filepack-delete.md).
+Packages may be deleted from the server with
+[`filepack delete`](commands/filepack-delete.md).
 
 Garbage Collection
 ------------------

@@ -45,6 +45,9 @@ lint:
   ./bin/forbid
   cargo fmt --all -- --check
 
+format:
+  rumdl fmt
+
 outdated:
   cargo outdated --workspace --root-deps-only
 
