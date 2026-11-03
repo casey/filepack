@@ -112,11 +112,11 @@ pub(crate) struct Serve {
   )]
   acme_directory: Url,
   #[arg(
-    default_value = "0.0.0.0",
+    default_value = "127.0.0.1",
     help = "Listen on <ADDRESS> for incoming requests",
     long
   )]
-  address: String,
+  address: IpAddr,
   #[arg(
     help = "Admin public key or key name",
     long,
@@ -639,15 +639,11 @@ impl Serve {
     ready: bool,
     router: Router,
   ) -> Result {
-    let listener = TcpListener::bind((self.address.as_str(), port))
+    let address = SocketAddr::new(self.address, port);
+
+    let listener = TcpListener::bind(address)
       .await
-      .context(error::BindListener {
-        address: if self.address.contains(':') {
-          format!("[{}]:{port}", self.address)
-        } else {
-          format!("{}:{port}", self.address)
-        },
-      })?
+      .context(error::BindListener { address })?
       .into_std()
       .context(error::ListenerIntoStandard)?;
 
@@ -716,7 +712,7 @@ impl Default for Serve {
       acme_cache: None,
       acme_contact: Vec::new(),
       acme_directory: LETS_ENCRYPT_PRODUCTION_DIRECTORY.parse().unwrap(),
-      address: "0.0.0.0".into(),
+      address: Ipv4Addr::LOCALHOST.into(),
       admin_key: None,
       domain: None,
       http: false,

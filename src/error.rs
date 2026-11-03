@@ -39,7 +39,7 @@ pub enum Error {
   },
   #[snafu(display("failed to bind listener to {address}"))]
   BindListener {
-    address: String,
+    address: SocketAddr,
     backtrace: Option<Backtrace>,
     source: io::Error,
   },
