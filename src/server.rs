@@ -858,6 +858,30 @@ impl Server {
         }
       }
 
+      let fingerprint = Fingerprint(hash);
+
+      if let Some(metadata) = self.metadata_deco(fingerprint)? {
+        let metadata = Metadata::decode_from_slice(&metadata)
+          .context(server_error::PackageMetadataDecode { fingerprint })?;
+
+        if let Some(Media::Web) = metadata.media {
+          ensure!(
+            self.unstable,
+            server_error::UnstableFeature {
+              feature: UnstableFeature::WebPackages,
+              fingerprint,
+            },
+          );
+        }
+
+        for path in metadata.files() {
+          ensure!(
+            self.resolve_path(fingerprint, &path)?.is_some(),
+            server_error::PackageMetadataFileMissing { fingerprint, path },
+          );
+        }
+      }
+
       directories.insert(&hash, &())?;
     }
 
@@ -875,28 +899,6 @@ impl Server {
         .is_some(),
       server_error::PackageRootUnverified { fingerprint },
     );
-
-    if let Some(metadata) = self.metadata_deco(fingerprint)? {
-      let metadata = Metadata::decode_from_slice(&metadata)
-        .context(server_error::PackageMetadataDecode { fingerprint })?;
-
-      if let Some(Media::Web) = metadata.media {
-        ensure!(
-          self.unstable,
-          server_error::UnstableFeature {
-            feature: UnstableFeature::WebPackages,
-            fingerprint,
-          },
-        );
-      }
-
-      for path in metadata.files() {
-        ensure!(
-          self.resolve_path(fingerprint, &path)?.is_some(),
-          server_error::PackageMetadataFileMissing { fingerprint, path },
-        );
-      }
-    }
 
     tx.open_table(PACKAGES)?.insert(&fingerprint, &())?;
 
