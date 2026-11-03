@@ -25,7 +25,6 @@ style = "---"
 
 [line-length]
 code-blocks = false
-line-length = 79
 reflow = true
 reflow-mode = "normalize"
 

@@ -5,8 +5,8 @@ Hashing
 -------
 
 `filepack` serves the same purpose as programs like `shasum`, which hash files
-and output a text file containing file hashes and paths, which can later be
-used with the same program to verify that the files have not changed.
+and output a text file containing file hashes and paths, which can later be used
+with the same program to verify that the files have not changed.
 
 They output hashes and paths one per line, separated by whitespace, and mainly
 differ in which hash function they use.
@@ -33,8 +33,8 @@ hash function.
 Signing
 -------
 
-`filepack` can also create and verify signatures. Other signing and
-verification utilities include:
+`filepack` can also create and verify signatures. Other signing and verification
+utilities include:
 
 | binary | about |
 |---|---|
@@ -70,8 +70,8 @@ construction that does give files consistent hashes between torrents.
 Version 1 torrents are currently far more widely adopted than version 2
 torrents.
 
-Torrents are not composable. A torrent may contain `.torrent` files, but may
-not natively contain other torrents.
+Torrents are not composable. A torrent may contain `.torrent` files, but may not
+natively contain other torrents.
 
 Compared to BitTorrent, Filepack uses BLAKE3, a fast, modern cryptographic hash
 function with built-in Merkle tree construction. Files are consistently hashed
@@ -81,34 +81,33 @@ contain packages in subdirectories.
 
 Filepack uses a more consistent content-addressing scheme. All objects,
 including files and directories, are identified by BLAKE3 hash, which is itself
-a Merkle tree, allowing any object to be incrementally streamed and verified.
-By contrast, a BitTorrent infohash is not a tree hash, so the info dictionary
+a Merkle tree, allowing any object to be incrementally streamed and verified. By
+contrast, a BitTorrent infohash is not a tree hash, so the info dictionary
 object it identifies cannot be downloaded using the same piece bartering
 algorithm as the files in the torrent.
 
-Filepack packages are directories of files, so packages can be transported
-using BitTorrent. Additionally, Filepack metadata identifies assets by relative
-path, so Filepack metadata can be used in torrents independently of Filepack
-hashing or manifests.
+Filepack packages are directories of files, so packages can be transported using
+BitTorrent. Additionally, Filepack metadata identifies assets by relative path,
+so Filepack metadata can be used in torrents independently of Filepack hashing
+or manifests.
 
 ### IPFS
 
-Filepack and IPFS use a similar data model, where directories and files are
-both identified by hash.
+Filepack and IPFS use a similar data model, where directories and files are both
+identified by hash.
 
 IPFS is notoriously complex, supports a wide variety of hash functions,
 public-key cryptography algorithms, and peer to peer transport and addressing
 schemes.
 
-Compared to IPFS, Filepack is far simpler. Filepack uses a single hash
-function, BLAKE3, and a single public-key cryptography implementation, Ed25519.
+Compared to IPFS, Filepack is far simpler. Filepack uses a single hash function,
+BLAKE3, and a single public-key cryptography implementation, Ed25519.
 Additionally, Filepack can be used for hashing, signing, and verification
 without depending on the network.
 
 ### Iroh
 
-Iroh is a peer-to-peer networking stack that uses BLAKE3 for content
-addressing.
+Iroh is a peer-to-peer networking stack that uses BLAKE3 for content addressing.
 
 Filepack and Iroh are largely orthogonal. Iroh is used for transport of flat
 blobs and does not define a directory encoding.

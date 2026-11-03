@@ -19,17 +19,16 @@
 <!-- ANCHOR: introduction -->
 Filepack is a content-addressed package format with self-describing metadata.
 
-A package is a directory of files and a manifest containing their BLAKE3
-hashes. File and directory hashes form a Merkle tree whose root hash, the
-package fingerprint, uniquely identifies the package. Packages can be signed
-with Ed25519 and verified against a manifest, fingerprint, or signature.
+A package is a directory of files and a manifest containing their BLAKE3 hashes.
+File and directory hashes form a Merkle tree whose root hash, the package
+fingerprint, uniquely identifies the package. Packages can be signed with
+Ed25519 and verified against a manifest, fingerprint, or signature.
 
 Packages may contain machine-readable metadata describing their content,
 allowing programmatic search, preview, playback, and conversion.
 
-`filepack` is a command-line tool for creating, signing, and verifying
-packages, and includes an HTTP server for package upload, download, and
-display.
+`filepack` is a command-line tool for creating, signing, and verifying packages,
+and includes an HTTP server for package upload, download, and display.
 
 The demo server at [filepack.com](https://filepack.com) hosts a selection of
 example packages.
