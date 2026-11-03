@@ -5,7 +5,7 @@ const TTL: u64 = 60;
 
 pub(crate) struct Policy<'a> {
   admin: PublicKey,
-  audience: Option<&'a str>,
+  domain: Option<&'a str>,
   now: u64,
 }
 
@@ -14,18 +14,18 @@ pub(crate) struct Policy<'a> {
 pub(crate) struct Claims {
   /// Domain the token is valid for.
   #[n(1)]
-  pub(crate) audience: String,
+  pub(crate) domain: String,
   /// Unix timestamp of signing in seconds.
   #[n(2)]
   pub(crate) timestamp: u64,
 }
 
 impl Claims {
-  pub(crate) fn sign(private_key: &PrivateKey, audience: &str) -> Result<String> {
+  pub(crate) fn sign(private_key: &PrivateKey, domain: &str) -> Result<String> {
     Ok(
       private_key
         .sign(Claims {
-          audience: audience.into(),
+          domain: domain.into(),
           timestamp: now().context(error::Time)?,
         })
         .to_string(),
@@ -34,17 +34,13 @@ impl Claims {
 
   pub(crate) fn verify(
     admin: PublicKey,
-    audience: Option<&str>,
+    domain: Option<&str>,
     now: u64,
     token: &str,
   ) -> Result<(), AuthorizationError> {
     let signature = token.parse::<Token>().context(authorization_error::Token)?;
 
-    let policy = Policy {
-      admin,
-      audience,
-      now,
-    };
+    let policy = Policy { admin, domain, now };
 
     signature.verify(policy)?;
 
@@ -60,7 +56,7 @@ impl Message for Claims {
     "c95cde36d8c377cb99c475555f2a2db63568c0afb1e83c101b835c540e",
   );
   const EXAMPLE_DESCRIPTION: &'static str =
-    "Token with audience `filepack.com` and timestamp 0, signed by the all-zero private key.";
+    "Token with domain `filepack.com` and timestamp 0, signed by the all-zero private key.";
   const NAME: &'static str = "Claims";
   const TAG: Tag = Tag::Token;
   type Error = AuthorizationError;
@@ -73,8 +69,8 @@ impl Message for Claims {
     }
 
     ensure! {
-      policy.audience.is_some_and(|audience| self.audience == audience),
-      authorization_error::Audience { audience: &self.audience },
+      policy.domain.is_some_and(|domain| self.domain == domain),
+      authorization_error::Domain { domain: &self.domain },
     }
 
     let start = self.timestamp.saturating_sub(LEEWAY);
@@ -99,14 +95,14 @@ impl Message for Claims {
 mod tests {
   use super::*;
 
-  const AUDIENCE: &str = "foo";
+  const DOMAIN: &str = "foo";
 
   #[test]
   fn example() {
     let private_key = PrivateKey::from([0; PrivateKey::LEN]);
 
     let claims = Claims {
-      audience: "filepack.com".into(),
+      domain: "filepack.com".into(),
       timestamp: 0,
     };
 
@@ -117,9 +113,9 @@ mod tests {
   fn expired() {
     let admin = PrivateKey::generate();
     let token = mint(&admin, 1000);
-    Claims::verify(admin.public_key(), Some(AUDIENCE), 1090, &token).unwrap();
+    Claims::verify(admin.public_key(), Some(DOMAIN), 1090, &token).unwrap();
     assert_matches!(
-      Claims::verify(admin.public_key(), Some(AUDIENCE), 1091, &token).unwrap_err(),
+      Claims::verify(admin.public_key(), Some(DOMAIN), 1091, &token).unwrap_err(),
       AuthorizationError::Expired {
         expiry: 1090,
         now: 1091,
@@ -131,27 +127,27 @@ mod tests {
   fn mint(private_key: &PrivateKey, timestamp: u64) -> String {
     private_key
       .sign(Claims {
-        audience: AUDIENCE.into(),
+        domain: DOMAIN.into(),
         timestamp,
       })
       .to_string()
   }
 
   #[test]
-  fn missing_audience() {
+  fn missing_domain() {
     let admin = PrivateKey::generate();
     let token = mint(&admin, 1000);
     let error = Claims::verify(admin.public_key(), None, 1000, &token).unwrap_err();
-    assert_matches!(error, AuthorizationError::Audience { ref audience } if audience == AUDIENCE);
+    assert_matches!(error, AuthorizationError::Domain { ref domain } if domain == DOMAIN);
   }
 
   #[test]
   fn pending() {
     let admin = PrivateKey::generate();
     let token = mint(&admin, 1000);
-    Claims::verify(admin.public_key(), Some(AUDIENCE), 970, &token).unwrap();
+    Claims::verify(admin.public_key(), Some(DOMAIN), 970, &token).unwrap();
     assert_matches!(
-      Claims::verify(admin.public_key(), Some(AUDIENCE), 969, &token).unwrap_err(),
+      Claims::verify(admin.public_key(), Some(DOMAIN), 969, &token).unwrap_err(),
       AuthorizationError::Pending {
         now: 969,
         start: 970,
@@ -178,9 +174,9 @@ mod tests {
     /// Extra.
     #[derive(Decode, Encode, Eq, Ord, PartialEq, PartialOrd)]
     struct Extra {
-      /// Audience.
+      /// Domain.
       #[n(1)]
-      audience: String,
+      domain: String,
       /// Timestamp.
       #[n(2)]
       timestamp: u64,
@@ -207,14 +203,14 @@ mod tests {
 
     let token = admin
       .sign(Extra {
-        audience: AUDIENCE.into(),
+        domain: DOMAIN.into(),
         timestamp: 0,
         unknown: 0,
       })
       .to_string();
 
     assert_matches!(
-      Claims::verify(admin.public_key(), Some(AUDIENCE), 0, &token).unwrap_err(),
+      Claims::verify(admin.public_key(), Some(DOMAIN), 0, &token).unwrap_err(),
       AuthorizationError::Token {
         source: HexError::Decode {
           source: DecodeError::Unknown {
@@ -228,13 +224,13 @@ mod tests {
   }
 
   #[test]
-  fn wrong_audience() {
+  fn wrong_domain() {
     let admin = PrivateKey::generate();
     let token = Claims::sign(&admin, "bar").unwrap();
     let error =
-      Claims::verify(admin.public_key(), Some(AUDIENCE), now().unwrap(), &token).unwrap_err();
-    assert_matches!(error, AuthorizationError::Audience { ref audience } if audience == "bar");
-    assert_eq!(error.to_string(), "token has incorrect audience `bar`");
+      Claims::verify(admin.public_key(), Some(DOMAIN), now().unwrap(), &token).unwrap_err();
+    assert_matches!(error, AuthorizationError::Domain { ref domain } if domain == "bar");
+    assert_eq!(error.to_string(), "token has incorrect domain `bar`");
   }
 
   #[test]
@@ -243,7 +239,7 @@ mod tests {
     let other = PrivateKey::generate();
     let token = mint(&other, 1000);
     assert_matches!(
-      Claims::verify(admin.public_key(), Some(AUDIENCE), 0, &token).unwrap_err(),
+      Claims::verify(admin.public_key(), Some(DOMAIN), 0, &token).unwrap_err(),
       AuthorizationError::Signer { signer } if signer == other.public_key(),
     );
   }

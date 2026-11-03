@@ -843,7 +843,7 @@ fn closed_server_forbids_writes() {
   TestServer::builder()
     .auth_config(AuthConfig {
       admin: None,
-      audience: None,
+      domain: None,
     })
     .build()
     .put(format!("/api/file/{}", Hash::bytes(b"bar")))
@@ -986,7 +986,7 @@ fn delete_package_rejects_missing_auth_header() {
   let server = TestServer::builder()
     .auth_config(AuthConfig {
       admin: Some(admin.public_key()),
-      audience: Some("filepack.example".into()),
+      domain: Some("filepack.example".into()),
     })
     .build();
 
@@ -1292,7 +1292,7 @@ fn gc_rejects_missing_auth_header() {
   let server = TestServer::builder()
     .auth_config(AuthConfig {
       admin: Some(admin.public_key()),
-      audience: Some("filepack.example".into()),
+      domain: Some("filepack.example".into()),
     })
     .build();
 
@@ -4053,7 +4053,7 @@ fn restricted_write_accepts_admin_token() {
   let server = TestServer::builder()
     .auth_config(AuthConfig {
       admin: Some(admin.public_key()),
-      audience: Some("filepack.example".into()),
+      domain: Some("filepack.example".into()),
     })
     .build();
 
@@ -4072,7 +4072,7 @@ fn restricted_write_rejects_missing_header() {
   let server = TestServer::builder()
     .auth_config(AuthConfig {
       admin: Some(admin.public_key()),
-      audience: Some("filepack.example".into()),
+      domain: Some("filepack.example".into()),
     })
     .build();
 
@@ -4093,7 +4093,7 @@ fn restricted_write_rejects_others() {
   let server = TestServer::builder()
     .auth_config(AuthConfig {
       admin: Some(admin.public_key()),
-      audience: Some("filepack.example".into()),
+      domain: Some("filepack.example".into()),
     })
     .build();
 
@@ -4110,12 +4110,12 @@ fn restricted_write_rejects_others() {
 }
 
 #[test]
-fn restricted_write_rejects_wrong_audience() {
+fn restricted_write_rejects_wrong_domain() {
   let admin = PrivateKey::generate();
   let server = TestServer::builder()
     .auth_config(AuthConfig {
       admin: Some(admin.public_key()),
-      audience: Some("filepack.example".into()),
+      domain: Some("filepack.example".into()),
     })
     .build();
 
@@ -4419,7 +4419,7 @@ fn verify_directory_rejects_missing_auth_header() {
   let server = TestServer::builder()
     .auth_config(AuthConfig {
       admin: Some(admin.public_key()),
-      audience: Some("filepack.example".into()),
+      domain: Some("filepack.example".into()),
     })
     .build();
 

@@ -26,7 +26,7 @@ write access to the API, including the ability to upload and delete packages.
 The `--admin-key` option, along with `--domain`, can be used to authorize write
 access by public key. The holder of the admin private key may authorize requests
 by including a tagged-hex [bearer token](hex/token.md) with their requests in
-the `Authorization` header. The token's audience must match the value of
+the `Authorization` header. The token's domain must match the value of
 `--domain`, and the timestamp must be current.
 
 If `--restrict-writes` is used with no `--admin-key`, the server will be
