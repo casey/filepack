@@ -83,6 +83,10 @@ pub(crate) enum ServerError {
     "history cannot be accessed by fingerprint, browse package {fingerprint} by number or revision"
   ))]
   HistoryByFingerprint { fingerprint: Fingerprint },
+  #[snafu(display("missing host header"))]
+  HostMissing,
+  #[snafu(display("host `{host}` not allowed, use `--domain {host}` to allow it"))]
+  HostNotAllowed { host: String },
   #[snafu(display("response invalid"))]
   InvalidResponse { source: http::Error },
   #[snafu(display(
@@ -255,6 +259,7 @@ impl ServerError {
       | Self::DirectoryUnverified { .. }
       | Self::FingerprintParse { .. }
       | Self::HistoryByFingerprint { .. }
+      | Self::HostMissing
       | Self::NumberParse { .. }
       | Self::RevisionParse { .. }
       | Self::PackageMetadataDecode { .. }
@@ -285,6 +290,7 @@ impl ServerError {
       | Self::PageNotFound
       | Self::PlaceholderNotFound { .. }
       | Self::RevisionNotFound { .. } => StatusCode::NOT_FOUND,
+      Self::HostNotAllowed { .. } => StatusCode::MISDIRECTED_REQUEST,
       Self::RevisionConflict { .. } => StatusCode::CONFLICT,
       Self::WriteForbidden => StatusCode::FORBIDDEN,
     }
