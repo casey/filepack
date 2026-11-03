@@ -69,6 +69,13 @@ impl Test {
     self
   }
 
+  pub(crate) fn assert_server_file(self, contents: &str) -> Self {
+    self.assert_file(
+      &format!("files/{}", Hash::bytes(contents.as_bytes())),
+      contents,
+    )
+  }
+
   #[cfg(unix)]
   pub(crate) fn chmod(self, path: &str, mode: u32) -> Self {
     use std::os::unix::fs::PermissionsExt;
@@ -497,5 +504,10 @@ impl Test {
     assert!(status.success());
 
     self
+  }
+
+  pub(crate) fn write_server_file(self, content: impl Into<Vec<u8>>) -> Self {
+    let content = content.into();
+    self.write(&format!("files/{}", Hash::bytes(&content)), content)
   }
 }

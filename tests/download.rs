@@ -16,22 +16,20 @@ fn download_checks_metadata() {
 
   let metadata = fs::read(test.path().join("metadata.filemeta")).unwrap();
 
-  let metadata_hash = Hash::bytes(&metadata);
-
   let mut child = Directory::new();
   child.insert_file("metadata.filemeta", &metadata);
 
-  let (child_deco, child_hash) = child.deco();
-
-  let (directory, hash) = Directory::new().insert_directory("bar", &child).deco();
+  let directory = Directory::new()
+    .insert_directory("bar", &child)
+    .encode_to_vec();
 
   let fingerprint = Fingerprint::from(Hash::bytes(&directory));
 
   let server = Test::new()
     .serve()
-    .write(&format!("files/{child_hash}"), child_deco)
-    .write(&format!("files/{hash}"), directory)
-    .write(&format!("files/{metadata_hash}"), metadata)
+    .write_server_file(child.encode_to_vec())
+    .write_server_file(directory)
+    .write_server_file(metadata)
     .spawn();
 
   Test::new()
@@ -161,8 +159,8 @@ fn download_package_fails_on_directory_size_mismatch() {
 
   let server = Test::new()
     .serve()
-    .write(&format!("files/{root_hash}"), root)
-    .write(&format!("files/{hash}"), directory)
+    .write_server_file(root)
+    .write_server_file(directory)
     .spawn();
 
   Test::new()
@@ -210,8 +208,8 @@ fn download_package_fails_on_directory_totals_mismatch() {
 
   let server = Test::new()
     .serve()
-    .write(&format!("files/{}", Hash::bytes(&root)), root)
-    .write(&format!("files/{subdirectory_hash}"), subdirectory_deco)
+    .write_server_file(root)
+    .write_server_file(subdirectory_deco)
     .spawn();
 
   Test::new()
@@ -242,10 +240,7 @@ fn download_package_fails_on_directory_totals_overflow() {
     .insert_file("foo", b"f")
     .deco();
 
-  let server = Test::new()
-    .serve()
-    .write(&format!("files/{hash}"), root)
-    .spawn();
+  let server = Test::new().serve().write_server_file(root).spawn();
 
   Test::new()
     .args([
@@ -302,8 +297,8 @@ fn download_package_fails_on_size_mismatch() {
 
   let server = Test::new()
     .serve()
-    .write(&format!("files/{hash}"), root)
-    .write(&format!("files/{}", Hash::bytes(b"bar")), "bar")
+    .write_server_file(root)
+    .write_server_file("bar")
     .spawn();
 
   Test::new()
@@ -326,14 +321,12 @@ fn download_package_rejects_nested_reserved_filename() {
   let mut child = Directory::new();
   child.insert_file("manifest.filepack", b"foo");
 
-  let (child_deco, child_hash) = child.deco();
-
   let (root, hash) = Directory::new().insert_directory("bar", &child).deco();
 
   let server = Test::new()
     .serve()
-    .write(&format!("files/{child_hash}"), child_deco)
-    .write(&format!("files/{hash}"), root)
+    .write_server_file(child.encode_to_vec())
+    .write_server_file(root)
     .spawn();
 
   Test::new()
@@ -359,10 +352,7 @@ fn download_package_rejects_reserved_filename() {
     .insert_file("manifest.filepack", b"foo")
     .deco();
 
-  let server = Test::new()
-    .serve()
-    .write(&format!("files/{hash}"), root)
-    .spawn();
+  let server = Test::new().serve().write_server_file(root).spawn();
 
   let test = Test::new()
     .args([
@@ -385,10 +375,7 @@ fn download_package_rejects_reserved_filename() {
 
 #[test]
 fn download_retrieves_file() {
-  let server = Test::new()
-    .serve()
-    .assert_file(&format!("files/{}", Hash::bytes(b"bar")), "bar")
-    .spawn();
+  let server = Test::new().serve().assert_server_file("bar").spawn();
 
   Test::new()
     .write("foo", "bar")
