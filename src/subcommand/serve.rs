@@ -75,21 +75,6 @@ impl ServerConfig {
       .iter()
       .find(|mount| mount.name.as_deref() == Some(name))
   }
-
-  fn new(hosts: Vec<Host>, mounts: Vec<Mount>, url: Option<Url>) -> Self {
-    Self {
-      hosts: [
-        Host::Domain("localhost".into()),
-        Host::Ipv4(Ipv4Addr::LOCALHOST),
-        Host::Ipv6(Ipv6Addr::LOCALHOST),
-      ]
-      .into_iter()
-      .chain(hosts)
-      .collect(),
-      mounts,
-      url,
-    }
-  }
 }
 
 enum SpawnConfig {
@@ -308,7 +293,7 @@ impl Serve {
     request: Request,
     next: Next,
   ) -> Response {
-    let Some(host) = request
+    let Some(header) = request
       .uri()
       .host()
       .or(host.as_ref().map(|TypedHeader(host)| host.hostname()))
@@ -316,11 +301,21 @@ impl Serve {
       return ServerError::HostMissing.into_response();
     };
 
-    if !host
-      .parse::<Host>()
-      .is_ok_and(|host| server_config.hosts.contains(&host))
+    let Ok(host) = header.parse::<Host>() else {
+      return ServerError::HostNotAllowed {
+        host: header.into(),
+      }
+      .into_response();
+    };
+
+    if let Host::Domain(domain) = &host
+      && domain != "localhost"
+      && !server_config.hosts.contains(&host)
     {
-      return ServerError::HostNotAllowed { host: host.into() }.into_response();
+      return ServerError::HostNotAllowed {
+        host: header.into(),
+      }
+      .into_response();
     }
 
     next.run(request).await
@@ -664,11 +659,11 @@ impl Serve {
   }
 
   fn server_config(&self) -> Arc<ServerConfig> {
-    Arc::new(ServerConfig::new(
-      self.domains(),
-      self.mounts.clone(),
-      self.domain.as_ref().map(|_| self.redirect_url()),
-    ))
+    Arc::new(ServerConfig {
+      hosts: self.domains().into_iter().collect(),
+      mounts: self.mounts.clone(),
+      url: self.domain.as_ref().map(|_| self.redirect_url()),
+    })
   }
 
   async fn spawn(

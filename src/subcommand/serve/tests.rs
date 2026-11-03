@@ -333,7 +333,7 @@ impl TestServer {
 
   fn builder() -> TestServerBuilder {
     TestServerBuilder {
-      hosts: Vec::new(),
+      hosts: HashSet::new(),
       mounts: Vec::new(),
       unstable: false,
       url: None,
@@ -417,7 +417,7 @@ impl TestServer {
 }
 
 struct TestServerBuilder {
-  hosts: Vec<Host>,
+  hosts: HashSet<Host>,
   mounts: Vec<Mount>,
   unstable: bool,
   url: Option<Url>,
@@ -433,7 +433,11 @@ impl TestServerBuilder {
     let router = Serve::router(
       server,
       None,
-      Arc::new(ServerConfig::new(self.hosts, self.mounts, self.url)),
+      Arc::new(ServerConfig {
+        hosts: self.hosts,
+        mounts: self.mounts,
+        url: self.url,
+      }),
       Arc::new(self.write_config),
     );
 
@@ -445,7 +449,7 @@ impl TestServerBuilder {
   }
 
   fn host(mut self, host: &str) -> Self {
-    self.hosts.push(host.parse().unwrap());
+    self.hosts.insert(host.parse().unwrap());
     self
   }
 
@@ -1975,10 +1979,9 @@ fn host_allowed() {
 
   case("localhost");
   case("LOCALHOST");
-  case("127.0.0.1");
-  case("[::1]");
-  case("[0:0::1]:8000");
   case("foo");
+  case("1.2.3.4:8000");
+  case("[1::2]");
 }
 
 #[test]
