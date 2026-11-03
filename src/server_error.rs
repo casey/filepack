@@ -215,7 +215,9 @@ pub(crate) enum ServerError {
   UploadBodyRead { hash: Hash, source: axum::Error },
   #[snafu(display("expected upload with hash {expected} but got {actual}"))]
   UploadHashMismatch { actual: Hash, expected: Hash },
-  #[snafu(display("writes forbidden"))]
+  #[snafu(display(
+    "writes forbidden, server must be started with `--admin-key` or `--unrestricted-writes`"
+  ))]
   WriteForbidden,
 }
 

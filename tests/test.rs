@@ -175,9 +175,14 @@ impl Test {
   }
 
   pub(crate) fn serve(self) -> Self {
-    self
-      .ready_address()
-      .args(["serve", "--address", "127.0.0.1", "--http-port", "0"])
+    self.ready_address().args([
+      "serve",
+      "--address",
+      "127.0.0.1",
+      "--http-port",
+      "0",
+      "--unrestricted-writes",
+    ])
   }
 
   #[track_caller]

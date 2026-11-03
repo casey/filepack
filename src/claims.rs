@@ -5,7 +5,7 @@ const TTL: u64 = 60;
 
 pub(crate) struct Policy<'a> {
   admin: PublicKey,
-  domain: Option<&'a str>,
+  domain: &'a str,
   now: u64,
 }
 
@@ -34,7 +34,7 @@ impl Claims {
 
   pub(crate) fn verify(
     admin: PublicKey,
-    domain: Option<&str>,
+    domain: &str,
     now: u64,
     token: &str,
   ) -> Result<(), AuthorizationError> {
@@ -69,7 +69,7 @@ impl Message for Claims {
     }
 
     ensure! {
-      policy.domain.is_some_and(|domain| self.domain == domain),
+      self.domain == policy.domain,
       authorization_error::Domain { domain: &self.domain },
     }
 
@@ -113,9 +113,9 @@ mod tests {
   fn expired() {
     let admin = PrivateKey::generate();
     let token = mint(&admin, 1000);
-    Claims::verify(admin.public_key(), Some(DOMAIN), 1090, &token).unwrap();
+    Claims::verify(admin.public_key(), DOMAIN, 1090, &token).unwrap();
     assert_matches!(
-      Claims::verify(admin.public_key(), Some(DOMAIN), 1091, &token).unwrap_err(),
+      Claims::verify(admin.public_key(), DOMAIN, 1091, &token).unwrap_err(),
       AuthorizationError::Expired {
         expiry: 1090,
         now: 1091,
@@ -134,20 +134,12 @@ mod tests {
   }
 
   #[test]
-  fn missing_domain() {
-    let admin = PrivateKey::generate();
-    let token = mint(&admin, 1000);
-    let error = Claims::verify(admin.public_key(), None, 1000, &token).unwrap_err();
-    assert_matches!(error, AuthorizationError::Domain { ref domain } if domain == DOMAIN);
-  }
-
-  #[test]
   fn pending() {
     let admin = PrivateKey::generate();
     let token = mint(&admin, 1000);
-    Claims::verify(admin.public_key(), Some(DOMAIN), 970, &token).unwrap();
+    Claims::verify(admin.public_key(), DOMAIN, 970, &token).unwrap();
     assert_matches!(
-      Claims::verify(admin.public_key(), Some(DOMAIN), 969, &token).unwrap_err(),
+      Claims::verify(admin.public_key(), DOMAIN, 969, &token).unwrap_err(),
       AuthorizationError::Pending {
         now: 969,
         start: 970,
@@ -159,10 +151,10 @@ mod tests {
   #[test]
   fn tampered_claims() {
     let public_key = PublicKey::EXAMPLE.parse::<PublicKey>().unwrap();
-    Claims::verify(public_key, Some("filepack.com"), 0, Token::EXAMPLE).unwrap();
+    Claims::verify(public_key, "filepack.com", 0, Token::EXAMPLE).unwrap();
     let token = Token::EXAMPLE.replacen("66696c657061636b2e636f6d", "66696c657061636b2e636f6e", 1);
     assert_matches!(
-      Claims::verify(public_key, Some("filepack.con"), 0, &token).unwrap_err(),
+      Claims::verify(public_key, "filepack.con", 0, &token).unwrap_err(),
       AuthorizationError::Signature {
         source: SignatureError::Invalid { public_key: signer, .. },
       } if signer == public_key,
@@ -210,7 +202,7 @@ mod tests {
       .to_string();
 
     assert_matches!(
-      Claims::verify(admin.public_key(), Some(DOMAIN), 0, &token).unwrap_err(),
+      Claims::verify(admin.public_key(), DOMAIN, 0, &token).unwrap_err(),
       AuthorizationError::Token {
         source: HexError::Decode {
           source: DecodeError::Unknown {
@@ -227,8 +219,7 @@ mod tests {
   fn wrong_domain() {
     let admin = PrivateKey::generate();
     let token = Claims::sign(&admin, "bar").unwrap();
-    let error =
-      Claims::verify(admin.public_key(), Some(DOMAIN), now().unwrap(), &token).unwrap_err();
+    let error = Claims::verify(admin.public_key(), DOMAIN, now().unwrap(), &token).unwrap_err();
     assert_matches!(error, AuthorizationError::Domain { ref domain } if domain == "bar");
     assert_eq!(error.to_string(), "token has incorrect domain `bar`");
   }
@@ -239,7 +230,7 @@ mod tests {
     let other = PrivateKey::generate();
     let token = mint(&other, 1000);
     assert_matches!(
-      Claims::verify(admin.public_key(), Some(DOMAIN), 0, &token).unwrap_err(),
+      Claims::verify(admin.public_key(), DOMAIN, 0, &token).unwrap_err(),
       AuthorizationError::Signer { signer } if signer == other.public_key(),
     );
   }
