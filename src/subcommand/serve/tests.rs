@@ -475,6 +475,15 @@ fn admin_key_requires_restrict_writes() {
 }
 
 #[test]
+fn api_fallback() {
+  TestServer::new()
+    .get("/api/foo")
+    .status(StatusCode::NOT_FOUND)
+    .assert_body("API endpoint not found")
+    .send();
+}
+
+#[test]
 fn api_file() {
   let server = TestServer::new();
 

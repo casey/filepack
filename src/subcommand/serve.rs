@@ -221,6 +221,10 @@ impl Serve {
     Ok(acceptor)
   }
 
+  async fn api_fallback() -> ServerError {
+    ServerError::ApiEndpointNotFound
+  }
+
   async fn api_version_layer(request: Request, next: Next) -> Response {
     let version = if let Some(value) = request.headers().get(API_VERSION_HEADER) {
       let Some(version) = value
@@ -435,11 +439,19 @@ impl Serve {
     redirect_config: Option<Arc<RedirectConfig>>,
     server_config: Arc<ServerConfig>,
   ) -> Router {
-    let router = Route::all(&mut BTreeMap::new())
-      .into_iter()
-      .fold(Router::new(), |router, entry| {
-        router.route(entry.path, entry.router)
-      })
+    let mut api = Router::new();
+    let mut web = Router::new();
+
+    for route in Route::all(&mut BTreeMap::new()) {
+      if let Some(path) = route.api_path {
+        api = api.route(path, route.router);
+      } else {
+        web = web.route(route.path, route.router);
+      }
+    }
+
+    let router = web
+      .nest("/api", api.fallback(Self::api_fallback))
       .fallback_service(
         Router::new()
           .route("/{name}/", get(Self::named_mount))

@@ -5,6 +5,7 @@ use {
 };
 
 pub(crate) struct Route {
+  pub(crate) api_path: Option<&'static str>,
   pub(crate) endpoint: crate::reference::Endpoint,
   pub(crate) method: Method,
   pub(crate) parameters: Vec<crate::reference::PathParameter>,

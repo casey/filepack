@@ -127,11 +127,7 @@ fn main() {
   let mut web = BTreeMap::new();
   {
     for (route_path, route) in &reference.routes {
-      let relative = if route.api {
-        route_path.strip_prefix("/api").unwrap()
-      } else {
-        route_path.as_str()
-      };
+      let relative = route.api_path.as_deref().unwrap_or(route_path);
 
       let slug = if relative.ends_with('/') {
         format!("{relative}index").to_kebab_case()
@@ -141,7 +137,11 @@ fn main() {
 
       let path = Utf8PathBuf::from(format!(
         "{}/{slug}.md",
-        if route.api { "api" } else { "web" },
+        if route.api_path.is_some() {
+          "api"
+        } else {
+          "web"
+        },
       ));
 
       write(
@@ -153,7 +153,7 @@ fn main() {
         },
       );
 
-      if route.api {
+      if route.api_path.is_some() {
         api.insert(route_path.as_str(), path);
       } else {
         web.insert(route_path.as_str(), path);
