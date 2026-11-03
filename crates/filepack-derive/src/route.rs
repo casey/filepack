@@ -117,6 +117,15 @@ impl Route {
 
     let descriptions = parameters.iter().map(|parameter| &parameter.1);
 
+    let value = path.value();
+
+    let api_path = if value.starts_with("/api/") {
+      let api_path = value.strip_prefix("/api").unwrap();
+      quote!(Some(#api_path))
+    } else {
+      quote!(None)
+    };
+
     quote! {
       #item
 
@@ -126,6 +135,7 @@ impl Route {
         #(<#types as Describe>::describe(&mut endpoint, registry);)*
         <#output as Describe>::describe(&mut endpoint, registry);
         Route {
+          api_path: #api_path,
           endpoint,
           method: axum::http::Method::#method,
           parameters: vec![#(

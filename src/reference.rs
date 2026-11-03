@@ -145,7 +145,7 @@ impl Reference {
       routes
         .entry(route.path.into())
         .or_insert_with(|| Route {
-          api: route.path.starts_with("/api/"),
+          api_path: route.api_path.map(Into::into),
           methods: BTreeMap::new(),
           parameters: route.parameters.clone(),
           wildcard: route.path.contains("{*"),

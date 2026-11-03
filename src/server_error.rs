@@ -3,6 +3,8 @@ use super::*;
 #[derive(Debug, Snafu)]
 #[snafu(context(suffix(false)), visibility(pub(crate)))]
 pub(crate) enum ServerError {
+  #[snafu(display("API endpoint not found"))]
+  ApiEndpointNotFound,
   #[snafu(display("malformed API version header `{value}`"))]
   ApiVersionMalformed { value: String },
   #[snafu(display(
@@ -264,7 +266,8 @@ impl ServerError {
       | Self::UnstableFeature { .. }
       | Self::UploadBodyRead { .. }
       | Self::UploadHashMismatch { .. } => StatusCode::BAD_REQUEST,
-      Self::ArtworkNotFound { .. }
+      Self::ApiEndpointNotFound
+      | Self::ArtworkNotFound { .. }
       | Self::DirectoryNotFound { .. }
       | Self::FileNotFound { .. }
       | Self::HeadNotFound { .. }
