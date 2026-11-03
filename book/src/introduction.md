@@ -7,6 +7,8 @@ See [Installation](installation.md) and [Usage](usage.md) to get started,
 [Packages](packages.md) for an overview of Filepack packages, and [Why?](why.md)
 for some of the higher-level ideas behind Filepack.
 
+All prose is written by hand.
+
 Features
 --------
 
