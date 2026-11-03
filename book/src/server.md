@@ -16,9 +16,9 @@ and can be used as convenient shortcuts.
 Authorization
 -------------
 
-By default, the Filepack server does not allow writes, but does allow reads.
-Anyone can browse and download packages. Running `filepack serve` without any
-flags listens on port 80 on all interfaces, not just localhost.
+By default, the Filepack server listens on `127.0.0.1:80` and does not allow
+writes, but does allow reads. Anyone who can reach the server can browse and
+download packages.
 
 Writes, including uploading and deleting packages, can be allowed with
 `--unrestricted-writes` or `--admin-key`.
@@ -49,7 +49,7 @@ To serve HTTPS on port 443, request a TLS certificate for `example.com`, and
 redirect requests on port 80 to port 443:
 
 ```sh
-filepack serve --domain example.com --https --redirect-http-to-https
+filepack serve --address 0.0.0.0 --domain example.com --https --redirect-http-to-https
 ```
 
 ACME TLS certificates are stored in `acme-cache/` in the

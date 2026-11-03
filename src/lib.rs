@@ -230,7 +230,7 @@ use {
     fs::{self, Permissions},
     io::{self, BufReader, IsTerminal, Read, Seek, SeekFrom, Write},
     iter, mem,
-    net::{SocketAddr, TcpStream},
+    net::{IpAddr, Ipv4Addr, SocketAddr, TcpStream},
     num::{NonZeroUsize, ParseIntError},
     ops::{Bound, Deref},
     path::{Path, PathBuf},
