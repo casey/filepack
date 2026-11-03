@@ -55,6 +55,7 @@ use {
     deco_response::DecoResponse,
     decode_error::DecodeError,
     decode_owned::DecodeOwned,
+    descendants::Descendants,
     describe::Describe,
     dimensions::Dimensions,
     directory_tree::DirectoryTree,
@@ -69,7 +70,6 @@ use {
     display_sample_rate::DisplaySampleRate,
     ed25519_signature::Ed25519Signature,
     embedded_image::EmbeddedImage,
-    entries::Entries,
     entry_info::{EntryInfo, EntryType},
     envelope::Envelope,
     error::Error,
@@ -81,8 +81,8 @@ use {
     float_ext::FloatExt,
     format::Format,
     functions::{
-      check_case, current_dir, decode_path, default, format_size, ignore, is_subpackage_manifest,
-      now, parse_number, transfer_tempfile, verify_subpackage,
+      check_case, check_metadata, current_dir, decode_path, default, format_size, ignore,
+      is_subpackage_manifest, now, parse_number, transfer_tempfile, verify_subpackage,
     },
     hashing_writer::HashingWriter,
     head::Head,
@@ -368,6 +368,7 @@ mod decode_options;
 mod decode_owned;
 mod decoded;
 mod decoder;
+mod descendants;
 mod describe;
 mod dimensions;
 mod directory;
@@ -386,7 +387,6 @@ mod ed25519_signature;
 mod embedded_image;
 mod encode;
 mod encoder;
-mod entries;
 mod entry;
 mod entry_info;
 mod envelope;

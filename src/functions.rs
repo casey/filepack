@@ -23,6 +23,25 @@ pub(crate) fn check_case(dir: &Utf8Path, names: &[&'static str]) -> Result {
   Ok(())
 }
 
+pub(crate) fn check_metadata(root: &Utf8Path, package: &DirectoryTree) -> Result {
+  for path in package.files().into_keys() {
+    if path.filename() != Metadata::DECO_FILENAME {
+      continue;
+    }
+
+    let (root, package) = match path.parent() {
+      Some(parent) => (root.join(&parent), package.subdirectory(&parent).unwrap()),
+      None => (root.to_owned(), package),
+    };
+
+    if let Some(metadata) = Metadata::load(&root)? {
+      metadata.check_files(&package.files().into_keys().collect())?;
+    }
+  }
+
+  Ok(())
+}
+
 pub(crate) fn current_dir() -> Result<Utf8PathBuf> {
   Utf8PathBuf::from_path_buf(env::current_dir().context(error::CurrentDir)?)
     .map_err(|path| error::PathUnicode { path }.build())
@@ -136,10 +155,6 @@ pub(crate) fn verify_subpackage(
 
   for signature in manifest.signatures() {
     signature.verify(expected)?;
-  }
-
-  if let Some(metadata) = Metadata::load(&root)? {
-    metadata.check_files(&manifest.files().into_keys().collect())?;
   }
 
   Ok(())

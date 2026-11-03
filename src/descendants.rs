@@ -1,20 +1,20 @@
 use super::*;
 
-pub(crate) struct Entries<'a> {
+pub(crate) struct Descendants<'a> {
   stack: Vec<(Vec<&'a Component>, &'a DirectoryTreeEntry)>,
 }
 
-impl<'a> From<&'a Manifest> for Entries<'a> {
-  fn from(manifest: &'a Manifest) -> Self {
+impl<'a> Descendants<'a> {
+  pub(crate) fn new(directory: &'a DirectoryTree) -> Self {
     let mut stack = Vec::new();
-    for (component, entry) in &manifest.package.entries {
+    for (component, entry) in &directory.entries {
       stack.push((vec![component.borrow()], entry));
     }
     Self { stack }
   }
 }
 
-impl<'a> Iterator for Entries<'a> {
+impl<'a> Iterator for Descendants<'a> {
   type Item = (RelativePath, &'a DirectoryTreeEntry);
 
   fn next(&mut self) -> Option<Self::Item> {

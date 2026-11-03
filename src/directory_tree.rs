@@ -56,6 +56,23 @@ impl DirectoryTree {
     Ok(())
   }
 
+  pub(crate) fn descendants(&self) -> Descendants {
+    Descendants::new(self)
+  }
+
+  pub(crate) fn files(&self) -> BTreeMap<RelativePath, File> {
+    let mut files = BTreeMap::new();
+
+    for (path, entry) in self.descendants() {
+      if let DirectoryTreeEntry::File(file) = entry {
+        let old = files.insert(path, *file);
+        assert!(old.is_none());
+      }
+    }
+
+    files
+  }
+
   pub(crate) fn is_empty(&self) -> bool {
     self.entries.is_empty()
   }
