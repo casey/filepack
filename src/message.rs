@@ -133,17 +133,17 @@ mod tests {
     let mut cases = Cases::default();
 
     cases.case(
-      Claims {
-        audience: "foo".into(),
-        timestamp: 1000,
+      Statement {
+        fingerprint: Fingerprint::from_bytes([0; Fingerprint::LEN]),
+        timestamp: Some(1000),
       },
       0,
     );
 
     cases.case(
-      Statement {
-        fingerprint: Fingerprint::from_bytes([0; Fingerprint::LEN]),
-        timestamp: Some(1000),
+      Claims {
+        audience: "foo".into(),
+        timestamp: 1000,
       },
       1,
     );
