@@ -35,7 +35,7 @@ type ServerExtension = Extension<Arc<Server>>;
 
 pub(crate) struct AuthConfig {
   pub(crate) admin: Option<PublicKey>,
-  pub(crate) audience: Option<String>,
+  pub(crate) domain: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -539,7 +539,7 @@ impl Serve {
       };
       Some(Arc::new(AuthConfig {
         admin,
-        audience: self.domain.clone(),
+        domain: self.domain.clone(),
       }))
     } else {
       None

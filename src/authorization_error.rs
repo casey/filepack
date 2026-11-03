@@ -3,8 +3,8 @@ use super::*;
 #[derive(Debug, Snafu)]
 #[snafu(context(suffix(false)), visibility(pub(crate)))]
 pub(crate) enum AuthorizationError {
-  #[snafu(display("token has incorrect audience `{audience}`"))]
-  Audience { audience: String },
+  #[snafu(display("token has incorrect domain `{domain}`"))]
+  Domain { domain: String },
   #[snafu(display(
     "token is expired: token with timestamp {timestamp} expires at {expiry} which is before now {now}"
   ))]

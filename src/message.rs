@@ -142,7 +142,7 @@ mod tests {
 
     cases.case(
       Claims {
-        audience: "foo".into(),
+        domain: "foo".into(),
         timestamp: 1000,
       },
       1,
