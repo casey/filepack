@@ -36,6 +36,14 @@ request, only by domain and time. They can be used for any purpose while valid.
 As such, `filepack` commands with `--auth` will refuse to run unless the
 connection to the server is over loopback or HTTPS.
 
+Cross-origin Requests
+---------------------
+
+The Filepack server rejects cross-origin browser requests with methods other
+than `GET`, `HEAD`, or `OPTIONS`. Requests are cross-origin when indicated by
+the `Sec-Fetch-Site` header, or the `Origin` header when `Sec-Fetch-Site` is
+absent.
+
 DNS Rebinding
 -------------
 
@@ -45,7 +53,7 @@ request `Host` headers match `localhost`, one of the server's configured
 domains, or be an IP address.
 
 The `--domain` option can be used to add a domain that the Filepack server
-accepts in the `Host` header, and is neceessary whenever the server is accessed
+accepts in the `Host` header, and is necessary whenever the server is accessed
 with a hostname other than `localhost`.
 
 HTTPS

@@ -19,6 +19,8 @@ pub(crate) enum ServerError {
   AuthorizationMalformed,
   #[snafu(display("missing authorization header"))]
   AuthorizationMissing,
+  #[snafu(display("cross-origin request forbidden"))]
+  CrossOriginRequest,
   #[snafu(context(false), display("failed to open database"))]
   Database { source: redb::DatabaseError },
   #[snafu(context(false), display("failed to commit database transaction"))]
@@ -292,7 +294,7 @@ impl ServerError {
       | Self::RevisionNotFound { .. } => StatusCode::NOT_FOUND,
       Self::HostNotAllowed { .. } => StatusCode::MISDIRECTED_REQUEST,
       Self::RevisionConflict { .. } => StatusCode::CONFLICT,
-      Self::WriteForbidden => StatusCode::FORBIDDEN,
+      Self::CrossOriginRequest | Self::WriteForbidden => StatusCode::FORBIDDEN,
     }
   }
 }
