@@ -44,8 +44,10 @@ lint:
   cargo lclippy --workspace --all-targets -- --deny warnings
   ./bin/forbid
   cargo fmt --all -- --check
+  rumdl check
 
-format:
+fmt:
+  cargo fmt --all
   rumdl fmt
 
 outdated:
