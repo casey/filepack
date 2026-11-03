@@ -124,9 +124,8 @@ impl Archive {
     Component::new(Self::SIGNATURES).unwrap()
   }
 
-  #[cfg(test)]
   pub(crate) fn unpack(&self) -> Result<Manifest, ArchiveError> {
-    self.unpack_with_options(DecodeOptions::strict())
+    self.unpack_with_options(DecodeOptions::default())
   }
 
   fn unpack_directory(
@@ -174,6 +173,11 @@ impl Archive {
         self.unpack_directory(options, loose, embedded, entry.hash, entry.size, totals)?,
       )),
     }
+  }
+
+  #[cfg(test)]
+  pub(crate) fn unpack_strict(&self) -> Result<Manifest, ArchiveError> {
+    self.unpack_with_options(DecodeOptions::strict())
   }
 
   pub(crate) fn unpack_with_options(
@@ -326,7 +330,7 @@ mod tests {
     files.insert(hash, junk);
     let archive = Archive { root: hash, files };
     assert_matches!(
-      archive.unpack(),
+      archive.unpack_strict(),
       Err(ArchiveError::DirectoryDecode {
         source: DecodeError::Malformed(MalformedError::Truncated)
       })
@@ -358,7 +362,7 @@ mod tests {
     let archive = builder.build(root.hash);
 
     assert_matches!(
-      archive.unpack(),
+      archive.unpack_strict(),
       Err(ArchiveError::DirectoryTotals { hash: h, source: TotalsError::Overflow }) if h == hash,
     );
   }
@@ -387,7 +391,7 @@ mod tests {
     let archive = builder.build(root.hash);
 
     assert_matches!(
-      archive.unpack(),
+      archive.unpack_strict(),
       Err(ArchiveError::FileSizeMismatch {
         actual: 3,
         expected: 100,
@@ -403,7 +407,7 @@ mod tests {
     archive.files.insert(expected, b"foo".to_vec());
     let actual = Hash::bytes(b"foo");
     assert_matches!(
-      archive.unpack(),
+      archive.unpack_strict(),
       Err(ArchiveError::FileHashMismatch { actual: a, expected: e })
         if a == actual && e == expected,
     );
@@ -425,7 +429,7 @@ mod tests {
     let missing = Hash::bytes(&[]);
     archive.root = missing;
     assert_matches!(
-      archive.unpack(),
+      archive.unpack_strict(),
       Err(ArchiveError::FileMissing { hash }) if hash == missing,
     );
   }
@@ -466,7 +470,7 @@ mod tests {
     let mut files = BTreeMap::new();
     files.insert(root, directory);
     let archive = Archive { root, files };
-    assert_matches!(archive.unpack(), Err(ArchiveError::PackageMissing));
+    assert_matches!(archive.unpack_strict(), Err(ArchiveError::PackageMissing));
   }
 
   #[test]
@@ -501,7 +505,7 @@ mod tests {
     let archive = builder.build(root.hash);
 
     assert_matches!(
-      archive.unpack(),
+      archive.unpack_strict(),
       Err(ArchiveError::DirectoryTotals {
         hash,
         source: TotalsError::Mismatch {
@@ -533,7 +537,7 @@ mod tests {
     let archive = Archive::pack(&Manifest::with_package(package)).unwrap();
 
     assert_matches!(
-      archive.unpack(),
+      archive.unpack_strict(),
       Err(ArchiveError::ReservedFilename { path }) if path == "foo/manifest.filepack",
     );
   }
@@ -573,7 +577,7 @@ mod tests {
   fn round_trip(manifest: &Manifest) {
     let bytes = Archive::pack(manifest).unwrap().encode_to_vec();
     let archive = Archive::decode_strict(&bytes).unwrap();
-    assert_eq!(archive.unpack().unwrap(), *manifest);
+    assert_eq!(archive.unpack_strict().unwrap(), *manifest);
   }
 
   #[test]
@@ -695,7 +699,7 @@ mod tests {
     let archive = builder.build(root.hash);
 
     assert_matches!(
-      archive.unpack(),
+      archive.unpack_strict(),
       Err(ArchiveError::SignatureDecode {
         source: DecodeError::Malformed(MalformedError::ArrayLength {
           actual: 32,
@@ -729,7 +733,7 @@ mod tests {
     let archive = builder.build(root.hash);
 
     assert_matches!(
-      archive.unpack(),
+      archive.unpack_strict(),
       Err(ArchiveError::FileMissing { hash }) if hash == missing_file,
     );
   }
@@ -766,7 +770,7 @@ mod tests {
     let archive = builder.build(root.hash);
 
     assert_matches!(
-      archive.unpack(),
+      archive.unpack_strict(),
       Err(ArchiveError::SignatureName { hash, name })
         if hash == signature.hash && name == "foo",
     );
@@ -848,7 +852,10 @@ mod tests {
 
     let archive = builder.build(root.hash);
 
-    assert_matches!(archive.unpack(), Err(ArchiveError::SignaturesDirectory));
+    assert_matches!(
+      archive.unpack_strict(),
+      Err(ArchiveError::SignaturesDirectory),
+    );
   }
 
   #[test]
@@ -864,7 +871,10 @@ mod tests {
 
     let archive = builder.build(root.hash);
 
-    assert_matches!(archive.unpack(), Err(ArchiveError::SignaturesMissing));
+    assert_matches!(
+      archive.unpack_strict(),
+      Err(ArchiveError::SignaturesMissing),
+    );
   }
 
   #[test]
@@ -896,7 +906,7 @@ mod tests {
     let archive = builder.build(root.hash);
 
     assert_matches!(
-      archive.unpack(),
+      archive.unpack_strict(),
       Err(ArchiveError::DirectoryTotals {
         hash,
         source: TotalsError::Mismatch {
@@ -958,14 +968,9 @@ mod tests {
       unknown,
     };
 
-    assert_eq!(
-      archive
-        .unpack_with_options(DecodeOptions::default())
-        .unwrap(),
-      manifest,
-    );
-
     assert_eq!(archive.unpack().unwrap(), manifest);
+
+    assert_eq!(archive.unpack_strict().unwrap(), manifest);
 
     assert_eq!(
       Archive::pack(&manifest).unwrap().encode_to_vec(),
@@ -980,7 +985,7 @@ mod tests {
     let hash = Hash::bytes(&file);
     archive.files.insert(hash, file);
     assert_matches!(
-      archive.unpack(),
+      archive.unpack_strict(),
       Err(ArchiveError::LooseFiles { hashes: Ticked(hashes) })
         if hashes == BTreeSet::from([hash]),
     );

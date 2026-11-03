@@ -154,17 +154,6 @@ impl Download {
       Self::download_package_file(&mut context, *hash, path, *size)?;
     }
 
-    if let Some(metadata) = Metadata::load(&self.output)? {
-      let paths = files
-        .iter()
-        .map(|(_hash, path, _size)| {
-          RelativePath::try_from(path.strip_prefix(&self.output).unwrap()).unwrap()
-        })
-        .collect();
-
-      metadata.check_files(&paths)?;
-    }
-
     let mut builder = ArchiveBuilder::new();
     builder.files = directories;
 
@@ -177,6 +166,10 @@ impl Download {
     let archive = builder
       .build_package(package, &BTreeSet::new(), BTreeMap::new())
       .unwrap();
+
+    let manifest = archive.unpack().unwrap();
+
+    check_metadata(&self.output, &manifest.package)?;
 
     filesystem::write(
       &self.output.join(Manifest::FILENAME),

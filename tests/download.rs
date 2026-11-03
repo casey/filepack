@@ -18,14 +18,18 @@ fn download_checks_metadata() {
 
   let metadata_hash = Hash::bytes(&metadata);
 
-  let (directory, hash) = Directory::new()
-    .insert_file("metadata.filemeta", &metadata)
-    .deco();
+  let mut child = Directory::new();
+  child.insert_file("metadata.filemeta", &metadata);
+
+  let (child_deco, child_hash) = child.deco();
+
+  let (directory, hash) = Directory::new().insert_directory("bar", &child).deco();
 
   let fingerprint = Fingerprint::from(Hash::bytes(&directory));
 
   let server = Test::new()
     .serve()
+    .write(&format!("files/{child_hash}"), child_deco)
     .write(&format!("files/{hash}"), directory)
     .write(&format!("files/{metadata_hash}"), metadata)
     .spawn();
