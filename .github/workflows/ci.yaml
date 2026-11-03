@@ -38,6 +38,15 @@ jobs:
     - name: Format
       run: cargo fmt --all -- --check
 
+    - name: Install rumdl
+      run: |
+        curl --fail --location --silent --show-error \
+          https://github.com/rvben/rumdl/releases/download/v0.3.0/rumdl-v0.3.0-x86_64-unknown-linux-gnu.tar.gz \
+          | tar --extract --gzip --directory /usr/local/bin
+
+    - name: Lint Markdown
+      run: rumdl check
+
     - name: Check for Forbidden Words
       run: |
         sudo apt-get install ripgrep
