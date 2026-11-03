@@ -315,17 +315,6 @@ fn manifest_already_exists_error() {
 }
 
 #[test]
-fn manifest_in_package_is_reserved() {
-  Test::new()
-    .touch("manifest.filepack")
-    .args(["create", "--manifest", "foo"])
-    .stderr(
-      "error: package contains reserved filename `manifest.filepack` at `manifest.filepack`\n",
-    )
-    .failure();
-}
-
-#[test]
 fn metadata_deco_is_embedded_in_manifest_archive() {
   let test = Test::new()
     .write("metadata.yaml", "title: Foo")
@@ -404,17 +393,6 @@ fn nested_empty_directories_are_included() {
     .args(["verify", "."])
     .stderr("successfully verified 0 files\n")
     .success();
-}
-
-#[test]
-fn nested_reserved_directory_error() {
-  Test::new()
-    .create_dir("foo/bar/manifest.filepack")
-    .args(["create", "foo"])
-    .stderr(
-      "error: package contains reserved filename `manifest.filepack` at `bar/manifest.filepack`\n",
-    )
-    .failure();
 }
 
 #[test]

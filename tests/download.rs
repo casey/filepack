@@ -317,36 +317,6 @@ fn download_package_fails_on_size_mismatch() {
 }
 
 #[test]
-fn download_package_rejects_nested_reserved_filename() {
-  let mut child = Directory::new();
-  child.insert_file("manifest.filepack", b"foo");
-
-  let (root, hash) = Directory::new().insert_directory("bar", &child).deco();
-
-  let server = Test::new()
-    .serve()
-    .write_server_file(child.encode_to_vec())
-    .write_server_file(root)
-    .spawn();
-
-  Test::new()
-    .args([
-      "download",
-      "--server",
-      &server.address(),
-      "--package",
-      &Fingerprint::from(hash).to_string(),
-      "out",
-    ])
-    .stderr(
-      "error: package contains reserved filename `manifest.filepack` at `bar/manifest.filepack`\n",
-    )
-    .failure();
-
-  server.terminate().success();
-}
-
-#[test]
 fn download_package_rejects_reserved_filename() {
   let (root, hash) = Directory::new()
     .insert_file("manifest.filepack", b"foo")

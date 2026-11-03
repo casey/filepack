@@ -176,55 +176,15 @@ fingerprint mismatch: `{}`
       );
     }
 
-    let mut empty = Vec::new();
+    let Walk {
+      empty,
+      entries,
+      subpackages,
+    } = Walk::new(&root, loader.path(), &self.ignore)?;
 
-    let mut subpackages = Vec::new();
-
-    for entry in WalkDir::new(&root).sort_by_file_name() {
-      let entry = entry?;
-
-      if entry.depth() == 0 {
-        continue;
-      }
-
-      let path = decode_path(entry.path())?;
-
-      if current_dir.join(path) == current_dir.join(loader.path()) {
-        continue;
-      }
-
-      let path = path.strip_prefix(&root).unwrap();
-
-      let path = RelativePath::try_from(path).context(error::Path { path })?;
-
-      if ignore(&path, &self.ignore) {
-        continue;
-      }
-
-      if is_subpackage_manifest(&entry, &path) {
-        subpackages.push(path.parent().unwrap());
-        continue;
-      }
-
+    for (path, ty) in entries {
       ensure! {
-        !path.filename().is_reserved(),
-        error::ReservedFilename { path },
-      }
-
-      ensure! {
-        !entry.file_type().is_symlink(),
-        error::Symlink { path },
-      }
-
-      empty.pop_if(|dir| path.starts_with(dir));
-
-      if entry.file_type().is_dir() {
-        empty.push(path);
-        continue;
-      }
-
-      ensure! {
-        files.contains_key(&path),
+        ty == EntryType::Directory || files.contains_key(&path),
         error::ExtraneousFile { path },
       }
     }
