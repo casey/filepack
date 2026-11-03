@@ -88,6 +88,8 @@ use {
     head::Head,
     hex::Hex,
     hex_error::HexError,
+    host::Host,
+    host_error::HostError,
     image::Image,
     image_format::ImageFormat,
     image_metadata::ImageMetadata,
@@ -230,7 +232,7 @@ use {
     fs::{self, Permissions},
     io::{self, BufReader, IsTerminal, Read, Seek, SeekFrom, Write},
     iter, mem,
-    net::{IpAddr, Ipv4Addr, SocketAddr, TcpStream},
+    net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, TcpStream},
     num::{NonZeroUsize, ParseIntError},
     ops::{Bound, Deref},
     path::{Path, PathBuf},
@@ -253,7 +255,7 @@ use {
   tokio_util::io::ReaderStream,
   unicase::UniCase,
   unindent::unindent,
-  url::{Host, Url},
+  url::Url,
   usized::IntoU64,
   walkdir::WalkDir,
   zune_jpeg::{JpegDecoder, SampleRatios, zune_core::colorspace::ColorSpace},
@@ -408,6 +410,8 @@ mod hashing_writer;
 mod head;
 pub mod hex;
 mod hex_error;
+mod host;
+mod host_error;
 mod image;
 mod image_format;
 mod image_metadata;

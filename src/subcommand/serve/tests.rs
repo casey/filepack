@@ -137,6 +137,7 @@ struct TestRequestBuilder {
   absent_headers: BTreeSet<String>,
   body: Option<Vec<u8>>,
   headers: Vec<(HeaderName, String)>,
+  host: Option<&'static str>,
   method: Method,
   path: String,
   range: Option<&'static str>,
@@ -200,6 +201,11 @@ impl TestRequestBuilder {
     self
   }
 
+  fn host(mut self, host: Option<&'static str>) -> Self {
+    self.host = host;
+    self
+  }
+
   fn ignore_body(mut self) -> Self {
     self.response_body = None;
     self
@@ -210,6 +216,7 @@ impl TestRequestBuilder {
       absent_headers: BTreeSet::new(),
       body: None,
       headers: Vec::new(),
+      host: Some("localhost"),
       method,
       path: path.into(),
       range: None,
@@ -232,6 +239,10 @@ impl TestRequestBuilder {
   fn send(self) {
     RUNTIME.block_on(async move {
       let mut request = Request::builder().method(self.method).uri(self.path);
+
+      if let Some(host) = self.host {
+        request = request.header(header::HOST, host);
+      }
 
       if let Some(token) = self.token {
         request = request.header(header::AUTHORIZATION, format!("Bearer {token}"));
@@ -322,6 +333,7 @@ impl TestServer {
 
   fn builder() -> TestServerBuilder {
     TestServerBuilder {
+      hosts: Vec::new(),
       mounts: Vec::new(),
       unstable: false,
       url: None,
@@ -405,6 +417,7 @@ impl TestServer {
 }
 
 struct TestServerBuilder {
+  hosts: Vec<Host>,
   mounts: Vec<Mount>,
   unstable: bool,
   url: Option<Url>,
@@ -420,10 +433,7 @@ impl TestServerBuilder {
     let router = Serve::router(
       server,
       None,
-      Arc::new(ServerConfig {
-        mounts: self.mounts,
-        url: self.url,
-      }),
+      Arc::new(ServerConfig::new(self.hosts, self.mounts, self.url)),
       Arc::new(self.write_config),
     );
 
@@ -432,6 +442,11 @@ impl TestServerBuilder {
       router,
       tempdir,
     }
+  }
+
+  fn host(mut self, host: &str) -> Self {
+    self.hosts.push(host.parse().unwrap());
+    self
   }
 
   fn mount(mut self, package: PackageIdentifier, name: Option<&str>) -> Self {
@@ -988,7 +1003,7 @@ fn delete_package_rejects_missing_auth_header() {
   let admin = PrivateKey::generate();
   let server = TestServer::builder()
     .write_config(WriteConfig::Admin {
-      domain: "filepack.example".into(),
+      domain: Host::Domain("filepack.example".into()),
       key: admin.public_key(),
     })
     .build();
@@ -1065,12 +1080,12 @@ fn domain_required_for_canonical_domain_options() {
 fn domains_include_redirects() {
   assert_eq!(
     Serve {
-      domain: Some("foo".into()),
-      redirects: vec!["bar".into()],
+      domain: Some(Host::Domain("foo".into())),
+      redirects: vec![Host::Domain("bar".into())],
       ..Serve::default()
     }
     .domains(),
-    vec!["foo".to_string(), "bar".to_string()],
+    vec![Host::Domain("foo".into()), Host::Domain("bar".into())],
   );
 }
 
@@ -1294,7 +1309,7 @@ fn gc_rejects_missing_auth_header() {
   let admin = PrivateKey::generate();
   let server = TestServer::builder()
     .write_config(WriteConfig::Admin {
-      domain: "filepack.example".into(),
+      domain: Host::Domain("filepack.example".into()),
       key: admin.public_key(),
     })
     .build();
@@ -1942,6 +1957,54 @@ fn home_empty() {
       packages: Vec::new(),
     })
     .send();
+}
+
+#[test]
+fn host_allowed() {
+  #[track_caller]
+  fn case(host: &'static str) {
+    TestServer::builder()
+      .host("foo")
+      .build()
+      .get("/api/foo")
+      .host(Some(host))
+      .status(StatusCode::NOT_FOUND)
+      .assert_body("API endpoint not found")
+      .send();
+  }
+
+  case("localhost");
+  case("LOCALHOST");
+  case("127.0.0.1");
+  case("[::1]");
+  case("[0:0::1]:8000");
+  case("foo");
+}
+
+#[test]
+fn host_missing() {
+  TestServer::new()
+    .get("/api/foo")
+    .host(None)
+    .status(StatusCode::BAD_REQUEST)
+    .assert_body("missing host header")
+    .send();
+}
+
+#[test]
+fn host_not_allowed() {
+  #[track_caller]
+  fn case(path: &str, host: Option<&'static str>) {
+    TestServer::new()
+      .get(path)
+      .host(host)
+      .status(StatusCode::MISDIRECTED_REQUEST)
+      .assert_body("host `foo` not allowed, use `--domain foo` to allow it")
+      .send();
+  }
+
+  case("/api/foo", Some("foo:8000"));
+  case("http://foo/api/foo", None);
 }
 
 #[test]
@@ -4027,7 +4090,7 @@ fn ports() {
 fn redirect_omits_default_ports() {
   assert_eq!(
     Serve {
-      domain: Some("foo".into()),
+      domain: Some(Host::Domain("foo".into())),
       ..Serve::default()
     }
     .redirect_url()
@@ -4037,7 +4100,7 @@ fn redirect_omits_default_ports() {
 
   assert_eq!(
     Serve {
-      domain: Some("foo".into()),
+      domain: Some(Host::Domain("foo".into())),
       https: true,
       ..Serve::default()
     }
@@ -4055,7 +4118,7 @@ fn restricted_write_accepts_admin_token() {
 
   let server = TestServer::builder()
     .write_config(WriteConfig::Admin {
-      domain: "filepack.example".into(),
+      domain: Host::Domain("filepack.example".into()),
       key: admin.public_key(),
     })
     .build();
@@ -4074,7 +4137,7 @@ fn restricted_write_rejects_missing_header() {
   let admin = PrivateKey::generate();
   let server = TestServer::builder()
     .write_config(WriteConfig::Admin {
-      domain: "filepack.example".into(),
+      domain: Host::Domain("filepack.example".into()),
       key: admin.public_key(),
     })
     .build();
@@ -4095,7 +4158,7 @@ fn restricted_write_rejects_others() {
   let other = PrivateKey::generate();
   let server = TestServer::builder()
     .write_config(WriteConfig::Admin {
-      domain: "filepack.example".into(),
+      domain: Host::Domain("filepack.example".into()),
       key: admin.public_key(),
     })
     .build();
@@ -4117,7 +4180,7 @@ fn restricted_write_rejects_wrong_domain() {
   let admin = PrivateKey::generate();
   let server = TestServer::builder()
     .write_config(WriteConfig::Admin {
-      domain: "filepack.example".into(),
+      domain: Host::Domain("filepack.example".into()),
       key: admin.public_key(),
     })
     .build();
@@ -4147,14 +4210,14 @@ fn server_config() {
   case(Serve::default(), None);
   case(
     Serve {
-      domain: Some("foo".into()),
+      domain: Some(Host::Domain("foo".into())),
       ..Serve::default()
     },
     Some("http://foo/"),
   );
   case(
     Serve {
-      domain: Some("foo".into()),
+      domain: Some(Host::Domain("foo".into())),
       https: true,
       ..Serve::default()
     },
@@ -4421,7 +4484,7 @@ fn verify_directory_rejects_missing_auth_header() {
   let admin = PrivateKey::generate();
   let server = TestServer::builder()
     .write_config(WriteConfig::Admin {
-      domain: "filepack.example".into(),
+      domain: Host::Domain("filepack.example".into()),
       key: admin.public_key(),
     })
     .build();

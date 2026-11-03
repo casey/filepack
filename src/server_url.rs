@@ -35,7 +35,7 @@ impl FromStr for ServerUrl {
     } else {
       let url = Self::check(&format!("http://{s}"))?;
 
-      if let Host::Domain(domain) = url.host().unwrap()
+      if let url::Host::Domain(domain) = url.host().unwrap()
         && domain != "localhost"
       {
         Self::check(&format!("https://{s}"))?

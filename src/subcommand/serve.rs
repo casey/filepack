@@ -50,7 +50,7 @@ impl Describe for Query<PackagesQuery> {
 
 pub(crate) struct RedirectConfig {
   destination: Url,
-  domains: HashSet<String>,
+  domains: HashSet<Host>,
 }
 
 impl RedirectConfig {
@@ -63,6 +63,7 @@ impl RedirectConfig {
 }
 
 pub(crate) struct ServerConfig {
+  pub(crate) hosts: HashSet<Host>,
   pub(crate) mounts: Vec<Mount>,
   pub(crate) url: Option<Url>,
 }
@@ -74,6 +75,21 @@ impl ServerConfig {
       .iter()
       .find(|mount| mount.name.as_deref() == Some(name))
   }
+
+  fn new(hosts: Vec<Host>, mounts: Vec<Mount>, url: Option<Url>) -> Self {
+    Self {
+      hosts: [
+        Host::Domain("localhost".into()),
+        Host::Ipv4(Ipv4Addr::LOCALHOST),
+        Host::Ipv6(Ipv6Addr::LOCALHOST),
+      ]
+      .into_iter()
+      .chain(hosts)
+      .collect(),
+      mounts,
+      url,
+    }
+  }
 }
 
 enum SpawnConfig {
@@ -83,7 +99,7 @@ enum SpawnConfig {
 }
 
 pub(crate) enum WriteConfig {
-  Admin { domain: String, key: PublicKey },
+  Admin { domain: Host, key: PublicKey },
   Forbidden,
   Unrestricted,
 }
@@ -130,7 +146,7 @@ pub(crate) struct Serve {
     long,
     value_name = "DOMAIN"
   )]
-  domain: Option<String>,
+  domain: Option<Host>,
   #[arg(help = "Serve HTTP traffic", long)]
   http: bool,
   #[arg(
@@ -173,7 +189,7 @@ pub(crate) struct Serve {
     requires = "domain",
     value_name = "DOMAIN"
   )]
-  redirects: Vec<String>,
+  redirects: Vec<Host>,
   #[arg(
     conflicts_with = "admin_key",
     help = "Allow unauthenticated writes",
@@ -190,7 +206,7 @@ impl Serve {
   fn acceptor(&self, acme_cache: Utf8PathBuf) -> Result<AxumAcceptor> {
     install_default_crypto_provider()?;
 
-    let config = AcmeConfig::new(self.domains())
+    let config = AcmeConfig::new(self.domains().iter().map(ToString::to_string))
       .contact(&self.acme_contact)
       .cache_option(Some(DirCache::new(acme_cache)))
       .directory(&self.acme_directory);
@@ -253,14 +269,12 @@ impl Serve {
     next.run(request).await
   }
 
-  fn canonical(&self) -> &str {
-    self.domain.as_deref().unwrap()
+  fn canonical(&self) -> &Host {
+    self.domain.as_ref().unwrap()
   }
 
-  fn domains(&self) -> Vec<String> {
-    let mut domains = vec![self.canonical().to_string()];
-    domains.extend(self.redirects.iter().cloned());
-    domains
+  fn domains(&self) -> Vec<Host> {
+    self.domain.iter().chain(&self.redirects).cloned().collect()
   }
 
   async fn fallback(server_config: ServerConfigExtension, uri: Uri) -> Result<Redirect, PageError> {
@@ -286,6 +300,30 @@ impl Serve {
     }
 
     Err(ServerError::PageNotFound.into())
+  }
+
+  async fn host_layer(
+    server_config: ServerConfigExtension,
+    host: Option<TypedHeader<headers::Host>>,
+    request: Request,
+    next: Next,
+  ) -> Response {
+    let Some(host) = request
+      .uri()
+      .host()
+      .or(host.as_ref().map(|TypedHeader(host)| host.hostname()))
+    else {
+      return ServerError::HostMissing.into_response();
+    };
+
+    if !host
+      .parse::<Host>()
+      .is_ok_and(|host| server_config.hosts.contains(&host))
+    {
+      return ServerError::HostNotAllowed { host: host.into() }.into_response();
+    }
+
+    next.run(request).await
   }
 
   fn http_port(&self) -> Option<u16> {
@@ -404,10 +442,9 @@ impl Serve {
       .uri()
       .host()
       .or(host.as_ref().map(|TypedHeader(host)| host.hostname()))
-      && redirect_config
-        .domains
-        .iter()
-        .any(|domain| domain.eq_ignore_ascii_case(host))
+      && host
+        .parse::<Host>()
+        .is_ok_and(|host| redirect_config.domains.contains(&host))
     {
       Redirect::permanent(redirect_config.with_path_and_query(request.uri()).as_str())
         .into_response()
@@ -472,21 +509,24 @@ impl Serve {
           .fallback(Self::fallback),
       )
       .layer(Extension(server))
-      .layer(Extension(server_config))
       .layer(Extension(write_config))
-      .layer(middleware::from_fn(Self::if_none_match_layer))
-      .layer(SetResponseHeaderLayer::overriding(
-        header::X_CONTENT_TYPE_OPTIONS,
-        HeaderValue::from_static("nosniff"),
-      ));
+      .layer(middleware::from_fn(Self::if_none_match_layer));
 
-    if let Some(redirect_config) = redirect_config {
+    let router = if let Some(redirect_config) = redirect_config {
       router
         .layer(middleware::from_fn(Self::redirect_layer))
         .layer(Extension(redirect_config))
     } else {
       router
-    }
+    };
+
+    router
+      .layer(middleware::from_fn(Self::host_layer))
+      .layer(Extension(server_config))
+      .layer(SetResponseHeaderLayer::overriding(
+        header::X_CONTENT_TYPE_OPTIONS,
+        HeaderValue::from_static("nosniff"),
+      ))
   }
 
   pub(crate) fn run(self, options: Options) -> Result {
@@ -532,7 +572,7 @@ impl Serve {
 
     let write_config = if let Some(identifier) = &self.admin_key {
       WriteConfig::Admin {
-        domain: self.canonical().into(),
+        domain: self.canonical().clone(),
         key: Keychain::load(&options)?.identifier_public_key(identifier)?,
       }
     } else if self.unrestricted_writes {
@@ -624,10 +664,11 @@ impl Serve {
   }
 
   fn server_config(&self) -> Arc<ServerConfig> {
-    Arc::new(ServerConfig {
-      mounts: self.mounts.clone(),
-      url: self.domain.as_ref().map(|_| self.redirect_url()),
-    })
+    Arc::new(ServerConfig::new(
+      self.domains(),
+      self.mounts.clone(),
+      self.domain.as_ref().map(|_| self.redirect_url()),
+    ))
   }
 
   async fn spawn(
