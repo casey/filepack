@@ -44,6 +44,10 @@ than `GET`, `HEAD`, or `OPTIONS`. Requests are cross-origin when indicated by
 the `Sec-Fetch-Site` header, or the `Origin` header when `Sec-Fetch-Site` is
 absent.
 
+Server responses include `Cross-Origin-Resource-Policy: same-origin` and
+`Content-Security-Policy: frame-ancestors 'self'`, which forbid cross-origin
+embedding.
+
 DNS Rebinding
 -------------
 

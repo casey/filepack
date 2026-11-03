@@ -39,6 +39,8 @@ mod spawn_config;
 mod tests;
 mod write_config;
 
+const CROSS_ORIGIN_RESOURCE_POLICY: HeaderName =
+  HeaderName::from_static("cross-origin-resource-policy");
 const SEC_FETCH_SITE: HeaderName = HeaderName::from_static("sec-fetch-site");
 
 static THREAD_COUNTER: AtomicU64 = AtomicU64::new(0);
@@ -524,6 +526,14 @@ impl Serve {
       .layer(middleware::from_fn(Self::cross_origin_layer))
       .layer(middleware::from_fn(Self::host_layer))
       .layer(Extension(server_config))
+      .layer(SetResponseHeaderLayer::appending(
+        header::CONTENT_SECURITY_POLICY,
+        HeaderValue::from_static("frame-ancestors 'self'"),
+      ))
+      .layer(SetResponseHeaderLayer::overriding(
+        CROSS_ORIGIN_RESOURCE_POLICY,
+        HeaderValue::from_static("same-origin"),
+      ))
       .layer(SetResponseHeaderLayer::overriding(
         header::X_CONTENT_TYPE_OPTIONS,
         HeaderValue::from_static("nosniff"),

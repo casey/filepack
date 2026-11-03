@@ -221,10 +221,13 @@ impl TestRequestBuilder {
       path: path.into(),
       range: None,
       response_body: Some(Body::empty()),
-      response_headers: BTreeMap::from([(
-        header::X_CONTENT_TYPE_OPTIONS.to_string(),
-        "nosniff".into(),
-      )]),
+      response_headers: BTreeMap::from([
+        (
+          CROSS_ORIGIN_RESOURCE_POLICY.to_string(),
+          "same-origin".into(),
+        ),
+        (header::X_CONTENT_TYPE_OPTIONS.to_string(), "nosniff".into()),
+      ]),
       router,
       status: StatusCode::OK,
       token: None,
@@ -275,7 +278,15 @@ impl TestRequestBuilder {
       let headers = response.headers();
 
       for (name, value) in self.response_headers {
-        assert_eq!(headers[name], value);
+        assert_eq!(
+          headers
+            .get_all(&name)
+            .iter()
+            .map(|value| value.to_str().unwrap())
+            .collect::<Vec<&str>>()
+            .join(", "),
+          value,
+        );
       }
 
       for name in self.absent_headers {
@@ -791,7 +802,10 @@ fn artwork_response() {
       .assert_header(header::ACCEPT_RANGES, "bytes")
       .assert_header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
       .assert_header(header::CONTENT_LENGTH, "3")
-      .assert_header(header::CONTENT_SECURITY_POLICY, "sandbox")
+      .assert_header(
+        header::CONTENT_SECURITY_POLICY,
+        "sandbox, frame-ancestors 'self'",
+      )
       .assert_header(header::CONTENT_TYPE, content_type)
       .assert_header(header::ETAG, format!("\"{artwork_hash}\""))
       .assert_body(artwork)
@@ -1170,7 +1184,10 @@ fn download_response() {
     .assert_header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
     .assert_header(header::CONTENT_DISPOSITION, "attachment")
     .assert_header(header::CONTENT_LENGTH, "3")
-    .assert_header(header::CONTENT_SECURITY_POLICY, "sandbox")
+    .assert_header(
+      header::CONTENT_SECURITY_POLICY,
+      "sandbox, frame-ancestors 'self'",
+    )
     .assert_header(header::CONTENT_TYPE, "application/octet-stream")
     .assert_header(header::ETAG, format!("\"{hash}\""))
     .assert_body("bar")
@@ -1230,7 +1247,10 @@ fn file_with_path_markdown() {
 
   server
     .get(format!("/file/{}/bar.md", Hash::bytes(b"foo")))
-    .assert_header(header::CONTENT_SECURITY_POLICY, "sandbox")
+    .assert_header(
+      header::CONTENT_SECURITY_POLICY,
+      "sandbox, frame-ancestors 'self'",
+    )
     .assert_header(header::CONTENT_TYPE, "text/plain;charset=utf-8")
     .assert_header_absent(header::CONTENT_DISPOSITION)
     .assert_body("foo")
@@ -2433,7 +2453,10 @@ fn media_image_item_response() {
     .assert_header(header::ACCEPT_RANGES, "bytes")
     .assert_header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
     .assert_header(header::CONTENT_LENGTH, "3")
-    .assert_header(header::CONTENT_SECURITY_POLICY, "sandbox")
+    .assert_header(
+      header::CONTENT_SECURITY_POLICY,
+      "sandbox, frame-ancestors 'self'",
+    )
     .assert_header(header::CONTENT_TYPE, "image/png")
     .assert_header(header::ETAG, format!("\"{}\"", Hash::bytes(foo)))
     .assert_body(foo)
@@ -2855,7 +2878,7 @@ fn mount_file() {
         .get(format!("/mount/{identifier}/foo.css"))
         .assert_header(header::CACHE_CONTROL, cache_control)
         .assert_header(header::CONTENT_TYPE, "text/css")
-        .assert_header_absent(header::CONTENT_SECURITY_POLICY)
+        .assert_header(header::CONTENT_SECURITY_POLICY, "frame-ancestors 'self'")
         .assert_header_absent(header::CONTENT_DISPOSITION)
         .assert_body("bar")
         .send();
@@ -3116,7 +3139,7 @@ fn mount_serves_index_html() {
     .get(format!("/mount/{fingerprint}/"))
     .assert_header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
     .assert_header(header::CONTENT_TYPE, "text/html")
-    .assert_header_absent(header::CONTENT_SECURITY_POLICY)
+    .assert_header(header::CONTENT_SECURITY_POLICY, "frame-ancestors 'self'")
     .assert_header_absent(header::CONTENT_DISPOSITION)
     .assert_body("foo")
     .send();
