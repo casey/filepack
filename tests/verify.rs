@@ -724,6 +724,48 @@ fn subpackage() {
 }
 
 #[test]
+fn subpackage_metadata_error() {
+  let test = Test::new()
+    .touch("foo/README.md")
+    .write(
+      "foo/metadata.yaml",
+      "
+        title: Foo
+        readme: README.md
+      ",
+    )
+    .args(["create", "foo"])
+    .success();
+
+  let metadata = fs::read(test.path().join("foo/metadata.filemeta")).unwrap();
+
+  let hash = Hash::bytes(&metadata);
+
+  let size = metadata.len();
+
+  test
+    .write("bar/baz/metadata.filemeta", metadata)
+    .write_manifest(
+      "bar/manifest.filepack",
+      json! {
+        embedded: {},
+        package: {
+          baz: {
+            "metadata.filemeta": {
+              hash: hash,
+              size: size
+            }
+          }
+        },
+        signatures: [],
+      },
+    )
+    .args(["verify", "bar"])
+    .stderr("error: file referenced in metadata missing: `README.md`\n")
+    .failure();
+}
+
+#[test]
 fn subpackage_mismatch_error() {
   Test::new()
     .touch("foo/bar/baz")

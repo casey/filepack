@@ -123,13 +123,7 @@ impl Download {
       directories.insert(hash, deco.to_vec());
 
       for component in directory.entries.keys() {
-        let reserved = if expected.is_some() {
-          component.is_reserved()
-        } else {
-          component.is_reserved_in_root()
-        };
-
-        if reserved {
+        if component.is_reserved() {
           let path = path.join(component);
           let path = RelativePath::try_from(path.strip_prefix(&self.output).unwrap()).unwrap();
           return Err(error::ReservedFilename { path }.build());

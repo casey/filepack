@@ -35,16 +35,6 @@ impl Component {
       }
     }
 
-    false
-  }
-
-  pub(crate) fn is_reserved_in_root(&self) -> bool {
-    let component = self.as_str();
-
-    if self.is_reserved() {
-      return true;
-    }
-
     if component.eq_ignore_ascii_case(Metadata::DECO_FILENAME)
       && component != Metadata::DECO_FILENAME
     {
@@ -183,24 +173,9 @@ mod tests {
     case("MANIFEST.FILEPACK", true);
     case(".filepack", true);
     case(".FILEPACK", true);
-    case("METADATA.FILEMETA", false);
-    case("manifest.filepack.foo", false);
-  }
-
-  #[test]
-  fn is_reserved_in_root() {
-    #[track_caller]
-    fn case(input: &str, expected: bool) {
-      assert_eq!(
-        Component::new(input).unwrap().is_reserved_in_root(),
-        expected
-      );
-    }
-
-    case("manifest.filepack", true);
     case("METADATA.FILEMETA", true);
     case("metadata.filemeta", false);
-    case("foo", false);
+    case("manifest.filepack.foo", false);
   }
 
   #[test]

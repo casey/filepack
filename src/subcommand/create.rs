@@ -263,6 +263,8 @@ impl Create {
       verify_subpackage(&root, path, package.subdirectory(path).unwrap())?;
     }
 
+    check_metadata(&root, &package)?;
+
     let embedded = if let Some((_metadata, deco)) = metadata {
       BTreeMap::from([(Hash::bytes(&deco), deco.into())])
     } else {

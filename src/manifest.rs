@@ -23,7 +23,7 @@ impl Manifest {
   pub(crate) fn empty_directories(&self) -> BTreeSet<RelativePath> {
     let mut empty = BTreeSet::new();
 
-    for (path, entry) in self.entries() {
+    for (path, entry) in self.package.descendants() {
       if let DirectoryTreeEntry::Directory(directory) = entry
         && directory.entries.is_empty()
       {
@@ -32,10 +32,6 @@ impl Manifest {
     }
 
     empty
-  }
-
-  fn entries(&self) -> Entries {
-    self.into()
   }
 
   fn file_hashes(&self) -> BTreeSet<Hash> {
@@ -58,16 +54,7 @@ impl Manifest {
   }
 
   pub(crate) fn files(&self) -> BTreeMap<RelativePath, File> {
-    let mut files = BTreeMap::new();
-
-    for (path, entry) in self.entries() {
-      if let DirectoryTreeEntry::File(file) = entry {
-        let old = files.insert(path, *file);
-        assert!(old.is_none());
-      }
-    }
-
-    files
+    self.package.files()
   }
 
   pub(crate) fn from_json(json: &str, path: &Utf8Path) -> Result<Self> {
@@ -122,16 +109,8 @@ impl Manifest {
   }
 
   pub(crate) fn reserved_filename(&self) -> Option<RelativePath> {
-    for (path, _entry) in self.entries() {
-      let name = path.filename();
-
-      let reserved = if path.parent().is_some() {
-        name.is_reserved()
-      } else {
-        name.is_reserved_in_root()
-      };
-
-      if reserved {
+    for (path, _entry) in self.package.descendants() {
+      if path.filename().is_reserved() {
         return Some(path);
       }
     }
@@ -253,7 +232,7 @@ mod tests {
   #[test]
   fn reserved_filename() {
     #[track_caller]
-    fn case(path: &str, expected: Option<&str>) {
+    fn case(path: &str, expected: &str) {
       let mut package = DirectoryTree::new();
 
       package
@@ -264,14 +243,13 @@ mod tests {
 
       assert_eq!(
         manifest.reserved_filename(),
-        expected.map(|expected| expected.parse().unwrap()),
+        Some(expected.parse().unwrap()),
       );
     }
 
-    case("METADATA.FILEMETA", Some("METADATA.FILEMETA"));
-    case("foo/METADATA.FILEMETA", None);
-    case("foo/.FILEPACK", Some("foo/.FILEPACK"));
-    case("manifest.filepack/foo", Some("manifest.filepack"));
+    case("METADATA.FILEMETA", "METADATA.FILEMETA");
+    case("foo/.FILEPACK", "foo/.FILEPACK");
+    case("manifest.filepack/foo", "manifest.filepack");
   }
 
   #[test]

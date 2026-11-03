@@ -131,16 +131,15 @@ This ensures that file paths assembled from path components work on Windows and
 Unix and cannot escape the package root. Symbolic links are not supported.
 
 The filenames `manifest.filepack` and `.filepack`, with any case, are reserved.
-Case variations of `metadata.filemeta`, other than lowercase, are reserved in
-the package root.
+Case variations of `metadata.filemeta`, other than lowercase, are reserved.
 
 Composition
 -----------
 
 Packages are composable, meaning that packages may contain other packages.
 
-A directory that contains the file `manifest.filepack` is a package. If it is a
-subdirectory of another package, it is a subpackage.
+A directory that contains the file `manifest.filepack` or `metadata.filemeta`
+is a package. If it is a subdirectory of another package, it is a subpackage.
 
 During verification, subpackage manifests are verified, and the subpackage root
 directory entry hash in the superpackage must be equal to the subpackage
@@ -203,6 +202,9 @@ describing the package contents, the package itself, and the media content of
 the package. Future versions of Filepack may define new metadata fields,
 causing verification errors if those fields are present and invalid according
 to the new schema.
+
+During verification, metadata is checked for consistency, which includes
+checking for references to missing files, as well duplicate media items.
 
 Metadata allows for the attractive presentation of packages, including
 browsing, viewing, search, and conversion. See

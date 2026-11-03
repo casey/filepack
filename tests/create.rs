@@ -782,25 +782,8 @@ fn subpackage_metadata_error() {
 
   let metadata = fs::read(test.path().join("foo/metadata.filemeta")).unwrap();
 
-  let hash = Hash::bytes(&metadata);
-
-  let size = metadata.len();
-
   test
     .write("bar/baz/metadata.filemeta", metadata)
-    .write_manifest(
-      "bar/baz/manifest.filepack",
-      json! {
-        embedded: {},
-        package: {
-          "metadata.filemeta": {
-            hash: hash,
-            size: size
-          }
-        },
-        signatures: [],
-      },
-    )
     .args(["create", "bar"])
     .stderr("error: file referenced in metadata missing: `README.md`\n")
     .failure();

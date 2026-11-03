@@ -243,9 +243,7 @@ fingerprint mismatch: `{}`
       }
     }
 
-    if let Some(metadata) = Metadata::load(&root)? {
-      metadata.check_files(&files.keys().cloned().collect())?;
-    }
+    check_metadata(&root, &manifest.package)?;
 
     for path in &subpackages {
       let subpackage = manifest.package.subdirectory(path).unwrap();

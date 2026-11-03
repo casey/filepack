@@ -876,13 +876,6 @@ impl Server {
       server_error::PackageRootUnverified { fingerprint },
     );
 
-    for name in self.read_directory(fingerprint.into())?.entries.keys() {
-      ensure!(
-        !name.is_reserved_in_root(),
-        server_error::PackageReservedFilename { fingerprint, name },
-      );
-    }
-
     if let Some(metadata) = self.metadata_deco(fingerprint)? {
       let metadata = Metadata::decode_from_slice(&metadata)
         .context(server_error::PackageMetadataDecode { fingerprint })?;
