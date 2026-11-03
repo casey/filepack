@@ -451,7 +451,16 @@ impl Serve {
     }
 
     let router = web
-      .nest("/api", api.fallback(Self::api_fallback))
+      .nest(
+        "/api",
+        api
+          .fallback(Self::api_fallback)
+          .layer(middleware::from_fn(Self::api_version_layer))
+          .layer(SetResponseHeaderLayer::overriding(
+            API_VERSION_HEADER,
+            HeaderValue::from(API_VERSION),
+          )),
+      )
       .fallback_service(
         Router::new()
           .route("/{name}/", get(Self::named_mount))
@@ -460,12 +469,7 @@ impl Serve {
       )
       .layer(Extension(server))
       .layer(Extension(server_config))
-      .layer(middleware::from_fn(Self::api_version_layer))
       .layer(middleware::from_fn(Self::if_none_match_layer))
-      .layer(SetResponseHeaderLayer::overriding(
-        API_VERSION_HEADER,
-        HeaderValue::from(API_VERSION),
-      ))
       .layer(SetResponseHeaderLayer::overriding(
         header::X_CONTENT_TYPE_OPTIONS,
         HeaderValue::from_static("nosniff"),

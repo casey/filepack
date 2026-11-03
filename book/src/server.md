@@ -89,10 +89,13 @@ API routes begin with `/api`. See [API](api.md) for details.
 
 Typed request and response bodies are encoded with [deco](deco.md).
 
-The optional `Filepack-API-Version` header may be included with requests. If
+The optional `Filepack-API-Version` header may be included with API requests. If
 included, the value should be the version of the Filepack API that the client
 supports. If omitted, requests are treated as having `Filepack-API-Version: 0`.
 Requests with an unsupported API version return 400.
+
+API responses include a `Filepack-API-Version` header with the server's maximum
+supported API version.
 
 The only supported API version is `0`.
 
