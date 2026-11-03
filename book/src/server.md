@@ -36,6 +36,18 @@ request, only by domain and time. They can be used for any purpose while valid.
 As such, `filepack` commands with `--auth` will refuse to run unless the
 connection to the server is over loopback or HTTPS.
 
+DNS Rebinding
+-------------
+
+The Filepack server protects against
+[DNS rebinding](https://en.wikipedia.org/wiki/DNS_rebinding) by requiring that
+request `Host` headers match `localhost`, one of the server's configured
+domains, or be an IP address.
+
+The `--domain` option can be used to add a domain that the Filepack server
+accepts in the `Host` header, and is neceessary whenever the server is accessed
+with a hostname other than `localhost`.
+
 HTTPS
 -----
 
