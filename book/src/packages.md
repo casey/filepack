@@ -218,3 +218,28 @@ metadata schemas.
 
 Please feel free to [open an issue](https://github.com/casey/filepack/issues)
 with ideas for new metadata fields.
+
+Security
+--------
+
+Filepack's security model assumes that BLAKE3 is a collision-resistant and
+second-preimage resistant hash function, and that Ed25519 signatures are
+unforgable.
+
+Filepack packages may be verified against a manifest, fingerprint, or signature
+made by a trusted public key.
+
+Verification methods differs by what is trusted. Verification against a manifest
+or fingerprint is safe if the manifest or fingerprint has not been tampered
+with. Verification against a signature is safe if the private key corresponding
+to the signature public key has been stored securely.
+
+All verification methods are robust against unintentional modification. Any
+accidental modification of a manifest, fingerprint, signature, public key, or
+package contents will be detected during verification.
+
+Filepack does not attempt to protect against covert storage channels, meaning
+that a package that successfully verifies may contain additional, unverified
+data. Examples of such channels include file and directory metadata, such as
+extended attributes, additional manifest archive entries, and the contents of
+ignored `.filepack` directories.
