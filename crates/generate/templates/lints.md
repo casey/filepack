@@ -34,6 +34,6 @@ following characters: {{ list(self.windows_reserved_characters) }}.
 Windows Reserved Names
 ----------------------
 
-The `windows-reserved-filename` lint fails if a filename , ignoring case, is
-one of the following names, or one of the following names followed by a period:
-{{ list(self.windows_reserved_names) }}.
+The `windows-reserved-filename` lint fails if a filename, ignoring case, is one
+of the following names, or one of the following names followed by a period: {{
+list(self.windows_reserved_names) }}.
