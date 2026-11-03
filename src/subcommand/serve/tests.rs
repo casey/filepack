@@ -4286,6 +4286,77 @@ fn verify_directory_idempotent() {
 }
 
 #[test]
+fn verify_directory_metadata_decode_error() {
+  let server = TestServer::new();
+
+  let junk = b"foo";
+  server.write_file(junk);
+
+  let (deco, hash) = Directory::new()
+    .insert_file(Metadata::DECO_FILENAME, junk)
+    .deco();
+  let fingerprint = Fingerprint(hash);
+  server.write_file(&deco);
+
+  server
+    .post(format!("/api/directory/{hash}"))
+    .status(StatusCode::BAD_REQUEST)
+    .assert_body(format!(
+      "failed to decode metadata for package {fingerprint}"
+    ))
+    .send();
+}
+
+#[test]
+fn verify_directory_metadata_references_missing_file() {
+  let server = TestServer::new();
+
+  let metadata = Metadata {
+    artwork: Some(Image::test("cover.png")),
+    ..default()
+  }
+  .encode_to_vec();
+  server.write_file(&metadata);
+
+  let (deco, hash) = Directory::new()
+    .insert_file(Metadata::DECO_FILENAME, &metadata)
+    .deco();
+  let fingerprint = Fingerprint(hash);
+  server.write_file(&deco);
+
+  server
+    .post(format!("/api/directory/{hash}"))
+    .status(StatusCode::BAD_REQUEST)
+    .assert_body(format!(
+      "package {fingerprint} metadata references missing file `cover.png`"
+    ))
+    .send();
+}
+
+#[test]
+fn verify_directory_metadata_references_present_file() {
+  let server = TestServer::new();
+
+  let artwork = b"artwork";
+  server.write_file(artwork);
+
+  let metadata = Metadata {
+    artwork: Some(Image::test("cover.png")),
+    ..default()
+  }
+  .encode_to_vec();
+  server.write_file(&metadata);
+
+  let (deco, hash) = Directory::new()
+    .insert_file("cover.png", artwork)
+    .insert_file(Metadata::DECO_FILENAME, &metadata)
+    .deco();
+  server.write_file(&deco);
+
+  server.post(format!("/api/directory/{hash}")).send();
+}
+
+#[test]
 fn verify_directory_missing_file() {
   let server = TestServer::new();
 
@@ -4356,6 +4427,32 @@ fn verify_directory_rejects_reserved_filename() {
     .status(StatusCode::BAD_REQUEST)
     .assert_body(format!(
       "directory {hash} contains reserved filename `manifest.filepack`"
+    ))
+    .send();
+}
+
+#[test]
+fn verify_directory_rejects_web_packages_unless_unstable() {
+  let server = TestServer::new();
+
+  let metadata = Metadata {
+    media: Some(Media::Web),
+    ..default()
+  }
+  .encode_to_vec();
+  server.write_file(&metadata);
+
+  let (deco, hash) = Directory::new()
+    .insert_file(Metadata::DECO_FILENAME, &metadata)
+    .deco();
+  let fingerprint = Fingerprint(hash);
+  server.write_file(&deco);
+
+  server
+    .post(format!("/api/directory/{hash}"))
+    .status(StatusCode::BAD_REQUEST)
+    .assert_body(format!(
+      "package {fingerprint} uses unstable feature `web-packages`"
     ))
     .send();
 }
@@ -4501,112 +4598,6 @@ fn verify_package_assigns_numbers() {
       .encode_to_vec(),
     )
     .assert_body(api::revision::Response { number: 0 }.encode_to_vec())
-    .send();
-}
-
-#[test]
-fn verify_package_metadata_decode_error() {
-  let server = TestServer::new();
-
-  let junk = b"foo";
-  server.write_file(junk);
-
-  let (deco, hash) = Directory::new()
-    .insert_file(Metadata::DECO_FILENAME, junk)
-    .deco();
-  let fingerprint = Fingerprint(hash);
-  server.write_file(&deco);
-
-  server.post(format!("/api/directory/{hash}")).send();
-
-  server
-    .post(format!("/api/package/{fingerprint}"))
-    .status(StatusCode::BAD_REQUEST)
-    .assert_body(format!(
-      "failed to decode metadata for package {fingerprint}"
-    ))
-    .send();
-}
-
-#[test]
-fn verify_package_metadata_references_missing_file() {
-  let server = TestServer::new();
-
-  let metadata = Metadata {
-    artwork: Some(Image::test("cover.png")),
-    ..default()
-  }
-  .encode_to_vec();
-  server.write_file(&metadata);
-
-  let (deco, hash) = Directory::new()
-    .insert_file(Metadata::DECO_FILENAME, &metadata)
-    .deco();
-  let fingerprint = Fingerprint(hash);
-  server.write_file(&deco);
-
-  server.post(format!("/api/directory/{hash}")).send();
-
-  server
-    .post(format!("/api/package/{fingerprint}"))
-    .status(StatusCode::BAD_REQUEST)
-    .assert_body(format!(
-      "package {fingerprint} metadata references missing file `cover.png`"
-    ))
-    .send();
-}
-
-#[test]
-fn verify_package_metadata_references_present_file() {
-  let server = TestServer::new();
-
-  let artwork = b"artwork";
-  server.write_file(artwork);
-
-  let metadata = Metadata {
-    artwork: Some(Image::test("cover.png")),
-    ..default()
-  }
-  .encode_to_vec();
-  server.write_file(&metadata);
-
-  let (deco, hash) = Directory::new()
-    .insert_file("cover.png", artwork)
-    .insert_file(Metadata::DECO_FILENAME, &metadata)
-    .deco();
-  let fingerprint = Fingerprint(hash);
-  server.write_file(&deco);
-
-  server.post(format!("/api/directory/{hash}")).send();
-
-  server.publish(fingerprint, 0);
-}
-
-#[test]
-fn verify_package_rejects_web_packages_unless_unstable() {
-  let server = TestServer::new();
-
-  let metadata = Metadata {
-    media: Some(Media::Web),
-    ..default()
-  }
-  .encode_to_vec();
-  server.write_file(&metadata);
-
-  let (deco, hash) = Directory::new()
-    .insert_file(Metadata::DECO_FILENAME, &metadata)
-    .deco();
-  let fingerprint = Fingerprint(hash);
-  server.write_file(&deco);
-
-  server.post(format!("/api/directory/{hash}")).send();
-
-  server
-    .post(format!("/api/package/{fingerprint}"))
-    .status(StatusCode::BAD_REQUEST)
-    .assert_body(format!(
-      "package {fingerprint} uses unstable feature `web-packages`"
-    ))
     .send();
 }
 
