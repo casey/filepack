@@ -2,8 +2,8 @@ Installation
 ============
 
 `filepack` is written in [Rust](https://www.rust-lang.org/) and can be built
-from source and installed from a checked-out copy of [the
-repo](https://github.com/casey/filepack) with:
+from source and installed from a checked-out copy of
+[the repo](https://github.com/casey/filepack) with:
 
 ```sh
 cargo install --locked --path .
@@ -20,8 +20,8 @@ See [rustup.rs](https://rustup.rs/) for installation instructions for Rust.
 Pre-Built Binaries
 ------------------
 
-Pre-built binaries for Linux, MacOS, and Windows can be found on [the releases
-page](https://github.com/casey/filepack/releases).
+Pre-built binaries for Linux, MacOS, and Windows can be found on
+[the releases page](https://github.com/casey/filepack/releases).
 
 You can use the following command on Linux, MacOS, or Windows to download the
 latest release, just replace `DEST` with the directory where you'd like to put

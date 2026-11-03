@@ -11,8 +11,8 @@ Features
 --------
 
 If you package content for distribution, Filepack offers a number of useful
-features, even if you already use [SFV
-files](https://en.wikipedia.org/wiki/Simple_file_verification):
+features, even if you already use
+[SFV files](https://en.wikipedia.org/wiki/Simple_file_verification):
 
 - Filepack can detect both accidental corruption and intentional modification,
   whereas SFV files can only detect accidental corruption.
@@ -38,8 +38,8 @@ files](https://en.wikipedia.org/wiki/Simple_file_verification):
 - Filepack packages are Merkle trees, both of files and within files. A user
   with a manifest, package fingerprint, or trusted public key can incrementally
   stream and verify files, or access and verify file content at random.
-  Additionally, errors can be detected and recovered from by transmitting
-  only those parts of the file which are corrupted.
+  Additionally, errors can be detected and recovered from by transmitting only
+  those parts of the file which are corrupted.
 
 - Packages may contain machine readable metadata following a Filepack-defined
   schema, allowing packages to be searched, indexed, and exposed through rich,
