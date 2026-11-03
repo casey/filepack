@@ -14,7 +14,9 @@ impl FromStr for Host {
     if let Some(address) = host.strip_prefix('[') {
       return address
         .strip_suffix(']')
-        .and_then(|address| address.parse().ok())
+        .context(host_error::BracketedIpv6Unterminated { host })?
+        .parse()
+        .ok()
         .map(Self::Ipv6)
         .context(host_error::BracketedIpv6 { host });
     }
@@ -163,8 +165,18 @@ mod tests {
 
     err("0", HostError::DomainNumeric { host: "0".into() });
 
-    for host in ["[foo]", "[::1"] {
-      err(host, HostError::BracketedIpv6 { host: host.into() });
-    }
+    err(
+      "[foo]",
+      HostError::BracketedIpv6 {
+        host: "[foo]".into(),
+      },
+    );
+
+    err(
+      "[::1",
+      HostError::BracketedIpv6Unterminated {
+        host: "[::1".into(),
+      },
+    );
   }
 }

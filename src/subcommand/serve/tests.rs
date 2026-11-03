@@ -2073,6 +2073,7 @@ fn host_not_allowed() {
 
   case("/api/foo", Some("foo:8000"));
   case("http://foo/api/foo", None);
+  case("http://foo/api/foo", Some("localhost"));
 }
 
 #[test]
