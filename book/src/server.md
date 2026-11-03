@@ -4,11 +4,10 @@ Server
 The package server can be started with `filepack serve`. A demo server is
 available at [filepack.com](https://filepack.com).
 
-The server has a web frontend that can be used to browse packages, as well as
-an API for uploading and downloading packages.
+The server has a web frontend that can be used to browse packages, as well as an
+API for uploading and downloading packages.
 
-See [API](api.md) and [Web](web.md) for documentation of the API and web
-routes.
+See [API](api.md) and [Web](web.md) for documentation of the API and web routes.
 
 The server responds to requests for `/{fingerprint}`, `/{number}`, and
 `/{revision}` which redirect to [`/package/{package}`](web/package-package.md),
@@ -25,10 +24,10 @@ Writes can be restricted with `--restrict-writes`, which forbids unauthorized
 write access to the API, including the ability to upload and delete packages.
 
 The `--admin-key` option, along with `--domain`, can be used to authorize write
-access by public key. The holder of the admin private key may authorize
-requests by including a tagged-hex [bearer token](hex/token.md) with their
-requests in the `Authorization` header. The token's audience must match the
-value of `--domain`, and the timestamp must be current.
+access by public key. The holder of the admin private key may authorize requests
+by including a tagged-hex [bearer token](hex/token.md) with their requests in
+the `Authorization` header. The token's audience must match the value of
+`--domain`, and the timestamp must be current.
 
 If `--restrict-writes` is used with no `--admin-key`, the server will be
 read-only.
@@ -59,15 +58,15 @@ ACME TLS certificates are stored in `acme-cache/` in the
 
 Responses served over HTTPS include
 `Strict-Transport-Security: max-age=31536000`. If you serve a domain over HTTPS
-and then later switch to HTTP, browsers that have previously visited using
-HTTPS will refuse to connect.
+and then later switch to HTTP, browsers that have previously visited using HTTPS
+will refuse to connect.
 
 Storage
 -------
 
-Server state, including the database, ACME cache, uploaded files, and
-incomplete files, as well as the keychain containing admin keys, is stored in
-the [Data Directory](configuration.md#data-directory).
+Server state, including the database, ACME cache, uploaded files, and incomplete
+files, as well as the keychain containing admin keys, is stored in the
+[Data Directory](configuration.md#data-directory).
 
 The database is stored in `database.redb` and uses
 [redb](https://github.com/cberner/redb).
@@ -102,13 +101,13 @@ Caching
 
 All routes that return hashed files include an `ETag` header whose value is the
 tagged-hex [hash](hex/hash.md) of the file as a strong entity tag. These routes
-also respect the `If-None-Match` header for `GET` and `HEAD` requests,
-including range requests, and will return a `304 Not Modified` with no body if
-the `If-None-Match` header entity tag matches the response `ETag` header.
+also respect the `If-None-Match` header for `GET` and `HEAD` requests, including
+range requests, and will return a `304 Not Modified` with no body if the
+`If-None-Match` header entity tag matches the response `ETag` header.
 
 Immutable routes return `Cache-Control: public, max-age=31536000, immutable`
-with successful responses. Immutable routes are those whose path contains a
-hash which commits to the response. Note that web routes, such as
+with successful responses. Immutable routes are those whose path contains a hash
+which commits to the response. Note that web routes, such as
 `/package/{fingerprint}`, are not immutable, since the HTML served may change,
 for example if `filepack` is updated.
 
@@ -147,9 +146,9 @@ Packages can be uploaded to the server with
 `filepack upload` actually performs three distinct operations: creation,
 replacement, and update.
 
-After successfully creating, replacing, or updating a package on the server,
-the new package head for that server is recorded to `.filepack/state.json` in
-the package root.
+After successfully creating, replacing, or updating a package on the server, the
+new package head for that server is recorded to `.filepack/state.json` in the
+package root.
 
 ### Package Creation
 
@@ -165,9 +164,9 @@ will update the package.
 
 ### Package Replacement
 
-Package replacement makes an existing package number point at a new package
-with no parents, making the old package and its parents collectable by
-`filepack gc`, unless they are reachable from another head.
+Package replacement makes an existing package number point at a new package with
+no parents, making the old package and its parents collectable by `filepack gc`,
+unless they are reachable from another head.
 
 A previously uploaded package with `NUMBER` can be replaced with:
 
@@ -209,9 +208,9 @@ requires that the package root directory has already been verified and package
 metadata is valid.
 
 Finally, the revision is verified and the package number obtained using
-[`POST /api/revision/{revision}`](api/revision-revision.md#post), which
-requires that the package has been verified and the revision has been uploaded
-and is valid.
+[`POST /api/revision/{revision}`](api/revision-revision.md#post), which requires
+that the package has been verified and the revision has been uploaded and is
+valid.
 
 Downloading Packages
 --------------------
@@ -233,9 +232,9 @@ Garbage Collection
 ------------------
 
 Deleting a package causes the package number to no longer point to a package,
-and replacing a package causes the number to point at a different package.
-These packages are still served by fingerprint and revision, and their files
-are not immediately removed from the server.
+and replacing a package causes the number to point at a different package. These
+packages are still served by fingerprint and revision, and their files are not
+immediately removed from the server.
 
 After a package is deleted or replaced, running `filepack gc` will remove all
 packages and package files which are not reachable from the current heads or
@@ -261,8 +260,8 @@ unless the server is started with unstable features enabled.
 By default, web packages are not mounted. Uploaded web packages can be viewed
 and browsed at `/package/{package}`, but all active content, including HTML and
 JavaScript, is served with `Content-Security-Policy: sandbox`, a non-active
-`Content-Type` such as `text/plain;charset=utf-8` or
-`application/octet-stream`, and `X-Content-Type-Options: nosniff`.
+`Content-Type` such as `text/plain;charset=utf-8` or `application/octet-stream`,
+and `X-Content-Type-Options: nosniff`.
 
 Web packages can be mounted with:
 
@@ -279,13 +278,13 @@ Mounted files are served unsandboxed from the server origin with unrestricted
 content types, including `text/html` and `text/javascript`, guessed from file
 extensions. Furthermore, packages mounted by number serve the latest version of
 the package. On a world-writable server, anyone may update the package, causing
-arbitrary HTML and JavaScript to be served from the server origin. Make sure
-you understand the consequences of this and only mount packages you trust, and
-only mount packages by number on servers with `--restrict-writes`.
+arbitrary HTML and JavaScript to be served from the server origin. Make sure you
+understand the consequences of this and only mount packages you trust, and only
+mount packages by number on servers with `--restrict-writes`.
 
-Mounts may optionally be given a name with `--mount PACKAGE:NAME`, in which
-case they are also served under `/{NAME}/`. Built-in routes take precedence
-over mounts.
+Mounts may optionally be given a name with `--mount PACKAGE:NAME`, in which case
+they are also served under `/{NAME}/`. Built-in routes take precedence over
+mounts.
 
 This book is served as a web package, mounted at
 [filepack.com/book/](https://filepack.com/book/).

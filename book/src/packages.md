@@ -4,8 +4,7 @@ Packages
 A Filepack package is a directory containing a manifest named
 `manifest.filepack`, which records the names, sizes, and
 [BLAKE3 hashes](https://en.wikipedia.org/wiki/BLAKE_(hash_function)#BLAKE3) of
-all files in the directory and its subdirectories, and which may be signed
-using
+all files in the directory and its subdirectories, and which may be signed using
 [Ed25519](https://en.wikipedia.org/wiki/EdDSA#Ed25519).
 
 Packages can be identified by fingerprint, a hash that uniquely identifies the
@@ -21,15 +20,15 @@ accidentally modified or intentionally tampered with.
 
 Filepack packages may include machine-readable metadata in a file named
 `metadata.filemeta` in the package root, which includes information about the
-package, the packager, its media content, and assets such as package artwork
-and image thumbnails.
+package, the packager, its media content, and assets such as package artwork and
+image thumbnails.
 
 A package may be stored in forms other than as a directory tree and manifest.
-For example, the Filepack server stores files and serialized directories by
-hash in a flat directory, alongside a database recording package fingerprints.
-This allows the Filepack server to deduplicate files that appear in multiple
-packages, and allows clients to skip uploading files that are already present
-on the server, regardless of which package contains them.
+For example, the Filepack server stores files and serialized directories by hash
+in a flat directory, alongside a database recording package fingerprints. This
+allows the Filepack server to deduplicate files that appear in multiple
+packages, and allows clients to skip uploading files that are already present on
+the server, regardless of which package contains them.
 
 Hashing
 -------
@@ -37,14 +36,14 @@ Hashing
 A Filepack package is a
 [Merkle tree](https://en.wikipedia.org/wiki/Merkle_tree). The root hash of the
 tree is the hash of the serialized root directory of the package. Serialized
-directories contain the names, sizes, hashes, and types of their children,
-which may be files or subdirectories.
+directories contain the names, sizes, hashes, and types of their children, which
+may be files or subdirectories.
 
 The root hash of a package Merkle tree is called the package fingerprint, and
 uniquely identifies the content of a package. Any change to the content of a
-package results in a completely different fingerprint, and it is
-computationally infeasible, assuming that BLAKE3 is collision-resistant, to
-create two packages with different content but the same fingerprint.
+package results in a completely different fingerprint, and it is computationally
+infeasible, assuming that BLAKE3 is collision-resistant, to create two packages
+with different content but the same fingerprint.
 
 Filepack's use of Merkle trees allows for efficient sharing and verification of
 packages over the internet, for example using the [Filepack server](server.md).
@@ -91,8 +90,8 @@ Manifests
 Manifests are serialized with [deco](deco.md) as a manifest
 [archive](deco/archive.md) named `manifest.filepack` in the package root.
 
-Archives are a content-addressed storage format. They contain the hash of a
-root directory and a map of hashes to file contents.
+Archives are a content-addressed storage format. They contain the hash of a root
+directory and a map of hashes to file contents.
 
 An archive can be traversed by reading the root hash, reading the entry for the
 root hash in the files map, deserializing the contents as a
@@ -111,10 +110,10 @@ All other entry names are reserved for use by future versions of Filepack.
 Unrecognized entries in the manifest archive root are ignored but preserved.
 
 Manifest archives do not contain package files, only serialized directories and
-signatures. The only exception to this is `metadata.filemeta`, which is
-included in the archive if present. This allows the manifest archive to serve
-as a convenient, single-file reference for a package, including both file
-hashes and sizes, as well as signatures and metadata.
+signatures. The only exception to this is `metadata.filemeta`, which is included
+in the archive if present. This allows the manifest archive to serve as a
+convenient, single-file reference for a package, including both file hashes and
+sizes, as well as signatures and metadata.
 
 Manifests can be converted to JSON with `filepack manifest` for inspection and
 manipulation. A JSON manifest can be converted to a deco manifest archive with
@@ -140,8 +139,8 @@ Composition
 
 Packages are composable, meaning that packages may contain other packages.
 
-A directory that contains the file `manifest.filepack` or `metadata.filemeta`
-is a package. If it is a subdirectory of another package, it is a subpackage.
+A directory that contains the file `manifest.filepack` or `metadata.filemeta` is
+a package. If it is a subdirectory of another package, it is a subpackage.
 
 During verification, subpackage manifests are verified, and the subpackage root
 directory entry hash in the superpackage must be equal to the subpackage
@@ -179,8 +178,7 @@ the manifest archive `signatures` directory, and are represented in text as
 [tagged hex](hex/signature.md).
 
 The same signature scheme, with a different context and inner
-[Claims](deco/claims.md) object, is used for server authorization bearer
-tokens.
+[Claims](deco/claims.md) object, is used for server authorization bearer tokens.
 
 Metadata
 --------
@@ -190,8 +188,8 @@ package and its contents. If present, `metadata.filemeta` is also embedded in
 the `manifest.filepack` archive.
 
 Metadata is authored by creating a file named `metadata.yaml` in the root of a
-new package. `filepack create` then loads `metadata.yaml` if present, checks
-for validity and unknown fields, and writes the deco serialization to
+new package. `filepack create` then loads `metadata.yaml` if present, checks for
+validity and unknown fields, and writes the deco serialization to
 `metadata.filemeta` in the package root.
 
 `metadata.yaml` is retained as a human-readable reference and for amending
@@ -201,19 +199,18 @@ consumption by scripts and tools, `filepack metadata` prints the contents of
 
 Metadata follows a fixed schema and is not user-extensible, with fields
 describing the package contents, the package itself, and the media content of
-the package. Future versions of Filepack may define new metadata fields,
-causing verification errors if those fields are present and invalid according
-to the new schema.
+the package. Future versions of Filepack may define new metadata fields, causing
+verification errors if those fields are present and invalid according to the new
+schema.
 
 During verification, metadata is checked for consistency, which includes
 checking for references to missing files, as well duplicate media items.
 
-Metadata allows for the attractive presentation of packages, including
-browsing, viewing, search, and conversion. See
-[filepack.com](https://filepack.com) for a selection of example packages,
-covering a variety of media types. All metadata served by the demo server,
-including package artwork, video placeholders, thumbnail images, and media
-information, is sourced from package metadata.
+Metadata allows for the attractive presentation of packages, including browsing,
+viewing, search, and conversion. See [filepack.com](https://filepack.com) for a
+selection of example packages, covering a variety of media types. All metadata
+served by the demo server, including package artwork, video placeholders,
+thumbnail images, and media information, is sourced from package metadata.
 
 See [Metadata](metadata.md) for an example `metadata.yaml` file, the template
 used to generate package metadata, as well as links to the deco and YAML

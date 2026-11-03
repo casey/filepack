@@ -4,8 +4,8 @@ Introduction
 {{#include ../../README.md:introduction}}
 
 See [Installation](installation.md) and [Usage](usage.md) to get started,
-[Packages](packages.md) for an overview of Filepack packages, and
-[Why?](why.md) for some of the higher-level ideas behind Filepack.
+[Packages](packages.md) for an overview of Filepack packages, and [Why?](why.md)
+for some of the higher-level ideas behind Filepack.
 
 Features
 --------
@@ -22,8 +22,8 @@ features, even if you already use
   empty, truncated, or too long.
 
 - Filepack packages have a fingerprint, a short text string beginning with
-  `package1…` which is guaranteed to be globally unique, allowing packages to
-  be identified and referenced by fingerprint alone.
+  `package1…` which is guaranteed to be globally unique, allowing packages to be
+  identified and referenced by fingerprint alone.
 
 - Fingerprints can be used to verify that a `manifest.filepack` manifest itself
   has not been tampered with, proving authenticity of a package regardless of

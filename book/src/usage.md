@@ -1,9 +1,9 @@
 Usage
 =====
 
-Filepack supports a number of subcommands, including `filepack create` to
-create a package, `filepack verify` to verify a package, and `filepack serve`
-to start an HTTP package server.
+Filepack supports a number of subcommands, including `filepack create` to create
+a package, `filepack verify` to verify a package, and `filepack serve` to start
+an HTTP package server.
 
 See [Commands](commands.md) for all commands and their `--help` strings, or run
 `filepack help` for supported subcommands and `filepack help SUBCOMMAND` for
@@ -31,8 +31,8 @@ Adding Package Metadata
 -----------------------
 
 Packages may optionally contain metadata in `metadata.filemeta`. This metadata
-describes the contents of the package, the package itself, and the media
-content of the package.
+describes the contents of the package, the package itself, and the media content
+of the package.
 
 Metadata may be added by creating a metadata template in `metadata.yaml`:
 
@@ -89,9 +89,9 @@ Verifying Packages
 ------------------
 
 A package can be verified by manifest, fingerprint, or public key. Verification
-will fail if files have been added, removed, or modified. The three
-verification methods differ by what is trusted: the manifest, fingerprint, or
-private key corresponding to the public key.
+will fail if files have been added, removed, or modified. The three verification
+methods differ by what is trusted: the manifest, fingerprint, or private key
+corresponding to the public key.
 
 The package in the current directory can be verified against the hashes and
 sizes in the manifest:
@@ -118,8 +118,8 @@ Then, verify the package by fingerprint:
 filepack verify --fingerprint <FINGERPRINT>
 ```
 
-As long as the fingerprint has not been modified, any change to the package
-will cause `filepack` to exit with a non-zero exit code.
+As long as the fingerprint has not been modified, any change to the package will
+cause `filepack` to exit with a non-zero exit code.
 
 Signing Packages
 ----------------
@@ -151,8 +151,8 @@ filepack verify --key <PUBLIC_KEY>
 ```
 
 Any change to the package will cause `filepack` to exit with a non-zero exit
-code. As long as your private key is secure, nobody can create a signature
-which verifies against your public key.
+code. As long as your private key is secure, nobody can create a signature which
+verifies against your public key.
 
 Packages may also be signed at creation:
 
