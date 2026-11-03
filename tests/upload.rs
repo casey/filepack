@@ -4,7 +4,7 @@ use super::*;
 fn restricted_upload_succeeds_with_auth() {
   let server = Test::new()
     .write_key_pair("master")
-    .assert_file(&format!("files/{}", Hash::bytes(b"bar")), "bar")
+    .assert_server_file("bar")
     .ready_address()
     .args([
       "serve",
@@ -41,10 +41,10 @@ fn restricted_upload_succeeds_with_auth() {
 fn reupload_package_succeeds() {
   let server = Test::new()
     .serve()
-    .assert_file(&format!("files/{}", Hash::bytes(b"aaa")), "aaa")
-    .assert_file(&format!("files/{}", Hash::bytes(b"bbb")), "bbb")
-    .assert_file(&format!("files/{}", Hash::bytes(b"ccc")), "ccc")
-    .assert_file(&format!("files/{}", Hash::bytes(b"ddd")), "ddd")
+    .assert_server_file("aaa")
+    .assert_server_file("bbb")
+    .assert_server_file("ccc")
+    .assert_server_file("ddd")
     .spawn();
 
   Test::new()
@@ -72,10 +72,7 @@ fn reupload_package_succeeds() {
 
 #[test]
 fn reupload_succeeds() {
-  let server = Test::new()
-    .serve()
-    .assert_file(&format!("files/{}", Hash::bytes(b"bar")), "bar")
-    .spawn();
+  let server = Test::new().serve().assert_server_file("bar").spawn();
 
   for _ in 0..2 {
     Test::new()
@@ -208,10 +205,7 @@ fn upload_auth_requires_https() {
 
 #[test]
 fn upload_creates_file() {
-  let server = Test::new()
-    .serve()
-    .assert_file(&format!("files/{}", Hash::bytes(b"bar")), "bar")
-    .spawn();
+  let server = Test::new().serve().assert_server_file("bar").spawn();
 
   Test::new()
     .write("foo", "bar")
@@ -223,10 +217,7 @@ fn upload_creates_file() {
 
 #[test]
 fn upload_package_accepts_directory() {
-  let server = Test::new()
-    .serve()
-    .assert_file(&format!("files/{}", Hash::bytes(b"bar")), "bar")
-    .spawn();
+  let server = Test::new().serve().assert_server_file("bar").spawn();
 
   Test::new()
     .write("foo/bar", "bar")
@@ -246,10 +237,7 @@ fn upload_package_accepts_directory() {
 
 #[test]
 fn upload_package_defaults_to_current_directory() {
-  let server = Test::new()
-    .serve()
-    .assert_file(&format!("files/{}", Hash::bytes(b"bar")), "bar")
-    .spawn();
+  let server = Test::new().serve().assert_server_file("bar").spawn();
 
   Test::new()
     .write("foo", "bar")
@@ -503,8 +491,8 @@ fn upload_package_serves_package_html() {
 fn upload_package_skips_files_already_on_server() {
   let server = Test::new()
     .serve()
-    .assert_file(&format!("files/{}", Hash::bytes(b"aaa")), "aaa")
-    .assert_file(&format!("files/{}", Hash::bytes(b"bbb")), "bbb")
+    .assert_server_file("aaa")
+    .assert_server_file("bbb")
     .spawn();
 
   Test::new()
@@ -541,10 +529,10 @@ fn upload_package_state_case_variant_error() {
 fn upload_package_uploads_files() {
   let server = Test::new()
     .serve()
-    .assert_file(&format!("files/{}", Hash::bytes(b"aaa")), "aaa")
-    .assert_file(&format!("files/{}", Hash::bytes(b"bbb")), "bbb")
-    .assert_file(&format!("files/{}", Hash::bytes(b"ccc")), "ccc")
-    .assert_file(&format!("files/{}", Hash::bytes(b"ddd")), "ddd")
+    .assert_server_file("aaa")
+    .assert_server_file("bbb")
+    .assert_server_file("ccc")
+    .assert_server_file("ddd")
     .assert_file_count("files", 8)
     .spawn();
 
