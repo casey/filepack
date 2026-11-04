@@ -13,6 +13,7 @@ Summary
 - [Packages](packages.md)
 - [Configuration](configuration.md)
 - [Server](server.md)
+- [Design](design.md)
 - [Comparisons](comparisons.md)
 
 # Reference
