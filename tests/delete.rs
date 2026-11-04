@@ -111,7 +111,7 @@ fn restricted_delete_succeeds_with_auth() {
       "--http-port",
       "0",
       "--domain",
-      "127.0.0.1",
+      "localhost",
       "--admin-key",
       "master",
     ])

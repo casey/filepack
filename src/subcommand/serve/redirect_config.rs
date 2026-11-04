@@ -2,7 +2,7 @@ use super::*;
 
 pub(crate) struct RedirectConfig {
   pub(crate) destination: Url,
-  pub(crate) domains: HashSet<Host>,
+  pub(crate) domains: HashSet<Domain>,
 }
 
 impl RedirectConfig {

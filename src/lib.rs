@@ -68,6 +68,7 @@ use {
     display_path::DisplayPath,
     display_private_key::DisplayPrivateKey,
     display_sample_rate::DisplaySampleRate,
+    domain::Domain,
     ed25519_signature::Ed25519Signature,
     embedded_image::EmbeddedImage,
     entry_info::{EntryInfo, EntryType},
@@ -386,6 +387,7 @@ mod display_millis;
 mod display_path;
 mod display_private_key;
 mod display_sample_rate;
+mod domain;
 mod ed25519_signature;
 mod embedded_image;
 mod encode;

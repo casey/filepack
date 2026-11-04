@@ -1,8 +1,8 @@
 use super::*;
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
-pub enum Host {
-  Domain(String),
+pub(crate) enum Host {
+  Domain(Domain),
   Ipv4(Ipv4Addr),
   Ipv6(Ipv6Addr),
 }
@@ -29,42 +29,7 @@ impl FromStr for Host {
       return Ok(Self::Ipv6(address));
     }
 
-    ensure!(!host.is_empty(), host_error::DomainEmpty);
-
-    if let Some(character) = host
-      .chars()
-      .find(|&character| !character.is_ascii_alphanumeric() && character != '-' && character != '.')
-    {
-      return host_error::DomainCharacter { character, host }.fail();
-    }
-
-    ensure!(host.len() <= 253, host_error::DomainLength { host });
-
-    for label in host.split('.') {
-      ensure!(!label.is_empty(), host_error::DomainLabelEmpty { host });
-
-      ensure!(
-        label.len() <= 63,
-        host_error::DomainLabelLength { host, label },
-      );
-
-      ensure!(
-        !label.starts_with('-') && !label.ends_with('-'),
-        host_error::DomainLabelHyphen { host, label },
-      );
-    }
-
-    ensure!(
-      !host
-        .rsplit('.')
-        .next()
-        .unwrap()
-        .bytes()
-        .all(|byte| byte.is_ascii_digit()),
-      host_error::DomainNumeric { host },
-    );
-
-    Ok(Self::Domain(host.to_ascii_lowercase()))
+    Ok(Self::Domain(host.parse()?))
   }
 }
 
@@ -127,14 +92,14 @@ mod tests {
       "foo_bar",
       HostError::DomainCharacter {
         character: '_',
-        host: "foo_bar".into(),
+        domain: "foo_bar".into(),
       },
     );
 
     err(
       "foo.",
       HostError::DomainLabelEmpty {
-        host: "foo.".into(),
+        domain: "foo.".into(),
       },
     );
 
@@ -142,7 +107,7 @@ mod tests {
       err(
         host,
         HostError::DomainLabelHyphen {
-          host: host.into(),
+          domain: host.into(),
           label: host.into(),
         },
       );
@@ -151,7 +116,7 @@ mod tests {
     err(
       &"a".repeat(64),
       HostError::DomainLabelLength {
-        host: "a".repeat(64),
+        domain: "a".repeat(64),
         label: "a".repeat(64),
       },
     );
@@ -159,11 +124,11 @@ mod tests {
     err(
       &format!("{long}d"),
       HostError::DomainLength {
-        host: format!("{long}d"),
+        domain: format!("{long}d"),
       },
     );
 
-    err("0", HostError::DomainNumeric { host: "0".into() });
+    err("0", HostError::DomainNumeric { domain: "0".into() });
 
     err(
       "[foo]",

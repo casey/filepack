@@ -92,7 +92,7 @@ pub(crate) struct Serve {
     long,
     value_name = "DOMAIN"
   )]
-  domain: Option<Host>,
+  domain: Option<Domain>,
   #[arg(help = "Serve HTTP traffic", long)]
   http: bool,
   #[arg(
@@ -135,7 +135,7 @@ pub(crate) struct Serve {
     requires = "domain",
     value_name = "DOMAIN"
   )]
-  redirects: Vec<Host>,
+  redirects: Vec<Domain>,
   #[arg(
     conflicts_with = "admin_key",
     help = "Allow unauthenticated writes",
@@ -152,7 +152,7 @@ impl Serve {
   fn acceptor(&self, acme_cache: Utf8PathBuf) -> Result<AxumAcceptor> {
     install_default_crypto_provider()?;
 
-    let config = AcmeConfig::new(self.domains().iter().map(ToString::to_string))
+    let config = AcmeConfig::new(self.domains().iter().map(Domain::as_str))
       .contact(&self.acme_contact)
       .cache_option(Some(DirCache::new(acme_cache)))
       .directory(&self.acme_directory);
@@ -215,7 +215,7 @@ impl Serve {
     next.run(request).await
   }
 
-  fn canonical(&self) -> &Host {
+  fn canonical(&self) -> &Domain {
     self.domain.as_ref().unwrap()
   }
 
@@ -265,7 +265,7 @@ impl Serve {
     next.run(request).await
   }
 
-  fn domains(&self) -> Vec<Host> {
+  fn domains(&self) -> Vec<Domain> {
     self.domain.iter().chain(&self.redirects).cloned().collect()
   }
 
@@ -321,8 +321,8 @@ impl Serve {
     };
 
     if let Host::Domain(domain) = &host
-      && domain != "localhost"
-      && !server_config.hosts.contains(&host)
+      && domain.as_str() != "localhost"
+      && !server_config.domains.contains(domain)
     {
       return ServerError::HostNotAllowed {
         host: hostname.into(),
@@ -447,7 +447,9 @@ impl Serve {
     request: Request,
     next: Next,
   ) -> Response {
-    if redirect_config.domains.contains(&host_port.host) {
+    if let Host::Domain(domain) = &host_port.host
+      && redirect_config.domains.contains(domain)
+    {
       Redirect::permanent(redirect_config.with_path_and_query(request.uri()).as_str())
         .into_response()
     } else {
@@ -676,7 +678,7 @@ impl Serve {
 
   fn server_config(&self) -> Arc<ServerConfig> {
     Arc::new(ServerConfig {
-      hosts: self.domains().into_iter().collect(),
+      domains: self.domains().into_iter().collect(),
       mounts: self.mounts.clone(),
       url: self.domain.as_ref().map(|_| self.redirect_url()),
     })
