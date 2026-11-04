@@ -8,6 +8,8 @@ pub enum PublicKeyError {
     key: InvalidPublicKey,
     source: ed25519_dalek::SignatureError,
   },
+  #[snafu(display("mixed-order public key: `{key}`"))]
+  MixedOrder { key: InvalidPublicKey },
   #[snafu(display("non-canonical public key: `{key}`"))]
   NonCanonical { key: InvalidPublicKey },
   #[snafu(display("weak public key: `{key}`"))]
