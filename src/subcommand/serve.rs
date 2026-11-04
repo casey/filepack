@@ -1,7 +1,7 @@
 use {
   self::{
     host_port::HostPort, packages_query::PackagesQuery, redirect_config::RedirectConfig,
-    server_config::ServerConfig, spawn_config::SpawnConfig,
+    scheme::Scheme, server_config::ServerConfig, spawn_config::SpawnConfig,
   },
   super::*,
   axum::{
@@ -33,6 +33,7 @@ mod host_port;
 mod packages_query;
 mod redirect_config;
 pub(crate) mod route;
+mod scheme;
 mod server_config;
 mod spawn_config;
 #[cfg(test)]
@@ -47,6 +48,7 @@ static THREAD_COUNTER: AtomicU64 = AtomicU64::new(0);
 
 type HostPortExtension = Extension<HostPort>;
 type RedirectConfigExtension = Extension<Arc<RedirectConfig>>;
+type SchemeExtension = Extension<Scheme>;
 type ServerConfigExtension = Extension<Arc<ServerConfig>>;
 type ServerExtension = Extension<Arc<Server>>;
 
@@ -221,6 +223,7 @@ impl Serve {
 
   async fn cross_origin_layer(
     host_port: HostPortExtension,
+    scheme: SchemeExtension,
     request: Request,
     next: Next,
   ) -> Response {
@@ -248,6 +251,10 @@ impl Serve {
     let Some(origin) = origin else {
       return next.run(request).await;
     };
+
+    if origin.scheme() != scheme.name() {
+      return ServerError::CrossOriginRequest.into_response();
+    }
 
     let Ok(host) = origin.hostname().parse::<Host>() else {
       return ServerError::CrossOriginRequest.into_response();
@@ -714,7 +721,7 @@ impl Serve {
     match config {
       SpawnConfig::Http => {
         Self::server(handle, listener)?
-          .serve(router.into_make_service())
+          .serve(router.layer(Extension(Scheme::Http)).into_make_service())
           .await
           .context(error::Serve)?;
       }
@@ -726,10 +733,13 @@ impl Serve {
           .clone()
           .unwrap_or_else(|| data_dir.join("acme-cache"));
 
-        let router = router.layer(SetResponseHeaderLayer::overriding(
-          header::STRICT_TRANSPORT_SECURITY,
-          HeaderValue::from_static("max-age=31536000"),
-        ));
+        let router =
+          router
+            .layer(Extension(Scheme::Https))
+            .layer(SetResponseHeaderLayer::overriding(
+              header::STRICT_TRANSPORT_SECURITY,
+              HeaderValue::from_static("max-age=31536000"),
+            ));
 
         Self::server(handle, listener)?
           .acceptor(self.acceptor(acme_cache)?)
