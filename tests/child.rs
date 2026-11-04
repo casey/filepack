@@ -8,7 +8,7 @@ pub(crate) struct Child {
 
 impl Child {
   pub(crate) fn address(&self) -> String {
-    format!("http://127.0.0.1:{}", self.port.unwrap())
+    format!("http://localhost:{}", self.port.unwrap())
   }
 
   pub(crate) fn get(&self, path: impl Into<String>) -> Request<'_> {

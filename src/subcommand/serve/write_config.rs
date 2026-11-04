@@ -1,7 +1,7 @@
 use super::*;
 
 pub(crate) enum WriteConfig {
-  Admin { domain: Host, key: PublicKey },
+  Admin { domain: Domain, key: PublicKey },
   Forbidden,
   Unrestricted,
 }

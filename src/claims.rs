@@ -5,7 +5,7 @@ const TTL: u64 = 60;
 
 pub(crate) struct Policy<'a> {
   admin: PublicKey,
-  domain: &'a Host,
+  domain: &'a Domain,
   now: u64,
 }
 
@@ -34,7 +34,7 @@ impl Claims {
 
   pub(crate) fn verify(
     admin: PublicKey,
-    domain: &Host,
+    domain: &Domain,
     now: u64,
     token: &str,
   ) -> Result<(), AuthorizationError> {
@@ -69,7 +69,7 @@ impl Message for Claims {
     }
 
     ensure! {
-      self.domain == policy.domain.to_string(),
+      self.domain == policy.domain.as_str(),
       authorization_error::Domain { domain: &self.domain },
     }
 

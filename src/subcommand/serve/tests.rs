@@ -344,7 +344,7 @@ impl TestServer {
 
   fn builder() -> TestServerBuilder {
     TestServerBuilder {
-      hosts: HashSet::new(),
+      domains: HashSet::new(),
       mounts: Vec::new(),
       unstable: false,
       url: None,
@@ -428,7 +428,7 @@ impl TestServer {
 }
 
 struct TestServerBuilder {
-  hosts: HashSet<Host>,
+  domains: HashSet<Domain>,
   mounts: Vec<Mount>,
   unstable: bool,
   url: Option<Url>,
@@ -445,7 +445,7 @@ impl TestServerBuilder {
       server,
       None,
       Arc::new(ServerConfig {
-        hosts: self.hosts,
+        domains: self.domains,
         mounts: self.mounts,
         url: self.url,
       }),
@@ -459,8 +459,8 @@ impl TestServerBuilder {
     }
   }
 
-  fn host(mut self, host: &str) -> Self {
-    self.hosts.insert(host.parse().unwrap());
+  fn domain(mut self, domain: &str) -> Self {
+    self.domains.insert(domain.parse().unwrap());
     self
   }
 
@@ -1066,7 +1066,7 @@ fn delete_package_rejects_missing_auth_header() {
   let admin = PrivateKey::generate();
   let server = TestServer::builder()
     .write_config(WriteConfig::Admin {
-      domain: Host::Domain("filepack.example".into()),
+      domain: "filepack.example".parse().unwrap(),
       key: admin.public_key(),
     })
     .build();
@@ -1143,12 +1143,12 @@ fn domain_required_for_canonical_domain_options() {
 fn domains_include_redirects() {
   assert_eq!(
     Serve {
-      domain: Some(Host::Domain("foo".into())),
-      redirects: vec![Host::Domain("bar".into())],
+      domain: Some("foo".parse().unwrap()),
+      redirects: vec!["bar".parse().unwrap()],
       ..Serve::default()
     }
     .domains(),
-    vec![Host::Domain("foo".into()), Host::Domain("bar".into())],
+    vec!["foo".parse().unwrap(), "bar".parse().unwrap()],
   );
 }
 
@@ -1378,7 +1378,7 @@ fn gc_rejects_missing_auth_header() {
   let admin = PrivateKey::generate();
   let server = TestServer::builder()
     .write_config(WriteConfig::Admin {
-      domain: Host::Domain("filepack.example".into()),
+      domain: "filepack.example".parse().unwrap(),
       key: admin.public_key(),
     })
     .build();
@@ -2033,7 +2033,7 @@ fn host_allowed() {
   #[track_caller]
   fn case(host: &'static str) {
     TestServer::builder()
-      .host("foo")
+      .domain("foo")
       .build()
       .get("/api/foo")
       .host(Some(host))
@@ -4162,7 +4162,7 @@ fn ports() {
 fn redirect_omits_default_ports() {
   assert_eq!(
     Serve {
-      domain: Some(Host::Domain("foo".into())),
+      domain: Some("foo".parse().unwrap()),
       ..Serve::default()
     }
     .redirect_url()
@@ -4172,7 +4172,7 @@ fn redirect_omits_default_ports() {
 
   assert_eq!(
     Serve {
-      domain: Some(Host::Domain("foo".into())),
+      domain: Some("foo".parse().unwrap()),
       https: true,
       ..Serve::default()
     }
@@ -4190,7 +4190,7 @@ fn restricted_write_accepts_admin_token() {
 
   let server = TestServer::builder()
     .write_config(WriteConfig::Admin {
-      domain: Host::Domain("filepack.example".into()),
+      domain: "filepack.example".parse().unwrap(),
       key: admin.public_key(),
     })
     .build();
@@ -4209,7 +4209,7 @@ fn restricted_write_rejects_missing_header() {
   let admin = PrivateKey::generate();
   let server = TestServer::builder()
     .write_config(WriteConfig::Admin {
-      domain: Host::Domain("filepack.example".into()),
+      domain: "filepack.example".parse().unwrap(),
       key: admin.public_key(),
     })
     .build();
@@ -4230,7 +4230,7 @@ fn restricted_write_rejects_others() {
   let other = PrivateKey::generate();
   let server = TestServer::builder()
     .write_config(WriteConfig::Admin {
-      domain: Host::Domain("filepack.example".into()),
+      domain: "filepack.example".parse().unwrap(),
       key: admin.public_key(),
     })
     .build();
@@ -4252,7 +4252,7 @@ fn restricted_write_rejects_wrong_domain() {
   let admin = PrivateKey::generate();
   let server = TestServer::builder()
     .write_config(WriteConfig::Admin {
-      domain: Host::Domain("filepack.example".into()),
+      domain: "filepack.example".parse().unwrap(),
       key: admin.public_key(),
     })
     .build();
@@ -4282,14 +4282,14 @@ fn server_config() {
   case(Serve::default(), None);
   case(
     Serve {
-      domain: Some(Host::Domain("foo".into())),
+      domain: Some("foo".parse().unwrap()),
       ..Serve::default()
     },
     Some("http://foo/"),
   );
   case(
     Serve {
-      domain: Some(Host::Domain("foo".into())),
+      domain: Some("foo".parse().unwrap()),
       https: true,
       ..Serve::default()
     },
@@ -4556,7 +4556,7 @@ fn verify_directory_rejects_missing_auth_header() {
   let admin = PrivateKey::generate();
   let server = TestServer::builder()
     .write_config(WriteConfig::Admin {
-      domain: Host::Domain("filepack.example".into()),
+      domain: "filepack.example".parse().unwrap(),
       key: admin.public_key(),
     })
     .build();

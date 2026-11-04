@@ -13,7 +13,7 @@ fn restricted_upload_succeeds_with_auth() {
       "--http-port",
       "0",
       "--domain",
-      "127.0.0.1",
+      "localhost",
       "--admin-key",
       "master",
     ])
@@ -95,7 +95,7 @@ fn serve_admin_key_by_name() {
       "--http-port",
       "0",
       "--domain",
-      "127.0.0.1",
+      "localhost",
       "--admin-key",
       "master",
     ])
@@ -121,7 +121,7 @@ fn serve_admin_key_by_public_key() {
       "--http-port",
       "0",
       "--domain",
-      "127.0.0.1",
+      "localhost",
       "--admin-key",
       PUBLIC_KEY,
     ])

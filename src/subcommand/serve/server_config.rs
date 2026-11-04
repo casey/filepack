@@ -1,7 +1,7 @@
 use super::*;
 
 pub(crate) struct ServerConfig {
-  pub(crate) hosts: HashSet<Host>,
+  pub(crate) domains: HashSet<Domain>,
   pub(crate) mounts: Vec<Mount>,
   pub(crate) url: Option<Url>,
 }
