@@ -1,5 +1,10 @@
 use super::*;
 
+const DESCRIPTION: &str = "Ed25519 public key.
+
+Must use the canonical encoding and be of order ℓ, meaning that it must not be \
+a small-order point and must be torsion-free.";
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq, SerializeDisplay)]
 pub struct PublicKey(ed25519_dalek::VerifyingKey);
 
@@ -20,6 +25,11 @@ impl PublicKey {
     ensure! {
       !key.is_weak(),
       public_key_error::Weak { key: InvalidPublicKey(bytes) },
+    }
+
+    ensure! {
+      key.to_edwards().is_torsion_free(),
+      public_key_error::MixedOrder { key: InvalidPublicKey(bytes) },
     }
 
     Ok(Self(key))
@@ -71,13 +81,7 @@ impl Display for PublicKey {
 impl Encode for PublicKey {
   fn deco_schema(registry: &mut deco::Registry) -> String {
     deco::Schema::Wrapper {
-      description: unindent(
-        "
-          Ed25519 public key.
-
-          Must use the canonical encoding and not be a small-order point.
-        ",
-      ),
+      description: DESCRIPTION.into(),
       inner: <[u8; Self::LEN]>::deco_schema(registry),
     }
     .register("PublicKey", registry)
@@ -110,13 +114,7 @@ impl PartialOrd for PublicKey {
 impl json::Json for PublicKey {
   fn json_schema(registry: &mut json::Registry) -> String {
     json::Schema::Hex {
-      description: unindent(
-        "
-          Ed25519 public key.
-
-          Must use the canonical encoding and not be a small-order point.
-        ",
-      ),
+      description: DESCRIPTION.into(),
       tag: Tag::Public,
     }
     .register("PublicKey", registry)
@@ -138,6 +136,22 @@ mod tests {
   }
 
   #[test]
+  fn mixed_order_public_keys_are_forbidden() {
+    const MIXED_ORDER_PUBLIC_KEY: &str =
+      "public198519eadf35b995233b51b5cd23e9cc5a28b639b5a4af0ec903cb960d81b7819";
+
+    assert_matches!(
+      MIXED_ORDER_PUBLIC_KEY.parse::<PublicKey>().unwrap_err(),
+      HexError::Decode {
+        source: DecodeError::Malformed(MalformedError::PublicKey {
+          source: PublicKeyError::MixedOrder { key },
+        }),
+        tag: Tag::Public,
+      } if key.to_string() == MIXED_ORDER_PUBLIC_KEY,
+    );
+  }
+
+  #[test]
   fn non_canonical_public_keys_are_forbidden() {
     const NON_CANONICAL_PUBLIC_KEY: &str =
       "public1f0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f";
@@ -152,7 +166,7 @@ mod tests {
       } if key.to_string() == NON_CANONICAL_PUBLIC_KEY,
     );
 
-    format!("public103{}", "0".repeat(62))
+    format!("public11a{}", "0".repeat(62))
       .parse::<PublicKey>()
       .unwrap();
   }
