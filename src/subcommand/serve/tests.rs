@@ -346,6 +346,7 @@ impl TestServer {
     TestServerBuilder {
       domains: HashSet::new(),
       mounts: Vec::new(),
+      scheme: Scheme::Http,
       unstable: false,
       url: None,
       write_config: WriteConfig::Unrestricted,
@@ -430,6 +431,7 @@ impl TestServer {
 struct TestServerBuilder {
   domains: HashSet<Domain>,
   mounts: Vec<Mount>,
+  scheme: Scheme,
   unstable: bool,
   url: Option<Url>,
   write_config: WriteConfig,
@@ -450,7 +452,8 @@ impl TestServerBuilder {
         url: self.url,
       }),
       Arc::new(self.write_config),
-    );
+    )
+    .layer(Extension(self.scheme));
 
     TestServer {
       data_dir,
@@ -469,6 +472,11 @@ impl TestServerBuilder {
       name: name.map(str::to_owned),
       package,
     });
+    self
+  }
+
+  fn scheme(mut self, scheme: Scheme) -> Self {
+    self.scheme = scheme;
     self
   }
 
@@ -997,6 +1005,15 @@ fn cross_origin_request_allowed() {
     .status(StatusCode::NOT_FOUND)
     .assert_body("API endpoint not found")
     .send();
+
+  TestServer::builder()
+    .scheme(Scheme::Https)
+    .build()
+    .post("/api/foo")
+    .header(header::ORIGIN, "https://localhost")
+    .status(StatusCode::NOT_FOUND)
+    .assert_body("API endpoint not found")
+    .send();
 }
 
 #[test]
@@ -1017,6 +1034,15 @@ fn cross_origin_request_rejected() {
   case(header::ORIGIN, "http://localhost:8000");
   case(header::ORIGIN, "null");
   case(header::ORIGIN, "foo");
+
+  TestServer::builder()
+    .scheme(Scheme::Https)
+    .build()
+    .post("/api/foo")
+    .header(header::ORIGIN, "http://localhost")
+    .status(StatusCode::FORBIDDEN)
+    .assert_body("cross-origin request forbidden")
+    .send();
 }
 
 #[test]
