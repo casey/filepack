@@ -15,7 +15,7 @@ has an internal tree structure.
 Many Filepack operations involve hashing potentially large files. The content of
 packages is hashed when packages are created, uploaded, downloaded, and
 verified. All these operations benefit from a fast hash function, and BLAKE3 is
-up to 14 times faster than SHA-256 when SHA-NI hardware acceleration is not
+up to 14 times faster than SHA-256 when SHA-256 hardware acceleration is not
 available, at least as fast when it is, and benefits from multiple cores when
 hashing large files..
 
@@ -62,8 +62,6 @@ bugs and complexity.
 Additionally, hash functions and signature schemes are rarely perfect
 substitutes. They have different properties, and characteristics of the system
 as a whole are determined by the properties of the parts.
-
-For these reasons, Filepack exclusively uses BLAKE3 and Ed25519.
 
 Although there are no specific provisions for algorithm agility, Filepack
 provides a multitude of schema evolution mechanisms for introducing both
