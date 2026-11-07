@@ -48,8 +48,8 @@ bytes. For example, the byte string containing 255 `0xab` bytes is encoded as
 `0xf001ababab…`.
 
 The shortest possible encoding for a given byte string must be used. For
-example, the byte string `0xab` must be encoded as `0xab` `0x81ab`, `0xf001ab`,
-or `0xf10100ab`.
+example, the byte string `0xab` must be encoded as `0xab` and not as `0x81ab`,
+`0xf001ab`, or `0xf10100ab`.
 
 Arrays
 ------
