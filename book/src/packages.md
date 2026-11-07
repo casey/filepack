@@ -164,7 +164,7 @@ domain separation by committing to the [application](deco/application.md) and
 
 To verify a signature, the statement is wrapped in an envelope, serialized,
 hashed, and the raw Ed25519 signature over the hash is verified against the
-public key. Public keys which are non-canonical or small order points are
+public key. Public keys which are non-canonical, small order, or mixed order are
 rejected.
 
 The fingerprint from the verified signature object can then be used to verify
@@ -204,7 +204,7 @@ verification errors if those fields are present and invalid according to the new
 schema.
 
 During verification, metadata is checked for consistency, which includes
-checking for references to missing files, as well duplicate media items.
+checking for references to missing files, as well as duplicate media items.
 
 Metadata allows for the attractive presentation of packages, including browsing,
 viewing, search, and conversion. See [filepack.com](https://filepack.com) for a
@@ -229,7 +229,7 @@ unforgable.
 Filepack packages may be verified against a manifest, fingerprint, or signature
 made by a trusted public key.
 
-Verification methods differs by what is trusted. Verification against a manifest
+Verification methods differ by what is trusted. Verification against a manifest
 or fingerprint is safe if the manifest or fingerprint has not been tampered
 with. Verification against a signature is safe if the private key corresponding
 to the signature public key has been stored securely.
