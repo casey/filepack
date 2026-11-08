@@ -94,19 +94,19 @@ impl<'a> FlacDecoder<'a> {
       .context(audio_error::FlacSampleCountUnknown)?;
 
     Ok(AudioMetadata {
-      album: decoder.text_tag("album")?,
-      artist: decoder.text_tag("artist")?,
+      album: decoder.text_tag("ALBUM")?,
+      artist: decoder.text_tag("ARTIST")?,
       channels: streaminfo.channels.into(),
       codec: AudioCodec::Flac,
-      disc: decoder.number_tag("discnumber")?,
-      discs: decoder.number_tag("disctotal")?,
+      disc: decoder.number_tag("DISCNUMBER")?,
+      discs: decoder.number_tag("DISCTOTAL")?,
       sample_bits: Some(streaminfo.bits_per_sample.into()),
       sample_rate: streaminfo.sample_rate.into(),
       samples,
       size: (data.len() - Self::frame_offset(data)?).into_u64(),
-      title: decoder.text_tag("title")?,
-      track: decoder.number_tag("tracknumber")?,
-      tracks: decoder.number_tag("tracktotal")?,
+      title: decoder.text_tag("TITLE")?,
+      track: decoder.number_tag("TRACKNUMBER")?,
+      tracks: decoder.number_tag("TRACKTOTAL")?,
     })
   }
 
@@ -248,12 +248,12 @@ mod tests {
 
     assert_matches!(
       err(FlacBuilder::new()),
-      AudioError::TagMissing { tag: "album" },
+      AudioError::TagMissing { tag: "ALBUM" },
     );
 
     assert_matches!(
       err(FlacBuilder::new().tag("ALBUM", "qux").tag("TITLE", "bar")),
-      AudioError::TagMissing { tag: "artist" },
+      AudioError::TagMissing { tag: "ARTIST" },
     );
 
     assert_matches!(
@@ -264,7 +264,7 @@ mod tests {
           .tag("DISCNUMBER", "1")
           .tag("DISCTOTAL", "1")
       ),
-      AudioError::TagMissing { tag: "title" },
+      AudioError::TagMissing { tag: "TITLE" },
     );
 
     assert_matches!(
@@ -275,7 +275,7 @@ mod tests {
           .tag("ARTIST", "baz")
           .tag("TITLE", "bar")
       ),
-      AudioError::TagMultiple { tag: "album" },
+      AudioError::TagMultiple { tag: "ALBUM" },
     );
 
     assert_matches!(
@@ -287,7 +287,7 @@ mod tests {
           .tag("DISCTOTAL", "1")
           .tag("TITLE", "")
       ),
-      AudioError::TagEmpty { tag: "title" },
+      AudioError::TagEmpty { tag: "TITLE" },
     );
 
     assert_matches!(
@@ -301,7 +301,7 @@ mod tests {
       ),
       AudioError::TagInvalid {
         source: TextError::Control { character: '\t' },
-        tag: "title",
+        tag: "TITLE",
       },
     );
 
@@ -314,7 +314,7 @@ mod tests {
           .tag("DISCTOTAL", "1")
           .tag("TITLE", "bar")
       ),
-      AudioError::TagMissing { tag: "tracknumber" },
+      AudioError::TagMissing { tag: "TRACKNUMBER" },
     );
 
     assert_matches!(
@@ -329,7 +329,7 @@ mod tests {
       ),
       AudioError::TagInteger {
         source: NumberError::Invalid { .. },
-        tag: "tracknumber",
+        tag: "TRACKNUMBER",
       },
     );
 
@@ -345,7 +345,7 @@ mod tests {
       ),
       AudioError::TagInteger {
         source: NumberError::Invalid { .. },
-        tag: "tracknumber",
+        tag: "TRACKNUMBER",
       },
     );
 
@@ -361,7 +361,7 @@ mod tests {
       ),
       AudioError::TagInteger {
         source: NumberError::Invalid { .. },
-        tag: "tracknumber",
+        tag: "TRACKNUMBER",
       },
     );
 
@@ -377,7 +377,7 @@ mod tests {
       ),
       AudioError::TagInteger {
         source: NumberError::Invalid { .. },
-        tag: "tracknumber",
+        tag: "TRACKNUMBER",
       },
     );
 
@@ -393,7 +393,7 @@ mod tests {
       ),
       AudioError::TagInteger {
         source: NumberError::Integer { .. },
-        tag: "tracknumber",
+        tag: "TRACKNUMBER",
       },
     );
 
@@ -452,5 +452,16 @@ mod tests {
         tracks: 4,
       },
     );
+  }
+
+  #[test]
+  fn tag_lookup_is_case_insensitive() {
+    let data = FlacBuilder::new().tag("title", "foo").build();
+
+    let decoder = FlacDecoder {
+      reader: FlacReader::new(data.as_slice()).unwrap(),
+    };
+
+    assert_eq!(decoder.tag("TITLE").unwrap(), "foo");
   }
 }

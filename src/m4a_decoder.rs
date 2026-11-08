@@ -3,12 +3,7 @@ use {
   mp4::{Fourcc, Ilst, Moov, Mp4, SampleEntry, Trak},
 };
 
-const ALBUM: Fourcc = Fourcc(*b"\xa9alb");
-const ARTIST: Fourcc = Fourcc(*b"\xa9ART");
 const COVER: Fourcc = Fourcc(*b"covr");
-const DISC: Fourcc = Fourcc(*b"disk");
-const TITLE: Fourcc = Fourcc(*b"\xa9nam");
-const TRACK: Fourcc = Fourcc(*b"trkn");
 
 #[derive(Clone, Debug, PartialEq)]
 struct AudioProperties {
@@ -63,12 +58,12 @@ impl M4aDecoder {
 
     let ilst = mp4.moov.ilst();
 
-    let album = Self::text_tag(ilst, ALBUM, "©alb")?;
-    let artist = Self::text_tag(ilst, ARTIST, "©ART")?;
-    let (disc, discs) = Self::pair_tag(ilst, DISC, "disk")?;
+    let album = Self::text_tag(ilst, "©alb")?;
+    let artist = Self::text_tag(ilst, "©ART")?;
+    let (disc, discs) = Self::pair_tag(ilst, "disk")?;
     let discs = discs.context(audio_error::DiscTotalMissing { tag: "disk" })?;
-    let title = Self::text_tag(ilst, TITLE, "©nam")?;
-    let (track, tracks) = Self::pair_tag(ilst, TRACK, "trkn")?;
+    let title = Self::text_tag(ilst, "©nam")?;
+    let (track, tracks) = Self::pair_tag(ilst, "trkn")?;
     let tracks = tracks.context(audio_error::TrackTotalMissing { tag: "trkn" })?;
 
     Ok(AudioMetadata {
@@ -88,11 +83,9 @@ impl M4aDecoder {
     })
   }
 
-  fn pair_tag(
-    ilst: Option<&Ilst>,
-    fourcc: Fourcc,
-    tag: &'static str,
-  ) -> Result<(u64, Option<u64>), AudioError> {
+  fn pair_tag(ilst: Option<&Ilst>, tag: &'static str) -> Result<(u64, Option<u64>), AudioError> {
+    let fourcc = Fourcc::new(tag);
+
     let mut data = ilst.into_iter().flat_map(|ilst| ilst.data(fourcc));
 
     let first = data.next().context(audio_error::TagMissing { tag })?;
@@ -134,10 +127,10 @@ impl M4aDecoder {
     Self::metadata(&data).context(error::Audio { path })
   }
 
-  fn text_tag(ilst: Option<&Ilst>, fourcc: Fourcc, tag: &'static str) -> Result<Text, AudioError> {
+  fn text_tag(ilst: Option<&Ilst>, tag: &'static str) -> Result<Text, AudioError> {
     let values = match ilst {
       Some(ilst) => ilst
-        .text(fourcc)
+        .text(Fourcc::new(tag))
         .map_err(M4aError::from)
         .context(audio_error::M4aDecode)?,
       None => Vec::new(),
