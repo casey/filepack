@@ -32,6 +32,7 @@ use {
     audio_format::AudioFormat,
     audio_metadata::AudioMetadata,
     audio_position_error::AudioPositionError,
+    audio_tags::AudioTags,
     authenticated::Authenticated,
     authorization_error::AuthorizationError,
     bit_reader::BitReader,
@@ -142,6 +143,7 @@ use {
     path_error::PathError,
     path_extractor::PathExtractor,
     percent_encode::PercentEncode,
+    position::Position,
     private_key_error::PrivateKeyError,
     progress_bar::ProgressBar,
     public_key_error::PublicKeyError,
@@ -342,6 +344,7 @@ mod audio_error;
 mod audio_format;
 mod audio_metadata;
 mod audio_position_error;
+mod audio_tags;
 mod authenticated;
 mod authorization_error;
 mod bit_reader;
@@ -478,6 +481,7 @@ mod path_error;
 mod path_extractor;
 mod percent_encode;
 mod png_builder;
+mod position;
 mod private_key;
 mod private_key_error;
 mod progress_bar;

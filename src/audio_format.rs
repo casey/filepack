@@ -18,6 +18,40 @@ pub(crate) enum AudioFormat {
   Mp4,
 }
 
+impl AudioFormat {
+  pub(crate) fn tags(self) -> AudioTags {
+    match self {
+      Self::Flac => AudioTags {
+        album: "ALBUM",
+        artist: "ARTIST",
+        disc: Position::Separate {
+          number: "DISCNUMBER",
+          total: "DISCTOTAL",
+        },
+        title: "TITLE",
+        track: Position::Separate {
+          number: "TRACKNUMBER",
+          total: "TRACKTOTAL",
+        },
+      },
+      Self::Mp3 => AudioTags {
+        album: "TALB",
+        artist: "TPE1",
+        disc: Position::Combined("TPOS"),
+        title: "TIT2",
+        track: Position::Combined("TRCK"),
+      },
+      Self::Mp4 => AudioTags {
+        album: "©alb",
+        artist: "©ART",
+        disc: Position::Combined("disk"),
+        title: "©nam",
+        track: Position::Combined("trkn"),
+      },
+    }
+  }
+}
+
 impl Format for AudioFormat {
   const EXTENSIONS: &[&str] = &["flac", "m4a", "mp3"];
 

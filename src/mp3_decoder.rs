@@ -150,13 +150,29 @@ impl<'a> Mp3Decoder<'a> {
   fn metadata(data: &[u8]) -> Result<AudioMetadata, AudioError> {
     let tag = Self::read_tag(data)?;
 
-    let album = Self::text_tag(&tag, "TALB")?;
-    let artist = Self::text_tag(&tag, "TPE1")?;
-    let (disc, discs) = Self::pair_tag(&tag, "TPOS")?;
-    let discs = discs.context(audio_error::DiscTotalMissing { tag: "TPOS" })?;
-    let title = Self::text_tag(&tag, "TIT2")?;
-    let (track, tracks) = Self::pair_tag(&tag, "TRCK")?;
-    let tracks = tracks.context(audio_error::TrackTotalMissing { tag: "TRCK" })?;
+    let AudioTags {
+      album,
+      artist,
+      disc,
+      title,
+      track,
+    } = AudioFormat::Mp3.tags();
+
+    let Position::Combined(disc_tag) = disc else {
+      unreachable!()
+    };
+
+    let Position::Combined(track_tag) = track else {
+      unreachable!()
+    };
+
+    let album = Self::text_tag(&tag, album)?;
+    let artist = Self::text_tag(&tag, artist)?;
+    let (disc, discs) = Self::pair_tag(&tag, disc_tag)?;
+    let discs = discs.context(audio_error::DiscTotalMissing { tag: disc_tag })?;
+    let title = Self::text_tag(&tag, title)?;
+    let (track, tracks) = Self::pair_tag(&tag, track_tag)?;
+    let tracks = tracks.context(audio_error::TrackTotalMissing { tag: track_tag })?;
 
     let mut cursor = io::Cursor::new(data);
 

@@ -850,7 +850,7 @@ fn create_rejects_flac_missing_track_total() {
     .stderr_regex(
       "
         error: invalid audio track `.*foo.flac`
-               └─ missing `tracktotal` tag
+               └─ missing `TRACKTOTAL` tag
       ",
     )
     .failure();

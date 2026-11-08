@@ -21,6 +21,7 @@ mod route;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Reference {
+  pub audio_tags: BTreeMap<String, BTreeMap<String, String>>,
   pub commands: Command,
   pub content_types: Vec<ContentType>,
   pub deco: deco::Registry,
@@ -41,6 +42,23 @@ pub struct Reference {
 
 impl Reference {
   pub fn new() -> Self {
+    fn audio_tags() -> BTreeMap<String, BTreeMap<String, String>> {
+      let mut tags = BTreeMap::<String, BTreeMap<String, String>>::new();
+
+      for extension in AudioFormat::EXTENSIONS {
+        let format = AudioFormat::from_extension(extension).unwrap();
+
+        for (field, tag) in format.tags().map() {
+          tags
+            .entry(field)
+            .or_default()
+            .insert(format.to_string(), tag);
+        }
+      }
+
+      tags
+    }
+
     fn descriptions<T: Json>() -> BTreeMap<String, String> {
       T::schema()
         .values()
@@ -155,6 +173,7 @@ impl Reference {
     }
 
     Self {
+      audio_tags: audio_tags(),
       commands,
       content_types: ResourceType::iter()
         .filter(|ty| !ty.extensions().is_empty())

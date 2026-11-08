@@ -265,6 +265,7 @@ fn main() {
   write(
     "media-formats.md",
     MediaFormatsMd {
+      audio_tags: &reference.audio_tags,
       media_formats: &reference.media_formats,
     },
   );

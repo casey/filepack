@@ -2,6 +2,17 @@ use super::*;
 
 pub(crate) struct Row<T>(pub(crate) T);
 
+impl<T> Row<Vec<T>> {
+  pub(crate) fn extend(mut self, values: impl Iterator<Item = T>) -> Self {
+    self.0.extend(values);
+    self
+  }
+
+  pub(crate) fn new(value: T) -> Self {
+    Self(vec![value])
+  }
+}
+
 impl<T> Row<T> {
   fn write(f: &mut Formatter, cells: &[&dyn Display]) -> fmt::Result {
     write!(f, "|")?;
@@ -11,6 +22,19 @@ impl<T> Row<T> {
     }
 
     Ok(())
+  }
+}
+
+impl<T: Display> Display for Row<Vec<T>> {
+  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    Self::write(
+      f,
+      &self
+        .0
+        .iter()
+        .map(|cell| cell as &dyn Display)
+        .collect::<Vec<&dyn Display>>(),
+    )
   }
 }
 

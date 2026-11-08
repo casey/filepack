@@ -90,6 +90,7 @@ pub(crate) struct LintsMd<'a> {
 
 #[derive(Boilerplate)]
 pub(crate) struct MediaFormatsMd<'a> {
+  pub(crate) audio_tags: &'a BTreeMap<String, BTreeMap<String, String>>,
   pub(crate) media_formats: &'a BTreeMap<MediaType, Vec<MediaFormat>>,
 }
 
