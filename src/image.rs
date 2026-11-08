@@ -211,6 +211,13 @@ impl Image {
       }
     }
 
+    for chunk in &info.compressed_latin1_text {
+      if chunk.keyword == "Title" {
+        ensure!(title.is_none(), error::ImageTitleMultiple { path });
+        title = Some(chunk.get_text().context(error::ImageDecodePng { path })?);
+      }
+    }
+
     for chunk in &info.utf8_text {
       if chunk.keyword == "Title" {
         ensure!(title.is_none(), error::ImageTitleMultiple { path });
@@ -697,7 +704,7 @@ mod tests {
 
     assert_eq!(
       title("foo.png", &PngBuilder::new().ztxt("Title", "bar").build()).unwrap(),
-      None,
+      Some("bar".parse().unwrap()),
     );
 
     assert_eq!(

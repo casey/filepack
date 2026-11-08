@@ -250,7 +250,7 @@ impl Mp4Decoder {
     let tag = "©nam";
 
     let titles = ilst
-      .text(Fourcc(*b"\xa9nam"))
+      .text(Fourcc::new(tag))
       .context(video_error::DecodeMp4)?;
 
     ensure!(titles.len() <= 1, video_error::TagMultiple { tag });
