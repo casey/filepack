@@ -43,6 +43,22 @@ impl Metadata {
     serde_yaml::from_str::<Self>(yaml).context(error::DeserializeMetadata { path })
   }
 
+  pub(crate) fn has_derivable_assets(&self) -> bool {
+    if self.artwork.is_some() {
+      return true;
+    }
+
+    let Some(media) = &self.media else {
+      return false;
+    };
+
+    match media {
+      Media::Image { items } => !items.is_empty(),
+      Media::Video { items } => items.iter().any(|item| item.placeholder.is_some()),
+      Media::Audio { .. } | Media::Web => false,
+    }
+  }
+
   pub(crate) fn load(self, root: &Utf8Path, quiet: bool) -> Result<crate::Metadata> {
     let Self {
       artwork,
@@ -337,6 +353,30 @@ mod tests {
       &filesystem::read_to_string(crate::Metadata::YAML_FILENAME).unwrap(),
     )
     .unwrap();
+  }
+
+  #[test]
+  fn has_derivable_assets() {
+    #[track_caller]
+    fn case(yaml: &str, expected: bool) {
+      assert_eq!(
+        Metadata::deserialize(crate::Metadata::YAML_FILENAME.as_ref(), yaml)
+          .unwrap()
+          .has_derivable_assets(),
+        expected,
+      );
+    }
+
+    case("title: foo", false);
+    case("artwork: foo.png", true);
+    case("media: {type: audio, items: [{path: foo.flac}]}", false);
+    case("media: {type: image, items: []}", false);
+    case("media: {type: image, items: [{path: foo.png}]}", true);
+    case("media: {type: video, items: [{path: foo.mp4}]}", false);
+    case(
+      "media: {type: video, items: [{path: foo.mp4, placeholder: bar.png}]}",
+      true,
+    );
   }
 
   fn image(width: u32, height: u32, image_format: ::image::ImageFormat) -> Vec<u8> {

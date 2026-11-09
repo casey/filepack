@@ -188,8 +188,8 @@ Since the package was already created in the previous step, `--force` is
 included to overwrite the old manifest.
 
 `filepack` will fail with a hopefully informative error message telling you what
-went wrong. Either fix the lint, or disable it by adding `--allow NAME` to the
-`filepack` invocation.
+went wrong, including the name of the lint in brackets. The lint can be fixed,
+or disabled by adding `--allow NAME` to the `filepack` invocation.
 
 Lints may not apply to your package at all. For example, the `media-missing`
 lint complains if your package does not have `media` metadata. However, your

@@ -41,26 +41,25 @@ impl Linter {
   }
 
   pub(crate) fn error(&mut self, lint: LintError) {
-    eprintln!("error: {lint}");
-    self.errors += 1;
+    self.error_paths(lint, &[]);
   }
 
   pub(crate) fn error_path(&mut self, lint: LintError, path: &RelativePath) {
-    eprintln!("error: path failed lint: `{path}`");
-    eprintln!("       └─ {lint}");
-    self.errors += 1;
+    self.error_paths(lint, slice::from_ref(path));
   }
 
-  pub(crate) fn error_paths(&mut self, lint: LintError, originals: &[RelativePath]) {
-    eprintln!("error: {lint}");
-    for (i, original) in originals.iter().enumerate() {
+  pub(crate) fn error_paths(&mut self, lint: LintError, paths: &[RelativePath]) {
+    let style = Style::stderr();
+    eprintln!(
+      "{}: {} {}",
+      "error".style(style.error()),
+      lint.style(style.message()),
+      format_args!("[{}]", Lint::from(&lint)).style(style.lint()),
+    );
+    for (i, path) in paths.iter().enumerate() {
       eprintln!(
-        "       {}─ `{original}`",
-        if i < originals.len() - 1 {
-          '├'
-        } else {
-          '└'
-        }
+        "       {}─ `{path}`",
+        if i < paths.len() - 1 { '├' } else { '└' }
       );
     }
     self.errors += 1;
@@ -132,7 +131,7 @@ impl Linter {
       }
     }
 
-    if self.is_active(Lint::VideoPlaceholderDimensions)
+    if self.is_active(Lint::VideoPlaceholderDimensionMismatch)
       && let Some(Media::Video { items }) = &metadata.media
     {
       for item in items {
@@ -142,7 +141,7 @@ impl Linter {
           && placeholder != video
         {
           self.error_path(
-            LintError::VideoPlaceholderDimensions { placeholder, video },
+            LintError::VideoPlaceholderDimensionMismatch { placeholder, video },
             item.path(),
           );
         }
@@ -234,8 +233,11 @@ impl Linter {
       self.error(LintError::ArtworkMissing);
     }
 
-    if self.is_active(Lint::NotGenerated) && !generate && metadata.is_some() {
-      self.error(LintError::NotGenerated);
+    if self.is_active(Lint::DerivedAssetsMissing)
+      && !generate
+      && metadata.is_some_and(yaml::Metadata::has_derivable_assets)
+    {
+      self.error(LintError::DerivedAssetsMissing);
     }
 
     if self.is_active(Lint::VideoPlaceholderMissing)

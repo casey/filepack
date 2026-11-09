@@ -35,6 +35,9 @@ pub(crate) enum LintError {
   /// Metadata has a creator.
   #[snafu(display("metadata missing creator"))]
   CreatorMissing,
+  /// Derived assets have been generated.
+  #[snafu(display("derived assets not generated, pass `--generate`"))]
+  DerivedAssetsMissing,
   /// Media items have titles.
   #[snafu(display("media item missing title"))]
   ItemTitleMissing,
@@ -53,9 +56,6 @@ pub(crate) enum LintError {
   /// Media items have the same format.
   #[snafu(display("media items have mixed formats: {}", formats.join(", ")))]
   MixedFormats { formats: Vec<String> },
-  /// Derived assets have been generated.
-  #[snafu(display("derived assets not generated, pass `--generate`"))]
-  NotGenerated,
   /// Package metadata has a creator.
   #[snafu(display("metadata package missing creator"))]
   PackageCreatorMissing,
@@ -64,7 +64,7 @@ pub(crate) enum LintError {
   PackageMissing,
   /// Path components are at most 255 bytes.
   #[snafu(display("path component longer than 255 bytes"))]
-  PathComponentLength,
+  PathComponentTooLong,
   /// Metadata has a time.
   #[snafu(display("metadata missing time"))]
   TimeMissing,
@@ -73,7 +73,7 @@ pub(crate) enum LintError {
   TitleMissing,
   /// Placeholder images have the same resolution as their videos.
   #[snafu(display("placeholder image is {placeholder} but video is {video}"))]
-  VideoPlaceholderDimensions {
+  VideoPlaceholderDimensionMismatch {
     placeholder: Dimensions,
     video: Dimensions,
   },

@@ -238,7 +238,7 @@ use {
     ops::{Bound, Deref},
     path::{Path, PathBuf},
     process::{self, ExitCode},
-    ptr,
+    ptr, slice,
     str::{self, FromStr, Utf8Error},
     sync::{
       Arc, LazyLock,
