@@ -1,6 +1,21 @@
 Why?
 ====
 
+Filepack is motivated by a desire to improve the user experience of
+decentralized filesharing. Filesharing suffers from a lack of standardized
+metadata, which in turn leads to bad, fractured user experiences that are
+uncompetitive with centralized alternatives.
+
+Filepack aims to solve this by providing a shared data model, content-addressed
+packages with standardized metadata, that can be used as a lingua franca by all
+kinds of filesharing systems and applications. Packages can be used
+independently of any network, and package metadata is ideal for consumption by
+applications to provide rich user experiences on top of packaged content.
+
+Filepack does not have a native peer-to-peer network, but it is designed to
+support one, and is compatible with any system that uses BLAKE3 for addressing
+and retrieval.
+
 Why is metadata important?
 --------------------------
 
@@ -20,7 +35,8 @@ unstructured, and recommendations are unavailable. It is only usable by a small
 and decreasing percentage of the population, and asking someone over to
 "BitTorrent and chill" will be met by blinking incomprehension, followed by
 derision as you struggle with your torrent client like a digital steam engine
-operator, desperately trying to find seeds for the movie you want to watch.
+operator, desperately trying to find subtitles for obscure French art film you
+want to watch.
 
 The difference between the two systems is not due to a difference in underlying
 data, every piece of content one could possibly imagine is available on
