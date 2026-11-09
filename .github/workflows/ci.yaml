@@ -40,7 +40,7 @@ jobs:
 
     - name: Install rumdl
       run: |
-        curl --fail --location --silent --show-error \
+        curl --fail --location --retry 5 --silent --show-error \
           https://github.com/rvben/rumdl/releases/download/v0.3.0/rumdl-v0.3.0-x86_64-unknown-linux-gnu.tar.gz \
           | tar --extract --gzip --directory /usr/local/bin
 
@@ -65,7 +65,7 @@ jobs:
 
     - name: Install mdBook
       run: |
-        curl --fail --location --silent --show-error \
+        curl --fail --location --retry 5 --silent --show-error \
           https://github.com/rust-lang/mdBook/releases/download/v0.5.4/mdbook-v0.5.4-x86_64-unknown-linux-gnu.tar.gz \
           | tar --extract --gzip --directory /usr/local/bin
 
