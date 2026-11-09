@@ -6,7 +6,7 @@ use {
     row::Row,
     templates::{
       ApiMd, CommandMd, CommandsMd, ContentTypesMd, DecoMd, DecoSchemaMd, HexMd, JsonMd,
-      JsonSchemaMd, LanguagesMd, LintsMd, MediaFormatsMd, MetadataMd, RouteMd, SummaryMd, TagMd,
+      JsonSchemaMd, LanguagesMd, LintsMd, MediaMd, MetadataMd, RouteMd, SummaryMd, TagMd,
       UnstableFeaturesMd, WebMd, YamlMd,
     },
   },
@@ -21,7 +21,7 @@ use {
   },
   heck::ToKebabCase,
   std::{
-    collections::BTreeMap,
+    collections::{BTreeMap, BTreeSet},
     env,
     fmt::{self, Display, Formatter},
     fs, iter,
@@ -263,9 +263,10 @@ fn main() {
   );
 
   write(
-    "media-formats.md",
-    MediaFormatsMd {
+    "media.md",
+    MediaMd {
       media_formats: &reference.media_formats,
+      media_types: &reference.media_types,
     },
   );
 
