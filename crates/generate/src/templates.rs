@@ -50,6 +50,11 @@ pub(crate) struct DecoSchemaMd<'a> {
 }
 
 #[derive(Boilerplate)]
+pub(crate) struct FormatsMd<'a> {
+  pub(crate) formats: &'a [MediaFormat],
+}
+
+#[derive(Boilerplate)]
 pub(crate) struct HexMd<'a> {
   pub(crate) hex: &'a BTreeMap<Tag, Hex>,
 }
@@ -89,8 +94,9 @@ pub(crate) struct LintsMd<'a> {
 }
 
 #[derive(Boilerplate)]
-pub(crate) struct MediaFormatsMd<'a> {
+pub(crate) struct MediaMd<'a> {
   pub(crate) media_formats: &'a BTreeMap<MediaType, Vec<MediaFormat>>,
+  pub(crate) media_types: &'a BTreeSet<MediaType>,
 }
 
 #[derive(Boilerplate)]

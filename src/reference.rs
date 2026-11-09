@@ -31,6 +31,7 @@ pub struct Reference {
   pub lint_groups: BTreeMap<crate::LintGroup, LintGroup>,
   pub lints: BTreeMap<Lint, String>,
   pub media_formats: BTreeMap<MediaType, Vec<MediaFormat>>,
+  pub media_types: BTreeSet<MediaType>,
   pub metadata: yaml::Example,
   pub routes: BTreeMap<String, Route>,
   pub unstable_features: BTreeMap<UnstableFeature, String>,
@@ -199,6 +200,7 @@ impl Reference {
         (MediaType::Video, media_formats::<VideoFormat>()),
       ]
       .into(),
+      media_types: MediaType::iter().collect(),
       metadata,
       routes,
       unstable_features: UnstableFeature::iter()

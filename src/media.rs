@@ -7,7 +7,7 @@ use super::*;
 #[serde(rename_all = "snake_case", tag = "type")]
 #[strum(serialize_all = "kebab-case")]
 #[strum_discriminants(
-  derive(Deserialize, Display, Ord, PartialOrd, Serialize),
+  derive(Deserialize, Display, EnumIter, Ord, PartialOrd, Serialize),
   name(MediaType),
   serde(rename_all = "kebab-case"),
   strum(serialize_all = "kebab-case"),

@@ -36,7 +36,7 @@ Summary
 %% }
 - [Languages](languages.md)
 - [Lints](lints.md)
-- [Media Formats](media-formats.md)
+- [Media](media.md)
 - [Metadata](metadata.md)
 - [Tagged Hex](hex.md)
 %% for (tag, path) in &self.hex {
