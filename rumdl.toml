@@ -1,5 +1,6 @@
 [global]
 disable = [
+  "blanks-around-lists",
   "existing-relative-links",
   "fenced-code-language",
   "first-line-heading",
@@ -27,9 +28,6 @@ style = "---"
 code-blocks = false
 reflow = true
 reflow-mode = "normalize"
-
-[list-item-spacing]
-style = "loose"
 
 [ol-prefix]
 style = "ordered"
