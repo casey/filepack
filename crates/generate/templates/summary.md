@@ -9,11 +9,13 @@ Summary
 - [Usage](usage.md)
 
 # Guide
-- [Why?](why.md)
 - [Packaging](packaging.md)
-- [Packages](packages.md)
 - [Configuration](configuration.md)
 - [Server](server.md)
+
+# Background
+- [Why?](why.md)
+- [Packages](packages.md)
 - [Design](design.md)
 - [Comparisons](comparisons.md)
 
