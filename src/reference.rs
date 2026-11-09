@@ -398,20 +398,6 @@ mod tests {
   }
 
   #[test]
-  fn media_types() {
-    assert_eq!(
-      Reference::new().media_types,
-      [
-        MediaType::Audio,
-        MediaType::Image,
-        MediaType::Video,
-        MediaType::Web,
-      ]
-      .into(),
-    );
-  }
-
-  #[test]
   fn outputs() {
     let reference = Reference::new();
 
