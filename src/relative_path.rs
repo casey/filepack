@@ -64,8 +64,8 @@ impl RelativePath {
         );
       };
 
-      if lints.contains(&Lint::PathComponentLength) && component.len() > 255 {
-        return Some(LintError::PathComponentLength);
+      if lints.contains(&Lint::PathComponentTooLong) && component.len() > 255 {
+        return Some(LintError::PathComponentTooLong);
       }
 
       if lints.contains(&Lint::WindowsReservedCharacter) {
@@ -369,7 +369,7 @@ mod tests {
 
     case("foo/ bar", LintError::WindowsLeadingSpace);
 
-    case(&"a".repeat(256), LintError::PathComponentLength);
+    case(&"a".repeat(256), LintError::PathComponentTooLong);
 
     case(
       "CON",
