@@ -300,10 +300,10 @@ fn deny_derived_assets_missing() {
   Test::new()
     .write("foo.png", PngBuilder::new().build())
     .write("metadata.yaml", "artwork: foo.png")
-    .args(["create", "--deny", "derived-assets-missing"])
+    .args(["create", "--deny", "derived-assets-missing", "--no-generate"])
     .stderr(
       "
-        error: derived assets not generated, pass `--generate` [derived-assets-missing]
+        error: derived assets not generated because `--no-generate` was passed [derived-assets-missing]
         error: 1 lint error
       ",
     )
@@ -314,14 +314,24 @@ fn deny_derived_assets_missing() {
 fn deny_derived_assets_missing_ignores_metadata_without_assets() {
   Test::new()
     .write("metadata.yaml", "title: foo")
-    .args(["create", "--deny", "derived-assets-missing"])
+    .args([
+      "create",
+      "--deny",
+      "derived-assets-missing",
+      "--no-generate",
+    ])
     .success();
 }
 
 #[test]
 fn deny_derived_assets_missing_ignores_missing_metadata() {
   Test::new()
-    .args(["create", "--deny", "derived-assets-missing"])
+    .args([
+      "create",
+      "--deny",
+      "derived-assets-missing",
+      "--no-generate",
+    ])
     .success();
 }
 
@@ -682,14 +692,7 @@ fn yaml_lints_fail_before_load() {
     .touch(".DS_Store")
     .write("foo.png", PngBuilder::new().build())
     .write("metadata.yaml", "artwork: foo.png")
-    .args([
-      "create",
-      "--generate",
-      "--deny",
-      "title-missing",
-      "--deny",
-      "junk",
-    ])
+    .args(["create", "--deny", "title-missing", "--deny", "junk"])
     .stderr(
       "
         error: metadata missing title [title-missing]

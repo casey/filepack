@@ -490,7 +490,7 @@ fn create_extracts_video_metadata() {
 }
 
 #[test]
-fn create_generate_force_overwrites_thumbnails() {
+fn create_force_overwrites_thumbnails() {
   Test::new()
     .write("foo.jpg", image(1280, 640, ImageFormat::Jpeg))
     .write(
@@ -503,30 +503,11 @@ fn create_generate_force_overwrites_thumbnails() {
       ",
     )
     .write("thumbnails/foo.jpg", "bar")
-    .args(["create", "--generate", "--force"])
+    .args(["create", "--force"])
     .success()
     .arg("verify")
     .stderr_regex("successfully verified .*")
     .success();
-}
-
-#[test]
-fn create_generate_rejects_existing_thumbnails() {
-  Test::new()
-    .write("foo.jpg", image(2, 1, ImageFormat::Jpeg))
-    .write(
-      "metadata.yaml",
-      "
-        media:
-          type: image
-          items:
-            - path: foo.jpg
-      ",
-    )
-    .write("thumbnails/foo.jpg", "bar")
-    .args(["create", "--generate"])
-    .stderr_path("error: thumbnail for `foo.jpg` conflicts with `thumbnails/foo.jpg`\n")
-    .failure();
 }
 
 #[test]
@@ -544,7 +525,7 @@ fn create_generates_thumbnails() {
             - path: bar/baz.png
       ",
     )
-    .args(["create", "--generate"])
+    .args(["create"])
     .success()
     .arg("metadata")
     .stdout(
@@ -710,6 +691,17 @@ fn create_loads_video_placeholder() {
 }
 
 #[test]
+fn create_no_generate_skips_thumbnails() {
+  let test = Test::new()
+    .write("foo.jpg", image(1, 1, ImageFormat::Jpeg))
+    .write("metadata.yaml", "artwork: foo.jpg")
+    .args(["create", "--no-generate"])
+    .success();
+
+  assert!(!test.path().join("thumbnails").exists());
+}
+
+#[test]
 fn create_rejects_audio_metadata() {
   #[track_caller]
   fn case(metadata: &str, expected: &str) {
@@ -733,7 +725,7 @@ fn create_rejects_audio_metadata() {
           "{metadata}\nartwork: cover.png\nmedia:\n  type: audio\n  items:\n    - path: foo.flac\n"
         ),
       )
-      .args(["create", "--generate"])
+      .args(["create"])
       .assert_file_count(".", 3)
       .stderr(expected)
       .failure();
@@ -757,6 +749,25 @@ fn create_rejects_audio_metadata() {
     "creator: baz\ntitle: QUX",
     "error: track `foo.flac` album tag `qux` does not match metadata title `QUX`\n",
   );
+}
+
+#[test]
+fn create_rejects_existing_thumbnails() {
+  Test::new()
+    .write("foo.jpg", image(2, 1, ImageFormat::Jpeg))
+    .write(
+      "metadata.yaml",
+      "
+        media:
+          type: image
+          items:
+            - path: foo.jpg
+      ",
+    )
+    .write("thumbnails/foo.jpg", "bar")
+    .args(["create"])
+    .stderr_path("error: thumbnail for `foo.jpg` conflicts with `thumbnails/foo.jpg`\n")
+    .failure();
 }
 
 #[test]
