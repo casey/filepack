@@ -141,10 +141,11 @@ milliseconds from `input.mp4` and write it to `input.jpg`:
 ffmpeg -ss 00:12:34.467 -i input.mp4 -frames:video 1 input.jpg
 ```
 
-Image assets should use their original and highest quality. Using the
-`--generate` flag with `filepack create` automatically generates thumbnail
-images, which are used in the server frontend whenever the full resolution of an
-image is not needed.
+Image assets should use their original and highest quality. When packages are
+created, unless `--no-generate` is passed, thumbnails generated for all image
+assets. Thumbnails are used by the server for efficiency when the full
+resolution of the original image is unnecessary. Thumbnails that are larger than
+the original image are omitted.
 
 Creation
 --------
@@ -195,19 +196,6 @@ Lints may not apply to your package at all. For example, the `media-missing`
 lint complains if your package does not have `media` metadata. However, your
 package may not contain media, or may contain an unsupported media type, in
 which case there is no sensible way to satisfy the lint.
-
-Generated Assets
-----------------
-
-Update the package, this time with the `--generate` flag:
-
-```sh
-filepack create --force --generate
-```
-
-This generates thumbnails for all images in the package. Thumbnails are used by
-the server for efficiency when the full resolution of the original image is
-unnecessary. Thumbnails that are larger than the original image are omitted.
 
 Fingerprint
 -----------
@@ -286,7 +274,7 @@ Regenerate
 Regenerate the package after any changes and with all options above:
 
 ```sh
-filepack create --deny all --force --generate --sign
+filepack create --deny all --force --sign
 ```
 
 Add `--allow NAME` with any lints you are disabling, and omit `--sign` if you

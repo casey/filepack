@@ -36,7 +36,7 @@ pub(crate) enum LintError {
   #[snafu(display("metadata missing creator"))]
   CreatorMissing,
   /// Derived assets have been generated.
-  #[snafu(display("derived assets not generated, pass `--generate`"))]
+  #[snafu(display("derived assets not generated because `--no-generate` was passed"))]
   DerivedAssetsMissing,
   /// Media items have titles.
   #[snafu(display("media item missing title"))]

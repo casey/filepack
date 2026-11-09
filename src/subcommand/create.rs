@@ -21,8 +21,6 @@ pub(crate) struct Create {
     long
   )]
   force: bool,
-  #[arg(help = "Generate derived assets", long)]
-  generate: bool,
   #[arg(help = "Ignore <PATH>", long, value_name = "PATH")]
   ignore: Vec<RelativePath>,
   #[arg(default_value_t = KeyName::DEFAULT, help = "Sign with <KEY>", long, requires = "sign")]
@@ -33,6 +31,8 @@ pub(crate) struct Create {
     value_hint = ValueHint::FilePath
   )]
   manifest: Option<Utf8PathBuf>,
+  #[arg(help = "Don't generate derived assets", long)]
+  no_generate: bool,
   #[arg(
     help = "Create manifest for files in <ROOT> directory, defaults to current directory",
     value_hint = ValueHint::DirPath
@@ -113,14 +113,14 @@ impl Create {
 
     linter.allow(&self.allow);
 
-    linter.lint_metadata(metadata.as_ref(), self.generate);
+    linter.lint_metadata(metadata.as_ref(), !self.no_generate);
 
     linter.check()?;
 
     let metadata = if let Some(metadata) = metadata {
       let mut metadata = metadata.load(&root, options.quiet)?;
 
-      if self.generate {
+      if !self.no_generate {
         metadata.generate(&root, self.force, options.quiet)?;
       }
 
