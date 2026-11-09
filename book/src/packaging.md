@@ -103,9 +103,9 @@ such as resolution, sample rate, and codec.
 
 Packages with `media` set may not have files that are not listed in the
 metadata. Such files are effectively invisible, as apps like the Filepack server
-have no useful way of surfacing them in the interface. Please [open an
-issue](https://github.com/casey/filepack/issues/new) if you run into this
-limitation, to discuss your use case and ways that it can be supported.
+have no useful way of surfacing them in the interface. Please
+[open an issue](https://github.com/casey/filepack/issues/new) if you run into
+this limitation, to discuss your use case and ways that it can be supported.
 
 Tagging
 -------
