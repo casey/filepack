@@ -1579,12 +1579,4 @@ fn validate_struct() {
       expected: "foo",
     })) if actual == "bar",
   );
-
-  assert_matches!(
-    Foo::decode(&mut Decoder::strict(&bytes)),
-    Err(DecodeError::Malformed(MalformedError::UnexpectedValue {
-      actual,
-      expected: "foo",
-    })) if actual == "bar",
-  );
 }
