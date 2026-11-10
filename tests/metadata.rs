@@ -1219,17 +1219,6 @@ fn metadata_subcommand_format_json() {
 }
 
 #[test]
-fn metadata_subcommand_format_tsv_error() {
-  Test::new()
-    .write("metadata.yaml", "title: Foo")
-    .arg("create")
-    .success()
-    .args(["metadata", "--format", "tsv"])
-    .stderr("error: metadata cannot be formatted as TSV\n")
-    .failure();
-}
-
-#[test]
 fn metadata_subcommand_path_is_directory() {
   Test::new()
     .write("pkg/metadata.yaml", "title: Foo")

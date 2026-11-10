@@ -73,16 +73,6 @@ fn json_pretty_format() {
 }
 
 #[test]
-fn tsv_error() {
-  Test::new()
-    .arg("create")
-    .success()
-    .args(["manifest", "--format", "tsv"])
-    .stderr("error: manifest cannot be formatted as TSV\n")
-    .failure();
-}
-
-#[test]
 fn unknown_signatures_error() {
   let test = Test::new()
     .arg("keygen")

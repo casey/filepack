@@ -2,8 +2,8 @@ use super::*;
 
 #[derive(Parser)]
 pub(crate) struct Metadata {
-  #[arg(long = "format", default_value_t)]
-  format: OutputFormat,
+  #[arg(long = "format", default_value_t, help = FORMAT_HELP)]
+  format: OutputFormatJson,
   #[arg(
     help = "Load deco metadata from <PATH>. May be path to metadata, to directory containing \
             metadata named `metadata.filemeta`, or omitted, in which case metadata named \
@@ -35,9 +35,10 @@ impl Metadata {
     let metadata = Output::decode_from_slice(&bytes).context(error::DecodeMetadataDeco { path })?;
 
     match self.format {
-      OutputFormat::Json => println!("{}", serde_json::to_string(&metadata).unwrap()),
-      OutputFormat::JsonPretty => println!("{}", serde_json::to_string_pretty(&metadata).unwrap()),
-      OutputFormat::Tsv => return Err(error::MetadataTsv.build()),
+      OutputFormatJson::Json => println!("{}", serde_json::to_string(&metadata).unwrap()),
+      OutputFormatJson::JsonPretty => {
+        println!("{}", serde_json::to_string_pretty(&metadata).unwrap());
+      }
     }
 
     Ok(())
