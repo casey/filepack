@@ -80,14 +80,6 @@ tmp:
   rm -rf tmp
   mkdir tmp
 
-example: tmp
-  cp README.md tmp
-  mkdir tmp/src
-  cp src/main.rs tmp/src
-  cargo run create tmp
-  cargo run sign --time tmp
-  cat tmp/manifest.filepack | jq | pbcopy
-
 publish: tmp
   #!/usr/bin/env bash
   set -euxo pipefail
@@ -126,33 +118,6 @@ test-progress-bar: tmp
   done
   cargo run --release create tmp
   rm tmp/data*
-
-sign-release: tmp
-  #!/usr/bin/env bash
-  set -euxo pipefail
-  VERSION=`bin/version`
-  gh release download \
-    --repo casey/filepack \
-    --pattern manifest.filepack \
-    --dir tmp \
-    $VERSION
-  cargo run sign tmp/manifest.filepack
-  gh release upload \
-    --clobber \
-    --repo casey/filepack \
-    $VERSION \
-    tmp/manifest.filepack
-
-verify-release: tmp
-  #!/usr/bin/env bash
-  set -euxo pipefail
-  VERSION=`bin/version`
-  gh release download \
-    --repo casey/filepack \
-    --pattern '*' \
-    --dir tmp \
-    $VERSION
-  cargo run verify tmp --key 3c977ea3a31cd37f0b540f02f33eab158f2ed7449f42b05613c921181aa95b79
 
 profile:
   cargo flamegraph --test integration --profile dev
