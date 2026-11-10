@@ -27,4 +27,4 @@ On Linux, when run as a systemd service, logs are written to the systemd journal
 instead of standard error.
 
 Log levels, in increasing verbosity, are `off`, `error`, `warn`, `info`,
-`debug`, and `trace`:
+`debug`, and `trace`.
