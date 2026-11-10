@@ -134,6 +134,7 @@ use {
     ordinal::Ordinal,
     orientation::Orientation,
     output_format::OutputFormat,
+    output_format_json::OutputFormatJson,
     owo_colorize_ext::OwoColorizeExt,
     package_identifier_error::PackageIdentifierError,
     package_metadata::PackageMetadata,
@@ -467,6 +468,7 @@ mod order;
 mod ordinal;
 mod orientation;
 mod output_format;
+mod output_format_json;
 mod owo_colorize_ext;
 mod package_identifier;
 mod package_identifier_error;

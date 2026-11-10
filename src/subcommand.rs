@@ -33,6 +33,8 @@ mod size;
 mod upload;
 mod verify;
 
+const FORMAT_HELP: &str = "Print output with <FORMAT>";
+
 const MANIFEST_PATH_HELP: &str = "\
   Load manifest from <PATH>. May be path to manifest, to directory containing manifest named \
   `manifest.filepack`, or omitted, in which case manifest named `manifest.filepack` in the current \
