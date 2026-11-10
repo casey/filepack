@@ -47,7 +47,7 @@ impl Tag {
     }
   }
 
-  pub fn prefix(self) -> String {
+  pub(crate) fn prefix(self) -> String {
     format!("{}1", self.tag())
   }
 
