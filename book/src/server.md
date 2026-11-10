@@ -197,7 +197,7 @@ unless they are reachable from another head.
 A previously uploaded package with `NUMBER` can be replaced with:
 
 ```sh
-filepack upload --replace <NUMBER>
+filepack upload --server <SERVER> --replace <NUMBER>
 ```
 
 ### Package Update
@@ -206,7 +206,7 @@ A package number may be updated to point at a new revision whose parent is the
 current head for that number with:
 
 ```sh
-filepack upload --update <NUMBER>
+filepack upload --server <SERVER> --update <NUMBER>
 ```
 
 Or just `filepack upload`, if `.filepack/state.json` has an entry for the

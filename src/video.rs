@@ -14,7 +14,7 @@ pub(crate) struct Video {
   /// Path to the video file.
   #[n(3)]
   pub(crate) path: RelativePath,
-  /// Placeholder image. Must have the same resolution as the video file.
+  /// Placeholder image. Should have the same resolution as the video file.
   #[n(4)]
   pub(crate) placeholder: Option<Image>,
   /// Metadata describing the tracks of the video.

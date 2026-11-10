@@ -124,8 +124,8 @@ Assets
 Packages may include assets, such as package artwork or video placeholder
 images.
 
-The `artwork` field contains the filename of the package artwork. It should be
-an image whose width and height are equal.
+The `artwork` field contains the filename of the package artwork. It must be an
+image whose width and height are equal.
 
 The `placeholder` field of video media items contains the filename of a
 placeholder image. It is used as the preview image on `/package` for that video,
@@ -144,8 +144,8 @@ ffmpeg -ss 00:12:34.467 -i input.mp4 -frames:video 1 input.jpg
 Image assets should use their original and highest quality. When packages are
 created, unless `--no-generate` is passed, thumbnails generated for all image
 assets. Thumbnails are used by the server for efficiency when the full
-resolution of the original image is unnecessary. Thumbnails that are larger than
-the original image are omitted.
+resolution of the original image is unnecessary. Thumbnails whose file size is
+larger than the original image are omitted.
 
 Creation
 --------

@@ -328,7 +328,7 @@ pub(crate) async fn files(
   })
 }
 
-/// Display all packages.
+/// Display the homepage.
 #[route(GET, "/")]
 pub(crate) async fn home(
   server: ServerExtension,

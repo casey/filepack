@@ -19,7 +19,7 @@ use super::*;
 #[serde(rename_all = "kebab-case")]
 #[strum(serialize_all = "kebab-case")]
 pub enum UnstableFeature {
-  /// Packages with `media: web` metadata.
+  /// Packages with media type `web`.
   WebPackages,
 }
 

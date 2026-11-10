@@ -45,7 +45,7 @@ bytes, are encoded as a head byte equal to `0xef` plus the number of bytes
 needed to encode the length, followed by that many length bytes encoded as a
 little endian integer with trailing zero bytes removed, followed by that many
 bytes. For example, the byte string containing 255 `0xab` bytes is encoded as
-`0xf001ababab…`.
+`0xf0ffababab…`.
 
 The shortest possible encoding for a given byte string must be used. For
 example, the byte string `0xab` must be encoded as `0xab` and not as `0x81ab`,

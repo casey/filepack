@@ -1,6 +1,6 @@
 use super::*;
 
-/// Ed25519 signature over an enveloped message.
+/// Ed25519 signature over the hash of an enveloped message.
 #[expect(clippy::arbitrary_source_item_ordering)]
 #[derive(
   Debug, Decode, Encode, DeserializeFromStr, Eq, Ord, PartialEq, PartialOrd, SerializeDisplay,
@@ -13,7 +13,7 @@ pub struct Signature<T> {
   /// Signed message.
   #[n(2)]
   message: T,
-  /// Ed25519 signature over the enveloped message.
+  /// Ed25519 signature.
   #[n(3)]
   signature: Ed25519Signature,
 }
@@ -73,7 +73,7 @@ impl<T: Message> Hex for Signature<T> {
 impl<T: Message> json::Json for Signature<T> {
   fn json_schema(registry: &mut json::Registry) -> String {
     json::Schema::Hex {
-      description: "Ed25519 signature over an enveloped message.".into(),
+      description: "Ed25519 signature over the hash of an enveloped message.".into(),
       tag: T::TAG,
     }
     .register(&format!("Signature<{}>", T::NAME), registry)
