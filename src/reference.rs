@@ -440,7 +440,7 @@ mod tests {
   fn unstable_features() {
     assert_eq!(
       Reference::new().unstable_features[&UnstableFeature::WebPackages],
-      "Packages with `media: web` metadata.",
+      "Packages with media type `web`.",
     );
   }
 }
