@@ -1,6 +1,6 @@
 [package]
 name = "filepack-derive"
-version = "0.0.2"
+version = "0.0.1"
 autotests = false
 description = "encode and decode derive macros for filepack"
 
