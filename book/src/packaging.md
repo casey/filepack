@@ -160,6 +160,12 @@ This writes file and directory hashes to the package manifest in
 `manifest.filepack`, and is the only required step for creating a package.
 However, keep reading for more options to use with `filepack create`.
 
+Use `--ignore` to omit files and directories from the package:
+
+```sh
+filepack create --ignore .git
+```
+
 Lints
 -----
 
@@ -235,6 +241,9 @@ public key was derived.
 If you keep your private key secure, you can create and sign packages and anyone
 with your public key can verify that the package was created by you, even if
 they get the package from an untrusted third party.
+
+Please note that the Filepack server does not yet support uploading or
+downloading signatures.
 
 Generate a private key and public key, also called a key pair, named
 `master.private` and `master.public`:
