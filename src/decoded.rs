@@ -7,7 +7,7 @@ pub enum Decoded<T> {
 }
 
 impl<T> Decoded<T> {
-  pub fn is_unknown(&self) -> bool {
+  pub(crate) fn is_unknown(&self) -> bool {
     self.known().is_none()
   }
 
