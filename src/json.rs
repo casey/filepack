@@ -3,13 +3,13 @@ use super::*;
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct Field {
   pub description: String,
-  pub example: Option<String>,
+  pub(crate) example: Option<String>,
   pub name: String,
   pub optional: bool,
   pub schema: String,
 }
 
-#[derive(Debug, Default, Deserialize, Serialize)]
+#[derive(Default, Deserialize, Serialize)]
 #[serde(transparent)]
 pub struct Registry {
   #[serde(skip)]
@@ -18,11 +18,11 @@ pub struct Registry {
 }
 
 impl Registry {
-  pub fn new() -> Self {
+  pub(crate) fn new() -> Self {
     Self::default()
   }
 
-  pub fn reserve(&mut self, name: &str) -> bool {
+  pub(crate) fn reserve(&mut self, name: &str) -> bool {
     !self.pending.insert(name.into())
   }
 }
@@ -115,7 +115,7 @@ impl Schema {
     }
   }
 
-  pub fn register(self, name: &str, registry: &mut Registry) -> String {
+  pub(crate) fn register(self, name: &str, registry: &mut Registry) -> String {
     if let Some(existing) = registry.schemas.get(name) {
       assert!(
         *existing == self,
@@ -135,7 +135,7 @@ impl Schema {
       .map(|description| description.split("\n\n").next().unwrap())
   }
 
-  pub fn values(&self) -> &[Value] {
+  pub(crate) fn values(&self) -> &[Value] {
     let Self::StringEnum { values, .. } = self else {
       unreachable!()
     };
@@ -157,7 +157,7 @@ pub struct Variant {
   pub name: String,
 }
 
-pub trait Io {
+pub(crate) trait Io {
   fn io_schema(registry: &mut Registry) -> Option<String>;
 }
 
@@ -173,7 +173,7 @@ impl Io for () {
   }
 }
 
-pub trait Json {
+pub(crate) trait Json {
   fn json_schema(registry: &mut Registry) -> String;
 
   fn schema() -> Schema

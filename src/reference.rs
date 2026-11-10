@@ -19,7 +19,7 @@ mod request;
 mod response;
 mod route;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Deserialize, Serialize)]
 pub struct Reference {
   pub commands: Command,
   pub content_types: Vec<ContentType>,
@@ -440,7 +440,7 @@ mod tests {
   fn unstable_features() {
     assert_eq!(
       Reference::new().unstable_features[&UnstableFeature::WebPackages],
-      "Packages with `media: web` metadata.",
+      "Packages with media type `web`.",
     );
   }
 }

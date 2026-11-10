@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug)]
 pub(crate) struct Udta {
   pub(crate) meta: Option<Meta>,
 }

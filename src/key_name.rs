@@ -80,7 +80,6 @@ mod tests {
     invalid("\\");
     invalid("_");
     invalid("foo--bar");
-    invalid("foo--bar");
     invalid("foo-bar-");
     invalid("foo.");
     invalid("foo.bar");

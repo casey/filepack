@@ -13,7 +13,7 @@ const METADATA: TableDefinition<DatabaseMetadata, u64> = TableDefinition::new("m
 const NUMBERS: TableDefinition<u64, Revision> = TableDefinition::new("numbers");
 const PACKAGES: TableDefinition<Fingerprint, ()> = TableDefinition::new("packages");
 const REVISIONS: TableDefinition<Revision, ()> = TableDefinition::new("revisions");
-const SCHEMA_VERSION: u64 = 8;
+const SCHEMA_VERSION: u64 = 9;
 
 pub(crate) struct Server {
   database: Database,
@@ -431,7 +431,7 @@ impl Server {
       .package_metadata_opt(fingerprint)?
       .and_then(|metadata| metadata.media)
     else {
-      return Err(server_error::MountedPackageNoMediaType { fingerprint }.build());
+      return Err(ServerError::MountedPackageNoMediaType { fingerprint });
     };
 
     ensure! {

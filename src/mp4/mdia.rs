@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug)]
 pub(crate) struct Mdia {
   pub(crate) hdlr: Hdlr,
   pub(crate) mdhd: Mdhd,

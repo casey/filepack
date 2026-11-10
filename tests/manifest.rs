@@ -75,11 +75,16 @@ fn json_pretty_format() {
 #[test]
 fn tsv_error() {
   Test::new()
-    .arg("create")
-    .success()
     .args(["manifest", "--format", "tsv"])
-    .stderr("error: manifest cannot be formatted as TSV\n")
-    .failure();
+    .stderr(
+      "
+        error: invalid value 'tsv' for '--format <FORMAT>'
+          [possible values: json, json-pretty]
+
+        For more information, try '--help'.
+      ",
+    )
+    .status(2);
 }
 
 #[test]

@@ -1,6 +1,5 @@
 use super::*;
 
-#[derive(Debug, PartialEq)]
 pub(crate) struct Ftyp;
 
 impl Parse for Ftyp {

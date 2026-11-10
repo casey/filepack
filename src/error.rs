@@ -349,8 +349,6 @@ pub enum Error {
     path: DisplayPath,
     source: TotalsError,
   },
-  #[snafu(display("manifest cannot be formatted as TSV"))]
-  ManifestTsv { backtrace: Option<Backtrace> },
   #[snafu(display("metadata `{path}` already exists, use `--force` to overwrite it"))]
   MetadataAlreadyExists {
     backtrace: Option<Backtrace>,
@@ -361,8 +359,6 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     field: &'static str,
   },
-  #[snafu(display("metadata cannot be formatted as TSV"))]
-  MetadataTsv { backtrace: Option<Backtrace> },
   #[snafu(display("directory missing: `{path}`"))]
   MissingDirectory {
     backtrace: Option<Backtrace>,

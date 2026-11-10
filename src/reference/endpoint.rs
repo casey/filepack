@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Debug, Default, Deserialize, PartialEq, Serialize)]
+#[derive(Default, Deserialize, Serialize)]
 pub struct Endpoint {
   pub authenticated: bool,
   pub description: String,

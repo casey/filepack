@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Clone, Copy, ValueEnum)]
+#[derive(Clone, ValueEnum)]
 pub(crate) enum Shell {
   Bash,
   Elvish,

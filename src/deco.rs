@@ -83,7 +83,7 @@ impl Schema {
     registry.remove(&name).unwrap()
   }
 
-  pub fn register(self, name: &str, registry: &mut Registry) -> String {
+  pub(crate) fn register(self, name: &str, registry: &mut Registry) -> String {
     if let Some(existing) = registry.get(name) {
       assert!(
         *existing == self,

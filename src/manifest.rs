@@ -8,7 +8,7 @@ pub struct Manifest {
   /// File contents embedded in the manifest, keyed by hash.
   pub embedded: BTreeMap<Hash, Bytes>,
   /// Files and directories in the package, as a tree of path components.
-  pub package: DirectoryTree,
+  pub(crate) package: DirectoryTree,
   /// Signatures over the package fingerprint.
   #[serde_as(as = "SetPreventDuplicates<serde_with::Same>")]
   pub signatures: BTreeSet<Decoded<Attestation>>,

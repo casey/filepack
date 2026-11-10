@@ -124,8 +124,8 @@ Assets
 Packages may include assets, such as package artwork or video placeholder
 images.
 
-The `artwork` field contains the filename of the package artwork. It should be
-an image whose width and height are equal.
+The `artwork` field contains the filename of the package artwork. It must be an
+image whose width and height are equal.
 
 The `placeholder` field of video media items contains the filename of a
 placeholder image. It is used as the preview image on `/package` for that video,

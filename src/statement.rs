@@ -5,7 +5,7 @@ use super::*;
 pub struct Statement {
   /// Fingerprint of the signed package.
   #[n(1)]
-  pub fingerprint: Fingerprint,
+  pub(crate) fingerprint: Fingerprint,
   /// Unix timestamp of signing in seconds.
   #[n(2)]
   pub timestamp: Option<u64>,

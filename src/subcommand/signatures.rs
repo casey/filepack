@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(Parser)]
 pub(crate) struct Signatures {
-  #[arg(long = "format", default_value_t)]
+  #[arg(long = "format", default_value_t, help = FORMAT_HELP)]
   format: OutputFormat,
   #[arg(help = MANIFEST_PATH_HELP, value_hint = ValueHint::AnyPath)]
   path: Option<Utf8PathBuf>,

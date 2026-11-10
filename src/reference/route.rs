@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Deserialize, Serialize)]
 pub struct Route {
   pub api_path: Option<String>,
   pub methods: BTreeMap<String, Endpoint>,
