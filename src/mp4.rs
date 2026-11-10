@@ -40,9 +40,8 @@ mod tkhd;
 mod trak;
 mod udta;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug)]
 pub(crate) struct Mp4 {
-  pub(crate) ftyp: Ftyp,
   pub(crate) moov: Moov,
 }
 
@@ -108,8 +107,9 @@ impl Mp4 {
         .collect(),
     );
 
+    container.one::<Ftyp>()?;
+
     Ok(Self {
-      ftyp: container.one()?,
       moov: container.one()?,
     })
   }
@@ -150,7 +150,6 @@ mod tests {
 
     let mp4 = Mp4::parse(&Mp4Builder::new().build()).unwrap();
 
-    assert_eq!(mp4.ftyp, Ftyp);
     assert_eq!(mp4.moov.mvhd.timescale, 1000);
 
     let bytes = [

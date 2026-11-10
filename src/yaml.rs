@@ -1,6 +1,6 @@
 use super::*;
 
-pub use self::example::{Example, Variant};
+pub use self::example::Example;
 
 pub(crate) use self::{
   audio::Audio, image::Image, media::Media, metadata::Metadata, package_metadata::PackageMetadata,

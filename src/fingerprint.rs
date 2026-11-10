@@ -2,18 +2,7 @@ use super::*;
 
 /// BLAKE3 hash of a package's serialized root directory.
 #[derive(
-  Clone,
-  Copy,
-  Debug,
-  Decode,
-  DeserializeFromStr,
-  Encode,
-  Eq,
-  Hash,
-  Ord,
-  PartialEq,
-  PartialOrd,
-  SerializeDisplay,
+  Clone, Copy, Debug, Decode, DeserializeFromStr, Encode, Eq, Ord, PartialEq, PartialOrd,
 )]
 #[deco(transparent)]
 pub struct Fingerprint(pub(crate) Hash);

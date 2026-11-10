@@ -1,7 +1,7 @@
 use super::*;
 
 /// Package sort order.
-#[derive(Clone, Copy, Default, Deserialize, Display, EnumIter, Eq, Json, PartialEq)]
+#[derive(Clone, Copy, Default, Deserialize, Display, Json, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 #[strum(serialize_all = "kebab-case")]
 pub(crate) enum Order {

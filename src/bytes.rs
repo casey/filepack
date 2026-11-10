@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Clone, Debug, DeserializeFromStr, Eq, PartialEq, SerializeDisplay)]
+#[derive(Debug, DeserializeFromStr, PartialEq, SerializeDisplay)]
 pub struct Bytes(Vec<u8>);
 
 impl Deref for Bytes {
