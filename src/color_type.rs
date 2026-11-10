@@ -1,7 +1,7 @@
 use super::*;
 
 /// How an image's pixels encode color.
-#[derive(Clone, Copy, Debug, Decode, Default, Display, Encode, Json, PartialEq, Serialize)]
+#[derive(Clone, Debug, Decode, Default, Display, Encode, Json, PartialEq, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub(crate) enum ColorType {
   /// Cyan, magenta, yellow, and black.

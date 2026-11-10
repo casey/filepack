@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug)]
 pub(crate) struct Stbl {
   pub(crate) stsd: Stsd,
   pub(crate) stsz: Stsz,

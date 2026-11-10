@@ -9,7 +9,7 @@ pub struct Field {
   pub schema: String,
 }
 
-#[derive(Debug, Default, Deserialize, Serialize)]
+#[derive(Default, Deserialize, Serialize)]
 #[serde(transparent)]
 pub struct Registry {
   #[serde(skip)]

@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug)]
 pub(crate) struct IlstItem {
   pub(crate) data: Vec<Data>,
   pub(crate) ty: Fourcc,

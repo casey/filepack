@@ -19,7 +19,7 @@ mod request;
 mod response;
 mod route;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Deserialize, Serialize)]
 pub struct Reference {
   pub commands: Command,
   pub content_types: Vec<ContentType>,

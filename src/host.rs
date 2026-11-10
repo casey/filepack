@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub(crate) enum Host {
   Domain(Domain),
   Ipv4(Ipv4Addr),

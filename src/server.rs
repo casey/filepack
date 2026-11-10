@@ -431,7 +431,7 @@ impl Server {
       .package_metadata_opt(fingerprint)?
       .and_then(|metadata| metadata.media)
     else {
-      return Err(server_error::MountedPackageNoMediaType { fingerprint }.build());
+      return Err(ServerError::MountedPackageNoMediaType { fingerprint });
     };
 
     ensure! {
