@@ -14,6 +14,12 @@
 
 <br>
 
+<div align=center>
+  <img src=screenshot.webp width=800 alt="filepack demo server homepage">
+</div>
+
+<br>
+
 <!-- ANCHOR: introduction -->
 Filepack is a content-addressed package format with self-describing metadata.
 
@@ -46,7 +52,3 @@ packages, and [Why?](https://filepack.com/book/why.html) for some of the
 higher-level ideas behind Filepack.
 
 All prose is written by hand.
-
-<div align=center>
-  <img src=screenshot.webp width=800 alt="filepack demo server homepage">
-</div>
