@@ -45,36 +45,26 @@ impl Track {
         dimensions,
         frames,
         orientation,
-      } => {
-        let pixels =
-          u128::from(dimensions.width) * u128::from(dimensions.height) * u128::from(frames);
-
-        builder
-          .value("dimensions", dimensions)
-          .value("orientation", orientation)
-          .value("frames", frames)
-          .when(video.duration > 0, |builder| {
-            builder.value(
-              "frame rate",
-              DisplayFrameRate {
-                duration: video.duration,
-                frames,
-              },
-            )
-          })
-          .optional("bit rate", DisplayBitrate::new(video.duration, self.size))
-          .when(pixels > 0, |builder| {
-            builder.value(
-              "bits per pixel",
-              DisplayBitsPerPixel {
-                pixels,
-                size: self.size,
-              },
-            )
-          })
-          .value("bit depth", format!("{bit_depth}-bit"))
-          .optional("chroma subsampling", chroma_subsampling)
-      }
+      } => builder
+        .value("dimensions", dimensions)
+        .value("orientation", orientation)
+        .value("frames", frames)
+        .when(video.duration > 0, |builder| {
+          builder.value(
+            "frame rate",
+            DisplayFrameRate {
+              duration: video.duration,
+              frames,
+            },
+          )
+        })
+        .optional("bit rate", DisplayBitrate::new(video.duration, self.size))
+        .optional(
+          "bits per pixel",
+          DisplayBitsPerPixel::new(dimensions, frames, self.size),
+        )
+        .value("bit depth", format!("{bit_depth}-bit"))
+        .optional("chroma subsampling", chroma_subsampling),
     });
 
     builder.value("size", format_size(self.size)).build()
