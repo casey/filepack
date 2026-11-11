@@ -97,7 +97,6 @@ test-release-workflow:
   git tag test-release
   git push origin test-release
 
-
 shellcheck-install-script:
   shellcheck static/install.sh
 

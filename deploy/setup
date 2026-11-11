@@ -24,8 +24,9 @@ apt-get install --yes \
 
 apt-get remove --yes --auto-remove
 
-sed -i -E 's/#?PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
+cp deploy/00-authentication.conf /etc/ssh/sshd_config.d
 sshd -t
+sshd -T | grep --line-regexp 'passwordauthentication no'
 systemctl restart sshd
 
 ufw default allow outgoing
