@@ -16,9 +16,7 @@ apt-get install --yes \
   acl \
   clang \
   curl \
-  libssl-dev \
   locales-all \
-  pkg-config \
   ufw \
   unattended-upgrades \
   vim
