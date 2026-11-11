@@ -417,7 +417,7 @@ impl Serve {
     };
 
     Ok(
-      block_in_place(|| server.mount_file(&server_config.mounts, mount.package, &path))?
+      block_in_place(|| server.mount_file(false, &server_config.mounts, mount.package, &path))?
         .range(range),
     )
   }

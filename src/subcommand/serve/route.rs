@@ -527,7 +527,12 @@ pub(crate) async fn mount_file(
   block_in_place(|| {
     Ok(
       server
-        .mount_file(&server_config.mounts, package, &path)?
+        .mount_file(
+          !matches!(package, PackageIdentifier::Number(_)),
+          &server_config.mounts,
+          package,
+          &path,
+        )?
         .range(range),
     )
   })

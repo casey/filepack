@@ -416,15 +416,12 @@ impl Server {
 
   pub(crate) fn mount_file(
     &self,
+    cache: bool,
     mounts: &[Mount],
     package: PackageIdentifier,
     path: &RelativePath,
   ) -> ServerResult<Resource> {
-    let Resolved {
-      fingerprint,
-      number,
-      ..
-    } = self.resolve(package)?;
+    let Resolved { fingerprint, .. } = self.resolve(package)?;
 
     ensure! {
       self.mounted(mounts, fingerprint)?,
@@ -452,7 +449,7 @@ impl Server {
     Ok(
       self
         .open_file(hash)?
-        .cache(number.is_none())
+        .cache(cache)
         .unsandboxed_content_type(content_type),
     )
   }
