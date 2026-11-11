@@ -156,11 +156,3 @@ book:
   mdbook serve book --open &
   trap 'kill $!' EXIT
   cargo watch --clear --ignore book --exec 'lrun --package generate'
-
-screenshot:
-  magick screenshot.png \
-    -resize 1600x \
-    -strip \
-    -quality 85 \
-    -define webp:alpha-quality=100 \
-    screenshot.webp
