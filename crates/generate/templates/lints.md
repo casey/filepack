@@ -22,8 +22,8 @@ Lints
 Junk Files
 ----------
 
-The `junk` lint fails if the package contains a file with one of the following
-names: {{ list(self.junk_names) }}.
+The `junk` lint fails if the package contains a file or directory with one of
+the following names: {{ list(self.junk_names) }}.
 
 Windows Reserved Characters
 ---------------------------
@@ -35,5 +35,5 @@ Windows Reserved Names
 ----------------------
 
 The `windows-reserved-filename` lint fails if a filename, ignoring case, is one
-of the following names, or one of the following names followed by a period: {{
-list(self.windows_reserved_names) }}.
+of the following names, or begins with one of the following names followed by a
+period, for example `CON.txt`: {{ list(self.windows_reserved_names) }}.
