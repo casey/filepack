@@ -224,7 +224,7 @@ Security
 
 Filepack's security model assumes that BLAKE3 is a collision-resistant and
 second-preimage resistant hash function, and that Ed25519 signatures are
-unforgable.
+unforgeable.
 
 Filepack packages may be verified against a manifest, fingerprint, or signature
 made by a trusted public key.

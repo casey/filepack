@@ -79,7 +79,7 @@ or disabling multiple related lints.
 Creating a package with all lints enabled and fixing them is a great way to
 learn more about Filepack and package metadata.
 
-Lint and lint group can be printed with:
+Lints and lint groups can be printed with:
 
 ```sh
 filepack lints

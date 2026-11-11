@@ -74,7 +74,7 @@ mod tests {
       // cannot be confused with reverse hex
       assert!(tag.chars().any(|c| !matches!(c, 'k'..='z')));
 
-      // not a prefix or suffix of another type
+      // not a prefix or suffix of another tag
       for (j, other) in Tag::iter().enumerate() {
         if i != j {
           assert!(!other.tag().starts_with(tag) && !other.tag().ends_with(tag));

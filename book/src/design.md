@@ -94,7 +94,7 @@ identifier, either a fingerprint or revision, commits to signatures. Detached
 signatures allow packages to be signed after they are created, without changing
 the package fingerprint or revision hash. Embedded signatures would have the
 benefit of being inseparable from packages, whereas detached signatures must be
-transported separately. and the Filepack server does not yet support upload and
+transported separately, and the Filepack server does not yet support upload and
 download of signatures.
 
 Messages are prehashed with BLAKE3 before signing with Ed25519. This makes the
@@ -115,7 +115,7 @@ Metadata
 Metadata is perhaps the central feature of Filepack. Although Filepack strives
 to be useful as a general-purpose hashing, signing, and validation tool, it
 accepts compromises, such as treating `metadata.filemeta` files specially and
-valid but non-portible filenames, that would not be appropriate in a fully
+valid but non-portable filenames, that would not be appropriate in a fully
 general tool.
 
 Metadata is designed to be usable without relying on other Filepack features,

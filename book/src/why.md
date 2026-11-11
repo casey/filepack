@@ -35,11 +35,11 @@ unstructured, and recommendations are unavailable. It is only usable by a small
 and decreasing percentage of the population, and asking someone over to
 "BitTorrent and chill" will be met by blinking incomprehension, followed by
 derision as you struggle with your torrent client like a digital steam engine
-operator, desperately trying to find subtitles for obscure French art film you
-want to watch.
+operator, desperately trying to find subtitles for the obscure French art film
+you want to watch.
 
 The difference between the two systems is not due to a difference in underlying
-data, every piece of content one could possibly imagine is available on
+data; every piece of content one could possibly imagine is available on
 BitTorrent. It is a difference in the availability of metadata.
 
 Netflix has a database of standardized, machine-readable metadata, underpinning

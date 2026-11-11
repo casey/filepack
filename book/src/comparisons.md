@@ -96,8 +96,8 @@ or manifests.
 Filepack and IPFS use a similar data model, where directories and files are both
 identified by hash.
 
-IPFS is notoriously complex, supports a wide variety of hash functions,
-public-key cryptography algorithms, and peer to peer transport and addressing
+IPFS is notoriously complex, supporting a wide variety of hash functions,
+public-key cryptography algorithms, and peer-to-peer transport and addressing
 schemes.
 
 Compared to IPFS, Filepack is far simpler. Filepack uses a single hash function,
