@@ -6,6 +6,7 @@ StartLimitIntervalSec=10m
 
 [Service]
 AmbientCapabilities=CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
 Environment=FILEPACK_LOG=info
 Environment=RUST_BACKTRACE=1
 ExecStart=/usr/local/bin/filepack \
@@ -23,16 +24,31 @@ ExecStart=/usr/local/bin/filepack \
   --redirect-http-to-https
 Group=filepack
 LimitNOFILE=65536
+LockPersonality=true
 MemoryDenyWriteExecute=true
 NoNewPrivileges=true
 PrivateDevices=true
 PrivateTmp=true
+ProtectClock=true
+ProtectControlGroups=true
 ProtectHome=true
+ProtectHostname=true
+ProtectKernelLogs=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+ProtectProc=invisible
 ProtectSystem=strict
+RemoveIPC=true
 Restart=on-failure
 RestartSec=5s
+RestrictAddressFamilies=AF_INET AF_INET6 AF_NETLINK AF_UNIX
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
 StateDirectory=filepack
 StateDirectoryMode=0700
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
 TimeoutStopSec=10m
 Type=exec
 User=filepack
