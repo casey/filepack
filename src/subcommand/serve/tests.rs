@@ -3174,19 +3174,23 @@ fn mount_serves_index_html() {
 
 #[test]
 fn named_mount() {
-  let server = TestServer::builder()
-    .mount(PackageIdentifier::Number(0), Some("foo"))
-    .unstable()
-    .build();
-
-  PackageBuilder::new()
+  let package = PackageBuilder::new()
     .metadata(&Metadata {
       media: Some(Media::Web),
       ..default()
     })
     .file("static/bar.css", b"bar")
-    .file("static/index.html", b"foo")
-    .upload(&server);
+    .file("static/index.html", b"foo");
+
+  let server = TestServer::builder()
+    .mount(
+      PackageIdentifier::Fingerprint(package.fingerprint()),
+      Some("foo"),
+    )
+    .unstable()
+    .build();
+
+  package.upload(&server);
 
   server
     .get("/foo/")
