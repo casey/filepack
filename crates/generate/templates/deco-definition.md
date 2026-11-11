@@ -47,8 +47,8 @@ A struct with {{ Count::new(fields.len(), "field") }}:
 {{ DecoFieldsMd { fields, registry: self.registry } }}
 %%     if let Some(magic) = magic {
 
-The value is encoded with magic bytes consisting of the deco encoded byte
-string `filepack\0`, followed by the deco encoded byte string `{{ magic }}`,
+The value is encoded with magic bytes consisting of the deco-encoded byte
+string `filepack\0`, followed by the deco-encoded byte string `{{ magic }}`,
 followed by the encoded value.
 %%     }
 %%     if *strict {

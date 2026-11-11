@@ -42,8 +42,8 @@ Layout
 ------
 
 Assemble the content you want to package into a directory. "Directory" and
-"folder" are synonymous, with "folder" being the graphical GUI metaphor, and
-"directory" being the lower-level primitive.
+"folder" are synonymous, with "folder" being the GUI metaphor, and "directory"
+being the lower-level primitive.
 
 The files and subdirectories in a Filepack package should be organized and named
 so that they are easy to understand and navigate, even without referring to the
@@ -142,8 +142,8 @@ ffmpeg -ss 00:12:34.467 -i input.mp4 -frames:video 1 input.jpg
 ```
 
 Image assets should use their original and highest quality. When packages are
-created, unless `--no-generate` is passed, thumbnails generated for all image
-assets. Thumbnails are used by the server for efficiency when the full
+created, unless `--no-generate` is passed, thumbnails are generated for all
+image assets. Thumbnails are used by the server for efficiency when the full
 resolution of the original image is unnecessary. Thumbnails whose file size is
 larger than the original image are omitted.
 

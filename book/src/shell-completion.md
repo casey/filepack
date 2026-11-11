@@ -14,7 +14,7 @@ filepack completions bash
 Bash
 ----
 
-The recommended approach is to use the `bash-completions` package to lazy-load
+The recommended approach is to use the `bash-completion` package to lazy-load
 the completion script:
 
 ```bash
@@ -22,7 +22,7 @@ mkdir -p ~/.local/share/bash-completion/completions
 filepack completions bash > ~/.local/share/bash-completion/completions/filepack
 ```
 
-If `bash-completions` is not installed, you can source the completion script in
+If `bash-completion` is not installed, you can source the completion script in
 your `.bashrc`:
 
 ```bash

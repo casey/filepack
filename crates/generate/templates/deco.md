@@ -35,7 +35,7 @@ The shortest possible encoding must be used.
 A single byte whose value is between `0x00` and `0x7f` is encoded as-is. For
 example, the string `0x67` is encoded as `0x67`.
 
-A byte string whose length is between 0 and 111 bytes are encoded as a head
+A byte string whose length is between 0 and 111 bytes is encoded as a head
 byte equal to `0x80` plus the length of the string, followed by the byte
 string. For example, the empty string is encoded as `0x80`, the string `0xff`
 is encoded as `0x81ff`, and the string `0xabcd` is encoded as `0x82abcd`.
@@ -109,7 +109,7 @@ field number to field value. Absent optional fields are omitted.
 Structs with `#[deco(strict)]` attribute reject unknown fields. Structs without
 the attribute ignore unknown fields.
 
-Non strict struct fields with type `Option<T>`, where `T` is an enum, are
+Non-strict struct fields with type `Option<T>`, where `T` is an enum, are
 treated as absent if the encoded value is an unrecognized variant.
 
 Field 0 is reserved for versioning. If field 0 is present, decoding fails with
