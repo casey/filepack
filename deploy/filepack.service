@@ -13,7 +13,7 @@ ExecStart=/usr/local/bin/filepack \
   --data-dir /var/lib/filepack \
   --unstable \
   serve \
-  --address 0.0.0.0 \
+  --address :: \
   --acme-contact mailto:casey@rodarmor.com \
   --admin-key public1475c817831f46c25109908a081cf091bb127e0ea47dba3829a3da003dbec0b2c \
   --domain filepack.com \
