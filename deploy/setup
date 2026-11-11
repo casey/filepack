@@ -20,9 +20,17 @@ apt-get install --yes \
   locales-all \
   pkg-config \
   ufw \
+  unattended-upgrades \
   vim
 
 apt-get remove --yes --auto-remove
+
+if [[ -e /var/run/reboot-required ]]; then
+  echo 'error: reboot required' >&2
+  exit 1
+fi
+
+cp deploy/20auto-upgrades /etc/apt/apt.conf.d
 
 cp deploy/00-authentication.conf /etc/ssh/sshd_config.d
 sshd -t
