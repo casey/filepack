@@ -119,7 +119,7 @@ pub(crate) struct Serve {
             unsandboxed and served with the server origin. Make sure you understand the \
             consequences of this and only mount packages you trust",
     long = "mount",
-    value_name = "PACKAGE"
+    value_name = "PACKAGE[:NAME]"
   )]
   mounts: Vec<Mount>,
   #[arg(
