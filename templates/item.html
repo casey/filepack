@@ -1,13 +1,13 @@
-%% match self.media() {
-%%   Media::Audio { .. } => {
+%% match self.items() {
+%%   Items::Audio(_) => {
 <img src=/artwork/{{ self.fingerprint }}>
 <audio autofocus controls src=/media/audio/{{ self.fingerprint }}/item/{{ Ordinal(self.index) }}></audio>
 %%   }
-%%   Media::Image { items } => {
+%%   Items::Image(items) => {
 %%     let dimensions = items[self.index].content.oriented_dimensions();
 <img src=/media/image/{{ self.fingerprint }}/item/{{ Ordinal(self.index) }} width={{ dimensions.width }} height={{ dimensions.height }}>
 %%   }
-%%   Media::Video { .. } => {
+%%   Items::Video(_) => {
 <video
   autofocus
   controls
@@ -16,7 +16,6 @@
 %%     }
   src=/media/video/{{ self.fingerprint }}/item/{{ Ordinal(self.index) }}></video>
 %%   }
-%%   Media::Web => unreachable!(),
 %% }
 <footer>
   <hgroup>
