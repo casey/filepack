@@ -12,6 +12,10 @@
   </a>
 </div>
 
+<div align=center>
+  <img src=screenshot.webp width=600 alt="filepack demo server homepage">
+</div>
+
 <br>
 
 <!-- ANCHOR: introduction -->
@@ -36,10 +40,6 @@ example packages.
 Filepack is currently experimental. The `filepack` interface and package format
 may change at any time.
 <!-- ANCHOR_END: introduction -->
-
-<div align=center>
-  <img src=screenshot.webp width=600 alt="filepack demo server homepage">
-</div>
 
 Documentation is available at [filepack.com/book/](https://filepack.com/book/).
 
