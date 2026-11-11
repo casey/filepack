@@ -49,16 +49,20 @@ ufw --force enable
 cp deploy/90-network.conf /etc/sysctl.d
 sysctl --system
 
-if [[ ! -e ~/.cargo/env ]]; then
-  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-fi
+id --user build || useradd --create-home build
 
-source ~/.cargo/env
+rsync \
+  --archive \
+  --chown build:build \
+  --delete \
+  --exclude /.git \
+  --exclude /target \
+  . \
+  /home/build/filepack
 
-rustup update stable
+runuser --login build --command 'cd filepack && ./deploy/build'
 
-cargo build --release
-install --backup target/release/filepack /usr/local/bin/filepack
+install --backup /home/build/filepack/target/release/filepack /usr/local/bin/filepack
 
 id --user filepack || useradd --system filepack
 
