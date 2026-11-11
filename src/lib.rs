@@ -253,7 +253,7 @@ use {
     Display, EnumDiscriminants, EnumIter, EnumString, FromRepr, IntoDiscriminant, IntoEnumIterator,
     IntoStaticStr, VariantArray,
   },
-  tempfile::NamedTempFile,
+  tempfile::{NamedTempFile, TempPath},
   tokio::io::{AsyncReadExt, AsyncWriteExt},
   tokio_util::io::ReaderStream,
   unicase::UniCase,

@@ -172,6 +172,9 @@ path = "tests/lib.rs"
 [target."cfg(windows)".dev-dependencies]
 windows-sys = { version = "0.61.2", features = ["Win32_System_Console", "Win32_System_Threading"] }
 
+[target."cfg(windows)".dependencies]
+windows-sys = { version = "0.61.2", features = ["Win32_Storage_FileSystem"] }
+
 [target.'cfg(target_os = "linux")'.dependencies]
 tracing-journald = "0.3.2"
 
