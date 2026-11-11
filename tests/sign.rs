@@ -183,7 +183,6 @@ fn unknown_fields_are_rejected() {
 #[test]
 fn unknown_root_entries_are_preserved() {
   let hash = Hash::bytes(b"qux");
-  let content = hex::encode(b"qux");
 
   let test = Test::new()
     .arg("keygen")
@@ -193,7 +192,7 @@ fn unknown_root_entries_are_preserved() {
       "foo/manifest.filepack",
       json! {
         embedded: {
-          *hash: content
+          *hash: (hex::encode(b"qux"))
         },
         package: {
           bar: {

@@ -69,14 +69,13 @@ fn embedded_preserved() {
 fn rejects_embedded_hash_mismatch() {
   let expected = Hash::bytes(b"foo");
   let actual = Hash::bytes(b"bar");
-  let content = hex::encode(b"bar");
 
   Test::new()
     .write(
       "manifest.json",
       json! {
         embedded: {
-          *expected: content
+          *expected: (hex::encode(b"bar"))
         },
         package: {
           foo: {
@@ -90,6 +89,33 @@ fn rejects_embedded_hash_mismatch() {
     .args(["archive", "manifest.json", "manifest.filepack"])
     .stderr_regex_path(&format!(
       "error: embedded file in manifest `.*manifest.json` should have hash `{expected}` but has hash `{actual}`\n",
+    ))
+    .failure();
+}
+
+#[test]
+fn rejects_embedded_size_mismatch() {
+  let hash = Hash::bytes(b"foo");
+
+  Test::new()
+    .write(
+      "manifest.json",
+      json! {
+        embedded: {
+          *hash: (hex::encode(b"foo"))
+        },
+        package: {
+          foo: {
+            hash: hash,
+            size: 4
+          }
+        },
+        signatures: [],
+      },
+    )
+    .args(["archive", "manifest.json", "manifest.filepack"])
+    .stderr_regex_path(&format!(
+      "error: embedded file `{hash}` in manifest `.*manifest.json` should have size 4 but has size 3\n",
     ))
     .failure();
 }
@@ -170,14 +196,13 @@ fn rejects_unknown_entry_conflict() {
 #[test]
 fn rejects_unreferenced_embedded_files() {
   let hash = Hash::bytes(b"foo");
-  let content = hex::encode(b"foo");
 
   Test::new()
     .write(
       "manifest.json",
       json! {
         embedded: {
-          *hash: content
+          *hash: (hex::encode(b"foo"))
         },
         package: {},
         signatures: [],

@@ -179,6 +179,16 @@ pub enum Error {
     expected: Hash,
     path: DisplayPath,
   },
+  #[snafu(display(
+    "embedded file `{hash}` in manifest `{path}` should have size {expected} but has size {actual}"
+  ))]
+  EmbeddedFileSizeMismatch {
+    actual: u64,
+    backtrace: Option<Backtrace>,
+    expected: u64,
+    hash: Hash,
+    path: DisplayPath,
+  },
   #[snafu(display("{count} mismatched file{}", if *count == 1 { "" } else { "s" }))]
   EntryMismatch {
     backtrace: Option<Backtrace>,
