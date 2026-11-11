@@ -85,6 +85,7 @@ publish: tmp
   set -euxo pipefail
   git clone git@github.com:casey/filepack.git tmp
   cd tmp
+  cargo publish --workspace --dry-run
   VERSION=`bin/version`
   git tag -a $VERSION -m "Release $VERSION"
   git push origin $VERSION
