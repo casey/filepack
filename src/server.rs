@@ -1117,10 +1117,15 @@ impl Server {
       return Ok(());
     }
 
-    temp_path
-      .persist(&path)
-      .map_err(|error| error.error)
-      .context(filesystem_error::Io { path: &path })?;
+    writer
+      .get_ref()
+      .sync_all()
+      .await
+      .context(filesystem_error::Io {
+        path: &temp_path_utf8,
+      })?;
+
+    tokio::task::block_in_place(|| filesystem::persist(temp_path, &path))?;
 
     Ok(())
   }
