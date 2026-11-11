@@ -3305,7 +3305,7 @@ fn package_item_audio_out_of_range() {
         count: 1,
         fingerprint,
         index: Ordinal(1),
-        ty: MediaType::Audio,
+        noun: "track",
       },
     )
     .send();
@@ -3417,7 +3417,7 @@ fn package_item_image_out_of_range() {
         count: 1,
         fingerprint,
         index: Ordinal(1),
-        ty: MediaType::Image,
+        noun: "image",
       },
     )
     .send();
@@ -3519,7 +3519,7 @@ fn package_item_video_out_of_range() {
         count: 1,
         fingerprint,
         index: Ordinal(1),
-        ty: MediaType::Video,
+        noun: "video",
       },
     )
     .send();

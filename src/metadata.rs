@@ -98,10 +98,10 @@ impl Metadata {
 
   pub(crate) fn check_files(&self, paths: &HashSet<RelativePath>) -> Result {
     if let Some(media) = &self.media
-      && media.ty().has_items()
+      && let Some(items) = media.items()
     {
       let mut seen = HashSet::new();
-      for item in media.items() {
+      for item in items {
         let path = item.path();
         ensure! {
           seen.insert(path),

@@ -342,13 +342,17 @@ impl Server {
       },
     }
 
-    let item = media
-      .item(index)
+    let items = media
+      .items()
+      .context(server_error::MediaTypeDoesNotHaveItems { ty })?;
+
+    let item = items
+      .get(index)
       .context(server_error::MediaItemDoesNotExist {
-        count: media.item_count(),
+        count: items.len(),
         fingerprint,
         index,
-        ty,
+        noun: items.noun(),
       })?;
 
     let (path, ty) = match resource {

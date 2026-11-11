@@ -92,15 +92,14 @@ pub(crate) enum ServerError {
   #[snafu(display("response invalid"))]
   InvalidResponse { source: http::Error },
   #[snafu(display(
-    "{} {index} does not exist, package {fingerprint} has {}",
-    ty.item_noun(),
-    Count::new(*count, ty.item_noun()),
+    "{noun} {index} does not exist, package {fingerprint} has {}",
+    Count::new(*count, noun),
   ))]
   MediaItemDoesNotExist {
     count: usize,
     fingerprint: Fingerprint,
     index: Ordinal,
-    ty: crate::MediaType,
+    noun: &'static str,
   },
   #[snafu(display("expected media type {expected} but package {fingerprint} is {actual}"))]
   MediaType {

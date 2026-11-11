@@ -99,6 +99,7 @@ use {
     invalid_public_key::InvalidPublicKey,
     iso8601_duration::Iso8601Duration,
     item::Item,
+    items::Items,
     json::Json,
     key_identifier::KeyIdentifier,
     key_identifier_error::KeyIdentifierError,
@@ -423,6 +424,7 @@ mod info_builder;
 mod invalid_public_key;
 mod iso8601_duration;
 mod item;
+mod items;
 pub mod json;
 mod key_identifier;
 mod key_identifier_error;

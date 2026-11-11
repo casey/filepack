@@ -15,11 +15,11 @@ impl ItemHtml {
   }
 
   fn item(&self) -> &dyn MediaItem {
-    self.media().item(self.index).unwrap()
+    self.items().get(self.index).unwrap()
   }
 
-  fn media(&self) -> &Media {
-    self.metadata.media.as_ref().unwrap()
+  fn items(&self) -> Items {
+    self.metadata.media.as_ref().unwrap().items().unwrap()
   }
 
   fn title(&self) -> Option<&Text> {
@@ -29,13 +29,13 @@ impl ItemHtml {
 
 impl Page for ItemHtml {
   fn next(&self) -> Option<String> {
-    self.media().next_item_url(self.identifier, self.index)
+    self.items().next_url(self.identifier, self.index)
   }
 
   fn open_graph_image(&self) -> Option<OpenGraphImage> {
-    match self.media() {
-      Media::Audio { .. } => OpenGraphImage::artwork(&self.metadata, self.fingerprint),
-      Media::Image { items } => Some(OpenGraphImage::thumbnail(
+    match self.items() {
+      Items::Audio(_) => OpenGraphImage::artwork(&self.metadata, self.fingerprint),
+      Items::Image(items) => Some(OpenGraphImage::thumbnail(
         &self.metadata,
         &items[self.index].content,
         format!(
@@ -44,7 +44,7 @@ impl Page for ItemHtml {
           Ordinal(self.index)
         ),
       )),
-      Media::Video { .. } => {
+      Items::Video(_) => {
         if let Some(placeholder) = self.item().placeholder() {
           Some(OpenGraphImage::thumbnail(
             &self.metadata,
@@ -59,12 +59,11 @@ impl Page for ItemHtml {
           OpenGraphImage::artwork(&self.metadata, self.fingerprint)
         }
       }
-      Media::Web => unreachable!(),
     }
   }
 
   fn prev(&self) -> Option<String> {
-    self.media().prev_item_url(self.identifier, self.index)
+    self.items().prev_url(self.identifier, self.index)
   }
 
   fn script(&self) -> Option<&'static str> {

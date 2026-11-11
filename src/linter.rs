@@ -150,9 +150,9 @@ impl Linter {
 
     if self.is_active(Lint::ItemTitleMissing)
       && let Some(media) = &metadata.media
-      && media.ty().has_items()
+      && let Some(items) = media.items()
     {
-      for item in media.items() {
+      for item in items {
         if item.title().is_none() {
           self.error_path(LintError::ItemTitleMissing, item.path());
         }
@@ -161,8 +161,8 @@ impl Linter {
 
     if self.is_active(Lint::MixedFormats)
       && let Some(media) = &metadata.media
-      && media.ty().has_items()
-      && let formats = media.formats()
+      && let Some(items) = media.items()
+      && let formats = items.formats()
       && formats.len() > 1
     {
       self.error(LintError::MixedFormats { formats });

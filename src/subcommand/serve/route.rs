@@ -599,20 +599,17 @@ pub(crate) async fn package_item(
 
     let ty = media.discriminant();
 
-    ensure! {
-      ty.has_items(),
-      server_error::MediaTypeDoesNotHaveItems {
-        ty,
-      }
-    }
+    let items = media
+      .items()
+      .context(server_error::MediaTypeDoesNotHaveItems { ty })?;
 
     ensure! {
-      media.item_count() > index,
+      items.len() > index,
       server_error::MediaItemDoesNotExist {
-        count: media.item_count(),
+        count: items.len(),
         fingerprint,
         index,
-        ty,
+        noun: items.noun(),
       },
     }
 
