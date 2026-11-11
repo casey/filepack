@@ -34,25 +34,6 @@ impl Manifest {
     empty
   }
 
-  fn file_hashes(&self) -> BTreeSet<Hash> {
-    let mut hashes = BTreeSet::new();
-    let mut stack = self
-      .package
-      .entries
-      .values()
-      .chain(self.unknown.entries.values())
-      .collect::<Vec<&DirectoryTreeEntry>>();
-    while let Some(entry) = stack.pop() {
-      match entry {
-        DirectoryTreeEntry::Directory(directory) => stack.extend(directory.entries.values()),
-        DirectoryTreeEntry::File(file) => {
-          hashes.insert(file.hash);
-        }
-      }
-    }
-    hashes
-  }
-
   pub(crate) fn files(&self) -> BTreeMap<RelativePath, File> {
     self.package.files()
   }
@@ -72,7 +53,17 @@ impl Manifest {
       return Err(error::ReservedFilename { path }.build());
     }
 
-    let hashes = manifest.file_hashes();
+    let files = manifest
+      .package
+      .files()
+      .into_values()
+      .chain(manifest.unknown.files().into_values())
+      .collect::<Vec<File>>();
+
+    let hashes = files
+      .iter()
+      .map(|file| file.hash)
+      .collect::<BTreeSet<Hash>>();
 
     let mut unreferenced = BTreeSet::new();
     for (&expected, content) in &manifest.embedded {
@@ -91,6 +82,22 @@ impl Manifest {
     ensure! {
       unreferenced.is_empty(),
       error::UnreferencedEmbeddedFiles { hashes: unreferenced, path },
+    }
+
+    for file in files {
+      if let Some(content) = manifest.embedded.get(&file.hash) {
+        let actual = content.len().into_u64();
+
+        ensure! {
+          actual == file.size,
+          error::EmbeddedFileSizeMismatch {
+            actual,
+            expected: file.size,
+            hash: file.hash,
+            path,
+          },
+        }
+      }
     }
 
     Ok(manifest)
