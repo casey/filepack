@@ -14,6 +14,12 @@
 
 <br>
 
+<div align=center>
+  <img src=screenshot.webp width=800 alt="filepack demo server homepage">
+</div>
+
+<br>
+
 <!-- ANCHOR: introduction -->
 Filepack is a content-addressed package format with self-describing metadata.
 
