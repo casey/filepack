@@ -13,7 +13,7 @@
 </div>
 
 <div align=center>
-  <img src=screenshot.webp width=600 alt="filepack demo server homepage">
+  <img src=screenshot.webp width=800 alt="filepack demo server homepage">
 </div>
 
 <br>
