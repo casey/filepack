@@ -129,23 +129,28 @@ impl Route {
     quote! {
       #item
 
-      pub(crate) fn #route(registry: &mut deco::Registry) -> Route {
-        let mut endpoint = crate::reference::Endpoint::default();
+      pub(crate) fn #route(
+        registry: &mut ::filepack::__private::deco::Registry,
+      ) -> ::filepack::__private::Route {
+        let mut endpoint = ::filepack::__private::reference::Endpoint::default();
         endpoint.description = #summary.into();
-        #(<#types as Describe>::describe(&mut endpoint, registry);)*
-        <#output as Describe>::describe(&mut endpoint, registry);
-        Route {
+        #(<#types as ::filepack::__private::Describe>::describe(&mut endpoint, registry);)*
+        <#output as ::filepack::__private::Describe>::describe(&mut endpoint, registry);
+        ::filepack::__private::Route {
           api_path: #api_path,
           endpoint,
-          method: axum::http::Method::#method,
+          method: ::axum::http::Method::#method,
           parameters: vec![#(
-            crate::reference::PathParameter {
+            ::filepack::__private::reference::PathParameter {
               description: #descriptions.into(),
               name: #names.into(),
             }
           ),*],
           path: #path,
-          router: axum::routing::on(axum::routing::MethodFilter::#method, #name),
+          router: ::axum::routing::on(
+            ::axum::routing::MethodFilter::#method,
+            #name,
+          ),
         }
       }
     }

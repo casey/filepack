@@ -40,7 +40,7 @@ pub fn decode(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
   };
 
   match input.decode() {
-    Ok(tokens) => tokens.into(),
+    Ok(tokens) => private(tokens).into(),
     Err(err) => err.to_compile_error().into(),
   }
 }
@@ -53,7 +53,7 @@ pub fn decode_from_str(input: proc_macro::TokenStream) -> proc_macro::TokenStrea
 
   let display_name = display_name(name);
 
-  quote! {
+  private(quote! {
     impl Decode<'_> for #name {
       fn decode(decoder: &mut Decoder) -> DecodeResult<Self> {
         decoder
@@ -65,7 +65,7 @@ pub fn decode_from_str(input: proc_macro::TokenStream) -> proc_macro::TokenStrea
           }.into())
       }
     }
-  }
+  })
   .into()
 }
 
@@ -79,7 +79,7 @@ pub fn encode(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
   };
 
   match input.encode() {
-    Ok(tokens) => tokens.into(),
+    Ok(tokens) => private(tokens).into(),
     Err(err) => err.to_compile_error().into(),
   }
 }
@@ -97,7 +97,7 @@ pub fn encode_display(input: proc_macro::TokenStream) -> proc_macro::TokenStream
 
   let schema_name = name.to_string();
 
-  quote! {
+  private(quote! {
     impl Encode for #name {
       fn deco_schema(registry: &mut deco::Registry) -> String {
         deco::Schema::Wrapper {
@@ -111,7 +111,7 @@ pub fn encode_display(input: proc_macro::TokenStream) -> proc_macro::TokenStream
         self.to_string().encode(encoder);
       }
     }
-  }
+  })
   .into()
 }
 
@@ -125,7 +125,7 @@ pub fn json(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
   };
 
   match input.schema() {
-    Ok(tokens) => tokens.into(),
+    Ok(tokens) => private(tokens).into(),
     Err(err) => err.to_compile_error().into(),
   }
 }
@@ -140,8 +140,19 @@ pub fn magic(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
   };
 
   match input.magic() {
-    Ok(tokens) => tokens.into(),
+    Ok(tokens) => private(tokens).into(),
     Err(err) => err.to_compile_error().into(),
+  }
+}
+
+/// Wrap trait impls so that the names they use resolve through
+/// `::filepack::__private`, not through the deriving module's imports.
+fn private(tokens: TokenStream) -> TokenStream {
+  quote! {
+    const _: () = {
+      use ::filepack::__private::*;
+      #tokens
+    };
   }
 }
 

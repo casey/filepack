@@ -428,6 +428,8 @@ mod error;
 mod exif_decoder;
 mod exif_error;
 mod file;
+// Lets the derive macros in `filepack-derive` name this crate as `::filepack`.
+extern crate self as filepack;
 mod filesystem;
 mod filesystem_error;
 mod fingerprint;
@@ -589,11 +591,27 @@ pub mod yaml;
 #[cfg(test)]
 mod derive;
 #[cfg(test)]
+mod derive_hygiene;
+#[cfg(test)]
 mod jpeg_builder;
 #[cfg(test)]
 mod test;
 #[cfg(test)]
 mod webm_builder;
+
+#[doc(hidden)]
+pub(crate) mod __private {
+  pub(crate) use {
+    crate::{
+      Decode, DecodeResult, Decoder, Encode, Encoder, Magic, MagicType, MalformedError,
+      UnknownError, Validate, deco, json, malformed_error,
+    },
+    snafu::ensure,
+  };
+
+  #[cfg(feature = "server")]
+  pub(crate) use crate::{Describe, reference, subcommand::serve::route::Route};
+}
 
 const API_VERSION: u64 = 0;
 const API_VERSION_HEADER: HeaderName = HeaderName::from_static("filepack-api-version");
