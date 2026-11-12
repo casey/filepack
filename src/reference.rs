@@ -140,8 +140,10 @@ impl Reference {
 
     let metadata = yaml::Example::new(&yaml, "Metadata");
 
+    #[cfg_attr(not(feature = "server"), allow(unused_mut))]
     let mut routes = BTreeMap::<String, Route>::new();
 
+    #[cfg(feature = "server")]
     for route in subcommand::serve::route::Route::all(&mut deco) {
       routes
         .entry(route.path.into())

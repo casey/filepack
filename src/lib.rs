@@ -39,7 +39,6 @@ use {
     audio_format::AudioFormat,
     audio_metadata::AudioMetadata,
     audio_position_error::AudioPositionError,
-    authenticated::Authenticated,
     authorization_error::AuthorizationError,
     bit_reader::BitReader,
     bytes_error::BytesError,
@@ -155,11 +154,9 @@ use {
     public_key_error::PublicKeyError,
     relative_path::RelativePath,
     resolved::Resolved,
-    resource::Resource,
     resource_type::ResourceType,
     revision::Revision,
     rotation::Rotation,
-    server::Server,
     server_error::ServerError,
     server_url::ServerUrl,
     server_url_error::ServerUrlError,
@@ -176,7 +173,6 @@ use {
     static_asset::StaticAsset,
     style::Style,
     subcommand::Subcommand,
-    subcommand::serve::route::Route,
     templates::{ErrorHtml, PageHtml},
     text::Text,
     text_error::TextError,
@@ -269,6 +265,11 @@ use {
   zune_jpeg::{JpegDecoder, SampleRatios, zune_core::colorspace::ColorSpace},
 };
 
+#[cfg(feature = "server")]
+use self::{
+  authenticated::Authenticated, resource::Resource, server::Server, subcommand::serve::route::Route,
+};
+
 #[cfg(feature = "client")]
 use self::{client::Client, reqwest_response_ext::ReqwestResponseExt};
 
@@ -355,6 +356,7 @@ mod audio_error;
 mod audio_format;
 mod audio_metadata;
 mod audio_position_error;
+#[cfg(feature = "server")]
 mod authenticated;
 mod authorization_error;
 mod bit_reader;
@@ -505,11 +507,13 @@ mod relative_path;
 #[cfg(feature = "client")]
 mod reqwest_response_ext;
 mod resolved;
+#[cfg(feature = "server")]
 mod resource;
 mod resource_type;
 mod revision;
 mod revision_object;
 mod rotation;
+#[cfg(feature = "server")]
 mod server;
 mod server_error;
 mod server_state;

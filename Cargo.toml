@@ -123,6 +123,8 @@ server = [
   "dep:hyper-util",
   "dep:rustls",
   "dep:rustls-acme",
+  "tokio/fs",
+  "tokio/rt-multi-thread",
 ]
 
 [dev-dependencies]
@@ -192,9 +194,6 @@ windows-sys = { version = "0.61.2", features = ["Win32_Storage_FileSystem"] }
 
 [target.'cfg(all(target_arch = "wasm32", target_os = "unknown"))'.dependencies]
 getrandom = { version = "0.4.3", features = ["wasm_js"] }
-
-[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-tokio = { version = "1.52.3", features = ["fs", "rt-multi-thread"] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 tracing-journald = "0.3.2"

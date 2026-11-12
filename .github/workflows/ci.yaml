@@ -92,15 +92,8 @@ jobs:
     - name: Check Without Default Features
       run: cargo check --lib --bins --no-default-features
 
-    - name: Check WASM Dependencies
-      run: |
-        ! cargo tree \
-          --edges normal \
-          --format '{p}' \
-          --no-default-features \
-          --prefix none \
-          --target wasm32-unknown-unknown \
-          | grep -E '^(axum-server|ctrlc|hyper-util|mio|reqwest|ring|rustls|rustls-acme) '
+    - name: Check WASM Without Default Features
+      run: cargo check --lib --bins --no-default-features --target wasm32-unknown-unknown
 
   test:
     strategy:

@@ -29,6 +29,7 @@ mod man;
 mod manifest;
 mod metadata;
 mod reference;
+#[cfg(feature = "server")]
 pub(crate) mod serve;
 mod sign;
 mod signatures;
