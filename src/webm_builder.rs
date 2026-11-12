@@ -36,17 +36,14 @@ impl WebmBuilder {
     let info = [
       self
         .timestamp_scale
-        .map(|timestamp_scale| Self::unsigned(&[0x2a, 0xd7, 0xb1], timestamp_scale))
-        .unwrap_or_default(),
+        .map_or_default(|timestamp_scale| Self::unsigned(&[0x2a, 0xd7, 0xb1], timestamp_scale)),
       self
         .duration
-        .map(|duration| Self::float(&[0x44, 0x89], duration))
-        .unwrap_or_default(),
+        .map_or_default(|duration| Self::float(&[0x44, 0x89], duration)),
       self
         .title
         .as_deref()
-        .map(|title| Self::string(&[0x7b, 0xa9], title))
-        .unwrap_or_default(),
+        .map_or_default(|title| Self::string(&[0x7b, 0xa9], title)),
       Self::string(&[0x4d, 0x80], "foo"),
       Self::string(&[0x57, 0x41], "bar"),
     ]

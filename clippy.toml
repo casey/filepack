@@ -2,7 +2,7 @@ source-item-ordering = ['enum', 'impl', 'module', 'struct', 'trait']
 
 module-item-order-groupings = [
   ["use",              ["use"]],
-  ["macros",           ["macro"]],
+  ["macros",           ["macro", "test_binder_constraints"]],
   ["modules",          ["extern_crate", "mod", "foreign_mod"]],
   ["global_asm",       ["global_asm"]],
   ["UPPER_SNAKE_CASE", ["static", "const"]],
