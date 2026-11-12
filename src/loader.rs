@@ -11,18 +11,21 @@ impl Loader {
     &self.archive
   }
 
-  pub fn fingerprint(&self) -> Result<Fingerprint> {
+  pub fn fingerprint(&self) -> Result<Fingerprint, ManifestError> {
     self
       .archive
       .fingerprint_with_options(self.options)
-      .context(error::UnarchiveManifest { path: &self.path })
+      .context(manifest_error::UnarchiveManifest { path: &self.path })
   }
 
-  pub(crate) fn load(path: Option<&Utf8Path>) -> Result<Self> {
+  pub(crate) fn load(path: Option<&Utf8Path>) -> Result<Self, ManifestError> {
     Self::load_with_options(DecodeOptions::default(), path)
   }
 
-  pub fn load_with_options(options: DecodeOptions, path: Option<&Utf8Path>) -> Result<Self> {
+  pub fn load_with_options(
+    options: DecodeOptions,
+    path: Option<&Utf8Path>,
+  ) -> Result<Self, ManifestError> {
     let path = if let Some(path) = path {
       if path.is_dir() {
         path.join_case_sensitive(Manifest::FILENAME)?
@@ -35,10 +38,10 @@ impl Loader {
     };
 
     let deco = filesystem::read_opt(&path)?
-      .ok_or_else(|| error::ManifestNotFound { path: &path }.build())?;
+      .ok_or_else(|| manifest_error::ManifestNotFound { path: &path }.build())?;
 
     let archive = Archive::decode_from_slice_with_options(options, &deco)
-      .context(error::DecodeManifest { path: &path })?;
+      .context(manifest_error::DecodeManifest { path: &path })?;
 
     Ok(Self {
       archive,
@@ -47,11 +50,11 @@ impl Loader {
     })
   }
 
-  pub(crate) fn package(&self) -> Result<Entry> {
+  pub(crate) fn package(&self) -> Result<Entry, ManifestError> {
     self
       .archive
       .package(self.options)
-      .context(error::UnarchiveManifest { path: &self.path })
+      .context(manifest_error::UnarchiveManifest { path: &self.path })
   }
 
   pub(crate) fn path(&self) -> &Utf8Path {
@@ -68,18 +71,18 @@ impl Loader {
     }
   }
 
-  pub(crate) fn unpack(&self) -> Result<Manifest> {
+  pub(crate) fn unpack(&self) -> Result<Manifest, ManifestError> {
     self
       .archive
       .unpack_with_options(self.options)
-      .context(error::UnarchiveManifest { path: &self.path })
+      .context(manifest_error::UnarchiveManifest { path: &self.path })
   }
 
-  pub(crate) fn unpack_with_totals(&self) -> Result<(Manifest, Totals)> {
+  pub(crate) fn unpack_with_totals(&self) -> Result<(Manifest, Totals), ManifestError> {
     self
       .archive
       .unpack_with_totals(self.options)
-      .context(error::UnarchiveManifest { path: &self.path })
+      .context(manifest_error::UnarchiveManifest { path: &self.path })
   }
 }
 
@@ -163,8 +166,7 @@ mod tests {
       let reject = |error| {
         assert_matches!(
           error,
-          Error::UnarchiveManifest {
-            backtrace: _,
+          ManifestError::UnarchiveManifest {
             path: actual,
             source: ArchiveError::DirectoryDecode {
               source: DecodeError::Unknown { source: UnknownError::Field { key: u64::MAX }, strict: true },

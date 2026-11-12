@@ -59,7 +59,7 @@ impl Upload {
     hash: Hash,
     size: u64,
   ) -> Result {
-    let error_context = error::UnarchiveManifest {
+    let error_context = manifest_error::UnarchiveManifest {
       path: context.loader.path(),
     };
 

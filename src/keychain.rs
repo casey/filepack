@@ -45,7 +45,7 @@ impl Keychain {
   pub(crate) fn identifier_public_key(&self, identifier: &KeyIdentifier) -> Result<PublicKey> {
     match identifier {
       KeyIdentifier::Literal(key) => Ok(*key),
-      KeyIdentifier::Name(name) => self.public_key(name),
+      KeyIdentifier::Name(name) => Ok(self.public_key(name)?),
     }
   }
 
@@ -110,7 +110,7 @@ impl Keychain {
 
           ensure! {
             filesystem::exists(&path)?,
-            error::PublicKeyNotFound { path },
+            key_error::PublicKeyNotFound { path },
           }
         }
         KeyType::Public => {
@@ -120,7 +120,7 @@ impl Keychain {
 
           ensure! {
             filesystem::exists(&path)?,
-            error::PrivateKeyNotFound { path },
+            key_error::PrivateKeyNotFound { path },
           }
 
           keys.insert(name, key);
@@ -131,12 +131,12 @@ impl Keychain {
     Ok(Self { keys, path })
   }
 
-  pub(crate) fn public_key(&self, name: &KeyName) -> Result<PublicKey> {
+  pub(crate) fn public_key(&self, name: &KeyName) -> Result<PublicKey, KeyError> {
     self
       .keys
       .get(name)
       .copied()
-      .context(error::PublicKeyNotFound {
+      .context(key_error::PublicKeyNotFound {
         path: self.path.join(name.public_key_filename()),
       })
   }

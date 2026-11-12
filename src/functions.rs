@@ -3,7 +3,7 @@ use {
   ::image::{DynamicImage, ImageBuffer, Rgb, Rgba},
 };
 
-pub(crate) fn check_case(dir: &Utf8Path, names: &[&'static str]) -> Result {
+pub(crate) fn check_case(dir: &Utf8Path, names: &[&'static str]) -> FilesystemResult {
   for entry in fs::read_dir(dir).context(filesystem_error::Io { path: dir })? {
     let actual = entry
       .context(filesystem_error::Io { path: dir })?
@@ -12,7 +12,7 @@ pub(crate) fn check_case(dir: &Utf8Path, names: &[&'static str]) -> Result {
     for &expected in names {
       ensure! {
         !actual.as_encoded_bytes().eq_ignore_ascii_case(expected.as_bytes()) || actual == expected,
-        error::FilenameCase {
+        filesystem_error::FilenameCase {
           actual: actual.to_str().unwrap(),
           expected,
         }

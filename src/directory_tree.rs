@@ -10,7 +10,7 @@ pub struct DirectoryTree {
 }
 
 impl DirectoryTree {
-  pub(crate) fn create_directory(&mut self, path: &RelativePath) -> Result {
+  pub(crate) fn create_directory(&mut self, path: &RelativePath) -> Result<(), ManifestError> {
     let mut current = self;
     for component in path.components() {
       current = current.create_directory_entry(component)?;
@@ -18,7 +18,10 @@ impl DirectoryTree {
     Ok(())
   }
 
-  fn create_directory_entry(&mut self, component: &Component) -> Result<&mut DirectoryTree> {
+  fn create_directory_entry(
+    &mut self,
+    component: &Component,
+  ) -> Result<&mut DirectoryTree, ManifestError> {
     let entry = self
       .entries
       .entry(component.to_owned())
@@ -27,7 +30,7 @@ impl DirectoryTree {
     match entry {
       DirectoryTreeEntry::Directory(directory) => Ok(directory),
       DirectoryTreeEntry::File(_file) => Err(
-        error::Internal {
+        manifest_error::Internal {
           message: "entry `{component}` already contains file",
         }
         .build(),
@@ -35,7 +38,11 @@ impl DirectoryTree {
     }
   }
 
-  pub(crate) fn create_file(&mut self, path: &RelativePath, file: File) -> Result {
+  pub(crate) fn create_file(
+    &mut self,
+    path: &RelativePath,
+    file: File,
+  ) -> Result<(), ManifestError> {
     let mut components = path.components().peekable();
 
     let mut current = self;
@@ -43,7 +50,7 @@ impl DirectoryTree {
       if components.peek().is_none() {
         ensure! {
           current.entries.insert(component.to_owned(), DirectoryTreeEntry::File(file)).is_none(),
-          error::Internal {
+          manifest_error::Internal {
             message: "entry `{component}` already contains file",
           }
         }

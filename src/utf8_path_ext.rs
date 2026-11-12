@@ -3,7 +3,7 @@ use super::*;
 pub(crate) trait Utf8PathExt {
   fn is_empty(&self) -> bool;
 
-  fn join_case_sensitive(&self, name: &'static str) -> Result<Utf8PathBuf>;
+  fn join_case_sensitive(&self, name: &'static str) -> FilesystemResult<Utf8PathBuf>;
 
   fn lexiclean(&self) -> Utf8PathBuf;
 }
@@ -13,7 +13,7 @@ impl Utf8PathExt for Utf8Path {
     self.as_str().is_empty()
   }
 
-  fn join_case_sensitive(&self, name: &'static str) -> Result<Utf8PathBuf> {
+  fn join_case_sensitive(&self, name: &'static str) -> FilesystemResult<Utf8PathBuf> {
     check_case(self, &[name])?;
     Ok(self.join(name))
   }

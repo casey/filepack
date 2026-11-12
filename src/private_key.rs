@@ -25,14 +25,14 @@ impl PrivateKey {
     &self.0
   }
 
-  pub(crate) fn load(path: &Utf8Path) -> Result<Self> {
+  pub(crate) fn load(path: &Utf8Path) -> Result<Self, KeyError> {
     let private_key = filesystem::read_to_string_opt(path)?
-      .ok_or_else(|| error::PrivateKeyNotFound { path }.build())?;
+      .ok_or_else(|| key_error::PrivateKeyNotFound { path }.build())?;
 
     let private_key = private_key
       .trim()
       .parse::<Self>()
-      .context(error::PrivateKeyLoad { path })?;
+      .context(key_error::PrivateKeyLoad { path })?;
 
     Ok(private_key)
   }

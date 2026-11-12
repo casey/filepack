@@ -305,12 +305,14 @@ pub use self::{
   flac_builder::FlacBuilder,
   functions::{gradient, gradient_alpha},
   hash::Hash,
+  key_error::KeyError,
   language::Language,
   lint_error::Lint,
   lint_group::LintGroup,
   loader::Loader,
   magic_type::MagicType,
   manifest::Manifest,
+  manifest_error::ManifestError,
   media::MediaType,
   metadata::Metadata,
   mp3_builder::Mp3Builder,
@@ -325,6 +327,7 @@ pub use self::{
   revision_object::RevisionObject,
   server_state::ServerState,
   state::State,
+  statement_error::StatementError,
   tag::Tag,
   totals::Totals,
   unstable_feature::UnstableFeature,
@@ -440,6 +443,7 @@ mod iso8601_duration;
 mod item;
 mod items;
 pub mod json;
+mod key_error;
 mod key_identifier;
 mod key_identifier_error;
 mod key_name;
@@ -458,6 +462,7 @@ mod magic;
 mod magic_type;
 mod malformed_error;
 mod manifest;
+mod manifest_error;
 mod map_decoder;
 mod map_encoder;
 mod media;
@@ -530,6 +535,7 @@ mod sort_key;
 mod sorted_set;
 mod state;
 mod statement;
+mod statement_error;
 mod static_asset;
 mod style;
 mod subcommand;

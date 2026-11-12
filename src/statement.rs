@@ -23,13 +23,13 @@ impl Message for Statement {
     with timestamp 0, signed by the all-zero private key.";
   const NAME: &'static str = "Statement";
   const TAG: Tag = Tag::Signature;
-  type Error = Error;
+  type Error = StatementError;
   type Policy<'a> = Fingerprint;
 
-  fn check(&self, _signer: PublicKey, fingerprint: Fingerprint) -> Result {
+  fn check(&self, _signer: PublicKey, fingerprint: Fingerprint) -> Result<(), StatementError> {
     ensure! {
       self.fingerprint == fingerprint,
-      error::SignatureFingerprintMismatch {
+      statement_error::SignatureFingerprintMismatch {
         package: fingerprint,
         signature: self.fingerprint,
       },
@@ -67,7 +67,7 @@ mod tests {
         .unwrap()
         .verify(other)
         .unwrap_err(),
-      Error::SignatureFingerprintMismatch {
+      StatementError::SignatureFingerprintMismatch {
         package,
         signature,
         ..

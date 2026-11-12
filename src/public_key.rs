@@ -39,14 +39,14 @@ impl PublicKey {
     self.0
   }
 
-  pub(crate) fn load(path: &Utf8Path) -> Result<Self> {
+  pub(crate) fn load(path: &Utf8Path) -> Result<Self, KeyError> {
     let public_key = filesystem::read_to_string_opt(path)?
-      .ok_or_else(|| error::PublicKeyNotFound { path }.build())?;
+      .ok_or_else(|| key_error::PublicKeyNotFound { path }.build())?;
 
     let public_key = public_key
       .trim()
       .parse::<Self>()
-      .context(error::PublicKeyLoad { path })?;
+      .context(key_error::PublicKeyLoad { path })?;
 
     Ok(public_key)
   }

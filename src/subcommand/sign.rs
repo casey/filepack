@@ -37,7 +37,7 @@ impl Sign {
 
     let actual = archive
       .fingerprint_with_options(DecodeOptions::strict())
-      .context(error::UnarchiveManifest {
+      .context(manifest_error::UnarchiveManifest {
         path: loader.path(),
       })?;
 

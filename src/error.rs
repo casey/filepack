@@ -93,12 +93,6 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     source: redb::TransactionError,
   },
-  #[snafu(display("failed to decode manifest at `{path}`"))]
-  DecodeManifest {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-    source: DecodeError,
-  },
   #[snafu(display("failed to decode metadata at `{path}`"))]
   DecodeMetadataDeco {
     backtrace: Option<Backtrace>,
@@ -116,12 +110,6 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     source: DecodeError,
     url: Url,
-  },
-  #[snafu(display("failed to deserialize manifest at `{path}`"))]
-  DeserializeManifest {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-    source: serde_json::Error,
   },
   #[snafu(display("failed to deserialize metadata at `{path}`"))]
   DeserializeMetadata {
@@ -171,25 +159,6 @@ pub enum Error {
     first: KeyIdentifier,
     second: KeyIdentifier,
   },
-  #[snafu(display(
-    "embedded file in manifest `{path}` should have hash `{expected}` but has hash `{actual}`"
-  ))]
-  EmbeddedFileHashMismatch {
-    actual: Hash,
-    backtrace: Option<Backtrace>,
-    expected: Hash,
-    path: DisplayPath,
-  },
-  #[snafu(display(
-    "embedded file `{hash}` in manifest `{path}` should have size {expected} but has size {actual}"
-  ))]
-  EmbeddedFileSizeMismatch {
-    actual: u64,
-    backtrace: Option<Backtrace>,
-    expected: u64,
-    hash: Hash,
-    path: DisplayPath,
-  },
   #[snafu(display("{count} mismatched file{}", if *count == 1 { "" } else { "s" }))]
   EntryMismatch {
     backtrace: Option<Backtrace>,
@@ -219,12 +188,6 @@ pub enum Error {
   FileNotFound {
     backtrace: Option<Backtrace>,
     hash: Hash,
-  },
-  #[snafu(display("expected `{expected}` but found case mismatch `{actual}`"))]
-  FilenameCase {
-    actual: String,
-    backtrace: Option<Backtrace>,
-    expected: &'static str,
   },
   #[snafu(transparent)]
   Filesystem {
@@ -293,6 +256,11 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     message: String,
   },
+  #[snafu(transparent)]
+  Key {
+    backtrace: Option<Backtrace>,
+    source: KeyError,
+  },
   #[snafu(display(
     "public key `{}` doesn't match private key `{}`",
     key.public_key_filename(),
@@ -339,6 +307,11 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     source: io::Error,
   },
+  #[snafu(transparent)]
+  Manifest {
+    backtrace: Option<Backtrace>,
+    source: ManifestError,
+  },
   #[snafu(display("manifest `{path}` already exists, use `--force` to overwrite it"))]
   ManifestAlreadyExists {
     backtrace: Option<Backtrace>,
@@ -348,17 +321,6 @@ pub enum Error {
   ManifestInPackage {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
-  },
-  #[snafu(display("manifest `{path}` not found"))]
-  ManifestNotFound {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-  },
-  #[snafu(display("manifest `{path}` totals error"))]
-  ManifestTotals {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-    source: TotalsError,
   },
   #[snafu(display("metadata `{path}` already exists, use `--force` to overwrite it"))]
   MetadataAlreadyExists {
@@ -416,17 +378,6 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: PathBuf,
   },
-  #[snafu(display("invalid private key `{path}`"))]
-  PrivateKeyLoad {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-    source: PrivateKeyError,
-  },
-  #[snafu(display("private key not found: `{path}`"))]
-  PrivateKeyNotFound {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-  },
   #[snafu(display("private key `{path}` has insecure permissions {mode}"))]
   PrivateKeyPermissions {
     backtrace: Option<Backtrace>,
@@ -437,17 +388,6 @@ pub enum Error {
   PublicKeyAlreadyExists {
     backtrace: Option<Backtrace>,
     path: PathBuf,
-  },
-  #[snafu(display("invalid public key: `{path}`"))]
-  PublicKeyLoad {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-    source: HexError,
-  },
-  #[snafu(display("public key not found: `{path}`"))]
-  PublicKeyNotFound {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
   },
   #[snafu(display("readme `{readme}` must end in `.md`"))]
   ReadmeExtension {
@@ -519,14 +459,6 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     source: io::Error,
   },
-  #[snafu(display(
-    "signature fingerprint `{signature}` does not match package fingerprint `{package}`"
-  ))]
-  SignatureFingerprintMismatch {
-    backtrace: Option<Backtrace>,
-    package: Fingerprint,
-    signature: Fingerprint,
-  },
   #[snafu(transparent)]
   SignatureInvalid {
     backtrace: Option<Backtrace>,
@@ -555,6 +487,11 @@ pub enum Error {
   StandardInputIo {
     backtrace: Option<Backtrace>,
     source: io::Error,
+  },
+  #[snafu(transparent)]
+  Statement {
+    backtrace: Option<Backtrace>,
+    source: StatementError,
   },
   #[snafu(display(
     "subpackage `{path}` fingerprint `{actual}` does not match `{path}/{}` fingerprint `{expected}`",
@@ -604,18 +541,6 @@ pub enum Error {
   TokenOverHttp { backtrace: Option<Backtrace> },
   #[snafu(display("total file size overflowed 64-bit integer"))]
   TotalFileSizeOverflow { backtrace: Option<Backtrace> },
-  #[snafu(display("failed to unarchive manifest"))]
-  UnarchiveManifest {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-    source: ArchiveError,
-  },
-  #[snafu(display("manifest `{path}` unknown entry `{name}` conflicts with known entry"))]
-  UnknownEntryConflict {
-    backtrace: Option<Backtrace>,
-    name: ComponentBuf,
-    path: DisplayPath,
-  },
   #[snafu(display(
     "manifest contains {}",
     Count::new(*count, "unrecognized signature"),
@@ -623,12 +548,6 @@ pub enum Error {
   UnknownSignatures {
     backtrace: Option<Backtrace>,
     count: usize,
-  },
-  #[snafu(display("manifest `{path}` contains unreferenced embedded files: {hashes}"))]
-  UnreferencedEmbeddedFiles {
-    backtrace: Option<Backtrace>,
-    hashes: Ticked<Hash>,
-    path: DisplayPath,
   },
   #[snafu(display("unstable feature `{feature}` requires `--unstable`"))]
   UnstableFeature {

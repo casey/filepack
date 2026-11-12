@@ -38,19 +38,19 @@ impl Manifest {
     self.package.files()
   }
 
-  pub(crate) fn from_json(json: &str, path: &Utf8Path) -> Result<Self> {
+  pub(crate) fn from_json(json: &str, path: &Utf8Path) -> Result<Self, ManifestError> {
     let manifest =
-      serde_json::from_str::<Self>(json).context(error::DeserializeManifest { path })?;
+      serde_json::from_str::<Self>(json).context(manifest_error::DeserializeManifest { path })?;
 
     for name in Archive::root_entries() {
       ensure! {
         !manifest.unknown.entries.contains_key(name),
-        error::UnknownEntryConflict { name: name.to_owned(), path },
+        manifest_error::UnknownEntryConflict { name: name.to_owned(), path },
       }
     }
 
     if let Some(path) = manifest.reserved_filename() {
-      return Err(error::ReservedFilename { path }.build());
+      return Err(manifest_error::ReservedFilename { path }.build());
     }
 
     let files = manifest
@@ -71,7 +71,7 @@ impl Manifest {
 
       ensure! {
         actual == expected,
-        error::EmbeddedFileHashMismatch { actual, expected, path },
+        manifest_error::EmbeddedFileHashMismatch { actual, expected, path },
       }
 
       if !hashes.contains(&expected) {
@@ -81,7 +81,7 @@ impl Manifest {
 
     ensure! {
       unreferenced.is_empty(),
-      error::UnreferencedEmbeddedFiles { hashes: unreferenced, path },
+      manifest_error::UnreferencedEmbeddedFiles { hashes: unreferenced, path },
     }
 
     for file in files {
@@ -90,7 +90,7 @@ impl Manifest {
 
         ensure! {
           actual == file.size,
-          error::EmbeddedFileSizeMismatch {
+          manifest_error::EmbeddedFileSizeMismatch {
             actual,
             expected: file.size,
             hash: file.hash,
@@ -103,16 +103,19 @@ impl Manifest {
     Ok(manifest)
   }
 
-  pub fn load(path: Option<&Utf8Path>) -> Result<Self> {
+  pub fn load(path: Option<&Utf8Path>) -> Result<Self, ManifestError> {
     Self::load_with_options(DecodeOptions::default(), path)
   }
 
-  pub fn load_with_options(options: DecodeOptions, path: Option<&Utf8Path>) -> Result<Self> {
+  pub fn load_with_options(
+    options: DecodeOptions,
+    path: Option<&Utf8Path>,
+  ) -> Result<Self, ManifestError> {
     Loader::load_with_options(options, path)?.unpack()
   }
 
-  pub(crate) fn pack(&self, path: &Utf8Path) -> Result<Archive> {
-    Archive::pack(self).context(error::ManifestTotals { path })
+  pub(crate) fn pack(&self, path: &Utf8Path) -> Result<Archive, ManifestError> {
+    Archive::pack(self).context(manifest_error::ManifestTotals { path })
   }
 
   pub(crate) fn reserved_filename(&self) -> Option<RelativePath> {
@@ -125,7 +128,7 @@ impl Manifest {
     None
   }
 
-  pub fn save(&self, path: &Utf8Path) -> Result {
+  pub fn save(&self, path: &Utf8Path) -> Result<(), ManifestError> {
     filesystem::write(path, self.pack(path)?.encode_to_vec())?;
     Ok(())
   }
