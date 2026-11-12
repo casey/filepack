@@ -128,3 +128,27 @@ jobs:
 
     - name: Test
       run: cargo test --workspace
+
+  wasm:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v7.0.1
+
+    - name: Install Rust Toolchain
+      run: rustup toolchain install stable --profile minimal --component clippy --target wasm32-unknown-unknown
+
+    - uses: Swatinem/rust-cache@v2.9.2
+
+    - name: Install wasm-bindgen Test Runner
+      run: |
+        version=$(cargo pkgid --package wasm-bindgen | sed 's/.*@//')
+        cargo install wasm-bindgen-cli --version "$version" --locked
+
+    - name: Clippy
+      run: cargo clippy --package filepack-wasm --all-targets --target wasm32-unknown-unknown
+
+    - name: Test
+      env:
+        CARGO_TARGET_WASM32_UNKNOWN_UNKNOWN_RUNNER: wasm-bindgen-test-runner
+      run: cargo test --package filepack-wasm --target wasm32-unknown-unknown
