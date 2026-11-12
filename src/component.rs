@@ -36,13 +36,7 @@ impl Component {
       }
     }
 
-    if component.eq_ignore_ascii_case(Metadata::DECO_FILENAME)
-      && component != Metadata::DECO_FILENAME
-    {
-      return true;
-    }
-
-    false
+    component.eq_ignore_ascii_case(Metadata::DECO_FILENAME) && component != Metadata::DECO_FILENAME
   }
 
   pub(crate) fn new(s: &str) -> Result<&Component, ComponentError> {

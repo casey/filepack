@@ -556,8 +556,7 @@ impl Server {
     let parents = revision
       .map(|revision| self.read_revision(revision))
       .transpose()?
-      .map(|revision_object| revision_object.parents().to_vec())
-      .unwrap_or_default();
+      .map_or_default(|revision_object| revision_object.parents().to_vec());
 
     let revisions = history.as_ref().map(|history| history.len().into_u64());
 

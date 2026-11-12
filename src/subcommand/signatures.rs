@@ -43,10 +43,7 @@ impl Signatures {
       }
       OutputFormat::Tsv => {
         for signature in &signatures {
-          let timestamp = signature
-            .timestamp
-            .map(|t| t.to_string())
-            .unwrap_or_default();
+          let timestamp = signature.timestamp.map_or_default(|t| t.to_string());
           println!("{}\t{}", signature.public_key, timestamp);
         }
       }
