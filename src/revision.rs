@@ -63,12 +63,14 @@ impl From<Hash> for Revision {
   }
 }
 
+#[cfg(feature = "redb")]
 impl redb::Key for Revision {
   fn compare(a: &[u8], b: &[u8]) -> Ordering {
     a.cmp(b)
   }
 }
 
+#[cfg(feature = "redb")]
 impl redb::Value for Revision {
   type AsBytes<'a>
     = &'a [u8; Self::LEN]
@@ -113,6 +115,7 @@ impl PathExtractor for Revision {
 mod tests {
   use super::*;
 
+  #[cfg(feature = "redb")]
   #[test]
   fn redb() {
     assert_redb_impls(&[

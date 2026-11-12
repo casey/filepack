@@ -45,7 +45,7 @@ usized = "0.0.2"
 axum-extra = { version = "0.12.6", features = ["typed-header"] }
 axum-server = { version = "0.8.0", optional = true }
 axum = { workspace = true, features = ["form", "json", "matched-path", "original-uri", "query", "tower-log", "tracing"] }
-blake3 = { version = "1.5.4", features = ["mmap", "rayon", "serde"] }
+blake3 = { version = "1.5.4", features = ["serde"] }
 boilerplate.workspace = true
 camino.workspace = true
 clap = { version = "4.5.16", features = ["derive", "env", "wrap_help"] }
@@ -72,7 +72,7 @@ owo-colors = "4.0.0"
 percent-encoding = "2.3.2"
 png = "0.18.1"
 rand = "0.10.2"
-redb = "4.1.0"
+redb = { version = "4.1.0", optional = true }
 regex = "1.10.6"
 roxmltree = "0.21.1"
 rust-embed = { version = "8.11.0", features = ["mime-guess"] }
@@ -116,6 +116,7 @@ optional = true
 [features]
 default = ["client", "server"]
 client = ["dep:reqwest", "dep:rustls"]
+redb = ["dep:redb"]
 server = [
   "axum/default",
   "dep:axum-server",
@@ -123,6 +124,7 @@ server = [
   "dep:hyper-util",
   "dep:rustls",
   "dep:rustls-acme",
+  "redb",
   "tokio/fs",
   "tokio/rt-multi-thread",
 ]
@@ -194,6 +196,10 @@ windows-sys = { version = "0.61.2", features = ["Win32_Storage_FileSystem"] }
 
 [target.'cfg(all(target_arch = "wasm32", target_os = "unknown"))'.dependencies]
 getrandom = { version = "0.4.3", features = ["wasm_js"] }
+web-time = "1.1.0"
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+blake3 = { version = "1.5.4", features = ["mmap", "rayon"] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 tracing-journald = "0.3.2"

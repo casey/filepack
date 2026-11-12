@@ -38,9 +38,11 @@ impl Options {
     }
   }
 
+  #[cfg_attr(target_arch = "wasm32", expect(clippy::unused_self))]
   pub(crate) fn hash_file(&self, path: &Utf8Path) -> io::Result<File> {
     let mut hasher = Hasher::new();
 
+    #[cfg(not(target_arch = "wasm32"))]
     if self.parallel {
       hasher.update_mmap_rayon(path)?;
     } else if self.mmap {
@@ -48,6 +50,10 @@ impl Options {
     } else {
       hasher.update_reader(fs::File::open(path)?)?;
     }
+
+    // memory maps and rayon are not available on wasm
+    #[cfg(target_arch = "wasm32")]
+    hasher.update_reader(fs::File::open(path)?)?;
 
     Ok(File {
       hash: hasher.finalize().into(),

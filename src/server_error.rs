@@ -21,14 +21,19 @@ pub(crate) enum ServerError {
   AuthorizationMissing,
   #[snafu(display("cross-origin request forbidden"))]
   CrossOriginRequest,
+  #[cfg(feature = "redb")]
   #[snafu(context(false), display("failed to open database"))]
   Database { source: redb::DatabaseError },
+  #[cfg(feature = "redb")]
   #[snafu(context(false), display("failed to commit database transaction"))]
   DatabaseCommit { source: redb::CommitError },
+  #[cfg(feature = "redb")]
   #[snafu(context(false), display("database storage error"))]
   DatabaseStorage { source: redb::StorageError },
+  #[cfg(feature = "redb")]
   #[snafu(context(false), display("failed to open database table"))]
   DatabaseTable { source: redb::TableError },
+  #[cfg(feature = "redb")]
   #[snafu(context(false), display("failed to begin database transaction"))]
   DatabaseTransaction { source: redb::TransactionError },
   #[snafu(display("failed to read request body"))]
@@ -232,12 +237,13 @@ impl ServerError {
       Self::AuthorizationInvalid { .. }
       | Self::AuthorizationMalformed
       | Self::AuthorizationMissing => StatusCode::UNAUTHORIZED,
+      #[cfg(feature = "redb")]
       Self::Database { .. }
       | Self::DatabaseCommit { .. }
       | Self::DatabaseStorage { .. }
       | Self::DatabaseTable { .. }
-      | Self::DatabaseTransaction { .. }
-      | Self::FileIo { .. }
+      | Self::DatabaseTransaction { .. } => StatusCode::INTERNAL_SERVER_ERROR,
+      Self::FileIo { .. }
       | Self::Filesystem { .. }
       | Self::InvalidResponse { .. }
       | Self::MountedPackageMediaType { .. }

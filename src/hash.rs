@@ -92,12 +92,14 @@ impl Encode for Hash {
   }
 }
 
+#[cfg(feature = "redb")]
 impl redb::Key for Hash {
   fn compare(a: &[u8], b: &[u8]) -> Ordering {
     a.cmp(b)
   }
 }
 
+#[cfg(feature = "redb")]
 impl redb::Value for Hash {
   type AsBytes<'a>
     = &'a [u8; Self::LEN]
@@ -183,6 +185,7 @@ mod tests {
     }
   }
 
+  #[cfg(feature = "redb")]
   #[test]
   fn redb() {
     assert_redb_impls(&[

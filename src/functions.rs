@@ -95,8 +95,22 @@ pub fn install_default_crypto_provider() -> Result {
   Ok(())
 }
 
+#[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
 pub(crate) fn now() -> Result<u64, SystemTimeError> {
   Ok(SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs())
+}
+
+// `SystemTime::now` panics on wasm32-unknown-unknown, so read the clock
+// through JavaScript.
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+#[expect(clippy::unnecessary_wraps)]
+pub(crate) fn now() -> Result<u64, SystemTimeError> {
+  Ok(
+    web_time::SystemTime::now()
+      .duration_since(web_time::UNIX_EPOCH)
+      .expect("system clock is before the unix epoch")
+      .as_secs(),
+  )
 }
 
 pub(crate) fn parse_number<T: FromStr<Err = ParseIntError>>(s: &str) -> Result<T, NumberError> {

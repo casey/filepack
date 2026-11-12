@@ -59,11 +59,13 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     source: io::Error,
   },
+  #[cfg(feature = "redb")]
   #[snafu(display("failed to commit to database"))]
   DatabaseCommit {
     backtrace: Option<Backtrace>,
     source: redb::CommitError,
   },
+  #[cfg(feature = "redb")]
   #[snafu(display("error opening database at `{path}`"))]
   DatabaseOpen {
     backtrace: Option<Backtrace>,
@@ -78,16 +80,19 @@ pub enum Error {
   },
   #[snafu(display("database schema version missing"))]
   DatabaseSchemaVersionMissing { backtrace: Option<Backtrace> },
+  #[cfg(feature = "redb")]
   #[snafu(display("database storage error"))]
   DatabaseStorage {
     backtrace: Option<Backtrace>,
     source: redb::StorageError,
   },
+  #[cfg(feature = "redb")]
   #[snafu(display("failed to open database table"))]
   DatabaseTableOpen {
     backtrace: Option<Backtrace>,
     source: redb::TableError,
   },
+  #[cfg(feature = "redb")]
   #[snafu(display("database transaction error"))]
   DatabaseTransaction {
     backtrace: Option<Backtrace>,
@@ -579,24 +584,28 @@ impl Error {
   }
 }
 
+#[cfg(feature = "redb")]
 impl From<redb::CommitError> for Error {
   fn from(source: redb::CommitError) -> Self {
     DatabaseCommit {}.into_error(source)
   }
 }
 
+#[cfg(feature = "redb")]
 impl From<redb::StorageError> for Error {
   fn from(source: redb::StorageError) -> Self {
     DatabaseStorage {}.into_error(source)
   }
 }
 
+#[cfg(feature = "redb")]
 impl From<redb::TableError> for Error {
   fn from(source: redb::TableError) -> Self {
     DatabaseTableOpen {}.into_error(source)
   }
 }
 
+#[cfg(feature = "redb")]
 impl From<redb::TransactionError> for Error {
   fn from(source: redb::TransactionError) -> Self {
     DatabaseTransaction {}.into_error(source)

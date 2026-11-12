@@ -3,6 +3,8 @@ use super::*;
 #[derive(Debug, Snafu)]
 #[snafu(context(suffix(false)), visibility(pub(crate)))]
 pub enum ManifestError {
+  #[snafu(display("failed to decode manifest"))]
+  Decode { source: DecodeError },
   #[snafu(display("failed to decode manifest at `{path}`"))]
   DecodeManifest {
     path: DisplayPath,
@@ -43,6 +45,10 @@ pub enum ManifestError {
   },
   #[snafu(display("package contains reserved filename `{}` at `{path}`", path.filename()))]
   ReservedFilename { path: RelativePath },
+  #[snafu(display("manifest totals error"))]
+  Totals { source: TotalsError },
+  #[snafu(display("failed to unarchive manifest"))]
+  Unarchive { source: ArchiveError },
   #[snafu(display("failed to unarchive manifest"))]
   UnarchiveManifest {
     path: DisplayPath,

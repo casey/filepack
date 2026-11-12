@@ -54,7 +54,6 @@ use {
     compression::Compression,
     content::Content,
     context::Context,
-    database_metadata::DatabaseMetadata,
     date::Date,
     deco_request::DecoRequest,
     deco_response::DecoResponse,
@@ -183,7 +182,6 @@ use {
     track::Track,
     track_codec::TrackCodec,
     track_info::TrackInfo,
-    type_name::TypeName,
     unknown_error::UnknownError,
     url_error::UrlError,
     utf8_path_ext::Utf8PathExt,
@@ -265,6 +263,9 @@ use {
   zune_jpeg::{JpegDecoder, SampleRatios, zune_core::colorspace::ColorSpace},
 };
 
+#[cfg(feature = "redb")]
+use self::{database_metadata::DatabaseMetadata, type_name::TypeName};
+
 #[cfg(feature = "server")]
 use self::{
   authenticated::Authenticated, resource::Resource, server::Server, subcommand::serve::route::Route,
@@ -291,6 +292,7 @@ use {
 
 pub use self::{
   bytes::Bytes,
+  content_hasher::ContentHasher,
   count::Count,
   decode::Decode,
   decode_options::DecodeOptions,
@@ -378,8 +380,10 @@ mod component_buf;
 mod component_error;
 mod compression;
 mod content;
+mod content_hasher;
 mod context;
 mod count;
+#[cfg(feature = "redb")]
 mod database_metadata;
 mod date;
 pub mod deco;
@@ -551,6 +555,7 @@ mod totals_error;
 mod track;
 mod track_codec;
 mod track_info;
+#[cfg(feature = "redb")]
 mod type_name;
 mod unknown_error;
 mod unstable_feature;
