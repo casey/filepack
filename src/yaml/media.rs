@@ -33,6 +33,7 @@ impl Media {
     }
   }
 
+  #[cfg(feature = "fs")]
   pub(crate) fn load(
     self,
     root: &Utf8Path,

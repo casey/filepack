@@ -59,6 +59,7 @@ impl Metadata {
     }
   }
 
+  #[cfg(feature = "fs")]
   pub(crate) fn load(self, root: &Utf8Path, quiet: bool) -> Result<crate::Metadata> {
     let Self {
       artwork,

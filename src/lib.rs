@@ -84,11 +84,7 @@ use {
     flac_decoder::FlacDecoder,
     float_ext::FloatExt,
     format::Format,
-    functions::{
-      check_case, current_dir, decode_path, default, format_size, now, parse_number,
-      transfer_tempfile,
-    },
-    hashing_writer::HashingWriter,
+    functions::{check_case, current_dir, decode_path, default, format_size, now, parse_number},
     head::Head,
     hex::Hex,
     hex_error::HexError,
@@ -134,8 +130,6 @@ use {
     order::Order,
     ordinal::Ordinal,
     orientation::Orientation,
-    output_format::OutputFormat,
-    output_format_json::OutputFormatJson,
     owo_colorize_ext::OwoColorizeExt,
     package_identifier_error::PackageIdentifierError,
     package_metadata::PackageMetadata,
@@ -145,7 +139,6 @@ use {
     path_extractor::PathExtractor,
     percent_encode::PercentEncode,
     private_key_error::PrivateKeyError,
-    progress_bar::ProgressBar,
     public_key_error::PublicKeyError,
     relative_path::RelativePath,
     resolved::Resolved,
@@ -155,7 +148,6 @@ use {
     server_error::ServerError,
     server_url::ServerUrl,
     server_url_error::ServerUrlError,
-    shell::Shell,
     shortcut::Shortcut,
     sign_options::SignOptions,
     signature::Signature,
@@ -165,7 +157,6 @@ use {
     sort_key::SortKey,
     sorted_set::SortedSet,
     statement::Statement,
-    static_asset::StaticAsset,
     style::Style,
     templates::{ErrorHtml, PageHtml},
     text::Text,
@@ -197,8 +188,6 @@ use {
   blake3::Hasher,
   boilerplate::{Boilerplate, Trusted},
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},
-  clap::{ArgGroup, CommandFactory, Parser, ValueEnum, ValueHint},
-  clap_complete::{ArgValueCandidates, CompleteEnv, CompletionCandidate},
   claxon::FlacReader,
   filepack_derive::{Decode, DecodeFromStr, Encode, EncodeDisplay, Json, Magic, route},
   futures_util::StreamExt,
@@ -246,25 +235,32 @@ use {
     Display, EnumDiscriminants, EnumIter, EnumString, FromRepr, IntoDiscriminant, IntoEnumIterator,
     IntoStaticStr, VariantArray,
   },
-  tempfile::{NamedTempFile, TempPath},
   tokio::io::{AsyncReadExt, AsyncWriteExt},
   tokio_util::io::ReaderStream,
   unicase::UniCase,
   unindent::unindent,
   url::Url,
   usized::IntoU64,
-  walkdir::WalkDir,
   zune_jpeg::{JpegDecoder, SampleRatios, zune_core::colorspace::ColorSpace},
 };
 
 #[cfg(feature = "fs")]
-use self::{
-  arguments::Arguments, keychain::Keychain, linter::Linter, options::Options,
-  subcommand::Subcommand, walk::Walk,
+use {
+  clap::{ArgGroup, CommandFactory, Parser, ValueEnum, ValueHint},
+  clap_complete::{ArgValueCandidates, CompleteEnv, CompletionCandidate},
+  tempfile::{NamedTempFile, TempPath},
+  walkdir::WalkDir,
 };
 
 #[cfg(feature = "fs")]
-use self::functions::{check_metadata, verify_subpackage};
+use self::{
+  arguments::Arguments, hashing_writer::HashingWriter, keychain::Keychain, linter::Linter,
+  options::Options, output_format::OutputFormat, output_format_json::OutputFormatJson,
+  progress_bar::ProgressBar, shell::Shell, subcommand::Subcommand, walk::Walk,
+};
+
+#[cfg(feature = "fs")]
+use self::functions::{check_metadata, transfer_tempfile, verify_subpackage};
 
 #[cfg(feature = "fs")]
 pub use self::{loader::Loader, state::State};
@@ -274,7 +270,8 @@ use self::{database_metadata::DatabaseMetadata, type_name::TypeName};
 
 #[cfg(feature = "server")]
 use self::{
-  authenticated::Authenticated, resource::Resource, server::Server, subcommand::serve::route::Route,
+  authenticated::Authenticated, resource::Resource, server::Server, static_asset::StaticAsset,
+  subcommand::serve::route::Route,
 };
 
 #[cfg(feature = "client")]
@@ -439,6 +436,7 @@ mod float_ext;
 mod format;
 mod functions;
 mod hash;
+#[cfg(feature = "fs")]
 mod hashing_writer;
 mod head;
 pub mod hex;
@@ -505,7 +503,9 @@ mod or;
 mod order;
 mod ordinal;
 mod orientation;
+#[cfg(feature = "fs")]
 mod output_format;
+#[cfg(feature = "fs")]
 mod output_format_json;
 mod owo_colorize_ext;
 mod package_identifier;
@@ -520,6 +520,7 @@ mod percent_encode;
 mod png_builder;
 mod private_key;
 mod private_key_error;
+#[cfg(feature = "fs")]
 mod progress_bar;
 mod public_key;
 mod public_key_error;
@@ -541,6 +542,7 @@ mod server_error;
 mod server_state;
 mod server_url;
 mod server_url_error;
+#[cfg(feature = "fs")]
 mod shell;
 mod shortcut;
 mod sign_options;
@@ -554,6 +556,7 @@ mod sorted_set;
 mod state;
 mod statement;
 mod statement_error;
+#[cfg(feature = "server")]
 mod static_asset;
 mod style;
 #[cfg(feature = "fs")]

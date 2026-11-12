@@ -50,7 +50,7 @@ pub(crate) fn open(path: &Utf8Path) -> FilesystemResult<fs::File> {
   fs::File::open(path).context(filesystem_error::Io { path })
 }
 
-#[cfg(not(windows))]
+#[cfg(all(feature = "fs", not(windows)))]
 pub(crate) fn persist(temp_path: TempPath, path: &Utf8Path) -> FilesystemResult {
   temp_path
     .persist(path)
@@ -64,7 +64,7 @@ pub(crate) fn persist(temp_path: TempPath, path: &Utf8Path) -> FilesystemResult 
     .context(filesystem_error::Io { path: parent })
 }
 
-#[cfg(windows)]
+#[cfg(all(feature = "fs", windows))]
 pub(crate) fn persist(temp_path: TempPath, path: &Utf8Path) -> FilesystemResult {
   use {
     std::os::windows::ffi::OsStrExt,

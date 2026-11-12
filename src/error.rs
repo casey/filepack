@@ -521,6 +521,7 @@ pub enum Error {
     path: DisplayPath,
     source: VideoError,
   },
+  #[cfg(feature = "fs")]
   #[snafu(display("error walking directory"))]
   WalkDir {
     backtrace: Option<Backtrace>,
@@ -568,6 +569,7 @@ impl From<redb::TransactionError> for Error {
   }
 }
 
+#[cfg(feature = "fs")]
 impl From<walkdir::Error> for Error {
   fn from(source: walkdir::Error) -> Self {
     WalkDir {}.into_error(source)

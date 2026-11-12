@@ -1,4 +1,7 @@
-use {super::*, clap::CommandFactory};
+use super::*;
+
+#[cfg(feature = "fs")]
+use clap::CommandFactory;
 
 pub use self::{
   command::Command, content_type::ContentType, endpoint::Endpoint, hex::Hex, lint_group::LintGroup,

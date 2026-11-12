@@ -7,6 +7,7 @@ pub(crate) enum LintSelector {
 }
 
 impl LintSelector {
+  #[cfg(feature = "fs")]
   pub(crate) fn candidates() -> Vec<CompletionCandidate> {
     Lint::schema()
       .values()

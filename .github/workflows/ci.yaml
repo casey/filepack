@@ -98,6 +98,16 @@ jobs:
     - name: Check WASM Without Default Features
       run: cargo check --lib --bins --no-default-features --target wasm32-unknown-unknown
 
+    - name: Check Library-Only Dependencies
+      run: |
+        ! cargo tree \
+          --edges normal \
+          --format '{p}' \
+          --no-default-features \
+          --package filepack \
+          --prefix none \
+          | grep -E '^(clap|clap_complete|clap_mangen|dirs|indicatif|rust-embed|tempfile|tracing-subscriber|walkdir) '
+
   test:
     strategy:
       matrix:

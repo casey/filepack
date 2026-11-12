@@ -123,6 +123,7 @@ pub(crate) fn parse_number<T: FromStr<Err = ParseIntError>>(s: &str) -> Result<T
   Ok(s.parse()?)
 }
 
+#[cfg(feature = "fs")]
 pub(crate) fn transfer_tempfile(hash: Hash, path: &Utf8Path) -> FilesystemResult<NamedTempFile> {
   tempfile::Builder::new()
     .prefix(&format!("{hash}-"))
