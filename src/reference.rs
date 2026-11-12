@@ -41,6 +41,7 @@ pub struct Reference {
 }
 
 impl Reference {
+  #[cfg(feature = "fs")]
   pub fn new() -> Self {
     fn descriptions<T: Json>() -> BTreeMap<String, String> {
       T::schema()

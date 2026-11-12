@@ -175,6 +175,7 @@ impl Metadata {
     files
   }
 
+  #[cfg(feature = "fs")]
   pub(crate) fn generate(&mut self, root: &Utf8Path, force: bool, quiet: bool) -> Result {
     assert!(self.thumbnails.is_none());
 
@@ -307,6 +308,7 @@ impl Metadata {
       })
   }
 
+  #[cfg(feature = "fs")]
   pub(crate) fn load(root: &Utf8Path) -> Result<Option<Self>, MetadataError> {
     let path = root.join(Self::DECO_FILENAME);
 

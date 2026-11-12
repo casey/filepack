@@ -114,8 +114,9 @@ features = ["axum", "ring", "tls12", "webpki-roots"]
 optional = true
 
 [features]
-default = ["client", "server"]
-client = ["dep:reqwest", "dep:rustls"]
+default = ["client", "fs", "server"]
+client = ["dep:reqwest", "dep:rustls", "fs"]
+fs = []
 redb = ["dep:redb"]
 server = [
   "axum/default",
@@ -124,6 +125,7 @@ server = [
   "dep:hyper-util",
   "dep:rustls",
   "dep:rustls-acme",
+  "fs",
   "redb",
   "tokio/fs",
   "tokio/rt-multi-thread",
@@ -138,6 +140,7 @@ doctest = false
 
 [[bin]]
 name = "filepack"
+required-features = ["fs"]
 test = false
 
 [lints]

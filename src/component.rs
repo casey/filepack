@@ -5,7 +5,8 @@ use super::*;
 pub struct Component(str);
 
 impl Component {
-  const RESERVED: &'static [&'static str] = &[Manifest::FILENAME, State::DIR];
+  const RESERVED: &'static [&'static str] = &[Manifest::FILENAME, Self::STATE_DIR];
+  pub(crate) const STATE_DIR: &'static str = ".filepack";
 
   pub(crate) fn as_str(&self) -> &str {
     &self.0

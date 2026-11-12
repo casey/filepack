@@ -7,7 +7,7 @@ pub struct State {
 }
 
 impl State {
-  pub(crate) const DIR: &'static str = ".filepack";
+  pub(crate) const DIR: &'static str = Component::STATE_DIR;
   const FILENAME: &'static str = "state.json";
 
   pub fn load(root: &Utf8Path) -> Result<Self> {

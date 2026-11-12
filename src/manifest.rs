@@ -119,10 +119,12 @@ impl Manifest {
     Ok(manifest)
   }
 
+  #[cfg(feature = "fs")]
   pub fn load(path: Option<&Utf8Path>) -> Result<Self, ManifestError> {
     Self::load_with_options(DecodeOptions::default(), path)
   }
 
+  #[cfg(feature = "fs")]
   pub fn load_with_options(
     options: DecodeOptions,
     path: Option<&Utf8Path>,
@@ -144,11 +146,13 @@ impl Manifest {
     None
   }
 
+  #[cfg(feature = "fs")]
   pub fn save(&self, path: &Utf8Path) -> Result<(), ManifestError> {
     filesystem::write(path, self.pack(path)?.encode_to_vec())?;
     Ok(())
   }
 
+  #[cfg(feature = "fs")]
   pub(crate) fn sign(
     &mut self,
     fingerprint: Fingerprint,

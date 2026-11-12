@@ -17,11 +17,11 @@
 //! integration tests. As such, it should not be used by outside consumers, and
 //! provides no semantic versioning guarantees.
 
-// Building without the default `client` and `server` features leaves code that
-// only they use unreachable.
+// Building without the default `client`, `fs` and `server` features leaves
+// code that only they use unreachable.
 #![cfg_attr(
-  not(all(feature = "client", feature = "server")),
-  allow(dead_code, unused_imports)
+  not(all(feature = "client", feature = "fs", feature = "server")),
+  allow(dead_code, unreachable_pub, unused_imports)
 )]
 
 use {
@@ -30,7 +30,6 @@ use {
     archive::Archive,
     archive_builder::ArchiveBuilder,
     archive_error::ArchiveError,
-    arguments::Arguments,
     array_decoder::ArrayDecoder,
     array_encoder::ArrayEncoder,
     audio::Audio,
@@ -86,8 +85,8 @@ use {
     float_ext::FloatExt,
     format::Format,
     functions::{
-      check_case, check_metadata, current_dir, decode_path, default, format_size, now,
-      parse_number, transfer_tempfile, verify_subpackage,
+      check_case, current_dir, decode_path, default, format_size, now, parse_number,
+      transfer_tempfile,
     },
     hashing_writer::HashingWriter,
     head::Head,
@@ -109,11 +108,9 @@ use {
     key_identifier_error::KeyIdentifierError,
     key_name::KeyName,
     key_type::KeyType,
-    keychain::Keychain,
     language_error::LanguageError,
     lint_error::LintError,
     lint_selector::LintSelector,
-    linter::Linter,
     m4a_decoder::M4aDecoder,
     m4a_error::M4aError,
     magic::Magic,
@@ -133,7 +130,6 @@ use {
     mp4_error::Mp4Error,
     number_error::NumberError,
     open_graph_image::OpenGraphImage,
-    options::Options,
     or::Or,
     order::Order,
     ordinal::Ordinal,
@@ -171,7 +167,6 @@ use {
     statement::Statement,
     static_asset::StaticAsset,
     style::Style,
-    subcommand::Subcommand,
     templates::{ErrorHtml, PageHtml},
     text::Text,
     text_error::TextError,
@@ -190,7 +185,6 @@ use {
     video_error::VideoError,
     video_format::VideoFormat,
     video_metadata::VideoMetadata,
-    walk::Walk,
     webm_decoder::WebmDecoder,
     xmp_error::XmpError,
   },
@@ -263,6 +257,18 @@ use {
   zune_jpeg::{JpegDecoder, SampleRatios, zune_core::colorspace::ColorSpace},
 };
 
+#[cfg(feature = "fs")]
+use self::{
+  arguments::Arguments, keychain::Keychain, linter::Linter, options::Options,
+  subcommand::Subcommand, walk::Walk,
+};
+
+#[cfg(feature = "fs")]
+use self::functions::{check_metadata, verify_subpackage};
+
+#[cfg(feature = "fs")]
+pub use self::{loader::Loader, state::State};
+
 #[cfg(feature = "redb")]
 use self::{database_metadata::DatabaseMetadata, type_name::TypeName};
 
@@ -311,7 +317,6 @@ pub use self::{
   language::Language,
   lint_error::Lint,
   lint_group::LintGroup,
-  loader::Loader,
   magic_type::MagicType,
   manifest::Manifest,
   manifest_error::ManifestError,
@@ -329,7 +334,6 @@ pub use self::{
   reference::Reference,
   revision_object::RevisionObject,
   server_state::ServerState,
-  state::State,
   statement_error::StatementError,
   tag::Tag,
   totals::Totals,
@@ -353,6 +357,7 @@ mod application;
 mod archive;
 mod archive_builder;
 mod archive_error;
+#[cfg(feature = "fs")]
 mod arguments;
 mod array_decoder;
 mod array_encoder;
@@ -453,13 +458,16 @@ mod key_identifier;
 mod key_identifier_error;
 mod key_name;
 mod key_type;
+#[cfg(feature = "fs")]
 mod keychain;
 mod language;
 mod language_error;
 mod lint_error;
 mod lint_group;
 mod lint_selector;
+#[cfg(feature = "fs")]
 mod linter;
+#[cfg(feature = "fs")]
 mod loader;
 mod m4a_decoder;
 mod m4a_error;
@@ -489,6 +497,7 @@ mod mp4_error;
 mod non_empty_ordered_set;
 mod number_error;
 mod open_graph_image;
+#[cfg(feature = "fs")]
 mod options;
 mod or;
 mod order;
@@ -539,11 +548,13 @@ mod signature_error;
 mod sort;
 mod sort_key;
 mod sorted_set;
+#[cfg(feature = "fs")]
 mod state;
 mod statement;
 mod statement_error;
 mod static_asset;
 mod style;
+#[cfg(feature = "fs")]
 mod subcommand;
 mod tag;
 pub mod templates;
@@ -568,6 +579,7 @@ mod video;
 mod video_error;
 mod video_format;
 mod video_metadata;
+#[cfg(feature = "fs")]
 mod walk;
 mod webm_decoder;
 mod xmp;
@@ -599,6 +611,7 @@ type ServerResult<T = ()> = Result<T, ServerError>;
 type Attestation = Signature<Statement>;
 type Token = Signature<Claims>;
 
+#[cfg(feature = "fs")]
 fn initialize_tracing() -> Result<(), Box<dyn std::error::Error>> {
   use {
     tracing::level_filters::LevelFilter,
@@ -643,6 +656,7 @@ fn initialize_tracing() -> Result<(), Box<dyn std::error::Error>> {
   Ok(())
 }
 
+#[cfg(feature = "fs")]
 pub fn run() -> ExitCode {
   CompleteEnv::with_factory(Arguments::command)
     .var("FILEPACK_COMPLETE")

@@ -11,6 +11,7 @@ pub struct Command {
 }
 
 impl Command {
+  #[cfg(feature = "fs")]
   pub(crate) fn new(
     command: &mut clap::Command,
     name: Option<subcommand::Name>,

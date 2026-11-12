@@ -92,6 +92,9 @@ jobs:
     - name: Check Without Default Features
       run: cargo check --lib --bins --no-default-features
 
+    - name: Check With Only Filesystem Feature
+      run: cargo check --lib --bins --no-default-features --features fs
+
     - name: Check WASM Without Default Features
       run: cargo check --lib --bins --no-default-features --target wasm32-unknown-unknown
 

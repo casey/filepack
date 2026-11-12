@@ -39,6 +39,7 @@ impl PublicKey {
     self.0
   }
 
+  #[cfg(feature = "fs")]
   pub(crate) fn load(path: &Utf8Path) -> Result<Self, KeyError> {
     let public_key = filesystem::read_to_string_opt(path)?
       .ok_or_else(|| key_error::PublicKeyNotFound { path }.build())?;

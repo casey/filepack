@@ -23,6 +23,7 @@ pub(crate) fn check_case(dir: &Utf8Path, names: &[&'static str]) -> FilesystemRe
   Ok(())
 }
 
+#[cfg(feature = "fs")]
 pub(crate) fn check_metadata(root: &Utf8Path, package: &DirectoryTree) -> Result {
   for path in package.files().into_keys() {
     if path.filename() != Metadata::DECO_FILENAME {
@@ -130,6 +131,7 @@ pub(crate) fn transfer_tempfile(hash: Hash, path: &Utf8Path) -> FilesystemResult
     .context(filesystem_error::Io { path })
 }
 
+#[cfg(feature = "fs")]
 pub(crate) fn verify_subpackage(
   root: &Utf8Path,
   path: &RelativePath,

@@ -69,6 +69,7 @@ pub(crate) struct ProgressBar {
 }
 
 impl ProgressBar {
+  #[cfg(feature = "fs")]
   pub(crate) fn bytes(options: &Options, bytes: u64) -> Self {
     Self {
       inner: Self::inner(options.quiet, bytes, TEMPLATE),
@@ -106,6 +107,7 @@ impl ProgressBar {
     self.update_message();
   }
 
+  #[cfg(feature = "fs")]
   pub(crate) fn items(options: &Options, bytes: u64, items: u64, noun: &'static str) -> Self {
     let bar = Self {
       inner: Self::inner(options.quiet, bytes, TEMPLATE_WITH_MESSAGE),
