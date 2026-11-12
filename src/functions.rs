@@ -82,6 +82,7 @@ pub fn gradient_alpha(width: u32, height: u32, alpha: u8) -> DynamicImage {
   .into()
 }
 
+#[cfg(any(feature = "client", feature = "server"))]
 pub fn install_default_crypto_provider() -> Result {
   static INSTALLED: LazyLock<bool> = LazyLock::new(|| {
     rustls::crypto::ring::default_provider()

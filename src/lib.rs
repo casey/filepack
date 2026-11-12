@@ -17,6 +17,13 @@
 //! integration tests. As such, it should not be used by outside consumers, and
 //! provides no semantic versioning guarantees.
 
+// Building without the default `client` and `server` features leaves code that
+// only they use unreachable.
+#![cfg_attr(
+  not(all(feature = "client", feature = "server")),
+  allow(dead_code, unused_imports)
+)]
+
 use {
   self::{
     application::Application,
@@ -40,7 +47,6 @@ use {
     checked_url::CheckedUrl,
     chroma_subsampling::ChromaSubsampling,
     claims::Claims,
-    client::Client,
     color_info::ColorInfo,
     color_type::ColorType,
     component::Component,
@@ -148,7 +154,6 @@ use {
     progress_bar::ProgressBar,
     public_key_error::PublicKeyError,
     relative_path::RelativePath,
-    reqwest_response_ext::ReqwestResponseExt,
     resolved::Resolved,
     resource::Resource,
     resource_type::ResourceType,
@@ -264,6 +269,12 @@ use {
   zune_jpeg::{JpegDecoder, SampleRatios, zune_core::colorspace::ColorSpace},
 };
 
+#[cfg(feature = "client")]
+use self::{client::Client, reqwest_response_ext::ReqwestResponseExt};
+
+#[cfg(any(feature = "client", feature = "server"))]
+pub use self::functions::install_default_crypto_provider;
+
 #[cfg(test)]
 use {
   jpeg_builder::JpegBuilder,
@@ -291,7 +302,7 @@ pub use self::{
   entry::Entry,
   fingerprint::Fingerprint,
   flac_builder::FlacBuilder,
-  functions::{gradient, gradient_alpha, install_default_crypto_provider},
+  functions::{gradient, gradient_alpha},
   hash::Hash,
   language::Language,
   lint_error::Lint,
@@ -353,6 +364,7 @@ mod cause;
 mod checked_url;
 mod chroma_subsampling;
 mod claims;
+#[cfg(feature = "client")]
 mod client;
 mod color_info;
 mod color_type;
@@ -490,6 +502,7 @@ mod public_key_error;
 mod re;
 pub mod reference;
 mod relative_path;
+#[cfg(feature = "client")]
 mod reqwest_response_ext;
 mod resolved;
 mod resource;

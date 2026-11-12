@@ -78,6 +78,30 @@ jobs:
     - name: Build Book
       run: mdbook build book
 
+  features:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v7.0.1
+
+    - name: Install Rust Toolchain
+      run: rustup toolchain install stable --profile minimal --target wasm32-unknown-unknown
+
+    - uses: Swatinem/rust-cache@v2.9.2
+
+    - name: Check Without Default Features
+      run: cargo check --lib --bins --no-default-features
+
+    - name: Check WASM Dependencies
+      run: |
+        ! cargo tree \
+          --edges normal \
+          --format '{p}' \
+          --no-default-features \
+          --prefix none \
+          --target wasm32-unknown-unknown \
+          | grep -E '^(axum-server|ctrlc|hyper-util|mio|reqwest|ring|rustls|rustls-acme) '
+
   test:
     strategy:
       matrix:

@@ -1,7 +1,7 @@
 use {
   self::{
     host_port::HostPort, packages_query::PackagesQuery, redirect_config::RedirectConfig,
-    scheme::Scheme, server_config::ServerConfig, spawn_config::SpawnConfig,
+    scheme::Scheme, server_config::ServerConfig,
   },
   super::*,
   axum::{
@@ -13,18 +13,24 @@ use {
     routing::get,
   },
   axum_extra::headers::HeaderMapExt,
-  axum_server::Handle,
   futures_util::stream,
+  templates::{
+    DirectoryHtml, FilesHtml, HistoryHtml, HomeHtml, ItemHtml, MediaHtml, PackageHtml, PackagesHtml,
+  },
+  tokio::task::block_in_place,
+  tower_http::set_header::SetResponseHeaderLayer,
+};
+
+#[cfg(feature = "server")]
+use {
+  self::spawn_config::SpawnConfig,
+  axum_server::Handle,
   hyper_util::rt::TokioTimer,
   rustls_acme::{
     AcmeConfig, EventOk, acme::LETS_ENCRYPT_PRODUCTION_DIRECTORY, axum::AxumAcceptor,
     caches::DirCache,
   },
-  templates::{
-    DirectoryHtml, FilesHtml, HistoryHtml, HomeHtml, ItemHtml, MediaHtml, PackageHtml, PackagesHtml,
-  },
-  tokio::{net::TcpListener, runtime, task::block_in_place},
-  tower_http::set_header::SetResponseHeaderLayer,
+  tokio::{net::TcpListener, runtime},
 };
 
 pub(crate) use self::write_config::WriteConfig;
@@ -35,6 +41,7 @@ mod redirect_config;
 pub(crate) mod route;
 mod scheme;
 mod server_config;
+#[cfg(feature = "server")]
 mod spawn_config;
 #[cfg(test)]
 mod tests;
@@ -42,8 +49,11 @@ mod write_config;
 
 const CROSS_ORIGIN_RESOURCE_POLICY: HeaderName =
   HeaderName::from_static("cross-origin-resource-policy");
+#[cfg(not(feature = "server"))]
+const LETS_ENCRYPT_PRODUCTION_DIRECTORY: &str = "https://acme-v02.api.letsencrypt.org/directory";
 const SEC_FETCH_SITE: HeaderName = HeaderName::from_static("sec-fetch-site");
 
+#[cfg(feature = "server")]
 static THREAD_COUNTER: AtomicU64 = AtomicU64::new(0);
 
 type HostPortExtension = Extension<HostPort>;
@@ -151,6 +161,7 @@ pub(crate) type Input = ();
 pub(crate) type Output = ();
 
 impl Serve {
+  #[cfg(feature = "server")]
   fn acceptor(&self, acme_cache: Utf8PathBuf) -> Result<AxumAcceptor> {
     install_default_crypto_provider()?;
 
@@ -549,6 +560,7 @@ impl Serve {
       ))
   }
 
+  #[cfg(feature = "server")]
   pub(crate) fn run(self, options: Options) -> Result {
     let runtime = runtime::Builder::new_multi_thread()
       .name("server")
@@ -567,6 +579,7 @@ impl Serve {
     Ok(())
   }
 
+  #[cfg(feature = "server")]
   async fn serve(self, options: Options) -> Result {
     let handle = Handle::new();
 
@@ -666,6 +679,7 @@ impl Serve {
     Ok(())
   }
 
+  #[cfg(feature = "server")]
   fn server(
     handle: Handle<SocketAddr>,
     listener: std::net::TcpListener,
@@ -691,6 +705,7 @@ impl Serve {
     })
   }
 
+  #[cfg(feature = "server")]
   async fn spawn(
     &self,
     config: SpawnConfig,

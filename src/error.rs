@@ -43,6 +43,7 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     source: io::Error,
   },
+  #[cfg(feature = "client")]
   #[snafu(display("failed to build HTTP client"))]
   ClientBuild {
     backtrace: Option<Backtrace>,
@@ -464,6 +465,7 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     domain: Domain,
   },
+  #[cfg(feature = "client")]
   #[snafu(display("request failed"))]
   Request {
     backtrace: Option<Backtrace>,
@@ -474,12 +476,14 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: RelativePath,
   },
+  #[cfg(feature = "client")]
   #[snafu(display("failed to read body from response from {url}"))]
   ResponseBody {
     backtrace: Option<Backtrace>,
     source: reqwest::Error,
     url: Url,
   },
+  #[cfg(feature = "client")]
   #[snafu(display("response from {url} failed with status {status}: {body}"))]
   ResponseStatus {
     backtrace: Option<Backtrace>,
@@ -497,6 +501,7 @@ pub enum Error {
     number: u64,
     server: Revision,
   },
+  #[cfg(any(feature = "client", feature = "server"))]
   #[snafu(display("failed to install rustls ring crypto provider"))]
   RustlsProvider { backtrace: Option<Backtrace> },
   #[snafu(display("failed to serialize JSON to stdout"))]

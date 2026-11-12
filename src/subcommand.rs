@@ -11,10 +11,13 @@ mod archive;
 mod completions;
 mod contains;
 mod create;
+#[cfg(feature = "client")]
 mod delete;
+#[cfg(feature = "client")]
 mod download;
 mod files;
 mod fingerprint;
+#[cfg(feature = "client")]
 mod gc;
 mod hash;
 mod info;
@@ -30,6 +33,7 @@ pub(crate) mod serve;
 mod sign;
 mod signatures;
 mod size;
+#[cfg(feature = "client")]
 mod upload;
 mod verify;
 
@@ -68,14 +72,17 @@ pub(crate) enum Subcommand {
   Contains(contains::Contains),
   #[command(about = "Create manifest")]
   Create(create::Create),
+  #[cfg(feature = "client")]
   #[command(about = "Delete package from a Filepack server")]
   Delete(delete::Delete),
+  #[cfg(feature = "client")]
   #[command(about = "Download package or file from a Filepack server")]
   Download(download::Download),
   #[command(about = "List manifest files")]
   Files(files::Files),
   #[command(about = "Print package fingerprint")]
   Fingerprint(fingerprint::Fingerprint),
+  #[cfg(feature = "client")]
   #[command(about = "Delete unreferenced data on a Filepack server")]
   Gc(gc::Gc),
   #[command(about = "Print file hash")]
@@ -98,6 +105,7 @@ pub(crate) enum Subcommand {
   Metadata(metadata::Metadata),
   #[command(about = "Print reference")]
   Reference,
+  #[cfg(feature = "server")]
   #[command(about = "Start Filepack server")]
   Serve(serve::Serve),
   #[command(about = "Sign manifest")]
@@ -106,6 +114,7 @@ pub(crate) enum Subcommand {
   Signatures(signatures::Signatures),
   #[command(about = "Print manifest totals")]
   Size(size::Size),
+  #[cfg(feature = "client")]
   #[command(about = "Upload package or file to a Filepack server")]
   Upload(upload::Upload),
   #[command(about = "Verify manifest")]
@@ -119,10 +128,13 @@ impl Name {
       Self::Completions => completions::Input::io_schema(registry),
       Self::Contains => contains::Input::io_schema(registry),
       Self::Create => create::Input::io_schema(registry),
+      #[cfg(feature = "client")]
       Self::Delete => delete::Input::io_schema(registry),
+      #[cfg(feature = "client")]
       Self::Download => download::Input::io_schema(registry),
       Self::Files => files::Input::io_schema(registry),
       Self::Fingerprint => fingerprint::Input::io_schema(registry),
+      #[cfg(feature = "client")]
       Self::Gc => gc::Input::io_schema(registry),
       Self::Hash => hash::Input::io_schema(registry),
       Self::Info => info::Input::io_schema(registry),
@@ -134,10 +146,12 @@ impl Name {
       Self::Manifest => manifest::Input::io_schema(registry),
       Self::Metadata => metadata::Input::io_schema(registry),
       Self::Reference => reference::Input::io_schema(registry),
+      #[cfg(feature = "server")]
       Self::Serve => serve::Input::io_schema(registry),
       Self::Sign => sign::Input::io_schema(registry),
       Self::Signatures => signatures::Input::io_schema(registry),
       Self::Size => size::Input::io_schema(registry),
+      #[cfg(feature = "client")]
       Self::Upload => upload::Input::io_schema(registry),
       Self::Verify => verify::Input::io_schema(registry),
     }
@@ -149,10 +163,13 @@ impl Name {
       Self::Completions => completions::Output::io_schema(registry),
       Self::Contains => contains::Output::io_schema(registry),
       Self::Create => create::Output::io_schema(registry),
+      #[cfg(feature = "client")]
       Self::Delete => delete::Output::io_schema(registry),
+      #[cfg(feature = "client")]
       Self::Download => download::Output::io_schema(registry),
       Self::Files => files::Output::io_schema(registry),
       Self::Fingerprint => fingerprint::Output::io_schema(registry),
+      #[cfg(feature = "client")]
       Self::Gc => gc::Output::io_schema(registry),
       Self::Hash => hash::Output::io_schema(registry),
       Self::Info => info::Output::io_schema(registry),
@@ -164,10 +181,12 @@ impl Name {
       Self::Manifest => manifest::Output::io_schema(registry),
       Self::Metadata => metadata::Output::io_schema(registry),
       Self::Reference => reference::Output::io_schema(registry),
+      #[cfg(feature = "server")]
       Self::Serve => serve::Output::io_schema(registry),
       Self::Sign => sign::Output::io_schema(registry),
       Self::Signatures => signatures::Output::io_schema(registry),
       Self::Size => size::Output::io_schema(registry),
+      #[cfg(feature = "client")]
       Self::Upload => upload::Output::io_schema(registry),
       Self::Verify => verify::Output::io_schema(registry),
     }
@@ -181,10 +200,13 @@ impl Subcommand {
       Self::Completions(completions) => completions.run(),
       Self::Contains(contains) => contains.run(options),
       Self::Create(create) => create.run(options),
+      #[cfg(feature = "client")]
       Self::Delete(delete) => delete.run(options),
+      #[cfg(feature = "client")]
       Self::Download(download) => download.run(options),
       Self::Files(files) => files.run(),
       Self::Fingerprint(fingerprint) => fingerprint.run(),
+      #[cfg(feature = "client")]
       Self::Gc(gc) => gc.run(options),
       Self::Hash(hash) => hash.run(options),
       Self::Info => info::run(options),
@@ -196,10 +218,12 @@ impl Subcommand {
       Self::Manifest(manifest) => manifest.run(),
       Self::Metadata(metadata) => metadata.run(),
       Self::Reference => reference::run(),
+      #[cfg(feature = "server")]
       Self::Serve(serve) => serve.run(options),
       Self::Sign(sign) => sign.run(options),
       Self::Signatures(signatures) => signatures.run(),
       Self::Size(size) => size.run(),
+      #[cfg(feature = "client")]
       Self::Upload(upload) => upload.run(options),
       Self::Verify(verify) => verify.run(options),
     }
