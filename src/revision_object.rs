@@ -20,8 +20,7 @@ impl RevisionObject {
     self
       .parents
       .as_ref()
-      .map(NonEmptyOrderedSet::as_slice)
-      .unwrap_or_default()
+      .map_or_default(NonEmptyOrderedSet::as_slice)
   }
 }
 
