@@ -131,17 +131,7 @@ impl Keychain {
     Ok(Self { keys, path })
   }
 
-  pub(crate) fn public_key(&self, name: &KeyName) -> Result<PublicKey, KeyError> {
-    self
-      .keys
-      .get(name)
-      .copied()
-      .context(key_error::PublicKeyNotFound {
-        path: self.path.join(name.public_key_filename()),
-      })
-  }
-
-  pub(crate) fn sign<T: Message>(&self, name: &KeyName, message: T) -> Result<Signature<T>> {
+  pub(crate) fn private_key(&self, name: &KeyName) -> Result<PrivateKey> {
     let public_key = self.public_key(name)?;
 
     let private_key = PrivateKey::load(&self.path.join(name.private_key_filename()))?;
@@ -153,6 +143,16 @@ impl Keychain {
       }
     }
 
-    Ok(private_key.sign(message))
+    Ok(private_key)
+  }
+
+  pub(crate) fn public_key(&self, name: &KeyName) -> Result<PublicKey, KeyError> {
+    self
+      .keys
+      .get(name)
+      .copied()
+      .context(key_error::PublicKeyNotFound {
+        path: self.path.join(name.public_key_filename()),
+      })
   }
 }

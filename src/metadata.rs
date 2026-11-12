@@ -48,10 +48,10 @@ impl Metadata {
   pub(crate) const DECO_FILENAME: &'static str = "metadata.filemeta";
   pub(crate) const YAML_FILENAME: &'static str = "metadata.yaml";
 
-  fn check_colophon(colophon: &RelativePath) -> Result {
+  fn check_colophon(colophon: &RelativePath) -> Result<(), MetadataError> {
     ensure! {
       colophon.extension().is_some_and(|extension| extension == "md"),
-      error::ColophonExtension {
+      metadata_error::ColophonExtension {
         colophon,
       },
     }
@@ -63,7 +63,7 @@ impl Metadata {
     &self,
     files: &HashSet<RelativePath>,
     empty: &[RelativePath],
-  ) -> Result {
+  ) -> Result<(), MetadataError> {
     let present = files
       .iter()
       .cloned()
@@ -90,13 +90,13 @@ impl Metadata {
 
     ensure! {
       extra.is_empty(),
-      error::ExtraFiles { paths: extra },
+      metadata_error::ExtraFiles { paths: extra },
     }
 
     Ok(())
   }
 
-  pub(crate) fn check_files(&self, paths: &HashSet<RelativePath>) -> Result {
+  pub(crate) fn check_files(&self, paths: &HashSet<RelativePath>) -> Result<(), MetadataError> {
     if let Some(media) = &self.media
       && let Some(items) = media.items()
     {
@@ -105,7 +105,7 @@ impl Metadata {
         let path = item.path();
         ensure! {
           seen.insert(path),
-          error::DuplicateItem { path },
+          metadata_error::DuplicateItem { path },
         }
       }
     }
@@ -113,17 +113,17 @@ impl Metadata {
     for path in self.files() {
       ensure! {
         paths.contains(&path),
-        error::MissingMetadataFile { path },
+        metadata_error::MissingMetadataFile { path },
       }
     }
 
     Ok(())
   }
 
-  fn check_readme(readme: &RelativePath) -> Result {
+  fn check_readme(readme: &RelativePath) -> Result<(), MetadataError> {
     ensure! {
       readme.extension().is_some_and(|extension| extension == "md"),
-      error::ReadmeExtension {
+      metadata_error::ReadmeExtension {
         readme,
       },
     }
@@ -225,21 +225,23 @@ impl Metadata {
     for image in &images {
       if let Some(path) = existing.get(image.path.stem()) {
         return Err(
-          error::ThumbnailAlreadyExists {
+          metadata_error::ThumbnailAlreadyExists {
             image: &image.path,
             path,
           }
-          .build(),
+          .build()
+          .into(),
         );
       }
 
       if let Some(first) = destinations.insert(image.thumbnail_stem(), image.path.clone()) {
         return Err(
-          error::ThumbnailCollision {
+          metadata_error::ThumbnailCollision {
             first,
             second: &image.path,
           }
-          .build(),
+          .build()
+          .into(),
         );
       }
     }
@@ -305,14 +307,15 @@ impl Metadata {
       })
   }
 
-  pub(crate) fn load(root: &Utf8Path) -> Result<Option<Self>> {
+  pub(crate) fn load(root: &Utf8Path) -> Result<Option<Self>, MetadataError> {
     let path = root.join(Self::DECO_FILENAME);
 
     let Some(deco) = filesystem::read_opt(&path)? else {
       return Ok(None);
     };
 
-    let metadata = Self::decode_from_slice(&deco).context(error::DecodeMetadataDeco { path })?;
+    let metadata =
+      Self::decode_from_slice(&deco).context(metadata_error::DecodeMetadataDeco { path })?;
 
     Ok(Some(metadata))
   }
@@ -321,7 +324,7 @@ impl Metadata {
     self.thumbnails.as_ref()?.get(path)
   }
 
-  pub(crate) fn validate(&self, root: &Utf8Path) -> Result {
+  pub(crate) fn validate(&self, root: &Utf8Path) -> Result<(), MetadataError> {
     if let Some(readme) = &self.readme {
       Self::check_readme(readme)?;
     }
@@ -335,7 +338,7 @@ impl Metadata {
     if let Some(artwork) = &self.artwork {
       ensure! {
         artwork.dimensions.width == artwork.dimensions.height,
-        error::ArtworkAspectRatio {
+        metadata_error::ArtworkAspectRatio {
           dimensions: artwork.dimensions,
           path: root.join(&artwork.path),
         }

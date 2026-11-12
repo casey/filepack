@@ -317,6 +317,7 @@ pub use self::{
   manifest_error::ManifestError,
   media::MediaType,
   metadata::Metadata,
+  metadata_error::MetadataError,
   mp3_builder::Mp3Builder,
   mp4_builder::Mp4Builder,
   non_empty_ordered_set::NonEmptyOrderedSet,
@@ -474,6 +475,7 @@ mod media_item;
 mod media_item_resource;
 mod message;
 mod metadata;
+mod metadata_error;
 mod mode;
 mod mount;
 mod mount_error;

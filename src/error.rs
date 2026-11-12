@@ -3,12 +3,6 @@ use super::*;
 #[derive(Debug, Snafu)]
 #[snafu(context(suffix(false)), visibility(pub(crate)))]
 pub enum Error {
-  #[snafu(display("artwork `{path}` is {dimensions} but must be square"))]
-  ArtworkAspectRatio {
-    backtrace: Option<Backtrace>,
-    dimensions: Dimensions,
-    path: DisplayPath,
-  },
   #[snafu(display("file hash {actual} not equal to expected {expected}"))]
   Assert {
     actual: Hash,
@@ -48,11 +42,6 @@ pub enum Error {
   ClientBuild {
     backtrace: Option<Backtrace>,
     source: reqwest::Error,
-  },
-  #[snafu(display("colophon `{colophon}` must end in `.md`"))]
-  ColophonExtension {
-    backtrace: Option<Backtrace>,
-    colophon: RelativePath,
   },
   #[snafu(display("failed to get current directory"))]
   CurrentDir {
@@ -98,12 +87,6 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     source: redb::TransactionError,
   },
-  #[snafu(display("failed to decode metadata at `{path}`"))]
-  DecodeMetadataDeco {
-    backtrace: Option<Backtrace>,
-    path: DisplayPath,
-    source: DecodeError,
-  },
   #[snafu(display("failed to decode response from `{url}`"))]
   DecodeResponse {
     backtrace: Option<Backtrace>,
@@ -146,11 +129,6 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     expected: u64,
   },
-  #[snafu(display("duplicate item in metadata: `{path}`"))]
-  DuplicateItem {
-    backtrace: Option<Backtrace>,
-    path: RelativePath,
-  },
   #[snafu(display(
     "duplicate key: {}",
     if first == second {
@@ -168,11 +146,6 @@ pub enum Error {
   EntryMismatch {
     backtrace: Option<Backtrace>,
     count: usize,
-  },
-  #[snafu(display("found {} not referenced in metadata", Count::new(paths.len(), "extra file")))]
-  ExtraFiles {
-    backtrace: Option<Backtrace>,
-    paths: Vec<RelativePath>,
   },
   #[snafu(display("extraneous directory not in manifest: `{path}`"))]
   ExtraneousDirectory {
@@ -327,6 +300,11 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
+  #[snafu(transparent)]
+  Metadata {
+    backtrace: Option<Backtrace>,
+    source: MetadataError,
+  },
   #[snafu(display("metadata `{path}` already exists, use `--force` to overwrite it"))]
   MetadataAlreadyExists {
     backtrace: Option<Backtrace>,
@@ -344,11 +322,6 @@ pub enum Error {
   },
   #[snafu(display("file missing: `{path}`"))]
   MissingFile {
-    backtrace: Option<Backtrace>,
-    path: RelativePath,
-  },
-  #[snafu(display("file referenced in metadata missing: `{path}`"))]
-  MissingMetadataFile {
     backtrace: Option<Backtrace>,
     path: RelativePath,
   },
@@ -393,11 +366,6 @@ pub enum Error {
   PublicKeyAlreadyExists {
     backtrace: Option<Backtrace>,
     path: PathBuf,
-  },
-  #[snafu(display("readme `{readme}` must end in `.md`"))]
-  ReadmeExtension {
-    backtrace: Option<Backtrace>,
-    readme: RelativePath,
   },
   #[snafu(display("failed to write listening port to `{address}`"))]
   ReadyAddress {
@@ -519,18 +487,6 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
-  #[snafu(display("thumbnail for `{image}` conflicts with `{path}`"))]
-  ThumbnailAlreadyExists {
-    backtrace: Option<Backtrace>,
-    image: RelativePath,
-    path: DisplayPath,
-  },
-  #[snafu(display("thumbnail for `{second}` conflicts with thumbnail for `{first}`"))]
-  ThumbnailCollision {
-    backtrace: Option<Backtrace>,
-    first: RelativePath,
-    second: RelativePath,
-  },
   #[snafu(display("failed to generate thumbnail for image `{path}`"))]
   ThumbnailGeneration {
     backtrace: Option<Backtrace>,
@@ -575,9 +531,9 @@ pub enum Error {
 impl Error {
   pub(crate) fn causes(&self) -> Vec<Cause> {
     match self {
-      Self::ExtraFiles {
+      Self::Metadata {
         backtrace: _,
-        paths,
+        source: MetadataError::ExtraFiles { paths },
       } => paths.iter().map(Cause::Path).collect(),
       _ => self.iter_chain().skip(1).map(Cause::Error).collect(),
     }

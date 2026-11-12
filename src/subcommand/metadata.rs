@@ -32,7 +32,8 @@ impl Metadata {
 
     let bytes = filesystem::read(&path)?;
 
-    let metadata = Output::decode_from_slice(&bytes).context(error::DecodeMetadataDeco { path })?;
+    let metadata =
+      Output::decode_from_slice(&bytes).context(metadata_error::DecodeMetadataDeco { path })?;
 
     match self.format {
       OutputFormatJson::Json => println!("{}", serde_json::to_string(&metadata).unwrap()),

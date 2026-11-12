@@ -156,20 +156,33 @@ impl Manifest {
     keychain: &Keychain,
     key: &KeyName,
   ) -> Result {
-    let statement = Statement {
-      fingerprint,
-      timestamp: options
-        .timestamp
-        .then(now)
-        .transpose()
-        .context(error::Time)?,
-    };
+    let timestamp = options
+      .timestamp
+      .then(now)
+      .transpose()
+      .context(error::Time)?;
 
-    let signature = keychain.sign(key, statement)?;
+    let private_key = keychain.private_key(key)?;
 
-    self.signatures.insert(Decoded::Known(signature));
+    self.sign_with(&private_key, fingerprint, timestamp);
 
     Ok(())
+  }
+
+  /// Sign `fingerprint` with `private_key` and add the signature, with an
+  /// optional `timestamp` in seconds since the Unix epoch.
+  pub fn sign_with(
+    &mut self,
+    private_key: &PrivateKey,
+    fingerprint: Fingerprint,
+    timestamp: Option<u64>,
+  ) {
+    let signature = private_key.sign(Statement {
+      fingerprint,
+      timestamp,
+    });
+
+    self.signatures.insert(Decoded::Known(signature));
   }
 
   pub(crate) fn signatures(&self) -> impl Iterator<Item = &Attestation> {
@@ -333,6 +346,18 @@ mod tests {
     case("METADATA.FILEMETA", "METADATA.FILEMETA");
     case("foo/.FILEPACK", "foo/.FILEPACK");
     case("manifest.filepack/foo", "manifest.filepack");
+  }
+
+  #[test]
+  fn sign_with() {
+    let private_key = DisplayPrivateKey::EXAMPLE.parse::<PrivateKey>().unwrap();
+    let fingerprint = Fingerprint::EXAMPLE.parse::<Fingerprint>().unwrap();
+    let mut manifest = Manifest::with_package(DirectoryTree::new());
+    manifest.sign_with(&private_key, fingerprint, Some(0));
+    assert_eq!(
+      manifest.verify_signatures(fingerprint).unwrap(),
+      vec![private_key.public_key()],
+    );
   }
 
   #[test]
