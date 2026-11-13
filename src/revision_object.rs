@@ -1,11 +1,14 @@
 use super::*;
 
+/// Revision of a package.
 #[derive(Debug, Decode, Encode, PartialEq)]
 pub struct RevisionObject {
+  /// Fingerprint at this revision.
   #[n(1)]
   pub package: Fingerprint,
+  /// Revisions this revision was derived from.
   #[n(2)]
-  pub parents: Option<OrderedSet<Revision>>,
+  pub parents: Option<NonEmptyOrderedSet<Revision>>,
 }
 
 impl RevisionObject {
@@ -17,8 +20,7 @@ impl RevisionObject {
     self
       .parents
       .as_ref()
-      .map(OrderedSet::as_slice)
-      .unwrap_or_default()
+      .map_or_default(NonEmptyOrderedSet::as_slice)
   }
 }
 
@@ -29,8 +31,10 @@ mod tests {
   #[test]
   fn encoding() {
     assert_encoding(RevisionObject {
-      package: test::FINGERPRINT.parse().unwrap(),
-      parents: Some(OrderedSet::singleton(test::REVISION.parse().unwrap())),
+      package: Fingerprint::EXAMPLE.parse().unwrap(),
+      parents: Some(NonEmptyOrderedSet::singleton(
+        Revision::EXAMPLE.parse().unwrap(),
+      )),
     });
   }
 
@@ -38,12 +42,12 @@ mod tests {
   fn hash() {
     assert_eq!(
       RevisionObject {
-        package: test::FINGERPRINT.parse().unwrap(),
+        package: Fingerprint::EXAMPLE.parse().unwrap(),
         parents: None,
       }
       .hash()
       .to_string(),
-      test::REVISION,
+      Revision::EXAMPLE,
     );
   }
 }

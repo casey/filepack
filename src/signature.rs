@@ -1,15 +1,19 @@
 use super::*;
 
-#[allow(clippy::arbitrary_source_item_ordering)]
+/// Ed25519 signature over the hash of an enveloped message.
+#[expect(clippy::arbitrary_source_item_ordering)]
 #[derive(
   Debug, Decode, Encode, DeserializeFromStr, Eq, Ord, PartialEq, PartialOrd, SerializeDisplay,
 )]
 #[deco(strict)]
 pub struct Signature<T> {
+  /// Public key that produced the signature.
   #[n(1)]
   public_key: PublicKey,
+  /// Signed message.
   #[n(2)]
   message: T,
+  /// Ed25519 signature.
   #[n(3)]
   signature: Ed25519Signature,
 }
@@ -61,7 +65,19 @@ impl<T: Message> FromStr for Signature<T> {
 }
 
 impl<T: Message> Hex for Signature<T> {
+  const EXAMPLE: &'static str = T::EXAMPLE;
+  const EXAMPLE_DESCRIPTION: &'static str = T::EXAMPLE_DESCRIPTION;
   const TAG: Tag = T::TAG;
+}
+
+impl<T: Message> json::Json for Signature<T> {
+  fn json_schema(registry: &mut json::Registry) -> String {
+    json::Schema::Hex {
+      description: "Ed25519 signature over the hash of an enveloped message.".into(),
+      tag: T::TAG,
+    }
+    .register(&format!("Signature<{}>", T::NAME), registry)
+  }
 }
 
 #[cfg(test)]
@@ -71,17 +87,17 @@ mod tests {
   #[test]
   fn signature_begins_with_pubkey_and_fingerprint() {
     let prefix = format!(
-      "signature101a0{}02a201a0{}03c0",
-      &test::PUBLIC_KEY["public1".len()..],
-      &test::FINGERPRINT["package1".len()..],
+      "signature101a0{}02a401a0{}020003c0",
+      &PublicKey::EXAMPLE["public1".len()..],
+      &Fingerprint::EXAMPLE["package1".len()..],
     );
-    assert!(test::SIGNATURE.starts_with(&prefix));
-    assert_eq!(test::SIGNATURE.len(), prefix.len() + 128);
+    assert!(Attestation::EXAMPLE.starts_with(&prefix));
+    assert_eq!(Attestation::EXAMPLE.len(), prefix.len() + 128);
   }
 
   #[test]
   fn unexpected_field_error() {
-    let s = format!("{}0400", test::SIGNATURE);
+    let s = format!("{}0400", Attestation::EXAMPLE);
     assert_matches!(
       s.parse::<Attestation>().unwrap_err(),
       HexError::Decode {

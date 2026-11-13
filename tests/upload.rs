@@ -3,8 +3,8 @@ use super::*;
 #[test]
 fn restricted_upload_succeeds_with_auth() {
   let server = Test::new()
-    .write_keypair("master")
-    .assert_file(&format!("files/{}", Hash::bytes(b"bar")), "bar")
+    .write_key_pair("master")
+    .assert_server_file("bar")
     .ready_address()
     .args([
       "serve",
@@ -13,15 +13,14 @@ fn restricted_upload_succeeds_with_auth() {
       "--http-port",
       "0",
       "--domain",
-      "127.0.0.1",
-      "--restrict-writes",
+      "localhost",
       "--admin-key",
       "master",
     ])
     .spawn();
 
   Test::new()
-    .write_keypair("master")
+    .write_key_pair("master")
     .write("foo", "bar")
     .args([
       "upload",
@@ -41,10 +40,10 @@ fn restricted_upload_succeeds_with_auth() {
 fn reupload_package_succeeds() {
   let server = Test::new()
     .serve()
-    .assert_file(&format!("files/{}", Hash::bytes(b"aaa")), "aaa")
-    .assert_file(&format!("files/{}", Hash::bytes(b"bbb")), "bbb")
-    .assert_file(&format!("files/{}", Hash::bytes(b"ccc")), "ccc")
-    .assert_file(&format!("files/{}", Hash::bytes(b"ddd")), "ddd")
+    .assert_server_file("aaa")
+    .assert_server_file("bbb")
+    .assert_server_file("ccc")
+    .assert_server_file("ddd")
     .spawn();
 
   Test::new()
@@ -59,12 +58,12 @@ fn reupload_package_succeeds() {
     .stderr(
       "
         uploading 4 of 4 files
-        created package number 1
+        created package number 0
       ",
     )
     .success()
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
-    .stderr("package number 1 is up to date\n")
+    .stderr("package number 0 is up to date\n")
     .success();
 
   server.terminate().success();
@@ -72,10 +71,7 @@ fn reupload_package_succeeds() {
 
 #[test]
 fn reupload_succeeds() {
-  let server = Test::new()
-    .serve()
-    .assert_file(&format!("files/{}", Hash::bytes(b"bar")), "bar")
-    .spawn();
+  let server = Test::new().serve().assert_server_file("bar").spawn();
 
   for _ in 0..2 {
     Test::new()
@@ -90,7 +86,7 @@ fn reupload_succeeds() {
 #[test]
 fn serve_admin_key_by_name() {
   let server = Test::new()
-    .write_keypair("master")
+    .write_key_pair("master")
     .ready_address()
     .args([
       "serve",
@@ -99,24 +95,17 @@ fn serve_admin_key_by_name() {
       "--http-port",
       "0",
       "--domain",
-      "127.0.0.1",
-      "--restrict-writes",
+      "localhost",
       "--admin-key",
       "master",
     ])
     .spawn();
 
-  let response = reqwest::blocking::Client::new()
-    .put(format!(
-      "{}/api/file/{}",
-      server.address(),
-      Hash::bytes(b"bar")
-    ))
+  server
+    .put(format!("/api/file/{}", Hash::bytes(b"bar")))
     .body("bar")
-    .send()
-    .unwrap();
-
-  assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+    .status(StatusCode::UNAUTHORIZED)
+    .send();
 
   server.terminate().success();
 }
@@ -132,24 +121,17 @@ fn serve_admin_key_by_public_key() {
       "--http-port",
       "0",
       "--domain",
-      "127.0.0.1",
-      "--restrict-writes",
+      "localhost",
       "--admin-key",
       PUBLIC_KEY,
     ])
     .spawn();
 
-  let response = reqwest::blocking::Client::new()
-    .put(format!(
-      "{}/api/file/{}",
-      server.address(),
-      Hash::bytes(b"bar")
-    ))
+  server
+    .put(format!("/api/file/{}", Hash::bytes(b"bar")))
     .body("bar")
-    .send()
-    .unwrap();
-
-  assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+    .status(StatusCode::UNAUTHORIZED)
+    .send();
 
   server.terminate().success();
 }
@@ -177,7 +159,7 @@ fn signatures_are_not_uploaded() {
     .stderr(
       "
         uploading 3 of 3 files
-        created package number 1
+        created package number 0
       ",
     )
     .success();
@@ -220,10 +202,7 @@ fn upload_auth_requires_https() {
 
 #[test]
 fn upload_creates_file() {
-  let server = Test::new()
-    .serve()
-    .assert_file(&format!("files/{}", Hash::bytes(b"bar")), "bar")
-    .spawn();
+  let server = Test::new().serve().assert_server_file("bar").spawn();
 
   Test::new()
     .write("foo", "bar")
@@ -235,10 +214,7 @@ fn upload_creates_file() {
 
 #[test]
 fn upload_package_accepts_directory() {
-  let server = Test::new()
-    .serve()
-    .assert_file(&format!("files/{}", Hash::bytes(b"bar")), "bar")
-    .spawn();
+  let server = Test::new().serve().assert_server_file("bar").spawn();
 
   Test::new()
     .write("foo/bar", "bar")
@@ -248,7 +224,7 @@ fn upload_package_accepts_directory() {
     .stderr(
       "
         uploading 1 of 1 file
-        created package number 1
+        created package number 0
       ",
     )
     .success();
@@ -258,10 +234,7 @@ fn upload_package_accepts_directory() {
 
 #[test]
 fn upload_package_defaults_to_current_directory() {
-  let server = Test::new()
-    .serve()
-    .assert_file(&format!("files/{}", Hash::bytes(b"bar")), "bar")
-    .spawn();
+  let server = Test::new().serve().assert_server_file("bar").spawn();
 
   Test::new()
     .write("foo", "bar")
@@ -271,7 +244,7 @@ fn upload_package_defaults_to_current_directory() {
     .stderr(
       "
         uploading 1 of 1 file
-        created package number 1
+        created package number 0
       ",
     )
     .success();
@@ -464,7 +437,7 @@ fn upload_package_serves_package_html() {
     .stderr(
       "
         uploading 2 of 2 files
-        created package number 1
+        created package number 0
       ",
     )
     .success();
@@ -484,16 +457,13 @@ fn upload_package_serves_package_html() {
 
   let root = Hash::from(fingerprint);
 
-  let deco = reqwest::blocking::get(format!("{}/file/{root}", server.address()))
-    .unwrap()
-    .bytes()
-    .unwrap();
+  let deco = server.get(format!("/file/{root}")).send();
 
   let directory = Directory::decode_strict(&deco).unwrap();
 
-  server.assert_page(
-    &format!("/package/{fingerprint}"),
-    PackageHtml {
+  server
+    .get(format!("/package/{fingerprint}"))
+    .assert_page(PackageHtml {
       colophon: None,
       directory,
       fingerprint,
@@ -508,8 +478,8 @@ fn upload_package_serves_package_html() {
       revision: None,
       revisions: None,
       totals,
-    },
-  );
+    })
+    .send();
 
   server.terminate().success();
 }
@@ -518,8 +488,8 @@ fn upload_package_serves_package_html() {
 fn upload_package_skips_files_already_on_server() {
   let server = Test::new()
     .serve()
-    .assert_file(&format!("files/{}", Hash::bytes(b"aaa")), "aaa")
-    .assert_file(&format!("files/{}", Hash::bytes(b"bbb")), "bbb")
+    .assert_server_file("aaa")
+    .assert_server_file("bbb")
     .spawn();
 
   Test::new()
@@ -533,7 +503,7 @@ fn upload_package_skips_files_already_on_server() {
     .stderr(
       "
         uploading 1 of 2 files
-        created package number 1
+        created package number 0
       ",
     )
     .success();
@@ -542,13 +512,24 @@ fn upload_package_skips_files_already_on_server() {
 }
 
 #[test]
+fn upload_package_state_case_variant_error() {
+  Test::new()
+    .arg("create")
+    .success()
+    .create_dir(".FILEPACK")
+    .args(["upload", "--server", "http://127.0.0.1:1"])
+    .stderr("error: expected `.filepack` but found case mismatch `.FILEPACK`\n")
+    .failure();
+}
+
+#[test]
 fn upload_package_uploads_files() {
   let server = Test::new()
     .serve()
-    .assert_file(&format!("files/{}", Hash::bytes(b"aaa")), "aaa")
-    .assert_file(&format!("files/{}", Hash::bytes(b"bbb")), "bbb")
-    .assert_file(&format!("files/{}", Hash::bytes(b"ccc")), "ccc")
-    .assert_file(&format!("files/{}", Hash::bytes(b"ddd")), "ddd")
+    .assert_server_file("aaa")
+    .assert_server_file("bbb")
+    .assert_server_file("ccc")
+    .assert_server_file("ddd")
     .assert_file_count("files", 8)
     .spawn();
 
@@ -569,25 +550,22 @@ fn upload_package_uploads_files() {
     .stderr(
       "
         uploading 4 of 4 files
-        created package number 1
+        created package number 0
       ",
     )
     .success();
 
-  let deco = reqwest::blocking::get(format!("{}/file/{root}", server.address()))
-    .unwrap()
-    .bytes()
-    .unwrap();
+  let deco = server.get(format!("/file/{root}")).send();
 
   let directory = Directory::decode_strict(&deco).unwrap();
 
-  server.assert_page(
-    &format!("/directory/{root}"),
-    DirectoryHtml {
+  server
+    .get(format!("/directory/{root}"))
+    .assert_page(DirectoryHtml {
       directory,
       hash: root,
-    },
-  );
+    })
+    .send();
 
   server.terminate().success();
 }
@@ -612,7 +590,7 @@ fn upload_records_state() {
     .stderr(
       "
         uploading 1 of 1 file
-        created package number 1
+        created package number 0
       ",
     )
     .success()
@@ -626,7 +604,7 @@ fn upload_records_state() {
       servers: BTreeMap::from([(
         format!("{}/", server.address()),
         ServerState {
-          number: 1,
+          number: 0,
           revision,
         },
       )]),
@@ -648,7 +626,7 @@ fn upload_rejects_stale_state() {
     .stderr(
       "
         uploading 1 of 1 file
-        created package number 1
+        created package number 0
       ",
     )
     .success();
@@ -664,7 +642,7 @@ fn upload_rejects_stale_state() {
     .args(["create", "."])
     .success()
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
-    .stderr("server already has package number 1\n")
+    .stderr("server already has package number 0\n")
     .success()
     .write("foo", "baz")
     .args(["create", "--force", "."])
@@ -673,14 +651,14 @@ fn upload_rejects_stale_state() {
     .stderr(
       "
         uploading 1 of 1 file
-        updated package number 1
+        updated package number 0
       ",
     )
     .success();
 
   let head = RevisionObject {
     package: fingerprint(&b.path().join("manifest.filepack")),
-    parents: Some(OrderedSet::singleton(root)),
+    parents: Some(NonEmptyOrderedSet::singleton(root)),
   }
   .hash();
 
@@ -689,7 +667,7 @@ fn upload_rejects_stale_state() {
     .success()
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
     .stderr(&format!(
-      "error: package number 1 is at revision {head} on the server, but the last uploaded \
+      "error: package number 0 is at revision {head} on the server, but the last uploaded \
       revision is {root}\n"
     ))
     .failure();
@@ -713,7 +691,7 @@ fn upload_replaces_package() {
     .stderr(
       "
         uploading 1 of 1 file
-        created package number 1
+        created package number 0
       ",
     )
     .success()
@@ -729,44 +707,30 @@ fn upload_replaces_package() {
       "--server",
       &server.address(),
       "--replace",
-      "1",
+      "0",
       "manifest.filepack",
     ])
     .stderr(
       "
         uploading 1 of 1 file
-        replaced package number 1
+        replaced package number 0
       ",
     )
     .success();
 
-  let address = server.address();
+  server.get(format!("/package/{new}")).send();
 
-  assert_eq!(
-    reqwest::blocking::get(format!("{address}/package/{new}"))
-      .unwrap()
-      .status(),
-    StatusCode::OK,
-  );
-
-  assert_eq!(
-    reqwest::blocking::get(format!("{address}/package/1"))
-      .unwrap()
-      .status(),
-    StatusCode::OK,
-  );
+  server.get("/package/0").send();
 
   Test::new()
-    .args(["gc", "--server", &address])
+    .args(["gc", "--server", &server.address()])
     .stderr("removed 1 revision, 1 package, 1 directory, and 3 files, freeing 84 B\n")
     .success();
 
-  assert_eq!(
-    reqwest::blocking::get(format!("{address}/package/{old}"))
-      .unwrap()
-      .status(),
-    StatusCode::NOT_FOUND,
-  );
+  server
+    .get(format!("/package/{old}"))
+    .status(StatusCode::NOT_FOUND)
+    .send();
 
   server.terminate().success();
 }
@@ -791,7 +755,7 @@ fn upload_updates_implicitly() {
     .stderr(
       "
         uploading 1 of 1 file
-        created package number 1
+        created package number 0
       ",
     )
     .success()
@@ -802,17 +766,17 @@ fn upload_updates_implicitly() {
     .stderr(
       "
         uploading 1 of 1 file
-        updated package number 1
+        updated package number 0
       ",
     )
     .success()
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
-    .stderr("package number 1 is up to date\n")
+    .stderr("package number 0 is up to date\n")
     .success();
 
   let head = RevisionObject {
     package: fingerprint(&test.path().join("manifest.filepack")),
-    parents: Some(OrderedSet::singleton(root)),
+    parents: Some(NonEmptyOrderedSet::singleton(root)),
   }
   .hash();
 
@@ -822,7 +786,7 @@ fn upload_updates_implicitly() {
       servers: BTreeMap::from([(
         format!("{}/", server.address()),
         ServerState {
-          number: 1,
+          number: 0,
           revision: head,
         },
       )]),
@@ -848,7 +812,7 @@ fn upload_updates_package() {
     .stderr(
       "
         uploading 1 of 1 file
-        created package number 1
+        created package number 0
       ",
     )
     .success()
@@ -857,10 +821,10 @@ fn upload_updates_package() {
       "--server",
       &server.address(),
       "--update",
-      "1",
+      "0",
       "manifest.filepack",
     ])
-    .stderr("package number 1 is up to date\n")
+    .stderr("package number 0 is up to date\n")
     .success()
     .write("foo", "baz")
     .args(["create", "--force", "."])
@@ -874,31 +838,24 @@ fn upload_updates_package() {
       "--server",
       &server.address(),
       "--update",
-      "1",
+      "0",
       "manifest.filepack",
     ])
     .stderr(
       "
         uploading 1 of 1 file
-        updated package number 1
+        updated package number 0
       ",
     )
     .success();
 
-  let address = server.address();
-
   Test::new()
-    .args(["gc", "--server", &address])
+    .args(["gc", "--server", &server.address()])
     .stderr("removed 0 revisions, 0 packages, 0 directories, and 0 files, freeing 0 B\n")
     .success();
 
-  for identifier in [old.to_string(), new.to_string(), "1".into()] {
-    assert_eq!(
-      reqwest::blocking::get(format!("{address}/package/{identifier}"))
-        .unwrap()
-        .status(),
-      StatusCode::OK,
-    );
+  for identifier in [old.to_string(), new.to_string(), "0".into()] {
+    server.get(format!("/package/{identifier}")).send();
   }
 
   server.terminate().success();

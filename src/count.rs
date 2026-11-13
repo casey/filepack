@@ -1,6 +1,6 @@
 use super::*;
 
-pub(crate) struct Count<N> {
+pub struct Count<N> {
   n: N,
   noun: &'static str,
   plural: Option<&'static str>,
@@ -15,7 +15,7 @@ impl<N> Count<N> {
     }
   }
 
-  pub(crate) fn new(n: N, noun: &'static str) -> Self {
+  pub fn new(n: N, noun: &'static str) -> Self {
     Self {
       n,
       noun,

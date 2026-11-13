@@ -1,9 +1,12 @@
 use super::*;
 
-#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Serialize)]
+/// Hashed file.
+#[derive(Clone, Copy, Debug, Deserialize, Json, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct File {
+  /// BLAKE3 hash of the file contents.
   pub(crate) hash: Hash,
+  /// Size of the file in bytes.
   pub(crate) size: u64,
 }
 
@@ -53,7 +56,7 @@ mod tests {
     assert!(
       serde_json::from_str::<File>(&format!(
         r#"{{"hash": "{}", "size": 0, "foo": null}}"#,
-        test::HASH,
+        Hash::EXAMPLE,
       ))
       .unwrap_err()
       .to_string()

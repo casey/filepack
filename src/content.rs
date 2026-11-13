@@ -5,7 +5,7 @@ pub(crate) trait Content: Sized {
 
   type Format: Format;
 
-  fn format(&self) -> Option<Self::Format>;
+  fn format(&self) -> &Decoded<Self::Format>;
 
   fn info(&self, builder: InfoBuilder) -> InfoBuilder;
 
@@ -20,6 +20,8 @@ pub(crate) trait Content: Sized {
   fn resource_type(&self) -> ResourceType {
     self
       .format()
+      .known()
+      .copied()
       .map_or(ResourceType::Binary, Format::resource_type)
   }
 

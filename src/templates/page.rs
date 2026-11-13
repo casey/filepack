@@ -13,34 +13,38 @@ impl<T: Page> PageHtml<T> {
     if self.content.prev().is_some() {
       shortcuts.push(Shortcut {
         description: "go to previous",
-        key: 'p',
+        keys: &['←', 'p'],
       });
     }
 
     if self.content.next().is_some() {
       shortcuts.push(Shortcut {
         description: "go to next",
-        key: 'n',
+        keys: &['→', 'n'],
       });
     }
 
     if self.content.up().is_some() {
       shortcuts.push(Shortcut {
         description: "go up",
-        key: 'u',
+        keys: &['u'],
       });
     }
 
     shortcuts.extend(self.content.shortcuts());
 
-    if !shortcuts.is_empty() {
-      shortcuts.push(Shortcut {
-        description: "toggle shortcuts",
-        key: '?',
-      });
-    }
+    shortcuts.push(Shortcut {
+      description: "toggle shortcuts",
+      keys: &['?'],
+    });
 
     shortcuts
+  }
+}
+
+impl<T: Page> Describe for PageHtml<T> {
+  fn describe(endpoint: &mut reference::Endpoint, _registry: &mut deco::Registry) {
+    endpoint.response = Some(reference::Response::Html);
   }
 }
 
@@ -96,7 +100,7 @@ mod tests {
     fn shortcuts(&self) -> Vec<Shortcut> {
       vec![Shortcut {
         description: "foo",
-        key: 'f',
+        keys: &['f'],
       }]
     }
 
@@ -153,7 +157,9 @@ mod tests {
                 <nav>
                   <a href=/>Filepack</a>
                   <a href=/packages>Packages</a>
+                  <a href=https://filepack.com/book>Book</a>
                   <a href=https://github.com/casey/filepack>GitHub</a>
+                  <button aria-label='Keyboard shortcuts' popovertarget=shortcuts title='Keyboard shortcuts'>?</button>
                 </nav>
               </header>
               <main>
@@ -161,8 +167,8 @@ mod tests {
               </main>
               <div id=shortcuts popover>
                 <dl>
-                  <div><dt><kbd>p</kbd></dt><dd>go to previous</dd></div>
-                  <div><dt><kbd>n</kbd></dt><dd>go to next</dd></div>
+                  <div><dt><kbd>←</kbd> or <kbd>p</kbd></dt><dd>go to previous</dd></div>
+                  <div><dt><kbd>→</kbd> or <kbd>n</kbd></dt><dd>go to next</dd></div>
                   <div><dt><kbd>u</kbd></dt><dd>go up</dd></div>
                   <div><dt><kbd>f</kbd></dt><dd>foo</dd></div>
                   <div><dt><kbd>?</kbd></dt><dd>toggle shortcuts</dd></div>
@@ -204,12 +210,19 @@ mod tests {
                 <nav>
                   <a href=/>Filepack</a>
                   <a href=/packages>Packages</a>
+                  <a href=https://filepack.com/book>Book</a>
                   <a href=https://github.com/casey/filepack>GitHub</a>
+                  <button aria-label='Keyboard shortcuts' popovertarget=shortcuts title='Keyboard shortcuts'>?</button>
                 </nav>
               </header>
               <main>
                 foo
               </main>
+              <div id=shortcuts popover>
+                <dl>
+                  <div><dt><kbd>?</kbd></dt><dd>toggle shortcuts</dd></div>
+                </dl>
+              </div>
             </body>
           </html>
         "
@@ -238,12 +251,19 @@ mod tests {
                 <nav>
                   <a href=/>Filepack</a>
                   <a href=/packages>Packages</a>
+                  <a href=https://filepack.com/book>Book</a>
                   <a href=https://github.com/casey/filepack>GitHub</a>
+                  <button aria-label='Keyboard shortcuts' popovertarget=shortcuts title='Keyboard shortcuts'>?</button>
                 </nav>
               </header>
               <main>
                 foo
               </main>
+              <div id=shortcuts popover>
+                <dl>
+                  <div><dt><kbd>?</kbd></dt><dd>toggle shortcuts</dd></div>
+                </dl>
+              </div>
             </body>
           </html>
         "
@@ -275,12 +295,19 @@ mod tests {
                 <nav>
                   <a href=/>Filepack</a>
                   <a href=/packages>Packages</a>
+                  <a href=https://filepack.com/book>Book</a>
                   <a href=https://github.com/casey/filepack>GitHub</a>
+                  <button aria-label='Keyboard shortcuts' popovertarget=shortcuts title='Keyboard shortcuts'>?</button>
                 </nav>
               </header>
               <main>
                 bar
               </main>
+              <div id=shortcuts popover>
+                <dl>
+                  <div><dt><kbd>?</kbd></dt><dd>toggle shortcuts</dd></div>
+                </dl>
+              </div>
             </body>
           </html>
         "

@@ -16,6 +16,7 @@ pub(crate) struct Upload {
   #[arg(
     help = "Upload <PATH>, defaults to current directory for packages",
     required_if_eq("file", "true"),
+    value_hint = ValueHint::AnyPath,
     value_name = "PATH"
   )]
   input: Option<Utf8PathBuf>,
@@ -36,6 +37,10 @@ pub(crate) struct Upload {
   )]
   update: Option<u64>,
 }
+
+pub(crate) type Input = ();
+
+pub(crate) type Output = ();
 
 impl Upload {
   pub(crate) fn run(self, options: Options) -> Result {
@@ -173,7 +178,7 @@ impl Upload {
 
     let revision_object = RevisionObject {
       package: fingerprint,
-      parents: parent.map(OrderedSet::singleton),
+      parents: parent.map(NonEmptyOrderedSet::singleton),
     };
 
     let revision = revision_object.hash();

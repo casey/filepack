@@ -2,6 +2,7 @@ use {super::*, pretty_assertions::assert_eq};
 
 #[derive(Debug)]
 pub(crate) enum Expected {
+  Check(fn(&str)),
   Empty,
   Regex(Regex),
   String(String),
@@ -11,6 +12,7 @@ impl Expected {
   #[track_caller]
   pub(crate) fn check(&self, actual: &str, name: &str) {
     match self {
+      Expected::Check(check) => check(actual),
       Expected::String(expected) => assert_eq!(actual, expected, "{name} did not match"),
       Expected::Regex(regex) => assert!(
         regex.is_match(actual),

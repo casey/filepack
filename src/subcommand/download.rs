@@ -15,7 +15,11 @@ pub(crate) struct Download {
     value_name = "HASH"
   )]
   file: Option<Hash>,
-  #[arg(help = "Download to <PATH>", value_name = "PATH")]
+  #[arg(
+    help = "Download to <PATH>",
+    value_hint = ValueHint::AnyPath,
+    value_name = "PATH"
+  )]
   output: Utf8PathBuf,
   #[arg(
     group = "target",
@@ -27,6 +31,10 @@ pub(crate) struct Download {
   #[arg(help = "Download from server at <URL>", long, value_name = "URL")]
   server: ServerUrl,
 }
+
+pub(crate) type Input = ();
+
+pub(crate) type Output = ();
 
 impl Download {
   fn download_file(&self, options: &Options, hash: Hash, path: &Utf8Path) -> Result {
@@ -105,13 +113,6 @@ impl Download {
       } else {
         assert!(totals.is_none());
 
-        for name in directory.entries.keys() {
-          ensure! {
-            !name.is_reserved(),
-            error::ReservedPath { name },
-          }
-        }
-
         totals = Some(actual);
 
         progress_bar.set_totals(actual.bytes(), actual.entries());
@@ -120,6 +121,14 @@ impl Download {
       progress_bar.item_done();
 
       directories.insert(hash, deco.to_vec());
+
+      for component in directory.entries.keys() {
+        if component.is_reserved() {
+          let path = path.join(component);
+          let path = RelativePath::try_from(path.strip_prefix(&self.output).unwrap()).unwrap();
+          return Err(error::ReservedFilename { path }.build());
+        }
+      }
 
       filesystem::create_dir_all(&path)?;
 
@@ -145,23 +154,6 @@ impl Download {
       Self::download_package_file(&mut context, *hash, path, *size)?;
     }
 
-    let metadata_path = self.output.join(Metadata::DECO_FILENAME);
-    if let Some(deco) = filesystem::read_opt(&metadata_path)? {
-      let paths = files
-        .iter()
-        .map(|(_hash, path, _size)| {
-          let path = path.strip_prefix(&self.output).unwrap();
-          path.try_into().context(error::Path { path })
-        })
-        .collect::<Result<HashSet<RelativePath>>>()?;
-
-      Metadata::decode_from_slice(&deco)
-        .context(error::DecodeMetadataDeco {
-          path: metadata_path,
-        })?
-        .check_files(&paths)?;
-    }
-
     let mut builder = ArchiveBuilder::new();
     builder.files = directories;
 
@@ -174,6 +166,10 @@ impl Download {
     let archive = builder
       .build_package(package, &BTreeSet::new(), BTreeMap::new())
       .unwrap();
+
+    let manifest = archive.unpack().unwrap();
+
+    check_metadata(&self.output, &manifest.package)?;
 
     filesystem::write(
       &self.output.join(Manifest::FILENAME),

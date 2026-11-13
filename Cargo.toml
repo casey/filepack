@@ -1,11 +1,22 @@
 [package]
 name = "filepack"
-version = "0.0.11"
+version = "0.0.12"
 autotests = false
 categories = ["command-line-utilities", "cryptography", "multimedia"]
 description = "content-addressed packages"
 keywords = ["media", "packaging", "verification"]
-include = ["CHANGELOG.md", "CONTRIBUTING", "LICENSE", "README.md", "filepack.magic", "src", "static", "templates", "tests"]
+include = [
+  "/CHANGELOG.md",
+  "/CONTRIBUTING",
+  "/LICENSE",
+  "/README.md",
+  "/completions",
+  "/filepack.magic",
+  "/src",
+  "/static",
+  "/templates",
+  "/tests",
+]
 
 authors.workspace = true
 edition.workspace = true
@@ -24,23 +35,27 @@ license = "CC0-1.0"
 repository = "https://github.com/casey/filepack"
 
 [workspace.dependencies]
+axum = "0.8.9"
+boilerplate = { version = "1.2.0", features = ["axum"] }
+camino = { version = "1.1.9", features = ["serde1"] }
 strum = { version = "0.28.0", features = ["derive"] }
 usized = "0.0.2"
 
 [dependencies]
-axum = "0.8.9"
 axum-extra = { version = "0.12.6", features = ["typed-header"] }
 axum-server = "0.8.0"
+axum.workspace = true
 blake3 = { version = "1.5.4", features = ["mmap", "rayon", "serde"] }
-boilerplate = { version = "1.2.0", features = ["axum"] }
-camino = { version = "1.1.9", features = ["serde1"] }
-clap = { version = "4.5.16", features = ["derive", "env"] }
+boilerplate.workspace = true
+camino.workspace = true
+clap = { version = "4.5.16", features = ["derive", "env", "wrap_help"] }
+clap_complete = { version = "4.6.11", features = ["unstable-dynamic"] }
 clap_mangen = "0.3.3"
 claxon = "0.4.3"
 ctrlc = { version = "3.5.2", features = ["termination"] }
 dirs = "7.0.0"
 ed25519-dalek = { version = "3.0.0", features = ["alloc", "rand_core"] }
-filepack-derive = { version = "0.0.1", path = "crates/filepack-derive" }
+filepack-derive = { version = "0.0.2", path = "crates/filepack-derive" }
 futures-util = { version = "0.3.32", default-features = false, features = ["std"] }
 humansize = { version = "2.1.3", default-features = false }
 hyper-util = { version = "0.1.20", features = ["tokio"] }
@@ -74,6 +89,7 @@ tower-http = { version = "0.7.1", features = ["set-header"] }
 tracing = "0.1.44"
 tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 unicase = "2.9.0"
+unindent = "0.2.4"
 url = "2.5.8"
 usized.workspace = true
 walkdir = "2.5.0"
@@ -97,7 +113,6 @@ features = ["axum", "ring", "tls12", "webpki-roots"]
 [dev-dependencies]
 pretty_assertions = "1.4.1"
 tower = { version = "0.5.3", features = ["util"] }
-unindent = "0.2.4"
 
 [lib]
 doctest = false
@@ -128,6 +143,7 @@ assert_is_empty = "allow"
 enum_glob_use = "allow"
 float_cmp = "allow"
 large_enum_variant = "allow"
+many_single_char_names = "allow"
 missing_errors_doc = "allow"
 missing_panics_doc = "allow"
 must_use_candidate = "allow"
@@ -142,6 +158,7 @@ struct_excessive_bools = "allow"
 struct_field_names = "allow"
 too_many_lines = "allow"
 unused_async = "allow"
+unused_async_trait_impl = "allow"
 wildcard_imports = "allow"
 
 [workspace.lints.rust]
@@ -154,6 +171,9 @@ path = "tests/lib.rs"
 
 [target."cfg(windows)".dev-dependencies]
 windows-sys = { version = "0.61.2", features = ["Win32_System_Console", "Win32_System_Threading"] }
+
+[target."cfg(windows)".dependencies]
+windows-sys = { version = "0.61.2", features = ["Win32_Storage_FileSystem"] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 tracing-journald = "0.3.2"

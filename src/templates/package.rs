@@ -60,7 +60,7 @@ impl PackageHtml {
         format!("/directory/{}", Hash::from(self.fingerprint)),
       )
       .when(self.mounted, |builder| {
-        builder.link("mount", "view", format!("/mount/{}/", self.fingerprint))
+        builder.link("mount", "view", format!("/mount/{}/", self.identifier))
       })
       .when_some(self.metadata.as_ref(), |builder, metadata| {
         metadata.info(builder, self.identifier, self.readme, self.colophon)
@@ -145,8 +145,8 @@ mod tests {
           Item {
             content: Audio {
               channels: 2,
-              codec: Some(AudioCodec::Flac),
-              format: Some(AudioFormat::Flac),
+              codec: Decoded::Known(AudioCodec::Flac),
+              format: Decoded::Known(AudioFormat::Flac),
               path: "foo.flac".parse().unwrap(),
               sample_bits: Some(16),
               sample_rate: 44100,
@@ -158,8 +158,8 @@ mod tests {
           Item {
             content: Audio {
               channels: 2,
-              codec: Some(AudioCodec::Flac),
-              format: Some(AudioFormat::Flac),
+              codec: Decoded::Known(AudioCodec::Flac),
+              format: Decoded::Known(AudioFormat::Flac),
               path: "bar.flac".parse().unwrap(),
               sample_bits: Some(24),
               sample_rate: 96000,
@@ -175,10 +175,10 @@ mod tests {
 
     assert_eq!(
       PackageHtml {
-        fingerprint: test::FINGERPRINT.parse().unwrap(),
-        identifier: PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
+        fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
+        identifier: PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
         metadata: Some(metadata),
-        number: Some(1),
+        number: Some(0),
         totals: Totals {
           directories: 0,
           directory_size: 0,
@@ -194,7 +194,7 @@ mod tests {
             <div>
               <dt>number</dt>
               <dd>
-                <a href='/package/1'>1</a>
+                <a href='/package/0'>0</a>
               </dd>
             </div>
             <div>
@@ -212,7 +212,7 @@ mod tests {
             <div>
               <dt>files</dt>
               <dd>
-                <a href='/directory/{hash}'>2 files</a>
+                <a href='/directory/{directory}'>2 files</a>
               </dd>
             </div>
             <div>
@@ -255,8 +255,8 @@ mod tests {
             </li>
           </ol>
         ",
-        fingerprint = test::FINGERPRINT,
-        hash = test::HASH,
+        directory = Hash::from(Fingerprint::EXAMPLE.parse::<Fingerprint>().unwrap()),
+        fingerprint = Fingerprint::EXAMPLE,
       )),
     );
   }
@@ -272,8 +272,8 @@ mod tests {
 
     assert_eq!(
       PackageHtml {
-        fingerprint: test::FINGERPRINT.parse().unwrap(),
-        identifier: PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
+        fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
+        identifier: PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
         metadata: Some(metadata),
         number: Some(1),
         totals: Totals {
@@ -341,8 +341,8 @@ mod tests {
             </li>
           </ol>
         ",
-        fingerprint = test::FINGERPRINT,
-        hash = test::HASH,
+        fingerprint = Fingerprint::EXAMPLE,
+        hash = Hash::from(Fingerprint::EXAMPLE.parse::<Fingerprint>().unwrap()),
       )),
     );
   }
@@ -352,8 +352,8 @@ mod tests {
     let audio = Item {
       content: Audio {
         channels: 2,
-        codec: Some(AudioCodec::Flac),
-        format: Some(AudioFormat::Flac),
+        codec: Decoded::Known(AudioCodec::Flac),
+        format: Decoded::Known(AudioFormat::Flac),
         path: "foo.flac".parse().unwrap(),
         sample_bits: Some(16),
         sample_rate: 1,
@@ -372,10 +372,10 @@ mod tests {
 
     assert_eq!(
       PackageHtml {
-        fingerprint: test::FINGERPRINT.parse().unwrap(),
-        identifier: PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
+        fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
+        identifier: PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
         metadata: Some(metadata),
-        number: Some(1),
+        number: Some(0),
         totals: Totals {
           directories: 0,
           directory_size: 0,
@@ -391,7 +391,7 @@ mod tests {
             <div>
               <dt>number</dt>
               <dd>
-                <a href='/package/1'>1</a>
+                <a href='/package/0'>0</a>
               </dd>
             </div>
             <div>
@@ -409,7 +409,7 @@ mod tests {
             <div>
               <dt>files</dt>
               <dd>
-                <a href='/directory/{hash}'>2 files</a>
+                <a href='/directory/{directory}'>2 files</a>
               </dd>
             </div>
             <div>
@@ -452,8 +452,8 @@ mod tests {
             </li>
           </ol>
         ",
-        fingerprint = test::FINGERPRINT,
-        hash = test::HASH,
+        directory = Hash::from(Fingerprint::EXAMPLE.parse::<Fingerprint>().unwrap()),
+        fingerprint = Fingerprint::EXAMPLE,
       )),
     );
   }
@@ -468,12 +468,12 @@ mod tests {
               alpha: false,
               bit_depth: 8,
               chroma_subsampling: None,
-              color_type: Some(ColorType::Rgb),
+              color_type: Decoded::Known(ColorType::Rgb),
               dimensions: Dimensions {
                 height: 1,
                 width: 2,
               },
-              format: Some(ImageFormat::Png),
+              format: Decoded::Known(ImageFormat::Png),
               orientation: Orientation::new(),
               path: "foo.png".parse().unwrap(),
             },
@@ -484,9 +484,9 @@ mod tests {
               alpha: false,
               bit_depth: 8,
               chroma_subsampling: None,
-              color_type: Some(ColorType::Rgb),
+              color_type: Decoded::Known(ColorType::Rgb),
               dimensions: Dimensions::default(),
-              format: Some(ImageFormat::Jpeg),
+              format: Decoded::Known(ImageFormat::Jpeg),
               orientation: Orientation::new(),
               path: "bar.jpg".parse().unwrap(),
             },
@@ -497,12 +497,12 @@ mod tests {
               alpha: false,
               bit_depth: 8,
               chroma_subsampling: None,
-              color_type: Some(ColorType::Rgb),
+              color_type: Decoded::Known(ColorType::Rgb),
               dimensions: Dimensions {
                 height: 1,
                 width: 2,
               },
-              format: Some(ImageFormat::Png),
+              format: Decoded::Known(ImageFormat::Png),
               orientation: Orientation::new(),
               path: "baz.png".parse().unwrap(),
             },
@@ -516,10 +516,10 @@ mod tests {
 
     assert_eq!(
       PackageHtml {
-        fingerprint: test::FINGERPRINT.parse().unwrap(),
-        identifier: PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
+        fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
+        identifier: PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
         metadata: Some(metadata),
-        number: Some(1),
+        number: Some(0),
         totals: Totals {
           directories: 0,
           directory_size: 0,
@@ -535,7 +535,7 @@ mod tests {
             <div>
               <dt>number</dt>
               <dd>
-                <a href='/package/1'>1</a>
+                <a href='/package/0'>0</a>
               </dd>
             </div>
             <div>
@@ -553,7 +553,7 @@ mod tests {
             <div>
               <dt>files</dt>
               <dd>
-                <a href='/directory/{hash}'>3 files</a>
+                <a href='/directory/{directory}'>3 files</a>
               </dd>
             </div>
             <div>
@@ -613,8 +613,8 @@ mod tests {
             </li>
           </ul>
         "#,
-        fingerprint = test::FINGERPRINT,
-        hash = test::HASH,
+        directory = Hash::from(Fingerprint::EXAMPLE.parse::<Fingerprint>().unwrap()),
+        fingerprint = Fingerprint::EXAMPLE,
       )),
     );
   }
@@ -626,8 +626,8 @@ mod tests {
         items: vec![Item {
           content: Audio {
             channels: 2,
-            codec: Some(AudioCodec::Flac),
-            format: Some(AudioFormat::Flac),
+            codec: Decoded::Known(AudioCodec::Flac),
+            format: Decoded::Known(AudioFormat::Flac),
             path: "foo.flac".parse().unwrap(),
             sample_bits: Some(16),
             sample_rate: 44100,
@@ -642,15 +642,16 @@ mod tests {
 
     assert_eq!(
       PackageHtml {
-        fingerprint: test::FINGERPRINT.parse().unwrap(),
-        identifier: PackageIdentifier::Number(1),
+        fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
+        identifier: PackageIdentifier::Number(0),
         metadata: Some(metadata),
-        number: Some(1),
+        mounted: true,
+        number: Some(0),
         parents: vec![
-          test::REVISION.parse().unwrap(),
+          Revision::EXAMPLE.parse().unwrap(),
           Revision::from(Hash::bytes(b"foo")),
         ],
-        revision: Some(test::REVISION.parse().unwrap()),
+        revision: Some(Revision::EXAMPLE.parse().unwrap()),
         revisions: Some(2),
         totals: Totals {
           directories: 0,
@@ -667,7 +668,7 @@ mod tests {
             <div>
               <dt>number</dt>
               <dd>
-                <a href='/package/1'>1</a>
+                <a href='/package/0'>0</a>
               </dd>
             </div>
             <div>
@@ -701,7 +702,7 @@ mod tests {
             <div>
               <dt>history</dt>
               <dd>
-                <a href='/package/1/history'>2 revisions</a>
+                <a href='/package/0/history'>2 revisions</a>
               </dd>
             </div>
             <div>
@@ -713,13 +714,19 @@ mod tests {
             <div>
               <dt>files</dt>
               <dd>
-                <a href='/directory/{hash}'>1 file</a>
+                <a href='/directory/{directory}'>1 file</a>
+              </dd>
+            </div>
+            <div>
+              <dt>mount</dt>
+              <dd>
+                <a href='/mount/0/'>view</a>
               </dd>
             </div>
             <div>
               <dt>media</dt>
               <dd>
-                <a href='/package/1/media'>audio</a>
+                <a href='/package/0/media'>audio</a>
               </dd>
             </div>
             <div>
@@ -747,15 +754,15 @@ mod tests {
           </dl>
           <ol>
             <li>
-              <a href=/package/1/item/1>foo</a>
+              <a href=/package/0/item/1>foo</a>
               <time datetime=PT3M45S>3:45</time>
             </li>
           </ol>
         ",
-        fingerprint = test::FINGERPRINT,
-        hash = test::HASH,
+        directory = Hash::from(Fingerprint::EXAMPLE.parse::<Fingerprint>().unwrap()),
+        fingerprint = Fingerprint::EXAMPLE,
         merge = Revision::from(Hash::bytes(b"foo")),
-        revision = test::REVISION,
+        revision = Revision::EXAMPLE,
       )),
     );
   }
@@ -763,16 +770,16 @@ mod tests {
   #[test]
   fn navigation() {
     let mut html = PackageHtml {
-      fingerprint: test::FINGERPRINT.parse().unwrap(),
-      identifier: PackageIdentifier::Number(2),
-      next: Some(3),
-      number: Some(2),
-      prev: Some(1),
+      fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
+      identifier: PackageIdentifier::Number(1),
+      next: Some(2),
+      number: Some(1),
+      prev: Some(0),
       ..default()
     };
 
-    assert_eq!(html.next(), Some("/package/3".into()));
-    assert_eq!(html.prev(), Some("/package/1".into()));
+    assert_eq!(html.next(), Some("/package/2".into()));
+    assert_eq!(html.prev(), Some("/package/0".into()));
     assert_eq!(html.up(), Some("/".into()));
 
     html.next = None;
@@ -785,19 +792,19 @@ mod tests {
   #[test]
   fn open_graph_metadata() {
     let html = PackageHtml {
-      fingerprint: test::FINGERPRINT.parse().unwrap(),
-      identifier: PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
+      fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
+      identifier: PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
       metadata: Some(Metadata {
         artwork: Some(Image {
           alpha: false,
           bit_depth: 8,
           chroma_subsampling: None,
-          color_type: Some(ColorType::Rgb),
+          color_type: Decoded::Known(ColorType::Rgb),
           dimensions: Dimensions {
             height: 1,
             width: 2,
           },
-          format: Some(ImageFormat::Png),
+          format: Decoded::Known(ImageFormat::Png),
           orientation: Orientation {
             mirrored: false,
             rotation: Rotation::R90,
@@ -807,7 +814,7 @@ mod tests {
         description: Some("bar".parse().unwrap()),
         ..default()
       }),
-      number: Some(1),
+      number: Some(0),
       ..default()
     };
 
@@ -818,7 +825,7 @@ mod tests {
           height: 2,
           width: 1,
         },
-        path: format!("artwork/{}", test::FINGERPRINT),
+        path: format!("artwork/{}", Fingerprint::EXAMPLE),
       }),
     );
 
@@ -833,12 +840,12 @@ mod tests {
           alpha: false,
           bit_depth: 8,
           chroma_subsampling: None,
-          color_type: Some(ColorType::Rgb),
+          color_type: Decoded::Known(ColorType::Rgb),
           dimensions: Dimensions {
             height: 3,
             width: 4,
           },
-          format: Some(ImageFormat::Jpeg),
+          format: Decoded::Known(ImageFormat::Jpeg),
           orientation: Orientation::default(),
           path: "thumbnails/foo.jpg".parse().unwrap(),
         },
@@ -853,14 +860,14 @@ mod tests {
           height: 3,
           width: 4,
         },
-        path: format!("artwork/{}/thumbnail", test::FINGERPRINT),
+        path: format!("artwork/{}/thumbnail", Fingerprint::EXAMPLE),
       }),
     );
 
     let html = PackageHtml {
-      fingerprint: test::FINGERPRINT.parse().unwrap(),
-      identifier: PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
-      number: Some(1),
+      fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
+      identifier: PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
+      number: Some(0),
       ..default()
     };
 
@@ -889,13 +896,13 @@ mod tests {
 
     assert_eq!(
       PackageHtml {
-        colophon: Some(test::HASH.parse().unwrap()),
+        colophon: Some(Hash::EXAMPLE.parse().unwrap()),
         directory,
-        fingerprint: test::FINGERPRINT.parse().unwrap(),
-        identifier: PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
+        fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
+        identifier: PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
         metadata: Some(metadata),
-        number: Some(1),
-        readme: Some(test::HASH.parse().unwrap()),
+        number: Some(0),
+        readme: Some(Hash::EXAMPLE.parse().unwrap()),
         totals: Totals {
           directories: 0,
           directory_size: 0,
@@ -911,7 +918,7 @@ mod tests {
             <div>
               <dt>number</dt>
               <dd>
-                <a href='/package/1'>1</a>
+                <a href='/package/0'>0</a>
               </dd>
             </div>
             <div>
@@ -929,7 +936,7 @@ mod tests {
             <div>
               <dt>files</dt>
               <dd>
-                <a href='/directory/{hash}'>1 file</a>
+                <a href='/directory/{directory}'>1 file</a>
               </dd>
             </div>
             <div>
@@ -1003,9 +1010,10 @@ mod tests {
             </tbody>
           </table>
         ",
-        fingerprint = test::FINGERPRINT,
+        directory = Hash::from(Fingerprint::EXAMPLE.parse::<Fingerprint>().unwrap()),
+        fingerprint = Fingerprint::EXAMPLE,
         foo = Hash::bytes(b"foo"),
-        hash = test::HASH,
+        hash = Hash::EXAMPLE,
       )),
     );
   }
@@ -1018,13 +1026,13 @@ mod tests {
           Item {
             content: Video {
               duration: 225_000,
-              format: Some(VideoFormat::Mp4),
+              format: Decoded::Known(VideoFormat::Mp4),
               path: "foo.mp4".parse().unwrap(),
               placeholder: None,
               tracks: vec![
                 Track {
-                  codec: Some(TrackCodec::H264),
-                  info: Some(TrackInfo::Video {
+                  codec: Decoded::Known(TrackCodec::H264),
+                  info: Decoded::Known(TrackInfo::Video {
                     bit_depth: 8,
                     chroma_subsampling: Some(ChromaSubsampling::Yuv420),
                     dimensions: Dimensions {
@@ -1037,8 +1045,8 @@ mod tests {
                   size: 0,
                 },
                 Track {
-                  codec: Some(TrackCodec::Aac),
-                  info: Some(TrackInfo::Audio {
+                  codec: Decoded::Known(TrackCodec::Aac),
+                  info: Decoded::Known(TrackInfo::Audio {
                     channels: 2,
                     sample_rate: 44100,
                   }),
@@ -1095,10 +1103,10 @@ mod tests {
 
     assert_eq!(
       PackageHtml {
-        fingerprint: test::FINGERPRINT.parse().unwrap(),
-        identifier: PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
+        fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
+        identifier: PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
         metadata: Some(metadata),
-        number: Some(1),
+        number: Some(0),
         totals: Totals {
           directories: 0,
           directory_size: 0,
@@ -1114,7 +1122,7 @@ mod tests {
             <div>
               <dt>number</dt>
               <dd>
-                <a href='/package/1'>1</a>
+                <a href='/package/0'>0</a>
               </dd>
             </div>
             <div>
@@ -1132,7 +1140,7 @@ mod tests {
             <div>
               <dt>files</dt>
               <dd>
-                <a href='/directory/{hash}'>1 file</a>
+                <a href='/directory/{directory}'>1 file</a>
               </dd>
             </div>
             <div>
@@ -1198,8 +1206,8 @@ mod tests {
             </li>
           </ol>
         ",
-        fingerprint = test::FINGERPRINT,
-        hash = test::HASH,
+        directory = Hash::from(Fingerprint::EXAMPLE.parse::<Fingerprint>().unwrap()),
+        fingerprint = Fingerprint::EXAMPLE,
       )),
     );
   }

@@ -1,7 +1,7 @@
 use super::*;
 
 #[derive(Debug, Decode, Encode, PartialEq)]
-#[deco(transparent, validate)]
+#[deco(sorted_set, transparent, validate)]
 pub(crate) struct SortedSet<T>(Vec<T>);
 
 impl<T: Ord> From<BTreeSet<T>> for SortedSet<T> {
@@ -25,8 +25,8 @@ impl<T> Deref for SortedSet<T> {
 
 impl<T: PartialOrd> Validate for SortedSet<T> {
   fn validate(&self) -> Result<(), MalformedError> {
-    for window in self.0.windows(2) {
-      ensure!(window[0] < window[1], malformed_error::Unsorted);
+    for [a, b] in self.0.array_windows() {
+      ensure!(a < b, malformed_error::Unsorted);
     }
 
     Ok(())

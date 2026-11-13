@@ -2,33 +2,51 @@ use super::*;
 
 #[derive(Parser)]
 pub(crate) struct Create {
-  #[arg(help = "Allow <LINT>", long, value_name = "LINT")]
+  #[arg(
+    add = ArgValueCandidates::new(LintSelector::candidates),
+    help = "Allow <LINT>",
+    long,
+    value_name = "LINT"
+  )]
   allow: Vec<LintSelector>,
-  #[arg(help = "Deny <LINT>", long, value_name = "LINT")]
+  #[arg(
+    add = ArgValueCandidates::new(LintSelector::candidates),
+    help = "Deny <LINT>",
+    long,
+    value_name = "LINT"
+  )]
   deny: Vec<LintSelector>,
   #[arg(
     help = "Overwrite manifest and generated assets if they already exist",
     long
   )]
   force: bool,
-  #[arg(help = "Generate derived assets", long)]
-  generate: bool,
   #[arg(help = "Ignore <PATH>", long, value_name = "PATH")]
   ignore: Vec<RelativePath>,
   #[arg(default_value_t = KeyName::DEFAULT, help = "Sign with <KEY>", long, requires = "sign")]
   key: KeyName,
   #[arg(
     help = "Write manifest to <MANIFEST>, defaults to `<ROOT>/manifest.filepack`",
-    long
+    long,
+    value_hint = ValueHint::FilePath
   )]
   manifest: Option<Utf8PathBuf>,
-  #[arg(help = "Create manifest for files in <ROOT> directory, defaults to current directory")]
+  #[arg(help = "Don't generate derived assets", long)]
+  no_generate: bool,
+  #[arg(
+    help = "Create manifest for files in <ROOT> directory, defaults to current directory",
+    value_hint = ValueHint::DirPath
+  )]
   root: Option<Utf8PathBuf>,
   #[arg(help = "Sign manifest", long)]
   sign: bool,
   #[arg(help = TIMESTAMP_HELP, long)]
   timestamp: bool,
 }
+
+pub(crate) type Input = ();
+
+pub(crate) type Output = ();
 
 impl Create {
   pub(crate) fn run(self, options: Options) -> Result {
@@ -40,6 +58,16 @@ impl Create {
       filesystem::metadata(&root)?.is_dir(),
       error::PackageRootDirectory { path: root },
     }
+
+    check_case(
+      &root,
+      &[
+        Manifest::FILENAME,
+        Metadata::DECO_FILENAME,
+        Metadata::YAML_FILENAME,
+        State::DIR,
+      ],
+    )?;
 
     let manifest_path = if let Some(path) = self.manifest {
       path
@@ -85,14 +113,14 @@ impl Create {
 
     linter.allow(&self.allow);
 
-    linter.lint_metadata(metadata.as_ref(), self.generate);
+    linter.lint_metadata(metadata.as_ref(), !self.no_generate);
 
     linter.check()?;
 
     let metadata = if let Some(metadata) = metadata {
       let mut metadata = metadata.load(&root, options.quiet)?;
 
-      if self.generate {
+      if !self.no_generate {
         metadata.generate(&root, self.force, options.quiet)?;
       }
 
@@ -105,63 +133,26 @@ impl Create {
       None
     };
 
-    let cleaned_manifest = current_dir.join(&manifest_path).lexiclean();
-
     let mut paths = HashMap::new();
 
-    let mut empty = Vec::new();
+    let Walk {
+      empty,
+      entries,
+      subpackages,
+    } = Walk::new(&root, &manifest_path, &self.ignore)?;
 
-    for entry in WalkDir::new(&root).sort_by_file_name() {
-      let entry = entry?;
-
-      if entry.depth() == 0 {
-        continue;
-      }
-
-      let path = decode_path(entry.path())?;
-
-      let cleaned_path = current_dir.join(path).lexiclean();
-
-      if cleaned_path == cleaned_manifest {
-        continue;
-      }
-
-      let relative = path.strip_prefix(&root).unwrap();
-
-      let relative = RelativePath::try_from(relative).context(error::Path { path: relative })?;
-
-      if ignore(&relative, &self.ignore) {
-        continue;
-      }
-
-      let name = relative.first_component();
+    for (path, ty) in entries {
       ensure! {
-        !name.is_reserved(),
-        error::ReservedPath { name },
+        path.is_nfc(),
+        error::PathNormalization { path },
       }
 
-      ensure! {
-        relative.is_nfc(),
-        error::PathNormalization { path: relative },
+      linter.lint_path(&path);
+
+      if ty == EntryType::File {
+        let size = filesystem::metadata(&root.join(&path))?.len();
+        paths.insert(path, size);
       }
-
-      ensure! {
-        !entry.file_type().is_symlink(),
-        error::Symlink { path },
-      }
-
-      let metadata = filesystem::metadata(path)?;
-
-      linter.lint_path(&relative);
-
-      empty.pop_if(|dir| relative.starts_with(dir));
-
-      if entry.file_type().is_dir() {
-        empty.push(relative);
-        continue;
-      }
-
-      paths.insert(relative, metadata.len());
     }
 
     linter.lint_case_conflicts();
@@ -225,8 +216,14 @@ impl Create {
       bar.inc(file.size);
     }
 
+    for path in &subpackages {
+      verify_subpackage(&root, path, package.subdirectory(path).unwrap())?;
+    }
+
+    check_metadata(&root, &package)?;
+
     let embedded = if let Some((_metadata, deco)) = metadata {
-      BTreeMap::from([(Hash::bytes(&deco), deco)])
+      BTreeMap::from([(Hash::bytes(&deco), deco.into())])
     } else {
       BTreeMap::new()
     };

@@ -1,0 +1,916 @@
+use super::*;
+
+#[derive(FromDeriveInput)]
+#[darling(
+  supports(struct_named, struct_newtype, enum_named, enum_unit),
+  forward_attrs(deco, doc, n)
+)]
+pub(crate) struct Input {
+  attrs: Vec<Attribute>,
+  data: Data<Variant, Field>,
+  generics: Generics,
+  ident: Ident,
+}
+
+impl Input {
+  pub(crate) fn decode(&self) -> Result<TokenStream> {
+    let attributes = self.parse_attributes()?;
+
+    match self.data {
+      Data::Enum(_) => self.decode_enum(),
+      Data::Struct(_) => {
+        if attributes.transparent {
+          self.decode_transparent(&attributes)
+        } else {
+          self.decode_struct(&attributes)
+        }
+      }
+    }
+  }
+
+  fn decode_enum(&self) -> Result<TokenStream> {
+    let name = &self.ident;
+
+    let type_name = display_name(name);
+
+    let variants = self.parse_variants()?;
+
+    let arms = variants.iter().map(|variant| {
+      let ParsedVariant {
+        fields, ident, n, ..
+      } = variant;
+      let variant = format!("{type_name} {}", display_name(ident));
+      if fields.is_empty() {
+        quote! {
+          #n => {
+            if !array.is_empty() {
+              let mut map = array.decoder()?.map::<u64>()?;
+              ensure!(!map.is_empty(), malformed_error::EmptyVariantMap);
+              map.version(#variant)?;
+              map.decode_unknown()?;
+            }
+            Self::#ident
+          }
+        }
+      } else {
+        let decode = ParsedField::decode(fields);
+        let fields = fields.iter().map(|field| field.ident);
+        quote! {
+          #n => {
+            let mut map = if array.is_empty() {
+              decoder.empty_map()
+            } else {
+              let map = array.decoder()?.map::<u64>()?;
+              ensure!(!map.is_empty(), malformed_error::EmptyVariantMap);
+              map
+            };
+            map.version(#variant)?;
+            #(#decode)*
+            map.decode_unknown()?;
+            Self::#ident { #(#fields,)* }
+          }
+        }
+      }
+    });
+
+    let header = self.decode_header(false);
+
+    Ok(quote! {
+      #header {
+        fn decode(decoder: &mut Decoder<'de>) -> DecodeResult<Self> {
+          let mut array = decoder.array()?;
+          let discriminant = array.element::<u64>()?;
+          let value = match discriminant {
+            #(#arms)*
+            _ => return Err(decoder.unknown(UnknownError::Discriminant {
+              discriminant,
+              name: #type_name,
+            })),
+          };
+          array.finish()?;
+          Ok(value)
+        }
+      }
+    })
+  }
+
+  fn decode_header(&self, validate: bool) -> TokenStream {
+    let mut header_generics = self.generics(syn::parse_quote!(Decode<'de>));
+
+    header_generics.params.insert(0, syn::parse_quote!('de));
+
+    let predicates = &mut header_generics.make_where_clause().predicates;
+
+    for param in self.generics.lifetimes() {
+      let lifetime = &param.lifetime;
+      predicates.push(syn::parse_quote!('de: #lifetime));
+    }
+
+    if validate {
+      predicates.push(syn::parse_quote!(Self: Validate));
+    }
+
+    let name = &self.ident;
+
+    let (impl_generics, _ty_generics, where_clause) = header_generics.split_for_impl();
+
+    let (_impl_generics, ty_generics, _where_clause) = self.generics.split_for_impl();
+
+    quote! {
+      impl #impl_generics Decode<'de> for #name #ty_generics #where_clause
+    }
+  }
+
+  fn decode_struct(&self, attributes: &Attributes) -> Result<TokenStream> {
+    let name = &self.ident;
+
+    let display_name = display_name(name);
+
+    let fields = self.parse_fields()?;
+
+    let decode = ParsedField::decode(&fields);
+
+    let fields = fields.iter().map(|field| field.ident);
+
+    let constructor = quote! {
+      Self {
+        #(#fields,)*
+      }
+    };
+
+    let header = self.decode_header(attributes.validate);
+
+    let magic = attributes
+      .magic
+      .is_some()
+      .then(|| quote! { decoder.magic(<Self as Magic>::TYPE)?; });
+
+    let map = if attributes.strict {
+      quote!(strict_map)
+    } else {
+      quote!(map)
+    };
+
+    let validate = attributes
+      .validate
+      .then(|| quote! { Validate::validate(&value)?; });
+
+    Ok(quote! {
+      #header {
+        fn decode(decoder: &mut Decoder<'de>) -> DecodeResult<Self> {
+          #magic
+          let mut map = decoder.#map::<u64>()?;
+          map.version(#display_name)?;
+          #(#decode)*
+          map.decode_unknown()?;
+          let value = #constructor;
+          #validate
+          Ok(value)
+        }
+      }
+    })
+  }
+
+  fn decode_transparent(&self, attributes: &Attributes) -> Result<TokenStream> {
+    self.transparent_field()?;
+
+    let constructor = quote! { Self(Decode::decode(decoder)?) };
+
+    let body = if attributes.validate {
+      quote! {
+        let value = #constructor;
+        Validate::validate(&value)?;
+        Ok(value)
+      }
+    } else {
+      quote! {
+        Ok(#constructor)
+      }
+    };
+
+    let header = self.decode_header(attributes.validate);
+
+    Ok(quote! {
+      #header {
+        fn decode(decoder: &mut Decoder<'de>) -> DecodeResult<Self> {
+          #body
+        }
+      }
+    })
+  }
+
+  fn description(&self) -> Result<Description> {
+    Description::new(&self.ident, &self.attrs, "type", false, false)
+  }
+
+  pub(crate) fn encode(&self) -> Result<TokenStream> {
+    let attributes = self.parse_attributes()?;
+
+    match self.data {
+      Data::Enum(_) => self.encode_enum(),
+      Data::Struct(_) => {
+        if attributes.transparent {
+          self.encode_transparent(&attributes)
+        } else {
+          self.encode_struct(&attributes)
+        }
+      }
+    }
+  }
+
+  fn encode_enum(&self) -> Result<TokenStream> {
+    let name = &self.ident;
+
+    let variants = self.parse_variants()?;
+
+    let description = self.description()?;
+
+    let arms = variants.iter().map(|variant| {
+      let ParsedVariant {
+        fields, ident, n, ..
+      } = variant;
+      if fields.is_empty() {
+        quote! { Self::#ident => array.element(#n), }
+      } else {
+        let idents = fields.iter().map(|field| field.ident);
+        let items = ParsedField::encode(fields, Receiver::Binding);
+        quote! {
+          Self::#ident { #(#idents),* } => {
+            let mut map = array.encoder().map::<u64>();
+            #(#items)*
+            map.finish_if_nonempty();
+            array.element(#n);
+          }
+        }
+      }
+    });
+
+    let schema_name = self.schema_name();
+
+    let schema_variants = variants.iter().map(|variant| {
+      let ParsedVariant {
+        description,
+        fields,
+        ident,
+        n,
+      } = variant;
+      let fields = ParsedField::schema(fields);
+      let variant_name = ident.to_string();
+      quote! {
+        deco::Variant {
+          description: #description.into(),
+          fields: vec![#(#fields),*],
+          n: #n,
+          name: #variant_name.into(),
+        }
+      }
+    });
+
+    let generics = self.encode_generics();
+
+    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+
+    Ok(quote! {
+      impl #impl_generics Encode for #name #ty_generics #where_clause {
+        fn deco_schema(registry: &mut deco::Registry) -> String {
+          deco::Schema::Enum {
+            description: #description.into(),
+            variants: vec![#(#schema_variants),*],
+          }
+          .register(&#schema_name, registry)
+        }
+
+        fn encode(&self, encoder: &mut Encoder) {
+          let mut array = encoder.array();
+          match self {
+            #(#arms)*
+          }
+          array.finish();
+        }
+      }
+    })
+  }
+
+  fn encode_generics(&self) -> Generics {
+    self.generics(syn::parse_quote!(Encode))
+  }
+
+  fn encode_struct(&self, attributes: &Attributes) -> Result<TokenStream> {
+    let name = &self.ident;
+
+    let fields = self.parse_fields()?;
+
+    let description = self.description()?;
+
+    let items = ParsedField::encode(&fields, Receiver::Field);
+
+    let magic = attributes
+      .magic
+      .is_some()
+      .then(|| quote! { encoder.magic(<Self as Magic>::TYPE); });
+
+    let schema_magic = if attributes.magic.is_some() {
+      quote! { Some(<Self as Magic>::TYPE.to_string()) }
+    } else {
+      quote! { None }
+    };
+
+    let schema_name = self.schema_name();
+
+    let schema_fields = ParsedField::schema(&fields);
+
+    let strict = attributes.strict;
+
+    let generics = self.encode_generics();
+
+    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+
+    Ok(quote! {
+      impl #impl_generics Encode for #name #ty_generics #where_clause {
+        fn deco_schema(registry: &mut deco::Registry) -> String {
+          deco::Schema::Struct {
+            description: #description.into(),
+            fields: vec![#(#schema_fields),*],
+            magic: #schema_magic,
+            strict: #strict,
+          }
+          .register(&#schema_name, registry)
+        }
+
+        fn encode(&self, encoder: &mut Encoder) {
+          let mut map = encoder.map::<u64>();
+          #(#items)*
+          map.finish();
+          #magic
+        }
+      }
+    })
+  }
+
+  fn encode_transparent(&self, attributes: &Attributes) -> Result<TokenStream> {
+    let name = &self.ident;
+
+    let ty = self.transparent_field()?.ty();
+
+    let schema = if attributes.non_empty_ordered_set || attributes.sorted_set {
+      let Some(element) = type_argument(ty, "Vec") else {
+        return Err(Error::new_spanned(
+          ty,
+          "set attributes require a `Vec<T>` field",
+        ));
+      };
+
+      let variant = if attributes.non_empty_ordered_set {
+        quote! { NonEmptyOrderedSet }
+      } else {
+        quote! { SortedSet }
+      };
+
+      quote! {
+        deco::Schema::#variant {
+          element: <#element>::deco_schema(registry),
+        }
+      }
+    } else {
+      let description = self.description()?;
+
+      quote! {
+        deco::Schema::Wrapper {
+          description: #description.into(),
+          inner: <#ty>::deco_schema(registry),
+        }
+      }
+    };
+
+    let schema_name = self.schema_name();
+
+    let generics = self.encode_generics();
+
+    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+
+    Ok(quote! {
+      impl #impl_generics Encode for #name #ty_generics #where_clause {
+        fn deco_schema(registry: &mut deco::Registry) -> String {
+          #schema.register(&#schema_name, registry)
+        }
+
+        fn encode(&self, encoder: &mut Encoder) {
+          self.0.encode(encoder);
+        }
+      }
+    })
+  }
+
+  fn generics(&self, bound: TypeParamBound) -> Generics {
+    let mut generics = self.generics.clone();
+
+    for param in generics.type_params_mut() {
+      param.bounds.push(bound.clone());
+    }
+
+    generics
+  }
+
+  pub(crate) fn magic(&self) -> Result<TokenStream> {
+    let attributes = self.parse_attributes()?;
+
+    let name = &self.ident;
+
+    let Some(magic) = &attributes.magic else {
+      return Err(Error::new_spanned(
+        name,
+        "missing `#[deco(magic = MagicType::Variant)]` attribute",
+      ));
+    };
+
+    let (impl_generics, ty_generics, where_clause) = self.generics.split_for_impl();
+
+    Ok(quote! {
+      impl #impl_generics Magic for #name #ty_generics #where_clause {
+        const TYPE: MagicType = #magic;
+      }
+    })
+  }
+
+  fn parse_attributes(&self) -> Result<Attributes> {
+    let mut attributes = Attributes::default();
+
+    for attribute in &self.attrs {
+      if attribute.path().is_ident("n") {
+        return Err(Error::new_spanned(
+          attribute,
+          "`#[n]` attributes can only be used on struct fields and enum variants",
+        ));
+      }
+
+      if !attribute.path().is_ident("deco") {
+        continue;
+      }
+
+      attribute.parse_nested_meta(|meta| {
+        let attribute = ContainerAttribute::parse(&meta)?;
+
+        if self.data.is_enum() {
+          let name = <&str>::from(&attribute);
+          return Err(meta.error(format!("`#[deco({name})]` cannot be used with enums")));
+        }
+
+        attributes.insert(&meta, attribute)?;
+
+        if attributes.strict && attributes.transparent {
+          return Err(meta.error("`#[deco(strict)]` cannot be used with `#[deco(transparent)]`"));
+        }
+
+        if attributes.magic.is_some() && attributes.transparent {
+          return Err(meta.error("`#[deco(magic)]` cannot be used with `#[deco(transparent)]`"));
+        }
+
+        Ok(())
+      })?;
+    }
+
+    if !attributes.transparent {
+      for (flag, present) in [
+        ("non_empty_ordered_set", attributes.non_empty_ordered_set),
+        ("sorted_set", attributes.sorted_set),
+      ] {
+        if present {
+          return Err(Error::new_spanned(
+            &self.ident,
+            format!("`#[deco({flag})]` requires `#[deco(transparent)]`"),
+          ));
+        }
+      }
+    }
+
+    Ok(attributes)
+  }
+
+  fn parse_fields(&self) -> Result<Vec<ParsedField>> {
+    let data = self.data.as_ref().take_struct().unwrap();
+
+    if data.is_tuple() {
+      return Err(Error::new_spanned(
+        &self.ident,
+        "tuple structs must use `#[deco(transparent)]` attribute to derive `Decode` or `Encode`",
+      ));
+    }
+
+    let fields = data
+      .into_iter()
+      .map(Field::parse)
+      .collect::<Result<Vec<ParsedField>>>()?;
+
+    validate_numbers(1, fields.iter().map(|field| (field.ident, field.n)))?;
+
+    Ok(fields)
+  }
+
+  fn parse_variants(&self) -> Result<Vec<ParsedVariant>> {
+    let variants = self
+      .data
+      .as_ref()
+      .take_enum()
+      .unwrap()
+      .into_iter()
+      .map(Variant::parse)
+      .collect::<Result<Vec<ParsedVariant>>>()?;
+
+    validate_numbers(0, variants.iter().map(|variant| (variant.ident, variant.n)))?;
+
+    Ok(variants)
+  }
+
+  fn schema_name(&self) -> TokenStream {
+    let name = self.ident.to_string();
+
+    let params = self
+      .generics
+      .type_params()
+      .map(|param| &param.ident)
+      .collect::<Vec<&Ident>>();
+
+    if params.is_empty() {
+      quote! { String::from(#name) }
+    } else {
+      let pattern = format!("{name}<{}>", vec!["{}"; params.len()].join(", "));
+      quote! { format!(#pattern, #(<#params>::deco_schema(registry)),*) }
+    }
+  }
+
+  fn transparent_field(&self) -> Result<&Field> {
+    let fields = self.data.as_ref().take_struct().unwrap();
+
+    if !fields.is_tuple() || fields.fields.len() != 1 {
+      return Err(Error::new_spanned(
+        &self.ident,
+        "`#[deco(transparent)]` can only be used on newtype structs",
+      ));
+    }
+
+    for field in &fields.fields {
+      if let Some(attr) = field.n_attribute() {
+        return Err(Error::new_spanned(
+          attr,
+          "`#[n]` attributes cannot be used with `#[deco(transparent)]`",
+        ));
+      }
+
+      if let Some(attr) = field.deco_attribute() {
+        return Err(Error::new_spanned(
+          attr,
+          "`#[deco(...)]` field attributes cannot be used with `#[deco(transparent)]`",
+        ));
+      }
+    }
+
+    Ok(fields.fields[0])
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn attribute_errors() {
+    #[track_caller]
+    fn case(input: &DeriveInput, expected: &str) {
+      assert_eq!(
+        Input::from_derive_input(input)
+          .unwrap()
+          .decode()
+          .err()
+          .unwrap()
+          .to_string(),
+        expected,
+      );
+    }
+
+    case(
+      &syn::parse_quote! {
+        #[deco(validate, validate)]
+        struct Foo {}
+      },
+      "duplicate `#[deco(validate)]` attribute",
+    );
+
+    case(
+      &syn::parse_quote! {
+        #[deco(strict)]
+        enum Foo {}
+      },
+      "`#[deco(strict)]` cannot be used with enums",
+    );
+
+    case(
+      &syn::parse_quote! {
+        #[deco(transparent)]
+        enum Foo {}
+      },
+      "`#[deco(transparent)]` cannot be used with enums",
+    );
+
+    case(
+      &syn::parse_quote! {
+        #[deco(validate)]
+        enum Foo {}
+      },
+      "`#[deco(validate)]` cannot be used with enums",
+    );
+
+    case(
+      &syn::parse_quote! {
+        #[deco(strict, transparent)]
+        struct Foo {}
+      },
+      "`#[deco(strict)]` cannot be used with `#[deco(transparent)]`",
+    );
+
+    case(
+      &syn::parse_quote! {
+        #[deco(transparent, strict)]
+        struct Foo(u64);
+      },
+      "`#[deco(strict)]` cannot be used with `#[deco(transparent)]`",
+    );
+
+    case(
+      &syn::parse_quote! {
+        #[deco(magic = Foo)]
+        enum Foo {}
+      },
+      "`#[deco(magic)]` cannot be used with enums",
+    );
+
+    case(
+      &syn::parse_quote! {
+        #[deco(magic = Foo, magic = Bar)]
+        struct Foo {}
+      },
+      "duplicate `#[deco(magic)]` attribute",
+    );
+
+    case(
+      &syn::parse_quote! {
+        #[deco(magic = Foo, transparent)]
+        struct Foo(u64);
+      },
+      "`#[deco(magic)]` cannot be used with `#[deco(transparent)]`",
+    );
+
+    case(
+      &syn::parse_quote! {
+        #[deco(transparent, magic = Foo)]
+        struct Foo(u64);
+      },
+      "`#[deco(magic)]` cannot be used with `#[deco(transparent)]`",
+    );
+
+    case(
+      &syn::parse_quote! {
+        #[deco(magic)]
+        struct Foo {}
+      },
+      "`#[deco(magic)]` must be of the form `#[deco(magic = MagicType::Variant)]`",
+    );
+
+    case(
+      &syn::parse_quote! {
+        #[deco(magic = "foo")]
+        struct Foo {}
+      },
+      "`#[deco(magic)]` must be of the form `#[deco(magic = MagicType::Variant)]`",
+    );
+
+    case(
+      &syn::parse_quote! {
+        struct Foo {
+          #[deco(strict)]
+          #[n(1)]
+          foo: Option<u64>,
+        }
+      },
+      "`#[deco(...)]` attributes cannot be used on fields",
+    );
+
+    case(
+      &syn::parse_quote! {
+        #[deco(foo = bar)]
+        struct Foo {}
+      },
+      "unknown container attribute `#[deco(foo)]`",
+    );
+
+    case(
+      &syn::parse_quote! {
+        #[n(0)]
+        struct Foo {}
+      },
+      "`#[n]` attributes can only be used on struct fields and enum variants",
+    );
+
+    case(
+      &syn::parse_quote! {
+        #[deco(transparent = true)]
+        struct Foo {}
+      },
+      "`#[deco(transparent)]` does not take a value",
+    );
+
+    case(
+      &syn::parse_quote! {
+        #[deco(transparent)]
+        struct Foo {
+          bar: u64,
+          baz: u64,
+        }
+      },
+      "`#[deco(transparent)]` can only be used on newtype structs",
+    );
+
+    case(
+      &syn::parse_quote! {
+        #[deco(transparent)]
+        struct Foo {
+          bar: u64,
+        }
+      },
+      "`#[deco(transparent)]` can only be used on newtype structs",
+    );
+
+    case(
+      &syn::parse_quote! {
+        #[deco(transparent)]
+        struct Foo(#[deco(foo = bar)] u64);
+      },
+      "`#[deco(...)]` field attributes cannot be used with `#[deco(transparent)]`",
+    );
+
+    case(
+      &syn::parse_quote! {
+        enum Foo {
+          #[deco(transparent)]
+          Bar,
+        }
+      },
+      "`#[deco(...)]` attributes cannot be used on enum variants",
+    );
+
+    case(
+      &syn::parse_quote! {
+        struct Foo {
+          #[n(1)]
+          bar: u64,
+        }
+      },
+      "fields must have doc comments",
+    );
+
+    case(
+      &syn::parse_quote! {
+        enum Foo {
+          #[n(0)]
+          Bar,
+        }
+      },
+      "variants must have doc comments",
+    );
+
+    case(
+      &syn::parse_quote! {
+        #[deco(non_empty_ordered_set)]
+        struct Foo {}
+      },
+      "`#[deco(non_empty_ordered_set)]` requires `#[deco(transparent)]`",
+    );
+  }
+
+  #[test]
+  fn doc_errors() {
+    assert_eq!(
+      Input::from_derive_input(&syn::parse_quote! {
+        struct Foo {
+          /// Bar.
+          #[n(1)]
+          bar: u64,
+        }
+      })
+      .unwrap()
+      .encode()
+      .err()
+      .unwrap()
+      .to_string(),
+      "types must have doc comments",
+    );
+
+    assert_eq!(
+      Input::from_derive_input(&syn::parse_quote! {
+        /// Foo
+        struct Foo {
+          /// Bar.
+          #[n(1)]
+          bar: u64,
+        }
+      })
+      .unwrap()
+      .encode()
+      .err()
+      .unwrap()
+      .to_string(),
+      "description `Foo` does not end with a period",
+    );
+  }
+
+  #[test]
+  fn magic_errors() {
+    assert_eq!(
+      Input::from_derive_input(&syn::parse_quote! {
+        struct Foo {}
+      })
+      .unwrap()
+      .magic()
+      .err()
+      .unwrap()
+      .to_string(),
+      "missing `#[deco(magic = MagicType::Variant)]` attribute",
+    );
+  }
+
+  #[test]
+  fn number_errors() {
+    #[track_caller]
+    fn case(input: &DeriveInput, expected: &str) {
+      assert_eq!(
+        Input::from_derive_input(input)
+          .unwrap()
+          .decode()
+          .err()
+          .unwrap()
+          .to_string(),
+        expected,
+      );
+    }
+
+    case(
+      &syn::parse_quote! {
+        struct Foo {
+          #[n(0)]
+          foo: u64,
+        }
+      },
+      "`#[n(0)]` is reserved for the version key",
+    );
+
+    case(
+      &syn::parse_quote! {
+        enum Foo {
+          #[n(0)]
+          Bar {
+            #[n(0)]
+            foo: u64,
+          },
+        }
+      },
+      "`#[n(0)]` is reserved for the version key",
+    );
+
+    case(
+      &syn::parse_quote! {
+        struct Foo {
+          /// Foo.
+          #[n(2)]
+          foo: u64,
+        }
+      },
+      "`#[n]` attributes must be contiguous starting from 1: expected 1, found 2",
+    );
+
+    case(
+      &syn::parse_quote! {
+        enum Foo {
+          /// Bar.
+          #[n(1)]
+          Bar,
+        }
+      },
+      "`#[n]` attributes must be contiguous starting from 0: expected 0, found 1",
+    );
+  }
+
+  #[test]
+  fn set_errors() {
+    assert_eq!(
+      Input::from_derive_input(&syn::parse_quote! {
+        #[deco(sorted_set, transparent)]
+        struct Foo(u64);
+      })
+      .unwrap()
+      .encode()
+      .err()
+      .unwrap()
+      .to_string(),
+      "set attributes require a `Vec<T>` field",
+    );
+  }
+}

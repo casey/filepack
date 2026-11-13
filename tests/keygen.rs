@@ -37,7 +37,7 @@ fn default_name() {
 #[test]
 fn key_already_exists() {
   Test::new()
-    .write_keypair("master")
+    .write_key_pair("master")
     .arg("keygen")
     .stderr_regex("error: public key already exists: `.*master.public`\n")
     .failure();

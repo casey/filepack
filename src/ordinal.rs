@@ -1,7 +1,7 @@
 use super::*;
 
 #[derive(Debug, DeserializeFromStr, PartialEq)]
-pub struct Ordinal(pub(crate) usize);
+pub(crate) struct Ordinal(pub(crate) usize);
 
 impl Display for Ordinal {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
@@ -20,6 +20,12 @@ impl FromStr for Ordinal {
 impl From<usize> for Ordinal {
   fn from(i: usize) -> Self {
     Self(i)
+  }
+}
+
+impl PathExtractor for Ordinal {
+  fn parameters() -> Vec<reference::Parameter> {
+    vec![reference::Parameter::Ordinal]
   }
 }
 

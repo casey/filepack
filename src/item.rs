@@ -1,16 +1,19 @@
 use super::*;
 
+/// Media file.
 #[skip_serializing_none]
-#[derive(Clone, Debug, Decode, Encode, PartialEq, Serialize)]
+#[derive(Clone, Debug, Decode, Encode, Json, PartialEq, Serialize)]
 pub(crate) struct Item<T> {
+  /// Metadata describing the item's media file.
   #[n(1)]
   pub(crate) content: T,
+  /// Title of the item.
   #[n(2)]
   pub(crate) title: Option<Text>,
 }
 
 impl<T: Content> Item<T> {
-  pub(crate) fn formats(items: &[Self]) -> Vec<Option<T::Format>> {
+  pub(crate) fn formats(items: &[Self]) -> Vec<&Decoded<T::Format>> {
     let mut formats = Vec::new();
 
     for item in items {
@@ -98,14 +101,21 @@ mod tests {
 
     assert_eq!(
       Item::formats(&items),
-      [Some(ImageFormat::Png), Some(ImageFormat::Jpeg)]
+      [
+        &Decoded::Known(ImageFormat::Png),
+        &Decoded::Known(ImageFormat::Jpeg)
+      ]
     );
 
-    items[0].content.format = None;
+    items[0].content.format = Decoded::Unknown(vec![99]);
 
     assert_eq!(
       Item::formats(&items),
-      [None, Some(ImageFormat::Jpeg), Some(ImageFormat::Png)]
+      [
+        &Decoded::Unknown(vec![99]),
+        &Decoded::Known(ImageFormat::Jpeg),
+        &Decoded::Known(ImageFormat::Png)
+      ]
     );
   }
 

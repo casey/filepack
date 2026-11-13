@@ -1,6 +1,7 @@
 use super::*;
 
-#[derive(EncodeDisplay, EnumString, Display)]
+/// Application a signed message belongs to.
+#[derive(EncodeDisplay, Display)]
 #[strum(serialize_all = "kebab-case")]
 pub(crate) enum Application {
   Filepack,

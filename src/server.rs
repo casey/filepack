@@ -13,7 +13,7 @@ const METADATA: TableDefinition<DatabaseMetadata, u64> = TableDefinition::new("m
 const NUMBERS: TableDefinition<u64, Revision> = TableDefinition::new("numbers");
 const PACKAGES: TableDefinition<Fingerprint, ()> = TableDefinition::new("packages");
 const REVISIONS: TableDefinition<Revision, ()> = TableDefinition::new("revisions");
-const SCHEMA_VERSION: u64 = 8;
+const SCHEMA_VERSION: u64 = 9;
 
 pub(crate) struct Server {
   database: Database,
@@ -118,7 +118,7 @@ impl Server {
       .collect()
   }
 
-  pub(crate) fn gc(&self) -> ServerResult<api::gc::Response> {
+  pub(crate) fn gc(&self, mounts: &[Mount]) -> ServerResult<api::gc::Response> {
     let tx = self.database.begin_write()?;
 
     let mut marked = HashSet::new();
@@ -145,6 +145,22 @@ impl Server {
         .iter()?
         .map(|entry| Ok(entry?.1.value()))
         .collect::<ServerResult<Vec<Revision>>>()?;
+
+      for mount in mounts {
+        match mount.package {
+          PackageIdentifier::Fingerprint(fingerprint) => {
+            if packages.get(&fingerprint)?.is_some() {
+              directory_stack.push(fingerprint.into());
+            }
+          }
+          PackageIdentifier::Number(_) => {}
+          PackageIdentifier::Revision(revision) => {
+            if revisions.get(&revision)?.is_some() {
+              revision_stack.push(revision);
+            }
+          }
+        }
+      }
 
       while let Some(current) = revision_stack.pop() {
         if !marked.insert(current.into()) {
@@ -326,13 +342,17 @@ impl Server {
       },
     }
 
-    let item = media
-      .item(index)
+    let items = media
+      .items()
+      .context(server_error::MediaTypeDoesNotHaveItems { ty })?;
+
+    let item = items
+      .get(index)
       .context(server_error::MediaItemDoesNotExist {
-        count: media.item_count(),
+        count: items.len(),
         fingerprint,
         index,
-        ty,
+        noun: items.noun(),
       })?;
 
     let (path, ty) = match resource {
@@ -394,6 +414,76 @@ impl Server {
     Ok(missing)
   }
 
+  pub(crate) fn mount_file(
+    &self,
+    cache: bool,
+    mounts: &[Mount],
+    package: PackageIdentifier,
+    path: &RelativePath,
+  ) -> ServerResult<Resource> {
+    let Resolved { fingerprint, .. } = self.resolve(package)?;
+
+    ensure! {
+      self.mounted(mounts, fingerprint)?,
+      server_error::PackageNotMounted { fingerprint },
+    }
+
+    let Some(media) = self
+      .package_metadata_opt(fingerprint)?
+      .and_then(|metadata| metadata.media)
+    else {
+      return Err(ServerError::MountedPackageNoMediaType { fingerprint });
+    };
+
+    ensure! {
+      media.ty() == MediaType::Web,
+      server_error::MountedPackageMediaType { fingerprint, media_type: media.ty() },
+    }
+
+    let path = format!("static/{path}").parse::<RelativePath>().unwrap();
+
+    let hash = self.package_file(fingerprint, &path)?;
+
+    let content_type = mime_guess::from_path(&path).first_or_octet_stream();
+
+    Ok(
+      self
+        .open_file(hash)?
+        .cache(cache)
+        .unsandboxed_content_type(content_type),
+    )
+  }
+
+  pub(crate) fn mounted(&self, mounts: &[Mount], fingerprint: Fingerprint) -> ServerResult<bool> {
+    let tx = self.database.begin_read()?;
+
+    let numbers = tx.open_table(NUMBERS)?;
+
+    let revisions = tx.open_table(REVISIONS)?;
+
+    for mount in mounts {
+      let mounted = match mount.package {
+        PackageIdentifier::Fingerprint(mount) => mount == fingerprint,
+        PackageIdentifier::Number(mount) => {
+          if let Some(revision) = numbers.get(&mount)? {
+            self.read_revision(revision.value())?.package == fingerprint
+          } else {
+            false
+          }
+        }
+        PackageIdentifier::Revision(mount) => {
+          revisions.get(&mount)?.is_some() && self.read_revision(mount)?.package == fingerprint
+        }
+      };
+
+      if mounted {
+        return Ok(true);
+      }
+    }
+
+    Ok(false)
+  }
+
   pub(crate) fn numbers(&self) -> ServerResult<BTreeSet<u64>> {
     let tx = self.database.begin_read()?;
     tx.open_table(NUMBERS)?
@@ -419,6 +509,7 @@ impl Server {
       .len();
 
     Ok(Resource {
+      cache: true,
       content_length,
       file,
       hash,
@@ -450,7 +541,7 @@ impl Server {
   pub(crate) fn package_html(
     &self,
     package: PackageIdentifier,
-    mounts: &HashSet<Fingerprint>,
+    mounts: &[Mount],
   ) -> ServerResult<PackageHtml> {
     let Resolved {
       fingerprint,
@@ -465,8 +556,7 @@ impl Server {
     let parents = revision
       .map(|revision| self.read_revision(revision))
       .transpose()?
-      .map(|revision_object| revision_object.parents().to_vec())
-      .unwrap_or_default();
+      .map_or_default(|revision_object| revision_object.parents().to_vec());
 
     let revisions = history.as_ref().map(|history| history.len().into_u64());
 
@@ -525,7 +615,7 @@ impl Server {
       fingerprint,
       identifier: package,
       metadata,
-      mounted: mounts.contains(&fingerprint),
+      mounted: self.mounted(mounts, fingerprint)?,
       next,
       number,
       parents,
@@ -712,6 +802,14 @@ impl Server {
       let mut directories = tx.open_table(DIRECTORIES)?;
 
       for (name, entry) in &directory.entries {
+        ensure! {
+          !name.is_reserved(),
+          server_error::DirectoryReservedFilename {
+            directory: hash,
+            name,
+          },
+        }
+
         let path = self.file_path(entry.hash);
 
         let metadata = path.metadata().map_err(|error| {
@@ -760,6 +858,30 @@ impl Server {
         }
       }
 
+      let fingerprint = Fingerprint(hash);
+
+      if let Some(metadata) = self.metadata_deco(fingerprint)? {
+        let metadata = Metadata::decode_from_slice(&metadata)
+          .context(server_error::PackageMetadataDecode { fingerprint })?;
+
+        if let Some(Media::Web) = metadata.media {
+          ensure!(
+            self.unstable,
+            server_error::UnstableFeature {
+              feature: UnstableFeature::WebPackages,
+              fingerprint,
+            },
+          );
+        }
+
+        for path in metadata.files() {
+          ensure!(
+            self.resolve_path(fingerprint, &path)?.is_some(),
+            server_error::PackageMetadataFileMissing { fingerprint, path },
+          );
+        }
+      }
+
       directories.insert(&hash, &())?;
     }
 
@@ -777,35 +899,6 @@ impl Server {
         .is_some(),
       server_error::PackageRootUnverified { fingerprint },
     );
-
-    for name in self.read_directory(fingerprint.into())?.entries.keys() {
-      ensure!(
-        !name.is_reserved(),
-        server_error::PackageReservedPath { fingerprint, name },
-      );
-    }
-
-    if let Some(metadata) = self.metadata_deco(fingerprint)? {
-      let metadata = Metadata::decode_from_slice(&metadata)
-        .context(server_error::PackageMetadataDecode { fingerprint })?;
-
-      if let Some(Media::Web) = metadata.media {
-        ensure!(
-          self.unstable,
-          server_error::UnstableFeature {
-            feature: UnstableFeature::WebPackages,
-            fingerprint,
-          },
-        );
-      }
-
-      for path in metadata.files() {
-        ensure!(
-          self.resolve_path(fingerprint, &path)?.is_some(),
-          server_error::PackageMetadataFileMissing { fingerprint, path },
-        );
-      }
-    }
 
     tx.open_table(PACKAGES)?.insert(&fingerprint, &())?;
 
@@ -933,7 +1026,7 @@ impl Server {
     if tx.list_tables()?.count() == 0 && tx.list_multimap_tables()?.count() == 0 {
       {
         let mut metadata = tx.open_table(METADATA)?;
-        metadata.insert(DatabaseMetadata::Number, &1)?;
+        metadata.insert(DatabaseMetadata::Number, &0)?;
         metadata.insert(DatabaseMetadata::Schema, &SCHEMA_VERSION)?;
 
         tx.open_table(DIRECTORIES)?;
@@ -1023,10 +1116,15 @@ impl Server {
       return Ok(());
     }
 
-    temp_path
-      .persist(&path)
-      .map_err(|error| error.error)
-      .context(filesystem_error::Io { path: &path })?;
+    writer
+      .get_ref()
+      .sync_all()
+      .await
+      .context(filesystem_error::Io {
+        path: &temp_path_utf8,
+      })?;
+
+    tokio::task::block_in_place(|| filesystem::persist(temp_path, &path))?;
 
     Ok(())
   }

@@ -1,6 +1,5 @@
 use super::*;
 
-#[allow(clippy::arbitrary_source_item_ordering)]
 #[derive(Copy, Clone, Debug, Eq, FromRepr, Ord, PartialEq, PartialOrd, VariantArray)]
 #[repr(u64)]
 pub(crate) enum DatabaseMetadata {

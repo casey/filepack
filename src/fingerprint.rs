@@ -1,18 +1,8 @@
 use super::*;
 
+/// BLAKE3 hash of a package's serialized root directory.
 #[derive(
-  Clone,
-  Copy,
-  Debug,
-  Decode,
-  DeserializeFromStr,
-  Encode,
-  Eq,
-  Hash,
-  Ord,
-  PartialEq,
-  PartialOrd,
-  SerializeDisplay,
+  Clone, Copy, Debug, Decode, DeserializeFromStr, Encode, Eq, Ord, PartialEq, PartialOrd,
 )]
 #[deco(transparent)]
 pub struct Fingerprint(pub(crate) Hash);
@@ -43,6 +33,11 @@ impl Display for Fingerprint {
 }
 
 impl Hex for Fingerprint {
+  const EXAMPLE: &'static str =
+    "package12186aa6cefc1ae2f427b90e61a3ab91c88573f6f6719ca0188098d681b6c80ca";
+
+  const EXAMPLE_DESCRIPTION: &'static str = "Fingerprint of the empty package.";
+
   const TAG: Tag = Tag::Package;
 }
 
@@ -106,9 +101,23 @@ impl redb::Value for Fingerprint {
   }
 }
 
+impl PathExtractor for Fingerprint {
+  fn parameters() -> Vec<reference::Parameter> {
+    vec![reference::Parameter::Fingerprint]
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn example() {
+    assert_eq!(
+      Fingerprint(Directory::new().entry().hash).to_string(),
+      Fingerprint::EXAMPLE
+    );
+  }
 
   #[test]
   fn redb() {

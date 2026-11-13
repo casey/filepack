@@ -1,32 +1,45 @@
 use super::*;
 
-#[allow(private_interfaces)]
+/// Metadata describing a package's content.
+#[expect(private_interfaces)]
 #[skip_serializing_none]
-#[derive(Clone, Debug, Default, Encode, Decode, Magic, PartialEq, Serialize)]
+#[derive(Clone, Debug, Default, Encode, Decode, Json, Magic, PartialEq, Serialize)]
 #[deco(magic = MagicType::Metadata)]
 pub struct Metadata {
+  /// Cover art image. Must be square.
   #[n(1)]
   pub artwork: Option<Image>,
+  /// Primary person or group who created the content.
   #[n(2)]
   pub creator: Option<Text>,
+  /// Single-line description of the content.
   #[n(3)]
   pub description: Option<Text>,
+  /// Official homepage of the content.
   #[n(4)]
   pub homepage: Option<CheckedUrl>,
+  /// Two-letter ISO 639-1 code of the content's primary language.
   #[n(5)]
   pub language: Option<Language>,
+  /// Metadata describing the media content of the package.
   #[n(6)]
   pub media: Option<Media>,
+  /// Metadata describing the package itself, as opposed to its content.
   #[n(7)]
   pub package: Option<PackageMetadata>,
+  /// Primary publisher of the content.
   #[n(8)]
   pub publisher: Option<Text>,
+  /// Path to a markdown file containing a readme describing the content.
   #[n(9)]
   pub readme: Option<RelativePath>,
+  /// Thumbnails generated for images in the package, keyed by the path of the original image.
   #[n(10)]
   pub thumbnails: Option<BTreeMap<RelativePath, Image>>,
+  /// Time the content was created.
   #[n(11)]
   pub time: Option<Time>,
+  /// Title of the content.
   #[n(12)]
   pub title: Option<Text>,
 }
@@ -85,10 +98,10 @@ impl Metadata {
 
   pub(crate) fn check_files(&self, paths: &HashSet<RelativePath>) -> Result {
     if let Some(media) = &self.media
-      && media.ty().has_items()
+      && let Some(items) = media.items()
     {
       let mut seen = HashSet::new();
-      for item in media.items() {
+      for item in items {
         let path = item.path();
         ensure! {
           seen.insert(path),
@@ -295,6 +308,18 @@ impl Metadata {
       })
   }
 
+  pub(crate) fn load(root: &Utf8Path) -> Result<Option<Self>> {
+    let path = root.join(Self::DECO_FILENAME);
+
+    let Some(deco) = filesystem::read_opt(&path)? else {
+      return Ok(None);
+    };
+
+    let metadata = Self::decode_from_slice(&deco).context(error::DecodeMetadataDeco { path })?;
+
+    Ok(Some(metadata))
+  }
+
   pub(crate) fn thumbnail(&self, path: &RelativePath) -> Option<&Image> {
     self.thumbnails.as_ref()?.get(path)
   }
@@ -362,12 +387,12 @@ mod tests {
         alpha: true,
         bit_depth: 8,
         chroma_subsampling: Some(ChromaSubsampling::Yuv420),
-        color_type: Some(ColorType::Rgb),
+        color_type: Decoded::Known(ColorType::Rgb),
         dimensions: Dimensions {
           height: 1,
           width: 1,
         },
-        format: Some(ImageFormat::Png),
+        format: Decoded::Known(ImageFormat::Png),
         orientation: Orientation::new(),
         path: "cover.png".parse().unwrap(),
       }),
@@ -379,8 +404,8 @@ mod tests {
         items: vec![Item {
           content: Audio {
             channels: 8,
-            codec: Some(AudioCodec::Flac),
-            format: Some(AudioFormat::Flac),
+            codec: Decoded::Known(AudioCodec::Flac),
+            format: Decoded::Known(AudioFormat::Flac),
             path: "track.flac".parse().unwrap(),
             sample_bits: Some(7),
             sample_rate: 1,
@@ -625,12 +650,12 @@ mod tests {
         alpha: false,
         bit_depth: 8,
         chroma_subsampling: Some(ChromaSubsampling::Yuv444),
-        color_type: Some(ColorType::Rgb),
+        color_type: Decoded::Known(ColorType::Rgb),
         dimensions: Dimensions {
           height: 512,
           width: 1024,
         },
-        format: Some(ImageFormat::Jpeg),
+        format: Decoded::Known(ImageFormat::Jpeg),
         orientation: Orientation::new(),
         path: "thumbnails/foo.jpg".parse().unwrap(),
       }],
@@ -734,7 +759,7 @@ mod tests {
 
     assert_eq!(
       metadata
-        .info(InfoBuilder::new(), PackageIdentifier::Number(1), None, None)
+        .info(InfoBuilder::new(), PackageIdentifier::Number(0), None, None)
         .build(),
       Info::Map(Vec::new()),
     );

@@ -1,16 +1,20 @@
 use {
-  self::{child::Child, dedent::Dedent, expected::Expected, test::Test},
+  self::{child::Child, dedent::Dedent, expected::Expected, request::Request, test::Test},
+  axum::{body, response::IntoResponse},
   camino::{Utf8Path, Utf8PathBuf},
   filepack::{
     Decode, DecodeOptions, Decoded, Decoder, Directory, DirectoryExt, Encode, Encoder, Entry,
     Fingerprint, FlacBuilder, Hash, Loader, MagicType, Manifest, Metadata, Mp3Builder, Mp4Builder,
-    OrderedSet, PackageIdentifier, Page, PngBuilder, PrivateKey, PublicKey, RevisionObject,
-    ServerState, State, Totals, gradient, gradient_alpha, hex,
+    NonEmptyOrderedSet, PackageIdentifier, Page, PngBuilder, PrivateKey, PublicKey, Reference,
+    RevisionObject, ServerState, State, Totals, gradient, gradient_alpha, hex,
     templates::{DirectoryHtml, PackageHtml},
   },
   image::{DynamicImage, ImageFormat},
   regex::Regex,
-  reqwest::StatusCode,
+  reqwest::{
+    Method, StatusCode, Version,
+    header::{self, HeaderName},
+  },
   std::{
     assert_matches,
     collections::{BTreeMap, BTreeSet},
@@ -20,17 +24,19 @@ use {
     path::{MAIN_SEPARATOR_STR, Path},
     process::{Command, Stdio},
     str,
-    sync::mpsc,
+    sync::{LazyLock, mpsc},
     thread,
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
   },
   tempfile::{NamedTempFile, TempDir},
+  tokio::runtime::Runtime,
   unindent::unindent,
   usized::IntoU64,
 };
 
 mod archive;
 mod child;
+mod completions;
 mod contains;
 mod create;
 mod data_dir;
@@ -55,6 +61,8 @@ mod man;
 mod manifest;
 mod metadata;
 mod misc;
+mod reference;
+mod request;
 mod serve;
 mod sign;
 mod signatures;
@@ -71,6 +79,8 @@ const PRIVATE_KEY: &str = concat!(
 );
 
 const PUBLIC_KEY: &str = "public1d79b36defbee7c1d26099c9e28f849f1f0dceb6e0217b83c87f5cff6fd8c4fc8";
+
+static RUNTIME: LazyLock<Runtime> = LazyLock::new(|| Runtime::new().unwrap());
 
 fn add_unknown_signature(path: &Utf8Path) -> Vec<u8> {
   let mut manifest = manifest(path);

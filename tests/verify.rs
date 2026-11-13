@@ -1,6 +1,24 @@
 use super::*;
 
 #[test]
+fn case_variant_error() {
+  #[track_caller]
+  fn case(actual: &str, expected: &str) {
+    Test::new()
+      .touch(actual)
+      .arg("verify")
+      .stderr(&format!(
+        "error: expected `{expected}` but found case mismatch `{actual}`\n"
+      ))
+      .failure();
+  }
+
+  case("MANIFEST.FILEPACK", "manifest.filepack");
+  case("METADATA.FILEMETA", "metadata.filemeta");
+  case(".FILEPACK", ".filepack");
+}
+
+#[test]
 fn duplicate_key_literal() {
   Test::new()
     .arg("create")
@@ -421,6 +439,20 @@ fn nested_missing_empty_directory_error() {
 }
 
 #[test]
+fn nested_reserved_filename_error() {
+  Test::new()
+    .create_dir("foo")
+    .args(["create", "foo"])
+    .success()
+    .touch("foo/bar/MANIFEST.FILEPACK")
+    .args(["verify", "foo"])
+    .stderr(
+      "error: package contains reserved filename `MANIFEST.FILEPACK` at `bar/MANIFEST.FILEPACK`\n",
+    )
+    .failure();
+}
+
+#[test]
 fn no_files() {
   Test::new()
     .write_manifest(
@@ -671,6 +703,96 @@ fn size_mismatch() {
 }
 
 #[test]
+fn subpackage() {
+  Test::new()
+    .arg("keygen")
+    .success()
+    .touch("foo/bar/baz")
+    .args(["create", "--sign", "foo/bar"])
+    .success()
+    .args(["create", "foo"])
+    .success()
+    .args(["verify", "foo"])
+    .stderr("successfully verified 1 file totaling 0 bytes\n")
+    .success()
+    .args(["verify", "--key", "master", "foo/bar"])
+    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
+    .success()
+    .args(["verify", "--key", "master", "foo"])
+    .stderr("error: no signature found for key `master`\n")
+    .failure();
+}
+
+#[test]
+fn subpackage_metadata_error() {
+  let test = Test::new()
+    .touch("foo/README.md")
+    .write(
+      "foo/metadata.yaml",
+      "
+        title: Foo
+        readme: README.md
+      ",
+    )
+    .args(["create", "foo"])
+    .success();
+
+  let metadata = fs::read(test.path().join("foo/metadata.filemeta")).unwrap();
+
+  let hash = Hash::bytes(&metadata);
+
+  let size = metadata.len();
+
+  test
+    .write("bar/baz/metadata.filemeta", metadata)
+    .write_manifest(
+      "bar/manifest.filepack",
+      json! {
+        embedded: {},
+        package: {
+          baz: {
+            "metadata.filemeta": {
+              hash: hash,
+              size: size
+            }
+          }
+        },
+        signatures: [],
+      },
+    )
+    .args(["verify", "bar"])
+    .stderr("error: file referenced in metadata missing: `README.md`\n")
+    .failure();
+}
+
+#[test]
+fn subpackage_mismatch_error() {
+  Test::new()
+    .touch("foo/bar/baz")
+    .touch("qux/quux")
+    .args(["create", "foo/bar"])
+    .success()
+    .args(["create", "foo"])
+    .success()
+    .args([
+      "create",
+      "--force",
+      "--manifest",
+      "foo/bar/manifest.filepack",
+      "qux",
+    ])
+    .success()
+    .args(["verify", "foo"])
+    .stderr(
+      "error: subpackage `bar` fingerprint \
+      `package1081491cb5479be8a7dbb3911f7c8b54f4f62ca0ca70992b9fc8fb8c76e511a7a` \
+      does not match `bar/manifest.filepack` fingerprint \
+      `package16c712b7a1ba31734e524213b5fa115e08a2fbd3d2a8bce59b858d3e33474acbc`\n",
+    )
+    .failure();
+}
+
+#[test]
 fn symlink_error() {
   Test::new()
     .touch("foo")
@@ -792,7 +914,7 @@ fn verify_checks_metadata() {
 
   let deco = fs::read(test.path().join("metadata.filemeta")).unwrap();
 
-  let hash = Hash::bytes(&deco).to_string();
+  let hash = Hash::bytes(&deco);
 
   test
     .remove_file("README.md")

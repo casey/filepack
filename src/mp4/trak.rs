@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug)]
 pub(crate) struct Trak {
   pub(crate) mdia: Mdia,
   pub(crate) tkhd: Tkhd,

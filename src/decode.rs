@@ -92,12 +92,6 @@ impl<'a> Decode<'a> for &'a [u8] {
   }
 }
 
-impl<'a> Decode<'a> for &'a str {
-  fn decode(decoder: &mut Decoder<'a>) -> DecodeResult<Self> {
-    decoder.text()
-  }
-}
-
 impl<const N: usize> Decode<'_> for [u8; N] {
   fn decode(decoder: &mut Decoder) -> DecodeResult<Self> {
     decoder.byte_array()
@@ -136,14 +130,6 @@ mod tests {
   }
 
   #[test]
-  fn borrowed_str() {
-    assert_eq!(
-      <&str>::decode_strict(&[0x83, 0x66, 0x6f, 0x6f]).unwrap(),
-      "foo",
-    );
-  }
-
-  #[test]
   fn decode_from_slice_errors_on_trailing_bytes() {
     assert_matches!(
       u64::decode_from_slice(&[0x00, 0x00]),
@@ -164,8 +150,10 @@ mod tests {
 
   #[test]
   fn unknown_fields() {
+    /// Foo.
     #[derive(Debug, Decode, Encode, PartialEq)]
     struct Foo {
+      /// Foo.
       #[n(1)]
       foo: u64,
     }
@@ -187,8 +175,10 @@ mod tests {
 
   #[test]
   fn unknown_fields_array() {
+    /// Foo.
     #[derive(Debug, Decode, Encode, PartialEq)]
     struct Foo {
+      /// Foo.
       #[n(1)]
       foo: u64,
     }
@@ -215,14 +205,18 @@ mod tests {
 
   #[test]
   fn unknown_fields_nested() {
+    /// Foo.
     #[derive(Debug, Decode, Encode, PartialEq)]
     struct Foo {
+      /// Foo.
       #[n(1)]
       foo: u64,
     }
 
+    /// Bar.
     #[derive(Debug, Decode, Encode, PartialEq)]
     struct Bar {
+      /// Bar.
       #[n(1)]
       bar: Foo,
     }

@@ -1,56 +1,53 @@
 use super::*;
 
-#[derive(Clone, Debug, Decode, Encode, EnumDiscriminants, IntoStaticStr, PartialEq, Serialize)]
+/// Package media content metadata.
+#[derive(
+  Clone, Debug, Decode, Encode, EnumDiscriminants, IntoStaticStr, Json, PartialEq, Serialize,
+)]
 #[serde(rename_all = "snake_case", tag = "type")]
 #[strum(serialize_all = "kebab-case")]
 #[strum_discriminants(
-  derive(Display, Ord, PartialOrd),
+  derive(Deserialize, Display, EnumIter, Ord, PartialOrd, Serialize),
   name(MediaType),
+  serde(rename_all = "kebab-case"),
   strum(serialize_all = "kebab-case"),
   vis(pub)
 )]
 pub(crate) enum Media {
+  /// Collection of audio items.
   #[n(0)]
   Audio {
+    /// Metadata describing the audio items.
     #[n(1)]
     items: Vec<Item<Audio>>,
   },
+  /// Collection of document items.
   #[n(1)]
   Document {
+    /// Metadata describing the document items.
     #[n(1)]
     items: Vec<Item<Document>>,
   },
+  /// Collection of image items.
   #[n(2)]
   Image {
+    /// Metadata describing the image items.
     #[n(1)]
     items: Vec<Item<Image>>,
   },
+  /// Collection of video items.
   #[n(3)]
   Video {
+    /// Metadata describing the video items.
     #[n(1)]
     items: Vec<Item<Video>>,
   },
+  /// A web site, with `static/index.html` as its entry point.
   #[n(4)]
   Web,
 }
 
 impl Media {
-  pub(crate) fn formats(&self) -> Vec<String> {
-    fn formats<T: Content>(items: &[Item<T>]) -> Vec<String> {
-      Item::formats(items)
-        .into_iter()
-        .map(|format| OrUnknown(format).to_string())
-        .collect()
-    }
-    match self {
-      Self::Audio { items } => formats(items),
-      Self::Document { items } => formats(items),
-      Self::Image { items } => formats(items),
-      Self::Video { items } => formats(items),
-      Self::Web => unreachable!(),
-    }
-  }
-
   pub(crate) fn info(&self, builder: InfoBuilder, identifier: PackageIdentifier) -> InfoBuilder {
     fn format<T: Content>(builder: InfoBuilder, items: &[Item<T>]) -> InfoBuilder {
       let formats = Item::formats(items);
@@ -59,7 +56,7 @@ impl Media {
           "format",
           formats
             .into_iter()
-            .map(|format| Info::Value(OrUnknown(format).to_string())),
+            .map(|format| Info::Value(format.to_string())),
         )
       })
     }
@@ -85,37 +82,13 @@ impl Media {
       })
   }
 
-  pub(crate) fn item(&self, i: usize) -> Option<&dyn MediaItem> {
+  pub(crate) fn items(&self) -> Option<Items> {
     match self {
-      Self::Audio { items } => items.get(i).map(|item| item as &dyn MediaItem),
-      Self::Document { items } => items.get(i).map(|item| item as &dyn MediaItem),
-      Self::Image { items } => items.get(i).map(|item| item as &dyn MediaItem),
-      Self::Video { items } => items.get(i).map(|item| item as &dyn MediaItem),
-      Self::Web => unreachable!(),
-    }
-  }
-
-  pub(crate) fn item_count(&self) -> usize {
-    match self {
-      Self::Audio { items } => items.len(),
-      Self::Document { items } => items.len(),
-      Self::Image { items } => items.len(),
-      Self::Video { items } => items.len(),
-      Self::Web => unreachable!(),
-    }
-  }
-
-  fn item_url(&self, identifier: PackageIdentifier, item: usize) -> Option<String> {
-    (item < self.item_count()).then(|| format!("/package/{identifier}/item/{}", Ordinal(item)))
-  }
-
-  pub(crate) fn items<'a>(&'a self) -> Box<dyn Iterator<Item = &dyn MediaItem> + 'a> {
-    match self {
-      Self::Audio { items } => Box::new(items.iter().map(|item| item as &dyn MediaItem)),
-      Self::Document { items } => Box::new(items.iter().map(|item| item as &dyn MediaItem)),
-      Self::Image { items } => Box::new(items.iter().map(|item| item as &dyn MediaItem)),
-      Self::Video { items } => Box::new(items.iter().map(|item| item as &dyn MediaItem)),
-      Self::Web => unreachable!(),
+      Self::Audio { items } => Some(Items::Audio(items)),
+      Self::Document { items } => Some(Items::Document(items)),
+      Self::Image { items } => Some(Items::Image(items)),
+      Self::Video { items } => Some(Items::Video(items)),
+      Self::Web => None,
     }
   }
 
@@ -123,77 +96,7 @@ impl Media {
     self.into()
   }
 
-  pub(crate) fn next_item_url(&self, identifier: PackageIdentifier, item: usize) -> Option<String> {
-    self.item_url(identifier, item.checked_add(1)?)
-  }
-
-  pub(crate) fn prev_item_url(&self, identifier: PackageIdentifier, item: usize) -> Option<String> {
-    self.item_url(identifier, item.checked_sub(1)?)
-  }
-
   pub(crate) fn ty(&self) -> MediaType {
     self.discriminant()
-  }
-}
-
-impl MediaType {
-  pub(crate) fn has_items(self) -> bool {
-    match self {
-      Self::Audio | Self::Document | Self::Image | Self::Video => true,
-      Self::Web => false,
-    }
-  }
-
-  pub(crate) fn item_noun(self) -> &'static str {
-    match self {
-      Self::Audio => "track",
-      Self::Document => "document",
-      Self::Image => "image",
-      Self::Video => "video",
-      Self::Web => unreachable!(),
-    }
-  }
-}
-
-#[cfg(test)]
-mod tests {
-  use super::*;
-
-  #[test]
-  fn formats() {
-    assert_eq!(
-      Media::Image {
-        items: vec![
-          Item::test("foo.png"),
-          Item::test("bar.jpg"),
-          Item::test("baz.png"),
-        ],
-      }
-      .formats(),
-      ["PNG", "JPEG"],
-    );
-  }
-
-  #[test]
-  fn item_url() {
-    let media = Media::Image {
-      items: vec![Item::test("foo.png"), Item::test("bar.png")],
-    };
-
-    for identifier in [
-      PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
-      PackageIdentifier::Number(1),
-    ] {
-      assert_eq!(
-        media.next_item_url(identifier, 0),
-        Some(format!("/package/{identifier}/item/2")),
-      );
-      assert_eq!(media.next_item_url(identifier, 1), None);
-      assert_eq!(media.prev_item_url(identifier, 0), None);
-      assert_eq!(
-        media.prev_item_url(identifier, 1),
-        Some(format!("/package/{identifier}/item/1")),
-      );
-    }
   }
 }

@@ -54,6 +54,9 @@ impl FromStr for Hash {
 }
 
 impl Hex for Hash {
+  const EXAMPLE: &'static str =
+    "hash1af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262";
+  const EXAMPLE_DESCRIPTION: &'static str = "Hash of the empty string.";
   const TAG: Tag = Tag::Hash;
 }
 
@@ -76,6 +79,14 @@ impl Display for Hash {
 }
 
 impl Encode for Hash {
+  fn deco_schema(registry: &mut deco::Registry) -> String {
+    deco::Schema::Wrapper {
+      description: "BLAKE3 hash.".into(),
+      inner: <[u8; Self::LEN]>::deco_schema(registry),
+    }
+    .register("Hash", registry)
+  }
+
   fn encode(&self, encoder: &mut Encoder) {
     self.as_bytes().encode(encoder);
   }
@@ -121,6 +132,22 @@ impl redb::Value for Hash {
   }
 }
 
+impl PathExtractor for Hash {
+  fn parameters() -> Vec<reference::Parameter> {
+    vec![reference::Parameter::Hash]
+  }
+}
+
+impl json::Json for Hash {
+  fn json_schema(registry: &mut json::Registry) -> String {
+    json::Schema::Hex {
+      description: "BLAKE3 hash.".into(),
+      tag: Tag::Hash,
+    }
+    .register("Hash", registry)
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
@@ -133,6 +160,11 @@ mod tests {
         .to_string(),
       "hash contains invalid hex digit `o` at line 1 column 10",
     );
+  }
+
+  #[test]
+  fn example() {
+    assert_eq!(Hash::bytes(b"").to_string(), Hash::EXAMPLE);
   }
 
   #[test]
@@ -174,7 +206,7 @@ mod tests {
 
   #[test]
   fn uppercase_is_forbidden() {
-    format!("hash1{}", test::HASH["hash1".len()..].to_uppercase())
+    format!("hash1{}", Hash::EXAMPLE["hash1".len()..].to_uppercase())
       .parse::<Hash>()
       .unwrap_err();
   }

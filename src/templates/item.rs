@@ -15,11 +15,11 @@ impl ItemHtml {
   }
 
   fn item(&self) -> &dyn MediaItem {
-    self.media().item(self.index).unwrap()
+    self.items().get(self.index).unwrap()
   }
 
-  fn media(&self) -> &Media {
-    self.metadata.media.as_ref().unwrap()
+  fn items(&self) -> Items {
+    self.metadata.media.as_ref().unwrap().items().unwrap()
   }
 
   fn title(&self) -> Option<&Text> {
@@ -29,15 +29,15 @@ impl ItemHtml {
 
 impl Page for ItemHtml {
   fn next(&self) -> Option<String> {
-    self.media().next_item_url(self.identifier, self.index)
+    self.items().next_url(self.identifier, self.index)
   }
 
   fn open_graph_image(&self) -> Option<OpenGraphImage> {
-    match self.media() {
-      Media::Audio { .. } | Media::Document { .. } => {
+    match self.items() {
+      Items::Audio(_) | Items::Document(_) => {
         OpenGraphImage::artwork(&self.metadata, self.fingerprint)
       }
-      Media::Image { items } => Some(OpenGraphImage::thumbnail(
+      Items::Image(items) => Some(OpenGraphImage::thumbnail(
         &self.metadata,
         &items[self.index].content,
         format!(
@@ -46,7 +46,7 @@ impl Page for ItemHtml {
           Ordinal(self.index)
         ),
       )),
-      Media::Video { .. } => {
+      Items::Video(_) => {
         if let Some(placeholder) = self.item().placeholder() {
           Some(OpenGraphImage::thumbnail(
             &self.metadata,
@@ -61,12 +61,11 @@ impl Page for ItemHtml {
           OpenGraphImage::artwork(&self.metadata, self.fingerprint)
         }
       }
-      Media::Web => unreachable!(),
     }
   }
 
   fn prev(&self) -> Option<String> {
-    self.media().prev_item_url(self.identifier, self.index)
+    self.items().prev_url(self.identifier, self.index)
   }
 
   fn script(&self) -> Option<&'static str> {
@@ -76,7 +75,7 @@ impl Page for ItemHtml {
   fn shortcuts(&self) -> Vec<Shortcut> {
     vec![Shortcut {
       description: "toggle full screen",
-      key: 'f',
+      keys: &['f'],
     }]
   }
 
@@ -100,11 +99,11 @@ mod tests {
   #[test]
   fn navigation() {
     for identifier in [
-      PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
-      PackageIdentifier::Number(1),
+      PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
+      PackageIdentifier::Number(0),
     ] {
       let mut html = ItemHtml {
-        fingerprint: test::FINGERPRINT.parse().unwrap(),
+        fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
         identifier,
         metadata: Metadata {
           media: Some(Media::Image {
@@ -132,8 +131,8 @@ mod tests {
     fn case(metadata: Metadata, expected: Option<OpenGraphImage>) {
       assert_eq!(
         ItemHtml {
-          fingerprint: test::FINGERPRINT.parse().unwrap(),
-          identifier: PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
+          fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
+          identifier: PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
           metadata,
           ..default()
         }
@@ -148,7 +147,7 @@ mod tests {
           height: 1,
           width: 1,
         },
-        path: format!("artwork/{}", test::FINGERPRINT),
+        path: format!("artwork/{}", Fingerprint::EXAMPLE),
       }
     }
 
@@ -200,7 +199,7 @@ mod tests {
           height: 2,
           width: 1,
         },
-        path: format!("media/image/{}/item/1", test::FINGERPRINT),
+        path: format!("media/image/{}/item/1", Fingerprint::EXAMPLE),
       }),
     );
 
@@ -232,7 +231,7 @@ mod tests {
           height: 3,
           width: 4,
         },
-        path: format!("media/image/{}/item/1/thumbnail", test::FINGERPRINT),
+        path: format!("media/image/{}/item/1/thumbnail", Fingerprint::EXAMPLE),
       }),
     );
 
@@ -261,7 +260,7 @@ mod tests {
           height: 2,
           width: 4,
         },
-        path: format!("media/video/{}/item/1/placeholder", test::FINGERPRINT),
+        path: format!("media/video/{}/item/1/placeholder", Fingerprint::EXAMPLE),
       }),
     );
 
@@ -298,7 +297,7 @@ mod tests {
         },
         path: format!(
           "media/video/{}/item/1/placeholder/thumbnail",
-          test::FINGERPRINT
+          Fingerprint::EXAMPLE
         ),
       }),
     );
@@ -331,8 +330,8 @@ mod tests {
     fn case(metadata: Metadata, expected: String) {
       assert_eq!(
         ItemHtml {
-          fingerprint: test::FINGERPRINT.parse().unwrap(),
-          identifier: PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
+          fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
+          identifier: PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
           metadata,
           ..default()
         }
@@ -341,7 +340,7 @@ mod tests {
       );
     }
 
-    let fingerprint = test::FINGERPRINT;
+    let fingerprint = Fingerprint::EXAMPLE;
 
     case(
       Metadata {
@@ -366,7 +365,6 @@ mod tests {
                 </a>
               </p>
             </hgroup>
-            <button aria-label='Keyboard shortcuts' popovertarget=shortcuts title='Keyboard shortcuts'>?</button>
           </footer>
         "
       ),
@@ -404,7 +402,6 @@ mod tests {
                 </a>
               </p>
             </hgroup>
-            <button aria-label='Keyboard shortcuts' popovertarget=shortcuts title='Keyboard shortcuts'>?</button>
           </footer>
         "
       ),
@@ -432,7 +429,6 @@ mod tests {
                 </a>
               </p>
             </hgroup>
-            <button aria-label='Keyboard shortcuts' popovertarget=shortcuts title='Keyboard shortcuts'>?</button>
           </footer>
         "
       ),
@@ -467,7 +463,6 @@ mod tests {
                 </a>
               </p>
             </hgroup>
-            <button aria-label='Keyboard shortcuts' popovertarget=shortcuts title='Keyboard shortcuts'>?</button>
           </footer>
         "
       ),
@@ -495,7 +490,6 @@ mod tests {
                 </a>
               </p>
             </hgroup>
-            <button aria-label='Keyboard shortcuts' popovertarget=shortcuts title='Keyboard shortcuts'>?</button>
           </footer>
         "
       ),
@@ -503,8 +497,8 @@ mod tests {
 
     assert_eq!(
       ItemHtml {
-        fingerprint: test::FINGERPRINT.parse().unwrap(),
-        identifier: PackageIdentifier::Number(1),
+        fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
+        identifier: PackageIdentifier::Number(0),
         metadata: Metadata {
           media: Some(Media::Image {
             items: vec![Item::test("foo.png")],
@@ -521,12 +515,11 @@ mod tests {
             <hgroup>
               <h1>Image 1</h1>
               <p>
-                <a href=/package/1>
-                  1
+                <a href=/package/0>
+                  0
                 </a>
               </p>
             </hgroup>
-            <button aria-label='Keyboard shortcuts' popovertarget=shortcuts title='Keyboard shortcuts'>?</button>
           </footer>
         "
       )),
@@ -539,7 +532,7 @@ mod tests {
       ItemHtml::default().shortcuts(),
       vec![Shortcut {
         description: "toggle full screen",
-        key: 'f',
+        keys: &['f'],
       }],
     );
   }
@@ -550,8 +543,8 @@ mod tests {
     fn case(media: Media, expected: &str) {
       assert_eq!(
         Page::title(&ItemHtml {
-          fingerprint: test::FINGERPRINT.parse().unwrap(),
-          identifier: PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
+          fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
+          identifier: PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
           metadata: Metadata {
             media: Some(media),
             ..default()

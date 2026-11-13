@@ -1,35 +1,40 @@
 use {
   self::{
-    attributes::Attributes, container_attribute::ContainerAttribute, field::Field, input::Input,
-    parsed_field::ParsedField, parsed_variant::ParsedVariant, receiver::Receiver, variant::Variant,
+    description::Description,
+    functions::{display_name, number, option, path_value, type_argument, validate_numbers},
+    route::Route,
+    route_attribute::RouteAttribute,
   },
   darling::{FromDeriveInput, FromField, FromVariant, ast::Data, ast::Fields},
-  heck::ToSnakeCase,
-  proc_macro::TokenStream,
-  quote::quote,
-  std::collections::HashSet,
-  strum::{Display, EnumString},
+  heck::{ToKebabCase, ToSnakeCase},
+  proc_macro2::TokenStream,
+  quote::{ToTokens, format_ident, quote},
+  std::{collections::HashSet, mem},
+  strum::{EnumString, IntoStaticStr},
   syn::{
-    Attribute, DeriveInput, Error, Generics, Ident, Index, LitInt, Member, Path, Result, Type,
-    TypeParamBound, TypePath, meta::ParseNestedMeta, parse::ParseBuffer,
+    Attribute, DeriveInput, Error, Expr, ExprLit, FnArg, GenericArgument, GenericParam, Generics,
+    Ident, ItemFn, Lit, LitInt, LitStr, Path, PathArguments, ReturnType, Token, Type,
+    TypeParamBound, TypePath,
+    meta::ParseNestedMeta,
+    parse::{Parse, ParseBuffer, ParseStream},
   },
   usized::IntoU64,
 };
 
-mod attributes;
-mod container_attribute;
-mod field;
-mod input;
-mod parsed_field;
-mod parsed_variant;
-mod receiver;
-mod variant;
+mod deco;
+mod description;
+mod functions;
+mod json;
+mod route;
+mod route_attribute;
+
+type Result<T = (), E = Error> = std::result::Result<T, E>;
 
 #[proc_macro_derive(Decode, attributes(deco, n))]
-pub fn decode(input: TokenStream) -> TokenStream {
+pub fn decode(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
   let input = syn::parse_macro_input!(input as DeriveInput);
 
-  let input = match Input::from_derive_input(&input) {
+  let input = match deco::Input::from_derive_input(&input) {
     Ok(input) => input,
     Err(err) => return err.write_errors().into(),
   };
@@ -41,7 +46,7 @@ pub fn decode(input: TokenStream) -> TokenStream {
 }
 
 #[proc_macro_derive(DecodeFromStr)]
-pub fn decode_from_str(input: TokenStream) -> TokenStream {
+pub fn decode_from_str(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
   let input = syn::parse_macro_input!(input as DeriveInput);
 
   let name = &input.ident;
@@ -64,15 +69,11 @@ pub fn decode_from_str(input: TokenStream) -> TokenStream {
   .into()
 }
 
-fn display_name(ident: &Ident) -> String {
-  ident.to_string().to_snake_case().replace('_', " ")
-}
-
 #[proc_macro_derive(Encode, attributes(deco, n))]
-pub fn encode(input: TokenStream) -> TokenStream {
+pub fn encode(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
   let input = syn::parse_macro_input!(input as DeriveInput);
 
-  let input = match Input::from_derive_input(&input) {
+  let input = match deco::Input::from_derive_input(&input) {
     Ok(input) => input,
     Err(err) => return err.write_errors().into(),
   };
@@ -84,13 +85,28 @@ pub fn encode(input: TokenStream) -> TokenStream {
 }
 
 #[proc_macro_derive(EncodeDisplay)]
-pub fn encode_display(input: TokenStream) -> TokenStream {
+pub fn encode_display(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
   let input = syn::parse_macro_input!(input as DeriveInput);
 
   let name = &input.ident;
 
+  let description = match Description::new(name, &input.attrs, "type", false, false) {
+    Ok(description) => description,
+    Err(err) => return err.to_compile_error().into(),
+  };
+
+  let schema_name = name.to_string();
+
   quote! {
     impl Encode for #name {
+      fn deco_schema(registry: &mut deco::Registry) -> String {
+        deco::Schema::Wrapper {
+          description: #description.into(),
+          inner: String::deco_schema(registry),
+        }
+        .register(#schema_name, registry)
+      }
+
       fn encode(&self, encoder: &mut Encoder) {
         self.to_string().encode(encoder);
       }
@@ -99,11 +115,26 @@ pub fn encode_display(input: TokenStream) -> TokenStream {
   .into()
 }
 
-#[proc_macro_derive(Magic, attributes(deco, n))]
-pub fn magic(input: TokenStream) -> TokenStream {
+#[proc_macro_derive(Json, attributes(json))]
+pub fn json(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
   let input = syn::parse_macro_input!(input as DeriveInput);
 
-  let input = match Input::from_derive_input(&input) {
+  let input = match json::Input::from_derive_input(&input) {
+    Ok(input) => input,
+    Err(err) => return err.write_errors().into(),
+  };
+
+  match input.schema() {
+    Ok(tokens) => tokens.into(),
+    Err(err) => err.to_compile_error().into(),
+  }
+}
+
+#[proc_macro_derive(Magic, attributes(deco, n))]
+pub fn magic(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+  let input = syn::parse_macro_input!(input as DeriveInput);
+
+  let input = match deco::Input::from_derive_input(&input) {
     Ok(input) => input,
     Err(err) => return err.write_errors().into(),
   };
@@ -114,55 +145,17 @@ pub fn magic(input: TokenStream) -> TokenStream {
   }
 }
 
-fn number(ident: &Ident, attributes: &[Attribute]) -> Result<u64> {
-  let mut n = None;
+#[proc_macro_attribute]
+pub fn route(
+  attribute: proc_macro::TokenStream,
+  item: proc_macro::TokenStream,
+) -> proc_macro::TokenStream {
+  let attribute = syn::parse_macro_input!(attribute as RouteAttribute);
 
-  for attribute in attributes {
-    if attribute.path().is_ident("n") {
-      if n.is_some() {
-        return Err(Error::new_spanned(attribute, "duplicate `#[n]` attribute"));
-      }
-      n = Some(attribute.parse_args::<LitInt>()?.base10_parse::<u64>()?);
-    }
+  let item = syn::parse_macro_input!(item as ItemFn);
+
+  match Route::new(attribute, item) {
+    Ok(route) => route.tokens().into(),
+    Err(err) => err.to_compile_error().into(),
   }
-
-  n.ok_or_else(|| Error::new_spanned(ident, "missing `#[n(N)]` attribute"))
-}
-
-fn path_value(meta: &ParseNestedMeta, placeholder: &str) -> Result<Path> {
-  let name = meta.path.require_ident()?;
-  meta.value().and_then(ParseBuffer::parse).map_err(|_| {
-    meta.error(format!(
-      "`#[deco({name})]` must be of the form `#[deco({name} = {placeholder})]`"
-    ))
-  })
-}
-
-fn validate_numbers<'a>(
-  start: u64,
-  numbers: impl IntoIterator<Item = (&'a Ident, u64)>,
-) -> Result<()> {
-  let mut seen = HashSet::new();
-
-  for (i, (ident, n)) in numbers.into_iter().enumerate() {
-    if !seen.insert(n) {
-      return Err(Error::new_spanned(
-        ident,
-        format!("duplicate `#[n({n})]` attribute"),
-      ));
-    }
-
-    let expected = start + i.into_u64();
-
-    if n != expected {
-      return Err(Error::new_spanned(
-        ident,
-        format!(
-          "`#[n]` attributes must be contiguous starting from {start}: expected {expected}, found {n}"
-        ),
-      ));
-    }
-  }
-
-  Ok(())
 }

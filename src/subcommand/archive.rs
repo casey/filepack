@@ -2,11 +2,15 @@ use super::*;
 
 #[derive(Parser)]
 pub(crate) struct Archive {
-  #[arg(help = "Read manifest JSON from <INPUT>")]
+  #[arg(help = "Read manifest JSON from <INPUT>", value_hint = ValueHint::FilePath)]
   input: Utf8PathBuf,
-  #[arg(help = "Write archive to <OUTPUT>")]
+  #[arg(help = "Write archive to <OUTPUT>", value_hint = ValueHint::AnyPath)]
   output: Utf8PathBuf,
 }
+
+pub(crate) type Input = Manifest;
+
+pub(crate) type Output = ();
 
 impl Archive {
   pub(crate) fn run(self) -> Result {

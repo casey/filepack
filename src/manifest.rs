@@ -1,14 +1,18 @@
 use super::*;
 
+/// Package manifest unpacked from a package archive.
 #[serde_as]
-#[derive(Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Debug, Deserialize, Json, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Manifest {
-  #[serde_as(as = "BTreeMap<serde_with::Same, serde_with::hex::Hex>")]
-  pub embedded: BTreeMap<Hash, Vec<u8>>,
+  /// File contents embedded in the manifest, keyed by hash.
+  pub embedded: BTreeMap<Hash, Bytes>,
+  /// Files and directories in the package, as a tree of path components.
   pub package: DirectoryTree,
+  /// Signatures over the package fingerprint.
   #[serde_as(as = "SetPreventDuplicates<serde_with::Same>")]
   pub signatures: BTreeSet<Decoded<Attestation>>,
+  /// Entries in the manifest archive not recognized by this version of Filepack.
   #[serde(default, skip_serializing_if = "DirectoryTree::is_empty")]
   pub unknown: DirectoryTree,
 }
@@ -19,7 +23,7 @@ impl Manifest {
   pub(crate) fn empty_directories(&self) -> BTreeSet<RelativePath> {
     let mut empty = BTreeSet::new();
 
-    for (path, entry) in self.entries() {
+    for (path, entry) in self.package.descendants() {
       if let DirectoryTreeEntry::Directory(directory) = entry
         && directory.entries.is_empty()
       {
@@ -30,40 +34,8 @@ impl Manifest {
     empty
   }
 
-  fn entries(&self) -> Entries {
-    self.into()
-  }
-
-  fn file_hashes(&self) -> BTreeSet<Hash> {
-    let mut hashes = BTreeSet::new();
-    let mut stack = self
-      .package
-      .entries
-      .values()
-      .chain(self.unknown.entries.values())
-      .collect::<Vec<&DirectoryTreeEntry>>();
-    while let Some(entry) = stack.pop() {
-      match entry {
-        DirectoryTreeEntry::Directory(directory) => stack.extend(directory.entries.values()),
-        DirectoryTreeEntry::File(file) => {
-          hashes.insert(file.hash);
-        }
-      }
-    }
-    hashes
-  }
-
   pub(crate) fn files(&self) -> BTreeMap<RelativePath, File> {
-    let mut files = BTreeMap::new();
-
-    for (path, entry) in self.entries() {
-      if let DirectoryTreeEntry::File(file) = entry {
-        let old = files.insert(path, *file);
-        assert!(old.is_none());
-      }
-    }
-
-    files
+    self.package.files()
   }
 
   pub(crate) fn from_json(json: &str, path: &Utf8Path) -> Result<Self> {
@@ -77,14 +49,21 @@ impl Manifest {
       }
     }
 
-    for name in manifest.package.entries.keys() {
-      ensure! {
-        !name.is_reserved(),
-        error::ReservedPath { name },
-      }
+    if let Some(path) = manifest.reserved_filename() {
+      return Err(error::ReservedFilename { path }.build());
     }
 
-    let hashes = manifest.file_hashes();
+    let files = manifest
+      .package
+      .files()
+      .into_values()
+      .chain(manifest.unknown.files().into_values())
+      .collect::<Vec<File>>();
+
+    let hashes = files
+      .iter()
+      .map(|file| file.hash)
+      .collect::<BTreeSet<Hash>>();
 
     let mut unreferenced = BTreeSet::new();
     for (&expected, content) in &manifest.embedded {
@@ -105,6 +84,22 @@ impl Manifest {
       error::UnreferencedEmbeddedFiles { hashes: unreferenced, path },
     }
 
+    for file in files {
+      if let Some(content) = manifest.embedded.get(&file.hash) {
+        let actual = content.len().into_u64();
+
+        ensure! {
+          actual == file.size,
+          error::EmbeddedFileSizeMismatch {
+            actual,
+            expected: file.size,
+            hash: file.hash,
+            path,
+          },
+        }
+      }
+    }
+
     Ok(manifest)
   }
 
@@ -118,6 +113,16 @@ impl Manifest {
 
   pub(crate) fn pack(&self, path: &Utf8Path) -> Result<Archive> {
     Archive::pack(self).context(error::ManifestTotals { path })
+  }
+
+  pub(crate) fn reserved_filename(&self) -> Option<RelativePath> {
+    for (path, _entry) in self.package.descendants() {
+      if path.filename().is_reserved() {
+        return Some(path);
+      }
+    }
+
+    None
   }
 
   pub fn save(&self, path: &Utf8Path) -> Result {
@@ -159,6 +164,16 @@ impl Manifest {
       .filter(|signature| signature.known().is_none())
       .count()
   }
+
+  #[cfg(test)]
+  pub(crate) fn with_package(package: DirectoryTree) -> Self {
+    Self {
+      embedded: BTreeMap::new(),
+      package,
+      signatures: BTreeSet::new(),
+      unknown: DirectoryTree::new(),
+    }
+  }
 }
 
 #[cfg(test)]
@@ -170,8 +185,8 @@ mod tests {
     assert_matches_regex!(
       serde_json::from_str::<Manifest>(&format!(
         r#"{{"package":{{}},"signatures":["{}","{}"]}}"#,
-        test::SIGNATURE,
-        test::SIGNATURE,
+        Attestation::EXAMPLE,
+        Attestation::EXAMPLE,
       ))
       .unwrap_err()
       .to_string(),
@@ -182,7 +197,7 @@ mod tests {
   #[test]
   fn embedded_serializes_as_hex() {
     let manifest = Manifest {
-      embedded: BTreeMap::from([(Hash::bytes(b"foo"), b"foo".to_vec())]),
+      embedded: BTreeMap::from([(Hash::bytes(b"foo"), b"foo".to_vec().into())]),
       package: DirectoryTree::new(),
       signatures: BTreeSet::new(),
       unknown: DirectoryTree::new(),
@@ -203,12 +218,7 @@ mod tests {
 
   #[test]
   fn empty_manifest_serialization() {
-    let manifest = Manifest {
-      embedded: BTreeMap::new(),
-      package: DirectoryTree::new(),
-      signatures: BTreeSet::new(),
-      unknown: DirectoryTree::new(),
-    };
+    let manifest = Manifest::with_package(DirectoryTree::new());
     let json = serde_json::to_string(&manifest).unwrap();
     assert_eq!(json, r#"{"embedded":{},"package":{},"signatures":[]}"#);
     assert_eq!(serde_json::from_str::<Manifest>(&json).unwrap(), manifest);
@@ -221,9 +231,32 @@ mod tests {
     let re = Regex::new(r"(?s)```json(.*?)```").unwrap();
 
     for capture in re.captures_iter(&readme) {
-      let manifest = capture[1].replace("…", test::SIGNATURE);
+      let manifest = capture[1].replace("…", Attestation::EXAMPLE);
       serde_json::from_str::<Manifest>(&manifest).unwrap();
     }
+  }
+
+  #[test]
+  fn reserved_filename() {
+    #[track_caller]
+    fn case(path: &str, expected: &str) {
+      let mut package = DirectoryTree::new();
+
+      package
+        .create_file(&path.parse().unwrap(), File::new(b"foo"))
+        .unwrap();
+
+      let manifest = Manifest::with_package(package);
+
+      assert_eq!(
+        manifest.reserved_filename(),
+        Some(expected.parse().unwrap()),
+      );
+    }
+
+    case("METADATA.FILEMETA", "METADATA.FILEMETA");
+    case("foo/.FILEPACK", "foo/.FILEPACK");
+    case("manifest.filepack/foo", "manifest.filepack");
   }
 
   #[test]

@@ -2,17 +2,15 @@ use super::*;
 
 #[derive(Parser)]
 pub(crate) struct Signatures {
-  #[arg(long = "format", default_value_t)]
+  #[arg(long = "format", default_value_t, help = FORMAT_HELP)]
   format: OutputFormat,
-  #[arg(help = MANIFEST_PATH_HELP)]
+  #[arg(help = MANIFEST_PATH_HELP, value_hint = ValueHint::AnyPath)]
   path: Option<Utf8PathBuf>,
 }
 
-#[derive(Serialize)]
-struct Output {
-  public_key: PublicKey,
-  timestamp: Option<u64>,
-}
+pub(crate) type Input = ();
+
+pub(crate) type Output = Vec<SignatureEntry>;
 
 impl Signatures {
   pub(crate) fn run(self) -> Result {
@@ -25,12 +23,12 @@ impl Signatures {
     let signatures = manifest
       .signatures()
       .map(|signature| {
-        Ok(Output {
+        Ok(SignatureEntry {
           public_key: signature.public_key(),
           timestamp: signature.verify(fingerprint)?.timestamp,
         })
       })
-      .collect::<Result<Vec<Output>>>()?;
+      .collect::<Result<Output>>()?;
 
     let unknown = manifest.unknown_signatures();
 
@@ -45,10 +43,7 @@ impl Signatures {
       }
       OutputFormat::Tsv => {
         for signature in &signatures {
-          let timestamp = signature
-            .timestamp
-            .map(|t| t.to_string())
-            .unwrap_or_default();
+          let timestamp = signature.timestamp.map_or_default(|t| t.to_string());
           println!("{}\t{}", signature.public_key, timestamp);
         }
       }

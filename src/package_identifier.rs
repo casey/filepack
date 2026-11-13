@@ -30,15 +30,21 @@ impl FromStr for PackageIdentifier {
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     if s.starts_with(|c: char| c.is_ascii_digit()) {
       Ok(Self::Number(parse_number(s)?))
-    } else if s.starts_with(Tag::Package.prefix()) {
+    } else if s.starts_with(Tag::Package.tag()) {
       Ok(Self::Fingerprint(s.parse()?))
-    } else if s.starts_with(Tag::Revision.prefix()) {
+    } else if s.starts_with(Tag::Revision.tag()) {
       Ok(Self::Revision(s.parse()?))
     } else {
       Err(PackageIdentifierError::Unrecognized {
         identifier: s.into(),
       })
     }
+  }
+}
+
+impl PathExtractor for PackageIdentifier {
+  fn parameters() -> Vec<reference::Parameter> {
+    vec![reference::Parameter::PackageIdentifier]
   }
 }
 
@@ -50,8 +56,8 @@ mod tests {
   fn display() {
     assert_eq!(PackageIdentifier::Number(1).to_string(), "1");
     assert_eq!(
-      PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()).to_string(),
-      test::FINGERPRINT,
+      PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()).to_string(),
+      Fingerprint::EXAMPLE,
     );
   }
 
@@ -66,12 +72,12 @@ mod tests {
     case("1", PackageIdentifier::Number(1));
     case("10", PackageIdentifier::Number(10));
     case(
-      test::FINGERPRINT,
-      PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
+      Fingerprint::EXAMPLE,
+      PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
     );
     case(
-      test::REVISION,
-      PackageIdentifier::Revision(test::REVISION.parse().unwrap()),
+      Revision::EXAMPLE,
+      PackageIdentifier::Revision(Revision::EXAMPLE.parse().unwrap()),
     );
   }
 

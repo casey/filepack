@@ -1,5 +1,10 @@
 use super::*;
 
+const DESCRIPTION: &str = "Ed25519 public key.
+
+Must use the canonical encoding and be of order ℓ, meaning that it must not be \
+a small-order point and must be torsion-free.";
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq, SerializeDisplay)]
 pub struct PublicKey(ed25519_dalek::VerifyingKey);
 
@@ -20,6 +25,11 @@ impl PublicKey {
     ensure! {
       !key.is_weak(),
       public_key_error::Weak { key: InvalidPublicKey(bytes) },
+    }
+
+    ensure! {
+      key.to_edwards().is_torsion_free(),
+      public_key_error::MixedOrder { key: InvalidPublicKey(bytes) },
     }
 
     Ok(Self(key))
@@ -69,12 +79,23 @@ impl Display for PublicKey {
 }
 
 impl Encode for PublicKey {
+  fn deco_schema(registry: &mut deco::Registry) -> String {
+    deco::Schema::Wrapper {
+      description: DESCRIPTION.into(),
+      inner: <[u8; Self::LEN]>::deco_schema(registry),
+    }
+    .register("PublicKey", registry)
+  }
+
   fn encode(&self, encoder: &mut Encoder) {
     encoder.bytes(self.0.as_bytes());
   }
 }
 
 impl Hex for PublicKey {
+  const EXAMPLE: &'static str =
+    "public13b6a27bcceb6a42d62a3a8d02a6f0d73653215771de243a63ac048a18b59da29";
+  const EXAMPLE_DESCRIPTION: &'static str = "Public key derived from the all-zero private key.";
   const TAG: Tag = Tag::Public;
 }
 
@@ -90,9 +111,45 @@ impl PartialOrd for PublicKey {
   }
 }
 
+impl json::Json for PublicKey {
+  fn json_schema(registry: &mut json::Registry) -> String {
+    json::Schema::Hex {
+      description: DESCRIPTION.into(),
+      tag: Tag::Public,
+    }
+    .register("PublicKey", registry)
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn example() {
+    assert_eq!(
+      PrivateKey::from([0; PrivateKey::LEN])
+        .public_key()
+        .to_string(),
+      PublicKey::EXAMPLE,
+    );
+  }
+
+  #[test]
+  fn mixed_order_public_keys_are_forbidden() {
+    const MIXED_ORDER_PUBLIC_KEY: &str =
+      "public198519eadf35b995233b51b5cd23e9cc5a28b639b5a4af0ec903cb960d81b7819";
+
+    assert_matches!(
+      MIXED_ORDER_PUBLIC_KEY.parse::<PublicKey>().unwrap_err(),
+      HexError::Decode {
+        source: DecodeError::Malformed(MalformedError::PublicKey {
+          source: PublicKeyError::MixedOrder { key },
+        }),
+        tag: Tag::Public,
+      } if key.to_string() == MIXED_ORDER_PUBLIC_KEY,
+    );
+  }
 
   #[test]
   fn non_canonical_public_keys_are_forbidden() {
@@ -109,7 +166,7 @@ mod tests {
       } if key.to_string() == NON_CANONICAL_PUBLIC_KEY,
     );
 
-    format!("public103{}", "0".repeat(62))
+    format!("public11a{}", "0".repeat(62))
       .parse::<PublicKey>()
       .unwrap();
   }
@@ -135,7 +192,7 @@ mod tests {
 
   #[test]
   fn whitespace_is_not_trimmed_when_parsing_from_string() {
-    format!(" {}", test::PUBLIC_KEY)
+    format!(" {}", PublicKey::EXAMPLE)
       .parse::<PublicKey>()
       .unwrap_err();
   }
@@ -146,11 +203,11 @@ mod tests {
 
     let path = path.join("key");
 
-    filesystem::write(&path, format!(" \t{}\n", test::PUBLIC_KEY)).unwrap();
+    filesystem::write(&path, format!(" \t{}\n", PublicKey::EXAMPLE)).unwrap();
 
     assert_eq!(
       PublicKey::load(&path).unwrap().to_string(),
-      test::PUBLIC_KEY,
+      PublicKey::EXAMPLE,
     );
   }
 }

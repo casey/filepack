@@ -2,10 +2,13 @@ use super::*;
 
 #[test]
 fn all_optional_all_none() {
+  /// Foo.
   #[derive(Debug, Encode, Decode, PartialEq)]
   struct Foo {
+    /// Bar.
     #[n(1)]
     bar: Option<u64>,
+    /// Baz.
     #[n(2)]
     baz: Option<String>,
   }
@@ -21,10 +24,13 @@ fn all_optional_all_none() {
 
 #[test]
 fn all_optional_all_some() {
+  /// Foo.
   #[derive(Debug, Encode, Decode, PartialEq)]
   struct Foo {
+    /// Bar.
     #[n(1)]
     bar: Option<u64>,
+    /// Baz.
     #[n(2)]
     baz: Option<String>,
   }
@@ -40,10 +46,13 @@ fn all_optional_all_some() {
 
 #[test]
 fn all_optional_mixed() {
+  /// Foo.
   #[derive(Debug, Encode, Decode, PartialEq)]
   struct Foo {
+    /// Bar.
     #[n(1)]
     bar: Option<u64>,
+    /// Baz.
     #[n(2)]
     baz: Option<String>,
   }
@@ -67,10 +76,13 @@ fn all_optional_mixed() {
 
 #[test]
 fn all_required() {
+  /// Foo.
   #[derive(Debug, Encode, Decode, PartialEq)]
   struct Foo {
+    /// Bar.
     #[n(1)]
     bar: u64,
+    /// Baz.
     #[n(2)]
     baz: String,
   }
@@ -86,8 +98,10 @@ fn all_required() {
 
 #[test]
 fn borrowed_field() {
+  /// Foo.
   #[derive(Debug, Decode, Encode, PartialEq)]
   struct Foo<'a> {
+    /// Bar.
     #[n(1)]
     bar: &'a [u8],
   }
@@ -136,6 +150,7 @@ fn decode_from_str() {
 
 #[test]
 fn encode_display() {
+  /// Foo.
   #[derive(EncodeDisplay)]
   struct Foo;
 
@@ -149,17 +164,53 @@ fn encode_display() {
 }
 
 #[test]
+fn encode_display_schema() {
+  /// Foo.
+  #[derive(EncodeDisplay)]
+  struct Foo;
+
+  impl Display for Foo {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+      write!(f, "foo")
+    }
+  }
+
+  let mut schemas = BTreeMap::new();
+
+  assert_eq!(Foo::deco_schema(&mut schemas), "Foo");
+
+  assert_eq!(
+    schemas,
+    BTreeMap::from([
+      (
+        "Foo".into(),
+        deco::Schema::Wrapper {
+          description: "Foo.".into(),
+          inner: "String".into(),
+        },
+      ),
+      ("String".into(), deco::Schema::of::<String>()),
+    ]),
+  );
+}
+
+#[test]
 fn enum_added_optional_field() {
+  /// Foo.
   #[derive(Debug, Decode, Encode, PartialEq)]
   enum Foo {
+    /// Bar.
     #[n(0)]
     Bar,
   }
 
+  /// Bar.
   #[derive(Debug, Decode, Encode, PartialEq)]
   enum Bar {
+    /// Bar.
     #[n(0)]
     Bar {
+      /// Foo.
       #[n(1)]
       foo: Option<u64>,
     },
@@ -189,10 +240,13 @@ fn enum_added_optional_field() {
 fn enum_array_invalid_discriminant() {
   #[derive(Debug, Decode, PartialEq)]
   enum Foo {
+    /// Bar.
     #[n(0)]
     Bar,
+    /// Baz.
     #[n(1)]
     Baz {
+      /// Baz.
       #[n(1)]
       baz: u64,
     },
@@ -214,8 +268,10 @@ fn enum_array_invalid_discriminant() {
 fn enum_array_missing_field() {
   #[derive(Debug, Decode, PartialEq)]
   enum Foo {
+    /// Bar.
     #[n(0)]
     Bar {
+      /// Bar.
       #[n(1)]
       bar: u64,
     },
@@ -231,8 +287,10 @@ fn enum_array_missing_field() {
 fn enum_array_unconsumed_elements() {
   #[derive(Debug, Decode, PartialEq)]
   enum Foo {
+    /// Bar.
     #[n(0)]
     Bar {
+      /// Bar.
       #[n(1)]
       bar: u64,
     },
@@ -248,10 +306,13 @@ fn enum_array_unconsumed_elements() {
 fn enum_empty_map() {
   #[derive(Debug, Decode, PartialEq)]
   enum Foo {
+    /// Bar.
     #[n(0)]
     Bar,
+    /// Baz.
     #[n(1)]
     Baz {
+      /// Foo.
       #[n(1)]
       foo: Option<u64>,
     },
@@ -271,6 +332,7 @@ fn enum_empty_map() {
 fn enum_invalid_discriminant() {
   #[derive(Debug, Decode)]
   enum Foo {
+    /// Bar.
     #[n(0)]
     Bar,
   }
@@ -317,12 +379,16 @@ fn enum_invalid_discriminant() {
 
 #[test]
 fn enum_mixed() {
+  /// Foo.
   #[derive(Debug, Decode, Encode, PartialEq)]
   enum Foo {
+    /// Bar.
     #[n(0)]
     Bar,
+    /// Baz.
     #[n(1)]
     Baz {
+      /// Baz.
       #[n(1)]
       baz: u64,
     },
@@ -334,12 +400,16 @@ fn enum_mixed() {
 
 #[test]
 fn enum_named_field() {
+  /// Foo.
   #[derive(Debug, Decode, Encode, PartialEq)]
   enum Foo {
+    /// Bar.
     #[n(0)]
     Bar {
+      /// Bar.
       #[n(1)]
       bar: u64,
+      /// Baz.
       #[n(2)]
       baz: String,
     },
@@ -356,12 +426,16 @@ fn enum_named_field() {
 
 #[test]
 fn enum_named_field_optional() {
+  /// Foo.
   #[derive(Debug, Decode, Encode, PartialEq)]
   enum Foo {
+    /// Bar.
     #[n(0)]
     Bar {
+      /// Bar.
       #[n(1)]
       bar: Option<u64>,
+      /// Baz.
       #[n(2)]
       baz: u64,
     },
@@ -380,10 +454,13 @@ fn enum_named_field_optional() {
 
 #[test]
 fn enum_round_trip() {
+  /// Foo.
   #[derive(Debug, Decode, Encode, PartialEq)]
   enum Foo {
+    /// Bar.
     #[n(0)]
     Bar,
+    /// Baz.
     #[n(1)]
     Baz,
   }
@@ -393,9 +470,107 @@ fn enum_round_trip() {
 }
 
 #[test]
+fn enum_schema() {
+  /// Foo.
+  #[derive(Decode, Encode)]
+  enum Foo {
+    /// Bar.
+    #[n(0)]
+    Bar,
+    /// Baz.
+    #[n(1)]
+    Baz,
+  }
+
+  let mut schemas = BTreeMap::new();
+
+  assert_eq!(Foo::deco_schema(&mut schemas), "Foo");
+
+  assert_eq!(
+    schemas,
+    BTreeMap::from([(
+      "Foo".into(),
+      deco::Schema::Enum {
+        description: "Foo.".into(),
+        variants: vec![
+          deco::Variant {
+            description: "Bar.".into(),
+            fields: vec![],
+            n: 0,
+            name: "Bar".into()
+          },
+          deco::Variant {
+            description: "Baz.".into(),
+            fields: vec![],
+            n: 1,
+            name: "Baz".into()
+          },
+        ],
+      },
+    )]),
+  );
+}
+
+#[test]
+fn enum_schema_fields() {
+  /// Foo.
+  #[derive(Decode, Encode)]
+  enum Foo {
+    /// Bar.
+    #[n(0)]
+    Bar,
+    /// Baz.
+    #[n(1)]
+    Baz {
+      /// Qux.
+      #[n(1)]
+      qux: Option<u64>,
+    },
+  }
+
+  let mut schemas = BTreeMap::new();
+
+  assert_eq!(Foo::deco_schema(&mut schemas), "Foo");
+
+  assert_eq!(
+    schemas,
+    BTreeMap::from([
+      (
+        "Foo".into(),
+        deco::Schema::Enum {
+          description: "Foo.".into(),
+          variants: vec![
+            deco::Variant {
+              description: "Bar.".into(),
+              fields: vec![],
+              n: 0,
+              name: "Bar".into(),
+            },
+            deco::Variant {
+              description: "Baz.".into(),
+              fields: vec![deco::Field {
+                description: "Qux.".into(),
+                n: 1,
+                name: "qux".into(),
+                optional: true,
+                schema: "UnsignedInteger".into(),
+              }],
+              n: 1,
+              name: "Baz".into(),
+            },
+          ],
+        },
+      ),
+      ("UnsignedInteger".into(), deco::Schema::of::<u64>()),
+    ]),
+  );
+}
+
+#[test]
 fn enum_unconsumed_unit_payload() {
   #[derive(Debug, Decode)]
   enum Foo {
+    /// Bar.
     #[n(0)]
     Bar,
   }
@@ -420,10 +595,13 @@ fn enum_unconsumed_unit_payload() {
 fn enum_unknown_fields() {
   #[derive(Debug, Decode, PartialEq)]
   enum Foo {
+    /// Bar.
     #[n(0)]
     Bar {
+      /// Foo.
       #[n(1)]
       foo: u64,
+      /// Bar.
       #[n(2)]
       bar: Option<u64>,
     },
@@ -446,18 +624,24 @@ fn enum_unknown_fields() {
 
 #[test]
 fn enum_unknown_variants() {
+  /// Foo.
   #[derive(Debug, Decode, Encode, PartialEq)]
   enum Foo {
+    /// Bar.
     #[n(0)]
     Bar,
   }
 
+  /// Bar.
   #[derive(Debug, Decode, Encode, PartialEq)]
   enum Bar {
+    /// Baz.
     #[n(0)]
     Baz {
+      /// Foo.
       #[n(1)]
       foo: Option<Foo>,
+      /// Bar.
       #[n(2)]
       bar: u64,
     },
@@ -482,10 +666,389 @@ fn enum_unknown_variants() {
 }
 
 #[test]
+fn generic_schema() {
+  /// Foo.
+  ///
+  /// - Bar is non-empty.
+  /// - Bar is full of love.
+  #[derive(Decode, Encode)]
+  struct Foo<T> {
+    /// Bar.
+    #[n(1)]
+    bar: T,
+  }
+
+  let mut schemas = BTreeMap::new();
+
+  assert_eq!(
+    Foo::<u64>::deco_schema(&mut schemas),
+    "Foo<UnsignedInteger>"
+  );
+
+  assert_eq!(
+    schemas,
+    BTreeMap::from([
+      (
+        "Foo<UnsignedInteger>".into(),
+        deco::Schema::Struct {
+          description: "Foo.\n\n- Bar is non-empty.\n- Bar is full of love.".into(),
+          fields: vec![deco::Field {
+            description: "Bar.".into(),
+            n: 1,
+            name: "bar".into(),
+            optional: false,
+            schema: "UnsignedInteger".into(),
+          }],
+          magic: None,
+          strict: false,
+        },
+      ),
+      ("UnsignedInteger".into(), deco::Schema::of::<u64>()),
+    ]),
+  );
+}
+
+#[test]
+fn json_enum() {
+  /// Foo.
+  #[expect(dead_code)]
+  #[skip_serializing_none]
+  #[derive(Deserialize, Json)]
+  #[serde(deny_unknown_fields, rename_all = "snake_case", tag = "type")]
+  enum Foo {
+    /// Bar.
+    Bar,
+    /// Baz.
+    Baz {
+      /// Qux.
+      qux: Option<String>,
+    },
+  }
+
+  let mut schemas = json::Registry::new();
+
+  assert_eq!(Foo::json_schema(&mut schemas), "Foo");
+
+  assert_eq!(
+    *schemas,
+    BTreeMap::from([
+      (
+        "Foo".into(),
+        json::Schema::TaggedEnum {
+          description: "Foo.".into(),
+          strict: true,
+          tag: "type".into(),
+          variants: vec![
+            json::Variant {
+              description: "Bar.".into(),
+              fields: vec![],
+              name: "bar".into(),
+            },
+            json::Variant {
+              description: "Baz.".into(),
+              fields: vec![json::Field {
+                description: "Qux.".into(),
+                example: None,
+                name: "qux".into(),
+                optional: true,
+                schema: "String".into(),
+              }],
+              name: "baz".into(),
+            },
+          ],
+        },
+      ),
+      (
+        "String".into(),
+        json::Schema::String {
+          description: "String.".into()
+        }
+      ),
+    ]),
+  );
+}
+
+#[test]
+fn json_generic() {
+  /// Foo.
+  ///
+  /// - Bar is non-empty.
+  /// - Bar is full of love.
+  #[expect(dead_code)]
+  #[derive(Deserialize, Json)]
+  struct Foo<T> {
+    /// Bar.
+    bar: T,
+  }
+
+  let mut schemas = json::Registry::new();
+
+  assert_eq!(Foo::<String>::json_schema(&mut schemas), "Foo<String>");
+
+  assert_eq!(
+    *schemas,
+    BTreeMap::from([
+      (
+        "Foo<String>".into(),
+        json::Schema::Struct {
+          description: "Foo.\n\n- Bar is non-empty.\n- Bar is full of love.".into(),
+          fields: vec![json::Field {
+            description: "Bar.".into(),
+            example: None,
+            name: "bar".into(),
+            optional: false,
+            schema: "String".into(),
+          }],
+          strict: false,
+        },
+      ),
+      (
+        "String".into(),
+        json::Schema::String {
+          description: "String.".into()
+        }
+      ),
+    ]),
+  );
+}
+
+#[test]
+fn json_string() {
+  /// Foo.
+  #[expect(dead_code)]
+  #[derive(Json)]
+  #[json(string)]
+  struct Foo(u64);
+
+  let mut schemas = json::Registry::new();
+
+  assert_eq!(Foo::json_schema(&mut schemas), "Foo");
+
+  assert_eq!(
+    *schemas,
+    BTreeMap::from([
+      (
+        "Foo".into(),
+        json::Schema::Wrapper {
+          description: "Foo.".into(),
+          inner: "String".into(),
+        },
+      ),
+      (
+        "String".into(),
+        json::Schema::String {
+          description: "String.".into()
+        }
+      ),
+    ]),
+  );
+}
+
+#[test]
+fn json_string_enum() {
+  /// Foo.
+  #[derive(Deserialize, Json)]
+  #[serde(rename_all = "kebab-case")]
+  enum Foo {
+    /// Bar.
+    BarBaz,
+    /// Baz.
+    #[serde(rename = "4:2:0")]
+    Baz,
+    /// Qux.
+    Qux,
+  }
+
+  let mut schemas = json::Registry::new();
+
+  assert_eq!(Foo::json_schema(&mut schemas), "Foo");
+
+  assert_eq!(
+    *schemas,
+    BTreeMap::from([(
+      "Foo".into(),
+      json::Schema::StringEnum {
+        description: "Foo.".into(),
+        values: vec![
+          json::Value {
+            description: "Bar.".into(),
+            value: "bar-baz".into(),
+          },
+          json::Value {
+            description: "Baz.".into(),
+            value: "4:2:0".into(),
+          },
+          json::Value {
+            description: "Qux.".into(),
+            value: "qux".into(),
+          },
+        ],
+      },
+    )]),
+  );
+}
+
+#[test]
+fn json_struct() {
+  /// Foo.
+  #[expect(dead_code)]
+  #[skip_serializing_none]
+  #[derive(Deserialize, Json)]
+  #[serde(deny_unknown_fields)]
+  struct Foo {
+    /// Bar.
+    #[json(example = "foo")]
+    bar: String,
+    /// Baz.
+    baz: Option<String>,
+    /// Qux.
+    #[serde(default)]
+    qux: Vec<String>,
+  }
+
+  let mut schemas = json::Registry::new();
+
+  assert_eq!(Foo::json_schema(&mut schemas), "Foo");
+
+  assert_eq!(
+    *schemas,
+    BTreeMap::from([
+      (
+        "Array<String>".into(),
+        json::Schema::Array {
+          element: "String".into(),
+        },
+      ),
+      (
+        "Foo".into(),
+        json::Schema::Struct {
+          description: "Foo.".into(),
+          fields: vec![
+            json::Field {
+              description: "Bar.".into(),
+              example: Some("foo".into()),
+              name: "bar".into(),
+              optional: false,
+              schema: "String".into(),
+            },
+            json::Field {
+              description: "Baz.".into(),
+              example: None,
+              name: "baz".into(),
+              optional: true,
+              schema: "String".into(),
+            },
+            json::Field {
+              description: "Qux.".into(),
+              example: None,
+              name: "qux".into(),
+              optional: true,
+              schema: "Array<String>".into(),
+            },
+          ],
+          strict: true,
+        },
+      ),
+      (
+        "String".into(),
+        json::Schema::String {
+          description: "String.".into()
+        }
+      ),
+    ]),
+  );
+}
+
+#[test]
+fn json_transparent() {
+  /// Foo.
+  #[expect(dead_code)]
+  #[serde_as]
+  #[derive(Deserialize, Json)]
+  #[serde(transparent)]
+  struct Foo {
+    #[serde_as(as = "SetPreventDuplicates<serde_with::Same>")]
+    bar: BTreeSet<String>,
+  }
+
+  let mut schemas = json::Registry::new();
+
+  assert_eq!(Foo::json_schema(&mut schemas), "Foo");
+
+  assert_eq!(
+    *schemas,
+    BTreeMap::from([
+      (
+        "Foo".into(),
+        json::Schema::Wrapper {
+          description: "Foo.".into(),
+          inner: "Set<String>".into(),
+        },
+      ),
+      (
+        "Set<String>".into(),
+        json::Schema::Set {
+          element: "String".into(),
+        },
+      ),
+      (
+        "String".into(),
+        json::Schema::String {
+          description: "String.".into()
+        }
+      ),
+    ]),
+  );
+}
+
+#[test]
+fn json_untagged() {
+  /// Foo.
+  #[expect(dead_code)]
+  #[derive(Deserialize, Json)]
+  #[serde(untagged)]
+  enum Foo {
+    Bar(String),
+    Baz(Vec<Foo>),
+  }
+
+  let mut schemas = json::Registry::new();
+
+  assert_eq!(Foo::json_schema(&mut schemas), "Foo");
+
+  assert_eq!(
+    *schemas,
+    BTreeMap::from([
+      (
+        "Array<Foo>".into(),
+        json::Schema::Array {
+          element: "Foo".into(),
+        },
+      ),
+      (
+        "Foo".into(),
+        json::Schema::UntaggedEnum {
+          description: "Foo.".into(),
+          variants: vec!["String".into(), "Array<Foo>".into()],
+        },
+      ),
+      (
+        "String".into(),
+        json::Schema::String {
+          description: "String.".into()
+        }
+      ),
+    ]),
+  );
+}
+
+#[test]
 fn magic() {
+  /// Foo.
   #[derive(Debug, Decode, Encode, Magic, PartialEq)]
   #[deco(magic = MagicType::Archive)]
   struct Foo {
+    /// Bar.
     #[n(1)]
     bar: u64,
   }
@@ -519,10 +1082,13 @@ fn magic() {
 
 #[test]
 fn mixed_required_and_optional() {
+  /// Foo.
   #[derive(Debug, Encode, Decode, PartialEq)]
   struct Foo {
+    /// Bar.
     #[n(1)]
     bar: Option<u64>,
+    /// Baz.
     #[n(2)]
     baz: String,
   }
@@ -546,8 +1112,10 @@ fn mixed_required_and_optional() {
 
 #[test]
 fn single_field() {
+  /// Foo.
   #[derive(Debug, Encode, Decode, PartialEq)]
   struct Foo {
+    /// Bar.
     #[n(1)]
     bar: u64,
   }
@@ -556,22 +1124,42 @@ fn single_field() {
 }
 
 #[test]
+fn sorted_set() {
+  /// Foo.
+  #[derive(Debug, Decode, Encode, PartialEq)]
+  #[deco(sorted_set, transparent)]
+  struct Foo(Vec<u64>);
+
+  let mut schemas = BTreeMap::new();
+
+  assert_eq!(Foo::deco_schema(&mut schemas), "Foo");
+
+  assert_eq!(
+    schemas,
+    BTreeMap::from([
+      (
+        "Foo".into(),
+        deco::Schema::SortedSet {
+          element: "UnsignedInteger".into(),
+        },
+      ),
+      ("UnsignedInteger".into(), deco::Schema::of::<u64>()),
+    ]),
+  );
+
+  let foo = Foo(vec![1, 2]);
+
+  assert_eq!(Foo::decode_strict(&foo.encode_to_vec()).unwrap(), foo);
+}
+
+#[test]
 fn strict() {
   #[derive(Debug, Decode, PartialEq)]
   #[deco(strict)]
   struct Foo {
+    /// Foo.
     #[n(1)]
     foo: u64,
-  }
-
-  #[derive(Debug, Decode, PartialEq)]
-  #[deco(strict)]
-  enum Bar {
-    #[n(0)]
-    Baz {
-      #[n(1)]
-      foo: u64,
-    },
   }
 
   let fields = with_unknown_field(BTreeMap::from([(1u64, 1u64)]));
@@ -583,30 +1171,86 @@ fn strict() {
       strict: true
     }),
   );
+}
 
-  assert_matches!(
-    Bar::decode_from_slice(&Encoder::frame([vec![0], fields].concat())),
-    Err(DecodeError::Unknown {
-      source: UnknownError::Field { key: u64::MAX },
-      strict: true
-    }),
+#[test]
+fn struct_schema() {
+  /// Foo.
+  #[derive(Decode, Encode)]
+  struct Foo {
+    /// Bar.
+    #[n(1)]
+    bar: u64,
+    /// Baz.
+    #[n(2)]
+    baz: Option<bool>,
+  }
+
+  let mut schemas = BTreeMap::new();
+
+  assert_eq!(Foo::deco_schema(&mut schemas), "Foo");
+
+  assert_eq!(
+    schemas,
+    BTreeMap::from([
+      ("Boolean".into(), deco::Schema::of::<bool>()),
+      (
+        "Foo".into(),
+        deco::Schema::Struct {
+          description: "Foo.".into(),
+          fields: vec![
+            deco::Field {
+              description: "Bar.".into(),
+              n: 1,
+              name: "bar".into(),
+              optional: false,
+              schema: "UnsignedInteger".into(),
+            },
+            deco::Field {
+              description: "Baz.".into(),
+              n: 2,
+              name: "baz".into(),
+              optional: true,
+              schema: "Boolean".into(),
+            },
+          ],
+          magic: None,
+          strict: false,
+        },
+      ),
+      ("UnsignedInteger".into(), deco::Schema::of::<u64>()),
+    ]),
   );
 }
 
 #[test]
-fn transparent_named() {
-  #[derive(Debug, Encode, Decode, PartialEq)]
-  #[deco(transparent)]
-  struct Foo {
-    bar: String,
-  }
+fn struct_schema_attributes() {
+  /// Foo.
+  #[derive(Encode, Magic)]
+  #[deco(magic = MagicType::Archive, strict)]
+  struct Foo {}
 
-  assert_deco(Foo { bar: "foo".into() }, "83666f6f");
-  assert_deco_eq(Foo { bar: "foo".into() }, "foo");
+  let mut schemas = BTreeMap::new();
+
+  assert_eq!(Foo::deco_schema(&mut schemas), "Foo");
+
+  assert_eq!(
+    schemas,
+    BTreeMap::from([(
+      "Foo".into(),
+      deco::Schema::Struct {
+        description: "Foo.".into(),
+        fields: vec![],
+        magic: Some("archive".into()),
+        strict: true,
+      },
+    )]),
+  );
 }
 
 #[test]
 fn transparent_newtype() {
+  /// Foo.
   #[derive(Debug, Encode, Decode, PartialEq)]
   #[deco(transparent)]
   struct Foo(u64);
@@ -616,17 +1260,48 @@ fn transparent_newtype() {
 }
 
 #[test]
+fn transparent_schema() {
+  /// Foo.
+  #[derive(Decode, Encode)]
+  #[deco(transparent)]
+  struct Foo(u64);
+
+  let mut schemas = BTreeMap::new();
+
+  assert_eq!(Foo::deco_schema(&mut schemas), "Foo");
+
+  assert_eq!(
+    schemas,
+    BTreeMap::from([
+      (
+        "Foo".into(),
+        deco::Schema::Wrapper {
+          description: "Foo.".into(),
+          inner: "UnsignedInteger".into(),
+        },
+      ),
+      ("UnsignedInteger".into(), deco::Schema::of::<u64>()),
+    ]),
+  );
+}
+
+#[test]
 fn unknown_variants() {
+  /// Foo.
   #[derive(Debug, Decode, Encode, PartialEq)]
   enum Foo {
+    /// Bar.
     #[n(0)]
     Bar,
   }
 
+  /// Bar.
   #[derive(Debug, Decode, Encode, PartialEq)]
   struct Bar {
+    /// Bar.
     #[n(1)]
     bar: Option<Foo>,
+    /// Foo.
     #[n(2)]
     foo: Option<u64>,
   }
@@ -662,8 +1337,10 @@ fn unknown_variants() {
 fn unknown_variants_errors() {
   #[derive(Debug, Decode, PartialEq)]
   enum Foo {
+    /// Bar.
     #[n(0)]
     Bar {
+      /// Foo.
       #[n(1)]
       foo: bool,
     },
@@ -671,6 +1348,7 @@ fn unknown_variants_errors() {
 
   #[derive(Debug, Decode, PartialEq)]
   struct Bar {
+    /// Foo.
     #[n(1)]
     foo: Option<Foo>,
   }
@@ -696,18 +1374,21 @@ fn unknown_variants_errors() {
 fn unknown_variants_scope() {
   #[derive(Debug, Decode, PartialEq)]
   enum Foo {
+    /// Bar.
     #[n(0)]
     Bar,
   }
 
   #[derive(Debug, Decode, PartialEq)]
   struct Bar<T> {
+    /// Foo.
     #[n(1)]
     foo: Option<T>,
   }
 
   #[derive(Debug, Decode, PartialEq)]
   struct Baz {
+    /// Foo.
     #[n(1)]
     foo: Foo,
   }
@@ -715,18 +1396,9 @@ fn unknown_variants_scope() {
   #[derive(Debug, Decode, PartialEq)]
   #[deco(strict)]
   struct Qux<T> {
+    /// Foo.
     #[n(1)]
     foo: Option<T>,
-  }
-
-  #[derive(Debug, Decode, PartialEq)]
-  #[deco(strict)]
-  enum Quux {
-    #[n(0)]
-    Foo {
-      #[n(1)]
-      foo: Option<Foo>,
-    },
   }
 
   #[track_caller]
@@ -749,11 +1421,6 @@ fn unknown_variants_scope() {
   unknown::<Baz>(lenient, false, &fields);
   unknown::<Qux<Foo>>(lenient, true, &fields);
   unknown::<Bar<Qux<Foo>>>(lenient, true, BTreeMap::from([(1u64, &fields)]));
-  unknown::<Bar<Quux>>(
-    lenient,
-    true,
-    BTreeMap::from([(1u64, [vec![0], fields.encode_to_vec()].concat())]),
-  );
   unknown::<Qux<Bar<Foo>>>(lenient, true, BTreeMap::from([(1u64, &fields)]));
 
   let nested = BTreeMap::from([(1u64, vec![vec![1u64]])]);
@@ -767,21 +1434,16 @@ fn unknown_variants_scope() {
 #[test]
 fn unknown_variants_validate() {
   #[derive(Debug, Decode, PartialEq)]
-  #[deco(validate)]
   enum Foo {
+    /// Bar.
     #[n(0)]
     Bar,
-  }
-
-  impl Validate for Foo {
-    fn validate(&self) -> Result<(), MalformedError> {
-      Err(MalformedError::UnexpectedKey)
-    }
   }
 
   #[derive(Debug, Decode, PartialEq)]
   #[deco(validate)]
   struct Bar {
+    /// Foo.
     #[n(1)]
     foo: Option<Foo>,
   }
@@ -797,26 +1459,26 @@ fn unknown_variants_validate() {
     Bar::decode_from_slice(&with_unknown_field(BTreeMap::from([(1u64, vec![1u64])]))),
     Err(DecodeError::Malformed(MalformedError::MissingElement)),
   );
-  assert_matches!(
-    Bar::decode_strict(&BTreeMap::from([(1u64, vec![0u64])]).encode_to_vec()),
-    Err(DecodeError::Malformed(MalformedError::UnexpectedKey)),
-  );
 }
 
 #[test]
 fn unsupported_version() {
   #[derive(Debug, Decode, PartialEq)]
   struct Foo {
+    /// Foo.
     #[n(1)]
     foo: u64,
   }
 
   #[derive(Debug, Decode, PartialEq)]
   enum Bar {
+    /// Baz.
     #[n(0)]
     Baz,
+    /// Qux.
     #[n(1)]
     Qux {
+      /// Foo.
       #[n(1)]
       foo: u64,
     },
@@ -853,6 +1515,7 @@ fn unsupported_version() {
 
 #[test]
 fn validate() {
+  /// Foo.
   #[derive(Debug, Encode, Decode, PartialEq)]
   #[deco(transparent, validate)]
   struct Foo(String);
@@ -882,50 +1545,12 @@ fn validate() {
 }
 
 #[test]
-fn validate_enum() {
-  #[derive(Debug, Encode, Decode, PartialEq)]
-  #[deco(validate)]
-  enum Foo {
-    #[n(0)]
-    Bar {
-      #[n(1)]
-      baz: String,
-    },
-  }
-
-  impl Validate for Foo {
-    fn validate(&self) -> Result<(), MalformedError> {
-      let Self::Bar { baz } = self;
-      ensure!(
-        baz == "foo",
-        malformed_error::UnexpectedValue {
-          actual: baz.clone(),
-          expected: "foo",
-        }
-      );
-      Ok(())
-    }
-  }
-
-  assert_deco(Foo::Bar { baz: "foo".into() }, "8700850183666f6f");
-
-  let fields = BTreeMap::from([(1u64, "bar")]).encode_to_vec();
-  let bytes = Encoder::frame([vec![0], fields].concat());
-
-  assert_matches!(
-    Foo::decode_strict(&bytes),
-    Err(DecodeError::Malformed(MalformedError::UnexpectedValue {
-      actual,
-      expected: "foo",
-    })) if actual == "bar",
-  );
-}
-
-#[test]
 fn validate_struct() {
+  /// Foo.
   #[derive(Debug, Encode, Decode, PartialEq)]
   #[deco(validate)]
   struct Foo {
+    /// Bar.
     #[n(1)]
     bar: String,
   }
@@ -949,14 +1574,6 @@ fn validate_struct() {
 
   assert_matches!(
     Foo::decode_strict(&bytes),
-    Err(DecodeError::Malformed(MalformedError::UnexpectedValue {
-      actual,
-      expected: "foo",
-    })) if actual == "bar",
-  );
-
-  assert_matches!(
-    Foo::decode(&mut Decoder::strict(&bytes)),
     Err(DecodeError::Malformed(MalformedError::UnexpectedValue {
       actual,
       expected: "foo",

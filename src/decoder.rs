@@ -131,11 +131,6 @@ impl<'a> Decoder<'a> {
     Self::with_options(DecodeOptions::strict(), buffer)
   }
 
-  #[cfg(test)]
-  pub(crate) fn strict_array(&mut self) -> DecodeResult<ArrayDecoder<'a>> {
-    Ok(ArrayDecoder::new(self.strict_child()?))
-  }
-
   fn strict_child(&mut self) -> DecodeResult<Self> {
     let mut child = self.child()?;
     child.options.strict = true;

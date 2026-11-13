@@ -1,20 +1,25 @@
 use {
+  self::{
+    host_port::HostPort, packages_query::PackagesQuery, redirect_config::RedirectConfig,
+    scheme::Scheme, server_config::ServerConfig, spawn_config::SpawnConfig,
+  },
   super::*,
   axum::{
-    Router,
+    Router, body,
     extract::{Extension, Path, Query, Request},
-    http::{HeaderValue, Uri},
+    http::{HeaderValue, Method, Uri},
     middleware::{self, Next},
     response::{IntoResponse, Redirect, Response},
-    routing::{delete, get, head, post},
+    routing::get,
   },
+  axum_extra::headers::HeaderMapExt,
   axum_server::Handle,
+  futures_util::stream,
   hyper_util::rt::TokioTimer,
   rustls_acme::{
     AcmeConfig, EventOk, acme::LETS_ENCRYPT_PRODUCTION_DIRECTORY, axum::AxumAcceptor,
     caches::DirCache,
   },
-  std::net::TcpStream,
   templates::{
     DirectoryHtml, FilesHtml, HistoryHtml, HomeHtml, ItemHtml, MediaHtml, PackageHtml, PackagesHtml,
   },
@@ -22,57 +27,37 @@ use {
   tower_http::set_header::SetResponseHeaderLayer,
 };
 
-mod route;
+pub(crate) use self::write_config::WriteConfig;
+
+mod host_port;
+mod packages_query;
+mod redirect_config;
+pub(crate) mod route;
+mod scheme;
+mod server_config;
+mod spawn_config;
 #[cfg(test)]
 mod tests;
+mod write_config;
+
+const CROSS_ORIGIN_RESOURCE_POLICY: HeaderName =
+  HeaderName::from_static("cross-origin-resource-policy");
+const SEC_FETCH_SITE: HeaderName = HeaderName::from_static("sec-fetch-site");
 
 static THREAD_COUNTER: AtomicU64 = AtomicU64::new(0);
 
+type HostPortExtension = Extension<HostPort>;
 type RedirectConfigExtension = Extension<Arc<RedirectConfig>>;
+type SchemeExtension = Extension<Scheme>;
 type ServerConfigExtension = Extension<Arc<ServerConfig>>;
 type ServerExtension = Extension<Arc<Server>>;
-
-pub(crate) struct AuthConfig {
-  pub(crate) admin: Option<PublicKey>,
-  pub(crate) audience: Option<String>,
-}
-
-#[derive(Deserialize)]
-pub(crate) struct PackagesQuery {
-  order: Option<Order>,
-  sort: Option<Sort>,
-}
-
-pub(crate) struct RedirectConfig {
-  destination: Url,
-  domains: HashSet<String>,
-}
-
-impl RedirectConfig {
-  fn with_path_and_query(&self, uri: &Uri) -> Url {
-    let mut destination = self.destination.clone();
-    destination.set_path(uri.path());
-    destination.set_query(uri.query());
-    destination
-  }
-}
-
-pub(crate) struct ServerConfig {
-  pub(crate) mounts: HashSet<Fingerprint>,
-  pub(crate) url: Option<Url>,
-}
-
-enum SpawnConfig {
-  Http,
-  Https,
-  Redirect(Url),
-}
 
 #[derive(Debug, Parser, PartialEq)]
 pub(crate) struct Serve {
   #[arg(
     help = "Store ACME TLS certificates in <PATH>",
     long,
+    value_hint = ValueHint::DirPath,
     value_name = "PATH"
   )]
   acme_cache: Option<Utf8PathBuf>,
@@ -91,16 +76,15 @@ pub(crate) struct Serve {
   )]
   acme_directory: Url,
   #[arg(
-    default_value = "0.0.0.0",
+    default_value = "127.0.0.1",
     help = "Listen on <ADDRESS> for incoming requests",
     long
   )]
-  address: String,
+  address: IpAddr,
   #[arg(
     help = "Admin public key or key name",
     long,
     requires = "domain",
-    requires = "restrict_writes",
     value_name = "KEY"
   )]
   admin_key: Option<KeyIdentifier>,
@@ -110,7 +94,7 @@ pub(crate) struct Serve {
     long,
     value_name = "DOMAIN"
   )]
-  domain: Option<String>,
+  domain: Option<Domain>,
   #[arg(help = "Serve HTTP traffic", long)]
   http: bool,
   #[arg(
@@ -129,13 +113,15 @@ pub(crate) struct Serve {
   )]
   https_port: Option<u16>,
   #[arg(
-    help = "Mount web package with <FINGERPRINT> at `/mount/<FINGERPRINT>`, mounted packages are \
-            unsandboxed and served with the server origin, make sure you understand the \
+    help = "Mount web package <PACKAGE>. <PACKAGE> may be a fingerprint, revision, or number. \
+            Mounted packages are served under `/mount` by fingerprint, revision, and number, as \
+            well as directly under `/<NAME>/` if `<NAME>` is supplied. Mounted packages are \
+            unsandboxed and served with the server origin. Make sure you understand the \
             consequences of this and only mount packages you trust",
     long = "mount",
-    value_name = "FINGERPRINT"
+    value_name = "PACKAGE[:NAME]"
   )]
-  mounts: Vec<Fingerprint>,
+  mounts: Vec<Mount>,
   #[arg(
     help = "Write listening port to <ADDRESS>",
     long,
@@ -151,16 +137,24 @@ pub(crate) struct Serve {
     requires = "domain",
     value_name = "DOMAIN"
   )]
-  redirects: Vec<String>,
-  #[arg(help = "Restrict writes to admin", long)]
-  restrict_writes: bool,
+  redirects: Vec<Domain>,
+  #[arg(
+    conflicts_with = "admin_key",
+    help = "Allow unauthenticated writes",
+    long
+  )]
+  unrestricted_writes: bool,
 }
+
+pub(crate) type Input = ();
+
+pub(crate) type Output = ();
 
 impl Serve {
   fn acceptor(&self, acme_cache: Utf8PathBuf) -> Result<AxumAcceptor> {
     install_default_crypto_provider()?;
 
-    let config = AcmeConfig::new(self.domains())
+    let config = AcmeConfig::new(self.domains().iter().map(Domain::as_str))
       .contact(&self.acme_contact)
       .cache_option(Some(DirCache::new(acme_cache)))
       .directory(&self.acme_directory);
@@ -195,6 +189,10 @@ impl Serve {
     Ok(acceptor)
   }
 
+  async fn api_fallback() -> ServerError {
+    ServerError::ApiEndpointNotFound
+  }
+
   async fn api_version_layer(request: Request, next: Next) -> Response {
     let version = if let Some(value) = request.headers().get(API_VERSION_HEADER) {
       let Some(version) = value
@@ -219,14 +217,129 @@ impl Serve {
     next.run(request).await
   }
 
-  fn canonical(&self) -> &str {
-    self.domain.as_deref().unwrap()
+  fn canonical(&self) -> &Domain {
+    self.domain.as_ref().unwrap()
   }
 
-  fn domains(&self) -> Vec<String> {
-    let mut domains = vec![self.canonical().to_string()];
-    domains.extend(self.redirects.iter().cloned());
-    domains
+  async fn cross_origin_layer(
+    host_port: HostPortExtension,
+    scheme: SchemeExtension,
+    request: Request,
+    next: Next,
+  ) -> Response {
+    if matches!(
+      *request.method(),
+      Method::GET | Method::HEAD | Method::OPTIONS
+    ) {
+      return next.run(request).await;
+    }
+
+    let headers = request.headers();
+
+    if let Some(site) = headers.get(SEC_FETCH_SITE) {
+      return if site == "same-origin" || site == "none" {
+        next.run(request).await
+      } else {
+        ServerError::CrossOriginRequest.into_response()
+      };
+    }
+
+    let Ok(origin) = headers.typed_try_get::<headers::Origin>() else {
+      return ServerError::CrossOriginRequest.into_response();
+    };
+
+    let Some(origin) = origin else {
+      return next.run(request).await;
+    };
+
+    if origin.scheme() != scheme.name() {
+      return ServerError::CrossOriginRequest.into_response();
+    }
+
+    let Ok(host) = origin.hostname().parse::<Host>() else {
+      return ServerError::CrossOriginRequest.into_response();
+    };
+
+    let origin = HostPort {
+      host,
+      port: origin.port(),
+    };
+
+    if origin != *host_port {
+      return ServerError::CrossOriginRequest.into_response();
+    }
+
+    next.run(request).await
+  }
+
+  fn domains(&self) -> Vec<Domain> {
+    self.domain.iter().chain(&self.redirects).cloned().collect()
+  }
+
+  async fn fallback(server_config: ServerConfigExtension, uri: Uri) -> Result<Redirect, PageError> {
+    if let Some(segment) = uri.path().strip_prefix('/')
+      && !segment.contains('/')
+    {
+      if segment.starts_with(|c: char| c.is_ascii_digit()) {
+        let number = parse_number::<u64>(segment).context(server_error::NumberParse)?;
+        return Ok(Redirect::permanent(&format!("/package/{number}")));
+      } else if segment.starts_with(&Tag::Package.prefix()) {
+        let fingerprint = segment
+          .parse::<Fingerprint>()
+          .context(server_error::FingerprintParse)?;
+        return Ok(Redirect::permanent(&format!("/package/{fingerprint}")));
+      } else if segment.starts_with(&Tag::Revision.prefix()) {
+        let revision = segment
+          .parse::<Revision>()
+          .context(server_error::RevisionParse)?;
+        return Ok(Redirect::permanent(&format!("/package/{revision}")));
+      } else if server_config.mount(segment).is_some() {
+        return Ok(Redirect::temporary(&format!("/{segment}/")));
+      }
+    }
+
+    Err(ServerError::PageNotFound.into())
+  }
+
+  async fn host_layer(
+    server_config: ServerConfigExtension,
+    header: Option<TypedHeader<headers::Host>>,
+    mut request: Request,
+    next: Next,
+  ) -> Response {
+    let Some((hostname, port)) = request
+      .uri()
+      .host()
+      .map(|host| (host, request.uri().port_u16()))
+      .or(
+        header
+          .as_ref()
+          .map(|header| (header.hostname(), header.port())),
+      )
+    else {
+      return ServerError::HostMissing.into_response();
+    };
+
+    let Ok(host) = hostname.parse::<Host>() else {
+      return ServerError::HostNotAllowed {
+        host: hostname.into(),
+      }
+      .into_response();
+    };
+
+    if let Host::Domain(domain) = &host
+      && domain.as_str() != "localhost"
+      && !server_config.domains.contains(domain)
+    {
+      return ServerError::HostNotAllowed {
+        host: hostname.into(),
+      }
+      .into_response();
+    }
+
+    request.extensions_mut().insert(HostPort { host, port });
+
+    next.run(request).await
   }
 
   fn http_port(&self) -> Option<u16> {
@@ -249,6 +362,66 @@ impl Serve {
     }
   }
 
+  async fn if_none_match_layer(request: Request, next: Next) -> Response {
+    let if_none_match = matches!(*request.method(), Method::GET | Method::HEAD)
+      .then(|| request.headers().typed_get::<headers::IfNoneMatch>())
+      .flatten();
+
+    let mut response = next.run(request).await;
+
+    if matches!(
+      response.status(),
+      StatusCode::OK | StatusCode::PARTIAL_CONTENT
+    ) && let Some(if_none_match) = if_none_match
+      && let Some(etag) = response.headers().typed_get::<headers::ETag>()
+      && !if_none_match.precondition_passes(&etag)
+    {
+      *response.status_mut() = StatusCode::NOT_MODIFIED;
+      *response.body_mut() = Body::from_stream(stream::empty::<Result<body::Bytes, !>>());
+
+      for name in [
+        header::CONTENT_LENGTH,
+        header::CONTENT_RANGE,
+        header::CONTENT_TYPE,
+      ] {
+        response.headers_mut().remove(name);
+      }
+    }
+
+    response
+  }
+
+  async fn named_mount(
+    server: ServerExtension,
+    server_config: ServerConfigExtension,
+    Path(name): Path<String>,
+    range: Option<TypedHeader<headers::Range>>,
+  ) -> Result<Resource, PageError> {
+    Self::named_mount_with_path(
+      server,
+      server_config,
+      Path((name, "index.html".parse().unwrap())),
+      range,
+    )
+    .await
+  }
+
+  async fn named_mount_with_path(
+    server: ServerExtension,
+    server_config: ServerConfigExtension,
+    Path((name, path)): Path<(String, RelativePath)>,
+    range: Option<TypedHeader<headers::Range>>,
+  ) -> Result<Resource, PageError> {
+    let Some(mount) = server_config.mount(&name) else {
+      return Err(ServerError::PageNotFound.into());
+    };
+
+    Ok(
+      block_in_place(|| server.mount_file(false, &server_config.mounts, mount.package, &path))?
+        .range(range),
+    )
+  }
+
   fn redirect_config(&self) -> Result<Option<Arc<RedirectConfig>>> {
     if self.redirects.is_empty() {
       return Ok(None);
@@ -258,7 +431,7 @@ impl Serve {
 
     for redirect in &self.redirects {
       ensure!(
-        redirect.as_str() != canonical,
+        redirect != canonical,
         error::RedirectDomainCanonical {
           domain: redirect.clone()
         },
@@ -271,25 +444,18 @@ impl Serve {
     })))
   }
 
-  #[allow(clippy::unused_async_trait_impl)]
   async fn redirect_http_to_https(redirect_config: RedirectConfigExtension, uri: Uri) -> Redirect {
     Redirect::permanent(redirect_config.with_path_and_query(&uri).as_str())
   }
 
   async fn redirect_layer(
     redirect_config: RedirectConfigExtension,
-    host: Option<TypedHeader<headers::Host>>,
+    host_port: HostPortExtension,
     request: Request,
     next: Next,
   ) -> Response {
-    if let Some(host) = request
-      .uri()
-      .host()
-      .or(host.as_ref().map(|TypedHeader(host)| host.hostname()))
-      && redirect_config
-        .domains
-        .iter()
-        .any(|domain| domain.eq_ignore_ascii_case(host))
+    if let Host::Domain(domain) = &host_port.host
+      && redirect_config.domains.contains(domain)
     {
       Redirect::permanent(redirect_config.with_path_and_query(request.uri()).as_str())
         .into_response()
@@ -321,105 +487,66 @@ impl Serve {
 
   pub(crate) fn router(
     server: Arc<Server>,
-    auth_config: Option<Arc<AuthConfig>>,
     redirect_config: Option<Arc<RedirectConfig>>,
     server_config: Arc<ServerConfig>,
+    write_config: Arc<WriteConfig>,
   ) -> Router {
-    let router = Router::new()
-      .route("/", get(route::home))
-      .route("/api/directory/{hash}", post(route::api_verify_directory))
-      .route(
-        "/api/file/{hash}",
-        get(route::api_file).put(route::api_upload_file),
+    let mut api = Router::new();
+    let mut web = Router::new();
+
+    for route in Route::all(&mut BTreeMap::new()) {
+      if let Some(path) = route.api_path {
+        api = api.route(path, route.router);
+      } else {
+        web = web.route(route.path, route.router);
+      }
+    }
+
+    let router = web
+      .nest(
+        "/api",
+        api
+          .fallback(Self::api_fallback)
+          .layer(middleware::from_fn(Self::api_version_layer))
+          .layer(SetResponseHeaderLayer::overriding(
+            API_VERSION_HEADER,
+            HeaderValue::from(API_VERSION),
+          )),
       )
-      .route("/api/gc", post(route::api_gc))
-      .route("/api/head/{revision}", head(route::api_head))
-      .route("/api/missing", post(route::api_missing))
-      .route(
-        "/api/number/{number}",
-        delete(route::api_delete_number).get(route::api_number),
+      .fallback_service(
+        Router::new()
+          .route("/{name}/", get(Self::named_mount))
+          .route("/{name}/{*path}", get(Self::named_mount_with_path))
+          .fallback(Self::fallback),
       )
-      .route("/api/numbers", get(route::api_numbers))
-      .route(
-        "/api/package/{fingerprint}",
-        post(route::api_verify_package).head(route::api_package),
-      )
-      .route("/api/packages", get(route::api_packages))
-      .route("/api/revision/{revision}", post(route::api_verify_revision))
-      .route("/artwork/{fingerprint}", get(route::artwork))
-      .route(
-        "/artwork/{fingerprint}/thumbnail",
-        get(route::artwork_thumbnail),
-      )
-      .route("/directory/{hash}", get(route::directory))
-      .route("/favicon.ico", get(route::favicon))
-      .route("/file/{hash}", get(route::api_file))
-      .route("/file/{hash}/{*path}", get(route::file_with_path))
-      .route("/files", get(route::files))
-      .route("/install.sh", get(route::install_script))
-      .route(
-        "/media/audio/{fingerprint}/item/{item}",
-        get(route::media_audio_item),
-      )
-      .route(
-        "/media/document/{fingerprint}/item/{item}",
-        get(route::media_document_item),
-      )
-      .route(
-        "/media/image/{fingerprint}/item/{item}",
-        get(route::media_image_item),
-      )
-      .route(
-        "/media/image/{fingerprint}/item/{item}/thumbnail",
-        get(route::media_image_item_thumbnail),
-      )
-      .route(
-        "/media/video/{fingerprint}/item/{item}",
-        get(route::media_video_item),
-      )
-      .route(
-        "/media/video/{fingerprint}/item/{item}/placeholder",
-        get(route::media_video_item_placeholder),
-      )
-      .route(
-        "/media/video/{fingerprint}/item/{item}/placeholder/thumbnail",
-        get(route::media_video_item_placeholder_thumbnail),
-      )
-      .route("/mount/{fingerprint}", get(route::mount_redirect))
-      .route("/mount/{fingerprint}/", get(route::mount))
-      .route("/mount/{fingerprint}/{*path}", get(route::mount_file))
-      .route("/package/{package}", get(route::package))
-      .route("/package/{package}/history", get(route::package_history))
-      .route("/package/{package}/item/{item}", get(route::package_item))
-      .route("/package/{package}/media", get(route::package_media))
-      .route("/packages", get(route::packages))
-      .route("/static/{*path}", get(route::static_asset))
-      .fallback(route::fallback)
       .layer(Extension(server))
-      .layer(Extension(server_config))
-      .layer(middleware::from_fn(Self::api_version_layer))
-      .layer(SetResponseHeaderLayer::overriding(
-        API_VERSION_HEADER,
-        HeaderValue::from(API_VERSION),
-      ))
-      .layer(SetResponseHeaderLayer::overriding(
-        header::X_CONTENT_TYPE_OPTIONS,
-        HeaderValue::from_static("nosniff"),
-      ));
+      .layer(Extension(write_config))
+      .layer(middleware::from_fn(Self::if_none_match_layer));
 
-    let router = if let Some(auth_config) = auth_config {
-      router.layer(Extension(auth_config))
-    } else {
-      router
-    };
-
-    if let Some(redirect_config) = redirect_config {
+    let router = if let Some(redirect_config) = redirect_config {
       router
         .layer(middleware::from_fn(Self::redirect_layer))
         .layer(Extension(redirect_config))
     } else {
       router
-    }
+    };
+
+    router
+      .layer(middleware::from_fn(Self::cross_origin_layer))
+      .layer(middleware::from_fn(Self::host_layer))
+      .layer(Extension(server_config))
+      .layer(SetResponseHeaderLayer::appending(
+        header::CONTENT_SECURITY_POLICY,
+        HeaderValue::from_static("frame-ancestors 'self'"),
+      ))
+      .layer(SetResponseHeaderLayer::overriding(
+        CROSS_ORIGIN_RESOURCE_POLICY,
+        HeaderValue::from_static("same-origin"),
+      ))
+      .layer(SetResponseHeaderLayer::overriding(
+        header::X_CONTENT_TYPE_OPTIONS,
+        HeaderValue::from_static("nosniff"),
+      ))
   }
 
   pub(crate) fn run(self, options: Options) -> Result {
@@ -463,38 +590,31 @@ impl Serve {
       options.unstable,
     )?);
 
-    for &fingerprint in &self.mounts {
-      let metadata = server
-        .package_metadata(fingerprint)
-        .context(error::MountedPackage)?;
-
-      let Some(media) = metadata.media else {
-        return Err(error::MountedPackageNoMediaType { fingerprint }.build());
-      };
-
-      ensure! {
-        media.ty() == MediaType::Web,
-        error::MountedPackageMediaType { fingerprint, media_type: media.ty() },
+    let write_config = if let Some(identifier) = &self.admin_key {
+      WriteConfig::Admin {
+        domain: self.canonical().clone(),
+        key: Keychain::load(&options)?.identifier_public_key(identifier)?,
       }
-    }
-
-    let auth_config = if self.restrict_writes {
-      let admin = if let Some(identifier) = &self.admin_key {
-        Some(Keychain::load(&options)?.identifier_public_key(identifier)?)
-      } else {
-        None
-      };
-      Some(Arc::new(AuthConfig {
-        admin,
-        audience: self.domain.clone(),
-      }))
+    } else if self.unrestricted_writes {
+      WriteConfig::Unrestricted
     } else {
-      None
+      WriteConfig::Forbidden
     };
+
+    let mut names = HashSet::new();
+
+    for name in self.mounts.iter().filter_map(|mount| mount.name.as_deref()) {
+      ensure!(names.insert(name), error::MountNameDuplicate { name });
+    }
 
     let redirect_config = self.redirect_config()?;
 
-    let router = Self::router(server, auth_config, redirect_config, self.server_config());
+    let router = Self::router(
+      server,
+      redirect_config,
+      self.server_config(),
+      Arc::new(write_config),
+    );
 
     match (self.http_port(), self.https_port()) {
       (Some(http_port), None) => {
@@ -565,7 +685,8 @@ impl Serve {
 
   fn server_config(&self) -> Arc<ServerConfig> {
     Arc::new(ServerConfig {
-      mounts: self.mounts.iter().copied().collect(),
+      domains: self.domains().into_iter().collect(),
+      mounts: self.mounts.clone(),
       url: self.domain.as_ref().map(|_| self.redirect_url()),
     })
   }
@@ -579,15 +700,11 @@ impl Serve {
     ready: bool,
     router: Router,
   ) -> Result {
-    let listener = TcpListener::bind((self.address.as_str(), port))
+    let address = SocketAddr::new(self.address, port);
+
+    let listener = TcpListener::bind(address)
       .await
-      .context(error::BindListener {
-        address: if self.address.contains(':') {
-          format!("[{}]:{port}", self.address)
-        } else {
-          format!("{}:{port}", self.address)
-        },
-      })?
+      .context(error::BindListener { address })?
       .into_std()
       .context(error::ListenerIntoStandard)?;
 
@@ -604,7 +721,7 @@ impl Serve {
     match config {
       SpawnConfig::Http => {
         Self::server(handle, listener)?
-          .serve(router.into_make_service())
+          .serve(router.layer(Extension(Scheme::Http)).into_make_service())
           .await
           .context(error::Serve)?;
       }
@@ -616,10 +733,13 @@ impl Serve {
           .clone()
           .unwrap_or_else(|| data_dir.join("acme-cache"));
 
-        let router = router.layer(SetResponseHeaderLayer::overriding(
-          header::STRICT_TRANSPORT_SECURITY,
-          HeaderValue::from_static("max-age=31536000"),
-        ));
+        let router =
+          router
+            .layer(Extension(Scheme::Https))
+            .layer(SetResponseHeaderLayer::overriding(
+              header::STRICT_TRANSPORT_SECURITY,
+              HeaderValue::from_static("max-age=31536000"),
+            ));
 
         Self::server(handle, listener)?
           .acceptor(self.acceptor(acme_cache)?)
@@ -656,7 +776,7 @@ impl Default for Serve {
       acme_cache: None,
       acme_contact: Vec::new(),
       acme_directory: LETS_ENCRYPT_PRODUCTION_DIRECTORY.parse().unwrap(),
-      address: "0.0.0.0".into(),
+      address: Ipv4Addr::LOCALHOST.into(),
       admin_key: None,
       domain: None,
       http: false,
@@ -667,7 +787,7 @@ impl Default for Serve {
       ready_address: None,
       redirect_http_to_https: false,
       redirects: Vec::new(),
-      restrict_writes: false,
+      unrestricted_writes: false,
     }
   }
 }

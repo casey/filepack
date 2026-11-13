@@ -1,0 +1,321 @@
+use {
+  self::{
+    chapter::Chapter,
+    description::Description,
+    functions::{escape, list, path_parameter_type, route_link, route_path, write},
+    row::Row,
+    templates::{
+      ApiMd, CommandMd, CommandsMd, ContentTypesMd, DecoMd, DecoSchemaMd, HexMd, JsonMd,
+      JsonSchemaMd, LanguagesMd, LintsMd, MediaMd, MetadataMd, RouteMd, SummaryMd, TagMd,
+      UnstableFeaturesMd, WebMd, YamlMd,
+    },
+  },
+  boilerplate::Boilerplate,
+  camino::{Utf8Path, Utf8PathBuf},
+  filepack::{
+    Count, Language, Lint, LintGroup, MediaType, Reference, Tag, UnstableFeature, deco, json,
+    reference::{
+      self, Command, ContentType, Hex, MediaFormat, Parameter, Request, Response, Route,
+    },
+    yaml,
+  },
+  heck::ToKebabCase,
+  std::{
+    collections::{BTreeMap, BTreeSet},
+    env,
+    fmt::{self, Display, Formatter},
+    fs, iter,
+  },
+  strum::Display,
+};
+
+mod chapter;
+mod description;
+mod functions;
+mod row;
+mod templates;
+
+fn main() {
+  for (key, _) in env::vars() {
+    if key.starts_with("FILEPACK_") {
+      unsafe {
+        env::remove_var(key);
+      }
+    }
+  }
+
+  let reference = Reference::new();
+
+  let commands = {
+    let mut commands = BTreeMap::new();
+
+    let mut stack = vec![(vec![reference.commands.name.as_str()], &reference.commands)];
+
+    while let Some((components, command)) = stack.pop() {
+      let name = components.join(" ");
+
+      let path = Utf8PathBuf::from(format!("commands/{}.md", components.join("-")));
+
+      write(
+        &path,
+        CommandMd {
+          help: &command.help,
+          input: command.input.as_deref(),
+          name: &name,
+          output: command.output.as_deref(),
+          registry: &reference.json,
+        },
+      );
+
+      commands.insert(name, (command, path));
+
+      for (name, command) in &command.subcommands {
+        stack.push((
+          components
+            .iter()
+            .copied()
+            .chain(iter::once(name.as_str()))
+            .collect(),
+          command,
+        ));
+      }
+    }
+
+    commands
+  };
+
+  let deco = {
+    let mut deco = BTreeMap::new();
+
+    for (name, schema) in &reference.deco {
+      if schema.description().is_none() {
+        continue;
+      }
+
+      let path = Utf8PathBuf::from(format!("deco/{}.md", name.to_kebab_case()));
+
+      write(
+        &path,
+        DecoSchemaMd {
+          name,
+          registry: &reference.deco,
+          schema,
+        },
+      );
+
+      deco.insert(name.as_str(), path);
+    }
+
+    deco
+  };
+
+  let hex = {
+    let mut pages = BTreeMap::new();
+
+    for (tag, hex) in &reference.hex {
+      let path = Utf8PathBuf::from(format!("hex/{}.md", tag.tag()));
+
+      write(&path, TagMd { hex, tag: *tag });
+
+      pages.insert(tag.tag(), path);
+    }
+
+    pages
+  };
+
+  let mut api = BTreeMap::new();
+  let mut web = BTreeMap::new();
+  {
+    for (route_path, route) in &reference.routes {
+      let relative = route.api_path.as_deref().unwrap_or(route_path);
+
+      let slug = if relative.ends_with('/') {
+        format!("{relative}index").to_kebab_case()
+      } else {
+        relative.to_kebab_case()
+      };
+
+      let path = Utf8PathBuf::from(format!(
+        "{}/{slug}.md",
+        if route.api_path.is_some() {
+          "api"
+        } else {
+          "web"
+        },
+      ));
+
+      write(
+        &path,
+        RouteMd {
+          path: route_path,
+          registry: &reference.deco,
+          route,
+        },
+      );
+
+      if route.api_path.is_some() {
+        api.insert(route_path.as_str(), path);
+      } else {
+        web.insert(route_path.as_str(), path);
+      }
+    }
+  }
+
+  let json = {
+    let mut pages = BTreeMap::new();
+
+    for (name, schema) in &reference.json {
+      if schema.description().is_none() {
+        continue;
+      }
+
+      let path = Utf8PathBuf::from(format!("json/{}.md", name.to_kebab_case()));
+
+      write(
+        &path,
+        JsonSchemaMd {
+          chapter: Chapter::Json,
+          name,
+          registry: &reference.json,
+          schema,
+        },
+      );
+
+      pages.insert(name.as_str(), path);
+    }
+
+    pages
+  };
+
+  let yaml = {
+    let mut pages = BTreeMap::new();
+
+    for (name, schema) in &reference.yaml {
+      if schema.description().is_none() {
+        continue;
+      }
+
+      let path = Utf8PathBuf::from(format!("yaml/{}.md", name.to_kebab_case()));
+
+      write(
+        &path,
+        JsonSchemaMd {
+          chapter: Chapter::Yaml,
+          name,
+          registry: &reference.yaml,
+          schema,
+        },
+      );
+
+      pages.insert(name.as_str(), path);
+    }
+
+    pages
+  };
+
+  write(
+    "api.md",
+    ApiMd {
+      pages: &api,
+      routes: &reference.routes,
+    },
+  );
+
+  write("commands.md", CommandsMd { pages: &commands });
+
+  write(
+    "content-types.md",
+    ContentTypesMd {
+      content_types: &reference.content_types,
+    },
+  );
+
+  write(
+    "hex.md",
+    HexMd {
+      hex: &reference.hex,
+    },
+  );
+
+  write(
+    "json.md",
+    JsonMd {
+      json: &reference.json,
+    },
+  );
+
+  write(
+    "languages.md",
+    LanguagesMd {
+      languages: &reference.languages,
+    },
+  );
+
+  write(
+    "lints.md",
+    LintsMd {
+      groups: &reference.lint_groups,
+      junk_names: &reference.junk_names,
+      lints: &reference.lints,
+      windows_reserved_characters: &reference.windows_reserved_characters,
+      windows_reserved_names: &reference.windows_reserved_names,
+    },
+  );
+
+  write(
+    "media.md",
+    MediaMd {
+      media_formats: &reference.media_formats,
+      media_types: &reference.media_types,
+    },
+  );
+
+  write(
+    "metadata.md",
+    MetadataMd {
+      example: &reference.metadata,
+    },
+  );
+
+  write(
+    "web.md",
+    WebMd {
+      pages: &web,
+      routes: &reference.routes,
+    },
+  );
+
+  write(
+    "deco.md",
+    DecoMd {
+      deco: &reference.deco,
+    },
+  );
+
+  write(
+    "unstable-features.md",
+    UnstableFeaturesMd {
+      features: &reference.unstable_features,
+    },
+  );
+
+  write(
+    "yaml.md",
+    YamlMd {
+      yaml: &reference.yaml,
+    },
+  );
+
+  write(
+    "SUMMARY.md",
+    SummaryMd {
+      api,
+      commands,
+      deco,
+      hex,
+      json,
+      web,
+      yaml,
+    },
+  );
+}

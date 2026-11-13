@@ -1,15 +1,23 @@
 use super::*;
 
-#[allow(clippy::arbitrary_source_item_ordering)]
-#[derive(Clone, Copy, Debug, Decode, Default, Encode, PartialEq, Serialize)]
+/// Directory totals.
+///
+/// `files + directories` and `file_size + directory_size` must be less than
+/// 2<sup>64</sup>.
+#[expect(clippy::arbitrary_source_item_ordering)]
+#[derive(Clone, Copy, Debug, Decode, Default, Encode, Json, PartialEq, Serialize)]
 #[deco(validate)]
 pub struct Totals {
+  /// Number of files in the directory and its children.
   #[n(1)]
   pub files: u64,
+  /// Total size in bytes of all files in the directory and its children.
   #[n(2)]
   pub file_size: u64,
+  /// Number of subdirectories of the directory and its children.
   #[n(3)]
   pub directories: u64,
+  /// Total size in bytes of the encoded directory entries of the directory and its children.
   #[n(4)]
   pub directory_size: u64,
 }

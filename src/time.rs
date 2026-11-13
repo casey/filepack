@@ -6,16 +6,21 @@ static TIME: LazyLock<Regex> = LazyLock::new(|| {
     .unwrap()
 });
 
-#[allow(clippy::arbitrary_source_item_ordering)]
+/// Point in time with varying precision.
+#[expect(clippy::arbitrary_source_item_ordering)]
 #[derive(Clone, Copy, Debug, Decode, DeserializeFromStr, Encode, PartialEq, SerializeDisplay)]
 pub(crate) enum Time {
+  /// A year.
   #[n(0)]
   Year {
+    /// Year, which may be negative.
     #[n(1)]
     year: i64,
   },
+  /// A calendar day.
   #[n(1)]
   Day {
+    /// Days since the Unix epoch, which may be negative.
     #[n(1)]
     days: i64,
   },
@@ -63,6 +68,26 @@ impl FromStr for Time {
     )?;
 
     Ok(Self::Day { days: date.days() })
+  }
+}
+
+impl json::Json for Time {
+  fn json_schema(registry: &mut json::Registry) -> String {
+    json::Schema::Wrapper {
+      description: unindent(
+        "
+          Point in time with varying precision.
+
+          May be an integer year, or a calendar day, written as Y-MM-DD.
+
+          - Year has no leading zeros and may be negative.
+          - Month is two digits.
+          - Day is two digits and must be valid for the month and year.
+        ",
+      ),
+      inner: String::json_schema(registry),
+    }
+    .register("Time", registry)
   }
 }
 

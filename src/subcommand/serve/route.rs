@@ -1,13 +1,79 @@
-use super::*;
+use {
+  super::*,
+  axum::{http::Method, routing::MethodRouter},
+  axum_extra::either::Either,
+};
 
+pub(crate) struct Route {
+  pub(crate) api_path: Option<&'static str>,
+  pub(crate) endpoint: crate::reference::Endpoint,
+  pub(crate) method: Method,
+  pub(crate) parameters: Vec<crate::reference::PathParameter>,
+  pub(crate) path: &'static str,
+  pub(crate) router: MethodRouter,
+}
+
+impl Route {
+  pub(crate) fn all(registry: &mut deco::Registry) -> Vec<Self> {
+    vec![
+      api_delete_number_route(registry),
+      api_file_route(registry),
+      api_gc_route(registry),
+      api_head_route(registry),
+      api_missing_route(registry),
+      api_number_route(registry),
+      api_numbers_route(registry),
+      api_package_route(registry),
+      api_packages_route(registry),
+      api_upload_file_route(registry),
+      api_verify_directory_route(registry),
+      api_verify_package_route(registry),
+      api_verify_revision_route(registry),
+      artwork_route(registry),
+      artwork_thumbnail_route(registry),
+      directory_route(registry),
+      favicon_route(registry),
+      file_route(registry),
+      file_with_path_route(registry),
+      files_route(registry),
+      home_route(registry),
+      install_script_route(registry),
+      media_audio_item_route(registry),
+      media_document_item_route(registry),
+      media_image_item_route(registry),
+      media_image_item_thumbnail_route(registry),
+      media_video_item_route(registry),
+      media_video_item_placeholder_route(registry),
+      media_video_item_placeholder_thumbnail_route(registry),
+      mount_route(registry),
+      mount_file_route(registry),
+      mount_redirect_route(registry),
+      package_route(registry),
+      package_history_route(registry),
+      package_item_route(registry),
+      package_media_route(registry),
+      packages_route(registry),
+      static_asset_route(registry),
+    ]
+  }
+}
+
+/// Delete package with `number`.
+///
+/// `number`: Number of the package.
+#[route(DELETE, "/api/number/{number}")]
 pub(crate) async fn api_delete_number(
   _: Authenticated,
   server: ServerExtension,
-  Path(number): Path<u64>,
+  number: Path<u64>,
 ) -> ServerResult {
-  block_in_place(|| server.delete_number(number))
+  block_in_place(|| server.delete_number(*number))
 }
 
+/// Serve file with `hash`.
+///
+/// `hash`: Hash of the file.
+#[route(GET, "/api/file/{hash}")]
 pub(crate) async fn api_file(
   server: ServerExtension,
   hash: Path<Hash>,
@@ -16,13 +82,21 @@ pub(crate) async fn api_file(
   block_in_place(|| Ok(server.open_file(*hash)?.range(range)))
 }
 
+/// Delete files, directories, packages, and revisions not reachable by package
+/// number or mount.
+#[route(POST, "/api/gc")]
 pub(crate) async fn api_gc(
   _: Authenticated,
   server: ServerExtension,
+  server_config: ServerConfigExtension,
 ) -> ServerResult<DecoResponse<api::gc::Response>> {
-  block_in_place(|| Ok(DecoResponse(server.gc()?)))
+  block_in_place(|| Ok(DecoResponse(server.gc(&server_config.mounts)?)))
 }
 
+/// Check whether `revision` is the head of a package.
+///
+/// `revision`: Revision to check.
+#[route(HEAD, "/api/head/{revision}")]
 pub(crate) async fn api_head(
   server: ServerExtension,
   Path(revision): Path<Revision>,
@@ -36,6 +110,8 @@ pub(crate) async fn api_head(
   })
 }
 
+/// Report which files the server lacks.
+#[route(POST, "/api/missing")]
 pub(crate) async fn api_missing(
   server: ServerExtension,
   DecoRequest(request): DecoRequest<api::missing::Request, { MIB }>,
@@ -47,13 +123,19 @@ pub(crate) async fn api_missing(
   })
 }
 
+/// Return information about package with `number`.
+///
+/// `number`: Number of the package.
+#[route(GET, "/api/number/{number}")]
 pub(crate) async fn api_number(
   server: ServerExtension,
-  Path(number): Path<u64>,
+  number: Path<u64>,
 ) -> ServerResult<DecoResponse<api::number::Response>> {
-  block_in_place(|| Ok(DecoResponse(server.head(number)?)))
+  block_in_place(|| Ok(DecoResponse(server.head(*number)?)))
 }
 
+/// List all package numbers.
+#[route(GET, "/api/numbers")]
 pub(crate) async fn api_numbers(
   server: ServerExtension,
 ) -> ServerResult<DecoResponse<api::numbers::Response>> {
@@ -64,6 +146,10 @@ pub(crate) async fn api_numbers(
   })
 }
 
+/// Check whether package with `fingerprint` is present.
+///
+/// `fingerprint`: Fingerprint of the package.
+#[route(HEAD, "/api/package/{fingerprint}")]
 pub(crate) async fn api_package(
   server: ServerExtension,
   Path(fingerprint): Path<Fingerprint>,
@@ -77,6 +163,8 @@ pub(crate) async fn api_package(
   })
 }
 
+/// List all package fingerprints.
+#[route(GET, "/api/packages")]
 pub(crate) async fn api_packages(
   server: ServerExtension,
 ) -> ServerResult<DecoResponse<api::packages::Response>> {
@@ -87,6 +175,10 @@ pub(crate) async fn api_packages(
   })
 }
 
+/// Upload file with `hash`.
+///
+/// `hash`: Hash of the file.
+#[route(PUT, "/api/file/{hash}")]
 pub(crate) async fn api_upload_file(
   _: Authenticated,
   server: ServerExtension,
@@ -96,6 +188,10 @@ pub(crate) async fn api_upload_file(
   server.write_file(*hash, body).await
 }
 
+/// Verify uploaded directory with `hash`.
+///
+/// `hash`: Hash of the directory.
+#[route(POST, "/api/directory/{hash}")]
 pub(crate) async fn api_verify_directory(
   _: Authenticated,
   server: ServerExtension,
@@ -104,27 +200,39 @@ pub(crate) async fn api_verify_directory(
   block_in_place(|| server.verify_directory(*hash))
 }
 
+/// Verify uploaded package with `fingerprint`.
+///
+/// `fingerprint`: Fingerprint of the package.
+#[route(POST, "/api/package/{fingerprint}")]
 pub(crate) async fn api_verify_package(
   _: Authenticated,
   server: ServerExtension,
-  Path(fingerprint): Path<Fingerprint>,
+  fingerprint: Path<Fingerprint>,
 ) -> ServerResult {
-  block_in_place(|| server.verify_package(fingerprint))
+  block_in_place(|| server.verify_package(*fingerprint))
 }
 
+/// Verify uploaded `revision` and assign it a package number.
+///
+/// `revision`: Revision of the uploaded package.
+#[route(POST, "/api/revision/{revision}")]
 pub(crate) async fn api_verify_revision(
   _: Authenticated,
   server: ServerExtension,
-  Path(revision): Path<Revision>,
+  revision: Path<Revision>,
   DecoRequest(request): DecoRequest<api::revision::Request, { MIB }>,
 ) -> ServerResult<DecoResponse<api::revision::Response>> {
   block_in_place(|| {
     Ok(DecoResponse(api::revision::Response {
-      number: server.verify_revision(revision, request)?,
+      number: server.verify_revision(*revision, request)?,
     }))
   })
 }
 
+/// Serve cover art of package with `fingerprint`.
+///
+/// `fingerprint`: Fingerprint of the package.
+#[route(GET, "/artwork/{fingerprint}")]
 pub(crate) async fn artwork(
   server: ServerExtension,
   fingerprint: Path<Fingerprint>,
@@ -133,6 +241,10 @@ pub(crate) async fn artwork(
   block_in_place(|| Ok(server.artwork(*fingerprint, false)?.range(range)))
 }
 
+/// Serve thumbnail of cover art of package with `fingerprint`.
+///
+/// `fingerprint`: Fingerprint of the package.
+#[route(GET, "/artwork/{fingerprint}/thumbnail")]
 pub(crate) async fn artwork_thumbnail(
   server: ServerExtension,
   fingerprint: Path<Fingerprint>,
@@ -141,6 +253,10 @@ pub(crate) async fn artwork_thumbnail(
   block_in_place(|| Ok(server.artwork(*fingerprint, true)?.range(range)))
 }
 
+/// Display entries of directory with `hash`.
+///
+/// `hash`: Hash of the directory.
+#[route(GET, "/directory/{hash}")]
 pub(crate) async fn directory(
   server: ServerExtension,
   server_config: ServerConfigExtension,
@@ -157,52 +273,48 @@ pub(crate) async fn directory(
   })
 }
 
-pub(crate) async fn fallback(uri: Uri) -> Result<Response, PageError> {
-  if let Some(component) = uri.path().strip_prefix('/')
-    && !component.contains('/')
-  {
-    if component.starts_with(|c: char| c.is_ascii_digit()) {
-      let number = parse_number::<u64>(component).context(server_error::NumberParse)?;
-      return Ok(Redirect::permanent(&format!("/package/{number}")).into_response());
-    } else if component.starts_with(Tag::Package.prefix()) {
-      let fingerprint = component
-        .parse::<Fingerprint>()
-        .context(server_error::FingerprintParse)?;
-      return Ok(Redirect::permanent(&format!("/package/{fingerprint}")).into_response());
-    } else if component.starts_with(Tag::Revision.prefix()) {
-      let revision = component
-        .parse::<Revision>()
-        .context(server_error::RevisionParse)?;
-      return Ok(Redirect::permanent(&format!("/package/{revision}")).into_response());
-    }
-  }
-  Err(ServerError::PageNotFound.into())
-}
-
+/// Serve favicon.
+#[route(GET, "/favicon.ico")]
 pub(crate) async fn favicon() -> ServerResult<StaticAsset> {
   StaticAsset::get("favicon.svg")
 }
 
+/// Serve file with `hash`.
+///
+/// `hash`: Hash of the file.
+#[route(GET, "/file/{hash}")]
+pub(crate) async fn file(
+  server: ServerExtension,
+  hash: Path<Hash>,
+  range: Option<TypedHeader<headers::Range>>,
+) -> ServerResult<Resource> {
+  api_file(server, hash, range).await
+}
+
+/// Serve file with `hash`, with content type inferred from `path`, redirecting
+/// to `/file/{hash}` if the extension of `path` is not recognized.
+///
+/// `hash`: Hash of the file.
+/// `path`: Path whose extension determines the content type.
+#[route(GET, "/file/{hash}/{*path}")]
 pub(crate) async fn file_with_path(
   server: ServerExtension,
   Path((hash, path)): Path<(Hash, RelativePath)>,
   range: Option<TypedHeader<headers::Range>>,
-) -> ServerResult<Response> {
+) -> ServerResult<Either<Resource, Redirect>> {
   block_in_place(|| {
     let Some(resource_type) = ResourceType::from_filename(path.filename()) else {
-      return Ok(Redirect::temporary(&format!("/file/{hash}")).into_response());
+      return Ok(Either::E2(Redirect::temporary(&format!("/file/{hash}"))));
     };
 
-    Ok(
-      server
-        .open_file(hash)?
-        .ty(resource_type)
-        .range(range)
-        .into_response(),
-    )
+    Ok(Either::E1(
+      server.open_file(hash)?.ty(resource_type).range(range),
+    ))
   })
 }
 
+/// Display all files on the server.
+#[route(GET, "/files")]
 pub(crate) async fn files(
   server: ServerExtension,
   server_config: ServerConfigExtension,
@@ -217,6 +329,8 @@ pub(crate) async fn files(
   })
 }
 
+/// Display the homepage.
+#[route(GET, "/")]
 pub(crate) async fn home(
   server: ServerExtension,
   server_config: ServerConfigExtension,
@@ -231,10 +345,17 @@ pub(crate) async fn home(
   })
 }
 
+/// Serve installation script.
+#[route(GET, "/install.sh")]
 pub(crate) async fn install_script() -> ServerResult<StaticAsset> {
   StaticAsset::get("install.sh")
 }
 
+/// Serve audio `item` of package with `fingerprint`.
+///
+/// `fingerprint`: Fingerprint of the package.
+/// `item`: One-based index of the media item.
+#[route(GET, "/media/audio/{fingerprint}/item/{item}")]
 pub(crate) async fn media_audio_item(
   server: ServerExtension,
   Path((fingerprint, Ordinal(item))): Path<(Fingerprint, Ordinal)>,
@@ -254,6 +375,11 @@ pub(crate) async fn media_audio_item(
   })
 }
 
+/// Serve document `item` of package with `fingerprint`.
+///
+/// `fingerprint`: Fingerprint of the package.
+/// `item`: One-based index of the media item.
+#[route(GET, "/media/document/{fingerprint}/item/{item}")]
 pub(crate) async fn media_document_item(
   server: ServerExtension,
   Path((fingerprint, Ordinal(item))): Path<(Fingerprint, Ordinal)>,
@@ -273,6 +399,11 @@ pub(crate) async fn media_document_item(
   })
 }
 
+/// Serve image `item` of package with `fingerprint`.
+///
+/// `fingerprint`: Fingerprint of the package.
+/// `item`: One-based index of the media item.
+#[route(GET, "/media/image/{fingerprint}/item/{item}")]
 pub(crate) async fn media_image_item(
   server: ServerExtension,
   Path((fingerprint, Ordinal(item))): Path<(Fingerprint, Ordinal)>,
@@ -292,6 +423,11 @@ pub(crate) async fn media_image_item(
   })
 }
 
+/// Serve thumbnail of image `item` of package with `fingerprint`.
+///
+/// `fingerprint`: Fingerprint of the package.
+/// `item`: One-based index of the media item.
+#[route(GET, "/media/image/{fingerprint}/item/{item}/thumbnail")]
 pub(crate) async fn media_image_item_thumbnail(
   server: ServerExtension,
   Path((fingerprint, Ordinal(item))): Path<(Fingerprint, Ordinal)>,
@@ -311,6 +447,11 @@ pub(crate) async fn media_image_item_thumbnail(
   })
 }
 
+/// Serve video `item` of package with `fingerprint`.
+///
+/// `fingerprint`: Fingerprint of the package.
+/// `item`: One-based index of the media item.
+#[route(GET, "/media/video/{fingerprint}/item/{item}")]
 pub(crate) async fn media_video_item(
   server: ServerExtension,
   Path((fingerprint, Ordinal(item))): Path<(Fingerprint, Ordinal)>,
@@ -330,6 +471,11 @@ pub(crate) async fn media_video_item(
   })
 }
 
+/// Serve placeholder image of video `item` of package with `fingerprint`.
+///
+/// `fingerprint`: Fingerprint of the package.
+/// `item`: One-based index of the media item.
+#[route(GET, "/media/video/{fingerprint}/item/{item}/placeholder")]
 pub(crate) async fn media_video_item_placeholder(
   server: ServerExtension,
   Path((fingerprint, Ordinal(item))): Path<(Fingerprint, Ordinal)>,
@@ -349,6 +495,11 @@ pub(crate) async fn media_video_item_placeholder(
   })
 }
 
+/// Serve thumbnail of placeholder image of video `item` of package with `fingerprint`.
+///
+/// `fingerprint`: Fingerprint of the package.
+/// `item`: One-based index of the media item.
+#[route(GET, "/media/video/{fingerprint}/item/{item}/placeholder/thumbnail")]
 pub(crate) async fn media_video_item_placeholder_thumbnail(
   server: ServerExtension,
   Path((fingerprint, Ordinal(item))): Path<(Fingerprint, Ordinal)>,
@@ -368,80 +519,99 @@ pub(crate) async fn media_video_item_placeholder_thumbnail(
   })
 }
 
+/// Serve `index.html` from `static` directory of mounted `package`.
+///
+/// `package`: Fingerprint, revision, or number of the mounted package.
+#[route(GET, "/mount/{package}/")]
 pub(crate) async fn mount(
   server: ServerExtension,
   server_config: ServerConfigExtension,
-  Path(fingerprint): Path<Fingerprint>,
+  package: Path<PackageIdentifier>,
   range: Option<TypedHeader<headers::Range>>,
 ) -> ServerResult<Resource> {
   mount_file(
     server,
     server_config,
-    Path((fingerprint, "index.html".parse().unwrap())),
+    Path((*package, "index.html".parse().unwrap())),
     range,
   )
   .await
 }
 
+/// Serve `path` from `static` directory of mounted `package`.
+///
+/// `package`: Fingerprint, revision, or number of the mounted package.
+/// `path`: Path of the file within the `static` directory.
+#[route(GET, "/mount/{package}/{*path}")]
 pub(crate) async fn mount_file(
   server: ServerExtension,
   server_config: ServerConfigExtension,
-  Path((fingerprint, path)): Path<(Fingerprint, RelativePath)>,
+  Path((package, path)): Path<(PackageIdentifier, RelativePath)>,
   range: Option<TypedHeader<headers::Range>>,
 ) -> ServerResult<Resource> {
   block_in_place(|| {
-    ensure! {
-      server_config.mounts.contains(&fingerprint),
-      server_error::PackageNotMounted { fingerprint },
-    }
-
-    let path = format!("static/{path}").parse::<RelativePath>().unwrap();
-
-    let hash = server.package_file(fingerprint, &path)?;
-
-    let content_type = mime_guess::from_path(&path).first_or_octet_stream();
-
     Ok(
       server
-        .open_file(hash)?
-        .range(range)
-        .unsandboxed_content_type(content_type),
+        .mount_file(
+          !matches!(package, PackageIdentifier::Number(_)),
+          &server_config.mounts,
+          package,
+          &path,
+        )?
+        .range(range),
     )
   })
 }
 
-pub(crate) async fn mount_redirect(Path(fingerprint): Path<Fingerprint>) -> Redirect {
-  Redirect::permanent(&format!("/mount/{fingerprint}/"))
+/// Redirect to root of mounted `package`, with trailing slash.
+///
+/// `package`: Fingerprint, revision, or number of the mounted package.
+#[route(GET, "/mount/{package}")]
+pub(crate) async fn mount_redirect(Path(package): Path<PackageIdentifier>) -> Redirect {
+  Redirect::permanent(&format!("/mount/{package}/"))
 }
 
+/// Display `package`.
+///
+/// `package`: Fingerprint, revision, or number of the package.
+#[route(GET, "/package/{package}")]
 pub(crate) async fn package(
   server: ServerExtension,
   server_config: ServerConfigExtension,
-  Path(identifier): Path<PackageIdentifier>,
+  identifier: Path<PackageIdentifier>,
 ) -> PageResult<PackageHtml> {
   block_in_place(|| {
     Ok(
       server
-        .package_html(identifier, &server_config.mounts)?
+        .package_html(*identifier, &server_config.mounts)?
         .page(server_config.url.clone()),
     )
   })
 }
 
+/// Display revision history of `package`.
+///
+/// `package`: Fingerprint, revision, or number of the package.
+#[route(GET, "/package/{package}/history")]
 pub(crate) async fn package_history(
   server: ServerExtension,
   server_config: ServerConfigExtension,
-  Path(identifier): Path<PackageIdentifier>,
+  identifier: Path<PackageIdentifier>,
 ) -> PageResult<HistoryHtml> {
   block_in_place(|| {
     Ok(
       server
-        .history_html(identifier)?
+        .history_html(*identifier)?
         .page(server_config.url.clone()),
     )
   })
 }
 
+/// Display media `item` of `package`.
+///
+/// `package`: Fingerprint, revision, or number of the package.
+/// `item`: One-based index of the media item.
+#[route(GET, "/package/{package}/item/{item}")]
 pub(crate) async fn package_item(
   server: ServerExtension,
   server_config: ServerConfigExtension,
@@ -459,20 +629,17 @@ pub(crate) async fn package_item(
 
     let ty = media.discriminant();
 
-    ensure! {
-      ty.has_items(),
-      server_error::MediaTypeDoesNotHaveItems {
-        ty,
-      }
-    }
+    let items = media
+      .items()
+      .context(server_error::MediaTypeDoesNotHaveItems { ty })?;
 
     ensure! {
-      media.item_count() > index,
+      items.len() > index,
       server_error::MediaItemDoesNotExist {
-        count: media.item_count(),
+        count: items.len(),
         fingerprint,
         index,
-        ty,
+        noun: items.noun(),
       },
     }
 
@@ -488,6 +655,10 @@ pub(crate) async fn package_item(
   })
 }
 
+/// Display media of `package`.
+///
+/// `package`: Fingerprint, revision, or number of the package.
+#[route(GET, "/package/{package}/media")]
 pub(crate) async fn package_media(
   server: ServerExtension,
   server_config: ServerConfigExtension,
@@ -520,10 +691,12 @@ pub(crate) async fn package_media(
   })
 }
 
+/// Display all packages.
+#[route(GET, "/packages")]
 pub(crate) async fn packages(
   server: ServerExtension,
   server_config: ServerConfigExtension,
-  Query(query): Query<PackagesQuery>,
+  query: Query<PackagesQuery>,
 ) -> PageResult<PackagesHtml> {
   let order = query.order.unwrap_or_default();
   let sort = query.sort.unwrap_or_default();
@@ -540,6 +713,182 @@ pub(crate) async fn packages(
   })
 }
 
+/// Serve static asset at `path`.
+///
+/// `path`: Path of the static asset.
+#[route(GET, "/static/{*path}")]
 pub(crate) async fn static_asset(path: Path<String>) -> ServerResult<StaticAsset> {
   StaticAsset::get(&path)
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn endpoint() {
+    let mut schemas = BTreeMap::new();
+
+    assert!(api_gc_route(&mut schemas).endpoint.authenticated);
+    assert!(!api_file_route(&mut schemas).endpoint.authenticated);
+
+    assert_eq!(
+      api_numbers_route(&mut schemas).endpoint.description,
+      "List all package numbers.",
+    );
+
+    assert!(api_file_route(&mut schemas).endpoint.range);
+    assert!(!api_gc_route(&mut schemas).endpoint.range);
+
+    assert_eq!(
+      api_file_route(&mut schemas).endpoint.parameters,
+      [crate::reference::Parameter::Hash]
+    );
+
+    assert_eq!(
+      media_audio_item_route(&mut schemas).endpoint.parameters,
+      [
+        crate::reference::Parameter::Fingerprint,
+        crate::reference::Parameter::Ordinal
+      ],
+    );
+
+    assert_eq!(api_gc_route(&mut schemas).endpoint.query, []);
+
+    assert_eq!(
+      packages_route(&mut schemas).endpoint.query,
+      [
+        crate::reference::QueryParameter {
+          default: "ascending".into(),
+          description: "Package sort order.".into(),
+          name: "order".into(),
+          values: vec![
+            json::Value {
+              description: "Smallest first.".into(),
+              value: "ascending".into(),
+            },
+            json::Value {
+              description: "Largest first.".into(),
+              value: "descending".into(),
+            },
+          ],
+        },
+        crate::reference::QueryParameter {
+          default: "title".into(),
+          description: "Package sort key.".into(),
+          name: "sort".into(),
+          values: vec![
+            json::Value {
+              description: "Title.".into(),
+              value: "title".into(),
+            },
+            json::Value {
+              description: "Creator.".into(),
+              value: "creator".into(),
+            },
+            json::Value {
+              description: "Year.".into(),
+              value: "year".into(),
+            },
+            json::Value {
+              description: "Media type.".into(),
+              value: "media".into(),
+            },
+            json::Value {
+              description: "Number of files.".into(),
+              value: "files".into(),
+            },
+            json::Value {
+              description: "Total size.".into(),
+              value: "size".into(),
+            },
+          ],
+        },
+      ],
+    );
+
+    assert_eq!(
+      file_with_path_route(&mut schemas).parameters,
+      [
+        crate::reference::PathParameter {
+          description: "Hash of the file.".into(),
+          name: "hash".into(),
+        },
+        crate::reference::PathParameter {
+          description: "Path whose extension determines the content type.".into(),
+          name: "path".into(),
+        },
+      ],
+    );
+
+    assert_eq!(api_gc_route(&mut schemas).endpoint.request, None);
+
+    assert_eq!(
+      api_upload_file_route(&mut schemas).endpoint.request,
+      Some(crate::reference::Request::Bytes),
+    );
+
+    assert_eq!(
+      api_missing_route(&mut schemas).endpoint.request,
+      Some(crate::reference::Request::Deco {
+        fields: vec![deco::Field {
+          description: "Hashes to check for.".into(),
+          n: 1,
+          name: "hashes".into(),
+          optional: false,
+          schema: "SortedSet<Hash>".into(),
+        }],
+        limit: 1_048_576,
+      }),
+    );
+
+    assert!(!schemas.contains_key("Request"));
+    assert!(schemas.contains_key("SortedSet<Hash>"));
+
+    assert_eq!(
+      api_numbers_route(&mut schemas).endpoint.response,
+      Some(crate::reference::Response::Deco {
+        fields: vec![deco::Field {
+          description: "Package numbers present on the server.".into(),
+          n: 1,
+          name: "numbers".into(),
+          optional: false,
+          schema: "SortedSet<UnsignedInteger>".into(),
+        }],
+      }),
+    );
+
+    assert_eq!(
+      api_delete_number_route(&mut schemas).endpoint.response,
+      None,
+    );
+
+    assert_eq!(
+      api_file_route(&mut schemas).endpoint.response,
+      Some(crate::reference::Response::File),
+    );
+
+    assert_eq!(
+      home_route(&mut schemas).endpoint.response,
+      Some(crate::reference::Response::Html),
+    );
+
+    assert_eq!(
+      favicon_route(&mut schemas).endpoint.response,
+      Some(crate::reference::Response::Static),
+    );
+
+    assert_eq!(
+      mount_redirect_route(&mut schemas).endpoint.response,
+      Some(crate::reference::Response::Redirect),
+    );
+
+    assert_eq!(
+      file_with_path_route(&mut schemas).endpoint.response,
+      Some(crate::reference::Response::File),
+    );
+
+    assert!(!schemas.contains_key("Response"));
+    assert!(schemas.contains_key("SortedSet<UnsignedInteger>"));
+  }
 }

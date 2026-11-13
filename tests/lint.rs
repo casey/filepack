@@ -12,8 +12,8 @@ fn allow_group() {
     .args(["create", "--deny", "distribution", "--allow", "hygiene"])
     .stderr(
       "
-        error: path failed lint: `aux`
-               └─ Windows does not allow files named `aux`
+        error: Windows does not allow files named `aux` [windows-reserved-filename]
+               └─ `aux`
         error: 1 lint error
       ",
     )
@@ -51,7 +51,7 @@ fn deny_artwork_missing() {
       .args(["create", "--deny", "artwork-missing"])
       .stderr(
         "
-          error: metadata missing artwork
+          error: metadata missing artwork [artwork-missing]
           error: 1 lint error
         ",
       )
@@ -90,8 +90,8 @@ fn deny_audio_embedded_artwork_aspect_ratio() {
         .stderr(
           format!(
             "
-              error: path failed lint: `{path}`
-                     └─ audio file embedded front cover art is 2×1 but must be square
+              error: audio file embedded front cover art is 2×1 but must be square [audio-embedded-artwork-aspect-ratio]
+                     └─ `{path}`
               error: 1 lint error
             "
           )
@@ -184,8 +184,8 @@ fn deny_audio_embedded_artwork_missing() {
         .stderr(
           format!(
             "
-              error: path failed lint: `{path}`
-                     └─ audio file missing embedded front cover art
+              error: audio file missing embedded front cover art [audio-embedded-artwork-missing]
+                     └─ `{path}`
               error: 1 lint error
             "
           )
@@ -252,7 +252,7 @@ fn deny_case_conflict() {
     .args(["create", "--deny", "case-conflict"])
     .stderr(
       "
-        error: paths would conflict on case-insensitive filesystem
+        error: paths would conflict on case-insensitive filesystem [case-conflict]
                ├─ `FOO`
                └─ `foo`
         error: 1 lint error
@@ -273,8 +273,8 @@ fn deny_compatibility_ignores_junk() {
     .args(["create", "--deny", "compatibility"])
     .stderr(
       "
-        error: path failed lint: `aux`
-               └─ Windows does not allow files named `aux`
+        error: Windows does not allow files named `aux` [windows-reserved-filename]
+               └─ `aux`
         error: 1 lint error
       ",
     )
@@ -288,11 +288,51 @@ fn deny_creator_missing() {
     .args(["create", "--deny", "creator-missing"])
     .stderr(
       "
-        error: metadata missing creator
+        error: metadata missing creator [creator-missing]
         error: 1 lint error
       ",
     )
     .failure();
+}
+
+#[test]
+fn deny_derived_assets_missing() {
+  Test::new()
+    .write("foo.png", PngBuilder::new().build())
+    .write("metadata.yaml", "artwork: foo.png")
+    .args(["create", "--deny", "derived-assets-missing", "--no-generate"])
+    .stderr(
+      "
+        error: derived assets not generated because `--no-generate` was passed [derived-assets-missing]
+        error: 1 lint error
+      ",
+    )
+    .failure();
+}
+
+#[test]
+fn deny_derived_assets_missing_ignores_metadata_without_assets() {
+  Test::new()
+    .write("metadata.yaml", "title: foo")
+    .args([
+      "create",
+      "--deny",
+      "derived-assets-missing",
+      "--no-generate",
+    ])
+    .success();
+}
+
+#[test]
+fn deny_derived_assets_missing_ignores_missing_metadata() {
+  Test::new()
+    .args([
+      "create",
+      "--deny",
+      "derived-assets-missing",
+      "--no-generate",
+    ])
+    .success();
 }
 
 #[test]
@@ -307,10 +347,10 @@ fn deny_distribution_catches_both() {
     .args(["create", "--deny", "distribution"])
     .stderr(
       "
-        error: path failed lint: `.DS_Store`
-               └─ possible junk file
-        error: path failed lint: `aux`
-               └─ Windows does not allow files named `aux`
+        error: possible junk file [junk]
+               └─ `.DS_Store`
+        error: Windows does not allow files named `aux` [windows-reserved-filename]
+               └─ `aux`
         error: 2 lint errors
       ",
     )
@@ -329,8 +369,8 @@ fn deny_hygiene_ignores_compatibility() {
     .args(["create", "--deny", "hygiene"])
     .stderr(
       "
-        error: path failed lint: `.DS_Store`
-               └─ possible junk file
+        error: possible junk file [junk]
+               └─ `.DS_Store`
         error: 1 lint error
       ",
     )
@@ -355,8 +395,8 @@ fn deny_item_title_missing() {
     .args(["create", "--deny", "item-title-missing"])
     .stderr(
       "
-        error: path failed lint: `foo.png`
-               └─ media item missing title
+        error: media item missing title [item-title-missing]
+               └─ `foo.png`
         error: 1 lint error
       ",
     )
@@ -372,17 +412,12 @@ fn deny_junk_ignores_compatibility() {
   Test::new()
     .touch("aux")
     .touch(".DS_Store")
-    .touch("foo/.filepack/bar")
     .args(["create", "--deny", "junk"])
     .stderr(
       "
-        error: path failed lint: `.DS_Store`
-               └─ possible junk file
-        error: path failed lint: `foo/.filepack`
-               └─ possible junk file
-        error: path failed lint: `foo/.filepack/bar`
-               └─ possible junk file
-        error: 3 lint errors
+        error: possible junk file [junk]
+               └─ `.DS_Store`
+        error: 1 lint error
       ",
     )
     .failure();
@@ -402,7 +437,7 @@ fn deny_media_items_missing() {
     .args(["create", "--deny", "media-items-missing"])
     .stderr(
       "
-        error: metadata media missing items
+        error: metadata media missing items [media-items-missing]
         error: 1 lint error
       ",
     )
@@ -429,7 +464,7 @@ fn deny_media_missing() {
     .args(["create", "--deny", "media-missing"])
     .stderr(
       "
-        error: metadata missing media
+        error: metadata missing media [media-missing]
         error: 1 lint error
       ",
     )
@@ -442,7 +477,7 @@ fn deny_metadata_missing() {
     .args(["create", "--deny", "metadata-missing"])
     .stderr(
       "
-        error: package missing metadata
+        error: package missing metadata [metadata-missing]
         error: 1 lint error
       ",
     )
@@ -472,7 +507,7 @@ fn deny_mixed_formats() {
     .args(["create", "--deny", "mixed-formats"])
     .stderr(
       "
-        error: media items have mixed formats: PNG, JPEG
+        error: media items have mixed formats: PNG, JPEG [mixed-formats]
         error: 1 lint error
       ",
     )
@@ -497,36 +532,14 @@ fn deny_multiple() {
     ])
     .stderr(
       "
-        error: path failed lint: `.DS_Store`
-               └─ possible junk file
-        error: path failed lint: `aux`
-               └─ Windows does not allow files named `aux`
+        error: possible junk file [junk]
+               └─ `.DS_Store`
+        error: Windows does not allow files named `aux` [windows-reserved-filename]
+               └─ `aux`
         error: 2 lint errors
       ",
     )
     .failure();
-}
-
-#[test]
-fn deny_not_generated() {
-  Test::new()
-    .write("foo.png", PngBuilder::new().build())
-    .write("metadata.yaml", "artwork: foo.png")
-    .args(["create", "--deny", "not-generated"])
-    .stderr(
-      "
-        error: derived assets not generated, pass `--generate`
-        error: 1 lint error
-      ",
-    )
-    .failure();
-}
-
-#[test]
-fn deny_not_generated_ignores_missing_metadata() {
-  Test::new()
-    .args(["create", "--deny", "not-generated"])
-    .success();
 }
 
 #[test]
@@ -536,7 +549,7 @@ fn deny_package_creator_missing() {
     .args(["create", "--deny", "package-creator-missing"])
     .stderr(
       "
-        error: metadata package missing creator
+        error: metadata package missing creator [package-creator-missing]
         error: 1 lint error
       ",
     )
@@ -550,7 +563,7 @@ fn deny_package_missing() {
     .args(["create", "--deny", "package-missing"])
     .stderr(
       "
-        error: metadata missing package
+        error: metadata missing package [package-missing]
         error: 1 lint error
       ",
     )
@@ -564,7 +577,7 @@ fn deny_time_missing() {
     .args(["create", "--deny", "time-missing"])
     .stderr(
       "
-        error: metadata missing time
+        error: metadata missing time [time-missing]
         error: 1 lint error
       ",
     )
@@ -578,7 +591,7 @@ fn deny_title_missing() {
     .args(["create", "--deny", "title-missing"])
     .stderr(
       "
-        error: metadata missing title
+        error: metadata missing title [title-missing]
         error: 1 lint error
       ",
     )
@@ -600,7 +613,7 @@ fn deny_unknown_lint() {
 }
 
 #[test]
-fn deny_video_placeholder_dimensions() {
+fn deny_video_placeholder_dimension_mismatch() {
   let mut placeholder = Cursor::new(Vec::new());
   gradient(1, 1)
     .write_to(&mut placeholder, ImageFormat::Png)
@@ -619,11 +632,11 @@ fn deny_video_placeholder_dimensions() {
               placeholder: bar.png
       ",
     )
-    .args(["create", "--deny", "video-placeholder-dimensions"])
+    .args(["create", "--deny", "video-placeholder-dimension-mismatch"])
     .stderr(
       "
-        error: path failed lint: `foo.mp4`
-               └─ placeholder image is 1×1 but video is 2×1
+        error: placeholder image is 1×1 but video is 2×1 [video-placeholder-dimension-mismatch]
+               └─ `foo.mp4`
         error: 1 lint error
       ",
     )
@@ -646,8 +659,8 @@ fn deny_video_placeholder_missing() {
     .args(["create", "--deny", "video-placeholder-missing"])
     .stderr(
       "
-        error: path failed lint: `foo.mp4`
-               └─ video missing placeholder image
+        error: video missing placeholder image [video-placeholder-missing]
+               └─ `foo.mp4`
         error: 1 lint error
       ",
     )
@@ -665,8 +678,8 @@ fn deny_windows_reserved_filename() {
     .args(["create", "--deny", "windows-reserved-filename"])
     .stderr(
       "
-        error: path failed lint: `aux`
-               └─ Windows does not allow files named `aux`
+        error: Windows does not allow files named `aux` [windows-reserved-filename]
+               └─ `aux`
         error: 1 lint error
       ",
     )
@@ -679,17 +692,10 @@ fn yaml_lints_fail_before_load() {
     .touch(".DS_Store")
     .write("foo.png", PngBuilder::new().build())
     .write("metadata.yaml", "artwork: foo.png")
-    .args([
-      "create",
-      "--generate",
-      "--deny",
-      "title-missing",
-      "--deny",
-      "junk",
-    ])
+    .args(["create", "--deny", "title-missing", "--deny", "junk"])
     .stderr(
       "
-        error: metadata missing title
+        error: metadata missing title [title-missing]
         error: 1 lint error
       ",
     )

@@ -1,6 +1,11 @@
 use super::*;
 
-#[derive(Clone, Debug, Decode, DeserializeFromStr, Encode, PartialEq, SerializeDisplay)]
+/// Non-empty single line of text.
+///
+/// May not contain control characters, including tabs and line breaks, or
+/// leading or trailing whitespace.
+#[derive(Clone, Debug, Decode, DeserializeFromStr, Encode, Json, PartialEq, SerializeDisplay)]
+#[json(string)]
 #[deco(transparent, validate)]
 pub struct Text(String);
 
@@ -46,6 +51,12 @@ impl FromStr for Text {
     Self::check(s)?;
 
     Ok(Self(s.into()))
+  }
+}
+
+impl PartialEq<str> for Text {
+  fn eq(&self, s: &str) -> bool {
+    self.as_str().eq(s)
   }
 }
 

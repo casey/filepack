@@ -2,7 +2,9 @@ use super::*;
 
 #[derive(Debug, Snafu)]
 #[snafu(context(suffix(false)), visibility(pub(crate)))]
-pub enum ServerError {
+pub(crate) enum ServerError {
+  #[snafu(display("API endpoint not found"))]
+  ApiEndpointNotFound,
   #[snafu(display("malformed API version header `{value}`"))]
   ApiVersionMalformed { value: String },
   #[snafu(display(
@@ -17,6 +19,8 @@ pub enum ServerError {
   AuthorizationMalformed,
   #[snafu(display("missing authorization header"))]
   AuthorizationMissing,
+  #[snafu(display("cross-origin request forbidden"))]
+  CrossOriginRequest,
   #[snafu(context(false), display("failed to open database"))]
   Database { source: redb::DatabaseError },
   #[snafu(context(false), display("failed to commit database transaction"))]
@@ -61,6 +65,8 @@ pub enum ServerError {
   },
   #[snafu(display("directory {hash} not found"))]
   DirectoryNotFound { hash: Hash },
+  #[snafu(display("directory {directory} contains reserved filename `{name}`"))]
+  DirectoryReservedFilename { directory: Hash, name: ComponentBuf },
   #[snafu(display("directory {hash} totals error"))]
   DirectoryTotals { hash: Hash, source: TotalsError },
   #[snafu(display("directory {directory} references unverified subdirectory {subdirectory}"))]
@@ -79,18 +85,21 @@ pub enum ServerError {
     "history cannot be accessed by fingerprint, browse package {fingerprint} by number or revision"
   ))]
   HistoryByFingerprint { fingerprint: Fingerprint },
+  #[snafu(display("missing host header"))]
+  HostMissing,
+  #[snafu(display("host `{host}` not allowed, use `--domain {host}` to allow it"))]
+  HostNotAllowed { host: String },
   #[snafu(display("response invalid"))]
   InvalidResponse { source: http::Error },
   #[snafu(display(
-    "{} {index} does not exist, package {fingerprint} has {}",
-    ty.item_noun(),
-    Count::new(*count, ty.item_noun()),
+    "{noun} {index} does not exist, package {fingerprint} has {}",
+    Count::new(*count, noun),
   ))]
   MediaItemDoesNotExist {
     count: usize,
     fingerprint: Fingerprint,
     index: Ordinal,
-    ty: crate::MediaType,
+    noun: &'static str,
   },
   #[snafu(display("expected media type {expected} but package {fingerprint} is {actual}"))]
   MediaType {
@@ -100,6 +109,18 @@ pub enum ServerError {
   },
   #[snafu(display("media type {ty} does not have items"))]
   MediaTypeDoesNotHaveItems { ty: crate::MediaType },
+  #[snafu(display(
+    "mounted package {fingerprint} has unexpected media type {media_type}, only web packages may \
+     be mounted"
+  ))]
+  MountedPackageMediaType {
+    fingerprint: Fingerprint,
+    media_type: crate::MediaType,
+  },
+  #[snafu(display(
+    "mounted package {fingerprint} has no media type, only web packages may be mounted"
+  ))]
+  MountedPackageNoMediaType { fingerprint: Fingerprint },
   #[snafu(display("{source}"))]
   NumberParse { source: NumberError },
   #[snafu(display("file `{path}` missing from package {fingerprint}"))]
@@ -137,11 +158,6 @@ pub enum ServerError {
   PackageNotMounted { fingerprint: Fingerprint },
   #[snafu(display("package number {number} not found"))]
   PackageNumberNotFound { number: u64 },
-  #[snafu(display("package {fingerprint} contains reserved path `{name}`"))]
-  PackageReservedPath {
-    fingerprint: Fingerprint,
-    name: ComponentBuf,
-  },
   #[snafu(display("package {fingerprint} root directory is unverified"))]
   PackageRootUnverified { fingerprint: Fingerprint },
   #[snafu(display("package {fingerprint} is unverified"))]
@@ -204,7 +220,9 @@ pub enum ServerError {
   UploadBodyRead { hash: Hash, source: axum::Error },
   #[snafu(display("expected upload with hash {expected} but got {actual}"))]
   UploadHashMismatch { actual: Hash, expected: Hash },
-  #[snafu(display("writes forbidden"))]
+  #[snafu(display(
+    "writes forbidden, server must be started with `--admin-key` or `--unrestricted-writes`"
+  ))]
   WriteForbidden,
 }
 
@@ -222,6 +240,8 @@ impl ServerError {
       | Self::FileIo { .. }
       | Self::Filesystem { .. }
       | Self::InvalidResponse { .. }
+      | Self::MountedPackageMediaType { .. }
+      | Self::MountedPackageNoMediaType { .. }
       | Self::PackageFileMissing { .. }
       | Self::DirectoryCorrupt { .. }
       | Self::PackageMetadataCorrupt { .. }
@@ -235,15 +255,16 @@ impl ServerError {
       | Self::DirectoryEntryMissing { .. }
       | Self::DirectoryEntrySizeMismatch { .. }
       | Self::DirectoryEntryTotals { .. }
+      | Self::DirectoryReservedFilename { .. }
       | Self::DirectoryTotals { .. }
       | Self::DirectoryUnverified { .. }
       | Self::FingerprintParse { .. }
       | Self::HistoryByFingerprint { .. }
+      | Self::HostMissing
       | Self::NumberParse { .. }
       | Self::RevisionParse { .. }
       | Self::PackageMetadataDecode { .. }
       | Self::PackageMetadataFileMissing { .. }
-      | Self::PackageReservedPath { .. }
       | Self::PackageRootUnverified { .. }
       | Self::PackageUnverified { .. }
       | Self::RevisionDecode { .. }
@@ -253,7 +274,8 @@ impl ServerError {
       | Self::UnstableFeature { .. }
       | Self::UploadBodyRead { .. }
       | Self::UploadHashMismatch { .. } => StatusCode::BAD_REQUEST,
-      Self::ArtworkNotFound { .. }
+      Self::ApiEndpointNotFound
+      | Self::ArtworkNotFound { .. }
       | Self::DirectoryNotFound { .. }
       | Self::FileNotFound { .. }
       | Self::HeadNotFound { .. }
@@ -269,8 +291,9 @@ impl ServerError {
       | Self::PageNotFound
       | Self::PlaceholderNotFound { .. }
       | Self::RevisionNotFound { .. } => StatusCode::NOT_FOUND,
+      Self::HostNotAllowed { .. } => StatusCode::MISDIRECTED_REQUEST,
       Self::RevisionConflict { .. } => StatusCode::CONFLICT,
-      Self::WriteForbidden => StatusCode::FORBIDDEN,
+      Self::CrossOriginRequest | Self::WriteForbidden => StatusCode::FORBIDDEN,
     }
   }
 }

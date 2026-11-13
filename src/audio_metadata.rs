@@ -127,8 +127,8 @@ impl AudioMetadata {
     Item {
       content: Audio {
         channels: self.channels,
-        codec: Some(self.codec),
-        format: Some(format),
+        codec: Decoded::Known(self.codec),
+        format: Decoded::Known(format),
         path,
         sample_bits: self.sample_bits,
         sample_rate: self.sample_rate,

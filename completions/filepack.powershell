@@ -1,0 +1,3 @@
+$env:FILEPACK_COMPLETE = "powershell"
+filepack | Out-String | Invoke-Expression
+Remove-Item Env:\FILEPACK_COMPLETE

@@ -10,7 +10,7 @@ use {
 
 static RUNTIME: LazyLock<Runtime> = LazyLock::new(|| Runtime::new().unwrap());
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 struct DirectoryBuilder<'a> {
   entries: BTreeMap<&'a str, DirectoryBuilderEntry<'a>>,
 }
@@ -77,12 +77,13 @@ impl<'a> DirectoryBuilder<'a> {
   }
 }
 
+#[derive(Clone)]
 enum DirectoryBuilderEntry<'a> {
   Directory(DirectoryBuilder<'a>),
   File(Vec<u8>),
 }
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 struct PackageBuilder<'a> {
   root: DirectoryBuilder<'a>,
 }
@@ -136,6 +137,7 @@ struct TestRequestBuilder {
   absent_headers: BTreeSet<String>,
   body: Option<Vec<u8>>,
   headers: Vec<(HeaderName, String)>,
+  host: Option<&'static str>,
   method: Method,
   path: String,
   range: Option<&'static str>,
@@ -199,6 +201,11 @@ impl TestRequestBuilder {
     self
   }
 
+  fn host(mut self, host: Option<&'static str>) -> Self {
+    self.host = host;
+    self
+  }
+
   fn ignore_body(mut self) -> Self {
     self.response_body = None;
     self
@@ -209,14 +216,18 @@ impl TestRequestBuilder {
       absent_headers: BTreeSet::new(),
       body: None,
       headers: Vec::new(),
+      host: Some("localhost"),
       method,
       path: path.into(),
       range: None,
       response_body: Some(Body::empty()),
-      response_headers: BTreeMap::from([(
-        header::X_CONTENT_TYPE_OPTIONS.to_string(),
-        "nosniff".into(),
-      )]),
+      response_headers: BTreeMap::from([
+        (
+          CROSS_ORIGIN_RESOURCE_POLICY.to_string(),
+          "same-origin".into(),
+        ),
+        (header::X_CONTENT_TYPE_OPTIONS.to_string(), "nosniff".into()),
+      ]),
       router,
       status: StatusCode::OK,
       token: None,
@@ -232,6 +243,10 @@ impl TestRequestBuilder {
     RUNTIME.block_on(async move {
       let mut request = Request::builder().method(self.method).uri(self.path);
 
+      if let Some(host) = self.host {
+        request = request.header(header::HOST, host);
+      }
+
       if let Some(token) = self.token {
         request = request.header(header::AUTHORIZATION, format!("Bearer {token}"));
       }
@@ -244,7 +259,7 @@ impl TestRequestBuilder {
         request = request.header(name, value);
       }
 
-      let response = self
+      let Ok(response) = self
         .router
         .oneshot(
           request
@@ -255,15 +270,22 @@ impl TestRequestBuilder {
             })
             .unwrap(),
         )
-        .await
-        .unwrap();
+        .await;
 
       assert_eq!(response.status(), self.status);
 
       let headers = response.headers();
 
       for (name, value) in self.response_headers {
-        assert_eq!(headers[name], value);
+        assert_eq!(
+          headers
+            .get_all(&name)
+            .iter()
+            .map(|value| value.to_str().unwrap())
+            .collect::<Vec<&str>>()
+            .join(", "),
+          value,
+        );
       }
 
       for name in self.absent_headers {
@@ -298,7 +320,7 @@ impl TestRequestBuilder {
 struct TestServer {
   data_dir: Utf8PathBuf,
   router: Router,
-  #[allow(unused)]
+  #[expect(unused)]
   tempdir: TempDir,
 }
 
@@ -321,10 +343,12 @@ impl TestServer {
 
   fn builder() -> TestServerBuilder {
     TestServerBuilder {
-      auth_config: None,
-      mounts: HashSet::new(),
+      domains: HashSet::new(),
+      mounts: Vec::new(),
+      scheme: Scheme::Http,
       unstable: false,
       url: None,
+      write_config: WriteConfig::Unrestricted,
     }
   }
 
@@ -404,18 +428,15 @@ impl TestServer {
 }
 
 struct TestServerBuilder {
-  auth_config: Option<Arc<AuthConfig>>,
-  mounts: HashSet<Fingerprint>,
+  domains: HashSet<Domain>,
+  mounts: Vec<Mount>,
+  scheme: Scheme,
   unstable: bool,
   url: Option<Url>,
+  write_config: WriteConfig,
 }
 
 impl TestServerBuilder {
-  fn auth_config(mut self, auth_config: AuthConfig) -> Self {
-    self.auth_config = Some(Arc::new(auth_config));
-    self
-  }
-
   fn build(self) -> TestServer {
     let (tempdir, data_dir) = tempdir();
 
@@ -423,13 +444,15 @@ impl TestServerBuilder {
 
     let router = Serve::router(
       server,
-      self.auth_config,
       None,
       Arc::new(ServerConfig {
+        domains: self.domains,
         mounts: self.mounts,
         url: self.url,
       }),
-    );
+      Arc::new(self.write_config),
+    )
+    .layer(Extension(self.scheme));
 
     TestServer {
       data_dir,
@@ -438,8 +461,21 @@ impl TestServerBuilder {
     }
   }
 
-  fn mount(mut self, fingerprint: Fingerprint) -> Self {
-    self.mounts.insert(fingerprint);
+  fn domain(mut self, domain: &str) -> Self {
+    self.domains.insert(domain.parse().unwrap());
+    self
+  }
+
+  fn mount(mut self, package: PackageIdentifier, name: Option<&str>) -> Self {
+    self.mounts.push(Mount {
+      name: name.map(str::to_owned),
+      package,
+    });
+    self
+  }
+
+  fn scheme(mut self, scheme: Scheme) -> Self {
+    self.scheme = scheme;
     self
   }
 
@@ -452,22 +488,40 @@ impl TestServerBuilder {
     self.url = Some(url);
     self
   }
+
+  fn write_config(mut self, write_config: WriteConfig) -> Self {
+    self.write_config = write_config;
+    self
+  }
+}
+
+#[test]
+fn admin_key_conflicts_with_unrestricted_writes() {
+  assert_argument_conflict::<Serve>(
+    &[
+      "--admin-key",
+      PublicKey::EXAMPLE,
+      "--domain",
+      "foo",
+      "--unrestricted-writes",
+    ],
+    "--admin-key <KEY>",
+    "--unrestricted-writes",
+  );
 }
 
 #[test]
 fn admin_key_requires_domain() {
-  assert_missing_argument::<Serve>(
-    &["--admin-key", test::PUBLIC_KEY, "--restrict-writes"],
-    &["--domain <DOMAIN>"],
-  );
+  assert_missing_argument::<Serve>(&["--admin-key", PublicKey::EXAMPLE], &["--domain <DOMAIN>"]);
 }
 
 #[test]
-fn admin_key_requires_restrict_writes() {
-  assert_missing_argument::<Serve>(
-    &["--admin-key", test::PUBLIC_KEY, "--domain", "foo"],
-    &["--restrict-writes"],
-  );
+fn api_fallback() {
+  TestServer::new()
+    .get("/api/foo")
+    .status(StatusCode::NOT_FOUND)
+    .assert_body("API endpoint not found")
+    .send();
 }
 
 #[test]
@@ -500,7 +554,7 @@ fn api_head() {
 
   server.head(format!("/api/head/{revision}")).send();
 
-  server.delete("/api/number/1").send();
+  server.delete("/api/number/0").send();
 
   server
     .head(format!("/api/head/{revision}"))
@@ -511,9 +565,9 @@ fn api_head() {
 #[test]
 fn api_number_not_found() {
   TestServer::new()
-    .get("/api/number/1")
+    .get("/api/number/0")
     .status(StatusCode::NOT_FOUND)
-    .assert_body("package number 1 not found")
+    .assert_body("package number 0 not found")
     .send();
 }
 
@@ -526,7 +580,7 @@ fn api_number_returns_head() {
   let revision = server.write_revision(package, None);
 
   server
-    .get("/api/number/1")
+    .get("/api/number/0")
     .assert_body(api::number::Response { package, revision }.encode_to_vec())
     .send();
 }
@@ -543,13 +597,13 @@ fn api_numbers_returns_numbers() {
   PackageBuilder::new().file("foo", b"foo").upload(&server);
   PackageBuilder::new().file("bar", b"bar").upload(&server);
 
-  server.delete("/api/number/1").send();
+  server.delete("/api/number/0").send();
 
   server
     .get("/api/numbers")
     .assert_body(
       api::numbers::Response {
-        numbers: BTreeSet::from([2]).into(),
+        numbers: BTreeSet::from([1]).into(),
       }
       .encode_to_vec(),
     )
@@ -619,9 +673,9 @@ fn api_version_malformed() {
 #[test]
 fn api_version_response_header() {
   TestServer::new()
-    .get("/")
+    .get("/api/numbers")
     .assert_header(API_VERSION_HEADER, "0")
-    .ignore_body()
+    .assert_body(api::numbers::Response::default().encode_to_vec())
     .send();
 }
 
@@ -637,10 +691,20 @@ fn api_version_unsupported() {
     .send();
 
   server
-    .get("/nonexistent")
+    .get("/api/foo")
     .header(API_VERSION_HEADER, "1")
     .status(StatusCode::BAD_REQUEST)
     .assert_body("unsupported API version 1, this server supports API version 0")
+    .send();
+}
+
+#[test]
+fn api_version_web_route() {
+  TestServer::new()
+    .get("/")
+    .header(API_VERSION_HEADER, "1")
+    .assert_header_absent(API_VERSION_HEADER)
+    .ignore_body()
     .send();
 }
 
@@ -663,7 +727,7 @@ fn artwork_missing() {
   server.write_file(&deco);
 
   server.post(format!("/api/directory/{hash}")).send();
-  server.publish(fingerprint, 1);
+  server.publish(fingerprint, 0);
 
   let mut corrupt = Directory::new();
   corrupt.insert_file(Metadata::DECO_FILENAME, &metadata_deco);
@@ -738,14 +802,17 @@ fn artwork_response() {
     server.write_file(&deco);
 
     server.post(format!("/api/directory/{hash}")).send();
-    server.publish(fingerprint, 1);
+    server.publish(fingerprint, 0);
 
     server
       .get(format!("/artwork/{fingerprint}"))
       .assert_header(header::ACCEPT_RANGES, "bytes")
       .assert_header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
       .assert_header(header::CONTENT_LENGTH, "3")
-      .assert_header(header::CONTENT_SECURITY_POLICY, "sandbox")
+      .assert_header(
+        header::CONTENT_SECURITY_POLICY,
+        "sandbox, frame-ancestors 'self'",
+      )
       .assert_header(header::CONTENT_TYPE, content_type)
       .assert_header(header::ETAG, format!("\"{artwork_hash}\""))
       .assert_body(artwork)
@@ -818,15 +885,14 @@ fn artwork_thumbnail_response() {
 #[test]
 fn closed_server_forbids_writes() {
   TestServer::builder()
-    .auth_config(AuthConfig {
-      admin: None,
-      audience: None,
-    })
+    .write_config(WriteConfig::Forbidden)
     .build()
     .put(format!("/api/file/{}", Hash::bytes(b"bar")))
     .body("bar")
     .status(StatusCode::FORBIDDEN)
-    .assert_body("writes forbidden")
+    .assert_body(
+      "writes forbidden, server must be started with `--admin-key` or `--unrestricted-writes`",
+    )
     .send();
 }
 
@@ -871,7 +937,7 @@ fn corrupt_package_metadata() {
   .unwrap();
 
   server
-    .get("/package/1")
+    .get("/package/0")
     .assert_error(
       StatusCode::INTERNAL_SERVER_ERROR,
       ServerError::PackageMetadataCorrupt {
@@ -904,7 +970,7 @@ fn corrupt_revision() {
   .unwrap();
 
   server
-    .get("/package/1")
+    .get("/package/0")
     .assert_error(
       StatusCode::INTERNAL_SERVER_ERROR,
       ServerError::RevisionCorrupt {
@@ -912,6 +978,69 @@ fn corrupt_revision() {
         source: DecodeError::Malformed(MalformedError::Truncated),
       },
     )
+    .send();
+}
+
+#[test]
+fn cross_origin_request_allowed() {
+  #[track_caller]
+  fn case(method: Method, name: HeaderName, value: &str) {
+    TestRequestBuilder::new(method, "/api/foo", TestServer::new().router)
+      .header(name, value)
+      .status(StatusCode::NOT_FOUND)
+      .assert_body("API endpoint not found")
+      .send();
+  }
+
+  case(Method::POST, SEC_FETCH_SITE, "same-origin");
+  case(Method::POST, SEC_FETCH_SITE, "none");
+  case(Method::POST, header::ORIGIN, "http://localhost");
+  case(Method::GET, SEC_FETCH_SITE, "cross-site");
+
+  TestServer::new()
+    .post("/api/foo")
+    .host(Some("[0:0::1]:8000"))
+    .header(header::ORIGIN, "http://[::1]:8000")
+    .status(StatusCode::NOT_FOUND)
+    .assert_body("API endpoint not found")
+    .send();
+
+  TestServer::builder()
+    .scheme(Scheme::Https)
+    .build()
+    .post("/api/foo")
+    .header(header::ORIGIN, "https://localhost")
+    .status(StatusCode::NOT_FOUND)
+    .assert_body("API endpoint not found")
+    .send();
+}
+
+#[test]
+fn cross_origin_request_rejected() {
+  #[track_caller]
+  fn case(name: HeaderName, value: &str) {
+    TestServer::new()
+      .post("/api/foo")
+      .header(name, value)
+      .status(StatusCode::FORBIDDEN)
+      .assert_body("cross-origin request forbidden")
+      .send();
+  }
+
+  case(SEC_FETCH_SITE, "cross-site");
+  case(SEC_FETCH_SITE, "same-site");
+  case(header::ORIGIN, "http://foo");
+  case(header::ORIGIN, "http://localhost:8000");
+  case(header::ORIGIN, "null");
+  case(header::ORIGIN, "foo");
+
+  TestServer::builder()
+    .scheme(Scheme::Https)
+    .build()
+    .post("/api/foo")
+    .header(header::ORIGIN, "http://localhost")
+    .status(StatusCode::FORBIDDEN)
+    .assert_body("cross-origin request forbidden")
     .send();
 }
 
@@ -936,14 +1065,14 @@ fn delete_number_keeps_shared_head() {
     .post(format!("/api/revision/{revision}"))
     .body(
       api::revision::Request {
-        mode: api::revision::Mode::Replace { number: 2 },
+        mode: api::revision::Mode::Replace { number: 1 },
       }
       .encode_to_vec(),
     )
-    .assert_body(api::revision::Response { number: 2 }.encode_to_vec())
+    .assert_body(api::revision::Response { number: 1 }.encode_to_vec())
     .send();
 
-  server.delete("/api/number/1").send();
+  server.delete("/api/number/0").send();
 
   server.head(format!("/api/head/{revision}")).send();
 }
@@ -951,9 +1080,9 @@ fn delete_number_keeps_shared_head() {
 #[test]
 fn delete_package_not_found() {
   TestServer::new()
-    .delete("/api/number/1")
+    .delete("/api/number/0")
     .status(StatusCode::NOT_FOUND)
-    .assert_body("package number 1 not found")
+    .assert_body("package number 0 not found")
     .send();
 }
 
@@ -961,14 +1090,14 @@ fn delete_package_not_found() {
 fn delete_package_rejects_missing_auth_header() {
   let admin = PrivateKey::generate();
   let server = TestServer::builder()
-    .auth_config(AuthConfig {
-      admin: Some(admin.public_key()),
-      audience: Some("filepack.example".into()),
+    .write_config(WriteConfig::Admin {
+      domain: "filepack.example".parse().unwrap(),
+      key: admin.public_key(),
     })
     .build();
 
   server
-    .delete("/api/number/1")
+    .delete("/api/number/0")
     .status(StatusCode::UNAUTHORIZED)
     .assert_body("missing authorization header")
     .send();
@@ -980,13 +1109,13 @@ fn delete_package_removes_number() {
 
   PackageBuilder::new().file("foo", b"foo").upload(&server);
 
-  server.delete("/api/number/1").send();
+  server.delete("/api/number/0").send();
 
   server
-    .get("/package/1")
+    .get("/package/0")
     .assert_error(
       StatusCode::NOT_FOUND,
-      ServerError::PackageNumberNotFound { number: 1 },
+      ServerError::PackageNumberNotFound { number: 0 },
     )
     .send();
 }
@@ -997,7 +1126,7 @@ fn delete_package_removes_package() {
 
   let fingerprint = PackageBuilder::new().file("foo", b"foo").upload(&server);
 
-  server.delete("/api/number/1").send();
+  server.delete("/api/number/0").send();
 
   server
     .get("/api/numbers")
@@ -1039,12 +1168,12 @@ fn domain_required_for_canonical_domain_options() {
 fn domains_include_redirects() {
   assert_eq!(
     Serve {
-      domain: Some("foo".into()),
-      redirects: vec!["bar".into()],
+      domain: Some("foo".parse().unwrap()),
+      redirects: vec!["bar".parse().unwrap()],
       ..Serve::default()
     }
     .domains(),
-    vec!["foo".to_string(), "bar".to_string()],
+    vec!["foo".parse().unwrap(), "bar".parse().unwrap()],
   );
 }
 
@@ -1080,7 +1209,10 @@ fn download_response() {
     .assert_header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
     .assert_header(header::CONTENT_DISPOSITION, "attachment")
     .assert_header(header::CONTENT_LENGTH, "3")
-    .assert_header(header::CONTENT_SECURITY_POLICY, "sandbox")
+    .assert_header(
+      header::CONTENT_SECURITY_POLICY,
+      "sandbox, frame-ancestors 'self'",
+    )
     .assert_header(header::CONTENT_TYPE, "application/octet-stream")
     .assert_header(header::ETAG, format!("\"{hash}\""))
     .assert_body("bar")
@@ -1092,6 +1224,20 @@ fn fallback() {
   TestServer::new()
     .get("/nonexistent")
     .assert_error(StatusCode::NOT_FOUND, ServerError::PageNotFound)
+    .send();
+}
+
+#[test]
+fn fallback_shadows_named_mount() {
+  TestServer::builder()
+    .mount(PackageIdentifier::Number(0), Some(Fingerprint::EXAMPLE))
+    .build()
+    .get(format!("/{}", Fingerprint::EXAMPLE))
+    .status(StatusCode::PERMANENT_REDIRECT)
+    .assert_header(
+      header::LOCATION,
+      format!("/package/{}", Fingerprint::EXAMPLE),
+    )
     .send();
 }
 
@@ -1126,8 +1272,11 @@ fn file_with_path_markdown() {
 
   server
     .get(format!("/file/{}/bar.md", Hash::bytes(b"foo")))
-    .assert_header(header::CONTENT_SECURITY_POLICY, "sandbox")
-    .assert_header(header::CONTENT_TYPE, "text/plain; charset=utf-8")
+    .assert_header(
+      header::CONTENT_SECURITY_POLICY,
+      "sandbox, frame-ancestors 'self'",
+    )
+    .assert_header(header::CONTENT_TYPE, "text/plain;charset=utf-8")
     .assert_header_absent(header::CONTENT_DISPOSITION)
     .assert_body("foo")
     .send();
@@ -1151,7 +1300,7 @@ fn file_with_path_redirect() {
   let hash = Hash::bytes(b"foo");
 
   TestServer::new()
-    .get(format!("/file/{hash}/bar.txt"))
+    .get(format!("/file/{hash}/bar.rtf"))
     .status(StatusCode::TEMPORARY_REDIRECT)
     .assert_header(header::LOCATION, format!("/file/{hash}"))
     .send();
@@ -1188,21 +1337,41 @@ fn files_non_empty() {
 #[test]
 fn fingerprint_redirects_to_package() {
   TestServer::new()
-    .get(format!("/{}", test::FINGERPRINT))
+    .get(format!("/{}", Fingerprint::EXAMPLE))
     .status(StatusCode::PERMANENT_REDIRECT)
-    .assert_header(header::LOCATION, format!("/package/{}", test::FINGERPRINT))
+    .assert_header(
+      header::LOCATION,
+      format!("/package/{}", Fingerprint::EXAMPLE),
+    )
     .send();
 
   TestServer::new()
-    .get(format!("/{}", test::REVISION))
+    .get(format!("/{}", Revision::EXAMPLE))
     .status(StatusCode::PERMANENT_REDIRECT)
-    .assert_header(header::LOCATION, format!("/package/{}", test::REVISION))
+    .assert_header(header::LOCATION, format!("/package/{}", Revision::EXAMPLE))
     .send();
 }
 
 #[test]
 fn gc_empty_server_removes_nothing() {
   TestServer::new()
+    .post("/api/gc")
+    .assert_body(api::gc::Response::default().encode_to_vec())
+    .send();
+}
+
+#[test]
+fn gc_ignores_missing_mounts() {
+  TestServer::builder()
+    .mount(
+      PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
+      None,
+    )
+    .mount(
+      PackageIdentifier::Revision(Revision::EXAMPLE.parse().unwrap()),
+      None,
+    )
+    .build()
     .post("/api/gc")
     .assert_body(api::gc::Response::default().encode_to_vec())
     .send();
@@ -1233,9 +1402,9 @@ fn gc_ignores_non_hash_filenames() {
 fn gc_rejects_missing_auth_header() {
   let admin = PrivateKey::generate();
   let server = TestServer::builder()
-    .auth_config(AuthConfig {
-      admin: Some(admin.public_key()),
-      audience: Some("filepack.example".into()),
+    .write_config(WriteConfig::Admin {
+      domain: "filepack.example".parse().unwrap(),
+      key: admin.public_key(),
     })
     .build();
 
@@ -1281,7 +1450,7 @@ fn gc_removes_unreachable_and_retains_reachable_data() {
 
   let revision = revision_object.hash();
 
-  server.delete("/api/number/2").send();
+  server.delete("/api/number/1").send();
 
   server
     .post("/api/gc")
@@ -1356,14 +1525,71 @@ fn gc_retains_merge_parents() {
     .post(format!("/api/revision/{merge}"))
     .body(
       api::revision::Request {
-        mode: api::revision::Mode::Update { number: 1 },
+        mode: api::revision::Mode::Update { number: 0 },
       }
       .encode_to_vec(),
     )
-    .assert_body(api::revision::Response { number: 1 }.encode_to_vec())
+    .assert_body(api::revision::Response { number: 0 }.encode_to_vec())
     .send();
 
-  server.delete("/api/number/2").send();
+  server.delete("/api/number/1").send();
+
+  server
+    .post("/api/gc")
+    .assert_body(api::gc::Response::default().encode_to_vec())
+    .send();
+}
+
+#[test]
+fn gc_retains_package_mounted_by_fingerprint() {
+  let package = PackageBuilder::new().file("foo", b"bar");
+
+  let fingerprint = package.fingerprint();
+
+  let server = TestServer::builder()
+    .mount(PackageIdentifier::Fingerprint(fingerprint), None)
+    .build();
+
+  package.upload(&server);
+
+  server.delete("/api/number/0").send();
+
+  let revision = RevisionObject {
+    package: fingerprint,
+    parents: None,
+  };
+
+  server
+    .post("/api/gc")
+    .assert_body(
+      api::gc::Response {
+        bytes: revision.encode_to_vec().len().into_u64(),
+        files: BTreeSet::from([revision.hash().into()]).into(),
+        revisions: BTreeSet::from([revision.hash()]).into(),
+        ..api::gc::Response::default()
+      }
+      .encode_to_vec(),
+    )
+    .send();
+}
+
+#[test]
+fn gc_retains_package_mounted_by_revision() {
+  let package = PackageBuilder::new().file("foo", b"bar");
+
+  let revision = RevisionObject {
+    package: package.fingerprint(),
+    parents: None,
+  }
+  .hash();
+
+  let server = TestServer::builder()
+    .mount(PackageIdentifier::Revision(revision), None)
+    .build();
+
+  package.upload(&server);
+
+  server.delete("/api/number/0").send();
 
   server
     .post("/api/gc")
@@ -1386,7 +1612,7 @@ fn gc_shares_ancestors() {
 
   let head_object = RevisionObject {
     package: bar,
-    parents: Some(OrderedSet::singleton(root)),
+    parents: Some(NonEmptyOrderedSet::singleton(root)),
   };
 
   let head = server.write_revision(bar, Some(root));
@@ -1395,11 +1621,11 @@ fn gc_shares_ancestors() {
     .post(format!("/api/revision/{head}"))
     .body(
       api::revision::Request {
-        mode: api::revision::Mode::Update { number: 1 },
+        mode: api::revision::Mode::Update { number: 0 },
       }
       .encode_to_vec(),
     )
-    .assert_body(api::revision::Response { number: 1 }.encode_to_vec())
+    .assert_body(api::revision::Response { number: 0 }.encode_to_vec())
     .send();
 
   server
@@ -1410,7 +1636,7 @@ fn gc_shares_ancestors() {
       }
       .encode_to_vec(),
     )
-    .assert_body(api::revision::Response { number: 2 }.encode_to_vec())
+    .assert_body(api::revision::Response { number: 1 }.encode_to_vec())
     .send();
 
   server
@@ -1418,7 +1644,7 @@ fn gc_shares_ancestors() {
     .assert_body(api::gc::Response::default().encode_to_vec())
     .send();
 
-  server.delete("/api/number/1").send();
+  server.delete("/api/number/0").send();
 
   server
     .post("/api/gc")
@@ -1477,11 +1703,11 @@ fn get_package_by_number() {
   let fingerprint = PackageBuilder::new().upload(&server);
 
   server
-    .get("/package/1")
+    .get("/package/0")
     .assert_page(PackageHtml {
       fingerprint,
-      identifier: PackageIdentifier::Number(1),
-      number: Some(1),
+      identifier: PackageIdentifier::Number(0),
+      number: Some(0),
       revision: Some(server.write_revision(fingerprint, None)),
       revisions: Some(1),
       ..default()
@@ -1520,11 +1746,11 @@ fn get_package_by_revision() {
     .post(format!("/api/revision/{head}"))
     .body(
       api::revision::Request {
-        mode: api::revision::Mode::Update { number: 1 },
+        mode: api::revision::Mode::Update { number: 0 },
       }
       .encode_to_vec(),
     )
-    .assert_body(api::revision::Response { number: 1 }.encode_to_vec())
+    .assert_body(api::revision::Response { number: 0 }.encode_to_vec())
     .send();
 
   server
@@ -1546,12 +1772,12 @@ fn get_package_by_revision() {
     .send();
 
   server
-    .get("/package/1")
+    .get("/package/0")
     .assert_page(PackageHtml {
       directory: bar_directory,
       fingerprint: bar,
-      identifier: PackageIdentifier::Number(1),
-      number: Some(1),
+      identifier: PackageIdentifier::Number(0),
+      number: Some(0),
       parents: vec![root],
       revision: Some(head),
       revisions: Some(2),
@@ -1596,17 +1822,17 @@ fn get_package_history() {
     .post(format!("/api/revision/{head}"))
     .body(
       api::revision::Request {
-        mode: api::revision::Mode::Update { number: 1 },
+        mode: api::revision::Mode::Update { number: 0 },
       }
       .encode_to_vec(),
     )
-    .assert_body(api::revision::Response { number: 1 }.encode_to_vec())
+    .assert_body(api::revision::Response { number: 0 }.encode_to_vec())
     .send();
 
   server
-    .get("/package/1/history")
+    .get("/package/0/history")
     .assert_page(HistoryHtml {
-      identifier: PackageIdentifier::Number(1),
+      identifier: PackageIdentifier::Number(0),
       revisions: vec![head, root],
     })
     .send();
@@ -1642,7 +1868,7 @@ fn get_package_navigation() {
   let baz_directory = baz.directory();
   let baz = baz.upload(&server);
 
-  server.delete("/api/number/2").send();
+  server.delete("/api/number/1").send();
 
   let totals = Totals {
     directories: 0,
@@ -1652,13 +1878,13 @@ fn get_package_navigation() {
   };
 
   server
-    .get("/package/1")
+    .get("/package/0")
     .assert_page(PackageHtml {
       directory: foo_directory,
       fingerprint: foo,
-      identifier: PackageIdentifier::Number(1),
-      next: Some(3),
-      number: Some(1),
+      identifier: PackageIdentifier::Number(0),
+      next: Some(2),
+      number: Some(0),
       revision: Some(server.write_revision(foo, None)),
       revisions: Some(1),
       totals,
@@ -1737,7 +1963,7 @@ fn get_package_with_metadata() {
   server.write_file(&deco);
 
   server.post(format!("/api/directory/{hash}")).send();
-  server.publish(fingerprint, 1);
+  server.publish(fingerprint, 0);
 
   server
     .get(format!("/package/{fingerprint}"))
@@ -1769,7 +1995,7 @@ fn get_package_without_metadata() {
   server.write_file(&deco);
 
   server.post(format!("/api/directory/{hash}")).send();
-  server.publish(fingerprint, 1);
+  server.publish(fingerprint, 0);
 
   server
     .get(format!("/package/{fingerprint}"))
@@ -1810,7 +2036,7 @@ fn home() {
       packages: vec![PackageSummary {
         fingerprint,
         metadata: Some(metadata),
-        number: 1,
+        number: 0,
         totals,
       }],
     })
@@ -1824,6 +2050,90 @@ fn home_empty() {
     .assert_page(HomeHtml {
       packages: Vec::new(),
     })
+    .send();
+}
+
+#[test]
+fn host_allowed() {
+  #[track_caller]
+  fn case(host: &'static str) {
+    TestServer::builder()
+      .domain("foo")
+      .build()
+      .get("/api/foo")
+      .host(Some(host))
+      .status(StatusCode::NOT_FOUND)
+      .assert_body("API endpoint not found")
+      .send();
+  }
+
+  case("localhost");
+  case("LOCALHOST");
+  case("foo");
+  case("1.2.3.4:8000");
+  case("[1::2]");
+}
+
+#[test]
+fn host_missing() {
+  TestServer::new()
+    .get("/api/foo")
+    .host(None)
+    .status(StatusCode::BAD_REQUEST)
+    .assert_body("missing host header")
+    .send();
+}
+
+#[test]
+fn host_not_allowed() {
+  #[track_caller]
+  fn case(path: &str, host: Option<&'static str>) {
+    TestServer::new()
+      .get(path)
+      .host(host)
+      .status(StatusCode::MISDIRECTED_REQUEST)
+      .assert_body("host `foo` not allowed, use `--domain foo` to allow it")
+      .send();
+  }
+
+  case("/api/foo", Some("foo:8000"));
+  case("http://foo/api/foo", None);
+  case("http://foo/api/foo", Some("localhost"));
+}
+
+#[test]
+fn if_none_match() {
+  let server = TestServer::new();
+
+  server.write_file(b"foo");
+
+  let hash = Hash::bytes(b"foo");
+
+  server
+    .get(format!("/file/{hash}"))
+    .header(header::IF_NONE_MATCH, format!("\"{hash}\""))
+    .status(StatusCode::NOT_MODIFIED)
+    .assert_header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
+    .assert_header(header::ETAG, format!("\"{hash}\""))
+    .assert_header_absent(header::CONTENT_LENGTH)
+    .assert_header_absent(header::CONTENT_TYPE)
+    .assert_body("")
+    .send();
+
+  server
+    .get(format!("/file/{hash}"))
+    .header(header::IF_NONE_MATCH, format!("\"{hash}\""))
+    .range("bytes=0-0")
+    .status(StatusCode::NOT_MODIFIED)
+    .assert_header_absent(header::CONTENT_RANGE)
+    .assert_body("")
+    .send();
+
+  server
+    .get(format!("/file/{hash}"))
+    .header(header::IF_NONE_MATCH, "\"bar\"")
+    .assert_header(header::ETAG, format!("\"{hash}\""))
+    .assert_body("foo")
     .send();
 }
 
@@ -1985,7 +2295,7 @@ fn media_audio_item_package_without_metadata() {
   server.write_file(&deco);
 
   server.post(format!("/api/directory/{hash}")).send();
-  server.publish(fingerprint, 1);
+  server.publish(fingerprint, 0);
 
   server
     .get(format!("/media/audio/{fingerprint}/item/1"))
@@ -2165,7 +2475,10 @@ fn media_document_item_response() {
     .assert_header(header::ACCEPT_RANGES, "bytes")
     .assert_header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
     .assert_header(header::CONTENT_LENGTH, pdf.len().to_string())
-    .assert_header(header::CONTENT_SECURITY_POLICY, "sandbox")
+    .assert_header(
+      header::CONTENT_SECURITY_POLICY,
+      "sandbox, frame-ancestors 'self'",
+    )
     .assert_header(header::CONTENT_TYPE, "application/pdf")
     .assert_header(header::ETAG, format!("\"{}\"", Hash::bytes(pdf)))
     .assert_header_absent(header::CONTENT_DISPOSITION)
@@ -2221,7 +2534,10 @@ fn media_image_item_response() {
     .assert_header(header::ACCEPT_RANGES, "bytes")
     .assert_header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
     .assert_header(header::CONTENT_LENGTH, "3")
-    .assert_header(header::CONTENT_SECURITY_POLICY, "sandbox")
+    .assert_header(
+      header::CONTENT_SECURITY_POLICY,
+      "sandbox, frame-ancestors 'self'",
+    )
     .assert_header(header::CONTENT_TYPE, "image/png")
     .assert_header(header::ETAG, format!("\"{}\"", Hash::bytes(foo)))
     .assert_body(foo)
@@ -2591,6 +2907,17 @@ fn missing_returns_missing_hashes() {
 }
 
 #[test]
+fn mount_before_upload() {
+  TestServer::builder()
+    .mount(PackageIdentifier::Number(0), None)
+    .build()
+    .get("/mount/0/")
+    .status(StatusCode::NOT_FOUND)
+    .assert_body("package number 0 not found")
+    .send();
+}
+
+#[test]
 fn mount_file() {
   let metadata = Metadata {
     media: Some(Media::Web),
@@ -2602,21 +2929,42 @@ fn mount_file() {
     .file("static/foo.css", b"bar")
     .file("static/index.html", b"foo");
 
-  let server = TestServer::builder()
-    .mount(package.fingerprint())
-    .unstable()
-    .build();
+  let fingerprint = package.fingerprint();
 
-  let fingerprint = package.upload(&server);
+  let revision = RevisionObject {
+    package: fingerprint,
+    parents: None,
+  }
+  .hash();
 
-  server
-    .get(format!("/mount/{fingerprint}/foo.css"))
-    .assert_header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
-    .assert_header(header::CONTENT_TYPE, "text/css")
-    .assert_header_absent(header::CONTENT_SECURITY_POLICY)
-    .assert_header_absent(header::CONTENT_DISPOSITION)
-    .assert_body("bar")
-    .send();
+  let identifiers = [
+    (
+      PackageIdentifier::Fingerprint(fingerprint),
+      "public, max-age=31536000, immutable",
+    ),
+    (PackageIdentifier::Number(0), "no-cache"),
+    (
+      PackageIdentifier::Revision(revision),
+      "public, max-age=31536000, immutable",
+    ),
+  ];
+
+  for (mount, _cache_control) in identifiers {
+    let server = TestServer::builder().mount(mount, None).unstable().build();
+
+    package.clone().upload(&server);
+
+    for (identifier, cache_control) in identifiers {
+      server
+        .get(format!("/mount/{identifier}/foo.css"))
+        .assert_header(header::CACHE_CONTROL, cache_control)
+        .assert_header(header::CONTENT_TYPE, "text/css")
+        .assert_header(header::CONTENT_SECURITY_POLICY, "frame-ancestors 'self'")
+        .assert_header_absent(header::CONTENT_DISPOSITION)
+        .assert_body("bar")
+        .send();
+    }
+  }
 }
 
 #[test]
@@ -2631,7 +2979,7 @@ fn mount_file_invalid_path() {
     .file("static/index.html", b"foo");
 
   let server = TestServer::builder()
-    .mount(package.fingerprint())
+    .mount(PackageIdentifier::Fingerprint(package.fingerprint()), None)
     .unstable()
     .build();
 
@@ -2659,7 +3007,7 @@ fn mount_file_nested() {
     .file("static/foo/bar.txt", b"baz");
 
   let server = TestServer::builder()
-    .mount(package.fingerprint())
+    .mount(PackageIdentifier::Fingerprint(package.fingerprint()), None)
     .unstable()
     .build();
 
@@ -2684,7 +3032,7 @@ fn mount_file_not_found() {
     .file("static/index.html", b"foo");
 
   let server = TestServer::builder()
-    .mount(package.fingerprint())
+    .mount(PackageIdentifier::Fingerprint(package.fingerprint()), None)
     .unstable()
     .build();
 
@@ -2719,11 +3067,134 @@ fn mount_file_not_mounted() {
 }
 
 #[test]
+fn mount_number_follows_head() {
+  let metadata = Metadata {
+    media: Some(Media::Web),
+    ..default()
+  };
+
+  let server = TestServer::builder()
+    .mount(PackageIdentifier::Number(0), None)
+    .unstable()
+    .build();
+
+  let foo = PackageBuilder::new()
+    .metadata(&metadata)
+    .file("static/index.html", b"foo")
+    .upload(&server);
+
+  server.get("/mount/0/").assert_body("foo").send();
+
+  let bar = PackageBuilder::new()
+    .metadata(&metadata)
+    .file("static/index.html", b"bar")
+    .upload(&server);
+
+  let revision = server.write_revision(bar, None);
+
+  server
+    .post(format!("/api/revision/{revision}"))
+    .body(
+      api::revision::Request {
+        mode: api::revision::Mode::Replace { number: 0 },
+      }
+      .encode_to_vec(),
+    )
+    .assert_body(api::revision::Response { number: 0 }.encode_to_vec())
+    .send();
+
+  server.get("/mount/0/").assert_body("bar").send();
+
+  server
+    .get(format!("/mount/{foo}/"))
+    .status(StatusCode::NOT_FOUND)
+    .assert_body(format!("package {foo} not mounted"))
+    .send();
+}
+
+#[test]
 fn mount_redirect() {
   TestServer::new()
-    .get(format!("/mount/{}", test::FINGERPRINT))
+    .get(format!("/mount/{}", Fingerprint::EXAMPLE))
     .status(StatusCode::PERMANENT_REDIRECT)
-    .assert_header(header::LOCATION, format!("/mount/{}/", test::FINGERPRINT))
+    .assert_header(
+      header::LOCATION,
+      format!("/mount/{}/", Fingerprint::EXAMPLE),
+    )
+    .send();
+}
+
+#[test]
+fn mount_requires_media_type() {
+  let server = TestServer::builder()
+    .mount(PackageIdentifier::Number(0), None)
+    .unstable()
+    .build();
+
+  let fingerprint = PackageBuilder::new()
+    .file("static/index.html", b"foo")
+    .upload(&server);
+
+  server
+    .get("/mount/0/")
+    .status(StatusCode::INTERNAL_SERVER_ERROR)
+    .assert_body(format!(
+      "mounted package {fingerprint} has no media type, only web packages may be mounted"
+    ))
+    .send();
+}
+
+#[test]
+fn mount_requires_web_package() {
+  let metadata = Metadata {
+    media: Some(Media::Audio { items: Vec::new() }),
+    ..default()
+  };
+
+  let metadata_deco_len = metadata.encode_to_vec().len().into_u64();
+
+  let package = PackageBuilder::new()
+    .metadata(&metadata)
+    .file("static/index.html", b"foo");
+
+  let directory = package.directory();
+
+  let mut static_directory = Directory::new();
+  static_directory.insert_file("index.html", b"foo");
+  let static_deco_len = static_directory.deco().0.len().into_u64();
+
+  let server = TestServer::builder()
+    .mount(PackageIdentifier::Number(0), None)
+    .unstable()
+    .build();
+
+  let fingerprint = package.upload(&server);
+
+  server
+    .get("/mount/0/")
+    .status(StatusCode::INTERNAL_SERVER_ERROR)
+    .assert_body(format!(
+      "mounted package {fingerprint} has unexpected media type audio, only web packages may be \
+       mounted"
+    ))
+    .send();
+
+  server
+    .get(format!("/package/{fingerprint}"))
+    .assert_page(PackageHtml {
+      directory,
+      fingerprint,
+      identifier: PackageIdentifier::Fingerprint(fingerprint),
+      metadata: Some(metadata),
+      mounted: true,
+      totals: Totals {
+        directories: 1,
+        directory_size: static_deco_len,
+        file_size: metadata_deco_len + 3,
+        files: 2,
+      },
+      ..default()
+    })
     .send();
 }
 
@@ -2739,7 +3210,7 @@ fn mount_serves_index_html() {
     .file("static/index.html", b"foo");
 
   let server = TestServer::builder()
-    .mount(package.fingerprint())
+    .mount(PackageIdentifier::Fingerprint(package.fingerprint()), None)
     .unstable()
     .build();
 
@@ -2749,16 +3220,87 @@ fn mount_serves_index_html() {
     .get(format!("/mount/{fingerprint}/"))
     .assert_header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
     .assert_header(header::CONTENT_TYPE, "text/html")
-    .assert_header_absent(header::CONTENT_SECURITY_POLICY)
+    .assert_header(header::CONTENT_SECURITY_POLICY, "frame-ancestors 'self'")
     .assert_header_absent(header::CONTENT_DISPOSITION)
     .assert_body("foo")
     .send();
 }
 
 #[test]
+fn named_mount() {
+  let package = PackageBuilder::new()
+    .metadata(&Metadata {
+      media: Some(Media::Web),
+      ..default()
+    })
+    .file("static/bar.css", b"bar")
+    .file("static/index.html", b"foo");
+
+  let server = TestServer::builder()
+    .mount(
+      PackageIdentifier::Fingerprint(package.fingerprint()),
+      Some("foo"),
+    )
+    .unstable()
+    .build();
+
+  package.upload(&server);
+
+  server
+    .get("/foo/")
+    .assert_header(header::CACHE_CONTROL, "no-cache")
+    .assert_header(header::CONTENT_TYPE, "text/html")
+    .assert_body("foo")
+    .send();
+
+  server
+    .get("/foo/bar.css")
+    .assert_header(header::CONTENT_TYPE, "text/css")
+    .assert_body("bar")
+    .send();
+
+  server
+    .get("/foo")
+    .status(StatusCode::TEMPORARY_REDIRECT)
+    .assert_header(header::LOCATION, "/foo/")
+    .send();
+
+  server
+    .get("/foo/%2e%2e/bar")
+    .status(StatusCode::BAD_REQUEST)
+    .assert_body(
+      "Invalid URL: Cannot parse `path` with value `../bar`: path contains invalid component `..`",
+    )
+    .send();
+
+  server.get("/mount/0/").assert_body("foo").send();
+
+  server
+    .get("/other/")
+    .assert_error(StatusCode::NOT_FOUND, ServerError::PageNotFound)
+    .send();
+}
+
+#[test]
+fn named_mount_with_tag_prefix_redirects() {
+  let server = TestServer::builder()
+    .mount(PackageIdentifier::Number(0), Some("package-foo"))
+    .mount(PackageIdentifier::Number(0), Some("revision-foo"))
+    .build();
+
+  for name in ["package-foo", "revision-foo"] {
+    server
+      .get(format!("/{name}"))
+      .status(StatusCode::TEMPORARY_REDIRECT)
+      .assert_header(header::LOCATION, format!("/{name}/"))
+      .send();
+  }
+}
+
+#[test]
 fn non_fingerprint_tagged_hex_falls_through() {
   TestServer::new()
-    .get(format!("/{}", test::PUBLIC_KEY))
+    .get(format!("/{}", PublicKey::EXAMPLE))
     .assert_error(StatusCode::NOT_FOUND, ServerError::PageNotFound)
     .send();
 }
@@ -2766,9 +3308,9 @@ fn non_fingerprint_tagged_hex_falls_through() {
 #[test]
 fn number_redirects_to_package() {
   TestServer::new()
-    .get("/1")
+    .get("/0")
     .status(StatusCode::PERMANENT_REDIRECT)
-    .assert_header(header::LOCATION, "/package/1")
+    .assert_header(header::LOCATION, "/package/0")
     .send();
 }
 
@@ -2821,7 +3363,7 @@ fn package_item_audio_out_of_range() {
         count: 1,
         fingerprint,
         index: Ordinal(1),
-        ty: MediaType::Audio,
+        noun: "track",
       },
     )
     .send();
@@ -2844,10 +3386,10 @@ fn package_item_by_number() {
     .upload(&server);
 
   server
-    .get("/package/1/item/1")
+    .get("/package/0/item/1")
     .assert_page(ItemHtml {
       fingerprint,
-      identifier: PackageIdentifier::Number(1),
+      identifier: PackageIdentifier::Number(0),
       metadata,
       ..default()
     })
@@ -2892,12 +3434,12 @@ fn package_item_image() {
           alpha: false,
           bit_depth: 8,
           chroma_subsampling: None,
-          color_type: Some(ColorType::Rgb),
+          color_type: Decoded::Known(ColorType::Rgb),
           dimensions: Dimensions {
             height: 1,
             width: 2,
           },
-          format: Some(ImageFormat::Png),
+          format: Decoded::Known(ImageFormat::Png),
           orientation: Orientation::new(),
           path: "foo.png".parse().unwrap(),
         },
@@ -2935,12 +3477,12 @@ fn package_item_image_out_of_range() {
             alpha: false,
             bit_depth: 8,
             chroma_subsampling: None,
-            color_type: Some(ColorType::Rgb),
+            color_type: Decoded::Known(ColorType::Rgb),
             dimensions: Dimensions {
               height: 1,
               width: 1,
             },
-            format: Some(ImageFormat::Png),
+            format: Decoded::Known(ImageFormat::Png),
             orientation: Orientation::new(),
             path: "foo.png".parse().unwrap(),
           },
@@ -2960,7 +3502,7 @@ fn package_item_image_out_of_range() {
         count: 1,
         fingerprint,
         index: Ordinal(1),
-        ty: MediaType::Image,
+        noun: "image",
       },
     )
     .send();
@@ -2990,13 +3532,13 @@ fn package_item_video() {
       items: vec![Item {
         content: Video {
           duration: 0,
-          format: Some(VideoFormat::Mp4),
+          format: Decoded::Known(VideoFormat::Mp4),
           path: "foo.mp4".parse().unwrap(),
           placeholder: None,
           tracks: vec![
             Track {
-              codec: Some(TrackCodec::H264),
-              info: Some(TrackInfo::Video {
+              codec: Decoded::Known(TrackCodec::H264),
+              info: Decoded::Known(TrackInfo::Video {
                 bit_depth: 8,
                 chroma_subsampling: Some(ChromaSubsampling::Yuv420),
                 dimensions: Dimensions {
@@ -3009,8 +3551,8 @@ fn package_item_video() {
               size: 0,
             },
             Track {
-              codec: Some(TrackCodec::Aac),
-              info: Some(TrackInfo::Audio {
+              codec: Decoded::Known(TrackCodec::Aac),
+              info: Decoded::Known(TrackInfo::Audio {
                 channels: 2,
                 sample_rate: 44100,
               }),
@@ -3062,7 +3604,7 @@ fn package_item_video_out_of_range() {
         count: 1,
         fingerprint,
         index: Ordinal(1),
-        ty: MediaType::Video,
+        noun: "video",
       },
     )
     .send();
@@ -3118,7 +3660,7 @@ fn package_item_without_metadata() {
   server.write_file(&deco);
 
   server.post(format!("/api/directory/{hash}")).send();
-  server.publish(fingerprint, 1);
+  server.publish(fingerprint, 0);
 
   server
     .get(format!("/package/{fingerprint}/item/1"))
@@ -3173,12 +3715,12 @@ fn package_media_by_number() {
     .upload(&server);
 
   server
-    .get("/package/1/media")
+    .get("/package/0/media")
     .assert_page(MediaHtml {
       fingerprint,
-      identifier: PackageIdentifier::Number(1),
+      identifier: PackageIdentifier::Number(0),
       metadata,
-      number: Some(1),
+      number: Some(0),
       revision: Some(server.write_revision(fingerprint, None)),
     })
     .send();
@@ -3229,7 +3771,7 @@ fn package_page_og_image() {
   server.write_file(&deco);
 
   server.post(format!("/api/directory/{hash}")).send();
-  server.publish(fingerprint, 1);
+  server.publish(fingerprint, 0);
 
   server
     .get(format!("/package/{fingerprint}"))
@@ -3262,8 +3804,8 @@ fn package_page_renders_audio_media() {
         Item {
           content: Audio {
             channels: 2,
-            codec: Some(AudioCodec::Flac),
-            format: Some(AudioFormat::Flac),
+            codec: Decoded::Known(AudioCodec::Flac),
+            format: Decoded::Known(AudioFormat::Flac),
             path: "foo.flac".parse().unwrap(),
             sample_bits: Some(16),
             sample_rate: 44100,
@@ -3275,8 +3817,8 @@ fn package_page_renders_audio_media() {
         Item {
           content: Audio {
             channels: 2,
-            codec: Some(AudioCodec::Flac),
-            format: Some(AudioFormat::Flac),
+            codec: Decoded::Known(AudioCodec::Flac),
+            format: Decoded::Known(AudioFormat::Flac),
             path: "bar.flac".parse().unwrap(),
             sample_bits: Some(16),
             sample_rate: 44100,
@@ -3326,12 +3868,12 @@ fn package_page_renders_image_media() {
           alpha: false,
           bit_depth: 8,
           chroma_subsampling: None,
-          color_type: Some(ColorType::Rgb),
+          color_type: Decoded::Known(ColorType::Rgb),
           dimensions: Dimensions {
             height: 1,
             width: 2,
           },
-          format: Some(ImageFormat::Png),
+          format: Decoded::Known(ImageFormat::Png),
           orientation: Orientation::new(),
           path: "foo.png".parse().unwrap(),
         },
@@ -3374,13 +3916,13 @@ fn package_page_renders_video_media() {
       items: vec![Item {
         content: Video {
           duration: 0,
-          format: Some(VideoFormat::Mp4),
+          format: Decoded::Known(VideoFormat::Mp4),
           path: "foo.mp4".parse().unwrap(),
           placeholder: None,
           tracks: vec![
             Track {
-              codec: Some(TrackCodec::H264),
-              info: Some(TrackInfo::Video {
+              codec: Decoded::Known(TrackCodec::H264),
+              info: Decoded::Known(TrackInfo::Video {
                 bit_depth: 8,
                 chroma_subsampling: Some(ChromaSubsampling::Yuv420),
                 dimensions: Dimensions {
@@ -3393,8 +3935,8 @@ fn package_page_renders_video_media() {
               size: 0,
             },
             Track {
-              codec: Some(TrackCodec::Aac),
-              info: Some(TrackInfo::Audio {
+              codec: Decoded::Known(TrackCodec::Aac),
+              info: Decoded::Known(TrackInfo::Audio {
                 channels: 2,
                 sample_rate: 44100,
               }),
@@ -3452,7 +3994,7 @@ fn package_page_web() {
   let static_deco_len = static_directory.deco().0.len().into_u64();
 
   let server = TestServer::builder()
-    .mount(package.fingerprint())
+    .mount(PackageIdentifier::Fingerprint(package.fingerprint()), None)
     .unstable()
     .build();
 
@@ -3510,7 +4052,7 @@ fn packages_include_creators_and_titles() {
       packages: vec![PackageSummary {
         fingerprint,
         metadata: Some(metadata),
-        number: 1,
+        number: 0,
         totals,
       }],
       ..default()
@@ -3530,11 +4072,11 @@ fn packages_non_empty() {
     let fingerprint = Fingerprint(hash);
     server.write_file(&deco);
     server.post(format!("/api/directory/{hash}")).send();
-    server.publish(fingerprint, i.into_u64() + 1);
+    server.publish(fingerprint, i.into_u64());
     packages.push(PackageSummary {
       fingerprint,
       metadata: None,
-      number: i.into_u64() + 1,
+      number: i.into_u64(),
       totals: Totals {
         directories: 0,
         directory_size: 0,
@@ -3608,7 +4150,7 @@ fn packages_sorted() {
     packages.push(PackageSummary {
       fingerprint: builder.upload(&server),
       metadata: Some(metadata),
-      number: packages.len().into_u64() + 1,
+      number: packages.len().into_u64(),
       totals,
     });
   }
@@ -3731,7 +4273,7 @@ fn ports() {
 fn redirect_omits_default_ports() {
   assert_eq!(
     Serve {
-      domain: Some("foo".into()),
+      domain: Some("foo".parse().unwrap()),
       ..Serve::default()
     }
     .redirect_url()
@@ -3741,7 +4283,7 @@ fn redirect_omits_default_ports() {
 
   assert_eq!(
     Serve {
-      domain: Some("foo".into()),
+      domain: Some("foo".parse().unwrap()),
       https: true,
       ..Serve::default()
     }
@@ -3758,9 +4300,9 @@ fn restricted_write_accepts_admin_token() {
   let token = Claims::sign(&admin, "filepack.example").unwrap();
 
   let server = TestServer::builder()
-    .auth_config(AuthConfig {
-      admin: Some(admin.public_key()),
-      audience: Some("filepack.example".into()),
+    .write_config(WriteConfig::Admin {
+      domain: "filepack.example".parse().unwrap(),
+      key: admin.public_key(),
     })
     .build();
 
@@ -3777,9 +4319,9 @@ fn restricted_write_accepts_admin_token() {
 fn restricted_write_rejects_missing_header() {
   let admin = PrivateKey::generate();
   let server = TestServer::builder()
-    .auth_config(AuthConfig {
-      admin: Some(admin.public_key()),
-      audience: Some("filepack.example".into()),
+    .write_config(WriteConfig::Admin {
+      domain: "filepack.example".parse().unwrap(),
+      key: admin.public_key(),
     })
     .build();
 
@@ -3798,9 +4340,9 @@ fn restricted_write_rejects_others() {
   let admin = PrivateKey::generate();
   let other = PrivateKey::generate();
   let server = TestServer::builder()
-    .auth_config(AuthConfig {
-      admin: Some(admin.public_key()),
-      audience: Some("filepack.example".into()),
+    .write_config(WriteConfig::Admin {
+      domain: "filepack.example".parse().unwrap(),
+      key: admin.public_key(),
     })
     .build();
 
@@ -3817,12 +4359,12 @@ fn restricted_write_rejects_others() {
 }
 
 #[test]
-fn restricted_write_rejects_wrong_audience() {
+fn restricted_write_rejects_wrong_domain() {
   let admin = PrivateKey::generate();
   let server = TestServer::builder()
-    .auth_config(AuthConfig {
-      admin: Some(admin.public_key()),
-      audience: Some("filepack.example".into()),
+    .write_config(WriteConfig::Admin {
+      domain: "filepack.example".parse().unwrap(),
+      key: admin.public_key(),
     })
     .build();
 
@@ -3851,14 +4393,14 @@ fn server_config() {
   case(Serve::default(), None);
   case(
     Serve {
-      domain: Some("foo".into()),
+      domain: Some("foo".parse().unwrap()),
       ..Serve::default()
     },
     Some("http://foo/"),
   );
   case(
     Serve {
-      domain: Some("foo".into()),
+      domain: Some("foo".parse().unwrap()),
       https: true,
       ..Serve::default()
     },
@@ -3867,14 +4409,19 @@ fn server_config() {
 
   let fingerprint = Fingerprint(Hash::bytes(b"foo"));
 
+  let mount = Mount {
+    name: Some("foo".into()),
+    package: PackageIdentifier::Fingerprint(fingerprint),
+  };
+
   assert_eq!(
     Serve {
-      mounts: vec![fingerprint],
+      mounts: vec![mount.clone()],
       ..Serve::default()
     }
     .server_config()
     .mounts,
-    HashSet::from([fingerprint]),
+    vec![mount],
   );
 }
 
@@ -4007,6 +4554,77 @@ fn verify_directory_idempotent() {
 }
 
 #[test]
+fn verify_directory_metadata_decode_error() {
+  let server = TestServer::new();
+
+  let junk = b"foo";
+  server.write_file(junk);
+
+  let (deco, hash) = Directory::new()
+    .insert_file(Metadata::DECO_FILENAME, junk)
+    .deco();
+  let fingerprint = Fingerprint(hash);
+  server.write_file(&deco);
+
+  server
+    .post(format!("/api/directory/{hash}"))
+    .status(StatusCode::BAD_REQUEST)
+    .assert_body(format!(
+      "failed to decode metadata for package {fingerprint}"
+    ))
+    .send();
+}
+
+#[test]
+fn verify_directory_metadata_references_missing_file() {
+  let server = TestServer::new();
+
+  let metadata = Metadata {
+    artwork: Some(Image::test("cover.png")),
+    ..default()
+  }
+  .encode_to_vec();
+  server.write_file(&metadata);
+
+  let (deco, hash) = Directory::new()
+    .insert_file(Metadata::DECO_FILENAME, &metadata)
+    .deco();
+  let fingerprint = Fingerprint(hash);
+  server.write_file(&deco);
+
+  server
+    .post(format!("/api/directory/{hash}"))
+    .status(StatusCode::BAD_REQUEST)
+    .assert_body(format!(
+      "package {fingerprint} metadata references missing file `cover.png`"
+    ))
+    .send();
+}
+
+#[test]
+fn verify_directory_metadata_references_present_file() {
+  let server = TestServer::new();
+
+  let artwork = b"artwork";
+  server.write_file(artwork);
+
+  let metadata = Metadata {
+    artwork: Some(Image::test("cover.png")),
+    ..default()
+  }
+  .encode_to_vec();
+  server.write_file(&metadata);
+
+  let (deco, hash) = Directory::new()
+    .insert_file("cover.png", artwork)
+    .insert_file(Metadata::DECO_FILENAME, &metadata)
+    .deco();
+  server.write_file(&deco);
+
+  server.post(format!("/api/directory/{hash}")).send();
+}
+
+#[test]
 fn verify_directory_missing_file() {
   let server = TestServer::new();
 
@@ -4048,9 +4666,9 @@ fn verify_directory_missing_subdirectory() {
 fn verify_directory_rejects_missing_auth_header() {
   let admin = PrivateKey::generate();
   let server = TestServer::builder()
-    .auth_config(AuthConfig {
-      admin: Some(admin.public_key()),
-      audience: Some("filepack.example".into()),
+    .write_config(WriteConfig::Admin {
+      domain: "filepack.example".parse().unwrap(),
+      key: admin.public_key(),
     })
     .build();
 
@@ -4060,6 +4678,50 @@ fn verify_directory_rejects_missing_auth_header() {
     .post(format!("/api/directory/{hash}"))
     .status(StatusCode::UNAUTHORIZED)
     .assert_body("missing authorization header")
+    .send();
+}
+
+#[test]
+fn verify_directory_rejects_reserved_filename() {
+  let server = TestServer::new();
+
+  let (deco, hash) = Directory::new()
+    .insert_file("manifest.filepack", b"foo")
+    .deco();
+  server.write_file(&deco);
+
+  server
+    .post(format!("/api/directory/{hash}"))
+    .status(StatusCode::BAD_REQUEST)
+    .assert_body(format!(
+      "directory {hash} contains reserved filename `manifest.filepack`"
+    ))
+    .send();
+}
+
+#[test]
+fn verify_directory_rejects_web_packages_unless_unstable() {
+  let server = TestServer::new();
+
+  let metadata = Metadata {
+    media: Some(Media::Web),
+    ..default()
+  }
+  .encode_to_vec();
+  server.write_file(&metadata);
+
+  let (deco, hash) = Directory::new()
+    .insert_file(Metadata::DECO_FILENAME, &metadata)
+    .deco();
+  let fingerprint = Fingerprint(hash);
+  server.write_file(&deco);
+
+  server
+    .post(format!("/api/directory/{hash}"))
+    .status(StatusCode::BAD_REQUEST)
+    .assert_body(format!(
+      "package {fingerprint} uses unstable feature `web-packages`"
+    ))
     .send();
 }
 
@@ -4187,150 +4849,23 @@ fn verify_package_assigns_numbers() {
 
   let foo = PackageBuilder::new().file("foo", b"foo").upload(&server);
 
-  server.publish(foo, 1);
+  server.publish(foo, 0);
 
   let bar = PackageBuilder::new().file("bar", b"bar").upload(&server);
 
-  server.publish(bar, 2);
+  server.publish(bar, 1);
 
-  let revision = server.publish(foo, 1);
+  let revision = server.publish(foo, 0);
 
   server
     .post(format!("/api/revision/{revision}"))
     .body(
       api::revision::Request {
-        mode: api::revision::Mode::Replace { number: 1 },
+        mode: api::revision::Mode::Replace { number: 0 },
       }
       .encode_to_vec(),
     )
-    .assert_body(api::revision::Response { number: 1 }.encode_to_vec())
-    .send();
-}
-
-#[test]
-fn verify_package_metadata_decode_error() {
-  let server = TestServer::new();
-
-  let junk = b"foo";
-  server.write_file(junk);
-
-  let (deco, hash) = Directory::new()
-    .insert_file(Metadata::DECO_FILENAME, junk)
-    .deco();
-  let fingerprint = Fingerprint(hash);
-  server.write_file(&deco);
-
-  server.post(format!("/api/directory/{hash}")).send();
-
-  server
-    .post(format!("/api/package/{fingerprint}"))
-    .status(StatusCode::BAD_REQUEST)
-    .assert_body(format!(
-      "failed to decode metadata for package {fingerprint}"
-    ))
-    .send();
-}
-
-#[test]
-fn verify_package_metadata_references_missing_file() {
-  let server = TestServer::new();
-
-  let metadata = Metadata {
-    artwork: Some(Image::test("cover.png")),
-    ..default()
-  }
-  .encode_to_vec();
-  server.write_file(&metadata);
-
-  let (deco, hash) = Directory::new()
-    .insert_file(Metadata::DECO_FILENAME, &metadata)
-    .deco();
-  let fingerprint = Fingerprint(hash);
-  server.write_file(&deco);
-
-  server.post(format!("/api/directory/{hash}")).send();
-
-  server
-    .post(format!("/api/package/{fingerprint}"))
-    .status(StatusCode::BAD_REQUEST)
-    .assert_body(format!(
-      "package {fingerprint} metadata references missing file `cover.png`"
-    ))
-    .send();
-}
-
-#[test]
-fn verify_package_metadata_references_present_file() {
-  let server = TestServer::new();
-
-  let artwork = b"artwork";
-  server.write_file(artwork);
-
-  let metadata = Metadata {
-    artwork: Some(Image::test("cover.png")),
-    ..default()
-  }
-  .encode_to_vec();
-  server.write_file(&metadata);
-
-  let (deco, hash) = Directory::new()
-    .insert_file("cover.png", artwork)
-    .insert_file(Metadata::DECO_FILENAME, &metadata)
-    .deco();
-  let fingerprint = Fingerprint(hash);
-  server.write_file(&deco);
-
-  server.post(format!("/api/directory/{hash}")).send();
-
-  server.publish(fingerprint, 1);
-}
-
-#[test]
-fn verify_package_rejects_reserved_paths() {
-  let server = TestServer::new();
-
-  server.write_file(b"foo");
-
-  let (deco, hash) = Directory::new().insert_file(".filepack", b"foo").deco();
-  let fingerprint = Fingerprint(hash);
-  server.write_file(&deco);
-
-  server.post(format!("/api/directory/{hash}")).send();
-
-  server
-    .post(format!("/api/package/{fingerprint}"))
-    .status(StatusCode::BAD_REQUEST)
-    .assert_body(format!(
-      "package {fingerprint} contains reserved path `.filepack`"
-    ))
-    .send();
-}
-
-#[test]
-fn verify_package_rejects_web_packages_unless_unstable() {
-  let server = TestServer::new();
-
-  let metadata = Metadata {
-    media: Some(Media::Web),
-    ..default()
-  }
-  .encode_to_vec();
-  server.write_file(&metadata);
-
-  let (deco, hash) = Directory::new()
-    .insert_file(Metadata::DECO_FILENAME, &metadata)
-    .deco();
-  let fingerprint = Fingerprint(hash);
-  server.write_file(&deco);
-
-  server.post(format!("/api/directory/{hash}")).send();
-
-  server
-    .post(format!("/api/package/{fingerprint}"))
-    .status(StatusCode::BAD_REQUEST)
-    .assert_body(format!(
-      "package {fingerprint} uses unstable feature `web-packages`"
-    ))
+    .assert_body(api::revision::Response { number: 0 }.encode_to_vec())
     .send();
 }
 
@@ -4354,20 +4889,20 @@ fn verify_package_replace() {
     .post(format!("/api/revision/{revision}"))
     .body(
       api::revision::Request {
-        mode: api::revision::Mode::Replace { number: 1 },
+        mode: api::revision::Mode::Replace { number: 0 },
       }
       .encode_to_vec(),
     )
-    .assert_body(api::revision::Response { number: 1 }.encode_to_vec())
+    .assert_body(api::revision::Response { number: 0 }.encode_to_vec())
     .send();
 
   server
-    .get("/package/1")
+    .get("/package/0")
     .assert_page(PackageHtml {
       directory,
       fingerprint: bar,
-      identifier: PackageIdentifier::Number(1),
-      number: Some(1),
+      identifier: PackageIdentifier::Number(0),
+      number: Some(0),
       revision: Some(revision),
       revisions: Some(1),
       totals: Totals {
@@ -4467,14 +5002,14 @@ fn verify_package_replace_shares_head() {
     .post(format!("/api/revision/{revision}"))
     .body(
       api::revision::Request {
-        mode: api::revision::Mode::Replace { number: 2 },
+        mode: api::revision::Mode::Replace { number: 1 },
       }
       .encode_to_vec(),
     )
-    .assert_body(api::revision::Response { number: 2 }.encode_to_vec())
+    .assert_body(api::revision::Response { number: 1 }.encode_to_vec())
     .send();
 
-  for number in 1..=2 {
+  for number in 0..=1 {
     server
       .get(format!("/api/number/{number}"))
       .assert_body(
@@ -4495,7 +5030,7 @@ fn verify_package_replace_shares_head() {
       }
       .encode_to_vec(),
     )
-    .assert_body(api::revision::Response { number: 1 }.encode_to_vec())
+    .assert_body(api::revision::Response { number: 0 }.encode_to_vec())
     .send();
 }
 
@@ -4516,11 +5051,11 @@ fn verify_package_replace_with_history() {
     .post(format!("/api/revision/{head}"))
     .body(
       api::revision::Request {
-        mode: api::revision::Mode::Update { number: 1 },
+        mode: api::revision::Mode::Update { number: 0 },
       }
       .encode_to_vec(),
     )
-    .assert_body(api::revision::Response { number: 1 }.encode_to_vec())
+    .assert_body(api::revision::Response { number: 0 }.encode_to_vec())
     .send();
 
   PackageBuilder::new().file("baz", b"baz").upload(&server);
@@ -4529,15 +5064,15 @@ fn verify_package_replace_with_history() {
     .post(format!("/api/revision/{head}"))
     .body(
       api::revision::Request {
-        mode: api::revision::Mode::Replace { number: 2 },
+        mode: api::revision::Mode::Replace { number: 1 },
       }
       .encode_to_vec(),
     )
-    .assert_body(api::revision::Response { number: 2 }.encode_to_vec())
+    .assert_body(api::revision::Response { number: 1 }.encode_to_vec())
     .send();
 
   server
-    .get("/api/number/2")
+    .get("/api/number/1")
     .assert_body(
       api::number::Response {
         package: bar,
@@ -4560,9 +5095,9 @@ fn verify_package_reuses_revision() {
   }
   .hash();
 
-  server.delete("/api/number/1").send();
+  server.delete("/api/number/0").send();
 
-  server.publish(fingerprint, 2);
+  server.publish(fingerprint, 1);
 
   server.assert_file(revision.into());
 
@@ -4724,16 +5259,16 @@ fn verify_revision_update() {
       .post(format!("/api/revision/{revision}"))
       .body(
         api::revision::Request {
-          mode: api::revision::Mode::Update { number: 1 },
+          mode: api::revision::Mode::Update { number: 0 },
         }
         .encode_to_vec(),
       )
-      .assert_body(api::revision::Response { number: 1 }.encode_to_vec())
+      .assert_body(api::revision::Response { number: 0 }.encode_to_vec())
       .send();
   }
 
   server
-    .get("/api/number/1")
+    .get("/api/number/0")
     .assert_body(
       api::number::Response {
         package: bar,
@@ -4776,13 +5311,13 @@ fn verify_revision_update_conflict() {
     .post(format!("/api/revision/{revision}"))
     .body(
       api::revision::Request {
-        mode: api::revision::Mode::Update { number: 1 },
+        mode: api::revision::Mode::Update { number: 0 },
       }
       .encode_to_vec(),
     )
     .status(StatusCode::CONFLICT)
     .assert_body(format!(
-      "package number 1 is at revision {head} but revision's parent is {parent}"
+      "package number 0 is at revision {head} but revision's parent is {parent}"
     ))
     .send();
 }
@@ -4807,17 +5342,17 @@ fn verify_revision_update_merge() {
     .post(format!("/api/revision/{merge}"))
     .body(
       api::revision::Request {
-        mode: api::revision::Mode::Update { number: 1 },
+        mode: api::revision::Mode::Update { number: 0 },
       }
       .encode_to_vec(),
     )
-    .assert_body(api::revision::Response { number: 1 }.encode_to_vec())
+    .assert_body(api::revision::Response { number: 0 }.encode_to_vec())
     .send();
 
   server
-    .get("/package/1/history")
+    .get("/package/0/history")
     .assert_page(HistoryHtml {
-      identifier: PackageIdentifier::Number(1),
+      identifier: PackageIdentifier::Number(0),
       revisions: vec![merge, a],
     })
     .send();
@@ -4843,13 +5378,13 @@ fn verify_revision_update_merge_conflict() {
     .post(format!("/api/revision/{merge}"))
     .body(
       api::revision::Request {
-        mode: api::revision::Mode::Update { number: 1 },
+        mode: api::revision::Mode::Update { number: 0 },
       }
       .encode_to_vec(),
     )
     .status(StatusCode::CONFLICT)
     .assert_body(format!(
-      "package number 1 is at revision {a} but revision's parent is {b}"
+      "package number 0 is at revision {a} but revision's parent is {b}"
     ))
     .send();
 }
@@ -4892,13 +5427,13 @@ fn verify_revision_update_parent_missing() {
     .post(format!("/api/revision/{revision}"))
     .body(
       api::revision::Request {
-        mode: api::revision::Mode::Update { number: 1 },
+        mode: api::revision::Mode::Update { number: 0 },
       }
       .encode_to_vec(),
     )
     .status(StatusCode::BAD_REQUEST)
     .assert_body(format!(
-      "revision {revision} has no parent but package number 1 is at revision {head}"
+      "revision {revision} has no parent but package number 0 is at revision {head}"
     ))
     .send();
 }

@@ -39,7 +39,7 @@ pub enum Error {
   },
   #[snafu(display("failed to bind listener to {address}"))]
   BindListener {
-    address: String,
+    address: SocketAddr,
     backtrace: Option<Backtrace>,
     source: io::Error,
   },
@@ -179,6 +179,16 @@ pub enum Error {
     expected: Hash,
     path: DisplayPath,
   },
+  #[snafu(display(
+    "embedded file `{hash}` in manifest `{path}` should have size {expected} but has size {actual}"
+  ))]
+  EmbeddedFileSizeMismatch {
+    actual: u64,
+    backtrace: Option<Backtrace>,
+    expected: u64,
+    hash: Hash,
+    path: DisplayPath,
+  },
   #[snafu(display("{count} mismatched file{}", if *count == 1 { "" } else { "s" }))]
   EntryMismatch {
     backtrace: Option<Backtrace>,
@@ -208,6 +218,12 @@ pub enum Error {
   FileNotFound {
     backtrace: Option<Backtrace>,
     hash: Hash,
+  },
+  #[snafu(display("expected `{expected}` but found case mismatch `{actual}`"))]
+  FilenameCase {
+    actual: String,
+    backtrace: Option<Backtrace>,
+    expected: &'static str,
   },
   #[snafu(transparent)]
   Filesystem {
@@ -271,7 +287,7 @@ pub enum Error {
     path: DisplayPath,
     source: XmpError,
   },
-  #[snafu(display("internal error, this may indicate a bug in filepack: {message}"))]
+  #[snafu(display("internal error, this may indicate a bug in Filepack: {message}"))]
   Internal {
     backtrace: Option<Backtrace>,
     message: String,
@@ -322,7 +338,7 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     source: io::Error,
   },
-  #[snafu(display("manifest `{path}` already exists"))]
+  #[snafu(display("manifest `{path}` already exists, use `--force` to overwrite it"))]
   ManifestAlreadyExists {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
@@ -343,9 +359,7 @@ pub enum Error {
     path: DisplayPath,
     source: TotalsError,
   },
-  #[snafu(display("manifest cannot be formatted as TSV"))]
-  ManifestTsv { backtrace: Option<Backtrace> },
-  #[snafu(display("metadata `{path}` already exists"))]
+  #[snafu(display("metadata `{path}` already exists, use `--force` to overwrite it"))]
   MetadataAlreadyExists {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
@@ -355,8 +369,6 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     field: &'static str,
   },
-  #[snafu(display("metadata cannot be formatted as TSV"))]
-  MetadataTsv { backtrace: Option<Backtrace> },
   #[snafu(display("directory missing: `{path}`"))]
   MissingDirectory {
     backtrace: Option<Backtrace>,
@@ -372,26 +384,10 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: RelativePath,
   },
-  #[snafu(display("failed to retrieve mounted package from server"))]
-  MountedPackage {
+  #[snafu(display("duplicate mount name `{name}`"))]
+  MountNameDuplicate {
     backtrace: Option<Backtrace>,
-    source: error::ServerError,
-  },
-  #[snafu(display(
-    "mounted package `{fingerprint}` has unexpected media type {media_type}, only web packages may \
-     be mounted",
-  ))]
-  MountedPackageMediaType {
-    backtrace: Option<Backtrace>,
-    fingerprint: Fingerprint,
-    media_type: MediaType,
-  },
-  #[snafu(display(
-    "mounted package `{fingerprint}` has no media type, only web packages may be mounted",
-  ))]
-  MountedPackageNoMediaType {
-    backtrace: Option<Backtrace>,
-    fingerprint: Fingerprint,
+    name: String,
   },
   #[snafu(display("package root `{path}` is not a directory"))]
   PackageRootDirectory {
@@ -466,17 +462,17 @@ pub enum Error {
   #[snafu(display("redirect domain `{domain}` is the canonical domain"))]
   RedirectDomainCanonical {
     backtrace: Option<Backtrace>,
-    domain: String,
+    domain: Domain,
   },
   #[snafu(display("request failed"))]
   Request {
     backtrace: Option<Backtrace>,
     source: reqwest::Error,
   },
-  #[snafu(display("package contains reserved path `{name}`"))]
-  ReservedPath {
+  #[snafu(display("package contains reserved filename `{}` at `{path}`", path.filename()))]
+  ReservedFilename {
     backtrace: Option<Backtrace>,
-    name: ComponentBuf,
+    path: RelativePath,
   },
   #[snafu(display("failed to read body from response from {url}"))]
   ResponseBody {
@@ -554,6 +550,22 @@ pub enum Error {
   StandardInputIo {
     backtrace: Option<Backtrace>,
     source: io::Error,
+  },
+  #[snafu(display(
+    "subpackage `{path}` fingerprint `{actual}` does not match `{path}/{}` fingerprint `{expected}`",
+    Manifest::FILENAME,
+  ))]
+  SubpackageMismatch {
+    actual: Fingerprint,
+    backtrace: Option<Backtrace>,
+    expected: Fingerprint,
+    path: RelativePath,
+  },
+  #[snafu(display("subpackage `{path}` totals error"))]
+  SubpackageTotals {
+    backtrace: Option<Backtrace>,
+    path: RelativePath,
+    source: TotalsError,
   },
   #[snafu(display("symlink at `{path}`"))]
   Symlink {

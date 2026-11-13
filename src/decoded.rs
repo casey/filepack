@@ -1,16 +1,29 @@
 use super::*;
 
-#[derive(Debug, Eq, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub enum Decoded<T> {
   Known(T),
   Unknown(Vec<u8>),
 }
 
 impl<T> Decoded<T> {
+  pub(crate) fn is_unknown(&self) -> bool {
+    self.known().is_none()
+  }
+
   pub fn known(&self) -> Option<&T> {
     match self {
       Self::Known(value) => Some(value),
       Self::Unknown(_) => None,
+    }
+  }
+}
+
+impl<T: Display> Display for Decoded<T> {
+  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    match self {
+      Self::Known(value) => write!(f, "{value}"),
+      Self::Unknown(_) => write!(f, "unknown"),
     }
   }
 }
@@ -31,11 +44,21 @@ impl<'a, T: Decode<'a>> Decode<'a> for Decoded<T> {
 }
 
 impl<T: Encode> Encode for Decoded<T> {
+  fn deco_schema(registry: &mut deco::Registry) -> String {
+    T::deco_schema(registry)
+  }
+
   fn encode(&self, encoder: &mut Encoder) {
     match self {
       Self::Known(value) => value.encode(encoder),
       Self::Unknown(bytes) => encoder.bytes(bytes),
     }
+  }
+}
+
+impl<T: json::Json> json::Json for Decoded<T> {
+  fn json_schema(registry: &mut json::Registry) -> String {
+    T::json_schema(registry)
   }
 }
 
@@ -60,11 +83,19 @@ impl<T: Serialize> Serialize for Decoded<T> {
 mod tests {
   use super::*;
 
+  /// Foo.
   #[derive(Debug, Decode, Encode, PartialEq, Serialize)]
   #[deco(strict)]
   struct Foo {
+    /// Foo.
     #[n(1)]
     foo: u64,
+  }
+
+  #[test]
+  fn display() {
+    assert_eq!(Decoded::Known(1).to_string(), "1");
+    assert_eq!(Decoded::<u64>::Unknown(vec![99]).to_string(), "unknown");
   }
 
   #[test]
@@ -75,6 +106,18 @@ mod tests {
     assert_eq!(decoded, Decoded::Known(Foo { foo: 1 }));
     assert_eq!(decoded.encode_to_vec(), bytes);
     assert_eq!(serde_json::to_string(&decoded).unwrap(), r#"{"foo":1}"#);
+  }
+
+  #[test]
+  fn schema() {
+    let mut schemas = BTreeMap::new();
+
+    assert_eq!(Decoded::<u64>::deco_schema(&mut schemas), "UnsignedInteger");
+
+    assert_eq!(
+      schemas,
+      BTreeMap::from([("UnsignedInteger".into(), deco::Schema::of::<u64>())]),
+    );
   }
 
   #[test]

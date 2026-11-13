@@ -1,0 +1,22 @@
+[book]
+title = "Filepack"
+authors = ["Casey Rodarmor"]
+description = "content-addressed packages"
+language = "en"
+
+[build]
+build-dir = "build"
+create-missing = false
+
+[output.html]
+additional-css = ["custom.css"]
+git-repository-url = "https://github.com/casey/filepack"
+
+[output.html.fold]
+enable = true
+level = 0
+
+[output.linkcheck2]
+follow-web-links = false
+require-md-extension = true
+warning-policy = "error"

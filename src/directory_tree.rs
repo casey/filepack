@@ -1,8 +1,9 @@
 use super::*;
 
+/// Directory tree of subdirectories and file content.
 #[serde_as]
-#[derive(Debug, Default, Deserialize, PartialEq, Serialize)]
-#[serde(deny_unknown_fields, transparent)]
+#[derive(Debug, Default, Deserialize, Json, PartialEq, Serialize)]
+#[serde(transparent)]
 pub struct DirectoryTree {
   #[serde_as(as = "MapPreventDuplicates<_, _>")]
   pub(crate) entries: BTreeMap<ComponentBuf, DirectoryTreeEntry>,
@@ -55,12 +56,40 @@ impl DirectoryTree {
     Ok(())
   }
 
+  pub(crate) fn descendants(&self) -> Descendants {
+    Descendants::new(self)
+  }
+
+  pub(crate) fn files(&self) -> BTreeMap<RelativePath, File> {
+    let mut files = BTreeMap::new();
+
+    for (path, entry) in self.descendants() {
+      if let DirectoryTreeEntry::File(file) = entry {
+        let old = files.insert(path, *file);
+        assert!(old.is_none());
+      }
+    }
+
+    files
+  }
+
   pub(crate) fn is_empty(&self) -> bool {
     self.entries.is_empty()
   }
 
   pub(crate) fn new() -> Self {
     Self::default()
+  }
+
+  pub(crate) fn subdirectory(&self, path: &RelativePath) -> Option<&DirectoryTree> {
+    let mut current = self;
+    for component in path.components() {
+      let DirectoryTreeEntry::Directory(directory) = current.entries.get(component)? else {
+        return None;
+      };
+      current = directory;
+    }
+    Some(current)
   }
 }
 

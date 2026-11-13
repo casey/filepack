@@ -5,10 +5,11 @@ fn no_keychain() {
   Test::new()
     .arg("info")
     .stdout_regex(&json_regex! {
-      data: ".*",
+      data_dir: ".*",
       keychain: ".*keychain",
       keys: {
       },
+      version: (env!("CARGO_PKG_VERSION")),
     })
     .success();
 }
@@ -20,10 +21,11 @@ fn no_keys() {
     .chmod("keychain", 0o700)
     .arg("info")
     .stdout_regex(&json_regex! {
-      data: ".*",
+      data_dir: ".*",
       keychain: ".*keychain",
       keys: {
       },
+      version: (env!("CARGO_PKG_VERSION")),
     })
     .success();
 }
@@ -42,12 +44,13 @@ fn with_keys() {
   test
     .arg("info")
     .stdout_regex(&json_regex! {
-      data: ".*",
+      data_dir: ".*",
       keychain: ".*keychain",
       keys: {
         master: master,
         foo: foo,
       },
+      version: (env!("CARGO_PKG_VERSION")),
     })
     .success();
 }

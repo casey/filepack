@@ -37,6 +37,16 @@ impl Display for KeyName {
   }
 }
 
+impl json::Json for KeyName {
+  fn json_schema(registry: &mut json::Registry) -> String {
+    json::Schema::Wrapper {
+      description: "Name of a key in the keychain.".into(),
+      inner: String::json_schema(registry),
+    }
+    .register("KeyName", registry)
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
@@ -69,7 +79,6 @@ mod tests {
     invalid("FOO");
     invalid("\\");
     invalid("_");
-    invalid("foo--bar");
     invalid("foo--bar");
     invalid("foo-bar-");
     invalid("foo.");

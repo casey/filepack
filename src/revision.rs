@@ -1,5 +1,6 @@
 use super::*;
 
+/// BLAKE3 hash of a revision.
 #[derive(
   Clone,
   Copy,
@@ -8,7 +9,6 @@ use super::*;
   DeserializeFromStr,
   Encode,
   Eq,
-  Hash,
   Ord,
   PartialEq,
   PartialOrd,
@@ -36,6 +36,10 @@ impl Display for Revision {
 }
 
 impl Hex for Revision {
+  const EXAMPLE: &'static str =
+    "revision12c7922354e5c2496ffc5e87ee0b29cc8767dc35a7c0e31e9d239014df5b44583";
+  const EXAMPLE_DESCRIPTION: &'static str = "Hash of the revision with no parents whose package \
+    is the empty package.";
   const TAG: Tag = Tag::Revision;
 }
 
@@ -96,6 +100,12 @@ impl redb::Value for Revision {
 
   fn type_name() -> redb::TypeName {
     TypeName::Revision.into()
+  }
+}
+
+impl PathExtractor for Revision {
+  fn parameters() -> Vec<reference::Parameter> {
+    vec![reference::Parameter::Revision]
   }
 }
 

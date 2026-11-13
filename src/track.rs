@@ -1,12 +1,18 @@
 use super::*;
 
+/// Track in a video file.
 #[skip_serializing_none]
-#[derive(Clone, Debug, Decode, Encode, PartialEq, Serialize)]
+#[derive(Clone, Debug, Decode, Encode, Json, PartialEq, Serialize)]
 pub(crate) struct Track {
+  /// Codec of the track.
   #[n(1)]
-  pub(crate) codec: Option<TrackCodec>,
+  #[serde(skip_serializing_if = "Decoded::is_unknown")]
+  pub(crate) codec: Decoded<TrackCodec>,
+  /// Codec-specific track information.
   #[n(2)]
-  pub(crate) info: Option<TrackInfo>,
+  #[serde(skip_serializing_if = "Decoded::is_unknown")]
+  pub(crate) info: Decoded<TrackInfo>,
+  /// Size of the track in bytes.
   #[n(3)]
   pub(crate) size: u64,
 }
@@ -15,16 +21,17 @@ impl Track {
   pub(crate) fn info(&self, video: &Video, index: usize) -> Info {
     let builder = InfoBuilder::new()
       .value("track", Ordinal(index))
-      .optional_or_unknown(
+      .value(
         "type",
-        self.info.map(|info| match info {
-          TrackInfo::Audio { .. } => "audio",
-          TrackInfo::Video { .. } => "video",
-        }),
+        match self.info.known() {
+          Some(TrackInfo::Audio { .. }) => "audio",
+          Some(TrackInfo::Video { .. }) => "video",
+          None => "unknown",
+        },
       )
-      .optional_or_unknown("codec", self.codec);
+      .value("codec", &self.codec);
 
-    let builder = builder.when_some(self.info, |builder, info| match info {
+    let builder = builder.when_some(self.info.known().copied(), |builder, info| match info {
       TrackInfo::Audio {
         channels,
         sample_rate,
@@ -38,36 +45,26 @@ impl Track {
         dimensions,
         frames,
         orientation,
-      } => {
-        let pixels =
-          u128::from(dimensions.width) * u128::from(dimensions.height) * u128::from(frames);
-
-        builder
-          .value("dimensions", dimensions)
-          .value("orientation", orientation)
-          .value("frames", frames)
-          .when(video.duration > 0, |builder| {
-            builder.value(
-              "frame rate",
-              DisplayFrameRate {
-                duration: video.duration,
-                frames,
-              },
-            )
-          })
-          .optional("bit rate", DisplayBitrate::new(video.duration, self.size))
-          .when(pixels > 0, |builder| {
-            builder.value(
-              "bits per pixel",
-              DisplayBitsPerPixel {
-                pixels,
-                size: self.size,
-              },
-            )
-          })
-          .value("bit depth", format!("{bit_depth}-bit"))
-          .optional("chroma subsampling", chroma_subsampling)
-      }
+      } => builder
+        .value("dimensions", dimensions)
+        .value("orientation", orientation)
+        .value("frames", frames)
+        .when(video.duration > 0, |builder| {
+          builder.value(
+            "frame rate",
+            DisplayFrameRate {
+              duration: video.duration,
+              frames,
+            },
+          )
+        })
+        .optional("bit rate", DisplayBitrate::new(video.duration, self.size))
+        .optional(
+          "bits per pixel",
+          DisplayBitsPerPixel::new(dimensions, frames, self.size),
+        )
+        .value("bit depth", format!("{bit_depth}-bit"))
+        .optional("chroma subsampling", chroma_subsampling),
     });
 
     builder.value("size", format_size(self.size)).build()
@@ -81,8 +78,8 @@ mod tests {
   #[test]
   fn info() {
     let track = Track {
-      codec: Some(TrackCodec::H264),
-      info: Some(TrackInfo::Video {
+      codec: Decoded::Known(TrackCodec::H264),
+      info: Decoded::Known(TrackInfo::Video {
         bit_depth: 8,
         chroma_subsampling: Some(ChromaSubsampling::Yuv420),
         dimensions: Dimensions {
@@ -136,8 +133,8 @@ mod tests {
     );
 
     let track = Track {
-      codec: Some(TrackCodec::Aac),
-      info: Some(TrackInfo::Audio {
+      codec: Decoded::Known(TrackCodec::Aac),
+      info: Decoded::Known(TrackInfo::Audio {
         channels: 2,
         sample_rate: 44100,
       }),
@@ -178,8 +175,8 @@ mod tests {
   fn serialize() {
     assert_eq!(
       serde_json::to_string(&Track {
-        codec: Some(TrackCodec::Aac),
-        info: Some(TrackInfo::Audio {
+        codec: Decoded::Known(TrackCodec::Aac),
+        info: Decoded::Known(TrackInfo::Audio {
           channels: 2,
           sample_rate: 44100,
         }),
@@ -191,8 +188,8 @@ mod tests {
 
     assert_eq!(
       serde_json::to_string(&Track {
-        codec: Some(TrackCodec::H264),
-        info: Some(TrackInfo::Video {
+        codec: Decoded::Known(TrackCodec::H264),
+        info: Decoded::Known(TrackInfo::Video {
           bit_depth: 8,
           chroma_subsampling: Some(ChromaSubsampling::Yuv420),
           dimensions: Dimensions {

@@ -27,9 +27,15 @@ impl Component {
   }
 
   pub(crate) fn is_reserved(&self) -> bool {
-    Self::RESERVED
-      .iter()
-      .any(|name| self.0.eq_ignore_ascii_case(name))
+    let component = self.as_str();
+
+    for reserved in Self::RESERVED {
+      if component.eq_ignore_ascii_case(reserved) {
+        return true;
+      }
+    }
+
+    component.eq_ignore_ascii_case(Metadata::DECO_FILENAME) && component != Metadata::DECO_FILENAME
   }
 
   pub(crate) fn new(s: &str) -> Result<&Component, ComponentError> {
@@ -66,6 +72,18 @@ impl Component {
     }
 
     Ok(Self::cast(s))
+  }
+}
+
+impl Display for Component {
+  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    write!(f, "{}", &self.0)
+  }
+}
+
+impl PartialEq<str> for Component {
+  fn eq(&self, s: &str) -> bool {
+    self.as_str().eq(s)
   }
 }
 
@@ -146,9 +164,12 @@ mod tests {
     }
 
     case("manifest.filepack", true);
-    case(".filepack", true);
     case("MANIFEST.FILEPACK", true);
-    case("foo", false);
+    case(".filepack", true);
+    case(".FILEPACK", true);
+    case("METADATA.FILEMETA", true);
+    case("metadata.filemeta", false);
+    case("manifest.filepack.foo", false);
   }
 
   #[test]

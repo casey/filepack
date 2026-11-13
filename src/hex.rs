@@ -1,10 +1,12 @@
 use super::*;
 
 pub(crate) trait Hex: DecodeOwned + Encode {
+  const EXAMPLE: &'static str;
+  const EXAMPLE_DESCRIPTION: &'static str;
   const TAG: Tag;
 
   fn format(&self, f: &mut Formatter) -> fmt::Result {
-    write!(f, "{}1", Self::TAG.prefix())?;
+    write!(f, "{}", Self::TAG.prefix())?;
 
     let buffer = self.encode_to_vec();
 
@@ -17,7 +19,7 @@ pub(crate) trait Hex: DecodeOwned + Encode {
     let (actual, payload) = s.split_once('1').context(hex_error::TagMissing { tag })?;
 
     ensure! {
-      actual == tag.prefix(),
+      actual == tag.tag(),
       hex_error::UnexpectedTag { actual, expected: tag }
     }
 
@@ -86,15 +88,15 @@ mod tests {
 
     let zeros = "0".repeat(64);
 
-    case("", "package fingerprint missing tag `package1…`");
-    case("package", "package fingerprint missing tag `package1…`");
+    case("", "package fingerprint missing prefix `package1…`");
+    case("package", "package fingerprint missing prefix `package1…`");
     case(
       &format!("public1{zeros}"),
-      "expected package fingerprint with tag `package1…` but found `public1…`",
+      "expected package fingerprint with prefix `package1…` but found `public1…`",
     );
     case(
       &format!("PACKAGE1{zeros}"),
-      "expected package fingerprint with tag `package1…` but found `PACKAGE1…`",
+      "expected package fingerprint with prefix `package1…` but found `PACKAGE1…`",
     );
     case(
       "package10g",
@@ -175,19 +177,19 @@ mod tests {
   #[test]
   fn round_trip() {
     #[track_caller]
-    fn case<T: Display + FromStr>(s: &str)
+    fn case<T: Display + Hex + FromStr>()
     where
       T::Err: Debug,
     {
-      assert_eq!(s.parse::<T>().unwrap().to_string(), s);
+      assert_eq!(T::EXAMPLE.parse::<T>().unwrap().to_string(), T::EXAMPLE);
     }
 
-    case::<Attestation>(test::SIGNATURE);
-    case::<DisplayPrivateKey>(test::PRIVATE_KEY);
-    case::<Fingerprint>(test::FINGERPRINT);
-    case::<Hash>(test::HASH);
-    case::<PublicKey>(test::PUBLIC_KEY);
-    case::<Revision>(test::REVISION);
-    case::<Token>(test::TOKEN);
+    case::<Attestation>();
+    case::<DisplayPrivateKey>();
+    case::<Fingerprint>();
+    case::<Hash>();
+    case::<PublicKey>();
+    case::<Revision>();
+    case::<Token>();
   }
 }

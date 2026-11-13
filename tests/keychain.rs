@@ -28,7 +28,7 @@ fn hidden_files_are_ignored() {
 #[test]
 fn invalid_key_name() {
   Test::new()
-    .write_keypair("INVALID")
+    .write_key_pair("INVALID")
     .arg("info")
     .stderr_regex("error: invalid key name: `.*INVALID.private`\n.*")
     .failure();
@@ -47,7 +47,7 @@ fn invalid_public_key() {
 #[test]
 fn missing_private_key_error() {
   Test::new()
-    .write_keypair("orphan")
+    .write_key_pair("orphan")
     .remove_file("keychain/orphan.private")
     .arg("info")
     .stderr_regex("error: private key not found: `.*orphan.private`\n")
@@ -57,7 +57,7 @@ fn missing_private_key_error() {
 #[test]
 fn missing_public_key_error() {
   Test::new()
-    .write_keypair("foo")
+    .write_key_pair("foo")
     .remove_file("keychain/foo.public")
     .arg("info")
     .stderr_regex("error: public key not found: `.*foo.public`\n")

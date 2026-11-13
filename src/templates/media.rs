@@ -24,16 +24,16 @@ impl MediaHtml {
         self.fingerprint,
         format!("/package/{}", self.fingerprint),
       )
-      .list(
-        "items",
-        self
-          .metadata
-          .media
-          .as_ref()
-          .unwrap()
-          .items()
-          .enumerate()
-          .map(|(i, item)| item.info(format!("/package/{}/item/{}", self.identifier, Ordinal(i)))),
+      .when_some(
+        self.metadata.media.as_ref().unwrap().items(),
+        |builder, items| {
+          builder.list(
+            "items",
+            items.into_iter().enumerate().map(|(i, item)| {
+              item.info(format!("/package/{}/item/{}", self.identifier, Ordinal(i)))
+            }),
+          )
+        },
       )
       .build()
   }
@@ -68,12 +68,12 @@ mod tests {
   #[test]
   fn media() {
     for identifier in [
-      PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
-      PackageIdentifier::Number(1),
+      PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
+      PackageIdentifier::Number(0),
     ] {
       assert_eq!(
         MediaHtml {
-          fingerprint: test::FINGERPRINT.parse().unwrap(),
+          fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
           identifier,
           metadata: Metadata {
             media: Some(Media::Image {
@@ -81,7 +81,7 @@ mod tests {
             }),
             ..default()
           },
-          number: Some(1),
+          number: Some(0),
           ..default()
         }
         .to_string(),
@@ -91,7 +91,7 @@ mod tests {
             <div>
               <dt>number</dt>
               <dd>
-                <a href='/package/1'>1</a>
+                <a href='/package/0'>0</a>
               </dd>
             </div>
             <div>
@@ -161,23 +161,51 @@ mod tests {
             </div>
           </dl>
         ",
-          fingerprint = test::FINGERPRINT,
+          fingerprint = Fingerprint::EXAMPLE,
         )),
       );
     }
   }
 
   #[test]
+  fn media_web() {
+    assert_eq!(
+      MediaHtml {
+        fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
+        metadata: Metadata {
+          media: Some(Media::Web),
+          ..default()
+        },
+        ..default()
+      }
+      .to_string(),
+      unindent(&format!(
+        "
+        <dl>
+          <div>
+            <dt>fingerprint</dt>
+            <dd>
+              <a href='/package/{fingerprint}'><code>{fingerprint}</code></a>
+            </dd>
+          </div>
+        </dl>
+      ",
+        fingerprint = Fingerprint::EXAMPLE,
+      )),
+    );
+  }
+
+  #[test]
   fn up() {
     for identifier in [
-      PackageIdentifier::Fingerprint(test::FINGERPRINT.parse().unwrap()),
-      PackageIdentifier::Number(1),
+      PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
+      PackageIdentifier::Number(0),
     ] {
       assert_eq!(
         MediaHtml {
-          fingerprint: test::FINGERPRINT.parse().unwrap(),
+          fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
           identifier,
-          number: Some(1),
+          number: Some(0),
           ..default()
         }
         .up(),

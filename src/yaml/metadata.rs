@@ -1,24 +1,62 @@
 use super::*;
 
-#[derive(Debug, Default, Deserialize, PartialEq)]
+/// Metadata describing a package's content, read from `metadata.yaml`.
+#[skip_serializing_none]
+#[derive(Debug, Default, Deserialize, PartialEq, Json)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct Metadata {
+  /// Path to cover art. Must be square.
+  #[json(example = "cover.png")]
   pub(crate) artwork: Option<RelativePath>,
+  /// Primary person or group who created the content.
+  #[json(example = "John Horace Tobin")]
   pub(crate) creator: Option<Text>,
+  /// Single-line description of the content.
+  #[json(example = "A compilation of supernatural occurrences, entities, and facts.")]
   pub(crate) description: Option<Text>,
+  /// Official homepage of the content.
+  #[json(example = "https://tobin-society.org/spirit-guide")]
   pub(crate) homepage: Option<CheckedUrl>,
+  /// Two-letter ISO 639-1 code of the content's primary language.
+  #[json(example = "en")]
   pub(crate) language: Option<Language>,
+  /// Metadata describing the media content of the package.
   pub(crate) media: Option<Media>,
+  /// Metadata describing the package itself, as opposed to its content.
   pub(crate) package: Option<PackageMetadata>,
+  /// Primary publisher of the content.
+  #[json(example = "Miskatonic University Press")]
   pub(crate) publisher: Option<Text>,
+  /// Path to a markdown file containing a readme describing the content.
+  #[json(example = "README.md")]
   pub(crate) readme: Option<RelativePath>,
+  /// Time the content was created.
+  #[json(example = "1929")]
   pub(crate) time: Option<Time>,
+  /// Title of the content.
+  #[json(example = "Tobin's Spirit Guide")]
   pub(crate) title: Option<Text>,
 }
 
 impl Metadata {
   pub(crate) fn deserialize(path: &Utf8Path, yaml: &str) -> Result<Self> {
     serde_yaml::from_str::<Self>(yaml).context(error::DeserializeMetadata { path })
+  }
+
+  pub(crate) fn has_derivable_assets(&self) -> bool {
+    if self.artwork.is_some() {
+      return true;
+    }
+
+    let Some(media) = &self.media else {
+      return false;
+    };
+
+    match media {
+      Media::Image { items } => !items.is_empty(),
+      Media::Video { items } => items.iter().any(|item| item.placeholder.is_some()),
+      Media::Audio { .. } | Media::Document { .. } | Media::Web => false,
+    }
   }
 
   pub(crate) fn load(self, root: &Utf8Path, quiet: bool) -> Result<crate::Metadata> {
@@ -349,6 +387,30 @@ mod tests {
     .unwrap();
   }
 
+  #[test]
+  fn has_derivable_assets() {
+    #[track_caller]
+    fn case(yaml: &str, expected: bool) {
+      assert_eq!(
+        Metadata::deserialize(crate::Metadata::YAML_FILENAME.as_ref(), yaml)
+          .unwrap()
+          .has_derivable_assets(),
+        expected,
+      );
+    }
+
+    case("title: foo", false);
+    case("artwork: foo.png", true);
+    case("media: {type: audio, items: [{path: foo.flac}]}", false);
+    case("media: {type: image, items: []}", false);
+    case("media: {type: image, items: [{path: foo.png}]}", true);
+    case("media: {type: video, items: [{path: foo.mp4}]}", false);
+    case(
+      "media: {type: video, items: [{path: foo.mp4, placeholder: bar.png}]}",
+      true,
+    );
+  }
+
   fn image(width: u32, height: u32, image_format: ::image::ImageFormat) -> Vec<u8> {
     let mut buffer = io::Cursor::new(Vec::new());
     gradient(width, height)
@@ -501,12 +563,12 @@ mod tests {
           alpha: false,
           bit_depth: 8,
           chroma_subsampling: None,
-          color_type: Some(ColorType::Rgb),
+          color_type: Decoded::Known(ColorType::Rgb),
           dimensions: Dimensions {
             height: 1,
             width: 1,
           },
-          format: Some(ImageFormat::Png),
+          format: Decoded::Known(ImageFormat::Png),
           orientation: Orientation::new(),
           path: "cover.png".parse().unwrap(),
         }),
@@ -515,8 +577,8 @@ mod tests {
           items: vec![Item {
             content: crate::Audio {
               channels: 2,
-              codec: Some(AudioCodec::Flac),
-              format: Some(AudioFormat::Flac),
+              codec: Decoded::Known(AudioCodec::Flac),
+              format: Decoded::Known(AudioFormat::Flac),
               path: "foo.flac".parse().unwrap(),
               sample_bits: Some(16),
               sample_rate: 44100,
@@ -631,7 +693,7 @@ mod tests {
 
       if title
         .as_ref()
-        .is_none_or(|title| title.as_str() != "Tobin's Spirit Guide")
+        .is_none_or(|title| title != "Tobin's Spirit Guide")
       {
         continue;
       }

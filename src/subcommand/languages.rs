@@ -2,20 +2,27 @@ use super::*;
 
 #[derive(Parser)]
 pub(crate) struct Languages {
-  #[arg(long = "format", default_value_t)]
+  #[arg(long = "format", default_value_t, help = FORMAT_HELP)]
   format: OutputFormat,
 }
+
+pub(crate) type Input = ();
+
+pub(crate) type Output = BTreeMap<Language, String>;
 
 impl Languages {
   #[expect(clippy::unnecessary_wraps)]
   pub(crate) fn run(self) -> Result {
-    let codes = &*language::CODES;
+    let languages = language::ALL
+      .iter()
+      .map(|language| (*language, language.name().into()))
+      .collect::<Output>();
 
     match self.format {
-      OutputFormat::Json => println!("{}", serde_json::to_string(codes).unwrap()),
-      OutputFormat::JsonPretty => println!("{}", serde_json::to_string_pretty(codes).unwrap()),
+      OutputFormat::Json => println!("{}", serde_json::to_string(&languages).unwrap()),
+      OutputFormat::JsonPretty => println!("{}", serde_json::to_string_pretty(&languages).unwrap()),
       OutputFormat::Tsv => {
-        for (code, language) in codes {
+        for (code, language) in &languages {
           println!("{code}\t{language}");
         }
       }

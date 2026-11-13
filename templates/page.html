@@ -40,21 +40,20 @@
       <nav>
         <a href=/>Filepack</a>
         <a href=/packages>Packages</a>
+        <a href=https://filepack.com/book>Book</a>
         <a href=https://github.com/casey/filepack>GitHub</a>
+        <button aria-label='Keyboard shortcuts' popovertarget=shortcuts title='Keyboard shortcuts'>?</button>
       </nav>
     </header>
     <main>
       {{ Trusted(&self.content) }}
     </main>
-%% let shortcuts = self.shortcuts();
-%% if !shortcuts.is_empty() {
     <div id=shortcuts popover>
       <dl>
-%%   for shortcut in shortcuts {
-        <div><dt><kbd>{{ shortcut.key }}</kbd></dt><dd>{{ shortcut.description }}</dd></div>
-%%   }
+%% for shortcut in self.shortcuts() {
+        <div><dt>{% for (i, key) in shortcut.keys.iter().enumerate() { %}{% if i > 0 { %} or {% } %}<kbd>{{ key }}</kbd>{% } %}</dt><dd>{{ shortcut.description }}</dd></div>
+%% }
       </dl>
     </div>
-%% }
   </body>
 </html>

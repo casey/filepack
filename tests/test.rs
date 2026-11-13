@@ -69,6 +69,13 @@ impl Test {
     self
   }
 
+  pub(crate) fn assert_server_file(self, contents: &str) -> Self {
+    self.assert_file(
+      &format!("files/{}", Hash::bytes(contents.as_bytes())),
+      contents,
+    )
+  }
+
   #[cfg(unix)]
   pub(crate) fn chmod(self, path: &str, mode: u32) -> Self {
     use std::os::unix::fs::PermissionsExt;
@@ -168,9 +175,14 @@ impl Test {
   }
 
   pub(crate) fn serve(self) -> Self {
-    self
-      .ready_address()
-      .args(["serve", "--address", "127.0.0.1", "--http-port", "0"])
+    self.ready_address().args([
+      "serve",
+      "--address",
+      "127.0.0.1",
+      "--http-port",
+      "0",
+      "--unrestricted-writes",
+    ])
   }
 
   #[track_caller]
@@ -380,6 +392,12 @@ impl Test {
     self
   }
 
+  pub(crate) fn stdout_check(mut self, check: fn(&str)) -> Self {
+    assert_matches!(self.stdout, Expected::Empty);
+    self.stdout = Expected::Check(check);
+    self
+  }
+
   pub(crate) fn stdout_regex(mut self, pattern: &str) -> Self {
     assert_matches!(self.stdout, Expected::Empty);
     self.stdout = Expected::regex(&unindent(pattern));
@@ -467,7 +485,7 @@ impl Test {
     self
   }
 
-  pub(crate) fn write_keypair(self, name: &str) -> Self {
+  pub(crate) fn write_key_pair(self, name: &str) -> Self {
     self
       .write(&format!("keychain/{name}.public"), PUBLIC_KEY)
       .write(&format!("keychain/{name}.private"), PRIVATE_KEY)
@@ -491,5 +509,10 @@ impl Test {
     assert!(status.success());
 
     self
+  }
+
+  pub(crate) fn write_server_file(self, content: impl Into<Vec<u8>>) -> Self {
+    let content = content.into();
+    self.write(&format!("files/{}", Hash::bytes(&content)), content)
   }
 }

@@ -9,9 +9,10 @@ fn default() {
     .env("HOME", "foo")
     .arg("info")
     .stdout(json_pretty! {
-      data: "foo/.filepack",
+      data_dir: "foo/.filepack",
       keychain: "foo/.filepack/keychain",
       keys: {},
+      version: (env!("CARGO_PKG_VERSION")),
     })
     .success();
 }
@@ -21,9 +22,10 @@ fn flag() {
   Test::new()
     .args(["--data-dir", "foo", "info"])
     .stdout_regex_path(&json_regex! {
-      data: "foo",
+      data_dir: "foo",
       keychain: "foo/keychain",
       keys: {},
+      version: (env!("CARGO_PKG_VERSION")),
     })
     .success();
 }
@@ -35,9 +37,10 @@ fn xdg_data_home() {
     .env("XDG_DATA_HOME", "foo")
     .arg("info")
     .stdout_regex_path(&json_regex! {
-      data: "foo/filepack",
+      data_dir: "foo/filepack",
       keychain: "foo/filepack/keychain",
       keys: {},
+      version: (env!("CARGO_PKG_VERSION")),
     })
     .success();
 }
@@ -51,9 +54,10 @@ fn xdg_data_home_empty() {
     .env("XDG_DATA_HOME", "")
     .arg("info")
     .stdout(json_pretty! {
-      data: "foo/.filepack",
+      data_dir: "foo/.filepack",
       keychain: "foo/.filepack/keychain",
       keys: {},
+      version: (env!("CARGO_PKG_VERSION")),
     })
     .success();
 }

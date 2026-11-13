@@ -50,6 +50,63 @@ pub(crate) fn open(path: &Utf8Path) -> FilesystemResult<fs::File> {
   fs::File::open(path).context(filesystem_error::Io { path })
 }
 
+#[cfg(not(windows))]
+pub(crate) fn persist(temp_path: TempPath, path: &Utf8Path) -> FilesystemResult {
+  temp_path
+    .persist(path)
+    .map_err(|error| error.error)
+    .context(filesystem_error::Io { path })?;
+
+  let parent = path.parent().unwrap();
+
+  fs::File::open(parent)
+    .and_then(|directory| directory.sync_all())
+    .context(filesystem_error::Io { path: parent })
+}
+
+#[cfg(windows)]
+pub(crate) fn persist(temp_path: TempPath, path: &Utf8Path) -> FilesystemResult {
+  use {
+    std::os::windows::ffi::OsStrExt,
+    windows_sys::Win32::Storage::FileSystem::{
+      MOVEFILE_REPLACE_EXISTING, MOVEFILE_WRITE_THROUGH, MoveFileExW,
+    },
+  };
+
+  fn wide(path: &Path) -> Vec<u16> {
+    path
+      .as_os_str()
+      .encode_wide()
+      .chain(iter::once(0))
+      .collect()
+  }
+
+  let temp_path = temp_path
+    .keep()
+    .map_err(|error| error.error)
+    .context(filesystem_error::Io { path })?;
+
+  let source = wide(&temp_path);
+
+  let destination = wide(path.as_std_path());
+
+  let result = unsafe {
+    MoveFileExW(
+      source.as_ptr(),
+      destination.as_ptr(),
+      MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH,
+    )
+  };
+
+  if result == 0 {
+    let error = io::Error::last_os_error();
+    fs::remove_file(&temp_path).ok();
+    return Err(filesystem_error::Io { path }.into_error(error));
+  }
+
+  Ok(())
+}
+
 pub(crate) fn read(path: &Utf8Path) -> FilesystemResult<Vec<u8>> {
   fs::read(path).context(filesystem_error::Io { path })
 }
@@ -102,4 +159,30 @@ pub(crate) fn write_with_mode(
   _mode: u32,
 ) -> FilesystemResult {
   write(path, contents)
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn persist_tempfile() {
+    let (_tempdir, root) = tempdir();
+
+    let mut tempfile = NamedTempFile::new_in(&root).unwrap();
+
+    tempfile.write_all(b"foo").unwrap();
+
+    let (_file, temp_path) = tempfile.into_parts();
+
+    let source = temp_path.to_path_buf();
+
+    let destination = root.join("bar");
+
+    persist(temp_path, &destination).unwrap();
+
+    assert!(!source.exists());
+
+    assert_eq!(fs::read(&destination).unwrap(), b"foo");
+  }
 }

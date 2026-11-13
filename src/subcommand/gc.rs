@@ -12,6 +12,10 @@ pub(crate) struct Gc {
   server: ServerUrl,
 }
 
+pub(crate) type Input = ();
+
+pub(crate) type Output = ();
+
 impl Gc {
   pub(crate) fn run(self, options: Options) -> Result {
     let response = Client::new(&options, self.server.clone(), self.auth.as_ref())?.gc()?;

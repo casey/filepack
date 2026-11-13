@@ -1,8 +1,23 @@
 use super::*;
 
+/// Path component.
+///
+/// May not be `.`, `..`, or empty. May not contain `/`, `\`, or control
+/// characters. May not begin with an ASCII letter followed by `:`.
 #[derive(
-  Clone, Debug, Decode, DeserializeFromStr, Encode, Eq, Ord, PartialEq, PartialOrd, SerializeDisplay,
+  Clone,
+  Debug,
+  Decode,
+  DeserializeFromStr,
+  Encode,
+  Eq,
+  Json,
+  Ord,
+  PartialEq,
+  PartialOrd,
+  SerializeDisplay,
 )]
+#[json(string)]
 #[deco(transparent, validate)]
 pub struct ComponentBuf(String);
 
@@ -57,12 +72,6 @@ impl Display for ComponentBuf {
 impl From<&Self> for ComponentBuf {
   fn from(component: &Self) -> Self {
     component.clone()
-  }
-}
-
-impl From<&Component> for ComponentBuf {
-  fn from(component: &Component) -> Self {
-    Self::from_component(component)
   }
 }
 

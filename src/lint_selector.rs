@@ -7,6 +7,18 @@ pub(crate) enum LintSelector {
 }
 
 impl LintSelector {
+  pub(crate) fn candidates() -> Vec<CompletionCandidate> {
+    Lint::schema()
+      .values()
+      .iter()
+      .chain(LintGroup::schema().values())
+      .map(|value| (value.value.clone(), value.description.clone()))
+      .collect::<BTreeMap<String, String>>()
+      .into_iter()
+      .map(|(name, description)| CompletionCandidate::new(name).help(Some(description.into())))
+      .collect()
+  }
+
   pub(crate) fn lints(self) -> BTreeSet<Lint> {
     match self {
       Self::Group(group) => group.lints(),

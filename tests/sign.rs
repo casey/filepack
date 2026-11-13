@@ -183,8 +183,6 @@ fn unknown_fields_are_rejected() {
 #[test]
 fn unknown_root_entries_are_preserved() {
   let hash = Hash::bytes(b"qux");
-  let hash_string = hash.to_string();
-  let content = hex::encode(b"qux");
 
   let test = Test::new()
     .arg("keygen")
@@ -194,7 +192,7 @@ fn unknown_root_entries_are_preserved() {
       "foo/manifest.filepack",
       json! {
         embedded: {
-          *hash_string: content
+          *hash: (hex::encode(b"qux"))
         },
         package: {
           bar: {
@@ -206,7 +204,7 @@ fn unknown_root_entries_are_preserved() {
         unknown: {
           baz: {
             qux: {
-              hash: hash_string,
+              hash: hash,
               size: 3
             }
           },
@@ -231,14 +229,17 @@ fn unknown_root_entries_are_preserved() {
 
   assert_eq!(manifest.signatures.len(), 1);
 
-  assert_eq!(manifest.embedded, BTreeMap::from([(hash, b"qux".to_vec())]));
+  assert_eq!(
+    manifest.embedded,
+    BTreeMap::from([(hash, b"qux".to_vec().into())])
+  );
 
   assert_eq!(
     serde_json::to_string(&manifest.unknown).unwrap() + "\n",
     json! {
       baz: {
         qux: {
-          hash: hash_string,
+          hash: hash,
           size: 3
         }
       },

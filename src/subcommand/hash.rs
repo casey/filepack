@@ -4,9 +4,16 @@ use super::*;
 pub(crate) struct Hash {
   #[arg(help = "Assert file hash is <HASH>", long, value_name = "HASH")]
   assert: Option<crate::Hash>,
-  #[arg(help = "Hash <FILE>, defaulting to standard input")]
+  #[arg(
+    help = "Hash <FILE>, defaulting to standard input",
+    value_hint = ValueHint::FilePath
+  )]
   file: Option<Utf8PathBuf>,
 }
+
+pub(crate) type Input = ();
+
+pub(crate) type Output = ();
 
 impl Hash {
   pub(crate) fn run(self, options: Options) -> Result {

@@ -2,6 +2,9 @@ use super::*;
 
 pub trait Message: DecodeOwned + Encode + Eq + Ord {
   const CONTEXT: Context;
+  const EXAMPLE: &'static str;
+  const EXAMPLE_DESCRIPTION: &'static str;
+  const NAME: &'static str;
   const TAG: Tag;
   type Error: From<SignatureError>;
   type Policy<'a>;
@@ -24,16 +27,22 @@ mod tests {
 
   #[test]
   fn context_separates_domains() {
+    /// Impostor.
     #[derive(Debug, Decode, Encode, Eq, Ord, PartialEq, PartialOrd)]
     struct Impostor {
+      /// Fingerprint.
       #[n(1)]
       fingerprint: Fingerprint,
+      /// Timestamp.
       #[n(2)]
       timestamp: Option<u64>,
     }
 
     impl Message for Impostor {
       const CONTEXT: Context = Context::Claims;
+      const EXAMPLE: &'static str = "";
+      const EXAMPLE_DESCRIPTION: &'static str = "";
+      const NAME: &'static str = "Impostor";
       const TAG: Tag = Tag::Token;
       type Error = AuthorizationError;
       type Policy<'a> = ();
@@ -43,16 +52,22 @@ mod tests {
       }
     }
 
+    /// Twin.
     #[derive(Decode, Encode, Eq, Ord, PartialEq, PartialOrd)]
     struct Twin {
+      /// Fingerprint.
       #[n(1)]
       fingerprint: Fingerprint,
+      /// Timestamp.
       #[n(2)]
       timestamp: Option<u64>,
     }
 
     impl Message for Twin {
       const CONTEXT: Context = Context::Statement;
+      const EXAMPLE: &'static str = "";
+      const EXAMPLE_DESCRIPTION: &'static str = "";
+      const NAME: &'static str = "Twin";
       const TAG: Tag = Tag::Signature;
       type Error = Error;
       type Policy<'a> = ();
@@ -62,22 +77,22 @@ mod tests {
       }
     }
 
-    let private_key = test::PRIVATE_KEY.parse::<PrivateKey>().unwrap();
-    let public_key = test::PUBLIC_KEY.parse::<PublicKey>().unwrap();
-    let fingerprint = test::FINGERPRINT.parse::<Fingerprint>().unwrap();
+    let private_key = DisplayPrivateKey::EXAMPLE.parse::<PrivateKey>().unwrap();
+    let public_key = PublicKey::EXAMPLE.parse::<PublicKey>().unwrap();
+    let fingerprint = Fingerprint::EXAMPLE.parse::<Fingerprint>().unwrap();
 
     assert_eq!(
       private_key
         .sign(Twin {
           fingerprint,
-          timestamp: None,
+          timestamp: Some(0),
         })
         .to_string(),
-      test::SIGNATURE,
+      Attestation::EXAMPLE,
     );
 
     assert_matches!(
-      test::SIGNATURE
+      Attestation::EXAMPLE
         .replacen("signature1", "token1", 1)
         .parse::<Signature<Impostor>>()
         .unwrap()
@@ -118,17 +133,17 @@ mod tests {
     let mut cases = Cases::default();
 
     cases.case(
-      Claims {
-        audience: "foo".into(),
-        timestamp: 1000,
+      Statement {
+        fingerprint: Fingerprint::from_bytes([0; Fingerprint::LEN]),
+        timestamp: Some(1000),
       },
       0,
     );
 
     cases.case(
-      Statement {
-        fingerprint: Fingerprint::from_bytes([0; Fingerprint::LEN]),
-        timestamp: Some(1000),
+      Claims {
+        domain: "foo".into(),
+        timestamp: 1000,
       },
       1,
     );

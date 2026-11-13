@@ -16,14 +16,22 @@ pub(crate) struct Verify {
   keys: Vec<KeyIdentifier>,
   #[arg(
     help = "Read manifest from <MANIFEST>, defaults to `<ROOT>/manifest.filepack`",
-    long
+    long,
+    value_hint = ValueHint::FilePath
   )]
   manifest: Option<Utf8PathBuf>,
   #[arg(help = "Print manifest if verification is successful", long)]
   print: bool,
-  #[arg(help = "Verify files in <ROOT> directory against manifest, defaults to current directory")]
+  #[arg(
+    help = "Verify files in <ROOT> directory against manifest, defaults to current directory",
+    value_hint = ValueHint::DirPath
+  )]
   root: Option<Utf8PathBuf>,
 }
+
+pub(crate) type Input = ();
+
+pub(crate) type Output = Manifest;
 
 impl Verify {
   pub(crate) fn run(self, options: Options) -> Result {
@@ -59,6 +67,11 @@ impl Verify {
       error::PackageRootDirectory { path: root },
     }
 
+    check_case(
+      &root,
+      &[Manifest::FILENAME, Metadata::DECO_FILENAME, State::DIR],
+    )?;
+
     if self.manifest.is_some() {
       ensure! {
         !filesystem::exists(&root.join(Manifest::FILENAME))?,
@@ -70,7 +83,7 @@ impl Verify {
 
     let loader = Loader::load(self.manifest.as_deref().or(self.root.as_deref()))?;
 
-    let (manifest, totals) = loader.unpack_with_totals()?;
+    let (manifest, totals): (Output, Totals) = loader.unpack_with_totals()?;
 
     let fingerprint = loader.fingerprint()?;
 
@@ -163,43 +176,15 @@ fingerprint mismatch: `{}`
       );
     }
 
-    let mut empty = Vec::new();
+    let Walk {
+      empty,
+      entries,
+      subpackages,
+    } = Walk::new(&root, loader.path(), &self.ignore)?;
 
-    for entry in WalkDir::new(&root).sort_by_file_name() {
-      let entry = entry?;
-
-      if entry.depth() == 0 {
-        continue;
-      }
-
-      let path = decode_path(entry.path())?;
-
-      if current_dir.join(path) == current_dir.join(loader.path()) {
-        continue;
-      }
-
-      let path = path.strip_prefix(&root).unwrap();
-
-      let path = RelativePath::try_from(path).context(error::Path { path })?;
-
-      if ignore(&path, &self.ignore) {
-        continue;
-      }
-
+    for (path, ty) in entries {
       ensure! {
-        !entry.file_type().is_symlink(),
-        error::Symlink { path },
-      }
-
-      empty.pop_if(|dir| path.starts_with(dir));
-
-      if entry.file_type().is_dir() {
-        empty.push(path);
-        continue;
-      }
-
-      ensure! {
-        files.contains_key(&path),
+        ty == EntryType::Directory || files.contains_key(&path),
         error::ExtraneousFile { path },
       }
     }
@@ -218,14 +203,11 @@ fingerprint mismatch: `{}`
       }
     }
 
-    {
-      let path = root.join(Metadata::DECO_FILENAME);
+    check_metadata(&root, &manifest.package)?;
 
-      if let Some(deco) = filesystem::read_opt(&path)? {
-        Metadata::decode_from_slice(&deco)
-          .context(error::DecodeMetadataDeco { path })?
-          .check_files(&files.keys().cloned().collect())?;
-      }
+    for path in &subpackages {
+      let subpackage = manifest.package.subdirectory(path).unwrap();
+      verify_subpackage(&root, path, subpackage)?;
     }
 
     for (key, identifier) in keys {

@@ -16,18 +16,20 @@ fn download_checks_metadata() {
 
   let metadata = fs::read(test.path().join("metadata.filemeta")).unwrap();
 
-  let metadata_hash = Hash::bytes(&metadata);
+  let mut child = Directory::new();
+  child.insert_file("metadata.filemeta", &metadata);
 
-  let (directory, hash) = Directory::new()
-    .insert_file("metadata.filemeta", &metadata)
-    .deco();
+  let directory = Directory::new()
+    .insert_directory("bar", &child)
+    .encode_to_vec();
 
   let fingerprint = Fingerprint::from(Hash::bytes(&directory));
 
   let server = Test::new()
     .serve()
-    .write(&format!("files/{hash}"), directory)
-    .write(&format!("files/{metadata_hash}"), metadata)
+    .write_server_file(child.encode_to_vec())
+    .write_server_file(directory)
+    .write_server_file(metadata)
     .spawn();
 
   Test::new()
@@ -157,8 +159,8 @@ fn download_package_fails_on_directory_size_mismatch() {
 
   let server = Test::new()
     .serve()
-    .write(&format!("files/{root_hash}"), root)
-    .write(&format!("files/{hash}"), directory)
+    .write_server_file(root)
+    .write_server_file(directory)
     .spawn();
 
   Test::new()
@@ -206,8 +208,8 @@ fn download_package_fails_on_directory_totals_mismatch() {
 
   let server = Test::new()
     .serve()
-    .write(&format!("files/{}", Hash::bytes(&root)), root)
-    .write(&format!("files/{subdirectory_hash}"), subdirectory_deco)
+    .write_server_file(root)
+    .write_server_file(subdirectory_deco)
     .spawn();
 
   Test::new()
@@ -238,10 +240,7 @@ fn download_package_fails_on_directory_totals_overflow() {
     .insert_file("foo", b"f")
     .deco();
 
-  let server = Test::new()
-    .serve()
-    .write(&format!("files/{hash}"), root)
-    .spawn();
+  let server = Test::new().serve().write_server_file(root).spawn();
 
   Test::new()
     .args([
@@ -298,8 +297,8 @@ fn download_package_fails_on_size_mismatch() {
 
   let server = Test::new()
     .serve()
-    .write(&format!("files/{hash}"), root)
-    .write(&format!("files/{}", Hash::bytes(b"bar")), "bar")
+    .write_server_file(root)
+    .write_server_file("bar")
     .spawn();
 
   Test::new()
@@ -318,15 +317,12 @@ fn download_package_fails_on_size_mismatch() {
 }
 
 #[test]
-fn download_package_rejects_reserved_path() {
+fn download_package_rejects_reserved_filename() {
   let (root, hash) = Directory::new()
     .insert_file("manifest.filepack", b"foo")
     .deco();
 
-  let server = Test::new()
-    .serve()
-    .write(&format!("files/{hash}"), root)
-    .spawn();
+  let server = Test::new().serve().write_server_file(root).spawn();
 
   let test = Test::new()
     .args([
@@ -337,7 +333,9 @@ fn download_package_rejects_reserved_path() {
       &Fingerprint::from(hash).to_string(),
       "out",
     ])
-    .stderr("error: package contains reserved path `manifest.filepack`\n")
+    .stderr(
+      "error: package contains reserved filename `manifest.filepack` at `manifest.filepack`\n",
+    )
     .failure();
 
   assert!(!test.path().join("out").exists());
@@ -347,10 +345,7 @@ fn download_package_rejects_reserved_path() {
 
 #[test]
 fn download_retrieves_file() {
-  let server = Test::new()
-    .serve()
-    .assert_file(&format!("files/{}", Hash::bytes(b"bar")), "bar")
-    .spawn();
+  let server = Test::new().serve().assert_server_file("bar").spawn();
 
   Test::new()
     .write("foo", "bar")
@@ -396,7 +391,7 @@ fn download_retrieves_package() {
     .stderr(
       "
         uploading 4 of 4 files
-        created package number 1
+        created package number 0
       ",
     )
     .success();
@@ -461,7 +456,7 @@ fn download_retrieves_package_with_metadata() {
     .stderr(
       "
         uploading 5 of 5 files
-        created package number 1
+        created package number 0
       ",
     )
     .success();

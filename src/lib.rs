@@ -35,6 +35,7 @@ use {
     authenticated::Authenticated,
     authorization_error::AuthorizationError,
     bit_reader::BitReader,
+    bytes_error::BytesError,
     cause::Cause,
     checked_url::CheckedUrl,
     chroma_subsampling::ChromaSubsampling,
@@ -48,13 +49,14 @@ use {
     compression::Compression,
     content::Content,
     context::Context,
-    count::Count,
     database_metadata::DatabaseMetadata,
     date::Date,
     deco_request::DecoRequest,
     deco_response::DecoResponse,
     decode_error::DecodeError,
     decode_owned::DecodeOwned,
+    descendants::Descendants,
+    describe::Describe,
     dimensions::Dimensions,
     directory_tree::DirectoryTree,
     directory_tree_entry::DirectoryTreeEntry,
@@ -67,10 +69,10 @@ use {
     display_private_key::DisplayPrivateKey,
     display_sample_rate::DisplaySampleRate,
     document::Document,
-    document_type::DocumentType,
+    document_format::DocumentFormat,
+    domain::Domain,
     ed25519_signature::Ed25519Signature,
     embedded_image::EmbeddedImage,
-    entries::Entries,
     entry_info::{EntryInfo, EntryType},
     envelope::Envelope,
     error::Error,
@@ -82,12 +84,15 @@ use {
     float_ext::FloatExt,
     format::Format,
     functions::{
-      current_dir, decode_path, default, format_size, ignore, now, parse_number, transfer_tempfile,
+      check_case, check_metadata, current_dir, decode_path, default, format_size, now,
+      parse_number, transfer_tempfile, verify_subpackage,
     },
     hashing_writer::HashingWriter,
     head::Head,
     hex::Hex,
     hex_error::HexError,
+    host::Host,
+    host_error::HostError,
     image::Image,
     image_format::ImageFormat,
     image_metadata::ImageMetadata,
@@ -96,15 +101,15 @@ use {
     invalid_public_key::InvalidPublicKey,
     iso8601_duration::Iso8601Duration,
     item::Item,
+    items::Items,
+    json::Json,
     key_identifier::KeyIdentifier,
     key_identifier_error::KeyIdentifierError,
     key_name::KeyName,
     key_type::KeyType,
     keychain::Keychain,
-    language::Language,
     language_error::LanguageError,
-    lint_error::{Lint, LintError},
-    lint_group::LintGroup,
+    lint_error::LintError,
     lint_selector::LintSelector,
     linter::Linter,
     m4a_decoder::M4aDecoder,
@@ -113,11 +118,13 @@ use {
     malformed_error::MalformedError,
     map_decoder::MapDecoder,
     map_encoder::MapEncoder,
-    media::{Media, MediaType},
+    media::Media,
     media_item::MediaItem,
     media_item_resource::MediaItemResource,
     message::Message,
     mode::Mode,
+    mount::Mount,
+    mount_error::MountError,
     mp3_decoder::Mp3Decoder,
     mp3_error::Mp3Error,
     mp4_decoder::Mp4Decoder,
@@ -126,17 +133,18 @@ use {
     open_graph_image::OpenGraphImage,
     options::Options,
     or::Or,
-    or_unknown::OrUnknown,
     order::Order,
     ordinal::Ordinal,
     orientation::Orientation,
     output_format::OutputFormat,
+    output_format_json::OutputFormatJson,
     owo_colorize_ext::OwoColorizeExt,
     package_identifier_error::PackageIdentifierError,
     package_metadata::PackageMetadata,
     package_summary::PackageSummary,
     page_error::PageError,
     path_error::PathError,
+    path_extractor::PathExtractor,
     percent_encode::PercentEncode,
     private_key_error::PrivateKeyError,
     progress_bar::ProgressBar,
@@ -152,9 +160,11 @@ use {
     server_error::ServerError,
     server_url::ServerUrl,
     server_url_error::ServerUrlError,
+    shell::Shell,
     shortcut::Shortcut,
     sign_options::SignOptions,
     signature::Signature,
+    signature_entry::SignatureEntry,
     signature_error::SignatureError,
     sort::Sort,
     sort_key::SortKey,
@@ -163,7 +173,7 @@ use {
     static_asset::StaticAsset,
     style::Style,
     subcommand::Subcommand,
-    tag::Tag,
+    subcommand::serve::route::Route,
     templates::{ErrorHtml, PageHtml},
     text::Text,
     text_error::TextError,
@@ -176,7 +186,6 @@ use {
     track_info::TrackInfo,
     type_name::TypeName,
     unknown_error::UnknownError,
-    unstable_feature::UnstableFeature,
     url_error::UrlError,
     utf8_path_ext::Utf8PathExt,
     validate::Validate,
@@ -184,6 +193,7 @@ use {
     video_error::VideoError,
     video_format::VideoFormat,
     video_metadata::VideoMetadata,
+    walk::Walk,
     webm_decoder::WebmDecoder,
     xmp_error::XmpError,
   },
@@ -196,9 +206,10 @@ use {
   blake3::Hasher,
   boilerplate::{Boilerplate, Trusted},
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},
-  clap::{ArgGroup, Parser, ValueEnum},
+  clap::{ArgGroup, CommandFactory, Parser, ValueEnum, ValueHint},
+  clap_complete::{ArgValueCandidates, CompleteEnv, CompletionCandidate},
   claxon::FlacReader,
-  filepack_derive::{Decode, DecodeFromStr, Encode, EncodeDisplay, Magic},
+  filepack_derive::{Decode, DecodeFromStr, Encode, EncodeDisplay, Json, Magic, route},
   futures_util::StreamExt,
   humansize::{BINARY, BaseUnit, DECIMAL, FormatSizeOptions, SizeFormatter},
   icu_normalizer::ComposingNormalizerBorrowed,
@@ -225,12 +236,12 @@ use {
     fs::{self, Permissions},
     io::{self, BufReader, IsTerminal, Read, Seek, SeekFrom, Write},
     iter, mem,
-    net::SocketAddr,
+    net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, TcpStream},
     num::{NonZeroUsize, ParseIntError},
     ops::{Bound, Deref},
     path::{Path, PathBuf},
     process::{self, ExitCode},
-    ptr,
+    ptr, slice,
     str::{self, FromStr, Utf8Error},
     sync::{
       Arc, LazyLock,
@@ -243,11 +254,12 @@ use {
     Display, EnumDiscriminants, EnumIter, EnumString, FromRepr, IntoDiscriminant, IntoEnumIterator,
     IntoStaticStr, VariantArray,
   },
-  tempfile::NamedTempFile,
+  tempfile::{NamedTempFile, TempPath},
   tokio::io::{AsyncReadExt, AsyncWriteExt},
   tokio_util::io::ReaderStream,
   unicase::UniCase,
-  url::{Host, Url},
+  unindent::unindent,
+  url::Url,
   usized::IntoU64,
   walkdir::WalkDir,
   zune_jpeg::{JpegDecoder, SampleRatios, zune_core::colorspace::ColorSpace},
@@ -263,11 +275,12 @@ use {
     assert_invalid_argument_value, assert_missing_argument, assert_redb_impls, exif, tempdir,
     with_unknown_field,
   },
-  unindent::unindent,
   webm_builder::WebmBuilder,
 };
 
 pub use self::{
+  bytes::Bytes,
+  count::Count,
   decode::Decode,
   decode_options::DecodeOptions,
   decoded::Decoded,
@@ -281,22 +294,29 @@ pub use self::{
   flac_builder::FlacBuilder,
   functions::{gradient, gradient_alpha, install_default_crypto_provider},
   hash::Hash,
+  language::Language,
+  lint_error::Lint,
+  lint_group::LintGroup,
   loader::Loader,
   magic_type::MagicType,
   manifest::Manifest,
+  media::MediaType,
   metadata::Metadata,
   mp3_builder::Mp3Builder,
   mp4_builder::Mp4Builder,
-  ordered_set::OrderedSet,
+  non_empty_ordered_set::NonEmptyOrderedSet,
   package_identifier::PackageIdentifier,
   page::Page,
   png_builder::PngBuilder,
   private_key::PrivateKey,
   public_key::PublicKey,
+  reference::Reference,
   revision_object::RevisionObject,
   server_state::ServerState,
   state::State,
+  tag::Tag,
   totals::Totals,
+  unstable_feature::UnstableFeature,
 };
 
 #[cfg(test)]
@@ -328,6 +348,8 @@ mod audio_position_error;
 mod authenticated;
 mod authorization_error;
 mod bit_reader;
+mod bytes;
+mod bytes_error;
 mod cause;
 mod checked_url;
 mod chroma_subsampling;
@@ -344,6 +366,7 @@ mod context;
 mod count;
 mod database_metadata;
 mod date;
+pub mod deco;
 mod deco_request;
 mod deco_response;
 mod decode;
@@ -352,6 +375,8 @@ mod decode_options;
 mod decode_owned;
 mod decoded;
 mod decoder;
+mod descendants;
+mod describe;
 mod dimensions;
 mod directory;
 mod directory_ext;
@@ -366,12 +391,12 @@ mod display_path;
 mod display_private_key;
 mod display_sample_rate;
 mod document;
-mod document_type;
+mod document_format;
+mod domain;
 mod ed25519_signature;
 mod embedded_image;
 mod encode;
 mod encoder;
-mod entries;
 mod entry;
 mod entry_info;
 mod envelope;
@@ -392,6 +417,8 @@ mod hashing_writer;
 mod head;
 pub mod hex;
 mod hex_error;
+mod host;
+mod host_error;
 mod image;
 mod image_format;
 mod image_metadata;
@@ -400,6 +427,8 @@ mod info_builder;
 mod invalid_public_key;
 mod iso8601_duration;
 mod item;
+mod items;
+pub mod json;
 mod key_identifier;
 mod key_identifier_error;
 mod key_name;
@@ -426,6 +455,8 @@ mod media_item_resource;
 mod message;
 mod metadata;
 mod mode;
+mod mount;
+mod mount_error;
 mod mp3_builder;
 mod mp3_decoder;
 mod mp3_error;
@@ -433,16 +464,16 @@ mod mp4;
 mod mp4_builder;
 mod mp4_decoder;
 mod mp4_error;
+mod non_empty_ordered_set;
 mod number_error;
 mod open_graph_image;
 mod options;
 mod or;
-mod or_unknown;
 mod order;
-mod ordered_set;
 mod ordinal;
 mod orientation;
 mod output_format;
+mod output_format_json;
 mod owo_colorize_ext;
 mod package_identifier;
 mod package_identifier_error;
@@ -451,6 +482,7 @@ mod package_summary;
 mod page;
 mod page_error;
 mod path_error;
+mod path_extractor;
 mod percent_encode;
 mod png_builder;
 mod private_key;
@@ -459,6 +491,7 @@ mod progress_bar;
 mod public_key;
 mod public_key_error;
 mod re;
+pub mod reference;
 mod relative_path;
 mod reqwest_response_ext;
 mod resolved;
@@ -472,9 +505,11 @@ mod server_error;
 mod server_state;
 mod server_url;
 mod server_url_error;
+mod shell;
 mod shortcut;
 mod sign_options;
 mod signature;
+mod signature_entry;
 mod signature_error;
 mod sort;
 mod sort_key;
@@ -506,10 +541,11 @@ mod video;
 mod video_error;
 mod video_format;
 mod video_metadata;
+mod walk;
 mod webm_decoder;
 mod xmp;
 mod xmp_error;
-mod yaml;
+pub mod yaml;
 
 #[cfg(test)]
 mod derive;
@@ -555,7 +591,7 @@ fn initialize_tracing() -> Result<(), Box<dyn std::error::Error>> {
   }
 
   #[cfg(not(target_os = "linux"))]
-  #[allow(clippy::unnecessary_wraps)]
+  #[expect(clippy::unnecessary_wraps)]
   fn journal_layer() -> Result<Option<Identity>, Box<dyn std::error::Error>> {
     Ok(None)
   }
@@ -581,6 +617,10 @@ fn initialize_tracing() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 pub fn run() -> ExitCode {
+  CompleteEnv::with_factory(Arguments::command)
+    .var("FILEPACK_COMPLETE")
+    .complete();
+
   if let Err(err) = initialize_tracing() {
     eprintln!("failed to initialize tracing: {err}");
     return ExitCode::FAILURE;

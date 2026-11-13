@@ -1,11 +1,14 @@
 use super::*;
 
-#[allow(clippy::arbitrary_source_item_ordering)]
+/// Filepack archive.
+#[expect(clippy::arbitrary_source_item_ordering)]
 #[derive(Encode, Decode, Magic)]
 #[deco(magic = MagicType::Archive)]
 pub(crate) struct Archive {
+  /// Hash of the root directory.
   #[n(1)]
   pub(crate) root: Hash,
+  /// Contents of the files and directories in the archive, keyed by hash.
   #[n(2)]
   pub(crate) files: BTreeMap<Hash, Vec<u8>>,
 }
@@ -87,7 +90,7 @@ impl Archive {
     let unknown = builder.pack_entries(&manifest.unknown)?;
 
     for (hash, content) in &manifest.embedded {
-      builder.files.insert(*hash, content.clone());
+      builder.files.insert(*hash, content.into());
     }
 
     builder.build_package(package, &manifest.signatures, unknown)
@@ -121,16 +124,15 @@ impl Archive {
     Component::new(Self::SIGNATURES).unwrap()
   }
 
-  #[cfg(test)]
   pub(crate) fn unpack(&self) -> Result<Manifest, ArchiveError> {
-    self.unpack_with_options(DecodeOptions::strict())
+    self.unpack_with_options(DecodeOptions::default())
   }
 
   fn unpack_directory(
     &self,
     options: DecodeOptions,
     loose: &mut BTreeSet<Hash>,
-    embedded: &mut BTreeMap<Hash, Vec<u8>>,
+    embedded: &mut BTreeMap<Hash, Bytes>,
     hash: Hash,
     size: u64,
     expected_totals: Totals,
@@ -152,7 +154,7 @@ impl Archive {
     &self,
     options: DecodeOptions,
     loose: &mut BTreeSet<Hash>,
-    embedded: &mut BTreeMap<Hash, Vec<u8>>,
+    embedded: &mut BTreeMap<Hash, Bytes>,
     entry: &Entry,
   ) -> Result<DirectoryTreeEntry, ArchiveError> {
     match entry.info {
@@ -160,7 +162,7 @@ impl Archive {
         if self.files.contains_key(&entry.hash) {
           let content = self.file(entry.hash, entry.size)?;
           loose.remove(&entry.hash);
-          embedded.insert(entry.hash, content.to_vec());
+          embedded.insert(entry.hash, content.into());
         }
         Ok(DirectoryTreeEntry::File(File {
           hash: entry.hash,
@@ -171,6 +173,11 @@ impl Archive {
         self.unpack_directory(options, loose, embedded, entry.hash, entry.size, totals)?,
       )),
     }
+  }
+
+  #[cfg(test)]
+  pub(crate) fn unpack_strict(&self) -> Result<Manifest, ArchiveError> {
+    self.unpack_with_options(DecodeOptions::strict())
   }
 
   pub(crate) fn unpack_with_options(
@@ -233,13 +240,6 @@ impl Archive {
       totals,
     )?;
 
-    for name in package.entries.keys() {
-      ensure! {
-        !name.is_reserved(),
-        archive_error::ReservedPath { name },
-      }
-    }
-
     let signatures = {
       let entry = root
         .entries
@@ -282,15 +282,18 @@ impl Archive {
       archive_error::LooseFiles { hashes: loose },
     }
 
-    Ok((
-      Manifest {
-        embedded,
-        package,
-        signatures,
-        unknown,
-      },
-      totals,
-    ))
+    let manifest = Manifest {
+      embedded,
+      package,
+      signatures,
+      unknown,
+    };
+
+    if let Some(path) = manifest.reserved_filename() {
+      return Err(ArchiveError::ReservedFilename { path });
+    }
+
+    Ok((manifest, totals))
   }
 }
 
@@ -310,7 +313,7 @@ mod tests {
       .unwrap();
 
     let manifest = Manifest {
-      embedded: BTreeMap::from([(Hash::bytes(content), content.to_vec())]),
+      embedded: BTreeMap::from([(Hash::bytes(content), content.to_vec().into())]),
       package,
       signatures: BTreeSet::new(),
       unknown: DirectoryTree::new(),
@@ -327,7 +330,7 @@ mod tests {
     files.insert(hash, junk);
     let archive = Archive { root: hash, files };
     assert_matches!(
-      archive.unpack(),
+      archive.unpack_strict(),
       Err(ArchiveError::DirectoryDecode {
         source: DecodeError::Malformed(MalformedError::Truncated)
       })
@@ -359,7 +362,7 @@ mod tests {
     let archive = builder.build(root.hash);
 
     assert_matches!(
-      archive.unpack(),
+      archive.unpack_strict(),
       Err(ArchiveError::DirectoryTotals { hash: h, source: TotalsError::Overflow }) if h == hash,
     );
   }
@@ -388,7 +391,7 @@ mod tests {
     let archive = builder.build(root.hash);
 
     assert_matches!(
-      archive.unpack(),
+      archive.unpack_strict(),
       Err(ArchiveError::FileSizeMismatch {
         actual: 3,
         expected: 100,
@@ -404,7 +407,7 @@ mod tests {
     archive.files.insert(expected, b"foo".to_vec());
     let actual = Hash::bytes(b"foo");
     assert_matches!(
-      archive.unpack(),
+      archive.unpack_strict(),
       Err(ArchiveError::FileHashMismatch { actual: a, expected: e })
         if a == actual && e == expected,
     );
@@ -417,12 +420,7 @@ mod tests {
       .create_file(&"foo".parse().unwrap(), File::new(b"bar"))
       .unwrap();
 
-    Manifest {
-      embedded: BTreeMap::new(),
-      package,
-      signatures: BTreeSet::new(),
-      unknown: DirectoryTree::new(),
-    }
+    Manifest::with_package(package)
   }
 
   #[test]
@@ -431,7 +429,7 @@ mod tests {
     let missing = Hash::bytes(&[]);
     archive.root = missing;
     assert_matches!(
-      archive.unpack(),
+      archive.unpack_strict(),
       Err(ArchiveError::FileMissing { hash }) if hash == missing,
     );
   }
@@ -460,12 +458,7 @@ mod tests {
       )
       .unwrap();
 
-    let manifest = Manifest {
-      embedded: BTreeMap::new(),
-      package,
-      signatures: BTreeSet::new(),
-      unknown: DirectoryTree::new(),
-    };
+    let manifest = Manifest::with_package(package);
 
     assert_eq!(Archive::pack(&manifest).err(), Some(TotalsError::Overflow));
   }
@@ -477,7 +470,7 @@ mod tests {
     let mut files = BTreeMap::new();
     files.insert(root, directory);
     let archive = Archive { root, files };
-    assert_matches!(archive.unpack(), Err(ArchiveError::PackageMissing));
+    assert_matches!(archive.unpack_strict(), Err(ArchiveError::PackageMissing));
   }
 
   #[test]
@@ -512,7 +505,7 @@ mod tests {
     let archive = builder.build(root.hash);
 
     assert_matches!(
-      archive.unpack(),
+      archive.unpack_strict(),
       Err(ArchiveError::DirectoryTotals {
         hash,
         source: TotalsError::Mismatch {
@@ -534,28 +527,18 @@ mod tests {
   }
 
   #[test]
-  fn reserved_path() {
-    let mut builder = ArchiveBuilder::new();
+  fn reserved_filename() {
+    let mut package = DirectoryTree::new();
 
-    let mut package = Directory::new();
-    package.insert_file("manifest.filepack", b"foo");
+    package
+      .create_file(&"foo/manifest.filepack".parse().unwrap(), File::new(b"foo"))
+      .unwrap();
 
-    let package = builder.directory(&package).unwrap();
-
-    let signatures = builder.directory(&Directory::new()).unwrap();
-
-    let mut root = Directory::new();
-    root
-      .insert_entry("package", package)
-      .insert_entry("signatures", signatures);
-
-    let root = builder.directory(&root).unwrap();
-
-    let archive = builder.build(root.hash);
+    let archive = Archive::pack(&Manifest::with_package(package)).unwrap();
 
     assert_matches!(
-      archive.unpack(),
-      Err(ArchiveError::ReservedPath { name }) if name == "manifest.filepack",
+      archive.unpack_strict(),
+      Err(ArchiveError::ReservedFilename { path }) if path == "foo/manifest.filepack",
     );
   }
 
@@ -573,7 +556,7 @@ mod tests {
       )
       .unwrap();
 
-    let private_key = test::PRIVATE_KEY.parse::<PrivateKey>().unwrap();
+    let private_key = DisplayPrivateKey::EXAMPLE.parse::<PrivateKey>().unwrap();
 
     let statement = Statement {
       fingerprint: Fingerprint::from_bytes([0; Fingerprint::LEN]),
@@ -594,17 +577,12 @@ mod tests {
   fn round_trip(manifest: &Manifest) {
     let bytes = Archive::pack(manifest).unwrap().encode_to_vec();
     let archive = Archive::decode_strict(&bytes).unwrap();
-    assert_eq!(archive.unpack().unwrap(), *manifest);
+    assert_eq!(archive.unpack_strict().unwrap(), *manifest);
   }
 
   #[test]
   fn round_trip_empty() {
-    let manifest = Manifest {
-      embedded: BTreeMap::new(),
-      package: DirectoryTree::new(),
-      signatures: BTreeSet::new(),
-      unknown: DirectoryTree::new(),
-    };
+    let manifest = Manifest::with_package(DirectoryTree::new());
     round_trip(&manifest);
   }
 
@@ -615,12 +593,7 @@ mod tests {
       .create_directory(&"foo/bar".parse().unwrap())
       .unwrap();
 
-    let manifest = Manifest {
-      embedded: BTreeMap::new(),
-      package,
-      signatures: BTreeSet::new(),
-      unknown: DirectoryTree::new(),
-    };
+    let manifest = Manifest::with_package(package);
 
     round_trip(&manifest);
   }
@@ -635,12 +608,7 @@ mod tests {
         .unwrap();
     }
 
-    let manifest = Manifest {
-      embedded: BTreeMap::new(),
-      package,
-      signatures: BTreeSet::new(),
-      unknown: DirectoryTree::new(),
-    };
+    let manifest = Manifest::with_package(package);
 
     round_trip(&manifest);
   }
@@ -657,12 +625,7 @@ mod tests {
       .create_file(&"a/d".parse().unwrap(), File::new(b"bar"))
       .unwrap();
 
-    let manifest = Manifest {
-      embedded: BTreeMap::new(),
-      package,
-      signatures: BTreeSet::new(),
-      unknown: DirectoryTree::new(),
-    };
+    let manifest = Manifest::with_package(package);
 
     round_trip(&manifest);
   }
@@ -675,16 +638,11 @@ mod tests {
 
   #[test]
   fn round_trip_with_signature() {
-    let manifest = Manifest {
-      embedded: BTreeMap::new(),
-      package: DirectoryTree::new(),
-      signatures: BTreeSet::new(),
-      unknown: DirectoryTree::new(),
-    };
+    let manifest = Manifest::with_package(DirectoryTree::new());
 
     let fingerprint = Archive::pack(&manifest).unwrap().fingerprint().unwrap();
 
-    let private_key = test::PRIVATE_KEY.parse::<PrivateKey>().unwrap();
+    let private_key = DisplayPrivateKey::EXAMPLE.parse::<PrivateKey>().unwrap();
     let statement = Statement {
       fingerprint,
       timestamp: None,
@@ -709,7 +667,7 @@ mod tests {
 
     let package = builder.directory(&package).unwrap();
 
-    let public_key = test::PUBLIC_KEY.parse::<PublicKey>().unwrap();
+    let public_key = PublicKey::EXAMPLE.parse::<PublicKey>().unwrap();
 
     let statement = Statement {
       fingerprint: Fingerprint::from_bytes([0; Fingerprint::LEN]),
@@ -741,7 +699,7 @@ mod tests {
     let archive = builder.build(root.hash);
 
     assert_matches!(
-      archive.unpack(),
+      archive.unpack_strict(),
       Err(ArchiveError::SignatureDecode {
         source: DecodeError::Malformed(MalformedError::ArrayLength {
           actual: 32,
@@ -775,7 +733,7 @@ mod tests {
     let archive = builder.build(root.hash);
 
     assert_matches!(
-      archive.unpack(),
+      archive.unpack_strict(),
       Err(ArchiveError::FileMissing { hash }) if hash == missing_file,
     );
   }
@@ -786,7 +744,7 @@ mod tests {
 
     let package = builder.directory(&Directory::new()).unwrap();
 
-    let private_key = test::PRIVATE_KEY.parse::<PrivateKey>().unwrap();
+    let private_key = DisplayPrivateKey::EXAMPLE.parse::<PrivateKey>().unwrap();
 
     let signature = builder.file(
       private_key
@@ -812,7 +770,7 @@ mod tests {
     let archive = builder.build(root.hash);
 
     assert_matches!(
-      archive.unpack(),
+      archive.unpack_strict(),
       Err(ArchiveError::SignatureName { hash, name })
         if hash == signature.hash && name == "foo",
     );
@@ -820,7 +778,7 @@ mod tests {
 
   #[test]
   fn signatures_are_named_by_hash() {
-    let private_key = test::PRIVATE_KEY.parse::<PrivateKey>().unwrap();
+    let private_key = DisplayPrivateKey::EXAMPLE.parse::<PrivateKey>().unwrap();
 
     let known = Decoded::Known(private_key.sign(Statement {
       fingerprint: Fingerprint::from_bytes([0; Fingerprint::LEN]),
@@ -894,7 +852,10 @@ mod tests {
 
     let archive = builder.build(root.hash);
 
-    assert_matches!(archive.unpack(), Err(ArchiveError::SignaturesDirectory));
+    assert_matches!(
+      archive.unpack_strict(),
+      Err(ArchiveError::SignaturesDirectory),
+    );
   }
 
   #[test]
@@ -910,7 +871,10 @@ mod tests {
 
     let archive = builder.build(root.hash);
 
-    assert_matches!(archive.unpack(), Err(ArchiveError::SignaturesMissing));
+    assert_matches!(
+      archive.unpack_strict(),
+      Err(ArchiveError::SignaturesMissing),
+    );
   }
 
   #[test]
@@ -942,7 +906,7 @@ mod tests {
     let archive = builder.build(root.hash);
 
     assert_matches!(
-      archive.unpack(),
+      archive.unpack_strict(),
       Err(ArchiveError::DirectoryTotals {
         hash,
         source: TotalsError::Mismatch {
@@ -998,20 +962,15 @@ mod tests {
       .unwrap();
 
     let manifest = Manifest {
-      embedded: BTreeMap::from([(Hash::bytes(b"qux"), b"qux".to_vec())]),
+      embedded: BTreeMap::from([(Hash::bytes(b"qux"), b"qux".to_vec().into())]),
       package: DirectoryTree::new(),
       signatures: BTreeSet::new(),
       unknown,
     };
 
-    assert_eq!(
-      archive
-        .unpack_with_options(DecodeOptions::default())
-        .unwrap(),
-      manifest,
-    );
-
     assert_eq!(archive.unpack().unwrap(), manifest);
+
+    assert_eq!(archive.unpack_strict().unwrap(), manifest);
 
     assert_eq!(
       Archive::pack(&manifest).unwrap().encode_to_vec(),
@@ -1026,7 +985,7 @@ mod tests {
     let hash = Hash::bytes(&file);
     archive.files.insert(hash, file);
     assert_matches!(
-      archive.unpack(),
+      archive.unpack_strict(),
       Err(ArchiveError::LooseFiles { hashes: Ticked(hashes) })
         if hashes == BTreeSet::from([hash]),
     );

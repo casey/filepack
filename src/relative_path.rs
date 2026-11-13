@@ -1,5 +1,9 @@
 use super::*;
 
+/// Relative forward-slash-separated path.
+///
+/// May not be empty or have leading, trailing, or double slashes. Each
+/// component must be a valid `ComponentBuf`.
 #[derive(
   Clone,
   Debug,
@@ -8,19 +12,22 @@ use super::*;
   EncodeDisplay,
   Eq,
   Hash,
+  Json,
   Ord,
   PartialEq,
   PartialOrd,
   SerializeDisplay,
 )]
+#[json(string)]
 pub struct RelativePath(String);
 
 impl RelativePath {
-  const JUNK_NAMES: &'static [&'static str] = &[".DS_Store", ".filepack", ".localized"];
+  pub(crate) const JUNK_NAMES: &'static [&'static str] = &[".DS_Store", ".localized"];
 
-  const WINDOWS_RESERVED_CHARACTERS: &'static [char] = &['"', '*', ':', '<', '>', '?', '|'];
+  pub(crate) const WINDOWS_RESERVED_CHARACTERS: &'static [char] =
+    &['"', '*', ':', '<', '>', '?', '|'];
 
-  const WINDOWS_RESERVED_NAMES: &'static [&'static str] = &[
+  pub(crate) const WINDOWS_RESERVED_NAMES: &'static [&'static str] = &[
     "AUX", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "COM¹", "COM²",
     "COM³", "CON", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9", "LPT¹",
     "LPT²", "LPT³", "NUL", "PRN",
@@ -45,10 +52,6 @@ impl RelativePath {
     Component::new(self.0.rsplit('/').next().unwrap()).unwrap()
   }
 
-  pub(crate) fn first_component(&self) -> &Component {
-    self.components().next().unwrap()
-  }
-
   pub(crate) fn is_nfc(&self) -> bool {
     ComposingNormalizerBorrowed::new_nfc().is_normalized(&self.0)
   }
@@ -61,8 +64,8 @@ impl RelativePath {
         );
       };
 
-      if lints.contains(&Lint::PathComponentLength) && component.len() > 255 {
-        return Some(LintError::PathComponentLength);
+      if lints.contains(&Lint::PathComponentTooLong) && component.len() > 255 {
+        return Some(LintError::PathComponentTooLong);
       }
 
       if lints.contains(&Lint::WindowsReservedCharacter) {
@@ -112,6 +115,13 @@ impl RelativePath {
     None
   }
 
+  pub(crate) fn parent(&self) -> Option<Self> {
+    self
+      .0
+      .rsplit_once('/')
+      .map(|(parent, _filename)| parent.parse().unwrap())
+  }
+
   pub(crate) fn starts_with(&self, prefix: impl AsRef<str>) -> bool {
     Utf8Path::new(self).starts_with(Utf8Path::new(&prefix))
   }
@@ -123,10 +133,6 @@ impl RelativePath {
       None | Some(0) => filename,
       Some(i) => &filename[..i],
     }
-  }
-
-  pub(crate) fn to_lowercase(&self) -> Self {
-    Self(self.0.to_lowercase())
   }
 }
 
@@ -235,6 +241,12 @@ impl TryFrom<&[&Component]> for RelativePath {
   }
 }
 
+impl PathExtractor for RelativePath {
+  fn parameters() -> Vec<reference::Parameter> {
+    vec![reference::Parameter::RelativePath]
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
@@ -257,32 +269,11 @@ mod tests {
   fn filename() {
     #[track_caller]
     fn case(path: &str, expected: &str) {
-      assert_eq!(
-        path.parse::<RelativePath>().unwrap().filename().as_str(),
-        expected,
-      );
+      assert_eq!(path.parse::<RelativePath>().unwrap().filename(), expected);
     }
 
     case("foo", "foo");
     case("foo/bar.png", "bar.png");
-  }
-
-  #[test]
-  fn first_component() {
-    #[track_caller]
-    fn case(path: &str, expected: &str) {
-      assert_eq!(
-        path
-          .parse::<RelativePath>()
-          .unwrap()
-          .first_component()
-          .as_str(),
-        expected,
-      );
-    }
-
-    case("foo", "foo");
-    case("foo/bar.png", "foo");
   }
 
   #[test]
@@ -378,7 +369,7 @@ mod tests {
 
     case("foo/ bar", LintError::WindowsLeadingSpace);
 
-    case(&"a".repeat(256), LintError::PathComponentLength);
+    case(&"a".repeat(256), LintError::PathComponentTooLong);
 
     case(
       "CON",
@@ -442,6 +433,21 @@ mod tests {
 
     case("foo");
     case(&"a".repeat(255));
+  }
+
+  #[test]
+  fn parent() {
+    #[track_caller]
+    fn case(path: &str, expected: Option<&str>) {
+      assert_eq!(
+        path.parse::<RelativePath>().unwrap().parent(),
+        expected.map(|expected| expected.parse().unwrap()),
+      );
+    }
+
+    case("foo", None);
+    case("foo/bar", Some("foo"));
+    case("foo/bar/baz", Some("foo/bar"));
   }
 
   #[test]

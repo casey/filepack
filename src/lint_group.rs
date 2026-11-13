@@ -1,15 +1,34 @@
 use super::*;
 
+/// Named group of lints.
 #[derive(
-  Clone, Copy, Debug, EnumIter, EnumString, Eq, IntoStaticStr, Ord, PartialEq, PartialOrd, Serialize,
+  Clone,
+  Copy,
+  Debug,
+  Deserialize,
+  Display,
+  EnumIter,
+  EnumString,
+  Eq,
+  IntoStaticStr,
+  Json,
+  Ord,
+  PartialEq,
+  PartialOrd,
+  Serialize,
 )]
 #[serde(rename_all = "kebab-case")]
 #[strum(serialize_all = "kebab-case")]
-pub(crate) enum LintGroup {
+pub enum LintGroup {
+  /// All lints.
   All,
+  /// Paths that may not work on all platforms.
   Compatibility,
+  /// Lints in the `compatibility` and `hygiene` groups.
   Distribution,
+  /// Files that shouldn't be in a package.
   Hygiene,
+  /// Missing or inconsistent metadata.
   Metadata,
 }
 
@@ -29,7 +48,7 @@ impl LintGroup {
       Self::All => Lint::iter().collect(),
       Self::Compatibility => [
         CaseConflict,
-        PathComponentLength,
+        PathComponentTooLong,
         WindowsLeadingSpace,
         WindowsReservedCharacter,
         WindowsReservedFilename,
@@ -44,17 +63,17 @@ impl LintGroup {
         AudioEmbeddedArtworkAspectRatio,
         AudioEmbeddedArtworkMissing,
         CreatorMissing,
+        DerivedAssetsMissing,
         ItemTitleMissing,
         MediaItemsMissing,
         MediaMissing,
         MetadataMissing,
         MixedFormats,
-        NotGenerated,
         PackageCreatorMissing,
         PackageMissing,
         TimeMissing,
         TitleMissing,
-        VideoPlaceholderDimensions,
+        VideoPlaceholderDimensionMismatch,
         VideoPlaceholderMissing,
       ]
       .into(),

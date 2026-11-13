@@ -1,32 +1,38 @@
 use super::*;
 
-#[derive(Clone, Debug, Decode, Encode, PartialEq, Serialize)]
+/// Properties of a document file.
+#[derive(Clone, Debug, Decode, Encode, Json, PartialEq, Serialize)]
 pub(crate) struct Document {
+  /// Document file format.
   #[n(1)]
-  pub(crate) path: RelativePath,
+  #[serde(skip_serializing_if = "Decoded::is_unknown")]
+  pub(crate) format: Decoded<DocumentFormat>,
+  /// Path to the document file.
   #[n(2)]
-  #[serde(rename = "type")]
-  pub(crate) ty: DocumentType,
+  pub(crate) path: RelativePath,
 }
 
 impl Content for Document {
   const LABEL: &'static str = "Document";
 
-  type Format = DocumentType;
+  type Format = DocumentFormat;
 
-  fn format(&self) -> Option<Self::Format> {
-    Some(self.ty)
+  fn format(&self) -> &Decoded<Self::Format> {
+    &self.format
   }
 
   fn info(&self, builder: InfoBuilder) -> InfoBuilder {
-    builder.value("type", self.ty)
+    builder.value("format", &self.format)
   }
 
   fn load(_root: &Utf8Path, path: RelativePath) -> Result<Item<Self>> {
-    let ty = DocumentType::from_path(&path).context(error::Path { path: &path })?;
+    let format = DocumentFormat::from_path(&path).context(error::Path { path: &path })?;
 
     Ok(Item {
-      content: Self { path, ty },
+      content: Self {
+        format: Decoded::Known(format),
+        path,
+      },
       title: None,
     })
   }
@@ -38,8 +44,11 @@ impl Content for Document {
   #[cfg(test)]
   fn test(path: &str) -> Self {
     let path = path.parse::<RelativePath>().unwrap();
-    let ty = DocumentType::from_path(&path).unwrap();
-    Self { path, ty }
+    let format = DocumentFormat::from_path(&path).unwrap();
+    Self {
+      format: Decoded::Known(format),
+      path,
+    }
   }
 }
 
@@ -57,8 +66,8 @@ mod tests {
       Document::load(&root, "foo.pdf".parse().unwrap()).unwrap(),
       Item {
         content: Document {
+          format: Decoded::Known(DocumentFormat::Pdf),
           path: "foo.pdf".parse().unwrap(),
-          ty: DocumentType::Pdf,
         },
         title: None,
       },
@@ -81,7 +90,7 @@ mod tests {
   fn serialize() {
     assert_eq!(
       serde_json::to_string(&Document::test("foo.pdf")).unwrap(),
-      r#"{"path":"foo.pdf","type":"pdf"}"#,
+      r#"{"format":"pdf","path":"foo.pdf"}"#,
     );
   }
 }

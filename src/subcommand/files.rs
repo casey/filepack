@@ -2,11 +2,15 @@ use super::*;
 
 #[derive(Parser)]
 pub(crate) struct Files {
-  #[arg(long = "format", default_value_t)]
+  #[arg(long = "format", default_value_t, help = FORMAT_HELP)]
   format: OutputFormat,
-  #[arg(help = MANIFEST_PATH_HELP)]
+  #[arg(help = MANIFEST_PATH_HELP, value_hint = ValueHint::AnyPath)]
   path: Option<Utf8PathBuf>,
 }
+
+pub(crate) type Input = ();
+
+pub(crate) type Output = BTreeMap<RelativePath, File>;
 
 impl Files {
   pub(crate) fn run(self) -> Result {
@@ -15,8 +19,11 @@ impl Files {
     let files = manifest.files();
 
     match self.format {
-      OutputFormat::Json => println!("{}", serde_json::to_string(&files).unwrap()),
-      OutputFormat::JsonPretty => println!("{}", serde_json::to_string_pretty(&files).unwrap()),
+      OutputFormat::Json => println!("{}", serde_json::to_string::<Output>(&files).unwrap()),
+      OutputFormat::JsonPretty => println!(
+        "{}",
+        serde_json::to_string_pretty::<Output>(&files).unwrap()
+      ),
       OutputFormat::Tsv => {
         for (path, file) in files {
           println!("{path}\t{}\t{}", file.hash, file.size);

@@ -3,6 +3,45 @@ use {
   ::image::{DynamicImage, ImageBuffer, Rgb, Rgba},
 };
 
+pub(crate) fn check_case(dir: &Utf8Path, names: &[&'static str]) -> Result {
+  for entry in fs::read_dir(dir).context(filesystem_error::Io { path: dir })? {
+    let actual = entry
+      .context(filesystem_error::Io { path: dir })?
+      .file_name();
+
+    for &expected in names {
+      ensure! {
+        !actual.as_encoded_bytes().eq_ignore_ascii_case(expected.as_bytes()) || actual == expected,
+        error::FilenameCase {
+          actual: actual.to_str().unwrap(),
+          expected,
+        }
+      }
+    }
+  }
+
+  Ok(())
+}
+
+pub(crate) fn check_metadata(root: &Utf8Path, package: &DirectoryTree) -> Result {
+  for path in package.files().into_keys() {
+    if path.filename() != Metadata::DECO_FILENAME {
+      continue;
+    }
+
+    let (root, package) = match path.parent() {
+      Some(parent) => (root.join(&parent), package.subdirectory(&parent).unwrap()),
+      None => (root.to_owned(), package),
+    };
+
+    if let Some(metadata) = Metadata::load(&root)? {
+      metadata.check_files(&package.files().into_keys().collect())?;
+    }
+  }
+
+  Ok(())
+}
+
 pub(crate) fn current_dir() -> Result<Utf8PathBuf> {
   Utf8PathBuf::from_path_buf(env::current_dir().context(error::CurrentDir)?)
     .map_err(|path| error::PathUnicode { path }.build())
@@ -43,10 +82,6 @@ pub fn gradient_alpha(width: u32, height: u32, alpha: u8) -> DynamicImage {
   .into()
 }
 
-pub(crate) fn ignore(path: &RelativePath, ignore: &[RelativePath]) -> bool {
-  path.starts_with(State::DIR) || ignore.iter().any(|ignore| path.starts_with(ignore))
-}
-
 pub fn install_default_crypto_provider() -> Result {
   static INSTALLED: LazyLock<bool> = LazyLock::new(|| {
     rustls::crypto::ring::default_provider()
@@ -78,4 +113,68 @@ pub(crate) fn transfer_tempfile(hash: Hash, path: &Utf8Path) -> FilesystemResult
     .suffix(".incomplete")
     .tempfile_in(path)
     .context(filesystem_error::Io { path })
+}
+
+pub(crate) fn verify_subpackage(
+  root: &Utf8Path,
+  path: &RelativePath,
+  package: &DirectoryTree,
+) -> Result {
+  let root = root.join(path);
+
+  let loader = Loader::load(Some(&root.join(Manifest::FILENAME)))?;
+
+  let manifest = loader.unpack()?;
+
+  let expected = loader.fingerprint()?;
+
+  let actual = Fingerprint(
+    ArchiveBuilder::new()
+      .pack_directory(package)
+      .context(error::SubpackageTotals { path: path.clone() })?
+      .hash,
+  );
+
+  ensure! {
+    actual == expected,
+    error::SubpackageMismatch {
+      actual,
+      expected,
+      path: path.clone(),
+    },
+  }
+
+  for signature in manifest.signatures() {
+    signature.verify(expected)?;
+  }
+
+  Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn check_case() {
+    #[track_caller]
+    fn case(name: &str, expected: Option<&str>) {
+      let (_tempdir, root) = tempdir();
+
+      filesystem::write(&root.join(name), "").unwrap();
+
+      assert_eq!(
+        super::check_case(&root, &["foo", "bar"])
+          .err()
+          .map(|err| err.to_string())
+          .as_deref(),
+        expected,
+      );
+    }
+
+    case("foo", None);
+    case("baz", None);
+    case("FOO", Some("expected `foo` but found case mismatch `FOO`"));
+    case("Bar", Some("expected `bar` but found case mismatch `Bar`"));
+  }
 }

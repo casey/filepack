@@ -6,6 +6,10 @@ pub(crate) struct Key {
   key: KeyName,
 }
 
+pub(crate) type Input = ();
+
+pub(crate) type Output = ();
+
 impl Key {
   pub(crate) fn run(self, options: Options) -> Result {
     let keychain = Keychain::load(&options)?;

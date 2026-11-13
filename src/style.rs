@@ -36,6 +36,13 @@ impl Style {
     }
   }
 
+  pub(crate) fn lint(self) -> Self {
+    Self {
+      inner: self.inner.cyan(),
+      ..self
+    }
+  }
+
   pub(crate) fn message(self) -> Self {
     Self {
       inner: self.inner.bold(),

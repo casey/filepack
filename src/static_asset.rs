@@ -31,6 +31,12 @@ impl IntoResponse for StaticAsset {
   }
 }
 
+impl Describe for StaticAsset {
+  fn describe(endpoint: &mut reference::Endpoint, _registry: &mut deco::Registry) {
+    endpoint.response = Some(reference::Response::Static);
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;

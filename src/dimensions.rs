@@ -1,9 +1,12 @@
 use super::*;
 
-#[derive(Clone, Copy, Debug, Default, Decode, Encode, PartialEq, Serialize)]
+/// Image dimensions in pixels.
+#[derive(Clone, Copy, Debug, Default, Decode, Encode, Json, PartialEq, Serialize)]
 pub struct Dimensions {
+  /// Height in pixels.
   #[n(1)]
   pub(crate) height: u64,
+  /// Width in pixels.
   #[n(2)]
   pub(crate) width: u64,
 }

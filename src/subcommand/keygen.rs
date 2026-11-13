@@ -6,6 +6,10 @@ pub(crate) struct Keygen {
   name: KeyName,
 }
 
+pub(crate) type Input = ();
+
+pub(crate) type Output = ();
+
 impl Keygen {
   pub(crate) fn run(self, options: Options) -> Result {
     Keychain::load(&options)?.generate_key(&self.name)

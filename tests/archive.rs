@@ -28,7 +28,7 @@ fn creates_archive_from_json() {
 #[test]
 fn embedded_preserved() {
   let content = b"foo";
-  let hash = Hash::bytes(content).to_string();
+  let hash = Hash::bytes(content);
   let hex_content = hex::encode(content);
 
   Test::new()
@@ -67,16 +67,15 @@ fn embedded_preserved() {
 
 #[test]
 fn rejects_embedded_hash_mismatch() {
-  let expected = Hash::bytes(b"foo").to_string();
-  let actual = Hash::bytes(b"bar").to_string();
-  let content = hex::encode(b"bar");
+  let expected = Hash::bytes(b"foo");
+  let actual = Hash::bytes(b"bar");
 
   Test::new()
     .write(
       "manifest.json",
       json! {
         embedded: {
-          *expected: content
+          *expected: (hex::encode(b"bar"))
         },
         package: {
           foo: {
@@ -95,7 +94,34 @@ fn rejects_embedded_hash_mismatch() {
 }
 
 #[test]
-fn rejects_reserved_path() {
+fn rejects_embedded_size_mismatch() {
+  let hash = Hash::bytes(b"foo");
+
+  Test::new()
+    .write(
+      "manifest.json",
+      json! {
+        embedded: {
+          *hash: (hex::encode(b"foo"))
+        },
+        package: {
+          foo: {
+            hash: hash,
+            size: 4
+          }
+        },
+        signatures: [],
+      },
+    )
+    .args(["archive", "manifest.json", "manifest.filepack"])
+    .stderr_regex_path(&format!(
+      "error: embedded file `{hash}` in manifest `.*manifest.json` should have size 4 but has size 3\n",
+    ))
+    .failure();
+}
+
+#[test]
+fn rejects_reserved_filename() {
   Test::new()
     .write(
       "manifest.json",
@@ -108,7 +134,9 @@ fn rejects_reserved_path() {
       },
     )
     .args(["archive", "manifest.json", "manifest.filepack"])
-    .stderr("error: package contains reserved path `manifest.filepack`\n")
+    .stderr(
+      "error: package contains reserved filename `manifest.filepack` at `manifest.filepack`\n",
+    )
     .failure();
 }
 
@@ -167,15 +195,14 @@ fn rejects_unknown_entry_conflict() {
 
 #[test]
 fn rejects_unreferenced_embedded_files() {
-  let hash = Hash::bytes(b"foo").to_string();
-  let content = hex::encode(b"foo");
+  let hash = Hash::bytes(b"foo");
 
   Test::new()
     .write(
       "manifest.json",
       json! {
         embedded: {
-          *hash: content
+          *hash: (hex::encode(b"foo"))
         },
         package: {},
         signatures: [],
@@ -223,7 +250,7 @@ fn round_trip() {
 
 #[test]
 fn round_trip_unknown_entries() {
-  let hash = Hash::bytes(b"qux").to_string();
+  let hash = Hash::bytes(b"qux");
   let content = hex::encode(b"qux");
 
   Test::new()

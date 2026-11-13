@@ -208,8 +208,8 @@ fn create_extracts_document_metadata() {
             "items": [
               {
                 "content": {
-                  "path": "foo.pdf",
-                  "type": "pdf"
+                  "format": "pdf",
+                  "path": "foo.pdf"
                 }
               }
             ]
@@ -529,7 +529,7 @@ fn create_extracts_video_metadata() {
 }
 
 #[test]
-fn create_generate_force_overwrites_thumbnails() {
+fn create_force_overwrites_thumbnails() {
   Test::new()
     .write("foo.jpg", image(1280, 640, ImageFormat::Jpeg))
     .write(
@@ -542,30 +542,11 @@ fn create_generate_force_overwrites_thumbnails() {
       ",
     )
     .write("thumbnails/foo.jpg", "bar")
-    .args(["create", "--generate", "--force"])
+    .args(["create", "--force"])
     .success()
     .arg("verify")
     .stderr_regex("successfully verified .*")
     .success();
-}
-
-#[test]
-fn create_generate_rejects_existing_thumbnails() {
-  Test::new()
-    .write("foo.jpg", image(2, 1, ImageFormat::Jpeg))
-    .write(
-      "metadata.yaml",
-      "
-        media:
-          type: image
-          items:
-            - path: foo.jpg
-      ",
-    )
-    .write("thumbnails/foo.jpg", "bar")
-    .args(["create", "--generate"])
-    .stderr_path("error: thumbnail for `foo.jpg` conflicts with `thumbnails/foo.jpg`\n")
-    .failure();
 }
 
 #[test]
@@ -583,7 +564,7 @@ fn create_generates_thumbnails() {
             - path: bar/baz.png
       ",
     )
-    .args(["create", "--generate"])
+    .args(["create"])
     .success()
     .arg("metadata")
     .stdout(
@@ -749,6 +730,17 @@ fn create_loads_video_placeholder() {
 }
 
 #[test]
+fn create_no_generate_skips_thumbnails() {
+  let test = Test::new()
+    .write("foo.jpg", image(1, 1, ImageFormat::Jpeg))
+    .write("metadata.yaml", "artwork: foo.jpg")
+    .args(["create", "--no-generate"])
+    .success();
+
+  assert!(!test.path().join("thumbnails").exists());
+}
+
+#[test]
 fn create_rejects_audio_metadata() {
   #[track_caller]
   fn case(metadata: &str, expected: &str) {
@@ -772,7 +764,7 @@ fn create_rejects_audio_metadata() {
           "{metadata}\nartwork: cover.png\nmedia:\n  type: audio\n  items:\n    - path: foo.flac\n"
         ),
       )
-      .args(["create", "--generate"])
+      .args(["create"])
       .assert_file_count(".", 3)
       .stderr(expected)
       .failure();
@@ -796,6 +788,25 @@ fn create_rejects_audio_metadata() {
     "creator: baz\ntitle: QUX",
     "error: track `foo.flac` album tag `qux` does not match metadata title `QUX`\n",
   );
+}
+
+#[test]
+fn create_rejects_existing_thumbnails() {
+  Test::new()
+    .write("foo.jpg", image(2, 1, ImageFormat::Jpeg))
+    .write(
+      "metadata.yaml",
+      "
+        media:
+          type: image
+          items:
+            - path: foo.jpg
+      ",
+    )
+    .write("thumbnails/foo.jpg", "bar")
+    .args(["create"])
+    .stderr_path("error: thumbnail for `foo.jpg` conflicts with `thumbnails/foo.jpg`\n")
+    .failure();
 }
 
 #[test]
@@ -889,7 +900,7 @@ fn create_rejects_flac_missing_track_total() {
     .stderr_regex(
       "
         error: invalid audio track `.*foo.flac`
-               └─ missing `tracktotal` tag
+               └─ missing `TRACKTOTAL` tag
       ",
     )
     .failure();
@@ -1188,7 +1199,9 @@ fn metadata_deco_already_exists() {
     .write("metadata.yaml", "title: Foo")
     .touch("metadata.filemeta")
     .arg("create")
-    .stderr_regex("error: metadata `.*metadata.filemeta` already exists\n")
+    .stderr_regex(
+      "error: metadata `.*metadata.filemeta` already exists, use `--force` to overwrite it\n",
+    )
     .failure();
 }
 
@@ -1202,6 +1215,18 @@ fn metadata_deco_force() {
     .arg("verify")
     .stderr_regex("successfully verified .*")
     .success();
+}
+
+#[test]
+fn metadata_subcommand_case_variant_error() {
+  Test::new()
+    .touch("METADATA.FILEMETA")
+    .arg("metadata")
+    .stderr("error: expected `metadata.filemeta` but found case mismatch `METADATA.FILEMETA`\n")
+    .failure()
+    .args(["metadata", "."])
+    .stderr("error: expected `metadata.filemeta` but found case mismatch `METADATA.FILEMETA`\n")
+    .failure();
 }
 
 #[test]
@@ -1230,17 +1255,6 @@ fn metadata_subcommand_format_json() {
     .args(["metadata", "--format", "json"])
     .stdout("{\"title\":\"Foo\"}\n")
     .success();
-}
-
-#[test]
-fn metadata_subcommand_format_tsv_error() {
-  Test::new()
-    .write("metadata.yaml", "title: Foo")
-    .arg("create")
-    .success()
-    .args(["metadata", "--format", "tsv"])
-    .stderr("error: metadata cannot be formatted as TSV\n")
-    .failure();
 }
 
 #[test]
