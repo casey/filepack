@@ -9,10 +9,14 @@ main {
   padding: 0;
 }
 
-img, video {
+img, video, iframe {
   flex: 1;
   min-height: 0;
   width: 100%;
+}
+
+iframe {
+  border: 0;
 }
 
 img {

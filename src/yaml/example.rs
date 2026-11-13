@@ -76,6 +76,7 @@ mod tests {
         .collect::<Vec<(&str, &str)>>(),
       [
         ("media", "audio"),
+        ("media", "document"),
         ("media", "image"),
         ("media", "video"),
         ("media", "web"),

@@ -196,6 +196,7 @@ impl Reference {
         .collect(),
       media_formats: [
         (MediaType::Audio, media_formats::<AudioFormat>()),
+        (MediaType::Document, media_formats::<DocumentFormat>()),
         (MediaType::Image, media_formats::<ImageFormat>()),
         (MediaType::Video, media_formats::<VideoFormat>()),
       ]

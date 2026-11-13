@@ -8,6 +8,7 @@ pub(crate) enum ResourceType {
   M4a,
   Mp3,
   Mp4,
+  Pdf,
   Png,
   Text,
   Webm,
@@ -22,6 +23,7 @@ impl ResourceType {
       | Self::M4a
       | Self::Mp3
       | Self::Mp4
+      | Self::Pdf
       | Self::Png
       | Self::Text
       | Self::Webm => None,
@@ -36,6 +38,7 @@ impl ResourceType {
       Self::M4a => "audio/mp4",
       Self::Mp3 => "audio/mpeg",
       Self::Mp4 => "video/mp4",
+      Self::Pdf => "application/pdf",
       Self::Png => "image/png",
       Self::Text => "text/plain;charset=utf-8",
       Self::Webm => "video/webm",
@@ -50,6 +53,7 @@ impl ResourceType {
       Self::M4a => &["m4a"],
       Self::Mp3 => &["mp3"],
       Self::Mp4 => &["mp4"],
+      Self::Pdf => &["pdf"],
       Self::Png => &["png"],
       Self::Text => &[
         "css", "csv", "html", "js", "json", "md", "svg", "toml", "tsv", "txt", "xml", "yaml",
@@ -65,7 +69,7 @@ impl ResourceType {
 
   pub(crate) fn sandbox(self) -> bool {
     match self {
-      Self::Binary | Self::Jpeg | Self::Png | Self::Text => true,
+      Self::Binary | Self::Jpeg | Self::Pdf | Self::Png | Self::Text => true,
       Self::Flac | Self::M4a | Self::Mp3 | Self::Mp4 | Self::Webm => false,
     }
   }
@@ -98,6 +102,7 @@ mod tests {
     case("foo.md", Some(ResourceType::Text));
     case("foo.mp3", Some(ResourceType::Mp3));
     case("foo.mp4", Some(ResourceType::Mp4));
+    case("foo.pdf", Some(ResourceType::Pdf));
     case("foo.png", Some(ResourceType::Png));
     case("foo.svg", Some(ResourceType::Text));
     case("foo.toml", Some(ResourceType::Text));

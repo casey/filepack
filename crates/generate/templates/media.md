@@ -83,6 +83,17 @@ exiftool \
   foo.m4a
 ```
 %%     }
+%%     MediaType::Document => {
+
+Document
+--------
+
+A collection of documents.
+
+### Formats
+
+{{ FormatsMd { formats: &self.media_formats[ty] } }}
+%%     }
 %%     MediaType::Image => {
 
 Image

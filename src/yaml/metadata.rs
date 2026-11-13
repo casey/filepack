@@ -55,7 +55,7 @@ impl Metadata {
     match media {
       Media::Image { items } => !items.is_empty(),
       Media::Video { items } => items.iter().any(|item| item.placeholder.is_some()),
-      Media::Audio { .. } | Media::Web => false,
+      Media::Audio { .. } | Media::Document { .. } | Media::Web => false,
     }
   }
 
@@ -79,6 +79,7 @@ impl Metadata {
     if let Some(media) = &media {
       match media {
         Media::Audio { items } => files += items.len().into_u64(),
+        Media::Document { items } => files += items.len().into_u64(),
         Media::Image { items } => files += items.len().into_u64(),
         Media::Video { items } => {
           for item in items {
@@ -151,6 +152,37 @@ mod tests {
           },
           Audio {
             path: "bar.flac".parse().unwrap(),
+          },
+        ],
+      }),
+    );
+  }
+
+  #[test]
+  fn deserialize_media_document() {
+    let metadata = Metadata::deserialize(
+      crate::Metadata::YAML_FILENAME.as_ref(),
+      &unindent(
+        "
+          media:
+            type: document
+            items:
+              - path: foo.pdf
+              - path: bar.pdf
+        ",
+      ),
+    )
+    .unwrap();
+
+    assert_eq!(
+      metadata.media,
+      Some(Media::Document {
+        items: vec![
+          Document {
+            path: "foo.pdf".parse().unwrap(),
+          },
+          Document {
+            path: "bar.pdf".parse().unwrap(),
           },
         ],
       }),
