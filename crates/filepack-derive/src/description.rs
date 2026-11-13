@@ -76,7 +76,7 @@ impl Description {
       };
 
       let line = line.value();
-      lines.push(line.strip_prefix(' ').unwrap_or(&line).to_string());
+      lines.push(line.trim_prefix(' ').to_string());
     }
 
     if lines.is_empty() {

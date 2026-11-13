@@ -47,14 +47,7 @@ impl Route {
       .value()
       .split('/')
       .filter_map(|segment| segment.strip_prefix('{'))
-      .map(|name| {
-        name
-          .strip_prefix('*')
-          .unwrap_or(name)
-          .strip_suffix('}')
-          .unwrap()
-          .to_string()
-      })
+      .map(|name| name.trim_prefix('*').strip_suffix('}').unwrap().to_string())
       .collect::<Vec<String>>();
 
     if documented != expected {
