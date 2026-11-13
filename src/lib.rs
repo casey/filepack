@@ -229,7 +229,6 @@ use {
     borrow::Cow,
     cmp::Ordering,
     collections::{BTreeMap, BTreeSet, HashMap, HashSet, VecDeque},
-    convert::Infallible,
     env,
     fmt::{self, Debug, Display, Formatter},
     fs::{self, Permissions},

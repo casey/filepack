@@ -377,7 +377,7 @@ impl Serve {
       && !if_none_match.precondition_passes(&etag)
     {
       *response.status_mut() = StatusCode::NOT_MODIFIED;
-      *response.body_mut() = Body::from_stream(stream::empty::<Result<body::Bytes, Infallible>>());
+      *response.body_mut() = Body::from_stream(stream::empty::<Result<body::Bytes, !>>());
 
       for name in [
         header::CONTENT_LENGTH,

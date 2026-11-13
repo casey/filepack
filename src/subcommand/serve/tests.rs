@@ -259,7 +259,7 @@ impl TestRequestBuilder {
         request = request.header(name, value);
       }
 
-      let response = self
+      let Ok(response) = self
         .router
         .oneshot(
           request
@@ -270,8 +270,7 @@ impl TestRequestBuilder {
             })
             .unwrap(),
         )
-        .await
-        .unwrap();
+        .await;
 
       assert_eq!(response.status(), self.status);
 
