@@ -577,7 +577,9 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
-  #[snafu(display("thumbnail for `{image}` conflicts with `{path}`"))]
+  #[snafu(display(
+    "thumbnail for `{image}` conflicts with `{path}`, use `--force` to overwrite it"
+  ))]
   ThumbnailAlreadyExists {
     backtrace: Option<Backtrace>,
     image: RelativePath,

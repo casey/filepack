@@ -678,7 +678,7 @@ mod tests {
         .generate(&root, false, true)
         .unwrap_err()
         .to_string(),
-      "thumbnail for `foo.png` conflicts with `thumbnails/foo.jpg`"
+      "thumbnail for `foo.png` conflicts with `thumbnails/foo.jpg`, use `--force` to overwrite it"
         .replace('/', std::path::MAIN_SEPARATOR_STR),
     );
   }
