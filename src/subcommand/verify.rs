@@ -218,7 +218,7 @@ fingerprint mismatch: `{}`
     }
 
     if self.print {
-      println!("{}", serde_json::to_string_pretty(&manifest).unwrap());
+      println!("{:#}", DisplayJson::<Output>(&manifest));
     }
 
     if !options.quiet {

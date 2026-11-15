@@ -24,10 +24,8 @@ impl Manifest {
     }
 
     match self.format {
-      OutputFormatJson::Json => println!("{}", serde_json::to_string(&manifest).unwrap()),
-      OutputFormatJson::JsonPretty => {
-        println!("{}", serde_json::to_string_pretty(&manifest).unwrap());
-      }
+      OutputFormatJson::Json => println!("{}", DisplayJson::<Output>(&manifest)),
+      OutputFormatJson::JsonPretty => println!("{:#}", DisplayJson::<Output>(&manifest)),
     }
 
     Ok(())

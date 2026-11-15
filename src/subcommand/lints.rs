@@ -9,7 +9,7 @@ pub(crate) fn run() -> Result {
     .map(|group| (group, group.lints()))
     .collect::<Output>();
 
-  println!("{}", serde_json::to_string_pretty(&groups).unwrap());
+  println!("{:#}", DisplayJson::<Output>(&groups));
 
   Ok(())
 }

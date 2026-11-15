@@ -173,6 +173,12 @@ impl Io for () {
   }
 }
 
+impl Io for Reference {
+  fn io_schema(_registry: &mut Registry) -> Option<String> {
+    None
+  }
+}
+
 pub(crate) trait Json {
   fn json_schema(registry: &mut Registry) -> String;
 

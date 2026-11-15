@@ -27,7 +27,7 @@ pub(crate) fn run(options: Options) -> Result {
     version: env!("CARGO_PKG_VERSION").into(),
   };
 
-  println!("{}", serde_json::to_string_pretty(&info).unwrap());
+  println!("{:#}", DisplayJson::<Output>(&info));
 
   Ok(())
 }

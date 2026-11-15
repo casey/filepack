@@ -18,8 +18,8 @@ impl Languages {
       .collect::<Output>();
 
     match self.format {
-      OutputFormat::Json => println!("{}", serde_json::to_string(&languages).unwrap()),
-      OutputFormat::JsonPretty => println!("{}", serde_json::to_string_pretty(&languages).unwrap()),
+      OutputFormat::Json => println!("{}", DisplayJson::<Output>(&languages)),
+      OutputFormat::JsonPretty => println!("{:#}", DisplayJson::<Output>(&languages)),
       OutputFormat::Tsv => {
         for (code, language) in &languages {
           println!("{code}\t{language}");

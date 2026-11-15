@@ -35,10 +35,8 @@ impl Metadata {
     let metadata = Output::decode_from_slice(&bytes).context(error::DecodeMetadataDeco { path })?;
 
     match self.format {
-      OutputFormatJson::Json => println!("{}", serde_json::to_string(&metadata).unwrap()),
-      OutputFormatJson::JsonPretty => {
-        println!("{}", serde_json::to_string_pretty(&metadata).unwrap());
-      }
+      OutputFormatJson::Json => println!("{}", DisplayJson::<Output>(&metadata)),
+      OutputFormatJson::JsonPretty => println!("{:#}", DisplayJson::<Output>(&metadata)),
     }
 
     Ok(())

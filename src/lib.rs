@@ -64,6 +64,7 @@ use {
     display_bits_per_pixel::DisplayBitsPerPixel,
     display_duration::DisplayDuration,
     display_frame_rate::DisplayFrameRate,
+    display_json::DisplayJson,
     display_millis::DisplayMillis,
     display_path::DisplayPath,
     display_private_key::DisplayPrivateKey,
@@ -385,6 +386,7 @@ mod display_bitrate;
 mod display_bits_per_pixel;
 mod display_duration;
 mod display_frame_rate;
+mod display_json;
 mod display_millis;
 mod display_path;
 mod display_private_key;
