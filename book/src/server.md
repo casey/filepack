@@ -226,12 +226,12 @@ Files, directories, and revisions are uploaded using
 
 Directories are verified using
 [`POST /api/directory/{hash}`](api/directory-hash.md#post), which requires that
-all files have been uploaded and all subdirectories have been verified.
+all files have been uploaded, all subdirectories have been verified, and package
+metadata in that directory is valid.
 
 The package is verified using
 [`POST /api/package/{fingerprint}`](api/package-fingerprint.md#post), which
-requires that the package root directory has already been verified and package
-metadata is valid.
+requires that the package root directory has already been verified.
 
 Finally, the revision is verified and the package number obtained using
 [`POST /api/revision/{revision}`](api/revision-revision.md#post), which requires
