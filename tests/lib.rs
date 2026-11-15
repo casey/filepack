@@ -19,7 +19,7 @@ use {
     assert_matches,
     collections::{BTreeMap, BTreeSet},
     fs,
-    io::{Cursor, Read, Write},
+    io::{self, Cursor, Read, Write},
     net::TcpListener,
     path::{MAIN_SEPARATOR_STR, Path},
     process::{Command, Stdio},
@@ -61,6 +61,7 @@ mod man;
 mod manifest;
 mod metadata;
 mod misc;
+mod print;
 mod reference;
 mod request;
 mod serve;

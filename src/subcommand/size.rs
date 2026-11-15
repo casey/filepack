@@ -14,10 +14,10 @@ impl Size {
   pub(crate) fn run(self) -> Result {
     let (_manifest, totals) = Loader::load(self.path.as_deref())?.unpack_with_totals()?;
 
-    serde_json::to_writer_pretty::<io::Stdout, Output>(io::stdout(), &totals)
-      .context(error::SerializeStdout)?;
-
-    println!();
+    println!(
+      "{}",
+      serde_json::to_string_pretty::<Output>(&totals).unwrap()
+    );
 
     Ok(())
   }
