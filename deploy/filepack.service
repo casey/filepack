@@ -7,7 +7,7 @@ StartLimitIntervalSec=10m
 [Service]
 AmbientCapabilities=CAP_NET_BIND_SERVICE
 CapabilityBoundingSet=CAP_NET_BIND_SERVICE
-Environment=FILEPACK_LOG=info
+Environment=FILEPACK_LOG=info,rustls=error
 Environment=RUST_BACKTRACE=1
 ExecStart=/usr/local/bin/filepack \
   --data-dir /var/lib/filepack \
