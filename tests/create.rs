@@ -720,6 +720,21 @@ fn single_non_empty_file() {
 }
 
 #[test]
+#[cfg(unix)]
+fn special_file_error() {
+  use std::os::unix::net::UnixListener;
+
+  let test = Test::new();
+
+  UnixListener::bind(test.path().join("foo")).unwrap();
+
+  test
+    .args(["create", "."])
+    .stderr("error: special file at `foo`\n")
+    .failure();
+}
+
+#[test]
 fn subpackage_manifest_is_excluded() {
   Test::new()
     .touch("foo/bar/baz")

@@ -41,7 +41,9 @@ impl Walk {
         continue;
       }
 
-      if entry.depth() > 1 && entry.file_type().is_file() && path.filename() == Manifest::FILENAME {
+      let file_type = entry.file_type();
+
+      if entry.depth() > 1 && file_type.is_file() && path.filename() == Manifest::FILENAME {
         subpackages.push(path.parent().unwrap());
         continue;
       }
@@ -52,13 +54,18 @@ impl Walk {
       }
 
       ensure! {
-        !entry.file_type().is_symlink(),
+        !file_type.is_symlink(),
         error::Symlink { path },
+      }
+
+      ensure! {
+        file_type.is_dir() || file_type.is_file(),
+        error::SpecialFile { path },
       }
 
       empty.pop_if(|dir| path.starts_with(dir));
 
-      if entry.file_type().is_dir() {
+      if file_type.is_dir() {
         empty.push(path.clone());
         entries.push((path, EntryType::Directory));
       } else {
