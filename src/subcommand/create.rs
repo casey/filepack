@@ -107,6 +107,13 @@ impl Create {
       None
     };
 
+    ensure! {
+      self.force || !filesystem::exists(&manifest_path)?,
+      error::ManifestAlreadyExists {
+        path: manifest_path,
+      },
+    }
+
     let mut linter = Linter::new();
 
     linter.deny(&self.deny);
@@ -120,11 +127,11 @@ impl Create {
     let metadata = if let Some(metadata) = metadata {
       let mut metadata = metadata.load(&root, options.quiet)?;
 
+      metadata.validate(&root)?;
+
       if !self.no_generate {
         metadata.generate(&root, self.force, options.quiet)?;
       }
-
-      metadata.validate(&root)?;
 
       let deco = metadata.encode_to_vec();
 
@@ -175,13 +182,6 @@ impl Create {
       if metadata.media.is_some() {
         metadata.check_extras(&files, &empty)?;
       }
-    }
-
-    ensure! {
-      self.force || !manifest_path.try_exists().context(filesystem_error::Io { path: &manifest_path })?,
-      error::ManifestAlreadyExists {
-        path: manifest_path,
-      },
     }
 
     if let Some((_metadata, deco)) = &metadata {

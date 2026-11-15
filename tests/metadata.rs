@@ -766,7 +766,10 @@ fn create_rejects_existing_thumbnails() {
     )
     .write("thumbnails/foo.jpg", "bar")
     .args(["create"])
-    .stderr_path("error: thumbnail for `foo.jpg` conflicts with `thumbnails/foo.jpg`\n")
+    .stderr_path(
+      "error: thumbnail for `foo.jpg` conflicts with `thumbnails/foo.jpg`, use `--force` to \
+      overwrite it\n",
+    )
     .failure();
 }
 
@@ -1113,6 +1116,19 @@ fn create_requires_index_html_in_web_packages() {
 }
 
 #[test]
+fn create_requires_manifest_not_exist_before_generating_thumbnails() {
+  let test = Test::new()
+    .write("foo.jpg", image(1280, 1280, ImageFormat::Jpeg))
+    .write("metadata.yaml", "artwork: foo.jpg")
+    .touch("manifest.filepack")
+    .args(["create", "."])
+    .stderr("error: manifest `manifest.filepack` already exists, use `--force` to overwrite it\n")
+    .failure();
+
+  assert!(!test.path().join("thumbnails").exists());
+}
+
+#[test]
 fn create_succeeds_with_valid_metadata() {
   Test::new()
     .touch("content")
@@ -1136,6 +1152,18 @@ fn create_succeeds_with_valid_metadata() {
     .arg("verify")
     .stderr("successfully verified 6 files totaling 279 bytes\n")
     .success();
+}
+
+#[test]
+fn create_validates_metadata_before_generating_thumbnails() {
+  let test = Test::new()
+    .write("foo.jpg", image(1280, 640, ImageFormat::Jpeg))
+    .write("metadata.yaml", "artwork: foo.jpg")
+    .args(["create", "."])
+    .stderr("error: artwork `foo.jpg` is 1280×640 but must be square\n")
+    .failure();
+
+  assert!(!test.path().join("thumbnails").exists());
 }
 
 fn image(width: u32, height: u32, image_format: ImageFormat) -> Vec<u8> {
