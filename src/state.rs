@@ -31,18 +31,7 @@ impl State {
 
     json.push('\n');
 
-    let mut tempfile = tempfile::Builder::new()
-      .tempfile_in(&dir)
-      .context(filesystem_error::Io { path: &dir })?;
-
-    tempfile
-      .write_all(json.as_bytes())
-      .context(filesystem_error::Io { path: &dir })?;
-
-    tempfile
-      .persist(&path)
-      .map_err(|error| error.error)
-      .context(filesystem_error::Io { path: &path })?;
+    filesystem::write_atomic(&path, json)?;
 
     Ok(())
   }

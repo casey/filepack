@@ -126,7 +126,7 @@ impl Manifest {
   }
 
   pub fn save(&self, path: &Utf8Path) -> Result {
-    filesystem::write(path, self.pack(path)?.encode_to_vec())?;
+    filesystem::write_atomic(path, self.pack(path)?.encode_to_vec())?;
     Ok(())
   }
 

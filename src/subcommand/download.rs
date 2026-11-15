@@ -171,7 +171,7 @@ impl Download {
 
     check_metadata(&self.output, &manifest.package)?;
 
-    filesystem::write(
+    filesystem::write_atomic(
       &self.output.join(Manifest::FILENAME),
       archive.encode_to_vec(),
     )?;
@@ -222,10 +222,7 @@ impl Download {
     bar: &ProgressBar,
     expected_size: Option<u64>,
   ) -> Result {
-    let output_directory = path
-      .parent()
-      .filter(|parent| !parent.as_str().is_empty())
-      .unwrap_or(Utf8Path::new("."));
+    let output_directory = path.containing_dir();
 
     let tempfile = transfer_tempfile(hash, output_directory)?;
 

@@ -57,7 +57,7 @@ pub(crate) fn persist(temp_path: TempPath, path: &Utf8Path) -> FilesystemResult 
     .map_err(|error| error.error)
     .context(filesystem_error::Io { path })?;
 
-  let parent = path.parent().unwrap();
+  let parent = path.containing_dir();
 
   fs::File::open(parent)
     .and_then(|directory| directory.sync_all())
@@ -135,6 +135,30 @@ pub(crate) fn write(path: &Utf8Path, contents: impl AsRef<[u8]>) -> FilesystemRe
   fs::write(path, contents).context(filesystem_error::Io { path })
 }
 
+pub(crate) fn write_atomic(path: &Utf8Path, contents: impl AsRef<[u8]>) -> FilesystemResult {
+  let dir = path.containing_dir();
+
+  #[cfg_attr(not(unix), expect(unused_mut))]
+  let mut builder = tempfile::Builder::new();
+
+  #[cfg(unix)]
+  {
+    use std::os::unix::fs::PermissionsExt;
+    builder.permissions(Permissions::from_mode(0o666));
+  }
+
+  let mut tempfile = builder
+    .tempfile_in(dir)
+    .context(filesystem_error::Io { path: dir })?;
+
+  tempfile
+    .write_all(contents.as_ref())
+    .and_then(|()| tempfile.as_file().sync_all())
+    .context(filesystem_error::Io { path })?;
+
+  persist(tempfile.into_temp_path(), path)
+}
+
 #[cfg(unix)]
 pub(crate) fn write_with_mode(
   path: &Utf8Path,
@@ -184,5 +208,44 @@ mod tests {
     assert!(!source.exists());
 
     assert_eq!(fs::read(&destination).unwrap(), b"foo");
+  }
+  #[test]
+  fn write_atomic_replaces_file() {
+    let (_tempdir, root) = tempdir();
+
+    let path = root.join("foo");
+
+    write(&path, "bar").unwrap();
+
+    write_atomic(&path, "baz").unwrap();
+
+    assert_eq!(read_to_string(&path).unwrap(), "baz");
+
+    assert_eq!(
+      fs::read_dir(&root)
+        .unwrap()
+        .map(|entry| entry.unwrap().file_name().into_string().unwrap())
+        .collect::<Vec<String>>(),
+      ["foo"],
+    );
+  }
+
+  #[test]
+  #[cfg(unix)]
+  fn write_atomic_respects_umask() {
+    let (_tempdir, root) = tempdir();
+
+    let foo = root.join("foo");
+
+    let bar = root.join("bar");
+
+    write(&foo, "").unwrap();
+
+    write_atomic(&bar, "").unwrap();
+
+    assert_eq!(
+      metadata(&bar).unwrap().permissions(),
+      metadata(&foo).unwrap().permissions(),
+    );
   }
 }
