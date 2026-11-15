@@ -48,7 +48,7 @@ impl Sign {
       },
     }
 
-    filesystem::write(loader.path(), archive.encode_to_vec())?;
+    filesystem::write_atomic(loader.path(), archive.encode_to_vec())?;
 
     Ok(())
   }
