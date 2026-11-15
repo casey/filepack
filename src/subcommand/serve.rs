@@ -603,7 +603,7 @@ impl Serve {
           process::exit(1);
         }
 
-        handle.graceful_shutdown(Some(Duration::from_millis(100)));
+        handle.graceful_shutdown(Some(Duration::from_secs(5)));
 
         shutting_down = true;
       })
