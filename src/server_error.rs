@@ -300,6 +300,7 @@ impl ServerError {
 
 impl IntoResponse for ServerError {
   fn into_response(self) -> Response {
-    (self.status_code(), self.to_string()).into_response()
+    let body = self.to_string();
+    (self.status_code(), Extension(Arc::new(self)), body).into_response()
   }
 }

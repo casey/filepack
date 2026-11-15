@@ -12,13 +12,12 @@ impl IntoResponse for PageError {
   fn into_response(self) -> Response {
     let status = self.0.status_code();
 
+    let error = Arc::new(self.0);
+
     (
       status,
-      ErrorHtml {
-        error: self.0,
-        status,
-      }
-      .page(None),
+      Extension(error.clone()),
+      ErrorHtml { error, status }.page(None),
     )
       .into_response()
   }

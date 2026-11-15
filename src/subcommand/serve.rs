@@ -1,12 +1,13 @@
 use {
   self::{
-    host_port::HostPort, packages_query::PackagesQuery, redirect_config::RedirectConfig,
-    scheme::Scheme, server_config::ServerConfig, spawn_config::SpawnConfig,
+    error_chain::ErrorChain, host_port::HostPort, packages_query::PackagesQuery,
+    redirect_config::RedirectConfig, scheme::Scheme, server_config::ServerConfig,
+    spawn_config::SpawnConfig,
   },
   super::*,
   axum::{
     Router, body,
-    extract::{Extension, Path, Query, Request},
+    extract::{Path, Query, Request},
     http::{HeaderValue, Method, Uri},
     middleware::{self, Next},
     response::{IntoResponse, Redirect, Response},
@@ -29,6 +30,7 @@ use {
 
 pub(crate) use self::write_config::WriteConfig;
 
+mod error_chain;
 mod host_port;
 mod packages_query;
 mod redirect_config;
@@ -391,6 +393,28 @@ impl Serve {
     response
   }
 
+  async fn log_layer(request: Request, next: Next) -> Response {
+    let method = request.method().clone();
+
+    let uri = request.uri().clone();
+
+    let response = next.run(request).await;
+
+    let status = response.status();
+
+    if status.is_server_error() {
+      tracing::error!(
+        "{method} {uri}: {}",
+        ErrorChain {
+          error: response.extensions().get::<Arc<ServerError>>(),
+          status,
+        }
+      );
+    }
+
+    response
+  }
+
   async fn named_mount(
     server: ServerExtension,
     server_config: ServerConfigExtension,
@@ -547,6 +571,7 @@ impl Serve {
         header::X_CONTENT_TYPE_OPTIONS,
         HeaderValue::from_static("nosniff"),
       ))
+      .layer(middleware::from_fn(Self::log_layer))
   }
 
   pub(crate) fn run(self, options: Options) -> Result {

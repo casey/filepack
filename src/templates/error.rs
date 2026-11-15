@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(Boilerplate)]
 pub(crate) struct ErrorHtml {
-  pub(crate) error: ServerError,
+  pub(crate) error: Arc<ServerError>,
   pub(crate) status: StatusCode,
 }
 
@@ -27,7 +27,7 @@ mod tests {
   fn render() {
     assert_eq!(
       ErrorHtml {
-        error: ServerError::PageNotFound,
+        error: ServerError::PageNotFound.into(),
         status: StatusCode::NOT_FOUND,
       }
       .to_string(),
@@ -48,7 +48,7 @@ mod tests {
     fn case(status: StatusCode, expected: &str) {
       assert_eq!(
         ErrorHtml {
-          error: ServerError::PageNotFound,
+          error: ServerError::PageNotFound.into(),
           status,
         }
         .title(),

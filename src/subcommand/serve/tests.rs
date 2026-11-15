@@ -4,6 +4,7 @@ use {
     body,
     http::{Method, Request, header::HeaderName},
   },
+  std::sync::Mutex,
   tokio::runtime::Runtime,
   tower::ServiceExt,
 };
@@ -155,7 +156,14 @@ impl TestRequestBuilder {
   }
 
   fn assert_error(self, status: StatusCode, error: ServerError) -> Self {
-    self.assert_response((status, ErrorHtml { error, status }.page(None)))
+    self.assert_response((
+      status,
+      ErrorHtml {
+        error: error.into(),
+        status,
+      }
+      .page(None),
+    ))
   }
 
   fn assert_header(mut self, name: HeaderName, value: impl Into<String>) -> Self {
@@ -4340,6 +4348,88 @@ fn server_config() {
     .server_config()
     .mounts,
     vec![mount],
+  );
+}
+
+#[test]
+fn server_errors_are_logged() {
+  #[derive(Clone, Default)]
+  struct Log(Arc<Mutex<Vec<u8>>>);
+
+  impl Log {
+    fn take(&self) -> String {
+      String::from_utf8(mem::take(&mut self.0.lock().unwrap())).unwrap()
+    }
+  }
+
+  impl Write for Log {
+    fn flush(&mut self) -> io::Result<()> {
+      Ok(())
+    }
+
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+      self.0.lock().unwrap().extend_from_slice(buf);
+      Ok(buf.len())
+    }
+  }
+
+  let log = Log::default();
+
+  let _guard = tracing::subscriber::set_default(
+    tracing_subscriber::fmt()
+      .with_ansi(false)
+      .with_level(false)
+      .with_target(false)
+      .without_time()
+      .with_writer({
+        let log = log.clone();
+        move || log.clone()
+      })
+      .finish(),
+  );
+
+  let server = TestServer::builder()
+    .mount(PackageIdentifier::Number(0), None)
+    .unstable()
+    .build();
+
+  let fingerprint = PackageBuilder::new()
+    .file("static/index.html", b"foo")
+    .upload(&server);
+
+  server
+    .get("/mount/0/")
+    .ignore_body()
+    .status(StatusCode::INTERNAL_SERVER_ERROR)
+    .send();
+
+  assert_eq!(
+    log.take(),
+    format!(
+      "GET /mount/0/: 500 Internal Server Error: mounted package {fingerprint} has no media type, \
+       only web packages may be mounted\n",
+    ),
+  );
+
+  let (deco, hash) = Directory::new().deco();
+  server.write_file(&deco);
+
+  server.post(format!("/api/directory/{hash}")).send();
+
+  fs::write(server.data_dir.join("files").join(hash.to_string()), "foo").unwrap();
+
+  server
+    .get(format!("/directory/{hash}"))
+    .ignore_body()
+    .status(StatusCode::INTERNAL_SERVER_ERROR)
+    .send();
+
+  assert_eq!(
+    log.take(),
+    format!(
+      "GET /directory/{hash}: 500 Internal Server Error: stored directory {hash} failed to decode: \
+       truncated\n",
+    ),
   );
 }
 
