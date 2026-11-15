@@ -37,10 +37,8 @@ impl Signatures {
     }
 
     match self.format {
-      OutputFormat::Json => println!("{}", serde_json::to_string(&signatures).unwrap()),
-      OutputFormat::JsonPretty => {
-        println!("{}", serde_json::to_string_pretty(&signatures).unwrap());
-      }
+      OutputFormat::Json => println!("{}", DisplayJson::<Output>(&signatures)),
+      OutputFormat::JsonPretty => println!("{:#}", DisplayJson::<Output>(&signatures)),
       OutputFormat::Tsv => {
         for signature in &signatures {
           let timestamp = signature.timestamp.map_or_default(|t| t.to_string());

@@ -14,10 +14,7 @@ impl Size {
   pub(crate) fn run(self) -> Result {
     let (_manifest, totals) = Loader::load(self.path.as_deref())?.unpack_with_totals()?;
 
-    println!(
-      "{}",
-      serde_json::to_string_pretty::<Output>(&totals).unwrap()
-    );
+    println!("{:#}", DisplayJson::<Output>(&totals));
 
     Ok(())
   }
