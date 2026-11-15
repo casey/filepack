@@ -198,7 +198,7 @@ impl Subcommand {
       Self::Reference => reference::run(),
       Self::Serve(serve) => serve.run(options),
       Self::Sign(sign) => sign.run(options),
-      Self::Signatures(signatures) => signatures.run(),
+      Self::Signatures(signatures) => signatures.run(options),
       Self::Size(size) => size.run(),
       Self::Upload(upload) => upload.run(options),
       Self::Verify(verify) => verify.run(options),

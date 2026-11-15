@@ -527,6 +527,20 @@ fn print_includes_embedded_files() {
 }
 
 #[test]
+fn quiet() {
+  let test = Test::new()
+    .arg("keygen")
+    .success()
+    .touch("foo/bar")
+    .args(["create", "--sign", "foo"])
+    .success();
+
+  add_unknown_signature(&test.path().join("foo/manifest.filepack"));
+
+  test.args(["--quiet", "verify", "foo"]).success();
+}
+
+#[test]
 fn root_not_directory_error() {
   Test::new()
     .touch("foo")

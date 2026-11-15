@@ -72,6 +72,25 @@ fn no_signatures() {
 }
 
 #[test]
+fn quiet() {
+  let test = Test::new()
+    .arg("keygen")
+    .success()
+    .touch("foo/bar")
+    .args(["create", "--sign", "foo"])
+    .success();
+
+  add_unknown_signature(&test.path().join("foo/manifest.filepack"));
+
+  let public_key = test.read("keychain/master.public");
+
+  test
+    .args(["--quiet", "signatures", "--format", "json", "foo"])
+    .stdout(format!("[{{\"public_key\":\"{public_key}\"}}]\n"))
+    .success();
+}
+
+#[test]
 fn signature_with_time() {
   let test = Test::new()
     .arg("keygen")

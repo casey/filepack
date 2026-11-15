@@ -33,3 +33,14 @@ fn gc_removes_orphaned_package_data() {
 
   server.terminate().success();
 }
+
+#[test]
+fn quiet() {
+  let server = Test::new().serve().spawn();
+
+  Test::new()
+    .args(["--quiet", "gc", "--server", &server.address()])
+    .success();
+
+  server.terminate().success();
+}
