@@ -508,6 +508,44 @@ fn upload_package_serves_package_html() {
 }
 
 #[test]
+fn upload_package_skips_directories_already_on_server() {
+  let server = Test::new().serve().spawn();
+
+  Test::new()
+    .write("foo/bar", "baz")
+    .args(["create", "."])
+    .success()
+    .env("FILEPACK_LOG", "filepack=debug")
+    .args(["upload", "--server", &server.address()])
+    .stderr_regex_path(
+      r"
+        uploading 1 of 1 file
+        \S+ DEBUG filepack::subcommand::upload: uploading directory `\.`
+        \S+ DEBUG filepack::subcommand::upload: uploading directory `\./foo`
+        \S+ DEBUG filepack::subcommand::upload: uploading file `\./foo/bar`
+        created package number 0
+      ",
+    )
+    .success()
+    .write("qux", "quux")
+    .args(["create", "--force", "."])
+    .success()
+    .env("FILEPACK_LOG", "filepack=debug")
+    .args(["upload", "--server", &server.address()])
+    .stderr_regex_path(
+      r"
+        uploading 1 of 2 files
+        \S+ DEBUG filepack::subcommand::upload: uploading directory `\.`
+        \S+ DEBUG filepack::subcommand::upload: uploading file `\./qux`
+        updated package number 0
+      ",
+    )
+    .success();
+
+  server.terminate().success();
+}
+
+#[test]
 fn upload_package_skips_files_already_on_server() {
   let server = Test::new()
     .serve()
@@ -522,10 +560,13 @@ fn upload_package_skips_files_already_on_server() {
     .write("bar", "bbb")
     .args(["create", "."])
     .success()
+    .env("FILEPACK_LOG", "filepack=debug")
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
-    .stderr(
-      "
+    .stderr_regex_path(
+      r"
         uploading 1 of 2 files
+        \S+ DEBUG filepack::subcommand::upload: uploading directory `\.`
+        \S+ DEBUG filepack::subcommand::upload: uploading file `\./bar`
         created package number 0
       ",
     )

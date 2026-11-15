@@ -82,6 +82,31 @@ impl Archive {
     Ok(Fingerprint(self.package(options)?.hash))
   }
 
+  pub(crate) fn hashes(&self, options: DecodeOptions) -> Result<BTreeSet<Hash>, ArchiveError> {
+    let package = self.package(options)?;
+
+    let mut hashes = BTreeSet::from([package.hash]);
+
+    let mut directories = vec![package];
+
+    while let Some(directory) = directories.pop() {
+      let file = self.file(directory.hash, directory.size)?;
+
+      let directory = Directory::decode_from_slice_with_options(options, file)
+        .context(archive_error::DirectoryDecode)?;
+
+      for entry in directory.entries.values() {
+        hashes.insert(entry.hash);
+
+        if entry.ty() == EntryType::Directory {
+          directories.push(*entry);
+        }
+      }
+    }
+
+    Ok(hashes)
+  }
+
   pub(crate) fn pack(manifest: &Manifest) -> Result<Self, TotalsError> {
     let mut builder = ArchiveBuilder::new();
 
@@ -410,6 +435,43 @@ mod tests {
       archive.unpack_strict(),
       Err(ArchiveError::FileHashMismatch { actual: a, expected: e })
         if a == actual && e == expected,
+    );
+  }
+
+  #[test]
+  fn hashes() {
+    let mut builder = ArchiveBuilder::new();
+
+    let mut bar = Directory::new();
+    bar.insert_file("baz", b"qux");
+
+    let bar = builder.directory(&bar).unwrap();
+
+    let mut package = Directory::new();
+    package.insert_entry("bar", bar).insert_file("foo", b"bar");
+
+    let package = builder.directory(&package).unwrap();
+
+    let signatures = builder.directory(&Directory::new()).unwrap();
+
+    let mut root = Directory::new();
+    root
+      .insert_entry("package", package)
+      .insert_entry("signatures", signatures);
+
+    let root = builder.directory(&root).unwrap();
+
+    assert_eq!(
+      builder
+        .build(root.hash)
+        .hashes(DecodeOptions::default())
+        .unwrap(),
+      BTreeSet::from([
+        package.hash,
+        bar.hash,
+        Hash::bytes(b"qux"),
+        Hash::bytes(b"bar"),
+      ]),
     );
   }
 

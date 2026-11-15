@@ -600,9 +600,11 @@ fn initialize_tracing() -> Result<(), Box<dyn std::error::Error>> {
 
   let journal = journal_layer()?;
 
-  let stderr = journal
-    .is_none()
-    .then(|| tracing_subscriber::fmt::layer().with_writer(io::stderr));
+  let stderr = journal.is_none().then(|| {
+    tracing_subscriber::fmt::layer()
+      .with_ansi(io::stderr().is_terminal())
+      .with_writer(io::stderr)
+  });
 
   tracing_subscriber::registry()
     .with(filter)
