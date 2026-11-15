@@ -106,7 +106,7 @@ impl Verify {
       verified.signatures += 1;
     }
 
-    if unknown > 0 {
+    if unknown > 0 && !options.quiet {
       eprintln!("ignored {}", Count::new(unknown, "unrecognized signature"));
     }
 
@@ -221,20 +221,22 @@ fingerprint mismatch: `{}`
       println!("{}", serde_json::to_string_pretty(&manifest).unwrap());
     }
 
-    eprint!(
-      "successfully verified {}",
-      Count::new(verified.files, "file")
-    );
+    if !options.quiet {
+      eprint!(
+        "successfully verified {}",
+        Count::new(verified.files, "file")
+      );
 
-    if verified.files > 0 {
-      eprint!(" totaling {}", Count::new(verified.bytes, "byte"));
+      if verified.files > 0 {
+        eprint!(" totaling {}", Count::new(verified.bytes, "byte"));
+      }
+
+      if verified.signatures > 0 {
+        eprint!(" with {}", Count::new(verified.signatures, "signature"));
+      }
+
+      eprintln!();
     }
-
-    if verified.signatures > 0 {
-      eprint!(" with {}", Count::new(verified.signatures, "signature"));
-    }
-
-    eprintln!();
 
     Ok(())
   }

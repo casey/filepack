@@ -1,6 +1,29 @@
 use super::*;
 
 #[test]
+fn quiet() {
+  let server = Test::new().serve().spawn();
+
+  Test::new()
+    .write("foo", "bar")
+    .args(["create", "."])
+    .success()
+    .args(["--quiet", "upload", "--server", &server.address()])
+    .success()
+    .args(["--quiet", "upload", "--server", &server.address()])
+    .success();
+
+  Test::new()
+    .write("foo", "bar")
+    .args(["create", "."])
+    .success()
+    .args(["--quiet", "upload", "--server", &server.address()])
+    .success();
+
+  server.terminate().success();
+}
+
+#[test]
 fn restricted_upload_succeeds_with_auth() {
   let server = Test::new()
     .write_key_pair("master")

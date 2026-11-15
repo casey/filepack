@@ -13,7 +13,7 @@ pub(crate) type Input = ();
 pub(crate) type Output = Vec<SignatureEntry>;
 
 impl Signatures {
-  pub(crate) fn run(self) -> Result {
+  pub(crate) fn run(self, options: Options) -> Result {
     let loader = Loader::load(self.path.as_deref())?;
 
     let fingerprint = loader.fingerprint()?;
@@ -32,7 +32,7 @@ impl Signatures {
 
     let unknown = manifest.unknown_signatures();
 
-    if unknown > 0 {
+    if unknown > 0 && !options.quiet {
       eprintln!("ignored {}", Count::new(unknown, "unrecognized signature"));
     }
 
