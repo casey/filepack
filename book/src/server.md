@@ -182,8 +182,8 @@ Package creation assigns a new package number to an uploaded package and is the
 default when running `filepack upload` for the first time in a given directory
 to a particular server.
 
-Running `filepack upload` from the same directory without modifying the package
-is idempotent and will return the same package number.
+Running `filepack upload` with a package the server already has, and which has
+not been updated, will return the existing package number.
 
 After modifying the package, running `filepack upload` from the same directory
 will update the package.
