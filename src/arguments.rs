@@ -9,6 +9,8 @@ use {
 #[derive(Parser)]
 #[command(
   version,
+  about = "Content-addressed packages",
+  long_about = "Content-addressed packages - https://github.com/casey/filepack",
   styles = Styles::styled()
     .header(AnsiColor::Green.on_default() | Effects::BOLD)
     .usage(AnsiColor::Green.on_default() | Effects::BOLD)

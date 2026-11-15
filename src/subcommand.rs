@@ -1,11 +1,4 @@
-use {
-  super::*,
-  clap::builder::{
-    Styles,
-    styling::{AnsiColor, Effects},
-  },
-  json::Io,
-};
+use {super::*, json::Io};
 
 mod archive;
 mod completions;
@@ -42,23 +35,13 @@ const MANIFEST_PATH_HELP: &str = "\
 
 const TIMESTAMP_HELP: &str = "Include current time in signature";
 
-#[derive(EnumDiscriminants, Parser)]
+#[derive(EnumDiscriminants, clap::Subcommand)]
 #[strum_discriminants(
   name(Name),
   derive(EnumString),
   vis(pub(crate)),
   strum(serialize_all = "kebab-case")
 )]
-#[command(
-  version,
-  about = "Content-addressed packages",
-  long_about = "Content-addressed packages - https://github.com/casey/filepack",
-  styles = Styles::styled()
-    .header(AnsiColor::Green.on_default() | Effects::BOLD)
-    .usage(AnsiColor::Green.on_default() | Effects::BOLD)
-    .literal(AnsiColor::Blue.on_default() | Effects::BOLD)
-    .placeholder(AnsiColor::Cyan.on_default()))
-]
 pub(crate) enum Subcommand {
   #[command(about = "Create archive from JSON manifest")]
   Archive(archive::Archive),
