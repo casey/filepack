@@ -482,6 +482,8 @@ mod path_error;
 mod path_extractor;
 mod percent_encode;
 mod png_builder;
+#[macro_use]
+mod print;
 mod private_key;
 mod private_key_error;
 mod progress_bar;

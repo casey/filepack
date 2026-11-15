@@ -11,7 +11,6 @@ pub(crate) type Input = ();
 pub(crate) type Output = BTreeMap<Language, String>;
 
 impl Languages {
-  #[expect(clippy::unnecessary_wraps)]
   pub(crate) fn run(self) -> Result {
     let languages = language::ALL
       .iter()

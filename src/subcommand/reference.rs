@@ -7,7 +7,7 @@ pub(crate) type Output = ();
 pub(crate) fn run() -> Result {
   let reference = Reference::new();
 
-  serde_json::to_writer_pretty(io::stdout(), &reference).context(error::SerializeStdout)?;
+  println!("{}", serde_json::to_string_pretty(&reference).unwrap());
 
   Ok(())
 }
