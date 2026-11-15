@@ -541,6 +541,11 @@ pub enum Error {
     hash: Hash,
     manifest: u64,
   },
+  #[snafu(display("special file at `{path}`"))]
+  SpecialFile {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+  },
   #[snafu(display("metadata `{path}` already exists"))]
   StaleMetadata {
     backtrace: Option<Backtrace>,
