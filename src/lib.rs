@@ -196,6 +196,7 @@ use {
     xmp_error::XmpError,
   },
   axum::{
+    Extension,
     body::Body,
     http::{self, HeaderName, HeaderValue, StatusCode, header},
     response::{IntoResponse, Response},
