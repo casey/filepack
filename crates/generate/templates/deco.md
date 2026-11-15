@@ -8,13 +8,25 @@ These formats use *deco*, a minimal, schema-driven, canonical, evolvable binary
 serialization format.
 
 Deco has only one type, the byte string. Since all native types are encoded as
-byte strings, an encoded deco value may not be decoded without knowing its
-type.
+byte strings, an encoded deco value may not be decoded without knowing its type.
 
-Deco is mostly canonical. With some exceptions, there is only one way to
-serialize a given value. Types which are designed to be extended are not
-guaranteed to have a canonical serialization, since they must accept and ignore
-data produced by newer versions of Filepack.
+Deco handles forward compatibility by allowing certain kinds of unexpected input
+to be ignored. This allows newer versions of Filepack to introduce changes while
+still being compatible with older versions.
+
+Unexpected input is classified as either "malformed" or "unknown".
+
+Malformed input is illegal and produces a decoding error when encountered.
+Examples of malformed input include byte strings that do not use the shortest
+possible encoding, truncated input, and invalid Unicode strings.
+
+Unknown input may be illegal and produce an error, or be ignored, depending on
+the context. For example, an optional struct field may be treated as absent if
+it contains unknown input. Examples of unknown input include unknown enum
+discriminants, language codes, and versions.
+
+Deco is mostly canonical. With the exception of unknown input, there is only one
+way to represent a given value.
 
 Byte Strings
 ------------
@@ -109,11 +121,11 @@ field number to field value. Absent optional fields are omitted.
 Structs with `#[deco(strict)]` attribute reject unknown fields. Structs without
 the attribute ignore unknown fields.
 
-Non-strict struct fields with type `Option<T>`, where `T` is an enum, are
-treated as absent if the encoded value is an unrecognized variant.
+Non-strict struct fields with type `Option<T>` are treated as absent if the
+encoded value contains unknown input.
 
-Field 0 is reserved for versioning. If field 0 is present, decoding fails with
-an unsupported version error.
+Field 0 is reserved for versioning. If field 0 is present, it is treated as
+unknown input.
 
 ### Examples
 
