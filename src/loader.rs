@@ -18,6 +18,13 @@ impl Loader {
       .context(error::UnarchiveManifest { path: &self.path })
   }
 
+  pub(crate) fn hashes(&self) -> Result<BTreeSet<Hash>> {
+    self
+      .archive
+      .hashes(self.options)
+      .context(error::UnarchiveManifest { path: &self.path })
+  }
+
   pub(crate) fn load(path: Option<&Utf8Path>) -> Result<Self> {
     Self::load_with_options(DecodeOptions::default(), path)
   }
@@ -59,13 +66,7 @@ impl Loader {
   }
 
   pub(crate) fn root(&self) -> &Utf8Path {
-    let parent = self.path.parent().unwrap();
-
-    if parent.is_empty() {
-      ".".into()
-    } else {
-      parent
-    }
+    self.path.containing_dir()
   }
 
   pub(crate) fn unpack(&self) -> Result<Manifest> {

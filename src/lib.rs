@@ -580,11 +580,7 @@ fn initialize_tracing() -> Result<(), Box<dyn std::error::Error>> {
 
   #[cfg(target_os = "linux")]
   fn journal_layer() -> Result<Option<tracing_journald::Layer>, Box<dyn std::error::Error>> {
-    if std::env::var_os("JOURNAL_STREAM").is_some_and(|value| !value.is_empty()) {
-      Ok(Some(tracing_journald::layer()?))
-    } else {
-      Ok(None)
-    }
+    Ok(Some(tracing_journald::layer()?))
   }
 
   #[cfg(not(target_os = "linux"))]
@@ -593,16 +589,41 @@ fn initialize_tracing() -> Result<(), Box<dyn std::error::Error>> {
     Ok(None)
   }
 
+  #[cfg(unix)]
+  fn stderr_is_journal() -> io::Result<bool> {
+    use std::os::{fd::AsFd, unix::fs::MetadataExt};
+
+    let Ok(journal_stream) = env::var("JOURNAL_STREAM") else {
+      return Ok(false);
+    };
+
+    let metadata = fs::File::from(io::stderr().as_fd().try_clone_to_owned()?).metadata()?;
+
+    Ok(journal_stream == format!("{}:{}", metadata.dev(), metadata.ino()))
+  }
+
+  #[cfg(not(unix))]
+  #[expect(clippy::unnecessary_wraps)]
+  fn stderr_is_journal() -> io::Result<bool> {
+    Ok(false)
+  }
+
   let filter = EnvFilter::builder()
     .with_default_directive(LevelFilter::ERROR.into())
     .with_env_var("FILEPACK_LOG")
     .from_env()?;
 
-  let journal = journal_layer()?;
+  let journal = if stderr_is_journal()? {
+    journal_layer()?
+  } else {
+    None
+  };
 
-  let stderr = journal
-    .is_none()
-    .then(|| tracing_subscriber::fmt::layer().with_writer(io::stderr));
+  let stderr = journal.is_none().then(|| {
+    tracing_subscriber::fmt::layer()
+      .with_ansi(io::stderr().is_terminal())
+      .with_writer(io::stderr)
+  });
 
   tracing_subscriber::registry()
     .with(filter)

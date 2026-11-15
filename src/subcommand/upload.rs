@@ -73,7 +73,10 @@ impl Upload {
       .context(archive_error::DirectoryDecode)
       .context(error_context)?;
 
-    context.client.put_file(hash, deco.to_vec().into())?;
+    if context.missing.contains(&hash) {
+      tracing::debug!("uploading directory `{file_path}`");
+      context.client.put_file(hash, deco.to_vec().into())?;
+    }
 
     for (component, entry) in &directory.entries {
       let file_path = file_path.join(component);
@@ -83,6 +86,7 @@ impl Upload {
         }
         EntryType::File => {
           if context.missing.contains(&entry.hash) {
+            tracing::debug!("uploading file `{file_path}`");
             Self::upload_package_file(context, entry, &file_path)?;
             context.progress_bar.item_done();
           }
@@ -208,12 +212,7 @@ impl Upload {
 
     let manifest_files = manifest.files();
 
-    let hashes = manifest_files
-      .values()
-      .map(|file| file.hash)
-      .collect::<BTreeSet<Hash>>();
-
-    let missing = client.missing_files(hashes)?;
+    let missing = client.missing_files(loader.hashes()?)?;
 
     let mut files = 0;
 
