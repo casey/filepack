@@ -218,7 +218,7 @@ fingerprint mismatch: `{}`
     }
 
     if self.print {
-      println!("{:#}", DisplayJson::<Output>(&manifest));
+      println!("{}", DisplayJson::<Output>(&manifest));
     }
 
     if !options.quiet {

@@ -85,8 +85,8 @@ fn quiet() {
   let public_key = test.read("keychain/master.public");
 
   test
-    .args(["--quiet", "signatures", "--format", "json", "foo"])
-    .stdout(format!("[\"{public_key}\"]\n"))
+    .args(["--quiet", "signatures", "foo"])
+    .stdout(format!("[\n  \"{public_key}\"\n]\n"))
     .success();
 }
 
@@ -104,8 +104,8 @@ fn signature() {
   let public_key = test.read("keychain/master.public");
 
   test
-    .args(["signatures", "--format", "json", "foo"])
-    .stdout(format!("[\"{public_key}\"]\n"))
+    .args(["signatures", "foo"])
+    .stdout(format!("[\n  \"{public_key}\"\n]\n"))
     .success();
 }
 
@@ -123,8 +123,8 @@ fn unknown_signatures_are_ignored() {
   let public_key = test.read("keychain/master.public");
 
   test
-    .args(["signatures", "--format", "json", "foo"])
+    .args(["signatures", "foo"])
     .stderr("ignored 1 unrecognized signature\n")
-    .stdout(format!("[\"{public_key}\"]\n"))
+    .stdout(format!("[\n  \"{public_key}\"\n]\n"))
     .success();
 }

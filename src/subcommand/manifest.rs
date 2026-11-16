@@ -2,8 +2,6 @@ use super::*;
 
 #[derive(Parser)]
 pub(crate) struct Manifest {
-  #[arg(long = "format", default_value_t, help = FORMAT_HELP)]
-  format: OutputFormat,
   #[arg(help = MANIFEST_PATH_HELP, value_hint = ValueHint::AnyPath)]
   path: Option<Utf8PathBuf>,
 }
@@ -23,10 +21,7 @@ impl Manifest {
       error::UnknownSignatures { count },
     }
 
-    match self.format {
-      OutputFormat::Json => println!("{}", DisplayJson::<Output>(&manifest)),
-      OutputFormat::JsonPretty => println!("{:#}", DisplayJson::<Output>(&manifest)),
-    }
+    println!("{}", DisplayJson::<Output>(&manifest));
 
     Ok(())
   }
