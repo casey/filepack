@@ -509,7 +509,7 @@ fn sign_creates_valid_signature() {
   let signature = manifest.signatures.first().unwrap().known().unwrap();
 
   assert_eq!(signature.public_key(), public_key);
-  assert!(signature.verify(fingerprint).unwrap().timestamp.is_none());
+  signature.verify(fingerprint).unwrap();
 }
 
 #[test]
@@ -554,40 +554,6 @@ fn sign_with_named_key() {
     .args(["verify", "foo"])
     .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
     .success();
-}
-
-#[test]
-fn sign_with_timestamp() {
-  use std::time::{SystemTime, UNIX_EPOCH};
-
-  let test = Test::new()
-    .arg("keygen")
-    .success()
-    .touch("foo/bar")
-    .args(["create", "--sign", "--timestamp", "foo"])
-    .success()
-    .args(["verify", "foo"])
-    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
-    .success();
-
-  let manifest_path = test.path().join("foo/manifest.filepack");
-  let fingerprint = fingerprint(&manifest_path);
-  let manifest = manifest(&manifest_path);
-
-  let public_key = test.read_public_key("keychain/master.public");
-
-  assert_eq!(manifest.signatures.len(), 1);
-
-  let signature = manifest.signatures.first().unwrap().known().unwrap();
-  assert_eq!(signature.public_key(), public_key);
-
-  let timestamp = signature.verify(fingerprint).unwrap().timestamp.unwrap();
-  let now = SystemTime::now()
-    .duration_since(UNIX_EPOCH)
-    .unwrap()
-    .as_secs();
-  let one_minute_ago = now - 60;
-  assert!(timestamp >= one_minute_ago && timestamp <= now);
 }
 
 #[test]

@@ -133,20 +133,10 @@ impl Manifest {
   pub(crate) fn sign(
     &mut self,
     fingerprint: Fingerprint,
-    options: SignOptions,
     keychain: &Keychain,
     key: &KeyName,
   ) -> Result {
-    let statement = Statement {
-      fingerprint,
-      timestamp: options
-        .timestamp
-        .then(now)
-        .transpose()
-        .context(error::Time)?,
-    };
-
-    let signature = keychain.sign(key, statement)?;
+    let signature = keychain.sign(key, Statement { fingerprint })?;
 
     self.signatures.insert(Decoded::Known(signature));
 

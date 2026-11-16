@@ -6,8 +6,6 @@ pub(crate) struct Sign {
   key: KeyName,
   #[arg(help = MANIFEST_PATH_HELP, value_hint = ValueHint::AnyPath)]
   path: Option<Utf8PathBuf>,
-  #[arg(help = TIMESTAMP_HELP, long)]
-  timestamp: bool,
 }
 
 pub(crate) type Input = ();
@@ -24,14 +22,7 @@ impl Sign {
 
     let keychain = Keychain::load(&options)?;
 
-    manifest.sign(
-      fingerprint,
-      SignOptions {
-        timestamp: self.timestamp,
-      },
-      &keychain,
-      &self.key,
-    )?;
+    manifest.sign(fingerprint, &keychain, &self.key)?;
 
     let archive = manifest.pack(loader.path())?;
 

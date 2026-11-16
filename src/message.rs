@@ -33,9 +33,6 @@ mod tests {
       /// Fingerprint.
       #[n(1)]
       fingerprint: Fingerprint,
-      /// Timestamp.
-      #[n(2)]
-      timestamp: Option<u64>,
     }
 
     impl Message for Impostor {
@@ -58,9 +55,6 @@ mod tests {
       /// Fingerprint.
       #[n(1)]
       fingerprint: Fingerprint,
-      /// Timestamp.
-      #[n(2)]
-      timestamp: Option<u64>,
     }
 
     impl Message for Twin {
@@ -82,12 +76,7 @@ mod tests {
     let fingerprint = Fingerprint::EXAMPLE.parse::<Fingerprint>().unwrap();
 
     assert_eq!(
-      private_key
-        .sign(Twin {
-          fingerprint,
-          timestamp: Some(0),
-        })
-        .to_string(),
+      private_key.sign(Twin { fingerprint }).to_string(),
       Attestation::EXAMPLE,
     );
 
@@ -135,7 +124,6 @@ mod tests {
     cases.case(
       Statement {
         fingerprint: Fingerprint::from_bytes([0; Fingerprint::LEN]),
-        timestamp: Some(1000),
       },
       0,
     );

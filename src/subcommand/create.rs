@@ -40,8 +40,6 @@ pub(crate) struct Create {
   root: Option<Utf8PathBuf>,
   #[arg(help = "Sign manifest", long)]
   sign: bool,
-  #[arg(help = TIMESTAMP_HELP, long)]
-  timestamp: bool,
 }
 
 pub(crate) type Input = ();
@@ -240,14 +238,7 @@ impl Create {
 
       let keychain = Keychain::load(&options)?;
 
-      manifest.sign(
-        fingerprint,
-        SignOptions {
-          timestamp: self.timestamp,
-        },
-        &keychain,
-        &self.key,
-      )?;
+      manifest.sign(fingerprint, &keychain, &self.key)?;
     }
 
     manifest.save(&manifest_path)?;

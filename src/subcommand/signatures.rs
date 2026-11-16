@@ -10,7 +10,7 @@ pub(crate) struct Signatures {
 
 pub(crate) type Input = ();
 
-pub(crate) type Output = Vec<SignatureEntry>;
+pub(crate) type Output = BTreeSet<PublicKey>;
 
 impl Signatures {
   pub(crate) fn run(self, options: Options) -> Result {
@@ -23,10 +23,8 @@ impl Signatures {
     let signatures = manifest
       .signatures()
       .map(|signature| {
-        Ok(SignatureEntry {
-          public_key: signature.public_key(),
-          timestamp: signature.verify(fingerprint)?.timestamp,
-        })
+        signature.verify(fingerprint)?;
+        Ok(signature.public_key())
       })
       .collect::<Result<Output>>()?;
 
@@ -40,9 +38,8 @@ impl Signatures {
       OutputFormat::Json => println!("{}", DisplayJson::<Output>(&signatures)),
       OutputFormat::JsonPretty => println!("{:#}", DisplayJson::<Output>(&signatures)),
       OutputFormat::Tsv => {
-        for signature in &signatures {
-          let timestamp = signature.timestamp.map_or_default(|t| t.to_string());
-          println!("{}\t{}", signature.public_key, timestamp);
+        for public_key in &signatures {
+          println!("{public_key}");
         }
       }
     }

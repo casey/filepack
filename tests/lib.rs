@@ -26,7 +26,7 @@ use {
     str,
     sync::{LazyLock, mpsc},
     thread,
-    time::{Duration, Instant, SystemTime, UNIX_EPOCH},
+    time::{Duration, Instant},
   },
   tempfile::{NamedTempFile, TempDir},
   tokio::runtime::Runtime,
