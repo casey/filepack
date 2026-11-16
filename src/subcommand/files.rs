@@ -21,11 +21,6 @@ impl Files {
     match self.format {
       OutputFormat::Json => println!("{}", DisplayJson::<Output>(&files)),
       OutputFormat::JsonPretty => println!("{:#}", DisplayJson::<Output>(&files)),
-      OutputFormat::Tsv => {
-        for (path, file) in files {
-          println!("{path}\t{}\t{}", file.hash, file.size);
-        }
-      }
     }
 
     Ok(())

@@ -41,20 +41,3 @@ fn files_json() {
     })
     .success();
 }
-
-#[test]
-fn files_tsv() {
-  Test::new()
-    .touch("foo/bar/baz")
-    .touch("foo/bar/bob")
-    .args(["create", "."])
-    .success()
-    .args(["files", "--format", "tsv"])
-    .stdout(format!(
-      "
-        foo/bar/baz\t{EMPTY_HASH}\t0
-        foo/bar/bob\t{EMPTY_HASH}\t0
-      "
-    ))
-    .success();
-}

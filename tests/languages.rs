@@ -15,11 +15,3 @@ fn json() {
     .stdout_regex("\\{.*\"en\":\"English\".*}\n")
     .success();
 }
-
-#[test]
-fn tsv() {
-  Test::new()
-    .args(["languages", "--format", "tsv"])
-    .stdout_regex(".*en\tEnglish\n.*")
-    .success();
-}
