@@ -1219,7 +1219,7 @@ fn metadata_subcommand_case_variant_error() {
 }
 
 #[test]
-fn metadata_subcommand_default() {
+fn metadata_subcommand_defaults_to_current_directory() {
   Test::new()
     .write("metadata.yaml", "title: Foo")
     .arg("create")
@@ -1232,17 +1232,6 @@ fn metadata_subcommand_default() {
         }
       "#,
     )
-    .success();
-}
-
-#[test]
-fn metadata_subcommand_format_json() {
-  Test::new()
-    .write("metadata.yaml", "title: Foo")
-    .arg("create")
-    .success()
-    .args(["metadata", "--format", "json"])
-    .stdout("{\"title\":\"Foo\"}\n")
     .success();
 }
 

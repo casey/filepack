@@ -26,8 +26,6 @@ mod size;
 mod upload;
 mod verify;
 
-const FORMAT_HELP: &str = "Print output with <FORMAT>";
-
 const MANIFEST_PATH_HELP: &str = "\
   Load manifest from <PATH>. May be path to manifest, to directory containing manifest named \
   `manifest.filepack`, or omitted, in which case manifest named `manifest.filepack` in the current \
@@ -68,7 +66,7 @@ pub(crate) enum Subcommand {
   #[command(about = "Generate key pair")]
   Keygen(keygen::Keygen),
   #[command(about = "List language codes")]
-  Languages(languages::Languages),
+  Languages,
   #[command(about = "List lint groups")]
   Lints,
   #[command(about = "Print man page")]
@@ -171,7 +169,7 @@ impl Subcommand {
       Self::Info => info::run(options),
       Self::Key(key) => key.run(options),
       Self::Keygen(keygen) => keygen.run(options),
-      Self::Languages(languages) => languages.run(),
+      Self::Languages => languages::run(),
       Self::Lints => lints::run(),
       Self::Man => man::run(),
       Self::Manifest(manifest) => manifest.run(),

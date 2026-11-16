@@ -4,11 +4,7 @@ pub(crate) struct DisplayJson<'a, T>(pub(crate) &'a T);
 
 impl<T: Serialize> Display for DisplayJson<'_, T> {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    if f.alternate() {
-      serde_json::to_writer_pretty(Writer(f), self.0).map_err(|_| fmt::Error)
-    } else {
-      serde_json::to_writer(Writer(f), self.0).map_err(|_| fmt::Error)
-    }
+    serde_json::to_writer_pretty(Writer(f), self.0).map_err(|_| fmt::Error)
   }
 }
 
@@ -32,8 +28,7 @@ mod tests {
 
   #[test]
   fn display() {
-    assert_eq!(DisplayJson(&["foo"]).to_string(), "[\"foo\"]");
-    assert_eq!(format!("{:#}", DisplayJson(&["foo"])), "[\n  \"foo\"\n]");
+    assert_eq!(DisplayJson(&["foo"]).to_string(), "[\n  \"foo\"\n]");
   }
 
   #[test]

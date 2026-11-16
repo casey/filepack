@@ -135,7 +135,6 @@ use {
     order::Order,
     ordinal::Ordinal,
     orientation::Orientation,
-    output_format::OutputFormat,
     owo_colorize_ext::OwoColorizeExt,
     package_identifier_error::PackageIdentifierError,
     package_metadata::PackageMetadata,
@@ -468,7 +467,6 @@ mod or;
 mod order;
 mod ordinal;
 mod orientation;
-mod output_format;
 mod owo_colorize_ext;
 mod package_identifier;
 mod package_identifier_error;

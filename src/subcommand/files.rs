@@ -2,8 +2,6 @@ use super::*;
 
 #[derive(Parser)]
 pub(crate) struct Files {
-  #[arg(long = "format", default_value_t, help = FORMAT_HELP)]
-  format: OutputFormat,
   #[arg(help = MANIFEST_PATH_HELP, value_hint = ValueHint::AnyPath)]
   path: Option<Utf8PathBuf>,
 }
@@ -18,10 +16,7 @@ impl Files {
 
     let files = manifest.files();
 
-    match self.format {
-      OutputFormat::Json => println!("{}", DisplayJson::<Output>(&files)),
-      OutputFormat::JsonPretty => println!("{:#}", DisplayJson::<Output>(&files)),
-    }
+    println!("{}", DisplayJson::<Output>(&files));
 
     Ok(())
   }

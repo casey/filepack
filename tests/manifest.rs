@@ -1,7 +1,7 @@
 use super::*;
 
 #[test]
-fn default_format() {
+fn defaults_to_current_directory() {
   Test::new()
     .touch("foo")
     .arg("create")
@@ -29,46 +29,6 @@ fn includes_embedded_files() {
     .success()
     .arg("manifest")
     .stdout_regex(r#".*"embedded": \{[^}].*"#)
-    .success();
-}
-
-#[test]
-fn json_format() {
-  Test::new()
-    .touch("foo")
-    .arg("create")
-    .success()
-    .args(["manifest", "--format", "json"])
-    .stdout(json! {
-      embedded: {},
-      package: {
-        foo: {
-          hash: EMPTY_HASH,
-          size: 0
-        }
-      },
-      signatures: [],
-    })
-    .success();
-}
-
-#[test]
-fn json_pretty_format() {
-  Test::new()
-    .touch("foo")
-    .arg("create")
-    .success()
-    .args(["manifest", "--format", "json-pretty"])
-    .stdout(json_pretty! {
-      embedded: {},
-      package: {
-        foo: {
-          hash: EMPTY_HASH,
-          size: 0
-        }
-      },
-      signatures: [],
-    })
     .success();
 }
 
