@@ -256,13 +256,15 @@ fn unknown_signatures_are_preserved() {
   let test = Test::new()
     .arg("keygen")
     .success()
+    .args(["keygen", "--name", "bar"])
+    .success()
     .touch("foo/bar")
     .args(["create", "--sign", "foo"])
     .success();
 
   let payload = add_unknown_signature(&test.path().join("foo/manifest.filepack"));
 
-  let test = test.args(["sign", "--timestamp", "foo"]).success();
+  let test = test.args(["sign", "--key", "bar", "foo"]).success();
 
   let manifest = manifest(&test.path().join("foo/manifest.filepack"));
 
@@ -297,56 +299,12 @@ fn updates_manifest_with_signature() {
   let manifest_path = test.path().join("foo/manifest.filepack");
   let fingerprint = fingerprint(&manifest_path);
   let manifest = manifest(&manifest_path);
-  assert!(
-    manifest
-      .signatures
-      .first()
-      .unwrap()
-      .known()
-      .unwrap()
-      .verify(fingerprint)
-      .unwrap()
-      .timestamp
-      .is_none()
-  );
-}
-
-#[test]
-fn with_timestamp() {
-  let test = Test::new()
-    .arg("keygen")
-    .success()
-    .touch("foo/bar")
-    .args(["create", "foo"])
-    .success();
-
-  let public_key = test.read("keychain/master.public");
-
-  let test = test
-    .args(["sign", "--timestamp", "foo/manifest.filepack"])
-    .success()
-    .args(["verify", "foo", "--key", &public_key])
-    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
-    .success();
-
-  let manifest_path = test.path().join("foo/manifest.filepack");
-  let fingerprint = fingerprint(&manifest_path);
-  let manifest = manifest(&manifest_path);
-
-  let time = manifest
+  manifest
     .signatures
     .first()
     .unwrap()
     .known()
     .unwrap()
     .verify(fingerprint)
-    .unwrap()
-    .timestamp
     .unwrap();
-  let now = SystemTime::now()
-    .duration_since(UNIX_EPOCH)
-    .unwrap()
-    .as_secs();
-  let one_minute_ago = now - 60;
-  assert!(time >= one_minute_ago && time <= now);
 }

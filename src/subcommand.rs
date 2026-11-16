@@ -33,8 +33,6 @@ const MANIFEST_PATH_HELP: &str = "\
   `manifest.filepack`, or omitted, in which case manifest named `manifest.filepack` in the current \
   directory is loaded.";
 
-const TIMESTAMP_HELP: &str = "Include current time in signature";
-
 #[derive(EnumDiscriminants, clap::Subcommand)]
 #[strum_discriminants(
   name(Name),

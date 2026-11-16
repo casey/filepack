@@ -146,7 +146,6 @@ Summary
   - [RelativePath](json/relative-path.md)
   - [Rotation](json/rotation.md)
   - [Signature\<Statement\>](json/signature-statement.md)
-  - [SignatureEntry](json/signature-entry.md)
   - [String](json/string.md)
   - [Text](json/text.md)
   - [Time](json/time.md)

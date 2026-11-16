@@ -161,9 +161,7 @@ use {
     server_url_error::ServerUrlError,
     shell::Shell,
     shortcut::Shortcut,
-    sign_options::SignOptions,
     signature::Signature,
-    signature_entry::SignatureEntry,
     signature_error::SignatureError,
     sort::Sort,
     sort_key::SortKey,
@@ -508,9 +506,7 @@ mod server_url;
 mod server_url_error;
 mod shell;
 mod shortcut;
-mod sign_options;
 mod signature;
-mod signature_entry;
 mod signature_error;
 mod sort;
 mod sort_key;

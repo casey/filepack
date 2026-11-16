@@ -86,33 +86,12 @@ fn quiet() {
 
   test
     .args(["--quiet", "signatures", "--format", "json", "foo"])
-    .stdout(format!("[{{\"public_key\":\"{public_key}\"}}]\n"))
+    .stdout(format!("[\"{public_key}\"]\n"))
     .success();
 }
 
 #[test]
-fn signature_with_time() {
-  let test = Test::new()
-    .arg("keygen")
-    .success()
-    .touch("foo/bar")
-    .args(["create", "foo"])
-    .success()
-    .args(["sign", "--timestamp", "foo"])
-    .success();
-
-  let public_key = test.read("keychain/master.public");
-
-  test
-    .args(["signatures", "--format", "json", "foo"])
-    .stdout_regex(&format!(
-      r#"\[\{{"public_key":"{public_key}","timestamp":\d+\}}\]\n"#,
-    ))
-    .success();
-}
-
-#[test]
-fn signature_without_time() {
+fn signature() {
   let test = Test::new()
     .arg("keygen")
     .success()
@@ -126,7 +105,7 @@ fn signature_without_time() {
 
   test
     .args(["signatures", "--format", "json", "foo"])
-    .stdout(format!("[{{\"public_key\":\"{public_key}\"}}]\n"))
+    .stdout(format!("[\"{public_key}\"]\n"))
     .success();
 }
 
@@ -145,26 +124,7 @@ fn tsv_format() {
 
   test
     .args(["signatures", "--format", "tsv", "foo"])
-    .stdout(format!("{public_key}\t\n"))
-    .success();
-}
-
-#[test]
-fn tsv_format_with_time() {
-  let test = Test::new()
-    .arg("keygen")
-    .success()
-    .touch("foo/bar")
-    .args(["create", "foo"])
-    .success()
-    .args(["sign", "--timestamp", "foo"])
-    .success();
-
-  let public_key = test.read("keychain/master.public");
-
-  test
-    .args(["signatures", "--format", "tsv", "foo"])
-    .stdout_regex(&format!("{public_key}\t\\d+\n"))
+    .stdout(format!("{public_key}\n"))
     .success();
 }
 
@@ -184,6 +144,6 @@ fn unknown_signatures_are_ignored() {
   test
     .args(["signatures", "--format", "json", "foo"])
     .stderr("ignored 1 unrecognized signature\n")
-    .stdout(format!("[{{\"public_key\":\"{public_key}\"}}]\n"))
+    .stdout(format!("[\"{public_key}\"]\n"))
     .success();
 }

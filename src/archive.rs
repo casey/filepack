@@ -622,7 +622,6 @@ mod tests {
 
     let statement = Statement {
       fingerprint: Fingerprint::from_bytes([0; Fingerprint::LEN]),
-      timestamp: None,
     };
 
     let manifest = Manifest {
@@ -705,10 +704,7 @@ mod tests {
     let fingerprint = Archive::pack(&manifest).unwrap().fingerprint().unwrap();
 
     let private_key = DisplayPrivateKey::EXAMPLE.parse::<PrivateKey>().unwrap();
-    let statement = Statement {
-      fingerprint,
-      timestamp: None,
-    };
+    let statement = Statement { fingerprint };
     let signature = private_key.sign(statement);
 
     let manifest = Manifest {
@@ -733,7 +729,6 @@ mod tests {
 
     let statement = Statement {
       fingerprint: Fingerprint::from_bytes([0; Fingerprint::LEN]),
-      timestamp: None,
     };
 
     let mut encoder = Encoder::new();
@@ -812,7 +807,6 @@ mod tests {
       private_key
         .sign(Statement {
           fingerprint: Fingerprint::from_bytes([0; Fingerprint::LEN]),
-          timestamp: None,
         })
         .encode_to_vec(),
     );
@@ -844,7 +838,6 @@ mod tests {
 
     let known = Decoded::Known(private_key.sign(Statement {
       fingerprint: Fingerprint::from_bytes([0; Fingerprint::LEN]),
-      timestamp: None,
     }));
 
     let unknown = {

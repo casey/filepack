@@ -87,7 +87,7 @@ mod tests {
   #[test]
   fn signature_begins_with_pubkey_and_fingerprint() {
     let prefix = format!(
-      "signature101a0{}02a401a0{}020003c0",
+      "signature101a0{}02a201a0{}03c0",
       &PublicKey::EXAMPLE["public1".len()..],
       &Fingerprint::EXAMPLE["package1".len()..],
     );
