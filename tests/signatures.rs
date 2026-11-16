@@ -110,25 +110,6 @@ fn signature() {
 }
 
 #[test]
-fn tsv_format() {
-  let test = Test::new()
-    .arg("keygen")
-    .success()
-    .touch("foo/bar")
-    .args(["create", "foo"])
-    .success()
-    .args(["sign", "foo"])
-    .success();
-
-  let public_key = test.read("keychain/master.public");
-
-  test
-    .args(["signatures", "--format", "tsv", "foo"])
-    .stdout(format!("{public_key}\n"))
-    .success();
-}
-
-#[test]
 fn unknown_signatures_are_ignored() {
   let test = Test::new()
     .arg("keygen")

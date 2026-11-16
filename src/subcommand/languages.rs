@@ -20,11 +20,6 @@ impl Languages {
     match self.format {
       OutputFormat::Json => println!("{}", DisplayJson::<Output>(&languages)),
       OutputFormat::JsonPretty => println!("{:#}", DisplayJson::<Output>(&languages)),
-      OutputFormat::Tsv => {
-        for (code, language) in &languages {
-          println!("{code}\t{language}");
-        }
-      }
     }
 
     Ok(())

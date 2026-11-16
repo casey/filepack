@@ -6,5 +6,4 @@ pub(crate) enum OutputFormat {
   Json,
   #[default]
   JsonPretty,
-  Tsv,
 }

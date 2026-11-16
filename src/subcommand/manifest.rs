@@ -3,7 +3,7 @@ use super::*;
 #[derive(Parser)]
 pub(crate) struct Manifest {
   #[arg(long = "format", default_value_t, help = FORMAT_HELP)]
-  format: OutputFormatJson,
+  format: OutputFormat,
   #[arg(help = MANIFEST_PATH_HELP, value_hint = ValueHint::AnyPath)]
   path: Option<Utf8PathBuf>,
 }
@@ -24,8 +24,8 @@ impl Manifest {
     }
 
     match self.format {
-      OutputFormatJson::Json => println!("{}", DisplayJson::<Output>(&manifest)),
-      OutputFormatJson::JsonPretty => println!("{:#}", DisplayJson::<Output>(&manifest)),
+      OutputFormat::Json => println!("{}", DisplayJson::<Output>(&manifest)),
+      OutputFormat::JsonPretty => println!("{:#}", DisplayJson::<Output>(&manifest)),
     }
 
     Ok(())

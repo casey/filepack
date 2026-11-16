@@ -37,11 +37,6 @@ impl Signatures {
     match self.format {
       OutputFormat::Json => println!("{}", DisplayJson::<Output>(&signatures)),
       OutputFormat::JsonPretty => println!("{:#}", DisplayJson::<Output>(&signatures)),
-      OutputFormat::Tsv => {
-        for public_key in &signatures {
-          println!("{public_key}");
-        }
-      }
     }
 
     Ok(())
