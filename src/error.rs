@@ -487,6 +487,8 @@ pub enum Error {
     status: StatusCode,
     url: Url,
   },
+  #[snafu(display("revision hash mismatch"))]
+  RevisionHashMismatch { backtrace: Option<Backtrace> },
   #[snafu(display(
     "package number {number} is at revision {server} on the server, but the last uploaded revision \
      is {local}"

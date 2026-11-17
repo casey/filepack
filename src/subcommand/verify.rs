@@ -22,6 +22,8 @@ pub(crate) struct Verify {
   manifest: Option<Utf8PathBuf>,
   #[arg(help = "Print manifest if verification is successful", long)]
   print: bool,
+  #[arg(help = "Verify current revision hash is <REVISION>", long)]
+  revision: Option<RevisionHash>,
   #[arg(
     help = "Verify files in <ROOT> directory against manifest, defaults to current directory",
     value_hint = ValueHint::DirPath
@@ -126,6 +128,22 @@ fingerprint mismatch: `{}`
         fingerprint.style(style.bad()),
       );
       return Err(error::FingerprintMismatch.build());
+    }
+
+    if let Some(expected) = self.revision
+      && revision_hash != expected
+    {
+      let style = Style::stderr();
+      eprintln!(
+        "\
+revision hash mismatch: `{}`
+              expected: {}
+                actual: {}",
+        loader.path(),
+        expected.style(style.good()),
+        revision_hash.style(style.bad()),
+      );
+      return Err(error::RevisionHashMismatch.build());
     }
 
     let bar = ProgressBar::bytes(&options, totals.file_size);
