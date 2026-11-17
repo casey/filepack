@@ -643,11 +643,9 @@ fn upload_records_state() {
     .args(["create", "."])
     .success();
 
-  let revision = RevisionObject {
-    package: fingerprint(&test.path().join("manifest.filepack")),
-    parents: None,
-  }
-  .hash();
+  let revision = fingerprint(&test.path().join("manifest.filepack"))
+    .revision()
+    .hash();
 
   let test = test
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
@@ -695,11 +693,9 @@ fn upload_rejects_stale_state() {
     )
     .success();
 
-  let root = RevisionObject {
-    package: fingerprint(&a.path().join("manifest.filepack")),
-    parents: None,
-  }
-  .hash();
+  let root = fingerprint(&a.path().join("manifest.filepack"))
+    .revision()
+    .hash();
 
   let b = Test::new()
     .write("foo", "bar")
@@ -720,7 +716,7 @@ fn upload_rejects_stale_state() {
     )
     .success();
 
-  let head = RevisionObject {
+  let head = Revision {
     package: fingerprint(&b.path().join("manifest.filepack")),
     parents: Some(NonEmptyOrderedSet::singleton(root)),
   }
@@ -808,11 +804,9 @@ fn upload_updates_implicitly() {
     .args(["create", "."])
     .success();
 
-  let root = RevisionObject {
-    package: fingerprint(&test.path().join("manifest.filepack")),
-    parents: None,
-  }
-  .hash();
+  let root = fingerprint(&test.path().join("manifest.filepack"))
+    .revision()
+    .hash();
 
   let test = test
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
@@ -838,7 +832,7 @@ fn upload_updates_implicitly() {
     .stderr("package number 0 is up to date\n")
     .success();
 
-  let head = RevisionObject {
+  let head = Revision {
     package: fingerprint(&test.path().join("manifest.filepack")),
     parents: Some(NonEmptyOrderedSet::singleton(root)),
   }

@@ -4,7 +4,7 @@ use super::*;
 pub enum PackageIdentifier {
   Fingerprint(Fingerprint),
   Number(u64),
-  Revision(Revision),
+  RevisionHash(RevisionHash),
 }
 
 #[cfg(test)]
@@ -19,7 +19,7 @@ impl Display for PackageIdentifier {
     match self {
       Self::Fingerprint(fingerprint) => write!(f, "{fingerprint}"),
       Self::Number(number) => write!(f, "{number}"),
-      Self::Revision(revision) => write!(f, "{revision}"),
+      Self::RevisionHash(revision) => write!(f, "{revision}"),
     }
   }
 }
@@ -33,7 +33,7 @@ impl FromStr for PackageIdentifier {
     } else if s.starts_with(Tag::Package.tag()) {
       Ok(Self::Fingerprint(s.parse()?))
     } else if s.starts_with(Tag::Revision.tag()) {
-      Ok(Self::Revision(s.parse()?))
+      Ok(Self::RevisionHash(s.parse()?))
     } else {
       Err(PackageIdentifierError::Unrecognized {
         identifier: s.into(),
@@ -76,8 +76,8 @@ mod tests {
       PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
     );
     case(
-      Revision::EXAMPLE,
-      PackageIdentifier::Revision(Revision::EXAMPLE.parse().unwrap()),
+      RevisionHash::EXAMPLE,
+      PackageIdentifier::RevisionHash(RevisionHash::EXAMPLE.parse().unwrap()),
     );
   }
 
@@ -98,6 +98,9 @@ mod tests {
       "package1ZZ",
       "package fingerprint contains invalid hex digit `Z`",
     );
-    case("revision1ZZ", "revision contains invalid hex digit `Z`");
+    case(
+      "revision1ZZ",
+      "revision hash contains invalid hex digit `Z`",
+    );
   }
 }

@@ -144,9 +144,9 @@ pub(crate) fn verify_subpackage(
     },
   }
 
-  let revision = expected.revision();
+  let revision_hash = expected.revision().hash();
   for signature in manifest.signatures() {
-    signature.verify(revision)?;
+    signature.verify(revision_hash)?;
   }
 
   Ok(())

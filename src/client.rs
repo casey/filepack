@@ -45,7 +45,7 @@ impl Client {
     self.request(self.client.head(self.url(path)))?.found()
   }
 
-  pub(crate) fn is_head(&self, revision: Revision) -> Result<bool> {
+  pub(crate) fn is_head(&self, revision: RevisionHash) -> Result<bool> {
     self.head(&format!("api/head/{revision}"))
   }
 
@@ -171,7 +171,7 @@ impl Client {
 
   pub(crate) fn verify_revision(
     &self,
-    revision: Revision,
+    revision: RevisionHash,
     request: api::revision::Request,
   ) -> Result<u64> {
     Ok(

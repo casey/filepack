@@ -120,7 +120,7 @@ mod tests {
       let signature = DisplayPrivateKey::EXAMPLE
         .parse::<PrivateKey>()
         .unwrap()
-        .sign(fingerprint.revision());
+        .sign(fingerprint.revision().hash());
 
       let signature_file = builder.file(signature.encode_to_vec());
       let signatures = directory(

@@ -493,9 +493,9 @@ pub enum Error {
   ))]
   RevisionStale {
     backtrace: Option<Backtrace>,
-    local: Revision,
+    local: RevisionHash,
     number: u64,
-    server: Revision,
+    server: RevisionHash,
   },
   #[snafu(display("failed to install rustls ring crypto provider"))]
   RustlsProvider { backtrace: Option<Backtrace> },
@@ -522,8 +522,8 @@ pub enum Error {
   #[snafu(display("signature revision `{signature}` does not match package revision `{package}`"))]
   SignatureRevisionMismatch {
     backtrace: Option<Backtrace>,
-    package: Revision,
-    signature: Revision,
+    package: RevisionHash,
+    signature: RevisionHash,
   },
   #[snafu(display(
     "file with hash `{hash}` has size {manifest} in manifest but size {disk} on disk"

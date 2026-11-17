@@ -151,7 +151,7 @@ use {
     resolved::Resolved,
     resource::Resource,
     resource_type::ResourceType,
-    revision::Revision,
+    revision_hash::RevisionHash,
     rotation::Rotation,
     server::Server,
     server_error::ServerError,
@@ -306,7 +306,7 @@ pub use self::{
   private_key::PrivateKey,
   public_key::PublicKey,
   reference::Reference,
-  revision_object::RevisionObject,
+  revision::Revision,
   server_state::ServerState,
   state::State,
   tag::Tag,
@@ -492,7 +492,7 @@ mod resolved;
 mod resource;
 mod resource_type;
 mod revision;
-mod revision_object;
+mod revision_hash;
 mod rotation;
 mod server;
 mod server_error;
@@ -560,7 +560,7 @@ type FilesystemResult<T = ()> = Result<T, FilesystemError>;
 type PageResult<T> = Result<PageHtml<T>, PageError>;
 type ServerResult<T = ()> = Result<T, ServerError>;
 
-type Attestation = Signature<Revision>;
+type Attestation = Signature<RevisionHash>;
 type Token = Signature<Claims>;
 
 fn initialize_tracing() -> Result<(), Box<dyn std::error::Error>> {

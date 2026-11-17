@@ -380,7 +380,7 @@ impl TestServer {
     TestRequestBuilder::new(Method::POST, path, self.router.clone())
   }
 
-  fn publish(&self, fingerprint: Fingerprint, number: u64) -> Revision {
+  fn publish(&self, fingerprint: Fingerprint, number: u64) -> RevisionHash {
     self.post(format!("/api/package/{fingerprint}")).send();
 
     let revision = self.write_revision(fingerprint, None);
@@ -417,9 +417,9 @@ impl TestServer {
   fn write_revision(
     &self,
     package: Fingerprint,
-    parents: impl IntoIterator<Item = Revision>,
-  ) -> Revision {
-    let parents = parents.into_iter().collect::<Vec<Revision>>();
+    parents: impl IntoIterator<Item = RevisionHash>,
+  ) -> RevisionHash {
+    let parents = parents.into_iter().collect::<Vec<RevisionHash>>();
 
     let parents = if parents.is_empty() {
       None
@@ -427,11 +427,11 @@ impl TestServer {
       Some(parents.try_into().unwrap())
     };
 
-    let revision_object = RevisionObject { package, parents };
+    let revision = Revision { package, parents };
 
-    self.write_file(&revision_object.encode_to_vec());
+    self.write_file(&revision.encode_to_vec());
 
-    revision_object.hash()
+    revision.hash()
   }
 }
 
@@ -962,11 +962,7 @@ fn corrupt_revision() {
 
   let fingerprint = PackageBuilder::new().file("foo", b"foo").upload(&server);
 
-  let revision = RevisionObject {
-    package: fingerprint,
-    parents: None,
-  }
-  .hash();
+  let revision = fingerprint.revision().hash();
 
   fs::write(
     server
@@ -1354,9 +1350,12 @@ fn fingerprint_redirects_to_package() {
     .send();
 
   TestServer::new()
-    .get(format!("/{}", Revision::EXAMPLE))
+    .get(format!("/{}", RevisionHash::EXAMPLE))
     .status(StatusCode::PERMANENT_REDIRECT)
-    .assert_header(header::LOCATION, format!("/package/{}", Revision::EXAMPLE))
+    .assert_header(
+      header::LOCATION,
+      format!("/package/{}", RevisionHash::EXAMPLE),
+    )
     .send();
 }
 
@@ -1376,7 +1375,7 @@ fn gc_ignores_missing_mounts() {
       None,
     )
     .mount(
-      PackageIdentifier::Revision(Revision::EXAMPLE.parse().unwrap()),
+      PackageIdentifier::RevisionHash(RevisionHash::EXAMPLE.parse().unwrap()),
       None,
     )
     .build()
@@ -1451,12 +1450,9 @@ fn gc_removes_unreachable_and_retains_reachable_data() {
 
   let fingerprint = package.upload(&server);
 
-  let revision_object = RevisionObject {
-    package: fingerprint,
-    parents: None,
-  };
+  let revision = fingerprint.revision();
 
-  let revision = revision_object.hash();
+  let revision_hash = revision.hash();
 
   server.delete("/api/number/1").send();
 
@@ -1467,17 +1463,17 @@ fn gc_removes_unreachable_and_retains_reachable_data() {
         bytes: root_deco.len().into_u64()
           + subdirectory_deco.len().into_u64()
           + 3
-          + revision_object.encode_to_vec().len().into_u64(),
+          + revision.encode_to_vec().len().into_u64(),
         directories: BTreeSet::from([root_hash, subdirectory_hash]).into(),
         files: BTreeSet::from([
           root_hash,
           subdirectory_hash,
           Hash::bytes(b"baz"),
-          revision.into(),
+          revision_hash.into(),
         ])
         .into(),
         packages: BTreeSet::from([fingerprint]).into(),
-        revisions: BTreeSet::from([revision]).into(),
+        revisions: BTreeSet::from([revision_hash]).into(),
       }
       .encode_to_vec(),
     )
@@ -1562,10 +1558,7 @@ fn gc_retains_package_mounted_by_fingerprint() {
 
   server.delete("/api/number/0").send();
 
-  let revision = RevisionObject {
-    package: fingerprint,
-    parents: None,
-  };
+  let revision = fingerprint.revision();
 
   server
     .post("/api/gc")
@@ -1585,14 +1578,10 @@ fn gc_retains_package_mounted_by_fingerprint() {
 fn gc_retains_package_mounted_by_revision() {
   let package = PackageBuilder::new().file("foo", b"bar");
 
-  let revision = RevisionObject {
-    package: package.fingerprint(),
-    parents: None,
-  }
-  .hash();
+  let revision = package.fingerprint().revision().hash();
 
   let server = TestServer::builder()
-    .mount(PackageIdentifier::Revision(revision), None)
+    .mount(PackageIdentifier::RevisionHash(revision), None)
     .build();
 
   package.upload(&server);
@@ -1618,7 +1607,7 @@ fn gc_shares_ancestors() {
   let bar = Fingerprint(bar.root.upload(&server));
   server.post(format!("/api/package/{bar}")).send();
 
-  let head_object = RevisionObject {
+  let revision = Revision {
     package: bar,
     parents: Some(NonEmptyOrderedSet::singleton(root)),
   };
@@ -1658,7 +1647,7 @@ fn gc_shares_ancestors() {
     .post("/api/gc")
     .assert_body(
       api::gc::Response {
-        bytes: bar_deco.len().into_u64() + 3 + head_object.encode_to_vec().len().into_u64(),
+        bytes: bar_deco.len().into_u64() + 3 + revision.encode_to_vec().len().into_u64(),
         directories: BTreeSet::from([bar_hash]).into(),
         files: BTreeSet::from([bar_hash, Hash::bytes(b"bar"), head.into()]).into(),
         packages: BTreeSet::from([bar]).into(),
@@ -1766,7 +1755,7 @@ fn get_package_by_revision() {
     .assert_page(PackageHtml {
       directory: foo_directory,
       fingerprint: foo,
-      identifier: PackageIdentifier::Revision(root),
+      identifier: PackageIdentifier::RevisionHash(root),
       revision: Some(root),
       revisions: Some(1),
       totals: Totals {
@@ -1802,7 +1791,7 @@ fn get_package_by_revision() {
 
 #[test]
 fn get_package_by_revision_not_found() {
-  let revision = Revision::from(Hash::bytes(b"foo"));
+  let revision = RevisionHash::from(Hash::bytes(b"foo"));
 
   TestServer::new()
     .get(format!("/package/{revision}"))
@@ -1848,7 +1837,7 @@ fn get_package_history() {
   server
     .get(format!("/package/{root}/history"))
     .assert_page(HistoryHtml {
-      identifier: PackageIdentifier::Revision(root),
+      identifier: PackageIdentifier::RevisionHash(root),
       revisions: vec![root],
     })
     .send();
@@ -2884,11 +2873,7 @@ fn mount_file() {
 
   let fingerprint = package.fingerprint();
 
-  let revision = RevisionObject {
-    package: fingerprint,
-    parents: None,
-  }
-  .hash();
+  let revision = fingerprint.revision().hash();
 
   let identifiers = [
     (
@@ -2897,7 +2882,7 @@ fn mount_file() {
     ),
     (PackageIdentifier::Number(0), "no-cache"),
     (
-      PackageIdentifier::Revision(revision),
+      PackageIdentifier::RevisionHash(revision),
       "public, max-age=31536000, immutable",
     ),
   ];
@@ -4933,22 +4918,19 @@ fn verify_package_replace() {
     )
     .send();
 
-  let revision_object = RevisionObject {
-    package: foo,
-    parents: None,
-  };
+  let revision = foo.revision();
 
-  let revision = revision_object.hash();
+  let revision_hash = revision.hash();
 
   server
     .post("/api/gc")
     .assert_body(
       api::gc::Response {
-        bytes: foo_deco.len().into_u64() + 3 + revision_object.encode_to_vec().len().into_u64(),
+        bytes: foo_deco.len().into_u64() + 3 + revision.encode_to_vec().len().into_u64(),
         directories: BTreeSet::from([foo_hash]).into(),
-        files: BTreeSet::from([foo_hash, Hash::bytes(b"foo"), revision.into()]).into(),
+        files: BTreeSet::from([foo_hash, Hash::bytes(b"foo"), revision_hash.into()]).into(),
         packages: BTreeSet::from([foo]).into(),
-        revisions: BTreeSet::from([revision]).into(),
+        revisions: BTreeSet::from([revision_hash]).into(),
       }
       .encode_to_vec(),
     )
@@ -5097,11 +5079,7 @@ fn verify_package_reuses_revision() {
 
   let fingerprint = PackageBuilder::new().file("foo", b"foo").upload(&server);
 
-  let revision = RevisionObject {
-    package: fingerprint,
-    parents: None,
-  }
-  .hash();
+  let revision = fingerprint.revision().hash();
 
   server.delete("/api/number/0").send();
 
@@ -5141,7 +5119,7 @@ fn verify_revision_decode_error() {
   let junk = b"foo";
   server.write_file(junk);
 
-  let revision = Revision::from(Hash::bytes(junk));
+  let revision = RevisionHash::from(Hash::bytes(junk));
 
   server
     .post(format!("/api/revision/{revision}"))
@@ -5160,7 +5138,7 @@ fn verify_revision_decode_error() {
 fn verify_revision_not_found() {
   let server = TestServer::new();
 
-  let revision = Revision::from(Hash::bytes(b"foo"));
+  let revision = RevisionHash::from(Hash::bytes(b"foo"));
 
   server
     .post(format!("/api/revision/{revision}"))
@@ -5204,7 +5182,7 @@ fn verify_revision_parent_not_found() {
   let fingerprint = Fingerprint(package.root.upload(&server));
   server.post(format!("/api/package/{fingerprint}")).send();
 
-  let parent = Revision::from(Hash::bytes(b"bar"));
+  let parent = RevisionHash::from(Hash::bytes(b"bar"));
 
   let revision = server.write_revision(fingerprint, Some(parent));
 

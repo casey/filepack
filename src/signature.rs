@@ -89,7 +89,7 @@ mod tests {
     let prefix = format!(
       "signature101a0{}02a0{}03c0",
       &PublicKey::EXAMPLE["public1".len()..],
-      &Revision::EXAMPLE["revision1".len()..],
+      &RevisionHash::EXAMPLE["revision1".len()..],
     );
     assert!(Attestation::EXAMPLE.starts_with(&prefix));
     assert_eq!(Attestation::EXAMPLE.len(), prefix.len() + 128);

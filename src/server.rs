@@ -8,11 +8,11 @@ use {
 };
 
 const DIRECTORIES: TableDefinition<Hash, ()> = TableDefinition::new("directories");
-const HEADS: MultimapTableDefinition<Revision, u64> = MultimapTableDefinition::new("heads");
+const HEADS: MultimapTableDefinition<RevisionHash, u64> = MultimapTableDefinition::new("heads");
 const METADATA: TableDefinition<DatabaseMetadata, u64> = TableDefinition::new("metadata");
-const NUMBERS: TableDefinition<u64, Revision> = TableDefinition::new("numbers");
+const NUMBERS: TableDefinition<u64, RevisionHash> = TableDefinition::new("numbers");
 const PACKAGES: TableDefinition<Fingerprint, ()> = TableDefinition::new("packages");
-const REVISIONS: TableDefinition<Revision, ()> = TableDefinition::new("revisions");
+const REVISIONS: TableDefinition<RevisionHash, ()> = TableDefinition::new("revisions");
 const SCHEMA_VERSION: u64 = 9;
 
 pub(crate) struct Server {
@@ -144,7 +144,7 @@ impl Server {
         .open_table(NUMBERS)?
         .iter()?
         .map(|entry| Ok(entry?.1.value()))
-        .collect::<ServerResult<Vec<Revision>>>()?;
+        .collect::<ServerResult<Vec<RevisionHash>>>()?;
 
       for mount in mounts {
         match mount.package {
@@ -154,7 +154,7 @@ impl Server {
             }
           }
           PackageIdentifier::Number(_) => {}
-          PackageIdentifier::Revision(revision) => {
+          PackageIdentifier::RevisionHash(revision) => {
             if revisions.get(&revision)?.is_some() {
               revision_stack.push(revision);
             }
@@ -167,15 +167,15 @@ impl Server {
           continue;
         }
 
-        let revision_object = self.read_revision(current)?;
+        let revision = self.read_revision(current)?;
 
-        directory_stack.push(revision_object.package.into());
+        directory_stack.push(revision.package.into());
 
-        revision_stack.extend(revision_object.parents());
+        revision_stack.extend(revision.parents());
       }
 
       for entry in revisions
-        .extract_from_if::<Revision, _>(.., |revision, ()| !marked.contains(&revision.into()))?
+        .extract_from_if::<RevisionHash, _>(.., |revision, ()| !marked.contains(&revision.into()))?
       {
         revisions_removed.insert(entry?.0.value());
       }
@@ -271,7 +271,7 @@ impl Server {
     })
   }
 
-  fn history(&self, revision: Revision) -> ServerResult<Vec<Revision>> {
+  fn history(&self, revision: RevisionHash) -> ServerResult<Vec<RevisionHash>> {
     let mut revisions = Vec::new();
 
     let mut revision = Some(revision);
@@ -300,7 +300,7 @@ impl Server {
     })
   }
 
-  pub(crate) fn is_head(&self, revision: Revision) -> ServerResult<bool> {
+  pub(crate) fn is_head(&self, revision: RevisionHash) -> ServerResult<bool> {
     Ok(
       !self
         .database
@@ -471,7 +471,7 @@ impl Server {
             false
           }
         }
-        PackageIdentifier::Revision(mount) => {
+        PackageIdentifier::RevisionHash(mount) => {
           revisions.get(&mount)?.is_some() && self.read_revision(mount)?.package == fingerprint
         }
       };
@@ -556,7 +556,7 @@ impl Server {
     let parents = revision
       .map(|revision| self.read_revision(revision))
       .transpose()?
-      .map_or_default(|revision_object| revision_object.parents().to_vec());
+      .map_or_default(|revision| revision.parents().to_vec());
 
     let revisions = history.as_ref().map(|history| history.len().into_u64());
 
@@ -706,8 +706,8 @@ impl Server {
     })
   }
 
-  fn read_revision(&self, revision: Revision) -> ServerResult<RevisionObject> {
-    RevisionObject::decode_from_slice(&self.read_file(revision.into())?)
+  fn read_revision(&self, revision: RevisionHash) -> ServerResult<Revision> {
+    Revision::decode_from_slice(&self.read_file(revision.into())?)
       .context(server_error::RevisionCorrupt { revision })
   }
 
@@ -740,7 +740,7 @@ impl Server {
           revision: Some(revision),
         })
       }
-      PackageIdentifier::Revision(revision) => {
+      PackageIdentifier::RevisionHash(revision) => {
         ensure!(
           tx.open_table(REVISIONS)?.get(&revision)?.is_some(),
           server_error::RevisionNotFound { revision },
@@ -909,17 +909,20 @@ impl Server {
 
   pub(crate) fn verify_revision(
     &self,
-    revision: Revision,
+    revision_hash: RevisionHash,
     request: api::revision::Request,
   ) -> ServerResult<u64> {
     let tx = self.database.begin_write()?;
 
-    let revision_object = RevisionObject::decode_from_slice(&self.read_file(revision.into())?)
-      .context(server_error::RevisionDecode { revision })?;
+    let revision = Revision::decode_from_slice(&self.read_file(revision_hash.into())?).context(
+      server_error::RevisionDecode {
+        revision: revision_hash,
+      },
+    )?;
 
-    let fingerprint = revision_object.package;
+    let fingerprint = revision.package;
 
-    let parents = revision_object.parents();
+    let parents = revision.parents();
 
     ensure!(
       tx.open_table(PACKAGES)?.get(&fingerprint)?.is_some(),
@@ -934,18 +937,24 @@ impl Server {
       for &parent in parents {
         ensure!(
           revisions.get(&parent)?.is_some(),
-          server_error::RevisionParentNotFound { parent, revision },
+          server_error::RevisionParentNotFound {
+            parent,
+            revision: revision_hash,
+          },
         );
       }
 
       match request.mode {
         api::revision::Mode::New => {
           if let Some(&parent) = parents.first() {
-            return Err(ServerError::RevisionParentUnexpected { parent, revision });
+            return Err(ServerError::RevisionParentUnexpected {
+              parent,
+              revision: revision_hash,
+            });
           }
 
           let existing = heads
-            .get(&revision)?
+            .get(&revision_hash)?
             .next()
             .transpose()?
             .map(|number| number.value());
@@ -956,9 +965,9 @@ impl Server {
             let mut metadata = tx.open_table(METADATA)?;
             let number = metadata.get(DatabaseMetadata::Number)?.unwrap().value();
             metadata.insert(DatabaseMetadata::Number, &(number + 1))?;
-            revisions.insert(&revision, &())?;
-            heads.insert(&revision, &number)?;
-            numbers.insert(&number, &revision)?;
+            revisions.insert(&revision_hash, &())?;
+            heads.insert(&revision_hash, &number)?;
+            numbers.insert(&number, &revision_hash)?;
             number
           }
         }
@@ -968,11 +977,11 @@ impl Server {
             .context(server_error::PackageNumberNotFound { number })?
             .value();
 
-          if head != revision {
-            revisions.insert(&revision, &())?;
+          if head != revision_hash {
+            revisions.insert(&revision_hash, &())?;
             heads.remove(&head, &number)?;
-            heads.insert(&revision, &number)?;
-            numbers.insert(&number, &revision)?;
+            heads.insert(&revision_hash, &number)?;
+            numbers.insert(&number, &revision_hash)?;
           }
 
           number
@@ -983,12 +992,12 @@ impl Server {
             .context(server_error::PackageNumberNotFound { number })?
             .value();
 
-          if head != revision {
+          if head != revision_hash {
             let Some(&parent) = parents.first() else {
               return Err(ServerError::RevisionParentMissing {
                 head,
                 number,
-                revision,
+                revision: revision_hash,
               });
             };
 
@@ -1001,10 +1010,10 @@ impl Server {
               },
             );
 
-            revisions.insert(&revision, &())?;
+            revisions.insert(&revision_hash, &())?;
             heads.remove(&head, &number)?;
-            heads.insert(&revision, &number)?;
-            numbers.insert(&number, &revision)?;
+            heads.insert(&revision_hash, &number)?;
+            numbers.insert(&number, &revision_hash)?;
           }
 
           number

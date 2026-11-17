@@ -9,6 +9,6 @@ pub enum Parameter {
   Ordinal,
   PackageIdentifier,
   RelativePath,
-  Revision,
+  RevisionHash,
   String,
 }

@@ -273,7 +273,7 @@ To print your public key for verification:
 filepack key
 ```
 
-Signatures identify a package by revision, which commits to the package
+Signatures identify a package by revision hash, which commits to the package
 fingerprint. If you update the package and its fingerprint or revision changes,
 old signatures will not be valid for the new package.
 
@@ -322,7 +322,7 @@ server. To upload to the fictitious `example.com` server and authorize with your
 filepack upload --auth master --server example.com
 ```
 
-After uploading, the uploaded package number and revision will be saved to
+After uploading, the uploaded package number and revision hash will be saved to
 `.filepack/state.json` in the package root.
 
 The package may be regenerated and a new revision published to the same package

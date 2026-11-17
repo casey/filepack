@@ -26,7 +26,7 @@ pub enum Tag {
   Private,
   /// Public key.
   Public,
-  /// Hash of a revision object.
+  /// Hash of a revision.
   Revision,
   /// Signature over a package.
   Signature,
@@ -41,7 +41,7 @@ impl Tag {
       Self::Package => "package fingerprint",
       Self::Private => "private key",
       Self::Public => "public key",
-      Self::Revision => "revision",
+      Self::Revision => "revision hash",
       Self::Signature => "signature",
       Self::Token => "token",
     }

@@ -141,10 +141,10 @@ Package Numbers and Revisions
 -----------------------------
 
 When a client uploads a package to the server, it creates and uploads a
-[revision object](deco/revision-object.md), similar to a
+[revision](deco/revision.md), similar to a
 [Git](https://en.wikipedia.org/wiki/Git) commit.
 
-Revision objects have a `package` field containing a package fingerprint, and a
+Revisions have a `package` field containing a package fingerprint, and a
 `parents` field containing a set of parent revision hashes.
 
 Uploaded packages are assigned sequential package numbers starting from zero.
@@ -154,7 +154,8 @@ A package revision with a number is a head.
 
 Newly uploaded packages are assigned numbers and are thus heads. When a new
 revision of the same package is published, the package number is updated to
-point at the new revision, whose parents field contains the old head revision.
+point at the new revision, whose parents field contains the hash of the old head
+revision.
 
 Server URLs
 -----------
@@ -259,8 +260,8 @@ Garbage Collection
 
 Deleting a package causes the package number to no longer point to a package,
 and replacing a package causes the number to point at a different package. These
-packages are still served by fingerprint and revision, and their files are not
-immediately removed from the server.
+packages are still served by fingerprint and revision hash, and their files are
+not immediately removed from the server.
 
 After a package is deleted or replaced, running `filepack gc` will remove all
 packages and package files which are not reachable from the current heads or
@@ -268,7 +269,7 @@ mounted packages.
 
 Previous versions of updated packages are still reachable from the parent
 revisions of the new head revisions, and will continue to be served by
-fingerprint and revision.
+fingerprint and revision hash.
 
 If a file uploaded with `filepack upload --file` is not reachable from any
 package head, it will be deleted by the next run of `filepack gc`.
@@ -296,8 +297,8 @@ filepack serve --mount PACKAGE
 ```
 
 When mounted, `/mount/{package}/`, where `package` is a mounted package
-fingerprint, revision, or number, returns `static/index.html` of the mounted
-package, and `/mount/{package}/{path}` returns the package file at
+fingerprint, revision hash, or number, returns `static/index.html` of the
+mounted package, and `/mount/{package}/{path}` returns the package file at
 `static/{path}`.
 
 Mounted files are served unsandboxed from the server origin with unrestricted

@@ -180,24 +180,28 @@ impl Upload {
       None
     };
 
-    let revision_object = RevisionObject {
+    let revision = Revision {
       package: fingerprint,
       parents: parent.map(NonEmptyOrderedSet::singleton),
     };
 
-    let revision = revision_object.hash();
+    let revision_hash = revision.hash();
 
-    if self.replace.is_none() && update.is_none() && client.is_head(revision)? {
+    if self.replace.is_none() && update.is_none() && client.is_head(revision_hash)? {
       let number = client.verify_revision(
-        revision,
+        revision_hash,
         api::revision::Request {
           mode: api::revision::Mode::New,
         },
       )?;
 
-      state
-        .servers
-        .insert(server, ServerState { number, revision });
+      state.servers.insert(
+        server,
+        ServerState {
+          number,
+          revision: revision_hash,
+        },
+      );
 
       state.save(&root)?;
 
@@ -245,7 +249,7 @@ impl Upload {
 
     context
       .client
-      .put_file(revision.into(), revision_object.encode_to_vec().into())?;
+      .put_file(revision_hash.into(), revision.encode_to_vec().into())?;
 
     let (mode, verb) = match (self.replace, update) {
       (Some(number), None) => (api::revision::Mode::Replace { number }, "replaced"),
@@ -256,11 +260,15 @@ impl Upload {
 
     let number = context
       .client
-      .verify_revision(revision, api::revision::Request { mode })?;
+      .verify_revision(revision_hash, api::revision::Request { mode })?;
 
-    state
-      .servers
-      .insert(server, ServerState { number, revision });
+    state.servers.insert(
+      server,
+      ServerState {
+        number,
+        revision: revision_hash,
+      },
+    );
 
     state.save(&root)?;
 

@@ -11,10 +11,10 @@ pub struct PackageHtml {
   pub mounted: bool,
   pub next: Option<u64>,
   pub number: Option<u64>,
-  pub parents: Vec<Revision>,
+  pub parents: Vec<RevisionHash>,
   pub prev: Option<u64>,
   pub readme: Option<Hash>,
-  pub revision: Option<Revision>,
+  pub revision: Option<RevisionHash>,
   pub revisions: Option<u64>,
   pub totals: Totals,
 }
@@ -562,10 +562,10 @@ mod tests {
         mounted: true,
         number: Some(0),
         parents: vec![
-          Revision::EXAMPLE.parse().unwrap(),
-          Revision::from(Hash::bytes(b"foo")),
+          RevisionHash::EXAMPLE.parse().unwrap(),
+          RevisionHash::from(Hash::bytes(b"foo")),
         ],
-        revision: Some(Revision::EXAMPLE.parse().unwrap()),
+        revision: Some(RevisionHash::EXAMPLE.parse().unwrap()),
         revisions: Some(2),
         totals: Totals {
           directories: 0,
@@ -675,8 +675,8 @@ mod tests {
         ",
         directory = Hash::from(Fingerprint::EXAMPLE.parse::<Fingerprint>().unwrap()),
         fingerprint = Fingerprint::EXAMPLE,
-        merge = Revision::from(Hash::bytes(b"foo")),
-        revision = Revision::EXAMPLE,
+        merge = RevisionHash::from(Hash::bytes(b"foo")),
+        revision = RevisionHash::EXAMPLE,
       )),
     );
   }

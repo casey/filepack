@@ -90,19 +90,19 @@ Filepack signatures are detached to allow multiple, after-the-fact signatures,
 by both first and third parties.
 
 The primary alternative would be embedded signatures, where a package
-identifier, either a fingerprint or revision, commits to signatures. Detached
-signatures allow packages to be signed after they are created, without changing
-the package fingerprint or revision hash. Embedded signatures would have the
-benefit of being inseparable from packages, whereas detached signatures must be
-transported separately, and the Filepack server does not yet support upload and
-download of signatures.
+identifier, either a fingerprint or revision hash, commits to signatures.
+Detached signatures allow packages to be signed after they are created, without
+changing the package fingerprint or revision hash. Embedded signatures would
+have the benefit of being inseparable from packages, whereas detached signatures
+must be transported separately, and the Filepack server does not yet support
+upload and download of signatures.
 
 Messages are prehashed with BLAKE3 before signing with Ed25519. This makes the
 signing interface a consistent 32-byte digest, and introduces no new security
 assumptions, since Filepack as a whole already relies on the security of BLAKE3.
 
 The signed message is a [deco-encoded](deco.md)
-[Envelope](deco/envelope-revision.md), which serializes to an unambiguous
+[Envelope](deco/envelope-revision-hash.md), which serializes to an unambiguous
 encoding that commits to the application, within-application context, and
 message. The application, in this case the string `"filepack"`, ensures
 cross-protocol domain separation, and the context, the integer `0` for package

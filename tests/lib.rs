@@ -6,7 +6,7 @@ use {
     Decode, DecodeOptions, Decoded, Decoder, Directory, DirectoryExt, Encode, Encoder, Entry,
     Fingerprint, FlacBuilder, Hash, Loader, MagicType, Manifest, Metadata, Mp3Builder, Mp4Builder,
     NonEmptyOrderedSet, PackageIdentifier, Page, PngBuilder, PrivateKey, PublicKey, Reference,
-    RevisionObject, ServerState, State, Totals, gradient, gradient_alpha, hex,
+    Revision, ServerState, State, Totals, gradient, gradient_alpha, hex,
     templates::{DirectoryHtml, PackageHtml},
   },
   image::{DynamicImage, ImageFormat},

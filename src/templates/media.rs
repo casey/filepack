@@ -7,7 +7,7 @@ pub(crate) struct MediaHtml {
   pub(crate) identifier: PackageIdentifier,
   pub(crate) metadata: Metadata,
   pub(crate) number: Option<u64>,
-  pub(crate) revision: Option<Revision>,
+  pub(crate) revision: Option<RevisionHash>,
 }
 
 impl MediaHtml {
