@@ -144,6 +144,7 @@ Summary
   - [PackageMetadata](json/package-metadata.md)
   - [PublicKey](json/public-key.md)
   - [RelativePath](json/relative-path.md)
+  - [RevisionHash](json/revision-hash.md)
   - [Rotation](json/rotation.md)
   - [Signature\<RevisionHash\>](json/signature-revision-hash.md)
   - [String](json/string.md)

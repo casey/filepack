@@ -110,6 +110,27 @@ fn signature() {
 }
 
 #[test]
+fn stored_revision_is_verified() {
+  let test = Test::new()
+    .arg("keygen")
+    .success()
+    .create_dir("foo")
+    .args(["create", "foo"])
+    .success();
+
+  add_parent(&test.path().join("foo/manifest.filepack"));
+
+  let public_key = test.read("keychain/master.public");
+
+  test
+    .args(["sign", "foo"])
+    .success()
+    .args(["signatures", "foo"])
+    .stdout(format!("[\n  \"{public_key}\"\n]\n"))
+    .success();
+}
+
+#[test]
 fn unknown_signatures_are_ignored() {
   let test = Test::new()
     .arg("keygen")

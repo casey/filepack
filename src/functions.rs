@@ -144,7 +144,7 @@ pub(crate) fn verify_subpackage(
     },
   }
 
-  let revision_hash = expected.revision().hash();
+  let revision_hash = loader.revision_hash()?;
   for signature in manifest.signatures() {
     signature.verify(revision_hash)?;
   }

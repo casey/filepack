@@ -1,7 +1,8 @@
 use super::*;
 
-#[derive(Debug, Decode, Encode, PartialEq)]
+#[derive(Clone, Debug, Decode, Encode, PartialEq, Serialize)]
 #[deco(non_empty_ordered_set, transparent, validate)]
+#[serde(transparent)]
 pub struct NonEmptyOrderedSet<T>(Vec<T>);
 
 impl<T> NonEmptyOrderedSet<T> {
@@ -11,6 +12,22 @@ impl<T> NonEmptyOrderedSet<T> {
 
   pub fn singleton(element: T) -> Self {
     Self(vec![element])
+  }
+}
+
+impl<'de, T: Deserialize<'de> + Ord> Deserialize<'de> for NonEmptyOrderedSet<T> {
+  fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+    Vec::<T>::deserialize(deserializer)?
+      .try_into()
+      .map_err(serde::de::Error::custom)
+  }
+}
+
+impl<T: json::Json> json::Json for NonEmptyOrderedSet<T> {
+  fn json_schema(registry: &mut json::Registry) -> String {
+    let element = T::json_schema(registry);
+    let name = format!("NonEmptyOrderedSet<{element}>");
+    json::Schema::NonEmptyOrderedSet { element }.register(&name, registry)
   }
 }
 
@@ -71,5 +88,33 @@ mod tests {
   #[test]
   fn round_trip() {
     assert_encoding(NonEmptyOrderedSet::try_from(vec![2u64, 1u64]).unwrap());
+  }
+
+  #[test]
+  fn serde() {
+    let set = NonEmptyOrderedSet::try_from(vec![2u64, 1u64]).unwrap();
+
+    let json = serde_json::to_string(&set).unwrap();
+
+    assert_eq!(json, "[2,1]");
+
+    assert_eq!(
+      serde_json::from_str::<NonEmptyOrderedSet<u64>>(&json).unwrap(),
+      set,
+    );
+
+    assert_eq!(
+      serde_json::from_str::<NonEmptyOrderedSet<u64>>("[1,1]")
+        .unwrap_err()
+        .to_string(),
+      "duplicate set element",
+    );
+
+    assert_eq!(
+      serde_json::from_str::<NonEmptyOrderedSet<u64>>("[]")
+        .unwrap_err()
+        .to_string(),
+      "empty set",
+    );
   }
 }

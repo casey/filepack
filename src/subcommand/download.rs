@@ -164,7 +164,7 @@ impl Download {
     );
 
     let archive = builder
-      .build_package(package, &BTreeSet::new(), BTreeMap::new())
+      .build_package(package, None, &BTreeSet::new(), BTreeMap::new())
       .unwrap();
 
     let manifest = archive.unpack().unwrap();

@@ -172,7 +172,7 @@ fn rejects_totals_overflow() {
 
 #[test]
 fn rejects_unknown_entry_conflict() {
-  for name in ["package", "signatures"] {
+  for name in ["package", "revision", "signatures"] {
     Test::new()
       .write(
         "manifest.json",

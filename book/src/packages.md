@@ -105,13 +105,13 @@ root hash in the files map, deserializing the contents as a
 [deco directory](deco/directory.md), and repeating the process for
 subdirectories.
 
-The manifest archive root directory contains two subdirectories, `package` and
-`signatures`.
+The manifest archive root directory contains three entries: `package`,
+`revision`, and `signatures`.
 
-The `package` directory is the package root, and the `signatures` directory
-contains signatures over the package revision hash. Each signature is stored as
-a file whose name is the [tagged hex hash](hex/hash.md) of the serialized
-signature.
+The `package` directory is the package root, `revision` contains the current
+[revision](deco/revision.md), and the `signatures` directory contains signatures
+over the hash of `revision`. Each signature is stored as a file whose name is
+the [tagged hex hash](hex/hash.md) of the serialized signature.
 
 All other entry names are reserved for use by future versions of Filepack.
 Unrecognized entries in the manifest archive root are ignored but preserved.

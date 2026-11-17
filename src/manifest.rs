@@ -9,6 +9,9 @@ pub struct Manifest {
   pub embedded: BTreeMap<Hash, Bytes>,
   /// Files and directories in the package, as a tree of path components.
   pub package: DirectoryTree,
+  /// Hashes of the revisions that the current revision was derived from.
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub parents: Option<NonEmptyOrderedSet<RevisionHash>>,
   /// Signatures over the revision hash.
   #[serde_as(as = "SetPreventDuplicates<serde_with::Same>")]
   pub signatures: BTreeSet<Decoded<Attestation>>,
@@ -132,11 +135,11 @@ impl Manifest {
 
   pub(crate) fn sign(
     &mut self,
-    fingerprint: Fingerprint,
     keychain: &Keychain,
     key: &KeyName,
+    revision_hash: RevisionHash,
   ) -> Result {
-    let signature = keychain.sign(key, fingerprint.revision().hash())?;
+    let signature = keychain.sign(key, revision_hash)?;
 
     self.signatures.insert(Decoded::Known(signature));
 
@@ -160,6 +163,7 @@ impl Manifest {
     Self {
       embedded: BTreeMap::new(),
       package,
+      parents: None,
       signatures: BTreeSet::new(),
       unknown: DirectoryTree::new(),
     }
@@ -189,6 +193,7 @@ mod tests {
     let manifest = Manifest {
       embedded: BTreeMap::from([(Hash::bytes(b"foo"), b"foo".to_vec().into())]),
       package: DirectoryTree::new(),
+      parents: None,
       signatures: BTreeSet::new(),
       unknown: DirectoryTree::new(),
     };

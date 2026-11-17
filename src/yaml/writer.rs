@@ -45,7 +45,10 @@ impl<'a> Writer<'a> {
 
         self.nested(|writer| writer.item(|writer| writer.fields(fields)));
       }
-      Schema::Map { .. } | Schema::Set { .. } | Schema::UntaggedEnum { .. } => {
+      Schema::Map { .. }
+      | Schema::NonEmptyOrderedSet { .. }
+      | Schema::Set { .. }
+      | Schema::UntaggedEnum { .. } => {
         unreachable!()
       }
       Schema::Struct { fields, .. } => {

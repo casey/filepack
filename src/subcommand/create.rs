@@ -229,16 +229,20 @@ impl Create {
     let mut manifest = Manifest {
       embedded,
       package,
+      parents: None,
       signatures: BTreeSet::new(),
       unknown: DirectoryTree::new(),
     };
 
     if self.sign {
-      let fingerprint = Archive::pack(&manifest).unwrap().fingerprint().unwrap();
+      let revision_hash = Archive::pack(&manifest)
+        .unwrap()
+        .revision_hash(DecodeOptions::default())
+        .unwrap();
 
       let keychain = Keychain::load(&options)?;
 
-      manifest.sign(fingerprint, &keychain, &self.key)?;
+      manifest.sign(&keychain, &self.key, revision_hash)?;
     }
 
     manifest.save(&manifest_path)?;

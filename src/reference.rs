@@ -259,6 +259,7 @@ mod tests {
           | json::Schema::Bytes { .. }
           | json::Schema::Hex { .. }
           | json::Schema::Map { .. }
+          | json::Schema::NonEmptyOrderedSet { .. }
           | json::Schema::Set { .. }
           | json::Schema::String { .. }
           | json::Schema::StringEnum { .. }
@@ -286,6 +287,7 @@ mod tests {
         reference.yaml[&field.schema],
         json::Schema::Array { .. }
           | json::Schema::Map { .. }
+          | json::Schema::NonEmptyOrderedSet { .. }
           | json::Schema::Set { .. }
           | json::Schema::Struct { .. }
           | json::Schema::TaggedEnum { .. }

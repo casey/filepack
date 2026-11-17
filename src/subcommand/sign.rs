@@ -18,24 +18,25 @@ impl Sign {
 
     let mut manifest = loader.unpack()?;
 
-    let fingerprint = loader.fingerprint()?;
+    let revision_hash = loader.revision_hash()?;
 
     let keychain = Keychain::load(&options)?;
 
-    manifest.sign(fingerprint, &keychain, &self.key)?;
+    manifest.sign(&keychain, &self.key, revision_hash)?;
 
     let archive = manifest.pack(loader.path())?;
 
-    let actual = archive
-      .fingerprint_with_options(DecodeOptions::strict())
-      .context(error::UnarchiveManifest {
-        path: loader.path(),
-      })?;
+    let actual =
+      archive
+        .revision_hash(DecodeOptions::strict())
+        .context(error::UnarchiveManifest {
+          path: loader.path(),
+        })?;
 
     ensure! {
-      actual == fingerprint,
+      actual == revision_hash,
       error::Internal {
-        message: format!("signing changed fingerprint from {fingerprint} to {actual}"),
+        message: format!("signing changed revision hash from {revision_hash} to {actual}"),
       },
     }
 
