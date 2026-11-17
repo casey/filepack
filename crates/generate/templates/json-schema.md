@@ -1,7 +1,10 @@
 # {{ escape(self.name) }}
 
 %% match self.schema {
-%%   json::Schema::Array { .. } | json::Schema::Map { .. } | json::Schema::Set { .. } => {
+%%   json::Schema::Array { .. }
+%%   | json::Schema::Map { .. }
+%%   | json::Schema::NonEmptyOrderedSet { .. }
+%%   | json::Schema::Set { .. } => {
 %%     unreachable!()
 %%   }
 %%   json::Schema::Boolean { description }

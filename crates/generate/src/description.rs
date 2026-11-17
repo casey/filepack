@@ -47,6 +47,12 @@ impl Description for json::Registry {
         self.description(chapter, key),
         self.description(chapter, value)
       ),
+      json::Schema::NonEmptyOrderedSet { element } => {
+        format!(
+          "a non-empty ordered set of {}",
+          self.description(chapter, element)
+        )
+      }
       json::Schema::Set { element } => {
         format!("a sorted set of {}", self.description(chapter, element))
       }

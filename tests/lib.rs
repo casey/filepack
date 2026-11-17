@@ -84,6 +84,21 @@ const PUBLIC_KEY: &str = "public1d79b36defbee7c1d26099c9e28f849f1f0dceb6e0217b83
 
 static RUNTIME: LazyLock<Runtime> = LazyLock::new(|| Runtime::new().unwrap());
 
+fn add_parent(path: &Utf8Path) -> Revision {
+  let fingerprint = fingerprint(path);
+
+  let revision = Revision {
+    package: fingerprint,
+    parents: Some(NonEmptyOrderedSet::singleton(fingerprint.revision().hash())),
+  };
+
+  let mut manifest = manifest(path);
+  manifest.parents = revision.parents.clone();
+  manifest.save(path).unwrap();
+
+  revision
+}
+
 fn add_unknown_signature(path: &Utf8Path) -> Vec<u8> {
   let mut manifest = manifest(path);
   let signature = manifest

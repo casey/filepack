@@ -143,6 +143,29 @@ fn re_signing_is_idempotent() {
 }
 
 #[test]
+fn stored_revision_is_signed() {
+  let test = Test::new()
+    .arg("keygen")
+    .success()
+    .create_dir("foo")
+    .args(["create", "foo"])
+    .success();
+
+  let revision = add_parent(&test.path().join("foo/manifest.filepack"));
+
+  let test = test.args(["sign", "foo"]).success();
+
+  manifest(&test.path().join("foo/manifest.filepack"))
+    .signatures
+    .first()
+    .unwrap()
+    .known()
+    .unwrap()
+    .verify(revision.hash())
+    .unwrap();
+}
+
+#[test]
 fn unknown_fields_are_rejected() {
   let test = Test::new()
     .create_dir("foo")

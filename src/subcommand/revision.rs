@@ -16,7 +16,7 @@ impl Revision {
 
     loader.unpack()?;
 
-    println!("{}", loader.fingerprint()?.revision().hash());
+    println!("{}", loader.revision_hash()?);
 
     Ok(())
   }

@@ -68,8 +68,8 @@ fn extra_fields_are_not_allowed() {
     .stderr(
       "
         error: failed to deserialize manifest at `manifest.json`
-               └─ unknown field `foo`, expected one of `embedded`, `package`, \
-        `signatures`, `unknown` at line 1 column 49
+               └─ unknown field `foo`, expected one of `embedded`, `package`, `parents`, \
+                  `signatures`, `unknown` at line 1 column 49
       ",
     )
     .failure();
@@ -717,6 +717,32 @@ fn size_mismatch() {
 }
 
 #[test]
+fn stored_revision_is_verified() {
+  let test = Test::new()
+    .arg("keygen")
+    .success()
+    .create_dir("foo")
+    .args(["create", "foo"])
+    .success();
+
+  let revision = add_parent(&test.path().join("foo/manifest.filepack"));
+
+  test
+    .args(["sign", "foo"])
+    .success()
+    .args([
+      "verify",
+      "foo",
+      "--key",
+      "master",
+      "--revision",
+      &revision.hash().to_string(),
+    ])
+    .stderr("successfully verified 0 files with 1 signature\n")
+    .success();
+}
+
+#[test]
 fn subpackage() {
   Test::new()
     .arg("keygen")
@@ -804,6 +830,27 @@ fn subpackage_mismatch_error() {
       `package16c712b7a1ba31734e524213b5fa115e08a2fbd3d2a8bce59b858d3e33474acbc`\n",
     )
     .failure();
+}
+
+#[test]
+fn subpackage_stored_revision_is_verified() {
+  let test = Test::new()
+    .arg("keygen")
+    .success()
+    .touch("foo/bar/baz")
+    .args(["create", "foo/bar"])
+    .success();
+
+  add_parent(&test.path().join("foo/bar/manifest.filepack"));
+
+  test
+    .args(["sign", "foo/bar"])
+    .success()
+    .args(["create", "foo"])
+    .success()
+    .args(["verify", "foo"])
+    .stderr("successfully verified 1 file totaling 0 bytes\n")
+    .success();
 }
 
 #[test]

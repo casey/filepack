@@ -15,6 +15,7 @@ pub(crate) struct Archive {
 
 impl Archive {
   const PACKAGE: &str = "package";
+  const REVISION: &str = "revision";
   const SIGNATURES: &str = "signatures";
 
   fn decode_directory(
@@ -71,14 +72,7 @@ impl Archive {
     Ok(file)
   }
 
-  pub(crate) fn fingerprint(&self) -> Result<Fingerprint, ArchiveError> {
-    self.fingerprint_with_options(DecodeOptions::default())
-  }
-
-  pub(crate) fn fingerprint_with_options(
-    &self,
-    options: DecodeOptions,
-  ) -> Result<Fingerprint, ArchiveError> {
+  pub(crate) fn fingerprint(&self, options: DecodeOptions) -> Result<Fingerprint, ArchiveError> {
     Ok(Fingerprint(self.package(options)?.hash))
   }
 
@@ -118,7 +112,12 @@ impl Archive {
       builder.files.insert(*hash, content.into());
     }
 
-    builder.build_package(package, &manifest.signatures, unknown)
+    builder.build_package(
+      package,
+      manifest.parents.as_ref(),
+      &manifest.signatures,
+      unknown,
+    )
   }
 
   pub(crate) fn package(&self, options: DecodeOptions) -> Result<Entry, ArchiveError> {
@@ -141,8 +140,38 @@ impl Archive {
     Component::new(Self::PACKAGE).unwrap()
   }
 
-  pub(crate) fn root_entries() -> [&'static Component; 2] {
-    [Self::package_component(), Self::signatures_component()]
+  pub(crate) fn revision_component() -> &'static Component {
+    Component::new(Self::REVISION).unwrap()
+  }
+
+  fn revision_entry(root: &Directory) -> Result<Entry, ArchiveError> {
+    let revision = root
+      .entries
+      .get(Self::REVISION)
+      .context(archive_error::RevisionMissing)?;
+
+    ensure! {
+      revision.ty() == EntryType::File,
+      archive_error::RevisionType { ty: revision.ty() },
+    }
+
+    Ok(*revision)
+  }
+
+  pub(crate) fn revision_hash(&self, options: DecodeOptions) -> Result<RevisionHash, ArchiveError> {
+    Ok(
+      Self::revision_entry(&self.decode_root(options)?)?
+        .hash
+        .into(),
+    )
+  }
+
+  pub(crate) fn root_entries() -> [&'static Component; 3] {
+    [
+      Self::package_component(),
+      Self::revision_component(),
+      Self::signatures_component(),
+    ]
   }
 
   pub(crate) fn signatures_component() -> &'static Component {
@@ -256,6 +285,8 @@ impl Archive {
       return Err(ArchiveError::PackageType { ty: package.ty() });
     };
 
+    let fingerprint = Fingerprint(package.hash);
+
     let package = self.unpack_directory(
       options,
       &mut loose,
@@ -302,6 +333,27 @@ impl Archive {
       signatures
     };
 
+    let parents = {
+      let entry = Self::revision_entry(&root)?;
+
+      let file = self.file(entry.hash, entry.size)?;
+
+      loose.remove(&entry.hash);
+
+      let revision = Revision::decode_from_slice_with_options(options, file)
+        .context(archive_error::RevisionDecode)?;
+
+      ensure! {
+        revision.package == fingerprint,
+        archive_error::RevisionPackageMismatch {
+          actual: revision.package,
+          expected: fingerprint,
+        },
+      }
+
+      revision.parents
+    };
+
     ensure! {
       loose.is_empty(),
       archive_error::LooseFiles { hashes: loose },
@@ -310,6 +362,7 @@ impl Archive {
     let manifest = Manifest {
       embedded,
       package,
+      parents,
       signatures,
       unknown,
     };
@@ -340,11 +393,30 @@ mod tests {
     let manifest = Manifest {
       embedded: BTreeMap::from([(Hash::bytes(content), content.to_vec().into())]),
       package,
+      parents: None,
       signatures: BTreeSet::new(),
       unknown: DirectoryTree::new(),
     };
 
     round_trip(&manifest);
+  }
+
+  fn archive_with_revision(revision: Entry) -> Archive {
+    let mut builder = ArchiveBuilder::new();
+
+    let package = builder.directory(&Directory::new()).unwrap();
+
+    let signatures = builder.directory(&Directory::new()).unwrap();
+
+    let mut root = Directory::new();
+    root
+      .insert_entry("package", package)
+      .insert_entry("revision", revision)
+      .insert_entry("signatures", signatures);
+
+    let root = builder.directory(&root).unwrap();
+
+    builder.build(root.hash)
   }
 
   #[test]
@@ -605,6 +677,81 @@ mod tests {
   }
 
   #[test]
+  fn revision_decode_error() {
+    let fingerprint = Fingerprint(Directory::new().entry().hash);
+
+    let revision = with_unknown_field(fingerprint.revision());
+
+    let entry = Entry::file(Hash::bytes(&revision), revision.len().into_u64());
+
+    let mut archive = archive_with_revision(entry);
+
+    archive.files.insert(entry.hash, revision);
+
+    assert_eq!(
+      archive.unpack().unwrap(),
+      Manifest::with_package(DirectoryTree::new()),
+    );
+
+    assert_matches!(
+      archive.unpack_strict(),
+      Err(ArchiveError::RevisionDecode {
+        source: DecodeError::Unknown {
+          source: UnknownError::Field { key: u64::MAX },
+          strict: true,
+        },
+      }),
+    );
+  }
+
+  #[test]
+  fn revision_missing() {
+    let mut builder = ArchiveBuilder::new();
+
+    let package = builder.directory(&Directory::new()).unwrap();
+
+    let signatures = builder.directory(&Directory::new()).unwrap();
+
+    let mut root = Directory::new();
+    root
+      .insert_entry("package", package)
+      .insert_entry("signatures", signatures);
+
+    let root = builder.directory(&root).unwrap();
+
+    let archive = builder.build(root.hash);
+
+    assert_matches!(archive.unpack_strict(), Err(ArchiveError::RevisionMissing));
+  }
+
+  #[test]
+  fn revision_package_mismatch() {
+    let revision = Fingerprint::ZERO.revision().encode_to_vec();
+
+    let entry = Entry::file(Hash::bytes(&revision), revision.len().into_u64());
+
+    let mut archive = archive_with_revision(entry);
+
+    archive.files.insert(entry.hash, revision);
+
+    assert_matches!(
+      archive.unpack_strict(),
+      Err(ArchiveError::RevisionPackageMismatch { actual, expected })
+        if actual == Fingerprint::ZERO && expected == Fingerprint(Directory::new().entry().hash),
+    );
+  }
+
+  #[test]
+  fn revision_type() {
+    assert_matches!(
+      archive_with_revision(Directory::new().entry()).unpack_strict(),
+      Err(ArchiveError::RevisionType {
+        ty: EntryType::Directory,
+      }),
+    );
+  }
+
+  #[test]
   fn root_totals_overflow() {
     let mut package = DirectoryTree::new();
 
@@ -625,6 +772,7 @@ mod tests {
     let manifest = Manifest {
       embedded: BTreeMap::new(),
       package,
+      parents: None,
       signatures: BTreeSet::from([Decoded::Known(private_key.sign(revision))]),
       unknown: DirectoryTree::new(),
     };
@@ -696,17 +844,46 @@ mod tests {
   }
 
   #[test]
+  fn round_trip_with_parents() {
+    let manifest = Manifest {
+      embedded: BTreeMap::new(),
+      package: DirectoryTree::new(),
+      parents: Some(NonEmptyOrderedSet::singleton(RevisionHash::ZERO)),
+      signatures: BTreeSet::new(),
+      unknown: DirectoryTree::new(),
+    };
+
+    round_trip(&manifest);
+
+    assert_eq!(
+      Archive::pack(&manifest)
+        .unwrap()
+        .revision_hash(DecodeOptions::strict())
+        .unwrap(),
+      Revision {
+        package: Fingerprint(Directory::new().entry().hash),
+        parents: Some(NonEmptyOrderedSet::singleton(RevisionHash::ZERO)),
+      }
+      .hash(),
+    );
+  }
+
+  #[test]
   fn round_trip_with_signature() {
     let manifest = Manifest::with_package(DirectoryTree::new());
 
-    let fingerprint = Archive::pack(&manifest).unwrap().fingerprint().unwrap();
+    let revision_hash = Archive::pack(&manifest)
+      .unwrap()
+      .revision_hash(DecodeOptions::default())
+      .unwrap();
 
     let private_key = DisplayPrivateKey::EXAMPLE.parse::<PrivateKey>().unwrap();
-    let signature = private_key.sign(fingerprint.revision().hash());
+    let signature = private_key.sign(revision_hash);
 
     let manifest = Manifest {
       embedded: BTreeMap::new(),
       package: manifest.package,
+      parents: None,
       signatures: BTreeSet::from([Decoded::Known(signature)]),
       unknown: DirectoryTree::new(),
     };
@@ -841,6 +1018,7 @@ mod tests {
     let manifest = Manifest {
       embedded: BTreeMap::new(),
       package: DirectoryTree::new(),
+      parents: None,
       signatures: BTreeSet::from([known, unknown]),
       unknown: DirectoryTree::new(),
     };
@@ -982,9 +1160,12 @@ mod tests {
 
     let bar = builder.directory(&bar).unwrap();
 
+    let revision = builder.file(Fingerprint(package.hash).revision().encode_to_vec());
+
     let mut root = Directory::new();
     root
       .insert_entry("package", package)
+      .insert_entry("revision", revision)
       .insert_entry("signatures", signatures)
       .insert_entry("bar", bar)
       .insert_file("foo", b"bar");
@@ -1006,6 +1187,7 @@ mod tests {
     let manifest = Manifest {
       embedded: BTreeMap::from([(Hash::bytes(b"qux"), b"qux".to_vec().into())]),
       package: DirectoryTree::new(),
+      parents: None,
       signatures: BTreeSet::new(),
       unknown,
     };

@@ -14,7 +14,7 @@ impl Loader {
   pub fn fingerprint(&self) -> Result<Fingerprint> {
     self
       .archive
-      .fingerprint_with_options(self.options)
+      .fingerprint(self.options)
       .context(error::UnarchiveManifest { path: &self.path })
   }
 
@@ -63,6 +63,13 @@ impl Loader {
 
   pub(crate) fn path(&self) -> &Utf8Path {
     &self.path
+  }
+
+  pub(crate) fn revision_hash(&self) -> Result<RevisionHash> {
+    self
+      .archive
+      .revision_hash(self.options)
+      .context(error::UnarchiveManifest { path: &self.path })
   }
 
   pub(crate) fn root(&self) -> &Utf8Path {
@@ -129,10 +136,13 @@ mod tests {
         unknown == Some("signatures"),
       );
 
+      let revision = builder.file(fingerprint.revision().encode_to_vec());
+
       let root = directory(
         &mut builder,
         Directory::new()
           .insert_entry("package", package)
+          .insert_entry("revision", revision)
           .insert_entry("signatures", signatures),
         unknown == Some("root"),
       );
@@ -147,6 +157,7 @@ mod tests {
       let manifest = Manifest {
         embedded: BTreeMap::new(),
         package: tree,
+        parents: None,
         signatures: BTreeSet::from([Decoded::Known(signature)]),
         unknown: DirectoryTree::new(),
       };

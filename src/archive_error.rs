@@ -25,6 +25,17 @@ pub enum ArchiveError {
   PackageType { ty: EntryType },
   #[snafu(display("package contains reserved filename `{}` at `{path}`", path.filename()))]
   ReservedFilename { path: RelativePath },
+  #[snafu(display("failed to decode revision"))]
+  RevisionDecode { source: DecodeError },
+  #[snafu(display("archive missing revision"))]
+  RevisionMissing,
+  #[snafu(display("revision package {actual} does not match package fingerprint {expected}"))]
+  RevisionPackageMismatch {
+    actual: Fingerprint,
+    expected: Fingerprint,
+  },
+  #[snafu(display("expected archive `revision` entry to be file but found {ty}"))]
+  RevisionType { ty: EntryType },
   #[snafu(display("failed to decode signature"))]
   SignatureDecode { source: DecodeError },
   #[snafu(display("signature entry `{name}` does not match hash {hash}"))]

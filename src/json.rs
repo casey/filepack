@@ -64,6 +64,9 @@ pub enum Schema {
     key: String,
     value: String,
   },
+  NonEmptyOrderedSet {
+    element: String,
+  },
   Set {
     element: String,
   },
@@ -101,7 +104,10 @@ pub enum Schema {
 impl Schema {
   pub fn description(&self) -> Option<&str> {
     match self {
-      Self::Array { .. } | Self::Map { .. } | Self::Set { .. } => None,
+      Self::Array { .. }
+      | Self::Map { .. }
+      | Self::NonEmptyOrderedSet { .. }
+      | Self::Set { .. } => None,
       Self::Boolean { description, .. }
       | Self::Bytes { description, .. }
       | Self::Hex { description, .. }

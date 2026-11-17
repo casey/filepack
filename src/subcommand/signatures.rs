@@ -14,7 +14,7 @@ impl Signatures {
   pub(crate) fn run(self, options: Options) -> Result {
     let loader = Loader::load(self.path.as_deref())?;
 
-    let revision_hash = loader.fingerprint()?.revision().hash();
+    let revision_hash = loader.revision_hash()?;
 
     let manifest = loader.unpack()?;
 

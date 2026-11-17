@@ -92,6 +92,16 @@ impl From<Hash> for RevisionHash {
   }
 }
 
+impl json::Json for RevisionHash {
+  fn json_schema(registry: &mut json::Registry) -> String {
+    json::Schema::Hex {
+      description: "BLAKE3 hash of a revision.".into(),
+      tag: Tag::Revision,
+    }
+    .register("RevisionHash", registry)
+  }
+}
+
 impl redb::Key for RevisionHash {
   fn compare(a: &[u8], b: &[u8]) -> Ordering {
     a.cmp(b)

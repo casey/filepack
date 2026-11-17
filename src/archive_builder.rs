@@ -23,6 +23,7 @@ impl ArchiveBuilder {
   pub(crate) fn build_package(
     mut self,
     package: Entry,
+    parents: Option<&NonEmptyOrderedSet<RevisionHash>>,
     signatures: &BTreeSet<Decoded<Attestation>>,
     unknown: BTreeMap<ComponentBuf, Entry>,
   ) -> Result<Archive, TotalsError> {
@@ -31,6 +32,20 @@ impl ArchiveBuilder {
     assert!(
       root
         .insert(Archive::package_component().to_owned(), package)
+        .is_none()
+    );
+
+    let revision = self.file(
+      Revision {
+        package: Fingerprint(package.hash),
+        parents: parents.cloned(),
+      }
+      .encode_to_vec(),
+    );
+
+    assert!(
+      root
+        .insert(Archive::revision_component().to_owned(), revision)
         .is_none()
     );
 
