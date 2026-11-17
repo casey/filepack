@@ -62,9 +62,7 @@ mod tests {
   #[test]
   fn example() {
     assert_eq!(
-      PrivateKey::from([0; PrivateKey::LEN])
-        .display_private_key()
-        .to_string(),
+      PrivateKey::zero().display_private_key().to_string(),
       DisplayPrivateKey::EXAMPLE,
     );
   }

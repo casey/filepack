@@ -19,6 +19,8 @@ pub struct RevisionHash(pub(crate) Hash);
 
 impl RevisionHash {
   pub(crate) const LEN: usize = Hash::LEN;
+  #[cfg(test)]
+  pub(crate) const ZERO: Self = Self(Hash::ZERO);
 
   pub(crate) fn as_bytes(&self) -> &[u8; Self::LEN] {
     self.0.as_bytes()
@@ -143,7 +145,7 @@ mod tests {
   #[test]
   fn example() {
     assert_eq!(
-      PrivateKey::from([0; PrivateKey::LEN])
+      PrivateKey::zero()
         .sign(RevisionHash::EXAMPLE.parse::<RevisionHash>().unwrap())
         .to_string(),
       Attestation::EXAMPLE,
@@ -153,7 +155,7 @@ mod tests {
   #[test]
   fn mismatch() {
     let revision = RevisionHash::EXAMPLE.parse::<RevisionHash>().unwrap();
-    let other = RevisionHash::from_bytes(default());
+    let other = RevisionHash::ZERO;
     assert_matches!(
       Attestation::EXAMPLE
         .parse::<Attestation>()
@@ -171,7 +173,7 @@ mod tests {
   #[test]
   fn redb() {
     assert_redb_impls(&[
-      RevisionHash::from(Hash::from([0; Hash::LEN])),
+      RevisionHash::ZERO,
       RevisionHash::from(Hash::from([0xff; Hash::LEN])),
       RevisionHash::from(Hash::bytes(b"foo")),
       RevisionHash::from(Hash::bytes(b"bar")),
