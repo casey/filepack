@@ -550,7 +550,7 @@ fn root_not_directory_error() {
 }
 
 #[test]
-fn signature_fingerprint_mismatch() {
+fn signature_revision_mismatch() {
   let test = Test::new()
     .arg("keygen")
     .success()
@@ -981,10 +981,38 @@ fn verify_fingerprint() {
 }
 
 #[test]
+fn verify_revision() {
+  Test::new()
+    .arg("create")
+    .success()
+    .args([
+      "verify",
+      "--revision",
+      "revision12c7922354e5c2496ffc5e87ee0b29cc8767dc35a7c0e31e9d239014df5b44583",
+    ])
+    .stderr("successfully verified 0 files\n")
+    .success()
+    .args([
+      "verify",
+      "--revision",
+      "revision10000000000000000000000000000000000000000000000000000000000000000",
+    ])
+    .stderr(
+      "
+        revision hash mismatch: `manifest.filepack`
+                      expected: revision10000000000000000000000000000000000000000000000000000000000000000
+                        actual: revision12c7922354e5c2496ffc5e87ee0b29cc8767dc35a7c0e31e9d239014df5b44583
+        error: revision hash mismatch
+      ",
+    )
+    .failure();
+}
+
+#[test]
 fn weak_signature_public_key() {
   let zeros = "00".repeat(32);
 
-  let signature = format!("signature101a0{zeros}02a201a0{zeros}03c0{zeros}{zeros}");
+  let signature = format!("signature101a0{zeros}02a0{zeros}03c0{zeros}{zeros}");
 
   Test::new()
     .write(
