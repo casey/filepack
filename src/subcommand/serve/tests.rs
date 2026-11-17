@@ -427,11 +427,11 @@ impl TestServer {
       Some(parents.try_into().unwrap())
     };
 
-    let revision_object = RevisionObject { package, parents };
+    let revision = Revision { package, parents };
 
-    self.write_file(&revision_object.encode_to_vec());
+    self.write_file(&revision.encode_to_vec());
 
-    revision_object.hash()
+    revision.hash()
   }
 }
 
@@ -962,11 +962,7 @@ fn corrupt_revision() {
 
   let fingerprint = PackageBuilder::new().file("foo", b"foo").upload(&server);
 
-  let revision = RevisionObject {
-    package: fingerprint,
-    parents: None,
-  }
-  .hash();
+  let revision = fingerprint.revision().hash();
 
   fs::write(
     server
@@ -1454,12 +1450,9 @@ fn gc_removes_unreachable_and_retains_reachable_data() {
 
   let fingerprint = package.upload(&server);
 
-  let revision_object = RevisionObject {
-    package: fingerprint,
-    parents: None,
-  };
+  let revision = fingerprint.revision();
 
-  let revision = revision_object.hash();
+  let revision_hash = revision.hash();
 
   server.delete("/api/number/1").send();
 
@@ -1470,17 +1463,17 @@ fn gc_removes_unreachable_and_retains_reachable_data() {
         bytes: root_deco.len().into_u64()
           + subdirectory_deco.len().into_u64()
           + 3
-          + revision_object.encode_to_vec().len().into_u64(),
+          + revision.encode_to_vec().len().into_u64(),
         directories: BTreeSet::from([root_hash, subdirectory_hash]).into(),
         files: BTreeSet::from([
           root_hash,
           subdirectory_hash,
           Hash::bytes(b"baz"),
-          revision.into(),
+          revision_hash.into(),
         ])
         .into(),
         packages: BTreeSet::from([fingerprint]).into(),
-        revisions: BTreeSet::from([revision]).into(),
+        revisions: BTreeSet::from([revision_hash]).into(),
       }
       .encode_to_vec(),
     )
@@ -1565,10 +1558,7 @@ fn gc_retains_package_mounted_by_fingerprint() {
 
   server.delete("/api/number/0").send();
 
-  let revision = RevisionObject {
-    package: fingerprint,
-    parents: None,
-  };
+  let revision = fingerprint.revision();
 
   server
     .post("/api/gc")
@@ -1588,11 +1578,7 @@ fn gc_retains_package_mounted_by_fingerprint() {
 fn gc_retains_package_mounted_by_revision() {
   let package = PackageBuilder::new().file("foo", b"bar");
 
-  let revision = RevisionObject {
-    package: package.fingerprint(),
-    parents: None,
-  }
-  .hash();
+  let revision = package.fingerprint().revision().hash();
 
   let server = TestServer::builder()
     .mount(PackageIdentifier::RevisionHash(revision), None)
@@ -1621,7 +1607,7 @@ fn gc_shares_ancestors() {
   let bar = Fingerprint(bar.root.upload(&server));
   server.post(format!("/api/package/{bar}")).send();
 
-  let head_object = RevisionObject {
+  let revision = Revision {
     package: bar,
     parents: Some(NonEmptyOrderedSet::singleton(root)),
   };
@@ -1661,7 +1647,7 @@ fn gc_shares_ancestors() {
     .post("/api/gc")
     .assert_body(
       api::gc::Response {
-        bytes: bar_deco.len().into_u64() + 3 + head_object.encode_to_vec().len().into_u64(),
+        bytes: bar_deco.len().into_u64() + 3 + revision.encode_to_vec().len().into_u64(),
         directories: BTreeSet::from([bar_hash]).into(),
         files: BTreeSet::from([bar_hash, Hash::bytes(b"bar"), head.into()]).into(),
         packages: BTreeSet::from([bar]).into(),
@@ -2887,11 +2873,7 @@ fn mount_file() {
 
   let fingerprint = package.fingerprint();
 
-  let revision = RevisionObject {
-    package: fingerprint,
-    parents: None,
-  }
-  .hash();
+  let revision = fingerprint.revision().hash();
 
   let identifiers = [
     (
@@ -4936,22 +4918,19 @@ fn verify_package_replace() {
     )
     .send();
 
-  let revision_object = RevisionObject {
-    package: foo,
-    parents: None,
-  };
+  let revision = foo.revision();
 
-  let revision = revision_object.hash();
+  let revision_hash = revision.hash();
 
   server
     .post("/api/gc")
     .assert_body(
       api::gc::Response {
-        bytes: foo_deco.len().into_u64() + 3 + revision_object.encode_to_vec().len().into_u64(),
+        bytes: foo_deco.len().into_u64() + 3 + revision.encode_to_vec().len().into_u64(),
         directories: BTreeSet::from([foo_hash]).into(),
-        files: BTreeSet::from([foo_hash, Hash::bytes(b"foo"), revision.into()]).into(),
+        files: BTreeSet::from([foo_hash, Hash::bytes(b"foo"), revision_hash.into()]).into(),
         packages: BTreeSet::from([foo]).into(),
-        revisions: BTreeSet::from([revision]).into(),
+        revisions: BTreeSet::from([revision_hash]).into(),
       }
       .encode_to_vec(),
     )
@@ -5100,11 +5079,7 @@ fn verify_package_reuses_revision() {
 
   let fingerprint = PackageBuilder::new().file("foo", b"foo").upload(&server);
 
-  let revision = RevisionObject {
-    package: fingerprint,
-    parents: None,
-  }
-  .hash();
+  let revision = fingerprint.revision().hash();
 
   server.delete("/api/number/0").send();
 

@@ -110,7 +110,7 @@ impl Reference {
     Envelope::<Claims>::deco_schema(&mut deco);
     Envelope::<RevisionHash>::deco_schema(&mut deco);
     Metadata::deco_schema(&mut deco);
-    RevisionObject::deco_schema(&mut deco);
+    Revision::deco_schema(&mut deco);
 
     let tags = descriptions::<Tag>();
 

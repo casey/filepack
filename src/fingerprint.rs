@@ -25,12 +25,11 @@ impl Fingerprint {
     Self(bytes.into())
   }
 
-  pub fn revision(self) -> RevisionHash {
-    RevisionObject {
+  pub fn revision(self) -> Revision {
+    Revision {
       package: self,
       parents: None,
     }
-    .hash()
   }
 }
 
@@ -139,13 +138,14 @@ mod tests {
 
   #[test]
   fn revision() {
+    let fingerprint = Fingerprint::EXAMPLE.parse::<Fingerprint>().unwrap();
+
     assert_eq!(
-      Fingerprint::EXAMPLE
-        .parse::<Fingerprint>()
-        .unwrap()
-        .revision()
-        .to_string(),
-      RevisionHash::EXAMPLE,
+      fingerprint.revision(),
+      Revision {
+        package: fingerprint,
+        parents: None,
+      },
     );
   }
 }

@@ -2,16 +2,16 @@ use super::*;
 
 /// Revision of a package.
 #[derive(Debug, Decode, Encode, PartialEq)]
-pub struct RevisionObject {
+pub struct Revision {
   /// Fingerprint at this revision.
   #[n(1)]
   pub package: Fingerprint,
-  /// Hashes of the revisions this revision was derived from.
+  /// Hashes of the revisions that this revision was derived from.
   #[n(2)]
   pub parents: Option<NonEmptyOrderedSet<RevisionHash>>,
 }
 
-impl RevisionObject {
+impl Revision {
   pub fn hash(&self) -> RevisionHash {
     Hash::bytes(&self.encode_to_vec()).into()
   }
@@ -30,7 +30,7 @@ mod tests {
 
   #[test]
   fn encoding() {
-    assert_encoding(RevisionObject {
+    assert_encoding(Revision {
       package: Fingerprint::EXAMPLE.parse().unwrap(),
       parents: Some(NonEmptyOrderedSet::singleton(
         RevisionHash::EXAMPLE.parse().unwrap(),
@@ -41,7 +41,7 @@ mod tests {
   #[test]
   fn hash() {
     assert_eq!(
-      RevisionObject {
+      Revision {
         package: Fingerprint::EXAMPLE.parse().unwrap(),
         parents: None,
       }

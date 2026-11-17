@@ -136,7 +136,7 @@ impl Manifest {
     keychain: &Keychain,
     key: &KeyName,
   ) -> Result {
-    let signature = keychain.sign(key, fingerprint.revision())?;
+    let signature = keychain.sign(key, fingerprint.revision().hash())?;
 
     self.signatures.insert(Decoded::Known(signature));
 

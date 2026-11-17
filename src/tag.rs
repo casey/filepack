@@ -26,7 +26,7 @@ pub enum Tag {
   Private,
   /// Public key.
   Public,
-  /// Hash of a revision object.
+  /// Hash of a revision.
   Revision,
   /// Signature over a package.
   Signature,

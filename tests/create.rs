@@ -510,7 +510,7 @@ fn sign_creates_valid_signature() {
 
   assert_eq!(signature.public_key(), public_key);
 
-  signature.verify(fingerprint.revision()).unwrap();
+  signature.verify(fingerprint.revision().hash()).unwrap();
 }
 
 #[test]

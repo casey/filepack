@@ -160,8 +160,8 @@ Signatures
 Packages may be signed with
 [Ed25519](https://en.wikipedia.org/wiki/EdDSA#Ed25519).
 
-To sign a package, the signer constructs a [revision](deco/revision-object.md),
-which contains the package fingerprint and parent revision hashes.
+To sign a package, the signer constructs a [revision](deco/revision.md), which
+contains the package fingerprint and parent revision hashes.
 
 The signature is made over the BLAKE3 hash of a deco-encoded
 [envelope](deco/envelope-revision-hash.md) containing the revision hash, which

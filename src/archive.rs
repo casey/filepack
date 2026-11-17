@@ -702,7 +702,7 @@ mod tests {
     let fingerprint = Archive::pack(&manifest).unwrap().fingerprint().unwrap();
 
     let private_key = DisplayPrivateKey::EXAMPLE.parse::<PrivateKey>().unwrap();
-    let signature = private_key.sign(fingerprint.revision());
+    let signature = private_key.sign(fingerprint.revision().hash());
 
     let manifest = Manifest {
       embedded: BTreeMap::new(),

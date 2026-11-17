@@ -14,14 +14,14 @@ impl Signatures {
   pub(crate) fn run(self, options: Options) -> Result {
     let loader = Loader::load(self.path.as_deref())?;
 
-    let revision = loader.fingerprint()?.revision();
+    let revision_hash = loader.fingerprint()?.revision().hash();
 
     let manifest = loader.unpack()?;
 
     let signatures = manifest
       .signatures()
       .map(|signature| {
-        signature.verify(revision)?;
+        signature.verify(revision_hash)?;
         Ok(signature.public_key())
       })
       .collect::<Result<Output>>()?;

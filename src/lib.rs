@@ -306,7 +306,7 @@ pub use self::{
   private_key::PrivateKey,
   public_key::PublicKey,
   reference::Reference,
-  revision_object::RevisionObject,
+  revision::Revision,
   server_state::ServerState,
   state::State,
   tag::Tag,
@@ -491,8 +491,8 @@ mod reqwest_response_ext;
 mod resolved;
 mod resource;
 mod resource_type;
+mod revision;
 mod revision_hash;
-mod revision_object;
 mod rotation;
 mod server;
 mod server_error;

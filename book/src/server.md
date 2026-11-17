@@ -141,10 +141,10 @@ Package Numbers and Revisions
 -----------------------------
 
 When a client uploads a package to the server, it creates and uploads a
-[revision object](deco/revision-object.md), similar to a
+[revision](deco/revision.md), similar to a
 [Git](https://en.wikipedia.org/wiki/Git) commit.
 
-Revision objects have a `package` field containing a package fingerprint, and a
+Revisions have a `package` field containing a package fingerprint, and a
 `parents` field containing a set of parent revision hashes.
 
 Uploaded packages are assigned sequential package numbers starting from zero.

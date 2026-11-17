@@ -100,10 +100,10 @@ impl Verify {
 
     let mut verified_signatures = Vec::new();
 
-    let revision = fingerprint.revision();
+    let revision_hash = fingerprint.revision().hash();
 
     for signature in manifest.signatures() {
-      signature.verify(revision)?;
+      signature.verify(revision_hash)?;
       verified_signatures.push(signature);
       verified.signatures += 1;
     }
