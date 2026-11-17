@@ -164,7 +164,6 @@ use {
     sort::Sort,
     sort_key::SortKey,
     sorted_set::SortedSet,
-    statement::Statement,
     static_asset::StaticAsset,
     style::Style,
     subcommand::Subcommand,
@@ -508,7 +507,6 @@ mod sort;
 mod sort_key;
 mod sorted_set;
 mod state;
-mod statement;
 mod static_asset;
 mod style;
 mod subcommand;
@@ -562,7 +560,7 @@ type FilesystemResult<T = ()> = Result<T, FilesystemError>;
 type PageResult<T> = Result<PageHtml<T>, PageError>;
 type ServerResult<T = ()> = Result<T, ServerError>;
 
-type Attestation = Signature<Statement>;
+type Attestation = Signature<Revision>;
 type Token = Signature<Claims>;
 
 fn initialize_tracing() -> Result<(), Box<dyn std::error::Error>> {

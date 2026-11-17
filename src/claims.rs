@@ -50,15 +50,15 @@ impl Claims {
 
 impl Message for Claims {
   const CONTEXT: Context = Context::Claims;
-  const EXAMPLE: &'static str = concat!(
+  const NAME: &'static str = "Claims";
+  const SIGNATURE_EXAMPLE: &'static str = concat!(
     "token101a03b6a27bcceb6a42d62a3a8d02a6f0d73653215771de243a63ac048a18b59da290290018c66696c6570",
     "61636b2e636f6d020003c0c99690da16d960d5afa356c4d73f79eef22f07981adc74efbf975db9aa343152c810cb",
     "c95cde36d8c377cb99c475555f2a2db63568c0afb1e83c101b835c540e",
   );
-  const EXAMPLE_DESCRIPTION: &'static str =
+  const SIGNATURE_EXAMPLE_DESCRIPTION: &'static str =
     "Token with domain `filepack.com` and timestamp 0, signed by the all-zero private key.";
-  const NAME: &'static str = "Claims";
-  const TAG: Tag = Tag::Token;
+  const SIGNATURE_TAG: Tag = Tag::Token;
   type Error = AuthorizationError;
   type Policy<'a> = Policy<'a>;
 
@@ -185,10 +185,10 @@ mod tests {
 
     impl Message for Extra {
       const CONTEXT: Context = Context::Claims;
-      const EXAMPLE: &'static str = "";
-      const EXAMPLE_DESCRIPTION: &'static str = "";
       const NAME: &'static str = "Extra";
-      const TAG: Tag = Tag::Token;
+      const SIGNATURE_EXAMPLE: &'static str = "";
+      const SIGNATURE_EXAMPLE_DESCRIPTION: &'static str = "";
+      const SIGNATURE_TAG: Tag = Tag::Token;
       type Error = AuthorizationError;
       type Policy<'a> = ();
 

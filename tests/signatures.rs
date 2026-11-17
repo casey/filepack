@@ -23,9 +23,9 @@ fn invalid_signature_error() {
 
   let manifest_path = test.path().join("foo/manifest.filepack");
 
-  let fingerprint = fingerprint(&manifest_path).to_string();
+  let revision = fingerprint(&manifest_path).revision().to_string();
 
-  let hex = &fingerprint["package1".len()..];
+  let hex = &revision["revision1".len()..];
 
   let tampered = format!(
     "{}{}",

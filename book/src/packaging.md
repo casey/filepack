@@ -273,9 +273,9 @@ To print your public key for verification:
 filepack key
 ```
 
-Signatures identify a package by fingerprint. If you update the package and its
-fingerprint changes, signatures with the old fingerprint will not be valid for
-the new package.
+Signatures identify a package by revision, which commits to the package
+fingerprint. If you update the package and its fingerprint or revision changes,
+old signatures will not be valid for the new package.
 
 Regenerate
 ----------

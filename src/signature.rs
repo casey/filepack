@@ -65,16 +65,16 @@ impl<T: Message> FromStr for Signature<T> {
 }
 
 impl<T: Message> Hex for Signature<T> {
-  const EXAMPLE: &'static str = T::EXAMPLE;
-  const EXAMPLE_DESCRIPTION: &'static str = T::EXAMPLE_DESCRIPTION;
-  const TAG: Tag = T::TAG;
+  const EXAMPLE: &'static str = T::SIGNATURE_EXAMPLE;
+  const EXAMPLE_DESCRIPTION: &'static str = T::SIGNATURE_EXAMPLE_DESCRIPTION;
+  const TAG: Tag = T::SIGNATURE_TAG;
 }
 
 impl<T: Message> json::Json for Signature<T> {
   fn json_schema(registry: &mut json::Registry) -> String {
     json::Schema::Hex {
       description: "Ed25519 signature over the hash of an enveloped message.".into(),
-      tag: T::TAG,
+      tag: T::SIGNATURE_TAG,
     }
     .register(&format!("Signature<{}>", T::NAME), registry)
   }
@@ -85,11 +85,11 @@ mod tests {
   use super::*;
 
   #[test]
-  fn signature_begins_with_pubkey_and_fingerprint() {
+  fn signature_begins_with_pubkey_and_revision() {
     let prefix = format!(
-      "signature101a0{}02a201a0{}03c0",
+      "signature101a0{}02a0{}03c0",
       &PublicKey::EXAMPLE["public1".len()..],
-      &Fingerprint::EXAMPLE["package1".len()..],
+      &Revision::EXAMPLE["revision1".len()..],
     );
     assert!(Attestation::EXAMPLE.starts_with(&prefix));
     assert_eq!(Attestation::EXAMPLE.len(), prefix.len() + 128);

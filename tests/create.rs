@@ -509,7 +509,8 @@ fn sign_creates_valid_signature() {
   let signature = manifest.signatures.first().unwrap().known().unwrap();
 
   assert_eq!(signature.public_key(), public_key);
-  signature.verify(fingerprint).unwrap();
+
+  signature.verify(fingerprint.revision()).unwrap();
 }
 
 #[test]
@@ -802,7 +803,7 @@ fn subpackage_signature_mismatch_error() {
     .touch("foo/bar/baz")
     .args(["create", "foo"])
     .stderr_regex(
-      "error: signature fingerprint `package1[0-9a-f]{64}` does not match package fingerprint `package1[0-9a-f]{64}`\n",
+      "error: signature revision `revision1[0-9a-f]{64}` does not match package revision `revision1[0-9a-f]{64}`\n",
     )
     .failure();
 }

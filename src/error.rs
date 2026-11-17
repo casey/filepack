@@ -509,14 +509,6 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     source: io::Error,
   },
-  #[snafu(display(
-    "signature fingerprint `{signature}` does not match package fingerprint `{package}`"
-  ))]
-  SignatureFingerprintMismatch {
-    backtrace: Option<Backtrace>,
-    package: Fingerprint,
-    signature: Fingerprint,
-  },
   #[snafu(transparent)]
   SignatureInvalid {
     backtrace: Option<Backtrace>,
@@ -526,6 +518,12 @@ pub enum Error {
   SignatureMissing {
     backtrace: Option<Backtrace>,
     identifier: KeyIdentifier,
+  },
+  #[snafu(display("signature revision `{signature}` does not match package revision `{package}`"))]
+  SignatureRevisionMismatch {
+    backtrace: Option<Backtrace>,
+    package: Revision,
+    signature: Revision,
   },
   #[snafu(display(
     "file with hash `{hash}` has size {manifest} in manifest but size {disk} on disk"

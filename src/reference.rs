@@ -108,7 +108,7 @@ impl Reference {
     Archive::deco_schema(&mut deco);
     Directory::deco_schema(&mut deco);
     Envelope::<Claims>::deco_schema(&mut deco);
-    Envelope::<Statement>::deco_schema(&mut deco);
+    Envelope::<Revision>::deco_schema(&mut deco);
     Metadata::deco_schema(&mut deco);
     RevisionObject::deco_schema(&mut deco);
 

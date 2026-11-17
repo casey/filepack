@@ -102,7 +102,7 @@ signing interface a consistent 32-byte digest, and introduces no new security
 assumptions, since Filepack as a whole already relies on the security of BLAKE3.
 
 The signed message is a [deco-encoded](deco.md)
-[Envelope](deco/envelope-statement.md), which serializes to an unambiguous
+[Envelope](deco/envelope-revision.md), which serializes to an unambiguous
 encoding that commits to the application, within-application context, and
 message. The application, in this case the string `"filepack"`, ensures
 cross-protocol domain separation, and the context, the integer `0` for package

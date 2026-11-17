@@ -14,9 +14,16 @@ content of the package:
 package12186aa6cefc1ae2f427b90e61a3ab91c88573f6f6719ca0188098d681b6c80ca
 ```
 
-The authenticity of a package can be verified by manifest, fingerprint, or
-signature, guaranteeing that the contents of the package have not been
-accidentally modified or intentionally tampered with.
+Or by revision, a hash that uniquely identifies the content of the package and
+its revision history:
+
+```
+revision12c7922354e5c2496ffc5e87ee0b29cc8767dc35a7c0e31e9d239014df5b44583
+```
+
+The authenticity of a package can be verified by manifest, fingerprint,
+revision, or signature, guaranteeing that the contents of the package have not
+been accidentally modified or intentionally tampered with.
 
 Filepack packages may include machine-readable metadata in a file named
 `metadata.filemeta` in the package root, which includes information about the
@@ -102,8 +109,8 @@ The manifest archive root directory contains two subdirectories, `package` and
 `signatures`.
 
 The `package` directory is the package root, and the `signatures` directory
-contains signatures over the package fingerprint. Each signature is stored as a
-file whose name is the [tagged hex hash](hex/hash.md) of the serialized
+contains signatures over the package revision hash. Each signature is stored as
+a file whose name is the [tagged hex hash](hex/hash.md) of the serialized
 signature.
 
 All other entry names are reserved for use by future versions of Filepack.
@@ -153,25 +160,24 @@ Signatures
 Packages may be signed with
 [Ed25519](https://en.wikipedia.org/wiki/EdDSA#Ed25519).
 
-To sign a package, the signer constructs a [statement](deco/statement.md),
-containing the package fingerprint, as well as an optional integer timestamp of
-seconds since the Unix epoch.
+To sign a package, the signer constructs a [revision](deco/revision-object.md),
+which contains the package fingerprint and parent revision hashes.
 
 The signature is made over the BLAKE3 hash of a deco-encoded
-[envelope](deco/envelope-statement.md) containing the statement, which performs
-domain separation by committing to the [application](deco/application.md) and
-[context](deco/context.md).
+[envelope](deco/envelope-revision.md) containing the revision hash, which
+performs domain separation by committing to the
+[application](deco/application.md) and [context](deco/context.md).
 
-To verify a signature, the statement is wrapped in an envelope, serialized,
-hashed, and the raw Ed25519 signature over the hash is verified against the
-public key. Public keys which are non-canonical, small order, or mixed order are
-rejected.
+To verify a signature, the hash of the current revision is wrapped in an
+envelope, serialized, hashed, and the raw Ed25519 signature over the envelope
+hash is verified against the public key. Public keys which are non-canonical,
+small order, or mixed order are rejected.
 
-The fingerprint from the verified signature object can then be used to verify
-the package itself.
+The fingerprint from the current revision can then be used to verify the package
+itself.
 
-For transport, the raw Ed25519 signature, statement, and public key are stored
-in a [signature object](deco/signature-statement.md).
+For transport, the raw Ed25519 signature, revision hash, and public key are
+stored in a [signature object](deco/signature-revision.md).
 
 Signatures are serialized as deco and stored as files named after their hash in
 the manifest archive `signatures` directory, and are represented in text as
