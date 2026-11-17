@@ -24,6 +24,14 @@ impl Fingerprint {
   pub(crate) fn from_bytes(bytes: [u8; Self::LEN]) -> Self {
     Self(bytes.into())
   }
+
+  pub fn revision(self) -> Revision {
+    RevisionObject {
+      package: self,
+      parents: None,
+    }
+    .hash()
+  }
 }
 
 impl Display for Fingerprint {
@@ -127,5 +135,17 @@ mod tests {
       Fingerprint::from(Hash::bytes(b"foo")),
       Fingerprint::from(Hash::bytes(b"bar")),
     ]);
+  }
+
+  #[test]
+  fn revision() {
+    assert_eq!(
+      Fingerprint::EXAMPLE
+        .parse::<Fingerprint>()
+        .unwrap()
+        .revision()
+        .to_string(),
+      Revision::EXAMPLE,
+    );
   }
 }

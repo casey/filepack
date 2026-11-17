@@ -620,14 +620,12 @@ mod tests {
 
     let private_key = DisplayPrivateKey::EXAMPLE.parse::<PrivateKey>().unwrap();
 
-    let statement = Statement {
-      fingerprint: Fingerprint::from_bytes([0; Fingerprint::LEN]),
-    };
+    let revision = Revision::from_bytes([0; Revision::LEN]);
 
     let manifest = Manifest {
       embedded: BTreeMap::new(),
       package,
-      signatures: BTreeSet::from([Decoded::Known(private_key.sign(statement))]),
+      signatures: BTreeSet::from([Decoded::Known(private_key.sign(revision))]),
       unknown: DirectoryTree::new(),
     };
 
@@ -704,8 +702,7 @@ mod tests {
     let fingerprint = Archive::pack(&manifest).unwrap().fingerprint().unwrap();
 
     let private_key = DisplayPrivateKey::EXAMPLE.parse::<PrivateKey>().unwrap();
-    let statement = Statement { fingerprint };
-    let signature = private_key.sign(statement);
+    let signature = private_key.sign(fingerprint.revision());
 
     let manifest = Manifest {
       embedded: BTreeMap::new(),
@@ -727,14 +724,12 @@ mod tests {
 
     let public_key = PublicKey::EXAMPLE.parse::<PublicKey>().unwrap();
 
-    let statement = Statement {
-      fingerprint: Fingerprint::from_bytes([0; Fingerprint::LEN]),
-    };
+    let revision = Revision::from_bytes([0; Revision::LEN]);
 
     let mut encoder = Encoder::new();
     let mut map = encoder.map::<u64>();
     map.item(3, &[0u8; 32][..]);
-    map.item(2, &statement);
+    map.item(2, revision);
     map.item(1, public_key);
     map.finish();
     let signature_bytes = encoder.finish();
@@ -805,9 +800,7 @@ mod tests {
 
     let signature = builder.file(
       private_key
-        .sign(Statement {
-          fingerprint: Fingerprint::from_bytes([0; Fingerprint::LEN]),
-        })
+        .sign(Revision::from_bytes([0; Revision::LEN]))
         .encode_to_vec(),
     );
 
@@ -836,9 +829,7 @@ mod tests {
   fn signatures_are_named_by_hash() {
     let private_key = DisplayPrivateKey::EXAMPLE.parse::<PrivateKey>().unwrap();
 
-    let known = Decoded::Known(private_key.sign(Statement {
-      fingerprint: Fingerprint::from_bytes([0; Fingerprint::LEN]),
-    }));
+    let known = Decoded::Known(private_key.sign(Revision::from_bytes([0; Revision::LEN])));
 
     let unknown = {
       let mut fields = BTreeMap::<u64, Vec<u8>>::decode_from_slice(&known.encode_to_vec()).unwrap();

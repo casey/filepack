@@ -305,6 +305,6 @@ fn updates_manifest_with_signature() {
     .unwrap()
     .known()
     .unwrap()
-    .verify(fingerprint)
+    .verify(fingerprint.revision())
     .unwrap();
 }

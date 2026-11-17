@@ -587,7 +587,7 @@ fn signature_fingerprint_mismatch() {
     .touch("foo/bar")
     .args(["verify", "foo"])
     .stderr_regex(
-      "error: signature fingerprint `package1[0-9a-f]{64}` does not match package fingerprint `package1[0-9a-f]{64}`\n",
+      "error: signature revision `revision1[0-9a-f]{64}` does not match package revision `revision1[0-9a-f]{64}`\n",
     )
     .failure();
 }

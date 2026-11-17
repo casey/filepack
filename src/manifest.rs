@@ -9,7 +9,7 @@ pub struct Manifest {
   pub embedded: BTreeMap<Hash, Bytes>,
   /// Files and directories in the package, as a tree of path components.
   pub package: DirectoryTree,
-  /// Signatures over the package fingerprint.
+  /// Signatures over the revision hash.
   #[serde_as(as = "SetPreventDuplicates<serde_with::Same>")]
   pub signatures: BTreeSet<Decoded<Attestation>>,
   /// Entries in the manifest archive not recognized by this version of Filepack.
@@ -136,7 +136,7 @@ impl Manifest {
     keychain: &Keychain,
     key: &KeyName,
   ) -> Result {
-    let signature = keychain.sign(key, Statement { fingerprint })?;
+    let signature = keychain.sign(key, fingerprint.revision())?;
 
     self.signatures.insert(Decoded::Known(signature));
 

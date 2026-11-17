@@ -4,9 +4,9 @@ use super::*;
 #[expect(clippy::arbitrary_source_item_ordering)]
 #[derive(Debug, Encode, EnumIter, Eq, Ord, PartialEq, PartialOrd)]
 pub enum Context {
-  /// Statement attesting to a package.
+  /// Revision hash.
   #[n(0)]
-  Statement,
+  Revision,
   /// Claims in an authorization token.
   #[n(1)]
   Claims,
