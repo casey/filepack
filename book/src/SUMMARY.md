@@ -52,6 +52,7 @@ Summary
   - [filepack manifest](commands/filepack-manifest.md)
   - [filepack metadata](commands/filepack-metadata.md)
   - [filepack reference](commands/filepack-reference.md)
+  - [filepack revision](commands/filepack-revision.md)
   - [filepack serve](commands/filepack-serve.md)
   - [filepack sign](commands/filepack-sign.md)
   - [filepack signatures](commands/filepack-signatures.md)

@@ -19,6 +19,7 @@ mod man;
 mod manifest;
 mod metadata;
 mod reference;
+mod revision;
 pub(crate) mod serve;
 mod sign;
 mod signatures;
@@ -77,6 +78,8 @@ pub(crate) enum Subcommand {
   Metadata(metadata::Metadata),
   #[command(about = "Print reference")]
   Reference,
+  #[command(about = "Print package revision hash")]
+  Revision(revision::Revision),
   #[command(about = "Start Filepack server")]
   Serve(serve::Serve),
   #[command(about = "Sign manifest")]
@@ -113,6 +116,7 @@ impl Name {
       Self::Manifest => manifest::Input::io_schema(registry),
       Self::Metadata => metadata::Input::io_schema(registry),
       Self::Reference => reference::Input::io_schema(registry),
+      Self::Revision => revision::Input::io_schema(registry),
       Self::Serve => serve::Input::io_schema(registry),
       Self::Sign => sign::Input::io_schema(registry),
       Self::Signatures => signatures::Input::io_schema(registry),
@@ -143,6 +147,7 @@ impl Name {
       Self::Manifest => manifest::Output::io_schema(registry),
       Self::Metadata => metadata::Output::io_schema(registry),
       Self::Reference => reference::Output::io_schema(registry),
+      Self::Revision => revision::Output::io_schema(registry),
       Self::Serve => serve::Output::io_schema(registry),
       Self::Sign => sign::Output::io_schema(registry),
       Self::Signatures => signatures::Output::io_schema(registry),
@@ -175,6 +180,7 @@ impl Subcommand {
       Self::Manifest(manifest) => manifest.run(),
       Self::Metadata(metadata) => metadata.run(),
       Self::Reference => reference::run(),
+      Self::Revision(revision) => revision.run(),
       Self::Serve(serve) => serve.run(options),
       Self::Sign(sign) => sign.run(options),
       Self::Signatures(signatures) => signatures.run(options),

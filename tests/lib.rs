@@ -64,6 +64,7 @@ mod misc;
 mod print;
 mod reference;
 mod request;
+mod revision;
 mod serve;
 mod sign;
 mod signatures;
