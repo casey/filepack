@@ -620,7 +620,7 @@ mod tests {
 
     let private_key = DisplayPrivateKey::EXAMPLE.parse::<PrivateKey>().unwrap();
 
-    let revision = Revision::from_bytes([0; Revision::LEN]);
+    let revision = RevisionHash::from_bytes([0; RevisionHash::LEN]);
 
     let manifest = Manifest {
       embedded: BTreeMap::new(),
@@ -724,7 +724,7 @@ mod tests {
 
     let public_key = PublicKey::EXAMPLE.parse::<PublicKey>().unwrap();
 
-    let revision = Revision::from_bytes([0; Revision::LEN]);
+    let revision = RevisionHash::from_bytes([0; RevisionHash::LEN]);
 
     let mut encoder = Encoder::new();
     let mut map = encoder.map::<u64>();
@@ -800,7 +800,7 @@ mod tests {
 
     let signature = builder.file(
       private_key
-        .sign(Revision::from_bytes([0; Revision::LEN]))
+        .sign(RevisionHash::from_bytes([0; RevisionHash::LEN]))
         .encode_to_vec(),
     );
 
@@ -829,7 +829,7 @@ mod tests {
   fn signatures_are_named_by_hash() {
     let private_key = DisplayPrivateKey::EXAMPLE.parse::<PrivateKey>().unwrap();
 
-    let known = Decoded::Known(private_key.sign(Revision::from_bytes([0; Revision::LEN])));
+    let known = Decoded::Known(private_key.sign(RevisionHash::from_bytes([0; RevisionHash::LEN])));
 
     let unknown = {
       let mut fields = BTreeMap::<u64, Vec<u8>>::decode_from_slice(&known.encode_to_vec()).unwrap();

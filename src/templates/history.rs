@@ -3,7 +3,7 @@ use super::*;
 #[derive(Boilerplate)]
 pub(crate) struct HistoryHtml {
   pub(crate) identifier: PackageIdentifier,
-  pub(crate) revisions: Vec<Revision>,
+  pub(crate) revisions: Vec<RevisionHash>,
 }
 
 impl Page for HistoryHtml {
@@ -21,7 +21,7 @@ mod tests {
     assert_eq!(
       HistoryHtml {
         identifier: PackageIdentifier::Number(0),
-        revisions: vec![Revision::EXAMPLE.parse().unwrap()],
+        revisions: vec![RevisionHash::EXAMPLE.parse().unwrap()],
       }
       .to_string(),
       unindent(&format!(
@@ -31,7 +31,7 @@ mod tests {
             <li><a href=/package/{revision}><code>{revision}</code></a></li>
           </ol>
         ",
-        revision = Revision::EXAMPLE,
+        revision = RevisionHash::EXAMPLE,
       )),
     );
   }

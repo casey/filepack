@@ -115,9 +115,9 @@ pub(crate) struct Serve {
   )]
   https_port: Option<u16>,
   #[arg(
-    help = "Mount web package <PACKAGE>. <PACKAGE> may be a fingerprint, revision, or number. \
-            Mounted packages are served under `/mount` by fingerprint, revision, and number, as \
-            well as directly under `/<NAME>/` if `<NAME>` is supplied. Mounted packages are \
+    help = "Mount web package <PACKAGE>. <PACKAGE> may be a fingerprint, revision hash, or number. \
+            Mounted packages are served under `/mount` by fingerprint, revision hash, and number, \
+            as well as directly under `/<NAME>/` if `<NAME>` is supplied. Mounted packages are \
             unsandboxed and served with the server origin. Make sure you understand the \
             consequences of this and only mount packages you trust",
     long = "mount",
@@ -292,7 +292,7 @@ impl Serve {
         return Ok(Redirect::permanent(&format!("/package/{fingerprint}")));
       } else if segment.starts_with(&Tag::Revision.prefix()) {
         let revision = segment
-          .parse::<Revision>()
+          .parse::<RevisionHash>()
           .context(server_error::RevisionParse)?;
         return Ok(Redirect::permanent(&format!("/package/{revision}")));
       } else if server_config.mount(segment).is_some() {

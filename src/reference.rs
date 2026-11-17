@@ -108,7 +108,7 @@ impl Reference {
     Archive::deco_schema(&mut deco);
     Directory::deco_schema(&mut deco);
     Envelope::<Claims>::deco_schema(&mut deco);
-    Envelope::<Revision>::deco_schema(&mut deco);
+    Envelope::<RevisionHash>::deco_schema(&mut deco);
     Metadata::deco_schema(&mut deco);
     RevisionObject::deco_schema(&mut deco);
 
@@ -121,7 +121,7 @@ impl Reference {
     tag::<Fingerprint>(&mut deco, &mut hex, &tags);
     tag::<Hash>(&mut deco, &mut hex, &tags);
     tag::<PublicKey>(&mut deco, &mut hex, &tags);
-    tag::<Revision>(&mut deco, &mut hex, &tags);
+    tag::<RevisionHash>(&mut deco, &mut hex, &tags);
     tag::<Token>(&mut deco, &mut hex, &tags);
 
     let mut json = json::Registry::new();

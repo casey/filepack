@@ -18,9 +18,9 @@ pub(crate) mod gc {
     /// Fingerprints of the deleted packages.
     #[n(4)]
     pub(crate) packages: SortedSet<Fingerprint>,
-    /// Revisions of the deleted packages.
+    /// Hashes of the deleted revisions.
     #[n(5)]
-    pub(crate) revisions: SortedSet<Revision>,
+    pub(crate) revisions: SortedSet<RevisionHash>,
   }
 }
 
@@ -53,9 +53,9 @@ pub(crate) mod number {
     /// Fingerprint of the package.
     #[n(1)]
     pub(crate) package: Fingerprint,
-    /// Revision with the given number.
+    /// Hash of the revision with the given number.
     #[n(2)]
-    pub(crate) revision: Revision,
+    pub(crate) revision: RevisionHash,
   }
 }
 

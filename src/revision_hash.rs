@@ -15,9 +15,9 @@ use super::*;
   SerializeDisplay,
 )]
 #[deco(transparent)]
-pub struct Revision(pub(crate) Hash);
+pub struct RevisionHash(pub(crate) Hash);
 
-impl Revision {
+impl RevisionHash {
   pub(crate) const LEN: usize = Hash::LEN;
 
   pub(crate) fn as_bytes(&self) -> &[u8; Self::LEN] {
@@ -29,13 +29,13 @@ impl Revision {
   }
 }
 
-impl Display for Revision {
+impl Display for RevisionHash {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     self.format(f)
   }
 }
 
-impl Hex for Revision {
+impl Hex for RevisionHash {
   const EXAMPLE: &'static str =
     "revision12c7922354e5c2496ffc5e87ee0b29cc8767dc35a7c0e31e9d239014df5b44583";
   const EXAMPLE_DESCRIPTION: &'static str = "Hash of the revision with no parents whose package \
@@ -43,22 +43,22 @@ impl Hex for Revision {
   const TAG: Tag = Tag::Revision;
 }
 
-impl Message for Revision {
+impl Message for RevisionHash {
   const CONTEXT: Context = Context::Revision;
-  const NAME: &'static str = "Revision";
+  const NAME: &'static str = "RevisionHash";
   const SIGNATURE_EXAMPLE: &'static str = concat!(
     "signature101a03b6a27bcceb6a42d62a3a8d02a6f0d73653215771de243a63ac048a18b59da2902a02c7922354e",
     "5c2496ffc5e87ee0b29cc8767dc35a7c0e31e9d239014df5b4458303c0b0917f33a73bc9a24cb5b04df40442113e",
     "0798e8e7ecad55b14ca2fe665a1f02dd658d2ea50d4b848461dd2d06f4905113e800511cb30090354491690ada41",
     "06",
   );
-  const SIGNATURE_EXAMPLE_DESCRIPTION: &'static str = "Signature over the revision with no \
-    parents whose package is the empty package by the all-zero private key.";
+  const SIGNATURE_EXAMPLE_DESCRIPTION: &'static str = "Signature over the hash of the revision \
+    with no parents whose package is the empty package by the all-zero private key.";
   const SIGNATURE_TAG: Tag = Tag::Signature;
   type Error = Error;
-  type Policy<'a> = Revision;
+  type Policy<'a> = RevisionHash;
 
-  fn check(&self, _signer: PublicKey, revision: Revision) -> Result {
+  fn check(&self, _signer: PublicKey, revision: RevisionHash) -> Result {
     ensure! {
       *self == revision,
       error::SignatureRevisionMismatch {
@@ -70,7 +70,7 @@ impl Message for Revision {
   }
 }
 
-impl FromStr for Revision {
+impl FromStr for RevisionHash {
   type Err = HexError;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -78,32 +78,32 @@ impl FromStr for Revision {
   }
 }
 
-impl From<[u8; Self::LEN]> for Revision {
+impl From<[u8; Self::LEN]> for RevisionHash {
   fn from(bytes: [u8; Self::LEN]) -> Self {
     Self::from_bytes(bytes)
   }
 }
 
-impl From<Hash> for Revision {
+impl From<Hash> for RevisionHash {
   fn from(hash: Hash) -> Self {
     Self(hash)
   }
 }
 
-impl redb::Key for Revision {
+impl redb::Key for RevisionHash {
   fn compare(a: &[u8], b: &[u8]) -> Ordering {
     a.cmp(b)
   }
 }
 
-impl redb::Value for Revision {
+impl redb::Value for RevisionHash {
   type AsBytes<'a>
     = &'a [u8; Self::LEN]
   where
     Self: 'a;
 
   type SelfType<'a>
-    = Revision
+    = RevisionHash
   where
     Self: 'a;
 
@@ -130,9 +130,9 @@ impl redb::Value for Revision {
   }
 }
 
-impl PathExtractor for Revision {
+impl PathExtractor for RevisionHash {
   fn parameters() -> Vec<reference::Parameter> {
-    vec![reference::Parameter::Revision]
+    vec![reference::Parameter::RevisionHash]
   }
 }
 
@@ -144,7 +144,7 @@ mod tests {
   fn example() {
     assert_eq!(
       PrivateKey::from([0; PrivateKey::LEN])
-        .sign(Revision::EXAMPLE.parse::<Revision>().unwrap())
+        .sign(RevisionHash::EXAMPLE.parse::<RevisionHash>().unwrap())
         .to_string(),
       Attestation::EXAMPLE,
     );
@@ -152,8 +152,8 @@ mod tests {
 
   #[test]
   fn mismatch() {
-    let revision = Revision::EXAMPLE.parse::<Revision>().unwrap();
-    let other = Revision::from_bytes(default());
+    let revision = RevisionHash::EXAMPLE.parse::<RevisionHash>().unwrap();
+    let other = RevisionHash::from_bytes(default());
     assert_matches!(
       Attestation::EXAMPLE
         .parse::<Attestation>()
@@ -171,10 +171,10 @@ mod tests {
   #[test]
   fn redb() {
     assert_redb_impls(&[
-      Revision::from(Hash::from([0; Hash::LEN])),
-      Revision::from(Hash::from([0xff; Hash::LEN])),
-      Revision::from(Hash::bytes(b"foo")),
-      Revision::from(Hash::bytes(b"bar")),
+      RevisionHash::from(Hash::from([0; Hash::LEN])),
+      RevisionHash::from(Hash::from([0xff; Hash::LEN])),
+      RevisionHash::from(Hash::bytes(b"foo")),
+      RevisionHash::from(Hash::bytes(b"bar")),
     ]);
   }
 }

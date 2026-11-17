@@ -94,11 +94,11 @@ pub(crate) async fn api_gc(
 
 /// Check whether `revision` is the head of a package.
 ///
-/// `revision`: Revision to check.
+/// `revision`: Hash of the revision to check.
 #[route(HEAD, "/api/head/{revision}")]
 pub(crate) async fn api_head(
   server: ServerExtension,
-  Path(revision): Path<Revision>,
+  Path(revision): Path<RevisionHash>,
 ) -> ServerResult {
   block_in_place(|| {
     ensure!(
@@ -213,12 +213,12 @@ pub(crate) async fn api_verify_package(
 
 /// Verify uploaded `revision` and assign it a package number.
 ///
-/// `revision`: Revision of the uploaded package.
+/// `revision`: Hash of the uploaded revision.
 #[route(POST, "/api/revision/{revision}")]
 pub(crate) async fn api_verify_revision(
   _: Authenticated,
   server: ServerExtension,
-  revision: Path<Revision>,
+  revision: Path<RevisionHash>,
   DecoRequest(request): DecoRequest<api::revision::Request, { MIB }>,
 ) -> ServerResult<DecoResponse<api::revision::Response>> {
   block_in_place(|| {
@@ -496,7 +496,7 @@ pub(crate) async fn media_video_item_placeholder_thumbnail(
 
 /// Serve `index.html` from `static` directory of mounted `package`.
 ///
-/// `package`: Fingerprint, revision, or number of the mounted package.
+/// `package`: Fingerprint, revision hash, or number of the mounted package.
 #[route(GET, "/mount/{package}/")]
 pub(crate) async fn mount(
   server: ServerExtension,
@@ -515,7 +515,7 @@ pub(crate) async fn mount(
 
 /// Serve `path` from `static` directory of mounted `package`.
 ///
-/// `package`: Fingerprint, revision, or number of the mounted package.
+/// `package`: Fingerprint, revision hash, or number of the mounted package.
 /// `path`: Path of the file within the `static` directory.
 #[route(GET, "/mount/{package}/{*path}")]
 pub(crate) async fn mount_file(
@@ -540,7 +540,7 @@ pub(crate) async fn mount_file(
 
 /// Redirect to root of mounted `package`, with trailing slash.
 ///
-/// `package`: Fingerprint, revision, or number of the mounted package.
+/// `package`: Fingerprint, revision hash, or number of the mounted package.
 #[route(GET, "/mount/{package}")]
 pub(crate) async fn mount_redirect(Path(package): Path<PackageIdentifier>) -> Redirect {
   Redirect::permanent(&format!("/mount/{package}/"))
@@ -548,7 +548,7 @@ pub(crate) async fn mount_redirect(Path(package): Path<PackageIdentifier>) -> Re
 
 /// Display `package`.
 ///
-/// `package`: Fingerprint, revision, or number of the package.
+/// `package`: Fingerprint, revision hash, or number of the package.
 #[route(GET, "/package/{package}")]
 pub(crate) async fn package(
   server: ServerExtension,
@@ -566,7 +566,7 @@ pub(crate) async fn package(
 
 /// Display revision history of `package`.
 ///
-/// `package`: Fingerprint, revision, or number of the package.
+/// `package`: Fingerprint, revision hash, or number of the package.
 #[route(GET, "/package/{package}/history")]
 pub(crate) async fn package_history(
   server: ServerExtension,
@@ -584,7 +584,7 @@ pub(crate) async fn package_history(
 
 /// Display media `item` of `package`.
 ///
-/// `package`: Fingerprint, revision, or number of the package.
+/// `package`: Fingerprint, revision hash, or number of the package.
 /// `item`: One-based index of the media item.
 #[route(GET, "/package/{package}/item/{item}")]
 pub(crate) async fn package_item(
@@ -632,7 +632,7 @@ pub(crate) async fn package_item(
 
 /// Display media of `package`.
 ///
-/// `package`: Fingerprint, revision, or number of the package.
+/// `package`: Fingerprint, revision hash, or number of the package.
 #[route(GET, "/package/{package}/media")]
 pub(crate) async fn package_media(
   server: ServerExtension,

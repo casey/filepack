@@ -80,7 +80,7 @@ pub(crate) enum ServerError {
   #[snafu(display("{source}"))]
   FingerprintParse { source: HexError },
   #[snafu(display("head {revision} not found"))]
-  HeadNotFound { revision: Revision },
+  HeadNotFound { revision: RevisionHash },
   #[snafu(display(
     "history cannot be accessed by fingerprint, browse package {fingerprint} by number or revision"
   ))]
@@ -173,39 +173,39 @@ pub(crate) enum ServerError {
     "package number {number} is at revision {head} but revision's parent is {parent}"
   ))]
   RevisionConflict {
-    head: Revision,
+    head: RevisionHash,
     number: u64,
-    parent: Revision,
+    parent: RevisionHash,
   },
   #[snafu(display("stored revision {revision} failed to decode"))]
   RevisionCorrupt {
-    revision: Revision,
+    revision: RevisionHash,
     source: DecodeError,
   },
   #[snafu(display("failed to decode revision {revision}"))]
   RevisionDecode {
-    revision: Revision,
+    revision: RevisionHash,
     source: DecodeError,
   },
   #[snafu(display("revision {revision} not found"))]
-  RevisionNotFound { revision: Revision },
+  RevisionNotFound { revision: RevisionHash },
   #[snafu(display(
     "revision {revision} has no parent but package number {number} is at revision {head}"
   ))]
   RevisionParentMissing {
-    head: Revision,
+    head: RevisionHash,
     number: u64,
-    revision: Revision,
+    revision: RevisionHash,
   },
   #[snafu(display("revision {revision} references unknown parent revision {parent}"))]
   RevisionParentNotFound {
-    parent: Revision,
-    revision: Revision,
+    parent: RevisionHash,
+    revision: RevisionHash,
   },
   #[snafu(display("revision {revision} has parent revision {parent}"))]
   RevisionParentUnexpected {
-    parent: Revision,
-    revision: Revision,
+    parent: RevisionHash,
+    revision: RevisionHash,
   },
   #[snafu(display("failed to parse revision"))]
   RevisionParse { source: HexError },

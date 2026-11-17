@@ -33,8 +33,8 @@ impl From<Fingerprint> for Hash {
   }
 }
 
-impl From<Revision> for Hash {
-  fn from(revision: Revision) -> Self {
+impl From<RevisionHash> for Hash {
+  fn from(revision: RevisionHash) -> Self {
     revision.0
   }
 }

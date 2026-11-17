@@ -67,7 +67,7 @@ mod tests {
 
     let private_key = DisplayPrivateKey::EXAMPLE.parse::<PrivateKey>().unwrap();
     let public_key = PublicKey::EXAMPLE.parse::<PublicKey>().unwrap();
-    let revision = Revision::EXAMPLE.parse::<Revision>().unwrap();
+    let revision = RevisionHash::EXAMPLE.parse::<RevisionHash>().unwrap();
 
     assert_eq!(
       private_key.sign(Twin(revision.0)).to_string(),
@@ -115,7 +115,7 @@ mod tests {
 
     let mut cases = Cases::default();
 
-    cases.case(Revision::from_bytes([0; Revision::LEN]), 0);
+    cases.case(RevisionHash::from_bytes([0; RevisionHash::LEN]), 0);
 
     cases.case(
       Claims {

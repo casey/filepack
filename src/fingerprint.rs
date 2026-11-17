@@ -25,7 +25,7 @@ impl Fingerprint {
     Self(bytes.into())
   }
 
-  pub fn revision(self) -> Revision {
+  pub fn revision(self) -> RevisionHash {
     RevisionObject {
       package: self,
       parents: None,
@@ -145,7 +145,7 @@ mod tests {
         .unwrap()
         .revision()
         .to_string(),
-      Revision::EXAMPLE,
+      RevisionHash::EXAMPLE,
     );
   }
 }

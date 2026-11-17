@@ -6,17 +6,17 @@ pub struct RevisionObject {
   /// Fingerprint at this revision.
   #[n(1)]
   pub package: Fingerprint,
-  /// Revisions this revision was derived from.
+  /// Hashes of the revisions this revision was derived from.
   #[n(2)]
-  pub parents: Option<NonEmptyOrderedSet<Revision>>,
+  pub parents: Option<NonEmptyOrderedSet<RevisionHash>>,
 }
 
 impl RevisionObject {
-  pub fn hash(&self) -> Revision {
+  pub fn hash(&self) -> RevisionHash {
     Hash::bytes(&self.encode_to_vec()).into()
   }
 
-  pub(crate) fn parents(&self) -> &[Revision] {
+  pub(crate) fn parents(&self) -> &[RevisionHash] {
     self
       .parents
       .as_ref()
@@ -33,7 +33,7 @@ mod tests {
     assert_encoding(RevisionObject {
       package: Fingerprint::EXAMPLE.parse().unwrap(),
       parents: Some(NonEmptyOrderedSet::singleton(
-        Revision::EXAMPLE.parse().unwrap(),
+        RevisionHash::EXAMPLE.parse().unwrap(),
       )),
     });
   }
@@ -47,7 +47,7 @@ mod tests {
       }
       .hash()
       .to_string(),
-      Revision::EXAMPLE,
+      RevisionHash::EXAMPLE,
     );
   }
 }

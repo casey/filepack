@@ -24,10 +24,10 @@ pub(crate) fn path_parameter_type(parameter: Parameter) -> &'static str {
     Parameter::Integer => "unsigned integer",
     Parameter::Ordinal => "one-based index",
     Parameter::PackageIdentifier => {
-      "package [fingerprint](../hex/package.md), [revision](../hex/revision.md), or number"
+      "package [fingerprint](../hex/package.md), [revision hash](../hex/revision.md), or number"
     }
     Parameter::RelativePath => "relative path",
-    Parameter::Revision => "[revision](../hex/revision.md)",
+    Parameter::RevisionHash => "[revision hash](../hex/revision.md)",
     Parameter::String => "string",
   }
 }

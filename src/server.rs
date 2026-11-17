@@ -8,11 +8,11 @@ use {
 };
 
 const DIRECTORIES: TableDefinition<Hash, ()> = TableDefinition::new("directories");
-const HEADS: MultimapTableDefinition<Revision, u64> = MultimapTableDefinition::new("heads");
+const HEADS: MultimapTableDefinition<RevisionHash, u64> = MultimapTableDefinition::new("heads");
 const METADATA: TableDefinition<DatabaseMetadata, u64> = TableDefinition::new("metadata");
-const NUMBERS: TableDefinition<u64, Revision> = TableDefinition::new("numbers");
+const NUMBERS: TableDefinition<u64, RevisionHash> = TableDefinition::new("numbers");
 const PACKAGES: TableDefinition<Fingerprint, ()> = TableDefinition::new("packages");
-const REVISIONS: TableDefinition<Revision, ()> = TableDefinition::new("revisions");
+const REVISIONS: TableDefinition<RevisionHash, ()> = TableDefinition::new("revisions");
 const SCHEMA_VERSION: u64 = 9;
 
 pub(crate) struct Server {
@@ -144,7 +144,7 @@ impl Server {
         .open_table(NUMBERS)?
         .iter()?
         .map(|entry| Ok(entry?.1.value()))
-        .collect::<ServerResult<Vec<Revision>>>()?;
+        .collect::<ServerResult<Vec<RevisionHash>>>()?;
 
       for mount in mounts {
         match mount.package {
@@ -154,7 +154,7 @@ impl Server {
             }
           }
           PackageIdentifier::Number(_) => {}
-          PackageIdentifier::Revision(revision) => {
+          PackageIdentifier::RevisionHash(revision) => {
             if revisions.get(&revision)?.is_some() {
               revision_stack.push(revision);
             }
@@ -175,7 +175,7 @@ impl Server {
       }
 
       for entry in revisions
-        .extract_from_if::<Revision, _>(.., |revision, ()| !marked.contains(&revision.into()))?
+        .extract_from_if::<RevisionHash, _>(.., |revision, ()| !marked.contains(&revision.into()))?
       {
         revisions_removed.insert(entry?.0.value());
       }
@@ -271,7 +271,7 @@ impl Server {
     })
   }
 
-  fn history(&self, revision: Revision) -> ServerResult<Vec<Revision>> {
+  fn history(&self, revision: RevisionHash) -> ServerResult<Vec<RevisionHash>> {
     let mut revisions = Vec::new();
 
     let mut revision = Some(revision);
@@ -300,7 +300,7 @@ impl Server {
     })
   }
 
-  pub(crate) fn is_head(&self, revision: Revision) -> ServerResult<bool> {
+  pub(crate) fn is_head(&self, revision: RevisionHash) -> ServerResult<bool> {
     Ok(
       !self
         .database
@@ -471,7 +471,7 @@ impl Server {
             false
           }
         }
-        PackageIdentifier::Revision(mount) => {
+        PackageIdentifier::RevisionHash(mount) => {
           revisions.get(&mount)?.is_some() && self.read_revision(mount)?.package == fingerprint
         }
       };
@@ -706,7 +706,7 @@ impl Server {
     })
   }
 
-  fn read_revision(&self, revision: Revision) -> ServerResult<RevisionObject> {
+  fn read_revision(&self, revision: RevisionHash) -> ServerResult<RevisionObject> {
     RevisionObject::decode_from_slice(&self.read_file(revision.into())?)
       .context(server_error::RevisionCorrupt { revision })
   }
@@ -740,7 +740,7 @@ impl Server {
           revision: Some(revision),
         })
       }
-      PackageIdentifier::Revision(revision) => {
+      PackageIdentifier::RevisionHash(revision) => {
         ensure!(
           tx.open_table(REVISIONS)?.get(&revision)?.is_some(),
           server_error::RevisionNotFound { revision },
@@ -909,7 +909,7 @@ impl Server {
 
   pub(crate) fn verify_revision(
     &self,
-    revision: Revision,
+    revision: RevisionHash,
     request: api::revision::Request,
   ) -> ServerResult<u64> {
     let tx = self.database.begin_write()?;

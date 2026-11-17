@@ -14,16 +14,16 @@ content of the package:
 package12186aa6cefc1ae2f427b90e61a3ab91c88573f6f6719ca0188098d681b6c80ca
 ```
 
-Or by revision, a hash that uniquely identifies the content of the package and
+Or by revision hash, which uniquely identifies the content of the package and
 its revision history:
 
 ```
 revision12c7922354e5c2496ffc5e87ee0b29cc8767dc35a7c0e31e9d239014df5b44583
 ```
 
-The authenticity of a package can be verified by manifest, fingerprint,
-revision, or signature, guaranteeing that the contents of the package have not
-been accidentally modified or intentionally tampered with.
+The authenticity of a package can be verified by manifest, fingerprint, revision
+hash, or signature, guaranteeing that the contents of the package have not been
+accidentally modified or intentionally tampered with.
 
 Filepack packages may include machine-readable metadata in a file named
 `metadata.filemeta` in the package root, which includes information about the
@@ -164,7 +164,7 @@ To sign a package, the signer constructs a [revision](deco/revision-object.md),
 which contains the package fingerprint and parent revision hashes.
 
 The signature is made over the BLAKE3 hash of a deco-encoded
-[envelope](deco/envelope-revision.md) containing the revision hash, which
+[envelope](deco/envelope-revision-hash.md) containing the revision hash, which
 performs domain separation by committing to the
 [application](deco/application.md) and [context](deco/context.md).
 
@@ -177,7 +177,7 @@ The fingerprint from the current revision can then be used to verify the package
 itself.
 
 For transport, the raw Ed25519 signature, revision hash, and public key are
-stored in a [signature object](deco/signature-revision.md).
+stored in a [signature object](deco/signature-revision-hash.md).
 
 Signatures are serialized as deco and stored as files named after their hash in
 the manifest archive `signatures` directory, and are represented in text as

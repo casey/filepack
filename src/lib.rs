@@ -151,7 +151,7 @@ use {
     resolved::Resolved,
     resource::Resource,
     resource_type::ResourceType,
-    revision::Revision,
+    revision_hash::RevisionHash,
     rotation::Rotation,
     server::Server,
     server_error::ServerError,
@@ -491,7 +491,7 @@ mod reqwest_response_ext;
 mod resolved;
 mod resource;
 mod resource_type;
-mod revision;
+mod revision_hash;
 mod revision_object;
 mod rotation;
 mod server;
@@ -560,7 +560,7 @@ type FilesystemResult<T = ()> = Result<T, FilesystemError>;
 type PageResult<T> = Result<PageHtml<T>, PageError>;
 type ServerResult<T = ()> = Result<T, ServerError>;
 
-type Attestation = Signature<Revision>;
+type Attestation = Signature<RevisionHash>;
 type Token = Signature<Claims>;
 
 fn initialize_tracing() -> Result<(), Box<dyn std::error::Error>> {
