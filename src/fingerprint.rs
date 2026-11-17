@@ -10,12 +10,14 @@ pub struct Fingerprint(pub(crate) Hash);
 #[cfg(test)]
 impl Default for Fingerprint {
   fn default() -> Self {
-    Self(Hash::from([0; Hash::LEN]))
+    Self::ZERO
   }
 }
 
 impl Fingerprint {
   pub(crate) const LEN: usize = Hash::LEN;
+  #[cfg(test)]
+  pub(crate) const ZERO: Self = Self(Hash::ZERO);
 
   pub(crate) fn as_bytes(&self) -> &[u8; Self::LEN] {
     self.0.as_bytes()
@@ -129,7 +131,7 @@ mod tests {
   #[test]
   fn redb() {
     assert_redb_impls(&[
-      Fingerprint::from(Hash::from([0; Hash::LEN])),
+      Fingerprint::ZERO,
       Fingerprint::from(Hash::from([0xff; Hash::LEN])),
       Fingerprint::from(Hash::bytes(b"foo")),
       Fingerprint::from(Hash::bytes(b"bar")),

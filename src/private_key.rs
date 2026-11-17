@@ -46,12 +46,10 @@ impl PrivateKey {
     let signature = self.0.sign(message.digest().as_bytes());
     Signature::new(self.public_key(), message, signature)
   }
-}
 
-#[cfg(test)]
-impl From<[u8; PrivateKey::LEN]> for PrivateKey {
-  fn from(secret: [u8; PrivateKey::LEN]) -> Self {
-    Self(ed25519_dalek::SigningKey::from_bytes(&secret))
+  #[cfg(test)]
+  pub(crate) fn zero() -> Self {
+    Self(ed25519_dalek::SigningKey::from_bytes(&[0; Self::LEN]))
   }
 }
 

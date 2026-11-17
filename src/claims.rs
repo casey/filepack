@@ -99,7 +99,7 @@ mod tests {
 
   #[test]
   fn example() {
-    let private_key = PrivateKey::from([0; PrivateKey::LEN]);
+    let private_key = PrivateKey::zero();
 
     let claims = Claims {
       domain: "filepack.com".into(),

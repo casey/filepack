@@ -5,6 +5,8 @@ pub struct Hash(blake3::Hash);
 
 impl Hash {
   pub(crate) const LEN: usize = blake3::OUT_LEN;
+  #[cfg(test)]
+  pub(crate) const ZERO: Self = Self(blake3::Hash::from_bytes([0; Self::LEN]));
 
   pub(crate) fn as_bytes(&self) -> &[u8; Self::LEN] {
     self.0.as_bytes()
@@ -178,7 +180,7 @@ mod tests {
   #[test]
   fn hex() {
     assert_eq! {
-      Hash::from([0; Hash::LEN]).to_string(),
+      Hash::ZERO.to_string(),
       "hash10000000000000000000000000000000000000000000000000000000000000000",
     }
   }
@@ -186,7 +188,7 @@ mod tests {
   #[test]
   fn redb() {
     assert_redb_impls(&[
-      Hash::from([0; Hash::LEN]),
+      Hash::ZERO,
       Hash::from([0xff; Hash::LEN]),
       Hash::bytes(b"foo"),
       Hash::bytes(b"bar"),

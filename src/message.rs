@@ -115,7 +115,7 @@ mod tests {
 
     let mut cases = Cases::default();
 
-    cases.case(RevisionHash::from_bytes([0; RevisionHash::LEN]), 0);
+    cases.case(RevisionHash::ZERO, 0);
 
     cases.case(
       Claims {
