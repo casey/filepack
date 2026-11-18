@@ -160,54 +160,6 @@ fn serve_admin_key_by_public_key() {
 }
 
 #[test]
-fn signatures_are_not_uploaded() {
-  let server = Test::new().serve().spawn();
-
-  let test = Test::new()
-    .arg("keygen")
-    .success()
-    .write("foo", "aaa")
-    .arg("create")
-    .success()
-    .args(["sign", "manifest.filepack"])
-    .success();
-
-  let path = test.path().join("manifest.filepack");
-  assert_eq!(manifest(&path).signatures.len(), 1);
-
-  let fingerprint = fingerprint(&path);
-
-  test
-    .args(["upload", "--server", &server.address(), "manifest.filepack"])
-    .stderr(
-      "
-        uploading 3 of 3 files
-        created package number 0
-      ",
-    )
-    .success();
-
-  let downloaded = Test::new()
-    .args([
-      "download",
-      "--server",
-      &server.address(),
-      "--package",
-      &fingerprint.to_string(),
-      "out",
-    ])
-    .success();
-
-  assert!(
-    manifest(&downloaded.path().join("out/manifest.filepack"))
-      .signatures
-      .is_empty(),
-  );
-
-  server.terminate().success();
-}
-
-#[test]
 fn upload_auth_requires_https() {
   Test::new()
     .args([
@@ -230,6 +182,34 @@ fn upload_creates_file() {
   Test::new()
     .write("foo", "bar")
     .args(["upload", "--server", &server.address(), "--file", "foo"])
+    .success();
+
+  server.terminate().success();
+}
+
+#[test]
+fn upload_ignores_unrecognized_signatures() {
+  let server = Test::new().serve().spawn();
+
+  let test = Test::new()
+    .arg("keygen")
+    .success()
+    .create_dir("foo")
+    .args(["create", "--sign", "foo"])
+    .success();
+
+  add_unknown_signature(&test.path().join("foo/manifest.filepack"));
+
+  test
+    .args(["upload", "--server", &server.address(), "foo"])
+    .stderr(
+      "
+        uploading 0 of 0 files
+        created package number 0
+        ignored 1 unrecognized signature
+        uploaded 1 signature
+      ",
+    )
     .success();
 
   server.terminate().success();
@@ -820,6 +800,29 @@ fn upload_rejects_ambiguous_parent() {
 }
 
 #[test]
+fn upload_rejects_invalid_signature() {
+  let test = Test::new()
+    .arg("keygen")
+    .success()
+    .create_dir("foo")
+    .args(["create", "--sign", "foo"])
+    .success();
+
+  let path = test.path().join("foo/manifest.filepack");
+
+  let signature = fingerprint(&path).revision().hash();
+
+  let package = add_parent(&path).hash();
+
+  test
+    .args(["upload", "--server", "http://127.0.0.1:1", "foo"])
+    .stderr(&format!(
+      "error: signature revision `{signature}` does not match package revision `{package}`\n"
+    ))
+    .failure();
+}
+
+#[test]
 fn upload_rejects_parent_that_is_not_head() {
   let server = Test::new().serve().spawn();
 
@@ -1113,6 +1116,57 @@ fn upload_updates_package() {
   for identifier in [old.to_string(), new.to_string(), "0".into()] {
     server.get(format!("/package/{identifier}")).send();
   }
+
+  server.terminate().success();
+}
+
+#[test]
+fn upload_uploads_signatures() {
+  let server = Test::new().serve().spawn();
+
+  Test::new()
+    .arg("keygen")
+    .success()
+    .write("foo/bar", "baz")
+    .args(["create", "--sign", "foo"])
+    .success()
+    .args(["upload", "--server", &server.address(), "foo"])
+    .stderr(
+      "
+        uploading 1 of 1 file
+        created package number 0
+        uploaded 1 signature
+      ",
+    )
+    .success()
+    .args(["keygen", "--name", "bar"])
+    .success()
+    .args(["sign", "--key", "bar", "foo"])
+    .success()
+    .args(["upload", "--server", &server.address(), "foo"])
+    .stderr(
+      "
+        package number 0 is up to date
+        uploaded 1 signature
+      ",
+    )
+    .success()
+    .args(["keygen", "--name", "baz"])
+    .success()
+    .args(["sign", "--key", "baz", "foo"])
+    .success()
+    .remove_file("foo/.filepack/state.json")
+    .args(["upload", "--server", &server.address(), "foo"])
+    .stderr(
+      "
+        server already has this revision as package number 0
+        uploaded 1 signature
+      ",
+    )
+    .success()
+    .args(["upload", "--server", &server.address(), "foo"])
+    .stderr("package number 0 is up to date\n")
+    .success();
 
   server.terminate().success();
 }
