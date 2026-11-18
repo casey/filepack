@@ -15,6 +15,11 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     expected: Hash,
   },
+  #[snafu(transparent)]
+  Attestation {
+    backtrace: Option<Backtrace>,
+    source: AttestationError,
+  },
   #[snafu(display("invalid audio track `{path}`"))]
   Audio {
     backtrace: Option<Backtrace>,
@@ -549,21 +554,10 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     source: io::Error,
   },
-  #[snafu(transparent)]
-  SignatureInvalid {
-    backtrace: Option<Backtrace>,
-    source: SignatureError,
-  },
   #[snafu(display("no signature found for key `{identifier}`"))]
   SignatureMissing {
     backtrace: Option<Backtrace>,
     identifier: KeyIdentifier,
-  },
-  #[snafu(display("signature revision `{signature}` does not match package revision `{package}`"))]
-  SignatureRevisionMismatch {
-    backtrace: Option<Backtrace>,
-    package: RevisionHash,
-    signature: RevisionHash,
   },
   #[snafu(display(
     "file with hash `{hash}` has size {manifest} in manifest but size {disk} on disk"

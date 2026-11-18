@@ -26,6 +26,7 @@ use {
     arguments::Arguments,
     array_decoder::ArrayDecoder,
     array_encoder::ArrayEncoder,
+    attestation_error::AttestationError,
     audio::Audio,
     audio_codec::AudioCodec,
     audio_error::AudioError,
@@ -33,7 +34,6 @@ use {
     audio_metadata::AudioMetadata,
     audio_position_error::AudioPositionError,
     authenticated::Authenticated,
-    authorization_error::AuthorizationError,
     bit_reader::BitReader,
     bytes_error::BytesError,
     cause::Cause,
@@ -176,6 +176,7 @@ use {
     ticked::Ticked,
     time::Time,
     time_error::TimeError,
+    token_error::TokenError,
     totals_error::TotalsError,
     track::Track,
     track_codec::TrackCodec,
@@ -336,6 +337,7 @@ mod archive_error;
 mod arguments;
 mod array_decoder;
 mod array_encoder;
+mod attestation_error;
 mod audio;
 mod audio_codec;
 mod audio_error;
@@ -343,7 +345,6 @@ mod audio_format;
 mod audio_metadata;
 mod audio_position_error;
 mod authenticated;
-mod authorization_error;
 mod bit_reader;
 mod bytes;
 mod bytes_error;
@@ -521,6 +522,7 @@ mod text_error;
 mod ticked;
 mod time;
 mod time_error;
+mod token_error;
 mod totals;
 mod totals_error;
 mod track;
@@ -566,6 +568,8 @@ type ServerResult<T = ()> = Result<T, ServerError>;
 
 type Attestation = Signature<RevisionHash>;
 type Token = Signature<Claims>;
+
+type PublicKeyBytes = [u8; PublicKey::LEN];
 
 fn initialize_tracing() -> Result<(), Box<dyn std::error::Error>> {
   use {

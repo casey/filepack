@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(Debug, Snafu)]
 #[snafu(context(suffix(false)), visibility(pub(crate)))]
-pub(crate) enum AuthorizationError {
+pub(crate) enum TokenError {
   #[snafu(display("token has incorrect domain `{domain}`"))]
   Domain { domain: String },
   #[snafu(display(

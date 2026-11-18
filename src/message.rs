@@ -38,10 +38,10 @@ mod tests {
       const SIGNATURE_EXAMPLE: &'static str = "";
       const SIGNATURE_EXAMPLE_DESCRIPTION: &'static str = "";
       const SIGNATURE_TAG: Tag = Tag::Token;
-      type Error = AuthorizationError;
+      type Error = TokenError;
       type Policy<'a> = ();
 
-      fn check(&self, _signer: PublicKey, _policy: ()) -> Result<(), AuthorizationError> {
+      fn check(&self, _signer: PublicKey, _policy: ()) -> Result<(), TokenError> {
         Ok(())
       }
     }
@@ -57,10 +57,10 @@ mod tests {
       const SIGNATURE_EXAMPLE: &'static str = "";
       const SIGNATURE_EXAMPLE_DESCRIPTION: &'static str = "";
       const SIGNATURE_TAG: Tag = Tag::Signature;
-      type Error = Error;
+      type Error = AttestationError;
       type Policy<'a> = ();
 
-      fn check(&self, _signer: PublicKey, _policy: ()) -> Result {
+      fn check(&self, _signer: PublicKey, _policy: ()) -> Result<(), AttestationError> {
         Ok(())
       }
     }
@@ -81,7 +81,7 @@ mod tests {
         .unwrap()
         .verify(())
         .unwrap_err(),
-      AuthorizationError::Signature {
+      TokenError::Signature {
         source: SignatureError::Invalid { public_key: signer, .. },
       } if signer == public_key,
     );

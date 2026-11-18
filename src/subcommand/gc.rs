@@ -18,16 +18,24 @@ pub(crate) type Output = ();
 
 impl Gc {
   pub(crate) fn run(self, options: Options) -> Result {
-    let response = Client::new(&options, self.server.clone(), self.auth.as_ref())?.gc()?;
+    let api::gc::Response {
+      bytes,
+      directories,
+      files,
+      packages,
+      revisions,
+      signatures,
+    } = Client::new(&options, self.server.clone(), self.auth.as_ref())?.gc()?;
 
     if !options.quiet {
       eprintln!(
-        "removed {}, {}, {}, and {}, freeing {}",
-        Count::new(response.revisions.len(), "revision"),
-        Count::new(response.packages.len(), "package"),
-        Count::irregular(response.directories.len(), "directory", "directories"),
-        Count::new(response.files.len(), "file"),
-        format_size(response.bytes),
+        "removed {}, {}, {}, {}, and {}, freeing {}",
+        Count::new(revisions.len(), "revision"),
+        Count::new(signatures.len(), "signature"),
+        Count::new(packages.len(), "package"),
+        Count::irregular(directories.len(), "directory", "directories"),
+        Count::new(files.len(), "file"),
+        format_size(bytes),
       );
     }
 

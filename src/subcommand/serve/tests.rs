@@ -403,6 +403,14 @@ impl TestServer {
     TestRequestBuilder::new(Method::PUT, path, self.router.clone())
   }
 
+  fn sign(&self, revision: RevisionHash) -> Hash {
+    let signature = PrivateKey::zero().sign(revision).encode_to_vec();
+
+    self.write_file(&signature);
+
+    Hash::bytes(&signature)
+  }
+
   fn write_file(&self, content: &[u8]) {
     fs::write(
       self
@@ -669,6 +677,7 @@ fn api_revision() {
     .assert_body(
       api::revision::get::Response {
         numbers: BTreeSet::from([0]).into(),
+        signatures: SortedSet::default(),
       }
       .encode_to_vec(),
     )
@@ -681,6 +690,7 @@ fn api_revision() {
     .assert_body(
       api::revision::get::Response {
         numbers: SortedSet::default(),
+        signatures: SortedSet::default(),
       }
       .encode_to_vec(),
     )
@@ -1126,6 +1136,7 @@ fn delete_number_keeps_shared_head() {
     .assert_body(
       api::revision::get::Response {
         numbers: BTreeSet::from([1]).into(),
+        signatures: SortedSet::default(),
       }
       .encode_to_vec(),
     )
@@ -1474,6 +1485,57 @@ fn gc_rejects_missing_auth_header() {
 }
 
 #[test]
+fn gc_removes_signatures_of_removed_revisions() {
+  let server = TestServer::new();
+
+  let package = PackageBuilder::new().file("foo", b"foo");
+
+  let (root_deco, root_hash) = package.directory().deco();
+
+  let fingerprint = package.upload(&server);
+
+  let revision = fingerprint.revision();
+
+  let revision_hash = revision.hash();
+
+  let signature = PrivateKey::zero().sign(revision_hash).encode_to_vec();
+
+  let signature_hash = Hash::bytes(&signature);
+
+  server.write_file(&signature);
+
+  server
+    .post(format!("/api/signature/{signature_hash}"))
+    .send();
+
+  server.delete("/api/number/0").send();
+
+  server
+    .post("/api/gc")
+    .assert_body(
+      api::gc::Response {
+        bytes: root_deco.len().into_u64()
+          + 3
+          + revision.encode_to_vec().len().into_u64()
+          + signature.len().into_u64(),
+        directories: BTreeSet::from([root_hash]).into(),
+        files: BTreeSet::from([
+          root_hash,
+          Hash::bytes(b"foo"),
+          revision_hash.into(),
+          signature_hash,
+        ])
+        .into(),
+        packages: BTreeSet::from([fingerprint]).into(),
+        revisions: BTreeSet::from([revision_hash]).into(),
+        signatures: BTreeSet::from([signature_hash]).into(),
+      }
+      .encode_to_vec(),
+    )
+    .send();
+}
+
+#[test]
 fn gc_removes_unreachable_and_retains_reachable_data() {
   let server = TestServer::new();
 
@@ -1525,6 +1587,7 @@ fn gc_removes_unreachable_and_retains_reachable_data() {
         .into(),
         packages: BTreeSet::from([fingerprint]).into(),
         revisions: BTreeSet::from([revision_hash]).into(),
+        signatures: SortedSet::default(),
       }
       .encode_to_vec(),
     )
@@ -1646,6 +1709,24 @@ fn gc_retains_package_mounted_by_revision() {
 }
 
 #[test]
+fn gc_retains_signatures_of_reachable_revisions() {
+  let server = TestServer::new();
+
+  let fingerprint = PackageBuilder::new().file("foo", b"foo").upload(&server);
+
+  let signature = server.sign(fingerprint.revision().hash());
+
+  server.post(format!("/api/signature/{signature}")).send();
+
+  server
+    .post("/api/gc")
+    .assert_body(api::gc::Response::default().encode_to_vec())
+    .send();
+
+  server.assert_file(signature);
+}
+
+#[test]
 fn gc_shares_ancestors() {
   let server = TestServer::new();
 
@@ -1703,6 +1784,7 @@ fn gc_shares_ancestors() {
         files: BTreeSet::from([bar_hash, Hash::bytes(b"bar"), head.into()]).into(),
         packages: BTreeSet::from([bar]).into(),
         revisions: BTreeSet::from([head]).into(),
+        signatures: SortedSet::default(),
       }
       .encode_to_vec(),
     )
@@ -5015,6 +5097,7 @@ fn verify_package_replace() {
         files: BTreeSet::from([foo_hash, Hash::bytes(b"foo"), revision_hash.into()]).into(),
         packages: BTreeSet::from([foo]).into(),
         revisions: BTreeSet::from([revision_hash]).into(),
+        signatures: SortedSet::default(),
       }
       .encode_to_vec(),
     )
@@ -5353,6 +5436,7 @@ fn verify_revision_update() {
     .assert_body(
       api::revision::get::Response {
         numbers: SortedSet::default(),
+        signatures: SortedSet::default(),
       }
       .encode_to_vec(),
     )
@@ -5511,4 +5595,178 @@ fn verify_revision_update_parent_missing() {
       "revision {revision} has no parent but package number 0 is at revision {head}"
     ))
     .send();
+}
+
+#[test]
+fn verify_signature_decode_error() {
+  let server = TestServer::new();
+
+  let junk = b"foo";
+  server.write_file(junk);
+
+  let hash = Hash::bytes(junk);
+
+  server
+    .post(format!("/api/signature/{hash}"))
+    .status(StatusCode::BAD_REQUEST)
+    .assert_body(format!("failed to decode signature {hash}"))
+    .send();
+}
+
+#[test]
+fn verify_signature_invalid() {
+  let server = TestServer::new();
+
+  let fingerprint = PackageBuilder::new().file("foo", b"foo").upload(&server);
+
+  let signature = Signature::new(
+    PrivateKey::zero().public_key(),
+    fingerprint.revision().hash(),
+    ed25519_dalek::Signature::from_bytes(&[0; ed25519_dalek::SIGNATURE_LENGTH]),
+  )
+  .encode_to_vec();
+
+  server.write_file(&signature);
+
+  let hash = Hash::bytes(&signature);
+
+  server
+    .post(format!("/api/signature/{hash}"))
+    .status(StatusCode::BAD_REQUEST)
+    .assert_body(format!("signature {hash} is invalid"))
+    .send();
+}
+
+#[test]
+fn verify_signature_keeps_first_signature_for_key() {
+  let server = TestServer::new();
+
+  let revision = PackageBuilder::new()
+    .file("foo", b"foo")
+    .upload(&server)
+    .revision()
+    .hash();
+
+  let first = server.sign(revision);
+
+  let key = PrivateKey::zero();
+
+  let mut expanded = ed25519_dalek::hazmat::ExpandedSecretKey::from(&key.inner_secret().to_bytes());
+
+  expanded.hash_prefix[0] ^= 1;
+
+  let second = Signature::new(
+    key.public_key(),
+    revision,
+    ed25519_dalek::hazmat::raw_sign::<ed25519_dalek::Sha512>(
+      &expanded,
+      revision.digest().as_bytes(),
+      &key.public_key().inner(),
+    ),
+  )
+  .encode_to_vec();
+
+  server.write_file(&second);
+
+  let second = Hash::bytes(&second);
+
+  assert_ne!(first, second);
+
+  for signature in [first, second] {
+    server.post(format!("/api/signature/{signature}")).send();
+  }
+
+  server
+    .get(format!("/api/revision/{revision}"))
+    .assert_body(
+      api::revision::get::Response {
+        numbers: BTreeSet::from([0]).into(),
+        signatures: BTreeSet::from([first]).into(),
+      }
+      .encode_to_vec(),
+    )
+    .send();
+}
+
+#[test]
+fn verify_signature_not_found() {
+  let hash = Hash::bytes(b"foo");
+
+  TestServer::new()
+    .post(format!("/api/signature/{hash}"))
+    .status(StatusCode::NOT_FOUND)
+    .assert_body(format!("file with hash {hash} not found"))
+    .send();
+}
+
+#[test]
+fn verify_signature_rejects_missing_auth_header() {
+  let admin = PrivateKey::generate();
+  let server = TestServer::builder()
+    .write_config(WriteConfig::Admin {
+      domain: "filepack.example".parse().unwrap(),
+      key: admin.public_key(),
+    })
+    .build();
+
+  let hash = Hash::bytes(b"foo");
+
+  server
+    .post(format!("/api/signature/{hash}"))
+    .status(StatusCode::UNAUTHORIZED)
+    .assert_body("missing authorization header")
+    .send();
+}
+
+#[test]
+fn verify_signature_revision_unverified() {
+  let server = TestServer::new();
+
+  let revision = RevisionHash::from(Hash::bytes(b"foo"));
+
+  let hash = server.sign(revision);
+
+  server
+    .post(format!("/api/signature/{hash}"))
+    .status(StatusCode::BAD_REQUEST)
+    .assert_body(format!(
+      "signature {hash} references unverified revision {revision}"
+    ))
+    .send();
+}
+
+#[test]
+fn verify_signature_succeeds() {
+  let server = TestServer::new();
+
+  let foo = PackageBuilder::new()
+    .file("foo", b"foo")
+    .upload(&server)
+    .revision()
+    .hash();
+
+  let bar = PackageBuilder::new()
+    .file("bar", b"bar")
+    .upload(&server)
+    .revision()
+    .hash();
+
+  for (number, revision) in [foo, bar].into_iter().enumerate() {
+    let signature = server.sign(revision);
+
+    for _ in 0..2 {
+      server.post(format!("/api/signature/{signature}")).send();
+    }
+
+    server
+      .get(format!("/api/revision/{revision}"))
+      .assert_body(
+        api::revision::get::Response {
+          numbers: BTreeSet::from([number.into_u64()]).into(),
+          signatures: BTreeSet::from([signature]).into(),
+        }
+        .encode_to_vec(),
+      )
+      .send();
+  }
 }

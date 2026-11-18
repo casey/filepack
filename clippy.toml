@@ -15,6 +15,5 @@ module-items-ordered-within-groupings = [
   "macros",
   "modules",
   "global_asm",
-  "UPPER_SNAKE_CASE",
   "lower_snake_case",
 ]

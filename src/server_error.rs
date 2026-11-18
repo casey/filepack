@@ -14,7 +14,7 @@ pub(crate) enum ServerError {
   #[snafu(display("package {fingerprint} artwork not found"))]
   ArtworkNotFound { fingerprint: Fingerprint },
   #[snafu(display("invalid authorization token"))]
-  AuthorizationInvalid { source: AuthorizationError },
+  AuthorizationInvalid { source: TokenError },
   #[snafu(display("malformed authorization header"))]
   AuthorizationMalformed,
   #[snafu(display("missing authorization header"))]
@@ -207,6 +207,15 @@ pub(crate) enum ServerError {
   },
   #[snafu(display("failed to parse revision"))]
   RevisionParse { source: HexError },
+  #[snafu(display("failed to decode signature {hash}"))]
+  SignatureDecode { hash: Hash, source: DecodeError },
+  #[snafu(display("signature {hash} is invalid"))]
+  SignatureInvalid {
+    hash: Hash,
+    source: AttestationError,
+  },
+  #[snafu(display("signature {hash} references unverified revision {revision}"))]
+  SignatureRevisionUnverified { hash: Hash, revision: RevisionHash },
   #[snafu(display("failed to get current time"))]
   Time { source: SystemTimeError },
   #[snafu(display("package {fingerprint} uses unstable feature `{feature}`"))]
@@ -269,6 +278,9 @@ impl ServerError {
       | Self::RevisionParentMissing { .. }
       | Self::RevisionParentNotFound { .. }
       | Self::RevisionParentUnexpected { .. }
+      | Self::SignatureDecode { .. }
+      | Self::SignatureInvalid { .. }
+      | Self::SignatureRevisionUnverified { .. }
       | Self::UnstableFeature { .. }
       | Self::UploadBodyRead { .. }
       | Self::UploadHashMismatch { .. } => StatusCode::BAD_REQUEST,

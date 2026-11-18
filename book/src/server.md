@@ -259,7 +259,7 @@ Garbage Collection
 ------------------
 
 Deleting a package causes the package number to no longer point to a package,
-and replacing a package causes the number to point at a different package. These
+and replacing a package causes the number to point to a different package. These
 packages are still served by fingerprint and revision hash, and their files are
 not immediately removed from the server.
 
