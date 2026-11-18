@@ -79,8 +79,6 @@ pub(crate) enum ServerError {
   Filesystem { source: FilesystemError },
   #[snafu(display("{source}"))]
   FingerprintParse { source: HexError },
-  #[snafu(display("head {revision} not found"))]
-  HeadNotFound { revision: RevisionHash },
   #[snafu(display(
     "history cannot be accessed by fingerprint, browse package {fingerprint} by number or revision"
   ))]
@@ -278,7 +276,6 @@ impl ServerError {
       | Self::ArtworkNotFound { .. }
       | Self::DirectoryNotFound { .. }
       | Self::FileNotFound { .. }
-      | Self::HeadNotFound { .. }
       | Self::MediaItemDoesNotExist { .. }
       | Self::MediaType { .. }
       | Self::MediaTypeDoesNotHaveItems { .. }

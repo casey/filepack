@@ -86,42 +86,68 @@ pub(crate) mod packages {
 pub(crate) mod revision {
   use super::*;
 
-  /// How an uploaded package relates to existing packages.
-  #[derive(Debug, Default, Encode, Decode)]
-  pub(crate) enum Mode {
-    /// Upload as a new package.
-    #[default]
-    #[n(0)]
-    New,
-    /// Replace package `number`.
-    #[n(1)]
-    Replace {
-      /// Number of the package to replace.
+  pub(crate) mod get {
+    use super::*;
+
+    /// Response body of `GET /api/revision/{revision}`.
+    #[derive(Encode, Decode)]
+    pub(crate) struct Response {
+      /// Numbers of the packages whose head is the revision.
       #[n(1)]
-      number: u64,
-    },
-    /// Add a revision to package `number`.
-    #[n(2)]
-    Update {
-      /// Number of the package to update.
-      #[n(1)]
-      number: u64,
-    },
+      pub(crate) numbers: SortedSet<u64>,
+    }
   }
 
-  /// Request body of `POST /api/revision/{revision}`.
-  #[derive(Debug, Encode, Decode)]
-  pub(crate) struct Request {
-    /// How the uploaded package relates to existing packages.
-    #[n(1)]
-    pub(crate) mode: Mode,
-  }
+  pub(crate) mod post {
+    use super::*;
 
-  /// Response body of `POST /api/revision/{revision}`.
-  #[derive(Encode, Decode)]
-  pub(crate) struct Response {
-    /// Number assigned to the uploaded package.
-    #[n(1)]
-    pub(crate) number: u64,
+    /// How an uploaded package relates to existing packages.
+    #[derive(Clone, Copy, Debug, Default, Encode, Decode)]
+    pub(crate) enum Mode {
+      /// Upload as a new package.
+      #[default]
+      #[n(0)]
+      New,
+      /// Replace package `number`.
+      #[n(1)]
+      Replace {
+        /// Number of the package to replace.
+        #[n(1)]
+        number: u64,
+      },
+      /// Add a revision to package `number`.
+      #[n(2)]
+      Update {
+        /// Number of the package to update.
+        #[n(1)]
+        number: u64,
+      },
+    }
+
+    impl Mode {
+      pub(crate) fn verb(self) -> &'static str {
+        match self {
+          Self::New => "created",
+          Self::Replace { .. } => "replaced",
+          Self::Update { .. } => "updated",
+        }
+      }
+    }
+
+    /// Request body of `POST /api/revision/{revision}`.
+    #[derive(Debug, Encode, Decode)]
+    pub(crate) struct Request {
+      /// How the uploaded package relates to existing packages.
+      #[n(1)]
+      pub(crate) mode: Mode,
+    }
+
+    /// Response body of `POST /api/revision/{revision}`.
+    #[derive(Encode, Decode)]
+    pub(crate) struct Response {
+      /// Number assigned to the uploaded package.
+      #[n(1)]
+      pub(crate) number: u64,
+    }
   }
 }

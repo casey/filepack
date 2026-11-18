@@ -300,17 +300,6 @@ impl Server {
     })
   }
 
-  pub(crate) fn is_head(&self, revision: RevisionHash) -> ServerResult<bool> {
-    Ok(
-      !self
-        .database
-        .begin_read()?
-        .open_multimap_table(HEADS)?
-        .get(&revision)?
-        .is_empty(),
-    )
-  }
-
   pub(crate) fn media_item(
     &self,
     fingerprint: Fingerprint,
@@ -778,6 +767,28 @@ impl Server {
     Ok(None)
   }
 
+  pub(crate) fn revision(
+    &self,
+    revision: RevisionHash,
+  ) -> ServerResult<api::revision::get::Response> {
+    let tx = self.database.begin_read()?;
+
+    ensure!(
+      tx.open_table(REVISIONS)?.get(&revision)?.is_some(),
+      server_error::RevisionNotFound { revision },
+    );
+
+    let numbers = tx
+      .open_multimap_table(HEADS)?
+      .get(&revision)?
+      .map(|number| Ok(number?.value()))
+      .collect::<ServerResult<BTreeSet<u64>>>()?;
+
+    Ok(api::revision::get::Response {
+      numbers: numbers.into(),
+    })
+  }
+
   fn verified_package_file(
     &self,
     fingerprint: Fingerprint,
@@ -910,7 +921,7 @@ impl Server {
   pub(crate) fn verify_revision(
     &self,
     revision_hash: RevisionHash,
-    request: api::revision::Request,
+    request: api::revision::post::Request,
   ) -> ServerResult<u64> {
     let tx = self.database.begin_write()?;
 
@@ -945,7 +956,7 @@ impl Server {
       }
 
       match request.mode {
-        api::revision::Mode::New => {
+        api::revision::post::Mode::New => {
           if let Some(&parent) = parents.first() {
             return Err(ServerError::RevisionParentUnexpected {
               parent,
@@ -971,7 +982,7 @@ impl Server {
             number
           }
         }
-        api::revision::Mode::Replace { number } => {
+        api::revision::post::Mode::Replace { number } => {
           let head = numbers
             .get(&number)?
             .context(server_error::PackageNumberNotFound { number })?
@@ -986,7 +997,7 @@ impl Server {
 
           number
         }
-        api::revision::Mode::Update { number } => {
+        api::revision::post::Mode::Update { number } => {
           let head = numbers
             .get(&number)?
             .context(server_error::PackageNumberNotFound { number })?

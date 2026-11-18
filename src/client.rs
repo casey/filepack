@@ -41,14 +41,6 @@ impl Client {
       .check_status()
   }
 
-  fn head(&self, path: &str) -> Result<bool> {
-    self.request(self.client.head(self.url(path)))?.found()
-  }
-
-  pub(crate) fn is_head(&self, revision: RevisionHash) -> Result<bool> {
-    self.head(&format!("api/head/{revision}"))
-  }
-
   pub(crate) fn missing_files(&self, hashes: BTreeSet<Hash>) -> Result<HashSet<Hash>> {
     Ok(
       self
@@ -155,6 +147,21 @@ impl Client {
     builder.send().context(error::Request)
   }
 
+  pub(crate) fn revision(
+    &self,
+    revision: RevisionHash,
+  ) -> Result<Option<api::revision::get::Response>> {
+    self
+      .request(
+        self
+          .client
+          .get(self.url(&format!("api/revision/{revision}"))),
+      )?
+      .found()?
+      .map(ReqwestResponseExt::deco)
+      .transpose()
+  }
+
   fn url(&self, path: &str) -> Url {
     self.server.join(path).unwrap()
   }
@@ -172,12 +179,12 @@ impl Client {
   pub(crate) fn verify_revision(
     &self,
     revision: RevisionHash,
-    request: api::revision::Request,
+    request: api::revision::post::Request,
   ) -> Result<u64> {
     Ok(
       self
         .post_with_body(&format!("api/revision/{revision}"), request)?
-        .deco::<api::revision::Response>()?
+        .deco::<api::revision::post::Response>()?
         .number,
     )
   }

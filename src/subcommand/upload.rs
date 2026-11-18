@@ -140,31 +140,33 @@ impl Upload {
         .map(|server_state| server_state.number),
     };
 
-    let parent = if let Some(number) = update {
-      let head = client.number(number)?;
+    let manifest = loader.unpack()?;
 
-      if let Some(server_state) = state.servers.get(&server)
-        && server_state.number == number
-        && server_state.revision != head.revision
-      {
-        return Err(
-          error::RevisionStale {
-            local: server_state.revision,
-            number,
-            server: head.revision,
-          }
-          .build(),
-        );
+    let revision = loader.revision_hash()?;
+
+    let parents = manifest
+      .parents
+      .as_ref()
+      .map_or_default(NonEmptyOrderedSet::as_slice);
+
+    let mode = if let Some(number) = self.replace {
+      for &parent in parents {
+        client
+          .revision(parent)?
+          .context(error::RevisionParentUnpublished {
+            parent,
+            server: &server,
+          })?;
       }
 
-      if head.package == fingerprint {
-        state.servers.insert(
-          server,
-          ServerState {
-            number,
-            revision: head.revision,
-          },
-        );
+      api::revision::post::Mode::Replace { number }
+    } else if let Some(number) = update {
+      let head = client.number(number)?.revision;
+
+      if head == revision {
+        state
+          .servers
+          .insert(server, ServerState { number, revision });
 
         state.save(&root)?;
 
@@ -175,44 +177,66 @@ impl Upload {
         return Ok(());
       }
 
-      Some(head.revision)
-    } else {
-      None
-    };
-
-    let revision = Revision {
-      package: fingerprint,
-      parents: parent.map(NonEmptyOrderedSet::singleton),
-    };
-
-    let revision_hash = revision.hash();
-
-    if self.replace.is_none() && update.is_none() && client.is_head(revision_hash)? {
-      let number = client.verify_revision(
-        revision_hash,
-        api::revision::Request {
-          mode: api::revision::Mode::New,
-        },
-      )?;
-
-      state.servers.insert(
-        server,
-        ServerState {
+      ensure! {
+        parents.first() == Some(&head),
+        error::RevisionStale {
+          head,
           number,
-          revision: revision_hash,
+          revision,
         },
-      );
+      }
+
+      api::revision::post::Mode::Update { number }
+    } else if let Some(response) = client.revision(revision)?
+      && let Some(&number) = response.numbers.first()
+    {
+      ensure! {
+        response.numbers.len() == 1,
+        error::RevisionNumberAmbiguous {
+          numbers: response.numbers.iter().copied().collect::<BTreeSet<u64>>(),
+        },
+      }
+
+      state
+        .servers
+        .insert(server, ServerState { number, revision });
 
       state.save(&root)?;
 
       if !options.quiet {
-        eprintln!("server already has package number {number}");
+        eprintln!("server already has this revision as package number {number}");
       }
 
       return Ok(());
-    }
+    } else if let Some(&parent) = parents.first() {
+      let response = client
+        .revision(parent)?
+        .context(error::RevisionParentUnpublished {
+          parent,
+          server: &server,
+        })?;
 
-    let manifest = loader.unpack()?;
+      ensure! {
+        response.numbers.len() <= 1,
+        error::RevisionParentNumberAmbiguous {
+          numbers: response.numbers.iter().copied().collect::<BTreeSet<u64>>(),
+          parent,
+          server,
+        },
+      }
+
+      let number = *response
+        .numbers
+        .first()
+        .context(error::RevisionParentNotHead {
+          parent,
+          server: &server,
+        })?;
+
+      api::revision::post::Mode::Update { number }
+    } else {
+      api::revision::post::Mode::New
+    };
 
     let manifest_files = manifest.files();
 
@@ -249,31 +273,20 @@ impl Upload {
 
     context
       .client
-      .put_file(revision_hash.into(), revision.encode_to_vec().into())?;
-
-    let (mode, verb) = match (self.replace, update) {
-      (Some(number), None) => (api::revision::Mode::Replace { number }, "replaced"),
-      (None, Some(number)) => (api::revision::Mode::Update { number }, "updated"),
-      (None, None) => (api::revision::Mode::New, "created"),
-      (Some(_), Some(_)) => unreachable!(),
-    };
+      .put_file(revision.into(), context.loader.revision()?.to_vec().into())?;
 
     let number = context
       .client
-      .verify_revision(revision_hash, api::revision::Request { mode })?;
+      .verify_revision(revision, api::revision::post::Request { mode })?;
 
-    state.servers.insert(
-      server,
-      ServerState {
-        number,
-        revision: revision_hash,
-      },
-    );
+    state
+      .servers
+      .insert(server, ServerState { number, revision });
 
     state.save(&root)?;
 
     if !options.quiet {
-      eprintln!("{verb} package number {number}");
+      eprintln!("{} package number {number}", mode.verb());
     }
 
     Ok(())

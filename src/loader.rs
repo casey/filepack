@@ -65,6 +65,13 @@ impl Loader {
     &self.path
   }
 
+  pub(crate) fn revision(&self) -> Result<&[u8]> {
+    self
+      .archive
+      .revision(self.options)
+      .context(error::UnarchiveManifest { path: &self.path })
+  }
+
   pub(crate) fn revision_hash(&self) -> Result<RevisionHash> {
     self
       .archive
