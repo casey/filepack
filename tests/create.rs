@@ -52,7 +52,7 @@ fn create_rejects_invalid_artwork() {
 fn empty_directories_are_included() {
   Test::new()
     .create_dir("foo")
-    .args(["create", "."])
+    .arg("create")
     .assert_manifest(
       "manifest.filepack",
       json_pretty! {
@@ -65,7 +65,7 @@ fn empty_directories_are_included() {
       },
     )
     .success()
-    .args(["verify", "."])
+    .arg("verify")
     .stderr("successfully verified 0 files\n")
     .success();
 }
@@ -98,7 +98,7 @@ fn empty_subpackage() {
 fn file_in_subdirectory() {
   Test::new()
     .touch("foo/bar")
-    .args(["create", "."])
+    .arg("create")
     .assert_manifest(
       "manifest.filepack",
       json_pretty! {
@@ -115,7 +115,7 @@ fn file_in_subdirectory() {
       },
     )
     .success()
-    .args(["verify", "."])
+    .arg("verify")
     .stderr("successfully verified 1 file totaling 0 bytes\n")
     .success();
 }
@@ -125,7 +125,7 @@ fn force_overwrites_manifest() {
   Test::new()
     .touch("manifest.filepack")
     .touch("foo")
-    .args(["create", "--force", "."])
+    .args(["create", "--force"])
     .assert_manifest(
       "manifest.filepack",
       json_pretty! {
@@ -140,7 +140,7 @@ fn force_overwrites_manifest() {
       },
     )
     .success()
-    .args(["verify", "."])
+    .arg("verify")
     .stderr("successfully verified 1 file totaling 0 bytes\n")
     .success();
 }
@@ -150,7 +150,7 @@ fn force_overwrites_manifest_with_destination() {
   Test::new()
     .touch("foo.json")
     .touch("foo")
-    .args(["create", "--force", ".", "--manifest", "foo.json"])
+    .args(["create", "--force", "--manifest", "foo.json"])
     .assert_manifest(
       "foo.json",
       json_pretty! {
@@ -165,7 +165,7 @@ fn force_overwrites_manifest_with_destination() {
       },
     )
     .success()
-    .args(["verify", ".", "--manifest", "foo.json"])
+    .args(["verify", "--manifest", "foo.json"])
     .stderr("successfully verified 1 file totaling 0 bytes\n")
     .success();
 }
@@ -310,7 +310,24 @@ fn manifest_already_exists_error() {
   Test::new()
     .touch("manifest.filepack")
     .args(["create", "."])
-    .stderr("error: manifest `manifest.filepack` already exists, use `--force` to overwrite it\n")
+    .stderr(
+      "error: manifest `manifest.filepack` already exists, use `filepack update` to update it or \
+       `--force` to overwrite it\n",
+    )
+    .failure();
+}
+
+#[test]
+fn manifest_already_exists_error_precedes_metadata_error() {
+  Test::new()
+    .write("metadata.yaml", "title: Foo")
+    .arg("create")
+    .success()
+    .args(["create", "."])
+    .stderr(
+      "error: manifest `manifest.filepack` already exists, use `filepack update` to update it or \
+       `--force` to overwrite it\n",
+    )
     .failure();
 }
 
@@ -351,7 +368,7 @@ fn multiple_empty_directory_are_included() {
   Test::new()
     .create_dir("foo")
     .create_dir("bar")
-    .args(["create", "."])
+    .arg("create")
     .assert_manifest(
       "manifest.filepack",
       json_pretty! {
@@ -366,7 +383,7 @@ fn multiple_empty_directory_are_included() {
       },
     )
     .success()
-    .args(["verify", "."])
+    .arg("verify")
     .stderr("successfully verified 0 files\n")
     .success();
 }
@@ -375,7 +392,7 @@ fn multiple_empty_directory_are_included() {
 fn nested_empty_directories_are_included() {
   Test::new()
     .create_dir("foo/bar")
-    .args(["create", "."])
+    .arg("create")
     .assert_manifest(
       "manifest.filepack",
       json_pretty! {
@@ -390,7 +407,7 @@ fn nested_empty_directories_are_included() {
       },
     )
     .success()
-    .args(["verify", "."])
+    .arg("verify")
     .stderr("successfully verified 0 files\n")
     .success();
 }
@@ -428,13 +445,13 @@ fn nested_state_directory_is_ignored() {
 #[test]
 fn no_files() {
   Test::new()
-    .args(["create", "."])
+    .arg("create")
     .assert_manifest(
       "manifest.filepack",
       json_pretty! { embedded: {}, package: {}, signatures: [] },
     )
     .success()
-    .args(["verify", "."])
+    .arg("verify")
     .stderr("successfully verified 0 files\n")
     .success();
 }
@@ -456,7 +473,7 @@ fn non_unicode_path_error() {
 
   Test::new()
     .touch_non_unicode()
-    .args(["create", "."])
+    .arg("create")
     .stderr_path("error: path not valid unicode: `./�`\n")
     .failure();
 }
@@ -570,54 +587,6 @@ fn sign_with_unknown_key() {
 fn single_file() {
   Test::new()
     .touch("foo")
-    .args(["create", "."])
-    .assert_manifest(
-      "manifest.filepack",
-      json_pretty! {
-        embedded: {},
-        package: {
-          foo: {
-            hash: EMPTY_HASH,
-            size: 0
-          }
-        },
-        signatures: [],
-      },
-    )
-    .success()
-    .args(["verify", "."])
-    .stderr("successfully verified 1 file totaling 0 bytes\n")
-    .success();
-}
-
-#[test]
-fn single_file_mmap() {
-  Test::new()
-    .touch("foo")
-    .args(["--mmap", "create", "."])
-    .assert_manifest(
-      "manifest.filepack",
-      json_pretty! {
-        embedded: {},
-        package: {
-          foo: {
-            hash: EMPTY_HASH,
-            size: 0
-          }
-        },
-        signatures: [],
-      },
-    )
-    .success()
-    .args(["--mmap", "verify", "."])
-    .stderr("successfully verified 1 file totaling 0 bytes\n")
-    .success();
-}
-
-#[test]
-fn single_file_omit_root() {
-  Test::new()
-    .touch("foo")
     .arg("create")
     .assert_manifest(
       "manifest.filepack",
@@ -633,16 +602,16 @@ fn single_file_omit_root() {
       },
     )
     .success()
-    .args(["verify", "."])
+    .arg("verify")
     .stderr("successfully verified 1 file totaling 0 bytes\n")
     .success();
 }
 
 #[test]
-fn single_file_parallel() {
+fn single_file_mmap() {
   Test::new()
     .touch("foo")
-    .args(["--parallel", "create", "."])
+    .args(["--mmap", "create"])
     .assert_manifest(
       "manifest.filepack",
       json_pretty! {
@@ -657,7 +626,31 @@ fn single_file_parallel() {
       },
     )
     .success()
-    .args(["--parallel", "verify", "."])
+    .args(["--mmap", "verify"])
+    .stderr("successfully verified 1 file totaling 0 bytes\n")
+    .success();
+}
+
+#[test]
+fn single_file_parallel() {
+  Test::new()
+    .touch("foo")
+    .args(["--parallel", "create"])
+    .assert_manifest(
+      "manifest.filepack",
+      json_pretty! {
+        embedded: {},
+        package: {
+          foo: {
+            hash: EMPTY_HASH,
+            size: 0
+          }
+        },
+        signatures: [],
+      },
+    )
+    .success()
+    .args(["--parallel", "verify"])
     .stderr("successfully verified 1 file totaling 0 bytes\n")
     .success();
 }
@@ -666,7 +659,7 @@ fn single_file_parallel() {
 fn single_non_empty_file() {
   Test::new()
     .write("foo", "bar")
-    .args(["create", "."])
+    .arg("create")
     .assert_manifest(
       "manifest.filepack",
       json_pretty! {
@@ -681,7 +674,7 @@ fn single_non_empty_file() {
       },
     )
     .success()
-    .args(["verify", "."])
+    .arg("verify")
     .stderr("successfully verified 1 file totaling 3 bytes\n")
     .success();
 }
@@ -696,7 +689,7 @@ fn special_file_error() {
   UnixListener::bind(test.path().join("foo")).unwrap();
 
   test
-    .args(["create", "."])
+    .arg("create")
     .stderr("error: special file at `foo`\n")
     .failure();
 }
@@ -812,7 +805,7 @@ fn subpackage_signature_mismatch_error() {
 fn symlink_error() {
   Test::new()
     .symlink("foo", "bar")
-    .args(["create", "."])
+    .arg("create")
     .stderr("error: symlink at `bar`\n")
     .failure();
 }

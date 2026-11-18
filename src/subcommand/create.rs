@@ -17,6 +17,8 @@ pub(crate) type Output = ();
 
 impl Create {
   pub(crate) fn run(self, options: Options) -> Result {
-    self.packager.package(options, self.force)
+    self
+      .packager
+      .package(options, packager::Operation::Create { force: self.force })
   }
 }

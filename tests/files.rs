@@ -5,7 +5,7 @@ fn files() {
   Test::new()
     .touch("foo/bar/baz")
     .touch("foo/bar/bob")
-    .args(["create", "."])
+    .arg("create")
     .success()
     .arg("files")
     .stdout(json_pretty! {
@@ -14,6 +14,22 @@ fn files() {
         size: 0,
       },
       "foo/bar/bob": {
+        hash: EMPTY_HASH,
+        size: 0,
+      },
+    })
+    .success();
+}
+
+#[test]
+fn with_path() {
+  Test::new()
+    .touch("foo/bar")
+    .args(["create", "foo"])
+    .success()
+    .args(["files", "foo"])
+    .stdout(json_pretty! {
+      bar: {
         hash: EMPTY_HASH,
         size: 0,
       },

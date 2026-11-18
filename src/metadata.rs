@@ -175,7 +175,7 @@ impl Metadata {
     files
   }
 
-  pub(crate) fn generate(&mut self, root: &Utf8Path, force: bool, quiet: bool) -> Result {
+  pub(crate) fn generate(&mut self, root: &Utf8Path, overwrite: bool, quiet: bool) -> Result {
     assert!(self.thumbnails.is_none());
 
     let mut images = Vec::new();
@@ -204,7 +204,7 @@ impl Metadata {
 
     {
       let path = &root.join(Image::THUMBNAIL_DIR);
-      if !force && filesystem::exists(path)? {
+      if !overwrite && filesystem::exists(path)? {
         for entry in path
           .read_dir_utf8()
           .context(filesystem_error::Io { path })?

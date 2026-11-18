@@ -1,5 +1,9 @@
 use super::*;
 
+pub(crate) use self::operation::Operation;
+
+mod operation;
+
 #[derive(Parser)]
 pub(crate) struct Packager {
   #[arg(
@@ -21,7 +25,7 @@ pub(crate) struct Packager {
   #[arg(default_value_t = KeyName::DEFAULT, help = "Sign with <KEY>", long, requires = "sign")]
   key: KeyName,
   #[arg(
-    help = "Write manifest to <MANIFEST>, defaults to `<ROOT>/manifest.filepack`",
+    help = "Use manifest at <MANIFEST>, defaults to `<ROOT>/manifest.filepack`",
     long,
     value_hint = ValueHint::FilePath
   )]
@@ -29,7 +33,7 @@ pub(crate) struct Packager {
   #[arg(help = "Don't generate derived assets", long)]
   no_generate: bool,
   #[arg(
-    help = "Create manifest for files in <ROOT> directory, defaults to current directory",
+    help = "Package files in <ROOT> directory, defaults to current directory",
     value_hint = ValueHint::DirPath
   )]
   root: Option<Utf8PathBuf>,
@@ -38,7 +42,7 @@ pub(crate) struct Packager {
 }
 
 impl Packager {
-  pub(crate) fn package(self, options: Options, force: bool) -> Result {
+  pub(crate) fn package(self, options: Options, operation: Operation) -> Result {
     let current_dir = current_dir()?;
 
     let root = self.root.unwrap_or_else(|| current_dir.clone());
@@ -64,6 +68,47 @@ impl Packager {
       root.join(Manifest::FILENAME)
     };
 
+    let (overwrite, previous) = match operation {
+      Operation::Create { force } => {
+        ensure! {
+          force || !filesystem::exists(&manifest_path)?,
+          error::ManifestAlreadyExists {
+            path: manifest_path,
+          },
+        }
+
+        (force, None)
+      }
+      Operation::Update => {
+        let loader = Loader::load_with_options(DecodeOptions::strict(), Some(&manifest_path))?;
+
+        let manifest = loader.unpack()?;
+
+        ensure! {
+          manifest.unknown.is_empty(),
+          error::UnknownEntries {
+            names: manifest
+              .unknown
+              .entries
+              .keys()
+              .cloned()
+              .collect::<BTreeSet<ComponentBuf>>(),
+            path: loader.path(),
+          },
+        }
+
+        let revision_hash = loader.revision_hash()?;
+
+        let parents = if State::load(&root)?.is_published(revision_hash)? {
+          Some(NonEmptyOrderedSet::singleton(revision_hash))
+        } else {
+          manifest.parents.clone()
+        };
+
+        (true, Some((manifest, parents)))
+      }
+    };
+
     let path = root.join(Metadata::YAML_FILENAME);
 
     let metadata = if let Some(yaml) = filesystem::read_to_string_opt(&path)? {
@@ -76,7 +121,7 @@ impl Packager {
       let path = root.join(Metadata::DECO_FILENAME);
 
       ensure! {
-        force || !filesystem::exists(&path)?,
+        overwrite || !filesystem::exists(&path)?,
         error::MetadataAlreadyExists {
           path,
         },
@@ -96,13 +141,6 @@ impl Packager {
       None
     };
 
-    ensure! {
-      force || !filesystem::exists(&manifest_path)?,
-      error::ManifestAlreadyExists {
-        path: manifest_path,
-      },
-    }
-
     let mut linter = Linter::new();
 
     linter.deny(&self.deny);
@@ -119,7 +157,7 @@ impl Packager {
       metadata.validate(&root)?;
 
       if !self.no_generate {
-        metadata.generate(&root, force, options.quiet)?;
+        metadata.generate(&root, overwrite, options.quiet)?;
       }
 
       let deco = metadata.encode_to_vec();
@@ -217,11 +255,22 @@ impl Packager {
       BTreeMap::new()
     };
 
+    let (parents, signatures) = match previous {
+      Some((previous, parents)) => {
+        if package == previous.package {
+          (previous.parents, previous.signatures)
+        } else {
+          (parents, BTreeSet::new())
+        }
+      }
+      None => (None, BTreeSet::new()),
+    };
+
     let mut manifest = Manifest {
       embedded,
       package,
-      parents: None,
-      signatures: BTreeSet::new(),
+      parents,
+      signatures,
       unknown: DirectoryTree::new(),
     };
 

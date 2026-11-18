@@ -379,7 +379,7 @@ fn download_retrieves_package() {
     .create_dir("empty")
     .write("sub/baz", "ccc")
     .write("sub/qux", "ddd")
-    .args(["create", "."])
+    .arg("create")
     .success();
 
   let path = test.path().join("manifest.filepack");
@@ -446,7 +446,7 @@ fn download_retrieves_package_with_metadata() {
         readme: README.md
       ",
     )
-    .args(["create", "."])
+    .arg("create")
     .success();
 
   let fingerprint = fingerprint(&test.path().join("manifest.filepack"));

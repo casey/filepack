@@ -57,6 +57,7 @@ Summary
   - [filepack sign](commands/filepack-sign.md)
   - [filepack signatures](commands/filepack-signatures.md)
   - [filepack size](commands/filepack-size.md)
+  - [filepack update](commands/filepack-update.md)
   - [filepack upload](commands/filepack-upload.md)
   - [filepack verify](commands/filepack-verify.md)
 - [Content Types](content-types.md)

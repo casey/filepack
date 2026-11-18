@@ -74,7 +74,7 @@ fn delete_package_succeeds() {
 
   Test::new()
     .write("foo", "bar")
-    .args(["create", "."])
+    .arg("create")
     .success()
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
     .stderr(

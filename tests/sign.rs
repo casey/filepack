@@ -173,17 +173,8 @@ fn unknown_fields_are_rejected() {
     .success();
 
   let path = test.path().join("foo/manifest.filepack");
-  let bytes = fs::read(&path).unwrap();
-  let mut decoder = Decoder::new(&bytes);
-  <&[u8]>::decode(&mut decoder).unwrap();
-  <&[u8]>::decode(&mut decoder).unwrap();
-  let mut fields = BTreeMap::<u64, Vec<u8>>::decode(&mut decoder).unwrap();
-  assert!(fields.insert(u64::MAX, b"foo".to_vec()).is_none());
-  let mut encoder = Encoder::new();
-  fields.encode(&mut encoder);
-  encoder.magic(MagicType::Archive);
-  let bytes = encoder.finish();
-  fs::write(&path, &bytes).unwrap();
+
+  let bytes = add_unknown_field(&path);
 
   Manifest::load(Some(&path)).unwrap();
 

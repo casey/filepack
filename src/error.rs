@@ -338,7 +338,10 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     source: io::Error,
   },
-  #[snafu(display("manifest `{path}` already exists, use `--force` to overwrite it"))]
+  #[snafu(display(
+    "manifest `{path}` already exists, use `filepack update` to update it or `--force` to \
+     overwrite it"
+  ))]
   ManifestAlreadyExists {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
@@ -499,6 +502,12 @@ pub enum Error {
     number: u64,
     server: RevisionHash,
   },
+  #[snafu(display("revision {revision} has not been uploaded to {servers}"))]
+  RevisionUnpublished {
+    backtrace: Option<Backtrace>,
+    revision: RevisionHash,
+    servers: Ticked<String>,
+  },
   #[snafu(display("failed to install rustls ring crypto provider"))]
   RustlsProvider { backtrace: Option<Backtrace> },
   #[snafu(display("server failed"))]
@@ -611,6 +620,12 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
     source: ArchiveError,
+  },
+  #[snafu(display("manifest `{path}` contains unknown entries: {names}"))]
+  UnknownEntries {
+    backtrace: Option<Backtrace>,
+    names: Ticked<ComponentBuf>,
+    path: DisplayPath,
   },
   #[snafu(display("manifest `{path}` unknown entry `{name}` conflicts with known entry"))]
   UnknownEntryConflict {

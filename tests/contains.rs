@@ -67,3 +67,13 @@ fn size_mismatch() {
     ))
     .failure();
 }
+
+#[test]
+fn with_path() {
+  Test::new()
+    .touch("foo/bar")
+    .args(["create", "foo"])
+    .success()
+    .args(["contains", "--hash", EMPTY_HASH, "foo"])
+    .success();
+}

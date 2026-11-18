@@ -6,7 +6,7 @@ fn quiet() {
 
   Test::new()
     .write("foo", "bar")
-    .args(["create", "."])
+    .arg("create")
     .success()
     .args(["--quiet", "upload", "--server", &server.address()])
     .success()
@@ -15,7 +15,7 @@ fn quiet() {
 
   Test::new()
     .write("foo", "bar")
-    .args(["create", "."])
+    .arg("create")
     .success()
     .args(["--quiet", "upload", "--server", &server.address()])
     .success();
@@ -75,7 +75,7 @@ fn reupload_package_succeeds() {
     .create_dir("empty")
     .write("sub/baz", "ccc")
     .write("sub/qux", "ddd")
-    .args(["create", "."])
+    .arg("create")
     .success()
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
     .stderr(
@@ -167,7 +167,7 @@ fn signatures_are_not_uploaded() {
     .arg("keygen")
     .success()
     .write("foo", "aaa")
-    .args(["create", "."])
+    .arg("create")
     .success()
     .args(["sign", "manifest.filepack"])
     .success();
@@ -261,7 +261,7 @@ fn upload_package_defaults_to_current_directory() {
 
   Test::new()
     .write("foo", "bar")
-    .args(["create", "."])
+    .arg("create")
     .success()
     .args(["upload", "--server", &server.address()])
     .stderr(
@@ -450,7 +450,7 @@ fn upload_package_serves_package_html() {
         description: Bar
       ",
     )
-    .args(["create", "."])
+    .arg("create")
     .success();
 
   let fingerprint = fingerprint(&test.path().join("manifest.filepack"));
@@ -513,7 +513,7 @@ fn upload_package_skips_directories_already_on_server() {
 
   Test::new()
     .write("foo/bar", "baz")
-    .args(["create", "."])
+    .arg("create")
     .success()
     .env("FILEPACK_LOG", "filepack=debug")
     .args(["upload", "--server", &server.address()])
@@ -528,7 +528,7 @@ fn upload_package_skips_directories_already_on_server() {
     )
     .success()
     .write("qux", "quux")
-    .args(["create", "--force", "."])
+    .args(["create", "--force"])
     .success()
     .env("FILEPACK_LOG", "filepack=debug")
     .args(["upload", "--server", &server.address()])
@@ -558,7 +558,7 @@ fn upload_package_skips_files_already_on_server() {
     .args(["upload", "--server", &server.address(), "--file", "foo"])
     .success()
     .write("bar", "bbb")
-    .args(["create", "."])
+    .arg("create")
     .success()
     .env("FILEPACK_LOG", "filepack=debug")
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
@@ -604,7 +604,7 @@ fn upload_package_uploads_files() {
     .write("sub/baz", "ccc")
     .write("sub/qux", "ddd")
     .create_dir("sub/empty")
-    .args(["create", "."])
+    .arg("create")
     .success();
 
   let root = Hash::from(fingerprint(&test.path().join("manifest.filepack")));
@@ -638,10 +638,7 @@ fn upload_package_uploads_files() {
 fn upload_records_state() {
   let server = Test::new().serve().spawn();
 
-  let test = Test::new()
-    .write("foo", "bar")
-    .args(["create", "."])
-    .success();
+  let test = Test::new().write("foo", "bar").arg("create").success();
 
   let revision = fingerprint(&test.path().join("manifest.filepack"))
     .revision()
@@ -656,7 +653,7 @@ fn upload_records_state() {
       ",
     )
     .success()
-    .args(["verify", "."])
+    .arg("verify")
     .stderr("successfully verified 1 file totaling 3 bytes\n")
     .success();
 
@@ -682,7 +679,7 @@ fn upload_rejects_stale_state() {
 
   let a = Test::new()
     .write("foo", "bar")
-    .args(["create", "."])
+    .arg("create")
     .success()
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
     .stderr(
@@ -699,13 +696,13 @@ fn upload_rejects_stale_state() {
 
   let b = Test::new()
     .write("foo", "bar")
-    .args(["create", "."])
+    .arg("create")
     .success()
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
     .stderr("server already has package number 0\n")
     .success()
     .write("foo", "baz")
-    .args(["create", "--force", "."])
+    .args(["create", "--force"])
     .success()
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
     .stderr(
@@ -723,7 +720,7 @@ fn upload_rejects_stale_state() {
   .hash();
 
   a.write("foo", "qux")
-    .args(["create", "--force", "."])
+    .args(["create", "--force"])
     .success()
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
     .stderr(&format!(
@@ -739,10 +736,7 @@ fn upload_rejects_stale_state() {
 fn upload_replaces_package() {
   let server = Test::new().serve().spawn();
 
-  let test = Test::new()
-    .write("foo", "bar")
-    .args(["create", "."])
-    .success();
+  let test = Test::new().write("foo", "bar").arg("create").success();
 
   let old = fingerprint(&test.path().join("manifest.filepack"));
 
@@ -756,7 +750,7 @@ fn upload_replaces_package() {
     )
     .success()
     .write("foo", "baz")
-    .args(["create", "--force", "."])
+    .args(["create", "--force"])
     .success();
 
   let new = fingerprint(&test.path().join("manifest.filepack"));
@@ -799,10 +793,7 @@ fn upload_replaces_package() {
 fn upload_updates_implicitly() {
   let server = Test::new().serve().spawn();
 
-  let test = Test::new()
-    .write("foo", "bar")
-    .args(["create", "."])
-    .success();
+  let test = Test::new().write("foo", "bar").arg("create").success();
 
   let root = fingerprint(&test.path().join("manifest.filepack"))
     .revision()
@@ -818,7 +809,7 @@ fn upload_updates_implicitly() {
     )
     .success()
     .write("foo", "baz")
-    .args(["create", "--force", "."])
+    .args(["create", "--force"])
     .success()
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
     .stderr(
@@ -858,10 +849,7 @@ fn upload_updates_implicitly() {
 fn upload_updates_package() {
   let server = Test::new().serve().spawn();
 
-  let test = Test::new()
-    .write("foo", "bar")
-    .args(["create", "."])
-    .success();
+  let test = Test::new().write("foo", "bar").arg("create").success();
 
   let old = fingerprint(&test.path().join("manifest.filepack"));
 
@@ -885,7 +873,7 @@ fn upload_updates_package() {
     .stderr("package number 0 is up to date\n")
     .success()
     .write("foo", "baz")
-    .args(["create", "--force", "."])
+    .args(["create", "--force"])
     .success();
 
   let new = fingerprint(&test.path().join("manifest.filepack"));

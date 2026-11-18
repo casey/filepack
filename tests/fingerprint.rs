@@ -3,11 +3,12 @@ use super::*;
 #[test]
 fn case_variant_error() {
   Test::new()
-    .touch("MANIFEST.FILEPACK")
+    .touch("foo/MANIFEST.FILEPACK")
+    .current_dir("foo")
     .arg("fingerprint")
     .stderr("error: expected `manifest.filepack` but found case mismatch `MANIFEST.FILEPACK`\n")
     .failure()
-    .args(["fingerprint", "."])
+    .args(["fingerprint", "foo"])
     .stderr("error: expected `manifest.filepack` but found case mismatch `MANIFEST.FILEPACK`\n")
     .failure();
 }
@@ -45,5 +46,16 @@ fn fingerprint() {
     .success()
     .args(["fingerprint", path.join("manifest.filepack").as_str()])
     .stdout(format!("{fingerprint}\n"))
+    .success();
+}
+
+#[test]
+fn with_path() {
+  Test::new()
+    .create_dir("foo")
+    .args(["create", "foo"])
+    .success()
+    .args(["fingerprint", "foo"])
+    .stdout("package12186aa6cefc1ae2f427b90e61a3ab91c88573f6f6719ca0188098d681b6c80ca\n")
     .success();
 }
