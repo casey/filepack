@@ -64,9 +64,9 @@ impl Route {
 pub(crate) async fn api_delete_number(
   _: Authenticated,
   server: ServerExtension,
-  number: Path<u64>,
+  Path(Number(number)): Path<Number>,
 ) -> ServerResult {
-  block_in_place(|| server.delete_number(*number))
+  block_in_place(|| server.delete_number(number))
 }
 
 /// Serve file with `hash`.
@@ -111,9 +111,9 @@ pub(crate) async fn api_missing(
 #[route(GET, "/api/number/{number}")]
 pub(crate) async fn api_number(
   server: ServerExtension,
-  number: Path<u64>,
+  Path(Number(number)): Path<Number>,
 ) -> ServerResult<DecoResponse<api::number::Response>> {
-  block_in_place(|| Ok(DecoResponse(server.head(*number)?)))
+  block_in_place(|| Ok(DecoResponse(server.head(number)?)))
 }
 
 /// List all package numbers.

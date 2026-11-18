@@ -128,6 +128,7 @@ use {
     mp3_error::Mp3Error,
     mp4_decoder::Mp4Decoder,
     mp4_error::Mp4Error,
+    number::Number,
     number_error::NumberError,
     open_graph_image::OpenGraphImage,
     options::Options,
@@ -460,6 +461,7 @@ mod mp4_builder;
 mod mp4_decoder;
 mod mp4_error;
 mod non_empty_ordered_set;
+mod number;
 mod number_error;
 mod open_graph_image;
 mod options;

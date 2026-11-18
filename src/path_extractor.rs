@@ -17,9 +17,3 @@ impl PathExtractor for String {
     vec![reference::Parameter::String]
   }
 }
-
-impl PathExtractor for u64 {
-  fn parameters() -> Vec<reference::Parameter> {
-    vec![reference::Parameter::Integer]
-  }
-}
