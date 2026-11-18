@@ -479,3 +479,146 @@ fn download_retrieves_package_with_metadata() {
 
   server.terminate().success();
 }
+
+#[test]
+fn download_retrieves_package_without_revision() {
+  let server = Test::new().serve().spawn();
+
+  let test = Test::new()
+    .write("foo", "bar")
+    .arg("create")
+    .success()
+    .args([
+      "--quiet",
+      "upload",
+      "--server",
+      &server.address(),
+      "--no-revision",
+    ])
+    .success();
+
+  let fingerprint = fingerprint(&test.path().join("manifest.filepack")).to_string();
+
+  Test::new()
+    .args([
+      "download",
+      "--server",
+      &server.address(),
+      "--package",
+      &fingerprint,
+      "out",
+    ])
+    .assert_file("out/foo", "bar")
+    .success()
+    .args(["verify", "out", "--fingerprint", &fingerprint])
+    .stderr("successfully verified 1 file totaling 3 bytes\n")
+    .success();
+
+  server.terminate().success();
+}
+
+#[test]
+fn download_retrieves_revision() {
+  let server = Test::new().serve().spawn();
+
+  let test = Test::new()
+    .write("foo", "bar")
+    .arg("create")
+    .success()
+    .args(["--quiet", "upload", "--server", &server.address()])
+    .success()
+    .write("foo", "baz")
+    .arg("update")
+    .success()
+    .args(["--quiet", "upload", "--server", &server.address()])
+    .success();
+
+  let path = test.path().join("manifest.filepack");
+
+  let revision = Revision {
+    package: fingerprint(&path),
+    parents: manifest(&path).parents,
+  }
+  .hash()
+  .to_string();
+
+  let downloaded = Test::new()
+    .args([
+      "download",
+      "--server",
+      &server.address(),
+      "--revision",
+      &revision,
+      "out",
+    ])
+    .assert_file("out/foo", "baz")
+    .success();
+
+  assert_eq!(
+    fs::read(downloaded.path().join("out/manifest.filepack")).unwrap(),
+    fs::read(&path).unwrap(),
+  );
+
+  downloaded
+    .args(["verify", "out", "--revision", &revision])
+    .stderr("successfully verified 1 file totaling 3 bytes\n")
+    .success();
+
+  server.terminate().success();
+}
+
+#[test]
+fn download_revision_fails_on_hash_mismatch() {
+  let revision = Fingerprint::from(Hash::bytes(b"baz")).revision().hash();
+
+  let expected = Hash::from(revision);
+
+  let server = Test::new()
+    .serve()
+    .write(&format!("files/{expected}"), "bar")
+    .spawn();
+
+  Test::new()
+    .args([
+      "download",
+      "--server",
+      &server.address(),
+      "--revision",
+      &revision.to_string(),
+      "out",
+    ])
+    .stderr(&format!(
+      "error: downloaded file hash mismatch: expected {expected} but got {}\n",
+      Hash::bytes(b"bar"),
+    ))
+    .failure();
+
+  server.terminate().success();
+}
+
+#[test]
+fn download_revision_fails_when_not_found() {
+  let server = Test::new().serve().spawn();
+
+  let revision = Fingerprint::from(Hash::bytes(b"foo")).revision().hash();
+
+  let hash = Hash::from(revision);
+
+  Test::new()
+    .args([
+      "download",
+      "--server",
+      &server.address(),
+      "--revision",
+      &revision.to_string(),
+      "out",
+    ])
+    .stderr(&format!(
+      "error: response from {}/api/file/{hash} failed with status 404 Not Found: file with hash \
+      {hash} not found\n",
+      server.address(),
+    ))
+    .failure();
+
+  server.terminate().success();
+}
