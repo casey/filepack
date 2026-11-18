@@ -2947,12 +2947,45 @@ fn mount_file() {
       server
         .get(format!("/mount/{identifier}/foo.css"))
         .assert_header(header::CACHE_CONTROL, cache_control)
-        .assert_header(header::CONTENT_TYPE, "text/css")
+        .assert_header(header::CONTENT_TYPE, "text/css;charset=utf-8")
         .assert_header(header::CONTENT_SECURITY_POLICY, "frame-ancestors 'self'")
         .assert_header_absent(header::CONTENT_DISPOSITION)
         .assert_body("bar")
         .send();
     }
+  }
+}
+
+#[test]
+fn mount_file_adds_charset_to_text_types() {
+  let metadata = Metadata {
+    media: Some(Media::Web),
+    ..default()
+  };
+
+  let server = TestServer::builder()
+    .mount(PackageIdentifier::Number(0), None)
+    .unstable()
+    .build();
+
+  PackageBuilder::new()
+    .metadata(&metadata)
+    .file("static/foo.json", b"foo")
+    .file("static/foo.txt", b"foo")
+    .file("static/foo.xml", b"foo")
+    .file("static/index.html", b"foo")
+    .upload(&server);
+
+  for (path, content_type) in [
+    ("foo.json", "application/json"),
+    ("foo.txt", "text/plain;charset=utf-8"),
+    ("foo.xml", "text/xml"),
+  ] {
+    server
+      .get(format!("/mount/0/{path}"))
+      .assert_header(header::CONTENT_TYPE, content_type)
+      .assert_body("foo")
+      .send();
   }
 }
 
@@ -3004,7 +3037,7 @@ fn mount_file_nested() {
 
   server
     .get(format!("/mount/{fingerprint}/foo/bar.txt"))
-    .assert_header(header::CONTENT_TYPE, "text/plain")
+    .assert_header(header::CONTENT_TYPE, "text/plain;charset=utf-8")
     .assert_body("baz")
     .send();
 }
@@ -3208,7 +3241,7 @@ fn mount_serves_index_html() {
   server
     .get(format!("/mount/{fingerprint}/"))
     .assert_header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
-    .assert_header(header::CONTENT_TYPE, "text/html")
+    .assert_header(header::CONTENT_TYPE, "text/html;charset=utf-8")
     .assert_header(header::CONTENT_SECURITY_POLICY, "frame-ancestors 'self'")
     .assert_header_absent(header::CONTENT_DISPOSITION)
     .assert_body("foo")
@@ -3238,13 +3271,13 @@ fn named_mount() {
   server
     .get("/foo/")
     .assert_header(header::CACHE_CONTROL, "no-cache")
-    .assert_header(header::CONTENT_TYPE, "text/html")
+    .assert_header(header::CONTENT_TYPE, "text/html;charset=utf-8")
     .assert_body("foo")
     .send();
 
   server
     .get("/foo/bar.css")
-    .assert_header(header::CONTENT_TYPE, "text/css")
+    .assert_header(header::CONTENT_TYPE, "text/css;charset=utf-8")
     .assert_body("bar")
     .send();
 

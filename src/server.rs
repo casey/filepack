@@ -435,6 +435,15 @@ impl Server {
 
     let content_type = mime_guess::from_path(&path).first_or_octet_stream();
 
+    let content_type = if content_type.type_() == mime::TEXT && content_type.subtype() != mime::XML
+    {
+      format!("{content_type};charset=utf-8")
+        .parse::<Mime>()
+        .unwrap()
+    } else {
+      content_type
+    };
+
     Ok(
       self
         .open_file(hash)?
