@@ -28,6 +28,13 @@ pub(crate) struct Download {
     value_name = "FINGERPRINT"
   )]
   package: Option<Fingerprint>,
+  #[arg(
+    group = "target",
+    help = "Download package with <REVISION>",
+    long,
+    value_name = "REVISION"
+  )]
+  revision: Option<RevisionHash>,
   #[arg(help = "Download from server at <URL>", long, value_name = "URL")]
   server: ServerUrl,
 }
@@ -38,11 +45,6 @@ pub(crate) type Output = ();
 
 impl Download {
   fn download_file(&self, options: &Options, hash: Hash, path: &Utf8Path) -> Result {
-    ensure! {
-      !filesystem::exists(path)?,
-      error::FileAlreadyExists { path },
-    }
-
     let client = Client::new(options, self.server.clone(), None)?;
 
     let response = client.file(hash)?;
@@ -54,14 +56,13 @@ impl Download {
     Ok(())
   }
 
-  fn download_package(&self, options: &Options, fingerprint: Fingerprint) -> Result {
-    ensure! {
-      !filesystem::exists(&self.output)?,
-      error::FileAlreadyExists { path: &self.output },
-    }
-
-    let client = Client::new(options, self.server.clone(), None)?;
-
+  fn download_package(
+    &self,
+    options: &Options,
+    client: Client,
+    fingerprint: Fingerprint,
+    parents: Option<&NonEmptyOrderedSet<RevisionHash>>,
+  ) -> Result {
     let mut stack = vec![(Hash::from(fingerprint), self.output.clone(), None)];
 
     let mut directories = BTreeMap::new();
@@ -164,7 +165,7 @@ impl Download {
     );
 
     let archive = builder
-      .build_package(package, None, &BTreeSet::new(), BTreeMap::new())
+      .build_package(package, parents, &BTreeSet::new(), BTreeMap::new())
       .unwrap();
 
     let manifest = archive.unpack().unwrap();
@@ -206,11 +207,47 @@ impl Download {
     Ok(())
   }
 
+  fn download_revision(&self, options: &Options, revision: RevisionHash) -> Result {
+    let client = Client::new(options, self.server.clone(), None)?;
+
+    let hash = Hash::from(revision);
+
+    let url = client.file_url(hash);
+
+    let deco = client
+      .file(hash)?
+      .bytes()
+      .with_context(|_| error::ResponseBody { url: url.clone() })?;
+
+    let actual = Hash::bytes(&deco);
+
+    ensure! {
+      actual == hash,
+      error::DownloadHashMismatch { actual, expected: hash },
+    }
+
+    let revision = Revision::decode_strict(&deco).context(error::DecodeResponse { url })?;
+
+    self.download_package(options, client, revision.package, revision.parents.as_ref())
+  }
+
   pub(crate) fn run(self, options: Options) -> Result {
+    ensure! {
+      !filesystem::exists(&self.output)?,
+      error::FileAlreadyExists { path: &self.output },
+    }
+
     if let Some(hash) = self.file {
       self.download_file(&options, hash, &self.output)
+    } else if let Some(revision) = self.revision {
+      self.download_revision(&options, revision)
     } else {
-      self.download_package(&options, self.package.unwrap())
+      self.download_package(
+        &options,
+        Client::new(&options, self.server.clone(), None)?,
+        self.package.unwrap(),
+        None,
+      )
     }
   }
 
@@ -260,6 +297,23 @@ impl Download {
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn revision_conflicts_with_package() {
+    assert_argument_conflict::<Download>(
+      &[
+        "--server",
+        "http://127.0.0.1:1",
+        "--package",
+        Fingerprint::EXAMPLE,
+        "--revision",
+        RevisionHash::EXAMPLE,
+        "foo",
+      ],
+      "--package <FINGERPRINT>",
+      "--revision <REVISION>",
+    );
+  }
 
   #[test]
   fn server_url_must_be_http_or_https() {
