@@ -6,7 +6,7 @@ fn gc_removes_orphaned_package_data() {
 
   Test::new()
     .write("foo", "bar")
-    .args(["create", "."])
+    .arg("create")
     .success()
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
     .stderr(

@@ -70,6 +70,7 @@ mod sign;
 mod signatures;
 mod size;
 mod test;
+mod update;
 mod upload;
 mod verify;
 
@@ -97,6 +98,21 @@ fn add_parent(path: &Utf8Path) -> Revision {
   manifest.save(path).unwrap();
 
   revision
+}
+
+fn add_unknown_field(path: &Utf8Path) -> Vec<u8> {
+  let bytes = fs::read(path).unwrap();
+  let mut decoder = Decoder::new(&bytes);
+  <&[u8]>::decode(&mut decoder).unwrap();
+  <&[u8]>::decode(&mut decoder).unwrap();
+  let mut fields = BTreeMap::<u64, Vec<u8>>::decode(&mut decoder).unwrap();
+  assert!(fields.insert(u64::MAX, b"foo".to_vec()).is_none());
+  let mut encoder = Encoder::new();
+  fields.encode(&mut encoder);
+  encoder.magic(MagicType::Archive);
+  let bytes = encoder.finish();
+  fs::write(path, &bytes).unwrap();
+  bytes
 }
 
 fn add_unknown_signature(path: &Utf8Path) -> Vec<u8> {

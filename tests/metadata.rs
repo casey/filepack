@@ -1122,7 +1122,10 @@ fn create_requires_manifest_not_exist_before_generating_thumbnails() {
     .write("metadata.yaml", "artwork: foo.jpg")
     .touch("manifest.filepack")
     .args(["create", "."])
-    .stderr("error: manifest `manifest.filepack` already exists, use `--force` to overwrite it\n")
+    .stderr(
+      "error: manifest `manifest.filepack` already exists, use `filepack update` to update it or \
+      `--force` to overwrite it\n",
+    )
     .failure();
 
   assert!(!test.path().join("thumbnails").exists());
@@ -1209,11 +1212,12 @@ fn metadata_deco_force() {
 #[test]
 fn metadata_subcommand_case_variant_error() {
   Test::new()
-    .touch("METADATA.FILEMETA")
+    .touch("foo/METADATA.FILEMETA")
+    .current_dir("foo")
     .arg("metadata")
     .stderr("error: expected `metadata.filemeta` but found case mismatch `METADATA.FILEMETA`\n")
     .failure()
-    .args(["metadata", "."])
+    .args(["metadata", "foo"])
     .stderr("error: expected `metadata.filemeta` but found case mismatch `METADATA.FILEMETA`\n")
     .failure();
 }

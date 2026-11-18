@@ -78,10 +78,10 @@ fn extra_fields_are_not_allowed() {
 #[test]
 fn extraneous_empty_directory_error() {
   Test::new()
-    .args(["create", "."])
+    .arg("create")
     .success()
     .create_dir("foo")
-    .args(["verify", "."])
+    .arg("verify")
     .stderr("error: extraneous directory not in manifest: `foo`\n")
     .failure();
 }
@@ -94,7 +94,7 @@ fn extraneous_file_error() {
       json! { embedded: {}, package: {}, signatures: [] },
     )
     .touch("foo")
-    .args(["verify", "."])
+    .arg("verify")
     .stderr("error: extraneous file not in manifest: `foo`\n")
     .failure();
 }
@@ -103,10 +103,10 @@ fn extraneous_file_error() {
 fn hash_mismatch() {
   Test::new()
     .write("foo", "foo")
-    .args(["create", "."])
+    .arg("create")
     .success()
     .write("foo", "bar")
-    .args(["verify", "."])
+    .arg("verify")
     .stderr(
       "
         mismatched file: `foo`
@@ -273,9 +273,9 @@ fn many_files() {
   }
 
   test
-    .args(["create", "."])
+    .arg("create")
     .success()
-    .args(["verify", "."])
+    .arg("verify")
     .stderr("successfully verified 65 files totaling 65 bytes\n")
     .success();
 }
@@ -284,10 +284,10 @@ fn many_files() {
 fn missing_empty_directory_error() {
   Test::new()
     .create_dir("foo")
-    .args(["create", "."])
+    .arg("create")
     .success()
     .remove_dir("foo")
-    .args(["verify", "."])
+    .arg("verify")
     .stderr("error: directory missing: `foo`\n")
     .failure();
 }
@@ -372,11 +372,11 @@ fn multiple_mismatches() {
   Test::new()
     .touch("foo")
     .touch("bar")
-    .args(["create", "."])
+    .arg("create")
     .success()
     .write("foo", "baz")
     .write("bar", "bob")
-    .args(["verify", "."])
+    .arg("verify")
     .stderr(
       "
         mismatched file: `bar`
@@ -418,10 +418,10 @@ fn named_key_not_found() {
 fn nested_extraneous_empty_directory_error() {
   Test::new()
     .create_dir("foo/bar")
-    .args(["create", "."])
+    .arg("create")
     .success()
     .create_dir("foo/bar/baz")
-    .args(["verify", "."])
+    .arg("verify")
     .stderr_path("error: extraneous directory not in manifest: `foo/bar/baz`\n")
     .failure();
 }
@@ -430,10 +430,10 @@ fn nested_extraneous_empty_directory_error() {
 fn nested_missing_empty_directory_error() {
   Test::new()
     .create_dir("foo/bar/baz")
-    .args(["create", "."])
+    .arg("create")
     .success()
     .remove_dir("foo/bar/baz")
-    .args(["verify", "."])
+    .arg("verify")
     .stderr("error: directory missing: `foo/bar/baz`\n")
     .failure();
 }
@@ -459,7 +459,7 @@ fn no_files() {
       "manifest.filepack",
       json! { embedded: {}, package: {}, signatures: [] },
     )
-    .args(["verify", "."])
+    .arg("verify")
     .stderr("successfully verified 0 files\n")
     .success();
 }
@@ -498,7 +498,7 @@ fn print() {
         signatures: [],
       },
     )
-    .args(["verify", "--print", "."])
+    .args(["verify", "--print"])
     .stdout(json_pretty! {
       embedded: {},
       package: {
@@ -626,7 +626,7 @@ fn single_file() {
         signatures: [],
       },
     )
-    .args(["verify", "."])
+    .arg("verify")
     .stderr("successfully verified 1 file totaling 0 bytes\n")
     .success();
 }
@@ -648,29 +648,7 @@ fn single_file_mmap() {
         signatures: [],
       },
     )
-    .args(["--mmap", "verify", "."])
-    .stderr("successfully verified 1 file totaling 0 bytes\n")
-    .success();
-}
-
-#[test]
-fn single_file_omit_directory() {
-  Test::new()
-    .touch("foo")
-    .write_manifest(
-      "manifest.filepack",
-      json! {
-        embedded: {},
-        package: {
-          foo: {
-            hash: EMPTY_HASH,
-            size: 0
-          }
-        },
-        signatures: [],
-      },
-    )
-    .arg("verify")
+    .args(["--mmap", "verify"])
     .stderr("successfully verified 1 file totaling 0 bytes\n")
     .success();
 }
@@ -692,7 +670,7 @@ fn single_file_parallel() {
         signatures: [],
       },
     )
-    .args(["--parallel", "verify", "."])
+    .args(["--parallel", "verify"])
     .stderr("successfully verified 1 file totaling 0 bytes\n")
     .success();
 }
@@ -701,10 +679,10 @@ fn single_file_parallel() {
 fn size_mismatch() {
   Test::new()
     .touch("foo")
-    .args(["create", "."])
+    .arg("create")
     .success()
     .write("foo", "bar")
-    .args(["verify", "."])
+    .arg("verify")
     .stderr(
       "
         mismatched file: `foo`
@@ -875,7 +853,7 @@ fn symlink_error() {
         signatures: [],
       },
     )
-    .args(["verify", "."])
+    .arg("verify")
     .stderr("error: symlink at `bar`\n")
     .failure();
 }
@@ -902,7 +880,7 @@ fn unarchive_error() {
 
   Test::new()
     .write("manifest.filepack", encoder.finish())
-    .args(["verify", "."])
+    .arg("verify")
     .stderr(
       "
         error: failed to unarchive manifest
