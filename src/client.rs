@@ -112,6 +112,10 @@ impl Client {
     )
   }
 
+  pub(crate) fn package_url(&self, fingerprint: Fingerprint) -> Url {
+    self.url(&format!("package/{fingerprint}"))
+  }
+
   fn post(&self, path: &str) -> Result<reqwest::blocking::Response> {
     self
       .request(self.client.post(self.url(path)))?
